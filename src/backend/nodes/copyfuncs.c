@@ -370,7 +370,31 @@ _copyIndexScan(IndexScan *from)
 	COPY_NODE_FIELD(indexorderby);
 	COPY_NODE_FIELD(indexorderbyorig);
 	COPY_SCALAR_FIELD(indexorderdir);
-	COPY_SCALAR_FIELD(indexonly);
+
+	return newnode;
+}
+
+/*
+ * _copyIndexOnlyScan
+ */
+static IndexOnlyScan *
+_copyIndexOnlyScan(IndexOnlyScan *from)
+{
+	IndexOnlyScan  *newnode = makeNode(IndexOnlyScan);
+
+	/*
+	 * copy node superclass fields
+	 */
+	CopyScanFields((Scan *) from, (Scan *) newnode);
+
+	/*
+	 * copy remainder of node
+	 */
+	COPY_SCALAR_FIELD(indexid);
+	COPY_NODE_FIELD(indexqual);
+	COPY_NODE_FIELD(indexorderby);
+	COPY_NODE_FIELD(indextlist);
+	COPY_SCALAR_FIELD(indexorderdir);
 
 	return newnode;
 }
@@ -3870,6 +3894,9 @@ copyObject(void *from)
 			break;
 		case T_IndexScan:
 			retval = _copyIndexScan(from);
+			break;
+		case T_IndexOnlyScan:
+			retval = _copyIndexOnlyScan(from);
 			break;
 		case T_BitmapIndexScan:
 			retval = _copyBitmapIndexScan(from);

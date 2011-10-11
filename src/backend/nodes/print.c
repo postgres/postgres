@@ -320,12 +320,16 @@ print_expr(Node *expr, List *rtable)
 
 		switch (var->varno)
 		{
-			case INNER:
+			case INNER_VAR:
 				relname = "INNER";
 				attname = "?";
 				break;
-			case OUTER:
+			case OUTER_VAR:
 				relname = "OUTER";
+				attname = "?";
+				break;
+			case INDEX_VAR:
+				relname = "INDEX";
 				attname = "?";
 				break;
 			default:

@@ -285,11 +285,8 @@ typedef Scan SeqScan;
  *
  * indexqual has the same form, but the expressions have been commuted if
  * necessary to put the indexkeys on the left, and the indexkeys are replaced
- * by Var nodes identifying the index columns (varattno is the index column
- * position, not the base table's column, even though varno is for the base
- * table).	This is a bit hokey ... would be cleaner to use a special-purpose
- * node type that could not be mistaken for a regular Var.	But it will do
- * for now.
+ * by Var nodes identifying the index columns (their varno is INDEX_VAR and
+ * their varattno is the index column number).
  *
  * indexorderbyorig is similarly the original form of any ORDER BY expressions
  * that are being implemented by the index, while indexorderby is modified to
@@ -302,8 +299,7 @@ typedef Scan SeqScan;
  * (Note these fields are used for amcanorderbyop cases, not amcanorder cases.)
  *
  * indexorderdir specifies the scan ordering, for indexscans on amcanorder
- * indexes (for other indexes it should be "don't care").  indexonly specifies
- * an index-only scan, for indexscans on amcanreturn indexes.
+ * indexes (for other indexes it should be "don't care").
  * ----------------
  */
 typedef struct IndexScan
@@ -315,8 +311,34 @@ typedef struct IndexScan
 	List	   *indexorderby;	/* list of index ORDER BY exprs */
 	List	   *indexorderbyorig;		/* the same in original form */
 	ScanDirection indexorderdir;	/* forward or backward or don't care */
-	bool		indexonly;		/* attempt to skip heap fetches? */
 } IndexScan;
+
+/* ----------------
+ *		index-only scan node
+ *
+ * IndexOnlyScan is very similar to IndexScan, but it specifies an
+ * index-only scan, in which the data comes from the index not the heap.
+ * Because of this, *all* Vars in the plan node's targetlist, qual, and
+ * index expressions reference index columns and have varno = INDEX_VAR.
+ * Hence we do not need separate indexqualorig and indexorderbyorig lists,
+ * since their contents would be equivalent to indexqual and indexorderby.
+ *
+ * To help EXPLAIN interpret the index Vars for display, we provide
+ * indextlist, which represents the contents of the index as a targetlist
+ * with one TLE per index column.  Vars appearing in this list reference
+ * the base table, and this is the only field in the plan node that may
+ * contain such Vars.
+ * ----------------
+ */
+typedef struct IndexOnlyScan
+{
+	Scan		scan;
+	Oid			indexid;		/* OID of index to scan */
+	List	   *indexqual;		/* list of index quals (usually OpExprs) */
+	List	   *indexorderby;	/* list of index ORDER BY exprs */
+	List	   *indextlist;		/* TargetEntry list describing index's cols */
+	ScanDirection indexorderdir;	/* forward or backward or don't care */
+} IndexOnlyScan;
 
 /* ----------------
  *		bitmap index scan node

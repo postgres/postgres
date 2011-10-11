@@ -806,8 +806,8 @@ find_unaggregated_cols_walker(Node *node, Bitmapset **colnos)
 	{
 		Var		   *var = (Var *) node;
 
-		/* setrefs.c should have set the varno to OUTER */
-		Assert(var->varno == OUTER);
+		/* setrefs.c should have set the varno to OUTER_VAR */
+		Assert(var->varno == OUTER_VAR);
 		Assert(var->varlevelsup == 0);
 		*colnos = bms_add_member(*colnos, var->varattno);
 		return false;

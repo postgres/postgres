@@ -14,8 +14,8 @@
  */
 /*
  * INTERFACE ROUTINES
- *		ExecIndexScan			scans a relation using indices
- *		ExecIndexNext			using index to retrieve next tuple
+ *		ExecIndexScan			scans a relation using an index
+ *		IndexNext				retrieve next tuple using index
  *		ExecInitIndexScan		creates and initializes state info.
  *		ExecReScanIndexScan		rescans the indexed relation.
  *		ExecEndIndexScan		releases all storage.
@@ -26,7 +26,6 @@
 
 #include "access/nbtree.h"
 #include "access/relscan.h"
-#include "access/visibilitymap.h"
 #include "executor/execdebug.h"
 #include "executor/nodeIndexscan.h"
 #include "optimizer/clauses.h"
@@ -37,7 +36,6 @@
 
 
 static TupleTableSlot *IndexNext(IndexScanState *node);
-static void IndexStoreHeapTuple(TupleTableSlot *slot, IndexScanDesc scandesc);
 
 
 /* ----------------------------------------------------------------
@@ -56,7 +54,6 @@ IndexNext(IndexScanState *node)
 	IndexScanDesc scandesc;
 	HeapTuple	tuple;
 	TupleTableSlot *slot;
-	ItemPointer tid;
 
 	/*
 	 * extract necessary information from index scan node
@@ -76,67 +73,23 @@ IndexNext(IndexScanState *node)
 	slot = node->ss.ss_ScanTupleSlot;
 
 	/*
-	 * OK, now that we have what we need, fetch the next TID.
+	 * ok, now that we have what we need, fetch the next tuple.
 	 */
-	while ((tid = index_getnext_tid(scandesc, direction)) != NULL)
+	while ((tuple = index_getnext(scandesc, direction)) != NULL)
 	{
 		/*
-		 * Attempt index-only scan, if possible.  For this, we need to have
-		 * gotten an index tuple from the AM, and we need the TID to reference
-		 * a heap page on which all tuples are known visible to everybody.
-		 * If that's the case, we don't need to visit the heap page for tuple
-		 * visibility testing, and we don't need any column values that are
-		 * not available from the index.
-		 *
-		 * Note: in the index-only path, we are still holding pin on the
-		 * scan's xs_cbuf, ie, the previously visited heap page.  It's not
-		 * clear whether it'd be better to release that pin.
+		 * Store the scanned tuple in the scan tuple slot of the scan state.
+		 * Note: we pass 'false' because tuples returned by amgetnext are
+		 * pointers onto disk pages and must not be pfree()'d.
 		 */
-		if (scandesc->xs_want_itup &&
-			visibilitymap_test(scandesc->heapRelation,
-							   ItemPointerGetBlockNumber(tid),
-							   &node->iss_VMBuffer))
-		{
-			/*
-			 * Convert index tuple to look like a heap tuple, and store the
-			 * results in the scan tuple slot.
-			 */
-			IndexStoreHeapTuple(slot, scandesc);
-		}
-		else
-		{
-			/* Index-only approach not possible, so fetch heap tuple. */
-			tuple = index_fetch_heap(scandesc);
-
-			/* Tuple might not be visible. */
-			if (tuple == NULL)
-				continue;
-
-			/*
-			 * Only MVCC snapshots are supported here, so there should be no
-			 * need to keep following the HOT chain once a visible entry has
-			 * been found.  If we did want to allow that, we'd need to keep
-			 * more state to remember not to call index_getnext_tid next time.
-			 */
-			if (scandesc->xs_continue_hot)
-				elog(ERROR, "unsupported use of non-MVCC snapshot in executor");
-
-			/*
-			 * Store the scanned tuple in the scan tuple slot of the scan
-			 * state.
-			 *
-			 * Note: we pass 'false' because tuples returned by amgetnext are
-			 * pointers onto disk pages and must not be pfree()'d.
-			 */
-			ExecStoreTuple(tuple,	/* tuple to store */
-						   slot,	/* slot to store in */
-						   scandesc->xs_cbuf,	/* buffer containing tuple */
-						   false);	/* don't pfree */
-		}
+		ExecStoreTuple(tuple,	/* tuple to store */
+					   slot,	/* slot to store in */
+					   scandesc->xs_cbuf,		/* buffer containing tuple */
+					   false);	/* don't pfree */
 
 		/*
 		 * If the index was lossy, we have to recheck the index quals using
-		 * the real tuple.
+		 * the fetched tuple.
 		 */
 		if (scandesc->xs_recheck)
 		{
@@ -158,53 +111,6 @@ IndexNext(IndexScanState *node)
 	 * the scan..
 	 */
 	return ExecClearTuple(slot);
-}
-
-/*
- * IndexStoreHeapTuple
- *
- *		When performing an index-only scan, we build a faux heap tuple
- *		from the index tuple.  Columns not present in the index are set to
- *		NULL, which is OK because we know they won't be referenced.
- *
- *		The faux tuple is built as a virtual tuple that depends on the
- *		scandesc's xs_itup, so that must remain valid for as long as we
- *		need the slot contents.
- */
-static void
-IndexStoreHeapTuple(TupleTableSlot *slot, IndexScanDesc scandesc)
-{
-	Form_pg_index indexForm = scandesc->indexRelation->rd_index;
-	TupleDesc	indexDesc = RelationGetDescr(scandesc->indexRelation);
-	int			nindexatts = indexDesc->natts;
-	int			nheapatts = slot->tts_tupleDescriptor->natts;
-	Datum	   *values = slot->tts_values;
-	bool	   *isnull = slot->tts_isnull;
-	int			i;
-
-	/* We must first set the slot to empty, and mark all columns as null */
-	ExecClearTuple(slot);
-
-	memset(isnull, true, nheapatts * sizeof(bool));
-
-	/* Transpose index tuple into heap tuple. */
-	for (i = 0; i < nindexatts; i++)
-	{
-		int		indexatt = indexForm->indkey.values[i];
-
-		/* Ignore expression columns, as well as system attributes */
-		if (indexatt <= 0)
-			continue;
-
-		Assert(indexatt <= nheapatts);
-
-		values[indexatt - 1] = index_getattr(scandesc->xs_itup, i + 1,
-											 indexDesc,
-											 &isnull[indexatt - 1]);
-	}
-
-	/* And now we can mark the slot as holding a virtual tuple. */
-	ExecStoreVirtualTuple(slot);
 }
 
 /*
@@ -493,13 +399,6 @@ ExecEndIndexScan(IndexScanState *node)
 	indexScanDesc = node->iss_ScanDesc;
 	relation = node->ss.ss_currentRelation;
 
-	/* Release VM buffer pin, if any. */
-	if (node->iss_VMBuffer != InvalidBuffer)
-	{
-		ReleaseBuffer(node->iss_VMBuffer);
-		node->iss_VMBuffer = InvalidBuffer;
-	}
-
 	/*
 	 * Free the exprcontext(s) ... now dead code, see ExecFreeExprContext
 	 */
@@ -659,7 +558,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 	 */
 	ExecIndexBuildScanKeys((PlanState *) indexstate,
 						   indexstate->iss_RelationDesc,
-						   node->scan.scanrelid,
 						   node->indexqual,
 						   false,
 						   &indexstate->iss_ScanKeys,
@@ -674,7 +572,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 	 */
 	ExecIndexBuildScanKeys((PlanState *) indexstate,
 						   indexstate->iss_RelationDesc,
-						   node->scan.scanrelid,
 						   node->indexorderby,
 						   true,
 						   &indexstate->iss_OrderByKeys,
@@ -711,10 +608,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 											   estate->es_snapshot,
 											   indexstate->iss_NumScanKeys,
 											 indexstate->iss_NumOrderByKeys);
-
-	/* Prepare for possible index-only scan */
-	indexstate->iss_ScanDesc->xs_want_itup = node->indexonly;
-	indexstate->iss_VMBuffer = InvalidBuffer;
 
 	/*
 	 * If no run-time keys to calculate, go ahead and pass the scankeys to the
@@ -772,7 +665,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
  *
  * planstate: executor state node we are working for
  * index: the index we are building scan keys for
- * scanrelid: varno of the index's relation within current query
  * quals: indexquals (or indexorderbys) expressions
  * isorderby: true if processing ORDER BY exprs, false if processing quals
  * *runtimeKeys: ptr to pre-existing IndexRuntimeKeyInfos, or NULL if none
@@ -791,7 +683,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
  * ScalarArrayOpExpr quals are not supported.
  */
 void
-ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
+ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 					   List *quals, bool isorderby,
 					   ScanKey *scanKeys, int *numScanKeys,
 					   IndexRuntimeKeyInfo **runtimeKeys, int *numRuntimeKeys,
@@ -865,7 +757,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 			Assert(leftop != NULL);
 
 			if (!(IsA(leftop, Var) &&
-				  ((Var *) leftop)->varno == scanrelid))
+				  ((Var *) leftop)->varno == INDEX_VAR))
 				elog(ERROR, "indexqual doesn't have key on left side");
 
 			varattno = ((Var *) leftop)->varattno;
@@ -979,7 +871,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 				Assert(leftop != NULL);
 
 				if (!(IsA(leftop, Var) &&
-					  ((Var *) leftop)->varno == scanrelid))
+					  ((Var *) leftop)->varno == INDEX_VAR))
 					elog(ERROR, "indexqual doesn't have key on left side");
 
 				varattno = ((Var *) leftop)->varattno;
@@ -1107,7 +999,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 			Assert(leftop != NULL);
 
 			if (!(IsA(leftop, Var) &&
-				  ((Var *) leftop)->varno == scanrelid))
+				  ((Var *) leftop)->varno == INDEX_VAR))
 				elog(ERROR, "indexqual doesn't have key on left side");
 
 			varattno = ((Var *) leftop)->varattno;
@@ -1172,7 +1064,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index, Index scanrelid,
 			Assert(leftop != NULL);
 
 			if (!(IsA(leftop, Var) &&
-				  ((Var *) leftop)->varno == scanrelid))
+				  ((Var *) leftop)->varno == INDEX_VAR))
 				elog(ERROR, "NullTest indexqual has wrong key");
 
 			varattno = ((Var *) leftop)->varattno;

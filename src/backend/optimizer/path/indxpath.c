@@ -199,14 +199,15 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 									 true, NULL, SAOP_FORBID, ST_ANYSCAN);
 
 	/*
-	 * Submit all the ones that can form plain IndexScan plans to add_path. (A
-	 * plain IndexPath always represents a plain IndexScan plan; however some
-	 * of the indexes might support only bitmap scans, and those we mustn't
-	 * submit to add_path here.)  Also, pick out the ones that might be useful
-	 * as bitmap scans.  For that, we must discard indexes that don't support
-	 * bitmap scans, and we also are only interested in paths that have some
-	 * selectivity; we should discard anything that was generated solely for
-	 * ordering purposes.
+	 * Submit all the ones that can form plain IndexScan plans to add_path.
+	 * (A plain IndexPath might represent either a plain IndexScan or an
+	 * IndexOnlyScan, but for our purposes here the distinction does not
+	 * matter.  However, some of the indexes might support only bitmap scans,
+	 * and those we mustn't submit to add_path here.)  Also, pick out the ones
+	 * that might be useful as bitmap scans.  For that, we must discard
+	 * indexes that don't support bitmap scans, and we also are only
+	 * interested in paths that have some selectivity; we should discard
+	 * anything that was generated solely for ordering purposes.
 	 */
 	bitindexpaths = NIL;
 	foreach(l, indexpaths)
@@ -1107,11 +1108,9 @@ check_index_only(RelOptInfo *rel, IndexOptInfo *index)
 
 		/*
 		 * For the moment, we just ignore index expressions.  It might be nice
-		 * to do something with them, later.  We also ignore index columns
-		 * that are system columns (such as OID), because the virtual-tuple
-		 * coding used by IndexStoreHeapTuple() can't deal with them.
+		 * to do something with them, later.
 		 */
-		if (attno <= 0)
+		if (attno == 0)
 			continue;
 
 		index_attrs =

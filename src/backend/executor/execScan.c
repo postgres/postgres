@@ -246,10 +246,17 @@ void
 ExecAssignScanProjectionInfo(ScanState *node)
 {
 	Scan	   *scan = (Scan *) node->ps.plan;
+	Index		varno;
+
+	/* Vars in an index-only scan's tlist should be INDEX_VAR */
+	if (IsA(scan, IndexOnlyScan))
+		varno = INDEX_VAR;
+	else
+		varno = scan->scanrelid;
 
 	if (tlist_matches_tupdesc(&node->ps,
 							  scan->plan.targetlist,
-							  scan->scanrelid,
+							  varno,
 							  node->ss_ScanTupleSlot->tts_tupleDescriptor))
 		node->ps.ps_ProjInfo = NULL;
 	else

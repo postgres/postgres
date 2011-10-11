@@ -452,7 +452,7 @@ create_index_path(PlannerInfo *root,
 		indexscandir = NoMovementScanDirection;
 	}
 
-	pathnode->path.pathtype = T_IndexScan;
+	pathnode->path.pathtype = indexonly ? T_IndexOnlyScan : T_IndexScan;
 	pathnode->path.parent = rel;
 	pathnode->path.pathkeys = pathkeys;
 
@@ -470,7 +470,6 @@ create_index_path(PlannerInfo *root,
 
 	pathnode->isjoininner = (outer_rel != NULL);
 	pathnode->indexscandir = indexscandir;
-	pathnode->indexonly = indexonly;
 
 	if (outer_rel != NULL)
 	{

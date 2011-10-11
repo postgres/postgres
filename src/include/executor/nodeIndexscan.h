@@ -23,9 +23,12 @@ extern void ExecIndexMarkPos(IndexScanState *node);
 extern void ExecIndexRestrPos(IndexScanState *node);
 extern void ExecReScanIndexScan(IndexScanState *node);
 
-/* routines exported to share code with nodeBitmapIndexscan.c */
+/*
+ * These routines are exported to share code with nodeIndexonlyscan.c and
+ * nodeBitmapIndexscan.c
+ */
 extern void ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
-					   Index scanrelid, List *quals, bool isorderby,
+					   List *quals, bool isorderby,
 					   ScanKey *scanKeys, int *numScanKeys,
 					   IndexRuntimeKeyInfo **runtimeKeys, int *numRuntimeKeys,
 					   IndexArrayKeyInfo **arrayKeys, int *numArrayKeys);

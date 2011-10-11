@@ -63,6 +63,7 @@ typedef struct
 {
 	PlannerInfo *root;
 	indexed_tlist *subplan_itlist;
+	Index		newvarno;
 	int			rtoffset;
 } fix_upper_expr_context;
 
@@ -81,6 +82,9 @@ typedef struct
 	((List *) fix_scan_expr(root, (Node *) (lst), rtoffset))
 
 static Plan *set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset);
+static Plan *set_indexonlyscan_references(PlannerInfo *root,
+							 IndexOnlyScan *plan,
+							 int rtoffset);
 static Plan *set_subqueryscan_references(PlannerInfo *root,
 							SubqueryScan *plan,
 							int rtoffset);
@@ -113,6 +117,7 @@ static Node *fix_join_expr_mutator(Node *node,
 static Node *fix_upper_expr(PlannerInfo *root,
 			   Node *node,
 			   indexed_tlist *subplan_itlist,
+			   Index newvarno,
 			   int rtoffset);
 static Node *fix_upper_expr_mutator(Node *node,
 					   fix_upper_expr_context *context);
@@ -235,6 +240,16 @@ set_plan_references(PlannerInfo *root, Plan *plan)
 	}
 
 	/*
+	 * Check for RT index overflow; it's very unlikely, but if it did happen,
+	 * the executor would get confused by varnos that match the special varno
+	 * values.
+	 */
+	if (IS_SPECIAL_VARNO(list_length(glob->finalrtable)))
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("too many range table entries")));
+
+	/*
 	 * Adjust RT indexes of PlanRowMarks and add to final rowmarks list
 	 */
 	foreach(lc, root->rowMarks)
@@ -303,6 +318,13 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 					fix_scan_list(root, splan->indexorderby, rtoffset);
 				splan->indexorderbyorig =
 					fix_scan_list(root, splan->indexorderbyorig, rtoffset);
+			}
+			break;
+		case T_IndexOnlyScan:
+			{
+				IndexOnlyScan  *splan = (IndexOnlyScan *) plan;
+
+				return set_indexonlyscan_references(root, splan, rtoffset);
 			}
 			break;
 		case T_BitmapIndexScan:
@@ -653,6 +675,49 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 }
 
 /*
+ * set_indexonlyscan_references
+ *		Do set_plan_references processing on an IndexOnlyScan
+ *
+ * This is unlike the handling of a plain IndexScan because we have to
+ * convert Vars referencing the heap into Vars referencing the index.
+ * We can use the fix_upper_expr machinery for that, by working from a
+ * targetlist describing the index columns.
+ */
+static Plan *
+set_indexonlyscan_references(PlannerInfo *root,
+							 IndexOnlyScan *plan,
+							 int rtoffset)
+{
+	indexed_tlist *index_itlist;
+
+	index_itlist = build_tlist_index(plan->indextlist);
+
+	plan->scan.scanrelid += rtoffset;
+	plan->scan.plan.targetlist = (List *)
+		fix_upper_expr(root,
+					   (Node *) plan->scan.plan.targetlist,
+					   index_itlist,
+					   INDEX_VAR,
+					   rtoffset);
+	plan->scan.plan.qual = (List *)
+		fix_upper_expr(root,
+					   (Node *) plan->scan.plan.qual,
+					   index_itlist,
+					   INDEX_VAR,
+					   rtoffset);
+	/* indexqual is already transformed to reference index columns */
+	plan->indexqual = fix_scan_list(root, plan->indexqual, rtoffset);
+	/* indexorderby is already transformed to reference index columns */
+	plan->indexorderby = fix_scan_list(root, plan->indexorderby, rtoffset);
+	/* indextlist must NOT be transformed to reference index columns */
+	plan->indextlist = fix_scan_list(root, plan->indextlist, rtoffset);
+
+	pfree(index_itlist);
+
+	return (Plan *) plan;
+}
+
+/*
  * set_subqueryscan_references
  *		Do set_plan_references processing on a SubqueryScan
  *
@@ -919,11 +984,13 @@ fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context)
 		Assert(var->varlevelsup == 0);
 
 		/*
-		 * We should not see any Vars marked INNER or OUTER.
+		 * We should not see any Vars marked INNER_VAR or OUTER_VAR.  But an
+		 * indexqual expression could contain INDEX_VAR Vars.
 		 */
-		Assert(var->varno != INNER);
-		Assert(var->varno != OUTER);
-		var->varno += context->rtoffset;
+		Assert(var->varno != INNER_VAR);
+		Assert(var->varno != OUTER_VAR);
+		if (!IS_SPECIAL_VARNO(var->varno))
+			var->varno += context->rtoffset;
 		if (var->varnoold > 0)
 			var->varnoold += context->rtoffset;
 		return (Node *) var;
@@ -932,9 +999,10 @@ fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context)
 	{
 		CurrentOfExpr *cexpr = (CurrentOfExpr *) copyObject(node);
 
-		Assert(cexpr->cvarno != INNER);
-		Assert(cexpr->cvarno != OUTER);
-		cexpr->cvarno += context->rtoffset;
+		Assert(cexpr->cvarno != INNER_VAR);
+		Assert(cexpr->cvarno != OUTER_VAR);
+		if (!IS_SPECIAL_VARNO(cexpr->cvarno))
+			cexpr->cvarno += context->rtoffset;
 		return (Node *) cexpr;
 	}
 	if (IsA(node, PlaceHolderVar))
@@ -963,9 +1031,9 @@ fix_scan_expr_walker(Node *node, fix_scan_expr_context *context)
 /*
  * set_join_references
  *	  Modify the target list and quals of a join node to reference its
- *	  subplans, by setting the varnos to OUTER or INNER and setting attno
- *	  values to the result domain number of either the corresponding outer
- *	  or inner join tuple item.  Also perform opcode lookup for these
+ *	  subplans, by setting the varnos to OUTER_VAR or INNER_VAR and setting
+ *	  attno values to the result domain number of either the corresponding
+ *	  outer or inner join tuple item.  Also perform opcode lookup for these
  *	  expressions. and add regclass OIDs to root->glob->relationOids.
  */
 static void
@@ -1012,6 +1080,7 @@ set_join_references(PlannerInfo *root, Join *join, int rtoffset)
 			nlp->paramval = (Var *) fix_upper_expr(root,
 												   (Node *) nlp->paramval,
 												   outer_itlist,
+												   OUTER_VAR,
 												   rtoffset);
 		}
 	}
@@ -1083,17 +1152,19 @@ set_upper_references(PlannerInfo *root, Plan *plan, int rtoffset)
 				search_indexed_tlist_for_sortgroupref((Node *) tle->expr,
 													  tle->ressortgroupref,
 													  subplan_itlist,
-													  OUTER);
+													  OUTER_VAR);
 			if (!newexpr)
 				newexpr = fix_upper_expr(root,
 										 (Node *) tle->expr,
 										 subplan_itlist,
+										 OUTER_VAR,
 										 rtoffset);
 		}
 		else
 			newexpr = fix_upper_expr(root,
 									 (Node *) tle->expr,
 									 subplan_itlist,
+									 OUTER_VAR,
 									 rtoffset);
 		tle = flatCopyTargetEntry(tle);
 		tle->expr = (Expr *) newexpr;
@@ -1105,6 +1176,7 @@ set_upper_references(PlannerInfo *root, Plan *plan, int rtoffset)
 		fix_upper_expr(root,
 					   (Node *) plan->qual,
 					   subplan_itlist,
+					   OUTER_VAR,
 					   rtoffset);
 
 	pfree(subplan_itlist);
@@ -1113,7 +1185,7 @@ set_upper_references(PlannerInfo *root, Plan *plan, int rtoffset)
 /*
  * set_dummy_tlist_references
  *	  Replace the targetlist of an upper-level plan node with a simple
- *	  list of OUTER references to its child.
+ *	  list of OUTER_VAR references to its child.
  *
  * This is used for plan types like Sort and Append that don't evaluate
  * their targetlists.  Although the executor doesn't care at all what's in
@@ -1136,7 +1208,7 @@ set_dummy_tlist_references(Plan *plan, int rtoffset)
 		Var		   *oldvar = (Var *) tle->expr;
 		Var		   *newvar;
 
-		newvar = makeVar(OUTER,
+		newvar = makeVar(OUTER_VAR,
 						 tle->resno,
 						 exprType((Node *) oldvar),
 						 exprTypmod((Node *) oldvar),
@@ -1382,11 +1454,12 @@ search_indexed_tlist_for_sortgroupref(Node *node,
  *	   relation target lists.  Also perform opcode lookup and add
  *	   regclass OIDs to root->glob->relationOids.
  *
- * This is used in two different scenarios: a normal join clause, where
- * all the Vars in the clause *must* be replaced by OUTER or INNER references;
- * and a RETURNING clause, which may contain both Vars of the target relation
- * and Vars of other relations.  In the latter case we want to replace the
- * other-relation Vars by OUTER references, while leaving target Vars alone.
+ * This is used in two different scenarios: a normal join clause, where all
+ * the Vars in the clause *must* be replaced by OUTER_VAR or INNER_VAR
+ * references; and a RETURNING clause, which may contain both Vars of the
+ * target relation and Vars of other relations.  In the latter case we want
+ * to replace the other-relation Vars by OUTER_VAR references, while leaving
+ * target Vars alone.
  *
  * For a normal join, acceptable_rel should be zero so that any failure to
  * match a Var will be reported as an error.  For the RETURNING case, pass
@@ -1435,7 +1508,7 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 		/* First look for the var in the input tlists */
 		newvar = search_indexed_tlist_for_var(var,
 											  context->outer_itlist,
-											  OUTER,
+											  OUTER_VAR,
 											  context->rtoffset);
 		if (newvar)
 			return (Node *) newvar;
@@ -1443,7 +1516,7 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 		{
 			newvar = search_indexed_tlist_for_var(var,
 												  context->inner_itlist,
-												  INNER,
+												  INNER_VAR,
 												  context->rtoffset);
 			if (newvar)
 				return (Node *) newvar;
@@ -1470,7 +1543,7 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 		{
 			newvar = search_indexed_tlist_for_non_var((Node *) phv,
 													  context->outer_itlist,
-													  OUTER);
+													  OUTER_VAR);
 			if (newvar)
 				return (Node *) newvar;
 		}
@@ -1478,7 +1551,7 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 		{
 			newvar = search_indexed_tlist_for_non_var((Node *) phv,
 													  context->inner_itlist,
-													  INNER);
+													  INNER_VAR);
 			if (newvar)
 				return (Node *) newvar;
 		}
@@ -1491,7 +1564,7 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 	{
 		newvar = search_indexed_tlist_for_non_var(node,
 												  context->outer_itlist,
-												  OUTER);
+												  OUTER_VAR);
 		if (newvar)
 			return (Node *) newvar;
 	}
@@ -1499,7 +1572,7 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 	{
 		newvar = search_indexed_tlist_for_non_var(node,
 												  context->inner_itlist,
-												  INNER);
+												  INNER_VAR);
 		if (newvar)
 			return (Node *) newvar;
 	}
@@ -1516,7 +1589,7 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
  *		root->glob->relationOids.
  *
  * This is used to fix up target and qual expressions of non-join upper-level
- * plan nodes.
+ * plan nodes, as well as index-only scan nodes.
  *
  * An error is raised if no matching var can be found in the subplan tlist
  * --- so this routine should only be applied to nodes whose subplans'
@@ -1529,23 +1602,26 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
  * subplan tlist is just a flattened list of Vars.)
  *
  * 'node': the tree to be fixed (a target item or qual)
- * 'subplan_itlist': indexed target list for subplan
+ * 'subplan_itlist': indexed target list for subplan (or index)
+ * 'newvarno': varno to use for Vars referencing tlist elements
  * 'rtoffset': how much to increment varnoold by
  *
  * The resulting tree is a copy of the original in which all Var nodes have
- * varno = OUTER, varattno = resno of corresponding subplan target.
+ * varno = newvarno, varattno = resno of corresponding targetlist element.
  * The original tree is not modified.
  */
 static Node *
 fix_upper_expr(PlannerInfo *root,
 			   Node *node,
 			   indexed_tlist *subplan_itlist,
+			   Index newvarno,
 			   int rtoffset)
 {
 	fix_upper_expr_context context;
 
 	context.root = root;
 	context.subplan_itlist = subplan_itlist;
+	context.newvarno = newvarno;
 	context.rtoffset = rtoffset;
 	return fix_upper_expr_mutator(node, &context);
 }
@@ -1563,7 +1639,7 @@ fix_upper_expr_mutator(Node *node, fix_upper_expr_context *context)
 
 		newvar = search_indexed_tlist_for_var(var,
 											  context->subplan_itlist,
-											  OUTER,
+											  context->newvarno,
 											  context->rtoffset);
 		if (!newvar)
 			elog(ERROR, "variable not found in subplan target list");
@@ -1578,7 +1654,7 @@ fix_upper_expr_mutator(Node *node, fix_upper_expr_context *context)
 		{
 			newvar = search_indexed_tlist_for_non_var((Node *) phv,
 													  context->subplan_itlist,
-													  OUTER);
+													  context->newvarno);
 			if (newvar)
 				return (Node *) newvar;
 		}
@@ -1590,7 +1666,7 @@ fix_upper_expr_mutator(Node *node, fix_upper_expr_context *context)
 	{
 		newvar = search_indexed_tlist_for_non_var(node,
 												  context->subplan_itlist,
-												  OUTER);
+												  context->newvarno);
 		if (newvar)
 			return (Node *) newvar;
 	}
@@ -1610,7 +1686,7 @@ fix_upper_expr_mutator(Node *node, fix_upper_expr_context *context)
  * table should be left alone, however (the executor will evaluate them
  * using the actual heap tuple, after firing triggers if any).	In the
  * adjusted RETURNING list, result-table Vars will still have their
- * original varno, but Vars for other rels will have varno OUTER.
+ * original varno, but Vars for other rels will have varno OUTER_VAR.
  *
  * We also must perform opcode lookup and add regclass OIDs to
  * root->glob->relationOids.

@@ -89,6 +89,7 @@
 #include "executor/nodeGroup.h"
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
+#include "executor/nodeIndexonlyscan.h"
 #include "executor/nodeIndexscan.h"
 #include "executor/nodeLimit.h"
 #include "executor/nodeLockRows.h"
@@ -190,6 +191,11 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 		case T_IndexScan:
 			result = (PlanState *) ExecInitIndexScan((IndexScan *) node,
 													 estate, eflags);
+			break;
+
+		case T_IndexOnlyScan:
+			result = (PlanState *) ExecInitIndexOnlyScan((IndexOnlyScan *) node,
+														 estate, eflags);
 			break;
 
 		case T_BitmapIndexScan:
@@ -395,6 +401,10 @@ ExecProcNode(PlanState *node)
 
 		case T_IndexScanState:
 			result = ExecIndexScan((IndexScanState *) node);
+			break;
+
+		case T_IndexOnlyScanState:
+			result = ExecIndexOnlyScan((IndexOnlyScanState *) node);
 			break;
 
 			/* BitmapIndexScanState does not yield tuples */
@@ -625,6 +635,10 @@ ExecEndNode(PlanState *node)
 
 		case T_IndexScanState:
 			ExecEndIndexScan((IndexScanState *) node);
+			break;
+
+		case T_IndexOnlyScanState:
+			ExecEndIndexOnlyScan((IndexOnlyScanState *) node);
 			break;
 
 		case T_BitmapIndexScanState:

@@ -53,8 +53,8 @@ static Material *create_material_plan(PlannerInfo *root, MaterialPath *best_path
 static Plan *create_unique_plan(PlannerInfo *root, UniquePath *best_path);
 static SeqScan *create_seqscan_plan(PlannerInfo *root, Path *best_path,
 					List *tlist, List *scan_clauses);
-static IndexScan *create_indexscan_plan(PlannerInfo *root, IndexPath *best_path,
-					  List *tlist, List *scan_clauses);
+static Scan *create_indexscan_plan(PlannerInfo *root, IndexPath *best_path,
+					  List *tlist, List *scan_clauses, bool indexonly);
 static BitmapHeapScan *create_bitmap_scan_plan(PlannerInfo *root,
 						BitmapHeapPath *best_path,
 						List *tlist, List *scan_clauses);
@@ -95,7 +95,12 @@ static SeqScan *make_seqscan(List *qptlist, List *qpqual, Index scanrelid);
 static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 			   Oid indexid, List *indexqual, List *indexqualorig,
 			   List *indexorderby, List *indexorderbyorig,
-			   ScanDirection indexscandir, bool indexonly);
+			   ScanDirection indexscandir);
+static IndexOnlyScan *make_indexonlyscan(List *qptlist, List *qpqual,
+				   Index scanrelid, Oid indexid,
+				   List *indexqual, List *indexorderby,
+				   List *indextlist,
+				   ScanDirection indexscandir);
 static BitmapIndexScan *make_bitmap_indexscan(Index scanrelid, Oid indexid,
 					  List *indexqual,
 					  List *indexqualorig);
@@ -206,6 +211,7 @@ create_plan_recurse(PlannerInfo *root, Path *best_path)
 	{
 		case T_SeqScan:
 		case T_IndexScan:
+		case T_IndexOnlyScan:
 		case T_BitmapHeapScan:
 		case T_TidScan:
 		case T_SubqueryScan:
@@ -274,10 +280,18 @@ create_scan_plan(PlannerInfo *root, Path *best_path)
 	 */
 	if (use_physical_tlist(root, rel))
 	{
-		tlist = build_physical_tlist(root, rel);
-		/* if fail because of dropped cols, use regular method */
-		if (tlist == NIL)
-			tlist = build_relation_tlist(rel);
+		if (best_path->pathtype == T_IndexOnlyScan)
+		{
+			/* For index-only scan, the preferred tlist is the index's */
+			tlist = copyObject(((IndexPath *) best_path)->indexinfo->indextlist);
+		}
+		else
+		{
+			tlist = build_physical_tlist(root, rel);
+			/* if fail because of dropped cols, use regular method */
+			if (tlist == NIL)
+				tlist = build_relation_tlist(rel);
+		}
 	}
 	else
 		tlist = build_relation_tlist(rel);
@@ -302,7 +316,16 @@ create_scan_plan(PlannerInfo *root, Path *best_path)
 			plan = (Plan *) create_indexscan_plan(root,
 												  (IndexPath *) best_path,
 												  tlist,
-												  scan_clauses);
+												  scan_clauses,
+												  false);
+			break;
+
+		case T_IndexOnlyScan:
+			plan = (Plan *) create_indexscan_plan(root,
+												  (IndexPath *) best_path,
+												  tlist,
+												  scan_clauses,
+												  true);
 			break;
 
 		case T_BitmapHeapScan:
@@ -476,6 +499,7 @@ disuse_physical_tlist(Plan *plan, Path *path)
 	{
 		case T_SeqScan:
 		case T_IndexScan:
+		case T_IndexOnlyScan:
 		case T_BitmapHeapScan:
 		case T_TidScan:
 		case T_SubqueryScan:
@@ -1044,16 +1068,23 @@ create_seqscan_plan(PlannerInfo *root, Path *best_path,
  *	  Returns an indexscan plan for the base relation scanned by 'best_path'
  *	  with restriction clauses 'scan_clauses' and targetlist 'tlist'.
  *
+ * We use this for both plain IndexScans and IndexOnlyScans, because the
+ * qual preprocessing work is the same for both.  Note that the caller tells
+ * us which to build --- we don't look at best_path->path.pathtype, because
+ * create_bitmap_subplan needs to be able to override the prior decision.
+ *
  * The indexquals list of the path contains implicitly-ANDed qual conditions.
  * The list can be empty --- then no index restrictions will be applied during
  * the scan.
  */
-static IndexScan *
+static Scan *
 create_indexscan_plan(PlannerInfo *root,
 					  IndexPath *best_path,
 					  List *tlist,
-					  List *scan_clauses)
+					  List *scan_clauses,
+					  bool indexonly)
 {
+	Scan	   *scan_plan;
 	List	   *indexquals = best_path->indexquals;
 	List	   *indexorderbys = best_path->indexorderbys;
 	Index		baserelid = best_path->path.parent->relid;
@@ -1063,7 +1094,6 @@ create_indexscan_plan(PlannerInfo *root,
 	List	   *fixed_indexquals;
 	List	   *fixed_indexorderbys;
 	ListCell   *l;
-	IndexScan  *scan_plan;
 
 	/* it should be a base rel... */
 	Assert(baserelid > 0);
@@ -1077,7 +1107,7 @@ create_indexscan_plan(PlannerInfo *root,
 
 	/*
 	 * The executor needs a copy with the indexkey on the left of each clause
-	 * and with index attr numbers substituted for table ones.
+	 * and with index Vars substituted for table ones.
 	 */
 	fixed_indexquals = fix_indexqual_references(root, best_path, indexquals);
 
@@ -1175,20 +1205,29 @@ create_indexscan_plan(PlannerInfo *root,
 	}
 
 	/* Finally ready to build the plan node */
-	scan_plan = make_indexscan(tlist,
-							   qpqual,
-							   baserelid,
-							   indexoid,
-							   fixed_indexquals,
-							   stripped_indexquals,
-							   fixed_indexorderbys,
-							   indexorderbys,
-							   best_path->indexscandir,
-							   best_path->indexonly);
+	if (indexonly)
+		scan_plan = (Scan *) make_indexonlyscan(tlist,
+												qpqual,
+												baserelid,
+												indexoid,
+												fixed_indexquals,
+												fixed_indexorderbys,
+												best_path->indexinfo->indextlist,
+												best_path->indexscandir);
+	else
+		scan_plan = (Scan *) make_indexscan(tlist,
+											qpqual,
+											baserelid,
+											indexoid,
+											fixed_indexquals,
+											stripped_indexquals,
+											fixed_indexorderbys,
+											indexorderbys,
+											best_path->indexscandir);
 
-	copy_path_costsize(&scan_plan->scan.plan, &best_path->path);
+	copy_path_costsize(&scan_plan->plan, &best_path->path);
 	/* use the indexscan-specific rows estimate, not the parent rel's */
-	scan_plan->scan.plan.plan_rows = best_path->rows;
+	scan_plan->plan.plan_rows = best_path->rows;
 
 	return scan_plan;
 }
@@ -1440,7 +1479,9 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 		ListCell   *l;
 
 		/* Use the regular indexscan plan build machinery... */
-		iscan = create_indexscan_plan(root, ipath, NIL, NIL);
+		iscan = (IndexScan *) create_indexscan_plan(root, ipath,
+													NIL, NIL, false);
+		Assert(IsA(iscan, IndexScan));
 		/* then convert to a bitmap indexscan */
 		plan = (Plan *) make_bitmap_indexscan(iscan->scan.scanrelid,
 											  iscan->indexid,
@@ -2549,17 +2590,13 @@ fix_indexorderby_references(PlannerInfo *root, IndexPath *index_path,
 /*
  * fix_indexqual_operand
  *	  Convert an indexqual expression to a Var referencing the index column.
+ *
+ * We represent index keys by Var nodes having varno == INDEX_VAR and varattno
+ * equal to the index's attribute number (index column position).
  */
 static Node *
 fix_indexqual_operand(Node *node, IndexOptInfo *index)
 {
-	/*
-	 * We represent index keys by Var nodes having the varno of the base table
-	 * but varattno equal to the index's attribute number (index column
-	 * position).  This is a bit hokey ... would be cleaner to use a
-	 * special-purpose node type that could not be mistaken for a regular Var.
-	 * But it will do for now.
-	 */
 	Var		   *result;
 	int			pos;
 	ListCell   *indexpr_item;
@@ -2583,6 +2620,7 @@ fix_indexqual_operand(Node *node, IndexOptInfo *index)
 				if (index->indexkeys[pos] == varatt)
 				{
 					result = (Var *) copyObject(node);
+					result->varno = INDEX_VAR;
 					result->varattno = pos + 1;
 					return (Node *) result;
 				}
@@ -2606,7 +2644,7 @@ fix_indexqual_operand(Node *node, IndexOptInfo *index)
 			if (equal(node, indexkey))
 			{
 				/* Found a match */
-				result = makeVar(index->rel->relid, pos + 1,
+				result = makeVar(INDEX_VAR, pos + 1,
 								 exprType(lfirst(indexpr_item)), -1,
 								 exprCollation(lfirst(indexpr_item)),
 								 0);
@@ -2842,8 +2880,7 @@ make_indexscan(List *qptlist,
 			   List *indexqualorig,
 			   List *indexorderby,
 			   List *indexorderbyorig,
-			   ScanDirection indexscandir,
-			   bool indexonly)
+			   ScanDirection indexscandir)
 {
 	IndexScan  *node = makeNode(IndexScan);
 	Plan	   *plan = &node->scan.plan;
@@ -2860,7 +2897,34 @@ make_indexscan(List *qptlist,
 	node->indexorderby = indexorderby;
 	node->indexorderbyorig = indexorderbyorig;
 	node->indexorderdir = indexscandir;
-	node->indexonly = indexonly;
+
+	return node;
+}
+
+static IndexOnlyScan *
+make_indexonlyscan(List *qptlist,
+				   List *qpqual,
+				   Index scanrelid,
+				   Oid indexid,
+				   List *indexqual,
+				   List *indexorderby,
+				   List *indextlist,
+				   ScanDirection indexscandir)
+{
+	IndexOnlyScan *node = makeNode(IndexOnlyScan);
+	Plan	   *plan = &node->scan.plan;
+
+	/* cost should be inserted by caller */
+	plan->targetlist = qptlist;
+	plan->qual = qpqual;
+	plan->lefttree = NULL;
+	plan->righttree = NULL;
+	node->scan.scanrelid = scanrelid;
+	node->indexid = indexid;
+	node->indexqual = indexqual;
+	node->indexorderby = indexorderby;
+	node->indextlist = indextlist;
+	node->indexorderdir = indexscandir;
 
 	return node;
 }

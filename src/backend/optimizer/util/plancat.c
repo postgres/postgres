@@ -22,6 +22,7 @@
 #include "access/sysattr.h"
 #include "access/transam.h"
 #include "catalog/catalog.h"
+#include "catalog/heap.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
@@ -49,6 +50,8 @@ static int32 get_rel_data_width(Relation rel, int32 *attr_widths);
 static List *get_relation_constraints(PlannerInfo *root,
 						 Oid relationObjectId, RelOptInfo *rel,
 						 bool include_notnull);
+static List *build_index_tlist(PlannerInfo *root, IndexOptInfo *index,
+				  Relation heapRelation);
 
 
 /*
@@ -314,6 +317,10 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 				ChangeVarNodes((Node *) info->indexprs, 1, varno, 0);
 			if (info->indpred && varno != 1)
 				ChangeVarNodes((Node *) info->indpred, 1, varno, 0);
+
+			/* Build targetlist using the completed indexprs data */
+			info->indextlist = build_index_tlist(root, info, relation);
+
 			info->predOK = false;		/* set later in indxpath.c */
 			info->unique = index->indisunique;
 			info->hypothetical = false;
@@ -896,6 +903,70 @@ build_physical_tlist(PlannerInfo *root, RelOptInfo *rel)
 				 (int) rte->rtekind);
 			break;
 	}
+
+	return tlist;
+}
+
+/*
+ * build_index_tlist
+ *
+ * Build a targetlist representing the columns of the specified index.
+ * Each column is represented by a Var for the corresponding base-relation
+ * column, or an expression in base-relation Vars, as appropriate.
+ *
+ * There are never any dropped columns in indexes, so unlike
+ * build_physical_tlist, we need no failure case.
+ */
+static List *
+build_index_tlist(PlannerInfo *root, IndexOptInfo *index,
+				  Relation heapRelation)
+{
+	List	   *tlist = NIL;
+	Index		varno = index->rel->relid;
+	ListCell   *indexpr_item;
+	int			i;
+
+	indexpr_item = list_head(index->indexprs);
+	for (i = 0; i < index->ncolumns; i++)
+	{
+		int			indexkey = index->indexkeys[i];
+		Expr	   *indexvar;
+
+		if (indexkey != 0)
+		{
+			/* simple column */
+			Form_pg_attribute att_tup;
+
+			if (indexkey < 0)
+				att_tup = SystemAttributeDefinition(indexkey,
+											heapRelation->rd_rel->relhasoids);
+			else
+				att_tup = heapRelation->rd_att->attrs[indexkey - 1];
+
+			indexvar = (Expr *) makeVar(varno,
+										indexkey,
+										att_tup->atttypid,
+										att_tup->atttypmod,
+										att_tup->attcollation,
+										0);
+		}
+		else
+		{
+			/* expression column */
+			if (indexpr_item == NULL)
+				elog(ERROR, "wrong number of index expressions");
+			indexvar = (Expr *) lfirst(indexpr_item);
+			indexpr_item = lnext(indexpr_item);
+		}
+
+		tlist = lappend(tlist,
+						makeTargetEntry(indexvar,
+										i + 1,
+										NULL,
+										false));
+	}
+	if (indexpr_item != NULL)
+		elog(ERROR, "wrong number of index expressions");
 
 	return tlist;
 }

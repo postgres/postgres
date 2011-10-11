@@ -1974,6 +1974,18 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 			context.paramids = bms_add_members(context.paramids, scan_params);
 			break;
 
+		case T_IndexOnlyScan:
+			finalize_primnode((Node *) ((IndexOnlyScan *) plan)->indexqual,
+							  &context);
+			finalize_primnode((Node *) ((IndexOnlyScan *) plan)->indexorderby,
+							  &context);
+
+			/*
+			 * we need not look at indextlist, since it cannot contain Params.
+			 */
+			context.paramids = bms_add_members(context.paramids, scan_params);
+			break;
+
 		case T_BitmapIndexScan:
 			finalize_primnode((Node *) ((BitmapIndexScan *) plan)->indexqual,
 							  &context);

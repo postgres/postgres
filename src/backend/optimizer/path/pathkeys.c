@@ -25,7 +25,6 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/tlist.h"
-#include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 
 
@@ -35,8 +34,6 @@ static PathKey *make_canonical_pathkey(PlannerInfo *root,
 					   EquivalenceClass *eclass, Oid opfamily,
 					   int strategy, bool nulls_first);
 static bool pathkey_is_redundant(PathKey *new_pathkey, List *pathkeys);
-static Var *find_indexkey_var(PlannerInfo *root, RelOptInfo *rel,
-				  AttrNumber varattno);
 static bool right_merge_direction(PlannerInfo *root, PathKey *pathkey);
 
 
@@ -504,20 +501,23 @@ build_index_pathkeys(PlannerInfo *root,
 					 ScanDirection scandir)
 {
 	List	   *retval = NIL;
-	ListCell   *indexprs_item;
+	ListCell   *lc;
 	int			i;
 
 	if (index->sortopfamily == NULL)
 		return NIL;				/* non-orderable index */
 
-	indexprs_item = list_head(index->indexprs);
-	for (i = 0; i < index->ncolumns; i++)
+	i = 0;
+	foreach(lc, index->indextlist)
 	{
+		TargetEntry *indextle = (TargetEntry *) lfirst(lc);
+		Expr	   *indexkey;
 		bool		reverse_sort;
 		bool		nulls_first;
-		int			ikey;
-		Expr	   *indexkey;
 		PathKey    *cpathkey;
+
+		/* We assume we don't need to make a copy of the tlist item */
+		indexkey = indextle->expr;
 
 		if (ScanDirectionIsBackward(scandir))
 		{
@@ -528,21 +528,6 @@ build_index_pathkeys(PlannerInfo *root,
 		{
 			reverse_sort = index->reverse_sort[i];
 			nulls_first = index->nulls_first[i];
-		}
-
-		ikey = index->indexkeys[i];
-		if (ikey != 0)
-		{
-			/* simple index column */
-			indexkey = (Expr *) find_indexkey_var(root, index->rel, ikey);
-		}
-		else
-		{
-			/* expression --- assume we need not copy it */
-			if (indexprs_item == NULL)
-				elog(ERROR, "wrong number of index expressions");
-			indexkey = (Expr *) lfirst(indexprs_item);
-			indexprs_item = lnext(indexprs_item);
 		}
 
 		/* OK, try to make a canonical pathkey for this sort key */
@@ -568,44 +553,11 @@ build_index_pathkeys(PlannerInfo *root,
 		/* Add to list unless redundant */
 		if (!pathkey_is_redundant(cpathkey, retval))
 			retval = lappend(retval, cpathkey);
+
+		i++;
 	}
 
 	return retval;
-}
-
-/*
- * Find or make a Var node for the specified attribute of the rel.
- *
- * We first look for the var in the rel's target list, because that's
- * easy and fast.  But the var might not be there (this should normally
- * only happen for vars that are used in WHERE restriction clauses,
- * but not in join clauses or in the SELECT target list).  In that case,
- * gin up a Var node the hard way.
- */
-static Var *
-find_indexkey_var(PlannerInfo *root, RelOptInfo *rel, AttrNumber varattno)
-{
-	ListCell   *temp;
-	Index		relid;
-	Oid			reloid,
-				vartypeid,
-				varcollid;
-	int32		type_mod;
-
-	foreach(temp, rel->reltargetlist)
-	{
-		Var		   *var = (Var *) lfirst(temp);
-
-		if (IsA(var, Var) &&
-			var->varattno == varattno)
-			return var;
-	}
-
-	relid = rel->relid;
-	reloid = getrelid(relid, root->parse->rtable);
-	get_atttypetypmodcoll(reloid, varattno, &vartypeid, &type_mod, &varcollid);
-
-	return makeVar(relid, varattno, vartypeid, type_mod, varcollid, 0);
 }
 
 /*

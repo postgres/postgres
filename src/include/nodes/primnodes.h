@@ -118,15 +118,19 @@ typedef struct Expr
  * Note: during parsing/planning, varnoold/varoattno are always just copies
  * of varno/varattno.  At the tail end of planning, Var nodes appearing in
  * upper-level plan nodes are reassigned to point to the outputs of their
- * subplans; for example, in a join node varno becomes INNER or OUTER and
- * varattno becomes the index of the proper element of that subplan's target
- * list.  But varnoold/varoattno continue to hold the original values.
+ * subplans; for example, in a join node varno becomes INNER_VAR or OUTER_VAR
+ * and varattno becomes the index of the proper element of that subplan's
+ * target list.  But varnoold/varoattno continue to hold the original values.
  * The code doesn't really need varnoold/varoattno, but they are very useful
  * for debugging and interpreting completed plans, so we keep them around.
  */
-#define    INNER		65000
-#define    OUTER		65001
+#define    INNER_VAR		65000			/* reference to inner subplan */
+#define    OUTER_VAR		65001			/* reference to outer subplan */
+#define    INDEX_VAR		65002			/* reference to index column */
 
+#define IS_SPECIAL_VARNO(varno)		((varno) >= INNER_VAR)
+
+/* Symbols for the indexes of the special RTE entries in rules */
 #define    PRS2_OLD_VARNO			1
 #define    PRS2_NEW_VARNO			2
 
@@ -134,7 +138,7 @@ typedef struct Var
 {
 	Expr		xpr;
 	Index		varno;			/* index of this var's relation in the range
-								 * table (could also be INNER or OUTER) */
+								 * table, or INNER_VAR/OUTER_VAR/INDEX_VAR */
 	AttrNumber	varattno;		/* attribute number of this var, or zero for
 								 * all */
 	Oid			vartype;		/* pg_type OID for the type of this var */

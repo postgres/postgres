@@ -306,7 +306,7 @@ currtid_for_view(Relation viewrel, ItemPointer tid)
 				Var		   *var = (Var *) tle->expr;
 				RangeTblEntry *rte;
 
-				if (var->varno > 0 && var->varno < INNER &&
+				if (!IS_SPECIAL_VARNO(var->varno) &&
 					var->varattno == SelfItemPointerAttributeNumber)
 				{
 					rte = rt_fetch(var->varno, query->rtable);

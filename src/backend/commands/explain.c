@@ -79,6 +79,8 @@ static void show_instrumentation_count(const char *qlabel, int which,
 						   PlanState *planstate, ExplainState *es);
 static void show_foreignscan_info(ForeignScanState *fsstate, ExplainState *es);
 static const char *explain_get_index_name(Oid indexId);
+static void ExplainIndexScanDetails(Oid indexid, ScanDirection indexorderdir,
+						ExplainState *es);
 static void ExplainScanTarget(Scan *plan, ExplainState *es);
 static void ExplainModifyTarget(ModifyTable *plan, ExplainState *es);
 static void ExplainTargetRel(Plan *plan, Index rti, ExplainState *es);
@@ -656,10 +658,10 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			pname = sname = "Seq Scan";
 			break;
 		case T_IndexScan:
-			if (((IndexScan *) plan)->indexonly)
-				pname = sname = "Index Only Scan";
-			else
-				pname = sname = "Index Scan";
+			pname = sname = "Index Scan";
+			break;
+		case T_IndexOnlyScan:
+			pname = sname = "Index Only Scan";
 			break;
 		case T_BitmapIndexScan:
 			pname = sname = "Bitmap Index Scan";
@@ -793,42 +795,6 @@ ExplainNode(PlanState *planstate, List *ancestors,
 
 	switch (nodeTag(plan))
 	{
-		case T_IndexScan:
-			{
-				IndexScan  *indexscan = (IndexScan *) plan;
-				const char *indexname =
-				explain_get_index_name(indexscan->indexid);
-
-				if (es->format == EXPLAIN_FORMAT_TEXT)
-				{
-					if (ScanDirectionIsBackward(indexscan->indexorderdir))
-						appendStringInfoString(es->str, " Backward");
-					appendStringInfo(es->str, " using %s", indexname);
-				}
-				else
-				{
-					const char *scandir;
-
-					switch (indexscan->indexorderdir)
-					{
-						case BackwardScanDirection:
-							scandir = "Backward";
-							break;
-						case NoMovementScanDirection:
-							scandir = "NoMovement";
-							break;
-						case ForwardScanDirection:
-							scandir = "Forward";
-							break;
-						default:
-							scandir = "???";
-							break;
-					}
-					ExplainPropertyText("Scan Direction", scandir, es);
-					ExplainPropertyText("Index Name", indexname, es);
-				}
-			}
-			/* FALL THRU */
 		case T_SeqScan:
 		case T_BitmapHeapScan:
 		case T_TidScan:
@@ -839,6 +805,26 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_WorkTableScan:
 		case T_ForeignScan:
 			ExplainScanTarget((Scan *) plan, es);
+			break;
+		case T_IndexScan:
+			{
+				IndexScan  *indexscan = (IndexScan *) plan;
+
+				ExplainIndexScanDetails(indexscan->indexid,
+										indexscan->indexorderdir,
+										es);
+				ExplainScanTarget((Scan *) indexscan, es);
+			}
+			break;
+		case T_IndexOnlyScan:
+			{
+				IndexOnlyScan *indexonlyscan = (IndexOnlyScan *) plan;
+
+				ExplainIndexScanDetails(indexonlyscan->indexid,
+										indexonlyscan->indexorderdir,
+										es);
+				ExplainScanTarget((Scan *) indexonlyscan, es);
+			}
 			break;
 		case T_BitmapIndexScan:
 			{
@@ -1008,6 +994,19 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				show_instrumentation_count("Rows Removed by Index Recheck", 2,
 										   planstate, es);
 			show_scan_qual(((IndexScan *) plan)->indexorderbyorig,
+						   "Order By", planstate, ancestors, es);
+			show_scan_qual(plan->qual, "Filter", planstate, ancestors, es);
+			if (plan->qual)
+				show_instrumentation_count("Rows Removed by Filter", 1,
+										   planstate, es);
+			break;
+		case T_IndexOnlyScan:
+			show_scan_qual(((IndexOnlyScan *) plan)->indexqual,
+						   "Index Cond", planstate, ancestors, es);
+			if (((IndexOnlyScan *) plan)->indexqual)
+				show_instrumentation_count("Rows Removed by Index Recheck", 2,
+										   planstate, es);
+			show_scan_qual(((IndexOnlyScan *) plan)->indexorderby,
 						   "Order By", planstate, ancestors, es);
 			show_scan_qual(plan->qual, "Filter", planstate, ancestors, es);
 			if (plan->qual)
@@ -1627,6 +1626,45 @@ explain_get_index_name(Oid indexId)
 }
 
 /*
+ * Add some additional details about an IndexScan or IndexOnlyScan
+ */
+static void
+ExplainIndexScanDetails(Oid indexid, ScanDirection indexorderdir,
+						ExplainState *es)
+{
+	const char *indexname = explain_get_index_name(indexid);
+
+	if (es->format == EXPLAIN_FORMAT_TEXT)
+	{
+		if (ScanDirectionIsBackward(indexorderdir))
+			appendStringInfoString(es->str, " Backward");
+		appendStringInfo(es->str, " using %s", indexname);
+	}
+	else
+	{
+		const char *scandir;
+
+		switch (indexorderdir)
+		{
+			case BackwardScanDirection:
+				scandir = "Backward";
+				break;
+			case NoMovementScanDirection:
+				scandir = "NoMovement";
+				break;
+			case ForwardScanDirection:
+				scandir = "Forward";
+				break;
+			default:
+				scandir = "???";
+				break;
+		}
+		ExplainPropertyText("Scan Direction", scandir, es);
+		ExplainPropertyText("Index Name", indexname, es);
+	}
+}
+
+/*
  * Show the target of a Scan node
  */
 static void
@@ -1670,6 +1708,7 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 	{
 		case T_SeqScan:
 		case T_IndexScan:
+		case T_IndexOnlyScan:
 		case T_BitmapHeapScan:
 		case T_TidScan:
 		case T_ForeignScan:

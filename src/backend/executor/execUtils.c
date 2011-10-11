@@ -566,19 +566,21 @@ ExecBuildProjectionInfo(List *targetList,
 
 			switch (variable->varno)
 			{
-				case INNER:
+				case INNER_VAR:
 					varSlotOffsets[numSimpleVars] = offsetof(ExprContext,
 															 ecxt_innertuple);
 					if (projInfo->pi_lastInnerVar < attnum)
 						projInfo->pi_lastInnerVar = attnum;
 					break;
 
-				case OUTER:
+				case OUTER_VAR:
 					varSlotOffsets[numSimpleVars] = offsetof(ExprContext,
 															 ecxt_outertuple);
 					if (projInfo->pi_lastOuterVar < attnum)
 						projInfo->pi_lastOuterVar = attnum;
 					break;
+
+				/* INDEX_VAR is handled by default case */
 
 				default:
 					varSlotOffsets[numSimpleVars] = offsetof(ExprContext,
@@ -628,15 +630,17 @@ get_last_attnums(Node *node, ProjectionInfo *projInfo)
 
 		switch (variable->varno)
 		{
-			case INNER:
+			case INNER_VAR:
 				if (projInfo->pi_lastInnerVar < attnum)
 					projInfo->pi_lastInnerVar = attnum;
 				break;
 
-			case OUTER:
+			case OUTER_VAR:
 				if (projInfo->pi_lastOuterVar < attnum)
 					projInfo->pi_lastOuterVar = attnum;
 				break;
+
+			/* INDEX_VAR is handled by default case */
 
 			default:
 				if (projInfo->pi_lastScanVar < attnum)

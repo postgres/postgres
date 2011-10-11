@@ -2734,9 +2734,9 @@ TriggerEnabled(EState *estate, ResultRelInfo *relinfo,
 
 			oldContext = MemoryContextSwitchTo(estate->es_query_cxt);
 			tgqual = stringToNode(trigger->tgqual);
-			/* Change references to OLD and NEW to INNER and OUTER */
-			ChangeVarNodes(tgqual, PRS2_OLD_VARNO, INNER, 0);
-			ChangeVarNodes(tgqual, PRS2_NEW_VARNO, OUTER, 0);
+			/* Change references to OLD and NEW to INNER_VAR and OUTER_VAR */
+			ChangeVarNodes(tgqual, PRS2_OLD_VARNO, INNER_VAR, 0);
+			ChangeVarNodes(tgqual, PRS2_NEW_VARNO, OUTER_VAR, 0);
 			/* ExecQual wants implicit-AND form */
 			tgqual = (Node *) make_ands_implicit((Expr *) tgqual);
 			*predicate = (List *) ExecPrepareExpr((Expr *) tgqual, estate);
@@ -2783,7 +2783,7 @@ TriggerEnabled(EState *estate, ResultRelInfo *relinfo,
 
 		/*
 		 * Finally evaluate the expression, making the old and/or new tuples
-		 * available as INNER/OUTER respectively.
+		 * available as INNER_VAR/OUTER_VAR respectively.
 		 */
 		econtext->ecxt_innertuple = oldslot;
 		econtext->ecxt_outertuple = newslot;
