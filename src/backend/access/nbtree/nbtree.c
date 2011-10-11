@@ -433,6 +433,16 @@ btrescan(PG_FUNCTION_ARGS)
 	 * not already done in a previous rescan call.  To save on palloc
 	 * overhead, both workspaces are allocated as one palloc block; only this
 	 * function and btendscan know that.
+	 *
+	 * NOTE: this data structure also makes it safe to return data from a
+	 * "name" column, even though btree name_ops uses an underlying storage
+	 * datatype of cstring.  The risk there is that "name" is supposed to be
+	 * padded to NAMEDATALEN, but the actual index tuple is probably shorter.
+	 * However, since we only return data out of tuples sitting in the
+	 * currTuples array, a fetch of NAMEDATALEN bytes can at worst pull some
+	 * data out of the markTuples array --- running off the end of memory for
+	 * a SIGSEGV is not possible.  Yeah, this is ugly as sin, but it beats
+	 * adding special-case treatment for name_ops elsewhere.
 	 */
 	if (scan->xs_want_itup && so->currTuples == NULL)
 	{
