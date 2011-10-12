@@ -268,7 +268,7 @@
 
 ;; Customization of header, add title attributes (overrides
 ;; dbcommon.dsl)
-(define (default-header-nav-tbl-ff elemnode prev next prevsib nextsib)
+(define (default-header-nav-tbl-ff elemnode prev next)
   (let* ((r1? (nav-banner? elemnode))
 	 (r1-sosofo (make element gi: "TR"
 			  (make element gi: "TH"
@@ -282,8 +282,6 @@
 				      (nav-banner elemnode)))))
 	 (r2? (or (not (node-list-empty? prev))
 		  (not (node-list-empty? next))
-		  (not (node-list-empty? prevsib))
-		  (not (node-list-empty? nextsib))
 		  (nav-context? elemnode)))
 	 (r2-sosofo (make element gi: "TR"
 			  (make element gi: "TD"
@@ -307,15 +305,9 @@
 					     (list "WIDTH" "10%")
 					     (list "ALIGN" "left")
 					     (list "VALIGN" "top"))
-				(if (node-list-empty? prevsib)
-				    (make entity-ref name: "nbsp")
-				    (make element gi: "A"
-					  attributes: (list
-						       (list "TITLE" (element-title-string prevsib))
-						       (list "HREF"
-							     (href-to
-							      prevsib)))
-					  (gentext-nav-prev-sibling prevsib))))
+				(if (nav-up? elemnode)
+				    (nav-up elemnode)
+				    (nav-home-link elemnode)))
 			  (make element gi: "TD"
 				attributes: (list
 					     (list "WIDTH" "60%")
@@ -324,21 +316,7 @@
 				(nav-context elemnode))
 			  (make element gi: "TD"
 				attributes: (list
-					     (list "WIDTH" "10%")
-					     (list "ALIGN" "right")
-					     (list "VALIGN" "top"))
-				(if (node-list-empty? nextsib)
-				    (make entity-ref name: "nbsp")
-				    (make element gi: "A"
-					  attributes: (list
-						       (list "TITLE" (element-title-string nextsib))
-						       (list "HREF" 
-							     (href-to
-							      nextsib)))
-					  (gentext-nav-next-sibling nextsib))))
-			  (make element gi: "TD"
-				attributes: (list
-					     (list "WIDTH" "10%")
+					     (list "WIDTH" "20%")
 					     (list "ALIGN" "right")
 					     (list "VALIGN" "top"))
 				(if (node-list-empty? next)
@@ -346,7 +324,7 @@
 				    (make element gi: "A"
 					  attributes: (list
 						       (list "TITLE" (element-title-string next))
-						       (list "HREF" 
+						       (list "HREF"
 							     (href-to
 							      next))
 						       (list "ACCESSKEY"
