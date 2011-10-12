@@ -484,7 +484,11 @@ TypeCreate(Oid newTypeOid,
  *
  * If rebuild is true, we remove existing dependencies and rebuild them
  * from scratch.  This is needed for ALTER TYPE, and also when replacing
- * a shell type.
+ * a shell type.  We don't remove an existing extension dependency, though.
+ * (That means an extension can't absorb a shell type created in another
+ * extension, nor ALTER a type created by another extension.  Also, if it
+ * replaces a free-standing shell type or ALTERs a free-standing type,
+ * that type will become a member of the extension.)
  */
 void
 GenerateTypeDependencies(Oid typeNamespace,
@@ -509,6 +513,7 @@ GenerateTypeDependencies(Oid typeNamespace,
 	ObjectAddress myself,
 				referenced;
 
+	/* If rebuild, first flush old dependencies, except extension deps */
 	if (rebuild)
 	{
 		deleteDependencyRecordsFor(TypeRelationId, typeObjectId, true);
@@ -520,7 +525,7 @@ GenerateTypeDependencies(Oid typeNamespace,
 	myself.objectSubId = 0;
 
 	/*
-	 * Make dependency on namespace and shared dependency on owner.
+	 * Make dependencies on namespace, owner, extension.
 	 *
 	 * For a relation rowtype (that's not a composite type), we should skip
 	 * these because we'll depend on them indirectly through the pg_class
@@ -536,10 +541,9 @@ GenerateTypeDependencies(Oid typeNamespace,
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 		recordDependencyOnOwner(TypeRelationId, typeObjectId, owner);
-	}
 
-	/* dependency on extension */
-	recordDependencyOnCurrentExtension(&myself, rebuild);
+		recordDependencyOnCurrentExtension(&myself, rebuild);
+	}
 
 	/* Normal dependencies on the I/O functions */
 	if (OidIsValid(inputProcedure))
