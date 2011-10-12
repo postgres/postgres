@@ -213,7 +213,7 @@ GetVisibilityMapPins(Relation relation, Buffer buffer1, Buffer buffer2,
 Buffer
 RelationGetBufferForTuple(Relation relation, Size len,
 						  Buffer otherBuffer, int options,
-						  struct BulkInsertStateData * bistate,
+						  BulkInsertState bistate,
 						  Buffer *vmbuffer, Buffer *vmbuffer_other)
 {
 	bool		use_fsm = !(options & HEAP_INSERT_SKIP_FSM);
