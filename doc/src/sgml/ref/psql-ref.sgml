@@ -2147,10 +2147,11 @@ lo_import 152801
 
 
       <varlistentry>
-        <term><literal>\q</literal></term>
+        <term><literal>\q</literal> or <literal>\quit</literal></term>
         <listitem>
         <para>
         Quits the <application>psql</application> program.
+        In a script file, only execution of that script is terminated.
         </para>
         </listitem>
       </varlistentry>
