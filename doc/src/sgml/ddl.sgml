@@ -688,7 +688,7 @@ CREATE TABLE orders (
     quantity integer
 );
 </programlisting>
-    Now it is impossible to create orders with
+    Now it is impossible to create orders with non-NULL
     <structfield>product_no</structfield> entries that do not appear in the
     products table.
    </para>
