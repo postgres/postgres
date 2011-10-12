@@ -6,26 +6,28 @@ pgindent
 This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
 *.l files.
 
-1) Change directory to the top of the build tree.
+1) Install pg_bsd_indent (see below for details)
 
-2) Download the typedef file from the buildfarm:
+2) Change directory to the top of the build tree.
+
+3) Download the typedef file from the buildfarm:
 
 	wget -O src/tools/pgindent/typedefs.list http://buildfarm.postgresql.org/cgi-bin/typedefs.pl
 
-3) Remove all derived files (pgindent has trouble with one of the flex macros):
+4) Remove all derived files (pgindent has trouble with one of the flex macros):
 
 	gmake maintainer-clean
 
-4) Run pgindent:
+5) Run pgindent:
 
 	find . -name '*.[ch]' -type f -print | \
 	egrep -v -f src/tools/pgindent/exclude_file_patterns | \
 	xargs -n100 pgindent src/tools/pgindent/typedefs.list
 
-5) Remove any files that generate errors and restore their original
+6) Remove any files that generate errors and restore their original
    versions.
 
-6) Do a full test build:
+7) Do a full test build:
 
 	run configure
 	# stop is only necessary if it's going to install in a location with an
@@ -38,17 +40,28 @@ This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
 
 ---------------------------------------------------------------------------
 
-We have standardized on NetBSD's indent.  We have fixed a few bugs which
-requre the NetBSD source to be patched with indent.bsd.patch patch.  A
-fully patched version is available at ftp://ftp.postgresql.org/pub/dev.
+BSD indent
+----------
+
+We have standardized on NetBSD's indent, and renamed it pg_bsd_indent. 
+We have fixed a few bugs which requre the NetBSD source to be patched
+with indent.bsd.patch patch.  A fully patched version is available at
+ftp://ftp.postgresql.org/pub/dev.
 
 GNU indent, version 2.2.6, has several problems, and is not recommended.
 These bugs become pretty major when you are doing >500k lines of code.
 If you don't believe me, take a directory and make a copy.  Run pgindent
 on the copy using GNU indent, and do a diff -r. You will see what I
-mean. GNU indent does some things better, but mangles too.
+mean. GNU indent does some things better, but mangles too.  For details,
+see:
 
-Notes about excluded files:
+	http://archives.postgresql.org/pgsql-hackers/2003-10/msg00374.php
+	http://archives.postgresql.org/pgsql-hackers/2011-04/msg01436.php
+
+---------------------------------------------------------------------------
+
+Notes about excluded files
+--------------------------
 
 src/include/storage/s_lock.h is excluded because it contains assembly code
 that pgindent tends to mess up.
@@ -63,8 +76,8 @@ should not be changed.
 
 ---------------------------------------------------------------------------
 
-Obsolete typedef list creation instructions:
---------------------------------------------
+Obsolete typedef list creation instructions
+-------------------------------------------
 
 To use pgindent:
 

@@ -1,17 +1,45 @@
-src/tools/pgindent/indent.bsd.patch
-
-This patch contains several fixes to NetBSD's indent and should be
-applied before using pgindent.
-
----------------------------------------------------------------------------
-
-Index: README
-===================================================================
-RCS file: /cvsroot/src/usr.bin/indent/README,v
-retrieving revision 1.1
-diff -c -r1.1 README
-*** README	9 Apr 1993 12:59:06 -0000	1.1
---- README	15 Nov 2005 00:25:43 -0000
+diff -c -r bsd_indent/Makefile pg_bsd_indent/Makefile
+*** bsd_indent/Makefile	Mon Nov 14 19:30:11 2005
+--- pg_bsd_indent/Makefile	Wed Oct 12 12:17:12 2011
+***************
+*** 2,10 ****
+  # Makefile
+  #
+  #
+! TARGET = indent
+  XFLAGS = -Wall -D__RCSID="static char *rcsid=" -D__COPYRIGHT="static char *copyright="
+! CFLAGS = -g 
+  LIBS = 
+  
+  $(TARGET) : args.o indent.o io.o lexi.o parse.o pr_comment.o
+--- 2,10 ----
+  # Makefile
+  #
+  #
+! TARGET = pg_bsd_indent
+  XFLAGS = -Wall -D__RCSID="static char *rcsid=" -D__COPYRIGHT="static char *copyright="
+! CFLAGS = -O
+  LIBS = 
+  
+  $(TARGET) : args.o indent.o io.o lexi.o parse.o pr_comment.o
+***************
+*** 31,37 ****
+  clean:
+  	rm -f *.o $(TARGET) log core
+  
+! install:
+! 	make clean
+! 	make CFLAGS=-O
+  	install -s -o bin -g bin $(TARGET) /usr/local/bin
+--- 31,35 ----
+  clean:
+  	rm -f *.o $(TARGET) log core
+  
+! install: $(TARGET)
+  	install -s -o bin -g bin $(TARGET) /usr/local/bin
+diff -c -r bsd_indent/README pg_bsd_indent/README
+*** bsd_indent/README	Wed Oct 12 11:51:58 2011
+--- pg_bsd_indent/README	Mon Nov 14 19:30:24 2005
 ***************
 *** 1,3 ****
 --- 1,13 ----
@@ -28,13 +56,107 @@ diff -c -r1.1 README
   This is the C indenter, it originally came from the University of Illinois
   via some distribution tape for PDP-11 Unix.  It has subsequently been
   hacked upon by James Gosling @ CMU.  It isn't very pretty, and really needs
-Index: indent_globs.h
-===================================================================
-RCS file: /cvsroot/src/usr.bin/indent/indent_globs.h,v
-retrieving revision 1.8
-diff -c -r1.8 indent_globs.h
-*** indent_globs.h	7 Aug 2003 11:14:08 -0000	1.8
---- indent_globs.h	15 Nov 2005 00:25:44 -0000
+diff -c -r bsd_indent/args.c pg_bsd_indent/args.c
+*** bsd_indent/args.c	Mon Nov 14 19:30:00 2005
+--- pg_bsd_indent/args.c	Wed Oct 12 12:30:06 2011
+***************
+*** 83,88 ****
+--- 83,90 ----
+  #include <string.h>
+  #include "indent_globs.h"
+  
++ #define INDENT_PG_VERSION	"1.0"
++ 
+  /* profile types */
+  #define	PRO_SPECIAL	1	/* special case */
+  #define	PRO_BOOL	2	/* boolean */
+***************
+*** 99,106 ****
+--- 101,113 ----
+  #define	STDIN		3	/* use stdin */
+  #define	KEY		4	/* type (keyword) */
+  
++ #define	KEY_FILE		5	/* only used for args */
++ #define VERSION			6	/* only used for args */
++ 
+  char   *option_source = "?";
+  
++ void add_typedefs_from_file(char *str);
++ 
+  /*
+   * N.B.: because of the way the table here is scanned, options whose names are
+   * substrings of other options must occur later; that is, with -lp vs -l, -lp
+***************
+*** 118,123 ****
+--- 125,136 ----
+  		"T", PRO_SPECIAL, 0, KEY, 0
+  	},
+  	{
++ 		"U", PRO_SPECIAL, 0, KEY_FILE, 0
++ 	},
++ 	{
++ 		"V", PRO_SPECIAL, 0, VERSION, 0
++ 	},
++ 	{
+  		"bacc", PRO_BOOL, false, ON, &blanklines_around_conditional_compilation
+  	},
+  	{
+***************
+*** 425,430 ****
+--- 438,456 ----
+  			}
+  			break;
+  
++ 		case KEY_FILE:
++ 			if (*param_start == 0)
++ 				goto need_param;
++ 			add_typedefs_from_file(param_start);
++ 			break;
++ 
++ 		case VERSION:
++ 			{
++ 				printf("pg_bsd_indent %s\n", INDENT_PG_VERSION);
++ 				exit(0);
++ 			}
++ 			break;
++ 
+  		default:
+  			fprintf(stderr, "\
+  indent: set_option: internal error: p_special %d\n", p->p_special);
+***************
+*** 459,461 ****
+--- 485,509 ----
+  		exit(1);
+  	}
+  }
++ 
++ 
++ void
++ add_typedefs_from_file(char *str)
++ {
++ 	FILE *file;
++ 	char line[BUFSIZ];
++ 	
++ 	if ((file = fopen(param_start, "r")) == NULL)
++ 	{
++ 		fprintf(stderr, "indent: cannot open file %s\n", str);
++ 		exit(1);
++ 	}
++ 	while ((fgets(line, BUFSIZ, file)) != NULL)
++ 	{
++ 		/* Remove trailing whitespace */
++ 		if (strstr(line, " \t\n\r") != NULL)
++ 			*strstr(line, " \t\n\r") = '\0';
++ 		addkey(strdup(line), 4);
++ 	}
++ 	fclose(file);
++ }
+Only in pg_bsd_indent/: args.o
+Only in bsd_indent/: indent.bsd.patch
+Only in pg_bsd_indent/: indent.o
+diff -c -r bsd_indent/indent_globs.h pg_bsd_indent/indent_globs.h
+*** bsd_indent/indent_globs.h	Wed Oct 12 11:51:58 2011
+--- pg_bsd_indent/indent_globs.h	Mon Nov 14 19:30:24 2005
 ***************
 *** 239,245 ****
           scomf,			/* Same line comment font */
@@ -56,13 +178,10 @@ diff -c -r1.8 indent_globs.h
   
   EXTERN struct parser_state {
   	int     last_token;
-Index: lexi.c
-===================================================================
-RCS file: /cvsroot/src/usr.bin/indent/lexi.c,v
-retrieving revision 1.12
-diff -c -r1.12 lexi.c
-*** lexi.c	7 Aug 2003 11:14:09 -0000	1.12
---- lexi.c	15 Nov 2005 00:25:44 -0000
+Only in pg_bsd_indent/: io.o
+diff -c -r bsd_indent/lexi.c pg_bsd_indent/lexi.c
+*** bsd_indent/lexi.c	Wed Oct 12 11:51:58 2011
+--- pg_bsd_indent/lexi.c	Mon Nov 14 19:30:24 2005
 ***************
 *** 93,99 ****
   	int     rwcode;
@@ -102,13 +221,10 @@ diff -c -r1.12 lexi.c
   	p->rwd = key;
   	p->rwcode = val;
   	p[1].rwd = 0;
-Index: parse.c
-===================================================================
-RCS file: /cvsroot/src/usr.bin/indent/parse.c,v
-retrieving revision 1.7
-diff -c -r1.7 parse.c
-*** parse.c	7 Aug 2003 11:14:09 -0000	1.7
---- parse.c	15 Nov 2005 00:25:44 -0000
+Only in pg_bsd_indent/: lexi.o
+diff -c -r bsd_indent/parse.c pg_bsd_indent/parse.c
+*** bsd_indent/parse.c	Wed Oct 12 11:51:58 2011
+--- pg_bsd_indent/parse.c	Mon Nov 14 19:30:24 2005
 ***************
 *** 231,236 ****
 --- 231,241 ----
@@ -123,13 +239,10 @@ diff -c -r1.7 parse.c
   	reduce();		/* see if any reduction can be done */
   
   #ifdef debug
-Index: pr_comment.c
-===================================================================
-RCS file: /cvsroot/src/usr.bin/indent/pr_comment.c,v
-retrieving revision 1.9
-diff -c -r1.9 pr_comment.c
-*** pr_comment.c	7 Aug 2003 11:14:09 -0000	1.9
---- pr_comment.c	15 Nov 2005 00:25:44 -0000
+Only in pg_bsd_indent/: parse.o
+diff -c -r bsd_indent/pr_comment.c pg_bsd_indent/pr_comment.c
+*** bsd_indent/pr_comment.c	Wed Oct 12 11:51:58 2011
+--- pg_bsd_indent/pr_comment.c	Mon Nov 14 19:30:24 2005
 ***************
 *** 148,154 ****
   		ps.box_com = true;
@@ -173,3 +286,4 @@ diff -c -r1.9 pr_comment.c
   			} else
   				if (++buf_ptr >= buf_end)
   					fill_buffer();
+Only in pg_bsd_indent/: pr_comment.o

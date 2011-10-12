@@ -21,12 +21,12 @@ fi
 TYPEDEFS="$1"
 shift
 
-if [ -z "$INDENT" ]
-then
-	INDENT=indent
-fi
+[ -z "$INDENT" ] && INDENT=pg_bsd_indent
 
 trap "rm -f /tmp/$$ /tmp/$$a" 0 1 2 3 15
+
+# check the environment
+
 entab </dev/null >/dev/null
 if [ "$?" -ne 0 ]
 then	echo "Go to the src/tools/entab directory and do a 'make' and 'make install'." >&2
@@ -36,7 +36,11 @@ then	echo "Go to the src/tools/entab directory and do a 'make' and 'make install
 fi
 $INDENT -? </dev/null >/dev/null 2>&1
 if [ "$?" -ne 1 ]
-then	echo "You do not appear to have 'indent' installed on your system." >&2
+then	echo "You do not appear to have '$INDENT' installed on your system." >&2
+	exit 1
+fi
+if [ "`$INDENT -V`" != "$INDENT 1.0" ]
+then	echo "You do not appear to have $INDENT version 1.0 installed on your system." >&2
 	exit 1
 fi
 $INDENT -gnu </dev/null >/dev/null 2>&1
@@ -140,10 +144,11 @@ do
 # Protect wrapping in CATALOG().
 	sed 's;^CATALOG(.*$;/*&*/;' >/tmp/$$a
 
+	egrep -v '^(FD_SET|date|interval|timestamp|ANY)$' "$TYPEDEFS" | sed -e '/^$/d' > /tmp/$$b
+
 # We get the list of typedef's from /src/tools/find_typedef
 	$INDENT -bad -bap -bc -bl -d0 -cdb -nce -nfc1 -di12 -i4 -l79 \
-		-lp -nip -npro -bbb $EXTRA_OPTS \
-		`egrep -v '^(FD_SET|date|interval|timestamp|ANY)$' "$TYPEDEFS" | sed -e '/^$/d' -e 's/.*/-T& /'` \
+		-lp -nip -npro -bbb $EXTRA_OPTS -U/tmp/$$b \
 		/tmp/$$a >/tmp/$$ 2>&1
 
 	if [ "$?" -ne 0 -o -s /tmp/$$ ]
