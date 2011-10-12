@@ -284,7 +284,7 @@
 
 ;; Customization of header, add title attributes (overrides
 ;; dbcommon.dsl)
-(define (default-header-nav-tbl-ff elemnode prev next)
+(define (default-header-nav-tbl-ff elemnode prev next prevsib nextsib)
   (let* ((r1? (nav-banner? elemnode))
 	 (r1-sosofo (make element gi: "TR"
 			  (make element gi: "TH"
