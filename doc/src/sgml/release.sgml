@@ -27,6 +27,8 @@ non-ASCII characters            convert to HTML4 entity (&) escapes
         does not support it
           http://www.pemberley.com/janeinfo/latin1.html#latexta
 
+	Alvaro Herrera is &Aacute;lvaro Herrera
+
 wrap long lines
 
 For new features, add links to the documentation sections.  Use </link>
