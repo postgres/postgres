@@ -1,5 +1,8 @@
 /* contrib/pgcrypto/pgcrypto--1.0.sql */
 
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION pgcrypto" to load this file. \quit
+
 CREATE FUNCTION digest(text, text)
 RETURNS bytea
 AS 'MODULE_PATHNAME', 'pg_digest'

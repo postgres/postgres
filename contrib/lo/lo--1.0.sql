@@ -1,5 +1,8 @@
 /* contrib/lo/lo--1.0.sql */
 
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION lo" to load this file. \quit
+
 --
 --	Create the data type ... now just a domain over OID
 --

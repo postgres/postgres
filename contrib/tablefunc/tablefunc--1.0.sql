@@ -1,5 +1,8 @@
 /* contrib/tablefunc/tablefunc--1.0.sql */
 
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION tablefunc" to load this file. \quit
+
 CREATE FUNCTION normal_rand(int4, float8, float8)
 RETURNS setof float8
 AS 'MODULE_PATHNAME','normal_rand'

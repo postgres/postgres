@@ -1,5 +1,8 @@
 /* contrib/dict_xsyn/dict_xsyn--1.0.sql */
 
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION dict_xsyn" to load this file. \quit
+
 CREATE FUNCTION dxsyn_init(internal)
         RETURNS internal
         AS 'MODULE_PATHNAME'

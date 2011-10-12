@@ -33,6 +33,7 @@
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
+#include "catalog/pg_collation.h"
 #include "catalog/pg_depend.h"
 #include "catalog/pg_extension.h"
 #include "catalog/pg_namespace.h"
@@ -855,26 +856,39 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 	CurrentExtensionObject = extensionOid;
 	PG_TRY();
 	{
-		char	   *sql = read_extension_script_file(control, filename);
+		char	   *c_sql = read_extension_script_file(control, filename);
+		Datum		t_sql;
+
+		/* We use various functions that want to operate on text datums */
+		t_sql = CStringGetTextDatum(c_sql);
+
+		/*
+		 * Reduce any lines beginning with "\echo" to empty.  This allows
+		 * scripts to contain messages telling people not to run them via
+		 * psql, which has been found to be necessary due to old habits.
+		 */
+		t_sql = DirectFunctionCall4Coll(textregexreplace,
+										C_COLLATION_OID,
+										t_sql,
+										CStringGetTextDatum("^\\\\echo.*$"),
+										CStringGetTextDatum(""),
+										CStringGetTextDatum("ng"));
 
 		/*
 		 * If it's not relocatable, substitute the target schema name for
 		 * occcurrences of @extschema@.
 		 *
-		 * For a relocatable extension, we just run the script as-is. There
-		 * cannot be any need for @extschema@, else it wouldn't be
-		 * relocatable.
+		 * For a relocatable extension, we needn't do this.  There cannot be
+		 * any need for @extschema@, else it wouldn't be relocatable.
 		 */
 		if (!control->relocatable)
 		{
 			const char *qSchemaName = quote_identifier(schemaName);
 
-			sql = text_to_cstring(
-								  DatumGetTextPP(
-											DirectFunctionCall3(replace_text,
-													CStringGetTextDatum(sql),
-										  CStringGetTextDatum("@extschema@"),
-										 CStringGetTextDatum(qSchemaName))));
+			t_sql = DirectFunctionCall3(replace_text,
+										t_sql,
+										CStringGetTextDatum("@extschema@"),
+										CStringGetTextDatum(qSchemaName));
 		}
 
 		/*
@@ -883,15 +897,16 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 		 */
 		if (control->module_pathname)
 		{
-			sql = text_to_cstring(
-								  DatumGetTextPP(
-											DirectFunctionCall3(replace_text,
-													CStringGetTextDatum(sql),
-									  CStringGetTextDatum("MODULE_PATHNAME"),
-							CStringGetTextDatum(control->module_pathname))));
+			t_sql = DirectFunctionCall3(replace_text,
+										t_sql,
+										CStringGetTextDatum("MODULE_PATHNAME"),
+							CStringGetTextDatum(control->module_pathname));
 		}
 
-		execute_sql_string(sql, filename);
+		/* And now back to C string */
+		c_sql = text_to_cstring(DatumGetTextPP(t_sql));
+
+		execute_sql_string(c_sql, filename);
 	}
 	PG_CATCH();
 	{

@@ -1,5 +1,8 @@
 /* contrib/adminpack/adminpack--1.0.sql */
 
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION adminpack" to load this file. \quit
+
 /* ***********************************************
  * Administrative functions for PostgreSQL
  * *********************************************** */

@@ -1,5 +1,8 @@
 /* contrib/pg_trgm/pg_trgm--unpackaged--1.0.sql */
 
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION pg_trgm" to load this file. \quit
+
 ALTER EXTENSION pg_trgm ADD function set_limit(real);
 ALTER EXTENSION pg_trgm ADD function show_limit();
 ALTER EXTENSION pg_trgm ADD function show_trgm(text);

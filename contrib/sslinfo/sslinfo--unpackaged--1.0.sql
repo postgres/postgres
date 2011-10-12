@@ -1,5 +1,8 @@
 /* contrib/sslinfo/sslinfo--unpackaged--1.0.sql */
 
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION sslinfo" to load this file. \quit
+
 ALTER EXTENSION sslinfo ADD function ssl_client_serial();
 ALTER EXTENSION sslinfo ADD function ssl_is_used();
 ALTER EXTENSION sslinfo ADD function ssl_client_cert_present();

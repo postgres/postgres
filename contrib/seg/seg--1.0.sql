@@ -1,5 +1,8 @@
 /* contrib/seg/seg--1.0.sql */
 
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION seg" to load this file. \quit
+
 -- Create the user-defined type for 1-D floating point intervals (seg)
 
 CREATE FUNCTION seg_in(cstring)

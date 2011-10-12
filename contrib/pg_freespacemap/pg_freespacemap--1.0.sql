@@ -1,5 +1,8 @@
 /* contrib/pg_freespacemap/pg_freespacemap--1.0.sql */
 
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION pg_freespacemap" to load this file. \quit
+
 -- Register the C function.
 CREATE FUNCTION pg_freespace(regclass, bigint)
 RETURNS int2

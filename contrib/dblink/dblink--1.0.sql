@@ -1,5 +1,8 @@
 /* contrib/dblink/dblink--1.0.sql */
 
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION dblink" to load this file. \quit
+
 -- dblink_connect now restricts non-superusers to password
 -- authenticated connections
 CREATE FUNCTION dblink_connect (text)

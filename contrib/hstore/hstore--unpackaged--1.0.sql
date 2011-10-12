@@ -1,5 +1,8 @@
 /* contrib/hstore/hstore--unpackaged--1.0.sql */
 
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION hstore" to load this file. \quit
+
 ALTER EXTENSION hstore ADD type hstore;
 ALTER EXTENSION hstore ADD function hstore_in(cstring);
 ALTER EXTENSION hstore ADD function hstore_out(hstore);

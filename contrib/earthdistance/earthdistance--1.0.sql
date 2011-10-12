@@ -1,5 +1,8 @@
 /* contrib/earthdistance/earthdistance--1.0.sql */
 
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION earthdistance" to load this file. \quit
+
 -- earth() returns the radius of the earth in meters. This is the only
 -- place you need to change things for the cube base distance functions
 -- in order to use different units (or a better value for the Earth's radius).

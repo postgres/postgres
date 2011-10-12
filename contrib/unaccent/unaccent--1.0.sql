@@ -1,5 +1,8 @@
 /* contrib/unaccent/unaccent--1.0.sql */
 
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION unaccent" to load this file. \quit
+
 CREATE FUNCTION unaccent(regdictionary, text)
 	RETURNS text
 	AS 'MODULE_PATHNAME', 'unaccent_dict'

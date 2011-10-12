@@ -1,5 +1,8 @@
 /* contrib/isn/isn--1.0.sql */
 
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION isn" to load this file. \quit
+
 -- Example:
 --   create table test ( id isbn );
 --   insert into test values('978-0-393-04002-9');

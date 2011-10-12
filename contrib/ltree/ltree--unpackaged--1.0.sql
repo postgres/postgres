@@ -1,5 +1,8 @@
 /* contrib/ltree/ltree--unpackaged--1.0.sql */
 
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION ltree" to load this file. \quit
+
 ALTER EXTENSION ltree ADD type ltree;
 ALTER EXTENSION ltree ADD function ltree_in(cstring);
 ALTER EXTENSION ltree ADD function ltree_out(ltree);

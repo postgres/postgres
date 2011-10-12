@@ -1,5 +1,8 @@
 /* contrib/citext/citext--unpackaged--1.0.sql */
 
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION citext" to load this file. \quit
+
 ALTER EXTENSION citext ADD type citext;
 ALTER EXTENSION citext ADD function citextin(cstring);
 ALTER EXTENSION citext ADD function citextout(citext);

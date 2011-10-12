@@ -1,5 +1,8 @@
 /* contrib/chkpass/chkpass--1.0.sql */
 
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION chkpass" to load this file. \quit
+
 --
 --	Input and output functions and the type itself:
 --

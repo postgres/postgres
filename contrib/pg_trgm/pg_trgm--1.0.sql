@@ -1,5 +1,8 @@
 /* contrib/pg_trgm/pg_trgm--1.0.sql */
 
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION pg_trgm" to load this file. \quit
+
 CREATE FUNCTION set_limit(float4)
 RETURNS float4
 AS 'MODULE_PATHNAME'
