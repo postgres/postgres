@@ -1,5 +1,8 @@
 /* contrib/pg_stat_statements/pg_stat_statements--1.0.sql */
 
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION pg_stat_statements" to load this file. \quit
+
 -- Register functions.
 CREATE FUNCTION pg_stat_statements_reset()
 RETURNS void

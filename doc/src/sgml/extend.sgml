@@ -523,6 +523,17 @@
     </para>
 
     <para>
+     An extension's <acronym>SQL</> script files can also contain lines
+     beginning with <literal>\echo</>, which will be ignored (treated as
+     comments) by the extension mechanism.  This provision is commonly used
+     to throw an error if the script file is fed to <application>psql</>
+     rather than being loaded via <command>CREATE EXTENSION</> (see example
+     script below).  Without that, users might accidentally load the
+     extension's contents as <quote>loose</> objects rather than as an
+     extension, a state of affairs that's a bit tedious to recover from.
+    </para>
+
+    <para>
      While the script files can contain any characters allowed by the specified
      encoding, control files should contain only plain ASCII, because there
      is no way for <productname>PostgreSQL</> to know what encoding a
@@ -808,6 +819,9 @@ SELECT * FROM pg_extension_update_paths('<replaceable>extension_name</>');
      The script file <filename>pair--1.0.sql</> looks like this:
 
 <programlisting><![CDATA[
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION pair" to load this file. \quit
+
 CREATE TYPE pair AS ( k text, v text );
 
 CREATE OR REPLACE FUNCTION pair(anyelement, text)

@@ -1,5 +1,8 @@
 /* contrib/tsearch2/tsearch2--1.0.sql */
 
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION tsearch2" to load this file. \quit
+
 -- These domains are just to catch schema-qualified references to the
 -- old data types.
 CREATE DOMAIN tsvector AS pg_catalog.tsvector;

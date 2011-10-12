@@ -1,5 +1,8 @@
 /* contrib/fuzzystrmatch/fuzzystrmatch--unpackaged--1.0.sql */
 
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION fuzzystrmatch" to load this file. \quit
+
 ALTER EXTENSION fuzzystrmatch ADD function levenshtein(text,text);
 ALTER EXTENSION fuzzystrmatch ADD function levenshtein(text,text,integer,integer,integer);
 ALTER EXTENSION fuzzystrmatch ADD function metaphone(text,integer);

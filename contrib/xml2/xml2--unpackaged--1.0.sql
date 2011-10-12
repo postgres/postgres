@@ -1,5 +1,8 @@
 /* contrib/xml2/xml2--unpackaged--1.0.sql */
 
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION xml2" to load this file. \quit
+
 ALTER EXTENSION xml2 ADD function xslt_process(text,text);
 ALTER EXTENSION xml2 ADD function xslt_process(text,text,text);
 ALTER EXTENSION xml2 ADD function xpath_table(text,text,text,text,text);

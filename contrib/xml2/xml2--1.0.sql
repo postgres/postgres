@@ -1,5 +1,8 @@
 /* contrib/xml2/xml2--1.0.sql */
 
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION xml2" to load this file. \quit
+
 --SQL for XML parser
 
 -- deprecated old name for xml_is_well_formed

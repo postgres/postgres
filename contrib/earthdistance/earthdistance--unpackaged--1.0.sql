@@ -1,5 +1,8 @@
 /* contrib/earthdistance/earthdistance--unpackaged--1.0.sql */
 
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION earthdistance" to load this file. \quit
+
 ALTER EXTENSION earthdistance ADD function earth();
 ALTER EXTENSION earthdistance ADD type earth;
 ALTER EXTENSION earthdistance ADD function sec_to_gc(double precision);

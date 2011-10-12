@@ -1,5 +1,8 @@
 /* contrib/unaccent/unaccent--unpackaged--1.0.sql */
 
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION unaccent" to load this file. \quit
+
 ALTER EXTENSION unaccent ADD function unaccent(regdictionary,text);
 ALTER EXTENSION unaccent ADD function unaccent(text);
 ALTER EXTENSION unaccent ADD function unaccent_init(internal);

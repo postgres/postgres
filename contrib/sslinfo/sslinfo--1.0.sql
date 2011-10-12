@@ -1,5 +1,8 @@
 /* contrib/sslinfo/sslinfo--1.0.sql */
 
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION sslinfo" to load this file. \quit
+
 CREATE FUNCTION ssl_client_serial() RETURNS numeric
 AS 'MODULE_PATHNAME', 'ssl_client_serial'
 LANGUAGE C STRICT;

@@ -1,5 +1,8 @@
 /* contrib/pgstattuple/pgstattuple--1.0.sql */
 
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION pgstattuple" to load this file. \quit
+
 CREATE FUNCTION pgstattuple(IN relname text,
     OUT table_len BIGINT,		-- physical table length in bytes
     OUT tuple_count BIGINT,		-- number of live tuples

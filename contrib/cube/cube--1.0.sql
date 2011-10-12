@@ -1,5 +1,8 @@
 /* contrib/cube/cube--1.0.sql */
 
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION cube" to load this file. \quit
+
 -- Create the user-defined type for N-dimensional boxes
 
 CREATE FUNCTION cube_in(cstring)

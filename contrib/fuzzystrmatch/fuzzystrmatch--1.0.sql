@@ -1,5 +1,8 @@
 /* contrib/fuzzystrmatch/fuzzystrmatch--1.0.sql */
 
+-- complain if script is sourced in psql, rather than via CREATE EXTENSION
+\echo Use "CREATE EXTENSION fuzzystrmatch" to load this file. \quit
+
 CREATE FUNCTION levenshtein (text,text) RETURNS int
 AS 'MODULE_PATHNAME','levenshtein'
 LANGUAGE C IMMUTABLE STRICT;
