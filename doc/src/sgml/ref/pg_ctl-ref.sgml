@@ -205,7 +205,8 @@ PostgreSQL documentation
    <option>status</option> mode checks whether a server is running in
    the specified data directory. If it is, the <acronym>PID</acronym>
    and the command line options that were used to invoke it are
-   displayed.
+   displayed.  If the server is not running, the process returns an
+   exit status of 3.
   </para>
 
   <para>

@@ -1155,9 +1155,11 @@ do_status(void)
 	pgpid_t		pid;
 
 	pid = get_pgpid();
-	if (pid != 0)				/* 0 means no pid file */
+	/* Is there a pid file? */
+	if (pid != 0)
 	{
-		if (pid < 0)			/* standalone backend */
+		/* standalone backend? */
+		if (pid < 0)
 		{
 			pid = -pid;
 			if (postmaster_is_alive((pid_t) pid))
@@ -1168,7 +1170,7 @@ do_status(void)
 			}
 		}
 		else
-			/* postmaster */
+		/* must be a postmaster */
 		{
 			if (postmaster_is_alive((pid_t) pid))
 			{
@@ -1186,7 +1188,11 @@ do_status(void)
 		}
 	}
 	printf(_("%s: no server running\n"), progname);
-	exit(1);
+	/*
+	 * The Linux Standard Base Core Specification 3.1 says this should return '3'
+	 * http://refspecs.freestandards.org/LSB_3.1.1/LSB-Core-generic/LSB-Core-generic/iniscrptact.html
+	 */
+	exit(3);
 }
 
 
