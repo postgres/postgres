@@ -867,7 +867,7 @@ ts_rank(<optional> <replaceable class="PARAMETER">weights</replaceable> <type>fl
 
       <listitem>
        <para>
-        Standard ranking function.<!-- TODO document this better -->
+        Ranks vectors based on the frequency of their matching lexems.
        </para>
       </listitem>
      </varlistentry>
