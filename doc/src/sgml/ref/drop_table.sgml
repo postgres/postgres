@@ -30,7 +30,8 @@ DROP TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ..
 
   <para>
    <command>DROP TABLE</command> removes tables from the database.
-   Only its owner can drop a table.  To empty a table of rows
+   Only its owner and users with the proper permissions can drop a
+   table.  To empty a table of rows
    without destroying the table, use <xref linkend="sql-delete">
    or <xref linkend="sql-truncate">.
   </para>
