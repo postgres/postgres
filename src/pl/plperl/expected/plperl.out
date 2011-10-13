@@ -101,6 +101,16 @@ SELECT * FROM perl_row();
   1 | hello | world | ({{1}})
 (1 row)
 
+-- test returning a composite literal
+CREATE OR REPLACE FUNCTION perl_row_lit() RETURNS testrowperl AS $$
+    return '(1,hello,world,"({{1}})")';
+$$ LANGUAGE plperl;
+SELECT perl_row_lit();
+       perl_row_lit        
+---------------------------
+ (1,hello,world,"({{1}})")
+(1 row)
+
 CREATE OR REPLACE FUNCTION perl_set() RETURNS SETOF testrowperl AS $$
     return undef;
 $$  LANGUAGE plperl;
@@ -336,7 +346,8 @@ CREATE OR REPLACE FUNCTION foo_bad() RETURNS footype AS $$
 return 42;
 $$ LANGUAGE plperl;
 SELECT * FROM foo_bad();
-ERROR:  composite-returning PL/Perl function must return reference to hash
+ERROR:  malformed record literal: "42"
+DETAIL:  Missing left parenthesis.
 CONTEXT:  PL/Perl function "foo_bad"
 CREATE OR REPLACE FUNCTION foo_bad() RETURNS footype AS $$
 return [
@@ -345,7 +356,7 @@ return [
 ];
 $$ LANGUAGE plperl;
 SELECT * FROM foo_bad();
-ERROR:  composite-returning PL/Perl function must return reference to hash
+ERROR:  cannot convert Perl array to non-array type footype
 CONTEXT:  PL/Perl function "foo_bad"
 CREATE OR REPLACE FUNCTION foo_set_bad() RETURNS SETOF footype AS $$
     return 42;
@@ -639,3 +650,46 @@ CONTEXT:  PL/Perl anonymous code block
 DO $do$ use warnings FATAL => qw(void) ; my @y; my $x = sort @y; 1; $do$ LANGUAGE plperl;
 ERROR:  Useless use of sort in scalar context at line 1.
 CONTEXT:  PL/Perl anonymous code block
+-- make sure functions marked as VOID without an explicit return work
+CREATE OR REPLACE FUNCTION myfuncs() RETURNS void AS $$
+   $_SHARED{myquote} = sub {
+       my $arg = shift;
+       $arg =~ s/(['\\])/\\$1/g;
+       return "'$arg'";
+   };
+$$ LANGUAGE plperl;
+SELECT myfuncs();
+ myfuncs 
+---------
+ 
+(1 row)
+
+-- make sure we can't return an array as a scalar
+CREATE OR REPLACE FUNCTION text_arrayref() RETURNS text AS $$
+	return ['array'];
+$$ LANGUAGE plperl;
+SELECT text_arrayref();
+ERROR:  cannot convert Perl array to non-array type text
+CONTEXT:  PL/Perl function "text_arrayref"
+--- make sure we can't return a hash as a scalar
+CREATE OR REPLACE FUNCTION text_hashref() RETURNS text AS $$
+	return {'hash'=>1};
+$$ LANGUAGE plperl;
+SELECT text_hashref();
+ERROR:  cannot convert Perl hash to non-composite type text
+CONTEXT:  PL/Perl function "text_hashref"
+---- make sure we can't return a blessed object as a scalar
+CREATE OR REPLACE FUNCTION text_obj() RETURNS text AS $$
+	return bless({}, 'Fake::Object');
+$$ LANGUAGE plperl;
+SELECT text_obj();
+ERROR:  cannot convert Perl hash to non-composite type text
+CONTEXT:  PL/Perl function "text_obj"
+----- make sure we can't return a scalar ref
+CREATE OR REPLACE FUNCTION text_scalarref() RETURNS text AS $$
+	my $str = 'str';
+	return \$str;
+$$ LANGUAGE plperl;
+SELECT text_scalarref();
+ERROR:  PL/Perl function must return reference to hash or array
+CONTEXT:  PL/Perl function "text_scalarref"
