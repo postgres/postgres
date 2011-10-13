@@ -50,6 +50,13 @@ $$ LANGUAGE plperl;
 SELECT perl_row();
 SELECT * FROM perl_row();
 
+-- test returning a composite literal
+CREATE OR REPLACE FUNCTION perl_row_lit() RETURNS testrowperl AS $$
+    return '(1,hello,world,"({{1}})")';
+$$ LANGUAGE plperl;
+
+SELECT perl_row_lit();
+
 
 CREATE OR REPLACE FUNCTION perl_set() RETURNS SETOF testrowperl AS $$
     return undef;
@@ -415,3 +422,43 @@ DO $do$ use strict; my $name = "foo"; my $ref = $$name; $do$ LANGUAGE plperl;
 -- check that we can "use warnings" (in this case to turn a warn into an error)
 -- yields "ERROR:  Useless use of sort in scalar context."
 DO $do$ use warnings FATAL => qw(void) ; my @y; my $x = sort @y; 1; $do$ LANGUAGE plperl;
+
+-- make sure functions marked as VOID without an explicit return work
+CREATE OR REPLACE FUNCTION myfuncs() RETURNS void AS $$
+   $_SHARED{myquote} = sub {
+       my $arg = shift;
+       $arg =~ s/(['\\])/\\$1/g;
+       return "'$arg'";
+   };
+$$ LANGUAGE plperl;
+
+SELECT myfuncs();
+
+-- make sure we can't return an array as a scalar
+CREATE OR REPLACE FUNCTION text_arrayref() RETURNS text AS $$
+	return ['array'];
+$$ LANGUAGE plperl;
+
+SELECT text_arrayref();
+
+--- make sure we can't return a hash as a scalar
+CREATE OR REPLACE FUNCTION text_hashref() RETURNS text AS $$
+	return {'hash'=>1};
+$$ LANGUAGE plperl;
+
+SELECT text_hashref();
+
+---- make sure we can't return a blessed object as a scalar
+CREATE OR REPLACE FUNCTION text_obj() RETURNS text AS $$
+	return bless({}, 'Fake::Object');
+$$ LANGUAGE plperl;
+
+SELECT text_obj();
+
+----- make sure we can't return a scalar ref
+CREATE OR REPLACE FUNCTION text_scalarref() RETURNS text AS $$
+	my $str = 'str';
+	return \$str;
+$$ LANGUAGE plperl;
+
+SELECT text_scalarref();
