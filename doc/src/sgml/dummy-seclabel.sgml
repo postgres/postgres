@@ -1,4 +1,4 @@
-<!-- doc/src/sgml/dummy_seclabel.sgml -->
+<!-- doc/src/sgml/dummy-seclabel.sgml -->
 
 <sect1 id="dummy-seclabel" xreflabel="dummy_seclabel">
  <title>dummy_seclabel</title>
@@ -40,7 +40,7 @@
 
 <programlisting>
 # postgresql.conf
-shared_preload_libraries = 'dummy_label'
+shared_preload_libraries = 'dummy_seclabel'
 </programlisting>
 
 <programlisting>
