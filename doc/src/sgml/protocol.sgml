@@ -293,10 +293,15 @@
       <listitem>
        <para>
         The frontend must now send a PasswordMessage containing the
-        password encrypted via MD5, using the 4-character salt
-        specified in the AuthenticationMD5Password message.  If
-        this is the correct password, the server responds with an
-        AuthenticationOk, otherwise it responds with an ErrorResponse.
+        password (with username) encrypted via MD5, then encrypted
+        again using the 4-byte random salt specified in the
+        AuthenticationMD5Password message.  If this is the correct
+        password, the server responds with an AuthenticationOk,
+        otherwise it responds with an ErrorResponse.  The actual
+        PasswordMessage can be computed in SQL as <literal>concat('md5',
+        md5(concat(md5(concat(password, username)), random-salt)))</>.
+        (Keep in mind the <function>md5()</> function returns its
+        result as a hex string.)
        </para>
       </listitem>
      </varlistentry>
