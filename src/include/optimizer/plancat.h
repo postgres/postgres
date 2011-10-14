@@ -29,7 +29,7 @@ extern void get_relation_info(PlannerInfo *root, Oid relationObjectId,
 				  bool inhparent, RelOptInfo *rel);
 
 extern void estimate_rel_size(Relation rel, int32 *attr_widths,
-				  BlockNumber *pages, double *tuples);
+				  BlockNumber *pages, double *tuples, double *allvisfrac);
 
 extern int32 get_relation_data_width(Oid relid, int32 *attr_widths);
 

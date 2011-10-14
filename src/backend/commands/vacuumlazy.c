@@ -158,6 +158,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	TransactionId freezeTableLimit;
 	BlockNumber new_rel_pages;
 	double		new_rel_tuples;
+	BlockNumber new_rel_allvisible;
 	TransactionId new_frozen_xid;
 
 	/* measure elapsed time iff autovacuum logging requires it */
@@ -222,6 +223,10 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	 * density") with nonzero relpages and reltuples=0 (which means "zero
 	 * tuple density") unless there's some actual evidence for the latter.
 	 *
+	 * We do update relallvisible even in the corner case, since if the
+	 * table is all-visible we'd definitely like to know that.  But clamp
+	 * the value to be not more than what we're setting relpages to.
+	 *
 	 * Also, don't change relfrozenxid if we skipped any pages, since then
 	 * we don't know for certain that all tuples have a newer xmin.
 	 */
@@ -233,12 +238,18 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 		new_rel_tuples = vacrelstats->old_rel_tuples;
 	}
 
+	new_rel_allvisible = visibilitymap_count(onerel);
+	if (new_rel_allvisible > new_rel_pages)
+		new_rel_allvisible = new_rel_pages;
+
 	new_frozen_xid = FreezeLimit;
 	if (vacrelstats->scanned_pages < vacrelstats->rel_pages)
 		new_frozen_xid = InvalidTransactionId;
 
 	vac_update_relstats(onerel,
-						new_rel_pages, new_rel_tuples,
+						new_rel_pages,
+						new_rel_tuples,
+						new_rel_allvisible,
 						vacrelstats->hasindex,
 						new_frozen_xid);
 
@@ -1063,8 +1074,11 @@ lazy_cleanup_index(Relation indrel,
 	 */
 	if (!stats->estimated_count)
 		vac_update_relstats(indrel,
-							stats->num_pages, stats->num_index_tuples,
-							false, InvalidTransactionId);
+							stats->num_pages,
+							stats->num_index_tuples,
+							0,
+							false,
+							InvalidTransactionId);
 
 	ereport(elevel,
 			(errmsg("index \"%s\" now contains %.0f row versions in %u pages",

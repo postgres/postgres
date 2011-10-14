@@ -109,6 +109,7 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	rel->indexlist = NIL;
 	rel->pages = 0;
 	rel->tuples = 0;
+	rel->allvisfrac = 0;
 	rel->subplan = NULL;
 	rel->subroot = NULL;
 	rel->baserestrictinfo = NIL;
@@ -362,6 +363,7 @@ build_join_rel(PlannerInfo *root,
 	joinrel->indexlist = NIL;
 	joinrel->pages = 0;
 	joinrel->tuples = 0;
+	joinrel->allvisfrac = 0;
 	joinrel->subplan = NULL;
 	joinrel->subroot = NULL;
 	joinrel->baserestrictinfo = NIL;

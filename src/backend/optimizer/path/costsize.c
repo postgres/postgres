@@ -120,9 +120,6 @@ bool		enable_material = true;
 bool		enable_mergejoin = true;
 bool		enable_hashjoin = true;
 
-/* Possibly this should become a GUC too */
-static double visibility_fraction = 0.9;
-
 typedef struct
 {
 	PlannerInfo *root;
@@ -324,9 +321,10 @@ cost_index(IndexPath *path, PlannerInfo *root,
 	 *
 	 * If it's an index-only scan, then we will not need to fetch any heap
 	 * pages for which the visibility map shows all tuples are visible.
-	 * Unfortunately, we have no stats as to how much of the heap is
-	 * all-visible, and that's likely to be a rather unstable number anyway.
-	 * We use an arbitrary constant visibility_fraction to estimate this.
+	 * Hence, reduce the estimated number of heap fetches accordingly.
+	 * We use the measured fraction of the entire heap that is all-visible,
+	 * which might not be particularly relevant to the subset of the heap
+	 * that this query will fetch; but it's not clear how to do better.
 	 *----------
 	 */
 	if (outer_rel != NULL && outer_rel->rows > 1)
@@ -347,7 +345,7 @@ cost_index(IndexPath *path, PlannerInfo *root,
 											root);
 
 		if (indexonly)
-			pages_fetched = ceil(pages_fetched * visibility_fraction);
+			pages_fetched = ceil(pages_fetched * (1.0 - baserel->allvisfrac));
 
 		max_IO_cost = (pages_fetched * spc_random_page_cost) / num_scans;
 
@@ -369,7 +367,7 @@ cost_index(IndexPath *path, PlannerInfo *root,
 											root);
 
 		if (indexonly)
-			pages_fetched = ceil(pages_fetched * visibility_fraction);
+			pages_fetched = ceil(pages_fetched * (1.0 - baserel->allvisfrac));
 
 		min_IO_cost = (pages_fetched * spc_random_page_cost) / num_scans;
 	}
@@ -385,7 +383,7 @@ cost_index(IndexPath *path, PlannerInfo *root,
 											root);
 
 		if (indexonly)
-			pages_fetched = ceil(pages_fetched * visibility_fraction);
+			pages_fetched = ceil(pages_fetched * (1.0 - baserel->allvisfrac));
 
 		/* max_IO_cost is for the perfectly uncorrelated case (csquared=0) */
 		max_IO_cost = pages_fetched * spc_random_page_cost;
@@ -394,7 +392,7 @@ cost_index(IndexPath *path, PlannerInfo *root,
 		pages_fetched = ceil(indexSelectivity * (double) baserel->pages);
 
 		if (indexonly)
-			pages_fetched = ceil(pages_fetched * visibility_fraction);
+			pages_fetched = ceil(pages_fetched * (1.0 - baserel->allvisfrac));
 
 		min_IO_cost = spc_random_page_cost;
 		if (pages_fetched > 1)

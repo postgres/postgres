@@ -211,7 +211,8 @@ FROM tenk1 WHERE unique1 < 10
 WINDOW w AS (order by four range between current row and unbounded following);
 
 SELECT sum(unique1) over
-	(rows (SELECT unique1 FROM tenk1 ORDER BY unique1 LIMIT 1) + 1 PRECEDING),
+	(order by unique1
+	 rows (SELECT unique1 FROM tenk1 ORDER BY unique1 LIMIT 1) + 1 PRECEDING),
 	unique1
 FROM tenk1 WHERE unique1 < 10;
 

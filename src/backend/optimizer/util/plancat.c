@@ -116,7 +116,7 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 	 */
 	if (!inhparent)
 		estimate_rel_size(relation, rel->attr_widths - rel->min_attr,
-						  &rel->pages, &rel->tuples);
+						  &rel->pages, &rel->tuples, &rel->allvisfrac);
 
 	/*
 	 * Make list of indexes.  Ignore indexes on system catalogs if told to.
@@ -339,8 +339,10 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			}
 			else
 			{
+				double		allvisfrac;				/* dummy */
+
 				estimate_rel_size(indexRelation, NULL,
-								  &info->pages, &info->tuples);
+								  &info->pages, &info->tuples, &allvisfrac);
 				if (info->tuples > rel->tuples)
 					info->tuples = rel->tuples;
 			}
@@ -369,17 +371,21 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 /*
  * estimate_rel_size - estimate # pages and # tuples in a table or index
  *
+ * We also estimate the fraction of the pages that are marked all-visible in
+ * the visibility map, for use in estimation of index-only scans.
+ *
  * If attr_widths isn't NULL, it points to the zero-index entry of the
  * relation's attr_widths[] cache; we fill this in if we have need to compute
  * the attribute widths for estimation purposes.
  */
 void
 estimate_rel_size(Relation rel, int32 *attr_widths,
-				  BlockNumber *pages, double *tuples)
+				  BlockNumber *pages, double *tuples, double *allvisfrac)
 {
 	BlockNumber curpages;
 	BlockNumber relpages;
 	double		reltuples;
+	BlockNumber relallvisible;
 	double		density;
 
 	switch (rel->rd_rel->relkind)
@@ -432,11 +438,13 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 			if (curpages == 0)
 			{
 				*tuples = 0;
+				*allvisfrac = 0;
 				break;
 			}
 			/* coerce values in pg_class to more desirable types */
 			relpages = (BlockNumber) rel->rd_rel->relpages;
 			reltuples = (double) rel->rd_rel->reltuples;
+			relallvisible = (BlockNumber) rel->rd_rel->relallvisible;
 
 			/*
 			 * If it's an index, discount the metapage while estimating the
@@ -480,21 +488,37 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 				density = (BLCKSZ - SizeOfPageHeaderData) / tuple_width;
 			}
 			*tuples = rint(density * (double) curpages);
+
+			/*
+			 * We use relallvisible as-is, rather than scaling it up like we
+			 * do for the pages and tuples counts, on the theory that any
+			 * pages added since the last VACUUM are most likely not marked
+			 * all-visible.  But costsize.c wants it converted to a fraction.
+			 */
+			if (relallvisible == 0 || curpages <= 0)
+				*allvisfrac = 0;
+			else if ((double) relallvisible >= curpages)
+				*allvisfrac = 1;
+			else
+				*allvisfrac = (double) relallvisible / curpages;
 			break;
 		case RELKIND_SEQUENCE:
 			/* Sequences always have a known size */
 			*pages = 1;
 			*tuples = 1;
+			*allvisfrac = 0;
 			break;
 		case RELKIND_FOREIGN_TABLE:
 			/* Just use whatever's in pg_class */
 			*pages = rel->rd_rel->relpages;
 			*tuples = rel->rd_rel->reltuples;
+			*allvisfrac = 0;
 			break;
 		default:
 			/* else it has no disk storage; probably shouldn't get here? */
 			*pages = 0;
 			*tuples = 0;
+			*allvisfrac = 0;
 			break;
 	}
 }

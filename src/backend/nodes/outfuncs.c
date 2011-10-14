@@ -1743,6 +1743,7 @@ _outRelOptInfo(StringInfo str, RelOptInfo *node)
 	WRITE_NODE_FIELD(indexlist);
 	WRITE_UINT_FIELD(pages);
 	WRITE_FLOAT_FIELD(tuples, "%.0f");
+	WRITE_FLOAT_FIELD(allvisfrac, "%.6f");
 	WRITE_NODE_FIELD(subplan);
 	WRITE_NODE_FIELD(subroot);
 	WRITE_NODE_FIELD(baserestrictinfo);

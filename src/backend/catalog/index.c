@@ -26,6 +26,7 @@
 #include "access/relscan.h"
 #include "access/sysattr.h"
 #include "access/transam.h"
+#include "access/visibilitymap.h"
 #include "access/xact.h"
 #include "bootstrap/bootstrap.h"
 #include "catalog/catalog.h"
@@ -1059,7 +1060,7 @@ index_create(Relation heapRelation,
 						   true,
 						   isprimary,
 						   InvalidOid,
-						   heapRelation->rd_rel->reltuples);
+						   -1.0);
 		/* Make the above update visible */
 		CommandCounterIncrement();
 	}
@@ -1225,7 +1226,7 @@ index_constraint_create(Relation heapRelation,
 						   true,
 						   true,
 						   InvalidOid,
-						   heapRelation->rd_rel->reltuples);
+						   -1.0);
 
 	/*
 	 * If needed, mark the index as primary and/or deferred in pg_index.
@@ -1533,9 +1534,10 @@ FormIndexDatum(IndexInfo *indexInfo,
  * isprimary: if true, set relhaspkey true; else no change
  * reltoastidxid: if not InvalidOid, set reltoastidxid to this value;
  *		else no change
- * reltuples: set reltuples to this value
+ * reltuples: if >= 0, set reltuples to this value; else no change
  *
- * relpages is also updated (using RelationGetNumberOfBlocks()).
+ * If reltuples >= 0, relpages and relallvisible are also updated (using
+ * RelationGetNumberOfBlocks() and visibilitymap_count()).
  *
  * NOTE: an important side-effect of this operation is that an SI invalidation
  * message is sent out to all backends --- including me --- causing relcache
@@ -1550,7 +1552,6 @@ index_update_stats(Relation rel,
 				   bool hasindex, bool isprimary,
 				   Oid reltoastidxid, double reltuples)
 {
-	BlockNumber relpages = RelationGetNumberOfBlocks(rel);
 	Oid			relid = RelationGetRelid(rel);
 	Relation	pg_class;
 	HeapTuple	tuple;
@@ -1586,9 +1587,11 @@ index_update_stats(Relation rel,
 	 * It is safe to use a non-transactional update even though our
 	 * transaction could still fail before committing.	Setting relhasindex
 	 * true is safe even if there are no indexes (VACUUM will eventually fix
-	 * it), likewise for relhaspkey.  And of course the relpages and reltuples
-	 * counts are correct (or at least more so than the old values)
-	 * regardless.
+	 * it), likewise for relhaspkey.  And of course the new relpages and
+	 * reltuples counts are correct regardless.  However, we don't want to
+	 * change relpages (or relallvisible) if the caller isn't providing an
+	 * updated reltuples count, because that would bollix the
+	 * reltuples/relpages ratio which is what's really important.
 	 */
 
 	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
@@ -1650,15 +1653,32 @@ index_update_stats(Relation rel,
 			dirty = true;
 		}
 	}
-	if (rd_rel->reltuples != (float4) reltuples)
+
+	if (reltuples >= 0)
 	{
-		rd_rel->reltuples = (float4) reltuples;
-		dirty = true;
-	}
-	if (rd_rel->relpages != (int32) relpages)
-	{
-		rd_rel->relpages = (int32) relpages;
-		dirty = true;
+		BlockNumber relpages = RelationGetNumberOfBlocks(rel);
+		BlockNumber relallvisible;
+
+		if (rd_rel->relkind != RELKIND_INDEX)
+			relallvisible = visibilitymap_count(rel);
+		else					/* don't bother for indexes */
+			relallvisible = 0;
+
+		if (rd_rel->relpages != (int32) relpages)
+		{
+			rd_rel->relpages = (int32) relpages;
+			dirty = true;
+		}
+		if (rd_rel->reltuples != (float4) reltuples)
+		{
+			rd_rel->reltuples = (float4) reltuples;
+			dirty = true;
+		}
+		if (rd_rel->relallvisible != (int32) relallvisible)
+		{
+			rd_rel->relallvisible = (int32) relallvisible;
+			dirty = true;
+		}
 	}
 
 	/*

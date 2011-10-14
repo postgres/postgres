@@ -319,6 +319,7 @@ typedef struct PlannerInfo
  *					(always NIL if it's not a table)
  *		pages - number of disk pages in relation (zero if not a table)
  *		tuples - number of tuples in relation (not considering restrictions)
+ *		allvisfrac - fraction of disk pages that are marked all-visible
  *		subplan - plan for subquery (NULL if it's not a subquery)
  *		subroot - PlannerInfo for subquery (NULL if it's not a subquery)
  *
@@ -402,8 +403,9 @@ typedef struct RelOptInfo
 	Relids	   *attr_needed;	/* array indexed [min_attr .. max_attr] */
 	int32	   *attr_widths;	/* array indexed [min_attr .. max_attr] */
 	List	   *indexlist;		/* list of IndexOptInfo */
-	BlockNumber pages;
+	BlockNumber pages;			/* size estimates derived from pg_class */
 	double		tuples;
+	double		allvisfrac;
 	struct Plan *subplan;		/* if subquery */
 	PlannerInfo *subroot;		/* if subquery */
 

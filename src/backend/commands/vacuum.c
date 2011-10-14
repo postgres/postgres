@@ -569,6 +569,7 @@ vac_estimate_reltuples(Relation relation, bool is_analyze,
 void
 vac_update_relstats(Relation relation,
 					BlockNumber num_pages, double num_tuples,
+					BlockNumber num_all_visible_pages,
 					bool hasindex, TransactionId frozenxid)
 {
 	Oid			relid = RelationGetRelid(relation);
@@ -597,6 +598,11 @@ vac_update_relstats(Relation relation,
 	if (pgcform->reltuples != (float4) num_tuples)
 	{
 		pgcform->reltuples = (float4) num_tuples;
+		dirty = true;
+	}
+	if (pgcform->relallvisible != (int32) num_all_visible_pages)
+	{
+		pgcform->relallvisible = (int32) num_all_visible_pages;
 		dirty = true;
 	}
 	if (pgcform->relhasindex != hasindex)

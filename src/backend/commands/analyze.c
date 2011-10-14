@@ -19,6 +19,7 @@
 #include "access/transam.h"
 #include "access/tupconvert.h"
 #include "access/tuptoaster.h"
+#include "access/visibilitymap.h"
 #include "access/xact.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
@@ -534,7 +535,10 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt, bool inh)
 	if (!inh)
 		vac_update_relstats(onerel,
 							RelationGetNumberOfBlocks(onerel),
-							totalrows, hasindex, InvalidTransactionId);
+							totalrows,
+							visibilitymap_count(onerel),
+							hasindex,
+							InvalidTransactionId);
 
 	/*
 	 * Same for indexes. Vacuum always scans all indexes, so if we're part of
@@ -551,7 +555,10 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt, bool inh)
 			totalindexrows = ceil(thisdata->tupleFract * totalrows);
 			vac_update_relstats(Irel[ind],
 								RelationGetNumberOfBlocks(Irel[ind]),
-								totalindexrows, false, InvalidTransactionId);
+								totalindexrows,
+								0,
+								false,
+								InvalidTransactionId);
 		}
 	}
 

@@ -149,6 +149,7 @@ extern double vac_estimate_reltuples(Relation relation, bool is_analyze,
 extern void vac_update_relstats(Relation relation,
 					BlockNumber num_pages,
 					double num_tuples,
+					BlockNumber num_all_visible_pages,
 					bool hasindex,
 					TransactionId frozenxid);
 extern void vacuum_set_xid_limits(int freeze_min_age, int freeze_table_age,

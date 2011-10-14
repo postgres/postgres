@@ -16,6 +16,8 @@
  *		visibilitymap_pin_ok - check whether correct map page is already pinned
  *		visibilitymap_set	 - set a bit in a previously pinned page
  *		visibilitymap_test	 - test if a bit is set
+ *		visibilitymap_count	 - count number of bits set in visibility map
+ *		visibilitymap_truncate	- truncate the visibility map
  *
  * NOTES
  *
@@ -109,6 +111,26 @@
 #define HEAPBLK_TO_MAPBLOCK(x) ((x) / HEAPBLOCKS_PER_PAGE)
 #define HEAPBLK_TO_MAPBYTE(x) (((x) % HEAPBLOCKS_PER_PAGE) / HEAPBLOCKS_PER_BYTE)
 #define HEAPBLK_TO_MAPBIT(x) ((x) % HEAPBLOCKS_PER_BYTE)
+
+/* table for fast counting of set bits */
+static const uint8 number_of_ones[256] = {
+	0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,
+	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+	4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
+};
 
 /* prototypes for internal routines */
 static Buffer vm_readbuf(Relation rel, BlockNumber blkno, bool extend);
@@ -303,6 +325,52 @@ visibilitymap_test(Relation rel, BlockNumber heapBlk, Buffer *buf)
 	 * We don't need to lock the page, as we're only looking at a single bit.
 	 */
 	result = (map[mapByte] & (1 << mapBit)) ? true : false;
+
+	return result;
+}
+
+/*
+ *	visibilitymap_count	 - count number of bits set in visibility map
+ *
+ * Note: we ignore the possibility of race conditions when the table is being
+ * extended concurrently with the call.  New pages added to the table aren't
+ * going to be marked all-visible, so they won't affect the result.
+ */
+BlockNumber
+visibilitymap_count(Relation rel)
+{
+	BlockNumber result = 0;
+	BlockNumber mapBlock;
+
+	for (mapBlock = 0; ; mapBlock++)
+	{
+		Buffer		mapBuffer;
+		unsigned char *map;
+		int			i;
+
+		/*
+		 * Read till we fall off the end of the map.  We assume that any
+		 * extra bytes in the last page are zeroed, so we don't bother
+		 * excluding them from the count.
+		 */
+		mapBuffer = vm_readbuf(rel, mapBlock, false);
+		if (!BufferIsValid(mapBuffer))
+			break;
+
+		/*
+		 * We choose not to lock the page, since the result is going to be
+		 * immediately stale anyway if anyone is concurrently setting or
+		 * clearing bits, and we only really need an approximate value.
+		 */
+		map = (unsigned char *) PageGetContents(BufferGetPage(mapBuffer));
+
+		for (i = 0; i < MAPSIZE; i++)
+		{
+			result += number_of_ones[map[i]];
+		}
+
+		ReleaseBuffer(mapBuffer);
+	}
 
 	return result;
 }

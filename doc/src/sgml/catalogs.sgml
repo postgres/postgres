@@ -1655,6 +1655,19 @@
      </row>
 
      <row>
+      <entry><structfield>relallvisible</structfield></entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>
+       Number of pages that are marked all-visible in the table's
+       visibility map.  This is only an estimate used by the
+       planner.  It is updated by <command>VACUUM</command>,
+       <command>ANALYZE</command>, and a few DDL commands such as
+       <command>CREATE INDEX</command>.
+      </entry>
+     </row>
+
+     <row>
       <entry><structfield>reltoastrelid</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>

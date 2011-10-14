@@ -901,21 +901,22 @@ WINDOW w AS (order by four range between current row and unbounded following);
 (10 rows)
 
 SELECT sum(unique1) over
-	(rows (SELECT unique1 FROM tenk1 ORDER BY unique1 LIMIT 1) + 1 PRECEDING),
+	(order by unique1
+	 rows (SELECT unique1 FROM tenk1 ORDER BY unique1 LIMIT 1) + 1 PRECEDING),
 	unique1
 FROM tenk1 WHERE unique1 < 10;
  sum | unique1 
 -----+---------
-   4 |       4
-   6 |       2
-   3 |       1
-   7 |       6
-  15 |       9
-  17 |       8
-  13 |       5
-   8 |       3
-  10 |       7
-   7 |       0
+   0 |       0
+   1 |       1
+   3 |       2
+   5 |       3
+   7 |       4
+   9 |       5
+  11 |       6
+  13 |       7
+  15 |       8
+  17 |       9
 (10 rows)
 
 CREATE TEMP VIEW v_window AS
