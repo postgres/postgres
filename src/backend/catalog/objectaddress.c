@@ -639,7 +639,8 @@ get_object_address_relobject(ObjectType objtype, List *objname,
 		 * Caller is expecting to get back the relation, even though we
 		 * didn't end up using it to find the rule.
 		 */
-		relation = heap_open(reloid, AccessShareLock);
+		if (OidIsValid(address.objectId))
+			relation = heap_open(reloid, AccessShareLock);
 	}
 	else
 	{
@@ -676,6 +677,14 @@ get_object_address_relobject(ObjectType objtype, List *objname,
 				address.classId = InvalidOid;
 				address.objectId = InvalidOid;
 				address.objectSubId = 0;
+		}
+
+		/* Avoid relcache leak when object not found. */
+		if (!OidIsValid(address.objectId))
+		{
+			heap_close(relation, AccessShareLock);
+			relation = NULL;		/* department of accident prevention */
+			return address;
 		}
 	}
 
