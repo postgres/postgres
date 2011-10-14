@@ -804,10 +804,16 @@ dumpRoles(PGconn *conn)
 							 buf, "ROLE", rolename);
 
 		fprintf(OPF, "%s", buf->data);
-
-		if (server_version >= 70300)
-			dumpUserConfig(conn, rolename);
 	}
+
+	/*
+	 * Dump configuration settings for roles after all roles have been dumped.
+	 * We do it this way because config settings for roles could mention the
+	 * names of other roles.
+	 */
+	if (server_version >= 70300)
+		for (i = 0; i < PQntuples(res); i++)
+			dumpUserConfig(conn, PQgetvalue(res, i, i_rolname));
 
 	PQclear(res);
 
