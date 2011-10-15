@@ -3332,8 +3332,10 @@ PSQL_EDITOR_LINENUMBER_ARG='--line '
      Both the system-wide <filename>psqlrc</filename> file and the user's
      <filename>~/.psqlrc</filename> file can be made version-specific
      by appending a dash and the <productname>PostgreSQL</productname>
-     release number, for example <filename>~/.psqlrc-&version;</filename>.
-     A matching version-specific file will be read in preference to a
+     major or minor release number, for example
+     <filename>~/.psqlrc-9.2</filename> or
+     <filename>~/.psqlrc-9.2.5</filename>.  The most specific
+     version-matching file will be read in preference to a
      non-version-specific file.
     </para>
    </listitem>

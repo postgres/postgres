@@ -594,20 +594,27 @@ process_psqlrc(char *argv0)
 static void
 process_psqlrc_file(char *filename)
 {
-	char	   *psqlrc;
+	char	   *psqlrc_minor, *psqlrc_major;
 
 #if defined(WIN32) && (!defined(__MINGW32__))
 #define R_OK 4
 #endif
 
-	psqlrc = pg_malloc(strlen(filename) + 1 + strlen(PG_VERSION) + 1);
-	sprintf(psqlrc, "%s-%s", filename, PG_VERSION);
+	psqlrc_minor = pg_malloc(strlen(filename) + 1 + strlen(PG_VERSION) + 1);
+	sprintf(psqlrc_minor, "%s-%s", filename, PG_VERSION);
+	psqlrc_major = pg_malloc(strlen(filename) + 1 + strlen(PG_MAJORVERSION) + 1);
+	sprintf(psqlrc_major, "%s-%s", filename, PG_MAJORVERSION);
 
-	if (access(psqlrc, R_OK) == 0)
-		(void) process_file(psqlrc, false, false);
+	/* check for minor version first, then major, then no version */
+	if (access(psqlrc_minor, R_OK) == 0)
+		(void) process_file(psqlrc_minor, false, false);
+	else if (access(psqlrc_major, R_OK) == 0)
+		(void) process_file(psqlrc_major, false, false);
 	else if (access(filename, R_OK) == 0)
 		(void) process_file(filename, false, false);
-	free(psqlrc);
+
+	free(psqlrc_minor);
+	free(psqlrc_major);
 }
 
 
