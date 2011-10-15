@@ -2720,7 +2720,7 @@ END;
 DECLARE
     curs1 refcursor;
     curs2 CURSOR FOR SELECT * FROM tenk1;
-    curs3 CURSOR (key integer) IS SELECT * FROM tenk1 WHERE unique1 = key;
+    curs3 CURSOR (key integer) FOR SELECT * FROM tenk1 WHERE unique1 = key;
 </programlisting>
      All three of these variables have the data type <type>refcursor</>,
      but the first can be used with any query, while the second has
@@ -2836,31 +2836,43 @@ OPEN <replaceable>bound_cursorvar</replaceable> <optional> ( <replaceable>argume
           cursor cannot be open already.  A list of actual argument value
           expressions must appear if and only if the cursor was declared to
           take arguments.  These values will be substituted in the query.
+         </para>
+
+         <para>
           The query plan for a bound cursor is always considered cacheable;
           there is no equivalent of <command>EXECUTE</command> in this case.
-          Notice that <literal>SCROLL</> and
-          <literal>NO SCROLL</> cannot be specified, as the cursor's scrolling
+          Notice that <literal>SCROLL</> and <literal>NO SCROLL</> cannot be
+          specified in <command>OPEN</>, as the cursor's scrolling
           behavior was already determined.
          </para>
 
          <para>
-          Note that because variable substitution is done on the bound
-          cursor's query, there are two ways to pass values into the cursor:
-          either with an explicit argument to <command>OPEN</>, or
-          implicitly by referencing a <application>PL/pgSQL</> variable
-          in the query.  However, only variables declared before the bound
-          cursor was declared will be substituted into it.  In either case
-          the value to be passed is determined at the time of the
-          <command>OPEN</>.
-         </para>
-
-    <para>
-     Examples:
+          Examples (these use the cursor declaration examples above):
 <programlisting>
 OPEN curs2;
 OPEN curs3(42);
 </programlisting>
-       </para>
+         </para>
+
+         <para>
+          Because variable substitution is done on a bound cursor's query,
+          there are really two ways to pass values into the cursor: either
+          with an explicit argument to <command>OPEN</>, or implicitly by
+          referencing a <application>PL/pgSQL</> variable in the query.
+          However, only variables declared before the bound cursor was
+          declared will be substituted into it.  In either case the value to
+          be passed is determined at the time of the <command>OPEN</>.
+          For example, another way to get the same effect as the
+          <literal>curs3</> example above is
+<programlisting>
+DECLARE
+    key integer;
+    curs4 CURSOR FOR SELECT * FROM tenk1 WHERE unique1 = key;
+BEGIN
+    key := 42;
+    OPEN curs4;
+</programlisting>
+         </para>
      </sect3>
    </sect2>
 
