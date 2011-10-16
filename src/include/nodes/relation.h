@@ -490,8 +490,9 @@ typedef struct IndexOptInfo
 	bool		unique;			/* true if a unique index */
 	bool		hypothetical;	/* true if index doesn't really exist */
 	bool		amcanorderbyop; /* does AM support order by operator result? */
-	bool		amcanreturn;	/* does AM know how to return tuples? */
+	bool		amcanreturn;	/* can AM return IndexTuples? */
 	bool		amoptionalkey;	/* can query omit key for the first column? */
+	bool		amsearcharray;	/* can AM handle ScalarArrayOpExpr quals? */
 	bool		amsearchnulls;	/* can AM search for NULL/NOT NULL entries? */
 	bool		amhasgettuple;	/* does AM have amgettuple interface? */
 	bool		amhasgetbitmap; /* does AM have amgetbitmap interface? */

@@ -394,9 +394,14 @@ cost_index(IndexPath *path, PlannerInfo *root,
 		if (indexonly)
 			pages_fetched = ceil(pages_fetched * (1.0 - baserel->allvisfrac));
 
-		min_IO_cost = spc_random_page_cost;
-		if (pages_fetched > 1)
-			min_IO_cost += (pages_fetched - 1) * spc_seq_page_cost;
+		if (pages_fetched > 0)
+		{
+			min_IO_cost = spc_random_page_cost;
+			if (pages_fetched > 1)
+				min_IO_cost += (pages_fetched - 1) * spc_seq_page_cost;
+		}
+		else
+			min_IO_cost = 0;
 	}
 
 	/*

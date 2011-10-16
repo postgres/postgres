@@ -647,11 +647,13 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
  * as specified in access/skey.h.  The elements of the row comparison
  * can have either constant or non-constant comparison values.
  *
- * 4. ScalarArrayOpExpr ("indexkey op ANY (array-expression)").  For these,
+ * 4. ScalarArrayOpExpr ("indexkey op ANY (array-expression)").  If the index
+ * has rd_am->amsearcharray, we handle these the same as simple operators,
+ * setting the SK_SEARCHARRAY flag to tell the AM to handle them.  Otherwise,
  * we create a ScanKey with everything filled in except the comparison value,
  * and set up an IndexArrayKeyInfo struct to drive processing of the qual.
- * (Note that we treat all array-expressions as requiring runtime evaluation,
- * even if they happen to be constants.)
+ * (Note that if we use an IndexArrayKeyInfo struct, the array expression is
+ * always treated as requiring runtime evaluation, even if it's a constant.)
  *
  * 5. NullTest ("indexkey IS NULL/IS NOT NULL").  We just fill in the
  * ScanKey properly.
@@ -680,7 +682,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
  * *numArrayKeys: receives number of array keys
  *
  * Caller may pass NULL for arrayKeys and numArrayKeys to indicate that
- * ScalarArrayOpExpr quals are not supported.
+ * IndexArrayKeyInfos are not supported.
  */
 void
 ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
@@ -981,6 +983,8 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 		{
 			/* indexkey op ANY (array-expression) */
 			ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) clause;
+			int			flags = 0;
+			Datum		scanvalue;
 
 			Assert(!isorderby);
 
@@ -1027,23 +1031,72 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 
 			Assert(rightop != NULL);
 
-			array_keys[n_array_keys].scan_key = this_scan_key;
-			array_keys[n_array_keys].array_expr =
-				ExecInitExpr(rightop, planstate);
-			/* the remaining fields were zeroed by palloc0 */
-			n_array_keys++;
+			if (index->rd_am->amsearcharray)
+			{
+				/* Index AM will handle this like a simple operator */
+				flags |= SK_SEARCHARRAY;
+				if (IsA(rightop, Const))
+				{
+					/* OK, simple constant comparison value */
+					scanvalue = ((Const *) rightop)->constvalue;
+					if (((Const *) rightop)->constisnull)
+						flags |= SK_ISNULL;
+				}
+				else
+				{
+					/* Need to treat this one as a runtime key */
+					if (n_runtime_keys >= max_runtime_keys)
+					{
+						if (max_runtime_keys == 0)
+						{
+							max_runtime_keys = 8;
+							runtime_keys = (IndexRuntimeKeyInfo *)
+								palloc(max_runtime_keys * sizeof(IndexRuntimeKeyInfo));
+						}
+						else
+						{
+							max_runtime_keys *= 2;
+							runtime_keys = (IndexRuntimeKeyInfo *)
+								repalloc(runtime_keys, max_runtime_keys * sizeof(IndexRuntimeKeyInfo));
+						}
+					}
+					runtime_keys[n_runtime_keys].scan_key = this_scan_key;
+					runtime_keys[n_runtime_keys].key_expr =
+						ExecInitExpr(rightop, planstate);
+
+					/*
+					 * Careful here: the runtime expression is not of
+					 * op_righttype, but rather is an array of same; so
+					 * TypeIsToastable() isn't helpful.  However, we can
+					 * assume that all array types are toastable.
+					 */
+					runtime_keys[n_runtime_keys].key_toastable = true;
+					n_runtime_keys++;
+					scanvalue = (Datum) 0;
+				}
+			}
+			else
+			{
+				/* Executor has to expand the array value */
+				array_keys[n_array_keys].scan_key = this_scan_key;
+				array_keys[n_array_keys].array_expr =
+					ExecInitExpr(rightop, planstate);
+				/* the remaining fields were zeroed by palloc0 */
+				n_array_keys++;
+				scanvalue = (Datum) 0;
+			}
 
 			/*
 			 * initialize the scan key's fields appropriately
 			 */
 			ScanKeyEntryInitialize(this_scan_key,
-								   0,	/* flags */
+								   flags,
 								   varattno,	/* attribute number to scan */
 								   op_strategy, /* op's strategy */
 								   op_righttype,		/* strategy subtype */
 								   saop->inputcollid,	/* collation */
 								   opfuncid,	/* reg proc to use */
-								   (Datum) 0);	/* constant */
+								   scanvalue);	/* constant */
 		}
 		else if (IsA(clause, NullTest))
 		{

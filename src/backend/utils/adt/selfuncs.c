@@ -6385,14 +6385,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 	 * is that multiple columns dilute the importance of the first column's
 	 * ordering, but don't negate it entirely.  Before 8.0 we divided the
 	 * correlation by the number of columns, but that seems too strong.)
-	 *
-	 * We can skip all this if we found a ScalarArrayOpExpr, because then the
-	 * call must be for a bitmap index scan, and the caller isn't going to
-	 * care what the index correlation is.
 	 */
-	if (found_saop)
-		PG_RETURN_VOID();
-
 	MemSet(&vardata, 0, sizeof(vardata));
 
 	if (index->indexkeys[0] != 0)

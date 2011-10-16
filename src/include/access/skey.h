@@ -55,18 +55,27 @@ typedef uint16 StrategyNumber;
  * If the operator is collation-sensitive, sk_collation must be set
  * correctly as well.
  *
+ * A ScanKey can also represent a ScalarArrayOpExpr, that is a condition
+ * "column op ANY(ARRAY[...])".  This is signaled by the SK_SEARCHARRAY
+ * flag bit.  The sk_argument is not a value of the operator's right-hand
+ * argument type, but rather an array of such values, and the per-element
+ * comparisons are to be ORed together.
+ *
  * A ScanKey can also represent a condition "column IS NULL" or "column
  * IS NOT NULL"; these cases are signaled by the SK_SEARCHNULL and
  * SK_SEARCHNOTNULL flag bits respectively.  The argument is always NULL,
  * and the sk_strategy, sk_subtype, sk_collation, and sk_func fields are
- * not used (unless set by the index AM).  Currently, SK_SEARCHNULL and
- * SK_SEARCHNOTNULL are supported only for index scans, not heap scans;
- * and not all index AMs support them.
+ * not used (unless set by the index AM).
+ *
+ * SK_SEARCHARRAY, SK_SEARCHNULL and SK_SEARCHNOTNULL are supported only
+ * for index scans, not heap scans; and not all index AMs support them,
+ * only those that set amsearcharray or amsearchnulls respectively.
  *
  * A ScanKey can also represent an ordering operator invocation, that is
  * an ordering requirement "ORDER BY indexedcol op constant".  This looks
  * the same as a comparison operator, except that the operator doesn't
  * (usually) yield boolean.  We mark such ScanKeys with SK_ORDER_BY.
+ * SK_SEARCHARRAY, SK_SEARCHNULL, SK_SEARCHNOTNULL cannot be used here.
  *
  * Note: in some places, ScanKeys are used as a convenient representation
  * for the invocation of an access method support procedure.  In this case
@@ -114,6 +123,7 @@ typedef ScanKeyData *ScanKey;
  *				opclass, NOT the operator's implementation function.
  * sk_strategy must be the same in all elements of the subsidiary array,
  * that is, the same as in the header entry.
+ * SK_SEARCHARRAY, SK_SEARCHNULL, SK_SEARCHNOTNULL cannot be used here.
  */
 
 /*
@@ -128,10 +138,11 @@ typedef ScanKeyData *ScanKey;
 #define SK_ROW_HEADER		0x0004		/* row comparison header (see above) */
 #define SK_ROW_MEMBER		0x0008		/* row comparison member (see above) */
 #define SK_ROW_END			0x0010		/* last row comparison member */
-#define SK_SEARCHNULL		0x0020		/* scankey represents "col IS NULL" */
-#define SK_SEARCHNOTNULL	0x0040		/* scankey represents "col IS NOT
+#define SK_SEARCHARRAY		0x0020		/* scankey represents ScalarArrayOp */
+#define SK_SEARCHNULL		0x0040		/* scankey represents "col IS NULL" */
+#define SK_SEARCHNOTNULL	0x0080		/* scankey represents "col IS NOT
 										 * NULL" */
-#define SK_ORDER_BY			0x0080		/* scankey is for ORDER BY op */
+#define SK_ORDER_BY			0x0100		/* scankey is for ORDER BY op */
 
 
 /*

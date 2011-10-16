@@ -215,6 +215,7 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			info->amcanorderbyop = indexRelation->rd_am->amcanorderbyop;
 			info->amcanreturn = indexRelation->rd_am->amcanreturn;
 			info->amoptionalkey = indexRelation->rd_am->amoptionalkey;
+			info->amsearcharray = indexRelation->rd_am->amsearcharray;
 			info->amsearchnulls = indexRelation->rd_am->amsearchnulls;
 			info->amhasgettuple = OidIsValid(indexRelation->rd_am->amgettuple);
 			info->amhasgetbitmap = OidIsValid(indexRelation->rd_am->amgetbitmap);

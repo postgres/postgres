@@ -525,12 +525,28 @@ typedef BTScanPosData *BTScanPos;
 
 #define BTScanPosIsValid(scanpos) BufferIsValid((scanpos).buf)
 
+/* We need one of these for each equality-type SK_SEARCHARRAY scan key */
+typedef struct BTArrayKeyInfo
+{
+	int			scan_key;		/* index of associated key in arrayKeyData */
+	int			cur_elem;		/* index of current element in elem_values */
+	int			num_elems;		/* number of elems in current array value */
+	Datum	   *elem_values;	/* array of num_elems Datums */
+} BTArrayKeyInfo;
+
 typedef struct BTScanOpaqueData
 {
 	/* these fields are set by _bt_preprocess_keys(): */
 	bool		qual_ok;		/* false if qual can never be satisfied */
 	int			numberOfKeys;	/* number of preprocessed scan keys */
 	ScanKey		keyData;		/* array of preprocessed scan keys */
+
+	/* workspace for SK_SEARCHARRAY support */
+	ScanKey		arrayKeyData;	/* modified copy of scan->keyData */
+	int			numArrayKeys;	/* number of equality-type array keys (-1 if
+								 * there are any unsatisfiable array keys) */
+	BTArrayKeyInfo *arrayKeys;	/* info about each equality-type array key */
+	MemoryContext arrayContext;	/* scan-lifespan context for array data */
 
 	/* info about killed items if any (killedItems is NULL if never used) */
 	int		   *killedItems;	/* currPos.items indexes of killed items */
@@ -639,6 +655,9 @@ extern ScanKey _bt_mkscankey(Relation rel, IndexTuple itup);
 extern ScanKey _bt_mkscankey_nodata(Relation rel);
 extern void _bt_freeskey(ScanKey skey);
 extern void _bt_freestack(BTStack stack);
+extern void _bt_preprocess_array_keys(IndexScanDesc scan);
+extern void _bt_start_array_keys(IndexScanDesc scan, ScanDirection dir);
+extern bool _bt_advance_array_keys(IndexScanDesc scan, ScanDirection dir);
 extern void _bt_preprocess_keys(IndexScanDesc scan);
 extern IndexTuple _bt_checkkeys(IndexScanDesc scan,
 			  Page page, OffsetNumber offnum,

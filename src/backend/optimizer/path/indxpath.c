@@ -48,9 +48,9 @@
 /* Whether to use ScalarArrayOpExpr to build index qualifications */
 typedef enum
 {
-	SAOP_FORBID,				/* Do not use ScalarArrayOpExpr */
-	SAOP_ALLOW,					/* OK to use ScalarArrayOpExpr */
-	SAOP_REQUIRE				/* Require ScalarArrayOpExpr */
+	SAOP_PER_AM,				/* Use ScalarArrayOpExpr if amsearcharray */
+	SAOP_ALLOW,					/* Use ScalarArrayOpExpr for all indexes */
+	SAOP_REQUIRE				/* Require ScalarArrayOpExpr to be used */
 } SaOpControl;
 
 /* Whether we are looking for plain indexscan, bitmap scan, or either */
@@ -196,7 +196,7 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 	 */
 	indexpaths = find_usable_indexes(root, rel,
 									 rel->baserestrictinfo, NIL,
-									 true, NULL, SAOP_FORBID, ST_ANYSCAN);
+									 true, NULL, SAOP_PER_AM, ST_ANYSCAN);
 
 	/*
 	 * Submit all the ones that can form plain IndexScan plans to add_path.
@@ -233,8 +233,9 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 	bitindexpaths = list_concat(bitindexpaths, indexpaths);
 
 	/*
-	 * Likewise, generate paths using ScalarArrayOpExpr clauses; these can't
-	 * be simple indexscans but they can be used in bitmap scans.
+	 * Likewise, generate paths using executor-managed ScalarArrayOpExpr
+	 * clauses; these can't be simple indexscans but they can be used in
+	 * bitmap scans.
 	 */
 	indexpaths = find_saop_paths(root, rel,
 								 rel->baserestrictinfo, NIL,
@@ -336,6 +337,14 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 				/* either or both are OK */
 				break;
 		}
+
+		/*
+		 * If we're doing find_saop_paths(), we can skip indexes that support
+		 * ScalarArrayOpExpr natively.  We already generated all the potential
+		 * indexpaths for them, so no need to do anything more.
+		 */
+		if (saop_control == SAOP_REQUIRE && index->amsearcharray)
+			continue;
 
 		/*
 		 * Ignore partial indexes that do not match the query.	If a partial
@@ -492,10 +501,10 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 
 /*
  * find_saop_paths
- *		Find all the potential indexpaths that make use of ScalarArrayOpExpr
- *		clauses.  The executor only supports these in bitmap scans, not
- *		plain indexscans, so we need to segregate them from the normal case.
- *		Otherwise, same API as find_usable_indexes().
+ *		Find all the potential indexpaths that make use of executor-managed
+ *		ScalarArrayOpExpr clauses.  The executor only supports these in bitmap
+ *		scans, not plain indexscans, so we need to segregate them from the
+ *		normal case.  Otherwise, same API as find_usable_indexes().
  *		Returns a list of IndexPaths.
  */
 static List *
@@ -1287,9 +1296,10 @@ group_clauses_by_indexkey(IndexOptInfo *index,
  *	  expand_indexqual_rowcompare().
  *
  *	  It is also possible to match ScalarArrayOpExpr clauses to indexes, when
- *	  the clause is of the form "indexkey op ANY (arrayconst)".  Since the
- *	  executor can only handle these in the context of bitmap index scans,
- *	  our caller specifies whether to allow these or not.
+ *	  the clause is of the form "indexkey op ANY (arrayconst)".  Since not
+ *	  all indexes handle these natively, and the executor implements them
+ *	  only in the context of bitmap index scans, our caller specifies whether
+ *	  to allow these or not.
  *
  *	  For boolean indexes, it is also possible to match the clause directly
  *	  to the indexkey; or perhaps the clause is (NOT indexkey).
@@ -1357,8 +1367,8 @@ match_clause_to_indexcol(IndexOptInfo *index,
 		expr_coll = ((OpExpr *) clause)->inputcollid;
 		plain_op = true;
 	}
-	else if (saop_control != SAOP_FORBID &&
-			 clause && IsA(clause, ScalarArrayOpExpr))
+	else if (clause && IsA(clause, ScalarArrayOpExpr) &&
+			 (index->amsearcharray || saop_control != SAOP_PER_AM))
 	{
 		ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) clause;
 
@@ -2089,12 +2099,12 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 
 	/*
 	 * Find all the index paths that are usable for this join, except for
-	 * stuff involving OR and ScalarArrayOpExpr clauses.
+	 * stuff involving OR and executor-managed ScalarArrayOpExpr clauses.
 	 */
 	allindexpaths = find_usable_indexes(root, rel,
 										clause_list, NIL,
 										false, outer_rel,
-										SAOP_FORBID,
+										SAOP_PER_AM,
 										ST_ANYSCAN);
 
 	/*
@@ -2123,8 +2133,9 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 														 outer_rel));
 
 	/*
-	 * Likewise, generate paths using ScalarArrayOpExpr clauses; these can't
-	 * be simple indexscans but they can be used in bitmap scans.
+	 * Likewise, generate paths using executor-managed ScalarArrayOpExpr
+	 * clauses; these can't be simple indexscans but they can be used in
+	 * bitmap scans.
 	 */
 	bitindexpaths = list_concat(bitindexpaths,
 								find_saop_paths(root, rel,
