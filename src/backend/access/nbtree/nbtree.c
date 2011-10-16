@@ -433,11 +433,14 @@ btbeginscan(PG_FUNCTION_ARGS)
 
 	/*
 	 * We don't know yet whether the scan will be index-only, so we do not
-	 * allocate the tuple workspace arrays until btrescan.
+	 * allocate the tuple workspace arrays until btrescan.  However, we set up
+	 * scan->xs_itupdesc whether we'll need it or not, since that's so cheap.
 	 */
 	so->currTuples = so->markTuples = NULL;
 	so->currPos.nextTupleOffset = 0;
 	so->markPos.nextTupleOffset = 0;
+
+	scan->xs_itupdesc = RelationGetDescr(rel);
 
 	scan->opaque = so;
 

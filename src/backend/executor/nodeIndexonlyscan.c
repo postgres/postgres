@@ -36,7 +36,7 @@
 
 static TupleTableSlot *IndexOnlyNext(IndexOnlyScanState *node);
 static void StoreIndexTuple(TupleTableSlot *slot, IndexTuple itup,
-							Relation indexRel);
+				TupleDesc itupdesc);
 
 
 /* ----------------------------------------------------------------
@@ -114,7 +114,7 @@ IndexOnlyNext(IndexOnlyScanState *node)
 		/*
 		 * Fill the scan tuple slot with data from the index.
 		 */
-		StoreIndexTuple(slot, scandesc->xs_itup, scandesc->indexRelation);
+		StoreIndexTuple(slot, scandesc->xs_itup, scandesc->xs_itupdesc);
 
 		/*
 		 * If the index was lossy, we have to recheck the index quals.
@@ -151,25 +151,25 @@ IndexOnlyNext(IndexOnlyScanState *node)
  * right now we don't need it elsewhere.
  */
 static void
-StoreIndexTuple(TupleTableSlot *slot, IndexTuple itup, Relation indexRel)
+StoreIndexTuple(TupleTableSlot *slot, IndexTuple itup, TupleDesc itupdesc)
 {
-	TupleDesc	indexDesc = RelationGetDescr(indexRel);
-	int			nindexatts = indexDesc->natts;
+	int			nindexatts = itupdesc->natts;
 	Datum	   *values = slot->tts_values;
 	bool	   *isnull = slot->tts_isnull;
 	int			i;
 
 	/*
-	 * Note: we must use the index relation's tupdesc in index_getattr, not
+	 * Note: we must use the tupdesc supplied by the AM in index_getattr, not
 	 * the slot's tupdesc, in case the latter has different datatypes (this
 	 * happens for btree name_ops in particular).  They'd better have the same
-	 * number of columns though.
+	 * number of columns though, as well as being datatype-compatible which
+	 * is something we can't so easily check.
 	 */
 	Assert(slot->tts_tupleDescriptor->natts == nindexatts);
 
 	ExecClearTuple(slot);
 	for (i = 0; i < nindexatts; i++)
-		values[i] = index_getattr(itup, i + 1, indexDesc, &isnull[i]);
+		values[i] = index_getattr(itup, i + 1, itupdesc, &isnull[i]);
 	ExecStoreVirtualTuple(slot);
 }
 

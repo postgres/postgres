@@ -17,6 +17,7 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/itup.h"
+#include "access/tupdesc.h"
 
 
 typedef struct HeapScanDescData
@@ -80,6 +81,7 @@ typedef struct IndexScanDescData
 
 	/* in an index-only scan, this is valid after a successful amgettuple */
 	IndexTuple	xs_itup;		/* index tuple returned by AM */
+	TupleDesc	xs_itupdesc;	/* rowtype descriptor of xs_itup */
 
 	/* xs_ctup/xs_cbuf/xs_recheck are valid after a successful index_getnext */
 	HeapTupleData xs_ctup;		/* current heap tuple, if any */

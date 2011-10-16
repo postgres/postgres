@@ -112,6 +112,7 @@ RelationGetIndexScan(Relation indexRelation, int nkeys, int norderbys)
 	scan->opaque = NULL;
 
 	scan->xs_itup = NULL;
+	scan->xs_itupdesc = NULL;
 
 	ItemPointerSetInvalid(&scan->xs_ctup.t_self);
 	scan->xs_ctup.t_data = NULL;
