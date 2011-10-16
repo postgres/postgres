@@ -577,8 +577,9 @@ sendDir(char *path, int basepathlen, bool sizeonly)
 
 		snprintf(pathbuf, MAXPGPATH, "%s/%s", path, de->d_name);
 
-		/* Skip postmaster.pid in the data directory */
-		if (strcmp(pathbuf, "./postmaster.pid") == 0)
+		/* Skip postmaster.pid and postmaster.opts in the data directory */
+		if (strcmp(pathbuf, "./postmaster.pid") == 0 ||
+			strcmp(pathbuf, "./postmaster.opts") == 0)
 			continue;
 
 		if (lstat(pathbuf, &statbuf) != 0)
