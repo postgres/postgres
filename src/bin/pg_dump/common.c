@@ -125,7 +125,7 @@ getSchemaData(int *numTablesPtr)
 	funinfo = getFuncs(&numFuncs);
 	funinfoindex = buildIndexArray(funinfo, numFuncs, sizeof(FuncInfo));
 
-	/* this must be after getFuncs */
+	/* this must be after getTables and getFuncs */
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined types\n");
 	typinfo = getTypes(&numTypes);
