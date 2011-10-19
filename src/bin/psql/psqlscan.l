@@ -1673,7 +1673,7 @@ evaluate_backtick(void)
 		error = true;
 	}
 
-	if (PQExpBufferBroken(&cmd_output))
+	if (PQExpBufferDataBroken(cmd_output))
 	{
 		psql_error("%s: out of memory\n", cmd);
 		error = true;

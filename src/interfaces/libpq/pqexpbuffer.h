@@ -60,6 +60,14 @@ typedef PQExpBufferData *PQExpBuffer;
 	((str) == NULL || (str)->maxlen == 0)
 
 /*------------------------
+ * Same, but for use when using a static or local PQExpBufferData struct.
+ * For that, a null-pointer test is useless and may draw compiler warnings.
+ *------------------------
+ */
+#define PQExpBufferDataBroken(buf)	\
+	((buf).maxlen == 0)
+
+/*------------------------
  * Initial size of the data buffer in a PQExpBuffer.
  * NB: this must be large enough to hold error messages that might
  * be returned by PQrequestCancel().
