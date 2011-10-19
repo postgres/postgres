@@ -1685,9 +1685,13 @@ check_hba(hbaPort *port)
 /*
  * Read the config file and create a List of HbaLine records for the contents.
  *
- * The configuration is read into a temporary list, and if any parse error occurs
- * the old list is kept in place and false is returned. Only if the whole file
- * parses Ok is the list replaced, and the function returns true.
+ * The configuration is read into a temporary list, and if any parse error
+ * occurs the old list is kept in place and false is returned.  Only if the
+ * whole file parses OK is the list replaced, and the function returns true.
+ *
+ * On a false result, caller will take care of reporting a FATAL error in case
+ * this is the initial startup.  If it happens on reload, we just keep running
+ * with the old data.
  */
 bool
 load_hba(void)
@@ -1710,12 +1714,6 @@ load_hba(void)
 				(errcode_for_file_access(),
 				 errmsg("could not open configuration file \"%s\": %m",
 						HbaFileName)));
-
-		/*
-		 * Caller will take care of making this a FATAL error in case this is
-		 * the initial startup. If it happens on reload, we just keep the old
-		 * version around.
-		 */
 		return false;
 	}
 
@@ -1755,13 +1753,27 @@ load_hba(void)
 		new_parsed_lines = lappend(new_parsed_lines, newline);
 	}
 
+	/*
+	 * A valid HBA file must have at least one entry; else there's no way
+	 * to connect to the postmaster.  But only complain about this if we
+	 * didn't already have parsing errors.
+	 */
+	if (ok && new_parsed_lines == NIL)
+	{
+		ereport(LOG,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("configuration file \"%s\" contains no entries",
+						HbaFileName)));
+		ok = false;
+	}
+
 	/* Free tokenizer memory */
 	MemoryContextDelete(linecxt);
 	MemoryContextSwitchTo(oldcxt);
 
 	if (!ok)
 	{
-		/* Parsing failed at one or more rows, so bail out */
+		/* File contained one or more errors, so bail out */
 		MemoryContextDelete(hbacxt);
 		return false;
 	}
