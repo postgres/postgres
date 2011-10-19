@@ -466,9 +466,9 @@ CopySendEndOfRow(CopyState cstate)
 #endif
 			}
 
-			(void) fwrite(fe_msgbuf->data, fe_msgbuf->len,
-						  1, cstate->copy_file);
-			if (ferror(cstate->copy_file))
+			if (fwrite(fe_msgbuf->data, fe_msgbuf->len, 1,
+					   cstate->copy_file) != 1 ||
+				ferror(cstate->copy_file))
 				ereport(ERROR,
 						(errcode_for_file_access(),
 						 errmsg("could not write to COPY file: %m")));

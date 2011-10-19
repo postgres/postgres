@@ -3284,6 +3284,7 @@ pgstat_write_statsfile(bool permanent)
 	int32		format_id;
 	const char *tmpfile = permanent ? PGSTAT_STAT_PERMANENT_TMPFILE : pgstat_stat_tmpname;
 	const char *statfile = permanent ? PGSTAT_STAT_PERMANENT_FILENAME : pgstat_stat_filename;
+	int			rc;
 
 	/*
 	 * Open the statistics temp file to write out the current values.
@@ -3307,12 +3308,14 @@ pgstat_write_statsfile(bool permanent)
 	 * Write the file header --- currently just a format ID.
 	 */
 	format_id = PGSTAT_FILE_FORMAT_ID;
-	fwrite(&format_id, sizeof(format_id), 1, fpout);
+	rc = fwrite(&format_id, sizeof(format_id), 1, fpout);
+	(void) rc;					/* we'll check for error with ferror */
 
 	/*
 	 * Write global stats struct
 	 */
-	fwrite(&globalStats, sizeof(globalStats), 1, fpout);
+	rc = fwrite(&globalStats, sizeof(globalStats), 1, fpout);
+	(void) rc;					/* we'll check for error with ferror */
 
 	/*
 	 * Walk through the database table.
@@ -3326,7 +3329,8 @@ pgstat_write_statsfile(bool permanent)
 		 * use to any other process.
 		 */
 		fputc('D', fpout);
-		fwrite(dbentry, offsetof(PgStat_StatDBEntry, tables), 1, fpout);
+		rc = fwrite(dbentry, offsetof(PgStat_StatDBEntry, tables), 1, fpout);
+		(void) rc;				/* we'll check for error with ferror */
 
 		/*
 		 * Walk through the database's access stats per table.
@@ -3335,7 +3339,8 @@ pgstat_write_statsfile(bool permanent)
 		while ((tabentry = (PgStat_StatTabEntry *) hash_seq_search(&tstat)) != NULL)
 		{
 			fputc('T', fpout);
-			fwrite(tabentry, sizeof(PgStat_StatTabEntry), 1, fpout);
+			rc = fwrite(tabentry, sizeof(PgStat_StatTabEntry), 1, fpout);
+			(void) rc;			/* we'll check for error with ferror */
 		}
 
 		/*
@@ -3345,7 +3350,8 @@ pgstat_write_statsfile(bool permanent)
 		while ((funcentry = (PgStat_StatFuncEntry *) hash_seq_search(&fstat)) != NULL)
 		{
 			fputc('F', fpout);
-			fwrite(funcentry, sizeof(PgStat_StatFuncEntry), 1, fpout);
+			rc = fwrite(funcentry, sizeof(PgStat_StatFuncEntry), 1, fpout);
+			(void) rc;			/* we'll check for error with ferror */
 		}
 
 		/*

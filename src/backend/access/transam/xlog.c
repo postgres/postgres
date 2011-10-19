@@ -9067,8 +9067,10 @@ do_pg_start_backup(const char *backupidstr, bool fast, char **labelfile)
 						(errcode_for_file_access(),
 						 errmsg("could not create file \"%s\": %m",
 								BACKUP_LABEL_FILE)));
-			fwrite(labelfbuf.data, labelfbuf.len, 1, fp);
-			if (fflush(fp) || ferror(fp) || FreeFile(fp))
+			if (fwrite(labelfbuf.data, labelfbuf.len, 1, fp) != 1 ||
+				fflush(fp) != 0 ||
+				ferror(fp) ||
+				FreeFile(fp))
 				ereport(ERROR,
 						(errcode_for_file_access(),
 						 errmsg("could not write file \"%s\": %m",

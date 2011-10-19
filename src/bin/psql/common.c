@@ -228,6 +228,7 @@ static void
 handle_sigint(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
+	int			rc;
 	char		errbuf[256];
 
 	/* if we are waiting for input, longjmp out of it */
@@ -244,11 +245,16 @@ handle_sigint(SIGNAL_ARGS)
 	if (cancelConn != NULL)
 	{
 		if (PQcancel(cancelConn, errbuf, sizeof(errbuf)))
-			write_stderr("Cancel request sent\n");
+		{
+			rc = write_stderr("Cancel request sent\n");
+			(void) rc;			/* ignore errors, nothing we can do here */
+		}
 		else
 		{
-			write_stderr("Could not send cancel request: ");
-			write_stderr(errbuf);
+			rc = write_stderr("Could not send cancel request: ");
+			(void) rc;			/* ignore errors, nothing we can do here */
+			rc = write_stderr(errbuf);
+			(void) rc;			/* ignore errors, nothing we can do here */
 		}
 	}
 

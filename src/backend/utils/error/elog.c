@@ -1747,10 +1747,12 @@ write_eventlog(int level, const char *line, int len)
 static void
 write_console(const char *line, int len)
 {
+	int			rc;
+
 #ifdef WIN32
 
 	/*
-	 * WriteConsoleW() will fail of stdout is redirected, so just fall through
+	 * WriteConsoleW() will fail if stdout is redirected, so just fall through
 	 * to writing unconverted to the logfile in this case.
 	 *
 	 * Since we palloc the structure required for conversion, also fall
@@ -1788,13 +1790,18 @@ write_console(const char *line, int len)
 #else
 
 	/*
-	 * Conversion on non-win32 platform is not implemented yet. It requires
+	 * Conversion on non-win32 platforms is not implemented yet. It requires
 	 * non-throw version of pg_do_encoding_conversion(), that converts
 	 * unconvertable characters to '?' without errors.
 	 */
 #endif
 
-	write(fileno(stderr), line, len);
+	/*
+	 * We ignore any error from write() here.  We have no useful way to report
+	 * it ... certainly whining on stderr isn't likely to be productive.
+	 */
+	rc = write(fileno(stderr), line, len);
+	(void) rc;
 }
 
 /*
@@ -2457,13 +2464,30 @@ send_message_to_server_log(ErrorData *edata)
 
 /*
  * Send data to the syslogger using the chunked protocol
+ *
+ * Note: when there are multiple backends writing into the syslogger pipe,
+ * it's critical that each write go into the pipe indivisibly, and not
+ * get interleaved with data from other processes.  Fortunately, the POSIX
+ * spec requires that writes to pipes be atomic so long as they are not
+ * more than PIPE_BUF bytes long.  So we divide long messages into chunks
+ * that are no more than that length, and send one chunk per write() call.
+ * The collector process knows how to reassemble the chunks.
+ *
+ * Because of the atomic write requirement, there are only two possible
+ * results from write() here: -1 for failure, or the requested number of
+ * bytes.  There is not really anything we can do about a failure; retry would
+ * probably be an infinite loop, and we can't even report the error usefully.
+ * (There is noplace else we could send it!)  So we might as well just ignore
+ * the result from write().  However, on some platforms you get a compiler
+ * warning from ignoring write()'s result, so do a little dance with casting
+ * rc to void to shut up the compiler.
  */
 static void
 write_pipe_chunks(char *data, int len, int dest)
 {
 	PipeProtoChunk p;
-
 	int			fd = fileno(stderr);
+	int			rc;
 
 	Assert(len > 0);
 
@@ -2476,7 +2500,8 @@ write_pipe_chunks(char *data, int len, int dest)
 		p.proto.is_last = (dest == LOG_DESTINATION_CSVLOG ? 'F' : 'f');
 		p.proto.len = PIPE_MAX_PAYLOAD;
 		memcpy(p.proto.data, data, PIPE_MAX_PAYLOAD);
-		write(fd, &p, PIPE_HEADER_SIZE + PIPE_MAX_PAYLOAD);
+		rc = write(fd, &p, PIPE_HEADER_SIZE + PIPE_MAX_PAYLOAD);
+		(void) rc;
 		data += PIPE_MAX_PAYLOAD;
 		len -= PIPE_MAX_PAYLOAD;
 	}
@@ -2485,7 +2510,8 @@ write_pipe_chunks(char *data, int len, int dest)
 	p.proto.is_last = (dest == LOG_DESTINATION_CSVLOG ? 'T' : 't');
 	p.proto.len = len;
 	memcpy(p.proto.data, data, len);
-	write(fd, &p, PIPE_HEADER_SIZE + len);
+	rc = write(fd, &p, PIPE_HEADER_SIZE + len);
+	(void) rc;
 }
 
 
