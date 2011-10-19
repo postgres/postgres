@@ -26,30 +26,30 @@ CHECKPOINT
   <title>Description</title>
 
   <para>
-   Write-Ahead Logging (WAL) puts a checkpoint in the transaction log
-   every so often. (To adjust the automatic checkpoint interval, see
-   the run-time configuration options <xref linkend="guc-checkpoint-segments">
-   and <xref linkend="guc-checkpoint-timeout">.)  The
-   <command>CHECKPOINT</command> command forces an immediate
-   checkpoint when the command is issued, without waiting for a
-   scheduled checkpoint.
-  </para>
-
-  <para>
    A checkpoint is a point in the transaction log sequence at which
    all data files have been updated to reflect the information in the
    log.  All data files will be flushed to disk.  Refer to
-   <xref linkend="wal"> for more information about the WAL system.
+   <xref linkend="wal-configuration"> for more details about what happens
+   during a checkpoint.
+  </para>
+
+  <para>
+   The <command>CHECKPOINT</command> command forces an immediate
+   checkpoint when the command is issued, without waiting for a
+   regular checkpoint scheduled by the system (controlled by the settings in
+   <xref linkend="runtime-config-wal-checkpoints">).
+   <command>CHECKPOINT</command> is not intended for use during normal
+   operation.
   </para>
 
   <para>
    If executed during recovery, the <command>CHECKPOINT</command> command
-   will force a restartpoint rather than writing a new checkpoint.
+   will force a restartpoint (see <xref linkend="wal-configuration">)
+   rather than writing a new checkpoint.
   </para>
 
   <para>
-   Only superusers can call <command>CHECKPOINT</command>.  The command is
-   not intended for use during normal operation.
+   Only superusers can call <command>CHECKPOINT</command>.
   </para>
  </refsect1>
 
