@@ -1564,7 +1564,7 @@ RemoveOpClass(RemoveOpClassStmt *stmt)
 	if (!HeapTupleIsValid(tuple))
 	{
 		ereport(NOTICE,
-				(errmsg("operator class \"%s\" does not exist for access method \"%s\"",
+				(errmsg("operator class \"%s\" does not exist for access method \"%s\", skipping",
 						NameListToString(stmt->opclassname), stmt->amname)));
 		return;
 	}

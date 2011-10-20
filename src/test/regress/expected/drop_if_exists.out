@@ -205,7 +205,7 @@ NOTICE:  server "test_server_exists" does not exist, skipping
 DROP OPERATOR CLASS test_operator_class USING btree;
 ERROR:  operator class "test_operator_class" does not exist for access method "btree"
 DROP OPERATOR CLASS IF EXISTS test_operator_class USING btree;
-NOTICE:  operator class "test_operator_class" does not exist for access method "btree"
+NOTICE:  operator class "test_operator_class" does not exist for access method "btree", skipping
 DROP OPERATOR CLASS test_operator_class USING no_such_am;
 ERROR:  access method "no_such_am" does not exist
 DROP OPERATOR CLASS IF EXISTS test_operator_class USING no_such_am;
