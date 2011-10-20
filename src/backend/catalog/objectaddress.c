@@ -116,7 +116,7 @@ static ObjectPropertyType ObjectProperty[] =
 		ExtensionRelationId,
 		ExtensionOidIndexId,
 		-1,
-		Anum_pg_extension_extnamespace
+		InvalidAttrNumber		/* extension doesn't belong to extnamespace */
 	},
 	{
 		ForeignDataWrapperRelationId,
