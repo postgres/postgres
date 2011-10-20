@@ -118,67 +118,6 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 }
 
 /*
- * DROP CONVERSION
- */
-void
-DropConversionsCommand(DropStmt *drop)
-{
-	ObjectAddresses *objects;
-	ListCell   *cell;
-
-	/*
-	 * First we identify all the conversions, then we delete them in a single
-	 * performMultipleDeletions() call.  This is to avoid unwanted DROP
-	 * RESTRICT errors if one of the conversions depends on another. (Not that
-	 * that is very likely, but we may as well do this consistently.)
-	 */
-	objects = new_object_addresses();
-
-	foreach(cell, drop->objects)
-	{
-		List	   *name = (List *) lfirst(cell);
-		Oid			conversionOid;
-		HeapTuple	tuple;
-		Form_pg_conversion con;
-		ObjectAddress object;
-
-		conversionOid = get_conversion_oid(name, drop->missing_ok);
-
-		if (!OidIsValid(conversionOid))
-		{
-			ereport(NOTICE,
-					(errmsg("conversion \"%s\" does not exist, skipping",
-							NameListToString(name))));
-			continue;
-		}
-
-		tuple = SearchSysCache1(CONVOID, ObjectIdGetDatum(conversionOid));
-		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "cache lookup failed for conversion %u",
-				 conversionOid);
-		con = (Form_pg_conversion) GETSTRUCT(tuple);
-
-		/* Permission check: must own conversion or its namespace */
-		if (!pg_conversion_ownercheck(conversionOid, GetUserId()) &&
-			!pg_namespace_ownercheck(con->connamespace, GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CONVERSION,
-						   NameStr(con->conname));
-
-		object.classId = ConversionRelationId;
-		object.objectId = conversionOid;
-		object.objectSubId = 0;
-
-		add_exact_object_address(&object, objects);
-
-		ReleaseSysCache(tuple);
-	}
-
-	performMultipleDeletions(objects, drop->behavior);
-
-	free_object_addresses(objects);
-}
-
-/*
  * Rename conversion
  */
 void

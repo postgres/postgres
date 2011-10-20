@@ -1563,69 +1563,6 @@ InsertExtensionTuple(const char *extName, Oid extOwner,
 	return extensionOid;
 }
 
-
-/*
- *	RemoveExtensions
- *		Implements DROP EXTENSION.
- */
-void
-RemoveExtensions(DropStmt *drop)
-{
-	ObjectAddresses *objects;
-	ListCell   *cell;
-
-	/*
-	 * First we identify all the extensions, then we delete them in a single
-	 * performMultipleDeletions() call.  This is to avoid unwanted DROP
-	 * RESTRICT errors if one of the extensions depends on another.
-	 */
-	objects = new_object_addresses();
-
-	foreach(cell, drop->objects)
-	{
-		List	   *names = (List *) lfirst(cell);
-		char	   *extensionName;
-		Oid			extensionId;
-		ObjectAddress object;
-
-		if (list_length(names) != 1)
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("extension name cannot be qualified")));
-		extensionName = strVal(linitial(names));
-
-		extensionId = get_extension_oid(extensionName, drop->missing_ok);
-
-		if (!OidIsValid(extensionId))
-		{
-			ereport(NOTICE,
-					(errmsg("extension \"%s\" does not exist, skipping",
-							extensionName)));
-			continue;
-		}
-
-		/* Permission check: must own extension */
-		if (!pg_extension_ownercheck(extensionId, GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_EXTENSION,
-						   extensionName);
-
-		object.classId = ExtensionRelationId;
-		object.objectId = extensionId;
-		object.objectSubId = 0;
-
-		add_exact_object_address(&object, objects);
-	}
-
-	/*
-	 * Do the deletions.  Objects contained in the extension(s) are removed by
-	 * means of their dependency links to the extensions.
-	 */
-	performMultipleDeletions(objects, drop->behavior);
-
-	free_object_addresses(objects);
-}
-
-
 /*
  * Guts of extension deletion.
  *

@@ -35,4 +35,6 @@ extern void check_object_ownership(Oid roleid,
 					   ObjectType objtype, ObjectAddress address,
 					   List *objname, List *objargs, Relation relation);
 
+extern Oid	get_object_namespace(const ObjectAddress *address);
+
 #endif   /* PARSE_OBJECT_H */

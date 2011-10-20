@@ -146,69 +146,6 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 	SetUserIdAndSecContext(saved_uid, save_sec_context);
 }
 
-
-/*
- *	RemoveSchemas
- *		Implements DROP SCHEMA.
- */
-void
-RemoveSchemas(DropStmt *drop)
-{
-	ObjectAddresses *objects;
-	ListCell   *cell;
-
-	/*
-	 * First we identify all the schemas, then we delete them in a single
-	 * performMultipleDeletions() call.  This is to avoid unwanted DROP
-	 * RESTRICT errors if one of the schemas depends on another.
-	 */
-	objects = new_object_addresses();
-
-	foreach(cell, drop->objects)
-	{
-		List	   *names = (List *) lfirst(cell);
-		char	   *namespaceName;
-		Oid			namespaceId;
-		ObjectAddress object;
-
-		if (list_length(names) != 1)
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("schema name cannot be qualified")));
-		namespaceName = strVal(linitial(names));
-
-		namespaceId = get_namespace_oid(namespaceName, drop->missing_ok);
-
-		if (!OidIsValid(namespaceId))
-		{
-			ereport(NOTICE,
-					(errmsg("schema \"%s\" does not exist, skipping",
-							namespaceName)));
-			continue;
-		}
-
-		/* Permission check */
-		if (!pg_namespace_ownercheck(namespaceId, GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_NAMESPACE,
-						   namespaceName);
-
-		object.classId = NamespaceRelationId;
-		object.objectId = namespaceId;
-		object.objectSubId = 0;
-
-		add_exact_object_address(&object, objects);
-	}
-
-	/*
-	 * Do the deletions.  Objects contained in the schema(s) are removed by
-	 * means of their dependency links to the schema.
-	 */
-	performMultipleDeletions(objects, drop->behavior);
-
-	free_object_addresses(objects);
-}
-
-
 /*
  * Guts of schema deletion.
  */

@@ -20,7 +20,6 @@
 #define DEFAULT_TYPDELIM		','
 
 extern void DefineType(List *names, List *parameters);
-extern void RemoveTypes(DropStmt *drop);
 extern void RemoveTypeById(Oid typeOid);
 extern void DefineDomain(CreateDomainStmt *stmt);
 extern void DefineEnum(CreateEnumStmt *stmt);

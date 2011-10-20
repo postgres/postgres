@@ -16,6 +16,8 @@
 
 #include "nodes/parsenodes.h"
 
+/* commands/dropcmds.c */
+extern void RemoveObjects(DropStmt *stmt);
 
 /* commands/indexcmds.c */
 extern Oid DefineIndex(RangeVar *heapRelation,
@@ -122,12 +124,10 @@ extern void DefineTSParser(List *names, List *parameters);
 extern void RenameTSParser(List *oldname, const char *newname);
 extern void AlterTSParserNamespace(List *name, const char *newschema);
 extern Oid	AlterTSParserNamespace_oid(Oid prsId, Oid newNspOid);
-extern void RemoveTSParsers(DropStmt *drop);
 extern void RemoveTSParserById(Oid prsId);
 
 extern void DefineTSDictionary(List *names, List *parameters);
 extern void RenameTSDictionary(List *oldname, const char *newname);
-extern void RemoveTSDictionaries(DropStmt *drop);
 extern void RemoveTSDictionaryById(Oid dictId);
 extern void AlterTSDictionary(AlterTSDictionaryStmt *stmt);
 extern void AlterTSDictionaryOwner(List *name, Oid newOwnerId);
@@ -138,12 +138,10 @@ extern void DefineTSTemplate(List *names, List *parameters);
 extern void RenameTSTemplate(List *oldname, const char *newname);
 extern void AlterTSTemplateNamespace(List *name, const char *newschema);
 extern Oid	AlterTSTemplateNamespace_oid(Oid tmplId, Oid newNspOid);
-extern void RemoveTSTemplates(DropStmt *stmt);
 extern void RemoveTSTemplateById(Oid tmplId);
 
 extern void DefineTSConfiguration(List *names, List *parameters);
 extern void RenameTSConfiguration(List *oldname, const char *newname);
-extern void RemoveTSConfigurations(DropStmt *stmt);
 extern void RemoveTSConfigurationById(Oid cfgId);
 extern void AlterTSConfiguration(AlterTSConfigurationStmt *stmt);
 extern void AlterTSConfigurationOwner(List *name, Oid newOwnerId);

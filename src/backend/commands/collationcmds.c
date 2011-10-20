@@ -145,67 +145,6 @@ DefineCollation(List *names, List *parameters)
 }
 
 /*
- * DROP COLLATION
- */
-void
-DropCollationsCommand(DropStmt *drop)
-{
-	ObjectAddresses *objects;
-	ListCell   *cell;
-
-	/*
-	 * First we identify all the collations, then we delete them in a single
-	 * performMultipleDeletions() call.  This is to avoid unwanted DROP
-	 * RESTRICT errors if one of the collations depends on another. (Not that
-	 * that is very likely, but we may as well do this consistently.)
-	 */
-	objects = new_object_addresses();
-
-	foreach(cell, drop->objects)
-	{
-		List	   *name = (List *) lfirst(cell);
-		Oid			collationOid;
-		HeapTuple	tuple;
-		Form_pg_collation coll;
-		ObjectAddress object;
-
-		collationOid = get_collation_oid(name, drop->missing_ok);
-
-		if (!OidIsValid(collationOid))
-		{
-			ereport(NOTICE,
-					(errmsg("collation \"%s\" does not exist, skipping",
-							NameListToString(name))));
-			continue;
-		}
-
-		tuple = SearchSysCache1(COLLOID, ObjectIdGetDatum(collationOid));
-		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "cache lookup failed for collation %u",
-				 collationOid);
-		coll = (Form_pg_collation) GETSTRUCT(tuple);
-
-		/* Permission check: must own collation or its namespace */
-		if (!pg_collation_ownercheck(collationOid, GetUserId()) &&
-			!pg_namespace_ownercheck(coll->collnamespace, GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_COLLATION,
-						   NameStr(coll->collname));
-
-		object.classId = CollationRelationId;
-		object.objectId = collationOid;
-		object.objectSubId = 0;
-
-		add_exact_object_address(&object, objects);
-
-		ReleaseSysCache(tuple);
-	}
-
-	performMultipleDeletions(objects, drop->behavior);
-
-	free_object_addresses(objects);
-}
-
-/*
  * Rename collation
  */
 void
