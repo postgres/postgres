@@ -755,7 +755,7 @@ psql_completion(char *text, int start, int end)
 	completion_info_charp2 = NULL;
 
 	/*
-	 * Scan the input line before our current position for the last five
+	 * Scan the input line before our current position for the last six
 	 * words. According to those we'll make some smart decisions on what the
 	 * user is probably intending to type. TODO: Use strtokx() to do this.
 	 */
@@ -2922,6 +2922,7 @@ psql_completion(char *text, int start, int end)
 	free(prev3_wd);
 	free(prev4_wd);
 	free(prev5_wd);
+	free(prev6_wd);
 
 	/* Return our Grand List O' Matches */
 	return matches;
