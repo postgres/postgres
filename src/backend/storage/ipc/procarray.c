@@ -997,22 +997,32 @@ TransactionIdIsActive(TransactionId xid)
  * This is also used to determine where to truncate pg_subtrans.  allDbs
  * must be TRUE for that case, and ignoreVacuum FALSE.
  *
- * Note: it's possible for the calculated value to move backwards on repeated
- * calls. The calculated value is conservative, so that anything older is
- * definitely not considered as running by anyone anymore, but the exact
- * value calculated depends on a number of things. For example, if allDbs is
- * TRUE and there are no transactions running in the current database,
- * GetOldestXmin() returns latestCompletedXid. If a transaction begins after
- * that, its xmin will include in-progress transactions in other databases
- * that started earlier, so another call will return an lower value. The
- * return value is also adjusted with vacuum_defer_cleanup_age, so increasing
- * that setting on the fly is an easy way to have GetOldestXmin() move
- * backwards.
- *
  * Note: we include all currently running xids in the set of considered xids.
  * This ensures that if a just-started xact has not yet set its snapshot,
  * when it does set the snapshot it cannot set xmin less than what we compute.
  * See notes in src/backend/access/transam/README.
+ *
+ * Note: despite the above, it's possible for the calculated value to move
+ * backwards on repeated calls. The calculated value is conservative, so that
+ * anything older is definitely not considered as running by anyone anymore,
+ * but the exact value calculated depends on a number of things. For example,
+ * if allDbs is FALSE and there are no transactions running in the current
+ * database, GetOldestXmin() returns latestCompletedXid. If a transaction
+ * begins after that, its xmin will include in-progress transactions in other
+ * databases that started earlier, so another call will return a lower value.
+ * Nonetheless it is safe to vacuum a table in the current database with the
+ * first result.  There are also replication-related effects: a walsender
+ * process can set its xmin based on transactions that are no longer running
+ * in the master but are still being replayed on the standby, thus possibly
+ * making the GetOldestXmin reading go backwards.  In this case there is a
+ * possibility that we lose data that the standby would like to have, but
+ * there is little we can do about that --- data is only protected if the
+ * walsender runs continuously while queries are executed on the standby.
+ * (The Hot Standby code deals with such cases by failing standby queries
+ * that needed to access already-removed data, so there's no integrity bug.)
+ * The return value is also adjusted with vacuum_defer_cleanup_age, so
+ * increasing that setting on the fly is another easy way to make
+ * GetOldestXmin() move backwards, with no consequences for data integrity.
  */
 TransactionId
 GetOldestXmin(bool allDbs, bool ignoreVacuum)
@@ -1045,7 +1055,7 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
 
 		if (allDbs ||
 			proc->databaseId == MyDatabaseId ||
-			proc->databaseId == 0)		/* include WalSender */
+			proc->databaseId == 0)		/* always include WalSender */
 		{
 			/* Fetch xid just once - see GetNewTransactionId */
 			TransactionId xid = proc->xid;
@@ -1091,16 +1101,18 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
 		LWLockRelease(ProcArrayLock);
 
 		/*
-		 * Compute the cutoff XID, being careful not to generate a "permanent"
-		 * XID. We need do this only on the primary, never on standby.
+		 * Compute the cutoff XID by subtracting vacuum_defer_cleanup_age,
+		 * being careful not to generate a "permanent" XID.
 		 *
 		 * vacuum_defer_cleanup_age provides some additional "slop" for the
 		 * benefit of hot standby queries on slave servers.  This is quick and
 		 * dirty, and perhaps not all that useful unless the master has a
-		 * predictable transaction rate, but it's what we've got.  Note that
-		 * we are assuming vacuum_defer_cleanup_age isn't large enough to
-		 * cause wraparound --- so guc.c should limit it to no more than the
-		 * xidStopLimit threshold in varsup.c.
+		 * predictable transaction rate, but it offers some protection when
+		 * there's no walsender connection.  Note that we are assuming
+		 * vacuum_defer_cleanup_age isn't large enough to cause wraparound ---
+		 * so guc.c should limit it to no more than the xidStopLimit threshold
+		 * in varsup.c.  Also note that we intentionally don't apply
+		 * vacuum_defer_cleanup_age on standby servers.
 		 */
 		result -= vacuum_defer_cleanup_age;
 		if (!TransactionIdIsNormal(result))
