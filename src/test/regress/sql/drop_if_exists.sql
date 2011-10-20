@@ -109,10 +109,7 @@ DROP GROUP IF EXISTS tg1, tg2;
 DROP GROUP tg1;
 
 -- collation
-DROP COLLATION test_collation_exists;
 DROP COLLATION IF EXISTS test_collation_exists;
-CREATE COLLATION test_collation_exists FROM "POSIX";
-DROP COLLATION test_collation_exists;
 
 -- conversion
 DROP CONVERSION test_conversion_exists;

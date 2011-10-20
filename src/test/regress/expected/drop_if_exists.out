@@ -86,12 +86,8 @@ NOTICE:  role "tg2" does not exist, skipping
 DROP GROUP tg1;
 ERROR:  role "tg1" does not exist
 -- collation
-DROP COLLATION test_collation_exists;
-ERROR:  collation "test_collation_exists" for encoding "UTF8" does not exist
 DROP COLLATION IF EXISTS test_collation_exists;
 NOTICE:  collation "test_collation_exists" does not exist, skipping
-CREATE COLLATION test_collation_exists FROM "POSIX";
-DROP COLLATION test_collation_exists;
 -- conversion
 DROP CONVERSION test_conversion_exists;
 ERROR:  conversion "test_conversion_exists" does not exist
