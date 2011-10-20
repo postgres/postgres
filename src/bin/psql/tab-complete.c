@@ -668,7 +668,7 @@ static char **complete_from_variables(char *text,
 
 static PGresult *exec_query(const char *query);
 
-static char *previous_word(int point, int skip);
+static void get_previous_words(int point, char **previous_words, int nwords);
 
 #ifdef NOT_USED
 static char *quote_file_name(char *text, int match_type, char *quote_pointer);
@@ -710,13 +710,16 @@ psql_completion(char *text, int start, int end)
 	/* This is the variable we'll return. */
 	char	  **matches = NULL;
 
-	/* These are going to contain some scannage of the input line. */
-	char	   *prev_wd,
-			   *prev2_wd,
-			   *prev3_wd,
-			   *prev4_wd,
-			   *prev5_wd,
-			   *prev6_wd;
+	/* This array will contain some scannage of the input line. */
+	char	   *previous_words[6];
+
+	/* For compactness, we use these macros to reference previous_words[]. */
+#define prev_wd   (previous_words[0])
+#define prev2_wd  (previous_words[1])
+#define prev3_wd  (previous_words[2])
+#define prev4_wd  (previous_words[3])
+#define prev5_wd  (previous_words[4])
+#define prev6_wd  (previous_words[5])
 
 	static const char *const sql_commands[] = {
 		"ABORT", "ALTER", "ANALYZE", "BEGIN", "CHECKPOINT", "CLOSE", "CLUSTER",
@@ -755,16 +758,11 @@ psql_completion(char *text, int start, int end)
 	completion_info_charp2 = NULL;
 
 	/*
-	 * Scan the input line before our current position for the last five
+	 * Scan the input line before our current position for the last few
 	 * words. According to those we'll make some smart decisions on what the
-	 * user is probably intending to type. TODO: Use strtokx() to do this.
+	 * user is probably intending to type.
 	 */
-	prev_wd = previous_word(start, 0);
-	prev2_wd = previous_word(start, 1);
-	prev3_wd = previous_word(start, 2);
-	prev4_wd = previous_word(start, 3);
-	prev5_wd = previous_word(start, 4);
-	prev6_wd = previous_word(start, 5);
+	get_previous_words(start, previous_words, lengthof(previous_words));
 
 	/* If a backslash command was started, continue */
 	if (text[0] == '\\')
@@ -782,7 +780,7 @@ psql_completion(char *text, int start, int end)
 	}
 
 	/* If no previous word, suggest one of the basic sql commands */
-	else if (!prev_wd)
+	else if (prev_wd[0] == '\0')
 		COMPLETE_WITH_LIST(sql_commands);
 
 /* CREATE */
@@ -790,10 +788,10 @@ psql_completion(char *text, int start, int end)
 	else if (pg_strcasecmp(prev_wd, "CREATE") == 0)
 		matches = completion_matches(text, create_command_generator);
 
-/* DROP, but watch out for DROP embedded in other commands */
+/* DROP, but not DROP embedded in other commands */
 	/* complete with something you can drop */
 	else if (pg_strcasecmp(prev_wd, "DROP") == 0 &&
-			 pg_strcasecmp(prev2_wd, "DROP") == 0)
+			 prev2_wd[0] == '\0')
 		matches = completion_matches(text, drop_command_generator);
 
 /* ALTER */
@@ -2918,11 +2916,12 @@ psql_completion(char *text, int start, int end)
 	}
 
 	/* free storage */
-	free(prev_wd);
-	free(prev2_wd);
-	free(prev3_wd);
-	free(prev4_wd);
-	free(prev5_wd);
+	{
+		int			i;
+
+		for (i = 0; i < lengthof(previous_words); i++)
+			free(previous_words[i]);
+	}
 
 	/* Return our Grand List O' Matches */
 	return matches;
@@ -3372,77 +3371,88 @@ exec_query(const char *query)
 
 
 /*
- * Return the word (space delimited) before point. Set skip > 0 to
- * skip that many words; e.g. skip=1 finds the word before the
- * previous one. Return value is NULL or a malloc'ed string.
+ * Return the nwords word(s) before point.  Words are returned right to left,
+ * that is, previous_words[0] gets the last word before point.
+ * If we run out of words, remaining array elements are set to empty strings.
+ * Each array element is filled with a malloc'd string.
  */
-static char *
-previous_word(int point, int skip)
+static void
+get_previous_words(int point, char **previous_words, int nwords)
 {
-	int			i,
-				start = 0,
-				end = -1,
-				inquotes = 0;
-	char	   *s;
 	const char *buf = rl_line_buffer;	/* alias */
+	int			i;
 
-	/* first we look for a space or a parenthesis before the current word */
+	/* first we look for a non-word char before the current point */
 	for (i = point - 1; i >= 0; i--)
 		if (strchr(WORD_BREAKS, buf[i]))
 			break;
 	point = i;
 
-	while (skip-- >= 0)
+	while (nwords-- > 0)
 	{
-		int			parentheses = 0;
+		int			start,
+					end;
+		char	   *s;
 
 		/* now find the first non-space which then constitutes the end */
+		end = -1;
 		for (i = point; i >= 0; i--)
-			if (buf[i] != ' ')
+		{
+			if (!isspace((unsigned char) buf[i]))
 			{
 				end = i;
 				break;
 			}
-
-		/*
-		 * If no end found we return null, because there is no word before the
-		 * point
-		 */
-		if (end == -1)
-			return NULL;
-
-		/*
-		 * Otherwise we now look for the start. The start is either the last
-		 * character before any space going backwards from the end, or it's
-		 * simply character 0. We also handle open quotes and parentheses.
-		 */
-		for (start = end; start > 0; start--)
-		{
-			if (buf[start] == '"')
-				inquotes = !inquotes;
-			if (inquotes == 0)
-			{
-				if (buf[start] == ')')
-					parentheses++;
-				else if (buf[start] == '(')
-				{
-					if (--parentheses <= 0)
-						break;
-				}
-				else if (parentheses == 0 &&
-						 strchr(WORD_BREAKS, buf[start - 1]))
-					break;
-			}
 		}
 
-		point = start - 1;
+		/*
+		 * If no end found we return an empty string, because there is no word
+		 * before the point
+		 */
+		if (end < 0)
+		{
+			point = end;
+			s = pg_strdup("");
+		}
+		else
+		{
+			/*
+			 * Otherwise we now look for the start. The start is either the
+			 * last character before any word-break character going backwards
+			 * from the end, or it's simply character 0. We also handle open
+			 * quotes and parentheses.
+			 */
+			bool		inquotes = false;
+			int			parentheses = 0;
+
+			for (start = end; start > 0; start--)
+			{
+				if (buf[start] == '"')
+					inquotes = !inquotes;
+				else if (!inquotes)
+				{
+					if (buf[start] == ')')
+						parentheses++;
+					else if (buf[start] == '(')
+					{
+						if (--parentheses <= 0)
+							break;
+					}
+					else if (parentheses == 0 &&
+							 strchr(WORD_BREAKS, buf[start - 1]))
+						break;
+				}
+			}
+
+			point = start - 1;
+
+			/* make a copy of chars from start to end inclusive */
+			s = pg_malloc(end - start + 2);
+			strlcpy(s, &buf[start], end - start + 2);
+		}
+
+		*previous_words++ = s;
 	}
-
-	/* make a copy */
-	s = pg_malloc(end - start + 2);
-	strlcpy(s, &buf[start], end - start + 2);
-
-	return s;
 }
 
 #ifdef NOT_USED
