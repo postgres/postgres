@@ -214,7 +214,7 @@ ERROR:  access method "no_such_am" does not exist
 DROP OPERATOR FAMILY test_operator_family USING btree;
 ERROR:  operator family "test_operator_family" does not exist for access method "btree"
 DROP OPERATOR FAMILY IF EXISTS test_operator_family USING btree;
-ERROR:  operator family "test_operator_family" does not exist for access method "btree"
+NOTICE:  operator family "test_operator_family" does not exist for access method "btree", skipping
 DROP OPERATOR FAMILY test_operator_family USING no_such_am;
 ERROR:  access method "no_such_am" does not exist
 DROP OPERATOR FAMILY IF EXISTS test_operator_family USING no_such_am;
