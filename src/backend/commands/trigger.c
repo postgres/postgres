@@ -1038,7 +1038,7 @@ DropTrigger(RangeVar *relation, const char *trigname, DropBehavior behavior,
 	ObjectAddress object;
 
 	/* lock level should match RemoveTriggerById */
-	relid = RangeVarGetRelid(relation, ShareRowExclusiveLock, false, false);
+	relid = RangeVarGetRelid(relation, AccessExclusiveLock, false, false);
 
 	object.classId = TriggerRelationId;
 	object.objectId = get_trigger_oid(relid, trigname, missing_ok);

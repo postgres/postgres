@@ -45,8 +45,8 @@ RemoveRewriteRule(RangeVar *relation, const char *ruleName,
 	Oid			owningRel;
 	ObjectAddress object;
 
-	/* should match RemoveRewriteRuleById */
-	owningRel = RangeVarGetRelid(relation, ShareUpdateExclusiveLock,
+	/* lock level should match RemoveRewriteRuleById */
+	owningRel = RangeVarGetRelid(relation, AccessExclusiveLock,
 								 false, false);
 
 	/*
