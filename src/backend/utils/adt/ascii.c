@@ -160,35 +160,38 @@ to_ascii_default(PG_FUNCTION_ARGS)
 }
 
 /* ----------
- * "Escape" a string in unknown encoding to a valid ASCII string.
- * Replace non-ASCII bytes with '?'
- * This must not trigger ereport(ERROR), as it is called from postmaster.
+ * Copy a string in an arbitrary backend-safe encoding, converting it to a
+ * valid ASCII string by replacing non-ASCII bytes with '?'.  Otherwise the
+ * behavior is identical to strlcpy(), except that we don't bother with a
+ * return value.
  *
- * Unlike C strncpy(), the result is always terminated with exactly one null
- * byte.
+ * This must not trigger ereport(ERROR), as it is called in postmaster.
  * ----------
  */
 void
-ascii_safe_strncpy(char *dest, const char *src, int len)
+ascii_safe_strlcpy(char *dest, const char *src, size_t destsiz)
 {
-	int			i;
+	if (destsiz == 0)			/* corner case: no room for trailing nul */
+		return;
 
-	for (i = 0; i < (len - 1); i++)
+	while (--destsiz > 0)
 	{
-		unsigned char ch = src[i];	/* use unsigned char here to avoid compiler warning */
+		/* use unsigned char here to avoid compiler warning */
+		unsigned char ch = *src++;
 
 		if (ch == '\0')
 			break;
 		/* Keep printable ASCII characters */
 		if (32 <= ch && ch <= 127)
-			dest[i] = ch;
+			*dest = ch;
 		/* White-space is also OK */
 		else if (ch == '\n' || ch == '\r' || ch == '\t')
-			dest[i] = ch;
+			*dest = ch;
 		/* Everything else is replaced with '?' */
 		else
-			dest[i] = '?';
+			*dest = '?';
+		dest++;
 	}
 
-	dest[i] = '\0';
+	*dest = '\0';
 }

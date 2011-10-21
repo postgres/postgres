@@ -2777,12 +2777,17 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 static void
 LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 {
-	char		activity_buffer[1024]; /* default track_activity_query_size */
-	const char *activity;
+	/*
+	 * size of activity_buffer is arbitrary, but set equal to default
+	 * track_activity_query_size
+	 */
+	char		activity_buffer[1024];
+	const char *activity = NULL;
 
-	activity = pgstat_get_crashed_backend_activity(pid,
-												   activity_buffer,
-												   sizeof(activity_buffer));
+	if (!EXIT_STATUS_0(exitstatus))
+		activity = pgstat_get_crashed_backend_activity(pid,
+													   activity_buffer,
+													   sizeof(activity_buffer));
 
 	if (WIFEXITED(exitstatus))
 		ereport(lev,
@@ -2792,7 +2797,7 @@ LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 		  "server process" */
 				(errmsg("%s (PID %d) exited with exit code %d",
 						procname, pid, WEXITSTATUS(exitstatus)),
-				 errdetail("Running query: %s", activity)));
+				 activity ? errdetail("Failed process was running: %s", activity) : 0));
 	else if (WIFSIGNALED(exitstatus))
 #if defined(WIN32)
 		ereport(lev,
@@ -2803,7 +2808,7 @@ LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 				(errmsg("%s (PID %d) was terminated by exception 0x%X",
 						procname, pid, WTERMSIG(exitstatus)),
 				 errhint("See C include file \"ntstatus.h\" for a description of the hexadecimal value."),
-				 errdetail("Running query: %s", activity)));
+				 activity ? errdetail("Failed process was running: %s", activity) : 0));
 #elif defined(HAVE_DECL_SYS_SIGLIST) && HAVE_DECL_SYS_SIGLIST
 	ereport(lev,
 
@@ -2814,7 +2819,7 @@ LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 					procname, pid, WTERMSIG(exitstatus),
 					WTERMSIG(exitstatus) < NSIG ?
 					sys_siglist[WTERMSIG(exitstatus)] : "(unknown)"),
-			 errdetail("Running query: %s", activity)));
+			 activity ? errdetail("Failed process was running: %s", activity) : 0));
 #else
 		ereport(lev,
 
@@ -2823,7 +2828,7 @@ LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 		  "server process" */
 				(errmsg("%s (PID %d) was terminated by signal %d",
 						procname, pid, WTERMSIG(exitstatus)),
-				 errdetail("Running query: %s", activity)));
+				 activity ? errdetail("Failed process was running: %s", activity) : 0));
 #endif
 	else
 		ereport(lev,
@@ -2833,7 +2838,7 @@ LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 		  "server process" */
 				(errmsg("%s (PID %d) exited with unrecognized status %d",
 						procname, pid, exitstatus),
-				 errdetail("Running query: %s", activity)));
+				 activity ? errdetail("Failed process was running: %s", activity) : 0));
 }
 
 /*

@@ -2760,27 +2760,33 @@ pgstat_get_backend_current_activity(int pid, bool checkUser)
  * pgstat_get_crashed_backend_activity() -
  *
  *	Return a string representing the current activity of the backend with
- *	the specified PID. Like the function above, but reads shared memory with
- *	the expectation that it may be corrupt. Returns either a pointer to a
- *	constant string, or writes into the 'buffer' argument and returns it.
+ *	the specified PID.  Like the function above, but reads shared memory with
+ *	the expectation that it may be corrupt.  On success, copy the string
+ *	into the "buffer" argument and return that pointer.  On failure,
+ *	return NULL.
  *
- *	This function is only intended to be used by postmaster to report the
- *	query that crashed the backend. In particular, no attempt is made to
+ *	This function is only intended to be used by the postmaster to report the
+ *	query that crashed a backend.  In particular, no attempt is made to
  *	follow the correct concurrency protocol when accessing the
- *	BackendStatusArray. But that's OK, in the worst case we'll return a
- *	corrupted message. We also must take care not to trip on ereport(ERROR).
- *
- *	Note: return strings for special cases match pg_stat_get_backend_activity.
+ *	BackendStatusArray.  But that's OK, in the worst case we'll return a
+ *	corrupted message.  We also must take care not to trip on ereport(ERROR).
  * ----------
  */
 const char *
-pgstat_get_crashed_backend_activity(int pid, char *buffer,
-									int len)
+pgstat_get_crashed_backend_activity(int pid, char *buffer, int buflen)
 {
 	volatile PgBackendStatus *beentry;
 	int			i;
 
 	beentry = BackendStatusArray;
+
+	/*
+	 * We probably shouldn't get here before shared memory has been set up,
+	 * but be safe.
+	 */
+	if (beentry == NULL || BackendActivityBuffer == NULL)
+		return NULL;
+
 	for (i = 1; i <= MaxBackends; i++)
 	{
 		if (beentry->st_procpid == pid)
@@ -2790,26 +2796,29 @@ pgstat_get_crashed_backend_activity(int pid, char *buffer,
 			const char *activity_last;
 
 			/*
-			 * We can't access activity pointer before we verify that it
-			 * falls into BackendActivityBuffer. To make sure that the entire
-			 * string including its ending is contained within the buffer,
-			 * we subtract one activity length from it.
+			 * We mustn't access activity string before we verify that it
+			 * falls within the BackendActivityBuffer. To make sure that the
+			 * entire string including its ending is contained within the
+			 * buffer, subtract one activity length from the buffer size.
 			 */
 			activity_last = BackendActivityBuffer + BackendActivityBufferSize
-							- pgstat_track_activity_query_size;
+				- pgstat_track_activity_query_size;
 
 			if (activity < BackendActivityBuffer ||
 				activity > activity_last)
-				return "<command string corrupt>";
+				return NULL;
 
-			if (*(activity) == '\0')
-				return "<command string empty>";
+			/* If no string available, no point in a report */
+			if (activity[0] == '\0')
+				return NULL;
 
 			/*
 			 * Copy only ASCII-safe characters so we don't run into encoding
-			 * problems when reporting the message.
+			 * problems when reporting the message; and be sure not to run
+			 * off the end of memory.
 			 */
-			ascii_safe_strncpy(buffer, activity, len);
+			ascii_safe_strlcpy(buffer, activity,
+							   Min(buflen, pgstat_track_activity_query_size));
 
 			return buffer;
 		}
@@ -2818,8 +2827,9 @@ pgstat_get_crashed_backend_activity(int pid, char *buffer,
 	}
 
 	/* PID not found */
-	return "<backend information not available>";
+	return NULL;
 }
+
 
 /* ------------------------------------------------------------
  * Local support functions follow
