@@ -1614,10 +1614,9 @@ RemoveOpFamily(RemoveOpFamilyStmt *stmt)
 	tuple = OpFamilyCacheLookup(amID, stmt->opfamilyname, stmt->missing_ok);
 	if (!HeapTupleIsValid(tuple))
 	{
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("operator family \"%s\" does not exist for access method \"%s\"",
-						NameListToString(stmt->opfamilyname), stmt->amname)));
+		ereport(NOTICE,
+				(errmsg("operator family \"%s\" does not exist for access method \"%s\", skipping",
+				   NameListToString(stmt->opfamilyname), stmt->amname)));
 		return;
 	}
 
