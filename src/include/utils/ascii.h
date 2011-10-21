@@ -16,5 +16,6 @@
 extern Datum to_ascii_encname(PG_FUNCTION_ARGS);
 extern Datum to_ascii_enc(PG_FUNCTION_ARGS);
 extern Datum to_ascii_default(PG_FUNCTION_ARGS);
+extern void ascii_safe_strncpy(char *dest, const char *src, int len);
 
 #endif   /* _ASCII_H_ */

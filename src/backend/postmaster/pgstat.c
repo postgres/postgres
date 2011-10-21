@@ -58,6 +58,7 @@
 #include "storage/pg_shmem.h"
 #include "storage/pmsignal.h"
 #include "storage/procsignal.h"
+#include "utils/ascii.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
@@ -2228,6 +2229,7 @@ static PgBackendStatus *MyBEEntry = NULL;
 static char *BackendClientHostnameBuffer = NULL;
 static char *BackendAppnameBuffer = NULL;
 static char *BackendActivityBuffer = NULL;
+static Size BackendActivityBufferSize = 0;
 
 
 /*
@@ -2310,9 +2312,12 @@ CreateSharedBackendStatus(void)
 	}
 
 	/* Create or attach to the shared activity buffer */
-	size = mul_size(pgstat_track_activity_query_size, MaxBackends);
+	BackendActivityBufferSize = mul_size(pgstat_track_activity_query_size,
+										 MaxBackends);
 	BackendActivityBuffer = (char *)
-		ShmemInitStruct("Backend Activity Buffer", size, &found);
+		ShmemInitStruct("Backend Activity Buffer",
+						BackendActivityBufferSize,
+						&found);
 
 	if (!found)
 	{
@@ -2751,6 +2756,70 @@ pgstat_get_backend_current_activity(int pid, bool checkUser)
 	return "<backend information not available>";
 }
 
+/* ----------
+ * pgstat_get_crashed_backend_activity() -
+ *
+ *	Return a string representing the current activity of the backend with
+ *	the specified PID. Like the function above, but reads shared memory with
+ *	the expectation that it may be corrupt. Returns either a pointer to a
+ *	constant string, or writes into the 'buffer' argument and returns it.
+ *
+ *	This function is only intended to be used by postmaster to report the
+ *	query that crashed the backend. In particular, no attempt is made to
+ *	follow the correct concurrency protocol when accessing the
+ *	BackendStatusArray. But that's OK, in the worst case we'll return a
+ *	corrupted message. We also must take care not to trip on ereport(ERROR).
+ *
+ *	Note: return strings for special cases match pg_stat_get_backend_activity.
+ * ----------
+ */
+const char *
+pgstat_get_crashed_backend_activity(int pid, char *buffer,
+									int len)
+{
+	volatile PgBackendStatus *beentry;
+	int			i;
+
+	beentry = BackendStatusArray;
+	for (i = 1; i <= MaxBackends; i++)
+	{
+		if (beentry->st_procpid == pid)
+		{
+			/* Read pointer just once, so it can't change after validation */
+			const char *activity = beentry->st_activity;
+			const char *activity_last;
+
+			/*
+			 * We can't access activity pointer before we verify that it
+			 * falls into BackendActivityBuffer. To make sure that the entire
+			 * string including its ending is contained within the buffer,
+			 * we subtract one activity length from it.
+			 */
+			activity_last = BackendActivityBuffer + BackendActivityBufferSize
+							- pgstat_track_activity_query_size;
+
+			if (activity < BackendActivityBuffer ||
+				activity > activity_last)
+				return "<command string corrupt>";
+
+			if (*(activity) == '\0')
+				return "<command string empty>";
+
+			/*
+			 * Copy only ASCII-safe characters so we don't run into encoding
+			 * problems when reporting the message.
+			 */
+			ascii_safe_strncpy(buffer, activity, len);
+
+			return buffer;
+		}
+
+		beentry++;
+	}
+
+	/* PID not found */
+	return "<backend information not available>";
+}
 
 /* ------------------------------------------------------------
  * Local support functions follow

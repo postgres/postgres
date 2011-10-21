@@ -158,3 +158,37 @@ to_ascii_default(PG_FUNCTION_ARGS)
 
 	PG_RETURN_TEXT_P(encode_to_ascii(data, enc));
 }
+
+/* ----------
+ * "Escape" a string in unknown encoding to a valid ASCII string.
+ * Replace non-ASCII bytes with '?'
+ * This must not trigger ereport(ERROR), as it is called from postmaster.
+ *
+ * Unlike C strncpy(), the result is always terminated with exactly one null
+ * byte.
+ * ----------
+ */
+void
+ascii_safe_strncpy(char *dest, const char *src, int len)
+{
+	int			i;
+
+	for (i = 0; i < (len - 1); i++)
+	{
+		unsigned char ch = src[i];	/* use unsigned char here to avoid compiler warning */
+
+		if (ch == '\0')
+			break;
+		/* Keep printable ASCII characters */
+		if (32 <= ch && ch <= 127)
+			dest[i] = ch;
+		/* White-space is also OK */
+		else if (ch == '\n' || ch == '\r' || ch == '\t')
+			dest[i] = ch;
+		/* Everything else is replaced with '?' */
+		else
+			dest[i] = '?';
+	}
+
+	dest[i] = '\0';
+}
