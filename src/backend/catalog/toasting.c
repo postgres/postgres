@@ -59,11 +59,13 @@ AlterTableCreateToastTable(Oid relOid, Datum reloptions)
 	Relation	rel;
 
 	/*
-	 * Grab a DDL-exclusive lock on the target table, since we'll update the
-	 * pg_class tuple.	This is redundant for all present users.  Tuple
-	 * toasting behaves safely in the face of a concurrent TOAST table add.
+	 * Grab an exclusive lock on the target table, since we'll update its
+	 * pg_class tuple. This is redundant for all present uses, since caller
+	 * will have such a lock already.  But the lock is needed to ensure that
+	 * concurrent readers of the pg_class tuple won't have visibility issues,
+	 * so let's be safe.
 	 */
-	rel = heap_open(relOid, ShareUpdateExclusiveLock);
+	rel = heap_open(relOid, AccessExclusiveLock);
 
 	/* create_toast_table does all the work */
 	(void) create_toast_table(rel, InvalidOid, InvalidOid, reloptions);
