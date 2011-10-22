@@ -58,6 +58,7 @@
 #include "utils/guc.h"
 #include "utils/ps_status.h"
 #include "utils/relmapper.h"
+#include "utils/snapmgr.h"
 #include "utils/timestamp.h"
 #include "pg_trace.h"
 
@@ -6380,6 +6381,12 @@ StartupXLOG(void)
 		 * garbage is left over from before.
 		 */
 		ResetUnloggedRelations(UNLOGGED_RELATION_CLEANUP);
+
+		/*
+		 * Likewise, delete any saved transaction snapshot files that got
+		 * left behind by crashed backends.
+		 */
+		DeleteAllExportedSnapshotFiles();
 
 		/*
 		 * Initialize for Hot Standby, if enabled. We won't let backends in

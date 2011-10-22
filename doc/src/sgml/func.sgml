@@ -13803,6 +13803,14 @@ SELECT typlen FROM pg_type WHERE oid = pg_typeof(33);
    <title>System Administration Functions</title>
 
    <para>
+    The functions described in this section are used to control and
+    monitor a <productname>PostgreSQL</> installation.
+   </para>
+
+  <sect2 id="functions-admin-set">
+   <title>Configuration Settings Functions</title>
+
+   <para>
     <xref linkend="functions-admin-set-table"> shows the functions
     available to query and alter run-time configuration parameters.
    </para>
@@ -13888,6 +13896,11 @@ SELECT set_config('log_statement_stats', 'off', false);
 (1 row)
 </programlisting>
    </para>
+
+  </sect2>
+
+  <sect2 id="functions-admin-signal">
+   <title>Server Signalling Functions</title>
 
    <indexterm>
     <primary>pg_cancel_backend</primary>
@@ -13984,6 +13997,11 @@ SELECT set_config('log_statement_stats', 'off', false);
     log collector is running, since otherwise there is no log-file manager
     subprocess.
    </para>
+
+  </sect2>
+
+  <sect2 id="functions-admin-backup">
+   <title>Backup Control Functions</title>
 
    <indexterm>
     <primary>backup</primary>
@@ -14181,6 +14199,11 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
     <xref linkend="continuous-archiving">.
    </para>
 
+  </sect2>
+
+  <sect2 id="functions-recovery-control">
+   <title>Recovery Control Functions</title>
+
    <indexterm>
     <primary>pg_is_in_recovery</primary>
    </indexterm>
@@ -14198,7 +14221,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
     The functions shown in <xref
     linkend="functions-recovery-info-table"> provide information
     about the current status of the standby.
-    These functions may be executed during both recovery and in normal running.
+    These functions may be executed both during recovery and in normal running.
    </para>
 
    <table id="functions-recovery-info-table">
@@ -14332,6 +14355,87 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
     eventually fill available disk space, depending upon the duration of
     the pause, the rate of WAL generation and available disk space.
    </para>
+
+  </sect2>
+
+  <sect2 id="functions-snapshot-synchronization">
+   <title>Snapshot Synchronization Functions</title>
+
+   <indexterm>
+     <primary>pg_export_snapshot</primary>
+   </indexterm>
+
+   <para>
+    <productname>PostgreSQL</> allows database sessions to synchronize their
+    snapshots. A <firstterm>snapshot</> determines which data is visible to the
+    transaction that is using the snapshot. Synchronized snapshots are
+    necessary when two or more sessions need to see identical content in the
+    database. If two sessions just start their transactions independently,
+    there is always a possibility that some third transaction commits
+    between the executions of the two <command>START TRANSACTION</> commands,
+    so that one session sees the effects of that transaction and the other
+    does not.
+   </para>
+
+   <para>
+    To solve this problem, <productname>PostgreSQL</> allows a transaction to
+    <firstterm>export</> the snapshot it is using.  As long as the exporting
+    transaction remains open, other transactions can <firstterm>import</> its
+    snapshot, and thereby be guaranteed that they see exactly the same view
+    of the database that the first transaction sees.  But note that any
+    database changes made by any one of these transactions remain invisible
+    to the other transactions, as is usual for changes made by uncommitted
+    transactions.  So the transactions are synchronized with respect to
+    pre-existing data, but act normally for changes they make themselves.
+   </para>
+
+   <para>
+    Snapshots are exported with the <function>pg_export_snapshot</> function,
+    shown in <xref linkend="functions-snapshot-synchronization-table">, and
+    imported with the <xref linkend="sql-set-transaction"> command.
+   </para>
+
+   <table id="functions-snapshot-synchronization-table">
+    <title>Snapshot Synchronization Functions</title>
+    <tgroup cols="3">
+     <thead>
+      <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry>
+        <literal><function>pg_export_snapshot()</function></literal>
+       </entry>
+       <entry><type>text</type></entry>
+       <entry>Save the current snapshot and return its identifier</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    The function <function>pg_export_snapshot</> saves the current snapshot
+    and returns a <type>text</> string identifying the snapshot.  This string
+    must be passed (outside the database) to clients that want to import the
+    snapshot.  The snapshot is available for import only until the end of the
+    transaction that exported it.  A transaction can export more than one
+    snapshot, if needed.  Note that doing so is only useful in <literal>READ
+    COMMITTED</> transactions, since in <literal>REPEATABLE READ</> and
+    higher isolation levels, transactions use the same snapshot throughout
+    their lifetime.  Once a transaction has exported any snapshots, it cannot
+    be prepared with <xref linkend="sql-prepare-transaction">.
+   </para>
+
+   <para>
+    See  <xref linkend="sql-set-transaction"> for details of how to use an
+    exported snapshot.
+   </para>
+  </sect2>
+
+  <sect2 id="functions-admin-dbobject">
+   <title>Database Object Management Functions</title>
 
    <para>
     The functions shown in <xref linkend="functions-admin-dbsize"> calculate
@@ -14591,9 +14695,14 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
     the relation.
    </para>
 
+  </sect2>
+
+  <sect2 id="functions-admin-genfile">
+   <title>Generic File Access Functions</title>
+
    <para>
     The functions shown in <xref
-    linkend="functions-admin-genfile"> provide native access to
+    linkend="functions-admin-genfile-table"> provide native access to
     files on the machine hosting the server. Only files within the
     database cluster directory and the <varname>log_directory</> can be
     accessed.  Use a relative path for files in the cluster directory,
@@ -14601,7 +14710,7 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
     for log files.  Use of these functions is restricted to superusers.
    </para>
 
-   <table id="functions-admin-genfile">
+   <table id="functions-admin-genfile-table">
     <title>Generic File Access Functions</title>
     <tgroup cols="3">
      <thead>
@@ -14694,13 +14803,18 @@ SELECT (pg_stat_file('filename')).modification;
 </programlisting>
    </para>
 
+  </sect2>
+
+  <sect2 id="functions-advisory-locks">
+   <title>Advisory Lock Functions</title>
+
    <para>
-    The functions shown in <xref linkend="functions-advisory-locks"> manage
-    advisory locks.  For details about proper use of these functions, see
-    <xref linkend="advisory-locks">.
+    The functions shown in <xref linkend="functions-advisory-locks-table">
+    manage advisory locks.  For details about proper use of these functions,
+    see <xref linkend="advisory-locks">.
    </para>
 
-   <table id="functions-advisory-locks">
+   <table id="functions-advisory-locks-table">
     <title>Advisory Lock Functions</title>
     <tgroup cols="3">
      <thead>
@@ -14971,6 +15085,8 @@ SELECT (pg_stat_file('filename')).modification;
     locks held by the current session.  (This function is implicitly invoked
     at session end, even if the client disconnects ungracefully.)
    </para>
+
+  </sect2>
 
   </sect1>
 

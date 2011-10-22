@@ -72,6 +72,7 @@
 #include "utils/plancache.h"
 #include "utils/portal.h"
 #include "utils/ps_status.h"
+#include "utils/snapmgr.h"
 #include "utils/tzparser.h"
 #include "utils/xml.h"
 
@@ -6093,8 +6094,11 @@ ExecSetVariableStmt(VariableSetStmt *stmt)
 		case VAR_SET_MULTI:
 
 			/*
-			 * Special case for special SQL syntax that effectively sets more
-			 * than one variable per statement.
+			 * Special-case SQL syntaxes.  The TRANSACTION and SESSION
+			 * CHARACTERISTICS cases effectively set more than one variable
+			 * per statement.  TRANSACTION SNAPSHOT only takes one argument,
+			 * but we put it here anyway since it's a special case and not
+			 * related to any GUC variable.
 			 */
 			if (strcmp(stmt->name, "TRANSACTION") == 0)
 			{
@@ -6139,6 +6143,18 @@ ExecSetVariableStmt(VariableSetStmt *stmt)
 						elog(ERROR, "unexpected SET SESSION element: %s",
 							 item->defname);
 				}
+			}
+			else if (strcmp(stmt->name, "TRANSACTION SNAPSHOT") == 0)
+			{
+				A_Const    *con = (A_Const *) linitial(stmt->args);
+
+				if (stmt->is_local)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("SET LOCAL TRANSACTION SNAPSHOT is not implemented")));
+				Assert(IsA(con, A_Const));
+				Assert(nodeTag(&con->val) == T_String);
+				ImportSnapshot(strVal(&con->val));
 			}
 			else
 				elog(ERROR, "unexpected SET MULTI element: %s",

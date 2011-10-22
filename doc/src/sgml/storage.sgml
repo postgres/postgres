@@ -88,6 +88,11 @@ Item
 </row>
 
 <row>
+ <entry><filename>pg_snapshots</></entry>
+ <entry>Subdirectory containing exported snapshots</entry>
+</row>
+
+<row>
  <entry><filename>pg_stat_tmp</></entry>
  <entry>Subdirectory containing temporary files for the statistics
   subsystem</entry>

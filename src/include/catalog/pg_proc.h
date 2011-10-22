@@ -2870,6 +2870,9 @@ DESCR("xlog filename and byte offset, given an xlog location");
 DATA(insert OID = 2851 ( pg_xlogfile_name			PGNSP PGUID 12 1 0 0 0 f f f t f i 1 0 25 "25" _null_ _null_ _null_ _null_ pg_xlogfile_name _null_ _null_ _null_ ));
 DESCR("xlog filename, given an xlog location");
 
+DATA(insert OID = 3809 ( pg_export_snapshot		PGNSP PGUID 12 1 0 0 0 f f f t f v 0 0 25 "" _null_ _null_ _null_ _null_ pg_export_snapshot _null_ _null_ _null_ ));
+DESCR("export a snapshot");
+
 DATA(insert OID = 3810 (  pg_is_in_recovery		PGNSP PGUID 12 1 0 0 0 f f f t f v 0 0 16 "" _null_ _null_ _null_ _null_ pg_is_in_recovery _null_ _null_ _null_ ));
 DESCR("true if server is in recovery");
 

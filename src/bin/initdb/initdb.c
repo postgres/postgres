@@ -2555,6 +2555,7 @@ main(int argc, char *argv[])
 		"pg_clog",
 		"pg_notify",
 		"pg_serial",
+		"pg_snapshots",
 		"pg_subtrans",
 		"pg_twophase",
 		"pg_multixact/members",

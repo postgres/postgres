@@ -147,6 +147,8 @@
  *
  * predicate lock maintenance
  *		GetSerializableTransactionSnapshot(Snapshot snapshot)
+ *		SetSerializableTransactionSnapshot(Snapshot snapshot,
+ *										   TransactionId sourcexid)
  *		RegisterPredicateLockingXid(void)
  *		PredicateLockRelation(Relation relation, Snapshot snapshot)
  *		PredicateLockPage(Relation relation, BlockNumber blkno,
@@ -417,7 +419,8 @@ static void OldSerXidSetActiveSerXmin(TransactionId xid);
 static uint32 predicatelock_hash(const void *key, Size keysize);
 static void SummarizeOldestCommittedSxact(void);
 static Snapshot GetSafeSnapshot(Snapshot snapshot);
-static Snapshot GetSerializableTransactionSnapshotInt(Snapshot snapshot);
+static Snapshot GetSerializableTransactionSnapshotInt(Snapshot snapshot,
+									  TransactionId sourcexid);
 static bool PredicateLockExists(const PREDICATELOCKTARGETTAG *targettag);
 static bool GetParentPredicateLockTag(const PREDICATELOCKTARGETTAG *tag,
 						  PREDICATELOCKTARGETTAG *parent);
@@ -1505,7 +1508,8 @@ GetSafeSnapshot(Snapshot origSnapshot)
 		 * our caller passed to us.  The pointer returned is actually the same
 		 * one passed to it, but we avoid assuming that here.
 		 */
-		snapshot = GetSerializableTransactionSnapshotInt(origSnapshot);
+		snapshot = GetSerializableTransactionSnapshotInt(origSnapshot,
+														 InvalidTransactionId);
 
 		if (MySerializableXact == InvalidSerializableXact)
 			return snapshot;	/* no concurrent r/w xacts; it's safe */
@@ -1574,11 +1578,52 @@ GetSerializableTransactionSnapshot(Snapshot snapshot)
 	if (XactReadOnly && XactDeferrable)
 		return GetSafeSnapshot(snapshot);
 
-	return GetSerializableTransactionSnapshotInt(snapshot);
+	return GetSerializableTransactionSnapshotInt(snapshot,
+												 InvalidTransactionId);
 }
 
+/*
+ * Import a snapshot to be used for the current transaction.
+ *
+ * This is nearly the same as GetSerializableTransactionSnapshot, except that
+ * we don't take a new snapshot, but rather use the data we're handed.
+ *
+ * The caller must have verified that the snapshot came from a serializable
+ * transaction; and if we're read-write, the source transaction must not be
+ * read-only.
+ */
+void
+SetSerializableTransactionSnapshot(Snapshot snapshot,
+								   TransactionId sourcexid)
+{
+	Assert(IsolationIsSerializable());
+
+	/*
+	 * We do not allow SERIALIZABLE READ ONLY DEFERRABLE transactions to
+	 * import snapshots, since there's no way to wait for a safe snapshot
+	 * when we're using the snap we're told to.  (XXX instead of throwing
+	 * an error, we could just ignore the XactDeferrable flag?)
+	 */
+	if (XactReadOnly && XactDeferrable)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("a snapshot-importing transaction must not be READ ONLY DEFERRABLE")));
+
+	(void) GetSerializableTransactionSnapshotInt(snapshot, sourcexid);
+}
+
+/*
+ * Guts of GetSerializableTransactionSnapshot
+ *
+ * If sourcexid is valid, this is actually an import operation and we should
+ * skip calling GetSnapshotData, because the snapshot contents are already
+ * loaded up.  HOWEVER: to avoid race conditions, we must check that the
+ * source xact is still running after we acquire SerializableXactHashLock.
+ * We do that by calling ProcArrayInstallImportedXmin.
+ */
 static Snapshot
-GetSerializableTransactionSnapshotInt(Snapshot snapshot)
+GetSerializableTransactionSnapshotInt(Snapshot snapshot,
+									  TransactionId sourcexid)
 {
 	PGPROC	   *proc;
 	VirtualTransactionId vxid;
@@ -1598,6 +1643,14 @@ GetSerializableTransactionSnapshotInt(Snapshot snapshot)
 	/*
 	 * First we get the sxact structure, which may involve looping and access
 	 * to the "finished" list to free a structure for use.
+	 *
+	 * We must hold SerializableXactHashLock when taking/checking the snapshot
+	 * to avoid race conditions, for much the same reasons that
+	 * GetSnapshotData takes the ProcArrayLock.  Since we might have to release
+	 * SerializableXactHashLock to call SummarizeOldestCommittedSxact, this
+	 * means we have to create the sxact first, which is a bit annoying (in
+	 * particular, an elog(ERROR) in procarray.c would cause us to leak the
+	 * sxact).  Consider refactoring to avoid this.
 	 */
 #ifdef TEST_OLDSERXID
 	SummarizeOldestCommittedSxact();
@@ -1615,8 +1668,19 @@ GetSerializableTransactionSnapshotInt(Snapshot snapshot)
 		}
 	} while (!sxact);
 
-	/* Get the snapshot */
-	snapshot = GetSnapshotData(snapshot);
+	/* Get the snapshot, or check that it's safe to use */
+	if (!TransactionIdIsValid(sourcexid))
+		snapshot = GetSnapshotData(snapshot);
+	else if (!ProcArrayInstallImportedXmin(snapshot->xmin, sourcexid))
+	{
+		ReleasePredXact(sxact);
+		LWLockRelease(SerializableXactHashLock);
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("could not import the requested snapshot"),
+				 errdetail("The source transaction %u is not running anymore.",
+						   sourcexid)));
+	}
 
 	/*
 	 * If there are no serializable transactions which are not read-only, we

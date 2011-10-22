@@ -37,9 +37,15 @@ extern void ExpireTreeKnownAssignedTransactionIds(TransactionId xid,
 extern void ExpireAllKnownAssignedTransactionIds(void);
 extern void ExpireOldKnownAssignedTransactionIds(TransactionId xid);
 
-extern RunningTransactions GetRunningTransactionData(void);
+extern int	GetMaxSnapshotXidCount(void);
+extern int	GetMaxSnapshotSubxidCount(void);
 
 extern Snapshot GetSnapshotData(Snapshot snapshot);
+
+extern bool ProcArrayInstallImportedXmin(TransactionId xmin,
+										 TransactionId sourcexid);
+
+extern RunningTransactions GetRunningTransactionData(void);
 
 extern bool TransactionIdIsInProgress(TransactionId xid);
 extern bool TransactionIdIsActive(TransactionId xid);

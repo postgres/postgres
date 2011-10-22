@@ -2067,6 +2067,16 @@ PrepareTransaction(void)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot PREPARE a transaction that has operated on temporary tables")));
 
+	/*
+	 * Likewise, don't allow PREPARE after pg_export_snapshot.  This could be
+	 * supported if we added cleanup logic to twophase.c, but for now it
+	 * doesn't seem worth the trouble.
+	 */
+	if (XactHasExportedSnapshots())
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot PREPARE a transaction that has exported snapshots")));
+
 	/* Prevent cancel/die interrupt while cleaning up */
 	HOLD_INTERRUPTS();
 

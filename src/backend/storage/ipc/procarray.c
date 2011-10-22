@@ -1123,6 +1123,28 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
 }
 
 /*
+ * GetMaxSnapshotXidCount -- get max size for snapshot XID array
+ *
+ * We have to export this for use by snapmgr.c.
+ */
+int
+GetMaxSnapshotXidCount(void)
+{
+	return procArray->maxProcs;
+}
+
+/*
+ * GetMaxSnapshotSubxidCount -- get max size for snapshot sub-XID array
+ *
+ * We have to export this for use by snapmgr.c.
+ */
+int
+GetMaxSnapshotSubxidCount(void)
+{
+	return TOTAL_MAX_CACHED_SUBXIDS;
+}
+
+/*
  * GetSnapshotData -- returns information about running transactions.
  *
  * The returned snapshot includes xmin (lowest still-running xact ID),
@@ -1187,14 +1209,14 @@ GetSnapshotData(Snapshot snapshot)
 		 * we are in recovery, see later comments.
 		 */
 		snapshot->xip = (TransactionId *)
-			malloc(arrayP->maxProcs * sizeof(TransactionId));
+			malloc(GetMaxSnapshotXidCount() * sizeof(TransactionId));
 		if (snapshot->xip == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of memory")));
 		Assert(snapshot->subxip == NULL);
 		snapshot->subxip = (TransactionId *)
-			malloc(TOTAL_MAX_CACHED_SUBXIDS * sizeof(TransactionId));
+			malloc(GetMaxSnapshotSubxidCount() * sizeof(TransactionId));
 		if (snapshot->subxip == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -1374,6 +1396,77 @@ GetSnapshotData(Snapshot snapshot)
 	snapshot->copied = false;
 
 	return snapshot;
+}
+
+/*
+ * ProcArrayInstallImportedXmin -- install imported xmin into MyProc->xmin
+ *
+ * This is called when installing a snapshot imported from another
+ * transaction.  To ensure that OldestXmin doesn't go backwards, we must
+ * check that the source transaction is still running, and we'd better do
+ * that atomically with installing the new xmin.
+ *
+ * Returns TRUE if successful, FALSE if source xact is no longer running.
+ */
+bool
+ProcArrayInstallImportedXmin(TransactionId xmin, TransactionId sourcexid)
+{
+	bool		result = false;
+	ProcArrayStruct *arrayP = procArray;
+	int			index;
+
+	Assert(TransactionIdIsNormal(xmin));
+	if (!TransactionIdIsNormal(sourcexid))
+		return false;
+
+	/* Get lock so source xact can't end while we're doing this */
+	LWLockAcquire(ProcArrayLock, LW_SHARED);
+
+	for (index = 0; index < arrayP->numProcs; index++)
+	{
+		volatile PGPROC *proc = arrayP->procs[index];
+		TransactionId xid;
+
+		/* Ignore procs running LAZY VACUUM */
+		if (proc->vacuumFlags & PROC_IN_VACUUM)
+			continue;
+
+		xid = proc->xid;	/* fetch just once */
+		if (xid != sourcexid)
+			continue;
+
+		/*
+		 * We check the transaction's database ID for paranoia's sake: if
+		 * it's in another DB then its xmin does not cover us.  Caller should
+		 * have detected this already, so we just treat any funny cases as
+		 * "transaction not found".
+		 */
+		if (proc->databaseId != MyDatabaseId)
+			continue;
+
+		/*
+		 * Likewise, let's just make real sure its xmin does cover us.
+		 */
+		xid = proc->xmin;	/* fetch just once */
+		if (!TransactionIdIsNormal(xid) ||
+			!TransactionIdPrecedesOrEquals(xid, xmin))
+			continue;
+
+		/*
+		 * We're good.  Install the new xmin.  As in GetSnapshotData, set
+		 * TransactionXmin too.  (Note that because snapmgr.c called
+		 * GetSnapshotData first, we'll be overwriting a valid xmin here,
+		 * so we don't check that.)
+		 */
+		MyProc->xmin = TransactionXmin = xmin;
+
+		result = true;
+		break;
+	}
+
+	LWLockRelease(ProcArrayLock);
+
+	return result;
 }
 
 /*
