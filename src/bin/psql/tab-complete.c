@@ -588,6 +588,11 @@ static const SchemaQuery Query_for_list_of_views = {
 "   FROM pg_catalog.pg_available_extensions "\
 "  WHERE substring(pg_catalog.quote_ident(name),1,%d)='%s' AND installed_version IS NULL"
 
+#define Query_for_list_of_prepared_statements \
+" SELECT pg_catalog.quote_ident(name) "\
+"   FROM pg_catalog.pg_prepared_statements "\
+"  WHERE substring(pg_catalog.quote_ident(name),1,%d)='%s'"
+
 /*
  * This is a list of all "things" in Pgsql, which can show up after CREATE or
  * DROP; and there is also a query to get a list of them.
@@ -1908,7 +1913,8 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev_wd, "ON") == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_views, NULL);
 	/* complete CREATE TRIGGER ... EXECUTE with PROCEDURE */
-	else if (pg_strcasecmp(prev_wd, "EXECUTE") == 0)
+	else if (pg_strcasecmp(prev_wd, "EXECUTE") == 0 &&
+			 prev2_wd[0] != '\0')
 		COMPLETE_WITH_CONST("PROCEDURE");
 
 /* CREATE ROLE,USER,GROUP */
@@ -2116,6 +2122,11 @@ psql_completion(char *text, int start, int end)
 
 		COMPLETE_WITH_LIST(list_ALTERTEXTSEARCH);
 	}
+
+/* EXECUTE, but not EXECUTE embedded in other commands */
+	else if (pg_strcasecmp(prev_wd, "EXECUTE") == 0 &&
+			 prev2_wd[0] == '\0')
+		COMPLETE_WITH_QUERY(Query_for_list_of_prepared_statements);
 
 /* EXPLAIN */
 
