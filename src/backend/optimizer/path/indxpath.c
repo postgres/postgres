@@ -2277,10 +2277,11 @@ relation_has_unique_index_for(PlannerInfo *root, RelOptInfo *rel,
 		int			c;
 
 		/*
-		 * If the index is not unique or if it's a partial index that doesn't
-		 * match the query, it's useless here.
+		 * If the index is not unique, or not immediately enforced, or if it's
+		 * a partial index that doesn't match the query, it's useless here.
 		 */
-		if (!ind->unique || (ind->indpred != NIL && !ind->predOK))
+		if (!ind->unique || !ind->immediate ||
+			(ind->indpred != NIL && !ind->predOK))
 			continue;
 
 		/*

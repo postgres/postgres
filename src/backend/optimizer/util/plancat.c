@@ -324,6 +324,7 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 
 			info->predOK = false;		/* set later in indxpath.c */
 			info->unique = index->indisunique;
+			info->immediate = index->indimmediate;
 			info->hypothetical = false;
 
 			/*
@@ -1076,6 +1077,11 @@ join_selectivity(PlannerInfo *root,
  * Detect whether there is a unique index on the specified attribute
  * of the specified relation, thus allowing us to conclude that all
  * the (non-null) values of the attribute are distinct.
+ *
+ * This function does not check the index's indimmediate property, which
+ * means that uniqueness may transiently fail to hold intra-transaction.
+ * That's appropriate when we are making statistical estimates, but beware
+ * of using this for any correctness proofs.
  */
 bool
 has_unique_index(RelOptInfo *rel, AttrNumber attno)

@@ -1770,6 +1770,7 @@ _outIndexOptInfo(StringInfo str, IndexOptInfo *node)
 	WRITE_NODE_FIELD(indextlist);
 	WRITE_BOOL_FIELD(predOK);
 	WRITE_BOOL_FIELD(unique);
+	WRITE_BOOL_FIELD(immediate);
 	WRITE_BOOL_FIELD(hypothetical);
 }
 
