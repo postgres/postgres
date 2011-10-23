@@ -4121,7 +4121,9 @@ get_join_variables(PlannerInfo *root, List *args, SpecialJoinInfo *sjinfo,
  *		commonly the same as the exposed type of the variable argument,
  *		but can be different in binary-compatible-type cases.
  *	isunique: TRUE if we were able to match the var to a unique index,
- *		implying its values are unique for this query.
+ *		implying its values are unique for this query.  (Caution: this
+ *		should be trusted for statistical purposes only, since we do not
+ *		check indimmediate.)
  *
  * Caller is responsible for doing ReleaseVariableStats() before exiting.
  */

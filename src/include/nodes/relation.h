@@ -491,6 +491,9 @@ typedef struct IndexOptInfo
 	bool		amsearchnulls;	/* can AM search for NULL/NOT NULL entries? */
 	bool		amhasgettuple;	/* does AM have amgettuple interface? */
 	bool		amhasgetbitmap; /* does AM have amgetbitmap interface? */
+
+	/* Added at end of struct to avoid ABI breakage in released branches */
+	bool		immediate;		/* is uniqueness enforced immediately? */
 } IndexOptInfo;
 
 
