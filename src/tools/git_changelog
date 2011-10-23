@@ -17,14 +17,9 @@
 # Most of the time, matchable commits occur in the same order on all branches,
 # and we print them out in that order.  However, if commit A occurs before
 # commit B on branch X and commit B occurs before commit A on branch Y, then
-# there's no ordering which is consistent with both branches.
-#
-# When we encounter a situation where there's no single "best" commit to
-# print next, we print the one that involves the least distortion of the
-# commit order, summed across all branches.  In the event of a tie on the
-# distortion measure (which is actually the common case: normally, the
-# distortion is zero), we choose the commit with latest timestamp.  If
-# that's a tie too, the commit from the newer branch prints first.
+# there's no ordering which is consistent with both branches.  In such cases
+# we sort a merged commit according to its timestamp on the newest branch
+# it appears in.
 #
 
 use strict;
@@ -51,7 +46,7 @@ Getopt::Long::GetOptions('post-date' => \$post_date,
                          'since=s' => \$since) || usage();
 usage() if @ARGV;
 
-my @git = qw(git log --date=iso);
+my @git = qw(git log --format=fuller --date=iso);
 push @git, '--since=' . $since if defined $since;
 
 # Collect the release tag data
@@ -117,7 +112,7 @@ for my $branch (@BRANCHES) {
 		elsif ($line =~ /^Author:\s+(.*)/) {
 			$commit{'author'} = $1;
 		}
-		elsif ($line =~ /^Date:\s+(.*)/) {
+		elsif ($line =~ /^CommitDate:\s+(.*)/) {
 			$commit{'date'} = $1;
 		}
 		elsif ($line =~ /^\s\s/) {
@@ -171,24 +166,13 @@ for my $branch (@BRANCHES) {
 
 while (1) {
 	my $best_branch;
-	my $best_inversions;
 	my $best_timestamp;
 	for my $branch (@BRANCHES) {
 		my $leader = $all_commits_by_branch{$branch}->[$position{$branch}];
 		next if !defined $leader;
-		my $inversions = 0;
-		for my $branch2 (@BRANCHES) {
-			if (defined $leader->{'branch_position'}{$branch2}) {
-				$inversions += $leader->{'branch_position'}{$branch2}
-					- $position{$branch2};
-			}
-		}
-		if (!defined $best_inversions ||
-		    $inversions < $best_inversions ||
-		    ($inversions == $best_inversions &&
-		     $leader->{'timestamp'} > $best_timestamp)) {
+		if (!defined $best_branch ||
+		    $leader->{'timestamp'} > $best_timestamp) {
 			$best_branch = $branch;
-			$best_inversions = $inversions;
 			$best_timestamp = $leader->{'timestamp'};
 		}
 	}
@@ -203,8 +187,6 @@ while (1) {
 	    }
 	    printf " [%s] %s\n", substr($c->{'commit'}, 0, 9), $c->{'date'};
 	}
-	print "Commit-Order-Inversions: $best_inversions\n"
-		if $best_inversions != 0;
 	print "\n";
 	print $winner->{'message'};
 	print "\n";
