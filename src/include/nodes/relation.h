@@ -473,6 +473,8 @@ typedef struct IndexOptInfo
 	bool		amhasgetbitmap; /* does AM have amgetbitmap interface? */
 	/* added in 9.0.4: */
 	bool		hypothetical;	/* true if index doesn't really exist */
+	/* added in 9.0.6: */
+	bool		immediate;		/* is uniqueness enforced immediately? */
 } IndexOptInfo;
 
 
