@@ -2657,6 +2657,11 @@ psql_completion(char *text, int start, int end)
 	else if (pg_strcasecmp(prev_wd, "START") == 0)
 		COMPLETE_WITH_CONST("TRANSACTION");
 
+/* TABLE, but not TABLE embedded in other commands */
+	else if (pg_strcasecmp(prev_wd, "TABLE") == 0 &&
+			 prev2_wd[0] == '\0')
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_relations, NULL);
+
 /* TRUNCATE */
 	else if (pg_strcasecmp(prev_wd, "TRUNCATE") == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
