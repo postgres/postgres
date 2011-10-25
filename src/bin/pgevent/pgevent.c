@@ -29,7 +29,7 @@ HANDLE		g_module = NULL;	/* hModule of DLL */
 char		event_source[256] = "PostgreSQL";
 
 /* Prototypes */
-HRESULT		DllInstall(BOOL bInstall, __in_opt LPCWSTR pszCmdLine);
+HRESULT		DllInstall(BOOL bInstall, LPCWSTR pszCmdLine);
 STDAPI		DllRegisterServer(void);
 STDAPI		DllUnregisterServer(void);
 BOOL WINAPI DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved);
@@ -40,7 +40,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 
 HRESULT
 DllInstall(BOOL bInstall,
-		   __in_opt LPCWSTR pszCmdLine)
+		   LPCWSTR pszCmdLine)
 {
 	size_t		ret;
 
