@@ -2,3 +2,4 @@
 EXPORTS
 	DllUnregisterServer ;
 	DllRegisterServer ;
+	DllInstall ;

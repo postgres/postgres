@@ -412,6 +412,7 @@ bool		log_executor_stats = false;
 bool		log_statement_stats = false;		/* this is sort of all three
 												 * above together */
 bool		log_btree_build_stats = false;
+char	   *event_source;
 
 bool		check_function_bodies = true;
 bool		default_with_oids = false;
@@ -2818,6 +2819,19 @@ static struct config_string ConfigureNamesString[] =
 		"postgres",
 		NULL, assign_syslog_ident, NULL
 	},
+
+#ifdef WIN32
+	{
+		{"event_source", PGC_POSTMASTER, LOGGING_WHERE,
+			gettext_noop("Sets the application name used to identify"
+						 "PostgreSQL messages in the event log."),
+			NULL
+		},
+		&event_source,
+		"PostgreSQL",
+		NULL, NULL, NULL
+	},
+#endif
 
 	{
 		{"TimeZone", PGC_USERSET, CLIENT_CONN_LOCALE,

@@ -15,15 +15,54 @@
 #include <windows.h>
 #include <olectl.h>
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 /* Global variables */
 HANDLE		g_module = NULL;	/* hModule of DLL */
 
+/*
+ * The event source is stored as a registry key.
+ * The maximum length of a registry key is 255 characters.
+ * http://msdn.microsoft.com/en-us/library/ms724872(v=vs.85).aspx
+ */
+char		event_source[256] = "PostgreSQL";
+
 /* Prototypes */
-STDAPI
-DllRegisterServer(void);
+HRESULT		DllInstall(BOOL bInstall, __in_opt LPCWSTR pszCmdLine);
+STDAPI		DllRegisterServer(void);
 STDAPI		DllUnregisterServer(void);
 BOOL WINAPI DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved);
+
+/*
+ * DllInstall --- Passes the command line argument to DLL
+ */
+
+HRESULT
+DllInstall(BOOL bInstall,
+		   __in_opt LPCWSTR pszCmdLine)
+{
+	size_t		ret;
+
+	if (pszCmdLine && *pszCmdLine != '\0')
+		wcstombs_s(&ret, event_source, sizeof(event_source),
+				   pszCmdLine, sizeof(event_source));
+
+	/*
+	 * This is an ugly hack due to the strange behavior of "regsvr32 /i".
+	 *
+	 * When installing, regsvr32 calls DllRegisterServer before DllInstall.
+	 * When uninstalling (i.e. "regsvr32 /u /i"), on the other hand, regsvr32
+	 * calls DllInstall and then DllUnregisterServer as expected.
+	 *
+	 * This strange behavior forces us to specify -n (i.e. "regsvr32 /n /i").
+	 * Without -n, DllRegisterServer called before DllInstall would mistakenly
+	 * overwrite the default "PostgreSQL" event source registration.
+	 */
+	if (bInstall)
+		DllRegisterServer();
+	return S_OK;
+}
 
 /*
  * DllRegisterServer --- Instructs DLL to create its registry entries
@@ -35,6 +74,7 @@ DllRegisterServer(void)
 	HKEY		key;
 	DWORD		data;
 	char		buffer[_MAX_PATH];
+	char		key_name[400];
 
 	/* Set the name of DLL full path name. */
 	if (!GetModuleFileName((HMODULE) g_module, buffer, sizeof(buffer)))
@@ -47,7 +87,10 @@ DllRegisterServer(void)
 	 * Add PostgreSQL source name as a subkey under the Application key in the
 	 * EventLog registry key.
 	 */
-	if (RegCreateKey(HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Services\\EventLog\\Application\\PostgreSQL", &key))
+	_snprintf(key_name, sizeof(key_name),
+			"SYSTEM\\CurrentControlSet\\Services\\EventLog\\Application\\%s",
+			  event_source);
+	if (RegCreateKey(HKEY_LOCAL_MACHINE, key_name, &key))
 	{
 		MessageBox(NULL, "Could not create the registry key.", "PostgreSQL error", MB_OK | MB_ICONSTOP);
 		return SELFREG_E_TYPELIB;
@@ -72,7 +115,7 @@ DllRegisterServer(void)
 					  "TypesSupported",
 					  0,
 					  REG_DWORD,
-					  (LPBYTE) &data,
+					  (LPBYTE) & data,
 					  sizeof(DWORD)))
 	{
 		MessageBox(NULL, "Could not set the supported types.", "PostgreSQL error", MB_OK | MB_ICONSTOP);
@@ -90,12 +133,17 @@ DllRegisterServer(void)
 STDAPI
 DllUnregisterServer(void)
 {
+	char		key_name[400];
+
 	/*
 	 * Remove PostgreSQL source name as a subkey under the Application key in
 	 * the EventLog registry key.
 	 */
 
-	if (RegDeleteKey(HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Services\\EventLog\\Application\\PostgreSQL"))
+	_snprintf(key_name, sizeof(key_name),
+			"SYSTEM\\CurrentControlSet\\Services\\EventLog\\Application\\%s",
+			  event_source);
+	if (RegDeleteKey(HKEY_LOCAL_MACHINE, key_name))
 	{
 		MessageBox(NULL, "Could not delete the registry key.", "PostgreSQL error", MB_OK | MB_ICONSTOP);
 		return SELFREG_E_TYPELIB;

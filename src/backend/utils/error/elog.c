@@ -123,6 +123,7 @@ static void write_syslog(int level, const char *line);
 static void write_console(const char *line, int len);
 
 #ifdef WIN32
+extern char *event_source;
 static void write_eventlog(int level, const char *line, int len);
 #endif
 
@@ -1673,7 +1674,7 @@ write_eventlog(int level, const char *line, int len)
 
 	if (evtHandle == INVALID_HANDLE_VALUE)
 	{
-		evtHandle = RegisterEventSource(NULL, "PostgreSQL");
+		evtHandle = RegisterEventSource(NULL, event_source ? event_source : "PostgreSQL");
 		if (evtHandle == NULL)
 		{
 			evtHandle = INVALID_HANDLE_VALUE;

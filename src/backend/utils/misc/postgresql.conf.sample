@@ -322,6 +322,8 @@
 #syslog_facility = 'LOCAL0'
 #syslog_ident = 'postgres'
 
+# This is only relevant when logging to eventlog (win32):
+#event_source = 'PostgreSQL'
 
 # - When to Log -
 

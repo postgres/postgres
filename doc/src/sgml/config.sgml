@@ -3037,6 +3037,14 @@ local0.*    /var/log/postgresql
          to the  <application>syslog</application> daemon's configuration file
          to make it work.
         </para>
+        <para>
+         On Windows, when you use the <literal>eventlog</literal>
+         option for <varname>log_destination</>, you should
+         register an event source and its library with the operating
+         system so that the Windows Event Viewer can display event
+         log messages cleanly.
+         See <xref linkend="event-log-registration"> for details.
+        </para>
        </note>
       </listitem>
      </varlistentry>
@@ -3286,6 +3294,23 @@ local0.*    /var/log/postgresql
         </para>
        </listitem>
       </varlistentry>
+
+     <varlistentry id="guc-event-source" xreflabel="event_source">
+      <term><varname>event_source</varname> (<type>string</type>)</term>
+      <indexterm>
+       <primary><varname>event_source</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        When logging to <application>event log</> is enabled, this parameter
+        determines the program name used to identify
+        <productname>PostgreSQL</productname> messages in
+        the log. The default is <literal>PostgreSQL</literal>.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
+       </para>
+      </listitem>
+     </varlistentry>
 
       </variablelist>
     </sect2>
