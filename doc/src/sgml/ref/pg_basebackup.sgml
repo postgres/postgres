@@ -323,7 +323,7 @@ PostgreSQL documentation
 
        <para>
         This option is never essential, since
-        <application>pg_bsaebackup</application> will automatically prompt
+        <application>pg_basebackup</application> will automatically prompt
         for a password if the server demands password authentication.
         However, <application>pg_basebackup</application> will waste a
         connection attempt finding out that the server wants a password.
