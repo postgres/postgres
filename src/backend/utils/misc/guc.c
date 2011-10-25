@@ -2820,7 +2820,6 @@ static struct config_string ConfigureNamesString[] =
 		NULL, assign_syslog_ident, NULL
 	},
 
-#ifdef WIN32
 	{
 		{"event_source", PGC_POSTMASTER, LOGGING_WHERE,
 			gettext_noop("Sets the application name used to identify"
@@ -2831,7 +2830,6 @@ static struct config_string ConfigureNamesString[] =
 		"PostgreSQL",
 		NULL, NULL, NULL
 	},
-#endif
 
 	{
 		{"TimeZone", PGC_USERSET, CLIENT_CONN_LOCALE,
