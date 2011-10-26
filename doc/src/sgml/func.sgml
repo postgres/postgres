@@ -14888,8 +14888,8 @@ SELECT (pg_stat_file('filename')).modification;
    </indexterm>
    <para>
     <function>pg_advisory_xact_lock</> works the same as
-    <function>pg_advisory_lock</>, expect the lock is automatically released
-    at the end of the current transaction and can not be released explicitly.
+    <function>pg_advisory_lock</>, except the lock is automatically released
+    at the end of the current transaction and cannot be released explicitly.
    </para>
 
    <indexterm>
@@ -14897,8 +14897,8 @@ SELECT (pg_stat_file('filename')).modification;
    </indexterm>
    <para>
     <function>pg_advisory_xact_lock_shared</> works the same as
-    <function>pg_advisory_lock_shared</>, expect the lock is automatically released
-    at the end of the current transaction and can not be released explicitly.
+    <function>pg_advisory_lock_shared</>, except the lock is automatically released
+    at the end of the current transaction and cannot be released explicitly.
    </para>
 
    <indexterm>
@@ -14906,9 +14906,9 @@ SELECT (pg_stat_file('filename')).modification;
    </indexterm>
    <para>
     <function>pg_try_advisory_xact_lock</> works the same as
-    <function>pg_try_advisory_lock</>, expect the lock, if acquired,
+    <function>pg_try_advisory_lock</>, except the lock, if acquired,
     is automatically released at the end of the current transaction and
-    can not be released explicitly.
+    cannot be released explicitly.
    </para>
 
    <indexterm>
@@ -14916,9 +14916,9 @@ SELECT (pg_stat_file('filename')).modification;
    </indexterm>
    <para>
     <function>pg_try_advisory_xact_lock_shared</> works the same as
-    <function>pg_try_advisory_lock_shared</>, expect the lock, if acquired,
+    <function>pg_try_advisory_lock_shared</>, except the lock, if acquired,
     is automatically released at the end of the current transaction and
-    can not be released explicitly.
+    cannot be released explicitly.
    </para>
 
    <indexterm>
