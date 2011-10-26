@@ -264,42 +264,13 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 		clause_list = lappend(clause_list, restrictinfo);
 	}
 
-	/* Now examine the rel's restriction clauses for var = const clauses */
-	foreach(l, innerrel->baserestrictinfo)
-	{
-		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(l);
-
-		/*
-		 * Note: can_join won't be set for a restriction clause, but
-		 * mergeopfamilies will be if it has a mergejoinable operator and
-		 * doesn't contain volatile functions.
-		 */
-		if (restrictinfo->mergeopfamilies == NIL)
-			continue;			/* not mergejoinable */
-
-		/*
-		 * The clause certainly doesn't refer to anything but the given rel.
-		 * If either side is pseudoconstant then we can use it.
-		 */
-		if (bms_is_empty(restrictinfo->left_relids))
-		{
-			/* righthand side is inner */
-			restrictinfo->outer_is_left = true;
-		}
-		else if (bms_is_empty(restrictinfo->right_relids))
-		{
-			/* lefthand side is inner */
-			restrictinfo->outer_is_left = false;
-		}
-		else
-			continue;
-
-		/* OK, add to list */
-		clause_list = lappend(clause_list, restrictinfo);
-	}
+	/*
+	 * relation_has_unique_index_for automatically adds any usable restriction
+	 * clauses for the innerrel, so we needn't do that here.
+	 */
 
 	/* Now examine the indexes to see if we have a matching unique index */
-	if (relation_has_unique_index_for(root, innerrel, clause_list))
+	if (relation_has_unique_index_for(root, innerrel, clause_list, NIL, NIL))
 		return true;
 
 	/*

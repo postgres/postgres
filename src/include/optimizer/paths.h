@@ -50,7 +50,8 @@ extern void best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 					 RelOptInfo *outer_rel, JoinType jointype,
 					 Path **cheapest_startup, Path **cheapest_total);
 extern bool relation_has_unique_index_for(PlannerInfo *root, RelOptInfo *rel,
-							  List *restrictlist);
+							  List *restrictlist,
+							  List *exprlist, List *oprlist);
 extern bool eclass_matches_any_index(EquivalenceClass *ec,
 						 EquivalenceMember *em,
 						 RelOptInfo *rel);
