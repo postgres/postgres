@@ -4736,13 +4736,6 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	CommandCounterIncrement();
 
 	/*
-	 * Build and execute a CREATE CONSTRAINT TRIGGER statement for the CHECK
-	 * action for both INSERTs and UPDATEs on the referencing table.
-	 */
-	CreateFKCheckTrigger(myRel, fkconstraint, &constrobj, &trigobj, true);
-	CreateFKCheckTrigger(myRel, fkconstraint, &constrobj, &trigobj, false);
-
-	/*
 	 * Build and execute a CREATE CONSTRAINT TRIGGER statement for the ON
 	 * DELETE action on the referenced table.
 	 */
@@ -4879,6 +4872,27 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 
 	/* Register dependency from trigger to constraint */
 	recordDependencyOn(&trigobj, &constrobj, DEPENDENCY_INTERNAL);
+
+	/* Make changes-so-far visible */
+	CommandCounterIncrement();
+
+	/*
+	 * Build and execute CREATE CONSTRAINT TRIGGER statements for the CHECK
+	 * action for both INSERTs and UPDATEs on the referencing table.
+	 *
+	 * Note: for a self-referential FK (referencing and referenced tables are
+	 * the same), it is important that the ON UPDATE action fires before the
+	 * CHECK action, since both triggers will fire on the same row during an
+	 * UPDATE event; otherwise the CHECK trigger will be checking a non-final
+	 * state of the row.  Because triggers fire in name order, we are
+	 * effectively relying on the OIDs of the triggers to sort correctly as
+	 * text.  This will work except when the OID counter wraps around or adds
+	 * a digit, eg "99999" sorts after "100000".  That is infrequent enough,
+	 * and the use of self-referential FKs is rare enough, that we live with
+	 * it for now.  There will be a real fix in PG 9.2.
+	 */
+	CreateFKCheckTrigger(myRel, fkconstraint, &constrobj, &trigobj, true);
+	CreateFKCheckTrigger(myRel, fkconstraint, &constrobj, &trigobj, false);
 }
 
 /*
