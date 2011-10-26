@@ -6467,8 +6467,17 @@ CreateFKCheckTrigger(RangeVar *myRel, Constraint *fkconstraint,
 {
 	CreateTrigStmt *fk_trigger;
 
+	/*
+	 * Note: for a self-referential FK (referencing and referenced tables are
+	 * the same), it is important that the ON UPDATE action fires before the
+	 * CHECK action, since both triggers will fire on the same row during an
+	 * UPDATE event; otherwise the CHECK trigger will be checking a non-final
+	 * state of the row.  Triggers fire in name order, so we ensure this by
+	 * using names like "RI_ConstraintTrigger_a_NNNN" for the action triggers
+	 * and "RI_ConstraintTrigger_c_NNNN" for the check triggers.
+	 */
 	fk_trigger = makeNode(CreateTrigStmt);
-	fk_trigger->trigname = "RI_ConstraintTrigger";
+	fk_trigger->trigname = "RI_ConstraintTrigger_c";
 	fk_trigger->relation = myRel;
 	fk_trigger->row = true;
 	fk_trigger->timing = TRIGGER_TYPE_AFTER;
@@ -6524,7 +6533,7 @@ createForeignKeyTriggers(Relation rel, Constraint *fkconstraint,
 	 * DELETE action on the referenced table.
 	 */
 	fk_trigger = makeNode(CreateTrigStmt);
-	fk_trigger->trigname = "RI_ConstraintTrigger";
+	fk_trigger->trigname = "RI_ConstraintTrigger_a";
 	fk_trigger->relation = fkconstraint->pktable;
 	fk_trigger->row = true;
 	fk_trigger->timing = TRIGGER_TYPE_AFTER;
@@ -6577,7 +6586,7 @@ createForeignKeyTriggers(Relation rel, Constraint *fkconstraint,
 	 * UPDATE action on the referenced table.
 	 */
 	fk_trigger = makeNode(CreateTrigStmt);
-	fk_trigger->trigname = "RI_ConstraintTrigger";
+	fk_trigger->trigname = "RI_ConstraintTrigger_a";
 	fk_trigger->relation = fkconstraint->pktable;
 	fk_trigger->row = true;
 	fk_trigger->timing = TRIGGER_TYPE_AFTER;
@@ -6628,17 +6637,6 @@ createForeignKeyTriggers(Relation rel, Constraint *fkconstraint,
 	/*
 	 * Build and execute CREATE CONSTRAINT TRIGGER statements for the CHECK
 	 * action for both INSERTs and UPDATEs on the referencing table.
-	 *
-	 * Note: for a self-referential FK (referencing and referenced tables are
-	 * the same), it is important that the ON UPDATE action fires before the
-	 * CHECK action, since both triggers will fire on the same row during an
-	 * UPDATE event; otherwise the CHECK trigger will be checking a non-final
-	 * state of the row.  Because triggers fire in name order, we are
-	 * effectively relying on the OIDs of the triggers to sort correctly as
-	 * text.  This will work except when the OID counter wraps around or adds
-	 * a digit, eg "99999" sorts after "100000".  That is infrequent enough,
-	 * and the use of self-referential FKs is rare enough, that we live with
-	 * it for now.  There will be a real fix in PG 9.2.
 	 */
 	CreateFKCheckTrigger(myRel, fkconstraint, constraintOid, indexOid, true);
 	CreateFKCheckTrigger(myRel, fkconstraint, constraintOid, indexOid, false);
