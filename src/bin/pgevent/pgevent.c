@@ -45,8 +45,7 @@ DllInstall(BOOL bInstall,
 	size_t		ret;
 
 	if (pszCmdLine && *pszCmdLine != '\0')
-		wcstombs_s(&ret, event_source, sizeof(event_source),
-				   pszCmdLine, sizeof(event_source));
+		wcstombs(event_source, pszCmdLine, sizeof(event_source));
 
 	/*
 	 * This is an ugly hack due to the strange behavior of "regsvr32 /i".
