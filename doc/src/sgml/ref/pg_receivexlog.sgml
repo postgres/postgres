@@ -1,0 +1,270 @@
+<!--
+doc/src/sgml/ref/pg_receivexlog.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="app-pgreceivexlog">
+ <refmeta>
+  <refentrytitle>pg_receivexlog</refentrytitle>
+  <manvolnum>1</manvolnum>
+  <refmiscinfo>Application</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>pg_receivexlog</refname>
+  <refpurpose>streams transaction logs from a <productname>PostgreSQL</productname> cluster</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="app-pgreceivexlog">
+  <primary>pg_receivexlog</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+  <cmdsynopsis>
+   <command>pg_receivexlog</command>
+   <arg rep="repeat"><replaceable>option</></arg>
+  </cmdsynopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>
+   Description
+  </title>
+  <para>
+   <application>pg_receivexlog</application> is used to stream transaction log
+   from a running <productname>PostgreSQL</productname> cluster. The transaction
+   log is streamed using the streaming replication protocol, and is written
+   to a local directory of files. This directory can be used as the archive
+   location for doing a restore using point-in-time recovery (see
+   <xref linkend="continuous-archiving">).
+  </para>
+
+  <para>
+   <application>pg_receivexlog</application> streams the transaction
+   log in real time as it's being generated on the server, and does not wait
+   for segments to complete like <xref linkend="guc-archive-command"> does.
+   For this reason, it is not necessary to set
+   <xref linkend="guc-archive-timeout"> when using
+    <application>pg_receivexlog</application>.
+  </para>
+
+  <para>
+   The transaction log is streamed over a regular
+   <productname>PostgreSQL</productname> connection, and uses the
+   replication protocol. The connection must be
+   made with a user having <literal>REPLICATION</literal> permissions (see
+   <xref linkend="role-attributes">), and the user must be granted explicit
+   permissions in <filename>pg_hba.conf</filename>. The server must also
+   be configured with <xref linkend="guc-max-wal-senders"> set high enough
+   to leave at least one session available for the stream.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Options</title>
+
+   <para>
+    The following command-line options control the location and format of the
+    output.
+
+    <variablelist>
+     <varlistentry>
+      <term><option>-D <replaceable class="parameter">directory</replaceable></option></term>
+      <term><option>--dir=<replaceable class="parameter">directory</replaceable></option></term>
+      <listitem>
+       <para>
+        Directory to write the output to.
+       </para>
+       <para>
+        This parameter is required.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+   <para>
+    The following command-line options control the running of the program.
+
+    <variablelist>
+     <varlistentry>
+      <term><option>-v</option></term>
+      <term><option>--verbose</option></term>
+      <listitem>
+       <para>
+        Enables verbose mode.
+       </para>
+      </listitem>
+     </varlistentry>
+
+    </variablelist>
+   </para>
+
+   <para>
+    The following command-line options control the database connection parameters.
+
+    <variablelist>
+     <varlistentry>
+      <term><option>-s <replaceable class="parameter">interval</replaceable></option></term>
+      <term><option>--statusint=<replaceable class="parameter">interval</replaceable></option></term>
+      <listitem>
+       <para>
+        Specifies the number of seconds between status packets sent back to the
+        server. This is required if replication timeout is configured on the
+        server, and allows for easier monitoring. The default value is
+        10 seconds.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-h <replaceable class="parameter">host</replaceable></option></term>
+      <term><option>--host=<replaceable class="parameter">host</replaceable></option></term>
+      <listitem>
+       <para>
+        Specifies the host name of the machine on which the server is
+        running.  If the value begins with a slash, it is used as the
+        directory for the Unix domain socket. The default is taken
+        from the <envar>PGHOST</envar> environment variable, if set,
+        else a Unix domain socket connection is attempted.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-p <replaceable class="parameter">port</replaceable></option></term>
+      <term><option>--port=<replaceable class="parameter">port</replaceable></option></term>
+      <listitem>
+       <para>
+        Specifies the TCP port or local Unix domain socket file
+        extension on which the server is listening for connections.
+        Defaults to the <envar>PGPORT</envar> environment variable, if
+        set, or a compiled-in default.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-U <replaceable>username</replaceable></option></term>
+      <term><option>--username=<replaceable class="parameter">username</replaceable></option></term>
+      <listitem>
+       <para>
+        User name to connect as.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-w</></term>
+      <term><option>--no-password</></term>
+      <listitem>
+       <para>
+        Never issue a password prompt.  If the server requires
+        password authentication and a password is not available by
+        other means such as a <filename>.pgpass</filename> file, the
+        connection attempt will fail.  This option can be useful in
+        batch jobs and scripts where no user is present to enter a
+        password.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-W</option></term>
+      <term><option>--password</option></term>
+      <listitem>
+       <para>
+        Force <application>pg_receivexlog</application> to prompt for a
+        password before connecting to a database.
+       </para>
+
+       <para>
+        This option is never essential, since
+        <application>pg_receivexlog</application> will automatically prompt
+        for a password if the server demands password authentication.
+        However, <application>pg_receivexlog</application> will waste a
+        connection attempt finding out that the server wants a password.
+        In some cases it is worth typing <option>-W</> to avoid the extra
+        connection attempt.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+
+   <para>
+    Other, less commonly used, parameters are also available:
+
+    <variablelist>
+     <varlistentry>
+       <term><option>-V</></term>
+       <term><option>--version</></term>
+       <listitem>
+       <para>
+       Print the <application>pg_receivexlog</application> version and exit.
+       </para>
+       </listitem>
+     </varlistentry>
+
+     <varlistentry>
+       <term><option>-?</></term>
+       <term><option>--help</></term>
+       <listitem>
+       <para>
+       Show help about <application>pg_receivexlog</application> command line
+       arguments, and exit.
+       </para>
+       </listitem>
+     </varlistentry>
+
+    </variablelist>
+   </para>
+
+ </refsect1>
+
+ <refsect1>
+  <title>Environment</title>
+
+  <para>
+   This utility, like most other <productname>PostgreSQL</> utilities,
+   uses the environment variables supported by <application>libpq</>
+   (see <xref linkend="libpq-envars">).
+  </para>
+
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   When using <application>pg_receivexlog</application> instead of
+   <xref linkend="guc-archive-command">, the server will continue to
+   recycle transaction log files even if the backups are not properly
+   archived, since there is no command that fails. This can be worked
+   around by having an <xref linkend="guc-archive-command"> that fails
+   when the file has not been properly archived yet.
+  </para>
+
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   To stream the transaction log from the server at
+   <literal>mydbserver</literal> and store it in the local directory
+   <filename>/usr/local/pgsql/archive</filename>:
+   <screen>
+    <prompt>$</prompt> <userinput>pg_receivexlog -h mydbserver -D /home/pgbackup/archive</userinput>
+   </screen>
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="APP-PGBASEBACKUP"></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

@@ -305,6 +305,13 @@ sub mkvcbuild
     $initdb->AddLibrary('ws2_32.lib');
 
     my $pgbasebackup = AddSimpleFrontend('pg_basebackup', 1);
+    $pgbasebackup->AddFile('src\bin\pg_basebackup\pg_basebackup.c');
+    $pgbasebackup->AddLibrary('ws2_32.lib');
+
+    my $pgreceivexlog = AddSimpleFrontend('pg_basebackup', 1);
+    $pgreceivexlog->{name} = 'pg_receivexlog';
+    $pgreceivexlog->AddFile('src\bin\pg_basebackup\pg_receivexlog.c');
+    $pgreceivexlog->AddLibrary('ws2_32.lib');
 
     my $pgconfig = AddSimpleFrontend('pg_config');
 

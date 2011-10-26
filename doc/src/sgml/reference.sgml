@@ -220,6 +220,7 @@
    &pgConfig;
    &pgDump;
    &pgDumpall;
+   &pgReceivexlog;
    &pgRestore;
    &psqlRef;
    &reindexdb;
