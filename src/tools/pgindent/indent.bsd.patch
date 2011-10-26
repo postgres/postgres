@@ -1,5 +1,5 @@
 diff -c -r bsd_indent/Makefile pg_bsd_indent/Makefile
-*** bsd_indent/Makefile	Mon Nov 14 19:30:11 2005
+*** bsd_indent/Makefile	Wed Oct 26 17:13:34 2011
 --- pg_bsd_indent/Makefile	Wed Oct 12 12:17:12 2011
 ***************
 *** 2,10 ****
@@ -38,7 +38,7 @@ diff -c -r bsd_indent/Makefile pg_bsd_indent/Makefile
 ! install: $(TARGET)
   	install -s -o bin -g bin $(TARGET) /usr/local/bin
 diff -c -r bsd_indent/README pg_bsd_indent/README
-*** bsd_indent/README	Wed Oct 12 11:51:58 2011
+*** bsd_indent/README	Wed Oct 26 17:13:34 2011
 --- pg_bsd_indent/README	Mon Nov 14 19:30:24 2005
 ***************
 *** 1,3 ****
@@ -57,15 +57,15 @@ diff -c -r bsd_indent/README pg_bsd_indent/README
   via some distribution tape for PDP-11 Unix.  It has subsequently been
   hacked upon by James Gosling @ CMU.  It isn't very pretty, and really needs
 diff -c -r bsd_indent/args.c pg_bsd_indent/args.c
-*** bsd_indent/args.c	Mon Nov 14 19:30:00 2005
---- pg_bsd_indent/args.c	Wed Oct 12 12:30:06 2011
+*** bsd_indent/args.c	Wed Oct 26 17:13:34 2011
+--- pg_bsd_indent/args.c	Wed Oct 26 17:16:56 2011
 ***************
 *** 83,88 ****
 --- 83,90 ----
   #include <string.h>
   #include "indent_globs.h"
   
-+ #define INDENT_PG_VERSION	"1.0"
++ #define INDENT_PG_VERSION	"1.1"
 + 
   /* profile types */
   #define	PRO_SPECIAL	1	/* special case */
@@ -125,7 +125,7 @@ diff -c -r bsd_indent/args.c pg_bsd_indent/args.c
   indent: set_option: internal error: p_special %d\n", p->p_special);
 ***************
 *** 459,461 ****
---- 485,509 ----
+--- 485,508 ----
   		exit(1);
   	}
   }
@@ -145,17 +145,16 @@ diff -c -r bsd_indent/args.c pg_bsd_indent/args.c
 + 	while ((fgets(line, BUFSIZ, file)) != NULL)
 + 	{
 + 		/* Remove trailing whitespace */
-+ 		if (strstr(line, " \t\n\r") != NULL)
-+ 			*strstr(line, " \t\n\r") = '\0';
++ 		*(line + strcspn(line, " \t\n\r")) = '\0';
 + 		addkey(strdup(line), 4);
 + 	}
 + 	fclose(file);
 + }
-Only in pg_bsd_indent/: args.o
-Only in bsd_indent/: indent.bsd.patch
-Only in pg_bsd_indent/: indent.o
+Only in pg_bsd_indent: args.o
+Only in pg_bsd_indent: indent.bsd.patch
+Only in pg_bsd_indent: indent.o
 diff -c -r bsd_indent/indent_globs.h pg_bsd_indent/indent_globs.h
-*** bsd_indent/indent_globs.h	Wed Oct 12 11:51:58 2011
+*** bsd_indent/indent_globs.h	Wed Oct 26 17:13:34 2011
 --- pg_bsd_indent/indent_globs.h	Mon Nov 14 19:30:24 2005
 ***************
 *** 239,245 ****
@@ -178,9 +177,9 @@ diff -c -r bsd_indent/indent_globs.h pg_bsd_indent/indent_globs.h
   
   EXTERN struct parser_state {
   	int     last_token;
-Only in pg_bsd_indent/: io.o
+Only in pg_bsd_indent: io.o
 diff -c -r bsd_indent/lexi.c pg_bsd_indent/lexi.c
-*** bsd_indent/lexi.c	Wed Oct 12 11:51:58 2011
+*** bsd_indent/lexi.c	Wed Oct 26 17:13:34 2011
 --- pg_bsd_indent/lexi.c	Mon Nov 14 19:30:24 2005
 ***************
 *** 93,99 ****
@@ -221,9 +220,9 @@ diff -c -r bsd_indent/lexi.c pg_bsd_indent/lexi.c
   	p->rwd = key;
   	p->rwcode = val;
   	p[1].rwd = 0;
-Only in pg_bsd_indent/: lexi.o
+Only in pg_bsd_indent: lexi.o
 diff -c -r bsd_indent/parse.c pg_bsd_indent/parse.c
-*** bsd_indent/parse.c	Wed Oct 12 11:51:58 2011
+*** bsd_indent/parse.c	Wed Oct 26 17:13:34 2011
 --- pg_bsd_indent/parse.c	Mon Nov 14 19:30:24 2005
 ***************
 *** 231,236 ****
@@ -239,9 +238,9 @@ diff -c -r bsd_indent/parse.c pg_bsd_indent/parse.c
   	reduce();		/* see if any reduction can be done */
   
   #ifdef debug
-Only in pg_bsd_indent/: parse.o
+Only in pg_bsd_indent: parse.o
 diff -c -r bsd_indent/pr_comment.c pg_bsd_indent/pr_comment.c
-*** bsd_indent/pr_comment.c	Wed Oct 12 11:51:58 2011
+*** bsd_indent/pr_comment.c	Wed Oct 26 17:13:34 2011
 --- pg_bsd_indent/pr_comment.c	Mon Nov 14 19:30:24 2005
 ***************
 *** 148,154 ****
@@ -286,4 +285,4 @@ diff -c -r bsd_indent/pr_comment.c pg_bsd_indent/pr_comment.c
   			} else
   				if (++buf_ptr >= buf_end)
   					fill_buffer();
-Only in pg_bsd_indent/: pr_comment.o
+Only in pg_bsd_indent: pr_comment.o

@@ -379,11 +379,10 @@ progress_report(int tablespacenum, const char *filename)
 	char		totalsize_str[32];
 
 	/*
-	 * Avoid overflowing past 100% or the full size. This may make the
-	 * total size number change as we approach the end of the backup
-	 * (the estimate will always be wrong if WAL is included), but
-	 * that's better than having the done column be bigger than the
-	 * total.
+	 * Avoid overflowing past 100% or the full size. This may make the total
+	 * size number change as we approach the end of the backup (the estimate
+	 * will always be wrong if WAL is included), but that's better than having
+	 * the done column be bigger than the total.
 	 */
 	if (percent > 100)
 		percent = 100;
@@ -391,9 +390,9 @@ progress_report(int tablespacenum, const char *filename)
 		totalsize = totaldone / 1024;
 
 	/*
-	 * Separate step to keep platform-dependent format code out of translatable
-	 * strings.  And we only test for INT64_FORMAT availability in snprintf,
-	 * not fprintf.
+	 * Separate step to keep platform-dependent format code out of
+	 * translatable strings.  And we only test for INT64_FORMAT availability
+	 * in snprintf, not fprintf.
 	 */
 	snprintf(totaldone_str, sizeof(totaldone_str), INT64_FORMAT, totaldone / 1024);
 	snprintf(totalsize_str, sizeof(totalsize_str), INT64_FORMAT, totalsize);
@@ -410,7 +409,7 @@ progress_report(int tablespacenum, const char *filename)
 					ngettext("%s/%s kB (100%%), %d/%d tablespace %35s",
 							 "%s/%s kB (100%%), %d/%d tablespaces %35s",
 							 tablespacecount),
-					totaldone_str, totalsize_str, tablespacenum, tablespacecount, "");
+			totaldone_str, totalsize_str, tablespacenum, tablespacecount, "");
 		else
 			fprintf(stderr,
 					ngettext("%s/%s kB (%d%%), %d/%d tablespace (%-30.30s)",

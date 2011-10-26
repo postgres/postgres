@@ -22,6 +22,7 @@ TYPEDEFS="$1"
 shift
 
 [ -z "$INDENT" ] && INDENT=pg_bsd_indent
+INDENT_VERSION="1.1"
 
 trap "rm -f /tmp/$$ /tmp/$$a" 0 1 2 3 15
 
@@ -39,8 +40,8 @@ if [ "$?" -ne 1 ]
 then	echo "You do not appear to have '$INDENT' installed on your system." >&2
 	exit 1
 fi
-if [ "`$INDENT -V`" != "$INDENT 1.0" ]
-then	echo "You do not appear to have $INDENT version 1.0 installed on your system." >&2
+if [ "`$INDENT -V`" != "$INDENT $INDENT_VERSION" ]
+then	echo "You do not appear to have $INDENT version $INDENT_VERSION installed on your system." >&2
 	exit 1
 fi
 $INDENT -gnu </dev/null >/dev/null 2>&1
