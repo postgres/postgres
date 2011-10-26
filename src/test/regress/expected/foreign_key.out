@@ -1287,3 +1287,35 @@ SELECT * FROM tasks;
 (3 rows)
 
 COMMIT;
+--
+-- Test self-referential FK with CASCADE (bug #6268)
+--
+create temp table selfref (
+    a int primary key,
+    b int,
+    foreign key (b) references selfref (a)
+        on update cascade on delete cascade
+);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "selfref_pkey" for table "selfref"
+insert into selfref (a, b)
+values
+    (0, 0),
+    (1, 1);
+begin;
+    update selfref set a = 123 where a = 0;
+    select a, b from selfref;
+  a  |  b  
+-----+-----
+   1 |   1
+ 123 | 123
+(2 rows)
+
+    update selfref set a = 456 where a = 123;
+    select a, b from selfref;
+  a  |  b  
+-----+-----
+   1 |   1
+ 456 | 456
+(2 rows)
+
+commit;
