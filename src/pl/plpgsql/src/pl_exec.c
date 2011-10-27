@@ -1510,22 +1510,24 @@ exec_stmt_if(PLpgSQL_execstate *estate, PLpgSQL_stmt_if *stmt)
 {
 	bool		value;
 	bool		isnull;
+	ListCell   *lc;
 
 	value = exec_eval_boolean(estate, stmt->cond, &isnull);
 	exec_eval_cleanup(estate);
-
 	if (!isnull && value)
+		return exec_stmts(estate, stmt->then_body);
+
+	foreach(lc, stmt->elsif_list)
 	{
-		if (stmt->true_body != NIL)
-			return exec_stmts(estate, stmt->true_body);
-	}
-	else
-	{
-		if (stmt->false_body != NIL)
-			return exec_stmts(estate, stmt->false_body);
+		PLpgSQL_if_elsif *elif = (PLpgSQL_if_elsif *) lfirst(lc);
+
+		value = exec_eval_boolean(estate, elif->cond, &isnull);
+		exec_eval_cleanup(estate);
+		if (!isnull && value)
+			return exec_stmts(estate, elif->stmts);
 	}
 
-	return PLPGSQL_RC_OK;
+	return exec_stmts(estate, stmt->else_body);
 }
 
 

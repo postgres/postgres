@@ -446,9 +446,18 @@ free_assign(PLpgSQL_stmt_assign *stmt)
 static void
 free_if(PLpgSQL_stmt_if *stmt)
 {
+	ListCell   *l;
+
 	free_expr(stmt->cond);
-	free_stmts(stmt->true_body);
-	free_stmts(stmt->false_body);
+	free_stmts(stmt->then_body);
+	foreach(l, stmt->elsif_list)
+	{
+		PLpgSQL_if_elsif *elif = (PLpgSQL_if_elsif *) lfirst(l);
+
+		free_expr(elif->cond);
+		free_stmts(elif->stmts);
+	}
+	free_stmts(stmt->else_body);
 }
 
 static void
@@ -877,20 +886,29 @@ dump_assign(PLpgSQL_stmt_assign *stmt)
 static void
 dump_if(PLpgSQL_stmt_if *stmt)
 {
+	ListCell   *l;
+
 	dump_ind();
 	printf("IF ");
 	dump_expr(stmt->cond);
 	printf(" THEN\n");
+	dump_stmts(stmt->then_body);
+	foreach(l, stmt->elsif_list)
+	{
+		PLpgSQL_if_elsif *elif = (PLpgSQL_if_elsif *) lfirst(l);
 
-	dump_stmts(stmt->true_body);
-
-	if (stmt->false_body != NIL)
+		dump_ind();
+		printf("    ELSIF ");
+		dump_expr(elif->cond);
+		printf(" THEN\n");
+		dump_stmts(elif->stmts);
+	}
+	if (stmt->else_body != NIL)
 	{
 		dump_ind();
 		printf("    ELSE\n");
-		dump_stmts(stmt->false_body);
+		dump_stmts(stmt->else_body);
 	}
-
 	dump_ind();
 	printf("    ENDIF\n");
 }

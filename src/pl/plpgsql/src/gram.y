@@ -186,7 +186,7 @@ static	List			*read_raise_options(void);
 
 %type <str>		any_identifier opt_block_label opt_label
 
-%type <list>	proc_sect proc_stmts stmt_else
+%type <list>	proc_sect proc_stmts stmt_elsifs stmt_else
 %type <loop_body>	loop_body
 %type <stmt>	proc_stmt pl_block
 %type <stmt>	stmt_assign stmt_if stmt_loop stmt_while stmt_exit
@@ -1007,7 +1007,7 @@ assign_var		: T_DATUM
 					}
 				;
 
-stmt_if			: K_IF expr_until_then proc_sect stmt_else K_END K_IF ';'
+stmt_if			: K_IF expr_until_then proc_sect stmt_elsifs stmt_else K_END K_IF ';'
 					{
 						PLpgSQL_stmt_if *new;
 
@@ -1015,10 +1015,28 @@ stmt_if			: K_IF expr_until_then proc_sect stmt_else K_END K_IF ';'
 						new->cmd_type	= PLPGSQL_STMT_IF;
 						new->lineno		= plpgsql_location_to_lineno(@1);
 						new->cond		= $2;
-						new->true_body	= $3;
-						new->false_body = $4;
+						new->then_body	= $3;
+						new->elsif_list = $4;
+						new->else_body  = $5;
 
 						$$ = (PLpgSQL_stmt *)new;
+					}
+				;
+
+stmt_elsifs		:
+					{
+						$$ = NIL;
+					}
+				| stmt_elsifs K_ELSIF expr_until_then proc_sect
+					{
+						PLpgSQL_if_elsif *new;
+
+						new = palloc0(sizeof(PLpgSQL_if_elsif));
+						new->lineno = plpgsql_location_to_lineno(@2);
+						new->cond   = $3;
+						new->stmts  = $4;
+
+						$$ = lappend($1, new);
 					}
 				;
 
@@ -1026,36 +1044,6 @@ stmt_else		:
 					{
 						$$ = NIL;
 					}
-				| K_ELSIF expr_until_then proc_sect stmt_else
-					{
-						/*----------
-						 * Translate the structure:	   into:
-						 *
-						 * IF c1 THEN				   IF c1 THEN
-						 *	 ...						   ...
-						 * ELSIF c2 THEN			   ELSE
-						 *								   IF c2 THEN
-						 *	 ...							   ...
-						 * ELSE							   ELSE
-						 *	 ...							   ...
-						 * END IF						   END IF
-						 *							   END IF
-						 *----------
-						 */
-						PLpgSQL_stmt_if *new_if;
-
-						/* first create a new if-statement */
-						new_if = palloc0(sizeof(PLpgSQL_stmt_if));
-						new_if->cmd_type	= PLPGSQL_STMT_IF;
-						new_if->lineno		= plpgsql_location_to_lineno(@1);
-						new_if->cond		= $2;
-						new_if->true_body	= $3;
-						new_if->false_body	= $4;
-
-						/* wrap the if-statement in a "container" list */
-						$$ = list_make1(new_if);
-					}
-
 				| K_ELSE proc_sect
 					{
 						$$ = $2;

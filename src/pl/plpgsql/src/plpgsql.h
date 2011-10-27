@@ -396,10 +396,18 @@ typedef struct
 {								/* IF statement				*/
 	int			cmd_type;
 	int			lineno;
-	PLpgSQL_expr *cond;
-	List	   *true_body;		/* List of statements */
-	List	   *false_body;		/* List of statements */
+	PLpgSQL_expr *cond;			/* boolean expression for THEN */
+	List	   *then_body;		/* List of statements */
+	List	   *elsif_list;		/* List of PLpgSQL_if_elsif structs */
+	List	   *else_body;		/* List of statements */
 } PLpgSQL_stmt_if;
+
+typedef struct					/* one ELSIF arm of IF statement */
+{
+	int			lineno;
+	PLpgSQL_expr *cond;			/* boolean expression for this case */
+	List	   *stmts;			/* List of statements */
+} PLpgSQL_if_elsif;
 
 
 typedef struct					/* CASE statement */
