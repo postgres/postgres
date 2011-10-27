@@ -167,8 +167,8 @@ NumLWLocks(void)
 	/* bufmgr.c needs two for each shared buffer */
 	numLocks += 2 * NBuffers;
 
-	/* lock.c needs one per backend */
-	numLocks += MaxBackends;
+	/* proc.c needs one for each backend or auxiliary process */
+	numLocks += MaxBackends + NUM_AUXILIARY_PROCS;
 
 	/* clog.c needs one per CLOG buffer */
 	numLocks += NUM_CLOG_BUFFERS;
