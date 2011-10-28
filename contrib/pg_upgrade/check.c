@@ -403,8 +403,13 @@ check_old_cluster_has_new_cluster_dbs(void)
 					   new_cluster.dbarr.dbs[new_dbnum].db_name) == 0)
 				break;
 		if (old_dbnum == old_cluster.dbarr.ndbs)
-			pg_log(PG_FATAL, "New cluster database \"%s\" does not exist in the old cluster\n",
-				   new_cluster.dbarr.dbs[new_dbnum].db_name);
+		{
+			if (strcmp(new_cluster.dbarr.dbs[new_dbnum].db_name, "postgres") == 0)
+				pg_log(PG_FATAL, "The \"postgres\" database must exist in the old cluster\n");
+			else
+				pg_log(PG_FATAL, "New cluster database \"%s\" does not exist in the old cluster\n",
+					   new_cluster.dbarr.dbs[new_dbnum].db_name);
+		}
 	}
 }
 
