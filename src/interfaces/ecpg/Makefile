@@ -6,8 +6,10 @@ SUBDIRS = include pgtypeslib ecpglib compatlib preproc
 
 $(recurse)
 
+all-pgtypeslib-recurse all-ecpglib-recurse all-compatlib-recurse all-preproc-recurse: all-include-recurse
 all-compatlib-recurse: all-ecpglib-recurse
 all-ecpglib-recurse: all-pgtypeslib-recurse
+install-pgtypeslib-recurse install-ecpglib-recurse install-compatlib-recurse install-preproc-recurse: install-include-recurse
 install-compatlib-recurse: install-ecpglib-recurse
 install-ecpglib-recurse: install-pgtypeslib-recurse
 
