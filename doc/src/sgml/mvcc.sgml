@@ -547,7 +547,7 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
     If either transaction were running at the Repeatable Read isolation level,
     both would be allowed to commit; but since there is no serial order of execution
     consistent with the result, using Serializable transactions will allow one
-    transaction to commit and and will roll the other back with this message:
+    transaction to commit and will roll the other back with this message:
 
 <screen>
 ERROR:  could not serialize access due to read/write dependencies among transactions
