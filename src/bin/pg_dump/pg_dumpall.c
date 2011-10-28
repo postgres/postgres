@@ -441,7 +441,12 @@ main(int argc, char *argv[])
 	if (verbose)
 		dumpTimestamp("Started on");
 
-	fprintf(OPF, "\\connect postgres\n\n");
+	/*
+	 * We used to emit \connect postgres here, but that served no purpose
+	 * other than to break things for installations without a postgres
+	 * database.  Everything we're restoring here is a global, so whichever
+	 * database we're connected to at the moment is fine.
+	 */
 
 	/* Replicate encoding and std_strings in output */
 	fprintf(OPF, "SET client_encoding = '%s';\n",
