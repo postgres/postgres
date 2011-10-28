@@ -13,26 +13,26 @@ Here are the steps needed to create a regression database dump file:
     This database can be created by running 'gmake installcheck' from
     src/test/regression.
 
-2)  Use pg_dump to dump out the regression database
-    Use the new cluster's pg_dump on the old database to minimize
-    whitespace differences in the diff.
+2)  Use pg_dump to dump out the regression database.  Use the new 
+    cluster's pg_dump on the old database to minimize whitespace 
+    differences in the diff.
 
 3)  Adjust the regression database dump file
 
-    a)  Change CREATE FUNCTION shared object paths to use '$libdir'
-        The old and new cluster will have different shared object paths.
-
-    d)  Perform the load/dump twice
+    a)  Perform the load/dump twice
         This fixes problems with the ordering of COPY columns for
         inherited tables.
 
-    e)  Fix any wrapping format differences
+    b)  Change CREATE FUNCTION shared object paths to use '$libdir'
+        The old and new cluster will have different shared object paths.
+
+    c)  Fix any wrapping format differences
         Commands like CREATE TRIGGER and ALTER TABLE sometimes have
         differences.
 
-    c)  For pre-9.0, change CREATE OR REPLACE LANGUAGE to CREATE LANGUAGE
+    d)  For pre-9.0, change CREATE OR REPLACE LANGUAGE to CREATE LANGUAGE
 
-    b)  For pre-9.0, remove 'regex_flavor'
+    e)  For pre-9.0, remove 'regex_flavor'
 
     f)  For pre-9.0, adjust extra_float_digits
         Postgres 9.0 pg_dump uses extra_float_digits=-2 for pre-9.0
