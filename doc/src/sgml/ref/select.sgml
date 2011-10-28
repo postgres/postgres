@@ -1280,7 +1280,8 @@ ROLLBACK TO s;
 
   <caution>
    <para>
-    It is possible for a <command>SELECT</> command using <literal>ORDER
+    It is possible for a <command>SELECT</> command running at the <literal>READ
+    COMMITTED</literal> transaction isolation level and using <literal>ORDER
     BY</literal> and <literal>FOR UPDATE/SHARE</literal> to return rows out of
     order.  This is because <literal>ORDER BY</> is applied first.
     The command sorts the result, but might then block trying to obtain a lock
@@ -1300,6 +1301,13 @@ SELECT * FROM (SELECT * FROM mytable FOR UPDATE) ss ORDER BY column1;
     <literal>LIMIT</> or other restrictions.  So this technique is recommended
     only if concurrent updates of the ordering columns are expected and a
     strictly sorted result is required.
+   </para>
+
+   <para>
+    At the <literal>REPEATABLE READ</literal> or <literal>SERIALIZABLE</literal>
+    transaction isolation level this would cause a serialization failure (with
+    a <literal>SQLSTATE</literal> of <literal>'40001'</literal>), so there is
+    no possibility of receiving rows out of order under these isolation levels.
    </para>
   </caution>
   </refsect2>
