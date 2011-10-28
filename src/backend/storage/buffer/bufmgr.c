@@ -1929,6 +1929,35 @@ RelationGetNumberOfBlocksInFork(Relation relation, ForkNumber forkNum)
 	return smgrnblocks(relation->rd_smgr, forkNum);
 }
 
+/*
+ * BufferIsPermanent
+ *		Determines whether a buffer will potentially still be around after
+ *		a crash.  Caller must hold a buffer pin.
+ */
+bool
+BufferIsPermanent(Buffer buffer)
+{
+	volatile BufferDesc *bufHdr;
+
+	/* Local buffers are used only for temp relations. */
+	if (BufferIsLocal(buffer))
+		return false;
+
+	/* Make sure we've got a real buffer, and that we hold a pin on it. */
+	Assert(BufferIsValid(buffer));
+	Assert(BufferIsPinned(buffer));
+
+	/*
+	 * BM_PERMANENT can't be changed while we hold a pin on the buffer, so
+	 * we need not bother with the buffer header spinlock.  Even if someone
+	 * else changes the buffer header flags while we're doing this, we assume
+	 * that changing an aligned 2-byte BufFlags value is atomic, so we'll read
+	 * the old value or the new value, but not random garbage.
+	 */
+	bufHdr = &BufferDescriptors[buffer - 1];
+	return (bufHdr->flags & BM_PERMANENT) != 0;
+}
+
 /* ---------------------------------------------------------------------
  *		DropRelFileNodeBuffers
  *

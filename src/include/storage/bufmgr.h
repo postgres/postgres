@@ -192,6 +192,8 @@ extern void DropDatabaseBuffers(Oid dbid);
 #define RelationGetNumberOfBlocks(reln) \
 	RelationGetNumberOfBlocksInFork(reln, MAIN_FORKNUM)
 
+extern bool BufferIsPermanent(Buffer buffer);
+
 #ifdef NOT_USED
 extern void PrintPinnedBufs(void);
 #endif
