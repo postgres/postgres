@@ -3,9 +3,12 @@ src/timezone/README
 Timezone
 ========
 
-This is a PostgreSQL adapted version of the timezone library from:
+This is a PostgreSQL adapted version of the timezone library from
+http://www.iana.org/time-zones
 
-	ftp://elsie.nci.nih.gov/pub/tzcode*.tar.gz
+The source code can be found at:
+
+	ftp://ftp.iana.org/tz/releases/tzcode*.tar.gz
 
 The code is currently synced with release 2010c.  There are many cosmetic
 (and not so cosmetic) differences from the original tzcode library, but
@@ -13,7 +16,7 @@ diffs in the upstream version should usually be propagated to our version.
 
 The data files under data/ are an exact copy of the latest data set from:
 
-	ftp://elsie.nci.nih.gov/pub/tzdata*.tar.gz
+	ftp://ftp.iana.org/tz/releases/tzdata*.tar.gz
 
 Since time zone rules change frequently in some parts of the world,
 we should endeavor to update the data files before each PostgreSQL
