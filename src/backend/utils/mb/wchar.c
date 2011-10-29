@@ -1334,6 +1334,244 @@ pg_utf8_islegal(const unsigned char *source, int length)
 	return true;
 }
 
+#ifndef FRONTEND
+
+/*
+ * Generic character increment function.
+ *
+ * Not knowing anything about the properties of the encoding in use, we just
+ * keep incrementing the last byte until pg_verifymbstr() likes the result,
+ * or we run out of values to try.
+ *
+ * Like all character-increment functions, we must restore the original input
+ * string on failure.
+ */
+static bool
+pg_generic_charinc(unsigned char *charptr, int len)
+{
+ 	unsigned char *lastchar = (unsigned char *) (charptr + len - 1);
+ 	unsigned char savelastchar = *lastchar;
+ 	const char *const_charptr = (const char *)charptr;
+ 
+ 	while (*lastchar < (unsigned char) 255)
+ 	{
+ 		(*lastchar)++;
+ 		if (!pg_verifymbstr(const_charptr, len, true))
+ 			continue;
+ 		return true;
+ 	}
+ 
+ 	*lastchar = savelastchar;
+ 	return false;
+}
+
+/*
+ * UTF-8 character increment function.
+ *
+ * For a one-byte character less than 0x7F, we just increment the byte.
+ *
+ * For a multibyte character, every byte but the first must fall between 0x80
+ * and 0xBF; and the first byte must be between 0xC0 and 0xF4.  We increment
+ * the last byte that's not already at its maximum value, and set any following
+ * bytes back to 0x80.  If we can't find a byte that's less than the maximum
+ * allowable vale, we simply fail.  We also have some special-case logic to
+ * skip regions used for surrogate pair handling, as those should not occur in
+ * valid UTF-8.
+ *
+ * Like all character-increment functions, we must restore the original input
+ * string on failure.
+ */
+static bool
+pg_utf8_increment(unsigned char *charptr, int length)
+{
+ 	unsigned char a;
+ 	unsigned char bak[4];
+	unsigned char limit;
+
+ 	switch (length)
+ 	{
+ 		default:
+ 			/* reject lengths 5 and 6 for now */
+ 			return false;
+ 		case 4:
+			bak[3] = charptr[3];
+ 			a = charptr[3];
+ 			if (a < 0xBF)
+ 			{
+ 				charptr[3]++;
+ 				break;
+ 			}
+ 			charptr[3] = 0x80;
+ 			/* FALL THRU */
+ 		case 3:
+			bak[2] = charptr[2];
+ 			a = charptr[2];
+ 			if (a < 0xBF)
+ 			{
+ 				charptr[2]++;
+ 				break;
+ 			}
+ 			charptr[2] = 0x80;
+ 			/* FALL THRU */
+ 		case 2:
+			bak[1] = charptr[1];
+ 			a = charptr[1];
+			switch (*charptr)
+			{
+				case 0xED:
+					limit = 0x9F;
+					break;
+				case 0xF4:
+					limit = 0x8F;
+					break;
+				default:
+					limit = 0xBF;
+					break;
+			}
+			if (a < limit)
+			{
+ 				charptr[1]++;
+ 				break;
+ 			}
+ 			charptr[1] = 0x80;
+ 			/* FALL THRU */
+ 		case 1:
+			bak[0] = *charptr;
+ 			a = *charptr;
+ 			if (a == 0x7F || a == 0xDF || a == 0xEF || a == 0xF4)
+			{
+				/* Restore original string. */
+				memcpy(charptr, bak, length);
+ 				return false;
+ 			}
+ 			charptr[0]++;
+ 			break;
+ 	}
+
+ 	return true;
+}
+
+/*
+ * EUC-JP character increment function.
+ *
+ * If the sequence starts with SS2(0x8e), it must be a two-byte sequence
+ * representing JIS X 0201 characters with the second byte ranges between
+ * 0xa1 and 0xde.  We just increment the last byte if it's less than 0xde,
+ * and otherwise rewrite whole the sequence to 0xa1 0xa1.
+ *
+ * If the sequence starts with SS3(0x8f), it must be a three-byte sequence
+ * which the last two bytes ranges between 0xa1 and 0xfe.  The last byte
+ * is incremented, carrying overflow to the second-to-last byte.
+ *
+ * If the sequence starts with the values other than the aboves and its MSB
+ * is set, it must be a two-byte sequence representing JIS X 0208 characters
+ * with both bytes ranges between 0xa1 and 0xfe.  The last byte is incremented,
+ * carrying overflow to the second-to-last byte.
+ *
+ * Otherwise the sequence is consists of single byte representing ASCII
+ * characters. It is incremented up to 0x7f.
+ *    
+ * Only three EUC-JP byte sequences shown below - which have no character
+ * allocated - make this function to fail in spite of its validity: 0x7f,
+ * 0xfe 0xfe, 0x8f 0xfe 0xfe.
+ */
+static bool
+pg_eucjp_increment(unsigned char *charptr, int length)
+{
+ 	unsigned char bak[3];
+ 	unsigned char c1, c2;
+ 	signed int i;
+
+ 	c1 = *charptr;
+
+ 	switch (c1)
+ 	{
+ 		case SS2:	/* JIS X 0201 */
+ 			if (length != 2)
+				return false;
+
+ 			c2 = charptr[1];
+
+ 			if (c2 > 0xde)
+ 				charptr[0] = charptr[1] = 0xa1;
+ 			else if (c2 < 0xa1)
+ 				charptr[1] = 0xa1;
+ 			else
+ 				charptr[1]++;
+
+ 			break;
+
+ 		case SS3:	/* JIS X 0212 */
+ 			if (length != 3)
+				return false;
+
+ 			for (i = 2; i > 0; i--)
+ 			{
+				bak[i] = charptr[i];
+ 				c2 = charptr[i];
+ 				if (c2 < 0xa1)
+ 				{
+ 					charptr[i] = 0xa1;
+ 					return true;
+ 				}
+ 				else if (c2 < 0xfe)
+ 				{
+ 					charptr[i]++;
+ 					break;
+ 				}
+ 				charptr[i] = 0xa1;
+ 			}
+
+ 			if (i == 0)	  /* Out of 3-byte code region */
+ 			{
+				charptr[1] = bak[1];
+				charptr[2] = bak[2];
+ 				return false;
+ 			}
+ 			break;
+
+ 		default:
+ 			if (IS_HIGHBIT_SET(c1))	 /* JIS X 0208? */
+ 			{
+ 				if (length != 2)
+					return false;
+
+ 				for (i = 1 ; i >= 0 ; i--)	/* i must be signed */
+ 				{
+					bak[i] = charptr[i];
+ 					c2 = charptr[i];
+ 					if (c2 < 0xa1)
+ 					{
+ 						charptr[i] = 0xa1;
+ 						return true;
+ 					}
+ 					else if (c2 < 0xfe)
+ 					{
+ 						charptr[i]++;
+ 						break;
+ 					}
+ 					charptr[i] = 0xa1;
+ 				}
+
+ 				if (i < 0)	/* Out of 2 byte code region */
+ 				{
+ 					charptr[0] = bak[0];
+ 					charptr[1] = bak[1];
+ 					return false;
+ 				}
+ 			}
+ 			else
+ 			{	/* ASCII, single byte */
+ 				if (c1 > 0x7e)
+ 					return false;
+ 				(*charptr)++;
+ 			}
+ 	}
+
+ 	return true;
+}
+#endif
+
 /*
  *-------------------------------------------------------------------
  * encoding info table
@@ -1456,6 +1694,25 @@ int
 pg_database_encoding_max_length(void)
 {
 	return pg_wchar_table[GetDatabaseEncoding()].maxmblen;
+}
+
+/*
+ * give the character incrementer for the encoding for the current database
+ */
+mbcharacter_incrementer
+pg_database_encoding_character_incrementer(void)
+{
+	switch (GetDatabaseEncoding())
+	{
+		case PG_UTF8:
+			return pg_utf8_increment;
+			
+		case PG_EUC_JP:
+			return pg_eucjp_increment;
+			
+		default:
+			return pg_generic_charinc;
+	}
 }
 
 /*

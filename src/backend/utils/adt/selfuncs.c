@@ -5666,6 +5666,19 @@ pattern_selectivity(Const *patt, Pattern_Type ptype)
 
 
 /*
+ * For bytea, the increment function need only increment the current byte
+ * (there are no multibyte characters to worry about).
+ */
+static bool
+byte_increment(unsigned char *ptr, int len)
+{
+	if (*ptr >= 255)
+		return false;
+	(*ptr)++;
+	return true;
+}
+
+/*
  * Try to generate a string greater than the given string or any
  * string it is a prefix of.  If successful, return a palloc'd string
  * in the form of a Const node; else return NULL.
@@ -5704,6 +5717,7 @@ make_greater_string(const Const *str_const, FmgrInfo *ltproc, Oid collation)
 	int			len;
 	Datum		cmpstr;
 	text	   *cmptxt = NULL;
+	mbcharacter_incrementer charinc;
 
 	/*
 	 * Get a modifiable copy of the prefix string in C-string format, and set
@@ -5765,29 +5779,33 @@ make_greater_string(const Const *str_const, FmgrInfo *ltproc, Oid collation)
 		}
 	}
 
+	if (datatype == BYTEAOID)
+		charinc = &byte_increment;
+	else
+		charinc = pg_database_encoding_character_incrementer();
+
 	while (len > 0)
 	{
-		unsigned char *lastchar = (unsigned char *) (workstr + len - 1);
-		unsigned char savelastchar = *lastchar;
+		int		charlen;
+		unsigned char *lastchar;
+		Const	   *workstr_const;
+
+		if (datatype == BYTEAOID)
+			charlen = 1;
+		else
+			charlen = len - pg_mbcliplen(workstr, len, len - 1);
+		lastchar = (unsigned char *) (workstr + len - charlen);
 
 		/*
-		 * Try to generate a larger string by incrementing the last byte.
+		 * Try to generate a larger string by incrementing the last character
+		 * (for BYTEA, we treat each byte as a character).
 		 */
-		while (*lastchar < (unsigned char) 255)
+		if (charinc(lastchar, charlen))
 		{
-			Const	   *workstr_const;
-
-			(*lastchar)++;
-
-			if (datatype != BYTEAOID)
-			{
-				/* do not generate invalid encoding sequences */
-				if (!pg_verifymbstr(workstr, len, true))
-					continue;
-				workstr_const = string_to_const(workstr, datatype);
-			}
-			else
+			if (datatype == BYTEAOID)
 				workstr_const = string_to_bytea_const(workstr, len);
+			else
+				workstr_const = string_to_const(workstr, datatype);
 
 			if (DatumGetBool(FunctionCall2Coll(ltproc,
 											   collation,
@@ -5806,20 +5824,11 @@ make_greater_string(const Const *str_const, FmgrInfo *ltproc, Oid collation)
 			pfree(workstr_const);
 		}
 
-		/* restore last byte so we don't confuse pg_mbcliplen */
-		*lastchar = savelastchar;
-
 		/*
-		 * Truncate off the last character, which might be more than 1 byte,
-		 * depending on the character encoding.
+		 * Truncate off the last character or byte.
 		 */
-		if (datatype != BYTEAOID && pg_database_encoding_max_length() > 1)
-			len = pg_mbcliplen(workstr, len, len - 1);
-		else
-			len -= 1;
-
-		if (datatype != BYTEAOID)
-			workstr[len] = '\0';
+		len -= charlen;
+		workstr[len] = '\0';
 	}
 
 	/* Failed... */
