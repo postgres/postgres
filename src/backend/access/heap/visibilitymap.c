@@ -27,21 +27,27 @@
  * the sense that we make sure that whenever a bit is set, we know the
  * condition is true, but if a bit is not set, it might or might not be true.
  *
- * There's no explicit WAL logging in the functions in this file. The callers
+ * Clearing a visibility map bit is not separately WAL-logged.  The callers
  * must make sure that whenever a bit is cleared, the bit is cleared on WAL
- * replay of the updating operation as well. Setting bits during recovery
- * isn't necessary for correctness.
+ * replay of the updating operation as well.
  *
- * Currently, the visibility map is only used as a hint, to speed up VACUUM.
- * A corrupted visibility map won't cause data corruption, although it can
- * make VACUUM skip pages that need vacuuming, until the next anti-wraparound
- * vacuum. The visibility map is not used for anti-wraparound vacuums, because
+ * When we *set* a visibility map during VACUUM, we must write WAL.  This may
+ * seem counterintuitive, since the bit is basically a hint: if it is clear,
+ * it may still be the case that every tuple on the page is visible to all
+ * transactions; we just don't know that for certain.  The difficulty is that
+ * there are two bits which are typically set together: the PD_ALL_VISIBLE bit
+ * on the page itself, and the visibility map bit.  If a crash occurs after the
+ * visibility map page makes it to disk and before the updated heap page makes
+ * it to disk, redo must set the bit on the heap page.  Otherwise, the next
+ * insert, update, or delete on the heap page will fail to realize that the
+ * visibility map bit must be cleared, possibly causing index-only scans to
+ * return wrong answers.
+ *
+ * VACUUM will normally skip pages for which the visibility map bit is set;
+ * such pages can't contain any dead tuples and therefore don't need vacuuming.
+ * The visibility map is not used for anti-wraparound vacuums, because
  * an anti-wraparound vacuum needs to freeze tuples and observe the latest xid
  * present in the table, even on pages that don't have any dead tuples.
- *
- * Although the visibility map is just a hint at the moment, the PD_ALL_VISIBLE
- * flag on heap pages *must* be correct, because it is used to skip visibility
- * checking.
  *
  * LOCKING
  *
@@ -71,11 +77,6 @@
  * WAL record of the changes that made it possible to set the bit is flushed.
  * But when a bit is cleared, we don't have to do that because it's always
  * safe to clear a bit in the map from correctness point of view.
- *
- * TODO
- *
- * It would be nice to use the visibility map to skip visibility checks in
- * index scans.
  *
  *-------------------------------------------------------------------------
  */
