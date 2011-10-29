@@ -52,9 +52,6 @@ static void set_frozenxids(void);
 static void setup(char *argv0, bool live_check);
 static void cleanup(void);
 
-/* This is the database used by pg_dumpall to restore global tables */
-#define GLOBAL_DUMP_DB	"postgres"
-
 ClusterInfo old_cluster,
 			new_cluster;
 OSInfo		os_info;
@@ -233,10 +230,12 @@ prepare_new_databases(void)
 	prep_status("Creating databases in the new cluster");
 
 	/*
-	 * Install support functions in the global-restore database to preserve
-	 * pg_authid.oid.
+	 * Install support functions in the global-object restore database to
+	 * preserve pg_authid.oid.  pg_dumpall uses 'template0' as its template
+	 * database so objects we add into 'template1' are not propogated.  They
+	 * are removed on pg_upgrade exit.
 	 */
-	install_support_functions_in_new_db(GLOBAL_DUMP_DB);
+	install_support_functions_in_new_db("template1");
 
 	/*
 	 * We have to create the databases first so we can install support
@@ -270,7 +269,7 @@ create_new_objects(void)
 		DbInfo	   *new_db = &new_cluster.dbarr.dbs[dbnum];
 
 		/* skip db we already installed */
-		if (strcmp(new_db->db_name, GLOBAL_DUMP_DB) != 0)
+		if (strcmp(new_db->db_name, "template1") != 0)
 			install_support_functions_in_new_db(new_db->db_name);
 	}
 	check_ok();
