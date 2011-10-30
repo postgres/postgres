@@ -1337,85 +1337,78 @@ pg_utf8_islegal(const unsigned char *source, int length)
 #ifndef FRONTEND
 
 /*
- * Generic character increment function.
+ * Generic character incrementer function.
  *
  * Not knowing anything about the properties of the encoding in use, we just
- * keep incrementing the last byte until pg_verifymbstr() likes the result,
- * or we run out of values to try.
- *
- * Like all character-increment functions, we must restore the original input
- * string on failure.
+ * keep incrementing the last byte until we get a validly-encoded result,
+ * or we run out of values to try.  We don't bother to try incrementing
+ * higher-order bytes, so there's no growth in runtime for wider characters.
+ * (If we did try to do that, we'd need to consider the likelihood that 255
+ * is not a valid final byte in the encoding.)
  */
 static bool
 pg_generic_charinc(unsigned char *charptr, int len)
 {
- 	unsigned char *lastchar = (unsigned char *) (charptr + len - 1);
- 	unsigned char savelastchar = *lastchar;
- 	const char *const_charptr = (const char *)charptr;
- 
- 	while (*lastchar < (unsigned char) 255)
- 	{
- 		(*lastchar)++;
- 		if (!pg_verifymbstr(const_charptr, len, true))
- 			continue;
- 		return true;
- 	}
- 
- 	*lastchar = savelastchar;
- 	return false;
+	unsigned char *lastbyte = charptr + len - 1;
+	mbverifier	mbverify;
+
+	/* We can just invoke the character verifier directly. */
+	mbverify = pg_wchar_table[GetDatabaseEncoding()].mbverify;
+
+	while (*lastbyte < (unsigned char) 255)
+	{
+		(*lastbyte)++;
+		if ((*mbverify) (charptr, len) == len)
+			return true;
+	}
+
+	return false;
 }
 
 /*
- * UTF-8 character increment function.
+ * UTF-8 character incrementer function.
  *
  * For a one-byte character less than 0x7F, we just increment the byte.
  *
  * For a multibyte character, every byte but the first must fall between 0x80
  * and 0xBF; and the first byte must be between 0xC0 and 0xF4.  We increment
- * the last byte that's not already at its maximum value, and set any following
- * bytes back to 0x80.  If we can't find a byte that's less than the maximum
- * allowable vale, we simply fail.  We also have some special-case logic to
- * skip regions used for surrogate pair handling, as those should not occur in
- * valid UTF-8.
+ * the last byte that's not already at its maximum value.  If we can't find a
+ * byte that's less than the maximum allowable value, we simply fail.  We also
+ * need some special-case logic to skip regions used for surrogate pair
+ * handling, as those should not occur in valid UTF-8.
  *
- * Like all character-increment functions, we must restore the original input
- * string on failure.
+ * Note that we don't reset lower-order bytes back to their minimums, since
+ * we can't afford to make an exhaustive search (see make_greater_string).
  */
 static bool
 pg_utf8_increment(unsigned char *charptr, int length)
 {
- 	unsigned char a;
- 	unsigned char bak[4];
+	unsigned char a;
 	unsigned char limit;
 
- 	switch (length)
- 	{
- 		default:
- 			/* reject lengths 5 and 6 for now */
- 			return false;
- 		case 4:
-			bak[3] = charptr[3];
- 			a = charptr[3];
- 			if (a < 0xBF)
- 			{
- 				charptr[3]++;
- 				break;
- 			}
- 			charptr[3] = 0x80;
- 			/* FALL THRU */
- 		case 3:
-			bak[2] = charptr[2];
- 			a = charptr[2];
- 			if (a < 0xBF)
- 			{
- 				charptr[2]++;
- 				break;
- 			}
- 			charptr[2] = 0x80;
- 			/* FALL THRU */
- 		case 2:
-			bak[1] = charptr[1];
- 			a = charptr[1];
+	switch (length)
+	{
+		default:
+			/* reject lengths 5 and 6 for now */
+			return false;
+		case 4:
+			a = charptr[3];
+			if (a < 0xBF)
+			{
+				charptr[3]++;
+				break;
+			}
+			/* FALL THRU */
+		case 3:
+			a = charptr[2];
+			if (a < 0xBF)
+			{
+				charptr[2]++;
+				break;
+			}
+			/* FALL THRU */
+		case 2:
+			a = charptr[1];
 			switch (*charptr)
 			{
 				case 0xED:
@@ -1430,147 +1423,126 @@ pg_utf8_increment(unsigned char *charptr, int length)
 			}
 			if (a < limit)
 			{
- 				charptr[1]++;
- 				break;
- 			}
- 			charptr[1] = 0x80;
- 			/* FALL THRU */
- 		case 1:
-			bak[0] = *charptr;
- 			a = *charptr;
- 			if (a == 0x7F || a == 0xDF || a == 0xEF || a == 0xF4)
-			{
-				/* Restore original string. */
-				memcpy(charptr, bak, length);
- 				return false;
- 			}
- 			charptr[0]++;
- 			break;
- 	}
+				charptr[1]++;
+				break;
+			}
+			/* FALL THRU */
+		case 1:
+			a = *charptr;
+			if (a == 0x7F || a == 0xDF || a == 0xEF || a == 0xF4)
+				return false;
+			charptr[0]++;
+			break;
+	}
 
- 	return true;
+	return true;
 }
 
 /*
- * EUC-JP character increment function.
+ * EUC-JP character incrementer function.
  *
- * If the sequence starts with SS2(0x8e), it must be a two-byte sequence
- * representing JIS X 0201 characters with the second byte ranges between
- * 0xa1 and 0xde.  We just increment the last byte if it's less than 0xde,
- * and otherwise rewrite whole the sequence to 0xa1 0xa1.
+ * If the sequence starts with SS2 (0x8e), it must be a two-byte sequence
+ * representing JIS X 0201 characters with the second byte ranging between
+ * 0xa1 and 0xdf.  We just increment the last byte if it's less than 0xdf,
+ * and otherwise rewrite the whole sequence to 0xa1 0xa1.
  *
- * If the sequence starts with SS3(0x8f), it must be a three-byte sequence
- * which the last two bytes ranges between 0xa1 and 0xfe.  The last byte
- * is incremented, carrying overflow to the second-to-last byte.
+ * If the sequence starts with SS3 (0x8f), it must be a three-byte sequence
+ * in which the last two bytes range between 0xa1 and 0xfe.  The last byte
+ * is incremented if possible, otherwise the second-to-last byte.
  *
- * If the sequence starts with the values other than the aboves and its MSB
+ * If the sequence starts with a value other than the above and its MSB
  * is set, it must be a two-byte sequence representing JIS X 0208 characters
- * with both bytes ranges between 0xa1 and 0xfe.  The last byte is incremented,
- * carrying overflow to the second-to-last byte.
+ * with both bytes ranging between 0xa1 and 0xfe.  The last byte is
+ * incremented if possible, otherwise the second-to-last byte.
  *
- * Otherwise the sequence is consists of single byte representing ASCII
- * characters. It is incremented up to 0x7f.
- *    
- * Only three EUC-JP byte sequences shown below - which have no character
- * allocated - make this function to fail in spite of its validity: 0x7f,
- * 0xfe 0xfe, 0x8f 0xfe 0xfe.
+ * Otherwise, the sequence is a single-byte ASCII character. It is
+ * incremented up to 0x7f.
  */
 static bool
 pg_eucjp_increment(unsigned char *charptr, int length)
 {
- 	unsigned char bak[3];
- 	unsigned char c1, c2;
- 	signed int i;
+	unsigned char c1,
+				c2;
+	int			i;
 
- 	c1 = *charptr;
+	c1 = *charptr;
 
- 	switch (c1)
- 	{
- 		case SS2:	/* JIS X 0201 */
- 			if (length != 2)
+	switch (c1)
+	{
+		case SS2:				/* JIS X 0201 */
+			if (length != 2)
 				return false;
 
- 			c2 = charptr[1];
+			c2 = charptr[1];
 
- 			if (c2 > 0xde)
- 				charptr[0] = charptr[1] = 0xa1;
- 			else if (c2 < 0xa1)
- 				charptr[1] = 0xa1;
- 			else
- 				charptr[1]++;
+			if (c2 >= 0xdf)
+				charptr[0] = charptr[1] = 0xa1;
+			else if (c2 < 0xa1)
+				charptr[1] = 0xa1;
+			else
+				charptr[1]++;
+			break;
 
- 			break;
-
- 		case SS3:	/* JIS X 0212 */
- 			if (length != 3)
+		case SS3:				/* JIS X 0212 */
+			if (length != 3)
 				return false;
 
- 			for (i = 2; i > 0; i--)
- 			{
-				bak[i] = charptr[i];
- 				c2 = charptr[i];
- 				if (c2 < 0xa1)
- 				{
- 					charptr[i] = 0xa1;
- 					return true;
- 				}
- 				else if (c2 < 0xfe)
- 				{
- 					charptr[i]++;
- 					break;
- 				}
- 				charptr[i] = 0xa1;
- 			}
+			for (i = 2; i > 0; i--)
+			{
+				c2 = charptr[i];
+				if (c2 < 0xa1)
+				{
+					charptr[i] = 0xa1;
+					return true;
+				}
+				else if (c2 < 0xfe)
+				{
+					charptr[i]++;
+					return true;
+				}
+			}
 
- 			if (i == 0)	  /* Out of 3-byte code region */
- 			{
-				charptr[1] = bak[1];
-				charptr[2] = bak[2];
- 				return false;
- 			}
- 			break;
+			/* Out of 3-byte code region */
+			return false;
 
- 		default:
- 			if (IS_HIGHBIT_SET(c1))	 /* JIS X 0208? */
- 			{
- 				if (length != 2)
+		default:
+			if (IS_HIGHBIT_SET(c1))		/* JIS X 0208? */
+			{
+				if (length != 2)
 					return false;
 
- 				for (i = 1 ; i >= 0 ; i--)	/* i must be signed */
- 				{
-					bak[i] = charptr[i];
- 					c2 = charptr[i];
- 					if (c2 < 0xa1)
- 					{
- 						charptr[i] = 0xa1;
- 						return true;
- 					}
- 					else if (c2 < 0xfe)
- 					{
- 						charptr[i]++;
- 						break;
- 					}
- 					charptr[i] = 0xa1;
- 				}
+				for (i = 1; i >= 0; i--)
+				{
+					c2 = charptr[i];
+					if (c2 < 0xa1)
+					{
+						charptr[i] = 0xa1;
+						return true;
+					}
+					else if (c2 < 0xfe)
+					{
+						charptr[i]++;
+						return true;
+					}
+				}
 
- 				if (i < 0)	/* Out of 2 byte code region */
- 				{
- 					charptr[0] = bak[0];
- 					charptr[1] = bak[1];
- 					return false;
- 				}
- 			}
- 			else
- 			{	/* ASCII, single byte */
- 				if (c1 > 0x7e)
- 					return false;
- 				(*charptr)++;
- 			}
- 	}
+				/* Out of 2 byte code region */
+				return false;
+			}
+			else
+			{	/* ASCII, single byte */
+				if (c1 > 0x7e)
+					return false;
+				(*charptr)++;
+			}
+			break;
+	}
 
- 	return true;
+	return true;
 }
-#endif
+
+#endif /* !FRONTEND */
+
 
 /*
  *-------------------------------------------------------------------
@@ -1697,19 +1669,23 @@ pg_database_encoding_max_length(void)
 }
 
 /*
- * give the character incrementer for the encoding for the current database
+ * get the character incrementer for the encoding for the current database
  */
 mbcharacter_incrementer
 pg_database_encoding_character_incrementer(void)
 {
+	/*
+	 * Eventually it might be best to add a field to pg_wchar_table[],
+	 * but for now we just use a switch.
+	 */
 	switch (GetDatabaseEncoding())
 	{
 		case PG_UTF8:
 			return pg_utf8_increment;
-			
+
 		case PG_EUC_JP:
 			return pg_eucjp_increment;
-			
+
 		default:
 			return pg_generic_charinc;
 	}
@@ -1908,4 +1884,4 @@ report_untranslatable_char(int src_encoding, int dest_encoding,
 			 pg_enc2name_tbl[dest_encoding].name)));
 }
 
-#endif
+#endif /* !FRONTEND */
