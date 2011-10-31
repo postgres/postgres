@@ -608,11 +608,11 @@ _bt_advance_array_keys(IndexScanDesc scan, ScanDirection dir)
  * Also, for a DESC column, we commute (flip) all the sk_strategy numbers
  * so that the index sorts in the desired direction.
  *
- * One key purpose of this routine is to discover how many scan keys
- * must be satisfied to continue the scan.	It also attempts to eliminate
- * redundant keys and detect contradictory keys.  (If the index opfamily
- * provides incomplete sets of cross-type operators, we may fail to detect
- * redundant or contradictory keys, but we can survive that.)
+ * One key purpose of this routine is to discover which scan keys must be
+ * satisfied to continue the scan. It also attempts to eliminate redundant
+ * keys and detect contradictory keys.  (If the index opfamily provides
+ * incomplete sets of cross-type operators, we may fail to detect redundant
+ * or contradictory keys, but we can survive that.)
  *
  * The output keys must be sorted by index attribute.  Presently we expect
  * (but verify) that the input keys are already so sorted --- this is done
@@ -646,6 +646,16 @@ _bt_advance_array_keys(IndexScanDesc scan, ScanDirection dir)
  * without further processing here.  We may also emit both >/>= or both
  * </<= keys if we can't compare them.  The logic about required keys still
  * works if we don't eliminate redundant keys.
+ *
+ * Note that the reason we need direction-sensitive required-key flags is
+ * precisely that we may not be able to eliminate redundant keys.  Suppose
+ * we have "x > 4::int AND x > 10::bigint", and we are unable to determine
+ * which key is more restrictive for lack of a suitable cross-type operator.
+ * _bt_first will arbitrarily pick one of the keys to do the initial
+ * positioning with.  If it picks x > 4, then the x > 10 condition will fail
+ * until we reach index entries > 10; but we can't stop the scan just because
+ * x > 10 is failing.  On the other hand, if we are scanning backwards, then
+ * failure of either key is indeed enough to stop the scan.
  *
  * As a byproduct of this work, we can detect contradictory quals such
  * as "x = 1 AND x > 2".  If we see that, we return so->qual_ok = FALSE,
@@ -1384,15 +1394,16 @@ _bt_checkkeys(IndexScanDesc scan,
 			}
 
 			/*
-			 * Tuple fails this qual.  If it's a required qual for the current
-			 * scan direction, then we can conclude no further tuples will
-			 * pass, either.
+			 * Tuple fails this qual.  If it's a required qual, then we can
+			 * conclude no further tuples will pass, either.  We can stop
+			 * regardless of the scan direction, because we know that NULLs
+			 * sort to one end or the other of the range of values.  If this
+			 * tuple doesn't pass, then no future ones will either, until we
+			 * reach the next set of values of the higher-order index attrs
+			 * (if any) ... and those attrs must have equality quals, else
+			 * this one wouldn't be marked required.
 			 */
-			if ((key->sk_flags & SK_BT_REQFWD) &&
-				ScanDirectionIsForward(dir))
-				*continuescan = false;
-			else if ((key->sk_flags & SK_BT_REQBKWD) &&
-					 ScanDirectionIsBackward(dir))
+			if (key->sk_flags & (SK_BT_REQFWD | SK_BT_REQBKWD))
 				*continuescan = false;
 
 			/*
@@ -1403,32 +1414,15 @@ _bt_checkkeys(IndexScanDesc scan,
 
 		if (isNull)
 		{
-			if (key->sk_flags & SK_BT_NULLS_FIRST)
-			{
-				/*
-				 * Since NULLs are sorted before non-NULLs, we know we have
-				 * reached the lower limit of the range of values for this
-				 * index attr.	On a backward scan, we can stop if this qual
-				 * is one of the "must match" subset.  On a forward scan,
-				 * however, we should keep going.
-				 */
-				if ((key->sk_flags & SK_BT_REQBKWD) &&
-					ScanDirectionIsBackward(dir))
-					*continuescan = false;
-			}
-			else
-			{
-				/*
-				 * Since NULLs are sorted after non-NULLs, we know we have
-				 * reached the upper limit of the range of values for this
-				 * index attr.	On a forward scan, we can stop if this qual is
-				 * one of the "must match" subset.	On a backward scan,
-				 * however, we should keep going.
-				 */
-				if ((key->sk_flags & SK_BT_REQFWD) &&
-					ScanDirectionIsForward(dir))
-					*continuescan = false;
-			}
+			/*
+			 * The index entry is NULL, so it must fail this qual (we assume
+			 * all btree operators are strict).  Furthermore, we know that
+			 * all remaining entries with the same higher-order index attr
+			 * values must be NULLs too.  So, just as above, we can stop the
+			 * scan regardless of direction, if the qual is required.
+			 */
+			if (key->sk_flags & (SK_BT_REQFWD | SK_BT_REQBKWD))
+				*continuescan = false;
 
 			/*
 			 * In any case, this indextuple doesn't match the qual.
@@ -1508,32 +1502,15 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, TupleDesc tupdesc,
 
 		if (isNull)
 		{
-			if (subkey->sk_flags & SK_BT_NULLS_FIRST)
-			{
-				/*
-				 * Since NULLs are sorted before non-NULLs, we know we have
-				 * reached the lower limit of the range of values for this
-				 * index attr. On a backward scan, we can stop if this qual is
-				 * one of the "must match" subset.	On a forward scan,
-				 * however, we should keep going.
-				 */
-				if ((subkey->sk_flags & SK_BT_REQBKWD) &&
-					ScanDirectionIsBackward(dir))
-					*continuescan = false;
-			}
-			else
-			{
-				/*
-				 * Since NULLs are sorted after non-NULLs, we know we have
-				 * reached the upper limit of the range of values for this
-				 * index attr. On a forward scan, we can stop if this qual is
-				 * one of the "must match" subset.	On a backward scan,
-				 * however, we should keep going.
-				 */
-				if ((subkey->sk_flags & SK_BT_REQFWD) &&
-					ScanDirectionIsForward(dir))
-					*continuescan = false;
-			}
+			/*
+			 * The index entry is NULL, so it must fail this qual (we assume
+			 * all btree operators are strict).  Furthermore, we know that
+			 * all remaining entries with the same higher-order index attr
+			 * values must be NULLs too.  So, just as above, we can stop the
+			 * scan regardless of direction, if the qual is required.
+			 */
+			if (subkey->sk_flags & (SK_BT_REQFWD | SK_BT_REQBKWD))
+				*continuescan = false;
 
 			/*
 			 * In any case, this indextuple doesn't match the qual.
