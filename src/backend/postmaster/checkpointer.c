@@ -528,6 +528,11 @@ CheckpointerMain(void)
 		}
 
 		/*
+		 * Send off activity statistics to the stats collector
+		 */
+		pgstat_send_bgwriter();
+
+		/*
 		 * Nap for a while and then loop again. Later patches will replace
 		 * this with a latch loop. Keep it simple now for clarity.
 		 * Relatively long sleep because the bgwriter does cleanup now.
