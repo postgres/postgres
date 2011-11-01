@@ -308,8 +308,8 @@ ECPG: DeclareCursorStmtDECLAREcursor_namecursor_optionsCURSORopt_holdFORSelectSt
 			if (strcmp_fn($2, ptr->name) == 0)
 			{
 				if ($2[0] == ':')
-                                        mmerror(PARSE_ERROR, ET_ERROR, "using variable \"%s\" in different declare statements is not supported", $2+1);
-                                else
+					mmerror(PARSE_ERROR, ET_ERROR, "using variable \"%s\" in different declare statements is not supported", $2+1);
+				else
 					mmerror(PARSE_ERROR, ET_ERROR, "cursor \"%s\" is already defined", $2);
 			}
 		}
@@ -362,7 +362,7 @@ ECPG: into_clauseINTOOptTempTableName block
 						FoundInto = 1;
 						$$= cat2_str(mm_strdup("into"), $2);
 					}
-	| ecpg_into                     { $$ = EMPTY; }
+	| ecpg_into { $$ = EMPTY; }
 ECPG: table_refselect_with_parens addon
 		mmerror(PARSE_ERROR, ET_ERROR, "subquery in FROM must have an alias");
 ECPG: TypenameSimpleTypenameopt_array_bounds block
@@ -468,9 +468,9 @@ ECPG: FetchStmtMOVEfetch_args rule
 		$$ = cat_str(2, mm_strdup("move backward from"), cursor_marker);
 	}
 ECPG: limit_clauseLIMITselect_limit_value','select_offset_value block
-        {
-                mmerror(PARSE_ERROR, ET_WARNING, "no longer supported LIMIT #,# syntax passed to server");
-                $$ = cat_str(4, mm_strdup("limit"), $2, mm_strdup(","), $4);
-        }
+	{
+		mmerror(PARSE_ERROR, ET_WARNING, "no longer supported LIMIT #,# syntax passed to server");
+		$$ = cat_str(4, mm_strdup("limit"), $2, mm_strdup(","), $4);
+	}
 ECPG: SignedIconstIconst rule
 	| civar	{ $$ = $1; }

@@ -96,12 +96,12 @@ teardown		{ return(TEARDOWN); }
 static void
 addlitchar(char c)
 {
-  if (litbufpos >= sizeof(litbuf) - 1)
-  {
-    fprintf(stderr, "SQL step too long\n");
-    exit(1);
-  }
-  litbuf[litbufpos++] = c;
+	if (litbufpos >= sizeof(litbuf) - 1)
+	{
+		fprintf(stderr, "SQL step too long\n");
+		exit(1);
+	}
+	litbuf[litbufpos++] = c;
 }
 
 void

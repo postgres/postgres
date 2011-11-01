@@ -1,22 +1,22 @@
 /* src/interfaces/ecpg/preproc/ecpg.trailer */
 
 statements: /*EMPTY*/
-                | statements statement
-                ;
+				| statements statement
+		;
 
-statement: ecpgstart at stmt ';'        { connection = NULL; }
-                | ecpgstart stmt ';'
-                | ecpgstart ECPGVarDeclaration
-                {
-                        fprintf(yyout, "%s", $2);
-                        free($2);
-                        output_line_number();
-                }
-                | ECPGDeclaration
-                | c_thing               { fprintf(yyout, "%s", $1); free($1); }
-                | CPP_LINE              { fprintf(yyout, "%s", $1); free($1); }
-                | '{'                   { braces_open++; fputs("{", yyout); }
-                | '}'
+statement: ecpgstart at stmt ';' { connection = NULL; }
+				| ecpgstart stmt ';'
+				| ecpgstart ECPGVarDeclaration
+				{
+					fprintf(yyout, "%s", $2);
+					free($2);
+					output_line_number();
+				}
+				| ECPGDeclaration
+				| c_thing               { fprintf(yyout, "%s", $1); free($1); }
+				| CPP_LINE              { fprintf(yyout, "%s", $1); free($1); }
+				| '{'                   { braces_open++; fputs("{", yyout); }
+				| '}'
 		{
 			remove_typedefs(braces_open);
 			remove_variables(braces_open--);
@@ -27,7 +27,7 @@ statement: ecpgstart at stmt ';'        { connection = NULL; }
 			}
 			fputs("}", yyout);
 		}
-                ;
+		;
 
 CreateAsStmt: CREATE OptTemp TABLE create_as_target AS {FoundInto = 0;} SelectStmt opt_with_data
 		{
@@ -36,20 +36,19 @@ CreateAsStmt: CREATE OptTemp TABLE create_as_target AS {FoundInto = 0;} SelectSt
 
 			$$ = cat_str(6, mm_strdup("create"), $2, mm_strdup("table"), $4, mm_strdup("as"), $7);
 		}
-	;
+		;
 
 at: AT connection_object
-                {
-                        connection = $2;
-                        /*
-                         *      Do we have a variable as connection target?
-                         *      Remove the variable from the variable
-                         *      list or else it will be used twice
-                         */
-                        if (argsinsert != NULL)
-                                argsinsert = NULL;
-                }
-        ;
+		{
+			connection = $2;
+			/*
+			 * Do we have a variable as connection target?  Remove the variable
+			 * from the variable list or else it will be used twice.
+			 */
+			if (argsinsert != NULL)
+				argsinsert = NULL;
+		}
+		;
 
 /*
  * the exec sql connect statement: connect to the given database
@@ -238,12 +237,14 @@ opt_options: Op connect_options
 
 			$$ = make2_str(mm_strdup("?"), $2);
 		}
-		| /*EMPTY*/ 	{ $$ = EMPTY; }
+		| /*EMPTY*/	{ $$ = EMPTY; }
 		;
 
 connect_options:  ColId opt_opt_value
-			{ $$ = make2_str($1, $2); }
-	| ColId opt_opt_value Op connect_options
+			{
+				$$ = make2_str($1, $2);
+			}
+		| ColId opt_opt_value Op connect_options
 			{
 				if (strlen($3) == 0)
 					mmerror(PARSE_ERROR, ET_ERROR, "incomplete statement");
@@ -253,7 +254,7 @@ connect_options:  ColId opt_opt_value
 
 				$$ = cat_str(3, make2_str($1, $2), $3, $4);
 			}
-	;
+		;
 
 opt_opt_value: /*EMPTY*/
 			{ $$ = EMPTY; }
@@ -265,21 +266,22 @@ opt_opt_value: /*EMPTY*/
 			{ $$ = make2_str(mm_strdup("="), $2); }
 		;
 
-prepared_name: name             {
-                                        if ($1[0] == '\"' && $1[strlen($1)-1] == '\"') /* already quoted? */
-                                                $$ = $1;
-                                        else /* not quoted => convert to lowercase */
-                                        {
-                                                size_t i;
+prepared_name: name
+		{
+			if ($1[0] == '\"' && $1[strlen($1)-1] == '\"') /* already quoted? */
+				$$ = $1;
+			else /* not quoted => convert to lowercase */
+			{
+				size_t i;
 
-                                                for (i = 0; i< strlen($1); i++)
-                                                        $1[i] = tolower((unsigned char) $1[i]);
+				for (i = 0; i< strlen($1); i++)
+					$1[i] = tolower((unsigned char) $1[i]);
 
-                                                $$ = make3_str(mm_strdup("\""), $1, mm_strdup("\""));
-                                        }
-                                }
-                | char_variable { $$ = $1; }
-                ;
+				$$ = make3_str(mm_strdup("\""), $1, mm_strdup("\""));
+			}
+		}
+		| char_variable { $$ = $1; }
+		;
 
 /*
  * Declare a prepared cursor. The syntax is different from the standard
@@ -300,8 +302,8 @@ ECPGCursorStmt:  DECLARE cursor_name cursor_options CURSOR opt_hold FOR prepared
 				{
 					/* re-definition is a bug */
 					if ($2[0] == ':')
-	                                        mmerror(PARSE_ERROR, ET_ERROR, "using variable \"%s\" in different declare statements is not supported", $2+1);
-        	                        else
+						mmerror(PARSE_ERROR, ET_ERROR, "using variable \"%s\" in different declare statements is not supported", $2+1);
+					else
 						mmerror(PARSE_ERROR, ET_ERROR, "cursor \"%s\" is already defined", $2);
 				}
 			}
@@ -401,8 +403,8 @@ vt_declarations:  single_vt_declaration			{ $$ = $1; }
 		| vt_declarations CPP_LINE		{ $$ = cat2_str($1, $2); }
 		;
 
-variable_declarations:	var_declaration 	{ $$ = $1; }
-		| variable_declarations var_declaration 	{ $$ = cat2_str($1, $2); }
+variable_declarations:	var_declaration	{ $$ = $1; }
+		| variable_declarations var_declaration	{ $$ = cat2_str($1, $2); }
 		;
 
 type_declaration: S_TYPEDEF
@@ -767,7 +769,10 @@ s_struct_union: SQL_STRUCT
 			ECPGstruct_sizeof = mm_strdup(""); /* This must not be NULL to distinguish from simple types. */
 			$$ = mm_strdup("struct");
 		}
-		| UNION 	{ $$ = mm_strdup("union"); }
+		| UNION
+		{
+			$$ = mm_strdup("union");
+		}
 		;
 
 simple_type: unsigned_type					{ $$=$1; }
@@ -838,8 +843,8 @@ variable_list: variable
 variable: opt_pointer ECPGColLabel opt_array_bounds opt_bit_field opt_initializer
 		{
 			struct ECPGtype * type;
-			char *dimension = $3.index1; /* dimension of array */
-			char *length = $3.index2;    /* length of string */
+			char *dimension = $3.index1;	/* dimension of array */
+			char *length = $3.index2;		/* length of string */
 			char *dim_str;
 			char *vcn;
 
@@ -991,8 +996,8 @@ opt_ecpg_using: /*EMPTY*/	{ $$ = EMPTY; }
 		| ecpg_using		{ $$ = $1; }
 		;
 
-ecpg_using:	USING using_list 	{ $$ = EMPTY; }
-		| using_descriptor      { $$ = $1; }
+ecpg_using:	USING using_list	{ $$ = EMPTY; }
+		| using_descriptor		{ $$ = $1; }
 		;
 
 using_descriptor: USING SQL_SQL SQL_DESCRIPTOR quoted_ident_stringvar
@@ -1041,10 +1046,10 @@ UsingValue: UsingConst
 
 UsingConst: Iconst			{ $$ = $1; }
 		| '+' Iconst		{ $$ = cat_str(2, mm_strdup("+"), $2); }
-                | '-' Iconst		{ $$ = cat_str(2, mm_strdup("-"), $2); }
+		| '-' Iconst		{ $$ = cat_str(2, mm_strdup("-"), $2); }
 		| ecpg_fconst		{ $$ = $1; }
 		| '+' ecpg_fconst	{ $$ = cat_str(2, mm_strdup("+"), $2); }
-                | '-' ecpg_fconst	{ $$ = cat_str(2, mm_strdup("-"), $2); }
+		| '-' ecpg_fconst	{ $$ = cat_str(2, mm_strdup("-"), $2); }
 		| ecpg_sconst		{ $$ = $1; }
 		| ecpg_bconst		{ $$ = $1; }
 		| ecpg_xconst		{ $$ = $1; }
@@ -1094,7 +1099,7 @@ ECPGDescribe: SQL_DESCRIBE INPUT_P prepared_name using_descriptor
 	;
 
 opt_output:	SQL_OUTPUT	{ $$ = mm_strdup("output"); }
-	| 	/* EMPTY */	{ $$ = EMPTY; }
+	|	/* EMPTY */	{ $$ = EMPTY; }
 	;
 
 /*
@@ -1106,7 +1111,7 @@ opt_output:	SQL_OUTPUT	{ $$ = mm_strdup("output"); }
 /*
  * allocate a descriptor
  */
-ECPGAllocateDescr:     SQL_ALLOCATE SQL_DESCRIPTOR quoted_ident_stringvar
+ECPGAllocateDescr: SQL_ALLOCATE SQL_DESCRIPTOR quoted_ident_stringvar
 		{
 			add_descriptor($3,connection);
 			$$ = $3;
@@ -1155,16 +1160,19 @@ ECPGSetDescHeaderItem: desc_header_item '=' IntConstVar
 		}
 		;
 
-IntConstVar:    Iconst
-                {
-                        char *length = mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
+IntConstVar: Iconst
+		{
+			char *length = mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
 
-                        sprintf(length, "%d", (int) strlen($1));
-                        new_variable($1, ECPGmake_simple_type(ECPGt_const, length, 0), 0);
-                        $$ = $1;
-                }
-                | cvariable     { $$ = $1; }
-                ;
+			sprintf(length, "%d", (int) strlen($1));
+			new_variable($1, ECPGmake_simple_type(ECPGt_const, length, 0), 0);
+			$$ = $1;
+		}
+		| cvariable
+		{
+			$$ = $1;
+		}
+		;
 
 desc_header_item:	SQL_COUNT			{ $$ = ECPGd_count; }
 		;
@@ -1198,49 +1206,56 @@ ECPGSetDescItem: descriptor_item '=' AllConstVar
 		}
 		;
 
-AllConstVar:    ecpg_fconst
-                {
-                        char *length = mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
+AllConstVar: ecpg_fconst
+		{
+			char *length = mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
 
-                        sprintf(length, "%d", (int) strlen($1));
-                        new_variable($1, ECPGmake_simple_type(ECPGt_const, length, 0), 0);
-                        $$ = $1;
-                }
-                | IntConstVar           { $$ = $1; }
-                | '-' ecpg_fconst
-                {
-                        char *length = mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
-                        char *var = cat2_str(mm_strdup("-"), $2);
+			sprintf(length, "%d", (int) strlen($1));
+			new_variable($1, ECPGmake_simple_type(ECPGt_const, length, 0), 0);
+			$$ = $1;
+		}
 
-                        sprintf(length, "%d", (int) strlen(var));
-                        new_variable(var, ECPGmake_simple_type(ECPGt_const, length, 0), 0);
-                        $$ = var;
-                }
-                | '-' Iconst
-                {
-                        char *length = mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
-                        char *var = cat2_str(mm_strdup("-"), $2);
+		| IntConstVar
+		{
+			$$ = $1;
+		}
 
-                        sprintf(length, "%d", (int) strlen(var));
-                        new_variable(var, ECPGmake_simple_type(ECPGt_const, length, 0), 0);
-                        $$ = var;
-                }
-                | ecpg_sconst
-                {
-                        char *length = mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
-                        char *var = $1 + 1;
+		| '-' ecpg_fconst
+		{
+			char *length = mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
+			char *var = cat2_str(mm_strdup("-"), $2);
 
-                        var[strlen(var) - 1] = '\0';
-                        sprintf(length, "%d", (int) strlen(var));
-                        new_variable(var, ECPGmake_simple_type(ECPGt_const, length, 0), 0);
-                        $$ = var;
-                }
+			sprintf(length, "%d", (int) strlen(var));
+			new_variable(var, ECPGmake_simple_type(ECPGt_const, length, 0), 0);
+			$$ = var;
+		}
+
+		| '-' Iconst
+		{
+			char *length = mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
+			char *var = cat2_str(mm_strdup("-"), $2);
+
+			sprintf(length, "%d", (int) strlen(var));
+			new_variable(var, ECPGmake_simple_type(ECPGt_const, length, 0), 0);
+			$$ = var;
+		}
+
+		| ecpg_sconst
+		{
+			char *length = mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
+			char *var = $1 + 1;
+
+			var[strlen(var) - 1] = '\0';
+			sprintf(length, "%d", (int) strlen(var));
+			new_variable(var, ECPGmake_simple_type(ECPGt_const, length, 0), 0);
+			$$ = var;
+		}
 		;
 
 descriptor_item:	SQL_CARDINALITY			{ $$ = ECPGd_cardinality; }
 		| DATA_P				{ $$ = ECPGd_data; }
 		| SQL_DATETIME_INTERVAL_CODE		{ $$ = ECPGd_di_code; }
-		| SQL_DATETIME_INTERVAL_PRECISION 	{ $$ = ECPGd_di_precision; }
+		| SQL_DATETIME_INTERVAL_PRECISION	{ $$ = ECPGd_di_precision; }
 		| SQL_INDICATOR				{ $$ = ECPGd_indicator; }
 		| SQL_KEY_MEMBER			{ $$ = ECPGd_key_member; }
 		| SQL_LENGTH				{ $$ = ECPGd_length; }
@@ -1295,8 +1310,8 @@ ECPGTypedef: TYPE_P
 		}
 		;
 
-opt_reference: SQL_REFERENCE 		{ $$ = mm_strdup("reference"); }
-		| /*EMPTY*/		 			{ $$ = EMPTY; }
+opt_reference: SQL_REFERENCE		{ $$ = mm_strdup("reference"); }
+		| /*EMPTY*/					{ $$ = EMPTY; }
 		;
 
 /*
@@ -1452,7 +1467,7 @@ action : CONTINUE_P
 
 /* additional unreserved keywords */
 ECPGKeywords: ECPGKeywords_vanames	{ $$ = $1; }
-		| ECPGKeywords_rest 	{ $$ = $1; }
+		| ECPGKeywords_rest	{ $$ = $1; }
 		;
 
 ECPGKeywords_vanames:  SQL_BREAK		{ $$ = mm_strdup("break"); }
@@ -1730,8 +1745,8 @@ ecpg_sconst:
 			$$[strlen($1)+3]='\0';
 			free($1);
 		}
-		| UCONST 	{ $$ = $1; }
-		| DOLCONST 	{ $$ = $1; }
+		| UCONST	{ $$ = $1; }
+		| DOLCONST	{ $$ = $1; }
 		;
 
 ecpg_xconst:	XCONST		{ $$ = make_name(); } ;
@@ -1832,7 +1847,7 @@ c_anything:  ecpg_ident				{ $$ = $1; }
 		| '['				{ $$ = mm_strdup("["); }
 		| ']'				{ $$ = mm_strdup("]"); }
 		| '='				{ $$ = mm_strdup("="); }
-		| ':' 				{ $$ = mm_strdup(":"); }
+		| ':'				{ $$ = mm_strdup(":"); }
 		;
 
 DeallocateStmt: DEALLOCATE prepared_name                { $$ = $2; }
@@ -1855,12 +1870,12 @@ Iresult:        Iconst			{ $$ = $1; }
 execute_rest: /* EMPTY */	{ $$ = EMPTY; }
 	| ecpg_using ecpg_into  { $$ = EMPTY; }
 	| ecpg_into ecpg_using  { $$ = EMPTY; }
-	| ecpg_using            { $$ = EMPTY; }
-	| ecpg_into             { $$ = EMPTY; }
+	| ecpg_using			{ $$ = EMPTY; }
+	| ecpg_into				{ $$ = EMPTY; }
 	;
 
 ecpg_into: INTO into_list	{ $$ = EMPTY; }
-        | into_descriptor	{ $$ = $1; }
+	| into_descriptor		{ $$ = $1; }
 	;
 
 ecpg_fetch_into: ecpg_into	{ $$ = $1; }

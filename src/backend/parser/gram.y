@@ -456,8 +456,8 @@ static void processCASbits(int cas_bits, int location, const char *constrType,
 %type <ival>	document_or_content
 %type <boolean> xml_whitespace_option
 
-%type <node> 	common_table_expr
-%type <with> 	with_clause opt_with_clause
+%type <node>	common_table_expr
+%type <with>	with_clause opt_with_clause
 %type <list>	cte_list
 
 %type <list>	window_clause window_definition_list opt_partition_clause
@@ -1553,7 +1553,7 @@ ConstraintsSetStmt:
 				{
 					ConstraintsSetStmt *n = makeNode(ConstraintsSetStmt);
 					n->constraints = $3;
-					n->deferred    = $4;
+					n->deferred = $4;
 					$$ = (Node *) n;
 				}
 		;
@@ -2048,7 +2048,7 @@ alter_using:
 		;
 
 reloptions:
-		  	'(' reloption_list ')'					{ $$ = $2; }
+			'(' reloption_list ')'					{ $$ = $2; }
 		;
 
 opt_reloptions:		WITH reloptions					{ $$ = $2; }
@@ -3278,7 +3278,7 @@ opt_procedural:
 
 /*****************************************************************************
  *
- * 		QUERY:
+ *		QUERY:
  *             CREATE TABLESPACE tablespace LOCATION '/path/to/tablespace/'
  *
  *****************************************************************************/
@@ -3299,7 +3299,7 @@ OptTableSpaceOwner: OWNER name			{ $$ = $2; }
 
 /*****************************************************************************
  *
- * 		QUERY :
+ *		QUERY :
  *				DROP TABLESPACE <tablespace>
  *
  *		No need for drop behaviour as we cannot implement dependencies for
@@ -3315,7 +3315,7 @@ DropTableSpaceStmt: DROP TABLESPACE name
 					$$ = (Node *) n;
 				}
 				|  DROP TABLESPACE IF_P EXISTS name
-                {
+				{
 					DropTableSpaceStmt *n = makeNode(DropTableSpaceStmt);
 					n->tablespacename = $5;
 					n->missing_ok = true;
@@ -3325,7 +3325,7 @@ DropTableSpaceStmt: DROP TABLESPACE name
 
 /*****************************************************************************
  *
- * 		QUERY:
+ *		QUERY:
  *             CREATE EXTENSION extension
  *             [ WITH ] [ SCHEMA schema ] [ VERSION version ] [ FROM oldversion ]
  *
@@ -3615,7 +3615,7 @@ AlterExtensionContentsStmt:
 
 /*****************************************************************************
  *
- * 		QUERY:
+ *		QUERY:
  *             CREATE FOREIGN DATA WRAPPER name options
  *
  *****************************************************************************/
@@ -3649,7 +3649,7 @@ opt_fdw_options:
 
 /*****************************************************************************
  *
- * 		QUERY :
+ *		QUERY :
  *				DROP FOREIGN DATA WRAPPER name
  *
  ****************************************************************************/
@@ -3663,7 +3663,7 @@ DropFdwStmt: DROP FOREIGN DATA_P WRAPPER name opt_drop_behavior
 					$$ = (Node *) n;
 				}
 				|  DROP FOREIGN DATA_P WRAPPER IF_P EXISTS name opt_drop_behavior
-                {
+				{
 					DropFdwStmt *n = makeNode(DropFdwStmt);
 					n->fdwname = $7;
 					n->missing_ok = true;
@@ -3674,7 +3674,7 @@ DropFdwStmt: DROP FOREIGN DATA_P WRAPPER name opt_drop_behavior
 
 /*****************************************************************************
  *
- * 		QUERY :
+ *		QUERY :
  *				ALTER FOREIGN DATA WRAPPER name options
  *
  ****************************************************************************/
@@ -3769,7 +3769,7 @@ generic_option_arg:
 
 /*****************************************************************************
  *
- * 		QUERY:
+ *		QUERY:
  *             CREATE SERVER name [TYPE] [VERSION] [OPTIONS]
  *
  *****************************************************************************/
@@ -3799,13 +3799,13 @@ foreign_server_version:
 		;
 
 opt_foreign_server_version:
-			foreign_server_version 	{ $$ = $1; }
+			foreign_server_version	{ $$ = $1; }
 			| /*EMPTY*/				{ $$ = NULL; }
 		;
 
 /*****************************************************************************
  *
- * 		QUERY :
+ *		QUERY :
  *				DROP SERVER name
  *
  ****************************************************************************/
@@ -3819,7 +3819,7 @@ DropForeignServerStmt: DROP SERVER name opt_drop_behavior
 					$$ = (Node *) n;
 				}
 				|  DROP SERVER IF_P EXISTS name opt_drop_behavior
-                {
+				{
 					DropForeignServerStmt *n = makeNode(DropForeignServerStmt);
 					n->servername = $5;
 					n->missing_ok = true;
@@ -3830,7 +3830,7 @@ DropForeignServerStmt: DROP SERVER name opt_drop_behavior
 
 /*****************************************************************************
  *
- * 		QUERY :
+ *		QUERY :
  *				ALTER SERVER name [VERSION] [OPTIONS]
  *
  ****************************************************************************/
@@ -3863,7 +3863,7 @@ AlterForeignServerStmt: ALTER SERVER name foreign_server_version alter_generic_o
 
 /*****************************************************************************
  *
- * 		QUERY:
+ *		QUERY:
  *             CREATE FOREIGN TABLE relname (...) SERVER name (...)
  *
  *****************************************************************************/
@@ -3923,7 +3923,7 @@ ForeignTableElement:
 
 /*****************************************************************************
  *
- * 		QUERY:
+ *		QUERY:
  *             ALTER FOREIGN TABLE relname [...]
  *
  *****************************************************************************/
@@ -3941,7 +3941,7 @@ AlterForeignTableStmt:
 
 /*****************************************************************************
  *
- * 		QUERY:
+ *		QUERY:
  *             CREATE USER MAPPING FOR auth_ident SERVER name [OPTIONS]
  *
  *****************************************************************************/
@@ -3958,14 +3958,14 @@ CreateUserMappingStmt: CREATE USER MAPPING FOR auth_ident SERVER name create_gen
 
 /* User mapping authorization identifier */
 auth_ident:
-			CURRENT_USER 	{ $$ = "current_user"; }
+			CURRENT_USER	{ $$ = "current_user"; }
 		|	USER			{ $$ = "current_user"; }
-		|	RoleId 			{ $$ = (strcmp($1, "public") == 0) ? NULL : $1; }
+		|	RoleId			{ $$ = (strcmp($1, "public") == 0) ? NULL : $1; }
 		;
 
 /*****************************************************************************
  *
- * 		QUERY :
+ *		QUERY :
  *				DROP USER MAPPING FOR auth_ident SERVER name
  *
  ****************************************************************************/
@@ -3979,7 +3979,7 @@ DropUserMappingStmt: DROP USER MAPPING FOR auth_ident SERVER name
 					$$ = (Node *) n;
 				}
 				|  DROP USER MAPPING IF_P EXISTS FOR auth_ident SERVER name
-                {
+				{
 					DropUserMappingStmt *n = makeNode(DropUserMappingStmt);
 					n->username = $7;
 					n->servername = $9;
@@ -3990,7 +3990,7 @@ DropUserMappingStmt: DROP USER MAPPING FOR auth_ident SERVER name
 
 /*****************************************************************************
  *
- * 		QUERY :
+ *		QUERY :
  *				ALTER USER MAPPING FOR auth_ident SERVER name OPTIONS
  *
  ****************************************************************************/
@@ -4395,7 +4395,7 @@ DefineStmt:
 definition: '(' def_list ')'						{ $$ = $2; }
 		;
 
-def_list:  	def_elem								{ $$ = list_make1($1); }
+def_list:	def_elem								{ $$ = list_make1($1); }
 			| def_list ',' def_elem					{ $$ = lappend($1, $3); }
 		;
 
@@ -4457,33 +4457,33 @@ enum_val_list:	Sconst
  *****************************************************************************/
 
 AlterEnumStmt:
-         ALTER TYPE_P any_name ADD_P VALUE_P Sconst
-			 {
-				 AlterEnumStmt *n = makeNode(AlterEnumStmt);
-				 n->typeName = $3;
-				 n->newVal = $6;
-				 n->newValNeighbor = NULL;
-				 n->newValIsAfter = true;
-				 $$ = (Node *) n;
-			 }
+		ALTER TYPE_P any_name ADD_P VALUE_P Sconst
+			{
+				AlterEnumStmt *n = makeNode(AlterEnumStmt);
+				n->typeName = $3;
+				n->newVal = $6;
+				n->newValNeighbor = NULL;
+				n->newValIsAfter = true;
+				$$ = (Node *) n;
+			}
 		 | ALTER TYPE_P any_name ADD_P VALUE_P Sconst BEFORE Sconst
-			 {
-				 AlterEnumStmt *n = makeNode(AlterEnumStmt);
-				 n->typeName = $3;
-				 n->newVal = $6;
-				 n->newValNeighbor = $8;
-				 n->newValIsAfter = false;
-				 $$ = (Node *) n;
-			 }
+			{
+				AlterEnumStmt *n = makeNode(AlterEnumStmt);
+				n->typeName = $3;
+				n->newVal = $6;
+				n->newValNeighbor = $8;
+				n->newValIsAfter = false;
+				$$ = (Node *) n;
+			}
 		 | ALTER TYPE_P any_name ADD_P VALUE_P Sconst AFTER Sconst
-			 {
-				 AlterEnumStmt *n = makeNode(AlterEnumStmt);
-				 n->typeName = $3;
-				 n->newVal = $6;
-				 n->newValNeighbor = $8;
-				 n->newValIsAfter = true;
-				 $$ = (Node *) n;
-			 }
+			{
+				AlterEnumStmt *n = makeNode(AlterEnumStmt);
+				n->typeName = $3;
+				n->newVal = $6;
+				n->newValNeighbor = $8;
+				n->newValIsAfter = true;
+				$$ = (Node *) n;
+			}
 		 ;
 
 
@@ -4708,7 +4708,7 @@ DropOpFamilyStmt:
  *****************************************************************************/
 DropOwnedStmt:
 			DROP OWNED BY name_list opt_drop_behavior
-			 	{
+				{
 					DropOwnedStmt *n = makeNode(DropOwnedStmt);
 					n->roles = $4;
 					n->behavior = $5;
@@ -5001,7 +5001,7 @@ comment_type:
 			| COLLATION							{ $$ = OBJECT_COLLATION; }
 			| CONVERSION_P						{ $$ = OBJECT_CONVERSION; }
 			| TABLESPACE						{ $$ = OBJECT_TABLESPACE; }
-			| EXTENSION 						{ $$ = OBJECT_EXTENSION; }
+			| EXTENSION							{ $$ = OBJECT_EXTENSION; }
 			| ROLE								{ $$ = OBJECT_ROLE; }
 			| FOREIGN TABLE						{ $$ = OBJECT_FOREIGN_TABLE; }
 			| SERVER							{ $$ = OBJECT_FOREIGN_SERVER; }
@@ -5988,25 +5988,25 @@ func_type:	Typename								{ $$ = $1; }
 
 func_arg_with_default:
 		func_arg
-			    {
-				    $$ = $1;
-			    }
+				{
+					$$ = $1;
+				}
 		| func_arg DEFAULT a_expr
-			    {
-				    $$ = $1;
-				    $$->defexpr = $3;
-			    }
+				{
+					$$ = $1;
+					$$->defexpr = $3;
+				}
 		| func_arg '=' a_expr
-			    {
-				    $$ = $1;
-				    $$->defexpr = $3;
-			    }
+				{
+					$$ = $1;
+					$$->defexpr = $3;
+				}
 		;
 
 
 createfunc_opt_list:
 			/* Must be at least one to prevent conflict */
-			createfunc_opt_item                     { $$ = list_make1($1); }
+			createfunc_opt_item						{ $$ = list_make1($1); }
 			| createfunc_opt_list createfunc_opt_item { $$ = lappend($1, $2); }
 	;
 
@@ -7687,13 +7687,13 @@ CreateConversionStmt:
 			CREATE opt_default CONVERSION_P any_name FOR Sconst
 			TO Sconst FROM any_name
 			{
-			  CreateConversionStmt *n = makeNode(CreateConversionStmt);
-			  n->conversion_name = $4;
-			  n->for_encoding_name = $6;
-			  n->to_encoding_name = $8;
-			  n->func_name = $10;
-			  n->def = $2;
-			  $$ = (Node *)n;
+				CreateConversionStmt *n = makeNode(CreateConversionStmt);
+				n->conversion_name = $4;
+				n->for_encoding_name = $6;
+				n->to_encoding_name = $8;
+				n->func_name = $10;
+				n->def = $2;
+				$$ = (Node *)n;
 			}
 		;
 
@@ -7709,28 +7709,28 @@ CreateConversionStmt:
 ClusterStmt:
 			CLUSTER opt_verbose qualified_name cluster_index_specification
 				{
-			       ClusterStmt *n = makeNode(ClusterStmt);
-				   n->relation = $3;
-				   n->indexname = $4;
-				   n->verbose = $2;
-				   $$ = (Node*)n;
+					ClusterStmt *n = makeNode(ClusterStmt);
+					n->relation = $3;
+					n->indexname = $4;
+					n->verbose = $2;
+					$$ = (Node*)n;
 				}
 			| CLUSTER opt_verbose
-			    {
-				   ClusterStmt *n = makeNode(ClusterStmt);
-				   n->relation = NULL;
-				   n->indexname = NULL;
-				   n->verbose = $2;
-				   $$ = (Node*)n;
+				{
+					ClusterStmt *n = makeNode(ClusterStmt);
+					n->relation = NULL;
+					n->indexname = NULL;
+					n->verbose = $2;
+					$$ = (Node*)n;
 				}
 			/* kept for pre-8.3 compatibility */
 			| CLUSTER opt_verbose index_name ON qualified_name
 				{
-				   ClusterStmt *n = makeNode(ClusterStmt);
-				   n->relation = $5;
-				   n->indexname = $3;
-				   n->verbose = $2;
-				   $$ = (Node*)n;
+					ClusterStmt *n = makeNode(ClusterStmt);
+					n->relation = $5;
+					n->indexname = $3;
+					n->verbose = $2;
+					$$ = (Node*)n;
 				}
 		;
 
@@ -8141,7 +8141,7 @@ DeleteStmt: opt_with_clause DELETE_P FROM relation_expr_opt_alias
 		;
 
 using_clause:
-	    		USING from_list						{ $$ = $2; }
+				USING from_list						{ $$ = $2; }
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
 
@@ -8164,7 +8164,7 @@ LockStmt:	LOCK_P opt_table relation_expr_list opt_lock opt_nowait
 				}
 		;
 
-opt_lock:	IN_P lock_type MODE 			{ $$ = $2; }
+opt_lock:	IN_P lock_type MODE				{ $$ = $2; }
 			| /*EMPTY*/						{ $$ = AccessExclusiveLock; }
 		;
 
@@ -10032,12 +10032,12 @@ a_expr:		c_expr									{ $$ = $1; }
 				{
 					$$ = (Node *) makeA_Expr(AEXPR_OR, NIL,
 						(Node *) makeA_Expr(AEXPR_AND, NIL,
-						    (Node *) makeSimpleA_Expr(AEXPR_OP, ">=", $1, $4, @2),
-						    (Node *) makeSimpleA_Expr(AEXPR_OP, "<=", $1, $6, @2),
+							(Node *) makeSimpleA_Expr(AEXPR_OP, ">=", $1, $4, @2),
+							(Node *) makeSimpleA_Expr(AEXPR_OP, "<=", $1, $6, @2),
 											@2),
 						(Node *) makeA_Expr(AEXPR_AND, NIL,
-						    (Node *) makeSimpleA_Expr(AEXPR_OP, ">=", $1, $6, @2),
-						    (Node *) makeSimpleA_Expr(AEXPR_OP, "<=", $1, $4, @2),
+							(Node *) makeSimpleA_Expr(AEXPR_OP, ">=", $1, $6, @2),
+							(Node *) makeSimpleA_Expr(AEXPR_OP, "<=", $1, $4, @2),
 											@2),
 											 @2);
 				}
@@ -10045,12 +10045,12 @@ a_expr:		c_expr									{ $$ = $1; }
 				{
 					$$ = (Node *) makeA_Expr(AEXPR_AND, NIL,
 						(Node *) makeA_Expr(AEXPR_OR, NIL,
-						    (Node *) makeSimpleA_Expr(AEXPR_OP, "<", $1, $5, @2),
-						    (Node *) makeSimpleA_Expr(AEXPR_OP, ">", $1, $7, @2),
+							(Node *) makeSimpleA_Expr(AEXPR_OP, "<", $1, $5, @2),
+							(Node *) makeSimpleA_Expr(AEXPR_OP, ">", $1, $7, @2),
 											@2),
 						(Node *) makeA_Expr(AEXPR_OR, NIL,
-						    (Node *) makeSimpleA_Expr(AEXPR_OP, "<", $1, $7, @2),
-						    (Node *) makeSimpleA_Expr(AEXPR_OP, ">", $1, $5, @2),
+							(Node *) makeSimpleA_Expr(AEXPR_OP, "<", $1, $7, @2),
+							(Node *) makeSimpleA_Expr(AEXPR_OP, ">", $1, $5, @2),
 											@2),
 											 @2);
 				}
@@ -11739,9 +11739,9 @@ AexprConst: Iconst
 
 						if (IsA(arg, NamedArgExpr))
 							ereport(ERROR,
-								    (errcode(ERRCODE_SYNTAX_ERROR),
-								     errmsg("type modifier cannot have parameter name"),
-								     parser_errposition(arg->location)));
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("type modifier cannot have parameter name"),
+									 parser_errposition(arg->location)));
 					}
 					t->typmods = $3;
 					t->location = @1;
@@ -12747,7 +12747,7 @@ static Node *
 makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args,
 			int location)
 {
-	XmlExpr    *x = makeNode(XmlExpr);
+	XmlExpr		*x = makeNode(XmlExpr);
 
 	x->op = op;
 	x->name = name;

@@ -55,41 +55,41 @@ static char *GUC_scanstr(const char *s);
 %option prefix="GUC_yy"
 
 
-SIGN            ("-"|"+")
-DIGIT           [0-9]
-HEXDIGIT        [0-9a-fA-F]
+SIGN			("-"|"+")
+DIGIT			[0-9]
+HEXDIGIT		[0-9a-fA-F]
 
-UNIT_LETTER     [a-zA-Z]
+UNIT_LETTER		[a-zA-Z]
 
-INTEGER         {SIGN}?({DIGIT}+|0x{HEXDIGIT}+){UNIT_LETTER}*
+INTEGER			{SIGN}?({DIGIT}+|0x{HEXDIGIT}+){UNIT_LETTER}*
 
-EXPONENT        [Ee]{SIGN}?{DIGIT}+
-REAL            {SIGN}?{DIGIT}*"."{DIGIT}*{EXPONENT}?
+EXPONENT		[Ee]{SIGN}?{DIGIT}+
+REAL			{SIGN}?{DIGIT}*"."{DIGIT}*{EXPONENT}?
 
-LETTER          [A-Za-z_\200-\377]
+LETTER			[A-Za-z_\200-\377]
 LETTER_OR_DIGIT [A-Za-z_0-9\200-\377]
 
-ID              {LETTER}{LETTER_OR_DIGIT}*
-QUALIFIED_ID    {ID}"."{ID}
+ID				{LETTER}{LETTER_OR_DIGIT}*
+QUALIFIED_ID	{ID}"."{ID}
 
 UNQUOTED_STRING {LETTER}({LETTER_OR_DIGIT}|[-._:/])*
-STRING          \'([^'\\\n]|\\.|\'\')*\'
+STRING			\'([^'\\\n]|\\.|\'\')*\'
 
 %%
 
-\n              ConfigFileLineno++; return GUC_EOL;
-[ \t\r]+        /* eat whitespace */
-#.*             /* eat comment (.* matches anything until newline) */
+\n				ConfigFileLineno++; return GUC_EOL;
+[ \t\r]+		/* eat whitespace */
+#.*				/* eat comment (.* matches anything until newline) */
 
-{ID}            return GUC_ID;
-{QUALIFIED_ID}  return GUC_QUALIFIED_ID;
-{STRING}        return GUC_STRING;
+{ID}			return GUC_ID;
+{QUALIFIED_ID}	return GUC_QUALIFIED_ID;
+{STRING}		return GUC_STRING;
 {UNQUOTED_STRING} return GUC_UNQUOTED_STRING;
-{INTEGER}       return GUC_INTEGER;
-{REAL}          return GUC_REAL;
-=               return GUC_EQUALS;
+{INTEGER}		return GUC_INTEGER;
+{REAL}			return GUC_REAL;
+=				return GUC_EQUALS;
 
-.               return GUC_ERROR;
+.				return GUC_ERROR;
 
 %%
 

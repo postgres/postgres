@@ -122,7 +122,7 @@ base_backup:
 			;
 
 base_backup_opt_list: base_backup_opt_list base_backup_opt { $$ = lappend($1, $2); }
-			| /* EMPTY */           { $$ = NIL; }
+			| /* EMPTY */			{ $$ = NIL; }
 
 base_backup_opt:
 			K_LABEL SCONST

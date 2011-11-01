@@ -83,7 +83,7 @@ static	void			 complete_direction(PLpgSQL_stmt_fetch *fetch,
 static	PLpgSQL_stmt	*make_return_stmt(int location);
 static	PLpgSQL_stmt	*make_return_next_stmt(int location);
 static	PLpgSQL_stmt	*make_return_query_stmt(int location);
-static  PLpgSQL_stmt 	*make_case(int location, PLpgSQL_expr *t_expr,
+static  PLpgSQL_stmt	*make_case(int location, PLpgSQL_expr *t_expr,
 								   List *case_when_list, List *else_stmts);
 static	char			*NameOfDatum(PLwdatum *wdatum);
 static	void			 check_assignable(PLpgSQL_datum *datum, int location);
@@ -102,7 +102,7 @@ static	PLpgSQL_type	*parse_datatype(const char *string, int location);
 static	void			 check_labels(const char *start_label,
 									  const char *end_label,
 									  int end_location);
-static	PLpgSQL_expr 	*read_cursor_args(PLpgSQL_var *cursor,
+static	PLpgSQL_expr	*read_cursor_args(PLpgSQL_var *cursor,
 										  int until, const char *expected);
 static	List			*read_raise_options(void);
 
@@ -134,8 +134,8 @@ static	List			*read_raise_options(void);
 			char *name;
 			int  lineno;
 			PLpgSQL_datum   *scalar;
-			PLpgSQL_rec     *rec;
-			PLpgSQL_row     *row;
+			PLpgSQL_rec		*rec;
+			PLpgSQL_row		*row;
 		}						forvariable;
 		struct
 		{
@@ -1069,7 +1069,7 @@ opt_expr_until_when	:
 						plpgsql_push_back_token(K_WHEN);
 						$$ = expr;
 					}
-			    ;
+				;
 
 case_when_list	: case_when_list case_when
 					{
@@ -1859,7 +1859,7 @@ stmt_open		: K_OPEN cursor_variable
 						if ($2->cursor_explicit_expr == NULL)
 						{
 							/* be nice if we could use opt_scrollable here */
-						    tok = yylex();
+							tok = yylex();
 							if (tok_is_keyword(tok, &yylval,
 											   K_NO, "no"))
 							{
@@ -2077,9 +2077,9 @@ proc_exception	: K_WHEN proc_conditions K_THEN proc_sect
 						PLpgSQL_exception *new;
 
 						new = palloc0(sizeof(PLpgSQL_exception));
-						new->lineno     = plpgsql_location_to_lineno(@1);
+						new->lineno = plpgsql_location_to_lineno(@1);
 						new->conditions = $2;
-						new->action	    = $4;
+						new->action = $4;
 
 						$$ = new;
 					}
@@ -2451,7 +2451,7 @@ read_sql_construct(int until,
 	expr->query			= pstrdup(ds.data);
 	expr->plan			= NULL;
 	expr->paramnos		= NULL;
-	expr->ns            = plpgsql_ns_top();
+	expr->ns			= plpgsql_ns_top();
 	pfree(ds.data);
 
 	if (valid_sql)
@@ -2651,7 +2651,7 @@ make_execsql_stmt(int firsttoken, int location)
 	expr->query			= pstrdup(ds.data);
 	expr->plan			= NULL;
 	expr->paramnos		= NULL;
-	expr->ns            = plpgsql_ns_top();
+	expr->ns			= plpgsql_ns_top();
 	pfree(ds.data);
 
 	check_sql_expr(expr->query, location, 0);
@@ -2688,7 +2688,7 @@ read_fetch_direction(void)
 	/* set direction defaults: */
 	fetch->direction = FETCH_FORWARD;
 	fetch->how_many  = 1;
-	fetch->expr      = NULL;
+	fetch->expr		 = NULL;
 	fetch->returns_multiple_rows = false;
 
 	tok = yylex();
@@ -3478,7 +3478,7 @@ static PLpgSQL_stmt *
 make_case(int location, PLpgSQL_expr *t_expr,
 		  List *case_when_list, List *else_stmts)
 {
-	PLpgSQL_stmt_case 	*new;
+	PLpgSQL_stmt_case	*new;
 
 	new = palloc(sizeof(PLpgSQL_stmt_case));
 	new->cmd_type = PLPGSQL_STMT_CASE;

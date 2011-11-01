@@ -112,13 +112,13 @@ START_REPLICATION	{ return K_START_REPLICATION; }
 static void
 startlit(void)
 {
-  initStringInfo(&litbuf);
+	initStringInfo(&litbuf);
 }
 
 static char *
 litbufdup(void)
 {
-  return litbuf.data;
+	return litbuf.data;
 }
 
 static void
@@ -130,13 +130,13 @@ addlit(char *ytext, int yleng)
 static void
 addlitchar(unsigned char ychar)
 {
-    appendStringInfoChar(&litbuf, ychar);
+	appendStringInfoChar(&litbuf, ychar);
 }
 
 void
 yyerror(const char *message)
 {
-    ereport(ERROR,
+	ereport(ERROR,
 			(errcode(ERRCODE_SYNTAX_ERROR),
 			 errmsg_internal("%s", message)));
 }
