@@ -929,6 +929,87 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 
 
 /* ----------
+ * toast_flatten_tuple -
+ *
+ *	"Flatten" a tuple to contain no out-of-line toasted fields.
+ *	(This does not eliminate compressed or short-header datums.)
+ * ----------
+ */
+HeapTuple
+toast_flatten_tuple(HeapTuple tup, TupleDesc tupleDesc)
+{
+	HeapTuple	new_tuple;
+	Form_pg_attribute *att = tupleDesc->attrs;
+	int			numAttrs = tupleDesc->natts;
+	int			i;
+	Datum		toast_values[MaxTupleAttributeNumber];
+	bool		toast_isnull[MaxTupleAttributeNumber];
+	bool		toast_free[MaxTupleAttributeNumber];
+
+	/*
+	 * Break down the tuple into fields.
+	 */
+	Assert(numAttrs <= MaxTupleAttributeNumber);
+	heap_deform_tuple(tup, tupleDesc, toast_values, toast_isnull);
+
+	memset(toast_free, 0, numAttrs * sizeof(bool));
+
+	for (i = 0; i < numAttrs; i++)
+	{
+		/*
+		 * Look at non-null varlena attributes
+		 */
+		if (!toast_isnull[i] && att[i]->attlen == -1)
+		{
+			struct varlena *new_value;
+
+			new_value = (struct varlena *) DatumGetPointer(toast_values[i]);
+			if (VARATT_IS_EXTERNAL(new_value))
+			{
+				new_value = toast_fetch_datum(new_value);
+				toast_values[i] = PointerGetDatum(new_value);
+				toast_free[i] = true;
+			}
+		}
+	}
+
+	/*
+	 * Form the reconfigured tuple.
+	 */
+	new_tuple = heap_form_tuple(tupleDesc, toast_values, toast_isnull);
+
+	/*
+	 * Be sure to copy the tuple's OID and identity fields.  We also make a
+	 * point of copying visibility info, just in case anybody looks at those
+	 * fields in a syscache entry.
+	 */
+	if (tupleDesc->tdhasoid)
+		HeapTupleSetOid(new_tuple, HeapTupleGetOid(tup));
+
+	new_tuple->t_self = tup->t_self;
+	new_tuple->t_tableOid = tup->t_tableOid;
+
+	new_tuple->t_data->t_choice = tup->t_data->t_choice;
+	new_tuple->t_data->t_ctid = tup->t_data->t_ctid;
+	new_tuple->t_data->t_infomask &= ~HEAP_XACT_MASK;
+	new_tuple->t_data->t_infomask |=
+		tup->t_data->t_infomask & HEAP_XACT_MASK;
+	new_tuple->t_data->t_infomask2 &= ~HEAP2_XACT_MASK;
+	new_tuple->t_data->t_infomask2 |=
+		tup->t_data->t_infomask2 & HEAP2_XACT_MASK;
+
+	/*
+	 * Free allocated temp values
+	 */
+	for (i = 0; i < numAttrs; i++)
+		if (toast_free[i])
+			pfree(DatumGetPointer(toast_values[i]));
+
+	return new_tuple;
+}
+
+
+/* ----------
  * toast_flatten_tuple_attribute -
  *
  *	If a Datum is of composite type, "flatten" it to contain no toasted fields.
