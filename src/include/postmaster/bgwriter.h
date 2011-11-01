@@ -23,6 +23,7 @@ extern int	CheckPointWarning;
 extern double CheckPointCompletionTarget;
 
 extern void BackgroundWriterMain(void);
+extern void CheckpointerMain(void);
 
 extern void RequestCheckpoint(int flags);
 extern void CheckpointWriteDelay(int flags, double progress);

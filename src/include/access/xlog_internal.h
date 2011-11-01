@@ -256,7 +256,7 @@ typedef struct RmgrData
 extern const RmgrData RmgrTable[];
 
 /*
- * Exported to support xlog switching from bgwriter
+ * Exported to support xlog switching from checkpointer
  */
 extern pg_time_t GetLastSegSwitchTime(void);
 extern XLogRecPtr RequestXLogSwitch(void);

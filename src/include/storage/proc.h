@@ -190,11 +190,11 @@ extern PROC_HDR *ProcGlobal;
  * We set aside some extra PGPROC structures for auxiliary processes,
  * ie things that aren't full-fledged backends but need shmem access.
  *
- * Background writer and WAL writer run during normal operation. Startup
- * process and WAL receiver also consume 2 slots, but WAL writer is
- * launched only after startup has exited, so we only need 3 slots.
+ * Background writer, checkpointer and WAL writer run during normal operation.
+ * Startup process and WAL receiver also consume 2 slots, but WAL writer is
+ * launched only after startup has exited, so we only need 4 slots.
  */
-#define NUM_AUXILIARY_PROCS		3
+#define NUM_AUXILIARY_PROCS		4
 
 
 /* configurable options */

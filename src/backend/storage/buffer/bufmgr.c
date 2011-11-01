@@ -1278,11 +1278,9 @@ BufferSync(int flags)
 					break;
 
 				/*
-				 * Perform normal bgwriter duties and sleep to throttle our
-				 * I/O rate.
+				 * Sleep to throttle our I/O rate.
 				 */
-				CheckpointWriteDelay(flags,
-									 (double) num_written / num_to_write);
+				CheckpointWriteDelay(flags, (double) num_written / num_to_write);
 			}
 		}
 

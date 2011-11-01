@@ -13,6 +13,6 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 OBJS = autovacuum.o bgwriter.o fork_process.o pgarch.o pgstat.o postmaster.o \
-	syslogger.o walwriter.o
+	syslogger.o walwriter.o checkpointer.o
 
 include $(top_srcdir)/src/backend/common.mk

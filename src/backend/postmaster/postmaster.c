@@ -208,6 +208,7 @@ char 		*output_config_variable = NULL;
 /* PIDs of special child processes; 0 when not running */
 static pid_t StartupPID = 0,
 			BgWriterPID = 0,
+			CheckpointerPID = 0,
 			WalWriterPID = 0,
 			WalReceiverPID = 0,
 			AutoVacPID = 0,
@@ -279,7 +280,7 @@ typedef enum
 	PM_WAIT_BACKUP,				/* waiting for online backup mode to end */
 	PM_WAIT_READONLY,			/* waiting for read only backends to exit */
 	PM_WAIT_BACKENDS,			/* waiting for live backends to exit */
-	PM_SHUTDOWN,				/* waiting for bgwriter to do shutdown ckpt */
+	PM_SHUTDOWN,				/* waiting for checkpointer to do shutdown ckpt */
 	PM_SHUTDOWN_2,				/* waiting for archiver and walsenders to
 								 * finish */
 	PM_WAIT_DEAD_END,			/* waiting for dead_end children to exit */
@@ -465,6 +466,7 @@ static void ShmemBackendArrayRemove(Backend *bn);
 
 #define StartupDataBase()		StartChildProcess(StartupProcess)
 #define StartBackgroundWriter() StartChildProcess(BgWriterProcess)
+#define StartCheckpointer()		StartChildProcess(CheckpointerProcess)
 #define StartWalWriter()		StartChildProcess(WalWriterProcess)
 #define StartWalReceiver()		StartChildProcess(WalReceiverProcess)
 
@@ -1028,8 +1030,8 @@ PostmasterMain(int argc, char *argv[])
 	 * CAUTION: when changing this list, check for side-effects on the signal
 	 * handling setup of child processes.  See tcop/postgres.c,
 	 * bootstrap/bootstrap.c, postmaster/bgwriter.c, postmaster/walwriter.c,
-	 * postmaster/autovacuum.c, postmaster/pgarch.c, postmaster/pgstat.c, and
-	 * postmaster/syslogger.c.
+	 * postmaster/autovacuum.c, postmaster/pgarch.c, postmaster/pgstat.c,
+	 * postmaster/syslogger.c and postmaster/checkpointer.c
 	 */
 	pqinitmask();
 	PG_SETMASK(&BlockSig);
@@ -1366,10 +1368,14 @@ ServerLoop(void)
 		 * state that prevents it, start one.  It doesn't matter if this
 		 * fails, we'll just try again later.
 		 */
-		if (BgWriterPID == 0 &&
-			(pmState == PM_RUN || pmState == PM_RECOVERY ||
-			 pmState == PM_HOT_STANDBY))
-			BgWriterPID = StartBackgroundWriter();
+		if (pmState == PM_RUN || pmState == PM_RECOVERY ||
+			 pmState == PM_HOT_STANDBY)
+		{
+			if (BgWriterPID == 0)
+				BgWriterPID = StartBackgroundWriter();
+			if (CheckpointerPID == 0)
+				CheckpointerPID = StartCheckpointer();
+		}
 
 		/*
 		 * Likewise, if we have lost the walwriter process, try to start a new
@@ -2047,6 +2053,8 @@ SIGHUP_handler(SIGNAL_ARGS)
 			signal_child(StartupPID, SIGHUP);
 		if (BgWriterPID != 0)
 			signal_child(BgWriterPID, SIGHUP);
+		if (CheckpointerPID != 0)
+			signal_child(CheckpointerPID, SIGHUP);
 		if (WalWriterPID != 0)
 			signal_child(WalWriterPID, SIGHUP);
 		if (WalReceiverPID != 0)
@@ -2119,6 +2127,8 @@ pmdie(SIGNAL_ARGS)
 				/* and the walwriter too */
 				if (WalWriterPID != 0)
 					signal_child(WalWriterPID, SIGTERM);
+				if (BgWriterPID != 0)
+					signal_child(BgWriterPID, SIGTERM);
 
 				/*
 				 * If we're in recovery, we can't kill the startup process
@@ -2159,9 +2169,11 @@ pmdie(SIGNAL_ARGS)
 				signal_child(StartupPID, SIGTERM);
 			if (WalReceiverPID != 0)
 				signal_child(WalReceiverPID, SIGTERM);
+			if (BgWriterPID != 0)
+				signal_child(BgWriterPID, SIGTERM);
 			if (pmState == PM_RECOVERY)
 			{
-				/* only bgwriter is active in this state */
+				/* only checkpointer is active in this state */
 				pmState = PM_WAIT_BACKENDS;
 			}
 			else if (pmState == PM_RUN ||
@@ -2206,6 +2218,8 @@ pmdie(SIGNAL_ARGS)
 				signal_child(StartupPID, SIGQUIT);
 			if (BgWriterPID != 0)
 				signal_child(BgWriterPID, SIGQUIT);
+			if (CheckpointerPID != 0)
+				signal_child(CheckpointerPID, SIGQUIT);
 			if (WalWriterPID != 0)
 				signal_child(WalWriterPID, SIGQUIT);
 			if (WalReceiverPID != 0)
@@ -2336,12 +2350,14 @@ reaper(SIGNAL_ARGS)
 			}
 
 			/*
-			 * Crank up the background writer, if we didn't do that already
+			 * Crank up background tasks, if we didn't do that already
 			 * when we entered consistent recovery state.  It doesn't matter
 			 * if this fails, we'll just try again later.
 			 */
 			if (BgWriterPID == 0)
 				BgWriterPID = StartBackgroundWriter();
+			if (CheckpointerPID == 0)
+				CheckpointerPID = StartCheckpointer();
 
 			/*
 			 * Likewise, start other special children as needed.  In a restart
@@ -2369,10 +2385,22 @@ reaper(SIGNAL_ARGS)
 		if (pid == BgWriterPID)
 		{
 			BgWriterPID = 0;
+			if (!EXIT_STATUS_0(exitstatus))
+				HandleChildCrash(pid, exitstatus,
+								 _("background writer process"));
+			continue;
+		}
+
+		/*
+		 * Was it the checkpointer?
+		 */
+		if (pid == CheckpointerPID)
+		{
+			CheckpointerPID = 0;
 			if (EXIT_STATUS_0(exitstatus) && pmState == PM_SHUTDOWN)
 			{
 				/*
-				 * OK, we saw normal exit of the bgwriter after it's been told
+				 * OK, we saw normal exit of the checkpointer after it's been told
 				 * to shut down.  We expect that it wrote a shutdown
 				 * checkpoint.	(If for some reason it didn't, recovery will
 				 * occur on next postmaster start.)
@@ -2409,11 +2437,11 @@ reaper(SIGNAL_ARGS)
 			else
 			{
 				/*
-				 * Any unexpected exit of the bgwriter (including FATAL exit)
+				 * Any unexpected exit of the checkpointer (including FATAL exit)
 				 * is treated as a crash.
 				 */
 				HandleChildCrash(pid, exitstatus,
-								 _("background writer process"));
+								 _("checkpointer process"));
 			}
 
 			continue;
@@ -2597,8 +2625,8 @@ CleanupBackend(int pid,
 }
 
 /*
- * HandleChildCrash -- cleanup after failed backend, bgwriter, walwriter,
- * or autovacuum.
+ * HandleChildCrash -- cleanup after failed backend, bgwriter, checkpointer,
+ * walwriter or autovacuum.
  *
  * The objectives here are to clean up our local state about the child
  * process, and to signal all other remaining children to quickdie.
@@ -2689,6 +2717,18 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 								 (SendStop ? "SIGSTOP" : "SIGQUIT"),
 								 (int) BgWriterPID)));
 		signal_child(BgWriterPID, (SendStop ? SIGSTOP : SIGQUIT));
+	}
+
+	/* Take care of the checkpointer too */
+	if (pid == CheckpointerPID)
+		CheckpointerPID = 0;
+	else if (CheckpointerPID != 0 && !FatalError)
+	{
+		ereport(DEBUG2,
+				(errmsg_internal("sending %s to process %d",
+								 (SendStop ? "SIGSTOP" : "SIGQUIT"),
+								 (int) CheckpointerPID)));
+		signal_child(CheckpointerPID, (SendStop ? SIGSTOP : SIGQUIT));
 	}
 
 	/* Take care of the walwriter too */
@@ -2887,9 +2927,10 @@ PostmasterStateMachine(void)
 	{
 		/*
 		 * PM_WAIT_BACKENDS state ends when we have no regular backends
-		 * (including autovac workers) and no walwriter or autovac launcher.
-		 * If we are doing crash recovery then we expect the bgwriter to exit
-		 * too, otherwise not.	The archiver, stats, and syslogger processes
+		 * (including autovac workers) and no walwriter, autovac launcher
+		 * or bgwriter.  If we are doing crash recovery then we expect the
+		 * checkpointer to exit as well, otherwise not.
+		 * The archiver, stats, and syslogger processes
 		 * are disregarded since they are not connected to shared memory; we
 		 * also disregard dead_end children here. Walsenders are also
 		 * disregarded, they will be terminated later after writing the
@@ -2898,7 +2939,8 @@ PostmasterStateMachine(void)
 		if (CountChildren(BACKEND_TYPE_NORMAL | BACKEND_TYPE_AUTOVAC) == 0 &&
 			StartupPID == 0 &&
 			WalReceiverPID == 0 &&
-			(BgWriterPID == 0 || !FatalError) &&
+			BgWriterPID == 0 &&
+			(CheckpointerPID == 0 || !FatalError) &&
 			WalWriterPID == 0 &&
 			AutoVacPID == 0)
 		{
@@ -2920,22 +2962,22 @@ PostmasterStateMachine(void)
 				/*
 				 * If we get here, we are proceeding with normal shutdown. All
 				 * the regular children are gone, and it's time to tell the
-				 * bgwriter to do a shutdown checkpoint.
+				 * checkpointer to do a shutdown checkpoint.
 				 */
 				Assert(Shutdown > NoShutdown);
-				/* Start the bgwriter if not running */
-				if (BgWriterPID == 0)
-					BgWriterPID = StartBackgroundWriter();
+				/* Start the checkpointer if not running */
+				if (CheckpointerPID == 0)
+					CheckpointerPID = StartCheckpointer();
 				/* And tell it to shut down */
-				if (BgWriterPID != 0)
+				if (CheckpointerPID != 0)
 				{
-					signal_child(BgWriterPID, SIGUSR2);
+					signal_child(CheckpointerPID, SIGUSR2);
 					pmState = PM_SHUTDOWN;
 				}
 				else
 				{
 					/*
-					 * If we failed to fork a bgwriter, just shut down. Any
+					 * If we failed to fork a checkpointer, just shut down. Any
 					 * required cleanup will happen at next restart. We set
 					 * FatalError so that an "abnormal shutdown" message gets
 					 * logged when we exit.
@@ -2994,6 +3036,7 @@ PostmasterStateMachine(void)
 			Assert(StartupPID == 0);
 			Assert(WalReceiverPID == 0);
 			Assert(BgWriterPID == 0);
+			Assert(CheckpointerPID == 0);
 			Assert(WalWriterPID == 0);
 			Assert(AutoVacPID == 0);
 			/* syslogger is not considered here */
@@ -4173,6 +4216,8 @@ sigusr1_handler(SIGNAL_ARGS)
 		 */
 		Assert(BgWriterPID == 0);
 		BgWriterPID = StartBackgroundWriter();
+		Assert(CheckpointerPID == 0);
+		CheckpointerPID = StartCheckpointer();
 
 		pmState = PM_RECOVERY;
 	}
@@ -4458,6 +4503,10 @@ StartChildProcess(AuxProcType type)
 			case BgWriterProcess:
 				ereport(LOG,
 				   (errmsg("could not fork background writer process: %m")));
+				break;
+			case CheckpointerProcess:
+				ereport(LOG,
+				   (errmsg("could not fork checkpointer process: %m")));
 				break;
 			case WalWriterProcess:
 				ereport(LOG,

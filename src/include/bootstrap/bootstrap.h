@@ -22,6 +22,7 @@ typedef enum
 	BootstrapProcess,
 	StartupProcess,
 	BgWriterProcess,
+	CheckpointerProcess,
 	WalWriterProcess,
 	WalReceiverProcess,
 
