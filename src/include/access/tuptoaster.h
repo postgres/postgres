@@ -113,6 +113,15 @@ extern varattrib *heap_tuple_untoast_attr_slice(varattrib *attr,
 							  int32 slicelength);
 
 /* ----------
+ * toast_flatten_tuple -
+ *
+ *	"Flatten" a tuple to contain no out-of-line toasted fields.
+ *	(This does not eliminate compressed or short-header datums.)
+ * ----------
+ */
+extern HeapTuple toast_flatten_tuple(HeapTuple tup, TupleDesc tupleDesc);
+
+/* ----------
  * toast_flatten_tuple_attribute -
  *
  *	If a Datum is of composite type, "flatten" it to contain no toasted fields.
