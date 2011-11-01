@@ -114,11 +114,6 @@ BackgroundWriterMain(void)
 	/*
 	 * Properly accept or ignore signals the postmaster might send us
 	 *
-	 * Note: we deliberately ignore SIGTERM, because during a standard Unix
-	 * system shutdown cycle, init will SIGTERM all processes at once.	We
-	 * want to wait for the backends to exit, whereupon the postmaster will
-	 * tell us it's okay to shut down (via SIGUSR2).
-	 *
 	 * SIGUSR1 is presently unused; keep it spare in case someday we want this
 	 * process to participate in ProcSignal signalling.
 	 */
@@ -129,7 +124,7 @@ BackgroundWriterMain(void)
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, SIG_IGN);			/* reserve for ProcSignal */
-	pqsignal(SIGUSR2, SIG_IGN);			/* request shutdown */
+	pqsignal(SIGUSR2, SIG_IGN);
 
 	/*
 	 * Reset some signals that are accepted by postmaster but not here
@@ -359,7 +354,7 @@ BgSigHupHandler(SIGNAL_ARGS)
 	got_SIGHUP = true;
 }
 
-/* SIGUSR2: set flag to run a shutdown checkpoint and exit */
+/* SIGTERM: set flag to shutdown and exit */
 static void
 ReqShutdownHandler(SIGNAL_ARGS)
 {

@@ -8001,8 +8001,8 @@ RecoveryRestartPoint(const CheckPoint *checkPoint)
 	}
 
 	/*
-	 * Copy the checkpoint record to shared memory, so that bgwriter can use
-	 * it the next time it wants to perform a restartpoint.
+	 * Copy the checkpoint record to shared memory, so that checkpointer
+	 * can work out the next time it wants to perform a restartpoint.
 	 */
 	SpinLockAcquire(&xlogctl->info_lck);
 	XLogCtl->lastCheckPointRecPtr = ReadRecPtr;
@@ -10151,7 +10151,7 @@ XLogPageRead(XLogRecPtr *RecPtr, int emode, bool fetching_ckpt,
 	if (readFile >= 0 && !XLByteInSeg(*RecPtr, readId, readSeg))
 	{
 		/*
-		 * Signal bgwriter to start a restartpoint if we've replayed too much
+		 * Request a restartpoint if we've replayed too much
 		 * xlog since the last one.
 		 */
 		if (StandbyMode && bgwriterLaunched)
