@@ -14,7 +14,6 @@
 
 static void set_locale_and_encoding(ClusterInfo *cluster);
 static void check_new_cluster_is_empty(void);
-static void check_old_cluster_has_new_cluster_dbs(void);
 static void check_locale_and_encoding(ControlData *oldctrl,
 						  ControlData *newctrl);
 static void check_is_super_user(ClusterInfo *cluster);
@@ -127,7 +126,6 @@ check_new_cluster(void)
 
 	check_new_cluster_is_empty();
 	check_for_prepared_transactions(&new_cluster);
-	check_old_cluster_has_new_cluster_dbs();
 
 	check_loadable_libraries();
 
@@ -382,39 +380,6 @@ check_new_cluster_is_empty(void)
 
 
 /*
- *	If someone removes the 'postgres' database from the old cluster and
- *	the new cluster has a 'postgres' database, the number of databases
- *	will not match.  We actually could upgrade such a setup, but it would
- *	violate the 1-to-1 mapping of database counts, so we throw an error
- *	instead.  We would detect this as a database count mismatch during
- *	upgrade, but we want to detect it during the check phase and report
- *	the database name.
- */
-static void
-check_old_cluster_has_new_cluster_dbs(void)
-{
-	int			old_dbnum,
-				new_dbnum;
-
-	for (new_dbnum = 0; new_dbnum < new_cluster.dbarr.ndbs; new_dbnum++)
-	{
-		for (old_dbnum = 0; old_dbnum < old_cluster.dbarr.ndbs; old_dbnum++)
-			if (strcmp(old_cluster.dbarr.dbs[old_dbnum].db_name,
-					   new_cluster.dbarr.dbs[new_dbnum].db_name) == 0)
-				break;
-		if (old_dbnum == old_cluster.dbarr.ndbs)
-		{
-			if (strcmp(new_cluster.dbarr.dbs[new_dbnum].db_name, "postgres") == 0)
-				pg_log(PG_FATAL, "The \"postgres\" database must exist in the old cluster\n");
-			else
-				pg_log(PG_FATAL, "New cluster database \"%s\" does not exist in the old cluster\n",
-					   new_cluster.dbarr.dbs[new_dbnum].db_name);
-		}
-	}
-}
-
-
-/*
  * create_script_for_old_cluster_deletion()
  *
  *	This is particularly useful for tablespace deletion.
@@ -462,7 +427,7 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 				fprintf(script, RM_CMD " %s%s/PG_VERSION\n",
 				 os_info.tablespaces[tblnum], old_cluster.tablespace_suffix);
 
-			for (dbnum = 0; dbnum < new_cluster.dbarr.ndbs; dbnum++)
+			for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
 			{
 				fprintf(script, RMDIR_CMD " %s%s/%d\n",
 				  os_info.tablespaces[tblnum], old_cluster.tablespace_suffix,

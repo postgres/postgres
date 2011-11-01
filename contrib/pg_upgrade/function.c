@@ -132,8 +132,7 @@ get_loadable_libraries(void)
 	int			totaltups;
 	int			dbnum;
 
-	ress = (PGresult **)
-		pg_malloc(old_cluster.dbarr.ndbs * sizeof(PGresult *));
+	ress = (PGresult **) pg_malloc(old_cluster.dbarr.ndbs * sizeof(PGresult *));
 	totaltups = 0;
 
 	/* Fetch all library names, removing duplicates within each DB */
