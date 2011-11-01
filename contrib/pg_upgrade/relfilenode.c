@@ -52,7 +52,8 @@ transfer_all_new_dbs(DbInfoArr *old_db_arr,
 
 		/*
 		 *	Advance past any databases that exist in the new cluster
-		 *	but not in the old, e.g. "postgres".
+		 *	but not in the old, e.g. "postgres".  (The user might
+		 *	have removed the 'postgres' database from the old cluster.)
 		 */
 		while (strcmp(old_db->db_name, new_db->db_name) != 0 &&
 			   new_dbnum < new_db_arr->ndbs)
