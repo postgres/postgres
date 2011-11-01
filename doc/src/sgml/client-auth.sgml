@@ -1210,7 +1210,8 @@ omicron       bryanh            guest1
       <term><literal>ldapserver</literal></term>
       <listitem>
        <para>
-        Name or IP of LDAP server to connect to.
+        Names or IP addresses of LDAP servers to connect to. Multiple
+        servers may be specified, separated by spaces.
        </para>
       </listitem>
      </varlistentry>
