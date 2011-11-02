@@ -490,6 +490,25 @@ StartupCLOG(void)
 	 */
 	ClogCtl->shared->latest_page_number = pageno;
 
+	LWLockRelease(CLogControlLock);
+}
+
+/*
+ * This must be called ONCE at the end of startup/recovery.
+ */
+void
+TrimCLOG(void)
+{
+	TransactionId xid = ShmemVariableCache->nextXid;
+	int			pageno = TransactionIdToPage(xid);
+
+	LWLockAcquire(CLogControlLock, LW_EXCLUSIVE);
+
+	/*
+	 * Re-Initialize our idea of the latest page number.
+	 */
+	ClogCtl->shared->latest_page_number = pageno;
+
 	/*
 	 * Zero out the remainder of the current clog page.  Under normal
 	 * circumstances it should be zeroes already, but it seems at least
