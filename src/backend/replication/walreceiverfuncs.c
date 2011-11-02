@@ -24,6 +24,7 @@
 #include <signal.h>
 
 #include "access/xlog_internal.h"
+#include "postmaster/startup.h"
 #include "replication/walreceiver.h"
 #include "storage/pmsignal.h"
 #include "storage/shmem.h"
@@ -110,6 +111,7 @@ WalRcvInProgress(void)
 
 /*
  * Stop walreceiver (if running) and wait for it to die.
+ * Executed by the Startup process.
  */
 void
 ShutdownWalRcv(void)
