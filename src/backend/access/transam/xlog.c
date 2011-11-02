@@ -7599,6 +7599,16 @@ CreateCheckPoint(int flags)
 	checkPoint.time = (pg_time_t) time(NULL);
 
 	/*
+	 * For Hot Standby, derive the oldestActiveXid before we fix the redo pointer.
+	 * This allows us to begin accumulating changes to assemble our starting
+	 * snapshot of locks and transactions.
+	 */
+	if (!shutdown && XLogStandbyInfoActive())
+		checkPoint.oldestActiveXid = GetOldestActiveTransactionId();
+	else
+		checkPoint.oldestActiveXid = InvalidTransactionId;
+
+	/*
 	 * We must hold WALInsertLock while examining insert state to determine
 	 * the checkpoint REDO pointer.
 	 */
@@ -7784,9 +7794,7 @@ CreateCheckPoint(int flags)
 	 * Update checkPoint.nextXid since we have a later value
 	 */
 	if (!shutdown && XLogStandbyInfoActive())
-		LogStandbySnapshot(&checkPoint.oldestActiveXid, &checkPoint.nextXid);
-	else
-		checkPoint.oldestActiveXid = InvalidTransactionId;
+		LogStandbySnapshot(&checkPoint.nextXid);
 
 	START_CRIT_SECTION();
 

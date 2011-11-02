@@ -814,7 +814,7 @@ standby_desc(StringInfo buf, uint8 xl_info, char *rec)
  * making WAL entries.
  */
 void
-LogStandbySnapshot(TransactionId *oldestActiveXid, TransactionId *nextXid)
+LogStandbySnapshot(TransactionId *nextXid)
 {
 	RunningTransactions running;
 	xl_standby_lock *locks;
@@ -844,7 +844,6 @@ LogStandbySnapshot(TransactionId *oldestActiveXid, TransactionId *nextXid)
 	/* GetRunningTransactionData() acquired XidGenLock, we must release it */
 	LWLockRelease(XidGenLock);
 
-	*oldestActiveXid = running->oldestRunningXid;
 	*nextXid = running->nextXid;
 }
 
