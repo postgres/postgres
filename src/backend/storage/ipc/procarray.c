@@ -1621,6 +1621,63 @@ GetRunningTransactionData(void)
 }
 
 /*
+ * GetOldestActiveTransactionId()
+ *
+ * Similar to GetSnapshotData but returns just oldestActiveXid. We include
+ * all PGPROCs with an assigned TransactionId, even VACUUM processes.
+ * We look at all databases, though there is no need to include WALSender
+ * since this has no effect on hot standby conflicts.
+ *
+ * This is never executed during recovery so there is no need to look at
+ * KnownAssignedXids.
+ *
+ * We don't worry about updating other counters, we want to keep this as
+ * simple as possible and leave GetSnapshotData() as the primary code for
+ * that bookkeeping.
+ */
+TransactionId
+GetOldestActiveTransactionId(void)
+{
+	ProcArrayStruct *arrayP = procArray;
+	TransactionId oldestRunningXid;
+	int			index;
+
+	Assert(!RecoveryInProgress());
+
+	LWLockAcquire(ProcArrayLock, LW_SHARED);
+
+	oldestRunningXid = ShmemVariableCache->nextXid;
+
+	/*
+	 * Spin over procArray collecting all xids and subxids.
+	 */
+	for (index = 0; index < arrayP->numProcs; index++)
+	{
+		volatile PGPROC *proc = arrayP->procs[index];
+		TransactionId xid;
+
+		/* Fetch xid just once - see GetNewTransactionId */
+		xid = proc->xid;
+
+		if (!TransactionIdIsNormal(xid))
+			continue;
+
+		if (TransactionIdPrecedes(xid, oldestRunningXid))
+			oldestRunningXid = xid;
+
+		/*
+		 * Top-level XID of a transaction is always less than any of its
+		 * subxids, so we don't need to check if any of the subxids are
+		 * smaller than oldestRunningXid
+		 */
+	}
+
+	LWLockRelease(ProcArrayLock);
+
+	return oldestRunningXid;
+}
+
+/*
  * GetTransactionsInCommit -- Get the XIDs of transactions that are committing
  *
  * Constructs an array of XIDs of transactions that are currently in commit
