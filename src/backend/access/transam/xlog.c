@@ -326,7 +326,7 @@ static XLogRecPtr RedoStartLSN = {0, 0};
  *
  * CheckpointLock: must be held to do a checkpoint or restartpoint (ensures
  * only one checkpointer at a time; currently, with all checkpoints done by
- * the bgwriter, this is just pro forma).
+ * the checkpointer, this is just pro forma).
  *
  *----------
  */
@@ -411,7 +411,7 @@ typedef struct XLogCtlData
 
 	/*
 	 * archiveCleanupCommand is read from recovery.conf but needs to be in
-	 * shared memory so that the bgwriter process can access it.
+	 * shared memory so that the checkpointer process can access it.
 	 */
 	char		archiveCleanupCommand[MAXPGPATH];
 
@@ -1837,7 +1837,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch)
 				Write->lastSegSwitchTime = (pg_time_t) time(NULL);
 
 				/*
-				 * Signal bgwriter to start a checkpoint if we've consumed too
+				 * Request a checkpoint if we've consumed too
 				 * much xlog since the last one.  For speed, we first check
 				 * using the local copy of RedoRecPtr, which might be out of
 				 * date; if it looks like a checkpoint is needed, forcibly
@@ -2023,8 +2023,8 @@ XLogFlush(XLogRecPtr record)
 	/*
 	 * During REDO, we are reading not writing WAL.  Therefore, instead of
 	 * trying to flush the WAL, we should update minRecoveryPoint instead. We
-	 * test XLogInsertAllowed(), not InRecovery, because we need the bgwriter
-	 * to act this way too, and because when the bgwriter tries to write the
+	 * test XLogInsertAllowed(), not InRecovery, because we need checkpointer
+	 * to act this way too, and because when it tries to write the
 	 * end-of-recovery checkpoint, it should indeed flush.
 	 */
 	if (!XLogInsertAllowed())
@@ -5856,7 +5856,7 @@ pg_is_xlog_replay_paused(PG_FUNCTION_ARGS)
  *
  * We keep this in XLogCtl, not a simple static variable, so that it can be
  * seen by processes other than the startup process.  Note in particular
- * that CreateRestartPoint is executed in the bgwriter.
+ * that CreateRestartPoint is executed in the checkpointer.
  */
 static void
 SetLatestXTime(TimestampTz xtime)
@@ -6464,14 +6464,14 @@ StartupXLOG(void)
 
 		/*
 		 * Let postmaster know we've started redo now, so that it can launch
-		 * bgwriter to perform restartpoints.  We don't bother during crash
+		 * checkpointer to perform restartpoints.  We don't bother during crash
 		 * recovery as restartpoints can only be performed during archive
 		 * recovery.  And we'd like to keep crash recovery simple, to avoid
 		 * introducing bugs that could affect you when recovering after crash.
 		 *
 		 * After this point, we can no longer assume that we're the only
 		 * process in addition to postmaster!  Also, fsync requests are
-		 * subsequently to be handled by the bgwriter, not locally.
+		 * subsequently to be handled by the checkpointer, not locally.
 		 */
 		if (InArchiveRecovery && IsUnderPostmaster)
 		{
@@ -7969,8 +7969,8 @@ CheckPointGuts(XLogRecPtr checkPointRedo, int flags)
  * It must determine whether the checkpoint represents a safe restartpoint or
  * not.  If so, the checkpoint record is stashed in shared memory so that
  * CreateRestartPoint can consult it.  (Note that the latter function is
- * executed by the bgwriter, while this one will be executed by the startup
- * process.)
+ * executed by the checkpointer, while this one will be executed by the
+ * startup process.)
  */
 static void
 RecoveryRestartPoint(const CheckPoint *checkPoint)
