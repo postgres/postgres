@@ -157,7 +157,8 @@ void
 InitProcGlobal(void)
 {
 	PGPROC	   *procs;
-	int			i;
+	int			i,
+				j;
 	bool		found;
 	uint32		TotalProcs = MaxBackends + NUM_AUXILIARY_PROCS;
 
@@ -222,6 +223,10 @@ InitProcGlobal(void)
 			procs[i].links.next = (SHM_QUEUE *) ProcGlobal->autovacFreeProcs;
 			ProcGlobal->autovacFreeProcs = &procs[i];
 		}
+
+		/* Initialize myProcLocks[] shared memory queues. */
+		for (j = 0; j < NUM_LOCK_PARTITIONS; j++)
+			SHMQueueInit(&(procs[i].myProcLocks[j]));
 	}
 
 	/*
@@ -243,7 +248,6 @@ InitProcess(void)
 {
 	/* use volatile pointer to prevent code rearrangement */
 	volatile PROC_HDR *procglobal = ProcGlobal;
-	int			i;
 
 	/*
 	 * ProcGlobal should be set up already (if we are a backend, we inherit
@@ -303,8 +307,8 @@ InitProcess(void)
 		MarkPostmasterChildActive();
 
 	/*
-	 * Initialize all fields of MyProc, except for the semaphore and latch,
-	 * which were prepared for us by InitProcGlobal.
+	 * Initialize all fields of MyProc, except for those previously initialized
+	 * by InitProcGlobal.
 	 */
 	SHMQueueElemInit(&(MyProc->links));
 	MyProc->waitStatus = STATUS_OK;
@@ -326,8 +330,16 @@ InitProcess(void)
 	MyProc->lwWaitLink = NULL;
 	MyProc->waitLock = NULL;
 	MyProc->waitProcLock = NULL;
-	for (i = 0; i < NUM_LOCK_PARTITIONS; i++)
-		SHMQueueInit(&(MyProc->myProcLocks[i]));
+#ifdef USE_ASSERT_CHECKING
+	if (assert_enabled)
+	{
+		int i;
+
+		/* Last process should have released all locks. */
+		for (i = 0; i < NUM_LOCK_PARTITIONS; i++)
+			Assert(SHMQueueEmpty(&(MyProc->myProcLocks[i])));
+	}
+#endif
 	MyProc->recoveryConflictPending = false;
 
 	/* Initialize fields for sync rep */
@@ -408,7 +420,6 @@ InitAuxiliaryProcess(void)
 {
 	PGPROC	   *auxproc;
 	int			proctype;
-	int			i;
 
 	/*
 	 * ProcGlobal should be set up already (if we are a backend, we inherit
@@ -455,8 +466,8 @@ InitAuxiliaryProcess(void)
 	SpinLockRelease(ProcStructLock);
 
 	/*
-	 * Initialize all fields of MyProc, except for the semaphore and latch,
-	 * which were prepared for us by InitProcGlobal.
+	 * Initialize all fields of MyProc, except for those previously initialized
+	 * by InitProcGlobal.
 	 */
 	SHMQueueElemInit(&(MyProc->links));
 	MyProc->waitStatus = STATUS_OK;
@@ -473,8 +484,16 @@ InitAuxiliaryProcess(void)
 	MyProc->lwWaitLink = NULL;
 	MyProc->waitLock = NULL;
 	MyProc->waitProcLock = NULL;
-	for (i = 0; i < NUM_LOCK_PARTITIONS; i++)
-		SHMQueueInit(&(MyProc->myProcLocks[i]));
+#ifdef USE_ASSERT_CHECKING
+	if (assert_enabled)
+	{
+		int i;
+
+		/* Last process should have released all locks. */
+		for (i = 0; i < NUM_LOCK_PARTITIONS; i++)
+			Assert(SHMQueueEmpty(&(MyProc->myProcLocks[i])));
+	}
+#endif
 
 	/*
 	 * Acquire ownership of the PGPROC's latch, so that we can use WaitLatch.
@@ -686,6 +705,17 @@ ProcKill(int code, Datum arg)
 
 	/* Make sure we're out of the sync rep lists */
 	SyncRepCleanupAtProcExit();
+
+#ifdef USE_ASSERT_CHECKING
+	if (assert_enabled)
+	{
+		int i;
+
+		/* Last process should have released all locks. */
+		for (i = 0; i < NUM_LOCK_PARTITIONS; i++)
+			Assert(SHMQueueEmpty(&(MyProc->myProcLocks[i])));
+	}
+#endif
 
 	/*
 	 * Release any LW locks I am holding.  There really shouldn't be any, but
