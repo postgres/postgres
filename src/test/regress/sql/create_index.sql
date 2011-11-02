@@ -487,6 +487,30 @@ SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NOT NUL
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL AND unique1 > 500;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique1 > 500;
 
+DROP INDEX onek_nulltest;
+
+-- Check initial-positioning logic too
+
+CREATE UNIQUE INDEX onek_nulltest ON onek_with_null (unique2);
+
+SET enable_seqscan = OFF;
+SET enable_indexscan = ON;
+SET enable_bitmapscan = OFF;
+
+SELECT unique1, unique2 FROM onek_with_null
+  ORDER BY unique2 LIMIT 2;
+SELECT unique1, unique2 FROM onek_with_null WHERE unique2 >= -1
+  ORDER BY unique2 LIMIT 2;
+SELECT unique1, unique2 FROM onek_with_null WHERE unique2 >= 0
+  ORDER BY unique2 LIMIT 2;
+
+SELECT unique1, unique2 FROM onek_with_null
+  ORDER BY unique2 DESC LIMIT 2;
+SELECT unique1, unique2 FROM onek_with_null WHERE unique2 >= -1
+  ORDER BY unique2 DESC LIMIT 2;
+SELECT unique1, unique2 FROM onek_with_null WHERE unique2 < 999
+  ORDER BY unique2 DESC LIMIT 2;
+
 RESET enable_seqscan;
 RESET enable_indexscan;
 RESET enable_bitmapscan;
