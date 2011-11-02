@@ -475,8 +475,9 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 
 	/*
 	 * If our initial RunningTransactionsData had an overflowed snapshot then
-	 * we knew we were missing some subxids from our snapshot. We can use this
-	 * data as an initial snapshot, but we cannot yet mark it valid. We know
+	 * we knew we were missing some subxids from our snapshot. If we continue
+	 * to see overflowed snapshots then we might never be able to start up,
+	 * so we make another test to see if our snapshot is now valid. We know
 	 * that the missing subxids are equal to or earlier than nextXid. After we
 	 * initialise we continue to apply changes during recovery, so once the
 	 * oldestRunningXid is later than the nextXid from the initial snapshot we
@@ -485,21 +486,31 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	 */
 	if (standbyState == STANDBY_SNAPSHOT_PENDING)
 	{
-		if (TransactionIdPrecedes(standbySnapshotPendingXmin,
-								  running->oldestRunningXid))
+		/*
+		 * If the snapshot isn't overflowed or if its empty we can
+		 * reset our pending state and use this snapshot instead.
+		 */
+		if (!running->subxid_overflow || running->xcnt == 0)
 		{
-			standbyState = STANDBY_SNAPSHOT_READY;
-			elog(trace_recovery(DEBUG2),
-				 "running xact data now proven complete");
-			elog(trace_recovery(DEBUG2),
-				 "recovery snapshots are now enabled");
+			standbyState = STANDBY_INITIALIZED;
 		}
 		else
-			elog(trace_recovery(DEBUG2),
-				 "recovery snapshot waiting for %u oldest active xid on standby is %u",
-				 standbySnapshotPendingXmin,
-				 running->oldestRunningXid);
-		return;
+		{
+			if (TransactionIdPrecedes(standbySnapshotPendingXmin,
+									  running->oldestRunningXid))
+			{
+				standbyState = STANDBY_SNAPSHOT_READY;
+				elog(trace_recovery(DEBUG1),
+					 "recovery snapshots are now enabled");
+			}
+			else
+				elog(trace_recovery(DEBUG1),
+					 "recovery snapshot waiting for non-overflowed snapshot or "
+					 "until oldest active xid on standby is at least %u (now %u)",
+					 standbySnapshotPendingXmin,
+					 running->oldestRunningXid);
+			return;
+		}
 	}
 
 	Assert(standbyState == STANDBY_INITIALIZED);
@@ -604,7 +615,6 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 		standbyState = STANDBY_SNAPSHOT_READY;
 
 		standbySnapshotPendingXmin = InvalidTransactionId;
-		procArray->lastOverflowedXid = InvalidTransactionId;
 	}
 
 	/*
@@ -627,13 +637,15 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 
 	LWLockRelease(ProcArrayLock);
 
-	elog(trace_recovery(DEBUG2), "running transaction data initialized");
 	KnownAssignedXidsDisplay(trace_recovery(DEBUG3));
 	if (standbyState == STANDBY_SNAPSHOT_READY)
-		elog(trace_recovery(DEBUG2), "recovery snapshots are now enabled");
+		elog(trace_recovery(DEBUG1), "recovery snapshots are now enabled");
 	else
-		ereport(LOG,
-				(errmsg("consistent state delayed because recovery snapshot incomplete")));
+		elog(trace_recovery(DEBUG1),
+			 "recovery snapshot waiting for non-overflowed snapshot or "
+			 "until oldest active xid on standby is at least %u (now %u)",
+			 standbySnapshotPendingXmin,
+			 running->oldestRunningXid);
 }
 
 /*
