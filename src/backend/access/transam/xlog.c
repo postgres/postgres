@@ -7560,6 +7560,10 @@ CreateCheckPoint(int flags)
 	uint32		freespace;
 	uint32		_logId;
 	uint32		_logSeg;
+	uint32		redo_logId;
+	uint32		redo_logSeg;
+	uint32		insert_logId;
+	uint32		insert_logSeg;
 	TransactionId *inCommitXids;
 	int			nInCommit;
 
@@ -7636,8 +7640,8 @@ CreateCheckPoint(int flags)
 	LWLockAcquire(WALInsertLock, LW_EXCLUSIVE);
 
 	/*
-	 * If this isn't a shutdown or forced checkpoint, and we have not inserted
-	 * any XLOG records since the start of the last checkpoint, skip the
+	 * If this isn't a shutdown or forced checkpoint, and we have not switched
+	 * to the next WAL file since the start of the last checkpoint, skip the
 	 * checkpoint.	The idea here is to avoid inserting duplicate checkpoints
 	 * when the system is idle. That wastes log space, and more importantly it
 	 * exposes us to possible loss of both current and previous checkpoint
@@ -7645,10 +7649,11 @@ CreateCheckPoint(int flags)
 	 * (Perhaps it'd make even more sense to checkpoint only when the previous
 	 * checkpoint record is in a different xlog page?)
 	 *
-	 * We have to make two tests to determine that nothing has happened since
-	 * the start of the last checkpoint: current insertion point must match
-	 * the end of the last checkpoint record, and its redo pointer must point
-	 * to itself.
+	 * While holding the WALInsertLock we find the current WAL insertion point
+	 * and compare that with the starting point of the last checkpoint, which
+	 * is the redo pointer. We use the redo pointer because the start and end
+	 * points of a checkpoint can be hundreds of files apart on large systems
+	 * when checkpoint writes are spread out over time.
 	 */
 	if ((flags & (CHECKPOINT_IS_SHUTDOWN | CHECKPOINT_END_OF_RECOVERY |
 				  CHECKPOINT_FORCE)) == 0)
@@ -7656,13 +7661,10 @@ CreateCheckPoint(int flags)
 		XLogRecPtr	curInsert;
 
 		INSERT_RECPTR(curInsert, Insert, Insert->curridx);
-		if (curInsert.xlogid == ControlFile->checkPoint.xlogid &&
-			curInsert.xrecoff == ControlFile->checkPoint.xrecoff +
-			MAXALIGN(SizeOfXLogRecord + sizeof(CheckPoint)) &&
-			ControlFile->checkPoint.xlogid ==
-			ControlFile->checkPointCopy.redo.xlogid &&
-			ControlFile->checkPoint.xrecoff ==
-			ControlFile->checkPointCopy.redo.xrecoff)
+		XLByteToSeg(curInsert, insert_logId, insert_logSeg);
+		XLByteToSeg(ControlFile->checkPointCopy.redo, redo_logId, redo_logSeg);
+		if (insert_logId == redo_logId &&
+			insert_logSeg == redo_logSeg)
 		{
 			LWLockRelease(WALInsertLock);
 			LWLockRelease(CheckpointLock);
