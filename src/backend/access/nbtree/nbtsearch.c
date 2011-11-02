@@ -456,6 +456,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	bool		goback;
 	ScanKey		startKeys[INDEX_MAX_KEYS];
 	ScanKeyData scankeys[INDEX_MAX_KEYS];
+	ScanKeyData notnullkeys[INDEX_MAX_KEYS];
 	int			keysCount = 0;
 	int			i;
 	StrategyNumber strat_total;
@@ -506,6 +507,14 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 * one we use --- by definition, they are either redundant or
 	 * contradictory.
 	 *
+	 * Any regular (not SK_SEARCHNULL) key implies a NOT NULL qualifier.
+	 * If the index stores nulls at the end of the index we'll be starting
+	 * from, and we have no boundary key for the column (which means the key
+	 * we deduced NOT NULL from is an inequality key that constrains the other
+	 * end of the index), then we cons up an explicit SK_SEARCHNOTNULL key to
+	 * use as a boundary key.  If we didn't do this, we might find ourselves
+	 * traversing a lot of null entries at the start of the scan.
+	 *
 	 * In this loop, row-comparison keys are treated the same as keys on their
 	 * first (leftmost) columns.  We'll add on lower-order columns of the row
 	 * comparison below, if possible.
@@ -519,6 +528,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	{
 		AttrNumber	curattr;
 		ScanKey		chosen;
+		ScanKey		impliesNN;
 		ScanKey		cur;
 
 		/*
@@ -528,6 +538,8 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 		 */
 		curattr = 1;
 		chosen = NULL;
+		/* Also remember any scankey that implies a NOT NULL constraint */
+		impliesNN = NULL;
 
 		/*
 		 * Loop iterates from 0 to numberOfKeys inclusive; we use the last
@@ -540,8 +552,32 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			{
 				/*
 				 * Done looking at keys for curattr.  If we didn't find a
-				 * usable boundary key, quit; else save the boundary key
-				 * pointer in startKeys.
+				 * usable boundary key, see if we can deduce a NOT NULL key.
+				 */
+				if (chosen == NULL && impliesNN != NULL &&
+					((impliesNN->sk_flags & SK_BT_NULLS_FIRST) ?
+					 ScanDirectionIsForward(dir) :
+					 ScanDirectionIsBackward(dir)))
+				{
+					/* Yes, so build the key in notnullkeys[keysCount] */
+					chosen = &notnullkeys[keysCount];
+					ScanKeyEntryInitialize(chosen,
+										   (SK_SEARCHNOTNULL | SK_ISNULL |
+											(impliesNN->sk_flags &
+											 (SK_BT_DESC | SK_BT_NULLS_FIRST))),
+										   curattr,
+										   ((impliesNN->sk_flags & SK_BT_NULLS_FIRST) ?
+											BTGreaterStrategyNumber :
+											BTLessStrategyNumber),
+										   InvalidOid,
+										   InvalidOid,
+										   InvalidOid,
+										   (Datum) 0);
+				}
+
+				/*
+				 * If we still didn't find a usable boundary key, quit; else
+				 * save the boundary key pointer in startKeys.
 				 */
 				if (chosen == NULL)
 					break;
@@ -574,15 +610,27 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 				 */
 				curattr = cur->sk_attno;
 				chosen = NULL;
+				impliesNN = NULL;
 			}
 
-			/* Can we use this key as a starting boundary for this attr? */
+			/*
+			 * Can we use this key as a starting boundary for this attr?
+			 *
+			 * If not, does it imply a NOT NULL constraint?  (Because
+			 * SK_SEARCHNULL keys are always assigned BTEqualStrategyNumber,
+			 * *any* inequality key works for that; we need not test.)
+			 */
 			switch (cur->sk_strategy)
 			{
 				case BTLessStrategyNumber:
 				case BTLessEqualStrategyNumber:
-					if (chosen == NULL && ScanDirectionIsBackward(dir))
-						chosen = cur;
+					if (chosen == NULL)
+					{
+						if (ScanDirectionIsBackward(dir))
+							chosen = cur;
+						else
+							impliesNN = cur;
+					}
 					break;
 				case BTEqualStrategyNumber:
 					/* override any non-equality choice */
@@ -590,8 +638,13 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 					break;
 				case BTGreaterEqualStrategyNumber:
 				case BTGreaterStrategyNumber:
-					if (chosen == NULL && ScanDirectionIsForward(dir))
-						chosen = cur;
+					if (chosen == NULL)
+					{
+						if (ScanDirectionIsForward(dir))
+							chosen = cur;
+						else
+							impliesNN = cur;
+					}
 					break;
 			}
 		}
