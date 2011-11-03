@@ -73,7 +73,7 @@ dintdict_lexize(PG_FUNCTION_ARGS)
 	DictInt    *d = (DictInt *) PG_GETARG_POINTER(0);
 	char	   *in = (char *) PG_GETARG_POINTER(1);
 	char	   *txt = pnstrdup(in, PG_GETARG_INT32(2));
-	TSLexeme   *res = palloc(sizeof(TSLexeme) * 2);
+	TSLexeme   *res = palloc0(sizeof(TSLexeme) * 2);
 
 	res[1].lexeme = NULL;
 	if (PG_GETARG_INT32(2) > d->maxlen)

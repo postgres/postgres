@@ -200,7 +200,7 @@ dxsyn_lexize(PG_FUNCTION_ARGS)
 		int			nsyns = 0;
 		bool		is_first = true;
 
-		res = palloc(0);
+		res = palloc(sizeof(TSLexeme));
 
 		while (pos < value + value_length)
 		{
@@ -212,13 +212,13 @@ dxsyn_lexize(PG_FUNCTION_ARGS)
 			*end = '\0';
 
 			res = repalloc(res, sizeof(TSLexeme) * (nsyns + 2));
-			res[nsyns].lexeme = NULL;
 
 			/* first word is added to result only if KEEPORIG flag is set */
 			if (d->keeporig || !is_first)
 			{
 				res[nsyns].lexeme = pstrdup(syn);
-				res[nsyns + 1].lexeme = NULL;
+				res[nsyns].nvariant = 0;
+				res[nsyns].flags = 0;
 
 				nsyns++;
 			}
@@ -227,6 +227,8 @@ dxsyn_lexize(PG_FUNCTION_ARGS)
 
 			pos = end + 1;
 		}
+
+		res[nsyns].lexeme = NULL;
 
 		pfree(value);
 	}
