@@ -35,6 +35,10 @@ static PGconn **conns = NULL;
 static const char **backend_pids = NULL;
 static int	nconns = 0;
 
+/* In dry run only output permutations to be run by the tester. */
+static int	dry_run = false;
+
+static void run_testspec(TestSpec *testspec);
 static void run_all_permutations(TestSpec * testspec);
 static void run_all_permutations_recurse(TestSpec * testspec, int nsteps,
 							 Step ** steps);
@@ -69,20 +73,46 @@ main(int argc, char **argv)
 	int			i;
 	PGresult   *res;
 	PQExpBufferData wait_query;
+	int opt;
+
+	while ((opt = getopt(argc, argv, "n")) != -1)
+	{
+		switch (opt)
+		{
+			case 'n':
+				dry_run = true;
+				break;
+			default:
+				fprintf(stderr, "Usage: isolationtester [-n] [CONNINFO]\n");
+				return EXIT_FAILURE;
+		}
+	}
 
 	/*
-	 * If the user supplies a parameter on the command line, use it as the
-	 * conninfo string; otherwise default to setting dbname=postgres and using
-	 * environment variables or defaults for all other connection parameters.
+	 * If the user supplies a non-option parameter on the command line, use it
+	 * as the conninfo string; otherwise default to setting dbname=postgres and
+	 * using environment variables or defaults for all other connection
+	 * parameters.
 	 */
-	if (argc > 1)
-		conninfo = argv[1];
+	if (argc > optind)
+		conninfo = argv[optind];
 	else
 		conninfo = "dbname = postgres";
 
 	/* Read the test spec from stdin */
 	spec_yyparse();
 	testspec = &parseresult;
+
+	/*
+	 * In dry-run mode, just print the permutations that would be run, and
+	 * exit.
+	 */
+	if (dry_run)
+	{
+		run_testspec(testspec);
+		return 0;
+	}
+
 	printf("Parsed test spec with %d sessions\n", testspec->nsessions);
 
 	/*
@@ -240,10 +270,7 @@ main(int argc, char **argv)
 	 * Run the permutations specified in the spec, or all if none were
 	 * explicitly specified.
 	 */
-	if (testspec->permutations)
-		run_named_permutations(testspec);
-	else
-		run_all_permutations(testspec);
+	run_testspec(testspec);
 
 	/* Clean up and exit */
 	for (i = 0; i < nconns; i++)
@@ -252,6 +279,19 @@ main(int argc, char **argv)
 }
 
 static int *piles;
+
+/*
+ * Run the permutations specified in the spec, or all if none were
+ * explicitly specified.
+ */
+static void
+run_testspec(TestSpec *testspec)
+{
+	if (testspec->permutations)
+		run_named_permutations(testspec);
+	else
+		run_all_permutations(testspec);
+}
 
 /*
  * Run all permutations of the steps and sessions.
@@ -436,6 +476,19 @@ run_permutation(TestSpec * testspec, int nsteps, Step ** steps)
 	PGresult   *res;
 	int			i;
 	Step	   *waiting = NULL;
+
+	/*
+	 * In dry run mode, just display the permutation in the same format used by
+	 * spec files, and return.
+	 */
+	if (dry_run)
+	{
+		printf("permutation");
+		for (i = 0; i < nsteps; i++)
+			printf(" \"%s\"", steps[i]->name);
+		printf("\n");
+		return;
+	}
 
 	printf("\nstarting permutation:");
 	for (i = 0; i < nsteps; i++)
@@ -649,7 +702,7 @@ try_complete_step(Step *step, int flags)
 				}
 				/* Detail may contain xid values, so just show primary. */
 				step->errormsg = malloc(5 +
-										strlen(PQresultErrorField(res, PG_DIAG_SEVERITY)) + 
+										strlen(PQresultErrorField(res, PG_DIAG_SEVERITY)) +
 										strlen(PQresultErrorField(res,
 																  PG_DIAG_MESSAGE_PRIMARY)));
 				sprintf(step->errormsg, "%s:  %s",
