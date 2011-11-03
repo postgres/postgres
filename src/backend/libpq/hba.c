@@ -442,8 +442,13 @@ is_member(Oid userid, const char *role)
 	if (!OidIsValid(roleid))
 		return false;			/* if target role not exist, say "no" */
 
-	/* See if user is directly or indirectly a member of role */
-	return is_member_of_role(userid, roleid);
+	/* 
+	 * See if user is directly or indirectly a member of role.
+	 * For this purpose, a superuser is not considered to be automatically
+	 * a member of the role, so group auth only applies to explicit
+	 * membership.
+	 */
+	return is_member_of_role_nosuper(userid, roleid);
 }
 
 /*

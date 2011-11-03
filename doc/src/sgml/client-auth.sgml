@@ -210,7 +210,10 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        in <productname>PostgreSQL</>; a <literal>+</> mark really means
        <quote>match any of the roles that are directly or indirectly members
        of this role</>, while a name without a <literal>+</> mark matches
-       only that specific role.)
+       only that specific role.) For this purpose, a superuser is only
+       considered to be a member of a role if they are explicitly a member
+       of the role, directly or indirectly, and not just by virtue of
+       being a superuser.
        Multiple user names can be supplied by separating them with commas.
        A separate file containing user names can be specified by preceding the
        file name with <literal>@</>.
