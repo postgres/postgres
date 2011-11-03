@@ -270,6 +270,8 @@ StreamLog(void)
 	ReceiveXlogStream(conn, startpos, timeline, NULL, basedir,
 					  segment_callback, continue_streaming,
 					  standby_message_timeout);
+
+	PQfinish(conn);
 }
 
 /*
