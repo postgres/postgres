@@ -85,20 +85,31 @@ extern bool searchstoplist(StopList *s, char *key);
 /* return struct for any lexize function */
 typedef struct
 {
-	/*
-	 * number of variant of split word , for example Word 'fotballklubber'
-	 * (norwegian) has two varian to split: ( fotball, klubb ) and ( fot,
-	 * ball, klubb ). So, dictionary should return: nvariant lexeme 1 fotball
-	 * 1	  klubb 2	   fot 2	  ball 2	  klubb
+	/*----------
+	 * Number of current variant of split word.  For example the Norwegian
+	 * word 'fotballklubber' has two variants to split: ( fotball, klubb )
+	 * and ( fot, ball, klubb ). So, dictionary should return:
+	 *
+	 * nvariant    lexeme
+	 *     1       fotball
+	 *     1       klubb
+	 *     2       fot
+	 *     2       ball
+	 *     2       klubb
+	 *
+	 * In general, a TSLexeme will be considered to belong to the same split
+	 * variant as the previous one if they have the same nvariant value.
+	 * The exact values don't matter, only changes from one lexeme to next.
+	 *----------
 	 */
 	uint16		nvariant;
 
-	uint16		flags;
+	uint16		flags;			/* See flag bits below */
 
-	/* C-string */
-	char	   *lexeme;
+	char	   *lexeme;			/* C string */
 } TSLexeme;
 
+/* Flag bits that can appear in TSLexeme.flags */
 #define TSL_ADDPOS		0x01
 #define TSL_PREFIX		0x02
 #define TSL_FILTER		0x04
