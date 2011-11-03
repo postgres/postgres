@@ -43,6 +43,7 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_range.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_tablespace.h"
@@ -553,6 +554,17 @@ static const struct cachedesc cacheinfo[] = {
 			0
 		},
 		2048
+	},
+	{RangeRelationId,		/* RANGETYPE */
+		RangeTypidIndexId,
+		1,
+		{
+			Anum_pg_range_rngtypid,
+			0,
+			0,
+			0
+		},
+		1024
 	},
 	{RelationRelationId,		/* RELNAMENSP */
 		ClassNameNspIndexId,

@@ -1,0 +1,951 @@
+--
+-- test parser
+--
+create type textrange as range (subtype=text, collation="C");
+-- negative tests; should fail
+select ''::textrange;
+ERROR:  malformed range literal: ""
+LINE 1: select ''::textrange;
+               ^
+DETAIL:  Missing left parenthesis or bracket.
+select '-[a,z)'::textrange;
+ERROR:  malformed range literal: "-[a,z)"
+LINE 1: select '-[a,z)'::textrange;
+               ^
+DETAIL:  Missing left parenthesis or bracket.
+select '[a,z) - '::textrange;
+ERROR:  malformed range literal: "[a,z) - "
+LINE 1: select '[a,z) - '::textrange;
+               ^
+DETAIL:  Junk after right parenthesis or bracket.
+select '(",a)'::textrange;
+ERROR:  malformed range literal: "(",a)"
+LINE 1: select '(",a)'::textrange;
+               ^
+DETAIL:  Unexpected end of input.
+select '(,,a)'::textrange;
+ERROR:  malformed range literal: "(,,a)"
+LINE 1: select '(,,a)'::textrange;
+               ^
+DETAIL:  Too many boundaries.
+select '(),a)'::textrange;
+ERROR:  malformed range literal: "(),a)"
+LINE 1: select '(),a)'::textrange;
+               ^
+DETAIL:  Missing upper bound.
+select '(a,))'::textrange;
+ERROR:  malformed range literal: "(a,))"
+LINE 1: select '(a,))'::textrange;
+               ^
+DETAIL:  Junk after right parenthesis or bracket.
+select '(],a)'::textrange;
+ERROR:  malformed range literal: "(],a)"
+LINE 1: select '(],a)'::textrange;
+               ^
+DETAIL:  Missing upper bound.
+select '(a,])'::textrange;
+ERROR:  malformed range literal: "(a,])"
+LINE 1: select '(a,])'::textrange;
+               ^
+DETAIL:  Junk after right parenthesis or bracket.
+-- should succeed
+select '  empty  '::textrange;
+ textrange 
+-----------
+ empty
+(1 row)
+
+select ' ( empty, empty )  '::textrange;
+      textrange       
+----------------------
+ (" empty"," empty ")
+(1 row)
+
+select ' ( " a " " a ", " z " " z " )  '::textrange;
+        textrange         
+--------------------------
+ ("  a   a ","  z   z  ")
+(1 row)
+
+select '(,z)'::textrange;
+ textrange 
+-----------
+ (,z)
+(1 row)
+
+select '(a,)'::textrange;
+ textrange 
+-----------
+ (a,)
+(1 row)
+
+select '[,z]'::textrange;
+ textrange 
+-----------
+ (,z]
+(1 row)
+
+select '[a,]'::textrange;
+ textrange 
+-----------
+ [a,)
+(1 row)
+
+select '( , )'::textrange;
+ textrange 
+-----------
+ (" "," ")
+(1 row)
+
+select '("","")'::textrange;
+ textrange 
+-----------
+ ("","")
+(1 row)
+
+select '["",""]'::textrange;
+ textrange 
+-----------
+ ["",""]
+(1 row)
+
+select '(",",",")'::textrange;
+ textrange 
+-----------
+ (",",",")
+(1 row)
+
+select '("\\","\\")'::textrange
+select '(\\,a)'::textrange;
+ERROR:  syntax error at or near "select"
+LINE 2: select '(\\,a)'::textrange;
+        ^
+select '((,z)'::textrange;
+ textrange 
+-----------
+ ("(",z)
+(1 row)
+
+select '([,z)'::textrange;
+ textrange 
+-----------
+ ("[",z)
+(1 row)
+
+select '(!,()'::textrange;
+ textrange 
+-----------
+ (!,"(")
+(1 row)
+
+select '(!,[)'::textrange;
+ textrange 
+-----------
+ (!,"[")
+(1 row)
+
+drop type textrange;
+--
+-- create some test data and test the operators
+--
+CREATE TABLE numrange_test (nr NUMRANGE);
+create index numrange_test_btree on numrange_test(nr);
+SET enable_seqscan = f;
+INSERT INTO numrange_test VALUES('[,)');
+INSERT INTO numrange_test VALUES('[3,]');
+INSERT INTO numrange_test VALUES('[, 5)');
+INSERT INTO numrange_test VALUES(numrange(1.1, 2.2));
+INSERT INTO numrange_test VALUES('empty');
+INSERT INTO numrange_test VALUES(numrange(1.7));
+SELECT isempty(nr) FROM numrange_test;
+ isempty 
+---------
+ f
+ f
+ f
+ f
+ t
+ f
+(6 rows)
+
+SELECT lower_inc(nr), lower(nr), upper(nr), upper_inc(nr) FROM numrange_test
+  WHERE NOT isempty(nr) AND NOT lower_inf(nr) AND NOT upper_inf(nr);
+ lower_inc | lower | upper | upper_inc 
+-----------+-------+-------+-----------
+ t         |   1.1 |   2.2 | f
+ t         |   1.7 |   1.7 | t
+(2 rows)
+
+SELECT * FROM numrange_test WHERE contains(nr, numrange(1.9,1.91));
+    nr     
+-----------
+ (,)
+ (,5)
+ [1.1,2.2)
+(3 rows)
+
+SELECT * FROM numrange_test WHERE nr @> numrange(1.0,10000.1);
+ nr  
+-----
+ (,)
+(1 row)
+
+SELECT * FROM numrange_test WHERE contained_by(numrange(-1e7,-10000.1), nr);
+  nr  
+------
+ (,)
+ (,5)
+(2 rows)
+
+SELECT * FROM numrange_test WHERE 1.9 <@ nr;
+    nr     
+-----------
+ (,)
+ (,5)
+ [1.1,2.2)
+(3 rows)
+
+SELECT * FROM numrange_test WHERE nr = 'empty';
+  nr   
+-------
+ empty
+(1 row)
+
+SELECT * FROM numrange_test WHERE range_eq(nr, '(1.1, 2.2)');
+ nr 
+----
+(0 rows)
+
+SELECT * FROM numrange_test WHERE nr = '[1.1, 2.2)';
+    nr     
+-----------
+ [1.1,2.2)
+(1 row)
+
+select numrange(2.0, 1.0);
+ERROR:  range lower bound must be less than or equal to range upper bound
+select numrange(2.0, 3.0) -|- numrange(3.0, 4.0);
+ ?column? 
+----------
+ t
+(1 row)
+
+select adjacent(numrange(2.0, 3.0), numrange(3.1, 4.0));
+ adjacent 
+----------
+ f
+(1 row)
+
+select numrange(2.0, 3.0, '[]') -|- numrange(3.0, 4.0, '()');
+ ?column? 
+----------
+ t
+(1 row)
+
+select numrange(1.0, 2.0) -|- numrange(2.0, 3.0,'[]');
+ ?column? 
+----------
+ t
+(1 row)
+
+select adjacent(numrange(2.0, 3.0, '(]'), numrange(1.0, 2.0, '(]'));
+ adjacent 
+----------
+ t
+(1 row)
+
+select numrange(1.1, 3.3) <@ numrange(0.1,10.1);
+ ?column? 
+----------
+ t
+(1 row)
+
+select numrange(0.1, 10.1) <@ numrange(1.1,3.3);
+ ?column? 
+----------
+ f
+(1 row)
+
+select numrange(1.1, 2.2) - numrange(2.0, 3.0);
+ ?column?  
+-----------
+ [1.1,2.0)
+(1 row)
+
+select numrange(1.1, 2.2) - numrange(2.2, 3.0);
+ ?column?  
+-----------
+ [1.1,2.2)
+(1 row)
+
+select numrange(1.1, 2.2,'[]') - numrange(2.0, 3.0);
+ ?column?  
+-----------
+ [1.1,2.0)
+(1 row)
+
+select minus(numrange(10.1,12.2,'[]'), numrange(110.0,120.2,'(]'));
+    minus    
+-------------
+ [10.1,12.2]
+(1 row)
+
+select minus(numrange(10.1,12.2,'[]'), numrange(0.0,120.2,'(]'));
+ minus 
+-------
+ empty
+(1 row)
+
+select numrange(4.5, 5.5, '[]') && numrange(5.5, 6.5);
+ ?column? 
+----------
+ t
+(1 row)
+
+select numrange(1.0, 2.0) << numrange(3.0, 4.0);
+ ?column? 
+----------
+ t
+(1 row)
+
+select numrange(1.0, 2.0) >> numrange(3.0, 4.0);
+ ?column? 
+----------
+ f
+(1 row)
+
+select numrange(3.0, 70.0) &< numrange(6.6, 100.0);
+ ?column? 
+----------
+ t
+(1 row)
+
+select numrange(1.1, 2.2) < numrange(1.0, 200.2);
+ ?column? 
+----------
+ f
+(1 row)
+
+select numrange(1.1, 2.2) < numrange(1.1, 1.2);
+ ?column? 
+----------
+ f
+(1 row)
+
+select numrange(1.0, 2.0) + numrange(2.0, 3.0);
+ ?column?  
+-----------
+ [1.0,3.0)
+(1 row)
+
+select numrange(1.0, 2.0) + numrange(1.5, 3.0);
+ ?column?  
+-----------
+ [1.0,3.0)
+(1 row)
+
+select numrange(1.0, 2.0) + numrange(2.5, 3.0);
+ERROR:  result range is not contiguous
+select numrange(1.0, 2.0) * numrange(2.0, 3.0);
+ ?column? 
+----------
+ empty
+(1 row)
+
+select numrange(1.0, 2.0) * numrange(1.5, 3.0);
+ ?column?  
+-----------
+ [1.5,2.0)
+(1 row)
+
+select numrange(1.0, 2.0) * numrange(2.5, 3.0);
+ ?column? 
+----------
+ empty
+(1 row)
+
+select * from numrange_test where nr < numrange(-1000.0, -1000.0,'[]');
+  nr   
+-------
+ (,)
+ (,5)
+ empty
+(3 rows)
+
+select * from numrange_test where nr < numrange(0.0, 1.0,'[]');
+  nr   
+-------
+ (,)
+ (,5)
+ empty
+(3 rows)
+
+select * from numrange_test where nr < numrange(1000.0, 1001.0,'[]');
+    nr     
+-----------
+ (,)
+ [3,)
+ (,5)
+ [1.1,2.2)
+ empty
+ [1.7,1.7]
+(6 rows)
+
+select * from numrange_test where nr > numrange(-1001.0, -1000.0,'[]');
+    nr     
+-----------
+ [3,)
+ [1.1,2.2)
+ [1.7,1.7]
+(3 rows)
+
+select * from numrange_test where nr > numrange(0.0, 1.0,'[]');
+    nr     
+-----------
+ [3,)
+ [1.1,2.2)
+ [1.7,1.7]
+(3 rows)
+
+select * from numrange_test where nr > numrange(1000.0, 1000.0,'[]');
+ nr 
+----
+(0 rows)
+
+create table numrange_test2(nr numrange);
+create index numrange_test2_hash_idx on numrange_test2 (nr);
+INSERT INTO numrange_test2 VALUES('[, 5)');
+INSERT INTO numrange_test2 VALUES(numrange(1.1, 2.2));
+INSERT INTO numrange_test2 VALUES(numrange(1.1, 2.2));
+INSERT INTO numrange_test2 VALUES(numrange(1.1, 2.2,'()'));
+INSERT INTO numrange_test2 VALUES('empty');
+select * from numrange_test2 where nr = 'empty'::numrange;
+  nr   
+-------
+ empty
+(1 row)
+
+select * from numrange_test2 where nr = numrange(1.1, 2.2);
+    nr     
+-----------
+ [1.1,2.2)
+ [1.1,2.2)
+(2 rows)
+
+select * from numrange_test2 where nr = numrange(1.1, 2.3);
+ nr 
+----
+(0 rows)
+
+set enable_nestloop=t;
+set enable_hashjoin=f;
+set enable_mergejoin=f;
+select * from numrange_test natural join numrange_test2 order by nr;
+    nr     
+-----------
+ empty
+ (,5)
+ [1.1,2.2)
+ [1.1,2.2)
+(4 rows)
+
+set enable_nestloop=f;
+set enable_hashjoin=t;
+set enable_mergejoin=f;
+select * from numrange_test natural join numrange_test2 order by nr;
+    nr     
+-----------
+ empty
+ (,5)
+ [1.1,2.2)
+ [1.1,2.2)
+(4 rows)
+
+set enable_nestloop=f;
+set enable_hashjoin=f;
+set enable_mergejoin=t;
+select * from numrange_test natural join numrange_test2 order by nr;
+    nr     
+-----------
+ empty
+ (,5)
+ [1.1,2.2)
+ [1.1,2.2)
+(4 rows)
+
+set enable_nestloop to default;
+set enable_hashjoin to default;
+set enable_mergejoin to default;
+SET enable_seqscan TO DEFAULT;
+DROP TABLE numrange_test;
+DROP TABLE numrange_test2;
+-- test canonical form for int4range
+select int4range(1,10,'[]');
+ int4range 
+-----------
+ [1,11)
+(1 row)
+
+select int4range(1,10,'[)');
+ int4range 
+-----------
+ [1,10)
+(1 row)
+
+select int4range(1,10,'(]');
+ int4range 
+-----------
+ [2,11)
+(1 row)
+
+select int4range(1,10,'[]');
+ int4range 
+-----------
+ [1,11)
+(1 row)
+
+-- test canonical form for daterange
+select daterange('2000-01-10'::date, '2000-01-20'::date,'[]');
+        daterange        
+-------------------------
+ [01-10-2000,01-21-2000)
+(1 row)
+
+select daterange('2000-01-10'::date, '2000-01-20'::date,'[)');
+        daterange        
+-------------------------
+ [01-10-2000,01-20-2000)
+(1 row)
+
+select daterange('2000-01-10'::date, '2000-01-20'::date,'(]');
+        daterange        
+-------------------------
+ [01-11-2000,01-21-2000)
+(1 row)
+
+select daterange('2000-01-10'::date, '2000-01-20'::date,'[]');
+        daterange        
+-------------------------
+ [01-10-2000,01-21-2000)
+(1 row)
+
+create table test_range_gist(ir int4range);
+create index test_range_gist_idx on test_range_gist using gist (ir);
+insert into test_range_gist select int4range(g, g+10) from generate_series(1,2000) g;
+insert into test_range_gist select 'empty'::int4range from generate_series(1,500) g;
+insert into test_range_gist select int4range(g, g+10000) from generate_series(1,1000) g;
+insert into test_range_gist select 'empty'::int4range from generate_series(1,500) g;
+insert into test_range_gist select int4range(NULL,g*10,'(]') from generate_series(1,100) g;
+insert into test_range_gist select int4range(g*10,NULL,'(]') from generate_series(1,100) g;
+insert into test_range_gist select int4range(g, g+10) from generate_series(1,2000) g;
+BEGIN;
+SET LOCAL enable_seqscan    = t;
+SET LOCAL enable_bitmapscan = f;
+SET LOCAL enable_indexscan  = f;
+select count(*) from test_range_gist where ir @> 'empty'::int4range;
+ count 
+-------
+  6200
+(1 row)
+
+select count(*) from test_range_gist where ir = int4range(10,20);
+ count 
+-------
+     2
+(1 row)
+
+select count(*) from test_range_gist where ir @> 10;
+ count 
+-------
+   130
+(1 row)
+
+select count(*) from test_range_gist where ir @> int4range(10,20);
+ count 
+-------
+   111
+(1 row)
+
+select count(*) from test_range_gist where ir && int4range(10,20);
+ count 
+-------
+   158
+(1 row)
+
+select count(*) from test_range_gist where ir <@ int4range(10,50);
+ count 
+-------
+  1062
+(1 row)
+
+select count(*) from (select * from test_range_gist where not isempty(ir)) s where ir << int4range(100,500);
+ count 
+-------
+   189
+(1 row)
+
+select count(*) from (select * from test_range_gist where not isempty(ir)) s where ir >> int4range(100,500);
+ count 
+-------
+  3554
+(1 row)
+
+select count(*) from (select * from test_range_gist where not isempty(ir)) s where ir &< int4range(100,500);
+ count 
+-------
+  1029
+(1 row)
+
+select count(*) from (select * from test_range_gist where not isempty(ir)) s where ir &> int4range(100,500);
+ count 
+-------
+  4794
+(1 row)
+
+select count(*) from (select * from test_range_gist where not isempty(ir)) s where ir -|- int4range(100,500);
+ count 
+-------
+     5
+(1 row)
+
+COMMIT;
+BEGIN;
+SET LOCAL enable_seqscan    = f;
+SET LOCAL enable_bitmapscan = f;
+SET LOCAL enable_indexscan  = t;
+select count(*) from test_range_gist where ir @> 'empty'::int4range;
+ count 
+-------
+  6200
+(1 row)
+
+select count(*) from test_range_gist where ir = int4range(10,20);
+ count 
+-------
+     2
+(1 row)
+
+select count(*) from test_range_gist where ir @> 10;
+ count 
+-------
+   130
+(1 row)
+
+select count(*) from test_range_gist where ir @> int4range(10,20);
+ count 
+-------
+   111
+(1 row)
+
+select count(*) from test_range_gist where ir && int4range(10,20);
+ count 
+-------
+   158
+(1 row)
+
+select count(*) from test_range_gist where ir <@ int4range(10,50);
+ count 
+-------
+  1062
+(1 row)
+
+select count(*) from test_range_gist where ir << int4range(100,500);
+ count 
+-------
+   189
+(1 row)
+
+select count(*) from test_range_gist where ir >> int4range(100,500);
+ count 
+-------
+  3554
+(1 row)
+
+select count(*) from test_range_gist where ir &< int4range(100,500);
+ count 
+-------
+  1029
+(1 row)
+
+select count(*) from test_range_gist where ir &> int4range(100,500);
+ count 
+-------
+  4794
+(1 row)
+
+select count(*) from test_range_gist where ir -|- int4range(100,500);
+ count 
+-------
+     5
+(1 row)
+
+COMMIT;
+drop index test_range_gist_idx;
+create index test_range_gist_idx on test_range_gist using gist (ir);
+BEGIN;
+SET LOCAL enable_seqscan    = f;
+SET LOCAL enable_bitmapscan = f;
+SET LOCAL enable_indexscan  = t;
+select count(*) from test_range_gist where ir @> 'empty'::int4range;
+ count 
+-------
+  6200
+(1 row)
+
+select count(*) from test_range_gist where ir = int4range(10,20);
+ count 
+-------
+     2
+(1 row)
+
+select count(*) from test_range_gist where ir @> 10;
+ count 
+-------
+   130
+(1 row)
+
+select count(*) from test_range_gist where ir @> int4range(10,20);
+ count 
+-------
+   111
+(1 row)
+
+select count(*) from test_range_gist where ir && int4range(10,20);
+ count 
+-------
+   158
+(1 row)
+
+select count(*) from test_range_gist where ir <@ int4range(10,50);
+ count 
+-------
+  1062
+(1 row)
+
+select count(*) from test_range_gist where ir << int4range(100,500);
+ count 
+-------
+   189
+(1 row)
+
+select count(*) from test_range_gist where ir >> int4range(100,500);
+ count 
+-------
+  3554
+(1 row)
+
+select count(*) from test_range_gist where ir &< int4range(100,500);
+ count 
+-------
+  1029
+(1 row)
+
+select count(*) from test_range_gist where ir &> int4range(100,500);
+ count 
+-------
+  4794
+(1 row)
+
+select count(*) from test_range_gist where ir -|- int4range(100,500);
+ count 
+-------
+     5
+(1 row)
+
+COMMIT;
+drop table test_range_gist;
+--
+-- Btree_gist is not included by default, so to test exclusion
+-- constraints with range types, use singleton int ranges for the "="
+-- portion of the constraint.
+--
+create table test_range_excl(
+  room int4range,
+  speaker int4range,
+  during tsrange,
+  exclude using gist (room with =, during with &&),
+  exclude using gist (speaker with =, during with &&)
+);
+NOTICE:  CREATE TABLE / EXCLUDE will create implicit index "test_range_excl_room_during_excl" for table "test_range_excl"
+NOTICE:  CREATE TABLE / EXCLUDE will create implicit index "test_range_excl_speaker_during_excl" for table "test_range_excl"
+insert into test_range_excl
+  values(int4range(123), int4range(1), '[2010-01-02 10:00, 2010-01-02 11:00)');
+insert into test_range_excl
+  values(int4range(123), int4range(2), '[2010-01-02 11:00, 2010-01-02 12:00)');
+insert into test_range_excl
+  values(int4range(123), int4range(3), '[2010-01-02 10:10, 2010-01-02 11:10)');
+ERROR:  conflicting key value violates exclusion constraint "test_range_excl_room_during_excl"
+DETAIL:  Key (room, during)=([123,124), ["Sat Jan 02 10:10:00 2010","Sat Jan 02 11:10:00 2010")) conflicts with existing key (room, during)=([123,124), ["Sat Jan 02 10:00:00 2010","Sat Jan 02 11:00:00 2010")).
+insert into test_range_excl
+  values(int4range(124), int4range(3), '[2010-01-02 10:10, 2010-01-02 11:10)');
+insert into test_range_excl
+  values(int4range(125), int4range(1), '[2010-01-02 10:10, 2010-01-02 11:10)');
+ERROR:  conflicting key value violates exclusion constraint "test_range_excl_speaker_during_excl"
+DETAIL:  Key (speaker, during)=([1,2), ["Sat Jan 02 10:10:00 2010","Sat Jan 02 11:10:00 2010")) conflicts with existing key (speaker, during)=([1,2), ["Sat Jan 02 10:00:00 2010","Sat Jan 02 11:00:00 2010")).
+drop table test_range_excl;
+-- test bigint ranges
+select int8range(10000000000::int8, 20000000000::int8,'(]');
+         int8range         
+---------------------------
+ [10000000001,20000000001)
+(1 row)
+
+-- test tstz ranges
+set timezone to '-08';
+select '[2010-01-01 01:00:00 -05, 2010-01-01 02:00:00 -08)'::tstzrange;
+                            tstzrange                            
+-----------------------------------------------------------------
+ ["Thu Dec 31 22:00:00 2009 -08","Fri Jan 01 02:00:00 2010 -08")
+(1 row)
+
+-- should fail
+select '[2010-01-01 01:00:00 -08, 2010-01-01 02:00:00 -05)'::tstzrange;
+ERROR:  range lower bound must be less than or equal to range upper bound
+LINE 1: select '[2010-01-01 01:00:00 -08, 2010-01-01 02:00:00 -05)':...
+               ^
+set timezone to default;
+--
+-- Test user-defined range of floats
+--
+--should fail
+create type float8range as range (subtype=float8, subtype_diff=float4mi);
+ERROR:  function float4mi(double precision, double precision) does not exist
+--should succeed
+create type float8range as range (subtype=float8, subtype_diff=float8mi);
+select '[123.001, 5.e9)'::float8range @> 888.882::float8;
+ ?column? 
+----------
+ t
+(1 row)
+
+create table float8range_test(f8r float8range, i int);
+insert into float8range_test values(float8range(-100.00007, '1.111113e9'));
+select * from float8range_test;
+           f8r           | i 
+-------------------------+---
+ [-100.00007,1111113000) |  
+(1 row)
+
+drop table float8range_test;
+drop type float8range;
+--
+-- Test range types over domains
+--
+create domain mydomain as int4;
+create type mydomainrange as range(subtype=mydomain);
+select '[4,50)'::mydomainrange @> 7::mydomain;
+ ?column? 
+----------
+ t
+(1 row)
+
+drop type mydomainrange;
+drop domain mydomain;
+--
+-- Test domains over range types
+--
+create domain restrictedrange  as int4range check (upper(value) < 10);
+select '[4,5)'::restrictedrange @> 7;
+ ?column? 
+----------
+ f
+(1 row)
+
+select '[4,50)'::restrictedrange @> 7; -- should fail
+ERROR:  value for domain restrictedrange violates check constraint "restrictedrange_check"
+drop domain restrictedrange;
+--
+-- Test multiple range types over the same subtype
+--
+create type textrange1 as range(subtype=text, collation="C");
+create type textrange2 as range(subtype=text, collation="C");
+select textrange1('a','Z') @> 'b'::text;
+ERROR:  range lower bound must be less than or equal to range upper bound
+select textrange2('a','z') @> 'b'::text;
+ ?column? 
+----------
+ t
+(1 row)
+
+drop type textrange1;
+drop type textrange2;
+--
+-- Test out polymorphic type system
+--
+create function anyarray_anyrange_func(a anyarray, r anyrange)
+  returns anyelement as 'select $1[1] + lower($2);' language sql;
+select anyarray_anyrange_func(ARRAY[1,2], int4range(10,20));
+ anyarray_anyrange_func 
+------------------------
+                     11
+(1 row)
+
+-- should fail
+select anyarray_anyrange_func(ARRAY[1,2], numrange(10,20));
+ERROR:  function anyarray_anyrange_func(integer[], numrange) does not exist
+LINE 1: select anyarray_anyrange_func(ARRAY[1,2], numrange(10,20));
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+drop function anyarray_anyrange_func(anyarray, anyrange);
+-- should fail
+create function bogus_func(anyelement)
+  returns anyrange as 'select int4range(1,10)' language sql;
+ERROR:  cannot determine result data type
+DETAIL:  A function returning ANYRANGE must have at least one ANYRANGE argument.
+-- should fail
+create function bogus_func(int)
+  returns anyrange as 'select int4range(1,10)' language sql;
+ERROR:  cannot determine result data type
+DETAIL:  A function returning a polymorphic type must have at least one polymorphic argument.
+create function range_add_bounds(anyrange)
+  returns anyelement as 'select lower($1) + upper($1)' language sql;
+select range_add_bounds(numrange(1.0001, 123.123));
+ range_add_bounds 
+------------------
+         124.1231
+(1 row)
+
+--
+-- Arrays of ranges
+--
+select ARRAY[numrange(1.1), numrange(12.3,155.5)];
+            array             
+------------------------------
+ {"[1.1,1.1]","[12.3,155.5)"}
+(1 row)
+
+--
+-- Ranges of arrays
+--
+create type arrayrange as range (subtype=int4[]);
+select arrayrange(ARRAY[1,2], ARRAY[2,1]);
+    arrayrange     
+-------------------
+ ["{1,2}","{2,1}")
+(1 row)
+
+drop type arrayrange;
+--
+-- OUT/INOUT/TABLE functions
+--
+create function outparam_succeed(i anyrange, out r anyrange, out t text)
+  as $$ select $1, 'foo' $$ language sql;
+create function inoutparam_succeed(out i anyelement, inout r anyrange)
+  as $$ select $1, $2 $$ language sql;
+create function table_succeed(i anyelement, r anyrange) returns table(i anyelement, r anyrange)
+  as $$ select $1, $2 $$ language sql;
+-- should fail
+create function outparam_fail(i anyelement, out r anyrange, out t text)
+  as $$ select '[1,10]', 'foo' $$ language sql;
+ERROR:  cannot determine result data type
+DETAIL:  A function returning ANYRANGE must have at least one ANYRANGE argument.
+--should fail
+create function inoutparam_fail(inout i anyelement, out r anyrange)
+  as $$ select $1, '[1,10]' $$ language sql;
+ERROR:  cannot determine result data type
+DETAIL:  A function returning ANYRANGE must have at least one ANYRANGE argument.
+--should fail
+create function table_succeed(i anyelement) returns table(i anyelement, r anyrange)
+  as $$ select $1, '[1,10]' $$ language sql;
+ERROR:  cannot determine result data type
+DETAIL:  A function returning ANYRANGE must have at least one ANYRANGE argument.

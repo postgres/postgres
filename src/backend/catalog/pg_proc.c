@@ -91,8 +91,11 @@ ProcedureCreate(const char *procedureName,
 	int			parameterCount;
 	int			allParamCount;
 	Oid		   *allParams;
+	char	   *modes = NULL;
 	bool		genericInParam = false;
 	bool		genericOutParam = false;
+	bool		anyrangeInParam = false;
+	bool		anyrangeOutParam = false;
 	bool		internalInParam = false;
 	bool		internalOutParam = false;
 	Oid			variadicType = InvalidOid;
@@ -152,6 +155,24 @@ ProcedureCreate(const char *procedureName,
 		allParams = parameterTypes->values;
 	}
 
+	if (parameterModes != PointerGetDatum(NULL))
+	{
+		/*
+		 * We expect the array to be a 1-D CHAR array; verify that. We don't
+		 * need to use deconstruct_array() since the array data is just going
+		 * to look like a C array of char values.
+		 */
+		ArrayType  *modesArray = (ArrayType *) DatumGetPointer(parameterModes);
+
+		if (ARR_NDIM(modesArray) != 1 ||
+			ARR_DIMS(modesArray)[0] != allParamCount ||
+			ARR_HASNULL(modesArray) ||
+			ARR_ELEMTYPE(modesArray) != CHAROID)
+			elog(ERROR, "parameterModes is not a 1-D char array");
+		modes = (char *) ARR_DATA_PTR(modesArray);
+	}
+
+
 	/*
 	 * Do not allow polymorphic return type unless at least one input argument
 	 * is polymorphic.	Also, do not allow return type INTERNAL unless at
@@ -161,6 +182,9 @@ ProcedureCreate(const char *procedureName,
 	{
 		switch (parameterTypes->values[i])
 		{
+			case ANYRANGEOID:
+				anyrangeInParam = true;
+				/* FALL THROUGH */
 			case ANYARRAYOID:
 			case ANYELEMENTOID:
 			case ANYNONARRAYOID:
@@ -177,14 +201,17 @@ ProcedureCreate(const char *procedureName,
 	{
 		for (i = 0; i < allParamCount; i++)
 		{
-			/*
-			 * We don't bother to distinguish input and output params here, so
-			 * if there is, say, just an input INTERNAL param then we will
-			 * still set internalOutParam.	This is OK since we don't really
-			 * care.
-			 */
+			if (modes == NULL ||
+				(modes[i] != PROARGMODE_OUT &&
+				 modes[i] != PROARGMODE_INOUT &&
+				 modes[i] != PROARGMODE_TABLE))
+				 continue;
+
 			switch (allParams[i])
 			{
+				case ANYRANGEOID:
+					anyrangeOutParam = true;
+					/* FALL THROUGH */
 				case ANYARRAYOID:
 				case ANYELEMENTOID:
 				case ANYNONARRAYOID:
@@ -204,6 +231,13 @@ ProcedureCreate(const char *procedureName,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 				 errmsg("cannot determine result data type"),
 				 errdetail("A function returning a polymorphic type must have at least one polymorphic argument.")));
+
+	if ((returnType == ANYRANGEOID || anyrangeOutParam) &&
+		!anyrangeInParam)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("cannot determine result data type"),
+				 errdetail("A function returning ANYRANGE must have at least one ANYRANGE argument.")));
 
 	if ((returnType == INTERNALOID || internalOutParam) && !internalInParam)
 		ereport(ERROR,
@@ -225,23 +259,8 @@ ProcedureCreate(const char *procedureName,
 						procedureName,
 						format_type_be(parameterTypes->values[0]))));
 
-	if (parameterModes != PointerGetDatum(NULL))
+	if (modes != NULL)
 	{
-		/*
-		 * We expect the array to be a 1-D CHAR array; verify that. We don't
-		 * need to use deconstruct_array() since the array data is just going
-		 * to look like a C array of char values.
-		 */
-		ArrayType  *modesArray = (ArrayType *) DatumGetPointer(parameterModes);
-		char	   *modes;
-
-		if (ARR_NDIM(modesArray) != 1 ||
-			ARR_DIMS(modesArray)[0] != allParamCount ||
-			ARR_HASNULL(modesArray) ||
-			ARR_ELEMTYPE(modesArray) != CHAROID)
-			elog(ERROR, "parameterModes is not a 1-D char array");
-		modes = (char *) ARR_DATA_PTR(modesArray);
-
 		/*
 		 * Only the last input parameter can be variadic; if it is, save its
 		 * element type.  Errors here are just elog since caller should have

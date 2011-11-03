@@ -709,4 +709,34 @@ DATA(insert (	3683   3615 3615 5 s	3679 403 0 ));
 DATA(insert (	3702   3615 3615 7 s	3693 783 0 ));
 DATA(insert (	3702   3615 3615 8 s	3694 783 0 ));
 
+/*
+ * btree range_ops
+ */
+DATA(insert (	3901   3831 3831 1 s	3884 403 0 ));
+DATA(insert (	3901   3831 3831 2 s	3885 403 0 ));
+DATA(insert (	3901   3831 3831 3 s	3882 403 0 ));
+DATA(insert (	3901   3831 3831 4 s	3886 403 0 ));
+DATA(insert (	3901   3831 3831 5 s	3887 403 0 ));
+
+/*
+ * hash range_ops
+ */
+DATA(insert (	3903   3831 3831 1 s	3882 405 0 ));
+
+/*
+ * GiST range_ops
+ */
+DATA(insert (	3919   3831 3831 1 s	3882 783 0 ));
+DATA(insert (	3919   3831 3831 2 s	3883 783 0 ));
+DATA(insert (	3919   3831 3831 3 s	3888 783 0 ));
+DATA(insert (	3919   3831 2776 4 s	3889 783 0 ));
+DATA(insert (	3919   2776 3831 5 s	3891 783 0 ));
+DATA(insert (	3919   3831 3831 6 s	3890 783 0 ));
+DATA(insert (	3919   3831 3831 7 s	3892 783 0 ));
+DATA(insert (	3919   3831 3831 8 s	3893 783 0 ));
+DATA(insert (	3919   3831 3831 9 s	3894 783 0 ));
+DATA(insert (	3919   3831 3831 10 s	3895 783 0 ));
+DATA(insert (	3919   3831 3831 11 s	3896 783 0 ));
+DATA(insert (	3919   3831 3831 12 s	3897 783 0 ));
+
 #endif   /* PG_AMOP_H */

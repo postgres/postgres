@@ -889,7 +889,6 @@ date_timestamp(PG_FUNCTION_ARGS)
 	PG_RETURN_TIMESTAMP(result);
 }
 
-
 /* timestamp_date()
  * Convert timestamp to date data type.
  */

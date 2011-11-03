@@ -133,7 +133,9 @@ WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-    (p1.prorettype < p2.prorettype)
+    (p1.prorettype < p2.prorettype) AND
+    -- range constructor functions are shared by all range types.
+    NOT p1.prosrc LIKE 'range_constructor%'
 ORDER BY 1, 2;
 
 SELECT DISTINCT p1.proargtypes[0], p2.proargtypes[0]
@@ -142,7 +144,9 @@ WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-    (p1.proargtypes[0] < p2.proargtypes[0])
+    (p1.proargtypes[0] < p2.proargtypes[0]) AND
+    -- range constructor functions are shared by all range types.
+    NOT p1.prosrc LIKE 'range_constructor%'
 ORDER BY 1, 2;
 
 SELECT DISTINCT p1.proargtypes[1], p2.proargtypes[1]
@@ -151,7 +155,9 @@ WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-    (p1.proargtypes[1] < p2.proargtypes[1])
+    (p1.proargtypes[1] < p2.proargtypes[1]) AND
+    -- range constructor functions are shared by all range types.
+    NOT p1.prosrc LIKE 'range_constructor%'
 ORDER BY 1, 2;
 
 SELECT DISTINCT p1.proargtypes[2], p2.proargtypes[2]

@@ -202,6 +202,7 @@ check_xact_readonly(Node *parsetree)
 		case T_CreateTrigStmt:
 		case T_CompositeTypeStmt:
 		case T_CreateEnumStmt:
+		case T_CreateRangeStmt:
 		case T_AlterEnumStmt:
 		case T_ViewStmt:
 		case T_DropCastStmt:
@@ -868,6 +869,10 @@ standard_ProcessUtility(Node *parsetree,
 
 		case T_CreateEnumStmt:	/* CREATE TYPE (enum) */
 			DefineEnum((CreateEnumStmt *) parsetree);
+			break;
+
+		case T_CreateRangeStmt:
+			DefineRange((CreateRangeStmt *) parsetree);
 			break;
 
 		case T_AlterEnumStmt:	/* ALTER TYPE (enum) */
@@ -1854,6 +1859,10 @@ CreateCommandTag(Node *parsetree)
 			tag = "CREATE TYPE";
 			break;
 
+		case T_CreateRangeStmt:
+			tag = "CREATE TYPE";
+			break;
+
 		case T_AlterEnumStmt:
 			tag = "ALTER TYPE";
 			break;
@@ -2398,6 +2407,10 @@ GetCommandLogLevel(Node *parsetree)
 			break;
 
 		case T_CreateEnumStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_CreateRangeStmt:
 			lev = LOGSTMT_DDL;
 			break;
 

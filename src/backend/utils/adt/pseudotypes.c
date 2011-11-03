@@ -25,6 +25,7 @@
 #include "libpq/pqformat.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/rangetypes.h"
 
 
 /*
@@ -187,6 +188,29 @@ anyenum_out(PG_FUNCTION_ARGS)
 	return enum_out(fcinfo);
 }
 
+/*
+ * anyrange_in		- input routine for pseudo-type ANYRANGE.
+ */
+Datum
+anyrange_in(PG_FUNCTION_ARGS)
+{
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot accept a value of type anyrange")));
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+/*
+ * anyrange_out		- output routine for pseudo-type ANYRANGE.
+ *
+ * We may as well allow this, since range_out will in fact work.
+ */
+Datum
+anyrange_out(PG_FUNCTION_ARGS)
+{
+	return range_out(fcinfo);
+}
 
 /*
  * void_in		- input routine for pseudo-type VOID.

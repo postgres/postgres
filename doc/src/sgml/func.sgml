@@ -10457,6 +10457,310 @@ SELECT NULLIF(value, '(none)') ...
    </para>
   </sect1>
 
+ <sect1 id="functions-range">
+  <title>Range Functions and Operators</title>
+
+  <para>
+   <xref linkend="range-operators-table"> shows the operators
+   available for range types.
+  </para>
+
+    <table id="range-operators-table">
+     <title>Range Operators</title>
+     <tgroup cols="4">
+      <thead>
+       <row>
+        <entry>Operator</entry>
+        <entry>Description</entry>
+        <entry>Example</entry>
+        <entry>Result</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+        <entry> <literal>=</literal> </entry>
+        <entry>equal</entry>
+        <entry><literal>int4range(1,5) = '[1,4]'::int4range</literal></entry>
+        <entry><literal>t</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>&lt;&gt;</literal> </entry>
+        <entry>not equal</entry>
+        <entry><literal>numrange(1.1,2.2) &lt;&gt; numrange(1.1,2.3)</literal></entry>
+        <entry><literal>t</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>&lt;</literal> </entry>
+        <entry>less than</entry>
+        <entry><literal>int4range(1,10) &lt; int4range(2,3)</literal></entry>
+        <entry><literal>t</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>&gt;</literal> </entry>
+        <entry>greater than</entry>
+        <entry><literal>int4range(1,10) &gt; int4range(1,5)</literal></entry>
+        <entry><literal>t</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>&lt;=</literal> </entry>
+        <entry>less than or equal</entry>
+        <entry><literal>numrange(1.1,2.2) &lt;= numrange(1.1,2.2)</literal></entry>
+        <entry><literal>t</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>&gt;=</literal> </entry>
+        <entry>greater than or equal</entry>
+        <entry><literal>numrange(1.1,2.2) &gt;= numrange(1.1,2.0)</literal></entry>
+        <entry><literal>t</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>@&gt;</literal> </entry>
+        <entry>contains</entry>
+        <entry><literal>'[2011-01-01,2011-03-01)'::tsrange @&gt; '2011-01-10'::timestamp</literal></entry>
+        <entry><literal>t</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>&lt;@</literal> </entry>
+        <entry>is contained by</entry>
+        <entry><literal>int4range(2,4) &lt;@ int4range(1,7)</literal></entry>
+        <entry><literal>t</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>&amp;&amp;</literal> </entry>
+        <entry>overlap (have points in common)</entry>
+        <entry><literal>int8range(3,7) &amp;&amp; int8range(4,12)</literal></entry>
+        <entry><literal>t</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>&lt;&lt;</literal> </entry>
+        <entry>strictly left of</entry>
+        <entry><literal>int8range(1,10) &lt;&lt; int8range(100,110)</literal></entry>
+        <entry><literal>t</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>&gt;&gt;</literal> </entry>
+        <entry>strictly right of</entry>
+        <entry><literal>int8range(50,60) &gt;&gt; int8range(20,30)</literal></entry>
+        <entry><literal>t</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>&amp;&lt;</literal> </entry>
+        <entry>Does not extend to the right of?</entry>
+        <entry><literal>int8range(1,20) &amp;&lt; int8range(18,20)</literal></entry>
+        <entry><literal>t</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>&amp;&gt;</literal> </entry>
+        <entry>Does not extend to the left of?</entry>
+        <entry><literal>int8range(7,20) &amp;&gt; int8range(5,10)</literal></entry>
+        <entry><literal>t</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>-|-</literal> </entry>
+        <entry>adjacent?</entry>
+        <entry><literal>numrange(1.1,2.2) -|- numrange(2.2,3.3)</literal></entry>
+        <entry><literal>t</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>+</literal> </entry>
+        <entry>Union</entry>
+        <entry><literal>numrange(5,15) + numrange(10,20)</literal></entry>
+        <entry><literal>[5,20)</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>-</literal> </entry>
+        <entry>Difference</entry>
+        <entry><literal>int8range(5,15) - int8range(10,20)</literal></entry>
+        <entry><literal>[5,10)</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>*</literal> </entry>
+        <entry>Intersection</entry>
+        <entry><literal>int8range(5,15) * int8range(10,20)</literal></entry>
+        <entry><literal>[10,15)</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>!?</literal> </entry>
+        <entry>Is empty?</entry>
+        <entry><literal>'empty'::int4range !?</literal></entry>
+        <entry><literal>t</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>?</literal> </entry>
+        <entry>Is non-empty?</entry>
+        <entry><literal>numrange(1.0,2.0)?</literal></entry>
+        <entry><literal>t</literal></entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
+  <para>
+   Range comparisons compare the lower bounds first, and only if
+   equal, compare the upper bounds. This is generally most useful for
+   B-tree indexes, rather than being useful comparisons by themselves.
+  </para>
+
+  <para>
+   See <xref linkend="rangetypes"> for more details about range operator
+   behavior.
+  </para>
+
+  <para>
+   <xref linkend="range-functions-table"> shows the functions
+   available for use with range types. See <xref linkend="rangetypes">
+   for more information  and examples of the use of these functions.
+  </para>
+
+  <indexterm>
+    <primary>lower</primary>
+  </indexterm>
+  <indexterm>
+    <primary>upper</primary>
+  </indexterm>
+  <indexterm>
+    <primary>empty</primary>
+  </indexterm>
+  <indexterm>
+    <primary>non_empty</primary>
+  </indexterm>
+  <indexterm>
+    <primary>lower_inc</primary>
+  </indexterm>
+  <indexterm>
+    <primary>upper_inc</primary>
+  </indexterm>
+  <indexterm>
+    <primary>lower_inf</primary>
+  </indexterm>
+  <indexterm>
+    <primary>upper_inf</primary>
+  </indexterm>
+
+    <table id="range-functions-table">
+     <title>Range Functions</title>
+     <tgroup cols="5">
+      <thead>
+       <row>
+        <entry>Function</entry>
+        <entry>Return Type</entry>
+        <entry>Description</entry>
+        <entry>Example</entry>
+        <entry>Result</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+        <entry>
+         <literal>
+          <function>lower</function>(<type>anyrange</type>)
+         </literal>
+        </entry>
+        <entry><type>anyrange</type></entry>
+        <entry>lower bound of range</entry>
+        <entry><literal>lower(numrange(1.1,2.2))</literal></entry>
+        <entry><literal>1.1</literal></entry>
+       </row>
+       <row>
+        <entry>
+         <literal>
+          <function>upper</function>(<type>anyrange</type>)
+         </literal>
+        </entry>
+        <entry><type>anyrange</type></entry>
+        <entry>upper bound of range</entry>
+        <entry><literal>upper(numrange(1.1,2.2))</literal></entry>
+        <entry><literal>2.2</literal></entry>
+       </row>
+       <row>
+        <entry>
+         <literal>
+          <function>empty</function>(<type>anyrange</type>)
+         </literal>
+        </entry>
+        <entry><type>anyrange</type></entry>
+        <entry>is the range empty?</entry>
+        <entry><literal>empty(numrange(1.1,2.2))</literal></entry>
+        <entry><literal>false</literal></entry>
+       </row>
+       <row>
+        <entry>
+         <literal>
+          <function>non_empty</function>(<type>anyrange</type>)
+         </literal>
+        </entry>
+        <entry><type>anyrange</type></entry>
+        <entry>is the range non-empty?</entry>
+        <entry><literal>non_empty(numrange(1.1,2.2))</literal></entry>
+        <entry><literal>true</literal></entry>
+       </row>
+       <row>
+        <entry>
+         <literal>
+          <function>lower_inc</function>(<type>anyrange</type>)
+         </literal>
+        </entry>
+        <entry><type>anyrange</type></entry>
+        <entry>is the lower bound of the range inclusive?</entry>
+        <entry><literal>lower_inc(numrange(1.1,2.2))</literal></entry>
+        <entry><literal>true</literal></entry>
+       </row>
+       <row>
+        <entry>
+         <literal>
+          <function>upper_inc</function>(<type>anyrange</type>)
+         </literal>
+        </entry>
+        <entry><type>anyrange</type></entry>
+        <entry>is the upper bound of the range inclusive?</entry>
+        <entry><literal>upper_inc(numrange(1.1,2.2))</literal></entry>
+        <entry><literal>false</literal></entry>
+       </row>
+       <row>
+        <entry>
+         <literal>
+          <function>lower_inf</function>(<type>anyrange</type>)
+         </literal>
+        </entry>
+        <entry><type>anyrange</type></entry>
+        <entry>is the lower bound of the range infinite?</entry>
+        <entry><literal>lower_inf('(,)'::daterange)</literal></entry>
+        <entry><literal>true</literal></entry>
+       </row>
+       <row>
+        <entry>
+         <literal>
+          <function>upper_inf</function>(<type>anyrange</type>)
+         </literal>
+        </entry>
+        <entry><type>anyrange</type></entry>
+        <entry>is the upper bound of the range infinite?</entry>
+        <entry><literal>upper_inf('(,)'::daterange)</literal></entry>
+        <entry><literal>true</literal></entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+  </sect1>
+
  <sect1 id="functions-aggregate">
   <title>Aggregate Functions</title>
 

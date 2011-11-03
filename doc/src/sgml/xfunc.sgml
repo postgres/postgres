@@ -997,8 +997,8 @@ $$ LANGUAGE SQL;
     <para>
      <acronym>SQL</acronym> functions can be declared to accept and
      return the polymorphic types <type>anyelement</type>,
-     <type>anyarray</type>, <type>anynonarray</type>, and
-     <type>anyenum</type>.  See <xref
+     <type>anyarray</type>, <type>anynonarray</type>,
+     <type>anyenum</type>, and <type>anyrange</type>.  See <xref
      linkend="extend-types-polymorphic"> for a more detailed
      explanation of polymorphic functions. Here is a polymorphic
      function <function>make_array</function> that builds up an array
@@ -3046,7 +3046,7 @@ CREATE OR REPLACE FUNCTION retcomposite(IN integer, IN integer,
      C-language functions can be declared to accept and
      return the polymorphic types
      <type>anyelement</type>, <type>anyarray</type>, <type>anynonarray</type>,
-     and <type>anyenum</type>.
+     <type>anyenum</type>, and <type>anyrange</type>.
      See <xref linkend="extend-types-polymorphic"> for a more detailed explanation
      of polymorphic functions. When function arguments or return types
      are defined as polymorphic types, the function author cannot know

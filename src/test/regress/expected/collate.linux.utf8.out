@@ -1049,3 +1049,20 @@ Composite type "public.collate_dep_test2"
 
 DROP TABLE collate_dep_test1, collate_dep_test4t;
 DROP TYPE collate_dep_test2;
+-- test range types and collations
+create type textrange_c as range(subtype=text, collation="C");
+create type textrange_en_us as range(subtype=text, collation="en_US");
+select textrange_c('A','Z') @> 'b'::text;
+ ?column? 
+----------
+ f
+(1 row)
+
+select textrange_en_us('A','Z') @> 'b'::text;
+ ?column? 
+----------
+ t
+(1 row)
+
+drop type textrange_c;
+drop type textrange_en_us;

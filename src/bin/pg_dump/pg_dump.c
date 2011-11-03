@@ -52,6 +52,7 @@
 #include "catalog/pg_largeobject.h"
 #include "catalog/pg_largeobject_metadata.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_range.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
 #include "libpq/libpq-fs.h"
@@ -167,6 +168,7 @@ static void dumpExtension(Archive *fout, ExtensionInfo *extinfo);
 static void dumpType(Archive *fout, TypeInfo *tyinfo);
 static void dumpBaseType(Archive *fout, TypeInfo *tyinfo);
 static void dumpEnumType(Archive *fout, TypeInfo *tyinfo);
+static void dumpRangeType(Archive *fout, TypeInfo *tyinfo);
 static void dumpDomain(Archive *fout, TypeInfo *tyinfo);
 static void dumpCompositeType(Archive *fout, TypeInfo *tyinfo);
 static void dumpCompositeTypeColComments(Archive *fout, TypeInfo *tyinfo);
@@ -2989,7 +2991,8 @@ getTypes(int *numTypes)
 		 * should copy the base type's catId, but then it might capture the
 		 * pg_depend entries for the type, which we don't want.
 		 */
-		if (tyinfo[i].dobj.dump && tyinfo[i].typtype == TYPTYPE_BASE)
+		if (tyinfo[i].dobj.dump && (tyinfo[i].typtype == TYPTYPE_BASE ||
+									tyinfo[i].typtype == TYPTYPE_RANGE))
 		{
 			stinfo = (ShellTypeInfo *) malloc(sizeof(ShellTypeInfo));
 			stinfo->dobj.objType = DO_SHELL_TYPE;
@@ -3700,7 +3703,32 @@ getFuncs(int *numFuncs)
 	 * so be sure to fetch any such functions.
 	 */
 
-	if (g_fout->remoteVersion >= 70300)
+	if (g_fout->remoteVersion >= 90200)
+	{
+		appendPQExpBuffer(query,
+						  "SELECT tableoid, oid, proname, prolang, "
+						  "pronargs, proargtypes, prorettype, proacl, "
+						  "pronamespace, "
+						  "(%s proowner) AS rolname "
+						  "FROM pg_proc p "
+						  "WHERE NOT proisagg AND "
+						  " NOT EXISTS (SELECT 1 FROM pg_depend "
+						  "   WHERE classid = 'pg_proc'::regclass AND "
+						  "   objid = p.oid AND deptype = 'i') AND "
+						  "(pronamespace != "
+						  "(SELECT oid FROM pg_namespace "
+						  "WHERE nspname = 'pg_catalog')",
+						  username_subquery);
+		if (binary_upgrade && g_fout->remoteVersion >= 90100)
+			appendPQExpBuffer(query,
+							  " OR EXISTS(SELECT 1 FROM pg_depend WHERE "
+							  "classid = 'pg_proc'::regclass AND "
+							  "objid = p.oid AND "
+							  "refclassid = 'pg_extension'::regclass AND "
+							  "deptype = 'e')");
+		appendPQExpBuffer(query, ")");
+	}
+	else if (g_fout->remoteVersion >= 70300)
 	{
 		appendPQExpBuffer(query,
 						  "SELECT tableoid, oid, proname, prolang, "
@@ -7309,6 +7337,8 @@ dumpType(Archive *fout, TypeInfo *tyinfo)
 		dumpCompositeType(fout, tyinfo);
 	else if (tyinfo->typtype == TYPTYPE_ENUM)
 		dumpEnumType(fout, tyinfo);
+	else if (tyinfo->typtype == TYPTYPE_RANGE)
+		dumpRangeType(fout, tyinfo);
 }
 
 /*
@@ -7401,6 +7431,156 @@ dumpEnumType(Archive *fout, TypeInfo *tyinfo)
 			appendPQExpBuffer(q, ";\n\n");
 		}
 	}
+
+	appendPQExpBuffer(labelq, "TYPE %s", fmtId(tyinfo->dobj.name));
+
+	if (binary_upgrade)
+		binary_upgrade_extension_member(q, &tyinfo->dobj, labelq->data);
+
+	ArchiveEntry(fout, tyinfo->dobj.catId, tyinfo->dobj.dumpId,
+				 tyinfo->dobj.name,
+				 tyinfo->dobj.namespace->dobj.name,
+				 NULL,
+				 tyinfo->rolname, false,
+				 "TYPE", SECTION_PRE_DATA,
+				 q->data, delq->data, NULL,
+				 tyinfo->dobj.dependencies, tyinfo->dobj.nDeps,
+				 NULL, NULL);
+
+	/* Dump Type Comments and Security Labels */
+	dumpComment(fout, labelq->data,
+				tyinfo->dobj.namespace->dobj.name, tyinfo->rolname,
+				tyinfo->dobj.catId, 0, tyinfo->dobj.dumpId);
+	dumpSecLabel(fout, labelq->data,
+				 tyinfo->dobj.namespace->dobj.name, tyinfo->rolname,
+				 tyinfo->dobj.catId, 0, tyinfo->dobj.dumpId);
+
+	PQclear(res);
+	destroyPQExpBuffer(q);
+	destroyPQExpBuffer(delq);
+	destroyPQExpBuffer(labelq);
+	destroyPQExpBuffer(query);
+}
+
+/*
+ * dumpRangeType
+ *	  writes out to fout the queries to recreate a user-defined range type
+ */
+static void
+dumpRangeType(Archive *fout, TypeInfo *tyinfo)
+{
+	PQExpBuffer q = createPQExpBuffer();
+	PQExpBuffer delq = createPQExpBuffer();
+	PQExpBuffer labelq = createPQExpBuffer();
+	PQExpBuffer query = createPQExpBuffer();
+	PGresult   *res;
+
+	Oid			 collationOid;
+	Oid			 opclassOid;
+	Oid			 analyzeOid;
+	Oid			 canonicalOid;
+	Oid			 subdiffOid;
+
+	/* Set proper schema search path */
+	selectSourceSchema("pg_catalog");
+
+	appendPQExpBuffer(query,
+					  "SELECT rngtypid, "
+					  "format_type(rngsubtype, NULL) as rngsubtype, "
+					  "rngsubtype::oid as rngsubtypeoid, "
+					  "opc.opcname AS opcname, "
+					  "CASE WHEN rngcollation = st.typcollation THEN 0 "
+					  "     ELSE rngcollation END AS collation, "
+					  "CASE WHEN opcdefault THEN 0 ELSE rngsubopc END "
+					  "  AS rngsubopc, "
+					  "(SELECT nspname FROM pg_namespace nsp "
+					  "  WHERE nsp.oid = opc.opcnamespace) AS opcnsp, "
+					  "t.typanalyze, t.typanalyze::oid as typanalyzeoid, "
+					  "rngcanonical, rngcanonical::oid as rngcanonicaloid, "
+					  "rngsubdiff, rngsubdiff::oid as rngsubdiffoid "
+					  "FROM pg_catalog.pg_type t, pg_type st, "
+					  "     pg_catalog.pg_opclass opc, pg_catalog.pg_range r "
+					  "WHERE t.oid = rngtypid AND st.oid = rngsubtype AND "
+					  "      opc.oid = rngsubopc AND rngtypid = '%u'",
+					  tyinfo->dobj.catId.oid);
+
+	res = PQexec(g_conn, query->data);
+	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+
+	/*
+	 * DROP must be fully qualified in case same name appears in pg_catalog.
+	 * CASCADE shouldn't be required here as for normal types since the I/O
+	 * functions are generic and do not get dropped.
+	 */
+	appendPQExpBuffer(delq, "DROP TYPE %s.",
+					  fmtId(tyinfo->dobj.namespace->dobj.name));
+	appendPQExpBuffer(delq, "%s;\n",
+					  fmtId(tyinfo->dobj.name));
+
+	/* We might already have a shell type, but setting pg_type_oid is harmless */
+	if (binary_upgrade)
+		binary_upgrade_set_type_oids_by_type_oid(q, tyinfo->dobj.catId.oid);
+
+	appendPQExpBuffer(q, "CREATE TYPE %s AS RANGE (",
+					  fmtId(tyinfo->dobj.name));
+
+	/* SUBTYPE */
+	appendPQExpBuffer(q, "\n    SUBTYPE = %s",
+					  PQgetvalue(res, 0, PQfnumber(res, "rngsubtype")));
+
+	/* COLLATION */
+	collationOid = atooid(PQgetvalue(res, 0,
+									 PQfnumber(res, "collation")));
+	if (OidIsValid(collationOid))
+	{
+		CollInfo   *coll;
+
+		coll = findCollationByOid(collationOid);
+		if (coll)
+		{
+			/* always schema-qualify, don't try to be smart */
+			appendPQExpBuffer(q, ",\n    COLLATION = %s.",
+							  fmtId(coll->dobj.namespace->dobj.name));
+			appendPQExpBuffer(q, "%s",
+							  fmtId(coll->dobj.name));
+		}
+	}
+
+	/* SUBTYPE_OPCLASS */
+	opclassOid = atooid(PQgetvalue(res, 0,
+								   PQfnumber(res, "rngsubopc")));
+	if (OidIsValid(opclassOid))
+	{
+		char *opcname = PQgetvalue(res, 0, PQfnumber(res, "opcname"));
+		char *nspname = PQgetvalue(res, 0, PQfnumber(res, "opcnsp"));
+
+		/* always schema-qualify, don't try to be smart */
+		appendPQExpBuffer(q, ",\n    SUBTYPE_OPCLASS = %s.",
+						  fmtId(nspname));
+		appendPQExpBuffer(q, "%s", fmtId(opcname));
+	}
+
+	/* ANALYZE */
+	analyzeOid = atooid(PQgetvalue(res, 0,
+								   PQfnumber(res, "typanalyzeoid")));
+	if (OidIsValid(analyzeOid))
+		appendPQExpBuffer(q, ",\n    ANALYZE = %s",
+						  PQgetvalue(res, 0, PQfnumber(res, "typanalyze")));
+
+	/* CANONICAL */
+	canonicalOid = atooid(PQgetvalue(res, 0,
+									 PQfnumber(res, "rngcanonicaloid")));
+	if (OidIsValid(canonicalOid))
+		appendPQExpBuffer(q, ",\n    CANONICAL = %s",
+						  PQgetvalue(res, 0, PQfnumber(res, "rngcanonical")));
+
+	/* SUBTYPE_DIFF */
+	subdiffOid = atooid(PQgetvalue(res, 0, PQfnumber(res, "rngsubdiffoid")));
+	if (OidIsValid(subdiffOid))
+		appendPQExpBuffer(q, ",\n    SUBTYPE_DIFF = %s",
+						  PQgetvalue(res, 0, PQfnumber(res, "rngsubdiff")));
+
+	appendPQExpBuffer(q, "\n);\n");
 
 	appendPQExpBuffer(labelq, "TYPE %s", fmtId(tyinfo->dobj.name));
 

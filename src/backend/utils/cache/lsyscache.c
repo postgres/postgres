@@ -26,6 +26,7 @@
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_range.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
@@ -2251,6 +2252,16 @@ type_is_enum(Oid typid)
 }
 
 /*
+ * type_is_range
+ *	  Returns true if the given type is an range type.
+ */
+bool
+type_is_range(Oid typid)
+{
+	return (get_typtype(typid) == TYPTYPE_RANGE);
+}
+
+/*
  * get_type_category_preferred
  *
  *		Given the type OID, fetch its category and preferred-type status.
@@ -2854,4 +2865,23 @@ get_namespace_name(Oid nspid)
 	}
 	else
 		return NULL;
+}
+
+Oid
+get_range_subtype(Oid rangeOid)
+{
+	HeapTuple	tp;
+
+	tp = SearchSysCache1(RANGETYPE, ObjectIdGetDatum(rangeOid));
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_range	rngtup = (Form_pg_range) GETSTRUCT(tp);
+		Oid				result;
+
+		result = rngtup->rngsubtype;
+		ReleaseSysCache(tp);
+		return result;
+	}
+	else
+		return InvalidOid;
 }

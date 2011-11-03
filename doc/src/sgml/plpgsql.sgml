@@ -139,7 +139,7 @@
      <application>PL/pgSQL</> functions can also be declared to accept
      and return the polymorphic types
      <type>anyelement</type>, <type>anyarray</type>, <type>anynonarray</type>,
-     and <type>anyenum</>.  The actual
+     <type>anyenum</>, and <type>anyrange</type>.  The actual
      data types handled by a polymorphic function can vary from call to
      call, as discussed in <xref linkend="extend-types-polymorphic">.
      An example is shown in <xref linkend="plpgsql-declaration-parameters">.
@@ -500,8 +500,8 @@ $$ LANGUAGE plpgsql;
      <para>
       When the return type of a <application>PL/pgSQL</application>
       function is declared as a polymorphic type (<type>anyelement</type>,
-      <type>anyarray</type>, <type>anynonarray</type>, or <type>anyenum</>),
-      a special parameter <literal>$0</literal>
+      <type>anyarray</type>, <type>anynonarray</type>, <type>anyenum</type>,
+      or <type>anyrange</type>), a special parameter <literal>$0</literal>
       is created.  Its data type is the actual return type of the function,
       as deduced from the actual input types (see <xref
       linkend="extend-types-polymorphic">).

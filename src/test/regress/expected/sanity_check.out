@@ -116,6 +116,7 @@ SELECT relname, relhasindex
  pg_opfamily             | t
  pg_pltemplate           | t
  pg_proc                 | t
+ pg_range                | t
  pg_rewrite              | t
  pg_seclabel             | t
  pg_shdepend             | t
@@ -158,7 +159,7 @@ SELECT relname, relhasindex
  timetz_tbl              | f
  tinterval_tbl           | f
  varchar_tbl             | f
-(147 rows)
+(148 rows)
 
 --
 -- another sanity check: every system catalog that has OIDs should have

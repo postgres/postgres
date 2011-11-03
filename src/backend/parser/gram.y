@@ -4336,6 +4336,13 @@ DefineStmt:
 					n->vals = $7;
 					$$ = (Node *)n;
 				}
+			| CREATE TYPE_P any_name AS RANGE definition
+				{
+					CreateRangeStmt *n = makeNode(CreateRangeStmt);
+					n->typeName = $3;
+					n->params	= $6;
+					$$ = (Node *)n;
+				}
 			| CREATE TEXT_P SEARCH PARSER any_name definition
 				{
 					DefineStmt *n = makeNode(DefineStmt);

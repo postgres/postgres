@@ -385,3 +385,14 @@ DROP COLLATION test0 CASCADE;
 
 DROP TABLE collate_dep_test1, collate_dep_test4t;
 DROP TYPE collate_dep_test2;
+
+-- test range types and collations
+
+create type textrange_c as range(subtype=text, collation="C");
+create type textrange_en_us as range(subtype=text, collation="en_US");
+
+select textrange_c('A','Z') @> 'b'::text;
+select textrange_en_us('A','Z') @> 'b'::text;
+
+drop type textrange_c;
+drop type textrange_en_us;

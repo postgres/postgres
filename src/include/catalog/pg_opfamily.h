@@ -139,5 +139,8 @@ DATA(insert OID = 3655 (	783		tsvector_ops	PGNSP PGUID ));
 DATA(insert OID = 3659 (	2742	tsvector_ops	PGNSP PGUID ));
 DATA(insert OID = 3683 (	403		tsquery_ops		PGNSP PGUID ));
 DATA(insert OID = 3702 (	783		tsquery_ops		PGNSP PGUID ));
+DATA(insert OID = 3901 (	403		range_ops		PGNSP PGUID ));
+DATA(insert OID = 3903 (	405		range_ops		PGNSP PGUID ));
+DATA(insert OID = 3919 (	783		range_ops		PGNSP PGUID ));
 
 #endif   /* PG_OPFAMILY_H */

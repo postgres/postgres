@@ -1439,6 +1439,15 @@ _equalCreateEnumStmt(CreateEnumStmt *a, CreateEnumStmt *b)
 }
 
 static bool
+_equalCreateRangeStmt(CreateRangeStmt *a, CreateRangeStmt *b)
+{
+	COMPARE_NODE_FIELD(typeName);
+	COMPARE_NODE_FIELD(params);
+
+	return true;
+}
+
+static bool
 _equalAlterEnumStmt(AlterEnumStmt *a, AlterEnumStmt *b)
 {
 	COMPARE_NODE_FIELD(typeName);
@@ -2825,6 +2834,9 @@ equal(void *a, void *b)
 			break;
 		case T_CreateEnumStmt:
 			retval = _equalCreateEnumStmt(a, b);
+			break;
+		case T_CreateRangeStmt:
+			retval = _equalCreateRangeStmt(a, b);
 			break;
 		case T_AlterEnumStmt:
 			retval = _equalAlterEnumStmt(a, b);

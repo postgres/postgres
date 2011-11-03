@@ -591,6 +591,28 @@ DATA(insert OID = 2970 ( txid_snapshot	PGNSP PGUID -1 f b U f t \054 0 0 2949 tx
 DESCR("txid snapshot");
 DATA(insert OID = 2949 ( _txid_snapshot PGNSP PGUID -1 f b A f t \054 0 2970 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 0 _null_ _null_ ));
 
+/* range types */
+
+DATA(insert OID = 3904 ( int4range		PGNSP PGUID  -1 f r R f t \054 0 0 3905 range_in range_out range_recv range_send - - - i x f 0 -1 0 0 _null_ _null_ ));
+DESCR("range of int4s");
+#define INT4RANGEOID		3904
+DATA(insert OID = 3905 ( _int4range		PGNSP PGUID  -1 f b A f t \054 0 3904 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ ));
+DATA(insert OID = 3906 ( numrange		PGNSP PGUID  -1 f r R f t \054 0 0 3907 range_in range_out range_recv range_send - - - i x f 0 -1 0 0 _null_ _null_ ));
+DESCR("range of numerics");
+DATA(insert OID = 3907 ( _numrange		PGNSP PGUID  -1 f b A f t \054 0 3906 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ ));
+DATA(insert OID = 3908 ( tsrange		PGNSP PGUID  -1 f r R f t \054 0 0 3909 range_in range_out range_recv range_send - - - i x f 0 -1 0 0 _null_ _null_ ));
+DESCR("range of timestamps");
+DATA(insert OID = 3909 ( _tsrange		PGNSP PGUID  -1 f b A f t \054 0 3908 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ ));
+DATA(insert OID = 3910 ( tstzrange		PGNSP PGUID  -1 f r R f t \054 0 0 3911 range_in range_out range_recv range_send - - - i x f 0 -1 0 0 _null_ _null_ ));
+DESCR("range of timestamps with time zone");
+DATA(insert OID = 3911 ( _tstzrange		PGNSP PGUID  -1 f b A f t \054 0 3910 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ ));
+DATA(insert OID = 3912 ( daterange		PGNSP PGUID  -1 f r R f t \054 0 0 3913 range_in range_out range_recv range_send - - - i x f 0 -1 0 0 _null_ _null_ ));
+DESCR("range of dates");
+DATA(insert OID = 3913 ( _daterange		PGNSP PGUID  -1 f b A f t \054 0 3912 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ ));
+DATA(insert OID = 3926 ( int8range		PGNSP PGUID  -1 f r R f t \054 0 0 3927 range_in range_out range_recv range_send - - - i x f 0 -1 0 0 _null_ _null_ ));
+DESCR("range of int8s");
+DATA(insert OID = 3927 ( _int8range		PGNSP PGUID  -1 f b A f t \054 0 3926 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ ));
+
 /*
  * pseudo-types
  *
@@ -632,6 +654,8 @@ DATA(insert OID = 3500 ( anyenum		PGNSP PGUID  4 t p P f t \054 0 0 0 anyenum_in
 #define ANYENUMOID		3500
 DATA(insert OID = 3115 ( fdw_handler	PGNSP PGUID  4 t p P f t \054 0 0 0 fdw_handler_in fdw_handler_out - - - - - i p f 0 -1 0 0 _null_ _null_ ));
 #define FDW_HANDLEROID		3115
+DATA(insert OID = 3831 ( anyrange		PGNSP PGUID  4 t p P f t \054 0 0 0 anyrange_in anyrange_out - - - - - i p f 0 -1 0 0 _null_ _null_ ));
+#define ANYRANGEOID		3831
 
 
 /*
@@ -642,6 +666,7 @@ DATA(insert OID = 3115 ( fdw_handler	PGNSP PGUID  4 t p P f t \054 0 0 0 fdw_han
 #define  TYPTYPE_DOMAIN		'd' /* domain over another type */
 #define  TYPTYPE_ENUM		'e' /* enumerated type */
 #define  TYPTYPE_PSEUDO		'p' /* pseudo-type */
+#define  TYPTYPE_RANGE		'r' /* range type */
 
 #define  TYPCATEGORY_INVALID	'\0'	/* not an allowed category */
 #define  TYPCATEGORY_ARRAY		'A'
@@ -653,6 +678,7 @@ DATA(insert OID = 3115 ( fdw_handler	PGNSP PGUID  4 t p P f t \054 0 0 0 fdw_han
 #define  TYPCATEGORY_NETWORK	'I'		/* think INET */
 #define  TYPCATEGORY_NUMERIC	'N'
 #define  TYPCATEGORY_PSEUDOTYPE 'P'
+#define  TYPCATEGORY_RANGE		'R'
 #define  TYPCATEGORY_STRING		'S'
 #define  TYPCATEGORY_TIMESPAN	'T'
 #define  TYPCATEGORY_USER		'U'
@@ -664,6 +690,7 @@ DATA(insert OID = 3115 ( fdw_handler	PGNSP PGUID  4 t p P f t \054 0 0 0 fdw_han
 	((typid) == ANYELEMENTOID || \
 	 (typid) == ANYARRAYOID || \
 	 (typid) == ANYNONARRAYOID || \
-	 (typid) == ANYENUMOID)
+	 (typid) == ANYENUMOID || \
+	 (typid) == ANYRANGEOID)
 
 #endif   /* PG_TYPE_H */

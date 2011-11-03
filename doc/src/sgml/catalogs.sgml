@@ -219,6 +219,11 @@
      </row>
 
      <row>
+      <entry><link linkend="catalog-pg-range"><structname>pg_range</structname></link></entry>
+      <entry>information about range types</entry>
+     </row>
+
+     <row>
       <entry><link linkend="catalog-pg-rewrite"><structname>pg_rewrite</structname></link></entry>
       <entry>query rewrite rules</entry>
      </row>
@@ -4591,6 +4596,78 @@
    dynamically-loaded C functions, for which it gives the name of the
    shared library file containing the function.
   </para>
+
+ </sect1>
+
+ <sect1 id="catalog-pg-range">
+  <title><structname>pg_range</structname></title>
+
+  <indexterm zone="catalog-pg-range">
+   <primary>pg_range</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_range</structname> stores information about range types.
+  </para>
+
+  <table>
+   <title><structname>pg_range</> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>rngtypid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
+      <entry>The type that is a range type</entry>
+     </row>
+
+     <row>
+      <entry><structfield>rngsubtype</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
+      <entry>Subtype of this range type, e.g. <type>integer</type> is the subtype of <type>int4range</type></entry>
+     </row>
+
+     <row>
+      <entry><structfield>rngcollation</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-collation"><structname>pg_collation</structname></link>.oid</literal></entry>
+      <entry>The collation used when comparing range boundaries</entry>
+     </row>
+
+     <row>
+      <entry><structfield>rngsubopc</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link>.oid</literal></entry>
+      <entry>The operator class used when comparing range boundaries</entry>
+     </row>
+
+     <row>
+      <entry><structfield>rngcanonical</structfield></entry>
+      <entry><type>regproc</type></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
+      <entry>A function to convert a range into its canonical form</entry>
+     </row>
+
+     <row>
+      <entry><structfield>rngsubdiff</structfield></entry>
+      <entry><type>regproc</type></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
+      <entry>A function to return the distance between two lower and upper bound, as a <type>double precision</type>. Used for GiST support</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
 
  </sect1>
 

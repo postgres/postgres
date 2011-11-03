@@ -1,0 +1,373 @@
+<!-- doc/src/sgml/rangetypes.sgml -->
+
+<sect1 id="rangetypes">
+ <title>Range Types</title>
+
+ <indexterm>
+  <primary>range type</primary>
+ </indexterm>
+
+ <para>
+  Range types are data types representing a range of values over some
+  sub-type with a total order. For instance, ranges
+  of <type>timestamp</type> might be used to represent the ranges of
+  time that a meeting room is reserved. In this case the data type
+  is <type>tsrange</type> (short for "timestamp range"),
+  and <type>timestamp</type> is the sub-type with a total order.
+ </para>
+
+ <para>
+  Range types are useful because they represent many points in a
+  single value. The use of time and date ranges for scheduling
+  purposes is the clearest example; but price ranges, measurement
+  ranges from an instrument, etc., are also useful.
+ </para>
+
+ <sect2 id="rangetypes-builtin">
+  <title>Built-in Range Types</title>
+ <para>
+  PostgreSQL comes with the following built-in range types:
+  <itemizedlist>
+    <listitem>
+      <para>
+       <type>INT4RANGE</type> -- Range of <type>INTEGER</type>. This is a discrete range type, see <xref linkend="rangetypes-discrete">.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+       <type>INT8RANGE</type> -- Range of <type>BIGINT</type>. This is a discrete range type, see <xref linkend="rangetypes-discrete">.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+       <type>NUMRANGE</type> -- Range of <type>NUMERIC</type>.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+       <type>TSRANGE</type> -- Range of <type>TIMESTAMP WITHOUT TIME ZONE</type>.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+       <type>TSTZRANGE</type> -- Range of <type>TIMESTAMP WITH TIME ZONE</type>.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+       <type>DATERANGE</type> -- Range of <type>DATE</type>. This is a discrete range type, see <xref linkend="rangetypes-discrete">.
+      </para>
+    </listitem>
+  </itemizedlist>
+  In addition, you can define your own; see <xref linkend="SQL-CREATETYPE"> for more information.
+ </para>
+ </sect2>
+
+ <sect2 id="rangetypes-examples">
+  <title>Examples</title>
+  <para>
+<programlisting>
+CREATE TABLE reservation ( during TSRANGE );
+INSERT INTO  reservation VALUES
+  ( '[2010-01-01 14:30, 2010-01-01 15:30)' );
+
+-- Containment
+SELECT int4range(10, 20) @> 3;
+
+-- Overlaps
+SELECT numrange(11.1, 22.2) && numrange(20.0, 30.0);
+
+-- Find the upper bound:
+SELECT upper(int8range(15, 25));
+
+-- Compute the intersection:
+SELECT int4range(10, 20) * int4range(15, 25);
+
+-- Is the range non-empty?
+SELECT numrange(1, 5)? ;
+
+</programlisting>
+
+  See <xref linkend="range-functions-table">
+  and <xref linkend="range-operators-table"> for complete lists of
+  functions and operators on range types.
+  </para>
+ </sect2>
+
+ <sect2 id="rangetypes-inclusivity">
+  <title>Inclusive and Exclusive Bounds</title>
+  <para>
+  Every range has two bounds, the lower bound and the upper bound. All
+  points in between those values are included in the range. An
+  inclusive bound means that the boundary point itself is included in
+  the range as well, while an exclusive bound means that the boundary
+  point is not included in the range.
+  </para>
+  <para>
+  An inclusive lower bound is represented by <literal>[</literal>
+  while an exclusive lower bound is represented
+  by <literal>(</literal> (see <xref linkend="rangetypes-construct">
+  and <xref linkend="rangetypes-io"> below). Likewise, an inclusive
+  upper bound is represented by <literal>]</literal>, while an
+  exclusive upper bound is represented by <literal>)</literal>.
+  </para>
+  <para>
+  Functions <literal>lower_inc</literal>
+  and <literal>upper_inc</literal> test the inclusivity of the lower
+  and upper bounds of a range, respectively.
+  </para>
+ </sect2>
+
+ <sect2 id="rangetypes-infinite">
+  <title>Infinite (unbounded) Ranges</title>
+  <para>
+  The lower bound of a range can be omitted, meaning that all points
+  less (or equal to, if inclusive) than the upper bound are included
+  in the range. Likewise, if the upper bound of the range is omitted,
+  then all points greater than (or equal to, if omitted) the lower
+  bound are included in the range. If both lower and upper bounds are
+  omitted, all points are considered to be in the range.
+  </para>
+  <para>
+  Functions <literal>lower_inf</literal>
+  and <literal>upper_inf</literal> test the range for infinite lower
+  and upper bounds of a range, respectively.
+  </para>
+ </sect2>
+
+ <sect2 id="rangetypes-io">
+  <title>Input/Output</title>
+  <para>
+  The input follows one of the following patterns:
+<synopsis>
+(<replaceable>lower-bound</replaceable>,<replaceable>upper-bound</replaceable>)
+(<replaceable>lower-bound</replaceable>,<replaceable>upper-bound</replaceable>]
+[<replaceable>lower-bound</replaceable>,<replaceable>upper-bound</replaceable>)
+[<replaceable>lower-bound</replaceable>,<replaceable>upper-bound</replaceable>]
+empty
+</synopsis>
+  Notice that the final pattern is <literal>empty</literal>, which
+  represents an empty range (a range that contains no points).
+  </para>
+  <para>
+  The <replaceable>lower-bound</replaceable> may be either a string
+  that is valid input for the sub-type, or omitted (to indicate no
+  lower bound); and <replaceable>upper-bound</replaceable> may be
+  either a string that is valid input for the sub-type, or omitted (to
+  indicate no upper bound).
+  </para>
+  <para>
+  Either the <replaceable>lower-bound</replaceable> or
+  the <replaceable>upper-bound</replaceable> may be quoted
+  using <literal>""</literal> (double quotation marks), which will allow
+  special characters such as "<literal>,</literal>". Within quotation
+  marks, "<literal>\</literal>" (backslash) serves as an escape
+  character.
+  </para>
+  <para>
+  The choice between the other input formats affects the inclusivity
+  of the bounds. See <xref linkend="rangetypes-inclusivity">.
+  </para>
+  <para>
+  Examples:
+<programlisting>
+-- includes point 3, does not include point 7, and does include all points in between
+select '[3,7)'
+
+-- does not include either 3 or 7, but includes all points in between
+select '(3,7)'
+
+-- includes only the single point 4
+select '[4,4]'
+</programlisting>
+  </para>
+ </sect2>
+
+ <sect2 id="rangetypes-construct">
+  <title>Constructing Ranges</title>
+  <para>
+   Each range type has a constructor by the same name. The constructor
+   accepts from zero to three arguments. The zero-argument form
+   constructs an empty range; the one-argument form constructs a
+   singleton range; the two-argument form constructs a range
+   in <literal>[ )</literal> form; and the three-argument form
+   constructs a range in a form specified by the third argument. For
+   example:
+<programlisting>
+-- Three-argument form: lower bound, upper bound, and third argument indicating
+-- inclusivity/exclusivity of bounds (if omitted, defaults to <literal>'[)'</literal>).
+SELECT numrange(1.0, 14.0, '(]');
+
+-- The int4range input will exclude the lower bound and include the upper bound; but the
+-- resulting output will appear in the canonical form; see <xref linkend="rangetypes-discrete">.
+SELECT int8range(1, 14, '(]');
+
+-- Single argument form constructs a singleton range; that is a range consisting of just
+-- one point.
+SELECT numrange(11.1);
+
+-- Zero-argument form constructs and empty range.
+SELECT numrange();
+
+-- Using NULL for a bound causes the range to be unbounded on that side; that is, negative
+-- infinity for the lower bound or positive infinity for the upper bound.
+SELECT numrange(NULL,2.2);
+</programlisting>
+  </para>
+ </sect2>
+
+ <sect2 id="rangetypes-discrete">
+  <title>Discrete Range Types</title>
+  <para>
+  Discrete ranges are those that have a
+  defined <literal>canonical</literal> function. Loosely speaking, a
+  discrete range has a sub-type with a well-defined "step";
+  e.g. <type>INTEGER</type> or <type>DATE</type>.
+  </para>
+  <para>
+  The <literal>canonical</literal> function should take an input range
+  value, and return an equal range value that may have a different
+  formatting. For instance, the integer range <literal>[1,
+  7]</literal> could be represented by the equal integer
+  range <literal>[1, 8)</literal>. The two values are equal because
+  there are no points within the integer domain
+  between <literal>7</literal> and <literal>8</literal>, so not
+  including the end point <literal>8</literal> is the same as
+  including the end point <literal>7</literal>. The canonical output
+  for two values that are equal, like <literal>[1, 7]</literal>
+  and <literal>[1, 8)</literal>, must be equal. It doesn't matter
+  which representation you choose to be the canonical one, as long as
+  two equal values with different formattings are always mapped to the
+  same value with the same formatting. If the canonical function is
+  not specified, then ranges with different formatting
+  (e.g. <literal>[1, 7]</literal> and <literal>[1, 8)</literal>) will
+  always be treated as unequal.
+  </para>
+  <para>
+  For types such as <type>NUMRANGE</type>, this is not possible,
+  because there are always points in between two
+  distinct <type>NUMERIC</type> values.
+  </para>
+  <para>
+  The built-in range
+  types <type>INT4RANGE</type>, <type>INT8RANGE</type>,
+  and <type>DATERNAGE</type> all use a canonical form that includes
+  the lower bound and excludes the upper bound; that is, <literal>[
+  )</literal>. User-defined ranges can use other conventions, however.
+  </para>
+ </sect2>
+
+ <sect2 id="rangetypes-defining">
+  <title>Defining New Range Types</title>
+  <para>
+  Users can define their own range types. The most common reason to do
+  this is to use ranges where the subtype is not among the built-in
+  range types, e.g. a range of type <type>FLOAT</type> (or, if the
+  subtype itself is a user-defined type).
+  </para>
+  <para>
+  For example: to define a new range type of sub-type <type>DOUBLE PRECISION</type>:
+<programlisting>
+CREATE TYPE FLOATRANGE AS RANGE (
+  SUBTYPE = DOUBLE PRECISION
+);
+
+SELECT '[1.234, 5.678]'::floatrange;
+</programlisting>
+  Because <type>DOUBLE PRECISION</type> has no meaningful "step", we
+  do not define a <literal>canonical</literal>
+  function. See <xref linkend="SQL-CREATETYPE"> for more
+  information.
+  </para>
+  <para>
+  Defining your own range type also allows you to specify a different
+  operator class or collation to use (which affects the points that
+  fall between the range boundaries), or a different canonicalization
+  function.
+  </para>
+ </sect2>
+
+ <sect2 id="rangetypes-gist">
+  <indexterm>
+    <primary>range type</primary>
+    <secondary>gist</secondary>
+  </indexterm>
+  <title>Indexing</title>
+  <para>
+   GiST indexes can be applied to a table containing a range type. For instance:
+<programlisting>
+CREATE INDEX reservation_idx ON reservation USING gist (during);
+</programlisting>
+  This index may speed up queries
+  involving <literal>&amp;&amp;</literal>
+  (overlaps), <literal>@&gt;</literal> (contains), and all the boolean
+  operators found in this
+  table: <xref linkend="range-operators-table">.
+  </para>
+ </sect2>
+
+ <sect2 id="rangetypes-constraint">
+  <indexterm>
+    <primary>range type</primary>
+    <secondary>exclude</secondary>
+  </indexterm>
+  <title>Constraints on Ranges</title>
+  <para>
+   While <literal>UNIQUE</literal> is a natural constraint for scalar
+   values, it is usually unsuitable for range types. Instead, an
+   exclusion constraint is often more appropriate
+   (see <link linkend="SQL-CREATETABLE-EXCLUDE">CREATE TABLE
+   ... CONSTRAINT ... EXCLUDE</link>). Exclusion constraints allow the
+   specification of constraints such as "non-overlapping" on a range
+   type. For example:
+<programlisting>
+ALTER TABLE reservation
+  ADD EXCLUDE USING gist (during WITH &&);
+</programlisting>
+   That constraint will prevent any overlapping values from existing
+   in the table at the same time:
+<programlisting>
+INSERT INTO  reservation VALUES
+  ( '[2010-01-01 11:30, 2010-01-01 13:00)' );
+-- Result: INSERT 0 1
+INSERT INTO  reservation VALUES
+  ( '[2010-01-01 14:45, 2010-01-01 15:45)' );
+-- Result:
+--   ERROR:  conflicting key value violates exclusion constraint "reservation_during_excl"
+--   DETAIL:  Key (during)=([ 2010-01-01 14:45:00, 2010-01-01 15:45:00 )) conflicts with
+--            existing key (during)=([ 2010-01-01 14:30:00, 2010-01-01 15:30:00 )).
+</programlisting>
+  </para>
+  <para>
+   Combine range types and exclusion constraints
+   with <link linkend="btree-gist">btree_gist</link> for maximum
+   flexibility defining
+   constraints. After <literal>btree_gist</literal> is installed, the
+   following constraint will prevent overlapping ranges only if the
+   meeting room numbers are equal:
+<programlisting>
+
+CREATE TABLE room_reservation
+(
+  room TEXT,
+  during TSRANGE,
+  EXCLUDE USING gist (room WITH =, during WITH &&)
+);
+
+INSERT INTO room_reservation VALUES
+  ( '123A', '[2010-01-01 14:00, 2010-01-01 15:00)' );
+-- Result: INSERT 0 1
+INSERT INTO room_reservation VALUES
+  ( '123A', '[2010-01-01 14:30, 2010-01-01 15:30)' );
+-- Result:
+--   ERROR:  conflicting key value violates exclusion constraint "room_reservation_room_during_excl"
+--   DETAIL:  Key (room, during)=(123A, [ 2010-01-01 14:30:00, 2010-01-01 15:30:00 )) conflicts with
+--            existing key (room, during)=(123A, [ 2010-01-01 14:00:00, 2010-01-01 15:00:00 )).
+INSERT INTO room_reservation VALUES
+  ( '123B', '[2010-01-01 14:30, 2010-01-01 15:30)' );
+-- Result: INSERT 0 1
+
+</programlisting>
+  </para>
+ </sect2>
+</sect1>

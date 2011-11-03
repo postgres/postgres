@@ -3600,3 +3600,13 @@ select testoa(1,2,1); -- fail at update
 
 drop function arrayassign1();
 drop function testoa(x1 int, x2 int, x3 int);
+
+-- Test resolve_polymorphic_argtypes() codepath. It is only taken when
+-- a function is invoked from a different backend from where it's defined,
+-- so we create the a function with polymorphic argument, reconnect, and
+-- and then call it.
+create function rangetypes_plpgsql(out a anyelement, b anyrange, c anyarray)
+  language plpgsql as
+  $$ begin a := upper(b) + c[1]; return; end; $$;
+\c -
+select rangetypes_plpgsql(int4range(1,10),ARRAY[2,20]);

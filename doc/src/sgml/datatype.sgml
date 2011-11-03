@@ -4173,6 +4173,8 @@ SET xmloption TO { DOCUMENT | CONTENT };
 
   &rowtypes;
 
+  &rangetypes;
+
   <sect1 id="datatype-oid">
    <title>Object Identifier Types</title>
 
@@ -4444,6 +4446,10 @@ SELECT * FROM pg_attribute
    </indexterm>
 
    <indexterm zone="datatype-pseudo">
+    <primary>anyrange</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-pseudo">
     <primary>void</primary>
    </indexterm>
 
@@ -4520,6 +4526,13 @@ SELECT * FROM pg_attribute
        </row>
 
        <row>
+        <entry><type>anyrange</></entry>
+        <entry>Indicates that a function accepts any range data type
+        (see <xref linkend="extend-types-polymorphic"> and
+        <xref linkend="rangetypes">).</entry>
+       </row>
+
+       <row>
         <entry><type>anynonarray</></entry>
         <entry>Indicates that a function accepts any non-array data type
         (see <xref linkend="extend-types-polymorphic">).</entry>
@@ -4583,7 +4596,8 @@ SELECT * FROM pg_attribute
     only <type>void</> and <type>record</> as a result type (plus
     <type>trigger</> when the function is used as a trigger).  Some also
     support polymorphic functions using the types <type>anyarray</>,
-    <type>anyelement</>, <type>anyenum</>, and <type>anynonarray</>.
+    <type>anyelement</>, <type>anyenum</>, <type>anyrange</>, and
+    <type>anynonarray</>.
    </para>
 
    <para>
