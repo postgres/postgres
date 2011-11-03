@@ -26,6 +26,7 @@
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
 #include "executor/functions.h"
+#include "funcapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -4337,9 +4338,12 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	 * If it returns RECORD, we have to check against the column type list
 	 * provided in the RTE; check_sql_fn_retval can't do that.  (If no match,
 	 * we just fail to inline, rather than complaining; see notes for
-	 * tlist_matches_coltypelist.)
+	 * tlist_matches_coltypelist.)  We don't have to do this for functions
+	 * with declared OUT parameters, even though their funcresulttype is
+	 * RECORDOID, so check get_func_result_type too.
 	 */
 	if (fexpr->funcresulttype == RECORDOID &&
+		get_func_result_type(func_oid, NULL, NULL) == TYPEFUNC_RECORD &&
 		!tlist_matches_coltypelist(querytree->targetList, rte->funccoltypes))
 		goto fail;
 
