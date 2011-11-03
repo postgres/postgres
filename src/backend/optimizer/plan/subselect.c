@@ -170,7 +170,7 @@ replace_outer_var(PlannerInfo *root, Var *var)
  * the Var to be local to the current query level.
  */
 Param *
-assign_nestloop_param(PlannerInfo *root, Var *var)
+assign_nestloop_param_var(PlannerInfo *root, Var *var)
 {
 	Param	   *retval;
 	int			i;
@@ -185,6 +185,65 @@ assign_nestloop_param(PlannerInfo *root, Var *var)
 	retval->paramtype = var->vartype;
 	retval->paramtypmod = var->vartypmod;
 	retval->paramcollid = var->varcollid;
+	retval->location = -1;
+
+	return retval;
+}
+
+/*
+ * Generate a Param node to replace the given PlaceHolderVar, which will be
+ * supplied from an upper NestLoop join node.
+ *
+ * This is just like assign_nestloop_param_var, except for PlaceHolderVars.
+ */
+Param *
+assign_nestloop_param_placeholdervar(PlannerInfo *root, PlaceHolderVar *phv)
+{
+	Param	   *retval;
+	ListCell   *ppl;
+	PlannerParamItem *pitem;
+	Index		abslevel;
+	int			i;
+
+	Assert(phv->phlevelsup == 0);
+	abslevel = root->query_level;
+
+	/* If there's already a paramlist entry for this same PHV, just use it */
+	/* We assume comparing the PHIDs is sufficient */
+	i = 0;
+	foreach(ppl, root->glob->paramlist)
+	{
+		pitem = (PlannerParamItem *) lfirst(ppl);
+		if (pitem->abslevel == abslevel && IsA(pitem->item, PlaceHolderVar))
+		{
+			PlaceHolderVar *pphv = (PlaceHolderVar *) pitem->item;
+
+			if (pphv->phid == phv->phid)
+				break;
+		}
+		i++;
+	}
+
+	if (ppl == NULL)
+	{
+		/* Nope, so make a new one */
+		phv = (PlaceHolderVar *) copyObject(phv);
+
+		pitem = makeNode(PlannerParamItem);
+		pitem->item = (Node *) phv;
+		pitem->abslevel = abslevel;
+
+		root->glob->paramlist = lappend(root->glob->paramlist, pitem);
+
+		/* i is already the correct list index for the new item */
+	}
+
+	retval = makeNode(Param);
+	retval->paramkind = PARAM_EXEC;
+	retval->paramid = i;
+	retval->paramtype = exprType((Node *) phv->phexpr);
+	retval->paramtypmod = exprTypmod((Node *) phv->phexpr);
+	retval->paramcollid = exprCollation((Node *) phv->phexpr);
 	retval->location = -1;
 
 	return retval;

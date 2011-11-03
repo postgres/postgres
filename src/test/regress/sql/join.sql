@@ -330,6 +330,8 @@ on (x1 = xx1) where (xx2 is not null);
 -- regression test: check for bug with propagation of implied equality
 -- to outside an IN
 --
+analyze tenk1;		-- ensure we get consistent plans here
+
 select count(*) from tenk1 a where unique1 in
   (select unique1 from tenk1 b join tenk1 c using (unique1)
    where b.unique2 = 42);
@@ -638,6 +640,27 @@ LEFT JOIN
     ON sub4.key5 = sub3.key3
 ) sub2
 ON sub1.key1 = sub2.key3;
+
+--
+-- test case where a PlaceHolderVar is used as a nestloop parameter
+--
+
+EXPLAIN (COSTS OFF)
+SELECT qq, unique1
+  FROM
+  ( SELECT COALESCE(q1, 0) AS qq FROM int8_tbl a ) AS ss1
+  FULL OUTER JOIN
+  ( SELECT COALESCE(q2, -1) AS qq FROM int8_tbl b ) AS ss2
+  USING (qq)
+  INNER JOIN tenk1 c ON qq = unique2;
+
+SELECT qq, unique1
+  FROM
+  ( SELECT COALESCE(q1, 0) AS qq FROM int8_tbl a ) AS ss1
+  FULL OUTER JOIN
+  ( SELECT COALESCE(q2, -1) AS qq FROM int8_tbl b ) AS ss2
+  USING (qq)
+  INNER JOIN tenk1 c ON qq = unique2;
 
 --
 -- test the corner cases FULL JOIN ON TRUE and FULL JOIN ON FALSE

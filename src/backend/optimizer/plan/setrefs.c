@@ -1082,6 +1082,10 @@ set_join_references(PlannerInfo *root, Join *join, int rtoffset)
 												   outer_itlist,
 												   OUTER_VAR,
 												   rtoffset);
+			/* Check we replaced any PlaceHolderVar with simple Var */
+			if (!(IsA(nlp->paramval, Var) &&
+				  nlp->paramval->varno == OUTER_VAR))
+				elog(ERROR, "NestLoopParam was not reduced to a simple Var");
 		}
 	}
 	else if (IsA(join, MergeJoin))
