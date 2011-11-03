@@ -245,6 +245,8 @@ dxsyn_lexize(PG_FUNCTION_ARGS)
 			if (pos != value || d->keeporig)
 			{
 				res[nsyns].lexeme = pnstrdup(syn, end - syn);
+				res[nsyns].nvariant = 0;
+				res[nsyns].flags = 0;
 				nsyns++;
 			}
 
