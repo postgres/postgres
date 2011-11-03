@@ -186,6 +186,10 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        the requested user must be a member of the role with the same
        name as the requested database.  (<literal>samegroup</> is an
        obsolete but still accepted spelling of <literal>samerole</>.)
+       Superusers are not considered to be members of a role for the
+       purposes of <literal>samerole</> unless they are explicitly
+       members of the role, directly or indirectly, and not just by 
+       virtue of being a superuser.
        The value <literal>replication</> specifies that the record
        matches if a replication connection is requested (note that
        replication connections do not specify any particular database).
