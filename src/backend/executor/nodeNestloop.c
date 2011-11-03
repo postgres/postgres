@@ -148,6 +148,7 @@ ExecNestLoop(NestLoopState *node)
 
 				prm = &(econtext->ecxt_param_exec_vals[paramno]);
 				/* Param value should be an OUTER var */
+				Assert(IsA(nlp->paramval, Var));
 				Assert(nlp->paramval->varno == OUTER);
 				Assert(nlp->paramval->varattno > 0);
 				prm->value = slot_getattr(outerTupleSlot,
