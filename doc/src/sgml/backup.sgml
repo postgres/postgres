@@ -837,7 +837,9 @@ SELECT pg_stop_backup();
     a fatal error if a file was truncated while <application>tar</> was
     copying it.  Fortunately, GNU <application>tar</> versions 1.16 and
     later exit with 1 if a file was changed during the backup,
-    and 2 for other errors.
+    and 2 for other errors.  With GNU <application>tar</> version 1.23 and
+    later, you can use the warning options <literal>--warning=no-file-changed
+    --warning=no-file-removed</literal> to hide the related warning messages.
    </para>
 
    <para>
