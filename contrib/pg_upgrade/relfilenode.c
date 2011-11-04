@@ -44,7 +44,7 @@ transfer_all_new_dbs(DbInfoArr *old_db_arr,
 		 old_dbnum < old_db_arr->ndbs;
 		 old_dbnum++, new_dbnum++)
 	{
-		DbInfo	   *old_db = &old_db_arr->dbs[old_dbnum], *new_db;
+		DbInfo	   *old_db = &old_db_arr->dbs[old_dbnum], *new_db = NULL;
 		FileNameMap *mappings;
 		int			n_maps;
 		pageCnvCtx *pageConverter = NULL;
