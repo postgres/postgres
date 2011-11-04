@@ -12,7 +12,8 @@ subdir = src/backend/access/transam
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = clog.o transam.o varsup.o xact.o xlog.o xlogutils.o rmgr.o slru.o subtrans.o multixact.o twophase.o twophase_rmgr.o
+OBJS = clog.o transam.o varsup.o xact.o rmgr.o slru.o subtrans.o multixact.o \
+	twophase.o twophase_rmgr.o xlog.o xlogfuncs.o xlogutils.o
 
 include $(top_srcdir)/src/backend/common.mk
 
