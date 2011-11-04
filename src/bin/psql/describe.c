@@ -1253,7 +1253,7 @@ describeOneTableDetails(const char *schemaname,
 	/*
 	 * Get column info
 	 *
-	 * You need to modify value of "firstvcol" which willbe defined below if
+	 * You need to modify value of "firstvcol" which will be defined below if
 	 * you are adding column(s) preceding to verbose-only columns.
 	 */
 	printfPQExpBuffer(&buf, "SELECT a.attname,");
