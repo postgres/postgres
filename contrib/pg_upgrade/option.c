@@ -56,6 +56,7 @@ parseCommandLine(int argc, char *argv[])
 	int			option;			/* Command line option */
 	int			optindex = 0;	/* used by getopt_long */
 	int			os_user_effective_id;
+	char		*return_buf;
 
 	user_opts.transfer_mode = TRANSFER_MODE_COPY;
 
@@ -93,7 +94,9 @@ parseCommandLine(int argc, char *argv[])
 	if (os_user_effective_id == 0)
 		pg_log(PG_FATAL, "%s: cannot be run as root\n", os_info.progname);
 
-	getcwd(os_info.cwd, MAXPGPATH);
+	return_buf = getcwd(os_info.cwd, MAXPGPATH);
+	if (return_buf == NULL)
+		pg_log(PG_FATAL, "Could not access current working directory: %s\n", getErrorText(errno));
 
 	while ((option = getopt_long(argc, argv, "d:D:b:B:cgG:kl:o:O:p:P:u:v",
 								 long_options, &optindex)) != -1)
