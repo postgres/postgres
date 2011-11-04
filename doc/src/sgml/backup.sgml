@@ -1252,7 +1252,7 @@ restore_command = 'gunzip &lt; /mnt/server/archivedir/%f | pg_decompresslog - %p
       <varname>archive_command</varname>, so that their
       <filename>postgresql.conf</> entry looks very simple:
 <programlisting>
-archive_command = 'local_backup_script.sh'
+archive_command = 'local_backup_script.sh "%p" "%f"'
 </programlisting>
       Using a separate script file is advisable any time you want to use
       more than a single command in the archiving process.
