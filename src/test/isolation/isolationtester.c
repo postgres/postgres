@@ -14,6 +14,13 @@
 #ifndef WIN32
 #include <sys/time.h>
 #include <unistd.h>
+
+#ifdef HAVE_GETOPT_H
+#include <getopt.h>
+#endif
+
+#else
+int			getopt(int argc, char *const argv[], const char *optstring);
 #endif   /* ! WIN32 */
 
 #ifdef HAVE_SYS_SELECT_H
@@ -24,6 +31,8 @@
 #include "pqexpbuffer.h"
 
 #include "isolationtester.h"
+
+extern int	optind;
 
 #define PREP_WAITING "isolationtester_waiting"
 
