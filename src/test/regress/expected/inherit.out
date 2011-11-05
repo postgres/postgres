@@ -945,22 +945,22 @@ CREATE TABLE t4 (a text, c text);
 ALTER TABLE t4 ALTER COLUMN c SET STORAGE EXTERNAL;
 CREATE TABLE t12_storage (LIKE t1 INCLUDING STORAGE, LIKE t2 INCLUDING STORAGE);
 \d+ t12_storage
-             Table "public.t12_storage"
- Column | Type | Modifiers | Storage  | Description 
---------+------+-----------+----------+-------------
- a      | text | not null  | main     | 
- b      | text |           | extended | 
- c      | text |           | external | 
+                    Table "public.t12_storage"
+ Column | Type | Modifiers | Storage  | Stats target | Description 
+--------+------+-----------+----------+--------------+-------------
+ a      | text | not null  | main     |              | 
+ b      | text |           | extended |              | 
+ c      | text |           | external |              | 
 Has OIDs: no
 
 CREATE TABLE t12_comments (LIKE t1 INCLUDING COMMENTS, LIKE t2 INCLUDING COMMENTS);
 \d+ t12_comments
-            Table "public.t12_comments"
- Column | Type | Modifiers | Storage  | Description 
---------+------+-----------+----------+-------------
- a      | text | not null  | extended | A
- b      | text |           | extended | B
- c      | text |           | extended | C
+                    Table "public.t12_comments"
+ Column | Type | Modifiers | Storage  | Stats target | Description 
+--------+------+-----------+----------+--------------+-------------
+ a      | text | not null  | extended |              | A
+ b      | text |           | extended |              | B
+ c      | text |           | extended |              | C
 Has OIDs: no
 
 CREATE TABLE t1_inh (LIKE t1 INCLUDING CONSTRAINTS INCLUDING COMMENTS) INHERITS (t1);
@@ -968,11 +968,11 @@ NOTICE:  merging column "a" with inherited definition
 NOTICE:  merging column "b" with inherited definition
 NOTICE:  merging constraint "t1_a_check" with inherited definition
 \d+ t1_inh
-               Table "public.t1_inh"
- Column | Type | Modifiers | Storage  | Description 
---------+------+-----------+----------+-------------
- a      | text | not null  | main     | A
- b      | text |           | extended | B
+                       Table "public.t1_inh"
+ Column | Type | Modifiers | Storage  | Stats target | Description 
+--------+------+-----------+----------+--------------+-------------
+ a      | text | not null  | main     |              | A
+ b      | text |           | extended |              | B
 Check constraints:
     "t1_a_check" CHECK (length(a) > 2)
 Inherits: t1
@@ -987,12 +987,12 @@ SELECT description FROM pg_description, pg_constraint c WHERE classoid = 'pg_con
 CREATE TABLE t13_inh () INHERITS (t1, t3);
 NOTICE:  merging multiple inherited definitions of column "a"
 \d+ t13_inh
-               Table "public.t13_inh"
- Column | Type | Modifiers | Storage  | Description 
---------+------+-----------+----------+-------------
- a      | text | not null  | main     | 
- b      | text |           | extended | 
- c      | text |           | external | 
+                      Table "public.t13_inh"
+ Column | Type | Modifiers | Storage  | Stats target | Description 
+--------+------+-----------+----------+--------------+-------------
+ a      | text | not null  | main     |              | 
+ b      | text |           | extended |              | 
+ c      | text |           | external |              | 
 Check constraints:
     "t1_a_check" CHECK (length(a) > 2)
     "t3_a_check" CHECK (length(a) < 5)
@@ -1003,12 +1003,12 @@ Has OIDs: no
 CREATE TABLE t13_like (LIKE t3 INCLUDING CONSTRAINTS INCLUDING COMMENTS INCLUDING STORAGE) INHERITS (t1);
 NOTICE:  merging column "a" with inherited definition
 \d+ t13_like
-              Table "public.t13_like"
- Column | Type | Modifiers | Storage  | Description 
---------+------+-----------+----------+-------------
- a      | text | not null  | main     | A3
- b      | text |           | extended | 
- c      | text |           | external | C
+                      Table "public.t13_like"
+ Column | Type | Modifiers | Storage  | Stats target | Description 
+--------+------+-----------+----------+--------------+-------------
+ a      | text | not null  | main     |              | A3
+ b      | text |           | extended |              | 
+ c      | text |           | external |              | C
 Check constraints:
     "t1_a_check" CHECK (length(a) > 2)
     "t3_a_check" CHECK (length(a) < 5)
@@ -1024,11 +1024,11 @@ SELECT description FROM pg_description, pg_constraint c WHERE classoid = 'pg_con
 CREATE TABLE t_all (LIKE t1 INCLUDING ALL);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "t_all_pkey" for table "t_all"
 \d+ t_all
-                Table "public.t_all"
- Column | Type | Modifiers | Storage  | Description 
---------+------+-----------+----------+-------------
- a      | text | not null  | main     | A
- b      | text |           | extended | B
+                       Table "public.t_all"
+ Column | Type | Modifiers | Storage  | Stats target | Description 
+--------+------+-----------+----------+--------------+-------------
+ a      | text | not null  | main     |              | A
+ b      | text |           | extended |              | B
 Indexes:
     "t_all_pkey" PRIMARY KEY, btree (a)
     "t_all_b_idx" btree (b)
@@ -1065,13 +1065,13 @@ ALTER TABLE ts RENAME aa TO aaa;      -- to be failed
 ERROR:  cannot rename inherited column "aa"
 ALTER TABLE ts RENAME d TO dd;
 \d+ ts
-                  Table "public.ts"
- Column |  Type   | Modifiers | Storage | Description 
---------+---------+-----------+---------+-------------
- aa     | integer |           | plain   | 
- b      | integer |           | plain   | 
- c      | integer |           | plain   | 
- dd     | integer |           | plain   | 
+                          Table "public.ts"
+ Column |  Type   | Modifiers | Storage | Stats target | Description 
+--------+---------+-----------+---------+--------------+-------------
+ aa     | integer |           | plain   |              | 
+ b      | integer |           | plain   |              | 
+ c      | integer |           | plain   |              | 
+ dd     | integer |           | plain   |              | 
 Inherits: t1,
           s1
 Has OIDs: no
@@ -1085,14 +1085,14 @@ NOTICE:  merging multiple inherited definitions of column "aa"
 NOTICE:  merging multiple inherited definitions of column "b"
 ALTER TABLE t1 RENAME aa TO aaa;
 \d+ t4
-                  Table "public.t4"
- Column |  Type   | Modifiers | Storage | Description 
---------+---------+-----------+---------+-------------
- aaa    | integer |           | plain   | 
- b      | integer |           | plain   | 
- x      | integer |           | plain   | 
- y      | integer |           | plain   | 
- z      | integer |           | plain   | 
+                          Table "public.t4"
+ Column |  Type   | Modifiers | Storage | Stats target | Description 
+--------+---------+-----------+---------+--------------+-------------
+ aaa    | integer |           | plain   |              | 
+ b      | integer |           | plain   |              | 
+ x      | integer |           | plain   |              | 
+ y      | integer |           | plain   |              | 
+ z      | integer |           | plain   |              | 
 Inherits: t2,
           t3
 Has OIDs: no
@@ -1103,14 +1103,14 @@ ALTER TABLE t1 RENAME aaa TO aaaa;
 ALTER TABLE t1 RENAME b TO bb;                -- to be failed
 ERROR:  cannot rename inherited column "b"
 \d+ ts
-                  Table "public.ts"
- Column |  Type   | Modifiers | Storage | Description 
---------+---------+-----------+---------+-------------
- aaaa   | integer |           | plain   | 
- b      | integer |           | plain   | 
- x      | integer |           | plain   | 
- c      | integer |           | plain   | 
- d      | integer |           | plain   | 
+                          Table "public.ts"
+ Column |  Type   | Modifiers | Storage | Stats target | Description 
+--------+---------+-----------+---------+--------------+-------------
+ aaaa   | integer |           | plain   |              | 
+ b      | integer |           | plain   |              | 
+ x      | integer |           | plain   |              | 
+ c      | integer |           | plain   |              | 
+ d      | integer |           | plain   |              | 
 Inherits: t2,
           s1
 Has OIDs: no
