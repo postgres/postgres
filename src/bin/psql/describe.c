@@ -1280,6 +1280,7 @@ describeOneTableDetails(const char *schemaname,
 	if (verbose)
 	{
 		appendPQExpBuffer(&buf, ",\n  a.attstorage");
+		appendPQExpBuffer(&buf, ",\n  CASE WHEN a.attstattarget=-1 THEN NULL ELSE a.attstattarget END AS attstattarget");
 		/*
 		 * In 9.0+, we have column comments for: relations, views, composite
 		 * types, and foreign tables (c.f. CommentObject() in comment.c).
@@ -1374,6 +1375,8 @@ describeOneTableDetails(const char *schemaname,
 	if (verbose)
 	{
 		headers[cols++] = gettext_noop("Storage");
+		if (tableinfo.relkind == 'r')
+			headers[cols++] = gettext_noop("Stats target");
 		/* Column comments, if the relkind supports this feature. */
 		if (tableinfo.relkind == 'r' || tableinfo.relkind == 'v' ||
 			tableinfo.relkind == 'c' || tableinfo.relkind == 'f')
@@ -1473,10 +1476,18 @@ describeOneTableDetails(const char *schemaname,
 										(storage[0] == 'e' ? "external" :
 										 "???")))),
 							  false, false);
+
+			/* Statistics target, if the relkind supports this feature */
+			if (tableinfo.relkind == 'r')
+			{
+				printTableAddCell(&cont, PQgetvalue(res, i, firstvcol + 1),
+								  false, false);
+			}
+
 			/* Column comments, if the relkind supports this feature. */
 			if (tableinfo.relkind == 'r' || tableinfo.relkind == 'v' ||
 				tableinfo.relkind == 'c' || tableinfo.relkind == 'f')
-				printTableAddCell(&cont, PQgetvalue(res, i, firstvcol + 1),
+				printTableAddCell(&cont, PQgetvalue(res, i, firstvcol + 2),
 								  false, false);
 		}
 	}
