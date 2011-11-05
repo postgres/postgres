@@ -1609,6 +1609,43 @@ describeOneTableDetails(const char *schemaname,
 			PQclear(result);
 		}
 	}
+	else if (tableinfo.relkind == 'S')
+	{
+		/* Footer information about a sequence */
+		PGresult   *result = NULL;
+
+		/* Get the column that owns this sequence */
+		printfPQExpBuffer(&buf, "SELECT pg_catalog.quote_ident(nspname) || '.' ||"
+						  "\n   pg_catalog.quote_ident(relname) || '.' ||"
+						  "\n   pg_catalog.quote_ident(attname)"
+						  "\nFROM pg_catalog.pg_class c"
+						  "\nINNER JOIN pg_catalog.pg_depend d ON c.oid=d.refobjid"
+						  "\nINNER JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace"
+						  "\nINNER JOIN pg_catalog.pg_attribute a ON ("
+						  "\n a.attrelid=c.oid AND"
+						  "\n a.attnum=d.refobjsubid)"
+						  "\nWHERE d.classid='pg_catalog.pg_class'::pg_catalog.regclass"
+						  "\n AND d.refclassid='pg_catalog.pg_class'::pg_catalog.regclass"
+						  "\n AND d.objid=%s"
+						  "\n AND d.deptype='a'",
+						  oid);
+
+		result = PSQLexec(buf.data, false);
+		if (!result)
+			goto error_return;
+		else if (PQntuples(result) == 1)
+		{
+			printfPQExpBuffer(&buf, _("Owned by: %s"),
+							  PQgetvalue(result, 0, 0));
+			printTableAddFooter(&cont, buf.data);
+		}
+		/*
+		 * If we get no rows back, don't show anything (obviously).
+		 * We should never get more than one row back, but if we do,
+		 * just ignore it and don't print anything.
+		 */
+		PQclear(result);
+	}
 	else if (tableinfo.relkind == 'r' || tableinfo.relkind == 'f')
 	{
 		/* Footer information about a table */
