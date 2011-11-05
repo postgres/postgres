@@ -514,7 +514,6 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 	if (newtup->t_data->t_infomask & HEAP_HASOID)
 		maxDataLen += sizeof(Oid);
 	maxDataLen = MAXALIGN(maxDataLen);
-	Assert(maxDataLen == newtup->t_data->t_hoff);
 	/* now convert to a limit on the tuple data size */
 	maxDataLen = TOAST_TUPLE_TARGET - maxDataLen;
 
@@ -748,41 +747,54 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 	{
 		HeapTupleHeader olddata = newtup->t_data;
 		HeapTupleHeader new_data;
-		int32		new_len;
+		int32		new_header_len;
+		int32		new_data_len;
+		int32		new_tuple_len;
 
 		/*
-		 * Calculate the new size of the tuple.  Header size should not
-		 * change, but data size might.
+		 * Calculate the new size of the tuple.
+		 *
+		 * Note: we used to assume here that the old tuple's t_hoff must equal
+		 * the new_header_len value, but that was incorrect.  The old tuple
+		 * might have a smaller-than-current natts, if there's been an ALTER
+		 * TABLE ADD COLUMN since it was stored; and that would lead to a
+		 * different conclusion about the size of the null bitmap, or even
+		 * whether there needs to be one at all.
 		 */
-		new_len = offsetof(HeapTupleHeaderData, t_bits);
+		new_header_len = offsetof(HeapTupleHeaderData, t_bits);
 		if (has_nulls)
-			new_len += BITMAPLEN(numAttrs);
+			new_header_len += BITMAPLEN(numAttrs);
 		if (olddata->t_infomask & HEAP_HASOID)
-			new_len += sizeof(Oid);
-		new_len = MAXALIGN(new_len);
-		Assert(new_len == olddata->t_hoff);
-		new_len += heap_compute_data_size(tupleDesc,
-										  toast_values, toast_isnull);
+			new_header_len += sizeof(Oid);
+		new_header_len = MAXALIGN(new_header_len);
+		new_data_len = heap_compute_data_size(tupleDesc,
+											  toast_values, toast_isnull);
+		new_tuple_len = new_header_len + new_data_len;
 
 		/*
 		 * Allocate and zero the space needed, and fill HeapTupleData fields.
 		 */
-		result_tuple = (HeapTuple) palloc0(HEAPTUPLESIZE + new_len);
-		result_tuple->t_len = new_len;
+		result_tuple = (HeapTuple) palloc0(HEAPTUPLESIZE + new_tuple_len);
+		result_tuple->t_len = new_tuple_len;
 		result_tuple->t_self = newtup->t_self;
 		result_tuple->t_tableOid = newtup->t_tableOid;
 		new_data = (HeapTupleHeader) ((char *) result_tuple + HEAPTUPLESIZE);
 		result_tuple->t_data = new_data;
 
 		/*
-		 * Put the existing tuple header and the changed values into place
+		 * Copy the existing tuple header, but adjust natts and t_hoff.
 		 */
-		memcpy(new_data, olddata, olddata->t_hoff);
+		memcpy(new_data, olddata, offsetof(HeapTupleHeaderData, t_bits));
+		new_data->t_natts = numAttrs;
+		new_data->t_hoff = new_header_len;
+		if (olddata->t_infomask & HEAP_HASOID)
+			HeapTupleHeaderSetOid(new_data, HeapTupleHeaderGetOid(olddata));
 
+		/* Copy over the data, and fill the null bitmap if needed */
 		heap_fill_tuple(tupleDesc,
 						toast_values,
 						toast_isnull,
-						(char *) new_data + olddata->t_hoff,
+						(char *) new_data + new_header_len,
 						&(new_data->t_infomask),
 						has_nulls ? new_data->t_bits : NULL);
 	}
@@ -903,7 +915,9 @@ toast_flatten_tuple_attribute(Datum value,
 	TupleDesc	tupleDesc;
 	HeapTupleHeader olddata;
 	HeapTupleHeader new_data;
-	int32		new_len;
+	int32		new_header_len;
+	int32		new_data_len;
+	int32		new_tuple_len;
 	HeapTupleData tmptup;
 	Form_pg_attribute *att;
 	int			numAttrs;
@@ -973,31 +987,39 @@ toast_flatten_tuple_attribute(Datum value,
 	}
 
 	/*
-	 * Calculate the new size of the tuple.  Header size should not change,
-	 * but data size might.
+	 * Calculate the new size of the tuple.
+	 *
+	 * This should match the reconstruction code in toast_insert_or_update.
 	 */
-	new_len = offsetof(HeapTupleHeaderData, t_bits);
+	new_header_len = offsetof(HeapTupleHeaderData, t_bits);
 	if (has_nulls)
-		new_len += BITMAPLEN(numAttrs);
+		new_header_len += BITMAPLEN(numAttrs);
 	if (olddata->t_infomask & HEAP_HASOID)
-		new_len += sizeof(Oid);
-	new_len = MAXALIGN(new_len);
-	Assert(new_len == olddata->t_hoff);
-	new_len += heap_compute_data_size(tupleDesc, toast_values, toast_isnull);
+		new_header_len += sizeof(Oid);
+	new_header_len = MAXALIGN(new_header_len);
+	new_data_len = heap_compute_data_size(tupleDesc,
+										  toast_values, toast_isnull);
+	new_tuple_len = new_header_len + new_data_len;
 
-	new_data = (HeapTupleHeader) palloc0(new_len);
+	new_data = (HeapTupleHeader) palloc0(new_tuple_len);
 
 	/*
-	 * Put the tuple header and the changed values into place
+	 * Copy the existing tuple header, but adjust natts and t_hoff.
 	 */
-	memcpy(new_data, olddata, olddata->t_hoff);
+	memcpy(new_data, olddata, offsetof(HeapTupleHeaderData, t_bits));
+	new_data->t_natts = numAttrs;
+	new_data->t_hoff = new_header_len;
+	if (olddata->t_infomask & HEAP_HASOID)
+		HeapTupleHeaderSetOid(new_data, HeapTupleHeaderGetOid(olddata));
 
-	HeapTupleHeaderSetDatumLength(new_data, new_len);
+	/* Reset the datum length field, too */
+	HeapTupleHeaderSetDatumLength(new_data, new_tuple_len);
 
+	/* Copy over the data, and fill the null bitmap if needed */
 	heap_fill_tuple(tupleDesc,
 					toast_values,
 					toast_isnull,
-					(char *) new_data + olddata->t_hoff,
+					(char *) new_data + new_header_len,
 					&(new_data->t_infomask),
 					has_nulls ? new_data->t_bits : NULL);
 
