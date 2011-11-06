@@ -53,7 +53,6 @@
  */
 
 /*							yyyymmddN */
-/* COMMITTER: please set appropriately */
-#define CATALOG_VERSION_NO	201111111
+#define CATALOG_VERSION_NO	201111061
 
 #endif
