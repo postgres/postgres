@@ -639,13 +639,13 @@ SELECT (timestamp with time zone 'today' = (timestamp with time zone 'tomorrow' 
  t
 (1 row)
 
-SELECT (timestamp with time zone 'today 10:30+05' = timestamptz(date 'today', time with time zone '10:30 +05')) as "True";
+SELECT (timestamp with time zone 'today 10:30-08' = timestamptz(date 'today', time with time zone '10:30 -08')) as "True";
  True 
 ------
  t
 (1 row)
 
-SELECT (timestamp with time zone '10:30+05 today' = timestamptz(date 'today', time with time zone '10:30 +05')) as "True";
+SELECT (timestamp with time zone '10:30-08 today' = timestamptz(date 'today', time with time zone '10:30 -08')) as "True";
  True 
 ------
  t
@@ -657,13 +657,13 @@ SELECT (timestamp with time zone 'tomorrow' = (timestamp with time zone 'yesterd
  t
 (1 row)
 
-SELECT (timestamp with time zone 'tomorrow 10:30+05' = (timestamp with time zone 'today 10:30+05' + interval '1 day')) as "True";
+SELECT (timestamp with time zone 'tomorrow 10:30-08' = (timestamp with time zone 'today 10:30-08' + interval '1 day')) as "True";
  True 
 ------
  t
 (1 row)
 
-SELECT (timestamp with time zone '10:30+05 tomorrow' = (timestamp with time zone 'today 10:30+05' + interval '1 day')) as "True";
+SELECT (timestamp with time zone '10:30-08 tomorrow' = (timestamp with time zone 'today 10:30-08' + interval '1 day')) as "True";
  True 
 ------
  t
