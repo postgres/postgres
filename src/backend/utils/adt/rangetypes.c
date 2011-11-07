@@ -1313,7 +1313,7 @@ tsrange_subdiff(PG_FUNCTION_ARGS)
 #ifdef HAVE_INT64_TIMESTAMP
 	result = ((float8)(v1-v2)) / USECS_PER_SEC;
 #else
-	result = timestamp;
+	result = v1 - v2;
 #endif
 
 	PG_RETURN_FLOAT8(result);
@@ -1329,7 +1329,7 @@ tstzrange_subdiff(PG_FUNCTION_ARGS)
 #ifdef HAVE_INT64_TIMESTAMP
 	result = ((float8)(v1-v2)) / USECS_PER_SEC;
 #else
-	result = timestamp;
+	result = v1 - v2;
 #endif
 
 	PG_RETURN_FLOAT8(result);
