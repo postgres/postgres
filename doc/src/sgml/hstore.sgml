@@ -120,13 +120,6 @@ key =&gt; NULL
      </row>
 
      <row>
-      <entry><type>text</> <literal>=&gt;</> <type>text</></entry>
-      <entry>make single-pair <type>hstore</></entry>
-      <entry><literal>'a' =&gt; 'b'</literal></entry>
-      <entry><literal>"a"=&gt;"b"</literal></entry>
-     </row>
-
-     <row>
       <entry><type>hstore</> <literal>||</> <type>hstore</></entry>
       <entry>concatenate <type>hstore</>s</entry>
       <entry><literal>'a=&gt;b, c=&gt;d'::hstore || 'c=&gt;x, d=&gt;q'::hstore</literal></entry>
@@ -221,14 +214,6 @@ key =&gt; NULL
    respectively. These names are still available, but are deprecated and will
    eventually be removed. Notice that the old names are reversed from the
    convention formerly followed by the core geometric data types!
-   </para>
-  </note>
-
-  <note>
-  <para>
-   The <literal>=&gt;</> operator is deprecated and may be removed in a
-   future release.  Use the <literal>hstore(text, text)</literal> function
-   instead.
    </para>
   </note>
 
@@ -455,7 +440,7 @@ CREATE INDEX hidx ON testhstore USING HASH (h);
   <para>
    Add a key, or update an existing key with a new value:
 <programlisting>
-UPDATE tab SET h = h || ('c' =&gt; '3');
+UPDATE tab SET h = h || hstore('c', '3');
 </programlisting>
   </para>
 
