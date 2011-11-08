@@ -84,7 +84,7 @@ SELECT upper(int8range(15, 25));
 SELECT int4range(10, 20) * int4range(15, 25);
 
 -- Is the range non-empty?
-SELECT numrange(1, 5)? ;
+SELECT isempty(numrange(1, 5));
 
 </programlisting>
 

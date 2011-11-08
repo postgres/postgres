@@ -10596,19 +10596,6 @@ SELECT NULLIF(value, '(none)') ...
         <entry><literal>[10,15)</literal></entry>
        </row>
 
-       <row>
-        <entry> <literal>!?</literal> </entry>
-        <entry>Is empty?</entry>
-        <entry><literal>'empty'::int4range !?</literal></entry>
-        <entry><literal>t</literal></entry>
-       </row>
-
-       <row>
-        <entry> <literal>?</literal> </entry>
-        <entry>Is non-empty?</entry>
-        <entry><literal>numrange(1.0,2.0)?</literal></entry>
-        <entry><literal>t</literal></entry>
-       </row>
       </tbody>
      </tgroup>
     </table>
@@ -10637,10 +10624,7 @@ SELECT NULLIF(value, '(none)') ...
     <primary>upper</primary>
   </indexterm>
   <indexterm>
-    <primary>empty</primary>
-  </indexterm>
-  <indexterm>
-    <primary>non_empty</primary>
+    <primary>isempty</primary>
   </indexterm>
   <indexterm>
     <primary>lower_inc</primary>
@@ -10693,24 +10677,13 @@ SELECT NULLIF(value, '(none)') ...
        <row>
         <entry>
          <literal>
-          <function>empty</function>(<type>anyrange</type>)
+          <function>isempty</function>(<type>anyrange</type>)
          </literal>
         </entry>
         <entry><type>anyrange</type></entry>
         <entry>is the range empty?</entry>
-        <entry><literal>empty(numrange(1.1,2.2))</literal></entry>
+        <entry><literal>isempty(numrange(1.1,2.2))</literal></entry>
         <entry><literal>false</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <literal>
-          <function>non_empty</function>(<type>anyrange</type>)
-         </literal>
-        </entry>
-        <entry><type>anyrange</type></entry>
-        <entry>is the range non-empty?</entry>
-        <entry><literal>non_empty(numrange(1.1,2.2))</literal></entry>
-        <entry><literal>true</literal></entry>
        </row>
        <row>
         <entry>
