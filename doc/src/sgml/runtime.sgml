@@ -1342,7 +1342,7 @@ echo -17 > /proc/self/oom_adj
     Note that this action must be done as root, or it will have no effect;
     so a root-owned startup script is the easiest place to do it.  If you
     do this, you may also wish to build <productname>PostgreSQL</>
-    with <literal>-DLINUX_OOM_ADJ=0</> added to <varname>CFLAGS</>.
+    with <literal>-DLINUX_OOM_ADJ=0</> added to <varname>CPPFLAGS</>.
     That will cause postmaster child processes to run with the normal
     <varname>oom_adj</> value of zero, so that the OOM killer can still
     target them at need.
