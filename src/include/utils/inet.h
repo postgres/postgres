@@ -70,9 +70,11 @@ typedef struct macaddr
 /*
  * fmgr interface macros
  */
-#define DatumGetInetP(X)	((inet *) PG_DETOAST_DATUM_PACKED(X))
+#define DatumGetInetP(X)	((inet *) PG_DETOAST_DATUM(X))
+#define DatumGetInetPP(X)	((inet *) PG_DETOAST_DATUM_PACKED(X))
 #define InetPGetDatum(X)	PointerGetDatum(X)
 #define PG_GETARG_INET_P(n) DatumGetInetP(PG_GETARG_DATUM(n))
+#define PG_GETARG_INET_PP(n) DatumGetInetP(PG_GETARG_DATUM_PACKED(n))
 #define PG_RETURN_INET_P(x) return InetPGetDatum(x)
 /* macaddr is a fixed-length pass-by-reference datatype */
 #define DatumGetMacaddrP(X)    ((macaddr *) DatumGetPointer(X))
