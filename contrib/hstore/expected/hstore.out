@@ -1,6 +1,4 @@
 CREATE EXTENSION hstore;
-WARNING:  => is deprecated as an operator name
-DETAIL:  This name may be disallowed altogether in future versions of PostgreSQL.
 set escape_string_warning=off;
 --hstore;
 select ''::hstore;
@@ -708,45 +706,45 @@ select pg_column_size(''::hstore || 'aa=>1, b=>2'::hstore)
  t
 (1 row)
 
--- =>
-select 'a=>g, b=>c'::hstore || ( 'asd'=>'gf' );
+-- hstore(text,text)
+select 'a=>g, b=>c'::hstore || hstore('asd', 'gf');
             ?column?             
 ---------------------------------
  "a"=>"g", "b"=>"c", "asd"=>"gf"
 (1 row)
 
-select 'a=>g, b=>c'::hstore || ( 'b'=>'gf' );
+select 'a=>g, b=>c'::hstore || hstore('b', 'gf');
       ?column?       
 ---------------------
  "a"=>"g", "b"=>"gf"
 (1 row)
 
-select 'a=>g, b=>c'::hstore || ( 'b'=>'NULL' );
+select 'a=>g, b=>c'::hstore || hstore('b', 'NULL');
        ?column?        
 -----------------------
  "a"=>"g", "b"=>"NULL"
 (1 row)
 
-select 'a=>g, b=>c'::hstore || ( 'b'=>NULL );
+select 'a=>g, b=>c'::hstore || hstore('b', NULL);
       ?column?       
 ---------------------
  "a"=>"g", "b"=>NULL
 (1 row)
 
-select ('a=>g, b=>c'::hstore || ( NULL=>'b' )) is null;
+select ('a=>g, b=>c'::hstore || hstore(NULL, 'b')) is null;
  ?column? 
 ----------
  t
 (1 row)
 
-select pg_column_size(('b'=>'gf'))
+select pg_column_size(hstore('b', 'gf'))
          = pg_column_size('b=>gf'::hstore);
  ?column? 
 ----------
  t
 (1 row)
 
-select pg_column_size('a=>g, b=>c'::hstore || ('b'=>'gf'))
+select pg_column_size('a=>g, b=>c'::hstore || hstore('b', 'gf'))
          = pg_column_size('a=>g, b=>gf'::hstore);
  ?column? 
 ----------
@@ -945,45 +943,45 @@ select pg_column_size(hstore(v))
  t
 (1 row)
 
-select populate_record(v, ('c' => '3.45')) from testhstore1 v;
+select populate_record(v, hstore('c', '3.45')) from testhstore1 v;
  populate_record  
 ------------------
  (1,foo,3.45,3,0)
 (1 row)
 
-select populate_record(v, ('d' => '3.45')) from testhstore1 v;
+select populate_record(v, hstore('d', '3.45')) from testhstore1 v;
   populate_record   
 --------------------
  (1,foo,1.2,3.45,0)
 (1 row)
 
-select populate_record(v, ('e' => '123')) from testhstore1 v;
+select populate_record(v, hstore('e', '123')) from testhstore1 v;
   populate_record  
 -------------------
  (1,foo,1.2,3,123)
 (1 row)
 
-select populate_record(v, ('e' => null)) from testhstore1 v;
+select populate_record(v, hstore('e', null)) from testhstore1 v;
 ERROR:  domain hstestdom1 does not allow null values
-select populate_record(v, ('c' => null)) from testhstore1 v;
+select populate_record(v, hstore('c', null)) from testhstore1 v;
  populate_record 
 -----------------
  (1,foo,,3,0)
 (1 row)
 
-select populate_record(v, ('b' => 'foo') || ('a' => '123')) from testhstore1 v;
+select populate_record(v, hstore('b', 'foo') || hstore('a', '123')) from testhstore1 v;
   populate_record  
 -------------------
  (123,foo,1.2,3,0)
 (1 row)
 
-select populate_record(v, ('b' => 'foo') || ('e' => null)) from testhstore0 v;
+select populate_record(v, hstore('b', 'foo') || hstore('e', null)) from testhstore0 v;
  populate_record 
 -----------------
  (1,foo,1.2,3)
 (1 row)
 
-select populate_record(v, ('b' => 'foo') || ('e' => null)) from testhstore1 v;
+select populate_record(v, hstore('b', 'foo') || hstore('e', null)) from testhstore1 v;
 ERROR:  domain hstestdom1 does not allow null values
 select populate_record(v, '') from testhstore0 v;
  populate_record 
@@ -997,9 +995,9 @@ select populate_record(v, '') from testhstore1 v;
  (1,foo,1.2,3,0)
 (1 row)
 
-select populate_record(null::testhstore1, ('c' => '3.45') || ('a' => '123'));
+select populate_record(null::testhstore1, hstore('c', '3.45') || hstore('a', '123'));
 ERROR:  domain hstestdom1 does not allow null values
-select populate_record(null::testhstore1, ('c' => '3.45') || ('e' => '123'));
+select populate_record(null::testhstore1, hstore('c', '3.45') || hstore('e', '123'));
  populate_record 
 -----------------
  (,,3.45,,123)
@@ -1013,45 +1011,45 @@ select populate_record(null::testhstore0, '');
 
 select populate_record(null::testhstore1, '');
 ERROR:  domain hstestdom1 does not allow null values
-select v #= ('c' => '3.45') from testhstore1 v;
+select v #= hstore('c', '3.45') from testhstore1 v;
      ?column?     
 ------------------
  (1,foo,3.45,3,0)
 (1 row)
 
-select v #= ('d' => '3.45') from testhstore1 v;
+select v #= hstore('d', '3.45') from testhstore1 v;
       ?column?      
 --------------------
  (1,foo,1.2,3.45,0)
 (1 row)
 
-select v #= ('e' => '123') from testhstore1 v;
+select v #= hstore('e', '123') from testhstore1 v;
      ?column?      
 -------------------
  (1,foo,1.2,3,123)
 (1 row)
 
-select v #= ('c' => null) from testhstore1 v;
+select v #= hstore('c', null) from testhstore1 v;
    ?column?   
 --------------
  (1,foo,,3,0)
 (1 row)
 
-select v #= ('e' => null) from testhstore0 v;
+select v #= hstore('e', null) from testhstore0 v;
    ?column?    
 ---------------
  (1,foo,1.2,3)
 (1 row)
 
-select v #= ('e' => null) from testhstore1 v;
+select v #= hstore('e', null) from testhstore1 v;
 ERROR:  domain hstestdom1 does not allow null values
-select v #= (('b' => 'foo') || ('a' => '123')) from testhstore1 v;
+select v #= (hstore('b', 'foo') || hstore('a', '123')) from testhstore1 v;
      ?column?      
 -------------------
  (123,foo,1.2,3,0)
 (1 row)
 
-select v #= (('b' => 'foo') || ('e' => '123')) from testhstore1 v;
+select v #= (hstore('b', 'foo') || hstore('e', '123')) from testhstore1 v;
      ?column?      
 -------------------
  (1,foo,1.2,3,123)
@@ -1069,9 +1067,9 @@ select v #= hstore '' from testhstore1 v;
  (1,foo,1.2,3,0)
 (1 row)
 
-select null::testhstore1 #= (('c' => '3.45') || ('a' => '123'));
+select null::testhstore1 #= (hstore('c', '3.45') || hstore('a', '123'));
 ERROR:  domain hstestdom1 does not allow null values
-select null::testhstore1 #= (('c' => '3.45') || ('e' => '123'));
+select null::testhstore1 #= (hstore('c', '3.45') || hstore('e', '123'));
    ?column?    
 ---------------
  (,,3.45,,123)
