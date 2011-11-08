@@ -3841,6 +3841,44 @@ recheck_xvac:
 	return changed;
 }
 
+/*
+ * heap_tuple_needs_freeze
+ *
+ * Check to see whether any of the XID fields of a tuple (xmin, xmax, xvac)
+ * are older than the specified cutoff XID.  If so, return TRUE.
+ *
+ * It doesn't matter whether the tuple is alive or dead, we are checking
+ * to see if a tuple needs to be removed or frozen to avoid wraparound.
+ */
+bool
+heap_tuple_needs_freeze(HeapTupleHeader tuple, TransactionId cutoff_xid,
+				  Buffer buf)
+{
+	TransactionId xid;
+
+	xid = HeapTupleHeaderGetXmin(tuple);
+	if (TransactionIdIsNormal(xid) &&
+		TransactionIdPrecedes(xid, cutoff_xid))
+		return true;
+
+	if (!(tuple->t_infomask & HEAP_XMAX_IS_MULTI))
+	{
+		xid = HeapTupleHeaderGetXmax(tuple);
+		if (TransactionIdIsNormal(xid) &&
+			TransactionIdPrecedes(xid, cutoff_xid))
+			return true;
+	}
+
+	if (tuple->t_infomask & HEAP_MOVED)
+	{
+		xid = HeapTupleHeaderGetXvac(tuple);
+		if (TransactionIdIsNormal(xid) &&
+			TransactionIdPrecedes(xid, cutoff_xid))
+			return true;
+	}
+
+	return false;
+}
 
 /* ----------------
  *		heap_markpos	- mark scan position

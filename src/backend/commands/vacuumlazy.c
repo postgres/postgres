@@ -117,6 +117,7 @@ static BufferAccessStrategy vac_strategy;
 static void lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			   Relation *Irel, int nindexes, bool scan_all);
 static void lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats);
+static bool lazy_check_needs_freeze(Buffer buf);
 static void lazy_vacuum_index(Relation indrel,
 				  IndexBulkDeleteResult **stats,
 				  LVRelStats *vacrelstats);
@@ -453,8 +454,6 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 
 		vacuum_delay_point();
 
-		vacrelstats->scanned_pages++;
-
 		/*
 		 * If we are close to overrunning the available space for dead-tuple
 		 * TIDs, pause and do a cycle of vacuuming before we tackle this page.
@@ -486,7 +485,41 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 								 RBM_NORMAL, vac_strategy);
 
 		/* We need buffer cleanup lock so that we can prune HOT chains. */
-		LockBufferForCleanup(buf);
+		if (!ConditionalLockBufferForCleanup(buf))
+		{
+			/*
+			 * It's OK to skip vacuuming a page, as long as its not got data
+			 * that needs to be cleaned for wraparound avoidance.
+			 */
+			if (!scan_all)
+			{
+				ReleaseBuffer(buf);
+				continue;
+			}
+
+			/*
+			 * If this is a wraparound checking vacuum, then we read the page
+			 * with share lock to see if any xids need to be frozen. If the
+			 * page doesn't need attention we just skip and continue. If it
+			 * does, we wait for cleanup lock.
+			 *
+			 * We could defer the lock request further by remembering the page
+			 * and coming back to it later, of we could even register
+			 * ourselves for multiple buffers and then service whichever one
+			 * is received first.  For now, this seems good enough.
+			 */
+			LockBuffer(buf, BUFFER_LOCK_SHARE);
+			if (!lazy_check_needs_freeze(buf))
+			{
+				UnlockReleaseBuffer(buf);
+				continue;
+			}
+			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
+			LockBufferForCleanup(buf);
+			/* drop through to normal processing */
+		}
+
+		vacrelstats->scanned_pages++;
 
 		page = BufferGetPage(buf);
 
@@ -932,7 +965,8 @@ lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats)
 		tblk = ItemPointerGetBlockNumber(&vacrelstats->dead_tuples[tupindex]);
 		buf = ReadBufferExtended(onerel, MAIN_FORKNUM, tblk, RBM_NORMAL,
 								 vac_strategy);
-		LockBufferForCleanup(buf);
+		if (!ConditionalLockBufferForCleanup(buf))
+			continue;
 		tupindex = lazy_vacuum_page(onerel, tblk, buf, tupindex, vacrelstats);
 
 		/* Now that we've compacted the page, record its available space */
@@ -1008,6 +1042,50 @@ lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 
 	return tupindex;
 }
+
+/*
+ *	lazy_check_needs_freeze() -- scan page to see if any tuples
+ *					 need to be cleaned to avoid wraparound
+ *
+ * Returns true if the page needs to be vacuumed using cleanup lock.
+ */
+static bool
+lazy_check_needs_freeze(Buffer buf)
+{
+	Page		page;
+	OffsetNumber offnum,
+				maxoff;
+	HeapTupleHeader tupleheader;
+
+	page = BufferGetPage(buf);
+
+	if (PageIsNew(page) || PageIsEmpty(page))
+	{
+		/* PageIsNew probably shouldn't happen... */
+		return false;
+	}
+
+	maxoff = PageGetMaxOffsetNumber(page);
+	for (offnum = FirstOffsetNumber;
+		 offnum <= maxoff;
+		 offnum = OffsetNumberNext(offnum))
+	{
+		ItemId		itemid;
+
+		itemid = PageGetItemId(page, offnum);
+
+		if (!ItemIdIsNormal(itemid))
+			continue;
+
+		tupleheader = (HeapTupleHeader) PageGetItem(page, itemid);
+
+		if (heap_tuple_needs_freeze(tupleheader, FreezeLimit, buf))
+			return true;
+	}						/* scan along page */
+
+	return false;
+}
+
 
 /*
  *	lazy_vacuum_index() -- vacuum one index relation.
