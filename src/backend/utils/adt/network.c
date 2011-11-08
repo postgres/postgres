@@ -907,7 +907,7 @@ convert_network_to_scalar(Datum value, Oid typid)
 		case INETOID:
 		case CIDROID:
 			{
-				inet	   *ip = DatumGetInetP(value);
+				inet	   *ip = DatumGetInetPP(value);
 				int			len;
 				double		res;
 				int			i;
