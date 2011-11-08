@@ -488,8 +488,9 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		if (!ConditionalLockBufferForCleanup(buf))
 		{
 			/*
-			 * It's OK to skip vacuuming a page, as long as its not got data
-			 * that needs to be cleaned for wraparound avoidance.
+			 * If we're not scanning the whole relation to guard against XID
+			 * wraparound, it's OK to skip vacuuming a page.  The next vacuum
+			 * will clean it up.
 			 */
 			if (!scan_all)
 			{
