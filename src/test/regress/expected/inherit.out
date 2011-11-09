@@ -1266,19 +1266,19 @@ ORDER BY thousand, tenthous;
 (7 rows)
 
 explain (costs off)
-SELECT thousand, tenthous FROM tenk1
+SELECT thousand, tenthous, thousand+tenthous AS x FROM tenk1
 UNION ALL
-SELECT 42, 42 FROM tenk1
+SELECT 42, 42, hundred FROM tenk1
 ORDER BY thousand, tenthous;
-                              QUERY PLAN                               
------------------------------------------------------------------------
+                           QUERY PLAN                            
+-----------------------------------------------------------------
  Result
    ->  Merge Append
          Sort Key: public.tenk1.thousand, public.tenk1.tenthous
          ->  Index Only Scan using tenk1_thous_tenthous on tenk1
          ->  Sort
                Sort Key: (42), (42)
-               ->  Index Only Scan using tenk1_thous_tenthous on tenk1
+               ->  Index Only Scan using tenk1_hundred on tenk1
 (7 rows)
 
 explain (costs off)

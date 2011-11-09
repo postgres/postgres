@@ -423,9 +423,9 @@ SELECT thousand, thousand FROM tenk1
 ORDER BY thousand, tenthous;
 
 explain (costs off)
-SELECT thousand, tenthous FROM tenk1
+SELECT thousand, tenthous, thousand+tenthous AS x FROM tenk1
 UNION ALL
-SELECT 42, 42 FROM tenk1
+SELECT 42, 42, hundred FROM tenk1
 ORDER BY thousand, tenthous;
 
 explain (costs off)
