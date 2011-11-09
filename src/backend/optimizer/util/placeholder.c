@@ -104,28 +104,41 @@ find_placeholder_info(PlannerInfo *root, PlaceHolderVar *phv,
 }
 
 /*
- * find_placeholders_in_jointree
- *		Search the jointree for PlaceHolderVars, and build PlaceHolderInfos
+ * find_placeholders_in_query
+ *		Search the query for PlaceHolderVars, and build PlaceHolderInfos
  *
- * We don't need to look at the targetlist because build_base_rel_tlists()
- * will already have made entries for any PHVs in the tlist.
+ * We need to examine the jointree, but not the targetlist, because
+ * build_base_rel_tlists() will already have made entries for any PHVs
+ * in the targetlist.
+ *
+ * We also need to search for PHVs in AppendRelInfo translated_vars
+ * lists.  In most cases, translated_vars entries aren't directly referenced
+ * elsewhere, but we need to create PlaceHolderInfo entries for them to
+ * support set_rel_width() calculations for the appendrel child relations.
  */
 void
-find_placeholders_in_jointree(PlannerInfo *root)
+find_placeholders_in_query(PlannerInfo *root)
 {
 	/* We need do nothing if the query contains no PlaceHolderVars */
 	if (root->glob->lastPHId != 0)
 	{
-		/* Start recursion at top of jointree */
+		/* Recursively search the jointree */
 		Assert(root->parse->jointree != NULL &&
 			   IsA(root->parse->jointree, FromExpr));
 		(void) find_placeholders_recurse(root, (Node *) root->parse->jointree);
+
+		/*
+		 * Also search the append_rel_list for translated vars that are PHVs.
+		 * Barring finding them elsewhere in the query, they do not need any
+		 * ph_may_need bits, only to be present in the PlaceHolderInfo list.
+		 */
+		mark_placeholders_in_expr(root, (Node *) root->append_rel_list, NULL);
 	}
 }
 
 /*
  * find_placeholders_recurse
- *	  One recursion level of find_placeholders_in_jointree.
+ *	  One recursion level of jointree search for find_placeholders_in_query.
  *
  * jtnode is the current jointree node to examine.
  *

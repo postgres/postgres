@@ -188,7 +188,7 @@ query_planner(PlannerInfo *root, List *tlist,
 	 */
 	build_base_rel_tlists(root, tlist);
 
-	find_placeholders_in_jointree(root);
+	find_placeholders_in_query(root);
 
 	joinlist = deconstruct_jointree(root);
 

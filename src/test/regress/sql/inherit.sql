@@ -406,3 +406,34 @@ select * from matest0 order by 1-id;
 reset enable_seqscan;
 
 drop table matest0 cascade;
+
+--
+-- Test merge-append for UNION ALL append relations
+-- Check handling of duplicated, constant, or volatile targetlist items
+--
+
+set enable_seqscan = off;
+set enable_indexscan = on;
+set enable_bitmapscan = off;
+
+explain (costs off)
+SELECT thousand, tenthous FROM tenk1
+UNION ALL
+SELECT thousand, thousand FROM tenk1
+ORDER BY thousand, tenthous;
+
+explain (costs off)
+SELECT thousand, tenthous FROM tenk1
+UNION ALL
+SELECT 42, 42 FROM tenk1
+ORDER BY thousand, tenthous;
+
+explain (costs off)
+SELECT thousand, tenthous FROM tenk1
+UNION ALL
+SELECT thousand, random()::integer FROM tenk1
+ORDER BY thousand, tenthous;
+
+reset enable_seqscan;
+reset enable_indexscan;
+reset enable_bitmapscan;

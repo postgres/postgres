@@ -1242,3 +1242,61 @@ NOTICE:  drop cascades to 3 other objects
 DETAIL:  drop cascades to table matest1
 drop cascades to table matest2
 drop cascades to table matest3
+--
+-- Test merge-append for UNION ALL append relations
+-- Check handling of duplicated, constant, or volatile targetlist items
+--
+set enable_seqscan = off;
+set enable_indexscan = on;
+set enable_bitmapscan = off;
+explain (costs off)
+SELECT thousand, tenthous FROM tenk1
+UNION ALL
+SELECT thousand, thousand FROM tenk1
+ORDER BY thousand, tenthous;
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ Result
+   ->  Merge Append
+         Sort Key: public.tenk1.thousand, public.tenk1.tenthous
+         ->  Index Scan using tenk1_thous_tenthous on tenk1
+         ->  Sort
+               Sort Key: public.tenk1.thousand, public.tenk1.thousand
+               ->  Seq Scan on tenk1
+(7 rows)
+
+explain (costs off)
+SELECT thousand, tenthous FROM tenk1
+UNION ALL
+SELECT 42, 42 FROM tenk1
+ORDER BY thousand, tenthous;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Result
+   ->  Merge Append
+         Sort Key: public.tenk1.thousand, public.tenk1.tenthous
+         ->  Index Scan using tenk1_thous_tenthous on tenk1
+         ->  Sort
+               Sort Key: (42), (42)
+               ->  Seq Scan on tenk1
+(7 rows)
+
+explain (costs off)
+SELECT thousand, tenthous FROM tenk1
+UNION ALL
+SELECT thousand, random()::integer FROM tenk1
+ORDER BY thousand, tenthous;
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ Result
+   ->  Merge Append
+         Sort Key: public.tenk1.thousand, public.tenk1.tenthous
+         ->  Index Scan using tenk1_thous_tenthous on tenk1
+         ->  Sort
+               Sort Key: public.tenk1.thousand, ((random())::integer)
+               ->  Seq Scan on tenk1
+(7 rows)
+
+reset enable_seqscan;
+reset enable_indexscan;
+reset enable_bitmapscan;
