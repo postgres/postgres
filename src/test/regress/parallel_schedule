@@ -50,12 +50,16 @@ test: create_function_2
 test: copy copyselect
 
 # ----------
+# More groups of parallel tests
+# ----------
+test: create_misc create_operator
+# These depend on the above two
+test: create_index create_view
+
+# ----------
 # Another group of parallel tests
 # ----------
-test: constraints triggers create_misc create_aggregate create_operator inherit typed_table vacuum drop_if_exists create_cast
-
-# Depends on the above
-test: create_index create_view
+test: create_aggregate create_cast constraints triggers inherit typed_table vacuum drop_if_exists
 
 # ----------
 # sanity_check does a vacuum, affecting the sort order of SELECT *
