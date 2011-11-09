@@ -40,9 +40,10 @@ NAME = plpython$(python_majorversion)
 
 OBJS = plpython.o
 
-DATA = plpythonu.control plpythonu--1.0.sql plpythonu--unpackaged--1.0.sql \
-       plpython2u.control plpython2u--1.0.sql plpython2u--unpackaged--1.0.sql \
-       plpython3u.control plpython3u--1.0.sql plpython3u--unpackaged--1.0.sql
+DATA = $(NAME)u.control $(NAME)u--1.0.sql $(NAME)u--unpackaged--1.0.sql
+ifeq ($(python_majorversion),2)
+DATA += plpythonu.control plpythonu--1.0.sql plpythonu--unpackaged--1.0.sql
+endif
 
 
 # Python on win32 ships with import libraries only for Microsoft Visual C++,
