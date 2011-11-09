@@ -608,6 +608,7 @@ typedef HeapTupleData *HeapTuple;
 /* 0x20 is free, was XLOG_HEAP2_CLEAN_MOVE */
 #define XLOG_HEAP2_CLEANUP_INFO 0x30
 #define XLOG_HEAP2_VISIBLE		0x40
+#define XLOG_HEAP2_MULTI_INSERT	0x50
 
 /*
  * All what we need to find changed tuple
@@ -660,6 +661,36 @@ typedef struct xl_heap_insert
 } xl_heap_insert;
 
 #define SizeOfHeapInsert	(offsetof(xl_heap_insert, all_visible_cleared) + sizeof(bool))
+
+/*
+ * This is what we need to know about a multi-insert. The record consists of
+ * xl_heap_multi_insert header, followed by a xl_multi_insert_tuple and tuple
+ * data for each tuple. 'offsets' array is omitted if the whole page is
+ * reinitialized (XLOG_HEAP_INIT_PAGE)
+ */
+typedef struct xl_heap_multi_insert
+{
+	RelFileNode node;
+	BlockNumber	blkno;
+	bool		all_visible_cleared;
+	uint16		ntuples;
+	OffsetNumber offsets[1];
+
+	/* TUPLE DATA (xl_multi_insert_tuples) FOLLOW AT END OF STRUCT */
+} xl_heap_multi_insert;
+
+#define SizeOfHeapMultiInsert	offsetof(xl_heap_multi_insert, offsets)
+
+typedef struct xl_multi_insert_tuple
+{
+	uint16		datalen;				/* size of tuple data that follows */
+	uint16		t_infomask2;
+	uint16		t_infomask;
+	uint8		t_hoff;
+	/* TUPLE DATA FOLLOWS AT END OF STRUCT */
+} xl_multi_insert_tuple;
+
+#define SizeOfMultiInsertTuple	(offsetof(xl_multi_insert_tuple, t_hoff) + sizeof(uint8))
 
 /* This is what we need to know about update|hot_update */
 typedef struct xl_heap_update

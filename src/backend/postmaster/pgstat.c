@@ -1677,10 +1677,10 @@ add_tabstat_xact_level(PgStat_TableStatus *pgstat_info, int nest_level)
 }
 
 /*
- * pgstat_count_heap_insert - count a tuple insertion
+ * pgstat_count_heap_insert - count a tuple insertion of n tuples
  */
 void
-pgstat_count_heap_insert(Relation rel)
+pgstat_count_heap_insert(Relation rel, int n)
 {
 	PgStat_TableStatus *pgstat_info = rel->pgstat_info;
 
@@ -1693,7 +1693,7 @@ pgstat_count_heap_insert(Relation rel)
 			pgstat_info->trans->nest_level != nest_level)
 			add_tabstat_xact_level(pgstat_info, nest_level);
 
-		pgstat_info->trans->tuples_inserted++;
+		pgstat_info->trans->tuples_inserted += n;
 	}
 }
 
