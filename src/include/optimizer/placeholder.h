@@ -21,7 +21,7 @@ extern PlaceHolderVar *make_placeholder_expr(PlannerInfo *root, Expr *expr,
 					  Relids phrels);
 extern PlaceHolderInfo *find_placeholder_info(PlannerInfo *root,
 					  PlaceHolderVar *phv, bool create_new_ph);
-extern void find_placeholders_in_jointree(PlannerInfo *root);
+extern void find_placeholders_in_query(PlannerInfo *root);
 extern void mark_placeholder_maybe_needed(PlannerInfo *root,
 							  PlaceHolderInfo *phinfo, Relids relids);
 extern void update_placeholder_eval_levels(PlannerInfo *root,
