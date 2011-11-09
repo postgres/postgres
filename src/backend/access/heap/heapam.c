@@ -2088,9 +2088,6 @@ heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 {
 	TransactionId xid = GetCurrentTransactionId();
 	HeapTuple  *heaptuples;
-	Buffer		buffer;
-	Buffer		vmbuffer = InvalidBuffer;
-	bool		all_visible_cleared = false;
 	int			i;
 	int			ndone;
 	char	   *scratch = NULL;
@@ -2128,6 +2125,9 @@ heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 	ndone = 0;
 	while (ndone < ntuples)
 	{
+		Buffer		buffer;
+		Buffer		vmbuffer = InvalidBuffer;
+		bool		all_visible_cleared = false;
 		int nthispage;
 
 		/*
@@ -5037,6 +5037,13 @@ heap_xlog_multi_insert(XLogRecPtr lsn, XLogRecord *record)
 	BlockNumber blkno;
 	int			i;
 	bool		isinit = (record->xl_info & XLOG_HEAP_INIT_PAGE) != 0;
+
+	/*
+	 * Insertion doesn't overwrite MVCC data, so no conflict processing is
+	 * required.
+	 */
+
+	RestoreBkpBlocks(lsn, record, false);
 
 	xlrec = (xl_heap_multi_insert *) recdata;
 	recdata += SizeOfHeapMultiInsert;
