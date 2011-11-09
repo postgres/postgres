@@ -14,8 +14,8 @@ GETTEXT_FLAGS    = $(BACKEND_COMMON_GETTEXT_FLAGS) \
 gettext-files: distprep
 	find $(srcdir)/ $(srcdir)/../port/ -name '*.c' -print >$@
 
-my-maintainer-clean:
+my-clean:
 	rm -f gettext-files
 
-.PHONY: my-maintainer-clean
-maintainer-clean: my-maintainer-clean
+.PHONY: my-clean
+clean: my-clean
