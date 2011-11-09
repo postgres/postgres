@@ -1858,7 +1858,7 @@ CopyFrom(CopyState cstate)
 	bool		useHeapMultiInsert;
 	int			nBufferedTuples = 0;
 #define MAX_BUFFERED_TUPLES 1000
-	HeapTuple  *bufferedTuples;
+	HeapTuple  *bufferedTuples = NULL;	/* initialize to silence warning */
 	Size		bufferedTuplesSize = 0;
 
 	Assert(cstate->rel);
