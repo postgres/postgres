@@ -62,7 +62,7 @@
    return a non-null object pointer, unless perhaps there is too
    little memory even to allocate the <structname>PGconn</> object.
    The <function>PQstatus</> function should be called to check
-   whether a connection was successfully made before queries are sent
+   the return value for a successful connection before queries are sent
    via the connection object.
 
    <warning>
@@ -1750,8 +1750,10 @@ PGresult *PQexec(PGconn *conn, const char *command);
         Returns a <structname>PGresult</structname> pointer or possibly a null
         pointer.  A non-null pointer will generally be returned except in
         out-of-memory conditions or serious errors such as inability to send
-        the command to the server.  If a null pointer is returned, it should
-        be treated like a <symbol>PGRES_FATAL_ERROR</symbol> result.  Use
+        the command to the server.  The <function>PQresultStatus</> function
+        should be called to check the return value for any errors (including
+        the value of a null pointer, in which case it will return
+        <symbol>PGRES_FATAL_ERROR</symbol>).  Use
         <function>PQerrorMessage</function> to get more information about such
         errors.
        </para>
