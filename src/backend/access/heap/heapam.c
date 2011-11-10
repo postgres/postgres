@@ -5111,7 +5111,7 @@ heap_xlog_multi_insert(XLogRecPtr lsn, XLogRecord *record)
 			elog(PANIC, "heap_multi_insert_redo: invalid max offset number");
 
 		xlhdr = (xl_multi_insert_tuple *) SHORTALIGN(recdata);
-		recdata += SizeOfMultiInsertTuple;
+		recdata = ((char *) xlhdr) + SizeOfMultiInsertTuple;
 
 		newlen = xlhdr->datalen;
 		Assert(newlen <= MaxHeapTupleSize);
