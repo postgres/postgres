@@ -643,9 +643,10 @@ main(int argc, char **argv)
 		do_sql_command(g_conn, "SET quote_all_identifiers = true");
 
 	/*
-	 * Disables security label support if server version < v9.1.x
+	 * Disable security label support if server version < v9.1.x (prevents
+	 * access to nonexistent pg_seclabel catalog)
 	 */
-	if (!no_security_labels && g_fout->remoteVersion < 90100)
+	if (g_fout->remoteVersion < 90100)
 		no_security_labels = 1;
 
 	/*
@@ -11760,6 +11761,12 @@ findSecLabels(Archive *fout, Oid classoid, Oid objoid, SecLabelItem **items)
 	/* Get security labels if we didn't already */
 	if (nlabels < 0)
 		nlabels = collectSecLabels(fout, &labels);
+
+	if (nlabels <= 0)			/* no labels, so no match is possible */
+	{
+		*items = NULL;
+		return 0;
+	}
 
 	/*
 	 * Do binary search to find some item matching the object.
