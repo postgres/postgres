@@ -583,7 +583,13 @@ exec_command(const char *cmd,
 	{
 		int			lineno = -1;
 
-		if (!query_buf)
+		if (pset.sversion < 80400)
+		{
+			psql_error("The server (version %d.%d) does not support editing function source.\n",
+					   pset.sversion / 10000, (pset.sversion / 100) % 100);
+			status = PSQL_CMD_ERROR;
+		}
+		else if (!query_buf)
 		{
 			psql_error("no query buffer\n");
 			status = PSQL_CMD_ERROR;
@@ -1115,7 +1121,13 @@ exec_command(const char *cmd,
 		func_buf = createPQExpBuffer();
 		func = psql_scan_slash_option(scan_state,
 									  OT_WHOLE_LINE, NULL, true);
-		if (!func)
+		if (pset.sversion < 80400)
+		{
+			psql_error("The server (version %d.%d) does not support showing function source.\n",
+					   pset.sversion / 10000, (pset.sversion / 100) % 100);
+			status = PSQL_CMD_ERROR;
+		}
+		else if (!func)
 		{
 			psql_error("function name is required\n");
 			status = PSQL_CMD_ERROR;
