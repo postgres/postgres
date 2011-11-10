@@ -6205,11 +6205,7 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
       <listitem>
        <para>
         If on, emit information about user lock usage.  Output is the same
-        as for <symbol>trace_locks</symbol>, only for user locks.
-       </para>
-       <para>
-        User locks were removed as of PostgreSQL version 8.2.  This option
-        currently has no effect.
+        as for <symbol>trace_locks</symbol>, only for advisory locks.
        </para>
        <para>
         This parameter is only available if the <symbol>LOCK_DEBUG</symbol>
