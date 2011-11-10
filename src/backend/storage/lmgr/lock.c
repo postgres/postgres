@@ -213,7 +213,12 @@ static const LockMethodData user_lockmethod = {
 	AccessExclusiveLock,		/* highest valid lock mode number */
 	true,
 	LockConflicts,
-	lock_mode_names
+	lock_mode_names,
+#ifdef LOCK_DEBUG
+	&Trace_userlocks
+#else
+	&Dummy_trace
+#endif
 };
 
 /*
@@ -271,6 +276,7 @@ static ResourceOwner awaitedOwner;
 
 int			Trace_lock_oidmin = FirstNormalObjectId;
 bool		Trace_locks = false;
+bool		Trace_userlocks = false;
 int			Trace_lock_table = 0;
 bool		Debug_deadlocks = false;
 

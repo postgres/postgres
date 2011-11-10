@@ -6218,6 +6218,28 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
      </varlistentry>
 
      <varlistentry>
+      <term><varname>trace_userlocks</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>trace_userlocks</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        If on, emit information about user lock usage.  Output is the same
+        as for <symbol>trace_locks</symbol>, only for user locks.
+       </para>
+       <para>
+        User locks were removed as of PostgreSQL version 8.2.  This option
+        currently has no effect.
+       </para>
+       <para>
+        This parameter is only available if the <symbol>LOCK_DEBUG</symbol>
+        macro was defined when <productname>PostgreSQL</productname> was
+        compiled.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><varname>trace_lock_oidmin</varname> (<type>integer</type>)</term>
       <indexterm>
        <primary><varname>trace_lock_oidmin</> configuration parameter</primary>

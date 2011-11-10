@@ -34,6 +34,7 @@ extern int	max_locks_per_xact;
 #ifdef LOCK_DEBUG
 extern int	Trace_lock_oidmin;
 extern bool Trace_locks;
+extern bool Trace_userlocks;
 extern int	Trace_lock_table;
 extern bool Debug_deadlocks;
 #endif   /* LOCK_DEBUG */

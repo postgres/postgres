@@ -1061,6 +1061,16 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
+		{"trace_userlocks", PGC_SUSET, DEVELOPER_OPTIONS,
+			gettext_noop("No description available."),
+			NULL,
+			GUC_NOT_IN_SAMPLE
+		},
+		&Trace_userlocks,
+		false,
+		NULL, NULL, NULL
+	},
+	{
 		{"trace_lwlocks", PGC_SUSET, DEVELOPER_OPTIONS,
 			gettext_noop("No description available."),
 			NULL,
