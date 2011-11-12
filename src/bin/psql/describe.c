@@ -876,8 +876,7 @@ objectDescription(const char *pattern, bool showSystem)
 						  "pg_catalog.pg_table_is_visible(c.oid)");
 
 	/*
-	 * pg_opclass.opcmethod only available in 8.3+, and comment on operator
-	 * family only available in 8.3+
+	 * pg_opclass.opcmethod only available in 8.3+
 	 */
 	if (pset.sversion >= 80300)
 	{
@@ -902,7 +901,14 @@ objectDescription(const char *pattern, bool showSystem)
 		processSQLNamePattern(pset.db, &buf, pattern, true, false,
 							  "n.nspname", "o.opcname", NULL,
 							  "pg_catalog.pg_opclass_is_visible(o.oid)");
+	}
 
+	/*
+	 * although operator family comments have been around since 8.3,
+	 * pg_opfamily_is_visible is only available in 9.2+
+	 */
+	if (pset.sversion >= 90200)
+	{
 		/* Operator family descriptions */
 		appendPQExpBuffer(&buf,
 						  "UNION ALL\n"
