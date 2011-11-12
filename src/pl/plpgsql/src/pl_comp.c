@@ -1721,12 +1721,13 @@ plpgsql_parse_cwordtype(List *idents)
 	classStruct = (Form_pg_class) GETSTRUCT(classtup);
 
 	/*
-	 * It must be a relation, sequence, view, or type
+	 * It must be a relation, sequence, view, composite type, or foreign table
 	 */
 	if (classStruct->relkind != RELKIND_RELATION &&
 		classStruct->relkind != RELKIND_SEQUENCE &&
 		classStruct->relkind != RELKIND_VIEW &&
-		classStruct->relkind != RELKIND_COMPOSITE_TYPE)
+		classStruct->relkind != RELKIND_COMPOSITE_TYPE &&
+		classStruct->relkind != RELKIND_FOREIGN_TABLE)
 		goto done;
 
 	/*
@@ -1947,11 +1948,12 @@ build_row_from_class(Oid classOid)
 	classStruct = RelationGetForm(rel);
 	relname = RelationGetRelationName(rel);
 
-	/* accept relation, sequence, view, or composite type entries */
+	/* accept relation, sequence, view, composite type, or foreign table */
 	if (classStruct->relkind != RELKIND_RELATION &&
 		classStruct->relkind != RELKIND_SEQUENCE &&
 		classStruct->relkind != RELKIND_VIEW &&
-		classStruct->relkind != RELKIND_COMPOSITE_TYPE)
+		classStruct->relkind != RELKIND_COMPOSITE_TYPE &&
+		classStruct->relkind != RELKIND_FOREIGN_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("relation \"%s\" is not a table", relname)));
