@@ -122,8 +122,10 @@ const printTextFormat pg_utf8format =
 
 /* Local functions */
 static int	strlen_max_width(unsigned char *str, int *target_width, int encoding);
-static void IsPagerNeeded(const printTableContent *cont, const int extra_lines,
+static void IsPagerNeeded(const printTableContent *cont, const int extra_lines, bool expanded,
 			  FILE **fout, bool *is_pager);
+
+static void print_aligned_vertical(const printTableContent *cont, FILE *fout);
 
 
 static void *
@@ -713,6 +715,17 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 		}
 	}
 
+	/*
+	 * If in expanded auto mode, we have now calculated the expected width, so
+	 * we can now escape to vertical mode if necessary.
+	 */
+	if (cont->opt->expanded == 2 && output_columns > 0 &&
+		(output_columns < total_header_width || output_columns < width_total))
+	{
+		print_aligned_vertical(cont, fout);
+		return;
+	}
+
 	/* If we wrapped beyond the display width, use the pager */
 	if (!is_pager && fout == stdout && output_columns > 0 &&
 		(output_columns < total_header_width || output_columns < width_total))
@@ -756,7 +769,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 				extra_row_output_lines = 0;
 			}
 		}
-		IsPagerNeeded(cont, extra_output_lines, &fout, &is_pager);
+		IsPagerNeeded(cont, extra_output_lines, false, &fout, &is_pager);
 	}
 
 	/* time to output */
@@ -1125,6 +1138,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 				dformatsize = 0;
 	struct lineptr *hlineptr,
 			   *dlineptr;
+	bool		is_pager = false;
 
 	if (cancel_pressed)
 		return;
@@ -1138,6 +1152,13 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 		fprintf(fout, _("(No rows)\n"));
 		return;
 	}
+
+	/*
+	 * Deal with the pager here instead of in printTable(), because we could
+	 * get here via print_aligned_text() in expanded auto mode, and so we have
+	 * to recalcuate the pager requirement based on vertical output.
+	 */
+	IsPagerNeeded(cont, 0, true, &fout, &is_pager);
 
 	/* Find the maximum dimensions for the headers */
 	for (i = 0; i < cont->ncolumns; i++)
@@ -1295,6 +1316,9 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 	free(dlineptr->ptr);
 	free(hlineptr);
 	free(dlineptr);
+
+	if (is_pager)
+		ClosePager(fout);
 }
 
 
@@ -2265,14 +2289,14 @@ printTableCleanup(printTableContent *const content)
  * Setup pager if required
  */
 static void
-IsPagerNeeded(const printTableContent *cont, const int extra_lines, FILE **fout,
+IsPagerNeeded(const printTableContent *cont, const int extra_lines, bool expanded, FILE **fout,
 			  bool *is_pager)
 {
 	if (*fout == stdout)
 	{
 		int			lines;
 
-		if (cont->opt->expanded)
+		if (expanded)
 			lines = (cont->ncolumns + 1) * cont->nrows;
 		else
 			lines = cont->nrows + 1;
@@ -2310,11 +2334,10 @@ printTable(const printTableContent *cont, FILE *fout, FILE *flog)
 	if (cont->opt->format == PRINT_NOTHING)
 		return;
 
-	/* print_aligned_text() handles the pager itself */
-	if ((cont->opt->format != PRINT_ALIGNED &&
-		 cont->opt->format != PRINT_WRAPPED) ||
-		cont->opt->expanded)
-		IsPagerNeeded(cont, 0, &fout, &is_pager);
+	/* print_aligned_*() handles the pager themselves */
+	if (cont->opt->format != PRINT_ALIGNED &&
+		cont->opt->format != PRINT_WRAPPED)
+		IsPagerNeeded(cont, 0, (cont->opt->expanded == 1), &fout, &is_pager);
 
 	/* print the stuff */
 
@@ -2324,32 +2347,32 @@ printTable(const printTableContent *cont, FILE *fout, FILE *flog)
 	switch (cont->opt->format)
 	{
 		case PRINT_UNALIGNED:
-			if (cont->opt->expanded)
+			if (cont->opt->expanded == 1)
 				print_unaligned_vertical(cont, fout);
 			else
 				print_unaligned_text(cont, fout);
 			break;
 		case PRINT_ALIGNED:
 		case PRINT_WRAPPED:
-			if (cont->opt->expanded)
+			if (cont->opt->expanded == 1)
 				print_aligned_vertical(cont, fout);
 			else
 				print_aligned_text(cont, fout);
 			break;
 		case PRINT_HTML:
-			if (cont->opt->expanded)
+			if (cont->opt->expanded == 1)
 				print_html_vertical(cont, fout);
 			else
 				print_html_text(cont, fout);
 			break;
 		case PRINT_LATEX:
-			if (cont->opt->expanded)
+			if (cont->opt->expanded == 1)
 				print_latex_vertical(cont, fout);
 			else
 				print_latex_text(cont, fout);
 			break;
 		case PRINT_TROFF_MS:
-			if (cont->opt->expanded)
+			if (cont->opt->expanded == 1)
 				print_troff_ms_vertical(cont, fout);
 			else
 				print_troff_ms_text(cont, fout);

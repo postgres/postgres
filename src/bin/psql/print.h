@@ -70,8 +70,8 @@ typedef struct printTextFormat
 typedef struct printTableOpt
 {
 	enum printFormat format;	/* see enum above */
-	bool		expanded;		/* expanded/vertical output (if supported by
-								 * output format) */
+	unsigned short int expanded;/* expanded/vertical output (if supported by
+								 * output format); 0=no, 1=yes, 2=auto */
 	unsigned short int border;	/* Print a border around the table. 0=none,
 								 * 1=dividing lines, 2=full */
 	unsigned short int pager;	/* use pager for output (if to stdout and

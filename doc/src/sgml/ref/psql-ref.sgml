@@ -1860,7 +1860,8 @@ lo_import 152801
           <para>
           Sets the target width for the <literal>wrapped</> format, and also
           the width limit for determining whether output is wide enough to
-          require the pager.
+          require the pager or switch to the vertical display in expanded auto
+          mode.
           Zero (the default) causes the target width to be controlled by the
           environment variable <envar>COLUMNS</>, or the detected screen width
           if <envar>COLUMNS</> is not set.
@@ -1876,15 +1877,19 @@ lo_import 152801
           <term><literal>expanded</literal> (or <literal>x</literal>)</term>
           <listitem>
           <para>
-          If <replaceable class="parameter">value</replaceable> is specified
-          it must be either <literal>on</literal> or <literal>off</literal>
-          which will enable or disable expanded mode.  If <replaceable
-          class="parameter">value</replaceable> is omitted the command toggles
-          between regular and expanded mode.
-          When expanded mode is enabled, query results
-          are displayed in two columns, with the column name on the left and
-          the data on the right. This mode is useful if the data wouldn't fit
-          on the screen in the normal <quote>horizontal</quote> mode.
+          If <replaceable class="parameter">value</replaceable> is specified it
+          must be either <literal>on</literal> or <literal>off</literal>, which
+          will enable or disable expanded mode, or <literal>auto</literal>.
+          If <replaceable class="parameter">value</replaceable> is omitted the
+          command toggles between the on and off settings.  When expanded mode
+          is enabled, query results are displayed in two columns, with the
+          column name on the left and the data on the right. This mode is
+          useful if the data wouldn't fit on the screen in the
+          normal <quote>horizontal</quote> mode.  In the auto setting, the
+          expanded mode is used whenever the query output is wider than the
+          screen, otherwise the regular mode is used.  The auto setting is only
+          effective in the aligned and wrapped formats.  In other formats, it
+          always behaves as if the expanded mode is off.
           </para>
           </listitem>
           </varlistentry>
@@ -2326,10 +2331,10 @@ lo_import 152801
 
 
       <varlistentry>
-        <term><literal>\x</literal></term>
+        <term><literal>\x [ <replaceable class="parameter">on</replaceable> | <replaceable class="parameter">off</replaceable> | <replaceable class="parameter">auto</replaceable> ]</literal></term>
         <listitem>
         <para>
-        Toggles expanded table formatting mode. As such it is equivalent to
+        Sets or toggles expanded table formatting mode. As such it is equivalent to
         <literal>\pset expanded</literal>.
        </para>
        </listitem>
@@ -3197,7 +3202,8 @@ $endif
      <para>
       If <literal>\pset columns</> is zero, controls the
       width for the <literal>wrapped</> format and width for determining
-      if wide output requires the pager.
+      if wide output requires the pager or should be switched to the
+      vertical format in expanded auto mode.
      </para>
     </listitem>
    </varlistentry>

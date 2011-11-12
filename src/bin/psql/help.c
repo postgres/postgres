@@ -242,8 +242,8 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\t [on|off]            show only rows (currently %s)\n"),
 			ON(pset.popt.topt.tuples_only));
 	fprintf(output, _("  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n"));
-	fprintf(output, _("  \\x [on|off]            toggle expanded output (currently %s)\n"),
-			ON(pset.popt.topt.expanded));
+	fprintf(output, _("  \\x [on|off|auto]       toggle expanded output (currently %s)\n"),
+			pset.popt.topt.expanded == 2 ? "auto" : ON(pset.popt.topt.expanded));
 	fprintf(output, "\n");
 
 	fprintf(output, _("Connection\n"));

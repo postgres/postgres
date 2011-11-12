@@ -1355,7 +1355,7 @@ exec_command(const char *cmd,
 		free(fname);
 	}
 
-	/* \x -- toggle expanded table representation */
+	/* \x -- set or toggle expanded table representation */
 	else if (strcmp(cmd, "x") == 0)
 	{
 		char	   *opt = psql_scan_slash_option(scan_state,
@@ -2189,14 +2189,21 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 	/* set expanded/vertical mode */
 	else if (strcmp(param, "x") == 0 || strcmp(param, "expanded") == 0 || strcmp(param, "vertical") == 0)
 	{
-		if (value)
+		if (value && pg_strcasecmp(value, "auto") == 0)
+			popt->topt.expanded = 2;
+		else if (value)
 			popt->topt.expanded = ParseVariableBool(value);
 		else
 			popt->topt.expanded = !popt->topt.expanded;
 		if (!quiet)
-			printf(popt->topt.expanded
-				   ? _("Expanded display is on.\n")
-				   : _("Expanded display is off.\n"));
+		{
+			if (popt->topt.expanded == 1)
+				printf(_("Expanded display is on.\n"));
+			else if (popt->topt.expanded == 2)
+				printf(_("Expanded display is used automatically.\n"));
+			else
+				printf(_("Expanded display is off.\n"));
+		}
 	}
 
 	/* locale-aware numeric output */
@@ -2356,7 +2363,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 			popt->topt.columns = atoi(value);
 
 		if (!quiet)
-			printf(_("Target width for \"wrapped\" format is %d.\n"), popt->topt.columns);
+			printf(_("Target width is %d.\n"), popt->topt.columns);
 	}
 
 	else
