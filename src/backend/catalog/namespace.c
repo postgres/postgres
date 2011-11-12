@@ -322,9 +322,18 @@ RangeVarGetRelid(const RangeVar *relation, LOCKMODE lockmode, bool missing_ok,
 		 * If, upon retry, we get back the same OID we did last time, then
 		 * the invalidation messages we processed did not change the final
 		 * answer.  So we're done.
+		 *
+		 * If we got a different OID, we've locked the relation that used to
+		 * have this name rather than the one that does now.  So release
+		 * the lock.
 		 */
-		if (retry && relId == oldRelId)
-			break;
+		if (retry)
+		{
+			if (relId == oldRelId)
+				break;
+			if (OidIsValid(oldRelId))
+				UnlockRelationOid(oldRelId, lockmode);
+		}
 
 		/*
 		 * Lock relation.  This will also accept any pending invalidation
