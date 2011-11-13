@@ -11,7 +11,8 @@
  *
  * Note that as with the bgwriter for shared buffers, regular backends are
  * still empowered to issue WAL writes and fsyncs when the walwriter doesn't
- * keep up.
+ * keep up. This means that the WALWriter is not an essential process and
+ * can shutdown quickly when requested.
  *
  * Because the walwriter's cycle is directly linked to the maximum delay
  * before async-commit transactions are guaranteed committed, it's probably
@@ -76,7 +77,6 @@ static void wal_quickdie(SIGNAL_ARGS);
 static void WalSigHupHandler(SIGNAL_ARGS);
 static void WalShutdownHandler(SIGNAL_ARGS);
 
-
 /*
  * Main entry point for walwriter process
  *
@@ -88,6 +88,8 @@ WalWriterMain(void)
 {
 	sigjmp_buf	local_sigjmp_buf;
 	MemoryContext walwriter_context;
+
+	InitLatch(WALWriterLatch()); /* initialize latch used in main loop */
 
 	/*
 	 * If possible, make this process a group leader, so that the postmaster
@@ -220,7 +222,7 @@ WalWriterMain(void)
 	 */
 	for (;;)
 	{
-		long		udelay;
+		ResetLatch(WALWriterLatch());
 
 		/*
 		 * Emergency bailout if postmaster has died.  This is to avoid the
@@ -248,20 +250,9 @@ WalWriterMain(void)
 		 */
 		XLogBackgroundFlush();
 
-		/*
-		 * Delay until time to do something more, but fall out of delay
-		 * reasonably quickly if signaled.
-		 */
-		udelay = WalWriterDelay * 1000L;
-		while (udelay > 999999L)
-		{
-			if (got_SIGHUP || shutdown_requested)
-				break;
-			pg_usleep(1000000L);
-			udelay -= 1000000L;
-		}
-		if (!(got_SIGHUP || shutdown_requested))
-			pg_usleep(udelay);
+		(void) WaitLatch(WALWriterLatch(),
+							   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
+							   WalWriterDelay /* ms */);
 	}
 }
 
@@ -308,6 +299,7 @@ static void
 WalSigHupHandler(SIGNAL_ARGS)
 {
 	got_SIGHUP = true;
+	SetLatch(WALWriterLatch());
 }
 
 /* SIGTERM: set flag to exit normally */
@@ -315,4 +307,5 @@ static void
 WalShutdownHandler(SIGNAL_ARGS)
 {
 	shutdown_requested = true;
+	SetLatch(WALWriterLatch());
 }

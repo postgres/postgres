@@ -16,6 +16,7 @@
 #include "datatype/timestamp.h"
 #include "lib/stringinfo.h"
 #include "storage/buf.h"
+#include "storage/latch.h"
 #include "utils/pg_crc.h"
 
 /*
@@ -319,6 +320,7 @@ extern TimeLineID GetRecoveryTargetTLI(void);
 
 extern bool CheckPromoteSignal(void);
 extern void WakeupRecovery(void);
+extern Latch *WALWriterLatch(void);
 
 /*
  * Starting/stopping a base backup

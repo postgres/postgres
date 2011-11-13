@@ -433,6 +433,11 @@ typedef struct XLogCtlData
 	Latch		recoveryWakeupLatch;
 
 	/*
+	 * WALWriterLatch is used to wake up the WALWriter to write some WAL.
+	 */
+	Latch		WALWriterLatch;
+
+	/*
 	 * During recovery, we keep a copy of the latest checkpoint record here.
 	 * Used by the background writer when it wants to create a restartpoint.
 	 *
@@ -1916,19 +1921,35 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch)
 }
 
 /*
- * Record the LSN for an asynchronous transaction commit/abort.
+ * Record the LSN for an asynchronous transaction commit/abort
+ * and nudge the WALWriter if there is a complete page to write.
  * (This should not be called for for synchronous commits.)
  */
 void
 XLogSetAsyncXactLSN(XLogRecPtr asyncXactLSN)
 {
+	XLogRecPtr	WriteRqstPtr = asyncXactLSN;
+
 	/* use volatile pointer to prevent code rearrangement */
 	volatile XLogCtlData *xlogctl = XLogCtl;
 
 	SpinLockAcquire(&xlogctl->info_lck);
+	LogwrtResult = xlogctl->LogwrtResult;
 	if (XLByteLT(xlogctl->asyncXactLSN, asyncXactLSN))
 		xlogctl->asyncXactLSN = asyncXactLSN;
 	SpinLockRelease(&xlogctl->info_lck);
+
+	/* back off to last completed page boundary */
+	WriteRqstPtr.xrecoff -= WriteRqstPtr.xrecoff % XLOG_BLCKSZ;
+
+	/* if we have already flushed that far, we're done */
+	if (XLByteLE(WriteRqstPtr, LogwrtResult.Flush))
+		return;
+
+	/*
+	 * Nudge the WALWriter if we have a full page of WAL to write.
+	 */
+	SetLatch(&XLogCtl->WALWriterLatch);
 }
 
 /*
@@ -5072,6 +5093,7 @@ XLOGShmemInit(void)
 	XLogCtl->Insert.currpage = (XLogPageHeader) (XLogCtl->pages);
 	SpinLockInit(&XLogCtl->info_lck);
 	InitSharedLatch(&XLogCtl->recoveryWakeupLatch);
+	InitSharedLatch(&XLogCtl->WALWriterLatch);
 
 	/*
 	 * If we are not in bootstrap mode, pg_control should already exist. Read
@@ -10012,4 +10034,13 @@ void
 WakeupRecovery(void)
 {
 	SetLatch(&XLogCtl->recoveryWakeupLatch);
+}
+
+/*
+ * Manage the WALWriterLatch
+ */
+Latch *
+WALWriterLatch(void)
+{
+	return &XLogCtl->WALWriterLatch;
 }
