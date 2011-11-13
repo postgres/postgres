@@ -124,7 +124,7 @@ sqlda_common_total_size(const PGresult *res, int row, enum COMPAT_MODE compat, l
 				}
 				break;
 			case ECPGt_date:
-				ecpg_sqlda_align_add_size(offset, sizeof(int), sizeof(date), &offset, &next_offset);
+				ecpg_sqlda_align_add_size(offset, sizeof(date), sizeof(date), &offset, &next_offset);
 				break;
 			case ECPGt_timestamp:
 				ecpg_sqlda_align_add_size(offset, sizeof(int), sizeof(timestamp), &offset, &next_offset);
