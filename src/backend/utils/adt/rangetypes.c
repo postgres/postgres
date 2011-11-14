@@ -59,8 +59,8 @@ static char *range_parse_bound(char *string, char *ptr, char **bound_str,
 				  bool *infinite);
 static char *range_deparse(char flags, char *lbound_str, char *ubound_str);
 static char *range_bound_escape(char *in_str);
-static bool range_contains_internal(FunctionCallInfo fcinfo, RangeType * r1,
-						RangeType * r2);
+static bool range_contains_internal(FunctionCallInfo fcinfo, RangeType *r1,
+						RangeType *r2);
 static Size datum_compute_size(Size sz, Datum datum, bool typbyval,
 				   char typalign, int16 typlen, char typstorage);
 static Pointer datum_write(Pointer ptr, Datum datum, bool typbyval,
@@ -1414,7 +1414,7 @@ tstzrange_subdiff(PG_FUNCTION_ARGS)
  * only be called by a canonicalization function.
  */
 Datum
-range_serialize(FunctionCallInfo fcinfo, RangeBound * lower, RangeBound * upper,
+range_serialize(FunctionCallInfo fcinfo, RangeBound *lower, RangeBound *upper,
 				bool empty)
 {
 	Datum		range;
@@ -1497,8 +1497,8 @@ range_serialize(FunctionCallInfo fcinfo, RangeBound * lower, RangeBound * upper,
 }
 
 void
-range_deserialize(FunctionCallInfo fcinfo, RangeType * range, RangeBound * lower,
-				  RangeBound * upper, bool *empty)
+range_deserialize(FunctionCallInfo fcinfo, RangeType *range, RangeBound *lower,
+				  RangeBound *upper, bool *empty)
 {
 	Pointer		ptr = VARDATA(range);
 	char		typalign;
@@ -1575,7 +1575,7 @@ range_deserialize(FunctionCallInfo fcinfo, RangeType * range, RangeBound * lower
  * range. This should be used by most callers.
  */
 Datum
-make_range(FunctionCallInfo fcinfo, RangeBound * lower, RangeBound * upper,
+make_range(FunctionCallInfo fcinfo, RangeBound *lower, RangeBound *upper,
 		   bool empty)
 {
 	Datum		range;
@@ -1596,7 +1596,7 @@ make_range(FunctionCallInfo fcinfo, RangeBound * lower, RangeBound * upper,
 }
 
 int
-range_cmp_bounds(FunctionCallInfo fcinfo, RangeBound * b1, RangeBound * b2)
+range_cmp_bounds(FunctionCallInfo fcinfo, RangeBound *b1, RangeBound *b2)
 {
 	int			result;
 
@@ -1652,7 +1652,7 @@ make_empty_range(FunctionCallInfo fcinfo, Oid rngtypid)
  */
 void
 range_gettypinfo(FunctionCallInfo fcinfo, Oid rngtypid,
-				 RangeTypeInfo * rngtypinfo)
+				 RangeTypeInfo *rngtypinfo)
 {
 	RangeTypeInfo *cached = (RangeTypeInfo *) fcinfo->flinfo->fn_extra;
 
@@ -2068,7 +2068,7 @@ range_bound_escape(char *value)
 }
 
 static bool
-range_contains_internal(FunctionCallInfo fcinfo, RangeType * r1, RangeType * r2)
+range_contains_internal(FunctionCallInfo fcinfo, RangeType *r1, RangeType *r2)
 {
 	RangeBound	lower1;
 	RangeBound	upper1;

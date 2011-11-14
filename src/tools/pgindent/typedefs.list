@@ -120,6 +120,7 @@ BF_KEY
 BF_ctx
 BF_key
 BF_word
+BF_word_signed
 BIGNUM
 BIO
 BIO_METHOD
@@ -130,6 +131,7 @@ BN_CTX
 BOOL
 BOOLEAN
 BOX
+BTArrayKeyInfo
 BTBuildState
 BTCycleId
 BTIndexStat
@@ -143,6 +145,7 @@ BTScanOpaque
 BTScanOpaqueData
 BTScanPosData
 BTScanPosItem
+BTSortArrayContext
 BTSpool
 BTStack
 BTStackData
@@ -273,6 +276,7 @@ CommandDest
 CommandId
 CommentItem
 CommentStmt
+CommonEntry
 CommonTableExpr
 CompareScalarsContext
 CompositeTypeStmt
@@ -281,6 +285,7 @@ CompressorState
 ConfigVariable
 ConnStatusType
 ConnType
+ConsiderSplitContext
 Const
 ConstrCheck
 ConstrType
@@ -316,6 +321,7 @@ CreateOpClassItem
 CreateOpClassStmt
 CreateOpFamilyStmt
 CreatePLangStmt
+CreateRangeStmt
 CreateRoleStmt
 CreateSchemaStmt
 CreateSchemaStmtContext
@@ -347,7 +353,6 @@ DR_copy
 DR_intorel
 DR_printtup
 DR_sqlfunction
-DSA
 DWORD
 DataDumperPtr
 DataPageDeleteStack
@@ -459,6 +464,7 @@ FSMPageData
 FState
 FakeRelCacheEntry
 FakeRelCacheEntryData
+FastPathStrongRelationLockData
 FdwInfo
 FdwPlan
 FdwRoutine
@@ -518,6 +524,7 @@ FormData_pg_operator
 FormData_pg_opfamily
 FormData_pg_pltemplate
 FormData_pg_proc
+FormData_pg_range
 FormData_pg_rewrite
 FormData_pg_sequence
 FormData_pg_shdepend
@@ -563,6 +570,7 @@ Form_pg_operator
 Form_pg_opfamily
 Form_pg_pltemplate
 Form_pg_proc
+Form_pg_range
 Form_pg_rewrite
 Form_pg_sequence
 Form_pg_shdepend
@@ -597,10 +605,14 @@ GBT_NUMKEY
 GBT_NUMKEY_R
 GBT_VARKEY
 GBT_VARKEY_R
+GISTBufferingInsertStack
+GISTBuildBuffers
 GISTBuildState
 GISTENTRY
 GISTInsertStack
 GISTInsertState
+GISTNodeBuffer
+GISTNodeBufferPage
 GISTPageOpaque
 GISTPageOpaqueData
 GISTPageSplitInfo
@@ -616,6 +628,7 @@ GV
 Gene
 GenericExprState
 GeqoPrivateData
+GiSTOptions
 GinBtree
 GinBtreeData
 GinBtreeStack
@@ -637,6 +650,7 @@ GinStatsData
 GinTupleCollector
 GinVacuumState
 GistBDItem
+GistBufferingMode
 GistEntryVector
 GistNSN
 GistSplitUnion
@@ -680,6 +694,7 @@ HKEY
 HLOCAL
 HMODULE
 HOldEntry
+HRESULT
 HSParser
 HSpool
 HStore
@@ -709,6 +724,7 @@ HashSkewBucket
 HashState
 HashValueFunc
 HbaLine
+HbaToken
 HeadlineParsedText
 HeadlineWordEntry
 HeapPosition
@@ -739,6 +755,8 @@ IndexBulkDeleteResult
 IndexElem
 IndexInfo
 IndexList
+IndexOnlyScan
+IndexOnlyScanState
 IndexOptInfo
 IndexPath
 IndexRuntimeKeyInfo
@@ -853,6 +871,7 @@ LocationIndex
 LockAcquireResult
 LockData
 LockInfoData
+LockInstanceData
 LockMethod
 LockMethodData
 LockRelId
@@ -939,6 +958,7 @@ ObjectAddressExtra
 ObjectAddressStack
 ObjectAddresses
 ObjectClass
+ObjectPropertyType
 ObjectType
 Offset
 OffsetNumber
@@ -952,6 +972,7 @@ OldTriggerInfo
 Oldstyle_fnextra
 OnCommitAction
 OnCommitItem
+OpBtreeInterpretation
 OpClassCacheEnt
 OpExpr
 OpFamilyMember
@@ -1034,6 +1055,7 @@ PLpgSQL_execstate
 PLpgSQL_expr
 PLpgSQL_func_hashkey
 PLpgSQL_function
+PLpgSQL_if_elsif
 PLpgSQL_nsitem
 PLpgSQL_plugin
 PLpgSQL_raise_option
@@ -1118,6 +1140,7 @@ PSQL_ECHO_HIDDEN
 PSQL_ERROR_ROLLBACK
 PTOKEN_GROUPS
 PTOKEN_USER
+PVCAggregateBehavior
 PVCPlaceHolderBehavior
 PVOID
 PX_Alias
@@ -1193,8 +1216,11 @@ PgStat_TableCounts
 PgStat_TableEntry
 PgStat_TableStatus
 PgStat_TableXactStatus
+PgXmlErrorContext
+PgXmlStrictness
 Pg_finfo_record
 Pg_magic_struct
+PickSplitSortItem
 PipeProtoChunk
 PipeProtoHeader
 PlaceHolderInfo
@@ -1296,11 +1322,14 @@ RSA
 RTEKind
 RWConflict
 RWConflictPoolHeader
+RangeBound
 RangeFunction
 RangeQueryClause
 RangeSubselect
 RangeTblEntry
 RangeTblRef
+RangeType
+RangeTypeInfo
 RangeVar
 RawColumnDefault
 ReScanForeignScan_function
@@ -1340,6 +1369,7 @@ RelationPtr
 RelativeTime
 RelcacheCallbackFunction
 Relids
+RelocationBufferInfo
 RemoveFuncStmt
 RemoveOpClassStmt
 RemoveOpFamilyStmt
@@ -1476,6 +1506,7 @@ SlruErrorCause
 SlruFlush
 SlruFlushData
 SlruPageStatus
+SlruScanCallback
 SlruShared
 SlruSharedData
 Snapshot
@@ -1490,6 +1521,7 @@ SortGroupClause
 SortState
 SortTuple
 SpecialJoinInfo
+SplitInterval
 SplitVar
 SplitedPageLayout
 StackElem
@@ -1849,7 +1881,6 @@ float8
 float8KEY
 fmNodePtr
 fmgr_hook_type
-fpos_t
 freeaddrinfo_ptr_t
 freefunc
 fsec_t
@@ -1895,7 +1926,6 @@ inetKEY
 inet_struct
 inline_error_callback_arg
 ino_t
-inquiry
 instr_time
 int16
 int16KEY
@@ -1933,6 +1963,7 @@ locate_agg_of_level_context
 locate_var_of_level_context
 locate_var_of_relation_context
 locate_windowfunc_context
+logstreamer_param
 lquery
 lquery_level
 lquery_variant
@@ -1944,6 +1975,7 @@ mXactCacheEnt
 macKEY
 macaddr
 mb2wchar_with_len_converter
+mbcharacter_incrementer
 mbdisplaylen_converter
 mblen_converter
 mbverifier
@@ -2041,6 +2073,7 @@ pthread_mutex_t
 pthread_once_t
 pthread_t
 pull_var_clause_context
+pull_varattnos_context
 pull_varnos_context
 pullup_replace_vars_context
 qsort_arg_comparator
@@ -2079,8 +2112,8 @@ rijndael_ctx
 rm_detail_t
 role_auth_extra
 save_buffer
+segment_finish_callback
 sequence_magic
-setter
 shmem_startup_hook_type
 sig_atomic_t
 sigjmp_buf
@@ -2090,14 +2123,13 @@ size_t
 slock_t
 smgrid
 sql_error_callback_arg
-sqlparseInfo
-sqlparseState
 ss_lru_item_t
 ss_scan_location_t
 ss_scan_locations_t
 ssize_t
 stemmer_module
 stmtCacheEntry
+stream_continue_callback
 substitute_actual_parameters_context
 substitute_actual_srf_parameters_context
 substitute_multiple_relids_context
@@ -2170,11 +2202,14 @@ xl_heap_header
 xl_heap_inplace
 xl_heap_insert
 xl_heap_lock
+xl_heap_multi_insert
 xl_heap_newpage
 xl_heap_update
+xl_heap_visible
 xl_heaptid
 xl_invalid_page
 xl_invalid_page_key
+xl_multi_insert_tuple
 xl_multixact_create
 xl_parameter_change
 xl_relmap_update
@@ -2191,14 +2226,19 @@ xl_xact_abort
 xl_xact_abort_prepared
 xl_xact_assignment
 xl_xact_commit
+xl_xact_commit_compact
 xl_xact_commit_prepared
 xmlBuffer
 xmlBufferPtr
 xmlChar
 xmlDocPtr
+xmlErrorPtr
+xmlGenericErrorFunc
 xmlNodePtr
 xmlNodeSetPtr
 xmlParserCtxtPtr
+xmlParserInputPtr
+xmlStructuredErrorFunc
 xmlTextWriter
 xmlTextWriterPtr
 xmlXPathCompExprPtr

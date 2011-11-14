@@ -1159,7 +1159,7 @@ DefineEnum(CreateEnumStmt *stmt)
  *		Registers a new range type.
  */
 void
-DefineRange(CreateRangeStmt * stmt)
+DefineRange(CreateRangeStmt *stmt)
 {
 	char	   *typeName;
 	char	   *rangeArrayName;
