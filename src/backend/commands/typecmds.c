@@ -92,10 +92,10 @@ static Oid	findTypeSendFunction(List *procname, Oid typeOid);
 static Oid	findTypeTypmodinFunction(List *procname);
 static Oid	findTypeTypmodoutFunction(List *procname);
 static Oid	findTypeAnalyzeFunction(List *procname, Oid typeOid);
-static Oid  findRangeCanonicalFunction(List *procname, Oid typeOid);
+static Oid	findRangeCanonicalFunction(List *procname, Oid typeOid);
 static Oid	findRangeSubOpclass(List *procname, Oid typeOid);
-static Oid findRangeSubtypeDiffFunction(List *procname, Oid typeOid);
-static void	validateDomainConstraint(Oid domainoid, char *ccbin);
+static Oid	findRangeSubtypeDiffFunction(List *procname, Oid typeOid);
+static void validateDomainConstraint(Oid domainoid, char *ccbin);
 static List *get_rels_with_domain(Oid domainOid, LOCKMODE lockmode);
 static void checkDomainOwner(HeapTuple tup);
 static void checkEnumOwner(HeapTuple tup);
@@ -104,7 +104,7 @@ static char *domainAddConstraint(Oid domainOid, Oid domainNamespace,
 					int typMod, Constraint *constr,
 					char *domainName);
 static void makeRangeConstructor(char *name, Oid namespace, Oid rettype,
-								 Oid subtype);
+					 Oid subtype);
 
 
 /*
@@ -654,9 +654,9 @@ RemoveTypeById(Oid typeOid)
 		EnumValuesDelete(typeOid);
 
 	/*
-	 * If it is a range type, delete the pg_range entries too; we
-	 * don't bother with making dependency entries for those, so it
-	 * has to be done "by hand" here.
+	 * If it is a range type, delete the pg_range entries too; we don't bother
+	 * with making dependency entries for those, so it has to be done "by
+	 * hand" here.
 	 */
 	if (((Form_pg_type) GETSTRUCT(tup))->typtype == TYPTYPE_RANGE)
 		RangeDelete(typeOid);
@@ -744,7 +744,8 @@ DefineDomain(CreateDomainStmt *stmt)
 	/*
 	 * Base type must be a plain base type, another domain, an enum or a range
 	 * type. Domains over pseudotypes would create a security hole.  Domains
-	 * over composite types might be made to work in the future, but not today.
+	 * over composite types might be made to work in the future, but not
+	 * today.
 	 */
 	typtype = baseType->typtype;
 	if (typtype != TYPTYPE_BASE &&
@@ -1158,27 +1159,27 @@ DefineEnum(CreateEnumStmt *stmt)
  *		Registers a new range type.
  */
 void
-DefineRange(CreateRangeStmt *stmt)
+DefineRange(CreateRangeStmt * stmt)
 {
-	char		*typeName;
-	char		*rangeArrayName;
-	Oid			 typeNamespace;
-	Oid			 typoid;
-	Oid			 rangeArrayOid;
-	List		*parameters = stmt->params;
+	char	   *typeName;
+	char	   *rangeArrayName;
+	Oid			typeNamespace;
+	Oid			typoid;
+	Oid			rangeArrayOid;
+	List	   *parameters = stmt->params;
 
-	ListCell	*lc;
-	List		*rangeSubOpclassName  = NIL;
-	List		*rangeSubtypeDiffName = NIL;
-	List		*rangeCollationName	  = NIL;
-	Oid			 rangeCollation		  = InvalidOid;
-	regproc		 rangeAnalyze		  = InvalidOid;
-	Oid			 rangeSubtype		  = InvalidOid;
-	regproc		 rangeSubOpclass	  = InvalidOid;
-	regproc		 rangeCanonical		  = InvalidOid;
-	regproc		 rangeSubtypeDiff	  = InvalidOid;
+	ListCell   *lc;
+	List	   *rangeSubOpclassName = NIL;
+	List	   *rangeSubtypeDiffName = NIL;
+	List	   *rangeCollationName = NIL;
+	Oid			rangeCollation = InvalidOid;
+	regproc		rangeAnalyze = InvalidOid;
+	Oid			rangeSubtype = InvalidOid;
+	regproc		rangeSubOpclass = InvalidOid;
+	regproc		rangeCanonical = InvalidOid;
+	regproc		rangeSubtypeDiff = InvalidOid;
 
-	AclResult	 aclresult;
+	AclResult	aclresult;
 
 	/* Convert list of names to a name and namespace */
 	typeNamespace = QualifiedNameGetCreationNamespace(stmt->typeName,
@@ -1236,7 +1237,7 @@ DefineRange(CreateRangeStmt *stmt)
 
 	foreach(lc, stmt->params)
 	{
-		DefElem *defel  = lfirst(lc);
+		DefElem    *defel = lfirst(lc);
 
 		if (pg_strcasecmp(defel->defname, "subtype") == 0)
 		{
@@ -1253,7 +1254,7 @@ DefineRange(CreateRangeStmt *stmt)
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
 			rangeCanonical = findRangeCanonicalFunction(
-				defGetQualifiedName(defel), typoid);
+										 defGetQualifiedName(defel), typoid);
 		}
 		else if (pg_strcasecmp(defel->defname, "collation") == 0)
 		{
@@ -1299,9 +1300,9 @@ DefineRange(CreateRangeStmt *stmt)
 	}
 
 	if (!OidIsValid(rangeSubtype))
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("type attribute \"subtype\" is required")));
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("type attribute \"subtype\" is required")));
 
 	if (type_is_collatable(rangeSubtype))
 	{
@@ -1319,7 +1320,7 @@ DefineRange(CreateRangeStmt *stmt)
 
 	if (rangeSubtypeDiffName != NIL)
 		rangeSubtypeDiff = findRangeSubtypeDiffFunction(
-			rangeSubtypeDiffName, rangeSubtype);
+										 rangeSubtypeDiffName, rangeSubtype);
 
 	rangeArrayOid = AssignTypeArrayOid();
 
@@ -1332,20 +1333,20 @@ DefineRange(CreateRangeStmt *stmt)
 				   0,			/* relation kind (ditto) */
 				   GetUserId(), /* owner's ID */
 				   -1,			/* internal size */
-				   TYPTYPE_RANGE,	/* type-type (range type) */
+				   TYPTYPE_RANGE,		/* type-type (range type) */
 				   TYPCATEGORY_RANGE,	/* type-category (range type) */
 				   false,		/* range types are never preferred */
 				   DEFAULT_TYPDELIM,	/* array element delimiter */
 				   F_RANGE_IN,	/* input procedure */
-				   F_RANGE_OUT,	/* output procedure */
-				   F_RANGE_RECV, /* receive procedure */
-				   F_RANGE_SEND, /* send procedure */
+				   F_RANGE_OUT, /* output procedure */
+				   F_RANGE_RECV,	/* receive procedure */
+				   F_RANGE_SEND,	/* send procedure */
 				   InvalidOid,	/* typmodin procedure - none */
 				   InvalidOid,	/* typmodout procedure - none */
 				   rangeAnalyze,	/* analyze procedure - default */
 				   InvalidOid,	/* element type ID */
 				   false,		/* this is not an array type */
-				   rangeArrayOid,	/* array type we are about to create */
+				   rangeArrayOid,		/* array type we are about to create */
 				   InvalidOid,	/* base type ID (only for domains) */
 				   NULL,		/* never a default type value */
 				   NULL,		/* binary default isn't sent either */
@@ -1355,7 +1356,7 @@ DefineRange(CreateRangeStmt *stmt)
 				   -1,			/* typMod (Domains only) */
 				   0,			/* Array dimensions of typbasetype */
 				   false,		/* Type NOT NULL */
-				   InvalidOid);	/* typcollation */
+				   InvalidOid); /* typcollation */
 
 	/* create the entry in pg_range */
 	RangeCreate(typoid, rangeSubtype, rangeCollation, rangeSubOpclass,
@@ -1384,7 +1385,7 @@ DefineRange(CreateRangeStmt *stmt)
 			   InvalidOid,		/* typmodin procedure - none */
 			   InvalidOid,		/* typmodout procedure - none */
 			   InvalidOid,		/* analyze procedure - default */
-			   typoid,		/* element type ID */
+			   typoid,			/* element type ID */
 			   true,			/* yes this is an array type */
 			   InvalidOid,		/* no further array type */
 			   InvalidOid,		/* base type ID */
@@ -1415,12 +1416,12 @@ DefineRange(CreateRangeStmt *stmt)
 static void
 makeRangeConstructor(char *name, Oid namespace, Oid rangeOid, Oid subtype)
 {
-	ObjectAddress		referenced;
-	Oid					constructorArgTypes[3];
-	int					i;
+	ObjectAddress referenced;
+	Oid			constructorArgTypes[3];
+	int			i;
 
-	referenced.classId	   = TypeRelationId;
-	referenced.objectId	   = rangeOid;
+	referenced.classId = TypeRelationId;
+	referenced.objectId = rangeOid;
 	referenced.objectSubId = 0;
 
 	constructorArgTypes[0] = subtype;
@@ -1429,46 +1430,46 @@ makeRangeConstructor(char *name, Oid namespace, Oid rangeOid, Oid subtype)
 
 	for (i = 0; i < 4; i++)
 	{
-		oidvector		*constructorArgTypesVector;
-		ObjectAddress	 myself;
-		Oid				 procOid;
-		char			*prosrc[4] = { "range_constructor0",
-									   "range_constructor1",
-									   "range_constructor2",
-									   "range_constructor3"};
+		oidvector  *constructorArgTypesVector;
+		ObjectAddress myself;
+		Oid			procOid;
+		char	   *prosrc[4] = {"range_constructor0",
+			"range_constructor1",
+			"range_constructor2",
+		"range_constructor3"};
 
 		constructorArgTypesVector = buildoidvector(constructorArgTypes, i);
 
 		procOid = ProcedureCreate(
-			name, /* name */
-			namespace, /* namespace */
-			false, /* replace */
-			false, /* return set */
-			rangeOid, /* return type */
-			INTERNALlanguageId, /* language */
-			F_FMGR_INTERNAL_VALIDATOR, /* language validator */
-			prosrc[i], /* prosrc */
-			NULL, /* probin */
-			false, /* agg */
-			false, /* window */
-			false, /* security definer */
-			false, /* strict */
-			PROVOLATILE_IMMUTABLE, /* volatility */
-			constructorArgTypesVector, /* param types */
-			PointerGetDatum(NULL), /* allParameterTypes */
-			PointerGetDatum(NULL), /* parameterModes */
-			PointerGetDatum(NULL), /* parameterNames */
-			NIL, /* parameterDefaults */
-			PointerGetDatum(NULL), /* proconfig */
-			1.0, /* procost */
-			0.0); /* prorows */
+								  name, /* name */
+								  namespace,	/* namespace */
+								  false,		/* replace */
+								  false,		/* return set */
+								  rangeOid,		/* return type */
+								  INTERNALlanguageId,	/* language */
+								  F_FMGR_INTERNAL_VALIDATOR,	/* language validator */
+								  prosrc[i],	/* prosrc */
+								  NULL, /* probin */
+								  false,		/* agg */
+								  false,		/* window */
+								  false,		/* security definer */
+								  false,		/* strict */
+								  PROVOLATILE_IMMUTABLE,		/* volatility */
+								  constructorArgTypesVector,	/* param types */
+								  PointerGetDatum(NULL),		/* allParameterTypes */
+								  PointerGetDatum(NULL),		/* parameterModes */
+								  PointerGetDatum(NULL),		/* parameterNames */
+								  NIL,	/* parameterDefaults */
+								  PointerGetDatum(NULL),		/* proconfig */
+								  1.0,	/* procost */
+								  0.0); /* prorows */
 
 		/*
 		 * Make the constructor internally-dependent on the range type so that
 		 * the user doesn't have to treat them as separate objects.
 		 */
-		myself.classId	   = ProcedureRelationId;
-		myself.objectId	   = procOid;
+		myself.classId = ProcedureRelationId;
+		myself.objectId = procOid;
 		myself.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_INTERNAL);
 	}
@@ -1840,8 +1841,8 @@ findRangeSubtypeDiffFunction(List *procname, Oid typeOid)
 	if (get_func_rettype(procOid) != FLOAT8OID)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("range subtype diff function %s must return type \"float8\"",
-						func_signature_string(procname, 2, NIL, argList))));
+		 errmsg("range subtype diff function %s must return type \"float8\"",
+				func_signature_string(procname, 2, NIL, argList))));
 
 	if (func_volatile(procOid) != PROVOLATILE_IMMUTABLE)
 		ereport(ERROR,
@@ -2395,13 +2396,13 @@ AlterDomainValidateConstraint(List *names, char *constrName)
 	Form_pg_constraint con = NULL;
 	Form_pg_constraint copy_con;
 	char	   *conbin;
-	SysScanDesc	scan;
+	SysScanDesc scan;
 	Datum		val;
 	bool		found = false;
 	bool		isnull;
 	HeapTuple	tuple;
 	HeapTuple	copyTuple;
-	ScanKeyData	key;
+	ScanKeyData key;
 
 	/* Make a TypeName so we can use standard type lookup machinery */
 	typename = makeTypeNameFromNameList(names);
@@ -2447,8 +2448,8 @@ AlterDomainValidateConstraint(List *names, char *constrName)
 	if (con->contype != CONSTRAINT_CHECK)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("constraint \"%s\" of domain \"%s\" is not a check constraint",
-						constrName, TypeNameToString(typename))));
+		errmsg("constraint \"%s\" of domain \"%s\" is not a check constraint",
+			   constrName, TypeNameToString(typename))));
 
 	val = SysCacheGetAttr(CONSTROID, tuple,
 						  Anum_pg_constraint_conbin,
@@ -2549,6 +2550,7 @@ validateDomainConstraint(Oid domainoid, char *ccbin)
 
 	FreeExecutorState(estate);
 }
+
 /*
  * get_rels_with_domain
  *
@@ -2868,7 +2870,7 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 						  CONSTRAINT_CHECK,		/* Constraint Type */
 						  false,	/* Is Deferrable */
 						  false,	/* Is Deferred */
-						  !constr->skip_validation, /* Is Validated */
+						  !constr->skip_validation,		/* Is Validated */
 						  InvalidOid,	/* not a relation constraint */
 						  NULL,
 						  0,

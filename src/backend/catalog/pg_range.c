@@ -36,23 +36,23 @@ RangeCreate(Oid rangeTypeOid, Oid rangeSubType, Oid rangeCollation,
 			Oid rangeSubOpclass, RegProcedure rangeCanonical,
 			RegProcedure rangeSubDiff)
 {
-	Relation			pg_range;
-	Datum				values[Natts_pg_range];
-	bool				nulls[Natts_pg_range];
-	HeapTuple			tup;
-	ObjectAddress		myself;
-	ObjectAddress		referenced;
+	Relation	pg_range;
+	Datum		values[Natts_pg_range];
+	bool		nulls[Natts_pg_range];
+	HeapTuple	tup;
+	ObjectAddress myself;
+	ObjectAddress referenced;
 
 	pg_range = heap_open(RangeRelationId, RowExclusiveLock);
 
 	memset(nulls, 0, Natts_pg_range * sizeof(bool));
 
-	values[Anum_pg_range_rngtypid - 1]	   = ObjectIdGetDatum(rangeTypeOid);
-	values[Anum_pg_range_rngsubtype - 1]   = ObjectIdGetDatum(rangeSubType);
+	values[Anum_pg_range_rngtypid - 1] = ObjectIdGetDatum(rangeTypeOid);
+	values[Anum_pg_range_rngsubtype - 1] = ObjectIdGetDatum(rangeSubType);
 	values[Anum_pg_range_rngcollation - 1] = ObjectIdGetDatum(rangeCollation);
-	values[Anum_pg_range_rngsubopc - 1]	   = ObjectIdGetDatum(rangeSubOpclass);
+	values[Anum_pg_range_rngsubopc - 1] = ObjectIdGetDatum(rangeSubOpclass);
 	values[Anum_pg_range_rngcanonical - 1] = ObjectIdGetDatum(rangeCanonical);
-	values[Anum_pg_range_rngsubdiff - 1]  = ObjectIdGetDatum(rangeSubDiff);
+	values[Anum_pg_range_rngsubdiff - 1] = ObjectIdGetDatum(rangeSubDiff);
 
 	tup = heap_form_tuple(RelationGetDescr(pg_range), values, nulls);
 	simple_heap_insert(pg_range, tup);
@@ -61,40 +61,40 @@ RangeCreate(Oid rangeTypeOid, Oid rangeSubType, Oid rangeCollation,
 
 	/* record dependencies */
 
-	myself.classId	   = TypeRelationId;
-	myself.objectId	   = rangeTypeOid;
+	myself.classId = TypeRelationId;
+	myself.objectId = rangeTypeOid;
 	myself.objectSubId = 0;
 
-	referenced.classId	   = TypeRelationId;
-	referenced.objectId	   = rangeSubType;
+	referenced.classId = TypeRelationId;
+	referenced.objectId = rangeSubType;
 	referenced.objectSubId = 0;
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
-	referenced.classId	   = OperatorClassRelationId;
-	referenced.objectId	   = rangeSubOpclass;
+	referenced.classId = OperatorClassRelationId;
+	referenced.objectId = rangeSubOpclass;
 	referenced.objectSubId = 0;
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 	if (OidIsValid(rangeCollation))
 	{
-		referenced.classId	   = CollationRelationId;
-		referenced.objectId	   = rangeCollation;
+		referenced.classId = CollationRelationId;
+		referenced.objectId = rangeCollation;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
 
 	if (OidIsValid(rangeCanonical))
 	{
-		referenced.classId	   = ProcedureRelationId;
-		referenced.objectId	   = rangeCanonical;
+		referenced.classId = ProcedureRelationId;
+		referenced.objectId = rangeCanonical;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
 
 	if (OidIsValid(rangeSubDiff))
 	{
-		referenced.classId	   = ProcedureRelationId;
-		referenced.objectId	   = rangeSubDiff;
+		referenced.classId = ProcedureRelationId;
+		referenced.objectId = rangeSubDiff;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}

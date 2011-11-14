@@ -33,37 +33,38 @@
 #define RANGESTRAT_OVERRIGHT			11
 #define RANGESTRAT_ADJACENT				12
 
-static RangeType *range_super_union(FunctionCallInfo fcinfo, RangeType *r1,
-									RangeType *r2);
+static RangeType *range_super_union(FunctionCallInfo fcinfo, RangeType * r1,
+				  RangeType * r2);
 static bool range_gist_consistent_int(FunctionCallInfo fcinfo,
-									  StrategyNumber strategy, RangeType *key,
-									  RangeType *query);
+						  StrategyNumber strategy, RangeType * key,
+						  RangeType * query);
 static bool range_gist_consistent_leaf(FunctionCallInfo fcinfo,
-									   StrategyNumber strategy, RangeType *key,
-									   RangeType *query);
-static int sort_item_cmp(const void *a, const void *b);
+						   StrategyNumber strategy, RangeType * key,
+						   RangeType * query);
+static int	sort_item_cmp(const void *a, const void *b);
 
 /*
  * Auxiliary structure for picksplit method.
  */
 typedef struct
 {
-	int					 index;
-	RangeType			*data;
-	FunctionCallInfo	 fcinfo;
-} PickSplitSortItem;
+	int			index;
+	RangeType  *data;
+	FunctionCallInfo fcinfo;
+}	PickSplitSortItem;
 
 
 Datum
 range_gist_consistent(PG_FUNCTION_ARGS)
 {
-	GISTENTRY			*entry	  = (GISTENTRY *) PG_GETARG_POINTER(0);
-	Datum				 dquery	  = PG_GETARG_DATUM(1);
-	StrategyNumber		 strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+	Datum		dquery = PG_GETARG_DATUM(1);
+	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+
 	/* Oid subtype = PG_GETARG_OID(3); */
-	bool				*recheck  = (bool *) PG_GETARG_POINTER(4);
-	RangeType			*key	  = DatumGetRangeType(entry->key);
-	RangeType			*query;
+	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
+	RangeType  *key = DatumGetRangeType(entry->key);
+	RangeType  *query;
 
 	RangeBound	lower;
 	RangeBound	upper;
@@ -76,50 +77,50 @@ range_gist_consistent(PG_FUNCTION_ARGS)
 
 	switch (strategy)
 	{
-		RangeBound lower;
-		RangeBound upper;
+			RangeBound	lower;
+			RangeBound	upper;
 
-		/*
-		 * For contains and contained by operators, the other operand is a
-		 * "point" of the subtype. Construct a singleton range containing just
-		 * that value.
-		 */
+			/*
+			 * For contains and contained by operators, the other operand is a
+			 * "point" of the subtype. Construct a singleton range containing
+			 * just that value.
+			 */
 		case RANGESTRAT_CONTAINS_ELEM:
 		case RANGESTRAT_ELEM_CONTAINED_BY:
-			lower.rngtypid	= rngtypid;
+			lower.rngtypid = rngtypid;
 			lower.inclusive = true;
-			lower.val		= dquery;
-			lower.lower		= true;
-			lower.infinite	= false;
-			upper.rngtypid	= rngtypid;
+			lower.val = dquery;
+			lower.lower = true;
+			lower.infinite = false;
+			upper.rngtypid = rngtypid;
 			upper.inclusive = true;
-			upper.val		= dquery;
-			upper.lower		= false;
-			upper.infinite	= false;
-			query			= DatumGetRangeType(
-				make_range(fcinfo, &lower, &upper, false));
+			upper.val = dquery;
+			upper.lower = false;
+			upper.infinite = false;
+			query = DatumGetRangeType(
+								  make_range(fcinfo, &lower, &upper, false));
 			break;
 
 		default:
-			query			= DatumGetRangeType(dquery);
+			query = DatumGetRangeType(dquery);
 			break;
 	}
 
 	if (GIST_LEAF(entry))
 		PG_RETURN_BOOL(range_gist_consistent_leaf(
-						   fcinfo, strategy, key, query));
+											  fcinfo, strategy, key, query));
 	else
 		PG_RETURN_BOOL(range_gist_consistent_int(
-						   fcinfo, strategy, key, query));
+											  fcinfo, strategy, key, query));
 }
 
 Datum
 range_gist_union(PG_FUNCTION_ARGS)
 {
-	GistEntryVector		*entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
-	GISTENTRY			*ent	  = entryvec->vector;
-	RangeType			*result_range;
-	int					 i;
+	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
+	GISTENTRY  *ent = entryvec->vector;
+	RangeType  *result_range;
+	int			i;
 
 	result_range = DatumGetRangeType(ent[0].key);
 
@@ -136,6 +137,7 @@ Datum
 range_gist_compress(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+
 	PG_RETURN_POINTER(entry);
 }
 
@@ -143,26 +145,31 @@ Datum
 range_gist_decompress(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+
 	PG_RETURN_POINTER(entry);
 }
 
 Datum
 range_gist_penalty(PG_FUNCTION_ARGS)
 {
-	GISTENTRY	*origentry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	GISTENTRY	*newentry  = (GISTENTRY *) PG_GETARG_POINTER(1);
-	float		*penalty   = (float *) PG_GETARG_POINTER(2);
-	RangeType	*orig	   = DatumGetRangeType(origentry->key);
-	RangeType	*new	   = DatumGetRangeType(newentry->key);
-	RangeType	*s_union   = range_super_union(fcinfo, orig, new);
+	GISTENTRY  *origentry = (GISTENTRY *) PG_GETARG_POINTER(0);
+	GISTENTRY  *newentry = (GISTENTRY *) PG_GETARG_POINTER(1);
+	float	   *penalty = (float *) PG_GETARG_POINTER(2);
+	RangeType  *orig = DatumGetRangeType(origentry->key);
+	RangeType  *new = DatumGetRangeType(newentry->key);
+	RangeType  *s_union = range_super_union(fcinfo, orig, new);
 
-	FmgrInfo	*subtype_diff;
+	FmgrInfo   *subtype_diff;
 
-	RangeBound	lower1, lower2;
-	RangeBound	upper1, upper2;
-	bool		empty1, empty2;
+	RangeBound	lower1,
+				lower2;
+	RangeBound	upper1,
+				upper2;
+	bool		empty1,
+				empty2;
 
-	float		lower_diff, upper_diff;
+	float		lower_diff,
+				upper_diff;
 
 	RangeTypeInfo rngtypinfo;
 
@@ -203,7 +210,7 @@ range_gist_penalty(PG_FUNCTION_ARGS)
 		if (lower_diff < 0)
 			lower_diff = 0;		/* subtype_diff is broken */
 	}
-	else /* only know whether there is a difference or not */
+	else	/* only know whether there is a difference or not */
 		lower_diff = (float) range_cmp_bounds(fcinfo, &lower1, &lower2);
 
 	Assert(upper2.infinite || !upper1.infinite);
@@ -219,7 +226,7 @@ range_gist_penalty(PG_FUNCTION_ARGS)
 		if (upper_diff < 0)
 			upper_diff = 0;		/* subtype_diff is broken */
 	}
-	else /* only know whether there is a difference or not */
+	else	/* only know whether there is a difference or not */
 		upper_diff = (float) range_cmp_bounds(fcinfo, &upper2, &upper1);
 
 	Assert(lower_diff >= 0 && upper_diff >= 0);
@@ -238,22 +245,22 @@ range_gist_penalty(PG_FUNCTION_ARGS)
 Datum
 range_gist_picksplit(PG_FUNCTION_ARGS)
 {
-	GistEntryVector		*entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
-	GIST_SPLITVEC		*v		  = (GIST_SPLITVEC *) PG_GETARG_POINTER(1);
-	OffsetNumber		 i;
-	RangeType			*pred_left;
-	RangeType			*pred_right;
-	PickSplitSortItem	*sortItems;
-	int					 nbytes;
-	OffsetNumber		 split_idx;
-	OffsetNumber		*left;
-	OffsetNumber		*right;
-	OffsetNumber		 maxoff;
+	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
+	GIST_SPLITVEC *v = (GIST_SPLITVEC *) PG_GETARG_POINTER(1);
+	OffsetNumber i;
+	RangeType  *pred_left;
+	RangeType  *pred_right;
+	PickSplitSortItem *sortItems;
+	int			nbytes;
+	OffsetNumber split_idx;
+	OffsetNumber *left;
+	OffsetNumber *right;
+	OffsetNumber maxoff;
 
 	maxoff = entryvec->n - 1;
 	nbytes = (maxoff + 1) * sizeof(OffsetNumber);
 	sortItems = (PickSplitSortItem *) palloc(
-		maxoff * sizeof(PickSplitSortItem));
+										 maxoff * sizeof(PickSplitSortItem));
 	v->spl_left = (OffsetNumber *) palloc(nbytes);
 	v->spl_right = (OffsetNumber *) palloc(nbytes);
 
@@ -262,8 +269,8 @@ range_gist_picksplit(PG_FUNCTION_ARGS)
 	 */
 	for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
 	{
-		sortItems[i - 1].index	= i;
-		sortItems[i - 1].data	= DatumGetRangeType(entryvec->vector[i].key);
+		sortItems[i - 1].index = i;
+		sortItems[i - 1].data = DatumGetRangeType(entryvec->vector[i].key);
 		sortItems[i - 1].fcinfo = fcinfo;
 	}
 	qsort(sortItems, maxoff, sizeof(PickSplitSortItem), sort_item_cmp);
@@ -313,9 +320,9 @@ range_gist_picksplit(PG_FUNCTION_ARGS)
 Datum
 range_gist_same(PG_FUNCTION_ARGS)
 {
-	Datum r1 = PG_GETARG_DATUM(0);
-	Datum r2 = PG_GETARG_DATUM(1);
-	bool *result = (bool *) PG_GETARG_POINTER(2);
+	Datum		r1 = PG_GETARG_DATUM(0);
+	Datum		r2 = PG_GETARG_DATUM(1);
+	bool	   *result = (bool *) PG_GETARG_POINTER(2);
 
 	*result = DatumGetBool(OidFunctionCall2(F_RANGE_EQ, r1, r2));
 	PG_RETURN_POINTER(result);
@@ -329,13 +336,16 @@ range_gist_same(PG_FUNCTION_ARGS)
 
 /* return the smallest range that contains r1 and r2 */
 static RangeType *
-range_super_union(FunctionCallInfo fcinfo, RangeType *r1, RangeType *r2)
+range_super_union(FunctionCallInfo fcinfo, RangeType * r1, RangeType * r2)
 {
-	RangeBound	 lower1, lower2;
-	RangeBound	 upper1, upper2;
-	bool		 empty1, empty2;
-	RangeBound	*result_lower;
-	RangeBound	*result_upper;
+	RangeBound	lower1,
+				lower2;
+	RangeBound	upper1,
+				upper2;
+	bool		empty1,
+				empty2;
+	RangeBound *result_lower;
+	RangeBound *result_upper;
 
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);
 	range_deserialize(fcinfo, r2, &lower2, &upper2, &empty2);
@@ -362,21 +372,24 @@ range_super_union(FunctionCallInfo fcinfo, RangeType *r1, RangeType *r2)
 		return r2;
 
 	return DatumGetRangeType(
-		make_range(fcinfo, result_lower, result_upper, false));
+					  make_range(fcinfo, result_lower, result_upper, false));
 }
 
 static bool
 range_gist_consistent_int(FunctionCallInfo fcinfo, StrategyNumber strategy,
-						  RangeType *key, RangeType *query)
+						  RangeType * key, RangeType * query)
 {
-	Oid proc = InvalidOid;
+	Oid			proc = InvalidOid;
 
-	RangeBound	lower1, lower2;
-	RangeBound	upper1, upper2;
-	bool		empty1, empty2;
+	RangeBound	lower1,
+				lower2;
+	RangeBound	upper1,
+				upper2;
+	bool		empty1,
+				empty2;
 
-	bool retval;
-	bool negate = false;
+	bool		retval;
+	bool		negate = false;
 
 	range_deserialize(fcinfo, key, &lower1, &upper1, &empty1);
 	range_deserialize(fcinfo, query, &lower2, &upper2, &empty2);
@@ -384,17 +397,17 @@ range_gist_consistent_int(FunctionCallInfo fcinfo, StrategyNumber strategy,
 	switch (strategy)
 	{
 		case RANGESTRAT_EQ:
-			proc   = F_RANGE_CONTAINS;
+			proc = F_RANGE_CONTAINS;
 			break;
 		case RANGESTRAT_NE:
 			return true;
 			break;
 		case RANGESTRAT_OVERLAPS:
-			proc   = F_RANGE_OVERLAPS;
+			proc = F_RANGE_OVERLAPS;
 			break;
 		case RANGESTRAT_CONTAINS_ELEM:
 		case RANGESTRAT_CONTAINS:
-			proc   = F_RANGE_CONTAINS;
+			proc = F_RANGE_CONTAINS;
 			break;
 		case RANGESTRAT_ELEM_CONTAINED_BY:
 		case RANGESTRAT_CONTAINED_BY:
@@ -403,19 +416,19 @@ range_gist_consistent_int(FunctionCallInfo fcinfo, StrategyNumber strategy,
 		case RANGESTRAT_BEFORE:
 			if (empty1)
 				return false;
-			proc   = F_RANGE_OVERRIGHT;
+			proc = F_RANGE_OVERRIGHT;
 			negate = true;
 			break;
 		case RANGESTRAT_AFTER:
 			if (empty1)
 				return false;
-			proc   = F_RANGE_OVERLEFT;
+			proc = F_RANGE_OVERLEFT;
 			negate = true;
 			break;
 		case RANGESTRAT_OVERLEFT:
 			if (empty1)
 				return false;
-			proc   = F_RANGE_AFTER;
+			proc = F_RANGE_AFTER;
 			negate = true;
 			break;
 		case RANGESTRAT_OVERRIGHT:
@@ -428,9 +441,9 @@ range_gist_consistent_int(FunctionCallInfo fcinfo, StrategyNumber strategy,
 			if (empty1 || empty2)
 				return false;
 			if (DatumGetBool(
-					OidFunctionCall2(F_RANGE_ADJACENT,
-									 RangeTypeGetDatum(key),
-									 RangeTypeGetDatum(query))))
+							 OidFunctionCall2(F_RANGE_ADJACENT,
+											  RangeTypeGetDatum(key),
+											  RangeTypeGetDatum(query))))
 				return true;
 			proc = F_RANGE_OVERLAPS;
 			break;
@@ -447,13 +460,16 @@ range_gist_consistent_int(FunctionCallInfo fcinfo, StrategyNumber strategy,
 
 static bool
 range_gist_consistent_leaf(FunctionCallInfo fcinfo, StrategyNumber strategy,
-						   RangeType *key, RangeType *query)
+						   RangeType * key, RangeType * query)
 {
-	Oid proc = InvalidOid;
+	Oid			proc = InvalidOid;
 
-	RangeBound	lower1, lower2;
-	RangeBound	upper1, upper2;
-	bool		empty1, empty2;
+	RangeBound	lower1,
+				lower2;
+	RangeBound	upper1,
+				upper2;
+	bool		empty1,
+				empty2;
 
 	range_deserialize(fcinfo, key, &lower1, &upper1, &empty1);
 	range_deserialize(fcinfo, query, &lower2, &upper2, &empty2);
@@ -525,18 +541,21 @@ range_gist_consistent_leaf(FunctionCallInfo fcinfo, StrategyNumber strategy,
 static int
 sort_item_cmp(const void *a, const void *b)
 {
-	PickSplitSortItem	*i1 = (PickSplitSortItem *)a;
-	PickSplitSortItem	*i2 = (PickSplitSortItem *)b;
-	RangeType			*r1 = i1->data;
-	RangeType			*r2 = i2->data;
+	PickSplitSortItem *i1 = (PickSplitSortItem *) a;
+	PickSplitSortItem *i2 = (PickSplitSortItem *) b;
+	RangeType  *r1 = i1->data;
+	RangeType  *r2 = i2->data;
 
-	RangeBound	lower1, lower2;
-	RangeBound	upper1, upper2;
-	bool		empty1, empty2;
+	RangeBound	lower1,
+				lower2;
+	RangeBound	upper1,
+				upper2;
+	bool		empty1,
+				empty2;
 
 	FunctionCallInfo fcinfo = i1->fcinfo;
 
-	int cmp;
+	int			cmp;
 
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);
 	range_deserialize(fcinfo, r2, &lower2, &upper2, &empty2);
@@ -554,12 +573,11 @@ sort_item_cmp(const void *a, const void *b)
 	}
 
 	/*
-	 * If both lower or both upper bounds are infinite, we sort by
-	 * ascending range size. That means that if both upper bounds are
-	 * infinite, we sort by the lower bound _descending_. That creates
-	 * a slightly odd total order, but keeps the pages with very
-	 * unselective predicates grouped more closely together on the
-	 * right.
+	 * If both lower or both upper bounds are infinite, we sort by ascending
+	 * range size. That means that if both upper bounds are infinite, we sort
+	 * by the lower bound _descending_. That creates a slightly odd total
+	 * order, but keeps the pages with very unselective predicates grouped
+	 * more closely together on the right.
 	 */
 	if (lower1.infinite || upper1.infinite ||
 		lower2.infinite || upper2.infinite)

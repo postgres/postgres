@@ -37,34 +37,34 @@
 /* flags */
 #define RANGE_EMPTY		0x01
 #define RANGE_LB_INC	0x02
-#define RANGE_LB_NULL	0x04 /* NOT USED */
+#define RANGE_LB_NULL	0x04	/* NOT USED */
 #define RANGE_LB_INF	0x08
 #define RANGE_UB_INC	0x10
-#define RANGE_UB_NULL	0x20 /* NOT USED */
+#define RANGE_UB_NULL	0x20	/* NOT USED */
 #define RANGE_UB_INF	0x40
 
-#define RANGE_HAS_LBOUND(flags) (!(flags & (RANGE_EMPTY |   \
-											RANGE_LB_NULL |	\
+#define RANGE_HAS_LBOUND(flags) (!(flags & (RANGE_EMPTY |	\
+											RANGE_LB_NULL | \
 											RANGE_LB_INF)))
 
 #define RANGE_HAS_UBOUND(flags) (!(flags & (RANGE_EMPTY |	\
-											RANGE_UB_NULL |	\
+											RANGE_UB_NULL | \
 											RANGE_UB_INF)))
 
 #define RANGE_EMPTY_LITERAL "empty"
 
-static void range_parse(char *input_str,  char *flags, char **lbound_str,
-						char **ubound_str);
+static void range_parse(char *input_str, char *flags, char **lbound_str,
+			char **ubound_str);
 static char *range_parse_bound(char *string, char *ptr, char **bound_str,
-							   bool *infinite);
+				  bool *infinite);
 static char *range_deparse(char flags, char *lbound_str, char *ubound_str);
 static char *range_bound_escape(char *in_str);
-static bool range_contains_internal(FunctionCallInfo fcinfo, RangeType *r1,
-									RangeType *r2);
+static bool range_contains_internal(FunctionCallInfo fcinfo, RangeType * r1,
+						RangeType * r2);
 static Size datum_compute_size(Size sz, Datum datum, bool typbyval,
-							   char typalign, int16 typlen, char typstorage);
+				   char typalign, int16 typlen, char typstorage);
 static Pointer datum_write(Pointer ptr, Datum datum, bool typbyval,
-						   char typalign, int16 typlen, char typstorage);
+			char typalign, int16 typlen, char typstorage);
 
 /*
  *----------------------------------------------------------
@@ -75,22 +75,22 @@ static Pointer datum_write(Pointer ptr, Datum datum, bool typbyval,
 Datum
 range_in(PG_FUNCTION_ARGS)
 {
-	char		*input_str = PG_GETARG_CSTRING(0);
-	Oid			 rngtypoid = PG_GETARG_OID(1);
-	Oid			 typmod	   = PG_GETARG_INT32(2);
+	char	   *input_str = PG_GETARG_CSTRING(0);
+	Oid			rngtypoid = PG_GETARG_OID(1);
+	Oid			typmod = PG_GETARG_INT32(2);
 
-	char		 flags;
-	Datum		 range;
-	char		*lbound_str;
-	char		*ubound_str;
+	char		flags;
+	Datum		range;
+	char	   *lbound_str;
+	char	   *ubound_str;
 
 	regproc		subInput;
 	FmgrInfo	subInputFn;
 	Oid			ioParam;
 
-	RangeTypeInfo		rngtypinfo;
-	RangeBound			lower;
-	RangeBound			upper;
+	RangeTypeInfo rngtypinfo;
+	RangeBound	lower;
+	RangeBound	upper;
 
 	if (rngtypoid == ANYRANGEOID)
 		ereport(ERROR,
@@ -106,21 +106,21 @@ range_in(PG_FUNCTION_ARGS)
 	getTypeInputInfo(rngtypinfo.subtype, &subInput, &ioParam);
 	fmgr_info(subInput, &subInputFn);
 
-	lower.rngtypid	= rngtypoid;
-	lower.infinite	= (flags & RANGE_LB_INF) != 0;
+	lower.rngtypid = rngtypoid;
+	lower.infinite = (flags & RANGE_LB_INF) != 0;
 	lower.inclusive = (flags & RANGE_LB_INC) != 0;
-	lower.lower		= true;
-	upper.rngtypid	= rngtypoid;
-	upper.infinite	= (flags & RANGE_UB_INF) != 0;
+	lower.lower = true;
+	upper.rngtypid = rngtypoid;
+	upper.infinite = (flags & RANGE_UB_INF) != 0;
 	upper.inclusive = (flags & RANGE_UB_INC) != 0;
-	upper.lower		= false;
+	upper.lower = false;
 
 	if (RANGE_HAS_LBOUND(flags))
 		lower.val = InputFunctionCall(&subInputFn, lbound_str,
-									   ioParam, typmod);
+									  ioParam, typmod);
 	if (RANGE_HAS_UBOUND(flags))
 		upper.val = InputFunctionCall(&subInputFn, ubound_str,
-									   ioParam, typmod);
+									  ioParam, typmod);
 
 	/* serialize and canonicalize */
 	range = make_range(fcinfo, &lower, &upper, flags & RANGE_EMPTY);
@@ -144,9 +144,9 @@ range_out(PG_FUNCTION_ARGS)
 
 	bool		empty;
 
-	RangeTypeInfo		rngtypinfo;
-	RangeBound			lower;
-	RangeBound			upper;
+	RangeTypeInfo rngtypinfo;
+	RangeBound	lower;
+	RangeBound	upper;
 
 	/* deserialize */
 	range_deserialize(fcinfo, range, &lower, &upper, &empty);
@@ -159,10 +159,10 @@ range_out(PG_FUNCTION_ARGS)
 	if (empty)
 		flags |= RANGE_EMPTY;
 
-	flags |= (lower.inclusive)	? RANGE_LB_INC  : 0;
-	flags |= (lower.infinite)	? RANGE_LB_INF  : 0;
-	flags |= (upper.inclusive)	? RANGE_UB_INC  : 0;
-	flags |= (upper.infinite)	? RANGE_UB_INF  : 0;
+	flags |= (lower.inclusive) ? RANGE_LB_INC : 0;
+	flags |= (lower.infinite) ? RANGE_LB_INF : 0;
+	flags |= (upper.inclusive) ? RANGE_UB_INC : 0;
+	flags |= (upper.infinite) ? RANGE_UB_INF : 0;
 
 	/* output */
 	getTypeOutputInfo(rngtypinfo.subtype, &subOutput, &isVarlena);
@@ -190,9 +190,9 @@ range_out(PG_FUNCTION_ARGS)
 Datum
 range_recv(PG_FUNCTION_ARGS)
 {
-	StringInfo	buf		 = (StringInfo) PG_GETARG_POINTER(0);
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 	Oid			rngtypid = PG_GETARG_OID(1);
-	int32		typmod	 = PG_GETARG_INT32(2);
+	int32		typmod = PG_GETARG_INT32(2);
 	Oid			subrecv;
 	Oid			ioparam;
 	Datum		range;
@@ -210,9 +210,9 @@ range_recv(PG_FUNCTION_ARGS)
 
 	if (RANGE_HAS_LBOUND(flags))
 	{
-		uint32			 bound_len	= pq_getmsgint(buf, 4);
-		const char		*bound_data = pq_getmsgbytes(buf, bound_len);
-		StringInfoData	 bound_buf;
+		uint32		bound_len = pq_getmsgint(buf, 4);
+		const char *bound_data = pq_getmsgbytes(buf, bound_len);
+		StringInfoData bound_buf;
 
 		initStringInfo(&bound_buf);
 		appendBinaryStringInfo(&bound_buf, bound_data, bound_len);
@@ -228,9 +228,9 @@ range_recv(PG_FUNCTION_ARGS)
 
 	if (RANGE_HAS_UBOUND(flags))
 	{
-		uint32			 bound_len	= pq_getmsgint(buf, 4);
-		const char		*bound_data = pq_getmsgbytes(buf, bound_len);
-		StringInfoData	 bound_buf;
+		uint32		bound_len = pq_getmsgint(buf, 4);
+		const char *bound_data = pq_getmsgbytes(buf, bound_len);
+		StringInfoData bound_buf;
 
 		initStringInfo(&bound_buf);
 		appendBinaryStringInfo(&bound_buf, bound_data, bound_len);
@@ -246,21 +246,21 @@ range_recv(PG_FUNCTION_ARGS)
 
 	pq_getmsgend(buf);
 
-	lower.rngtypid	= rngtypid;
-	lower.infinite	= (flags & RANGE_LB_INF) != 0;
+	lower.rngtypid = rngtypid;
+	lower.infinite = (flags & RANGE_LB_INF) != 0;
 	lower.inclusive = (flags & RANGE_LB_INC) != 0;
-	lower.lower		= true;
-	upper.rngtypid	= rngtypid;
-	upper.infinite	= (flags & RANGE_UB_INF) != 0;
+	lower.lower = true;
+	upper.rngtypid = rngtypid;
+	upper.infinite = (flags & RANGE_UB_INF) != 0;
 	upper.inclusive = (flags & RANGE_UB_INC) != 0;
-	upper.lower		= false;
+	upper.lower = false;
 
 	/* serialize and canonicalize */
 	range = make_range(fcinfo, &lower, &upper, flags & RANGE_EMPTY);
 
 	/*
-	 * XXX if the subtype is pass-by-val, we should pfree the upper and
-	 * lower bounds here.
+	 * XXX if the subtype is pass-by-val, we should pfree the upper and lower
+	 * bounds here.
 	 */
 
 	PG_RETURN_RANGE(range);
@@ -269,14 +269,14 @@ range_recv(PG_FUNCTION_ARGS)
 Datum
 range_send(PG_FUNCTION_ARGS)
 {
-	RangeType	*range = PG_GETARG_RANGE(0);
-	StringInfo	 buf   = makeStringInfo();
-	char		 flags = 0;
-	RangeBound	 lower;
-	RangeBound	 upper;
-	bool		 empty;
-	Oid			 subsend;
-	bool		 typIsVarlena;
+	RangeType  *range = PG_GETARG_RANGE(0);
+	StringInfo	buf = makeStringInfo();
+	char		flags = 0;
+	RangeBound	lower;
+	RangeBound	upper;
+	bool		empty;
+	Oid			subsend;
+	bool		typIsVarlena;
 
 	RangeTypeInfo rngtypinfo;
 
@@ -287,10 +287,10 @@ range_send(PG_FUNCTION_ARGS)
 	if (empty)
 		flags |= RANGE_EMPTY;
 
-	flags |= (lower.inclusive)	? RANGE_LB_INC  : 0;
-	flags |= (lower.infinite)	? RANGE_LB_INF  : 0;
-	flags |= (upper.inclusive)	? RANGE_UB_INC  : 0;
-	flags |= (upper.infinite)	? RANGE_UB_INF  : 0;
+	flags |= (lower.inclusive) ? RANGE_LB_INC : 0;
+	flags |= (lower.infinite) ? RANGE_LB_INF : 0;
+	flags |= (upper.inclusive) ? RANGE_UB_INC : 0;
+	flags |= (upper.infinite) ? RANGE_UB_INF : 0;
 
 	range_gettypinfo(fcinfo, lower.rngtypid, &rngtypinfo);
 
@@ -301,10 +301,10 @@ range_send(PG_FUNCTION_ARGS)
 
 	if (RANGE_HAS_LBOUND(flags))
 	{
-		Datum	 bound		= PointerGetDatum(
-			OidSendFunctionCall(subsend, lower.val));
-		uint32	 bound_len	= VARSIZE(bound) - VARHDRSZ;
-		char	*bound_data = VARDATA(bound);
+		Datum		bound = PointerGetDatum(
+									OidSendFunctionCall(subsend, lower.val));
+		uint32		bound_len = VARSIZE(bound) - VARHDRSZ;
+		char	   *bound_data = VARDATA(bound);
 
 		pq_sendint(buf, bound_len, 4);
 		pq_sendbytes(buf, bound_data, bound_len);
@@ -312,10 +312,10 @@ range_send(PG_FUNCTION_ARGS)
 
 	if (RANGE_HAS_UBOUND(flags))
 	{
-		Datum	 bound		= PointerGetDatum(
-			OidSendFunctionCall(subsend, upper.val));
-		uint32	 bound_len	= VARSIZE(bound) - VARHDRSZ;
-		char	*bound_data = VARDATA(bound);
+		Datum		bound = PointerGetDatum(
+									OidSendFunctionCall(subsend, upper.val));
+		uint32		bound_len = VARSIZE(bound) - VARHDRSZ;
+		char	   *bound_data = VARDATA(bound);
 
 		pq_sendint(buf, bound_len, 4);
 		pq_sendbytes(buf, bound_data, bound_len);
@@ -334,22 +334,22 @@ range_send(PG_FUNCTION_ARGS)
 Datum
 range_constructor0(PG_FUNCTION_ARGS)
 {
-	Oid			 rngtypid = get_fn_expr_rettype(fcinfo->flinfo);
-	RangeType	*range;
-	RangeBound	 lower;
-	RangeBound	 upper;
+	Oid			rngtypid = get_fn_expr_rettype(fcinfo->flinfo);
+	RangeType  *range;
+	RangeBound	lower;
+	RangeBound	upper;
 
-	lower.rngtypid	= rngtypid;
-	lower.val		= (Datum) 0;
+	lower.rngtypid = rngtypid;
+	lower.val = (Datum) 0;
 	lower.inclusive = false;
-	lower.infinite	= false;
-	lower.lower		= true;
+	lower.infinite = false;
+	lower.lower = true;
 
-	upper.rngtypid	= rngtypid;
-	upper.val		= (Datum) 0;
+	upper.rngtypid = rngtypid;
+	upper.val = (Datum) 0;
 	upper.inclusive = false;
-	upper.infinite	= false;
-	upper.lower		= false;
+	upper.infinite = false;
+	upper.lower = false;
 
 	range = DatumGetRangeType(make_range(fcinfo, &lower, &upper, true));
 
@@ -359,28 +359,28 @@ range_constructor0(PG_FUNCTION_ARGS)
 Datum
 range_constructor1(PG_FUNCTION_ARGS)
 {
-	Datum		 arg1	  = PG_GETARG_DATUM(0);
-	Oid			 rngtypid = get_fn_expr_rettype(fcinfo->flinfo);
-	RangeType	*range;
-	RangeBound	 lower;
-	RangeBound	 upper;
+	Datum		arg1 = PG_GETARG_DATUM(0);
+	Oid			rngtypid = get_fn_expr_rettype(fcinfo->flinfo);
+	RangeType  *range;
+	RangeBound	lower;
+	RangeBound	upper;
 
 	if (PG_ARGISNULL(0))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_EXCEPTION),
 				 errmsg("argument must not be NULL")));
 
-	lower.rngtypid	= rngtypid;
-	lower.val		= arg1;
+	lower.rngtypid = rngtypid;
+	lower.val = arg1;
 	lower.inclusive = true;
-	lower.infinite	= false;
-	lower.lower		= true;
+	lower.infinite = false;
+	lower.lower = true;
 
-	upper.rngtypid	= rngtypid;
-	upper.val		= arg1;
+	upper.rngtypid = rngtypid;
+	upper.val = arg1;
 	upper.inclusive = true;
-	upper.infinite	= false;
-	upper.lower		= false;
+	upper.infinite = false;
+	upper.lower = false;
 
 	range = DatumGetRangeType(make_range(fcinfo, &lower, &upper, false));
 
@@ -390,27 +390,27 @@ range_constructor1(PG_FUNCTION_ARGS)
 Datum
 range_constructor2(PG_FUNCTION_ARGS)
 {
-	Datum		 arg1	  = PG_GETARG_DATUM(0);
-	Datum		 arg2	  = PG_GETARG_DATUM(1);
-	Oid			 rngtypid = get_fn_expr_rettype(fcinfo->flinfo);
-	RangeType	*range;
-	RangeBound	 lower;
-	RangeBound	 upper;
-	char		 flags;
+	Datum		arg1 = PG_GETARG_DATUM(0);
+	Datum		arg2 = PG_GETARG_DATUM(1);
+	Oid			rngtypid = get_fn_expr_rettype(fcinfo->flinfo);
+	RangeType  *range;
+	RangeBound	lower;
+	RangeBound	upper;
+	char		flags;
 
 	flags = range_parse_flags(RANGE_DEFAULT_FLAGS);
 
-	lower.rngtypid	= rngtypid;
-	lower.val		= PG_ARGISNULL(0) ? (Datum)0 : arg1;
+	lower.rngtypid = rngtypid;
+	lower.val = PG_ARGISNULL(0) ? (Datum) 0 : arg1;
 	lower.inclusive = flags & RANGE_LB_INC;
-	lower.infinite	= PG_ARGISNULL(0);
-	lower.lower		= true;
+	lower.infinite = PG_ARGISNULL(0);
+	lower.lower = true;
 
-	upper.rngtypid	= rngtypid;
-	upper.val		= PG_ARGISNULL(1) ? (Datum)0 : arg2;
+	upper.rngtypid = rngtypid;
+	upper.val = PG_ARGISNULL(1) ? (Datum) 0 : arg2;
 	upper.inclusive = flags & RANGE_UB_INC;
-	upper.infinite	= PG_ARGISNULL(1);
-	upper.lower		= false;
+	upper.infinite = PG_ARGISNULL(1);
+	upper.lower = false;
 
 	range = DatumGetRangeType(make_range(fcinfo, &lower, &upper, false));
 
@@ -420,13 +420,13 @@ range_constructor2(PG_FUNCTION_ARGS)
 Datum
 range_constructor3(PG_FUNCTION_ARGS)
 {
-	Datum		 arg1	  = PG_GETARG_DATUM(0);
-	Datum		 arg2	  = PG_GETARG_DATUM(1);
-	Oid			 rngtypid = get_fn_expr_rettype(fcinfo->flinfo);
-	RangeType	*range;
-	RangeBound	 lower;
-	RangeBound	 upper;
-	char		 flags;
+	Datum		arg1 = PG_GETARG_DATUM(0);
+	Datum		arg2 = PG_GETARG_DATUM(1);
+	Oid			rngtypid = get_fn_expr_rettype(fcinfo->flinfo);
+	RangeType  *range;
+	RangeBound	lower;
+	RangeBound	upper;
+	char		flags;
 
 	if (PG_ARGISNULL(2))
 		ereport(ERROR,
@@ -434,17 +434,17 @@ range_constructor3(PG_FUNCTION_ARGS)
 				 errmsg("flags argument must not be NULL")));
 	flags = range_parse_flags(text_to_cstring(PG_GETARG_TEXT_P(2)));
 
-	lower.rngtypid	= rngtypid;
-	lower.val		= PG_ARGISNULL(0) ? (Datum)0 : arg1;
+	lower.rngtypid = rngtypid;
+	lower.val = PG_ARGISNULL(0) ? (Datum) 0 : arg1;
 	lower.inclusive = flags & RANGE_LB_INC;
-	lower.infinite	= PG_ARGISNULL(0);
-	lower.lower		= true;
+	lower.infinite = PG_ARGISNULL(0);
+	lower.lower = true;
 
-	upper.rngtypid	= rngtypid;
-	upper.val		= PG_ARGISNULL(1) ? (Datum)0 : arg2;
+	upper.rngtypid = rngtypid;
+	upper.val = PG_ARGISNULL(1) ? (Datum) 0 : arg2;
 	upper.inclusive = flags & RANGE_UB_INC;
-	upper.infinite	= PG_ARGISNULL(1);
-	upper.lower		= false;
+	upper.infinite = PG_ARGISNULL(1);
+	upper.lower = false;
 
 	range = DatumGetRangeType(make_range(fcinfo, &lower, &upper, false));
 
@@ -455,10 +455,10 @@ range_constructor3(PG_FUNCTION_ARGS)
 Datum
 range_lower(PG_FUNCTION_ARGS)
 {
-	RangeType	*r1 = PG_GETARG_RANGE(0);
-	RangeBound	 lower;
-	RangeBound	 upper;
-	bool		 empty;
+	RangeType  *r1 = PG_GETARG_RANGE(0);
+	RangeBound	lower;
+	RangeBound	upper;
+	bool		empty;
 
 	range_deserialize(fcinfo, r1, &lower, &upper, &empty);
 
@@ -477,10 +477,10 @@ range_lower(PG_FUNCTION_ARGS)
 Datum
 range_upper(PG_FUNCTION_ARGS)
 {
-	RangeType	*r1 = PG_GETARG_RANGE(0);
-	RangeBound	 lower;
-	RangeBound	 upper;
-	bool		 empty;
+	RangeType  *r1 = PG_GETARG_RANGE(0);
+	RangeBound	lower;
+	RangeBound	upper;
+	bool		empty;
 
 	range_deserialize(fcinfo, r1, &lower, &upper, &empty);
 
@@ -501,10 +501,10 @@ range_upper(PG_FUNCTION_ARGS)
 Datum
 range_empty(PG_FUNCTION_ARGS)
 {
-	RangeType	*r1 = PG_GETARG_RANGE(0);
-	RangeBound	 lower;
-	RangeBound	 upper;
-	bool		 empty;
+	RangeType  *r1 = PG_GETARG_RANGE(0);
+	RangeBound	lower;
+	RangeBound	upper;
+	bool		empty;
 
 	range_deserialize(fcinfo, r1, &lower, &upper, &empty);
 
@@ -514,10 +514,10 @@ range_empty(PG_FUNCTION_ARGS)
 Datum
 range_lower_inc(PG_FUNCTION_ARGS)
 {
-	RangeType	*r1 = PG_GETARG_RANGE(0);
-	RangeBound	 lower;
-	RangeBound	 upper;
-	bool		 empty;
+	RangeType  *r1 = PG_GETARG_RANGE(0);
+	RangeBound	lower;
+	RangeBound	upper;
+	bool		empty;
 
 	range_deserialize(fcinfo, r1, &lower, &upper, &empty);
 
@@ -527,10 +527,10 @@ range_lower_inc(PG_FUNCTION_ARGS)
 Datum
 range_upper_inc(PG_FUNCTION_ARGS)
 {
-	RangeType	*r1 = PG_GETARG_RANGE(0);
-	RangeBound	 lower;
-	RangeBound	 upper;
-	bool		 empty;
+	RangeType  *r1 = PG_GETARG_RANGE(0);
+	RangeBound	lower;
+	RangeBound	upper;
+	bool		empty;
 
 	range_deserialize(fcinfo, r1, &lower, &upper, &empty);
 
@@ -540,10 +540,10 @@ range_upper_inc(PG_FUNCTION_ARGS)
 Datum
 range_lower_inf(PG_FUNCTION_ARGS)
 {
-	RangeType	*r1 = PG_GETARG_RANGE(0);
-	RangeBound	 lower;
-	RangeBound	 upper;
-	bool		 empty;
+	RangeType  *r1 = PG_GETARG_RANGE(0);
+	RangeBound	lower;
+	RangeBound	upper;
+	bool		empty;
 
 	range_deserialize(fcinfo, r1, &lower, &upper, &empty);
 
@@ -553,10 +553,10 @@ range_lower_inf(PG_FUNCTION_ARGS)
 Datum
 range_upper_inf(PG_FUNCTION_ARGS)
 {
-	RangeType	*r1 = PG_GETARG_RANGE(0);
-	RangeBound	 lower;
-	RangeBound	 upper;
-	bool		 empty;
+	RangeType  *r1 = PG_GETARG_RANGE(0);
+	RangeBound	lower;
+	RangeBound	upper;
+	bool		empty;
 
 	range_deserialize(fcinfo, r1, &lower, &upper, &empty);
 
@@ -568,12 +568,15 @@ range_upper_inf(PG_FUNCTION_ARGS)
 Datum
 range_eq(PG_FUNCTION_ARGS)
 {
-	RangeType *r1 = PG_GETARG_RANGE(0);
-	RangeType *r2 = PG_GETARG_RANGE(1);
+	RangeType  *r1 = PG_GETARG_RANGE(0);
+	RangeType  *r2 = PG_GETARG_RANGE(1);
 
-	RangeBound	lower1, lower2;
-	RangeBound	upper1, upper2;
-	bool		empty1, empty2;
+	RangeBound	lower1,
+				lower2;
+	RangeBound	upper1,
+				upper2;
+	bool		empty1,
+				empty2;
 
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);
 	range_deserialize(fcinfo, r2, &lower2, &upper2, &empty2);
@@ -600,7 +603,7 @@ range_eq(PG_FUNCTION_ARGS)
 Datum
 range_ne(PG_FUNCTION_ARGS)
 {
-	bool eq = DatumGetBool(range_eq(fcinfo));
+	bool		eq = DatumGetBool(range_eq(fcinfo));
 
 	PG_RETURN_BOOL(!eq);
 }
@@ -608,27 +611,29 @@ range_ne(PG_FUNCTION_ARGS)
 Datum
 range_contains_elem(PG_FUNCTION_ARGS)
 {
-	RangeType	*r1		  = PG_GETARG_RANGE(0);
-	RangeType	*r2;
-	Datum		 val	  = PG_GETARG_DATUM(1);
+	RangeType  *r1 = PG_GETARG_RANGE(0);
+	RangeType  *r2;
+	Datum		val = PG_GETARG_DATUM(1);
 
-	RangeBound	lower1, lower2;
-	RangeBound	upper1, upper2;
+	RangeBound	lower1,
+				lower2;
+	RangeBound	upper1,
+				upper2;
 	bool		empty1;
 
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);
 
-	lower2.rngtypid	 = lower1.rngtypid;
+	lower2.rngtypid = lower1.rngtypid;
 	lower2.inclusive = true;
-	lower2.infinite	 = false;
-	lower2.lower	 = true;
-	lower2.val		 = val;
+	lower2.infinite = false;
+	lower2.lower = true;
+	lower2.val = val;
 
-	upper2.rngtypid	 = lower1.rngtypid;
+	upper2.rngtypid = lower1.rngtypid;
 	upper2.inclusive = true;
-	upper2.infinite	 = false;
-	upper2.lower	 = false;
-	upper2.val		 = val;
+	upper2.infinite = false;
+	upper2.lower = false;
+	upper2.val = val;
 
 	r2 = DatumGetRangeType(make_range(fcinfo, &lower2, &upper2, false));
 
@@ -638,8 +643,8 @@ range_contains_elem(PG_FUNCTION_ARGS)
 Datum
 range_contains(PG_FUNCTION_ARGS)
 {
-	RangeType	*r1 = PG_GETARG_RANGE(0);
-	RangeType	*r2 = PG_GETARG_RANGE(1);
+	RangeType  *r1 = PG_GETARG_RANGE(0);
+	RangeType  *r2 = PG_GETARG_RANGE(1);
 
 	PG_RETURN_BOOL(range_contains_internal(fcinfo, r1, r2));
 }
@@ -647,27 +652,29 @@ range_contains(PG_FUNCTION_ARGS)
 Datum
 elem_contained_by_range(PG_FUNCTION_ARGS)
 {
-	RangeType	*r1		  = PG_GETARG_RANGE(1);
-	RangeType	*r2;
-	Datum		 val	  = PG_GETARG_DATUM(0);
+	RangeType  *r1 = PG_GETARG_RANGE(1);
+	RangeType  *r2;
+	Datum		val = PG_GETARG_DATUM(0);
 
-	RangeBound	lower1, lower2;
-	RangeBound	upper1, upper2;
+	RangeBound	lower1,
+				lower2;
+	RangeBound	upper1,
+				upper2;
 	bool		empty1;
 
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);
 
-	lower2.rngtypid	 = lower1.rngtypid;
+	lower2.rngtypid = lower1.rngtypid;
 	lower2.inclusive = true;
-	lower2.infinite	 = false;
-	lower2.lower	 = true;
-	lower2.val		 = val;
+	lower2.infinite = false;
+	lower2.lower = true;
+	lower2.val = val;
 
-	upper2.rngtypid	 = lower1.rngtypid;
+	upper2.rngtypid = lower1.rngtypid;
 	upper2.inclusive = true;
-	upper2.infinite	 = false;
-	upper2.lower	 = false;
-	upper2.val		 = val;
+	upper2.infinite = false;
+	upper2.lower = false;
+	upper2.val = val;
 
 	r2 = DatumGetRangeType(make_range(fcinfo, &lower2, &upper2, false));
 
@@ -677,8 +684,8 @@ elem_contained_by_range(PG_FUNCTION_ARGS)
 Datum
 range_contained_by(PG_FUNCTION_ARGS)
 {
-	RangeType	*r1 = PG_GETARG_RANGE(0);
-	RangeType	*r2 = PG_GETARG_RANGE(1);
+	RangeType  *r1 = PG_GETARG_RANGE(0);
+	RangeType  *r2 = PG_GETARG_RANGE(1);
 
 	PG_RETURN_BOOL(range_contains_internal(fcinfo, r2, r1));
 }
@@ -686,12 +693,15 @@ range_contained_by(PG_FUNCTION_ARGS)
 Datum
 range_before(PG_FUNCTION_ARGS)
 {
-	RangeType *r1 = PG_GETARG_RANGE(0);
-	RangeType *r2 = PG_GETARG_RANGE(1);
+	RangeType  *r1 = PG_GETARG_RANGE(0);
+	RangeType  *r2 = PG_GETARG_RANGE(1);
 
-	RangeBound	lower1, lower2;
-	RangeBound	upper1, upper2;
-	bool		empty1, empty2;
+	RangeBound	lower1,
+				lower2;
+	RangeBound	upper1,
+				upper2;
+	bool		empty1,
+				empty2;
 
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);
 	range_deserialize(fcinfo, r2, &lower2, &upper2, &empty2);
@@ -715,12 +725,15 @@ range_before(PG_FUNCTION_ARGS)
 Datum
 range_after(PG_FUNCTION_ARGS)
 {
-	RangeType *r1 = PG_GETARG_RANGE(0);
-	RangeType *r2 = PG_GETARG_RANGE(1);
+	RangeType  *r1 = PG_GETARG_RANGE(0);
+	RangeType  *r2 = PG_GETARG_RANGE(1);
 
-	RangeBound	lower1, lower2;
-	RangeBound	upper1, upper2;
-	bool		empty1, empty2;
+	RangeBound	lower1,
+				lower2;
+	RangeBound	upper1,
+				upper2;
+	bool		empty1,
+				empty2;
 
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);
 	range_deserialize(fcinfo, r2, &lower2, &upper2, &empty2);
@@ -741,16 +754,20 @@ range_after(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(false);
 }
 
-Datum range_adjacent(PG_FUNCTION_ARGS)
+Datum
+range_adjacent(PG_FUNCTION_ARGS)
 {
-	RangeType *r1 = PG_GETARG_RANGE(0);
-	RangeType *r2 = PG_GETARG_RANGE(1);
+	RangeType  *r1 = PG_GETARG_RANGE(0);
+	RangeType  *r2 = PG_GETARG_RANGE(1);
 
 	RangeTypeInfo rngtypinfo;
 
-	RangeBound	lower1, lower2;
-	RangeBound	upper1, upper2;
-	bool		empty1, empty2;
+	RangeBound	lower1,
+				lower2;
+	RangeBound	upper1,
+				upper2;
+	bool		empty1,
+				empty2;
 
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);
 	range_deserialize(fcinfo, r2, &lower2, &upper2, &empty2);
@@ -766,12 +783,12 @@ Datum range_adjacent(PG_FUNCTION_ARGS)
 				 errmsg("undefined for empty ranges")));
 
 	/*
-	 * For two ranges to be adjacent, the lower boundary of one range
-	 * has to match the upper boundary of the other. However, the
-	 * inclusivity of those two boundaries must also be different.
+	 * For two ranges to be adjacent, the lower boundary of one range has to
+	 * match the upper boundary of the other. However, the inclusivity of
+	 * those two boundaries must also be different.
 	 *
-	 * The semantics for range_cmp_bounds aren't quite what we need
-	 * here, so we do the comparison more directly.
+	 * The semantics for range_cmp_bounds aren't quite what we need here, so
+	 * we do the comparison more directly.
 	 */
 
 	range_gettypinfo(fcinfo, lower1.rngtypid, &rngtypinfo);
@@ -798,12 +815,15 @@ Datum range_adjacent(PG_FUNCTION_ARGS)
 Datum
 range_overlaps(PG_FUNCTION_ARGS)
 {
-	RangeType *r1 = PG_GETARG_RANGE(0);
-	RangeType *r2 = PG_GETARG_RANGE(1);
+	RangeType  *r1 = PG_GETARG_RANGE(0);
+	RangeType  *r2 = PG_GETARG_RANGE(1);
 
-	RangeBound	lower1, lower2;
-	RangeBound	upper1, upper2;
-	bool		empty1, empty2;
+	RangeBound	lower1,
+				lower2;
+	RangeBound	upper1,
+				upper2;
+	bool		empty1,
+				empty2;
 
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);
 	range_deserialize(fcinfo, r2, &lower2, &upper2, &empty2);
@@ -830,12 +850,15 @@ range_overlaps(PG_FUNCTION_ARGS)
 Datum
 range_overleft(PG_FUNCTION_ARGS)
 {
-	RangeType *r1 = PG_GETARG_RANGE(0);
-	RangeType *r2 = PG_GETARG_RANGE(1);
+	RangeType  *r1 = PG_GETARG_RANGE(0);
+	RangeType  *r2 = PG_GETARG_RANGE(1);
 
-	RangeBound	lower1, lower2;
-	RangeBound	upper1, upper2;
-	bool		empty1, empty2;
+	RangeBound	lower1,
+				lower2;
+	RangeBound	upper1,
+				upper2;
+	bool		empty1,
+				empty2;
 
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);
 	range_deserialize(fcinfo, r2, &lower2, &upper2, &empty2);
@@ -857,12 +880,15 @@ range_overleft(PG_FUNCTION_ARGS)
 Datum
 range_overright(PG_FUNCTION_ARGS)
 {
-	RangeType *r1 = PG_GETARG_RANGE(0);
-	RangeType *r2 = PG_GETARG_RANGE(1);
+	RangeType  *r1 = PG_GETARG_RANGE(0);
+	RangeType  *r2 = PG_GETARG_RANGE(1);
 
-	RangeBound	lower1, lower2;
-	RangeBound	upper1, upper2;
-	bool		empty1, empty2;
+	RangeBound	lower1,
+				lower2;
+	RangeBound	upper1,
+				upper2;
+	bool		empty1,
+				empty2;
 
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);
 	range_deserialize(fcinfo, r2, &lower2, &upper2, &empty2);
@@ -886,14 +912,20 @@ range_overright(PG_FUNCTION_ARGS)
 Datum
 range_minus(PG_FUNCTION_ARGS)
 {
-	RangeType *r1 = PG_GETARG_RANGE(0);
-	RangeType *r2 = PG_GETARG_RANGE(1);
+	RangeType  *r1 = PG_GETARG_RANGE(0);
+	RangeType  *r2 = PG_GETARG_RANGE(1);
 
-	RangeBound	lower1, lower2;
-	RangeBound	upper1, upper2;
-	bool		empty1, empty2;
+	RangeBound	lower1,
+				lower2;
+	RangeBound	upper1,
+				upper2;
+	bool		empty1,
+				empty2;
 
-	int cmp_l1l2, cmp_l1u2, cmp_u1l2, cmp_u1u2;
+	int			cmp_l1l2,
+				cmp_l1u2,
+				cmp_u1l2,
+				cmp_u1u2;
 
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);
 	range_deserialize(fcinfo, r2, &lower2, &upper2, &empty2);
@@ -925,14 +957,14 @@ range_minus(PG_FUNCTION_ARGS)
 	if (cmp_l1l2 <= 0 && cmp_u1l2 >= 0 && cmp_u1u2 <= 0)
 	{
 		lower2.inclusive = !lower2.inclusive;
-		lower2.lower = false; /* it will become the upper bound */
+		lower2.lower = false;	/* it will become the upper bound */
 		PG_RETURN_RANGE(make_range(fcinfo, &lower1, &lower2, false));
 	}
 
 	if (cmp_l1l2 >= 0 && cmp_u1u2 >= 0 && cmp_l1u2 <= 0)
 	{
 		upper2.inclusive = !upper2.inclusive;
-		upper2.lower = true; /* it will become the lower bound */
+		upper2.lower = true;	/* it will become the lower bound */
 		PG_RETURN_RANGE(make_range(fcinfo, &upper2, &upper1, false));
 	}
 
@@ -943,14 +975,17 @@ range_minus(PG_FUNCTION_ARGS)
 Datum
 range_union(PG_FUNCTION_ARGS)
 {
-	RangeType *r1 = PG_GETARG_RANGE(0);
-	RangeType *r2 = PG_GETARG_RANGE(1);
+	RangeType  *r1 = PG_GETARG_RANGE(0);
+	RangeType  *r2 = PG_GETARG_RANGE(1);
 
-	RangeBound	 lower1, lower2;
-	RangeBound	 upper1, upper2;
-	bool		 empty1, empty2;
-	RangeBound	*result_lower;
-	RangeBound	*result_upper;
+	RangeBound	lower1,
+				lower2;
+	RangeBound	upper1,
+				upper2;
+	bool		empty1,
+				empty2;
+	RangeBound *result_lower;
+	RangeBound *result_upper;
 
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);
 	range_deserialize(fcinfo, r2, &lower2, &upper2, &empty2);
@@ -982,14 +1017,17 @@ range_union(PG_FUNCTION_ARGS)
 Datum
 range_intersect(PG_FUNCTION_ARGS)
 {
-	RangeType *r1 = PG_GETARG_RANGE(0);
-	RangeType *r2 = PG_GETARG_RANGE(1);
+	RangeType  *r1 = PG_GETARG_RANGE(0);
+	RangeType  *r2 = PG_GETARG_RANGE(1);
 
-	RangeBound	 lower1, lower2;
-	RangeBound	 upper1, upper2;
-	bool		 empty1, empty2;
-	RangeBound	*result_lower;
-	RangeBound	*result_upper;
+	RangeBound	lower1,
+				lower2;
+	RangeBound	upper1,
+				upper2;
+	bool		empty1,
+				empty2;
+	RangeBound *result_lower;
+	RangeBound *result_upper;
 
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);
 	range_deserialize(fcinfo, r2, &lower2, &upper2, &empty2);
@@ -1015,14 +1053,17 @@ range_intersect(PG_FUNCTION_ARGS)
 Datum
 range_cmp(PG_FUNCTION_ARGS)
 {
-	RangeType *r1 = PG_GETARG_RANGE(0);
-	RangeType *r2 = PG_GETARG_RANGE(1);
+	RangeType  *r1 = PG_GETARG_RANGE(0);
+	RangeType  *r2 = PG_GETARG_RANGE(1);
 
-	RangeBound	lower1, lower2;
-	RangeBound	upper1, upper2;
-	bool		empty1, empty2;
+	RangeBound	lower1,
+				lower2;
+	RangeBound	upper1,
+				upper2;
+	bool		empty1,
+				empty2;
 
-	int cmp;
+	int			cmp;
 
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);
 	range_deserialize(fcinfo, r2, &lower2, &upper2, &empty2);
@@ -1048,28 +1089,32 @@ range_cmp(PG_FUNCTION_ARGS)
 Datum
 range_lt(PG_FUNCTION_ARGS)
 {
-	int cmp = range_cmp(fcinfo);
+	int			cmp = range_cmp(fcinfo);
+
 	PG_RETURN_BOOL(cmp < 0);
 }
 
 Datum
 range_le(PG_FUNCTION_ARGS)
 {
-	int cmp = range_cmp(fcinfo);
+	int			cmp = range_cmp(fcinfo);
+
 	PG_RETURN_BOOL(cmp <= 0);
 }
 
 Datum
 range_ge(PG_FUNCTION_ARGS)
 {
-	int cmp = range_cmp(fcinfo);
+	int			cmp = range_cmp(fcinfo);
+
 	PG_RETURN_BOOL(cmp >= 0);
 }
 
 Datum
 range_gt(PG_FUNCTION_ARGS)
 {
-	int cmp = range_cmp(fcinfo);
+	int			cmp = range_cmp(fcinfo);
+
 	PG_RETURN_BOOL(cmp > 0);
 }
 
@@ -1077,19 +1122,19 @@ range_gt(PG_FUNCTION_ARGS)
 Datum
 hash_range(PG_FUNCTION_ARGS)
 {
-	RangeType	*r			= PG_GETARG_RANGE(0);
-	RangeBound	 lower;
-	RangeBound	 upper;
-	bool		 empty;
-	char		 flags		= 0;
-	uint32		 lower_hash = 0;
-	uint32		 upper_hash = 0;
-	uint32		 result		= 0;
+	RangeType  *r = PG_GETARG_RANGE(0);
+	RangeBound	lower;
+	RangeBound	upper;
+	bool		empty;
+	char		flags = 0;
+	uint32		lower_hash = 0;
+	uint32		upper_hash = 0;
+	uint32		result = 0;
 
 	RangeTypeInfo rngtypinfo;
 
 	TypeCacheEntry *typentry;
-	Oid subtype;
+	Oid			subtype;
 	FunctionCallInfoData locfcinfo;
 
 
@@ -1101,19 +1146,19 @@ hash_range(PG_FUNCTION_ARGS)
 	if (empty)
 		flags |= RANGE_EMPTY;
 
-	flags |= (lower.inclusive)	? RANGE_LB_INC  : 0;
-	flags |= (lower.infinite)	? RANGE_LB_INF  : 0;
-	flags |= (upper.inclusive)	? RANGE_UB_INC  : 0;
-	flags |= (upper.infinite)	? RANGE_UB_INF  : 0;
+	flags |= (lower.inclusive) ? RANGE_LB_INC : 0;
+	flags |= (lower.infinite) ? RANGE_LB_INF : 0;
+	flags |= (upper.inclusive) ? RANGE_UB_INC : 0;
+	flags |= (upper.infinite) ? RANGE_UB_INF : 0;
 
 	range_gettypinfo(fcinfo, lower.rngtypid, &rngtypinfo);
 	subtype = rngtypinfo.subtype;
 
 	/*
-	 * We arrange to look up the hash function only once per series of
-	 * calls, assuming the subtype doesn't change underneath us.  The
-	 * typcache is used so that we have no memory leakage when being
-	 * used as an index support function.
+	 * We arrange to look up the hash function only once per series of calls,
+	 * assuming the subtype doesn't change underneath us.  The typcache is
+	 * used so that we have no memory leakage when being used as an index
+	 * support function.
 	 */
 	typentry = (TypeCacheEntry *) fcinfo->flinfo->fn_extra;
 	if (typentry == NULL || typentry->type_id != subtype)
@@ -1128,30 +1173,30 @@ hash_range(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Apply the hash function to each bound (the hash function shouldn't
-	 * care about the collation).
+	 * Apply the hash function to each bound (the hash function shouldn't care
+	 * about the collation).
 	 */
 	InitFunctionCallInfoData(locfcinfo, &typentry->hash_proc_finfo, 1,
 							 InvalidOid, NULL, NULL);
 
 	if (RANGE_HAS_LBOUND(flags))
 	{
-		locfcinfo.arg[0]	 = lower.val;
+		locfcinfo.arg[0] = lower.val;
 		locfcinfo.argnull[0] = false;
-		locfcinfo.isnull	 = false;
+		locfcinfo.isnull = false;
 		lower_hash = DatumGetUInt32(FunctionCallInvoke(&locfcinfo));
 	}
 	if (RANGE_HAS_UBOUND(flags))
 	{
-		locfcinfo.arg[0]	 = upper.val;
+		locfcinfo.arg[0] = upper.val;
 		locfcinfo.argnull[0] = false;
-		locfcinfo.isnull	 = false;
+		locfcinfo.isnull = false;
 		upper_hash = DatumGetUInt32(FunctionCallInvoke(&locfcinfo));
 	}
 
-	result	= hash_uint32((uint32) flags);
+	result = hash_uint32((uint32) flags);
 	result ^= lower_hash;
-	result	= (result << 1) | (result >> 31);
+	result = (result << 1) | (result >> 31);
 	result ^= upper_hash;
 
 	PG_RETURN_INT32(result);
@@ -1161,14 +1206,14 @@ hash_range(PG_FUNCTION_ARGS)
  *----------------------------------------------------------
  * CANONICAL FUNCTIONS
  *
- *   Functions for specific built-in range types.
+ *	 Functions for specific built-in range types.
  *----------------------------------------------------------
  */
 
 Datum
 int4range_canonical(PG_FUNCTION_ARGS)
 {
-	RangeType	*r = PG_GETARG_RANGE(0);
+	RangeType  *r = PG_GETARG_RANGE(0);
 
 	RangeBound	lower;
 	RangeBound	upper;
@@ -1197,7 +1242,7 @@ int4range_canonical(PG_FUNCTION_ARGS)
 Datum
 int8range_canonical(PG_FUNCTION_ARGS)
 {
-	RangeType	*r = PG_GETARG_RANGE(0);
+	RangeType  *r = PG_GETARG_RANGE(0);
 
 	RangeBound	lower;
 	RangeBound	upper;
@@ -1226,7 +1271,7 @@ int8range_canonical(PG_FUNCTION_ARGS)
 Datum
 daterange_canonical(PG_FUNCTION_ARGS)
 {
-	RangeType	*r = PG_GETARG_RANGE(0);
+	RangeType  *r = PG_GETARG_RANGE(0);
 
 	RangeBound	lower;
 	RangeBound	upper;
@@ -1256,35 +1301,35 @@ daterange_canonical(PG_FUNCTION_ARGS)
  *----------------------------------------------------------
  * SUBTYPE_DIFF FUNCTIONS
  *
- *   Functions for specific built-in range types.
+ *	 Functions for specific built-in range types.
  *----------------------------------------------------------
  */
 
 Datum
 int4range_subdiff(PG_FUNCTION_ARGS)
 {
-	int32 v1 = PG_GETARG_INT32(0);
-	int32 v2 = PG_GETARG_INT32(1);
+	int32		v1 = PG_GETARG_INT32(0);
+	int32		v2 = PG_GETARG_INT32(1);
 
-	PG_RETURN_FLOAT8((float8)(v1-v2));
+	PG_RETURN_FLOAT8((float8) (v1 - v2));
 }
 
 Datum
 int8range_subdiff(PG_FUNCTION_ARGS)
 {
-	int64 v1 = PG_GETARG_INT64(0);
-	int64 v2 = PG_GETARG_INT64(1);
+	int64		v1 = PG_GETARG_INT64(0);
+	int64		v2 = PG_GETARG_INT64(1);
 
-	PG_RETURN_FLOAT8((float8)(v1-v2));
+	PG_RETURN_FLOAT8((float8) (v1 - v2));
 }
 
 Datum
 daterange_subdiff(PG_FUNCTION_ARGS)
 {
-	int32 v1 = PG_GETARG_INT32(0);
-	int32 v2 = PG_GETARG_INT32(1);
+	int32		v1 = PG_GETARG_INT32(0);
+	int32		v2 = PG_GETARG_INT32(1);
 
-	PG_RETURN_FLOAT8((float8)(v1-v2));
+	PG_RETURN_FLOAT8((float8) (v1 - v2));
 }
 
 Datum
@@ -1298,7 +1343,7 @@ numrange_subdiff(PG_FUNCTION_ARGS)
 	numresult = DirectFunctionCall2(numeric_sub, v1, v2);
 
 	floatresult = DatumGetFloat8(
-		DirectFunctionCall1(numeric_float8, numresult));
+							 DirectFunctionCall1(numeric_float8, numresult));
 
 	PG_RETURN_FLOAT8(floatresult);
 }
@@ -1311,7 +1356,7 @@ tsrange_subdiff(PG_FUNCTION_ARGS)
 	float8		result;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	result = ((float8)(v1-v2)) / USECS_PER_SEC;
+	result = ((float8) (v1 - v2)) / USECS_PER_SEC;
 #else
 	result = v1 - v2;
 #endif
@@ -1327,7 +1372,7 @@ tstzrange_subdiff(PG_FUNCTION_ARGS)
 	float8		result;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	result = ((float8)(v1-v2)) / USECS_PER_SEC;
+	result = ((float8) (v1 - v2)) / USECS_PER_SEC;
 #else
 	result = v1 - v2;
 #endif
@@ -1339,18 +1384,18 @@ tstzrange_subdiff(PG_FUNCTION_ARGS)
  *----------------------------------------------------------
  * SUPPORT FUNCTIONS
  *
- *   These functions aren't in pg_proc, but are useful if
- *   defining new generic range functions in C.
+ *	 These functions aren't in pg_proc, but are useful if
+ *	 defining new generic range functions in C.
  *----------------------------------------------------------
  */
 
 /*
  * Serialized format is:
  *
- *  4 bytes: Range type Oid
- *  Lower boundary, if any, aligned according to subtype's typalign
- *  Upper boundary, if any, aligned according to subtype's typalign
- *  1 byte for flags
+ *	4 bytes: Range type Oid
+ *	Lower boundary, if any, aligned according to subtype's typalign
+ *	Upper boundary, if any, aligned according to subtype's typalign
+ *	1 byte for flags
  *
  * This representation is chosen to be compact when the boundary
  * values need to be MAXALIGNed. A palloc chunk always starts out
@@ -1369,7 +1414,7 @@ tstzrange_subdiff(PG_FUNCTION_ARGS)
  * only be called by a canonicalization function.
  */
 Datum
-range_serialize(FunctionCallInfo fcinfo, RangeBound *lower, RangeBound *upper,
+range_serialize(FunctionCallInfo fcinfo, RangeBound * lower, RangeBound * upper,
 				bool empty)
 {
 	Datum		range;
@@ -1379,7 +1424,7 @@ range_serialize(FunctionCallInfo fcinfo, RangeBound *lower, RangeBound *upper,
 	char		typalign;
 	bool		typbyval;
 	char		typstorage;
-	char		flags	   = 0;
+	char		flags = 0;
 
 	RangeTypeInfo rngtypinfo;
 
@@ -1388,9 +1433,9 @@ range_serialize(FunctionCallInfo fcinfo, RangeBound *lower, RangeBound *upper,
 
 	range_gettypinfo(fcinfo, lower->rngtypid, &rngtypinfo);
 
-	typlen	   = rngtypinfo.subtyplen;
-	typalign   = rngtypinfo.subtypalign;
-	typbyval   = rngtypinfo.subtypbyval;
+	typlen = rngtypinfo.subtyplen;
+	typalign = rngtypinfo.subtypalign;
+	typbyval = rngtypinfo.subtypbyval;
 	typstorage = rngtypinfo.subtypstorage;
 
 	if (empty)
@@ -1400,12 +1445,12 @@ range_serialize(FunctionCallInfo fcinfo, RangeBound *lower, RangeBound *upper,
 				(errcode(ERRCODE_DATA_EXCEPTION),
 				 errmsg("range lower bound must be less than or equal to range upper bound")));
 
-	flags |= (lower->inclusive) ? RANGE_LB_INC  : 0;
-	flags |= (lower->infinite)  ? RANGE_LB_INF  : 0;
-	flags |= (upper->inclusive) ? RANGE_UB_INC  : 0;
-	flags |= (upper->infinite)  ? RANGE_UB_INF  : 0;
+	flags |= (lower->inclusive) ? RANGE_LB_INC : 0;
+	flags |= (lower->infinite) ? RANGE_LB_INF : 0;
+	flags |= (upper->inclusive) ? RANGE_UB_INC : 0;
+	flags |= (upper->infinite) ? RANGE_UB_INF : 0;
 
-	msize  = VARHDRSZ;
+	msize = VARHDRSZ;
 	msize += sizeof(Oid);
 
 	if (RANGE_HAS_LBOUND(flags))
@@ -1452,10 +1497,10 @@ range_serialize(FunctionCallInfo fcinfo, RangeBound *lower, RangeBound *upper,
 }
 
 void
-range_deserialize(FunctionCallInfo fcinfo, RangeType *range, RangeBound *lower,
-				  RangeBound *upper, bool *empty)
+range_deserialize(FunctionCallInfo fcinfo, RangeType * range, RangeBound * lower,
+				  RangeBound * upper, bool *empty)
 {
-	Pointer		ptr	= VARDATA(range);
+	Pointer		ptr = VARDATA(range);
 	char		typalign;
 	int16		typlen;
 	int16		typbyval;
@@ -1485,7 +1530,7 @@ range_deserialize(FunctionCallInfo fcinfo, RangeType *range, RangeBound *lower,
 	range_gettypinfo(fcinfo, rngtypid, &rngtypinfo);
 
 	typalign = rngtypinfo.subtypalign;
-	typlen	 = rngtypinfo.subtyplen;
+	typlen = rngtypinfo.subtyplen;
 	typbyval = rngtypinfo.subtypbyval;
 
 	if (RANGE_HAS_LBOUND(flags))
@@ -1512,17 +1557,17 @@ range_deserialize(FunctionCallInfo fcinfo, RangeType *range, RangeBound *lower,
 
 	*empty = flags & RANGE_EMPTY;
 
-	lower->rngtypid	 = rngtypid;
-	lower->val		 = lbound;
-	lower->inclusive = flags &	RANGE_LB_INC;
-	lower->infinite	 = flags &	RANGE_LB_INF;
-	lower->lower	 = true;
+	lower->rngtypid = rngtypid;
+	lower->val = lbound;
+	lower->inclusive = flags & RANGE_LB_INC;
+	lower->infinite = flags & RANGE_LB_INF;
+	lower->lower = true;
 
-	upper->rngtypid	 = rngtypid;
-	upper->val		 = ubound;
-	upper->inclusive = flags &	RANGE_UB_INC;
-	upper->infinite	 = flags &	RANGE_UB_INF;
-	upper->lower	 = false;
+	upper->rngtypid = rngtypid;
+	upper->val = ubound;
+	upper->inclusive = flags & RANGE_UB_INC;
+	upper->infinite = flags & RANGE_UB_INF;
+	upper->lower = false;
 }
 
 /*
@@ -1530,10 +1575,10 @@ range_deserialize(FunctionCallInfo fcinfo, RangeType *range, RangeBound *lower,
  * range. This should be used by most callers.
  */
 Datum
-make_range(FunctionCallInfo fcinfo, RangeBound *lower, RangeBound *upper,
+make_range(FunctionCallInfo fcinfo, RangeBound * lower, RangeBound * upper,
 		   bool empty)
 {
-	Datum range;
+	Datum		range;
 
 	RangeTypeInfo rngtypinfo;
 
@@ -1551,7 +1596,7 @@ make_range(FunctionCallInfo fcinfo, RangeBound *lower, RangeBound *upper,
 }
 
 int
-range_cmp_bounds(FunctionCallInfo fcinfo, RangeBound *b1, RangeBound *b2)
+range_cmp_bounds(FunctionCallInfo fcinfo, RangeBound * b1, RangeBound * b2)
 {
 	int			result;
 
@@ -1588,8 +1633,8 @@ range_cmp_bounds(FunctionCallInfo fcinfo, RangeBound *b1, RangeBound *b2)
 RangeType *
 make_empty_range(FunctionCallInfo fcinfo, Oid rngtypid)
 {
-	RangeBound lower;
-	RangeBound upper;
+	RangeBound	lower;
+	RangeBound	upper;
 
 	memset(&lower, 0, sizeof(RangeBound));
 	memset(&upper, 0, sizeof(RangeBound));
@@ -1607,7 +1652,7 @@ make_empty_range(FunctionCallInfo fcinfo, Oid rngtypid)
  */
 void
 range_gettypinfo(FunctionCallInfo fcinfo, Oid rngtypid,
-				 RangeTypeInfo *rngtypinfo)
+				 RangeTypeInfo * rngtypinfo)
 {
 	RangeTypeInfo *cached = (RangeTypeInfo *) fcinfo->flinfo->fn_extra;
 
@@ -1621,23 +1666,23 @@ range_gettypinfo(FunctionCallInfo fcinfo, Oid rngtypid,
 
 	if (cached->rngtypid != rngtypid)
 	{
-		Form_pg_range		pg_range;
-		Form_pg_opclass		pg_opclass;
-		Form_pg_type		pg_type;
-		HeapTuple			tup;
+		Form_pg_range pg_range;
+		Form_pg_opclass pg_opclass;
+		Form_pg_type pg_type;
+		HeapTuple	tup;
 
-		Oid		subtypeOid;
-		Oid		collationOid;
-		Oid		canonicalOid;
-		Oid		subdiffOid;
-		Oid		opclassOid;
-		Oid		cmpFnOid;
-		Oid		opfamilyOid;
-		Oid		opcintype;
-		int16	subtyplen;
-		char	subtypalign;
-		char	subtypstorage;
-		bool	subtypbyval;
+		Oid			subtypeOid;
+		Oid			collationOid;
+		Oid			canonicalOid;
+		Oid			subdiffOid;
+		Oid			opclassOid;
+		Oid			cmpFnOid;
+		Oid			opfamilyOid;
+		Oid			opcintype;
+		int16		subtyplen;
+		char		subtypalign;
+		char		subtypstorage;
+		bool		subtypbyval;
 
 		/* get information from pg_range */
 		tup = SearchSysCache1(RANGETYPE, ObjectIdGetDatum(rngtypid));
@@ -1646,11 +1691,11 @@ range_gettypinfo(FunctionCallInfo fcinfo, Oid rngtypid,
 
 		pg_range = (Form_pg_range) GETSTRUCT(tup);
 
-		subtypeOid	 = pg_range->rngsubtype;
+		subtypeOid = pg_range->rngsubtype;
 		collationOid = pg_range->rngcollation;
 		canonicalOid = pg_range->rngcanonical;
-		opclassOid	 = pg_range->rngsubopc;
-		subdiffOid	 = pg_range->rngsubdiff;
+		opclassOid = pg_range->rngsubopc;
+		subdiffOid = pg_range->rngsubdiff;
 
 		ReleaseSysCache(tup);
 
@@ -1665,7 +1710,7 @@ range_gettypinfo(FunctionCallInfo fcinfo, Oid rngtypid,
 		pg_opclass = (Form_pg_opclass) GETSTRUCT(tup);
 
 		opfamilyOid = pg_opclass->opcfamily;
-		opcintype  = pg_opclass->opcintype;
+		opcintype = pg_opclass->opcintype;
 
 		ReleaseSysCache(tup);
 
@@ -1683,10 +1728,10 @@ range_gettypinfo(FunctionCallInfo fcinfo, Oid rngtypid,
 
 		pg_type = (Form_pg_type) GETSTRUCT(tup);
 
-		subtyplen	  = pg_type->typlen;
-		subtypalign	  = pg_type->typalign;
+		subtyplen = pg_type->typlen;
+		subtypalign = pg_type->typalign;
 		subtypstorage = pg_type->typstorage;
-		subtypbyval	  = pg_type->typbyval;
+		subtypbyval = pg_type->typbyval;
 
 		ReleaseSysCache(tup);
 
@@ -1703,13 +1748,13 @@ range_gettypinfo(FunctionCallInfo fcinfo, Oid rngtypid,
 			cached->subdiffFn.fn_addr = NULL;
 
 		fmgr_info(cmpFnOid, &cached->cmpFn);
-		cached->subtype		  = subtypeOid;
-		cached->collation	  = collationOid;
-		cached->subtyplen	  = subtyplen;
-		cached->subtypalign	  = subtypalign;
+		cached->subtype = subtypeOid;
+		cached->collation = collationOid;
+		cached->subtyplen = subtyplen;
+		cached->subtypalign = subtypalign;
 		cached->subtypstorage = subtypstorage;
-		cached->subtypbyval	  = subtypbyval;
-		cached->rngtypid	  = rngtypid;
+		cached->subtypbyval = subtypbyval;
+		cached->rngtypid = rngtypid;
 	}
 
 	memcpy(rngtypinfo, cached, sizeof(RangeTypeInfo));
@@ -1724,7 +1769,7 @@ range_gettypinfo(FunctionCallInfo fcinfo, Oid rngtypid,
 char
 range_parse_flags(char *flags_str)
 {
-	char		 flags = 0;
+	char		flags = 0;
 
 	if (flags_str[0] == '\0' ||
 		flags_str[1] == '\0' ||
@@ -1745,7 +1790,7 @@ range_parse_flags(char *flags_str)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("invalid range bound flags"),
-					 errhint("Valid values are '[]', '[)', '(]', and '()'.")));
+				   errhint("Valid values are '[]', '[)', '(]', and '()'.")));
 	}
 
 	switch (flags_str[1])
@@ -1759,7 +1804,7 @@ range_parse_flags(char *flags_str)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("invalid range bound flags"),
-					 errhint("Valid values are '[]', '[)', '(]', and '()'.")));
+				   errhint("Valid values are '[]', '[)', '(]', and '()'.")));
 	}
 
 	return flags;
@@ -1774,10 +1819,10 @@ range_parse_flags(char *flags_str)
 /*
  * Parse range input, modeled after record_in in rowtypes.c.
  *
- *  <range>   := EMPTY
- *	           | <lb-inc> <string>, <string> <ub-inc>
- *  <lb-inc>  := '[' | '('
- *  <ub-inc>  := ']' | ')'
+ *	<range>   := EMPTY
+ *			   | <lb-inc> <string>, <string> <ub-inc>
+ *	<lb-inc>  := '[' | '('
+ *	<ub-inc>  := ']' | ')'
  *
  * Whitespace before or after <range> is ignored. Whitespace within a <string>
  * is taken literally and becomes the input string for that bound.
@@ -1791,11 +1836,11 @@ range_parse_flags(char *flags_str)
  * double-quotes, a double-quote can be escaped with double-quote or backslash.
  */
 static void
-range_parse(char *string,  char *flags, char **lbound_str,
+range_parse(char *string, char *flags, char **lbound_str,
 			char **ubound_str)
 {
-	char		*ptr = string;
-	bool		 infinite;
+	char	   *ptr = string;
+	bool		infinite;
 
 	*flags = 0;
 
@@ -1897,13 +1942,13 @@ range_parse(char *string,  char *flags, char **lbound_str,
 static char *
 range_parse_bound(char *string, char *ptr, char **bound_str, bool *infinite)
 {
-	StringInfoData		 buf;
+	StringInfoData buf;
 
 	/* Check for null: completely empty input means null */
 	if (*ptr == ',' || *ptr == ')' || *ptr == ']')
 	{
 		*bound_str = NULL;
-		*infinite  = true;
+		*infinite = true;
 	}
 	else
 	{
@@ -1948,7 +1993,7 @@ range_parse_bound(char *string, char *ptr, char **bound_str, bool *infinite)
 		}
 
 		*bound_str = buf.data;
-		*infinite  = false;
+		*infinite = false;
 	}
 
 	return ptr;
@@ -1957,7 +2002,7 @@ range_parse_bound(char *string, char *ptr, char **bound_str, bool *infinite)
 static char *
 range_deparse(char flags, char *lbound_str, char *ubound_str)
 {
-	StringInfoData	 buf;
+	StringInfoData buf;
 
 	initStringInfo(&buf);
 
@@ -1982,9 +2027,9 @@ range_deparse(char flags, char *lbound_str, char *ubound_str)
 static char *
 range_bound_escape(char *value)
 {
-	bool				 nq;
-	char				*tmp;
-	StringInfoData		 buf;
+	bool		nq;
+	char	   *tmp;
+	StringInfoData buf;
 
 	initStringInfo(&buf);
 
@@ -2023,7 +2068,7 @@ range_bound_escape(char *value)
 }
 
 static bool
-range_contains_internal(FunctionCallInfo fcinfo, RangeType *r1, RangeType *r2)
+range_contains_internal(FunctionCallInfo fcinfo, RangeType * r1, RangeType * r2)
 {
 	RangeBound	lower1;
 	RangeBound	upper1;
@@ -2066,8 +2111,8 @@ datum_compute_size(Size data_length, Datum val, bool typbyval, char typalign,
 		VARATT_CAN_MAKE_SHORT(DatumGetPointer(val)))
 	{
 		/*
-		 * we're anticipating converting to a short varlena header, so
-		 * adjust length and don't count any alignment
+		 * we're anticipating converting to a short varlena header, so adjust
+		 * length and don't count any alignment
 		 */
 		data_length += VARATT_CONVERTED_SHORT_SIZE(DatumGetPointer(val));
 	}
