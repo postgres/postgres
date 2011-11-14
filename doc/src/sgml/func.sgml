@@ -10461,6 +10461,10 @@ SELECT NULLIF(value, '(none)') ...
   <title>Range Functions and Operators</title>
 
   <para>
+   See <xref linkend="rangetypes"> for an overview of range types.
+  </para>
+
+  <para>
    <xref linkend="range-operators-table"> shows the operators
    available for range types.
   </para>
@@ -10556,44 +10560,44 @@ SELECT NULLIF(value, '(none)') ...
 
        <row>
         <entry> <literal>&amp;&lt;</literal> </entry>
-        <entry>Does not extend to the right of?</entry>
+        <entry>does not extend to the right of</entry>
         <entry><literal>int8range(1,20) &amp;&lt; int8range(18,20)</literal></entry>
         <entry><literal>t</literal></entry>
        </row>
 
        <row>
         <entry> <literal>&amp;&gt;</literal> </entry>
-        <entry>Does not extend to the left of?</entry>
+        <entry>does not extend to the left of</entry>
         <entry><literal>int8range(7,20) &amp;&gt; int8range(5,10)</literal></entry>
         <entry><literal>t</literal></entry>
        </row>
 
        <row>
         <entry> <literal>-|-</literal> </entry>
-        <entry>adjacent?</entry>
+        <entry>is adjacent to</entry>
         <entry><literal>numrange(1.1,2.2) -|- numrange(2.2,3.3)</literal></entry>
         <entry><literal>t</literal></entry>
        </row>
 
        <row>
         <entry> <literal>+</literal> </entry>
-        <entry>Union</entry>
+        <entry>union</entry>
         <entry><literal>numrange(5,15) + numrange(10,20)</literal></entry>
         <entry><literal>[5,20)</literal></entry>
        </row>
 
        <row>
-        <entry> <literal>-</literal> </entry>
-        <entry>Difference</entry>
-        <entry><literal>int8range(5,15) - int8range(10,20)</literal></entry>
-        <entry><literal>[5,10)</literal></entry>
+        <entry> <literal>*</literal> </entry>
+        <entry>intersection</entry>
+        <entry><literal>int8range(5,15) * int8range(10,20)</literal></entry>
+        <entry><literal>[10,15)</literal></entry>
        </row>
 
        <row>
-        <entry> <literal>*</literal> </entry>
-        <entry>Intersection</entry>
-        <entry><literal>int8range(5,15) * int8range(10,20)</literal></entry>
-        <entry><literal>[10,15)</literal></entry>
+        <entry> <literal>-</literal> </entry>
+        <entry>difference</entry>
+        <entry><literal>int8range(5,15) - int8range(10,20)</literal></entry>
+        <entry><literal>[5,10)</literal></entry>
        </row>
 
       </tbody>
@@ -10601,20 +10605,29 @@ SELECT NULLIF(value, '(none)') ...
     </table>
 
   <para>
-   Range comparisons compare the lower bounds first, and only if
-   equal, compare the upper bounds. This is generally most useful for
-   B-tree indexes, rather than being useful comparisons by themselves.
+   The simple comparison operators <literal>&lt;</literal>,
+   <literal>&gt;</literal>, <literal>&lt;=</literal>, and
+   <literal>&gt;=</literal> compare the lower bounds first, and only if those
+   are equal, compare the upper bounds.  These comparisons are not usually
+   very useful for ranges, but are provided to allow B-tree indexes to be
+   constructed on ranges.
   </para>
 
   <para>
-   See <xref linkend="rangetypes"> for more details about range operator
-   behavior.
+   The left-of/right-of/adjacent operators always return false when an empty
+   range is involved; that is, an empty range is not considered to be either
+   before or after any other range.
+  </para>
+
+  <para>
+   The union and difference operators will fail if the resulting range would
+   need to contain two disjoint sub-ranges, as such a range cannot be
+   represented.
   </para>
 
   <para>
    <xref linkend="range-functions-table"> shows the functions
-   available for use with range types. See <xref linkend="rangetypes">
-   for more information  and examples of the use of these functions.
+   available for use with range types.
   </para>
 
   <indexterm>
@@ -10658,7 +10671,7 @@ SELECT NULLIF(value, '(none)') ...
           <function>lower</function>(<type>anyrange</type>)
          </literal>
         </entry>
-        <entry><type>anyrange</type></entry>
+        <entry>range's element type</entry>
         <entry>lower bound of range</entry>
         <entry><literal>lower(numrange(1.1,2.2))</literal></entry>
         <entry><literal>1.1</literal></entry>
@@ -10669,7 +10682,7 @@ SELECT NULLIF(value, '(none)') ...
           <function>upper</function>(<type>anyrange</type>)
          </literal>
         </entry>
-        <entry><type>anyrange</type></entry>
+        <entry>range's element type</entry>
         <entry>upper bound of range</entry>
         <entry><literal>upper(numrange(1.1,2.2))</literal></entry>
         <entry><literal>2.2</literal></entry>
@@ -10680,7 +10693,7 @@ SELECT NULLIF(value, '(none)') ...
           <function>isempty</function>(<type>anyrange</type>)
          </literal>
         </entry>
-        <entry><type>anyrange</type></entry>
+        <entry><type>boolean</type></entry>
         <entry>is the range empty?</entry>
         <entry><literal>isempty(numrange(1.1,2.2))</literal></entry>
         <entry><literal>false</literal></entry>
@@ -10691,8 +10704,8 @@ SELECT NULLIF(value, '(none)') ...
           <function>lower_inc</function>(<type>anyrange</type>)
          </literal>
         </entry>
-        <entry><type>anyrange</type></entry>
-        <entry>is the lower bound of the range inclusive?</entry>
+        <entry><type>boolean</type></entry>
+        <entry>is the lower bound inclusive?</entry>
         <entry><literal>lower_inc(numrange(1.1,2.2))</literal></entry>
         <entry><literal>true</literal></entry>
        </row>
@@ -10702,8 +10715,8 @@ SELECT NULLIF(value, '(none)') ...
           <function>upper_inc</function>(<type>anyrange</type>)
          </literal>
         </entry>
-        <entry><type>anyrange</type></entry>
-        <entry>is the upper bound of the range inclusive?</entry>
+        <entry><type>boolean</type></entry>
+        <entry>is the upper bound inclusive?</entry>
         <entry><literal>upper_inc(numrange(1.1,2.2))</literal></entry>
         <entry><literal>false</literal></entry>
        </row>
@@ -10713,8 +10726,8 @@ SELECT NULLIF(value, '(none)') ...
           <function>lower_inf</function>(<type>anyrange</type>)
          </literal>
         </entry>
-        <entry><type>anyrange</type></entry>
-        <entry>is the lower bound of the range infinite?</entry>
+        <entry><type>boolean</type></entry>
+        <entry>is the lower bound infinite?</entry>
         <entry><literal>lower_inf('(,)'::daterange)</literal></entry>
         <entry><literal>true</literal></entry>
        </row>
@@ -10724,8 +10737,8 @@ SELECT NULLIF(value, '(none)') ...
           <function>upper_inf</function>(<type>anyrange</type>)
          </literal>
         </entry>
-        <entry><type>anyrange</type></entry>
-        <entry>is the upper bound of the range infinite?</entry>
+        <entry><type>boolean</type></entry>
+        <entry>is the upper bound infinite?</entry>
         <entry><literal>upper_inf('(,)'::daterange)</literal></entry>
         <entry><literal>true</literal></entry>
        </row>

@@ -701,15 +701,11 @@ range_before(PG_FUNCTION_ARGS)
 		lower1.rngtypid != upper2.rngtypid)
 		elog(ERROR, "range types do not match");
 
+	/* An empty range is neither before nor after any other range */
 	if (empty1 || empty2)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATA_EXCEPTION),
-				 errmsg("input range is empty")));
-
-	if (range_cmp_bounds(fcinfo, &upper1, &lower2) < 0)
-		PG_RETURN_BOOL(true);
-	else
 		PG_RETURN_BOOL(false);
+
+	PG_RETURN_BOOL(range_cmp_bounds(fcinfo, &upper1, &lower2) < 0);
 }
 
 Datum
@@ -732,15 +728,11 @@ range_after(PG_FUNCTION_ARGS)
 		lower1.rngtypid != upper2.rngtypid)
 		elog(ERROR, "range types do not match");
 
+	/* An empty range is neither before nor after any other range */
 	if (empty1 || empty2)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATA_EXCEPTION),
-				 errmsg("input range is empty")));
-
-	if (range_cmp_bounds(fcinfo, &lower1, &upper2) > 0)
-		PG_RETURN_BOOL(true);
-	else
 		PG_RETURN_BOOL(false);
+
+	PG_RETURN_BOOL(range_cmp_bounds(fcinfo, &lower1, &upper2) > 0);
 }
 
 Datum
@@ -764,10 +756,9 @@ range_adjacent(PG_FUNCTION_ARGS)
 		lower1.rngtypid != upper2.rngtypid)
 		elog(ERROR, "range types do not match");
 
+	/* An empty range is not adjacent to any other range */
 	if (empty1 || empty2)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATA_EXCEPTION),
-				 errmsg("undefined for empty ranges")));
+		PG_RETURN_BOOL(false);
 
 	/*
 	 * For two ranges to be adjacent, the lower boundary of one range has to
@@ -819,6 +810,7 @@ range_overlaps(PG_FUNCTION_ARGS)
 		lower1.rngtypid != upper2.rngtypid)
 		elog(ERROR, "range types do not match");
 
+	/* An empty range does not overlap any other range */
 	if (empty1 || empty2)
 		PG_RETURN_BOOL(false);
 
@@ -853,6 +845,7 @@ range_overleft(PG_FUNCTION_ARGS)
 		lower1.rngtypid != upper2.rngtypid)
 		elog(ERROR, "range types do not match");
 
+	/* An empty range is neither before nor after any other range */
 	if (empty1 || empty2)
 		PG_RETURN_BOOL(false);
 
@@ -882,6 +875,7 @@ range_overright(PG_FUNCTION_ARGS)
 		lower1.rngtypid != upper2.rngtypid)
 		elog(ERROR, "range types do not match");
 
+	/* An empty range is neither before nor after any other range */
 	if (empty1 || empty2)
 		PG_RETURN_BOOL(false);
 
@@ -917,6 +911,7 @@ range_minus(PG_FUNCTION_ARGS)
 		lower1.rngtypid != upper2.rngtypid)
 		elog(ERROR, "range types do not match");
 
+	/* if either is empty, r1 is the correct answer */
 	if (empty1 || empty2)
 		PG_RETURN_RANGE(r1);
 
@@ -971,6 +966,7 @@ range_union(PG_FUNCTION_ARGS)
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);
 	range_deserialize(fcinfo, r2, &lower2, &upper2, &empty2);
 
+	/* if either is empty, the other is the correct answer */
 	if (empty1)
 		PG_RETURN_RANGE(r2);
 	if (empty2)
@@ -1051,6 +1047,7 @@ range_cmp(PG_FUNCTION_ARGS)
 		lower1.rngtypid != upper2.rngtypid)
 		elog(ERROR, "range types do not match");
 
+	/* For b-tree use, empty ranges sort before all else */
 	if (empty1 && empty2)
 		PG_RETURN_INT32(0);
 	else if (empty1)

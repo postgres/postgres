@@ -144,7 +144,6 @@ select '(!,[)'::textrange;
  (!,"[")
 (1 row)
 
-drop type textrange;
 --
 -- create some test data and test the operators
 --
@@ -529,6 +528,7 @@ select daterange('2000-01-10'::date, '2000-01-20'::date,'[]');
  [01-10-2000,01-21-2000)
 (1 row)
 
+-- test GiST index that's been built incrementally
 create table test_range_gist(ir int4range);
 create index test_range_gist_idx on test_range_gist using gist (ir);
 insert into test_range_gist select int4range(g, g+10) from generate_series(1,2000) g;
@@ -538,81 +538,10 @@ insert into test_range_gist select 'empty'::int4range from generate_series(1,500
 insert into test_range_gist select int4range(NULL,g*10,'(]') from generate_series(1,100) g;
 insert into test_range_gist select int4range(g*10,NULL,'(]') from generate_series(1,100) g;
 insert into test_range_gist select int4range(g, g+10) from generate_series(1,2000) g;
-BEGIN;
-SET LOCAL enable_seqscan    = t;
-SET LOCAL enable_bitmapscan = f;
-SET LOCAL enable_indexscan  = f;
-select count(*) from test_range_gist where ir @> 'empty'::int4range;
- count 
--------
-  6200
-(1 row)
-
-select count(*) from test_range_gist where ir = int4range(10,20);
- count 
--------
-     2
-(1 row)
-
-select count(*) from test_range_gist where ir @> 10;
- count 
--------
-   130
-(1 row)
-
-select count(*) from test_range_gist where ir @> int4range(10,20);
- count 
--------
-   111
-(1 row)
-
-select count(*) from test_range_gist where ir && int4range(10,20);
- count 
--------
-   158
-(1 row)
-
-select count(*) from test_range_gist where ir <@ int4range(10,50);
- count 
--------
-  1062
-(1 row)
-
-select count(*) from (select * from test_range_gist where not isempty(ir)) s where ir << int4range(100,500);
- count 
--------
-   189
-(1 row)
-
-select count(*) from (select * from test_range_gist where not isempty(ir)) s where ir >> int4range(100,500);
- count 
--------
-  3554
-(1 row)
-
-select count(*) from (select * from test_range_gist where not isempty(ir)) s where ir &< int4range(100,500);
- count 
--------
-  1029
-(1 row)
-
-select count(*) from (select * from test_range_gist where not isempty(ir)) s where ir &> int4range(100,500);
- count 
--------
-  4794
-(1 row)
-
-select count(*) from (select * from test_range_gist where not isempty(ir)) s where ir -|- int4range(100,500);
- count 
--------
-     5
-(1 row)
-
-COMMIT;
-BEGIN;
-SET LOCAL enable_seqscan    = f;
-SET LOCAL enable_bitmapscan = f;
-SET LOCAL enable_indexscan  = t;
+-- first, verify non-indexed results
+SET enable_seqscan    = t;
+SET enable_indexscan  = f;
+SET enable_bitmapscan = f;
 select count(*) from test_range_gist where ir @> 'empty'::int4range;
  count 
 -------
@@ -679,13 +608,79 @@ select count(*) from test_range_gist where ir -|- int4range(100,500);
      5
 (1 row)
 
-COMMIT;
+-- now check same queries using index
+SET enable_seqscan    = f;
+SET enable_indexscan  = t;
+SET enable_bitmapscan = f;
+select count(*) from test_range_gist where ir @> 'empty'::int4range;
+ count 
+-------
+  6200
+(1 row)
+
+select count(*) from test_range_gist where ir = int4range(10,20);
+ count 
+-------
+     2
+(1 row)
+
+select count(*) from test_range_gist where ir @> 10;
+ count 
+-------
+   130
+(1 row)
+
+select count(*) from test_range_gist where ir @> int4range(10,20);
+ count 
+-------
+   111
+(1 row)
+
+select count(*) from test_range_gist where ir && int4range(10,20);
+ count 
+-------
+   158
+(1 row)
+
+select count(*) from test_range_gist where ir <@ int4range(10,50);
+ count 
+-------
+  1062
+(1 row)
+
+select count(*) from test_range_gist where ir << int4range(100,500);
+ count 
+-------
+   189
+(1 row)
+
+select count(*) from test_range_gist where ir >> int4range(100,500);
+ count 
+-------
+  3554
+(1 row)
+
+select count(*) from test_range_gist where ir &< int4range(100,500);
+ count 
+-------
+  1029
+(1 row)
+
+select count(*) from test_range_gist where ir &> int4range(100,500);
+ count 
+-------
+  4794
+(1 row)
+
+select count(*) from test_range_gist where ir -|- int4range(100,500);
+ count 
+-------
+     5
+(1 row)
+
+-- now check same queries using a bulk-loaded index
 drop index test_range_gist_idx;
 create index test_range_gist_idx on test_range_gist using gist (ir);
-BEGIN;
-SET LOCAL enable_seqscan    = f;
-SET LOCAL enable_bitmapscan = f;
-SET LOCAL enable_indexscan  = t;
 select count(*) from test_range_gist where ir @> 'empty'::int4range;
  count 
 -------
@@ -752,8 +747,9 @@ select count(*) from test_range_gist where ir -|- int4range(100,500);
      5
 (1 row)
 
-COMMIT;
-drop table test_range_gist;
+RESET enable_seqscan;
+RESET enable_indexscan;
+RESET enable_bitmapscan;
 --
 -- Btree_gist is not included by default, so to test exclusion
 -- constraints with range types, use singleton int ranges for the "="
@@ -782,7 +778,6 @@ insert into test_range_excl
   values(int4range(125), int4range(1), '[2010-01-02 10:10, 2010-01-02 11:10)');
 ERROR:  conflicting key value violates exclusion constraint "test_range_excl_speaker_during_excl"
 DETAIL:  Key (speaker, during)=([1,2), ["Sat Jan 02 10:10:00 2010","Sat Jan 02 11:10:00 2010")) conflicts with existing key (speaker, during)=([1,2), ["Sat Jan 02 10:00:00 2010","Sat Jan 02 11:00:00 2010")).
-drop table test_range_excl;
 -- test bigint ranges
 select int8range(10000000000::int8, 20000000000::int8,'(]');
          int8range         
@@ -924,7 +919,6 @@ select arrayrange(ARRAY[1,2], ARRAY[2,1]);
  ["{1,2}","{2,1}")
 (1 row)
 
-drop type arrayrange;
 --
 -- OUT/INOUT/TABLE functions
 --
