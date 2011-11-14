@@ -3,7 +3,8 @@
  * rangetypes_gist.c
  *	  GiST support for range types.
  *
- * Copyright (c) 2006-2011, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
@@ -20,6 +21,8 @@
 #include "utils/lsyscache.h"
 #include "utils/rangetypes.h"
 
+
+/* Operator strategy numbers used in the GiST range opclass */
 #define RANGESTRAT_EQ					1
 #define RANGESTRAT_NE					2
 #define RANGESTRAT_OVERLAPS				3
@@ -33,16 +36,6 @@
 #define RANGESTRAT_OVERRIGHT			11
 #define RANGESTRAT_ADJACENT				12
 
-static RangeType *range_super_union(FunctionCallInfo fcinfo, RangeType * r1,
-				  RangeType * r2);
-static bool range_gist_consistent_int(FunctionCallInfo fcinfo,
-						  StrategyNumber strategy, RangeType * key,
-						  RangeType * query);
-static bool range_gist_consistent_leaf(FunctionCallInfo fcinfo,
-						   StrategyNumber strategy, RangeType * key,
-						   RangeType * query);
-static int	sort_item_cmp(const void *a, const void *b);
-
 /*
  * Auxiliary structure for picksplit method.
  */
@@ -53,6 +46,16 @@ typedef struct
 	FunctionCallInfo fcinfo;
 }	PickSplitSortItem;
 
+static RangeType *range_super_union(FunctionCallInfo fcinfo, RangeType * r1,
+				  RangeType * r2);
+static bool range_gist_consistent_int(FunctionCallInfo fcinfo,
+						  StrategyNumber strategy, RangeType * key,
+						  RangeType * query);
+static bool range_gist_consistent_leaf(FunctionCallInfo fcinfo,
+						   StrategyNumber strategy, RangeType * key,
+						   RangeType * query);
+static int	sort_item_cmp(const void *a, const void *b);
+
 
 Datum
 range_gist_consistent(PG_FUNCTION_ARGS)
@@ -60,12 +63,10 @@ range_gist_consistent(PG_FUNCTION_ARGS)
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	Datum		dquery = PG_GETARG_DATUM(1);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
-
 	/* Oid subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	RangeType  *key = DatumGetRangeType(entry->key);
 	RangeType  *query;
-
 	RangeBound	lower;
 	RangeBound	upper;
 	bool		empty;
@@ -77,14 +78,11 @@ range_gist_consistent(PG_FUNCTION_ARGS)
 
 	switch (strategy)
 	{
-			RangeBound	lower;
-			RangeBound	upper;
-
-			/*
-			 * For contains and contained by operators, the other operand is a
-			 * "point" of the subtype. Construct a singleton range containing
-			 * just that value.
-			 */
+		/*
+		 * For contains and contained by operators, the other operand is a
+		 * "point" of the subtype. Construct a singleton range containing
+		 * just that value.
+		 */
 		case RANGESTRAT_CONTAINS_ELEM:
 		case RANGESTRAT_ELEM_CONTAINED_BY:
 			lower.rngtypid = rngtypid;
@@ -97,8 +95,8 @@ range_gist_consistent(PG_FUNCTION_ARGS)
 			upper.val = dquery;
 			upper.lower = false;
 			upper.infinite = false;
-			query = DatumGetRangeType(
-								  make_range(fcinfo, &lower, &upper, false));
+			query = DatumGetRangeType(make_range(fcinfo,
+												 &lower, &upper, false));
 			break;
 
 		default:
@@ -107,11 +105,11 @@ range_gist_consistent(PG_FUNCTION_ARGS)
 	}
 
 	if (GIST_LEAF(entry))
-		PG_RETURN_BOOL(range_gist_consistent_leaf(
-											  fcinfo, strategy, key, query));
+		PG_RETURN_BOOL(range_gist_consistent_leaf(fcinfo, strategy,
+												  key, query));
 	else
-		PG_RETURN_BOOL(range_gist_consistent_int(
-											  fcinfo, strategy, key, query));
+		PG_RETURN_BOOL(range_gist_consistent_int(fcinfo, strategy,
+												 key, query));
 }
 
 Datum
@@ -157,21 +155,19 @@ range_gist_penalty(PG_FUNCTION_ARGS)
 	float	   *penalty = (float *) PG_GETARG_POINTER(2);
 	RangeType  *orig = DatumGetRangeType(origentry->key);
 	RangeType  *new = DatumGetRangeType(newentry->key);
-	RangeType  *s_union = range_super_union(fcinfo, orig, new);
-
+	RangeType  *s_union;
 	FmgrInfo   *subtype_diff;
-
 	RangeBound	lower1,
 				lower2;
 	RangeBound	upper1,
 				upper2;
 	bool		empty1,
 				empty2;
-
 	float		lower_diff,
 				upper_diff;
-
 	RangeTypeInfo rngtypinfo;
+
+	s_union = range_super_union(fcinfo, orig, new);
 
 	range_deserialize(fcinfo, orig, &lower1, &upper1, &empty1);
 	range_deserialize(fcinfo, s_union, &lower2, &upper2, &empty2);
@@ -371,23 +367,21 @@ range_super_union(FunctionCallInfo fcinfo, RangeType * r1, RangeType * r2)
 	if (result_lower == &lower2 && result_upper == &upper2)
 		return r2;
 
-	return DatumGetRangeType(
-					  make_range(fcinfo, result_lower, result_upper, false));
+	return DatumGetRangeType(make_range(fcinfo, result_lower, result_upper,
+										false));
 }
 
 static bool
 range_gist_consistent_int(FunctionCallInfo fcinfo, StrategyNumber strategy,
 						  RangeType * key, RangeType * query)
 {
-	Oid			proc = InvalidOid;
-
+	Oid			proc;
 	RangeBound	lower1,
 				lower2;
 	RangeBound	upper1,
 				upper2;
 	bool		empty1,
 				empty2;
-
 	bool		retval;
 	bool		negate = false;
 
@@ -440,12 +434,15 @@ range_gist_consistent_int(FunctionCallInfo fcinfo, StrategyNumber strategy,
 		case RANGESTRAT_ADJACENT:
 			if (empty1 || empty2)
 				return false;
-			if (DatumGetBool(
-							 OidFunctionCall2(F_RANGE_ADJACENT,
+			if (DatumGetBool(OidFunctionCall2(F_RANGE_ADJACENT,
 											  RangeTypeGetDatum(key),
 											  RangeTypeGetDatum(query))))
 				return true;
 			proc = F_RANGE_OVERLAPS;
+			break;
+		default:
+			elog(ERROR, "unrecognized range strategy: %d", strategy);
+			proc = InvalidOid;
 			break;
 	}
 
@@ -462,8 +459,7 @@ static bool
 range_gist_consistent_leaf(FunctionCallInfo fcinfo, StrategyNumber strategy,
 						   RangeType * key, RangeType * query)
 {
-	Oid			proc = InvalidOid;
-
+	Oid			proc;
 	RangeBound	lower1,
 				lower2;
 	RangeBound	upper1,
@@ -518,6 +514,10 @@ range_gist_consistent_leaf(FunctionCallInfo fcinfo, StrategyNumber strategy,
 				return false;
 			proc = F_RANGE_ADJACENT;
 			break;
+		default:
+			elog(ERROR, "unrecognized range strategy: %d", strategy);
+			proc = InvalidOid;
+			break;
 	}
 
 	return DatumGetBool(OidFunctionCall2(proc, RangeTypeGetDatum(key),
@@ -545,16 +545,13 @@ sort_item_cmp(const void *a, const void *b)
 	PickSplitSortItem *i2 = (PickSplitSortItem *) b;
 	RangeType  *r1 = i1->data;
 	RangeType  *r2 = i2->data;
-
 	RangeBound	lower1,
 				lower2;
 	RangeBound	upper1,
 				upper2;
 	bool		empty1,
 				empty2;
-
 	FunctionCallInfo fcinfo = i1->fcinfo;
-
 	int			cmp;
 
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);

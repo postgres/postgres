@@ -345,7 +345,7 @@ select numrange(1.0, 2.0) + numrange(1.5, 3.0);
 (1 row)
 
 select numrange(1.0, 2.0) + numrange(2.5, 3.0);
-ERROR:  result range is not contiguous
+ERROR:  result of range union would not be contiguous
 select numrange(1.0, 2.0) * numrange(2.0, 3.0);
  ?column? 
 ----------

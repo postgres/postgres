@@ -3,7 +3,8 @@
  * pg_range.c
  *	  routines to support manipulation of the pg_range relation
  *
- * Copyright (c) 2006-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
@@ -22,10 +23,10 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_range.h"
 #include "catalog/pg_type.h"
-#include "utils/builtins.h"
 #include "utils/fmgroids.h"
-#include "utils/tqual.h"
 #include "utils/rel.h"
+#include "utils/tqual.h"
+
 
 /*
  * RangeCreate
@@ -45,7 +46,7 @@ RangeCreate(Oid rangeTypeOid, Oid rangeSubType, Oid rangeCollation,
 
 	pg_range = heap_open(RangeRelationId, RowExclusiveLock);
 
-	memset(nulls, 0, Natts_pg_range * sizeof(bool));
+	memset(nulls, 0, sizeof(nulls));
 
 	values[Anum_pg_range_rngtypid - 1] = ObjectIdGetDatum(rangeTypeOid);
 	values[Anum_pg_range_rngsubtype - 1] = ObjectIdGetDatum(rangeSubType);
@@ -55,11 +56,12 @@ RangeCreate(Oid rangeTypeOid, Oid rangeSubType, Oid rangeCollation,
 	values[Anum_pg_range_rngsubdiff - 1] = ObjectIdGetDatum(rangeSubDiff);
 
 	tup = heap_form_tuple(RelationGetDescr(pg_range), values, nulls);
+
 	simple_heap_insert(pg_range, tup);
 	CatalogUpdateIndexes(pg_range, tup);
 	heap_freetuple(tup);
 
-	/* record dependencies */
+	/* record type's dependencies on range-related items */
 
 	myself.classId = TypeRelationId;
 	myself.objectId = rangeTypeOid;
@@ -105,7 +107,7 @@ RangeCreate(Oid rangeTypeOid, Oid rangeSubType, Oid rangeCollation,
 
 /*
  * RangeDelete
- *		Remove the pg_range entry.
+ *		Remove the pg_range entry for the specified type.
  */
 void
 RangeDelete(Oid rangeTypeOid)

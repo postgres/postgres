@@ -1,9 +1,10 @@
 /*-------------------------------------------------------------------------
  *
  * rangetypes.c
- *	  I/O functions, operators, and support functions for range types
+ *	  I/O functions, operators, and support functions for range types.
  *
- * Copyright (c) 2006-2011, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
@@ -31,6 +32,7 @@
 #include "utils/timestamp.h"
 #include "utils/typcache.h"
 
+
 #define TYPE_IS_PACKABLE(typlen, typstorage) \
 	(typlen == -1 && typstorage != 'p')
 
@@ -53,6 +55,10 @@
 
 #define RANGE_EMPTY_LITERAL "empty"
 
+#define RANGE_DEFAULT_FLAGS		"[)"
+
+
+static char range_parse_flags(const char *flags_str);
 static void range_parse(char *input_str, char *flags, char **lbound_str,
 			char **ubound_str);
 static char *range_parse_bound(char *string, char *ptr, char **bound_str,
@@ -66,6 +72,7 @@ static Size datum_compute_size(Size sz, Datum datum, bool typbyval,
 static Pointer datum_write(Pointer ptr, Datum datum, bool typbyval,
 			char typalign, int16 typlen, char typstorage);
 
+
 /*
  *----------------------------------------------------------
  * I/O FUNCTIONS
@@ -78,16 +85,13 @@ range_in(PG_FUNCTION_ARGS)
 	char	   *input_str = PG_GETARG_CSTRING(0);
 	Oid			rngtypoid = PG_GETARG_OID(1);
 	Oid			typmod = PG_GETARG_INT32(2);
-
-	char		flags;
 	Datum		range;
+	char		flags;
 	char	   *lbound_str;
 	char	   *ubound_str;
-
 	regproc		subInput;
 	FmgrInfo	subInputFn;
 	Oid			ioParam;
-
 	RangeTypeInfo rngtypinfo;
 	RangeBound	lower;
 	RangeBound	upper;
@@ -132,18 +136,14 @@ Datum
 range_out(PG_FUNCTION_ARGS)
 {
 	RangeType  *range = PG_GETARG_RANGE(0);
-
+	char	   *output_str;
 	regproc		subOutput;
 	FmgrInfo	subOutputFn;
 	bool		isVarlena;
-
 	char		flags = 0;
 	char	   *lbound_str = NULL;
 	char	   *ubound_str = NULL;
-	char	   *output_str;
-
 	bool		empty;
-
 	RangeTypeInfo rngtypinfo;
 	RangeBound	lower;
 	RangeBound	upper;
@@ -193,13 +193,12 @@ range_recv(PG_FUNCTION_ARGS)
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 	Oid			rngtypid = PG_GETARG_OID(1);
 	int32		typmod = PG_GETARG_INT32(2);
+	Datum		range;
 	Oid			subrecv;
 	Oid			ioparam;
-	Datum		range;
 	char		flags;
 	RangeBound	lower;
 	RangeBound	upper;
-
 	RangeTypeInfo rngtypinfo;
 
 	flags = (unsigned char) pq_getmsgbyte(buf);
@@ -258,11 +257,6 @@ range_recv(PG_FUNCTION_ARGS)
 	/* serialize and canonicalize */
 	range = make_range(fcinfo, &lower, &upper, flags & RANGE_EMPTY);
 
-	/*
-	 * XXX if the subtype is pass-by-val, we should pfree the upper and lower
-	 * bounds here.
-	 */
-
 	PG_RETURN_RANGE(range);
 }
 
@@ -277,7 +271,6 @@ range_send(PG_FUNCTION_ARGS)
 	bool		empty;
 	Oid			subsend;
 	bool		typIsVarlena;
-
 	RangeTypeInfo rngtypinfo;
 
 	pq_begintypsend(buf);
@@ -301,8 +294,8 @@ range_send(PG_FUNCTION_ARGS)
 
 	if (RANGE_HAS_LBOUND(flags))
 	{
-		Datum		bound = PointerGetDatum(
-									OidSendFunctionCall(subsend, lower.val));
+		Datum		bound = PointerGetDatum(OidSendFunctionCall(subsend,
+																lower.val));
 		uint32		bound_len = VARSIZE(bound) - VARHDRSZ;
 		char	   *bound_data = VARDATA(bound);
 
@@ -312,8 +305,8 @@ range_send(PG_FUNCTION_ARGS)
 
 	if (RANGE_HAS_UBOUND(flags))
 	{
-		Datum		bound = PointerGetDatum(
-									OidSendFunctionCall(subsend, upper.val));
+		Datum		bound = PointerGetDatum(OidSendFunctionCall(subsend,
+																upper.val));
 		uint32		bound_len = VARSIZE(bound) - VARHDRSZ;
 		char	   *bound_data = VARDATA(bound);
 
@@ -432,6 +425,7 @@ range_constructor3(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_EXCEPTION),
 				 errmsg("flags argument must not be NULL")));
+
 	flags = range_parse_flags(text_to_cstring(PG_GETARG_TEXT_P(2)));
 
 	lower.rngtypid = rngtypid;
@@ -570,7 +564,6 @@ range_eq(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE(0);
 	RangeType  *r2 = PG_GETARG_RANGE(1);
-
 	RangeBound	lower1,
 				lower2;
 	RangeBound	upper1,
@@ -612,9 +605,8 @@ Datum
 range_contains_elem(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE(0);
-	RangeType  *r2;
 	Datum		val = PG_GETARG_DATUM(1);
-
+	RangeType  *r2;
 	RangeBound	lower1,
 				lower2;
 	RangeBound	upper1,
@@ -653,9 +645,8 @@ Datum
 elem_contained_by_range(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE(1);
-	RangeType  *r2;
 	Datum		val = PG_GETARG_DATUM(0);
-
+	RangeType  *r2;
 	RangeBound	lower1,
 				lower2;
 	RangeBound	upper1,
@@ -695,7 +686,6 @@ range_before(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE(0);
 	RangeType  *r2 = PG_GETARG_RANGE(1);
-
 	RangeBound	lower1,
 				lower2;
 	RangeBound	upper1,
@@ -727,7 +717,6 @@ range_after(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE(0);
 	RangeType  *r2 = PG_GETARG_RANGE(1);
-
 	RangeBound	lower1,
 				lower2;
 	RangeBound	upper1,
@@ -759,9 +748,7 @@ range_adjacent(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE(0);
 	RangeType  *r2 = PG_GETARG_RANGE(1);
-
 	RangeTypeInfo rngtypinfo;
-
 	RangeBound	lower1,
 				lower2;
 	RangeBound	upper1,
@@ -817,7 +804,6 @@ range_overlaps(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE(0);
 	RangeType  *r2 = PG_GETARG_RANGE(1);
-
 	RangeBound	lower1,
 				lower2;
 	RangeBound	upper1,
@@ -852,7 +838,6 @@ range_overleft(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE(0);
 	RangeType  *r2 = PG_GETARG_RANGE(1);
-
 	RangeBound	lower1,
 				lower2;
 	RangeBound	upper1,
@@ -882,7 +867,6 @@ range_overright(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE(0);
 	RangeType  *r2 = PG_GETARG_RANGE(1);
-
 	RangeBound	lower1,
 				lower2;
 	RangeBound	upper1,
@@ -914,14 +898,12 @@ range_minus(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE(0);
 	RangeType  *r2 = PG_GETARG_RANGE(1);
-
 	RangeBound	lower1,
 				lower2;
 	RangeBound	upper1,
 				upper2;
 	bool		empty1,
 				empty2;
-
 	int			cmp_l1l2,
 				cmp_l1u2,
 				cmp_u1l2,
@@ -946,7 +928,7 @@ range_minus(PG_FUNCTION_ARGS)
 	if (cmp_l1l2 < 0 && cmp_u1u2 > 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_EXCEPTION),
-				 errmsg("result range is not contiguous")));
+				 errmsg("result of range difference would not be contiguous")));
 
 	if (cmp_l1u2 > 0 || cmp_u1l2 < 0)
 		PG_RETURN_RANGE(r1);
@@ -968,8 +950,8 @@ range_minus(PG_FUNCTION_ARGS)
 		PG_RETURN_RANGE(make_range(fcinfo, &upper2, &upper1, false));
 	}
 
-	elog(ERROR, "unexpected error in range_minus");
-	PG_RETURN_VOID();
+	elog(ERROR, "unexpected case in range_minus");
+	PG_RETURN_NULL();
 }
 
 Datum
@@ -977,7 +959,6 @@ range_union(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE(0);
 	RangeType  *r2 = PG_GETARG_RANGE(1);
-
 	RangeBound	lower1,
 				lower2;
 	RangeBound	upper1,
@@ -999,7 +980,7 @@ range_union(PG_FUNCTION_ARGS)
 		!DatumGetBool(range_adjacent(fcinfo)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_EXCEPTION),
-				 errmsg("result range is not contiguous")));
+				 errmsg("result of range union would not be contiguous")));
 
 	if (range_cmp_bounds(fcinfo, &lower1, &lower2) < 0)
 		result_lower = &lower1;
@@ -1019,7 +1000,6 @@ range_intersect(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE(0);
 	RangeType  *r2 = PG_GETARG_RANGE(1);
-
 	RangeBound	lower1,
 				lower2;
 	RangeBound	upper1,
@@ -1055,14 +1035,12 @@ range_cmp(PG_FUNCTION_ARGS)
 {
 	RangeType  *r1 = PG_GETARG_RANGE(0);
 	RangeType  *r2 = PG_GETARG_RANGE(1);
-
 	RangeBound	lower1,
 				lower2;
 	RangeBound	upper1,
 				upper2;
 	bool		empty1,
 				empty2;
-
 	int			cmp;
 
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);
@@ -1119,6 +1097,7 @@ range_gt(PG_FUNCTION_ARGS)
 }
 
 /* Hash support */
+
 Datum
 hash_range(PG_FUNCTION_ARGS)
 {
@@ -1130,13 +1109,10 @@ hash_range(PG_FUNCTION_ARGS)
 	uint32		lower_hash = 0;
 	uint32		upper_hash = 0;
 	uint32		result = 0;
-
 	RangeTypeInfo rngtypinfo;
-
 	TypeCacheEntry *typentry;
 	Oid			subtype;
 	FunctionCallInfoData locfcinfo;
-
 
 	range_deserialize(fcinfo, r, &lower, &upper, &empty);
 
@@ -1214,7 +1190,6 @@ Datum
 int4range_canonical(PG_FUNCTION_ARGS)
 {
 	RangeType  *r = PG_GETARG_RANGE(0);
-
 	RangeBound	lower;
 	RangeBound	upper;
 	bool		empty;
@@ -1243,7 +1218,6 @@ Datum
 int8range_canonical(PG_FUNCTION_ARGS)
 {
 	RangeType  *r = PG_GETARG_RANGE(0);
-
 	RangeBound	lower;
 	RangeBound	upper;
 	bool		empty;
@@ -1272,7 +1246,6 @@ Datum
 daterange_canonical(PG_FUNCTION_ARGS)
 {
 	RangeType  *r = PG_GETARG_RANGE(0);
-
 	RangeBound	lower;
 	RangeBound	upper;
 	bool		empty;
@@ -1311,7 +1284,7 @@ int4range_subdiff(PG_FUNCTION_ARGS)
 	int32		v1 = PG_GETARG_INT32(0);
 	int32		v2 = PG_GETARG_INT32(1);
 
-	PG_RETURN_FLOAT8((float8) (v1 - v2));
+	PG_RETURN_FLOAT8((float8) v1 - (float8) v2);
 }
 
 Datum
@@ -1320,16 +1293,7 @@ int8range_subdiff(PG_FUNCTION_ARGS)
 	int64		v1 = PG_GETARG_INT64(0);
 	int64		v2 = PG_GETARG_INT64(1);
 
-	PG_RETURN_FLOAT8((float8) (v1 - v2));
-}
-
-Datum
-daterange_subdiff(PG_FUNCTION_ARGS)
-{
-	int32		v1 = PG_GETARG_INT32(0);
-	int32		v2 = PG_GETARG_INT32(1);
-
-	PG_RETURN_FLOAT8((float8) (v1 - v2));
+	PG_RETURN_FLOAT8((float8) v1 - (float8) v2);
 }
 
 Datum
@@ -1342,10 +1306,19 @@ numrange_subdiff(PG_FUNCTION_ARGS)
 
 	numresult = DirectFunctionCall2(numeric_sub, v1, v2);
 
-	floatresult = DatumGetFloat8(
-							 DirectFunctionCall1(numeric_float8, numresult));
+	floatresult = DatumGetFloat8(DirectFunctionCall1(numeric_float8,
+													 numresult));
 
 	PG_RETURN_FLOAT8(floatresult);
+}
+
+Datum
+daterange_subdiff(PG_FUNCTION_ARGS)
+{
+	int32		v1 = PG_GETARG_INT32(0);
+	int32		v2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_FLOAT8((float8) v1 - (float8) v2);
 }
 
 Datum
@@ -1356,7 +1329,7 @@ tsrange_subdiff(PG_FUNCTION_ARGS)
 	float8		result;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	result = ((float8) (v1 - v2)) / USECS_PER_SEC;
+	result = ((float8) v1 - (float8) v2) / USECS_PER_SEC;
 #else
 	result = v1 - v2;
 #endif
@@ -1372,7 +1345,7 @@ tstzrange_subdiff(PG_FUNCTION_ARGS)
 	float8		result;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	result = ((float8) (v1 - v2)) / USECS_PER_SEC;
+	result = ((float8) v1 - (float8) v2) / USECS_PER_SEC;
 #else
 	result = v1 - v2;
 #endif
@@ -1384,7 +1357,7 @@ tstzrange_subdiff(PG_FUNCTION_ARGS)
  *----------------------------------------------------------
  * SUPPORT FUNCTIONS
  *
- *	 These functions aren't in pg_proc, but are useful if
+ *	 These functions aren't in pg_proc, but are useful for
  *	 defining new generic range functions in C.
  *----------------------------------------------------------
  */
@@ -1425,7 +1398,6 @@ range_serialize(FunctionCallInfo fcinfo, RangeBound *lower, RangeBound *upper,
 	bool		typbyval;
 	char		typstorage;
 	char		flags = 0;
-
 	RangeTypeInfo rngtypinfo;
 
 	if (lower->rngtypid != upper->rngtypid)
@@ -1509,7 +1481,6 @@ range_deserialize(FunctionCallInfo fcinfo, RangeType *range, RangeBound *lower,
 	Datum		lbound;
 	Datum		ubound;
 	Pointer		flags_ptr;
-
 	RangeTypeInfo rngtypinfo;
 
 	memset(lower, 0, sizeof(RangeBound));
@@ -1571,15 +1542,14 @@ range_deserialize(FunctionCallInfo fcinfo, RangeType *range, RangeBound *lower,
 }
 
 /*
- * This both serializes and caonicalizes (if applicable) the
- * range. This should be used by most callers.
+ * This both serializes and canonicalizes (if applicable) the range.
+ * This should be used by most callers.
  */
 Datum
 make_range(FunctionCallInfo fcinfo, RangeBound *lower, RangeBound *upper,
 		   bool empty)
 {
 	Datum		range;
-
 	RangeTypeInfo rngtypinfo;
 
 	range_gettypinfo(fcinfo, lower->rngtypid, &rngtypinfo);
@@ -1599,7 +1569,6 @@ int
 range_cmp_bounds(FunctionCallInfo fcinfo, RangeBound *b1, RangeBound *b2)
 {
 	int			result;
-
 	RangeTypeInfo rngtypinfo;
 
 	if (b1->infinite && b2->infinite)
@@ -1615,6 +1584,7 @@ range_cmp_bounds(FunctionCallInfo fcinfo, RangeBound *b1, RangeBound *b2)
 		return (b2->lower) ? 1 : -1;
 
 	range_gettypinfo(fcinfo, b1->rngtypid, &rngtypinfo);
+
 	result = DatumGetInt32(FunctionCall2Coll(&rngtypinfo.cmpFn,
 											 rngtypinfo.collation,
 											 b1->val, b2->val));
@@ -1670,7 +1640,6 @@ range_gettypinfo(FunctionCallInfo fcinfo, Oid rngtypid,
 		Form_pg_opclass pg_opclass;
 		Form_pg_type pg_type;
 		HeapTuple	tup;
-
 		Oid			subtypeOid;
 		Oid			collationOid;
 		Oid			canonicalOid;
@@ -1716,10 +1685,9 @@ range_gettypinfo(FunctionCallInfo fcinfo, Oid rngtypid,
 
 		cmpFnOid = get_opfamily_proc(opfamilyOid, opcintype, opcintype,
 									 BTORDER_PROC);
-
-		if (!OidIsValid(cmpFnOid))
-			elog(ERROR, "unable to find compare function for operator class %d",
-				 opclassOid);
+		if (!RegProcedureIsValid(cmpFnOid))
+			elog(ERROR, "missing support function %d(%u,%u) in opfamily %u",
+				 BTORDER_PROC, opcintype, opcintype, opfamilyOid);
 
 		/* get information from pg_type */
 		tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(subtypeOid));
@@ -1761,13 +1729,17 @@ range_gettypinfo(FunctionCallInfo fcinfo, Oid rngtypid,
 }
 
 /*
+ *----------------------------------------------------------
+ * STATIC FUNCTIONS
+ *----------------------------------------------------------
+ */
+
+/*
  * Given a string representing the flags for the range type, return the flags
  * represented as a char.
- *
- * Exported so that it can be called by DefineRange to check the default flags.
  */
-char
-range_parse_flags(char *flags_str)
+static char
+range_parse_flags(const char *flags_str)
 {
 	char		flags = 0;
 
@@ -1809,12 +1781,6 @@ range_parse_flags(char *flags_str)
 
 	return flags;
 }
-
-/*
- *----------------------------------------------------------
- * STATIC FUNCTIONS
- *----------------------------------------------------------
- */
 
 /*
  * Parse range input, modeled after record_in in rowtypes.c.

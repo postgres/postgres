@@ -5,7 +5,8 @@
  *	  along with the relation's initial contents.
  *
  *
- * Copyright (c) 2006-2010, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_range.h
  *
@@ -59,16 +60,6 @@ typedef FormData_pg_range *Form_pg_range;
 #define Anum_pg_range_rngcanonical		5
 #define Anum_pg_range_rngsubdiff		6
 
-#define RANGE_DEFAULT_FLAGS		"[)"
-
-/*
- * prototypes for functions in pg_range.c
- */
-
-extern void RangeCreate(Oid rangeTypeOid, Oid rangeSubType, Oid rangeCollation,
-			Oid rangeSubOpclass, RegProcedure rangeCanonical,
-			RegProcedure rangeSubDiff);
-extern void RangeDelete(Oid rangeTypeOid);
 
 /* ----------------
  *		initial contents of pg_range
@@ -80,5 +71,15 @@ DATA(insert ( 3908 1114 0 10054 - tsrange_subdiff));
 DATA(insert ( 3910 1184 0 10047 - tstzrange_subdiff));
 DATA(insert ( 3912 1082 0 10019 daterange_canonical daterange_subdiff));
 DATA(insert ( 3926 20 0 10029 int8range_canonical int8range_subdiff));
+
+
+/*
+ * prototypes for functions in pg_range.c
+ */
+
+extern void RangeCreate(Oid rangeTypeOid, Oid rangeSubType, Oid rangeCollation,
+			Oid rangeSubOpclass, RegProcedure rangeCanonical,
+			RegProcedure rangeSubDiff);
+extern void RangeDelete(Oid rangeTypeOid);
 
 #endif   /* PG_RANGE_H */
