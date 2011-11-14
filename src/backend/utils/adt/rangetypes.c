@@ -456,14 +456,9 @@ range_lower(PG_FUNCTION_ARGS)
 
 	range_deserialize(fcinfo, r1, &lower, &upper, &empty);
 
-	if (empty)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATA_EXCEPTION),
-				 errmsg("empty range has no lower bound")));
-	if (lower.infinite)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATA_EXCEPTION),
-				 errmsg("range lower bound is infinite")));
+	/* Return NULL if there's no finite lower bound */
+	if (empty || lower.infinite)
+		PG_RETURN_NULL();
 
 	PG_RETURN_DATUM(lower.val);
 }
@@ -478,14 +473,9 @@ range_upper(PG_FUNCTION_ARGS)
 
 	range_deserialize(fcinfo, r1, &lower, &upper, &empty);
 
-	if (empty)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATA_EXCEPTION),
-				 errmsg("empty range has no upper bound")));
-	if (upper.infinite)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATA_EXCEPTION),
-				 errmsg("range upper bound is infinite")));
+	/* Return NULL if there's no finite upper bound */
+	if (empty || upper.infinite)
+		PG_RETURN_NULL();
 
 	PG_RETURN_DATUM(upper.val);
 }

@@ -10745,6 +10745,14 @@ SELECT NULLIF(value, '(none)') ...
       </tbody>
      </tgroup>
     </table>
+
+  <para>
+   The <function>lower</> and  <function>upper</> functions return null
+   if the range is empty or the requested bound is infinite.
+   The <function>lower_inc</function>, <function>upper_inc</function>,
+   <function>lower_inf</function>, and <function>upper_inf</function>
+   functions all return false for an empty range.
+  </para>
   </sect1>
 
  <sect1 id="functions-aggregate">
