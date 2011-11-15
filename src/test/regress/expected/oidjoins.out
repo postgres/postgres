@@ -769,11 +769,67 @@ WHERE	provariadic != 0 AND
 ------+-------------
 (0 rows)
 
+SELECT	ctid, protransform
+FROM	pg_catalog.pg_proc fk
+WHERE	protransform != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.protransform);
+ ctid | protransform 
+------+--------------
+(0 rows)
+
 SELECT	ctid, prorettype
 FROM	pg_catalog.pg_proc fk
 WHERE	prorettype != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.prorettype);
  ctid | prorettype 
+------+------------
+(0 rows)
+
+SELECT	ctid, rngtypid
+FROM	pg_catalog.pg_range fk
+WHERE	rngtypid != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.rngtypid);
+ ctid | rngtypid 
+------+----------
+(0 rows)
+
+SELECT	ctid, rngsubtype
+FROM	pg_catalog.pg_range fk
+WHERE	rngsubtype != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.rngsubtype);
+ ctid | rngsubtype 
+------+------------
+(0 rows)
+
+SELECT	ctid, rngcollation
+FROM	pg_catalog.pg_range fk
+WHERE	rngcollation != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_collation pk WHERE pk.oid = fk.rngcollation);
+ ctid | rngcollation 
+------+--------------
+(0 rows)
+
+SELECT	ctid, rngsubopc
+FROM	pg_catalog.pg_range fk
+WHERE	rngsubopc != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_opclass pk WHERE pk.oid = fk.rngsubopc);
+ ctid | rngsubopc 
+------+-----------
+(0 rows)
+
+SELECT	ctid, rngcanonical
+FROM	pg_catalog.pg_range fk
+WHERE	rngcanonical != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.rngcanonical);
+ ctid | rngcanonical 
+------+--------------
+(0 rows)
+
+SELECT	ctid, rngsubdiff
+FROM	pg_catalog.pg_range fk
+WHERE	rngsubdiff != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.rngsubdiff);
+ ctid | rngsubdiff 
 ------+------------
 (0 rows)
 
@@ -1150,6 +1206,14 @@ FROM	(SELECT ctid, unnest(conffeqop) AS conffeqop FROM pg_catalog.pg_constraint)
 WHERE	conffeqop != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator pk WHERE pk.oid = fk.conffeqop);
  ctid | conffeqop 
+------+-----------
+(0 rows)
+
+SELECT	ctid, conexclop
+FROM	(SELECT ctid, unnest(conexclop) AS conexclop FROM pg_catalog.pg_constraint) fk
+WHERE	conexclop != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator pk WHERE pk.oid = fk.conexclop);
+ ctid | conexclop 
 ------+-----------
 (0 rows)
 

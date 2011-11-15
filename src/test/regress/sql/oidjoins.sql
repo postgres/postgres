@@ -385,10 +385,38 @@ SELECT	ctid, provariadic
 FROM	pg_catalog.pg_proc fk
 WHERE	provariadic != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.provariadic);
+SELECT	ctid, protransform
+FROM	pg_catalog.pg_proc fk
+WHERE	protransform != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.protransform);
 SELECT	ctid, prorettype
 FROM	pg_catalog.pg_proc fk
 WHERE	prorettype != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.prorettype);
+SELECT	ctid, rngtypid
+FROM	pg_catalog.pg_range fk
+WHERE	rngtypid != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.rngtypid);
+SELECT	ctid, rngsubtype
+FROM	pg_catalog.pg_range fk
+WHERE	rngsubtype != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.rngsubtype);
+SELECT	ctid, rngcollation
+FROM	pg_catalog.pg_range fk
+WHERE	rngcollation != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_collation pk WHERE pk.oid = fk.rngcollation);
+SELECT	ctid, rngsubopc
+FROM	pg_catalog.pg_range fk
+WHERE	rngsubopc != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_opclass pk WHERE pk.oid = fk.rngsubopc);
+SELECT	ctid, rngcanonical
+FROM	pg_catalog.pg_range fk
+WHERE	rngcanonical != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.rngcanonical);
+SELECT	ctid, rngsubdiff
+FROM	pg_catalog.pg_range fk
+WHERE	rngsubdiff != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.rngsubdiff);
 SELECT	ctid, ev_class
 FROM	pg_catalog.pg_rewrite fk
 WHERE	ev_class != 0 AND
@@ -577,6 +605,10 @@ SELECT	ctid, conffeqop
 FROM	(SELECT ctid, unnest(conffeqop) AS conffeqop FROM pg_catalog.pg_constraint) fk
 WHERE	conffeqop != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator pk WHERE pk.oid = fk.conffeqop);
+SELECT	ctid, conexclop
+FROM	(SELECT ctid, unnest(conexclop) AS conexclop FROM pg_catalog.pg_constraint) fk
+WHERE	conexclop != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator pk WHERE pk.oid = fk.conexclop);
 SELECT	ctid, proallargtypes
 FROM	(SELECT ctid, unnest(proallargtypes) AS proallargtypes FROM pg_catalog.pg_proc) fk
 WHERE	proallargtypes != 0 AND

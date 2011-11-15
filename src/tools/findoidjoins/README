@@ -5,7 +5,7 @@ findoidjoins
 
 This program scans a database and prints oid fields (also reg* fields)
 and the tables they join to.  It is normally used to check the system
-catalog join relationships (shown below for 9.1devel).
+catalog join relationships (shown below for 9.2devel as of 2011-11-14).
 
 Historically this has been run against an empty database such as template1,
 but there's a problem with that approach: some of the catalogs are empty
@@ -16,7 +16,7 @@ catalogs in interesting ways.
 Note that unexpected matches may indicate bogus entries in system tables;
 don't accept a peculiar match without question.  In particular, a field
 shown as joining to more than one target table is probably messed up.
-In 9.1devel, the *only* fields that should join to more than one target
+In 9.2devel, the *only* fields that should join to more than one target
 table are pg_description.objoid, pg_depend.objid, pg_depend.refobjid,
 pg_shdescription.objoid, pg_shdepend.objid, and pg_shdepend.refobjid.
 (Running make_oidjoins_check is an easy way to spot fields joining to more
@@ -33,7 +33,7 @@ regression test.  The oidjoins test should be updated after any
 revision in the patterns of cross-links between system tables.
 (Typically we update it at the end of each development cycle.)
 
-NOTE: as of 9.1devel, make_oidjoins_check produces two bogus join checks:
+NOTE: as of 9.2devel, make_oidjoins_check produces two bogus join checks:
 Join pg_catalog.pg_class.relfilenode => pg_catalog.pg_class.oid
 Join pg_catalog.pg_database.datlastsysoid => pg_catalog.pg_database.oid
 These are artifacts and should not be added to the oidjoins regress test.
@@ -138,7 +138,14 @@ Join pg_catalog.pg_proc.pronamespace => pg_catalog.pg_namespace.oid
 Join pg_catalog.pg_proc.proowner => pg_catalog.pg_authid.oid
 Join pg_catalog.pg_proc.prolang => pg_catalog.pg_language.oid
 Join pg_catalog.pg_proc.provariadic => pg_catalog.pg_type.oid
+Join pg_catalog.pg_proc.protransform => pg_catalog.pg_proc.oid
 Join pg_catalog.pg_proc.prorettype => pg_catalog.pg_type.oid
+Join pg_catalog.pg_range.rngtypid => pg_catalog.pg_type.oid
+Join pg_catalog.pg_range.rngsubtype => pg_catalog.pg_type.oid
+Join pg_catalog.pg_range.rngcollation => pg_catalog.pg_collation.oid
+Join pg_catalog.pg_range.rngsubopc => pg_catalog.pg_opclass.oid
+Join pg_catalog.pg_range.rngcanonical => pg_catalog.pg_proc.oid
+Join pg_catalog.pg_range.rngsubdiff => pg_catalog.pg_proc.oid
 Join pg_catalog.pg_rewrite.ev_class => pg_catalog.pg_class.oid
 Join pg_catalog.pg_shdepend.refclassid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_shdescription.classoid => pg_catalog.pg_class.oid
@@ -186,6 +193,7 @@ Join pg_catalog.pg_type.typcollation => pg_catalog.pg_collation.oid
 Join pg_catalog.pg_constraint.conpfeqop []=> pg_catalog.pg_operator.oid
 Join pg_catalog.pg_constraint.conppeqop []=> pg_catalog.pg_operator.oid
 Join pg_catalog.pg_constraint.conffeqop []=> pg_catalog.pg_operator.oid
+Join pg_catalog.pg_constraint.conexclop []=> pg_catalog.pg_operator.oid
 Join pg_catalog.pg_proc.proallargtypes []=> pg_catalog.pg_type.oid
 
 ---------------------------------------------------------------------------
