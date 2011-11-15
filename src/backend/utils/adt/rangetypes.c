@@ -15,29 +15,30 @@
 #include "postgres.h"
 
 #include "access/hash.h"
-#include "access/nbtree.h"
-#include "catalog/pg_opclass.h"
-#include "catalog/pg_range.h"
-#include "catalog/pg_type.h"
-#include "fmgr.h"
 #include "lib/stringinfo.h"
 #include "libpq/pqformat.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
-#include "utils/fmgroids.h"
 #include "utils/int8.h"
 #include "utils/lsyscache.h"
 #include "utils/rangetypes.h"
-#include "utils/syscache.h"
 #include "utils/timestamp.h"
-#include "utils/typcache.h"
 
 
 #define RANGE_EMPTY_LITERAL "empty"
 
-#define RANGE_DEFAULT_FLAGS	"[)"
+/* fn_extra cache entry for one of the range I/O functions */
+typedef struct RangeIOData
+{
+	TypeCacheEntry *typcache;	/* range type's typcache entry */
+	Oid			typiofunc;		/* element type's I/O function */
+	Oid			typioparam;		/* element type's I/O parameter */
+	FmgrInfo	proc;			/* lookup result for typiofunc */
+} RangeIOData;
 
 
+static RangeIOData *get_range_io_data(FunctionCallInfo fcinfo, Oid rngtypid,
+									  IOFuncSelector func);
 static char range_parse_flags(const char *flags_str);
 static void range_parse(char *input_str, char *flags, char **lbound_str,
 			char **ubound_str);
@@ -66,31 +67,25 @@ range_in(PG_FUNCTION_ARGS)
 	Oid			rngtypoid = PG_GETARG_OID(1);
 	Oid			typmod = PG_GETARG_INT32(2);
 	RangeType  *range;
-	TypeCacheEntry *typcache;
+	RangeIOData *cache;
 	char		flags;
 	char	   *lbound_str;
 	char	   *ubound_str;
-	regproc		subInput;
-	FmgrInfo	subInputFn;
-	Oid			ioParam;
 	RangeBound	lower;
 	RangeBound	upper;
 
-	typcache = range_get_typcache(fcinfo, rngtypoid);
+	cache = get_range_io_data(fcinfo, rngtypoid, IOFunc_input);
 
 	/* parse */
 	range_parse(input_str, &flags, &lbound_str, &ubound_str);
 
-	/* input */
-	getTypeInputInfo(typcache->rngelemtype->type_id, &subInput, &ioParam);
-	fmgr_info(subInput, &subInputFn);
-
+	/* call element type's input function */
 	if (RANGE_HAS_LBOUND(flags))
-		lower.val = InputFunctionCall(&subInputFn, lbound_str,
-									  ioParam, typmod);
+		lower.val = InputFunctionCall(&cache->proc, lbound_str,
+									  cache->typioparam, typmod);
 	if (RANGE_HAS_UBOUND(flags))
-		upper.val = InputFunctionCall(&subInputFn, ubound_str,
-									  ioParam, typmod);
+		upper.val = InputFunctionCall(&cache->proc, ubound_str,
+									  cache->typioparam, typmod);
 
 	lower.infinite = (flags & RANGE_LB_INF) != 0;
 	lower.inclusive = (flags & RANGE_LB_INC) != 0;
@@ -100,7 +95,7 @@ range_in(PG_FUNCTION_ARGS)
 	upper.lower = false;
 
 	/* serialize and canonicalize */
-	range = make_range(typcache, &lower, &upper, flags & RANGE_EMPTY);
+	range = make_range(cache->typcache, &lower, &upper, flags & RANGE_EMPTY);
 
 	PG_RETURN_RANGE(range);
 }
@@ -109,39 +104,26 @@ Datum
 range_out(PG_FUNCTION_ARGS)
 {
 	RangeType  *range = PG_GETARG_RANGE(0);
-	TypeCacheEntry *typcache;
 	char	   *output_str;
-	regproc		subOutput;
-	FmgrInfo	subOutputFn;
-	bool		isVarlena;
-	char		flags = 0;
+	RangeIOData *cache;
+	char		flags;
 	char	   *lbound_str = NULL;
 	char	   *ubound_str = NULL;
-	bool		empty;
 	RangeBound	lower;
 	RangeBound	upper;
+	bool		empty;
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(range));
+	cache = get_range_io_data(fcinfo, RangeTypeGetOid(range), IOFunc_output);
 
 	/* deserialize */
-	range_deserialize(typcache, range, &lower, &upper, &empty);
+	range_deserialize(cache->typcache, range, &lower, &upper, &empty);
+	flags = range_get_flags(range);
 
-	if (empty)
-		flags |= RANGE_EMPTY;
-
-	flags |= lower.inclusive ? RANGE_LB_INC : 0;
-	flags |= lower.infinite ? RANGE_LB_INF : 0;
-	flags |= upper.inclusive ? RANGE_UB_INC : 0;
-	flags |= upper.infinite ? RANGE_UB_INF : 0;
-
-	/* output */
-	getTypeOutputInfo(typcache->rngelemtype->type_id, &subOutput, &isVarlena);
-	fmgr_info(subOutput, &subOutputFn);
-
+	/* call element type's output function */
 	if (RANGE_HAS_LBOUND(flags))
-		lbound_str = OutputFunctionCall(&subOutputFn, lower.val);
+		lbound_str = OutputFunctionCall(&cache->proc, lower.val);
 	if (RANGE_HAS_UBOUND(flags))
-		ubound_str = OutputFunctionCall(&subOutputFn, upper.val);
+		ubound_str = OutputFunctionCall(&cache->proc, upper.val);
 
 	/* deparse */
 	output_str = range_deparse(flags, lbound_str, ubound_str);
@@ -150,11 +132,10 @@ range_out(PG_FUNCTION_ARGS)
 }
 
 /*
- * Binary representation: The first byte is the flags, then 4 bytes are the
- * range type Oid, then the lower bound (if present) then the upper bound (if
- * present). Each bound is represented by a 4-byte length header and the binary
- * representation of that bound (as returned by a call to the send function for
- * the subtype).
+ * Binary representation: The first byte is the flags, then the lower bound
+ * (if present), then the upper bound (if present).  Each bound is represented
+ * by a 4-byte length header and the binary representation of that bound (as
+ * returned by a call to the send function for the subtype).
  */
 
 Datum
@@ -164,19 +145,27 @@ range_recv(PG_FUNCTION_ARGS)
 	Oid			rngtypoid = PG_GETARG_OID(1);
 	int32		typmod = PG_GETARG_INT32(2);
 	RangeType  *range;
-	TypeCacheEntry *typcache;
-	Oid			subrecv;
-	Oid			ioparam;
+	RangeIOData *cache;
 	char		flags;
 	RangeBound	lower;
 	RangeBound	upper;
 
-	typcache = range_get_typcache(fcinfo, rngtypoid);
+	cache = get_range_io_data(fcinfo, rngtypoid, IOFunc_receive);
 
+	/* receive the flags... */
 	flags = (unsigned char) pq_getmsgbyte(buf);
 
-	getTypeBinaryInputInfo(typcache->rngelemtype->type_id, &subrecv, &ioparam);
+	/*
+	 * mask out any unsupported flags, particularly RANGE_xB_NULL which would
+	 * confuse following tests.
+	 */
+	flags &= (RANGE_EMPTY |
+			  RANGE_LB_INC |
+			  RANGE_LB_INF |
+			  RANGE_UB_INC |
+			  RANGE_UB_INF);
 
+	/* receive the bounds ... */
 	if (RANGE_HAS_LBOUND(flags))
 	{
 		uint32		bound_len = pq_getmsgint(buf, 4);
@@ -186,10 +175,10 @@ range_recv(PG_FUNCTION_ARGS)
 		initStringInfo(&bound_buf);
 		appendBinaryStringInfo(&bound_buf, bound_data, bound_len);
 
-		lower.val = OidReceiveFunctionCall(subrecv,
-										   &bound_buf,
-										   ioparam,
-										   typmod);
+		lower.val = ReceiveFunctionCall(&cache->proc,
+										&bound_buf,
+										cache->typioparam,
+										typmod);
 		pfree(bound_buf.data);
 	}
 	else
@@ -204,10 +193,10 @@ range_recv(PG_FUNCTION_ARGS)
 		initStringInfo(&bound_buf);
 		appendBinaryStringInfo(&bound_buf, bound_data, bound_len);
 
-		upper.val = OidReceiveFunctionCall(subrecv,
-										   &bound_buf,
-										   ioparam,
-										   typmod);
+		upper.val = ReceiveFunctionCall(&cache->proc,
+										&bound_buf,
+										cache->typioparam,
+										typmod);
 		pfree(bound_buf.data);
 	}
 	else
@@ -215,6 +204,7 @@ range_recv(PG_FUNCTION_ARGS)
 
 	pq_getmsgend(buf);
 
+	/* finish constructing RangeBound representation */
 	lower.infinite = (flags & RANGE_LB_INF) != 0;
 	lower.inclusive = (flags & RANGE_LB_INC) != 0;
 	lower.lower = true;
@@ -223,7 +213,7 @@ range_recv(PG_FUNCTION_ARGS)
 	upper.lower = false;
 
 	/* serialize and canonicalize */
-	range = make_range(typcache, &lower, &upper, flags & RANGE_EMPTY);
+	range = make_range(cache->typcache, &lower, &upper, flags & RANGE_EMPTY);
 
 	PG_RETURN_RANGE(range);
 }
@@ -233,37 +223,27 @@ range_send(PG_FUNCTION_ARGS)
 {
 	RangeType  *range = PG_GETARG_RANGE(0);
 	StringInfo	buf = makeStringInfo();
-	TypeCacheEntry *typcache;
-	char		flags = 0;
+	RangeIOData *cache;
+	char		flags;
 	RangeBound	lower;
 	RangeBound	upper;
 	bool		empty;
-	Oid			subsend;
-	bool		typIsVarlena;
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(range));
+	cache = get_range_io_data(fcinfo, RangeTypeGetOid(range), IOFunc_send);
 
-	getTypeBinaryOutputInfo(typcache->rngelemtype->type_id,
-							&subsend, &typIsVarlena);
+	/* deserialize */
+	range_deserialize(cache->typcache, range, &lower, &upper, &empty);
+	flags = range_get_flags(range);
 
+	/* construct output */
 	pq_begintypsend(buf);
-
-	range_deserialize(typcache, range, &lower, &upper, &empty);
-
-	if (empty)
-		flags |= RANGE_EMPTY;
-
-	flags |= lower.inclusive ? RANGE_LB_INC : 0;
-	flags |= lower.infinite ? RANGE_LB_INF : 0;
-	flags |= upper.inclusive ? RANGE_UB_INC : 0;
-	flags |= upper.infinite ? RANGE_UB_INF : 0;
 
 	pq_sendbyte(buf, flags);
 
 	if (RANGE_HAS_LBOUND(flags))
 	{
-		Datum		bound = PointerGetDatum(OidSendFunctionCall(subsend,
-																lower.val));
+		Datum		bound = PointerGetDatum(SendFunctionCall(&cache->proc,
+															 lower.val));
 		uint32		bound_len = VARSIZE(bound) - VARHDRSZ;
 		char	   *bound_data = VARDATA(bound);
 
@@ -273,8 +253,8 @@ range_send(PG_FUNCTION_ARGS)
 
 	if (RANGE_HAS_UBOUND(flags))
 	{
-		Datum		bound = PointerGetDatum(OidSendFunctionCall(subsend,
-																upper.val));
+		Datum		bound = PointerGetDatum(SendFunctionCall(&cache->proc,
+															 upper.val));
 		uint32		bound_len = VARSIZE(bound) - VARHDRSZ;
 		char	   *bound_data = VARDATA(bound);
 
@@ -283,6 +263,64 @@ range_send(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_BYTEA_P(pq_endtypsend(buf));
+}
+
+/*
+ * get_range_io_data: get cached information needed for range type I/O
+ *
+ * The range I/O functions need a bit more cached info than other range
+ * functions, so they store a RangeIOData struct in fn_extra, not just a
+ * pointer to a type cache entry.
+ */
+static RangeIOData *
+get_range_io_data(FunctionCallInfo fcinfo, Oid rngtypid, IOFuncSelector func)
+{
+	RangeIOData *cache = (RangeIOData *) fcinfo->flinfo->fn_extra;
+
+	if (cache == NULL || cache->typcache->type_id != rngtypid)
+	{
+		int16	typlen;
+		bool	typbyval;
+		char	typalign;
+		char	typdelim;
+
+		cache = (RangeIOData *) MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+												   sizeof(RangeIOData));
+		cache->typcache = lookup_type_cache(rngtypid, TYPECACHE_RANGE_INFO);
+		if (cache->typcache->rngelemtype == NULL)
+			elog(ERROR, "type %u is not a range type", rngtypid);
+
+		/* get_type_io_data does more than we need, but is convenient */
+		get_type_io_data(cache->typcache->rngelemtype->type_id,
+						 func,
+						 &typlen,
+						 &typbyval,
+						 &typalign,
+						 &typdelim,
+						 &cache->typioparam,
+						 &cache->typiofunc);
+
+		if (!OidIsValid(cache->typiofunc))
+		{
+			/* this could only happen for receive or send */
+			if (func == IOFunc_receive)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						 errmsg("no binary input function available for type %s",
+								format_type_be(cache->typcache->rngelemtype->type_id))));
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						 errmsg("no binary output function available for type %s",
+								format_type_be(cache->typcache->rngelemtype->type_id))));
+		}
+		fmgr_info_cxt(cache->typiofunc, &cache->proc,
+					  fcinfo->flinfo->fn_mcxt);
+
+		fcinfo->flinfo->fn_extra = (void *) cache;
+	}
+
+	return cache;
 }
 
 
@@ -360,20 +398,17 @@ range_constructor2(PG_FUNCTION_ARGS)
 	TypeCacheEntry *typcache;
 	RangeBound	lower;
 	RangeBound	upper;
-	char		flags;
 
 	typcache = range_get_typcache(fcinfo, rngtypid);
 
-	flags = range_parse_flags(RANGE_DEFAULT_FLAGS);
-
 	lower.val = PG_ARGISNULL(0) ? (Datum) 0 : arg1;
 	lower.infinite = PG_ARGISNULL(0);
-	lower.inclusive = (flags & RANGE_LB_INC) != 0;
+	lower.inclusive = true;
 	lower.lower = true;
 
 	upper.val = PG_ARGISNULL(1) ? (Datum) 0 : arg2;
 	upper.infinite = PG_ARGISNULL(1);
-	upper.inclusive = (flags & RANGE_UB_INC) != 0;
+	upper.inclusive = false;
 	upper.lower = false;
 
 	range = make_range(typcache, &lower, &upper, false);
@@ -1085,66 +1120,54 @@ Datum
 hash_range(PG_FUNCTION_ARGS)
 {
 	RangeType  *r = PG_GETARG_RANGE(0);
+	uint32		result;
 	TypeCacheEntry *typcache;
+	TypeCacheEntry *scache;
 	RangeBound	lower;
 	RangeBound	upper;
 	bool		empty;
-	char		flags = 0;
-	uint32		lower_hash = 0;
-	uint32		upper_hash = 0;
-	uint32		result = 0;
-	TypeCacheEntry *subtypcache;
-	FunctionCallInfoData locfcinfo;
+	char		flags;
+	uint32		lower_hash;
+	uint32		upper_hash;
 
 	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r));
 
+	/* deserialize */
 	range_deserialize(typcache, r, &lower, &upper, &empty);
-
-	if (empty)
-		flags |= RANGE_EMPTY;
-
-	flags |= lower.inclusive ? RANGE_LB_INC : 0;
-	flags |= lower.infinite ? RANGE_LB_INF : 0;
-	flags |= upper.inclusive ? RANGE_UB_INC : 0;
-	flags |= upper.infinite ? RANGE_UB_INF : 0;
+	flags = range_get_flags(r);
 
 	/*
 	 * Look up the element type's hash function, if not done already.
 	 */
-	subtypcache = typcache->rngelemtype;
-	if (!OidIsValid(subtypcache->hash_proc_finfo.fn_oid))
+	scache = typcache->rngelemtype;
+	if (!OidIsValid(scache->hash_proc_finfo.fn_oid))
 	{
-		subtypcache = lookup_type_cache(subtypcache->type_id,
-										TYPECACHE_HASH_PROC_FINFO);
-		if (!OidIsValid(subtypcache->hash_proc_finfo.fn_oid))
+		scache = lookup_type_cache(scache->type_id, TYPECACHE_HASH_PROC_FINFO);
+		if (!OidIsValid(scache->hash_proc_finfo.fn_oid))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
 					 errmsg("could not identify a hash function for type %s",
-							format_type_be(subtypcache->type_id))));
+							format_type_be(scache->type_id))));
 	}
 
 	/*
-	 * Apply the hash function to each bound (the hash function shouldn't care
-	 * about the collation).
+	 * Apply the hash function to each bound.
 	 */
-	InitFunctionCallInfoData(locfcinfo, &subtypcache->hash_proc_finfo, 1,
-							 InvalidOid, NULL, NULL);
-
 	if (RANGE_HAS_LBOUND(flags))
-	{
-		locfcinfo.arg[0] = lower.val;
-		locfcinfo.argnull[0] = false;
-		locfcinfo.isnull = false;
-		lower_hash = DatumGetUInt32(FunctionCallInvoke(&locfcinfo));
-	}
-	if (RANGE_HAS_UBOUND(flags))
-	{
-		locfcinfo.arg[0] = upper.val;
-		locfcinfo.argnull[0] = false;
-		locfcinfo.isnull = false;
-		upper_hash = DatumGetUInt32(FunctionCallInvoke(&locfcinfo));
-	}
+		lower_hash = DatumGetUInt32(FunctionCall1Coll(&scache->hash_proc_finfo,
+													  typcache->rng_collation,
+													  lower.val));
+	else
+		lower_hash = 0;
 
+	if (RANGE_HAS_UBOUND(flags))
+		upper_hash = DatumGetUInt32(FunctionCall1Coll(&scache->hash_proc_finfo,
+													  typcache->rng_collation,
+													  upper.val));
+	else
+		upper_hash = 0;
+
+	/* Merge hashes of flags and bounds */
 	result = hash_uint32((uint32) flags);
 	result ^= lower_hash;
 	result = (result << 1) | (result >> 31);
@@ -1420,15 +1443,18 @@ range_serialize(TypeCacheEntry *typcache, RangeBound *lower, RangeBound *upper,
 	/* construct flags value */
 	if (empty)
 		flags |= RANGE_EMPTY;
-	else if (range_cmp_bounds(typcache, lower, upper) > 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATA_EXCEPTION),
-				 errmsg("range lower bound must be less than or equal to range upper bound")));
+	else
+	{
+		if (range_cmp_bounds(typcache, lower, upper) > 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATA_EXCEPTION),
+					 errmsg("range lower bound must be less than or equal to range upper bound")));
 
-	flags |= lower->inclusive ? RANGE_LB_INC : 0;
-	flags |= lower->infinite ? RANGE_LB_INF : 0;
-	flags |= upper->inclusive ? RANGE_UB_INC : 0;
-	flags |= upper->infinite ? RANGE_UB_INF : 0;
+		flags |= lower->inclusive ? RANGE_LB_INC : 0;
+		flags |= lower->infinite ? RANGE_LB_INF : 0;
+		flags |= upper->inclusive ? RANGE_UB_INC : 0;
+		flags |= upper->infinite ? RANGE_UB_INF : 0;
+	}
 
 	/* Count space for varlena header and range type's OID */
 	msize = sizeof(RangeType);
@@ -1731,7 +1757,7 @@ range_parse(char *string, char *flags, char **lbound_str,
 	*flags = 0;
 
 	/* consume whitespace */
-	while (*ptr != '\0' && isspace(*ptr))
+	while (*ptr != '\0' && isspace((unsigned char) *ptr))
 		ptr++;
 
 	/* check for empty range */
@@ -1743,7 +1769,7 @@ range_parse(char *string, char *flags, char **lbound_str,
 		ptr += strlen(RANGE_EMPTY_LITERAL);
 
 		/* the rest should be whitespace */
-		while (*ptr != '\0' && isspace(*ptr))
+		while (*ptr != '\0' && isspace((unsigned char) *ptr))
 			ptr++;
 
 		/* should have consumed everything */
@@ -1812,7 +1838,7 @@ range_parse(char *string, char *flags, char **lbound_str,
 	}
 
 	/* consume whitespace */
-	while (*ptr != '\0' && isspace(*ptr))
+	while (*ptr != '\0' && isspace((unsigned char) *ptr))
 		ptr++;
 
 	if (*ptr != '\0')
@@ -1885,15 +1911,20 @@ range_parse_bound(char *string, char *ptr, char **bound_str, bool *infinite)
 	return ptr;
 }
 
+/*
+ * Convert a deserialized range value to text form
+ *
+ * Result is a palloc'd string
+ */
 static char *
 range_deparse(char flags, char *lbound_str, char *ubound_str)
 {
 	StringInfoData buf;
 
-	initStringInfo(&buf);
-
 	if (flags & RANGE_EMPTY)
 		return pstrdup(RANGE_EMPTY_LITERAL);
+
+	initStringInfo(&buf);
 
 	appendStringInfoString(&buf, (flags & RANGE_LB_INC) ? "[" : "(");
 
@@ -1910,6 +1941,11 @@ range_deparse(char flags, char *lbound_str, char *ubound_str)
 	return buf.data;
 }
 
+/*
+ * Helper for range_deparse: quote a bound value as needed
+ *
+ * Result is a palloc'd string
+ */
 static char *
 range_bound_escape(char *value)
 {
