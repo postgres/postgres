@@ -32,6 +32,7 @@ typedef struct TypeCacheEntry
 	int16		typlen;
 	bool		typbyval;
 	char		typalign;
+	char		typstorage;
 	char		typtype;
 	Oid			typrelid;
 
@@ -71,6 +72,18 @@ typedef struct TypeCacheEntry
 	 */
 	TupleDesc	tupDesc;
 
+	/*
+	 * Fields computed when TYPECACHE_RANGE_INFO is requested.  Zeroes if
+	 * not a range type or information hasn't yet been requested.  Note that
+	 * rng_cmp_proc_finfo could be different from the element type's default
+	 * btree comparison function.
+	 */
+	struct TypeCacheEntry *rngelemtype;	/* range's element type */
+	Oid			rng_collation;			/* collation for comparisons, if any */
+	FmgrInfo	rng_cmp_proc_finfo;		/* comparison function */
+	FmgrInfo	rng_canonical_finfo;	/* canonicalization function, if any */
+	FmgrInfo	rng_subdiff_finfo;		/* difference function, if any */
+
 	/* Private data, for internal use of typcache.c only */
 	int			flags;			/* flags about what we've computed */
 
@@ -93,6 +106,7 @@ typedef struct TypeCacheEntry
 #define TYPECACHE_TUPDESC			0x0100
 #define TYPECACHE_BTREE_OPFAMILY	0x0200
 #define TYPECACHE_HASH_OPFAMILY		0x0400
+#define TYPECACHE_RANGE_INFO		0x0800
 
 extern TypeCacheEntry *lookup_type_cache(Oid type_id, int flags);
 

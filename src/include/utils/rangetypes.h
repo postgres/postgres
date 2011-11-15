@@ -14,36 +14,50 @@
 #ifndef RANGETYPES_H
 #define RANGETYPES_H
 
-#include "fmgr.h"
+#include "utils/typcache.h"
 
 
-/* All ranges are represented as varlena objects */
-typedef struct varlena RangeType;
+/*
+ * Ranges are varlena objects, so must meet the varlena convention that
+ * the first int32 of the object contains the total object size in bytes.
+ * Be sure to use VARSIZE() and SET_VARSIZE() to access it, though!
+ */
+typedef struct
+{
+	int32		vl_len_;		/* varlena header (do not touch directly!) */
+	Oid			rangetypid;		/* range type's own OID */
+	/* Following the OID are zero to two bound values, then a flags byte */
+} RangeType;
+
+/* Use this macro in preference to fetching rangetypid field directly */
+#define RangeTypeGetOid(r)  ((r)->rangetypid)
+
+/* A range's flags byte contains these bits: */
+#define RANGE_EMPTY		0x01	/* range is empty */
+#define RANGE_LB_INC	0x02	/* lower bound is inclusive (vs exclusive) */
+#define RANGE_LB_NULL	0x04	/* lower bound is null (NOT CURRENTLY USED) */
+#define RANGE_LB_INF	0x08	/* lower bound is +/- infinity */
+#define RANGE_UB_INC	0x10	/* upper bound is inclusive (vs exclusive) */
+#define RANGE_UB_NULL	0x20	/* upper bound is null (NOT CURRENTLY USED) */
+#define RANGE_UB_INF	0x40	/* upper bound is +/- infinity */
+
+#define RANGE_HAS_LBOUND(flags) (!((flags) & (RANGE_EMPTY | \
+											  RANGE_LB_NULL | \
+											  RANGE_LB_INF)))
+
+#define RANGE_HAS_UBOUND(flags) (!((flags) & (RANGE_EMPTY | \
+											  RANGE_UB_NULL | \
+											  RANGE_UB_INF)))
+
 
 /* Internal representation of either bound of a range (not what's on disk) */
 typedef struct
 {
 	Datum		val;			/* the bound value, if any */
-	Oid			rngtypid;		/* OID of the range type itself */
 	bool		infinite;		/* bound is +/- infinity */
-	bool		lower;			/* this is the lower (vs upper) bound */
 	bool		inclusive;		/* bound is inclusive (vs exclusive) */
+	bool		lower;			/* this is the lower (vs upper) bound */
 } RangeBound;
-
-/* Standard runtime-cached data for a range type */
-typedef struct
-{
-	FmgrInfo	canonicalFn;	/* canonicalization function, if any */
-	FmgrInfo	cmpFn;			/* element type's btree comparison function */
-	FmgrInfo	subdiffFn;		/* element type difference function, if any */
-	Oid			rngtypid;		/* OID of the range type itself */
-	Oid			subtype;		/* OID of the element type */
-	Oid			collation;		/* collation for comparisons, if any */
-	int16		subtyplen;		/* typlen of element type */
-	char		subtypalign;	/* typalign of element type */
-	char		subtypstorage;	/* typstorage of element type */
-	bool		subtypbyval;	/* typbyval of element type */
-} RangeTypeInfo;
 
 /*
  * fmgr macros for range type objects
@@ -129,18 +143,19 @@ extern Datum tsrange_subdiff(PG_FUNCTION_ARGS);
 extern Datum tstzrange_subdiff(PG_FUNCTION_ARGS);
 
 /* assorted support functions */
-extern Datum range_serialize(FunctionCallInfo fcinfo, RangeBound *lower,
+extern TypeCacheEntry *range_get_typcache(FunctionCallInfo fcinfo,
+										  Oid rngtypid);
+extern RangeType *range_serialize(TypeCacheEntry *typcache, RangeBound *lower,
 							 RangeBound *upper, bool empty);
-extern void range_deserialize(FunctionCallInfo fcinfo, RangeType *range,
+extern void range_deserialize(TypeCacheEntry *typcache, RangeType *range,
 							  RangeBound *lower, RangeBound *upper,
 							  bool *empty);
-extern Datum make_range(FunctionCallInfo fcinfo, RangeBound *lower,
+extern char range_get_flags(RangeType *range);
+extern RangeType *make_range(TypeCacheEntry *typcache, RangeBound *lower,
 						RangeBound *upper, bool empty);
-extern int range_cmp_bounds(FunctionCallInfo fcinfo, RangeBound *b1,
+extern int range_cmp_bounds(TypeCacheEntry *typcache, RangeBound *b1,
 							RangeBound *b2);
-extern RangeType *make_empty_range(FunctionCallInfo fcinfo, Oid rngtypid);
-extern void range_gettypinfo(FunctionCallInfo fcinfo, Oid rngtypid,
-							 RangeTypeInfo *rngtypinfo);
+extern RangeType *make_empty_range(TypeCacheEntry *typcache);
 
 /* GiST support (in rangetypes_gist.c) */
 extern Datum range_gist_consistent(PG_FUNCTION_ARGS);
