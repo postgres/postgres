@@ -822,7 +822,6 @@ select * from float8range_test;
 (1 row)
 
 drop table float8range_test;
-drop type float8range;
 --
 -- Test range types over domains
 --
@@ -909,6 +908,15 @@ select ARRAY[numrange(1.1), numrange(12.3,155.5)];
  {"[1.1,1.1]","[12.3,155.5)"}
 (1 row)
 
+create table i8r_array (f1 int, f2 int8range[]);
+insert into i8r_array values (42, array[int8range(1,10), int8range(2,20)]);
+select * from i8r_array;
+ f1 |         f2          
+----+---------------------
+ 42 | {"[1,10)","[2,20)"}
+(1 row)
+
+drop table i8r_array;
 --
 -- Ranges of arrays
 --

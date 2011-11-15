@@ -67,6 +67,22 @@ FROM   pg_type p1 LEFT JOIN pg_type p2 ON (p1.typarray = p2.oid)
 WHERE  p1.typarray <> 0 AND
        (p2.oid IS NULL OR p2.typelem <> p1.oid OR p2.typlen <> -1);
 
+-- Look for range types that do not have a pg_range entry
+SELECT p1.oid, p1.typname
+FROM pg_type as p1
+WHERE p1.typtype = 'r' AND
+   NOT EXISTS(SELECT 1 FROM pg_range r WHERE rngtypid = p1.oid);
+
+-- Look for range types whose typalign isn't sufficient
+SELECT p1.oid, p1.typname, p1.typalign, p2.typname, p2.typalign
+FROM pg_type as p1
+     LEFT JOIN pg_range as r ON rngtypid = p1.oid
+     LEFT JOIN pg_type as p2 ON rngsubtype = p2.oid
+WHERE p1.typtype = 'r' AND
+    (p1.typalign != (CASE WHEN p2.typalign = 'd' THEN 'd'::"char"
+                          ELSE 'i'::"char" END)
+     OR p2.oid IS NULL);
+
 -- Text conversion routines must be provided.
 
 SELECT p1.oid, p1.typname
@@ -201,6 +217,14 @@ WHERE p1.typelem = p2.oid AND NOT
 SELECT p1.oid, p1.typname, p2.oid, p2.typname
 FROM pg_type AS p1, pg_type AS p2
 WHERE p1.typarray = p2.oid AND NOT (p1.typdelim = p2.typdelim);
+
+-- Look for array types whose typalign isn't sufficient
+
+SELECT p1.oid, p1.typname, p1.typalign, p2.typname, p2.typalign
+FROM pg_type AS p1, pg_type AS p2
+WHERE p1.typarray = p2.oid AND
+    p2.typalign != (CASE WHEN p1.typalign = 'd' THEN 'd'::"char"
+                         ELSE 'i'::"char" END);
 
 -- Check for bogus typanalyze routines
 

@@ -1167,8 +1167,6 @@ DefineRange(CreateRangeStmt *stmt)
 	Oid			typoid;
 	Oid			rangeArrayOid;
 	List	   *parameters = stmt->params;
-
-	ListCell   *lc;
 	List	   *rangeSubOpclassName = NIL;
 	List	   *rangeSubtypeDiffName = NIL;
 	List	   *rangeCollationName = NIL;
@@ -1178,8 +1176,12 @@ DefineRange(CreateRangeStmt *stmt)
 	regproc		rangeSubOpclass = InvalidOid;
 	regproc		rangeCanonical = InvalidOid;
 	regproc		rangeSubtypeDiff = InvalidOid;
-
+	int16		subtyplen;
+	bool		subtypbyval;
+	char		subtypalign;
+	char		alignment;
 	AclResult	aclresult;
+	ListCell   *lc;
 
 	/* Convert list of names to a name and namespace */
 	typeNamespace = QualifiedNameGetCreationNamespace(stmt->typeName,
@@ -1314,14 +1316,21 @@ DefineRange(CreateRangeStmt *stmt)
 	else if (rangeCollationName != NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("range collation provided but subtype does not support collation")));
+				 errmsg("range collation specified but subtype does not support collation")));
 
 	rangeSubOpclass = findRangeSubOpclass(rangeSubOpclassName, rangeSubtype);
 
 	if (rangeSubtypeDiffName != NIL)
-		rangeSubtypeDiff = findRangeSubtypeDiffFunction(
-										 rangeSubtypeDiffName, rangeSubtype);
+		rangeSubtypeDiff = findRangeSubtypeDiffFunction(rangeSubtypeDiffName,
+														rangeSubtype);
 
+	get_typlenbyvalalign(rangeSubtype,
+						 &subtyplen, &subtypbyval, &subtypalign);
+
+	/* alignment must be 'i' or 'd' for ranges */
+	alignment = (subtypalign == 'd') ? 'd' : 'i';
+
+	/* Allocate OID for array type */
 	rangeArrayOid = AssignTypeArrayOid();
 
 	/* Create the pg_type entry */
@@ -1332,7 +1341,7 @@ DefineRange(CreateRangeStmt *stmt)
 				   InvalidOid,	/* relation oid (n/a here) */
 				   0,			/* relation kind (ditto) */
 				   GetUserId(), /* owner's ID */
-				   -1,			/* internal size */
+				   -1,			/* internal size (always varlena) */
 				   TYPTYPE_RANGE,		/* type-type (range type) */
 				   TYPCATEGORY_RANGE,	/* type-category (range type) */
 				   false,		/* range types are never preferred */
@@ -1343,16 +1352,16 @@ DefineRange(CreateRangeStmt *stmt)
 				   F_RANGE_SEND,	/* send procedure */
 				   InvalidOid,	/* typmodin procedure - none */
 				   InvalidOid,	/* typmodout procedure - none */
-				   rangeAnalyze,	/* analyze procedure - default */
-				   InvalidOid,	/* element type ID */
+				   rangeAnalyze,	/* analyze procedure */
+				   InvalidOid,	/* element type ID - none */
 				   false,		/* this is not an array type */
 				   rangeArrayOid,		/* array type we are about to create */
 				   InvalidOid,	/* base type ID (only for domains) */
 				   NULL,		/* never a default type value */
 				   NULL,		/* binary default isn't sent either */
 				   false,		/* never passed by value */
-				   'i',			/* int alignment */
-				   'x',			/* TOAST strategy always plain */
+				   alignment,	/* alignment */
+				   'x',			/* TOAST strategy (always extended) */
 				   -1,			/* typMod (Domains only) */
 				   0,			/* Array dimensions of typbasetype */
 				   false,		/* Type NOT NULL */
@@ -1392,7 +1401,7 @@ DefineRange(CreateRangeStmt *stmt)
 			   NULL,			/* never a default type value */
 			   NULL,			/* binary default isn't sent either */
 			   false,			/* never passed by value */
-			   'i',				/* align 'i' */
+			   alignment,		/* alignment - same as range's */
 			   'x',				/* ARRAY is always toastable */
 			   -1,				/* typMod (Domains only) */
 			   0,				/* Array dimensions of typbasetype */
@@ -1401,6 +1410,7 @@ DefineRange(CreateRangeStmt *stmt)
 
 	pfree(rangeArrayName);
 
+	/* And create the constructor functions for this range type */
 	makeRangeConstructor(typeName, typeNamespace, typoid, rangeSubtype);
 }
 

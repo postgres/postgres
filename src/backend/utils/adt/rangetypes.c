@@ -33,29 +33,26 @@
 #include "utils/typcache.h"
 
 
-#define TYPE_IS_PACKABLE(typlen, typstorage) \
-	(typlen == -1 && typstorage != 'p')
-
 /* flags */
 #define RANGE_EMPTY		0x01
 #define RANGE_LB_INC	0x02
-#define RANGE_LB_NULL	0x04	/* NOT USED */
+#define RANGE_LB_NULL	0x04	/* NOT CURRENTLY USED */
 #define RANGE_LB_INF	0x08
 #define RANGE_UB_INC	0x10
-#define RANGE_UB_NULL	0x20	/* NOT USED */
+#define RANGE_UB_NULL	0x20	/* NOT CURRENTLY USED */
 #define RANGE_UB_INF	0x40
 
-#define RANGE_HAS_LBOUND(flags) (!(flags & (RANGE_EMPTY |	\
-											RANGE_LB_NULL | \
-											RANGE_LB_INF)))
+#define RANGE_HAS_LBOUND(flags) (!((flags) & (RANGE_EMPTY | \
+											  RANGE_LB_NULL | \
+											  RANGE_LB_INF)))
 
-#define RANGE_HAS_UBOUND(flags) (!(flags & (RANGE_EMPTY |	\
-											RANGE_UB_NULL | \
-											RANGE_UB_INF)))
+#define RANGE_HAS_UBOUND(flags) (!((flags) & (RANGE_EMPTY | \
+											  RANGE_UB_NULL | \
+											  RANGE_UB_INF)))
 
 #define RANGE_EMPTY_LITERAL "empty"
 
-#define RANGE_DEFAULT_FLAGS		"[)"
+#define RANGE_DEFAULT_FLAGS	"[)"
 
 
 static char range_parse_flags(const char *flags_str);
@@ -151,18 +148,15 @@ range_out(PG_FUNCTION_ARGS)
 	/* deserialize */
 	range_deserialize(fcinfo, range, &lower, &upper, &empty);
 
-	if (lower.rngtypid != upper.rngtypid)
-		elog(ERROR, "range types do not match");
-
 	range_gettypinfo(fcinfo, lower.rngtypid, &rngtypinfo);
 
 	if (empty)
 		flags |= RANGE_EMPTY;
 
-	flags |= (lower.inclusive) ? RANGE_LB_INC : 0;
-	flags |= (lower.infinite) ? RANGE_LB_INF : 0;
-	flags |= (upper.inclusive) ? RANGE_UB_INC : 0;
-	flags |= (upper.infinite) ? RANGE_UB_INF : 0;
+	flags |= lower.inclusive ? RANGE_LB_INC : 0;
+	flags |= lower.infinite ? RANGE_LB_INF : 0;
+	flags |= upper.inclusive ? RANGE_UB_INC : 0;
+	flags |= upper.infinite ? RANGE_UB_INF : 0;
 
 	/* output */
 	getTypeOutputInfo(rngtypinfo.subtype, &subOutput, &isVarlena);
@@ -280,10 +274,10 @@ range_send(PG_FUNCTION_ARGS)
 	if (empty)
 		flags |= RANGE_EMPTY;
 
-	flags |= (lower.inclusive) ? RANGE_LB_INC : 0;
-	flags |= (lower.infinite) ? RANGE_LB_INF : 0;
-	flags |= (upper.inclusive) ? RANGE_UB_INC : 0;
-	flags |= (upper.infinite) ? RANGE_UB_INF : 0;
+	flags |= lower.inclusive ? RANGE_LB_INC : 0;
+	flags |= lower.infinite ? RANGE_LB_INF : 0;
+	flags |= upper.inclusive ? RANGE_UB_INC : 0;
+	flags |= upper.infinite ? RANGE_UB_INF : 0;
 
 	range_gettypinfo(fcinfo, lower.rngtypid, &rngtypinfo);
 
@@ -395,13 +389,13 @@ range_constructor2(PG_FUNCTION_ARGS)
 
 	lower.rngtypid = rngtypid;
 	lower.val = PG_ARGISNULL(0) ? (Datum) 0 : arg1;
-	lower.inclusive = flags & RANGE_LB_INC;
+	lower.inclusive = (flags & RANGE_LB_INC) != 0;
 	lower.infinite = PG_ARGISNULL(0);
 	lower.lower = true;
 
 	upper.rngtypid = rngtypid;
 	upper.val = PG_ARGISNULL(1) ? (Datum) 0 : arg2;
-	upper.inclusive = flags & RANGE_UB_INC;
+	upper.inclusive = (flags & RANGE_UB_INC) != 0;
 	upper.infinite = PG_ARGISNULL(1);
 	upper.lower = false;
 
@@ -430,13 +424,13 @@ range_constructor3(PG_FUNCTION_ARGS)
 
 	lower.rngtypid = rngtypid;
 	lower.val = PG_ARGISNULL(0) ? (Datum) 0 : arg1;
-	lower.inclusive = flags & RANGE_LB_INC;
+	lower.inclusive = (flags & RANGE_LB_INC) != 0;
 	lower.infinite = PG_ARGISNULL(0);
 	lower.lower = true;
 
 	upper.rngtypid = rngtypid;
 	upper.val = PG_ARGISNULL(1) ? (Datum) 0 : arg2;
-	upper.inclusive = flags & RANGE_UB_INC;
+	upper.inclusive = (flags & RANGE_UB_INC) != 0;
 	upper.infinite = PG_ARGISNULL(1);
 	upper.lower = false;
 
@@ -564,9 +558,7 @@ range_eq(PG_FUNCTION_ARGS)
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);
 	range_deserialize(fcinfo, r2, &lower2, &upper2, &empty2);
 
-	if (lower1.rngtypid != upper1.rngtypid ||
-		lower1.rngtypid != lower2.rngtypid ||
-		lower1.rngtypid != upper2.rngtypid)
+	if (lower1.rngtypid != lower2.rngtypid)
 		elog(ERROR, "range types do not match");
 
 	if (empty1 && empty2)
@@ -686,9 +678,7 @@ range_before(PG_FUNCTION_ARGS)
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);
 	range_deserialize(fcinfo, r2, &lower2, &upper2, &empty2);
 
-	if (lower1.rngtypid != upper1.rngtypid ||
-		lower1.rngtypid != lower2.rngtypid ||
-		lower1.rngtypid != upper2.rngtypid)
+	if (lower1.rngtypid != lower2.rngtypid)
 		elog(ERROR, "range types do not match");
 
 	/* An empty range is neither before nor after any other range */
@@ -713,9 +703,7 @@ range_after(PG_FUNCTION_ARGS)
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);
 	range_deserialize(fcinfo, r2, &lower2, &upper2, &empty2);
 
-	if (lower1.rngtypid != upper1.rngtypid ||
-		lower1.rngtypid != lower2.rngtypid ||
-		lower1.rngtypid != upper2.rngtypid)
+	if (lower1.rngtypid != lower2.rngtypid)
 		elog(ERROR, "range types do not match");
 
 	/* An empty range is neither before nor after any other range */
@@ -741,9 +729,7 @@ range_adjacent(PG_FUNCTION_ARGS)
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);
 	range_deserialize(fcinfo, r2, &lower2, &upper2, &empty2);
 
-	if (lower1.rngtypid != upper1.rngtypid ||
-		lower1.rngtypid != lower2.rngtypid ||
-		lower1.rngtypid != upper2.rngtypid)
+	if (lower1.rngtypid != lower2.rngtypid)
 		elog(ERROR, "range types do not match");
 
 	/* An empty range is not adjacent to any other range */
@@ -795,9 +781,7 @@ range_overlaps(PG_FUNCTION_ARGS)
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);
 	range_deserialize(fcinfo, r2, &lower2, &upper2, &empty2);
 
-	if (lower1.rngtypid != upper1.rngtypid ||
-		lower1.rngtypid != lower2.rngtypid ||
-		lower1.rngtypid != upper2.rngtypid)
+	if (lower1.rngtypid != lower2.rngtypid)
 		elog(ERROR, "range types do not match");
 
 	/* An empty range does not overlap any other range */
@@ -830,9 +814,7 @@ range_overleft(PG_FUNCTION_ARGS)
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);
 	range_deserialize(fcinfo, r2, &lower2, &upper2, &empty2);
 
-	if (lower1.rngtypid != upper1.rngtypid ||
-		lower1.rngtypid != lower2.rngtypid ||
-		lower1.rngtypid != upper2.rngtypid)
+	if (lower1.rngtypid != lower2.rngtypid)
 		elog(ERROR, "range types do not match");
 
 	/* An empty range is neither before nor after any other range */
@@ -860,9 +842,7 @@ range_overright(PG_FUNCTION_ARGS)
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);
 	range_deserialize(fcinfo, r2, &lower2, &upper2, &empty2);
 
-	if (lower1.rngtypid != upper1.rngtypid ||
-		lower1.rngtypid != lower2.rngtypid ||
-		lower1.rngtypid != upper2.rngtypid)
+	if (lower1.rngtypid != lower2.rngtypid)
 		elog(ERROR, "range types do not match");
 
 	/* An empty range is neither before nor after any other range */
@@ -896,9 +876,7 @@ range_minus(PG_FUNCTION_ARGS)
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);
 	range_deserialize(fcinfo, r2, &lower2, &upper2, &empty2);
 
-	if (lower1.rngtypid != upper1.rngtypid ||
-		lower1.rngtypid != lower2.rngtypid ||
-		lower1.rngtypid != upper2.rngtypid)
+	if (lower1.rngtypid != lower2.rngtypid)
 		elog(ERROR, "range types do not match");
 
 	/* if either is empty, r1 is the correct answer */
@@ -956,6 +934,9 @@ range_union(PG_FUNCTION_ARGS)
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);
 	range_deserialize(fcinfo, r2, &lower2, &upper2, &empty2);
 
+	if (lower1.rngtypid != lower2.rngtypid)
+		elog(ERROR, "range types do not match");
+
 	/* if either is empty, the other is the correct answer */
 	if (empty1)
 		PG_RETURN_RANGE(r2);
@@ -998,6 +979,9 @@ range_intersect(PG_FUNCTION_ARGS)
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);
 	range_deserialize(fcinfo, r2, &lower2, &upper2, &empty2);
 
+	if (lower1.rngtypid != lower2.rngtypid)
+		elog(ERROR, "range types do not match");
+
 	if (empty1 || empty2 || !DatumGetBool(range_overlaps(fcinfo)))
 		PG_RETURN_RANGE(make_empty_range(fcinfo, lower1.rngtypid));
 
@@ -1032,9 +1016,7 @@ range_cmp(PG_FUNCTION_ARGS)
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);
 	range_deserialize(fcinfo, r2, &lower2, &upper2, &empty2);
 
-	if (lower1.rngtypid != upper1.rngtypid ||
-		lower1.rngtypid != lower2.rngtypid ||
-		lower1.rngtypid != upper2.rngtypid)
+	if (lower1.rngtypid != lower2.rngtypid)
 		elog(ERROR, "range types do not match");
 
 	/* For b-tree use, empty ranges sort before all else */
@@ -1103,16 +1085,13 @@ hash_range(PG_FUNCTION_ARGS)
 
 	range_deserialize(fcinfo, r, &lower, &upper, &empty);
 
-	if (lower.rngtypid != upper.rngtypid)
-		elog(ERROR, "range types do not match");
-
 	if (empty)
 		flags |= RANGE_EMPTY;
 
-	flags |= (lower.inclusive) ? RANGE_LB_INC : 0;
-	flags |= (lower.infinite) ? RANGE_LB_INF : 0;
-	flags |= (upper.inclusive) ? RANGE_UB_INC : 0;
-	flags |= (upper.infinite) ? RANGE_UB_INF : 0;
+	flags |= lower.inclusive ? RANGE_LB_INC : 0;
+	flags |= lower.infinite ? RANGE_LB_INF : 0;
+	flags |= upper.inclusive ? RANGE_UB_INC : 0;
+	flags |= upper.infinite ? RANGE_UB_INF : 0;
 
 	range_gettypinfo(fcinfo, lower.rngtypid, &rngtypinfo);
 	subtype = rngtypinfo.subtype;
@@ -1370,8 +1349,10 @@ tstzrange_subdiff(PG_FUNCTION_ARGS)
  */
 
 /*
- * This serializes a range, but does not canonicalize it. This should
- * only be called by a canonicalization function.
+ * range_serialize: construct a range value from bounds and empty-flag
+ *
+ * This does not force canonicalization of the range value.  In most cases,
+ * external callers should only be canonicalization functions.
  */
 Datum
 range_serialize(FunctionCallInfo fcinfo, RangeBound *lower, RangeBound *upper,
@@ -1404,28 +1385,45 @@ range_serialize(FunctionCallInfo fcinfo, RangeBound *lower, RangeBound *upper,
 				(errcode(ERRCODE_DATA_EXCEPTION),
 				 errmsg("range lower bound must be less than or equal to range upper bound")));
 
-	flags |= (lower->inclusive) ? RANGE_LB_INC : 0;
-	flags |= (lower->infinite) ? RANGE_LB_INF : 0;
-	flags |= (upper->inclusive) ? RANGE_UB_INC : 0;
-	flags |= (upper->infinite) ? RANGE_UB_INF : 0;
+	flags |= lower->inclusive ? RANGE_LB_INC : 0;
+	flags |= lower->infinite ? RANGE_LB_INF : 0;
+	flags |= upper->inclusive ? RANGE_UB_INC : 0;
+	flags |= upper->infinite ? RANGE_UB_INF : 0;
 
 	msize = VARHDRSZ;
 	msize += sizeof(Oid);
 
 	if (RANGE_HAS_LBOUND(flags))
 	{
+		/*
+		 * Make sure item to be inserted is not toasted.  It is essential that
+		 * we not insert an out-of-line toast value pointer into a range
+		 * object, for the same reasons that arrays and records can't contain
+		 * them.  It would work to store a compressed-in-line value, but we
+		 * prefer to decompress and then let compression be applied to the
+		 * whole range object if necessary.  But, unlike arrays, we do allow
+		 * short-header varlena objects to stay as-is.
+		 */
+		if (typlen == -1)
+			lower->val = PointerGetDatum(PG_DETOAST_DATUM_PACKED(lower->val));
+
 		msize = datum_compute_size(msize, lower->val, typbyval, typalign,
 								   typlen, typstorage);
 	}
 
 	if (RANGE_HAS_UBOUND(flags))
 	{
+		/* Make sure item to be inserted is not toasted */
+		if (typlen == -1)
+			upper->val = PointerGetDatum(PG_DETOAST_DATUM_PACKED(upper->val));
+
 		msize = datum_compute_size(msize, upper->val, typbyval, typalign,
 								   typlen, typstorage);
 	}
 
 	msize += sizeof(char);
 
+	/* Note: zero-fill is required here, just as in heap tuples */
 	ptr = palloc0(msize);
 	range = (Datum) ptr;
 
@@ -1455,6 +1453,15 @@ range_serialize(FunctionCallInfo fcinfo, RangeBound *lower, RangeBound *upper,
 	PG_RETURN_RANGE(range);
 }
 
+/*
+ * range_deserialize: deconstruct a range value
+ *
+ * NB: the given range object must be fully detoasted; it cannot have a
+ * short varlena header.
+ *
+ * Note that if the element type is pass-by-reference, the datums in the
+ * RangeBound structs will be pointers into the given range object.
+ */
 void
 range_deserialize(FunctionCallInfo fcinfo, RangeType *range, RangeBound *lower,
 				  RangeBound *upper, bool *empty)
@@ -1467,64 +1474,55 @@ range_deserialize(FunctionCallInfo fcinfo, RangeType *range, RangeBound *lower,
 	Oid			rngtypid;
 	Datum		lbound;
 	Datum		ubound;
-	Pointer		flags_ptr;
 	RangeTypeInfo rngtypinfo;
 
-	memset(lower, 0, sizeof(RangeBound));
-	memset(upper, 0, sizeof(RangeBound));
+	/* fetch the flag byte from datum's last byte */
+	flags = *((char *) (ptr + VARSIZE(range) - VARHDRSZ - 1));
 
-	/* peek at last byte to read the flag byte */
-	flags_ptr = ptr + VARSIZE(range) - VARHDRSZ - 1;
-	memcpy(&flags, flags_ptr, sizeof(char));
-
-	memcpy(&rngtypid, ptr, sizeof(Oid));
+	/* fetch and advance over the range type OID */
+	rngtypid = *((Oid *) ptr);
 	ptr += sizeof(Oid);
 
-	if (rngtypid == ANYRANGEOID)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot output a value of type anyrange")));
-
+	/* fetch information about range type */
 	range_gettypinfo(fcinfo, rngtypid, &rngtypinfo);
-
 	typalign = rngtypinfo.subtypalign;
 	typlen = rngtypinfo.subtyplen;
 	typbyval = rngtypinfo.subtypbyval;
 
+	/* fetch lower bound, if any */
 	if (RANGE_HAS_LBOUND(flags))
 	{
-		ptr = (Pointer) att_align_pointer(ptr, typalign, typlen, ptr);
+		/* att_align_pointer cannot be necessary here */
 		lbound = fetch_att(ptr, typbyval, typlen);
-		ptr = (Pointer) att_addlength_datum(ptr, typlen, PointerGetDatum(ptr));
-		if (typlen == -1)
-			lbound = PointerGetDatum(PG_DETOAST_DATUM(lbound));
+		ptr = (Pointer) att_addlength_pointer(ptr, typlen, ptr);
 	}
 	else
 		lbound = (Datum) 0;
 
+	/* fetch upper bound, if any */
 	if (RANGE_HAS_UBOUND(flags))
 	{
 		ptr = (Pointer) att_align_pointer(ptr, typalign, typlen, ptr);
 		ubound = fetch_att(ptr, typbyval, typlen);
-		ptr = (Pointer) att_addlength_datum(ptr, typlen, PointerGetDatum(ptr));
-		if (typlen == -1)
-			ubound = PointerGetDatum(PG_DETOAST_DATUM(ubound));
+		/* no need for att_addlength_pointer */
 	}
 	else
 		ubound = (Datum) 0;
+
+	/* emit results */
 
 	*empty = flags & RANGE_EMPTY;
 
 	lower->rngtypid = rngtypid;
 	lower->val = lbound;
-	lower->inclusive = flags & RANGE_LB_INC;
-	lower->infinite = flags & RANGE_LB_INF;
+	lower->inclusive = (flags & RANGE_LB_INC) != 0;
+	lower->infinite = (flags & RANGE_LB_INF) != 0;
 	lower->lower = true;
 
 	upper->rngtypid = rngtypid;
 	upper->val = ubound;
-	upper->inclusive = flags & RANGE_UB_INC;
-	upper->infinite = flags & RANGE_UB_INF;
+	upper->inclusive = (flags & RANGE_UB_INC) != 0;
+	upper->infinite = (flags & RANGE_UB_INF) != 0;
 	upper->lower = false;
 }
 
@@ -1540,9 +1538,6 @@ make_range(FunctionCallInfo fcinfo, RangeBound *lower, RangeBound *upper,
 	RangeTypeInfo rngtypinfo;
 
 	range_gettypinfo(fcinfo, lower->rngtypid, &rngtypinfo);
-
-	if (lower->rngtypid != upper->rngtypid)
-		elog(ERROR, "range types do not match");
 
 	range = range_serialize(fcinfo, lower, upper, empty);
 
@@ -2033,9 +2028,7 @@ range_contains_internal(FunctionCallInfo fcinfo, RangeType *r1, RangeType *r2)
 	range_deserialize(fcinfo, r1, &lower1, &upper1, &empty1);
 	range_deserialize(fcinfo, r2, &lower2, &upper2, &empty2);
 
-	if (lower1.rngtypid != upper1.rngtypid ||
-		lower1.rngtypid != lower2.rngtypid ||
-		lower1.rngtypid != upper2.rngtypid)
+	if (lower1.rngtypid != lower2.rngtypid)
 		elog(ERROR, "range types do not match");
 
 	if (empty2)
@@ -2051,11 +2044,23 @@ range_contains_internal(FunctionCallInfo fcinfo, RangeType *r1, RangeType *r2)
 	return true;
 }
 
+
 /*
- * datum_compute_size() and datum_write() are modeled after
- * heap_compute_data_size() and heap_fill_tuple().
+ * datum_compute_size() and datum_write() are used to insert the bound
+ * values into a range object.  They are modeled after heaptuple.c's
+ * heap_compute_data_size() and heap_fill_tuple(), but we need not handle
+ * null values here.  TYPE_IS_PACKABLE must test the same conditions as
+ * heaptuple.c's ATT_IS_PACKABLE macro.
  */
 
+/* Does datatype allow packing into the 1-byte-header varlena format? */
+#define TYPE_IS_PACKABLE(typlen, typstorage) \
+	((typlen) == -1 && (typstorage) != 'p')
+
+/*
+ * Increment data_length by the space needed by the datum, including any
+ * preceding alignment padding.
+ */
 static Size
 datum_compute_size(Size data_length, Datum val, bool typbyval, char typalign,
 				   int16 typlen, char typstorage)
@@ -2079,9 +2084,8 @@ datum_compute_size(Size data_length, Datum val, bool typbyval, char typalign,
 }
 
 /*
- * Modified version of the code in heap_fill_tuple(). Writes the datum to ptr
- * using the correct alignment, and also uses short varlena header if
- * applicable.
+ * Write the given datum beginning at ptr (after advancing to correct
+ * alignment, if needed).  Return the pointer incremented by space used.
  */
 static Pointer
 datum_write(Pointer ptr, Datum datum, bool typbyval, char typalign,
@@ -2103,9 +2107,12 @@ datum_write(Pointer ptr, Datum datum, bool typbyval, char typalign,
 
 		if (VARATT_IS_EXTERNAL(val))
 		{
-			/* no alignment, since it's short by definition */
-			data_length = VARSIZE_EXTERNAL(val);
-			memcpy(ptr, val, data_length);
+			/*
+			 * Throw error, because we must never put a toast pointer inside a
+			 * range object.  Caller should have detoasted it.
+			 */
+			elog(ERROR, "cannot store a toast pointer inside a range");
+			data_length = 0;	/* keep compiler quiet */
 		}
 		else if (VARATT_IS_SHORT(val))
 		{

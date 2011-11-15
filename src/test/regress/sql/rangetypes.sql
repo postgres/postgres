@@ -260,7 +260,6 @@ create table float8range_test(f8r float8range, i int);
 insert into float8range_test values(float8range(-100.00007, '1.111113e9'));
 select * from float8range_test;
 drop table float8range_test;
-drop type float8range;
 
 --
 -- Test range types over domains
@@ -326,6 +325,11 @@ select range_add_bounds(numrange(1.0001, 123.123));
 --
 
 select ARRAY[numrange(1.1), numrange(12.3,155.5)];
+
+create table i8r_array (f1 int, f2 int8range[]);
+insert into i8r_array values (42, array[int8range(1,10), int8range(2,20)]);
+select * from i8r_array;
+drop table i8r_array;
 
 --
 -- Ranges of arrays
