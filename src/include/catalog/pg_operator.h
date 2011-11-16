@@ -1674,32 +1674,33 @@ DATA(insert OID = 3886 (  ">="	   PGNSP PGUID b f f 3831 3831 16 3885 3884 range
 DESCR("greater than or equal");
 DATA(insert OID = 3887 (  ">"	   PGNSP PGUID b f f 3831 3831 16 3884 3885 range_gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 3888 (  "&&"	   PGNSP PGUID b f f 3831 3831 16 3888 0 3857 - - ));
+DATA(insert OID = 3888 (  "&&"	   PGNSP PGUID b f f 3831 3831 16 3888 0 range_overlaps - - ));
 DESCR("overlaps");
-DATA(insert OID = 3889 (  "@>"	   PGNSP PGUID b f f 3831 2776 16 3891 0 3858 - - ));
+DATA(insert OID = 3889 (  "@>"	   PGNSP PGUID b f f 3831 2776 16 3891 0 range_contains_elem - - ));
 DESCR("contains");
-DATA(insert OID = 3890 (  "@>"	   PGNSP PGUID b f f 3831 3831 16 3892 0 3859 - - ));
+DATA(insert OID = 3890 (  "@>"	   PGNSP PGUID b f f 3831 3831 16 3892 0 range_contains - - ));
 DESCR("contains");
-DATA(insert OID = 3891 (  "<@"	   PGNSP PGUID b f f 2776 3831 16 3889 0 3860 - - ));
-DESCR("contained by");
-DATA(insert OID = 3892 (  "<@"	   PGNSP PGUID b f f 3831 3831 16 3890 0 3861 - - ));
-DESCR("contained by");
-DATA(insert OID = 3893 (  "<<"	   PGNSP PGUID b f f 3831 3831 16 0 0 before scalarltsel scalarltjoinsel ));
-DESCR("left of");
-DATA(insert OID = 3894 (  ">>"	   PGNSP PGUID b f f 3831 3831 16 0 0 after scalargtsel scalargtjoinsel ));
-DESCR("right of");
-DATA(insert OID = 3895 (  "&<"	   PGNSP PGUID b f f 3831 3831 16 0 0 overleft scalarltsel scalarltjoinsel ));
-DESCR("overlaps to left");
-DATA(insert OID = 3896 (  "&>"	   PGNSP PGUID b f f 3831 3831 16 0 0 overright scalargtsel scalargtjoinsel ));
-DESCR("overlaps to right");
-DATA(insert OID = 3897 (  "-|-"	   PGNSP PGUID b f f 3831 3831 16 3897 0 adjacent - - ));
-DESCR("adjacent");
+DATA(insert OID = 3891 (  "<@"	   PGNSP PGUID b f f 2776 3831 16 3889 0 elem_contained_by_range - - ));
+DESCR("is contained by");
+DATA(insert OID = 3892 (  "<@"	   PGNSP PGUID b f f 3831 3831 16 3890 0 range_contained_by - - ));
+DESCR("is contained by");
+DATA(insert OID = 3893 (  "<<"	   PGNSP PGUID b f f 3831 3831 16 0 0 range_before scalarltsel scalarltjoinsel ));
+DESCR("is left of");
+DATA(insert OID = 3894 (  ">>"	   PGNSP PGUID b f f 3831 3831 16 0 0 range_after scalargtsel scalargtjoinsel ));
+DESCR("is right of");
+DATA(insert OID = 3895 (  "&<"	   PGNSP PGUID b f f 3831 3831 16 0 0 range_overleft scalarltsel scalarltjoinsel ));
+DESCR("overlaps or is left of");
+DATA(insert OID = 3896 (  "&>"	   PGNSP PGUID b f f 3831 3831 16 0 0 range_overright scalargtsel scalargtjoinsel ));
+DESCR("overlaps or is right of");
+DATA(insert OID = 3897 (  "-|-"	   PGNSP PGUID b f f 3831 3831 16 3897 0 range_adjacent - - ));
+DESCR("is adjacent to");
 DATA(insert OID = 3898 (  "+"	   PGNSP PGUID b f f 3831 3831 3831 3898 0 range_union - - ));
 DESCR("range union");
-DATA(insert OID = 3899 (  "-"	   PGNSP PGUID b f f 3831 3831 3831 0 0 minus - - ));
+DATA(insert OID = 3899 (  "-"	   PGNSP PGUID b f f 3831 3831 3831 0 0 range_minus - - ));
 DESCR("range difference");
 DATA(insert OID = 3900 (  "*"	   PGNSP PGUID b f f 3831 3831 3831 3900 0 range_intersect - - ));
-DESCR("intersection");
+DESCR("range intersection");
+
 
 /*
  * function prototypes

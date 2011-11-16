@@ -175,7 +175,7 @@ SELECT lower_inc(nr), lower(nr), upper(nr), upper_inc(nr) FROM numrange_test
  t         |   1.7 |   1.7 | t
 (2 rows)
 
-SELECT * FROM numrange_test WHERE contains(nr, numrange(1.9,1.91));
+SELECT * FROM numrange_test WHERE range_contains(nr, numrange(1.9,1.91));
     nr     
 -----------
  (,)
@@ -189,7 +189,7 @@ SELECT * FROM numrange_test WHERE nr @> numrange(1.0,10000.1);
  (,)
 (1 row)
 
-SELECT * FROM numrange_test WHERE contained_by(numrange(-1e7,-10000.1), nr);
+SELECT * FROM numrange_test WHERE range_contained_by(numrange(-1e7,-10000.1), nr);
   nr  
 ------
  (,)
@@ -229,9 +229,9 @@ select numrange(2.0, 3.0) -|- numrange(3.0, 4.0);
  t
 (1 row)
 
-select adjacent(numrange(2.0, 3.0), numrange(3.1, 4.0));
- adjacent 
-----------
+select range_adjacent(numrange(2.0, 3.0), numrange(3.1, 4.0));
+ range_adjacent 
+----------------
  f
 (1 row)
 
@@ -247,9 +247,9 @@ select numrange(1.0, 2.0) -|- numrange(2.0, 3.0,'[]');
  t
 (1 row)
 
-select adjacent(numrange(2.0, 3.0, '(]'), numrange(1.0, 2.0, '(]'));
- adjacent 
-----------
+select range_adjacent(numrange(2.0, 3.0, '(]'), numrange(1.0, 2.0, '(]'));
+ range_adjacent 
+----------------
  t
 (1 row)
 
@@ -283,15 +283,15 @@ select numrange(1.1, 2.2,'[]') - numrange(2.0, 3.0);
  [1.1,2.0)
 (1 row)
 
-select minus(numrange(10.1,12.2,'[]'), numrange(110.0,120.2,'(]'));
-    minus    
+select range_minus(numrange(10.1,12.2,'[]'), numrange(110.0,120.2,'(]'));
+ range_minus 
 -------------
  [10.1,12.2]
 (1 row)
 
-select minus(numrange(10.1,12.2,'[]'), numrange(0.0,120.2,'(]'));
- minus 
--------
+select range_minus(numrange(10.1,12.2,'[]'), numrange(0.0,120.2,'(]'));
+ range_minus 
+-------------
  empty
 (1 row)
 

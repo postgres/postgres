@@ -38,7 +38,7 @@ CATALOG(pg_range,3541) BKI_WITHOUT_OIDS
 	Oid			rngcollation;	/* collation for this range type, or 0 */
 	Oid			rngsubopc;		/* subtype's btree opclass */
 	regproc		rngcanonical;	/* canonicalize range, or 0 */
-	regproc		rngsubdiff;		/* subtype difference as a float8 (for GiST) */
+	regproc		rngsubdiff;		/* subtype difference as a float8, or 0 */
 } FormData_pg_range;
 
 /* ----------------
@@ -65,12 +65,12 @@ typedef FormData_pg_range *Form_pg_range;
  *		initial contents of pg_range
  * ----------------
  */
-DATA(insert ( 3904 23 0 1978 int4range_canonical int4range_subdiff));
-DATA(insert ( 3906 1700 0 10037 - numrange_subdiff));
-DATA(insert ( 3908 1114 0 10054 - tsrange_subdiff));
-DATA(insert ( 3910 1184 0 10047 - tstzrange_subdiff));
-DATA(insert ( 3912 1082 0 10019 daterange_canonical daterange_subdiff));
-DATA(insert ( 3926 20 0 10029 int8range_canonical int8range_subdiff));
+DATA(insert ( 3904 23   0 1978 int4range_canonical int4range_subdiff));
+DATA(insert ( 3906 1700 0 3125 - numrange_subdiff));
+DATA(insert ( 3908 1114 0 3128 - tsrange_subdiff));
+DATA(insert ( 3910 1184 0 3127 - tstzrange_subdiff));
+DATA(insert ( 3912 1082 0 3122 daterange_canonical daterange_subdiff));
+DATA(insert ( 3926 20   0 3124 int8range_canonical int8range_subdiff));
 
 
 /*

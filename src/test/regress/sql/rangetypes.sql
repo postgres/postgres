@@ -54,9 +54,9 @@ SELECT isempty(nr) FROM numrange_test;
 SELECT lower_inc(nr), lower(nr), upper(nr), upper_inc(nr) FROM numrange_test
   WHERE NOT isempty(nr) AND NOT lower_inf(nr) AND NOT upper_inf(nr);
 
-SELECT * FROM numrange_test WHERE contains(nr, numrange(1.9,1.91));
+SELECT * FROM numrange_test WHERE range_contains(nr, numrange(1.9,1.91));
 SELECT * FROM numrange_test WHERE nr @> numrange(1.0,10000.1);
-SELECT * FROM numrange_test WHERE contained_by(numrange(-1e7,-10000.1), nr);
+SELECT * FROM numrange_test WHERE range_contained_by(numrange(-1e7,-10000.1), nr);
 SELECT * FROM numrange_test WHERE 1.9 <@ nr;
 SELECT * FROM numrange_test WHERE nr = 'empty';
 SELECT * FROM numrange_test WHERE range_eq(nr, '(1.1, 2.2)');
@@ -65,10 +65,10 @@ SELECT * FROM numrange_test WHERE nr = '[1.1, 2.2)';
 select numrange(2.0, 1.0);
 
 select numrange(2.0, 3.0) -|- numrange(3.0, 4.0);
-select adjacent(numrange(2.0, 3.0), numrange(3.1, 4.0));
+select range_adjacent(numrange(2.0, 3.0), numrange(3.1, 4.0));
 select numrange(2.0, 3.0, '[]') -|- numrange(3.0, 4.0, '()');
 select numrange(1.0, 2.0) -|- numrange(2.0, 3.0,'[]');
-select adjacent(numrange(2.0, 3.0, '(]'), numrange(1.0, 2.0, '(]'));
+select range_adjacent(numrange(2.0, 3.0, '(]'), numrange(1.0, 2.0, '(]'));
 
 select numrange(1.1, 3.3) <@ numrange(0.1,10.1);
 select numrange(0.1, 10.1) <@ numrange(1.1,3.3);
@@ -76,8 +76,8 @@ select numrange(0.1, 10.1) <@ numrange(1.1,3.3);
 select numrange(1.1, 2.2) - numrange(2.0, 3.0);
 select numrange(1.1, 2.2) - numrange(2.2, 3.0);
 select numrange(1.1, 2.2,'[]') - numrange(2.0, 3.0);
-select minus(numrange(10.1,12.2,'[]'), numrange(110.0,120.2,'(]'));
-select minus(numrange(10.1,12.2,'[]'), numrange(0.0,120.2,'(]'));
+select range_minus(numrange(10.1,12.2,'[]'), numrange(110.0,120.2,'(]'));
+select range_minus(numrange(10.1,12.2,'[]'), numrange(0.0,120.2,'(]'));
 
 select numrange(4.5, 5.5, '[]') && numrange(5.5, 6.5);
 select numrange(1.0, 2.0) << numrange(3.0, 4.0);

@@ -1,7 +1,7 @@
 --
 -- TYPE_SANITY
 -- Sanity checks for common errors in making type-related system tables:
--- pg_type, pg_class, pg_attribute.
+-- pg_type, pg_class, pg_attribute, pg_range.
 --
 -- None of the SELECTs here should ever find any matching entries,
 -- so the expected output is easy to maintain ;-).
@@ -285,3 +285,42 @@ WHERE p1.atttypid = p2.oid AND
      p1.attalign != p2.typalign OR
      p1.attbyval != p2.typbyval OR
      (p1.attstorage != p2.typstorage AND p1.attstorage != 'p'));
+
+-- **************** pg_range ****************
+
+-- Look for illegal values in pg_range fields.
+
+SELECT p1.rngtypid, p1.rngsubtype
+FROM pg_range as p1
+WHERE p1.rngtypid = 0 OR p1.rngsubtype = 0 OR p1.rngsubopc = 0;
+
+-- rngcollation should be specified iff subtype is collatable
+
+SELECT p1.rngtypid, p1.rngsubtype, p1.rngcollation, t.typcollation
+FROM pg_range p1 JOIN pg_type t ON t.oid = p1.rngsubtype
+WHERE (rngcollation = 0) != (typcollation = 0);
+
+-- opclass had better be a btree opclass accepting the subtype.
+-- We must allow anyarray matches, cf opr_sanity's binary_coercible()
+
+SELECT p1.rngtypid, p1.rngsubtype, o.opcmethod, o.opcname
+FROM pg_range p1 JOIN pg_opclass o ON o.oid = p1.rngsubopc
+WHERE o.opcmethod != 403 OR
+    ((o.opcintype != p1.rngsubtype) AND NOT
+     (o.opcintype = 'pg_catalog.anyarray'::regtype AND
+      EXISTS(select 1 from pg_catalog.pg_type where
+             oid = p1.rngsubtype and typelem != 0 and typlen = -1)));
+
+-- canonical function, if any, had better match the range type
+
+SELECT p1.rngtypid, p1.rngsubtype, p.proname
+FROM pg_range p1 JOIN pg_proc p ON p.oid = p1.rngcanonical
+WHERE pronargs != 1 OR proargtypes[0] != rngtypid OR prorettype != rngtypid;
+
+-- subdiff function, if any, had better match the subtype
+
+SELECT p1.rngtypid, p1.rngsubtype, p.proname
+FROM pg_range p1 JOIN pg_proc p ON p.oid = p1.rngsubdiff
+WHERE pronargs != 2
+    OR proargtypes[0] != rngsubtype OR proargtypes[1] != rngsubtype
+    OR prorettype != 'pg_catalog.float8'::regtype;
