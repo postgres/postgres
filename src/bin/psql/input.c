@@ -95,10 +95,10 @@ void
 pg_append_history(const char *s, PQExpBuffer history_buf)
 {
 #ifdef USE_READLINE
-	if (useHistory && s && s[0])
+	if (useHistory && s)
 	{
 		appendPQExpBufferStr(history_buf, s);
-		if (s[strlen(s) - 1] != '\n')
+		if (!s[0] || s[strlen(s) - 1] != '\n')
 			appendPQExpBufferChar(history_buf, '\n');
 	}
 #endif
