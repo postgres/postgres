@@ -42,19 +42,6 @@
 #include "parser/scansup.h"
 #include "utils/int8.h"
 
-
-/*
- * Translate the input language name to lower case, and truncate if needed.
- *
- * Returns a palloc'd string
- */
-char *
-case_translate_language_name(const char *input)
-{
-	return downcase_truncate_identifier(input, strlen(input), false);
-}
-
-
 /*
  * Extract a string value (otherwise uninterpreted) from a DefElem.
  */

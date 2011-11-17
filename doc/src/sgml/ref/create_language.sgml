@@ -143,9 +143,8 @@ CREATE [ OR REPLACE ] [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="pa
 
      <listitem>
       <para>
-       The name of the new procedural language.  The language name is
-       case insensitive. The name must be unique among the languages
-       in the database.
+       The name of the new procedural language.
+       The name must be unique among the languages in the database.
       </para>
 
       <para>

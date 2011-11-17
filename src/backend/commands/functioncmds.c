@@ -779,7 +779,6 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 	Oid			prorettype;
 	bool		returnsSet;
 	char	   *language;
-	char	   *languageName;
 	Oid			languageOid;
 	Oid			languageValidator;
 	char	   *funcname;
@@ -828,16 +827,13 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 								 &isStrict, &security,
 								 &proconfig, &procost, &prorows);
 
-	/* Convert language name to canonical case */
-	languageName = case_translate_language_name(language);
-
 	/* Look up the language and validate permissions */
-	languageTuple = SearchSysCache1(LANGNAME, PointerGetDatum(languageName));
+	languageTuple = SearchSysCache1(LANGNAME, PointerGetDatum(language));
 	if (!HeapTupleIsValid(languageTuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("language \"%s\" does not exist", languageName),
-				 (PLTemplateExists(languageName) ?
+				 errmsg("language \"%s\" does not exist", language),
+				 (PLTemplateExists(language) ?
 				  errhint("Use CREATE LANGUAGE to load the language into the database.") : 0)));
 
 	languageOid = HeapTupleGetOid(languageTuple);
@@ -906,7 +902,7 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 
 	compute_attributes_with_style(stmt->withClause, &isStrict, &volatility);
 
-	interpret_AS_clause(languageOid, languageName, funcname, as_clause,
+	interpret_AS_clause(languageOid, language, funcname, as_clause,
 						&prosrc_str, &probin_str);
 
 	/*
@@ -1964,7 +1960,6 @@ ExecuteDoStmt(DoStmt *stmt)
 	DefElem    *as_item = NULL;
 	DefElem    *language_item = NULL;
 	char	   *language;
-	char	   *languageName;
 	Oid			laninline;
 	HeapTuple	languageTuple;
 	Form_pg_language languageStruct;
@@ -2008,16 +2003,13 @@ ExecuteDoStmt(DoStmt *stmt)
 	else
 		language = "plpgsql";
 
-	/* Convert language name to canonical case */
-	languageName = case_translate_language_name(language);
-
 	/* Look up the language and validate permissions */
-	languageTuple = SearchSysCache1(LANGNAME, PointerGetDatum(languageName));
+	languageTuple = SearchSysCache1(LANGNAME, PointerGetDatum(language));
 	if (!HeapTupleIsValid(languageTuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("language \"%s\" does not exist", languageName),
-				 (PLTemplateExists(languageName) ?
+				 errmsg("language \"%s\" does not exist", language),
+				 (PLTemplateExists(language) ?
 				  errhint("Use CREATE LANGUAGE to load the language into the database.") : 0)));
 
 	codeblock->langOid = HeapTupleGetOid(languageTuple);
