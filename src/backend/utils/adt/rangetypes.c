@@ -1622,33 +1622,89 @@ make_range(TypeCacheEntry *typcache, RangeBound *lower, RangeBound *upper,
 	return range;
 }
 
+/*
+ * Compare two range boundary points, returning <0, 0, or >0 according to
+ * whether b1 is less than, equal to, or greater than b2.
+ *
+ * The boundaries can be any combination of upper and lower; so it's useful
+ * for a variety of operators.
+ *
+ * The simple case is when b1 and b2 are both finite and inclusive, in which
+ * case the result is just a comparison of the values held in b1 and b2.
+ *
+ * If a bound is exclusive, then we need to know whether it's a lower bound,
+ * in which case we treat the boundary point as "just greater than" the held
+ * value; or an upper bound, in which case we treat the boundary point as
+ * "just less than" the held value.
+ *
+ * If a bound is infinite, it represents minus infinity (less than every other
+ * point) if it's a lower bound; or plus infinity (greater than every other
+ * point) if it's an upper bound.
+ *
+ * There is only one case where two boundaries compare equal but are not
+ * identical: when both bounds are inclusive and hold the same finite value,
+ * but one is an upper bound and the other a lower bound.
+ */
 int
 range_cmp_bounds(TypeCacheEntry *typcache, RangeBound *b1, RangeBound *b2)
 {
 	int32		result;
 
+	/*
+	 * First, handle cases involving infinity, which don't require invoking
+	 * the comparison proc.
+	 */
 	if (b1->infinite && b2->infinite)
 	{
+		/*
+		 * Both are infinity, so they are equal unless one is lower and the
+		 * other not.
+		 */
 		if (b1->lower == b2->lower)
 			return 0;
 		else
-			return (b1->lower) ? -1 : 1;
+			return b1->lower ? -1 : 1;
 	}
-	else if (b1->infinite && !b2->infinite)
-		return (b1->lower) ? -1 : 1;
-	else if (!b1->infinite && b2->infinite)
-		return (b2->lower) ? 1 : -1;
+	else if (b1->infinite)
+		return b1->lower ? -1 : 1;
+	else if (b2->infinite)
+		return b2->lower ? 1 : -1;
 
+	/*
+	 * Both boundaries are finite, so compare the held values.
+	 */
 	result = DatumGetInt32(FunctionCall2Coll(&typcache->rng_cmp_proc_finfo,
 											 typcache->rng_collation,
 											 b1->val, b2->val));
 
+	/*
+	 * If the comparison is anything other than equal, we're done. If they
+	 * compare equal though, we still have to consider whether the boundaries
+	 * are inclusive or exclusive.
+	 */
 	if (result == 0)
 	{
-		if (b1->inclusive && !b2->inclusive)
-			return (b2->lower) ? -1 : 1;
-		else if (!b1->inclusive && b2->inclusive)
-			return (b1->lower) ? 1 : -1;
+		if (!b1->inclusive && !b2->inclusive)
+		{
+			/* both are exclusive */
+			if (b1->lower == b2->lower)
+				return 0;
+			else
+				return b1->lower ? 1 : -1;
+		}
+		else if (!b1->inclusive)
+			return b1->lower ? 1 : -1;
+		else if (!b2->inclusive)
+			return b2->lower ? -1 : 1;
+		else
+		{
+			/*
+			 * Both are inclusive and the values held are equal, so they are
+			 * equal regardless of whether they are upper or lower boundaries,
+			 * or a mix.
+			 */
+			return 0;
+		}
 	}
 
 	return result;

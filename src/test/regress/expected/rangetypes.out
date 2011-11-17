@@ -48,6 +48,30 @@ ERROR:  malformed range literal: "(a,])"
 LINE 1: select '(a,])'::textrange;
                ^
 DETAIL:  Junk after right parenthesis or bracket.
+select '( , )'::textrange;
+ERROR:  range lower bound must be less than or equal to range upper bound
+LINE 1: select '( , )'::textrange;
+               ^
+select '("","")'::textrange;
+ERROR:  range lower bound must be less than or equal to range upper bound
+LINE 1: select '("","")'::textrange;
+               ^
+select '(",",",")'::textrange;
+ERROR:  range lower bound must be less than or equal to range upper bound
+LINE 1: select '(",",",")'::textrange;
+               ^
+select '("\\","\\")'::textrange;
+ERROR:  range lower bound must be less than or equal to range upper bound
+LINE 1: select '("\\","\\")'::textrange;
+               ^
+select '[a,a)'::textrange;
+ERROR:  range lower bound must be less than or equal to range upper bound
+LINE 1: select '[a,a)'::textrange;
+               ^
+select '(a,a]'::textrange;
+ERROR:  range lower bound must be less than or equal to range upper bound
+LINE 1: select '(a,a]'::textrange;
+               ^
 -- should succeed
 select '  empty  '::textrange;
  textrange 
@@ -91,16 +115,10 @@ select '[a,]'::textrange;
  [a,)
 (1 row)
 
-select '( , )'::textrange;
+select '(,)'::textrange;
  textrange 
 -----------
- (" "," ")
-(1 row)
-
-select '("","")'::textrange;
- textrange 
------------
- ("","")
+ (,)
 (1 row)
 
 select '["",""]'::textrange;
@@ -109,17 +127,24 @@ select '["",""]'::textrange;
  ["",""]
 (1 row)
 
-select '(",",",")'::textrange;
+select '[",",","]'::textrange;
  textrange 
 -----------
- (",",",")
+ [",",","]
 (1 row)
 
-select '("\\","\\")'::textrange
+select '["\\","\\"]'::textrange;
+  textrange  
+-------------
+ ["\\","\\"]
+(1 row)
+
 select '(\\,a)'::textrange;
-ERROR:  syntax error at or near "select"
-LINE 2: select '(\\,a)'::textrange;
-        ^
+ textrange 
+-----------
+ ("\\",a)
+(1 row)
+
 select '((,z)'::textrange;
  textrange 
 -----------
@@ -302,6 +327,18 @@ select numrange(4.5, 5.5, '[]') && numrange(5.5, 6.5);
 (1 row)
 
 select numrange(1.0, 2.0) << numrange(3.0, 4.0);
+ ?column? 
+----------
+ t
+(1 row)
+
+select numrange(1.0, 3.0,'[]') << numrange(3.0, 4.0,'[]');
+ ?column? 
+----------
+ f
+(1 row)
+
+select numrange(1.0, 3.0,'()') << numrange(3.0, 4.0,'()');
  ?column? 
 ----------
  t

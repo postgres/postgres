@@ -15,6 +15,12 @@ select '(),a)'::textrange;
 select '(a,))'::textrange;
 select '(],a)'::textrange;
 select '(a,])'::textrange;
+select '( , )'::textrange;
+select '("","")'::textrange;
+select '(",",",")'::textrange;
+select '("\\","\\")'::textrange;
+select '[a,a)'::textrange;
+select '(a,a]'::textrange;
 
 -- should succeed
 select '  empty  '::textrange;
@@ -24,11 +30,10 @@ select '(,z)'::textrange;
 select '(a,)'::textrange;
 select '[,z]'::textrange;
 select '[a,]'::textrange;
-select '( , )'::textrange;
-select '("","")'::textrange;
+select '(,)'::textrange;
 select '["",""]'::textrange;
-select '(",",",")'::textrange;
-select '("\\","\\")'::textrange
+select '[",",","]'::textrange;
+select '["\\","\\"]'::textrange;
 select '(\\,a)'::textrange;
 select '((,z)'::textrange;
 select '([,z)'::textrange;
@@ -81,6 +86,8 @@ select range_minus(numrange(10.1,12.2,'[]'), numrange(0.0,120.2,'(]'));
 
 select numrange(4.5, 5.5, '[]') && numrange(5.5, 6.5);
 select numrange(1.0, 2.0) << numrange(3.0, 4.0);
+select numrange(1.0, 3.0,'[]') << numrange(3.0, 4.0,'[]');
+select numrange(1.0, 3.0,'()') << numrange(3.0, 4.0,'()');
 select numrange(1.0, 2.0) >> numrange(3.0, 4.0);
 select numrange(3.0, 70.0) &< numrange(6.6, 100.0);
 
