@@ -333,22 +333,6 @@ pg_scandir_internal(const char *dirname,
 #endif
 
 
-/*
- *	dir_matching_filenames
- *
- *	Return only matching file names during directory scan
- */
-int
-dir_matching_filenames(const struct dirent * scan_ent)
-{
-	/* we only compare for string length because the number suffix varies */
-	if (!strncmp(scandir_file_pattern, scan_ent->d_name, strlen(scandir_file_pattern)))
-		return 1;
-
-	return 0;
-}
-
-
 void
 check_hard_link(void)
 {
