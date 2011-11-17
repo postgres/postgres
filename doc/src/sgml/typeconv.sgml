@@ -304,13 +304,18 @@ without more clues.  Now discard
 candidates that do not accept the selected type category.  Furthermore,
 if any candidate accepts a preferred type in that category,
 discard candidates that accept non-preferred types for that argument.
+Keep all candidates if none survive these tests.
+If only one candidate remains, use it; else continue to the next step.
 </para>
 </step>
 <step performance="required">
 <para>
-If only one candidate remains, use it.  If no candidate or more than one
-candidate remains,
-then fail.
+If there are both <type>unknown</type> and known-type arguments, and all
+the known-type arguments have the same type, assume that the
+<type>unknown</type> arguments are also of that type, and check which
+candidates can accept that type at the <type>unknown</type>-argument
+positions.  If exactly one candidate passes this test, use it.
+Otherwise, fail.
 </para>
 </step>
 </substeps>
@@ -376,7 +381,7 @@ be interpreted as type <type>text</type>.
 </para>
 
 <para>
-Here is a concatenation on unspecified types:
+Here is a concatenation of two values of unspecified types:
 <screen>
 SELECT 'abc' || 'def' AS "unspecified";
 
@@ -394,7 +399,7 @@ and finds that there are candidates accepting both string-category and
 bit-string-category inputs.  Since string category is preferred when available,
 that category is selected, and then the
 preferred type for strings, <type>text</type>, is used as the specific
-type to resolve the unknown literals as.
+type to resolve the unknown-type literals as.
 </para>
 </example>
 
@@ -447,6 +452,36 @@ SELECT ~ CAST('20' AS int8) AS "negation";
       -21
 (1 row)
 </screen>
+</para>
+</example>
+
+<example>
+<title>Array Inclusion Operator Type Resolution</title>
+
+<para>
+Here is another example of resolving an operator with one known and one
+unknown input:
+<screen>
+SELECT array[1,2] &lt;@ '{1,2,3}' as "is subset";
+
+ is subset
+-----------
+ t
+(1 row)
+</screen>
+The <productname>PostgreSQL</productname> operator catalog has several
+entries for the infix operator <literal>&lt;@</>, but the only two that
+could possibly accept an integer array on the left-hand side are
+array inclusion (<type>anyarray</> <literal>&lt;@</> <type>anyarray</>)
+and range inclusion (<type>anyelement</> <literal>&lt;@</> <type>anyrange</>).
+Since none of these polymorphic pseudo-types (see <xref
+linkend="datatype-pseudo">) are considered preferred, the parser cannot
+resolve the ambiguity on that basis.  However, the last resolution rule tells
+it to assume that the unknown-type literal is of the same type as the other
+input, that is, integer array.  Now only one of the two operators can match,
+so array inclusion is selected.  (Had range inclusion been selected, we would
+have gotten an error, because the string does not have the right format to be
+a range literal.)
 </para>
 </example>
 
@@ -594,13 +629,18 @@ the correct choice cannot be deduced without more clues.
 Now discard candidates that do not accept the selected type category.
 Furthermore, if any candidate accepts a preferred type in that category,
 discard candidates that accept non-preferred types for that argument.
+Keep all candidates if none survive these tests.
+If only one candidate remains, use it; else continue to the next step.
 </para>
 </step>
 <step performance="required">
 <para>
-If only one candidate remains, use it.  If no candidate or more than one
-candidate remains,
-then fail.
+If there are both <type>unknown</type> and known-type arguments, and all
+the known-type arguments have the same type, assume that the
+<type>unknown</type> arguments are also of that type, and check which
+candidates can accept that type at the <type>unknown</type>-argument
+positions.  If exactly one candidate passes this test, use it.
+Otherwise, fail.
 </para>
 </step>
 </substeps>

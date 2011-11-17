@@ -618,14 +618,16 @@ func_select_candidate(int nargs,
 					  Oid *input_typeids,
 					  FuncCandidateList candidates)
 {
-	FuncCandidateList current_candidate;
-	FuncCandidateList last_candidate;
+	FuncCandidateList current_candidate,
+				first_candidate,
+				last_candidate;
 	Oid		   *current_typeids;
 	Oid			current_type;
 	int			i;
 	int			ncandidates;
 	int			nbestMatch,
-				nmatch;
+				nmatch,
+				nunknowns;
 	Oid			input_base_typeids[FUNC_MAX_ARGS];
 	TYPCATEGORY slot_category[FUNC_MAX_ARGS],
 				current_category;
@@ -651,9 +653,22 @@ func_select_candidate(int nargs,
 	 * take a domain as an input datatype.	Such a function will be selected
 	 * over the base-type function only if it is an exact match at all
 	 * argument positions, and so was already chosen by our caller.
+	 *
+	 * While we're at it, count the number of unknown-type arguments for use
+	 * later.
 	 */
+	nunknowns = 0;
 	for (i = 0; i < nargs; i++)
-		input_base_typeids[i] = getBaseType(input_typeids[i]);
+	{
+		if (input_typeids[i] != UNKNOWNOID)
+			input_base_typeids[i] = getBaseType(input_typeids[i]);
+		else
+		{
+			/* no need to call getBaseType on UNKNOWNOID */
+			input_base_typeids[i] = UNKNOWNOID;
+			nunknowns++;
+		}
+	}
 
 	/*
 	 * Run through all candidates and keep those with the most matches on
@@ -749,14 +764,16 @@ func_select_candidate(int nargs,
 		return candidates;
 
 	/*
-	 * Still too many candidates? Try assigning types for the unknown columns.
+	 * Still too many candidates?  Try assigning types for the unknown inputs.
 	 *
-	 * NOTE: for a binary operator with one unknown and one non-unknown input,
-	 * we already tried the heuristic of looking for a candidate with the
-	 * known input type on both sides (see binary_oper_exact()). That's
-	 * essentially a special case of the general algorithm we try next.
-	 *
-	 * We do this by examining each unknown argument position to see if we can
+	 * If there are no unknown inputs, we have no more heuristics that apply,
+	 * and must fail.
+	 */
+	if (nunknowns == 0)
+		return NULL;			/* failed to select a best candidate */
+
+	/*
+	 * The next step examines each unknown argument position to see if we can
 	 * determine a "type category" for it.	If any candidate has an input
 	 * datatype of STRING category, use STRING category (this bias towards
 	 * STRING is appropriate since unknown-type literals look like strings).
@@ -770,9 +787,9 @@ func_select_candidate(int nargs,
 	 * Having completed this examination, remove candidates that accept the
 	 * wrong category at any unknown position.	Also, if at least one
 	 * candidate accepted a preferred type at a position, remove candidates
-	 * that accept non-preferred types.
-	 *
-	 * If we are down to one candidate at the end, we win.
+	 * that accept non-preferred types.  If just one candidate remains,
+	 * return that one.  However, if this rule turns out to reject all
+	 * candidates, keep them all instead.
 	 */
 	resolved_unknowns = false;
 	for (i = 0; i < nargs; i++)
@@ -835,6 +852,7 @@ func_select_candidate(int nargs,
 	{
 		/* Strip non-matching candidates */
 		ncandidates = 0;
+		first_candidate = candidates;
 		last_candidate = NULL;
 		for (current_candidate = candidates;
 			 current_candidate != NULL;
@@ -874,15 +892,78 @@ func_select_candidate(int nargs,
 				if (last_candidate)
 					last_candidate->next = current_candidate->next;
 				else
-					candidates = current_candidate->next;
+					first_candidate = current_candidate->next;
 			}
 		}
-		if (last_candidate)		/* terminate rebuilt list */
+
+		/* if we found any matches, restrict our attention to those */
+		if (last_candidate)
+		{
+			candidates = first_candidate;
+			/* terminate rebuilt list */
 			last_candidate->next = NULL;
+		}
+
+		if (ncandidates == 1)
+			return candidates;
 	}
 
-	if (ncandidates == 1)
-		return candidates;
+	/*
+	 * Last gasp: if there are both known- and unknown-type inputs, and all
+	 * the known types are the same, assume the unknown inputs are also that
+	 * type, and see if that gives us a unique match.  If so, use that match.
+	 *
+	 * NOTE: for a binary operator with one unknown and one non-unknown input,
+	 * we already tried this heuristic in binary_oper_exact().  However, that
+	 * code only finds exact matches, whereas here we will handle matches that
+	 * involve coercion, polymorphic type resolution, etc.
+	 */
+	if (nunknowns < nargs)
+	{
+		Oid			known_type = UNKNOWNOID;
+
+		for (i = 0; i < nargs; i++)
+		{
+			if (input_base_typeids[i] == UNKNOWNOID)
+				continue;
+			if (known_type == UNKNOWNOID)		/* first known arg? */
+				known_type = input_base_typeids[i];
+			else if (known_type != input_base_typeids[i])
+			{
+				/* oops, not all match */
+				known_type = UNKNOWNOID;
+				break;
+			}
+		}
+
+		if (known_type != UNKNOWNOID)
+		{
+			/* okay, just one known type, apply the heuristic */
+			for (i = 0; i < nargs; i++)
+				input_base_typeids[i] = known_type;
+			ncandidates = 0;
+			last_candidate = NULL;
+			for (current_candidate = candidates;
+				 current_candidate != NULL;
+				 current_candidate = current_candidate->next)
+			{
+				current_typeids = current_candidate->args;
+				if (can_coerce_type(nargs, input_base_typeids, current_typeids,
+									COERCION_IMPLICIT))
+				{
+					if (++ncandidates > 1)
+						break;	/* not unique, give up */
+					last_candidate = current_candidate;
+				}
+			}
+			if (ncandidates == 1)
+			{
+				/* successfully identified a unique match */
+				last_candidate->next = NULL;
+				return last_candidate;
+			}
+		}
+	}
 
 	return NULL;				/* failed to select a best candidate */
 }	/* func_select_candidate() */
