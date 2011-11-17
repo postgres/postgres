@@ -296,7 +296,7 @@ pg_scandir_internal(const char *dirname,
 	while ((direntry = readdir(dirdesc)) != NULL)
 	{
 		/* Invoke the selector function to see if the direntry matches */
-		if ((*selector) (direntry))
+		if (selector && (*selector) (direntry))
 		{
 			count++;
 
