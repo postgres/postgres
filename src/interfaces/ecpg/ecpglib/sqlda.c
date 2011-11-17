@@ -127,10 +127,10 @@ sqlda_common_total_size(const PGresult *res, int row, enum COMPAT_MODE compat, l
 				ecpg_sqlda_align_add_size(offset, sizeof(date), sizeof(date), &offset, &next_offset);
 				break;
 			case ECPGt_timestamp:
-				ecpg_sqlda_align_add_size(offset, sizeof(int), sizeof(timestamp), &offset, &next_offset);
+				ecpg_sqlda_align_add_size(offset, sizeof(int64), sizeof(timestamp), &offset, &next_offset);
 				break;
 			case ECPGt_interval:
-				ecpg_sqlda_align_add_size(offset, sizeof(int), sizeof(interval), &offset, &next_offset);
+				ecpg_sqlda_align_add_size(offset, sizeof(int64), sizeof(interval), &offset, &next_offset);
 				break;
 			case ECPGt_char:
 			case ECPGt_unsigned_char:
@@ -359,7 +359,7 @@ ecpg_set_compat_sqlda(int lineno, struct sqlda_compat ** _sqlda, const PGresult 
 				sqlda->sqlvar[i].sqllen = sizeof(date);
 				break;
 			case ECPGt_timestamp:
-				ecpg_sqlda_align_add_size(offset, sizeof(timestamp), sizeof(timestamp), &offset, &next_offset);
+				ecpg_sqlda_align_add_size(offset, sizeof(int64), sizeof(timestamp), &offset, &next_offset);
 				sqlda->sqlvar[i].sqldata = (char *) sqlda + offset;
 				sqlda->sqlvar[i].sqllen = sizeof(timestamp);
 				break;
@@ -545,7 +545,7 @@ ecpg_set_native_sqlda(int lineno, struct sqlda_struct ** _sqlda, const PGresult 
 				sqlda->sqlvar[i].sqllen = sizeof(date);
 				break;
 			case ECPGt_timestamp:
-				ecpg_sqlda_align_add_size(offset, sizeof(timestamp), sizeof(timestamp), &offset, &next_offset);
+				ecpg_sqlda_align_add_size(offset, sizeof(int64), sizeof(timestamp), &offset, &next_offset);
 				sqlda->sqlvar[i].sqldata = (char *) sqlda + offset;
 				sqlda->sqlvar[i].sqllen = sizeof(timestamp);
 				break;
