@@ -61,7 +61,7 @@ LANGUAGE C IMMUTABLE STRICT;
 CREATE FUNCTION gen_random_bytes(int4)
 RETURNS bytea
 AS 'MODULE_PATHNAME', 'pg_random_bytes'
-LANGUAGE 'C' VOLATILE STRICT;
+LANGUAGE C VOLATILE STRICT;
 
 --
 -- pgp_sym_encrypt(data, key)
