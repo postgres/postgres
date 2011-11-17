@@ -346,6 +346,9 @@ create type arrayrange as range (subtype=int4[]);
 
 select arrayrange(ARRAY[1,2], ARRAY[2,1]);
 
+select array[1,1] <@ arrayrange(array[1,2], array[2,1]);
+select array[1,3] <@ arrayrange(array[1,2], array[2,1]);
+
 --
 -- OUT/INOUT/TABLE functions
 --

@@ -4367,11 +4367,11 @@ DATA(insert OID = 3856 (  range_ne	PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 16 "38
 DESCR("implementation of <> operator");
 DATA(insert OID = 3857 (  range_overlaps		PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 16 "3831 3831" _null_ _null_ _null_ _null_ range_overlaps _null_ _null_ _null_ ));
 DESCR("implementation of && operator");
-DATA(insert OID = 3858 (  range_contains_elem	PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 16 "3831 2776" _null_ _null_ _null_ _null_ range_contains_elem _null_ _null_ _null_ ));
+DATA(insert OID = 3858 (  range_contains_elem	PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 16 "3831 2283" _null_ _null_ _null_ _null_ range_contains_elem _null_ _null_ _null_ ));
 DESCR("implementation of @> operator");
 DATA(insert OID = 3859 (  range_contains		PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 16 "3831 3831" _null_ _null_ _null_ _null_ range_contains _null_ _null_ _null_ ));
 DESCR("implementation of @> operator");
-DATA(insert OID = 3860 (  elem_contained_by_range	PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 16 "2776 3831" _null_ _null_ _null_ _null_ elem_contained_by_range _null_ _null_ _null_ ));
+DATA(insert OID = 3860 (  elem_contained_by_range	PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 16 "2283 3831" _null_ _null_ _null_ _null_ elem_contained_by_range _null_ _null_ _null_ ));
 DESCR("implementation of <@ operator");
 DATA(insert OID = 3861 (  range_contained_by	PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 16 "3831 3831" _null_ _null_ _null_ _null_ range_contained_by _null_ _null_ _null_ ));
 DESCR("implementation of <@ operator");

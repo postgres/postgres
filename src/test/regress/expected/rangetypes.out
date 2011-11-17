@@ -964,6 +964,18 @@ select arrayrange(ARRAY[1,2], ARRAY[2,1]);
  ["{1,2}","{2,1}")
 (1 row)
 
+select array[1,1] <@ arrayrange(array[1,2], array[2,1]);
+ ?column? 
+----------
+ f
+(1 row)
+
+select array[1,3] <@ arrayrange(array[1,2], array[2,1]);
+ ?column? 
+----------
+ t
+(1 row)
+
 --
 -- OUT/INOUT/TABLE functions
 --
