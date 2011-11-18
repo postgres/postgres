@@ -10525,16 +10525,30 @@ SELECT NULLIF(value, '(none)') ...
 
        <row>
         <entry> <literal>@&gt;</literal> </entry>
-        <entry>contains</entry>
+        <entry>contains range</entry>
+        <entry><literal>int4range(2,4) @&gt; int4range(2,3)</literal></entry>
+        <entry><literal>t</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>@&gt;</literal> </entry>
+        <entry>contains element</entry>
         <entry><literal>'[2011-01-01,2011-03-01)'::tsrange @&gt; '2011-01-10'::timestamp</literal></entry>
         <entry><literal>t</literal></entry>
        </row>
 
        <row>
         <entry> <literal>&lt;@</literal> </entry>
-        <entry>is contained by</entry>
+        <entry>range is contained by</entry>
         <entry><literal>int4range(2,4) &lt;@ int4range(1,7)</literal></entry>
         <entry><literal>t</literal></entry>
+       </row>
+
+       <row>
+        <entry> <literal>&lt;@</literal> </entry>
+        <entry>element is contained by</entry>
+        <entry><literal>42 &lt;@ int4range(1,7)</literal></entry>
+        <entry><literal>f</literal></entry>
        </row>
 
        <row>

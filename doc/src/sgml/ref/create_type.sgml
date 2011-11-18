@@ -28,12 +28,12 @@ CREATE TYPE <replaceable class="parameter">name</replaceable> AS ENUM
     ( [ '<replaceable class="parameter">label</replaceable>' [, ... ] ] )
 
 CREATE TYPE <replaceable class="parameter">name</replaceable> AS RANGE (
-    SUBTYPE = <replaceable class="parameter">subtype</replaceable>,
+    SUBTYPE = <replaceable class="parameter">subtype</replaceable>
     [ , SUBTYPE_OPCLASS = <replaceable class="parameter">subtype_operator_class</replaceable> ]
-    [ , SUBTYPE_DIFF = <replaceable class="parameter">subtype_diff_function</replaceable> ]
-    [ , CANONICAL = <replaceable class="parameter">canonical_function</replaceable> ]
-    [ , ANALYZE = <replaceable class="parameter">analyze_function</replaceable> ]
     [ , COLLATION = <replaceable class="parameter">collation</replaceable> ]
+    [ , CANONICAL = <replaceable class="parameter">canonical_function</replaceable> ]
+    [ , SUBTYPE_DIFF = <replaceable class="parameter">subtype_diff_function</replaceable> ]
+    [ , ANALYZE = <replaceable class="parameter">analyze_function</replaceable> ]
 )
 
 CREATE TYPE <replaceable class="parameter">name</replaceable> (
@@ -79,6 +79,18 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    table in the same schema.)
   </para>
 
+  <para>
+   There are five forms of <command>CREATE TYPE</command>, as shown in the
+   syntax synopsis above.  They respectively create a <firstterm>composite
+   type</>, an <firstterm>enum type</>, a <firstterm>range type</>, a
+   <firstterm>base type</>, or a <firstterm>shell type</>.  The first four
+   of these are discussed in turn below.  A shell type is simply a placeholder
+   for a type to be defined later; it is created by issuing <command>CREATE
+   TYPE</command> with no parameters except for the type name.  Shell types
+   are needed as forward references when creating range types and base types,
+   as discussed in those sections.
+  </para>
+
   <refsect2>
    <title>Composite Types</title>
 
@@ -102,59 +114,65 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
     The second form of <command>CREATE TYPE</command> creates an enumerated
     (enum) type, as described in <xref linkend="datatype-enum">.
     Enum types take a list of one or more quoted labels, each of which
-    must be less than <symbol>NAMEDATALEN</symbol> bytes long (64 in a standard
-    <productname>PostgreSQL</productname> build).
+    must be less than <symbol>NAMEDATALEN</symbol> bytes long (64 bytes in a
+    standard <productname>PostgreSQL</productname> build).
    </para>
   </refsect2>
 
   <refsect2 id="SQL-CREATETYPE-RANGE">
    <title>Range Types</title>
 
-  <para>
+   <para>
     The third form of <command>CREATE TYPE</command> creates a new
     range type, as described in <xref linkend="rangetypes">.
-  </para>
+   </para>
 
-  <para>
-    The <replaceable class="parameter">subtype</replaceable> parameter
-    can be any type with an associated btree opclass (uses the type's
-    default btree operator class unless specified with
-    <replaceable class="parameter">subtype_operator_class</replaceable>).
-  </para>
+   <para>
+    The range type's <replaceable class="parameter">subtype</replaceable> can
+    be any type with an associated btree operator class (to determine the
+    ordering of values for the range type).  Normally the subtype's default
+    btree operator class is used to determine ordering; to use a non-default
+    opclass, specify its name with <replaceable
+    class="parameter">subtype_opclass</replaceable>.  If the subtype is
+    collatable, and you want to use a non-default collation in the range's
+    ordering, specify the desired collation with the <replaceable
+    class="parameter">collation</replaceable> option.
+   </para>
 
-  <para>
-    The <replaceable class="parameter">subtype_diff</replaceable>
-    function takes two values of type
-    <replaceable class="parameter">subtype</replaceable> as argument, and
-    returns the distance between the two values as
-    <type>double precision</type>. This function is used for GiST indexing
-    (see <xref linkend="gist"> for more information), and should be provided
-    for efficiency.
-  </para>
-
-  <para>
-    The <replaceable class="parameter">canonical</replaceable>
-    function takes an argument and returns a value, both of the same
-    type being defined. This is used to convert the range value to a
-    canonical form, when applicable. See <xref linkend="rangetypes">
+   <para>
+    The optional <replaceable class="parameter">canonical</replaceable>
+    function must take one argument of the range type being defined, and
+    return a value of the same type.  This is used to convert the range value
+    to a canonical form, when applicable. See <xref linkend="rangetypes">
     for more information. To define
-    a <replaceable class="parameter">canonical</replaceable> function,
-    you must first create a <firstterm>shell type</>, which is a
+    the <replaceable class="parameter">canonical</replaceable> function,
+    you must first create a shell type, which is a
     placeholder type that has no properties except a name and an
     owner.  This is done by issuing the command <literal>CREATE TYPE
-   <replaceable>name</></literal>, with no additional parameters.
-  </para>
+    <replaceable>name</></literal>, with no additional parameters.  Then
+    the function can be declared, and finally the range type can be declared,
+    replacing the shell type entry with a valid range type.
+   </para>
 
-  <para>
-    The <replaceable class="parameter">analyze</replaceable>
-    function is the same as for creating a base type.
-  </para>
+   <para>
+    The optional <replaceable class="parameter">subtype_diff</replaceable>
+    function must take two values of the
+    <replaceable class="parameter">subtype</replaceable> type as argument,
+    and return a <type>double precision</type> value representing the
+    difference between the two given values.  While this is optional,
+    providing it allows much greater efficiency of GiST indexes on columns of
+    the range type.  Note that the <replaceable
+    class="parameter">subtype_diff</replaceable> function should agree with
+    the sort ordering implied by the selected operator class and collation;
+    that is, its result should be positive whenever its first argument is
+    greater than its second according to the sort ordering.
+   </para>
 
-  <para>
-    The <replaceable class="parameter">collation</replaceable> option
-    specifies the collation used when determining the total order for
-    the range.
-  </para>
+   <para>
+    The optional <replaceable class="parameter">analyze</replaceable>
+    function performs type-specific statistics collection for columns of the
+    range type.  This is defined the same as for base types; see below.
+   </para>
   </refsect2>
 
   <refsect2>
@@ -431,7 +449,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    <para>
     Whenever a user-defined type is created,
     <productname>PostgreSQL</productname> automatically creates an
-    associated array type, whose name consists of the base type's
+    associated array type, whose name consists of the element type's
     name prepended with an underscore, and truncated if necessary to keep
     it less than <symbol>NAMEDATALEN</symbol> bytes long.  (If the name
     so generated collides with an existing type name, the process is
@@ -497,11 +515,58 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    </varlistentry>
 
    <varlistentry>
+    <term><replaceable class="parameter">collation</replaceable></term>
+    <listitem>
+     <para>
+      The name of an existing collation to be associated with a column of
+      a composite type, or with a range type.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><replaceable class="parameter">label</replaceable></term>
     <listitem>
      <para>
       A string literal representing the textual label associated with
       one value of an enum type.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">subtype</replaceable></term>
+    <listitem>
+     <para>
+      The name of the element type that the range type will represent ranges
+      of.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">subtype_operator_class</replaceable></term>
+    <listitem>
+     <para>
+      The name of a btree operator class for the subtype.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">canonical_function</replaceable></term>
+    <listitem>
+     <para>
+      The name of the canonicalization function for the range type.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">subtype_diff_function</replaceable></term>
+    <listitem>
+     <para>
+      The name of a difference function for the subtype.
      </para>
     </listitem>
    </varlistentry>
@@ -699,8 +764,8 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
 
   <para>
    Because there are no restrictions on use of a data type once it's been
-   created, creating a base type is tantamount to granting public execute
-   permission on the functions mentioned in the type definition.
+   created, creating a base type or range type is tantamount to granting
+   public execute permission on the functions mentioned in the type definition.
    This is usually
    not an issue for the sorts of functions that are useful in a type
    definition.  But you might want to think twice before designing a type
@@ -730,7 +795,8 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
   </para>
 
   <para>
-   Before <productname>PostgreSQL</productname> version 8.2, the syntax
+   Before <productname>PostgreSQL</productname> version 8.2, the shell-type
+   creation syntax
    <literal>CREATE TYPE <replaceable>name</></literal> did not exist.
    The way to create a new base type was to create its input function first.
    In this approach, <productname>PostgreSQL</productname> will first see
@@ -784,6 +850,13 @@ CREATE TABLE bug (
     description text,
     status bug_status
 );
+</programlisting>
+  </para>
+
+  <para>
+   This example creates a range type:
+<programlisting>
+CREATE TYPE float8_range AS RANGE (subtype = float8, subtype_diff = float8mi);
 </programlisting>
   </para>
 
@@ -860,7 +933,7 @@ CREATE TABLE big_objs (
   <para>
    The ability to create a composite type with zero attributes is
    a <productname>PostgreSQL</productname>-specific deviation from the
-   standard (analogous to <command>CREATE TABLE</command>).
+   standard (analogous to the same case in <command>CREATE TABLE</command>).
   </para>
  </refsect1>
 

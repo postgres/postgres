@@ -4607,7 +4607,9 @@
   </indexterm>
 
   <para>
-   The catalog <structname>pg_range</structname> stores information about range types.
+   The catalog <structname>pg_range</structname> stores information about
+   range types.  This is in addition to the types' entries in
+   <link linkend="catalog-pg-type"><structname>pg_type</structname></link>.
   </para>
 
   <table>
@@ -4628,46 +4630,56 @@
       <entry><structfield>rngtypid</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
-      <entry>The type that is a range type</entry>
+      <entry>OID of the range type</entry>
      </row>
 
      <row>
       <entry><structfield>rngsubtype</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
-      <entry>Subtype of this range type, e.g. <type>integer</type> is the subtype of <type>int4range</type></entry>
+      <entry>OID of the element type (subtype) of this range type</entry>
      </row>
 
      <row>
       <entry><structfield>rngcollation</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-collation"><structname>pg_collation</structname></link>.oid</literal></entry>
-      <entry>The collation used when comparing range boundaries</entry>
+      <entry>OID of the collation used for range comparisons, or 0 if none</entry>
      </row>
 
      <row>
       <entry><structfield>rngsubopc</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link>.oid</literal></entry>
-      <entry>The operator class used when comparing range boundaries</entry>
+      <entry>OID of the subtype's operator class used for range comparisons</entry>
      </row>
 
      <row>
       <entry><structfield>rngcanonical</structfield></entry>
       <entry><type>regproc</type></entry>
       <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
-      <entry>A function to convert a range into its canonical form</entry>
+      <entry>OID of the function to convert a range value into canonical form,
+      or 0 if none</entry>
      </row>
 
      <row>
       <entry><structfield>rngsubdiff</structfield></entry>
       <entry><type>regproc</type></entry>
       <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
-      <entry>A function to return the distance between two lower and upper bound, as a <type>double precision</type>. Used for GiST support</entry>
+      <entry>OID of the function to return the difference between two element
+      values as <type>double precision</type>, or 0 if none</entry>
      </row>
     </tbody>
    </tgroup>
   </table>
+
+  <para>
+   <structfield>rngsubopc</> (plus <structfield>rngcollation</>, if the
+   element type is collatable) determines the sort ordering used by the range
+   type.  <structfield>rngcanonical</> is used when the element type is
+   discrete.  <structfield>rngsubdiff</> is optional but should be supplied to
+   improve performance of GiST indexes on the range type.
+  </para>
 
  </sect1>
 
@@ -6059,7 +6071,8 @@
        <literal>c</literal> for a composite type (e.g., a table's row type),
        <literal>d</literal> for a domain,
        <literal>e</literal> for an enum type,
-       or <literal>p</literal> for a pseudo-type.
+       <literal>p</literal> for a pseudo-type, or
+       <literal>r</literal> for a range type.
        See also <structfield>typrelid</structfield> and
        <structfield>typbasetype</structfield>.
       </entry>
@@ -6428,6 +6441,10 @@
      <row>
       <entry><literal>P</literal></entry>
       <entry>Pseudo-types</entry>
+     </row>
+     <row>
+      <entry><literal>R</literal></entry>
+      <entry>Range types</entry>
      </row>
      <row>
       <entry><literal>S</literal></entry>

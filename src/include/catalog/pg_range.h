@@ -34,7 +34,7 @@
 CATALOG(pg_range,3541) BKI_WITHOUT_OIDS
 {
 	Oid			rngtypid;		/* OID of owning range type */
-	Oid			rngsubtype;		/* OID of range's subtype */
+	Oid			rngsubtype;		/* OID of range's element type (subtype) */
 	Oid			rngcollation;	/* collation for this range type, or 0 */
 	Oid			rngsubopc;		/* subtype's btree opclass */
 	regproc		rngcanonical;	/* canonicalize range, or 0 */

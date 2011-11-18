@@ -636,7 +636,8 @@ findLoop(DumpableObject *obj,
 /*
  * A user-defined datatype will have a dependency loop with each of its
  * I/O functions (since those have the datatype as input or output).
- * Break the loop and make the I/O function depend on the associated
+ * Similarly, a range type will have a loop with its canonicalize function,
+ * if any.  Break the loop by making the function depend on the associated
  * shell type, instead.
  */
 static void
@@ -651,7 +652,7 @@ repairTypeFuncLoop(DumpableObject *typeobj, DumpableObject *funcobj)
 	if (typeInfo->shellType)
 	{
 		addObjectDependency(funcobj, typeInfo->shellType->dobj.dumpId);
-		/* Mark shell type as to be dumped if any I/O function is */
+		/* Mark shell type as to be dumped if any such function is */
 		if (funcobj->dump)
 			typeInfo->shellType->dobj.dump = true;
 	}
@@ -789,7 +790,7 @@ repairDependencyLoop(DumpableObject **loop,
 	int			i,
 				j;
 
-	/* Datatype and one of its I/O functions */
+	/* Datatype and one of its I/O or canonicalize functions */
 	if (nLoop == 2 &&
 		loop[0]->objType == DO_TYPE &&
 		loop[1]->objType == DO_FUNC)

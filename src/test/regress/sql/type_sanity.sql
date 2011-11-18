@@ -50,12 +50,15 @@ FROM pg_type as p1
 WHERE (p1.typtype = 'c' AND p1.typrelid = 0) OR
     (p1.typtype != 'c' AND p1.typrelid != 0);
 
--- Look for basic or enum types that don't have an array type.
+-- Look for types that should have an array type according to their typtype,
+-- but don't.  We exclude composites here because we have not bothered to
+-- make array types corresponding to the system catalogs' rowtypes.
 -- NOTE: as of 9.1, this check finds pg_node_tree, smgr, and unknown.
 
 SELECT p1.oid, p1.typname
 FROM pg_type as p1
-WHERE p1.typtype in ('b','e') AND p1.typname NOT LIKE E'\\_%' AND NOT EXISTS
+WHERE p1.typtype not in ('c','d','p') AND p1.typname NOT LIKE E'\\_%'
+    AND NOT EXISTS
     (SELECT 1 FROM pg_type as p2
      WHERE p2.typname = ('_' || p1.typname)::name AND
            p2.typelem = p1.oid and p1.typarray = p2.oid);
@@ -117,6 +120,12 @@ WHERE p1.typinput = p2.oid AND p1.typtype in ('b', 'p') AND
     (p2.oid = 'array_in'::regproc)
 ORDER BY 1;
 
+-- Composites, domains, enums, ranges should all use the same input routines
+SELECT DISTINCT typtype, typinput
+FROM pg_type AS p1
+WHERE p1.typtype not in ('b', 'p')
+ORDER BY 1;
+
 -- Check for bogus typoutput routines
 
 -- As of 8.0, this check finds refcursor, which is borrowing
@@ -134,6 +143,17 @@ SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
 WHERE p1.typoutput = p2.oid AND p1.typtype in ('b', 'p') AND NOT
     (p2.prorettype = 'cstring'::regtype AND NOT p2.proretset);
+
+-- Composites, enums, ranges should all use the same output routines
+SELECT DISTINCT typtype, typoutput
+FROM pg_type AS p1
+WHERE p1.typtype not in ('b', 'd', 'p')
+ORDER BY 1;
+
+-- Domains should have same typoutput as their base types
+SELECT p1.oid, p1.typname, p2.oid, p2.typname
+FROM pg_type AS p1 LEFT JOIN pg_type AS p2 ON p1.typbasetype = p2.oid
+WHERE p1.typtype = 'd' AND p1.typoutput IS DISTINCT FROM p2.typoutput;
 
 -- Check for bogus typreceive routines
 
@@ -169,6 +189,12 @@ FROM pg_type AS p1, pg_proc AS p2, pg_proc AS p3
 WHERE p1.typinput = p2.oid AND p1.typreceive = p3.oid AND
     p2.pronargs != p3.pronargs;
 
+-- Composites, domains, enums, ranges should all use the same receive routines
+SELECT DISTINCT typtype, typreceive
+FROM pg_type AS p1
+WHERE p1.typtype not in ('b', 'p')
+ORDER BY 1;
+
 -- Check for bogus typsend routines
 
 -- As of 7.4, this check finds refcursor, which is borrowing
@@ -187,11 +213,22 @@ FROM pg_type AS p1, pg_proc AS p2
 WHERE p1.typsend = p2.oid AND p1.typtype in ('b', 'p') AND NOT
     (p2.prorettype = 'bytea'::regtype AND NOT p2.proretset);
 
+-- Composites, enums, ranges should all use the same send routines
+SELECT DISTINCT typtype, typsend
+FROM pg_type AS p1
+WHERE p1.typtype not in ('b', 'd', 'p')
+ORDER BY 1;
+
+-- Domains should have same typsend as their base types
+SELECT p1.oid, p1.typname, p2.oid, p2.typname
+FROM pg_type AS p1 LEFT JOIN pg_type AS p2 ON p1.typbasetype = p2.oid
+WHERE p1.typtype = 'd' AND p1.typsend IS DISTINCT FROM p2.typsend;
+
 -- Check for bogus typmodin routines
 
 SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
-WHERE p1.typmodin = p2.oid AND p1.typtype in ('b', 'p') AND NOT
+WHERE p1.typmodin = p2.oid AND NOT
     (p2.pronargs = 1 AND
      p2.proargtypes[0] = 'cstring[]'::regtype AND
      p2.prorettype = 'int4'::regtype AND NOT p2.proretset);
@@ -200,7 +237,7 @@ WHERE p1.typmodin = p2.oid AND p1.typtype in ('b', 'p') AND NOT
 
 SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
-WHERE p1.typmodout = p2.oid AND p1.typtype in ('b', 'p') AND NOT
+WHERE p1.typmodout = p2.oid AND NOT
     (p2.pronargs = 1 AND
      p2.proargtypes[0] = 'int4'::regtype AND
      p2.prorettype = 'cstring'::regtype AND NOT p2.proretset);
@@ -230,7 +267,7 @@ WHERE p1.typarray = p2.oid AND
 
 SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
-WHERE p1.typanalyze = p2.oid AND p1.typtype in ('b', 'p') AND NOT
+WHERE p1.typanalyze = p2.oid AND NOT
     (p2.pronargs = 1 AND
      p2.proargtypes[0] = 'internal'::regtype AND
      p2.prorettype = 'bool'::regtype AND NOT p2.proretset);

@@ -200,13 +200,13 @@
     <para>
      Five pseudo-types of special interest are <type>anyelement</>,
      <type>anyarray</>, <type>anynonarray</>, <type>anyenum</>,
-     and <type>anyrange</>, which are collectively
-     called <firstterm>polymorphic types</>.  Any function declared
-     using these types is said to be a <firstterm>polymorphic
-     function</>.  A polymorphic function can operate on many
-     different data types, with the specific data type(s) being
-     determined by the data types actually passed to it in a
-     particular call.
+     and <type>anyrange</>,
+     which are collectively called <firstterm>polymorphic types</>.
+     Any function declared using these types is said to be
+     a <firstterm>polymorphic function</>.  A polymorphic function can
+     operate on many different data types, with the specific data type(s)
+     being determined by the data types actually passed to it in a particular
+     call.
     </para>
 
     <para>
@@ -217,15 +217,16 @@
      data type, but in any given call they must all be the
      <emphasis>same</emphasis> actual type. Each
      position declared as <type>anyarray</type> can have any array data type,
-     but similarly they must all be the same type. If there are
+     but similarly they must all be the same type.  And similarly,
+     positions declared as <type>anyrange</type> must all be the same range
+     type.  Furthermore, if there are
      positions declared <type>anyarray</type> and others declared
      <type>anyelement</type>, the actual array type in the
      <type>anyarray</type> positions must be an array whose elements are
      the same type appearing in the <type>anyelement</type> positions.
      Similarly, if there are positions declared <type>anyrange</type>
-     and others declared
-     <type>anyelement</type>, the actual range type in the
-     <type>anyrange</type> positions must be a range whose subtype is
+     and others declared <type>anyelement</type>, the actual range type in
+     the <type>anyrange</type> positions must be a range whose subtype is
      the same type appearing in the <type>anyelement</type> positions.
      <type>anynonarray</> is treated exactly the same as <type>anyelement</>,
      but adds the additional constraint that the actual type must not be

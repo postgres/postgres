@@ -2986,7 +2986,8 @@ getTypes(int *numTypes)
 		/*
 		 * If it's a base type, make a DumpableObject representing a shell
 		 * definition of the type.	We will need to dump that ahead of the I/O
-		 * functions for the type.
+		 * functions for the type.  Similarly, range types need a shell
+		 * definition in case they have a canonicalize function.
 		 *
 		 * Note: the shell type doesn't have a catId.  You might think it
 		 * should copy the base type's catId, but then it might capture the
@@ -3006,8 +3007,8 @@ getTypes(int *numTypes)
 
 			/*
 			 * Initially mark the shell type as not to be dumped.  We'll only
-			 * dump it if the I/O functions need to be dumped; this is taken
-			 * care of while sorting dependencies.
+			 * dump it if the I/O or canonicalize functions need to be dumped;
+			 * this is taken care of while sorting dependencies.
 			 */
 			stinfo->dobj.dump = false;
 
@@ -7340,6 +7341,9 @@ dumpType(Archive *fout, TypeInfo *tyinfo)
 		dumpEnumType(fout, tyinfo);
 	else if (tyinfo->typtype == TYPTYPE_RANGE)
 		dumpRangeType(fout, tyinfo);
+	else
+		write_msg(NULL, "WARNING: typtype of data type \"%s\" appears to be invalid\n",
+				  tyinfo->dobj.name);
 }
 
 /*
