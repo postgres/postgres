@@ -732,7 +732,7 @@ _bt_page_recyclable(Page page)
  * and so must be scanned anyway during replay. We always write a WAL record
  * for the last block in the index, whether or not it contained any items
  * to be removed. This allows us to scan right up to end of index to
- * ensure correct locking.
+ * ensure correct locking. That is the only time we are called with nitems==0.
  */
 void
 _bt_delitems_vacuum(Relation rel, Buffer buf,
@@ -764,7 +764,8 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 	 */
 	opaque->btpo_flags &= ~BTP_HAS_GARBAGE;
 
-	MarkBufferDirty(buf);
+	if (nitems > 0)
+		MarkBufferDirty(buf);
 
 	/* XLOG stuff */
 	if (RelationNeedsWAL(rel))
@@ -804,8 +805,11 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 
 		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_VACUUM, rdata);
 
-		PageSetLSN(page, recptr);
-		PageSetTLI(page, ThisTimeLineID);
+		if (nitems > 0)
+		{
+			PageSetLSN(page, recptr);
+			PageSetTLI(page, ThisTimeLineID);
+		}
 	}
 
 	END_CRIT_SECTION();
