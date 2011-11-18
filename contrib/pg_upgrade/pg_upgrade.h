@@ -333,8 +333,7 @@ const char *setupPageConverter(pageCnvCtx **result);
 typedef void *pageCnvCtx;
 #endif
 
-int pg_scandir(const char *dirname, struct dirent *** namelist,
-		   int (*selector) (const struct dirent *));
+int load_directory(const char *dirname, struct dirent ***namelist);
 const char *copyAndUpdateFile(pageCnvCtx *pageConverter, const char *src,
 				  const char *dst, bool force);
 const char *linkAndUpdateFile(pageCnvCtx *pageConverter, const char *src,

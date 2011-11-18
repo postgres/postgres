@@ -160,7 +160,7 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 			}
 
 			snprintf(old_dir, sizeof(old_dir), "%s", maps[mapnum].old_dir);
-			numFiles = pg_scandir(old_dir, &namelist, NULL);
+			numFiles = load_directory(old_dir, &namelist);
 		}
 
 		/* Copying files might take some time, so give feedback. */
