@@ -507,43 +507,6 @@ PLTemplateExists(const char *languageName)
 	return (find_language_template(languageName) != NULL);
 }
 
-
-/* ---------------------------------------------------------------------
- * DROP PROCEDURAL LANGUAGE
- * ---------------------------------------------------------------------
- */
-void
-DropProceduralLanguage(DropPLangStmt *stmt)
-{
-	Oid			oid;
-	ObjectAddress object;
-
-	oid = get_language_oid(stmt->plname, stmt->missing_ok);
-	if (!OidIsValid(oid))
-	{
-		ereport(NOTICE,
-				(errmsg("language \"%s\" does not exist, skipping",
-						stmt->plname)));
-		return;
-	}
-
-	/*
-	 * Check permission
-	 */
-	if (!pg_language_ownercheck(oid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_LANGUAGE,
-					   stmt->plname);
-
-	object.classId = LanguageRelationId;
-	object.objectId = oid;
-	object.objectSubId = 0;
-
-	/*
-	 * Do the deletion
-	 */
-	performDeletion(&object, stmt->behavior);
-}
-
 /*
  * Guts of language dropping.
  */

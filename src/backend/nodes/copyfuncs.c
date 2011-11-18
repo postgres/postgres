@@ -2755,6 +2755,7 @@ _copyDropStmt(DropStmt *from)
 	DropStmt   *newnode = makeNode(DropStmt);
 
 	COPY_NODE_FIELD(objects);
+	COPY_NODE_FIELD(arguments);
 	COPY_SCALAR_FIELD(removeType);
 	COPY_SCALAR_FIELD(behavior);
 	COPY_SCALAR_FIELD(missing_ok);
@@ -2878,52 +2879,12 @@ _copyAlterFunctionStmt(AlterFunctionStmt *from)
 	return newnode;
 }
 
-static RemoveFuncStmt *
-_copyRemoveFuncStmt(RemoveFuncStmt *from)
-{
-	RemoveFuncStmt *newnode = makeNode(RemoveFuncStmt);
-
-	COPY_SCALAR_FIELD(kind);
-	COPY_NODE_FIELD(name);
-	COPY_NODE_FIELD(args);
-	COPY_SCALAR_FIELD(behavior);
-	COPY_SCALAR_FIELD(missing_ok);
-
-	return newnode;
-}
-
 static DoStmt *
 _copyDoStmt(DoStmt *from)
 {
 	DoStmt	   *newnode = makeNode(DoStmt);
 
 	COPY_NODE_FIELD(args);
-
-	return newnode;
-}
-
-static RemoveOpClassStmt *
-_copyRemoveOpClassStmt(RemoveOpClassStmt *from)
-{
-	RemoveOpClassStmt *newnode = makeNode(RemoveOpClassStmt);
-
-	COPY_NODE_FIELD(opclassname);
-	COPY_STRING_FIELD(amname);
-	COPY_SCALAR_FIELD(behavior);
-	COPY_SCALAR_FIELD(missing_ok);
-
-	return newnode;
-}
-
-static RemoveOpFamilyStmt *
-_copyRemoveOpFamilyStmt(RemoveOpFamilyStmt *from)
-{
-	RemoveOpFamilyStmt *newnode = makeNode(RemoveOpFamilyStmt);
-
-	COPY_NODE_FIELD(opfamilyname);
-	COPY_STRING_FIELD(amname);
-	COPY_SCALAR_FIELD(behavior);
-	COPY_SCALAR_FIELD(missing_ok);
 
 	return newnode;
 }
@@ -3391,18 +3352,6 @@ _copyAlterFdwStmt(AlterFdwStmt *from)
 	return newnode;
 }
 
-static DropFdwStmt *
-_copyDropFdwStmt(DropFdwStmt *from)
-{
-	DropFdwStmt *newnode = makeNode(DropFdwStmt);
-
-	COPY_STRING_FIELD(fdwname);
-	COPY_SCALAR_FIELD(missing_ok);
-	COPY_SCALAR_FIELD(behavior);
-
-	return newnode;
-}
-
 static CreateForeignServerStmt *
 _copyCreateForeignServerStmt(CreateForeignServerStmt *from)
 {
@@ -3426,18 +3375,6 @@ _copyAlterForeignServerStmt(AlterForeignServerStmt *from)
 	COPY_STRING_FIELD(version);
 	COPY_NODE_FIELD(options);
 	COPY_SCALAR_FIELD(has_version);
-
-	return newnode;
-}
-
-static DropForeignServerStmt *
-_copyDropForeignServerStmt(DropForeignServerStmt *from)
-{
-	DropForeignServerStmt *newnode = makeNode(DropForeignServerStmt);
-
-	COPY_STRING_FIELD(servername);
-	COPY_SCALAR_FIELD(missing_ok);
-	COPY_SCALAR_FIELD(behavior);
 
 	return newnode;
 }
@@ -3513,20 +3450,6 @@ _copyCreateTrigStmt(CreateTrigStmt *from)
 	return newnode;
 }
 
-static DropPropertyStmt *
-_copyDropPropertyStmt(DropPropertyStmt *from)
-{
-	DropPropertyStmt *newnode = makeNode(DropPropertyStmt);
-
-	COPY_NODE_FIELD(relation);
-	COPY_STRING_FIELD(property);
-	COPY_SCALAR_FIELD(removeType);
-	COPY_SCALAR_FIELD(behavior);
-	COPY_SCALAR_FIELD(missing_ok);
-
-	return newnode;
-}
-
 static CreatePLangStmt *
 _copyCreatePLangStmt(CreatePLangStmt *from)
 {
@@ -3538,18 +3461,6 @@ _copyCreatePLangStmt(CreatePLangStmt *from)
 	COPY_NODE_FIELD(plinline);
 	COPY_NODE_FIELD(plvalidator);
 	COPY_SCALAR_FIELD(pltrusted);
-
-	return newnode;
-}
-
-static DropPLangStmt *
-_copyDropPLangStmt(DropPLangStmt *from)
-{
-	DropPLangStmt *newnode = makeNode(DropPLangStmt);
-
-	COPY_STRING_FIELD(plname);
-	COPY_SCALAR_FIELD(behavior);
-	COPY_SCALAR_FIELD(missing_ok);
 
 	return newnode;
 }
@@ -3674,19 +3585,6 @@ _copyCreateCastStmt(CreateCastStmt *from)
 	COPY_NODE_FIELD(func);
 	COPY_SCALAR_FIELD(context);
 	COPY_SCALAR_FIELD(inout);
-
-	return newnode;
-}
-
-static DropCastStmt *
-_copyDropCastStmt(DropCastStmt *from)
-{
-	DropCastStmt *newnode = makeNode(DropCastStmt);
-
-	COPY_NODE_FIELD(sourcetype);
-	COPY_NODE_FIELD(targettype);
-	COPY_SCALAR_FIELD(behavior);
-	COPY_SCALAR_FIELD(missing_ok);
 
 	return newnode;
 }
@@ -4266,17 +4164,8 @@ copyObject(void *from)
 		case T_AlterFunctionStmt:
 			retval = _copyAlterFunctionStmt(from);
 			break;
-		case T_RemoveFuncStmt:
-			retval = _copyRemoveFuncStmt(from);
-			break;
 		case T_DoStmt:
 			retval = _copyDoStmt(from);
-			break;
-		case T_RemoveOpClassStmt:
-			retval = _copyRemoveOpClassStmt(from);
-			break;
-		case T_RemoveOpFamilyStmt:
-			retval = _copyRemoveOpFamilyStmt(from);
 			break;
 		case T_RenameStmt:
 			retval = _copyRenameStmt(from);
@@ -4392,17 +4281,11 @@ copyObject(void *from)
 		case T_AlterFdwStmt:
 			retval = _copyAlterFdwStmt(from);
 			break;
-		case T_DropFdwStmt:
-			retval = _copyDropFdwStmt(from);
-			break;
 		case T_CreateForeignServerStmt:
 			retval = _copyCreateForeignServerStmt(from);
 			break;
 		case T_AlterForeignServerStmt:
 			retval = _copyAlterForeignServerStmt(from);
-			break;
-		case T_DropForeignServerStmt:
-			retval = _copyDropForeignServerStmt(from);
 			break;
 		case T_CreateUserMappingStmt:
 			retval = _copyCreateUserMappingStmt(from);
@@ -4419,14 +4302,8 @@ copyObject(void *from)
 		case T_CreateTrigStmt:
 			retval = _copyCreateTrigStmt(from);
 			break;
-		case T_DropPropertyStmt:
-			retval = _copyDropPropertyStmt(from);
-			break;
 		case T_CreatePLangStmt:
 			retval = _copyCreatePLangStmt(from);
-			break;
-		case T_DropPLangStmt:
-			retval = _copyDropPLangStmt(from);
 			break;
 		case T_CreateRoleStmt:
 			retval = _copyCreateRoleStmt(from);
@@ -4460,9 +4337,6 @@ copyObject(void *from)
 			break;
 		case T_CreateCastStmt:
 			retval = _copyCreateCastStmt(from);
-			break;
-		case T_DropCastStmt:
-			retval = _copyDropCastStmt(from);
 			break;
 		case T_PrepareStmt:
 			retval = _copyPrepareStmt(from);

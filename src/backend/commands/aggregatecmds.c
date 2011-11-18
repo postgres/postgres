@@ -208,58 +208,9 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters)
 
 
 /*
- * RemoveAggregate
- *		Deletes an aggregate.
+ * RenameAggregate
+ *		Rename an aggregate.
  */
-void
-RemoveAggregate(RemoveFuncStmt *stmt)
-{
-	List	   *aggName = stmt->name;
-	List	   *aggArgs = stmt->args;
-	Oid			procOid;
-	HeapTuple	tup;
-	ObjectAddress object;
-
-	/* Look up function and make sure it's an aggregate */
-	procOid = LookupAggNameTypeNames(aggName, aggArgs, stmt->missing_ok);
-
-	if (!OidIsValid(procOid))
-	{
-		/* we only get here if stmt->missing_ok is true */
-		ereport(NOTICE,
-				(errmsg("aggregate %s(%s) does not exist, skipping",
-						NameListToString(aggName),
-						TypeNameListToString(aggArgs))));
-		return;
-	}
-
-	/*
-	 * Find the function tuple, do permissions and validity checks
-	 */
-	tup = SearchSysCache1(PROCOID, ObjectIdGetDatum(procOid));
-	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "cache lookup failed for function %u", procOid);
-
-	/* Permission check: must own agg or its namespace */
-	if (!pg_proc_ownercheck(procOid, GetUserId()) &&
-	  !pg_namespace_ownercheck(((Form_pg_proc) GETSTRUCT(tup))->pronamespace,
-							   GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
-					   NameListToString(aggName));
-
-	ReleaseSysCache(tup);
-
-	/*
-	 * Do the deletion
-	 */
-	object.classId = ProcedureRelationId;
-	object.objectId = procOid;
-	object.objectSubId = 0;
-
-	performDeletion(&object, stmt->behavior);
-}
-
-
 void
 RenameAggregate(List *name, List *args, const char *newname)
 {

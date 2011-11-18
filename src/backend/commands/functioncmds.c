@@ -961,72 +961,6 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 
 
 /*
- * RemoveFunction
- *		Deletes a function.
- */
-void
-RemoveFunction(RemoveFuncStmt *stmt)
-{
-	List	   *functionName = stmt->name;
-	List	   *argTypes = stmt->args;	/* list of TypeName nodes */
-	Oid			funcOid;
-	HeapTuple	tup;
-	ObjectAddress object;
-
-	/*
-	 * Find the function, do permissions and validity checks
-	 */
-	funcOid = LookupFuncNameTypeNames(functionName, argTypes, stmt->missing_ok);
-	if (!OidIsValid(funcOid))
-	{
-		/* can only get here if stmt->missing_ok */
-		ereport(NOTICE,
-				(errmsg("function %s(%s) does not exist, skipping",
-						NameListToString(functionName),
-						TypeNameListToString(argTypes))));
-		return;
-	}
-
-	tup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcOid));
-	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "cache lookup failed for function %u", funcOid);
-
-	/* Permission check: must own func or its namespace */
-	if (!pg_proc_ownercheck(funcOid, GetUserId()) &&
-	  !pg_namespace_ownercheck(((Form_pg_proc) GETSTRUCT(tup))->pronamespace,
-							   GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
-					   NameListToString(functionName));
-
-	if (((Form_pg_proc) GETSTRUCT(tup))->proisagg)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is an aggregate function",
-						NameListToString(functionName)),
-				 errhint("Use DROP AGGREGATE to drop aggregate functions.")));
-
-	if (((Form_pg_proc) GETSTRUCT(tup))->prolang == INTERNALlanguageId)
-	{
-		/* "Helpful" NOTICE when removing a builtin function ... */
-		ereport(NOTICE,
-				(errcode(ERRCODE_WARNING),
-				 errmsg("removing built-in function \"%s\"",
-						NameListToString(functionName))));
-	}
-
-	ReleaseSysCache(tup);
-
-	/*
-	 * Do the deletion
-	 */
-	object.classId = ProcedureRelationId;
-	object.objectId = funcOid;
-	object.objectSubId = 0;
-
-	performDeletion(&object, stmt->behavior);
-}
-
-/*
  * Guts of function deletion.
  *
  * Note: this is also used for aggregate deletion, since the OIDs of
@@ -1770,51 +1704,6 @@ CreateCast(CreateCastStmt *stmt)
 	heap_freetuple(tuple);
 
 	heap_close(relation, RowExclusiveLock);
-}
-
-
-
-/*
- * DROP CAST
- */
-void
-DropCast(DropCastStmt *stmt)
-{
-	Oid			sourcetypeid;
-	Oid			targettypeid;
-	ObjectAddress object;
-
-	/* when dropping a cast, the types must exist even if you use IF EXISTS */
-	sourcetypeid = typenameTypeId(NULL, stmt->sourcetype);
-	targettypeid = typenameTypeId(NULL, stmt->targettype);
-
-	object.classId = CastRelationId;
-	object.objectId = get_cast_oid(sourcetypeid, targettypeid,
-								   stmt->missing_ok);
-	object.objectSubId = 0;
-
-	if (!OidIsValid(object.objectId))
-	{
-		ereport(NOTICE,
-			 (errmsg("cast from type %s to type %s does not exist, skipping",
-					 format_type_be(sourcetypeid),
-					 format_type_be(targettypeid))));
-		return;
-	}
-
-	/* Permission check */
-	if (!pg_type_ownercheck(sourcetypeid, GetUserId())
-		&& !pg_type_ownercheck(targettypeid, GetUserId()))
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be owner of type %s or type %s",
-						format_type_be(sourcetypeid),
-						format_type_be(targettypeid))));
-
-	/*
-	 * Do the deletion
-	 */
-	performDeletion(&object, stmt->behavior);
 }
 
 /*

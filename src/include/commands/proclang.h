@@ -15,7 +15,6 @@
 #include "nodes/parsenodes.h"
 
 extern void CreateProceduralLanguage(CreatePLangStmt *stmt);
-extern void DropProceduralLanguage(DropPLangStmt *stmt);
 extern void DropProceduralLanguageById(Oid langOid);
 extern void RenameLanguage(const char *oldname, const char *newname);
 extern void AlterLanguageOwner(const char *name, Oid newOwnerId);

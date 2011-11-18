@@ -195,13 +195,8 @@ DROP ROLE regress_test_role_super;                          -- ERROR
 ERROR:  role "regress_test_role_super" cannot be dropped because some objects depend on it
 DETAIL:  owner of foreign-data wrapper foo
 SET ROLE regress_test_role_super;
-DROP FOREIGN DATA WRAPPER foo;                              -- ERROR
-ERROR:  permission denied to drop foreign-data wrapper "foo"
-HINT:  Must be superuser to drop a foreign-data wrapper.
-RESET ROLE;
-ALTER ROLE regress_test_role_super SUPERUSER;
 DROP FOREIGN DATA WRAPPER foo;
-DROP ROLE regress_test_role_super;
+RESET ROLE;
 \dew+
                                             List of foreign-data wrappers
     Name    |       Owner       | Handler |        Validator         | Access privileges | FDW Options | Description 
@@ -244,8 +239,7 @@ user mapping for foreign_data_user depends on server s1
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 SET ROLE regress_test_role;
 DROP FOREIGN DATA WRAPPER foo CASCADE;                      -- ERROR
-ERROR:  permission denied to drop foreign-data wrapper "foo"
-HINT:  Must be superuser to drop a foreign-data wrapper.
+ERROR:  must be owner of foreign-data wrapper foo
 RESET ROLE;
 DROP FOREIGN DATA WRAPPER foo CASCADE;
 NOTICE:  drop cascades to 2 other objects
@@ -1009,8 +1003,7 @@ ALTER FOREIGN DATA WRAPPER foo OWNER TO unprivileged_role;      -- ERROR
 ERROR:  permission denied to change owner of foreign-data wrapper "foo"
 HINT:  Must be superuser to change owner of a foreign-data wrapper.
 DROP FOREIGN DATA WRAPPER foo;                                  -- ERROR
-ERROR:  permission denied to drop foreign-data wrapper "foo"
-HINT:  Must be superuser to drop a foreign-data wrapper.
+ERROR:  must be owner of foreign-data wrapper foo
 GRANT USAGE ON FOREIGN DATA WRAPPER foo TO regress_test_role;   -- ERROR
 ERROR:  permission denied for foreign-data wrapper foo
 CREATE SERVER s9 FOREIGN DATA WRAPPER foo;                      -- ERROR
@@ -1040,8 +1033,7 @@ ALTER FOREIGN DATA WRAPPER foo OPTIONS (gotcha 'true');         -- ERROR
 ERROR:  permission denied to alter foreign-data wrapper "foo"
 HINT:  Must be superuser to alter a foreign-data wrapper.
 DROP FOREIGN DATA WRAPPER foo;                                  -- ERROR
-ERROR:  permission denied to drop foreign-data wrapper "foo"
-HINT:  Must be superuser to drop a foreign-data wrapper.
+ERROR:  must be owner of foreign-data wrapper foo
 GRANT USAGE ON FOREIGN DATA WRAPPER postgresql TO regress_test_role; -- WARNING
 WARNING:  no privileges were granted for "postgresql"
 GRANT USAGE ON FOREIGN DATA WRAPPER foo TO regress_test_role;

@@ -20,13 +20,17 @@
 #include "catalog/namespace.h"
 #include "catalog/objectaddress.h"
 #include "catalog/pg_class.h"
+#include "catalog/pg_proc.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_type.h"
 #include "utils/acl.h"
+#include "utils/builtins.h"
+#include "utils/syscache.h"
 
-static void does_not_exist_skipping(ObjectType objtype, List *objname);
+static void does_not_exist_skipping(ObjectType objtype,
+									List *objname, List *objargs);
 
 /*
  * Drop one or more objects.
@@ -44,6 +48,7 @@ RemoveObjects(DropStmt *stmt)
 {
 	ObjectAddresses *objects;
 	ListCell   *cell1;
+	ListCell   *cell2 = NULL;
 
 	objects = new_object_addresses();
 
@@ -51,12 +56,19 @@ RemoveObjects(DropStmt *stmt)
 	{
 		ObjectAddress	address;
 		List	   *objname = lfirst(cell1);
+		List	   *objargs = NIL;
 		Relation	relation = NULL;
 		Oid			namespaceId;
 
+		if (stmt->arguments)
+		{
+			cell2 = (!cell2 ? list_head(stmt->arguments) : lnext(cell2));
+			objargs = lfirst(cell2);
+		}
+
 		/* Get an ObjectAddress for the object. */
 		address = get_object_address(stmt->removeType,
-									 objname, NIL,
+									 objname, objargs,
 									 &relation,
 									 AccessExclusiveLock,
 									 stmt->missing_ok);
@@ -64,8 +76,32 @@ RemoveObjects(DropStmt *stmt)
 		/* Issue NOTICE if supplied object was not found. */
 		if (!OidIsValid(address.objectId))
 		{
-			does_not_exist_skipping(stmt->removeType, objname);
+			does_not_exist_skipping(stmt->removeType, objname, objargs);
 			continue;
+		}
+
+		/*
+		 * Although COMMENT ON FUNCTION, SECURITY LABEL ON FUNCTION, etc. are
+		 * happy to operate on an aggregate as on any other function, we have
+		 * historically not allowed this for DROP FUNCTION.
+		 */
+		if (stmt->removeType == OBJECT_FUNCTION)
+		{
+			Oid			funcOid = address.objectId;
+			HeapTuple	tup;
+
+			tup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcOid));
+			if (!HeapTupleIsValid(tup)) /* should not happen */
+				elog(ERROR, "cache lookup failed for function %u", funcOid);
+
+			if (((Form_pg_proc) GETSTRUCT(tup))->proisagg)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+								 errmsg("\"%s\" is an aggregate function",
+									NameListToString(objname)),
+				errhint("Use DROP AGGREGATE to drop aggregate functions.")));
+
+			ReleaseSysCache(tup);
 		}
 
 		/* Check permissions. */
@@ -73,7 +109,7 @@ RemoveObjects(DropStmt *stmt)
 		if (!OidIsValid(namespaceId) ||
 			!pg_namespace_ownercheck(namespaceId, GetUserId()))
 			check_object_ownership(GetUserId(), stmt->removeType, address,
-								   objname, NIL, relation);
+								   objname, objargs, relation);
 
 		/* Release any relcache reference count, but keep lock until commit. */
 		if (relation)
@@ -94,10 +130,11 @@ RemoveObjects(DropStmt *stmt)
  * get_object_address() will throw an ERROR.
  */
 static void
-does_not_exist_skipping(ObjectType objtype, List *objname)
+does_not_exist_skipping(ObjectType objtype, List *objname, List *objargs)
 {
 	const char *msg = NULL;
 	char	   *name = NULL;
+	char	   *args = NULL;
 
 	switch (objtype)
 	{
@@ -138,10 +175,68 @@ does_not_exist_skipping(ObjectType objtype, List *objname)
 			msg = gettext_noop("extension \"%s\" does not exist, skipping");
 			name = NameListToString(objname);
 			break;
+		case OBJECT_FUNCTION:
+			msg = gettext_noop("function %s(%s) does not exist, skipping");
+			name = NameListToString(objname);
+			args = TypeNameListToString(objargs);
+			break;
+		case OBJECT_AGGREGATE:
+			msg = gettext_noop("aggregate %s(%s) does not exist, skipping");
+			name = NameListToString(objname);
+			args = TypeNameListToString(objargs);
+			break;
+		case OBJECT_OPERATOR:
+			msg = gettext_noop("operator %s does not exist, skipping");
+			name = NameListToString(objname);
+			break;
+		case OBJECT_LANGUAGE:
+			msg = gettext_noop("language \"%s\" does not exist, skipping");
+			name = NameListToString(objname);
+			break;
+		case OBJECT_CAST:
+			msg = gettext_noop("cast from type %s to type %s does not exist, skipping");
+			name = format_type_be(typenameTypeId(NULL,
+								  (TypeName *) linitial(objname)));
+			args = format_type_be(typenameTypeId(NULL,
+								  (TypeName *) linitial(objargs)));
+			break;
+		case OBJECT_TRIGGER:
+			msg = gettext_noop("trigger \"%s\" for table \"%s\" does not exist, skipping");
+			name = strVal(llast(objname));
+			args = NameListToString(list_truncate(objname,
+												  list_length(objname) - 1));
+			break;
+		case OBJECT_RULE:
+			msg = gettext_noop("rule \"%s\" for relation \"%s\" does not exist, skipping");
+			name = strVal(llast(objname));
+			args = NameListToString(list_truncate(objname,
+												  list_length(objname) - 1));
+			break;
+		case OBJECT_FDW:
+			msg = gettext_noop("foreign-data wrapper \"%s\" does not exist, skipping");
+			name = NameListToString(objname);
+			break;
+		case OBJECT_FOREIGN_SERVER:
+			msg = gettext_noop("server \"%s\" does not exist, skipping");
+			name = NameListToString(objname);
+			break;
+		case OBJECT_OPCLASS:
+			msg = gettext_noop("operator class \"%s\" does not exist for access method \"%s\", skipping");
+			name = NameListToString(objname);
+			args = strVal(linitial(objargs));
+			break;
+		case OBJECT_OPFAMILY:
+			msg = gettext_noop("operator family \"%s\" does not exist for access method \"%s\", skipping");
+			name = NameListToString(objname);
+			args = strVal(linitial(objargs));
+			break;
 		default:
 			elog(ERROR, "unexpected object type (%d)", (int)objtype);
 			break;
 	}
 
-	ereport(NOTICE, (errmsg(msg, name)));
+	if (!args)
+		ereport(NOTICE, (errmsg(msg, name)));
+	else
+		ereport(NOTICE, (errmsg(msg, name, args)));
 }

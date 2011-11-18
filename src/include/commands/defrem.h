@@ -61,7 +61,6 @@ extern Oid	GetDefaultOpClass(Oid type_id, Oid am_id);
 
 /* commands/functioncmds.c */
 extern void CreateFunction(CreateFunctionStmt *stmt, const char *queryString);
-extern void RemoveFunction(RemoveFuncStmt *stmt);
 extern void RemoveFunctionById(Oid funcOid);
 extern void SetFunctionReturnType(Oid funcOid, Oid newRetType);
 extern void SetFunctionArgType(Oid funcOid, int argIndex, Oid newArgType);
@@ -70,7 +69,6 @@ extern void AlterFunctionOwner(List *name, List *argtypes, Oid newOwnerId);
 extern void AlterFunctionOwner_oid(Oid procOid, Oid newOwnerId);
 extern void AlterFunction(AlterFunctionStmt *stmt);
 extern void CreateCast(CreateCastStmt *stmt);
-extern void DropCast(DropCastStmt *stmt);
 extern void DropCastById(Oid castOid);
 extern void AlterFunctionNamespace(List *name, List *argtypes, bool isagg,
 					   const char *newschema);
@@ -80,7 +78,6 @@ extern Oid	get_cast_oid(Oid sourcetypeid, Oid targettypeid, bool missing_ok);
 
 /* commands/operatorcmds.c */
 extern void DefineOperator(List *names, List *parameters);
-extern void RemoveOperator(RemoveFuncStmt *stmt);
 extern void RemoveOperatorById(Oid operOid);
 extern void AlterOperatorOwner(List *name, TypeName *typeName1,
 				   TypeName *typename2, Oid newOwnerId);
@@ -91,7 +88,6 @@ extern Oid	AlterOperatorNamespace_oid(Oid operOid, Oid newNspOid);
 /* commands/aggregatecmds.c */
 extern void DefineAggregate(List *name, List *args, bool oldstyle,
 				List *parameters);
-extern void RemoveAggregate(RemoveFuncStmt *stmt);
 extern void RenameAggregate(List *name, List *args, const char *newname);
 extern void AlterAggregateOwner(List *name, List *args, Oid newOwnerId);
 
@@ -99,8 +95,6 @@ extern void AlterAggregateOwner(List *name, List *args, Oid newOwnerId);
 extern void DefineOpClass(CreateOpClassStmt *stmt);
 extern void DefineOpFamily(CreateOpFamilyStmt *stmt);
 extern void AlterOpFamily(AlterOpFamilyStmt *stmt);
-extern void RemoveOpClass(RemoveOpClassStmt *stmt);
-extern void RemoveOpFamily(RemoveOpFamilyStmt *stmt);
 extern void RemoveOpClassById(Oid opclassOid);
 extern void RemoveOpFamilyById(Oid opfamilyOid);
 extern void RemoveAmOpEntryById(Oid entryOid);
@@ -156,11 +150,9 @@ extern void AlterForeignServerOwner(const char *name, Oid newOwnerId);
 extern void AlterForeignDataWrapperOwner(const char *name, Oid newOwnerId);
 extern void CreateForeignDataWrapper(CreateFdwStmt *stmt);
 extern void AlterForeignDataWrapper(AlterFdwStmt *stmt);
-extern void RemoveForeignDataWrapper(DropFdwStmt *stmt);
 extern void RemoveForeignDataWrapperById(Oid fdwId);
 extern void CreateForeignServer(CreateForeignServerStmt *stmt);
 extern void AlterForeignServer(AlterForeignServerStmt *stmt);
-extern void RemoveForeignServer(DropForeignServerStmt *stmt);
 extern void RemoveForeignServerById(Oid srvId);
 extern void CreateUserMapping(CreateUserMappingStmt *stmt);
 extern void AlterUserMapping(AlterUserMappingStmt *stmt);

@@ -91,11 +91,8 @@ DROP FOREIGN DATA WRAPPER IF EXISTS nonexistent;
 
 DROP ROLE regress_test_role_super;                          -- ERROR
 SET ROLE regress_test_role_super;
-DROP FOREIGN DATA WRAPPER foo;                              -- ERROR
-RESET ROLE;
-ALTER ROLE regress_test_role_super SUPERUSER;
 DROP FOREIGN DATA WRAPPER foo;
-DROP ROLE regress_test_role_super;
+RESET ROLE;
 \dew+
 
 CREATE FOREIGN DATA WRAPPER foo;

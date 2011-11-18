@@ -16,9 +16,6 @@
 
 #include "nodes/parsenodes.h"
 
-
-extern void RemoveRewriteRule(RangeVar *relation, const char *ruleName,
-				  DropBehavior behavior, bool missing_ok);
 extern void RemoveRewriteRuleById(Oid ruleOid);
 
 #endif   /* REWRITEREMOVE_H */
