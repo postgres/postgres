@@ -1286,7 +1286,18 @@ BgBufferSync(void)
 			smoothing_samples;
 
 	/* Scale the estimate by a GUC to allow more aggressive tuning. */
-	upcoming_alloc_est = smoothed_alloc * bgwriter_lru_multiplier;
+	upcoming_alloc_est = (int) (smoothed_alloc * bgwriter_lru_multiplier);
+
+	/*
+	 * If recent_alloc remains at zero for many cycles, smoothed_alloc will
+	 * eventually underflow to zero, and the underflows produce annoying
+	 * kernel warnings on some platforms.  Once upcoming_alloc_est has gone
+	 * to zero, there's no point in tracking smaller and smaller values of
+	 * smoothed_alloc, so just reset it to exactly zero to avoid this
+	 * syndrome.  It will pop back up as soon as recent_alloc increases.
+	 */
+	if (upcoming_alloc_est == 0)
+		smoothed_alloc = 0;
 
 	/*
 	 * Even in cases where there's been little or no buffer allocation
