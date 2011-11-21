@@ -140,16 +140,16 @@ WHERE p1.oid < p2.oid AND
 -- need to be modified whenever new pairs of types are made binary-equivalent,
 -- or when new polymorphic built-in functions are added!
 -- Note: ignore aggregate functions here, since they all point to the same
--- dummy built-in function.
+-- dummy built-in function.  Likewise, ignore range constructor functions.
 SELECT DISTINCT p1.prorettype, p2.prorettype
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-    (p1.prorettype < p2.prorettype) AND
-    -- range constructor functions are shared by all range types.
-    NOT p1.prosrc LIKE 'range_constructor%'
+    p1.prosrc NOT LIKE E'range\\_constructor_' AND
+    p2.prosrc NOT LIKE E'range\\_constructor_' AND
+    (p1.prorettype < p2.prorettype)
 ORDER BY 1, 2;
  prorettype | prorettype 
 ------------+------------
@@ -163,9 +163,9 @@ WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-    (p1.proargtypes[0] < p2.proargtypes[0]) AND
-    -- range constructor functions are shared by all range types.
-    NOT p1.prosrc LIKE 'range_constructor%'
+    p1.prosrc NOT LIKE E'range\\_constructor_' AND
+    p2.prosrc NOT LIKE E'range\\_constructor_' AND
+    (p1.proargtypes[0] < p2.proargtypes[0])
 ORDER BY 1, 2;
  proargtypes | proargtypes 
 -------------+-------------
@@ -182,9 +182,9 @@ WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-    (p1.proargtypes[1] < p2.proargtypes[1]) AND
-    -- range constructor functions are shared by all range types.
-    NOT p1.prosrc LIKE 'range_constructor%'
+    p1.prosrc NOT LIKE E'range\\_constructor_' AND
+    p2.prosrc NOT LIKE E'range\\_constructor_' AND
+    (p1.proargtypes[1] < p2.proargtypes[1])
 ORDER BY 1, 2;
  proargtypes | proargtypes 
 -------------+-------------
@@ -1021,34 +1021,28 @@ ORDER BY 1, 2, 3;
         403 |            5 | ~>~
         405 |            1 | =
         783 |            1 | <<
-        783 |            1 | =
         783 |            1 | @@
         783 |            2 | &<
-        783 |            2 | <>
         783 |            3 | &&
         783 |            4 | &>
-        783 |            4 | @>
-        783 |            5 | <@
         783 |            5 | >>
-        783 |            6 | @>
+        783 |            6 | -|-
         783 |            6 | ~=
-        783 |            7 | <@
         783 |            7 | @>
-        783 |            8 | <<
         783 |            8 | <@
         783 |            9 | &<|
-        783 |            9 | >>
-        783 |           10 | &<
         783 |           10 | <<|
         783 |           10 | <^
-        783 |           11 | &>
         783 |           11 | >^
         783 |           11 | |>>
-        783 |           12 | -|-
         783 |           12 | |&>
         783 |           13 | ~
         783 |           14 | @
         783 |           15 | <->
+        783 |           16 | @>
+        783 |           17 | <@
+        783 |           18 | =
+        783 |           19 | <>
         783 |           27 | @>
         783 |           28 | <@
         783 |           47 | @>
@@ -1061,7 +1055,7 @@ ORDER BY 1, 2, 3;
        2742 |            2 | @@@
        2742 |            3 | <@
        2742 |            4 | =
-(51 rows)
+(45 rows)
 
 -- Check that all opclass search operators have selectivity estimators.
 -- This is not absolutely required, but it seems a reasonable thing
@@ -1070,15 +1064,9 @@ SELECT p1.amopfamily, p1.amopopr, p2.oid, p2.oprname
 FROM pg_amop AS p1, pg_operator AS p2
 WHERE p1.amopopr = p2.oid AND p1.amoppurpose = 's' AND
     (p2.oprrest = 0 OR p2.oprjoin = 0);
- amopfamily | amopopr | oid  | oprname 
-------------+---------+------+---------
-       3919 |    3888 | 3888 | &&
-       3919 |    3889 | 3889 | @>
-       3919 |    3891 | 3891 | <@
-       3919 |    3890 | 3890 | @>
-       3919 |    3892 | 3892 | <@
-       3919 |    3897 | 3897 | -|-
-(6 rows)
+ amopfamily | amopopr | oid | oprname 
+------------+---------+-----+---------
+(0 rows)
 
 -- Check that each opclass in an opfamily has associated operators, that is
 -- ones whose oprleft matches opcintype (possibly by coercion).

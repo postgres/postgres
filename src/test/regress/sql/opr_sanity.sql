@@ -125,7 +125,7 @@ WHERE p1.oid < p2.oid AND
 -- need to be modified whenever new pairs of types are made binary-equivalent,
 -- or when new polymorphic built-in functions are added!
 -- Note: ignore aggregate functions here, since they all point to the same
--- dummy built-in function.
+-- dummy built-in function.  Likewise, ignore range constructor functions.
 
 SELECT DISTINCT p1.prorettype, p2.prorettype
 FROM pg_proc AS p1, pg_proc AS p2
@@ -133,9 +133,9 @@ WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-    (p1.prorettype < p2.prorettype) AND
-    -- range constructor functions are shared by all range types.
-    NOT p1.prosrc LIKE 'range_constructor%'
+    p1.prosrc NOT LIKE E'range\\_constructor_' AND
+    p2.prosrc NOT LIKE E'range\\_constructor_' AND
+    (p1.prorettype < p2.prorettype)
 ORDER BY 1, 2;
 
 SELECT DISTINCT p1.proargtypes[0], p2.proargtypes[0]
@@ -144,9 +144,9 @@ WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-    (p1.proargtypes[0] < p2.proargtypes[0]) AND
-    -- range constructor functions are shared by all range types.
-    NOT p1.prosrc LIKE 'range_constructor%'
+    p1.prosrc NOT LIKE E'range\\_constructor_' AND
+    p2.prosrc NOT LIKE E'range\\_constructor_' AND
+    (p1.proargtypes[0] < p2.proargtypes[0])
 ORDER BY 1, 2;
 
 SELECT DISTINCT p1.proargtypes[1], p2.proargtypes[1]
@@ -155,9 +155,9 @@ WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     NOT p1.proisagg AND NOT p2.proisagg AND
-    (p1.proargtypes[1] < p2.proargtypes[1]) AND
-    -- range constructor functions are shared by all range types.
-    NOT p1.prosrc LIKE 'range_constructor%'
+    p1.prosrc NOT LIKE E'range\\_constructor_' AND
+    p2.prosrc NOT LIKE E'range\\_constructor_' AND
+    (p1.proargtypes[1] < p2.proargtypes[1])
 ORDER BY 1, 2;
 
 SELECT DISTINCT p1.proargtypes[2], p2.proargtypes[2]

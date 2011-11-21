@@ -327,6 +327,13 @@ create function range_add_bounds(anyrange)
 
 select range_add_bounds(numrange(1.0001, 123.123));
 
+create function rangetypes_sql(q anyrange, b anyarray, out c anyelement)
+  as $$ select upper($1) + $2[1] $$
+  language sql;
+
+select rangetypes_sql(int4range(1,10), ARRAY[2,20]);
+select rangetypes_sql(numrange(1,10), ARRAY[2,20]);  -- match failure
+
 --
 -- Arrays of ranges
 --

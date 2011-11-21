@@ -21,18 +21,19 @@
 
 
 /* Operator strategy numbers used in the GiST range opclass */
-#define RANGESTRAT_EQ					1
-#define RANGESTRAT_NE					2
+/* Numbers are chosen to match up operator names with existing usages */
+#define RANGESTRAT_BEFORE				1
+#define RANGESTRAT_OVERLEFT				2
 #define RANGESTRAT_OVERLAPS				3
-#define RANGESTRAT_CONTAINS_ELEM		4
-#define RANGESTRAT_ELEM_CONTAINED_BY	5
-#define RANGESTRAT_CONTAINS				6
-#define RANGESTRAT_CONTAINED_BY			7
-#define RANGESTRAT_BEFORE				8
-#define RANGESTRAT_AFTER				9
-#define RANGESTRAT_OVERLEFT				10
-#define RANGESTRAT_OVERRIGHT			11
-#define RANGESTRAT_ADJACENT				12
+#define RANGESTRAT_OVERRIGHT			4
+#define RANGESTRAT_AFTER				5
+#define RANGESTRAT_ADJACENT				6
+#define RANGESTRAT_CONTAINS				7
+#define RANGESTRAT_CONTAINED_BY			8
+#define RANGESTRAT_CONTAINS_ELEM		16
+#define RANGESTRAT_ELEM_CONTAINED_BY	17
+#define RANGESTRAT_EQ					18
+#define RANGESTRAT_NE					19
 
 #define RangeIsEmpty(r)  (range_get_flags(r) & RANGE_EMPTY)
 
@@ -460,33 +461,10 @@ range_gist_consistent_int(FmgrInfo *flinfo, StrategyNumber strategy,
 
 	switch (strategy)
 	{
-		case RANGESTRAT_EQ:
-			proc = range_contains;
-			break;
-		case RANGESTRAT_NE:
-			return true;
-			break;
-		case RANGESTRAT_OVERLAPS:
-			proc = range_overlaps;
-			break;
-		case RANGESTRAT_CONTAINS_ELEM:
-		case RANGESTRAT_CONTAINS:
-			proc = range_contains;
-			break;
-		case RANGESTRAT_ELEM_CONTAINED_BY:
-		case RANGESTRAT_CONTAINED_BY:
-			return true;
-			break;
 		case RANGESTRAT_BEFORE:
 			if (RangeIsEmpty(key))
 				return false;
 			proc = range_overright;
-			negate = true;
-			break;
-		case RANGESTRAT_AFTER:
-			if (RangeIsEmpty(key))
-				return false;
-			proc = range_overleft;
 			negate = true;
 			break;
 		case RANGESTRAT_OVERLEFT:
@@ -495,10 +473,19 @@ range_gist_consistent_int(FmgrInfo *flinfo, StrategyNumber strategy,
 			proc = range_after;
 			negate = true;
 			break;
+		case RANGESTRAT_OVERLAPS:
+			proc = range_overlaps;
+			break;
 		case RANGESTRAT_OVERRIGHT:
 			if (RangeIsEmpty(key))
 				return false;
 			proc = range_before;
+			negate = true;
+			break;
+		case RANGESTRAT_AFTER:
+			if (RangeIsEmpty(key))
+				return false;
+			proc = range_overleft;
 			negate = true;
 			break;
 		case RANGESTRAT_ADJACENT:
@@ -509,6 +496,20 @@ range_gist_consistent_int(FmgrInfo *flinfo, StrategyNumber strategy,
 												RangeTypeGetDatum(query))))
 				return true;
 			proc = range_overlaps;
+			break;
+		case RANGESTRAT_CONTAINS:
+		case RANGESTRAT_CONTAINS_ELEM:
+			proc = range_contains;
+			break;
+		case RANGESTRAT_CONTAINED_BY:
+		case RANGESTRAT_ELEM_CONTAINED_BY:
+			return true;
+			break;
+		case RANGESTRAT_EQ:
+			proc = range_contains;
+			break;
+		case RANGESTRAT_NE:
+			return true;
 			break;
 		default:
 			elog(ERROR, "unrecognized range strategy: %d", strategy);
@@ -536,47 +537,47 @@ range_gist_consistent_leaf(FmgrInfo *flinfo, StrategyNumber strategy,
 
 	switch (strategy)
 	{
-		case RANGESTRAT_EQ:
-			proc = range_eq;
-			break;
-		case RANGESTRAT_NE:
-			proc = range_ne;
-			break;
-		case RANGESTRAT_OVERLAPS:
-			proc = range_overlaps;
-			break;
-		case RANGESTRAT_CONTAINS_ELEM:
-		case RANGESTRAT_CONTAINS:
-			proc = range_contains;
-			break;
-		case RANGESTRAT_ELEM_CONTAINED_BY:
-		case RANGESTRAT_CONTAINED_BY:
-			proc = range_contained_by;
-			break;
 		case RANGESTRAT_BEFORE:
 			if (RangeIsEmpty(key) || RangeIsEmpty(query))
 				return false;
 			proc = range_before;
-			break;
-		case RANGESTRAT_AFTER:
-			if (RangeIsEmpty(key) || RangeIsEmpty(query))
-				return false;
-			proc = range_after;
 			break;
 		case RANGESTRAT_OVERLEFT:
 			if (RangeIsEmpty(key) || RangeIsEmpty(query))
 				return false;
 			proc = range_overleft;
 			break;
+		case RANGESTRAT_OVERLAPS:
+			proc = range_overlaps;
+			break;
 		case RANGESTRAT_OVERRIGHT:
 			if (RangeIsEmpty(key) || RangeIsEmpty(query))
 				return false;
 			proc = range_overright;
 			break;
+		case RANGESTRAT_AFTER:
+			if (RangeIsEmpty(key) || RangeIsEmpty(query))
+				return false;
+			proc = range_after;
+			break;
 		case RANGESTRAT_ADJACENT:
 			if (RangeIsEmpty(key) || RangeIsEmpty(query))
 				return false;
 			proc = range_adjacent;
+			break;
+		case RANGESTRAT_CONTAINS:
+		case RANGESTRAT_CONTAINS_ELEM:
+			proc = range_contains;
+			break;
+		case RANGESTRAT_CONTAINED_BY:
+		case RANGESTRAT_ELEM_CONTAINED_BY:
+			proc = range_contained_by;
+			break;
+		case RANGESTRAT_EQ:
+			proc = range_eq;
+			break;
+		case RANGESTRAT_NE:
+			proc = range_ne;
 			break;
 		default:
 			elog(ERROR, "unrecognized range strategy: %d", strategy);
