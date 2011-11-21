@@ -555,7 +555,7 @@ static const struct cachedesc cacheinfo[] = {
 		},
 		2048
 	},
-	{RangeRelationId,		/* RANGETYPE */
+	{RangeRelationId,			/* RANGETYPE */
 		RangeTypidIndexId,
 		1,
 		{
@@ -564,7 +564,7 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 		},
-		1024
+		64
 	},
 	{RelationRelationId,		/* RELNAMENSP */
 		ClassNameNspIndexId,

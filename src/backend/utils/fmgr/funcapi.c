@@ -481,14 +481,7 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 		!OidIsValid(anyrange_type))
 		return false;
 
-	/*
-	 * We can't deduce a range type from the subtype, because there may be
-	 * multiple range types for a single subtype.
-	 */
-	if (have_anyrange_result && !OidIsValid(anyrange_type))
-		return false;
-
-	/* If needed, deduce one polymorphic type from the other */
+	/* If needed, deduce one polymorphic type from others */
 	if (have_anyelement_result && !OidIsValid(anyelement_type))
 	{
 		if (OidIsValid(anyarray_type))
@@ -497,14 +490,14 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 												   ANYARRAYOID);
 		if (OidIsValid(anyrange_type))
 		{
-			Oid subtype = resolve_generic_type(ANYELEMENTOID,
-											   anyrange_type,
-											   ANYRANGEOID);
-			if (OidIsValid(anyelement_type) &&
-				anyelement_type != subtype)
+			Oid		subtype = resolve_generic_type(ANYELEMENTOID,
+												   anyrange_type,
+												   ANYRANGEOID);
+
+			/* check for inconsistent array and range results */
+			if (OidIsValid(anyelement_type) && anyelement_type != subtype)
 				return false;
-			else
-				anyelement_type = subtype;
+			anyelement_type = subtype;
 		}
 	}
 
@@ -512,6 +505,13 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 		anyarray_type = resolve_generic_type(ANYARRAYOID,
 											 anyelement_type,
 											 ANYELEMENTOID);
+
+	/*
+	 * We can't deduce a range type from other polymorphic inputs, because
+	 * there may be multiple range types for the same subtype.
+	 */
+	if (have_anyrange_result && !OidIsValid(anyrange_type))
+		return false;
 
 	/* Enforce ANYNONARRAY if needed */
 	if (have_anynonarray && type_is_array(anyelement_type))
@@ -523,9 +523,10 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 
 	/*
 	 * Identify the collation to use for polymorphic OUT parameters. (It'll
-	 * necessarily be the same for both anyelement and anyarray.)
+	 * necessarily be the same for both anyelement and anyarray.)  Note that
+	 * range types are not collatable, so any possible internal collation of
+	 * a range type is not considered here.
 	 */
-
 	if (OidIsValid(anyelement_type))
 		anycollation = get_typcollation(anyelement_type);
 	else if (OidIsValid(anyarray_type))
@@ -573,7 +574,7 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 								   anyrange_type,
 								   -1,
 								   0);
-				TupleDescInitEntryCollation(tupdesc, i + 1, anycollation);
+				/* no collation should be attached to a range type */
 				break;
 			default:
 				break;
@@ -672,19 +673,12 @@ resolve_polymorphic_argtypes(int numargs, Oid *argtypes, char *argmodes,
 		!have_anyrange_result)
 		return true;
 
-	/*
-	 * We can't deduce a range type from the subtype, because there may be
-	 * multiple range types for a single subtype.
-	 */
-	if (have_anyrange_result && !OidIsValid(anyrange_type))
-		return false;
-
 	/* If no input polymorphics, parser messed up */
 	if (!OidIsValid(anyelement_type) && !OidIsValid(anyarray_type) &&
 		!OidIsValid(anyrange_type))
 		return false;
 
-	/* If needed, deduce one polymorphic type from the other */
+	/* If needed, deduce one polymorphic type from others */
 	if (have_anyelement_result && !OidIsValid(anyelement_type))
 	{
 		if (OidIsValid(anyarray_type))
@@ -693,14 +687,14 @@ resolve_polymorphic_argtypes(int numargs, Oid *argtypes, char *argmodes,
 												   ANYARRAYOID);
 		if (OidIsValid(anyrange_type))
 		{
-			Oid subtype = resolve_generic_type(ANYELEMENTOID,
-											   anyrange_type,
-											   ANYRANGEOID);
-			if (OidIsValid(anyelement_type) &&
-				anyelement_type != subtype)
+			Oid		subtype = resolve_generic_type(ANYELEMENTOID,
+												   anyrange_type,
+												   ANYRANGEOID);
+
+			/* check for inconsistent array and range results */
+			if (OidIsValid(anyelement_type) && anyelement_type != subtype)
 				return false;
-			else
-				anyelement_type = subtype;
+			anyelement_type = subtype;
 		}
 	}
 
@@ -708,6 +702,13 @@ resolve_polymorphic_argtypes(int numargs, Oid *argtypes, char *argmodes,
 		anyarray_type = resolve_generic_type(ANYARRAYOID,
 											 anyelement_type,
 											 ANYELEMENTOID);
+
+	/*
+	 * We can't deduce a range type from other polymorphic inputs, because
+	 * there may be multiple range types for the same subtype.
+	 */
+	if (have_anyrange_result && !OidIsValid(anyrange_type))
+		return false;
 
 	/* XXX do we need to enforce ANYNONARRAY or ANYENUM here?  I think not */
 

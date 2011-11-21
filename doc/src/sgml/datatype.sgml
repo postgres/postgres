@@ -4507,14 +4507,20 @@ SELECT * FROM pg_attribute
        </row>
 
        <row>
+        <entry><type>anyelement</></entry>
+        <entry>Indicates that a function accepts any data type
+        (see <xref linkend="extend-types-polymorphic">).</entry>
+       </row>
+
+       <row>
         <entry><type>anyarray</></entry>
         <entry>Indicates that a function accepts any array data type
         (see <xref linkend="extend-types-polymorphic">).</entry>
        </row>
 
        <row>
-        <entry><type>anyelement</></entry>
-        <entry>Indicates that a function accepts any data type
+        <entry><type>anynonarray</></entry>
+        <entry>Indicates that a function accepts any non-array data type
         (see <xref linkend="extend-types-polymorphic">).</entry>
        </row>
 
@@ -4530,12 +4536,6 @@ SELECT * FROM pg_attribute
         <entry>Indicates that a function accepts any range data type
         (see <xref linkend="extend-types-polymorphic"> and
         <xref linkend="rangetypes">).</entry>
-       </row>
-
-       <row>
-        <entry><type>anynonarray</></entry>
-        <entry>Indicates that a function accepts any non-array data type
-        (see <xref linkend="extend-types-polymorphic">).</entry>
        </row>
 
        <row>
@@ -4595,9 +4595,9 @@ SELECT * FROM pg_attribute
     languages all forbid use of a pseudo-type as argument type, and allow
     only <type>void</> and <type>record</> as a result type (plus
     <type>trigger</> when the function is used as a trigger).  Some also
-    support polymorphic functions using the types <type>anyarray</>,
-    <type>anyelement</>, <type>anyenum</>, <type>anyrange</>, and
-    <type>anynonarray</>.
+    support polymorphic functions using the types <type>anyelement</>,
+    <type>anyarray</>, <type>anynonarray</>, <type>anyenum</>, and
+    <type>anyrange</>.
    </para>
 
    <para>

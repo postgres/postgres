@@ -2241,6 +2241,17 @@ typedef struct CreateEnumStmt
 } CreateEnumStmt;
 
 /* ----------------------
+ *		Create Type Statement, range types
+ * ----------------------
+ */
+typedef struct CreateRangeStmt
+{
+	NodeTag		type;
+	List	   *typeName;		/* qualified name (list of Value strings) */
+	List	   *params;			/* range parameters (list of DefElem) */
+} CreateRangeStmt;
+
+/* ----------------------
  *		Alter Type Statement, enum types
  * ----------------------
  */
@@ -2252,17 +2263,6 @@ typedef struct AlterEnumStmt
 	char	   *newValNeighbor; /* neighboring enum value, if specified */
 	bool		newValIsAfter;	/* place new enum value after neighbor? */
 } AlterEnumStmt;
-
-/* ----------------------
- *		Create Type Statement, range types
- * ----------------------
- */
-typedef struct CreateRangeStmt
-{
-	NodeTag		type;
-	List	   *typeName;		/* qualified name (list of Value strings) */
-	List	   *params;			/* range parameters (list of DefElem) */
-} CreateRangeStmt;
 
 /* ----------------------
  *		Create View Statement

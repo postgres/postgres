@@ -52,7 +52,6 @@
 #include "catalog/pg_largeobject.h"
 #include "catalog/pg_largeobject_metadata.h"
 #include "catalog/pg_proc.h"
-#include "catalog/pg_range.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
 #include "libpq/libpq-fs.h"
@@ -3703,34 +3702,16 @@ getFuncs(int *numFuncs)
 	 * pg_catalog.	In normal dumps we can still ignore those --- but in
 	 * binary-upgrade mode, we must dump the member objects of the extension,
 	 * so be sure to fetch any such functions.
+	 *
+	 * Also, in 9.2 and up, exclude functions that are internally dependent on
+	 * something else, since presumably those will be created as a result of
+	 * creating the something else.  This currently only acts to suppress
+	 * constructor functions for range types.  Note that this is OK only
+	 * because the constructors don't have any dependencies the range type
+	 * doesn't have; otherwise we might not get creation ordering correct.
 	 */
 
-	if (g_fout->remoteVersion >= 90200)
-	{
-		appendPQExpBuffer(query,
-						  "SELECT tableoid, oid, proname, prolang, "
-						  "pronargs, proargtypes, prorettype, proacl, "
-						  "pronamespace, "
-						  "(%s proowner) AS rolname "
-						  "FROM pg_proc p "
-						  "WHERE NOT proisagg AND "
-						  " NOT EXISTS (SELECT 1 FROM pg_depend "
-						  "   WHERE classid = 'pg_proc'::regclass AND "
-						  "   objid = p.oid AND deptype = 'i') AND "
-						  "(pronamespace != "
-						  "(SELECT oid FROM pg_namespace "
-						  "WHERE nspname = 'pg_catalog')",
-						  username_subquery);
-		if (binary_upgrade && g_fout->remoteVersion >= 90100)
-			appendPQExpBuffer(query,
-							  " OR EXISTS(SELECT 1 FROM pg_depend WHERE "
-							  "classid = 'pg_proc'::regclass AND "
-							  "objid = p.oid AND "
-							  "refclassid = 'pg_extension'::regclass AND "
-							  "deptype = 'e')");
-		appendPQExpBuffer(query, ")");
-	}
-	else if (g_fout->remoteVersion >= 70300)
+	if (g_fout->remoteVersion >= 70300)
 	{
 		appendPQExpBuffer(query,
 						  "SELECT tableoid, oid, proname, prolang, "
@@ -3743,9 +3724,14 @@ getFuncs(int *numFuncs)
 						  "(SELECT oid FROM pg_namespace "
 						  "WHERE nspname = 'pg_catalog')",
 						  username_subquery);
+		if (g_fout->remoteVersion >= 90200)
+			appendPQExpBuffer(query,
+							  "\n  AND NOT EXISTS (SELECT 1 FROM pg_depend "
+							  "WHERE classid = 'pg_proc'::regclass AND "
+							  "objid = p.oid AND deptype = 'i')");
 		if (binary_upgrade && g_fout->remoteVersion >= 90100)
 			appendPQExpBuffer(query,
-							  " OR EXISTS(SELECT 1 FROM pg_depend WHERE "
+							  "\n  OR EXISTS(SELECT 1 FROM pg_depend WHERE "
 							  "classid = 'pg_proc'::regclass AND "
 							  "objid = p.oid AND "
 							  "refclassid = 'pg_extension'::regclass AND "
@@ -7479,31 +7465,25 @@ dumpRangeType(Archive *fout, TypeInfo *tyinfo)
 	PQExpBuffer labelq = createPQExpBuffer();
 	PQExpBuffer query = createPQExpBuffer();
 	PGresult   *res;
+	Oid			collationOid;
+	char	   *procname;
 
-	Oid			 collationOid;
-	Oid			 opclassOid;
-	Oid			 analyzeOid;
-	Oid			 canonicalOid;
-	Oid			 subdiffOid;
-
-	/* Set proper schema search path */
-	selectSourceSchema("pg_catalog");
+	/*
+	 * select appropriate schema to ensure names in CREATE are properly
+	 * qualified
+	 */
+	selectSourceSchema(tyinfo->dobj.namespace->dobj.name);
 
 	appendPQExpBuffer(query,
-					  "SELECT rngtypid, "
-					  "format_type(rngsubtype, NULL) as rngsubtype, "
-					  "rngsubtype::oid as rngsubtypeoid, "
+					  "SELECT pg_catalog.format_type(rngsubtype, NULL) AS rngsubtype, "
 					  "opc.opcname AS opcname, "
+					  "(SELECT nspname FROM pg_catalog.pg_namespace nsp "
+					  "  WHERE nsp.oid = opc.opcnamespace) AS opcnsp, "
+					  "opc.opcdefault, "
 					  "CASE WHEN rngcollation = st.typcollation THEN 0 "
 					  "     ELSE rngcollation END AS collation, "
-					  "CASE WHEN opcdefault THEN 0 ELSE rngsubopc END "
-					  "  AS rngsubopc, "
-					  "(SELECT nspname FROM pg_namespace nsp "
-					  "  WHERE nsp.oid = opc.opcnamespace) AS opcnsp, "
-					  "t.typanalyze, t.typanalyze::oid as typanalyzeoid, "
-					  "rngcanonical, rngcanonical::oid as rngcanonicaloid, "
-					  "rngsubdiff, rngsubdiff::oid as rngsubdiffoid "
-					  "FROM pg_catalog.pg_type t, pg_type st, "
+					  "rngcanonical, rngsubdiff, t.typanalyze "
+					  "FROM pg_catalog.pg_type t, pg_catalog.pg_type st, "
 					  "     pg_catalog.pg_opclass opc, pg_catalog.pg_range r "
 					  "WHERE t.oid = rngtypid AND st.oid = rngsubtype AND "
 					  "      opc.oid = rngsubopc AND rngtypid = '%u'",
@@ -7511,6 +7491,12 @@ dumpRangeType(Archive *fout, TypeInfo *tyinfo)
 
 	res = PQexec(g_conn, query->data);
 	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	if (PQntuples(res) != 1)
+	{
+		write_msg(NULL, "query returned %d pg_range entries for range type \"%s\"\n",
+				  PQntuples(res), tyinfo->dobj.name);
+		exit_nicely();
+	}
 
 	/*
 	 * DROP must be fully qualified in case same name appears in pg_catalog.
@@ -7522,68 +7508,53 @@ dumpRangeType(Archive *fout, TypeInfo *tyinfo)
 	appendPQExpBuffer(delq, "%s;\n",
 					  fmtId(tyinfo->dobj.name));
 
-	/* We might already have a shell type, but setting pg_type_oid is harmless */
 	if (binary_upgrade)
 		binary_upgrade_set_type_oids_by_type_oid(q, tyinfo->dobj.catId.oid);
 
 	appendPQExpBuffer(q, "CREATE TYPE %s AS RANGE (",
 					  fmtId(tyinfo->dobj.name));
 
-	/* SUBTYPE */
-	appendPQExpBuffer(q, "\n    SUBTYPE = %s",
+	appendPQExpBuffer(q, "\n    subtype = %s",
 					  PQgetvalue(res, 0, PQfnumber(res, "rngsubtype")));
 
-	/* COLLATION */
-	collationOid = atooid(PQgetvalue(res, 0,
-									 PQfnumber(res, "collation")));
+	/* print subtype_opclass only if not default for subtype */
+	if (PQgetvalue(res, 0, PQfnumber(res, "opcdefault"))[0] != 't')
+	{
+		char *opcname = PQgetvalue(res, 0, PQfnumber(res, "opcname"));
+		char *nspname = PQgetvalue(res, 0, PQfnumber(res, "opcnsp"));
+
+		/* always schema-qualify, don't try to be smart */
+		appendPQExpBuffer(q, ",\n    subtype_opclass = %s.",
+						  fmtId(nspname));
+		appendPQExpBuffer(q, "%s", fmtId(opcname));
+	}
+
+	collationOid = atooid(PQgetvalue(res, 0, PQfnumber(res, "collation")));
 	if (OidIsValid(collationOid))
 	{
-		CollInfo   *coll;
+		CollInfo   *coll = findCollationByOid(collationOid);
 
-		coll = findCollationByOid(collationOid);
 		if (coll)
 		{
 			/* always schema-qualify, don't try to be smart */
-			appendPQExpBuffer(q, ",\n    COLLATION = %s.",
+			appendPQExpBuffer(q, ",\n    collation = %s.",
 							  fmtId(coll->dobj.namespace->dobj.name));
 			appendPQExpBuffer(q, "%s",
 							  fmtId(coll->dobj.name));
 		}
 	}
 
-	/* SUBTYPE_OPCLASS */
-	opclassOid = atooid(PQgetvalue(res, 0,
-								   PQfnumber(res, "rngsubopc")));
-	if (OidIsValid(opclassOid))
-	{
-		char *opcname = PQgetvalue(res, 0, PQfnumber(res, "opcname"));
-		char *nspname = PQgetvalue(res, 0, PQfnumber(res, "opcnsp"));
+	procname = PQgetvalue(res, 0, PQfnumber(res, "rngcanonical"));
+	if (strcmp(procname, "-") != 0)
+		appendPQExpBuffer(q, ",\n    canonical = %s", procname);
 
-		/* always schema-qualify, don't try to be smart */
-		appendPQExpBuffer(q, ",\n    SUBTYPE_OPCLASS = %s.",
-						  fmtId(nspname));
-		appendPQExpBuffer(q, "%s", fmtId(opcname));
-	}
+	procname = PQgetvalue(res, 0, PQfnumber(res, "rngsubdiff"));
+	if (strcmp(procname, "-") != 0)
+		appendPQExpBuffer(q, ",\n    subtype_diff = %s", procname);
 
-	/* ANALYZE */
-	analyzeOid = atooid(PQgetvalue(res, 0,
-								   PQfnumber(res, "typanalyzeoid")));
-	if (OidIsValid(analyzeOid))
-		appendPQExpBuffer(q, ",\n    ANALYZE = %s",
-						  PQgetvalue(res, 0, PQfnumber(res, "typanalyze")));
-
-	/* CANONICAL */
-	canonicalOid = atooid(PQgetvalue(res, 0,
-									 PQfnumber(res, "rngcanonicaloid")));
-	if (OidIsValid(canonicalOid))
-		appendPQExpBuffer(q, ",\n    CANONICAL = %s",
-						  PQgetvalue(res, 0, PQfnumber(res, "rngcanonical")));
-
-	/* SUBTYPE_DIFF */
-	subdiffOid = atooid(PQgetvalue(res, 0, PQfnumber(res, "rngsubdiffoid")));
-	if (OidIsValid(subdiffOid))
-		appendPQExpBuffer(q, ",\n    SUBTYPE_DIFF = %s",
-						  PQgetvalue(res, 0, PQfnumber(res, "rngsubdiff")));
+	procname = PQgetvalue(res, 0, PQfnumber(res, "typanalyze"));
+	if (strcmp(procname, "-") != 0)
+		appendPQExpBuffer(q, ",\n    analyze = %s", procname);
 
 	appendPQExpBuffer(q, "\n);\n");
 

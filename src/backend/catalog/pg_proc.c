@@ -91,7 +91,7 @@ ProcedureCreate(const char *procedureName,
 	int			parameterCount;
 	int			allParamCount;
 	Oid		   *allParams;
-	char	   *modes = NULL;
+	char	   *paramModes = NULL;
 	bool		genericInParam = false;
 	bool		genericOutParam = false;
 	bool		anyrangeInParam = false;
@@ -130,6 +130,7 @@ ProcedureCreate(const char *procedureName,
 							   FUNC_MAX_ARGS)));
 	/* note: the above is correct, we do NOT count output arguments */
 
+	/* Deconstruct array inputs */
 	if (allParameterTypes != PointerGetDatum(NULL))
 	{
 		/*
@@ -169,27 +170,26 @@ ProcedureCreate(const char *procedureName,
 			ARR_HASNULL(modesArray) ||
 			ARR_ELEMTYPE(modesArray) != CHAROID)
 			elog(ERROR, "parameterModes is not a 1-D char array");
-		modes = (char *) ARR_DATA_PTR(modesArray);
+		paramModes = (char *) ARR_DATA_PTR(modesArray);
 	}
 
-
 	/*
-	 * Do not allow polymorphic return type unless at least one input argument
-	 * is polymorphic.	Also, do not allow return type INTERNAL unless at
-	 * least one input argument is INTERNAL.
+	 * Detect whether we have polymorphic or INTERNAL arguments.  The first
+	 * loop checks input arguments, the second output arguments.
 	 */
 	for (i = 0; i < parameterCount; i++)
 	{
 		switch (parameterTypes->values[i])
 		{
-			case ANYRANGEOID:
-				anyrangeInParam = true;
-				/* FALL THROUGH */
 			case ANYARRAYOID:
 			case ANYELEMENTOID:
 			case ANYNONARRAYOID:
 			case ANYENUMOID:
 				genericInParam = true;
+				break;
+			case ANYRANGEOID:
+				genericInParam = true;
+				anyrangeInParam = true;
 				break;
 			case INTERNALOID:
 				internalInParam = true;
@@ -201,22 +201,22 @@ ProcedureCreate(const char *procedureName,
 	{
 		for (i = 0; i < allParamCount; i++)
 		{
-			if (modes == NULL ||
-				(modes[i] != PROARGMODE_OUT &&
-				 modes[i] != PROARGMODE_INOUT &&
-				 modes[i] != PROARGMODE_TABLE))
-				 continue;
+			if (paramModes == NULL ||
+				paramModes[i] == PROARGMODE_IN ||
+				paramModes[i] == PROARGMODE_VARIADIC)
+				continue;		/* ignore input-only params */
 
 			switch (allParams[i])
 			{
-				case ANYRANGEOID:
-					anyrangeOutParam = true;
-					/* FALL THROUGH */
 				case ANYARRAYOID:
 				case ANYELEMENTOID:
 				case ANYNONARRAYOID:
 				case ANYENUMOID:
 					genericOutParam = true;
+					break;
+				case ANYRANGEOID:
+					genericOutParam = true;
+					anyrangeOutParam = true;
 					break;
 				case INTERNALOID:
 					internalOutParam = true;
@@ -225,6 +225,13 @@ ProcedureCreate(const char *procedureName,
 		}
 	}
 
+	/*
+	 * Do not allow polymorphic return type unless at least one input argument
+	 * is polymorphic.  ANYRANGE return type is even stricter: must have an
+	 * ANYRANGE input (since we can't deduce the specific range type from
+	 * ANYELEMENT).  Also, do not allow return type INTERNAL unless at least
+	 * one input argument is INTERNAL.
+	 */
 	if ((IsPolymorphicType(returnType) || genericOutParam)
 		&& !genericInParam)
 		ereport(ERROR,
@@ -259,7 +266,7 @@ ProcedureCreate(const char *procedureName,
 						procedureName,
 						format_type_be(parameterTypes->values[0]))));
 
-	if (modes != NULL)
+	if (paramModes != NULL)
 	{
 		/*
 		 * Only the last input parameter can be variadic; if it is, save its
@@ -268,7 +275,7 @@ ProcedureCreate(const char *procedureName,
 		 */
 		for (i = 0; i < allParamCount; i++)
 		{
-			switch (modes[i])
+			switch (paramModes[i])
 			{
 				case PROARGMODE_IN:
 				case PROARGMODE_INOUT:
@@ -298,7 +305,7 @@ ProcedureCreate(const char *procedureName,
 					}
 					break;
 				default:
-					elog(ERROR, "invalid parameter mode '%c'", modes[i]);
+					elog(ERROR, "invalid parameter mode '%c'", paramModes[i]);
 					break;
 			}
 		}

@@ -73,9 +73,7 @@ typedef struct
  * prototypes for functions defined in rangetypes.c
  */
 
-/* IO */
-extern Datum anyrange_in(PG_FUNCTION_ARGS);
-extern Datum anyrange_out(PG_FUNCTION_ARGS);
+/* I/O */
 extern Datum range_in(PG_FUNCTION_ARGS);
 extern Datum range_out(PG_FUNCTION_ARGS);
 extern Datum range_recv(PG_FUNCTION_ARGS);

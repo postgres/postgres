@@ -654,9 +654,9 @@ RemoveTypeById(Oid typeOid)
 		EnumValuesDelete(typeOid);
 
 	/*
-	 * If it is a range type, delete the pg_range entries too; we don't bother
-	 * with making dependency entries for those, so it has to be done "by
-	 * hand" here.
+	 * If it is a range type, delete the pg_range entry too; we don't bother
+	 * with making a dependency entry for that, so it has to be done "by hand"
+	 * here.
 	 */
 	if (((Form_pg_type) GETSTRUCT(tup))->typtype == TYPTYPE_RANGE)
 		RangeDelete(typeOid);
@@ -1475,8 +1475,9 @@ makeRangeConstructor(char *name, Oid namespace, Oid rangeOid, Oid subtype)
 								  0.0); /* prorows */
 
 		/*
-		 * Make the constructor internally-dependent on the range type so that
-		 * the user doesn't have to treat them as separate objects.
+		 * Make the constructors internally-dependent on the range type so
+		 * that they go away silently when the type is dropped.  Note that
+		 * pg_dump depends on this choice to avoid dumping the constructors.
 		 */
 		myself.classId = ProcedureRelationId;
 		myself.objectId = procOid;

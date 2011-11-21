@@ -2253,7 +2253,7 @@ type_is_enum(Oid typid)
 
 /*
  * type_is_range
- *	  Returns true if the given type is an range type.
+ *	  Returns true if the given type is a range type.
  */
 bool
 type_is_range(Oid typid)
@@ -2867,6 +2867,14 @@ get_namespace_name(Oid nspid)
 		return NULL;
 }
 
+/*				---------- PG_RANGE CACHE ----------				 */
+
+/*
+ * get_range_subtype
+ *		Returns the subtype of a given range type
+ *
+ * Returns InvalidOid if the type is not a range type.
+ */
 Oid
 get_range_subtype(Oid rangeOid)
 {

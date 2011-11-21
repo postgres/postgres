@@ -2378,7 +2378,7 @@ compute_function_hashkey(FunctionCallInfo fcinfo,
 /*
  * This is the same as the standard resolve_polymorphic_argtypes() function,
  * but with a special case for validation: assume that polymorphic arguments
- * are integer, integer-range or integer-array.  Also, we go ahead and report
+ * are integer, integer-array or integer-range.  Also, we go ahead and report
  * the error if we can't resolve the types.
  */
 static void
@@ -2412,11 +2412,11 @@ plpgsql_resolve_polymorphic_argtypes(int numargs,
 				case ANYENUMOID:		/* XXX dubious */
 					argtypes[i] = INT4OID;
 					break;
-				case ANYRANGEOID:
-					argtypes[i] = INT4RANGEOID;
-					break;
 				case ANYARRAYOID:
 					argtypes[i] = INT4ARRAYOID;
+					break;
+				case ANYRANGEOID:
+					argtypes[i] = INT4RANGEOID;
 					break;
 				default:
 					break;

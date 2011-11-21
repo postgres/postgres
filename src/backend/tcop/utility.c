@@ -851,11 +851,11 @@ standard_ProcessUtility(Node *parsetree,
 			}
 			break;
 
-		case T_CreateEnumStmt:	/* CREATE TYPE (enum) */
+		case T_CreateEnumStmt:	/* CREATE TYPE AS ENUM */
 			DefineEnum((CreateEnumStmt *) parsetree);
 			break;
 
-		case T_CreateRangeStmt:
+		case T_CreateRangeStmt:	/* CREATE TYPE AS RANGE */
 			DefineRange((CreateRangeStmt *) parsetree);
 			break;
 
