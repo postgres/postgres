@@ -81,11 +81,49 @@ ALTER EXTENSION citext ADD function translate(citext,citext,text);
 --
 -- As of 9.1, type citext should be marked collatable.  There is no ALTER TYPE
 -- command for this, so we have to do it by poking the pg_type entry directly.
+-- We have to poke any derived copies in pg_attribute or pg_index as well.
 -- Notes: 100 is the OID of the "pg_catalog.default" collation --- it seems
 -- easier and more reliable to hard-wire that here than to pull it out of
--- pg_collation.  Also, we don't need a pg_depend entry since the default
--- collation is pinned.
+-- pg_collation.  Also, we don't need to make pg_depend entries since the
+-- default collation is pinned.
 --
 
 UPDATE pg_catalog.pg_type SET typcollation = 100
 WHERE oid = 'citext'::pg_catalog.regtype;
+
+UPDATE pg_catalog.pg_attribute SET attcollation = 100
+WHERE atttypid = 'citext'::pg_catalog.regtype;
+
+UPDATE pg_catalog.pg_index SET indcollation[0] = 100
+WHERE indclass[0] IN (SELECT oid FROM pg_catalog.pg_opclass
+                      WHERE opcintype = 'citext'::pg_catalog.regtype);
+
+UPDATE pg_catalog.pg_index SET indcollation[1] = 100
+WHERE indclass[1] IN (SELECT oid FROM pg_catalog.pg_opclass
+                      WHERE opcintype = 'citext'::pg_catalog.regtype);
+
+UPDATE pg_catalog.pg_index SET indcollation[2] = 100
+WHERE indclass[2] IN (SELECT oid FROM pg_catalog.pg_opclass
+                      WHERE opcintype = 'citext'::pg_catalog.regtype);
+
+UPDATE pg_catalog.pg_index SET indcollation[3] = 100
+WHERE indclass[3] IN (SELECT oid FROM pg_catalog.pg_opclass
+                      WHERE opcintype = 'citext'::pg_catalog.regtype);
+
+UPDATE pg_catalog.pg_index SET indcollation[4] = 100
+WHERE indclass[4] IN (SELECT oid FROM pg_catalog.pg_opclass
+                      WHERE opcintype = 'citext'::pg_catalog.regtype);
+
+UPDATE pg_catalog.pg_index SET indcollation[5] = 100
+WHERE indclass[5] IN (SELECT oid FROM pg_catalog.pg_opclass
+                      WHERE opcintype = 'citext'::pg_catalog.regtype);
+
+UPDATE pg_catalog.pg_index SET indcollation[6] = 100
+WHERE indclass[6] IN (SELECT oid FROM pg_catalog.pg_opclass
+                      WHERE opcintype = 'citext'::pg_catalog.regtype);
+
+UPDATE pg_catalog.pg_index SET indcollation[7] = 100
+WHERE indclass[7] IN (SELECT oid FROM pg_catalog.pg_opclass
+                      WHERE opcintype = 'citext'::pg_catalog.regtype);
+
+-- somewhat arbitrarily, we assume no citext indexes have more than 8 columns
