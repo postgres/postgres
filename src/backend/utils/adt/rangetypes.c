@@ -65,6 +65,8 @@ static char *range_deparse(char flags, const char *lbound_str,
 static char *range_bound_escape(const char *value);
 static bool range_contains_internal(TypeCacheEntry *typcache,
 									RangeType *r1, RangeType *r2);
+static bool range_contains_elem_internal(TypeCacheEntry *typcache,
+										 RangeType *r, Datum val);
 static Size datum_compute_size(Size sz, Datum datum, bool typbyval,
 				   char typalign, int16 typlen, char typstorage);
 static Pointer datum_write(Pointer ptr, Datum datum, bool typbyval,
@@ -555,18 +557,13 @@ range_upper_inf(PG_FUNCTION_ARGS)
 Datum
 range_contains_elem(PG_FUNCTION_ARGS)
 {
-	RangeType  *r1 = PG_GETARG_RANGE(0);
+	RangeType  *r = PG_GETARG_RANGE(0);
 	Datum		val = PG_GETARG_DATUM(1);
 	TypeCacheEntry *typcache;
-	RangeType  *r2;
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
+	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r));
 
-	/* Construct a singleton range representing just "val" */
-	r2 = make_singleton_range(typcache, val);
-
-	/* And use range_contains */
-	PG_RETURN_BOOL(range_contains_internal(typcache, r1, r2));
+	PG_RETURN_BOOL(range_contains_elem_internal(typcache, r, val));
 }
 
 /* contained by? */
@@ -574,17 +571,12 @@ Datum
 elem_contained_by_range(PG_FUNCTION_ARGS)
 {
 	Datum		val = PG_GETARG_DATUM(0);
-	RangeType  *r1 = PG_GETARG_RANGE(1);
+	RangeType  *r = PG_GETARG_RANGE(1);
 	TypeCacheEntry *typcache;
-	RangeType  *r2;
 
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
+	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r));
 
-	/* Construct a singleton range representing just "val" */
-	r2 = make_singleton_range(typcache, val);
-
-	/* And use range_contains */
-	PG_RETURN_BOOL(range_contains_internal(typcache, r1, r2));
+	PG_RETURN_BOOL(range_contains_elem_internal(typcache, r, val));
 }
 
 
@@ -2169,6 +2161,47 @@ range_contains_internal(TypeCacheEntry *typcache, RangeType *r1, RangeType *r2)
 		return false;
 	if (range_cmp_bounds(typcache, &upper1, &upper2) < 0)
 		return false;
+
+	return true;
+}
+
+/*
+ * Test whether range r contains a specific element value.
+ */
+static bool
+range_contains_elem_internal(TypeCacheEntry *typcache, RangeType *r, Datum val)
+{
+	RangeBound	lower;
+	RangeBound	upper;
+	bool		empty;
+	int32		cmp;
+
+	range_deserialize(typcache, r, &lower, &upper, &empty);
+
+	if (empty)
+		return false;
+
+	if (!lower.infinite)
+	{
+		cmp = DatumGetInt32(FunctionCall2Coll(&typcache->rng_cmp_proc_finfo,
+											  typcache->rng_collation,
+											  lower.val, val));
+		if (cmp > 0)
+			return false;
+		if (cmp == 0 && !lower.inclusive)
+			return false;
+	}
+
+	if (!upper.infinite)
+	{
+		cmp = DatumGetInt32(FunctionCall2Coll(&typcache->rng_cmp_proc_finfo,
+											  typcache->rng_collation,
+											  upper.val, val));
+		if (cmp < 0)
+			return false;
+		if (cmp == 0 && !upper.inclusive)
+			return false;
+	}
 
 	return true;
 }
