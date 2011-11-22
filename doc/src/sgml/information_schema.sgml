@@ -3331,7 +3331,7 @@ ORDER BY c.ordinal_position;
    referential (foreign key) constraints in the current database.
    Only those constraints are shown for which the current user has
    write access to the referencing table (by way of being the
-   owner or having some privilege other than SELECT).
+   owner or having some privilege other than <literal>SELECT</literal>).
   </para>
 
   <table>
@@ -5220,7 +5220,7 @@ ORDER BY c.ordinal_position;
   <para>
    The view <literal>table_constraints</literal> contains all
    constraints belonging to tables that the current user owns or has
-   some non-SELECT privilege on.
+   some privilege other than <literal>SELECT</literal> on.
   </para>
 
   <table>
@@ -5513,7 +5513,8 @@ ORDER BY c.ordinal_position;
    view <literal>triggered_update_columns</literal> identifies these
    columns.  Triggers that do not specify a column list are not
    included in this view.  Only those columns are shown that the
-   current user owns or has some non-SELECT privilege on.
+   current user owns or has some privilege other than
+   <literal>SELECT</literal> on.
   </para>
 
   <table>
@@ -5584,7 +5585,7 @@ ORDER BY c.ordinal_position;
   <para>
    The view <literal>triggers</literal> contains all triggers defined
    in the current database on tables and views that the current user owns
-   or has some non-SELECT privilege on.
+   or has some privilege other than <literal>SELECT</literal> on.
   </para>
 
   <table>
