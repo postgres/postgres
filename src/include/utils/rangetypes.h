@@ -49,6 +49,8 @@ typedef struct
 											  RANGE_UB_NULL | \
 											  RANGE_UB_INF)))
 
+#define RangeIsEmpty(r)  (range_get_flags(r) & RANGE_EMPTY)
+
 
 /* Internal representation of either bound of a range (not what's on disk) */
 typedef struct
@@ -153,7 +155,10 @@ extern RangeType *make_range(TypeCacheEntry *typcache, RangeBound *lower,
 						RangeBound *upper, bool empty);
 extern int range_cmp_bounds(TypeCacheEntry *typcache, RangeBound *b1,
 							RangeBound *b2);
+extern int range_cmp_bound_values(TypeCacheEntry *typcache, RangeBound *b1,
+					   RangeBound *b2);
 extern RangeType *make_empty_range(TypeCacheEntry *typcache);
+extern RangeType *make_singleton_range(TypeCacheEntry *typcache, Datum val);
 
 /* GiST support (in rangetypes_gist.c) */
 extern Datum range_gist_consistent(PG_FUNCTION_ARGS);

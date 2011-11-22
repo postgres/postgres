@@ -35,8 +35,6 @@
 #define RANGESTRAT_EQ					18
 #define RANGESTRAT_NE					19
 
-#define RangeIsEmpty(r)  (range_get_flags(r) & RANGE_EMPTY)
-
 /*
  * Auxiliary structure for picksplit method.
  */
@@ -58,6 +56,7 @@ static bool range_gist_consistent_leaf(FmgrInfo *flinfo,
 static int	sort_item_cmp(const void *a, const void *b);
 
 
+/* GiST query consistency check */
 Datum
 range_gist_consistent(PG_FUNCTION_ARGS)
 {
@@ -69,8 +68,6 @@ range_gist_consistent(PG_FUNCTION_ARGS)
 	RangeType  *key = DatumGetRangeType(entry->key);
 	TypeCacheEntry *typcache;
 	RangeType  *query;
-	RangeBound	lower;
-	RangeBound	upper;
 
 	/* All operators served by this function are exact */
 	*recheck = false;
@@ -78,25 +75,18 @@ range_gist_consistent(PG_FUNCTION_ARGS)
 	switch (strategy)
 	{
 		/*
-		 * For contains and contained by operators, the other operand is a
-		 * "point" of the subtype. Construct a singleton range containing
-		 * just that value.
+		 * For element contains and contained by operators, the other operand
+		 * is a "point" of the subtype.  Construct a singleton range
+		 * containing just that value.  (Since range_contains_elem and
+		 * elem_contained_by_range would do that anyway, it's actually more
+		 * efficient not less so to merge these cases into range containment
+		 * at this step.  But revisit this if we ever change the implementation
+		 * of those functions.)
 		 */
 		case RANGESTRAT_CONTAINS_ELEM:
 		case RANGESTRAT_ELEM_CONTAINED_BY:
 			typcache = range_get_typcache(fcinfo, RangeTypeGetOid(key));
-
-			lower.val = dquery;
-			lower.infinite = false;
-			lower.inclusive = true;
-			lower.lower = true;
-
-			upper.val = dquery;
-			upper.infinite = false;
-			upper.inclusive = true;
-			upper.lower = false;
-
-			query = make_range(typcache, &lower, &upper, false);
+			query = make_singleton_range(typcache, dquery);
 			break;
 
 		default:
@@ -112,6 +102,7 @@ range_gist_consistent(PG_FUNCTION_ARGS)
 												 key, query));
 }
 
+/* form union range */
 Datum
 range_gist_union(PG_FUNCTION_ARGS)
 {
@@ -134,6 +125,7 @@ range_gist_union(PG_FUNCTION_ARGS)
 	PG_RETURN_RANGE(result_range);
 }
 
+/* compress, decompress are no-ops */
 Datum
 range_gist_compress(PG_FUNCTION_ARGS)
 {
@@ -150,6 +142,7 @@ range_gist_decompress(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(entry);
 }
 
+/* page split penalty function */
 Datum
 range_gist_penalty(PG_FUNCTION_ARGS)
 {
@@ -177,6 +170,7 @@ range_gist_penalty(PG_FUNCTION_ARGS)
 
 	subtype_diff = &typcache->rng_subdiff_finfo;
 
+	/* we want to compare the size of "orig" to size of "orig union new" */
 	s_union = range_super_union(typcache, orig, new);
 
 	range_deserialize(typcache, orig, &lower1, &upper1, &empty1);
@@ -268,9 +262,9 @@ range_gist_penalty(PG_FUNCTION_ARGS)
 /*
  * The GiST PickSplit method for ranges
  *
- * Algorithm based on sorting. Incoming array of periods is sorted using
- * sort_item_cmp function. After that first half of periods goes to the left
- * datum, and the second half of periods goes to the right datum.
+ * Algorithm based on sorting.  Incoming array of ranges is sorted using
+ * sort_item_cmp function.  After that first half of ranges goes to the left
+ * output, and the second half of ranges goes to the right output.
  */
 Datum
 range_gist_picksplit(PG_FUNCTION_ARGS)
@@ -318,7 +312,7 @@ range_gist_picksplit(PG_FUNCTION_ARGS)
 	v->spl_nright = 0;
 
 	/*
-	 * First half of items goes to the left datum.
+	 * First half of items goes to the left output.
 	 */
 	pred_left = sortItems[0].data;
 	*left++ = sortItems[0].index;
@@ -331,7 +325,7 @@ range_gist_picksplit(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Second half of items goes to the right datum.
+	 * Second half of items goes to the right output.
 	 */
 	pred_right = sortItems[split_idx].data;
 	*right++ = sortItems[split_idx].index;
@@ -351,6 +345,7 @@ range_gist_picksplit(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(v);
 }
 
+/* equality comparator for GiST */
 Datum
 range_gist_same(PG_FUNCTION_ARGS)
 {
@@ -375,6 +370,8 @@ range_gist_same(PG_FUNCTION_ARGS)
 
 /*
  * Return the smallest range that contains r1 and r2
+ *
+ * XXX would it be better to redefine range_union as working this way?
  */
 static RangeType *
 range_super_union(TypeCacheEntry *typcache, RangeType * r1, RangeType * r2)

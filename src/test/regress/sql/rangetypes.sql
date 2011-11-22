@@ -1,9 +1,10 @@
-
---
--- test parser
---
+-- Tests for range data types.
 
 create type textrange as range (subtype=text, collation="C");
+
+--
+-- test input parser
+--
 
 -- negative tests; should fail
 select ''::textrange;
@@ -15,12 +16,7 @@ select '(),a)'::textrange;
 select '(a,))'::textrange;
 select '(],a)'::textrange;
 select '(a,])'::textrange;
-select '( , )'::textrange;
-select '("","")'::textrange;
-select '(",",",")'::textrange;
-select '("\\","\\")'::textrange;
-select '[a,a)'::textrange;
-select '(a,a]'::textrange;
+select '[z,a]'::textrange;
 
 -- should succeed
 select '  empty  '::textrange;
@@ -31,6 +27,7 @@ select '(a,)'::textrange;
 select '[,z]'::textrange;
 select '[a,]'::textrange;
 select '(,)'::textrange;
+select '[ , ]'::textrange;
 select '["",""]'::textrange;
 select '[",",","]'::textrange;
 select '["\\","\\"]'::textrange;
@@ -39,6 +36,11 @@ select '((,z)'::textrange;
 select '([,z)'::textrange;
 select '(!,()'::textrange;
 select '(!,[)'::textrange;
+select '[a,a]'::textrange;
+-- these are allowed but normalize to empty:
+select '[a,a)'::textrange;
+select '(a,a]'::textrange;
+select '(a,a)'::textrange;
 
 --
 -- create some test data and test the operators
@@ -46,7 +48,6 @@ select '(!,[)'::textrange;
 
 CREATE TABLE numrange_test (nr NUMRANGE);
 create index numrange_test_btree on numrange_test(nr);
-SET enable_seqscan = f;
 
 INSERT INTO numrange_test VALUES('[,)');
 INSERT INTO numrange_test VALUES('[3,]');
@@ -55,22 +56,29 @@ INSERT INTO numrange_test VALUES(numrange(1.1, 2.2));
 INSERT INTO numrange_test VALUES('empty');
 INSERT INTO numrange_test VALUES(numrange(1.7));
 
-SELECT isempty(nr) FROM numrange_test;
-SELECT lower_inc(nr), lower(nr), upper(nr), upper_inc(nr) FROM numrange_test
-  WHERE NOT isempty(nr) AND NOT lower_inf(nr) AND NOT upper_inf(nr);
+SELECT nr, isempty(nr), lower(nr), upper(nr) FROM numrange_test;
+SELECT nr, lower_inc(nr), lower_inf(nr), upper_inc(nr), upper_inf(nr) FROM numrange_test;
 
 SELECT * FROM numrange_test WHERE range_contains(nr, numrange(1.9,1.91));
 SELECT * FROM numrange_test WHERE nr @> numrange(1.0,10000.1);
 SELECT * FROM numrange_test WHERE range_contained_by(numrange(-1e7,-10000.1), nr);
 SELECT * FROM numrange_test WHERE 1.9 <@ nr;
-SELECT * FROM numrange_test WHERE nr = 'empty';
-SELECT * FROM numrange_test WHERE range_eq(nr, '(1.1, 2.2)');
-SELECT * FROM numrange_test WHERE nr = '[1.1, 2.2)';
+
+select * from numrange_test where nr = 'empty';
+select * from numrange_test where nr = '(1.1, 2.2)';
+select * from numrange_test where nr = '[1.1, 2.2)';
+select * from numrange_test where nr < numrange(-1000.0, -1000.0,'[]');
+select * from numrange_test where nr < numrange(0.0, 1.0,'[]');
+select * from numrange_test where nr < numrange(1000.0, 1001.0,'[]');
+select * from numrange_test where nr > numrange(-1001.0, -1000.0,'[]');
+select * from numrange_test where nr > numrange(0.0, 1.0,'[]');
+select * from numrange_test where nr > numrange(1000.0, 1000.0,'[]');
 
 select numrange(2.0, 1.0);
 
 select numrange(2.0, 3.0) -|- numrange(3.0, 4.0);
 select range_adjacent(numrange(2.0, 3.0), numrange(3.1, 4.0));
+select range_adjacent(numrange(2.0, 3.0), numrange(3.1, null));
 select numrange(2.0, 3.0, '[]') -|- numrange(3.0, 4.0, '()');
 select numrange(1.0, 2.0) -|- numrange(2.0, 3.0,'[]');
 select range_adjacent(numrange(2.0, 3.0, '(]'), numrange(1.0, 2.0, '(]'));
@@ -102,15 +110,9 @@ select numrange(1.0, 2.0) * numrange(2.0, 3.0);
 select numrange(1.0, 2.0) * numrange(1.5, 3.0);
 select numrange(1.0, 2.0) * numrange(2.5, 3.0);
 
-select * from numrange_test where nr < numrange(-1000.0, -1000.0,'[]');
-select * from numrange_test where nr < numrange(0.0, 1.0,'[]');
-select * from numrange_test where nr < numrange(1000.0, 1001.0,'[]');
-select * from numrange_test where nr > numrange(-1001.0, -1000.0,'[]');
-select * from numrange_test where nr > numrange(0.0, 1.0,'[]');
-select * from numrange_test where nr > numrange(1000.0, 1000.0,'[]');
-
 create table numrange_test2(nr numrange);
 create index numrange_test2_hash_idx on numrange_test2 (nr);
+
 INSERT INTO numrange_test2 VALUES('[, 5)');
 INSERT INTO numrange_test2 VALUES(numrange(1.1, 2.2));
 INSERT INTO numrange_test2 VALUES(numrange(1.1, 2.2));
@@ -137,21 +139,24 @@ select * from numrange_test natural join numrange_test2 order by nr;
 set enable_nestloop to default;
 set enable_hashjoin to default;
 set enable_mergejoin to default;
-SET enable_seqscan TO DEFAULT;
+
 DROP TABLE numrange_test;
 DROP TABLE numrange_test2;
 
 -- test canonical form for int4range
-select int4range(1,10,'[]');
-select int4range(1,10,'[)');
-select int4range(1,10,'(]');
-select int4range(1,10,'[]');
+select int4range(1, 10, '[]');
+select int4range(1, 10, '[)');
+select int4range(1, 10, '(]');
+select int4range(1, 10, '()');
+select int4range(1, 2, '()');
 
 -- test canonical form for daterange
-select daterange('2000-01-10'::date, '2000-01-20'::date,'[]');
-select daterange('2000-01-10'::date, '2000-01-20'::date,'[)');
-select daterange('2000-01-10'::date, '2000-01-20'::date,'(]');
-select daterange('2000-01-10'::date, '2000-01-20'::date,'[]');
+select daterange('2000-01-10'::date, '2000-01-20'::date, '[]');
+select daterange('2000-01-10'::date, '2000-01-20'::date, '[)');
+select daterange('2000-01-10'::date, '2000-01-20'::date, '(]');
+select daterange('2000-01-10'::date, '2000-01-20'::date, '()');
+select daterange('2000-01-10'::date, '2000-01-11'::date, '()');
+select daterange('2000-01-10'::date, '2000-01-11'::date, '(]');
 
 -- test GiST index that's been built incrementally
 create table test_range_gist(ir int4range);
@@ -238,11 +243,11 @@ insert into test_range_excl
 insert into test_range_excl
   values(int4range(123), int4range(2), '[2010-01-02 11:00, 2010-01-02 12:00)');
 insert into test_range_excl
-  values(int4range(123), int4range(3), '[2010-01-02 10:10, 2010-01-02 11:10)');
+  values(int4range(123), int4range(3), '[2010-01-02 10:10, 2010-01-02 11:00)');
 insert into test_range_excl
   values(int4range(124), int4range(3), '[2010-01-02 10:10, 2010-01-02 11:10)');
 insert into test_range_excl
-  values(int4range(125), int4range(1), '[2010-01-02 10:10, 2010-01-02 11:10)');
+  values(int4range(125), int4range(1), '[2010-01-02 10:10, 2010-01-02 11:00)');
 
 -- test bigint ranges
 select int8range(10000000000::int8, 20000000000::int8,'(]');
@@ -264,7 +269,7 @@ create type float8range as range (subtype=float8, subtype_diff=float4mi);
 create type float8range as range (subtype=float8, subtype_diff=float8mi);
 select '[123.001, 5.e9)'::float8range @> 888.882::float8;
 create table float8range_test(f8r float8range, i int);
-insert into float8range_test values(float8range(-100.00007, '1.111113e9'));
+insert into float8range_test values(float8range(-100.00007, '1.111113e9'), 42);
 select * from float8range_test;
 drop table float8range_test;
 
@@ -275,14 +280,14 @@ drop table float8range_test;
 create domain mydomain as int4;
 create type mydomainrange as range(subtype=mydomain);
 select '[4,50)'::mydomainrange @> 7::mydomain;
-drop type mydomainrange;
-drop domain mydomain;
+drop domain mydomain;  -- fail
+drop domain mydomain cascade;
 
 --
 -- Test domains over range types
 --
 
-create domain restrictedrange  as int4range check (upper(value) < 10);
+create domain restrictedrange as int4range check (upper(value) < 10);
 select '[4,5)'::restrictedrange @> 7;
 select '[4,50)'::restrictedrange @> 7; -- should fail
 drop domain restrictedrange;
@@ -301,7 +306,7 @@ drop type textrange1;
 drop type textrange2;
 
 --
--- Test out polymorphic type system
+-- Test polymorphic type system
 --
 
 create function anyarray_anyrange_func(a anyarray, r anyrange)
@@ -325,6 +330,7 @@ create function bogus_func(int)
 create function range_add_bounds(anyrange)
   returns anyelement as 'select lower($1) + upper($1)' language sql;
 
+select range_add_bounds(int4range(1, 17));
 select range_add_bounds(numrange(1.0001, 123.123));
 
 create function rangetypes_sql(q anyrange, b anyarray, out c anyelement)
@@ -352,6 +358,7 @@ drop table i8r_array;
 create type arrayrange as range (subtype=int4[]);
 
 select arrayrange(ARRAY[1,2], ARRAY[2,1]);
+select arrayrange(ARRAY[2,1], ARRAY[1,2]);  -- fail
 
 select array[1,1] <@ arrayrange(array[1,2], array[2,1]);
 select array[1,3] <@ arrayrange(array[1,2], array[2,1]);
@@ -361,13 +368,19 @@ select array[1,3] <@ arrayrange(array[1,2], array[2,1]);
 --
 
 create function outparam_succeed(i anyrange, out r anyrange, out t text)
-  as $$ select $1, 'foo' $$ language sql;
+  as $$ select $1, 'foo'::text $$ language sql;
+
+select * from outparam_succeed(int4range(1,2));
 
 create function inoutparam_succeed(out i anyelement, inout r anyrange)
-  as $$ select $1, $2 $$ language sql;
+  as $$ select upper($1), $1 $$ language sql;
+
+select * from inoutparam_succeed(int4range(1,2));
 
 create function table_succeed(i anyelement, r anyrange) returns table(i anyelement, r anyrange)
   as $$ select $1, $2 $$ language sql;
+
+select * from table_succeed(123, int4range(1,11));
 
 -- should fail
 create function outparam_fail(i anyelement, out r anyrange, out t text)
@@ -378,5 +391,5 @@ create function inoutparam_fail(inout i anyelement, out r anyrange)
   as $$ select $1, '[1,10]' $$ language sql;
 
 --should fail
-create function table_succeed(i anyelement) returns table(i anyelement, r anyrange)
+create function table_fail(i anyelement) returns table(i anyelement, r anyrange)
   as $$ select $1, '[1,10]' $$ language sql;

@@ -3,6 +3,22 @@
  * rangetypes.c
  *	  I/O functions, operators, and support functions for range types.
  *
+ * The stored (serialized) format of a range value is:
+ *
+ *	4 bytes: varlena header
+ *	4 bytes: range type's OID
+ *	Lower boundary value, if any, aligned according to subtype's typalign
+ *	Upper boundary value, if any, aligned according to subtype's typalign
+ *	1 byte for flags
+ *
+ * This representation is chosen to avoid needing any padding before the
+ * lower boundary value, even when it requires double alignment.  We can
+ * expect that the varlena header is presented to us on a suitably aligned
+ * boundary (possibly after detoasting), and then the lower boundary is too.
+ * Note that this means we can't work with a packed (short varlena header)
+ * value; we must detoast it first.
+ *
+ *
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -40,12 +56,13 @@ typedef struct RangeIOData
 static RangeIOData *get_range_io_data(FunctionCallInfo fcinfo, Oid rngtypid,
 									  IOFuncSelector func);
 static char range_parse_flags(const char *flags_str);
-static void range_parse(char *input_str, char *flags, char **lbound_str,
+static void range_parse(const char *input_str, char *flags, char **lbound_str,
 			char **ubound_str);
-static char *range_parse_bound(char *string, char *ptr, char **bound_str,
-				  bool *infinite);
-static char *range_deparse(char flags, char *lbound_str, char *ubound_str);
-static char *range_bound_escape(char *in_str);
+static const char *range_parse_bound(const char *string, const char *ptr,
+				  char **bound_str, bool *infinite);
+static char *range_deparse(char flags, const char *lbound_str,
+						   const char *ubound_str);
+static char *range_bound_escape(const char *value);
 static bool range_contains_internal(TypeCacheEntry *typcache,
 									RangeType *r1, RangeType *r2);
 static Size datum_compute_size(Size sz, Datum datum, bool typbyval,
@@ -125,7 +142,7 @@ range_out(PG_FUNCTION_ARGS)
 	if (RANGE_HAS_UBOUND(flags))
 		ubound_str = OutputFunctionCall(&cache->proc, upper.val);
 
-	/* deparse */
+	/* construct result string */
 	output_str = range_deparse(flags, lbound_str, ubound_str);
 
 	PG_RETURN_CSTRING(output_str);
@@ -156,8 +173,9 @@ range_recv(PG_FUNCTION_ARGS)
 	flags = (unsigned char) pq_getmsgbyte(buf);
 
 	/*
-	 * mask out any unsupported flags, particularly RANGE_xB_NULL which would
-	 * confuse following tests.
+	 * Mask out any unsupported flags, particularly RANGE_xB_NULL which would
+	 * confuse following tests.  Note that range_serialize will take care of
+	 * cleaning up any inconsistencies in the remaining flags.
 	 */
 	flags &= (RANGE_EMPTY |
 			  RANGE_LB_INC |
@@ -330,32 +348,22 @@ get_range_io_data(FunctionCallInfo fcinfo, Oid rngtypid, IOFuncSelector func)
  *----------------------------------------------------------
  */
 
+/* Construct empty range value from no arguments */
 Datum
 range_constructor0(PG_FUNCTION_ARGS)
 {
 	Oid			rngtypid = get_fn_expr_rettype(fcinfo->flinfo);
 	RangeType  *range;
 	TypeCacheEntry *typcache;
-	RangeBound	lower;
-	RangeBound	upper;
 
 	typcache = range_get_typcache(fcinfo, rngtypid);
 
-	lower.val = (Datum) 0;
-	lower.infinite = false;
-	lower.inclusive = false;
-	lower.lower = true;
-
-	upper.val = (Datum) 0;
-	upper.infinite = false;
-	upper.inclusive = false;
-	upper.lower = false;
-
-	range = make_range(typcache, &lower, &upper, true);
+	range = make_empty_range(typcache);
 
 	PG_RETURN_RANGE(range);
 }
 
+/* Construct singleton range value from one argument */
 Datum
 range_constructor1(PG_FUNCTION_ARGS)
 {
@@ -363,8 +371,6 @@ range_constructor1(PG_FUNCTION_ARGS)
 	Oid			rngtypid = get_fn_expr_rettype(fcinfo->flinfo);
 	RangeType  *range;
 	TypeCacheEntry *typcache;
-	RangeBound	lower;
-	RangeBound	upper;
 
 	typcache = range_get_typcache(fcinfo, rngtypid);
 
@@ -373,21 +379,12 @@ range_constructor1(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_DATA_EXCEPTION),
 				 errmsg("range constructor argument must not be NULL")));
 
-	lower.val = arg1;
-	lower.infinite = false;
-	lower.inclusive = true;
-	lower.lower = true;
-
-	upper.val = arg1;
-	upper.infinite = false;
-	upper.inclusive = true;
-	upper.lower = false;
-
-	range = make_range(typcache, &lower, &upper, false);
+	range = make_singleton_range(typcache, arg1);
 
 	PG_RETURN_RANGE(range);
 }
 
+/* Construct standard-form range value from two arguments */
 Datum
 range_constructor2(PG_FUNCTION_ARGS)
 {
@@ -416,6 +413,7 @@ range_constructor2(PG_FUNCTION_ARGS)
 	PG_RETURN_RANGE(range);
 }
 
+/* Construct general range value from three arguments */
 Datum
 range_constructor3(PG_FUNCTION_ARGS)
 {
@@ -452,7 +450,10 @@ range_constructor3(PG_FUNCTION_ARGS)
 	PG_RETURN_RANGE(range);
 }
 
-/* range -> subtype */
+
+/* range -> subtype functions */
+
+/* extract lower bound value */
 Datum
 range_lower(PG_FUNCTION_ARGS)
 {
@@ -473,6 +474,7 @@ range_lower(PG_FUNCTION_ARGS)
 	PG_RETURN_DATUM(lower.val);
 }
 
+/* extract upper bound value */
 Datum
 range_upper(PG_FUNCTION_ARGS)
 {
@@ -494,7 +496,9 @@ range_upper(PG_FUNCTION_ARGS)
 }
 
 
-/* range -> bool */
+/* range -> bool functions */
+
+/* is range empty? */
 Datum
 range_empty(PG_FUNCTION_ARGS)
 {
@@ -504,6 +508,7 @@ range_empty(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(flags & RANGE_EMPTY);
 }
 
+/* is lower bound inclusive? */
 Datum
 range_lower_inc(PG_FUNCTION_ARGS)
 {
@@ -513,6 +518,7 @@ range_lower_inc(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(flags & RANGE_LB_INC);
 }
 
+/* is upper bound inclusive? */
 Datum
 range_upper_inc(PG_FUNCTION_ARGS)
 {
@@ -522,6 +528,7 @@ range_upper_inc(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(flags & RANGE_UB_INC);
 }
 
+/* is lower bound infinite? */
 Datum
 range_lower_inf(PG_FUNCTION_ARGS)
 {
@@ -531,6 +538,7 @@ range_lower_inf(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(flags & RANGE_LB_INF);
 }
 
+/* is upper bound infinite? */
 Datum
 range_upper_inf(PG_FUNCTION_ARGS)
 {
@@ -541,7 +549,48 @@ range_upper_inf(PG_FUNCTION_ARGS)
 }
 
 
-/* range, range -> bool */
+/* range, element -> bool functions */
+
+/* contains? */
+Datum
+range_contains_elem(PG_FUNCTION_ARGS)
+{
+	RangeType  *r1 = PG_GETARG_RANGE(0);
+	Datum		val = PG_GETARG_DATUM(1);
+	TypeCacheEntry *typcache;
+	RangeType  *r2;
+
+	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
+
+	/* Construct a singleton range representing just "val" */
+	r2 = make_singleton_range(typcache, val);
+
+	/* And use range_contains */
+	PG_RETURN_BOOL(range_contains_internal(typcache, r1, r2));
+}
+
+/* contained by? */
+Datum
+elem_contained_by_range(PG_FUNCTION_ARGS)
+{
+	Datum		val = PG_GETARG_DATUM(0);
+	RangeType  *r1 = PG_GETARG_RANGE(1);
+	TypeCacheEntry *typcache;
+	RangeType  *r2;
+
+	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
+
+	/* Construct a singleton range representing just "val" */
+	r2 = make_singleton_range(typcache, val);
+
+	/* And use range_contains */
+	PG_RETURN_BOOL(range_contains_internal(typcache, r1, r2));
+}
+
+
+/* range, range -> bool functions */
+
+/* equality */
 Datum
 range_eq(PG_FUNCTION_ARGS)
 {
@@ -578,6 +627,7 @@ range_eq(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(true);
 }
 
+/* inequality */
 Datum
 range_ne(PG_FUNCTION_ARGS)
 {
@@ -586,35 +636,7 @@ range_ne(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(!eq);
 }
 
-Datum
-range_contains_elem(PG_FUNCTION_ARGS)
-{
-	RangeType  *r1 = PG_GETARG_RANGE(0);
-	Datum		val = PG_GETARG_DATUM(1);
-	TypeCacheEntry *typcache;
-	RangeBound	lower2;
-	RangeBound	upper2;
-	RangeType  *r2;
-
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
-
-	/* Construct a singleton range representing just "val" */
-	lower2.val = val;
-	lower2.infinite = false;
-	lower2.inclusive = true;
-	lower2.lower = true;
-
-	upper2.val = val;
-	upper2.infinite = false;
-	upper2.inclusive = true;
-	upper2.lower = false;
-
-	r2 = make_range(typcache, &lower2, &upper2, false);
-
-	/* And use range_contains */
-	PG_RETURN_BOOL(range_contains_internal(typcache, r1, r2));
-}
-
+/* contains? */
 Datum
 range_contains(PG_FUNCTION_ARGS)
 {
@@ -631,35 +653,7 @@ range_contains(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(range_contains_internal(typcache, r1, r2));
 }
 
-Datum
-elem_contained_by_range(PG_FUNCTION_ARGS)
-{
-	Datum		val = PG_GETARG_DATUM(0);
-	RangeType  *r1 = PG_GETARG_RANGE(1);
-	TypeCacheEntry *typcache;
-	RangeBound	lower2;
-	RangeBound	upper2;
-	RangeType  *r2;
-
-	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
-
-	/* Construct a singleton range representing just "val" */
-	lower2.val = val;
-	lower2.infinite = false;
-	lower2.inclusive = true;
-	lower2.lower = true;
-
-	upper2.val = val;
-	upper2.infinite = false;
-	upper2.inclusive = true;
-	upper2.lower = false;
-
-	r2 = make_range(typcache, &lower2, &upper2, false);
-
-	/* And use range_contains */
-	PG_RETURN_BOOL(range_contains_internal(typcache, r1, r2));
-}
-
+/* contained by? */
 Datum
 range_contained_by(PG_FUNCTION_ARGS)
 {
@@ -676,6 +670,7 @@ range_contained_by(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(range_contains_internal(typcache, r2, r1));
 }
 
+/* strictly left of? */
 Datum
 range_before(PG_FUNCTION_ARGS)
 {
@@ -705,6 +700,7 @@ range_before(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(range_cmp_bounds(typcache, &upper1, &lower2) < 0);
 }
 
+/* strictly right of? */
 Datum
 range_after(PG_FUNCTION_ARGS)
 {
@@ -734,6 +730,7 @@ range_after(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(range_cmp_bounds(typcache, &lower1, &upper2) > 0);
 }
 
+/* adjacent to (but not overlapping)? */
 Datum
 range_adjacent(PG_FUNCTION_ARGS)
 {
@@ -770,23 +767,20 @@ range_adjacent(PG_FUNCTION_ARGS)
 	 */
 	if (lower1.inclusive != upper2.inclusive)
 	{
-		if (DatumGetInt32(FunctionCall2Coll(&typcache->rng_cmp_proc_finfo,
-											typcache->rng_collation,
-											lower1.val, upper2.val)) == 0)
+		if (range_cmp_bound_values(typcache, &lower1, &upper2) == 0)
 			PG_RETURN_BOOL(true);
 	}
 
 	if (upper1.inclusive != lower2.inclusive)
 	{
-		if (DatumGetInt32(FunctionCall2Coll(&typcache->rng_cmp_proc_finfo,
-											typcache->rng_collation,
-											upper1.val, lower2.val)) == 0)
+		if (range_cmp_bound_values(typcache, &upper1, &lower2) == 0)
 			PG_RETURN_BOOL(true);
 	}
 
 	PG_RETURN_BOOL(false);
 }
 
+/* overlaps? */
 Datum
 range_overlaps(PG_FUNCTION_ARGS)
 {
@@ -824,6 +818,7 @@ range_overlaps(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(false);
 }
 
+/* does not extend to right of? */
 Datum
 range_overleft(PG_FUNCTION_ARGS)
 {
@@ -856,6 +851,7 @@ range_overleft(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(false);
 }
 
+/* does not extend to left of? */
 Datum
 range_overright(PG_FUNCTION_ARGS)
 {
@@ -889,7 +885,9 @@ range_overright(PG_FUNCTION_ARGS)
 }
 
 
-/* range, range -> range */
+/* range, range -> range functions */
+
+/* set difference */
 Datum
 range_minus(PG_FUNCTION_ARGS)
 {
@@ -954,6 +952,7 @@ range_minus(PG_FUNCTION_ARGS)
 	PG_RETURN_NULL();
 }
 
+/* set union */
 Datum
 range_union(PG_FUNCTION_ARGS)
 {
@@ -1003,6 +1002,7 @@ range_union(PG_FUNCTION_ARGS)
 	PG_RETURN_RANGE(make_range(typcache, result_lower, result_upper, false));
 }
 
+/* set intersection */
 Datum
 range_intersect(PG_FUNCTION_ARGS)
 {
@@ -1045,6 +1045,7 @@ range_intersect(PG_FUNCTION_ARGS)
 
 /* Btree support */
 
+/* btree comparator */
 Datum
 range_cmp(PG_FUNCTION_ARGS)
 {
@@ -1082,6 +1083,7 @@ range_cmp(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(range_cmp_bounds(typcache, &upper1, &upper2));
 }
 
+/* inequality operators using the range_cmp function */
 Datum
 range_lt(PG_FUNCTION_ARGS)
 {
@@ -1116,6 +1118,7 @@ range_gt(PG_FUNCTION_ARGS)
 
 /* Hash support */
 
+/* hash a range value */
 Datum
 hash_range(PG_FUNCTION_ARGS)
 {
@@ -1281,7 +1284,11 @@ daterange_canonical(PG_FUNCTION_ARGS)
  *----------------------------------------------------------
  * SUBTYPE_DIFF FUNCTIONS
  *
- *	 Functions for specific built-in range types.
+ * Functions for specific built-in range types.
+ *
+ * Note that subtype_diff does return the difference, not the absolute value
+ * of the difference, and it must take care to avoid overflow.
+ * (numrange_subdiff is at some risk there ...)
  *----------------------------------------------------------
  */
 
@@ -1394,38 +1401,19 @@ range_get_typcache(FunctionCallInfo fcinfo, Oid rngtypid)
 	return typcache;
 }
 
-
-/*
- * Serialized format is:
- *
- *	4 bytes: Range type Oid
- *	Lower boundary, if any, aligned according to subtype's typalign
- *	Upper boundary, if any, aligned according to subtype's typalign
- *	1 byte for flags
- *
- * This representation is chosen to be compact when the boundary
- * values need to be MAXALIGNed. A palloc chunk always starts out
- * MAXALIGNed, and the first 4 bytes will be the length header (range
- * types are always variable-length), then the next 4 bytes will be
- * the range type Oid. That leaves the first boundary item MAXALIGNed
- * without the need for padding.
- *
- * However, it requires a slightly odd deserialization strategy,
- * because we have to read the flags byte before we know whether to
- * read a boundary value.
- */
-
 /*
  * range_serialize: construct a range value from bounds and empty-flag
  *
  * This does not force canonicalization of the range value.  In most cases,
- * external callers should only be canonicalization functions.
+ * external callers should only be canonicalization functions.  Note that
+ * we perform some datatype-independent canonicalization checks anyway.
  */
 RangeType *
 range_serialize(TypeCacheEntry *typcache, RangeBound *lower, RangeBound *upper,
 				bool empty)
 {
 	RangeType  *range;
+	int			cmp;
 	Size		msize;
 	Pointer		ptr;
 	int16		typlen;
@@ -1434,27 +1422,47 @@ range_serialize(TypeCacheEntry *typcache, RangeBound *lower, RangeBound *upper,
 	char		typstorage;
 	char		flags = 0;
 
-	/* fetch information about range's element type */
-	typlen = typcache->rngelemtype->typlen;
-	typbyval = typcache->rngelemtype->typbyval;
-	typalign = typcache->rngelemtype->typalign;
-	typstorage = typcache->rngelemtype->typstorage;
+	/*
+	 * Verify range is not invalid on its face, and construct flags value,
+	 * preventing any non-canonical combinations such as infinite+inclusive.
+	 */
+	Assert(lower->lower);
+	Assert(!upper->lower);
 
-	/* construct flags value */
 	if (empty)
 		flags |= RANGE_EMPTY;
 	else
 	{
-		if (range_cmp_bounds(typcache, lower, upper) > 0)
+		cmp = range_cmp_bound_values(typcache, lower, upper);
+
+		/* error check: if lower bound value is above upper, it's wrong */
+		if (cmp > 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_EXCEPTION),
 					 errmsg("range lower bound must be less than or equal to range upper bound")));
 
-		flags |= lower->inclusive ? RANGE_LB_INC : 0;
-		flags |= lower->infinite ? RANGE_LB_INF : 0;
-		flags |= upper->inclusive ? RANGE_UB_INC : 0;
-		flags |= upper->infinite ? RANGE_UB_INF : 0;
+		/* if bounds are equal, and not both inclusive, range is empty */
+		if (cmp == 0 && !(lower->inclusive && upper->inclusive))
+			flags |= RANGE_EMPTY;
+		else
+		{
+			/* infinite boundaries are never inclusive */
+			if (lower->infinite)
+				flags |= RANGE_LB_INF;
+			else if (lower->inclusive)
+				flags |= RANGE_LB_INC;
+			if (upper->infinite)
+				flags |= RANGE_UB_INF;
+			else if (upper->inclusive)
+				flags |= RANGE_UB_INC;
+		}
 	}
+
+	/* Fetch information about range's element type */
+	typlen = typcache->rngelemtype->typlen;
+	typbyval = typcache->rngelemtype->typbyval;
+	typalign = typcache->rngelemtype->typalign;
+	typstorage = typcache->rngelemtype->typstorage;
 
 	/* Count space for varlena header and range type's OID */
 	msize = sizeof(RangeType);
@@ -1615,7 +1623,9 @@ make_range(TypeCacheEntry *typcache, RangeBound *lower, RangeBound *upper,
 
 	range = range_serialize(typcache, lower, upper, empty);
 
-	if (OidIsValid(typcache->rng_canonical_finfo.fn_oid))
+	/* no need to call canonical on empty ranges ... */
+	if (OidIsValid(typcache->rng_canonical_finfo.fn_oid) &&
+		!RangeIsEmpty(range))
 		range = DatumGetRangeType(FunctionCall1(&typcache->rng_canonical_finfo,
 												RangeTypeGetDatum(range)));
 
@@ -1710,6 +1720,50 @@ range_cmp_bounds(TypeCacheEntry *typcache, RangeBound *b1, RangeBound *b2)
 	return result;
 }
 
+/*
+ * Compare two range boundary point values, returning <0, 0, or >0 according
+ * to whether b1 is less than, equal to, or greater than b2.
+ *
+ * This is similar to but simpler than range_cmp_bounds().  We just compare
+ * the values held in b1 and b2, ignoring inclusive/exclusive flags.  The
+ * lower/upper flags only matter for infinities, where they tell us if the
+ * infinity is plus or minus.
+ */
+int
+range_cmp_bound_values(TypeCacheEntry *typcache, RangeBound *b1,
+					   RangeBound *b2)
+{
+	/*
+	 * First, handle cases involving infinity, which don't require invoking
+	 * the comparison proc.
+	 */
+	if (b1->infinite && b2->infinite)
+	{
+		/*
+		 * Both are infinity, so they are equal unless one is lower and the
+		 * other not.
+		 */
+		if (b1->lower == b2->lower)
+			return 0;
+		else
+			return b1->lower ? -1 : 1;
+	}
+	else if (b1->infinite)
+		return b1->lower ? -1 : 1;
+	else if (b2->infinite)
+		return b2->lower ? 1 : -1;
+
+	/*
+	 * Both boundaries are finite, so compare the held values.
+	 */
+	return DatumGetInt32(FunctionCall2Coll(&typcache->rng_cmp_proc_finfo,
+										   typcache->rng_collation,
+										   b1->val, b2->val));
+}
+
+/*
+ * Build an empty range value of the type indicated by the typcache entry.
+ */
 RangeType *
 make_empty_range(TypeCacheEntry *typcache)
 {
@@ -1727,6 +1781,28 @@ make_empty_range(TypeCacheEntry *typcache)
 	upper.lower = false;
 
 	return make_range(typcache, &lower, &upper, true);
+}
+
+/*
+ * Build a range value representing a single point.
+ */
+RangeType *
+make_singleton_range(TypeCacheEntry *typcache, Datum val)
+{
+	RangeBound	lower;
+	RangeBound	upper;
+
+	lower.val = val;
+	lower.infinite = false;
+	lower.inclusive = true;
+	lower.lower = true;
+
+	upper.val = val;
+	upper.infinite = false;
+	upper.inclusive = true;
+	upper.lower = false;
+
+	return make_range(typcache, &lower, &upper, false);
 }
 
 
@@ -1785,17 +1861,26 @@ range_parse_flags(const char *flags_str)
 }
 
 /*
- * Parse range input, modeled after record_in in rowtypes.c.
+ * Parse range input.
  *
+ * Input parameters:
+ *	string: input string to be parsed
+ * Output parameters:
+ *	*flags: receives flags bitmask
+ *	*lbound_str: receives palloc'd lower bound string, or NULL if none
+ *	*ubound_str: receives palloc'd upper bound string, or NULL if none
+ *
+ * This is modeled somewhat after record_in in rowtypes.c.
+ * The input syntax is:
  *	<range>   := EMPTY
  *			   | <lb-inc> <string>, <string> <ub-inc>
  *	<lb-inc>  := '[' | '('
  *	<ub-inc>  := ']' | ')'
  *
- * Whitespace before or after <range> is ignored. Whitespace within a <string>
- * is taken literally and becomes the input string for that bound.
+ * Whitespace before or after <range> is ignored.  Whitespace within a <string>
+ * is taken literally and becomes part of the input string for that bound.
  *
- * A <string> of length zero is taken as "infinite" (i.e. no bound); unless it
+ * A <string> of length zero is taken as "infinite" (i.e. no bound), unless it
  * is surrounded by double-quotes, in which case it is the literal empty
  * string.
  *
@@ -1804,10 +1889,10 @@ range_parse_flags(const char *flags_str)
  * double-quotes, a double-quote can be escaped with double-quote or backslash.
  */
 static void
-range_parse(char *string, char *flags, char **lbound_str,
+range_parse(const char *string, char *flags, char **lbound_str,
 			char **ubound_str)
 {
-	char	   *ptr = string;
+	const char *ptr = string;
 	bool		infinite;
 
 	*flags = 0;
@@ -1821,6 +1906,8 @@ range_parse(char *string, char *flags, char **lbound_str,
 					   strlen(RANGE_EMPTY_LITERAL)) == 0)
 	{
 		*flags = RANGE_EMPTY;
+		*lbound_str = NULL;
+		*ubound_str = NULL;
 
 		ptr += strlen(RANGE_EMPTY_LITERAL);
 
@@ -1834,64 +1921,55 @@ range_parse(char *string, char *flags, char **lbound_str,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("malformed range literal: \"%s\"",
 							string),
-					 errdetail("Unexpected end of input.")));
+					 errdetail("Junk after \"empty\" keyword.")));
 
 		return;
 	}
 
-	if (*ptr == '[' || *ptr == '(')
+	if (*ptr == '[')
 	{
-		if (*ptr == '[')
-			*flags |= RANGE_LB_INC;
+		*flags |= RANGE_LB_INC;
 		ptr++;
 	}
+	else if (*ptr == '(')
+		ptr++;
 	else
-	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("malformed range literal: \"%s\"",
 						string),
 				 errdetail("Missing left parenthesis or bracket.")));
-	}
 
 	ptr = range_parse_bound(string, ptr, lbound_str, &infinite);
 	if (infinite)
-	{
 		*flags |= RANGE_LB_INF;
-		*flags &= ~RANGE_LB_INC;
-	}
 
-	if (*ptr != ',')
+	if (*ptr == ',')
+		ptr++;
+	else
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("malformed range literal: \"%s\"",
 						string),
-				 errdetail("Missing upper bound.")));
-	ptr++;
+				 errdetail("Missing comma after lower bound.")));
 
 	ptr = range_parse_bound(string, ptr, ubound_str, &infinite);
+	if (infinite)
+		*flags |= RANGE_UB_INF;
 
-	if (*ptr == ')' || *ptr == ']')
+	if (*ptr == ']')
 	{
-		if (*ptr == ']')
-			*flags |= RANGE_UB_INC;
+		*flags |= RANGE_UB_INC;
+		ptr++;
 	}
-	else
-	{
+	else if (*ptr == ')')
+		ptr++;
+	else						/* must be a comma */
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("malformed range literal: \"%s\"",
 						string),
-				 errdetail("Too many boundaries.")));
-	}
-
-	ptr++;
-
-	if (infinite)
-	{
-		*flags |= RANGE_UB_INF;
-		*flags &= ~RANGE_UB_INC;
-	}
+				 errdetail("Too many commas.")));
 
 	/* consume whitespace */
 	while (*ptr != '\0' && isspace((unsigned char) *ptr))
@@ -1903,12 +1981,25 @@ range_parse(char *string, char *flags, char **lbound_str,
 				 errmsg("malformed range literal: \"%s\"",
 						string),
 				 errdetail("Junk after right parenthesis or bracket.")));
-
-	return;
 }
 
-static char *
-range_parse_bound(char *string, char *ptr, char **bound_str, bool *infinite)
+/*
+ * Helper for range_parse: parse and de-quote one bound string.
+ *
+ * We scan until finding comma, right parenthesis, or right bracket.
+ *
+ * Input parameters:
+ *	string: entire input string (used only for error reports)
+ *	ptr: where to start parsing bound
+ * Output parameters:
+ *	*bound_str: receives palloc'd bound string, or NULL if none
+ *	*infinite: set true if no bound, else false
+ *
+ * The return value is the scan ptr, advanced past the bound string.
+ */
+static const char *
+range_parse_bound(const char *string, const char *ptr,
+				  char **bound_str, bool *infinite)
 {
 	StringInfoData buf;
 
@@ -1920,7 +2011,7 @@ range_parse_bound(char *string, char *ptr, char **bound_str, bool *infinite)
 	}
 	else
 	{
-		/* Extract string for this column */
+		/* Extract string for this bound */
 		bool		inquote = false;
 
 		initStringInfo(&buf);
@@ -1970,10 +2061,13 @@ range_parse_bound(char *string, char *ptr, char **bound_str, bool *infinite)
 /*
  * Convert a deserialized range value to text form
  *
+ * Inputs are the flags byte, and the two bound values already converted to
+ * text (but not yet quoted).  If no bound value, pass NULL.
+ *
  * Result is a palloc'd string
  */
 static char *
-range_deparse(char flags, char *lbound_str, char *ubound_str)
+range_deparse(char flags, const char *lbound_str, const char *ubound_str)
 {
 	StringInfoData buf;
 
@@ -1982,17 +2076,17 @@ range_deparse(char flags, char *lbound_str, char *ubound_str)
 
 	initStringInfo(&buf);
 
-	appendStringInfoString(&buf, (flags & RANGE_LB_INC) ? "[" : "(");
+	appendStringInfoChar(&buf, (flags & RANGE_LB_INC) ? '[' : '(');
 
 	if (RANGE_HAS_LBOUND(flags))
 		appendStringInfoString(&buf, range_bound_escape(lbound_str));
 
-	appendStringInfoString(&buf, ",");
+	appendStringInfoChar(&buf, ',');
 
 	if (RANGE_HAS_UBOUND(flags))
 		appendStringInfoString(&buf, range_bound_escape(ubound_str));
 
-	appendStringInfoString(&buf, (flags & RANGE_UB_INC) ? "]" : ")");
+	appendStringInfoChar(&buf, (flags & RANGE_UB_INC) ? ']' : ')');
 
 	return buf.data;
 }
@@ -2003,19 +2097,19 @@ range_deparse(char flags, char *lbound_str, char *ubound_str)
  * Result is a palloc'd string
  */
 static char *
-range_bound_escape(char *value)
+range_bound_escape(const char *value)
 {
 	bool		nq;
-	char	   *tmp;
+	const char *ptr;
 	StringInfoData buf;
 
 	initStringInfo(&buf);
 
 	/* Detect whether we need double quotes for this value */
 	nq = (value[0] == '\0');	/* force quotes for empty string */
-	for (tmp = value; *tmp; tmp++)
+	for (ptr = value; *ptr; ptr++)
 	{
-		char		ch = *tmp;
+		char		ch = *ptr;
 
 		if (ch == '"' || ch == '\\' ||
 			ch == '(' || ch == ')' ||
@@ -2031,9 +2125,9 @@ range_bound_escape(char *value)
 	/* And emit the string */
 	if (nq)
 		appendStringInfoChar(&buf, '"');
-	for (tmp = value; *tmp; tmp++)
+	for (ptr = value; *ptr; ptr++)
 	{
-		char		ch = *tmp;
+		char		ch = *ptr;
 
 		if (ch == '"' || ch == '\\')
 			appendStringInfoChar(&buf, ch);
@@ -2045,6 +2139,12 @@ range_bound_escape(char *value)
 	return buf.data;
 }
 
+/*
+ * Test whether range r1 contains range r2.
+ *
+ * Caller has already checked that they are the same range type, and looked up
+ * the necessary typcache entry.
+ */
 static bool
 range_contains_internal(TypeCacheEntry *typcache, RangeType *r1, RangeType *r2)
 {
@@ -2058,11 +2158,13 @@ range_contains_internal(TypeCacheEntry *typcache, RangeType *r1, RangeType *r2)
 	range_deserialize(typcache, r1, &lower1, &upper1, &empty1);
 	range_deserialize(typcache, r2, &lower2, &upper2, &empty2);
 
+	/* If either range is empty, the answer is easy */
 	if (empty2)
 		return true;
 	else if (empty1)
 		return false;
 
+	/* Else we must have lower1 <= lower2 and upper1 >= upper2 */
 	if (range_cmp_bounds(typcache, &lower1, &lower2) > 0)
 		return false;
 	if (range_cmp_bounds(typcache, &upper1, &upper2) < 0)
