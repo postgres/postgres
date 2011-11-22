@@ -2395,6 +2395,8 @@ OpenIntoRel(QueryDesc *queryDesc)
 	Datum		reloptions;
 	Oid			intoRelationId;
 	DR_intorel *myState;
+	RangeTblEntry  *rte;
+	AttrNumber		attnum;
 	static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 
 	Assert(into);
@@ -2515,6 +2517,21 @@ OpenIntoRel(QueryDesc *queryDesc)
 	 * And open the constructed table for writing.
 	 */
 	intoRelationDesc = heap_open(intoRelationId, AccessExclusiveLock);
+
+	/*
+	 * check INSERT permission on the constructed table.
+	 */
+	rte = makeNode(RangeTblEntry);
+	rte->rtekind = RTE_RELATION;
+	rte->relid = intoRelationId;
+	rte->relkind = RELKIND_RELATION;
+	rte->requiredPerms = ACL_INSERT;
+
+	for (attnum = 1; attnum <= queryDesc->tupDesc->natts; attnum++)
+		rte->modifiedCols = bms_add_member(rte->modifiedCols,
+				attnum - FirstLowInvalidHeapAttributeNumber);
+
+	ExecCheckRTPerms(list_make1(rte), true);
 
 	/*
 	 * Now replace the query's DestReceiver with one for SELECT INTO
