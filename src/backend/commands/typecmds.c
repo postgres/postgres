@@ -1853,6 +1853,7 @@ findRangeCanonicalFunction(List *procname, Oid typeOid)
 {
 	Oid			argList[1];
 	Oid			procOid;
+	AclResult	aclresult;
 
 	/*
 	 * Range canonical functions must take and return the range type, and must
@@ -1880,6 +1881,11 @@ findRangeCanonicalFunction(List *procname, Oid typeOid)
 				 errmsg("range canonical function %s must be immutable",
 						func_signature_string(procname, 1, NIL, argList))));
 
+	/* Also, range type's creator must have permission to call function */
+	aclresult = pg_proc_aclcheck(procOid, GetUserId(), ACL_EXECUTE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, ACL_KIND_PROC, get_func_name(procOid));
+
 	return procOid;
 }
 
@@ -1888,6 +1894,7 @@ findRangeSubtypeDiffFunction(List *procname, Oid subtype)
 {
 	Oid			argList[2];
 	Oid			procOid;
+	AclResult	aclresult;
 
 	/*
 	 * Range subtype diff functions must take two arguments of the subtype,
@@ -1915,6 +1922,11 @@ findRangeSubtypeDiffFunction(List *procname, Oid subtype)
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("range subtype diff function %s must be immutable",
 						func_signature_string(procname, 2, NIL, argList))));
+
+	/* Also, range type's creator must have permission to call function */
+	aclresult = pg_proc_aclcheck(procOid, GetUserId(), ACL_EXECUTE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, ACL_KIND_PROC, get_func_name(procOid));
 
 	return procOid;
 }
