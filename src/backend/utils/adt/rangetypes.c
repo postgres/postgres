@@ -699,6 +699,8 @@ range_adjacent(PG_FUNCTION_ARGS)
 				upper2;
 	bool		empty1,
 				empty2;
+	RangeType  *r3;
+	int			cmp;
 
 	/* Different types should be prevented by ANYRANGE matching rules */
 	if (RangeTypeGetOid(r1) != RangeTypeGetOid(r2))
@@ -714,23 +716,59 @@ range_adjacent(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(false);
 
 	/*
-	 * For two ranges to be adjacent, the lower boundary of one range has to
-	 * match the upper boundary of the other. However, the inclusivity of
-	 * those two boundaries must also be different.
+	 * Given two ranges A..B and C..D, where B < C, the ranges are adjacent
+	 * if and only if the range B..C is empty, where inclusivity of these two
+	 * bounds is inverted compared to the original bounds.  For discrete
+	 * ranges, we have to rely on the canonicalization function to normalize
+	 * B..C to empty if it contains no elements of the subtype.  (If there is
+	 * no canonicalization function, it's impossible for such a range to
+	 * normalize to empty, so we needn't bother to try.)
 	 *
-	 * The semantics for range_cmp_bounds aren't quite what we need here, so
-	 * we do the comparison more directly.
+	 * If B == C, the ranges are adjacent only if these bounds have different
+	 * inclusive flags (i.e., exactly one of the ranges includes the common
+	 * boundary point).
+	 *
+	 * And if B > C then the ranges cannot be adjacent in this order, but we
+	 * must consider the other order (i.e., check D <= A).
 	 */
-	if (lower1.inclusive != upper2.inclusive)
+	cmp = range_cmp_bound_values(typcache, &upper1, &lower2);
+	if (cmp < 0)
 	{
-		if (range_cmp_bound_values(typcache, &lower1, &upper2) == 0)
-			PG_RETURN_BOOL(true);
+		/* in a continuous subtype, there are assumed to be points between */
+		if (!OidIsValid(typcache->rng_canonical_finfo.fn_oid))
+			PG_RETURN_BOOL(false);
+		/* flip the inclusion flags */
+		upper1.inclusive = !upper1.inclusive;
+		lower2.inclusive = !lower2.inclusive;
+		/* change upper/lower labels to avoid Assert failures */
+		upper1.lower = true;
+		lower2.lower = false;
+		r3 = make_range(typcache, &upper1, &lower2, false);
+		PG_RETURN_BOOL(RangeIsEmpty(r3));
+	}
+	if (cmp == 0)
+	{
+		PG_RETURN_BOOL(upper1.inclusive != lower2.inclusive);
 	}
 
-	if (upper1.inclusive != lower2.inclusive)
+	cmp = range_cmp_bound_values(typcache, &upper2, &lower1);
+	if (cmp < 0)
 	{
-		if (range_cmp_bound_values(typcache, &upper1, &lower2) == 0)
-			PG_RETURN_BOOL(true);
+		/* in a continuous subtype, there are assumed to be points between */
+		if (!OidIsValid(typcache->rng_canonical_finfo.fn_oid))
+			PG_RETURN_BOOL(false);
+		/* flip the inclusion flags */
+		upper2.inclusive = !upper2.inclusive;
+		lower1.inclusive = !lower1.inclusive;
+		/* change upper/lower labels to avoid Assert failures */
+		upper2.lower = true;
+		lower1.lower = false;
+		r3 = make_range(typcache, &upper2, &lower1, false);
+		PG_RETURN_BOOL(RangeIsEmpty(r3));
+	}
+	if (cmp == 0)
+	{
+		PG_RETURN_BOOL(upper2.inclusive != lower1.inclusive);
 	}
 
 	PG_RETURN_BOOL(false);
