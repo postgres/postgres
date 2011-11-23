@@ -350,42 +350,6 @@ get_range_io_data(FunctionCallInfo fcinfo, Oid rngtypid, IOFuncSelector func)
  *----------------------------------------------------------
  */
 
-/* Construct empty range value from no arguments */
-Datum
-range_constructor0(PG_FUNCTION_ARGS)
-{
-	Oid			rngtypid = get_fn_expr_rettype(fcinfo->flinfo);
-	RangeType  *range;
-	TypeCacheEntry *typcache;
-
-	typcache = range_get_typcache(fcinfo, rngtypid);
-
-	range = make_empty_range(typcache);
-
-	PG_RETURN_RANGE(range);
-}
-
-/* Construct singleton range value from one argument */
-Datum
-range_constructor1(PG_FUNCTION_ARGS)
-{
-	Datum		arg1 = PG_GETARG_DATUM(0);
-	Oid			rngtypid = get_fn_expr_rettype(fcinfo->flinfo);
-	RangeType  *range;
-	TypeCacheEntry *typcache;
-
-	typcache = range_get_typcache(fcinfo, rngtypid);
-
-	if (PG_ARGISNULL(0))
-		ereport(ERROR,
-				(errcode(ERRCODE_DATA_EXCEPTION),
-				 errmsg("range constructor argument must not be NULL")));
-
-	range = make_singleton_range(typcache, arg1);
-
-	PG_RETURN_RANGE(range);
-}
-
 /* Construct standard-form range value from two arguments */
 Datum
 range_constructor2(PG_FUNCTION_ARGS)
@@ -1773,28 +1737,6 @@ make_empty_range(TypeCacheEntry *typcache)
 	upper.lower = false;
 
 	return make_range(typcache, &lower, &upper, true);
-}
-
-/*
- * Build a range value representing a single point.
- */
-RangeType *
-make_singleton_range(TypeCacheEntry *typcache, Datum val)
-{
-	RangeBound	lower;
-	RangeBound	upper;
-
-	lower.val = val;
-	lower.infinite = false;
-	lower.inclusive = true;
-	lower.lower = true;
-
-	upper.val = val;
-	upper.infinite = false;
-	upper.inclusive = true;
-	upper.lower = false;
-
-	return make_range(typcache, &lower, &upper, false);
 }
 
 

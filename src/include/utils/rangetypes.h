@@ -82,8 +82,6 @@ extern Datum range_recv(PG_FUNCTION_ARGS);
 extern Datum range_send(PG_FUNCTION_ARGS);
 
 /* constructors */
-extern Datum range_constructor0(PG_FUNCTION_ARGS);
-extern Datum range_constructor1(PG_FUNCTION_ARGS);
 extern Datum range_constructor2(PG_FUNCTION_ARGS);
 extern Datum range_constructor3(PG_FUNCTION_ARGS);
 
@@ -158,7 +156,6 @@ extern int range_cmp_bounds(TypeCacheEntry *typcache, RangeBound *b1,
 extern int range_cmp_bound_values(TypeCacheEntry *typcache, RangeBound *b1,
 					   RangeBound *b2);
 extern RangeType *make_empty_range(TypeCacheEntry *typcache);
-extern RangeType *make_singleton_range(TypeCacheEntry *typcache, Datum val);
 
 /* GiST support (in rangetypes_gist.c) */
 extern Datum range_gist_consistent(PG_FUNCTION_ARGS);

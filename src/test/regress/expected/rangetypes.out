@@ -191,7 +191,7 @@ INSERT INTO numrange_test VALUES('[3,]');
 INSERT INTO numrange_test VALUES('[, 5)');
 INSERT INTO numrange_test VALUES(numrange(1.1, 2.2));
 INSERT INTO numrange_test VALUES('empty');
-INSERT INTO numrange_test VALUES(numrange(1.7));
+INSERT INTO numrange_test VALUES(numrange(1.7, 1.7, '[]'));
 SELECT nr, isempty(nr), lower(nr), upper(nr) FROM numrange_test;
     nr     | isempty | lower | upper 
 -----------+---------+-------+-------
@@ -839,17 +839,17 @@ create table test_range_excl(
 NOTICE:  CREATE TABLE / EXCLUDE will create implicit index "test_range_excl_room_during_excl" for table "test_range_excl"
 NOTICE:  CREATE TABLE / EXCLUDE will create implicit index "test_range_excl_speaker_during_excl" for table "test_range_excl"
 insert into test_range_excl
-  values(int4range(123), int4range(1), '[2010-01-02 10:00, 2010-01-02 11:00)');
+  values(int4range(123, 123, '[]'), int4range(1, 1, '[]'), '[2010-01-02 10:00, 2010-01-02 11:00)');
 insert into test_range_excl
-  values(int4range(123), int4range(2), '[2010-01-02 11:00, 2010-01-02 12:00)');
+  values(int4range(123, 123, '[]'), int4range(2, 2, '[]'), '[2010-01-02 11:00, 2010-01-02 12:00)');
 insert into test_range_excl
-  values(int4range(123), int4range(3), '[2010-01-02 10:10, 2010-01-02 11:00)');
+  values(int4range(123, 123, '[]'), int4range(3, 3, '[]'), '[2010-01-02 10:10, 2010-01-02 11:00)');
 ERROR:  conflicting key value violates exclusion constraint "test_range_excl_room_during_excl"
 DETAIL:  Key (room, during)=([123,124), ["Sat Jan 02 10:10:00 2010","Sat Jan 02 11:00:00 2010")) conflicts with existing key (room, during)=([123,124), ["Sat Jan 02 10:00:00 2010","Sat Jan 02 11:00:00 2010")).
 insert into test_range_excl
-  values(int4range(124), int4range(3), '[2010-01-02 10:10, 2010-01-02 11:10)');
+  values(int4range(124, 124, '[]'), int4range(3, 3, '[]'), '[2010-01-02 10:10, 2010-01-02 11:10)');
 insert into test_range_excl
-  values(int4range(125), int4range(1), '[2010-01-02 10:10, 2010-01-02 11:00)');
+  values(int4range(125, 125, '[]'), int4range(1, 1, '[]'), '[2010-01-02 10:10, 2010-01-02 11:00)');
 ERROR:  conflicting key value violates exclusion constraint "test_range_excl_speaker_during_excl"
 DETAIL:  Key (speaker, during)=([1,2), ["Sat Jan 02 10:10:00 2010","Sat Jan 02 11:00:00 2010")) conflicts with existing key (speaker, during)=([1,2), ["Sat Jan 02 10:00:00 2010","Sat Jan 02 11:00:00 2010")).
 -- test bigint ranges
@@ -1000,10 +1000,10 @@ HINT:  No function matches the given name and argument types. You might need to 
 --
 -- Arrays of ranges
 --
-select ARRAY[numrange(1.1), numrange(12.3,155.5)];
+select ARRAY[numrange(1.1, 1.2), numrange(12.3, 155.5)];
             array             
 ------------------------------
- {"[1.1,1.1]","[12.3,155.5)"}
+ {"[1.1,1.2)","[12.3,155.5)"}
 (1 row)
 
 create table i8r_array (f1 int, f2 int8range[]);

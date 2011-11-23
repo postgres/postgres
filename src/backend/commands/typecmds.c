@@ -1495,11 +1495,9 @@ static void
 makeRangeConstructors(const char *name, Oid namespace,
 					  Oid rangeOid, Oid subtype)
 {
-	static const char * const prosrc[4] = {"range_constructor0",
-										   "range_constructor1",
-										   "range_constructor2",
+	static const char * const prosrc[2] = {"range_constructor2",
 										   "range_constructor3"};
-	static const int pronargs[4] = {0, 1, 2, 3};
+	static const int pronargs[2] = {2, 3};
 
 	Oid			constructorArgTypes[3];
 	ObjectAddress myself,

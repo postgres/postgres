@@ -242,12 +242,11 @@ select '[4,4]'::int4range;
    type.  Using the constructor function is frequently more convenient than
    writing a range literal constant, since it avoids the need for extra
    quoting of the bound values.  The constructor function
-   accepts from zero to three arguments. The zero-argument form
-   constructs an empty range; the one-argument form constructs a
-   singleton range; the two-argument form constructs a range in
-   standard form (lower bound inclusive, upper bound exclusive);
-   and the three-argument form constructs a range in a form specified by the
-   third argument.  The third argument must be one of the strings
+   accepts two or three arguments.  The two-argument form constructs a range
+   in standard form (lower bound inclusive, upper bound exclusive), while
+   the three-argument form constructs a range with bounds of the form
+   specified by the third argument.
+   The third argument must be one of the strings
    <quote><literal>()</literal></quote>,
    <quote><literal>(]</literal></quote>,
    <quote><literal>[)</literal></quote>, or
@@ -255,7 +254,7 @@ select '[4,4]'::int4range;
    For example:
 
 <programlisting>
--- Three-argument form: lower bound, upper bound, and third argument indicating
+-- The full form is: lower bound, upper bound, and text argument indicating
 -- inclusivity/exclusivity of bounds.
 SELECT numrange(1.0, 14.0, '(]');
 
@@ -268,13 +267,6 @@ SELECT int8range(1, 14, '(]');
 
 -- Using NULL for either bound causes the range to be unbounded on that side.
 SELECT numrange(NULL, 2.2);
-
--- Single argument constructs a singleton range; that is a range consisting of
--- just one point.
-SELECT numrange(11.1);
-
--- Zero-argument form constructs an empty range.
-SELECT numrange();
 </programlisting>
   </para>
  </sect2>

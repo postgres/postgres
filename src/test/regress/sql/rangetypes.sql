@@ -54,7 +54,7 @@ INSERT INTO numrange_test VALUES('[3,]');
 INSERT INTO numrange_test VALUES('[, 5)');
 INSERT INTO numrange_test VALUES(numrange(1.1, 2.2));
 INSERT INTO numrange_test VALUES('empty');
-INSERT INTO numrange_test VALUES(numrange(1.7));
+INSERT INTO numrange_test VALUES(numrange(1.7, 1.7, '[]'));
 
 SELECT nr, isempty(nr), lower(nr), upper(nr) FROM numrange_test;
 SELECT nr, lower_inc(nr), lower_inf(nr), upper_inc(nr), upper_inf(nr) FROM numrange_test;
@@ -239,15 +239,15 @@ create table test_range_excl(
 );
 
 insert into test_range_excl
-  values(int4range(123), int4range(1), '[2010-01-02 10:00, 2010-01-02 11:00)');
+  values(int4range(123, 123, '[]'), int4range(1, 1, '[]'), '[2010-01-02 10:00, 2010-01-02 11:00)');
 insert into test_range_excl
-  values(int4range(123), int4range(2), '[2010-01-02 11:00, 2010-01-02 12:00)');
+  values(int4range(123, 123, '[]'), int4range(2, 2, '[]'), '[2010-01-02 11:00, 2010-01-02 12:00)');
 insert into test_range_excl
-  values(int4range(123), int4range(3), '[2010-01-02 10:10, 2010-01-02 11:00)');
+  values(int4range(123, 123, '[]'), int4range(3, 3, '[]'), '[2010-01-02 10:10, 2010-01-02 11:00)');
 insert into test_range_excl
-  values(int4range(124), int4range(3), '[2010-01-02 10:10, 2010-01-02 11:10)');
+  values(int4range(124, 124, '[]'), int4range(3, 3, '[]'), '[2010-01-02 10:10, 2010-01-02 11:10)');
 insert into test_range_excl
-  values(int4range(125), int4range(1), '[2010-01-02 10:10, 2010-01-02 11:00)');
+  values(int4range(125, 125, '[]'), int4range(1, 1, '[]'), '[2010-01-02 10:10, 2010-01-02 11:00)');
 
 -- test bigint ranges
 select int8range(10000000000::int8, 20000000000::int8,'(]');
@@ -344,7 +344,7 @@ select rangetypes_sql(numrange(1,10), ARRAY[2,20]);  -- match failure
 -- Arrays of ranges
 --
 
-select ARRAY[numrange(1.1), numrange(12.3,155.5)];
+select ARRAY[numrange(1.1, 1.2), numrange(12.3, 155.5)];
 
 create table i8r_array (f1 int, f2 int8range[]);
 insert into i8r_array values (42, array[int8range(1,10), int8range(2,20)]);
