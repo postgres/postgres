@@ -7482,11 +7482,11 @@ dumpRangeType(Archive *fout, TypeInfo *tyinfo)
 					  "opc.opcdefault, "
 					  "CASE WHEN rngcollation = st.typcollation THEN 0 "
 					  "     ELSE rngcollation END AS collation, "
-					  "rngcanonical, rngsubdiff, t.typanalyze "
-					  "FROM pg_catalog.pg_type t, pg_catalog.pg_type st, "
-					  "     pg_catalog.pg_opclass opc, pg_catalog.pg_range r "
-					  "WHERE t.oid = rngtypid AND st.oid = rngsubtype AND "
-					  "      opc.oid = rngsubopc AND rngtypid = '%u'",
+					  "rngcanonical, rngsubdiff "
+					  "FROM pg_catalog.pg_range r, pg_catalog.pg_type st, "
+					  "     pg_catalog.pg_opclass opc "
+					  "WHERE st.oid = rngsubtype AND opc.oid = rngsubopc AND "
+					  "rngtypid = '%u'",
 					  tyinfo->dobj.catId.oid);
 
 	res = PQexec(g_conn, query->data);
@@ -7551,10 +7551,6 @@ dumpRangeType(Archive *fout, TypeInfo *tyinfo)
 	procname = PQgetvalue(res, 0, PQfnumber(res, "rngsubdiff"));
 	if (strcmp(procname, "-") != 0)
 		appendPQExpBuffer(q, ",\n    subtype_diff = %s", procname);
-
-	procname = PQgetvalue(res, 0, PQfnumber(res, "typanalyze"));
-	if (strcmp(procname, "-") != 0)
-		appendPQExpBuffer(q, ",\n    analyze = %s", procname);
 
 	appendPQExpBuffer(q, "\n);\n");
 

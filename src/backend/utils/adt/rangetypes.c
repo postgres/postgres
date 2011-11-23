@@ -1135,6 +1135,23 @@ hash_range(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(result);
 }
 
+/* ANALYZE support */
+
+/* typanalyze function for range datatypes */
+Datum
+range_typanalyze(PG_FUNCTION_ARGS)
+{
+	/*
+	 * For the moment, just punt and don't analyze range columns.  If we
+	 * get close to release without having a better answer, we could
+	 * consider letting std_typanalyze do what it can ... but those stats
+	 * are probably next door to useless for most activity with range
+	 * columns, so it's not clear it's worth gathering them.
+	 */
+	PG_RETURN_BOOL(false);
+}
+
+
 /*
  *----------------------------------------------------------
  * CANONICAL FUNCTIONS

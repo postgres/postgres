@@ -33,7 +33,6 @@ CREATE TYPE <replaceable class="parameter">name</replaceable> AS RANGE (
     [ , COLLATION = <replaceable class="parameter">collation</replaceable> ]
     [ , CANONICAL = <replaceable class="parameter">canonical_function</replaceable> ]
     [ , SUBTYPE_DIFF = <replaceable class="parameter">subtype_diff_function</replaceable> ]
-    [ , ANALYZE = <replaceable class="parameter">analyze_function</replaceable> ]
 )
 
 CREATE TYPE <replaceable class="parameter">name</replaceable> (
@@ -166,12 +165,6 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
     the sort ordering implied by the selected operator class and collation;
     that is, its result should be positive whenever its first argument is
     greater than its second according to the sort ordering.
-   </para>
-
-   <para>
-    The optional <replaceable class="parameter">analyze</replaceable>
-    function performs type-specific statistics collection for columns of the
-    range type.  This is defined the same as for base types; see below.
    </para>
   </refsect2>
 

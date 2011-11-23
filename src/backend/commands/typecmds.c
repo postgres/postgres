@@ -1225,12 +1225,10 @@ DefineRange(CreateRangeStmt *stmt)
 	List	   *rangeCollationName = NIL;
 	List	   *rangeCanonicalName = NIL;
 	List	   *rangeSubtypeDiffName = NIL;
-	List	   *rangeAnalyzeName = NIL;
 	Oid			rangeSubOpclass;
 	Oid			rangeCollation;
 	regproc		rangeCanonical;
 	regproc		rangeSubtypeDiff;
-	regproc		rangeAnalyze;
 	int16		subtyplen;
 	bool		subtypbyval;
 	char		subtypalign;
@@ -1326,14 +1324,6 @@ DefineRange(CreateRangeStmt *stmt)
 						 errmsg("conflicting or redundant options")));
 			rangeSubtypeDiffName = defGetQualifiedName(defel);
 		}
-		else if (pg_strcasecmp(defel->defname, "analyze") == 0)
-		{
-			if (rangeAnalyzeName != NIL)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options")));
-			rangeAnalyzeName = defGetQualifiedName(defel);
-		}
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
@@ -1386,12 +1376,6 @@ DefineRange(CreateRangeStmt *stmt)
 	else
 		rangeSubtypeDiff = InvalidOid;
 
-	if (rangeAnalyzeName != NIL)
-		rangeAnalyze = findTypeAnalyzeFunction(rangeAnalyzeName,
-											   typoid);
-	else
-		rangeAnalyze = InvalidOid;
-
 	get_typlenbyvalalign(rangeSubtype,
 						 &subtyplen, &subtypbyval, &subtypalign);
 
@@ -1420,7 +1404,7 @@ DefineRange(CreateRangeStmt *stmt)
 				   F_RANGE_SEND,	/* send procedure */
 				   InvalidOid,	/* typmodin procedure - none */
 				   InvalidOid,	/* typmodout procedure - none */
-				   rangeAnalyze,	/* analyze procedure */
+				   F_RANGE_TYPANALYZE,	/* analyze procedure */
 				   InvalidOid,	/* element type ID - none */
 				   false,		/* this is not an array type */
 				   rangeArrayOid,		/* array type we are about to create */

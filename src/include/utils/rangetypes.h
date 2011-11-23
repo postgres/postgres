@@ -127,6 +127,9 @@ extern Datum range_gt(PG_FUNCTION_ARGS);
 /* Hash support */
 extern Datum hash_range(PG_FUNCTION_ARGS);
 
+/* ANALYZE support */
+extern Datum range_typanalyze(PG_FUNCTION_ARGS);
+
 /* Canonical functions */
 extern Datum int4range_canonical(PG_FUNCTION_ARGS);
 extern Datum int8range_canonical(PG_FUNCTION_ARGS);

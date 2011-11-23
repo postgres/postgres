@@ -4413,6 +4413,9 @@ DATA(insert OID = 3881 (  range_gist_same		PGNSP PGUID 12 1 0 0 0 f f f t f i 3 
 DESCR("GiST support");
 DATA(insert OID = 3902 (  hash_range		 	PGNSP PGUID 12 1 0 0 0 f f f t f i 1 0 23 "3831" _null_ _null_ _null_ _null_ hash_range _null_ _null_ _null_ ));
 DESCR("hash a range");
+DATA(insert OID = 3916 (  range_typanalyze		PGNSP PGUID 12 1 0 0 0 f f f t f s 1 0 16 "2281" _null_ _null_ _null_ _null_ range_typanalyze _null_ _null_ _null_ ));
+DESCR("range typanalyze");
+
 DATA(insert OID = 3914 (  int4range_canonical		   PGNSP PGUID 12 1 0 0 0 f f f t f i 1 0 3904 "3904" _null_ _null_ _null_ _null_ int4range_canonical _null_ _null_ _null_ ));
 DESCR("convert an int4 range to canonical form");
 DATA(insert OID = 3928 (  int8range_canonical		   PGNSP PGUID 12 1 0 0 0 f f f t f i 1 0 3926 "3926" _null_ _null_ _null_ _null_ int8range_canonical _null_ _null_ _null_ ));

@@ -593,23 +593,23 @@ DESCR("txid snapshot");
 DATA(insert OID = 2949 ( _txid_snapshot PGNSP PGUID -1 f b A f t \054 0 2970 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 0 _null_ _null_ ));
 
 /* range types */
-DATA(insert OID = 3904 ( int4range		PGNSP PGUID  -1 f r R f t \054 0 0 3905 range_in range_out range_recv range_send - - - i x f 0 -1 0 0 _null_ _null_ ));
+DATA(insert OID = 3904 ( int4range		PGNSP PGUID  -1 f r R f t \054 0 0 3905 range_in range_out range_recv range_send - - range_typanalyze i x f 0 -1 0 0 _null_ _null_ ));
 DESCR("range of integers");
 #define INT4RANGEOID		3904
 DATA(insert OID = 3905 ( _int4range		PGNSP PGUID  -1 f b A f t \054 0 3904 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ ));
-DATA(insert OID = 3906 ( numrange		PGNSP PGUID  -1 f r R f t \054 0 0 3907 range_in range_out range_recv range_send - - - i x f 0 -1 0 0 _null_ _null_ ));
+DATA(insert OID = 3906 ( numrange		PGNSP PGUID  -1 f r R f t \054 0 0 3907 range_in range_out range_recv range_send - - range_typanalyze i x f 0 -1 0 0 _null_ _null_ ));
 DESCR("range of numerics");
 DATA(insert OID = 3907 ( _numrange		PGNSP PGUID  -1 f b A f t \054 0 3906 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ ));
-DATA(insert OID = 3908 ( tsrange		PGNSP PGUID  -1 f r R f t \054 0 0 3909 range_in range_out range_recv range_send - - - d x f 0 -1 0 0 _null_ _null_ ));
+DATA(insert OID = 3908 ( tsrange		PGNSP PGUID  -1 f r R f t \054 0 0 3909 range_in range_out range_recv range_send - - range_typanalyze d x f 0 -1 0 0 _null_ _null_ ));
 DESCR("range of timestamps without time zone");
 DATA(insert OID = 3909 ( _tsrange		PGNSP PGUID  -1 f b A f t \054 0 3908 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 0 _null_ _null_ ));
-DATA(insert OID = 3910 ( tstzrange		PGNSP PGUID  -1 f r R f t \054 0 0 3911 range_in range_out range_recv range_send - - - d x f 0 -1 0 0 _null_ _null_ ));
+DATA(insert OID = 3910 ( tstzrange		PGNSP PGUID  -1 f r R f t \054 0 0 3911 range_in range_out range_recv range_send - - range_typanalyze d x f 0 -1 0 0 _null_ _null_ ));
 DESCR("range of timestamps with time zone");
 DATA(insert OID = 3911 ( _tstzrange		PGNSP PGUID  -1 f b A f t \054 0 3910 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 0 _null_ _null_ ));
-DATA(insert OID = 3912 ( daterange		PGNSP PGUID  -1 f r R f t \054 0 0 3913 range_in range_out range_recv range_send - - - i x f 0 -1 0 0 _null_ _null_ ));
+DATA(insert OID = 3912 ( daterange		PGNSP PGUID  -1 f r R f t \054 0 0 3913 range_in range_out range_recv range_send - - range_typanalyze i x f 0 -1 0 0 _null_ _null_ ));
 DESCR("range of dates");
 DATA(insert OID = 3913 ( _daterange		PGNSP PGUID  -1 f b A f t \054 0 3912 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ ));
-DATA(insert OID = 3926 ( int8range		PGNSP PGUID  -1 f r R f t \054 0 0 3927 range_in range_out range_recv range_send - - - d x f 0 -1 0 0 _null_ _null_ ));
+DATA(insert OID = 3926 ( int8range		PGNSP PGUID  -1 f r R f t \054 0 0 3927 range_in range_out range_recv range_send - - range_typanalyze d x f 0 -1 0 0 _null_ _null_ ));
 DESCR("range of bigints");
 DATA(insert OID = 3927 ( _int8range		PGNSP PGUID  -1 f b A f t \054 0 3926 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 0 _null_ _null_ ));
 
