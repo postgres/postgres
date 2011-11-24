@@ -242,8 +242,10 @@ check_cluster_versions(void)
 	 * We can't allow downgrading because we use the target pg_dumpall, and
 	 * pg_dumpall cannot operate on new database versions, only older versions.
 	 */
+#ifndef ENABLE_SAME_CATVERSION_UPGRADES	/* does not allow tablespace upgrades */
 	if (old_cluster.major_version > new_cluster.major_version)
 		pg_log(PG_FATAL, "This utility cannot be used to downgrade to older major PostgreSQL versions.\n");
+#endif
 
 	/* get old and new binary versions */
 	get_bin_version(&old_cluster);
