@@ -5953,11 +5953,22 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 						  tbinfo->dobj.name);
 
 			resetPQExpBuffer(q);
-			if (g_fout->remoteVersion >= 80400)
+			if (g_fout->remoteVersion >= 90100)
 			{
 				appendPQExpBuffer(q, "SELECT tableoid, oid, conname, "
 						   "pg_catalog.pg_get_constraintdef(oid) AS consrc, "
-								  "conislocal "
+								  "conislocal, convalidated "
+								  "FROM pg_catalog.pg_constraint "
+								  "WHERE conrelid = '%u'::pg_catalog.oid "
+								  "   AND contype = 'c' "
+								  "ORDER BY conname",
+								  tbinfo->dobj.catId.oid);
+			}
+			else if (g_fout->remoteVersion >= 80400)
+			{
+				appendPQExpBuffer(q, "SELECT tableoid, oid, conname, "
+						   "pg_catalog.pg_get_constraintdef(oid) AS consrc, "
+								  "conislocal, true AS convalidated "
 								  "FROM pg_catalog.pg_constraint "
 								  "WHERE conrelid = '%u'::pg_catalog.oid "
 								  "   AND contype = 'c' "
@@ -5968,7 +5979,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			{
 				appendPQExpBuffer(q, "SELECT tableoid, oid, conname, "
 						   "pg_catalog.pg_get_constraintdef(oid) AS consrc, "
-								  "true AS conislocal "
+								  "true AS conislocal, true AS convalidated "
 								  "FROM pg_catalog.pg_constraint "
 								  "WHERE conrelid = '%u'::pg_catalog.oid "
 								  "   AND contype = 'c' "
@@ -5980,7 +5991,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 				/* no pg_get_constraintdef, must use consrc */
 				appendPQExpBuffer(q, "SELECT tableoid, oid, conname, "
 								  "'CHECK (' || consrc || ')' AS consrc, "
-								  "true AS conislocal "
+								  "true AS conislocal, true AS convalidated "
 								  "FROM pg_catalog.pg_constraint "
 								  "WHERE conrelid = '%u'::pg_catalog.oid "
 								  "   AND contype = 'c' "
@@ -5993,7 +6004,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 				appendPQExpBuffer(q, "SELECT tableoid, 0 AS oid, "
 								  "rcname AS conname, "
 								  "'CHECK (' || rcsrc || ')' AS consrc, "
-								  "true AS conislocal "
+								  "true AS conislocal, true AS convalidated "
 								  "FROM pg_relcheck "
 								  "WHERE rcrelid = '%u'::oid "
 								  "ORDER BY rcname",
@@ -6004,7 +6015,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 				appendPQExpBuffer(q, "SELECT tableoid, oid, "
 								  "rcname AS conname, "
 								  "'CHECK (' || rcsrc || ')' AS consrc, "
-								  "true AS conislocal "
+								  "true AS conislocal, true AS convalidated "
 								  "FROM pg_relcheck "
 								  "WHERE rcrelid = '%u'::oid "
 								  "ORDER BY rcname",
@@ -6017,7 +6028,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 								  "(SELECT oid FROM pg_class WHERE relname = 'pg_relcheck') AS tableoid, "
 								  "oid, rcname AS conname, "
 								  "'CHECK (' || rcsrc || ')' AS consrc, "
-								  "true AS conislocal "
+								  "true AS conislocal, true AS convalidated "
 								  "FROM pg_relcheck "
 								  "WHERE rcrelid = '%u'::oid "
 								  "ORDER BY rcname",
@@ -6042,6 +6053,8 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 
 			for (j = 0; j < numConstrs; j++)
 			{
+				bool	validated = PQgetvalue(res, j, 5)[0] == 't';
+
 				constrs[j].dobj.objType = DO_CONSTRAINT;
 				constrs[j].dobj.catId.tableoid = atooid(PQgetvalue(res, j, 0));
 				constrs[j].dobj.catId.oid = atooid(PQgetvalue(res, j, 1));
@@ -6057,7 +6070,12 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 				constrs[j].condeferrable = false;
 				constrs[j].condeferred = false;
 				constrs[j].conislocal = (PQgetvalue(res, j, 4)[0] == 't');
-				constrs[j].separate = false;
+				/*
+				 * An unvalidated constraint needs to be dumped separately, so
+				 * that potentially-violating existing data is loaded before
+				 * the constraint.
+				 */
+				constrs[j].separate = !validated;
 
 				constrs[j].dobj.dump = tbinfo->dobj.dump;
 
@@ -6065,10 +6083,14 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 				 * Mark the constraint as needing to appear before the table
 				 * --- this is so that any other dependencies of the
 				 * constraint will be emitted before we try to create the
-				 * table.
+				 * table.  If the constraint is not validated, it will be
+				 * dumped after data is loaded anyway, so don't do it.  (There's
+				 * an automatic dependency in the opposite direction anyway, so
+				 * don't need to add one manually here.)
 				 */
-				addObjectDependency(&tbinfo->dobj,
-									constrs[j].dobj.dumpId);
+				if (validated)
+					addObjectDependency(&tbinfo->dobj,
+										constrs[j].dobj.dumpId);
 
 				/*
 				 * If the constraint is inherited, this will be detected later
