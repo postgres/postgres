@@ -257,6 +257,26 @@ SELECT specific_exception(2);
 SELECT specific_exception(NULL);
 SELECT specific_exception(2);
 
+/* SPI errors in PL/Python functions should preserve the SQLSTATE value
+ */
+CREATE FUNCTION python_unique_violation() RETURNS void AS $$
+plpy.execute("insert into specific values (1)")
+plpy.execute("insert into specific values (1)")
+$$ LANGUAGE plpythonu;
+
+CREATE FUNCTION catch_python_unique_violation() RETURNS text AS $$
+begin
+    begin
+        perform python_unique_violation();
+    exception when unique_violation then
+        return 'ok';
+    end;
+    return 'not reached';
+end;
+$$ language plpgsql;
+
+SELECT catch_python_unique_violation();
+
 /* manually starting subtransactions - a bad idea
  */
 CREATE FUNCTION manual_subxact() RETURNS void AS $$

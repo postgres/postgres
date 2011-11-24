@@ -383,7 +383,7 @@ static char *PLy_procedure_name(PLyProcedure *);
 static void
 PLy_elog(int, const char *,...)
 __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
-static void PLy_get_spi_error_data(PyObject *exc, char **detail, char **hint, char **query, int *position);
+static void PLy_get_spi_error_data(PyObject *exc, int *sqlerrcode, char **detail, char **hint, char **query, int *position);
 static void PLy_traceback(char **, char **, int *);
 
 static void *PLy_malloc(size_t);
@@ -4441,7 +4441,7 @@ PLy_spi_exception_set(PyObject *excclass, ErrorData *edata)
 	if (!spierror)
 		goto failure;
 
-	spidata = Py_BuildValue("(zzzi)", edata->detail, edata->hint,
+	spidata = Py_BuildValue("(izzzi)", edata->sqlerrcode, edata->detail, edata->hint,
 							edata->internalquery, edata->internalpos);
 	if (!spidata)
 		goto failure;
@@ -4481,6 +4481,7 @@ PLy_elog(int elevel, const char *fmt,...)
 			   *val,
 			   *tb;
 	const char *primary = NULL;
+	int        sqlerrcode = 0;
 	char	   *detail = NULL;
 	char	   *hint = NULL;
 	char	   *query = NULL;
@@ -4490,7 +4491,7 @@ PLy_elog(int elevel, const char *fmt,...)
 	if (exc != NULL)
 	{
 		if (PyErr_GivenExceptionMatches(val, PLy_exc_spi_error))
-			PLy_get_spi_error_data(val, &detail, &hint, &query, &position);
+			PLy_get_spi_error_data(val, &sqlerrcode, &detail, &hint, &query, &position);
 		else if (PyErr_GivenExceptionMatches(val, PLy_exc_fatal))
 			elevel = FATAL;
 	}
@@ -4531,7 +4532,8 @@ PLy_elog(int elevel, const char *fmt,...)
 	PG_TRY();
 	{
 		ereport(elevel,
-				(errmsg_internal("%s", primary ? primary : "no exception data"),
+				(errcode(sqlerrcode ? sqlerrcode : ERRCODE_INTERNAL_ERROR),
+				 errmsg_internal("%s", primary ? primary : "no exception data"),
 				 (detail) ? errdetail_internal("%s", detail) : 0,
 				 (tb_depth > 0 && tbmsg) ? errcontext("%s", tbmsg) : 0,
 				 (hint) ? errhint("%s", hint) : 0,
@@ -4562,7 +4564,7 @@ PLy_elog(int elevel, const char *fmt,...)
  * Extract the error data from a SPIError
  */
 static void
-PLy_get_spi_error_data(PyObject *exc, char **detail, char **hint, char **query, int *position)
+PLy_get_spi_error_data(PyObject *exc, int* sqlerrcode, char **detail, char **hint, char **query, int *position)
 {
 	PyObject   *spidata = NULL;
 
@@ -4570,7 +4572,7 @@ PLy_get_spi_error_data(PyObject *exc, char **detail, char **hint, char **query, 
 	if (!spidata)
 		goto cleanup;
 
-	if (!PyArg_ParseTuple(spidata, "zzzi", detail, hint, query, position))
+	if (!PyArg_ParseTuple(spidata, "izzzi", sqlerrcode, detail, hint, query, position))
 		goto cleanup;
 
 cleanup:
