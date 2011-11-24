@@ -128,9 +128,9 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
 
    <para>
     The range type's <replaceable class="parameter">subtype</replaceable> can
-    be any type with an associated btree operator class (to determine the
+    be any type with an associated b-tree operator class (to determine the
     ordering of values for the range type).  Normally the subtype's default
-    btree operator class is used to determine ordering; to use a non-default
+    b-tree operator class is used to determine ordering; to use a non-default
     opclass, specify its name with <replaceable
     class="parameter">subtype_opclass</replaceable>.  If the subtype is
     collatable, and you want to use a non-default collation in the range's
@@ -141,16 +141,18 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    <para>
     The optional <replaceable class="parameter">canonical</replaceable>
     function must take one argument of the range type being defined, and
-    return a value of the same type.  This is used to convert the range value
-    to a canonical form, when applicable. See <xref linkend="rangetypes">
-    for more information. To define
-    the <replaceable class="parameter">canonical</replaceable> function,
-    you must first create a shell type, which is a
+    return a value of the same type.  This is used to convert range values
+    to a canonical form, when applicable.  See <xref
+    linkend="rangetypes-defining"> for more information.  Creating a
+    <replaceable class="parameter">canonical</replaceable> function
+    is a bit tricky, since it must be defined before the range type can be
+    declared.  To do this, you must first create a shell type, which is a
     placeholder type that has no properties except a name and an
     owner.  This is done by issuing the command <literal>CREATE TYPE
     <replaceable>name</></literal>, with no additional parameters.  Then
-    the function can be declared, and finally the range type can be declared,
-    replacing the shell type entry with a valid range type.
+    the function can be declared using the shell type as argument and result,
+    and finally the range type can be declared using the same name.  This
+    automatically replaces the shell type entry with a valid range type.
    </para>
 
    <para>
@@ -160,11 +162,8 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
     and return a <type>double precision</type> value representing the
     difference between the two given values.  While this is optional,
     providing it allows much greater efficiency of GiST indexes on columns of
-    the range type.  Note that the <replaceable
-    class="parameter">subtype_diff</replaceable> function should agree with
-    the sort ordering implied by the selected operator class and collation;
-    that is, its result should be positive whenever its first argument is
-    greater than its second according to the sort ordering.
+    the range type.  See <xref linkend="rangetypes-defining"> for more
+    information.
    </para>
   </refsect2>
 
@@ -541,7 +540,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
     <term><replaceable class="parameter">subtype_operator_class</replaceable></term>
     <listitem>
      <para>
-      The name of a btree operator class for the subtype.
+      The name of a b-tree operator class for the subtype.
      </para>
     </listitem>
    </varlistentry>

@@ -94,9 +94,9 @@ SELECT int4range(10, 20) * int4range(15, 25);
 SELECT isempty(numrange(1, 5));
 </programlisting>
 
-   See <xref linkend="range-functions-table">
-   and <xref linkend="range-operators-table"> for complete lists of
-   functions and operators on range types.
+   See <xref linkend="range-operators-table">
+   and <xref linkend="range-functions-table"> for complete lists of
+   operators and functions on range types.
   </para>
  </sect2>
 
@@ -230,6 +230,9 @@ select '(3,7)'::int4range;
 
 -- includes only the single point 4
 select '[4,4]'::int4range;
+
+-- includes no points (and will be normalized to 'empty')
+select '[4,4)'::int4range;
 </programlisting>
   </para>
  </sect2>
@@ -277,7 +280,7 @@ SELECT numrange(NULL, 2.2);
   <para>
    A discrete range is one whose element type has a well-defined
    <quote>step</quote>, such as <type>INTEGER</type> or <type>DATE</type>.
-   In these types two elements can be said to be adjacent, since there are
+   In these types two elements can be said to be adjacent, when there are
    no valid values between them.  This contrasts with continuous ranges,
    where it's always (or almost always) possible to identify other element
    values between two given values.  For example, a range over the
@@ -301,18 +304,12 @@ SELECT numrange(NULL, 2.2);
   <para>
    A discrete range type should have a <firstterm>canonicalization</>
    function that is aware of the desired step size for the element type.
-   The canonicalization function is charged with converting values of the
-   range type to have consistently inclusive or exclusive bounds.
-   The canonicalization function takes an input range value, and
-   must return an equivalent range value that may have a different
-   formatting. The canonical output for two values that are equivalent, like
-   <literal>[1, 7]</literal> and <literal>[1, 8)</literal>, must be identical.
-   It doesn't matter which representation you choose to be the canonical one,
-   so long as two equivalent values with different formattings are always
-   mapped to the same value with the same formatting. If a canonicalization
-   function is not specified, then ranges with different formatting
-   will always be treated as unequal, even though they might represent the
-   same set of values.
+   The canonicalization function is charged with converting equivalent values
+   of the range type to have identical representations, in particular
+   consistently inclusive or exclusive bounds.
+   If a canonicalization function is not specified, then ranges with different
+   formatting will always be treated as unequal, even though they might
+   represent the same set of values in reality.
   </para>
 
   <para>
@@ -331,28 +328,64 @@ SELECT numrange(NULL, 2.2);
    Users can define their own range types. The most common reason to do
    this is to use ranges over subtypes not provided among the built-in
    range types.
-   For example, to define a new range type of subtype <type>DOUBLE
-   PRECISION</type>:
+   For example, to define a new range type of subtype <type>float8</type>:
 
 <programlisting>
-CREATE TYPE FLOATRANGE AS RANGE (
-  SUBTYPE = DOUBLE PRECISION
+CREATE TYPE floatrange AS RANGE (
+  subtype = float8,
+  subtype_diff = float8mi
 );
 
 SELECT '[1.234, 5.678]'::floatrange;
 </programlisting>
 
-   Because <type>DOUBLE PRECISION</type> has no meaningful
+   Because <type>float8</type> has no meaningful
    <quote>step</quote>, we do not define a canonicalization
-   function.
+   function in this example.
+  </para>
+
+  <para>
+   If the subtype is considered to have discrete rather than continuous
+   values, the <command>CREATE TYPE</> command should specify a
+   <literal>canonical</> function.
+   The canonicalization function takes an input range value, and must return
+   an equivalent range value that may have different bounds and formatting.
+   The canonical output for two ranges that represent the same set of values,
+   for example the integer ranges <literal>[1, 7]</literal> and <literal>[1,
+   8)</literal>, must be identical.  It doesn't matter which representation
+   you choose to be the canonical one, so long as two equivalent values with
+   different formattings are always mapped to the same value with the same
+   formatting.  In addition to adjusting the inclusive/exclusive bounds
+   format, a canonicalization function might round off boundary values, in
+   case the desired step size is larger than what the subtype is capable of
+   storing.  For instance, a range type over <type>timestamp</> could be
+   defined to have a step size of an hour, in which case the canonicalization
+   function would need to round off bounds that weren't a multiple of an hour,
+   or perhaps throw an error instead.
   </para>
 
   <para>
    Defining your own range type also allows you to specify a different
-   operator class or collation to use, so as to change the sort ordering
-   that determines which values fall into a given range.  You might also
-   choose to use a different canonicalization function, either to change
-   the displayed format or to modify the effective <quote>step size</>.
+   subtype B-tree operator class or collation to use, so as to change the sort
+   ordering that determines which values fall into a given range.
+  </para>
+
+  <para>
+   In addition, any range type that is meant to be used with GiST indexes
+   should define a subtype difference, or <literal>subtype_diff</>, function.
+   (A GiST index will still work without <literal>subtype_diff</>, but it is
+   likely to be considerably less efficient than if a difference function is
+   provided.)  The subtype difference function takes two input values of the
+   subtype, and returns their difference (i.e., <replaceable>X</> minus
+   <replaceable>Y</>) represented as a <type>float8</> value.  In our example
+   above, the function that underlies the regular <type>float8</> minus
+   operator can be used; but for any other subtype, some type conversion would
+   be necessary.  Some creative thought about how to represent differences as
+   numbers might be needed, too.  To the greatest extent possible, the
+   <literal>subtype_diff</> function should agree with the sort ordering
+   implied by the selected operator class and collation; that is, its result
+   should be positive whenever its first argument is greater than its second
+   according to the sort ordering.
   </para>
 
   <para>
@@ -366,18 +399,37 @@ SELECT '[1.234, 5.678]'::floatrange;
 
   <indexterm>
     <primary>range type</primary>
-    <secondary>GiST index</secondary>
+    <secondary>indexes on</secondary>
   </indexterm>
 
   <para>
-   GiST indexes can be applied to columns of range types. For instance:
+   GiST indexes can be created for table columns of range types.
+   For instance:
 <programlisting>
 CREATE INDEX reservation_idx ON reservation USING gist (during);
 </programlisting>
-   This index may speed up queries
-   involving <literal>&amp;&amp;</literal>
-   (overlaps), <literal>@&gt;</literal> (contains), and other boolean
-   operators listed in <xref linkend="range-operators-table">.
+   A GiST index can accelerate queries involving these range operators:
+   <literal>=</>,
+   <literal>&amp;&amp;</>,
+   <literal>&lt;@</>,
+   <literal>@&gt;</>,
+   <literal>&lt;&lt;</>,
+   <literal>&gt;&gt;</>,
+   <literal>-|-</>,
+   <literal>&amp;&lt;</>, and
+   <literal>&amp;&gt;</>
+   (see <xref linkend="range-operators-table"> for more information).
+  </para>
+
+  <para>
+   In addition, B-tree and hash indexes can be created for table columns of
+   range types.  For these index types, basically the only useful range
+   operation is equality.  There is a B-tree sort ordering defined for range
+   values, with corresponding <literal>&lt;</> and <literal>&gt;</> operators,
+   but the ordering is rather arbitrary and not usually useful in the real
+   world.  Range types' B-tree and hash support is primarily meant to
+   allow sorting and hashing internally in queries, rather than creation of
+   actual indexes.
   </para>
  </sect2>
 
