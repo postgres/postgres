@@ -529,6 +529,8 @@ ginRedoUpdateMetapage(XLogRecPtr lsn, XLogRecord *record)
 							elog(ERROR, "failed to add item to index page");
 
 						tuples = (IndexTuple) (((char *) tuples) + tupsize);
+
+						off++;
 					}
 
 					/*
