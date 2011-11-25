@@ -36,6 +36,7 @@
 #include <sys/time.h>
 
 #include "access/transam.h"
+#include "access/twophase.h"
 #include "access/xact.h"
 #include "miscadmin.h"
 #include "postmaster/autovacuum.h"
@@ -57,6 +58,7 @@ bool		log_lock_waits = false;
 
 /* Pointer to this process's PGPROC struct, if any */
 PGPROC	   *MyProc = NULL;
+PGXACT	   *MyPgXact = NULL;
 
 /*
  * This spinlock protects the freelist of recycled PGPROC structures.
@@ -70,6 +72,7 @@ NON_EXEC_STATIC slock_t *ProcStructLock = NULL;
 /* Pointers to shared-memory structures */
 PROC_HDR *ProcGlobal = NULL;
 NON_EXEC_STATIC PGPROC *AuxiliaryProcs = NULL;
+PGPROC *PreparedXactProcs = NULL;
 
 /* If we are waiting for a lock, this points to the associated LOCALLOCK */
 static LOCALLOCK *lockAwaited = NULL;
@@ -106,12 +109,18 @@ ProcGlobalShmemSize(void)
 
 	/* ProcGlobal */
 	size = add_size(size, sizeof(PROC_HDR));
-	/* AuxiliaryProcs */
-	size = add_size(size, mul_size(NUM_AUXILIARY_PROCS, sizeof(PGPROC)));
 	/* MyProcs, including autovacuum workers and launcher */
 	size = add_size(size, mul_size(MaxBackends, sizeof(PGPROC)));
+	/* AuxiliaryProcs */
+	size = add_size(size, mul_size(NUM_AUXILIARY_PROCS, sizeof(PGPROC)));
+	/* Prepared xacts */
+	size = add_size(size, mul_size(max_prepared_xacts, sizeof(PGPROC)));
 	/* ProcStructLock */
 	size = add_size(size, sizeof(slock_t));
+
+	size = add_size(size, mul_size(MaxBackends, sizeof(PGXACT)));
+	size = add_size(size, mul_size(NUM_AUXILIARY_PROCS, sizeof(PGXACT)));
+	size = add_size(size, mul_size(max_prepared_xacts, sizeof(PGXACT)));
 
 	return size;
 }
@@ -157,10 +166,11 @@ void
 InitProcGlobal(void)
 {
 	PGPROC	   *procs;
+	PGXACT	   *pgxacts;
 	int			i,
 				j;
 	bool		found;
-	uint32		TotalProcs = MaxBackends + NUM_AUXILIARY_PROCS;
+	uint32		TotalProcs = MaxBackends + NUM_AUXILIARY_PROCS + max_prepared_xacts;
 
 	/* Create the ProcGlobal shared structure */
 	ProcGlobal = (PROC_HDR *)
@@ -182,10 +192,11 @@ InitProcGlobal(void)
 	 * those used for 2PC, which are embedded within a GlobalTransactionData
 	 * struct).
 	 *
-	 * There are three separate consumers of PGPROC structures: (1) normal
-	 * backends, (2) autovacuum workers and the autovacuum launcher, and (3)
-	 * auxiliary processes.  Each PGPROC structure is dedicated to exactly
-	 * one of these purposes, and they do not move between groups.
+	 * There are four separate consumers of PGPROC structures: (1) normal
+	 * backends, (2) autovacuum workers and the autovacuum launcher, (3)
+	 * auxiliary processes, and (4) prepared transactions.  Each PGPROC
+	 * structure is dedicated to exactly one of these purposes, and they do
+	 * not move between groups.
 	 */
 	procs = (PGPROC *) ShmemAlloc(TotalProcs * sizeof(PGPROC));
 	ProcGlobal->allProcs = procs;
@@ -195,21 +206,43 @@ InitProcGlobal(void)
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of shared memory")));
 	MemSet(procs, 0, TotalProcs * sizeof(PGPROC));
+
+	/*
+	 * Also allocate a separate array of PGXACT structures.  This is separate
+	 * from the main PGPROC array so that the most heavily accessed data is
+	 * stored contiguously in memory in as few cache lines as possible. This
+	 * provides significant performance benefits, especially on a
+	 * multiprocessor system.  Thereis one PGXACT structure for every PGPROC
+	 * structure.
+	 */
+	pgxacts = (PGXACT *) ShmemAlloc(TotalProcs * sizeof(PGXACT));
+	MemSet(pgxacts, 0, TotalProcs * sizeof(PGXACT));
+	ProcGlobal->allPgXact = pgxacts;
+
 	for (i = 0; i < TotalProcs; i++)
 	{
 		/* Common initialization for all PGPROCs, regardless of type. */
 
-		/* Set up per-PGPROC semaphore, latch, and backendLock */
-		PGSemaphoreCreate(&(procs[i].sem));
-		InitSharedLatch(&(procs[i].procLatch));
-		procs[i].backendLock = LWLockAssign();
+		/*
+		 * Set up per-PGPROC semaphore, latch, and backendLock. Prepared
+		 * xact dummy PGPROCs don't need these though - they're never
+		 * associated with a real process
+		 */
+		if (i < MaxBackends + NUM_AUXILIARY_PROCS)
+		{
+			PGSemaphoreCreate(&(procs[i].sem));
+			InitSharedLatch(&(procs[i].procLatch));
+			procs[i].backendLock = LWLockAssign();
+		}
+		procs[i].pgprocno = i;
 
 		/*
 		 * Newly created PGPROCs for normal backends or for autovacuum must
 		 * be queued up on the appropriate free list.  Because there can only
 		 * ever be a small, fixed number of auxiliary processes, no free
 		 * list is used in that case; InitAuxiliaryProcess() instead uses a
-		 * linear search.
+		 * linear search.  PGPROCs for prepared transactions are added to a
+		 * free list by TwoPhaseShmemInit().
 		 */
 		if (i < MaxConnections)
 		{
@@ -230,10 +263,11 @@ InitProcGlobal(void)
 	}
 
 	/*
-	 * Save a pointer to the block of PGPROC structures reserved for
-	 * auxiliary proceses.
+	 * Save pointers to the blocks of PGPROC structures reserved for
+	 * auxiliary processes and prepared transactions.
 	 */
 	AuxiliaryProcs = &procs[MaxBackends];
+	PreparedXactProcs = &procs[MaxBackends + NUM_AUXILIARY_PROCS];
 
 	/* Create ProcStructLock spinlock, too */
 	ProcStructLock = (slock_t *) ShmemAlloc(sizeof(slock_t));
@@ -296,6 +330,7 @@ InitProcess(void)
 				(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
 				 errmsg("sorry, too many clients already")));
 	}
+	MyPgXact = &ProcGlobal->allPgXact[MyProc->pgprocno];
 
 	/*
 	 * Now that we have a PGPROC, mark ourselves as an active postmaster
@@ -313,18 +348,18 @@ InitProcess(void)
 	SHMQueueElemInit(&(MyProc->links));
 	MyProc->waitStatus = STATUS_OK;
 	MyProc->lxid = InvalidLocalTransactionId;
-	MyProc->xid = InvalidTransactionId;
-	MyProc->xmin = InvalidTransactionId;
+	MyPgXact->xid = InvalidTransactionId;
+	MyPgXact->xmin = InvalidTransactionId;
 	MyProc->pid = MyProcPid;
 	/* backendId, databaseId and roleId will be filled in later */
 	MyProc->backendId = InvalidBackendId;
 	MyProc->databaseId = InvalidOid;
 	MyProc->roleId = InvalidOid;
-	MyProc->inCommit = false;
-	MyProc->vacuumFlags = 0;
+	MyPgXact->inCommit = false;
+	MyPgXact->vacuumFlags = 0;
 	/* NB -- autovac launcher intentionally does not set IS_AUTOVACUUM */
 	if (IsAutoVacuumWorkerProcess())
-		MyProc->vacuumFlags |= PROC_IS_AUTOVACUUM;
+		MyPgXact->vacuumFlags |= PROC_IS_AUTOVACUUM;
 	MyProc->lwWaiting = false;
 	MyProc->lwExclusive = false;
 	MyProc->lwWaitLink = NULL;
@@ -462,6 +497,7 @@ InitAuxiliaryProcess(void)
 	((volatile PGPROC *) auxproc)->pid = MyProcPid;
 
 	MyProc = auxproc;
+	MyPgXact = &ProcGlobal->allPgXact[auxproc->pgprocno];
 
 	SpinLockRelease(ProcStructLock);
 
@@ -472,13 +508,13 @@ InitAuxiliaryProcess(void)
 	SHMQueueElemInit(&(MyProc->links));
 	MyProc->waitStatus = STATUS_OK;
 	MyProc->lxid = InvalidLocalTransactionId;
-	MyProc->xid = InvalidTransactionId;
-	MyProc->xmin = InvalidTransactionId;
+	MyPgXact->xid = InvalidTransactionId;
+	MyPgXact->xmin = InvalidTransactionId;
 	MyProc->backendId = InvalidBackendId;
 	MyProc->databaseId = InvalidOid;
 	MyProc->roleId = InvalidOid;
-	MyProc->inCommit = false;
-	MyProc->vacuumFlags = 0;
+	MyPgXact->inCommit = false;
+	MyPgXact->vacuumFlags = 0;
 	MyProc->lwWaiting = false;
 	MyProc->lwExclusive = false;
 	MyProc->lwWaitLink = NULL;
@@ -1045,6 +1081,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 		if (deadlock_state == DS_BLOCKED_BY_AUTOVACUUM && allow_autovacuum_cancel)
 		{
 			PGPROC	   *autovac = GetBlockingAutoVacuumPgproc();
+			PGXACT	   *autovac_pgxact = &ProcGlobal->allPgXact[autovac->pgprocno];
 
 			LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 
@@ -1053,8 +1090,8 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 			 * wraparound.
 			 */
 			if ((autovac != NULL) &&
-				(autovac->vacuumFlags & PROC_IS_AUTOVACUUM) &&
-				!(autovac->vacuumFlags & PROC_VACUUM_FOR_WRAPAROUND))
+				(autovac_pgxact->vacuumFlags & PROC_IS_AUTOVACUUM) &&
+				!(autovac_pgxact->vacuumFlags & PROC_VACUUM_FOR_WRAPAROUND))
 			{
 				int			pid = autovac->pid;
 

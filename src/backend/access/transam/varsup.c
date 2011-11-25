@@ -54,7 +54,7 @@ GetNewTransactionId(bool isSubXact)
 	if (IsBootstrapProcessingMode())
 	{
 		Assert(!isSubXact);
-		MyProc->xid = BootstrapTransactionId;
+		MyPgXact->xid = BootstrapTransactionId;
 		return BootstrapTransactionId;
 	}
 
@@ -208,20 +208,21 @@ GetNewTransactionId(bool isSubXact)
 		 * TransactionId and int fetch/store are atomic.
 		 */
 		volatile PGPROC *myproc = MyProc;
+		volatile PGXACT *mypgxact = MyPgXact;
 
 		if (!isSubXact)
-			myproc->xid = xid;
+			mypgxact->xid = xid;
 		else
 		{
-			int			nxids = myproc->subxids.nxids;
+			int			nxids = mypgxact->nxids;
 
 			if (nxids < PGPROC_MAX_CACHED_SUBXIDS)
 			{
 				myproc->subxids.xids[nxids] = xid;
-				myproc->subxids.nxids = nxids + 1;
+				mypgxact->nxids = nxids + 1;
 			}
 			else
-				myproc->subxids.overflowed = true;
+				mypgxact->overflowed = true;
 		}
 	}
 

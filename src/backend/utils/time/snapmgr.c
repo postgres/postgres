@@ -577,7 +577,7 @@ static void
 SnapshotResetXmin(void)
 {
 	if (RegisteredSnapshots == 0 && ActiveSnapshot == NULL)
-		MyProc->xmin = InvalidTransactionId;
+		MyPgXact->xmin = InvalidTransactionId;
 }
 
 /*

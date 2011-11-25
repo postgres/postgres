@@ -702,7 +702,7 @@ ProcessStandbyHSFeedbackMessage(void)
 	 * safe, and if we're moving it backwards, well, the data is at risk
 	 * already since a VACUUM could have just finished calling GetOldestXmin.)
 	 */
-	MyProc->xmin = reply.xmin;
+	MyPgXact->xmin = reply.xmin;
 }
 
 /* Main loop of walsender process */

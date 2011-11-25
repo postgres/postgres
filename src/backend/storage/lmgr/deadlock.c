@@ -450,6 +450,7 @@ FindLockCycleRecurse(PGPROC *checkProc,
 					 int *nSoftEdges)	/* output argument */
 {
 	PGPROC	   *proc;
+	PGXACT	   *pgxact;
 	LOCK	   *lock;
 	PROCLOCK   *proclock;
 	SHM_QUEUE  *procLocks;
@@ -516,6 +517,7 @@ FindLockCycleRecurse(PGPROC *checkProc,
 	while (proclock)
 	{
 		proc = proclock->tag.myProc;
+		pgxact = &ProcGlobal->allPgXact[proc->pgprocno];
 
 		/* A proc never blocks itself */
 		if (proc != checkProc)
@@ -541,7 +543,7 @@ FindLockCycleRecurse(PGPROC *checkProc,
 					 * vacuumFlag bit), but we don't do that here to avoid
 					 * grabbing ProcArrayLock.
 					 */
-					if (proc->vacuumFlags & PROC_IS_AUTOVACUUM)
+					if (pgxact->vacuumFlags & PROC_IS_AUTOVACUUM)
 						blocking_autovacuum_proc = proc;
 
 					/* This proc hard-blocks checkProc */

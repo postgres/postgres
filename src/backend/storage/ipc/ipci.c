@@ -192,7 +192,6 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	XLOGShmemInit();
 	CLOGShmemInit();
 	SUBTRANSShmemInit();
-	TwoPhaseShmemInit();
 	MultiXactShmemInit();
 	InitBufferPool();
 
@@ -213,6 +212,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		InitProcGlobal();
 	CreateSharedProcArray();
 	CreateSharedBackendStatus();
+	TwoPhaseShmemInit();
 
 	/*
 	 * Set up shared-inval messaging

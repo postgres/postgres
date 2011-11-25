@@ -35,8 +35,6 @@
 
 struct XidCache
 {
-	bool		overflowed;
-	int			nxids;
 	TransactionId xids[PGPROC_MAX_CACHED_SUBXIDS];
 };
 
@@ -86,26 +84,13 @@ struct PGPROC
 	LocalTransactionId lxid;	/* local id of top-level transaction currently
 								 * being executed by this proc, if running;
 								 * else InvalidLocalTransactionId */
-
-	TransactionId xid;			/* id of top-level transaction currently being
-								 * executed by this proc, if running and XID
-								 * is assigned; else InvalidTransactionId */
-
-	TransactionId xmin;			/* minimal running XID as it was when we were
-								 * starting our xact, excluding LAZY VACUUM:
-								 * vacuum must not remove tuples deleted by
-								 * xid >= xmin ! */
-
 	int			pid;			/* Backend's process ID; 0 if prepared xact */
+	int			pgprocno;
 
 	/* These fields are zero while a backend is still starting up: */
 	BackendId	backendId;		/* This backend's backend ID (if assigned) */
 	Oid			databaseId;		/* OID of database this backend is using */
 	Oid			roleId;			/* OID of role using this backend */
-
-	bool		inCommit;		/* true if within commit critical section */
-
-	uint8		vacuumFlags;	/* vacuum-related flags, see above */
 
 	/*
 	 * While in hot standby mode, shows that a conflict signal has been sent
@@ -160,7 +145,33 @@ struct PGPROC
 
 
 extern PGDLLIMPORT PGPROC *MyProc;
+extern PGDLLIMPORT struct PGXACT *MyPgXact;
 
+/*
+ * Prior to PostgreSQL 9.2, the fieds below were stored as part of the
+ * PGPROC.  However, benchmarking revealed that packing these particular
+ * members into a separate array as tightly as possible sped up GetSnapshotData
+ * considerably on systems with many CPU cores, by reducing the number of
+ * cache lines needing to be fetched.  Thus, think very carefully before adding
+ * anything else here.
+ */
+typedef struct PGXACT
+{
+	TransactionId xid;			/* id of top-level transaction currently being
+								 * executed by this proc, if running and XID
+								 * is assigned; else InvalidTransactionId */
+
+	TransactionId xmin;			/* minimal running XID as it was when we were
+								 * starting our xact, excluding LAZY VACUUM:
+								 * vacuum must not remove tuples deleted by
+								 * xid >= xmin ! */
+
+	uint8		vacuumFlags;	/* vacuum-related flags, see above */
+	bool		overflowed;
+	bool		inCommit;		/* true if within commit critical section */
+
+	uint8		nxids;
+} PGXACT;
 
 /*
  * There is one ProcGlobal struct for the whole database cluster.
@@ -169,6 +180,8 @@ typedef struct PROC_HDR
 {
 	/* Array of PGPROC structures (not including dummies for prepared txns) */
 	PGPROC	   *allProcs;
+	/* Array of PGXACT structures (not including dummies for prepared txns */
+	PGXACT	   *allPgXact;
 	/* Length of allProcs array */
 	uint32		allProcCount;
 	/* Head of list of free PGPROC structures */
@@ -185,6 +198,8 @@ typedef struct PROC_HDR
 } PROC_HDR;
 
 extern PROC_HDR *ProcGlobal;
+
+extern PGPROC *PreparedXactProcs;
 
 /*
  * We set aside some extra PGPROC structures for auxiliary processes,

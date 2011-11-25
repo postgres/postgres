@@ -430,6 +430,7 @@ typedef struct
 	slock_t    *ProcStructLock;
 	PROC_HDR   *ProcGlobal;
 	PGPROC	   *AuxiliaryProcs;
+	PGPROC	   *PreparedXactProcs;
 	PMSignalData *PMSignalState;
 	InheritableSocket pgStatSock;
 	pid_t		PostmasterPid;
@@ -4724,6 +4725,7 @@ save_backend_variables(BackendParameters *param, Port *port,
 	param->ProcStructLock = ProcStructLock;
 	param->ProcGlobal = ProcGlobal;
 	param->AuxiliaryProcs = AuxiliaryProcs;
+	param->PreparedXactProcs = PreparedXactProcs;
 	param->PMSignalState = PMSignalState;
 	if (!write_inheritable_socket(&param->pgStatSock, pgStatSock, childPid))
 		return false;
@@ -4947,6 +4949,7 @@ restore_backend_variables(BackendParameters *param, Port *port)
 	ProcStructLock = param->ProcStructLock;
 	ProcGlobal = param->ProcGlobal;
 	AuxiliaryProcs = param->AuxiliaryProcs;
+	PreparedXactProcs = param->PreparedXactProcs;
 	PMSignalState = param->PMSignalState;
 	read_inheritable_socket(&pgStatSock, &param->pgStatSock);
 

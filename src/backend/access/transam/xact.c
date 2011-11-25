@@ -981,7 +981,7 @@ RecordTransactionCommit(void)
 		 * bit fuzzy, but it doesn't matter.
 		 */
 		START_CRIT_SECTION();
-		MyProc->inCommit = true;
+		MyPgXact->inCommit = true;
 
 		SetCurrentTransactionStopTimestamp();
 
@@ -1155,7 +1155,7 @@ RecordTransactionCommit(void)
 	 */
 	if (markXidCommitted)
 	{
-		MyProc->inCommit = false;
+		MyPgXact->inCommit = false;
 		END_CRIT_SECTION();
 	}
 
