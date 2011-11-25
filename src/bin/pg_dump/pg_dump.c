@@ -4867,16 +4867,27 @@ getDomainConstraints(TypeInfo *tyinfo)
 
 	query = createPQExpBuffer();
 
-	if (g_fout->remoteVersion >= 70400)
+	if (g_fout->remoteVersion >= 90100)
 		appendPQExpBuffer(query, "SELECT tableoid, oid, conname, "
-						  "pg_catalog.pg_get_constraintdef(oid) AS consrc "
+						  "pg_catalog.pg_get_constraintdef(oid) AS consrc, "
+						  "convalidated "
+						  "FROM pg_catalog.pg_constraint "
+						  "WHERE contypid = '%u'::pg_catalog.oid "
+						  "ORDER BY conname",
+						  tyinfo->dobj.catId.oid);
+
+	else if (g_fout->remoteVersion >= 70400)
+		appendPQExpBuffer(query, "SELECT tableoid, oid, conname, "
+						  "pg_catalog.pg_get_constraintdef(oid) AS consrc, "
+						  "true as convalidated "
 						  "FROM pg_catalog.pg_constraint "
 						  "WHERE contypid = '%u'::pg_catalog.oid "
 						  "ORDER BY conname",
 						  tyinfo->dobj.catId.oid);
 	else
 		appendPQExpBuffer(query, "SELECT tableoid, oid, conname, "
-						  "'CHECK (' || consrc || ')' AS consrc "
+						  "'CHECK (' || consrc || ')' AS consrc, "
+						  "true as convalidated "
 						  "FROM pg_catalog.pg_constraint "
 						  "WHERE contypid = '%u'::pg_catalog.oid "
 						  "ORDER BY conname",
@@ -4899,6 +4910,8 @@ getDomainConstraints(TypeInfo *tyinfo)
 
 	for (i = 0; i < ntups; i++)
 	{
+		bool	validated = PQgetvalue(res, i, 4)[0] == 't';
+
 		constrinfo[i].dobj.objType = DO_CONSTRAINT;
 		constrinfo[i].dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_tableoid));
 		constrinfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
@@ -4914,14 +4927,18 @@ getDomainConstraints(TypeInfo *tyinfo)
 		constrinfo[i].condeferrable = false;
 		constrinfo[i].condeferred = false;
 		constrinfo[i].conislocal = true;
-		constrinfo[i].separate = false;
+
+		constrinfo[i].separate = !validated;
 
 		/*
 		 * Make the domain depend on the constraint, ensuring it won't be
-		 * output till any constraint dependencies are OK.
+		 * output till any constraint dependencies are OK.  If the constraint
+		 * has not been validated, it's going to be dumped after the domain
+		 * anyway, so this doesn't matter.
 		 */
-		addObjectDependency(&tyinfo->dobj,
-							constrinfo[i].dobj.dumpId);
+		if (validated)
+			addObjectDependency(&tyinfo->dobj,
+								constrinfo[i].dobj.dumpId);
 	}
 
 	PQclear(res);
