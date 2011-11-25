@@ -14,7 +14,7 @@
  *-------------------------------------------------------------------------
  */
 #include "pg_backup_archiver.h"
-
+#include "common.h"
 
 static const char *modulename = gettext_noop("sorter");
 
@@ -227,10 +227,7 @@ sortDumpableObjects(DumpableObject **objs, int numObjs)
 	if (numObjs <= 0)
 		return;
 
-	ordering = (DumpableObject **) malloc(numObjs * sizeof(DumpableObject *));
-	if (ordering == NULL)
-		exit_horribly(NULL, modulename, "out of memory\n");
-
+	ordering = (DumpableObject **) pg_malloc(numObjs * sizeof(DumpableObject *));
 	while (!TopoSort(objs, numObjs, ordering, &nOrdering))
 		findDependencyLoops(ordering, nOrdering, numObjs);
 
@@ -301,9 +298,7 @@ TopoSort(DumpableObject **objs,
 		return true;
 
 	/* Create workspace for the above-described heap */
-	pendingHeap = (int *) malloc(numObjs * sizeof(int));
-	if (pendingHeap == NULL)
-		exit_horribly(NULL, modulename, "out of memory\n");
+	pendingHeap = (int *) pg_malloc(numObjs * sizeof(int));
 
 	/*
 	 * Scan the constraints, and for each item in the input, generate a count
@@ -312,13 +307,9 @@ TopoSort(DumpableObject **objs,
 	 * We also make a map showing the input-order index of the item with
 	 * dumpId j.
 	 */
-	beforeConstraints = (int *) malloc((maxDumpId + 1) * sizeof(int));
-	if (beforeConstraints == NULL)
-		exit_horribly(NULL, modulename, "out of memory\n");
+	beforeConstraints = (int *) pg_malloc((maxDumpId + 1) * sizeof(int));
 	memset(beforeConstraints, 0, (maxDumpId + 1) * sizeof(int));
-	idMap = (int *) malloc((maxDumpId + 1) * sizeof(int));
-	if (idMap == NULL)
-		exit_horribly(NULL, modulename, "out of memory\n");
+	idMap = (int *) pg_malloc((maxDumpId + 1) * sizeof(int));
 	for (i = 0; i < numObjs; i++)
 	{
 		obj = objs[i];
@@ -516,9 +507,7 @@ findDependencyLoops(DumpableObject **objs, int nObjs, int totObjs)
 	bool		fixedloop;
 	int			i;
 
-	workspace = (DumpableObject **) malloc(totObjs * sizeof(DumpableObject *));
-	if (workspace == NULL)
-		exit_horribly(NULL, modulename, "out of memory\n");
+	workspace = (DumpableObject **) pg_malloc(totObjs * sizeof(DumpableObject *));
 	initiallen = 0;
 	fixedloop = false;
 

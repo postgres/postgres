@@ -60,6 +60,9 @@ static PGconn *connectDatabase(const char *dbname, const char *pghost, const cha
 static PGresult *executeQuery(PGconn *conn, const char *query);
 static void executeCommand(PGconn *conn, const char *query);
 
+char *pg_strdup(const char *string);
+void *pg_malloc(size_t size);
+
 static char pg_dump_bin[MAXPGPATH];
 static PQExpBuffer pgdumpopts;
 static bool skip_acls = false;
@@ -916,7 +919,7 @@ dumpGroups(PGconn *conn)
 		if (strlen(grolist) < 3)
 			continue;
 
-		grolist = strdup(grolist);
+		grolist = pg_strdup(grolist);
 		grolist[0] = '(';
 		grolist[strlen(grolist) - 1] = ')';
 		printfPQExpBuffer(buf,
@@ -1040,7 +1043,7 @@ dumpTablespaces(PGconn *conn)
 		char	   *fspcname;
 
 		/* needed for buildACLCommands() */
-		fspcname = strdup(fmtId(spcname));
+		fspcname = pg_strdup(fmtId(spcname));
 
 		appendPQExpBuffer(buf, "CREATE TABLESPACE %s", fspcname);
 		appendPQExpBuffer(buf, " OWNER %s", fmtId(spcowner));
@@ -1189,11 +1192,11 @@ dumpCreateDB(PGconn *conn)
 	if (PQntuples(res) > 0)
 	{
 		if (!PQgetisnull(res, 0, 0))
-			default_encoding = strdup(PQgetvalue(res, 0, 0));
+			default_encoding = pg_strdup(PQgetvalue(res, 0, 0));
 		if (!PQgetisnull(res, 0, 1))
-			default_collate = strdup(PQgetvalue(res, 0, 1));
+			default_collate = pg_strdup(PQgetvalue(res, 0, 1));
 		if (!PQgetisnull(res, 0, 2))
-			default_ctype = strdup(PQgetvalue(res, 0, 2));
+			default_ctype = pg_strdup(PQgetvalue(res, 0, 2));
 	}
 
 	PQclear(res);
@@ -1283,7 +1286,7 @@ dumpCreateDB(PGconn *conn)
 		char	   *dbtablespace = PQgetvalue(res, i, 9);
 		char	   *fdbname;
 
-		fdbname = strdup(fmtId(dbname));
+		fdbname = pg_strdup(fmtId(dbname));
 
 		resetPQExpBuffer(buf);
 
@@ -1519,7 +1522,7 @@ makeAlterConfigCommand(PGconn *conn, const char *arrayitem,
 	char	   *mine;
 	PQExpBuffer buf = createPQExpBuffer();
 
-	mine = strdup(arrayitem);
+	mine = pg_strdup(arrayitem);
 	pos = strchr(mine, '=');
 	if (pos == NULL)
 		return;
@@ -1688,14 +1691,8 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 	do
 	{
 #define PARAMS_ARRAY_SIZE	7
-		const char **keywords = malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
-		const char **values = malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
-
-		if (!keywords || !values)
-		{
-			fprintf(stderr, _("%s: out of memory\n"), progname);
-			exit(1);
-		}
+		const char **keywords = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
+		const char **values = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
 
 		keywords[0] = "host";
 		values[0] = pghost;
@@ -1910,4 +1907,42 @@ doShellQuoting(PQExpBuffer buf, const char *str)
 	}
 	appendPQExpBufferChar(buf, '"');
 #endif   /* WIN32 */
+}
+
+
+/*
+ *	Simpler versions of common.c functions.
+ */
+
+char *
+pg_strdup(const char *string)
+{
+	char	   *tmp;
+
+	if (!string)
+	{
+		fprintf(stderr, "cannot duplicate null pointer\n");
+		exit(1);
+	}
+	tmp = strdup(string);
+	if (!tmp)
+	{
+		fprintf(stderr, _("%s: out of memory\n"), progname);
+		exit(1);
+	}
+	return tmp;
+}
+
+void *
+pg_malloc(size_t size)
+{
+	void	   *tmp;
+
+	tmp = malloc(size);
+	if (!tmp)
+	{
+		fprintf(stderr, _("%s: out of memory\n"), progname);
+		exit(1);
+	}
+	return tmp;
 }

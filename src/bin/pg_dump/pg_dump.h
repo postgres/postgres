@@ -521,11 +521,6 @@ extern void simple_string_list_append(SimpleStringList *list, const char *val);
 extern bool simple_oid_list_member(SimpleOidList *list, Oid val);
 extern bool simple_string_list_member(SimpleStringList *list, const char *val);
 
-extern char *pg_strdup(const char *string);
-extern void *pg_malloc(size_t size);
-extern void *pg_calloc(size_t nmemb, size_t size);
-extern void *pg_realloc(void *ptr, size_t size);
-
 extern void check_conn_and_db(void);
 extern void exit_nicely(void);
 

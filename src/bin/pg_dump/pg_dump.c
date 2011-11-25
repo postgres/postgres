@@ -57,6 +57,7 @@
 #include "libpq/libpq-fs.h"
 
 #include "pg_backup_archiver.h"
+#include "common.h"
 #include "dumputils.h"
 
 extern char *optarg;
@@ -438,7 +439,7 @@ main(int argc, char **argv)
 				break;
 
 			case 'S':			/* Username for superuser in plain text output */
-				outputSuperuser = strdup(optarg);
+				outputSuperuser = pg_strdup(optarg);
 				break;
 
 			case 't':			/* include table(s) */
@@ -1585,7 +1586,7 @@ makeTableDataInfo(TableInfo *tbinfo, bool oids)
 {
 	TableDataInfo *tdinfo;
 
-	tdinfo = (TableDataInfo *) malloc(sizeof(TableDataInfo));
+	tdinfo = (TableDataInfo *) pg_malloc(sizeof(TableDataInfo));
 
 	tdinfo->dobj.objType = DO_TABLE_DATA;
 
@@ -2181,7 +2182,7 @@ getBlobs(Archive *AH)
 		/*
 		 * Each large object has its own BLOB archive entry.
 		 */
-		binfo = (BlobInfo *) malloc(ntups * sizeof(BlobInfo));
+		binfo = (BlobInfo *) pg_malloc(ntups * sizeof(BlobInfo));
 
 		for (i = 0; i < ntups; i++)
 		{
@@ -2190,13 +2191,13 @@ getBlobs(Archive *AH)
 			binfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, 0));
 			AssignDumpId(&binfo[i].dobj);
 
-			binfo[i].dobj.name = strdup(PQgetvalue(res, i, 0));
+			binfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, 0));
 			if (!PQgetisnull(res, i, 1))
-				binfo[i].rolname = strdup(PQgetvalue(res, i, 1));
+				binfo[i].rolname = pg_strdup(PQgetvalue(res, i, 1));
 			else
 				binfo[i].rolname = "";
 			if (!PQgetisnull(res, i, 2))
-				binfo[i].blobacl = strdup(PQgetvalue(res, i, 2));
+				binfo[i].blobacl = pg_strdup(PQgetvalue(res, i, 2));
 			else
 				binfo[i].blobacl = NULL;
 		}
@@ -2205,11 +2206,11 @@ getBlobs(Archive *AH)
 		 * If we have any large objects, a "BLOBS" archive entry is needed.
 		 * This is just a placeholder for sorting; it carries no data now.
 		 */
-		bdata = (DumpableObject *) malloc(sizeof(DumpableObject));
+		bdata = (DumpableObject *) pg_malloc(sizeof(DumpableObject));
 		bdata->objType = DO_BLOB_DATA;
 		bdata->catId = nilCatalogId;
 		AssignDumpId(bdata);
-		bdata->name = strdup("BLOBS");
+		bdata->name = pg_strdup("BLOBS");
 	}
 
 	PQclear(res);
@@ -2608,15 +2609,15 @@ getNamespaces(int *numNamespaces)
 	 */
 	if (g_fout->remoteVersion < 70300)
 	{
-		nsinfo = (NamespaceInfo *) malloc(2 * sizeof(NamespaceInfo));
+		nsinfo = (NamespaceInfo *) pg_malloc(2 * sizeof(NamespaceInfo));
 
 		nsinfo[0].dobj.objType = DO_NAMESPACE;
 		nsinfo[0].dobj.catId.tableoid = 0;
 		nsinfo[0].dobj.catId.oid = 0;
 		AssignDumpId(&nsinfo[0].dobj);
-		nsinfo[0].dobj.name = strdup("public");
-		nsinfo[0].rolname = strdup("");
-		nsinfo[0].nspacl = strdup("");
+		nsinfo[0].dobj.name = pg_strdup("public");
+		nsinfo[0].rolname = pg_strdup("");
+		nsinfo[0].nspacl = pg_strdup("");
 
 		selectDumpableNamespace(&nsinfo[0]);
 
@@ -2624,9 +2625,9 @@ getNamespaces(int *numNamespaces)
 		nsinfo[1].dobj.catId.tableoid = 0;
 		nsinfo[1].dobj.catId.oid = 1;
 		AssignDumpId(&nsinfo[1].dobj);
-		nsinfo[1].dobj.name = strdup("pg_catalog");
-		nsinfo[1].rolname = strdup("");
-		nsinfo[1].nspacl = strdup("");
+		nsinfo[1].dobj.name = pg_strdup("pg_catalog");
+		nsinfo[1].rolname = pg_strdup("");
+		nsinfo[1].nspacl = pg_strdup("");
 
 		selectDumpableNamespace(&nsinfo[1]);
 
@@ -2655,7 +2656,7 @@ getNamespaces(int *numNamespaces)
 
 	ntups = PQntuples(res);
 
-	nsinfo = (NamespaceInfo *) malloc(ntups * sizeof(NamespaceInfo));
+	nsinfo = (NamespaceInfo *) pg_malloc(ntups * sizeof(NamespaceInfo));
 
 	i_tableoid = PQfnumber(res, "tableoid");
 	i_oid = PQfnumber(res, "oid");
@@ -2669,9 +2670,9 @@ getNamespaces(int *numNamespaces)
 		nsinfo[i].dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_tableoid));
 		nsinfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
 		AssignDumpId(&nsinfo[i].dobj);
-		nsinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_nspname));
-		nsinfo[i].rolname = strdup(PQgetvalue(res, i, i_rolname));
-		nsinfo[i].nspacl = strdup(PQgetvalue(res, i, i_nspacl));
+		nsinfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_nspname));
+		nsinfo[i].rolname = pg_strdup(PQgetvalue(res, i, i_rolname));
+		nsinfo[i].nspacl = pg_strdup(PQgetvalue(res, i, i_nspacl));
 
 		/* Decide whether to dump this namespace */
 		selectDumpableNamespace(&nsinfo[i]);
@@ -2776,7 +2777,7 @@ getExtensions(int *numExtensions)
 
 	ntups = PQntuples(res);
 
-	extinfo = (ExtensionInfo *) malloc(ntups * sizeof(ExtensionInfo));
+	extinfo = (ExtensionInfo *) pg_malloc(ntups * sizeof(ExtensionInfo));
 
 	i_tableoid = PQfnumber(res, "tableoid");
 	i_oid = PQfnumber(res, "oid");
@@ -2793,12 +2794,12 @@ getExtensions(int *numExtensions)
 		extinfo[i].dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_tableoid));
 		extinfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
 		AssignDumpId(&extinfo[i].dobj);
-		extinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_extname));
-		extinfo[i].namespace = strdup(PQgetvalue(res, i, i_nspname));
+		extinfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_extname));
+		extinfo[i].namespace = pg_strdup(PQgetvalue(res, i, i_nspname));
 		extinfo[i].relocatable = *(PQgetvalue(res, i, i_extrelocatable)) == 't';
-		extinfo[i].extversion = strdup(PQgetvalue(res, i, i_extversion));
-		extinfo[i].extconfig = strdup(PQgetvalue(res, i, i_extconfig));
-		extinfo[i].extcondition = strdup(PQgetvalue(res, i, i_extcondition));
+		extinfo[i].extversion = pg_strdup(PQgetvalue(res, i, i_extversion));
+		extinfo[i].extconfig = pg_strdup(PQgetvalue(res, i, i_extconfig));
+		extinfo[i].extcondition = pg_strdup(PQgetvalue(res, i, i_extcondition));
 
 		/* Decide whether we want to dump it */
 		selectDumpableExtension(&(extinfo[i]));
@@ -2929,7 +2930,7 @@ getTypes(int *numTypes)
 
 	ntups = PQntuples(res);
 
-	tyinfo = (TypeInfo *) malloc(ntups * sizeof(TypeInfo));
+	tyinfo = (TypeInfo *) pg_malloc(ntups * sizeof(TypeInfo));
 
 	i_tableoid = PQfnumber(res, "tableoid");
 	i_oid = PQfnumber(res, "oid");
@@ -2951,10 +2952,10 @@ getTypes(int *numTypes)
 		tyinfo[i].dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_tableoid));
 		tyinfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
 		AssignDumpId(&tyinfo[i].dobj);
-		tyinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_typname));
+		tyinfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_typname));
 		tyinfo[i].dobj.namespace = findNamespace(atooid(PQgetvalue(res, i, i_typnamespace)),
 												 tyinfo[i].dobj.catId.oid);
-		tyinfo[i].rolname = strdup(PQgetvalue(res, i, i_rolname));
+		tyinfo[i].rolname = pg_strdup(PQgetvalue(res, i, i_rolname));
 		tyinfo[i].typelem = atooid(PQgetvalue(res, i, i_typelem));
 		tyinfo[i].typrelid = atooid(PQgetvalue(res, i, i_typrelid));
 		tyinfo[i].typrelkind = *PQgetvalue(res, i, i_typrelkind);
@@ -2995,11 +2996,11 @@ getTypes(int *numTypes)
 		if (tyinfo[i].dobj.dump && (tyinfo[i].typtype == TYPTYPE_BASE ||
 									tyinfo[i].typtype == TYPTYPE_RANGE))
 		{
-			stinfo = (ShellTypeInfo *) malloc(sizeof(ShellTypeInfo));
+			stinfo = (ShellTypeInfo *) pg_malloc(sizeof(ShellTypeInfo));
 			stinfo->dobj.objType = DO_SHELL_TYPE;
 			stinfo->dobj.catId = nilCatalogId;
 			AssignDumpId(&stinfo->dobj);
-			stinfo->dobj.name = strdup(tyinfo[i].dobj.name);
+			stinfo->dobj.name = pg_strdup(tyinfo[i].dobj.name);
 			stinfo->dobj.namespace = tyinfo[i].dobj.namespace;
 			stinfo->baseType = &(tyinfo[i]);
 			tyinfo[i].shellType = stinfo;
@@ -3134,7 +3135,7 @@ getOperators(int *numOprs)
 	ntups = PQntuples(res);
 	*numOprs = ntups;
 
-	oprinfo = (OprInfo *) malloc(ntups * sizeof(OprInfo));
+	oprinfo = (OprInfo *) pg_malloc(ntups * sizeof(OprInfo));
 
 	i_tableoid = PQfnumber(res, "tableoid");
 	i_oid = PQfnumber(res, "oid");
@@ -3149,10 +3150,10 @@ getOperators(int *numOprs)
 		oprinfo[i].dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_tableoid));
 		oprinfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
 		AssignDumpId(&oprinfo[i].dobj);
-		oprinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_oprname));
+		oprinfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_oprname));
 		oprinfo[i].dobj.namespace = findNamespace(atooid(PQgetvalue(res, i, i_oprnamespace)),
 												  oprinfo[i].dobj.catId.oid);
-		oprinfo[i].rolname = strdup(PQgetvalue(res, i, i_rolname));
+		oprinfo[i].rolname = pg_strdup(PQgetvalue(res, i, i_rolname));
 		oprinfo[i].oprcode = atooid(PQgetvalue(res, i, i_oprcode));
 
 		/* Decide whether we want to dump it */
@@ -3218,7 +3219,7 @@ getCollations(int *numCollations)
 	ntups = PQntuples(res);
 	*numCollations = ntups;
 
-	collinfo = (CollInfo *) malloc(ntups * sizeof(CollInfo));
+	collinfo = (CollInfo *) pg_malloc(ntups * sizeof(CollInfo));
 
 	i_tableoid = PQfnumber(res, "tableoid");
 	i_oid = PQfnumber(res, "oid");
@@ -3232,10 +3233,10 @@ getCollations(int *numCollations)
 		collinfo[i].dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_tableoid));
 		collinfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
 		AssignDumpId(&collinfo[i].dobj);
-		collinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_collname));
+		collinfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_collname));
 		collinfo[i].dobj.namespace = findNamespace(atooid(PQgetvalue(res, i, i_collnamespace)),
 												 collinfo[i].dobj.catId.oid);
-		collinfo[i].rolname = strdup(PQgetvalue(res, i, i_rolname));
+		collinfo[i].rolname = pg_strdup(PQgetvalue(res, i, i_rolname));
 
 		/* Decide whether we want to dump it */
 		selectDumpableObject(&(collinfo[i].dobj));
@@ -3296,7 +3297,7 @@ getConversions(int *numConversions)
 	ntups = PQntuples(res);
 	*numConversions = ntups;
 
-	convinfo = (ConvInfo *) malloc(ntups * sizeof(ConvInfo));
+	convinfo = (ConvInfo *) pg_malloc(ntups * sizeof(ConvInfo));
 
 	i_tableoid = PQfnumber(res, "tableoid");
 	i_oid = PQfnumber(res, "oid");
@@ -3310,10 +3311,10 @@ getConversions(int *numConversions)
 		convinfo[i].dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_tableoid));
 		convinfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
 		AssignDumpId(&convinfo[i].dobj);
-		convinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_conname));
+		convinfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_conname));
 		convinfo[i].dobj.namespace = findNamespace(atooid(PQgetvalue(res, i, i_connamespace)),
 												 convinfo[i].dobj.catId.oid);
-		convinfo[i].rolname = strdup(PQgetvalue(res, i, i_rolname));
+		convinfo[i].rolname = pg_strdup(PQgetvalue(res, i, i_rolname));
 
 		/* Decide whether we want to dump it */
 		selectDumpableObject(&(convinfo[i].dobj));
@@ -3386,7 +3387,7 @@ getOpclasses(int *numOpclasses)
 	ntups = PQntuples(res);
 	*numOpclasses = ntups;
 
-	opcinfo = (OpclassInfo *) malloc(ntups * sizeof(OpclassInfo));
+	opcinfo = (OpclassInfo *) pg_malloc(ntups * sizeof(OpclassInfo));
 
 	i_tableoid = PQfnumber(res, "tableoid");
 	i_oid = PQfnumber(res, "oid");
@@ -3400,10 +3401,10 @@ getOpclasses(int *numOpclasses)
 		opcinfo[i].dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_tableoid));
 		opcinfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
 		AssignDumpId(&opcinfo[i].dobj);
-		opcinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_opcname));
+		opcinfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_opcname));
 		opcinfo[i].dobj.namespace = findNamespace(atooid(PQgetvalue(res, i, i_opcnamespace)),
 												  opcinfo[i].dobj.catId.oid);
-		opcinfo[i].rolname = strdup(PQgetvalue(res, i, i_rolname));
+		opcinfo[i].rolname = pg_strdup(PQgetvalue(res, i, i_rolname));
 
 		/* Decide whether we want to dump it */
 		selectDumpableObject(&(opcinfo[i].dobj));
@@ -3473,7 +3474,7 @@ getOpfamilies(int *numOpfamilies)
 	ntups = PQntuples(res);
 	*numOpfamilies = ntups;
 
-	opfinfo = (OpfamilyInfo *) malloc(ntups * sizeof(OpfamilyInfo));
+	opfinfo = (OpfamilyInfo *) pg_malloc(ntups * sizeof(OpfamilyInfo));
 
 	i_tableoid = PQfnumber(res, "tableoid");
 	i_oid = PQfnumber(res, "oid");
@@ -3487,10 +3488,10 @@ getOpfamilies(int *numOpfamilies)
 		opfinfo[i].dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_tableoid));
 		opfinfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
 		AssignDumpId(&opfinfo[i].dobj);
-		opfinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_opfname));
+		opfinfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_opfname));
 		opfinfo[i].dobj.namespace = findNamespace(atooid(PQgetvalue(res, i, i_opfnamespace)),
 												  opfinfo[i].dobj.catId.oid);
-		opfinfo[i].rolname = strdup(PQgetvalue(res, i, i_rolname));
+		opfinfo[i].rolname = pg_strdup(PQgetvalue(res, i, i_rolname));
 
 		/* Decide whether we want to dump it */
 		selectDumpableObject(&(opfinfo[i].dobj));
@@ -3613,7 +3614,7 @@ getAggregates(int *numAggs)
 	ntups = PQntuples(res);
 	*numAggs = ntups;
 
-	agginfo = (AggInfo *) malloc(ntups * sizeof(AggInfo));
+	agginfo = (AggInfo *) pg_malloc(ntups * sizeof(AggInfo));
 
 	i_tableoid = PQfnumber(res, "tableoid");
 	i_oid = PQfnumber(res, "oid");
@@ -3630,22 +3631,22 @@ getAggregates(int *numAggs)
 		agginfo[i].aggfn.dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_tableoid));
 		agginfo[i].aggfn.dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
 		AssignDumpId(&agginfo[i].aggfn.dobj);
-		agginfo[i].aggfn.dobj.name = strdup(PQgetvalue(res, i, i_aggname));
+		agginfo[i].aggfn.dobj.name = pg_strdup(PQgetvalue(res, i, i_aggname));
 		agginfo[i].aggfn.dobj.namespace = findNamespace(atooid(PQgetvalue(res, i, i_aggnamespace)),
 											agginfo[i].aggfn.dobj.catId.oid);
-		agginfo[i].aggfn.rolname = strdup(PQgetvalue(res, i, i_rolname));
+		agginfo[i].aggfn.rolname = pg_strdup(PQgetvalue(res, i, i_rolname));
 		if (strlen(agginfo[i].aggfn.rolname) == 0)
 			write_msg(NULL, "WARNING: owner of aggregate function \"%s\" appears to be invalid\n",
 					  agginfo[i].aggfn.dobj.name);
 		agginfo[i].aggfn.lang = InvalidOid;		/* not currently interesting */
 		agginfo[i].aggfn.prorettype = InvalidOid;		/* not saved */
-		agginfo[i].aggfn.proacl = strdup(PQgetvalue(res, i, i_aggacl));
+		agginfo[i].aggfn.proacl = pg_strdup(PQgetvalue(res, i, i_aggacl));
 		agginfo[i].aggfn.nargs = atoi(PQgetvalue(res, i, i_pronargs));
 		if (agginfo[i].aggfn.nargs == 0)
 			agginfo[i].aggfn.argtypes = NULL;
 		else
 		{
-			agginfo[i].aggfn.argtypes = (Oid *) malloc(agginfo[i].aggfn.nargs * sizeof(Oid));
+			agginfo[i].aggfn.argtypes = (Oid *) pg_malloc(agginfo[i].aggfn.nargs * sizeof(Oid));
 			if (g_fout->remoteVersion >= 70300)
 				parseOidArray(PQgetvalue(res, i, i_proargtypes),
 							  agginfo[i].aggfn.argtypes,
@@ -3775,7 +3776,7 @@ getFuncs(int *numFuncs)
 
 	*numFuncs = ntups;
 
-	finfo = (FuncInfo *) calloc(ntups, sizeof(FuncInfo));
+	finfo = (FuncInfo *) pg_calloc(ntups, sizeof(FuncInfo));
 
 	i_tableoid = PQfnumber(res, "tableoid");
 	i_oid = PQfnumber(res, "oid");
@@ -3794,20 +3795,20 @@ getFuncs(int *numFuncs)
 		finfo[i].dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_tableoid));
 		finfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
 		AssignDumpId(&finfo[i].dobj);
-		finfo[i].dobj.name = strdup(PQgetvalue(res, i, i_proname));
+		finfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_proname));
 		finfo[i].dobj.namespace =
 			findNamespace(atooid(PQgetvalue(res, i, i_pronamespace)),
 						  finfo[i].dobj.catId.oid);
-		finfo[i].rolname = strdup(PQgetvalue(res, i, i_rolname));
+		finfo[i].rolname = pg_strdup(PQgetvalue(res, i, i_rolname));
 		finfo[i].lang = atooid(PQgetvalue(res, i, i_prolang));
 		finfo[i].prorettype = atooid(PQgetvalue(res, i, i_prorettype));
-		finfo[i].proacl = strdup(PQgetvalue(res, i, i_proacl));
+		finfo[i].proacl = pg_strdup(PQgetvalue(res, i, i_proacl));
 		finfo[i].nargs = atoi(PQgetvalue(res, i, i_pronargs));
 		if (finfo[i].nargs == 0)
 			finfo[i].argtypes = NULL;
 		else
 		{
-			finfo[i].argtypes = (Oid *) malloc(finfo[i].nargs * sizeof(Oid));
+			finfo[i].argtypes = (Oid *) pg_malloc(finfo[i].nargs * sizeof(Oid));
 			parseOidArray(PQgetvalue(res, i, i_proargtypes),
 						  finfo[i].argtypes, finfo[i].nargs);
 		}
@@ -4204,7 +4205,7 @@ getTables(int *numTables)
 	 * only one, because we don't yet know which tables might be inheritance
 	 * ancestors of the target table.
 	 */
-	tblinfo = (TableInfo *) calloc(ntups, sizeof(TableInfo));
+	tblinfo = (TableInfo *) pg_calloc(ntups, sizeof(TableInfo));
 
 	i_reltableoid = PQfnumber(res, "tableoid");
 	i_reloid = PQfnumber(res, "oid");
@@ -4250,11 +4251,11 @@ getTables(int *numTables)
 		tblinfo[i].dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_reltableoid));
 		tblinfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_reloid));
 		AssignDumpId(&tblinfo[i].dobj);
-		tblinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_relname));
+		tblinfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_relname));
 		tblinfo[i].dobj.namespace = findNamespace(atooid(PQgetvalue(res, i, i_relnamespace)),
 												  tblinfo[i].dobj.catId.oid);
-		tblinfo[i].rolname = strdup(PQgetvalue(res, i, i_rolname));
-		tblinfo[i].relacl = strdup(PQgetvalue(res, i, i_relacl));
+		tblinfo[i].rolname = pg_strdup(PQgetvalue(res, i, i_rolname));
+		tblinfo[i].relacl = pg_strdup(PQgetvalue(res, i, i_relacl));
 		tblinfo[i].relkind = *(PQgetvalue(res, i, i_relkind));
 		tblinfo[i].relpersistence = *(PQgetvalue(res, i, i_relpersistence));
 		tblinfo[i].hasindex = (strcmp(PQgetvalue(res, i, i_relhasindex), "t") == 0);
@@ -4267,7 +4268,7 @@ getTables(int *numTables)
 		if (PQgetisnull(res, i, i_reloftype))
 			tblinfo[i].reloftype = NULL;
 		else
-			tblinfo[i].reloftype = strdup(PQgetvalue(res, i, i_reloftype));
+			tblinfo[i].reloftype = pg_strdup(PQgetvalue(res, i, i_reloftype));
 		tblinfo[i].ncheck = atoi(PQgetvalue(res, i, i_relchecks));
 		if (PQgetisnull(res, i, i_owning_tab))
 		{
@@ -4279,9 +4280,9 @@ getTables(int *numTables)
 			tblinfo[i].owning_tab = atooid(PQgetvalue(res, i, i_owning_tab));
 			tblinfo[i].owning_col = atoi(PQgetvalue(res, i, i_owning_col));
 		}
-		tblinfo[i].reltablespace = strdup(PQgetvalue(res, i, i_reltablespace));
-		tblinfo[i].reloptions = strdup(PQgetvalue(res, i, i_reloptions));
-		tblinfo[i].toast_reloptions = strdup(PQgetvalue(res, i, i_toastreloptions));
+		tblinfo[i].reltablespace = pg_strdup(PQgetvalue(res, i, i_reltablespace));
+		tblinfo[i].reloptions = pg_strdup(PQgetvalue(res, i, i_reloptions));
+		tblinfo[i].toast_reloptions = pg_strdup(PQgetvalue(res, i, i_toastreloptions));
 
 		/* other fields were zeroed above */
 
@@ -4395,7 +4396,7 @@ getInherits(int *numInherits)
 
 	*numInherits = ntups;
 
-	inhinfo = (InhInfo *) malloc(ntups * sizeof(InhInfo));
+	inhinfo = (InhInfo *) pg_malloc(ntups * sizeof(InhInfo));
 
 	i_inhrelid = PQfnumber(res, "inhrelid");
 	i_inhparent = PQfnumber(res, "inhparent");
@@ -4660,8 +4661,8 @@ getIndexes(TableInfo tblinfo[], int numTables)
 		i_tablespace = PQfnumber(res, "tablespace");
 		i_options = PQfnumber(res, "options");
 
-		indxinfo = (IndxInfo *) malloc(ntups * sizeof(IndxInfo));
-		constrinfo = (ConstraintInfo *) malloc(ntups * sizeof(ConstraintInfo));
+		indxinfo = (IndxInfo *) pg_malloc(ntups * sizeof(IndxInfo));
+		constrinfo = (ConstraintInfo *) pg_malloc(ntups * sizeof(ConstraintInfo));
 
 		for (j = 0; j < ntups; j++)
 		{
@@ -4671,13 +4672,13 @@ getIndexes(TableInfo tblinfo[], int numTables)
 			indxinfo[j].dobj.catId.tableoid = atooid(PQgetvalue(res, j, i_tableoid));
 			indxinfo[j].dobj.catId.oid = atooid(PQgetvalue(res, j, i_oid));
 			AssignDumpId(&indxinfo[j].dobj);
-			indxinfo[j].dobj.name = strdup(PQgetvalue(res, j, i_indexname));
+			indxinfo[j].dobj.name = pg_strdup(PQgetvalue(res, j, i_indexname));
 			indxinfo[j].dobj.namespace = tbinfo->dobj.namespace;
 			indxinfo[j].indextable = tbinfo;
-			indxinfo[j].indexdef = strdup(PQgetvalue(res, j, i_indexdef));
+			indxinfo[j].indexdef = pg_strdup(PQgetvalue(res, j, i_indexdef));
 			indxinfo[j].indnkeys = atoi(PQgetvalue(res, j, i_indnkeys));
-			indxinfo[j].tablespace = strdup(PQgetvalue(res, j, i_tablespace));
-			indxinfo[j].options = strdup(PQgetvalue(res, j, i_options));
+			indxinfo[j].tablespace = pg_strdup(PQgetvalue(res, j, i_tablespace));
+			indxinfo[j].options = pg_strdup(PQgetvalue(res, j, i_options));
 
 			/*
 			 * In pre-7.4 releases, indkeys may contain more entries than
@@ -4688,7 +4689,7 @@ getIndexes(TableInfo tblinfo[], int numTables)
 			 * have to allocate enough space to keep parseOidArray from
 			 * complaining.
 			 */
-			indxinfo[j].indkeys = (Oid *) malloc(INDEX_MAX_KEYS * sizeof(Oid));
+			indxinfo[j].indkeys = (Oid *) pg_malloc(INDEX_MAX_KEYS * sizeof(Oid));
 			parseOidArray(PQgetvalue(res, j, i_indkey),
 						  indxinfo[j].indkeys, INDEX_MAX_KEYS);
 			indxinfo[j].indisclustered = (PQgetvalue(res, j, i_indisclustered)[0] == 't');
@@ -4707,13 +4708,13 @@ getIndexes(TableInfo tblinfo[], int numTables)
 				constrinfo[j].dobj.catId.tableoid = atooid(PQgetvalue(res, j, i_contableoid));
 				constrinfo[j].dobj.catId.oid = atooid(PQgetvalue(res, j, i_conoid));
 				AssignDumpId(&constrinfo[j].dobj);
-				constrinfo[j].dobj.name = strdup(PQgetvalue(res, j, i_conname));
+				constrinfo[j].dobj.name = pg_strdup(PQgetvalue(res, j, i_conname));
 				constrinfo[j].dobj.namespace = tbinfo->dobj.namespace;
 				constrinfo[j].contable = tbinfo;
 				constrinfo[j].condomain = NULL;
 				constrinfo[j].contype = contype;
 				if (contype == 'x')
-					constrinfo[j].condef = strdup(PQgetvalue(res, j, i_condef));
+					constrinfo[j].condef = pg_strdup(PQgetvalue(res, j, i_condef));
 				else
 					constrinfo[j].condef = NULL;
 				constrinfo[j].confrelid = InvalidOid;
@@ -4808,7 +4809,7 @@ getConstraints(TableInfo tblinfo[], int numTables)
 		i_confrelid = PQfnumber(res, "confrelid");
 		i_condef = PQfnumber(res, "condef");
 
-		constrinfo = (ConstraintInfo *) malloc(ntups * sizeof(ConstraintInfo));
+		constrinfo = (ConstraintInfo *) pg_malloc(ntups * sizeof(ConstraintInfo));
 
 		for (j = 0; j < ntups; j++)
 		{
@@ -4816,12 +4817,12 @@ getConstraints(TableInfo tblinfo[], int numTables)
 			constrinfo[j].dobj.catId.tableoid = atooid(PQgetvalue(res, j, i_contableoid));
 			constrinfo[j].dobj.catId.oid = atooid(PQgetvalue(res, j, i_conoid));
 			AssignDumpId(&constrinfo[j].dobj);
-			constrinfo[j].dobj.name = strdup(PQgetvalue(res, j, i_conname));
+			constrinfo[j].dobj.name = pg_strdup(PQgetvalue(res, j, i_conname));
 			constrinfo[j].dobj.namespace = tbinfo->dobj.namespace;
 			constrinfo[j].contable = tbinfo;
 			constrinfo[j].condomain = NULL;
 			constrinfo[j].contype = 'f';
-			constrinfo[j].condef = strdup(PQgetvalue(res, j, i_condef));
+			constrinfo[j].condef = pg_strdup(PQgetvalue(res, j, i_condef));
 			constrinfo[j].confrelid = atooid(PQgetvalue(res, j, i_confrelid));
 			constrinfo[j].conindex = 0;
 			constrinfo[j].condeferrable = false;
@@ -4891,7 +4892,7 @@ getDomainConstraints(TypeInfo *tyinfo)
 	i_conname = PQfnumber(res, "conname");
 	i_consrc = PQfnumber(res, "consrc");
 
-	constrinfo = (ConstraintInfo *) malloc(ntups * sizeof(ConstraintInfo));
+	constrinfo = (ConstraintInfo *) pg_malloc(ntups * sizeof(ConstraintInfo));
 
 	tyinfo->nDomChecks = ntups;
 	tyinfo->domChecks = constrinfo;
@@ -4902,12 +4903,12 @@ getDomainConstraints(TypeInfo *tyinfo)
 		constrinfo[i].dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_tableoid));
 		constrinfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
 		AssignDumpId(&constrinfo[i].dobj);
-		constrinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_conname));
+		constrinfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_conname));
 		constrinfo[i].dobj.namespace = tyinfo->dobj.namespace;
 		constrinfo[i].contable = NULL;
 		constrinfo[i].condomain = tyinfo;
 		constrinfo[i].contype = 'c';
-		constrinfo[i].condef = strdup(PQgetvalue(res, i, i_consrc));
+		constrinfo[i].condef = pg_strdup(PQgetvalue(res, i, i_consrc));
 		constrinfo[i].confrelid = InvalidOid;
 		constrinfo[i].conindex = 0;
 		constrinfo[i].condeferrable = false;
@@ -4989,7 +4990,7 @@ getRules(int *numRules)
 
 	*numRules = ntups;
 
-	ruleinfo = (RuleInfo *) malloc(ntups * sizeof(RuleInfo));
+	ruleinfo = (RuleInfo *) pg_malloc(ntups * sizeof(RuleInfo));
 
 	i_tableoid = PQfnumber(res, "tableoid");
 	i_oid = PQfnumber(res, "oid");
@@ -5007,7 +5008,7 @@ getRules(int *numRules)
 		ruleinfo[i].dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_tableoid));
 		ruleinfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
 		AssignDumpId(&ruleinfo[i].dobj);
-		ruleinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_rulename));
+		ruleinfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_rulename));
 		ruletableoid = atooid(PQgetvalue(res, i, i_ruletable));
 		ruleinfo[i].ruletable = findTableByOid(ruletableoid);
 		if (ruleinfo[i].ruletable == NULL)
@@ -5211,7 +5212,7 @@ getTriggers(TableInfo tblinfo[], int numTables)
 		i_tginitdeferred = PQfnumber(res, "tginitdeferred");
 		i_tgdef = PQfnumber(res, "tgdef");
 
-		tginfo = (TriggerInfo *) malloc(ntups * sizeof(TriggerInfo));
+		tginfo = (TriggerInfo *) pg_malloc(ntups * sizeof(TriggerInfo));
 
 		for (j = 0; j < ntups; j++)
 		{
@@ -5219,13 +5220,13 @@ getTriggers(TableInfo tblinfo[], int numTables)
 			tginfo[j].dobj.catId.tableoid = atooid(PQgetvalue(res, j, i_tableoid));
 			tginfo[j].dobj.catId.oid = atooid(PQgetvalue(res, j, i_oid));
 			AssignDumpId(&tginfo[j].dobj);
-			tginfo[j].dobj.name = strdup(PQgetvalue(res, j, i_tgname));
+			tginfo[j].dobj.name = pg_strdup(PQgetvalue(res, j, i_tgname));
 			tginfo[j].dobj.namespace = tbinfo->dobj.namespace;
 			tginfo[j].tgtable = tbinfo;
 			tginfo[j].tgenabled = *(PQgetvalue(res, j, i_tgenabled));
 			if (i_tgdef >= 0)
 			{
-				tginfo[j].tgdef = strdup(PQgetvalue(res, j, i_tgdef));
+				tginfo[j].tgdef = pg_strdup(PQgetvalue(res, j, i_tgdef));
 
 				/* remaining fields are not valid if we have tgdef */
 				tginfo[j].tgfname = NULL;
@@ -5243,17 +5244,17 @@ getTriggers(TableInfo tblinfo[], int numTables)
 			{
 				tginfo[j].tgdef = NULL;
 
-				tginfo[j].tgfname = strdup(PQgetvalue(res, j, i_tgfname));
+				tginfo[j].tgfname = pg_strdup(PQgetvalue(res, j, i_tgfname));
 				tginfo[j].tgtype = atoi(PQgetvalue(res, j, i_tgtype));
 				tginfo[j].tgnargs = atoi(PQgetvalue(res, j, i_tgnargs));
-				tginfo[j].tgargs = strdup(PQgetvalue(res, j, i_tgargs));
+				tginfo[j].tgargs = pg_strdup(PQgetvalue(res, j, i_tgargs));
 				tginfo[j].tgisconstraint = *(PQgetvalue(res, j, i_tgisconstraint)) == 't';
 				tginfo[j].tgdeferrable = *(PQgetvalue(res, j, i_tgdeferrable)) == 't';
 				tginfo[j].tginitdeferred = *(PQgetvalue(res, j, i_tginitdeferred)) == 't';
 
 				if (tginfo[j].tgisconstraint)
 				{
-					tginfo[j].tgconstrname = strdup(PQgetvalue(res, j, i_tgconstrname));
+					tginfo[j].tgconstrname = pg_strdup(PQgetvalue(res, j, i_tgconstrname));
 					tginfo[j].tgconstrrelid = atooid(PQgetvalue(res, j, i_tgconstrrelid));
 					if (OidIsValid(tginfo[j].tgconstrrelid))
 					{
@@ -5264,7 +5265,7 @@ getTriggers(TableInfo tblinfo[], int numTables)
 									  tginfo[j].tgconstrrelid);
 							exit_nicely();
 						}
-						tginfo[j].tgconstrrelname = strdup(PQgetvalue(res, j, i_tgconstrrelname));
+						tginfo[j].tgconstrrelname = pg_strdup(PQgetvalue(res, j, i_tgconstrrelname));
 					}
 					else
 						tginfo[j].tgconstrrelname = NULL;
@@ -5381,7 +5382,7 @@ getProcLangs(int *numProcLangs)
 
 	*numProcLangs = ntups;
 
-	planginfo = (ProcLangInfo *) malloc(ntups * sizeof(ProcLangInfo));
+	planginfo = (ProcLangInfo *) pg_malloc(ntups * sizeof(ProcLangInfo));
 
 	i_tableoid = PQfnumber(res, "tableoid");
 	i_oid = PQfnumber(res, "oid");
@@ -5401,7 +5402,7 @@ getProcLangs(int *numProcLangs)
 		planginfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
 		AssignDumpId(&planginfo[i].dobj);
 
-		planginfo[i].dobj.name = strdup(PQgetvalue(res, i, i_lanname));
+		planginfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_lanname));
 		planginfo[i].lanpltrusted = *(PQgetvalue(res, i, i_lanpltrusted)) == 't';
 		planginfo[i].lanplcallfoid = atooid(PQgetvalue(res, i, i_lanplcallfoid));
 		if (i_laninline >= 0)
@@ -5413,13 +5414,13 @@ getProcLangs(int *numProcLangs)
 		else
 			planginfo[i].lanvalidator = InvalidOid;
 		if (i_lanacl >= 0)
-			planginfo[i].lanacl = strdup(PQgetvalue(res, i, i_lanacl));
+			planginfo[i].lanacl = pg_strdup(PQgetvalue(res, i, i_lanacl));
 		else
-			planginfo[i].lanacl = strdup("{=U}");
+			planginfo[i].lanacl = pg_strdup("{=U}");
 		if (i_lanowner >= 0)
-			planginfo[i].lanowner = strdup(PQgetvalue(res, i, i_lanowner));
+			planginfo[i].lanowner = pg_strdup(PQgetvalue(res, i, i_lanowner));
 		else
-			planginfo[i].lanowner = strdup("");
+			planginfo[i].lanowner = pg_strdup("");
 
 		if (g_fout->remoteVersion < 70300)
 		{
@@ -5502,7 +5503,7 @@ getCasts(int *numCasts)
 
 	*numCasts = ntups;
 
-	castinfo = (CastInfo *) malloc(ntups * sizeof(CastInfo));
+	castinfo = (CastInfo *) pg_malloc(ntups * sizeof(CastInfo));
 
 	i_tableoid = PQfnumber(res, "tableoid");
 	i_oid = PQfnumber(res, "oid");
@@ -5784,24 +5785,24 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		i_attfdwoptions = PQfnumber(res, "attfdwoptions");
 
 		tbinfo->numatts = ntups;
-		tbinfo->attnames = (char **) malloc(ntups * sizeof(char *));
-		tbinfo->atttypnames = (char **) malloc(ntups * sizeof(char *));
-		tbinfo->atttypmod = (int *) malloc(ntups * sizeof(int));
-		tbinfo->attstattarget = (int *) malloc(ntups * sizeof(int));
-		tbinfo->attstorage = (char *) malloc(ntups * sizeof(char));
-		tbinfo->typstorage = (char *) malloc(ntups * sizeof(char));
-		tbinfo->attisdropped = (bool *) malloc(ntups * sizeof(bool));
-		tbinfo->attlen = (int *) malloc(ntups * sizeof(int));
-		tbinfo->attalign = (char *) malloc(ntups * sizeof(char));
-		tbinfo->attislocal = (bool *) malloc(ntups * sizeof(bool));
-		tbinfo->notnull = (bool *) malloc(ntups * sizeof(bool));
-		tbinfo->attrdefs = (AttrDefInfo **) malloc(ntups * sizeof(AttrDefInfo *));
-		tbinfo->attoptions = (char **) malloc(ntups * sizeof(char *));
-		tbinfo->attcollation = (Oid *) malloc(ntups * sizeof(Oid));
-		tbinfo->attfdwoptions = (char **) malloc(ntups * sizeof(char *));
-		tbinfo->inhAttrs = (bool *) malloc(ntups * sizeof(bool));
-		tbinfo->inhAttrDef = (bool *) malloc(ntups * sizeof(bool));
-		tbinfo->inhNotNull = (bool *) malloc(ntups * sizeof(bool));
+		tbinfo->attnames = (char **) pg_malloc(ntups * sizeof(char *));
+		tbinfo->atttypnames = (char **) pg_malloc(ntups * sizeof(char *));
+		tbinfo->atttypmod = (int *) pg_malloc(ntups * sizeof(int));
+		tbinfo->attstattarget = (int *) pg_malloc(ntups * sizeof(int));
+		tbinfo->attstorage = (char *) pg_malloc(ntups * sizeof(char));
+		tbinfo->typstorage = (char *) pg_malloc(ntups * sizeof(char));
+		tbinfo->attisdropped = (bool *) pg_malloc(ntups * sizeof(bool));
+		tbinfo->attlen = (int *) pg_malloc(ntups * sizeof(int));
+		tbinfo->attalign = (char *) pg_malloc(ntups * sizeof(char));
+		tbinfo->attislocal = (bool *) pg_malloc(ntups * sizeof(bool));
+		tbinfo->notnull = (bool *) pg_malloc(ntups * sizeof(bool));
+		tbinfo->attrdefs = (AttrDefInfo **) pg_malloc(ntups * sizeof(AttrDefInfo *));
+		tbinfo->attoptions = (char **) pg_malloc(ntups * sizeof(char *));
+		tbinfo->attcollation = (Oid *) pg_malloc(ntups * sizeof(Oid));
+		tbinfo->attfdwoptions = (char **) pg_malloc(ntups * sizeof(char *));
+		tbinfo->inhAttrs = (bool *) pg_malloc(ntups * sizeof(bool));
+		tbinfo->inhAttrDef = (bool *) pg_malloc(ntups * sizeof(bool));
+		tbinfo->inhNotNull = (bool *) pg_malloc(ntups * sizeof(bool));
 		hasdefaults = false;
 
 		for (j = 0; j < ntups; j++)
@@ -5812,8 +5813,8 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 						  tbinfo->dobj.name);
 				exit_nicely();
 			}
-			tbinfo->attnames[j] = strdup(PQgetvalue(res, j, i_attname));
-			tbinfo->atttypnames[j] = strdup(PQgetvalue(res, j, i_atttypname));
+			tbinfo->attnames[j] = pg_strdup(PQgetvalue(res, j, i_attname));
+			tbinfo->atttypnames[j] = pg_strdup(PQgetvalue(res, j, i_atttypname));
 			tbinfo->atttypmod[j] = atoi(PQgetvalue(res, j, i_atttypmod));
 			tbinfo->attstattarget[j] = atoi(PQgetvalue(res, j, i_attstattarget));
 			tbinfo->attstorage[j] = *(PQgetvalue(res, j, i_attstorage));
@@ -5823,9 +5824,9 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			tbinfo->attalign[j] = *(PQgetvalue(res, j, i_attalign));
 			tbinfo->attislocal[j] = (PQgetvalue(res, j, i_attislocal)[0] == 't');
 			tbinfo->notnull[j] = (PQgetvalue(res, j, i_attnotnull)[0] == 't');
-			tbinfo->attoptions[j] = strdup(PQgetvalue(res, j, i_attoptions));
+			tbinfo->attoptions[j] = pg_strdup(PQgetvalue(res, j, i_attoptions));
 			tbinfo->attcollation[j] = atooid(PQgetvalue(res, j, i_attcollation));
-			tbinfo->attfdwoptions[j] = strdup(PQgetvalue(res, j, i_attfdwoptions));
+			tbinfo->attfdwoptions[j] = pg_strdup(PQgetvalue(res, j, i_attfdwoptions));
 			tbinfo->attrdefs[j] = NULL; /* fix below */
 			if (PQgetvalue(res, j, i_atthasdef)[0] == 't')
 				hasdefaults = true;
@@ -5889,7 +5890,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			check_sql_result(res, g_conn, q->data, PGRES_TUPLES_OK);
 
 			numDefaults = PQntuples(res);
-			attrdefs = (AttrDefInfo *) malloc(numDefaults * sizeof(AttrDefInfo));
+			attrdefs = (AttrDefInfo *) pg_malloc(numDefaults * sizeof(AttrDefInfo));
 
 			for (j = 0; j < numDefaults; j++)
 			{
@@ -5901,9 +5902,9 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 				AssignDumpId(&attrdefs[j].dobj);
 				attrdefs[j].adtable = tbinfo;
 				attrdefs[j].adnum = adnum = atoi(PQgetvalue(res, j, 2));
-				attrdefs[j].adef_expr = strdup(PQgetvalue(res, j, 3));
+				attrdefs[j].adef_expr = pg_strdup(PQgetvalue(res, j, 3));
 
-				attrdefs[j].dobj.name = strdup(tbinfo->dobj.name);
+				attrdefs[j].dobj.name = pg_strdup(tbinfo->dobj.name);
 				attrdefs[j].dobj.namespace = tbinfo->dobj.namespace;
 
 				attrdefs[j].dobj.dump = tbinfo->dobj.dump;
@@ -6048,7 +6049,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 				exit_nicely();
 			}
 
-			constrs = (ConstraintInfo *) malloc(numConstrs * sizeof(ConstraintInfo));
+			constrs = (ConstraintInfo *) pg_malloc(numConstrs * sizeof(ConstraintInfo));
 			tbinfo->checkexprs = constrs;
 
 			for (j = 0; j < numConstrs; j++)
@@ -6059,12 +6060,12 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 				constrs[j].dobj.catId.tableoid = atooid(PQgetvalue(res, j, 0));
 				constrs[j].dobj.catId.oid = atooid(PQgetvalue(res, j, 1));
 				AssignDumpId(&constrs[j].dobj);
-				constrs[j].dobj.name = strdup(PQgetvalue(res, j, 2));
+				constrs[j].dobj.name = pg_strdup(PQgetvalue(res, j, 2));
 				constrs[j].dobj.namespace = tbinfo->dobj.namespace;
 				constrs[j].contable = tbinfo;
 				constrs[j].condomain = NULL;
 				constrs[j].contype = 'c';
-				constrs[j].condef = strdup(PQgetvalue(res, j, 3));
+				constrs[j].condef = pg_strdup(PQgetvalue(res, j, 3));
 				constrs[j].confrelid = InvalidOid;
 				constrs[j].conindex = 0;
 				constrs[j].condeferrable = false;
@@ -6157,7 +6158,7 @@ getTSParsers(int *numTSParsers)
 	ntups = PQntuples(res);
 	*numTSParsers = ntups;
 
-	prsinfo = (TSParserInfo *) malloc(ntups * sizeof(TSParserInfo));
+	prsinfo = (TSParserInfo *) pg_malloc(ntups * sizeof(TSParserInfo));
 
 	i_tableoid = PQfnumber(res, "tableoid");
 	i_oid = PQfnumber(res, "oid");
@@ -6175,7 +6176,7 @@ getTSParsers(int *numTSParsers)
 		prsinfo[i].dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_tableoid));
 		prsinfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
 		AssignDumpId(&prsinfo[i].dobj);
-		prsinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_prsname));
+		prsinfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_prsname));
 		prsinfo[i].dobj.namespace = findNamespace(atooid(PQgetvalue(res, i, i_prsnamespace)),
 												  prsinfo[i].dobj.catId.oid);
 		prsinfo[i].prsstart = atooid(PQgetvalue(res, i, i_prsstart));
@@ -6240,7 +6241,7 @@ getTSDictionaries(int *numTSDicts)
 	ntups = PQntuples(res);
 	*numTSDicts = ntups;
 
-	dictinfo = (TSDictInfo *) malloc(ntups * sizeof(TSDictInfo));
+	dictinfo = (TSDictInfo *) pg_malloc(ntups * sizeof(TSDictInfo));
 
 	i_tableoid = PQfnumber(res, "tableoid");
 	i_oid = PQfnumber(res, "oid");
@@ -6256,15 +6257,15 @@ getTSDictionaries(int *numTSDicts)
 		dictinfo[i].dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_tableoid));
 		dictinfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
 		AssignDumpId(&dictinfo[i].dobj);
-		dictinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_dictname));
+		dictinfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_dictname));
 		dictinfo[i].dobj.namespace = findNamespace(atooid(PQgetvalue(res, i, i_dictnamespace)),
 												 dictinfo[i].dobj.catId.oid);
-		dictinfo[i].rolname = strdup(PQgetvalue(res, i, i_rolname));
+		dictinfo[i].rolname = pg_strdup(PQgetvalue(res, i, i_rolname));
 		dictinfo[i].dicttemplate = atooid(PQgetvalue(res, i, i_dicttemplate));
 		if (PQgetisnull(res, i, i_dictinitoption))
 			dictinfo[i].dictinitoption = NULL;
 		else
-			dictinfo[i].dictinitoption = strdup(PQgetvalue(res, i, i_dictinitoption));
+			dictinfo[i].dictinitoption = pg_strdup(PQgetvalue(res, i, i_dictinitoption));
 
 		/* Decide whether we want to dump it */
 		selectDumpableObject(&(dictinfo[i].dobj));
@@ -6319,7 +6320,7 @@ getTSTemplates(int *numTSTemplates)
 	ntups = PQntuples(res);
 	*numTSTemplates = ntups;
 
-	tmplinfo = (TSTemplateInfo *) malloc(ntups * sizeof(TSTemplateInfo));
+	tmplinfo = (TSTemplateInfo *) pg_malloc(ntups * sizeof(TSTemplateInfo));
 
 	i_tableoid = PQfnumber(res, "tableoid");
 	i_oid = PQfnumber(res, "oid");
@@ -6334,7 +6335,7 @@ getTSTemplates(int *numTSTemplates)
 		tmplinfo[i].dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_tableoid));
 		tmplinfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
 		AssignDumpId(&tmplinfo[i].dobj);
-		tmplinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_tmplname));
+		tmplinfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_tmplname));
 		tmplinfo[i].dobj.namespace = findNamespace(atooid(PQgetvalue(res, i, i_tmplnamespace)),
 												 tmplinfo[i].dobj.catId.oid);
 		tmplinfo[i].tmplinit = atooid(PQgetvalue(res, i, i_tmplinit));
@@ -6394,7 +6395,7 @@ getTSConfigurations(int *numTSConfigs)
 	ntups = PQntuples(res);
 	*numTSConfigs = ntups;
 
-	cfginfo = (TSConfigInfo *) malloc(ntups * sizeof(TSConfigInfo));
+	cfginfo = (TSConfigInfo *) pg_malloc(ntups * sizeof(TSConfigInfo));
 
 	i_tableoid = PQfnumber(res, "tableoid");
 	i_oid = PQfnumber(res, "oid");
@@ -6409,10 +6410,10 @@ getTSConfigurations(int *numTSConfigs)
 		cfginfo[i].dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_tableoid));
 		cfginfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
 		AssignDumpId(&cfginfo[i].dobj);
-		cfginfo[i].dobj.name = strdup(PQgetvalue(res, i, i_cfgname));
+		cfginfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_cfgname));
 		cfginfo[i].dobj.namespace = findNamespace(atooid(PQgetvalue(res, i, i_cfgnamespace)),
 												  cfginfo[i].dobj.catId.oid);
-		cfginfo[i].rolname = strdup(PQgetvalue(res, i, i_rolname));
+		cfginfo[i].rolname = pg_strdup(PQgetvalue(res, i, i_rolname));
 		cfginfo[i].cfgparser = atooid(PQgetvalue(res, i, i_cfgparser));
 
 		/* Decide whether we want to dump it */
@@ -6493,7 +6494,7 @@ getForeignDataWrappers(int *numForeignDataWrappers)
 	ntups = PQntuples(res);
 	*numForeignDataWrappers = ntups;
 
-	fdwinfo = (FdwInfo *) malloc(ntups * sizeof(FdwInfo));
+	fdwinfo = (FdwInfo *) pg_malloc(ntups * sizeof(FdwInfo));
 
 	i_tableoid = PQfnumber(res, "tableoid");
 	i_oid = PQfnumber(res, "oid");
@@ -6510,13 +6511,13 @@ getForeignDataWrappers(int *numForeignDataWrappers)
 		fdwinfo[i].dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_tableoid));
 		fdwinfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
 		AssignDumpId(&fdwinfo[i].dobj);
-		fdwinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_fdwname));
+		fdwinfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_fdwname));
 		fdwinfo[i].dobj.namespace = NULL;
-		fdwinfo[i].rolname = strdup(PQgetvalue(res, i, i_rolname));
-		fdwinfo[i].fdwhandler = strdup(PQgetvalue(res, i, i_fdwhandler));
-		fdwinfo[i].fdwvalidator = strdup(PQgetvalue(res, i, i_fdwvalidator));
-		fdwinfo[i].fdwoptions = strdup(PQgetvalue(res, i, i_fdwoptions));
-		fdwinfo[i].fdwacl = strdup(PQgetvalue(res, i, i_fdwacl));
+		fdwinfo[i].rolname = pg_strdup(PQgetvalue(res, i, i_rolname));
+		fdwinfo[i].fdwhandler = pg_strdup(PQgetvalue(res, i, i_fdwhandler));
+		fdwinfo[i].fdwvalidator = pg_strdup(PQgetvalue(res, i, i_fdwvalidator));
+		fdwinfo[i].fdwoptions = pg_strdup(PQgetvalue(res, i, i_fdwoptions));
+		fdwinfo[i].fdwacl = pg_strdup(PQgetvalue(res, i, i_fdwacl));
 
 		/* Decide whether we want to dump it */
 		selectDumpableObject(&(fdwinfo[i].dobj));
@@ -6580,7 +6581,7 @@ getForeignServers(int *numForeignServers)
 	ntups = PQntuples(res);
 	*numForeignServers = ntups;
 
-	srvinfo = (ForeignServerInfo *) malloc(ntups * sizeof(ForeignServerInfo));
+	srvinfo = (ForeignServerInfo *) pg_malloc(ntups * sizeof(ForeignServerInfo));
 
 	i_tableoid = PQfnumber(res, "tableoid");
 	i_oid = PQfnumber(res, "oid");
@@ -6598,14 +6599,14 @@ getForeignServers(int *numForeignServers)
 		srvinfo[i].dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_tableoid));
 		srvinfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
 		AssignDumpId(&srvinfo[i].dobj);
-		srvinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_srvname));
+		srvinfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_srvname));
 		srvinfo[i].dobj.namespace = NULL;
-		srvinfo[i].rolname = strdup(PQgetvalue(res, i, i_rolname));
+		srvinfo[i].rolname = pg_strdup(PQgetvalue(res, i, i_rolname));
 		srvinfo[i].srvfdw = atooid(PQgetvalue(res, i, i_srvfdw));
-		srvinfo[i].srvtype = strdup(PQgetvalue(res, i, i_srvtype));
-		srvinfo[i].srvversion = strdup(PQgetvalue(res, i, i_srvversion));
-		srvinfo[i].srvoptions = strdup(PQgetvalue(res, i, i_srvoptions));
-		srvinfo[i].srvacl = strdup(PQgetvalue(res, i, i_srvacl));
+		srvinfo[i].srvtype = pg_strdup(PQgetvalue(res, i, i_srvtype));
+		srvinfo[i].srvversion = pg_strdup(PQgetvalue(res, i, i_srvversion));
+		srvinfo[i].srvoptions = pg_strdup(PQgetvalue(res, i, i_srvoptions));
+		srvinfo[i].srvacl = pg_strdup(PQgetvalue(res, i, i_srvacl));
 
 		/* Decide whether we want to dump it */
 		selectDumpableObject(&(srvinfo[i].dobj));
@@ -6665,7 +6666,7 @@ getDefaultACLs(int *numDefaultACLs)
 	ntups = PQntuples(res);
 	*numDefaultACLs = ntups;
 
-	daclinfo = (DefaultACLInfo *) malloc(ntups * sizeof(DefaultACLInfo));
+	daclinfo = (DefaultACLInfo *) pg_malloc(ntups * sizeof(DefaultACLInfo));
 
 	i_oid = PQfnumber(res, "oid");
 	i_tableoid = PQfnumber(res, "tableoid");
@@ -6683,7 +6684,7 @@ getDefaultACLs(int *numDefaultACLs)
 		daclinfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
 		AssignDumpId(&daclinfo[i].dobj);
 		/* cheesy ... is it worth coming up with a better object name? */
-		daclinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_defaclobjtype));
+		daclinfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_defaclobjtype));
 
 		if (nspid != InvalidOid)
 			daclinfo[i].dobj.namespace = findNamespace(nspid,
@@ -6691,9 +6692,9 @@ getDefaultACLs(int *numDefaultACLs)
 		else
 			daclinfo[i].dobj.namespace = NULL;
 
-		daclinfo[i].defaclrole = strdup(PQgetvalue(res, i, i_defaclrole));
+		daclinfo[i].defaclrole = pg_strdup(PQgetvalue(res, i, i_defaclrole));
 		daclinfo[i].defaclobjtype = *(PQgetvalue(res, i, i_defaclobjtype));
-		daclinfo[i].defaclacl = strdup(PQgetvalue(res, i, i_defaclacl));
+		daclinfo[i].defaclacl = pg_strdup(PQgetvalue(res, i, i_defaclacl));
 
 		/* Decide whether we want to dump it */
 		selectDumpableDefaultACL(&(daclinfo[i]));
@@ -7021,7 +7022,7 @@ collectComments(Archive *fout, CommentItem **items)
 
 	ntups = PQntuples(res);
 
-	comments = (CommentItem *) malloc(ntups * sizeof(CommentItem));
+	comments = (CommentItem *) pg_malloc(ntups * sizeof(CommentItem));
 
 	for (i = 0; i < ntups; i++)
 	{
@@ -7174,7 +7175,7 @@ dumpNamespace(Archive *fout, NamespaceInfo *nspinfo)
 	delq = createPQExpBuffer();
 	labelq = createPQExpBuffer();
 
-	qnspname = strdup(fmtId(nspinfo->dobj.name));
+	qnspname = pg_strdup(fmtId(nspinfo->dobj.name));
 
 	appendPQExpBuffer(delq, "DROP SCHEMA %s;\n", qnspname);
 
@@ -7233,7 +7234,7 @@ dumpExtension(Archive *fout, ExtensionInfo *extinfo)
 	delq = createPQExpBuffer();
 	labelq = createPQExpBuffer();
 
-	qextname = strdup(fmtId(extinfo->dobj.name));
+	qextname = pg_strdup(fmtId(extinfo->dobj.name));
 
 	appendPQExpBuffer(delq, "DROP EXTENSION %s;\n", qextname);
 
@@ -8634,7 +8635,7 @@ dumpProcLang(Archive *fout, ProcLangInfo *plang)
 	delqry = createPQExpBuffer();
 	labelq = createPQExpBuffer();
 
-	qlanname = strdup(fmtId(plang->dobj.name));
+	qlanname = pg_strdup(fmtId(plang->dobj.name));
 
 	/*
 	 * If dumping a HANDLER clause, treat the language as being in the handler
@@ -9723,7 +9724,7 @@ convertRegProcReference(const char *proc)
 		char	   *paren;
 		bool		inquote;
 
-		name = strdup(proc);
+		name = pg_strdup(proc);
 		/* find non-double-quoted left paren */
 		inquote = false;
 		for (paren = name; *paren; paren++)
@@ -9770,7 +9771,7 @@ convertOperatorReference(const char *opr)
 		bool		inquote;
 		bool		sawdot;
 
-		name = strdup(opr);
+		name = pg_strdup(opr);
 		/* find non-double-quoted left paren, and check for non-quoted dot */
 		inquote = false;
 		sawdot = false;
@@ -9789,7 +9790,7 @@ convertOperatorReference(const char *opr)
 		/* If not schema-qualified, don't need to add OPERATOR() */
 		if (!sawdot)
 			return name;
-		oname = malloc(strlen(name) + 11);
+		oname = pg_malloc(strlen(name) + 11);
 		sprintf(oname, "OPERATOR(%s)", name);
 		free(name);
 		return oname;
@@ -9836,7 +9837,7 @@ convertTSFunction(Oid funcOid)
 		exit_nicely();
 	}
 
-	result = strdup(PQgetvalue(res, 0, 0));
+	result = pg_strdup(PQgetvalue(res, 0, 0));
 
 	PQclear(res);
 
@@ -9962,11 +9963,11 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 	opckeytype = PQgetvalue(res, 0, i_opckeytype);
 	opcdefault = PQgetvalue(res, 0, i_opcdefault);
 	/* opcfamily will still be needed after we PQclear res */
-	opcfamily = strdup(PQgetvalue(res, 0, i_opcfamily));
+	opcfamily = pg_strdup(PQgetvalue(res, 0, i_opcfamily));
 	opcfamilyname = PQgetvalue(res, 0, i_opcfamilyname);
 	opcfamilynsp = PQgetvalue(res, 0, i_opcfamilynsp);
 	/* amname will still be needed after we PQclear res */
-	amname = strdup(PQgetvalue(res, 0, i_amname));
+	amname = pg_strdup(PQgetvalue(res, 0, i_amname));
 
 	/*
 	 * DROP must be fully qualified in case same name appears in pg_catalog
@@ -10409,7 +10410,7 @@ dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo)
 	i_amname = PQfnumber(res, "amname");
 
 	/* amname will still be needed after we PQclear res */
-	amname = strdup(PQgetvalue(res, 0, i_amname));
+	amname = pg_strdup(PQgetvalue(res, 0, i_amname));
 
 	/*
 	 * DROP must be fully qualified in case same name appears in pg_catalog
@@ -11429,7 +11430,7 @@ dumpForeignDataWrapper(Archive *fout, FdwInfo *fdwinfo)
 	delq = createPQExpBuffer();
 	labelq = createPQExpBuffer();
 
-	qfdwname = strdup(fmtId(fdwinfo->dobj.name));
+	qfdwname = pg_strdup(fmtId(fdwinfo->dobj.name));
 
 	appendPQExpBuffer(q, "CREATE FOREIGN DATA WRAPPER %s",
 					  qfdwname);
@@ -11508,7 +11509,7 @@ dumpForeignServer(Archive *fout, ForeignServerInfo *srvinfo)
 	labelq = createPQExpBuffer();
 	query = createPQExpBuffer();
 
-	qsrvname = strdup(fmtId(srvinfo->dobj.name));
+	qsrvname = pg_strdup(fmtId(srvinfo->dobj.name));
 
 	/* look up the foreign-data wrapper */
 	selectSourceSchema("pg_catalog");
@@ -12091,7 +12092,7 @@ collectSecLabels(Archive *fout, SecLabelItem **items)
 
 	ntups = PQntuples(res);
 
-	labels = (SecLabelItem *) malloc(ntups * sizeof(SecLabelItem));
+	labels = (SecLabelItem *) pg_malloc(ntups * sizeof(SecLabelItem));
 
 	for (i = 0; i < ntups; i++)
 	{
@@ -12126,7 +12127,7 @@ dumpTable(Archive *fout, TableInfo *tbinfo)
 			dumpTableSchema(fout, tbinfo);
 
 		/* Handle the ACL here */
-		namecopy = strdup(fmtId(tbinfo->dobj.name));
+		namecopy = pg_strdup(fmtId(tbinfo->dobj.name));
 		dumpACL(fout, tbinfo->dobj.catId, tbinfo->dobj.dumpId,
 				(tbinfo->relkind == RELKIND_SEQUENCE) ? "SEQUENCE" :
 				"TABLE",
@@ -12160,8 +12161,8 @@ dumpTable(Archive *fout, TableInfo *tbinfo)
 				char	   *attnamecopy;
 				char	   *acltag;
 
-				attnamecopy = strdup(fmtId(attname));
-				acltag = malloc(strlen(tbinfo->dobj.name) + strlen(attname) + 2);
+				attnamecopy = pg_strdup(fmtId(attname));
+				acltag = pg_malloc(strlen(tbinfo->dobj.name) + strlen(attname) + 2);
 				sprintf(acltag, "%s.%s", tbinfo->dobj.name, attname);
 				/* Column's GRANT type is always TABLE */
 				dumpACL(fout, tbinfo->dobj.catId, tbinfo->dobj.dumpId, "TABLE",
@@ -12296,8 +12297,8 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
 			i_srvname = PQfnumber(res, "srvname");
 			i_ftoptions = PQfnumber(res, "ftoptions");
-			srvname = strdup(PQgetvalue(res, 0, i_srvname));
-			ftoptions = strdup(PQgetvalue(res, 0, i_ftoptions));
+			srvname = pg_strdup(PQgetvalue(res, 0, i_srvname));
+			ftoptions = pg_strdup(PQgetvalue(res, 0, i_ftoptions));
 			PQclear(res);
 		}
 		else
@@ -13968,7 +13969,7 @@ getExtensionMembership(ExtensionInfo extinfo[], int numExtensions)
 					 */
 					makeTableDataInfo(configtbl, false);
 					if (strlen(extconditionarray[j]) > 0)
-						configtbl->dataObj->filtercond = strdup(extconditionarray[j]);
+						configtbl->dataObj->filtercond = pg_strdup(extconditionarray[j]);
 				}
 			}
 		}
@@ -14141,7 +14142,7 @@ selectSourceSchema(const char *schemaName)
 	destroyPQExpBuffer(query);
 	if (curSchemaName)
 		free(curSchemaName);
-	curSchemaName = strdup(schemaName);
+	curSchemaName = pg_strdup(schemaName);
 }
 
 /*
@@ -14162,13 +14163,13 @@ getFormattedTypeName(Oid oid, OidOptions opts)
 	if (oid == 0)
 	{
 		if ((opts & zeroAsOpaque) != 0)
-			return strdup(g_opaque_type);
+			return pg_strdup(g_opaque_type);
 		else if ((opts & zeroAsAny) != 0)
-			return strdup("'any'");
+			return pg_strdup("'any'");
 		else if ((opts & zeroAsStar) != 0)
-			return strdup("*");
+			return pg_strdup("*");
 		else if ((opts & zeroAsNone) != 0)
-			return strdup("NONE");
+			return pg_strdup("NONE");
 	}
 
 	query = createPQExpBuffer();
@@ -14207,12 +14208,12 @@ getFormattedTypeName(Oid oid, OidOptions opts)
 	if (g_fout->remoteVersion >= 70100)
 	{
 		/* already quoted */
-		result = strdup(PQgetvalue(res, 0, 0));
+		result = pg_strdup(PQgetvalue(res, 0, 0));
 	}
 	else
 	{
 		/* may need to quote it */
-		result = strdup(fmtId(PQgetvalue(res, 0, 0)));
+		result = pg_strdup(fmtId(PQgetvalue(res, 0, 0)));
 	}
 
 	PQclear(res);
@@ -14285,7 +14286,7 @@ myFormatType(const char *typname, int32 typmod)
 	if (isarray)
 		appendPQExpBuffer(buf, "[]");
 
-	result = strdup(buf->data);
+	result = pg_strdup(buf->data);
 	destroyPQExpBuffer(buf);
 
 	return result;

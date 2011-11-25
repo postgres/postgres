@@ -23,6 +23,7 @@
  */
 
 #include "pg_backup_archiver.h"
+#include "common.h"
 #include "dumputils.h"
 
 #include <unistd.h>				/* for dup */
@@ -67,9 +68,7 @@ InitArchiveFmt_Null(ArchiveHandle *AH)
 
 	/* Initialize LO buffering */
 	AH->lo_buf_size = LOBBUFSIZE;
-	AH->lo_buf = (void *) malloc(LOBBUFSIZE);
-	if (AH->lo_buf == NULL)
-		die_horribly(AH, NULL, "out of memory\n");
+	AH->lo_buf = (void *) pg_malloc(LOBBUFSIZE);
 
 	/*
 	 * Now prevent reading...

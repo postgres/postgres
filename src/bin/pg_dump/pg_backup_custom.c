@@ -25,6 +25,7 @@
  */
 
 #include "compress_io.h"
+#include "common.h"
 
 /*--------
  * Routines in the format interface
@@ -126,16 +127,12 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 	AH->DeClonePtr = _DeClone;
 
 	/* Set up a private area. */
-	ctx = (lclContext *) calloc(1, sizeof(lclContext));
-	if (ctx == NULL)
-		die_horribly(AH, modulename, "out of memory\n");
+	ctx = (lclContext *) pg_calloc(1, sizeof(lclContext));
 	AH->formatData = (void *) ctx;
 
 	/* Initialize LO buffering */
 	AH->lo_buf_size = LOBBUFSIZE;
-	AH->lo_buf = (void *) malloc(LOBBUFSIZE);
-	if (AH->lo_buf == NULL)
-		die_horribly(AH, modulename, "out of memory\n");
+	AH->lo_buf = (void *) pg_malloc(LOBBUFSIZE);
 
 	ctx->filePos = 0;
 
@@ -199,7 +196,7 @@ _ArchiveEntry(ArchiveHandle *AH, TocEntry *te)
 {
 	lclTocEntry *ctx;
 
-	ctx = (lclTocEntry *) calloc(1, sizeof(lclTocEntry));
+	ctx = (lclTocEntry *) pg_calloc(1, sizeof(lclTocEntry));
 	if (te->dataDumper)
 		ctx->dataState = K_OFFSET_POS_NOT_SET;
 	else
@@ -240,7 +237,7 @@ _ReadExtraToc(ArchiveHandle *AH, TocEntry *te)
 
 	if (ctx == NULL)
 	{
-		ctx = (lclTocEntry *) calloc(1, sizeof(lclTocEntry));
+		ctx = (lclTocEntry *) pg_calloc(1, sizeof(lclTocEntry));
 		te->formatData = (void *) ctx;
 	}
 
@@ -566,7 +563,7 @@ _skipData(ArchiveHandle *AH)
 		{
 			if (buf)
 				free(buf);
-			buf = (char *) malloc(blkLen);
+			buf = (char *) pg_malloc(blkLen);
 			buflen = blkLen;
 		}
 		cnt = fread(buf, 1, blkLen, AH->FH);
@@ -774,9 +771,7 @@ _Clone(ArchiveHandle *AH)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 
-	AH->formatData = (lclContext *) malloc(sizeof(lclContext));
-	if (AH->formatData == NULL)
-		die_horribly(AH, modulename, "out of memory\n");
+	AH->formatData = (lclContext *) pg_malloc(sizeof(lclContext));
 	memcpy(AH->formatData, ctx, sizeof(lclContext));
 	ctx = (lclContext *) AH->formatData;
 
@@ -901,9 +896,7 @@ _CustomReadFunc(ArchiveHandle *AH, char **buf, size_t *buflen)
 	if (blkLen > *buflen)
 	{
 		free(*buf);
-		*buf = (char *) malloc(blkLen);
-		if (!(*buf))
-			die_horribly(AH, modulename, "out of memory\n");
+		*buf = (char *) pg_malloc(blkLen);
 		*buflen = blkLen;
 	}
 

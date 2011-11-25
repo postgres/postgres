@@ -28,6 +28,7 @@
 #include "pg_backup.h"
 #include "pg_backup_archiver.h"
 #include "pg_backup_tar.h"
+#include "common.h"
 
 #include <sys/stat.h>
 #include <ctype.h>
@@ -159,16 +160,14 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 	/*
 	 * Set up some special context used in compressing data.
 	 */
-	ctx = (lclContext *) calloc(1, sizeof(lclContext));
+	ctx = (lclContext *) pg_calloc(1, sizeof(lclContext));
 	AH->formatData = (void *) ctx;
 	ctx->filePos = 0;
 	ctx->isSpecialScript = 0;
 
 	/* Initialize LO buffering */
 	AH->lo_buf_size = LOBBUFSIZE;
-	AH->lo_buf = (void *) malloc(LOBBUFSIZE);
-	if (AH->lo_buf == NULL)
-		die_horribly(AH, modulename, "out of memory\n");
+	AH->lo_buf = (void *) pg_malloc(LOBBUFSIZE);
 
 	/*
 	 * Now open the tar file, and load the TOC if we're in read mode.
@@ -267,7 +266,7 @@ _ArchiveEntry(ArchiveHandle *AH, TocEntry *te)
 	lclTocEntry *ctx;
 	char		fn[K_STD_BUF_SIZE];
 
-	ctx = (lclTocEntry *) calloc(1, sizeof(lclTocEntry));
+	ctx = (lclTocEntry *) pg_calloc(1, sizeof(lclTocEntry));
 	if (te->dataDumper != NULL)
 	{
 #ifdef HAVE_LIBZ
@@ -278,7 +277,7 @@ _ArchiveEntry(ArchiveHandle *AH, TocEntry *te)
 #else
 		sprintf(fn, "%d.dat", te->dumpId);
 #endif
-		ctx->filename = strdup(fn);
+		ctx->filename = pg_strdup(fn);
 	}
 	else
 	{
@@ -306,7 +305,7 @@ _ReadExtraToc(ArchiveHandle *AH, TocEntry *te)
 
 	if (ctx == NULL)
 	{
-		ctx = (lclTocEntry *) calloc(1, sizeof(lclTocEntry));
+		ctx = (lclTocEntry *) pg_calloc(1, sizeof(lclTocEntry));
 		te->formatData = (void *) ctx;
 	}
 
@@ -379,7 +378,7 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 	}
 	else
 	{
-		tm = calloc(1, sizeof(TAR_MEMBER));
+		tm = pg_calloc(1, sizeof(TAR_MEMBER));
 
 #ifndef WIN32
 		tm->tmpFH = tmpfile();
@@ -432,7 +431,7 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 #endif
 
 		tm->AH = AH;
-		tm->targetFile = strdup(filename);
+		tm->targetFile = pg_strdup(filename);
 	}
 
 	tm->mode = mode;
@@ -665,7 +664,7 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 		ahprintf(AH, "\\.\n");
 
 		/* Get a copy of the COPY statement and clean it up */
-		tmpCopy = strdup(te->copyStmt);
+		tmpCopy = pg_strdup(te->copyStmt);
 		for (i = 0; i < strlen(tmpCopy); i++)
 			tmpCopy[i] = pg_tolower((unsigned char) tmpCopy[i]);
 
@@ -1010,9 +1009,7 @@ tarPrintf(ArchiveHandle *AH, TAR_MEMBER *th, const char *fmt,...)
 		if (p != NULL)
 			free(p);
 		bSize *= 2;
-		p = (char *) malloc(bSize);
-		if (p == NULL)
-			die_horribly(AH, modulename, "out of memory\n");
+		p = (char *) pg_malloc(bSize);
 		va_start(ap, fmt);
 		cnt = vsnprintf(p, bSize, fmt, ap);
 		va_end(ap);
@@ -1125,7 +1122,7 @@ static TAR_MEMBER *
 _tarPositionTo(ArchiveHandle *AH, const char *filename)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	TAR_MEMBER *th = calloc(1, sizeof(TAR_MEMBER));
+	TAR_MEMBER *th = pg_calloc(1, sizeof(TAR_MEMBER));
 	char		c;
 	char		header[512];
 	size_t		i,
@@ -1295,7 +1292,7 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 					 tag, sum, chk, buf);
 	}
 
-	th->targetFile = strdup(tag);
+	th->targetFile = pg_strdup(tag);
 	th->fileLen = len;
 
 	return 1;

@@ -16,6 +16,7 @@
 
 #include <ctype.h>
 
+#include "common.h"
 #include "dumputils.h"
 
 #include "parser/keywords.h"

@@ -34,6 +34,7 @@
  */
 
 #include "compress_io.h"
+#include "common.h"
 
 #include <dirent.h>
 #include <sys/stat.h>
@@ -125,9 +126,7 @@ InitArchiveFmt_Directory(ArchiveHandle *AH)
 	AH->DeClonePtr = NULL;
 
 	/* Set up our private context */
-	ctx = (lclContext *) calloc(1, sizeof(lclContext));
-	if (ctx == NULL)
-		die_horribly(AH, modulename, "out of memory\n");
+	ctx = (lclContext *) pg_calloc(1, sizeof(lclContext));
 	AH->formatData = (void *) ctx;
 
 	ctx->dataFH = NULL;
@@ -135,9 +134,7 @@ InitArchiveFmt_Directory(ArchiveHandle *AH)
 
 	/* Initialize LO buffering */
 	AH->lo_buf_size = LOBBUFSIZE;
-	AH->lo_buf = (void *) malloc(LOBBUFSIZE);
-	if (AH->lo_buf == NULL)
-		die_horribly(AH, modulename, "out of memory\n");
+	AH->lo_buf = (void *) pg_malloc(LOBBUFSIZE);
 
 	/*
 	 * Now open the TOC file
@@ -196,16 +193,14 @@ _ArchiveEntry(ArchiveHandle *AH, TocEntry *te)
 	lclTocEntry *tctx;
 	char		fn[MAXPGPATH];
 
-	tctx = (lclTocEntry *) calloc(1, sizeof(lclTocEntry));
-	if (!tctx)
-		die_horribly(AH, modulename, "out of memory\n");
+	tctx = (lclTocEntry *) pg_calloc(1, sizeof(lclTocEntry));
 	if (te->dataDumper)
 	{
 		snprintf(fn, MAXPGPATH, "%d.dat", te->dumpId);
-		tctx->filename = strdup(fn);
+		tctx->filename = pg_strdup(fn);
 	}
 	else if (strcmp(te->desc, "BLOBS") == 0)
-		tctx->filename = strdup("blobs.toc");
+		tctx->filename = pg_strdup("blobs.toc");
 	else
 		tctx->filename = NULL;
 
@@ -247,9 +242,7 @@ _ReadExtraToc(ArchiveHandle *AH, TocEntry *te)
 
 	if (tctx == NULL)
 	{
-		tctx = (lclTocEntry *) calloc(1, sizeof(lclTocEntry));
-		if (!tctx)
-			die_horribly(AH, modulename, "out of memory\n");
+		tctx = (lclTocEntry *) pg_calloc(1, sizeof(lclTocEntry));
 		te->formatData = (void *) tctx;
 	}
 
@@ -355,9 +348,7 @@ _PrintFileData(ArchiveHandle *AH, char *filename, RestoreOptions *ropt)
 		die_horribly(AH, modulename, "could not open input file \"%s\": %s\n",
 					 filename, strerror(errno));
 
-	buf = malloc(ZLIB_OUT_SIZE);
-	if (buf == NULL)
-		die_horribly(NULL, modulename, "out of memory\n");
+	buf = pg_malloc(ZLIB_OUT_SIZE);
 	buflen = ZLIB_OUT_SIZE;
 
 	while ((cnt = cfread(buf, buflen, cfp)))
