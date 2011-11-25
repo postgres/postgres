@@ -340,6 +340,7 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 		{
 			/* Just need to update stats before we exit */
 			*hit = true;
+			VacuumPageHit++;
 
 			if (VacuumCostActive)
 				VacuumCostBalance += VacuumCostPageHit;
@@ -471,6 +472,7 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 		TerminateBufferIO(bufHdr, false, BM_VALID);
 	}
 
+	VacuumPageMiss++;
 	if (VacuumCostActive)
 		VacuumCostBalance += VacuumCostPageMiss;
 
@@ -972,10 +974,14 @@ MarkBufferDirty(Buffer buffer)
 	Assert(bufHdr->refcount > 0);
 
 	/*
-	 * If the buffer was not dirty already, do vacuum cost accounting.
+	 * If the buffer was not dirty already, do vacuum accounting.
 	 */
-	if (!(bufHdr->flags & BM_DIRTY) && VacuumCostActive)
-		VacuumCostBalance += VacuumCostPageDirty;
+	if (!(bufHdr->flags & BM_DIRTY))
+	{
+		VacuumPageDirty++;
+		if (VacuumCostActive)
+			VacuumCostBalance += VacuumCostPageDirty;
+	}
 
 	bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
 
@@ -2337,8 +2343,12 @@ SetBufferCommitInfoNeedsSave(Buffer buffer)
 	{
 		LockBufHdr(bufHdr);
 		Assert(bufHdr->refcount > 0);
-		if (!(bufHdr->flags & BM_DIRTY) && VacuumCostActive)
-			VacuumCostBalance += VacuumCostPageDirty;
+		if (!(bufHdr->flags & BM_DIRTY))
+		{
+			VacuumPageDirty++;
+			if (VacuumCostActive)
+				VacuumCostBalance += VacuumCostPageDirty;
+		}
 		bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
 		UnlockBufHdr(bufHdr);
 	}

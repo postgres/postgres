@@ -214,6 +214,9 @@ vacuum(VacuumStmt *vacstmt, Oid relid, bool do_toast,
 
 		VacuumCostActive = (VacuumCostDelay > 0);
 		VacuumCostBalance = 0;
+		VacuumPageHit = 0;
+		VacuumPageMiss = 0;
+		VacuumPageDirty = 0;
 
 		/*
 		 * Loop to process each selected relation.

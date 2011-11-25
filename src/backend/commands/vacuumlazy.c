@@ -155,6 +155,10 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	BlockNumber possibly_freeable;
 	PGRUsage	ru0;
 	TimestampTz starttime = 0;
+ 	long		secs;
+ 	int			usecs;
+ 	double		read_rate,
+				write_rate;
 	bool		scan_all;
 	TransactionId freezeTableLimit;
 	BlockNumber new_rel_pages;
@@ -166,8 +170,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration >= 0)
 	{
 		pg_rusage_init(&ru0);
-		if (Log_autovacuum_min_duration > 0)
-			starttime = GetCurrentTimestamp();
+		starttime = GetCurrentTimestamp();
 	}
 
 	if (vacstmt->options & VACOPT_VERBOSE)
@@ -262,13 +265,29 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	/* and log the action if appropriate */
 	if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration >= 0)
 	{
+		TimestampTz	endtime = GetCurrentTimestamp();
+
 		if (Log_autovacuum_min_duration == 0 ||
-			TimestampDifferenceExceeds(starttime, GetCurrentTimestamp(),
+			TimestampDifferenceExceeds(starttime, endtime,
 									   Log_autovacuum_min_duration))
+		{
+			TimestampDifference(starttime, endtime, &secs, &usecs);
+
+			read_rate = 0;
+			write_rate = 0;
+			if ((secs > 0) || (usecs > 0))
+			{
+				read_rate = (double) BLCKSZ * VacuumPageMiss / (1024 * 1024) /
+					(secs + usecs / 1000000.0);
+				write_rate = (double) BLCKSZ * VacuumPageDirty / (1024 * 1024) /
+ 					(secs + usecs / 1000000.0);
+			}
 			ereport(LOG,
 					(errmsg("automatic vacuum of table \"%s.%s.%s\": index scans: %d\n"
 							"pages: %d removed, %d remain\n"
 							"tuples: %.0f removed, %.0f remain\n"
+							"buffer usage: %d hits, %d misses, %d dirtied\n"
+							"avg read rate: %.3f MiB/s, avg write rate: %.3f MiB/s\n"
 							"system usage: %s",
 							get_database_name(MyDatabaseId),
 							get_namespace_name(RelationGetNamespace(onerel)),
@@ -277,8 +296,13 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 							vacrelstats->pages_removed,
 							vacrelstats->rel_pages,
 							vacrelstats->tuples_deleted,
-							new_rel_tuples,
+							vacrelstats->new_rel_tuples,
+							VacuumPageHit,
+							VacuumPageMiss,
+							VacuumPageDirty,
+							read_rate,write_rate,
 							pg_rusage_show(&ru0))));
+		}
 	}
 }
 

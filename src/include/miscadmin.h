@@ -230,6 +230,10 @@ extern int	VacuumCostPageDirty;
 extern int	VacuumCostLimit;
 extern int	VacuumCostDelay;
 
+extern int	VacuumPageHit;
+extern int	VacuumPageMiss;
+extern int	VacuumPageDirty;
+
 extern int	VacuumCostBalance;
 extern bool VacuumCostActive;
 

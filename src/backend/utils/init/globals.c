@@ -115,6 +115,10 @@ int			VacuumCostPageDirty = 20;
 int			VacuumCostLimit = 200;
 int			VacuumCostDelay = 0;
 
+int			VacuumPageHit = 0;
+int			VacuumPageMiss = 0;
+int			VacuumPageDirty = 0;
+
 int			VacuumCostBalance = 0;		/* working state for vacuum */
 bool		VacuumCostActive = false;
 
