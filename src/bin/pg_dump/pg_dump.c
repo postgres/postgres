@@ -12708,7 +12708,7 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 			exit_nicely();
 		}
 
-		if (binary_upgrade && !coninfo->condef)
+		if (binary_upgrade)
 			binary_upgrade_set_pg_class_oids(q, indxinfo->dobj.catId.oid, true);
 
 		appendPQExpBuffer(q, "ALTER TABLE ONLY %s\n",
