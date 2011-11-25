@@ -11204,7 +11204,7 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 			exit_nicely();
 		}
 
-		if (binary_upgrade && !coninfo->condef)
+		if (binary_upgrade)
 			binary_upgrade_set_relfilenodes(q, indxinfo->dobj.catId.oid, true);
 
 		appendPQExpBuffer(q, "ALTER TABLE ONLY %s\n",
