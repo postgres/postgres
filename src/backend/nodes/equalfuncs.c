@@ -119,6 +119,7 @@ _equalIntoClause(IntoClause *a, IntoClause *b)
 	COMPARE_NODE_FIELD(options);
 	COMPARE_SCALAR_FIELD(onCommit);
 	COMPARE_STRING_FIELD(tableSpaceName);
+	COMPARE_SCALAR_FIELD(skipData);
 
 	return true;
 }

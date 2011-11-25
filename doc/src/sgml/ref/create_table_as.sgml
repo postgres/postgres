@@ -105,10 +105,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE <replaceable
     <listitem>
      <para>
       The name of a column in the new table.  If column names are not
-      provided, they are taken from the output column names of the
-      query.  If the table is created from an
-      <command>EXECUTE</command> command, a column name list cannot be
-      specified.
+      provided, they are taken from the output column names of the query.
      </para>
     </listitem>
    </varlistentry>
@@ -252,7 +249,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE <replaceable
    identical to pre-8.0 releases.  Applications that
    require OIDs in the table created by <command>CREATE TABLE
    AS</command> should explicitly specify <literal>WITH (OIDS)</literal>
-   to ensure proper behavior.
+   to ensure desired behavior.
   </para>
  </refsect1>
 

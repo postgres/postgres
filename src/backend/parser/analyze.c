@@ -56,7 +56,6 @@ static Node *transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 						  bool isTopLevel, List **targetlist);
 static void determineRecursiveColTypes(ParseState *pstate,
 						   Node *larg, List *nrtargetlist);
-static void applyColumnNames(List *dst, List *src);
 static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
 static List *transformReturningList(ParseState *pstate, List *returningList);
 static Query *transformDeclareCursorStmt(ParseState *pstate,
@@ -964,13 +963,8 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 												   pstate->p_windowdefs,
 												   &qry->targetList);
 
-	/* handle any SELECT INTO/CREATE TABLE AS spec */
-	if (stmt->intoClause)
-	{
-		qry->intoClause = stmt->intoClause;
-		if (stmt->intoClause->colNames)
-			applyColumnNames(qry->targetList, stmt->intoClause->colNames);
-	}
+	/* SELECT INTO/CREATE TABLE AS spec is just passed through */
+	qry->intoClause = stmt->intoClause;
 
 	qry->rtable = pstate->p_rtable;
 	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
@@ -1191,13 +1185,8 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("SELECT FOR UPDATE/SHARE cannot be applied to VALUES")));
 
-	/* handle any CREATE TABLE AS spec */
-	if (stmt->intoClause)
-	{
-		qry->intoClause = stmt->intoClause;
-		if (stmt->intoClause->colNames)
-			applyColumnNames(qry->targetList, stmt->intoClause->colNames);
-	}
+	/* CREATE TABLE AS spec is just passed through */
+	qry->intoClause = stmt->intoClause;
 
 	/*
 	 * There mustn't have been any table references in the expressions, else
@@ -1268,7 +1257,6 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	int			leftmostRTI;
 	Query	   *leftmostQuery;
 	SetOperationStmt *sostmt;
-	List	   *intoColNames = NIL;
 	List	   *sortClause;
 	Node	   *limitOffset;
 	Node	   *limitCount;
@@ -1306,11 +1294,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 		leftmostSelect = leftmostSelect->larg;
 	Assert(leftmostSelect && IsA(leftmostSelect, SelectStmt) &&
 		   leftmostSelect->larg == NULL);
-	if (leftmostSelect->intoClause)
-	{
-		qry->intoClause = leftmostSelect->intoClause;
-		intoColNames = leftmostSelect->intoClause->colNames;
-	}
+	qry->intoClause = leftmostSelect->intoClause;
 
 	/* clear this to prevent complaints in transformSetOperationTree() */
 	leftmostSelect->intoClause = NULL;
@@ -1459,19 +1443,6 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 											"OFFSET");
 	qry->limitCount = transformLimitClause(pstate, limitCount,
 										   "LIMIT");
-
-	/*
-	 * Handle SELECT INTO/CREATE TABLE AS.
-	 *
-	 * Any column names from CREATE TABLE AS need to be attached to both the
-	 * top level and the leftmost subquery.  We do not do this earlier because
-	 * we do *not* want sortClause processing to be affected.
-	 */
-	if (intoColNames)
-	{
-		applyColumnNames(qry->targetList, intoColNames);
-		applyColumnNames(leftmostQuery->targetList, intoColNames);
-	}
 
 	qry->rtable = pstate->p_rtable;
 	qry->jointree = makeFromExpr(pstate->p_joinlist, NULL);
@@ -1890,44 +1861,6 @@ determineRecursiveColTypes(ParseState *pstate, Node *larg, List *nrtargetlist)
 
 	/* Now build CTE's output column info using dummy targetlist */
 	analyzeCTETargetList(pstate, pstate->p_parent_cte, targetList);
-}
-
-/*
- * Attach column names from a ColumnDef list to a TargetEntry list
- * (for CREATE TABLE AS)
- */
-static void
-applyColumnNames(List *dst, List *src)
-{
-	ListCell   *dst_item;
-	ListCell   *src_item;
-
-	src_item = list_head(src);
-
-	foreach(dst_item, dst)
-	{
-		TargetEntry *d = (TargetEntry *) lfirst(dst_item);
-		ColumnDef  *s;
-
-		/* junk targets don't count */
-		if (d->resjunk)
-			continue;
-
-		/* fewer ColumnDefs than target entries is OK */
-		if (src_item == NULL)
-			break;
-
-		s = (ColumnDef *) lfirst(src_item);
-		src_item = lnext(src_item);
-
-		d->resname = pstrdup(s->colname);
-	}
-
-	/* more ColumnDefs than target entries is not OK */
-	if (src_item != NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("CREATE TABLE AS specifies too many column names")));
 }
 
 

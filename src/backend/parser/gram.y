@@ -387,8 +387,7 @@ static void processCASbits(int cas_bits, int location, const char *constrType,
 %type <node>	case_expr case_arg when_clause case_default
 %type <list>	when_clause_list
 %type <ival>	sub_type
-%type <list>	OptCreateAs CreateAsList
-%type <node>	CreateAsElement ctext_expr
+%type <node>	ctext_expr
 %type <value>	NumericOnly
 %type <list>	NumericOnly_list
 %type <alias>	alias_clause
@@ -3015,8 +3014,7 @@ CreateAsStmt:
 					 * When the SelectStmt is a set-operation tree, we must
 					 * stuff the INTO information into the leftmost component
 					 * Select, because that's where analyze.c will expect
-					 * to find it.	Similarly, the output column names must
-					 * be attached to that Select's target list.
+					 * to find it.
 					 */
 					SelectStmt *n = findLeftmostSelect((SelectStmt *) $6);
 					if (n->intoClause != NULL)
@@ -3024,17 +3022,16 @@ CreateAsStmt:
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("CREATE TABLE AS cannot specify INTO"),
 								 parser_errposition(exprLocation((Node *) n->intoClause))));
-					$4->rel->relpersistence = $2;
 					n->intoClause = $4;
-					/* Implement WITH NO DATA by forcing top-level LIMIT 0 */
-					if (!$7)
-						((SelectStmt *) $6)->limitCount = makeIntConst(0, -1);
+					/* cram additional flags into the IntoClause */
+					$4->rel->relpersistence = $2;
+					$4->skipData = !($7);
 					$$ = $6;
 				}
 		;
 
 create_as_target:
-			qualified_name OptCreateAs OptWith OnCommitOption OptTableSpace
+			qualified_name opt_column_list OptWith OnCommitOption OptTableSpace
 				{
 					$$ = makeNode(IntoClause);
 					$$->rel = $1;
@@ -3042,36 +3039,7 @@ create_as_target:
 					$$->options = $3;
 					$$->onCommit = $4;
 					$$->tableSpaceName = $5;
-				}
-		;
-
-OptCreateAs:
-			'(' CreateAsList ')'					{ $$ = $2; }
-			| /*EMPTY*/								{ $$ = NIL; }
-		;
-
-CreateAsList:
-			CreateAsElement							{ $$ = list_make1($1); }
-			| CreateAsList ',' CreateAsElement		{ $$ = lappend($1, $3); }
-		;
-
-CreateAsElement:
-			ColId
-				{
-					ColumnDef *n = makeNode(ColumnDef);
-					n->colname = $1;
-					n->typeName = NULL;
-					n->inhcount = 0;
-					n->is_local = true;
-					n->is_not_null = false;
-					n->is_from_type = false;
-					n->storage = 0;
-					n->raw_default = NULL;
-					n->cooked_default = NULL;
-					n->collClause = NULL;
-					n->collOid = InvalidOid;
-					n->constraints = NIL;
-					$$ = (Node *)n;
+					$$->skipData = false;		/* might get changed later */
 				}
 		;
 
@@ -8030,18 +7998,15 @@ ExecuteStmt: EXECUTE name execute_param_clause
 					$$ = (Node *) n;
 				}
 			| CREATE OptTemp TABLE create_as_target AS
-				EXECUTE name execute_param_clause
+				EXECUTE name execute_param_clause opt_with_data
 				{
 					ExecuteStmt *n = makeNode(ExecuteStmt);
 					n->name = $7;
 					n->params = $8;
-					$4->rel->relpersistence = $2;
 					n->into = $4;
-					if ($4->colNames)
-						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("column name list not allowed in CREATE TABLE / AS EXECUTE")));
-					/* ... because it's not implemented, but it could be */
+					/* cram additional flags into the IntoClause */
+					$4->rel->relpersistence = $2;
+					$4->skipData = !($9);
 					$$ = (Node *) n;
 				}
 		;
@@ -8583,6 +8548,7 @@ into_clause:
 					$$->options = NIL;
 					$$->onCommit = ONCOMMIT_NOOP;
 					$$->tableSpaceName = NULL;
+					$$->skipData = false;
 				}
 			| /*EMPTY*/
 				{ $$ = NULL; }

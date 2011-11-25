@@ -899,6 +899,7 @@ _outIntoClause(StringInfo str, IntoClause *node)
 	WRITE_NODE_FIELD(options);
 	WRITE_ENUM_FIELD(onCommit, OnCommitAction);
 	WRITE_STRING_FIELD(tableSpaceName);
+	WRITE_BOOL_FIELD(skipData);
 }
 
 static void

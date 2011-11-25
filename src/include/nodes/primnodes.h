@@ -91,6 +91,7 @@ typedef struct IntoClause
 	List	   *options;		/* options from WITH clause */
 	OnCommitAction onCommit;	/* what do we do at COMMIT? */
 	char	   *tableSpaceName; /* table space to use, or NULL */
+	bool		skipData;		/* true for WITH NO DATA */
 } IntoClause;
 
 

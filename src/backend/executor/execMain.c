@@ -56,6 +56,7 @@
 #include "storage/smgr.h"
 #include "tcop/utility.h"
 #include "utils/acl.h"
+#include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/snapmgr.h"
@@ -304,6 +305,13 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 
 	if (sendTuples)
 		(*dest->rStartup) (dest, operation, queryDesc->tupDesc);
+
+	/*
+	 * if it's CREATE TABLE AS ... WITH NO DATA, skip plan execution
+	 */
+	if (estate->es_select_into &&
+		queryDesc->plannedstmt->intoClause->skipData)
+		direction = NoMovementScanDirection;
 
 	/*
 	 * run plan
@@ -2388,6 +2396,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 {
 	IntoClause *into = queryDesc->plannedstmt->intoClause;
 	EState	   *estate = queryDesc->estate;
+	TupleDesc	intoTupDesc = queryDesc->tupDesc;
 	Relation	intoRelationDesc;
 	char	   *intoName;
 	Oid			namespaceId;
@@ -2414,6 +2423,31 @@ OpenIntoRel(QueryDesc *queryDesc)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("ON COMMIT can only be used on temporary tables")));
+
+	/*
+	 * If a column name list was specified in CREATE TABLE AS, override the
+	 * column names derived from the query.  (Too few column names are OK, too
+	 * many are not.)  It would probably be all right to scribble directly on
+	 * the query's result tupdesc, but let's be safe and make a copy.
+	 */
+	if (into->colNames)
+	{
+		ListCell   *lc;
+
+		intoTupDesc = CreateTupleDescCopy(intoTupDesc);
+		attnum = 1;
+		foreach(lc, into->colNames)
+		{
+			char	   *colname = strVal(lfirst(lc));
+
+			if (attnum > intoTupDesc->natts)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("CREATE TABLE AS specifies too many column names")));
+			namestrcpy(&(intoTupDesc->attrs[attnum - 1]->attname), colname);
+			attnum++;
+		}
+	}
 
 	/*
 	 * Find namespace to create in, check its permissions
@@ -2477,7 +2511,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 											  InvalidOid,
 											  InvalidOid,
 											  GetUserId(),
-											  queryDesc->tupDesc,
+											  intoTupDesc,
 											  NIL,
 											  RELKIND_RELATION,
 											  into->rel->relpersistence,
@@ -2519,7 +2553,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 	intoRelationDesc = heap_open(intoRelationId, AccessExclusiveLock);
 
 	/*
-	 * check INSERT permission on the constructed table.
+	 * Check INSERT permission on the constructed table.
 	 */
 	rte = makeNode(RangeTblEntry);
 	rte->rtekind = RTE_RELATION;
@@ -2527,7 +2561,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 	rte->relkind = RELKIND_RELATION;
 	rte->requiredPerms = ACL_INSERT;
 
-	for (attnum = 1; attnum <= queryDesc->tupDesc->natts; attnum++)
+	for (attnum = 1; attnum <= intoTupDesc->natts; attnum++)
 		rte->modifiedCols = bms_add_member(rte->modifiedCols,
 				attnum - FirstLowInvalidHeapAttributeNumber);
 
