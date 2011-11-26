@@ -57,7 +57,7 @@ PSQLDIR = $(bindir)
 
 include $(top_srcdir)/src/Makefile.shlib
 
-plperl.o: perlchunks.h plperl_opmask.h
+plperl.o: perlchunks.h plperl_opmask.h plperl_helpers.h
 
 plperl_opmask.h: plperl_opmask.pl
 	@if [ x"$(perl_privlibexp)" = x"" ]; then echo "configure switch --with-perl was not specified."; exit 1; fi
