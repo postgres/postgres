@@ -7,10 +7,21 @@
 static inline char *
 utf_u2e(const char *utf8_str, size_t len)
 {
-	char	   *ret = (char *) pg_do_encoding_conversion((unsigned char *) utf8_str, len, PG_UTF8, GetDatabaseEncoding());
+	int 	    enc = GetDatabaseEncoding();
+
+	char	   *ret = (char *) pg_do_encoding_conversion((unsigned char *) utf8_str, len, PG_UTF8, enc);
+
+	/*
+	* when we are a PG_UTF8 or SQL_ASCII database
+	* pg_do_encoding_conversion() will not do any conversion or
+	* verification. we need to do it manually instead.
+	*/
+	if (enc == PG_UTF8 || enc == PG_SQL_ASCII)
+		pg_verify_mbstr_len(PG_UTF8, utf8_str, len, false);
 
 	if (ret == utf8_str)
 		ret = pstrdup(ret);
+
 	return ret;
 }
 
