@@ -444,13 +444,13 @@ range_gist_consistent_int(FmgrInfo *flinfo, StrategyNumber strategy,
 	switch (strategy)
 	{
 		case RANGESTRAT_BEFORE:
-			if (RangeIsEmpty(key))
+			if (RangeIsEmpty(key) || RangeIsEmpty(DatumGetRangeType(query)))
 				return false;
 			proc = range_overright;
 			negate = true;
 			break;
 		case RANGESTRAT_OVERLEFT:
-			if (RangeIsEmpty(key))
+			if (RangeIsEmpty(key) || RangeIsEmpty(DatumGetRangeType(query)))
 				return false;
 			proc = range_after;
 			negate = true;
@@ -459,13 +459,13 @@ range_gist_consistent_int(FmgrInfo *flinfo, StrategyNumber strategy,
 			proc = range_overlaps;
 			break;
 		case RANGESTRAT_OVERRIGHT:
-			if (RangeIsEmpty(key))
+			if (RangeIsEmpty(key) || RangeIsEmpty(DatumGetRangeType(query)))
 				return false;
 			proc = range_before;
 			negate = true;
 			break;
 		case RANGESTRAT_AFTER:
-			if (RangeIsEmpty(key))
+			if (RangeIsEmpty(key) || RangeIsEmpty(DatumGetRangeType(query)))
 				return false;
 			proc = range_overleft;
 			negate = true;
@@ -483,6 +483,11 @@ range_gist_consistent_int(FmgrInfo *flinfo, StrategyNumber strategy,
 			proc = range_contains;
 			break;
 		case RANGESTRAT_CONTAINED_BY:
+			/*
+			 * Ideally we'd apply range_overlaps here, but at present it
+			 * might fail to find empty ranges in the index, which should
+			 * be reported as being contained by anything.  This needs work.
+			 */
 			return true;
 			break;
 		case RANGESTRAT_CONTAINS_ELEM:
