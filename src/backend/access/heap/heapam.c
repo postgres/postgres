@@ -2093,8 +2093,11 @@ heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 	char	   *scratch = NULL;
 	Page		page;
 	bool		needwal;
+	Size		saveFreeSpace;
 
 	needwal = !(options & HEAP_INSERT_SKIP_WAL) && RelationNeedsWAL(relation);
+	saveFreeSpace = RelationGetTargetPageFreeSpace(relation,
+												   HEAP_DEFAULT_FILLFACTOR);
 
 	/* Toast and set header data in all the tuples */
 	heaptuples = palloc(ntuples * sizeof(HeapTuple));
@@ -2157,7 +2160,7 @@ heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 		{
 			HeapTuple	heaptup = heaptuples[ndone + nthispage];
 
-			if (PageGetHeapFreeSpace(page) < MAXALIGN(heaptup->t_len))
+			if (PageGetHeapFreeSpace(page) - saveFreeSpace < MAXALIGN(heaptup->t_len))
 				break;
 
 			RelationPutHeapTuple(relation, buffer, heaptup);
