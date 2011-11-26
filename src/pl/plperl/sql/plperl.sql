@@ -429,7 +429,7 @@ DO $do$ use warnings FATAL => qw(void) ; my @y; my $x = sort @y; 1; $do$ LANGUAG
 --
 CREATE OR REPLACE FUNCTION perl_zerob() RETURNS TEXT AS $$
   return "abcd\0efg";
-$$ LANGUAGE plperlu;
+$$ LANGUAGE plperl;
 SELECT perl_zerob();
 
 -- make sure functions marked as VOID without an explicit return work
