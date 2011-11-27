@@ -108,11 +108,10 @@ sub mkvcbuild
             (my $xsc = $xs) =~ s/\.xs/.c/;
             if (Solution::IsNewer("$plperlsrc$xsc","$plperlsrc$xs"))
             {
-                my $xsubppdir = first { -e "$_\\ExtUtils\\xsubpp.BAT" } @INC;
+                my $xsubppdir = first { -e "$_\\ExtUtils\\xsubpp" } @INC;
                 print "Building $plperlsrc$xsc...\n";
                 system( $solution->{options}->{perl}
                       . '/bin/perl '
-                      . $solution->{options}->{perl}
                       . "$xsubppdir/ExtUtils/xsubpp -typemap "
                       . $solution->{options}->{perl}
                       . '/lib/ExtUtils/typemap '
