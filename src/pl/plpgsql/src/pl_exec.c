@@ -5850,8 +5850,7 @@ exec_simple_recheck_plan(PLpgSQL_expr *expr, CachedPlan *cplan)
 }
 
 /* ----------
- * exec_set_found			Set the global found variable
- *					to true/false
+ * exec_set_found			Set the global found variable to true/false
  * ----------
  */
 static void
@@ -5860,7 +5859,7 @@ exec_set_found(PLpgSQL_execstate *estate, bool state)
 	PLpgSQL_var *var;
 
 	var = (PLpgSQL_var *) (estate->datums[estate->found_varno]);
-	var->value = PointerGetDatum(state);
+	var->value = BoolGetDatum(state);
 	var->isnull = false;
 }
 
