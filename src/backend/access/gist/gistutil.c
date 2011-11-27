@@ -19,6 +19,7 @@
 #include "access/reloptions.h"
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"
+#include "utils/builtins.h"
 
 /*
  * static *S used for temrorary storage (saves stack and palloc() call)
@@ -538,8 +539,10 @@ gistpenalty(GISTSTATE *giststate, int attno,
 	else if (isNullOrig && isNullAdd)
 		penalty = 0.0;
 	else
-		penalty = 1e10;			/* try to prevent mixing null and non-null
-								 * values */
+	{
+		/* try to prevent mixing null and non-null values */
+		penalty = get_float4_infinity();
+	}
 
 	return penalty;
 }
