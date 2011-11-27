@@ -1623,6 +1623,24 @@ range_get_flags(RangeType *range)
 }
 
 /*
+ * range_set_contain_empty: set the RANGE_CONTAIN_EMPTY bit in the value.
+ *
+ * This is only needed in GiST operations, so we don't include a provision
+ * for setting it in range_serialize; rather, this function must be applied
+ * afterwards.
+ */
+void
+range_set_contain_empty(RangeType *range)
+{
+	char	   *flagsp;
+
+	/* flag byte is datum's last byte */
+	flagsp = (char *) range + VARSIZE(range) - 1;
+
+	*flagsp |= RANGE_CONTAIN_EMPTY;
+}
+
+/*
  * This both serializes and canonicalizes (if applicable) the range.
  * This should be used by most callers.
  */

@@ -17,6 +17,7 @@
 #include "access/gist.h"
 #include "access/skey.h"
 #include "utils/builtins.h"
+#include "utils/datum.h"
 #include "utils/rangetypes.h"
 
 
@@ -32,7 +33,11 @@
 #define RANGESTRAT_CONTAINED_BY			8
 #define RANGESTRAT_CONTAINS_ELEM		16
 #define RANGESTRAT_EQ					18
-#define RANGESTRAT_NE					19
+
+/* Copy a RangeType datum (hardwires typbyval and typlen for ranges...) */
+#define rangeCopy(r) \
+	((RangeType *) DatumGetPointer(datumCopy(PointerGetDatum(r), \
+											 false, -1)))
 
 /*
  * Auxiliary structure for picksplit method.
@@ -146,6 +151,16 @@ range_gist_penalty(PG_FUNCTION_ARGS)
 	subtype_diff = &typcache->rng_subdiff_finfo;
 
 	/*
+	 * If new is or contains empty, and orig doesn't, apply infinite penalty.
+	 * We really don't want to pollute an empty-free subtree with empties.
+	 */
+	if (RangeIsOrContainsEmpty(new) && !RangeIsOrContainsEmpty(orig))
+	{
+		*penalty = get_float4_infinity();
+		PG_RETURN_POINTER(penalty);
+	}
+
+	/*
 	 * We want to compare the size of "orig" to size of "orig union new".
 	 * The penalty will be the sum of the reduction in the lower bound plus
 	 * the increase in the upper bound.
@@ -163,30 +178,9 @@ range_gist_penalty(PG_FUNCTION_ARGS)
 	}
 	else if (empty1)
 	{
-		if (lower2.infinite || upper2.infinite)
-		{
-			/* from empty to infinite */
-			*penalty = get_float4_infinity();
-			PG_RETURN_POINTER(penalty);
-		}
-		else if (OidIsValid(subtype_diff->fn_oid))
-		{
-			/* from empty to upper2-lower2 */
-			*penalty = DatumGetFloat8(FunctionCall2Coll(subtype_diff,
-														typcache->rng_collation,
-														upper2.val,
-														lower2.val));
-			/* upper2 must be >= lower2 */
-			if (*penalty < 0)
-				*penalty = 0;		/* subtype_diff is broken */
-			PG_RETURN_POINTER(penalty);
-		}
-		else
-		{
-			/* wild guess */
-			*penalty = 1.0;
-			PG_RETURN_POINTER(penalty);
-		}
+		/* infinite penalty for pushing non-empty into all-empty subtree */
+		*penalty = get_float4_infinity();
+		PG_RETURN_POINTER(penalty);
 	}
 
 	/* if orig isn't empty, s_union can't be either */
@@ -334,15 +328,27 @@ range_gist_picksplit(PG_FUNCTION_ARGS)
 Datum
 range_gist_same(PG_FUNCTION_ARGS)
 {
-	/* Datum r1 = PG_GETARG_DATUM(0); */
-	/* Datum r2 = PG_GETARG_DATUM(1); */
+	RangeType  *r1 = PG_GETARG_RANGE(0);
+	RangeType  *r2 = PG_GETARG_RANGE(1);
 	bool	   *result = (bool *) PG_GETARG_POINTER(2);
 
 	/*
-	 * We can safely call range_eq using our fcinfo directly; it won't notice
-	 * the third argument.  This allows it to use fn_extra for caching.
+	 * range_eq will ignore the RANGE_CONTAIN_EMPTY flag, so we have to
+	 * check that for ourselves.  More generally, if the entries have been
+	 * properly normalized, then unequal flags bytes must mean unequal ranges
+	 * ... so let's just test all the flag bits at once.
 	 */
-	*result = DatumGetBool(range_eq(fcinfo));
+	if (range_get_flags(r1) != range_get_flags(r2))
+		*result = false;
+	else
+	{
+		/*
+		 * We can safely call range_eq using our fcinfo directly; it won't
+		 * notice the third argument.  This allows it to use fn_extra for
+		 * caching.
+		 */
+		*result = DatumGetBool(range_eq(fcinfo));
+	}
 
 	PG_RETURN_POINTER(result);
 }
@@ -356,27 +362,53 @@ range_gist_same(PG_FUNCTION_ARGS)
 /*
  * Return the smallest range that contains r1 and r2
  *
- * XXX would it be better to redefine range_union as working this way?
+ * This differs from regular range_union in two critical ways:
+ * 1. It won't throw an error for non-adjacent r1 and r2, but just absorb
+ * the intervening values into the result range.
+ * 2. We track whether any empty range has been union'd into the result,
+ * so that contained_by searches can be indexed.  Note that this means
+ * that *all* unions formed within the GiST index must go through here.
  */
 static RangeType *
 range_super_union(TypeCacheEntry *typcache, RangeType * r1, RangeType * r2)
 {
+	RangeType  *result;
 	RangeBound	lower1,
 				lower2;
 	RangeBound	upper1,
 				upper2;
 	bool		empty1,
 				empty2;
+	char		flags1,
+				flags2;
 	RangeBound *result_lower;
 	RangeBound *result_upper;
 
 	range_deserialize(typcache, r1, &lower1, &upper1, &empty1);
 	range_deserialize(typcache, r2, &lower2, &upper2, &empty2);
+	flags1 = range_get_flags(r1);
+	flags2 = range_get_flags(r2);
 
 	if (empty1)
+	{
+		/* We can return r2 as-is if it already is or contains empty */
+		if (flags2 & (RANGE_EMPTY | RANGE_CONTAIN_EMPTY))
+			return r2;
+		/* Else we'd better copy it (modify-in-place isn't safe) */
+		r2 = rangeCopy(r2);
+		range_set_contain_empty(r2);
 		return r2;
+	}
 	if (empty2)
+	{
+		/* We can return r1 as-is if it already is or contains empty */
+		if (flags1 & (RANGE_EMPTY | RANGE_CONTAIN_EMPTY))
+			return r1;
+		/* Else we'd better copy it (modify-in-place isn't safe) */
+		r1 = rangeCopy(r1);
+		range_set_contain_empty(r1);
 		return r1;
+	}
 
 	if (range_cmp_bounds(typcache, &lower1, &lower2) <= 0)
 		result_lower = &lower1;
@@ -389,12 +421,19 @@ range_super_union(TypeCacheEntry *typcache, RangeType * r1, RangeType * r2)
 		result_upper = &upper2;
 
 	/* optimization to avoid constructing a new range */
-	if (result_lower == &lower1 && result_upper == &upper1)
+	if (result_lower == &lower1 && result_upper == &upper1 &&
+		((flags1 & RANGE_CONTAIN_EMPTY) || !(flags2 & RANGE_CONTAIN_EMPTY)))
 		return r1;
-	if (result_lower == &lower2 && result_upper == &upper2)
+	if (result_lower == &lower2 && result_upper == &upper2 &&
+		((flags2 & RANGE_CONTAIN_EMPTY) || !(flags1 & RANGE_CONTAIN_EMPTY)))
 		return r2;
 
-	return make_range(typcache, result_lower, result_upper, false);
+	result = make_range(typcache, result_lower, result_upper, false);
+
+	if ((flags1 & RANGE_CONTAIN_EMPTY) || (flags2 & RANGE_CONTAIN_EMPTY))
+		range_set_contain_empty(result);
+
+	return result;
 }
 
 /*
@@ -484,20 +523,25 @@ range_gist_consistent_int(FmgrInfo *flinfo, StrategyNumber strategy,
 			break;
 		case RANGESTRAT_CONTAINED_BY:
 			/*
-			 * Ideally we'd apply range_overlaps here, but at present it
-			 * might fail to find empty ranges in the index, which should
-			 * be reported as being contained by anything.  This needs work.
+			 * Empty ranges are contained by anything, so if key is or
+			 * contains any empty ranges, we must descend into it.  Otherwise,
+			 * descend only if key overlaps the query.
 			 */
-			return true;
+			if (RangeIsOrContainsEmpty(key))
+				return true;
+			proc = range_overlaps;
 			break;
 		case RANGESTRAT_CONTAINS_ELEM:
 			proc = range_contains_elem;
 			break;
 		case RANGESTRAT_EQ:
+			/*
+			 * If query is empty, descend only if the key is or contains any
+			 * empty ranges.  Otherwise, descend if key contains query.
+			 */
+			if (RangeIsEmpty(DatumGetRangeType(query)))
+				return RangeIsOrContainsEmpty(key);
 			proc = range_contains;
-			break;
-		case RANGESTRAT_NE:
-			return true;
 			break;
 		default:
 			elog(ERROR, "unrecognized range strategy: %d", strategy);
@@ -554,9 +598,6 @@ range_gist_consistent_leaf(FmgrInfo *flinfo, StrategyNumber strategy,
 			break;
 		case RANGESTRAT_EQ:
 			proc = range_eq;
-			break;
-		case RANGESTRAT_NE:
-			proc = range_ne;
 			break;
 		default:
 			elog(ERROR, "unrecognized range strategy: %d", strategy);
