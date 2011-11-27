@@ -132,7 +132,7 @@ tablespace-setup:
 ## Run tests
 ##
 
-REGRESS_OPTS = --dlpath=.
+REGRESS_OPTS = --dlpath=. $(EXTRA_REGRESS_OPTS)
 
 check: all tablespace-setup
 	$(pg_regress_check) $(REGRESS_OPTS) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT) $(TEMP_CONF) $(EXTRA_TESTS)

@@ -207,7 +207,7 @@ ifdef OBJS
 	rm -f $(OBJS)
 endif
 ifdef EXTRA_CLEAN
-	rm -f $(EXTRA_CLEAN)
+	rm -rf $(EXTRA_CLEAN)
 endif
 ifdef REGRESS
 # things created by various check targets

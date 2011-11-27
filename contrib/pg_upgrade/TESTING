@@ -62,3 +62,22 @@ steps:
 
 7)  Diff the regression database dump file with the regression dump
     file loaded into the old server.
+
+The shell script test.sh in this directory performs more or less this
+procedure.  You can invoke it by running
+
+    gmake check
+
+or by running
+
+    gmake installcheck
+
+if "gmake install" (or "gmake install-world") were done beforehand.
+When invoked without arguments, it will run an upgrade from the
+version in this source tree to a new instance of the same version.  To
+test an upgrade from a different version, invoke it like this:
+
+    gmake installcheck oldbindir=...otherversion/bin oldsrc=...somewhere/postgresql
+
+In this case, you will have to manually eyeball the resulting dump
+diff for version-specific differences, as explained above.
