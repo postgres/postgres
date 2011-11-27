@@ -57,7 +57,7 @@
 #include "libpq/libpq-fs.h"
 
 #include "pg_backup_archiver.h"
-#include "common.h"
+#include "dumpmem.h"
 #include "dumputils.h"
 
 extern char *optarg;

@@ -53,7 +53,7 @@
  */
 
 #include "compress_io.h"
-#include "common.h"
+#include "dumpmem.h"
 
 /*----------------------
  * Compressor API

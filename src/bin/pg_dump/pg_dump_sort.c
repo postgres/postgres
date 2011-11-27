@@ -14,7 +14,7 @@
  *-------------------------------------------------------------------------
  */
 #include "pg_backup_archiver.h"
-#include "common.h"
+#include "dumpmem.h"
 
 static const char *modulename = gettext_noop("sorter");
 

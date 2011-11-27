@@ -34,7 +34,7 @@
  */
 
 #include "compress_io.h"
-#include "common.h"
+#include "dumpmem.h"
 
 #include <dirent.h>
 #include <sys/stat.h>

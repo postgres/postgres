@@ -39,7 +39,7 @@
  *-------------------------------------------------------------------------
  */
 
-#include "common.h"
+#include "dumpmem.h"
 #include "pg_backup_archiver.h"
 #include "dumputils.h"
 

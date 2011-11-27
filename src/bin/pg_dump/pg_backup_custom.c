@@ -25,7 +25,7 @@
  */
 
 #include "compress_io.h"
-#include "common.h"
+#include "dumpmem.h"
 
 /*--------
  * Routines in the format interface

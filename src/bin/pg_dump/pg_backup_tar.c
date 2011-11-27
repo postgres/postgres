@@ -28,7 +28,7 @@
 #include "pg_backup.h"
 #include "pg_backup_archiver.h"
 #include "pg_backup_tar.h"
-#include "common.h"
+#include "dumpmem.h"
 
 #include <sys/stat.h>
 #include <ctype.h>
