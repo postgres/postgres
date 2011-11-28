@@ -6885,6 +6885,8 @@
    in the same way as in <structname>pg_description</structname> or
    <structname>pg_depend</structname>).  Also, the right to extend a
    relation is represented as a separate lockable object.
+   Also, <quote>advisory</> locks can be taken on numbers that have
+   user-defined meanings.
   </para>
 
   <table>
@@ -6985,9 +6987,7 @@
       <entry>any OID column</entry>
       <entry>
        OID of the object within its system catalog, or null if the
-       object is not a general database object.
-       For advisory locks it is used to distinguish the two key
-       spaces (1 for an int8 key, 2 for two int4 keys).
+       object is not a general database object
       </entry>
      </row>
      <row>
@@ -6995,10 +6995,11 @@
       <entry><type>smallint</type></entry>
       <entry></entry>
       <entry>
-       For a table column, this is the column number (the
+       Column number targeted by the lock (the
        <structfield>classid</> and <structfield>objid</> refer to the
-       table itself).  For all other object types, this column is
-       zero.  Null if the object is not a general database object
+       table itself),
+       or zero if the target is some other general database object,
+       or null if the target is not a general database object
       </entry>
      </row>
      <row>
@@ -7015,7 +7016,7 @@
       <entry></entry>
       <entry>
        Process ID of the server process holding or awaiting this
-       lock.  Null if the lock is held by a prepared transaction.
+       lock, or null if the lock is held by a prepared transaction
       </entry>
      </row>
      <row>
@@ -7068,7 +7069,8 @@
 
   <para>
    Advisory locks can be acquired on keys consisting of either a single
-   <type>bigint</type> value or two integer values.  A <type>bigint</type> key is displayed with its
+   <type>bigint</type> value or two integer values.
+   A <type>bigint</type> key is displayed with its
    high-order half in the <structfield>classid</> column, its low-order half
    in the <structfield>objid</> column, and <structfield>objsubid</> equal
    to 1.  Integer keys are displayed with the first key in the
@@ -7076,21 +7078,6 @@
    column, and <structfield>objsubid</> equal to 2.  The actual meaning of
    the keys is up to the user.  Advisory locks are local to each database,
    so the <structfield>database</> column is meaningful for an advisory lock.
-  </para>
-
-  <para>
-   The <structname>pg_locks</structname> view displays data from both the
-   regular lock manager and the predicate lock manager, which are
-   separate systems.  When this view is accessed, the internal data
-   structures of each lock manager are momentarily locked, and copies are
-   made for the view to display.  Each lock manager will therefore
-   produce a consistent set of results, but as we do not lock both lock
-   managers simultaneously, it is possible for locks to be taken or
-   released after we interrogate the regular lock manager and before we
-   interrogate the predicate lock manager.  Each lock manager is only
-   locked for the minimum possible time so as to reduce the performance
-   impact of querying this view, but there could nevertheless be some
-   impact on database performance if it is frequently accessed.
   </para>
 
   <para>
@@ -7115,6 +7102,21 @@
    information on prepared transactions that hold locks.
    (A prepared transaction can never be waiting for a lock,
    but it continues to hold the locks it acquired while running.)
+  </para>
+
+  <para>
+   The <structname>pg_locks</structname> view displays data from both the
+   regular lock manager and the predicate lock manager, which are
+   separate systems.  When this view is accessed, the internal data
+   structures of each lock manager are momentarily locked, and copies are
+   made for the view to display.  Each lock manager will therefore
+   produce a consistent set of results, but as we do not lock both lock
+   managers simultaneously, it is possible for locks to be taken or
+   released after we interrogate the regular lock manager and before we
+   interrogate the predicate lock manager.  Each lock manager is only
+   locked for the minimum possible time so as to reduce the performance
+   impact of querying this view, but there could nevertheless be some
+   impact on database performance if it is frequently accessed.
   </para>
 
  </sect1>
