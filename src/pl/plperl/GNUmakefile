@@ -50,6 +50,9 @@ endif
 # where to find psql for running the tests
 PSQLDIR = $(bindir)
 
+# where to find xsubpp for building XS.
+XSUBPPDIR = $(shell $(PERL) -e 'use List::Util qw(first); print first { -r "$$_/ExtUtils/xsubpp" } @INC')
+
 include $(top_srcdir)/src/Makefile.shlib
 
 
@@ -62,7 +65,7 @@ plperl_opmask.h: plperl_opmask.pl
 
 
 SPI.c: SPI.xs
-	$(PERL) $(perl_privlibexp)/ExtUtils/xsubpp -typemap $(perl_privlibexp)/ExtUtils/typemap $< >$@
+	$(PERL) $(XSUBPPDIR)/ExtUtils/xsubpp -typemap $(perl_privlibexp)/ExtUtils/typemap $< >$@
 
 install: all installdirs install-lib
 
