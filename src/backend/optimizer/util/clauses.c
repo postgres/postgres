@@ -2109,982 +2109,1017 @@ eval_const_expressions_mutator(Node *node,
 	switch (nodeTag(node))
 	{
 		case T_Param:
-	{
-		Param	   *param = (Param *) node;
-
-		/* Look to see if we've been given a value for this Param */
-		if (param->paramkind == PARAM_EXTERN &&
-			context->boundParams != NULL &&
-			param->paramid > 0 &&
-			param->paramid <= context->boundParams->numParams)
-		{
-			ParamExternData *prm = &context->boundParams->params[param->paramid - 1];
-
-			if (OidIsValid(prm->ptype))
 			{
-				/* OK to substitute parameter value? */
-				if (context->estimate || (prm->pflags & PARAM_FLAG_CONST))
+				Param	   *param = (Param *) node;
+
+				/* Look to see if we've been given a value for this Param */
+				if (param->paramkind == PARAM_EXTERN &&
+					context->boundParams != NULL &&
+					param->paramid > 0 &&
+					param->paramid <= context->boundParams->numParams)
 				{
-					/*
-					 * Return a Const representing the param value.  Must copy
-					 * pass-by-ref datatypes, since the Param might be in a
-					 * memory context shorter-lived than our output plan
-					 * should be.
-					 */
-					int16		typLen;
-					bool		typByVal;
-					Datum		pval;
+					ParamExternData *prm = &context->boundParams->params[param->paramid - 1];
 
-					Assert(prm->ptype == param->paramtype);
-					get_typlenbyval(param->paramtype, &typLen, &typByVal);
-					if (prm->isnull || typByVal)
-						pval = prm->value;
-					else
-						pval = datumCopy(prm->value, typByVal, typLen);
-					return (Node *) makeConst(param->paramtype,
-											  param->paramtypmod,
-											  param->paramcollid,
-											  (int) typLen,
-											  pval,
-											  prm->isnull,
-											  typByVal);
+					if (OidIsValid(prm->ptype))
+					{
+						/* OK to substitute parameter value? */
+						if (context->estimate || (prm->pflags & PARAM_FLAG_CONST))
+						{
+							/*
+							 * Return a Const representing the param value.
+							 * Must copy pass-by-ref datatypes, since the
+							 * Param might be in a memory context
+							 * shorter-lived than our output plan should be.
+							 */
+							int16		typLen;
+							bool		typByVal;
+							Datum		pval;
+
+							Assert(prm->ptype == param->paramtype);
+							get_typlenbyval(param->paramtype, &typLen, &typByVal);
+							if (prm->isnull || typByVal)
+								pval = prm->value;
+							else
+								pval = datumCopy(prm->value, typByVal, typLen);
+							return (Node *) makeConst(param->paramtype,
+													  param->paramtypmod,
+													  param->paramcollid,
+													  (int) typLen,
+													  pval,
+													  prm->isnull,
+													  typByVal);
+						}
+					}
 				}
-			}
-		}
-		/* Not replaceable, so just copy the Param (no need to recurse) */
-		return (Node *) copyObject(param);
-	}
-		case T_FuncExpr:
-	{
-		FuncExpr   *expr = (FuncExpr *) node;
-		List	   *args;
-		bool		has_named_args;
-		Expr	   *simple;
-		FuncExpr   *newexpr;
-		ListCell   *lc;
 
-		/*
-		 * Reduce constants in the FuncExpr's arguments, and check to see if
-		 * there are any named args.
-		 */
-		args = NIL;
-		has_named_args = false;
-		foreach(lc, expr->args)
-		{
-			Node	   *arg = (Node *) lfirst(lc);
-
-			arg = eval_const_expressions_mutator(arg, context);
-			if (IsA(arg, NamedArgExpr))
-				has_named_args = true;
-			args = lappend(args, arg);
-		}
-
-		/*
-		 * Code for op/func reduction is pretty bulky, so split it out as a
-		 * separate function.  Note: exprTypmod normally returns -1 for a
-		 * FuncExpr, but not when the node is recognizably a length coercion;
-		 * we want to preserve the typmod in the eventual Const if so.
-		 */
-		simple = simplify_function((Expr *) expr,
-								   expr->funcid,
-								   expr->funcresulttype, exprTypmod(node),
-								   expr->funccollid,
-								   expr->inputcollid,
-								   &args,
-								   has_named_args, true, context);
-		if (simple)				/* successfully simplified it */
-			return (Node *) simple;
-
-		/*
-		 * The expression cannot be simplified any further, so build and
-		 * return a replacement FuncExpr node using the possibly-simplified
-		 * arguments.  Note that we have also converted the argument list to
-		 * positional notation.
-		 */
-		newexpr = makeNode(FuncExpr);
-		newexpr->funcid = expr->funcid;
-		newexpr->funcresulttype = expr->funcresulttype;
-		newexpr->funcretset = expr->funcretset;
-		newexpr->funcformat = expr->funcformat;
-		newexpr->funccollid = expr->funccollid;
-		newexpr->inputcollid = expr->inputcollid;
-		newexpr->args = args;
-		newexpr->location = expr->location;
-		return (Node *) newexpr;
-	}
-		case T_OpExpr:
-	{
-		OpExpr	   *expr = (OpExpr *) node;
-		List	   *args;
-		Expr	   *simple;
-		OpExpr	   *newexpr;
-
-		/*
-		 * Reduce constants in the OpExpr's arguments.  We know args is either
-		 * NIL or a List node, so we can call expression_tree_mutator directly
-		 * rather than recursing to self.
-		 */
-		args = (List *) expression_tree_mutator((Node *) expr->args,
-											  eval_const_expressions_mutator,
-												(void *) context);
-
-		/*
-		 * Need to get OID of underlying function.	Okay to scribble on input
-		 * to this extent.
-		 */
-		set_opfuncid(expr);
-
-		/*
-		 * Code for op/func reduction is pretty bulky, so split it out as a
-		 * separate function.
-		 */
-		simple = simplify_function((Expr *) expr,
-								   expr->opfuncid,
-								   expr->opresulttype, -1,
-								   expr->opcollid,
-								   expr->inputcollid,
-								   &args,
-								   false, true, context);
-		if (simple)				/* successfully simplified it */
-			return (Node *) simple;
-
-		/*
-		 * If the operator is boolean equality or inequality, we know how to
-		 * simplify cases involving one constant and one non-constant
-		 * argument.
-		 */
-		if (expr->opno == BooleanEqualOperator ||
-			expr->opno == BooleanNotEqualOperator)
-		{
-			simple = (Expr *) simplify_boolean_equality(expr->opno, args);
-			if (simple)			/* successfully simplified it */
-				return (Node *) simple;
-		}
-
-		/*
-		 * The expression cannot be simplified any further, so build and
-		 * return a replacement OpExpr node using the possibly-simplified
-		 * arguments.
-		 */
-		newexpr = makeNode(OpExpr);
-		newexpr->opno = expr->opno;
-		newexpr->opfuncid = expr->opfuncid;
-		newexpr->opresulttype = expr->opresulttype;
-		newexpr->opretset = expr->opretset;
-		newexpr->opcollid = expr->opcollid;
-		newexpr->inputcollid = expr->inputcollid;
-		newexpr->args = args;
-		newexpr->location = expr->location;
-		return (Node *) newexpr;
-	}
-		case T_DistinctExpr:
-	{
-		DistinctExpr *expr = (DistinctExpr *) node;
-		List	   *args;
-		ListCell   *arg;
-		bool		has_null_input = false;
-		bool		all_null_input = true;
-		bool		has_nonconst_input = false;
-		Expr	   *simple;
-		DistinctExpr *newexpr;
-
-		/*
-		 * Reduce constants in the DistinctExpr's arguments.  We know args is
-		 * either NIL or a List node, so we can call expression_tree_mutator
-		 * directly rather than recursing to self.
-		 */
-		args = (List *) expression_tree_mutator((Node *) expr->args,
-											  eval_const_expressions_mutator,
-												(void *) context);
-
-		/*
-		 * We must do our own check for NULLs because DistinctExpr has
-		 * different results for NULL input than the underlying operator does.
-		 */
-		foreach(arg, args)
-		{
-			if (IsA(lfirst(arg), Const))
-			{
-				has_null_input |= ((Const *) lfirst(arg))->constisnull;
-				all_null_input &= ((Const *) lfirst(arg))->constisnull;
-			}
-			else
-				has_nonconst_input = true;
-		}
-
-		/* all constants? then can optimize this out */
-		if (!has_nonconst_input)
-		{
-			/* all nulls? then not distinct */
-			if (all_null_input)
-				return makeBoolConst(false, false);
-
-			/* one null? then distinct */
-			if (has_null_input)
-				return makeBoolConst(true, false);
-
-			/* otherwise try to evaluate the '=' operator */
-			/* (NOT okay to try to inline it, though!) */
-
-			/*
-			 * Need to get OID of underlying function.	Okay to scribble on
-			 * input to this extent.
-			 */
-			set_opfuncid((OpExpr *) expr);		/* rely on struct equivalence */
-
-			/*
-			 * Code for op/func reduction is pretty bulky, so split it out as
-			 * a separate function.
-			 */
-			simple = simplify_function((Expr *) expr,
-									   expr->opfuncid,
-									   expr->opresulttype, -1,
-									   expr->opcollid,
-									   expr->inputcollid,
-									   &args,
-									   false, false, context);
-			if (simple)			/* successfully simplified it */
-			{
 				/*
-				 * Since the underlying operator is "=", must negate its
-				 * result
+				 * Not replaceable, so just copy the Param (no need to
+				 * recurse)
 				 */
-				Const	   *csimple = (Const *) simple;
-
-				Assert(IsA(csimple, Const));
-				csimple->constvalue =
-					BoolGetDatum(!DatumGetBool(csimple->constvalue));
-				return (Node *) csimple;
+				return (Node *) copyObject(param);
 			}
-		}
+		case T_FuncExpr:
+			{
+				FuncExpr   *expr = (FuncExpr *) node;
+				List	   *args;
+				bool		has_named_args;
+				Expr	   *simple;
+				FuncExpr   *newexpr;
+				ListCell   *lc;
 
-		/*
-		 * The expression cannot be simplified any further, so build and
-		 * return a replacement DistinctExpr node using the
-		 * possibly-simplified arguments.
-		 */
-		newexpr = makeNode(DistinctExpr);
-		newexpr->opno = expr->opno;
-		newexpr->opfuncid = expr->opfuncid;
-		newexpr->opresulttype = expr->opresulttype;
-		newexpr->opretset = expr->opretset;
-		newexpr->opcollid = expr->opcollid;
-		newexpr->inputcollid = expr->inputcollid;
-		newexpr->args = args;
-		newexpr->location = expr->location;
-		return (Node *) newexpr;
-	}
-		case T_BoolExpr:
-	{
-		BoolExpr   *expr = (BoolExpr *) node;
-
-		switch (expr->boolop)
-		{
-			case OR_EXPR:
+				/*
+				 * Reduce constants in the FuncExpr's arguments, and check to
+				 * see if there are any named args.
+				 */
+				args = NIL;
+				has_named_args = false;
+				foreach(lc, expr->args)
 				{
-					List	   *newargs;
-					bool		haveNull = false;
-					bool		forceTrue = false;
+					Node	   *arg = (Node *) lfirst(lc);
 
-					newargs = simplify_or_arguments(expr->args, context,
-													&haveNull, &forceTrue);
-					if (forceTrue)
-						return makeBoolConst(true, false);
-					if (haveNull)
-						newargs = lappend(newargs, makeBoolConst(false, true));
-					/* If all the inputs are FALSE, result is FALSE */
-					if (newargs == NIL)
-						return makeBoolConst(false, false);
-					/* If only one nonconst-or-NULL input, it's the result */
-					if (list_length(newargs) == 1)
-						return (Node *) linitial(newargs);
-					/* Else we still need an OR node */
-					return (Node *) make_orclause(newargs);
+					arg = eval_const_expressions_mutator(arg, context);
+					if (IsA(arg, NamedArgExpr))
+						has_named_args = true;
+					args = lappend(args, arg);
 				}
-			case AND_EXPR:
-				{
-					List	   *newargs;
-					bool		haveNull = false;
-					bool		forceFalse = false;
 
-					newargs = simplify_and_arguments(expr->args, context,
-													 &haveNull, &forceFalse);
-					if (forceFalse)
-						return makeBoolConst(false, false);
-					if (haveNull)
-						newargs = lappend(newargs, makeBoolConst(false, true));
-					/* If all the inputs are TRUE, result is TRUE */
-					if (newargs == NIL)
-						return makeBoolConst(true, false);
-					/* If only one nonconst-or-NULL input, it's the result */
-					if (list_length(newargs) == 1)
-						return (Node *) linitial(newargs);
-					/* Else we still need an AND node */
-					return (Node *) make_andclause(newargs);
+				/*
+				 * Code for op/func reduction is pretty bulky, so split it out
+				 * as a separate function.	Note: exprTypmod normally returns
+				 * -1 for a FuncExpr, but not when the node is recognizably a
+				 * length coercion; we want to preserve the typmod in the
+				 * eventual Const if so.
+				 */
+				simple = simplify_function((Expr *) expr,
+										   expr->funcid,
+									  expr->funcresulttype, exprTypmod(node),
+										   expr->funccollid,
+										   expr->inputcollid,
+										   &args,
+										   has_named_args, true, context);
+				if (simple)		/* successfully simplified it */
+					return (Node *) simple;
+
+				/*
+				 * The expression cannot be simplified any further, so build
+				 * and return a replacement FuncExpr node using the
+				 * possibly-simplified arguments.  Note that we have also
+				 * converted the argument list to positional notation.
+				 */
+				newexpr = makeNode(FuncExpr);
+				newexpr->funcid = expr->funcid;
+				newexpr->funcresulttype = expr->funcresulttype;
+				newexpr->funcretset = expr->funcretset;
+				newexpr->funcformat = expr->funcformat;
+				newexpr->funccollid = expr->funccollid;
+				newexpr->inputcollid = expr->inputcollid;
+				newexpr->args = args;
+				newexpr->location = expr->location;
+				return (Node *) newexpr;
+			}
+		case T_OpExpr:
+			{
+				OpExpr	   *expr = (OpExpr *) node;
+				List	   *args;
+				Expr	   *simple;
+				OpExpr	   *newexpr;
+
+				/*
+				 * Reduce constants in the OpExpr's arguments.  We know args
+				 * is either NIL or a List node, so we can call
+				 * expression_tree_mutator directly rather than recursing to
+				 * self.
+				 */
+				args = (List *) expression_tree_mutator((Node *) expr->args,
+											  eval_const_expressions_mutator,
+														(void *) context);
+
+				/*
+				 * Need to get OID of underlying function.	Okay to scribble
+				 * on input to this extent.
+				 */
+				set_opfuncid(expr);
+
+				/*
+				 * Code for op/func reduction is pretty bulky, so split it out
+				 * as a separate function.
+				 */
+				simple = simplify_function((Expr *) expr,
+										   expr->opfuncid,
+										   expr->opresulttype, -1,
+										   expr->opcollid,
+										   expr->inputcollid,
+										   &args,
+										   false, true, context);
+				if (simple)		/* successfully simplified it */
+					return (Node *) simple;
+
+				/*
+				 * If the operator is boolean equality or inequality, we know
+				 * how to simplify cases involving one constant and one
+				 * non-constant argument.
+				 */
+				if (expr->opno == BooleanEqualOperator ||
+					expr->opno == BooleanNotEqualOperator)
+				{
+					simple = (Expr *) simplify_boolean_equality(expr->opno, args);
+					if (simple) /* successfully simplified it */
+						return (Node *) simple;
 				}
-			case NOT_EXPR:
-				{
-					Node	   *arg;
 
-					Assert(list_length(expr->args) == 1);
-					arg = eval_const_expressions_mutator(linitial(expr->args),
-														 context);
+				/*
+				 * The expression cannot be simplified any further, so build
+				 * and return a replacement OpExpr node using the
+				 * possibly-simplified arguments.
+				 */
+				newexpr = makeNode(OpExpr);
+				newexpr->opno = expr->opno;
+				newexpr->opfuncid = expr->opfuncid;
+				newexpr->opresulttype = expr->opresulttype;
+				newexpr->opretset = expr->opretset;
+				newexpr->opcollid = expr->opcollid;
+				newexpr->inputcollid = expr->inputcollid;
+				newexpr->args = args;
+				newexpr->location = expr->location;
+				return (Node *) newexpr;
+			}
+		case T_DistinctExpr:
+			{
+				DistinctExpr *expr = (DistinctExpr *) node;
+				List	   *args;
+				ListCell   *arg;
+				bool		has_null_input = false;
+				bool		all_null_input = true;
+				bool		has_nonconst_input = false;
+				Expr	   *simple;
+				DistinctExpr *newexpr;
+
+				/*
+				 * Reduce constants in the DistinctExpr's arguments.  We know
+				 * args is either NIL or a List node, so we can call
+				 * expression_tree_mutator directly rather than recursing to
+				 * self.
+				 */
+				args = (List *) expression_tree_mutator((Node *) expr->args,
+											  eval_const_expressions_mutator,
+														(void *) context);
+
+				/*
+				 * We must do our own check for NULLs because DistinctExpr has
+				 * different results for NULL input than the underlying
+				 * operator does.
+				 */
+				foreach(arg, args)
+				{
+					if (IsA(lfirst(arg), Const))
+					{
+						has_null_input |= ((Const *) lfirst(arg))->constisnull;
+						all_null_input &= ((Const *) lfirst(arg))->constisnull;
+					}
+					else
+						has_nonconst_input = true;
+				}
+
+				/* all constants? then can optimize this out */
+				if (!has_nonconst_input)
+				{
+					/* all nulls? then not distinct */
+					if (all_null_input)
+						return makeBoolConst(false, false);
+
+					/* one null? then distinct */
+					if (has_null_input)
+						return makeBoolConst(true, false);
+
+					/* otherwise try to evaluate the '=' operator */
+					/* (NOT okay to try to inline it, though!) */
 
 					/*
-					 * Use negate_clause() to see if we can simplify away the
-					 * NOT.
+					 * Need to get OID of underlying function.	Okay to
+					 * scribble on input to this extent.
 					 */
-					return negate_clause(arg);
+					set_opfuncid((OpExpr *) expr);		/* rely on struct
+														 * equivalence */
+
+					/*
+					 * Code for op/func reduction is pretty bulky, so split it
+					 * out as a separate function.
+					 */
+					simple = simplify_function((Expr *) expr,
+											   expr->opfuncid,
+											   expr->opresulttype, -1,
+											   expr->opcollid,
+											   expr->inputcollid,
+											   &args,
+											   false, false, context);
+					if (simple) /* successfully simplified it */
+					{
+						/*
+						 * Since the underlying operator is "=", must negate
+						 * its result
+						 */
+						Const	   *csimple = (Const *) simple;
+
+						Assert(IsA(csimple, Const));
+						csimple->constvalue =
+							BoolGetDatum(!DatumGetBool(csimple->constvalue));
+						return (Node *) csimple;
+					}
 				}
-			default:
-				elog(ERROR, "unrecognized boolop: %d",
-					 (int) expr->boolop);
+
+				/*
+				 * The expression cannot be simplified any further, so build
+				 * and return a replacement DistinctExpr node using the
+				 * possibly-simplified arguments.
+				 */
+				newexpr = makeNode(DistinctExpr);
+				newexpr->opno = expr->opno;
+				newexpr->opfuncid = expr->opfuncid;
+				newexpr->opresulttype = expr->opresulttype;
+				newexpr->opretset = expr->opretset;
+				newexpr->opcollid = expr->opcollid;
+				newexpr->inputcollid = expr->inputcollid;
+				newexpr->args = args;
+				newexpr->location = expr->location;
+				return (Node *) newexpr;
+			}
+		case T_BoolExpr:
+			{
+				BoolExpr   *expr = (BoolExpr *) node;
+
+				switch (expr->boolop)
+				{
+					case OR_EXPR:
+						{
+							List	   *newargs;
+							bool		haveNull = false;
+							bool		forceTrue = false;
+
+							newargs = simplify_or_arguments(expr->args, context,
+													  &haveNull, &forceTrue);
+							if (forceTrue)
+								return makeBoolConst(true, false);
+							if (haveNull)
+								newargs = lappend(newargs, makeBoolConst(false, true));
+							/* If all the inputs are FALSE, result is FALSE */
+							if (newargs == NIL)
+								return makeBoolConst(false, false);
+
+							/*
+							 * If only one nonconst-or-NULL input, it's the
+							 * result
+							 */
+							if (list_length(newargs) == 1)
+								return (Node *) linitial(newargs);
+							/* Else we still need an OR node */
+							return (Node *) make_orclause(newargs);
+						}
+					case AND_EXPR:
+						{
+							List	   *newargs;
+							bool		haveNull = false;
+							bool		forceFalse = false;
+
+							newargs = simplify_and_arguments(expr->args, context,
+													 &haveNull, &forceFalse);
+							if (forceFalse)
+								return makeBoolConst(false, false);
+							if (haveNull)
+								newargs = lappend(newargs, makeBoolConst(false, true));
+							/* If all the inputs are TRUE, result is TRUE */
+							if (newargs == NIL)
+								return makeBoolConst(true, false);
+
+							/*
+							 * If only one nonconst-or-NULL input, it's the
+							 * result
+							 */
+							if (list_length(newargs) == 1)
+								return (Node *) linitial(newargs);
+							/* Else we still need an AND node */
+							return (Node *) make_andclause(newargs);
+						}
+					case NOT_EXPR:
+						{
+							Node	   *arg;
+
+							Assert(list_length(expr->args) == 1);
+							arg = eval_const_expressions_mutator(linitial(expr->args),
+																 context);
+
+							/*
+							 * Use negate_clause() to see if we can simplify
+							 * away the NOT.
+							 */
+							return negate_clause(arg);
+						}
+					default:
+						elog(ERROR, "unrecognized boolop: %d",
+							 (int) expr->boolop);
+						break;
+				}
 				break;
-		}
-		break;
-	}
+			}
 		case T_SubPlan:
 		case T_AlternativeSubPlan:
-		/*
-		 * Return a SubPlan unchanged --- too late to do anything with it.
-		 *
-		 * XXX should we ereport() here instead?  Probably this routine should
-		 * never be invoked after SubPlan creation.
-		 */
-		return node;
-		case T_RelabelType:
-	{
-		/*
-		 * If we can simplify the input to a constant, then we don't need the
-		 * RelabelType node anymore: just change the type field of the Const
-		 * node.  Otherwise, must copy the RelabelType node.
-		 */
-		RelabelType *relabel = (RelabelType *) node;
-		Node	   *arg;
 
-		arg = eval_const_expressions_mutator((Node *) relabel->arg,
-											 context);
-
-		/*
-		 * If we find stacked RelabelTypes (eg, from foo :: int :: oid) we can
-		 * discard all but the top one.
-		 */
-		while (arg && IsA(arg, RelabelType))
-			arg = (Node *) ((RelabelType *) arg)->arg;
-
-		if (arg && IsA(arg, Const))
-		{
-			Const	   *con = (Const *) arg;
-
-			con->consttype = relabel->resulttype;
-			con->consttypmod = relabel->resulttypmod;
-			con->constcollid = relabel->resultcollid;
-			return (Node *) con;
-		}
-		else
-		{
-			RelabelType *newrelabel = makeNode(RelabelType);
-
-			newrelabel->arg = (Expr *) arg;
-			newrelabel->resulttype = relabel->resulttype;
-			newrelabel->resulttypmod = relabel->resulttypmod;
-			newrelabel->resultcollid = relabel->resultcollid;
-			newrelabel->relabelformat = relabel->relabelformat;
-			newrelabel->location = relabel->location;
-			return (Node *) newrelabel;
-		}
-	}
-		case T_CoerceViaIO:
-	{
-		CoerceViaIO *expr = (CoerceViaIO *) node;
-		Expr	   *arg;
-		List	   *args;
-		Oid			outfunc;
-		bool		outtypisvarlena;
-		Oid			infunc;
-		Oid			intypioparam;
-		Expr	   *simple;
-		CoerceViaIO *newexpr;
-
-		/*
-		 * Reduce constants in the CoerceViaIO's argument.
-		 */
-		arg = (Expr *) eval_const_expressions_mutator((Node *) expr->arg,
-													  context);
-		args = list_make1(arg);
-
-		/*
-		 * CoerceViaIO represents calling the source type's output function
-		 * then the result type's input function.  So, try to simplify it as
-		 * though it were a stack of two such function calls.  First we need
-		 * to know what the functions are.
-		 *
-		 * Note that the coercion functions are assumed not to care about
-		 * input collation, so we just pass InvalidOid for that.
-		 */
-		getTypeOutputInfo(exprType((Node *) arg), &outfunc, &outtypisvarlena);
-		getTypeInputInfo(expr->resulttype, &infunc, &intypioparam);
-
-		simple = simplify_function(NULL,
-								   outfunc,
-								   CSTRINGOID, -1,
-								   InvalidOid,
-								   InvalidOid,
-								   &args,
-								   false, true, context);
-		if (simple)				/* successfully simplified output fn */
-		{
 			/*
-			 * Input functions may want 1 to 3 arguments.  We always supply
-			 * all three, trusting that nothing downstream will complain.
+			 * Return a SubPlan unchanged --- too late to do anything with it.
+			 *
+			 * XXX should we ereport() here instead?  Probably this routine
+			 * should never be invoked after SubPlan creation.
 			 */
-			args = list_make3(simple,
-							  makeConst(OIDOID, -1, InvalidOid, sizeof(Oid),
-										ObjectIdGetDatum(intypioparam),
-										false, true),
+			return node;
+		case T_RelabelType:
+			{
+				/*
+				 * If we can simplify the input to a constant, then we don't
+				 * need the RelabelType node anymore: just change the type
+				 * field of the Const node.  Otherwise, must copy the
+				 * RelabelType node.
+				 */
+				RelabelType *relabel = (RelabelType *) node;
+				Node	   *arg;
+
+				arg = eval_const_expressions_mutator((Node *) relabel->arg,
+													 context);
+
+				/*
+				 * If we find stacked RelabelTypes (eg, from foo :: int ::
+				 * oid) we can discard all but the top one.
+				 */
+				while (arg && IsA(arg, RelabelType))
+					arg = (Node *) ((RelabelType *) arg)->arg;
+
+				if (arg && IsA(arg, Const))
+				{
+					Const	   *con = (Const *) arg;
+
+					con->consttype = relabel->resulttype;
+					con->consttypmod = relabel->resulttypmod;
+					con->constcollid = relabel->resultcollid;
+					return (Node *) con;
+				}
+				else
+				{
+					RelabelType *newrelabel = makeNode(RelabelType);
+
+					newrelabel->arg = (Expr *) arg;
+					newrelabel->resulttype = relabel->resulttype;
+					newrelabel->resulttypmod = relabel->resulttypmod;
+					newrelabel->resultcollid = relabel->resultcollid;
+					newrelabel->relabelformat = relabel->relabelformat;
+					newrelabel->location = relabel->location;
+					return (Node *) newrelabel;
+				}
+			}
+		case T_CoerceViaIO:
+			{
+				CoerceViaIO *expr = (CoerceViaIO *) node;
+				Expr	   *arg;
+				List	   *args;
+				Oid			outfunc;
+				bool		outtypisvarlena;
+				Oid			infunc;
+				Oid			intypioparam;
+				Expr	   *simple;
+				CoerceViaIO *newexpr;
+
+				/*
+				 * Reduce constants in the CoerceViaIO's argument.
+				 */
+				arg = (Expr *) eval_const_expressions_mutator((Node *) expr->arg,
+															  context);
+				args = list_make1(arg);
+
+				/*
+				 * CoerceViaIO represents calling the source type's output
+				 * function then the result type's input function.  So, try to
+				 * simplify it as though it were a stack of two such function
+				 * calls.  First we need to know what the functions are.
+				 *
+				 * Note that the coercion functions are assumed not to care
+				 * about input collation, so we just pass InvalidOid for that.
+				 */
+				getTypeOutputInfo(exprType((Node *) arg), &outfunc, &outtypisvarlena);
+				getTypeInputInfo(expr->resulttype, &infunc, &intypioparam);
+
+				simple = simplify_function(NULL,
+										   outfunc,
+										   CSTRINGOID, -1,
+										   InvalidOid,
+										   InvalidOid,
+										   &args,
+										   false, true, context);
+				if (simple)		/* successfully simplified output fn */
+				{
+					/*
+					 * Input functions may want 1 to 3 arguments.  We always
+					 * supply all three, trusting that nothing downstream will
+					 * complain.
+					 */
+					args = list_make3(simple,
+							   makeConst(OIDOID, -1, InvalidOid, sizeof(Oid),
+										 ObjectIdGetDatum(intypioparam),
+										 false, true),
 							makeConst(INT4OID, -1, InvalidOid, sizeof(int32),
 									  Int32GetDatum(-1),
 									  false, true));
 
-			simple = simplify_function(NULL,
-									   infunc,
-									   expr->resulttype, -1,
-									   expr->resultcollid,
-									   InvalidOid,
-									   &args,
-									   false, true, context);
-			if (simple)			/* successfully simplified input fn */
-				return (Node *) simple;
-		}
-
-		/*
-		 * The expression cannot be simplified any further, so build and
-		 * return a replacement CoerceViaIO node using the possibly-simplified
-		 * argument.
-		 */
-		newexpr = makeNode(CoerceViaIO);
-		newexpr->arg = arg;
-		newexpr->resulttype = expr->resulttype;
-		newexpr->resultcollid = expr->resultcollid;
-		newexpr->coerceformat = expr->coerceformat;
-		newexpr->location = expr->location;
-		return (Node *) newexpr;
-	}
-		case T_ArrayCoerceExpr:
-	{
-		ArrayCoerceExpr *expr = (ArrayCoerceExpr *) node;
-		Expr	   *arg;
-		ArrayCoerceExpr *newexpr;
-
-		/*
-		 * Reduce constants in the ArrayCoerceExpr's argument, then build a
-		 * new ArrayCoerceExpr.
-		 */
-		arg = (Expr *) eval_const_expressions_mutator((Node *) expr->arg,
-													  context);
-
-		newexpr = makeNode(ArrayCoerceExpr);
-		newexpr->arg = arg;
-		newexpr->elemfuncid = expr->elemfuncid;
-		newexpr->resulttype = expr->resulttype;
-		newexpr->resulttypmod = expr->resulttypmod;
-		newexpr->resultcollid = expr->resultcollid;
-		newexpr->isExplicit = expr->isExplicit;
-		newexpr->coerceformat = expr->coerceformat;
-		newexpr->location = expr->location;
-
-		/*
-		 * If constant argument and it's a binary-coercible or immutable
-		 * conversion, we can simplify it to a constant.
-		 */
-		if (arg && IsA(arg, Const) &&
-			(!OidIsValid(newexpr->elemfuncid) ||
-			 func_volatile(newexpr->elemfuncid) == PROVOLATILE_IMMUTABLE))
-			return (Node *) evaluate_expr((Expr *) newexpr,
-										  newexpr->resulttype,
-										  newexpr->resulttypmod,
-										  newexpr->resultcollid);
-
-		/* Else we must return the partially-simplified node */
-		return (Node *) newexpr;
-	}
-	case T_CollateExpr:
-	{
-		/*
-		 * If we can simplify the input to a constant, then we don't need the
-		 * CollateExpr node at all: just change the constcollid field of the
-		 * Const node.	Otherwise, replace the CollateExpr with a RelabelType.
-		 * (We do that so as to improve uniformity of expression
-		 * representation and thus simplify comparison of expressions.)
-		 */
-		CollateExpr *collate = (CollateExpr *) node;
-		Node	   *arg;
-
-		arg = eval_const_expressions_mutator((Node *) collate->arg,
-											 context);
-
-		if (arg && IsA(arg, Const))
-		{
-			Const	   *con = (Const *) arg;
-
-			con->constcollid = collate->collOid;
-			return (Node *) con;
-		}
-		else if (collate->collOid == exprCollation(arg))
-		{
-			/* Don't need a RelabelType either... */
-			return arg;
-		}
-		else
-		{
-			RelabelType *relabel = makeNode(RelabelType);
-
-			relabel->resulttype = exprType(arg);
-			relabel->resulttypmod = exprTypmod(arg);
-			relabel->resultcollid = collate->collOid;
-			relabel->relabelformat = COERCE_DONTCARE;
-			relabel->location = collate->location;
-
-			/* Don't create stacked RelabelTypes */
-			while (arg && IsA(arg, RelabelType))
-				arg = (Node *) ((RelabelType *) arg)->arg;
-			relabel->arg = (Expr *) arg;
-
-			return (Node *) relabel;
-		}
-	}
-	case T_CaseExpr:
-	{
-		/*----------
-		 * CASE expressions can be simplified if there are constant
-		 * condition clauses:
-		 *		FALSE (or NULL): drop the alternative
-		 *		TRUE: drop all remaining alternatives
-		 * If the first non-FALSE alternative is a constant TRUE, we can
-		 * simplify the entire CASE to that alternative's expression.
-		 * If there are no non-FALSE alternatives, we simplify the entire
-		 * CASE to the default result (ELSE result).
-		 *
-		 * If we have a simple-form CASE with constant test expression,
-		 * we substitute the constant value for contained CaseTestExpr
-		 * placeholder nodes, so that we have the opportunity to reduce
-		 * constant test conditions.  For example this allows
-		 *		CASE 0 WHEN 0 THEN 1 ELSE 1/0 END
-		 * to reduce to 1 rather than drawing a divide-by-0 error.	Note
-		 * that when the test expression is constant, we don't have to
-		 * include it in the resulting CASE; for example
-		 *		CASE 0 WHEN x THEN y ELSE z END
-		 * is transformed by the parser to
-		 *		CASE 0 WHEN CaseTestExpr = x THEN y ELSE z END
-		 * which we can simplify to
-		 *		CASE WHEN 0 = x THEN y ELSE z END
-		 * It is not necessary for the executor to evaluate the "arg"
-		 * expression when executing the CASE, since any contained
-		 * CaseTestExprs that might have referred to it will have been
-		 * replaced by the constant.
-		 *----------
-		 */
-		CaseExpr   *caseexpr = (CaseExpr *) node;
-		CaseExpr   *newcase;
-		Node	   *save_case_val;
-		Node	   *newarg;
-		List	   *newargs;
-		bool		const_true_cond;
-		Node	   *defresult = NULL;
-		ListCell   *arg;
-
-		/* Simplify the test expression, if any */
-		newarg = eval_const_expressions_mutator((Node *) caseexpr->arg,
-												context);
-
-		/* Set up for contained CaseTestExpr nodes */
-		save_case_val = context->case_val;
-		if (newarg && IsA(newarg, Const))
-		{
-			context->case_val = newarg;
-			newarg = NULL;		/* not needed anymore, see comment above */
-		}
-		else
-			context->case_val = NULL;
-
-		/* Simplify the WHEN clauses */
-		newargs = NIL;
-		const_true_cond = false;
-		foreach(arg, caseexpr->args)
-		{
-			CaseWhen   *oldcasewhen = (CaseWhen *) lfirst(arg);
-			Node	   *casecond;
-			Node	   *caseresult;
-
-			Assert(IsA(oldcasewhen, CaseWhen));
-
-			/* Simplify this alternative's test condition */
-			casecond =
-				eval_const_expressions_mutator((Node *) oldcasewhen->expr,
-											   context);
-
-			/*
-			 * If the test condition is constant FALSE (or NULL), then drop
-			 * this WHEN clause completely, without processing the result.
-			 */
-			if (casecond && IsA(casecond, Const))
-			{
-				Const	   *const_input = (Const *) casecond;
-
-				if (const_input->constisnull ||
-					!DatumGetBool(const_input->constvalue))
-					continue;	/* drop alternative with FALSE condition */
-				/* Else it's constant TRUE */
-				const_true_cond = true;
-			}
-
-			/* Simplify this alternative's result value */
-			caseresult =
-				eval_const_expressions_mutator((Node *) oldcasewhen->result,
-											   context);
-
-			/* If non-constant test condition, emit a new WHEN node */
-			if (!const_true_cond)
-			{
-				CaseWhen   *newcasewhen = makeNode(CaseWhen);
-
-				newcasewhen->expr = (Expr *) casecond;
-				newcasewhen->result = (Expr *) caseresult;
-				newcasewhen->location = oldcasewhen->location;
-				newargs = lappend(newargs, newcasewhen);
-				continue;
-			}
-
-			/*
-			 * Found a TRUE condition, so none of the remaining alternatives
-			 * can be reached.	We treat the result as the default result.
-			 */
-			defresult = caseresult;
-			break;
-		}
-
-		/* Simplify the default result, unless we replaced it above */
-		if (!const_true_cond)
-			defresult =
-				eval_const_expressions_mutator((Node *) caseexpr->defresult,
-											   context);
-
-		context->case_val = save_case_val;
-
-		/* If no non-FALSE alternatives, CASE reduces to the default result */
-		if (newargs == NIL)
-			return defresult;
-		/* Otherwise we need a new CASE node */
-		newcase = makeNode(CaseExpr);
-		newcase->casetype = caseexpr->casetype;
-		newcase->casecollid = caseexpr->casecollid;
-		newcase->arg = (Expr *) newarg;
-		newcase->args = newargs;
-		newcase->defresult = (Expr *) defresult;
-		newcase->location = caseexpr->location;
-		return (Node *) newcase;
-	}
-		case T_CaseTestExpr:
-	{
-		/*
-		 * If we know a constant test value for the current CASE construct,
-		 * substitute it for the placeholder.  Else just return the
-		 * placeholder as-is.
-		 */
-		if (context->case_val)
-			return copyObject(context->case_val);
-		else
-			return copyObject(node);
-	}
-		case T_ArrayExpr:
-	{
-		ArrayExpr  *arrayexpr = (ArrayExpr *) node;
-		ArrayExpr  *newarray;
-		bool		all_const = true;
-		List	   *newelems;
-		ListCell   *element;
-
-		newelems = NIL;
-		foreach(element, arrayexpr->elements)
-		{
-			Node	   *e;
-
-			e = eval_const_expressions_mutator((Node *) lfirst(element),
-											   context);
-			if (!IsA(e, Const))
-				all_const = false;
-			newelems = lappend(newelems, e);
-		}
-
-		newarray = makeNode(ArrayExpr);
-		newarray->array_typeid = arrayexpr->array_typeid;
-		newarray->array_collid = arrayexpr->array_collid;
-		newarray->element_typeid = arrayexpr->element_typeid;
-		newarray->elements = newelems;
-		newarray->multidims = arrayexpr->multidims;
-		newarray->location = arrayexpr->location;
-
-		if (all_const)
-			return (Node *) evaluate_expr((Expr *) newarray,
-										  newarray->array_typeid,
-										  exprTypmod(node),
-										  newarray->array_collid);
-
-		return (Node *) newarray;
-	}
-		case T_CoalesceExpr:
-	{
-		CoalesceExpr *coalesceexpr = (CoalesceExpr *) node;
-		CoalesceExpr *newcoalesce;
-		List	   *newargs;
-		ListCell   *arg;
-
-		newargs = NIL;
-		foreach(arg, coalesceexpr->args)
-		{
-			Node	   *e;
-
-			e = eval_const_expressions_mutator((Node *) lfirst(arg),
-											   context);
-
-			/*
-			 * We can remove null constants from the list. For a non-null
-			 * constant, if it has not been preceded by any other
-			 * non-null-constant expressions then it is the result. Otherwise,
-			 * it's the next argument, but we can drop following arguments
-			 * since they will never be reached.
-			 */
-			if (IsA(e, Const))
-			{
-				if (((Const *) e)->constisnull)
-					continue;	/* drop null constant */
-				if (newargs == NIL)
-					return e;	/* first expr */
-				newargs = lappend(newargs, e);
-				break;
-			}
-			newargs = lappend(newargs, e);
-		}
-
-		/* If all the arguments were constant null, the result is just null */
-		if (newargs == NIL)
-			return (Node *) makeNullConst(coalesceexpr->coalescetype,
-										  -1,
-										  coalesceexpr->coalescecollid);
-
-		newcoalesce = makeNode(CoalesceExpr);
-		newcoalesce->coalescetype = coalesceexpr->coalescetype;
-		newcoalesce->coalescecollid = coalesceexpr->coalescecollid;
-		newcoalesce->args = newargs;
-		newcoalesce->location = coalesceexpr->location;
-		return (Node *) newcoalesce;
-	}
-		case T_FieldSelect:
-	{
-		/*
-		 * We can optimize field selection from a whole-row Var into a simple
-		 * Var.  (This case won't be generated directly by the parser, because
-		 * ParseComplexProjection short-circuits it. But it can arise while
-		 * simplifying functions.)	Also, we can optimize field selection from
-		 * a RowExpr construct.
-		 *
-		 * We must however check that the declared type of the field is still
-		 * the same as when the FieldSelect was created --- this can change if
-		 * someone did ALTER COLUMN TYPE on the rowtype.
-		 */
-		FieldSelect *fselect = (FieldSelect *) node;
-		FieldSelect *newfselect;
-		Node	   *arg;
-
-		arg = eval_const_expressions_mutator((Node *) fselect->arg,
-											 context);
-		if (arg && IsA(arg, Var) &&
-			((Var *) arg)->varattno == InvalidAttrNumber)
-		{
-			if (rowtype_field_matches(((Var *) arg)->vartype,
-									  fselect->fieldnum,
-									  fselect->resulttype,
-									  fselect->resulttypmod,
-									  fselect->resultcollid))
-				return (Node *) makeVar(((Var *) arg)->varno,
-										fselect->fieldnum,
-										fselect->resulttype,
-										fselect->resulttypmod,
-										fselect->resultcollid,
-										((Var *) arg)->varlevelsup);
-		}
-		if (arg && IsA(arg, RowExpr))
-		{
-			RowExpr    *rowexpr = (RowExpr *) arg;
-
-			if (fselect->fieldnum > 0 &&
-				fselect->fieldnum <= list_length(rowexpr->args))
-			{
-				Node	   *fld = (Node *) list_nth(rowexpr->args,
-													fselect->fieldnum - 1);
-
-				if (rowtype_field_matches(rowexpr->row_typeid,
-										  fselect->fieldnum,
-										  fselect->resulttype,
-										  fselect->resulttypmod,
-										  fselect->resultcollid) &&
-					fselect->resulttype == exprType(fld) &&
-					fselect->resulttypmod == exprTypmod(fld) &&
-					fselect->resultcollid == exprCollation(fld))
-					return fld;
-			}
-		}
-		newfselect = makeNode(FieldSelect);
-		newfselect->arg = (Expr *) arg;
-		newfselect->fieldnum = fselect->fieldnum;
-		newfselect->resulttype = fselect->resulttype;
-		newfselect->resulttypmod = fselect->resulttypmod;
-		newfselect->resultcollid = fselect->resultcollid;
-		return (Node *) newfselect;
-	}
-		case T_NullTest:
-	{
-		NullTest   *ntest = (NullTest *) node;
-		NullTest   *newntest;
-		Node	   *arg;
-
-		arg = eval_const_expressions_mutator((Node *) ntest->arg,
-											 context);
-		if (arg && IsA(arg, RowExpr))
-		{
-			/*
-			 * We break ROW(...) IS [NOT] NULL into separate tests on its
-			 * component fields.  This form is usually more efficient to
-			 * evaluate, as well as being more amenable to optimization.
-			 */
-			RowExpr    *rarg = (RowExpr *) arg;
-			List	   *newargs = NIL;
-			ListCell   *l;
-
-			Assert(ntest->argisrow);
-
-			foreach(l, rarg->args)
-			{
-				Node	   *relem = (Node *) lfirst(l);
+					simple = simplify_function(NULL,
+											   infunc,
+											   expr->resulttype, -1,
+											   expr->resultcollid,
+											   InvalidOid,
+											   &args,
+											   false, true, context);
+					if (simple) /* successfully simplified input fn */
+						return (Node *) simple;
+				}
 
 				/*
-				 * A constant field refutes the whole NullTest if it's of the
-				 * wrong nullness; else we can discard it.
+				 * The expression cannot be simplified any further, so build
+				 * and return a replacement CoerceViaIO node using the
+				 * possibly-simplified argument.
 				 */
-				if (relem && IsA(relem, Const))
+				newexpr = makeNode(CoerceViaIO);
+				newexpr->arg = arg;
+				newexpr->resulttype = expr->resulttype;
+				newexpr->resultcollid = expr->resultcollid;
+				newexpr->coerceformat = expr->coerceformat;
+				newexpr->location = expr->location;
+				return (Node *) newexpr;
+			}
+		case T_ArrayCoerceExpr:
+			{
+				ArrayCoerceExpr *expr = (ArrayCoerceExpr *) node;
+				Expr	   *arg;
+				ArrayCoerceExpr *newexpr;
+
+				/*
+				 * Reduce constants in the ArrayCoerceExpr's argument, then
+				 * build a new ArrayCoerceExpr.
+				 */
+				arg = (Expr *) eval_const_expressions_mutator((Node *) expr->arg,
+															  context);
+
+				newexpr = makeNode(ArrayCoerceExpr);
+				newexpr->arg = arg;
+				newexpr->elemfuncid = expr->elemfuncid;
+				newexpr->resulttype = expr->resulttype;
+				newexpr->resulttypmod = expr->resulttypmod;
+				newexpr->resultcollid = expr->resultcollid;
+				newexpr->isExplicit = expr->isExplicit;
+				newexpr->coerceformat = expr->coerceformat;
+				newexpr->location = expr->location;
+
+				/*
+				 * If constant argument and it's a binary-coercible or
+				 * immutable conversion, we can simplify it to a constant.
+				 */
+				if (arg && IsA(arg, Const) &&
+					(!OidIsValid(newexpr->elemfuncid) ||
+				func_volatile(newexpr->elemfuncid) == PROVOLATILE_IMMUTABLE))
+					return (Node *) evaluate_expr((Expr *) newexpr,
+												  newexpr->resulttype,
+												  newexpr->resulttypmod,
+												  newexpr->resultcollid);
+
+				/* Else we must return the partially-simplified node */
+				return (Node *) newexpr;
+			}
+		case T_CollateExpr:
+			{
+				/*
+				 * If we can simplify the input to a constant, then we don't
+				 * need the CollateExpr node at all: just change the
+				 * constcollid field of the Const node.  Otherwise, replace
+				 * the CollateExpr with a RelabelType. (We do that so as to
+				 * improve uniformity of expression representation and thus
+				 * simplify comparison of expressions.)
+				 */
+				CollateExpr *collate = (CollateExpr *) node;
+				Node	   *arg;
+
+				arg = eval_const_expressions_mutator((Node *) collate->arg,
+													 context);
+
+				if (arg && IsA(arg, Const))
 				{
-					Const	   *carg = (Const *) relem;
+					Const	   *con = (Const *) arg;
 
-					if (carg->constisnull ?
-						(ntest->nulltesttype == IS_NOT_NULL) :
-						(ntest->nulltesttype == IS_NULL))
-						return makeBoolConst(false, false);
-					continue;
+					con->constcollid = collate->collOid;
+					return (Node *) con;
 				}
+				else if (collate->collOid == exprCollation(arg))
+				{
+					/* Don't need a RelabelType either... */
+					return arg;
+				}
+				else
+				{
+					RelabelType *relabel = makeNode(RelabelType);
+
+					relabel->resulttype = exprType(arg);
+					relabel->resulttypmod = exprTypmod(arg);
+					relabel->resultcollid = collate->collOid;
+					relabel->relabelformat = COERCE_DONTCARE;
+					relabel->location = collate->location;
+
+					/* Don't create stacked RelabelTypes */
+					while (arg && IsA(arg, RelabelType))
+						arg = (Node *) ((RelabelType *) arg)->arg;
+					relabel->arg = (Expr *) arg;
+
+					return (Node *) relabel;
+				}
+			}
+		case T_CaseExpr:
+			{
+				/*----------
+				 * CASE expressions can be simplified if there are constant
+				 * condition clauses:
+				 *		FALSE (or NULL): drop the alternative
+				 *		TRUE: drop all remaining alternatives
+				 * If the first non-FALSE alternative is a constant TRUE, we can
+				 * simplify the entire CASE to that alternative's expression.
+				 * If there are no non-FALSE alternatives, we simplify the entire
+				 * CASE to the default result (ELSE result).
+				 *
+				 * If we have a simple-form CASE with constant test expression,
+				 * we substitute the constant value for contained CaseTestExpr
+				 * placeholder nodes, so that we have the opportunity to reduce
+				 * constant test conditions.  For example this allows
+				 *		CASE 0 WHEN 0 THEN 1 ELSE 1/0 END
+				 * to reduce to 1 rather than drawing a divide-by-0 error.	Note
+				 * that when the test expression is constant, we don't have to
+				 * include it in the resulting CASE; for example
+				 *		CASE 0 WHEN x THEN y ELSE z END
+				 * is transformed by the parser to
+				 *		CASE 0 WHEN CaseTestExpr = x THEN y ELSE z END
+				 * which we can simplify to
+				 *		CASE WHEN 0 = x THEN y ELSE z END
+				 * It is not necessary for the executor to evaluate the "arg"
+				 * expression when executing the CASE, since any contained
+				 * CaseTestExprs that might have referred to it will have been
+				 * replaced by the constant.
+				 *----------
+				 */
+				CaseExpr   *caseexpr = (CaseExpr *) node;
+				CaseExpr   *newcase;
+				Node	   *save_case_val;
+				Node	   *newarg;
+				List	   *newargs;
+				bool		const_true_cond;
+				Node	   *defresult = NULL;
+				ListCell   *arg;
+
+				/* Simplify the test expression, if any */
+				newarg = eval_const_expressions_mutator((Node *) caseexpr->arg,
+														context);
+
+				/* Set up for contained CaseTestExpr nodes */
+				save_case_val = context->case_val;
+				if (newarg && IsA(newarg, Const))
+				{
+					context->case_val = newarg;
+					newarg = NULL;		/* not needed anymore, see comment
+										 * above */
+				}
+				else
+					context->case_val = NULL;
+
+				/* Simplify the WHEN clauses */
+				newargs = NIL;
+				const_true_cond = false;
+				foreach(arg, caseexpr->args)
+				{
+					CaseWhen   *oldcasewhen = (CaseWhen *) lfirst(arg);
+					Node	   *casecond;
+					Node	   *caseresult;
+
+					Assert(IsA(oldcasewhen, CaseWhen));
+
+					/* Simplify this alternative's test condition */
+					casecond =
+						eval_const_expressions_mutator((Node *) oldcasewhen->expr,
+													   context);
+
+					/*
+					 * If the test condition is constant FALSE (or NULL), then
+					 * drop this WHEN clause completely, without processing
+					 * the result.
+					 */
+					if (casecond && IsA(casecond, Const))
+					{
+						Const	   *const_input = (Const *) casecond;
+
+						if (const_input->constisnull ||
+							!DatumGetBool(const_input->constvalue))
+							continue;	/* drop alternative with FALSE
+										 * condition */
+						/* Else it's constant TRUE */
+						const_true_cond = true;
+					}
+
+					/* Simplify this alternative's result value */
+					caseresult =
+						eval_const_expressions_mutator((Node *) oldcasewhen->result,
+													   context);
+
+					/* If non-constant test condition, emit a new WHEN node */
+					if (!const_true_cond)
+					{
+						CaseWhen   *newcasewhen = makeNode(CaseWhen);
+
+						newcasewhen->expr = (Expr *) casecond;
+						newcasewhen->result = (Expr *) caseresult;
+						newcasewhen->location = oldcasewhen->location;
+						newargs = lappend(newargs, newcasewhen);
+						continue;
+					}
+
+					/*
+					 * Found a TRUE condition, so none of the remaining
+					 * alternatives can be reached.  We treat the result as
+					 * the default result.
+					 */
+					defresult = caseresult;
+					break;
+				}
+
+				/* Simplify the default result, unless we replaced it above */
+				if (!const_true_cond)
+					defresult =
+						eval_const_expressions_mutator((Node *) caseexpr->defresult,
+													   context);
+
+				context->case_val = save_case_val;
+
+				/*
+				 * If no non-FALSE alternatives, CASE reduces to the default
+				 * result
+				 */
+				if (newargs == NIL)
+					return defresult;
+				/* Otherwise we need a new CASE node */
+				newcase = makeNode(CaseExpr);
+				newcase->casetype = caseexpr->casetype;
+				newcase->casecollid = caseexpr->casecollid;
+				newcase->arg = (Expr *) newarg;
+				newcase->args = newargs;
+				newcase->defresult = (Expr *) defresult;
+				newcase->location = caseexpr->location;
+				return (Node *) newcase;
+			}
+		case T_CaseTestExpr:
+			{
+				/*
+				 * If we know a constant test value for the current CASE
+				 * construct, substitute it for the placeholder.  Else just
+				 * return the placeholder as-is.
+				 */
+				if (context->case_val)
+					return copyObject(context->case_val);
+				else
+					return copyObject(node);
+			}
+		case T_ArrayExpr:
+			{
+				ArrayExpr  *arrayexpr = (ArrayExpr *) node;
+				ArrayExpr  *newarray;
+				bool		all_const = true;
+				List	   *newelems;
+				ListCell   *element;
+
+				newelems = NIL;
+				foreach(element, arrayexpr->elements)
+				{
+					Node	   *e;
+
+					e = eval_const_expressions_mutator((Node *) lfirst(element),
+													   context);
+					if (!IsA(e, Const))
+						all_const = false;
+					newelems = lappend(newelems, e);
+				}
+
+				newarray = makeNode(ArrayExpr);
+				newarray->array_typeid = arrayexpr->array_typeid;
+				newarray->array_collid = arrayexpr->array_collid;
+				newarray->element_typeid = arrayexpr->element_typeid;
+				newarray->elements = newelems;
+				newarray->multidims = arrayexpr->multidims;
+				newarray->location = arrayexpr->location;
+
+				if (all_const)
+					return (Node *) evaluate_expr((Expr *) newarray,
+												  newarray->array_typeid,
+												  exprTypmod(node),
+												  newarray->array_collid);
+
+				return (Node *) newarray;
+			}
+		case T_CoalesceExpr:
+			{
+				CoalesceExpr *coalesceexpr = (CoalesceExpr *) node;
+				CoalesceExpr *newcoalesce;
+				List	   *newargs;
+				ListCell   *arg;
+
+				newargs = NIL;
+				foreach(arg, coalesceexpr->args)
+				{
+					Node	   *e;
+
+					e = eval_const_expressions_mutator((Node *) lfirst(arg),
+													   context);
+
+					/*
+					 * We can remove null constants from the list. For a
+					 * non-null constant, if it has not been preceded by any
+					 * other non-null-constant expressions then it is the
+					 * result. Otherwise, it's the next argument, but we can
+					 * drop following arguments since they will never be
+					 * reached.
+					 */
+					if (IsA(e, Const))
+					{
+						if (((Const *) e)->constisnull)
+							continue;	/* drop null constant */
+						if (newargs == NIL)
+							return e;	/* first expr */
+						newargs = lappend(newargs, e);
+						break;
+					}
+					newargs = lappend(newargs, e);
+				}
+
+				/*
+				 * If all the arguments were constant null, the result is just
+				 * null
+				 */
+				if (newargs == NIL)
+					return (Node *) makeNullConst(coalesceexpr->coalescetype,
+												  -1,
+											   coalesceexpr->coalescecollid);
+
+				newcoalesce = makeNode(CoalesceExpr);
+				newcoalesce->coalescetype = coalesceexpr->coalescetype;
+				newcoalesce->coalescecollid = coalesceexpr->coalescecollid;
+				newcoalesce->args = newargs;
+				newcoalesce->location = coalesceexpr->location;
+				return (Node *) newcoalesce;
+			}
+		case T_FieldSelect:
+			{
+				/*
+				 * We can optimize field selection from a whole-row Var into a
+				 * simple Var.	(This case won't be generated directly by the
+				 * parser, because ParseComplexProjection short-circuits it.
+				 * But it can arise while simplifying functions.)  Also, we
+				 * can optimize field selection from a RowExpr construct.
+				 *
+				 * We must however check that the declared type of the field
+				 * is still the same as when the FieldSelect was created ---
+				 * this can change if someone did ALTER COLUMN TYPE on the
+				 * rowtype.
+				 */
+				FieldSelect *fselect = (FieldSelect *) node;
+				FieldSelect *newfselect;
+				Node	   *arg;
+
+				arg = eval_const_expressions_mutator((Node *) fselect->arg,
+													 context);
+				if (arg && IsA(arg, Var) &&
+					((Var *) arg)->varattno == InvalidAttrNumber)
+				{
+					if (rowtype_field_matches(((Var *) arg)->vartype,
+											  fselect->fieldnum,
+											  fselect->resulttype,
+											  fselect->resulttypmod,
+											  fselect->resultcollid))
+						return (Node *) makeVar(((Var *) arg)->varno,
+												fselect->fieldnum,
+												fselect->resulttype,
+												fselect->resulttypmod,
+												fselect->resultcollid,
+												((Var *) arg)->varlevelsup);
+				}
+				if (arg && IsA(arg, RowExpr))
+				{
+					RowExpr    *rowexpr = (RowExpr *) arg;
+
+					if (fselect->fieldnum > 0 &&
+						fselect->fieldnum <= list_length(rowexpr->args))
+					{
+						Node	   *fld = (Node *) list_nth(rowexpr->args,
+													  fselect->fieldnum - 1);
+
+						if (rowtype_field_matches(rowexpr->row_typeid,
+												  fselect->fieldnum,
+												  fselect->resulttype,
+												  fselect->resulttypmod,
+												  fselect->resultcollid) &&
+							fselect->resulttype == exprType(fld) &&
+							fselect->resulttypmod == exprTypmod(fld) &&
+							fselect->resultcollid == exprCollation(fld))
+							return fld;
+					}
+				}
+				newfselect = makeNode(FieldSelect);
+				newfselect->arg = (Expr *) arg;
+				newfselect->fieldnum = fselect->fieldnum;
+				newfselect->resulttype = fselect->resulttype;
+				newfselect->resulttypmod = fselect->resulttypmod;
+				newfselect->resultcollid = fselect->resultcollid;
+				return (Node *) newfselect;
+			}
+		case T_NullTest:
+			{
+				NullTest   *ntest = (NullTest *) node;
+				NullTest   *newntest;
+				Node	   *arg;
+
+				arg = eval_const_expressions_mutator((Node *) ntest->arg,
+													 context);
+				if (arg && IsA(arg, RowExpr))
+				{
+					/*
+					 * We break ROW(...) IS [NOT] NULL into separate tests on
+					 * its component fields.  This form is usually more
+					 * efficient to evaluate, as well as being more amenable
+					 * to optimization.
+					 */
+					RowExpr    *rarg = (RowExpr *) arg;
+					List	   *newargs = NIL;
+					ListCell   *l;
+
+					Assert(ntest->argisrow);
+
+					foreach(l, rarg->args)
+					{
+						Node	   *relem = (Node *) lfirst(l);
+
+						/*
+						 * A constant field refutes the whole NullTest if it's
+						 * of the wrong nullness; else we can discard it.
+						 */
+						if (relem && IsA(relem, Const))
+						{
+							Const	   *carg = (Const *) relem;
+
+							if (carg->constisnull ?
+								(ntest->nulltesttype == IS_NOT_NULL) :
+								(ntest->nulltesttype == IS_NULL))
+								return makeBoolConst(false, false);
+							continue;
+						}
+						newntest = makeNode(NullTest);
+						newntest->arg = (Expr *) relem;
+						newntest->nulltesttype = ntest->nulltesttype;
+						newntest->argisrow = type_is_rowtype(exprType(relem));
+						newargs = lappend(newargs, newntest);
+					}
+					/* If all the inputs were constants, result is TRUE */
+					if (newargs == NIL)
+						return makeBoolConst(true, false);
+					/* If only one nonconst input, it's the result */
+					if (list_length(newargs) == 1)
+						return (Node *) linitial(newargs);
+					/* Else we need an AND node */
+					return (Node *) make_andclause(newargs);
+				}
+				if (!ntest->argisrow && arg && IsA(arg, Const))
+				{
+					Const	   *carg = (Const *) arg;
+					bool		result;
+
+					switch (ntest->nulltesttype)
+					{
+						case IS_NULL:
+							result = carg->constisnull;
+							break;
+						case IS_NOT_NULL:
+							result = !carg->constisnull;
+							break;
+						default:
+							elog(ERROR, "unrecognized nulltesttype: %d",
+								 (int) ntest->nulltesttype);
+							result = false;		/* keep compiler quiet */
+							break;
+					}
+
+					return makeBoolConst(result, false);
+				}
+
 				newntest = makeNode(NullTest);
-				newntest->arg = (Expr *) relem;
+				newntest->arg = (Expr *) arg;
 				newntest->nulltesttype = ntest->nulltesttype;
-				newntest->argisrow = type_is_rowtype(exprType(relem));
-				newargs = lappend(newargs, newntest);
+				newntest->argisrow = ntest->argisrow;
+				return (Node *) newntest;
 			}
-			/* If all the inputs were constants, result is TRUE */
-			if (newargs == NIL)
-				return makeBoolConst(true, false);
-			/* If only one nonconst input, it's the result */
-			if (list_length(newargs) == 1)
-				return (Node *) linitial(newargs);
-			/* Else we need an AND node */
-			return (Node *) make_andclause(newargs);
-		}
-		if (!ntest->argisrow && arg && IsA(arg, Const))
-		{
-			Const	   *carg = (Const *) arg;
-			bool		result;
-
-			switch (ntest->nulltesttype)
-			{
-				case IS_NULL:
-					result = carg->constisnull;
-					break;
-				case IS_NOT_NULL:
-					result = !carg->constisnull;
-					break;
-				default:
-					elog(ERROR, "unrecognized nulltesttype: %d",
-						 (int) ntest->nulltesttype);
-					result = false;		/* keep compiler quiet */
-					break;
-			}
-
-			return makeBoolConst(result, false);
-		}
-
-		newntest = makeNode(NullTest);
-		newntest->arg = (Expr *) arg;
-		newntest->nulltesttype = ntest->nulltesttype;
-		newntest->argisrow = ntest->argisrow;
-		return (Node *) newntest;
-	}
 		case T_BooleanTest:
-	{
-		BooleanTest *btest = (BooleanTest *) node;
-		BooleanTest *newbtest;
-		Node	   *arg;
-
-		arg = eval_const_expressions_mutator((Node *) btest->arg,
-											 context);
-		if (arg && IsA(arg, Const))
-		{
-			Const	   *carg = (Const *) arg;
-			bool		result;
-
-			switch (btest->booltesttype)
 			{
-				case IS_TRUE:
-					result = (!carg->constisnull &&
-							  DatumGetBool(carg->constvalue));
-					break;
-				case IS_NOT_TRUE:
-					result = (carg->constisnull ||
-							  !DatumGetBool(carg->constvalue));
-					break;
-				case IS_FALSE:
-					result = (!carg->constisnull &&
-							  !DatumGetBool(carg->constvalue));
-					break;
-				case IS_NOT_FALSE:
-					result = (carg->constisnull ||
-							  DatumGetBool(carg->constvalue));
-					break;
-				case IS_UNKNOWN:
-					result = carg->constisnull;
-					break;
-				case IS_NOT_UNKNOWN:
-					result = !carg->constisnull;
-					break;
-				default:
-					elog(ERROR, "unrecognized booltesttype: %d",
-						 (int) btest->booltesttype);
-					result = false;		/* keep compiler quiet */
-					break;
+				BooleanTest *btest = (BooleanTest *) node;
+				BooleanTest *newbtest;
+				Node	   *arg;
+
+				arg = eval_const_expressions_mutator((Node *) btest->arg,
+													 context);
+				if (arg && IsA(arg, Const))
+				{
+					Const	   *carg = (Const *) arg;
+					bool		result;
+
+					switch (btest->booltesttype)
+					{
+						case IS_TRUE:
+							result = (!carg->constisnull &&
+									  DatumGetBool(carg->constvalue));
+							break;
+						case IS_NOT_TRUE:
+							result = (carg->constisnull ||
+									  !DatumGetBool(carg->constvalue));
+							break;
+						case IS_FALSE:
+							result = (!carg->constisnull &&
+									  !DatumGetBool(carg->constvalue));
+							break;
+						case IS_NOT_FALSE:
+							result = (carg->constisnull ||
+									  DatumGetBool(carg->constvalue));
+							break;
+						case IS_UNKNOWN:
+							result = carg->constisnull;
+							break;
+						case IS_NOT_UNKNOWN:
+							result = !carg->constisnull;
+							break;
+						default:
+							elog(ERROR, "unrecognized booltesttype: %d",
+								 (int) btest->booltesttype);
+							result = false;		/* keep compiler quiet */
+							break;
+					}
+
+					return makeBoolConst(result, false);
+				}
+
+				newbtest = makeNode(BooleanTest);
+				newbtest->arg = (Expr *) arg;
+				newbtest->booltesttype = btest->booltesttype;
+				return (Node *) newbtest;
 			}
-
-			return makeBoolConst(result, false);
-		}
-
-		newbtest = makeNode(BooleanTest);
-		newbtest->arg = (Expr *) arg;
-		newbtest->booltesttype = btest->booltesttype;
-		return (Node *) newbtest;
-	}
 		case T_PlaceHolderVar:
-		/*
-		 * In estimation mode, just strip the PlaceHolderVar node altogether;
-		 * this amounts to estimating that the contained value won't be forced
-		 * to null by an outer join.  In regular mode we just use the default
-		 * behavior (ie, simplify the expression but leave the PlaceHolderVar
-		 * node intact).
-		 */
+
+			/*
+			 * In estimation mode, just strip the PlaceHolderVar node
+			 * altogether; this amounts to estimating that the contained value
+			 * won't be forced to null by an outer join.  In regular mode we
+			 * just use the default behavior (ie, simplify the expression but
+			 * leave the PlaceHolderVar node intact).
+			 */
 			if (context->estimate)
 			{
 				PlaceHolderVar *phv = (PlaceHolderVar *) node;
@@ -3392,7 +3427,7 @@ simplify_boolean_equality(Oid opno, List *args)
  * result type OID (which is needed for polymorphic functions), result typmod,
  * result collation, the input collation to use for the function, the
  * pre-simplified argument list, and some flags; also the context data for
- * eval_const_expressions.  In common cases, several of the arguments could be
+ * eval_const_expressions.	In common cases, several of the arguments could be
  * derived from the original expression.  Sending them separately avoids
  * duplicating NodeTag-specific knowledge, and it's necessary for CoerceViaIO.
  * A NULL original expression disables use of transform functions while
@@ -3424,7 +3459,7 @@ simplify_function(Expr *oldexpr, Oid funcid,
 	 * deliver a constant result, use a transform function to generate a
 	 * substitute node tree, or expand in-line the body of the function
 	 * definition (which only works for simple SQL-language functions, but
-	 * that is a common case).  Each needs access to the function's pg_proc
+	 * that is a common case).	Each needs access to the function's pg_proc
 	 * tuple, so fetch it just once.
 	 */
 	func_tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
@@ -3469,15 +3504,15 @@ simplify_function(Expr *oldexpr, Oid funcid,
 	 *
 	 * Currently, this facility is undocumented and not exposed to users at
 	 * the SQL level.  Core length coercion casts use it to avoid calls
-	 * guaranteed to return their input unchanged.  This in turn allows ALTER
-	 * TABLE ALTER TYPE to avoid rewriting tables for some typmod changes.  In
+	 * guaranteed to return their input unchanged.	This in turn allows ALTER
+	 * TABLE ALTER TYPE to avoid rewriting tables for some typmod changes.	In
 	 * the future, this facility may find other applications, like simplifying
 	 * x*0, x*1, and x+0.
 	 */
 	transform = ((Form_pg_proc) GETSTRUCT(func_tuple))->protransform;
 	if (!newexpr && OidIsValid(transform) && oldexpr)
 		newexpr = (Expr *) DatumGetPointer(OidFunctionCall1(transform,
-															PointerGetDatum(oldexpr)));
+												  PointerGetDatum(oldexpr)));
 
 	if (!newexpr && allow_inline)
 		newexpr = inline_function(funcid, result_type, result_collid,
@@ -4523,7 +4558,7 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	 * If it returns RECORD, we have to check against the column type list
 	 * provided in the RTE; check_sql_fn_retval can't do that.  (If no match,
 	 * we just fail to inline, rather than complaining; see notes for
-	 * tlist_matches_coltypelist.)  We don't have to do this for functions
+	 * tlist_matches_coltypelist.)	We don't have to do this for functions
 	 * with declared OUT parameters, even though their funcresulttype is
 	 * RECORDOID, so check get_func_result_type too.
 	 */
