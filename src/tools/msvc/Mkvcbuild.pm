@@ -344,9 +344,17 @@ sub mkvcbuild
     $pgdump->AddFile('src\backend\parser\kwlookup.c');
 
     my $pgdumpall = AddSimpleFrontend('pg_dump', 1);
+	# pg_dumpall doesn't use the files in the Makefile's $(OBJS), unlike
+	# pg_dump and pg_restore.
+	# So remove their sources from the object, keeping the other setup that 
+	# AddSimpleFrontend() has done.
+    my @nodumpall = grep  { m/src\\bin\\pg_dump\\.*\.c$/ } 
+	keys %{$pgdumpall->{files}};
+    delete @{$pgdumpall->{files}}{@nodumpall};
     $pgdumpall->{name} = 'pg_dumpall';
     $pgdumpall->AddIncludeDir('src\backend');
     $pgdumpall->AddFile('src\bin\pg_dump\pg_dumpall.c');
+    $pgdumpall->AddFile('src\bin\pg_dump\dumputils.c');
     $pgdumpall->AddFile('src\bin\pg_dump\keywords.c');
     $pgdumpall->AddFile('src\backend\parser\kwlookup.c');
 
