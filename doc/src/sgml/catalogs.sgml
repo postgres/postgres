@@ -7100,6 +7100,8 @@
    in the same way as in <structname>pg_description</structname> or
    <structname>pg_depend</structname>).  Also, the right to extend a
    relation is represented as a separate lockable object.
+   Also, <quote>advisory</> locks can be taken on numbers that have
+   user-defined meanings.
   </para>
 
   <table>
@@ -7202,9 +7204,7 @@
       <entry>any OID column</entry>
       <entry>
        OID of the lock target within its system catalog, or null if the
-       target is not a general database object.
-       For advisory locks it is used to distinguish the two key
-       spaces (1 for an int8 key, 2 for two int4 keys).
+       target is not a general database object
       </entry>
      </row>
      <row>
@@ -7233,7 +7233,7 @@
       <entry></entry>
       <entry>
        Process ID of the server process holding or awaiting this
-       lock.  Null if the lock is held by a prepared transaction.
+       lock, or null if the lock is held by a prepared transaction
       </entry>
      </row>
      <row>
@@ -7253,7 +7253,8 @@
       <entry><structfield>fastpath</structfield></entry>
       <entry><type>boolean</type></entry>
       <entry></entry>
-      <entry>True if lock was taken via fast path, false if taken via main lock table</entry>
+      <entry>True if lock was taken via fast path, false if taken via main
+       lock table</entry>
      </row>
     </tbody>
    </tgroup>
@@ -7292,7 +7293,8 @@
 
   <para>
    Advisory locks can be acquired on keys consisting of either a single
-   <type>bigint</type> value or two integer values.  A <type>bigint</type> key is displayed with its
+   <type>bigint</type> value or two integer values.
+   A <type>bigint</type> key is displayed with its
    high-order half in the <structfield>classid</> column, its low-order half
    in the <structfield>objid</> column, and <structfield>objsubid</> equal
    to 1.  Integer keys are displayed with the first key in the
@@ -7300,34 +7302,6 @@
    column, and <structfield>objsubid</> equal to 2.  The actual meaning of
    the keys is up to the user.  Advisory locks are local to each database,
    so the <structfield>database</> column is meaningful for an advisory lock.
-  </para>
-
-  <para>
-   The <structname>pg_locks</structname> view displays data from both the
-   regular lock manager and the predicate lock manager, which are
-   separate systems.  This data is not guaranteed to be entirely consistent.
-   Data on fast-path locks (with <structfield>fastpath</> = <literal>true</>)
-   is gathered from each backend one at a time, without freezing the state of
-   the entire lock manager, so it is possible for locks to be taken and
-   released as information is gathered.  Note, however, that these locks are
-   known not to conflict with any other lock currently in place.  After
-   all backends have been queried for fast-path locks, the remainder of the
-   lock manager is locked as a unit, and a consistent snapshot of all
-   remaining locks is dumped as an atomic action.  Once the lock manager has
-   been unlocked, the predicate lock manager is similarly locked and all
-   predicate locks are dumped as an atomic action.  Thus, with the exception
-   of fast-path locks, each lock manager will deliver a consistent set of
-   results, but as we do not lock both lock managers simultaneously, it is
-   possible for locks to be taken or released after we interrogate the regular
-   lock manager and before we interrogate the predicate lock manager.
-  </para>
-
-  <para>
-   Locking the lock manger and/or predicate lock manager could have some
-   impact on database performance if this view is very frequently accessed.
-   The locks are held only for the minimum amount of time necessary to
-   obtain data from the lock manager, but this does not completely eliminate
-   the possibility of a performance impact.
   </para>
 
   <para>
@@ -7352,6 +7326,37 @@
    information on prepared transactions that hold locks.
    (A prepared transaction can never be waiting for a lock,
    but it continues to hold the locks it acquired while running.)
+  </para>
+
+  <para>
+   The <structname>pg_locks</structname> view displays data from both the
+   regular lock manager and the predicate lock manager, which are
+   separate systems; in addition, the regular lock manager subdivides its
+   locks into regular and <firstterm>fast-path</> locks.
+   This data is not guaranteed to be entirely consistent.
+   When the view is queried,
+   data on fast-path locks (with <structfield>fastpath</> = <literal>true</>)
+   is gathered from each backend one at a time, without freezing the state of
+   the entire lock manager, so it is possible for locks to be taken or
+   released while information is gathered.  Note, however, that these locks are
+   known not to conflict with any other lock currently in place.  After
+   all backends have been queried for fast-path locks, the remainder of the
+   regular lock manager is locked as a unit, and a consistent snapshot of all
+   remaining locks is collected as an atomic action.  After unlocking the
+   regular lock manager, the predicate lock manager is similarly locked and all
+   predicate locks are collected as an atomic action.  Thus, with the exception
+   of fast-path locks, each lock manager will deliver a consistent set of
+   results, but as we do not lock both lock managers simultaneously, it is
+   possible for locks to be taken or released after we interrogate the regular
+   lock manager and before we interrogate the predicate lock manager.
+  </para>
+
+  <para>
+   Locking the regular and/or predicate lock manager could have some
+   impact on database performance if this view is very frequently accessed.
+   The locks are held only for the minimum amount of time necessary to
+   obtain data from the lock managers, but this does not completely eliminate
+   the possibility of a performance impact.
   </para>
 
  </sect1>
