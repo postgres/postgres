@@ -1188,7 +1188,8 @@ rewriteTargetListUD(Query *parsetree, RangeTblEntry *target_rte,
 		 */
 		var = makeWholeRowVar(target_rte,
 							  parsetree->resultRelation,
-							  0);
+							  0,
+							  false);
 
 		attrname = "wholerow";
 	}

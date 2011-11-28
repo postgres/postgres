@@ -35,7 +35,8 @@ extern Var *makeVarFromTargetEntry(Index varno,
 
 extern Var *makeWholeRowVar(RangeTblEntry *rte,
 				Index varno,
-				Index varlevelsup);
+				Index varlevelsup,
+				bool allowScalar);
 
 extern TargetEntry *makeTargetEntry(Expr *expr,
 				AttrNumber resno,
