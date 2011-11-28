@@ -222,6 +222,9 @@ static const PQconninfoOption PQconninfoOptions[] = {
 	{"sslmode", "PGSSLMODE", DefaultSSLMode, NULL,
 	"SSL-Mode", "", 8},			/* sizeof("disable") == 8 */
 
+	{"sslcompression", "PGSSLCOMPRESSION", "1", NULL,
+	"SSL-Compression", "", 1},
+
 	{"sslcert", "PGSSLCERT", NULL, NULL,
 	"SSL-Client-Cert", "", 64},
 
@@ -621,6 +624,8 @@ fillPGconn(PGconn *conn, PQconninfoOption *connOptions)
 	conn->keepalives_count = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval(connOptions, "sslmode");
 	conn->sslmode = tmp ? strdup(tmp) : NULL;
+	tmp = conninfo_getval(connOptions, "sslcompression");
+	conn->sslcompression = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval(connOptions, "sslkey");
 	conn->sslkey = tmp ? strdup(tmp) : NULL;
 	tmp = conninfo_getval(connOptions, "sslcert");

@@ -1292,6 +1292,16 @@ initialize_SSL(PGconn *conn)
 		}
 	}
 
+	/*
+	 * If the OpenSSL version used supports it (from 1.0.0 on)
+	 * and the user requested it, disable SSL compression.
+	 */
+#ifdef SSL_OP_NO_COMPRESSION
+	if (conn->sslcompression && conn->sslcompression[0] == '0') {
+		SSL_set_options(conn->ssl, SSL_OP_NO_COMPRESSION);
+	}
+#endif
+
 	return 0;
 }
 
