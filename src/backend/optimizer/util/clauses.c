@@ -2106,7 +2106,9 @@ eval_const_expressions_mutator(Node *node,
 {
 	if (node == NULL)
 		return NULL;
-	if (IsA(node, Param))
+	switch (nodeTag(node))
+	{
+		case T_Param:
 	{
 		Param	   *param = (Param *) node;
 
@@ -2152,7 +2154,7 @@ eval_const_expressions_mutator(Node *node,
 		/* Not replaceable, so just copy the Param (no need to recurse) */
 		return (Node *) copyObject(param);
 	}
-	if (IsA(node, FuncExpr))
+		case T_FuncExpr:
 	{
 		FuncExpr   *expr = (FuncExpr *) node;
 		List	   *args;
@@ -2210,7 +2212,7 @@ eval_const_expressions_mutator(Node *node,
 		newexpr->location = expr->location;
 		return (Node *) newexpr;
 	}
-	if (IsA(node, OpExpr))
+		case T_OpExpr:
 	{
 		OpExpr	   *expr = (OpExpr *) node;
 		List	   *args;
@@ -2275,7 +2277,7 @@ eval_const_expressions_mutator(Node *node,
 		newexpr->location = expr->location;
 		return (Node *) newexpr;
 	}
-	if (IsA(node, DistinctExpr))
+		case T_DistinctExpr:
 	{
 		DistinctExpr *expr = (DistinctExpr *) node;
 		List	   *args;
@@ -2372,7 +2374,7 @@ eval_const_expressions_mutator(Node *node,
 		newexpr->location = expr->location;
 		return (Node *) newexpr;
 	}
-	if (IsA(node, BoolExpr))
+		case T_BoolExpr:
 	{
 		BoolExpr   *expr = (BoolExpr *) node;
 
@@ -2439,10 +2441,10 @@ eval_const_expressions_mutator(Node *node,
 					 (int) expr->boolop);
 				break;
 		}
+		break;
 	}
-	if (IsA(node, SubPlan) ||
-		IsA(node, AlternativeSubPlan))
-	{
+		case T_SubPlan:
+		case T_AlternativeSubPlan:
 		/*
 		 * Return a SubPlan unchanged --- too late to do anything with it.
 		 *
@@ -2450,8 +2452,7 @@ eval_const_expressions_mutator(Node *node,
 		 * never be invoked after SubPlan creation.
 		 */
 		return node;
-	}
-	if (IsA(node, RelabelType))
+		case T_RelabelType:
 	{
 		/*
 		 * If we can simplify the input to a constant, then we don't need the
@@ -2493,7 +2494,7 @@ eval_const_expressions_mutator(Node *node,
 			return (Node *) newrelabel;
 		}
 	}
-	if (IsA(node, CoerceViaIO))
+		case T_CoerceViaIO:
 	{
 		CoerceViaIO *expr = (CoerceViaIO *) node;
 		Expr	   *arg;
@@ -2569,7 +2570,7 @@ eval_const_expressions_mutator(Node *node,
 		newexpr->location = expr->location;
 		return (Node *) newexpr;
 	}
-	if (IsA(node, ArrayCoerceExpr))
+		case T_ArrayCoerceExpr:
 	{
 		ArrayCoerceExpr *expr = (ArrayCoerceExpr *) node;
 		Expr	   *arg;
@@ -2607,7 +2608,7 @@ eval_const_expressions_mutator(Node *node,
 		/* Else we must return the partially-simplified node */
 		return (Node *) newexpr;
 	}
-	if (IsA(node, CollateExpr))
+	case T_CollateExpr:
 	{
 		/*
 		 * If we can simplify the input to a constant, then we don't need the
@@ -2652,7 +2653,7 @@ eval_const_expressions_mutator(Node *node,
 			return (Node *) relabel;
 		}
 	}
-	if (IsA(node, CaseExpr))
+	case T_CaseExpr:
 	{
 		/*----------
 		 * CASE expressions can be simplified if there are constant
@@ -2783,7 +2784,7 @@ eval_const_expressions_mutator(Node *node,
 		newcase->location = caseexpr->location;
 		return (Node *) newcase;
 	}
-	if (IsA(node, CaseTestExpr))
+		case T_CaseTestExpr:
 	{
 		/*
 		 * If we know a constant test value for the current CASE construct,
@@ -2795,7 +2796,7 @@ eval_const_expressions_mutator(Node *node,
 		else
 			return copyObject(node);
 	}
-	if (IsA(node, ArrayExpr))
+		case T_ArrayExpr:
 	{
 		ArrayExpr  *arrayexpr = (ArrayExpr *) node;
 		ArrayExpr  *newarray;
@@ -2831,7 +2832,7 @@ eval_const_expressions_mutator(Node *node,
 
 		return (Node *) newarray;
 	}
-	if (IsA(node, CoalesceExpr))
+		case T_CoalesceExpr:
 	{
 		CoalesceExpr *coalesceexpr = (CoalesceExpr *) node;
 		CoalesceExpr *newcoalesce;
@@ -2878,7 +2879,7 @@ eval_const_expressions_mutator(Node *node,
 		newcoalesce->location = coalesceexpr->location;
 		return (Node *) newcoalesce;
 	}
-	if (IsA(node, FieldSelect))
+		case T_FieldSelect:
 	{
 		/*
 		 * We can optimize field selection from a whole-row Var into a simple
@@ -2941,7 +2942,7 @@ eval_const_expressions_mutator(Node *node,
 		newfselect->resultcollid = fselect->resultcollid;
 		return (Node *) newfselect;
 	}
-	if (IsA(node, NullTest))
+		case T_NullTest:
 	{
 		NullTest   *ntest = (NullTest *) node;
 		NullTest   *newntest;
@@ -3024,7 +3025,7 @@ eval_const_expressions_mutator(Node *node,
 		newntest->argisrow = ntest->argisrow;
 		return (Node *) newntest;
 	}
-	if (IsA(node, BooleanTest))
+		case T_BooleanTest:
 	{
 		BooleanTest *btest = (BooleanTest *) node;
 		BooleanTest *newbtest;
@@ -3076,8 +3077,7 @@ eval_const_expressions_mutator(Node *node,
 		newbtest->booltesttype = btest->booltesttype;
 		return (Node *) newbtest;
 	}
-	if (IsA(node, PlaceHolderVar) &&context->estimate)
-	{
+		case T_PlaceHolderVar:
 		/*
 		 * In estimation mode, just strip the PlaceHolderVar node altogether;
 		 * this amounts to estimating that the contained value won't be forced
@@ -3085,10 +3085,16 @@ eval_const_expressions_mutator(Node *node,
 		 * behavior (ie, simplify the expression but leave the PlaceHolderVar
 		 * node intact).
 		 */
-		PlaceHolderVar *phv = (PlaceHolderVar *) node;
+			if (context->estimate)
+			{
+				PlaceHolderVar *phv = (PlaceHolderVar *) node;
 
-		return eval_const_expressions_mutator((Node *) phv->phexpr,
-											  context);
+				return eval_const_expressions_mutator((Node *) phv->phexpr,
+													  context);
+			}
+			break;
+		default:
+			break;
 	}
 
 	/*
