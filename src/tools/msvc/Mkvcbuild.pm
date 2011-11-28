@@ -12,6 +12,8 @@ use warnings;
 use Project;
 use Solution;
 use Cwd;
+use Config;
+use List::Util qw(first);
 
 use Exporter;
 our (@ISA, @EXPORT_OK);
@@ -91,11 +93,11 @@ sub mkvcbuild
         $plperl->AddDefine('PLPERL_HAVE_UID_GID');
         if (Solution::IsNewer('src\pl\plperl\SPI.c','src\pl\plperl\SPI.xs'))
         {
+			my $xsubppdir = first { -e "$_\\ExtUtils\\xsubpp" } @INC;
             print 'Building src\pl\plperl\SPI.c...' . "\n";
             system( $solution->{options}->{perl}
                   . '/bin/perl '
-                  . $solution->{options}->{perl}
-                  . '/lib/ExtUtils/xsubpp -typemap '
+				  . "$xsubppdir/ExtUtils/xsubpp -typemap "
                   . $solution->{options}->{perl}
                   . '/lib/ExtUtils/typemap src\pl\plperl\SPI.xs >src\pl\plperl\SPI.c');
             if ((!(-f 'src\pl\plperl\SPI.c')) || -z 'src\pl\plperl\SPI.c')
