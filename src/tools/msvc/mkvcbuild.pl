@@ -5,6 +5,8 @@ use warnings;
 use Project;
 use Solution;
 use Cwd;
+use Config;
+use List::Util qw(first);
 
 chdir('..\..\..') if (-d '..\msvc' && -d '..\..\..\src');
 die 'Must run from root or msvc directory' unless (-d 'src\tools\msvc' && -d 'src');
@@ -52,8 +54,9 @@ if ($solution->{options}->{perl}) {
 	$plperl->AddIncludeDir($solution->{options}->{perl} . '/lib/CORE');
 	$plperl->AddDefine('PLPERL_HAVE_UID_GID');
 	if (Solution::IsNewer('src\pl\plperl\SPI.c','src\pl\plperl\SPI.xs')) {
+		my $xsubppdir = first { -e "$_\\ExtUtils\\xsubpp" } @INC;
 		print 'Building src\pl\plperl\SPI.c...' . "\n";
-		system($solution->{options}->{perl} . '/bin/perl ' . $solution->{options}->{perl} . '/lib/ExtUtils/xsubpp -typemap ' . $solution->{options}->{perl} . '/lib/ExtUtils/typemap src\pl\plperl\SPI.xs >src\pl\plperl\SPI.c');
+		system($solution->{options}->{perl} . '/bin/perl ' . "$xsubppdir/ExtUtils/xsubpp -typemap " . $solution->{options}->{perl} . '/lib/ExtUtils/typemap src\pl\plperl\SPI.xs >src\pl\plperl\SPI.c');
 		if ((!(-f 'src\pl\plperl\SPI.c')) || -z 'src\pl\plperl\SPI.c') {
 			unlink('src\pl\plperl\SPI.c'); # if zero size
 			die 'Failed to create SPI.c' . "\n";
