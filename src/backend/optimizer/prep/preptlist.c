@@ -129,7 +129,8 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 			/* Not a table, so we need the whole row as a junk var */
 			var = makeWholeRowVar(rt_fetch(rc->rti, range_table),
 								  rc->rti,
-								  0);
+								  0,
+								  false);
 			snprintf(resname, sizeof(resname), "wholerow%u", rc->rowmarkId);
 			tle = makeTargetEntry((Expr *) var,
 								  list_length(tlist) + 1,
