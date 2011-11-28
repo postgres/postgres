@@ -6302,10 +6302,7 @@
       <entry>any OID column</entry>
       <entry>
        OID of the object within its system catalog, or null if the
-       object is not a general database object.
-       For advisory locks it is used to distinguish the two key
-       spaces (<literal>1</> for an int8 key, <literal>2</> for two
-       int4 keys).
+       object is not a general database object
       </entry>
      </row>
      <row>
