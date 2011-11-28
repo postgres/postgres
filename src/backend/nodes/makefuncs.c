@@ -101,11 +101,17 @@ makeVar(Index varno,
  * with error cases, but it's not worth changing now.)  The vartype indicates
  * a rowtype; either a named composite type, or RECORD.  This function
  * encapsulates the logic for determining the correct rowtype OID to use.
+ *
+ * If allowScalar is true, then for the case where the RTE is a function
+ * returning a non-composite result type, we produce a normal Var referencing
+ * the function's result directly, instead of the single-column composite
+ * value that the whole-row notation might otherwise suggest.
  */
 Var *
 makeWholeRowVar(RangeTblEntry *rte,
 				Index varno,
-				Index varlevelsup)
+				Index varlevelsup,
+				bool allowScalar)
 {
 	Var		   *result;
 	Oid			toid;
@@ -135,37 +141,32 @@ makeWholeRowVar(RangeTblEntry *rte,
 								 -1,
 								 varlevelsup);
 			}
-			else
+			else if (allowScalar)
 			{
-				/*
-				 * func returns scalar; instead of making a whole-row Var,
-				 * just reference the function's scalar output.  (XXX this
-				 * seems a tad inconsistent, especially if "f.*" was
-				 * explicitly written ...)
-				 */
+				/* func returns scalar; just return its output as-is */
 				result = makeVar(varno,
 								 1,
 								 toid,
 								 -1,
 								 varlevelsup);
 			}
-			break;
-		case RTE_VALUES:
-			toid = RECORDOID;
-			/* returns composite; same as relation case */
-			result = makeVar(varno,
-							 InvalidAttrNumber,
-							 toid,
-							 -1,
-							 varlevelsup);
+			else
+			{
+				/* func returns scalar, but we want a composite result */
+				result = makeVar(varno,
+								 InvalidAttrNumber,
+								 RECORDOID,
+								 -1,
+								 varlevelsup);
+			}
 			break;
 		default:
 
 			/*
-			 * RTE is a join or subselect.	We represent this as a whole-row
-			 * Var of RECORD type.	(Note that in most cases the Var will be
-			 * expanded to a RowExpr during planning, but that is not our
-			 * concern here.)
+			 * RTE is a join, subselect, or VALUES.  We represent this as a
+			 * whole-row Var of RECORD type. (Note that in most cases the Var
+			 * will be expanded to a RowExpr during planning, but that is not
+			 * our concern here.)
 			 */
 			result = makeVar(varno,
 							 InvalidAttrNumber,

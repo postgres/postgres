@@ -2029,8 +2029,15 @@ transformWholeRowRef(ParseState *pstate, RangeTblEntry *rte, int location)
 	/* Find the RTE's rangetable location */
 	vnum = RTERangeTablePosn(pstate, rte, &sublevels_up);
 
-	/* Build the appropriate referencing node */
-	result = makeWholeRowVar(rte, vnum, sublevels_up);
+	/*
+	 * Build the appropriate referencing node.  Note that if the RTE is a
+	 * function returning scalar, we create just a plain reference to the
+	 * function value, not a composite containing a single column.  This is
+	 * pretty inconsistent at first sight, but it's what we've done
+	 * historically.  One argument for it is that "rel" and "rel.*" mean the
+	 * same thing for composite relations, so why not for scalar functions...
+	 */
+	result = makeWholeRowVar(rte, vnum, sublevels_up, true);
 
 	/* location is not filled in by makeWholeRowVar */
 	result->location = location;
