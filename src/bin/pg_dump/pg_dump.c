@@ -6378,9 +6378,10 @@ getForeignDataWrappers(int *numForeignDataWrappers)
 						  "fdwhandler::pg_catalog.regproc, "
 						  "fdwvalidator::pg_catalog.regproc, fdwacl, "
 						  "array_to_string(ARRAY("
-						  "		SELECT quote_ident(option_name) || ' ' || "
-						  "            quote_literal(option_value) "
-						  "		FROM pg_options_to_table(fdwoptions)), ', ') AS fdwoptions "
+						  "SELECT quote_ident(option_name) || ' ' || "
+						  "quote_literal(option_value) "
+						  "FROM pg_options_to_table(fdwoptions)"
+						  "), ', ') AS fdwoptions "
 						  "FROM pg_foreign_data_wrapper",
 						  username_subquery);
 	}
@@ -6391,9 +6392,10 @@ getForeignDataWrappers(int *numForeignDataWrappers)
 						  "'-' AS fdwhandler, "
 						  "fdwvalidator::pg_catalog.regproc, fdwacl, "
 						  "array_to_string(ARRAY("
-						  "		SELECT quote_ident(option_name) || ' ' || "
-						  "            quote_literal(option_value) "
-						  "		FROM pg_options_to_table(fdwoptions)), ', ') AS fdwoptions "
+						  "SELECT quote_ident(option_name) || ' ' || "
+						  "quote_literal(option_value) "
+						  "FROM pg_options_to_table(fdwoptions)"
+						  "), ', ') AS fdwoptions "
 						  "FROM pg_foreign_data_wrapper",
 						  username_subquery);
 	}
@@ -6479,9 +6481,10 @@ getForeignServers(int *numForeignServers)
 					  "(%s srvowner) AS rolname, "
 					  "srvfdw, srvtype, srvversion, srvacl,"
 					  "array_to_string(ARRAY("
-		 "		SELECT quote_ident(option_name) || ' ' || "
-		 "             quote_literal(option_value) "
-	   "		FROM pg_options_to_table(srvoptions)), ', ') AS srvoptions "
+					  "SELECT quote_ident(option_name) || ' ' || "
+					  "quote_literal(option_value) "
+					  "FROM pg_options_to_table(srvoptions)"
+					  "), ', ') AS srvoptions "
 					  "FROM pg_foreign_server",
 					  username_subquery);
 
@@ -11407,9 +11410,13 @@ dumpUserMappings(Archive *fout,
 
 	appendPQExpBuffer(query,
 					  "SELECT usename, "
-					  "array_to_string(ARRAY(SELECT quote_ident(option_name) || ' ' || quote_literal(option_value) FROM pg_options_to_table(umoptions)), ', ') AS umoptions\n"
+					  "array_to_string(ARRAY("
+					  "SELECT quote_ident(option_name) || ' ' || "
+					  "quote_literal(option_value) "
+					  "FROM pg_options_to_table(umoptions)"
+					  "), ', ') AS umoptions "
 					  "FROM pg_user_mappings "
-					  "WHERE srvid = %u",
+					  "WHERE srvid = '%u'",
 					  catalogId.oid);
 
 	res = PQexec(g_conn, query->data);
@@ -11969,12 +11976,12 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 	int			numParents;
 	TableInfo **parents;
 	int			actual_atts;	/* number of attrs in this CREATE statment */
-	char	   *reltypename;
+	const char *reltypename;
 	char	   *storage;
+	char	   *srvname;
+	char	   *ftoptions;
 	int			j,
 				k;
-	char	   *srvname;
-	char	   *ftoptions = NULL;
 
 	/* Make sure we are in proper schema */
 	selectSourceSchema(tbinfo->dobj.namespace->dobj.name);
@@ -12060,15 +12067,25 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 
 			/* retrieve name of foreign server and generic options */
 			appendPQExpBuffer(query,
-							  "SELECT fs.srvname, array_to_string(ARRAY("
-				"   SELECT quote_ident(option_name) || ' ' || "
-				"          quote_literal(option_value)"
-			   "   FROM pg_options_to_table(ftoptions)), ', ') AS ftoptions "
-						"FROM pg_foreign_table ft JOIN pg_foreign_server fs "
-							  "	ON (fs.oid = ft.ftserver) "
-							"WHERE ft.ftrelid = %u", tbinfo->dobj.catId.oid);
+							  "SELECT fs.srvname, "
+							  "pg_catalog.array_to_string(ARRAY("
+							  "SELECT pg_catalog.quote_ident(option_name) || "
+							  "' ' || pg_catalog.quote_literal(option_value) "
+							  "FROM pg_catalog.pg_options_to_table(ftoptions)"
+							  "), ', ') AS ftoptions "
+							  "FROM pg_catalog.pg_foreign_table ft "
+							  "JOIN pg_catalog.pg_foreign_server fs "
+							  "ON (fs.oid = ft.ftserver) "
+							  "WHERE ft.ftrelid = '%u'",
+							  tbinfo->dobj.catId.oid);
 			res = PQexec(g_conn, query->data);
 			check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+			if (PQntuples(res) != 1)
+			{
+				write_msg(NULL, "query returned %d foreign server entries for foreign table \"%s\"\n",
+						  PQntuples(res), tbinfo->dobj.name);
+				exit_nicely();
+			}
 			i_srvname = PQfnumber(res, "srvname");
 			i_ftoptions = PQfnumber(res, "ftoptions");
 			srvname = strdup(PQgetvalue(res, 0, i_srvname));
@@ -12259,7 +12276,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		}
 
 		if (tbinfo->relkind == RELKIND_FOREIGN_TABLE)
-			appendPQExpBuffer(q, "\nSERVER %s", srvname);
+			appendPQExpBuffer(q, "\nSERVER %s", fmtId(srvname));
 
 		if ((tbinfo->reloptions && strlen(tbinfo->reloptions) > 0) ||
 		  (tbinfo->toast_reloptions && strlen(tbinfo->toast_reloptions) > 0))
