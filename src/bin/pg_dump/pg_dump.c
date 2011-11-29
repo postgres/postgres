@@ -12325,7 +12325,9 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
 			if (PQntuples(res) != 1)
 			{
-				write_msg(NULL, "query returned %d foreign server entries for foreign table \"%s\"\n",
+				write_msg(NULL, ngettext("query returned %d foreign server entry for foreign table \"%s\"\n",
+										 "query returned %d foreign server entries for foreign table \"%s\"\n",
+										 PQntuples(res)),
 						  PQntuples(res), tbinfo->dobj.name);
 				exit_nicely();
 			}
