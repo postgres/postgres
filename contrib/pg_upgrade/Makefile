@@ -25,7 +25,8 @@ endif
 check: test.sh
 	MAKE=$(MAKE) bindir=$(bindir) libdir=$(libdir) $(SHELL) $< --install
 
-installcheck: test.sh
-	MAKE=$(MAKE) bindir=$(bindir) libdir=$(libdir) $(SHELL) $<
+# disabled because it upsets the build farm
+#installcheck: test.sh
+#	MAKE=$(MAKE) bindir=$(bindir) libdir=$(libdir) $(SHELL) $<
 
 EXTRA_CLEAN = delete_old_cluster.sh log/ tmp_check/
