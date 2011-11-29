@@ -37,6 +37,10 @@ This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
 	gmake -C contrib install
 	gmake installcheck-world
 
+8) Indent the Perl MSVC code:
+
+	cd src/tools/msvc
+	perltidy -b -bl -nsfs -naws -l=100 -ole=unix *.pl *.pm
 
 ---------------------------------------------------------------------------
 
