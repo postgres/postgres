@@ -14,7 +14,7 @@
  *-------------------------------------------------------------------------
  */
 #include "postgres_fe.h"
-#include "pg_backup.h"
+#include "dumputils.h"
 #include "dumpmem.h"
 
 #include <ctype.h>
@@ -32,10 +32,10 @@ pg_strdup(const char *string)
 	char	   *tmp;
 
 	if (!string)
-		exit_horribly(NULL, NULL, "cannot duplicate null pointer\n");
+		exit_horribly(NULL, "cannot duplicate null pointer\n");
 	tmp = strdup(string);
 	if (!tmp)
-		exit_horribly(NULL, NULL, "out of memory\n");
+		exit_horribly(NULL, "out of memory\n");
 	return tmp;
 }
 
@@ -46,7 +46,7 @@ pg_malloc(size_t size)
 
 	tmp = malloc(size);
 	if (!tmp)
-		exit_horribly(NULL, NULL, "out of memory\n");
+		exit_horribly(NULL, "out of memory\n");
 	return tmp;
 }
 
@@ -57,7 +57,7 @@ pg_calloc(size_t nmemb, size_t size)
 
 	tmp = calloc(nmemb, size);
 	if (!tmp)
-		exit_horribly(NULL, NULL, _("out of memory\n"));
+		exit_horribly(NULL, _("out of memory\n"));
 	return tmp;
 }
 
@@ -68,6 +68,6 @@ pg_realloc(void *ptr, size_t size)
 
 	tmp = realloc(ptr, size);
 	if (!tmp)
-		exit_horribly(NULL, NULL, _("out of memory\n"));
+		exit_horribly(NULL, _("out of memory\n"));
 	return tmp;
 }

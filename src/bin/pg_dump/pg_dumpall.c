@@ -23,6 +23,7 @@
 #include "getopt_long.h"
 
 #include "dumputils.h"
+#include "dumpmem.h"
 #include "pg_backup.h"
 
 /* version string we expect back from pg_dump */
@@ -1907,42 +1908,4 @@ doShellQuoting(PQExpBuffer buf, const char *str)
 	}
 	appendPQExpBufferChar(buf, '"');
 #endif   /* WIN32 */
-}
-
-
-/*
- *	Simpler versions of common.c functions.
- */
-
-char *
-pg_strdup(const char *string)
-{
-	char	   *tmp;
-
-	if (!string)
-	{
-		fprintf(stderr, "cannot duplicate null pointer\n");
-		exit(1);
-	}
-	tmp = strdup(string);
-	if (!tmp)
-	{
-		fprintf(stderr, _("%s: out of memory\n"), progname);
-		exit(1);
-	}
-	return tmp;
-}
-
-void *
-pg_malloc(size_t size)
-{
-	void	   *tmp;
-
-	tmp = malloc(size);
-	if (!tmp)
-	{
-		fprintf(stderr, _("%s: out of memory\n"), progname);
-		exit(1);
-	}
-	return tmp;
 }

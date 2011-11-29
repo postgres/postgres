@@ -26,6 +26,7 @@
  */
 
 #include "pg_backup_archiver.h"
+#include "dumputils.h"
 #include "dumpmem.h"
 
 static void _ArchiveEntry(ArchiveHandle *AH, TocEntry *te);

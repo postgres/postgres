@@ -23,6 +23,7 @@
 
 
 int			quote_all_identifiers = 0;
+const char *progname;
 
 
 #define supports_grant_options(version) ((version) >= 70400)
@@ -1211,3 +1212,33 @@ emitShSecLabels(PGconn *conn, PGresult *res, PQExpBuffer buffer,
         appendPQExpBuffer(buffer, ";\n");
 	}
 }
+
+
+void
+write_msg(const char *modulename, const char *fmt,...)
+{
+	va_list		ap;
+
+	va_start(ap, fmt);
+	if (modulename)
+		fprintf(stderr, "%s: [%s] ", progname, _(modulename));
+	else
+		fprintf(stderr, "%s: ", progname);
+	vfprintf(stderr, _(fmt), ap);
+	va_end(ap);
+}
+
+
+void
+exit_horribly(const char *modulename, const char *fmt,...)
+{
+	va_list		ap;
+
+	va_start(ap, fmt);
+	write_msg(modulename, fmt, ap);
+	va_end(ap);
+
+	exit(1);
+}
+
+

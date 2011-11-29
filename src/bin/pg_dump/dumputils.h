@@ -51,5 +51,9 @@ extern void buildShSecLabelQuery(PGconn *conn, const char *catalog_name,
 					 uint32 objectId, PQExpBuffer sql);
 extern void emitShSecLabels(PGconn *conn, PGresult *res,
 				PQExpBuffer buffer, const char *target, const char *objname);
+extern void write_msg(const char *modulename, const char *fmt,...)
+				__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
+extern void exit_horribly(const char *modulename, const char *fmt,...)
+				__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
 
 #endif   /* DUMPUTILS_H */

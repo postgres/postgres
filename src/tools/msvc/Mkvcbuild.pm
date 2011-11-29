@@ -355,6 +355,7 @@ sub mkvcbuild
     $pgdumpall->AddIncludeDir('src\backend');
     $pgdumpall->AddFile('src\bin\pg_dump\pg_dumpall.c');
     $pgdumpall->AddFile('src\bin\pg_dump\dumputils.c');
+    $pgdumpall->AddFile('src\bin\pg_dump\dumpmem.c');
     $pgdumpall->AddFile('src\bin\pg_dump\keywords.c');
     $pgdumpall->AddFile('src\backend\parser\kwlookup.c');
 

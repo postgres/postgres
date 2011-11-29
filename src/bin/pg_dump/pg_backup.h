@@ -150,10 +150,6 @@ typedef struct _restoreOptions
  * Main archiver interface.
  */
 
-extern void
-exit_horribly(Archive *AH, const char *modulename, const char *fmt,...)
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 4)));
-
 
 /* Lets the archive know we have a DB connection to shutdown if it dies */
 

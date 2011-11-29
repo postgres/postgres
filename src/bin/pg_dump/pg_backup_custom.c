@@ -25,6 +25,7 @@
  */
 
 #include "compress_io.h"
+#include "dumputils.h"
 #include "dumpmem.h"
 
 /*--------

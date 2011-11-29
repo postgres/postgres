@@ -84,8 +84,6 @@ typedef struct _outputContext
 	int			gzOut;
 } OutputContext;
 
-const char *progname;
-
 static const char *modulename = gettext_noop("archiver");
 
 /* index array created by fix_dependencies -- only used in parallel restore */
@@ -120,7 +118,6 @@ static int	_discoverArchiveFormat(ArchiveHandle *AH);
 
 static int	RestoringToDB(ArchiveHandle *AH);
 static void dump_lo_buf(ArchiveHandle *AH);
-static void _write_msg(const char *modulename, const char *fmt, va_list ap) __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 0)));
 static void _die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt, va_list ap) __attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 0)));
 
 static void dumpTimestamp(ArchiveHandle *AH, const char *msg, time_t tim);
@@ -1302,7 +1299,7 @@ ahlog(ArchiveHandle *AH, int level, const char *fmt,...)
 		return;
 
 	va_start(ap, fmt);
-	_write_msg(NULL, fmt, ap);
+	write_msg(NULL, fmt, ap);
 	va_end(ap);
 }
 
@@ -1420,32 +1417,11 @@ ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 	}
 }
 
-/* Common exit code */
-static void
-_write_msg(const char *modulename, const char *fmt, va_list ap)
-{
-	if (modulename)
-		fprintf(stderr, "%s: [%s] ", progname, _(modulename));
-	else
-		fprintf(stderr, "%s: ", progname);
-	vfprintf(stderr, _(fmt), ap);
-}
-
-void
-write_msg(const char *modulename, const char *fmt,...)
-{
-	va_list		ap;
-
-	va_start(ap, fmt);
-	_write_msg(modulename, fmt, ap);
-	va_end(ap);
-}
-
 
 static void
 _die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt, va_list ap)
 {
-	_write_msg(modulename, fmt, ap);
+	write_msg(modulename, fmt, ap);
 
 	if (AH)
 	{
@@ -1456,17 +1432,6 @@ _die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt, va_lis
 	}
 
 	exit(1);
-}
-
-/* External use */
-void
-exit_horribly(Archive *AH, const char *modulename, const char *fmt,...)
-{
-	va_list		ap;
-
-	va_start(ap, fmt);
-	_die_horribly((ArchiveHandle *) AH, modulename, fmt, ap);
-	va_end(ap);
 }
 
 /* Archiver use (just different arg declaration) */
@@ -1524,7 +1489,7 @@ warn_or_die_horribly(ArchiveHandle *AH,
 		_die_horribly(AH, modulename, fmt, ap);
 	else
 	{
-		_write_msg(modulename, fmt, ap);
+		write_msg(modulename, fmt, ap);
 		AH->public.n_errors++;
 	}
 	va_end(ap);
