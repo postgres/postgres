@@ -47,6 +47,7 @@
 #include "commands/tablespace.h"
 #include "commands/trigger.h"
 #include "executor/execdebug.h"
+#include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "parser/parse_clause.h"
@@ -85,6 +86,8 @@ static void ExecutePlan(EState *estate, PlanState *planstate,
 			DestReceiver *dest);
 static bool ExecCheckRTEPerms(RangeTblEntry *rte);
 static void ExecCheckXactReadOnly(PlannedStmt *plannedstmt);
+static char *ExecBuildSlotValueDescription(TupleTableSlot *slot,
+										   int maxfieldlen);
 static void EvalPlanQualStart(EPQState *epqstate, EState *parentestate,
 				  Plan *planTree);
 static void OpenIntoRel(QueryDesc *queryDesc);
@@ -1585,8 +1588,69 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 			ereport(ERROR,
 					(errcode(ERRCODE_CHECK_VIOLATION),
 					 errmsg("new row for relation \"%s\" violates check constraint \"%s\"",
-							RelationGetRelationName(rel), failed)));
+							RelationGetRelationName(rel), failed),
+					 errdetail("Failing row contains %s.",
+							   ExecBuildSlotValueDescription(slot, 64))));
 	}
+}
+
+/*
+ * ExecBuildSlotValueDescription -- construct a string representing a tuple
+ *
+ * This is intentionally very similar to BuildIndexValueDescription, but
+ * unlike that function, we truncate long field values.  That seems necessary
+ * here since heap field values could be very long, whereas index entries
+ * typically aren't so wide.
+ */
+static char *
+ExecBuildSlotValueDescription(TupleTableSlot *slot, int maxfieldlen)
+{
+	StringInfoData buf;
+	TupleDesc	tupdesc = slot->tts_tupleDescriptor;
+	int			i;
+
+	/* Make sure the tuple is fully deconstructed */
+	slot_getallattrs(slot);
+
+	initStringInfo(&buf);
+
+	appendStringInfoChar(&buf, '(');
+
+	for (i = 0; i < tupdesc->natts; i++)
+	{
+		char	   *val;
+		int			vallen;
+
+		if (slot->tts_isnull[i])
+			val = "null";
+		else
+		{
+			Oid			foutoid;
+			bool		typisvarlena;
+
+			getTypeOutputInfo(tupdesc->attrs[i]->atttypid,
+							  &foutoid, &typisvarlena);
+			val = OidOutputFunctionCall(foutoid, slot->tts_values[i]);
+		}
+
+		if (i > 0)
+			appendStringInfoString(&buf, ", ");
+
+		/* truncate if needed */
+		vallen = strlen(val);
+		if (vallen <= maxfieldlen)
+			appendStringInfoString(&buf, val);
+		else
+		{
+			vallen = pg_mbcliplen(val, vallen, maxfieldlen);
+			appendBinaryStringInfo(&buf, val, vallen);
+			appendStringInfoString(&buf, "...");
+		}
+	}
+
+	appendStringInfoChar(&buf, ')');
+
+	return buf.data;
 }
 
 

@@ -390,6 +390,7 @@ alter table atacc1 add constraint atacc_test1 check (test>3);
 -- should fail
 insert into atacc1 (test) values (2);
 ERROR:  new row for relation "atacc1" violates check constraint "atacc_test1"
+DETAIL:  Failing row contains (2).
 -- should succeed
 insert into atacc1 (test) values (4);
 drop table atacc1;
@@ -415,6 +416,7 @@ alter table atacc1 add constraint atacc_test1 check (test+test2<test3*4);
 -- should fail
 insert into atacc1 (test,test2,test3) values (4,4,2);
 ERROR:  new row for relation "atacc1" violates check constraint "atacc_test1"
+DETAIL:  Failing row contains (4, 4, 2).
 -- should succeed
 insert into atacc1 (test,test2,test3) values (4,4,5);
 drop table atacc1;
@@ -424,6 +426,7 @@ alter table atacc1 add check (test2>test);
 -- should fail for $2
 insert into atacc1 (test2, test) values (3, 4);
 ERROR:  new row for relation "atacc1" violates check constraint "atacc1_check"
+DETAIL:  Failing row contains (4, 3).
 drop table atacc1;
 -- inheritance related tests
 create table atacc1 (test int);
@@ -433,10 +436,12 @@ alter table atacc2 add constraint foo check (test2>0);
 -- fail and then succeed on atacc2
 insert into atacc2 (test2) values (-3);
 ERROR:  new row for relation "atacc2" violates check constraint "foo"
+DETAIL:  Failing row contains (-3).
 insert into atacc2 (test2) values (3);
 -- fail and then succeed on atacc3
 insert into atacc3 (test2) values (-3);
 ERROR:  new row for relation "atacc3" violates check constraint "foo"
+DETAIL:  Failing row contains (null, -3, null).
 insert into atacc3 (test2) values (3);
 drop table atacc3;
 drop table atacc2;
@@ -507,6 +512,7 @@ insert into atacc1 (test) values (3);
 -- check constraint is there on child
 insert into atacc2 (test) values (-3);
 ERROR:  new row for relation "atacc2" violates check constraint "foo"
+DETAIL:  Failing row contains (-3, null).
 insert into atacc2 (test) values (3);
 drop table atacc2;
 drop table atacc1;
@@ -1450,6 +1456,7 @@ NOTICE:  merging definition of column "f2" for child "c1"
 insert into p1 values (1,2,'abc');
 insert into c1 values(11,'xyz',33,0); -- should fail
 ERROR:  new row for relation "c1" violates check constraint "p1_a1_check"
+DETAIL:  Failing row contains (11, xyz, 33, 0).
 insert into c1 values(11,'xyz',33,22);
 select * from p1;
  f1 | a1 | f2  
@@ -1537,6 +1544,7 @@ select * from anothertab;
 
 insert into anothertab (atcol1, atcol2) values (45, null); -- fails
 ERROR:  new row for relation "anothertab" violates check constraint "anothertab_chk"
+DETAIL:  Failing row contains (45, null).
 insert into anothertab (atcol1, atcol2) values (default, null);
 select * from anothertab;
  atcol1 | atcol2 
@@ -2110,5 +2118,6 @@ ALTER TABLE ONLY test_drop_constr_parent DROP CONSTRAINT "test_drop_constr_paren
 -- should fail
 INSERT INTO test_drop_constr_child (c) VALUES (NULL);
 ERROR:  new row for relation "test_drop_constr_child" violates check constraint "test_drop_constr_parent_c_check"
+DETAIL:  Failing row contains (null).
 DROP TABLE test_drop_constr_parent CASCADE;
 NOTICE:  drop cascades to table test_drop_constr_child

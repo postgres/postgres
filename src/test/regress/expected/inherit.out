@@ -640,6 +640,7 @@ INSERT INTO inhg VALUES ('x', 'text', 'y'); /* Succeeds */
 INSERT INTO inhg VALUES ('x', 'text', 'y'); /* Succeeds -- Unique constraints not copied */
 INSERT INTO inhg VALUES ('x', 'foo',  'y');  /* fails due to constraint */
 ERROR:  new row for relation "inhg" violates check constraint "foo"
+DETAIL:  Failing row contains (x, foo, y).
 SELECT * FROM inhg; /* Two records with three columns in order x=x, xx=text, y=y */
  x |  xx  | y 
 ---+------+---
@@ -721,8 +722,10 @@ select pc.relname, pgc.conname, pgc.contype, pgc.conislocal, pgc.coninhcount, pg
 
 insert into ac (aa) values (NULL);
 ERROR:  new row for relation "ac" violates check constraint "ac_check"
+DETAIL:  Failing row contains (null).
 insert into bc (aa) values (NULL);
 ERROR:  new row for relation "bc" violates check constraint "ac_check"
+DETAIL:  Failing row contains (null, null).
 alter table bc drop constraint ac_check;  -- fail, disallowed
 ERROR:  cannot drop inherited constraint "ac_check" of relation "bc"
 alter table ac drop constraint ac_check;
@@ -742,8 +745,10 @@ select pc.relname, pgc.conname, pgc.contype, pgc.conislocal, pgc.coninhcount, pg
 
 insert into ac (aa) values (NULL);
 ERROR:  new row for relation "ac" violates check constraint "ac_aa_check"
+DETAIL:  Failing row contains (null).
 insert into bc (aa) values (NULL);
 ERROR:  new row for relation "bc" violates check constraint "ac_aa_check"
+DETAIL:  Failing row contains (null, null).
 alter table bc drop constraint ac_aa_check;  -- fail, disallowed
 ERROR:  cannot drop inherited constraint "ac_aa_check" of relation "bc"
 alter table ac drop constraint ac_aa_check;
@@ -830,6 +835,7 @@ insert into c1 values(1,1,2);
 alter table p2 add check (f2>0);
 insert into c1 values(1,-1,2);  -- fail
 ERROR:  new row for relation "c1" violates check constraint "p2_f2_check"
+DETAIL:  Failing row contains (1, -1, 2).
 create table c2(f3 int) inherits(p1,p2);
 \d c2
       Table "public.c2"
