@@ -320,6 +320,7 @@ INSERT INTO PRIMARY_TBL VALUES (4, 'three');
 INSERT INTO PRIMARY_TBL VALUES (5, 'one');
 INSERT INTO PRIMARY_TBL (t) VALUES ('six');
 ERROR:  null value in column "i" violates not-null constraint
+DETAIL:  Failing row contains (null, six).
 SELECT '' AS four, * FROM PRIMARY_TBL;
  four | i |   t   
 ------+---+-------
@@ -340,6 +341,7 @@ INSERT INTO PRIMARY_TBL VALUES (4, 'three');
 INSERT INTO PRIMARY_TBL VALUES (5, 'one');
 INSERT INTO PRIMARY_TBL (t) VALUES ('six');
 ERROR:  null value in column "i" violates not-null constraint
+DETAIL:  Failing row contains (null, six).
 SELECT '' AS three, * FROM PRIMARY_TBL;
  three | i |   t   
 -------+---+-------

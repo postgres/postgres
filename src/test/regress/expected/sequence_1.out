@@ -8,6 +8,7 @@ INSERT INTO serialTest VALUES ('bar');
 INSERT INTO serialTest VALUES ('force', 100);
 INSERT INTO serialTest VALUES ('wrong', NULL);
 ERROR:  null value in column "f2" violates not-null constraint
+DETAIL:  Failing row contains (wrong, null).
 SELECT * FROM serialTest;
   f1   | f2  
 -------+-----

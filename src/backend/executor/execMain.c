@@ -1576,7 +1576,9 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 				ereport(ERROR,
 						(errcode(ERRCODE_NOT_NULL_VIOLATION),
 						 errmsg("null value in column \"%s\" violates not-null constraint",
-						NameStr(rel->rd_att->attrs[attrChk - 1]->attname))));
+						NameStr(rel->rd_att->attrs[attrChk - 1]->attname)),
+						 errdetail("Failing row contains %s.",
+								   ExecBuildSlotValueDescription(slot, 64))));
 		}
 	}
 
