@@ -2123,7 +2123,8 @@ eval_const_expressions_mutator(Node *node,
 					if (OidIsValid(prm->ptype))
 					{
 						/* OK to substitute parameter value? */
-						if (context->estimate || (prm->pflags & PARAM_FLAG_CONST))
+						if (context->estimate ||
+							(prm->pflags & PARAM_FLAG_CONST))
 						{
 							/*
 							 * Return a Const representing the param value.
@@ -2136,7 +2137,8 @@ eval_const_expressions_mutator(Node *node,
 							Datum		pval;
 
 							Assert(prm->ptype == param->paramtype);
-							get_typlenbyval(param->paramtype, &typLen, &typByVal);
+							get_typlenbyval(param->paramtype,
+											&typLen, &typByVal);
 							if (prm->isnull || typByVal)
 								pval = prm->value;
 							else
@@ -2192,11 +2194,14 @@ eval_const_expressions_mutator(Node *node,
 				 */
 				simple = simplify_function((Expr *) expr,
 										   expr->funcid,
-									  expr->funcresulttype, exprTypmod(node),
+										   expr->funcresulttype,
+										   exprTypmod(node),
 										   expr->funccollid,
 										   expr->inputcollid,
 										   &args,
-										   has_named_args, true, context);
+										   has_named_args,
+										   true,
+										   context);
 				if (simple)		/* successfully simplified it */
 					return (Node *) simple;
 
@@ -2262,7 +2267,8 @@ eval_const_expressions_mutator(Node *node,
 				if (expr->opno == BooleanEqualOperator ||
 					expr->opno == BooleanNotEqualOperator)
 				{
-					simple = (Expr *) simplify_boolean_equality(expr->opno, args);
+					simple = (Expr *) simplify_boolean_equality(expr->opno,
+																args);
 					if (simple) /* successfully simplified it */
 						return (Node *) simple;
 				}
@@ -2395,12 +2401,15 @@ eval_const_expressions_mutator(Node *node,
 							bool		haveNull = false;
 							bool		forceTrue = false;
 
-							newargs = simplify_or_arguments(expr->args, context,
-													  &haveNull, &forceTrue);
+							newargs = simplify_or_arguments(expr->args,
+															context,
+															&haveNull,
+															&forceTrue);
 							if (forceTrue)
 								return makeBoolConst(true, false);
 							if (haveNull)
-								newargs = lappend(newargs, makeBoolConst(false, true));
+								newargs = lappend(newargs,
+												  makeBoolConst(false, true));
 							/* If all the inputs are FALSE, result is FALSE */
 							if (newargs == NIL)
 								return makeBoolConst(false, false);
@@ -2420,12 +2429,15 @@ eval_const_expressions_mutator(Node *node,
 							bool		haveNull = false;
 							bool		forceFalse = false;
 
-							newargs = simplify_and_arguments(expr->args, context,
-													 &haveNull, &forceFalse);
+							newargs = simplify_and_arguments(expr->args,
+															 context,
+															 &haveNull,
+															 &forceFalse);
 							if (forceFalse)
 								return makeBoolConst(false, false);
 							if (haveNull)
-								newargs = lappend(newargs, makeBoolConst(false, true));
+								newargs = lappend(newargs,
+												  makeBoolConst(false, true));
 							/* If all the inputs are TRUE, result is TRUE */
 							if (newargs == NIL)
 								return makeBoolConst(true, false);
@@ -2541,8 +2553,10 @@ eval_const_expressions_mutator(Node *node,
 				 * Note that the coercion functions are assumed not to care
 				 * about input collation, so we just pass InvalidOid for that.
 				 */
-				getTypeOutputInfo(exprType((Node *) arg), &outfunc, &outtypisvarlena);
-				getTypeInputInfo(expr->resulttype, &infunc, &intypioparam);
+				getTypeOutputInfo(exprType((Node *) arg),
+								  &outfunc, &outtypisvarlena);
+				getTypeInputInfo(expr->resulttype,
+								 &infunc, &intypioparam);
 
 				simple = simplify_function(NULL,
 										   outfunc,
@@ -2559,12 +2573,20 @@ eval_const_expressions_mutator(Node *node,
 					 * complain.
 					 */
 					args = list_make3(simple,
-							   makeConst(OIDOID, -1, InvalidOid, sizeof(Oid),
-										 ObjectIdGetDatum(intypioparam),
-										 false, true),
-							makeConst(INT4OID, -1, InvalidOid, sizeof(int32),
-									  Int32GetDatum(-1),
-									  false, true));
+									  makeConst(OIDOID,
+												-1,
+												InvalidOid,
+												sizeof(Oid),
+												ObjectIdGetDatum(intypioparam),
+												false,
+												true),
+									  makeConst(INT4OID,
+												-1,
+												InvalidOid,
+												sizeof(int32),
+												Int32GetDatum(-1),
+												false,
+												true));
 
 					simple = simplify_function(NULL,
 											   infunc,
@@ -2681,19 +2703,20 @@ eval_const_expressions_mutator(Node *node,
 				 * condition clauses:
 				 *		FALSE (or NULL): drop the alternative
 				 *		TRUE: drop all remaining alternatives
-				 * If the first non-FALSE alternative is a constant TRUE, we can
-				 * simplify the entire CASE to that alternative's expression.
-				 * If there are no non-FALSE alternatives, we simplify the entire
-				 * CASE to the default result (ELSE result).
+				 * If the first non-FALSE alternative is a constant TRUE,
+				 * we can simplify the entire CASE to that alternative's
+				 * expression.  If there are no non-FALSE alternatives,
+				 * we simplify the entire CASE to the default result (ELSE).
 				 *
-				 * If we have a simple-form CASE with constant test expression,
-				 * we substitute the constant value for contained CaseTestExpr
-				 * placeholder nodes, so that we have the opportunity to reduce
-				 * constant test conditions.  For example this allows
+				 * If we have a simple-form CASE with constant test
+				 * expression, we substitute the constant value for contained
+				 * CaseTestExpr placeholder nodes, so that we have the
+				 * opportunity to reduce constant test conditions.  For
+				 * example this allows
 				 *		CASE 0 WHEN 0 THEN 1 ELSE 1/0 END
-				 * to reduce to 1 rather than drawing a divide-by-0 error.	Note
-				 * that when the test expression is constant, we don't have to
-				 * include it in the resulting CASE; for example
+				 * to reduce to 1 rather than drawing a divide-by-0 error.
+				 * Note that when the test expression is constant, we don't
+				 * have to include it in the resulting CASE; for example
 				 *		CASE 0 WHEN x THEN y ELSE z END
 				 * is transformed by the parser to
 				 *		CASE 0 WHEN CaseTestExpr = x THEN y ELSE z END
@@ -2723,8 +2746,7 @@ eval_const_expressions_mutator(Node *node,
 				if (newarg && IsA(newarg, Const))
 				{
 					context->case_val = newarg;
-					newarg = NULL;		/* not needed anymore, see comment
-										 * above */
+					newarg = NULL;		/* not needed anymore, see above */
 				}
 				else
 					context->case_val = NULL;
@@ -2741,9 +2763,8 @@ eval_const_expressions_mutator(Node *node,
 					Assert(IsA(oldcasewhen, CaseWhen));
 
 					/* Simplify this alternative's test condition */
-					casecond =
-						eval_const_expressions_mutator((Node *) oldcasewhen->expr,
-													   context);
+					casecond = eval_const_expressions_mutator((Node *) oldcasewhen->expr,
+															  context);
 
 					/*
 					 * If the test condition is constant FALSE (or NULL), then
@@ -2756,16 +2777,14 @@ eval_const_expressions_mutator(Node *node,
 
 						if (const_input->constisnull ||
 							!DatumGetBool(const_input->constvalue))
-							continue;	/* drop alternative with FALSE
-										 * condition */
+							continue;	/* drop alternative with FALSE cond */
 						/* Else it's constant TRUE */
 						const_true_cond = true;
 					}
 
 					/* Simplify this alternative's result value */
-					caseresult =
-						eval_const_expressions_mutator((Node *) oldcasewhen->result,
-													   context);
+					caseresult = eval_const_expressions_mutator((Node *) oldcasewhen->result,
+																context);
 
 					/* If non-constant test condition, emit a new WHEN node */
 					if (!const_true_cond)
@@ -2790,9 +2809,8 @@ eval_const_expressions_mutator(Node *node,
 
 				/* Simplify the default result, unless we replaced it above */
 				if (!const_true_cond)
-					defresult =
-						eval_const_expressions_mutator((Node *) caseexpr->defresult,
-													   context);
+					defresult = eval_const_expressions_mutator((Node *) caseexpr->defresult,
+															   context);
 
 				context->case_val = save_case_val;
 
