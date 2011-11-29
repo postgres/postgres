@@ -343,7 +343,14 @@ errstart(int elevel, const char *filename, int lineno,
 	edata->elevel = elevel;
 	edata->output_to_server = output_to_server;
 	edata->output_to_client = output_to_client;
-	edata->filename = filename;
+	if (filename)
+	{
+		const char *slash;
+
+		/* keep only base name, useful especially for vpath builds */
+		slash = strrchr(filename, '/');
+		edata->filename = slash ? slash + 1 : filename;
+	}
 	edata->lineno = lineno;
 	edata->funcname = funcname;
 	/* the default text domain is the backend's */
@@ -1142,7 +1149,14 @@ elog_start(const char *filename, int lineno, const char *funcname)
 	}
 
 	edata = &errordata[errordata_stack_depth];
-	edata->filename = filename;
+	if (filename)
+	{
+		const char *slash;
+
+		/* keep only base name, useful especially for vpath builds */
+		slash = strrchr(filename, '/');
+		edata->filename = slash ? slash + 1 : filename;
+	}
 	edata->lineno = lineno;
 	edata->funcname = funcname;
 	/* errno is saved now so that error parameter eval can't change it */
