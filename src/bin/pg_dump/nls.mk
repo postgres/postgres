@@ -5,10 +5,10 @@ GETTEXT_FILES    = pg_dump.c common.c pg_backup_archiver.c pg_backup_custom.c \
                    pg_backup_db.c pg_backup_files.c pg_backup_null.c \
                    pg_backup_tar.c pg_restore.c pg_dumpall.c \
                    ../../port/exec.c
-GETTEXT_TRIGGERS = write_msg:2 die_horribly:3 exit_horribly:3 simple_prompt \
+GETTEXT_TRIGGERS = write_msg:2 die_horribly:3 exit_horribly:2 simple_prompt \
                    ExecuteSqlCommand:3 ahlog:3
 GETTEXT_FLAGS  = \
     write_msg:2:c-format \
     die_horribly:3:c-format \
-    exit_horribly:3:c-format \
+    exit_horribly:2:c-format \
     ahlog:3:c-format

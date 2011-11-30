@@ -61,9 +61,6 @@ static PGconn *connectDatabase(const char *dbname, const char *pghost, const cha
 static PGresult *executeQuery(PGconn *conn, const char *query);
 static void executeCommand(PGconn *conn, const char *query);
 
-char *pg_strdup(const char *string);
-void *pg_malloc(size_t size);
-
 static char pg_dump_bin[MAXPGPATH];
 static PQExpBuffer pgdumpopts;
 static bool skip_acls = false;

@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * common.c
- *	catalog routines used by pg_dump;  long ago these were shared
+ *	Catalog routines used by pg_dump; long ago these were shared
  *	by another dump tool, but not anymore.  
  *
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
@@ -13,14 +13,13 @@
  *
  *-------------------------------------------------------------------------
  */
-#include "postgres_fe.h"
+#include "pg_backup_archiver.h"
 
 #include <ctype.h>
 
 #include "catalog/pg_class.h"
-
-#include "pg_backup_archiver.h"
 #include "dumpmem.h"
+#include "dumputils.h"
 
 
 /*

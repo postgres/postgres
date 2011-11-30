@@ -118,7 +118,9 @@ static int	_discoverArchiveFormat(ArchiveHandle *AH);
 
 static int	RestoringToDB(ArchiveHandle *AH);
 static void dump_lo_buf(ArchiveHandle *AH);
-static void _die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt, va_list ap) __attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 0)));
+static void vdie_horribly(ArchiveHandle *AH, const char *modulename,
+						  const char *fmt, va_list ap)
+	__attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 0)));
 
 static void dumpTimestamp(ArchiveHandle *AH, const char *msg, time_t tim);
 static void SetOutput(ArchiveHandle *AH, char *filename, int compression);
@@ -1299,7 +1301,7 @@ ahlog(ArchiveHandle *AH, int level, const char *fmt,...)
 		return;
 
 	va_start(ap, fmt);
-	write_msg(NULL, fmt, ap);
+	vwrite_msg(NULL, fmt, ap);
 	va_end(ap);
 }
 
@@ -1418,10 +1420,12 @@ ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 }
 
 
+/* Report a fatal error and exit(1) */
 static void
-_die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt, va_list ap)
+vdie_horribly(ArchiveHandle *AH, const char *modulename,
+			  const char *fmt, va_list ap)
 {
-	write_msg(modulename, fmt, ap);
+	vwrite_msg(modulename, fmt, ap);
 
 	if (AH)
 	{
@@ -1434,14 +1438,14 @@ _die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt, va_lis
 	exit(1);
 }
 
-/* Archiver use (just different arg declaration) */
+/* As above, but with variable arg list */
 void
 die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt,...)
 {
 	va_list		ap;
 
 	va_start(ap, fmt);
-	_die_horribly(AH, modulename, fmt, ap);
+	vdie_horribly(AH, modulename, fmt, ap);
 	va_end(ap);
 }
 
@@ -1486,10 +1490,10 @@ warn_or_die_horribly(ArchiveHandle *AH,
 
 	va_start(ap, fmt);
 	if (AH->public.exit_on_error)
-		_die_horribly(AH, modulename, fmt, ap);
+		vdie_horribly(AH, modulename, fmt, ap);
 	else
 	{
-		write_msg(modulename, fmt, ap);
+		vwrite_msg(modulename, fmt, ap);
 		AH->public.n_errors++;
 	}
 	va_end(ap);
@@ -2218,7 +2222,7 @@ ReadToc(ArchiveHandle *AH)
 				if (depIdx >= depSize)
 				{
 					depSize *= 2;
-					deps = (DumpId *) realloc(deps, sizeof(DumpId) * depSize);
+					deps = (DumpId *) pg_realloc(deps, sizeof(DumpId) * depSize);
 				}
 				sscanf(tmp, "%d", &deps[depIdx]);
 				free(tmp);
@@ -2227,7 +2231,7 @@ ReadToc(ArchiveHandle *AH)
 
 			if (depIdx > 0)		/* We have a non-null entry */
 			{
-				deps = (DumpId *) realloc(deps, sizeof(DumpId) * depIdx);
+				deps = (DumpId *) pg_realloc(deps, sizeof(DumpId) * depIdx);
 				te->dependencies = deps;
 				te->nDeps = depIdx;
 			}
@@ -4062,7 +4066,7 @@ identify_locking_dependencies(TocEntry *te)
 		return;
 	}
 
-	te->lockDeps = realloc(lockids, nlockids * sizeof(DumpId));
+	te->lockDeps = pg_realloc(lockids, nlockids * sizeof(DumpId));
 	te->nLockDeps = nlockids;
 }
 
