@@ -529,6 +529,27 @@ AutoVacLauncherMain(int argc, char *argv[])
 	/* must unblock signals before calling rebuild_database_list */
 	PG_SETMASK(&UnBlockSig);
 
+	/*
+	 * Force zero_damaged_pages OFF in the autovac process, even if it is set
+	 * in postgresql.conf.	We don't really want such a dangerous option being
+	 * applied non-interactively.
+	 */
+	SetConfigOption("zero_damaged_pages", "false", PGC_SUSET, PGC_S_OVERRIDE);
+
+	/*
+	 * Force statement_timeout to zero to avoid a timeout setting from
+	 * preventing regular maintenance from being executed.
+	 */
+	SetConfigOption("statement_timeout", "0", PGC_SUSET, PGC_S_OVERRIDE);
+
+	/*
+	 * Force default_transaction_isolation to READ COMMITTED.  We don't
+	 * want to pay the overhead of serializable mode, nor add any risk
+	 * of causing deadlocks or delaying other transactions.
+	 */
+	SetConfigOption("default_transaction_isolation", "read committed",
+					PGC_SUSET, PGC_S_OVERRIDE);
+
 	/* in emergency mode, just start a worker and go away */
 	if (!AutoVacuumingActive())
 	{
@@ -1531,12 +1552,21 @@ AutoVacWorkerMain(int argc, char *argv[])
 	SetConfigOption("statement_timeout", "0", PGC_SUSET, PGC_S_OVERRIDE);
 
 	/*
+	 * Force default_transaction_isolation to READ COMMITTED.  We don't
+	 * want to pay the overhead of serializable mode, nor add any risk
+	 * of causing deadlocks or delaying other transactions.
+	 */
+	SetConfigOption("default_transaction_isolation", "read committed",
+					PGC_SUSET, PGC_S_OVERRIDE);
+
+	/*
 	 * Force synchronous replication off to allow regular maintenance even if
 	 * we are waiting for standbys to connect. This is important to ensure we
 	 * aren't blocked from performing anti-wraparound tasks.
 	 */
 	if (synchronous_commit > SYNCHRONOUS_COMMIT_LOCAL_FLUSH)
-		SetConfigOption("synchronous_commit", "local", PGC_SUSET, PGC_S_OVERRIDE);
+		SetConfigOption("synchronous_commit", "local",
+						PGC_SUSET, PGC_S_OVERRIDE);
 
 	/*
 	 * Get the info about the database we're going to work on.
