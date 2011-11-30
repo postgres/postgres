@@ -1418,7 +1418,7 @@ su - postgres
       Server developers should consider using the configure options 
       <option>--enable-cassert</> and <option>--enable-debug</> to enhance the
       ability to detect and debug server errors.  They should also consider
-      running configure with <literal>CFLAGS="-O0 -g"</>.
+      running configure with <literal>CFLAGS="-O0 -g"</> if using a debugger.
      </para>
     </note>
    </step>
