@@ -11,6 +11,8 @@ OBJS = check.o controldata.o dump.o exec.o file.o function.o info.o \
 PG_CPPFLAGS  = -DFRONTEND -DDLSUFFIX=\"$(DLSUFFIX)\" -I$(srcdir) -I$(libpq_srcdir)
 PG_LIBS = $(libpq_pgport)
 
+EXTRA_CLEAN = delete_old_cluster.sh log/ tmp_check/
+
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
@@ -28,5 +30,3 @@ check: test.sh
 # disabled because it upsets the build farm
 #installcheck: test.sh
 #	MAKE=$(MAKE) bindir=$(bindir) libdir=$(libdir) $(SHELL) $<
-
-EXTRA_CLEAN = delete_old_cluster.sh log/ tmp_check/
