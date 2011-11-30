@@ -349,8 +349,10 @@ errstart(int elevel, const char *filename, int lineno,
 
 		/* keep only base name, useful especially for vpath builds */
 		slash = strrchr(filename, '/');
-		edata->filename = slash ? slash + 1 : filename;
+		if (slash)
+			filename = slash + 1;
 	}
+	edata->filename = filename;
 	edata->lineno = lineno;
 	edata->funcname = funcname;
 	/* the default text domain is the backend's */
@@ -1155,8 +1157,10 @@ elog_start(const char *filename, int lineno, const char *funcname)
 
 		/* keep only base name, useful especially for vpath builds */
 		slash = strrchr(filename, '/');
-		edata->filename = slash ? slash + 1 : filename;
+		if (slash)
+			filename = slash + 1;
 	}
+	edata->filename = filename;
 	edata->lineno = lineno;
 	edata->funcname = funcname;
 	/* errno is saved now so that error parameter eval can't change it */
