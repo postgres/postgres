@@ -30,8 +30,6 @@
 #define PGDUMP_VERSIONSTR "pg_dump (PostgreSQL) " PG_VERSION "\n"
 
 
-static const char *progname;
-
 static void help(void);
 
 static void dropRoles(PGconn *conn);
