@@ -979,7 +979,7 @@ relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
 	Oid			relOid;
 
 	/* Look up and lock the appropriate relation using namespace search */
-	relOid = RangeVarGetRelid(relation, lockmode, false, false);
+	relOid = RangeVarGetRelid(relation, lockmode, false);
 
 	/* Let relation_open do the rest */
 	return relation_open(relOid, NoLock);
@@ -1001,7 +1001,7 @@ relation_openrv_extended(const RangeVar *relation, LOCKMODE lockmode,
 	Oid			relOid;
 
 	/* Look up and lock the appropriate relation using namespace search */
-	relOid = RangeVarGetRelid(relation, lockmode, missing_ok, false);
+	relOid = RangeVarGetRelid(relation, lockmode, missing_ok);
 
 	/* Return NULL on not-found */
 	if (!OidIsValid(relOid))

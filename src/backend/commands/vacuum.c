@@ -330,7 +330,7 @@ get_rel_oids(Oid relid, const RangeVar *vacrel)
 		 * alternative, since we're going to commit this transaction and
 		 * begin a new one between now and then.
 		 */
-		relid = RangeVarGetRelid(vacrel, NoLock, false, false);
+		relid = RangeVarGetRelid(vacrel, NoLock, false);
 
 		/* Make a relation list entry for this guy */
 		oldcontext = MemoryContextSwitchTo(vac_context);

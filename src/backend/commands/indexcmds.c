@@ -63,7 +63,10 @@ static void ComputeIndexAttrs(IndexInfo *indexInfo,
 static Oid GetIndexOpClass(List *opclass, Oid attrType,
 				char *accessMethodName, Oid accessMethodId);
 static char *ChooseIndexNameAddition(List *colnames);
-
+static void RangeVarCallbackForReindexTable(const RangeVar *relation,
+								Oid relId, Oid oldRelId, void *arg);
+static void RangeVarCallbackForReindexIndex(const RangeVar *relation,
+								Oid relId, Oid oldRelId, void *arg);
 
 /*
  * CheckIndexCompatible
@@ -129,7 +132,7 @@ CheckIndexCompatible(Oid oldId,
 	Datum		d;
 
 	/* Caller should already have the relation locked in some way. */
-	relationId = RangeVarGetRelid(heapRelation, NoLock, false, false);
+	relationId = RangeVarGetRelid(heapRelation, NoLock, false);
 	/*
 	 * We can pretend isconstraint = false unconditionally.  It only serves to
 	 * decide the text of an error message that should never happen for us.
@@ -1725,33 +1728,74 @@ void
 ReindexIndex(RangeVar *indexRelation)
 {
 	Oid			indOid;
-	HeapTuple	tuple;
+	Oid			heapOid = InvalidOid;
 
-	/*
-	 * XXX: This is not safe in the presence of concurrent DDL. We should
-	 * take AccessExclusiveLock here, but that would violate the rule that
-	 * indexes should only be locked after their parent tables.  For now,
-	 * we live with it.
-	 */
-	indOid = RangeVarGetRelid(indexRelation, NoLock, false, false);
-	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(indOid));
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "cache lookup failed for relation %u", indOid);
-
-	if (((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_INDEX)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not an index",
-						indexRelation->relname)));
-
-	/* Check permissions */
-	if (!pg_class_ownercheck(indOid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
-					   indexRelation->relname);
-
-	ReleaseSysCache(tuple);
+	/* lock level used here should match index lock reindex_index() */
+	indOid = RangeVarGetRelidExtended(indexRelation, AccessExclusiveLock,
+									  false, false,
+									  RangeVarCallbackForReindexIndex,
+									  (void *) &heapOid);
 
 	reindex_index(indOid, false);
+}
+
+/*
+ * Check permissions on table before acquiring relation lock; also lock
+ * the heap before the RangeVarGetRelidExtended takes the index lock, to avoid
+ * deadlocks.
+ */
+static void
+RangeVarCallbackForReindexIndex(const RangeVar *relation,
+								Oid relId, Oid oldRelId, void *arg)
+{
+	char		relkind;
+	Oid		   *heapOid = (Oid *) arg;
+
+	/*
+	 * If we previously locked some other index's heap, and the name we're
+	 * looking up no longer refers to that relation, release the now-useless
+	 * lock.
+	 */
+	if (relId != oldRelId && OidIsValid(oldRelId))
+	{
+		/* lock level here should match reindex_index() heap lock */
+		UnlockRelationOid(*heapOid, ShareLock);
+		*heapOid = InvalidOid;
+	}
+
+	/* If the relation does not exist, there's nothing more to do. */
+	if (!OidIsValid(relId))
+		return;
+
+	/*
+	 * If the relation does exist, check whether it's an index.  But note
+	 * that the relation might have been dropped between the time we did the
+	 * name lookup and now.  In that case, there's nothing to do.
+	 */
+	relkind = get_rel_relkind(relId);
+	if (!relkind)
+		return;
+	if (relkind != RELKIND_INDEX)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not an index", relation->relname)));
+
+	/* Check permissions */
+	if (!pg_class_ownercheck(relId, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS, relation->relname);
+
+	/* Lock heap before index to avoid deadlock. */
+	if (relId != oldRelId)
+	{
+		/*
+		 * Lock level here should match reindex_index() heap lock.
+		 * If the OID isn't valid, it means the index as concurrently dropped,
+		 * which is not a problem for us; just return normally.
+		 */
+		*heapOid = IndexGetRelation(relId, true);
+		if (OidIsValid(*heapOid))
+			LockRelationOid(*heapOid, ShareLock);
+	}
 }
 
 /*
@@ -1762,32 +1806,46 @@ void
 ReindexTable(RangeVar *relation)
 {
 	Oid			heapOid;
-	HeapTuple	tuple;
 
 	/* The lock level used here should match reindex_relation(). */
-	heapOid = RangeVarGetRelid(relation, ShareLock, false, false);
-	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(heapOid));
-	if (!HeapTupleIsValid(tuple))		/* shouldn't happen */
-		elog(ERROR, "cache lookup failed for relation %u", heapOid);
-
-	if (((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_RELATION &&
-		((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_TOASTVALUE)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a table",
-						relation->relname)));
-
-	/* Check permissions */
-	if (!pg_class_ownercheck(heapOid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
-					   relation->relname);
-
-	ReleaseSysCache(tuple);
+	heapOid = RangeVarGetRelidExtended(relation, ShareLock, false, false,
+									   RangeVarCallbackForReindexTable, NULL);
 
 	if (!reindex_relation(heapOid, REINDEX_REL_PROCESS_TOAST))
 		ereport(NOTICE,
 				(errmsg("table \"%s\" has no indexes",
 						relation->relname)));
+}
+
+/*
+ * Check permissions on table before acquiring relation lock.
+ */
+static void
+RangeVarCallbackForReindexTable(const RangeVar *relation,
+								Oid relId, Oid oldRelId, void *arg)
+{
+	char		relkind;
+
+	/* Nothing to do if the relation was not found. */
+	if (!OidIsValid(relId))
+		return;
+
+	/*
+	 * If the relation does exist, check whether it's an index.  But note
+	 * that the relation might have been dropped between the time we did the
+	 * name lookup and now.  In that case, there's nothing to do.
+	 */
+	relkind = get_rel_relkind(relId);
+	if (!relkind)
+		return;
+	if (relkind != RELKIND_RELATION && relkind != RELKIND_TOASTVALUE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a table", relation->relname)));
+
+	/* Check permissions */
+	if (!pg_class_ownercheck(relId, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS, relation->relname);
 }
 
 /*

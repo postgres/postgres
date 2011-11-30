@@ -425,7 +425,7 @@ AlterSequence(AlterSeqStmt *stmt)
 	List	   *owned_by;
 
 	/* Open and lock sequence. */
-	relid = RangeVarGetRelid(stmt->sequence, AccessShareLock, false, false);
+	relid = RangeVarGetRelid(stmt->sequence, AccessShareLock, false);
 	init_sequence(relid, &elm, &seqrel);
 
 	/* allow ALTER to sequence owner only */
@@ -513,7 +513,7 @@ nextval(PG_FUNCTION_ARGS)
 	 * whether the performance penalty is material in practice, but for now,
 	 * we do it this way.
 	 */
-	relid = RangeVarGetRelid(sequence, NoLock, false, false);
+	relid = RangeVarGetRelid(sequence, NoLock, false);
 
 	PG_RETURN_INT64(nextval_internal(relid));
 }

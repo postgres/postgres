@@ -201,8 +201,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 		 * we might end up creating a pg_constraint entry referencing a
 		 * nonexistent table.
 		 */
-		constrrelid = RangeVarGetRelid(stmt->constrrel, AccessShareLock, false,
-									   false);
+		constrrelid = RangeVarGetRelid(stmt->constrrel, AccessShareLock, false);
 	}
 
 	/* permission checks */

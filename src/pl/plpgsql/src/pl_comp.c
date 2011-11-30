@@ -1707,7 +1707,7 @@ plpgsql_parse_cwordtype(List *idents)
 							  strVal(lsecond(idents)),
 							  -1);
 		/* Can't lock relation - we might not have privileges. */
-		classOid = RangeVarGetRelid(relvar, NoLock, true, false);
+		classOid = RangeVarGetRelid(relvar, NoLock, true);
 		if (!OidIsValid(classOid))
 			goto done;
 		fldname = strVal(lthird(idents));
@@ -1808,7 +1808,7 @@ plpgsql_parse_cwordrowtype(List *idents)
 	relvar = makeRangeVar(strVal(linitial(idents)),
 						  strVal(lsecond(idents)),
 						  -1);
-	classOid = RangeVarGetRelid(relvar, NoLock, false, false);
+	classOid = RangeVarGetRelid(relvar, NoLock, false);
 
 	MemoryContextSwitchTo(oldCxt);
 

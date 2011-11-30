@@ -111,7 +111,7 @@ ExecRenameStmt(RenameStmt *stmt)
 				 * in RenameRelation, renameatt, or renametrig.
 				 */
 				relid = RangeVarGetRelid(stmt->relation, AccessExclusiveLock,
-										 false, false);
+										 false);
 
 				switch (stmt->renameType)
 				{

@@ -1940,7 +1940,7 @@ convert_table_name(text *tablename)
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(tablename));
 
 	/* We might not even have permissions on this relation; don't lock it. */
-	return RangeVarGetRelid(relrv, NoLock, false, false);
+	return RangeVarGetRelid(relrv, NoLock, false);
 }
 
 /*

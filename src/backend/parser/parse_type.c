@@ -115,7 +115,7 @@ LookupTypeName(ParseState *pstate, const TypeName *typeName,
 		 * of concurrent DDL.  But taking a lock would carry a performance
 		 * penalty and would also require a permissions check.
 		 */
-		relid = RangeVarGetRelid(rel, NoLock, false, false);
+		relid = RangeVarGetRelid(rel, NoLock, false);
 		attnum = get_attnum(relid, field);
 		if (attnum == InvalidAttrNumber)
 			ereport(ERROR,

@@ -282,7 +282,7 @@ searchRangeTable(ParseState *pstate, RangeVar *relation)
 	if (!relation->schemaname)
 		cte = scanNameSpaceForCTE(pstate, refname, &ctelevelsup);
 	if (!cte)
-		relId = RangeVarGetRelid(relation, NoLock, true, false);
+		relId = RangeVarGetRelid(relation, NoLock, true);
 
 	/* Now look for RTEs matching either the relation/CTE or the alias */
 	for (levelsup = 0;

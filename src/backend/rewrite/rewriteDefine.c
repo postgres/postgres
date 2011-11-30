@@ -203,8 +203,7 @@ DefineRule(RuleStmt *stmt, const char *queryString)
 	 * Find and lock the relation.  Lock level should match
 	 * DefineQueryRewrite.
 	 */
-	relId = RangeVarGetRelid(stmt->relation, AccessExclusiveLock, false,
-							 false);
+	relId = RangeVarGetRelid(stmt->relation, AccessExclusiveLock, false);
 
 	/* ... and execute */
 	DefineQueryRewrite(stmt->rulename,

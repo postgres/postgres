@@ -111,7 +111,6 @@ static void validate_index_heapscan(Relation heapRelation,
 						IndexInfo *indexInfo,
 						Snapshot snapshot,
 						v_i_state *state);
-static Oid	IndexGetRelation(Oid indexId);
 static bool ReindexIsCurrentlyProcessingIndex(Oid indexOid);
 static void SetReindexProcessing(Oid heapOid, Oid indexOid);
 static void ResetReindexProcessing(void);
@@ -1301,7 +1300,7 @@ index_drop(Oid indexId)
 	 * proceeding until we commit and send out a shared-cache-inval notice
 	 * that will make them update their index lists.
 	 */
-	heapId = IndexGetRelation(indexId);
+	heapId = IndexGetRelation(indexId, false);
 	userHeapRelation = heap_open(heapId, AccessExclusiveLock);
 
 	userIndexRelation = index_open(indexId, AccessExclusiveLock);
@@ -2763,8 +2762,8 @@ validate_index_heapscan(Relation heapRelation,
  * IndexGetRelation: given an index's relation OID, get the OID of the
  * relation it is an index on.	Uses the system cache.
  */
-static Oid
-IndexGetRelation(Oid indexId)
+Oid
+IndexGetRelation(Oid indexId, bool missing_ok)
 {
 	HeapTuple	tuple;
 	Form_pg_index index;
@@ -2772,7 +2771,11 @@ IndexGetRelation(Oid indexId)
 
 	tuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexId));
 	if (!HeapTupleIsValid(tuple))
+	{
+		if (missing_ok)
+			return InvalidOid;
 		elog(ERROR, "cache lookup failed for index %u", indexId);
+	}
 	index = (Form_pg_index) GETSTRUCT(tuple);
 	Assert(index->indexrelid == indexId);
 
@@ -2800,7 +2803,7 @@ reindex_index(Oid indexId, bool skip_constraint_checks)
 	 * Open and lock the parent heap relation.	ShareLock is sufficient since
 	 * we only need to be sure no schema or data changes are going on.
 	 */
-	heapId = IndexGetRelation(indexId);
+	heapId = IndexGetRelation(indexId, false);
 	heapRelation = heap_open(heapId, ShareLock);
 
 	/*

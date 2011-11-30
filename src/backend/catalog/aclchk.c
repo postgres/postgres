@@ -606,7 +606,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 				RangeVar   *relvar = (RangeVar *) lfirst(cell);
 				Oid			relOid;
 
-				relOid = RangeVarGetRelid(relvar, NoLock, false, false);
+				relOid = RangeVarGetRelid(relvar, NoLock, false);
 				objects = lappend_oid(objects, relOid);
 			}
 			break;

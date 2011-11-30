@@ -84,7 +84,7 @@ CheckRelationOwnership(RangeVar *rel, bool noCatalogs)
 	 * AccessExclusiveLock) before verifying that the user has permissions
 	 * is not appealing either.
 	 */
-	relOid = RangeVarGetRelid(rel, NoLock, false, false);
+	relOid = RangeVarGetRelid(rel, NoLock, false);
 
 	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relOid));
 	if (!HeapTupleIsValid(tuple))		/* should not happen */

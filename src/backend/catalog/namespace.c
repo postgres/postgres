@@ -219,10 +219,14 @@ Datum		pg_is_other_temp_schema(PG_FUNCTION_ARGS);
  * otherwise raise an error.
  *
  * If nowait = true, throw an error if we'd have to wait for a lock.
+ *
+ * Callback allows caller to check permissions or acquire additional locks
+ * prior to grabbing the relation lock.
  */
 Oid
-RangeVarGetRelid(const RangeVar *relation, LOCKMODE lockmode, bool missing_ok,
-				 bool nowait)
+RangeVarGetRelidExtended(const RangeVar *relation, LOCKMODE lockmode,
+						 bool missing_ok, bool nowait,
+						 RangeVarGetRelidCallback callback, void *callback_arg)
 {
 	uint64		inval_count;
 	Oid			relId;
@@ -307,6 +311,19 @@ RangeVarGetRelid(const RangeVar *relation, LOCKMODE lockmode, bool missing_ok,
 			/* search the namespace path */
 			relId = RelnameGetRelid(relation->relname);
 		}
+
+		/*
+		 * Invoke caller-supplied callback, if any.
+		 *
+		 * This callback is a good place to check permissions: we haven't taken
+		 * the table lock yet (and it's really best to check permissions before
+		 * locking anything!), but we've gotten far enough to know what OID we
+		 * think we should lock.  Of course, concurrent DDL might things while
+		 * we're waiting for the lock, but in that case the callback will be
+		 * invoked again for the new OID.
+		 */
+		if (callback)
+			callback(relation, relId, oldRelId, callback_arg);
 
 		/*
 		 * If no lock requested, we assume the caller knows what they're
