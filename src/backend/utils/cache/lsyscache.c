@@ -1758,7 +1758,7 @@ getTypeIOParam(HeapTuple typeTuple)
 	 * own type OID as parameter.  (As of 8.2, domains must get their own OID
 	 * even if their base type is an array.)
 	 */
-	if (typeStruct->typtype == TYPTYPE_BASE && OidIsValid(typeStruct->typelem))
+	if (typeStruct->typtype != TYPTYPE_DOMAIN && OidIsValid(typeStruct->typelem))
 		return typeStruct->typelem;
 	else
 		return HeapTupleGetOid(typeTuple);
