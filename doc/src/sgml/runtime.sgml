@@ -317,10 +317,11 @@ fi
 
     <listitem>
      <para>
-      On <productname>NetBSD</productname>, either use the
+      On <productname>NetBSD</productname>, use either the
       <productname>FreeBSD</productname> or
       <productname>Linux</productname> start scripts, depending on
-      preference. <indexterm><primary>NetBSD</><secondary>start script</secondary></>
+      preference.
+      <indexterm><primary>NetBSD</><secondary>start script</secondary></>
      </para>
     </listitem>
 
@@ -831,17 +832,45 @@ options "SEMMNS=240"
        </para>
 
        <para>
-        <systemitem class="osname">FreeBSD</> versions before 4.0 work like 
-        <systemitem class="osname">NetBSD</> and <systemitem class="osname">
-        OpenBSD</> (see below).
+        <systemitem class="osname">FreeBSD</> versions before 4.0 work like
+        <systemitem class="osname">OpenBSD</> (see below).
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
       <term><systemitem class="osname">NetBSD</></term>
-      <term><systemitem class="osname">OpenBSD</></term>
       <indexterm><primary>NetBSD</><secondary>IPC configuration</></>
+      <listitem>
+       <para>
+        In <systemitem class="osname">NetBSD</> 5.0 and later,
+        IPC parameters can be adjusted using <command>sysctl</command>,
+        for example:
+<screen>
+<prompt>$</prompt> <userinput>sysctl -w kern.ipc.shmmax=16777216</userinput>
+</screen>
+        To have these settings persist over reboots, modify
+        <filename>/etc/sysctl.conf</filename>.
+       </para>
+
+       <para>
+        You might also want to configure your kernel to lock shared
+        memory into RAM and prevent it from being paged out to swap.
+        This can be accomplished using the <command>sysctl</command>
+        setting <literal>kern.ipc.shm_use_phys</literal>.
+       </para>
+
+       <para>
+        <systemitem class="osname">NetBSD</> versions before 5.0 work like
+        <systemitem class="osname">OpenBSD</> (see below), except that
+        parameters should be set with the keyword <literal>options</> not
+        <literal>option</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><systemitem class="osname">OpenBSD</></term>
       <indexterm><primary>OpenBSD</><secondary>IPC configuration</></>
       <listitem>
        <para>
@@ -849,18 +878,17 @@ options "SEMMNS=240"
         to be enabled when the kernel is compiled. (They are by
         default.) The maximum size of shared memory is determined by
         the option <varname>SHMMAXPGS</> (in pages). The following
-        shows an example of how to set the various parameters 
-        (<systemitem class="osname">OpenBSD</> uses <literal>option</> instead):
+        shows an example of how to set the various parameters:
 <programlisting>
-options        SYSVSHM
-options        SHMMAXPGS=4096
-options        SHMSEG=256
+option        SYSVSHM
+option        SHMMAXPGS=4096
+option        SHMSEG=256
 
-options        SYSVSEM
-options        SEMMNI=256
-options        SEMMNS=512
-options        SEMMNU=256
-options        SEMMAP=256
+option        SYSVSEM
+option        SEMMNI=256
+option        SEMMNS=512
+option        SEMMNU=256
+option        SEMMAP=256
 </programlisting>
        </para>
 
@@ -872,7 +900,6 @@ options        SEMMAP=256
        </para>
       </listitem>
      </varlistentry>
-
 
      <varlistentry>
       <term><systemitem class="osname">HP-UX</></term>
