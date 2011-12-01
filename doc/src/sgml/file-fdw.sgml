@@ -158,4 +158,76 @@
   specified, the file size (in bytes) is shown as well.
  </para>
 
+ <example>
+ <title id="csvlog-fdw">Create a Foreign Table for PostgreSQL CSV Logs</title>
+   
+  <para>
+   One of the obvious uses for the <literal>file_fdw</> is to make
+   the PostgreSQL activity log available as a table for querying.  To
+   do this, first you must be logging to a CSV file, which here we
+   will call <literal>pglog.csv</>.  First, install <literal>file_fdw</>
+   as an extension:
+  </para>
+
+<programlisting>
+CREATE EXTENSION file_fdw;
+</programlisting>
+
+  <para>
+   Next, create the foreign data wrapper:
+
+<programlisting>
+CREATE FOREIGN DATA WRAPPER file_fdw HANDLER file_fdw_handler;
+</programlisting>
+  </para>
+
+  <para>
+   Then create a foreign data server:
+
+<programlisting>
+CREATE SERVER pglog FOREIGN DATA WRAPPER file_fdw;
+</programlisting>
+  </para>
+
+  <para>
+   Now you are ready to create the foreign data table.  Using the
+   <command>CREATE FOREIGN TABLE</> command, you will need to define
+   the columns for the table, the CSV filename, and its format:
+
+<programlisting>
+CREATE FOREIGN TABLE pglog (
+  log_time timestamp(3) with time zone,
+  user_name text,
+  database_name text,
+  process_id integer,
+  connection_from text,
+  session_id text,
+  session_line_num bigint,
+  command_tag text,
+  session_start_time timestamp with time zone,
+  virtual_transaction_id text,
+  transaction_id bigint,
+  error_severity text,
+  sql_state_code text,
+  message text,
+  detail text,
+  hint text,
+  internal_query text,
+  internal_query_pos integer,
+  context text,
+  query text,
+  query_pos integer,
+  location text,
+  application_name text
+) SERVER pglog
+OPTIONS ( filename '/home/josh/9.1/data/pg_log/pglog.csv', format 'csv' );
+</programlisting>
+  </para>
+
+  <para>
+   That's it &mdash; now you can query your log directly. In production, of course,
+   you would need to define some way to adjust to log rotation.
+  </para>
+ </example>
+
 </sect1>
