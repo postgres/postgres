@@ -391,6 +391,21 @@ select f1, sql_if(f1 > 0, bleat(f1), bleat(f1 + 1)) from int4_tbl;
 
 select q2, sql_if(q2 > 0, q2, q2 + 1) from int8_tbl;
 
+-- another sort of polymorphic aggregate
+
+CREATE AGGREGATE array_cat_accum (anyarray)
+(
+    sfunc = array_cat,
+    stype = anyarray,
+    initcond = '{}'
+);
+
+SELECT array_cat_accum(i)
+FROM (VALUES (ARRAY[1,2]), (ARRAY[3,4])) as t(i);
+
+SELECT array_cat_accum(i)
+FROM (VALUES (ARRAY[row(1,2),row(3,4)]), (ARRAY[row(5,6),row(7,8)])) as t(i);
+
 -- another kind of polymorphic aggregate
 
 create function add_group(grp anyarray, ad anyelement, size integer)
