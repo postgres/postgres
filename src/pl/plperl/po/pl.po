@@ -1,14 +1,14 @@
-# LANGUAGE message translation file for plperl
+# Polish message translation file for plperl
 # Copyright (C) 2011 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
+#
 # Begina Felicysym <begina.felicysym@wp.eu>, 2011.
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.1\n"
+"Project-Id-Version: plperl (PostgreSQL 9.1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-09-03 20:51+0000\n"
-"PO-Revision-Date: 2011-09-04 21:16+0200\n"
+"POT-Creation-Date: 2011-09-29 22:52+0000\n"
+"PO-Revision-Date: 2011-09-30 09:49-0300\n"
 "Last-Translator: Begina Felicysym <begina.felicysym@wp.eu>\n"
 "Language-Team: Polish TotroiseSvn translation team\n"
 "Language: pl\n"
@@ -153,7 +153,8 @@ msgstr "ignorowanie modyfikacji wiersza w wyzwalaczy DELETE"
 #: plperl.c:2280
 msgid ""
 "result of PL/Perl trigger function must be undef, \"SKIP\", or \"MODIFY\""
-msgstr "funkcja wyzwalacza PL/Perl musi zwracać undef, \"SKIP\", lub \"MODIFY\""
+msgstr ""
+"funkcja wyzwalacza PL/Perl musi zwracać undef, \"SKIP\", lub \"MODIFY\""
 
 #: plperl.c:2406 plperl.c:2412
 msgid "out of memory"

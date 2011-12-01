@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.1\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-09-06 04:55+0000\n"
+"POT-Creation-Date: 2011-11-30 16:07-0300\n"
 "PO-Revision-Date: 2005-11-02 10:30-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -70,118 +70,128 @@ msgstr ""
 msgid "Time: %.3f ms\n"
 msgstr "Tempo: %.3f ms\n"
 
-#: command.c:524 command.c:588 command.c:1285
+#: command.c:524 command.c:594 command.c:1297
 msgid "no query buffer\n"
 msgstr "nenhum buffer de consulta\n"
 
-#: command.c:557 command.c:2507
+#: command.c:557 command.c:2519
 #, c-format
 msgid "invalid line number: %s\n"
 msgstr "número de linha inválido: %s\n"
 
-#: command.c:662
+#: command.c:588
+#, c-format
+msgid "The server (version %d.%d) does not support editing function source.\n"
+msgstr "O servidor (versão %d.%d) não suporta edição do código da função.\n"
+
+#: command.c:668
 msgid "No changes"
 msgstr "Nenhuma alteração"
 
-#: command.c:716
+#: command.c:722
 #, c-format
 msgid "%s: invalid encoding name or conversion procedure not found\n"
 msgstr ""
 "%s: nome da codificação é inválido ou procedimento de conversão não foi "
 "encontrado\n"
 
-#: command.c:795 command.c:829 command.c:843 command.c:860 command.c:964
-#: command.c:1014 command.c:1265 command.c:1296
+#: command.c:801 command.c:835 command.c:849 command.c:866 command.c:970
+#: command.c:1020 command.c:1277 command.c:1308
 #, c-format
 msgid "\\%s: missing required argument\n"
 msgstr "\\%s: faltando argumento requerido\n"
 
-#: command.c:892
+#: command.c:898
 msgid "Query buffer is empty."
 msgstr "Buffer de consulta está vazio."
 
-#: command.c:902
+#: command.c:908
 msgid "Enter new password: "
 msgstr "Digite nova senha: "
 
-#: command.c:903
+#: command.c:909
 msgid "Enter it again: "
 msgstr "Digite-a novamente: "
 
-#: command.c:907
+#: command.c:913
 #, c-format
 msgid "Passwords didn't match.\n"
 msgstr "Senhas não correspondem.\n"
 
-#: command.c:925
+#: command.c:931
 #, c-format
 msgid "Password encryption failed.\n"
 msgstr "Criptografia de senha falhou.\n"
 
-#: command.c:993 command.c:1094 command.c:1270
+#: command.c:999 command.c:1100 command.c:1282
 #, c-format
 msgid "\\%s: error\n"
 msgstr "\\%s: erro\n"
 
-#: command.c:1034
+#: command.c:1040
 msgid "Query buffer reset (cleared)."
 msgstr "Buffer de consulta reiniciado (limpo)."
 
-#: command.c:1047
+#: command.c:1053
 #, c-format
 msgid "Wrote history to file \"%s/%s\".\n"
 msgstr "Histórico escrito para arquivo \"%s/%s\".\n"
 
-#: command.c:1085 common.c:52 common.c:66 common.c:90 input.c:209
+#: command.c:1091 common.c:52 common.c:66 common.c:90 input.c:209
 #: mainloop.c:72 mainloop.c:234 print.c:137 print.c:151
 #, c-format
 msgid "out of memory\n"
 msgstr "sem memória\n"
 
-#: command.c:1115
+#: command.c:1121
+#, c-format
+msgid "The server (version %d.%d) does not support showing function source.\n"
+msgstr "O servidor (versão %d.%d) não suporta exibição do código da função.\n"
+
+#: command.c:1127
 msgid "function name is required\n"
 msgstr "nome de função é requerido\n"
 
-#: command.c:1250
+#: command.c:1262
 msgid "Timing is on."
 msgstr "Tempo de execução está habilitado."
 
-#: command.c:1252
+#: command.c:1264
 msgid "Timing is off."
 msgstr "Tempo de execução está desabilitado."
 
-#: command.c:1313 command.c:1333 command.c:1895 command.c:1902 command.c:1911
-#: command.c:1921 command.c:1930 command.c:1944 command.c:1961 command.c:1999
+#: command.c:1325 command.c:1345 command.c:1907 command.c:1914 command.c:1923
+#: command.c:1933 command.c:1942 command.c:1956 command.c:1973 command.c:2011
 #: common.c:137 copy.c:283 copy.c:361
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
 
-#: command.c:1415 startup.c:159
+#: command.c:1427 startup.c:159
 msgid "Password: "
 msgstr "Senha: "
 
-#: command.c:1422 startup.c:162 startup.c:164
+#: command.c:1434 startup.c:162 startup.c:164
 #, c-format
 msgid "Password for user %s: "
 msgstr "Senha para usuário %s: "
 
-#: command.c:1541 command.c:2541 common.c:183 common.c:460 common.c:525
+#: command.c:1553 command.c:2553 common.c:183 common.c:460 common.c:525
 #: common.c:816 common.c:841 common.c:925 copy.c:432 copy.c:477 copy.c:607
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: command.c:1545
+#: command.c:1557
 msgid "Previous connection kept\n"
 msgstr "Conexão anterior mantida\n"
 
-#: command.c:1549
+#: command.c:1561
 #, c-format
 msgid "\\connect: %s"
 msgstr "\\connect: %s"
 
-#: command.c:1582
+#: command.c:1594
 #, c-format
 msgid ""
 "You are now connected to database \"%s\" as user \"%s\" via socket in \"%s\" "
@@ -190,7 +200,7 @@ msgstr ""
 "Você está conectado agora ao banco de dados \"%s\" como usuário \"%s\" via "
 "soquete em \"%s\" na porta \"%s\".\n"
 
-#: command.c:1585
+#: command.c:1597
 #, c-format
 msgid ""
 "You are now connected to database \"%s\" as user \"%s\" on host \"%s\" at "
@@ -199,18 +209,18 @@ msgstr ""
 "Você está conectado agora ao banco de dados \"%s\" como usuário \"%s\" na "
 "máquina \"%s\" na porta \"%s\".\n"
 
-#: command.c:1589
+#: command.c:1601
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\".\n"
 msgstr ""
 "Você está conectado agora ao banco de dados \"%s\" como usuário \"%s\".\n"
 
-#: command.c:1623
+#: command.c:1635
 #, c-format
 msgid "%s (%s, server %s)\n"
 msgstr "%s (%s, servidor %s)\n"
 
-#: command.c:1631
+#: command.c:1643
 #, c-format
 msgid ""
 "WARNING: %s version %d.%d, server version %d.%d.\n"
@@ -219,19 +229,19 @@ msgstr ""
 "AVISO: %s versão %d.%d, servidor versão %d.%d.\n"
 "         Algumas funcionalidades do psql podem não funcionar.\n"
 
-#: command.c:1661
+#: command.c:1673
 #, c-format
 msgid "SSL connection (cipher: %s, bits: %i)\n"
 msgstr "conexão SSL (cifra: %s, bits: %i)\n"
 
-#: command.c:1671
+#: command.c:1683
 #, c-format
 msgid "SSL connection (unknown cipher)\n"
 msgstr ""
 "conexão SSL (cifra desconhecida)\n"
 "\n"
 
-#: command.c:1692
+#: command.c:1704
 #, c-format
 msgid ""
 "WARNING: Console code page (%u) differs from Windows code page (%u)\n"
@@ -245,33 +255,34 @@ msgstr ""
 "         referência do psql \"Notes for Windows users\" para obter "
 "detalhes.\n"
 
-#: command.c:1776
+#: command.c:1788
 msgid ""
 "environment variable PSQL_EDITOR_LINENUMBER_ARG must be set to specify a "
 "line number\n"
 msgstr ""
-"variável de ambiente PSQL_EDITOR_LINENUMBER_ARG deve ser definida para especificar um número de linha\n"
+"variável de ambiente PSQL_EDITOR_LINENUMBER_ARG deve ser definida para "
+"especificar um número de linha\n"
 
-#: command.c:1813
+#: command.c:1825
 #, c-format
 msgid "could not start editor \"%s\"\n"
 msgstr "não pôde iniciar o editor \"%s\"\n"
 
-#: command.c:1815
+#: command.c:1827
 msgid "could not start /bin/sh\n"
 msgstr "não pôde iniciar /bin/sh\n"
 
-#: command.c:1853
+#: command.c:1865
 #, c-format
 msgid "could not locate temporary directory: %s\n"
 msgstr "não pôde localizar diretório temporário: %s\n"
 
-#: command.c:1880
+#: command.c:1892
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "não pôde abrir arquivo temporário \"%s\": %s\n"
 
-#: command.c:2110
+#: command.c:2122
 msgid ""
 "\\pset: allowed formats are unaligned, aligned, wrapped, html, latex, troff-"
 "ms\n"
@@ -279,122 +290,122 @@ msgstr ""
 "\\pset: formatos permitidos são unaligned, aligned, wrapped, html, latex, "
 "troff-ms\n"
 
-#: command.c:2115
+#: command.c:2127
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "Formato de saída é %s.\n"
 
-#: command.c:2131
+#: command.c:2143
 msgid "\\pset: allowed line styles are ascii, old-ascii, unicode\n"
 msgstr "\\pset: estilos de linha permitidos são ascii, old-ascii, unicode\n"
 
-#: command.c:2136
+#: command.c:2148
 #, c-format
 msgid "Line style is %s.\n"
 msgstr "Estilo de linha é %s.\n"
 
-#: command.c:2147
+#: command.c:2159
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "Estilo de borda é %d.\n"
 
-#: command.c:2159
+#: command.c:2171
 #, c-format
 msgid "Expanded display is on.\n"
 msgstr "Exibição expandida está habilitada.\n"
 
-#: command.c:2160
+#: command.c:2172
 #, c-format
 msgid "Expanded display is off.\n"
 msgstr "Exibição expandida está desabilitada.\n"
 
-#: command.c:2173
+#: command.c:2185
 msgid "Showing locale-adjusted numeric output."
 msgstr "Exibindo formato numérico baseado na configuração regional."
 
-#: command.c:2175
+#: command.c:2187
 msgid "Locale-adjusted numeric output is off."
 msgstr "Formato numérico baseado no idioma está desabilitado."
 
-#: command.c:2188
+#: command.c:2200
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Exibição nula é \"%s\".\n"
 
-#: command.c:2200
+#: command.c:2212
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "Separador de campos é \"%s\".\n"
 
-#: command.c:2214
+#: command.c:2226
 #, c-format
 msgid "Record separator is <newline>."
 msgstr "Separador de registros é <novalinha>."
 
-#: command.c:2216
+#: command.c:2228
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "Separador de registros é \"%s\".\n"
 
-#: command.c:2230
+#: command.c:2242
 msgid "Showing only tuples."
 msgstr "Mostrando apenas tuplas."
 
-#: command.c:2232
+#: command.c:2244
 msgid "Tuples only is off."
 msgstr "Somente tuplas está desabilitado."
 
-#: command.c:2248
+#: command.c:2260
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "Título é \"%s\".\n"
 
-#: command.c:2250
+#: command.c:2262
 #, c-format
 msgid "Title is unset.\n"
 msgstr "Título não está definido.\n"
 
-#: command.c:2266
+#: command.c:2278
 #, c-format
 msgid "Table attribute is \"%s\".\n"
 msgstr "Atributo de tabela é \"%s\".\n"
 
-#: command.c:2268
+#: command.c:2280
 #, c-format
 msgid "Table attributes unset.\n"
 msgstr "Atributos de tabela não estão definidos.\n"
 
-#: command.c:2289
+#: command.c:2301
 msgid "Pager is used for long output."
 msgstr "Paginação é usada para saída longa."
 
-#: command.c:2291
+#: command.c:2303
 msgid "Pager is always used."
 msgstr "Paginação é sempre utilizada."
 
-#: command.c:2293
+#: command.c:2305
 msgid "Pager usage is off."
 msgstr "Uso de paginação está desabilitado."
 
-#: command.c:2307
+#: command.c:2319
 msgid "Default footer is on."
 msgstr "Rodapé padrão está habilitado."
 
-#: command.c:2309
+#: command.c:2321
 msgid "Default footer is off."
 msgstr "Rodapé padrão está desabilitado."
 
-#: command.c:2320
+#: command.c:2332
 #, c-format
 msgid "Target width for \"wrapped\" format is %d.\n"
 msgstr "largura para formato \"wrapped\" é %d.\n"
 
-#: command.c:2325
+#: command.c:2337
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: opção desconhecida: %s\n"
 
-#: command.c:2379
+#: command.c:2391
 msgid "\\!: failed\n"
 msgstr "\\!: falhou\n"
 
@@ -1256,8 +1267,7 @@ msgstr "  \\password [USUÁRIO]    altera a senha de um usuário com segurança\
 #, c-format
 msgid ""
 "  \\conninfo              display information about current connection\n"
-msgstr ""
-"  \\conninfo              mostra informação sobre conexão atual\n"
+msgstr "  \\conninfo              mostra informação sobre conexão atual\n"
 
 #: help.c:257
 #, c-format

@@ -1,16 +1,16 @@
-# LANGUAGE message translation file for pgscripts
+# Polish message translation file for pgscripts
 # Copyright (C) 2011 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
+#
 # Begina Felicysym <begina.felicysym@wp.eu>, 2011.
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.1\n"
+"Project-Id-Version: pgscripts (PostgreSQL 9.1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-09-03 20:55+0000\n"
-"PO-Revision-Date: 2011-09-04 21:10+0200\n"
+"POT-Creation-Date: 2011-09-29 22:56+0000\n"
+"PO-Revision-Date: 2011-09-30 09:49-0300\n"
 "Last-Translator: Begina Felicysym <begina.felicysym@wp.eu>\n"
-"Language-Team: Polish TotroiseSvn translation team\n"
+"Language-Team: Begina Felicysym\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -26,7 +26,7 @@ msgstr ""
 #: reindexdb.c:114 reindexdb.c:128
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Spróbuj \"%s --help\" aby uzykać wiecej informacji.\n"
+msgstr "Spróbuj \"%s --help\" aby uzyskać więcej informacji.\n"
 
 #: createdb.c:131 createlang.c:108 createuser.c:162 dropdb.c:98 droplang.c:107
 #: dropuser.c:96 clusterdb.c:117 vacuumdb.c:140 reindexdb.c:127
@@ -94,18 +94,21 @@ msgstr ""
 #: createdb.c:251
 #, c-format
 msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
-msgstr "  -D, --tablespace=TABLESPACE  domyślna przestrzeń tabel dla bazy danych\n"
+msgstr ""
+"  -D, --tablespace=TABLESPACE  domyślna przestrzeń tabel dla bazy danych\n"
 
 #: createdb.c:252
 #, c-format
 msgid ""
 "  -e, --echo                   show the commands being sent to the server\n"
-msgstr "  -e, --echo                   pokazuje polecenia przesyłane do serwera\n"
+msgstr ""
+"  -e, --echo                   pokazuje polecenia przesyłane do serwera\n"
 
 #: createdb.c:253
 #, c-format
 msgid "  -E, --encoding=ENCODING      encoding for the database\n"
-msgstr "  -E, --encoding=KODOWANIE     ustawia domyślne kodowanie dla bazy danych\n"
+msgstr ""
+"  -E, --encoding=KODOWANIE     ustawia domyślne kodowanie dla bazy danych\n"
 
 #: createdb.c:254
 #, c-format
@@ -125,7 +128,8 @@ msgstr "      --lc-ctype=LOKALIZACJA   ustawienie LC_CTYPE dla bazy danych\n"
 #: createdb.c:257
 #, c-format
 msgid "  -O, --owner=OWNER            database user to own the new database\n"
-msgstr "  -O, --owner=WŁAŚCICIEL       użytkownik bazy danych będący właścicielem "
+msgstr ""
+"  -O, --owner=WŁAŚCICIEL       użytkownik bazy danych będący właścicielem "
 "nowej bazy\n"
 
 #: createdb.c:258
@@ -158,7 +162,8 @@ msgstr ""
 #, c-format
 msgid ""
 "  -h, --host=HOSTNAME          database server host or socket directory\n"
-msgstr "  -h, --host=NAZWAHOSTA        host serwera bazy danych lub katalog gniazda\n"
+msgstr ""
+"  -h, --host=NAZWAHOSTA        host serwera bazy danych lub katalog gniazda\n"
 
 #: createdb.c:263
 #, c-format
@@ -266,7 +271,9 @@ msgstr "  -e, --echo                pokazuje polecenia przesyłane do serwera\n"
 #, c-format
 msgid ""
 "  -l, --list                show a list of currently installed languages\n"
-msgstr "  -l, --list                pokazuje listę aktualnie zainstalowanych języków\n"
+msgstr ""
+"  -l, --list                pokazuje listę aktualnie zainstalowanych "
+"języków\n"
 
 #: createlang.c:229 createuser.c:319 dropdb.c:149 droplang.c:230
 #: dropuser.c:144 clusterdb.c:245 reindexdb.c:323
@@ -284,7 +291,8 @@ msgstr "  --version                 pokazuje informacje o wersji i kończy\n"
 #: dropuser.c:147 clusterdb.c:248 vacuumdb.c:344 reindexdb.c:326
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
-msgstr "  -h, --host=NAZWAHOSTA     host serwera bazy danych lub katalog gniazda\n"
+msgstr ""
+"  -h, --host=NAZWAHOSTA     host serwera bazy danych lub katalog gniazda\n"
 
 #: createlang.c:233 createuser.c:323 dropdb.c:153 droplang.c:234
 #: dropuser.c:148 clusterdb.c:249 vacuumdb.c:345 reindexdb.c:327
@@ -367,7 +375,8 @@ msgstr "  %s [OPCJA]... [NAZWAROLI]\n"
 #, c-format
 msgid ""
 "  -c, --connection-limit=N  connection limit for role (default: no limit)\n"
-msgstr "  -c, --connection-limit=N  limit połączeń dla roli (domyślnie: bez limitu)\n"
+msgstr ""
+"  -c, --connection-limit=N  limit połączeń dla roli (domyślnie: bez limitu)\n"
 
 #: createuser.c:304
 #, c-format
@@ -442,7 +451,8 @@ msgstr "  -S, --no-superuser        rola nie będzie superużytkownikiem\n"
 #, c-format
 msgid ""
 "  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
-msgstr "  -U, --username=USERNAME   nazwa użytkownika do połączenia z bazą (nie tego "
+msgstr ""
+"  -U, --username=USERNAME   nazwa użytkownika do połączenia z bazą (nie tego "
 "do utworzenia)\n"
 
 #: createuser.c:327
@@ -546,19 +556,22 @@ msgstr ""
 #, c-format
 msgid ""
 "  -U, --username=USERNAME   user name to connect as (not the one to drop)\n"
-msgstr "  -U, --username=USERNAME   nazwa użytkownika do połączenia z bazą (nie tego "
+msgstr ""
+"  -U, --username=USERNAME   nazwa użytkownika do połączenia z bazą (nie tego "
 "do skasowania)\n"
 
 #: clusterdb.c:129
 #, c-format
 msgid "%s: cannot cluster all databases and a specific one at the same time\n"
-msgstr "%s: nie można klastrować wszystkich baz danych i jednej wskazanej w tym "
+msgstr ""
+"%s: nie można klastrować wszystkich baz danych i jednej wskazanej w tym "
 "samym czasie\n"
 
 #: clusterdb.c:135
 #, c-format
 msgid "%s: cannot cluster a specific table in all databases\n"
-msgstr "%s: nie można klastrować wskazanej tabeli we wszystkich bazach danych\n"
+msgstr ""
+"%s: nie można klastrować wskazanej tabeli we wszystkich bazach danych\n"
 
 #: clusterdb.c:187
 #, c-format
@@ -626,17 +639,20 @@ msgstr ""
 #: vacuumdb.c:150
 #, c-format
 msgid "%s: cannot use the \"full\" option when performing only analyze\n"
-msgstr "%s: nie można używać opcji \"full\" podczas wykonywania wyłącznie analizy\n"
+msgstr ""
+"%s: nie można używać opcji \"full\" podczas wykonywania wyłącznie analizy\n"
 
 #: vacuumdb.c:156
 #, c-format
 msgid "%s: cannot use the \"freeze\" option when performing only analyze\n"
-msgstr "%s: nie można używać opcji \"freeze\" podczas wykonywania wyłącznie analizy\n"
+msgstr ""
+"%s: nie można używać opcji \"freeze\" podczas wykonywania wyłącznie analizy\n"
 
 #: vacuumdb.c:169
 #, c-format
 msgid "%s: cannot vacuum all databases and a specific one at the same time\n"
-msgstr "%s: nie można odkurzyć wszystkich baz danych i jednej wskazanej w tym samym "
+msgstr ""
+"%s: nie można odkurzyć wszystkich baz danych i jednej wskazanej w tym samym "
 "czasie\n"
 
 #: vacuumdb.c:175
@@ -683,7 +699,8 @@ msgstr "  -d, --dbname=NAZWADB            baza danych do odkurzenia\n"
 msgid ""
 "  -e, --echo                      show the commands being sent to the "
 "server\n"
-msgstr "  -e, --echo                      pokazuje polecenia przesyłane do serwera\n"
+msgstr ""
+"  -e, --echo                      pokazuje polecenia przesyłane do serwera\n"
 
 #: vacuumdb.c:334
 #, c-format
@@ -693,7 +710,8 @@ msgstr "  -f, --full                      wykonuje pełne odkurzenie\n"
 #: vacuumdb.c:335
 #, c-format
 msgid "  -F, --freeze                    freeze row transaction information\n"
-msgstr "  -F, --freeze                    zamraża informację transakcji wiersza\n"
+msgstr ""
+"  -F, --freeze                    zamraża informację transakcji wiersza\n"
 
 #: vacuumdb.c:336
 #, c-format
@@ -713,12 +731,14 @@ msgstr "  -v, --verbose                   wypisuje dużo danych wyjściowych\n"
 #: vacuumdb.c:339
 #, c-format
 msgid "  -z, --analyze                   update optimizer statistics\n"
-msgstr "  -z, --analyze                   aktualizuje statystyki optymalizatora\n"
+msgstr ""
+"  -z, --analyze                   aktualizuje statystyki optymalizatora\n"
 
 #: vacuumdb.c:340
 #, c-format
 msgid "  -Z, --analyze-only              only update optimizer statistics\n"
-msgstr "  -Z, --analyze-only              aktualizuje tylko statystyki "
+msgstr ""
+"  -Z, --analyze-only              aktualizuje tylko statystyki "
 "optymalizatora\n"
 
 #: vacuumdb.c:341
@@ -730,7 +750,8 @@ msgstr "  --help                          pokazuje ten ekran pomocy i kończy\n"
 #, c-format
 msgid ""
 "  --version                       output version information, then exit\n"
-msgstr "  --version                       pokazuje informacje o wersji i kończy\n"
+msgstr ""
+"  --version                       pokazuje informacje o wersji i kończy\n"
 
 #: vacuumdb.c:349
 #, c-format
@@ -744,48 +765,56 @@ msgstr ""
 #: reindexdb.c:138
 #, c-format
 msgid "%s: cannot reindex all databases and a specific one at the same time\n"
-msgstr "%s: nie można przeindeksować wszystkich baz danych i jednej wskazanej w tym "
+msgstr ""
+"%s: nie można przeindeksować wszystkich baz danych i jednej wskazanej w tym "
 "samym czasie\n"
 
 #: reindexdb.c:143
 #, c-format
 msgid "%s: cannot reindex all databases and system catalogs at the same time\n"
-msgstr "%s: nie można przeindeksować wszystkich baz danych i katalogów systemowych w "
+msgstr ""
+"%s: nie można przeindeksować wszystkich baz danych i katalogów systemowych w "
 "tym samym czasie\n"
 
 #: reindexdb.c:148
 #, c-format
 msgid "%s: cannot reindex a specific table in all databases\n"
-msgstr "%s: nie można przeindeksować wskazanej tabeli we wszystkich bazach danych\n"
+msgstr ""
+"%s: nie można przeindeksować wskazanej tabeli we wszystkich bazach danych\n"
 
 #: reindexdb.c:153
 #, c-format
 msgid "%s: cannot reindex a specific index in all databases\n"
-msgstr "%s: nie można przeindeksować wskazanego indeksu we wszystkich bazach danych\n"
+msgstr ""
+"%s: nie można przeindeksować wskazanego indeksu we wszystkich bazach danych\n"
 
 #: reindexdb.c:164
 #, c-format
 msgid ""
 "%s: cannot reindex a specific table and system catalogs at the same time\n"
-msgstr "%s: nie można przeindeksować wskazanej tabeli i katalogów systemowych w tym "
+msgstr ""
+"%s: nie można przeindeksować wskazanej tabeli i katalogów systemowych w tym "
 "samym czasie\n"
 
 #: reindexdb.c:169
 #, c-format
 msgid ""
 "%s: cannot reindex a specific index and system catalogs at the same time\n"
-msgstr "%s: nie można przeindeksować wskazanego indeksu i katalogów systemowych w "
+msgstr ""
+"%s: nie można przeindeksować wskazanego indeksu i katalogów systemowych w "
 "tym samym czasie\n"
 
 #: reindexdb.c:238
 #, c-format
 msgid "%s: reindexing of table \"%s\" in database \"%s\" failed: %s"
-msgstr "%s: przeindeksowanie tabeli \"%s\" w bazie danych \"%s\" nie udało się: %s"
+msgstr ""
+"%s: przeindeksowanie tabeli \"%s\" w bazie danych \"%s\" nie udało się: %s"
 
 #: reindexdb.c:241
 #, c-format
 msgid "%s: reindexing of index \"%s\" in database \"%s\" failed: %s"
-msgstr "%s: przeindeksowanie indeksu \"%s\" w bazie danych \"%s\" nie udało się: %s"
+msgstr ""
+"%s: przeindeksowanie indeksu \"%s\" w bazie danych \"%s\" nie udało się: %s"
 
 #: reindexdb.c:244
 #, c-format
@@ -904,22 +933,24 @@ msgstr "t"
 msgid "n"
 msgstr "n"
 
-#: common.c:296
+#. translator: This is a question followed by the translated options for
+#. "yes" and "no".
+#: common.c:295
 #, c-format
 msgid "%s (%s/%s) "
 msgstr "%s (%s/%s) "
 
-#: common.c:317
+#: common.c:316
 #, c-format
 msgid "Please answer \"%s\" or \"%s\".\n"
 msgstr "Wymagana jest odpowiedź \"%s\" lub \"%s\".\n"
 
-#: common.c:395 common.c:428
+#: common.c:394 common.c:427
 #, c-format
 msgid "Cancel request sent\n"
 msgstr "Wysłano żądanie anulowania\n"
 
-#: common.c:397 common.c:430
+#: common.c:396 common.c:429
 #, c-format
 msgid "Could not send cancel request: %s"
 msgstr "Nie udało się wysłać żądania anulowania: %s"

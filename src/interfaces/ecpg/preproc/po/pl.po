@@ -1,16 +1,16 @@
-# LANGUAGE message translation file for ecpg
+# Polish message translation file for ecpg
 # Copyright (C) 2011 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
+#
 # Begina Felicysym <begina.felicysym@wp.eu>, 2011.
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.1\n"
+"Project-Id-Version: ecpg (PostgreSQL 9.1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-09-03 20:55+0000\n"
-"PO-Revision-Date: 2011-09-04 10:52+0200\n"
+"POT-Creation-Date: 2011-09-29 22:57+0000\n"
+"PO-Revision-Date: 2011-09-30 09:51-0300\n"
 "Last-Translator: Begina Felicysym <begina.felicysym@wp.eu>\n"
-"Language-Team: Polish TotroiseSvn translation team\n"
+"Language-Team: Begina Felicysym\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -83,7 +83,7 @@ msgid ""
 "  -c             automatically generate C code from embedded SQL code;\n"
 "                 this affects EXEC SQL TYPE\n"
 msgstr ""
-"  -c             automatycznie generujekod w C z osadzonego kodu SQL;\n"
+"  -c             automatycznie generuje kod w C z osadzonego kodu SQL;\n"
 "                 dotyczy to EXEC SQL TYPE\n"
 
 #: ecpg.c:43
@@ -109,7 +109,8 @@ msgstr "  -D SYMBOL      definiuje SYMBOL\n"
 #, c-format
 msgid ""
 "  -h             parse a header file, this option includes option \"-c\"\n"
-msgstr "  -h             parsuje plik nagłówkowy, opcja ta zawiera opcję \"-c\"\n"
+msgstr ""
+"  -h             parsuje plik nagłówkowy, opcja ta zawiera opcję \"-c\"\n"
 
 #: ecpg.c:50
 #, c-format
@@ -132,7 +133,7 @@ msgid ""
 "  -r OPTION      specify run-time behavior; OPTION can be:\n"
 "                 \"no_indicator\", \"prepare\", \"questionmarks\"\n"
 msgstr ""
-"  -r OPCJA       określa zachowanie ueruchmienia; OPTCJA może być:\n"
+"  -r OPCJA       określa zachowanie uruchomienia; OPTCJA może być:\n"
 "                 \"no_indicator\", \"prepare\", \"questionmarks\"\n"
 
 #: ecpg.c:55
@@ -153,7 +154,7 @@ msgstr "  --help         pokazuje ten ekran pomocy i kończy\n"
 #: ecpg.c:58
 #, c-format
 msgid "  --version      output version information, then exit\n"
-msgstr "  --version      wypisuje informacje o wersjii kończy\n"
+msgstr "  --version      wypisuje informacje o wersji i kończy\n"
 
 #: ecpg.c:59
 #, c-format
@@ -193,7 +194,7 @@ msgstr "%s: wsparcie debugu analizatora (-d) niedostępne\n"
 #: ecpg.c:263
 #, c-format
 msgid "%s, the PostgreSQL embedded C preprocessor, version %d.%d.%d\n"
-msgstr "%s, preprocesor C osadzony w PostgreSQL, versja %d.%d.%d\n"
+msgstr "%s, preprocesor C osadzony w PostgreSQL, wersja %d.%d.%d\n"
 
 #: ecpg.c:265
 #, c-format
@@ -295,7 +296,8 @@ msgstr ""
 #: pgc.l:1342
 #, c-format
 msgid "Error: include path \"%s/%s\" is too long on line %d, skipping\n"
-msgstr "Błąd: załączona ścieżka \"%s/%s\" jest zbyt długa w linii %d, pominięto\n"
+msgstr ""
+"Błąd: załączona ścieżka \"%s/%s\" jest zbyt długa w linii %d, pominięto\n"
 
 #: pgc.l:1364
 #, c-format
@@ -394,7 +396,8 @@ msgstr "COPY FROM STDIN nie zostało zaimplementowane"
 #: preproc.y:7909 preproc.y:12600
 #, c-format
 msgid "using variable \"%s\" in different declare statements is not supported"
-msgstr "użycie zmiennej \"%s\" w innych wyrażeniach deklaracji nie jest wspierane"
+msgstr ""
+"użycie zmiennej \"%s\" w innych wyrażeniach deklaracji nie jest wspierane"
 
 #: preproc.y:7911 preproc.y:12602
 #, c-format
@@ -434,7 +437,8 @@ msgstr "oczekiwano \"://\", znaleziono \"%s\""
 #: preproc.y:12389
 #, c-format
 msgid "Unix-domain sockets only work on \"localhost\" but not on \"%s\""
-msgstr "Gniazda dziedziny Uniksa działają tylko na \"localhost\" a nie na \"%s\""
+msgstr ""
+"Gniazda dziedziny Uniksa działają tylko na \"localhost\" a nie na \"%s\""
 
 #: preproc.y:12415
 #, c-format
@@ -522,7 +526,8 @@ msgstr "zmienna \"%s\" została przykryta przez zmienną lokalną"
 msgid ""
 "indicator variable \"%s\" is hidden by a local variable of a different type"
 msgstr ""
-"zmienna wskaźnikowa \"%s\" została przykryta przez zmienną lokalną innego typu"
+"zmienna wskaźnikowa \"%s\" została przykryta przez zmienną lokalną innego "
+"typu"
 
 #: type.c:277
 #, c-format

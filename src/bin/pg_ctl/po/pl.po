@@ -1,16 +1,15 @@
-# LANGUAGE message translation file for pg_ctl
+# Polish message translation file for pg_ctl
 # Copyright (C) 2011 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
 # Begina Felicysym <begina.felicysym@wp.eu>, 2011.
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.1\n"
+"Project-Id-Version: pg_ctl (PostgreSQL 9.1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-09-03 20:54+0000\n"
-"PO-Revision-Date: 2011-09-04 19:34+0200\n"
+"POT-Creation-Date: 2011-10-08 08:41+0000\n"
+"PO-Revision-Date: 2011-10-09 17:47+0200\n"
 "Last-Translator: Begina Felicysym <begina.felicysym@wp.eu>\n"
-"Language-Team: Polish TotroiseSvn translation team\n"
+"Language-Team: Begina Felicysym\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -64,7 +63,8 @@ msgstr ""
 #: pg_ctl.c:638
 #, c-format
 msgid "%s: cannot set core file size limit; disallowed by hard limit\n"
-msgstr "%s: nie można ustawić ograniczenia rozmiaru pliku jądra; zablokowane przez "
+msgstr ""
+"%s: nie można ustawić ograniczenia rozmiaru pliku jądra; zablokowane przez "
 "twardy limit\n"
 
 #: pg_ctl.c:663
@@ -107,7 +107,8 @@ msgstr "%s: inicjacja systemu bazy danych nie powiodła się\n"
 #: pg_ctl.c:770
 #, c-format
 msgid "%s: another server might be running; trying to start server anyway\n"
-msgstr "%s: inny serwer może być uruchomiony, próba uruchomienia serwera mimo to\n"
+msgstr ""
+"%s: inny serwer może być uruchomiony, próba uruchomienia serwera mimo to\n"
 
 #: pg_ctl.c:807
 #, c-format
@@ -140,7 +141,7 @@ msgid ""
 "%s: could not start server\n"
 "Examine the log output.\n"
 msgstr ""
-"%s: Nie udało się uruchomoć serwera\n"
+"%s: Nie udało się uruchomić serwera\n"
 "Sprawdź logi wyjścia.\n"
 
 #: pg_ctl.c:834 pg_ctl.c:912 pg_ctl.c:1002
@@ -168,7 +169,8 @@ msgstr "Czy serwer działa?\n"
 #: pg_ctl.c:863
 #, c-format
 msgid "%s: cannot stop server; single-user server is running (PID: %ld)\n"
-msgstr "%s: Nie można zatrzymać serwera; jest uruchomiony serwer pojedynczego "
+msgstr ""
+"%s: Nie można zatrzymać serwera; jest uruchomiony serwer pojedynczego "
 "użytkownika (PID: %ld)\n"
 
 #: pg_ctl.c:871 pg_ctl.c:966
@@ -218,12 +220,14 @@ msgstr "uruchomienie serwera mimo wszystko\n"
 #: pg_ctl.c:954
 #, c-format
 msgid "%s: cannot restart server; single-user server is running (PID: %ld)\n"
-msgstr "%s: Nie można zrestartować serwera; jest uruchomiony serwer pojedynczego "
+msgstr ""
+"%s: Nie można zrestartować serwera; jest uruchomiony serwer pojedynczego "
 "użytkownika (PID: %ld)\n"
 
 #: pg_ctl.c:957 pg_ctl.c:1042
 msgid "Please terminate the single-user server and try again.\n"
-msgstr "Proszę zakończyć działanie serwera pojedynczego użytkownika i spróbować raz "
+msgstr ""
+"Proszę zakończyć działanie serwera pojedynczego użytkownika i spróbować raz "
 "jeszcze.\n"
 
 #: pg_ctl.c:1016
@@ -234,7 +238,8 @@ msgstr "%s: poprzedni proces serwera (PID: %ld) wydaje się zginął\n"
 #: pg_ctl.c:1039
 #, c-format
 msgid "%s: cannot reload server; single-user server is running (PID: %ld)\n"
-msgstr "%s: Nie można przeładować serwera; jest uruchomiony serwer pojedynczego "
+msgstr ""
+"%s: Nie można przeładować serwera; jest uruchomiony serwer pojedynczego "
 "użytkownika (PID: %ld)\n"
 
 #: pg_ctl.c:1048
@@ -245,12 +250,13 @@ msgstr "%s: nie udało się wysłać sygnału przeładowującego (PID: %ld): %s\
 #: pg_ctl.c:1053
 #, fuzzy
 msgid "server signaled\n"
-msgstr "serwer zasygnalizował\n"
+msgstr "uruchomiono serwer\n"
 
 #: pg_ctl.c:1079
 #, c-format
 msgid "%s: cannot promote server; single-user server is running (PID: %ld)\n"
-msgstr "%s: Nie można rozgłosić serwera; jest uruchomiony serwer pojedynczego "
+msgstr ""
+"%s: Nie można rozgłosić serwera; jest uruchomiony serwer pojedynczego "
 "użytkownika (PID: %ld)\n"
 
 #: pg_ctl.c:1088
@@ -360,14 +366,14 @@ msgid "%s: could not start service \"%s\": error code %d\n"
 msgstr "%s: nie udało się uruchomić usługi \"%s\": kod błędu %d\n"
 
 #: pg_ctl.c:1573
-#, c-format, fuzzy
+#, c-format
 msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
-msgstr "%s: OSTRZEŻENIE: nie można utworzyć ograniczonego tokenu na tej platformie\n"
+msgstr "%s: OSTRZEŻENIE nie można tworzyć ograniczonych tokenów na tej platformie\n"
 
 #: pg_ctl.c:1582
-#, c-format, fuzzy
+#, c-format
 msgid "%s: could not open process token: %lu\n"
-msgstr "%s: nie udało się otworzyć tokenu procesu: kod błędu %lu"
+msgstr "%s: nie udało się otworzyć tokena procesu: %lu\n"
 
 #: pg_ctl.c:1595
 #, c-format
@@ -375,14 +381,15 @@ msgid "%s: could not allocate SIDs: %lu\n"
 msgstr "%s: nie udało się przydzielić SIDów: kod błędu %lu\n"
 
 #: pg_ctl.c:1614
-#, c-format, fuzzy
+#, c-format
 msgid "%s: could not create restricted token: %lu\n"
-msgstr "%s: nie udało się otworzyć ograniczonego tokenu: kod błędu %lu\n"
+msgstr "%s: nie udało się utworzyć ograniczonego tokena: %lu\n"
 
 #: pg_ctl.c:1652
 #, c-format
 msgid "%s: WARNING: could not locate all job object functions in system API\n"
-msgstr "%s: OSTRZEŻENIE: nie może zlokalizować wszystkich funkcji obiektów zadań w "
+msgstr ""
+"%s: OSTRZEŻENIE: nie może zlokalizować wszystkich funkcji obiektów zadań w "
 "systemowym API\n"
 
 #: pg_ctl.c:1738
@@ -415,13 +422,15 @@ msgstr "  %s init[db]               [-D KATDANE] [-s] [-o \"OPCJE\"]\n"
 msgid ""
 "  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS"
 "\"]\n"
-msgstr "  %s start   [-w] [-t SEKUNDY] [-D KATDANE] [-s] [-l NAZWAPLIKU] [-o "
-"\"OPCJE\"]\n"
+msgstr ""
+"  %s start   [-w] [-t SEKUNDY] [-D KATDANE] [-s] [-l NAZWAPLIKU] [-o \"OPCJE"
+"\"]\n"
 
 #: pg_ctl.c:1750
 #, c-format
 msgid "  %s stop    [-W] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
-msgstr "  %s stop    [-W] [-t SEKUNDY] [-D KATDANE] [-s] [-m TRYB-ZAMKNIECIA]\n"
+msgstr ""
+"  %s stop    [-W] [-t SEKUNDY] [-D KATDANE] [-s] [-m TRYB-ZAMKNIECIA]\n"
 
 #: pg_ctl.c:1751
 #, c-format
@@ -478,12 +487,14 @@ msgstr ""
 #: pg_ctl.c:1764
 #, c-format
 msgid "  -D, --pgdata DATADIR   location of the database storage area\n"
-msgstr "  -D, --pgdata KATDANE   położenie miejsca przechowywania bazy danych\n"
+msgstr ""
+"  -D, --pgdata KATDANE   położenie miejsca przechowywania bazy danych\n"
 
 #: pg_ctl.c:1765
 #, c-format
 msgid "  -s, --silent           only print errors, no informational messages\n"
-msgstr "  -s, --silent           wypisz tylko błędy, bez komunikatów informacyjnych\n"
+msgstr ""
+"  -s, --silent           wypisz tylko błędy, bez komunikatów informacyjnych\n"
 
 #: pg_ctl.c:1766
 #, c-format
@@ -547,7 +558,8 @@ msgstr "  -c, --core-files       niedostępne na tej platformie\n"
 #: pg_ctl.c:1780
 #, c-format
 msgid "  -l, --log FILENAME     write (or append) server log to FILENAME\n"
-msgstr "  -l, --log NAZWAPLIKU   zapisuje (lub dodaje) komunikaty servera do "
+msgstr ""
+"  -l, --log NAZWAPLIKU   zapisuje (lub dodaje) komunikaty serwera do "
 "NAZWAPLIKU\n"
 
 #: pg_ctl.c:1781
@@ -604,7 +616,8 @@ msgstr "  fast        bezpośrednie wyjście, z właściwym zamknięciem\n"
 msgid ""
 "  immediate   quit without complete shutdown; will lead to recovery on "
 "restart\n"
-msgstr "  immediate   wyjście bez pełnego zamknięcia; doprowadzi do odzyskiwania "
+msgstr ""
+"  immediate   wyjście bez pełnego zamknięcia; doprowadzi do odzyskiwania "
 "przy restarcie\n"
 
 #: pg_ctl.c:1792
@@ -629,7 +642,8 @@ msgstr ""
 #, c-format
 msgid ""
 "  -N SERVICENAME  service name with which to register PostgreSQL server\n"
-msgstr "  -N SERVICENAME  nazwa usługi, na której rejestruje się serwer PostgreSQL\n"
+msgstr ""
+"  -N SERVICENAME  nazwa usługi, na której rejestruje się serwer PostgreSQL\n"
 
 #: pg_ctl.c:1798
 #, c-format
@@ -639,7 +653,8 @@ msgstr "  -P PASSWORD     hasło konta rejestracji serwera PostgreSQL\n"
 #: pg_ctl.c:1799
 #, c-format
 msgid "  -U USERNAME     user name of account to register PostgreSQL server\n"
-msgstr "  -U USERNAME     nazwa użytkownika konta rejestracji serwera PostgreSQL\n"
+msgstr ""
+"  -U USERNAME     nazwa użytkownika konta rejestracji serwera PostgreSQL\n"
 
 #: pg_ctl.c:1800
 #, c-format
@@ -659,7 +674,8 @@ msgstr ""
 #, c-format
 msgid ""
 "  auto       start service automatically during system startup (default)\n"
-msgstr "  auto       uruchamia usługę automatycznie w czasie startu systemu "
+msgstr ""
+"  auto       uruchamia usługę automatycznie w czasie startu systemu "
 "(domyślnie)\n"
 
 #: pg_ctl.c:1804
@@ -732,7 +748,8 @@ msgstr "%s: nie podano operacji\n"
 #, c-format
 msgid ""
 "%s: no database directory specified and environment variable PGDATA unset\n"
-msgstr "%s: nie wskazano folderu bazy danych ani nie ustawiono zmiennej środowiska "
+msgstr ""
+"%s: nie wskazano folderu bazy danych ani nie ustawiono zmiennej środowiska "
 "PGDATA\n"
 
 #: ../../port/exec.c:125 ../../port/exec.c:239 ../../port/exec.c:282

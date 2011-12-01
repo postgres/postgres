@@ -1,16 +1,16 @@
-# LANGUAGE message translation file for pg_resetxlog
+# pg_resetxlog message translation file for pg_resetxlog
 # Copyright (C) 2011 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
+#
 # Begina Felicysym <begina.felicysym@wp.eu>, 2011.
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.1\n"
+"Project-Id-Version: pg_resetxlog (PostgreSQL 9.1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-09-03 20:54+0000\n"
-"PO-Revision-Date: 2011-09-04 20:39+0200\n"
+"POT-Creation-Date: 2011-09-29 22:55+0000\n"
+"PO-Revision-Date: 2011-09-30 09:49-0300\n"
 "Last-Translator: Begina Felicysym <begina.felicysym@wp.eu>\n"
-"Language-Team: Polish TotroiseSvn translation team\n"
+"Language-Team: Begina Felicysym\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -113,7 +113,7 @@ msgid ""
 "Is a server running?  If not, delete the lock file and try again.\n"
 msgstr ""
 "%s: plik blokady \"%s\" istnieje\n"
-"Czy serwer działa? Jeśli nie, usuń plik blokady i stpóbuj ponownie.\n"
+"Czy serwer działa? Jeśli nie, usuń plik blokady i spróbuj ponownie.\n"
 
 #: pg_resetxlog.c:355
 #, c-format
@@ -164,7 +164,8 @@ msgstr "%s: pg_control istnieje ale ma niepoprawne CRC; postępuj ostrożnie\n"
 #: pg_resetxlog.c:455
 #, c-format
 msgid "%s: pg_control exists but is broken or unknown version; ignoring it\n"
-msgstr "%s: pg_control istnieje ale jest uszkodzony lub ma nieznaną wersję, "
+msgstr ""
+"%s: pg_control istnieje ale jest uszkodzony lub ma nieznaną wersję, "
 "zignorowano\n"
 
 #: pg_resetxlog.c:549
@@ -326,7 +327,8 @@ msgstr "Przekazywanie parametru float8:                  %s\n"
 msgid ""
 "%s: internal error -- sizeof(ControlFileData) is too large ... fix "
 "PG_CONTROL_SIZE\n"
-msgstr "%s: błąd wewnętrzny -- sizeof(ControlFileData) jest zbyt duża ... popraw "
+msgstr ""
+"%s: błąd wewnętrzny -- sizeof(ControlFileData) jest zbyt duża ... popraw "
 "PG_CONTROL_SIZE\n"
 
 #: pg_resetxlog.c:686
@@ -409,7 +411,8 @@ msgstr "  -f              wymusza wykonanie modyfikacji\n"
 msgid ""
 "  -l TLI,FILE,SEG force minimum WAL starting location for new transaction "
 "log\n"
-msgstr "  -l TLI,FILE,SEG wymusza minimalne położenie początkowe WAL dla nowego "
+msgstr ""
+"  -l TLI,FILE,SEG wymusza minimalne położenie początkowe WAL dla nowego "
 "komunikatu transakcji\n"
 
 #: pg_resetxlog.c:1028
@@ -422,7 +425,8 @@ msgstr "  -m XID          ustawia ID następnej multitransakcji\n"
 msgid ""
 "  -n              no update, just show extracted control values (for "
 "testing)\n"
-msgstr "  -n              bez modyfikacji, po prostu wyświetl wyodrębnione wartości "
+msgstr ""
+"  -n              bez modyfikacji, po prostu wyświetl wyodrębnione wartości "
 "kontrolne (do testowania)\n"
 
 #: pg_resetxlog.c:1030

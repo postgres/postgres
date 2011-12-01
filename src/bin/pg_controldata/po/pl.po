@@ -1,18 +1,18 @@
-# PG_CONTROLDATA Translated Messages into the Polish Language (ISO-8859-2)
+# PG_CONTROLDATA Translated Messages into the Polish Language
 # Copyright (c) 2005 toczek, xxxtoczekxxx@wp.pl
 # Distributed under the same licensing terms as PostgreSQL itself.
 # Begina Felicysym <begina.felicysym@wp.eu>, 2011.
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_controldata\n"
+"Project-Id-Version: pg_controldata (PostgreSQL 9.1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-09-03 20:53+0000\n"
-"PO-Revision-Date: 2011-09-04 19:14+0200\n"
+"POT-Creation-Date: 2011-10-08 08:40+0000\n"
+"PO-Revision-Date: 2011-10-09 17:59+0200\n"
 "Last-Translator: Begina Felicysym <begina.felicysym@wp.eu>\n"
-"Language-Team: Polish TotroiseSvn translation team\n"
+"Language-Team: Begina Felicysym\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ISO-8859-2\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2);\n"
@@ -24,7 +24,7 @@ msgid ""
 "%s displays control information of a PostgreSQL database cluster.\n"
 "\n"
 msgstr ""
-"%s wy¶wietla informacje kontrolne klastra bazy danych PostgreSQL.\n"
+"%s wyÅ›wietla informacje kontrolne klastra bazy danych PostgreSQL.\n"
 "\n"
 
 #: pg_controldata.c:37
@@ -37,12 +37,12 @@ msgid ""
 "  --help         show this help, then exit\n"
 "  --version      output version information, then exit\n"
 msgstr ""
-"Sk³adnia:\n"
+"SkÅ‚adnia:\n"
 "  %s [OPCJA] [KATALOG]\n"
 "\n"
 "Opcje:\n"
-"  --help         poka¿ ekran pomocy i zakoñcz\n"
-"  --version      wy¶wietl informacje o wersji i zakoñcz\n"
+"  --help         pokaÅ¼ ekran pomocy i zakoÅ„cz\n"
+"  --version      wyÅ›wietl informacje o wersji i zakoÅ„cz\n"
 
 #: pg_controldata.c:45
 #, c-format
@@ -55,22 +55,22 @@ msgid ""
 msgstr ""
 "\n"
 "W przypadku gdy katalog danych nie jest podany (DATADIR), zmienna "
-"¶rodowiskowa PGDATA\n"
-"jest u¿ywana.\n"
+"Å›rodowiskowa PGDATA\n"
+"jest uÅ¼ywana.\n"
 "\n"
 
 #: pg_controldata.c:47
 #, c-format
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
-msgstr "B³êdy proszê przesy³aæ na adres <pgsql-bugs@postgresql.org>.\n"
+msgstr "BÅ‚Ä™dy proszÄ™ przesyÅ‚aÄ‡ na adres <pgsql-bugs@postgresql.org>.\n"
 
 #: pg_controldata.c:57
 msgid "starting up"
-msgstr "w³±czanie"
+msgstr "wÅ‚Ä…czanie"
 
 #: pg_controldata.c:59
 msgid "shut down"
-msgstr "wy³±cz bazê danych"
+msgstr "wyÅ‚Ä…cz bazÄ™ danych"
 
 #: pg_controldata.c:61
 msgid "shut down in recovery"
@@ -78,17 +78,15 @@ msgstr "baza danych w trybie odzyskiwania"
 
 #: pg_controldata.c:63
 msgid "shutting down"
-msgstr "wy³±czanie bazy danych"
+msgstr "wyÅ‚Ä…czanie bazy danych"
 
 #: pg_controldata.c:65
-#, fuzzy
 msgid "in crash recovery"
-msgstr "odzyskiwanie po awarii programu"
+msgstr "w trybie odzyskiwania po awarii programu"
 
 #: pg_controldata.c:67
-#, fuzzy
 msgid "in archive recovery"
-msgstr "rozpoczêto odzyskiwanie archiwum"
+msgstr "w trybie odzyskiwania z archiwum"
 
 #: pg_controldata.c:69
 msgid "in production"
@@ -105,22 +103,22 @@ msgstr "nierozpoznany wal_level"
 #: pg_controldata.c:129
 #, c-format
 msgid "%s: no data directory specified\n"
-msgstr "%s: katalog danych nie zosta³ ustawiony\n"
+msgstr "%s: katalog danych nie zostaÅ‚ ustawiony\n"
 
 #: pg_controldata.c:130
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Spróbuj \"%s --help\" aby uzyskaæ wiêcej informacji.\n"
+msgstr "SprÃ³buj \"%s --help\" aby uzyskaÄ‡ wiÄ™cej informacji.\n"
 
 #: pg_controldata.c:138
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
-msgstr "%s: nie mo¿na otworzyæ pliku \"%s\" do odczytu: %s\n"
+msgstr "%s: nie moÅ¼na otworzyÄ‡ pliku \"%s\" do odczytu: %s\n"
 
 #: pg_controldata.c:145
 #, c-format
 msgid "%s: could not read file \"%s\": %s\n"
-msgstr "%s: nie mo¿na czytaæ z pliku \"%s\": %s\n"
+msgstr "%s: nie moÅ¼na czytaÄ‡ z pliku \"%s\": %s\n"
 
 #: pg_controldata.c:159
 #, c-format
@@ -130,10 +128,10 @@ msgid ""
 "is expecting.  The results below are untrustworthy.\n"
 "\n"
 msgstr ""
-"UWAGA: obliczona suma kontrolna CRC pliku nie zgadza siê.\n"
-"Albo plik jest uszkodzony albo posiada inny uk³ad ni¿ program siê "
-"spodziewa³.\n"
-"Rezultaty mog± byæ niepewne.\n"
+"UWAGA: obliczona suma kontrolna CRC pliku nie zgadza siÄ™.\n"
+"Albo plik jest uszkodzony albo posiada inny ukÅ‚ad niÅ¼ program siÄ™ "
+"spodziewaÅ‚.\n"
+"Rezultaty mogÄ… byÄ‡ niepewne.\n"
 "\n"
 
 #: pg_controldata.c:186
@@ -150,11 +148,11 @@ msgid ""
 "and\n"
 "the PostgreSQL installation would be incompatible with this data directory.\n"
 msgstr ""
-"OSTRZE¯ENIE: mo¿liwe niepoprawna kolejno¶æ bajtów\n"
-"Kolejno¶æ bajtów u¿ywana do przechowywania plików pg_control mo¿e nie "
-"pasowaæ\n"
-"do u¿ywanej przez ten program.  W tym przypadku wynik poni¿ej jest b³êdny,\n"
-"a instalacja PostgreSQL by³aby niezgodna z tym folderem danych.\n"
+"OSTRZEÅ»ENIE: moÅ¼liwe niepoprawna kolejnoÅ›Ä‡ bajtÃ³w\n"
+"KolejnoÅ›Ä‡ bajtÃ³w uÅ¼ywana do przechowywania plikÃ³w pg_control moÅ¼e nie "
+"pasowaÄ‡\n"
+"do uÅ¼ywanej przez ten program.  W tym przypadku wynik poniÅ¼ej jest bÅ‚Ä™dny,\n"
+"a instalacja PostgreSQL byÅ‚aby niezgodna z tym folderem danych.\n"
 
 #: pg_controldata.c:193
 #, c-format
@@ -239,12 +237,12 @@ msgstr "Czas najnowszego punktu kontrolnego:             %s\n"
 #: pg_controldata.c:229
 #, c-format
 msgid "Minimum recovery ending location:     %X/%X\n"
-msgstr "Po³o¿enie zakoñczenia odzyskiwania minimalnego:  %X/%X\n"
+msgstr "PoÅ‚oÅ¼enie zakoÅ„czenia odzyskiwania minimalnego:  %X/%X\n"
 
 #: pg_controldata.c:232
 #, c-format
 msgid "Backup start location:                %X/%X\n"
-msgstr "Po³o¿enie pocz±tku kopii zapasowej:              %X/%X\n"
+msgstr "PoÅ‚oÅ¼enie poczÄ…tku kopii zapasowej:              %X/%X\n"
 
 #: pg_controldata.c:235
 #, c-format
@@ -269,32 +267,32 @@ msgstr "Aktualne ustawienie max_locks_per_xact:          %d\n"
 #: pg_controldata.c:243
 #, c-format
 msgid "Maximum data alignment:               %u\n"
-msgstr "Maksymalne wyrównanie danych:                    %u\n"
+msgstr "Maksymalne wyrÃ³wnanie danych:                    %u\n"
 
 #: pg_controldata.c:246
 #, c-format
 msgid "Database block size:                  %u\n"
-msgstr "Wielko¶æ bloku bazy danych:                      %u\n"
+msgstr "WielkoÅ›Ä‡ bloku bazy danych:                      %u\n"
 
 #: pg_controldata.c:248
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
-msgstr "Bloki na segment s± w relacji:                   %u\n"
+msgstr "Bloki na segment sÄ… w relacji:                   %u\n"
 
 #: pg_controldata.c:250
 #, c-format
 msgid "WAL block size:                       %u\n"
-msgstr "Wielko¶æ bloku WAL:                              %u\n"
+msgstr "WielkoÅ›Ä‡ bloku WAL:                              %u\n"
 
 #: pg_controldata.c:252
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
-msgstr "Bajtów na segment WAL:                           %u\n"
+msgstr "BajtÃ³w na segment WAL:                           %u\n"
 
 #: pg_controldata.c:254
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
-msgstr "Maksymalna d³ugo¶æ identyfikatorów:              %u\n"
+msgstr "Maksymalna dÅ‚ugoÅ›Ä‡ identyfikatorÃ³w:              %u\n"
 
 #: pg_controldata.c:256
 #, c-format
@@ -326,11 +324,11 @@ msgstr "Przekazywanie parametru float4:                  %s\n"
 
 #: pg_controldata.c:263 pg_controldata.c:265
 msgid "by value"
-msgstr "przez warto¶æ"
+msgstr "przez wartoÅ›Ä‡"
 
 #: pg_controldata.c:263 pg_controldata.c:265
 msgid "by reference"
-msgstr "przez referencjê"
+msgstr "przez referencjÄ™"
 
 #: pg_controldata.c:264
 #, c-format
@@ -341,7 +339,7 @@ msgstr "Przekazywanie parametru float8:                  %s\n"
 #~ msgstr "Najnowsza lokalizacja punktu kontrolnego UNDO:    %X/%X\n"
 
 #~ msgid "Maximum number of function arguments: %u\n"
-#~ msgstr "Maksymalna ilo¶æ argumentów funkcji: %u\n"
+#~ msgstr "Maksymalna iloÅ›Ä‡ argumentÃ³w funkcji: %u\n"
 
 #~ msgid "LC_COLLATE:                           %s\n"
 #~ msgstr "LC_COLLATE:                           %s\n"

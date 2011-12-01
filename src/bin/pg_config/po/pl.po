@@ -1,18 +1,18 @@
-# PG_CONFIG Translated Messages into the Polish Language (ISO-8859-2)
+# PG_CONFIG Translated Messages into the Polish Language
 # Copyright (c) 2005 toczek, xxxtoczekxxx@wp.pl
 # Distributed under the same licensing terms as PostgreSQL itself.
 # Begina Felicysym <begina.felicysym@wp.eu>, 2011.
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_config\n"
+"Project-Id-Version: pg_config (PostgreSQL 9.1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-09-03 20:53+0000\n"
-"PO-Revision-Date: 2011-09-04 17:25+0200\n"
+"POT-Creation-Date: 2011-09-29 22:54+0000\n"
+"PO-Revision-Date: 2011-09-30 09:52-0300\n"
 "Last-Translator: Begina Felicysym <begina.felicysym@wp.eu>\n"
 "Language-Team: Polish TotroiseSvn translation team\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ISO-8859-2\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2);\n"
@@ -39,7 +39,7 @@ msgstr ""
 #: pg_config.c:429
 #, c-format
 msgid "Usage:\n"
-msgstr "Sk≥adnia:\n"
+msgstr "Sk≈Çadnia:\n"
 
 #: pg_config.c:430
 #, c-format
@@ -58,17 +58,17 @@ msgstr "Opcje:\n"
 #: pg_config.c:432
 #, c-format
 msgid "  --bindir              show location of user executables\n"
-msgstr "  --bindir              pokaø lokalizacjÍ plikÛw uøytkownika\n"
+msgstr "  --bindir              poka≈º lokalizacjƒô plik√≥w u≈ºytkownika\n"
 
 #: pg_config.c:433
 #, c-format
 msgid "  --docdir              show location of documentation files\n"
-msgstr "  --docdir              pokaø po≥oøenie plikÛw dokumentacji\n"
+msgstr "  --docdir              poka≈º po≈Ço≈ºenie plik√≥w dokumentacji\n"
 
 #: pg_config.c:434
 #, c-format
 msgid "  --htmldir             show location of HTML documentation files\n"
-msgstr "  --htmldir             pokaø lokalizacjÍ plikÛw HTML dokumentacji\n"
+msgstr "  --htmldir             poka≈º lokalizacjƒô plik√≥w HTML dokumentacji\n"
 
 #: pg_config.c:435
 #, c-format
@@ -76,39 +76,39 @@ msgid ""
 "  --includedir          show location of C header files of the client\n"
 "                        interfaces\n"
 msgstr ""
-"  --includedir          pokaø lokalizacjÍ nag≥ÛwkÛw C interfejsu \n"
-"                        uøytkownika\n"
+"  --includedir          poka≈º lokalizacjƒô nag≈Ç√≥wk√≥w C interfejsu \n"
+"                        u≈ºytkownika\n"
 
 #: pg_config.c:437
 #, c-format
 msgid "  --pkgincludedir       show location of other C header files\n"
-msgstr "  --pkgincludedir       pokaø po≥oøenie innych plikÛw nag≥Ûwkowych C\n"
+msgstr "  --pkgincludedir       poka≈º po≈Ço≈ºenie innych plik√≥w nag≈Ç√≥wkowych C\n"
 
 #: pg_config.c:438
 #, c-format
 msgid ""
 "  --includedir-server   show location of C header files for the server\n"
-msgstr "  --includedir-server   pokaø lokalizacjÍ nag≥ÛwkÛw C dla serwera\n"
+msgstr "  --includedir-server   poka≈º lokalizacjƒô nag≈Ç√≥wk√≥w C dla serwera\n"
 
 #: pg_config.c:439
 #, c-format
 msgid "  --libdir              show location of object code libraries\n"
-msgstr "  --libdir              pokaø lokalizacjÍ bibliotek obiektÛw\n"
+msgstr "  --libdir              poka≈º lokalizacjƒô bibliotek obiekt√≥w\n"
 
 #: pg_config.c:440
 #, c-format
 msgid "  --pkglibdir           show location of dynamically loadable modules\n"
-msgstr "  --pkglibdir           pokaø lokalizacjÍ dynamicznych modu≥Ûw\n"
+msgstr "  --pkglibdir           poka≈º lokalizacjƒô dynamicznych modu≈Ç√≥w\n"
 
 #: pg_config.c:441
 #, c-format
 msgid "  --localedir           show location of locale support files\n"
-msgstr "  --localedir           pokaø po≥oøenie plikÛw obs≥ugi lokalizacji\n"
+msgstr "  --localedir           poka≈º po≈Ço≈ºenie plik√≥w obs≈Çugi lokalizacji\n"
 
 #: pg_config.c:442
 #, c-format
 msgid "  --mandir              show location of manual pages\n"
-msgstr "  --mandir              pokaø po≥oøenie plikÛw podrÍcznika\n"
+msgstr "  --mandir              poka≈º po≈Ço≈ºenie plik√≥w podrƒôcznika\n"
 
 #: pg_config.c:443
 #, c-format
@@ -116,20 +116,21 @@ msgid ""
 "  --sharedir            show location of architecture-independent support "
 "files\n"
 msgstr ""
-"  --sharedir            pokaø po≥oøenie niezaleønych od architektury\n"
-"                        plikÛw obs≥ugi\n"
+"  --sharedir            poka≈º po≈Ço≈ºenie niezale≈ºnych od architektury\n"
+"                        plik√≥w obs≈Çugi\n"
 
 #: pg_config.c:444
 #, c-format
 msgid ""
 "  --sysconfdir          show location of system-wide configuration files\n"
-msgstr "  --sysconfdir          pokaø po≥oøenie ogÛlnosystemowych plikÛw "
+msgstr ""
+"  --sysconfdir          poka≈º po≈Ço≈ºenie og√≥lnosystemowych plik√≥w "
 "konfiguracyjnych\n"
 
 #: pg_config.c:445
 #, c-format
 msgid "  --pgxs                show location of extension makefile\n"
-msgstr "  --pgxs                pokaø lokalizacjÍ makefile rozszerzeÒ\n"
+msgstr "  --pgxs                poka≈º lokalizacjƒô makefile rozszerze≈Ñ\n"
 
 #: pg_config.c:446
 #, c-format
@@ -137,40 +138,45 @@ msgid ""
 "  --configure           show options given to \"configure\" script when\n"
 "                        PostgreSQL was built\n"
 msgstr ""
-"  --configure           pokaø opcje uøyte przy skrypcie \"configure\" \n"
+"  --configure           poka≈º opcje u≈ºyte przy skrypcie \"configure\" \n"
 "                        podczas budowania PostgreSQL\n"
 
 #: pg_config.c:448
 #, c-format
 msgid "  --cc                  show CC value used when PostgreSQL was built\n"
-msgstr "  --cc                  pokaø warto∂Ê CC uøyt± podczas budowania PostgreSQL\n"
+msgstr ""
+"  --cc                  poka≈º warto≈õƒá CC u≈ºytƒÖ podczas budowania PostgreSQL\n"
 
 #: pg_config.c:449
 #, c-format
 msgid ""
 "  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
-msgstr "  --cppflags            pokaø warto∂Ê CPPFLAGS uøyt± podczas budowania "
+msgstr ""
+"  --cppflags            poka≈º warto≈õƒá CPPFLAGS u≈ºytƒÖ podczas budowania "
 "PostgreSQL\n"
 
 #: pg_config.c:450
 #, c-format
 msgid ""
 "  --cflags              show CFLAGS value used when PostgreSQL was built\n"
-msgstr "  --cflags              pokaø warto∂Ê CFLAGS uøyt± podczas budowania "
+msgstr ""
+"  --cflags              poka≈º warto≈õƒá CFLAGS u≈ºytƒÖ podczas budowania "
 "PostgreSQL\n"
 
 #: pg_config.c:451
 #, c-format
 msgid ""
 "  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
-msgstr "  --cflags_sl           pokaø warto∂Ê CFLAGS_SL uøyt± podczas budowania "
+msgstr ""
+"  --cflags_sl           poka≈º warto≈õƒá CFLAGS_SL u≈ºytƒÖ podczas budowania "
 "PostgreSQL\n"
 
 #: pg_config.c:452
 #, c-format
 msgid ""
 "  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
-msgstr "  --ldflags             pokaø warto∂Ê LDFLAGS uøyt± podczas budowania "
+msgstr ""
+"  --ldflags             poka≈º warto≈õƒá LDFLAGS u≈ºytƒÖ podczas budowania "
 "PostgreSQL\n"
 
 #: pg_config.c:453
@@ -178,7 +184,8 @@ msgstr "  --ldflags             pokaø warto∂Ê LDFLAGS uøyt± podczas budowania "
 msgid ""
 "  --ldflags_ex          show LDFLAGS_EX value used when PostgreSQL was "
 "built\n"
-msgstr "  --ldflags_ex          pokaø warto∂Ê LDFLAGS_EX uøyt± podczas budowania "
+msgstr ""
+"  --ldflags_ex          poka≈º warto≈õƒá LDFLAGS_EX u≈ºytƒÖ podczas budowania "
 "PostgreSQL\n"
 
 #: pg_config.c:454
@@ -186,25 +193,27 @@ msgstr "  --ldflags_ex          pokaø warto∂Ê LDFLAGS_EX uøyt± podczas budowania
 msgid ""
 "  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was "
 "built\n"
-msgstr "  --ldflags_sl          pokaø warto∂Ê LDFLAGS_SL uøyt± podczas budowania "
+msgstr ""
+"  --ldflags_sl          poka≈º warto≈õƒá LDFLAGS_SL u≈ºytƒÖ podczas budowania "
 "PostgreSQL\n"
 
 #: pg_config.c:455
 #, c-format
 msgid ""
 "  --libs                show LIBS value used when PostgreSQL was built\n"
-msgstr "  --libs                pokaø warto∂Ê LIBS uøyt± podczas budowania "
+msgstr ""
+"  --libs                poka≈º warto≈õƒá LIBS u≈ºytƒÖ podczas budowania "
 "PostgreSQL\n"
 
 #: pg_config.c:456
 #, c-format
 msgid "  --version             show the PostgreSQL version\n"
-msgstr "  --version             pokaø wersjÍ PostgreSQL\n"
+msgstr "  --version             poka≈º wersjƒô PostgreSQL\n"
 
 #: pg_config.c:457
 #, c-format
 msgid "  --help                show this help, then exit\n"
-msgstr "  --help                pokaø ten ekran pomocy i zakoÒcz\n"
+msgstr "  --help                poka≈º ten ekran pomocy i zako≈Ñcz\n"
 
 #: pg_config.c:458
 #, c-format
@@ -214,23 +223,23 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Bez argumentÛw s± pokazane wszystkie znane elementy.\n"
+"Bez argument√≥w sƒÖ pokazane wszystkie znane elementy.\n"
 "\n"
 
 #: pg_config.c:459
 #, c-format
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
-msgstr "B≥Ídy proszÍ przesy≥aÊ na adres <pgsql-bugs@postgresql.org>.\n"
+msgstr "B≈Çƒôdy proszƒô przesy≈Çaƒá na adres <pgsql-bugs@postgresql.org>.\n"
 
 #: pg_config.c:465
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "SprÛbuj \"%s --help\" aby uzyskaÊ wiÍcej informacji.\n"
+msgstr "Spr√≥buj \"%s --help\" aby uzyskaƒá wiƒôcej informacji.\n"
 
 #: pg_config.c:504
 #, c-format
 msgid "%s: could not find own program executable\n"
-msgstr "%s: nie moøna znaleºÊ programu wykonywalnego\n"
+msgstr "%s: nie mo≈ºna znale≈∫ƒá programu wykonywalnego\n"
 
 #: pg_config.c:527
 #, c-format
@@ -240,7 +249,7 @@ msgstr "%s: niepoprawny parametr: %s\n"
 #: ../../port/exec.c:125 ../../port/exec.c:239 ../../port/exec.c:282
 #, c-format
 msgid "could not identify current directory: %s"
-msgstr "nie moøna zidentyfikowaÊ bieø±cego katalogu: %s"
+msgstr "nie mo≈ºna zidentyfikowaƒá bie≈ºƒÖcego katalogu: %s"
 
 #: ../../port/exec.c:144
 #, c-format
@@ -250,7 +259,7 @@ msgstr "niepoprawny binarny \"%s\""
 #: ../../port/exec.c:193
 #, c-format
 msgid "could not read binary \"%s\""
-msgstr "nie moøna odczytaÊ binarnego \"%s\""
+msgstr "nie mo≈ºna odczytaƒá binarnego \"%s\""
 
 #: ../../port/exec.c:200
 #, c-format
@@ -260,44 +269,44 @@ msgstr "nie znaleziono \"%s\" do wykonania"
 #: ../../port/exec.c:255 ../../port/exec.c:291
 #, c-format
 msgid "could not change directory to \"%s\""
-msgstr "nie moøna zmieniÊ katalogu na \"%s\""
+msgstr "nie mo≈ºna zmieniƒá katalogu na \"%s\""
 
 #: ../../port/exec.c:270
 #, c-format
 msgid "could not read symbolic link \"%s\""
-msgstr "nie moøna odczytaÊ odwo≥ania symbolicznego \"%s\""
+msgstr "nie mo≈ºna odczytaƒá odwo≈Çania symbolicznego \"%s\""
 
 #: ../../port/exec.c:517
 #, c-format
 msgid "child process exited with exit code %d"
-msgstr "proces potomny zakoÒczy≥ dzia≥anie z kodem %d"
+msgstr "proces potomny zako≈Ñczy≈Ç dzia≈Çanie z kodem %d"
 
 #: ../../port/exec.c:521
 #, c-format
 msgid "child process was terminated by exception 0x%X"
-msgstr "proces potomny zosta≥ zatrzymany przez wyj±tek 0x%X"
+msgstr "proces potomny zosta≈Ç zatrzymany przez wyjƒÖtek 0x%X"
 
 #: ../../port/exec.c:530
 #, c-format
 msgid "child process was terminated by signal %s"
-msgstr "proces potomny zosta≥ zatrzymany przez sygna≥ %s"
+msgstr "proces potomny zosta≈Ç zatrzymany przez sygna≈Ç %s"
 
 #: ../../port/exec.c:533
 #, c-format
 msgid "child process was terminated by signal %d"
-msgstr "proces potomny zosta≥ zatrzymany przez sygna≥ %d"
+msgstr "proces potomny zosta≈Ç zatrzymany przez sygna≈Ç %d"
 
 #: ../../port/exec.c:537
 #, c-format
 msgid "child process exited with unrecognized status %d"
-msgstr "proces potomny zakoÒczy≥ dzia≥anie z nieznanym stanem %d"
+msgstr "proces potomny zako≈Ñczy≈Ç dzia≈Çanie z nieznanym stanem %d"
 
 #~ msgid ""
 #~ "\n"
 #~ "Try \"%s --help\" for more information\n"
 #~ msgstr ""
 #~ "\n"
-#~ "SprÛbuj \"%s --help\" aby uzykaÊ wiÍcej informacji.\n"
+#~ "Spr√≥buj \"%s --help\" aby uzykaƒá wiƒôcej informacji.\n"
 
 #~ msgid "%s: argument required\n"
 #~ msgstr "%s: parametr wymagany\n"

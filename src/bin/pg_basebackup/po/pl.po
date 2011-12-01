@@ -1,14 +1,14 @@
-# LANGUAGE message translation file for pg_basebackup
+# Polish message translation file for pg_basebackup
 # Copyright (C) 2011 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
+#
 # Begina Felicysym <begina.felicysym@wp.eu>, 2011.
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.1\n"
+"Project-Id-Version: pg_basebackup (PostgreSQL 9.1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-09-03 20:54+0000\n"
-"PO-Revision-Date: 2011-09-04 17:19+0200\n"
+"POT-Creation-Date: 2011-09-29 22:55+0000\n"
+"PO-Revision-Date: 2011-09-30 09:52-0300\n"
 "Last-Translator: Begina Felicysym <begina.felicysym@wp.eu>\n"
 "Language-Team: Polish TotroiseSvn translation team\n"
 "Language: pl\n"
@@ -65,7 +65,8 @@ msgstr "  -F, --format=p|t         format wyjścia (plain, tar)\n"
 #: pg_basebackup.c:128
 #, c-format
 msgid "  -x, --xlog               include required WAL files in backup\n"
-msgstr "  -x, --xlog               dołącza wymagane pliki WAL do kopii zapasowej\n"
+msgstr ""
+"  -x, --xlog               dołącza wymagane pliki WAL do kopii zapasowej\n"
 
 #: pg_basebackup.c:129
 #, c-format
@@ -76,7 +77,8 @@ msgstr "  -z, --gzip               wyjście jako spakowany tar\n"
 #, c-format
 msgid ""
 "  -Z, --compress=0-9       compress tar output with given compression level\n"
-msgstr "  -Z, --compress=0-9       wyjście jako spakowany tar z określonym poziomem "
+msgstr ""
+"  -Z, --compress=0-9       wyjście jako spakowany tar z określonym poziomem "
 "kompresji\n"
 
 #: pg_basebackup.c:131
@@ -134,7 +136,8 @@ msgstr ""
 #: pg_basebackup.c:140
 #, c-format
 msgid "  -h, --host=HOSTNAME      database server host or socket directory\n"
-msgstr "  -h, --host=NAZWAHOSTA    host serwera bazy danych lub katalog gniazda\n"
+msgstr ""
+"  -h, --host=NAZWAHOSTA    host serwera bazy danych lub katalog gniazda\n"
 
 #: pg_basebackup.c:141
 #, c-format
@@ -156,7 +159,8 @@ msgstr "  -w, --no-password        nie pytaj nigdy o hasło\n"
 msgid ""
 "  -W, --password           force password prompt (should happen "
 "automatically)\n"
-msgstr "  -W, --password           wymuś pytanie o hasło (powinno nastąpić "
+msgstr ""
+"  -W, --password           wymuś pytanie o hasło (powinno nastąpić "
 "automatycznie)\n"
 
 #: pg_basebackup.c:145
@@ -319,7 +323,8 @@ msgstr "%s: nie zwrócono żadnych danych z serwera\n"
 #: pg_basebackup.c:896
 #, c-format
 msgid "%s: can only write single tablespace to stdout, database has %i\n"
-msgstr "%s: można zapisać tylko pojedynczą przestrzeń tabel do stdout, baza danych "
+msgstr ""
+"%s: można zapisać tylko pojedynczą przestrzeń tabel do stdout, baza danych "
 "ma %i\n"
 
 #: pg_basebackup.c:925
@@ -340,7 +345,8 @@ msgstr "%s: ostateczne pobieranie nie powiodło się: %s"
 #: pg_basebackup.c:1017
 #, c-format
 msgid "%s: invalid output format \"%s\", must be \"plain\" or \"tar\"\n"
-msgstr "%s: niepoprawny format wyjścia \"%s\", musi być \"plain\" lub \"tar\"\n"
+msgstr ""
+"%s: niepoprawny format wyjścia \"%s\", musi być \"plain\" lub \"tar\"\n"
 
 #: pg_basebackup.c:1039
 #, c-format
@@ -351,7 +357,9 @@ msgstr "%s: niepoprawny poziom kompresji \"%s\"\n"
 #, c-format
 msgid ""
 "%s: invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\"\n"
-msgstr "%s: niepoprawny argument checkpoint \"%s\", musi być \"fast\" lub \"spread\"\n"
+msgstr ""
+"%s: niepoprawny argument checkpoint \"%s\", musi być \"fast\" lub \"spread"
+"\"\n"
 
 #: pg_basebackup.c:1082 pg_basebackup.c:1096 pg_basebackup.c:1107
 #: pg_basebackup.c:1120
