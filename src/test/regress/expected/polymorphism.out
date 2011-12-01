@@ -578,6 +578,27 @@ select q2, sql_if(q2 > 0, q2, q2 + 1) from int8_tbl;
  -4567890123456789 | -4567890123456788
 (5 rows)
 
+-- another sort of polymorphic aggregate
+CREATE AGGREGATE array_cat_accum (anyarray)
+(
+    sfunc = array_cat,
+    stype = anyarray,
+    initcond = '{}'
+);
+SELECT array_cat_accum(i)
+FROM (VALUES (ARRAY[1,2]), (ARRAY[3,4])) as t(i);
+ array_cat_accum 
+-----------------
+ {1,2,3,4}
+(1 row)
+
+SELECT array_cat_accum(i)
+FROM (VALUES (ARRAY[row(1,2),row(3,4)]), (ARRAY[row(5,6),row(7,8)])) as t(i);
+          array_cat_accum          
+-----------------------------------
+ {"(1,2)","(3,4)","(5,6)","(7,8)"}
+(1 row)
+
 -- another kind of polymorphic aggregate
 create function add_group(grp anyarray, ad anyelement, size integer)
   returns anyarray
