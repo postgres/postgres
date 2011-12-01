@@ -1,21 +1,22 @@
 # LIBPQ Translated Messages into the Polish Language (ISO-8859-2)
-#
 # Copyright (c) 2005 toczek, xxxtoczekxxx@wp.pl
 # Distributed under the same licensing terms as PostgreSQL itself.
-#
-#
+# Begina Felicysym <begina.felicysym@wp.eu>, 2011.
 msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL 8.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-09-22 08:47+0000\n"
-"PO-Revision-Date: 2005-01-10 01:27+0100\n"
+"POT-Creation-Date: 2011-09-24 13:21+0000\n"
+"PO-Revision-Date: 2011-09-25 22:46+0200\n"
 "Last-Translator: Begina Felicysym <begina.felicysym@wp.eu>\n"
-"Language-Team: TortoiseSVN Polish translation team\n"
-"Language: \n"
+"Language-Team: Begina Felicysym\n"
+"Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
+"|| n%100>=20) ? 1 : 2);\n"
+"X-Generator: Virtaal 0.7.1-beta1\n"
 
 #: fe-auth.c:212 fe-auth.c:432 fe-auth.c:659
 msgid "host name must be specified\n"
@@ -127,19 +128,19 @@ msgid ""
 "\tTCP/IP connections on port %s?\n"
 msgstr ""
 "nie można połączyć się z serwerem: %s\n"
-"\tCzy serwer działa na stacji siecowej \"%s\" i akceptuje\n"
+"\tCzy serwer działa na stacji sieciowej \"%s\" i akceptuje\n"
 "\tpołączenia TCP/IP na porcie %s?\n"
 
 #: fe-connect.c:858
 #, c-format
 msgid "could not translate host name \"%s\" to address: %s\n"
-msgstr "nie można przetłumaczyć nazwy host'a \"%s\" na adres: %s\n"
+msgstr "nie można przetłumaczyć nazwy hosta \"%s\" na adres: %s\n"
 
 #: fe-connect.c:862
 #, c-format
 msgid "could not translate Unix-domain socket path \"%s\" to address: %s\n"
 msgstr ""
-"nie można przetłumaczyć ścieżki gniazda Unix-domain \"%s\" na adres: %s\n"
+"nie można przetłumaczyć ścieżki gniazda domeny uniks \"%s\" na adres: %s\n"
 
 #: fe-connect.c:1069
 msgid "invalid connection state, probably indicative of memory corruption\n"
@@ -154,12 +155,12 @@ msgstr "nie można utworzyć gniazda: %s\n"
 #: fe-connect.c:1135
 #, c-format
 msgid "could not set socket to non-blocking mode: %s\n"
-msgstr "nie można ustawić gniazda w tryb non-blocking: %s\n"
+msgstr "nie można ustawić gniazda w tryb nie-blokujący: %s\n"
 
 #: fe-connect.c:1147
 #, c-format
 msgid "could not set socket to close-on-exec mode: %s\n"
-msgstr "nie można ustawić gniazda osługi zamknięcia przy uruchomieniu: %s\n"
+msgstr "nie można ustawić gniazda obsługi zamknięcia przy uruchomieniu: %s\n"
 
 #: fe-connect.c:1234
 #, c-format
@@ -174,7 +175,7 @@ msgstr "nie można otrzymać adresu klienta z gniazda: %s\n"
 #: fe-connect.c:1316
 #, c-format
 msgid "could not send SSL negotiation packet: %s\n"
-msgstr "nie można wysłać pakietu negcjacji SSL: %s\n"
+msgstr "nie można wysłać pakietu negocjacji SSL: %s\n"
 
 #: fe-connect.c:1355
 #, c-format
@@ -188,7 +189,7 @@ msgstr "serwer nie obsługuje SSL, ale SSL jest wymagane\n"
 #: fe-connect.c:1451
 #, c-format
 msgid "received invalid response to SSL negotiation: %c\n"
-msgstr "otrzymano niepoprawną odpowiedziedź negocjacji SSL: %c\n"
+msgstr "otrzymano niepoprawną odpowiedź negocjacji SSL: %c\n"
 
 #: fe-connect.c:1530 fe-connect.c:1563
 #, c-format
@@ -286,17 +287,17 @@ msgstr "niezamknięty cudzysłów w łańcuchu informacyjnym połączenia\n"
 #: fe-connect.c:3029
 #, c-format
 msgid "ERROR: service file \"%s\" not found\n"
-msgstr ""
+msgstr "BŁĄD: nie znaleziono pliku usługi \"%s\"\n"
 
 #: fe-connect.c:3042
-#, fuzzy, c-format
+#, c-format
 msgid "ERROR: line %d too long in service file \"%s\"\n"
-msgstr "zbyt długa linia %d w pliku usługi \"%s\"\n"
+msgstr "BŁĄD: zbyt długa linia %d w pliku usługi \"%s\"\n"
 
 #: fe-connect.c:3114 fe-connect.c:3141
-#, fuzzy, c-format
+#, c-format
 msgid "ERROR: syntax error in service file \"%s\", line %d\n"
-msgstr "błąd składni w pliku usługi \"%s\", linia %d\n"
+msgstr "BŁĄD: błąd składni w pliku usługi \"%s\", linia %d\n"
 
 #: fe-connect.c:3597
 msgid "connection pointer is NULL\n"
@@ -377,7 +378,7 @@ msgstr "połączenie posiada błędny stan\n"
 
 #: fe-exec.c:2371
 msgid "invalid ExecStatusType code"
-msgstr "błedny kod ExecStatusType"
+msgstr "błędny kod ExecStatusType"
 
 #: fe-exec.c:2435 fe-exec.c:2458
 #, c-format
@@ -428,7 +429,7 @@ msgstr "nie można pisać do pliku \"%s\": %s\n"
 
 #: fe-lobj.c:744
 msgid "query to initialize large object functions did not return data\n"
-msgstr "zapytanie inicjalizujące duży obiekt nie zwróciło żadnych danych\n"
+msgstr "zapytanie inicjujące duży obiekt nie zwróciło żadnych danych\n"
 
 #: fe-lobj.c:785
 msgid "cannot determine OID of function lo_open\n"
@@ -470,7 +471,7 @@ msgstr "typ integer o rozmiarze %lu nie jest obsługiwany przez pqGetInt"
 #: fe-misc.c:298
 #, c-format
 msgid "integer of size %lu not supported by pqPutInt"
-msgstr "typ intiger o rozmiarze %lu nie jest obsługiwany przez pqPutInt"
+msgstr "typ integer o rozmiarze %lu nie jest obsługiwany przez pqPutInt"
 
 #: fe-misc.c:577 fe-misc.c:776
 msgid "connection not open\n"
@@ -509,7 +510,7 @@ msgstr ""
 #: fe-protocol2.c:330
 #, c-format
 msgid "invalid state %c, probably indicative of memory corruption\n"
-msgstr "nieporawny stan %c, prawdopodobnie oznajmiający uszkodzenie pamięci\n"
+msgstr "niepoprawny stan %c, prawdopodobnie oznajmiający uszkodzenie pamięci\n"
 
 #: fe-protocol2.c:419 fe-protocol3.c:186
 #, c-format
@@ -542,7 +543,8 @@ msgstr ""
 #: fe-protocol2.c:547 fe-protocol3.c:382
 #, c-format
 msgid "unexpected response from server; first received character was \"%c\"\n"
-msgstr "nieznana odpowiedź z serwera: pierszym znakiem otrzymanym był \"%c\"\n"
+msgstr ""
+"nieznana odpowiedź z serwera: pierwszym otrzymanym znakiem był \"%c\"\n"
 
 #: fe-protocol2.c:768 fe-protocol3.c:701
 msgid "out of memory for query result\n"
@@ -567,7 +569,7 @@ msgid ""
 "server sent data (\"D\" message) without prior row description (\"T\" "
 "message)\n"
 msgstr ""
-"serwer wysłał dane (wiadmość \"D\") bez wcześniejszego opisu wiersza "
+"serwer wysłał dane (wiadomość \"D\") bez wcześniejszego opisu wiersza "
 "(wiadomość \"T\")\n"
 
 #: fe-protocol3.c:403
@@ -580,7 +582,7 @@ msgstr ""
 #, c-format
 msgid "lost synchronization with server: got message type \"%c\", length %d\n"
 msgstr ""
-"utracono synchronizację z serwerm: otrzymano wiadomość typu\"%c\", długość "
+"utracono synchronizację z serwerem: otrzymano wiadomość typu\"%c\", długość "
 "%d\n"
 
 #: fe-protocol3.c:646
@@ -606,7 +608,7 @@ msgstr "PODPOWIEDŹ:  %s\n"
 #: fe-protocol3.c:826
 #, c-format
 msgid "QUERY:  %s\n"
-msgstr "ZAPYTANOE:  %s\n"
+msgstr "ZAPYTANIE:  %s\n"
 
 #: fe-protocol3.c:829
 #, c-format
@@ -684,10 +686,9 @@ msgid "server common name \"%s\" does not match host name \"%s\"\n"
 msgstr "nazwa zwyczajowa serwera \"%s\" nie odpowiada nazwie hosta \"%s\"\n"
 
 #: fe-secure.c:749
-#, fuzzy
 msgid "could not get home directory to locate client certificate files"
 msgstr ""
-"nie można pobrać katalogu domowego aby zlokalizować plik definicji usługi"
+"nie można pobrać katalogu domowego aby zlokalizować pliki certyfikatu klienta"
 
 #: fe-secure.c:773 fe-secure.c:787
 #, c-format
@@ -755,10 +756,9 @@ msgid "could not create SSL context: %s\n"
 msgstr "nie można utworzyć kontekstu SSL: %s\n"
 
 #: fe-secure.c:1185
-#, fuzzy
 msgid "could not get home directory to locate root certificate file"
 msgstr ""
-"nie można pobrać katalogu domowego aby zlokalizować plik definicji usługi"
+"nie można pobrać katalogu domowego aby zlokalizować plik certyfikatu root"
 
 #: fe-secure.c:1209
 #, c-format
@@ -784,7 +784,7 @@ msgstr ""
 #: fe-secure.c:1347
 #, c-format
 msgid "certificate could not be obtained: %s\n"
-msgstr "certygikat nie może zostać otrzymany: %s\n"
+msgstr "certyfikat nie może zostać otrzymany: %s\n"
 
 #: fe-secure.c:1375
 msgid "SSL certificate's common name contains embedded null\n"

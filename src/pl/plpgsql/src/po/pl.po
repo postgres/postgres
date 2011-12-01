@@ -2,21 +2,22 @@
 # Copyright (C) 2011 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
-#
+# Begina Felicysym <begina.felicysym@wp.eu>, 2011.
 msgid ""
 msgstr ""
 "Project-Id-Version: plpgsql (PostgreSQL 8.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-09-22 08:43+0000\n"
-"PO-Revision-Date: 2011-09-22 10:58-0300\n"
+"POT-Creation-Date: 2011-09-24 13:17+0000\n"
+"PO-Revision-Date: 2011-09-25 22:44+0200\n"
 "Last-Translator: Begina Felicysym <begina.felicysym@wp.eu>\n"
-"Language-Team: TortoiseSVN Polish translation team\n"
-"Language: \n"
+"Language-Team: Begina Felicysym\n"
+"Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
-"|| n%100>=20) ? 1 : 2;\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
+"|| n%100>=20) ? 1 : 2);\n"
+"X-Generator: Virtaal 0.7.1-beta1\n"
 
 #: pl_comp.c:418 pl_handler.c:177
 #, c-format
@@ -56,17 +57,17 @@ msgstr "kompilacja funkcji PL/pgSQL \"%s\", w okolicach linii %d"
 
 #: pl_comp.c:804
 msgid "expected \"[\""
-msgstr ""
+msgstr "oczekiwano \"[\""
 
 #: pl_comp.c:942
 #, c-format
 msgid "row \"%s\" has no field \"%s\""
-msgstr ""
+msgstr "wiersz \"%s\" nie posiada pola \"%s\""
 
 #: pl_comp.c:1044
 #, c-format
 msgid "row \"%s.%s\" has no field \"%s\""
-msgstr ""
+msgstr "wiersz \"%s.%s\" nie posiada pola \"%s\""
 
 #: pl_comp.c:1356
 #, c-format
@@ -398,17 +399,17 @@ msgstr ""
 #: pl_exec.c:3940 pl_exec.c:3965 pl_exec.c:4002
 #, c-format
 msgid "type of \"%s\" does not match that when preparing the plan"
-msgstr ""
+msgstr "typ \"%s\" nie pasuje do tego podczas przygotowania planu"
 
 #: pl_exec.c:4031
 #, c-format
 msgid "type of \"%s.%s\" does not match that when preparing the plan"
-msgstr ""
+msgstr "typ \"%s.%s\" nie pasuje do tego podczas przygotowania planu"
 
 #: pl_exec.c:4056
 #, c-format
 msgid "type of tg_argv[%d] does not match that when preparing the plan"
-msgstr ""
+msgstr "typ tg_argv[%d] nie pasuje do tego podczas przygotowania planu"
 
 #: pl_exec.c:4149
 #, c-format
@@ -419,8 +420,9 @@ msgstr "zapytanie \"%s\" nie zwróciło żadnych danych"
 #, c-format
 msgid "query \"%s\" returned %d column"
 msgid_plural "query \"%s\" returned %d columns"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "zapytanie \"%s\" zwróciło %d kolumnę"
+msgstr[1] "zapytanie \"%s\" zwróciło %d kolumny"
+msgstr[2] "zapytanie \"%s\" zwróciło %d kolumn"
 
 #: pl_exec.c:4183
 #, c-format
@@ -448,12 +450,12 @@ msgstr ""
 
 #: gram.y:522
 msgid "only positional parameters can be aliased"
-msgstr ""
+msgstr "aliasu można użyć tylko dla parametrów pozycyjnych"
 
 #: gram.y:532
 #, c-format
 msgid "function has no parameter \"%s\""
-msgstr ""
+msgstr "funkcja nie posiada parametru \"%s\""
 
 #: gram.y:560 gram.y:564 gram.y:568
 msgid "duplicate declaration"
@@ -461,7 +463,7 @@ msgstr "powtórzona deklaracja"
 
 #: gram.y:761 gram.y:765 gram.y:769
 msgid "expected an integer variable"
-msgstr ""
+msgstr "oczekiwana zmienna całkowita"
 
 #: gram.y:1024 gram.y:1213
 msgid ""
@@ -510,11 +512,12 @@ msgstr "błędny kod SQLSTATE"
 #: gram.y:1601 gram.y:2595 gram.y:2882
 #, c-format
 msgid "syntax error at \"%s\""
-msgstr ""
+msgstr "błąd składni przy \"%s\""
 
 #: gram.y:1603
 msgid "Expected \"FOR\", to open a cursor for an unbound cursor variable."
 msgstr ""
+"Oczekiwano \"FOR\", by otworzyć kursor na zmiennej kursora bez ograniczeń."
 
 #: gram.y:1690
 msgid "cursor variable must be a simple variable"
@@ -527,11 +530,11 @@ msgstr "zmienna \"%s\" musi być typu cursor lub refcursor"
 
 #: gram.y:1704 gram.y:1708 gram.y:1712
 msgid "expected a cursor or refcursor variable"
-msgstr ""
+msgstr "oczekiwano zmiennej typu cursor lub refcursor"
 
 #: gram.y:1937 gram.y:3050
 msgid "too many variables specified in SQL statement"
-msgstr ""
+msgstr "wskazano zbyt wiele zmiennych w wyrażeniu SQL"
 
 #: gram.y:2022 gram.y:2032 gram.y:2125
 msgid "mismatched parentheses"
@@ -568,6 +571,8 @@ msgid ""
 "RETURN cannot have a parameter in function returning set; use RETURN NEXT or "
 "RETURN QUERY"
 msgstr ""
+"RETURN nie może posiadać parametru w funkcji zwracającej grupę; użyj RETURN "
+"NEXT lub RETURN QUERY"
 
 #: gram.y:2383
 msgid "RETURN cannot have a parameter in function with OUT parameters"
@@ -606,13 +611,15 @@ msgstr "\"%s\" zadeklarowano jako CONSTANT"
 
 #: gram.y:2545
 msgid "cannot assign to tg_argv"
-msgstr ""
+msgstr "nie można przypisywać do tg_argv"
 
 #: gram.y:2596
 msgid ""
 "Expected record variable, row variable, or list of scalar variables "
 "following INTO."
 msgstr ""
+"Oczekiwano zmiennej rekordowej, wierszowej lub listy zmiennych skalarnych po "
+"INTO."
 
 #: gram.y:2630
 msgid "too many INTO variables specified"
@@ -621,12 +628,12 @@ msgstr "po INTO podano za dużo zmiennych"
 #: gram.y:2764
 #, c-format
 msgid "SQL statement in PL/PgSQL function \"%s\" near line %d"
-msgstr ""
+msgstr "wyrażenie SQL w funkcji PL/pgSQL \"%s\", w okolicach linii %d"
 
 #: gram.y:2807
 #, c-format
 msgid "string literal in PL/PgSQL function \"%s\" near line %d"
-msgstr ""
+msgstr "stała znakowa w funkcji PL/pgSQL \"%s\", w okolicach linii %d"
 
 #: gram.y:2820
 msgid "label does not exist"
@@ -654,12 +661,12 @@ msgstr "kursor \"%s\" przyjmuje parametry"
 
 #: gram.y:2933
 msgid "expected \")\""
-msgstr ""
+msgstr "oczekiwano \")\""
 
 #: gram.y:2970
 #, c-format
 msgid "unrecognized RAISE statement option \"%s\""
-msgstr ""
+msgstr "nie rozpoznana opcja \"%s\" wyrażenia RAISE"
 
 #: gram.y:2975
 msgid "syntax error, expected \"=\""
@@ -668,17 +675,17 @@ msgstr "błąd składniowy, spodziewano się \"=\""
 #: pl_funcs.c:359
 #, c-format
 msgid "variable \"%s\" does not exist in the current block"
-msgstr ""
+msgstr "zmienna \"%s\" nie istnieje w bieżącym bloku"
 
 #: pl_funcs.c:415
 #, c-format
 msgid "unterminated \" in identifier: %s"
-msgstr ""
+msgstr "niezakończony \" w identyfikatorze: %s"
 
 #: pl_funcs.c:439
 #, c-format
 msgid "qualified identifier cannot be used here: %s"
-msgstr ""
+msgstr "identyfikator kwalifikowany nie może być tu użyty: %s"
 
 #: pl_funcs.c:471
 msgid "statement block"
@@ -714,7 +721,7 @@ msgstr "pętla FOR po wynikach instrukcji EXECUTE"
 
 #: scan.l:263
 msgid "unterminated quoted identifier"
-msgstr ""
+msgstr "niezakończony łańcuch identyfikatora"
 
 #: scan.l:306
 msgid "unterminated /* comment"
@@ -722,11 +729,11 @@ msgstr "nie zakończony komentarz /*"
 
 #: scan.l:342
 msgid "unterminated quoted string"
-msgstr ""
+msgstr "niezakończona stała łańcuchowa"
 
 #: scan.l:382
 msgid "unterminated dollar-quoted string"
-msgstr ""
+msgstr "niezakończona stała łańcuchowa cytowana znakiem dolara"
 
 #. translator: %s is typically the translation of "syntax error"
 #: scan.l:446

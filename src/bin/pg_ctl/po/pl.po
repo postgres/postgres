@@ -2,19 +2,22 @@
 # Copyright (C) 2011 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
-#
+# Begina Felicysym <begina.felicysym@wp.eu>, 2011.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_ctl (PostgreSQL 8.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-09-22 08:45+0000\n"
-"PO-Revision-Date: 2011-09-22 10:58-0300\n"
+"POT-Creation-Date: 2011-09-24 13:18+0000\n"
+"PO-Revision-Date: 2011-09-25 22:46+0200\n"
 "Last-Translator: Begina Felicysym <begina.felicysym@wp.eu>\n"
-"Language-Team: TortoiseSVN Polish translation team\n"
-"Language: \n"
+"Language-Team: Begina Felicysym\n"
+"Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
+"|| n%100>=20) ? 1 : 2);\n"
+"X-Generator: Virtaal 0.7.1-beta1\n"
 
 #: pg_ctl.c:226 pg_ctl.c:241 pg_ctl.c:1784
 #, c-format
@@ -63,7 +66,7 @@ msgid ""
 msgstr ""
 "Program \"postgres\" jest wymagany przez %s ale nie został znaleziony \n"
 "w tym samym folderze co \"%s\".\n"
-"Sprawdź instalcję.\n"
+"Sprawdź instalację.\n"
 
 #: pg_ctl.c:664
 #, c-format
@@ -72,14 +75,14 @@ msgid ""
 "but was not the same version as %s.\n"
 "Check your installation.\n"
 msgstr ""
-"Program \"postgres\" został znaleziony przez \"%s\"nale nie jest w tej samej "
-"wersji co %s.\n"
+"Program \"postgres\" został znaleziony przez \"%s\"\n"
+"ale nie jest w tej samej wersji co %s.\n"
 "Sprawdź instalację.\n"
 
 #: pg_ctl.c:681
 #, c-format
 msgid "%s: could not start server: exit code was %d\n"
-msgstr "%s: nie można uruchomić serwera: wystąpił kod wyjścia %d\n"
+msgstr "%s: nie można uruchomić serwera: otrzymano kod wyjścia %d\n"
 
 #: pg_ctl.c:692
 #, c-format
@@ -87,7 +90,7 @@ msgid ""
 "%s: could not start server\n"
 "Examine the log output.\n"
 msgstr ""
-"%s: Nie udało się uruchomoć serwera\n"
+"%s: Nie udało się uruchomić serwera\n"
 "Sprawdź logi wyjścia.\n"
 
 #: pg_ctl.c:701
@@ -97,7 +100,7 @@ msgstr "oczekiwanie na uruchomienie serwera..."
 #: pg_ctl.c:705
 #, c-format
 msgid "could not start server\n"
-msgstr ""
+msgstr "nie można uruchomić serwera\n"
 
 #: pg_ctl.c:710 pg_ctl.c:783 pg_ctl.c:863
 msgid " done\n"
@@ -201,7 +204,7 @@ msgstr "%s: nie udało się wysłać sygnału przeładowującego (PID: %ld): %s\
 #: pg_ctl.c:906
 #, fuzzy
 msgid "server signaled\n"
-msgstr "serwer zasygnalizował\n"
+msgstr "uruchomiono serwer\n"
 
 #: pg_ctl.c:950
 #, c-format
@@ -283,7 +286,7 @@ msgstr "%s: nie udało się uruchomić usługi \"%s\": kod błędu %d\n"
 #: pg_ctl.c:1519
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Spróbuj \"%s --help\" aby uzykać wiecej informacji.\n"
+msgstr "Spróbuj \"%s --help\" aby uzyskać więcej informacji.\n"
 
 #: pg_ctl.c:1527
 #, c-format
@@ -343,6 +346,8 @@ msgid ""
 "  %s register   [-N SERVICENAME] [-U USERNAME] [-P PASSWORD] [-D DATADIR]\n"
 "                    [-w] [-t SECS] [-o \"OPTIONS\"]\n"
 msgstr ""
+"  %s register   [-N NAZWAUSLUGI] [-U USERNAME] [-P PASSWORD] [-D KATDANE]\n"
+"                    [-w] [-t SEKUNDY] [-o \"OPCJE\"]\n"
 
 #: pg_ctl.c:1540
 #, c-format
@@ -433,7 +438,7 @@ msgstr "  -c, --core-files       niedostępne na tej platformie\n"
 #, c-format
 msgid "  -l, --log FILENAME     write (or append) server log to FILENAME\n"
 msgstr ""
-"  -l, --log NAZWAPLIKU   zapisuje (lub dodaje) komunikaty servera do "
+"  -l, --log NAZWAPLIKU   zapisuje (lub dodaje) komunikaty serwera do "
 "NAZWAPLIKU\n"
 
 #: pg_ctl.c:1561
@@ -442,6 +447,8 @@ msgid ""
 "  -o OPTIONS             command line options to pass to postgres\n"
 "                         (PostgreSQL server executable)\n"
 msgstr ""
+"  -o OPCJE               opcje wiersza poleceń przekazywanych postgresowi\n"
+"                         (program wykonywalny PostgreSQL)\n"
 
 #: pg_ctl.c:1563
 #, c-format
@@ -555,7 +562,7 @@ msgid ""
 "own the server process.\n"
 msgstr ""
 "%s: nie można uruchomić jako root\n"
-"Proszę zalogować (używajac np: \"su\") się na użytkownika który\n"
+"Proszę zalogować (używając np: \"su\") się na użytkownika który\n"
 "będzie właścicielem procesu.\n"
 
 #: pg_ctl.c:1814

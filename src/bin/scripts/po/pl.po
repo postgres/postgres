@@ -2,19 +2,22 @@
 # Copyright (C) 2011 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
-#
+# Begina Felicysym <begina.felicysym@wp.eu>, 2011.
 msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL 8.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-09-22 08:44+0000\n"
-"PO-Revision-Date: 2011-09-22 10:58-0300\n"
+"POT-Creation-Date: 2011-09-24 13:17+0000\n"
+"PO-Revision-Date: 2011-09-25 22:45+0200\n"
 "Last-Translator: Begina Felicysym <begina.felicysym@wp.eu>\n"
-"Language-Team: TortoiseSVN Polish translation team\n"
-"Language: \n"
+"Language-Team: Begina Felicysym\n"
+"Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
+"|| n%100>=20) ? 1 : 2);\n"
+"X-Generator: Virtaal 0.7.1-beta1\n"
 
 #: createdb.c:114 createdb.c:133 createlang.c:89 createlang.c:110
 #: createlang.c:163 createuser.c:149 createuser.c:164 dropdb.c:83 dropdb.c:92
@@ -23,7 +26,7 @@ msgstr ""
 #: reindexdb.c:114 reindexdb.c:128
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Spróbuj \"%s --help\" aby uzykać wiecej informacji.\n"
+msgstr "Spróbuj \"%s --help\" aby uzyskać więcej informacji.\n"
 
 #: createdb.c:131 createlang.c:108 createuser.c:162 dropdb.c:98 droplang.c:119
 #: dropuser.c:96 clusterdb.c:117 vacuumdb.c:134 reindexdb.c:127
@@ -511,6 +514,8 @@ msgstr "%s: język \"%s\" nie jest zainstalowany w bazie danych \"%s\"\n"
 msgid ""
 "%s: still %s functions declared in language \"%s\"; language not removed\n"
 msgstr ""
+"%s: pozostało %s funkcji zadeklarowanych w języku \"%s\"; nie usunięto "
+"języka\n"
 
 #: droplang.c:316
 #, c-format
@@ -723,6 +728,7 @@ msgstr "  -v, --verbose                   wypisuje dużo danych wyjściowych\n"
 #, c-format
 msgid "  -z, --analyze                   update optimizer hints\n"
 msgstr ""
+"  -z, --analyze                   aktualizuje podpowiedzi optymalizatora\n"
 
 #: vacuumdb.c:274
 #, c-format

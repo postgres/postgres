@@ -2,21 +2,22 @@
 # Copyright (C) 2011 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
-#
+# Begina Felicysym <begina.felicysym@wp.eu>, 2011.
 msgid ""
 msgstr ""
 "Project-Id-Version: ecpg (PostgreSQL 8.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-09-22 08:47+0000\n"
-"PO-Revision-Date: 2011-09-22 10:58-0300\n"
+"POT-Creation-Date: 2011-09-24 13:20+0000\n"
+"PO-Revision-Date: 2011-09-25 22:48+0200\n"
 "Last-Translator: Begina Felicysym <begina.felicysym@wp.eu>\n"
-"Language-Team: TortoiseSVN Polish translation team\n"
-"Language: \n"
+"Language-Team: Begina Felicysym\n"
+"Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
-"|| n%100>=20) ? 1 : 2;\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
+"|| n%100>=20) ? 1 : 2);\n"
+"X-Generator: Virtaal 0.7.1-beta1\n"
 
 #: descriptor.c:64
 #, c-format
@@ -82,7 +83,7 @@ msgid ""
 "  -c             automatically generate C code from embedded SQL code;\n"
 "                 this affects EXEC SQL TYPE\n"
 msgstr ""
-"  -c             automatycznie generujekod w C z osadzonego kodu SQL;\n"
+"  -c             automatycznie generuje kod w C z osadzonego kodu SQL;\n"
 "                 dotyczy to EXEC SQL TYPE\n"
 
 #: ecpg.c:44
@@ -132,7 +133,7 @@ msgid ""
 "  -r OPTION      specify run-time behavior; OPTION can be:\n"
 "                 \"no_indicator\", \"prepare\", \"questionmarks\"\n"
 msgstr ""
-"  -r OPCJA       określa zachowanie ueruchmienia; OPTCJA może być:\n"
+"  -r OPCJA       określa zachowanie uruchomienia; OPTCJA może być:\n"
 "                 \"no_indicator\", \"prepare\", \"questionmarks\"\n"
 
 #: ecpg.c:56
@@ -153,7 +154,7 @@ msgstr "  --help         pokazuje ten ekran pomocy i kończy\n"
 #: ecpg.c:59
 #, c-format
 msgid "  --version      output version information, then exit\n"
-msgstr "  --version      wypisuje informacje o wersjii kończy\n"
+msgstr "  --version      wypisuje informacje o wersji i kończy\n"
 
 #: ecpg.c:60
 #, c-format
@@ -183,7 +184,7 @@ msgstr "%s: nie można otworzyć pliku \"%s\": %s\n"
 #: ecpg.c:222 ecpg.c:235 ecpg.c:251 ecpg.c:276
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Spróbuj \"%s --help\" aby uzykać wiecej informacji.\n"
+msgstr "Spróbuj \"%s --help\" aby uzyskać więcej informacji.\n"
 
 #: ecpg.c:246
 #, c-format
@@ -193,7 +194,7 @@ msgstr "%s: wsparcie debugu analizatora (-d) niedostępne\n"
 #: ecpg.c:264
 #, c-format
 msgid "%s, the PostgreSQL embedded C preprocessor, version %d.%d.%d\n"
-msgstr "%s, preprocesor C osadzony w PostgreSQL, versja %d.%d.%d\n"
+msgstr "%s, preprocesor C osadzony w PostgreSQL, wersja %d.%d.%d\n"
 
 #: ecpg.c:266
 #, c-format
@@ -408,11 +409,11 @@ msgstr "podzapytanie z FROM musi mieć alias"
 
 #: preproc.y:10838
 msgid "OLD used in query that is not in a rule"
-msgstr ""
+msgstr "OLD użyty w zapytaniu nie znajdującego się w regule"
 
 #: preproc.y:10845
 msgid "NEW used in query that is not in a rule"
-msgstr ""
+msgstr "NEW użyty w zapytaniu nie znajdującego się w regule"
 
 #: preproc.y:10877
 msgid "CREATE TABLE AS cannot specify INTO"
@@ -584,7 +585,14 @@ msgid ""
 msgid_plural ""
 "multilevel pointers (more than 2 levels) are not supported; found %d levels"
 msgstr[0] ""
+"wielopoziomowe wskaźniki (więcej niż 2 poziomy) nie są wspierane; znaleziono "
+"%d poziom"
 msgstr[1] ""
+"wielopoziomowe wskaźniki (więcej niż 2 poziomy) nie są wspierane; znaleziono "
+"%d poziomy"
+msgstr[2] ""
+"wielopoziomowe wskaźniki (więcej niż 2 poziomy) nie są wspierane; znaleziono "
+"%d poziomów"
 
 #: variable.c:504
 msgid "pointer to pointer is not supported for this data type"

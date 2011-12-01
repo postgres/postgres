@@ -1,0 +1,312 @@
+# LANGUAGE message translation file for plpython
+# Copyright (C) 2011 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
+# Begina Felicysym <begina.felicysym@wp.eu>, 2011.
+msgid ""
+msgstr ""
+"Project-Id-Version: plpython (PostgreSQL 8.4)\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2011-09-24 13:17+0000\n"
+"PO-Revision-Date: 2011-09-25 22:44+0200\n"
+"Last-Translator: Begina Felicysym <begina.felicysym@wp.eu>\n"
+"Language-Team: Begina Felicysym\n"
+"Language: pl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
+"|| n%100>=20) ? 1 : 2);\n"
+"X-Generator: Virtaal 0.7.1-beta1\n"
+
+#: plpython.c:428 plpython.c:453
+msgid "unexpected return value from trigger procedure"
+msgstr "nieoczekiwana wartość zwracana przez procedury wyzwalacza"
+
+#: plpython.c:429
+msgid "Expected None or a string."
+msgstr "Oczekiwano None lub ciąg znaków."
+
+#: plpython.c:443
+msgid ""
+"PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
+msgstr ""
+"funkcja wyzwalacza PL/Python zwróciła \"MODIFY\" w wyzwalaczu DELETE -- "
+"zignorowano"
+
+#: plpython.c:454
+msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
+msgstr "Oczekiwano None, \"OK\", \"SKIP\", lub \"MODIFY\"."
+
+#: plpython.c:501
+msgid "TD[\"new\"] deleted, cannot modify row"
+msgstr "usunięto TD[\"new\"], nie można zmienić wiersza"
+
+#: plpython.c:504
+msgid "TD[\"new\"] is not a dictionary"
+msgstr "TD[\"new\"] nie jest słownikiem"
+
+#: plpython.c:523
+#, c-format
+msgid "name of TD[\"new\"] attribute at ordinal position %d is not a string"
+msgstr ""
+"nazwa atrybutu TD[\"new\"] na kolejnej pozycji %d nie jest ciągiem znaków"
+
+#: plpython.c:527
+#, c-format
+msgid ""
+"key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering "
+"row"
+msgstr ""
+"klucz \"%s\" znaleziony w TD[\"new\"] nie istnieje jako kolumna w wierszu "
+"obsługiwanym przez wyzwalacz"
+
+#: plpython.c:548
+#, c-format
+msgid ""
+"could not compute string representation of Python object in PL/Python "
+"function \"%s\" while modifying trigger row"
+msgstr ""
+"nie można wyliczyć reprezentacji znakowej obiektu Python w funkcji  PL/"
+"Python \"%s\" podczas zmiany wiersza wyzwalacza"
+
+#: plpython.c:630
+msgid "could not create new dictionary while building trigger arguments"
+msgstr ""
+"nie można utworzyć nowego słownika w czasie tworzenia argumentów wyzwalacza"
+
+#: plpython.c:837
+msgid "unsupported set function return mode"
+msgstr "nieobsługiwany tryb zwracania przez funkcję grupy"
+
+#: plpython.c:838
+msgid ""
+"PL/Python set-returning functions only support returning only value per call."
+msgstr ""
+"funkcja zwracająca grupę PL/obsługuje tylko zwracanie jednej wartości w "
+"wywołaniu."
+
+#: plpython.c:850
+msgid "returned object cannot be iterated"
+msgstr "zwrócony obiekt nie może być przeiterowany"
+
+#: plpython.c:851
+msgid "PL/Python set-returning functions must return an iterable object."
+msgstr "funkcje PL/Python zwracające grupę muszą zwracać iterowalny obiekt."
+
+#: plpython.c:879
+msgid "error fetching next item from iterator"
+msgstr "błąd pobierania następnego elementu z iteratora"
+
+#: plpython.c:910
+msgid "PL/Python function with return type \"void\" did not return None"
+msgstr "funkcja PL/Python zwracająca typ \"void\" nie zwróciła wartości None"
+
+#: plpython.c:957
+#, c-format
+msgid ""
+"could not create string representation of Python object in PL/Python "
+"function \"%s\" while creating return value"
+msgstr ""
+"nie można utworzyć reprezentacji znakowej obiektu Python w funkcji  PL/"
+"Python \"%s\" podczas tworzenia wartości zwracanej"
+
+#: plpython.c:1006
+#, c-format
+msgid "PL/Python function \"%s\" failed"
+msgstr "nie powiodła się funkcja PL/Python \"%s\""
+
+#: plpython.c:1076
+#, c-format
+msgid ""
+"PyList_SetItem() failed for PL/Python function \"%s\" while setting up "
+"arguments"
+msgstr ""
+"nie powiodła się PyList_SetItem() dla funkcji PL/Python \"%s\" podczas "
+"ustawiania argumentów"
+
+#: plpython.c:1080
+#, c-format
+msgid ""
+"PyDict_SetItemString() failed for PL/Python function \"%s\" while setting up "
+"arguments"
+msgstr ""
+"nie powiodła się PyDict_SetItemString() dla funkcji PL/Python \"%s\" podczas "
+"ustawiania argumentów"
+
+#: plpython.c:1151
+msgid "PyCObject_AsVoidPtr() failed"
+msgstr "nie powiodło się PyCObject_AsVoidPtr()"
+
+#: plpython.c:1260
+msgid "trigger functions can only be called as triggers"
+msgstr "procedury wyzwalaczy mogą być wywoływane jedynie przez wyzwalacze"
+
+#: plpython.c:1264
+#, c-format
+msgid "PL/Python functions cannot return type %s"
+msgstr "funkcje PL/Python nie mogą zwracać wartości typu %s"
+
+#: plpython.c:1343
+#, c-format
+msgid "PL/Python functions cannot accept type %s"
+msgstr "funkcje PL/Python nie obsługują typu %s"
+
+#: plpython.c:1382
+msgid "PyCObject_FromVoidPtr() failed"
+msgstr "nie powiodło się PyCObject_FromVoidPtr()"
+
+#: plpython.c:1440
+#, c-format
+msgid "could not compile PL/Python function \"%s\""
+msgstr "nie powiodła się kompilacja funkcji PL/Python \"%s\""
+
+#: plpython.c:1752
+msgid "could not create new dictionary"
+msgstr "nie można utworzyć nowego słownika"
+
+#: plpython.c:1839 plpython.c:1928 plpython.c:1999
+msgid "could not compute string representation of Python object"
+msgstr "nie można wyliczyć reprezentacji znakowej obiektu Python"
+
+#: plpython.c:1853
+#, c-format
+msgid "key \"%s\" not found in mapping"
+msgstr "nie odnaleziono klucza \"%s\" w mapowaniu"
+
+#: plpython.c:1854
+msgid ""
+"To return null in a column, add the value None to the mapping with the key "
+"named after the column."
+msgstr ""
+"Aby zwrócić null w kolumnie, dodaj wartość None do mapowania z kluczem "
+"nazwanym wedle kolumny."
+
+#: plpython.c:1898
+msgid "length of returned sequence did not match number of columns in row"
+msgstr "długość zwróconej sekwencji nie jest równa liczbie kolumn w wierszu"
+
+#: plpython.c:2012
+#, c-format
+msgid "attribute \"%s\" does not exist in Python object"
+msgstr "atrybut \"%s\" nie istnieje w obiekcie Python"
+
+#: plpython.c:2013
+msgid ""
+"To return null in a column, let the returned object have an attribute named "
+"after column with value None."
+msgstr ""
+"Aby zwrócić null w kolumnie, niech zwrócony obiekt posiada atrybut nazwany "
+"wedle kolumny z wartością None."
+
+#: plpython.c:2235
+msgid "plan.status takes no arguments"
+msgstr "plan.status nie przyjmuje żadnych argumentów"
+
+#: plpython.c:2360 plpython.c:2499
+msgid "transaction aborted"
+msgstr "transakcja przerwana"
+
+#: plpython.c:2367
+msgid "invalid arguments for plpy.prepare"
+msgstr "niepoprawne argumenty plpy.prepare"
+
+#: plpython.c:2374
+msgid "second argument of plpy.prepare must be a sequence"
+msgstr "drugi argument plpy.prepare musi być sekwencją"
+
+#: plpython.c:2419
+#, c-format
+msgid "plpy.prepare: type name at ordinal position %d is not a string"
+msgstr ""
+"plpy.prepare: nazwa typu na pozycji porządkowej %d nie jest ciągiem znaków"
+
+#: plpython.c:2446
+msgid "plpy.prepare does not support composite types"
+msgstr "plpy.prepare nie obsługuje typów złożonych"
+
+#: plpython.c:2474
+msgid "unrecognized error in PLy_spi_prepare"
+msgstr "nierozpoznany błąd PLy_spi_prepare"
+
+#: plpython.c:2476 plpython.c:2640 plpython.c:2687
+#, c-format
+msgid "in PL/Python function \"%s\""
+msgstr "w funkcji PL/Python \"%s\""
+
+#: plpython.c:2512
+msgid "plpy.execute expected a query or a plan"
+msgstr "plpy.execute oczekuje kwerendy lub planu"
+
+#: plpython.c:2529
+msgid "plpy.execute takes a sequence as its second argument"
+msgstr "plpy.execute przyjmuje sekwencję jako drugi argument"
+
+#: plpython.c:2545 plpython.c:2574
+#, c-format
+msgid "PL/Python function \"%s\" could not execute plan"
+msgstr "funkcja PL/Python  \"%s\" nie mogła uruchomić planu"
+
+#: plpython.c:2549
+#, c-format
+msgid "Expected sequence of %d argument, got %d: %s"
+msgid_plural "Expected sequence of %d arguments, got %d: %s"
+msgstr[0] "Oczekiwano sekwencji z %d argumentem, mamy %d: %s"
+msgstr[1] "Oczekiwano sekwencji z %d argumentami, mamy %d: %s"
+msgstr[2] "Oczekiwano sekwencji z %d argumentami, mamy %d: %s"
+
+#: plpython.c:2638
+msgid "unrecognized error in PLy_spi_execute_plan"
+msgstr "nierozpoznany błąd PLy_spi_execute_plan"
+
+#: plpython.c:2659
+#, c-format
+msgid "SPI_execute_plan failed: %s"
+msgstr "nie powiódł się SPI_execute_plan: %s"
+
+#: plpython.c:2685
+msgid "unrecognized error in PLy_spi_execute_query"
+msgstr "nierozpoznany błąd PLy_spi_execute_query"
+
+#: plpython.c:2696
+#, c-format
+msgid "SPI_execute failed: %s"
+msgstr "nie powiódł się SPI_execute: %s"
+
+#: plpython.c:2753
+msgid "unrecognized error in PLy_spi_execute_fetch_result"
+msgstr "nierozpoznany błąd w PLy_spi_execute_fetch_result"
+
+#: plpython.c:2793
+msgid "untrapped error in initialization"
+msgstr "niewyłapany błąd w inicjacji"
+
+#: plpython.c:2796
+msgid "could not create procedure cache"
+msgstr "nie udało się utworzyć pamięci podręcznej procedury"
+
+#: plpython.c:2808
+msgid "could not import \"__main__\" module"
+msgstr "nie można zaimportować modułu \"__main__\""
+
+#: plpython.c:2815
+msgid "could not initialize globals"
+msgstr "nie można zainicjować zmiennych globalnych"
+
+#: plpython.c:2917
+msgid "could not parse error message in plpy.elog"
+msgstr "nie można przetworzyć komunikatu błędu w plpy.elog"
+
+#: plpython.c:3036
+#, c-format
+msgid "PL/Python: %s"
+msgstr "PL/Python: %s"
+
+#: plpython.c:3037
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: plpython.c:3127
+msgid "out of memory"
+msgstr "brak pamięci"

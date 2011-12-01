@@ -2,19 +2,22 @@
 # Copyright (C) 2011 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
-#
+# Begina Felicysym <begina.felicysym@wp.eu>, 2011.
 msgid ""
 msgstr ""
 "Project-Id-Version: plperl (PostgreSQL 8.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-09-22 08:43+0000\n"
-"PO-Revision-Date: 2011-09-22 10:58-0300\n"
+"POT-Creation-Date: 2011-09-24 13:16+0000\n"
+"PO-Revision-Date: 2011-09-25 22:45+0200\n"
 "Last-Translator: Begina Felicysym <begina.felicysym@wp.eu>\n"
-"Language-Team: TortoiseSVN Polish translation team\n"
-"Language: \n"
+"Language-Team: Begina Felicysym\n"
+"Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
+"|| n%100>=20) ? 1 : 2);\n"
+"X-Generator: Virtaal 0.7.1-beta1\n"
 
 #: plperl.c:262
 msgid ""
@@ -70,12 +73,12 @@ msgstr "funkcje PL/Perl nie obsługują typu %s"
 #: plperl.c:1156
 #, c-format
 msgid "creation of Perl function \"%s\" failed: %s"
-msgstr ""
+msgstr "nie udało się utworzyć funkcji Perl \"%s\": %s"
 
 #: plperl.c:1282 plperl.c:1340
 #, c-format
 msgid "error from Perl function \"%s\": %s"
-msgstr ""
+msgstr "błąd wewnątrz funkcji Perl \"%s\": %s"
 
 #: plperl.c:1387
 msgid "set-valued function called in context that cannot accept a set"
