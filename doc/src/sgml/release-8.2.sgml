@@ -1,6 +1,234 @@
 <!-- doc/src/sgml/release-8.2.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-8-2-23">
+  <title>Release 8.2.23</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2011-12-05</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.2.22.
+   For information about new features in the 8.2 major release, see
+   <xref linkend="release-8-2">.
+  </para>
+
+  <para>
+   This is expected to be the last <productname>PostgreSQL</> release
+   in the 8.2.X series.  Users are encouraged to update to a newer
+   release branch soon.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.2.23</title>
+
+   <para>
+    A dump/restore is not required for those running 8.2.X.
+   </para>
+
+   <para>
+    However, a longstanding error was discovered in the definition of the
+    <literal>information_schema.referential_constraints</> view.  If you
+    rely on correct results from that view, you should replace its
+    definition as explained in the first changelog item below.
+   </para>
+
+   <para>
+    Also, if you are upgrading from a version earlier than 8.2.14,
+    see the release notes for 8.2.14.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix bugs in <literal>information_schema.referential_constraints</> view
+      (Tom Lane)
+     </para>
+
+     <para>
+      This view was being insufficiently careful about matching the
+      foreign-key constraint to the depended-on primary or unique key
+      constraint.  That could result in failure to show a foreign key
+      constraint at all, or showing it multiple times, or claiming that it
+      depends on a different constraint than the one it really does.
+     </para>
+
+     <para>
+      Since the view definition is installed by <application>initdb</>,
+      merely upgrading will not fix the problem.  If you need to fix this
+      in an existing installation, you can (as a superuser) drop the
+      <literal>information_schema</> schema then re-create it by sourcing
+      <filename><replaceable>SHAREDIR</>/information_schema.sql</filename>.
+      (Run <literal>pg_config --sharedir</> if you're uncertain where
+      <replaceable>SHAREDIR</> is.)  This must be repeated in each database
+      to be fixed.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix TOAST-related data corruption during <literal>CREATE TABLE dest AS
+      SELECT * FROM src</> or <literal>INSERT INTO dest SELECT * FROM src</>
+      (Tom Lane)
+     </para>
+
+     <para>
+      If a table has been modified by <command>ALTER TABLE ADD COLUMN</>,
+      attempts to copy its data verbatim to another table could produce
+      corrupt results in certain corner cases.
+      The problem can only manifest in this precise form in 8.4 and later,
+      but we patched earlier versions as well in case there are other code
+      paths that could trigger the same bug.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix race condition during toast table access from stale syscache entries
+      (Tom Lane)
+     </para>
+
+     <para>
+      The typical symptom was transient errors like <quote>missing chunk
+      number 0 for toast value NNNNN in pg_toast_2619</>, where the cited
+      toast table would always belong to a system catalog.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve locale support in <type>money</> type's input and output
+      (Tom Lane)
+     </para>
+
+     <para>
+      Aside from not supporting all standard
+      <link linkend="guc-lc-monetary"><varname>lc_monetary</></link>
+      formatting options, the input and output functions were inconsistent,
+      meaning there were locales in which dumped <type>money</> values could
+      not be re-read.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Don't let <link
+      linkend="guc-transform-null-equals"><varname>transform_null_equals</></link>
+      affect <literal>CASE foo WHEN NULL ...</> constructs
+      (Heikki Linnakangas)
+     </para>
+
+     <para>
+      <varname>transform_null_equals</> is only supposed to affect
+      <literal>foo = NULL</> expressions written directly by the user, not
+      equality checks generated internally by this form of <literal>CASE</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Change foreign-key trigger creation order to better support
+      self-referential foreign keys (Tom Lane)
+     </para>
+
+     <para>
+      For a cascading foreign key that references its own table, a row update
+      will fire both the <literal>ON UPDATE</> trigger and the
+      <literal>CHECK</> trigger as one event.  The <literal>ON UPDATE</>
+      trigger must execute first, else the <literal>CHECK</> will check a
+      non-final state of the row and possibly throw an inappropriate error.
+      However, the firing order of these triggers is determined by their
+      names, which generally sort in creation order since the triggers have
+      auto-generated names following the convention
+      <quote>RI_ConstraintTrigger_NNNN</>.  A proper fix would require
+      modifying that convention, which we will do in 9.2, but it seems risky
+      to change it in existing releases.  So this patch just changes the
+      creation order of the triggers.  Users encountering this type of error
+      should drop and re-create the foreign key constraint to get its
+      triggers into the right order.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Preserve blank lines within commands in <application>psql</>'s command
+      history (Robert Haas)
+     </para>
+
+     <para>
+      The former behavior could cause problems if an empty line was removed
+      from within a string literal, for example.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Use the preferred version of <application>xsubpp</> to build PL/Perl,
+      not necessarily the operating system's main copy
+      (David Wheeler and Alex Hunsaker)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Honor query cancel interrupts promptly in <function>pgstatindex()</>
+      (Robert Haas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure VPATH builds properly install all server header files
+      (Peter Eisentraut)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Shorten file names reported in verbose error messages (Peter Eisentraut)
+     </para>
+
+     <para>
+      Regular builds have always reported just the name of the C file
+      containing the error message call, but VPATH builds formerly
+      reported an absolute path name.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix interpretation of Windows timezone names for Central America
+      (Tom Lane)
+     </para>
+
+     <para>
+      Map <quote>Central America Standard Time</> to <literal>CST6</>, not
+      <literal>CST6CDT</>, because DST is generally not observed anywhere in
+      Central America.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2011n
+      for DST law changes in Brazil, Cuba, Fiji, Palestine, Russia, and Samoa;
+      also historical corrections for Alaska and British East Africa.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-8-2-22">
   <title>Release 8.2.22</title>
 
