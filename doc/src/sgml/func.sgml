@@ -364,8 +364,8 @@
     </indexterm>
     Ordinary comparison operators yield null (signifying <quote>unknown</>),
     not true or false, when either input is null.  For example,
-    <literal>7 = NULL</> yields null.  When this behavior is not suitable,
-    use the
+    <literal>7 = NULL</> yields null, as does <literal>7 &lt;&gt; NULL</>.  When
+    this behavior is not suitable, use the
     <literal>IS <optional> NOT </> DISTINCT FROM</literal> constructs:
 <synopsis>
 <replaceable>expression</replaceable> IS DISTINCT FROM <replaceable>expression</replaceable>
