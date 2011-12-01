@@ -2,21 +2,22 @@
 # Copyright (C) 2011 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
-#
+# Begina Felicysym <begina.felicysym@wp.eu>, 2011.
 msgid ""
 msgstr ""
 "Project-Id-Version: plpgsql (PostgreSQL 9.0)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-09-22 05:06+0000\n"
-"PO-Revision-Date: 2011-09-22 10:45-0300\n"
+"POT-Creation-Date: 2011-09-24 13:06+0000\n"
+"PO-Revision-Date: 2011-09-25 23:16+0200\n"
 "Last-Translator: Begina Felicysym <begina.felicysym@wp.eu>\n"
-"Language-Team: TortoiseSVN Polish translation team\n"
-"Language: \n"
+"Language-Team: Begina Felicysym\n"
+"Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
-"|| n%100>=20) ? 1 : 2;\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
+"|| n%100>=20) ? 1 : 2);\n"
+"X-Generator: Virtaal 0.7.1-beta1\n"
 
 #: pl_comp.c:423 pl_handler.c:256
 #, c-format
@@ -82,7 +83,7 @@ msgstr "relacja \"%s.%s\" nie istnieje"
 #: pl_comp.c:1833
 #, c-format
 msgid "variable \"%s\" has pseudo-type %s"
-msgstr "zmienna \"%s\" jest psuedo-typu %s"
+msgstr "zmienna \"%s\" jest pseudo-typu %s"
 
 #: pl_comp.c:1894
 #, c-format
@@ -351,7 +352,7 @@ msgstr "użycie SELECT ... INTO w instrukcji EXECUTE nie jest obsługiwane"
 
 #: pl_exec.c:3045
 msgid "You might want to use EXECUTE ... INTO instead."
-msgstr ""
+msgstr "Zamiast tego można użyć EXECUTE ... INTO."
 
 #: pl_exec.c:3333 pl_exec.c:3424
 #, c-format
@@ -393,9 +394,7 @@ msgstr "indeksowanie jest możliwe jedynie dla obiektu typu tablicowego"
 
 #: pl_exec.c:3802
 msgid "array subscript in assignment must not be null"
-msgstr ""
-"w instrukcji przypisania do elementu tablicy indeksem elementu nie może być "
-"NULL"
+msgstr "indeks tablicy w przypisaniu nie może być null"
 
 #: pl_exec.c:4198
 #, c-format
@@ -406,8 +405,9 @@ msgstr "zapytanie \"%s\" nie zwróciło żadnych danych"
 #, c-format
 msgid "query \"%s\" returned %d column"
 msgid_plural "query \"%s\" returned %d columns"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "zapytanie \"%s\" zwróciło %d kolumnę"
+msgstr[1] "zapytanie \"%s\" zwróciło %d kolumny"
+msgstr[2] "zapytanie \"%s\" zwróciło %d kolumn"
 
 #: pl_exec.c:4232
 #, c-format

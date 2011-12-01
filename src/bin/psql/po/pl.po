@@ -2,21 +2,22 @@
 # Copyright (C) 2011 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
-#
+# Begina Felicysym <begina.felicysym@wp.eu>, 2011.
 msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL 9.0)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-09-22 05:08+0000\n"
-"PO-Revision-Date: 2011-09-22 10:45-0300\n"
+"POT-Creation-Date: 2011-09-24 13:08+0000\n"
+"PO-Revision-Date: 2011-09-25 23:17+0200\n"
 "Last-Translator: Begina Felicysym <begina.felicysym@wp.eu>\n"
-"Language-Team: TortoiseSVN Polish translation team\n"
-"Language: \n"
+"Language-Team: Begina Felicysym\n"
+"Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
-"|| n%100>=20) ? 1 : 2;\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
+"|| n%100>=20) ? 1 : 2);\n"
+"X-Generator: Virtaal 0.7.1-beta1\n"
 
 #: command.c:112
 #, c-format
@@ -152,22 +153,22 @@ msgstr "\\connect: %s"
 #: command.c:1350
 #, c-format
 msgid "You are now connected to database \"%s\""
-msgstr ""
+msgstr "Jesteś obecnie połączony do bazy danych \"%s\""
 
 #: command.c:1353
 #, c-format
 msgid " on host \"%s\""
-msgstr ""
+msgstr " na hoście \"%s\""
 
 #: command.c:1356
 #, c-format
 msgid " at port \"%s\""
-msgstr ""
+msgstr " na porcie \"%s\""
 
 #: command.c:1359
 #, c-format
 msgid " as user \"%s\""
-msgstr ""
+msgstr " jako użytkownik \"%s\""
 
 #: command.c:1394
 #, c-format
@@ -191,7 +192,7 @@ msgstr "Połączenie SSL (szyfr: %s, bity: %i)\n"
 #: command.c:1442
 #, c-format
 msgid "SSL connection (unknown cipher)\n"
-msgstr "Połaczenie SSL (nieznany szyfr)\n"
+msgstr "Połączenie SSL (nieznany szyfr)\n"
 
 #: command.c:1463
 #, c-format
@@ -217,7 +218,7 @@ msgstr "nie można uruchomić /bin/sh\n"
 #: command.c:1591
 #, c-format
 msgid "cannot locate temporary directory: %s\n"
-msgstr ""
+msgstr "nie można odnaleźć katalogu tymczasowego: %s\n"
 
 #: command.c:1618
 #, c-format
@@ -787,7 +788,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"By uzyskac więcej informacji wpisz \"\\?\" (dla poleceń wewnętrznych) lub "
+"By uzyskać więcej informacji wpisz \"\\?\" (dla poleceń wewnętrznych) lub "
 "\"\\help\" \n"
 "(dal poleceń SQL) w psql, lub sprawdź w rozdziale dotyczącym psql\n"
 "dokumentacji PostgreSQL.\n"
@@ -844,12 +845,15 @@ msgid ""
 "  \\e [FILE]              edit the query buffer (or file) with external "
 "editor\n"
 msgstr ""
+"  \\e [PLIK]              edytuje bufor zapytania (lub plik) edytorem "
+"zewnętrznym\n"
 
 #: help.c:178
 #, c-format
 msgid ""
 "  \\ef [FUNCNAME]         edit function definition with external editor\n"
 msgstr ""
+"  \\ef [NAZWAFUNK]        edytuje definicję funkcji edytorem zewnętrznym\n"
 
 #: help.c:179
 #, c-format
@@ -926,7 +930,7 @@ msgstr "  (opcje: S = pokaż obiekty systemowe, + = dodatkowe szczegóły)\n"
 #: help.c:197
 #, c-format
 msgid "  \\d[S+]                 list tables, views, and sequences\n"
-msgstr "  \\d[S+]                 listuk tabele, widoku i dekwencje\n"
+msgstr "  \\d[S+]                 listuj tabele, widoku i dekwencje\n"
 
 #: help.c:198
 #, c-format
@@ -989,8 +993,8 @@ msgstr "  \\dew[+] [WZORZEC]      listuje opakowania obcych danych\n"
 msgid ""
 "  \\df[antw][S+] [PATRN]  list [only agg/normal/trigger/window] functions\n"
 msgstr ""
-"  \\df[antw][S+] [WZORC]  listuje funkcje [tylko agg/zwykłe/wyzwalaczy/"
-"okna]\n"
+"  \\df[antw][S+] [WZORC]  listuje funkcje [tylko agreg/zwykły/wyzwalaczy/"
+"okno]\n"
 
 #: help.c:210
 #, c-format
@@ -1017,7 +1021,7 @@ msgstr "  \\dFt[+] [WZORZEC]      listuje wzorce wyszukiwania tekstowego\n"
 #: help.c:214
 #, c-format
 msgid "  \\dg[+]  [PATTERN]      list roles (groups)\n"
-msgstr ""
+msgstr "  \\dg[+]  [WZORZEC]      listuje role (grupy)\n"
 
 #: help.c:215
 #, c-format
@@ -1033,7 +1037,7 @@ msgstr ""
 #: help.c:217
 #, c-format
 msgid "  \\dn[+]  [PATTERN]      list schemas\n"
-msgstr ""
+msgstr "  \\dn[+]  [WZORZEC]      listuje schematy\n"
 
 #: help.c:218
 #, c-format
@@ -1071,7 +1075,7 @@ msgstr "  \\dT[S+] [WZORZEC]      listuje typy danych\n"
 #: help.c:224
 #, c-format
 msgid "  \\du[+]  [PATTERN]      list roles (users)\n"
-msgstr ""
+msgstr "  \\du[+]  [WZORZEC]      listuje role (użytkowników)\n"
 
 #: help.c:225
 #, c-format
@@ -1387,8 +1391,9 @@ msgstr "niepoprawny format wyjścia (błąd wewnętrzny): %d"
 #, c-format
 msgid "(%lu row)"
 msgid_plural "(%lu rows)"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "(%lu wiersz)"
+msgstr[1] "(%lu wiersze)"
+msgstr[2] "(%lu wierszy)"
 
 #: startup.c:237
 #, c-format
@@ -1422,7 +1427,7 @@ msgstr "%s: nie można ustawić zmiennej \"%s\"\n"
 #: startup.c:531 startup.c:537
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Spróbuj \"%s --help\" aby uzykać wiecej informacji.\n"
+msgstr "Spróbuj \"%s --help\" aby uzyskać więcej informacji.\n"
 
 #: startup.c:554
 #, c-format
@@ -1487,7 +1492,7 @@ msgstr "\\df nie przyjmuje opcji \"w\" w wersji serwera %d.%d\n"
 #. translator: "agg" is short for "aggregate"
 #: describe.c:251 describe.c:297 describe.c:314
 msgid "agg"
-msgstr "agr"
+msgstr "agreg"
 
 #: describe.c:252
 msgid "window"
@@ -1572,7 +1577,7 @@ msgstr "Kodowanie"
 
 #: describe.c:619
 msgid "Collation"
-msgstr ""
+msgstr "Porównanie"
 
 #: describe.c:620
 msgid "Ctype"
@@ -1643,7 +1648,7 @@ msgstr "typ danych"
 
 #: describe.c:921 describe.c:2377
 msgid "index"
-msgstr "index"
+msgstr "indeks"
 
 #: describe.c:943
 msgid "rule"
@@ -1828,13 +1833,13 @@ msgid "Child tables"
 msgstr "Tabele podrzędne"
 
 #: describe.c:2004
-#, fuzzy, c-format
+#, c-format
 msgid "Typed table of type: %s"
-msgstr "Typ tabeli wpisanej: %s"
+msgstr ""
 
 #: describe.c:2011
 msgid "Has OIDs"
-msgstr "Są OIDy"
+msgstr "Posiada OIDy"
 
 #: describe.c:2014 describe.c:2553 describe.c:2627
 msgid "yes"
@@ -1899,11 +1904,12 @@ msgid "No connections"
 msgstr "Brak połączeń"
 
 #: describe.c:2236
-#, c-format
+#, fuzzy, c-format
 msgid "%d connection"
 msgid_plural "%d connections"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Brak połączeń"
+msgstr[1] "Brak połączeń"
+msgstr[2] "Brak połączeń"
 
 #: describe.c:2303
 #, c-format
@@ -2344,7 +2350,7 @@ msgstr "definiuje nowe rzutowanie"
 
 #: sql_help.h:378
 msgid "define a new constraint trigger"
-msgstr ""
+msgstr "definiuje nowy wyzwalacz ograniczenia"
 
 #: sql_help.h:383
 msgid "define a new encoding conversion"
@@ -2393,7 +2399,7 @@ msgstr "definiuje nową rodzinę operatora"
 #: sql_help.h:443
 #, fuzzy
 msgid "define a new rewrite rule"
-msgstr "definiuje nową regułę przepisywania"
+msgstr "definiuje nowy wyzwalacz"
 
 #: sql_help.h:448
 msgid "define a new schema"
@@ -2454,7 +2460,7 @@ msgstr "definiuje nowy widok"
 #: sql_help.h:523
 #, fuzzy
 msgid "deallocate a prepared statement"
-msgstr "przemieszcza przygotowane wyrażenie"
+msgstr "wykonuje przygotowane wyrażenie"
 
 #: sql_help.h:528
 msgid "define a cursor"
@@ -2531,7 +2537,7 @@ msgstr "usuwa obiekty bazy danych których właścicielem jest rola bazy danych"
 #: sql_help.h:623
 #, fuzzy
 msgid "remove a rewrite rule"
-msgstr "usuwa regułę przepisywania"
+msgstr "usuwa wyzwalacz"
 
 #: sql_help.h:628
 msgid "remove a schema"
@@ -2712,9 +2718,8 @@ msgid "update rows of a table"
 msgstr "modyfikuje wiersze w tabeli"
 
 #: sql_help.h:873
-#, fuzzy
 msgid "garbage-collect and optionally analyze a database"
-msgstr "opróżnia śmietnik i przy okazji analizuje bazę danych"
+msgstr ""
 
 #: sql_help.h:878
 msgid "compute a set of rows"
@@ -2921,7 +2926,7 @@ msgstr "nazwa_użytkownika"
 #: sql_help.c:270 sql_help.c:1500 sql_help.c:1924 sql_help.c:2156
 #: sql_help.c:2385
 msgid "tablespace_name"
-msgstr "nawa_przestrzenitabel"
+msgstr "nazwa_przestrzenitabel"
 
 #: sql_help.c:272 sql_help.c:275 sql_help.c:553 sql_help.c:555 sql_help.c:1183
 #: sql_help.c:1427 sql_help.c:1436 sql_help.c:1467 sql_help.c:1489
@@ -3062,7 +3067,7 @@ msgstr "nazwa_wyzwalacza"
 #: sql_help.c:548 sql_help.c:549 sql_help.c:550 sql_help.c:551
 #, fuzzy
 msgid "rewrite_rule_name"
-msgstr "nazwa_reguły_przepisywania"
+msgstr "nazwa_reguły"
 
 #: sql_help.c:552 sql_help.c:801
 msgid "index_name"
@@ -3074,7 +3079,7 @@ msgstr "tabela_nadrzędna"
 
 #: sql_help.c:575 sql_help.c:578
 msgid "tablespace_option"
-msgstr "opcja_przestrzeni_tabel"
+msgstr "opcja_przestrzenitabel"
 
 #: sql_help.c:598 sql_help.c:601 sql_help.c:607 sql_help.c:611
 msgid "token_type"
@@ -3118,11 +3123,11 @@ msgstr "nazwa_obiektu"
 
 #: sql_help.c:839
 msgid "agg_name"
-msgstr "nazwa_agr"
+msgstr "nazwa_agreg"
 
 #: sql_help.c:840
 msgid "agg_type"
-msgstr "typ_agr"
+msgstr "typ_agreg"
 
 #: sql_help.c:841 sql_help.c:994 sql_help.c:998 sql_help.c:1000
 #: sql_help.c:1762
@@ -3313,7 +3318,7 @@ msgstr "plik_obj"
 
 #: sql_help.c:1129
 msgid "link_symbol"
-msgstr "symbol_linku"
+msgstr "link_symbolicz"
 
 #: sql_help.c:1130
 msgid "attribute"
@@ -3494,7 +3499,7 @@ msgstr "funkcja_odbierająca"
 
 #: sql_help.c:1620
 msgid "send_function"
-msgstr "funkcja_wysyłąjąca"
+msgstr "funkcja_wysyłająca"
 
 #: sql_help.c:1621
 msgid "type_modifier_input_function"
@@ -3754,7 +3759,7 @@ msgstr "nie można odczytać odwołania symbolicznego  \"%s\""
 #: ../../port/exec.c:516
 #, c-format
 msgid "child process exited with exit code %d"
-msgstr "proces potomny zakończyl działanie z kodem %d"
+msgstr "proces potomny zakończył działanie z kodem %d"
 
 #: ../../port/exec.c:520
 #, c-format

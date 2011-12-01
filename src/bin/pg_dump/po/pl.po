@@ -2,26 +2,27 @@
 # Copyright (C) 2011 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
-#
+# Begina Felicysym <begina.felicysym@wp.eu>, 2011.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL 9.0)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-09-22 05:08+0000\n"
-"PO-Revision-Date: 2011-09-22 10:44-0300\n"
+"POT-Creation-Date: 2011-09-24 13:08+0000\n"
+"PO-Revision-Date: 2011-09-25 23:15+0200\n"
 "Last-Translator: Begina Felicysym <begina.felicysym@wp.eu>\n"
-"Language-Team: TortoiseSVN Polish translation team\n"
-"Language: \n"
+"Language-Team: Begina Felicysym\n"
+"Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
-"|| n%100>=20) ? 1 : 2;\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
+"|| n%100>=20) ? 1 : 2);\n"
+"X-Generator: Virtaal 0.7.1-beta1\n"
 
 #: pg_dump.c:453 pg_restore.c:268 pg_dumpall.c:291
 #, c-format
 msgid "%s: invalid -X option -- %s\n"
-msgstr ""
+msgstr "%s: niepoprawna opcja -X -- %s\n"
 
 #: pg_dump.c:455 pg_dump.c:477 pg_dump.c:491 pg_restore.c:270 pg_restore.c:293
 #: pg_restore.c:309 pg_restore.c:321 pg_dumpall.c:293 pg_dumpall.c:313
@@ -29,7 +30,7 @@ msgstr ""
 #: pg_dumpall.c:403
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Spróbuj \"%s --help\" aby uzykać wiecej informacji.\n"
+msgstr "Spróbuj \"%s --help\" aby uzyskać więcej informacji.\n"
 
 #: pg_dump.c:489 pg_restore.c:307 pg_dumpall.c:321
 #, c-format
@@ -125,6 +126,8 @@ msgstr "  -f, --file=NAZWAPLIKU       nazwa pliku wyjścia\n"
 msgid ""
 "  -F, --format=c|t|p          output file format (custom, tar, plain text)\n"
 msgstr ""
+"  -F, --format=c|t|p          format pliku wyjścia (c-użytkownika, t-tar, p-"
+"tekstowy)\n"
 
 #: pg_dump.c:805
 #, c-format
@@ -235,7 +238,7 @@ msgid ""
 "  -S, --superuser=NAME        superuser user name to use in plain-text "
 "format\n"
 msgstr ""
-"  -S, --superuser=NAZWA       nazwa superużuykownika używana w formacie "
+"  -S, --superuser=NAZWA       nazwa superużytkownika używana w formacie "
 "tekstowym\n"
 
 #: pg_dump.c:824
@@ -303,7 +306,7 @@ msgstr ""
 #: pg_dump.c:833 pg_dumpall.c:561
 #, c-format
 msgid "  --role=ROLENAME             do SET ROLE before dump\n"
-msgstr ""
+msgstr "  --role=NAZWAROLI            wykonuje SET ROLE przed zrzutem\n"
 
 #: pg_dump.c:834 pg_dumpall.c:562
 #, c-format
@@ -400,7 +403,7 @@ msgstr ""
 #: pg_dump.c:1218 pg_dump.c:12451
 #, c-format
 msgid "Error message from server: %s"
-msgstr "Komunikat błedu z serwera:: %s"
+msgstr "Komunikat błędu z serwera: %s"
 
 #: pg_dump.c:1219 pg_dump.c:12452
 #, c-format
@@ -461,8 +464,9 @@ msgstr "błąd odczytu dużego obiektu %u: %s"
 #, c-format
 msgid "query returned %d row instead of one: %s\n"
 msgid_plural "query returned %d rows instead of one: %s\n"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "zapytanie zwróciło %d wiersz zamiast: %s\n"
+msgstr[1] "zapytanie zwróciło %d wiersze zamiast: %s\n"
+msgstr[2] "zapytanie zwróciło %d wierszy zamiast: %s\n"
 
 #: pg_dump.c:2436
 #, c-format
@@ -577,7 +581,11 @@ msgstr "odczyt ograniczeń sprawdzających dla tabeli \"%s\"\n"
 msgid "expected %d check constraint on table \"%s\" but found %d\n"
 msgid_plural "expected %d check constraints on table \"%s\" but found %d\n"
 msgstr[0] ""
+"oczekiwano %d ograniczenie sprawdzające na tabeli \"%s\" ale znaleziono %d\n"
 msgstr[1] ""
+"oczekiwano %d ograniczenia sprawdzające na tabeli \"%s\" ale znaleziono %d\n"
+msgstr[2] ""
+"oczekiwano %d ograniczeń sprawdzających na tabeli \"%s\" ale znaleziono %d\n"
 
 #: pg_dump.c:5480
 msgid "(The system catalogs might be corrupted.)\n"
@@ -586,7 +594,7 @@ msgstr "(Foldery systemowe mogą być uszkodzone.)\n"
 #: pg_dump.c:7270 pg_dump.c:7377
 #, c-format
 msgid "query returned no rows: %s\n"
-msgstr ""
+msgstr "zapytanie nie zwróciło żadnych wierszy: %s\n"
 
 #: pg_dump.c:7727
 msgid "WARNING: bogus value in proargmodes array\n"
@@ -700,7 +708,11 @@ msgid "query to get data of sequence \"%s\" returned %d row (expected 1)\n"
 msgid_plural ""
 "query to get data of sequence \"%s\" returned %d rows (expected 1)\n"
 msgstr[0] ""
+"zapytanie o dane sekwencji \"%s\" zwróciło %d wiersz (oczekiwano 1)\n"
 msgstr[1] ""
+"zapytanie o dane sekwencji \"%s\" zwróciło %d wiersze (oczekiwano 1)\n"
+msgstr[2] ""
+"zapytanie o dane sekwencji \"%s\" zwróciło %d wierszy (oczekiwano 1)\n"
 
 #: pg_dump.c:11563
 #, c-format
@@ -985,8 +997,9 @@ msgstr "wyjście dużych obiektów nie jest obsługiwane w wybranym formacie\n"
 #, c-format
 msgid "restored %d large object\n"
 msgid_plural "restored %d large objects\n"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "odtworzono %d duży obiekt\n"
+msgstr[1] "odtworzono %d duże obiekty\n"
+msgstr[2] "odtworzono %d dużych obiektów\n"
 
 #: pg_backup_archiver.c:956
 #, c-format
@@ -1033,8 +1046,9 @@ msgstr "nie można otworzyć pliku wyjścia %s\n"
 #, c-format
 msgid "wrote %lu byte of large object data (result = %lu)\n"
 msgid_plural "wrote %lu bytes of large object data (result = %lu)\n"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "zapisano %lu bajt danych dużego obiektu (wynik = %lu)\n"
+msgstr[1] "zapisano %lu bajty danych dużego obiektu (wynik = %lu)\n"
+msgstr[2] "zapisano %lu bajtów danych dużego obiektu (wynik = %lu)\n"
 
 #: pg_backup_archiver.c:1325
 #, c-format
@@ -1360,7 +1374,7 @@ msgstr "nierozpoznany typ bloku danych %d podczas odtwarzania archiwum\n"
 #: pg_backup_custom.c:557 pg_backup_custom.c:990
 #, c-format
 msgid "could not initialize compression library: %s\n"
-msgstr ""
+msgstr "nie udało się zainicjować biblioteki kompresji: %s\n"
 
 #: pg_backup_custom.c:581 pg_backup_custom.c:705
 msgid "could not read from input file: end of file\n"
@@ -1374,12 +1388,12 @@ msgstr "nie można czytać z pliku wejścia: %s\n"
 #: pg_backup_custom.c:601 pg_backup_custom.c:628
 #, c-format
 msgid "could not uncompress data: %s\n"
-msgstr ""
+msgstr "nie udało się rozpakować danych: %s\n"
 
 #: pg_backup_custom.c:634
 #, c-format
 msgid "could not close compression library: %s\n"
-msgstr ""
+msgstr "nie udało się zamknąć biblioteki kompresji: %s\n"
 
 #: pg_backup_custom.c:736
 #, c-format
@@ -1421,12 +1435,12 @@ msgstr "OSTRZEŻENIE: niezgodność ftell z oczekiwaną pozycją -- użyto ftel\
 #: pg_backup_custom.c:1021
 #, c-format
 msgid "could not compress data: %s\n"
-msgstr ""
+msgstr "nie udało się spakować danych: %s\n"
 
 #: pg_backup_custom.c:1099
 #, c-format
 msgid "could not close compression stream: %s\n"
-msgstr ""
+msgstr "nie udało się zamknąć strumienia kompresji: %s\n"
 
 #: pg_backup_db.c:25
 msgid "archiver (db)"
@@ -1701,8 +1715,9 @@ msgstr "niezgodność między rzeczywistą i wyliczoną pozycją pliku (%s i %s)
 #, c-format
 msgid "incomplete tar header found (%lu byte)\n"
 msgid_plural "incomplete tar header found (%lu bytes)\n"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "znaleziono niepełny nagłówek tar (%lu bajt)\n"
+msgstr[1] "znaleziono niepełny nagłówek tar (%lu bajty)\n"
+msgstr[2] "znaleziono niepełny nagłówek tar (%lu bajtów)\n"
 
 #: pg_backup_tar.c:1279
 #, c-format
@@ -1731,7 +1746,7 @@ msgstr ""
 #: pg_restore.c:361
 #, c-format
 msgid "unrecognized archive format \"%s\"; please specify \"c\" or \"t\"\n"
-msgstr ""
+msgstr "nierozpoznany format archiwum \"%s\"; proszę wskazać \"c\" lub \"t\"\n"
 
 #: pg_restore.c:395
 #, c-format
@@ -1766,6 +1781,8 @@ msgstr "  -f, --file=NAZWAPLIKU    nazwa pliku wyjścia\n"
 #, c-format
 msgid "  -F, --format=c|t         backup file format (should be automatic)\n"
 msgstr ""
+"  -F, --format=c|t         format pliku kopii zapasowej (powinien być "
+"wybrany automatycznie)\n"
 
 #: pg_restore.c:417
 #, c-format
@@ -2060,14 +2077,14 @@ msgstr "  -O, --no-owner              bez odtwarzania posiadania obiektu\n"
 msgid ""
 "  -r, --roles-only            dump only roles, no databases or tablespaces\n"
 msgstr ""
-"  -r, --roles-only            zrzuca tylko rolebez baz danych i przestrzeni "
+"  -r, --roles-only            zrzuca tylko role bez baz danych i przestrzeni "
 "tabel\n"
 
 #: pg_dumpall.c:552
 #, c-format
 msgid "  -S, --superuser=NAME        superuser user name to use in the dump\n"
 msgstr ""
-"  -S, --superuser=NAZWA       nazwa superużuykownika używana w zrzucie\n"
+"  -S, --superuser=NAZWA       nazwa superużuytkownika używana w zrzucie\n"
 
 #: pg_dumpall.c:553
 #, c-format
@@ -2201,7 +2218,7 @@ msgstr "nie można odczytać odwołania symbolicznego  \"%s\""
 #: ../../port/exec.c:516
 #, c-format
 msgid "child process exited with exit code %d"
-msgstr "proces potomny zakończyl działanie z kodem %d"
+msgstr "proces potomny zakończył działanie z kodem %d"
 
 #: ../../port/exec.c:520
 #, c-format
