@@ -7161,8 +7161,12 @@ int PQisthreadsafe();
   </para>
 
   <para>
-   <structname>PGresult</> objects are read-only after creation, and so
-   can be passed around freely between threads.
+   <structname>PGresult</> objects are normally read-only after creation,
+   and so can be passed around freely between threads.  However, if you use
+   any of the <structname>PGresult</>-modifying functions described in
+   <xref linkend="libpq-misc"> or <xref linkend="libpq-events">, it's up
+   to you to avoid concurrent operations on the same <structname>PGresult</>,
+   too.
   </para>
 
   <para>
