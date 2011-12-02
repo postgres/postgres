@@ -1415,10 +1415,23 @@ su - postgres
 
     <note>
      <para>
-      Server developers should consider using the configure options 
-      <option>--enable-cassert</> and <option>--enable-debug</> to enhance the
-      ability to detect and debug server errors.  Your debugger might
-      also require specific compiler flags to produce useful output.
+      When developing code inside the server, it is recommended to
+      use the configure options <option>--enable-cassert</> (which
+      turns on many run-time error checks) and <option>--enable-debug</>
+      (which improves the usefulness of debugging tools).
+     </para>
+
+     <para>
+      If using GCC, it is best to build with an optimization level of
+      at least <option>-O1</>, because using no optimization
+      (<option>-O0</>) disables some important compiler warnings (such
+      as the use of uninitialized variables).  However, non-zero
+      optimization levels can complicate debugging because stepping
+      through compiled code will usually not match up one-to-one with
+      source code lines.  If you get confused while trying to debug
+      optimized code, recompile the specific files of interest with
+      <option>-O0</>.  An easy way to do this is by passing an option
+      to <application>make</>: <command>gmake PROFILE=-O0 file.o</>.
      </para>
     </note>
    </step>
