@@ -1879,10 +1879,10 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf,
 		 */
 #endif
 #ifndef WIN32
-		snprintf(fnametmp, sizeof(fnametmp), "%s%spsql.edit.%d", tmpdir,
+		snprintf(fnametmp, sizeof(fnametmp), "%s%spsql.edit.%d.sql", tmpdir,
 				 "/", (int) getpid());
 #else
-		snprintf(fnametmp, sizeof(fnametmp), "%s%spsql.edit.%d", tmpdir,
+		snprintf(fnametmp, sizeof(fnametmp), "%s%spsql.edit.%d.sql", tmpdir,
 			   "" /* trailing separator already present */ , (int) getpid());
 #endif
 
