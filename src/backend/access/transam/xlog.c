@@ -562,7 +562,7 @@ static TimeLineID lastPageTLI = 0;
 static XLogRecPtr minRecoveryPoint;		/* local copy of
 										 * ControlFile->minRecoveryPoint */
 static bool updateMinRecoveryPoint = true;
-static bool reachedMinRecoveryPoint = false;
+bool reachedMinRecoveryPoint = false;
 
 static bool InRedo = false;
 
@@ -6759,12 +6759,6 @@ StartupXLOG(void)
 		LocalXLogInsertAllowed = -1;
 
 		/*
-		 * Check to see if the XLOG sequence contained any unresolved
-		 * references to uninitialized pages.
-		 */
-		XLogCheckInvalidPages();
-
-		/*
 		 * Perform a checkpoint to update all our recovery activity to disk.
 		 *
 		 * Note that we write a shutdown checkpoint rather than an on-line
@@ -6906,6 +6900,12 @@ CheckRecoveryConsistency(void)
 		XLByteLE(minRecoveryPoint, EndRecPtr) &&
 		XLogRecPtrIsInvalid(ControlFile->backupStartPoint))
 	{
+		/*
+		 * Check to see if the XLOG sequence contained any unresolved
+		 * references to uninitialized pages.
+		 */
+		XLogCheckInvalidPages();
+
 		reachedMinRecoveryPoint = true;
 		ereport(LOG,
 				(errmsg("consistent recovery state reached at %X/%X",
@@ -7907,7 +7907,7 @@ RecoveryRestartPoint(const CheckPoint *checkPoint)
 	volatile XLogCtlData *xlogctl = XLogCtl;
 
 	/*
-	 * Is it safe to checkpoint?  We must ask each of the resource managers
+	 * Is it safe to restartpoint?  We must ask each of the resource managers
 	 * whether they have any partial state information that might prevent a
 	 * correct restart from this point.  If so, we skip this opportunity, but
 	 * return at the next checkpoint record for another try.
@@ -7924,6 +7924,22 @@ RecoveryRestartPoint(const CheckPoint *checkPoint)
 					 checkPoint->redo.xrecoff);
 				return;
 			}
+	}
+
+	/*
+	 * Also refrain from creating a restartpoint if we have seen any references
+	 * to non-existent pages. Restarting recovery from the restartpoint would
+	 * not see the references, so we would lose the cross-check that the pages
+	 * belonged to a relation that was dropped later.
+	 */
+	if (XLogHaveInvalidPages())
+	{
+		elog(trace_recovery(DEBUG2),
+			 "could not record restart point at %X/%X because there "
+			 "are unresolved references to invalid pages",
+			 checkPoint->redo.xlogid,
+			 checkPoint->redo.xrecoff);
+		return;
 	}
 
 	/*

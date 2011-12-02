@@ -190,6 +190,8 @@ typedef enum
 
 extern XLogRecPtr XactLastRecEnd;
 
+extern bool reachedMinRecoveryPoint;
+
 /* these variables are GUC parameters related to XLOG */
 extern int	CheckPointSegments;
 extern int	wal_keep_segments;

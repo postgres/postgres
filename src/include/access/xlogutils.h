@@ -14,6 +14,7 @@
 #include "storage/bufmgr.h"
 
 
+extern bool XLogHaveInvalidPages(void);
 extern void XLogCheckInvalidPages(void);
 
 extern void XLogDropRelation(RelFileNode rnode, ForkNumber forknum);
