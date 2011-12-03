@@ -110,7 +110,7 @@ sqlda_common_total_size(const PGresult *res, int row, enum COMPAT_MODE compat, l
 				 * int Unfortunately we need to do double work here to compute
 				 * the size of the space needed for the numeric structure.
 				 */
-				ecpg_sqlda_align_add_size(offset, sizeof(int), sizeof(numeric), &offset, &next_offset);
+				ecpg_sqlda_align_add_size(offset, sizeof(NumericDigit *), sizeof(numeric), &offset, &next_offset);
 				if (!PQgetisnull(res, row, i))
 				{
 					char	   *val = PQgetvalue(res, row, i);
@@ -119,7 +119,8 @@ sqlda_common_total_size(const PGresult *res, int row, enum COMPAT_MODE compat, l
 					num = PGTYPESnumeric_from_asc(val, NULL);
 					if (!num)
 						break;
-					ecpg_sqlda_align_add_size(next_offset, sizeof(int), num->ndigits + 1, &offset, &next_offset);
+					if (num->ndigits)
+						ecpg_sqlda_align_add_size(next_offset, sizeof(int), num->ndigits + 1, &offset, &next_offset);
 					PGTYPESnumeric_free(num);
 				}
 				break;
@@ -323,7 +324,7 @@ ecpg_set_compat_sqlda(int lineno, struct sqlda_compat ** _sqlda, const PGresult 
 
 					set_data = false;
 
-					ecpg_sqlda_align_add_size(offset, sizeof(int), sizeof(numeric), &offset, &next_offset);
+					ecpg_sqlda_align_add_size(offset, sizeof(NumericDigit *), sizeof(numeric), &offset, &next_offset);
 					sqlda->sqlvar[i].sqldata = (char *) sqlda + offset;
 					sqlda->sqlvar[i].sqllen = sizeof(numeric);
 
@@ -343,11 +344,14 @@ ecpg_set_compat_sqlda(int lineno, struct sqlda_compat ** _sqlda, const PGresult 
 
 					memcpy(sqlda->sqlvar[i].sqldata, num, sizeof(numeric));
 
-					ecpg_sqlda_align_add_size(next_offset, sizeof(int), num->ndigits + 1, &offset, &next_offset);
-					memcpy((char *) sqlda + offset, num->buf, num->ndigits + 1);
+					if (num->ndigits)
+					{
+						ecpg_sqlda_align_add_size(next_offset, sizeof(int), num->ndigits + 1, &offset, &next_offset);
+						memcpy((char *) sqlda + offset, num->buf, num->ndigits + 1);
 
-					((numeric *) sqlda->sqlvar[i].sqldata)->buf = (NumericDigit *) sqlda + offset;
-					((numeric *) sqlda->sqlvar[i].sqldata)->digits = (NumericDigit *) sqlda + offset + (num->digits - num->buf);
+						((numeric *) sqlda->sqlvar[i].sqldata)->buf = (NumericDigit *) sqlda + offset;
+						((numeric *) sqlda->sqlvar[i].sqldata)->digits = (NumericDigit *) sqlda + offset + (num->digits - num->buf);
+					}
 
 					PGTYPESnumeric_free(num);
 
@@ -509,7 +513,7 @@ ecpg_set_native_sqlda(int lineno, struct sqlda_struct ** _sqlda, const PGresult 
 
 					set_data = false;
 
-					ecpg_sqlda_align_add_size(offset, sizeof(int), sizeof(numeric), &offset, &next_offset);
+					ecpg_sqlda_align_add_size(offset, sizeof(NumericDigit *), sizeof(numeric), &offset, &next_offset);
 					sqlda->sqlvar[i].sqldata = (char *) sqlda + offset;
 					sqlda->sqlvar[i].sqllen = sizeof(numeric);
 
@@ -529,11 +533,14 @@ ecpg_set_native_sqlda(int lineno, struct sqlda_struct ** _sqlda, const PGresult 
 
 					memcpy(sqlda->sqlvar[i].sqldata, num, sizeof(numeric));
 
-					ecpg_sqlda_align_add_size(next_offset, sizeof(int), num->ndigits + 1, &offset, &next_offset);
-					memcpy((char *) sqlda + offset, num->buf, num->ndigits + 1);
+					if (num->ndigits)
+					{
+						ecpg_sqlda_align_add_size(next_offset, sizeof(int), num->ndigits + 1, &offset, &next_offset);
+						memcpy((char *) sqlda + offset, num->buf, num->ndigits + 1);
 
-					((numeric *) sqlda->sqlvar[i].sqldata)->buf = (NumericDigit *) sqlda + offset;
-					((numeric *) sqlda->sqlvar[i].sqldata)->digits = (NumericDigit *) sqlda + offset + (num->digits - num->buf);
+						((numeric *) sqlda->sqlvar[i].sqldata)->buf = (NumericDigit *) sqlda + offset;
+						((numeric *) sqlda->sqlvar[i].sqldata)->digits = (NumericDigit *) sqlda + offset + (num->digits - num->buf);
+					}
 
 					PGTYPESnumeric_free(num);
 
