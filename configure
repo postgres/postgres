@@ -27415,6 +27415,9 @@ ac_config_headers="$ac_config_headers src/include/pg_config.h"
 ac_config_headers="$ac_config_headers src/interfaces/ecpg/include/ecpg_config.h"
 
 
+# This comment is to lengthen the configure script to dodge this ksh93 bug:
+# https://mailman.research.att.com/pipermail/ast-developers/2010q4/000797.html
+
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
