@@ -1110,6 +1110,51 @@ exec_command(const char *cmd,
 		free(opt0);
 	}
 
+
+	/* \setenv -- set environment command */
+	else if (strcmp(cmd, "setenv") == 0)
+	{
+		char	   *envvar = psql_scan_slash_option(scan_state,
+												  OT_NORMAL, NULL, false);
+		char	   *envval = psql_scan_slash_option(scan_state,
+												  OT_NORMAL, NULL, false);
+
+		if (!envvar)
+		{
+			psql_error("\\%s: missing required argument\n", cmd);
+			success = false;
+		}
+		else if (strchr(envvar,'=') != NULL)
+		{
+			psql_error("\\%s: environment variable name must not contain '='\n",
+					   cmd);
+			success = false;
+		}
+		else if (!envval)
+		{
+			/* No argument - unset the environment variable */
+			unsetenv(envvar);
+			success = true;
+		}
+		else
+		{
+			/* Set variable to the value of the next argument */
+			int         len = strlen(envvar) + strlen(envval) + 1;
+			char	   *newval = pg_malloc(len + 1);
+
+			snprintf(newval, len+1, "%s=%s", envvar, envval);
+			putenv(newval);
+			success = true;
+			/*
+			 * Do not free newval here, it will screw up the environment
+			 * if you do. See putenv man page for details. That means we
+			 * leak a bit of memory here, but not enough to worry about.
+			 */
+		}
+		free(envvar);
+		free(envval);
+	}
+
 	/* \sf -- show a function's source code */
 	else if (strcmp(cmd, "sf") == 0 || strcmp(cmd, "sf+") == 0)
 	{

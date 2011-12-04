@@ -2242,6 +2242,24 @@ lo_import 152801
 
 
       <varlistentry>
+        <term><literal>\setenv [ <replaceable class="parameter">name</replaceable> [ <replaceable class="parameter">value</replaceable> ] ]</literal></term>
+
+        <listitem>
+        <para>
+        Sets the environment variable <replaceable
+        class="parameter">name</replaceable> to <replaceable
+        class="parameter">value</replaceable>, or if the
+        <replaceable class="parameter">value</replaceable> is
+        not supplied, unsets the environment variable. Example:
+<programlisting>
+testdb=&gt; <userinput>\setenv PAGER less</userinput>
+testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
+</programlisting>
+        </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term><literal>\sf[+] <replaceable class="parameter">function_description</> </literal></term>
 
         <listitem>

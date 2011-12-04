@@ -158,7 +158,7 @@ slashUsage(unsigned short int pager)
 {
 	FILE	   *output;
 
-	output = PageOutput(93, pager);
+	output = PageOutput(94, pager);
 
 	/* if you add/remove a line here, change the row count above */
 
@@ -257,6 +257,7 @@ slashUsage(unsigned short int pager)
 
 	fprintf(output, _("Operating System\n"));
 	fprintf(output, _("  \\cd [DIR]              change the current working directory\n"));
+	fprintf(output, _("  \\setenv NAME [VALUE]   set or unset environment variable\n"));
 	fprintf(output, _("  \\timing [on|off]       toggle timing of commands (currently %s)\n"),
 			ON(pset.timing));
 	fprintf(output, _("  \\! [COMMAND]           execute command in shell or start interactive shell\n"));
