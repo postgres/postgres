@@ -174,14 +174,6 @@ CREATE EXTENSION file_fdw;
 </programlisting>
 
   <para>
-   Next, create the foreign data wrapper:
-
-<programlisting>
-CREATE FOREIGN DATA WRAPPER file_fdw HANDLER file_fdw_handler;
-</programlisting>
-  </para>
-
-  <para>
    Then create a foreign data server:
 
 <programlisting>
