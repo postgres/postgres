@@ -557,7 +557,7 @@ psql --username postgres --file script.sql postgres
    <application>pg_upgrade</> does not support upgrading of databases
    containing these <type>reg*</> OID-referencing system data types:
    <type>regproc</>, <type>regprocedure</>, <type>regoper</>,
-   <type>regoperator</>, <type>regclass</>, <type>regconfig</>, and
+   <type>regoperator</>, <type>regconfig</>, and
    <type>regdictionary</>.  (<type>regtype</> can be upgraded.)
   </para>
 

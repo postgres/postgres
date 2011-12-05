@@ -611,11 +611,11 @@ check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster)
 /*
  * check_for_reg_data_type_usage()
  *	pg_upgrade only preserves these system values:
- *		pg_class.relfilenode
+ *		pg_class.oid
  *		pg_type.oid
  *		pg_enum.oid
  *
- *	Most of the reg* data types reference system catalog info that is
+ *	Many of the reg* data types reference system catalog info that is
  *	not preserved, and hence these data types cannot be used in user
  *	tables upgraded by pg_upgrade.
  */
@@ -653,16 +653,16 @@ check_for_reg_data_type_usage(ClusterInfo *cluster)
 								"		NOT a.attisdropped AND "
 								"		a.atttypid IN ( "
 		  "			'pg_catalog.regproc'::pg_catalog.regtype, "
-								"			'pg_catalog.regprocedure'::pg_catalog.regtype, "
+		  "			'pg_catalog.regprocedure'::pg_catalog.regtype, "
 		  "			'pg_catalog.regoper'::pg_catalog.regtype, "
-								"			'pg_catalog.regoperator'::pg_catalog.regtype, "
-		 "			'pg_catalog.regclass'::pg_catalog.regtype, "
+		  "			'pg_catalog.regoperator'::pg_catalog.regtype, "
+		/* regclass.oid is preserved, so 'regclass' is OK */
 		/* regtype.oid is preserved, so 'regtype' is OK */
-		"			'pg_catalog.regconfig'::pg_catalog.regtype, "
-								"			'pg_catalog.regdictionary'::pg_catalog.regtype) AND "
-								"		c.relnamespace = n.oid AND "
-							  "		n.nspname != 'pg_catalog' AND "
-						 "		n.nspname != 'information_schema'");
+		  "			'pg_catalog.regconfig'::pg_catalog.regtype, "
+		  "			'pg_catalog.regdictionary'::pg_catalog.regtype) AND "
+		  "		c.relnamespace = n.oid AND "
+		  "		n.nspname != 'pg_catalog' AND "
+		  "		n.nspname != 'information_schema'");
 
 		ntups = PQntuples(res);
 		i_nspname = PQfnumber(res, "nspname");
