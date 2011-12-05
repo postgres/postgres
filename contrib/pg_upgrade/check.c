@@ -593,7 +593,7 @@ check_for_reg_data_type_usage(migratorContext *ctx, Cluster whichCluster)
 								"			'pg_catalog.regprocedure'::pg_catalog.regtype, "
 								"			'pg_catalog.regoper'::pg_catalog.regtype, "
 								"			'pg_catalog.regoperator'::pg_catalog.regtype, "
-								"			'pg_catalog.regclass'::pg_catalog.regtype, "
+/*	allow						"			'pg_catalog.regclass'::pg_catalog.regtype, " */
 								/* regtype.oid is preserved, so 'regtype' is OK */
 								"			'pg_catalog.regconfig'::pg_catalog.regtype, "
 								"			'pg_catalog.regdictionary'::pg_catalog.regtype) AND "
