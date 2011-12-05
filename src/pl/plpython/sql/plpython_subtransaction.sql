@@ -242,3 +242,55 @@ SELECT pk_violation_inside_subtransaction();
 SELECT * FROM subtransaction_tbl;
 
 DROP TABLE subtransaction_tbl;
+
+-- cursor/subtransactions interactions
+
+CREATE FUNCTION cursor_in_subxact() RETURNS int AS $$
+with plpy.subtransaction():
+    cur = plpy.cursor("select * from generate_series(1, 20) as gen(i)")
+    cur.fetch(10)
+fetched = cur.fetch(10);
+return int(fetched[5]["i"])
+$$ LANGUAGE plpythonu;
+
+CREATE FUNCTION cursor_aborted_subxact() RETURNS int AS $$
+try:
+    with plpy.subtransaction():
+        cur = plpy.cursor("select * from generate_series(1, 20) as gen(i)")
+        cur.fetch(10);
+        plpy.execute("select no_such_function()")
+except plpy.SPIError:
+    fetched = cur.fetch(10)
+    return int(fetched[5]["i"])
+return 0 # not reached
+$$ LANGUAGE plpythonu;
+
+CREATE FUNCTION cursor_plan_aborted_subxact() RETURNS int AS $$
+try:
+    with plpy.subtransaction():
+        plpy.execute('create temporary table tmp(i) '
+                     'as select generate_series(1, 10)')
+        plan = plpy.prepare("select i from tmp")
+        cur = plpy.cursor(plan)
+        plpy.execute("select no_such_function()")
+except plpy.SPIError:
+    fetched = cur.fetch(5)
+    return fetched[2]["i"]
+return 0 # not reached
+$$ LANGUAGE plpythonu;
+
+CREATE FUNCTION cursor_close_aborted_subxact() RETURNS boolean AS $$
+try:
+    with plpy.subtransaction():
+        cur = plpy.cursor('select 1')
+        plpy.execute("select no_such_function()")
+except plpy.SPIError:
+    cur.close()
+    return True
+return False # not reached
+$$ LANGUAGE plpythonu;
+
+SELECT cursor_in_subxact();
+SELECT cursor_aborted_subxact();
+SELECT cursor_plan_aborted_subxact();
+SELECT cursor_close_aborted_subxact();

@@ -892,6 +892,15 @@ $$ LANGUAGE plpythonu;
   </para>
 
   <para>
+   Note that calling <literal>plpy.execute</literal> will cause the entire
+   result set to be read into memory.  Only use that function when you are sure
+   that the result set will be relatively small.  If you don't want to risk
+   excessive memory usage when fetching large results,
+   use <literal>plpy.cursor</literal> rather
+   than <literal>plpy.execute</literal>.
+  </para>
+
+  <para>
    For example:
 <programlisting>
 rv = plpy.execute("SELECT * FROM my_table", 5)
@@ -956,6 +965,78 @@ $$ LANGUAGE plpythonu;
 </programlisting>
   </para>
 
+  </sect2>
+
+  <sect2>
+   <title>Accessing Data with Cursors</title>
+
+   <para>
+    The <literal>plpy.cursor</literal> function accepts the same arguments
+    as <literal>plpy.execute</literal> (except for <literal>limit</literal>)
+    and returns a cursor object, which allows you to process large result sets
+    in smaller chunks.  As with <literal>plpy.execute</literal>, either a query
+    string or a plan object along with a list of arguments can be used.  The
+    cursor object provides a <literal>fetch</literal> method that accepts an
+    integer parameter and returns a result object.  Each time you
+    call <literal>fetch</literal>, the returned object will contain the next
+    batch of rows, never larger than the parameter value.  Once all rows are
+    exhausted, <literal>fetch</literal> starts returning an empty result
+    object.  Cursor objects also provide an
+    <ulink url="http://docs.python.org/library/stdtypes.html#iterator-types">iterator
+    interface</ulink>, yielding one row at a time until all rows are exhausted.
+    Data fetched that way is not returned as result objects, but rather as
+    dictionaries, each dictionary corresponding to a single result row.
+   </para>
+
+   <para>
+    Cursors are automatically disposed of.  But if you want to explicitly
+    release all resources held by a cursor, use the <literal>close</literal>
+    method.  Once closed, a cursor cannot be fetched from anymore.
+   </para>
+
+   <tip>
+    <para>
+      Do not confuse objects created by <literal>plpy.cursor</literal> with
+      DB-API cursors as defined by
+      the <ulink url="http://www.python.org/dev/peps/pep-0249/">Python Database
+      API specification</ulink>.  They don't have anything in common except for
+      the name.
+    </para>
+   </tip>
+
+   <para>
+    An example of two ways of processing data from a large table is:
+<programlisting>
+CREATE FUNCTION count_odd_iterator() RETURNS integer AS $$
+odd = 0
+for row in plpy.cursor("select num from largetable"):
+    if row['num'] % 2:
+         odd += 1
+return odd
+$$ LANGUAGE plpythonu;
+
+CREATE FUNCTION count_odd_fetch(batch_size integer) RETURNS integer AS $$
+odd = 0
+cursor = plpy.cursor("select num from largetable")
+while True:
+    rows = cursor.fetch(batch_size)
+    if not rows:
+        break
+    for row in rows:
+        if row['num'] % 2:
+            odd += 1
+return odd
+$$ LANGUAGE plpythonu;
+
+CREATE FUNCTION count_odd_prepared() RETURNS integer AS $$
+odd = 0
+plan = plpy.prepare("select num from largetable where num % $1 &lt;&gt; 0", ["integer"])
+rows = list(plpy.cursor(plan, [2]))
+
+return len(rows)
+$$ LANGUAGE plpythonu;
+</programlisting>
+   </para>
   </sect2>
 
   <sect2 id="plpython-trapping">
