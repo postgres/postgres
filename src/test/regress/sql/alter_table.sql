@@ -450,20 +450,19 @@ select test2 from atacc2;
 drop table atacc2 cascade;
 drop table atacc1;
 
--- adding only to a parent is disallowed as of 8.4
+-- adding only to a parent is allowed as of 9.2
 
 create table atacc1 (test int);
 create table atacc2 (test2 int) inherits (atacc1);
--- fail:
-alter table only atacc1 add constraint foo check (test>0);
 -- ok:
-alter table only atacc2 add constraint foo check (test>0);
--- check constraint not there on parent
+alter table only atacc1 add constraint foo check (test>0);
+-- check constraint is not there on child
+insert into atacc2 (test) values (-3);
+-- check constraint is there on parent
 insert into atacc1 (test) values (-3);
 insert into atacc1 (test) values (3);
--- check constraint is there on child
-insert into atacc2 (test) values (-3);
-insert into atacc2 (test) values (3);
+-- fail, violating row:
+alter table only atacc2 add constraint foo check (test>0);
 drop table atacc2;
 drop table atacc1;
 

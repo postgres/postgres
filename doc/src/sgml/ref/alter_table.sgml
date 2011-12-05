@@ -984,6 +984,14 @@ ALTER TABLE distributors ADD CONSTRAINT zipchk CHECK (char_length(zipcode) = 5);
   </para>
 
   <para>
+   To add a check constraint only to a table and not to its children:
+<programlisting>
+ALTER TABLE ONLY distributors ADD CONSTRAINT zipchk CHECK (char_length(zipcode) = 5);
+</programlisting>
+   (The check constraint will not be inherited by future children, either.)
+  </para>
+
+  <para>
    To remove a check constraint from a table and all its children:
 <programlisting>
 ALTER TABLE distributors DROP CONSTRAINT zipchk;

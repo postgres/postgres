@@ -498,22 +498,21 @@ select test2 from atacc2;
 drop table atacc2 cascade;
 NOTICE:  drop cascades to table atacc3
 drop table atacc1;
--- adding only to a parent is disallowed as of 8.4
+-- adding only to a parent is allowed as of 9.2
 create table atacc1 (test int);
 create table atacc2 (test2 int) inherits (atacc1);
--- fail:
-alter table only atacc1 add constraint foo check (test>0);
-ERROR:  constraint must be added to child tables too
 -- ok:
-alter table only atacc2 add constraint foo check (test>0);
--- check constraint not there on parent
-insert into atacc1 (test) values (-3);
-insert into atacc1 (test) values (3);
--- check constraint is there on child
+alter table only atacc1 add constraint foo check (test>0);
+-- check constraint is not there on child
 insert into atacc2 (test) values (-3);
-ERROR:  new row for relation "atacc2" violates check constraint "foo"
-DETAIL:  Failing row contains (-3, null).
-insert into atacc2 (test) values (3);
+-- check constraint is there on parent
+insert into atacc1 (test) values (-3);
+ERROR:  new row for relation "atacc1" violates check constraint "foo"
+DETAIL:  Failing row contains (-3).
+insert into atacc1 (test) values (3);
+-- fail, violating row:
+alter table only atacc2 add constraint foo check (test>0);
+ERROR:  check constraint "foo" is violated by some row
 drop table atacc2;
 drop table atacc1;
 -- test unique constraint adding

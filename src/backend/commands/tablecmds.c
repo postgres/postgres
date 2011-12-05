@@ -579,6 +579,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 			cooked->skip_validation = false;
 			cooked->is_local = true;	/* not used for defaults */
 			cooked->inhcount = 0;		/* ditto */
+			cooked->is_only = false;
 			cookedDefaults = lappend(cookedDefaults, cooked);
 			descriptor->attrs[attnum - 1]->atthasdef = true;
 		}
@@ -638,7 +639,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 	 */
 	if (rawDefaults || stmt->constraints)
 		AddRelationNewConstraints(rel, rawDefaults, stmt->constraints,
-								  true, true);
+								  true, true, false);
 
 	/*
 	 * Clean up.  We keep lock on new relation (although it shouldn't be
@@ -1599,6 +1600,10 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				char	   *name = check[i].ccname;
 				Node	   *expr;
 
+				/* ignore if the constraint is non-inheritable */
+				if (check[i].cconly)
+					continue;
+
 				/* adjust varattnos of ccbin here */
 				expr = stringToNode(check[i].ccbin);
 				change_varattnos_of_a_node(expr, newattno);
@@ -1617,6 +1622,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 					cooked->skip_validation = false;
 					cooked->is_local = false;
 					cooked->inhcount = 1;
+					cooked->is_only = false;
 					constraints = lappend(constraints, cooked);
 				}
 			}
@@ -4501,7 +4507,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		 * This function is intended for CREATE TABLE, so it processes a
 		 * _list_ of defaults, but we just do one.
 		 */
-		AddRelationNewConstraints(rel, list_make1(rawEnt), NIL, false, true);
+		AddRelationNewConstraints(rel, list_make1(rawEnt), NIL, false, true, false);
 
 		/* Make the additional catalog changes visible */
 		CommandCounterIncrement();
@@ -4898,7 +4904,7 @@ ATExecColumnDefault(Relation rel, const char *colName,
 		 * This function is intended for CREATE TABLE, so it processes a
 		 * _list_ of defaults, but we just do one.
 		 */
-		AddRelationNewConstraints(rel, list_make1(rawEnt), NIL, false, true);
+		AddRelationNewConstraints(rel, list_make1(rawEnt), NIL, false, true, false);
 	}
 }
 
@@ -5562,10 +5568,16 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	 * omitted from the returned list, which is what we want: we do not need
 	 * to do any validation work.  That can only happen at child tables,
 	 * though, since we disallow merging at the top level.
+	 *
+	 * Note: we set is_only based on the recurse flag which is false when
+	 * interpretInhOption() of our statement returns false all the way up
+	 * in AlterTable and gets passed all the way down to here.
 	 */
 	newcons = AddRelationNewConstraints(rel, NIL,
 										list_make1(copyObject(constr)),
-										recursing, !recursing);
+										recursing, /* allow_merge */
+										!recursing, /* is_local */
+										!recurse && !recursing); /* is_only */
 
 	/* Add each to-be-validated constraint to Phase 3's queue */
 	foreach(lcon, newcons)
@@ -5606,20 +5618,17 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		return;
 
 	/*
+	 * Adding an ONLY constraint? No need to find our children
+	 */
+	if (!recurse && !recursing)
+		return;
+
+	/*
 	 * Propagate to children as appropriate.  Unlike most other ALTER
 	 * routines, we have to do this one level of recursion at a time; we can't
 	 * use find_all_inheritors to do it in one pass.
 	 */
 	children = find_inheritance_children(RelationGetRelid(rel), lockmode);
-
-	/*
-	 * If we are told not to recurse, there had better not be any child
-	 * tables; else the addition would put them out of step.
-	 */
-	if (children && !recurse)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				 errmsg("constraint must be added to child tables too")));
 
 	foreach(child, children)
 	{
@@ -5914,7 +5923,8 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 									  NULL,
 									  NULL,
 									  true,		/* islocal */
-									  0);		/* inhcount */
+									  0,		/* inhcount */
+									  false);	/* isonly */
 
 	/*
 	 * Create the triggers that will enforce the constraint.
@@ -6755,6 +6765,7 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 	HeapTuple	tuple;
 	bool		found = false;
 	bool		is_check_constraint = false;
+	bool		is_only_constraint = false;
 
 	/* At top level, permission check was done in ATPrepCmd, else do it */
 	if (recursing)
@@ -6791,6 +6802,12 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 		/* Right now only CHECK constraints can be inherited */
 		if (con->contype == CONSTRAINT_CHECK)
 			is_check_constraint = true;
+		
+		if (con->conisonly)
+		{
+			Assert(is_check_constraint);
+			is_only_constraint = true;
+		}
 
 		/*
 		 * Perform the actual constraint deletion
@@ -6802,6 +6819,9 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 		performDeletion(&conobj, behavior);
 
 		found = true;
+
+		/* constraint found and dropped -- no need to keep looping */
+		break;
 	}
 
 	systable_endscan(scan);
@@ -6830,7 +6850,7 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 	 * routines, we have to do this one level of recursion at a time; we can't
 	 * use find_all_inheritors to do it in one pass.
 	 */
-	if (is_check_constraint)
+	if (is_check_constraint && !is_only_constraint)
 		children = find_inheritance_children(RelationGetRelid(rel), lockmode);
 	else
 		children = NIL;

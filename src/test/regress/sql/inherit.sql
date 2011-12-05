@@ -188,6 +188,20 @@ insert into d values('test','one','two','three');
 alter table a alter column aa type integer using bit_length(aa);
 select * from d;
 
+-- Test non-inheritable parent constraints
+create table p1(ff1 int);
+alter table only p1 add constraint p1chk check (ff1 > 0);
+alter table p1 add constraint p2chk check (ff1 > 10);
+-- conisonly should be true for ONLY constraint
+select pc.relname, pgc.conname, pgc.contype, pgc.conislocal, pgc.coninhcount, pgc.conisonly from pg_class as pc inner join pg_constraint as pgc on (pgc.conrelid = pc.oid) where pc.relname = 'p1';
+
+-- Test that child does not inherit ONLY constraints
+create table c1 () inherits (p1);
+\d p1
+\d c1
+
+drop table p1 cascade;
+
 -- Tests for casting between the rowtypes of parent and child
 -- tables. See the pgsql-hackers thread beginning Dec. 4/04
 create table base (i integer);

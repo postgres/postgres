@@ -2037,6 +2037,16 @@
      </row>
 
      <row>
+      <entry><structfield>conisonly</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       This constraint is defined locally for the relation.  It is a
+       non-inheritable constraint.
+      </entry>
+     </row>
+
+     <row>
       <entry><structfield>conkey</structfield></entry>
       <entry><type>int2[]</type></entry>
       <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attnum</></entry>
