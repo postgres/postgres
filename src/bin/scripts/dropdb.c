@@ -32,6 +32,7 @@ main(int argc, char *argv[])
 		{"echo", no_argument, NULL, 'e'},
 		{"interactive", no_argument, NULL, 'i'},
 		{"if-exists", no_argument, &if_exists, 1},
+		{"maintenance-db", required_argument, NULL, 2},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -40,6 +41,7 @@ main(int argc, char *argv[])
 	int			c;
 
 	char	   *dbname = NULL;
+	char	   *maintenance_db = NULL;
 	char	   *host = NULL;
 	char	   *port = NULL;
 	char	   *username = NULL;
@@ -85,6 +87,9 @@ main(int argc, char *argv[])
 			case 0:
 				/* this covers the long options */
 				break;
+			case 2:
+				maintenance_db = optarg;
+				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
@@ -119,11 +124,11 @@ main(int argc, char *argv[])
 	appendPQExpBuffer(&sql, "DROP DATABASE %s%s;\n",
 					  (if_exists ? "IF EXISTS " : ""), fmtId(dbname));
 
-	/*
-	 * Connect to the 'postgres' database by default, except have the
-	 * 'postgres' user use 'template1' so he can drop the 'postgres' database.
-	 */
-	conn = connectDatabase(strcmp(dbname, "postgres") == 0 ? "template1" : "postgres",
+	/* Avoid trying to drop postgres db while we are connected to it. */
+	if (maintenance_db == NULL && strcmp(dbname, "postgres") == 0)
+		maintenance_db = "template1";
+
+	conn = connectMaintenanceDatabase(maintenance_db,
 						   host, port, username, prompt_password, progname);
 
 	if (echo)
@@ -161,5 +166,6 @@ help(const char *progname)
 	printf(_("  -U, --username=USERNAME   user name to connect as\n"));
 	printf(_("  -w, --no-password         never prompt for password\n"));
 	printf(_("  -W, --password            force password prompt\n"));
+	printf(_("  --maintenance-db=DBNAME   alternate maintenance database\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }

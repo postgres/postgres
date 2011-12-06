@@ -93,7 +93,7 @@ handle_help_version_opts(int argc, char *argv[],
 PGconn *
 connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 				const char *pguser, enum trivalue prompt_password,
-				const char *progname)
+				const char *progname, bool fail_ok)
 {
 	PGconn	   *conn;
 	char	   *password = NULL;
@@ -163,6 +163,11 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus(conn) == CONNECTION_BAD)
 	{
+		if (fail_ok)
+		{
+			PQfinish(conn);
+			return NULL;
+		}
 		fprintf(stderr, _("%s: could not connect to database %s: %s"),
 				progname, dbname, PQerrorMessage(conn));
 		exit(1);
@@ -171,6 +176,41 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 	return conn;
 }
 
+/*
+ * Try to connect to the appropriate maintenance database.
+ */
+PGconn *
+connectMaintenanceDatabase(const char *maintenance_db, const char *pghost,
+						   const char *pgport, const char *pguser,
+						   enum trivalue prompt_password,
+						   const char *progname)
+{
+	PGconn *conn;
+
+	/* If a maintenance database name was specified, just connect to it. */
+	if (maintenance_db)
+		return connectDatabase(maintenance_db, pghost, pgport, pguser,
+							   prompt_password, progname, false);
+
+	/* Otherwise, try postgres first and then template1. */
+	conn = connectDatabase("postgres", pghost, pgport, pguser, prompt_password,
+						   progname, true);
+	if (!conn)
+		conn = connectDatabase("template1", pghost, pgport, pguser,
+							   prompt_password, progname, true);
+
+	if (!conn)
+	{
+		fprintf(stderr, _("%s: could not connect to databases \"postgres\" or \"template1\"\n"
+						  "Please specify an alternative maintenance database.\n"),
+				progname);
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
+				progname);
+		exit(1);
+	}
+
+	return conn;
+}
 
 /*
  * Run a query, return the results, exit program on failure.

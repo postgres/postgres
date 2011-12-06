@@ -119,7 +119,8 @@ main(int argc, char *argv[])
 	appendPQExpBuffer(&sql, "DROP ROLE %s%s;\n",
 					  (if_exists ? "IF EXISTS " : ""), fmtId(dropuser));
 
-	conn = connectDatabase("postgres", host, port, username, prompt_password, progname);
+	conn = connectDatabase("postgres", host, port, username, prompt_password,
+						   progname, false);
 
 	if (echo)
 		printf("%s", sql.data);

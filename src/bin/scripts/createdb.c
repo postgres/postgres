@@ -35,6 +35,7 @@ main(int argc, char *argv[])
 		{"lc-collate", required_argument, NULL, 1},
 		{"lc-ctype", required_argument, NULL, 2},
 		{"locale", required_argument, NULL, 'l'},
+		{"maintenance-db", required_argument, NULL, 3},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -43,6 +44,7 @@ main(int argc, char *argv[])
 	int			c;
 
 	const char *dbname = NULL;
+	const char *maintenance_db = NULL;
 	char	   *comment = NULL;
 	char	   *host = NULL;
 	char	   *port = NULL;
@@ -109,6 +111,9 @@ main(int argc, char *argv[])
 				break;
 			case 'l':
 				locale = optarg;
+				break;
+			case 3:
+				maintenance_db = optarg;
 				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
@@ -192,13 +197,12 @@ main(int argc, char *argv[])
 
 	appendPQExpBuffer(&sql, ";\n");
 
-	/*
-	 * Connect to the 'postgres' database by default, except have the
-	 * 'postgres' user use 'template1' so he can create the 'postgres'
-	 * database.
-	 */
-	conn = connectDatabase(strcmp(dbname, "postgres") == 0 ? "template1" : "postgres",
-						   host, port, username, prompt_password, progname);
+	/* No point in trying to use postgres db when creating postgres db. */
+	if (maintenance_db == NULL && strcmp(dbname, "postgres") == 0)
+		maintenance_db = "template1";
+
+	conn = connectMaintenanceDatabase(maintenance_db, host, port, username,
+									  prompt_password, progname);
 
 	if (echo)
 		printf("%s", sql.data);
@@ -264,6 +268,7 @@ help(const char *progname)
 	printf(_("  -U, --username=USERNAME      user name to connect as\n"));
 	printf(_("  -w, --no-password            never prompt for password\n"));
 	printf(_("  -W, --password               force password prompt\n"));
+	printf(_("  --maintenance-db=DBNAME      alternate maintenance database\n"));
 	printf(_("\nBy default, a database with the same name as the current user is created.\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }

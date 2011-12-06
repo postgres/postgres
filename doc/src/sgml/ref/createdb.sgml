@@ -276,6 +276,19 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term><option>--maintenance-db=<replaceable class="parameter">dbname</replaceable></></term>
+      <listitem>
+       <para>
+         Specifies the name of the database to connect to when creating the
+         new database. If not specified, the <literal>postgres</literal>
+         database will be used; if that does not exist (or if it is the name
+         of the new database being created), <literal>template1</literal> will
+         be used.
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
    </para>
 

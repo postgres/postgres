@@ -19,7 +19,8 @@ static void reindex_one_database(const char *name, const char *dbname,
 					 const char *port, const char *username,
 					 enum trivalue prompt_password, const char *progname,
 					 bool echo);
-static void reindex_all_databases(const char *host, const char *port,
+static void reindex_all_databases(const char *maintenance_db,
+					  const char *host, const char *port,
 					  const char *username, enum trivalue prompt_password,
 					  const char *progname, bool echo,
 					  bool quiet);
@@ -45,6 +46,7 @@ main(int argc, char *argv[])
 		{"system", no_argument, NULL, 's'},
 		{"table", required_argument, NULL, 't'},
 		{"index", required_argument, NULL, 'i'},
+		{"maintenance-db", required_argument, NULL, 2},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -53,6 +55,7 @@ main(int argc, char *argv[])
 	int			c;
 
 	const char *dbname = NULL;
+	const char *maintenance_db = NULL;
 	const char *host = NULL;
 	const char *port = NULL;
 	const char *username = NULL;
@@ -110,6 +113,9 @@ main(int argc, char *argv[])
 			case 'i':
 				index = optarg;
 				break;
+			case 2:
+				maintenance_db = optarg;
+				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
@@ -154,8 +160,8 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 
-		reindex_all_databases(host, port, username, prompt_password,
-							  progname, echo, quiet);
+		reindex_all_databases(maintenance_db, host, port, username,
+							  prompt_password, progname, echo, quiet);
 	}
 	else if (syscatalog)
 	{
@@ -230,7 +236,8 @@ reindex_one_database(const char *name, const char *dbname, const char *type,
 		appendPQExpBuffer(&sql, " DATABASE %s", fmtId(name));
 	appendPQExpBuffer(&sql, ";\n");
 
-	conn = connectDatabase(dbname, host, port, username, prompt_password, progname);
+	conn = connectDatabase(dbname, host, port, username, prompt_password,
+						   progname, false);
 
 	if (!executeMaintenanceCommand(conn, sql.data, echo))
 	{
@@ -252,7 +259,8 @@ reindex_one_database(const char *name, const char *dbname, const char *type,
 }
 
 static void
-reindex_all_databases(const char *host, const char *port,
+reindex_all_databases(const char *maintenance_db,
+					  const char *host, const char *port,
 					  const char *username, enum trivalue prompt_password,
 					  const char *progname, bool echo, bool quiet)
 {
@@ -260,7 +268,8 @@ reindex_all_databases(const char *host, const char *port,
 	PGresult   *result;
 	int			i;
 
-	conn = connectDatabase("postgres", host, port, username, prompt_password, progname);
+	conn = connectMaintenanceDatabase(maintenance_db, host, port, username,
+									  prompt_password, progname);
 	result = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;", progname, echo);
 	PQfinish(conn);
 
@@ -294,7 +303,8 @@ reindex_system_catalogs(const char *dbname, const char *host, const char *port,
 
 	appendPQExpBuffer(&sql, "REINDEX SYSTEM %s;\n", dbname);
 
-	conn = connectDatabase(dbname, host, port, username, prompt_password, progname);
+	conn = connectDatabase(dbname, host, port, username, prompt_password,
+						   progname, false);
 	if (!executeMaintenanceCommand(conn, sql.data, echo))
 	{
 		fprintf(stderr, _("%s: reindexing of system catalogs failed: %s"),
@@ -328,6 +338,7 @@ help(const char *progname)
 	printf(_("  -U, --username=USERNAME   user name to connect as\n"));
 	printf(_("  -w, --no-password         never prompt for password\n"));
 	printf(_("  -W, --password            force password prompt\n"));
+	printf(_("  --maintenance-db=DBNAME   alternate maintenance database\n"));
 	printf(_("\nRead the description of the SQL command REINDEX for details.\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }

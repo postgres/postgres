@@ -230,7 +230,8 @@ main(int argc, char *argv[])
 	if (login == 0)
 		login = TRI_YES;
 
-	conn = connectDatabase("postgres", host, port, username, prompt_password, progname);
+	conn = connectDatabase("postgres", host, port, username, prompt_password,
+						   progname, false);
 
 	initPQExpBuffer(&sql);
 

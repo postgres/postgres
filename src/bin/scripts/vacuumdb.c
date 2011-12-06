@@ -21,6 +21,7 @@ static void vacuum_one_database(const char *dbname, bool full, bool verbose,
 					const char *progname, bool echo);
 static void vacuum_all_databases(bool full, bool verbose, bool and_analyze,
 					 bool analyze_only, bool freeze,
+					 const char *maintenance_db,
 					 const char *host, const char *port,
 					 const char *username, enum trivalue prompt_password,
 					 const char *progname, bool echo, bool quiet);
@@ -47,6 +48,7 @@ main(int argc, char *argv[])
 		{"table", required_argument, NULL, 't'},
 		{"full", no_argument, NULL, 'f'},
 		{"verbose", no_argument, NULL, 'v'},
+		{"maintenance-db", required_argument, NULL, 2},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -55,6 +57,7 @@ main(int argc, char *argv[])
 	int			c;
 
 	const char *dbname = NULL;
+	const char *maintenance_db = NULL;
 	char	   *host = NULL;
 	char	   *port = NULL;
 	char	   *username = NULL;
@@ -123,6 +126,9 @@ main(int argc, char *argv[])
 			case 'v':
 				verbose = true;
 				break;
+			case 2:
+				maintenance_db = optarg;
+				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
@@ -178,8 +184,8 @@ main(int argc, char *argv[])
 		}
 
 		vacuum_all_databases(full, verbose, and_analyze, analyze_only, freeze,
-							 host, port, username, prompt_password,
-							 progname, echo, quiet);
+							 maintenance_db, host, port, username,
+							 prompt_password, progname, echo, quiet);
 	}
 	else
 	{
@@ -216,7 +222,8 @@ vacuum_one_database(const char *dbname, bool full, bool verbose, bool and_analyz
 
 	initPQExpBuffer(&sql);
 
-	conn = connectDatabase(dbname, host, port, username, prompt_password, progname);
+	conn = connectDatabase(dbname, host, port, username, prompt_password,
+						   progname, false);
 
 	if (analyze_only)
 	{
@@ -290,7 +297,8 @@ vacuum_one_database(const char *dbname, bool full, bool verbose, bool and_analyz
 
 static void
 vacuum_all_databases(bool full, bool verbose, bool and_analyze, bool analyze_only,
-					 bool freeze, const char *host, const char *port,
+					 bool freeze, const char *maintenance_db,
+					 const char *host, const char *port,
 					 const char *username, enum trivalue prompt_password,
 					 const char *progname, bool echo, bool quiet)
 {
@@ -298,7 +306,8 @@ vacuum_all_databases(bool full, bool verbose, bool and_analyze, bool analyze_onl
 	PGresult   *result;
 	int			i;
 
-	conn = connectDatabase("postgres", host, port, username, prompt_password, progname);
+	conn = connectMaintenanceDatabase(maintenance_db, host, port,
+						   username, prompt_password, progname);
 	result = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;", progname, echo);
 	PQfinish(conn);
 
@@ -346,6 +355,7 @@ help(const char *progname)
 	printf(_("  -U, --username=USERNAME   user name to connect as\n"));
 	printf(_("  -w, --no-password         never prompt for password\n"));
 	printf(_("  -W, --password            force password prompt\n"));
+	printf(_("  --maintenance-db=DBNAME   alternate maintenance database\n"));
 	printf(_("\nRead the description of the SQL command VACUUM for details.\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
