@@ -318,9 +318,9 @@ RangeVarGetRelidExtended(const RangeVar *relation, LOCKMODE lockmode,
 		 * This callback is a good place to check permissions: we haven't taken
 		 * the table lock yet (and it's really best to check permissions before
 		 * locking anything!), but we've gotten far enough to know what OID we
-		 * think we should lock.  Of course, concurrent DDL might things while
-		 * we're waiting for the lock, but in that case the callback will be
-		 * invoked again for the new OID.
+		 * think we should lock.  Of course, concurrent DDL might change things
+		 * while we're waiting for the lock, but in that case the callback will
+		 * be invoked again for the new OID.
 		 */
 		if (callback)
 			callback(relation, relId, oldRelId, callback_arg);
