@@ -274,7 +274,7 @@ pg_tablespace_location(PG_FUNCTION_ARGS)
 	int		rllen;
 
 	/*
-	 * Return empty string for our two default tablespace
+	 * Return empty string for our default tablespaces
 	 */
 	if (tablespaceOid == DEFAULTTABLESPACE_OID ||
 		tablespaceOid == GLOBALTABLESPACE_OID)
@@ -286,13 +286,16 @@ pg_tablespace_location(PG_FUNCTION_ARGS)
 	 * in pg_tblspc/<oid>.
 	 */
 	snprintf(sourcepath, sizeof(sourcepath), "pg_tblspc/%u", tablespaceOid);
-	rllen =readlink(sourcepath, targetpath, sizeof(targetpath));
+
+	rllen = readlink(sourcepath, targetpath, sizeof(targetpath));
 	if (rllen < 0)
 		ereport(ERROR,
-				(errmsg("could not read symbolic link \"%s\": %m", sourcepath)));
+				(errmsg("could not read symbolic link \"%s\": %m",
+						sourcepath)));
 	else if (rllen >= sizeof(targetpath))
 		ereport(ERROR,
-				(errmsg("symbolic link \"%s\" target is too long", sourcepath)));
+				(errmsg("symbolic link \"%s\" target is too long",
+						sourcepath)));
 	targetpath[rllen] = '\0';
 
 	PG_RETURN_TEXT_P(cstring_to_text(targetpath));
@@ -300,6 +303,7 @@ pg_tablespace_location(PG_FUNCTION_ARGS)
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("tablespaces are not supported on this platform")));
+	PG_RETURN_NULL();
 #endif
 }
 
