@@ -244,19 +244,22 @@ get_ordering_op_properties(Oid opno,
 }
 
 /*
- * get_compare_function_for_ordering_op
- *		Get the OID of the datatype-specific btree comparison function
+ * get_sort_function_for_ordering_op
+ *		Get the OID of the datatype-specific btree sort support function,
+ *		or if there is none, the btree comparison function,
  *		associated with an ordering operator (a "<" or ">" operator).
  *
- * *cmpfunc receives the comparison function OID.
+ * *sortfunc receives the support or comparison function OID.
+ * *issupport is set TRUE if it's a support func, FALSE if a comparison func.
  * *reverse is set FALSE if the operator is "<", TRUE if it's ">"
- * (indicating the comparison result must be negated before use).
+ * (indicating that comparison results must be negated before use).
  *
  * Returns TRUE if successful, FALSE if no btree function can be found.
  * (This indicates that the operator is not a valid ordering operator.)
  */
 bool
-get_compare_function_for_ordering_op(Oid opno, Oid *cmpfunc, bool *reverse)
+get_sort_function_for_ordering_op(Oid opno, Oid *sortfunc,
+								  bool *issupport, bool *reverse)
 {
 	Oid			opfamily;
 	Oid			opcintype;
@@ -267,21 +270,31 @@ get_compare_function_for_ordering_op(Oid opno, Oid *cmpfunc, bool *reverse)
 								   &opfamily, &opcintype, &strategy))
 	{
 		/* Found a suitable opfamily, get matching support function */
-		*cmpfunc = get_opfamily_proc(opfamily,
-									 opcintype,
-									 opcintype,
-									 BTORDER_PROC);
-
-		if (!OidIsValid(*cmpfunc))		/* should not happen */
-			elog(ERROR, "missing support function %d(%u,%u) in opfamily %u",
-				 BTORDER_PROC, opcintype, opcintype, opfamily);
+		*sortfunc = get_opfamily_proc(opfamily,
+									  opcintype,
+									  opcintype,
+									  BTSORTSUPPORT_PROC);
+		if (OidIsValid(*sortfunc))
+			*issupport = true;
+		else
+		{
+			/* opfamily doesn't provide sort support, get comparison func */
+			*sortfunc = get_opfamily_proc(opfamily,
+										  opcintype,
+										  opcintype,
+										  BTORDER_PROC);
+			if (!OidIsValid(*sortfunc))		/* should not happen */
+				elog(ERROR, "missing support function %d(%u,%u) in opfamily %u",
+					 BTORDER_PROC, opcintype, opcintype, opfamily);
+			*issupport = false;
+		}
 		*reverse = (strategy == BTGreaterStrategyNumber);
 		return true;
 	}
 
 	/* ensure outputs are set on failure */
-	*cmpfunc = InvalidOid;
-
+	*sortfunc = InvalidOid;
+	*issupport = false;
 	*reverse = false;
 	return false;
 }

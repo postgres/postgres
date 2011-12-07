@@ -104,6 +104,7 @@ extern Datum date_le(PG_FUNCTION_ARGS);
 extern Datum date_gt(PG_FUNCTION_ARGS);
 extern Datum date_ge(PG_FUNCTION_ARGS);
 extern Datum date_cmp(PG_FUNCTION_ARGS);
+extern Datum date_sortsupport(PG_FUNCTION_ARGS);
 extern Datum date_finite(PG_FUNCTION_ARGS);
 extern Datum date_larger(PG_FUNCTION_ARGS);
 extern Datum date_smaller(PG_FUNCTION_ARGS);

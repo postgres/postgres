@@ -23,6 +23,7 @@
 #include "libpq/pqformat.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/sortsupport.h"
 
 
 #ifndef M_PI
@@ -936,6 +937,24 @@ btfloat4cmp(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(float4_cmp_internal(arg1, arg2));
 }
 
+static int
+btfloat4fastcmp(Datum x, Datum y, SortSupport ssup)
+{
+	float4		arg1 = DatumGetFloat4(x);
+	float4		arg2 = DatumGetFloat4(y);
+
+	return float4_cmp_internal(arg1, arg2);
+}
+
+Datum
+btfloat4sortsupport(PG_FUNCTION_ARGS)
+{
+	SortSupport	ssup = (SortSupport) PG_GETARG_POINTER(0);
+
+	ssup->comparator = btfloat4fastcmp;
+	PG_RETURN_VOID();
+}
+
 /*
  *		float8{eq,ne,lt,le,gt,ge}		- float8/float8 comparison operations
  */
@@ -1030,6 +1049,24 @@ btfloat8cmp(PG_FUNCTION_ARGS)
 	float8		arg2 = PG_GETARG_FLOAT8(1);
 
 	PG_RETURN_INT32(float8_cmp_internal(arg1, arg2));
+}
+
+static int
+btfloat8fastcmp(Datum x, Datum y, SortSupport ssup)
+{
+	float8		arg1 = DatumGetFloat8(x);
+	float8		arg2 = DatumGetFloat8(y);
+
+	return float8_cmp_internal(arg1, arg2);
+}
+
+Datum
+btfloat8sortsupport(PG_FUNCTION_ARGS)
+{
+	SortSupport	ssup = (SortSupport) PG_GETARG_POINTER(0);
+
+	ssup->comparator = btfloat8fastcmp;
+	PG_RETURN_VOID();
 }
 
 Datum

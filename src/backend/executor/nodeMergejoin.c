@@ -95,8 +95,6 @@
 #include "access/nbtree.h"
 #include "executor/execdebug.h"
 #include "executor/nodeMergejoin.h"
-#include "miscadmin.h"
-#include "utils/acl.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 
@@ -135,13 +133,10 @@ typedef struct MergeJoinClauseData
 	bool		risnull;
 
 	/*
-	 * The comparison strategy in use, and the lookup info to let us call the
-	 * btree comparison support function, and the collation to use.
+	 * Everything we need to know to compare the left and right values is
+	 * stored here.
 	 */
-	bool		reverse;		/* if true, negate the cmpfn's output */
-	bool		nulls_first;	/* if true, nulls sort low */
-	FmgrInfo	cmpfinfo;
-	Oid			collation;
+	SortSupportData ssup;
 }	MergeJoinClauseData;
 
 /* Result type for MJEvalOuterValues and MJEvalInnerValues */
@@ -203,8 +198,7 @@ MJExamineQuals(List *mergeclauses,
 		int			op_strategy;
 		Oid			op_lefttype;
 		Oid			op_righttype;
-		RegProcedure cmpproc;
-		AclResult	aclresult;
+		Oid			sortfunc;
 
 		if (!IsA(qual, OpExpr))
 			elog(ERROR, "mergejoin clause is not an OpExpr");
@@ -215,6 +209,17 @@ MJExamineQuals(List *mergeclauses,
 		clause->lexpr = ExecInitExpr((Expr *) linitial(qual->args), parent);
 		clause->rexpr = ExecInitExpr((Expr *) lsecond(qual->args), parent);
 
+		/* Set up sort support data */
+		clause->ssup.ssup_cxt = CurrentMemoryContext;
+		clause->ssup.ssup_collation = collation;
+		if (opstrategy == BTLessStrategyNumber)
+			clause->ssup.ssup_reverse = false;
+		else if (opstrategy == BTGreaterStrategyNumber)
+			clause->ssup.ssup_reverse = true;
+		else	/* planner screwed up */
+			elog(ERROR, "unsupported mergejoin strategy %d", opstrategy);
+		clause->ssup.ssup_nulls_first = nulls_first;
+
 		/* Extract the operator's declared left/right datatypes */
 		get_op_opfamily_properties(qual->opno, opfamily, false,
 								   &op_strategy,
@@ -224,36 +229,30 @@ MJExamineQuals(List *mergeclauses,
 			elog(ERROR, "cannot merge using non-equality operator %u",
 				 qual->opno);
 
-		/* And get the matching support procedure (comparison function) */
-		cmpproc = get_opfamily_proc(opfamily,
-									op_lefttype,
-									op_righttype,
-									BTORDER_PROC);
-		if (!RegProcedureIsValid(cmpproc))		/* should not happen */
-			elog(ERROR, "missing support function %d(%u,%u) in opfamily %u",
-				 BTORDER_PROC, op_lefttype, op_righttype, opfamily);
-
-		/* Check permission to call cmp function */
-		aclresult = pg_proc_aclcheck(cmpproc, GetUserId(), ACL_EXECUTE);
-		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_PROC,
-						   get_func_name(cmpproc));
-
-		/* Set up the fmgr lookup information */
-		fmgr_info(cmpproc, &(clause->cmpfinfo));
-
-		/* Fill the additional comparison-strategy flags */
-		if (opstrategy == BTLessStrategyNumber)
-			clause->reverse = false;
-		else if (opstrategy == BTGreaterStrategyNumber)
-			clause->reverse = true;
-		else	/* planner screwed up */
-			elog(ERROR, "unsupported mergejoin strategy %d", opstrategy);
-
-		clause->nulls_first = nulls_first;
-
-		/* ... and the collation too */
-		clause->collation = collation;
+		/* And get the matching support or comparison function */
+		sortfunc = get_opfamily_proc(opfamily,
+									 op_lefttype,
+									 op_righttype,
+									 BTSORTSUPPORT_PROC);
+		if (OidIsValid(sortfunc))
+		{
+			/* The sort support function should provide a comparator */
+			OidFunctionCall1(sortfunc, PointerGetDatum(&clause->ssup));
+			Assert(clause->ssup.comparator != NULL);
+		}
+		else
+		{
+			/* opfamily doesn't provide sort support, get comparison func */
+			sortfunc = get_opfamily_proc(opfamily,
+										 op_lefttype,
+										 op_righttype,
+										 BTORDER_PROC);
+			if (!OidIsValid(sortfunc))		/* should not happen */
+				elog(ERROR, "missing support function %d(%u,%u) in opfamily %u",
+					 BTORDER_PROC, op_lefttype, op_righttype, opfamily);
+			/* We'll use a shim to call the old-style btree comparator */
+			PrepareSortSupportComparisonShim(sortfunc, &clause->ssup);
+		}
 
 		iClause++;
 	}
@@ -310,7 +309,8 @@ MJEvalOuterValues(MergeJoinState *mergestate)
 		if (clause->lisnull)
 		{
 			/* match is impossible; can we end the join early? */
-			if (i == 0 && !clause->nulls_first && !mergestate->mj_FillOuter)
+			if (i == 0 && !clause->ssup.ssup_nulls_first &&
+				!mergestate->mj_FillOuter)
 				result = MJEVAL_ENDOFJOIN;
 			else if (result == MJEVAL_MATCHABLE)
 				result = MJEVAL_NONMATCHABLE;
@@ -356,7 +356,8 @@ MJEvalInnerValues(MergeJoinState *mergestate, TupleTableSlot *innerslot)
 		if (clause->risnull)
 		{
 			/* match is impossible; can we end the join early? */
-			if (i == 0 && !clause->nulls_first && !mergestate->mj_FillInner)
+			if (i == 0 && !clause->ssup.ssup_nulls_first &&
+				!mergestate->mj_FillInner)
 				result = MJEVAL_ENDOFJOIN;
 			else if (result == MJEVAL_MATCHABLE)
 				result = MJEVAL_NONMATCHABLE;
@@ -373,20 +374,19 @@ MJEvalInnerValues(MergeJoinState *mergestate, TupleTableSlot *innerslot)
  *
  * Compare the mergejoinable values of the current two input tuples
  * and return 0 if they are equal (ie, the mergejoin equalities all
- * succeed), +1 if outer > inner, -1 if outer < inner.
+ * succeed), >0 if outer > inner, <0 if outer < inner.
  *
  * MJEvalOuterValues and MJEvalInnerValues must already have been called
  * for the current outer and inner tuples, respectively.
  */
-static int32
+static int
 MJCompare(MergeJoinState *mergestate)
 {
-	int32		result = 0;
+	int			result = 0;
 	bool		nulleqnull = false;
 	ExprContext *econtext = mergestate->js.ps.ps_ExprContext;
 	int			i;
 	MemoryContext oldContext;
-	FunctionCallInfoData fcinfo;
 
 	/*
 	 * Call the comparison functions in short-lived context, in case they leak
@@ -399,62 +399,28 @@ MJCompare(MergeJoinState *mergestate)
 	for (i = 0; i < mergestate->mj_NumClauses; i++)
 	{
 		MergeJoinClause clause = &mergestate->mj_Clauses[i];
-		Datum		fresult;
 
 		/*
-		 * Deal with null inputs.
+		 * Special case for NULL-vs-NULL, else use standard comparison.
 		 */
-		if (clause->lisnull)
+		if (clause->lisnull && clause->risnull)
 		{
-			if (clause->risnull)
-			{
-				nulleqnull = true;		/* NULL "=" NULL */
-				continue;
-			}
-			if (clause->nulls_first)
-				result = -1;	/* NULL "<" NOT_NULL */
-			else
-				result = 1;		/* NULL ">" NOT_NULL */
-			break;
-		}
-		if (clause->risnull)
-		{
-			if (clause->nulls_first)
-				result = 1;		/* NOT_NULL ">" NULL */
-			else
-				result = -1;	/* NOT_NULL "<" NULL */
-			break;
-		}
-
-		/*
-		 * OK to call the comparison function.
-		 */
-		InitFunctionCallInfoData(fcinfo, &(clause->cmpfinfo), 2,
-								 clause->collation, NULL, NULL);
-		fcinfo.arg[0] = clause->ldatum;
-		fcinfo.arg[1] = clause->rdatum;
-		fcinfo.argnull[0] = false;
-		fcinfo.argnull[1] = false;
-		fresult = FunctionCallInvoke(&fcinfo);
-		if (fcinfo.isnull)
-		{
-			nulleqnull = true;	/* treat like NULL = NULL */
+			nulleqnull = true;		/* NULL "=" NULL */
 			continue;
 		}
-		result = DatumGetInt32(fresult);
 
-		if (clause->reverse)
-			result = -result;
+		result = ApplySortComparator(clause->ldatum, clause->lisnull,
+									 clause->rdatum, clause->risnull,
+									 &clause->ssup);
 
 		if (result != 0)
 			break;
 	}
 
 	/*
-	 * If we had any null comparison results or NULL-vs-NULL inputs, we do not
-	 * want to report that the tuples are equal.  Instead, if result is still
-	 * 0, change it to +1.	This will result in advancing the inner side of
-	 * the join.
+	 * If we had any NULL-vs-NULL inputs, we do not want to report that the
+	 * tuples are equal.  Instead, if result is still 0, change it to +1.
+	 * This will result in advancing the inner side of the join.
 	 *
 	 * Likewise, if there was a constant-false joinqual, do not report
 	 * equality.  We have to check this as part of the mergequals, else the
@@ -647,7 +613,7 @@ ExecMergeJoin(MergeJoinState *node)
 	List	   *joinqual;
 	List	   *otherqual;
 	bool		qualResult;
-	int32		compareResult;
+	int			compareResult;
 	PlanState  *innerPlan;
 	TupleTableSlot *innerTupleSlot;
 	PlanState  *outerPlan;

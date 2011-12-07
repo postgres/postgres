@@ -20,6 +20,7 @@
 #include "nodes/params.h"
 #include "nodes/plannodes.h"
 #include "utils/reltrigger.h"
+#include "utils/sortsupport.h"
 #include "utils/tuplestore.h"
 
 
@@ -1087,7 +1088,7 @@ typedef struct AppendState
  *
  *		nplans			how many plans are in the array
  *		nkeys			number of sort key columns
- *		scankeys		sort keys in ScanKey representation
+ *		sortkeys		sort keys in SortSupport representation
  *		slots			current output tuple of each subplan
  *		heap			heap of active tuples (represented as array indexes)
  *		heap_size		number of active heap entries
@@ -1101,7 +1102,7 @@ typedef struct MergeAppendState
 	PlanState **mergeplans;		/* array of PlanStates for my inputs */
 	int			ms_nplans;
 	int			ms_nkeys;
-	ScanKey		ms_scankeys;	/* array of length ms_nkeys */
+	SortSupport	ms_sortkeys;	/* array of length ms_nkeys */
 	TupleTableSlot **ms_slots;	/* array of length ms_nplans */
 	int		   *ms_heap;		/* array of length ms_nplans */
 	int			ms_heap_size;	/* current active length of ms_heap[] */

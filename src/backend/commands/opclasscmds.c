@@ -19,6 +19,7 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/nbtree.h"
 #include "access/sysattr.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
@@ -1151,27 +1152,48 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 	procform = (Form_pg_proc) GETSTRUCT(proctup);
 
 	/*
-	 * btree support procs must be 2-arg procs returning int4; hash support
-	 * procs must be 1-arg procs returning int4; otherwise we don't know.
+	 * btree comparison procs must be 2-arg procs returning int4, while btree
+	 * sortsupport procs must take internal and return void.  hash support
+	 * procs must be 1-arg procs returning int4.  Otherwise we don't know.
 	 */
 	if (amoid == BTREE_AM_OID)
 	{
-		if (procform->pronargs != 2)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("btree procedures must have two arguments")));
-		if (procform->prorettype != INT4OID)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("btree procedures must return integer")));
+		if (member->number == BTORDER_PROC)
+		{
+			if (procform->pronargs != 2)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("btree comparison procedures must have two arguments")));
+			if (procform->prorettype != INT4OID)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("btree comparison procedures must return integer")));
 
-		/*
-		 * If lefttype/righttype isn't specified, use the proc's input types
-		 */
-		if (!OidIsValid(member->lefttype))
-			member->lefttype = procform->proargtypes.values[0];
-		if (!OidIsValid(member->righttype))
-			member->righttype = procform->proargtypes.values[1];
+			/*
+			 * If lefttype/righttype isn't specified, use the proc's input
+			 * types
+			 */
+			if (!OidIsValid(member->lefttype))
+				member->lefttype = procform->proargtypes.values[0];
+			if (!OidIsValid(member->righttype))
+				member->righttype = procform->proargtypes.values[1];
+		}
+		else if (member->number == BTSORTSUPPORT_PROC)
+		{
+			if (procform->pronargs != 1 ||
+				procform->proargtypes.values[0] != INTERNALOID)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("btree sort support procedures must accept type \"internal\"")));
+			if (procform->prorettype != VOIDOID)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("btree sort support procedures must return void")));
+
+			/*
+			 * Can't infer lefttype/righttype from proc, so use default rule
+			 */
+		}
 	}
 	else if (amoid == HASH_AM_OID)
 	{
@@ -1192,23 +1214,21 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 		if (!OidIsValid(member->righttype))
 			member->righttype = procform->proargtypes.values[0];
 	}
-	else
-	{
-		/*
-		 * The default for GiST and GIN in CREATE OPERATOR CLASS is to use the
-		 * class' opcintype as lefttype and righttype.  In CREATE or ALTER
-		 * OPERATOR FAMILY, opcintype isn't available, so make the user
-		 * specify the types.
-		 */
-		if (!OidIsValid(member->lefttype))
-			member->lefttype = typeoid;
-		if (!OidIsValid(member->righttype))
-			member->righttype = typeoid;
-		if (!OidIsValid(member->lefttype) || !OidIsValid(member->righttype))
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("associated data types must be specified for index support procedure")));
-	}
+
+	/*
+	 * The default in CREATE OPERATOR CLASS is to use the class' opcintype as
+	 * lefttype and righttype.  In CREATE or ALTER OPERATOR FAMILY, opcintype
+	 * isn't available, so make the user specify the types.
+	 */
+	if (!OidIsValid(member->lefttype))
+		member->lefttype = typeoid;
+	if (!OidIsValid(member->righttype))
+		member->righttype = typeoid;
+
+	if (!OidIsValid(member->lefttype) || !OidIsValid(member->righttype))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("associated data types must be specified for index support procedure")));
 
 	ReleaseSysCache(proctup);
 }

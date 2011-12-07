@@ -566,16 +566,28 @@ DESCR("I/O");
 
 DATA(insert OID = 350 (  btint2cmp		   PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 23 "21 21" _null_ _null_ _null_ _null_ btint2cmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
+DATA(insert OID = 3129 ( btint2sortsupport PGNSP PGUID 12 1 0 0 0 f f f t f i 1 0 2278 "2281" _null_ _null_ _null_ _null_ btint2sortsupport _null_ _null_ _null_ ));
+DESCR("sort support");
 DATA(insert OID = 351 (  btint4cmp		   PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 23 "23 23" _null_ _null_ _null_ _null_ btint4cmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
+DATA(insert OID = 3130 ( btint4sortsupport PGNSP PGUID 12 1 0 0 0 f f f t f i 1 0 2278 "2281" _null_ _null_ _null_ _null_ btint4sortsupport _null_ _null_ _null_ ));
+DESCR("sort support");
 DATA(insert OID = 842 (  btint8cmp		   PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 23 "20 20" _null_ _null_ _null_ _null_ btint8cmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
+DATA(insert OID = 3131 ( btint8sortsupport PGNSP PGUID 12 1 0 0 0 f f f t f i 1 0 2278 "2281" _null_ _null_ _null_ _null_ btint8sortsupport _null_ _null_ _null_ ));
+DESCR("sort support");
 DATA(insert OID = 354 (  btfloat4cmp	   PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 23 "700 700" _null_ _null_ _null_ _null_ btfloat4cmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
+DATA(insert OID = 3132 ( btfloat4sortsupport PGNSP PGUID 12 1 0 0 0 f f f t f i 1 0 2278 "2281" _null_ _null_ _null_ _null_ btfloat4sortsupport _null_ _null_ _null_ ));
+DESCR("sort support");
 DATA(insert OID = 355 (  btfloat8cmp	   PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 23 "701 701" _null_ _null_ _null_ _null_ btfloat8cmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
+DATA(insert OID = 3133 ( btfloat8sortsupport PGNSP PGUID 12 1 0 0 0 f f f t f i 1 0 2278 "2281" _null_ _null_ _null_ _null_ btfloat8sortsupport _null_ _null_ _null_ ));
+DESCR("sort support");
 DATA(insert OID = 356 (  btoidcmp		   PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 23 "26 26" _null_ _null_ _null_ _null_ btoidcmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
+DATA(insert OID = 3134 ( btoidsortsupport PGNSP PGUID 12 1 0 0 0 f f f t f i 1 0 2278 "2281" _null_ _null_ _null_ _null_ btoidsortsupport _null_ _null_ _null_ ));
+DESCR("sort support");
 DATA(insert OID = 404 (  btoidvectorcmp    PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 23 "30 30" _null_ _null_ _null_ _null_ btoidvectorcmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 DATA(insert OID = 357 (  btabstimecmp	   PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 23 "702 702" _null_ _null_ _null_ _null_ btabstimecmp _null_ _null_ _null_ ));
@@ -584,6 +596,8 @@ DATA(insert OID = 358 (  btcharcmp		   PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 23
 DESCR("less-equal-greater");
 DATA(insert OID = 359 (  btnamecmp		   PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 23 "19 19" _null_ _null_ _null_ _null_ btnamecmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
+DATA(insert OID = 3135 ( btnamesortsupport PGNSP PGUID 12 1 0 0 0 f f f t f i 1 0 2278 "2281" _null_ _null_ _null_ _null_ btnamesortsupport _null_ _null_ _null_ ));
+DESCR("sort support");
 DATA(insert OID = 360 (  bttextcmp		   PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 23 "25 25" _null_ _null_ _null_ _null_ bttextcmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 DATA(insert OID = 377 (  cash_cmp		   PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 23 "790 790" _null_ _null_ _null_ _null_ cash_cmp _null_ _null_ _null_ ));
@@ -1122,6 +1136,8 @@ DATA(insert OID = 1090 (  date_ge		   PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 16 
 DATA(insert OID = 1091 (  date_ne		   PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 16 "1082 1082" _null_ _null_ _null_ _null_ date_ne _null_ _null_ _null_ ));
 DATA(insert OID = 1092 (  date_cmp		   PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 23 "1082 1082" _null_ _null_ _null_ _null_ date_cmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
+DATA(insert OID = 3136 (  date_sortsupport PGNSP PGUID 12 1 0 0 0 f f f t f i 1 0 2278 "2281" _null_ _null_ _null_ _null_ date_sortsupport _null_ _null_ _null_ ));
+DESCR("sort support");
 
 /* OIDS 1100 - 1199 */
 
@@ -2769,6 +2785,8 @@ DATA(insert OID = 2044 ( overlaps			PGNSP PGUID 14 1 0 0 0 f f f f f i 4 0 16 "1
 DESCR("intervals overlap?");
 DATA(insert OID = 2045 (  timestamp_cmp		PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 23 "1114 1114" _null_ _null_ _null_ _null_ timestamp_cmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
+DATA(insert OID = 3137 (  timestamp_sortsupport PGNSP PGUID 12 1 0 0 0 f f f t f i 1 0 2278 "2281" _null_ _null_ _null_ _null_ timestamp_sortsupport _null_ _null_ _null_ ));
+DESCR("sort support");
 DATA(insert OID = 2046 (  time				PGNSP PGUID 12 1 0 0 0 f f f t f i 1 0 1083 "1266" _null_ _null_ _null_ _null_ timetz_time _null_ _null_ _null_ ));
 DESCR("convert time with time zone to time");
 DATA(insert OID = 2047 (  timetz			PGNSP PGUID 12 1 0 0 0 f f f t f s 1 0 1266 "1083" _null_ _null_ _null_ _null_ time_timetz _null_ _null_ _null_ ));

@@ -117,7 +117,7 @@ typedef FormData_pg_am *Form_pg_am;
  * ----------------
  */
 
-DATA(insert OID = 403 (  btree	5 1 t f t t t t t t t f t t 0 btinsert btbeginscan btgettuple btgetbitmap btrescan btendscan btmarkpos btrestrpos btbuild btbuildempty btbulkdelete btvacuumcleanup btcostestimate btoptions ));
+DATA(insert OID = 403 (  btree	5 2 t f t t t t t t t f t t 0 btinsert btbeginscan btgettuple btgetbitmap btrescan btendscan btmarkpos btrestrpos btbuild btbuildempty btbulkdelete btvacuumcleanup btcostestimate btoptions ));
 DESCR("b-tree index access method");
 #define BTREE_AM_OID 403
 DATA(insert OID = 405 (  hash	1 1 f f t f f f f f f f f f 23 hashinsert hashbeginscan hashgettuple hashgetbitmap hashrescan hashendscan hashmarkpos hashrestrpos hashbuild hashbuildempty hashbulkdelete hashvacuumcleanup hashcostestimate hashoptions ));

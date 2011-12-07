@@ -38,10 +38,8 @@
 
 #include "postgres.h"
 
-#include "access/nbtree.h"
 #include "executor/execdebug.h"
 #include "executor/nodeMergeAppend.h"
-#include "utils/lsyscache.h"
 
 /*
  * It gets quite confusing having a heap array (indexed by integers) which
@@ -128,38 +126,18 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 	 * initialize sort-key information
 	 */
 	mergestate->ms_nkeys = node->numCols;
-	mergestate->ms_scankeys = palloc0(sizeof(ScanKeyData) * node->numCols);
+	mergestate->ms_sortkeys = palloc0(sizeof(SortSupportData) * node->numCols);
 
 	for (i = 0; i < node->numCols; i++)
 	{
-		Oid			sortFunction;
-		bool		reverse;
-		int			flags;
+		SortSupport	sortKey = mergestate->ms_sortkeys + i;
 
-		if (!get_compare_function_for_ordering_op(node->sortOperators[i],
-												  &sortFunction, &reverse))
-			elog(ERROR, "operator %u is not a valid ordering operator",
-				 node->sortOperators[i]);
+		sortKey->ssup_cxt = CurrentMemoryContext;
+		sortKey->ssup_collation = node->collations[i];
+		sortKey->ssup_nulls_first = node->nullsFirst[i];
+		sortKey->ssup_attno = node->sortColIdx[i];
 
-		/* We use btree's conventions for encoding directionality */
-		flags = 0;
-		if (reverse)
-			flags |= SK_BT_DESC;
-		if (node->nullsFirst[i])
-			flags |= SK_BT_NULLS_FIRST;
-
-		/*
-		 * We needn't fill in sk_strategy or sk_subtype since these scankeys
-		 * will never be passed to an index.
-		 */
-		ScanKeyEntryInitialize(&mergestate->ms_scankeys[i],
-							   flags,
-							   node->sortColIdx[i],
-							   InvalidStrategy,
-							   InvalidOid,
-							   node->collations[i],
-							   sortFunction,
-							   (Datum) 0);
+		PrepareSortSupportFromOrderingOp(node->sortOperators[i], sortKey);
 	}
 
 	/*
@@ -298,45 +276,22 @@ heap_compare_slots(MergeAppendState *node, SlotNumber slot1, SlotNumber slot2)
 
 	for (nkey = 0; nkey < node->ms_nkeys; nkey++)
 	{
-		ScanKey		scankey = node->ms_scankeys + nkey;
-		AttrNumber	attno = scankey->sk_attno;
+		SortSupport	sortKey = node->ms_sortkeys + nkey;
+		AttrNumber	attno = sortKey->ssup_attno;
 		Datum		datum1,
 					datum2;
 		bool		isNull1,
 					isNull2;
-		int32		compare;
+		int			compare;
 
 		datum1 = slot_getattr(s1, attno, &isNull1);
 		datum2 = slot_getattr(s2, attno, &isNull2);
 
-		if (isNull1)
-		{
-			if (isNull2)
-				continue;		/* NULL "=" NULL */
-			else if (scankey->sk_flags & SK_BT_NULLS_FIRST)
-				return -1;		/* NULL "<" NOT_NULL */
-			else
-				return 1;		/* NULL ">" NOT_NULL */
-		}
-		else if (isNull2)
-		{
-			if (scankey->sk_flags & SK_BT_NULLS_FIRST)
-				return 1;		/* NOT_NULL ">" NULL */
-			else
-				return -1;		/* NOT_NULL "<" NULL */
-		}
-		else
-		{
-			compare = DatumGetInt32(FunctionCall2Coll(&scankey->sk_func,
-													  scankey->sk_collation,
-													  datum1, datum2));
-			if (compare != 0)
-			{
-				if (scankey->sk_flags & SK_BT_DESC)
-					compare = -compare;
-				return compare;
-			}
-		}
+		compare = ApplySortComparator(datum1, isNull1,
+									  datum2, isNull2,
+									  sortKey);
+		if (compare != 0)
+			return compare;
 	}
 	return 0;
 }

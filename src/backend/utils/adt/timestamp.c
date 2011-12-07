@@ -1830,6 +1830,25 @@ timestamp_cmp(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(timestamp_cmp_internal(dt1, dt2));
 }
 
+/* note: this is used for timestamptz also */
+static int
+timestamp_fastcmp(Datum x, Datum y, SortSupport ssup)
+{
+	Timestamp	a = DatumGetTimestamp(x);
+	Timestamp	b = DatumGetTimestamp(y);
+
+	return timestamp_cmp_internal(a, b);
+}
+
+Datum
+timestamp_sortsupport(PG_FUNCTION_ARGS)
+{
+	SortSupport	ssup = (SortSupport) PG_GETARG_POINTER(0);
+
+	ssup->comparator = timestamp_fastcmp;
+	PG_RETURN_VOID();
+}
+
 Datum
 timestamp_hash(PG_FUNCTION_ARGS)
 {

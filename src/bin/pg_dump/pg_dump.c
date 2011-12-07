@@ -9892,6 +9892,8 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 	int			i_sortfamilynsp;
 	int			i_amprocnum;
 	int			i_amproc;
+	int			i_amproclefttype;
+	int			i_amprocrighttype;
 	char	   *opcintype;
 	char	   *opckeytype;
 	char	   *opcdefault;
@@ -9906,6 +9908,8 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 	char	   *sortfamilynsp;
 	char	   *amprocnum;
 	char	   *amproc;
+	char	   *amproclefttype;
+	char	   *amprocrighttype;
 	bool		needComma;
 	int			i;
 
@@ -10150,13 +10154,21 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 	 *
 	 * Print only those opfamily members that are tied to the opclass by
 	 * pg_depend entries.
+	 *
+	 * We print the amproclefttype/amprocrighttype even though in most cases
+	 * the backend could deduce the right values, because of the corner case
+	 * of a btree sort support function for a cross-type comparison.  That's
+	 * only allowed in 9.2 and later, but for simplicity print them in all
+	 * versions that have the columns.
 	 */
 	resetPQExpBuffer(query);
 
 	if (g_fout->remoteVersion >= 80300)
 	{
 		appendPQExpBuffer(query, "SELECT amprocnum, "
-						  "amproc::pg_catalog.regprocedure "
+						  "amproc::pg_catalog.regprocedure, "
+						  "amproclefttype::pg_catalog.regtype, "
+						  "amprocrighttype::pg_catalog.regtype "
 						"FROM pg_catalog.pg_amproc ap, pg_catalog.pg_depend "
 		   "WHERE refclassid = 'pg_catalog.pg_opclass'::pg_catalog.regclass "
 						  "AND refobjid = '%u'::pg_catalog.oid "
@@ -10168,7 +10180,9 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 	else
 	{
 		appendPQExpBuffer(query, "SELECT amprocnum, "
-						  "amproc::pg_catalog.regprocedure "
+						  "amproc::pg_catalog.regprocedure, "
+						  "'' AS amproclefttype, "
+						  "'' AS amprocrighttype "
 						  "FROM pg_catalog.pg_amproc "
 						  "WHERE amopclaid = '%u'::pg_catalog.oid "
 						  "ORDER BY amprocnum",
@@ -10182,17 +10196,25 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 
 	i_amprocnum = PQfnumber(res, "amprocnum");
 	i_amproc = PQfnumber(res, "amproc");
+	i_amproclefttype = PQfnumber(res, "amproclefttype");
+	i_amprocrighttype = PQfnumber(res, "amprocrighttype");
 
 	for (i = 0; i < ntups; i++)
 	{
 		amprocnum = PQgetvalue(res, i, i_amprocnum);
 		amproc = PQgetvalue(res, i, i_amproc);
+		amproclefttype = PQgetvalue(res, i, i_amproclefttype);
+		amprocrighttype = PQgetvalue(res, i, i_amprocrighttype);
 
 		if (needComma)
 			appendPQExpBuffer(q, " ,\n    ");
 
-		appendPQExpBuffer(q, "FUNCTION %s %s",
-						  amprocnum, amproc);
+		appendPQExpBuffer(q, "FUNCTION %s", amprocnum);
+
+		if (*amproclefttype && *amprocrighttype)
+			appendPQExpBuffer(q, " (%s, %s)", amproclefttype, amprocrighttype);
+
+		appendPQExpBuffer(q, " %s", amproc);
 
 		needComma = true;
 	}

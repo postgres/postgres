@@ -169,13 +169,14 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
      <para>
       In a <literal>FUNCTION</> clause, the operand data type(s) the
       function is intended to support, if different from
-      the input data type(s) of the function (for B-tree and hash indexes)
-      or the class's data type (for GIN and GiST indexes).  These defaults
-      are always correct, so there is no point in specifying <replaceable
-      class="parameter">op_type</replaceable> in a <literal>FUNCTION</> clause
-      in <command>CREATE OPERATOR CLASS</>, but the option is provided
-      for consistency with the comparable syntax in
-      <command>ALTER OPERATOR FAMILY</>.
+      the input data type(s) of the function (for B-tree comparison functions
+      and hash functions)
+      or the class's data type (for B-tree sort support functions and all
+      functions in GiST and GIN operator classes).  These defaults
+      are correct, and so <replaceable
+      class="parameter">op_type</replaceable> need not be specified in
+      <literal>FUNCTION</> clauses, except for the case of a B-tree sort
+      support function that is meant to support cross-data-type comparisons.
      </para>
     </listitem>
    </varlistentry>

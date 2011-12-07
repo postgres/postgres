@@ -112,6 +112,7 @@
 #include "utils/memutils.h"
 #include "utils/pg_rusage.h"
 #include "utils/rel.h"
+#include "utils/sortsupport.h"
 #include "utils/tuplesort.h"
 
 
@@ -339,7 +340,7 @@ struct Tuplesortstate
 	 * tuplesort_begin_heap and used only by the MinimalTuple routines.
 	 */
 	TupleDesc	tupDesc;
-	ScanKey		scanKeys;		/* array of length nKeys */
+	SortSupport	sortKeys;		/* array of length nKeys */
 
 	/*
 	 * These variables are specific to the CLUSTER case; they are set by
@@ -367,9 +368,7 @@ struct Tuplesortstate
 	 * tuplesort_begin_datum and used only by the DatumTuple routines.
 	 */
 	Oid			datumType;
-	FmgrInfo	sortOpFn;		/* cached lookup data for sortOperator */
-	int			sortFnFlags;	/* equivalent to sk_flags */
-	Oid			sortCollation;	/* equivalent to sk_collation */
+	SortSupport	datumKey;
 	/* we need typelen and byval in order to know how to copy the Datums. */
 	int			datumTypeLen;
 	bool		datumTypeByVal;
@@ -613,41 +612,23 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 	state->reversedirection = reversedirection_heap;
 
 	state->tupDesc = tupDesc;	/* assume we need not copy tupDesc */
-	state->scanKeys = (ScanKey) palloc0(nkeys * sizeof(ScanKeyData));
+
+	/* Prepare SortSupport data for each column */
+	state->sortKeys = (SortSupport) palloc0(nkeys * sizeof(SortSupportData));
 
 	for (i = 0; i < nkeys; i++)
 	{
-		Oid			sortFunction;
-		bool		reverse;
-		int			flags;
+		SortSupport	sortKey = state->sortKeys + i;
 
 		AssertArg(attNums[i] != 0);
 		AssertArg(sortOperators[i] != 0);
 
-		if (!get_compare_function_for_ordering_op(sortOperators[i],
-												  &sortFunction, &reverse))
-			elog(ERROR, "operator %u is not a valid ordering operator",
-				 sortOperators[i]);
+		sortKey->ssup_cxt = CurrentMemoryContext;
+		sortKey->ssup_collation = sortCollations[i];
+		sortKey->ssup_nulls_first = nullsFirstFlags[i];
+		sortKey->ssup_attno = attNums[i];
 
-		/* We use btree's conventions for encoding directionality */
-		flags = 0;
-		if (reverse)
-			flags |= SK_BT_DESC;
-		if (nullsFirstFlags[i])
-			flags |= SK_BT_NULLS_FIRST;
-
-		/*
-		 * We needn't fill in sk_strategy or sk_subtype since these scankeys
-		 * will never be passed to an index.
-		 */
-		ScanKeyEntryInitialize(&state->scanKeys[i],
-							   flags,
-							   attNums[i],
-							   InvalidStrategy,
-							   InvalidOid,
-							   sortCollations[i],
-							   sortFunction,
-							   (Datum) 0);
+		PrepareSortSupportFromOrderingOp(sortOperators[i], sortKey);
 	}
 
 	MemoryContextSwitchTo(oldcontext);
@@ -799,8 +780,6 @@ tuplesort_begin_datum(Oid datumType, Oid sortOperator, Oid sortCollation,
 {
 	Tuplesortstate *state = tuplesort_begin_common(workMem, randomAccess);
 	MemoryContext oldcontext;
-	Oid			sortFunction;
-	bool		reverse;
 	int16		typlen;
 	bool		typbyval;
 
@@ -829,18 +808,14 @@ tuplesort_begin_datum(Oid datumType, Oid sortOperator, Oid sortCollation,
 
 	state->datumType = datumType;
 
-	/* lookup the ordering function */
-	if (!get_compare_function_for_ordering_op(sortOperator,
-											  &sortFunction, &reverse))
-		elog(ERROR, "operator %u is not a valid ordering operator",
-			 sortOperator);
-	fmgr_info(sortFunction, &state->sortOpFn);
+	/* Prepare SortSupport data */
+	state->datumKey = (SortSupport) palloc0(sizeof(SortSupportData));
 
-	/* set ordering flags and collation */
-	state->sortFnFlags = reverse ? SK_BT_DESC : 0;
-	if (nullsFirstFlag)
-		state->sortFnFlags |= SK_BT_NULLS_FIRST;
-	state->sortCollation = sortCollation;
+	state->datumKey->ssup_cxt = CurrentMemoryContext;
+	state->datumKey->ssup_collation = sortCollation;
+	state->datumKey->ssup_nulls_first = nullsFirstFlag;
+
+	PrepareSortSupportFromOrderingOp(sortOperator, state->datumKey);
 
 	/* lookup necessary attributes of the datum type */
 	get_typlenbyval(datumType, &typlen, &typbyval);
@@ -2605,29 +2580,6 @@ markrunend(Tuplesortstate *state, int tapenum)
 
 
 /*
- * Set up for an external caller of ApplySortFunction.	This function
- * basically just exists to localize knowledge of the encoding of sk_flags
- * used in this module.
- */
-void
-SelectSortFunction(Oid sortOperator,
-				   bool nulls_first,
-				   Oid *sortFunction,
-				   int *sortFlags)
-{
-	bool		reverse;
-
-	if (!get_compare_function_for_ordering_op(sortOperator,
-											  sortFunction, &reverse))
-		elog(ERROR, "operator %u is not a valid ordering operator",
-			 sortOperator);
-
-	*sortFlags = reverse ? SK_BT_DESC : 0;
-	if (nulls_first)
-		*sortFlags |= SK_BT_NULLS_FIRST;
-}
-
-/*
  * Inline-able copy of FunctionCall2Coll() to save some cycles in sorting.
  */
 static inline Datum
@@ -2693,20 +2645,6 @@ inlineApplySortFunction(FmgrInfo *sortFunction, int sk_flags, Oid collation,
 	return compare;
 }
 
-/*
- * Non-inline ApplySortFunction() --- this is needed only to conform to
- * C99's brain-dead notions about how to implement inline functions...
- */
-int32
-ApplySortFunction(FmgrInfo *sortFunction, int sortFlags, Oid collation,
-				  Datum datum1, bool isNull1,
-				  Datum datum2, bool isNull2)
-{
-	return inlineApplySortFunction(sortFunction, sortFlags, collation,
-								   datum1, isNull1,
-								   datum2, isNull2);
-}
-
 
 /*
  * Routines specialized for HeapTuple (actually MinimalTuple) case
@@ -2715,7 +2653,7 @@ ApplySortFunction(FmgrInfo *sortFunction, int sortFlags, Oid collation,
 static int
 comparetup_heap(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 {
-	ScanKey		scanKey = state->scanKeys;
+	SortSupport	sortKey = state->sortKeys;
 	HeapTupleData ltup;
 	HeapTupleData rtup;
 	TupleDesc	tupDesc;
@@ -2726,10 +2664,9 @@ comparetup_heap(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 	CHECK_FOR_INTERRUPTS();
 
 	/* Compare the leading sort key */
-	compare = inlineApplySortFunction(&scanKey->sk_func, scanKey->sk_flags,
-									  scanKey->sk_collation,
-									  a->datum1, a->isnull1,
-									  b->datum1, b->isnull1);
+	compare = ApplySortComparator(a->datum1, a->isnull1,
+								  b->datum1, b->isnull1,
+								  sortKey);
 	if (compare != 0)
 		return compare;
 
@@ -2739,10 +2676,10 @@ comparetup_heap(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 	rtup.t_len = ((MinimalTuple) b->tuple)->t_len + MINIMAL_TUPLE_OFFSET;
 	rtup.t_data = (HeapTupleHeader) ((char *) b->tuple - MINIMAL_TUPLE_OFFSET);
 	tupDesc = state->tupDesc;
-	scanKey++;
-	for (nkey = 1; nkey < state->nKeys; nkey++, scanKey++)
+	sortKey++;
+	for (nkey = 1; nkey < state->nKeys; nkey++, sortKey++)
 	{
-		AttrNumber	attno = scanKey->sk_attno;
+		AttrNumber	attno = sortKey->ssup_attno;
 		Datum		datum1,
 					datum2;
 		bool		isnull1,
@@ -2751,10 +2688,9 @@ comparetup_heap(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 		datum1 = heap_getattr(&ltup, attno, tupDesc, &isnull1);
 		datum2 = heap_getattr(&rtup, attno, tupDesc, &isnull2);
 
-		compare = inlineApplySortFunction(&scanKey->sk_func, scanKey->sk_flags,
-										  scanKey->sk_collation,
-										  datum1, isnull1,
-										  datum2, isnull2);
+		compare = ApplySortComparator(datum1, isnull1,
+									  datum2, isnull2,
+									  sortKey);
 		if (compare != 0)
 			return compare;
 	}
@@ -2781,7 +2717,7 @@ copytup_heap(Tuplesortstate *state, SortTuple *stup, void *tup)
 	htup.t_len = tuple->t_len + MINIMAL_TUPLE_OFFSET;
 	htup.t_data = (HeapTupleHeader) ((char *) tuple - MINIMAL_TUPLE_OFFSET);
 	stup->datum1 = heap_getattr(&htup,
-								state->scanKeys[0].sk_attno,
+								state->sortKeys[0].ssup_attno,
 								state->tupDesc,
 								&stup->isnull1);
 }
@@ -2833,7 +2769,7 @@ readtup_heap(Tuplesortstate *state, SortTuple *stup,
 	htup.t_len = tuple->t_len + MINIMAL_TUPLE_OFFSET;
 	htup.t_data = (HeapTupleHeader) ((char *) tuple - MINIMAL_TUPLE_OFFSET);
 	stup->datum1 = heap_getattr(&htup,
-								state->scanKeys[0].sk_attno,
+								state->sortKeys[0].ssup_attno,
 								state->tupDesc,
 								&stup->isnull1);
 }
@@ -2841,12 +2777,13 @@ readtup_heap(Tuplesortstate *state, SortTuple *stup,
 static void
 reversedirection_heap(Tuplesortstate *state)
 {
-	ScanKey		scanKey = state->scanKeys;
+	SortSupport	sortKey = state->sortKeys;
 	int			nkey;
 
-	for (nkey = 0; nkey < state->nKeys; nkey++, scanKey++)
+	for (nkey = 0; nkey < state->nKeys; nkey++, sortKey++)
 	{
-		scanKey->sk_flags ^= (SK_BT_DESC | SK_BT_NULLS_FIRST);
+		sortKey->ssup_reverse = !sortKey->ssup_reverse;
+		sortKey->ssup_nulls_first = !sortKey->ssup_nulls_first;
 	}
 }
 
@@ -3297,10 +3234,9 @@ comparetup_datum(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 	/* Allow interrupting long sorts */
 	CHECK_FOR_INTERRUPTS();
 
-	return inlineApplySortFunction(&state->sortOpFn, state->sortFnFlags,
-								   state->sortCollation,
-								   a->datum1, a->isnull1,
-								   b->datum1, b->isnull1);
+	return ApplySortComparator(a->datum1, a->isnull1,
+							   b->datum1, b->isnull1,
+							   state->datumKey);
 }
 
 static void
@@ -3392,7 +3328,8 @@ readtup_datum(Tuplesortstate *state, SortTuple *stup,
 static void
 reversedirection_datum(Tuplesortstate *state)
 {
-	state->sortFnFlags ^= (SK_BT_DESC | SK_BT_NULLS_FIRST);
+	state->datumKey->ssup_reverse = !state->datumKey->ssup_reverse;
+	state->datumKey->ssup_nulls_first = !state->datumKey->ssup_nulls_first;
 }
 
 /*

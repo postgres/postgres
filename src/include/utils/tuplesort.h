@@ -116,19 +116,4 @@ extern void tuplesort_rescan(Tuplesortstate *state);
 extern void tuplesort_markpos(Tuplesortstate *state);
 extern void tuplesort_restorepos(Tuplesortstate *state);
 
-/* Setup for ApplySortFunction */
-extern void SelectSortFunction(Oid sortOperator, bool nulls_first,
-				   Oid *sortFunction,
-				   int *sortFlags);
-
-/*
- * Apply a sort function (by now converted to fmgr lookup form)
- * and return a 3-way comparison result.  This takes care of handling
- * reverse-sort and NULLs-ordering properly.
- */
-extern int32 ApplySortFunction(FmgrInfo *sortFunction, int sortFlags,
-				  Oid collation,
-				  Datum datum1, bool isNull1,
-				  Datum datum2, bool isNull2);
-
 #endif   /* TUPLESORT_H */

@@ -417,13 +417,18 @@ typedef struct xl_btree_newroot
 
 /*
  *	When a new operator class is declared, we require that the user
- *	supply us with an amproc procedure for determining whether, for
- *	two keys a and b, a < b, a = b, or a > b.  This routine must
- *	return < 0, 0, > 0, respectively, in these three cases.  Since we
- *	only have one such proc in amproc, it's number 1.
+ *	supply us with an amproc procedure (BTORDER_PROC) for determining
+ *	whether, for two keys a and b, a < b, a = b, or a > b.  This routine
+ *	must return < 0, 0, > 0, respectively, in these three cases.  (It must
+ *	not return INT_MIN, since we may negate the result before using it.)
+ *
+ *	To facilitate accelerated sorting, an operator class may choose to
+ *	offer a second procedure (BTSORTSUPPORT_PROC).  For full details, see
+ *	src/include/utils/sortsupport.h.
  */
 
-#define BTORDER_PROC	1
+#define BTORDER_PROC		1
+#define BTSORTSUPPORT_PROC	2
 
 /*
  *	We need to be able to tell the difference between read and write

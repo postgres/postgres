@@ -926,37 +926,29 @@ WHERE p1.amprocfamily = p3.oid AND p3.opfmethod = p2.oid AND
 
 -- Detect missing pg_amproc entries: should have as many support functions
 -- as AM expects for each datatype combination supported by the opfamily.
--- GiST/GIN are special cases because each has an optional support function.
+-- btree/GiST/GIN each allow one optional support function, though.
 
 SELECT p1.amname, p2.opfname, p3.amproclefttype, p3.amprocrighttype
 FROM pg_am AS p1, pg_opfamily AS p2, pg_amproc AS p3
 WHERE p2.opfmethod = p1.oid AND p3.amprocfamily = p2.oid AND
-    p1.amname <> 'gist' AND p1.amname <> 'gin' AND
-    p1.amsupport != (SELECT count(*) FROM pg_amproc AS p4
-                     WHERE p4.amprocfamily = p2.oid AND
-                           p4.amproclefttype = p3.amproclefttype AND
-                           p4.amprocrighttype = p3.amprocrighttype);
-
--- Similar check for GiST/GIN, allowing one optional proc
-
-SELECT p1.amname, p2.opfname, p3.amproclefttype, p3.amprocrighttype
-FROM pg_am AS p1, pg_opfamily AS p2, pg_amproc AS p3
-WHERE p2.opfmethod = p1.oid AND p3.amprocfamily = p2.oid AND
-    (p1.amname = 'gist' OR p1.amname = 'gin') AND
     (SELECT count(*) FROM pg_amproc AS p4
      WHERE p4.amprocfamily = p2.oid AND
            p4.amproclefttype = p3.amproclefttype AND
            p4.amprocrighttype = p3.amprocrighttype)
-      NOT IN (p1.amsupport, p1.amsupport - 1);
+    NOT BETWEEN
+      (CASE WHEN p1.amname IN ('btree', 'gist', 'gin') THEN p1.amsupport - 1
+            ELSE p1.amsupport END)
+      AND p1.amsupport;
 
 -- Also, check if there are any pg_opclass entries that don't seem to have
--- pg_amproc support.  Again, GiST/GIN have to be checked specially.
+-- pg_amproc support.  Again, opclasses with an optional support proc have
+-- to be checked specially.
 
 SELECT amname, opcname, count(*)
 FROM pg_am am JOIN pg_opclass op ON opcmethod = am.oid
      LEFT JOIN pg_amproc p ON amprocfamily = opcfamily AND
          amproclefttype = amprocrighttype AND amproclefttype = opcintype
-WHERE am.amname <> 'gist' AND am.amname <> 'gin'
+WHERE am.amname <> 'btree' AND am.amname <> 'gist' AND am.amname <> 'gin'
 GROUP BY amname, amsupport, opcname, amprocfamily
 HAVING count(*) != amsupport OR amprocfamily IS NULL;
 
@@ -964,7 +956,7 @@ SELECT amname, opcname, count(*)
 FROM pg_am am JOIN pg_opclass op ON opcmethod = am.oid
      LEFT JOIN pg_amproc p ON amprocfamily = opcfamily AND
          amproclefttype = amprocrighttype AND amproclefttype = opcintype
-WHERE am.amname = 'gist' OR am.amname = 'gin'
+WHERE am.amname = 'btree' OR am.amname = 'gist' OR am.amname = 'gin'
 GROUP BY amname, amsupport, opcname, amprocfamily
 HAVING (count(*) != amsupport AND count(*) != amsupport - 1)
     OR amprocfamily IS NULL;
@@ -990,7 +982,8 @@ WHERE p1.amprocfamily = p3.oid AND p4.amprocfamily = p6.oid AND
     (p2.proretset OR p5.proretset OR p2.pronargs != p5.pronargs);
 
 -- For btree, though, we can do better since we know the support routines
--- must be of the form cmp(lefttype, righttype) returns int4.
+-- must be of the form cmp(lefttype, righttype) returns int4
+-- or sortsupport(internal) returns void.
 
 SELECT p1.amprocfamily, p1.amprocnum,
 	p2.oid, p2.proname,
@@ -998,12 +991,14 @@ SELECT p1.amprocfamily, p1.amprocnum,
 FROM pg_amproc AS p1, pg_proc AS p2, pg_opfamily AS p3
 WHERE p3.opfmethod = (SELECT oid FROM pg_am WHERE amname = 'btree')
     AND p1.amprocfamily = p3.oid AND p1.amproc = p2.oid AND
-    (amprocnum != 1
-     OR proretset
-     OR prorettype != 'int4'::regtype
-     OR pronargs != 2
-     OR proargtypes[0] != amproclefttype
-     OR proargtypes[1] != amprocrighttype);
+    (CASE WHEN amprocnum = 1
+          THEN prorettype != 'int4'::regtype OR proretset OR pronargs != 2
+               OR proargtypes[0] != amproclefttype
+               OR proargtypes[1] != amprocrighttype
+          WHEN amprocnum = 2
+          THEN prorettype != 'void'::regtype OR proretset OR pronargs != 1
+               OR proargtypes[0] != 'internal'::regtype
+          ELSE true END);
 
 -- For hash we can also do a little better: the support routines must be
 -- of the form hash(lefttype) returns int4.  There are several cases where

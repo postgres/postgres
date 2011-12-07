@@ -311,7 +311,8 @@
   </para>
 
   <para>
-   B-trees require a single support function, shown in <xref
+   B-trees require a single support function, and allow a second one to be
+   supplied at the operator class author's option, as shown in <xref
    linkend="xindex-btree-support-table">.
   </para>
 
@@ -333,12 +334,19 @@
        </entry>
        <entry>1</entry>
       </row>
+      <row>
+       <entry>
+        Return the addresses of C-callable sort support function(s),
+        as documented in <filename>utils/sortsupport.h</> (optional)
+       </entry>
+       <entry>2</entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
 
   <para>
-   Hash indexes likewise require one support function, shown in <xref
+   Hash indexes require one support function, shown in <xref
    linkend="xindex-hash-support-table">.
   </para>
 
@@ -363,6 +371,7 @@
   <para>
    GiST indexes require seven support functions, with an optional eighth, as
    shown in <xref linkend="xindex-gist-support-table">.
+   (For more information see <xref linkend="GiST">.)
   </para>
 
    <table tocentry="1" id="xindex-gist-support-table">
@@ -418,9 +427,7 @@
       </row>
       <row>
        <entry><function>distance</></entry>
-       <entry>
-        (optional method) determine distance from key to query value
-       </entry>
+       <entry>determine distance from key to query value (optional)</entry>
        <entry>8</entry>
       </row>
      </tbody>
@@ -430,6 +437,7 @@
   <para>
    GIN indexes require four support functions, with an optional fifth, as
    shown in <xref linkend="xindex-gin-support-table">.
+   (For more information see <xref linkend="GIN">.)
   </para>
 
    <table tocentry="1" id="xindex-gin-support-table">
@@ -470,10 +478,10 @@
       <row>
        <entry><function>comparePartial</></entry>
        <entry>
-        (optional method) compare partial key from
+        compare partial key from
         query and key from index, and return an integer less than zero, zero,
         or greater than zero, indicating whether GIN should ignore this index
-        entry, treat the entry as a match, or stop the index scan
+        entry, treat the entry as a match, or stop the index scan (optional)
        </entry>
        <entry>5</entry>
       </row>
@@ -486,7 +494,8 @@
    type the particular index method expects; for example in the case
    of the comparison function for B-trees, a signed integer.  The number
    and types of the arguments to each support function are likewise
-   dependent on the index method.  For B-tree and hash the support functions
+   dependent on the index method.  For B-tree and hash the comparison and
+   hashing support functions
    take the same input data types as do the operators included in the operator
    class, but this is not the case for most GIN and GiST support functions.
   </para>
@@ -748,7 +757,8 @@ DEFAULT FOR TYPE int8 USING btree FAMILY integer_ops AS
   OPERATOR 3 = ,
   OPERATOR 4 >= ,
   OPERATOR 5 > ,
-  FUNCTION 1 btint8cmp(int8, int8) ;
+  FUNCTION 1 btint8cmp(int8, int8) ,
+  FUNCTION 2 btint8sortsupport(internal) ;
 
 CREATE OPERATOR CLASS int4_ops
 DEFAULT FOR TYPE int4 USING btree FAMILY integer_ops AS
@@ -758,7 +768,8 @@ DEFAULT FOR TYPE int4 USING btree FAMILY integer_ops AS
   OPERATOR 3 = ,
   OPERATOR 4 >= ,
   OPERATOR 5 > ,
-  FUNCTION 1 btint4cmp(int4, int4) ;
+  FUNCTION 1 btint4cmp(int4, int4) ,
+  FUNCTION 2 btint4sortsupport(internal) ;
 
 CREATE OPERATOR CLASS int2_ops
 DEFAULT FOR TYPE int2 USING btree FAMILY integer_ops AS
@@ -768,7 +779,8 @@ DEFAULT FOR TYPE int2 USING btree FAMILY integer_ops AS
   OPERATOR 3 = ,
   OPERATOR 4 >= ,
   OPERATOR 5 > ,
-  FUNCTION 1 btint2cmp(int2, int2) ;
+  FUNCTION 1 btint2cmp(int2, int2) ,
+  FUNCTION 2 btint2sortsupport(internal) ;
 
 ALTER OPERATOR FAMILY integer_ops USING btree ADD
   -- cross-type comparisons int8 vs int2

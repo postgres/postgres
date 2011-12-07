@@ -140,11 +140,12 @@ ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="
      <para>
       In an <literal>ADD FUNCTION</> clause, the operand data type(s) the
       function is intended to support, if different from
-      the input data type(s) of the function.  For B-tree and hash indexes
-      it is not necessary to specify <replaceable
+      the input data type(s) of the function.  For B-tree comparison functions
+      and hash functions it is not necessary to specify <replaceable
       class="parameter">op_type</replaceable> since the function's input
-      data type(s) are always the correct ones to use.  For GIN and GiST
-      indexes it is necessary to specify the input data type the function
+      data type(s) are always the correct ones to use.  For B-tree sort
+      support functions and all functions in GiST and GIN operator classes,
+      it is necessary to specify the operand data type(s) the function
       is to be used with.
      </para>
 
