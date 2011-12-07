@@ -109,6 +109,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 		{
 			char		fullpath[MAXPGPATH];
 			char		linkpath[MAXPGPATH];
+			int			rllen;
 
 			/* Skip special stuff */
 			if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
@@ -116,19 +117,37 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 
 			snprintf(fullpath, sizeof(fullpath), "pg_tblspc/%s", de->d_name);
 
-			MemSet(linkpath, 0, sizeof(linkpath));
-			if (readlink(fullpath, linkpath, sizeof(linkpath) - 1) == -1)
+#if defined(HAVE_READLINK) || defined(WIN32)
+			rllen = readlink(fullpath, linkpath, sizeof(linkpath) - 1);
+			if (rllen < 0)
 			{
 				ereport(WARNING,
-				  (errmsg("could not read symbolic link \"%s\": %m", fullpath)));
+						(errmsg("could not read symbolic link \"%s\": %m", fullpath)));
 				continue;
 			}
+			else if (rllen >= sizeof(linkpath))
+			{
+				ereport(WARNING,
+						(errmsg("symbolic link \"%s\" target is too long", fullpath)));
+				continue;
+			}
+			linkpath[rllen] = '\0';
 
 			ti = palloc(sizeof(tablespaceinfo));
 			ti->oid = pstrdup(de->d_name);
 			ti->path = pstrdup(linkpath);
 			ti->size = opt->progress ? sendDir(linkpath, strlen(linkpath), true) : -1;
 			tablespaces = lappend(tablespaces, ti);
+#else
+			/*
+			 * If the platform does not have symbolic links, it should not be possible
+			 * to have tablespaces - clearly somebody else created them. Warn about it
+			 * and ignore.
+			 */
+			ereport(WARNING,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("tablespaces are not supported on this platform")));
+#endif
 		}
 
 		/* Add a node for the base directory at the end */
