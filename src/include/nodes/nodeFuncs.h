@@ -26,17 +26,17 @@
 #define QTW_DONT_COPY_QUERY			0x20		/* do not copy top Query */
 
 
-extern Oid	exprType(Node *expr);
-extern int32 exprTypmod(Node *expr);
-extern bool exprIsLengthCoercion(Node *expr, int32 *coercedTypmod);
+extern Oid	exprType(const Node *expr);
+extern int32 exprTypmod(const Node *expr);
+extern bool exprIsLengthCoercion(const Node *expr, int32 *coercedTypmod);
 extern bool expression_returns_set(Node *clause);
 
-extern Oid	exprCollation(Node *expr);
-extern Oid	exprInputCollation(Node *expr);
+extern Oid	exprCollation(const Node *expr);
+extern Oid	exprInputCollation(const Node *expr);
 extern void exprSetCollation(Node *expr, Oid collation);
 extern void exprSetInputCollation(Node *expr, Oid inputcollation);
 
-extern int	exprLocation(Node *expr);
+extern int	exprLocation(const Node *expr);
 
 extern bool expression_tree_walker(Node *node, bool (*walker) (),
 											   void *context);

@@ -181,9 +181,9 @@ make_opclause(Oid opno, Oid opresulttype, bool opretset,
  *		or (op expr)
  */
 Node *
-get_leftop(Expr *clause)
+get_leftop(const Expr *clause)
 {
-	OpExpr	   *expr = (OpExpr *) clause;
+	const OpExpr	   *expr = (const OpExpr *) clause;
 
 	if (expr->args != NIL)
 		return linitial(expr->args);
@@ -198,9 +198,9 @@ get_leftop(Expr *clause)
  * NB: result will be NULL if applied to a unary op clause.
  */
 Node *
-get_rightop(Expr *clause)
+get_rightop(const Expr *clause)
 {
-	OpExpr	   *expr = (OpExpr *) clause;
+	const OpExpr	   *expr = (const OpExpr *) clause;
 
 	if (list_length(expr->args) >= 2)
 		return lsecond(expr->args);

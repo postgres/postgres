@@ -31,7 +31,7 @@
  *	  print contents of Node to stdout
  */
 void
-print(void *obj)
+print(const void *obj)
 {
 	char	   *s;
 	char	   *f;
@@ -49,7 +49,7 @@ print(void *obj)
  *	  pretty-print contents of Node to stdout
  */
 void
-pprint(void *obj)
+pprint(const void *obj)
 {
 	char	   *s;
 	char	   *f;
@@ -67,7 +67,7 @@ pprint(void *obj)
  *	  send pretty-printed contents of Node to postmaster log
  */
 void
-elog_node_display(int lev, const char *title, void *obj, bool pretty)
+elog_node_display(int lev, const char *title, const void *obj, bool pretty)
 {
 	char	   *s;
 	char	   *f;
@@ -249,9 +249,9 @@ pretty_format_node_dump(const char *dump)
  *	  print contents of range table
  */
 void
-print_rt(List *rtable)
+print_rt(const List *rtable)
 {
-	ListCell   *l;
+	const ListCell   *l;
 	int			i = 1;
 
 	printf("resno\trefname  \trelid\tinFromCl\n");
@@ -304,7 +304,7 @@ print_rt(List *rtable)
  *	  print an expression
  */
 void
-print_expr(Node *expr, List *rtable)
+print_expr(const Node *expr, const List *rtable)
 {
 	if (expr == NULL)
 	{
@@ -314,7 +314,7 @@ print_expr(Node *expr, List *rtable)
 
 	if (IsA(expr, Var))
 	{
-		Var		   *var = (Var *) expr;
+		const Var		   *var = (const Var *) expr;
 		char	   *relname,
 				   *attname;
 
@@ -348,7 +348,7 @@ print_expr(Node *expr, List *rtable)
 	}
 	else if (IsA(expr, Const))
 	{
-		Const	   *c = (Const *) expr;
+		const Const	   *c = (const Const *) expr;
 		Oid			typoutput;
 		bool		typIsVarlena;
 		char	   *outputstr;
@@ -368,26 +368,26 @@ print_expr(Node *expr, List *rtable)
 	}
 	else if (IsA(expr, OpExpr))
 	{
-		OpExpr	   *e = (OpExpr *) expr;
+		const OpExpr	   *e = (const OpExpr *) expr;
 		char	   *opname;
 
 		opname = get_opname(e->opno);
 		if (list_length(e->args) > 1)
 		{
-			print_expr(get_leftop((Expr *) e), rtable);
+			print_expr(get_leftop((const Expr *) e), rtable);
 			printf(" %s ", ((opname != NULL) ? opname : "(invalid operator)"));
-			print_expr(get_rightop((Expr *) e), rtable);
+			print_expr(get_rightop((const Expr *) e), rtable);
 		}
 		else
 		{
 			/* we print prefix and postfix ops the same... */
 			printf("%s ", ((opname != NULL) ? opname : "(invalid operator)"));
-			print_expr(get_leftop((Expr *) e), rtable);
+			print_expr(get_leftop((const Expr *) e), rtable);
 		}
 	}
 	else if (IsA(expr, FuncExpr))
 	{
-		FuncExpr   *e = (FuncExpr *) expr;
+		const FuncExpr   *e = (const FuncExpr *) expr;
 		char	   *funcname;
 		ListCell   *l;
 
@@ -410,9 +410,9 @@ print_expr(Node *expr, List *rtable)
  *	  pathkeys list of PathKeys
  */
 void
-print_pathkeys(List *pathkeys, List *rtable)
+print_pathkeys(const List *pathkeys, const List *rtable)
 {
-	ListCell   *i;
+	const ListCell   *i;
 
 	printf("(");
 	foreach(i, pathkeys)
@@ -450,9 +450,9 @@ print_pathkeys(List *pathkeys, List *rtable)
  *	  print targetlist in a more legible way.
  */
 void
-print_tl(List *tlist, List *rtable)
+print_tl(const List *tlist, const List *rtable)
 {
-	ListCell   *tl;
+	const ListCell   *tl;
 
 	printf("(\n");
 	foreach(tl, tlist)
