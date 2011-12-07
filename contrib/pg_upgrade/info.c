@@ -193,15 +193,21 @@ get_db_infos(ClusterInfo *cluster)
 	int			i_datname,
 				i_oid,
 				i_spclocation;
+	char		query[QUERY_ALLOC];
 
-	res = executeQueryOrDie(conn,
-							"SELECT d.oid, d.datname, t.spclocation "
-							"FROM pg_catalog.pg_database d "
-							" LEFT OUTER JOIN pg_catalog.pg_tablespace t "
-							" ON d.dattablespace = t.oid "
-							"WHERE d.datallowconn = true "
+	snprintf(query, sizeof(query),
+			"SELECT d.oid, d.datname, %s "
+			"FROM pg_catalog.pg_database d "
+			" LEFT OUTER JOIN pg_catalog.pg_tablespace t "
+			" ON d.dattablespace = t.oid "
+			"WHERE d.datallowconn = true "
 	/* we don't preserve pg_database.oid so we sort by name */
-							"ORDER BY 2");
+			"ORDER BY 2",
+	/* 9.2 removed the spclocation column */
+			(GET_MAJOR_VERSION(old_cluster.major_version) <= 901) ?
+			"t.spclocation" : "pg_catalog.pg_tablespace_location(t.oid) AS spclocation");
+
+	res = executeQueryOrDie(conn, "%s", query);
 
 	i_oid = PQfnumber(res, "oid");
 	i_datname = PQfnumber(res, "datname");
@@ -265,7 +271,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 
 	snprintf(query, sizeof(query),
 			 "SELECT c.oid, n.nspname, c.relname, "
-			 "	c.relfilenode, t.spclocation "
+			 "	c.relfilenode, %s "
 			 "FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n "
 			 "	   ON c.relnamespace = n.oid "
 			 "  LEFT OUTER JOIN pg_catalog.pg_tablespace t "
@@ -280,6 +286,9 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	"    relname IN ('pg_largeobject', 'pg_largeobject_loid_pn_index'%s) )) "
 	/* we preserve pg_class.oid so we sort by it to match old/new */
 			 "ORDER BY 1;",
+	/* 9.2 removed the spclocation column */
+			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 901) ?
+			 "t.spclocation" : "pg_catalog.pg_tablespace_location(t.oid) AS spclocation",
 	/* see the comment at the top of old_8_3_create_sequence_script() */
 			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 803) ?
 			 "" : ", 'S'",

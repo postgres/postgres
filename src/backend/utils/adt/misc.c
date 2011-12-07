@@ -18,6 +18,7 @@
 #include <signal.h>
 #include <dirent.h>
 #include <math.h>
+#include <unistd.h>
 
 #include "catalog/catalog.h"
 #include "catalog/pg_tablespace.h"
@@ -260,6 +261,44 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 	SRF_RETURN_DONE(funcctx);
 }
 
+
+/*
+ * pg_tablespace_location - get location for a tablespace
+ */
+Datum
+pg_tablespace_location(PG_FUNCTION_ARGS)
+{
+	Oid		tablespaceOid = PG_GETARG_OID(0);
+	char	sourcepath[MAXPGPATH];
+	char	targetpath[MAXPGPATH];
+	int		rllen;
+
+	/*
+	 * Return empty string for our two default tablespace
+	 */
+	if (tablespaceOid == DEFAULTTABLESPACE_OID ||
+		tablespaceOid == GLOBALTABLESPACE_OID)
+		PG_RETURN_TEXT_P(cstring_to_text(""));
+
+#if defined(HAVE_READLINK) || defined(WIN32)
+	/*
+	 * Find the location of the tablespace by reading the symbolic link that is
+	 * in pg_tblspc/<oid>.
+	 */
+	snprintf(sourcepath, sizeof(sourcepath), "pg_tblspc/%u", tablespaceOid);
+	rllen =readlink(sourcepath, targetpath, sizeof(targetpath));
+	if (rllen < 0 || rllen >= sizeof(targetpath))
+		ereport(ERROR,
+				(errmsg("could not read symbolic link \"%s\": %m", sourcepath)));
+	targetpath[rllen] = '\0';
+
+	PG_RETURN_TEXT_P(cstring_to_text(targetpath));
+#else
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("tablespaces are not supported on this platform")));
+#endif
+}
 
 /*
  * pg_sleep - delay for N seconds

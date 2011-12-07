@@ -5392,13 +5392,6 @@
      </row>
 
      <row>
-      <entry><structfield>spclocation</structfield></entry>
-      <entry><type>text</type></entry>
-      <entry></entry>
-      <entry>Location (directory path) of the tablespace</entry>
-     </row>
-
-     <row>
       <entry><structfield>spcacl</structfield></entry>
       <entry><type>aclitem[]</type></entry>
       <entry></entry>

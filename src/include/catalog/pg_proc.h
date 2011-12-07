@@ -2686,6 +2686,9 @@ DESCR("statistics: reset collected statistics for a single table or index in the
 DATA(insert OID = 3777 (  pg_stat_reset_single_function_counters	PGNSP PGUID 12 1 0 0 0 f f f f f v 1 0 2278 "26" _null_ _null_ _null_ _null_	pg_stat_reset_single_function_counters _null_ _null_ _null_ ));
 DESCR("statistics: reset collected statistics for a single function in the current database");
 
+DATA(insert OID = 3778 ( pg_tablespace_location PGNSP PGUID 12 1 0 0 0 f f f t f s 1 0 25 "26" _null_ _null_ _null_ _null_ pg_tablespace_location _null_ _null_ _null_ ));
+DESCR("tablespace location");
+
 DATA(insert OID = 1946 (  encode						PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 25 "17 25" _null_ _null_ _null_ _null_ binary_encode _null_ _null_ _null_ ));
 DESCR("convert bytea value into some ascii-only text string");
 DATA(insert OID = 1947 (  decode						PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 17 "25 25" _null_ _null_ _null_ _null_ binary_decode _null_ _null_ _null_ ));

@@ -154,7 +154,7 @@ SELECT attrelid::regclass, array_accum(attname)
 
    attrelid    |              array_accum              
 ---------------+---------------------------------------
- pg_tablespace | {spcname,spcowner,spclocation,spcacl}
+ pg_tablespace | {spcname,spcowner,spcacl,spcoptions}
 (1 row)
 
 SELECT attrelid::regclass, array_accum(atttypid::regtype)
@@ -164,7 +164,7 @@ SELECT attrelid::regclass, array_accum(atttypid::regtype)
 
    attrelid    |        array_accum        
 ---------------+---------------------------
- pg_tablespace | {name,oid,text,aclitem[]}
+ pg_tablespace | {name,oid,aclitem[],text[]}
 (1 row)
 </programlisting>
   </para>

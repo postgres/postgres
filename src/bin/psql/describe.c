@@ -139,13 +139,22 @@ describeTablespaces(const char *pattern, bool verbose)
 
 	initPQExpBuffer(&buf);
 
-	printfPQExpBuffer(&buf,
-					  "SELECT spcname AS \"%s\",\n"
-					  "  pg_catalog.pg_get_userbyid(spcowner) AS \"%s\",\n"
-					  "  spclocation AS \"%s\"",
-					  gettext_noop("Name"),
-					  gettext_noop("Owner"),
-					  gettext_noop("Location"));
+	if (pset.sversion >= 90200)
+		printfPQExpBuffer(&buf,
+						  "SELECT spcname AS \"%s\",\n"
+						  "  pg_catalog.pg_get_userbyid(spcowner) AS \"%s\",\n"
+						  "  pg_catalog.pg_tablespace_location(oid) AS \"%s\"",
+						  gettext_noop("Name"),
+						  gettext_noop("Owner"),
+						  gettext_noop("Location"));
+	else
+		printfPQExpBuffer(&buf,
+						  "SELECT spcname AS \"%s\",\n"
+						  "  pg_catalog.pg_get_userbyid(spcowner) AS \"%s\",\n"
+						  "  spclocation AS \"%s\"",
+						  gettext_noop("Name"),
+						  gettext_noop("Owner"),
+						  gettext_noop("Location"));
 
 	if (verbose)
 	{

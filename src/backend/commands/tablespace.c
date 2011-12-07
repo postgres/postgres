@@ -314,8 +314,6 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 		DirectFunctionCall1(namein, CStringGetDatum(stmt->tablespacename));
 	values[Anum_pg_tablespace_spcowner - 1] =
 		ObjectIdGetDatum(ownerId);
-	values[Anum_pg_tablespace_spclocation - 1] =
-		CStringGetTextDatum(location);
 	nulls[Anum_pg_tablespace_spcacl - 1] = true;
 	nulls[Anum_pg_tablespace_spcoptions - 1] = true;
 
