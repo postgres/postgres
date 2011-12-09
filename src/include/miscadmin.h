@@ -55,6 +55,11 @@
  * course, only if the interrupt holdoff counter is zero).	See the
  * related code for details.
  *
+ * A lost connection is handled similarly, although the loss of connection
+ * does not raise a signal, but is detected when we fail to write to the
+ * socket. If there was a signal for a broken connection, we could make use of
+ * it by setting ClientConnectionLost in the signal handler.
+ *
  * A related, but conceptually distinct, mechanism is the "critical section"
  * mechanism.  A critical section not only holds off cancel/die interrupts,
  * but causes any ereport(ERROR) or ereport(FATAL) to become ereport(PANIC)
@@ -69,6 +74,8 @@
 extern PGDLLIMPORT volatile bool InterruptPending;
 extern volatile bool QueryCancelPending;
 extern volatile bool ProcDiePending;
+
+extern volatile bool ClientConnectionLost;
 
 /* these are marked volatile because they are examined by signal handlers: */
 extern volatile bool ImmediateInterruptOK;

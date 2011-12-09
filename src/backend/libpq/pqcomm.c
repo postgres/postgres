@@ -1247,9 +1247,13 @@ internal_flush(void)
 
 			/*
 			 * We drop the buffered data anyway so that processing can
-			 * continue, even though we'll probably quit soon.
+			 * continue, even though we'll probably quit soon. We also
+			 * set a flag that'll cause the next CHECK_FOR_INTERRUPTS
+			 * to terminate the connection.
 			 */
 			PqSendStart = PqSendPointer = 0;
+			ClientConnectionLost = 1;
+			InterruptPending = 1;
 			return EOF;
 		}
 
