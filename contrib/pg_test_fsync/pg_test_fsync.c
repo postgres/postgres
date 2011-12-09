@@ -9,6 +9,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include "getopt_long.h"
 #include "access/xlogdefs.h"
@@ -29,6 +30,7 @@
 static const char *progname;
 
 static int	ops_per_test = 2000;
+static int	needs_unlink = 0;
 static char full_buf[XLOG_SEG_SIZE],
 		   *buf,
 		   *filename = FSYNC_FILENAME;
@@ -44,6 +46,7 @@ static void test_sync(int writes_per_op);
 static void test_open_syncs(void);
 static void test_open_sync(const char *msg, int writes_size);
 static void test_file_descriptor_sync(void);
+static void signal_cleanup(int sig);
 
 #ifdef HAVE_FSYNC_WRITETHROUGH
 static int	pg_fsync_writethrough(int fd);
@@ -58,6 +61,14 @@ main(int argc, char *argv[])
 	progname = get_progname(argv[0]);
 
 	handle_args(argc, argv);
+
+	/* Prevent leaving behind the test file */
+	signal(SIGINT, signal_cleanup);
+	signal(SIGTERM, signal_cleanup);
+#ifdef SIGHUP
+	/* Not defined on win32 */
+	signal(SIGHUP, signal_cleanup);
+#endif
 
 	prepare_buf();
 
@@ -167,6 +178,7 @@ test_open(void)
 	 */
 	if ((tmpfile = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR)) == -1)
 		die("could not open output file");
+	needs_unlink = 1;
 	if (write(tmpfile, full_buf, XLOG_SEG_SIZE) != XLOG_SEG_SIZE)
 		die("write failed");
 
@@ -488,6 +500,17 @@ test_non_sync(void)
 	}
 	gettimeofday(&stop_t, NULL);
 	print_elapse(start_t, stop_t);
+}
+
+static void
+signal_cleanup(int signum)
+{
+	/* Delete the file if it exists. Ignore errors */
+	if (needs_unlink)
+		unlink(filename);
+	/* Finish incomplete line on stdout */
+	puts("");
+	exit(signum);
 }
 
 #ifdef HAVE_FSYNC_WRITETHROUGH
