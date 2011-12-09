@@ -85,7 +85,7 @@ log_invalid_page(RelFileNode node, ForkNumber forkno, BlockNumber blkno,
 	 * linger in the hash table until the end of recovery and PANIC there,
 	 * which might come only much later if this is a standby server.
 	 */
-	if (reachedMinRecoveryPoint)
+	if (reachedConsistency)
 	{
 		report_invalid_page(WARNING, node, forkno, blkno, present);
 		elog(PANIC, "WAL contains references to invalid pages");
