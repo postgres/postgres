@@ -177,6 +177,17 @@ RESET ROLE;
  postgresql | foreign_data_user       | -       | postgresql_fdw_validator |                   |                              | 
 (3 rows)
 
+ALTER FOREIGN DATA WRAPPER foo RENAME TO foo1;
+\dew+
+                                                       List of foreign-data wrappers
+    Name    |          Owner          | Handler |        Validator         | Access privileges |         FDW Options          | Description 
+------------+-------------------------+---------+--------------------------+-------------------+------------------------------+-------------
+ dummy      | foreign_data_user       | -       | -                        |                   |                              | useless
+ foo1       | regress_test_role_super | -       | -                        |                   | (b '3', c '4', a '2', d '5') | 
+ postgresql | foreign_data_user       | -       | postgresql_fdw_validator |                   |                              | 
+(3 rows)
+
+ALTER FOREIGN DATA WRAPPER foo1 RENAME TO foo;
 -- DROP FOREIGN DATA WRAPPER
 DROP FOREIGN DATA WRAPPER nonexistent;                      -- ERROR
 ERROR:  foreign-data wrapper "nonexistent" does not exist
@@ -427,6 +438,26 @@ privileges for foreign-data wrapper foo
  t2   | regress_test_role     | foo                  |                                         |        |         |                                      | 
 (10 rows)
 
+ALTER SERVER s8 RENAME to s8new;
+\des+
+                                                                        List of foreign servers
+ Name  |         Owner         | Foreign-data wrapper |            Access privileges            |  Type  | Version |             FDW Options              | Description 
+-------+-----------------------+----------------------+-----------------------------------------+--------+---------+--------------------------------------+-------------
+ s1    | regress_test_indirect | foo                  | foreign_data_user=U/foreign_data_user  +|        | 1.1     | (servername 's1')                    | 
+       |                       |                      | regress_test_role=U/foreign_data_user   |        |         |                                      | 
+ s2    | foreign_data_user     | foo                  |                                         |        | 1.1     | (host 'a', dbname 'b')               | 
+ s3    | foreign_data_user     | foo                  |                                         | oracle |         | ("tns name" 'orcl', port '1521')     | 
+ s4    | foreign_data_user     | foo                  |                                         | oracle |         | (host 'a', dbname 'b')               | 
+ s5    | foreign_data_user     | foo                  |                                         |        | 15.0    |                                      | 
+ s6    | foreign_data_user     | foo                  | foreign_data_user=U/foreign_data_user  +|        | 16.0    | (host 'a', dbname 'b')               | 
+       |                       |                      | regress_test_role2=U*/foreign_data_user |        |         |                                      | 
+ s7    | foreign_data_user     | foo                  |                                         | oracle | 17.0    | (host 'a', dbname 'b')               | 
+ s8new | foreign_data_user     | postgresql           |                                         |        |         | (dbname 'db1', connect_timeout '30') | 
+ t1    | regress_test_role     | foo                  |                                         |        |         |                                      | 
+ t2    | regress_test_role     | foo                  |                                         |        |         |                                      | 
+(10 rows)
+
+ALTER SERVER s8new RENAME to s8;
 -- DROP SERVER
 DROP SERVER nonexistent;                                    -- ERROR
 ERROR:  server "nonexistent" does not exist

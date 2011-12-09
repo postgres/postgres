@@ -146,6 +146,8 @@ extern text *serialize_deflist(List *deflist);
 extern List *deserialize_deflist(Datum txt);
 
 /* commands/foreigncmds.c */
+extern void RenameForeignServer(const char *oldname, const char *newname);
+extern void RenameForeignDataWrapper(const char *oldname, const char *newname);
 extern void AlterForeignServerOwner(const char *name, Oid newOwnerId);
 extern void AlterForeignDataWrapperOwner(const char *name, Oid newOwnerId);
 extern void CreateForeignDataWrapper(CreateFdwStmt *stmt);

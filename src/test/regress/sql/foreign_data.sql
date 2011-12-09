@@ -84,6 +84,10 @@ ALTER FOREIGN DATA WRAPPER foo OPTIONS (ADD e '6');         -- ERROR
 RESET ROLE;
 \dew+
 
+ALTER FOREIGN DATA WRAPPER foo RENAME TO foo1;
+\dew+
+ALTER FOREIGN DATA WRAPPER foo1 RENAME TO foo;
+
 -- DROP FOREIGN DATA WRAPPER
 DROP FOREIGN DATA WRAPPER nonexistent;                      -- ERROR
 DROP FOREIGN DATA WRAPPER IF EXISTS nonexistent;
@@ -180,6 +184,10 @@ ALTER SERVER s1 OWNER TO regress_test_indirect;
 RESET ROLE;
 DROP ROLE regress_test_indirect;                            -- ERROR
 \des+
+
+ALTER SERVER s8 RENAME to s8new;
+\des+
+ALTER SERVER s8new RENAME to s8;
 
 -- DROP SERVER
 DROP SERVER nonexistent;                                    -- ERROR

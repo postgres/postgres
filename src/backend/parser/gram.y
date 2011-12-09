@@ -6434,6 +6434,14 @@ RenameStmt: ALTER AGGREGATE func_name aggr_args RENAME TO name
 					n->newname = $6;
 					$$ = (Node *)n;
 				}
+			| ALTER FOREIGN DATA_P WRAPPER name RENAME TO name
+				{
+					RenameStmt *n = makeNode(RenameStmt);
+					n->renameType = OBJECT_FDW;
+					n->subname = $5;
+					n->newname = $8;
+					$$ = (Node *)n;
+				}
 			| ALTER FUNCTION function_with_argtypes RENAME TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);
@@ -6481,6 +6489,14 @@ RenameStmt: ALTER AGGREGATE func_name aggr_args RENAME TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_SCHEMA;
+					n->subname = $3;
+					n->newname = $6;
+					$$ = (Node *)n;
+				}
+			| ALTER SERVER name RENAME TO name
+				{
+					RenameStmt *n = makeNode(RenameStmt);
+					n->renameType = OBJECT_FOREIGN_SERVER;
 					n->subname = $3;
 					n->newname = $6;
 					$$ = (Node *)n;

@@ -201,6 +201,82 @@ GetUserOidFromMapping(const char *username, bool missing_ok)
 
 
 /*
+ * Rename foreign-data wrapper
+ */
+void
+RenameForeignDataWrapper(const char *oldname, const char *newname)
+{
+	HeapTuple	tup;
+	Relation	rel;
+
+	rel = heap_open(ForeignDataWrapperRelationId, RowExclusiveLock);
+
+	tup = SearchSysCacheCopy1(FOREIGNDATAWRAPPERNAME, CStringGetDatum(oldname));
+	if (!HeapTupleIsValid(tup))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("foreign-data wrapper \"%s\" does not exist", oldname)));
+
+	/* make sure the new name doesn't exist */
+	if (SearchSysCacheExists1(FOREIGNDATAWRAPPERNAME, CStringGetDatum(newname)))
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("foreign-data wrapper \"%s\" already exists", newname)));
+
+	/* must be owner of FDW */
+	if (!pg_foreign_data_wrapper_ownercheck(HeapTupleGetOid(tup), GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_FDW,
+					   oldname);
+
+	/* rename */
+	namestrcpy(&(((Form_pg_foreign_data_wrapper) GETSTRUCT(tup))->fdwname), newname);
+	simple_heap_update(rel, &tup->t_self, tup);
+	CatalogUpdateIndexes(rel, tup);
+
+	heap_close(rel, NoLock);
+	heap_freetuple(tup);
+}
+
+
+/*
+ * Rename foreign server
+ */
+void
+RenameForeignServer(const char *oldname, const char *newname)
+{
+	HeapTuple	tup;
+	Relation	rel;
+
+	rel = heap_open(ForeignServerRelationId, RowExclusiveLock);
+
+	tup = SearchSysCacheCopy1(FOREIGNSERVERNAME, CStringGetDatum(oldname));
+	if (!HeapTupleIsValid(tup))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("server \"%s\" does not exist", oldname)));
+
+	/* make sure the new name doesn't exist */
+	if (SearchSysCacheExists1(FOREIGNSERVERNAME, CStringGetDatum(newname)))
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("server \"%s\" already exists", newname)));
+
+	/* must be owner of server */
+	if (!pg_foreign_server_ownercheck(HeapTupleGetOid(tup), GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_FOREIGN_SERVER,
+					   oldname);
+
+	/* rename */
+	namestrcpy(&(((Form_pg_foreign_server) GETSTRUCT(tup))->srvname), newname);
+	simple_heap_update(rel, &tup->t_self, tup);
+	CatalogUpdateIndexes(rel, tup);
+
+	heap_close(rel, NoLock);
+	heap_freetuple(tup);
+}
+
+
+/*
  * Change foreign-data wrapper owner.
  *
  * Allow this only for superusers; also the new owner must be a

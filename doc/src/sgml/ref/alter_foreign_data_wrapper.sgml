@@ -26,6 +26,7 @@ ALTER FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
     [ VALIDATOR <replaceable class="parameter">validator_function</replaceable> | NO VALIDATOR ]
     [ OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ]) ]
 ALTER FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable> OWNER TO <replaceable>new_owner</replaceable>
+ALTER FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -122,6 +123,24 @@ ALTER FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable> OWN
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">new_owner</replaceable></term>
+    <listitem>
+     <para>
+      The user name of the new owner of the foreign-data wrapper.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">new_name</replaceable></term>
+    <listitem>
+     <para>
+      The new name for the foreign-data wrapper.
+     </para>
+    </listitem>
+   </varlistentry>
   </variablelist>
  </refsect1>
 
@@ -150,7 +169,8 @@ ALTER FOREIGN DATA WRAPPER dbi VALIDATOR bob.myvalidator;
   <para>
    <command>ALTER FOREIGN DATA WRAPPER</command> conforms to ISO/IEC
    9075-9 (SQL/MED), except that the <literal>HANDLER</literal>,
-   <literal>VALIDATOR</> and <literal>OWNER TO</> clauses are extensions.
+   <literal>VALIDATOR</>, <literal>OWNER TO</>, and <literal>RENAME</literal>
+   clauses are extensions.
   </para>
  </refsect1>
 

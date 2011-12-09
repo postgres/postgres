@@ -65,6 +65,14 @@ ExecRenameStmt(RenameStmt *stmt)
 			RenameDatabase(stmt->subname, stmt->newname);
 			break;
 
+		case OBJECT_FDW:
+			RenameForeignDataWrapper(stmt->subname, stmt->newname);
+			break;
+
+		case OBJECT_FOREIGN_SERVER:
+			RenameForeignServer(stmt->subname, stmt->newname);
+			break;
+
 		case OBJECT_FUNCTION:
 			RenameFunction(stmt->object, stmt->objarg, stmt->newname);
 			break;

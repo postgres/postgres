@@ -24,6 +24,7 @@ PostgreSQL documentation
 ALTER SERVER <replaceable class="parameter">server_name</replaceable> [ VERSION '<replaceable class="parameter">new_version</replaceable>' ]
     [ OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ] ) ]
 ALTER SERVER <replaceable class="PARAMETER">server_name</replaceable> OWNER TO <replaceable>new_owner</replaceable>
+ALTER SERVER <replaceable class="PARAMETER">server_name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -82,6 +83,24 @@ ALTER SERVER <replaceable class="PARAMETER">server_name</replaceable> OWNER TO <
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">new_owner</replaceable></term>
+    <listitem>
+     <para>
+      The user name of the new owner of the foreign server.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">new_name</replaceable></term>
+    <listitem>
+     <para>
+      The new name for the foreign server.
+     </para>
+    </listitem>
+   </varlistentry>
   </variablelist>
  </refsect1>
 
@@ -108,6 +127,8 @@ ALTER SERVER foo VERSION '8.4' OPTIONS (SET host 'baz');
 
   <para>
    <command>ALTER SERVER</command> conforms to ISO/IEC 9075-9 (SQL/MED).
+   The <literal>OWNER TO</literal> and <literal>RENAME</literal> forms are
+   PostgreSQL extensions.
   </para>
  </refsect1>
 
