@@ -31,7 +31,7 @@
  * The Mingw64 headers choke if this is already defined - they
  * define it themselves.
  */
-#if !defined(WIN64) || defined(WIN32_ONLY_COMPILER)
+#if !defined(__MINGW64_VERSION_MAJOR) || defined(WIN32_ONLY_COMPILER)
 #define _WINSOCKAPI_
 #endif
 #include <winsock2.h>
@@ -225,8 +225,12 @@ int			setitimer(int which, const struct itimerval * value, struct itimerval * ov
 #define fseeko(stream, offset, origin) _fseeki64(stream, offset, origin)
 #define ftello(stream) _ftelli64(stream)
 #else
+#ifndef fseeko
 #define fseeko(stream, offset, origin) fseeko64(stream, offset, origin)
+#endif
+#ifndef ftello
 #define ftello(stream) ftello64(stream)
+#endif
 #endif
 
 /*
@@ -264,16 +268,36 @@ typedef int pid_t;
 #undef EINTR
 #define EINTR WSAEINTR
 #define EAGAIN WSAEWOULDBLOCK
+#ifndef EMSGSIZE
 #define EMSGSIZE WSAEMSGSIZE
+#endif
+#ifndef EAFNOSUPPORT
 #define EAFNOSUPPORT WSAEAFNOSUPPORT
+#endif
+#ifndef EWOULDBLOCK
 #define EWOULDBLOCK WSAEWOULDBLOCK
+#endif
+#ifndef ECONNRESET
 #define ECONNRESET WSAECONNRESET
+#endif
+#ifndef EINPROGRESS
 #define EINPROGRESS WSAEINPROGRESS
+#endif
+#ifndef ENOBUFS
 #define ENOBUFS WSAENOBUFS
+#endif
+#ifndef EPROTONOSUPPORT
 #define EPROTONOSUPPORT WSAEPROTONOSUPPORT
+#endif
+#ifndef ECONNREFUSED
 #define ECONNREFUSED WSAECONNREFUSED
+#endif
+#ifndef EBADFD
 #define EBADFD WSAENOTSOCK
+#endif
+#ifndef EOPNOTSUPP
 #define EOPNOTSUPP WSAEOPNOTSUPP
+#endif
 
 /*
  * Extended locale functions with gratuitous underscore prefixes.
