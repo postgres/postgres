@@ -58,7 +58,6 @@
 #endif
 #include "postgres_ext.h"
 
-#define HAVE_CRTDEFS_H 1
 #if _MSC_VER >= 1400 || defined(HAVE_CRTDEFS_H)
 #define errcode __msvc_errcode
 #include <crtdefs.h>
