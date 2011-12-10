@@ -63,7 +63,11 @@ static pid_t bgchild = -1;
 
 /* End position for xlog streaming, empty string if unknown yet */
 static XLogRecPtr xlogendptr;
+#ifndef WIN32
 static int	has_xlogendptr = 0;
+#else
+static volatile LONG has_xlogendptr = 0;
+#endif
 
 /* Function headers */
 static void usage(void);
@@ -1070,10 +1074,11 @@ BaseBackup(void)
 
 	if (bgchild > 0)
 	{
-		int			status;
-
 #ifndef WIN32
+		int			status;
 		int			r;
+#else
+		DWORD       status;
 #endif
 
 		if (verbose)
@@ -1147,7 +1152,7 @@ BaseBackup(void)
 		if (status != 0)
 		{
 			fprintf(stderr, _("%s: child thread exited with error %u\n"),
-					progname, status);
+					progname, (unsigned int) status);
 			disconnect_and_exit(1);
 		}
 		/* Exited normally, we're happy */

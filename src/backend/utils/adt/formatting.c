@@ -1554,7 +1554,9 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 #endif   /* USE_WIDE_UPPER_LOWER */
 	else
 	{
+#ifdef HAVE_LOCALE_T
 		pg_locale_t mylocale = 0;
+#endif
 		char	   *p;
 
 		if (collid != DEFAULT_COLLATION_OID)
@@ -1570,7 +1572,9 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 						 errmsg("could not determine which collation to use for lower() function"),
 						 errhint("Use the COLLATE clause to set the collation explicitly.")));
 			}
+#ifdef HAVE_LOCALE_T
 			mylocale = pg_newlocale_from_collation(collid);
+#endif
 		}
 
 		result = pnstrdup(buff, nbytes);
@@ -1675,7 +1679,9 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 #endif   /* USE_WIDE_UPPER_LOWER */
 	else
 	{
+#ifdef HAVE_LOCALE_T
 		pg_locale_t mylocale = 0;
+#endif
 		char	   *p;
 
 		if (collid != DEFAULT_COLLATION_OID)
@@ -1691,7 +1697,9 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 						 errmsg("could not determine which collation to use for upper() function"),
 						 errhint("Use the COLLATE clause to set the collation explicitly.")));
 			}
+#ifdef HAVE_LOCALE_T
 			mylocale = pg_newlocale_from_collation(collid);
+#endif
 		}
 
 		result = pnstrdup(buff, nbytes);
@@ -1820,7 +1828,9 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 #endif   /* USE_WIDE_UPPER_LOWER */
 	else
 	{
+#ifdef HAVE_LOCALE_T
 		pg_locale_t mylocale = 0;
+#endif
 		char	   *p;
 
 		if (collid != DEFAULT_COLLATION_OID)
@@ -1836,7 +1846,9 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 						 errmsg("could not determine which collation to use for initcap() function"),
 						 errhint("Use the COLLATE clause to set the collation explicitly.")));
 			}
+#ifdef HAVE_LOCALE_T
 			mylocale = pg_newlocale_from_collation(collid);
+#endif
 		}
 
 		result = pnstrdup(buff, nbytes);

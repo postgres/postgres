@@ -1299,7 +1299,9 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2, Oid collid)
 		char		a2buf[STACKBUFLEN];
 		char	   *a1p,
 				   *a2p;
+#ifdef HAVE_LOCALE_T
 		pg_locale_t mylocale = 0;
+#endif
 
 		if (collid != DEFAULT_COLLATION_OID)
 		{
@@ -1314,7 +1316,9 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2, Oid collid)
 						 errmsg("could not determine which collation to use for string comparison"),
 						 errhint("Use the COLLATE clause to set the collation explicitly.")));
 			}
+#ifdef HAVE_LOCALE_T
 			mylocale = pg_newlocale_from_collation(collid);
+#endif
 		}
 
 #ifdef WIN32

@@ -1414,7 +1414,6 @@ pgwin32_ServiceMain(DWORD argc, LPTSTR *argv)
 {
 	PROCESS_INFORMATION pi;
 	DWORD		ret;
-	DWORD		check_point_start;
 
 	/* Initialize variables */
 	status.dwWin32ExitCode = S_OK;
@@ -1458,12 +1457,6 @@ pgwin32_ServiceMain(DWORD argc, LPTSTR *argv)
 		}
 		write_eventlog(EVENTLOG_INFORMATION_TYPE, _("Server started and accepting connections\n"));
 	}
-
-	/*
-	 * Save the checkpoint value as it might have been incremented in
-	 * test_postmaster_connection
-	 */
-	check_point_start = status.dwCheckPoint;
 
 	pgwin32_SetServiceStatus(SERVICE_RUNNING);
 

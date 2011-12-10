@@ -2277,29 +2277,6 @@ check_locale_encoding(const char *locale, int user_enc)
 	return true;
 }
 
-#ifdef WIN32
-
-/*
- * Replace 'needle' with 'replacement' in 'str' . Note that the replacement
- * is done in-place, so 'replacement' must be shorter than 'needle'.
- */
-static void
-strreplace(char *str, char *needle, char *replacement)
-{
-	char	   *s;
-
-	s = strstr(str, needle);
-	if (s != NULL)
-	{
-		int			replacementlen = strlen(replacement);
-		char	   *rest = s + strlen(needle);
-
-		memcpy(s, replacement, replacementlen);
-		memmove(s + replacementlen, rest, strlen(rest) + 1);
-	}
-}
-#endif   /* WIN32 */
-
 /*
  * set up the locale variables
  *

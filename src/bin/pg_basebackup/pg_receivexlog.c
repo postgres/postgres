@@ -278,11 +278,15 @@ StreamLog(void)
  * When sigint is called, just tell the system to exit at the next possible
  * moment.
  */
+#ifndef WIN32
+
 static void
 sigint_handler(int signum)
 {
 	time_to_abort = true;
 }
+
+#endif
 
 int
 main(int argc, char **argv)
