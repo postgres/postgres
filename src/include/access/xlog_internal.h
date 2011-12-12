@@ -71,7 +71,7 @@ typedef struct XLogContRecord
 /*
  * Each page of XLOG file has a header like this:
  */
-#define XLOG_PAGE_MAGIC 0xD068	/* can be used as WAL version indicator */
+#define XLOG_PAGE_MAGIC 0xD069	/* can be used as WAL version indicator */
 
 typedef struct XLogPageHeaderData
 {
@@ -106,8 +106,10 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 #define XLP_FIRST_IS_CONTRECORD		0x0001
 /* This flag indicates a "long" page header */
 #define XLP_LONG_HEADER				0x0002
+/* This flag indicates backup blocks starting in this page are optional */
+#define XLP_BKP_REMOVABLE			0x0004
 /* All defined flag bits in xlp_info (used for validity checking of header) */
-#define XLP_ALL_FLAGS				0x0003
+#define XLP_ALL_FLAGS				0x0007
 
 #define XLogPageHeaderSize(hdr)		\
 	(((hdr)->xlp_info & XLP_LONG_HEADER) ? SizeOfXLogLongPHD : SizeOfXLogShortPHD)

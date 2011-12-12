@@ -473,7 +473,7 @@ the same page, only BKP(1) would have been set.
 For this reason as well as the risk of deadlocking on buffer locks, it's best
 to design WAL records so that they reflect small atomic actions involving just
 one or a few pages.  The current XLOG infrastructure cannot handle WAL records
-involving references to more than three shared buffers, anyway.
+involving references to more than four shared buffers, anyway.
 
 In the case where the WAL record contains enough information to re-generate
 the entire contents of a page, do *not* show that page's buffer ID in the
