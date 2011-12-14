@@ -629,7 +629,7 @@ PostgreSQL documentation
        </para>
        <para>
         To exclude data for all tables in the database, see <option>--schema-only</>.
-       <para>
+       </para>
       </listitem>
      </varlistentry>
 
