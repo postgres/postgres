@@ -2823,11 +2823,11 @@ OPEN curs1 FOR EXECUTE 'SELECT * FROM ' || quote_ident(tabname)
        </para>
      </sect3>
 
-    <sect3>
+    <sect3 id="plpgsql-open-bound-cursor">
      <title>Opening a Bound Cursor</title>
 
 <synopsis>
-OPEN <replaceable>bound_cursorvar</replaceable> <optional> ( <replaceable>argument_values</replaceable> ) </optional>;
+OPEN <replaceable>bound_cursorvar</replaceable> <optional> ( <optional> <replaceable>argument_name</replaceable> := </optional> <replaceable>argument_value</replaceable> <optional>, ...</optional> ) </optional>;
 </synopsis>
 
          <para>
@@ -2847,10 +2847,21 @@ OPEN <replaceable>bound_cursorvar</replaceable> <optional> ( <replaceable>argume
          </para>
 
          <para>
+          Argument values can be passed using either <firstterm>positional</firstterm>
+          or <firstterm>named</firstterm> notation.  In positional
+          notation, all arguments are specified in order.  In named notation,
+          each argument's name is specified using <literal>:=</literal> to
+          separate it from the argument expression. Similar to calling
+          functions, described in <xref linkend="sql-syntax-calling-funcs">, it
+          is also allowed to mix positional and named notation.
+         </para>
+
+         <para>
           Examples (these use the cursor declaration examples above):
 <programlisting>
 OPEN curs2;
 OPEN curs3(42);
+OPEN curs3(key := 42);
 </programlisting>
          </para>
 
@@ -3169,7 +3180,7 @@ COMMIT;
 
 <synopsis>
 <optional> &lt;&lt;<replaceable>label</replaceable>&gt;&gt; </optional>
-FOR <replaceable>recordvar</replaceable> IN <replaceable>bound_cursorvar</replaceable> <optional> ( <replaceable>argument_values</replaceable> ) </optional> LOOP
+FOR <replaceable>recordvar</replaceable> IN <replaceable>bound_cursorvar</replaceable> <optional> ( <optional> <replaceable>argument_name</replaceable> := </optional> <replaceable>argument_value</replaceable> <optional>, ...</optional> ) </optional> LOOP
     <replaceable>statements</replaceable>
 END LOOP <optional> <replaceable>label</replaceable> </optional>;
 </synopsis>
@@ -3180,7 +3191,11 @@ END LOOP <optional> <replaceable>label</replaceable> </optional>;
      the cursor again when the loop exits.  A list of actual argument value
      expressions must appear if and only if the cursor was declared to take
      arguments.  These values will be substituted in the query, in just
-     the same way as during an <command>OPEN</>.
+     the same way as during an <command>OPEN</> (see <xref
+     linkend="plpgsql-open-bound-cursor">).
+   </para>
+
+   <para>
      The variable <replaceable>recordvar</replaceable> is automatically
      defined as type <type>record</> and exists only inside the loop (any
      existing definition of the variable name is ignored within the loop).

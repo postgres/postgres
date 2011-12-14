@@ -1946,6 +1946,114 @@ select refcursor_test2(20000, 20000) as "Should be false",
        refcursor_test2(20, 20) as "Should be true";
 
 --
+-- tests for cursors with named parameter arguments
+--
+create function namedparmcursor_test1(int, int) returns boolean as $$
+declare
+    c1 cursor (param1 int, param12 int) for select * from rc_test where a > param1 and b > param12;
+    nonsense record;
+begin
+    open c1(param12 := $2, param1 := $1);
+    fetch c1 into nonsense;
+    close c1;
+    if found then
+        return true;
+    else
+        return false;
+    end if;
+end
+$$ language plpgsql;
+
+select namedparmcursor_test1(20000, 20000) as "Should be false",
+       namedparmcursor_test1(20, 20) as "Should be true";
+
+-- mixing named and positional argument notations
+create function namedparmcursor_test2(int, int) returns boolean as $$
+declare
+    c1 cursor (param1 int, param2 int) for select * from rc_test where a > param1 and b > param2;
+    nonsense record;
+begin
+    open c1(param1 := $1, $2);
+    fetch c1 into nonsense;
+    close c1;
+    if found then
+        return true;
+    else
+        return false;
+    end if;
+end
+$$ language plpgsql;
+select namedparmcursor_test2(20, 20);
+
+-- mixing named and positional: param2 is given twice, once in named notation
+-- and second time in positional notation. Should throw an error at parse time
+create function namedparmcursor_test3() returns void as $$
+declare
+    c1 cursor (param1 int, param2 int) for select * from rc_test where a > param1 and b > param2;
+begin
+    open c1(param2 := 20, 21);
+end
+$$ language plpgsql;
+
+-- mixing named and positional: same as previous test, but param1 is duplicated
+create function namedparmcursor_test4() returns void as $$
+declare
+    c1 cursor (param1 int, param2 int) for select * from rc_test where a > param1 and b > param2;
+begin
+    open c1(20, param1 := 21);
+end
+$$ language plpgsql;
+
+-- duplicate named parameter, should throw an error at parse time
+create function namedparmcursor_test5() returns void as $$
+declare
+  c1 cursor (p1 int, p2 int) for
+    select * from tenk1 where thousand = p1 and tenthous = p2;
+begin
+  open c1 (p2 := 77, p2 := 42);
+end
+$$ language plpgsql;
+
+-- not enough parameters, should throw an error at parse time
+create function namedparmcursor_test6() returns void as $$
+declare
+  c1 cursor (p1 int, p2 int) for
+    select * from tenk1 where thousand = p1 and tenthous = p2;
+begin
+  open c1 (p2 := 77);
+end
+$$ language plpgsql;
+
+-- division by zero runtime error, the context given in the error message
+-- should be sensible
+create function namedparmcursor_test7() returns void as $$
+declare
+  c1 cursor (p1 int, p2 int) for
+    select * from tenk1 where thousand = p1 and tenthous = p2;
+begin
+  open c1 (p2 := 77, p1 := 42/0);
+end $$ language plpgsql;
+select namedparmcursor_test7();
+
+-- check that line comments work correctly within the argument list (there
+-- is some special handling of this case in the code: the newline after the
+-- comment must be preserved when the argument-evaluating query is
+-- constructed, otherwise the comment effectively comments out the next
+-- argument, too)
+create function namedparmcursor_test8() returns int4 as $$
+declare
+  c1 cursor (p1 int, p2 int) for
+    select count(*) from tenk1 where thousand = p1 and tenthous = p2;
+  n int4;
+begin
+  open c1 (77 -- test
+  , 42);
+  fetch c1 into n;
+  return n;
+end $$ language plpgsql;
+select namedparmcursor_test8();
+
+--
 -- tests for "raise" processing
 --
 create function raise_test1(int) returns int as $$
