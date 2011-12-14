@@ -404,6 +404,10 @@ PostgreSQL documentation
        <para>
         Dump only the object definitions (schema), not data.
        </para>
+       <para>
+        To exclude table data for only a subset of tables in the database, 
+        see <option>--exclude-table-data</>.
+       </para>
       </listitem>
      </varlistentry>
 
@@ -608,6 +612,24 @@ PostgreSQL documentation
         the archive formats, you can specify the option when you
         call <command>pg_restore</command>.
        </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--exclude-table-data=<replaceable class="parameter">table</replaceable></option></term>
+      <listitem>
+       <para>
+        Do not dump data for any tables matching the <replaceable
+        class="parameter">table</replaceable> pattern. The pattern is
+        interpreted according to the same rules as for <option>-t</>.
+        <option>--exclude-table-data</> can be given more than once to 
+        exclude tables matching any of several patterns. This option is
+        useful when you need the definition of a particular table even
+        though you do not need the data in it.
+       </para>
+       <para>
+        To exclude data for all tables in the database, see <option>--schema-only</>.
+       <para>
       </listitem>
      </varlistentry>
 

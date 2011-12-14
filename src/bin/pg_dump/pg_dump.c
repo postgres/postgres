@@ -115,6 +115,8 @@ static SimpleStringList table_include_patterns = {NULL, NULL};
 static SimpleOidList table_include_oids = {NULL, NULL};
 static SimpleStringList table_exclude_patterns = {NULL, NULL};
 static SimpleOidList table_exclude_oids = {NULL, NULL};
+static SimpleStringList tabledata_exclude_patterns = {NULL, NULL};
+static SimpleOidList tabledata_exclude_oids = {NULL, NULL};
 
 /* default, if no "inclusion" switches appear, is to dump everything */
 static bool include_everything = true;
@@ -324,6 +326,7 @@ main(int argc, char **argv)
 		{"column-inserts", no_argument, &column_inserts, 1},
 		{"disable-dollar-quoting", no_argument, &disable_dollar_quoting, 1},
 		{"disable-triggers", no_argument, &disable_triggers, 1},
+		{"exclude-table-data", required_argument, NULL, 4},
 		{"inserts", no_argument, &dump_inserts, 1},
 		{"lock-wait-timeout", required_argument, NULL, 2},
 		{"no-tablespaces", no_argument, &outputNoTablespaces, 1},
@@ -485,6 +488,10 @@ main(int argc, char **argv)
 
 			case 3:				/* SET ROLE */
 				use_role = optarg;
+				break;
+
+			case 4:			/* exclude table(s) data */
+				simple_string_list_append(&tabledata_exclude_patterns, optarg);
 				break;
 
 			default:
@@ -715,6 +722,10 @@ main(int argc, char **argv)
 	}
 	expand_table_name_patterns(&table_exclude_patterns,
 							   &table_exclude_oids);
+
+	expand_table_name_patterns(&tabledata_exclude_patterns,
+							   &tabledata_exclude_oids);
+
 	/* non-matching exclusion patterns aren't an error */
 
 	/*
@@ -854,6 +865,7 @@ help(const char *progname)
 	printf(_("  --column-inserts            dump data as INSERT commands with column names\n"));
 	printf(_("  --disable-dollar-quoting    disable dollar quoting, use SQL standard quoting\n"));
 	printf(_("  --disable-triggers          disable triggers during data-only restore\n"));
+	printf(_("  --exclude-table-data=TABLE  do NOT dump data for the named table(s)\n"));
 	printf(_("  --inserts                   dump data as INSERT commands, rather than COPY\n"));
 	printf(_("  --no-security-labels        do not dump security label assignments\n"));
 	printf(_("  --no-tablespaces            do not dump tablespace assignments\n"));
@@ -1087,6 +1099,15 @@ selectDumpableTable(TableInfo *tbinfo)
 		simple_oid_list_member(&table_exclude_oids,
 							   tbinfo->dobj.catId.oid))
 		tbinfo->dobj.dump = false;
+
+	/* If table is to be dumped, check that the data is not excluded */
+	if (tbinfo->dobj.dump && !
+		simple_oid_list_member(&tabledata_exclude_oids,
+							   tbinfo->dobj.catId.oid))
+		tbinfo->dobj.dumpdata = true;
+	else
+		tbinfo->dobj.dumpdata = false;
+		
 }
 
 /*
@@ -1517,6 +1538,10 @@ dumpTableData(Archive *fout, TableDataInfo *tdinfo)
 	PQExpBuffer copyBuf = createPQExpBuffer();
 	DataDumperPtr dumpFn;
 	char	   *copyStmt;
+
+	/* don't do anything if the data isn't wanted */
+	if (!tbinfo->dobj.dumpdata)
+		return;
 
 	if (!dump_inserts)
 	{
