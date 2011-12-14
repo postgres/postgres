@@ -292,6 +292,8 @@ choke me
   PGAC_PROG_CC_CFLAGS_OPT([-fno-strict-aliasing])
   # Disable optimizations that assume no overflow; needed for gcc 4.3+
   PGAC_PROG_CC_CFLAGS_OPT([-fwrapv])
+  # Disable FP optimizations that cause various errors on gcc 4.5+ or maybe 4.6+
+  PGAC_PROG_CC_CFLAGS_OPT([-fexcess-precision=standard])
 elif test x"${CC}" = x"xlc"; then
   # AIX xlc has to have strict aliasing turned off too
   PGAC_PROG_CC_CFLAGS_OPT([-qnoansialias])
