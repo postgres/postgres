@@ -208,6 +208,7 @@ DETAIL:  owner of foreign-data wrapper foo
 SET ROLE regress_test_role_super;
 DROP FOREIGN DATA WRAPPER foo;
 RESET ROLE;
+DROP ROLE regress_test_role_super;
 \dew+
                                             List of foreign-data wrappers
     Name    |       Owner       | Handler |        Validator         | Access privileges | FDW Options | Description 

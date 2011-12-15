@@ -97,6 +97,7 @@ DROP ROLE regress_test_role_super;                          -- ERROR
 SET ROLE regress_test_role_super;
 DROP FOREIGN DATA WRAPPER foo;
 RESET ROLE;
+DROP ROLE regress_test_role_super;
 \dew+
 
 CREATE FOREIGN DATA WRAPPER foo;
