@@ -160,7 +160,7 @@ typedef struct Port
 #if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 
 	/*
-	 * If GSSAPI is supported, store GSSAPI information. Oterwise, store a
+	 * If GSSAPI is supported, store GSSAPI information. Otherwise, store a
 	 * NULL pointer to make sure offsets in the struct remain the same.
 	 */
 	pg_gssinfo *gss;
