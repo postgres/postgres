@@ -45,15 +45,12 @@ extern void ExecuteTruncate(TruncateStmt *stmt);
 
 extern void SetRelationHasSubclass(Oid relationId, bool relhassubclass);
 
-extern void renameatt(Oid myrelid, RenameStmt *stmt);
+extern void renameatt(RenameStmt *stmt);
 
-extern void RenameRelation(Oid myrelid,
-			   const char *newrelname,
-			   ObjectType reltype);
+extern void RenameRelation(RenameStmt *stmt);
 
 extern void RenameRelationInternal(Oid myrelid,
-					   const char *newrelname,
-					   Oid namespaceId);
+					   const char *newrelname);
 
 extern void find_composite_type_dependencies(Oid typeOid,
 								 Relation origRelation,

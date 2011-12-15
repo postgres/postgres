@@ -1474,28 +1474,24 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 		{
 			Relation	toastrel;
 			Oid			toastidx;
-			Oid			toastnamespace;
 			char		NewToastName[NAMEDATALEN];
 
 			toastrel = relation_open(newrel->rd_rel->reltoastrelid,
 									 AccessShareLock);
 			toastidx = toastrel->rd_rel->reltoastidxid;
-			toastnamespace = toastrel->rd_rel->relnamespace;
 			relation_close(toastrel, AccessShareLock);
 
 			/* rename the toast table ... */
 			snprintf(NewToastName, NAMEDATALEN, "pg_toast_%u",
 					 OIDOldHeap);
 			RenameRelationInternal(newrel->rd_rel->reltoastrelid,
-								   NewToastName,
-								   toastnamespace);
+								   NewToastName);
 
 			/* ... and its index too */
 			snprintf(NewToastName, NAMEDATALEN, "pg_toast_%u_index",
 					 OIDOldHeap);
 			RenameRelationInternal(toastidx,
-								   NewToastName,
-								   toastnamespace);
+								   NewToastName);
 		}
 		relation_close(newrel, NoLock);
 	}

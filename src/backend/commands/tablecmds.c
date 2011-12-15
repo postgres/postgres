@@ -2064,6 +2064,48 @@ SetRelationHasSubclass(Oid relationId, bool relhassubclass)
 	heap_close(relationRelation, RowExclusiveLock);
 }
 
+/*
+ *		renameatt_check			- basic sanity checks before attribute rename
+ */
+static void
+renameatt_check(Oid myrelid, Form_pg_class classform, bool recursing)
+{
+	char		relkind = classform->relkind;
+
+	if (classform->reloftype && !recursing)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cannot rename column of typed table")));
+
+	/*
+	 * Renaming the columns of sequences or toast tables doesn't actually
+	 * break anything from the system's point of view, since internal
+	 * references are by attnum.  But it doesn't seem right to allow users to
+	 * change names that are hardcoded into the system, hence the following
+	 * restriction.
+	 */
+	if (relkind != RELKIND_RELATION &&
+		relkind != RELKIND_VIEW &&
+		relkind != RELKIND_COMPOSITE_TYPE &&
+		relkind != RELKIND_INDEX &&
+		relkind != RELKIND_FOREIGN_TABLE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a table, view, composite type, index or foreign table",
+						NameStr(classform->relname))));
+
+	/*
+	 * permissions checking.  only the owner of a class can change its schema.
+	 */
+	if (!pg_class_ownercheck(myrelid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   NameStr(classform->relname));
+	if (!allowSystemTableMods && IsSystemClass(classform))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied: \"%s\" is a system catalog",
+						NameStr(classform->relname))));
+}
 
 /*
  *		renameatt_internal		- workhorse for renameatt
@@ -2082,48 +2124,13 @@ renameatt_internal(Oid myrelid,
 	HeapTuple	atttup;
 	Form_pg_attribute attform;
 	int			attnum;
-	char		relkind;
 
 	/*
 	 * Grab an exclusive lock on the target table, which we will NOT release
 	 * until end of transaction.
 	 */
 	targetrelation = relation_open(myrelid, AccessExclusiveLock);
-
-	if (targetrelation->rd_rel->reloftype && !recursing)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("cannot rename column of typed table")));
-
-	/*
-	 * Renaming the columns of sequences or toast tables doesn't actually
-	 * break anything from the system's point of view, since internal
-	 * references are by attnum.  But it doesn't seem right to allow users to
-	 * change names that are hardcoded into the system, hence the following
-	 * restriction.
-	 */
-	relkind = RelationGetForm(targetrelation)->relkind;
-	if (relkind != RELKIND_RELATION &&
-		relkind != RELKIND_VIEW &&
-		relkind != RELKIND_COMPOSITE_TYPE &&
-		relkind != RELKIND_INDEX &&
-		relkind != RELKIND_FOREIGN_TABLE)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a table, view, composite type, index or foreign table",
-						RelationGetRelationName(targetrelation))));
-
-	/*
-	 * permissions checking.  only the owner of a class can change its schema.
-	 */
-	if (!pg_class_ownercheck(myrelid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
-					   RelationGetRelationName(targetrelation));
-	if (!allowSystemTableMods && IsSystemRelation(targetrelation))
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied: \"%s\" is a system catalog",
-						RelationGetRelationName(targetrelation))));
+	renameatt_check(myrelid, RelationGetForm(targetrelation), recursing);
 
 	/*
 	 * if the 'recurse' flag is set then we are supposed to rename this
@@ -2252,14 +2259,38 @@ renameatt_internal(Oid myrelid,
 	relation_close(targetrelation, NoLock);		/* close rel but keep lock */
 }
 
+/*
+ * Perform permissions and integrity checks before acquiring a relation lock.
+ */
+static void
+RangeVarCallbackForRenameAttribute(const RangeVar *rv, Oid relid, Oid oldrelid,
+								   void *arg)
+{
+	HeapTuple		tuple;
+	Form_pg_class	form;
+
+	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+	if (!HeapTupleIsValid(tuple))
+		return;							/* concurrently dropped */
+	form = (Form_pg_class) GETSTRUCT(tuple);
+	renameatt_check(relid, form, false);
+	ReleaseSysCache(tuple);
+}
 
 /*
  *		renameatt		- changes the name of a attribute in a relation
  */
 void
-renameatt(Oid myrelid, RenameStmt *stmt)
+renameatt(RenameStmt *stmt)
 {
-	renameatt_internal(myrelid,
+	Oid			relid;
+
+	/* lock level taken here should match renameatt_internal */
+	relid = RangeVarGetRelidExtended(stmt->relation, AccessExclusiveLock,
+									 false, false,
+									 RangeVarCallbackForRenameAttribute,
+									 NULL);
+	renameatt_internal(relid,
 					   stmt->subname,	/* old att name */
 					   stmt->newname,	/* new att name */
 					   interpretInhOption(stmt->relation->inhOpt),		/* recursive? */
@@ -2268,29 +2299,44 @@ renameatt(Oid myrelid, RenameStmt *stmt)
 					   stmt->behavior);
 }
 
-
 /*
- * Execute ALTER TABLE/INDEX/SEQUENCE/VIEW/FOREIGN TABLE RENAME
- *
- * Caller has already done permissions checks.
+ * Perform permissions and integrity checks before acquiring a relation lock.
  */
-void
-RenameRelation(Oid myrelid, const char *newrelname, ObjectType reltype)
+static void
+RangeVarCallbackForRenameRelation(const RangeVar *rv, Oid relid, Oid oldrelid,
+								  void *arg)
 {
-	Relation	targetrelation;
-	Oid			namespaceId;
-	char		relkind;
+	RenameStmt	   *stmt = (RenameStmt *) arg;
+	ObjectType		reltype;
+	HeapTuple		tuple;
+	Form_pg_class	classform;
+	AclResult   	aclresult;
+	char			relkind;
 
-	/*
-	 * Grab an exclusive lock on the target table, index, sequence or view,
-	 * which we will NOT release until end of transaction.
-	 *
-	 * Lock level used here should match ExecRenameStmt
-	 */
-	targetrelation = relation_open(myrelid, AccessExclusiveLock);
+	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+	if (!HeapTupleIsValid(tuple))
+		return;							/* concurrently dropped */
+	classform = (Form_pg_class) GETSTRUCT(tuple);
+	relkind = classform->relkind;
 
-	namespaceId = RelationGetNamespace(targetrelation);
-	relkind = targetrelation->rd_rel->relkind;
+	/* Must own table. */
+	if (!pg_class_ownercheck(relid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   NameStr(classform->relname));
+
+	/* No system table modifications unless explicitly allowed. */
+	if (!allowSystemTableMods && IsSystemClass(classform))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied: \"%s\" is a system catalog",
+						NameStr(classform->relname))));
+
+	/* Must (still) have CREATE rights on containing namespace. */
+ 	aclresult = pg_namespace_aclcheck(classform->relnamespace, GetUserId(),
+									  ACL_CREATE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+					   get_namespace_name(classform->relnamespace));
 
 	/*
 	 * For compatibility with prior releases, we don't complain if ALTER TABLE
@@ -2298,23 +2344,21 @@ RenameRelation(Oid myrelid, const char *newrelname, ObjectType reltype)
 	 * ALTER SEQUENCE/VIEW/FOREIGN TABLE are only to be used with relations of
 	 * that type.
 	 */
+	reltype = stmt->renameType;
 	if (reltype == OBJECT_SEQUENCE && relkind != RELKIND_SEQUENCE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a sequence",
-						RelationGetRelationName(targetrelation))));
+				 errmsg("\"%s\" is not a sequence", rv->relname)));
 
 	if (reltype == OBJECT_VIEW && relkind != RELKIND_VIEW)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a view",
-						RelationGetRelationName(targetrelation))));
+				 errmsg("\"%s\" is not a view", rv->relname)));
 
 	if (reltype == OBJECT_FOREIGN_TABLE && relkind != RELKIND_FOREIGN_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a foreign table",
-						RelationGetRelationName(targetrelation))));
+				 errmsg("\"%s\" is not a foreign table", rv->relname)));
 
 	/*
 	 * Don't allow ALTER TABLE on composite types. We want people to use ALTER
@@ -2323,17 +2367,35 @@ RenameRelation(Oid myrelid, const char *newrelname, ObjectType reltype)
 	if (relkind == RELKIND_COMPOSITE_TYPE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is a composite type",
-						RelationGetRelationName(targetrelation)),
+				 errmsg("\"%s\" is a composite type", rv->relname),
 				 errhint("Use ALTER TYPE instead.")));
 
-	/* Do the work */
-	RenameRelationInternal(myrelid, newrelname, namespaceId);
+	ReleaseSysCache(tuple);
+}
+
+
+/*
+ * Execute ALTER TABLE/INDEX/SEQUENCE/VIEW/FOREIGN TABLE RENAME
+ */
+void
+RenameRelation(RenameStmt *stmt)
+{
+	Oid			relid;
 
 	/*
-	 * Close rel, but keep exclusive lock!
+	 * Grab an exclusive lock on the target table, index, sequence or view,
+	 * which we will NOT release until end of transaction.
+	 *
+	 * Lock level used here should match RenameRelationInternal, to avoid
+	 * lock escalation.
 	 */
-	relation_close(targetrelation, NoLock);
+	relid = RangeVarGetRelidExtended(stmt->relation, AccessExclusiveLock,
+									 false, false,
+									 RangeVarCallbackForRenameRelation,
+									 (void *) stmt);
+
+	/* Do the work */
+	RenameRelationInternal(relid, stmt->newname);
 }
 
 /*
@@ -2346,18 +2408,20 @@ RenameRelation(Oid myrelid, const char *newrelname, ObjectType reltype)
  *			  sequence, AFAIK there's no need for it to be there.
  */
 void
-RenameRelationInternal(Oid myrelid, const char *newrelname, Oid namespaceId)
+RenameRelationInternal(Oid myrelid, const char *newrelname)
 {
 	Relation	targetrelation;
 	Relation	relrelation;	/* for RELATION relation */
 	HeapTuple	reltup;
 	Form_pg_class relform;
+	Oid			namespaceId;
 
 	/*
 	 * Grab an exclusive lock on the target table, index, sequence or view,
 	 * which we will NOT release until end of transaction.
 	 */
 	targetrelation = relation_open(myrelid, AccessExclusiveLock);
+	namespaceId = RelationGetNamespace(targetrelation);
 
 	/*
 	 * Find relation's pg_class tuple, and make sure newrelname isn't in use.
@@ -5376,7 +5440,7 @@ ATExecAddIndexConstraint(AlteredTableInfo *tab, Relation rel,
 		ereport(NOTICE,
 				(errmsg("ALTER TABLE / ADD CONSTRAINT USING INDEX will rename index \"%s\" to \"%s\"",
 						indexName, constraintName)));
-		RenameRelation(index_oid, constraintName, OBJECT_INDEX);
+		RenameRelationInternal(index_oid, constraintName);
 	}
 
 	/* Extra checks needed if making primary key */

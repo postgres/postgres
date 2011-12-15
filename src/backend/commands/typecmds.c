@@ -3121,8 +3121,7 @@ RenameType(List *names, const char *newTypeName)
 	 * RenameRelationInternal will call RenameTypeInternal automatically.
 	 */
 	if (typTup->typtype == TYPTYPE_COMPOSITE)
-		RenameRelationInternal(typTup->typrelid, newTypeName,
-							   typTup->typnamespace);
+		RenameRelationInternal(typTup->typrelid, newTypeName);
 	else
 		RenameTypeInternal(typeOid, newTypeName,
 						   typTup->typnamespace);
