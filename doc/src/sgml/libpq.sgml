@@ -6781,7 +6781,7 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
     as that of <literal>verify-ca</literal>, meaning the sever certificate
     is validated against the CA. Relying on this behavior is discouraged,
     and applications that need certificate validation should always use
-    <literal>validate-ca</literal> or <literal>validate-full</literal>.
+    <literal>verify-ca</literal> or <literal>verify-full</literal>.
    </para>
   </note>
  </sect2>
