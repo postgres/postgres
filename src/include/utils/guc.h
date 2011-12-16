@@ -111,7 +111,7 @@ typedef struct ConfigVariable
 } ConfigVariable;
 
 extern bool ParseConfigFile(const char *config_file, const char *calling_file,
-				int depth, int elevel,
+				bool strict, int depth, int elevel,
 				ConfigVariable **head_p, ConfigVariable **tail_p);
 extern bool ParseConfigFp(FILE *fp, const char *config_file,
 			  int depth, int elevel,

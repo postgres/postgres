@@ -91,6 +91,18 @@ include 'filename'
 
    <para>
     <indexterm>
+     <primary><literal>include_if_exists</></primary>
+     <secondary>in configuration file</secondary>
+    </indexterm>
+    Use the same approach as the <literal>include</> directive, continuing
+    normally if the file does not exist.  A regular <literal>include</>
+    will stop with an error if the referenced file is missing, while
+    <literal>include_if_exists</> does not.  A warning about the missing
+    file will be logged.
+   </para>
+
+   <para>
+    <indexterm>
      <primary>SIGHUP</primary>
     </indexterm>
     The configuration file is reread whenever the main server process receives a

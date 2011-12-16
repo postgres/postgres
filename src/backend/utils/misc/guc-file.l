@@ -129,7 +129,7 @@ ProcessConfigFile(GucContext context)
 	/* Parse the file into a list of option names and values */
 	head = tail = NULL;
 
-	if (!ParseConfigFile(ConfigFileName, NULL, 0, elevel, &head, &tail))
+	if (!ParseConfigFile(ConfigFileName, NULL, true, 0, elevel, &head, &tail))
 	{
 		/* Syntax error(s) detected in the file, so bail out */
 		error = true;
@@ -363,7 +363,7 @@ ProcessConfigFile(GucContext context)
  * and absolute-ifying the path name if necessary.
  */
 bool
-ParseConfigFile(const char *config_file, const char *calling_file,
+ParseConfigFile(const char *config_file, const char *calling_file, bool strict,
 				int depth, int elevel,
 				ConfigVariable **head_p,
 				ConfigVariable **tail_p)
@@ -414,11 +414,19 @@ ParseConfigFile(const char *config_file, const char *calling_file,
 	fp = AllocateFile(config_file, "r");
 	if (!fp)
 	{
-		ereport(elevel,
-				(errcode_for_file_access(),
-				 errmsg("could not open configuration file \"%s\": %m",
+		if (strict)
+		{
+			ereport(elevel,
+					(errcode_for_file_access(),
+					 errmsg("could not open configuration file \"%s\": %m",
+							config_file)));
+			return false;
+		}
+
+		ereport(LOG, 
+				(errmsg("skipping missing configuration file \"%s\"", 
 						config_file)));
-		return false;
+		return OK;
 	}
 
 	OK = ParseConfigFp(fp, config_file, depth, elevel, head_p, tail_p);
@@ -512,7 +520,24 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 		}
 
 		/* OK, process the option name and value */
-		if (guc_name_compare(opt_name, "include") == 0)
+		if (guc_name_compare(opt_name, "include_if_exists") == 0)
+		{
+			/*
+			 * An include_if_exists directive isn't a variable and should be
+			 * processed immediately.
+			 */
+			unsigned int save_ConfigFileLineno = ConfigFileLineno;
+
+			if (!ParseConfigFile(opt_value, config_file, false,
+								 depth + 1, elevel,
+								 head_p, tail_p))
+				OK = false;
+			yy_switch_to_buffer(lex_buffer);
+			ConfigFileLineno = save_ConfigFileLineno;
+			pfree(opt_name);
+			pfree(opt_value);
+		}
+		else if (guc_name_compare(opt_name, "include") == 0)
 		{
 			/*
 			 * An include directive isn't a variable and should be processed
@@ -520,7 +545,7 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 			 */
 			unsigned int save_ConfigFileLineno = ConfigFileLineno;
 
-			if (!ParseConfigFile(opt_value, config_file,
+			if (!ParseConfigFile(opt_value, config_file, true,
 								 depth + 1, elevel,
 								 head_p, tail_p))
 				OK = false;
