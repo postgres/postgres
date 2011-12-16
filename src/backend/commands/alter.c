@@ -191,7 +191,6 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
 		case OBJECT_TABLE:
 		case OBJECT_VIEW:
 		case OBJECT_FOREIGN_TABLE:
-			CheckRelationOwnership(stmt->relation, true);
 			AlterTableNamespace(stmt->relation, stmt->newschema,
 								stmt->objectType, AccessExclusiveLock);
 			break;
