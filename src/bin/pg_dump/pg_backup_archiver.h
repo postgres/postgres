@@ -287,6 +287,9 @@ typedef struct _tocEntry
 	void	   *dataDumperArg;	/* Arg for above routine */
 	void	   *formatData;		/* TOC Entry data specific to file format */
 
+	/* in post data? not quite the same as section, might be SECTION_NONE */
+	bool        inPostData;
+
 	/* working state (needed only for parallel restore) */
 	struct _tocEntry *par_prev; /* list links for pending/ready items; */
 	struct _tocEntry *par_next; /* these are NULL if not in either list */

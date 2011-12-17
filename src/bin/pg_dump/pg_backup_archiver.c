@@ -665,6 +665,7 @@ NewRestoreOptions(void)
 	/* set any fields that shouldn't default to zeroes */
 	opts->format = archUnknown;
 	opts->promptPassword = TRI_DEFAULT;
+	opts->dumpSections = DUMP_UNSECTIONED;
 
 	return opts;
 }
@@ -2120,6 +2121,7 @@ ReadToc(ArchiveHandle *AH)
 	int			depIdx;
 	int			depSize;
 	TocEntry   *te;
+	bool        in_post_data = false;
 
 	AH->tocCount = ReadInt(AH);
 	AH->maxDumpId = 0;
@@ -2184,6 +2186,12 @@ ReadToc(ArchiveHandle *AH)
 			else
 				te->section = SECTION_PRE_DATA;
 		}
+
+		/* will stay true even for SECTION_NONE items */
+		if (te->section == SECTION_POST_DATA)
+			in_post_data = true;
+
+		te->inPostData = in_post_data;
 
 		te->defn = ReadStr(AH);
 		te->dropStmt = ReadStr(AH);
@@ -2333,6 +2341,17 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool include_acls)
 	/* Ignore DATABASE entry unless we should create it */
 	if (!ropt->createDB && strcmp(te->desc, "DATABASE") == 0)
 		return 0;
+
+	/* skip (all but) post data section as required */
+	/* table data is filtered if necessary lower down */
+	if (ropt->dumpSections != DUMP_UNSECTIONED)
+	{
+		if (!(ropt->dumpSections & DUMP_POST_DATA) && te->inPostData)
+			return 0;
+		if (!(ropt->dumpSections & DUMP_PRE_DATA) && ! te->inPostData && strcmp(te->desc, "TABLE DATA") != 0)
+			return 0;
+	}
+
 
 	/* Check options for selective dump/restore */
 	if (ropt->schemaNames)

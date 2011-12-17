@@ -93,6 +93,9 @@
        <para>
         Restore only the data, not the schema (data definitions).
        </para>
+       <para>
+        This option is equivalent to specifying <option>--section=data</>.
+       </para>
       </listitem>
      </varlistentry>
 
@@ -359,6 +362,10 @@
         (Do not confuse this with the <option>--schema</> option, which
         uses the word <quote>schema</> in a different meaning.)
        </para>
+       <para>
+        This option is equivalent to specifying 
+        <option>--section=pre-data --section=post-data</>.
+       </para>
       </listitem>
      </varlistentry>
 
@@ -502,6 +509,22 @@
         tablespace is the default during restore.
        </para>
       </listitem>
+     </varlistentry>
+
+     <varlistentry>
+       <term><option>--section=<replaceable class="parameter">sectionname</replaceable></option></term>
+       <listitem>
+         <para>
+           Only restore the named section. The name can be one of <option>pre-data</>, <option>data</> 
+           and <option>post-data</>. 
+           This option can be specified more than once. The default is to restore all sections.
+         </para>
+         <para>
+           Post-data items consist of definitions of indexes, triggers, rules 
+           and constraints other than check constraints. 
+           Pre-data items consist of all other data definition items.
+         </para>
+       </listitem>
      </varlistentry>
 
      <varlistentry>

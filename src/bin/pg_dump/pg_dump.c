@@ -91,6 +91,7 @@ PGconn	   *g_conn;				/* the database connection */
 /* various user-settable parameters */
 bool		schemaOnly;
 bool		dataOnly;
+int         dumpSections; /* bitmask of chosen sections */
 bool		aclsSkip;
 const char *lockWaitTimeout;
 
@@ -250,7 +251,6 @@ static void do_sql_command(PGconn *conn, const char *query);
 static void check_sql_result(PGresult *res, PGconn *conn, const char *query,
 				 ExecStatusType expected);
 
-
 int
 main(int argc, char **argv)
 {
@@ -332,6 +332,7 @@ main(int argc, char **argv)
 		{"no-tablespaces", no_argument, &outputNoTablespaces, 1},
 		{"quote-all-identifiers", no_argument, &quote_all_identifiers, 1},
 		{"role", required_argument, NULL, 3},
+		{"section", required_argument, NULL, 5},
 		{"serializable-deferrable", no_argument, &serializable_deferrable, 1},
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
 		{"no-security-labels", no_argument, &no_security_labels, 1},
@@ -349,6 +350,7 @@ main(int argc, char **argv)
 	strcpy(g_opaque_type, "opaque");
 
 	dataOnly = schemaOnly = false;
+	dumpSections = DUMP_UNSECTIONED;
 	lockWaitTimeout = NULL;
 
 	progname = get_progname(argv[0]);
@@ -494,6 +496,10 @@ main(int argc, char **argv)
 				simple_string_list_append(&tabledata_exclude_patterns, optarg);
 				break;
 
+			case 5:				/* section */
+				set_section(optarg, &dumpSections);
+				break;
+
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
@@ -522,6 +528,22 @@ main(int argc, char **argv)
 	{
 		write_msg(NULL, "options -s/--schema-only and -a/--data-only cannot be used together\n");
 		exit(1);
+	}
+
+	if ((dataOnly || schemaOnly) && dumpSections != DUMP_UNSECTIONED)
+	{
+		write_msg(NULL, "options -s/--schema-only and -a/--data-only cannot be used with --section\n");
+		exit(1);
+	}
+
+	if (dataOnly)
+		dumpSections = DUMP_DATA;
+	else if (schemaOnly)
+		dumpSections = DUMP_PRE_DATA | DUMP_POST_DATA;
+	else if ( dumpSections != DUMP_UNSECTIONED)
+	{
+		dataOnly = dumpSections == DUMP_DATA;
+		schemaOnly = !(dumpSections & DUMP_DATA);
 	}
 
 	if (dataOnly && outputClean)
@@ -871,6 +893,7 @@ help(const char *progname)
 	printf(_("  --no-tablespaces            do not dump tablespace assignments\n"));
 	printf(_("  --no-unlogged-table-data    do not dump unlogged table data\n"));
 	printf(_("  --quote-all-identifiers     quote all identifiers, even if not key words\n"));
+	printf(_("  --section=SECTION           dump named section (pre-data, data or post-data)\n"));
 	printf(_("  --serializable-deferrable   wait until the dump can run without anomalies\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                              use SET SESSION AUTHORIZATION commands instead of\n"
@@ -1107,7 +1130,7 @@ selectDumpableTable(TableInfo *tbinfo)
 		tbinfo->dobj.dumpdata = true;
 	else
 		tbinfo->dobj.dumpdata = false;
-		
+
 }
 
 /*
@@ -7093,6 +7116,28 @@ collectComments(Archive *fout, CommentItem **items)
 static void
 dumpDumpableObject(Archive *fout, DumpableObject *dobj)
 {
+
+	bool skip = false;
+
+	switch (dobj->objType)
+	{
+		case DO_INDEX:
+		case DO_TRIGGER:
+		case DO_CONSTRAINT:
+		case DO_FK_CONSTRAINT:
+		case DO_RULE:
+			skip = !(dumpSections & DUMP_POST_DATA);
+			break;
+		case DO_TABLE_DATA:
+			skip = !(dumpSections & DUMP_DATA);
+			break;
+		default:
+			skip = !(dumpSections & DUMP_PRE_DATA);
+	}
+
+	if (skip)
+		return;
+
 	switch (dobj->objType)
 	{
 		case DO_NAMESPACE:

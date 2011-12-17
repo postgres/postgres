@@ -118,6 +118,7 @@ main(int argc, char **argv)
 		{"no-data-for-failed-tables", no_argument, &no_data_for_failed_tables, 1},
 		{"no-tablespaces", no_argument, &outputNoTablespaces, 1},
 		{"role", required_argument, NULL, 2},
+		{"section", required_argument, NULL, 3},
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
 		{"no-security-labels", no_argument, &no_security_labels, 1},
 
@@ -272,6 +273,10 @@ main(int argc, char **argv)
 				opts->use_role = optarg;
 				break;
 
+			case 3:				/* section */
+				set_section(optarg, &(opts->dumpSections));
+				break;
+
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
@@ -292,6 +297,30 @@ main(int argc, char **argv)
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
 		exit(1);
+	}
+
+	if (opts->dataOnly && opts->schemaOnly)
+	{
+		fprintf(stderr, _("%s: options -s/--schema-only and -a/--data-only cannot be used together\n"),
+			progname);
+		exit(1);
+	}
+
+	if ((opts->dataOnly || opts->schemaOnly) && (opts->dumpSections != DUMP_UNSECTIONED))
+	{
+		fprintf(stderr, _("%s: options -s/--schema-only and -a/--data-only cannot be used with --section\n"),
+			progname);
+		exit(1);
+	}
+
+	if (opts->dataOnly)
+		opts->dumpSections = DUMP_DATA;
+	else if (opts->schemaOnly)
+		opts->dumpSections = DUMP_PRE_DATA | DUMP_POST_DATA;
+	else if ( opts->dumpSections != DUMP_UNSECTIONED)
+	{
+		opts->dataOnly = opts->dumpSections == DUMP_DATA;
+		opts->schemaOnly = !(opts->dumpSections & DUMP_DATA);
 	}
 
 	/* Should get at most one of -d and -f, else user is confused */
@@ -434,6 +463,7 @@ usage(const char *progname)
 			 "                           created\n"));
 	printf(_("  --no-security-labels     do not restore security labels\n"));
 	printf(_("  --no-tablespaces         do not restore tablespace assignments\n"));
+	printf(_("  --section=SECTION        restore named section (pre-data, data or post-data)\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                           use SET SESSION AUTHORIZATION commands instead of\n"
 	  "                           ALTER OWNER commands to set ownership\n"));

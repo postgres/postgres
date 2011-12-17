@@ -17,6 +17,7 @@
 #include <ctype.h>
 
 #include "dumputils.h"
+#include "pg_backup.h"
 
 #include "parser/keywords.h"
 
@@ -1261,4 +1262,33 @@ exit_horribly(const char *modulename, const char *fmt,...)
 	va_end(ap);
 
 	exit(1);
+}
+
+/*
+ * Set the bitmask in dumpSections according to the first argument.
+ * dumpSections is initialised as DUMP_UNSECTIONED by pg_dump and
+ * pg_restore so they can know if this has even been called.
+ */
+
+void
+set_section (const char *arg, int *dumpSections)
+{
+	/* if this is the first, clear all the bits */
+	if (*dumpSections == DUMP_UNSECTIONED)
+		*dumpSections = 0;
+
+	if (strcmp(arg,"pre-data") == 0)
+		*dumpSections |= DUMP_PRE_DATA;
+	else if (strcmp(arg,"data") == 0)
+		*dumpSections |= DUMP_DATA;
+	else if (strcmp(arg,"post-data") == 0)
+		*dumpSections |= DUMP_POST_DATA;
+	else
+	{
+		fprintf(stderr, _("%s: unknown section name \"%s\")\n"),
+				progname, arg);
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
+				progname);
+		exit(1);
+	}
 }

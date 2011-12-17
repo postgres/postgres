@@ -116,9 +116,7 @@ PostgreSQL documentation
        </para>
 
        <para>
-        This option is only meaningful for the plain-text format.  For
-        the archive formats, you can specify the option when you
-        call <command>pg_restore</command>.
+        This option is equivalent to specifying <option>--section=data</>.
        </para>
       </listitem>
      </varlistentry>
@@ -408,7 +406,27 @@ PostgreSQL documentation
         To exclude table data for only a subset of tables in the database, 
         see <option>--exclude-table-data</>.
        </para>
+       <para>
+        This option is equivalent to specifying 
+        <option>--section=pre-data --section=post-data</>.
+       </para>
       </listitem>
+     </varlistentry>
+
+     <varlistentry>
+       <term><option>--section=<replaceable class="parameter">sectionname</replaceable></option></term>
+       <listitem>
+         <para>
+           Only dump the named section. The name can be one of <option>pre-data</>, <option>data</> 
+           and <option>post-data</>. 
+           This option can be specified more than once. The default is to dump all sections.
+         </para>
+         <para>
+           Post-data items consist of definitions of indexes, triggers, rules 
+           and constraints other than check constraints. 
+           Pre-data items consist of all other data definition items.
+         </para>
+       </listitem>
      </varlistentry>
 
      <varlistentry>
