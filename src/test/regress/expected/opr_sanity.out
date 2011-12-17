@@ -1041,11 +1041,8 @@ ORDER BY 1, 2, 3;
         783 |           15 | <->
         783 |           16 | @>
         783 |           18 | =
-        783 |           27 | @>
         783 |           28 | <@
-        783 |           47 | @>
         783 |           48 | <@
-        783 |           67 | @>
         783 |           68 | <@
        2742 |            1 | &&
        2742 |            1 | @@
@@ -1068,7 +1065,7 @@ ORDER BY 1, 2, 3;
        4000 |           12 | <=
        4000 |           14 | >=
        4000 |           15 | >
-(58 rows)
+(55 rows)
 
 -- Check that all opclass search operators have selectivity estimators.
 -- This is not absolutely required, but it seems a reasonable thing
@@ -1105,10 +1102,7 @@ WHERE NOT EXISTS(SELECT 1 FROM pg_opclass AS p2
                    AND binary_coercible(p2.opcintype, p1.amoplefttype));
  amopfamily | amopstrategy | amopopr 
 ------------+--------------+---------
-       1029 |           27 |     433
-       1029 |           47 |     757
-       1029 |           67 |     759
-(3 rows)
+(0 rows)
 
 -- Operators that are primary members of opclasses must be immutable (else
 -- it suggests that the index ordering isn't fixed).  Operators that are
