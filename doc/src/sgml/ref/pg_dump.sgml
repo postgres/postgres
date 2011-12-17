@@ -423,7 +423,7 @@ PostgreSQL documentation
          </para>
          <para>
            Post-data items consist of definitions of indexes, triggers, rules 
-           and constraints other than check constraints. 
+           and constraints other than validated check constraints. 
            Pre-data items consist of all other data definition items.
          </para>
        </listitem>
