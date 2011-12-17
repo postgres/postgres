@@ -505,7 +505,7 @@ smgr_redo(XLogRecPtr lsn, XLogRecord *record)
 		/*
 		 * Forcibly create relation if it doesn't exist (which suggests that
 		 * it was dropped somewhere later in the WAL sequence).  As in
-		 * XLogOpenRelation, we prefer to recreate the rel and replay the log
+		 * XLogReadBuffer, we prefer to recreate the rel and replay the log
 		 * as best we can until the drop is seen.
 		 */
 		smgrcreate(reln, MAIN_FORKNUM, true);

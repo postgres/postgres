@@ -481,8 +481,7 @@ rdata array, even if some of the rdata items point into the buffer.  This is
 because you don't want XLogInsert to log the whole page contents.  The
 standard replay-routine pattern for this case is
 
-	reln = XLogOpenRelation(rnode);
-	buffer = XLogReadBuffer(reln, blkno, true);
+	buffer = XLogReadBuffer(rnode, blkno, true);
 	Assert(BufferIsValid(buffer));
 	page = (Page) BufferGetPage(buffer);
 
@@ -501,8 +500,7 @@ The standard replay-routine pattern for this case is
 	if (record->xl_info & XLR_BKP_BLOCK_n)
 		<< do nothing, page was rewritten from logged copy >>;
 
-	reln = XLogOpenRelation(rnode);
-	buffer = XLogReadBuffer(reln, blkno, false);
+	buffer = XLogReadBuffer(rnode, blkno, false);
 	if (!BufferIsValid(buffer))
 		<< do nothing, page has been deleted >>;
 	page = (Page) BufferGetPage(buffer);
