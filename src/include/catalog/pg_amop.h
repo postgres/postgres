@@ -737,4 +737,37 @@ DATA(insert (	3919   3831 3831 8 s	3892 783 0 ));
 DATA(insert (	3919   3831 2283 16 s	3889 783 0 ));
 DATA(insert (	3919   3831 3831 18 s	3882 783 0 ));
 
+/*
+ * SP-GiST quad_point_ops
+ */
+DATA(insert (	4015   600 600 11 s 506 4000 0 ));
+DATA(insert (	4015   600 600 1 s	507 4000 0 ));
+DATA(insert (	4015   600 600 5 s	508 4000 0 ));
+DATA(insert (	4015   600 600 10 s 509 4000 0 ));
+DATA(insert (	4015   600 600 6 s	510 4000 0 ));
+DATA(insert (	4015   600 603 8 s	511 4000 0 ));
+
+/*
+ * SP-GiST kd_point_ops
+ */
+DATA(insert (	4016   600 600 11 s 506 4000 0 ));
+DATA(insert (	4016   600 600 1 s	507 4000 0 ));
+DATA(insert (	4016   600 600 5 s	508 4000 0 ));
+DATA(insert (	4016   600 600 10 s 509 4000 0 ));
+DATA(insert (	4016   600 600 6 s	510 4000 0 ));
+DATA(insert (	4016   600 603 8 s	511 4000 0 ));
+
+/*
+ * SP-GiST text_ops
+ */
+DATA(insert (	4017   25 25 1 s	2314 4000 0 ));
+DATA(insert (	4017   25 25 2 s	2315 4000 0 ));
+DATA(insert (	4017   25 25 3 s	98	4000 0 ));
+DATA(insert (	4017   25 25 4 s	2317 4000 0 ));
+DATA(insert (	4017   25 25 5 s	2318 4000 0 ));
+DATA(insert (	4017   25 25 11 s	664 4000 0 ));
+DATA(insert (	4017   25 25 12 s	665 4000 0 ));
+DATA(insert (	4017   25 25 14 s	667 4000 0 ));
+DATA(insert (	4017   25 25 15 s	666 4000 0 ));
+
 #endif   /* PG_AMOP_H */

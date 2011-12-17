@@ -6555,6 +6555,26 @@ gistcostestimate(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
+Datum
+spgcostestimate(PG_FUNCTION_ARGS)
+{
+	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
+	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(1);
+	List	   *indexQuals = (List *) PG_GETARG_POINTER(2);
+	List	   *indexOrderBys = (List *) PG_GETARG_POINTER(3);
+	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(4);
+	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(5);
+	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(6);
+	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(7);
+	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(8);
+
+	genericcostestimate(root, index, indexQuals, indexOrderBys, outer_rel, 0.0,
+						indexStartupCost, indexTotalCost,
+						indexSelectivity, indexCorrelation);
+
+	PG_RETURN_VOID();
+}
+
 /* Find the index column matching "op"; return its index, or -1 if no match */
 static int
 find_index_column(Node *op, IndexOptInfo *index)

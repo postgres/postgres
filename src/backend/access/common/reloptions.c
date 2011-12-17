@@ -19,6 +19,7 @@
 #include "access/hash.h"
 #include "access/nbtree.h"
 #include "access/reloptions.h"
+#include "access/spgist.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "commands/tablespace.h"
@@ -103,6 +104,14 @@ static relopt_int intRelOpts[] =
 			RELOPT_KIND_GIST
 		},
 		GIST_DEFAULT_FILLFACTOR, GIST_MIN_FILLFACTOR, 100
+	},
+	{
+		{
+			"fillfactor",
+			"Packs spgist index pages only to this percentage",
+			RELOPT_KIND_SPGIST
+		},
+		SPGIST_DEFAULT_FILLFACTOR, SPGIST_MIN_FILLFACTOR, 100
 	},
 	{
 		{

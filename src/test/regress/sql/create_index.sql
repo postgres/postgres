@@ -92,6 +92,36 @@ CREATE INDEX ggpolygonind ON gpolygon_tbl USING gist (f1);
 
 CREATE INDEX ggcircleind ON gcircle_tbl USING gist (f1);
 
+--
+-- SP-GiST
+--
+
+CREATE TABLE quad_point_tbl AS
+    SELECT point(unique1,unique2) AS p FROM tenk1;
+
+INSERT INTO quad_point_tbl
+    SELECT '(333.0,400.0)'::point FROM generate_series(1,1000);
+
+CREATE INDEX sp_quad_ind ON quad_point_tbl USING spgist (p);
+
+CREATE TABLE kd_point_tbl AS SELECT * FROM quad_point_tbl;
+
+CREATE INDEX sp_kd_ind ON kd_point_tbl USING spgist (p kd_point_ops);
+
+CREATE TABLE suffix_text_tbl AS
+    SELECT name AS t FROM road;
+
+INSERT INTO suffix_text_tbl
+    SELECT '0123456789abcdef' FROM generate_series(1,1000);
+INSERT INTO suffix_text_tbl VALUES ('0123456789abcde');
+INSERT INTO suffix_text_tbl VALUES ('0123456789abcdefF');
+
+CREATE INDEX sp_suff_ind ON suffix_text_tbl USING spgist (t);
+
+--
+-- Test GiST and SP-GiST indexes
+--
+
 -- get non-indexed results for comparison purposes
 
 SET enable_seqscan = ON;
@@ -142,9 +172,50 @@ SELECT * FROM point_tbl WHERE f1 IS NOT NULL ORDER BY f1 <-> '0,1';
 
 SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
 
+SELECT count(*) FROM quad_point_tbl WHERE p <@ box '(200,200,1000,1000)';
+
+SELECT count(*) FROM quad_point_tbl WHERE box '(200,200,1000,1000)' @> p;
+
+SELECT count(*) FROM quad_point_tbl WHERE p << '(5000, 4000)';
+
+SELECT count(*) FROM quad_point_tbl WHERE p >> '(5000, 4000)';
+
+SELECT count(*) FROM quad_point_tbl WHERE p <^ '(5000, 4000)';
+
+SELECT count(*) FROM quad_point_tbl WHERE p >^ '(5000, 4000)';
+
+SELECT count(*) FROM quad_point_tbl WHERE p ~= '(4585, 365)';
+
+SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdef';
+
+SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcde';
+
+SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdefF';
+
+SELECT count(*) FROM suffix_text_tbl WHERE t <    'Aztec                         Ct  ';
+
+SELECT count(*) FROM suffix_text_tbl WHERE t ~<~  'Aztec                         Ct  ';
+
+SELECT count(*) FROM suffix_text_tbl WHERE t <=   'Aztec                         Ct  ';
+
+SELECT count(*) FROM suffix_text_tbl WHERE t ~<=~ 'Aztec                         Ct  ';
+
+SELECT count(*) FROM suffix_text_tbl WHERE t =    'Aztec                         Ct  ';
+
+SELECT count(*) FROM suffix_text_tbl WHERE t =    'Worth                         St  ';
+
+SELECT count(*) FROM suffix_text_tbl WHERE t >=   'Worth                         St  ';
+
+SELECT count(*) FROM suffix_text_tbl WHERE t ~>=~ 'Worth                         St  ';
+
+SELECT count(*) FROM suffix_text_tbl WHERE t >    'Worth                         St  ';
+
+SELECT count(*) FROM suffix_text_tbl WHERE t ~>~  'Worth                         St  ';
+
+-- Now check the results from plain indexscan
 SET enable_seqscan = OFF;
 SET enable_indexscan = ON;
-SET enable_bitmapscan = ON;
+SET enable_bitmapscan = OFF;
 
 EXPLAIN (COSTS OFF)
 SELECT * FROM fast_emp4000
@@ -234,6 +305,115 @@ EXPLAIN (COSTS OFF)
 SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
 SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
 
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE p <@ box '(200,200,1000,1000)';
+SELECT count(*) FROM quad_point_tbl WHERE p <@ box '(200,200,1000,1000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE box '(200,200,1000,1000)' @> p;
+SELECT count(*) FROM quad_point_tbl WHERE box '(200,200,1000,1000)' @> p;
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE p << '(5000, 4000)';
+SELECT count(*) FROM quad_point_tbl WHERE p << '(5000, 4000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE p >> '(5000, 4000)';
+SELECT count(*) FROM quad_point_tbl WHERE p >> '(5000, 4000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE p <^ '(5000, 4000)';
+SELECT count(*) FROM quad_point_tbl WHERE p <^ '(5000, 4000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE p >^ '(5000, 4000)';
+SELECT count(*) FROM quad_point_tbl WHERE p >^ '(5000, 4000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE p ~= '(4585, 365)';
+SELECT count(*) FROM quad_point_tbl WHERE p ~= '(4585, 365)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM kd_point_tbl WHERE p <@ box '(200,200,1000,1000)';
+SELECT count(*) FROM kd_point_tbl WHERE p <@ box '(200,200,1000,1000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM kd_point_tbl WHERE box '(200,200,1000,1000)' @> p;
+SELECT count(*) FROM kd_point_tbl WHERE box '(200,200,1000,1000)' @> p;
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM kd_point_tbl WHERE p << '(5000, 4000)';
+SELECT count(*) FROM kd_point_tbl WHERE p << '(5000, 4000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM kd_point_tbl WHERE p >> '(5000, 4000)';
+SELECT count(*) FROM kd_point_tbl WHERE p >> '(5000, 4000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM kd_point_tbl WHERE p <^ '(5000, 4000)';
+SELECT count(*) FROM kd_point_tbl WHERE p <^ '(5000, 4000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM kd_point_tbl WHERE p >^ '(5000, 4000)';
+SELECT count(*) FROM kd_point_tbl WHERE p >^ '(5000, 4000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM kd_point_tbl WHERE p ~= '(4585, 365)';
+SELECT count(*) FROM kd_point_tbl WHERE p ~= '(4585, 365)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdef';
+SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdef';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcde';
+SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcde';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdefF';
+SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdefF';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t <    'Aztec                         Ct  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t <    'Aztec                         Ct  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t ~<~  'Aztec                         Ct  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t ~<~  'Aztec                         Ct  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t <=   'Aztec                         Ct  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t <=   'Aztec                         Ct  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t ~<=~ 'Aztec                         Ct  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t ~<=~ 'Aztec                         Ct  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t =    'Aztec                         Ct  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t =    'Aztec                         Ct  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t =    'Worth                         St  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t =    'Worth                         St  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t >=   'Worth                         St  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t >=   'Worth                         St  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t ~>=~ 'Worth                         St  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t ~>=~ 'Worth                         St  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t >    'Worth                         St  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t >    'Worth                         St  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t ~>~  'Worth                         St  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t ~>~  'Worth                         St  ';
+
+-- Now check the results from bitmap indexscan
 SET enable_seqscan = OFF;
 SET enable_indexscan = OFF;
 SET enable_bitmapscan = ON;
@@ -241,6 +421,114 @@ SET enable_bitmapscan = ON;
 EXPLAIN (COSTS OFF)
 SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
 SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE p <@ box '(200,200,1000,1000)';
+SELECT count(*) FROM quad_point_tbl WHERE p <@ box '(200,200,1000,1000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE box '(200,200,1000,1000)' @> p;
+SELECT count(*) FROM quad_point_tbl WHERE box '(200,200,1000,1000)' @> p;
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE p << '(5000, 4000)';
+SELECT count(*) FROM quad_point_tbl WHERE p << '(5000, 4000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE p >> '(5000, 4000)';
+SELECT count(*) FROM quad_point_tbl WHERE p >> '(5000, 4000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE p <^ '(5000, 4000)';
+SELECT count(*) FROM quad_point_tbl WHERE p <^ '(5000, 4000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE p >^ '(5000, 4000)';
+SELECT count(*) FROM quad_point_tbl WHERE p >^ '(5000, 4000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE p ~= '(4585, 365)';
+SELECT count(*) FROM quad_point_tbl WHERE p ~= '(4585, 365)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM kd_point_tbl WHERE p <@ box '(200,200,1000,1000)';
+SELECT count(*) FROM kd_point_tbl WHERE p <@ box '(200,200,1000,1000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM kd_point_tbl WHERE box '(200,200,1000,1000)' @> p;
+SELECT count(*) FROM kd_point_tbl WHERE box '(200,200,1000,1000)' @> p;
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM kd_point_tbl WHERE p << '(5000, 4000)';
+SELECT count(*) FROM kd_point_tbl WHERE p << '(5000, 4000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM kd_point_tbl WHERE p >> '(5000, 4000)';
+SELECT count(*) FROM kd_point_tbl WHERE p >> '(5000, 4000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM kd_point_tbl WHERE p <^ '(5000, 4000)';
+SELECT count(*) FROM kd_point_tbl WHERE p <^ '(5000, 4000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM kd_point_tbl WHERE p >^ '(5000, 4000)';
+SELECT count(*) FROM kd_point_tbl WHERE p >^ '(5000, 4000)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM kd_point_tbl WHERE p ~= '(4585, 365)';
+SELECT count(*) FROM kd_point_tbl WHERE p ~= '(4585, 365)';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdef';
+SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdef';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcde';
+SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcde';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdefF';
+SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdefF';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t <    'Aztec                         Ct  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t <    'Aztec                         Ct  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t ~<~  'Aztec                         Ct  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t ~<~  'Aztec                         Ct  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t <=   'Aztec                         Ct  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t <=   'Aztec                         Ct  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t ~<=~ 'Aztec                         Ct  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t ~<=~ 'Aztec                         Ct  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t =    'Aztec                         Ct  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t =    'Aztec                         Ct  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t =    'Worth                         St  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t =    'Worth                         St  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t >=   'Worth                         St  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t >=   'Worth                         St  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t ~>=~ 'Worth                         St  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t ~>=~ 'Worth                         St  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t >    'Worth                         St  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t >    'Worth                         St  ';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM suffix_text_tbl WHERE t ~>~  'Worth                         St  ';
+SELECT count(*) FROM suffix_text_tbl WHERE t ~>~  'Worth                         St  ';
 
 RESET enable_seqscan;
 RESET enable_indexscan;

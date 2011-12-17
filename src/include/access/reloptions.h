@@ -42,8 +42,9 @@ typedef enum relopt_kind
 	RELOPT_KIND_GIST = (1 << 5),
 	RELOPT_KIND_ATTRIBUTE = (1 << 6),
 	RELOPT_KIND_TABLESPACE = (1 << 7),
+	RELOPT_KIND_SPGIST = (1 << 8),
 	/* if you add a new kind, make sure you update "last_default" too */
-	RELOPT_KIND_LAST_DEFAULT = RELOPT_KIND_TABLESPACE,
+	RELOPT_KIND_LAST_DEFAULT = RELOPT_KIND_SPGIST,
 	/* some compilers treat enums as signed ints, so we can't use 1 << 31 */
 	RELOPT_KIND_MAX = (1 << 30)
 } relopt_kind;

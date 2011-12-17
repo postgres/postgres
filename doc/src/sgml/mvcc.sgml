@@ -525,7 +525,7 @@ ERROR:  could not serialize access due to concurrent update
     As an example,
     consider a table <structname>mytab</>, initially containing:
 <screen>
- class | value 
+ class | value
 -------+-------
      1 |    10
      1 |    20
@@ -1460,7 +1460,7 @@ SELECT pg_advisory_lock(q.id) FROM
     <variablelist>
      <varlistentry>
       <term>
-       B-tree and <acronym>GiST</acronym> indexes
+       B-tree, <acronym>GiST</acronym> and <acronym>SP-GiST</acronym> indexes
       </term>
       <listitem>
        <para>
@@ -1510,8 +1510,8 @@ SELECT pg_advisory_lock(q.id) FROM
     applications; since they also have more features than hash
     indexes, they are the recommended index type for concurrent
     applications that need to index scalar data. When dealing with
-    non-scalar data, B-trees are not useful, and GiST or GIN indexes should
-    be used instead.
+    non-scalar data, B-trees are not useful, and GiST, SP-GiST or GIN
+    indexes should be used instead.
    </para>
   </sect1>
  </chapter>

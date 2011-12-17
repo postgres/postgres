@@ -57,7 +57,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ <replaceable class="parameter">name</
 
   <para>
    <productname>PostgreSQL</productname> provides the index methods
-   B-tree, hash, GiST, and GIN.  Users can also define their own index
+   B-tree, hash, GiST, SP-GiST, and GIN.  Users can also define their own index
    methods, but that is fairly complicated.
   </para>
 
@@ -154,8 +154,8 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ <replaceable class="parameter">name</
        <para>
         The name of the index method to be used.  Choices are
         <literal>btree</literal>, <literal>hash</literal>,
-        <literal>gist</literal>, and <literal>gin</>.  The
-        default method is <literal>btree</literal>.
+        <literal>gist</literal>, <literal>spgist</> and <literal>gin</>.
+        The default method is <literal>btree</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -281,12 +281,11 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ <replaceable class="parameter">name</
    <para>
     The optional <literal>WITH</> clause specifies <firstterm>storage
     parameters</> for the index.  Each index method has its own set of allowed
-    storage parameters.  The B-tree, hash and GiST index methods all accept a
-    single parameter:
+    storage parameters.  The B-tree, hash, GiST and SP-GiST index methods all
+    accept this parameter:
    </para>
 
    <variablelist>
-
    <varlistentry>
     <term><literal>FILLFACTOR</></term>
     <listitem>
@@ -307,7 +306,25 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ <replaceable class="parameter">name</
      </para>
     </listitem>
    </varlistentry>
+   </variablelist>
 
+   <para>
+    GiST indexes additionally accept this parameter:
+   </para>
+
+   <variablelist>
+   <varlistentry>
+    <term><literal>BUFFERING</></term>
+    <listitem>
+    <para>
+     Determines whether the buffering build technique described in
+     <xref linkend="gist-buffering-build"> is used to build the index. With
+     <literal>OFF</> it is disabled, with <literal>ON</> it is enabled, and
+     with <literal>AUTO</> it is initially disabled, but turned on
+     on-the-fly once the index size reaches <xref linkend="guc-effective-cache-size">. The default is <literal>AUTO</>.
+    </para>
+    </listitem>
+   </varlistentry>
    </variablelist>
 
    <para>
@@ -315,7 +332,6 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ <replaceable class="parameter">name</
    </para>
 
    <variablelist>
-
    <varlistentry>
     <term><literal>FASTUPDATE</></term>
     <listitem>
@@ -339,27 +355,6 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ <replaceable class="parameter">name</
     </note>
     </listitem>
    </varlistentry>
-
-   </variablelist>
-   <para>
-    GiST indexes additionally accept parameter:
-   </para>
-
-   <variablelist>
-
-   <varlistentry>
-    <term><literal>BUFFERING</></term>
-    <listitem>
-    <para>
-     Determines whether the buffering build technique described in
-     <xref linkend="gist-buffering-build"> is used to build the index. With
-     <literal>OFF</> it is disabled, with <literal>ON</> it is enabled, and
-     with <literal>AUTO</> it is initially disabled, but turned on
-     on-the-fly once the index size reaches <xref linkend="guc-effective-cache-size">. The default is <literal>AUTO</>.
-    </para>
-    </listitem>
-   </varlistentry>
-
    </variablelist>
   </refsect2>
 

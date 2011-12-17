@@ -540,7 +540,8 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       cannot be used.  Although it's allowed, there is little point in using
       B-tree or hash indexes with an exclusion constraint, because this
       does nothing that an ordinary unique constraint doesn't do better.
-      So in practice the access method will always be <acronym>GiST</>.
+      So in practice the access method will always be <acronym>GiST</> or
+      <acronym>SP-GiST</>.
      </para>
 
      <para>

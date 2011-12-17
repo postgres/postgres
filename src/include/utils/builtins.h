@@ -1080,6 +1080,26 @@ extern Datum window_first_value(PG_FUNCTION_ARGS);
 extern Datum window_last_value(PG_FUNCTION_ARGS);
 extern Datum window_nth_value(PG_FUNCTION_ARGS);
 
+/* access/spgist/spgquadtreeproc.c */
+extern Datum spg_quad_config(PG_FUNCTION_ARGS);
+extern Datum spg_quad_choose(PG_FUNCTION_ARGS);
+extern Datum spg_quad_picksplit(PG_FUNCTION_ARGS);
+extern Datum spg_quad_inner_consistent(PG_FUNCTION_ARGS);
+extern Datum spg_quad_leaf_consistent(PG_FUNCTION_ARGS);
+
+/* access/spgist/spgkdtreeproc.c */
+extern Datum spg_kd_config(PG_FUNCTION_ARGS);
+extern Datum spg_kd_choose(PG_FUNCTION_ARGS);
+extern Datum spg_kd_picksplit(PG_FUNCTION_ARGS);
+extern Datum spg_kd_inner_consistent(PG_FUNCTION_ARGS);
+
+/* access/spgist/spgtextproc.c */
+extern Datum spg_text_config(PG_FUNCTION_ARGS);
+extern Datum spg_text_choose(PG_FUNCTION_ARGS);
+extern Datum spg_text_picksplit(PG_FUNCTION_ARGS);
+extern Datum spg_text_inner_consistent(PG_FUNCTION_ARGS);
+extern Datum spg_text_leaf_consistent(PG_FUNCTION_ARGS);
+
 /* access/gin/ginarrayproc.c */
 extern Datum ginarrayextract(PG_FUNCTION_ARGS);
 extern Datum ginarrayextract_2args(PG_FUNCTION_ARGS);

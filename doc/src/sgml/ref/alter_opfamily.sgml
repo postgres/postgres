@@ -144,8 +144,8 @@ ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="
       and hash functions it is not necessary to specify <replaceable
       class="parameter">op_type</replaceable> since the function's input
       data type(s) are always the correct ones to use.  For B-tree sort
-      support functions and all functions in GiST and GIN operator classes,
-      it is necessary to specify the operand data type(s) the function
+      support functions and all functions in GiST, SP-GiST and GIN operator
+      classes, it is necessary to specify the operand data type(s) the function
       is to be used with.
      </para>
 
@@ -245,8 +245,8 @@ ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="
    type(s).  The name of the operator or function occupying the slot is not
    mentioned.  Also, for <literal>DROP FUNCTION</> the type(s) to specify
    are the input data type(s) the function is intended to support; for
-   GIN and GiST indexes this might have nothing to do with the actual input
-   argument types of the function.
+   GiST, SP-GiST and GIN indexes this might have nothing to do with the actual
+   input argument types of the function.
   </para>
 
   <para>

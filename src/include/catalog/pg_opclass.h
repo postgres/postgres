@@ -223,5 +223,8 @@ DATA(insert (	783		tsquery_ops			PGNSP PGUID 3702  3615 t 20 ));
 DATA(insert (	403		range_ops			PGNSP PGUID 3901  3831 t 0 ));
 DATA(insert (	405		range_ops			PGNSP PGUID 3903  3831 t 0 ));
 DATA(insert (	783		range_ops			PGNSP PGUID 3919  3831 t 0 ));
+DATA(insert (	4000	quad_point_ops		PGNSP PGUID 4015  600 t 0 ));
+DATA(insert (	4000	kd_point_ops		PGNSP PGUID 4016  600 f 0 ));
+DATA(insert (	4000	text_ops			PGNSP PGUID 4017  25 t 0 ));
 
 #endif   /* PG_OPCLASS_H */

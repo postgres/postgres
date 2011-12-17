@@ -4481,6 +4481,68 @@ DESCR("int8range constructor");
 DATA(insert OID = 3946 (  int8range	PGNSP PGUID 12 1 0 0 0 f f f f f i 3 0 3926 "20 20 25" _null_ _null_ _null_ _null_ range_constructor3 _null_ _null_ _null_ ));
 DESCR("int8range constructor");
 
+/* spgist support functions */
+DATA(insert OID = 4001 (  spggettuple	   PGNSP PGUID 12 1 0 0 0 f f f t f v 2 0 16 "2281 2281" _null_ _null_ _null_ _null_	spggettuple _null_ _null_ _null_ ));
+DESCR("spgist(internal)");
+DATA(insert OID = 4002 (  spggetbitmap	   PGNSP PGUID 12 1 0 0 0 f f f t f v 2 0 20 "2281 2281" _null_ _null_ _null_ _null_	spggetbitmap _null_ _null_ _null_ ));
+DESCR("spgist(internal)");
+DATA(insert OID = 4003 (  spginsert		   PGNSP PGUID 12 1 0 0 0 f f f t f v 6 0 16 "2281 2281 2281 2281 2281 2281" _null_ _null_ _null_ _null_	spginsert _null_ _null_ _null_ ));
+DESCR("spgist(internal)");
+DATA(insert OID = 4004 (  spgbeginscan	   PGNSP PGUID 12 1 0 0 0 f f f t f v 3 0 2281 "2281 2281 2281" _null_ _null_ _null_ _null_	spgbeginscan _null_ _null_ _null_ ));
+DESCR("spgist(internal)");
+DATA(insert OID = 4005 (  spgrescan		   PGNSP PGUID 12 1 0 0 0 f f f t f v 5 0 2278 "2281 2281 2281 2281 2281" _null_ _null_ _null_ _null_ spgrescan _null_ _null_ _null_ ));
+DESCR("spgist(internal)");
+DATA(insert OID = 4006 (  spgendscan	   PGNSP PGUID 12 1 0 0 0 f f f t f v 1 0 2278 "2281" _null_ _null_ _null_ _null_ spgendscan _null_ _null_ _null_ ));
+DESCR("spgist(internal)");
+DATA(insert OID = 4007 (  spgmarkpos	   PGNSP PGUID 12 1 0 0 0 f f f t f v 1 0 2278 "2281" _null_ _null_ _null_ _null_ spgmarkpos _null_ _null_ _null_ ));
+DESCR("spgist(internal)");
+DATA(insert OID = 4008 (  spgrestrpos	   PGNSP PGUID 12 1 0 0 0 f f f t f v 1 0 2278 "2281" _null_ _null_ _null_ _null_ spgrestrpos _null_ _null_ _null_ ));
+DESCR("spgist(internal)");
+DATA(insert OID = 4009 (  spgbuild		   PGNSP PGUID 12 1 0 0 0 f f f t f v 3 0 2281 "2281 2281 2281" _null_ _null_ _null_ _null_ spgbuild _null_ _null_ _null_ ));
+DESCR("spgist(internal)");
+DATA(insert OID = 4010 (  spgbuildempty    PGNSP PGUID 12 1 0 0 0 f f f t f v 1 0 2278 "2281" _null_ _null_ _null_ _null_ spgbuildempty _null_ _null_ _null_ ));
+DESCR("spgist(internal)");
+DATA(insert OID = 4011 (  spgbulkdelete    PGNSP PGUID 12 1 0 0 0 f f f t f v 4 0 2281 "2281 2281 2281 2281" _null_ _null_ _null_ _null_ spgbulkdelete _null_ _null_ _null_ ));
+DESCR("spgist(internal)");
+DATA(insert OID = 4012 (  spgvacuumcleanup   PGNSP PGUID 12 1 0 0 0 f f f t f v 2 0 2281 "2281 2281" _null_ _null_ _null_ _null_ spgvacuumcleanup _null_ _null_ _null_ ));
+DESCR("spgist(internal)");
+DATA(insert OID = 4013 (  spgcostestimate  PGNSP PGUID 12 1 0 0 0 f f f t f v 9 0 2278 "2281 2281 2281 2281 2281 2281 2281 2281 2281" _null_ _null_ _null_ _null_ spgcostestimate _null_ _null_ _null_ ));
+DESCR("spgist(internal)");
+DATA(insert OID = 4014 (  spgoptions	   PGNSP PGUID 12 1 0 0 0 f f f t f s 2 0 17 "1009 16" _null_ _null_ _null_ _null_  spgoptions _null_ _null_ _null_ ));
+DESCR("spgist(internal)");
+
+/* spgist opclasses */
+DATA(insert OID = 4018 (  spg_quad_config	PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 2278 "2281 2281" _null_ _null_ _null_ _null_  spg_quad_config _null_ _null_ _null_ ));
+DESCR("SP-GiST support for quad tree over point");
+DATA(insert OID = 4019 (  spg_quad_choose	PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 2278 "2281 2281" _null_ _null_ _null_ _null_  spg_quad_choose _null_ _null_ _null_ ));
+DESCR("SP-GiST support for quad tree over point");
+DATA(insert OID = 4020 (  spg_quad_picksplit	PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 2278 "2281 2281" _null_ _null_ _null_ _null_  spg_quad_picksplit _null_ _null_ _null_ ));
+DESCR("SP-GiST support for quad tree over point");
+DATA(insert OID = 4021 (  spg_quad_inner_consistent	PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 2278 "2281 2281" _null_ _null_ _null_ _null_  spg_quad_inner_consistent _null_ _null_ _null_ ));
+DESCR("SP-GiST support for quad tree over point");
+DATA(insert OID = 4022 (  spg_quad_leaf_consistent	PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 16 "2281 2281" _null_ _null_ _null_ _null_  spg_quad_leaf_consistent _null_ _null_ _null_ ));
+DESCR("SP-GiST support for quad tree and k-d tree over point");
+
+DATA(insert OID = 4023 (  spg_kd_config	PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 2278 "2281 2281" _null_ _null_ _null_ _null_  spg_kd_config _null_ _null_ _null_ ));
+DESCR("SP-GiST support for k-d tree over point");
+DATA(insert OID = 4024 (  spg_kd_choose	PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 2278 "2281 2281" _null_ _null_ _null_ _null_  spg_kd_choose _null_ _null_ _null_ ));
+DESCR("SP-GiST support for k-d tree over point");
+DATA(insert OID = 4025 (  spg_kd_picksplit	PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 2278 "2281 2281" _null_ _null_ _null_ _null_  spg_kd_picksplit _null_ _null_ _null_ ));
+DESCR("SP-GiST support for k-d tree over point");
+DATA(insert OID = 4026 (  spg_kd_inner_consistent	PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 2278 "2281 2281" _null_ _null_ _null_ _null_  spg_kd_inner_consistent _null_ _null_ _null_ ));
+DESCR("SP-GiST support for k-d tree over point");
+
+DATA(insert OID = 4027 (  spg_text_config	PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 2278 "2281 2281" _null_ _null_ _null_ _null_  spg_text_config _null_ _null_ _null_ ));
+DESCR("SP-GiST support for suffix tree over text");
+DATA(insert OID = 4028 (  spg_text_choose	PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 2278 "2281 2281" _null_ _null_ _null_ _null_  spg_text_choose _null_ _null_ _null_ ));
+DESCR("SP-GiST support for suffix tree over text");
+DATA(insert OID = 4029 (  spg_text_picksplit	PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 2278 "2281 2281" _null_ _null_ _null_ _null_  spg_text_picksplit _null_ _null_ _null_ ));
+DESCR("SP-GiST support for suffix tree over text");
+DATA(insert OID = 4030 (  spg_text_inner_consistent	PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 2278 "2281 2281" _null_ _null_ _null_ _null_  spg_text_inner_consistent _null_ _null_ _null_ ));
+DESCR("SP-GiST support for suffix tree over text");
+DATA(insert OID = 4031 (  spg_text_leaf_consistent	PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 16 "2281 2281" _null_ _null_ _null_ _null_  spg_text_leaf_consistent _null_ _null_ _null_ ));
+DESCR("SP-GiST support for suffix tree over text");
+
 
 /*
  * Symbolic values for provolatile column: these indicate whether the result

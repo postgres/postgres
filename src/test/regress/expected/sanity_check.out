@@ -63,6 +63,7 @@ SELECT relname, relhasindex
  int8_tbl                | f
  interval_tbl            | f
  iportaltest             | f
+ kd_point_tbl            | t
  log_table               | f
  lseg_tbl                | f
  main_table              | f
@@ -134,6 +135,7 @@ SELECT relname, relhasindex
  pg_user_mapping         | t
  point_tbl               | t
  polygon_tbl             | t
+ quad_point_tbl          | t
  ramp                    | f
  real_city               | f
  reltime_tbl             | f
@@ -149,6 +151,7 @@ SELECT relname, relhasindex
  sql_sizing_profiles     | f
  stud_emp                | f
  student                 | f
+ suffix_text_tbl         | t
  tenk1                   | t
  tenk2                   | t
  test_range_excl         | t
@@ -161,7 +164,7 @@ SELECT relname, relhasindex
  timetz_tbl              | f
  tinterval_tbl           | f
  varchar_tbl             | f
-(150 rows)
+(153 rows)
 
 --
 -- another sanity check: every system catalog that has OIDs should have

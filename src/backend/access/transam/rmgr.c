@@ -14,6 +14,7 @@
 #include "access/heapam.h"
 #include "access/multixact.h"
 #include "access/nbtree.h"
+#include "access/spgist.h"
 #include "access/xact.h"
 #include "access/xlog_internal.h"
 #include "catalog/storage.h"
@@ -40,5 +41,6 @@ const RmgrData RmgrTable[RM_MAX_ID + 1] = {
 	{"Hash", hash_redo, hash_desc, NULL, NULL, NULL},
 	{"Gin", gin_redo, gin_desc, gin_xlog_startup, gin_xlog_cleanup, gin_safe_restartpoint},
 	{"Gist", gist_redo, gist_desc, gist_xlog_startup, gist_xlog_cleanup, NULL},
-	{"Sequence", seq_redo, seq_desc, NULL, NULL, NULL}
+	{"Sequence", seq_redo, seq_desc, NULL, NULL, NULL},
+	{"SPGist", spg_redo, spg_desc, spg_xlog_startup, spg_xlog_cleanup, NULL}
 };

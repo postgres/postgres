@@ -636,6 +636,7 @@ SELECT user_relns() AS user_relns
  int8_tbl
  interval_tbl
  iportaltest
+ kd_point_tbl
  log_table
  lseg_tbl
  main_table
@@ -657,6 +658,7 @@ SELECT user_relns() AS user_relns
  person
  point_tbl
  polygon_tbl
+ quad_point_tbl
  ramp
  random_tbl
  real_city
@@ -668,6 +670,7 @@ SELECT user_relns() AS user_relns
  stud_emp
  student
  subselect_tbl
+ suffix_text_tbl
  tenk1
  tenk2
  test_range_excl
@@ -682,7 +685,7 @@ SELECT user_relns() AS user_relns
  toyemp
  varchar_tbl
  xacttest
-(104 rows)
+(107 rows)
 
 SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer')));
  name 

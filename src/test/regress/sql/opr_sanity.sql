@@ -831,6 +831,19 @@ WHERE NOT EXISTS(SELECT 1 FROM pg_amop AS p2
                  WHERE p2.amopfamily = p1.opcfamily
                    AND binary_coercible(p1.opcintype, p2.amoplefttype));
 
+-- Check that each operator listed in pg_amop has an associated opclass,
+-- that is one whose opcintype matches oprleft (possibly by coercion).
+-- Otherwise the operator is useless because it cannot be matched to an index.
+-- (In principle it could be useful to list such operators in multiple-datatype
+-- btree opfamilies, but in practice you'd expect there to be an opclass for
+-- every datatype the family knows about.)
+
+SELECT p1.amopfamily, p1.amopstrategy, p1.amopopr
+FROM pg_amop AS p1
+WHERE NOT EXISTS(SELECT 1 FROM pg_opclass AS p2
+                 WHERE p2.opcfamily = p1.amopfamily
+                   AND binary_coercible(p2.opcintype, p1.amoplefttype));
+
 -- Operators that are primary members of opclasses must be immutable (else
 -- it suggests that the index ordering isn't fixed).  Operators that are
 -- cross-type members need only be stable, since they are just shorthands
@@ -1017,6 +1030,25 @@ WHERE p3.opfmethod = (SELECT oid FROM pg_am WHERE amname = 'hash')
      OR NOT physically_coercible(amproclefttype, proargtypes[0])
      OR amproclefttype != amprocrighttype)
 ORDER BY 1;
+
+-- We can also check SP-GiST carefully, since the support routine signatures
+-- are independent of the datatype being indexed.
+
+SELECT p1.amprocfamily, p1.amprocnum,
+	p2.oid, p2.proname,
+	p3.opfname
+FROM pg_amproc AS p1, pg_proc AS p2, pg_opfamily AS p3
+WHERE p3.opfmethod = (SELECT oid FROM pg_am WHERE amname = 'spgist')
+    AND p1.amprocfamily = p3.oid AND p1.amproc = p2.oid AND
+    (CASE WHEN amprocnum = 1 OR amprocnum = 2 OR amprocnum = 3 OR amprocnum = 4
+          THEN prorettype != 'void'::regtype OR proretset OR pronargs != 2
+               OR proargtypes[0] != 'internal'::regtype
+               OR proargtypes[1] != 'internal'::regtype
+          WHEN amprocnum = 5
+          THEN prorettype != 'bool'::regtype OR proretset OR pronargs != 2
+               OR proargtypes[0] != 'internal'::regtype
+               OR proargtypes[1] != 'internal'::regtype
+          ELSE true END);
 
 -- Support routines that are primary members of opfamilies must be immutable
 -- (else it suggests that the index ordering isn't fixed).  But cross-type

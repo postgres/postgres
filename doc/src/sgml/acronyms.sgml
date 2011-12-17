@@ -570,6 +570,15 @@
    </varlistentry>
 
    <varlistentry>
+    <term><acronym>SP-GiST</acronym></term>
+    <listitem>
+     <para>
+      <link linkend="SPGiST">Space-Partitioned Generalized Search Tree</link>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><acronym>SQL</acronym></term>
     <listitem>
      <para>
