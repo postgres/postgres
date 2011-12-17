@@ -1892,7 +1892,7 @@ set_starttype(char *starttypeopt)
  *
  * If a configuration-only directory was specified, find the real data dir.
  */
-void
+static void
 adjust_data_dir(void)
 {
 	char		cmd[MAXPGPATH], filename[MAXPGPATH], *my_exec_path;
