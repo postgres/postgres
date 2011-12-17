@@ -1324,30 +1324,33 @@ GetSnapshotData(Snapshot snapshot)
 			/* Update globalxmin to be the smallest valid xmin */
 			xid = pgxact->xmin;	/* fetch just once */
 			if (TransactionIdIsNormal(xid) &&
-				TransactionIdPrecedes(xid, globalxmin))
+				NormalTransactionIdPrecedes(xid, globalxmin))
 					globalxmin = xid;
 
 			/* Fetch xid just once - see GetNewTransactionId */
 			xid = pgxact->xid;
 
 			/*
-			 * If the transaction has been assigned an xid < xmax we add it to
-			 * the snapshot, and update xmin if necessary.	There's no need to
-			 * store XIDs >= xmax, since we'll treat them as running anyway.
-			 * We don't bother to examine their subxids either.
-			 *
-			 * We don't include our own XID (if any) in the snapshot, but we
-			 * must include it into xmin.
+			 * If the transaction has no XID assigned, we can skip it; it won't
+			 * have sub-XIDs either.  If the XID is >= xmax, we can also skip
+			 * it; such transactions will be treated as running anyway (and any
+			 * sub-XIDs will also be >= xmax).
 			 */
-			if (TransactionIdIsNormal(xid))
-			{
-				if (TransactionIdFollowsOrEquals(xid, xmax))
+			if (!TransactionIdIsNormal(xid)
+				|| !NormalTransactionIdPrecedes(xid, xmax))
 					continue;
-				if (pgxact != MyPgXact)
-					snapshot->xip[count++] = xid;
-				if (TransactionIdPrecedes(xid, xmin))
-					xmin = xid;
-			}
+
+			/*
+			 * We don't include our own XIDs (if any) in the snapshot, but we
+			 * must include them in xmin.
+			 */
+			if (NormalTransactionIdPrecedes(xid, xmin))
+				xmin = xid;
+			if (pgxact == MyPgXact)
+				continue;
+
+			/* Add XID to snapshot. */
+			snapshot->xip[count++] = xid;
 
 			/*
 			 * Save subtransaction XIDs if possible (if we've already
@@ -1364,7 +1367,7 @@ GetSnapshotData(Snapshot snapshot)
 			 *
 			 * Again, our own XIDs are not included in the snapshot.
 			 */
-			if (!suboverflowed && pgxact != MyPgXact)
+			if (!suboverflowed)
 			{
 				if (pgxact->overflowed)
 					suboverflowed = true;
