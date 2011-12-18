@@ -1185,8 +1185,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_wal_senders()</function></literal></entry>
       <entry><type>setof record</type></entry>
       <entry>
-	   One record for each active wal sender. The fields returned are a subset
-	   of those in the <structname>pg_stat_replication</structname> view.
+       One record for each active wal sender. The fields returned are a subset
+       of those in the <structname>pg_stat_replication</structname> view.
       </entry>
      </row>
 
