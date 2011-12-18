@@ -189,7 +189,7 @@ endif # can't build
 # distprep and maintainer-clean rules should be run even if we can't build.
 
 # Force this dependency to be known even without dependency info built:
-plpython_plpy.o: spiexceptions.h
+plpy_plpymodule.o: spiexceptions.h
 
 spiexceptions.h: $(top_srcdir)/src/backend/utils/errcodes.txt generate-spiexceptions.pl
 	$(PERL) $(srcdir)/generate-spiexceptions.pl $< > $@
