@@ -21,8 +21,8 @@ extern void PGTYPESdate_julmdy(date, int *);
 extern void PGTYPESdate_mdyjul(int *, date *);
 extern int	PGTYPESdate_dayofweek(date);
 extern void PGTYPESdate_today(date *);
-extern int	PGTYPESdate_defmt_asc(date *, char *, char *);
-extern int	PGTYPESdate_fmt_asc(date, char *, char *);
+extern int	PGTYPESdate_defmt_asc(date *, const char *, char *);
+extern int	PGTYPESdate_fmt_asc(date, const char *, char *);
 
 #ifdef __cplusplus
 }

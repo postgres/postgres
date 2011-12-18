@@ -16,7 +16,7 @@ pgtypes_alloc(long size)
 }
 
 char *
-pgtypes_strdup(char *str)
+pgtypes_strdup(const char *str)
 {
 	char	   *new = (char *) strdup(str);
 
