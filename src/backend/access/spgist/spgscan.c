@@ -162,13 +162,22 @@ spgLeafTest(SpGistScanOpaque so, Datum leafDatum,
 	oldCtx = MemoryContextSwitchTo(so->tempCxt);
 	for (i = 0; i < so->numberOfKeys; i++)
 	{
-		in.strategy = so->keyData[i].sk_strategy;
-		in.query = so->keyData[i].sk_argument;
+		ScanKey		skey = &so->keyData[i];
+
+		/* Assume SPGiST-indexable operators are strict */
+		if (skey->sk_flags & SK_ISNULL)
+		{
+			result = false;
+			break;
+		}
+
+		in.strategy = skey->sk_strategy;
+		in.query = skey->sk_argument;
 
 		out.recheck = false;
 
 		result = DatumGetBool(FunctionCall2Coll(&so->state.leafConsistentFn,
-												so->keyData[i].sk_collation,
+												skey->sk_collation,
 												PointerGetDatum(&in),
 												PointerGetDatum(&out)));
 		*recheck |= out.recheck;
@@ -398,13 +407,22 @@ redirect:
 
 				for (j = 0; j < so->numberOfKeys; j++)
 				{
-					in.strategy = so->keyData[j].sk_strategy;
-					in.query = so->keyData[j].sk_argument;
+					ScanKey		skey = &so->keyData[j];
+
+					/* Assume SPGiST-indexable operators are strict */
+					if (skey->sk_flags & SK_ISNULL)
+					{
+						nMatches = 0;
+						break;
+					}
+
+					in.strategy = skey->sk_strategy;
+					in.query = skey->sk_argument;
 
 					memset(&out, 0, sizeof(out));
 
 					FunctionCall2Coll(&so->state.innerConsistentFn,
-									  so->keyData[j].sk_collation,
+									  skey->sk_collation,
 									  PointerGetDatum(&in),
 									  PointerGetDatum(&out));
 
