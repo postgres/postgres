@@ -26,6 +26,7 @@
  *		index_getbitmap - get all tuples from a scan
  *		index_bulk_delete	- bulk deletion of index tuples
  *		index_vacuum_cleanup	- post-deletion cleanup of an index
+ *		index_can_return	- does index support index-only scans?
  *		index_getprocid - get a support procedure OID
  *		index_getprocinfo - get a support procedure's lookup info
  *
@@ -709,6 +710,27 @@ index_vacuum_cleanup(IndexVacuumInfo *info,
 									  PointerGetDatum(stats)));
 
 	return result;
+}
+
+/* ----------------
+ *		index_can_return - does index support index-only scans?
+ * ----------------
+ */
+bool
+index_can_return(Relation indexRelation)
+{
+	FmgrInfo   *procedure;
+
+	RELATION_CHECKS;
+
+	/* amcanreturn is optional; assume FALSE if not provided by AM */
+	if (!RegProcedureIsValid(indexRelation->rd_am->amcanreturn))
+		return false;
+
+	GET_REL_PROCEDURE(amcanreturn);
+
+	return DatumGetBool(FunctionCall1(procedure,
+									  PointerGetDatum(indexRelation)));
 }
 
 /* ----------------

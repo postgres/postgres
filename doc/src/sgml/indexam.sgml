@@ -134,11 +134,6 @@
    <structfield>amsearchnulls</structfield>, indicating that it supports
    <literal>IS NULL</> and <literal>IS NOT NULL</> clauses as search
    conditions.
-   An index method can also set <structfield>amcanreturn</structfield>,
-   indicating that it can support <firstterm>index-only scans</> by returning
-   the indexed column values for an index entry in the form of an IndexTuple.
-   (An example of an index AM that cannot do this is hash, which stores only
-   the hash values not the original data.)
   </para>
 
  </sect1>
@@ -278,6 +273,19 @@ amvacuumcleanup (IndexVacuumInfo *info,
 
   <para>
 <programlisting>
+bool
+amcanreturn (Relation indexRelation);
+</programlisting>
+   Check whether the index can support <firstterm>index-only scans</> by
+   returning the indexed column values for an index entry in the form of an
+   IndexTuple.  Return TRUE if so, else FALSE.  If the index AM can never
+   support index-only scans (an example is hash, which stores only
+   the hash values not the original data), it is sufficient to set its
+   <structfield>amcanreturn</> field to zero in <structname>pg_am</>.
+  </para>
+
+  <para>
+<programlisting>
 void
 amcostestimate (PlannerInfo *root,
                 IndexOptInfo *index,
@@ -391,9 +399,9 @@ amgettuple (IndexScanDesc scan,
   </para>
 
   <para>
-   If the access method supports index-only scans (i.e.,
-   <structfield>amcanreturn</structfield> is TRUE in its <structname>pg_am</>
-   row), then on success it must also check
+   If the index supports index-only scans (i.e.,
+   <function>amcanreturn</function> returns TRUE for it),
+   then on success the AM must also check
    <literal>scan-&gt;xs_want_itup</>, and if that is true it must return
    the original indexed data for the index entry, in the form of an
    <structname>IndexTuple</> pointer stored at <literal>scan-&gt;xs_itup</>,

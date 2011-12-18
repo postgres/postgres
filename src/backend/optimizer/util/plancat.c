@@ -212,8 +212,8 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 
 			info->relam = indexRelation->rd_rel->relam;
 			info->amcostestimate = indexRelation->rd_am->amcostestimate;
+			info->canreturn = index_can_return(indexRelation);
 			info->amcanorderbyop = indexRelation->rd_am->amcanorderbyop;
-			info->amcanreturn = indexRelation->rd_am->amcanreturn;
 			info->amoptionalkey = indexRelation->rd_am->amoptionalkey;
 			info->amsearcharray = indexRelation->rd_am->amsearcharray;
 			info->amsearchnulls = indexRelation->rd_am->amsearchnulls;

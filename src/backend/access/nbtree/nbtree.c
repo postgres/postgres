@@ -1091,3 +1091,14 @@ restart:
 		goto restart;
 	}
 }
+
+/*
+ *	btcanreturn() -- Check whether btree indexes support index-only scans.
+ *
+ * btrees always do, so this is trivial.
+ */
+Datum
+btcanreturn(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BOOL(true);
+}

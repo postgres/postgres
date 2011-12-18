@@ -559,3 +559,10 @@ spggettuple(PG_FUNCTION_ARGS)
 
 	PG_RETURN_BOOL(false);
 }
+
+Datum
+spgcanreturn(PG_FUNCTION_ARGS)
+{
+	/* Not implemented yet */
+	PG_RETURN_BOOL(false);
+}

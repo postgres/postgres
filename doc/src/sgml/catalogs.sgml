@@ -482,13 +482,6 @@
      </row>
 
      <row>
-      <entry><structfield>amcanreturn</structfield></entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>Can the access method return the contents of index entries?</entry>
-     </row>
-
-     <row>
       <entry><structfield>amoptionalkey</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
@@ -620,6 +613,14 @@
       <entry><type>regproc</type></entry>
       <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry>Post-<command>VACUUM</command> cleanup function</entry>
+     </row>
+
+     <row>
+      <entry><structfield>amcanreturn</structfield></entry>
+      <entry><type>regproc</type></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
+      <entry>Function to check whether index supports index-only scans,
+       or zero if none</entry>
      </row>
 
      <row>

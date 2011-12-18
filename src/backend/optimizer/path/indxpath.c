@@ -1075,10 +1075,10 @@ check_index_only(RelOptInfo *rel, IndexOptInfo *index)
 	ListCell   *lc;
 	int			i;
 
-	/* Index-only scans must be enabled, and AM must be capable of it */
+	/* Index-only scans must be enabled, and index must be capable of them */
 	if (!enable_indexonlyscan)
 		return false;
-	if (!index->amcanreturn)
+	if (!index->canreturn)
 		return false;
 
 	/*

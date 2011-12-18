@@ -64,6 +64,7 @@ typedef struct RelationAmInfo
 	FmgrInfo	ambuildempty;
 	FmgrInfo	ambulkdelete;
 	FmgrInfo	amvacuumcleanup;
+	FmgrInfo	amcanreturn;
 	FmgrInfo	amcostestimate;
 	FmgrInfo	amoptions;
 } RelationAmInfo;

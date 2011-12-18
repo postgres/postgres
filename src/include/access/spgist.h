@@ -182,6 +182,7 @@ extern Datum spgmarkpos(PG_FUNCTION_ARGS);
 extern Datum spgrestrpos(PG_FUNCTION_ARGS);
 extern Datum spggetbitmap(PG_FUNCTION_ARGS);
 extern Datum spggettuple(PG_FUNCTION_ARGS);
+extern Datum spgcanreturn(PG_FUNCTION_ARGS);
 
 /* spgutils.c */
 extern Datum spgoptions(PG_FUNCTION_ARGS);
