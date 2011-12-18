@@ -1,0 +1,21 @@
+/*--------------------------
+ * common utility functions
+ *--------------------------
+ */
+
+#ifndef PLPY_UTIL_H
+#define PLPY_UTIL_H
+
+extern void *PLy_malloc(size_t);
+extern void *PLy_malloc0(size_t);
+extern char *PLy_strdup(const char *);
+extern void PLy_free(void *);
+
+extern PyObject *PLyUnicode_Bytes(PyObject *unicode);
+extern char *PLyUnicode_AsString(PyObject *unicode);
+
+#if PY_MAJOR_VERSION >= 3
+extern PyObject *PLyUnicode_FromString(const char *s);
+#endif
+
+#endif	/* PLPY_UTIL_H */
