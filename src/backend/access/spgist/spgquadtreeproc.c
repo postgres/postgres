@@ -30,6 +30,7 @@ spg_quad_config(PG_FUNCTION_ARGS)
 
 	cfg->prefixType = POINTOID;
 	cfg->labelType = VOIDOID;	/* we don't need node labels */
+	cfg->canReturnData = true;
 	cfg->longValuesOK = false;
 	PG_RETURN_VOID();
 }
@@ -323,6 +324,9 @@ spg_quad_leaf_consistent(PG_FUNCTION_ARGS)
 
 	/* all tests are exact */
 	out->recheck = false;
+
+	/* leafDatum is what it is... */
+	out->leafValue = in->leafDatum;
 
 	switch (in->strategy)
 	{

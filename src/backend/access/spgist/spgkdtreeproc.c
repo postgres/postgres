@@ -30,6 +30,7 @@ spg_kd_config(PG_FUNCTION_ARGS)
 
 	cfg->prefixType = FLOAT8OID;
 	cfg->labelType = VOIDOID;	/* we don't need node labels */
+	cfg->canReturnData = true;
 	cfg->longValuesOK = false;
 	PG_RETURN_VOID();
 }

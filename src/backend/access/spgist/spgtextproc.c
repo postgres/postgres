@@ -51,6 +51,7 @@ spg_text_config(PG_FUNCTION_ARGS)
 
 	cfg->prefixType = TEXTOID;
 	cfg->labelType = CHAROID;
+	cfg->canReturnData = true;
 	cfg->longValuesOK = true;	/* suffixing will shorten long values */
 	PG_RETURN_VOID();
 }
@@ -521,7 +522,10 @@ spg_text_leaf_consistent(PG_FUNCTION_ARGS)
 
 	queryLen = VARSIZE_ANY_EXHDR(query);
 
-	/* For equality, we needn't reconstruct fullValue if not same length */
+	/*
+	 * For an equality check, we needn't reconstruct fullValue if not same
+	 * length; it can't match
+	 */
 	if (strategy == BTEqualStrategyNumber && queryLen != fullLen)
 		PG_RETURN_BOOL(false);
 
@@ -529,15 +533,20 @@ spg_text_leaf_consistent(PG_FUNCTION_ARGS)
 	if (VARSIZE_ANY_EXHDR(leafValue) == 0 && level > 0)
 	{
 		fullValue = VARDATA(reconstrValue);
+		out->leafValue = PointerGetDatum(reconstrValue);
 	}
 	else
 	{
-		fullValue = palloc(fullLen);
+		text   *fullText = palloc(VARHDRSZ + fullLen);
+
+		SET_VARSIZE(fullText, VARHDRSZ + fullLen);
+		fullValue = VARDATA(fullText);
 		if (level)
 			memcpy(fullValue, VARDATA(reconstrValue), level);
 		if (VARSIZE_ANY_EXHDR(leafValue) > 0)
 			memcpy(fullValue + level, VARDATA_ANY(leafValue),
 				   VARSIZE_ANY_EXHDR(leafValue));
+		out->leafValue = PointerGetDatum(fullText);
 	}
 
 	/* Run the appropriate type of comparison */

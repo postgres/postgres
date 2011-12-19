@@ -34,51 +34,88 @@ fillTypeDesc(SpGistTypeDesc *desc, Oid type)
 	get_typlenbyval(type, &desc->attlen, &desc->attbyval);
 }
 
+/*
+ * Fetch local cache of AM-specific info about the index, initializing it
+ * if necessary
+ */
+SpGistCache *
+spgGetCache(Relation index)
+{
+	SpGistCache *cache;
+
+	if (index->rd_amcache == NULL)
+	{
+		Oid			atttype;
+		spgConfigIn in;
+		FmgrInfo   *procinfo;
+		Buffer		metabuffer;
+		SpGistMetaPageData *metadata;
+
+		cache = MemoryContextAllocZero(index->rd_indexcxt,
+									   sizeof(SpGistCache));
+
+		/* SPGiST doesn't support multi-column indexes */
+		Assert(index->rd_att->natts == 1);
+
+		/*
+		 * Get the actual data type of the indexed column from the index
+		 * tupdesc.  We pass this to the opclass config function so that
+		 * polymorphic opclasses are possible.
+		 */
+		atttype = index->rd_att->attrs[0]->atttypid;
+
+		/* Call the config function to get config info for the opclass */
+		in.attType = atttype;
+
+		procinfo = index_getprocinfo(index, 1, SPGIST_CONFIG_PROC);
+		FunctionCall2Coll(procinfo,
+						  index->rd_indcollation[0],
+						  PointerGetDatum(&in),
+						  PointerGetDatum(&cache->config));
+
+		/* Get the information we need about each relevant datatype */
+		fillTypeDesc(&cache->attType, atttype);
+		fillTypeDesc(&cache->attPrefixType, cache->config.prefixType);
+		fillTypeDesc(&cache->attLabelType, cache->config.labelType);
+
+		/* Last, get the lastUsedPages data from the metapage */
+		metabuffer = ReadBuffer(index, SPGIST_METAPAGE_BLKNO);
+		LockBuffer(metabuffer, BUFFER_LOCK_SHARE);
+
+		metadata = SpGistPageGetMeta(BufferGetPage(metabuffer));
+
+		if (metadata->magicNumber != SPGIST_MAGIC_NUMBER)
+			elog(ERROR, "index \"%s\" is not an SP-GiST index",
+				 RelationGetRelationName(index));
+
+		cache->lastUsedPages = metadata->lastUsedPages;
+
+		UnlockReleaseBuffer(metabuffer);
+
+		index->rd_amcache = (void *) cache;
+	}
+	else
+	{
+		/* assume it's up to date */
+		cache = (SpGistCache *) index->rd_amcache;
+	}
+
+	return cache;
+}
+
 /* Initialize SpGistState for working with the given index */
 void
 initSpGistState(SpGistState *state, Relation index)
 {
-	Oid			atttype;
-	spgConfigIn in;
+	SpGistCache *cache;
 
-	/* SPGiST doesn't support multi-column indexes */
-	Assert(index->rd_att->natts == 1);
+	/* Get cached static information about index */
+	cache = spgGetCache(index);
 
-	/*
-	 * Get the actual data type of the indexed column from the index tupdesc.
-	 * We pass this to the opclass config function so that polymorphic
-	 * opclasses are possible.
-	 */
-	atttype = index->rd_att->attrs[0]->atttypid;
-
-	/* Get the config info for the opclass */
-	in.attType = atttype;
-
-	memset(&state->config, 0, sizeof(state->config));
-
-	FunctionCall2Coll(index_getprocinfo(index, 1, SPGIST_CONFIG_PROC),
-					  index->rd_indcollation[0],
-					  PointerGetDatum(&in),
-					  PointerGetDatum(&state->config));
-
-	/* Get the information we need about each relevant datatype */
-	fillTypeDesc(&state->attType, atttype);
-	fillTypeDesc(&state->attPrefixType, state->config.prefixType);
-	fillTypeDesc(&state->attLabelType, state->config.labelType);
-
-	/* Get lookup info for opclass support procs */
-	fmgr_info_copy(&(state->chooseFn),
-				   index_getprocinfo(index, 1, SPGIST_CHOOSE_PROC),
-				   CurrentMemoryContext);
-	fmgr_info_copy(&(state->picksplitFn),
-				   index_getprocinfo(index, 1, SPGIST_PICKSPLIT_PROC),
-				   CurrentMemoryContext);
-	fmgr_info_copy(&(state->innerConsistentFn),
-				   index_getprocinfo(index, 1, SPGIST_INNER_CONSISTENT_PROC),
-				   CurrentMemoryContext);
-	fmgr_info_copy(&(state->leafConsistentFn),
-				   index_getprocinfo(index, 1, SPGIST_LEAF_CONSISTENT_PROC),
-				   CurrentMemoryContext);
+	state->config = cache->config;
+	state->attType = cache->attType;
+	state->attPrefixType = cache->attPrefixType;
+	state->attLabelType = cache->attLabelType;
 
 	/* Make workspace for constructing dead tuples */
 	state->deadTupleStorage = palloc0(SGDTSIZE);
@@ -86,6 +123,7 @@ initSpGistState(SpGistState *state, Relation index)
 	/* Set XID to use in redirection tuples */
 	state->myXid = GetTopTransactionIdIfAny();
 
+	/* Assume we're not in an index build (spgbuild will override) */
 	state->isBuild = false;
 }
 
@@ -154,46 +192,6 @@ SpGistNewBuffer(Relation index)
 }
 
 /*
- * Fetch local cache of lastUsedPages info, initializing it from the metapage
- * if necessary
- */
-static SpGistCache *
-spgGetCache(Relation index)
-{
-	SpGistCache *cache;
-
-	if (index->rd_amcache == NULL)
-	{
-		Buffer		metabuffer;
-		SpGistMetaPageData *metadata;
-
-		cache = MemoryContextAlloc(index->rd_indexcxt,
-								   sizeof(SpGistCache));
-
-		metabuffer = ReadBuffer(index, SPGIST_METAPAGE_BLKNO);
-		LockBuffer(metabuffer, BUFFER_LOCK_SHARE);
-
-		metadata = SpGistPageGetMeta(BufferGetPage(metabuffer));
-
-		if (metadata->magicNumber != SPGIST_MAGIC_NUMBER)
-			elog(ERROR, "index \"%s\" is not an SP-GiST index",
-				 RelationGetRelationName(index));
-
-		*cache = metadata->lastUsedPages;
-
-		UnlockReleaseBuffer(metabuffer);
-
-		index->rd_amcache = cache;
-	}
-	else
-	{
-		cache = (SpGistCache *) index->rd_amcache;
-	}
-
-	return cache;
-}
-
-/*
  * Update index metapage's lastUsedPages info from local cache, if possible
  *
  * Updating meta page isn't critical for index working, so
@@ -215,7 +213,7 @@ SpGistUpdateMetaPage(Relation index)
 		if (ConditionalLockBuffer(metabuffer))
 		{
 			metadata = SpGistPageGetMeta(BufferGetPage(metabuffer));
-			metadata->lastUsedPages = *cache;
+			metadata->lastUsedPages = cache->lastUsedPages;
 
 			MarkBufferDirty(metabuffer);
 			UnlockReleaseBuffer(metabuffer);
@@ -229,8 +227,8 @@ SpGistUpdateMetaPage(Relation index)
 
 /* Macro to select proper element of lastUsedPages cache depending on flags */
 #define GET_LUP(c, f)	(((f) & GBUF_LEAF) ? \
-						 &(c)->leafPage : \
-						 &(c)->innerPage[(f) & GBUF_PARITY_MASK])
+						 &(c)->lastUsedPages.leafPage : \
+						 &(c)->lastUsedPages.innerPage[(f) & GBUF_PARITY_MASK])
 
 /*
  * Allocate and initialize a new buffer of the type and parity specified by
@@ -282,8 +280,8 @@ allocNewBuffer(Relation index, int flags)
 			else
 			{
 				/* Page has wrong parity, record it in cache and try again */
-				cache->innerPage[blkParity].blkno = blkno;
-				cache->innerPage[blkParity].freeSpace =
+				cache->lastUsedPages.innerPage[blkParity].blkno = blkno;
+				cache->lastUsedPages.innerPage[blkParity].freeSpace =
 					PageGetExactFreeSpace(BufferGetPage(buffer));
 				UnlockReleaseBuffer(buffer);
 			}

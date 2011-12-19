@@ -15,6 +15,7 @@
 
 #include "postgres.h"
 
+#include "access/genam.h"
 #include "access/spgist_private.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
@@ -678,6 +679,7 @@ doPickSplit(Relation index, SpGistState *state,
 	bool		insertedNew = false;
 	spgPickSplitIn in;
 	spgPickSplitOut out;
+	FmgrInfo   *procinfo;
 	bool		includeNew;
 	int			i,
 				max,
@@ -816,7 +818,8 @@ doPickSplit(Relation index, SpGistState *state,
 	 */
 	memset(&out, 0, sizeof(out));
 
-	FunctionCall2Coll(&state->picksplitFn,
+	procinfo = index_getprocinfo(index, 1, SPGIST_PICKSPLIT_PROC);
+	FunctionCall2Coll(procinfo,
 					  index->rd_indcollation[0],
 					  PointerGetDatum(&in),
 					  PointerGetDatum(&out));
@@ -1944,6 +1947,7 @@ spgdoinsert(Relation index, SpGistState *state,
 			SpGistInnerTuple innerTuple;
 			spgChooseIn in;
 			spgChooseOut out;
+			FmgrInfo   *procinfo;
 
 			/*
 			 * spgAddNode and spgSplitTuple cases will loop back to here to
@@ -1968,7 +1972,8 @@ spgdoinsert(Relation index, SpGistState *state,
 
 			memset(&out, 0, sizeof(out));
 
-			FunctionCall2Coll(&state->chooseFn,
+			procinfo = index_getprocinfo(index, 1, SPGIST_CHOOSE_PROC);
+			FunctionCall2Coll(procinfo,
 							  index->rd_indcollation[0],
 							  PointerGetDatum(&in),
 							  PointerGetDatum(&out));

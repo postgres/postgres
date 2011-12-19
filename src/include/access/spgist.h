@@ -43,6 +43,7 @@ typedef struct spgConfigOut
 {
 	Oid			prefixType;		/* Data type of inner-tuple prefixes */
 	Oid			labelType;		/* Data type of inner-tuple node labels */
+	bool		canReturnData;	/* Opclass can reconstruct original data */
 	bool		longValuesOK;	/* Opclass can cope with values > 1 page */
 } spgConfigOut;
 
@@ -132,6 +133,7 @@ typedef struct spgInnerConsistentIn
 
 	Datum		reconstructedValue;		/* value reconstructed at parent */
 	int			level;			/* current level (counting from zero) */
+	bool		returnData;		/* original data must be returned? */
 
 	/* Data from current inner tuple */
 	bool		allTheSame;		/* tuple is marked all-the-same? */
@@ -159,12 +161,14 @@ typedef struct spgLeafConsistentIn
 
 	Datum		reconstructedValue;		/* value reconstructed at parent */
 	int			level;			/* current level (counting from zero) */
+	bool		returnData;		/* original data must be returned? */
 
 	Datum		leafDatum;		/* datum in leaf tuple */
 } spgLeafConsistentIn;
 
 typedef struct spgLeafConsistentOut
 {
+	Datum		leafValue;		/* reconstructed original data, if any */
 	bool		recheck;		/* set true if operator must be rechecked */
 } spgLeafConsistentOut;
 

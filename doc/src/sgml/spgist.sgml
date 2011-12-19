@@ -145,6 +145,7 @@ typedef struct spgConfigOut
 {
     Oid         prefixType;     /* Data type of inner-tuple prefixes */
     Oid         labelType;      /* Data type of inner-tuple node labels */
+    bool        canReturnData;  /* Opclass can reconstruct original data */
     bool        longValuesOK;   /* Opclass can cope with values &gt; 1 page */
 } spgConfigOut;
 </programlisting>
@@ -159,6 +160,8 @@ typedef struct spgConfigOut
       <structfield>prefixType</> can be set to <literal>VOIDOID</>.
       Likewise, for operator classes that do not use node labels,
       <structfield>labelType</> can be set to <literal>VOIDOID</>.
+      <structfield>canReturnData</> should be set true if the operator class
+      is capable of reconstructing the originally-supplied index value.
       <structfield>longValuesOK</> should be set true only when the
       <structfield>attType</> is of variable length and the operator
       class is capable of segmenting long values by repeated suffixing
@@ -441,6 +444,7 @@ typedef struct spgInnerConsistentIn
 
     Datum       reconstructedValue;     /* value reconstructed at parent */
     int         level;          /* current level (counting from zero) */
+    bool        returnData;     /* original data must be returned? */
 
     /* Data from current inner tuple */
     bool        allTheSame;     /* tuple is marked all-the-same? */
@@ -467,6 +471,9 @@ typedef struct spgInnerConsistentOut
        parent level.
        <structfield>level</> is the current inner tuple's level, starting at
        zero for the root level.
+       <structfield>returnData</> is <literal>true</> if reconstructed data is
+       required for this query; this will only be so if the
+       <function>config</> function asserted <structfield>canReturnData</>.
        <structfield>allTheSame</> is true if the current inner tuple is
        marked <quote>all-the-same</>; in this case all the nodes have the
        same label (if any) and so either all or none of them match the query
@@ -525,12 +532,14 @@ typedef struct spgLeafConsistentIn
 
     Datum       reconstructedValue;     /* value reconstructed at parent */
     int         level;          /* current level (counting from zero) */
+    bool        returnData;     /* original data must be returned? */
 
     Datum       leafDatum;      /* datum in leaf tuple */
 } spgLeafConsistentIn;
 
 typedef struct spgLeafConsistentOut
 {
+    Datum       leafValue;      /* reconstructed original data, if any */
     bool        recheck;        /* set true if operator must be rechecked */
 } spgLeafConsistentOut;
 </programlisting>
@@ -543,6 +552,9 @@ typedef struct spgLeafConsistentOut
        parent level.
        <structfield>level</> is the current leaf tuple's level, starting at
        zero for the root level.
+       <structfield>returnData</> is <literal>true</> if reconstructed data is
+       required for this query; this will only be so if the
+       <function>config</> function asserted <structfield>canReturnData</>.
        <structfield>leafDatum</> is the key value stored in the current
        leaf tuple.
       </para>
@@ -550,6 +562,9 @@ typedef struct spgLeafConsistentOut
       <para>
        The function must return <literal>true</> if the leaf tuple matches the
        query, or <literal>false</> if not.  In the <literal>true</> case,
+       if <structfield>returnData</> is <literal>true</> then
+       <structfield>leafValue</> must be set to the value originally supplied
+       to be indexed for this leaf tuple.  Also,
        <structfield>recheck</> may be set to <literal>true</> if the match
        is uncertain and so the operator must be re-applied to the actual heap
        tuple to verify the match.

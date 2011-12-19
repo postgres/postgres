@@ -680,10 +680,10 @@ SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl WHERE p <@ box '(200,200,1000,1000)';
-                       QUERY PLAN                        
----------------------------------------------------------
+                        QUERY PLAN                         
+-----------------------------------------------------------
  Aggregate
-   ->  Index Scan using sp_quad_ind on quad_point_tbl
+   ->  Index Only Scan using sp_quad_ind on quad_point_tbl
          Index Cond: (p <@ '(1000,1000),(200,200)'::box)
 (3 rows)
 
@@ -695,11 +695,11 @@ SELECT count(*) FROM quad_point_tbl WHERE p <@ box '(200,200,1000,1000)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl WHERE box '(200,200,1000,1000)' @> p;
-                       QUERY PLAN                        
----------------------------------------------------------
+                        QUERY PLAN                         
+-----------------------------------------------------------
  Aggregate
-   ->  Index Scan using sp_quad_ind on quad_point_tbl
-         Index Cond: ('(1000,1000),(200,200)'::box @> p)
+   ->  Index Only Scan using sp_quad_ind on quad_point_tbl
+         Index Cond: (p <@ '(1000,1000),(200,200)'::box)
 (3 rows)
 
 SELECT count(*) FROM quad_point_tbl WHERE box '(200,200,1000,1000)' @> p;
@@ -710,10 +710,10 @@ SELECT count(*) FROM quad_point_tbl WHERE box '(200,200,1000,1000)' @> p;
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl WHERE p << '(5000, 4000)';
-                      QUERY PLAN                      
-------------------------------------------------------
+                        QUERY PLAN                         
+-----------------------------------------------------------
  Aggregate
-   ->  Index Scan using sp_quad_ind on quad_point_tbl
+   ->  Index Only Scan using sp_quad_ind on quad_point_tbl
          Index Cond: (p << '(5000,4000)'::point)
 (3 rows)
 
@@ -725,10 +725,10 @@ SELECT count(*) FROM quad_point_tbl WHERE p << '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl WHERE p >> '(5000, 4000)';
-                      QUERY PLAN                      
-------------------------------------------------------
+                        QUERY PLAN                         
+-----------------------------------------------------------
  Aggregate
-   ->  Index Scan using sp_quad_ind on quad_point_tbl
+   ->  Index Only Scan using sp_quad_ind on quad_point_tbl
          Index Cond: (p >> '(5000,4000)'::point)
 (3 rows)
 
@@ -740,10 +740,10 @@ SELECT count(*) FROM quad_point_tbl WHERE p >> '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl WHERE p <^ '(5000, 4000)';
-                      QUERY PLAN                      
-------------------------------------------------------
+                        QUERY PLAN                         
+-----------------------------------------------------------
  Aggregate
-   ->  Index Scan using sp_quad_ind on quad_point_tbl
+   ->  Index Only Scan using sp_quad_ind on quad_point_tbl
          Index Cond: (p <^ '(5000,4000)'::point)
 (3 rows)
 
@@ -755,10 +755,10 @@ SELECT count(*) FROM quad_point_tbl WHERE p <^ '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl WHERE p >^ '(5000, 4000)';
-                      QUERY PLAN                      
-------------------------------------------------------
+                        QUERY PLAN                         
+-----------------------------------------------------------
  Aggregate
-   ->  Index Scan using sp_quad_ind on quad_point_tbl
+   ->  Index Only Scan using sp_quad_ind on quad_point_tbl
          Index Cond: (p >^ '(5000,4000)'::point)
 (3 rows)
 
@@ -770,10 +770,10 @@ SELECT count(*) FROM quad_point_tbl WHERE p >^ '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl WHERE p ~= '(4585, 365)';
-                      QUERY PLAN                      
-------------------------------------------------------
+                        QUERY PLAN                         
+-----------------------------------------------------------
  Aggregate
-   ->  Index Scan using sp_quad_ind on quad_point_tbl
+   ->  Index Only Scan using sp_quad_ind on quad_point_tbl
          Index Cond: (p ~= '(4585,365)'::point)
 (3 rows)
 
@@ -788,7 +788,7 @@ SELECT count(*) FROM kd_point_tbl WHERE p <@ box '(200,200,1000,1000)';
                        QUERY PLAN                        
 ---------------------------------------------------------
  Aggregate
-   ->  Index Scan using sp_kd_ind on kd_point_tbl
+   ->  Index Only Scan using sp_kd_ind on kd_point_tbl
          Index Cond: (p <@ '(1000,1000),(200,200)'::box)
 (3 rows)
 
@@ -803,8 +803,8 @@ SELECT count(*) FROM kd_point_tbl WHERE box '(200,200,1000,1000)' @> p;
                        QUERY PLAN                        
 ---------------------------------------------------------
  Aggregate
-   ->  Index Scan using sp_kd_ind on kd_point_tbl
-         Index Cond: ('(1000,1000),(200,200)'::box @> p)
+   ->  Index Only Scan using sp_kd_ind on kd_point_tbl
+         Index Cond: (p <@ '(1000,1000),(200,200)'::box)
 (3 rows)
 
 SELECT count(*) FROM kd_point_tbl WHERE box '(200,200,1000,1000)' @> p;
@@ -815,10 +815,10 @@ SELECT count(*) FROM kd_point_tbl WHERE box '(200,200,1000,1000)' @> p;
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM kd_point_tbl WHERE p << '(5000, 4000)';
-                    QUERY PLAN                    
---------------------------------------------------
+                      QUERY PLAN                       
+-------------------------------------------------------
  Aggregate
-   ->  Index Scan using sp_kd_ind on kd_point_tbl
+   ->  Index Only Scan using sp_kd_ind on kd_point_tbl
          Index Cond: (p << '(5000,4000)'::point)
 (3 rows)
 
@@ -830,10 +830,10 @@ SELECT count(*) FROM kd_point_tbl WHERE p << '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM kd_point_tbl WHERE p >> '(5000, 4000)';
-                    QUERY PLAN                    
---------------------------------------------------
+                      QUERY PLAN                       
+-------------------------------------------------------
  Aggregate
-   ->  Index Scan using sp_kd_ind on kd_point_tbl
+   ->  Index Only Scan using sp_kd_ind on kd_point_tbl
          Index Cond: (p >> '(5000,4000)'::point)
 (3 rows)
 
@@ -845,10 +845,10 @@ SELECT count(*) FROM kd_point_tbl WHERE p >> '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM kd_point_tbl WHERE p <^ '(5000, 4000)';
-                    QUERY PLAN                    
---------------------------------------------------
+                      QUERY PLAN                       
+-------------------------------------------------------
  Aggregate
-   ->  Index Scan using sp_kd_ind on kd_point_tbl
+   ->  Index Only Scan using sp_kd_ind on kd_point_tbl
          Index Cond: (p <^ '(5000,4000)'::point)
 (3 rows)
 
@@ -860,10 +860,10 @@ SELECT count(*) FROM kd_point_tbl WHERE p <^ '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM kd_point_tbl WHERE p >^ '(5000, 4000)';
-                    QUERY PLAN                    
---------------------------------------------------
+                      QUERY PLAN                       
+-------------------------------------------------------
  Aggregate
-   ->  Index Scan using sp_kd_ind on kd_point_tbl
+   ->  Index Only Scan using sp_kd_ind on kd_point_tbl
          Index Cond: (p >^ '(5000,4000)'::point)
 (3 rows)
 
@@ -875,10 +875,10 @@ SELECT count(*) FROM kd_point_tbl WHERE p >^ '(5000, 4000)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM kd_point_tbl WHERE p ~= '(4585, 365)';
-                    QUERY PLAN                    
---------------------------------------------------
+                      QUERY PLAN                       
+-------------------------------------------------------
  Aggregate
-   ->  Index Scan using sp_kd_ind on kd_point_tbl
+   ->  Index Only Scan using sp_kd_ind on kd_point_tbl
          Index Cond: (p ~= '(4585,365)'::point)
 (3 rows)
 
@@ -890,10 +890,10 @@ SELECT count(*) FROM kd_point_tbl WHERE p ~= '(4585, 365)';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdef';
-                      QUERY PLAN                       
--------------------------------------------------------
+                         QUERY PLAN                         
+------------------------------------------------------------
  Aggregate
-   ->  Index Scan using sp_suff_ind on suffix_text_tbl
+   ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
          Index Cond: (t = '0123456789abcdef'::text)
 (3 rows)
 
@@ -905,10 +905,10 @@ SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdef';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcde';
-                      QUERY PLAN                       
--------------------------------------------------------
+                         QUERY PLAN                         
+------------------------------------------------------------
  Aggregate
-   ->  Index Scan using sp_suff_ind on suffix_text_tbl
+   ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
          Index Cond: (t = '0123456789abcde'::text)
 (3 rows)
 
@@ -920,10 +920,10 @@ SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcde';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdefF';
-                      QUERY PLAN                       
--------------------------------------------------------
+                         QUERY PLAN                         
+------------------------------------------------------------
  Aggregate
-   ->  Index Scan using sp_suff_ind on suffix_text_tbl
+   ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
          Index Cond: (t = '0123456789abcdefF'::text)
 (3 rows)
 
@@ -938,7 +938,7 @@ SELECT count(*) FROM suffix_text_tbl WHERE t <    'Aztec                        
                               QUERY PLAN                              
 ----------------------------------------------------------------------
  Aggregate
-   ->  Index Scan using sp_suff_ind on suffix_text_tbl
+   ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
          Index Cond: (t < 'Aztec                         Ct  '::text)
 (3 rows)
 
@@ -953,7 +953,7 @@ SELECT count(*) FROM suffix_text_tbl WHERE t ~<~  'Aztec                        
                                QUERY PLAN                               
 ------------------------------------------------------------------------
  Aggregate
-   ->  Index Scan using sp_suff_ind on suffix_text_tbl
+   ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
          Index Cond: (t ~<~ 'Aztec                         Ct  '::text)
 (3 rows)
 
@@ -968,7 +968,7 @@ SELECT count(*) FROM suffix_text_tbl WHERE t <=   'Aztec                        
                               QUERY PLAN                               
 -----------------------------------------------------------------------
  Aggregate
-   ->  Index Scan using sp_suff_ind on suffix_text_tbl
+   ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
          Index Cond: (t <= 'Aztec                         Ct  '::text)
 (3 rows)
 
@@ -983,7 +983,7 @@ SELECT count(*) FROM suffix_text_tbl WHERE t ~<=~ 'Aztec                        
                                QUERY PLAN                                
 -------------------------------------------------------------------------
  Aggregate
-   ->  Index Scan using sp_suff_ind on suffix_text_tbl
+   ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
          Index Cond: (t ~<=~ 'Aztec                         Ct  '::text)
 (3 rows)
 
@@ -998,7 +998,7 @@ SELECT count(*) FROM suffix_text_tbl WHERE t =    'Aztec                        
                               QUERY PLAN                              
 ----------------------------------------------------------------------
  Aggregate
-   ->  Index Scan using sp_suff_ind on suffix_text_tbl
+   ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
          Index Cond: (t = 'Aztec                         Ct  '::text)
 (3 rows)
 
@@ -1013,7 +1013,7 @@ SELECT count(*) FROM suffix_text_tbl WHERE t =    'Worth                        
                               QUERY PLAN                              
 ----------------------------------------------------------------------
  Aggregate
-   ->  Index Scan using sp_suff_ind on suffix_text_tbl
+   ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
          Index Cond: (t = 'Worth                         St  '::text)
 (3 rows)
 
@@ -1028,7 +1028,7 @@ SELECT count(*) FROM suffix_text_tbl WHERE t >=   'Worth                        
                               QUERY PLAN                               
 -----------------------------------------------------------------------
  Aggregate
-   ->  Index Scan using sp_suff_ind on suffix_text_tbl
+   ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
          Index Cond: (t >= 'Worth                         St  '::text)
 (3 rows)
 
@@ -1043,7 +1043,7 @@ SELECT count(*) FROM suffix_text_tbl WHERE t ~>=~ 'Worth                        
                                QUERY PLAN                                
 -------------------------------------------------------------------------
  Aggregate
-   ->  Index Scan using sp_suff_ind on suffix_text_tbl
+   ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
          Index Cond: (t ~>=~ 'Worth                         St  '::text)
 (3 rows)
 
@@ -1058,7 +1058,7 @@ SELECT count(*) FROM suffix_text_tbl WHERE t >    'Worth                        
                               QUERY PLAN                              
 ----------------------------------------------------------------------
  Aggregate
-   ->  Index Scan using sp_suff_ind on suffix_text_tbl
+   ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
          Index Cond: (t > 'Worth                         St  '::text)
 (3 rows)
 
@@ -1073,7 +1073,7 @@ SELECT count(*) FROM suffix_text_tbl WHERE t ~>~  'Worth                        
                                QUERY PLAN                               
 ------------------------------------------------------------------------
  Aggregate
-   ->  Index Scan using sp_suff_ind on suffix_text_tbl
+   ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
          Index Cond: (t ~>~ 'Worth                         St  '::text)
 (3 rows)
 

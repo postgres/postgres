@@ -71,11 +71,11 @@ typedef struct SpGistLastUsedPage
 	int			freeSpace;		/* its free space (could be obsolete!) */
 } SpGistLastUsedPage;
 
-typedef struct SpGistCache
+typedef struct SpGistLUPCache
 {
 	SpGistLastUsedPage innerPage[3];	/* one per triple-parity group */
 	SpGistLastUsedPage leafPage;
-} SpGistCache;
+} SpGistLUPCache;
 
 /*
  * metapage
@@ -83,7 +83,7 @@ typedef struct SpGistCache
 typedef struct SpGistMetaPageData
 {
 	uint32		magicNumber;	/* for identity cross-check */
-	SpGistCache lastUsedPages;	/* shared storage of last-used info */
+	SpGistLUPCache lastUsedPages;	/* shared storage of last-used info */
 } SpGistMetaPageData;
 
 #define SPGIST_MAGIC_NUMBER (0xBA0BABED)
@@ -112,12 +112,6 @@ typedef struct SpGistState
 	SpGistTypeDesc attPrefixType;	/* type of inner-tuple prefix values */
 	SpGistTypeDesc attLabelType;	/* type of node label values */
 
-	/* lookup data for the opclass support functions, except config */
-	FmgrInfo	chooseFn;
-	FmgrInfo	picksplitFn;
-	FmgrInfo	innerConsistentFn;
-	FmgrInfo	leafConsistentFn;
-
 	char	   *deadTupleStorage;	/* workspace for spgFormDeadTuple */
 
 	TransactionId myXid;		/* XID to use when creating a redirect tuple */
@@ -144,10 +138,13 @@ typedef struct SpGistScanOpaqueData
 	int64		ntids;			/* number of TIDs passed to bitmap */
 
 	/* These fields are only used in amgettuple scans: */
+	bool		want_itup;		/* are we reconstructing tuples? */
+	TupleDesc	indexTupDesc;	/* if so, tuple descriptor for them */
 	int			nPtrs;			/* number of TIDs found on current page */
 	int			iPtr;			/* index for scanning through same */
 	ItemPointerData heapPtrs[MaxIndexTuplesPerPage]; /* TIDs from cur page */
 	bool		recheck[MaxIndexTuplesPerPage];		/* their recheck flags */
+	IndexTuple	indexTups[MaxIndexTuplesPerPage];	/* reconstructed tuples */
 
 	/*
 	 * Note: using MaxIndexTuplesPerPage above is a bit hokey since
@@ -157,6 +154,21 @@ typedef struct SpGistScanOpaqueData
 } SpGistScanOpaqueData;
 
 typedef SpGistScanOpaqueData *SpGistScanOpaque;
+
+/*
+ * This struct is what we actually keep in index->rd_amcache.  It includes
+ * static configuration information as well as the lastUsedPages cache.
+ */
+typedef struct SpGistCache
+{
+	spgConfigOut config;		/* filled in by opclass config method */
+
+	SpGistTypeDesc attType;			/* type of input data and leaf values */
+	SpGistTypeDesc attPrefixType;	/* type of inner-tuple prefix values */
+	SpGistTypeDesc attLabelType;	/* type of node label values */
+
+	SpGistLUPCache lastUsedPages;	/* local storage of last-used info */
+} SpGistCache;
 
 
 /*
@@ -570,6 +582,7 @@ typedef struct spgxlogVacuumRedirect
 #define GBUF_INNER_PARITY(x)	((x) % 3)
 
 /* spgutils.c */
+extern SpGistCache *spgGetCache(Relation index);
 extern void initSpGistState(SpGistState *state, Relation index);
 extern Buffer SpGistNewBuffer(Relation index);
 extern void SpGistUpdateMetaPage(Relation index);

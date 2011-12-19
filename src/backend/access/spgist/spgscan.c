@@ -55,7 +55,10 @@ freeScanStack(SpGistScanOpaque so)
 	so->scanStack = NIL;
 }
 
-/* Initialize scanStack with a single entry for the root page */
+/*
+ * Initialize scanStack with a single entry for the root page, resetting
+ * any previously active scan
+ */
 static void
 resetSpGistScanOpaque(SpGistScanOpaque so)
 {
@@ -65,7 +68,16 @@ resetSpGistScanOpaque(SpGistScanOpaque so)
 
 	freeScanStack(so);
 	so->scanStack = list_make1(startEntry);
-	so->nPtrs = so->iPtr = 0;
+
+	if (so->want_itup)
+	{
+		/* Must pfree IndexTuples to avoid memory leak */
+		int		i;
+
+		for (i = 0; i < so->nPtrs; i++)
+			pfree(so->indexTups[i]);
+	}
+	so->iPtr = so->nPtrs = 0;
 }
 
 Datum
@@ -87,6 +99,10 @@ spgbeginscan(PG_FUNCTION_ARGS)
 										ALLOCSET_DEFAULT_INITSIZE,
 										ALLOCSET_DEFAULT_MAXSIZE);
 	resetSpGistScanOpaque(so);
+
+	/* Set up indexTupDesc and xs_itupdesc in case it's an index-only scan */
+	so->indexTupDesc = scan->xs_itupdesc = RelationGetDescr(rel);
+
 	scan->opaque = so;
 
 	PG_RETURN_POINTER(scan);
@@ -138,28 +154,35 @@ spgrestrpos(PG_FUNCTION_ARGS)
 /*
  * Test whether a leaf datum satisfies all the scan keys
  *
+ * *leafValue is set to the reconstructed datum, if provided
  * *recheck is set true if any of the operators are lossy
  */
 static bool
-spgLeafTest(SpGistScanOpaque so, Datum leafDatum,
+spgLeafTest(Relation index, SpGistScanOpaque so, Datum leafDatum,
 			int level, Datum reconstructedValue,
-			bool *recheck)
+			Datum *leafValue, bool *recheck)
 {
 	bool		result = true;
 	spgLeafConsistentIn in;
 	spgLeafConsistentOut out;
+	FmgrInfo   *procinfo;
 	MemoryContext oldCtx;
 	int			i;
 
+	*leafValue = (Datum) 0;
 	*recheck = false;
 
 	/* set up values that are the same for all quals */
 	in.reconstructedValue = reconstructedValue;
 	in.level = level;
+	in.returnData = so->want_itup;
 	in.leafDatum = leafDatum;
 
-	/* Apply each leaf consistent function, working in the temp context */
+	/* Apply each leaf consistency check, working in the temp context */
 	oldCtx = MemoryContextSwitchTo(so->tempCxt);
+
+	procinfo = index_getprocinfo(index, 1, SPGIST_LEAF_CONSISTENT_PROC);
+
 	for (i = 0; i < so->numberOfKeys; i++)
 	{
 		ScanKey		skey = &so->keyData[i];
@@ -174,12 +197,14 @@ spgLeafTest(SpGistScanOpaque so, Datum leafDatum,
 		in.strategy = skey->sk_strategy;
 		in.query = skey->sk_argument;
 
+		out.leafValue = (Datum) 0;
 		out.recheck = false;
 
-		result = DatumGetBool(FunctionCall2Coll(&so->state.leafConsistentFn,
+		result = DatumGetBool(FunctionCall2Coll(procinfo,
 												skey->sk_collation,
 												PointerGetDatum(&in),
 												PointerGetDatum(&out)));
+		*leafValue = out.leafValue;
 		*recheck |= out.recheck;
 		if (!result)
 			break;
@@ -198,7 +223,7 @@ spgLeafTest(SpGistScanOpaque so, Datum leafDatum,
  */
 static void
 spgWalk(Relation index, SpGistScanOpaque so, bool scanWholeIndex,
-		void (*storeRes) (SpGistScanOpaque, ItemPointer, bool))
+		void (*storeRes) (SpGistScanOpaque, ItemPointer, Datum, bool))
 {
 	Buffer		buffer = InvalidBuffer;
 	bool		reportedSome = false;
@@ -243,6 +268,7 @@ redirect:
 		{
 			SpGistLeafTuple leafTuple;
 			OffsetNumber max = PageGetMaxOffsetNumber(page);
+			Datum		leafValue = (Datum) 0;
 			bool		recheck = false;
 
 			if (blkno == SPGIST_HEAD_BLKNO)
@@ -260,13 +286,14 @@ redirect:
 					}
 
 					Assert(ItemPointerIsValid(&leafTuple->heapPtr));
-					if (spgLeafTest(so,
+					if (spgLeafTest(index, so,
 									SGLTDATUM(leafTuple, &so->state),
 									stackEntry->level,
 									stackEntry->reconstructedValue,
+									&leafValue,
 									&recheck))
 					{
-						storeRes(so, &leafTuple->heapPtr, recheck);
+						storeRes(so, &leafTuple->heapPtr, leafValue, recheck);
 						reportedSome = true;
 					}
 				}
@@ -304,13 +331,14 @@ redirect:
 					}
 
 					Assert(ItemPointerIsValid(&leafTuple->heapPtr));
-					if (spgLeafTest(so,
+					if (spgLeafTest(index, so,
 									SGLTDATUM(leafTuple, &so->state),
 									stackEntry->level,
 									stackEntry->reconstructedValue,
+									&leafValue,
 									&recheck))
 					{
-						storeRes(so, &leafTuple->heapPtr, recheck);
+						storeRes(so, &leafTuple->heapPtr, leafValue, recheck);
 						reportedSome = true;
 					}
 
@@ -374,6 +402,7 @@ redirect:
 			{
 				spgInnerConsistentIn in;
 				spgInnerConsistentOut out;
+				FmgrInfo   *procinfo;
 				SpGistNodeTuple *nodes;
 				int		   *andMap;
 				int		   *levelAdds;
@@ -388,6 +417,7 @@ redirect:
 				/* set up values that are the same for all scankeys */
 				in.reconstructedValue = stackEntry->reconstructedValue;
 				in.level = stackEntry->level;
+				in.returnData = so->want_itup;
 				in.allTheSame = innerTuple->allTheSame;
 				in.hasPrefix = (innerTuple->prefixSize > 0);
 				in.prefixDatum = SGITDATUM(innerTuple, &so->state);
@@ -405,6 +435,8 @@ redirect:
 				levelAdds = (int *) palloc0(sizeof(int) * in.nNodes);
 				reconstructedValues = (Datum *) palloc0(sizeof(Datum) * in.nNodes);
 
+				procinfo = index_getprocinfo(index, 1, SPGIST_INNER_CONSISTENT_PROC);
+
 				for (j = 0; j < so->numberOfKeys; j++)
 				{
 					ScanKey		skey = &so->keyData[j];
@@ -421,7 +453,7 @@ redirect:
 
 					memset(&out, 0, sizeof(out));
 
-					FunctionCall2Coll(&so->state.innerConsistentFn,
+					FunctionCall2Coll(procinfo,
 									  skey->sk_collation,
 									  PointerGetDatum(&in),
 									  PointerGetDatum(&out));
@@ -490,7 +522,8 @@ redirect:
 
 /* storeRes subroutine for getbitmap case */
 static void
-storeBitmap(SpGistScanOpaque so, ItemPointer heapPtr, bool recheck)
+storeBitmap(SpGistScanOpaque so, ItemPointer heapPtr,
+			Datum leafValue, bool recheck)
 {
 	tbm_add_tuples(so->tbm, heapPtr, 1, recheck);
 	so->ntids++;
@@ -506,6 +539,8 @@ spggetbitmap(PG_FUNCTION_ARGS)
 	/* Copy scankey to *so so we don't need to pass it around separately */
 	so->numberOfKeys = scan->numberOfKeys;
 	so->keyData = scan->keyData;
+	/* Ditto for the want_itup flag */
+	so->want_itup = false;
 
 	so->tbm = tbm;
 	so->ntids = 0;
@@ -517,11 +552,24 @@ spggetbitmap(PG_FUNCTION_ARGS)
 
 /* storeRes subroutine for gettuple case */
 static void
-storeGettuple(SpGistScanOpaque so, ItemPointer heapPtr, bool recheck)
+storeGettuple(SpGistScanOpaque so, ItemPointer heapPtr,
+			  Datum leafValue, bool recheck)
 {
 	Assert(so->nPtrs < MaxIndexTuplesPerPage);
 	so->heapPtrs[so->nPtrs] = *heapPtr;
 	so->recheck[so->nPtrs] = recheck;
+	if (so->want_itup)
+	{
+		/*
+		 * Reconstruct desired IndexTuple.  We have to copy the datum out of
+		 * the temp context anyway, so we may as well create the tuple here.
+		 */
+		bool	isnull = false;
+
+		so->indexTups[so->nPtrs] = index_form_tuple(so->indexTupDesc,
+													&leafValue,
+													&isnull);
+	}
 	so->nPtrs++;
 }
 
@@ -538,6 +586,8 @@ spggettuple(PG_FUNCTION_ARGS)
 	/* Copy scankey to *so so we don't need to pass it around separately */
 	so->numberOfKeys = scan->numberOfKeys;
 	so->keyData = scan->keyData;
+	/* Ditto for the want_itup flag */
+	so->want_itup = scan->xs_want_itup;
 
 	for (;;)
 	{
@@ -546,11 +596,21 @@ spggettuple(PG_FUNCTION_ARGS)
 			/* continuing to return tuples from a leaf page */
 			scan->xs_ctup.t_self = so->heapPtrs[so->iPtr];
 			scan->xs_recheck = so->recheck[so->iPtr];
+			scan->xs_itup = so->indexTups[so->iPtr];
 			so->iPtr++;
 			PG_RETURN_BOOL(true);
 		}
 
+		if (so->want_itup)
+		{
+			/* Must pfree IndexTuples to avoid memory leak */
+			int		i;
+
+			for (i = 0; i < so->nPtrs; i++)
+				pfree(so->indexTups[i]);
+		}
 		so->iPtr = so->nPtrs = 0;
+
 		spgWalk(scan->indexRelation, so, false, storeGettuple);
 
 		if (so->nPtrs == 0)
@@ -563,6 +623,11 @@ spggettuple(PG_FUNCTION_ARGS)
 Datum
 spgcanreturn(PG_FUNCTION_ARGS)
 {
-	/* Not implemented yet */
-	PG_RETURN_BOOL(false);
+	Relation	index = (Relation) PG_GETARG_POINTER(0);
+	SpGistCache *cache;
+
+	/* We can do it if the opclass config function says so */
+	cache = spgGetCache(index);
+
+	PG_RETURN_BOOL(cache->config.canReturnData);
 }
