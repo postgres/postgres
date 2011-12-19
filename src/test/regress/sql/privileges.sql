@@ -338,6 +338,115 @@ DROP FUNCTION testfunc1(int); -- ok
 -- restore to sanity
 GRANT ALL PRIVILEGES ON LANGUAGE sql TO PUBLIC;
 
+-- privileges on types
+
+-- switch to superuser
+\c -
+
+CREATE TYPE testtype1 AS (a int, b text);
+REVOKE USAGE ON TYPE testtype1 FROM PUBLIC;
+GRANT USAGE ON TYPE testtype1 TO regressuser2;
+GRANT USAGE ON TYPE _testtype1 TO regressuser2; -- fail
+GRANT USAGE ON DOMAIN testtype1 TO regressuser2; -- fail
+
+CREATE DOMAIN testdomain1 AS int;
+REVOKE USAGE on DOMAIN testdomain1 FROM PUBLIC;
+GRANT USAGE ON DOMAIN testdomain1 TO regressuser2;
+GRANT USAGE ON TYPE testdomain1 TO regressuser2; -- ok
+
+SET SESSION AUTHORIZATION regressuser1;
+
+-- commands that should fail
+
+CREATE AGGREGATE testagg1a(testdomain1) (sfunc = int4_sum, stype = bigint);
+
+CREATE DOMAIN testdomain2a AS testdomain1;
+
+CREATE DOMAIN testdomain3a AS int;
+CREATE FUNCTION castfunc(int) RETURNS testdomain3a AS $$ SELECT $1::testdomain3a $$ LANGUAGE SQL;
+CREATE CAST (testdomain1 AS testdomain3a) WITH FUNCTION castfunc(int);
+DROP FUNCTION castfunc(int) CASCADE;
+DROP DOMAIN testdomain3a;
+
+CREATE FUNCTION testfunc5a(a testdomain1) RETURNS int LANGUAGE SQL AS $$ SELECT $1 $$;
+CREATE FUNCTION testfunc6a(b int) RETURNS testdomain1 LANGUAGE SQL AS $$ SELECT $1::testdomain1 $$;
+
+CREATE OPERATOR !+! (PROCEDURE = int4pl, LEFTARG = testdomain1, RIGHTARG = testdomain1);
+
+CREATE TABLE test5a (a int, b testdomain1);
+CREATE TABLE test6a OF testtype1;
+CREATE TABLE test10a (a int[], b testtype1[]);
+
+CREATE TABLE test9a (a int, b int);
+ALTER TABLE test9a ADD COLUMN c testdomain1;
+ALTER TABLE test9a ALTER COLUMN b TYPE testdomain1;
+
+CREATE TYPE test7a AS (a int, b testdomain1);
+
+CREATE TYPE test8a AS (a int, b int);
+ALTER TYPE test8a ADD ATTRIBUTE c testdomain1;
+ALTER TYPE test8a ALTER ATTRIBUTE b TYPE testdomain1;
+
+CREATE TABLE test11a AS (SELECT 1::testdomain1 AS a);
+
+REVOKE ALL ON TYPE testtype1 FROM PUBLIC;
+
+SET SESSION AUTHORIZATION regressuser2;
+
+-- commands that should succeed
+
+CREATE AGGREGATE testagg1b(testdomain1) (sfunc = int4_sum, stype = bigint);
+
+CREATE DOMAIN testdomain2b AS testdomain1;
+
+CREATE DOMAIN testdomain3b AS int;
+CREATE FUNCTION castfunc(int) RETURNS testdomain3b AS $$ SELECT $1::testdomain3b $$ LANGUAGE SQL;
+CREATE CAST (testdomain1 AS testdomain3b) WITH FUNCTION castfunc(int);
+
+CREATE FUNCTION testfunc5b(a testdomain1) RETURNS int LANGUAGE SQL AS $$ SELECT $1 $$;
+CREATE FUNCTION testfunc6b(b int) RETURNS testdomain1 LANGUAGE SQL AS $$ SELECT $1::testdomain1 $$;
+
+CREATE OPERATOR !! (PROCEDURE = testfunc5b, RIGHTARG = testdomain1);
+
+CREATE TABLE test5b (a int, b testdomain1);
+CREATE TABLE test6b OF testtype1;
+CREATE TABLE test10b (a int[], b testtype1[]);
+
+CREATE TABLE test9b (a int, b int);
+ALTER TABLE test9b ADD COLUMN c testdomain1;
+ALTER TABLE test9b ALTER COLUMN b TYPE testdomain1;
+
+CREATE TYPE test7b AS (a int, b testdomain1);
+
+CREATE TYPE test8b AS (a int, b int);
+ALTER TYPE test8b ADD ATTRIBUTE c testdomain1;
+ALTER TYPE test8b ALTER ATTRIBUTE b TYPE testdomain1;
+
+CREATE TABLE test11b AS (SELECT 1::testdomain1 AS a);
+
+REVOKE ALL ON TYPE testtype1 FROM PUBLIC;
+
+\c -
+DROP AGGREGATE testagg1b(testdomain1);
+DROP DOMAIN testdomain2b;
+DROP OPERATOR !! (NONE, testdomain1);
+DROP FUNCTION testfunc5b(a testdomain1);
+DROP FUNCTION testfunc6b(b int);
+DROP TABLE test5b;
+DROP TABLE test6b;
+DROP TABLE test9b;
+DROP TABLE test10b;
+DROP TYPE test7b;
+DROP TYPE test8b;
+DROP CAST (testdomain1 AS testdomain3b);
+DROP FUNCTION castfunc(int) CASCADE;
+DROP DOMAIN testdomain3b;
+DROP TABLE test11b;
+
+DROP TYPE testtype1; -- ok
+DROP DOMAIN testdomain1; -- ok
+
+
 -- truncate
 SET SESSION AUTHORIZATION regressuser5;
 TRUNCATE atest2; -- ok
@@ -625,6 +734,21 @@ CREATE FUNCTION testns.foo() RETURNS int AS 'select 1' LANGUAGE sql;
 SELECT has_function_privilege('regressuser2', 'testns.foo()', 'EXECUTE'); -- yes
 
 DROP FUNCTION testns.foo();
+
+ALTER DEFAULT PRIVILEGES FOR ROLE regressuser1 REVOKE USAGE ON TYPES FROM public;
+
+CREATE DOMAIN testns.testdomain1 AS int;
+
+SELECT has_type_privilege('regressuser2', 'testns.testdomain1', 'USAGE'); -- no
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA testns GRANT USAGE ON TYPES to public;
+
+DROP DOMAIN testns.testdomain1;
+CREATE DOMAIN testns.testdomain1 AS int;
+
+SELECT has_type_privilege('regressuser2', 'testns.testdomain1', 'USAGE'); -- yes
+
+DROP DOMAIN testns.testdomain1;
 
 RESET ROLE;
 

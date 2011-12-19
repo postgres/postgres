@@ -357,7 +357,9 @@ CREATE VIEW attributes AS
            ON a.attcollation = co.oid AND (nco.nspname, co.collname) <> ('pg_catalog', 'default')
 
     WHERE a.attnum > 0 AND NOT a.attisdropped
-          AND c.relkind in ('c');
+          AND c.relkind in ('c')
+          AND (pg_has_role(c.relowner, 'USAGE')
+               OR has_type_privilege(c.reltype, 'USAGE'));
 
 GRANT SELECT ON attributes TO PUBLIC;
 
@@ -868,7 +870,9 @@ CREATE VIEW domain_constraints AS
     FROM pg_namespace rs, pg_namespace n, pg_constraint con, pg_type t
     WHERE rs.oid = con.connamespace
           AND n.oid = t.typnamespace
-          AND t.oid = con.contypid;
+          AND t.oid = con.contypid
+          AND (pg_has_role(t.typowner, 'USAGE')
+               OR has_type_privilege(t.oid, 'USAGE'));
 
 GRANT SELECT ON domain_constraints TO PUBLIC;
 
@@ -978,7 +982,8 @@ CREATE VIEW domains AS
          LEFT JOIN (pg_collation co JOIN pg_namespace nco ON (co.collnamespace = nco.oid))
            ON t.typcollation = co.oid AND (nco.nspname, co.collname) <> ('pg_catalog', 'default')
 
-    ;
+    WHERE (pg_has_role(t.typowner, 'USAGE')
+           OR has_type_privilege(t.oid, 'USAGE'));
 
 GRANT SELECT ON domains TO PUBLIC;
 
@@ -2024,20 +2029,38 @@ GRANT SELECT ON triggers TO PUBLIC;
  */
 
 CREATE VIEW udt_privileges AS
-    SELECT CAST(null AS sql_identifier) AS grantor,
-           CAST('PUBLIC' AS sql_identifier) AS grantee,
+    SELECT CAST(u_grantor.rolname AS sql_identifier) AS grantor,
+           CAST(grantee.rolname AS sql_identifier) AS grantee,
            CAST(current_database() AS sql_identifier) AS udt_catalog,
            CAST(n.nspname AS sql_identifier) AS udt_schema,
            CAST(t.typname AS sql_identifier) AS udt_name,
            CAST('TYPE USAGE' AS character_data) AS privilege_type, -- sic
-           CAST('NO' AS yes_or_no) AS is_grantable
+           CAST(
+             CASE WHEN
+                  -- object owner always has grant options
+                  pg_has_role(grantee.oid, t.typowner, 'USAGE')
+                  OR t.grantable
+                  THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_grantable
 
-    FROM pg_authid u, pg_namespace n, pg_type t
+    FROM (
+            SELECT oid, typname, typnamespace, typtype, typowner, (aclexplode(typacl)).* FROM pg_type
+         ) AS t (oid, typname, typnamespace, typtype, typowner, grantor, grantee, prtype, grantable),
+         pg_namespace n,
+         pg_authid u_grantor,
+         (
+           SELECT oid, rolname FROM pg_authid
+           UNION ALL
+           SELECT 0::oid, 'PUBLIC'
+         ) AS grantee (oid, rolname)
 
-    WHERE u.oid = t.typowner
-          AND n.oid = t.typnamespace
-          AND t.typtype <> 'd'
-          AND NOT (t.typelem <> 0 AND t.typlen = -1);
+    WHERE t.typnamespace = n.oid
+          AND t.typtype = 'c'
+          AND t.grantee = grantee.oid
+          AND t.grantor = u_grantor.oid
+          AND t.prtype IN ('USAGE')
+          AND (pg_has_role(u_grantor.oid, 'USAGE')
+               OR pg_has_role(grantee.oid, 'USAGE')
+               OR grantee.rolname = 'PUBLIC');
 
 GRANT SELECT ON udt_privileges TO PUBLIC;
 
@@ -2091,23 +2114,39 @@ CREATE VIEW usage_privileges AS
     UNION ALL
 
     /* domains */
-    -- Domains have no real privileges, so we represent all domains with implicit usage privilege here.
-    SELECT CAST(u.rolname AS sql_identifier) AS grantor,
-           CAST('PUBLIC' AS sql_identifier) AS grantee,
+    SELECT CAST(u_grantor.rolname AS sql_identifier) AS grantor,
+           CAST(grantee.rolname AS sql_identifier) AS grantee,
            CAST(current_database() AS sql_identifier) AS object_catalog,
            CAST(n.nspname AS sql_identifier) AS object_schema,
            CAST(t.typname AS sql_identifier) AS object_name,
            CAST('DOMAIN' AS character_data) AS object_type,
            CAST('USAGE' AS character_data) AS privilege_type,
-           CAST('NO' AS yes_or_no) AS is_grantable
+           CAST(
+             CASE WHEN
+                  -- object owner always has grant options
+                  pg_has_role(grantee.oid, t.typowner, 'USAGE')
+                  OR t.grantable
+                  THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_grantable
 
-    FROM pg_authid u,
+    FROM (
+            SELECT oid, typname, typnamespace, typtype, typowner, (aclexplode(typacl)).* FROM pg_type
+         ) AS t (oid, typname, typnamespace, typtype, typowner, grantor, grantee, prtype, grantable),
          pg_namespace n,
-         pg_type t
+         pg_authid u_grantor,
+         (
+           SELECT oid, rolname FROM pg_authid
+           UNION ALL
+           SELECT 0::oid, 'PUBLIC'
+         ) AS grantee (oid, rolname)
 
-    WHERE u.oid = t.typowner
-          AND t.typnamespace = n.oid
+    WHERE t.typnamespace = n.oid
           AND t.typtype = 'd'
+          AND t.grantee = grantee.oid
+          AND t.grantor = u_grantor.oid
+          AND t.prtype IN ('USAGE')
+          AND (pg_has_role(u_grantor.oid, 'USAGE')
+               OR pg_has_role(grantee.oid, 'USAGE')
+               OR grantee.rolname = 'PUBLIC')
 
     UNION ALL
 
@@ -2237,10 +2276,13 @@ CREATE VIEW user_defined_types AS
            CAST(null AS sql_identifier) AS source_dtd_identifier,
            CAST(null AS sql_identifier) AS ref_dtd_identifier
 
-    FROM pg_namespace n, pg_class c
+    FROM pg_namespace n, pg_class c, pg_type t
 
     WHERE n.oid = c.relnamespace
-          AND c.relkind = 'c';
+          AND t.typrelid = c.oid
+          AND c.relkind = 'c'
+          AND (pg_has_role(t.typowner, 'USAGE')
+               OR has_type_privilege(t.oid, 'USAGE'));
 
 GRANT SELECT ON user_defined_types TO PUBLIC;
 

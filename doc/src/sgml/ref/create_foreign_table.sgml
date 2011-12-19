@@ -52,6 +52,11 @@ CREATE FOREIGN TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name
    the foreign table.  Therefore, foreign tables cannot have the same
    name as any existing data type in the same schema.
   </para>
+
+  <para>
+   To be able to create a table, you must have <literal>USAGE</literal>
+   privilege on all column types.
+  </para>
  </refsect1>
 
  <refsect1>

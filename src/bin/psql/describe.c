@@ -504,6 +504,11 @@ describeTypes(const char *pattern, bool verbose, bool showSystem)
 						  "  ) AS \"%s\",\n",
 						  gettext_noop("Elements"));
 	}
+	if (verbose && pset.sversion >= 90200)
+	{
+		printACLColumn(&buf, "t.typacl");
+		appendPQExpBuffer(&buf, ",\n  ");
+	}
 
 	appendPQExpBuffer(&buf,
 				"  pg_catalog.obj_description(t.oid, 'pg_type') as \"%s\"\n",
@@ -2813,9 +2818,16 @@ listDomains(const char *pattern, bool verbose, bool showSystem)
 					  gettext_noop("Check"));
 
 	if (verbose)
+	{
+		if (pset.sversion >= 90200)
+		{
+			appendPQExpBuffer(&buf, ",\n  ");
+			printACLColumn(&buf, "t.typacl");
+		}
 		appendPQExpBuffer(&buf,
 						  ",\n       d.description as \"%s\"",
 						  gettext_noop("Description"));
+	}
 
 	appendPQExpBuffer(&buf,
 					  "\nFROM pg_catalog.pg_type t\n"

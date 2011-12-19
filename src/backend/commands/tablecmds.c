@@ -506,7 +506,16 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 	(void) heap_reloptions(relkind, reloptions, true);
 
 	if (stmt->ofTypename)
+	{
+		AclResult	aclresult;
+
 		ofTypeId = typenameTypeId(NULL, stmt->ofTypename);
+
+		aclresult = pg_type_aclcheck(ofTypeId, GetUserId(), ACL_USAGE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, ACL_KIND_TYPE,
+						   format_type_be(ofTypeId));
+	}
 	else
 		ofTypeId = InvalidOid;
 
@@ -4326,6 +4335,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	Expr	   *defval;
 	List	   *children;
 	ListCell   *child;
+	AclResult	aclresult;
 
 	/* At top level, permission check was done in ATPrepCmd, else do it */
 	if (recursing)
@@ -4429,6 +4439,12 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	typeTuple = typenameType(NULL, colDef->typeName, &typmod);
 	tform = (Form_pg_type) GETSTRUCT(typeTuple);
 	typeOid = HeapTupleGetOid(typeTuple);
+
+	aclresult = pg_type_aclcheck(typeOid, GetUserId(), ACL_USAGE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, ACL_KIND_TYPE,
+					   format_type_be(typeOid));
+
 	collOid = GetColumnDefCollation(NULL, colDef, typeOid);
 
 	/* make sure datatype is legal for a column */
@@ -6973,6 +6989,7 @@ ATPrepAlterColumnType(List **wqueue,
 	Oid			targetcollid;
 	NewColumnValue *newval;
 	ParseState *pstate = make_parsestate(NULL);
+	AclResult	aclresult;
 
 	if (rel->rd_rel->reloftype && !recursing)
 		ereport(ERROR,
@@ -7005,6 +7022,11 @@ ATPrepAlterColumnType(List **wqueue,
 
 	/* Look up the target type */
 	typenameTypeIdAndMod(NULL, typeName, &targettype, &targettypmod);
+
+	aclresult = pg_type_aclcheck(targettype, GetUserId(), ACL_USAGE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, ACL_KIND_TYPE,
+					   format_type_be(targettype));
 
 	/* And the collation */
 	targetcollid = GetColumnDefCollation(NULL, def, targettype);

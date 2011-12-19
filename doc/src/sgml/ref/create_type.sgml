@@ -104,6 +104,11 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    A stand-alone composite type is useful, for example, as the argument or
    return type of a function.
   </para>
+
+  <para>
+   To be able to create a composite type, you must
+   have <literal>USAGE</literal> privilege on all attribute types.
+  </para>
   </refsect2>
 
   <refsect2 id="SQL-CREATETYPE-enum">

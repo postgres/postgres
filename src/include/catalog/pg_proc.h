@@ -3311,6 +3311,19 @@ DESCR("current user privilege on server by server name");
 DATA(insert OID = 3011 (  has_server_privilege		   PGNSP PGUID 12 1 0 0 0 f f f t f s 2 0 16 "26 25" _null_ _null_ _null_ _null_ has_server_privilege_id _null_ _null_ _null_ ));
 DESCR("current user privilege on server by server oid");
 
+DATA(insert OID = 3138 (  has_type_privilege		   PGNSP PGUID 12 1 0 0 0 f f f t f s 3 0 16 "19 25 25" _null_ _null_ _null_ _null_	has_type_privilege_name_name _null_ _null_ _null_ ));
+DESCR("user privilege on type by username, type name");
+DATA(insert OID = 3139 (  has_type_privilege		   PGNSP PGUID 12 1 0 0 0 f f f t f s 3 0 16 "19 26 25" _null_ _null_ _null_ _null_	has_type_privilege_name_id _null_ _null_ _null_ ));
+DESCR("user privilege on type by username, type oid");
+DATA(insert OID = 3140 (  has_type_privilege		   PGNSP PGUID 12 1 0 0 0 f f f t f s 3 0 16 "26 25 25" _null_ _null_ _null_ _null_	has_type_privilege_id_name _null_ _null_ _null_ ));
+DESCR("user privilege on type by user oid, type name");
+DATA(insert OID = 3141 (  has_type_privilege		   PGNSP PGUID 12 1 0 0 0 f f f t f s 3 0 16 "26 26 25" _null_ _null_ _null_ _null_	has_type_privilege_id_id _null_ _null_ _null_ ));
+DESCR("user privilege on type by user oid, type oid");
+DATA(insert OID = 3142 (  has_type_privilege		   PGNSP PGUID 12 1 0 0 0 f f f t f s 2 0 16 "25 25" _null_ _null_ _null_ _null_ has_type_privilege_name _null_ _null_ _null_ ));
+DESCR("current user privilege on type by type name");
+DATA(insert OID = 3143 (  has_type_privilege		   PGNSP PGUID 12 1 0 0 0 f f f t f s 2 0 16 "26 25" _null_ _null_ _null_ _null_ has_type_privilege_id _null_ _null_ _null_ ));
+DESCR("current user privilege on type by type oid");
+
 DATA(insert OID = 2705 (  pg_has_role		PGNSP PGUID 12 1 0 0 0 f f f t f s 3 0 16 "19 19 25" _null_ _null_ _null_ _null_	pg_has_role_name_name _null_ _null_ _null_ ));
 DESCR("user privilege on role by username, role name");
 DATA(insert OID = 2706 (  pg_has_role		PGNSP PGUID 12 1 0 0 0 f f f t f s 3 0 16 "19 26 25" _null_ _null_ _null_ _null_	pg_has_role_name_id _null_ _null_ _null_ ));

@@ -103,6 +103,13 @@ CREATE OPERATOR <replaceable>name</replaceable> (
    The other clauses specify optional operator optimization clauses.
    Their meaning is detailed in <xref linkend="xoper-optimization">.
   </para>
+
+  <para>
+   To be able to create an operator, you must have <literal>USAGE</literal>
+   privilege on the argument types and the return type, as well
+   as <literal>EXECUTE</literal> privilege on the underlying function.  If a
+   commutator or negator operator is specified, you must own these operators.
+  </para>
  </refsect1>
 
  <refsect1>

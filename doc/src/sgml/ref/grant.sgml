@@ -43,6 +43,10 @@ GRANT { { CREATE | CONNECT | TEMPORARY | TEMP } [, ...] | ALL [ PRIVILEGES ] }
     TO { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { USAGE | ALL [ PRIVILEGES ] }
+    ON DOMAIN <replaceable>domain_name</replaceable> [, ...]
+    TO { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+
+GRANT { USAGE | ALL [ PRIVILEGES ] }
     ON FOREIGN DATA WRAPPER <replaceable>fdw_name</replaceable> [, ...]
     TO { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
@@ -69,6 +73,10 @@ GRANT { { CREATE | USAGE } [, ...] | ALL [ PRIVILEGES ] }
 
 GRANT { CREATE | ALL [ PRIVILEGES ] }
     ON TABLESPACE <replaceable>tablespace_name</replaceable> [, ...]
+    TO { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+
+GRANT { USAGE | ALL [ PRIVILEGES ] }
+    ON TYPE <replaceable>type_name</replaceable> [, ...]
     TO { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT <replaceable class="PARAMETER">role_name</replaceable> [, ...] TO <replaceable class="PARAMETER">role_name</replaceable> [, ...] [ WITH ADMIN OPTION ]
@@ -334,6 +342,15 @@ GRANT <replaceable class="PARAMETER">role_name</replaceable> [, ...] TO <replace
       <para>
        For sequences, this privilege allows the use of the
        <function>currval</function> and <function>nextval</function> functions.
+      </para>
+      <para>
+       For types and domains, this privilege allow the use of the type or
+       domain in the creation of tables, functions, and other schema objects.
+       (Note that it does not control general <quote>usage</quote> of the type,
+       such as values of the type appearing in queries.  It only prevents
+       objects from being created that depend on the type.  The main purpose of
+       the privilege is controlling which users create dependencies on a type,
+       which could prevent the owner from changing the type later.)
       </para>
       <para>
        For foreign-data wrappers, this privilege enables the grantee
@@ -616,7 +633,7 @@ GRANT admins TO joe;
    <para>
     The SQL standard provides for a <literal>USAGE</literal> privilege
     on other kinds of objects: character sets, collations,
-    translations, domains.
+    translations.
    </para>
 
    <para>

@@ -117,6 +117,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 	values[Anum_pg_type_typcollation - 1] = ObjectIdGetDatum(InvalidOid);
 	nulls[Anum_pg_type_typdefaultbin - 1] = true;
 	nulls[Anum_pg_type_typdefault - 1] = true;
+	nulls[Anum_pg_type_typacl - 1] = true;
 
 	/*
 	 * create a new type tuple
@@ -224,6 +225,7 @@ TypeCreate(Oid newTypeOid,
 	Datum		values[Natts_pg_type];
 	NameData	name;
 	int			i;
+	Acl		   *typacl = NULL;
 
 	/*
 	 * We assume that the caller validated the arguments individually, but did
@@ -368,6 +370,13 @@ TypeCreate(Oid newTypeOid,
 		values[Anum_pg_type_typdefault - 1] = CStringGetTextDatum(defaultTypeValue);
 	else
 		nulls[Anum_pg_type_typdefault - 1] = true;
+
+	typacl = get_user_default_acl(ACL_OBJECT_TYPE, ownerId,
+								  typeNamespace);
+	if (typacl != NULL)
+		values[Anum_pg_type_typacl - 1] = PointerGetDatum(typacl);
+	else
+		nulls[Anum_pg_type_typacl - 1] = true;
 
 	/*
 	 * open pg_type and prepare to insert or update a row.

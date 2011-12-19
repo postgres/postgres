@@ -558,7 +558,7 @@ static void processCASbits(int cas_bits, int location, const char *constrType,
 
 	TABLE TABLES TABLESPACE TEMP TEMPLATE TEMPORARY TEXT_P THEN TIME TIMESTAMP
 	TO TRAILING TRANSACTION TREAT TRIGGER TRIM TRUE_P
-	TRUNCATE TRUSTED TYPE_P
+	TRUNCATE TRUSTED TYPE_P TYPES_P
 
 	UNBOUNDED UNCOMMITTED UNENCRYPTED UNION UNIQUE UNKNOWN UNLISTEN UNLOGGED
 	UNTIL UPDATE USER USING
@@ -5434,6 +5434,14 @@ privilege_target:
 					n->objs = $2;
 					$$ = n;
 				}
+			| DOMAIN_P any_name_list
+				{
+					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
+					n->targtype = ACL_TARGET_OBJECT;
+					n->objtype = ACL_OBJECT_DOMAIN;
+					n->objs = $2;
+					$$ = n;
+				}
 			| LANGUAGE name_list
 				{
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
@@ -5463,6 +5471,14 @@ privilege_target:
 					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
 					n->targtype = ACL_TARGET_OBJECT;
 					n->objtype = ACL_OBJECT_TABLESPACE;
+					n->objs = $2;
+					$$ = n;
+				}
+			| TYPE_P any_name_list
+				{
+					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
+					n->targtype = ACL_TARGET_OBJECT;
+					n->objtype = ACL_OBJECT_TYPE;
 					n->objs = $2;
 					$$ = n;
 				}
@@ -5680,6 +5696,7 @@ defacl_privilege_target:
 			TABLES			{ $$ = ACL_OBJECT_RELATION; }
 			| FUNCTIONS		{ $$ = ACL_OBJECT_FUNCTION; }
 			| SEQUENCES		{ $$ = ACL_OBJECT_SEQUENCE; }
+			| TYPES_P		{ $$ = ACL_OBJECT_TYPE; }
 		;
 
 

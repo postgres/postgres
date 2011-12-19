@@ -163,6 +163,13 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    than</quote> or <quote>greater than</quote> strategy member of a B-tree
    index operator class.
   </para>
+
+  <para>
+   To be able to create an aggregate function, you must
+   have <literal>USAGE</literal> privilege on the argument types, the state
+   type, and the return type, as well as <literal>EXECUTE</literal> privilege
+   on the transition and final functions.
+  </para>
  </refsect1>
 
  <refsect1>

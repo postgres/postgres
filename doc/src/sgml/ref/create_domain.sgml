@@ -59,6 +59,11 @@ CREATE DOMAIN <replaceable class="parameter">name</replaceable> [ AS ] <replacea
    Define a domain rather than setting up each table's constraint
    individually.
   </para>
+
+  <para>
+   To be able to create a domain, you must have <literal>USAGE</literal>
+   privilege on the underlying type.
+  </para>
  </refsect1>
 
  <refsect1>

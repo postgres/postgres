@@ -284,6 +284,8 @@
    the attributes of composite data types defined in the database.
    (Note that the view does not give information about table columns,
    which are sometimes called attributes in PostgreSQL contexts.)
+   Only those attributes are shown that the current user has access to (by way
+   of being the owner of or having some privilege on the type).
   </para>
 
   <table>
@@ -1915,8 +1917,10 @@
   <title><literal>domain_constraints</literal></title>
 
   <para>
-   The view <literal>domain_constraints</literal> contains all
-   constraints belonging to domains defined in the current database.
+   The view <literal>domain_constraints</literal> contains all constraints
+   belonging to domains defined in the current database.  Only those domains
+   are shown that the current user has access to (by way of being the owner or
+   having some privilege).
   </para>
 
   <table>
@@ -2052,8 +2056,9 @@
   <title><literal>domains</literal></title>
 
   <para>
-   The view <literal>domains</literal> contains all domains defined in
-   the current database.
+   The view <literal>domains</literal> contains all domains defined in the
+   current database.  Only those domains are shown that the current user has
+   access to (by way of being the owner or having some privilege).
   </para>
 
   <table>
@@ -5778,15 +5783,13 @@ ORDER BY c.ordinal_position;
   <title><literal>udt_privileges</literal></title>
 
   <para>
-   The view <literal>udt_privileges</literal> is intended to identify
-   <literal>USAGE</literal> privileges granted on user-defined types
-   to a currently enabled role or by a currently enabled role.  Since
-   data types do not have real privileges
-   in <productname>PostgreSQL</productname>, this view shows implicit
-   non-grantable <literal>USAGE</literal> privileges granted by the
-   owner to <literal>PUBLIC</literal> for all types, including
-   built-in ones (except domains,
-   see <xref linkend="infoschema-usage-privileges"> for that).
+   The view <literal>udt_privileges</literal> identifies
+   <literal>USAGE</literal> privileges granted on user-defined types to a
+   currently enabled role or by a currently enabled role.  There is one row for
+   each combination of column, grantor, and grantee.  This view shows only
+   composite types (see under <xref linkend="infoschema-user-defined-types">
+   for why); see
+   <xref linkend="infoschema-usage-privileges"> for domain privileges.
   </para>
 
   <table>
@@ -5861,10 +5864,10 @@ ORDER BY c.ordinal_position;
   </para>
 
   <para>
-   Since collations and domains do not have real privileges
+   Since collations do not have real privileges
    in <productname>PostgreSQL</productname>, this view shows implicit
    non-grantable <literal>USAGE</literal> privileges granted by the
-   owner to <literal>PUBLIC</literal> for all collations and domains.  The other
+   owner to <literal>PUBLIC</literal> for all collations.  The other
    object types, however, show real privileges.
   </para>
 
@@ -5940,6 +5943,8 @@ ORDER BY c.ordinal_position;
   <para>
    The view <literal>user_defined_types</literal> currently contains
    all composite types defined in the current database.
+   Only those types are shown that the current user has access to (by way
+   of being the owner or having some privilege).
   </para>
 
   <para>

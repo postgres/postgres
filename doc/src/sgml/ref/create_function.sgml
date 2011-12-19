@@ -92,6 +92,11 @@ CREATE [ OR REPLACE ] FUNCTION
   <para>
    The user that creates the function becomes the owner of the function.
   </para>
+
+  <para>
+   To be able to create a function, you must have <literal>USAGE</literal>
+   privilege on the argument types and the return type.
+  </para>
  </refsect1>
 
  <refsect1>

@@ -2490,6 +2490,21 @@ OpenIntoRel(QueryDesc *queryDesc)
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("ON COMMIT can only be used on temporary tables")));
 
+	{
+		AclResult aclresult;
+		int i;
+
+		for (i = 0; i < intoTupDesc->natts; i++)
+		{
+			Oid atttypid = intoTupDesc->attrs[i]->atttypid;
+
+			aclresult = pg_type_aclcheck(atttypid, GetUserId(), ACL_USAGE);
+			if (aclresult != ACLCHECK_OK)
+				aclcheck_error(aclresult, ACL_KIND_TYPE,
+							   format_type_be(atttypid));
+		}
+	}
+
 	/*
 	 * If a column name list was specified in CREATE TABLE AS, override the
 	 * column names derived from the query.  (Too few column names are OK, too

@@ -156,6 +156,8 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> ADD VALUE <replacea
    the type's schema.  (These restrictions enforce that altering the owner
    doesn't do anything you couldn't do by dropping and recreating the type.
    However, a superuser can alter ownership of any type anyway.)
+   To add an attribute or alter an attribute type, you must also
+   have <literal>USAGE</literal> privilege on the data type.
   </para>
  </refsect1>
 

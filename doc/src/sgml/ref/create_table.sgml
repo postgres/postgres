@@ -124,6 +124,12 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
    a column constraint is only a notational convenience for use when the
    constraint only affects one column.
   </para>
+
+  <para>
+   To be able to create a table, you must have <literal>USAGE</literal>
+   privilege on all column types or the type in the <literal>OF</literal>
+   clause, respectively.
+  </para>
  </refsect1>
 
  <refsect1>

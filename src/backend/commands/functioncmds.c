@@ -87,8 +87,10 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 {
 	Oid			rettype;
 	Type		typtup;
+	AclResult	aclresult;
 
 	typtup = LookupTypeName(NULL, returnType, NULL);
+
 
 	if (typtup)
 	{
@@ -150,6 +152,11 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 		Assert(OidIsValid(rettype));
 	}
 
+	aclresult = pg_type_aclcheck(rettype, GetUserId(), ACL_USAGE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, ACL_KIND_TYPE,
+					   format_type_be(rettype));
+
 	*prorettype_p = rettype;
 	*returnsSet_p = returnType->setof;
 }
@@ -207,6 +214,7 @@ examine_parameter_list(List *parameters, Oid languageOid,
 		bool		isinput = false;
 		Oid			toid;
 		Type		typtup;
+		AclResult	aclresult;
 
 		typtup = LookupTypeName(NULL, t, NULL);
 		if (typtup)
@@ -236,6 +244,11 @@ examine_parameter_list(List *parameters, Oid languageOid,
 							TypeNameToString(t))));
 			toid = InvalidOid;	/* keep compiler quiet */
 		}
+
+		aclresult = pg_type_aclcheck(toid, GetUserId(), ACL_USAGE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, ACL_KIND_TYPE,
+						   format_type_be(toid));
 
 		if (t->setof)
 			ereport(ERROR,
@@ -1429,6 +1442,7 @@ CreateCast(CreateCastStmt *stmt)
 	bool		nulls[Natts_pg_cast];
 	ObjectAddress myself,
 				referenced;
+	AclResult	aclresult;
 
 	sourcetypeid = typenameTypeId(NULL, stmt->sourcetype);
 	targettypeid = typenameTypeId(NULL, stmt->targettype);
@@ -1456,6 +1470,16 @@ CreateCast(CreateCastStmt *stmt)
 				 errmsg("must be owner of type %s or type %s",
 						format_type_be(sourcetypeid),
 						format_type_be(targettypeid))));
+
+	aclresult = pg_type_aclcheck(sourcetypeid, GetUserId(), ACL_USAGE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, ACL_KIND_TYPE,
+					   format_type_be(sourcetypeid));
+
+	aclresult = pg_type_aclcheck(targettypeid, GetUserId(), ACL_USAGE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, ACL_KIND_TYPE,
+					   format_type_be(targettypeid));
 
 	/* Detemine the cast method */
 	if (stmt->func != NULL)

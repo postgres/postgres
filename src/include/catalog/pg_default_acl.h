@@ -71,5 +71,6 @@ typedef FormData_pg_default_acl *Form_pg_default_acl;
 #define DEFACLOBJ_RELATION		'r'		/* table, view */
 #define DEFACLOBJ_SEQUENCE		'S'		/* sequence */
 #define DEFACLOBJ_FUNCTION		'f'		/* function */
+#define DEFACLOBJ_TYPE			'T'		/* type */
 
 #endif   /* PG_DEFAULT_ACL_H */

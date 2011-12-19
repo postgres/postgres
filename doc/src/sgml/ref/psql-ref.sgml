@@ -1048,7 +1048,7 @@ testdb=&gt;
         pattern or the <literal>S</literal> modifier to include system
         objects.
         If <literal>+</literal> is appended to the command name, each object
-        is listed with its associated description.
+        is listed with its associated permissions and description.
         </para>
         </listitem>
       </varlistentry>
@@ -1387,8 +1387,8 @@ testdb=&gt;
         If <replaceable class="parameter">pattern</replaceable> is
         specified, only types whose names match the pattern are listed.
         If <literal>+</literal> is appended to the command name, each type is
-        listed with its internal name and size, as well as its allowed values
-        if it is an <type>enum</> type.
+        listed with its internal name and size, its allowed values
+        if it is an <type>enum</> type, and its associated permissions.
         By default, only user-created objects are shown;  supply a
         pattern or the <literal>S</literal> modifier to include system
         objects.

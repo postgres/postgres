@@ -2241,13 +2241,15 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev_wd, "ON") == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tsvf,
 								   " UNION SELECT 'DATABASE'"
+								   " UNION SELECT 'DOMAIN'"
 								   " UNION SELECT 'FOREIGN DATA WRAPPER'"
 								   " UNION SELECT 'FOREIGN SERVER'"
 								   " UNION SELECT 'FUNCTION'"
 								   " UNION SELECT 'LANGUAGE'"
 								   " UNION SELECT 'LARGE OBJECT'"
 								   " UNION SELECT 'SCHEMA'"
-								   " UNION SELECT 'TABLESPACE'");
+								   " UNION SELECT 'TABLESPACE'"
+								   " UNION SELECT 'TYPE'");
 	else if ((pg_strcasecmp(prev4_wd, "GRANT") == 0 ||
 			  pg_strcasecmp(prev4_wd, "REVOKE") == 0) &&
 			 pg_strcasecmp(prev2_wd, "ON") == 0 &&
@@ -2266,6 +2268,8 @@ psql_completion(char *text, int start, int end)
 	{
 		if (pg_strcasecmp(prev_wd, "DATABASE") == 0)
 			COMPLETE_WITH_QUERY(Query_for_list_of_databases);
+		else if (pg_strcasecmp(prev_wd, "DOMAIN") == 0)
+			COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_domains, NULL);
 		else if (pg_strcasecmp(prev_wd, "FUNCTION") == 0)
 			COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_functions, NULL);
 		else if (pg_strcasecmp(prev_wd, "LANGUAGE") == 0)
@@ -2274,6 +2278,8 @@ psql_completion(char *text, int start, int end)
 			COMPLETE_WITH_QUERY(Query_for_list_of_schemas);
 		else if (pg_strcasecmp(prev_wd, "TABLESPACE") == 0)
 			COMPLETE_WITH_QUERY(Query_for_list_of_tablespaces);
+		else if (pg_strcasecmp(prev_wd, "TYPE") == 0)
+			COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_datatypes, NULL);
 		else if (pg_strcasecmp(prev4_wd, "GRANT") == 0)
 			COMPLETE_WITH_CONST("TO");
 		else

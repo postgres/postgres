@@ -594,6 +594,9 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
    the table's schema.  (These restrictions enforce that altering the owner
    doesn't do anything you couldn't do by dropping and recreating the table.
    However, a superuser can alter ownership of any table anyway.)
+   To add a column or alter a column type or use the <literal>OF</literal>
+   clause, you must also have <literal>USAGE</literal> privilege on the data
+   type.
   </para>
  </refsect1>
 

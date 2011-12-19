@@ -756,6 +756,11 @@ DefineDomain(CreateDomainStmt *stmt)
 				 errmsg("\"%s\" is not a valid base type for a domain",
 						TypeNameToString(stmt->typeName))));
 
+	aclresult = pg_type_aclcheck(basetypeoid, GetUserId(), ACL_USAGE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, ACL_KIND_TYPE,
+					   format_type_be(basetypeoid));
+
 	/*
 	 * Identify the collation if any
 	 */

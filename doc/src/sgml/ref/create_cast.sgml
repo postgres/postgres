@@ -159,10 +159,11 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
   </note>
 
   <para>
-   To be able to create a cast, you must own the source or the target
-   data type.  To create a binary-coercible cast, you must be superuser.
-   (This restriction is made because an erroneous binary-coercible cast
-   conversion can easily crash the server.)
+   To be able to create a cast, you must own the source or the target data type
+   and have <literal>USAGE</literal> privilege on the other type.  To create a
+   binary-coercible cast, you must be superuser.  (This restriction is made
+   because an erroneous binary-coercible cast conversion can easily crash the
+   server.)
   </para>
  </refsect1>
 
