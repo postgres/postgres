@@ -610,8 +610,8 @@ extern OffsetNumber SpGistPageAddNewItem(SpGistState *state, Page page,
 					 bool errorOK);
 
 /* spgdoinsert.c */
-extern void updateNodeLink(SpGistInnerTuple tup, int nodeN,
-						   BlockNumber blkno, OffsetNumber offset);
+extern void spgUpdateNodeLink(SpGistInnerTuple tup, int nodeN,
+							  BlockNumber blkno, OffsetNumber offset);
 extern void spgPageIndexMultiDelete(SpGistState *state, Page page,
 						OffsetNumber *itemnos, int nitems,
 						int firststate, int reststate,

@@ -172,8 +172,8 @@ spgRedoAddLeaf(XLogRecPtr lsn, XLogRecord *record)
 				tuple = (SpGistInnerTuple) PageGetItem(page,
 													   PageGetItemId(page, xldata->offnumParent));
 
-				updateNodeLink(tuple, xldata->nodeI,
-							   xldata->blknoLeaf, xldata->offnumLeaf);
+				spgUpdateNodeLink(tuple, xldata->nodeI,
+								  xldata->blknoLeaf, xldata->offnumLeaf);
 
 				PageSetLSN(page, lsn);
 				PageSetTLI(page, ThisTimeLineID);
@@ -277,8 +277,8 @@ spgRedoMoveLeafs(XLogRecPtr lsn, XLogRecord *record)
 				tuple = (SpGistInnerTuple) PageGetItem(page,
 													   PageGetItemId(page, xldata->offnumParent));
 
-				updateNodeLink(tuple, xldata->nodeI,
-							   xldata->blknoDst, toInsert[nInsert - 1]);
+				spgUpdateNodeLink(tuple, xldata->nodeI,
+								  xldata->blknoDst, toInsert[nInsert - 1]);
 
 				PageSetLSN(page, lsn);
 				PageSetTLI(page, ThisTimeLineID);
@@ -425,8 +425,8 @@ spgRedoAddNode(XLogRecPtr lsn, XLogRecord *record)
 					innerTuple = (SpGistInnerTuple) PageGetItem(page,
 																PageGetItemId(page, xldata->offnumParent));
 
-					updateNodeLink(innerTuple, xldata->nodeI,
-								   xldata->blknoNew, xldata->offnumNew);
+					spgUpdateNodeLink(innerTuple, xldata->nodeI,
+									  xldata->blknoNew, xldata->offnumNew);
 
 					PageSetLSN(page, lsn);
 					PageSetTLI(page, ThisTimeLineID);
@@ -692,8 +692,8 @@ spgRedoPickSplit(XLogRecPtr lsn, XLogRecord *record)
 
 					parent = (SpGistInnerTuple) PageGetItem(page,
 									PageGetItemId(page, xldata->offnumParent));
-					updateNodeLink(parent, xldata->nodeI,
-								   xldata->blknoInner, xldata->offnumInner);
+					spgUpdateNodeLink(parent, xldata->nodeI,
+									  xldata->blknoInner, xldata->offnumInner);
 				}
 
 				PageSetLSN(page, lsn);
@@ -727,8 +727,8 @@ spgRedoPickSplit(XLogRecPtr lsn, XLogRecord *record)
 
 					parent = (SpGistInnerTuple) PageGetItem(page,
 									PageGetItemId(page, xldata->offnumParent));
-					updateNodeLink(parent, xldata->nodeI,
-								   xldata->blknoInner, xldata->offnumInner);
+					spgUpdateNodeLink(parent, xldata->nodeI,
+									  xldata->blknoInner, xldata->offnumInner);
 
 					PageSetLSN(page, lsn);
 					PageSetTLI(page, ThisTimeLineID);

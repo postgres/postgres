@@ -44,8 +44,8 @@ typedef struct SPPageDesc
  * split operation.
  */
 void
-updateNodeLink(SpGistInnerTuple tup, int nodeN,
-			   BlockNumber blkno, OffsetNumber offset)
+spgUpdateNodeLink(SpGistInnerTuple tup, int nodeN,
+				  BlockNumber blkno, OffsetNumber offset)
 {
 	int			i;
 	SpGistNodeTuple node;
@@ -190,7 +190,7 @@ saveNodeLink(Relation index, SPPageDesc *parent,
 	innerTuple = (SpGistInnerTuple) PageGetItem(parent->page,
 								PageGetItemId(parent->page, parent->offnum));
 
-	updateNodeLink(innerTuple, parent->node, blkno, offnum);
+	spgUpdateNodeLink(innerTuple, parent->node, blkno, offnum);
 
 	MarkBufferDirty(parent->buffer);
 }
@@ -1766,10 +1766,10 @@ spgSplitNodeAction(Relation index, SpGistState *state,
 	 * the postfix tuple first.)  We have to update the local copy of the
 	 * prefixTuple too, because that's what will be written to WAL.
 	 */
-	updateNodeLink(prefixTuple, 0, postfixBlkno, postfixOffset);
+	spgUpdateNodeLink(prefixTuple, 0, postfixBlkno, postfixOffset);
 	prefixTuple = (SpGistInnerTuple) PageGetItem(current->page,
 							  PageGetItemId(current->page, current->offnum));
-	updateNodeLink(prefixTuple, 0, postfixBlkno, postfixOffset);
+	spgUpdateNodeLink(prefixTuple, 0, postfixBlkno, postfixOffset);
 
 	MarkBufferDirty(current->buffer);
 
