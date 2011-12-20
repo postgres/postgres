@@ -360,8 +360,7 @@ smgrDoPendingDeletes(bool isCommit)
 				srel = smgropen(pending->relnode, pending->backend);
 				for (i = 0; i <= MAX_FORKNUM; i++)
 				{
-					if (smgrexists(srel, i))
-						smgrdounlink(srel, i, false);
+					smgrdounlink(srel, i, false);
 				}
 				smgrclose(srel);
 			}
