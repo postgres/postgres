@@ -278,11 +278,10 @@ smgrDoPendingDeletes(bool isCommit)
 				srel = smgropen(pending->relnode);
 				for (i = 0; i <= MAX_FORKNUM; i++)
 				{
-					if (smgrexists(srel, i))
-						smgrdounlink(srel,
-									 i,
-									 pending->isTemp,
-									 false);
+					smgrdounlink(srel,
+								 i,
+								 pending->isTemp,
+								 false);
 				}
 				smgrclose(srel);
 			}

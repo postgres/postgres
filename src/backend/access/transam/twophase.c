@@ -1271,8 +1271,7 @@ FinishPreparedTransaction(const char *gid, bool isCommit)
 
 		for (fork = 0; fork <= MAX_FORKNUM; fork++)
 		{
-			if (smgrexists(srel, fork))
-				smgrdounlink(srel, fork, false, false);
+			smgrdounlink(srel, fork, false, false);
 		}
 		smgrclose(srel);
 	}

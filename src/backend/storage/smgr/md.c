@@ -310,7 +310,13 @@ mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
  * number until it's safe, because relfilenode assignment skips over any
  * existing file.
  *
- * If isRedo is true, it's okay for the relation to be already gone.
+ * All the above applies only to the relation's main fork; other forks can
+ * just be removed immediately, since they are not needed to prevent the
+ * relfilenode number from being recycled.  Also, we do not carefully
+ * track whether other forks have been created or not, but just attempt to
+ * unlink them unconditionally; so we should never complain about ENOENT.
+ *
+ * If isRedo is true, it's unsurprising for the relation to be already gone.
  * Also, we should remove the file immediately instead of queuing a request
  * for later, since during redo there's no possibility of creating a
  * conflicting relation.
@@ -355,18 +361,15 @@ mdunlink(RelFileNode rnode, ForkNumber forkNum, bool isRedo)
 		else
 			ret = -1;
 	}
-	if (ret < 0)
-	{
-		if (!isRedo || errno != ENOENT)
-			ereport(WARNING,
-					(errcode_for_file_access(),
-					 errmsg("could not remove relation %s: %m", path)));
-	}
+	if (ret < 0 && errno != ENOENT)
+		ereport(WARNING,
+				(errcode_for_file_access(),
+				 errmsg("could not remove relation %s: %m", path)));
 
 	/*
 	 * Delete any additional segments.
 	 */
-	else
+	if (ret >= 0)
 	{
 		char	   *segpath = (char *) palloc(strlen(path) + 12);
 		BlockNumber segno;
