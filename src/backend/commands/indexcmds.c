@@ -25,6 +25,7 @@
 #include "catalog/pg_tablespace.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
+#include "commands/tablecmds.h"
 #include "commands/tablespace.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
@@ -63,8 +64,6 @@ static void ComputeIndexAttrs(IndexInfo *indexInfo,
 static Oid GetIndexOpClass(List *opclass, Oid attrType,
 				char *accessMethodName, Oid accessMethodId);
 static char *ChooseIndexNameAddition(List *colnames);
-static void RangeVarCallbackForReindexTable(const RangeVar *relation,
-								Oid relId, Oid oldRelId, void *arg);
 static void RangeVarCallbackForReindexIndex(const RangeVar *relation,
 								Oid relId, Oid oldRelId, void *arg);
 
@@ -1809,43 +1808,12 @@ ReindexTable(RangeVar *relation)
 
 	/* The lock level used here should match reindex_relation(). */
 	heapOid = RangeVarGetRelidExtended(relation, ShareLock, false, false,
-									   RangeVarCallbackForReindexTable, NULL);
+									   RangeVarCallbackOwnsTable, NULL);
 
 	if (!reindex_relation(heapOid, REINDEX_REL_PROCESS_TOAST))
 		ereport(NOTICE,
 				(errmsg("table \"%s\" has no indexes",
 						relation->relname)));
-}
-
-/*
- * Check permissions on table before acquiring relation lock.
- */
-static void
-RangeVarCallbackForReindexTable(const RangeVar *relation,
-								Oid relId, Oid oldRelId, void *arg)
-{
-	char		relkind;
-
-	/* Nothing to do if the relation was not found. */
-	if (!OidIsValid(relId))
-		return;
-
-	/*
-	 * If the relation does exist, check whether it's an index.  But note
-	 * that the relation might have been dropped between the time we did the
-	 * name lookup and now.  In that case, there's nothing to do.
-	 */
-	relkind = get_rel_relkind(relId);
-	if (!relkind)
-		return;
-	if (relkind != RELKIND_RELATION && relkind != RELKIND_TOASTVALUE)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a table", relation->relname)));
-
-	/* Check permissions */
-	if (!pg_class_ownercheck(relId, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS, relation->relname);
 }
 
 /*
