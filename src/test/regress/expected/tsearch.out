@@ -142,6 +142,12 @@ SELECT count(*) FROM test_tsvector WHERE a @@ 'w:*|q:*';
    494
 (1 row)
 
+SELECT count(*) FROM test_tsvector WHERE a @@ any ('{wr,qh}');
+ count 
+-------
+   158
+(1 row)
+
 RESET enable_seqscan;
 DROP INDEX wowidx;
 CREATE INDEX wowidx ON test_tsvector USING gin (a);
@@ -186,6 +192,12 @@ SELECT count(*) FROM test_tsvector WHERE a @@ 'w:*|q:*';
  count 
 -------
    494
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ any ('{wr,qh}');
+ count 
+-------
+   158
 (1 row)
 
 RESET enable_seqscan;
