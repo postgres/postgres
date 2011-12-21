@@ -3621,7 +3621,7 @@ string_agg_finalfn(PG_FUNCTION_ARGS)
 	state = PG_ARGISNULL(0) ? NULL : (StringInfo) PG_GETARG_POINTER(0);
 
 	if (state != NULL)
-		PG_RETURN_TEXT_P(cstring_to_text(state->data));
+		PG_RETURN_TEXT_P(cstring_to_text_with_len(state->data, state->len));
 	else
 		PG_RETURN_NULL();
 }
