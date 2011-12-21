@@ -446,16 +446,17 @@ FetchStatementTargetList(Node *stmt)
  * the query, they must be passed in here (caller is responsible for
  * giving them appropriate lifetime).
  *
- * The caller can optionally pass a snapshot to be used; pass InvalidSnapshot
- * for the normal behavior of setting a new snapshot.  This parameter is
- * presently ignored for non-PORTAL_ONE_SELECT portals (it's only intended
- * to be used for cursors).
+ * The use_active_snapshot parameter is currently used only for
+ * PORTAL_ONE_SELECT portals.  If it is true, the active snapshot will
+ * be used when starting up the executor; if false, a new snapshot will
+ * be taken.  This is used both for cursors and to avoid taking an entirely
+ * new snapshot when it isn't necessary.
  *
  * On return, portal is ready to accept PortalRun() calls, and the result
  * tupdesc (if any) is known.
  */
 void
-PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot)
+PortalStart(Portal portal, ParamListInfo params, bool use_active_snapshot)
 {
 	Portal		saveActivePortal;
 	ResourceOwner saveResourceOwner;
@@ -497,8 +498,8 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot)
 			case PORTAL_ONE_SELECT:
 
 				/* Must set snapshot before starting executor. */
-				if (snapshot)
-					PushActiveSnapshot(snapshot);
+				if (use_active_snapshot)
+					PushActiveSnapshot(GetActiveSnapshot());
 				else
 					PushActiveSnapshot(GetTransactionSnapshot());
 
