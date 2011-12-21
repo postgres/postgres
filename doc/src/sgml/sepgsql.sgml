@@ -421,6 +421,33 @@ UPDATE t1 SET x = 2, y = md5sum(y) WHERE z = 100;
   <sect3>
    <title>DDL Permissions</title>
    <para>
+    <productname>SELinux</> defines several permissions to control common
+    operations for each object types; such as creation, alter, drop and
+    relabel of security label. In addition, several object types has its
+    special permissions to control its characteristic operations; such as
+    addition or deletion of name entries underlying a particular schema.
+   </para>
+   <para>
+    When <literal>CREATE</> command is executed, <literal>create</> will
+    be checked on the object being constructed for each object types.
+    A default security label shall be assigned on the new database object,
+    and the <literal>create</> permission needs to be allowed on the pair
+    of security label of the client and the new object itself.
+    We consider <xref linkend="sql-createtable"> construct a table and
+    underlying columns at the same time, so it requires users permission
+    to create both of table and columns.
+   </para>
+   <para>
+    A few additional checks are applied depending on object types.
+    On <xref linkend="sql-createdatabase">, <literal>getattr</> permission
+    shall be checked on the source or template database of the new database,
+    not only <literal>create</> on the new database.
+    On creation of objects underlying a particula schema (tables, views,
+    sequences and procedures), <literal>add_name</> shall be also chechked
+    on the schema, not only <literal>create</> on the new object itself.
+   </para>
+
+   <para>
     When <xref linkend="sql-security-label"> is executed, <literal>setattr</>
     and <literal>relabelfrom</> will be checked on the object being relabeled
     with its old security label, then <literal>relabelto</> with the supplied
@@ -509,7 +536,8 @@ postgres=# SELECT cid, cname, show_credit(cid) FROM customer;
     <term>Data Definition Language (DDL) Permissions</term>
     <listitem>
      <para>
-      Due to implementation restrictions, DDL permissions are not checked.
+      Due to implementation restrictions, some of DDL permissions are not
+      checked.
      </para>
     </listitem>
    </varlistentry>

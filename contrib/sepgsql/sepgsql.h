@@ -286,7 +286,8 @@ extern bool sepgsql_dml_privileges(List *rangeTabls, bool abort);
 /*
  * database.c
  */
-extern void sepgsql_database_post_create(Oid databaseId);
+extern void sepgsql_database_post_create(Oid databaseId,
+										 const char *dtemplate);
 extern void sepgsql_database_relabel(Oid databaseId, const char *seclabel);
 
 /*

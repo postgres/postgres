@@ -259,6 +259,6 @@ echo "found ${NUM}"
 echo
 echo "============== running sepgsql regression tests       =============="
 
-make REGRESS="label dml misc" REGRESS_OPTS="--launcher ./launcher" installcheck
+make REGRESS="label dml create misc" REGRESS_OPTS="--launcher ./launcher" installcheck
 
 # exit with the exit code provided by "make"

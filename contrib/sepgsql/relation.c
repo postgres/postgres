@@ -36,10 +36,16 @@
 void
 sepgsql_attribute_post_create(Oid relOid, AttrNumber attnum)
 {
-	char	   *scontext = sepgsql_get_client_label();
+	Relation	rel;
+	ScanKeyData skey[2];
+	SysScanDesc sscan;
+	HeapTuple	tuple;
+	char	   *scontext;
 	char	   *tcontext;
 	char	   *ncontext;
+	char		audit_name[2*NAMEDATALEN + 20];
 	ObjectAddress object;
+	Form_pg_attribute	attForm;
 
 	/*
 	 * Only attributes within regular relation have individual security
@@ -49,13 +55,44 @@ sepgsql_attribute_post_create(Oid relOid, AttrNumber attnum)
 		return;
 
 	/*
-	 * Compute a default security label when we create a new procedure object
-	 * under the specified namespace.
+	 * Compute a default security label of the new column underlying the
+	 * specified relation, and check permission to create it.
 	 */
+	rel = heap_open(AttributeRelationId, AccessShareLock);
+
+	ScanKeyInit(&skey[0],
+				Anum_pg_attribute_attrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(relOid));
+	ScanKeyInit(&skey[1],
+				Anum_pg_attribute_attnum,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(attnum));
+
+	sscan = systable_beginscan(rel, AttributeRelidNumIndexId, true,
+							   SnapshotSelf, 2, &skey[0]);
+
+	tuple = systable_getnext(sscan);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "catalog lookup failed for column %d of relation %u",
+			 attnum, relOid);
+
+	attForm = (Form_pg_attribute) GETSTRUCT(tuple);
+
 	scontext = sepgsql_get_client_label();
 	tcontext = sepgsql_get_label(RelationRelationId, relOid, 0);
 	ncontext = sepgsql_compute_create(scontext, tcontext,
 									  SEPG_CLASS_DB_COLUMN);
+	/*
+	 * check db_column:{create} permission
+	 */
+	snprintf(audit_name, sizeof(audit_name), "table %s column %s",
+			 get_rel_name(relOid), NameStr(attForm->attname));
+	sepgsql_avc_check_perms_label(ncontext,
+								  SEPG_CLASS_DB_COLUMN,
+								  SEPG_DB_COLUMN__CREATE,
+								  audit_name,
+								  true);
 
 	/*
 	 * Assign the default security label on a new procedure
@@ -64,6 +101,9 @@ sepgsql_attribute_post_create(Oid relOid, AttrNumber attnum)
 	object.objectId = relOid;
 	object.objectSubId = attnum;
 	SetSecurityLabel(&object, SEPGSQL_LABEL_TAG, ncontext);
+
+	systable_endscan(sscan);
+	heap_close(rel, AccessShareLock);
 
 	pfree(tcontext);
 	pfree(ncontext);
@@ -127,10 +167,12 @@ sepgsql_relation_post_create(Oid relOid)
 	Form_pg_class classForm;
 	ObjectAddress object;
 	uint16		tclass;
+	const char *tclass_text;
 	char	   *scontext;		/* subject */
 	char	   *tcontext;		/* schema */
 	char	   *rcontext;		/* relation */
 	char	   *ccontext;		/* column */
+	char		audit_name[2*NAMEDATALEN + 20];
 
 	/*
 	 * Fetch catalog record of the new relation. Because pg_class entry is not
@@ -152,15 +194,35 @@ sepgsql_relation_post_create(Oid relOid)
 
 	classForm = (Form_pg_class) GETSTRUCT(tuple);
 
-	if (classForm->relkind == RELKIND_RELATION)
-		tclass = SEPG_CLASS_DB_TABLE;
-	else if (classForm->relkind == RELKIND_SEQUENCE)
-		tclass = SEPG_CLASS_DB_SEQUENCE;
-	else if (classForm->relkind == RELKIND_VIEW)
-		tclass = SEPG_CLASS_DB_VIEW;
-	else
-		goto out;				/* No need to assign individual labels */
+	switch (classForm->relkind)
+	{
+		case RELKIND_RELATION:
+			tclass = SEPG_CLASS_DB_TABLE;
+			tclass_text = "table";
+			break;
+		case RELKIND_SEQUENCE:
+			tclass = SEPG_CLASS_DB_SEQUENCE;
+			tclass_text = "sequence";
+			break;
+		case RELKIND_VIEW:
+			tclass = SEPG_CLASS_DB_VIEW;
+			tclass_text = "view";
+			break;
+		default:
+			goto out;
+	}
 
+	/*
+	 * check db_schema:{add_name} permission of the namespace
+	 */
+	object.classId = NamespaceRelationId;
+	object.objectId = classForm->relnamespace;
+	object.objectSubId = 0;
+	sepgsql_avc_check_perms(&object,
+							SEPG_CLASS_DB_SCHEMA,
+							SEPG_DB_SCHEMA__ADD_NAME,
+							getObjectDescription(&object),
+							true);
 	/*
 	 * Compute a default security label when we create a new relation object
 	 * under the specified namespace.
@@ -170,6 +232,16 @@ sepgsql_relation_post_create(Oid relOid)
 								 classForm->relnamespace, 0);
 	rcontext = sepgsql_compute_create(scontext, tcontext, tclass);
 
+	/*
+	 * check db_xxx:{create} permission
+	 */
+	snprintf(audit_name, sizeof(audit_name), "%s %s",
+			 tclass_text, NameStr(classForm->relname));
+	sepgsql_avc_check_perms_label(rcontext,
+								  tclass,
+								  SEPG_DB_DATABASE__CREATE,
+								  audit_name,
+								  true);
 	/*
 	 * Assign the default security label on the new relation
 	 */
@@ -184,26 +256,52 @@ sepgsql_relation_post_create(Oid relOid)
 	 */
 	if (classForm->relkind == RELKIND_RELATION)
 	{
-		AttrNumber	index;
+		Relation	arel;
+		ScanKeyData	akey;
+		SysScanDesc	ascan;
+		HeapTuple	atup;
+		Form_pg_attribute	attForm;
 
-		ccontext = sepgsql_compute_create(scontext, rcontext,
-										  SEPG_CLASS_DB_COLUMN);
-		for (index = FirstLowInvalidHeapAttributeNumber + 1;
-			 index <= classForm->relnatts;
-			 index++)
+		arel = heap_open(AttributeRelationId, AccessShareLock);
+
+		ScanKeyInit(&akey,
+					Anum_pg_attribute_attrelid,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(relOid));
+
+		ascan = systable_beginscan(arel, AttributeRelidNumIndexId, true,
+								   SnapshotSelf, 1, &akey);
+
+		while (HeapTupleIsValid(atup = systable_getnext(ascan)))
 		{
-			if (index == InvalidAttrNumber)
-				continue;
+			attForm = (Form_pg_attribute) GETSTRUCT(atup);
 
-			if (index == ObjectIdAttributeNumber && !classForm->relhasoids)
-				continue;
+			snprintf(audit_name, sizeof(audit_name), "%s %s column %s",
+					 tclass_text,
+					 NameStr(classForm->relname),
+					 NameStr(attForm->attname));
+
+			ccontext = sepgsql_compute_create(scontext,
+											  rcontext,
+											  SEPG_CLASS_DB_COLUMN);
+			/*
+			 * check db_column:{create} permission
+			 */
+			sepgsql_avc_check_perms_label(ccontext,
+										  SEPG_CLASS_DB_COLUMN,
+										  SEPG_DB_COLUMN__CREATE,
+										  audit_name,
+										  true);
 
 			object.classId = RelationRelationId;
 			object.objectId = relOid;
-			object.objectSubId = index;
+			object.objectSubId = attForm->attnum;
 			SetSecurityLabel(&object, SEPGSQL_LABEL_TAG, ccontext);
+
+			pfree(ccontext);
 		}
-		pfree(ccontext);
+		systable_endscan(ascan);
+		heap_close(arel, AccessShareLock);
 	}
 	pfree(rcontext);
 out:

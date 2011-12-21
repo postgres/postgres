@@ -41,6 +41,23 @@ static ExecutorCheckPerms_hook_type next_exec_check_perms_hook = NULL;
 static needs_fmgr_hook_type next_needs_fmgr_hook = NULL;
 static fmgr_hook_type next_fmgr_hook = NULL;
 static ProcessUtility_hook_type next_ProcessUtility_hook = NULL;
+static ExecutorStart_hook_type next_ExecutorStart_hook = NULL;
+
+/*
+ * Contextual information on DDL commands
+ */
+typedef struct
+{
+	NodeTag		cmdtype;
+
+	/*
+	 * Name of the template database given by users on CREATE DATABASE
+	 * command. Elsewhere (including the case of default) NULL.
+	 */
+	const char *createdb_dtemplate;
+} sepgsql_context_info_t;
+
+static sepgsql_context_info_t	sepgsql_context_info;
 
 /*
  * GUC: sepgsql.permissive = (on|off)
@@ -127,7 +144,8 @@ sepgsql_object_access(ObjectAccessType access,
 			switch (classId)
 			{
 				case DatabaseRelationId:
-					sepgsql_database_post_create(objectId);
+					sepgsql_database_post_create(objectId,
+								sepgsql_context_info.createdb_dtemplate);
 					break;
 
 				case NamespaceRelationId:
@@ -136,7 +154,30 @@ sepgsql_object_access(ObjectAccessType access,
 
 				case RelationRelationId:
 					if (subId == 0)
-						sepgsql_relation_post_create(objectId);
+					{
+						/*
+						 * All cases we want to apply permission checks on
+						 * creation of a new relation are invocation of the
+						 * heap_create_with_catalog via DefineRelation or
+						 * OpenIntoRel.
+						 * Elsewhere, we need neither assignment of security
+						 * label nor permission checks.
+						 */
+						switch (sepgsql_context_info.cmdtype)
+						{
+							case T_CreateStmt:
+							case T_ViewStmt:
+							case T_CreateSeqStmt:
+							case T_CompositeTypeStmt:
+							case T_CreateForeignTableStmt:
+							case T_SelectStmt:
+								sepgsql_relation_post_create(objectId);
+								break;
+							default:
+								/* via make_new_heap() */
+								break;
+						}
+					}
 					else
 						sepgsql_attribute_post_create(objectId, subId);
 					break;
@@ -295,6 +336,46 @@ sepgsql_fmgr_hook(FmgrHookEventType event,
 }
 
 /*
+ * sepgsql_executor_start
+ *
+ * It saves contextual information during ExecutorStart to distinguish 
+ * a case with/without permission checks later.
+ */
+static void
+sepgsql_executor_start(QueryDesc *queryDesc, int eflags)
+{
+	sepgsql_context_info_t	saved_context_info = sepgsql_context_info;
+
+	PG_TRY();
+	{
+		if (queryDesc->operation == CMD_SELECT)
+			sepgsql_context_info.cmdtype = T_SelectStmt;
+		else if (queryDesc->operation == CMD_INSERT)
+			sepgsql_context_info.cmdtype = T_InsertStmt;
+		else if (queryDesc->operation == CMD_DELETE)
+			sepgsql_context_info.cmdtype = T_DeleteStmt;
+		else if (queryDesc->operation == CMD_UPDATE)
+			sepgsql_context_info.cmdtype = T_UpdateStmt;
+
+		/*
+		 * XXX - If queryDesc->operation is not above four cases, an error
+		 * shall be raised on the following executor stage soon.
+		 */
+		if (next_ExecutorStart_hook)
+			(*next_ExecutorStart_hook) (queryDesc, eflags);
+		else
+			standard_ExecutorStart(queryDesc, eflags);
+	}
+	PG_CATCH();
+	{
+		sepgsql_context_info = saved_context_info;
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+	sepgsql_context_info = saved_context_info;
+}
+
+/*
  * sepgsql_utility_command
  *
  * It tries to rough-grained control on utility commands; some of them can
@@ -308,44 +389,74 @@ sepgsql_utility_command(Node *parsetree,
 						DestReceiver *dest,
 						char *completionTag)
 {
-	if (next_ProcessUtility_hook)
-		(*next_ProcessUtility_hook) (parsetree, queryString, params,
-									 isTopLevel, dest, completionTag);
+	sepgsql_context_info_t	saved_context_info = sepgsql_context_info;
+	ListCell	   *cell;
 
-	/*
-	 * Check command tag to avoid nefarious operations
-	 */
-	switch (nodeTag(parsetree))
+	PG_TRY();
 	{
-		case T_LoadStmt:
+		/*
+		 * Check command tag to avoid nefarious operations, and save the
+		 * current contextual information to determine whether we should
+		 * apply permission checks here, or not.
+		 */
+		sepgsql_context_info.cmdtype = nodeTag(parsetree);
 
-			/*
-			 * We reject LOAD command across the board on enforcing mode,
-			 * because a binary module can arbitrarily override hooks.
-			 */
-			if (sepgsql_getenforce())
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("SELinux: LOAD is not permitted")));
-			}
-			break;
-		default:
+		switch (nodeTag(parsetree))
+		{
+			case T_CreatedbStmt:
+				/*
+				 * We hope to reference name of the source database, but it
+				 * does not appear in system catalog. So, we save it here.
+				 */
+				foreach (cell, ((CreatedbStmt *) parsetree)->options)
+				{
+					DefElem	   *defel = (DefElem *) lfirst(cell);
 
-			/*
-			 * Right now we don't check any other utility commands, because it
-			 * needs more detailed information to make access control decision
-			 * here, but we don't want to have two parse and analyze routines
-			 * individually.
-			 */
-			break;
+					if (strcmp(defel->defname, "template") == 0)
+					{
+						sepgsql_context_info.createdb_dtemplate
+							= strVal(defel->arg);
+						break;
+					}
+				}
+				break;
+
+			case T_LoadStmt:
+				/*
+				 * We reject LOAD command across the board on enforcing mode,
+				 * because a binary module can arbitrarily override hooks.
+				 */
+				if (sepgsql_getenforce())
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+							 errmsg("SELinux: LOAD is not permitted")));
+				}
+				break;
+			default:
+				/*
+				 * Right now we don't check any other utility commands,
+				 * because it needs more detailed information to make access
+				 * control decision here, but we don't want to have two parse
+				 * and analyze routines individually.
+				 */
+				break;
+		}
+
+		if (next_ProcessUtility_hook)
+			(*next_ProcessUtility_hook) (parsetree, queryString, params,
+										 isTopLevel, dest, completionTag);
+		else
+			standard_ProcessUtility(parsetree, queryString, params,
+									isTopLevel, dest, completionTag);
 	}
-
-	/*
-	 * Original implementation
-	 */
-	standard_ProcessUtility(parsetree, queryString, params,
-							isTopLevel, dest, completionTag);
+	PG_CATCH();
+	{
+		sepgsql_context_info = saved_context_info;
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+	sepgsql_context_info = saved_context_info;
 }
 
 /*
@@ -456,4 +567,11 @@ _PG_init(void)
 	/* ProcessUtility hook */
 	next_ProcessUtility_hook = ProcessUtility_hook;
 	ProcessUtility_hook = sepgsql_utility_command;
+
+	/* ExecutorStart hook */
+	next_ExecutorStart_hook = ExecutorStart_hook;
+	ExecutorStart_hook = sepgsql_executor_start;
+
+	/* init contextual info */
+	memset(&sepgsql_context_info, 0, sizeof(sepgsql_context_info));
 }
