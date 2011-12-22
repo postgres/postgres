@@ -104,7 +104,7 @@ CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] VIEW <replaceable class="PARAMETER">n
     <listitem>
      <para>
       This clause specifies optional parameters for a view; currently, the
-      only suppored parameter name is <literal>security_barrier</literal>,
+      only supported parameter name is <literal>security_barrier</literal>,
       which should be enabled when a view is intended to provide row-level
       security.  See <xref linkend="rules-privileges"> for full details.
      </para>
