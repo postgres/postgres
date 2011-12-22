@@ -37,7 +37,7 @@ extern void AlterDomainDropConstraint(List *names, const char *constrName,
 
 extern List *GetDomainConstraints(Oid typeOid);
 
-extern void RenameType(List *names, const char *newTypeName);
+extern void RenameType(RenameStmt *stmt);
 extern void AlterTypeOwner(List *names, Oid newOwnerId);
 extern void AlterTypeOwnerInternal(Oid typeOid, Oid newOwnerId,
 					   bool hasDependEntry);

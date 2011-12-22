@@ -6451,6 +6451,14 @@ RenameStmt: ALTER AGGREGATE func_name aggr_args RENAME TO name
 					n->newname = $6;
 					$$ = (Node *)n;
 				}
+			| ALTER DOMAIN_P any_name RENAME TO name
+				{
+					RenameStmt *n = makeNode(RenameStmt);
+					n->renameType = OBJECT_DOMAIN;
+					n->object = $3;
+					n->newname = $6;
+					$$ = (Node *)n;
+				}
 			| ALTER FOREIGN DATA_P WRAPPER name RENAME TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);

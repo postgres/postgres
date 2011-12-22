@@ -483,3 +483,13 @@ select array_elem_check(3);
 select array_elem_check(-1);
 
 drop function array_elem_check(int);
+
+
+--
+-- Renaming
+--
+
+create domain testdomain1 as int;
+alter domain testdomain1 rename to testdomain2;
+alter type testdomain2 rename to testdomain3;  -- alter type also works
+drop domain testdomain3;

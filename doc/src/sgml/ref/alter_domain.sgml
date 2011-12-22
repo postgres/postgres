@@ -36,6 +36,8 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
 ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
     OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
 ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
+    RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
+ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
     SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable>
 </synopsis>
  </refsynopsisdiv>
@@ -114,6 +116,15 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
     <listitem>
      <para>
       This form changes the owner of the domain to the specified user.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RENAME</literal></term>
+    <listitem>
+     <para>
+      This form changes the name of the domain.
      </para>
     </listitem>
    </varlistentry>
@@ -204,6 +215,15 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
      </varlistentry>
 
      <varlistentry>
+      <term><replaceable class="PARAMETER">new_name</replaceable></term>
+      <listitem>
+       <para>
+        The new name for the domain.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><replaceable class="PARAMETER">new_owner</replaceable></term>
       <listitem>
        <para>
@@ -278,7 +298,7 @@ ALTER DOMAIN zipcode SET SCHEMA customers;
 
   <para>
    <command>ALTER DOMAIN</command> conforms to the <acronym>SQL</acronym>
-   standard, except for the <literal>OWNER</>, <literal>SET SCHEMA</> and
+   standard, except for the <literal>OWNER</>, <literal>RENAME</literal>, <literal>SET SCHEMA</>, and
    <literal>VALIDATE CONSTRAINT</> variants, which are
    <productname>PostgreSQL</productname> extensions.  The <literal>NOT VALID</>
    clause of the <literal>ADD CONSTRAINT</> variant is also a

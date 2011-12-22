@@ -134,8 +134,9 @@ ExecRenameStmt(RenameStmt *stmt)
 			RenameTSConfiguration(stmt->object, stmt->newname);
 			break;
 
+		case OBJECT_DOMAIN:
 		case OBJECT_TYPE:
-			RenameType(stmt->object, stmt->newname);
+			RenameType(stmt);
 			break;
 
 		default:

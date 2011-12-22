@@ -3074,8 +3074,10 @@ GetDomainConstraints(Oid typeOid)
  * Execute ALTER TYPE RENAME
  */
 void
-RenameType(List *names, const char *newTypeName)
+RenameType(RenameStmt *stmt)
 {
+	List	   *names = stmt->object;
+	const char *newTypeName = stmt->newname;
 	TypeName   *typename;
 	Oid			typeOid;
 	Relation	rel;
@@ -3098,6 +3100,13 @@ RenameType(List *names, const char *newTypeName)
 	if (!pg_type_ownercheck(typeOid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
 					   format_type_be(typeOid));
+
+	/* ALTER DOMAIN used on a non-domain? */
+	if (stmt->renameType == OBJECT_DOMAIN && typTup->typtype != TYPTYPE_DOMAIN)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a domain",
+						format_type_be(typeOid))));
 
 	/*
 	 * If it's a composite type, we need to check that it really is a
