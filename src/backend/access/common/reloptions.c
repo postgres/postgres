@@ -67,6 +67,14 @@ static relopt_bool boolRelOpts[] =
 		},
 		true
 	},
+	{
+		{
+			"security_barrier",
+			"View acts as a row security barrier",
+			RELOPT_KIND_VIEW
+		},
+		false
+	},
 	/* list terminator */
 	{{NULL}}
 };
@@ -781,6 +789,7 @@ extractRelOptions(HeapTuple tuple, TupleDesc tupdesc, Oid amoptions)
 	{
 		case RELKIND_RELATION:
 		case RELKIND_TOASTVALUE:
+		case RELKIND_VIEW:
 		case RELKIND_UNCATALOGED:
 			options = heap_reloptions(classForm->relkind, datum, false);
 			break;
@@ -1139,7 +1148,9 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 		{"autovacuum_vacuum_scale_factor", RELOPT_TYPE_REAL,
 		offsetof(StdRdOptions, autovacuum) +offsetof(AutoVacOpts, vacuum_scale_factor)},
 		{"autovacuum_analyze_scale_factor", RELOPT_TYPE_REAL,
-		offsetof(StdRdOptions, autovacuum) +offsetof(AutoVacOpts, analyze_scale_factor)}
+		offsetof(StdRdOptions, autovacuum) +offsetof(AutoVacOpts, analyze_scale_factor)},
+		{"security_barrier", RELOPT_TYPE_BOOL,
+		offsetof(StdRdOptions, security_barrier)},
 	};
 
 	options = parseRelOptions(reloptions, validate, kind, &numoptions);
@@ -1159,7 +1170,7 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 }
 
 /*
- * Parse options for heaps and toast tables.
+ * Parse options for heaps, views and toast tables.
  */
 bytea *
 heap_reloptions(char relkind, Datum reloptions, bool validate)
@@ -1181,6 +1192,8 @@ heap_reloptions(char relkind, Datum reloptions, bool validate)
 			return (bytea *) rdopts;
 		case RELKIND_RELATION:
 			return default_reloptions(reloptions, validate, RELOPT_KIND_HEAP);
+		case RELKIND_VIEW:
+			return default_reloptions(reloptions, validate, RELOPT_KIND_VIEW);
 		default:
 			/* other relkinds are not supported */
 			return NULL;

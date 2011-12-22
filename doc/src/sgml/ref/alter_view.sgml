@@ -26,6 +26,8 @@ ALTER VIEW <replaceable class="parameter">name</replaceable> ALTER [ COLUMN ] <r
 ALTER VIEW <replaceable class="parameter">name</replaceable> OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
 ALTER VIEW <replaceable class="parameter">name</replaceable> RENAME TO <replaceable class="parameter">new_name</replaceable>
 ALTER VIEW <replaceable class="parameter">name</replaceable> SET SCHEMA <replaceable class="parameter">new_schema</replaceable>
+ALTER VIEW <replaceable class="parameter">name</replaceable> SET ( <replaceable class="parameter">view_option_name</replaceable> [= <replaceable class="parameter">view_option_value</replaceable>] [, ... ] )
+ALTER VIEW <replaceable class="parameter">name</replaceable> RESET ( <replaceable class="parameter">view_option_name</replaceable> [, ... ] )
 </synopsis>
  </refsynopsisdiv>
 
@@ -99,6 +101,24 @@ ALTER VIEW <replaceable class="parameter">name</replaceable> SET SCHEMA <replace
     <listitem>
      <para>
       The new schema for the view.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">view_option_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of a view option to be set or reset.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">view_option_name</replaceable></term>
+    <listitem>
+     <para>
+      The new value for a view option.
      </para>
     </listitem>
    </varlistentry>

@@ -239,6 +239,55 @@ And relnamespace IN (SELECT OID FROM pg_namespace WHERE nspname LIKE 'pg_temp%')
      1
 (1 row)
 
+--
+-- CREATE VIEW and WITH(...) clause
+--
+CREATE VIEW mysecview1
+       AS SELECT * FROM tbl1 WHERE a = 0;
+CREATE VIEW mysecview2 WITH (security_barrier=true)
+       AS SELECT * FROM tbl1 WHERE a > 0;
+CREATE VIEW mysecview3 WITH (security_barrier=false)
+       AS SELECT * FROM tbl1 WHERE a < 0;
+CREATE VIEW mysecview4 WITH (security_barrier)
+       AS SELECT * FROM tbl1 WHERE a <> 0;
+CREATE VIEW mysecview5 WITH (security_barrier=100)	-- Error
+       AS SELECT * FROM tbl1 WHERE a > 100;
+ERROR:  invalid value for boolean option "security_barrier": 100
+CREATE VIEW mysecview6 WITH (invalid_option)		-- Error
+       AS SELECT * FROM tbl1 WHERE a < 100;
+ERROR:  unrecognized parameter "invalid_option"
+SELECT relname, relkind, reloptions FROM pg_class
+       WHERE oid in ('mysecview1'::regclass, 'mysecview2'::regclass,
+                     'mysecview3'::regclass, 'mysecview4'::regclass)
+       ORDER BY relname;
+  relname   | relkind |        reloptions        
+------------+---------+--------------------------
+ mysecview1 | v       | 
+ mysecview2 | v       | {security_barrier=true}
+ mysecview3 | v       | {security_barrier=false}
+ mysecview4 | v       | {security_barrier=true}
+(4 rows)
+
+CREATE OR REPLACE VIEW mysecview1
+       AS SELECT * FROM tbl1 WHERE a = 256;
+CREATE OR REPLACE VIEW mysecview2
+       AS SELECT * FROM tbl1 WHERE a > 256;
+CREATE OR REPLACE VIEW mysecview3 WITH (security_barrier=true)
+       AS SELECT * FROM tbl1 WHERE a < 256;
+CREATE OR REPLACE VIEW mysecview4 WITH (security_barrier=false)
+       AS SELECT * FROM tbl1 WHERE a <> 256;
+SELECT relname, relkind, reloptions FROM pg_class
+       WHERE oid in ('mysecview1'::regclass, 'mysecview2'::regclass,
+                     'mysecview3'::regclass, 'mysecview4'::regclass)
+       ORDER BY relname;
+  relname   | relkind |        reloptions        
+------------+---------+--------------------------
+ mysecview1 | v       | 
+ mysecview2 | v       | 
+ mysecview3 | v       | {security_barrier=true}
+ mysecview4 | v       | {security_barrier=false}
+(4 rows)
+
 DROP SCHEMA temp_view_test CASCADE;
 NOTICE:  drop cascades to 22 other objects
 DETAIL:  drop cascades to table temp_view_test.base_table
@@ -264,7 +313,7 @@ drop cascades to view temp_view_test.v8
 drop cascades to sequence temp_view_test.seq1
 drop cascades to view temp_view_test.v9
 DROP SCHEMA testviewschm2 CASCADE;
-NOTICE:  drop cascades to 16 other objects
+NOTICE:  drop cascades to 20 other objects
 DETAIL:  drop cascades to table t1
 drop cascades to view temporal1
 drop cascades to view temporal2
@@ -281,4 +330,8 @@ drop cascades to table tbl3
 drop cascades to table tbl4
 drop cascades to view mytempview
 drop cascades to view pubview
+drop cascades to view mysecview1
+drop cascades to view mysecview2
+drop cascades to view mysecview3
+drop cascades to view mysecview4
 SET search_path to public;

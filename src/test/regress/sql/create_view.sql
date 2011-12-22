@@ -191,6 +191,39 @@ AND NOT EXISTS (SELECT g FROM tbl4 LEFT JOIN tmptbl ON tbl4.h = tmptbl.j);
 SELECT count(*) FROM pg_class where relname LIKE 'mytempview'
 And relnamespace IN (SELECT OID FROM pg_namespace WHERE nspname LIKE 'pg_temp%');
 
+--
+-- CREATE VIEW and WITH(...) clause
+--
+CREATE VIEW mysecview1
+       AS SELECT * FROM tbl1 WHERE a = 0;
+CREATE VIEW mysecview2 WITH (security_barrier=true)
+       AS SELECT * FROM tbl1 WHERE a > 0;
+CREATE VIEW mysecview3 WITH (security_barrier=false)
+       AS SELECT * FROM tbl1 WHERE a < 0;
+CREATE VIEW mysecview4 WITH (security_barrier)
+       AS SELECT * FROM tbl1 WHERE a <> 0;
+CREATE VIEW mysecview5 WITH (security_barrier=100)	-- Error
+       AS SELECT * FROM tbl1 WHERE a > 100;
+CREATE VIEW mysecview6 WITH (invalid_option)		-- Error
+       AS SELECT * FROM tbl1 WHERE a < 100;
+SELECT relname, relkind, reloptions FROM pg_class
+       WHERE oid in ('mysecview1'::regclass, 'mysecview2'::regclass,
+                     'mysecview3'::regclass, 'mysecview4'::regclass)
+       ORDER BY relname;
+
+CREATE OR REPLACE VIEW mysecview1
+       AS SELECT * FROM tbl1 WHERE a = 256;
+CREATE OR REPLACE VIEW mysecview2
+       AS SELECT * FROM tbl1 WHERE a > 256;
+CREATE OR REPLACE VIEW mysecview3 WITH (security_barrier=true)
+       AS SELECT * FROM tbl1 WHERE a < 256;
+CREATE OR REPLACE VIEW mysecview4 WITH (security_barrier=false)
+       AS SELECT * FROM tbl1 WHERE a <> 256;
+SELECT relname, relkind, reloptions FROM pg_class
+       WHERE oid in ('mysecview1'::regclass, 'mysecview2'::regclass,
+                     'mysecview3'::regclass, 'mysecview4'::regclass)
+       ORDER BY relname;
+
 DROP SCHEMA temp_view_test CASCADE;
 DROP SCHEMA testviewschm2 CASCADE;
 

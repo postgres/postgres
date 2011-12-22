@@ -12397,8 +12397,10 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		if (binary_upgrade)
 			binary_upgrade_set_pg_class_oids(q, tbinfo->dobj.catId.oid, false);
 
-		appendPQExpBuffer(q, "CREATE VIEW %s AS\n    %s\n",
-						  fmtId(tbinfo->dobj.name), viewdef);
+		appendPQExpBuffer(q, "CREATE VIEW %s", fmtId(tbinfo->dobj.name));
+		if (tbinfo->reloptions && strlen(tbinfo->reloptions) > 0)
+			appendPQExpBuffer(q, " WITH (%s)", tbinfo->reloptions);
+		appendPQExpBuffer(q, " AS\n    %s\n", viewdef);
 
 		appendPQExpBuffer(labelq, "VIEW %s",
 						  fmtId(tbinfo->dobj.name));

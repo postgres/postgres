@@ -706,6 +706,7 @@ typedef struct RangeTblEntry
 	 * Fields valid for a subquery RTE (else NULL):
 	 */
 	Query	   *subquery;		/* the sub-query */
+	bool		security_barrier;	/* subquery from security_barrier view */
 
 	/*
 	 * Fields valid for a join RTE (else NULL/zero):
@@ -1208,6 +1209,7 @@ typedef enum AlterTableType
 	AT_SetTableSpace,			/* SET TABLESPACE */
 	AT_SetRelOptions,			/* SET (...) -- AM specific parameters */
 	AT_ResetRelOptions,			/* RESET (...) -- AM specific parameters */
+	AT_ReplaceRelOptions,		/* replace reloption list in its entirety */
 	AT_EnableTrig,				/* ENABLE TRIGGER name */
 	AT_EnableAlwaysTrig,		/* ENABLE ALWAYS TRIGGER name */
 	AT_EnableReplicaTrig,		/* ENABLE REPLICA TRIGGER name */
@@ -2277,6 +2279,7 @@ typedef struct ViewStmt
 	List	   *aliases;		/* target column names */
 	Node	   *query;			/* the SELECT query */
 	bool		replace;		/* replace an existing view? */
+	List	   *options;		/* options from WITH clause */
 } ViewStmt;
 
 /* ----------------------

@@ -32,6 +32,7 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
+#include "utils/syscache.h"
 
 
 static void checkViewTupleDesc(TupleDesc newdesc, TupleDesc olddesc);
@@ -98,7 +99,7 @@ isViewOnTempTable_walker(Node *node, void *context)
  */
 static Oid
 DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace,
-					  Oid namespaceId)
+					  Oid namespaceId, List *options)
 {
 	Oid			viewOid;
 	CreateStmt *createStmt = makeNode(CreateStmt);
@@ -166,6 +167,8 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace,
 	{
 		Relation	rel;
 		TupleDesc	descriptor;
+		List	   *atcmds = NIL;
+		AlterTableCmd *atcmd;
 
 		/*
 		 * Yes.  Get exclusive lock on the existing view ...
@@ -204,20 +207,26 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace,
 		checkViewTupleDesc(descriptor, rel->rd_att);
 
 		/*
+		 * The new options list replaces the existing options list, even
+		 * if it's empty.
+		 */
+		atcmd = makeNode(AlterTableCmd);
+		atcmd->subtype = AT_ReplaceRelOptions;
+		atcmd->def = (Node *) options;
+		atcmds = lappend(atcmds, atcmd);
+
+		/*
 		 * If new attributes have been added, we must add pg_attribute entries
 		 * for them.  It is convenient (although overkill) to use the ALTER
 		 * TABLE ADD COLUMN infrastructure for this.
 		 */
 		if (list_length(attrList) > rel->rd_att->natts)
 		{
-			List	   *atcmds = NIL;
 			ListCell   *c;
 			int			skip = rel->rd_att->natts;
 
 			foreach(c, attrList)
 			{
-				AlterTableCmd *atcmd;
-
 				if (skip > 0)
 				{
 					skip--;
@@ -228,8 +237,10 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace,
 				atcmd->def = (Node *) lfirst(c);
 				atcmds = lappend(atcmds, atcmd);
 			}
-			AlterTableInternal(viewOid, atcmds, true);
 		}
+
+		/* OK, let's do it. */
+		AlterTableInternal(viewOid, atcmds, true);
 
 		/*
 		 * Seems okay, so return the OID of the pre-existing view.
@@ -250,7 +261,8 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace,
 		createStmt->tableElts = attrList;
 		createStmt->inhRelations = NIL;
 		createStmt->constraints = NIL;
-		createStmt->options = list_make1(defWithOids(false));
+		createStmt->options = options;
+		createStmt->options = lappend(options, defWithOids(false));
 		createStmt->oncommit = ONCOMMIT_NOOP;
 		createStmt->tablespacename = NULL;
 		createStmt->if_not_exists = false;
@@ -513,7 +525,7 @@ DefineView(ViewStmt *stmt, const char *queryString)
 	 * aborted.
 	 */
 	viewOid = DefineVirtualRelation(view, viewParse->targetList,
-									stmt->replace, namespaceId);
+									stmt->replace, namespaceId, stmt->options);
 
 	/*
 	 * The relation we have just created is not visible to any other commands

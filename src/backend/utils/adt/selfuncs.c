@@ -4373,6 +4373,19 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 			return;
 
 		/*
+		 * If the sub-query originated from a view with the security_barrier
+		 * attribute, we treat it as a black-box from outside of the view.
+		 * This is probably a harsher restriction than necessary; it's
+		 * certainly OK for the selectivity estimator (which is a C function,
+		 * and therefore omnipotent anyway) to look at the statistics.  But
+		 * many selectivity estimators will happily *invoke the operator
+		 * function* to try to work out a good estimate - and that's not OK.
+		 * So for now, we do this.
+		 */
+		if (rte->security_barrier)
+			return;
+
+		/*
 		 * OK, fetch RelOptInfo for subquery.  Note that we don't change the
 		 * rel returned in vardata, since caller expects it to be a rel of the
 		 * caller's query level.  Because we might already be recursing, we

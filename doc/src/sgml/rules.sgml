@@ -1822,8 +1822,9 @@ GRANT SELECT ON phone_number TO secretary;
 <para>
     Note that while views can be used to hide the contents of certain
     columns using the technique shown above, they cannot be used to reliably
-    conceal the data in unseen rows.  For example, the following view is
-    insecure:
+    conceal the data in unseen rows unless the
+    <literal>security_barrier</literal> flag has been set.  For example,
+    the following view is insecure:
 <programlisting>
 CREATE VIEW phone_number AS
     SELECT person, phone FROM phone_data WHERE phone NOT LIKE '412%';
@@ -1869,6 +1870,40 @@ SELECT * FROM phone_number WHERE tricky(person, phone);
     the planner to alter the order of operations, because the only rule
     which references <literal>shoelace_log</> is an unqualified
     <literal>INSERT</>.  This might not be true in more complex scenarios.
+</para>
+
+<para>
+    When it is necessary for a view to provide row-level security, the
+    <literal>security_barrier</literal> attribute should be applied to
+    the view.  This prevents maliciously-chosen functions and operators from
+    being invoked on rows until afterthe view has done its work.  For
+    example, if the view shown above had been created like this, it would
+    be secure:
+<programlisting>
+CREATE VIEW phone_number WITH (security_barrier) AS
+    SELECT person, phone FROM phone_data WHERE phone NOT LIKE '412%';
+</programlisting>
+    Views created with the <literal>security_barrier</literal> may perform
+    far worse than views created without this option.  In general, there is
+    no way to avoid this: the fastest possible plan must be rejected
+    if it may compromise security.  For this reason, this option is not
+    enabled by default.
+</para>
+
+<para>
+    It is important to understand that even a view created with the
+    <literal>security_barrier</literal> option is intended to be secure only
+    in the limited sense that the contents of the invisible tuples will not
+    passed to possibly-insecure functions.  The user may well have other means
+    of making inferences about the unseen data; for example, they can see the
+    query plan using <command>EXPLAIN</command>, or measure the runtime of
+    queries against the view.  A malicious attacker might be able to infer
+    something about the amount of unseen data, or even gain some information
+    about the data distribution or most common values (since these things may
+    affect the runtime of the plan; or even, since they are also reflected in
+    the optimizer statistics, the choice of plan).  If these types of "covert
+    channel" attacks are of concern, it is probably unwise to grant any access
+    to the data at all.
 </para>
 </sect1>
 
