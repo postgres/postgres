@@ -226,6 +226,9 @@ DATA(insert ( 2335	array_agg_transfn	array_agg_finalfn		0	2281	_null_ ));
 /* text */
 DATA(insert ( 3538	string_agg_transfn	string_agg_finalfn		0	2281	_null_ ));
 
+/* bytea */
+DATA(insert ( 3545	bytea_agg_transfn	bytea_agg_finalfn		0	2281	_null_ ));
+
 /*
  * prototypes for functions in pg_aggregate.c
  */

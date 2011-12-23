@@ -1061,3 +1061,26 @@ select string_agg(distinct f1::text, ',' order by f1::text) from varchar_tbl;  -
  a,ab,abcd
 (1 row)
 
+-- bytea_agg tests
+create table bytea_test_table(v bytea);
+select bytea_agg(v) from bytea_test_table;
+ bytea_agg 
+-----------
+ 
+(1 row)
+
+insert into bytea_test_table values(decode('ff','hex'));
+select bytea_agg(v) from bytea_test_table;
+ bytea_agg 
+-----------
+ \xff
+(1 row)
+
+insert into bytea_test_table values(decode('aa','hex'));
+select bytea_agg(v) from bytea_test_table;
+ bytea_agg 
+-----------
+ \xffaa
+(1 row)
+
+drop table bytea_test_table;

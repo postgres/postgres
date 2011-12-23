@@ -10911,6 +10911,24 @@ SELECT NULLIF(value, '(none)') ...
      <row>
       <entry>
        <indexterm>
+        <primary>bytea_agg</primary>
+       </indexterm>
+       <function>
+         bytea_agg(<replaceable class="parameter">expression</replaceable>)
+       </function>
+      </entry>
+      <entry>
+       <type>bytea</type>
+      </entry>
+      <entry>
+       <type>bytea</type>
+      </entry>
+      <entry>input values concatenated into a bytea</entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
         <primary>count</primary>
        </indexterm>
        <function>count(*)</function>

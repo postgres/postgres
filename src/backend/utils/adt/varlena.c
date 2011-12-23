@@ -396,6 +396,53 @@ byteasend(PG_FUNCTION_ARGS)
 	PG_RETURN_BYTEA_P(vlena);
 }
 
+Datum
+bytea_agg_transfn(PG_FUNCTION_ARGS)
+{
+	StringInfo	state;
+
+	state = PG_ARGISNULL(0) ? NULL : (StringInfo) PG_GETARG_POINTER(0);
+
+	/* Append the value unless null. */
+	if (!PG_ARGISNULL(1))
+	{
+		bytea	   *value = PG_GETARG_BYTEA_PP(1);
+
+		if (state == NULL)
+			state = makeStringAggState(fcinfo);
+
+		appendBinaryStringInfo(state, VARDATA_ANY(value), VARSIZE_ANY_EXHDR(value));
+	}
+
+	/*
+	 * The transition type for bytea_agg() is declared to be "internal",
+	 * which is a pass-by-value type the same size as a pointer.
+	 */
+	PG_RETURN_POINTER(state);
+}
+
+Datum
+bytea_agg_finalfn(PG_FUNCTION_ARGS)
+{
+	StringInfo	state;
+
+	/* cannot be called directly because of internal-type argument */
+	Assert(AggCheckCallContext(fcinfo, NULL));
+
+	state = PG_ARGISNULL(0) ? NULL : (StringInfo) PG_GETARG_POINTER(0);
+
+	if (state != NULL)
+	{
+		bytea	   *result;
+
+		result = (bytea *) palloc(state->len + VARHDRSZ);
+		SET_VARSIZE(result, state->len + VARHDRSZ);
+		memcpy(VARDATA(result), state->data, state->len);
+		PG_RETURN_BYTEA_P(result);
+	}
+	else
+		PG_RETURN_NULL();
+}
 
 /*
  *		textin			- converts "..." to internal representation

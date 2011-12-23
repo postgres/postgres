@@ -769,6 +769,8 @@ extern Datum unknownsend(PG_FUNCTION_ARGS);
 
 extern Datum pg_column_size(PG_FUNCTION_ARGS);
 
+extern Datum bytea_agg_transfn(PG_FUNCTION_ARGS);
+extern Datum bytea_agg_finalfn(PG_FUNCTION_ARGS);
 extern Datum string_agg_transfn(PG_FUNCTION_ARGS);
 extern Datum string_agg_finalfn(PG_FUNCTION_ARGS);
 
