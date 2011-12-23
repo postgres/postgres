@@ -61,6 +61,12 @@ extern List *expand_indexqual_conditions(IndexOptInfo *index,
 							List *clausegroups);
 extern void check_partial_indexes(PlannerInfo *root, RelOptInfo *rel);
 extern List *flatten_clausegroups_list(List *clausegroups);
+extern List *flatten_indexorderbys_list(List *indexorderbys);
+extern Expr *adjust_rowcompare_for_index(RowCompareExpr *clause,
+							IndexOptInfo *index,
+							int indexcol,
+							List **indexcolnos,
+							bool *var_on_left_p);
 
 /*
  * orindxpath.c

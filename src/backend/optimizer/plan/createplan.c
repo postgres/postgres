@@ -87,7 +87,7 @@ static List *fix_indexqual_references(PlannerInfo *root, IndexPath *index_path,
 						 List *indexquals);
 static List *fix_indexorderby_references(PlannerInfo *root, IndexPath *index_path,
 							List *indexorderbys);
-static Node *fix_indexqual_operand(Node *node, IndexOptInfo *index);
+static Node *fix_indexqual_operand(Node *node, IndexOptInfo *index, int indexcol);
 static List *get_switched_clauses(List *clauses, Relids outerrelids);
 static List *order_qual_clauses(PlannerInfo *root, List *clauses);
 static void copy_path_costsize(Plan *dest, Path *src);
@@ -1073,10 +1073,6 @@ create_seqscan_plan(PlannerInfo *root, Path *best_path,
  * qual preprocessing work is the same for both.  Note that the caller tells
  * us which to build --- we don't look at best_path->path.pathtype, because
  * create_bitmap_subplan needs to be able to override the prior decision.
- *
- * The indexquals list of the path contains implicitly-ANDed qual conditions.
- * The list can be empty --- then no index restrictions will be applied during
- * the scan.
  */
 static Scan *
 create_indexscan_plan(PlannerInfo *root,
@@ -1086,11 +1082,11 @@ create_indexscan_plan(PlannerInfo *root,
 					  bool indexonly)
 {
 	Scan	   *scan_plan;
-	List	   *indexquals = best_path->indexquals;
 	List	   *indexorderbys = best_path->indexorderbys;
 	Index		baserelid = best_path->path.parent->relid;
 	Oid			indexoid = best_path->indexinfo->indexoid;
 	List	   *qpqual;
+	List	   *indexquals;
 	List	   *stripped_indexquals;
 	List	   *fixed_indexquals;
 	List	   *fixed_indexorderbys;
@@ -1101,6 +1097,13 @@ create_indexscan_plan(PlannerInfo *root,
 	Assert(best_path->path.parent->rtekind == RTE_RELATION);
 
 	/*
+	 * We need to flatten the indexquals list-of-sublists, since most of the
+	 * processing below doesn't care which index column each qual is
+	 * associated with.
+	 */
+	indexquals = flatten_clausegroups_list(best_path->indexquals);
+
+	/*
 	 * Build "stripped" indexquals structure (no RestrictInfos) to pass to
 	 * executor as indexqualorig
 	 */
@@ -1108,14 +1111,23 @@ create_indexscan_plan(PlannerInfo *root,
 
 	/*
 	 * The executor needs a copy with the indexkey on the left of each clause
-	 * and with index Vars substituted for table ones.
+	 * and with index Vars substituted for table ones.  Here we use the
+	 * unflattened list so we can conveniently tell which index column each
+	 * clause is for.
 	 */
-	fixed_indexquals = fix_indexqual_references(root, best_path, indexquals);
+	fixed_indexquals = fix_indexqual_references(root, best_path,
+												best_path->indexquals);
 
 	/*
 	 * Likewise fix up index attr references in the ORDER BY expressions.
 	 */
-	fixed_indexorderbys = fix_indexorderby_references(root, best_path, indexorderbys);
+	fixed_indexorderbys = fix_indexorderby_references(root, best_path,
+													  indexorderbys);
+
+	/*
+	 * Also produce a flat list to become the indexorderbyorig.
+	 */
+	indexorderbys = flatten_indexorderbys_list(indexorderbys);
 
 	/*
 	 * If this is an innerjoin scan, the indexclauses will contain join
@@ -1494,7 +1506,7 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 			clamp_row_est(ipath->indexselectivity * ipath->path.parent->tuples);
 		plan->plan_width = 0;	/* meaningless */
 		*qual = get_actual_clauses(ipath->indexclauses);
-		*indexqual = get_actual_clauses(ipath->indexquals);
+		*indexqual = get_actual_clauses(flatten_clausegroups_list(ipath->indexquals));
 		foreach(l, ipath->indexinfo->indpred)
 		{
 			Expr	   *pred = (Expr *) lfirst(l);
@@ -2472,7 +2484,8 @@ replace_nestloop_params_mutator(Node *node, PlannerInfo *root)
  *	  Adjust indexqual clauses to the form the executor's indexqual
  *	  machinery needs.
  *
- * We have four tasks here:
+ * We have five tasks here:
+ *	* Flatten the list-of-sublists structure of indexquals into a simple list.
  *	* Remove RestrictInfo nodes from the input clauses.
  *	* Replace any outer-relation Var or PHV nodes with nestloop Params.
  *	  (XXX eventually, that responsibility should go elsewhere?)
@@ -2492,96 +2505,129 @@ fix_indexqual_references(PlannerInfo *root, IndexPath *index_path,
 {
 	IndexOptInfo *index = index_path->indexinfo;
 	List	   *fixed_indexquals;
-	ListCell   *l;
+	ListCell   *lc1;
+	int			indexcol;
 
 	fixed_indexquals = NIL;
 
-	foreach(l, indexquals)
+	/* clausegroups must correspond to index columns */
+	Assert(list_length(indexquals) <= index->ncolumns);
+
+	indexcol = 0;
+	foreach(lc1, indexquals)
 	{
-		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
-		Node	   *clause;
+		List	   *clausegroup = (List *) lfirst(lc1);
+		ListCell   *lc2;
 
-		Assert(IsA(rinfo, RestrictInfo));
-
-		/*
-		 * Replace any outer-relation variables with nestloop params.
-		 *
-		 * This also makes a copy of the clause, so it's safe to modify it
-		 * in-place below.
-		 */
-		clause = replace_nestloop_params(root, (Node *) rinfo->clause);
-
-		if (IsA(clause, OpExpr))
+		foreach(lc2, clausegroup)
 		{
-			OpExpr	   *op = (OpExpr *) clause;
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc2);
+			Node	   *clause;
 
-			if (list_length(op->args) != 2)
-				elog(ERROR, "indexqual clause is not binary opclause");
-
-			/*
-			 * Check to see if the indexkey is on the right; if so, commute
-			 * the clause. The indexkey should be the side that refers to
-			 * (only) the base relation.
-			 */
-			if (!bms_equal(rinfo->left_relids, index->rel->relids))
-				CommuteOpExpr(op);
+			Assert(IsA(rinfo, RestrictInfo));
 
 			/*
-			 * Now, determine which index attribute this is and change the
-			 * indexkey operand as needed.
+			 * Replace any outer-relation variables with nestloop params.
+			 *
+			 * This also makes a copy of the clause, so it's safe to modify it
+			 * in-place below.
 			 */
-			linitial(op->args) = fix_indexqual_operand(linitial(op->args),
-													   index);
-		}
-		else if (IsA(clause, RowCompareExpr))
-		{
-			RowCompareExpr *rc = (RowCompareExpr *) clause;
-			ListCell   *lc;
+			clause = replace_nestloop_params(root, (Node *) rinfo->clause);
 
-			/*
-			 * Check to see if the indexkey is on the right; if so, commute
-			 * the clause. The indexkey should be the side that refers to
-			 * (only) the base relation.
-			 */
-			if (!bms_overlap(pull_varnos(linitial(rc->largs)),
-							 index->rel->relids))
-				CommuteRowCompareExpr(rc);
-
-			/*
-			 * For each column in the row comparison, determine which index
-			 * attribute this is and change the indexkey operand as needed.
-			 */
-			foreach(lc, rc->largs)
+			if (IsA(clause, OpExpr))
 			{
-				lfirst(lc) = fix_indexqual_operand(lfirst(lc),
-												   index);
+				OpExpr	   *op = (OpExpr *) clause;
+
+				if (list_length(op->args) != 2)
+					elog(ERROR, "indexqual clause is not binary opclause");
+
+				/*
+				 * Check to see if the indexkey is on the right; if so,
+				 * commute the clause. The indexkey should be the side that
+				 * refers to (only) the base relation.
+				 */
+				if (!bms_equal(rinfo->left_relids, index->rel->relids))
+					CommuteOpExpr(op);
+
+				/*
+				 * Now replace the indexkey expression with an index Var.
+				 */
+				linitial(op->args) = fix_indexqual_operand(linitial(op->args),
+														   index,
+														   indexcol);
 			}
+			else if (IsA(clause, RowCompareExpr))
+			{
+				RowCompareExpr *rc = (RowCompareExpr *) clause;
+				Expr	   *newrc;
+				List	   *indexcolnos;
+				bool		var_on_left;
+				ListCell   *lca,
+						   *lci;
+
+				/*
+				 * Re-discover which index columns are used in the rowcompare.
+				 */
+				newrc = adjust_rowcompare_for_index(rc,
+													index,
+													indexcol,
+													&indexcolnos,
+													&var_on_left);
+
+				/*
+				 * Trouble if adjust_rowcompare_for_index thought the
+				 * RowCompareExpr didn't match the index as-is; the clause
+				 * should have gone through that routine already.
+				 */
+				if (newrc != (Expr *) rc)
+					elog(ERROR, "inconsistent results from adjust_rowcompare_for_index");
+
+				/*
+				 * Check to see if the indexkey is on the right; if so,
+				 * commute the clause.
+				 */
+				if (!var_on_left)
+					CommuteRowCompareExpr(rc);
+
+				/*
+				 * Now replace the indexkey expressions with index Vars.
+				 */
+				Assert(list_length(rc->largs) == list_length(indexcolnos));
+				forboth(lca, rc->largs, lci, indexcolnos)
+				{
+					lfirst(lca) = fix_indexqual_operand(lfirst(lca),
+														index,
+														lfirst_int(lci));
+				}
+			}
+			else if (IsA(clause, ScalarArrayOpExpr))
+			{
+				ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) clause;
+
+				/* Never need to commute... */
+
+				/* Replace the indexkey expression with an index Var. */
+				linitial(saop->args) = fix_indexqual_operand(linitial(saop->args),
+															 index,
+															 indexcol);
+			}
+			else if (IsA(clause, NullTest))
+			{
+				NullTest   *nt = (NullTest *) clause;
+
+				/* Replace the indexkey expression with an index Var. */
+				nt->arg = (Expr *) fix_indexqual_operand((Node *) nt->arg,
+														 index,
+														 indexcol);
+			}
+			else
+				elog(ERROR, "unsupported indexqual type: %d",
+					 (int) nodeTag(clause));
+
+			fixed_indexquals = lappend(fixed_indexquals, clause);
 		}
-		else if (IsA(clause, ScalarArrayOpExpr))
-		{
-			ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) clause;
 
-			/* Never need to commute... */
-
-			/*
-			 * Determine which index attribute this is and change the indexkey
-			 * operand as needed.
-			 */
-			linitial(saop->args) = fix_indexqual_operand(linitial(saop->args),
-														 index);
-		}
-		else if (IsA(clause, NullTest))
-		{
-			NullTest   *nt = (NullTest *) clause;
-
-			nt->arg = (Expr *) fix_indexqual_operand((Node *) nt->arg,
-													 index);
-		}
-		else
-			elog(ERROR, "unsupported indexqual type: %d",
-				 (int) nodeTag(clause));
-
-		fixed_indexquals = lappend(fixed_indexquals, clause);
+		indexcol++;
 	}
 
 	return fixed_indexquals;
@@ -2593,7 +2639,7 @@ fix_indexqual_references(PlannerInfo *root, IndexPath *index_path,
  *	  machinery needs.
  *
  * This is a simplified version of fix_indexqual_references.  The input does
- * not have RestrictInfo nodes, and we assume that indxqual.c already
+ * not have RestrictInfo nodes, and we assume that indxpath.c already
  * commuted the clauses to put the index keys on the left.	Also, we don't
  * bother to support any cases except simple OpExprs, since nothing else
  * is allowed for ordering operators.
@@ -2604,41 +2650,62 @@ fix_indexorderby_references(PlannerInfo *root, IndexPath *index_path,
 {
 	IndexOptInfo *index = index_path->indexinfo;
 	List	   *fixed_indexorderbys;
-	ListCell   *l;
+	ListCell   *lc1;
 
 	fixed_indexorderbys = NIL;
 
-	foreach(l, indexorderbys)
+	foreach(lc1, indexorderbys)
 	{
-		Node	   *clause = (Node *) lfirst(l);
+		List	   *percollists = (List *) lfirst(lc1);
+		ListCell   *lc2;
+		int			indexcol;
 
-		/*
-		 * Replace any outer-relation variables with nestloop params.
-		 *
-		 * This also makes a copy of the clause, so it's safe to modify it
-		 * in-place below.
-		 */
-		clause = replace_nestloop_params(root, clause);
+		/* percollists must correspond to index columns */
+		Assert(list_length(percollists) <= index->ncolumns);
 
-		if (IsA(clause, OpExpr))
+		indexcol = 0;
+		foreach(lc2, percollists)
 		{
-			OpExpr	   *op = (OpExpr *) clause;
+			List	   *percollist = (List *) lfirst(lc2);
 
-			if (list_length(op->args) != 2)
-				elog(ERROR, "indexorderby clause is not binary opclause");
+			if (percollist != NIL)
+			{
+				Node	   *clause = (Node *) linitial(percollist);
 
-			/*
-			 * Now, determine which index attribute this is and change the
-			 * indexkey operand as needed.
-			 */
-			linitial(op->args) = fix_indexqual_operand(linitial(op->args),
-													   index);
+				/* Should have only one clause per index column */
+				Assert(list_length(percollist) == 1);
+
+				/*
+				 * Replace any outer-relation variables with nestloop params.
+				 *
+				 * This also makes a copy of the clause, so it's safe to
+				 * modify it in-place below.
+				 */
+				clause = replace_nestloop_params(root, clause);
+
+				if (IsA(clause, OpExpr))
+				{
+					OpExpr	   *op = (OpExpr *) clause;
+
+					if (list_length(op->args) != 2)
+						elog(ERROR, "indexorderby clause is not binary opclause");
+
+					/*
+					 * Now replace the indexkey expression with an index Var.
+					 */
+					linitial(op->args) = fix_indexqual_operand(linitial(op->args),
+															   index,
+															   indexcol);
+				}
+				else
+					elog(ERROR, "unsupported indexorderby type: %d",
+						 (int) nodeTag(clause));
+
+				fixed_indexorderbys = lappend(fixed_indexorderbys, clause);
+			}
+
+			indexcol++;
 		}
-		else
-			elog(ERROR, "unsupported indexorderby type: %d",
-				 (int) nodeTag(clause));
-
-		fixed_indexorderbys = lappend(fixed_indexorderbys, clause);
 	}
 
 	return fixed_indexorderbys;
@@ -2650,9 +2717,12 @@ fix_indexorderby_references(PlannerInfo *root, IndexPath *index_path,
  *
  * We represent index keys by Var nodes having varno == INDEX_VAR and varattno
  * equal to the index's attribute number (index column position).
+ *
+ * Most of the code here is just for sanity cross-checking that the given
+ * expression actually matches the index column it's claimed to.
  */
 static Node *
-fix_indexqual_operand(Node *node, IndexOptInfo *index)
+fix_indexqual_operand(Node *node, IndexOptInfo *index, int indexcol)
 {
 	Var		   *result;
 	int			pos;
@@ -2664,55 +2734,56 @@ fix_indexqual_operand(Node *node, IndexOptInfo *index)
 	if (IsA(node, RelabelType))
 		node = (Node *) ((RelabelType *) node)->arg;
 
-	if (IsA(node, Var) &&
-		((Var *) node)->varno == index->rel->relid)
-	{
-		/* Try to match against simple index columns */
-		int			varatt = ((Var *) node)->varattno;
+	Assert(indexcol >= 0 && indexcol < index->ncolumns);
 
-		if (varatt != 0)
+	if (index->indexkeys[indexcol] != 0)
+	{
+		/* It's a simple index column */
+		if (IsA(node, Var) &&
+			((Var *) node)->varno == index->rel->relid &&
+			((Var *) node)->varattno == index->indexkeys[indexcol])
 		{
-			for (pos = 0; pos < index->ncolumns; pos++)
-			{
-				if (index->indexkeys[pos] == varatt)
-				{
-					result = (Var *) copyObject(node);
-					result->varno = INDEX_VAR;
-					result->varattno = pos + 1;
-					return (Node *) result;
-				}
-			}
+			result = (Var *) copyObject(node);
+			result->varno = INDEX_VAR;
+			result->varattno = indexcol + 1;
+			return (Node *) result;
 		}
+		else
+			elog(ERROR, "index key does not match expected index column");
 	}
 
-	/* Try to match against index expressions */
+	/* It's an index expression, so find and cross-check the expression */
 	indexpr_item = list_head(index->indexprs);
 	for (pos = 0; pos < index->ncolumns; pos++)
 	{
 		if (index->indexkeys[pos] == 0)
 		{
-			Node	   *indexkey;
-
 			if (indexpr_item == NULL)
 				elog(ERROR, "too few entries in indexprs list");
-			indexkey = (Node *) lfirst(indexpr_item);
-			if (indexkey && IsA(indexkey, RelabelType))
-				indexkey = (Node *) ((RelabelType *) indexkey)->arg;
-			if (equal(node, indexkey))
+			if (pos == indexcol)
 			{
-				/* Found a match */
-				result = makeVar(INDEX_VAR, pos + 1,
-								 exprType(lfirst(indexpr_item)), -1,
-								 exprCollation(lfirst(indexpr_item)),
-								 0);
-				return (Node *) result;
+				Node	   *indexkey;
+
+				indexkey = (Node *) lfirst(indexpr_item);
+				if (indexkey && IsA(indexkey, RelabelType))
+					indexkey = (Node *) ((RelabelType *) indexkey)->arg;
+				if (equal(node, indexkey))
+				{
+					result = makeVar(INDEX_VAR, indexcol + 1,
+									 exprType(lfirst(indexpr_item)), -1,
+									 exprCollation(lfirst(indexpr_item)),
+									 0);
+					return (Node *) result;
+				}
+				else
+					elog(ERROR, "index key does not match expected index column");
 			}
 			indexpr_item = lnext(indexpr_item);
 		}
 	}
 
 	/* Ooops... */
-	elog(ERROR, "node is not an index attribute");
+	elog(ERROR, "index key does not match expected index column");
 	return NULL;				/* keep compiler quiet */
 }
 

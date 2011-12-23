@@ -659,18 +659,25 @@ typedef struct Path
  * AND semantics across the list.  Each clause is a RestrictInfo node from
  * the query's WHERE or JOIN conditions.
  *
- * 'indexquals' has the same structure as 'indexclauses', but it contains
- * the actual indexqual conditions that can be used with the index.
- * In simple cases this is identical to 'indexclauses', but when special
- * indexable operators appear in 'indexclauses', they are replaced by the
- * derived indexscannable conditions in 'indexquals'.
+ * 'indexquals' is a list of sub-lists of the actual index qual conditions
+ * that can be used with the index.  There is one possibly-empty sub-list
+ * for each index column (but empty sub-lists for trailing columns can be
+ * omitted).  The qual conditions are RestrictInfos, and in simple cases
+ * are the same RestrictInfos that appear in the flat indexclauses list.
+ * But when special indexable operators appear in 'indexclauses', they are
+ * replaced by their derived indexscannable conditions in 'indexquals'.
+ * Note that an entirely empty indexquals list denotes a full-index scan.
  *
- * 'indexorderbys', if not NIL, is a list of ORDER BY expressions that have
- * been found to be usable as ordering operators for an amcanorderbyop index.
- * Note that these are not RestrictInfos, just bare expressions, since they
- * generally won't yield booleans.  The list will match the path's pathkeys.
- * Also, unlike the case for quals, it's guaranteed that each expression has
- * the index key on the left side of the operator.
+ * 'indexorderbys', if not NIL, is a list of lists of lists of ORDER BY
+ * expressions that have been found to be usable as ordering operators for an
+ * amcanorderbyop index.  These are not RestrictInfos, just bare expressions,
+ * since they generally won't yield booleans.  Also, unlike the case for
+ * quals, it's guaranteed that each expression has the index key on the left
+ * side of the operator.  The top list has one entry per pathkey in the
+ * path's pathkeys, and the sub-lists have one sub-sublist per index column.
+ * This representation is a bit of overkill, since there will be only one
+ * actual expression per pathkey, but it's convenient because each sub-list
+ * has the same structure as the indexquals list.
  *
  * 'isjoininner' is TRUE if the path is a nestloop inner scan (that is,
  * some of the index conditions are join rather than restriction clauses).

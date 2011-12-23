@@ -630,7 +630,7 @@ extract_actual_join_clauses(List *restrictinfo_list,
  * being used in an inner indexscan need not be checked again at the join.
  *
  * "Redundant" means either equal() or derived from the same EquivalenceClass.
- * We have to check the latter because indxqual.c may select different derived
+ * We have to check the latter because indxpath.c may select different derived
  * clauses than were selected by generate_join_implied_equalities().
  *
  * Note that we are *not* checking for local redundancies within the given

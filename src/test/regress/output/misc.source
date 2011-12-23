@@ -610,6 +610,7 @@ SELECT user_relns() AS user_relns
  default_tbl
  defaultexpr_tbl
  dept
+ dupindexcols
  e_star
  emp
  equipment_r
@@ -685,7 +686,7 @@ SELECT user_relns() AS user_relns
  toyemp
  varchar_tbl
  xacttest
-(107 rows)
+(108 rows)
 
 SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer')));
  name 

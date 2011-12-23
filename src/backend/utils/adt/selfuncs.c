@@ -5991,6 +5991,14 @@ genericcostestimate(PlannerInfo *root,
 	List	   *selectivityQuals;
 	ListCell   *l;
 
+	/*
+	 * For our purposes here, it doesn't matter which index columns the
+	 * individual quals and order-by expressions go with, so flatten the
+	 * lists for convenience.
+	 */
+	indexQuals = flatten_clausegroups_list(indexQuals);
+	indexOrderBys = flatten_indexorderbys_list(indexOrderBys);
+
 	/*----------
 	 * If the index is partial, AND the index predicate with the explicitly
 	 * given indexquals to produce a more accurate idea of the index
@@ -6022,7 +6030,7 @@ genericcostestimate(PlannerInfo *root,
 			if (!predicate_implied_by(oneQual, indexQuals))
 				predExtraQuals = list_concat(predExtraQuals, oneQual);
 		}
-		/* list_concat avoids modifying the passed-in indexQuals list */
+		/* list_concat avoids modifying the indexQuals list */
 		selectivityQuals = list_concat(predExtraQuals, indexQuals);
 	}
 	else
@@ -6250,7 +6258,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 	bool		found_saop;
 	bool		found_is_null_op;
 	double		num_sa_scans;
-	ListCell   *l;
+	ListCell   *lc1;
 
 	/*
 	 * For a btree scan, only leading '=' quals plus inequality quals for the
@@ -6259,8 +6267,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 	 * the index scan).  Additional quals can suppress visits to the heap, so
 	 * it's OK to count them in indexSelectivity, but they should not count
 	 * for estimating numIndexTuples.  So we must examine the given indexQuals
-	 * to find out which ones count as boundary quals.	We rely on the
-	 * knowledge that they are given in index column order.
+	 * to find out which ones count as boundary quals.
 	 *
 	 * For a RowCompareExpr, we consider only the first column, just as
 	 * rowcomparesel() does.
@@ -6270,120 +6277,119 @@ btcostestimate(PG_FUNCTION_ARGS)
 	 * considered to act the same as it normally does.
 	 */
 	indexBoundQuals = NIL;
-	indexcol = 0;
 	eqQualHere = false;
 	found_saop = false;
 	found_is_null_op = false;
 	num_sa_scans = 1;
-	foreach(l, indexQuals)
+
+	/* clausegroups must correspond to index columns */
+	Assert(list_length(indexQuals) <= index->ncolumns);
+
+	indexcol = 0;
+	foreach(lc1, indexQuals)
 	{
-		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
-		Expr	   *clause;
-		Node	   *leftop,
-				   *rightop;
-		Oid			clause_op;
-		int			op_strategy;
-		bool		is_null_op = false;
+		List	   *clausegroup = (List *) lfirst(lc1);
+		ListCell   *lc2;
 
-		Assert(IsA(rinfo, RestrictInfo));
-		clause = rinfo->clause;
-		if (IsA(clause, OpExpr))
-		{
-			leftop = get_leftop(clause);
-			rightop = get_rightop(clause);
-			clause_op = ((OpExpr *) clause)->opno;
-		}
-		else if (IsA(clause, RowCompareExpr))
-		{
-			RowCompareExpr *rc = (RowCompareExpr *) clause;
+		eqQualHere = false;
 
-			leftop = (Node *) linitial(rc->largs);
-			rightop = (Node *) linitial(rc->rargs);
-			clause_op = linitial_oid(rc->opnos);
-		}
-		else if (IsA(clause, ScalarArrayOpExpr))
+		foreach(lc2, clausegroup)
 		{
-			ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) clause;
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc2);
+			Expr	   *clause;
+			Node	   *leftop,
+					   *rightop;
+			Oid			clause_op;
+			int			op_strategy;
+			bool		is_null_op = false;
 
-			leftop = (Node *) linitial(saop->args);
-			rightop = (Node *) lsecond(saop->args);
-			clause_op = saop->opno;
-			found_saop = true;
-		}
-		else if (IsA(clause, NullTest))
-		{
-			NullTest   *nt = (NullTest *) clause;
-
-			leftop = (Node *) nt->arg;
-			rightop = NULL;
-			clause_op = InvalidOid;
-			if (nt->nulltesttype == IS_NULL)
+			Assert(IsA(rinfo, RestrictInfo));
+			clause = rinfo->clause;
+			if (IsA(clause, OpExpr))
 			{
-				found_is_null_op = true;
-				is_null_op = true;
+				leftop = get_leftop(clause);
+				rightop = get_rightop(clause);
+				clause_op = ((OpExpr *) clause)->opno;
 			}
-		}
-		else
-		{
-			elog(ERROR, "unsupported indexqual type: %d",
-				 (int) nodeTag(clause));
-			continue;			/* keep compiler quiet */
-		}
-		if (match_index_to_operand(leftop, indexcol, index))
-		{
-			/* clause_op is correct */
-		}
-		else if (match_index_to_operand(rightop, indexcol, index))
-		{
-			/* Must flip operator to get the opfamily member */
-			clause_op = get_commutator(clause_op);
-		}
-		else
-		{
-			/* Must be past the end of quals for indexcol, try next */
-			if (!eqQualHere)
-				break;			/* done if no '=' qual for indexcol */
-			indexcol++;
-			eqQualHere = false;
+			else if (IsA(clause, RowCompareExpr))
+			{
+				RowCompareExpr *rc = (RowCompareExpr *) clause;
+
+				leftop = (Node *) linitial(rc->largs);
+				rightop = (Node *) linitial(rc->rargs);
+				clause_op = linitial_oid(rc->opnos);
+			}
+			else if (IsA(clause, ScalarArrayOpExpr))
+			{
+				ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) clause;
+
+				leftop = (Node *) linitial(saop->args);
+				rightop = (Node *) lsecond(saop->args);
+				clause_op = saop->opno;
+				found_saop = true;
+			}
+			else if (IsA(clause, NullTest))
+			{
+				NullTest   *nt = (NullTest *) clause;
+
+				leftop = (Node *) nt->arg;
+				rightop = NULL;
+				clause_op = InvalidOid;
+				if (nt->nulltesttype == IS_NULL)
+				{
+					found_is_null_op = true;
+					is_null_op = true;
+				}
+			}
+			else
+			{
+				elog(ERROR, "unsupported indexqual type: %d",
+					 (int) nodeTag(clause));
+				continue;			/* keep compiler quiet */
+			}
+
 			if (match_index_to_operand(leftop, indexcol, index))
 			{
 				/* clause_op is correct */
 			}
-			else if (match_index_to_operand(rightop, indexcol, index))
+			else
 			{
+				Assert(match_index_to_operand(rightop, indexcol, index));
 				/* Must flip operator to get the opfamily member */
 				clause_op = get_commutator(clause_op);
 			}
-			else
-			{
-				/* No quals for new indexcol, so we are done */
-				break;
-			}
-		}
-		/* check for equality operator */
-		if (OidIsValid(clause_op))
-		{
-			op_strategy = get_op_opfamily_strategy(clause_op,
-												   index->opfamily[indexcol]);
-			Assert(op_strategy != 0);	/* not a member of opfamily?? */
-			if (op_strategy == BTEqualStrategyNumber)
-				eqQualHere = true;
-		}
-		else if (is_null_op)
-		{
-			/* IS NULL is like = for purposes of selectivity determination */
-			eqQualHere = true;
-		}
-		/* count up number of SA scans induced by indexBoundQuals only */
-		if (IsA(clause, ScalarArrayOpExpr))
-		{
-			ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) clause;
-			int			alength = estimate_array_length(lsecond(saop->args));
 
-			if (alength > 1)
-				num_sa_scans *= alength;
+			/* check for equality operator */
+			if (OidIsValid(clause_op))
+			{
+				op_strategy = get_op_opfamily_strategy(clause_op,
+												   index->opfamily[indexcol]);
+				Assert(op_strategy != 0);	/* not a member of opfamily?? */
+				if (op_strategy == BTEqualStrategyNumber)
+					eqQualHere = true;
+			}
+			else if (is_null_op)
+			{
+				/* IS NULL is like = for selectivity determination */
+				eqQualHere = true;
+			}
+			/* count up number of SA scans induced by indexBoundQuals only */
+			if (IsA(clause, ScalarArrayOpExpr))
+			{
+				ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) clause;
+				int		alength = estimate_array_length(lsecond(saop->args));
+
+				if (alength > 1)
+					num_sa_scans *= alength;
+			}
+			indexBoundQuals = lappend(indexBoundQuals, rinfo);
 		}
-		indexBoundQuals = lappend(indexBoundQuals, rinfo);
+
+		/* Done with this indexcol, continue to next only if it had = qual */
+		if (!eqQualHere)
+			break;
+
+		indexcol++;
 	}
 
 	/*
@@ -6393,7 +6399,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 	 * NullTest invalidates that theory, even though it sets eqQualHere.
 	 */
 	if (index->unique &&
-		indexcol == index->ncolumns - 1 &&
+		indexcol == index->ncolumns &&
 		eqQualHere &&
 		!found_saop &&
 		!found_is_null_op)
@@ -6925,6 +6931,14 @@ gincostestimate(PG_FUNCTION_ARGS)
 	GinStatsData ginStats;
 
 	/*
+	 * For our purposes here, it doesn't matter which index columns the
+	 * individual quals and order-by expressions go with, so flatten the
+	 * lists for convenience.
+	 */
+	indexQuals = flatten_clausegroups_list(indexQuals);
+	indexOrderBys = flatten_indexorderbys_list(indexOrderBys);
+
+	/*
 	 * Obtain statistic information from the meta page
 	 */
 	indexRel = index_open(index->indexoid, AccessShareLock);
@@ -6980,7 +6994,7 @@ gincostestimate(PG_FUNCTION_ARGS)
 			if (!predicate_implied_by(oneQual, indexQuals))
 				predExtraQuals = list_concat(predExtraQuals, oneQual);
 		}
-		/* list_concat avoids modifying the passed-in indexQuals list */
+		/* list_concat avoids modifying the indexQuals list */
 		selectivityQuals = list_concat(predExtraQuals, indexQuals);
 	}
 	else

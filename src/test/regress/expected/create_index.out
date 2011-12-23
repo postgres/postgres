@@ -2459,3 +2459,27 @@ RESET enable_seqscan;
 RESET enable_indexscan;
 RESET enable_bitmapscan;
 DROP TABLE onek_with_null;
+--
+-- Check behavior with duplicate index column contents
+--
+CREATE TABLE dupindexcols AS
+  SELECT unique1 as id, stringu2::text as f1 FROM tenk1;
+CREATE INDEX dupindexcols_i ON dupindexcols (f1, id, f1 text_pattern_ops);
+VACUUM ANALYZE dupindexcols;
+EXPLAIN (COSTS OFF)
+  SELECT count(*) FROM dupindexcols
+    WHERE f1 > 'LX' and id < 1000 and f1 ~<~ 'YX';
+                                   QUERY PLAN                                    
+---------------------------------------------------------------------------------
+ Aggregate
+   ->  Index Only Scan using dupindexcols_i on dupindexcols
+         Index Cond: ((f1 > 'LX'::text) AND (id < 1000) AND (f1 ~<~ 'YX'::text))
+(3 rows)
+
+SELECT count(*) FROM dupindexcols
+  WHERE f1 > 'LX' and id < 1000 and f1 ~<~ 'YX';
+ count 
+-------
+   500
+(1 row)
+

@@ -804,3 +804,18 @@ RESET enable_indexscan;
 RESET enable_bitmapscan;
 
 DROP TABLE onek_with_null;
+
+--
+-- Check behavior with duplicate index column contents
+--
+
+CREATE TABLE dupindexcols AS
+  SELECT unique1 as id, stringu2::text as f1 FROM tenk1;
+CREATE INDEX dupindexcols_i ON dupindexcols (f1, id, f1 text_pattern_ops);
+VACUUM ANALYZE dupindexcols;
+
+EXPLAIN (COSTS OFF)
+  SELECT count(*) FROM dupindexcols
+    WHERE f1 > 'LX' and id < 1000 and f1 ~<~ 'YX';
+SELECT count(*) FROM dupindexcols
+  WHERE f1 > 'LX' and id < 1000 and f1 ~<~ 'YX';

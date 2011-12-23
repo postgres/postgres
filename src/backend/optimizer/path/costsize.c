@@ -209,8 +209,10 @@ cost_seqscan(Path *path, PlannerInfo *root,
  *	  Determines and returns the cost of scanning a relation using an index.
  *
  * 'index' is the index to be used
- * 'indexQuals' is the list of applicable qual clauses (implicit AND semantics)
- * 'indexOrderBys' is the list of ORDER BY operators for amcanorderbyop indexes
+ * 'indexQuals' is a list of lists of applicable qual clauses (implicit AND
+ *		semantics, one sub-list per index column)
+ * 'indexOrderBys' is a list of lists of lists of ORDER BY expressions for
+ *		amcanorderbyop indexes (lists per pathkey and index column)
  * 'indexonly' is true if it's an index-only scan
  * 'outer_rel' is the outer relation when we are considering using the index
  *		scan as the inside of a nestloop join (hence, some of the indexQuals
@@ -221,8 +223,8 @@ cost_seqscan(Path *path, PlannerInfo *root,
  * additional fields of the IndexPath besides startup_cost and total_cost.
  * These fields are needed if the IndexPath is used in a BitmapIndexScan.
  *
- * indexQuals is a list of RestrictInfo nodes, but indexOrderBys is a list of
- * bare expressions.
+ * indexQuals is a list of lists of RestrictInfo nodes, but indexOrderBys
+ * is a list of lists of lists of bare expressions.
  *
  * NOTE: 'indexQuals' must contain only clauses usable as index restrictions.
  * Any additional quals evaluated as qpquals may reduce the number of returned

@@ -1148,7 +1148,8 @@ check_index_only(RelOptInfo *rel, IndexOptInfo *index)
  * Returns a list of sublists of RestrictInfo nodes for clauses that can be
  * used with this index.  Each sublist contains clauses that can be used
  * with one index key (in no particular order); the top list is ordered by
- * index key.  (This is depended on by expand_indexqual_conditions().)
+ * index key.  (This is depended on by expand_indexqual_conditions() and
+ * fix_indexqual_references().)
  *
  * We can use clauses from either the current clauses or outer_clauses lists,
  * but *found_clause is set TRUE only if we used at least one clause from
@@ -1171,8 +1172,11 @@ check_index_only(RelOptInfo *rel, IndexOptInfo *index)
  * column C, and no clauses use column B.
  *
  * Note: in some circumstances we may find the same RestrictInfos coming
- * from multiple places.  Defend against redundant outputs by using
- * list_append_unique_ptr (pointer equality should be good enough).
+ * from multiple places.  Defend against redundant outputs by keeping a side
+ * list of already-used clauses (pointer equality should be a good enough
+ * check for this).  That also keeps us from matching the same clause to
+ * multiple columns of a badly-defined index, which is unlikely to be helpful
+ * and is likely to give us an inflated idea of the index's selectivity.
  */
 static List *
 group_clauses_by_indexkey(IndexOptInfo *index,
@@ -1182,6 +1186,7 @@ group_clauses_by_indexkey(IndexOptInfo *index,
 						  bool *found_clause)
 {
 	List	   *clausegroup_list = NIL;
+	List	   *used_clauses = NIL;
 	bool		found_outer_clause = false;
 	int			indexcol;
 
@@ -1201,13 +1206,16 @@ group_clauses_by_indexkey(IndexOptInfo *index,
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 
 			Assert(IsA(rinfo, RestrictInfo));
+			if (list_member_ptr(used_clauses, rinfo))
+				continue;
 			if (match_clause_to_indexcol(index,
 										 indexcol,
 										 rinfo,
 										 outer_relids,
 										 saop_control))
 			{
-				clausegroup = list_append_unique_ptr(clausegroup, rinfo);
+				clausegroup = lappend(clausegroup, rinfo);
+				used_clauses = lappend(used_clauses, rinfo);
 				if (saop_control != SAOP_REQUIRE ||
 					IsA(rinfo->clause, ScalarArrayOpExpr))
 					*found_clause = true;
@@ -1220,13 +1228,16 @@ group_clauses_by_indexkey(IndexOptInfo *index,
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 
 			Assert(IsA(rinfo, RestrictInfo));
+			if (list_member_ptr(used_clauses, rinfo))
+				continue;
 			if (match_clause_to_indexcol(index,
 										 indexcol,
 										 rinfo,
 										 outer_relids,
 										 saop_control))
 			{
-				clausegroup = list_append_unique_ptr(clausegroup, rinfo);
+				clausegroup = lappend(clausegroup, rinfo);
+				used_clauses = lappend(used_clauses, rinfo);
 				found_outer_clause = true;
 			}
 		}
@@ -1239,6 +1250,8 @@ group_clauses_by_indexkey(IndexOptInfo *index,
 
 		clausegroup_list = lappend(clausegroup_list, clausegroup);
 	}
+
+	list_free(used_clauses);
 
 	if (!*found_clause && !found_outer_clause)
 		return NIL;				/* no indexable clauses anywhere */
@@ -1293,7 +1306,7 @@ group_clauses_by_indexkey(IndexOptInfo *index,
  *	  target index column.	This is sufficient to guarantee that some index
  *	  condition can be constructed from the RowCompareExpr --- whether the
  *	  remaining columns match the index too is considered in
- *	  expand_indexqual_rowcompare().
+ *	  adjust_rowcompare_for_index().
  *
  *	  It is also possible to match ScalarArrayOpExpr clauses to indexes, when
  *	  the clause is of the form "indexkey op ANY (arrayconst)".  Since not
@@ -1553,13 +1566,15 @@ match_rowcompare_to_indexcol(IndexOptInfo *index,
  *		Test whether an index can produce output ordered according to the
  *		given pathkeys using "ordering operators".
  *
- * If it can, return a list of suitable ORDER BY expressions, each of the form
- * "indexedcol operator pseudoconstant".  If not, return NIL.
+ * If it can, return a list of lists of lists of ORDER BY expressions,
+ * each of the form "indexedcol operator pseudoconstant".  If not, return NIL.
+ * (The top list corresponds to pathkeys and the sub-lists to index columns;
+ * see comments for indexorderbys in nodes/relation.h.)
  */
 static List *
 match_index_to_pathkeys(IndexOptInfo *index, List *pathkeys)
 {
-	List	   *orderbyexprs = NIL;
+	List	   *orderbylists = NIL;
 	ListCell   *lc1;
 
 	/* Only indexes with the amcanorderbyop property are interesting here */
@@ -1606,7 +1621,17 @@ match_index_to_pathkeys(IndexOptInfo *index, List *pathkeys)
 												   pathkey->pk_opfamily);
 				if (expr)
 				{
-					orderbyexprs = lappend(orderbyexprs, expr);
+					/*
+					 * Generate list-of-sublists representation to show which
+					 * index column this expression matches.
+					 */
+					List   *sublist = NIL;
+					int		i;
+
+					for (i = 0; i < indexcol; i++)
+						sublist = lappend(sublist, NIL);
+					sublist = lappend(sublist, list_make1(expr));
+					orderbylists = lappend(orderbylists, sublist);
 					found = true;
 					break;
 				}
@@ -1620,7 +1645,7 @@ match_index_to_pathkeys(IndexOptInfo *index, List *pathkeys)
 			return NIL;
 	}
 
-	return orderbyexprs;		/* success! */
+	return orderbylists;		/* success! */
 }
 
 /*
@@ -2434,9 +2459,11 @@ relation_has_unique_index_for(PlannerInfo *root, RelOptInfo *rel,
  *	  Given a list of lists of RestrictInfos, flatten it to a list
  *	  of RestrictInfos.
  *
- * This is used to flatten out the result of group_clauses_by_indexkey()
- * to produce an indexclauses list.  The original list structure mustn't
- * be altered, but it's OK to share copies of the underlying RestrictInfos.
+ * This is used to flatten out a list of sublists of index clauses (such as
+ * the result of group_clauses_by_indexkey()) into a single list, for use
+ * where we don't care which clause goes with which index column.  The input
+ * list structure mustn't be altered, but it's OK to share copies of the
+ * underlying RestrictInfos.
  */
 List *
 flatten_clausegroups_list(List *clausegroups)
@@ -2446,6 +2473,38 @@ flatten_clausegroups_list(List *clausegroups)
 
 	foreach(l, clausegroups)
 		allclauses = list_concat(allclauses, list_copy((List *) lfirst(l)));
+	return allclauses;
+}
+
+/*
+ * flatten_indexorderbys_list
+ *	  Given a list of lists of lists of ORDER BY expressions, flatten it.
+ *
+ * This is similar to flatten_clausegroups_list, but is used to flatten the
+ * three-list-level result of match_index_to_pathkeys().  We assume the
+ * bottom lists each have zero or one member.
+ */
+List *
+flatten_indexorderbys_list(List *indexorderbys)
+{
+	List	   *allclauses = NIL;
+	ListCell   *lc1;
+
+	foreach(lc1, indexorderbys)
+	{
+		List	   *sublist = (List *) lfirst(lc1);
+		ListCell   *lc2;
+
+		foreach(lc2, sublist)
+		{
+			List	   *subsublist = (List *) lfirst(lc2);
+
+			if (subsublist == NIL)
+				continue;
+			Assert(list_length(subsublist) == 1);
+			allclauses = lappend(allclauses, (Expr *) linitial(subsublist));
+		}
+	}
 	return allclauses;
 }
 
@@ -2577,8 +2636,8 @@ match_index_to_operand(Node *operand,
  * converted into boolean equality operators.
  *
  * expand_indexqual_conditions() converts a list of lists of RestrictInfo
- * nodes (with implicit AND semantics across list elements) into
- * a list of clauses that the executor can actually handle.  For operators
+ * nodes (with implicit AND semantics across list elements) into a list of
+ * lists of clauses that the executor can actually handle.  For operators
  * that are members of the index's opfamily this transformation is a no-op,
  * but clauses recognized by match_special_index_operator() or
  * match_boolean_index_clause() must be converted into one or more "regular"
@@ -2796,22 +2855,20 @@ match_special_index_operator(Expr *clause, Oid opfamily, Oid idxcollation,
 
 /*
  * expand_indexqual_conditions
- *	  Given a list of sublists of RestrictInfo nodes, produce a flat list
+ *	  Given a list of sublists of RestrictInfo nodes, produce a list of lists
  *	  of index qual clauses.  Standard qual clauses (those in the index's
  *	  opfamily) are passed through unchanged.  Boolean clauses and "special"
  *	  index operators are expanded into clauses that the indexscan machinery
  *	  will know what to do with.  RowCompare clauses are simplified if
  *	  necessary to create a clause that is fully checkable by the index.
  *
- * The input list is ordered by index key, and so the output list is too.
- * (The latter is not depended on by any part of the core planner, I believe,
- * but parts of the executor require it, and so do the amcostestimate
- * functions.)
+ * The input clauses are grouped by index key, and so the output is too.
+ * (This is depended on in various places in both planner and executor.)
  */
 List *
 expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 {
-	List	   *resultquals = NIL;
+	List	   *resultgroups = NIL;
 	ListCell   *lc;
 	int			indexcol;
 
@@ -2827,6 +2884,7 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 		List	   *clausegroup = (List *) lfirst(lc);
 		Oid			curFamily = index->opfamily[indexcol];
 		Oid			curCollation = index->indexcollations[indexcol];
+		List	   *newgroup = NIL;
 		ListCell   *lc2;
 
 		foreach(lc2, clausegroup)
@@ -2844,8 +2902,8 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 													   index);
 				if (boolqual)
 				{
-					resultquals = lappend(resultquals,
-										  make_simple_restrictinfo(boolqual));
+					newgroup = lappend(newgroup,
+									   make_simple_restrictinfo(boolqual));
 					continue;
 				}
 			}
@@ -2856,38 +2914,40 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 			 */
 			if (is_opclause(clause))
 			{
-				resultquals = list_concat(resultquals,
-										  expand_indexqual_opclause(rinfo,
-																	curFamily,
+				newgroup = list_concat(newgroup,
+									   expand_indexqual_opclause(rinfo,
+																 curFamily,
 															  curCollation));
 			}
 			else if (IsA(clause, ScalarArrayOpExpr))
 			{
 				/* no extra work at this time */
-				resultquals = lappend(resultquals, rinfo);
+				newgroup = lappend(newgroup, rinfo);
 			}
 			else if (IsA(clause, RowCompareExpr))
 			{
-				resultquals = lappend(resultquals,
-									  expand_indexqual_rowcompare(rinfo,
-																  index,
-																  indexcol));
+				newgroup = lappend(newgroup,
+								   expand_indexqual_rowcompare(rinfo,
+															   index,
+															   indexcol));
 			}
 			else if (IsA(clause, NullTest))
 			{
 				Assert(index->amsearchnulls);
-				resultquals = lappend(resultquals,
-									  make_simple_restrictinfo(clause));
+				newgroup = lappend(newgroup,
+								   make_simple_restrictinfo(clause));
 			}
 			else
 				elog(ERROR, "unsupported indexqual type: %d",
 					 (int) nodeTag(clause));
 		}
 
+		resultgroups = lappend(resultgroups, newgroup);
+
 		indexcol++;
 	}
 
-	return resultquals;
+	return resultgroups;
 }
 
 /*
@@ -3054,6 +3114,41 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily, Oid idxcollation)
  * expand_indexqual_rowcompare --- expand a single indexqual condition
  *		that is a RowCompareExpr
  *
+ * This is a thin wrapper around adjust_rowcompare_for_index; we export the
+ * latter so that createplan.c can use it to re-discover which columns of the
+ * index are used by a row comparison indexqual.
+ */
+static RestrictInfo *
+expand_indexqual_rowcompare(RestrictInfo *rinfo,
+							IndexOptInfo *index,
+							int indexcol)
+{
+	RowCompareExpr *clause = (RowCompareExpr *) rinfo->clause;
+	Expr	   *newclause;
+	List	   *indexcolnos;
+	bool		var_on_left;
+
+	newclause = adjust_rowcompare_for_index(clause,
+											index,
+											indexcol,
+											&indexcolnos,
+											&var_on_left);
+
+	/*
+	 * If we didn't have to change the RowCompareExpr, return the original
+	 * RestrictInfo.
+	 */
+	if (newclause == (Expr *) clause)
+		return rinfo;
+
+	/* Else we need a new RestrictInfo */
+	return make_simple_restrictinfo(newclause);
+}
+
+/*
+ * adjust_rowcompare_for_index --- expand a single indexqual condition
+ *		that is a RowCompareExpr
+ *
  * It's already known that the first column of the row comparison matches
  * the specified column of the index.  We can use additional columns of the
  * row comparison as index qualifications, so long as they match the index
@@ -3066,13 +3161,23 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily, Oid idxcollation)
  * even when the original was "<" or ">" --- this is necessary to match all
  * the rows that could match the original.	(We are essentially building a
  * lossy version of the row comparison when we do this.)
+ *
+ * *indexcolnos receives an integer list of the index column numbers (zero
+ * based) used in the resulting expression.  The reason we need to return
+ * that is that if the index is selected for use, createplan.c will need to
+ * call this again to extract that list.  (This is a bit grotty, but row
+ * comparison indexquals aren't used enough to justify finding someplace to
+ * keep the information in the Path representation.)  Since createplan.c
+ * also needs to know which side of the RowCompareExpr is the index side,
+ * we also return *var_on_left_p rather than re-deducing that there.
  */
-static RestrictInfo *
-expand_indexqual_rowcompare(RestrictInfo *rinfo,
+Expr *
+adjust_rowcompare_for_index(RowCompareExpr *clause,
 							IndexOptInfo *index,
-							int indexcol)
+							int indexcol,
+							List **indexcolnos,
+							bool *var_on_left_p)
 {
-	RowCompareExpr *clause = (RowCompareExpr *) rinfo->clause;
 	bool		var_on_left;
 	int			op_strategy;
 	Oid			op_lefttype;
@@ -3094,6 +3199,8 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 	Assert(var_on_left ||
 		   match_index_to_operand((Node *) linitial(clause->rargs),
 								  indexcol, index));
+	*var_on_left_p = var_on_left;
+
 	expr_op = linitial_oid(clause->opnos);
 	if (!var_on_left)
 		expr_op = get_commutator(expr_op);
@@ -3101,6 +3208,10 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 							   &op_strategy,
 							   &op_lefttype,
 							   &op_righttype);
+
+	/* Initialize returned list of which index columns are used */
+	*indexcolnos = list_make1_int(indexcol);
+
 	/* Build lists of the opfamilies and operator datatypes in case needed */
 	opfamilies = list_make1_oid(index->opfamily[indexcol]);
 	lefttypes = list_make1_oid(op_lefttype);
@@ -3147,28 +3258,22 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 			break;				/* no good, volatile comparison value */
 
 		/*
-		 * The Var side can match any column of the index.	If the user does
-		 * something weird like having multiple identical index columns, we
-		 * insist the match be on the first such column, to avoid confusing
-		 * the executor.
+		 * The Var side can match any column of the index.
 		 */
 		for (i = 0; i < index->ncolumns; i++)
 		{
-			if (match_index_to_operand(varop, i, index))
+			if (match_index_to_operand(varop, i, index) &&
+				get_op_opfamily_strategy(expr_op,
+										 index->opfamily[i]) == op_strategy &&
+				IndexCollMatchesExprColl(index->indexcollations[i],
+										 lfirst_oid(collids_cell)))
 				break;
 		}
 		if (i >= index->ncolumns)
 			break;				/* no match found */
 
-		/* Now, do we have the right operator for this column? */
-		if (get_op_opfamily_strategy(expr_op, index->opfamily[i])
-			!= op_strategy)
-			break;
-
-		/* Does collation match? */
-		if (!IndexCollMatchesExprColl(index->indexcollations[i],
-									  lfirst_oid(collids_cell)))
-			break;
+		/* Add column number to returned list */
+		*indexcolnos = lappend_int(*indexcolnos, i);
 
 		/* Add opfamily and datatypes to lists */
 		get_op_opfamily_properties(expr_op, index->opfamily[i], false,
@@ -3189,7 +3294,7 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 
 	/* Return clause as-is if it's all usable as index quals */
 	if (matching_cols == list_length(clause->opnos))
-		return rinfo;
+		return (Expr *) clause;
 
 	/*
 	 * We have to generate a subset rowcompare (possibly just one OpExpr). The
@@ -3260,18 +3365,15 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 								  matching_cols);
 		rc->rargs = list_truncate((List *) copyObject(clause->rargs),
 								  matching_cols);
-		return make_simple_restrictinfo((Expr *) rc);
+		return (Expr *) rc;
 	}
 	else
 	{
-		Expr	   *opexpr;
-
-		opexpr = make_opclause(linitial_oid(new_ops), BOOLOID, false,
-							   copyObject(linitial(clause->largs)),
-							   copyObject(linitial(clause->rargs)),
-							   InvalidOid,
-							   linitial_oid(clause->inputcollids));
-		return make_simple_restrictinfo(opexpr);
+		return make_opclause(linitial_oid(new_ops), BOOLOID, false,
+							 copyObject(linitial(clause->largs)),
+							 copyObject(linitial(clause->rargs)),
+							 InvalidOid,
+							 linitial_oid(clause->inputcollids));
 	}
 }
 

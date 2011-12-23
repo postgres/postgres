@@ -412,8 +412,8 @@ create_seqscan_path(PlannerInfo *root, RelOptInfo *rel)
  * 'index' is a usable index.
  * 'clause_groups' is a list of lists of RestrictInfo nodes
  *			to be used as index qual conditions in the scan.
- * 'indexorderbys' is a list of bare expressions (no RestrictInfos)
- *			to be used as index ordering operators in the scan.
+ * 'indexorderbys' is a list of lists of lists of bare expressions (not
+ *			RestrictInfos) to be used as index ordering operators.
  * 'pathkeys' describes the ordering of the path.
  * 'indexscandir' is ForwardScanDirection or BackwardScanDirection
  *			for an ordered index, or NoMovementScanDirection for
