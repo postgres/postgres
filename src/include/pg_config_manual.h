@@ -22,7 +22,7 @@
 /*
  * Maximum number of arguments to a function.
  *
- * The minimum value is 9 (index cost estimation uses 9-argument functions).
+ * The minimum value is 8 (GIN indexes use 8-argument support functions).
  * The maximum possible value is around 600 (limited by index tuple size in
  * pg_proc's index; BLCKSZ larger than 8K would allow more).  Values larger
  * than needed will waste memory and processing time, but do not directly

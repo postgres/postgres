@@ -410,10 +410,14 @@ create_seqscan_path(PlannerInfo *root, RelOptInfo *rel)
  *	  Creates a path node for an index scan.
  *
  * 'index' is a usable index.
- * 'clause_groups' is a list of lists of RestrictInfo nodes
+ * 'indexclauses' is a list of RestrictInfo nodes representing clauses
  *			to be used as index qual conditions in the scan.
- * 'indexorderbys' is a list of lists of lists of bare expressions (not
- *			RestrictInfos) to be used as index ordering operators.
+ * 'indexclausecols' is an integer list of index column numbers (zero based)
+ *			the indexclauses can be used with.
+ * 'indexorderbys' is a list of bare expressions (no RestrictInfos)
+ *			to be used as index ordering operators in the scan.
+ * 'indexorderbycols' is an integer list of index column numbers (zero based)
+ *			the ordering operators can be used with.
  * 'pathkeys' describes the ordering of the path.
  * 'indexscandir' is ForwardScanDirection or BackwardScanDirection
  *			for an ordered index, or NoMovementScanDirection for
@@ -427,8 +431,10 @@ create_seqscan_path(PlannerInfo *root, RelOptInfo *rel)
 IndexPath *
 create_index_path(PlannerInfo *root,
 				  IndexOptInfo *index,
-				  List *clause_groups,
+				  List *indexclauses,
+				  List *indexclausecols,
 				  List *indexorderbys,
+				  List *indexorderbycols,
 				  List *pathkeys,
 				  ScanDirection indexscandir,
 				  bool indexonly,
@@ -437,7 +443,7 @@ create_index_path(PlannerInfo *root,
 	IndexPath  *pathnode = makeNode(IndexPath);
 	RelOptInfo *rel = index->rel;
 	List	   *indexquals,
-			   *allclauses;
+			   *indexqualcols;
 
 	/*
 	 * For a join inner scan, there's no point in marking the path with any
@@ -457,16 +463,16 @@ create_index_path(PlannerInfo *root,
 	pathnode->path.pathkeys = pathkeys;
 
 	/* Convert clauses to indexquals the executor can handle */
-	indexquals = expand_indexqual_conditions(index, clause_groups);
-
-	/* Flatten the clause-groups list to produce indexclauses list */
-	allclauses = flatten_clausegroups_list(clause_groups);
+	expand_indexqual_conditions(index, indexclauses, indexclausecols,
+								&indexquals, &indexqualcols);
 
 	/* Fill in the pathnode */
 	pathnode->indexinfo = index;
-	pathnode->indexclauses = allclauses;
+	pathnode->indexclauses = indexclauses;
 	pathnode->indexquals = indexquals;
+	pathnode->indexqualcols = indexqualcols;
 	pathnode->indexorderbys = indexorderbys;
+	pathnode->indexorderbycols = indexorderbycols;
 
 	pathnode->isjoininner = (outer_rel != NULL);
 	pathnode->indexscandir = indexscandir;
@@ -476,7 +482,7 @@ create_index_path(PlannerInfo *root,
 		/*
 		 * We must compute the estimated number of output rows for the
 		 * indexscan.  This is less than rel->rows because of the additional
-		 * selectivity of the join clauses.  Since clause_groups may contain
+		 * selectivity of the join clauses.  Since indexclauses may contain
 		 * both restriction and join clauses, we have to do a set union to get
 		 * the full set of clauses that must be considered to compute the
 		 * correct selectivity.  (Without the union operation, we might have
@@ -489,7 +495,9 @@ create_index_path(PlannerInfo *root,
 		 * Note that we force the clauses to be treated as non-join clauses
 		 * during selectivity estimation.
 		 */
-		allclauses = list_union_ptr(rel->baserestrictinfo, allclauses);
+		List	   *allclauses;
+
+		allclauses = list_union_ptr(rel->baserestrictinfo, indexclauses);
 		pathnode->rows = rel->tuples *
 			clauselist_selectivity(root,
 								   allclauses,
@@ -508,8 +516,7 @@ create_index_path(PlannerInfo *root,
 		pathnode->rows = rel->rows;
 	}
 
-	cost_index(pathnode, root, index, indexquals, indexorderbys,
-			   indexonly, outer_rel);
+	cost_index(pathnode, root, outer_rel);
 
 	return pathnode;
 }

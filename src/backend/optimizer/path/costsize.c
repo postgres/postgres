@@ -52,7 +52,9 @@
  * results into.  All the input data they need is passed as separate
  * parameters, even though much of it could be extracted from the Path.
  * An exception is made for the cost_XXXjoin() routines, which expect all
- * the non-cost fields of the passed XXXPath to be filled in.
+ * the non-cost fields of the passed XXXPath to be filled in, and similarly
+ * cost_index() assumes the passed IndexPath is valid except for its output
+ * values.
  *
  *
  * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
@@ -208,38 +210,28 @@ cost_seqscan(Path *path, PlannerInfo *root,
  * cost_index
  *	  Determines and returns the cost of scanning a relation using an index.
  *
- * 'index' is the index to be used
- * 'indexQuals' is a list of lists of applicable qual clauses (implicit AND
- *		semantics, one sub-list per index column)
- * 'indexOrderBys' is a list of lists of lists of ORDER BY expressions for
- *		amcanorderbyop indexes (lists per pathkey and index column)
- * 'indexonly' is true if it's an index-only scan
+ * 'path' describes the indexscan under consideration, and is complete
+ *		except for the fields to be set by this routine
  * 'outer_rel' is the outer relation when we are considering using the index
- *		scan as the inside of a nestloop join (hence, some of the indexQuals
+ *		scan as the inside of a nestloop join (hence, some of the indexquals
  *		are join clauses, and we should expect repeated scans of the index);
  *		NULL for a plain index scan
  *
- * cost_index() takes an IndexPath not just a Path, because it sets a few
- * additional fields of the IndexPath besides startup_cost and total_cost.
- * These fields are needed if the IndexPath is used in a BitmapIndexScan.
+ * In addition to startup_cost and total_cost, cost_index() sets the path's
+ * indextotalcost and indexselectivity fields.  These values are needed if
+ * the IndexPath is used in a BitmapIndexScan.
  *
- * indexQuals is a list of lists of RestrictInfo nodes, but indexOrderBys
- * is a list of lists of lists of bare expressions.
- *
- * NOTE: 'indexQuals' must contain only clauses usable as index restrictions.
- * Any additional quals evaluated as qpquals may reduce the number of returned
- * tuples, but they won't reduce the number of tuples we have to fetch from
- * the table, so they don't reduce the scan cost.
+ * NOTE: path->indexquals must contain only clauses usable as index
+ * restrictions.  Any additional quals evaluated as qpquals may reduce the
+ * number of returned tuples, but they won't reduce the number of tuples
+ * we have to fetch from the table, so they don't reduce the scan cost.
  */
 void
-cost_index(IndexPath *path, PlannerInfo *root,
-		   IndexOptInfo *index,
-		   List *indexQuals,
-		   List *indexOrderBys,
-		   bool indexonly,
-		   RelOptInfo *outer_rel)
+cost_index(IndexPath *path, PlannerInfo *root, RelOptInfo *outer_rel)
 {
+	IndexOptInfo *index = path->indexinfo;
 	RelOptInfo *baserel = index->rel;
+	bool		indexonly = (path->path.pathtype == T_IndexOnlyScan);
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
 	Cost		indexStartupCost;
@@ -271,11 +263,9 @@ cost_index(IndexPath *path, PlannerInfo *root,
 	 * the fraction of main-table tuples we will have to retrieve) and its
 	 * correlation to the main-table tuple order.
 	 */
-	OidFunctionCall9(index->amcostestimate,
+	OidFunctionCall7(index->amcostestimate,
 					 PointerGetDatum(root),
-					 PointerGetDatum(index),
-					 PointerGetDatum(indexQuals),
-					 PointerGetDatum(indexOrderBys),
+					 PointerGetDatum(path),
 					 PointerGetDatum(outer_rel),
 					 PointerGetDatum(&indexStartupCost),
 					 PointerGetDatum(&indexTotalCost),
@@ -431,7 +421,7 @@ cost_index(IndexPath *path, PlannerInfo *root,
 	{
 		QualCost	index_qual_cost;
 
-		cost_qual_eval(&index_qual_cost, indexQuals, root);
+		cost_qual_eval(&index_qual_cost, path->indexquals, root);
 		/* any startup cost still has to be paid ... */
 		cpu_per_tuple -= index_qual_cost.per_tuple;
 	}
@@ -589,7 +579,7 @@ get_indexpath_pages(Path *bitmapqual)
  * 'baserel' is the relation to be scanned
  * 'bitmapqual' is a tree of IndexPaths, BitmapAndPaths, and BitmapOrPaths
  * 'outer_rel' is the outer relation when we are considering using the bitmap
- *		scan as the inside of a nestloop join (hence, some of the indexQuals
+ *		scan as the inside of a nestloop join (hence, some of the indexquals
  *		are join clauses, and we should expect repeated scans of the table);
  *		NULL for a plain bitmap scan
  *

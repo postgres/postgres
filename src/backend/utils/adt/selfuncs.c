@@ -5970,9 +5970,7 @@ string_to_bytea_const(const char *str, size_t str_len)
 
 static void
 genericcostestimate(PlannerInfo *root,
-					IndexOptInfo *index,
-					List *indexQuals,
-					List *indexOrderBys,
+					IndexPath *path,
 					RelOptInfo *outer_rel,
 					double numIndexTuples,
 					Cost *indexStartupCost,
@@ -5980,6 +5978,9 @@ genericcostestimate(PlannerInfo *root,
 					Selectivity *indexSelectivity,
 					double *indexCorrelation)
 {
+	IndexOptInfo *index = path->indexinfo;
+	List	   *indexQuals = path->indexquals;
+	List	   *indexOrderBys = path->indexorderbys;
 	double		numIndexPages;
 	double		num_sa_scans;
 	double		num_outer_scans;
@@ -5990,14 +5991,6 @@ genericcostestimate(PlannerInfo *root,
 	double		spc_random_page_cost;
 	List	   *selectivityQuals;
 	ListCell   *l;
-
-	/*
-	 * For our purposes here, it doesn't matter which index columns the
-	 * individual quals and order-by expressions go with, so flatten the
-	 * lists for convenience.
-	 */
-	indexQuals = flatten_clausegroups_list(indexQuals);
-	indexOrderBys = flatten_indexorderbys_list(indexOrderBys);
 
 	/*----------
 	 * If the index is partial, AND the index predicate with the explicitly
@@ -6030,7 +6023,7 @@ genericcostestimate(PlannerInfo *root,
 			if (!predicate_implied_by(oneQual, indexQuals))
 				predExtraQuals = list_concat(predExtraQuals, oneQual);
 		}
-		/* list_concat avoids modifying the indexQuals list */
+		/* list_concat avoids modifying the passed-in indexQuals list */
 		selectivityQuals = list_concat(predExtraQuals, indexQuals);
 	}
 	else
@@ -6240,14 +6233,13 @@ Datum
 btcostestimate(PG_FUNCTION_ARGS)
 {
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
-	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(1);
-	List	   *indexQuals = (List *) PG_GETARG_POINTER(2);
-	List	   *indexOrderBys = (List *) PG_GETARG_POINTER(3);
-	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(4);
-	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(5);
-	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(6);
-	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(7);
-	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(8);
+	IndexPath  *path = (IndexPath *) PG_GETARG_POINTER(1);
+	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(2);
+	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(3);
+	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(4);
+	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
+	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(6);
+	IndexOptInfo *index = path->indexinfo;
 	Oid			relid;
 	AttrNumber	colnum;
 	VariableStatData vardata;
@@ -6258,7 +6250,8 @@ btcostestimate(PG_FUNCTION_ARGS)
 	bool		found_saop;
 	bool		found_is_null_op;
 	double		num_sa_scans;
-	ListCell   *lc1;
+	ListCell   *lcc,
+			   *lci;
 
 	/*
 	 * For a btree scan, only leading '=' quals plus inequality quals for the
@@ -6266,8 +6259,9 @@ btcostestimate(PG_FUNCTION_ARGS)
 	 * the "boundary quals" that determine the starting and stopping points of
 	 * the index scan).  Additional quals can suppress visits to the heap, so
 	 * it's OK to count them in indexSelectivity, but they should not count
-	 * for estimating numIndexTuples.  So we must examine the given indexQuals
-	 * to find out which ones count as boundary quals.
+	 * for estimating numIndexTuples.  So we must examine the given indexquals
+	 * to find out which ones count as boundary quals.  We rely on the
+	 * knowledge that they are given in index column order.
 	 *
 	 * For a RowCompareExpr, we consider only the first column, just as
 	 * rowcomparesel() does.
@@ -6277,119 +6271,113 @@ btcostestimate(PG_FUNCTION_ARGS)
 	 * considered to act the same as it normally does.
 	 */
 	indexBoundQuals = NIL;
+	indexcol = 0;
 	eqQualHere = false;
 	found_saop = false;
 	found_is_null_op = false;
 	num_sa_scans = 1;
-
-	/* clausegroups must correspond to index columns */
-	Assert(list_length(indexQuals) <= index->ncolumns);
-
-	indexcol = 0;
-	foreach(lc1, indexQuals)
+	forboth(lcc, path->indexquals, lci, path->indexqualcols)
 	{
-		List	   *clausegroup = (List *) lfirst(lc1);
-		ListCell   *lc2;
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lcc);
+		Expr	   *clause;
+		Node	   *leftop,
+				   *rightop;
+		Oid			clause_op;
+		int			op_strategy;
+		bool		is_null_op = false;
 
-		eqQualHere = false;
-
-		foreach(lc2, clausegroup)
+		if (indexcol != lfirst_int(lci))
 		{
-			RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc2);
-			Expr	   *clause;
-			Node	   *leftop,
-					   *rightop;
-			Oid			clause_op;
-			int			op_strategy;
-			bool		is_null_op = false;
-
-			Assert(IsA(rinfo, RestrictInfo));
-			clause = rinfo->clause;
-			if (IsA(clause, OpExpr))
-			{
-				leftop = get_leftop(clause);
-				rightop = get_rightop(clause);
-				clause_op = ((OpExpr *) clause)->opno;
-			}
-			else if (IsA(clause, RowCompareExpr))
-			{
-				RowCompareExpr *rc = (RowCompareExpr *) clause;
-
-				leftop = (Node *) linitial(rc->largs);
-				rightop = (Node *) linitial(rc->rargs);
-				clause_op = linitial_oid(rc->opnos);
-			}
-			else if (IsA(clause, ScalarArrayOpExpr))
-			{
-				ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) clause;
-
-				leftop = (Node *) linitial(saop->args);
-				rightop = (Node *) lsecond(saop->args);
-				clause_op = saop->opno;
-				found_saop = true;
-			}
-			else if (IsA(clause, NullTest))
-			{
-				NullTest   *nt = (NullTest *) clause;
-
-				leftop = (Node *) nt->arg;
-				rightop = NULL;
-				clause_op = InvalidOid;
-				if (nt->nulltesttype == IS_NULL)
-				{
-					found_is_null_op = true;
-					is_null_op = true;
-				}
-			}
-			else
-			{
-				elog(ERROR, "unsupported indexqual type: %d",
-					 (int) nodeTag(clause));
-				continue;			/* keep compiler quiet */
-			}
-
-			if (match_index_to_operand(leftop, indexcol, index))
-			{
-				/* clause_op is correct */
-			}
-			else
-			{
-				Assert(match_index_to_operand(rightop, indexcol, index));
-				/* Must flip operator to get the opfamily member */
-				clause_op = get_commutator(clause_op);
-			}
-
-			/* check for equality operator */
-			if (OidIsValid(clause_op))
-			{
-				op_strategy = get_op_opfamily_strategy(clause_op,
-												   index->opfamily[indexcol]);
-				Assert(op_strategy != 0);	/* not a member of opfamily?? */
-				if (op_strategy == BTEqualStrategyNumber)
-					eqQualHere = true;
-			}
-			else if (is_null_op)
-			{
-				/* IS NULL is like = for selectivity determination */
-				eqQualHere = true;
-			}
-			/* count up number of SA scans induced by indexBoundQuals only */
-			if (IsA(clause, ScalarArrayOpExpr))
-			{
-				ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) clause;
-				int		alength = estimate_array_length(lsecond(saop->args));
-
-				if (alength > 1)
-					num_sa_scans *= alength;
-			}
-			indexBoundQuals = lappend(indexBoundQuals, rinfo);
+			/* Beginning of a new column's quals */
+			if (!eqQualHere)
+				break;			/* done if no '=' qual for indexcol */
+			eqQualHere = false;
+			indexcol++;
+			if (indexcol != lfirst_int(lci))
+				break;			/* no quals at all for indexcol */
 		}
 
-		/* Done with this indexcol, continue to next only if it had = qual */
-		if (!eqQualHere)
-			break;
+		Assert(IsA(rinfo, RestrictInfo));
+		clause = rinfo->clause;
 
-		indexcol++;
+		if (IsA(clause, OpExpr))
+		{
+			leftop = get_leftop(clause);
+			rightop = get_rightop(clause);
+			clause_op = ((OpExpr *) clause)->opno;
+		}
+		else if (IsA(clause, RowCompareExpr))
+		{
+			RowCompareExpr *rc = (RowCompareExpr *) clause;
+
+			leftop = (Node *) linitial(rc->largs);
+			rightop = (Node *) linitial(rc->rargs);
+			clause_op = linitial_oid(rc->opnos);
+		}
+		else if (IsA(clause, ScalarArrayOpExpr))
+		{
+			ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) clause;
+
+			leftop = (Node *) linitial(saop->args);
+			rightop = (Node *) lsecond(saop->args);
+			clause_op = saop->opno;
+			found_saop = true;
+		}
+		else if (IsA(clause, NullTest))
+		{
+			NullTest   *nt = (NullTest *) clause;
+
+			leftop = (Node *) nt->arg;
+			rightop = NULL;
+			clause_op = InvalidOid;
+			if (nt->nulltesttype == IS_NULL)
+			{
+				found_is_null_op = true;
+				is_null_op = true;
+			}
+		}
+		else
+		{
+			elog(ERROR, "unsupported indexqual type: %d",
+				 (int) nodeTag(clause));
+			continue;			/* keep compiler quiet */
+		}
+
+		if (match_index_to_operand(leftop, indexcol, index))
+		{
+			/* clause_op is correct */
+		}
+		else
+		{
+			Assert(match_index_to_operand(rightop, indexcol, index));
+			/* Must flip operator to get the opfamily member */
+			clause_op = get_commutator(clause_op);
+		}
+
+		/* check for equality operator */
+		if (OidIsValid(clause_op))
+		{
+			op_strategy = get_op_opfamily_strategy(clause_op,
+												   index->opfamily[indexcol]);
+			Assert(op_strategy != 0);	/* not a member of opfamily?? */
+			if (op_strategy == BTEqualStrategyNumber)
+				eqQualHere = true;
+		}
+		else if (is_null_op)
+		{
+			/* IS NULL is like = for purposes of selectivity determination */
+			eqQualHere = true;
+		}
+		/* count up number of SA scans induced by indexBoundQuals only */
+		if (IsA(clause, ScalarArrayOpExpr))
+		{
+			ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) clause;
+			int			alength = estimate_array_length(lsecond(saop->args));
+
+			if (alength > 1)
+				num_sa_scans *= alength;
+		}
+		indexBoundQuals = lappend(indexBoundQuals, rinfo);
 	}
 
 	/*
@@ -6399,7 +6387,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 	 * NullTest invalidates that theory, even though it sets eqQualHere.
 	 */
 	if (index->unique &&
-		indexcol == index->ncolumns &&
+		indexcol == index->ncolumns - 1 &&
 		eqQualHere &&
 		!found_saop &&
 		!found_is_null_op)
@@ -6422,8 +6410,8 @@ btcostestimate(PG_FUNCTION_ARGS)
 		numIndexTuples = rint(numIndexTuples / num_sa_scans);
 	}
 
-	genericcostestimate(root, index, indexQuals, indexOrderBys,
-						outer_rel, numIndexTuples,
+	genericcostestimate(root, path, outer_rel,
+						numIndexTuples,
 						indexStartupCost, indexTotalCost,
 						indexSelectivity, indexCorrelation);
 
@@ -6538,16 +6526,14 @@ Datum
 hashcostestimate(PG_FUNCTION_ARGS)
 {
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
-	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(1);
-	List	   *indexQuals = (List *) PG_GETARG_POINTER(2);
-	List	   *indexOrderBys = (List *) PG_GETARG_POINTER(3);
-	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(4);
-	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(5);
-	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(6);
-	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(7);
-	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(8);
+	IndexPath  *path = (IndexPath *) PG_GETARG_POINTER(1);
+	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(2);
+	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(3);
+	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(4);
+	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
+	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(6);
 
-	genericcostestimate(root, index, indexQuals, indexOrderBys, outer_rel, 0.0,
+	genericcostestimate(root, path, outer_rel, 0.0,
 						indexStartupCost, indexTotalCost,
 						indexSelectivity, indexCorrelation);
 
@@ -6558,16 +6544,14 @@ Datum
 gistcostestimate(PG_FUNCTION_ARGS)
 {
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
-	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(1);
-	List	   *indexQuals = (List *) PG_GETARG_POINTER(2);
-	List	   *indexOrderBys = (List *) PG_GETARG_POINTER(3);
-	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(4);
-	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(5);
-	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(6);
-	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(7);
-	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(8);
+	IndexPath  *path = (IndexPath *) PG_GETARG_POINTER(1);
+	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(2);
+	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(3);
+	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(4);
+	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
+	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(6);
 
-	genericcostestimate(root, index, indexQuals, indexOrderBys, outer_rel, 0.0,
+	genericcostestimate(root, path, outer_rel, 0.0,
 						indexStartupCost, indexTotalCost,
 						indexSelectivity, indexCorrelation);
 
@@ -6578,16 +6562,14 @@ Datum
 spgcostestimate(PG_FUNCTION_ARGS)
 {
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
-	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(1);
-	List	   *indexQuals = (List *) PG_GETARG_POINTER(2);
-	List	   *indexOrderBys = (List *) PG_GETARG_POINTER(3);
-	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(4);
-	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(5);
-	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(6);
-	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(7);
-	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(8);
+	IndexPath  *path = (IndexPath *) PG_GETARG_POINTER(1);
+	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(2);
+	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(3);
+	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(4);
+	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
+	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(6);
 
-	genericcostestimate(root, index, indexQuals, indexOrderBys, outer_rel, 0.0,
+	genericcostestimate(root, path, outer_rel, 0.0,
 						indexStartupCost, indexTotalCost,
 						indexSelectivity, indexCorrelation);
 
@@ -6901,14 +6883,15 @@ Datum
 gincostestimate(PG_FUNCTION_ARGS)
 {
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
-	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(1);
-	List	   *indexQuals = (List *) PG_GETARG_POINTER(2);
-	List	   *indexOrderBys = (List *) PG_GETARG_POINTER(3);
-	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(4);
-	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(5);
-	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(6);
-	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(7);
-	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(8);
+	IndexPath  *path = (IndexPath *) PG_GETARG_POINTER(1);
+	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(2);
+	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(3);
+	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(4);
+	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
+	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(6);
+	IndexOptInfo *index = path->indexinfo;
+	List	   *indexQuals = path->indexquals;
+	List	   *indexOrderBys = path->indexorderbys;
 	ListCell   *l;
 	List	   *selectivityQuals;
 	double		numPages = index->pages,
@@ -6929,14 +6912,6 @@ gincostestimate(PG_FUNCTION_ARGS)
 	QualCost	index_qual_cost;
 	Relation	indexRel;
 	GinStatsData ginStats;
-
-	/*
-	 * For our purposes here, it doesn't matter which index columns the
-	 * individual quals and order-by expressions go with, so flatten the
-	 * lists for convenience.
-	 */
-	indexQuals = flatten_clausegroups_list(indexQuals);
-	indexOrderBys = flatten_indexorderbys_list(indexOrderBys);
 
 	/*
 	 * Obtain statistic information from the meta page
@@ -6994,7 +6969,7 @@ gincostestimate(PG_FUNCTION_ARGS)
 			if (!predicate_implied_by(oneQual, indexQuals))
 				predExtraQuals = list_concat(predExtraQuals, oneQual);
 		}
-		/* list_concat avoids modifying the indexQuals list */
+		/* list_concat avoids modifying the passed-in indexQuals list */
 		selectivityQuals = list_concat(predExtraQuals, indexQuals);
 	}
 	else

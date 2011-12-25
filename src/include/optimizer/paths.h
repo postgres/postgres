@@ -57,11 +57,10 @@ extern bool eclass_matches_any_index(EquivalenceClass *ec,
 						 RelOptInfo *rel);
 extern bool match_index_to_operand(Node *operand, int indexcol,
 					   IndexOptInfo *index);
-extern List *expand_indexqual_conditions(IndexOptInfo *index,
-							List *clausegroups);
+extern void expand_indexqual_conditions(IndexOptInfo *index,
+							List *indexclauses, List *indexclausecols,
+							List **indexquals_p, List **indexqualcols_p);
 extern void check_partial_indexes(PlannerInfo *root, RelOptInfo *rel);
-extern List *flatten_clausegroups_list(List *clausegroups);
-extern List *flatten_indexorderbys_list(List *indexorderbys);
 extern Expr *adjust_rowcompare_for_index(RowCompareExpr *clause,
 							IndexOptInfo *index,
 							int indexcol,

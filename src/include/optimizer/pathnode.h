@@ -30,8 +30,10 @@ extern void add_path(RelOptInfo *parent_rel, Path *new_path);
 extern Path *create_seqscan_path(PlannerInfo *root, RelOptInfo *rel);
 extern IndexPath *create_index_path(PlannerInfo *root,
 				  IndexOptInfo *index,
-				  List *clause_groups,
+				  List *indexclauses,
+				  List *indexclausecols,
 				  List *indexorderbys,
+				  List *indexorderbycols,
 				  List *pathkeys,
 				  ScanDirection indexscandir,
 				  bool indexonly,

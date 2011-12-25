@@ -90,11 +90,13 @@ static PathClauseUsage *classify_index_clause_usage(Path *path,
 static void find_indexpath_quals(Path *bitmapqual, List **quals, List **preds);
 static int	find_list_position(Node *node, List **nodelist);
 static bool check_index_only(RelOptInfo *rel, IndexOptInfo *index);
-static List *group_clauses_by_indexkey(IndexOptInfo *index,
-						  List *clauses, List *outer_clauses,
-						  Relids outer_relids,
-						  SaOpControl saop_control,
-						  bool *found_clause);
+static void match_clauses_to_index(IndexOptInfo *index,
+					   List *clauses, List *outer_clauses,
+					   Relids outer_relids,
+					   SaOpControl saop_control,
+					   List **index_clauses_p,
+					   List **clause_columns_p,
+					   bool *found_clause);
 static bool match_clause_to_indexcol(IndexOptInfo *index,
 						 int indexcol,
 						 RestrictInfo *rinfo,
@@ -108,7 +110,9 @@ static bool match_rowcompare_to_indexcol(IndexOptInfo *index,
 							 Oid idxcollation,
 							 RowCompareExpr *clause,
 							 Relids outer_relids);
-static List *match_index_to_pathkeys(IndexOptInfo *index, List *pathkeys);
+static void match_pathkeys_to_index(IndexOptInfo *index, List *pathkeys,
+						List **orderby_clauses_p,
+						List **clause_columns_p);
 static Expr *match_clause_to_ordering_op(IndexOptInfo *index,
 							int indexcol, Expr *clause, Oid pk_opfamily);
 static Relids indexable_outerrelids(PlannerInfo *root, RelOptInfo *rel);
@@ -312,7 +316,9 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 		IndexOptInfo *index = (IndexOptInfo *) lfirst(ilist);
 		IndexPath  *ipath;
 		List	   *restrictclauses;
+		List	   *restrictclausecols;
 		List	   *orderbyclauses;
+		List	   *orderbyclausecols;
 		List	   *index_pathkeys;
 		List	   *useful_pathkeys;
 		bool		useful_predicate;
@@ -396,12 +402,14 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 		 * clauses was used (and, if saop_control is SAOP_REQUIRE, it has to
 		 * have been a ScalarArrayOpExpr clause).
 		 */
-		restrictclauses = group_clauses_by_indexkey(index,
-													clauses,
-													outer_clauses,
-													outer_relids,
-													saop_control,
-													&found_clause);
+		match_clauses_to_index(index,
+							   clauses,
+							   outer_clauses,
+							   outer_relids,
+							   saop_control,
+							   &restrictclauses,
+							   &restrictclausecols,
+							   &found_clause);
 
 		/*
 		 * Not all index AMs support scans with no restriction clauses. We
@@ -425,13 +433,15 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 			useful_pathkeys = truncate_useless_pathkeys(root, rel,
 														index_pathkeys);
 			orderbyclauses = NIL;
+			orderbyclausecols = NIL;
 		}
 		else if (index->amcanorderbyop && possibly_useful_pathkeys &&
 				 istoplevel && outer_rel == NULL && scantype != ST_BITMAPSCAN)
 		{
 			/* see if we can generate ordering operators for query_pathkeys */
-			orderbyclauses = match_index_to_pathkeys(index,
-													 root->query_pathkeys);
+			match_pathkeys_to_index(index, root->query_pathkeys,
+									&orderbyclauses,
+									&orderbyclausecols);
 			if (orderbyclauses)
 				useful_pathkeys = root->query_pathkeys;
 			else
@@ -441,6 +451,7 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 		{
 			useful_pathkeys = NIL;
 			orderbyclauses = NIL;
+			orderbyclausecols = NIL;
 		}
 
 		/*
@@ -460,7 +471,9 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 		{
 			ipath = create_index_path(root, index,
 									  restrictclauses,
+									  restrictclausecols,
 									  orderbyclauses,
+									  orderbyclausecols,
 									  useful_pathkeys,
 									  index_is_ordered ?
 									  ForwardScanDirection :
@@ -485,6 +498,8 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 			{
 				ipath = create_index_path(root, index,
 										  restrictclauses,
+										  restrictclausecols,
+										  NIL,
 										  NIL,
 										  useful_pathkeys,
 										  BackwardScanDirection,
@@ -1142,14 +1157,15 @@ check_index_only(RelOptInfo *rel, IndexOptInfo *index)
 
 
 /*
- * group_clauses_by_indexkey
+ * match_clauses_to_index
  *	  Find restriction clauses that can be used with an index.
  *
- * Returns a list of sublists of RestrictInfo nodes for clauses that can be
- * used with this index.  Each sublist contains clauses that can be used
- * with one index key (in no particular order); the top list is ordered by
- * index key.  (This is depended on by expand_indexqual_conditions() and
- * fix_indexqual_references().)
+ * Returns a list of RestrictInfo nodes for clauses that can be used with
+ * this index, along with an integer list of the index column numbers
+ * (zero based) that each clause would be used with.  The clauses are
+ * ordered by index key, so that the column numbers form a nondecreasing
+ * sequence.  (This order is depended on by btree and possibly other places.)
+ * NIL lists are returned if there are no matching clauses.
  *
  * We can use clauses from either the current clauses or outer_clauses lists,
  * but *found_clause is set TRUE only if we used at least one clause from
@@ -1164,40 +1180,38 @@ check_index_only(RelOptInfo *rel, IndexOptInfo *index)
  *
  * If the index has amoptionalkey = false, we give up and return NIL when
  * there are no restriction clauses matching the first index key.  Otherwise,
- * we return NIL if there are no restriction clauses matching any index key.
- * A non-NIL result will have one (possibly empty) sublist for each index key.
- *
- * Example: given an index on (A,B,C), we would return ((C1 C2) () (C3 C4))
- * if we find that clauses C1 and C2 use column A, clauses C3 and C4 use
- * column C, and no clauses use column B.
+ * we return NIL only if there are no restriction clauses matching any index
+ * key.  There could be unused index keys after the first one in any case.
  *
  * Note: in some circumstances we may find the same RestrictInfos coming
- * from multiple places.  Defend against redundant outputs by keeping a side
- * list of already-used clauses (pointer equality should be a good enough
- * check for this).  That also keeps us from matching the same clause to
+ * from multiple places.  Defend against redundant outputs by refusing to
+ * match an already-used clause (pointer equality should be a good enough
+ * check for this).  This also keeps us from matching the same clause to
  * multiple columns of a badly-defined index, which is unlikely to be helpful
  * and is likely to give us an inflated idea of the index's selectivity.
  */
-static List *
-group_clauses_by_indexkey(IndexOptInfo *index,
-						  List *clauses, List *outer_clauses,
-						  Relids outer_relids,
-						  SaOpControl saop_control,
-						  bool *found_clause)
+static void
+match_clauses_to_index(IndexOptInfo *index,
+					   List *clauses, List *outer_clauses,
+					   Relids outer_relids,
+					   SaOpControl saop_control,
+					   List **index_clauses_p,
+					   List **clause_columns_p,
+					   bool *found_clause)
 {
-	List	   *clausegroup_list = NIL;
-	List	   *used_clauses = NIL;
-	bool		found_outer_clause = false;
+	List	   *index_clauses = NIL;
+	List	   *clause_columns = NIL;
 	int			indexcol;
 
-	*found_clause = false;		/* default result */
+	*index_clauses_p = NIL;		/* set default results */
+	*clause_columns_p = NIL;
+	*found_clause = false;
 
 	if (clauses == NIL && outer_clauses == NIL)
-		return NIL;				/* cannot succeed */
+		return;					/* cannot succeed */
 
 	for (indexcol = 0; indexcol < index->ncolumns; indexcol++)
 	{
-		List	   *clausegroup = NIL;
 		ListCell   *l;
 
 		/* check the current clauses */
@@ -1206,7 +1220,7 @@ group_clauses_by_indexkey(IndexOptInfo *index,
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 
 			Assert(IsA(rinfo, RestrictInfo));
-			if (list_member_ptr(used_clauses, rinfo))
+			if (list_member_ptr(index_clauses, rinfo))
 				continue;
 			if (match_clause_to_indexcol(index,
 										 indexcol,
@@ -1214,8 +1228,8 @@ group_clauses_by_indexkey(IndexOptInfo *index,
 										 outer_relids,
 										 saop_control))
 			{
-				clausegroup = lappend(clausegroup, rinfo);
-				used_clauses = lappend(used_clauses, rinfo);
+				index_clauses = lappend(index_clauses, rinfo);
+				clause_columns = lappend_int(clause_columns, indexcol);
 				if (saop_control != SAOP_REQUIRE ||
 					IsA(rinfo->clause, ScalarArrayOpExpr))
 					*found_clause = true;
@@ -1228,7 +1242,7 @@ group_clauses_by_indexkey(IndexOptInfo *index,
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 
 			Assert(IsA(rinfo, RestrictInfo));
-			if (list_member_ptr(used_clauses, rinfo))
+			if (list_member_ptr(index_clauses, rinfo))
 				continue;
 			if (match_clause_to_indexcol(index,
 										 indexcol,
@@ -1236,27 +1250,20 @@ group_clauses_by_indexkey(IndexOptInfo *index,
 										 outer_relids,
 										 saop_control))
 			{
-				clausegroup = lappend(clausegroup, rinfo);
-				used_clauses = lappend(used_clauses, rinfo);
-				found_outer_clause = true;
+				index_clauses = lappend(index_clauses, rinfo);
+				clause_columns = lappend_int(clause_columns, indexcol);
 			}
 		}
 
 		/*
 		 * If no clauses match this key, check for amoptionalkey restriction.
 		 */
-		if (clausegroup == NIL && !index->amoptionalkey && indexcol == 0)
-			return NIL;
-
-		clausegroup_list = lappend(clausegroup_list, clausegroup);
+		if (index_clauses == NIL && !index->amoptionalkey)
+			return;
 	}
 
-	list_free(used_clauses);
-
-	if (!*found_clause && !found_outer_clause)
-		return NIL;				/* no indexable clauses anywhere */
-
-	return clausegroup_list;
+	*index_clauses_p = index_clauses;
+	*clause_columns_p = clause_columns;
 }
 
 
@@ -1562,24 +1569,33 @@ match_rowcompare_to_indexcol(IndexOptInfo *index,
  ****************************************************************************/
 
 /*
- * match_index_to_pathkeys
+ * match_pathkeys_to_index
  *		Test whether an index can produce output ordered according to the
  *		given pathkeys using "ordering operators".
  *
- * If it can, return a list of lists of lists of ORDER BY expressions,
- * each of the form "indexedcol operator pseudoconstant".  If not, return NIL.
- * (The top list corresponds to pathkeys and the sub-lists to index columns;
- * see comments for indexorderbys in nodes/relation.h.)
+ * If it can, return a list of suitable ORDER BY expressions, each of the form
+ * "indexedcol operator pseudoconstant", along with an integer list of the
+ * index column numbers (zero based) that each clause would be used with.
+ * NIL lists are returned if the ordering is not achievable this way.
+ *
+ * On success, the result list is ordered by pathkeys, and in fact is
+ * one-to-one with the requested pathkeys.
  */
-static List *
-match_index_to_pathkeys(IndexOptInfo *index, List *pathkeys)
+static void
+match_pathkeys_to_index(IndexOptInfo *index, List *pathkeys,
+						List **orderby_clauses_p,
+						List **clause_columns_p)
 {
-	List	   *orderbylists = NIL;
+	List	   *orderby_clauses = NIL;
+	List	   *clause_columns = NIL;
 	ListCell   *lc1;
+
+	*orderby_clauses_p = NIL;		/* set default results */
+	*clause_columns_p = NIL;
 
 	/* Only indexes with the amcanorderbyop property are interesting here */
 	if (!index->amcanorderbyop)
-		return NIL;
+		return;
 
 	foreach(lc1, pathkeys)
 	{
@@ -1595,11 +1611,11 @@ match_index_to_pathkeys(IndexOptInfo *index, List *pathkeys)
 		/* Pathkey must request default sort order for the target opfamily */
 		if (pathkey->pk_strategy != BTLessStrategyNumber ||
 			pathkey->pk_nulls_first)
-			return NIL;
+			return;
 
 		/* If eclass is volatile, no hope of using an indexscan */
 		if (pathkey->pk_eclass->ec_has_volatile)
-			return NIL;
+			return;
 
 		/* Try to match eclass member expression(s) to index */
 		foreach(lc2, pathkey->pk_eclass->ec_members)
@@ -1621,17 +1637,8 @@ match_index_to_pathkeys(IndexOptInfo *index, List *pathkeys)
 												   pathkey->pk_opfamily);
 				if (expr)
 				{
-					/*
-					 * Generate list-of-sublists representation to show which
-					 * index column this expression matches.
-					 */
-					List   *sublist = NIL;
-					int		i;
-
-					for (i = 0; i < indexcol; i++)
-						sublist = lappend(sublist, NIL);
-					sublist = lappend(sublist, list_make1(expr));
-					orderbylists = lappend(orderbylists, sublist);
+					orderby_clauses = lappend(orderby_clauses, expr);
+					clause_columns = lappend_int(clause_columns, indexcol);
 					found = true;
 					break;
 				}
@@ -1642,10 +1649,11 @@ match_index_to_pathkeys(IndexOptInfo *index, List *pathkeys)
 		}
 
 		if (!found)				/* fail if no match for this pathkey */
-			return NIL;
+			return;
 	}
 
-	return orderbylists;		/* success! */
+	*orderby_clauses_p = orderby_clauses;		/* success! */
+	*clause_columns_p = clause_columns;
 }
 
 /*
@@ -2451,65 +2459,6 @@ relation_has_unique_index_for(PlannerInfo *root, RelOptInfo *rel,
 
 
 /****************************************************************************
- *				----  PATH CREATION UTILITIES  ----
- ****************************************************************************/
-
-/*
- * flatten_clausegroups_list
- *	  Given a list of lists of RestrictInfos, flatten it to a list
- *	  of RestrictInfos.
- *
- * This is used to flatten out a list of sublists of index clauses (such as
- * the result of group_clauses_by_indexkey()) into a single list, for use
- * where we don't care which clause goes with which index column.  The input
- * list structure mustn't be altered, but it's OK to share copies of the
- * underlying RestrictInfos.
- */
-List *
-flatten_clausegroups_list(List *clausegroups)
-{
-	List	   *allclauses = NIL;
-	ListCell   *l;
-
-	foreach(l, clausegroups)
-		allclauses = list_concat(allclauses, list_copy((List *) lfirst(l)));
-	return allclauses;
-}
-
-/*
- * flatten_indexorderbys_list
- *	  Given a list of lists of lists of ORDER BY expressions, flatten it.
- *
- * This is similar to flatten_clausegroups_list, but is used to flatten the
- * three-list-level result of match_index_to_pathkeys().  We assume the
- * bottom lists each have zero or one member.
- */
-List *
-flatten_indexorderbys_list(List *indexorderbys)
-{
-	List	   *allclauses = NIL;
-	ListCell   *lc1;
-
-	foreach(lc1, indexorderbys)
-	{
-		List	   *sublist = (List *) lfirst(lc1);
-		ListCell   *lc2;
-
-		foreach(lc2, sublist)
-		{
-			List	   *subsublist = (List *) lfirst(lc2);
-
-			if (subsublist == NIL)
-				continue;
-			Assert(list_length(subsublist) == 1);
-			allclauses = lappend(allclauses, (Expr *) linitial(subsublist));
-		}
-	}
-	return allclauses;
-}
-
-
-/****************************************************************************
  *				----  ROUTINES TO CHECK OPERANDS  ----
  ****************************************************************************/
 
@@ -2635,13 +2584,12 @@ match_index_to_operand(Node *operand,
  * match_boolean_index_clause() similarly detects clauses that can be
  * converted into boolean equality operators.
  *
- * expand_indexqual_conditions() converts a list of lists of RestrictInfo
- * nodes (with implicit AND semantics across list elements) into a list of
- * lists of clauses that the executor can actually handle.  For operators
- * that are members of the index's opfamily this transformation is a no-op,
- * but clauses recognized by match_special_index_operator() or
- * match_boolean_index_clause() must be converted into one or more "regular"
- * indexqual conditions.
+ * expand_indexqual_conditions() converts a list of RestrictInfo nodes
+ * (with implicit AND semantics across list elements) into a list of clauses
+ * that the executor can actually handle.  For operators that are members of
+ * the index's opfamily this transformation is a no-op, but clauses recognized
+ * by match_special_index_operator() or match_boolean_index_clause() must be
+ * converted into one or more "regular" indexqual conditions.
  *----------
  */
 
@@ -2855,99 +2803,100 @@ match_special_index_operator(Expr *clause, Oid opfamily, Oid idxcollation,
 
 /*
  * expand_indexqual_conditions
- *	  Given a list of sublists of RestrictInfo nodes, produce a list of lists
- *	  of index qual clauses.  Standard qual clauses (those in the index's
- *	  opfamily) are passed through unchanged.  Boolean clauses and "special"
- *	  index operators are expanded into clauses that the indexscan machinery
- *	  will know what to do with.  RowCompare clauses are simplified if
- *	  necessary to create a clause that is fully checkable by the index.
+ *	  Given a list of RestrictInfo nodes, produce a list of directly usable
+ *	  index qual clauses.
  *
- * The input clauses are grouped by index key, and so the output is too.
+ * Standard qual clauses (those in the index's opfamily) are passed through
+ * unchanged.  Boolean clauses and "special" index operators are expanded
+ * into clauses that the indexscan machinery will know what to do with.
+ * RowCompare clauses are simplified if necessary to create a clause that is
+ * fully checkable by the index.
+ *
+ * In addition to the expressions themselves, there are auxiliary lists
+ * of the index column numbers that the clauses are meant to be used with;
+ * we generate an updated column number list for the result.  (This is not
+ * the identical list because one input clause sometimes produces more than
+ * one output clause.)
+ *
+ * The input clauses are sorted by column number, and so the output is too.
  * (This is depended on in various places in both planner and executor.)
  */
-List *
-expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
+void
+expand_indexqual_conditions(IndexOptInfo *index,
+							List *indexclauses, List *indexclausecols,
+							List **indexquals_p, List **indexqualcols_p)
 {
-	List	   *resultgroups = NIL;
-	ListCell   *lc;
-	int			indexcol;
+	List	   *indexquals = NIL;
+	List	   *indexqualcols = NIL;
+	ListCell   *lcc,
+			   *lci;
 
-	if (clausegroups == NIL)
-		return NIL;
-
-	/* clausegroups must correspond to index columns */
-	Assert(list_length(clausegroups) <= index->ncolumns);
-
-	indexcol = 0;
-	foreach(lc, clausegroups)
+	forboth(lcc, indexclauses, lci, indexclausecols)
 	{
-		List	   *clausegroup = (List *) lfirst(lc);
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lcc);
+		int			indexcol = lfirst_int(lci);
+		Expr	   *clause = rinfo->clause;
 		Oid			curFamily = index->opfamily[indexcol];
 		Oid			curCollation = index->indexcollations[indexcol];
-		List	   *newgroup = NIL;
-		ListCell   *lc2;
 
-		foreach(lc2, clausegroup)
+		/* First check for boolean cases */
+		if (IsBooleanOpfamily(curFamily))
 		{
-			RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc2);
-			Expr	   *clause = rinfo->clause;
+			Expr	   *boolqual;
 
-			/* First check for boolean cases */
-			if (IsBooleanOpfamily(curFamily))
+			boolqual = expand_boolean_index_clause((Node *) clause,
+												   indexcol,
+												   index);
+			if (boolqual)
 			{
-				Expr	   *boolqual;
-
-				boolqual = expand_boolean_index_clause((Node *) clause,
-													   indexcol,
-													   index);
-				if (boolqual)
-				{
-					newgroup = lappend(newgroup,
-									   make_simple_restrictinfo(boolqual));
-					continue;
-				}
+				indexquals = lappend(indexquals,
+									 make_simple_restrictinfo(boolqual));
+				indexqualcols = lappend_int(indexqualcols, indexcol);
+				continue;
 			}
-
-			/*
-			 * Else it must be an opclause (usual case), ScalarArrayOp,
-			 * RowCompare, or NullTest
-			 */
-			if (is_opclause(clause))
-			{
-				newgroup = list_concat(newgroup,
-									   expand_indexqual_opclause(rinfo,
-																 curFamily,
-															  curCollation));
-			}
-			else if (IsA(clause, ScalarArrayOpExpr))
-			{
-				/* no extra work at this time */
-				newgroup = lappend(newgroup, rinfo);
-			}
-			else if (IsA(clause, RowCompareExpr))
-			{
-				newgroup = lappend(newgroup,
-								   expand_indexqual_rowcompare(rinfo,
-															   index,
-															   indexcol));
-			}
-			else if (IsA(clause, NullTest))
-			{
-				Assert(index->amsearchnulls);
-				newgroup = lappend(newgroup,
-								   make_simple_restrictinfo(clause));
-			}
-			else
-				elog(ERROR, "unsupported indexqual type: %d",
-					 (int) nodeTag(clause));
 		}
 
-		resultgroups = lappend(resultgroups, newgroup);
-
-		indexcol++;
+		/*
+		 * Else it must be an opclause (usual case), ScalarArrayOp,
+		 * RowCompare, or NullTest
+		 */
+		if (is_opclause(clause))
+		{
+			indexquals = list_concat(indexquals,
+									 expand_indexqual_opclause(rinfo,
+															   curFamily,
+															   curCollation));
+			/* expand_indexqual_opclause can produce multiple clauses */
+			while (list_length(indexqualcols) < list_length(indexquals))
+				indexqualcols = lappend_int(indexqualcols, indexcol);
+		}
+		else if (IsA(clause, ScalarArrayOpExpr))
+		{
+			/* no extra work at this time */
+			indexquals = lappend(indexquals, rinfo);
+			indexqualcols = lappend_int(indexqualcols, indexcol);
+		}
+		else if (IsA(clause, RowCompareExpr))
+		{
+			indexquals = lappend(indexquals,
+								 expand_indexqual_rowcompare(rinfo,
+															 index,
+															 indexcol));
+			indexqualcols = lappend_int(indexqualcols, indexcol);
+		}
+		else if (IsA(clause, NullTest))
+		{
+			Assert(index->amsearchnulls);
+			indexquals = lappend(indexquals, rinfo);
+			indexqualcols = lappend_int(indexqualcols, indexcol);
+		}
+		else
+			elog(ERROR, "unsupported indexqual type: %d",
+				 (int) nodeTag(clause));
 	}
 
-	return resultgroups;
+	*indexquals_p = indexquals;
+	*indexqualcols_p = indexqualcols;
 }
 
 /*

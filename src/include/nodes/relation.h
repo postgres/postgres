@@ -657,27 +657,33 @@ typedef struct Path
  *
  * 'indexclauses' is a list of index qualification clauses, with implicit
  * AND semantics across the list.  Each clause is a RestrictInfo node from
- * the query's WHERE or JOIN conditions.
+ * the query's WHERE or JOIN conditions.  An empty list implies a full
+ * index scan.
  *
- * 'indexquals' is a list of sub-lists of the actual index qual conditions
- * that can be used with the index.  There is one possibly-empty sub-list
- * for each index column (but empty sub-lists for trailing columns can be
- * omitted).  The qual conditions are RestrictInfos, and in simple cases
- * are the same RestrictInfos that appear in the flat indexclauses list.
- * But when special indexable operators appear in 'indexclauses', they are
- * replaced by their derived indexscannable conditions in 'indexquals'.
- * Note that an entirely empty indexquals list denotes a full-index scan.
+ * 'indexquals' has the same structure as 'indexclauses', but it contains
+ * the actual index qual conditions that can be used with the index.
+ * In simple cases this is identical to 'indexclauses', but when special
+ * indexable operators appear in 'indexclauses', they are replaced by the
+ * derived indexscannable conditions in 'indexquals'.
  *
- * 'indexorderbys', if not NIL, is a list of lists of lists of ORDER BY
- * expressions that have been found to be usable as ordering operators for an
- * amcanorderbyop index.  These are not RestrictInfos, just bare expressions,
+ * 'indexqualcols' is an integer list of index column numbers (zero-based)
+ * of the same length as 'indexquals', showing which index column each qual
+ * is meant to be used with.  'indexquals' is required to be ordered by
+ * index column, so 'indexqualcols' must form a nondecreasing sequence.
+ * (The order of multiple quals for the same index column is unspecified.)
+ *
+ * 'indexorderbys', if not NIL, is a list of ORDER BY expressions that have
+ * been found to be usable as ordering operators for an amcanorderbyop index.
+ * The list must match the path's pathkeys, ie, one expression per pathkey
+ * in the same order.  These are not RestrictInfos, just bare expressions,
  * since they generally won't yield booleans.  Also, unlike the case for
  * quals, it's guaranteed that each expression has the index key on the left
- * side of the operator.  The top list has one entry per pathkey in the
- * path's pathkeys, and the sub-lists have one sub-sublist per index column.
- * This representation is a bit of overkill, since there will be only one
- * actual expression per pathkey, but it's convenient because each sub-list
- * has the same structure as the indexquals list.
+ * side of the operator.
+ *
+ * 'indexorderbycols' is an integer list of index column numbers (zero-based)
+ * of the same length as 'indexorderbys', showing which index column each
+ * ORDER BY expression is meant to be used with.  (There is no restriction
+ * on which index column each ORDER BY can be used with.)
  *
  * 'isjoininner' is TRUE if the path is a nestloop inner scan (that is,
  * some of the index conditions are join rather than restriction clauses).
@@ -711,7 +717,9 @@ typedef struct IndexPath
 	IndexOptInfo *indexinfo;
 	List	   *indexclauses;
 	List	   *indexquals;
+	List	   *indexqualcols;
 	List	   *indexorderbys;
+	List	   *indexorderbycols;
 	bool		isjoininner;
 	ScanDirection indexscandir;
 	Cost		indextotalcost;

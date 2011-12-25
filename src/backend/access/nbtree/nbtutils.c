@@ -616,7 +616,7 @@ _bt_advance_array_keys(IndexScanDesc scan, ScanDirection dir)
  *
  * The output keys must be sorted by index attribute.  Presently we expect
  * (but verify) that the input keys are already so sorted --- this is done
- * by group_clauses_by_indexkey() in indxpath.c.  Some reordering of the keys
+ * by match_clauses_to_index() in indxpath.c.  Some reordering of the keys
  * within each attribute may be done as a byproduct of the processing here,
  * but no other code depends on that.
  *

@@ -288,9 +288,7 @@ amcanreturn (Relation indexRelation);
 <programlisting>
 void
 amcostestimate (PlannerInfo *root,
-                IndexOptInfo *index,
-                List *indexQuals,
-                List *indexOrderBys,
+                IndexPath *path,
                 RelOptInfo *outer_rel,
                 Cost *indexStartupCost,
                 Cost *indexTotalCost,
@@ -929,9 +927,7 @@ amrestrpos (IndexScanDesc scan);
 <programlisting>
 void
 amcostestimate (PlannerInfo *root,
-                IndexOptInfo *index,
-                List *indexQuals,
-                List *indexOrderBys,
+                IndexPath *path,
                 RelOptInfo *outer_rel,
                 Cost *indexStartupCost,
                 Cost *indexTotalCost,
@@ -939,7 +935,7 @@ amcostestimate (PlannerInfo *root,
                 double *indexCorrelation);
 </programlisting>
 
-   The first five parameters are inputs:
+   The first three parameters are inputs:
 
    <variablelist>
     <varlistentry>
@@ -952,32 +948,11 @@ amcostestimate (PlannerInfo *root,
     </varlistentry>
 
     <varlistentry>
-     <term><parameter>index</></term>
+     <term><parameter>path</></term>
      <listitem>
       <para>
-       The index being considered.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><parameter>indexQuals</></term>
-     <listitem>
-      <para>
-       List of index qual clauses (implicitly ANDed);
-       a <symbol>NIL</> list indicates no qualifiers are available.
-       Note that the list contains expression trees with RestrictInfo nodes
-       at the top, not ScanKeys.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><parameter>indexOrderBys</></term>
-     <listitem>
-      <para>
-       List of indexable ORDER BY operators, or <symbol>NIL</> if none.
-       Note that the list contains expression trees, not ScanKeys.
+       The index access path being considered.  All fields except cost and
+       selectivity values are valid.
       </para>
      </listitem>
     </varlistentry>
@@ -988,7 +963,8 @@ amcostestimate (PlannerInfo *root,
       <para>
        If the index is being considered for use in a join inner indexscan,
        the planner's information about the outer side of the join.  Otherwise
-       <symbol>NULL</>.  When non-<symbol>NULL</>, some of the qual clauses will be join clauses
+       <symbol>NULL</>.  When non-<symbol>NULL</>, some of the qual clauses
+       will be join clauses for joins
        with this rel rather than being simple restriction clauses.  Also,
        the cost estimator should expect that the index scan will be repeated
        for each row of the outer rel.
@@ -1055,7 +1031,7 @@ amcostestimate (PlannerInfo *root,
    row should usually be taken as <varname>cpu_index_tuple_cost</>.  In
    addition, an appropriate multiple of <varname>cpu_operator_cost</> should
    be charged for any comparison operators invoked during index processing
-   (especially evaluation of the <literal>indexQuals</> themselves).
+   (especially evaluation of the indexquals themselves).
   </para>
 
   <para>
@@ -1103,8 +1079,8 @@ amcostestimate (PlannerInfo *root,
      knowledge, use the standard optimizer function <function>clauselist_selectivity()</function>:
 
 <programlisting>
-*indexSelectivity = clauselist_selectivity(root, indexQuals,
-                                           index-&gt;rel-&gt;relid,
+*indexSelectivity = clauselist_selectivity(root, path-&gt;indexquals,
+                                           path-&gt;indexinfo-&gt;rel-&gt;relid,
                                            JOIN_INNER, NULL);
 </programlisting>
     </para>
@@ -1115,7 +1091,8 @@ amcostestimate (PlannerInfo *root,
      Estimate the number of index rows that will be visited during the
      scan.  For many index types this is the same as <parameter>indexSelectivity</> times
      the number of rows in the index, but it might be more.  (Note that the
-     index's size in pages and rows is available from the <structname>IndexOptInfo</> struct.)
+     index's size in pages and rows is available from the
+     <literal>path-&gt;indexinfo</> struct.)
     </para>
    </step>
 
@@ -1137,7 +1114,7 @@ amcostestimate (PlannerInfo *root,
  * Also, we charge for evaluation of the indexquals at each index row.
  * All the costs are assumed to be paid incrementally during the scan.
  */
-cost_qual_eval(&amp;index_qual_cost, indexQuals, root);
+cost_qual_eval(&amp;index_qual_cost, path-&gt;indexquals, root);
 *indexStartupCost = index_qual_cost.startup;
 *indexTotalCost = seq_page_cost * numIndexPages +
     (cpu_index_tuple_cost + index_qual_cost.per_tuple) * numIndexTuples;
