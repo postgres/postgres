@@ -101,7 +101,7 @@
    </para>
 
    <para>
-    The phenomena which are prohibited are various levels are:
+    The phenomena which are prohibited at various levels are:
 
     <variablelist>
      <varlistentry>
@@ -155,7 +155,7 @@
    </para>
 
     <table tocentry="1" id="mvcc-isolevel-table">
-     <title><acronym>SQL</acronym> Transaction Isolation Levels</title>
+     <title>Standard <acronym>SQL</acronym> Transaction Isolation Levels</title>
      <tgroup cols="4">
       <thead>
        <row>
