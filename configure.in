@@ -1438,11 +1438,6 @@ fi
 AC_CHECK_FUNCS([strtoll strtoq], [break])
 AC_CHECK_FUNCS([strtoull strtouq], [break])
 
-# Check for one of atexit() or on_exit()
-AC_CHECK_FUNCS(atexit, [],
-               [AC_CHECK_FUNCS(on_exit, [],
-               [AC_MSG_ERROR([neither atexit() nor on_exit() found])])])
-
 
 #
 # Pthreads

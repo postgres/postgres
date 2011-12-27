@@ -130,11 +130,7 @@ get_major_server_version(ClusterInfo *cluster)
 
 
 static void
-#ifdef HAVE_ATEXIT
 stop_postmaster_atexit(void)
-#else
-stop_postmaster_on_exit(int exitstatus, void *arg)
-#endif
 {
 	stop_postmaster(true);
 
@@ -151,11 +147,7 @@ start_postmaster(ClusterInfo *cluster)
 
 	if (!exit_hook_registered)
 	{
-#ifdef HAVE_ATEXIT
 		atexit(stop_postmaster_atexit);
-#else
-		on_exit(stop_postmaster_on_exit);
-#endif
 		exit_hook_registered = true;
 	}
 

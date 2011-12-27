@@ -45,12 +45,7 @@ static int	history_lines_added;
 #define NL_IN_HISTORY	0x01
 #endif
 
-#ifdef HAVE_ATEXIT
 static void finishInput(void);
-#else
-/* designed for use with on_exit() */
-static void finishInput(int, void *);
-#endif
 
 
 /*
@@ -313,11 +308,7 @@ initializeInput(int flags)
 	}
 #endif
 
-#ifdef HAVE_ATEXIT
 	atexit(finishInput);
-#else
-	on_exit(finishInput, NULL);
-#endif
 }
 
 
@@ -416,11 +407,7 @@ saveHistory(char *fname, int max_lines, bool appendFlag, bool encodeFlag)
 
 
 static void
-#ifdef HAVE_ATEXIT
 finishInput(void)
-#else
-finishInput(int exitstatus, void *arg)
-#endif
 {
 #ifdef USE_READLINE
 	if (useHistory && psql_history)

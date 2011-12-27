@@ -72,9 +72,6 @@
 # define gettimeofday(a,b) gettimeofday(a)
 #endif
 
-/* Define to 1 if you have the `atexit' function. */
-#define HAVE_ATEXIT 1
-
 /* Define to 1 if you have the `cbrt' function. */
 //#define HAVE_CBRT 1
 
@@ -278,9 +275,6 @@
 
 /* Define to 1 if you have the <netinet/tcp.h> header file. */
 /* #undef HAVE_NETINET_TCP_H */
-
-/* Define to 1 if you have the `on_exit' function. */
-/* #undef HAVE_ON_EXIT */
 
 /* Define to 1 if you have the <pam/pam_appl.h> header file. */
 /* #undef HAVE_PAM_PAM_APPL_H */
