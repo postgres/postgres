@@ -24,7 +24,7 @@ include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
 
-check: test.sh
+check: test.sh all
 	MAKE=$(MAKE) bindir=$(bindir) libdir=$(libdir) $(SHELL) $< --install
 
 # disabled because it upsets the build farm

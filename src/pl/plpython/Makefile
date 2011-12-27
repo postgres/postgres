@@ -149,7 +149,7 @@ prep3:
 clean3:
 	rm -rf python3/
 
-check: submake prep3
+check: all submake prep3
 	$(pg_regress_check) --inputdir=./python3 --outputdir=./python3 $(REGRESS_OPTS) $(REGRESS)
 
 installcheck: submake prep3
@@ -157,7 +157,7 @@ installcheck: submake prep3
 
 clean: clean3
 else # not Python 3
-check: submake
+check: all submake
 	$(pg_regress_check) $(REGRESS_OPTS) $(REGRESS)
 
 installcheck: submake
