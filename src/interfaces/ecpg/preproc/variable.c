@@ -491,7 +491,7 @@ get_typedef(char *name)
 {
 	struct typedefs *this;
 
-	for (this = types; this && strcmp(this->name, name); this = this->next);
+	for (this = types; this && strcmp(this->name, name) != 0; this = this->next);
 	if (!this)
 		mmerror(PARSE_ERROR, ET_FATAL, "unrecognized data type name \"%s\"", name);
 

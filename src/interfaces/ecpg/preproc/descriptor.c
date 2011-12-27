@@ -106,11 +106,11 @@ drop_descriptor(char *name, char *connection)
 
 	for (i = descriptors; i; lastptr = &i->next, i = i->next)
 	{
-		if (!strcmp(name, i->name))
+		if (strcmp(name, i->name) == 0)
 		{
 			if ((!connection && !i->connection)
 				|| (connection && i->connection
-					&& !strcmp(connection, i->connection)))
+					&& strcmp(connection, i->connection) == 0))
 			{
 				*lastptr = i->next;
 				if (i->connection)
@@ -135,11 +135,11 @@ lookup_descriptor(char *name, char *connection)
 
 	for (i = descriptors; i; i = i->next)
 	{
-		if (!strcmp(name, i->name))
+		if (strcmp(name, i->name) == 0)
 		{
 			if ((!connection && !i->connection)
 				|| (connection && i->connection
-					&& !strcmp(connection, i->connection)))
+					&& strcmp(connection, i->connection) == 0))
 				return i;
 		}
 	}

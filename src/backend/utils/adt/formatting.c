@@ -1012,7 +1012,7 @@ index_seq_search(char *str, const KeyWord *kw, const int *index)
 
 		do
 		{
-			if (!strncmp(str, k->name, k->len))
+			if (strncmp(str, k->name, k->len) == 0)
 				return k;
 			k++;
 			if (!k->name)
@@ -1032,7 +1032,7 @@ suff_search(char *str, KeySuffix *suf, int type)
 		if (s->type != type)
 			continue;
 
-		if (!strncmp(str, s->name, s->len))
+		if (strncmp(str, s->name, s->len) == 0)
 			return s;
 	}
 	return NULL;

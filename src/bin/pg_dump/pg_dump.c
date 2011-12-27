@@ -14384,7 +14384,7 @@ myFormatType(const char *typname, int32 typmod)
 	}
 
 	/* Show lengths on bpchar and varchar */
-	if (!strcmp(typname, "bpchar"))
+	if (strcmp(typname, "bpchar") == 0)
 	{
 		int			len = (typmod - VARHDRSZ);
 
@@ -14393,14 +14393,14 @@ myFormatType(const char *typname, int32 typmod)
 			appendPQExpBuffer(buf, "(%d)",
 							  typmod - VARHDRSZ);
 	}
-	else if (!strcmp(typname, "varchar"))
+	else if (strcmp(typname, "varchar") == 0)
 	{
 		appendPQExpBuffer(buf, "character varying");
 		if (typmod != -1)
 			appendPQExpBuffer(buf, "(%d)",
 							  typmod - VARHDRSZ);
 	}
-	else if (!strcmp(typname, "numeric"))
+	else if (strcmp(typname, "numeric") == 0)
 	{
 		appendPQExpBuffer(buf, "numeric");
 		if (typmod != -1)

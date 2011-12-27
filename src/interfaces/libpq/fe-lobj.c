@@ -752,25 +752,25 @@ lo_initialize(PGconn *conn)
 	{
 		fname = PQgetvalue(res, n, 0);
 		foid = (Oid) atoi(PQgetvalue(res, n, 1));
-		if (!strcmp(fname, "lo_open"))
+		if (strcmp(fname, "lo_open") == 0)
 			lobjfuncs->fn_lo_open = foid;
-		else if (!strcmp(fname, "lo_close"))
+		else if (strcmp(fname, "lo_close") == 0)
 			lobjfuncs->fn_lo_close = foid;
-		else if (!strcmp(fname, "lo_creat"))
+		else if (strcmp(fname, "lo_creat") == 0)
 			lobjfuncs->fn_lo_creat = foid;
-		else if (!strcmp(fname, "lo_create"))
+		else if (strcmp(fname, "lo_create") == 0)
 			lobjfuncs->fn_lo_create = foid;
-		else if (!strcmp(fname, "lo_unlink"))
+		else if (strcmp(fname, "lo_unlink") == 0)
 			lobjfuncs->fn_lo_unlink = foid;
-		else if (!strcmp(fname, "lo_lseek"))
+		else if (strcmp(fname, "lo_lseek") == 0)
 			lobjfuncs->fn_lo_lseek = foid;
-		else if (!strcmp(fname, "lo_tell"))
+		else if (strcmp(fname, "lo_tell") == 0)
 			lobjfuncs->fn_lo_tell = foid;
-		else if (!strcmp(fname, "lo_truncate"))
+		else if (strcmp(fname, "lo_truncate") == 0)
 			lobjfuncs->fn_lo_truncate = foid;
-		else if (!strcmp(fname, "loread"))
+		else if (strcmp(fname, "loread") == 0)
 			lobjfuncs->fn_lo_read = foid;
-		else if (!strcmp(fname, "lowrite"))
+		else if (strcmp(fname, "lowrite") == 0)
 			lobjfuncs->fn_lo_write = foid;
 	}
 

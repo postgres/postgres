@@ -361,7 +361,7 @@ SearchStmtCache(const char *ecpgQuery)
 	{
 		if (stmtCacheEntries[entNo].stmtID[0])	/* check if entry is in use		*/
 		{
-			if (!strcmp(ecpgQuery, stmtCacheEntries[entNo].ecpgQuery))
+			if (strcmp(ecpgQuery, stmtCacheEntries[entNo].ecpgQuery) == 0)
 				break;			/* found it		*/
 		}
 		++entNo;				/* incr entry #		*/

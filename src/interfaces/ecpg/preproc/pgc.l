@@ -1319,7 +1319,7 @@ parse_include(void)
 		yyin = fopen(inc_file, "r");
 		if (!yyin)
 		{
-			if (strcmp(inc_file + strlen(inc_file) - 2, ".h"))
+			if (strcmp(inc_file + strlen(inc_file) - 2, ".h") != 0)
 			{
 				strcat(inc_file, ".h");
 				yyin = fopen(inc_file, "r");
@@ -1346,7 +1346,7 @@ parse_include(void)
 			yyin = fopen(inc_file, "r");
 			if (!yyin)
 			{
-				if (strcmp(inc_file + strlen(inc_file) - 2, ".h"))
+				if (strcmp(inc_file + strlen(inc_file) - 2, ".h") != 0)
 				{
 					strcat(inc_file, ".h");
 					yyin = fopen( inc_file, "r" );

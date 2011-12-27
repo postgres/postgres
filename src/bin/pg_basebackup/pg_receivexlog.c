@@ -126,7 +126,7 @@ FindStreamingStart(XLogRecPtr currentpos, uint32 currenttimeline)
 					log,
 					seg;
 
-		if (!strcmp(dirent->d_name, ".") || !strcmp(dirent->d_name, ".."))
+		if (strcmp(dirent->d_name, ".") == 0 || strcmp(dirent->d_name, "..") == 0)
 			continue;
 
 		/* xlog files are always 24 characters */

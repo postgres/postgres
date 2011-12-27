@@ -365,19 +365,19 @@ ean2isn(ean13 ean, bool errorOK, ean13 *result, enum isn_type accept)
 		*--aux = '0';			/* fill the remaining EAN13 with '0' */
 
 	/* find out the data type: */
-	if (!strncmp("978", buf, 3))
+	if (strncmp("978", buf, 3) == 0)
 	{							/* ISBN */
 		type = ISBN;
 	}
-	else if (!strncmp("977", buf, 3))
+	else if (strncmp("977", buf, 3) == 0)
 	{							/* ISSN */
 		type = ISSN;
 	}
-	else if (!strncmp("9790", buf, 4))
+	else if (strncmp("9790", buf, 4) == 0)
 	{							/* ISMN */
 		type = ISMN;
 	}
-	else if (!strncmp("979", buf, 3))
+	else if (strncmp("979", buf, 3) == 0)
 	{							/* ISBN-13 */
 		type = ISBN;
 	}
@@ -570,28 +570,28 @@ ean2string(ean13 ean, bool errorOK, char *result, bool shortType)
 	}
 
 	/* find out what type of hyphenation is needed: */
-	if (!strncmp("978-", result, search))
+	if (strncmp("978-", result, search) == 0)
 	{							/* ISBN -13 978-range */
 		/* The string should be in this form: 978-??000000000-0" */
 		type = ISBN;
 		TABLE = ISBN_range;
 		TABLE_index = ISBN_index;
 	}
-	else if (!strncmp("977-", result, search))
+	else if (strncmp("977-", result, search) == 0)
 	{							/* ISSN */
 		/* The string should be in this form: 977-??000000000-0" */
 		type = ISSN;
 		TABLE = ISSN_range;
 		TABLE_index = ISSN_index;
 	}
-	else if (!strncmp("979-0", result, search + 1))
+	else if (strncmp("979-0", result, search + 1) == 0)
 	{							/* ISMN */
 		/* The string should be in this form: 979-0?000000000-0" */
 		type = ISMN;
 		TABLE = ISMN_range;
 		TABLE_index = ISMN_index;
 	}
-	else if (!strncmp("979-", result, search))
+	else if (strncmp("979-", result, search) == 0)
 	{							/* ISBN-13 979-range */
 		/* The string should be in this form: 979-??000000000-0" */
 		type = ISBN;
@@ -813,13 +813,13 @@ string2ean(const char *str, bool errorOK, ean13 *result,
 			/* now get the subtype of EAN13: */
 			if (buf[3] == '0')
 				type = UPC;
-			else if (!strncmp("977", buf + 3, 3))
+			else if (strncmp("977", buf + 3, 3) == 0)
 				type = ISSN;
-			else if (!strncmp("978", buf + 3, 3))
+			else if (strncmp("978", buf + 3, 3) == 0)
 				type = ISBN;
-			else if (!strncmp("9790", buf + 3, 4))
+			else if (strncmp("9790", buf + 3, 4) == 0)
 				type = ISMN;
-			else if (!strncmp("979", buf + 3, 3))
+			else if (strncmp("979", buf + 3, 3) == 0)
 				type = ISBN;
 			if (accept != EAN13 && accept != ANY && type != accept)
 				goto eanwrongtype;

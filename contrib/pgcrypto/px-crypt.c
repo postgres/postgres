@@ -96,7 +96,7 @@ px_crypt(const char *psw, const char *salt, char *buf, unsigned len)
 	{
 		if (!c->id_len)
 			break;
-		if (!strncmp(salt, c->id, c->id_len))
+		if (strncmp(salt, c->id, c->id_len) == 0)
 			break;
 	}
 

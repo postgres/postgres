@@ -102,7 +102,7 @@ ECPG: stmtViewStmt rule
 	{
 		const char *con = connection ? connection : "NULL";
 
-		if (!strcmp($1, "all"))
+		if (strcmp($1, "all") == 0)
 			fprintf(yyout, "{ ECPGdeallocate_all(__LINE__, %d, %s);", compat, con);
 		else if ($1[0] == ':')
 			fprintf(yyout, "{ ECPGdeallocate(__LINE__, %d, %s, %s);", compat, con, $1+1);

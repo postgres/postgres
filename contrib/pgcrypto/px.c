@@ -360,7 +360,7 @@ parse_cipher_name(char *full, char **cipher, char **pad)
 		if (p2 != NULL)
 		{
 			*p2++ = 0;
-			if (!strcmp(p, "pad"))
+			if (strcmp(p, "pad") == 0)
 				*pad = p2;
 			else
 				return PXE_BAD_OPTION;
@@ -405,9 +405,9 @@ px_find_combo(const char *name, PX_Combo **res)
 
 	if (s_pad != NULL)
 	{
-		if (!strcmp(s_pad, "pkcs"))
+		if (strcmp(s_pad, "pkcs") == 0)
 			cx->padding = 1;
-		else if (!strcmp(s_pad, "none"))
+		else if (strcmp(s_pad, "none") == 0)
 			cx->padding = 0;
 		else
 			goto err1;

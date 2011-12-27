@@ -97,19 +97,19 @@ get_float8_nan(void)
 static bool
 check_special_value(char *ptr, double *retval, char **endptr)
 {
-	if (!pg_strncasecmp(ptr, "NaN", 3))
+	if (pg_strncasecmp(ptr, "NaN", 3) == 0)
 	{
 		*retval = get_float8_nan();
 		*endptr = ptr + 3;
 		return true;
 	}
-	else if (!pg_strncasecmp(ptr, "Infinity", 8))
+	else if (pg_strncasecmp(ptr, "Infinity", 8) == 0)
 	{
 		*retval = get_float8_infinity();
 		*endptr = ptr + 8;
 		return true;
 	}
-	else if (!pg_strncasecmp(ptr, "-Infinity", 9))
+	else if (pg_strncasecmp(ptr, "-Infinity", 9) == 0)
 	{
 		*retval = -get_float8_infinity();
 		*endptr = ptr + 9;

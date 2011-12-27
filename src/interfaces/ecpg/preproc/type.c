@@ -257,7 +257,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type, const int bra
 		if ((var->type->type != type->type) ||
 			(var->type->type_name && !type->type_name) ||
 			(!var->type->type_name && type->type_name) ||
-			(var->type->type_name && type->type_name && strcmp(var->type->type_name, type->type_name)))
+			(var->type->type_name && type->type_name && strcmp(var->type->type_name, type->type_name) != 0))
 			mmerror(PARSE_ERROR, ET_ERROR, "variable \"%s\" is hidden by a local variable of a different type", name);
 		else if (var->brace_level != brace_level)
 			mmerror(PARSE_ERROR, ET_WARNING, "variable \"%s\" is hidden by a local variable", name);
@@ -271,7 +271,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type, const int bra
 			if ((var->type->type != ind_type->type) ||
 				(var->type->type_name && !ind_type->type_name) ||
 				(!var->type->type_name && ind_type->type_name) ||
-				(var->type->type_name && ind_type->type_name && strcmp(var->type->type_name, ind_type->type_name)))
+				(var->type->type_name && ind_type->type_name && strcmp(var->type->type_name, ind_type->type_name) != 0))
 				mmerror(PARSE_ERROR, ET_ERROR, "indicator variable \"%s\" is hidden by a local variable of a different type", ind_name);
 			else if (var->brace_level != ind_brace_level)
 				mmerror(PARSE_ERROR, ET_WARNING, "indicator variable \"%s\" is hidden by a local variable", ind_name);

@@ -1098,7 +1098,7 @@ setup_config(void)
 
 	conflines = replace_token(conflines,
 							  "@authcomment@",
-					   strcmp(authmethod, "trust") ? "" : AUTHTRUST_WARNING);
+					   strcmp(authmethod, "trust") != 0 ? "" : AUTHTRUST_WARNING);
 
 	/* Replace username for replication */
 	conflines = replace_token(conflines,
@@ -2667,16 +2667,16 @@ main(int argc, char *argv[])
 		authmethod = "trust";
 	}
 
-	if (strcmp(authmethod, "md5") &&
-		strcmp(authmethod, "peer") &&
-		strcmp(authmethod, "ident") &&
-		strcmp(authmethod, "trust") &&
+	if (strcmp(authmethod, "md5") != 0 &&
+		strcmp(authmethod, "peer") != 0 &&
+		strcmp(authmethod, "ident") != 0 &&
+		strcmp(authmethod, "trust") != 0 &&
 #ifdef USE_PAM
-		strcmp(authmethod, "pam") &&
-		strncmp(authmethod, "pam ", 4) &&		/* pam with space = param */
+		strcmp(authmethod, "pam") != 0 &&
+		strncmp(authmethod, "pam ", 4) != 0 &&		/* pam with space = param */
 #endif
-		strcmp(authmethod, "crypt") &&
-		strcmp(authmethod, "password")
+		strcmp(authmethod, "crypt") != 0 &&
+		strcmp(authmethod, "password") != 0
 		)
 
 		/*
@@ -2689,9 +2689,9 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if ((!strcmp(authmethod, "md5") ||
-		 !strcmp(authmethod, "crypt") ||
-		 !strcmp(authmethod, "password")) &&
+	if ((strcmp(authmethod, "md5") == 0 ||
+		 strcmp(authmethod, "crypt") == 0 ||
+		 strcmp(authmethod, "password") == 0) &&
 		!(pwprompt || pwfilename))
 	{
 		fprintf(stderr, _("%s: must specify a password for the superuser to enable %s authentication\n"), progname, authmethod);

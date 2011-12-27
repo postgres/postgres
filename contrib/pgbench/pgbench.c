@@ -1579,7 +1579,7 @@ process_commands(char *buf)
 			{
 				if (pg_strcasecmp(my_commands->argv[2], "us") != 0 &&
 					pg_strcasecmp(my_commands->argv[2], "ms") != 0 &&
-					pg_strcasecmp(my_commands->argv[2], "s"))
+					pg_strcasecmp(my_commands->argv[2], "s") != 0)
 				{
 					fprintf(stderr, "%s: unknown time unit '%s' - must be us, ms or s\n",
 							my_commands->argv[0], my_commands->argv[2]);

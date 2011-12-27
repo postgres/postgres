@@ -1650,9 +1650,9 @@ ecpg_execute(struct statement * stmt)
 			ecpg_log("ecpg_execute on line %d: OK: %s\n", stmt->lineno, cmdstat);
 			if (stmt->compat != ECPG_COMPAT_INFORMIX_SE &&
 				!sqlca->sqlerrd[2] &&
-				(!strncmp(cmdstat, "UPDATE", 6)
-				 || !strncmp(cmdstat, "INSERT", 6)
-				 || !strncmp(cmdstat, "DELETE", 6)))
+				(strncmp(cmdstat, "UPDATE", 6) == 0
+				 || strncmp(cmdstat, "INSERT", 6) == 0
+				 || strncmp(cmdstat, "DELETE", 6) == 0))
 				ecpg_raise(stmt->lineno, ECPG_NOT_FOUND, ECPG_SQLSTATE_NO_DATA, NULL);
 			break;
 		case PGRES_COPY_OUT:

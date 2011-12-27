@@ -1464,7 +1464,7 @@ pg_SSPI_recvauth(Port *port)
 	 */
 	if (port->hba->krb_realm && strlen(port->hba->krb_realm))
 	{
-		if (pg_strcasecmp(port->hba->krb_realm, domainname))
+		if (pg_strcasecmp(port->hba->krb_realm, domainname) != 0)
 		{
 			elog(DEBUG2,
 				 "SSPI domain (%s) and configured domain (%s) don't match",

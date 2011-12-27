@@ -652,7 +652,7 @@ ECPGdeallocate_desc(int line, const char *name)
 	ecpg_init_sqlca(sqlca);
 	for (desc = get_descriptors(), prev = NULL; desc; prev = desc, desc = desc->next)
 	{
-		if (!strcmp(name, desc->name))
+		if (strcmp(name, desc->name) == 0)
 		{
 			if (prev)
 				prev->next = desc->next;

@@ -262,7 +262,7 @@ adjust_outofscope_cursor_vars(struct cursor *cur)
 				skip_set_var = true;
 			}
 			else if ((ptr->variable->type->type == ECPGt_char_variable)
-					 && (!strncmp(ptr->variable->name, "ECPGprepared_statement", strlen("ECPGprepared_statement"))))
+					 && (strncmp(ptr->variable->name, "ECPGprepared_statement", strlen("ECPGprepared_statement")) == 0))
 			{
 				newvar = ptr->variable;
 				skip_set_var = true;
@@ -468,7 +468,7 @@ adjust_outofscope_cursor_vars(struct cursor *cur)
 /* This tests whether the cursor was declared and opened in the same function. */
 #define SAMEFUNC(cur)	\
 	((cur->function == NULL) ||		\
-	 (cur->function != NULL && !strcmp(cur->function, current_function)))
+	 (cur->function != NULL && strcmp(cur->function, current_function) == 0))
 
 static struct cursor *
 add_additional_variables(char *name, bool insert)

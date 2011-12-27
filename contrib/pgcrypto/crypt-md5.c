@@ -55,7 +55,7 @@ px_crypt_md5(const char *pw, const char *salt, char *passwd, unsigned dstlen)
 	sp = salt;
 
 	/* If it starts with the magic string, then skip that */
-	if (!strncmp(sp, magic, strlen(magic)))
+	if (strncmp(sp, magic, strlen(magic)) == 0)
 		sp += strlen(magic);
 
 	/* It stops at the first '$', max 8 chars */

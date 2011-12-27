@@ -1263,7 +1263,7 @@ pgwin32_CommandLine(bool registration)
 
 	if (registration)
 	{
-		if (pg_strcasecmp(cmdLine + strlen(cmdLine) - 4, ".exe"))
+		if (pg_strcasecmp(cmdLine + strlen(cmdLine) - 4, ".exe") != 0)
 		{
 			/* If commandline does not end in .exe, append it */
 			strcat(cmdLine, ".exe");
@@ -1841,25 +1841,24 @@ set_mode(char *modeopt)
 static void
 set_sig(char *signame)
 {
-	if (!strcmp(signame, "HUP"))
+	if (strcmp(signame, "HUP") == 0)
 		sig = SIGHUP;
-	else if (!strcmp(signame, "INT"))
+	else if (strcmp(signame, "INT") == 0)
 		sig = SIGINT;
-	else if (!strcmp(signame, "QUIT"))
+	else if (strcmp(signame, "QUIT") == 0)
 		sig = SIGQUIT;
-	else if (!strcmp(signame, "ABRT"))
+	else if (strcmp(signame, "ABRT") == 0)
 		sig = SIGABRT;
-
-	/*
-	 * probably should NOT provide SIGKILL
-	 *
-	 * else if (!strcmp(signame,"KILL")) sig = SIGKILL;
-	 */
-	else if (!strcmp(signame, "TERM"))
+#if 0
+	/* probably should NOT provide SIGKILL */
+	else if (strcmp(signame,"KILL") == 0)
+		sig = SIGKILL;
+#endif
+	else if (strcmp(signame, "TERM") == 0)
 		sig = SIGTERM;
-	else if (!strcmp(signame, "USR1"))
+	else if (strcmp(signame, "USR1") == 0)
 		sig = SIGUSR1;
-	else if (!strcmp(signame, "USR2"))
+	else if (strcmp(signame, "USR2") == 0)
 		sig = SIGUSR2;
 	else
 	{
