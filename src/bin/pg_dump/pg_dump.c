@@ -860,7 +860,8 @@ help(const char *progname)
 
 	printf(_("\nGeneral options:\n"));
 	printf(_("  -f, --file=FILENAME         output file or directory name\n"));
-	printf(_("  -F, --format=c|d|t|p        output file format (custom, directory, tar, plain text)\n"));
+	printf(_("  -F, --format=c|d|t|p        output file format (custom, directory, tar,\n"
+			 "                              plain text (default))\n"));
 	printf(_("  -v, --verbose               verbose mode\n"));
 	printf(_("  -Z, --compress=0-9          compression level for compressed formats\n"));
 	printf(_("  --lock-wait-timeout=TIMEOUT fail after waiting TIMEOUT for a table lock\n"));

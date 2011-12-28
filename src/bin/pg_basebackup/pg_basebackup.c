@@ -105,7 +105,7 @@ usage(void)
 	printf(_("  %s [OPTION]...\n"), progname);
 	printf(_("\nOptions controlling the output:\n"));
 	printf(_("  -D, --pgdata=DIRECTORY   receive base backup into directory\n"));
-	printf(_("  -F, --format=p|t         output format (plain, tar)\n"));
+	printf(_("  -F, --format=p|t         output format (plain (default), tar)\n"));
 	printf(_("  -x, --xlog=fetch|stream  include required WAL files in backup\n"));
 	printf(_("  -z, --gzip               compress tar output\n"));
 	printf(_("  -Z, --compress=0-9       compress tar output with given compression level\n"));
