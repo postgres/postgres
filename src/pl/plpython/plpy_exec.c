@@ -25,18 +25,18 @@
 #include "plpy_subxactobject.h"
 
 
-static PyObject *PLy_function_build_args(FunctionCallInfo, PLyProcedure *);
-static void PLy_function_delete_args(PLyProcedure *);
-static void plpython_return_error_callback(void *);
+static PyObject *PLy_function_build_args(FunctionCallInfo fcinfo, PLyProcedure *proc);
+static void PLy_function_delete_args(PLyProcedure *proc);
+static void plpython_return_error_callback(void *arg);
 
-static PyObject *PLy_trigger_build_args(FunctionCallInfo, PLyProcedure *,
-										HeapTuple *);
-static HeapTuple PLy_modify_tuple(PLyProcedure *, PyObject *,
-								  TriggerData *, HeapTuple);
-static void plpython_trigger_error_callback(void *);
+static PyObject *PLy_trigger_build_args(FunctionCallInfo fcinfo, PLyProcedure *proc,
+										HeapTuple *rv);
+static HeapTuple PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd,
+								  TriggerData *tdata, HeapTuple otup);
+static void plpython_trigger_error_callback(void *arg);
 
-static PyObject *PLy_procedure_call(PLyProcedure *, char *, PyObject *);
-static void PLy_abort_open_subtransactions(int);
+static PyObject *PLy_procedure_call(PLyProcedure *proc, char *kargs, PyObject *vargs);
+static void PLy_abort_open_subtransactions(int save_subxact_level);
 
 
 /* function subhandler */

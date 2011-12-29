@@ -11,14 +11,14 @@
 #include "plpy_resultobject.h"
 
 
-static void PLy_result_dealloc(PyObject *);
-static PyObject *PLy_result_nrows(PyObject *, PyObject *);
-static PyObject *PLy_result_status(PyObject *, PyObject *);
-static Py_ssize_t PLy_result_length(PyObject *);
-static PyObject *PLy_result_item(PyObject *, Py_ssize_t);
-static PyObject *PLy_result_slice(PyObject *, Py_ssize_t, Py_ssize_t);
-static int	PLy_result_ass_item(PyObject *, Py_ssize_t, PyObject *);
-static int	PLy_result_ass_slice(PyObject *, Py_ssize_t, Py_ssize_t, PyObject *);
+static void PLy_result_dealloc(PyObject *arg);
+static PyObject *PLy_result_nrows(PyObject *self, PyObject *args);
+static PyObject *PLy_result_status(PyObject *self, PyObject *args);
+static Py_ssize_t PLy_result_length(PyObject *arg);
+static PyObject *PLy_result_item(PyObject *arg, Py_ssize_t idx);
+static PyObject *PLy_result_slice(PyObject *arg, Py_ssize_t lidx, Py_ssize_t hidx);
+static int	PLy_result_ass_item(PyObject *arg, Py_ssize_t idx, PyObject *item);
+static int	PLy_result_ass_slice(PyObject *rg, Py_ssize_t lidx, Py_ssize_t hidx, PyObject *slice);
 
 static char PLy_result_doc[] = {
 	"Results of a PostgreSQL query"

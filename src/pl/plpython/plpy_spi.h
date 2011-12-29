@@ -8,8 +8,8 @@
 #include "utils/palloc.h"
 #include "utils/resowner.h"
 
-extern PyObject *PLy_spi_prepare(PyObject *, PyObject *);
-extern PyObject *PLy_spi_execute(PyObject *, PyObject *);
+extern PyObject *PLy_spi_prepare(PyObject *self, PyObject *args);
+extern PyObject *PLy_spi_execute(PyObject *self, PyObject *args);
 
 typedef struct PLyExceptionEntry
 {

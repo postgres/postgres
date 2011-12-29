@@ -19,9 +19,9 @@
 List *explicit_subtransactions = NIL;
 
 
-static void PLy_subtransaction_dealloc(PyObject *);
-static PyObject *PLy_subtransaction_enter(PyObject *, PyObject *);
-static PyObject *PLy_subtransaction_exit(PyObject *, PyObject *);
+static void PLy_subtransaction_dealloc(PyObject *subxact);
+static PyObject *PLy_subtransaction_enter(PyObject *self, PyObject *unused);
+static PyObject *PLy_subtransaction_exit(PyObject *self, PyObject *args);
 
 static char PLy_subtransaction_doc[] = {
 	"PostgreSQL subtransaction context manager"

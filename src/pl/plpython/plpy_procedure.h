@@ -40,10 +40,10 @@ typedef struct PLyProcedureEntry
 } PLyProcedureEntry;
 
 /* PLyProcedure manipulation */
-extern char *PLy_procedure_name(PLyProcedure *);
-extern PLyProcedure *PLy_procedure_get(Oid, bool);
-extern void PLy_procedure_compile(PLyProcedure *, const char *);
-extern void PLy_procedure_delete(PLyProcedure *);
+extern char *PLy_procedure_name(PLyProcedure *proc);
+extern PLyProcedure *PLy_procedure_get(Oid fn_oid, bool is_trigger);
+extern void PLy_procedure_compile(PLyProcedure *proc, const char *src);
+extern void PLy_procedure_delete(PLyProcedure *proc);
 
 
 /* currently active plpython function */

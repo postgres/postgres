@@ -24,6 +24,6 @@ typedef struct PLySubtransactionData
 } PLySubtransactionData;
 
 extern void PLy_subtransaction_init_type(void);
-extern PyObject *PLy_subtransaction_new(PyObject *, PyObject *);
+extern PyObject *PLy_subtransaction_new(PyObject *self, PyObject *unused);
 
 #endif	/* PLPY_SUBXACTOBJECT */

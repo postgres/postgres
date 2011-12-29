@@ -28,10 +28,10 @@ PLyProcedure *PLy_curr_procedure = NULL;
 static HTAB *PLy_procedure_cache = NULL;
 static HTAB *PLy_trigger_cache = NULL;
 
-static PLyProcedure *PLy_procedure_create(HeapTuple, Oid, bool);
-static bool PLy_procedure_argument_valid(PLyTypeInfo *);
-static bool PLy_procedure_valid(PLyProcedure *, HeapTuple procTup);
-static char *PLy_procedure_munge_source(const char *, const char *);
+static PLyProcedure *PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger);
+static bool PLy_procedure_argument_valid(PLyTypeInfo *arg);
+static bool PLy_procedure_valid(PLyProcedure *proc, HeapTuple procTup);
+static char *PLy_procedure_munge_source(const char *name, const char *src);
 
 
 void

@@ -61,9 +61,9 @@ PG_FUNCTION_INFO_V1(plpython2_inline_handler);
 #endif
 
 
-static bool PLy_procedure_is_trigger(Form_pg_proc);
-static void plpython_error_callback(void *);
-static void plpython_inline_error_callback(void *);
+static bool PLy_procedure_is_trigger(Form_pg_proc procStruct);
+static void plpython_error_callback(void *arg);
+static void plpython_inline_error_callback(void *arg);
 static void PLy_init_interp(void);
 
 static const int plpython_python_version = PY_MAJOR_VERSION;

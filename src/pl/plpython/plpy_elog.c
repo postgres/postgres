@@ -20,10 +20,10 @@ PyObject *PLy_exc_fatal = NULL;
 PyObject *PLy_exc_spi_error = NULL;
 
 
-static void PLy_traceback(char **, char **, int *);
-static void PLy_get_spi_error_data(PyObject *, int *, char **,
-								   char **, char **, int *);
-static char * get_source_line(const char *, int);
+static void PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth);
+static void PLy_get_spi_error_data(PyObject *exc, int *sqlerrcode, char **detail,
+								   char **hint, char **query, int *position);
+static char * get_source_line(const char *src, int lineno);
 
 
 /*

@@ -87,21 +87,21 @@ typedef struct PLyTypeInfo
 	ItemPointerData typrel_tid;
 } PLyTypeInfo;
 
-extern void PLy_typeinfo_init(PLyTypeInfo *);
-extern void PLy_typeinfo_dealloc(PLyTypeInfo *);
+extern void PLy_typeinfo_init(PLyTypeInfo *arg);
+extern void PLy_typeinfo_dealloc(PLyTypeInfo *arg);
 
-extern void PLy_input_datum_func(PLyTypeInfo *, Oid, HeapTuple);
-extern void PLy_output_datum_func(PLyTypeInfo *, HeapTuple);
+extern void PLy_input_datum_func(PLyTypeInfo *arg, Oid typeOid, HeapTuple typeTup);
+extern void PLy_output_datum_func(PLyTypeInfo *arg, HeapTuple typeTup);
 
-extern void PLy_input_tuple_funcs(PLyTypeInfo *, TupleDesc);
-extern void PLy_output_tuple_funcs(PLyTypeInfo *, TupleDesc);
+extern void PLy_input_tuple_funcs(PLyTypeInfo *arg, TupleDesc desc);
+extern void PLy_output_tuple_funcs(PLyTypeInfo *arg, TupleDesc desc);
 
-extern void PLy_output_record_funcs(PLyTypeInfo *, TupleDesc);
+extern void PLy_output_record_funcs(PLyTypeInfo *arg, TupleDesc desc);
 
 /* conversion from Python objects to heap tuples */
-extern HeapTuple PLyObject_ToTuple(PLyTypeInfo *, TupleDesc, PyObject *);
+extern HeapTuple PLyObject_ToTuple(PLyTypeInfo *info, TupleDesc desc, PyObject *plrv);
 
 /* conversion from heap tuples to Python dictionaries */
-extern PyObject *PLyDict_FromTuple(PLyTypeInfo *, HeapTuple, TupleDesc);
+extern PyObject *PLyDict_FromTuple(PLyTypeInfo *info, HeapTuple tuple, TupleDesc desc);
 
 #endif	/* PLPY_TYPEIO_H */

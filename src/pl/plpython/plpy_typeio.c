@@ -26,35 +26,35 @@
 
 
 /* I/O function caching */
-static void PLy_input_datum_func2(PLyDatumToOb *, Oid, HeapTuple);
-static void PLy_output_datum_func2(PLyObToDatum *, HeapTuple);
+static void PLy_input_datum_func2(PLyDatumToOb *arg, Oid typeOid, HeapTuple typeTup);
+static void PLy_output_datum_func2(PLyObToDatum *arg, HeapTuple typeTup);
 
 /* conversion from Datums to Python objects */
-static PyObject *PLyBool_FromBool(PLyDatumToOb *, Datum);
-static PyObject *PLyFloat_FromFloat4(PLyDatumToOb *, Datum);
-static PyObject *PLyFloat_FromFloat8(PLyDatumToOb *, Datum);
-static PyObject *PLyFloat_FromNumeric(PLyDatumToOb *, Datum);
-static PyObject *PLyInt_FromInt16(PLyDatumToOb *, Datum);
-static PyObject *PLyInt_FromInt32(PLyDatumToOb *, Datum);
-static PyObject *PLyLong_FromInt64(PLyDatumToOb *, Datum);
-static PyObject *PLyBytes_FromBytea(PLyDatumToOb *, Datum);
-static PyObject *PLyString_FromDatum(PLyDatumToOb *, Datum);
-static PyObject *PLyList_FromArray(PLyDatumToOb *, Datum);
+static PyObject *PLyBool_FromBool(PLyDatumToOb *arg, Datum d);
+static PyObject *PLyFloat_FromFloat4(PLyDatumToOb *arg, Datum d);
+static PyObject *PLyFloat_FromFloat8(PLyDatumToOb *arg, Datum d);
+static PyObject *PLyFloat_FromNumeric(PLyDatumToOb *arg, Datum d);
+static PyObject *PLyInt_FromInt16(PLyDatumToOb *arg, Datum d);
+static PyObject *PLyInt_FromInt32(PLyDatumToOb *arg, Datum d);
+static PyObject *PLyLong_FromInt64(PLyDatumToOb *arg, Datum d);
+static PyObject *PLyBytes_FromBytea(PLyDatumToOb *arg, Datum d);
+static PyObject *PLyString_FromDatum(PLyDatumToOb *arg, Datum d);
+static PyObject *PLyList_FromArray(PLyDatumToOb *arg, Datum d);
 
 /* conversion from Python objects to Datums */
-static Datum PLyObject_ToBool(PLyObToDatum *, int32, PyObject *);
-static Datum PLyObject_ToBytea(PLyObToDatum *, int32, PyObject *);
-static Datum PLyObject_ToComposite(PLyObToDatum *, int32, PyObject *);
-static Datum PLyObject_ToDatum(PLyObToDatum *, int32, PyObject *);
-static Datum PLySequence_ToArray(PLyObToDatum *, int32, PyObject *);
+static Datum PLyObject_ToBool(PLyObToDatum *arg, int32 typmod, PyObject *plrv);
+static Datum PLyObject_ToBytea(PLyObToDatum *arg, int32 typmod, PyObject *plrv);
+static Datum PLyObject_ToComposite(PLyObToDatum *arg, int32 typmod, PyObject *plrv);
+static Datum PLyObject_ToDatum(PLyObToDatum *arg, int32 typmod, PyObject *plrv);
+static Datum PLySequence_ToArray(PLyObToDatum *arg, int32 typmod, PyObject *plrv);
 
 /* conversion from Python objects to heap tuples (used by triggers and SRFs) */
-static HeapTuple PLyMapping_ToTuple(PLyTypeInfo *, TupleDesc, PyObject *);
-static HeapTuple PLySequence_ToTuple(PLyTypeInfo *, TupleDesc, PyObject *);
-static HeapTuple PLyGenericObject_ToTuple(PLyTypeInfo *, TupleDesc, PyObject *);
+static HeapTuple PLyMapping_ToTuple(PLyTypeInfo *info, TupleDesc desc, PyObject *mapping);
+static HeapTuple PLySequence_ToTuple(PLyTypeInfo *info, TupleDesc desc, PyObject *sequence);
+static HeapTuple PLyGenericObject_ToTuple(PLyTypeInfo *info, TupleDesc desc, PyObject *object);
 
 /* make allocations in the TopMemoryContext */
-static void perm_fmgr_info(Oid, FmgrInfo *);
+static void perm_fmgr_info(Oid functionId, FmgrInfo *finfo);
 
 void
 PLy_typeinfo_init(PLyTypeInfo *arg)

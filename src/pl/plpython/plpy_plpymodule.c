@@ -24,20 +24,20 @@
 HTAB *PLy_spi_exceptions = NULL;
 
 
-static void PLy_add_exceptions(PyObject *);
-static void PLy_generate_spi_exceptions(PyObject *, PyObject *);
+static void PLy_add_exceptions(PyObject *plpy);
+static void PLy_generate_spi_exceptions(PyObject *mod, PyObject *base);
 
 /* module functions */
-static PyObject *PLy_debug(PyObject *, PyObject *);
-static PyObject *PLy_log(PyObject *, PyObject *);
-static PyObject *PLy_info(PyObject *, PyObject *);
-static PyObject *PLy_notice(PyObject *, PyObject *);
-static PyObject *PLy_warning(PyObject *, PyObject *);
-static PyObject *PLy_error(PyObject *, PyObject *);
-static PyObject *PLy_fatal(PyObject *, PyObject *);
-static PyObject *PLy_quote_literal(PyObject *, PyObject *);
-static PyObject *PLy_quote_nullable(PyObject *, PyObject *);
-static PyObject *PLy_quote_ident(PyObject *, PyObject *);
+static PyObject *PLy_debug(PyObject *self, PyObject *args);
+static PyObject *PLy_log(PyObject *self, PyObject *args);
+static PyObject *PLy_info(PyObject *self, PyObject *args);
+static PyObject *PLy_notice(PyObject *self, PyObject *args);
+static PyObject *PLy_warning(PyObject *self, PyObject *args);
+static PyObject *PLy_error(PyObject *self, PyObject *args);
+static PyObject *PLy_fatal(PyObject *self, PyObject *args);
+static PyObject *PLy_quote_literal(PyObject *self, PyObject *args);
+static PyObject *PLy_quote_nullable(PyObject *self, PyObject *args);
+static PyObject *PLy_quote_ident(PyObject *self, PyObject *args);
 
 
 /* A list of all known exceptions, generated from backend/utils/errcodes.txt */

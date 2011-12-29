@@ -7,7 +7,7 @@
 
 #include "plpy_procedure.h"
 
-extern Datum PLy_exec_function(FunctionCallInfo, PLyProcedure *);
-extern HeapTuple PLy_exec_trigger(FunctionCallInfo, PLyProcedure *);
+extern Datum PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc);
+extern HeapTuple PLy_exec_trigger(FunctionCallInfo fcinfo, PLyProcedure *proc);
 
 #endif	/* PLPY_EXEC_H */

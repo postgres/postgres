@@ -20,12 +20,12 @@
 #include "plpy_spi.h"
 
 
-static PyObject *PLy_cursor_query(const char *);
-static PyObject *PLy_cursor_plan(PyObject *, PyObject *);
-static void PLy_cursor_dealloc(PyObject *);
-static PyObject *PLy_cursor_iternext(PyObject *);
-static PyObject *PLy_cursor_fetch(PyObject *, PyObject *);
-static PyObject *PLy_cursor_close(PyObject *, PyObject *);
+static PyObject *PLy_cursor_query(const char *query);
+static PyObject *PLy_cursor_plan(PyObject *ob, PyObject *args);
+static void PLy_cursor_dealloc(PyObject *arg);
+static PyObject *PLy_cursor_iternext(PyObject *self);
+static PyObject *PLy_cursor_fetch(PyObject *self, PyObject *args);
+static PyObject *PLy_cursor_close(PyObject *self, PyObject *unused);
 
 static char PLy_cursor_doc[] = {
 	"Wrapper around a PostgreSQL cursor"

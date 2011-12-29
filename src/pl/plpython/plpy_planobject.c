@@ -13,8 +13,8 @@
 #include "plpy_elog.h"
 
 
-static void PLy_plan_dealloc(PyObject *);
-static PyObject *PLy_plan_status(PyObject *, PyObject *);
+static void PLy_plan_dealloc(PyObject *arg);
+static PyObject *PLy_plan_status(PyObject *self, PyObject *args);
 
 static char PLy_plan_doc[] = {
 	"Store a PostgreSQL plan"

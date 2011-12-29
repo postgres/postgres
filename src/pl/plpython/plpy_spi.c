@@ -24,10 +24,10 @@
 #include "plpy_resultobject.h"
 
 
-static PyObject *PLy_spi_execute_query(char *, long );
-static PyObject *PLy_spi_execute_plan(PyObject *, PyObject *, long);
-static PyObject *PLy_spi_execute_fetch_result(SPITupleTable *, int, int);
-static void PLy_spi_exception_set(PyObject *, ErrorData *);
+static PyObject *PLy_spi_execute_query(char *query, long limit);
+static PyObject *PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit);
+static PyObject *PLy_spi_execute_fetch_result(SPITupleTable *tuptable, int rows, int status);
+static void PLy_spi_exception_set(PyObject *excclass, ErrorData *edata);
 
 
 /* prepare(query="select * from foo")
