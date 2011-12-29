@@ -11766,7 +11766,8 @@ dumpUserMappings(Archive *fout,
 					  "FROM pg_options_to_table(umoptions)"
 					  "), ', ') AS umoptions "
 					  "FROM pg_user_mappings "
-					  "WHERE srvid = '%u'",
+					  "WHERE srvid = '%u' "
+					  "ORDER BY usename",
 					  catalogId.oid);
 
 	res = PQexec(g_conn, query->data);
