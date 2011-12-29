@@ -109,12 +109,12 @@ CREATE TABLE kd_point_tbl AS SELECT * FROM quad_point_tbl;
 CREATE INDEX sp_kd_ind ON kd_point_tbl USING spgist (p kd_point_ops);
 
 CREATE TABLE suffix_text_tbl AS
-    SELECT name AS t FROM road;
+    SELECT name AS t FROM road WHERE name !~ '^[0-9]';
 
 INSERT INTO suffix_text_tbl
-    SELECT '0123456789abcdef' FROM generate_series(1,1000);
-INSERT INTO suffix_text_tbl VALUES ('0123456789abcde');
-INSERT INTO suffix_text_tbl VALUES ('0123456789abcdefF');
+    SELECT 'P0123456789abcdef' FROM generate_series(1,1000);
+INSERT INTO suffix_text_tbl VALUES ('P0123456789abcde');
+INSERT INTO suffix_text_tbl VALUES ('P0123456789abcdefF');
 
 CREATE INDEX sp_suff_ind ON suffix_text_tbl USING spgist (t);
 
@@ -186,11 +186,11 @@ SELECT count(*) FROM quad_point_tbl WHERE p >^ '(5000, 4000)';
 
 SELECT count(*) FROM quad_point_tbl WHERE p ~= '(4585, 365)';
 
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdef';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdef';
 
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcde';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcde';
 
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdefF';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdefF';
 
 SELECT count(*) FROM suffix_text_tbl WHERE t <    'Aztec                         Ct  ';
 
@@ -362,16 +362,16 @@ SELECT count(*) FROM kd_point_tbl WHERE p ~= '(4585, 365)';
 SELECT count(*) FROM kd_point_tbl WHERE p ~= '(4585, 365)';
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdef';
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdef';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdef';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdef';
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcde';
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcde';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcde';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcde';
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdefF';
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdefF';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdefF';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdefF';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t <    'Aztec                         Ct  ';
@@ -479,16 +479,16 @@ SELECT count(*) FROM kd_point_tbl WHERE p ~= '(4585, 365)';
 SELECT count(*) FROM kd_point_tbl WHERE p ~= '(4585, 365)';
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdef';
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdef';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdef';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdef';
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcde';
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcde';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcde';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcde';
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdefF';
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdefF';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdefF';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdefF';
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM suffix_text_tbl WHERE t <    'Aztec                         Ct  ';

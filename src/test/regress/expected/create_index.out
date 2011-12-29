@@ -72,11 +72,11 @@ CREATE INDEX sp_quad_ind ON quad_point_tbl USING spgist (p);
 CREATE TABLE kd_point_tbl AS SELECT * FROM quad_point_tbl;
 CREATE INDEX sp_kd_ind ON kd_point_tbl USING spgist (p kd_point_ops);
 CREATE TABLE suffix_text_tbl AS
-    SELECT name AS t FROM road;
+    SELECT name AS t FROM road WHERE name !~ '^[0-9]';
 INSERT INTO suffix_text_tbl
-    SELECT '0123456789abcdef' FROM generate_series(1,1000);
-INSERT INTO suffix_text_tbl VALUES ('0123456789abcde');
-INSERT INTO suffix_text_tbl VALUES ('0123456789abcdefF');
+    SELECT 'P0123456789abcdef' FROM generate_series(1,1000);
+INSERT INTO suffix_text_tbl VALUES ('P0123456789abcde');
+INSERT INTO suffix_text_tbl VALUES ('P0123456789abcdefF');
 CREATE INDEX sp_suff_ind ON suffix_text_tbl USING spgist (t);
 --
 -- Test GiST and SP-GiST indexes
@@ -269,19 +269,19 @@ SELECT count(*) FROM quad_point_tbl WHERE p ~= '(4585, 365)';
      1
 (1 row)
 
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdef';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdef';
  count 
 -------
   1000
 (1 row)
 
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcde';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcde';
  count 
 -------
      1
 (1 row)
 
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdefF';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdefF';
  count 
 -------
      1
@@ -290,25 +290,25 @@ SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdefF';
 SELECT count(*) FROM suffix_text_tbl WHERE t <    'Aztec                         Ct  ';
  count 
 -------
-  1705
+   272
 (1 row)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t ~<~  'Aztec                         Ct  ';
  count 
 -------
-  1705
+   272
 (1 row)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t <=   'Aztec                         Ct  ';
  count 
 -------
-  1706
+   273
 (1 row)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t ~<=~ 'Aztec                         Ct  ';
  count 
 -------
-  1706
+   273
 (1 row)
 
 SELECT count(*) FROM suffix_text_tbl WHERE t =    'Aztec                         Ct  ';
@@ -889,45 +889,45 @@ SELECT count(*) FROM kd_point_tbl WHERE p ~= '(4585, 365)';
 (1 row)
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdef';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdef';
                          QUERY PLAN                         
 ------------------------------------------------------------
  Aggregate
    ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
-         Index Cond: (t = '0123456789abcdef'::text)
+         Index Cond: (t = 'P0123456789abcdef'::text)
 (3 rows)
 
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdef';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdef';
  count 
 -------
   1000
 (1 row)
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcde';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcde';
                          QUERY PLAN                         
 ------------------------------------------------------------
  Aggregate
    ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
-         Index Cond: (t = '0123456789abcde'::text)
+         Index Cond: (t = 'P0123456789abcde'::text)
 (3 rows)
 
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcde';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcde';
  count 
 -------
      1
 (1 row)
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdefF';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdefF';
                          QUERY PLAN                         
 ------------------------------------------------------------
  Aggregate
    ->  Index Only Scan using sp_suff_ind on suffix_text_tbl
-         Index Cond: (t = '0123456789abcdefF'::text)
+         Index Cond: (t = 'P0123456789abcdefF'::text)
 (3 rows)
 
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdefF';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdefF';
  count 
 -------
      1
@@ -945,7 +945,7 @@ SELECT count(*) FROM suffix_text_tbl WHERE t <    'Aztec                        
 SELECT count(*) FROM suffix_text_tbl WHERE t <    'Aztec                         Ct  ';
  count 
 -------
-  1705
+   272
 (1 row)
 
 EXPLAIN (COSTS OFF)
@@ -960,7 +960,7 @@ SELECT count(*) FROM suffix_text_tbl WHERE t ~<~  'Aztec                        
 SELECT count(*) FROM suffix_text_tbl WHERE t ~<~  'Aztec                         Ct  ';
  count 
 -------
-  1705
+   272
 (1 row)
 
 EXPLAIN (COSTS OFF)
@@ -975,7 +975,7 @@ SELECT count(*) FROM suffix_text_tbl WHERE t <=   'Aztec                        
 SELECT count(*) FROM suffix_text_tbl WHERE t <=   'Aztec                         Ct  ';
  count 
 -------
-  1706
+   273
 (1 row)
 
 EXPLAIN (COSTS OFF)
@@ -990,7 +990,7 @@ SELECT count(*) FROM suffix_text_tbl WHERE t ~<=~ 'Aztec                        
 SELECT count(*) FROM suffix_text_tbl WHERE t ~<=~ 'Aztec                         Ct  ';
  count 
 -------
-  1706
+   273
 (1 row)
 
 EXPLAIN (COSTS OFF)
@@ -1347,51 +1347,51 @@ SELECT count(*) FROM kd_point_tbl WHERE p ~= '(4585, 365)';
 (1 row)
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdef';
-                        QUERY PLAN                        
-----------------------------------------------------------
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdef';
+                        QUERY PLAN                         
+-----------------------------------------------------------
  Aggregate
    ->  Bitmap Heap Scan on suffix_text_tbl
-         Recheck Cond: (t = '0123456789abcdef'::text)
+         Recheck Cond: (t = 'P0123456789abcdef'::text)
          ->  Bitmap Index Scan on sp_suff_ind
-               Index Cond: (t = '0123456789abcdef'::text)
+               Index Cond: (t = 'P0123456789abcdef'::text)
 (5 rows)
 
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdef';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdef';
  count 
 -------
   1000
 (1 row)
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcde';
-                       QUERY PLAN                        
----------------------------------------------------------
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcde';
+                        QUERY PLAN                        
+----------------------------------------------------------
  Aggregate
    ->  Bitmap Heap Scan on suffix_text_tbl
-         Recheck Cond: (t = '0123456789abcde'::text)
+         Recheck Cond: (t = 'P0123456789abcde'::text)
          ->  Bitmap Index Scan on sp_suff_ind
-               Index Cond: (t = '0123456789abcde'::text)
+               Index Cond: (t = 'P0123456789abcde'::text)
 (5 rows)
 
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcde';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcde';
  count 
 -------
      1
 (1 row)
 
 EXPLAIN (COSTS OFF)
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdefF';
-                        QUERY PLAN                         
------------------------------------------------------------
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdefF';
+                         QUERY PLAN                         
+------------------------------------------------------------
  Aggregate
    ->  Bitmap Heap Scan on suffix_text_tbl
-         Recheck Cond: (t = '0123456789abcdefF'::text)
+         Recheck Cond: (t = 'P0123456789abcdefF'::text)
          ->  Bitmap Index Scan on sp_suff_ind
-               Index Cond: (t = '0123456789abcdefF'::text)
+               Index Cond: (t = 'P0123456789abcdefF'::text)
 (5 rows)
 
-SELECT count(*) FROM suffix_text_tbl WHERE t = '0123456789abcdefF';
+SELECT count(*) FROM suffix_text_tbl WHERE t = 'P0123456789abcdefF';
  count 
 -------
      1
@@ -1411,7 +1411,7 @@ SELECT count(*) FROM suffix_text_tbl WHERE t <    'Aztec                        
 SELECT count(*) FROM suffix_text_tbl WHERE t <    'Aztec                         Ct  ';
  count 
 -------
-  1705
+   272
 (1 row)
 
 EXPLAIN (COSTS OFF)
@@ -1428,7 +1428,7 @@ SELECT count(*) FROM suffix_text_tbl WHERE t ~<~  'Aztec                        
 SELECT count(*) FROM suffix_text_tbl WHERE t ~<~  'Aztec                         Ct  ';
  count 
 -------
-  1705
+   272
 (1 row)
 
 EXPLAIN (COSTS OFF)
@@ -1445,7 +1445,7 @@ SELECT count(*) FROM suffix_text_tbl WHERE t <=   'Aztec                        
 SELECT count(*) FROM suffix_text_tbl WHERE t <=   'Aztec                         Ct  ';
  count 
 -------
-  1706
+   273
 (1 row)
 
 EXPLAIN (COSTS OFF)
@@ -1462,7 +1462,7 @@ SELECT count(*) FROM suffix_text_tbl WHERE t ~<=~ 'Aztec                        
 SELECT count(*) FROM suffix_text_tbl WHERE t ~<=~ 'Aztec                         Ct  ';
  count 
 -------
-  1706
+   273
 (1 row)
 
 EXPLAIN (COSTS OFF)
