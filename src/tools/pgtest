@@ -8,7 +8,9 @@
 # have enough kernel resources to run two postmasters or
 # stop your main postmaster before running this script.
 #
-# Use -n to prevent 'gmake clean'
+# Use -n to prevent 'make clean'
+
+MAKE="make"
 
 [ ! -d src ] && echo "This must be run from the top of the PostgreSQL source tree" 1>&2 && exit 1
 
@@ -18,7 +20,7 @@ TMP="/tmp/$$"
 
 [ "X$1" != "X-n" ] && PGCLEAN=clean
 
-(gmake $PGCLEAN check 2>&1; echo "$?" > $TMP/ret) |
+($MAKE $PGCLEAN check 2>&1; echo "$?" > $TMP/ret) |
 	(tee  $TMP/0; exit `cat $TMP/ret`) &&
 cat $TMP/0 |
 # The following grep's have to be adjusted for your setup because
