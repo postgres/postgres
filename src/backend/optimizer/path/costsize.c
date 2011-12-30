@@ -1925,6 +1925,9 @@ cost_mergejoin(MergePath *path, PlannerInfo *root, SpecialJoinInfo *sjinfo)
 	outerendsel = outer_rows / outer_path_rows;
 	innerendsel = inner_rows / inner_path_rows;
 
+	Assert(outerstartsel <= outerendsel);
+	Assert(innerstartsel <= innerendsel);
+
 	/* cost of source data */
 
 	if (outersortkeys)			/* do we need to sort outer? */
