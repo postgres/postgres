@@ -79,6 +79,12 @@ typedef struct
 	XLogRecPtr	latestChunkStart;
 
 	/*
+	 * Time of send and receive of any message received.
+	 */
+	TimestampTz lastMsgSendTime;
+	TimestampTz lastMsgReceiptTime;
+
+	/*
 	 * connection string; is used for walreceiver to connect with the primary.
 	 */
 	char		conninfo[MAXCONNINFO];
@@ -112,5 +118,7 @@ extern void ShutdownWalRcv(void);
 extern bool WalRcvInProgress(void);
 extern void RequestXLogStreaming(XLogRecPtr recptr, const char *conninfo);
 extern XLogRecPtr GetWalRcvWriteRecPtr(XLogRecPtr *latestChunkStart);
+extern int GetReplicationApplyDelay(void);
+extern int GetReplicationTransferLatency(void);
 
 #endif   /* _WALRECEIVER_H */

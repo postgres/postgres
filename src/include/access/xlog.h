@@ -293,6 +293,7 @@ extern XLogRecPtr GetXLogWriteRecPtr(void);
 extern bool RecoveryIsPaused(void);
 extern void SetRecoveryPause(bool recoveryPause);
 extern TimestampTz GetLatestXTime(void);
+extern TimestampTz GetCurrentChunkReplayStartTime(void);
 
 extern void UpdateControlFile(void);
 extern uint64 GetSystemIdentifier(void);

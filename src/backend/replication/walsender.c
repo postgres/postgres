@@ -131,6 +131,7 @@ static void ProcessStandbyMessage(void);
 static void ProcessStandbyReplyMessage(void);
 static void ProcessStandbyHSFeedbackMessage(void);
 static void ProcessRepliesIfAny(void);
+static void WalSndKeepalive(char *msgbuf);
 
 
 /* Main entry point for walsender process */
@@ -823,30 +824,24 @@ WalSndLoop(void)
 		 */
 		if (caughtup || pq_is_send_pending())
 		{
-			TimestampTz finish_time = 0;
-			long		sleeptime = -1;
+			TimestampTz timeout = 0;
+			long		sleeptime = 10000; /* 10 s */
 			int			wakeEvents;
 
 			wakeEvents = WL_LATCH_SET | WL_POSTMASTER_DEATH |
-				WL_SOCKET_READABLE;
+				WL_SOCKET_READABLE | WL_TIMEOUT;
+
 			if (pq_is_send_pending())
 				wakeEvents |= WL_SOCKET_WRITEABLE;
+			else
+				WalSndKeepalive(output_message);
 
 			/* Determine time until replication timeout */
 			if (replication_timeout > 0)
 			{
-				long		secs;
-				int			usecs;
-
-				finish_time = TimestampTzPlusMilliseconds(last_reply_timestamp,
+				timeout = TimestampTzPlusMilliseconds(last_reply_timestamp,
 														  replication_timeout);
-				TimestampDifference(GetCurrentTimestamp(),
-									finish_time, &secs, &usecs);
-				sleeptime = secs * 1000 + usecs / 1000;
-				/* Avoid Assert in WaitLatchOrSocket if timeout is past */
-				if (sleeptime < 0)
-					sleeptime = 0;
-				wakeEvents |= WL_TIMEOUT;
+				sleeptime = 1 + (replication_timeout / 10);
 			}
 
 			/* Sleep until something happens or replication timeout */
@@ -859,7 +854,7 @@ WalSndLoop(void)
 			 * timeout ... he's supposed to reply *before* that.
 			 */
 			if (replication_timeout > 0 &&
-				GetCurrentTimestamp() >= finish_time)
+				GetCurrentTimestamp() >= timeout)
 			{
 				/*
 				 * Since typically expiration of replication timeout means
@@ -1625,6 +1620,23 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 	tuplestore_donestoring(tupstore);
 
 	return (Datum) 0;
+}
+
+static void
+WalSndKeepalive(char *msgbuf)
+{
+	PrimaryKeepaliveMessage keepalive_message;
+
+	/* Construct a new message */
+	keepalive_message.walEnd = sentPtr;
+	keepalive_message.sendTime = GetCurrentTimestamp();
+
+	elog(DEBUG2, "sending replication keepalive");
+
+	/* Prepend with the message type and send it. */
+	msgbuf[0] = 'k';
+	memcpy(msgbuf + 1, &keepalive_message, sizeof(PrimaryKeepaliveMessage));
+	pq_putmessage_noblock('d', msgbuf, sizeof(PrimaryKeepaliveMessage) + 1);
 }
 
 /*

@@ -17,6 +17,20 @@
 
 
 /*
+ * All messages from WalSender must contain these fields to allow us to
+ * correctly calculate the replication delay.
+ */
+typedef struct
+{
+	/* Current end of WAL on the sender */
+	XLogRecPtr	walEnd;
+
+	/* Sender's system clock at the time of transmission */
+	TimestampTz sendTime;
+} WalSndrMessage;
+
+
+/*
  * Header for a WAL data message (message type 'w').  This is wrapped within
  * a CopyData message at the FE/BE protocol level.
  *
@@ -38,6 +52,14 @@ typedef struct
 	/* Sender's system clock at the time of transmission */
 	TimestampTz sendTime;
 } WalDataMessageHeader;
+
+/*
+ * Keepalive message from primary (message type 'k'). (lowercase k)
+ * This is wrapped within a CopyData message at the FE/BE protocol level.
+ *
+ * Note that the data length is not specified here.
+ */
+typedef WalSndrMessage	PrimaryKeepaliveMessage;
 
 /*
  * Reply message from standby (message type 'r').  This is wrapped within

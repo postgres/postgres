@@ -452,6 +452,9 @@ typedef struct XLogCtlData
 	XLogRecPtr	recoveryLastRecPtr;
 	/* timestamp of last COMMIT/ABORT record replayed (or being replayed) */
 	TimestampTz recoveryLastXTime;
+	/* timestamp of when we started replaying the current chunk of WAL data,
+	 * only relevant for replication or archive recovery */
+	TimestampTz currentChunkStartTime;
 	/* end of the last record restored from the archive */
 	XLogRecPtr	restoreLastRecPtr;
 	/* Are we requested to pause recovery? */
@@ -606,6 +609,7 @@ static void exitArchiveRecovery(TimeLineID endTLI,
 static bool recoveryStopsHere(XLogRecord *record, bool *includeThis);
 static void recoveryPausesHere(void);
 static void SetLatestXTime(TimestampTz xtime);
+static void SetCurrentChunkStartTime(TimestampTz xtime);
 static void CheckRequiredParameterValues(void);
 static void XLogReportParameters(void);
 static void LocalSetXLogInsertAllowed(void);
@@ -5848,6 +5852,41 @@ GetLatestXTime(void)
 }
 
 /*
+ * Save timestamp of the next chunk of WAL records to apply.
+ *
+ * We keep this in XLogCtl, not a simple static variable, so that it can be
+ * seen by all backends.
+ */
+static void
+SetCurrentChunkStartTime(TimestampTz xtime)
+{
+	/* use volatile pointer to prevent code rearrangement */
+	volatile XLogCtlData *xlogctl = XLogCtl;
+
+	SpinLockAcquire(&xlogctl->info_lck);
+	xlogctl->currentChunkStartTime = xtime;
+	SpinLockRelease(&xlogctl->info_lck);
+}
+
+/*
+ * Fetch timestamp of latest processed commit/abort record.
+ * Startup process maintains an accurate local copy in XLogReceiptTime
+ */
+TimestampTz
+GetCurrentChunkReplayStartTime(void)
+{
+	/* use volatile pointer to prevent code rearrangement */
+	volatile XLogCtlData *xlogctl = XLogCtl;
+	TimestampTz xtime;
+
+	SpinLockAcquire(&xlogctl->info_lck);
+	xtime = xlogctl->currentChunkStartTime;
+	SpinLockRelease(&xlogctl->info_lck);
+
+	return xtime;
+}
+
+/*
  * Returns time of receipt of current chunk of XLOG data, as well as
  * whether it was received from streaming replication or from archives.
  */
@@ -6390,6 +6429,7 @@ StartupXLOG(void)
 		xlogctl->replayEndRecPtr = ReadRecPtr;
 		xlogctl->recoveryLastRecPtr = ReadRecPtr;
 		xlogctl->recoveryLastXTime = 0;
+		xlogctl->currentChunkStartTime = 0;
 		xlogctl->recoveryPause = false;
 		SpinLockRelease(&xlogctl->info_lck);
 
@@ -9696,7 +9736,10 @@ retry:
 						{
 							havedata = true;
 							if (!XLByteLT(*RecPtr, latestChunkStart))
+							{
 								XLogReceiptTime = GetCurrentTimestamp();
+								SetCurrentChunkStartTime(XLogReceiptTime);
+							}
 						}
 						else
 							havedata = false;

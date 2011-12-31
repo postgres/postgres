@@ -1467,6 +1467,54 @@ The commands accepted in walsender mode are:
       <variablelist>
       <varlistentry>
       <term>
+          Primary keepalive message (B)
+      </term>
+      <listitem>
+      <para>
+      <variablelist>
+      <varlistentry>
+      <term>
+          Byte1('k')
+      </term>
+      <listitem>
+      <para>
+          Identifies the message as a sender keepalive.
+      </para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term>
+          Byte8
+      </term>
+      <listitem>
+      <para>
+          The current end of WAL on the server, given in
+          XLogRecPtr format.
+      </para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term>
+          Byte8
+      </term>
+      <listitem>
+      <para>
+          The server's system clock at the time of transmission,
+          given in TimestampTz format.
+      </para>
+      </listitem>
+      </varlistentry>
+      </variablelist>
+      </para>
+      </listitem>
+      </varlistentry>
+      </variablelist>
+     </para>
+
+     <para>
+      <variablelist>
+      <varlistentry>
+      <term>
           Standby status update (F)
       </term>
       <listitem>

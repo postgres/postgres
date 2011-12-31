@@ -28,6 +28,7 @@
 #include "replication/walreceiver.h"
 #include "storage/pmsignal.h"
 #include "storage/shmem.h"
+#include "utils/timestamp.h"
 
 WalRcvData *WalRcv = NULL;
 
@@ -237,4 +238,66 @@ GetWalRcvWriteRecPtr(XLogRecPtr *latestChunkStart)
 	SpinLockRelease(&walrcv->mutex);
 
 	return recptr;
+}
+
+/*
+ * Returns the replication apply delay in ms
+ */
+int
+GetReplicationApplyDelay(void)
+{
+	/* use volatile pointer to prevent code rearrangement */
+	volatile WalRcvData *walrcv = WalRcv;
+
+	XLogRecPtr	receivePtr;
+	XLogRecPtr	replayPtr;
+
+	long	secs;
+	int		usecs;
+
+	SpinLockAcquire(&walrcv->mutex);
+	receivePtr = walrcv->receivedUpto;
+	SpinLockRelease(&walrcv->mutex);
+
+	replayPtr = GetXLogReplayRecPtr(NULL);
+
+	if (XLByteLE(receivePtr, replayPtr))
+		return 0;
+
+	TimestampDifference(GetCurrentChunkReplayStartTime(),
+						GetCurrentTimestamp(),
+						&secs, &usecs);
+
+	return (((int) secs * 1000) + (usecs / 1000));
+}
+
+/*
+ * Returns the network latency in ms, note that this includes any
+ * difference in clock settings between the servers, as well as timezone.
+ */
+int
+GetReplicationTransferLatency(void)
+{
+	/* use volatile pointer to prevent code rearrangement */
+	volatile WalRcvData *walrcv = WalRcv;
+
+	TimestampTz lastMsgSendTime;
+	TimestampTz lastMsgReceiptTime;
+
+	long	secs = 0;
+	int		usecs = 0;
+	int		ms;
+
+	SpinLockAcquire(&walrcv->mutex);
+	lastMsgSendTime = walrcv->lastMsgSendTime;
+	lastMsgReceiptTime = walrcv->lastMsgReceiptTime;
+	SpinLockRelease(&walrcv->mutex);
+
+	TimestampDifference(lastMsgSendTime,
+						lastMsgReceiptTime,
+						&secs, &usecs);
+
+	ms = ((int) secs * 1000) + (usecs / 1000);
+
+	return ms;
 }
