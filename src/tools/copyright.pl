@@ -26,8 +26,8 @@ sub wanted {
     # prevent corruption of git indexes, ./.git
     if ($File::Find::name =~ m{^\./\.git$})
     {
-	$File::Find::prune = 1;
-	return;
+        $File::Find::prune = 1;
+        return;
     }
 
     return if ! -f $File::Find::name || -l $File::Find::name;
