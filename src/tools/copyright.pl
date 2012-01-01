@@ -2,7 +2,7 @@
 #################################################################
 # copyright.pl -- update copyright notices throughout the source tree, idempotently.
 #
-# Copyright (c) 2011, PostgreSQL Global Development Group
+# Copyright (c) 2011-2012, PostgreSQL Global Development Group
 #
 # src/tools/copyright.pl
 #################################################################
@@ -23,6 +23,13 @@ print "Using current year:  $year\n";
 find({wanted => \&wanted, no_chdir => 1}, '.');
 
 sub wanted {
+    # prevent corruption of git indexes, ./.git
+    if ($File::Find::name =~ m{^\./\.git$})
+    {
+	$File::Find::prune = 1;
+	return;
+    }
+
     return if ! -f $File::Find::name || -l $File::Find::name;
 
     my @lines;
