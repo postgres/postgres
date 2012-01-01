@@ -4,7 +4,7 @@
  *	  port-specific prototypes for Intel x86/Intel SVR4
  *
  *
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/port/dynloader/svr4.h

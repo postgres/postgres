@@ -3,7 +3,7 @@
  * dumpmem.c
  *	  Memory allocation routines used by pg_dump, pg_dumpall, and pg_restore
  *
- * Portions Copyright (c) 1996-2011, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *

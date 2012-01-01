@@ -5,7 +5,7 @@
  *	  along with the relation's initial contents.
  *
  *
- * Copyright (c) 2006-2011, PostgreSQL Global Development Group
+ * Copyright (c) 2006-2012, PostgreSQL Global Development Group
  *
  * src/include/catalog/pg_enum.h
  *
