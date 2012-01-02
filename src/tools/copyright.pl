@@ -23,7 +23,7 @@ print "Using current year:  $year\n";
 find({wanted => \&wanted, no_chdir => 1}, '.');
 
 sub wanted {
-    # prevent corruption of git indexes, ./.git
+    # prevent corruption of git indexes by ignoring any .git/
     if ($_ eq '.git')
     {
         $File::Find::prune = 1;
