@@ -31,6 +31,7 @@ sub wanted {
     }
 
     return if ! -f $File::Find::name || -l $File::Find::name;
+    return if ($_ =~ m/\.(ico|bin)$);
 
     my @lines;
     tie @lines, "Tie::File", $File::Find::name;
