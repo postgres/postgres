@@ -1170,10 +1170,26 @@ if test "$with_krb5" = yes; then
   AC_MSG_CHECKING(for krb5_free_unparsed_name)
   AC_TRY_LINK([#include <krb5.h>],
               [krb5_free_unparsed_name(NULL,NULL);],
-              [AC_DEFINE(HAVE_KRB5_FREE_UNPARSED_NAME, 1, [Define to 1 if you have krb5_free_unparsed_name])
+              [AC_DEFINE(HAVE_KRB5_FREE_UNPARSED_NAME, 1, [Define to 1 if you have krb5_free_unparsed_name.])
 AC_MSG_RESULT(yes)],
               [AC_MSG_RESULT(no)])
 fi
+
+# On PPC, check if assembler supports LWARX instruction's mutex hint bit
+case $host_cpu in
+  ppc*|powerpc*)
+    AC_MSG_CHECKING([whether assembler supports lwarx hint bit])
+    AC_TRY_COMPILE([],
+	[int a = 0; int *p = &a; int r;
+	 __asm__ __volatile__ (" lwarx %0,0,%1,1\n" : "=&r"(r) : "r"(p));],
+	[pgac_cv_have_ppc_mutex_hint=yes],
+	[pgac_cv_have_ppc_mutex_hint=no])
+    AC_MSG_RESULT([$pgac_cv_have_ppc_mutex_hint])
+    if test x"$pgac_cv_have_ppc_mutex_hint" = xyes ; then
+	AC_DEFINE(HAVE_PPC_LWARX_MUTEX_HINT, 1, [Define to 1 if the assembler supports PPC's LWARX mutex hint bit.])
+    fi
+  ;;
+esac
 
 # Check largefile support.  You might think this is a system service not a
 # compiler characteristic, but you'd be wrong.  We must check this before

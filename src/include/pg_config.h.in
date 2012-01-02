@@ -275,7 +275,7 @@
 /* Define to 1 if `text.data' is member of `krb5_error'. */
 #undef HAVE_KRB5_ERROR_TEXT_DATA
 
-/* Define to 1 if you have krb5_free_unparsed_name */
+/* Define to 1 if you have krb5_free_unparsed_name. */
 #undef HAVE_KRB5_FREE_UNPARSED_NAME
 
 /* Define to 1 if `client' is member of `krb5_ticket'. */
@@ -383,6 +383,9 @@
 
 /* Define to 1 if you have the POSIX signal interface. */
 #undef HAVE_POSIX_SIGNALS
+
+/* Define to 1 if the assembler supports PPC's LWARX mutex hint bit. */
+#undef HAVE_PPC_LWARX_MUTEX_HINT
 
 /* Define to 1 if you have the `pstat' function. */
 #undef HAVE_PSTAT

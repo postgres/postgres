@@ -6,6 +6,9 @@
  * for developers.	If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
  * src/include/pg_config_manual.h
  *------------------------------------------------------------------------
  */
@@ -168,6 +171,21 @@
 #define PG_PRINTF_ATTRIBUTE gnu_printf
 #else
 #define PG_PRINTF_ATTRIBUTE printf
+#endif
+
+/*
+ * On PPC machines, decide whether to use the mutex hint bit in LWARX
+ * instructions.  Setting the hint bit will slightly improve spinlock
+ * performance on POWER6 and later machines, but does nothing before that,
+ * and will result in illegal-instruction failures on some pre-POWER4
+ * machines.  By default we use the hint bit when building for 64-bit PPC,
+ * which should be safe in nearly all cases.  You might want to override
+ * this if you are building 32-bit code for a known-recent PPC machine.
+ */
+#ifdef HAVE_PPC_LWARX_MUTEX_HINT /* must have assembler support in any case */
+#if defined(__ppc64__) || defined(__powerpc64__)
+#define USE_PPC_LWARX_MUTEX_HINT
+#endif
 #endif
 
 /*

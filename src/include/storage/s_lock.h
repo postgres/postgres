@@ -372,7 +372,11 @@ tas(volatile slock_t *lock)
 	int _res;
 
 	__asm__ __volatile__(
+#ifdef USE_PPC_LWARX_MUTEX_HINT
+"	lwarx   %0,0,%3,1	\n"
+#else
 "	lwarx   %0,0,%3		\n"
+#endif
 "	cmpwi   %0,0		\n"
 "	bne     1f			\n"
 "	addi    %0,%0,1		\n"
