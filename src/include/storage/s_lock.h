@@ -354,13 +354,10 @@ tas(volatile slock_t *lock)
 #if defined(__ppc__) || defined(__powerpc__) || defined(__ppc64__) || defined(__powerpc64__)
 #define HAS_TEST_AND_SET
 
-#if defined(__ppc64__) || defined(__powerpc64__)
-typedef unsigned long slock_t;
-#else
 typedef unsigned int slock_t;
-#endif
 
 #define TAS(lock) tas(lock)
+
 /*
  * NOTE: per the Enhanced PowerPC Architecture manual, v1.0 dated 7-May-2002,
  * an isync is a sufficient synchronization barrier after a lwarx/stwcx loop.
