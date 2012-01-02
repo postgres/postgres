@@ -34,13 +34,13 @@ ecpg_filter(const char *sourcefile, const char *outfile)
 	if (!s)
 	{
 		fprintf(stderr, "Could not open file %s for reading\n", sourcefile);
-		exit_nicely(2);
+		exit(2);
 	}
 	t = fopen(outfile, "w");
 	if (!t)
 	{
 		fprintf(stderr, "Could not open file %s for writing\n", outfile);
-		exit_nicely(2);
+		exit(2);
 	}
 
 	while (fgets(linebuf, LINEBUFSIZE, s))
@@ -148,7 +148,7 @@ ecpg_start_test(const char *testname,
 	{
 		fprintf(stderr, _("could not start process for test %s\n"),
 				testname);
-		exit_nicely(2);
+		exit(2);
 	}
 
 	free(outfile_stdout);
