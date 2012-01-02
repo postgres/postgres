@@ -31,6 +31,8 @@ sub wanted {
     }
 
     return if ! -f $File::Find::name || -l $File::Find::name;
+    # skip file names with binary extensions
+    # How are these updated?  bjm 2012-01-02
     return if ($_ =~ m/\.(ico|bin)$);
 
     my @lines;
