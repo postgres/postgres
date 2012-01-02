@@ -69,7 +69,7 @@ isolation_start_test(const char *testname,
 	{
 		fprintf(stderr, _("could not start process for test %s\n"),
 				testname);
-		exit_nicely(2);
+		exit(2);
 	}
 
 	return pid;
