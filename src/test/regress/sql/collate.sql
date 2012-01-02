@@ -214,6 +214,11 @@ RESET enable_seqscan;
 RESET enable_hashjoin;
 RESET enable_nestloop;
 
+-- 9.1 bug with useless COLLATE in an expression subject to length coercion
+
+CREATE TEMP TABLE vctable (f1 varchar(25));
+INSERT INTO vctable VALUES ('foo' COLLATE "C");
+
 --
 -- Clean up.  Many of these table names will be re-used if the user is
 -- trying to run any platform-specific collation tests later, so we
