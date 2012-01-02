@@ -24,7 +24,7 @@ find({wanted => \&wanted, no_chdir => 1}, '.');
 
 sub wanted {
     # prevent corruption of git indexes, ./.git
-    if ($File::Find::name =~ m{^\./\.git$})
+    if ($_ eq '.git')
     {
         $File::Find::prune = 1;
         return;
