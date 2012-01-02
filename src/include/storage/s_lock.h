@@ -361,6 +361,7 @@ typedef unsigned int slock_t;
 /*
  * NOTE: per the Enhanced PowerPC Architecture manual, v1.0 dated 7-May-2002,
  * an isync is a sufficient synchronization barrier after a lwarx/stwcx loop.
+ * On newer machines, we can use lwsync instead for better performance.
  */
 static __inline__ int
 tas(volatile slock_t *lock)
@@ -382,7 +383,11 @@ tas(volatile slock_t *lock)
 "1:	li      %1,1		\n"
 "	b		3f			\n"
 "2:						\n"
+#ifdef USE_PPC_LWSYNC
+"	lwsync				\n"
+#else
 "	isync				\n"
+#endif
 "	li      %1,0		\n"
 "3:						\n"
 
@@ -392,13 +397,25 @@ tas(volatile slock_t *lock)
 	return _res;
 }
 
-/* PowerPC S_UNLOCK is almost standard but requires a "sync" instruction */
+/*
+ * PowerPC S_UNLOCK is almost standard but requires a "sync" instruction.
+ * On newer machines, we can use lwsync instead for better performance.
+ */
+#ifdef USE_PPC_LWSYNC
+#define S_UNLOCK(lock)	\
+do \
+{ \
+	__asm__ __volatile__ ("	lwsync \n"); \
+	*((volatile slock_t *) (lock)) = 0; \
+} while (0)
+#else
 #define S_UNLOCK(lock)	\
 do \
 { \
 	__asm__ __volatile__ ("	sync \n"); \
 	*((volatile slock_t *) (lock)) = 0; \
 } while (0)
+#endif /* USE_PPC_LWSYNC */
 
 #endif /* powerpc */
 

@@ -189,6 +189,17 @@
 #endif
 
 /*
+ * On PPC machines, decide whether to use LWSYNC instructions in place of
+ * ISYNC and SYNC.  This provides slightly better performance, but will
+ * result in illegal-instruction failures on some pre-POWER4 machines.
+ * By default we use LWSYNC when building for 64-bit PPC, which should be
+ * safe in nearly all cases.
+ */
+#if defined(__ppc64__) || defined(__powerpc64__)
+#define USE_PPC_LWSYNC
+#endif
+
+/*
  *------------------------------------------------------------------------
  * The following symbols are for enabling debugging code, not for
  * controlling user-visible features or resource limits.
