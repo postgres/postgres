@@ -358,6 +358,9 @@ typedef unsigned int slock_t;
 
 #define TAS(lock) tas(lock)
 
+/* On PPC, it's a win to use a non-locking test before the lwarx */
+#define TAS_SPIN(lock)	(*(lock) ? 1 : TAS(lock))
+
 /*
  * NOTE: per the Enhanced PowerPC Architecture manual, v1.0 dated 7-May-2002,
  * an isync is a sufficient synchronization barrier after a lwarx/stwcx loop.
