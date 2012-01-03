@@ -77,6 +77,9 @@ typedef struct _parallel_slot
 
 #define NO_SLOT (-1)
 
+#define TEXT_DUMP_HEADER "--\n-- PostgreSQL database dump\n--\n\n"
+#define TEXT_DUMPALL_HEADER "--\n-- PostgreSQL database cluster dump\n--\n\n"
+
 /* state needed to save/restore an archive's output target */
 typedef struct _outputContext
 {
@@ -1862,11 +1865,19 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 	else
 	{
 		/*
-		 * *Maybe* we have a tar archive format file... So, read first 512
-		 * byte header...
+		 * *Maybe* we have a tar archive format file or a text dump ... 
+		 * So, read first 512 byte header...
 		 */
 		cnt = fread(&AH->lookahead[AH->lookaheadLen], 1, 512 - AH->lookaheadLen, fh);
 		AH->lookaheadLen += cnt;
+
+		if (AH->lookaheadLen >= strlen(TEXT_DUMPALL_HEADER) &&
+			(strncmp(AH->lookahead, TEXT_DUMP_HEADER, strlen(TEXT_DUMP_HEADER)) == 0 ||
+			 strncmp(AH->lookahead, TEXT_DUMPALL_HEADER, strlen(TEXT_DUMPALL_HEADER)) == 0))
+		{
+			/* looks like it's probably a text format dump. so suggest they try psql */
+			die_horribly(AH, modulename, "input file appears to be a text format dump. Please use psql.\n");
+		}
 
 		if (AH->lookaheadLen != 512)
 			die_horribly(AH, modulename, "input file does not appear to be a valid archive (too short?)\n");
