@@ -33,7 +33,7 @@ our $config;
 require "config_default.pl";
 require "config.pl" if (-f "src/tools/msvc/config.pl");
 
-Mkvcbuild::mkvcbuild($config);
+my $vcver = Mkvcbuild::mkvcbuild($config);
 
 # check what sort of build we are doing
 
@@ -50,7 +50,11 @@ elsif ($ARGV[0] ne "RELEASE")
 
 # ... and do it
 
-if ($buildwhat)
+if ($buildwhat and $vcver eq '10.00')
+{
+    system("msbuild $buildwhat.vcxproj /verbosity:detailed /p:Configuration=$bconf");
+}
+elsif ($buildwhat)
 {
     system("vcbuild $buildwhat.vcproj $bconf");
 }

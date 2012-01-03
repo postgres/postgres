@@ -8,10 +8,11 @@ package Solution;
 use Carp;
 use strict;
 use warnings;
+use VSObjectFactory;
 
-sub new
+sub _new
 {
-    my $junk = shift;
+    my $classname = shift;
     my $options = shift;
     my $self = {
         projects => {},
@@ -21,7 +22,7 @@ sub new
         vcver    => undef,
         platform => undef,
     };
-    bless $self;
+    bless($self, $classname);
 
     # integer_datetimes is now the default
     $options->{integer_datetimes} = 1
@@ -53,27 +54,14 @@ sub new
     die "Bad wal_segsize $options->{wal_segsize}"
       unless grep {$_ == $options->{wal_segsize}} (1,2,4,8,16,32,64);
 
-    $self->DetermineToolVersions();
+    $self->DeterminePlatform();
 
     return $self;
 }
 
-sub DetermineToolVersions
+sub DeterminePlatform
 {
     my $self = shift;
-
-    # Determine version of vcbuild command, to set proper verison of visual studio
-    open(P,"vcbuild /? |") || die "vcbuild command not found";
-    my $line = <P>;
-    close(P);
-    if ($line !~ /^Microsoft\s*\(R\) Visual C\+\+ [^-]+ - \D+(\d+)\.00\.\d+/)
-    {
-        die "Unable to determine vcbuild version from first line of output!";
-    }
-    if ($1 == 8) { $self->{vcver} = '8.00' }
-    elsif ($1 == 9) { $self->{vcver} = '9.00' }
-    else { die "Unsupported version of Visual Studio: $1" }
-    print "Detected Visual Studio version $self->{vcver}\n";
 
     # Determine if we are in 32 or 64-bit mode. Do this by seeing if CL has
     # 64-bit only parameters.
@@ -428,7 +416,7 @@ sub AddProject
 {
     my ($self, $name, $type, $folder, $initialdir) = @_;
 
-    my $proj = new Project($name, $type, $self);
+    my $proj = VSObjectFactory::CreateProject($self->{vcver}, $name, $type, $self);
     push @{$self->{projects}->{$folder}}, $proj;
     $proj->AddDir($initialdir) if ($initialdir);
     if ($self->{options}->{zlib})
@@ -488,8 +476,8 @@ sub Save
 
     open(SLN,">pgsql.sln") || croak "Could not write to pgsql.sln\n";
     print SLN <<EOF;
-Microsoft Visual Studio Solution File, Format Version 9.00
-# Visual Studio 2005
+Microsoft Visual Studio Solution File, Format Version $self->{solutionFileVersion}
+# $self->{visualStudioName}
 EOF
 
     foreach my $fld (keys %{$self->{projects}})
@@ -497,7 +485,7 @@ EOF
         foreach my $proj (@{$self->{projects}->{$fld}})
         {
             print SLN <<EOF;
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "$proj->{name}", "$proj->{name}.vcproj", "$proj->{guid}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "$proj->{name}", "$proj->{name}$proj->{filenameExtension}", "$proj->{guid}"
 EndProject
 EOF
         }
@@ -577,6 +565,76 @@ sub GetFakeConfigure
     $cfg .= ' --with-python' if ($self->{options}->{python});
 
     return $cfg;
+}
+
+package VS2005Solution;
+
+#
+# Package that encapsulates a Visual Studio 2005 solution file
+#
+
+use strict;
+use warnings;
+use base qw(Solution);
+
+sub new
+{
+    my $classname = shift;
+    my $self = $classname->SUPER::_new(@_);
+    bless($self, $classname);
+
+    $self->{solutionFileVersion} = '9.00';
+    $self->{vcver} = '8.00';
+    $self->{visualStudioName} = 'Visual Studio 2005';
+
+    return $self;
+}
+
+package VS2008Solution;
+
+#
+# Package that encapsulates a Visual Studio 2008 solution file
+#
+
+use strict;
+use warnings;
+use base qw(Solution);
+
+sub new
+{
+    my $classname = shift;
+    my $self = $classname->SUPER::_new(@_);
+    bless($self, $classname);
+
+    $self->{solutionFileVersion} = '10.00';
+    $self->{vcver} = '9.00';
+    $self->{visualStudioName} = 'Visual Studio 2008';
+
+    return $self;
+}
+
+package VS2010Solution;
+
+#
+# Package that encapsulates a Visual Studio 2010 solution file
+#
+
+use Carp;
+use strict;
+use warnings;
+use base qw(Solution);
+
+sub new
+{
+    my $classname = shift;
+    my $self = $classname->SUPER::_new(@_);
+    bless($self, $classname);
+
+    $self->{solutionFileVersion} = '11.00';
+    $self->{vcver} = '10.00';
+    $self->{visualStudioName} = 'Visual Studio 2010';
+
+    return $self;
 }
 
 1;

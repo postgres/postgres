@@ -20,10 +20,10 @@
   There are several different ways of building PostgreSQL on
   <productname>Windows</productname>. The simplest way to build with
   Microsoft tools is to install a supported version of the
-  <productname>Microsoft Platform SDK</productname> and use the included
+  <productname>Microsoft Windows SDK</productname> and use the included
   compiler. It is also possible to build with the full
-  <productname>Microsoft Visual C++ 2005 or 2008</productname>. In some cases
-  that requires the installation of the <productname>Platform SDK</productname>
+  <productname>Microsoft Visual C++ 2005, 2008 or 2010</productname>. In some cases
+  that requires the installation of the <productname>Windows SDK</productname>
   in addition to the compiler.
  </para>
 
@@ -69,32 +69,26 @@
 
  <sect1 id="install-windows-full">
   <title>Building with <productname>Visual C++</productname> or the
-  <productname>Platform SDK</productname></title>
+  <productname>Microsoft Windows SDK</productname></title>
 
  <para>
   PostgreSQL can be built using the Visual C++ compiler suite from Microsoft.
   These compilers can be either from <productname>Visual Studio</productname>,
   <productname>Visual Studio Express</productname> or some versions of the
-  <productname>Platform SDK</productname>. If you do not already have a
+  <productname>Microsoft Windows SDK</productname>. If you do not already have a
   <productname>Visual Studio</productname> environment set up, the easiest
-  way us to use the compilers in the <productname>Platform SDK</productname>,
+  way is to use the compilers in the <productname>Windows SDK</productname>,
   which is a free download from Microsoft.
  </para>
 
  <para>
-  PostgreSQL supports the compilers from
-  <productname>Visual Studio 2005</productname> and
-  <productname>Visual Studio 2008</productname>. When using the Platform SDK
-  only, or when building for 64-bit Windows, only
-  <productname>Visual Studio 2008</productname> is supported.
-  <productname>Visual Studio 2010</productname> is not yet supported.
- </para>
-
- <para>
-  When building using the <productname>Platform SDK</productname>, versions
-  6.0 to 7.0 of the SDK are supported. Older or newer versions will not work.
-  In particular, versions from 7.0a and later will not work, since
-  they include compilers from <productname>Visual Studio 2010</productname>.
+  PostgreSQL is known to support compilation using the compilers shipped with
+  <productname>Visual Studio 2005</productname> to
+  <productname>Visual Studio 2010</productname> (including Express editions),
+  as well as standalone Windows SDK releases 6.0 to 7.1.
+  64-bit PostgreSQL builds are only supported with
+  <productname>Microsoft Windows SDK</productname> version 6.0a and above or
+  <productname>Visual Studio 2008</productname> and above.
  </para>
 
  <para>
@@ -104,11 +98,13 @@
   <productname>Cygwin</productname> present in your system PATH. Also, make
   sure you have all the required Visual C++ tools available in the PATH. In
   <productname>Visual Studio</productname>, start the
-  <application>Visual Studio Command Prompt</application>. In the
-  <productname>Platform SDK</productname>, start the
-  <application>CMD shell</application> listed under the SDK on the Start Menu.
+  <application>Visual Studio Command Prompt</application>.
   If you wish to build a 64-bit version, you must use the 64-bit version of
   the command, and vice versa.
+  In the <productname>Microsoft Windows SDK</productname>, start the
+  <application>CMD shell</application> listed under the SDK on the Start Menu.
+  In recent SDK versions you can change the targeted CPU architecture by using
+  the <command>setenv</command> command.
   All commands should be run from the <filename>src\tools\msvc</filename>
   directory.
  </para>
@@ -148,17 +144,17 @@ $ENV{PATH}=$ENV{PATH} . ';c:\some\where\bison\bin';
 
    <variablelist>
     <varlistentry>
-     <term><productname>Microsoft Platform SDK</productname></term>
+     <term><productname>Microsoft Windows SDK</productname></term>
      <listitem><para>
       It is recommended that you upgrade to the latest supported version
-      of the <productname>Microsoft Platform SDK</productname> (currently
-      version 7.0), available for download from
+      of the <productname>Microsoft Windows SDK</productname> (currently
+      version 7.1), available for download from
       <ulink url="http://www.microsoft.com/downloads/"></>.
      </para>
      <para>
       You must always include the
       <application>Windows Headers and Libraries</application> part of the SDK.
-      If you install the <productname>Platform SDK</productname>
+      If you install the <productname>Windows SDK</productname>
       including the <application>Visual C++ Compilers</application>,
       you don't need <productname>Visual Studio</productname> to build.
      </para></listitem>
@@ -202,6 +198,10 @@ $ENV{PATH}=$ENV{PATH} . ';c:\some\where\bison\bin';
       Bison can be downloaded from <ulink url="http://gnuwin32.sourceforge.net"></>.
       Flex can be downloaded from
       <ulink url="http://www.postgresql.org/ftp/misc/winflex/"></>.
+      If you are using <productname>msysGit</productname> for accessing the
+      PostgreSQL <productname>Git</productname> repository you probably already
+      have recent versions of bison and flex in your <productname>Git</productname>
+      binary directory.
      </para>
 
      <note>
@@ -479,7 +479,7 @@ $ENV{DOCROOT}='c:\docbook';
   static library to link into an application. For normal use the
   <productname>MinGW</productname> or
   <productname>Visual Studio</productname> or
-  <productname>Platform SDK</productname> method is recommended.
+  <productname>Windows SDK</productname> method is recommended.
  </para>
 
  <para>

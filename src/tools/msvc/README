@@ -4,19 +4,19 @@ MSVC build
 ==========
 
 This directory contains the tools required to build PostgreSQL using
-Microsoft Visual Studio 2005. This builds the whole backend, not just
+Microsoft Visual Studio 2005 - 2011. This builds the whole backend, not just
 the libpq frontend library. For more information, see the documentation
-chapter "Installation on Windows".
+chapter "Installation on Windows" and the description below.
 
 
 Notes about Visual Studio Express
 ---------------------------------
-To build PostgreSQL using Visual Studio Express, the Platform SDK
+To build PostgreSQL using Visual Studio Express, the Microsoft Windows SDK
 has to be installed. Since this is not included in the product
 originally, extra steps are needed to make it work.
 
-First, download and install the latest Platform SDK from
-www.microsoft.com.
+First, download and install a supported version of the Microsoft Windows SDK
+from www.microsoft.com (v6.0 or greater).
 
 Locate the files vcprojectengine.dll.express.config and
 vcprojectengine.dll.config in the vc\vcpackages directory of
@@ -26,3 +26,77 @@ to add them to the beginning of the list.
 
 This should work for both GUI and commandline builds, but a restart
 may be necessary.
+
+If you are using a recent version of the Microsoft Windows SDK that includes
+the compilers and build tools you probably don't even need Visual Studio
+Express to build PostgreSQL.
+
+
+Structure of the build tools
+----------------------------
+The tools for building PostgreSQL using Microsoft Visual Studio currently
+consist of the following files:
+
+- Configuration files -
+config_default.pl      default configuration arguments
+
+A typical build environment has two more files, buildenv.pl and config.pl
+that contain the user's build environment settings and configuration
+arguments.
+
+
+- User tools -
+build.pl               tool to build the binaries
+builddoc.pl            tool to build the docs
+clean.bat              batch file for cleaning up generated files
+install.pl             tool to install the generated files
+mkvcbuild.pl           tool to generate the Visual Studio build files
+vcregress.pl           tool to run the regression tests
+
+
+- Internal tools -
+gendef.pl              internal tool to generate .DEF files
+pgbison.pl             internal tool to process .y files using bison
+pgflex.pl              internal tool to process .l files using flex
+
+Many of those .pl files also have a corresponding .bat-wrapper that doesn't
+contain any additional logic.
+
+
+- Internal modules -
+Install.pm             module containing the install logic
+Mkvcbuild.pm           module containing the code to generate the Visual
+                       Studio build (project/solution) files
+MSBuildProject.pm      module containing the code to generate MSBuild based
+                       project files (Visual Studio 2010 or greater)
+Project.pm             module containing the common code to generate the
+                       Visual Studio project files. Also provides the
+                       common interface of all project file generators
+Solution.pm            module containing the code to generate the Visual
+                       Studio solution files.
+VCBuildProject.pm      module containing the code to generate VCBuild based
+                       project files (Visual Studio 2005/2008)
+VSObjectFactory.pm     factory module providing the code to create the 
+                       appropriate project/solution files for the current
+                       environment
+
+
+Description of the internals of the Visual Studio build process
+---------------------------------------------------------------
+By typing 'build' the user starts the build.bat wrapper which simply passes
+it's arguments to build.pl.
+In build.pl the user's buildenv.pl is used to set up the build environment
+(i. e. path to bison and flex). In addtion his config.pl file is merged into
+config_default.pl to create the configuration arguments.
+These configuration arguments are passed over to Mkvcbuild::mkvcbuild
+(Mkvcbuild.pm) which creates the Visual Studio project and solution files.
+It does this by using VSObjectFactory::CreateSolution to create an object
+implementing the Solution interface (this could be either a VS2005Solution,
+a VS2008Solution or a VS2010Solution, all in Solution.pm, depending on the
+user's build environment) and adding objects implementing the corresponding
+Project interface (VC2005Project or VC2008Project from VCBuildProject.pm or
+VC2010Project from MSBuildProject.pm) to it.
+When Solution::Save is called, the implementations of Solution and Project
+save their content in the appropriate format.
+The final step of starting the appropriate build program (msbuild or vcbuild)
+is performed in build.pl again.

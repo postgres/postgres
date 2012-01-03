@@ -56,11 +56,8 @@ sub Install
     my $majorver = DetermineMajorVersion();
     print "Installing version $majorver for $conf in $target\n";
 
-    EnsureDirectories(
-        $target, 'bin', 'lib', 'share',
-        'share/timezonesets','share/extension', 'share/contrib','doc',
-        'doc/extension', 'doc/contrib','symbols', 'share/tsearch_data'
-    );
+    EnsureDirectories($target, 'bin', 'lib', 'share','share/timezonesets','share/extension',
+        'share/contrib','doc','doc/extension', 'doc/contrib','symbols', 'share/tsearch_data');
 
     CopySolutionOutput($conf, $target);
     lcopy($target . '/lib/libpq.dll', $target . '/bin/libpq.dll');
@@ -186,6 +183,13 @@ sub CopySolutionOutput
     my $rem = qr{Project\("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}"\) = "([^"]+)"};
 
     my $sln = read_file("pgsql.sln") || croak "Could not open pgsql.sln\n";
+
+    my $vcproj = 'vcproj';
+    if ($sln =~ /Microsoft Visual Studio Solution File, Format Version (\d+)\.\d+/ && $1 >= 11)
+    {
+        $vcproj = 'vcxproj';
+    }
+
     print "Copying build output files...";
     while ($sln =~ $rem)
     {
@@ -195,26 +199,48 @@ sub CopySolutionOutput
 
         $sln =~ s/$rem//;
 
-        my $proj = read_file("$pf.vcproj") || croak "Could not open $pf.vcproj\n";
-        if ($proj !~ qr{ConfigurationType="([^"]+)"})
+        my $proj = read_file("$pf.$vcproj") || croak "Could not open $pf.$vcproj\n";
+        if ($vcproj eq 'vcproj' && $proj =~ qr{ConfigurationType="([^"]+)"})
         {
-            croak "Could not parse $pf.vcproj\n";
+            if ($1 == 1)
+            {
+                $dir = "bin";
+                $ext = "exe";
+            }
+            elsif ($1 == 2)
+            {
+                $dir = "lib";
+                $ext = "dll";
+            }
+            else
+            {
+
+                # Static lib, such as libpgport, only used internally during build, don't install
+                next;
+            }
         }
-        if ($1 == 1)
+        elsif ($vcproj eq 'vcxproj' && $proj =~ qr{<ConfigurationType>(\w+)</ConfigurationType>})
         {
-            $dir = "bin";
-            $ext = "exe";
-        }
-        elsif ($1 == 2)
-        {
-            $dir = "lib";
-            $ext = "dll";
+            if ($1 eq 'Application')
+            {
+                $dir = "bin";
+                $ext = "exe";
+            }
+            elsif ($1 eq 'DynamicLibrary')
+            {
+                $dir = "lib";
+                $ext = "dll";
+            }
+            else # 'StaticLibrary'
+            {
+
+                # Static lib, such as libpgport, only used internally during build, don't install
+                next;
+            }
         }
         else
         {
-
-            # Static lib, such as libpgport, only used internally during build, don't install
-            next;
+            croak "Could not parse $pf.$vcproj\n";
         }
         lcopy("$conf\\$pf\\$pf.$ext","$target\\$dir\\$pf.$ext")
           || croak "Could not copy $pf.$ext\n";
@@ -470,8 +496,7 @@ sub CopyIncludeFiles
         $target . '/include/server/',
         'src/include/', 'pg_config.h', 'pg_config_os.h'
     );
-    CopyFiles('Grammar header', $target . '/include/server/parser/','src/backend/parser/',
-        'gram.h');
+    CopyFiles('Grammar header', $target . '/include/server/parser/','src/backend/parser/','gram.h');
     CopySetOfFiles('',[ glob("src\\include\\*.h") ],$target . '/include/server/');
     my $D;
     opendir($D, 'src/include') || croak "Could not opendir on src/include!\n";

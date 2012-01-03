@@ -14,6 +14,7 @@ use Solution;
 use Cwd;
 use File::Copy;
 use Config;
+use VSObjectFactory;
 use List::Util qw(first);
 
 use Exporter;
@@ -47,7 +48,9 @@ sub mkvcbuild
     chdir('..\..\..') if (-d '..\msvc' && -d '..\..\..\src');
     die 'Must run from root or msvc directory' unless (-d 'src\tools\msvc' && -d 'src');
 
-    $solution = new Solution($config);
+    my $vsVersion = DetermineVisualStudioVersion();
+
+    $solution = CreateSolution($vsVersion, $config);
 
     our @pgportfiles = qw(
       chklocale.c crypt.c fseeko.c getrusage.c inet_aton.c random.c srandom.c
@@ -344,12 +347,13 @@ sub mkvcbuild
     $pgdump->AddFile('src\backend\parser\kwlookup.c');
 
     my $pgdumpall = AddSimpleFrontend('pg_dump', 1);
-	# pg_dumpall doesn't use the files in the Makefile's $(OBJS), unlike
-	# pg_dump and pg_restore.
-	# So remove their sources from the object, keeping the other setup that 
-	# AddSimpleFrontend() has done.
-    my @nodumpall = grep  { m/src\\bin\\pg_dump\\.*\.c$/ } 
-	keys %{$pgdumpall->{files}};
+
+    # pg_dumpall doesn't use the files in the Makefile's $(OBJS), unlike
+    # pg_dump and pg_restore.
+    # So remove their sources from the object, keeping the other setup that
+    # AddSimpleFrontend() has done.
+    my @nodumpall = grep  { m/src\\bin\\pg_dump\\.*\.c$/ }
+      keys %{$pgdumpall->{files}};
     delete @{$pgdumpall->{files}}{@nodumpall};
     $pgdumpall->{name} = 'pg_dumpall';
     $pgdumpall->AddIncludeDir('src\backend');
@@ -508,6 +512,7 @@ sub mkvcbuild
     $pgregress->AddReference($libpgport);
 
     $solution->Save();
+    return $solution->{vcver};
 }
 
 #####################

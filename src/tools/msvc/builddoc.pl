@@ -69,8 +69,8 @@ $cmd =
   ."| findstr /V \"DTDDECL catalog entries are not supported\" ";
 system($cmd); # die "openjade" if $?;
 print "Running collateindex...\n";
-$cmd ="perl \"$docroot/$dsssl/bin/collateindex.pl\" -f -g -i bookindex "
-  ."-o bookindex.sgml HTML.index";
+$cmd =
+  "perl \"$docroot/$dsssl/bin/collateindex.pl\" -f -g -i bookindex "."-o bookindex.sgml HTML.index";
 system($cmd);
 die "collateindex" if $?;
 mkdir "html";

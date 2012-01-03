@@ -103,7 +103,9 @@
 #define IPC_STAT 4096
 
 #define EACCESS 2048
+#ifndef EIDRM
 #define EIDRM 4096
+#endif
 
 #define SETALL 8192
 #define GETNCNT 16384
@@ -298,6 +300,26 @@ typedef int pid_t;
 #ifndef EOPNOTSUPP
 #define EOPNOTSUPP WSAEOPNOTSUPP
 #endif
+
+/*
+ * For Microsoft Visual Studio 2010 and above we intentionally redefine
+ * the regular Berkeley error constants and set them to the WSA constants.
+ * Note that this will break if those constants are used for anything else
+ * than Windows Sockets errors.
+ */
+#if _MSC_VER >= 1600
+#pragma warning(disable:4005)
+#define EMSGSIZE WSAEMSGSIZE
+#define EAFNOSUPPORT WSAEAFNOSUPPORT
+#define EWOULDBLOCK WSAEWOULDBLOCK
+#define EPROTONOSUPPORT WSAEPROTONOSUPPORT
+#define ECONNRESET WSAECONNRESET
+#define EINPROGRESS WSAEINPROGRESS
+#define ENOBUFS WSAENOBUFS
+#define ECONNREFUSED WSAECONNREFUSED
+#define EOPNOTSUPP WSAEOPNOTSUPP
+#pragma warning(default:4005)
+#endif 
 
 /*
  * Extended locale functions with gratuitous underscore prefixes.
