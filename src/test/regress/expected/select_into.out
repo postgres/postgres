@@ -50,3 +50,28 @@ DETAIL:  drop cascades to table selinto_schema.tmp1
 drop cascades to table selinto_schema.tmp2
 drop cascades to table selinto_schema.tmp3
 DROP USER selinto_user;
+--
+-- CREATE TABLE AS/SELECT INTO as last command in a SQL function
+-- have been known to cause problems
+--
+CREATE FUNCTION make_table() RETURNS VOID
+AS $$
+  CREATE TABLE created_table AS SELECT * FROM int8_tbl;
+$$ LANGUAGE SQL;
+SELECT make_table();
+ make_table 
+------------
+ 
+(1 row)
+
+SELECT * FROM created_table;
+        q1        |        q2         
+------------------+-------------------
+              123 |               456
+              123 |  4567890123456789
+ 4567890123456789 |               123
+ 4567890123456789 |  4567890123456789
+ 4567890123456789 | -4567890123456789
+(5 rows)
+
+DROP TABLE created_table;
