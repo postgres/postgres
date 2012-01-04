@@ -2151,6 +2151,7 @@ typedef struct
 {
 	DestReceiver pub;			/* publicly-known function pointers */
 	EState	   *estate;			/* EState we are working with */
+	DestReceiver *origdest;		/* QueryDesc's original receiver */
 	Relation	rel;			/* Relation to write to */
 	int			hi_options;		/* heap_insert performance options */
 	BulkInsertState bistate;	/* bulk insert state */
@@ -2312,11 +2313,13 @@ OpenIntoRel(QueryDesc *queryDesc)
 	/*
 	 * Now replace the query's DestReceiver with one for SELECT INTO
 	 */
-	queryDesc->dest = CreateDestReceiver(DestIntoRel);
-	myState = (DR_intorel *) queryDesc->dest;
+	myState = (DR_intorel *) CreateDestReceiver(DestIntoRel);
 	Assert(myState->pub.mydest == DestIntoRel);
 	myState->estate = estate;
+	myState->origdest = queryDesc->dest;
 	myState->rel = intoRelationDesc;
+
+	queryDesc->dest = (DestReceiver *) myState;
 
 	/*
 	 * We can skip WAL-logging the insertions, unless PITR or streaming
@@ -2338,8 +2341,11 @@ CloseIntoRel(QueryDesc *queryDesc)
 {
 	DR_intorel *myState = (DR_intorel *) queryDesc->dest;
 
-	/* OpenIntoRel might never have gotten called */
-	if (myState && myState->pub.mydest == DestIntoRel && myState->rel)
+	/*
+	 * OpenIntoRel might never have gotten called, and we also want to guard
+	 * against double destruction.
+	 */
+	if (myState && myState->pub.mydest == DestIntoRel)
 	{
 		FreeBulkInsertState(myState->bistate);
 
@@ -2350,7 +2356,11 @@ CloseIntoRel(QueryDesc *queryDesc)
 		/* close rel, but keep lock until commit */
 		heap_close(myState->rel, NoLock);
 
-		myState->rel = NULL;
+		/* restore the receiver belonging to executor's caller */
+		queryDesc->dest = myState->origdest;
+
+		/* might as well invoke my destructor */
+		intorel_destroy((DestReceiver *) myState);
 	}
 }
 
