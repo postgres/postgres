@@ -501,12 +501,7 @@ ecpg_gettext(const char *msgid)
 }
 #endif   /* ENABLE_NLS */
 
-static struct var_list
-{
-	int			number;
-	void	   *pointer;
-	struct var_list *next;
-}	*ivlist = NULL;
+struct var_list *ivlist = NULL;
 
 void
 ECPGset_var(int number, void *pointer, int lineno)

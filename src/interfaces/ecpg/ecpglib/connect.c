@@ -149,6 +149,13 @@ ecpg_finish(struct connection * act)
 		for (cache = act->cache_head; cache; ptr = cache, cache = cache->next, ecpg_free(ptr));
 		ecpg_free(act->name);
 		ecpg_free(act);
+		/* delete cursor variables when last connection gets closed */
+		if (all_connections == NULL)
+		{
+			struct var_list *iv_ptr;
+
+			for (; ivlist; iv_ptr = ivlist, ivlist = ivlist->next, ecpg_free(iv_ptr));
+		}
 	}
 	else
 		ecpg_log("ecpg_finish: called an extra time\n");

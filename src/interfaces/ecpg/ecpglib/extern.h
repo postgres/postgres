@@ -121,6 +121,15 @@ struct variable
 	struct variable *next;
 };
 
+struct var_list
+{
+	int	number;
+	void   *pointer;
+	struct var_list *next;
+};
+
+extern struct var_list *ivlist;
+
 /* Here are some methods used by the lib. */
 
 /* Returns a pointer to a string containing a simple type name. */
