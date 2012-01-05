@@ -204,6 +204,7 @@ typedef struct _oprInfo
 {
 	DumpableObject dobj;
 	char	   *rolname;
+	char		oprkind;
 	Oid			oprcode;
 } OprInfo;
 

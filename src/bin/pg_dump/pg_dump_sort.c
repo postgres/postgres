@@ -178,6 +178,16 @@ DOTypeNameCompare(const void *p1, const void *p2)
 		if (cmpval != 0)
 			return cmpval;
 	}
+	else if (obj1->objType == DO_OPERATOR)
+	{
+		OprInfo	*oobj1 = *(OprInfo * const *) p1;
+		OprInfo *oobj2 = *(OprInfo * const *) p2;
+
+		/* oprkind is 'l', 'r', or 'b'; this sorts prefix, postfix, infix */
+		cmpval = (oobj2->oprkind - oobj1->oprkind);
+		if (cmpval != 0)
+			return cmpval;
+	}
 
 	/* Usually shouldn't get here, but if we do, sort by OID */
 	return oidcmp(obj1->catId.oid, obj2->catId.oid);

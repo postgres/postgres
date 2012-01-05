@@ -3138,6 +3138,7 @@ getOperators(int *numOprs)
 	int			i_oprname;
 	int			i_oprnamespace;
 	int			i_rolname;
+	int			i_oprkind;
 	int			i_oprcode;
 
 	/*
@@ -3153,6 +3154,7 @@ getOperators(int *numOprs)
 		appendPQExpBuffer(query, "SELECT tableoid, oid, oprname, "
 						  "oprnamespace, "
 						  "(%s oprowner) AS rolname, "
+						  "oprkind, "
 						  "oprcode::oid AS oprcode "
 						  "FROM pg_operator",
 						  username_subquery);
@@ -3162,6 +3164,7 @@ getOperators(int *numOprs)
 		appendPQExpBuffer(query, "SELECT tableoid, oid, oprname, "
 						  "0::oid AS oprnamespace, "
 						  "(%s oprowner) AS rolname, "
+						  "oprkind, "
 						  "oprcode::oid AS oprcode "
 						  "FROM pg_operator",
 						  username_subquery);
@@ -3173,6 +3176,7 @@ getOperators(int *numOprs)
 						  "oid, oprname, "
 						  "0::oid AS oprnamespace, "
 						  "(%s oprowner) AS rolname, "
+						  "oprkind, "
 						  "oprcode::oid AS oprcode "
 						  "FROM pg_operator",
 						  username_subquery);
@@ -3191,6 +3195,7 @@ getOperators(int *numOprs)
 	i_oprname = PQfnumber(res, "oprname");
 	i_oprnamespace = PQfnumber(res, "oprnamespace");
 	i_rolname = PQfnumber(res, "rolname");
+	i_oprkind = PQfnumber(res, "oprkind");
 	i_oprcode = PQfnumber(res, "oprcode");
 
 	for (i = 0; i < ntups; i++)
@@ -3203,6 +3208,7 @@ getOperators(int *numOprs)
 		oprinfo[i].dobj.namespace = findNamespace(atooid(PQgetvalue(res, i, i_oprnamespace)),
 												  oprinfo[i].dobj.catId.oid);
 		oprinfo[i].rolname = pg_strdup(PQgetvalue(res, i, i_rolname));
+		oprinfo[i].oprkind = (PQgetvalue(res, i, i_oprkind))[0];
 		oprinfo[i].oprcode = atooid(PQgetvalue(res, i, i_oprcode));
 
 		/* Decide whether we want to dump it */
