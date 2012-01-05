@@ -50,8 +50,14 @@ sv2cstr(SV *sv)
 
 	/*
 	 * get a utf8 encoded char * out of perl. *note* it may not be valid utf8!
+	 *
+	 * SvPVutf8() croaks nastily on certain things, like typeglobs and
+	 * readonly object such as $^V. That's a perl bug - it's not supposed to
+	 * happen. To avoid crashing the backend, we make a mortal copy of the
+	 * sv before passing it to SvPVutf8(). The copy will be garbage collected
+	 * very soon (see perldoc perlguts).
 	 */
-	val = SvPVutf8(sv, len);
+	val = SvPVutf8(sv_mortalcopy(sv), len);
 
 	/*
 	 * we use perls length in the event we had an embedded null byte to ensure
