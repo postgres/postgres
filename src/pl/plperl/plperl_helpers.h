@@ -45,25 +45,32 @@ utf_e2u(const char *str)
 static inline char *
 sv2cstr(SV *sv)
 {
-	char	   *val;
+	char	   *val, *res;
 	STRLEN		len;
+	SV         *nsv;
 
 	/*
 	 * get a utf8 encoded char * out of perl. *note* it may not be valid utf8!
 	 *
 	 * SvPVutf8() croaks nastily on certain things, like typeglobs and
-	 * readonly object such as $^V. That's a perl bug - it's not supposed to
-	 * happen. To avoid crashing the backend, we make a mortal copy of the
-	 * sv before passing it to SvPVutf8(). The copy will be garbage collected
-	 * very soon (see perldoc perlguts).
+	 * readonly objects such as $^V. That's a perl bug - it's not supposed to
+	 * happen. To avoid crashing the backend, we make a copy of the
+	 * sv before passing it to SvPVutf8(). The copy is garbage collected 
+	 * when we're done with it.
 	 */
-	val = SvPVutf8(sv_mortalcopy(sv), len);
+	nsv = newSVsv(sv);
+	val = SvPVutf8(nsv, len);
 
 	/*
-	 * we use perls length in the event we had an embedded null byte to ensure
+	 * we use perl's length in the event we had an embedded null byte to ensure
 	 * we error out properly
 	 */
-	return utf_u2e(val, len);
+	res =  utf_u2e(val, len);
+
+	/* safe now to garbage collect the new SV */
+	SvREFCNT_dec(nsv);
+
+	return res;
 }
 
 /*
