@@ -30,7 +30,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
 ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
     ADD <replaceable class="PARAMETER">domain_constraint</replaceable> [ NOT VALID ]
 ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
-    DROP CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
+    DROP CONSTRAINT [ IF EXISTS ] <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
 ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
     VALIDATE CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable>
 ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
@@ -92,10 +92,12 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term>DROP CONSTRAINT</term>
+    <term>DROP CONSTRAINT [ IF EXISTS ]</term>
     <listitem>
      <para>
       This form drops constraints on a domain.
+      If <literal>IF EXISTS</literal> is specified and the constraint
+      does not exist, no error is thrown. In this case a notice is issued instead.
      </para>
     </listitem>
    </varlistentry>

@@ -768,7 +768,8 @@ standard_ProcessUtility(Node *parsetree,
 					case 'X':	/* DROP CONSTRAINT */
 						AlterDomainDropConstraint(stmt->typeName,
 												  stmt->name,
-												  stmt->behavior);
+												  stmt->behavior,
+												  stmt->missing_ok);
 						break;
 					case 'V':	/* VALIDATE CONSTRAINT */
 						AlterDomainValidateConstraint(stmt->typeName,

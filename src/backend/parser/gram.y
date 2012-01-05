@@ -7616,6 +7616,18 @@ AlterDomainStmt:
 					n->typeName = $3;
 					n->name = $6;
 					n->behavior = $7;
+					n->missing_ok = false;
+					$$ = (Node *)n;
+				}
+			/* ALTER DOMAIN <domain> DROP CONSTRAINT IF EXISTS <name> [RESTRICT|CASCADE] */
+			| ALTER DOMAIN_P any_name DROP CONSTRAINT IF_P EXISTS name opt_drop_behavior
+				{
+					AlterDomainStmt *n = makeNode(AlterDomainStmt);
+					n->subtype = 'X';
+					n->typeName = $3;
+					n->name = $8;
+					n->behavior = $9;
+					n->missing_ok = true;
 					$$ = (Node *)n;
 				}
 			/* ALTER DOMAIN <domain> VALIDATE CONSTRAINT <name> */

@@ -2264,7 +2264,7 @@ AlterDomainNotNull(List *names, bool notNull)
  */
 void
 AlterDomainDropConstraint(List *names, const char *constrName,
-						  DropBehavior behavior)
+						  DropBehavior behavior, bool missing_ok)
 {
 	TypeName   *typename;
 	Oid			domainoid;
@@ -2274,6 +2274,7 @@ AlterDomainDropConstraint(List *names, const char *constrName,
 	SysScanDesc conscan;
 	ScanKeyData key[1];
 	HeapTuple	contup;
+	bool		found = false;
 
 	/* Make a TypeName so we can use standard type lookup machinery */
 	typename = makeTypeNameFromNameList(names);
@@ -2317,6 +2318,7 @@ AlterDomainDropConstraint(List *names, const char *constrName,
 			conobj.objectSubId = 0;
 
 			performDeletion(&conobj, behavior);
+			found = true;
 		}
 	}
 	/* Clean up after the scan */
@@ -2324,6 +2326,19 @@ AlterDomainDropConstraint(List *names, const char *constrName,
 	heap_close(conrel, RowExclusiveLock);
 
 	heap_close(rel, NoLock);
+
+	if (!found)
+	{
+		if (!missing_ok)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("constraint \"%s\" of domain \"%s\" does not exist",
+					   constrName, TypeNameToString(typename))));
+		else
+			ereport(NOTICE,
+					(errmsg("constraint \"%s\" of domain \"%s\" does not exist, skipping",
+							constrName, TypeNameToString(typename))));
+	}
 }
 
 /*

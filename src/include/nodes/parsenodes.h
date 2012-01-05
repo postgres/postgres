@@ -1264,6 +1264,7 @@ typedef struct AlterDomainStmt
 	char	   *name;			/* column or constraint name to act on */
 	Node	   *def;			/* definition of default or constraint */
 	DropBehavior behavior;		/* RESTRICT or CASCADE for DROP cases */
+	bool		missing_ok;		/* skip error if missing? */
 } AlterDomainStmt;
 
 

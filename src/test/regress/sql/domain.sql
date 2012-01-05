@@ -259,6 +259,9 @@ alter domain con drop constraint t;
 insert into domcontest values (-5); --fails
 insert into domcontest values (42);
 
+alter domain con drop constraint nonexistent;
+alter domain con drop constraint if exists nonexistent;
+
 -- Test ALTER DOMAIN .. CONSTRAINT .. NOT VALID
 create domain things AS INT;
 CREATE TABLE thethings (stuff things);
