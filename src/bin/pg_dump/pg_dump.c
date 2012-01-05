@@ -5726,7 +5726,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 							  "SELECT pg_catalog.quote_ident(option_name) || "
 							  "' ' || pg_catalog.quote_literal(option_value) "
 							  "FROM pg_catalog.pg_options_to_table(attfdwoptions)"
-							  "), ', ') AS attfdwoptions "
+							  "), E',\n    ') AS attfdwoptions "
 			 "FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_type t "
 							  "ON a.atttypid = t.oid "
 							  "WHERE a.attrelid = '%u'::pg_catalog.oid "
@@ -6557,7 +6557,7 @@ getForeignDataWrappers(int *numForeignDataWrappers)
 						  "SELECT quote_ident(option_name) || ' ' || "
 						  "quote_literal(option_value) "
 						  "FROM pg_options_to_table(fdwoptions)"
-						  "), ', ') AS fdwoptions "
+						  "), E',\n    ') AS fdwoptions "
 						  "FROM pg_foreign_data_wrapper",
 						  username_subquery);
 	}
@@ -6571,7 +6571,7 @@ getForeignDataWrappers(int *numForeignDataWrappers)
 						  "SELECT quote_ident(option_name) || ' ' || "
 						  "quote_literal(option_value) "
 						  "FROM pg_options_to_table(fdwoptions)"
-						  "), ', ') AS fdwoptions "
+						  "), E',\n    ') AS fdwoptions "
 						  "FROM pg_foreign_data_wrapper",
 						  username_subquery);
 	}
@@ -6660,7 +6660,7 @@ getForeignServers(int *numForeignServers)
 					  "SELECT quote_ident(option_name) || ' ' || "
 					  "quote_literal(option_value) "
 					  "FROM pg_options_to_table(srvoptions)"
-					  "), ', ') AS srvoptions "
+					  "), E',\n    ') AS srvoptions "
 					  "FROM pg_foreign_server",
 					  username_subquery);
 
@@ -11575,7 +11575,7 @@ dumpForeignDataWrapper(Archive *fout, FdwInfo *fdwinfo)
 		appendPQExpBuffer(q, " VALIDATOR %s", fdwinfo->fdwvalidator);
 
 	if (strlen(fdwinfo->fdwoptions) > 0)
-		appendPQExpBuffer(q, " OPTIONS (%s)", fdwinfo->fdwoptions);
+		appendPQExpBuffer(q, " OPTIONS (\n    %s\n)", fdwinfo->fdwoptions);
 
 	appendPQExpBuffer(q, ";\n");
 
@@ -11679,7 +11679,7 @@ dumpForeignServer(Archive *fout, ForeignServerInfo *srvinfo)
 	appendPQExpBuffer(q, "%s", fmtId(fdwname));
 
 	if (srvinfo->srvoptions && strlen(srvinfo->srvoptions) > 0)
-		appendPQExpBuffer(q, " OPTIONS (%s)", srvinfo->srvoptions);
+		appendPQExpBuffer(q, " OPTIONS (\n    %s\n)", srvinfo->srvoptions);
 
 	appendPQExpBuffer(q, ";\n");
 
@@ -11770,7 +11770,7 @@ dumpUserMappings(Archive *fout,
 					  "SELECT quote_ident(option_name) || ' ' || "
 					  "quote_literal(option_value) "
 					  "FROM pg_options_to_table(umoptions)"
-					  "), ', ') AS umoptions "
+					  "), E',\n    ') AS umoptions "
 					  "FROM pg_user_mappings "
 					  "WHERE srvid = '%u' "
 					  "ORDER BY usename",
@@ -11796,7 +11796,7 @@ dumpUserMappings(Archive *fout,
 		appendPQExpBuffer(q, " SERVER %s", fmtId(servername));
 
 		if (umoptions && strlen(umoptions) > 0)
-			appendPQExpBuffer(q, " OPTIONS (%s)", umoptions);
+			appendPQExpBuffer(q, " OPTIONS (\n    %s\n)", umoptions);
 
 		appendPQExpBuffer(q, ";\n");
 
@@ -12431,7 +12431,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 							  "SELECT pg_catalog.quote_ident(option_name) || "
 							  "' ' || pg_catalog.quote_literal(option_value) "
 							  "FROM pg_catalog.pg_options_to_table(ftoptions)"
-							  "), ', ') AS ftoptions "
+							  "), E',\n    ') AS ftoptions "
 							  "FROM pg_catalog.pg_foreign_table ft "
 							  "JOIN pg_catalog.pg_foreign_server fs "
 							  "ON (fs.oid = ft.ftserver) "
@@ -12660,7 +12660,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 
 		/* Dump generic options if any */
 		if (ftoptions && ftoptions[0])
-			appendPQExpBuffer(q, "\nOPTIONS (%s)", ftoptions);
+			appendPQExpBuffer(q, "\nOPTIONS (\n    %s\n)", ftoptions);
 
 		appendPQExpBuffer(q, ";\n");
 
@@ -12860,7 +12860,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 								  fmtId(tbinfo->dobj.name));
 				appendPQExpBuffer(q, "ALTER COLUMN %s ",
 								  fmtId(tbinfo->attnames[j]));
-				appendPQExpBuffer(q, "OPTIONS (%s);\n",
+				appendPQExpBuffer(q, "OPTIONS (\n    %s\n);\n",
 								  tbinfo->attfdwoptions[j]);
 			}
 		}
