@@ -1038,7 +1038,7 @@ ts = 2010-06-27 18:03:56.949343
 
      <para>
       In addition, the DATE type can be handled in the same way. The
-      program has to include <filename>pg_types_date.h</filename>, declare a host variable
+      program has to include <filename>pgtypes_date.h</filename>, declare a host variable
       as the date type and convert a DATE value into a text form using
       <function>PGTYPESdate_to_asc()</function> function. For more details about the
       pgtypes library functions, see <xref linkend="ecpg-pgtypes">.
