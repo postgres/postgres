@@ -1191,7 +1191,7 @@ BufferSync(int flags)
 	 * buffers.  But at shutdown time, we write all dirty buffers.
 	 */
 	if (!(flags & CHECKPOINT_IS_SHUTDOWN))
-		flags |= BM_PERMANENT;
+		mask |= BM_PERMANENT;
 
 	/*
 	 * Loop over all buffers, and mark the ones that need to be written with
