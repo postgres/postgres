@@ -171,7 +171,7 @@ NumLWLocks(void)
 	numLocks += MaxBackends + NUM_AUXILIARY_PROCS;
 
 	/* clog.c needs one per CLOG buffer */
-	numLocks += NUM_CLOG_BUFFERS;
+	numLocks += CLOGShmemBuffers();
 
 	/* subtrans.c needs one per SubTrans buffer */
 	numLocks += NUM_SUBTRANS_BUFFERS;
