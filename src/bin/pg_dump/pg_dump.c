@@ -1243,6 +1243,14 @@ dumpTableData_copy(Archive *fout, void *dcontext)
 	return 1;
 }
 
+/*
+ * Dump table data using INSERT commands.
+ *
+ * Caution: when we restore from an archive file direct to database, the
+ * INSERT commands emitted by this function have to be parsed by
+ * pg_backup_db.c's ExecuteInsertCommands(), which will not handle comments,
+ * E'' strings, or dollar-quoted strings.  So don't emit anything like that.
+ */
 static int
 dumpTableData_insert(Archive *fout, void *dcontext)
 {

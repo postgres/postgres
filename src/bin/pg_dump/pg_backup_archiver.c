@@ -607,20 +607,20 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te,
 					if (te->copyStmt && strlen(te->copyStmt) > 0)
 					{
 						ahprintf(AH, "%s", te->copyStmt);
-						AH->writingCopyData = true;
+						AH->outputKind = OUTPUT_COPYDATA;
 					}
+					else
+						AH->outputKind = OUTPUT_OTHERDATA;
 
 					(*AH->PrintTocDataPtr) (AH, te, ropt);
 
 					/*
 					 * Terminate COPY if needed.
 					 */
-					if (AH->writingCopyData)
-					{
-						if (RestoringToDB(AH))
-							EndDBCopyMode(AH, te);
-						AH->writingCopyData = false;
-					}
+					if (AH->outputKind == OUTPUT_COPYDATA &&
+						RestoringToDB(AH))
+						EndDBCopyMode(AH, te);
+					AH->outputKind = OUTPUT_SQLCMDS;
 
 					/* close out the transaction started above */
 					if (is_parallel && te->created)
@@ -1954,6 +1954,8 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 
 	AH->mode = mode;
 	AH->compression = compression;
+
+	memset(&(AH->sqlparse), 0, sizeof(AH->sqlparse));
 
 	/* Open stdout with no compression for AH output handle */
 	AH->gzOut = 0;
@@ -4144,7 +4146,8 @@ CloneArchive(ArchiveHandle *AH)
 		die_horribly(AH, modulename, "out of memory\n");
 	memcpy(clone, AH, sizeof(ArchiveHandle));
 
-	/* Handle format-independent fields ... none at the moment */
+	/* Handle format-independent fields */
+	memset(&(clone->sqlparse), 0, sizeof(clone->sqlparse));
 
 	/* The clone will have its own connection, so disregard connection state */
 	clone->connection = NULL;
@@ -4177,7 +4180,9 @@ DeCloneArchive(ArchiveHandle *AH)
 	/* Clear format-specific state */
 	(AH->DeClonePtr) (AH);
 
-	/* Clear state allocated by CloneArchive ... none at the moment */
+	/* Clear state allocated by CloneArchive */
+	if (AH->sqlparse.curCmd)
+		destroyPQExpBuffer(AH->sqlparse.curCmd);
 
 	/* Clear any connection-local state */
 	if (AH->currUser)
