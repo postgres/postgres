@@ -164,6 +164,9 @@
 /* Define to 1 if your compiler understands __FUNCTION__. */
 #undef HAVE_FUNCNAME__FUNCTION
 
+/* Define to 1 if you have __sync_lock_test_and_set(int *) and friends. */
+#undef HAVE_GCC_INT_ATOMICS
+
 /* Define to 1 if you have the `getaddrinfo' function. */
 #undef HAVE_GETADDRINFO
 
