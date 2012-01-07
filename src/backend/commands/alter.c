@@ -192,8 +192,7 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
 		case OBJECT_TABLE:
 		case OBJECT_VIEW:
 		case OBJECT_FOREIGN_TABLE:
-			AlterTableNamespace(stmt->relation, stmt->newschema,
-								stmt->objectType, AccessExclusiveLock);
+			AlterTableNamespace(stmt);
 			break;
 
 		case OBJECT_TSPARSER:

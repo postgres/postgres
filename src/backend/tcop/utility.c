@@ -699,12 +699,23 @@ standard_ProcessUtility(Node *parsetree,
 
 		case T_AlterTableStmt:
 			{
+				AlterTableStmt *atstmt = (AlterTableStmt *) parsetree;
+				Oid			relid;
 				List	   *stmts;
 				ListCell   *l;
+				LOCKMODE	lockmode;
+
+				/*
+				 * Figure out lock mode, and acquire lock.  This also does
+				 * basic permissions checks, so that we won't wait for a lock
+				 * on (for example) a relation on which we have no
+				 * permissions.
+				 */
+				lockmode = AlterTableGetLockLevel(atstmt->cmds);
+				relid = AlterTableLookupRelation(atstmt, lockmode);
 
 				/* Run parse analysis ... */
-				stmts = transformAlterTableStmt((AlterTableStmt *) parsetree,
-												queryString);
+				stmts = transformAlterTableStmt(atstmt, queryString);
 
 				/* ... and do it */
 				foreach(l, stmts)
@@ -714,7 +725,7 @@ standard_ProcessUtility(Node *parsetree,
 					if (IsA(stmt, AlterTableStmt))
 					{
 						/* Do the table alteration proper */
-						AlterTable((AlterTableStmt *) stmt);
+						AlterTable(relid, lockmode, (AlterTableStmt *) stmt);
 					}
 					else
 					{

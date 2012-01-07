@@ -24,7 +24,9 @@ extern Oid	DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId);
 
 extern void RemoveRelations(DropStmt *drop);
 
-extern void AlterTable(AlterTableStmt *stmt);
+extern Oid	AlterTableLookupRelation(AlterTableStmt *stmt, LOCKMODE lockmode);
+
+extern void AlterTable(Oid relid, LOCKMODE lockmode, AlterTableStmt *stmt);
 
 extern LOCKMODE AlterTableGetLockLevel(List *cmds);
 
@@ -32,8 +34,7 @@ extern void ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing, L
 
 extern void AlterTableInternal(Oid relid, List *cmds, bool recurse);
 
-extern void AlterTableNamespace(RangeVar *relation, const char *newschema,
-					ObjectType stmttype, LOCKMODE lockmode);
+extern void AlterTableNamespace(AlterObjectSchemaStmt *stmt);
 
 extern void AlterRelationNamespaceInternal(Relation classRel, Oid relOid,
 							   Oid oldNspOid, Oid newNspOid,
