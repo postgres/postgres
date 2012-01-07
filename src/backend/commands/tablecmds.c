@@ -9947,11 +9947,6 @@ RangeVarCallbackForAlterRelation(const RangeVar *rv, Oid relid, Oid oldrelid,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is not a composite type", rv->relname)));
 
-	if (reltype == OBJECT_FOREIGN_TABLE && relkind != RELKIND_FOREIGN_TABLE)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a foreign table", rv->relname)));
-
 	if (reltype == OBJECT_INDEX && relkind != RELKIND_INDEX
 		&& !IsA(stmt, RenameStmt))
 		ereport(ERROR,
@@ -9967,6 +9962,12 @@ RangeVarCallbackForAlterRelation(const RangeVar *rv, Oid relid, Oid oldrelid,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is a composite type", rv->relname),
 				 errhint("Use ALTER TYPE instead.")));
+
+	if (reltype != OBJECT_FOREIGN_TABLE && relkind == RELKIND_FOREIGN_TABLE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is a foreign table", rv->relname),
+				 errhint("Use ALTER FOREIGN TABLE instead.")));
 
 	/*
 	 * Don't allow ALTER TABLE .. SET SCHEMA on relations that can't be
