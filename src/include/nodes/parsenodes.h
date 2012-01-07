@@ -504,16 +504,16 @@ typedef struct ColumnDef
 } ColumnDef;
 
 /*
- * inhRelation - Relation a CREATE TABLE is to inherit attributes of
+ * TableLikeClause - CREATE TABLE ( ... LIKE ... ) clause
  */
-typedef struct InhRelation
+typedef struct TableLikeClause
 {
 	NodeTag		type;
 	RangeVar   *relation;
-	bits32		options;		/* OR of CreateStmtLikeOption flags */
-} InhRelation;
+	bits32		options;		/* OR of TableLikeOption flags */
+} TableLikeClause;
 
-typedef enum CreateStmtLikeOption
+typedef enum TableLikeOption
 {
 	CREATE_TABLE_LIKE_DEFAULTS = 1 << 0,
 	CREATE_TABLE_LIKE_CONSTRAINTS = 1 << 1,
@@ -521,7 +521,7 @@ typedef enum CreateStmtLikeOption
 	CREATE_TABLE_LIKE_STORAGE = 1 << 3,
 	CREATE_TABLE_LIKE_COMMENTS = 1 << 4,
 	CREATE_TABLE_LIKE_ALL = 0x7FFFFFFF
-} CreateStmtLikeOption;
+} TableLikeOption;
 
 /*
  * IndexElem - index parameters (used in CREATE INDEX)

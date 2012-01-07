@@ -2066,9 +2066,9 @@ _outDefElem(StringInfo str, const DefElem *node)
 }
 
 static void
-_outInhRelation(StringInfo str, const InhRelation *node)
+_outTableLikeClause(StringInfo str, const TableLikeClause *node)
 {
-	WRITE_NODE_TYPE("INHRELATION");
+	WRITE_NODE_TYPE("TABLELIKECLAUSE");
 
 	WRITE_NODE_FIELD(relation);
 	WRITE_UINT_FIELD(options);
@@ -3142,8 +3142,8 @@ _outNode(StringInfo str, const void *obj)
 			case T_DefElem:
 				_outDefElem(str, obj);
 				break;
-			case T_InhRelation:
-				_outInhRelation(str, obj);
+			case T_TableLikeClause:
+				_outTableLikeClause(str, obj);
 				break;
 			case T_LockingClause:
 				_outLockingClause(str, obj);

@@ -2727,10 +2727,10 @@ _copyCreateStmt(const CreateStmt *from)
 	return newnode;
 }
 
-static InhRelation *
-_copyInhRelation(const InhRelation *from)
+static TableLikeClause *
+_copyTableLikeClause(const TableLikeClause *from)
 {
-	InhRelation *newnode = makeNode(InhRelation);
+	TableLikeClause *newnode = makeNode(TableLikeClause);
 
 	COPY_NODE_FIELD(relation);
 	COPY_SCALAR_FIELD(options);
@@ -4134,8 +4134,8 @@ copyObject(const void *from)
 		case T_CreateStmt:
 			retval = _copyCreateStmt(from);
 			break;
-		case T_InhRelation:
-			retval = _copyInhRelation(from);
+		case T_TableLikeClause:
+			retval = _copyTableLikeClause(from);
 			break;
 		case T_DefineStmt:
 			retval = _copyDefineStmt(from);

@@ -133,56 +133,6 @@ CREATE TABLE otherchild (tomorrow date default now())
 
 DROP TABLE firstparent, secondparent, jointchild, thirdparent, otherchild;
 
-/* Test inheritance of structure (LIKE) */
-CREATE TABLE inhx (xx text DEFAULT 'text');
-
-/*
- * Test double inheritance
- *
- * Ensure that defaults are NOT included unless
- * INCLUDING DEFAULTS is specified
- */
-CREATE TABLE inhe (ee text, LIKE inhx) inherits (b);
-INSERT INTO inhe VALUES ('ee-col1', 'ee-col2', DEFAULT, 'ee-col4');
-SELECT * FROM inhe; /* Columns aa, bb, xx value NULL, ee */
-SELECT * FROM inhx; /* Empty set since LIKE inherits structure only */
-SELECT * FROM b; /* Has ee entry */
-SELECT * FROM a; /* Has ee entry */
-
-CREATE TABLE inhf (LIKE inhx, LIKE inhx); /* Throw error */
-
-CREATE TABLE inhf (LIKE inhx INCLUDING DEFAULTS INCLUDING CONSTRAINTS);
-INSERT INTO inhf DEFAULT VALUES;
-SELECT * FROM inhf; /* Single entry with value 'text' */
-
-ALTER TABLE inhx add constraint foo CHECK (xx = 'text');
-ALTER TABLE inhx ADD PRIMARY KEY (xx);
-CREATE TABLE inhg (LIKE inhx); /* Doesn't copy constraint */
-INSERT INTO inhg VALUES ('foo');
-DROP TABLE inhg;
-CREATE TABLE inhg (x text, LIKE inhx INCLUDING CONSTRAINTS, y text); /* Copies constraints */
-INSERT INTO inhg VALUES ('x', 'text', 'y'); /* Succeeds */
-INSERT INTO inhg VALUES ('x', 'text', 'y'); /* Succeeds -- Unique constraints not copied */
-INSERT INTO inhg VALUES ('x', 'foo',  'y');  /* fails due to constraint */
-SELECT * FROM inhg; /* Two records with three columns in order x=x, xx=text, y=y */
-DROP TABLE inhg;
-
-CREATE TABLE inhg (x text, LIKE inhx INCLUDING INDEXES, y text); /* copies indexes */
-INSERT INTO inhg VALUES (5, 10);
-INSERT INTO inhg VALUES (20, 10); -- should fail
-DROP TABLE inhg;
-/* Multiple primary keys creation should fail */
-CREATE TABLE inhg (x text, LIKE inhx INCLUDING INDEXES, PRIMARY KEY(x)); /* fails */
-CREATE TABLE inhz (xx text DEFAULT 'text', yy int UNIQUE);
-CREATE UNIQUE INDEX inhz_xx_idx on inhz (xx) WHERE xx <> 'test';
-/* Ok to create multiple unique indexes */
-CREATE TABLE inhg (x text UNIQUE, LIKE inhz INCLUDING INDEXES);
-INSERT INTO inhg (xx, yy, x) VALUES ('test', 5, 10);
-INSERT INTO inhg (xx, yy, x) VALUES ('test', 10, 15);
-INSERT INTO inhg (xx, yy, x) VALUES ('foo', 10, 15); -- should fail
-DROP TABLE inhg;
-DROP TABLE inhz;
-
 -- Test changing the type of inherited columns
 insert into d values('test','one','two','three');
 alter table a alter column aa type integer using bit_length(aa);
@@ -302,81 +252,34 @@ alter table pp1 add column a2 int check (a2 > 0);
 \d cc2
 drop table pp1 cascade;
 
--- including storage and comments
-CREATE TABLE t1 (a text CHECK (length(a) > 2) PRIMARY KEY, b text);
-CREATE INDEX t1_b_key ON t1 (b);
-CREATE INDEX t1_fnidx ON t1 ((a || b));
-COMMENT ON COLUMN t1.a IS 'A';
-COMMENT ON COLUMN t1.b IS 'B';
-COMMENT ON CONSTRAINT t1_a_check ON t1 IS 't1_a_check';
-COMMENT ON INDEX t1_pkey IS 'index pkey';
-COMMENT ON INDEX t1_b_key IS 'index b_key';
-ALTER TABLE t1 ALTER COLUMN a SET STORAGE MAIN;
-
-CREATE TABLE t2 (c text);
-ALTER TABLE t2 ALTER COLUMN c SET STORAGE EXTERNAL;
-COMMENT ON COLUMN t2.c IS 'C';
-
-CREATE TABLE t3 (a text CHECK (length(a) < 5), c text);
-ALTER TABLE t3 ALTER COLUMN c SET STORAGE EXTERNAL;
-ALTER TABLE t3 ALTER COLUMN a SET STORAGE MAIN;
-COMMENT ON COLUMN t3.a IS 'A3';
-COMMENT ON COLUMN t3.c IS 'C';
-COMMENT ON CONSTRAINT t3_a_check ON t3 IS 't3_a_check';
-
-CREATE TABLE t4 (a text, c text);
-ALTER TABLE t4 ALTER COLUMN c SET STORAGE EXTERNAL;
-
-CREATE TABLE t12_storage (LIKE t1 INCLUDING STORAGE, LIKE t2 INCLUDING STORAGE);
-\d+ t12_storage
-CREATE TABLE t12_comments (LIKE t1 INCLUDING COMMENTS, LIKE t2 INCLUDING COMMENTS);
-\d+ t12_comments
-CREATE TABLE t1_inh (LIKE t1 INCLUDING CONSTRAINTS INCLUDING COMMENTS) INHERITS (t1);
-\d+ t1_inh
-SELECT description FROM pg_description, pg_constraint c WHERE classoid = 'pg_constraint'::regclass AND objoid = c.oid AND c.conrelid = 't1_inh'::regclass;
-CREATE TABLE t13_inh () INHERITS (t1, t3);
-\d+ t13_inh
-CREATE TABLE t13_like (LIKE t3 INCLUDING CONSTRAINTS INCLUDING COMMENTS INCLUDING STORAGE) INHERITS (t1);
-\d+ t13_like
-SELECT description FROM pg_description, pg_constraint c WHERE classoid = 'pg_constraint'::regclass AND objoid = c.oid AND c.conrelid = 't13_like'::regclass;
-
-CREATE TABLE t_all (LIKE t1 INCLUDING ALL);
-\d+ t_all
-SELECT c.relname, objsubid, description FROM pg_description, pg_index i, pg_class c WHERE classoid = 'pg_class'::regclass AND objoid = i.indexrelid AND c.oid = i.indexrelid AND i.indrelid = 't_all'::regclass ORDER BY c.relname, objsubid;
-
-CREATE TABLE inh_error1 () INHERITS (t1, t4);
-CREATE TABLE inh_error2 (LIKE t4 INCLUDING STORAGE) INHERITS (t1);
-
-DROP TABLE t1, t2, t3, t4, t12_storage, t12_comments, t1_inh, t13_inh, t13_like, t_all;
-
 -- Test for renaming in simple multiple inheritance
-CREATE TABLE t1 (a int, b int);
-CREATE TABLE s1 (b int, c int);
-CREATE TABLE ts (d int) INHERITS (t1, s1);
+CREATE TABLE inht1 (a int, b int);
+CREATE TABLE inhs1 (b int, c int);
+CREATE TABLE inhts (d int) INHERITS (inht1, inhs1);
 
-ALTER TABLE t1 RENAME a TO aa;
-ALTER TABLE t1 RENAME b TO bb;                -- to be failed
-ALTER TABLE ts RENAME aa TO aaa;      -- to be failed
-ALTER TABLE ts RENAME d TO dd;
-\d+ ts
+ALTER TABLE inht1 RENAME a TO aa;
+ALTER TABLE inht1 RENAME b TO bb;                -- to be failed
+ALTER TABLE inhts RENAME aa TO aaa;      -- to be failed
+ALTER TABLE inhts RENAME d TO dd;
+\d+ inhts
 
-DROP TABLE ts;
+DROP TABLE inhts;
 
 -- Test for renaming in diamond inheritance
-CREATE TABLE t2 (x int) INHERITS (t1);
-CREATE TABLE t3 (y int) INHERITS (t1);
-CREATE TABLE t4 (z int) INHERITS (t2, t3);
+CREATE TABLE inht2 (x int) INHERITS (inht1);
+CREATE TABLE inht3 (y int) INHERITS (inht1);
+CREATE TABLE inht4 (z int) INHERITS (inht2, inht3);
 
-ALTER TABLE t1 RENAME aa TO aaa;
-\d+ t4
+ALTER TABLE inht1 RENAME aa TO aaa;
+\d+ inht4
 
-CREATE TABLE ts (d int) INHERITS (t2, s1);
-ALTER TABLE t1 RENAME aaa TO aaaa;
-ALTER TABLE t1 RENAME b TO bb;                -- to be failed
-\d+ ts
+CREATE TABLE inhts (d int) INHERITS (inht2, inhs1);
+ALTER TABLE inht1 RENAME aaa TO aaaa;
+ALTER TABLE inht1 RENAME b TO bb;                -- to be failed
+\d+ inhts
 
 WITH RECURSIVE r AS (
-  SELECT 't1'::regclass AS inhrelid
+  SELECT 'inht1'::regclass AS inhrelid
 UNION ALL
   SELECT c.inhrelid FROM pg_inherits c, r WHERE r.inhrelid = c.inhparent
 )
@@ -386,7 +289,7 @@ SELECT a.attrelid::regclass, a.attname, a.attinhcount, e.expected
   JOIN pg_attribute a ON e.inhrelid = a.attrelid WHERE NOT attislocal
   ORDER BY a.attrelid::regclass::name, a.attnum;
 
-DROP TABLE t1, s1 CASCADE;
+DROP TABLE inht1, inhs1 CASCADE;
 
 --
 -- Test merge-append plans for inheritance trees

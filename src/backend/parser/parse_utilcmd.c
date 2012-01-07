@@ -102,8 +102,8 @@ static void transformColumnDefinition(CreateStmtContext *cxt,
 						  ColumnDef *column);
 static void transformTableConstraint(CreateStmtContext *cxt,
 						 Constraint *constraint);
-static void transformInhRelation(CreateStmtContext *cxt,
-					 InhRelation *inhrelation);
+static void transformTableLikeClause(CreateStmtContext *cxt,
+					 TableLikeClause *table_like_clause);
 static void transformOfType(CreateStmtContext *cxt,
 				TypeName *ofTypename);
 static char *chooseIndexName(const RangeVar *relation, IndexStmt *index_stmt);
@@ -238,8 +238,8 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 				transformTableConstraint(&cxt, (Constraint *) element);
 				break;
 
-			case T_InhRelation:
-				transformInhRelation(&cxt, (InhRelation *) element);
+			case T_TableLikeClause:
+				transformTableLikeClause(&cxt, (TableLikeClause *) element);
 				break;
 
 			default:
@@ -625,14 +625,14 @@ transformTableConstraint(CreateStmtContext *cxt, Constraint *constraint)
 }
 
 /*
- * transformInhRelation
+ * transformTableLikeClause
  *
- * Change the LIKE <subtable> portion of a CREATE TABLE statement into
+ * Change the LIKE <srctable> portion of a CREATE TABLE statement into
  * column definitions which recreate the user defined column portions of
- * <subtable>.
+ * <srctable>.
  */
 static void
-transformInhRelation(CreateStmtContext *cxt, InhRelation *inhRelation)
+transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_clause)
 {
 	AttrNumber	parent_attno;
 	Relation	relation;
@@ -641,17 +641,17 @@ transformInhRelation(CreateStmtContext *cxt, InhRelation *inhRelation)
 	AclResult	aclresult;
 	char	   *comment;
 
-	relation = parserOpenTable(cxt->pstate, inhRelation->relation,
+	relation = parserOpenTable(cxt->pstate, table_like_clause->relation,
 							   AccessShareLock);
 
 	if (relation->rd_rel->relkind != RELKIND_RELATION)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("inherited relation \"%s\" is not a table",
-						inhRelation->relation->relname)));
+				 errmsg("LIKE source relation \"%s\" is not a table",
+						table_like_clause->relation->relname)));
 
 	/*
-	 * Check for SELECT privilages
+	 * Check for SELECT privileges
 	 */
 	aclresult = pg_class_aclcheck(RelationGetRelid(relation), GetUserId(),
 								  ACL_SELECT);
@@ -708,7 +708,7 @@ transformInhRelation(CreateStmtContext *cxt, InhRelation *inhRelation)
 		 * Copy default, if present and the default has been requested
 		 */
 		if (attribute->atthasdef &&
-			(inhRelation->options & CREATE_TABLE_LIKE_DEFAULTS))
+			(table_like_clause->options & CREATE_TABLE_LIKE_DEFAULTS))
 		{
 			Node	   *this_default = NULL;
 			AttrDefault *attrdef;
@@ -736,13 +736,13 @@ transformInhRelation(CreateStmtContext *cxt, InhRelation *inhRelation)
 		}
 
 		/* Likewise, copy storage if requested */
-		if (inhRelation->options & CREATE_TABLE_LIKE_STORAGE)
+		if (table_like_clause->options & CREATE_TABLE_LIKE_STORAGE)
 			def->storage = attribute->attstorage;
 		else
 			def->storage = 0;
 
 		/* Likewise, copy comment if requested */
-		if ((inhRelation->options & CREATE_TABLE_LIKE_COMMENTS) &&
+		if ((table_like_clause->options & CREATE_TABLE_LIKE_COMMENTS) &&
 			(comment = GetComment(attribute->attrelid,
 								  RelationRelationId,
 								  attribute->attnum)) != NULL)
@@ -764,7 +764,7 @@ transformInhRelation(CreateStmtContext *cxt, InhRelation *inhRelation)
 	 * Copy CHECK constraints if requested, being careful to adjust attribute
 	 * numbers
 	 */
-	if ((inhRelation->options & CREATE_TABLE_LIKE_CONSTRAINTS) &&
+	if ((table_like_clause->options & CREATE_TABLE_LIKE_CONSTRAINTS) &&
 		tupleDesc->constr)
 	{
 		AttrNumber *attmap = varattnos_map_schema(tupleDesc, cxt->columns);
@@ -787,7 +787,7 @@ transformInhRelation(CreateStmtContext *cxt, InhRelation *inhRelation)
 			cxt->ckconstraints = lappend(cxt->ckconstraints, n);
 
 			/* Copy comment on constraint */
-			if ((inhRelation->options & CREATE_TABLE_LIKE_COMMENTS) &&
+			if ((table_like_clause->options & CREATE_TABLE_LIKE_COMMENTS) &&
 				(comment = GetComment(get_constraint_oid(RelationGetRelid(relation),
 														 n->conname, false),
 									  ConstraintRelationId,
@@ -810,7 +810,7 @@ transformInhRelation(CreateStmtContext *cxt, InhRelation *inhRelation)
 	/*
 	 * Likewise, copy indexes if requested
 	 */
-	if ((inhRelation->options & CREATE_TABLE_LIKE_INDEXES) &&
+	if ((table_like_clause->options & CREATE_TABLE_LIKE_INDEXES) &&
 		relation->rd_rel->relhasindex)
 	{
 		AttrNumber *attmap = varattnos_map_schema(tupleDesc, cxt->columns);
@@ -831,7 +831,7 @@ transformInhRelation(CreateStmtContext *cxt, InhRelation *inhRelation)
 			index_stmt = generateClonedIndexStmt(cxt, parent_index, attmap);
 
 			/* Copy comment on index */
-			if (inhRelation->options & CREATE_TABLE_LIKE_COMMENTS)
+			if (table_like_clause->options & CREATE_TABLE_LIKE_COMMENTS)
 			{
 				comment = GetComment(parent_index_oid, RelationRelationId, 0);
 

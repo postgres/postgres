@@ -389,7 +389,7 @@ typedef enum NodeTag
 	T_FuncWithArgs,
 	T_AccessPriv,
 	T_CreateOpClassItem,
-	T_InhRelation,
+	T_TableLikeClause,
 	T_FunctionParameter,
 	T_LockingClause,
 	T_RowMarkClause,

@@ -59,7 +59,7 @@ test: create_index create_view
 # ----------
 # Another group of parallel tests
 # ----------
-test: create_aggregate create_cast constraints triggers inherit typed_table vacuum drop_if_exists
+test: create_aggregate create_cast constraints triggers inherit create_table_like typed_table vacuum drop_if_exists
 
 # ----------
 # sanity_check does a vacuum, affecting the sort order of SELECT *

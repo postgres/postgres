@@ -55,7 +55,6 @@ SELECT relname, relhasindex
  hobbies_r               | f
  ihighway                | t
  inet_tbl                | f
- inhe                    | f
  inhf                    | f
  inhx                    | t
  insert_tbl              | f
@@ -165,7 +164,7 @@ SELECT relname, relhasindex
  timetz_tbl              | f
  tinterval_tbl           | f
  varchar_tbl             | f
-(154 rows)
+(153 rows)
 
 --
 -- another sanity check: every system catalog that has OIDs should have

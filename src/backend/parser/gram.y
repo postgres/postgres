@@ -2718,18 +2718,10 @@ ConstraintAttr:
 		;
 
 
-/*
- * SQL99 supports wholesale borrowing of a table definition via the LIKE clause.
- * This seems to be a poor man's inheritance capability, with the resulting
- * tables completely decoupled except for the original commonality in definitions.
- *
- * This is very similar to CREATE TABLE AS except for the INCLUDING DEFAULTS extension
- * which is a part of SQL:2003.
- */
 TableLikeClause:
 			LIKE qualified_name TableLikeOptionList
 				{
-					InhRelation *n = makeNode(InhRelation);
+					TableLikeClause *n = makeNode(TableLikeClause);
 					n->relation = $2;
 					n->options = $3;
 					$$ = (Node *)n;
