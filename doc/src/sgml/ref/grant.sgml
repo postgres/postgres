@@ -631,6 +631,12 @@ GRANT admins TO joe;
    </para>
 
    <para>
+    According to the SQL standard, grant options can be granted to
+    <literal>PUBLIC</literal>; PostgreSQL only supports granting grant options
+    to roles.
+   </para>
+
+   <para>
     The SQL standard provides for a <literal>USAGE</literal> privilege
     on other kinds of objects: character sets, collations,
     translations.
