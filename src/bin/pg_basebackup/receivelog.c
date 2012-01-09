@@ -33,8 +33,9 @@
 #include <unistd.h>
 
 
-/* Size of the streaming replication protocol header */
-#define STREAMING_HEADER_SIZE (1+8+8+8)
+/* Size of the streaming replication protocol headers */
+#define STREAMING_HEADER_SIZE (1+sizeof(WalDataMessageHeader))
+#define STREAMING_KEEPALIVE_SIZE (1+sizeof(PrimaryKeepaliveMessage))
 
 const XLogRecPtr InvalidXLogRecPtr = {0, 0};
 
@@ -374,16 +375,31 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysi
 					progname, PQerrorMessage(conn));
 			return false;
 		}
+		if (copybuf[0] == 'k')
+		{
+			/*
+			 * keepalive message, sent in 9.2 and newer. We just ignore
+			 * this message completely, but need to forward past it
+			 * in our reading.
+			 */
+			if (r != STREAMING_KEEPALIVE_SIZE)
+			{
+				fprintf(stderr, _("%s: keepalive message is incorrect size: %i\n"),
+						progname, r);
+				return false;
+			}
+			continue;
+		}
+		else if (copybuf[0] != 'w')
+		{
+			fprintf(stderr, _("%s: unrecognized streaming header: \"%c\"\n"),
+					progname, copybuf[0]);
+			return false;
+		}
 		if (r < STREAMING_HEADER_SIZE + 1)
 		{
 			fprintf(stderr, _("%s: streaming header too small: %i\n"),
 					progname, r);
-			return false;
-		}
-		if (copybuf[0] != 'w')
-		{
-			fprintf(stderr, _("%s: unrecognized streaming header: \"%c\"\n"),
-					progname, copybuf[0]);
 			return false;
 		}
 
