@@ -379,8 +379,8 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysi
 		{
 			/*
 			 * keepalive message, sent in 9.2 and newer. We just ignore
-			 * this message completely, but need to forward past it
-			 * in our reading.
+			 * this message completely, but need to skip past it in the
+			 * stream.
 			 */
 			if (r != STREAMING_KEEPALIVE_SIZE)
 			{
