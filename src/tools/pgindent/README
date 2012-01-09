@@ -22,7 +22,7 @@ This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
 
 	find . -name '*.[ch]' -type f -print | \
 	egrep -v -f src/tools/pgindent/exclude_file_patterns | \
-	xargs -n100 pgindent src/tools/pgindent/typedefs.list
+	xargs -n100 src/tools/pgindent/pgindent src/tools/pgindent/typedefs.list
 
 6) Remove any files that generate errors and restore their original
    versions.
