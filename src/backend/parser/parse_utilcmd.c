@@ -644,10 +644,12 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 	relation = parserOpenTable(cxt->pstate, table_like_clause->relation,
 							   AccessShareLock);
 
-	if (relation->rd_rel->relkind != RELKIND_RELATION)
+	if (relation->rd_rel->relkind != RELKIND_RELATION
+		&& relation->rd_rel->relkind != RELKIND_VIEW
+		&& relation->rd_rel->relkind != RELKIND_FOREIGN_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("LIKE source relation \"%s\" is not a table",
+				 errmsg("LIKE source relation \"%s\" is not a table, view, or foreign table",
 						table_like_clause->relation->relname)));
 
 	/*

@@ -368,6 +368,11 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       If the same name is specified explicitly or in another
       <literal>LIKE</literal> clause, an error is signalled.
      </para>
+     <para>
+      The <literal>LIKE</literal> clause can also be used to copy columns from
+      views or foreign tables.  Inapplicable options (e.g., <literal>INCLUDING
+      INDEXES</literal> from a view) are ignored.
+     </para>
     </listitem>
    </varlistentry>
 

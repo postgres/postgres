@@ -97,3 +97,23 @@ CREATE TABLE inh_error1 () INHERITS (ctlt1, ctlt4);
 CREATE TABLE inh_error2 (LIKE ctlt4 INCLUDING STORAGE) INHERITS (ctlt1);
 
 DROP TABLE ctlt1, ctlt2, ctlt3, ctlt4, ctlt12_storage, ctlt12_comments, ctlt1_inh, ctlt13_inh, ctlt13_like, ctlt_all, ctla, ctlb CASCADE;
+
+
+/* LIKE with other relation kinds */
+
+CREATE TABLE ctlt4 (a int, b text);
+
+CREATE SEQUENCE ctlseq1;
+CREATE TABLE ctlt10 (LIKE ctlseq1);  -- fail
+
+CREATE VIEW ctlv1 AS SELECT * FROM ctlt4;
+CREATE TABLE ctlt11 (LIKE ctlv1);
+CREATE TABLE ctlt11a (LIKE ctlv1 INCLUDING ALL);
+
+CREATE TYPE ctlty1 AS (a int, b text);
+CREATE TABLE ctlt12 (LIKE ctlty1);  -- currently fails
+
+DROP SEQUENCE ctlseq1;
+DROP TYPE ctlty1;
+DROP VIEW ctlv1;
+DROP TABLE IF EXISTS ctlt4, ctlt10, ctlt11, ctlt11a, ctlt12;
