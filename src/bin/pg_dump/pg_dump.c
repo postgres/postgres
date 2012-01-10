@@ -5733,7 +5733,8 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 							  "pg_catalog.array_to_string(ARRAY("
 							  "SELECT pg_catalog.quote_ident(option_name) || "
 							  "' ' || pg_catalog.quote_literal(option_value) "
-							  "FROM pg_catalog.pg_options_to_table(attfdwoptions)"
+							  "FROM pg_catalog.pg_options_to_table(attfdwoptions) "
+							  "ORDER BY option_name"
 							  "), E',\n    ') AS attfdwoptions "
 			 "FROM pg_catalog.pg_attribute a LEFT JOIN pg_catalog.pg_type t "
 							  "ON a.atttypid = t.oid "
@@ -6564,7 +6565,8 @@ getForeignDataWrappers(int *numForeignDataWrappers)
 						  "array_to_string(ARRAY("
 						  "SELECT quote_ident(option_name) || ' ' || "
 						  "quote_literal(option_value) "
-						  "FROM pg_options_to_table(fdwoptions)"
+						  "FROM pg_options_to_table(fdwoptions) "
+						  "ORDER BY option_name"
 						  "), E',\n    ') AS fdwoptions "
 						  "FROM pg_foreign_data_wrapper",
 						  username_subquery);
@@ -6578,7 +6580,8 @@ getForeignDataWrappers(int *numForeignDataWrappers)
 						  "array_to_string(ARRAY("
 						  "SELECT quote_ident(option_name) || ' ' || "
 						  "quote_literal(option_value) "
-						  "FROM pg_options_to_table(fdwoptions)"
+						  "FROM pg_options_to_table(fdwoptions) "
+						  "ORDER BY option_name"
 						  "), E',\n    ') AS fdwoptions "
 						  "FROM pg_foreign_data_wrapper",
 						  username_subquery);
@@ -6667,7 +6670,8 @@ getForeignServers(int *numForeignServers)
 					  "array_to_string(ARRAY("
 					  "SELECT quote_ident(option_name) || ' ' || "
 					  "quote_literal(option_value) "
-					  "FROM pg_options_to_table(srvoptions)"
+					  "FROM pg_options_to_table(srvoptions) "
+					  "ORDER BY option_name"
 					  "), E',\n    ') AS srvoptions "
 					  "FROM pg_foreign_server",
 					  username_subquery);
@@ -11777,7 +11781,8 @@ dumpUserMappings(Archive *fout,
 					  "array_to_string(ARRAY("
 					  "SELECT quote_ident(option_name) || ' ' || "
 					  "quote_literal(option_value) "
-					  "FROM pg_options_to_table(umoptions)"
+					  "FROM pg_options_to_table(umoptions) "
+					  "ORDER BY option_name"
 					  "), E',\n    ') AS umoptions "
 					  "FROM pg_user_mappings "
 					  "WHERE srvid = '%u' "
@@ -12438,7 +12443,8 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 							  "pg_catalog.array_to_string(ARRAY("
 							  "SELECT pg_catalog.quote_ident(option_name) || "
 							  "' ' || pg_catalog.quote_literal(option_value) "
-							  "FROM pg_catalog.pg_options_to_table(ftoptions)"
+							  "FROM pg_catalog.pg_options_to_table(ftoptions) "
+							  "ORDER BY option_name"
 							  "), E',\n    ') AS ftoptions "
 							  "FROM pg_catalog.pg_foreign_table ft "
 							  "JOIN pg_catalog.pg_foreign_server fs "
