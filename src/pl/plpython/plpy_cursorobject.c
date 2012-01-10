@@ -134,7 +134,7 @@ PLy_cursor_query(const char *query)
 		SPI_freeplan(plan);
 
 		if (portal == NULL)
-			elog(ERROR, "SPI_cursor_open() failed:%s",
+			elog(ERROR, "SPI_cursor_open() failed: %s",
 				 SPI_result_code_string(SPI_result));
 
 		cursor->portalname = PLy_strdup(portal->name);
@@ -255,7 +255,7 @@ PLy_cursor_plan(PyObject *ob, PyObject *args)
 		portal = SPI_cursor_open(NULL, plan->plan, plan->values, nulls,
 								 PLy_curr_procedure->fn_readonly);
 		if (portal == NULL)
-			elog(ERROR, "SPI_cursor_open() failed:%s",
+			elog(ERROR, "SPI_cursor_open() failed: %s",
 				 SPI_result_code_string(SPI_result));
 
 		cursor->portalname = PLy_strdup(portal->name);
