@@ -9411,16 +9411,14 @@ GetStandbyFlushRecPtr(void)
  * Get latest WAL insert pointer
  */
 XLogRecPtr
-GetXLogInsertRecPtr(bool needlock)
+GetXLogInsertRecPtr(void)
 {
 	XLogCtlInsert *Insert = &XLogCtl->Insert;
 	XLogRecPtr	current_recptr;
 
-	if (needlock)
-		LWLockAcquire(WALInsertLock, LW_SHARED);
+	LWLockAcquire(WALInsertLock, LW_SHARED);
 	INSERT_RECPTR(current_recptr, Insert, Insert->curridx);
-	if (needlock)
-		LWLockRelease(WALInsertLock);
+	LWLockRelease(WALInsertLock);
 
 	return current_recptr;
 }

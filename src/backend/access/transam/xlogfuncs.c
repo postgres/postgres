@@ -200,7 +200,7 @@ pg_current_xlog_insert_location(PG_FUNCTION_ARGS)
 				 errmsg("recovery is in progress"),
 				 errhint("WAL control functions cannot be executed during recovery.")));
 
-	current_recptr = GetXLogInsertRecPtr(true);
+	current_recptr = GetXLogInsertRecPtr();
 
 	snprintf(location, sizeof(location), "%X/%X",
 			 current_recptr.xlogid, current_recptr.xrecoff);
