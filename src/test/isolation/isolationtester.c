@@ -395,6 +395,12 @@ run_named_permutations(TestSpec * testspec)
 		Permutation *p = testspec->permutations[i];
 		Step	  **steps;
 
+		if (p->nsteps != nallsteps)
+		{
+			fprintf(stderr, "invalid number of steps in permutation %d\n", i + 1);
+			exit_nicely();
+		}
+
 		steps = malloc(p->nsteps * sizeof(Step *));
 
 		/* Find all the named steps from the lookup table */
@@ -404,7 +410,8 @@ run_named_permutations(TestSpec * testspec)
 										 sizeof(Step *), &step_bsearch_cmp));
 			if (steps[j] == NULL)
 			{
-				fprintf(stderr, "undefined step \"%s\" specified in permutation\n", p->stepnames[j]);
+				fprintf(stderr, "undefined step \"%s\" specified in permutation\n",
+						p->stepnames[j]);
 				exit_nicely();
 			}
 		}
