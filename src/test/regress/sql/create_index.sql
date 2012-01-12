@@ -816,6 +816,6 @@ VACUUM ANALYZE dupindexcols;
 
 EXPLAIN (COSTS OFF)
   SELECT count(*) FROM dupindexcols
-    WHERE f1 > 'LX' and id < 1000 and f1 ~<~ 'YX';
+    WHERE f1 > 'MA' and id < 1000 and f1 ~<~ 'YX';
 SELECT count(*) FROM dupindexcols
-  WHERE f1 > 'LX' and id < 1000 and f1 ~<~ 'YX';
+  WHERE f1 > 'MA' and id < 1000 and f1 ~<~ 'YX';

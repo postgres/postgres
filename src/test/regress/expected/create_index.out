@@ -2468,18 +2468,18 @@ CREATE INDEX dupindexcols_i ON dupindexcols (f1, id, f1 text_pattern_ops);
 VACUUM ANALYZE dupindexcols;
 EXPLAIN (COSTS OFF)
   SELECT count(*) FROM dupindexcols
-    WHERE f1 > 'LX' and id < 1000 and f1 ~<~ 'YX';
+    WHERE f1 > 'MA' and id < 1000 and f1 ~<~ 'YX';
                                    QUERY PLAN                                    
 ---------------------------------------------------------------------------------
  Aggregate
    ->  Index Only Scan using dupindexcols_i on dupindexcols
-         Index Cond: ((f1 > 'LX'::text) AND (id < 1000) AND (f1 ~<~ 'YX'::text))
+         Index Cond: ((f1 > 'MA'::text) AND (id < 1000) AND (f1 ~<~ 'YX'::text))
 (3 rows)
 
 SELECT count(*) FROM dupindexcols
-  WHERE f1 > 'LX' and id < 1000 and f1 ~<~ 'YX';
+  WHERE f1 > 'MA' and id < 1000 and f1 ~<~ 'YX';
  count 
 -------
-   500
+   497
 (1 row)
 
