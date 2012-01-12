@@ -76,7 +76,8 @@ do { \
 static void toast_delete_datum(Relation rel, Datum value);
 static Datum toast_save_datum(Relation rel, Datum value,
 				 struct varlena *oldexternal, int options);
-static bool toast_valueid_exists(Oid toastrelid, Oid valueid);
+static bool toastrel_valueid_exists(Relation toastrel, Oid valueid);
+static bool toastid_valueid_exists(Oid toastrelid, Oid valueid);
 static struct varlena *toast_fetch_datum(struct varlena * attr);
 static struct varlena *toast_fetch_datum_slice(struct varlena * attr,
 						int32 sliceoffset, int32 length);
@@ -1342,7 +1343,34 @@ toast_save_datum(Relation rel, Datum value,
 			/* Must copy to access aligned fields */
 			VARATT_EXTERNAL_GET_POINTER(old_toast_pointer, oldexternal);
 			if (old_toast_pointer.va_toastrelid == rel->rd_toastoid)
+			{
+				/* This value came from the old toast table; reuse its OID */
 				toast_pointer.va_valueid = old_toast_pointer.va_valueid;
+
+				/*
+				 * There is a corner case here: the table rewrite might have
+				 * to copy both live and recently-dead versions of a row, and
+				 * those versions could easily reference the same toast value.
+				 * When we copy the second or later version of such a row,
+				 * reusing the OID will mean we select an OID that's already
+				 * in the new toast table.  Check for that, and if so, just
+				 * fall through without writing the data again.
+				 *
+				 * While annoying and ugly-looking, this is a good thing
+				 * because it ensures that we wind up with only one copy of
+				 * the toast value when there is only one copy in the old
+				 * toast table.  Before we detected this case, we'd have made
+				 * multiple copies, wasting space; and what's worse, the
+				 * copies belonging to already-deleted heap tuples would not
+				 * be reclaimed by VACUUM.
+				 */
+				if (toastrel_valueid_exists(toastrel,
+											toast_pointer.va_valueid))
+				{
+					/* Match, so short-circuit the data storage loop below */
+					data_todo = 0;
+				}
+			}
 		}
 		if (toast_pointer.va_valueid == InvalidOid)
 		{
@@ -1356,8 +1384,8 @@ toast_save_datum(Relation rel, Datum value,
 					GetNewOidWithIndex(toastrel,
 									   RelationGetRelid(toastidx),
 									   (AttrNumber) 1);
-			} while (toast_valueid_exists(rel->rd_toastoid,
-										  toast_pointer.va_valueid));
+			} while (toastid_valueid_exists(rel->rd_toastoid,
+											toast_pointer.va_valueid));
 		}
 	}
 
@@ -1495,23 +1523,17 @@ toast_delete_datum(Relation rel, Datum value)
 
 
 /* ----------
- * toast_valueid_exists -
+ * toastrel_valueid_exists -
  *
  *	Test whether a toast value with the given ID exists in the toast relation
  * ----------
  */
 static bool
-toast_valueid_exists(Oid toastrelid, Oid valueid)
+toastrel_valueid_exists(Relation toastrel, Oid valueid)
 {
 	bool		result = false;
-	Relation	toastrel;
 	ScanKeyData toastkey;
 	SysScanDesc toastscan;
-
-	/*
-	 * Open the toast relation
-	 */
-	toastrel = heap_open(toastrelid, AccessShareLock);
 
 	/*
 	 * Setup a scan key to find chunks with matching va_valueid
@@ -1530,10 +1552,27 @@ toast_valueid_exists(Oid toastrelid, Oid valueid)
 	if (systable_getnext(toastscan) != NULL)
 		result = true;
 
-	/*
-	 * End scan and close relations
-	 */
 	systable_endscan(toastscan);
+
+	return result;
+}
+
+/* ----------
+ * toastid_valueid_exists -
+ *
+ *	As above, but work from toast rel's OID not an open relation
+ * ----------
+ */
+static bool
+toastid_valueid_exists(Oid toastrelid, Oid valueid)
+{
+	bool		result;
+	Relation	toastrel;
+
+	toastrel = heap_open(toastrelid, AccessShareLock);
+
+	result = toastrel_valueid_exists(toastrel, valueid);
+
 	heap_close(toastrel, AccessShareLock);
 
 	return result;

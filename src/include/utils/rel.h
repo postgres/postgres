@@ -206,7 +206,8 @@ typedef struct RelationData
 	 * have the existing toast table's OID, not the OID of the transient toast
 	 * table.  If rd_toastoid isn't InvalidOid, it is the OID to place in
 	 * toast pointers inserted into this rel.  (Note it's set on the new
-	 * version of the main heap, not the toast table itself.)
+	 * version of the main heap, not the toast table itself.)  This also
+	 * causes toast_save_datum() to try to preserve toast value OIDs.
 	 */
 	Oid			rd_toastoid;	/* Real TOAST table's OID, or InvalidOid */
 
