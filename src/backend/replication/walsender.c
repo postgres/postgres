@@ -834,7 +834,12 @@ WalSndLoop(void)
 			if (pq_is_send_pending())
 				wakeEvents |= WL_SOCKET_WRITEABLE;
 			else
+			{
 				WalSndKeepalive(output_message);
+				/* Try to flush pending output to the client */
+				if (pq_flush_if_writable() != 0)
+					break;
+			}
 
 			/* Determine time until replication timeout */
 			if (replication_timeout > 0)
