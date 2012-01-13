@@ -750,7 +750,7 @@ ProcessWalSndrMessage(XLogRecPtr walEnd, TimestampTz sendTime)
 	walrcv->lastMsgReceiptTime = lastMsgReceiptTime;
 	SpinLockRelease(&walrcv->mutex);
 
-	if (log_min_mesages <= DEBUG2)
+	if (log_min_messages <= DEBUG2)
 		elog(DEBUG2, "sendtime %s receipttime %s replication apply delay %d ms transfer latency %d ms",
 					timestamptz_to_str(sendTime),
 					timestamptz_to_str(lastMsgReceiptTime),
