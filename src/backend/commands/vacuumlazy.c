@@ -991,7 +991,11 @@ lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats)
 		buf = ReadBufferExtended(onerel, MAIN_FORKNUM, tblk, RBM_NORMAL,
 								 vac_strategy);
 		if (!ConditionalLockBufferForCleanup(buf))
+		{
+			ReleaseBuffer(buf);
+			++tupindex;
 			continue;
+		}
 		tupindex = lazy_vacuum_page(onerel, tblk, buf, tupindex, vacrelstats);
 
 		/* Now that we've compacted the page, record its available space */
