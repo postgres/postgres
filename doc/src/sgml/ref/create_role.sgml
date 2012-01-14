@@ -185,8 +185,7 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
         A role having the <literal>REPLICATION</> attribute is a very
         highly privileged role, and should only be used on roles actually
         used for replication. If not specified,
-        <literal>NOREPLICATION</literal> is the default for all roles except
-        superusers.
+        <literal>NOREPLICATION</literal> is the default.
        </para>
       </listitem>
      </varlistentry>

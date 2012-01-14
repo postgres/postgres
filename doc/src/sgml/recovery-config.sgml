@@ -325,9 +325,8 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
           The connection string should specify the host name (or address)
           of the primary server, as well as the port number if it is not
           the same as the standby server's default.
-          Also specify a user name corresponding to a role that has the
-          <literal>REPLICATION</> and <literal>LOGIN</> privileges on the
-          primary (see
+          Also specify a user name corresponding to a suitably-privileged role
+          on the primary (see
           <xref linkend="streaming-replication-authentication">).
           A password needs to be provided too, if the primary demands password
           authentication.  It can be provided in the
