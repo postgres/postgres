@@ -2675,7 +2675,6 @@ main(int argc, char *argv[])
 		strcmp(authmethod, "pam") != 0 &&
 		strncmp(authmethod, "pam ", 4) != 0 &&		/* pam with space = param */
 #endif
-		strcmp(authmethod, "crypt") != 0 &&
 		strcmp(authmethod, "password") != 0
 		)
 
@@ -2690,7 +2689,6 @@ main(int argc, char *argv[])
 	}
 
 	if ((strcmp(authmethod, "md5") == 0 ||
-		 strcmp(authmethod, "crypt") == 0 ||
 		 strcmp(authmethod, "password") == 0) &&
 		!(pwprompt || pwfilename))
 	{
