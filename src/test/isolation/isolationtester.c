@@ -406,14 +406,16 @@ run_named_permutations(TestSpec * testspec)
 		/* Find all the named steps from the lookup table */
 		for (j = 0; j < p->nsteps; j++)
 		{
-			steps[j] = *((Step **) bsearch(p->stepnames[j], allsteps, nallsteps,
-										 sizeof(Step *), &step_bsearch_cmp));
-			if (steps[j] == NULL)
+			Step	**this = (Step **) bsearch(p->stepnames[j], allsteps,
+											   nallsteps, sizeof(Step *),
+											   &step_bsearch_cmp);
+			if (this == NULL)
 			{
 				fprintf(stderr, "undefined step \"%s\" specified in permutation\n",
 						p->stepnames[j]);
 				exit_nicely();
 			}
+			steps[j] = *this;
 		}
 
 		run_permutation(testspec, p->nsteps, steps);
