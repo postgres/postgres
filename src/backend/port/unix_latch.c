@@ -310,8 +310,13 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 		{
 			result |= WL_SOCKET_WRITEABLE;
 		}
+		/*
+		 * We expect a POLLHUP when the remote end is closed, but because we
+		 * don't expect the pipe to become readable or to have any errors
+		 * either, treat those as postmaster death, too.
+		 */
 		if ((wakeEvents & WL_POSTMASTER_DEATH) &&
-			(pfds[nfds - 1].revents & POLLIN))
+			(pfds[nfds - 1].revents & (POLLHUP | POLLIN | POLLERR | POLLNVAL)))
 		{
 			result |= WL_POSTMASTER_DEATH;
 		}
