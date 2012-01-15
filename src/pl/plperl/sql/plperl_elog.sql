@@ -43,3 +43,6 @@ create or replace function uses_global() returns text language plperl as $$
 $$;
 
 select uses_global();
+
+-- make sure we don't choke on readonly values
+do language plperl $$ elog(NOTICE, ${^TAINT}); $$;
