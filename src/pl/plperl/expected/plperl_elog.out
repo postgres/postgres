@@ -58,3 +58,7 @@ select uses_global();
  uses_global worked
 (1 row)
 
+-- make sure we don't choke on readonly values
+do language plperl $$ elog(NOTICE, ${^TAINT}); $$;
+NOTICE:  0
+CONTEXT:  PL/Perl anonymous code block
