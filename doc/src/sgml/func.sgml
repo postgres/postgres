@@ -14262,8 +14262,8 @@ SELECT set_config('log_statement_stats', 'off', false);
    <para>
     The functions shown in <xref
     linkend="functions-admin-signal-table"> send control signals to
-    other server processes.  Use of these functions is restricted
-    to superusers.
+    other server processes.  Use of these functions is usually restricted
+    to superusers, with noted exceptions.
    </para>
 
    <table id="functions-admin-signal-table">
@@ -14280,7 +14280,10 @@ SELECT set_config('log_statement_stats', 'off', false);
         <literal><function>pg_cancel_backend(<parameter>pid</parameter> <type>int</>)</function></literal>
         </entry>
        <entry><type>boolean</type></entry>
-       <entry>Cancel a backend's current query</entry>
+       <entry>Cancel a backend's current query.  You can execute this against
+        another backend that has exactly the same role as the user calling the
+        function.  In all other cases, you must be a superuser.
+        </entry>
       </row>
       <row>
        <entry>
@@ -14322,6 +14325,10 @@ SELECT set_config('log_statement_stats', 'off', false);
     <command>postgres</command> processes on the server (using
     <application>ps</> on Unix or the <application>Task
     Manager</> on <productname>Windows</>).
+    For the less restrictive <function>pg_cancel_backend</>, the role of an
+    active backend can be found from
+    the <structfield>usename</structfield> column of the
+    <structname>pg_stat_activity</structname> view.
    </para>
 
    <para>
