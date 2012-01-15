@@ -136,7 +136,7 @@ mbuf_create(int len)
 }
 
 MBuf *
-mbuf_create_from_data(const uint8 *data, int len)
+mbuf_create_from_data(uint8 *data, int len)
 {
 	MBuf	   *mbuf;
 

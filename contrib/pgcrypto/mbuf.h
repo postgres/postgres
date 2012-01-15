@@ -77,7 +77,7 @@ struct PullFilterOps
  * Memory buffer
  */
 MBuf	   *mbuf_create(int len);
-MBuf	   *mbuf_create_from_data(const uint8 *data, int len);
+MBuf	   *mbuf_create_from_data(uint8 *data, int len);
 int			mbuf_tell(MBuf *mbuf);
 int			mbuf_avail(MBuf *mbuf);
 int			mbuf_size(MBuf *mbuf);
