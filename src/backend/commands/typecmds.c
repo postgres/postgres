@@ -2005,7 +2005,8 @@ DefineCompositeType(const RangeVar *typevar, List *coldeflist)
 	 * check is here mainly to get a better error message about a "type"
 	 * instead of below about a "relation".
 	 */
-	typeNamespace = RangeVarGetCreationNamespace(createStmt->relation);
+	typeNamespace = RangeVarGetAndCheckCreationNamespace(createStmt->relation,
+														 NoLock, NULL);
 	RangeVarAdjustRelationPersistence(createStmt->relation, typeNamespace);
 	old_type_oid =
 		GetSysCacheOid2(TYPENAMENSP,

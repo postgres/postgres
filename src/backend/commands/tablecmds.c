@@ -451,10 +451,12 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 
 	/*
 	 * Look up the namespace in which we are supposed to create the relation,
-	 * and check we have permission to create there.
+	 * check we have permission to create there, lock it against concurrent
+	 * drop, and mark stmt->relation as RELPERSISTENCE_TEMP if a temporary
+	 * namespace is selected.
 	 */
-	namespaceId = RangeVarGetAndCheckCreationNamespace(stmt->relation);
-	RangeVarAdjustRelationPersistence(stmt->relation, namespaceId);
+	namespaceId =
+		RangeVarGetAndCheckCreationNamespace(stmt->relation, NoLock, NULL);
 
 	/*
 	 * Security check: disallow creating temp tables from security-restricted
@@ -9417,6 +9419,7 @@ AlterTableNamespace(AlterObjectSchemaStmt *stmt)
 	Oid			oldNspOid;
 	Oid			nspOid;
 	Relation	classRel;
+	RangeVar   *newrv;
 
 	relid = RangeVarGetRelidExtended(stmt->relation, AccessExclusiveLock,
 									 false, false,
@@ -9441,8 +9444,9 @@ AlterTableNamespace(AlterObjectSchemaStmt *stmt)
 						get_rel_name(tableId))));
 	}
 
-	/* get schema OID and check its permissions */
-	nspOid = LookupCreationNamespace(stmt->newschema);
+	/* Get and lock schema OID and check its permissions. */
+	newrv = makeRangeVar(stmt->newschema, RelationGetRelationName(rel), -1);
+	nspOid = RangeVarGetAndCheckCreationNamespace(newrv, NoLock, NULL);
 
 	/* common checks on switching namespaces */
 	CheckSetNamespace(oldNspOid, nspOid, RelationRelationId, relid);

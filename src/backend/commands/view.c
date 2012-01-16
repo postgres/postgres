@@ -98,10 +98,12 @@ isViewOnTempTable_walker(Node *node, void *context)
  *---------------------------------------------------------------------
  */
 static Oid
-DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace,
-					  Oid namespaceId, List *options)
+DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
+					  List *options)
 {
 	Oid			viewOid;
+	Oid			namespaceId;
+	LOCKMODE	lockmode;
 	CreateStmt *createStmt = makeNode(CreateStmt);
 	List	   *attrList;
 	ListCell   *t;
@@ -159,9 +161,14 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace,
 				 errmsg("view must have at least one column")));
 
 	/*
-	 * Check to see if we want to replace an existing view.
+	 * Look up, check permissions on, and lock the creation namespace; also
+	 * check for a preexisting view with the same name.  This will also set
+	 * relation->relpersistence to RELPERSISTENCE_TEMP if the selected
+	 * namespace is temporary.
 	 */
-	viewOid = get_relname_relid(relation->relname, namespaceId);
+	lockmode = replace ? AccessExclusiveLock : NoLock;
+	namespaceId =
+		RangeVarGetAndCheckCreationNamespace(relation, lockmode, &viewOid);
 
 	if (OidIsValid(viewOid) && replace)
 	{
@@ -170,23 +177,15 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace,
 		List	   *atcmds = NIL;
 		AlterTableCmd *atcmd;
 
-		/*
-		 * Yes.  Get exclusive lock on the existing view ...
-		 */
-		rel = relation_open(viewOid, AccessExclusiveLock);
+		/* Relation is already locked, but we must build a relcache entry. */
+		rel = relation_open(viewOid, NoLock);
 
-		/*
-		 * Make sure it *is* a view, and do permissions checks.
-		 */
+		/* Make sure it *is* a view. */
 		if (rel->rd_rel->relkind != RELKIND_VIEW)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("\"%s\" is not a view",
 							RelationGetRelationName(rel))));
-
-		if (!pg_class_ownercheck(viewOid, GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
-						   RelationGetRelationName(rel));
 
 		/* Also check it's not in use already */
 		CheckTableNotInUse(rel, "CREATE OR REPLACE VIEW");
@@ -428,7 +427,6 @@ DefineView(ViewStmt *stmt, const char *queryString)
 {
 	Query	   *viewParse;
 	Oid			viewOid;
-	Oid			namespaceId;
 	RangeVar   *view;
 
 	/*
@@ -514,10 +512,6 @@ DefineView(ViewStmt *stmt, const char *queryString)
 						view->relname)));
 	}
 
-	/* Might also need to make it temporary if placed in temp schema. */
-	namespaceId = RangeVarGetCreationNamespace(view);
-	RangeVarAdjustRelationPersistence(view, namespaceId);
-
 	/*
 	 * Create the view relation
 	 *
@@ -525,7 +519,7 @@ DefineView(ViewStmt *stmt, const char *queryString)
 	 * aborted.
 	 */
 	viewOid = DefineVirtualRelation(view, viewParse->targetList,
-									stmt->replace, namespaceId, stmt->options);
+									stmt->replace, stmt->options);
 
 	/*
 	 * The relation we have just created is not visible to any other commands

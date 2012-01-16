@@ -2532,11 +2532,13 @@ OpenIntoRel(QueryDesc *queryDesc)
 	}
 
 	/*
-	 * Find namespace to create in, check its permissions
+	 * Find namespace to create in, check its permissions, lock it against
+	 * concurrent drop, and mark into->rel as RELPERSISTENCE_TEMP if the
+	 * selected namespace is temporary.
 	 */
 	intoName = into->rel->relname;
-	namespaceId = RangeVarGetAndCheckCreationNamespace(into->rel);
-	RangeVarAdjustRelationPersistence(into->rel, namespaceId);
+	namespaceId = RangeVarGetAndCheckCreationNamespace(into->rel, NoLock,
+													   NULL);
 
 	/*
 	 * Security check: disallow creating temp tables from security-restricted

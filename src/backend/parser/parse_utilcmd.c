@@ -146,6 +146,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	List	   *save_alist;
 	ListCell   *elements;
 	Oid			namespaceid;
+	Oid			existing_relid;
 
 	/*
 	 * We must not scribble on the passed-in CreateStmt, so copy it.  (This is
@@ -155,30 +156,25 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 
 	/*
 	 * Look up the creation namespace.	This also checks permissions on the
-	 * target namespace, so that we throw any permissions error as early as
-	 * possible.
+	 * target namespace, locks it against concurrent drops, checks for a
+	 * preexisting relation in that namespace with the same name, and updates
+	 * stmt->relation->relpersistence if the select namespace is temporary.
 	 */
-	namespaceid = RangeVarGetAndCheckCreationNamespace(stmt->relation);
-	RangeVarAdjustRelationPersistence(stmt->relation, namespaceid);
+	namespaceid =
+		RangeVarGetAndCheckCreationNamespace(stmt->relation, NoLock,
+											 &existing_relid);
 
 	/*
 	 * If the relation already exists and the user specified "IF NOT EXISTS",
 	 * bail out with a NOTICE.
 	 */
-	if (stmt->if_not_exists)
+	if (stmt->if_not_exists && OidIsValid(existing_relid))
 	{
-		Oid			existing_relid;
-
-		existing_relid = get_relname_relid(stmt->relation->relname,
-										   namespaceid);
-		if (existing_relid != InvalidOid)
-		{
-			ereport(NOTICE,
-					(errcode(ERRCODE_DUPLICATE_TABLE),
-					 errmsg("relation \"%s\" already exists, skipping",
-							stmt->relation->relname)));
-			return NIL;
-		}
+		ereport(NOTICE,
+				(errcode(ERRCODE_DUPLICATE_TABLE),
+				 errmsg("relation \"%s\" already exists, skipping",
+						stmt->relation->relname)));
+		return NIL;
 	}
 
 	/*
