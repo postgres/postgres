@@ -2251,6 +2251,8 @@ AddRelationNewConstraints(Relation rel,
  *
  * Returns TRUE if merged (constraint is a duplicate), or FALSE if it's
  * got a so-far-unique name, or throws error if conflict.
+ *
+ * XXX See MergeConstraintsIntoExisting too if you change this code.
  */
 static bool
 MergeWithExistingConstraint(Relation rel, char *ccname, Node *expr,
@@ -2307,12 +2309,17 @@ MergeWithExistingConstraint(Relation rel, char *ccname, Node *expr,
 						(errcode(ERRCODE_DUPLICATE_OBJECT),
 				errmsg("constraint \"%s\" for relation \"%s\" already exists",
 					   ccname, RelationGetRelationName(rel))));
-			/* OK to update the tuple */
-			ereport(NOTICE,
-			   (errmsg("merging constraint \"%s\" with inherited definition",
-					   ccname)));
+
 			tup = heap_copytuple(tup);
 			con = (Form_pg_constraint) GETSTRUCT(tup);
+
+			/* If the constraint is "only" then cannot merge */
+			if (con->conisonly)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("constraint \"%s\" conflicts with non-inherited constraint on relation \"%s\"",
+								ccname, RelationGetRelationName(rel))));
+
 			if (is_local)
 				con->conislocal = true;
 			else
@@ -2322,6 +2329,10 @@ MergeWithExistingConstraint(Relation rel, char *ccname, Node *expr,
 				Assert(is_local);
 				con->conisonly = true;
 			}
+			/* OK to update the tuple */
+			ereport(NOTICE,
+					(errmsg("merging constraint \"%s\" with inherited definition",
+							ccname)));
 			simple_heap_update(conDesc, &tup->t_self, tup);
 			CatalogUpdateIndexes(conDesc, tup);
 			break;

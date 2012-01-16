@@ -8818,18 +8818,18 @@ MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel)
  * Check constraints in child table match up with constraints in parent,
  * and increment their coninhcount.
  *
+ * Constraints that are marked ONLY in the parent are ignored.
+ *
  * Called by ATExecAddInherit
  *
  * Currently all constraints in parent must be present in the child. One day we
- * may consider adding new constraints like CREATE TABLE does. We may also want
- * to allow an optional flag on parent table constraints indicating they are
- * intended to ONLY apply to the master table, not to the children. That would
- * make it possible to ensure no records are mistakenly inserted into the
- * master in partitioned tables rather than the appropriate child.
+ * may consider adding new constraints like CREATE TABLE does.
  *
  * XXX This is O(N^2) which may be an issue with tables with hundreds of
  * constraints. As long as tables have more like 10 constraints it shouldn't be
  * a problem though. Even 100 constraints ought not be the end of the world.
+ *
+ * XXX See MergeWithExistingConstraint too if you change this code.
  */
 static void
 MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel)
@@ -8862,6 +8862,10 @@ MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel)
 		if (parent_con->contype != CONSTRAINT_CHECK)
 			continue;
 
+		/* if the parent's constraint is marked ONLY, it's not inherited */
+		if (parent_con->conisonly)
+			continue;
+
 		/* Search for a child constraint matching this one */
 		ScanKeyInit(&child_key,
 					Anum_pg_constraint_conrelid,
@@ -8888,6 +8892,14 @@ MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel)
 						 errmsg("child table \"%s\" has different definition for check constraint \"%s\"",
 								RelationGetRelationName(child_rel),
 								NameStr(parent_con->conname))));
+
+			/* If the constraint is "only" then cannot merge */
+			if (child_con->conisonly)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("constraint \"%s\" conflicts with non-inherited constraint on child table \"%s\"",
+								NameStr(child_con->conname),
+								RelationGetRelationName(child_rel))));
 
 			/*
 			 * OK, bump the child constraint's inheritance count.  (If we fail

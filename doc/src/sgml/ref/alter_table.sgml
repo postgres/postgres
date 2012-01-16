@@ -482,7 +482,11 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
 
      <para>
       There must also be matching child-table constraints for all
-      <literal>CHECK</literal> constraints of the parent. Currently
+      <literal>CHECK</literal> constraints of the parent, except those
+      marked non-inheritable (that is, created with <literal>ALTER TABLE ONLY</literal>)
+      in the parent, which are ignored; all child-table constraints matched
+      must not be marked non-inheritable.
+      Currently
       <literal>UNIQUE</literal>, <literal>PRIMARY KEY</literal>, and
       <literal>FOREIGN KEY</literal> constraints are not considered, but
       this might change in the future.
