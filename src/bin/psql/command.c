@@ -953,6 +953,9 @@ exec_command(const char *cmd,
 					PQclear(res);
 				PQfreemem(encrypted_password);
 			}
+
+			if (opt0)
+				free(opt0);
 		}
 
 		free(pw1);
