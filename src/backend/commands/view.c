@@ -102,7 +102,6 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 					  List *options)
 {
 	Oid			viewOid;
-	Oid			namespaceId;
 	LOCKMODE	lockmode;
 	CreateStmt *createStmt = makeNode(CreateStmt);
 	List	   *attrList;
@@ -167,8 +166,7 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 	 * namespace is temporary.
 	 */
 	lockmode = replace ? AccessExclusiveLock : NoLock;
-	namespaceId =
-		RangeVarGetAndCheckCreationNamespace(relation, lockmode, &viewOid);
+	(void) RangeVarGetAndCheckCreationNamespace(relation, lockmode, &viewOid);
 
 	if (OidIsValid(viewOid) && replace)
 	{
