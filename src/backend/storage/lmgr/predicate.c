@@ -3457,10 +3457,29 @@ ClearOldPredicateLocks(void)
 		else if (finishedSxact->commitSeqNo > PredXact->HavePartialClearedThrough
 		   && finishedSxact->commitSeqNo <= PredXact->CanPartialClearThrough)
 		{
+			/*
+			 * Any active transactions that took their snapshot before this
+			 * transaction committed are read-only, so we can clear part of
+			 * its state.
+			 */
 			LWLockRelease(SerializableXactHashLock);
-			ReleaseOneSerializableXact(finishedSxact,
-									   !SxactIsReadOnly(finishedSxact),
-									   false);
+
+			if (SxactIsReadOnly(finishedSxact))
+			{
+				/* A read-only transaction can be removed entirely */
+				SHMQueueDelete(&(finishedSxact->finishedLink));
+				ReleaseOneSerializableXact(finishedSxact, false, false);
+			}
+			else
+			{
+				/*
+				 * A read-write transaction can only be partially
+				 * cleared. We need to keep the SERIALIZABLEXACT but
+				 * can release the SIREAD locks and conflicts in.
+				 */
+				ReleaseOneSerializableXact(finishedSxact, true, false);
+			}
+
 			PredXact->HavePartialClearedThrough = finishedSxact->commitSeqNo;
 			LWLockAcquire(SerializableXactHashLock, LW_SHARED);
 		}
@@ -3566,6 +3585,7 @@ ReleaseOneSerializableXact(SERIALIZABLEXACT *sxact, bool partial,
 
 	Assert(sxact != NULL);
 	Assert(SxactIsRolledBack(sxact) || SxactIsCommitted(sxact));
+	Assert(partial || !SxactIsOnFinishedList(sxact));
 	Assert(LWLockHeldByMe(SerializableFinishedListLock));
 
 	/*
