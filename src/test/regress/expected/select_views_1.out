@@ -1247,3 +1247,258 @@ SELECT * FROM toyemp WHERE name = 'sharon';
  sharon |  25 | (15,12)  |     12000
 (1 row)
 
+--
+-- Test for Leaky view scenario
+--
+CREATE USER alice;
+CREATE FUNCTION f_leak (text)
+       RETURNS bool LANGUAGE 'plpgsql' COST 0.0000001
+       AS 'BEGIN RAISE NOTICE ''f_leak => %'', $1; RETURN true; END';
+CREATE TABLE customer (
+       cid      int primary key,
+       name     text not null,
+       tel      text,
+       passwd	text
+);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "customer_pkey" for table "customer"
+CREATE TABLE credit_card (
+       cid      int references customer(cid),
+       cnum     text,
+       climit   int
+);
+CREATE TABLE credit_usage (
+       cid      int references customer(cid),
+       ymd      date,
+       usage    int
+);
+INSERT INTO customer
+       VALUES (101, 'alice', '+81-12-3456-7890', 'passwd123'),
+              (102, 'bob',   '+01-234-567-8901', 'beafsteak'),
+              (103, 'eve',   '+49-8765-43210',   'hamburger');
+INSERT INTO credit_card
+       VALUES (101, '1111-2222-3333-4444', 4000),
+              (102, '5555-6666-7777-8888', 3000),
+              (103, '9801-2345-6789-0123', 2000);
+INSERT INTO credit_usage
+       VALUES (101, '2011-09-15', 120),
+       	      (101, '2011-10-05',  90),
+	      (101, '2011-10-18', 110),
+	      (101, '2011-10-21', 200),
+	      (101, '2011-11-10',  80),
+	      (102, '2011-09-22', 300),
+	      (102, '2011-10-12', 120),
+	      (102, '2011-10-28', 200),
+	      (103, '2011-10-15', 480);
+CREATE VIEW my_property_normal AS
+       SELECT * FROM customer WHERE name = current_user;
+CREATE VIEW my_property_secure WITH (security_barrier) AS
+       SELECT * FROM customer WHERE name = current_user;
+CREATE VIEW my_credit_card_normal AS
+       SELECT * FROM customer l NATURAL JOIN credit_card r
+       WHERE l.name = current_user;
+CREATE VIEW my_credit_card_secure WITH (security_barrier) AS
+       SELECT * FROM customer l NATURAL JOIN credit_card r
+       WHERE l.name = current_user;
+CREATE VIEW my_credit_card_usage_normal AS
+       SELECT * FROM my_credit_card_secure l NATURAL JOIN credit_usage r;
+CREATE VIEW my_credit_card_usage_secure WITH (security_barrier) AS
+       SELECT * FROM my_credit_card_secure l NATURAL JOIN credit_usage r;
+GRANT SELECT ON my_property_normal TO public;
+GRANT SELECT ON my_property_secure TO public;
+GRANT SELECT ON my_credit_card_normal TO public;
+GRANT SELECT ON my_credit_card_secure TO public;
+GRANT SELECT ON my_credit_card_usage_normal TO public;
+GRANT SELECT ON my_credit_card_usage_secure TO public;
+--
+-- Run leaky view scenarios
+--
+SET SESSION AUTHORIZATION alice;
+--
+-- scenario: if a qualifier with tiny-cost is given, it shall be launched
+--           prior to the security policy of the view.
+--
+SELECT * FROM my_property_normal WHERE f_leak(passwd);
+NOTICE:  f_leak => passwd123
+NOTICE:  f_leak => beafsteak
+NOTICE:  f_leak => hamburger
+ cid | name  |       tel        |  passwd   
+-----+-------+------------------+-----------
+ 101 | alice | +81-12-3456-7890 | passwd123
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT * FROM my_property_normal WHERE f_leak(passwd);
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Seq Scan on customer
+   Filter: (f_leak(passwd) AND (name = ("current_user"())::text))
+(2 rows)
+
+SELECT * FROM my_property_secure WHERE f_leak(passwd);
+NOTICE:  f_leak => passwd123
+ cid | name  |       tel        |  passwd   
+-----+-------+------------------+-----------
+ 101 | alice | +81-12-3456-7890 | passwd123
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT * FROM my_property_secure WHERE f_leak(passwd);
+                    QUERY PLAN                     
+---------------------------------------------------
+ Subquery Scan on my_property_secure
+   Filter: f_leak(my_property_secure.passwd)
+   ->  Seq Scan on customer
+         Filter: (name = ("current_user"())::text)
+(4 rows)
+
+--
+-- scenario: if a qualifier references only one-side of a particular join-
+--           tree, it shall be distributed to the most deep scan plan as
+--           possible as we can.
+--
+SELECT * FROM my_credit_card_normal WHERE f_leak(cnum);
+NOTICE:  f_leak => 1111-2222-3333-4444
+NOTICE:  f_leak => 5555-6666-7777-8888
+NOTICE:  f_leak => 9801-2345-6789-0123
+ cid | name  |       tel        |  passwd   |        cnum         | climit 
+-----+-------+------------------+-----------+---------------------+--------
+ 101 | alice | +81-12-3456-7890 | passwd123 | 1111-2222-3333-4444 |   4000
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT * FROM my_credit_card_normal WHERE f_leak(cnum);
+                       QUERY PLAN                        
+---------------------------------------------------------
+ Hash Join
+   Hash Cond: (r.cid = l.cid)
+   ->  Seq Scan on credit_card r
+         Filter: f_leak(cnum)
+   ->  Hash
+         ->  Seq Scan on customer l
+               Filter: (name = ("current_user"())::text)
+(7 rows)
+
+SELECT * FROM my_credit_card_secure WHERE f_leak(cnum);
+NOTICE:  f_leak => 1111-2222-3333-4444
+ cid | name  |       tel        |  passwd   |        cnum         | climit 
+-----+-------+------------------+-----------+---------------------+--------
+ 101 | alice | +81-12-3456-7890 | passwd123 | 1111-2222-3333-4444 |   4000
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT * FROM my_credit_card_secure WHERE f_leak(cnum);
+                          QUERY PLAN                           
+---------------------------------------------------------------
+ Subquery Scan on my_credit_card_secure
+   Filter: f_leak(my_credit_card_secure.cnum)
+   ->  Hash Join
+         Hash Cond: (r.cid = l.cid)
+         ->  Seq Scan on credit_card r
+         ->  Hash
+               ->  Seq Scan on customer l
+                     Filter: (name = ("current_user"())::text)
+(8 rows)
+
+--
+-- scenario: an external qualifier can be pushed-down by in-front-of the
+--           views with "security_barrier" attribute
+--
+SELECT * FROM my_credit_card_usage_normal
+       WHERE f_leak(cnum) AND ymd >= '2011-10-01' AND ymd < '2011-11-01';
+NOTICE:  f_leak => 1111-2222-3333-4444
+ cid | name  |       tel        |  passwd   |        cnum         | climit |    ymd     | usage 
+-----+-------+------------------+-----------+---------------------+--------+------------+-------
+ 101 | alice | +81-12-3456-7890 | passwd123 | 1111-2222-3333-4444 |   4000 | 10-05-2011 |    90
+ 101 | alice | +81-12-3456-7890 | passwd123 | 1111-2222-3333-4444 |   4000 | 10-18-2011 |   110
+ 101 | alice | +81-12-3456-7890 | passwd123 | 1111-2222-3333-4444 |   4000 | 10-21-2011 |   200
+(3 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM my_credit_card_usage_normal
+       WHERE f_leak(cnum) AND ymd >= '2011-10-01' AND ymd < '2011-11-01';
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Nested Loop
+   Join Filter: (l.cid = r.cid)
+   ->  Seq Scan on credit_usage r
+         Filter: ((ymd >= '10-01-2011'::date) AND (ymd < '11-01-2011'::date))
+   ->  Materialize
+         ->  Subquery Scan on l
+               Filter: f_leak(l.cnum)
+               ->  Hash Join
+                     Hash Cond: (r.cid = l.cid)
+                     ->  Seq Scan on credit_card r
+                     ->  Hash
+                           ->  Seq Scan on customer l
+                                 Filter: (name = ("current_user"())::text)
+(13 rows)
+
+SELECT * FROM my_credit_card_usage_secure
+       WHERE f_leak(cnum) AND ymd >= '2011-10-01' AND ymd < '2011-11-01';
+NOTICE:  f_leak => 1111-2222-3333-4444
+NOTICE:  f_leak => 1111-2222-3333-4444
+NOTICE:  f_leak => 1111-2222-3333-4444
+NOTICE:  f_leak => 1111-2222-3333-4444
+NOTICE:  f_leak => 1111-2222-3333-4444
+ cid | name  |       tel        |  passwd   |        cnum         | climit |    ymd     | usage 
+-----+-------+------------------+-----------+---------------------+--------+------------+-------
+ 101 | alice | +81-12-3456-7890 | passwd123 | 1111-2222-3333-4444 |   4000 | 10-05-2011 |    90
+ 101 | alice | +81-12-3456-7890 | passwd123 | 1111-2222-3333-4444 |   4000 | 10-18-2011 |   110
+ 101 | alice | +81-12-3456-7890 | passwd123 | 1111-2222-3333-4444 |   4000 | 10-21-2011 |   200
+(3 rows)
+
+EXPLAIN (COSTS OFF) SELECT * FROM my_credit_card_usage_secure
+       WHERE f_leak(cnum) AND ymd >= '2011-10-01' AND ymd < '2011-11-01';
+                                                                                 QUERY PLAN                                                                                  
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Subquery Scan on my_credit_card_usage_secure
+   Filter: (f_leak(my_credit_card_usage_secure.cnum) AND (my_credit_card_usage_secure.ymd >= '10-01-2011'::date) AND (my_credit_card_usage_secure.ymd < '11-01-2011'::date))
+   ->  Hash Join
+         Hash Cond: (r.cid = l.cid)
+         ->  Seq Scan on credit_usage r
+         ->  Hash
+               ->  Hash Join
+                     Hash Cond: (r.cid = l.cid)
+                     ->  Seq Scan on credit_card r
+                     ->  Hash
+                           ->  Seq Scan on customer l
+                                 Filter: (name = ("current_user"())::text)
+(12 rows)
+
+--
+-- Test for the case when security_barrier gets changed between rewriter
+-- and planner stage.
+--
+PREPARE p1 AS SELECT * FROM my_property_normal WHERE f_leak(passwd);
+PREPARE p2 AS SELECT * FROM my_property_secure WHERE f_leak(passwd);
+EXECUTE p1;
+NOTICE:  f_leak => passwd123
+NOTICE:  f_leak => beafsteak
+NOTICE:  f_leak => hamburger
+ cid | name  |       tel        |  passwd   
+-----+-------+------------------+-----------
+ 101 | alice | +81-12-3456-7890 | passwd123
+(1 row)
+
+EXECUTE p2;
+NOTICE:  f_leak => passwd123
+ cid | name  |       tel        |  passwd   
+-----+-------+------------------+-----------
+ 101 | alice | +81-12-3456-7890 | passwd123
+(1 row)
+
+RESET SESSION AUTHORIZATION;
+ALTER VIEW my_property_normal SET (security_barrier=true);
+ALTER VIEW my_property_secure SET (security_barrier=false);
+SET SESSION AUTHORIZATION alice;
+EXECUTE p1;		-- To be perform as a view with security-barrier
+NOTICE:  f_leak => passwd123
+ cid | name  |       tel        |  passwd   
+-----+-------+------------------+-----------
+ 101 | alice | +81-12-3456-7890 | passwd123
+(1 row)
+
+EXECUTE p2;		-- To be perform as a view without security-barrier
+NOTICE:  f_leak => passwd123
+NOTICE:  f_leak => beafsteak
+NOTICE:  f_leak => hamburger
+ cid | name  |       tel        |  passwd   
+-----+-------+------------------+-----------
+ 101 | alice | +81-12-3456-7890 | passwd123
+(1 row)
+
