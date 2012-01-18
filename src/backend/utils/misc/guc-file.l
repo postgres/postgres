@@ -20,9 +20,14 @@
 #include "utils/guc.h"
 
 
-/* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
+/*
+ * flex emits a yy_fatal_error() function that it calls in response to
+ * critical errors like malloc failure, file I/O errors, and detection of
+ * internal inconsistency.  That function prints a message and calls exit().
+ * Mutate it to instead call our handler, which jumps out of the parser.
+ */
 #undef fprintf
-#define fprintf(file, fmt, msg)  ereport(ERROR, (errmsg_internal("%s", msg)))
+#define fprintf(file, fmt, msg) GUC_flex_fatal(msg)
 
 enum {
 	GUC_ID = 1,
@@ -37,10 +42,13 @@ enum {
 };
 
 static unsigned int ConfigFileLineno;
+static const char *GUC_flex_fatal_errmsg;
+static sigjmp_buf *GUC_flex_fatal_jmp;
 
 /* flex fails to supply a prototype for yylex, so provide one */
 int GUC_yylex(void);
 
+static int GUC_flex_fatal(const char *msg);
 static char *GUC_scanstr(const char *s);
 
 %}
@@ -437,6 +445,22 @@ ParseConfigFile(const char *config_file, const char *calling_file, bool strict,
 }
 
 /*
+ * Flex fatal errors bring us here.  Stash the error message and jump back to
+ * ParseConfigFp().  Assume all msg arguments point to string constants; this
+ * holds for flex 2.5.31 (earliest we support) and flex 2.5.35 (latest as of
+ * this writing).  Otherwise, we would need to copy the message.
+ *
+ * We return "int" since this takes the place of calls to fprintf().
+*/
+static int
+GUC_flex_fatal(const char *msg)
+{
+	GUC_flex_fatal_errmsg = msg;
+	siglongjmp(*GUC_flex_fatal_jmp, 1);
+	return 0;	/* keep compiler quiet */
+}
+
+/*
  * Read and parse a single configuration file.  This function recurses
  * to handle "include" directives.
  *
@@ -464,18 +488,37 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 			  ConfigVariable **head_p, ConfigVariable **tail_p)
 {
 	bool		OK = true;
-	YY_BUFFER_STATE lex_buffer;
+	unsigned int save_ConfigFileLineno = ConfigFileLineno;
+	sigjmp_buf *save_GUC_flex_fatal_jmp = GUC_flex_fatal_jmp;
+	sigjmp_buf	flex_fatal_jmp;
+	volatile YY_BUFFER_STATE lex_buffer = NULL;
 	int			errorcount;
 	int			token;
+
+	if (sigsetjmp(flex_fatal_jmp, 1) == 0)
+		GUC_flex_fatal_jmp = &flex_fatal_jmp;
+	else
+	{
+		/*
+		 * Regain control after a fatal, internal flex error.  It may have
+		 * corrupted parser state.  Consequently, abandon the file, but trust
+		 * that the state remains sane enough for yy_delete_buffer().
+		 */
+		elog(elevel, "%s at file \"%s\" line %u",
+			 GUC_flex_fatal_errmsg, config_file, ConfigFileLineno);
+
+		OK = false;
+		goto cleanup;
+	}
 
 	/*
 	 * Parse
 	 */
-	lex_buffer = yy_create_buffer(fp, YY_BUF_SIZE);
-	yy_switch_to_buffer(lex_buffer);
-
 	ConfigFileLineno = 1;
 	errorcount = 0;
+
+	lex_buffer = yy_create_buffer(fp, YY_BUF_SIZE);
+	yy_switch_to_buffer(lex_buffer);
 
 	/* This loop iterates once per logical line */
 	while ((token = yylex()))
@@ -526,14 +569,11 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 			 * An include_if_exists directive isn't a variable and should be
 			 * processed immediately.
 			 */
-			unsigned int save_ConfigFileLineno = ConfigFileLineno;
-
 			if (!ParseConfigFile(opt_value, config_file, false,
 								 depth + 1, elevel,
 								 head_p, tail_p))
 				OK = false;
 			yy_switch_to_buffer(lex_buffer);
-			ConfigFileLineno = save_ConfigFileLineno;
 			pfree(opt_name);
 			pfree(opt_value);
 		}
@@ -543,14 +583,11 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 			 * An include directive isn't a variable and should be processed
 			 * immediately.
 			 */
-			unsigned int save_ConfigFileLineno = ConfigFileLineno;
-
 			if (!ParseConfigFile(opt_value, config_file, true,
 								 depth + 1, elevel,
 								 head_p, tail_p))
 				OK = false;
 			yy_switch_to_buffer(lex_buffer);
-			ConfigFileLineno = save_ConfigFileLineno;
 			pfree(opt_name);
 			pfree(opt_value);
 		}
@@ -620,7 +657,11 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 			break;
 	}
 
+cleanup:
 	yy_delete_buffer(lex_buffer);
+	/* Each recursion level must save and restore these static variables. */
+	ConfigFileLineno = save_ConfigFileLineno;
+	GUC_flex_fatal_jmp = save_GUC_flex_fatal_jmp;
 	return OK;
 }
 
