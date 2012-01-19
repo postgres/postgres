@@ -2410,12 +2410,14 @@ pgstat_bestart(void)
 	beentry->st_procpid = MyProcPid;
 	beentry->st_proc_start_timestamp = proc_start_timestamp;
 	beentry->st_activity_start_timestamp = 0;
+	beentry->st_state_start_timestamp = 0;
 	beentry->st_xact_start_timestamp = 0;
 	beentry->st_databaseid = MyDatabaseId;
 	beentry->st_userid = userid;
 	beentry->st_clientaddr = clientaddr;
 	beentry->st_clienthostname[0] = '\0';
 	beentry->st_waiting = false;
+	beentry->st_state = STATE_UNDEFINED;
 	beentry->st_appname[0] = '\0';
 	beentry->st_activity[0] = '\0';
 	/* Also make sure the last byte in each string area is always 0 */
@@ -2476,39 +2478,70 @@ pgstat_beshutdown_hook(int code, Datum arg)
  *
  *	Called from tcop/postgres.c to report what the backend is actually doing
  *	(usually "<IDLE>" or the start of the query to be executed).
+ *
+ * All updates of the status entry follow the protocol of bumping
+ * st_changecount before and after.  We use a volatile pointer here to
+ * ensure the compiler doesn't try to get cute.
  * ----------
  */
 void
-pgstat_report_activity(const char *cmd_str)
+pgstat_report_activity(BackendState state, const char *cmd_str)
 {
 	volatile PgBackendStatus *beentry = MyBEEntry;
 	TimestampTz start_timestamp;
+	TimestampTz current_timestamp;
 	int			len;
 
 	TRACE_POSTGRESQL_STATEMENT_STATUS(cmd_str);
 
-	if (!pgstat_track_activities || !beentry)
+	if (!beentry)
 		return;
 
 	/*
 	 * To minimize the time spent modifying the entry, fetch all the needed
 	 * data first.
 	 */
-	start_timestamp = GetCurrentStatementStartTimestamp();
+	current_timestamp = GetCurrentTimestamp();
 
-	len = strlen(cmd_str);
-	len = pg_mbcliplen(cmd_str, len, pgstat_track_activity_query_size - 1);
+	if (!pgstat_track_activities && beentry->st_state != STATE_DISABLED)
+	{
+		/*
+		 * Track activities is disabled, but we have a non-disabled state set.
+		 * That means the status changed - so as our last update, tell the
+		 * collector that we disabled it and will no longer update.
+		 */
+		beentry->st_changecount++;
+		beentry->st_state = STATE_DISABLED;
+		beentry->st_state_start_timestamp = current_timestamp;
+		beentry->st_changecount++;
+		Assert((beentry->st_changecount & 1) == 0);
+		return;
+	}
 
 	/*
-	 * Update my status entry, following the protocol of bumping
-	 * st_changecount before and after.  We use a volatile pointer here to
-	 * ensure the compiler doesn't try to get cute.
+	 * Fetch more data before we start modifying the entry
+	 */
+	start_timestamp = GetCurrentStatementStartTimestamp();
+	if (cmd_str != NULL)
+	{
+		len = strlen(cmd_str);
+		len = pg_mbcliplen(cmd_str, len, pgstat_track_activity_query_size - 1);
+	}
+
+	/*
+	 * Now update the status entry
 	 */
 	beentry->st_changecount++;
 
-	beentry->st_activity_start_timestamp = start_timestamp;
-	memcpy((char *) beentry->st_activity, cmd_str, len);
-	beentry->st_activity[len] = '\0';
+	beentry->st_state = state;
+	beentry->st_state_start_timestamp = current_timestamp;
+
+	if (cmd_str != NULL)
+	{
+		memcpy((char *) beentry->st_activity, cmd_str, len);
+		beentry->st_activity[len] = '\0';
+		beentry->st_activity_start_timestamp = start_timestamp;
+	}
 
 	beentry->st_changecount++;
 	Assert((beentry->st_changecount & 1) == 0);

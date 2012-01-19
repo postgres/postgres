@@ -2781,7 +2781,7 @@ autovac_report_activity(autovac_table *tab)
 	/* Set statement_timestamp() to current time for pg_stat_activity */
 	SetCurrentStatementStartTimestamp();
 
-	pgstat_report_activity(activity);
+	pgstat_report_activity(STATE_RUNNING, activity);
 }
 
 /*

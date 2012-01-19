@@ -809,7 +809,7 @@ exec_simple_query(const char *query_string)
 	 */
 	debug_query_string = query_string;
 
-	pgstat_report_activity(query_string);
+	pgstat_report_activity(STATE_RUNNING, query_string);
 
 	TRACE_POSTGRESQL_QUERY_START(query_string);
 
@@ -1134,7 +1134,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 	 */
 	debug_query_string = query_string;
 
-	pgstat_report_activity(query_string);
+	pgstat_report_activity(STATE_RUNNING, query_string);
 
 	set_ps_display("PARSE", false);
 
@@ -1429,7 +1429,7 @@ exec_bind_message(StringInfo input_message)
 	 */
 	debug_query_string = psrc->query_string;
 
-	pgstat_report_activity(psrc->query_string);
+	pgstat_report_activity(STATE_RUNNING, psrc->query_string);
 
 	set_ps_display("BIND", false);
 
@@ -1836,7 +1836,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 	 */
 	debug_query_string = sourceText;
 
-	pgstat_report_activity(sourceText);
+	pgstat_report_activity(STATE_RUNNING, sourceText);
 
 	set_ps_display(portal->commandTag, false);
 
@@ -3811,12 +3811,12 @@ PostgresMain(int argc, char *argv[], const char *username)
 			if (IsAbortedTransactionBlockState())
 			{
 				set_ps_display("idle in transaction (aborted)", false);
-				pgstat_report_activity("<IDLE> in transaction (aborted)");
+				pgstat_report_activity(STATE_IDLEINTRANSACTION_ABORTED, NULL);
 			}
 			else if (IsTransactionOrTransactionBlock())
 			{
 				set_ps_display("idle in transaction", false);
-				pgstat_report_activity("<IDLE> in transaction");
+				pgstat_report_activity(STATE_IDLEINTRANSACTION, NULL);
 			}
 			else
 			{
@@ -3824,7 +3824,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 				pgstat_report_stat(false);
 
 				set_ps_display("idle", false);
-				pgstat_report_activity("<IDLE>");
+				pgstat_report_activity(STATE_IDLE, NULL);
 			}
 
 			ReadyForQuery(whereToSendOutput);
@@ -3944,7 +3944,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 				SetCurrentStatementStartTimestamp();
 
 				/* Report query to various monitoring facilities. */
-				pgstat_report_activity("<FASTPATH> function call");
+				pgstat_report_activity(STATE_FASTPATH, NULL);
 				set_ps_display("<FASTPATH>", false);
 
 				/* start an xact for this function invocation */

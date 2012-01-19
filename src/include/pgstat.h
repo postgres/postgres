@@ -589,9 +589,24 @@ typedef struct PgStat_GlobalStats
 
 
 /* ----------
+ * Backend states
+ * ----------
+ */
+typedef enum BackendState {
+	STATE_UNDEFINED,
+	STATE_IDLE,
+	STATE_RUNNING,
+	STATE_IDLEINTRANSACTION,
+	STATE_FASTPATH,
+	STATE_IDLEINTRANSACTION_ABORTED,
+	STATE_DISABLED,
+} BackendState;
+
+/* ----------
  * Shared-memory data structures
  * ----------
  */
+
 
 /* ----------
  * PgBackendStatus
@@ -622,6 +637,7 @@ typedef struct PgBackendStatus
 	TimestampTz st_proc_start_timestamp;
 	TimestampTz st_xact_start_timestamp;
 	TimestampTz st_activity_start_timestamp;
+    TimestampTz st_state_start_timestamp;
 
 	/* Database OID, owning user's OID, connection client address */
 	Oid			st_databaseid;
@@ -631,6 +647,9 @@ typedef struct PgBackendStatus
 
 	/* Is backend currently waiting on an lmgr lock? */
 	bool		st_waiting;
+
+    /* current state */
+    BackendState	st_state;
 
 	/* application name; MUST be null-terminated */
 	char	   *st_appname;
@@ -715,7 +734,7 @@ extern void pgstat_report_recovery_conflict(int reason);
 extern void pgstat_initialize(void);
 extern void pgstat_bestart(void);
 
-extern void pgstat_report_activity(const char *cmd_str);
+extern void pgstat_report_activity(BackendState state, const char *cmd_str);
 extern void pgstat_report_appname(const char *appname);
 extern void pgstat_report_xact_timestamp(TimestampTz tstamp);
 extern void pgstat_report_waiting(bool waiting);

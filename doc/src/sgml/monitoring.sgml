@@ -242,20 +242,20 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
 
     <tbody>
      <row>
-      <entry><structname>pg_stat_activity</><indexterm><primary>pg_stat_activity</primary></indexterm></entry>
-      <entry>One row per server process, showing database OID, database
-      name, process <acronym>ID</>, user OID, user name, application name,
-      client's address, host name (if available), and port number, times at
-      which the server process, current transaction, and current query began
-      execution, process's waiting status, and text of the current query.
-      The columns that report data on the current query are available unless
-      the parameter <varname>track_activities</varname> has been turned off.
-      Furthermore, these columns are only visible if the user examining
-      the view is a superuser or the same as the user owning the process
-      being reported on.  The client's host name will be available only if
-      <xref linkend="guc-log-hostname"> is set or if the user's host name
-      needed to be looked up during <filename>pg_hba.conf</filename>
-      processing.
+      <entry>
+       <structname>pg_stat_activity</structname>
+       <indexterm><primary>pg_stat_activity</primary></indexterm>
+      </entry>
+      <entry>
+       <para>One row per server process, showing information related to
+        each connection to the server. Unless the
+        <xref linkend="guc-track-activities"> parameter has been turned
+         off, it is possible to monitor state and query information of
+         all running processes.
+       </para>
+       <para>
+        See <xref linkend="pg-stat-activity-view"> for more details.
+       </para>
      </entry>
      </row>
 
@@ -528,6 +528,210 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    in combination with operating system utilities that allow insight
    into the kernel's handling of I/O.
   </para>
+
+  <table id="pg-stat-activity-view" xreflabel="pg_stat_activity">
+   <title>pg_stat_activity view</title>
+
+   <tgroup cols="3">
+    <thead>
+    <row>
+      <entry>Column</entry>
+      <entry>Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+   <tbody>
+    <row>
+     <entry>datid</entry>
+     <entry><type>oid</></entry>
+     <entry>The oid of the database the backend is connected to.</entry>
+    </row>
+    <row>
+     <entry>datname</entry>
+     <entry><type>name</></entry>
+     <entry>The name of the database the backend is connected to.</entry>
+    </row>
+    <row>
+     <entry>pid</entry>
+     <entry><type>integer</></entry>
+     <entry>The process ID of the backend.</entry>
+    </row>
+    <row>
+     <entry>usesysid</entry>
+     <entry><type>oid</></entry>
+     <entry>The id of the user logged into the backend.</entry>
+    </row>
+    <row>
+     <entry>usename</entry>
+     <entry><type>name</></entry>
+     <entry>The name of the user logged into the backend.</entry>
+    </row>
+    <row>
+     <entry>application_name</entry>
+     <entry><type>text</></entry>
+     <entry>The name of the application that has initiated the connection
+      to the backend.</entry>
+    </row>
+    <row>
+     <entry>client_addr</entry>
+     <entry><type>inet</></entry>
+     <entry>The remote IP of the client connected to the backend.
+     If this field is not set, it indicates that the client is either:
+      <itemizedlist spacing="compact" mark="bullet">
+       <listitem>
+        <para>
+         Connected via unix sockets on the server machine
+        </para>
+       </listitem>
+       <listitem>
+        <para>An internal process such as autovacuum</para>
+       </listitem>
+     </itemizedlist>
+     </entry>
+    </row>
+    <row>
+     <entry>client_hostname</entry>
+     <entry><type>text</></entry>
+     <entry>
+      If available, the hostname of the client as reported by a
+      reverse lookup of <structfield>client_addr</>. This field will
+      only be set when <xref linkend="guc-log-hostname"> is enabled.
+     </entry>
+    </row>
+    <row>
+     <entry>client_port</entry>
+     <entry><type>integer</></entry>
+     <entry>
+      The remote TCP port that the client is using for communication
+      to the backend, or <symbol>NULL</> if a unix socket is used.
+     </entry>
+    </row>
+    <row>
+     <entry>backend_start</entry>
+     <entry><type>timestamp with time zone</></entry>
+     <entry>
+      The time when this process was started,  i.e. when the
+      client connected to the server.
+     </entry>
+    </row>
+    <row>
+     <entry>xact_start</entry>
+     <entry><type>timestamp with time zone</></entry>
+     <entry>
+      The time when the current transaction was started. If the client is
+      using autocommit for transactions, this value is equal to the
+      query_start column.
+     </entry>
+    </row>
+    <row>
+     <entry>query_start</entry>
+     <entry><type>timestamp with time zone</></entry>
+     <entry>
+      The time when the currently active query started, or if
+      <structfield>state</> is <literal>idle</>, when the last query
+      was started.
+     </entry>
+    </row>
+    <row>
+     <entry>state_change</entry>
+     <entry><type>timestamp with time zone</></entry>
+     <entry>The time when the <structfield>state</> was last changed.</entry>
+    </row>
+    <row>
+     <entry>waiting</entry>
+     <entry><type>boolean</></entry>
+     <entry>
+      Boolean indicating if a backend is currently waiting on a lock.
+     </entry>
+    </row>
+    <row>
+     <entry>state</entry>
+     <entry><type>text</></entry>
+     <entry>
+       The <structfield>state</> of the currently running query.
+       Can be one of:
+       <variablelist>
+         <varlistentry>
+           <term>active</term>
+           <listitem>
+             <para>
+              The backend is executing a query.
+             </para>
+           </listitem>
+           </varlistentry>
+           <varlistentry>
+             <term>idle</term>
+           <listitem>
+             <para>
+               There is no query executing in the backend.
+             </para>
+           </listitem>
+         </varlistentry>
+         <varlistentry>
+           <term>idle in transaction</term>
+           <listitem>
+             <para>
+               The backend is in a transaction, but is currently not currently
+               executing a query.
+             </para>
+           </listitem>
+         </varlistentry>
+         <varlistentry>
+           <term>idle in transaction (aborted)</term>
+           <listitem>
+             <para>
+               This state is similar to <literal>idle in transaction</>,
+               except one of the statements in the transaction caused an error.
+             </para>
+           </listitem>
+         </varlistentry>
+         <varlistentry>
+           <term>fastpath function call</term>
+           <listitem>
+             <para>
+               The backend is executing a fast-path function.
+             </para>
+           </listitem>
+         </varlistentry>
+         <varlistentry>
+           <term>disabled</term>
+           <listitem>
+             <para>
+               This state indicates that <xref linkend="guc-track-activities">
+               is disabled.
+             </para>
+           </listitem>
+         </varlistentry>
+       </variablelist>
+      <note>
+       <para>
+        The <structfield>waiting</> and <structfield>state</> columns are
+        independent.  If a query is in the <literal>active</> state,
+        it may or may not be <literal>waiting</>.  If a query is
+        <literal>active</> and <structfield>waiting</> is true, it means
+        that the query is being executed, but is being blocked by a lock
+        somewhere in the system.
+       </para>
+      </note>
+     </entry>
+    </row>
+    <row>
+     <entry>query</entry>
+     <entry><type>text</></entry>
+     <entry>
+      The most recent query that the backend has executed. If
+      <structfield>state</> is <literal>active</> this means the currently
+      executing query. In all other states, it means the last query that was
+      executed.
+     </entry>
+    </row>
+   </tbody>
+   </tgroup>
+  </table>
+
+ <sect3 id="monitoring-stats-functions">
+  <title>Statistics Access Functions</title>
 
   <para>
    Other ways of looking at the statistics can be set up by writing
@@ -1264,6 +1468,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS procpid,
 </programlisting>
   </para>
 
+ </sect3>
  </sect2>
  </sect1>
 

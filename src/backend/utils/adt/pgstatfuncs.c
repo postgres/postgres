@@ -507,31 +507,34 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		tupdesc = CreateTemplateTupleDesc(12, false);
+		tupdesc = CreateTemplateTupleDesc(14, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "datid",
 						   OIDOID, -1, 0);
-		/* This should have been called 'pid';  can't change it. 2011-06-11 */
-		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "procpid",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "pid",
 						   INT4OID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "usesysid",
 						   OIDOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "application_name",
 						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "current_query",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "state",
 						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 6, "waiting",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 6, "query",
+						   TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 7, "waiting",
 						   BOOLOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 7, "act_start",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 8, "act_start",
 						   TIMESTAMPTZOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 8, "query_start",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 9, "query_start",
 						   TIMESTAMPTZOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 9, "backend_start",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 10, "backend_start",
 						   TIMESTAMPTZOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 10, "client_addr",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 11, "state_change",
+						   TIMESTAMPTZOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 12, "client_addr",
 						   INETOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 11, "client_hostname",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 13, "client_hostname",
 						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 12, "client_port",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 14, "client_port",
 						   INT4OID, -1, 0);
 
 		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
@@ -584,8 +587,8 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 	if (funcctx->call_cntr < funcctx->max_calls)
 	{
 		/* for each row */
-		Datum		values[12];
-		bool		nulls[12];
+		Datum		values[14];
+		bool		nulls[14];
 		HeapTuple	tuple;
 		PgBackendStatus *beentry;
 		SockAddr	zero_clientaddr;
@@ -610,8 +613,8 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			for (i = 0; i < sizeof(nulls) / sizeof(nulls[0]); i++)
 				nulls[i] = true;
 
-			nulls[4] = false;
-			values[4] = CStringGetTextDatum("<backend information not available>");
+			nulls[5] = false;
+			values[5] = CStringGetTextDatum("<backend information not available>");
 
 			tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
 			SRF_RETURN_NEXT(funcctx, HeapTupleGetDatum(tuple));
@@ -629,40 +632,69 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 		/* Values only available to same user or superuser */
 		if (superuser() || beentry->st_userid == GetUserId())
 		{
-			if (*(beentry->st_activity) == '\0')
+			switch (beentry->st_state)
 			{
-				values[4] = CStringGetTextDatum("<command string not enabled>");
+				case STATE_IDLE:
+					values[4] = CStringGetTextDatum("idle");
+					break;
+				case STATE_RUNNING:
+					values[4] = CStringGetTextDatum("active");
+					break;
+				case STATE_IDLEINTRANSACTION:
+					values[4] = CStringGetTextDatum("idle in transaction");
+					break;
+				case STATE_FASTPATH:
+					values[4] = CStringGetTextDatum("fastpath function call");
+					break;
+				case STATE_IDLEINTRANSACTION_ABORTED:
+					values[4] = CStringGetTextDatum("idle in transaction (aborted)");
+					break;
+				case STATE_DISABLED:
+					values[4] = CStringGetTextDatum("disabled");
+					break;
+				case STATE_UNDEFINED:
+					nulls[4] = true;
+					break;
+			}
+			if (beentry->st_state == STATE_UNDEFINED ||
+				beentry->st_state == STATE_DISABLED)
+			{
+				values[5] = CStringGetTextDatum("");
 			}
 			else
 			{
-				values[4] = CStringGetTextDatum(beentry->st_activity);
+				values[5] = CStringGetTextDatum(beentry->st_activity);
 			}
-
-			values[5] = BoolGetDatum(beentry->st_waiting);
+			values[6] = BoolGetDatum(beentry->st_waiting);
 
 			if (beentry->st_xact_start_timestamp != 0)
-				values[6] = TimestampTzGetDatum(beentry->st_xact_start_timestamp);
-			else
-				nulls[6] = true;
-
-			if (beentry->st_activity_start_timestamp != 0)
-				values[7] = TimestampTzGetDatum(beentry->st_activity_start_timestamp);
+				values[7] = TimestampTzGetDatum(beentry->st_xact_start_timestamp);
 			else
 				nulls[7] = true;
 
-			if (beentry->st_proc_start_timestamp != 0)
-				values[8] = TimestampTzGetDatum(beentry->st_proc_start_timestamp);
+			if (beentry->st_activity_start_timestamp != 0)
+				values[8] = TimestampTzGetDatum(beentry->st_activity_start_timestamp);
 			else
 				nulls[8] = true;
+
+			if (beentry->st_proc_start_timestamp != 0)
+				values[9] = TimestampTzGetDatum(beentry->st_proc_start_timestamp);
+			else
+				nulls[9] = true;
+
+			if (beentry->st_state_start_timestamp != 0)
+				values[10] = TimestampTzGetDatum(beentry->st_state_start_timestamp);
+			else
+				nulls[10] = true;
 
 			/* A zeroed client addr means we don't know */
 			memset(&zero_clientaddr, 0, sizeof(zero_clientaddr));
 			if (memcmp(&(beentry->st_clientaddr), &zero_clientaddr,
 					   sizeof(zero_clientaddr) == 0))
 			{
-				nulls[9] = true;
-				nulls[10] = true;
 				nulls[11] = true;
+				nulls[12] = true;
+				nulls[13] = true;
 			}
 			else
 			{
@@ -686,19 +718,19 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 					if (ret == 0)
 					{
 						clean_ipv6_addr(beentry->st_clientaddr.addr.ss_family, remote_host);
-						values[9] = DirectFunctionCall1(inet_in,
+						values[11] = DirectFunctionCall1(inet_in,
 											   CStringGetDatum(remote_host));
 						if (beentry->st_clienthostname)
-							values[10] = CStringGetTextDatum(beentry->st_clienthostname);
+							values[12] = CStringGetTextDatum(beentry->st_clienthostname);
 						else
-							nulls[10] = true;
-						values[11] = Int32GetDatum(atoi(remote_port));
+							nulls[12] = true;
+						values[13] = Int32GetDatum(atoi(remote_port));
 					}
 					else
 					{
-						nulls[9] = true;
-						nulls[10] = true;
 						nulls[11] = true;
+						nulls[12] = true;
+						nulls[13] = true;
 					}
 				}
 				else if (beentry->st_clientaddr.addr.ss_family == AF_UNIX)
@@ -709,30 +741,32 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 					 * connections we have no permissions to view, or with
 					 * errors.
 					 */
-					nulls[9] = true;
-					nulls[10] = true;
-					values[11] = DatumGetInt32(-1);
+					nulls[11] = true;
+					nulls[12] = true;
+					values[13] = DatumGetInt32(-1);
 				}
 				else
 				{
 					/* Unknown address type, should never happen */
-					nulls[9] = true;
-					nulls[10] = true;
 					nulls[11] = true;
+					nulls[12] = true;
+					nulls[13] = true;
 				}
 			}
 		}
 		else
 		{
 			/* No permissions to view data about this session */
-			values[4] = CStringGetTextDatum("<insufficient privilege>");
-			nulls[5] = true;
+			values[5] = CStringGetTextDatum("<insufficient privilege>");
+			nulls[4] = true;
 			nulls[6] = true;
 			nulls[7] = true;
 			nulls[8] = true;
 			nulls[9] = true;
 			nulls[10] = true;
 			nulls[11] = true;
+			nulls[12] = true;
+			nulls[13] = true;
 		}
 
 		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
