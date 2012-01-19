@@ -120,12 +120,6 @@ calculate_database_size(Oid dbOid)
 
 	FreeDir(dirdesc);
 
-	/* Complain if we found no trace of the DB at all */
-	if (!totalsize)
-		ereport(ERROR,
-				(ERRCODE_UNDEFINED_DATABASE,
-				 errmsg("database with OID %u does not exist", dbOid)));
-
 	return totalsize;
 }
 
@@ -133,8 +127,14 @@ Datum
 pg_database_size_oid(PG_FUNCTION_ARGS)
 {
 	Oid			dbOid = PG_GETARG_OID(0);
+	int64		size;
 
-	PG_RETURN_INT64(calculate_database_size(dbOid));
+	size = calculate_database_size(dbOid);
+
+	if (size == 0)
+		PG_RETURN_NULL();
+
+	PG_RETURN_INT64(size);
 }
 
 Datum
@@ -142,13 +142,20 @@ pg_database_size_name(PG_FUNCTION_ARGS)
 {
 	Name		dbName = PG_GETARG_NAME(0);
 	Oid			dbOid = get_database_oid(NameStr(*dbName), false);
+	int64		size;
 
-	PG_RETURN_INT64(calculate_database_size(dbOid));
+	size = calculate_database_size(dbOid);
+
+	if (size == 0)
+		PG_RETURN_NULL();
+
+	PG_RETURN_INT64(size);
 }
 
 
 /*
- * calculate total size of tablespace
+ * Calculate total size of tablespace. Returns -1 if the tablespace directory
+ * cannot be found.
  */
 static int64
 calculate_tablespace_size(Oid tblspcOid)
@@ -184,10 +191,7 @@ calculate_tablespace_size(Oid tblspcOid)
 	dirdesc = AllocateDir(tblspcPath);
 
 	if (!dirdesc)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not open tablespace directory \"%s\": %m",
-						tblspcPath)));
+		return -1;
 
 	while ((direntry = ReadDir(dirdesc, tblspcPath)) != NULL)
 	{
@@ -226,8 +230,14 @@ Datum
 pg_tablespace_size_oid(PG_FUNCTION_ARGS)
 {
 	Oid			tblspcOid = PG_GETARG_OID(0);
+	int64		size;
 
-	PG_RETURN_INT64(calculate_tablespace_size(tblspcOid));
+	size = calculate_tablespace_size(tblspcOid);
+
+	if (size < 0)
+		PG_RETURN_NULL();
+
+	PG_RETURN_INT64(size);
 }
 
 Datum
@@ -235,8 +245,14 @@ pg_tablespace_size_name(PG_FUNCTION_ARGS)
 {
 	Name		tblspcName = PG_GETARG_NAME(0);
 	Oid			tblspcOid = get_tablespace_oid(NameStr(*tblspcName), false);
+	int64		size;
 
-	PG_RETURN_INT64(calculate_tablespace_size(tblspcOid));
+	size = calculate_tablespace_size(tblspcOid);
+
+	if (size < 0)
+		PG_RETURN_NULL();
+
+	PG_RETURN_INT64(size);
 }
 
 
@@ -289,7 +305,17 @@ pg_relation_size(PG_FUNCTION_ARGS)
 	Relation	rel;
 	int64		size;
 
-	rel = relation_open(relOid, AccessShareLock);
+	rel = try_relation_open(relOid, AccessShareLock);
+
+	/*
+	 * Before 9.2, we used to throw an error if the relation didn't exist, but
+	 * that makes queries like "SELECT pg_relation_size(oid) FROM pg_class"
+	 * less robust, because while we scan pg_class with an MVCC snapshot,
+	 * someone else might drop the table. It's better to return NULL for
+	 * alread-dropped tables than throw an error and abort the whole query.
+	 */
+	if (rel == NULL)
+		PG_RETURN_NULL();
 
 	size = calculate_relation_size(&(rel->rd_node), rel->rd_backend,
 							  forkname_to_number(text_to_cstring(forkName)));
@@ -339,13 +365,10 @@ calculate_toast_table_size(Oid toastrelid)
  * those won't have attached toast tables, but they can have multiple forks.
  */
 static int64
-calculate_table_size(Oid relOid)
+calculate_table_size(Relation rel)
 {
 	int64		size = 0;
-	Relation	rel;
 	ForkNumber	forkNum;
-
-	rel = relation_open(relOid, AccessShareLock);
 
 	/*
 	 * heap size, including FSM and VM
@@ -360,8 +383,6 @@ calculate_table_size(Oid relOid)
 	if (OidIsValid(rel->rd_rel->reltoastrelid))
 		size += calculate_toast_table_size(rel->rd_rel->reltoastrelid);
 
-	relation_close(rel, AccessShareLock);
-
 	return size;
 }
 
@@ -371,12 +392,9 @@ calculate_table_size(Oid relOid)
  * Can be applied safely to an index, but you'll just get zero.
  */
 static int64
-calculate_indexes_size(Oid relOid)
+calculate_indexes_size(Relation rel)
 {
 	int64		size = 0;
-	Relation	rel;
-
-	rel = relation_open(relOid, AccessShareLock);
 
 	/*
 	 * Aggregate all indexes on the given relation
@@ -405,8 +423,6 @@ calculate_indexes_size(Oid relOid)
 		list_free(index_oids);
 	}
 
-	relation_close(rel, AccessShareLock);
-
 	return size;
 }
 
@@ -414,16 +430,38 @@ Datum
 pg_table_size(PG_FUNCTION_ARGS)
 {
 	Oid			relOid = PG_GETARG_OID(0);
+	Relation	rel;
+	int64		size;
 
-	PG_RETURN_INT64(calculate_table_size(relOid));
+	rel = try_relation_open(relOid, AccessShareLock);
+
+	if (rel == NULL)
+		PG_RETURN_NULL();
+
+	size = calculate_table_size(rel);
+
+	relation_close(rel, AccessShareLock);
+
+	PG_RETURN_INT64(size);
 }
 
 Datum
 pg_indexes_size(PG_FUNCTION_ARGS)
 {
 	Oid			relOid = PG_GETARG_OID(0);
+	Relation	rel;
+	int64		size;
 
-	PG_RETURN_INT64(calculate_indexes_size(relOid));
+	rel = try_relation_open(relOid, AccessShareLock);
+
+	if (rel == NULL)
+		PG_RETURN_NULL();
+
+	size = calculate_indexes_size(rel);
+
+	relation_close(rel, AccessShareLock);
+
+	PG_RETURN_INT64(size);
 }
 
 /*
@@ -431,7 +469,7 @@ pg_indexes_size(PG_FUNCTION_ARGS)
  *	including heap data, index data, toast data, FSM, VM.
  */
 static int64
-calculate_total_relation_size(Oid Relid)
+calculate_total_relation_size(Relation rel)
 {
 	int64		size;
 
@@ -439,12 +477,12 @@ calculate_total_relation_size(Oid Relid)
 	 * Aggregate the table size, this includes size of the heap, toast and
 	 * toast index with free space and visibility map
 	 */
-	size = calculate_table_size(Relid);
+	size = calculate_table_size(rel);
 
 	/*
 	 * Add size of all attached indexes as well
 	 */
-	size += calculate_indexes_size(Relid);
+	size += calculate_indexes_size(rel);
 
 	return size;
 }
@@ -452,9 +490,20 @@ calculate_total_relation_size(Oid Relid)
 Datum
 pg_total_relation_size(PG_FUNCTION_ARGS)
 {
-	Oid			relid = PG_GETARG_OID(0);
+	Oid			relOid = PG_GETARG_OID(0);
+	Relation	rel;
+	int64		size;
 
-	PG_RETURN_INT64(calculate_total_relation_size(relid));
+	rel = try_relation_open(relOid, AccessShareLock);
+
+	if (rel == NULL)
+		PG_RETURN_NULL();
+
+	size = calculate_total_relation_size(rel);
+
+	relation_close(rel, AccessShareLock);
+
+	PG_RETURN_INT64(size);
 }
 
 /*

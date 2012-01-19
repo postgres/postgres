@@ -14980,6 +14980,11 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
    </para>
 
    <para>
+    If an OID that does not represent an existing object is passed as
+    argument to one of the above functions, NULL is returned.
+   </para>
+
+   <para>
     The functions shown in <xref linkend="functions-admin-dblocation"> assist
     in identifying the specific disk files associated with database objects.
    </para>
