@@ -8300,7 +8300,9 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
    <para>
     The <type>macaddr</type> type also supports the standard relational
     operators (<literal>&gt;</literal>, <literal>&lt;=</literal>, etc.) for
-    lexicographical ordering.
+    lexicographical ordering, and the bitwise arithmetic operators
+    (<literal>~</literal>, <literal>&amp;</literal> and <literal>|</literal>)
+    for NOT, AND and OR.
    </para>
 
   </sect1>

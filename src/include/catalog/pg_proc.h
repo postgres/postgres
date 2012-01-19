@@ -2039,6 +2039,9 @@ DATA(insert OID = 834 (  macaddr_ge			PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 16 
 DATA(insert OID = 835 (  macaddr_ne			PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 16 "829 829" _null_ _null_ _null_ _null_	macaddr_ne _null_ _null_ _null_ ));
 DATA(insert OID = 836 (  macaddr_cmp		PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 23 "829 829" _null_ _null_ _null_ _null_	macaddr_cmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
+DATA(insert OID = 3144 (  macaddr_not		PGNSP PGUID 12 1 0 0 0 f f f t f i 1 0 829 "829" _null_ _null_ _null_ _null_	macaddr_not _null_ _null_ _null_ ));
+DATA(insert OID = 3145 (  macaddr_and		PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 829 "829 829" _null_ _null_ _null_ _null_	macaddr_and _null_ _null_ _null_ ));
+DATA(insert OID = 3146 (  macaddr_or		PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 829 "829 829" _null_ _null_ _null_ _null_	macaddr_or _null_ _null_ _null_ ));
 
 /* for inet type support */
 DATA(insert OID = 910 (  inet_in			PGNSP PGUID 12 1 0 0 0 f f f t f i 1 0 869 "2275" _null_ _null_ _null_ _null_ inet_in _null_ _null_ _null_ ));

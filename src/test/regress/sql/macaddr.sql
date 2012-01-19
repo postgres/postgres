@@ -35,4 +35,8 @@ SELECT b =  '08:00:2b:01:02:03' FROM macaddr_data WHERE a = 1; -- true
 SELECT b <> '08:00:2b:01:02:04' FROM macaddr_data WHERE a = 1; -- true
 SELECT b <> '08:00:2b:01:02:03' FROM macaddr_data WHERE a = 1; -- false
 
+SELECT ~b                       FROM macaddr_data;
+SELECT  b & '00:00:00:ff:ff:ff' FROM macaddr_data;
+SELECT  b | '01:02:03:04:05:06' FROM macaddr_data;
+
 DROP TABLE macaddr_data;

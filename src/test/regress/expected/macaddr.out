@@ -103,4 +103,52 @@ SELECT b <> '08:00:2b:01:02:03' FROM macaddr_data WHERE a = 1; -- false
  f
 (1 row)
 
+SELECT ~b                       FROM macaddr_data;
+     ?column?      
+-------------------
+ f7:ff:d4:fe:fd:fc
+ f7:ff:d4:fe:fd:fc
+ f7:ff:d4:fe:fd:fc
+ f7:ff:d4:fe:fd:fc
+ f7:ff:d4:fe:fd:fc
+ f7:ff:d4:fe:fd:fc
+ f7:ff:d4:fe:fd:fb
+ f7:ff:d4:fe:fd:fd
+ f7:ff:d5:fe:fd:fc
+ f7:ff:d3:fe:fd:fc
+ f7:ff:d5:fe:fd:fb
+(11 rows)
+
+SELECT  b & '00:00:00:ff:ff:ff' FROM macaddr_data;
+     ?column?      
+-------------------
+ 00:00:00:01:02:03
+ 00:00:00:01:02:03
+ 00:00:00:01:02:03
+ 00:00:00:01:02:03
+ 00:00:00:01:02:03
+ 00:00:00:01:02:03
+ 00:00:00:01:02:04
+ 00:00:00:01:02:02
+ 00:00:00:01:02:03
+ 00:00:00:01:02:03
+ 00:00:00:01:02:04
+(11 rows)
+
+SELECT  b | '01:02:03:04:05:06' FROM macaddr_data;
+     ?column?      
+-------------------
+ 09:02:2b:05:07:07
+ 09:02:2b:05:07:07
+ 09:02:2b:05:07:07
+ 09:02:2b:05:07:07
+ 09:02:2b:05:07:07
+ 09:02:2b:05:07:07
+ 09:02:2b:05:07:06
+ 09:02:2b:05:07:06
+ 09:02:2b:05:07:07
+ 09:02:2f:05:07:07
+ 09:02:2b:05:07:06
+(11 rows)
+
 DROP TABLE macaddr_data;
