@@ -644,6 +644,11 @@ check_for_reg_data_type_usage(ClusterInfo *cluster)
 		DbInfo	   *active_db = &cluster->dbarr.dbs[dbnum];
 		PGconn	   *conn = connectToServer(cluster, active_db->db_name);
 
+		/*
+		 *	While several relkinds don't store any data, e.g. views, they
+		 *	can be used to define data types of other columns, so we
+		 *	check all relkinds.
+		 */
 		res = executeQueryOrDie(conn,
 								"SELECT n.nspname, c.relname, a.attname "
 								"FROM	pg_catalog.pg_class c, "
