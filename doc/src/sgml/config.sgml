@@ -1342,7 +1342,8 @@ SET ENABLE_SEQSCAN TO OFF;
         <para>
          In each round, no more than this many buffers will be written
          by the background writer.  Setting this to zero disables
-         background writing (except for checkpoint activity).
+         background writing.  (Note that checkpoints, which are managed by
+         a separate, dedicated auxiliary process, are unaffected.)
          The default value is 100 buffers.
          This parameter can only be set in the <filename>postgresql.conf</>
          file or on the server command line.
