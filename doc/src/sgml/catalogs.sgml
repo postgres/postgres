@@ -7320,7 +7320,7 @@
 
   <para>
    The <structfield>pid</structfield> column can be joined to the
-   <structfield>procpid</structfield> column of the
+   <structfield>pid</structfield> column of the
    <structname>pg_stat_activity</structname> view to get more
    information on the session holding or waiting to hold each lock.
    Also, if you are using prepared transactions, the

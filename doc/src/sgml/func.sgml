@@ -14322,7 +14322,7 @@ SELECT set_config('log_statement_stats', 'off', false);
     send signals (<systemitem>SIGINT</> or <systemitem>SIGTERM</>
     respectively) to backend processes identified by process ID.
     The process ID of an active backend can be found from
-    the <structfield>procpid</structfield> column of the
+    the <structfield>pid</structfield> column of the
     <structname>pg_stat_activity</structname> view, or by listing the
     <command>postgres</command> processes on the server (using
     <application>ps</> on Unix or the <application>Task

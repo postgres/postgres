@@ -1462,8 +1462,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    example, to show the <acronym>PID</>s and current queries of all server processes:
 
 <programlisting>
-SELECT pg_stat_get_backend_pid(s.backendid) AS procpid,
-       pg_stat_get_backend_activity(s.backendid) AS current_query
+SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
+       pg_stat_get_backend_activity(s.backendid) AS query
     FROM (SELECT pg_stat_get_backend_idset() AS backendid) AS s;
 </programlisting>
   </para>
@@ -1670,7 +1670,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS procpid,
      <entry>statement-status</entry>
      <entry>(const char *)</entry>
      <entry>Probe that fires anytime the server process updates its
-      <structname>pg_stat_activity</>.<structfield>current_query</> status.
+      <structname>pg_stat_activity</>.<structfield>status</>.
       arg0 is the new status string.</entry>
     </row>
     <row>
