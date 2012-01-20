@@ -577,17 +577,9 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      <entry>client_addr</entry>
      <entry><type>inet</></entry>
      <entry>The remote IP of the client connected to the backend.
-     If this field is not set, it indicates that the client is either:
-      <itemizedlist spacing="compact" mark="bullet">
-       <listitem>
-        <para>
-         Connected via unix sockets on the server machine
-        </para>
-       </listitem>
-       <listitem>
-        <para>An internal process such as autovacuum</para>
-       </listitem>
-     </itemizedlist>
+      If this field is not set, it indicates that the client is either connected
+      via a Unix socket on the server machine or is an internal process such
+      as autovacuum.
      </entry>
     </row>
     <row>
