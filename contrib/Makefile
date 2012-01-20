@@ -45,6 +45,7 @@ SUBDIRS = \
 		seg		\
 		spi		\
 		tablefunc	\
+		tcn		\
 		test_parser	\
 		tsearch2	\
 		unaccent	\

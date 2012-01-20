@@ -136,6 +136,7 @@
 <!ENTITY sepgsql         SYSTEM "sepgsql.sgml">
 <!ENTITY sslinfo         SYSTEM "sslinfo.sgml">
 <!ENTITY tablefunc       SYSTEM "tablefunc.sgml">
+<!ENTITY tcn             SYSTEM "tcn.sgml">
 <!ENTITY test-parser     SYSTEM "test-parser.sgml">
 <!ENTITY tsearch2        SYSTEM "tsearch2.sgml">
 <!ENTITY unaccent      SYSTEM "unaccent.sgml">
