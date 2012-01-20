@@ -235,6 +235,13 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysi
 			PQclear(res);
 			return false;
 		}
+		if (PQnfields(res) != 3 || PQntuples(res) != 1)
+		{
+			fprintf(stderr, _("%s: could not identify system, got %i rows and %i fields\n"),
+					progname, PQntuples(res), PQnfields(res));
+			PQclear(res);
+			return false;
+		}
 		if (strcmp(sysidentifier, PQgetvalue(res, 0, 0)) != 0)
 		{
 			fprintf(stderr, _("%s: system identifier does not match between base backup and streaming connection\n"), progname);

@@ -918,10 +918,10 @@ BaseBackup(void)
 				progname, PQerrorMessage(conn));
 		disconnect_and_exit(1);
 	}
-	if (PQntuples(res) != 1)
+	if (PQntuples(res) != 1 || PQnfields(res) != 3)
 	{
-		fprintf(stderr, _("%s: could not identify system, got %i rows\n"),
-				progname, PQntuples(res));
+		fprintf(stderr, _("%s: could not identify system, got %i rows and %i fields\n"),
+				progname, PQntuples(res), PQnfields(res));
 		disconnect_and_exit(1);
 	}
 	sysidentifier = strdup(PQgetvalue(res, 0, 0));
@@ -1130,7 +1130,7 @@ BaseBackup(void)
 		{
 			fprintf(stderr, _("%s: could not parse xlog end position \"%s\"\n"),
 					progname, xlogend);
-			exit(1);
+			disconnect_and_exit(1);
 		}
 		InterlockedIncrement(&has_xlogendptr);
 
@@ -1162,6 +1162,7 @@ BaseBackup(void)
 	/*
 	 * End of copy data. Final result is already checked inside the loop.
 	 */
+	PQclear(res);
 	PQfinish(conn);
 
 	if (verbose)
