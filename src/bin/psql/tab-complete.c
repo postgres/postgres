@@ -2209,21 +2209,52 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_foreign_tables, NULL);
 
 /* GRANT && REVOKE */
-	/* Complete GRANT/REVOKE with a list of privileges */
+	/* Complete GRANT/REVOKE with a list of roles and privileges */
 	else if (pg_strcasecmp(prev_wd, "GRANT") == 0 ||
 			 pg_strcasecmp(prev_wd, "REVOKE") == 0)
 	{
-		static const char *const list_privilege[] =
-		{"SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES",
-			"TRIGGER", "CREATE", "CONNECT", "TEMPORARY", "EXECUTE", "USAGE",
-		"ALL", NULL};
-
-		COMPLETE_WITH_LIST(list_privilege);
+		COMPLETE_WITH_QUERY(Query_for_list_of_roles
+							" UNION SELECT 'SELECT'"
+							" UNION SELECT 'INSERT'"
+							" UNION SELECT 'UPDATE'"
+							" UNION SELECT 'DELETE'"
+							" UNION SELECT 'TRUNCATE'"
+							" UNION SELECT 'REFERENCES'"
+							" UNION SELECT 'TRIGGER'"
+							" UNION SELECT 'CREATE'"
+							" UNION SELECT 'CONNECT'"
+							" UNION SELECT 'TEMPORARY'"
+							" UNION SELECT 'EXECUTE'"
+							" UNION SELECT 'USAGE'"
+							" UNION SELECT 'ALL'");
 	}
-	/* Complete GRANT/REVOKE <sth> with "ON" */
+	/* Complete GRANT/REVOKE <privilege> with "ON", GRANT/REVOKE <role> with TO/FROM */
 	else if (pg_strcasecmp(prev2_wd, "GRANT") == 0 ||
 			 pg_strcasecmp(prev2_wd, "REVOKE") == 0)
-		COMPLETE_WITH_CONST("ON");
+	{
+		if (pg_strcasecmp(prev_wd, "SELECT") == 0
+			|| pg_strcasecmp(prev_wd, "INSERT") == 0
+			|| pg_strcasecmp(prev_wd, "UPDATE") == 0
+			|| pg_strcasecmp(prev_wd, "DELETE") == 0
+			|| pg_strcasecmp(prev_wd, "TRUNCATE") == 0
+			|| pg_strcasecmp(prev_wd, "REFERENCES") == 0
+			|| pg_strcasecmp(prev_wd, "TRIGGER") == 0
+			|| pg_strcasecmp(prev_wd, "CREATE") == 0
+			|| pg_strcasecmp(prev_wd, "CONNECT") == 0
+			|| pg_strcasecmp(prev_wd, "TEMPORARY") == 0
+			|| pg_strcasecmp(prev_wd, "TEMP") == 0
+			|| pg_strcasecmp(prev_wd, "EXECUTE") == 0
+			|| pg_strcasecmp(prev_wd, "USAGE") == 0
+			|| pg_strcasecmp(prev_wd, "ALL") == 0)
+			COMPLETE_WITH_CONST("ON");
+		else
+		{
+			if (pg_strcasecmp(prev2_wd, "GRANT") == 0)
+				COMPLETE_WITH_CONST("TO");
+			else
+				COMPLETE_WITH_CONST("FROM");
+		}
+	}
 
 	/*
 	 * Complete GRANT/REVOKE <sth> ON with a list of tables, views, sequences,
@@ -2302,6 +2333,18 @@ psql_completion(char *text, int start, int end)
 			COMPLETE_WITH_QUERY(Query_for_list_of_grant_roles);
 		else
 			COMPLETE_WITH_CONST("FROM");
+	}
+
+	/* Complete "GRANT/REVOKE * TO/FROM" with username, GROUP, or PUBLIC */
+	else if (pg_strcasecmp(prev3_wd, "GRANT") == 0 &&
+			 pg_strcasecmp(prev_wd, "TO") == 0)
+	{
+		COMPLETE_WITH_QUERY(Query_for_list_of_grant_roles);
+	}
+	else if (pg_strcasecmp(prev3_wd, "REVOKE") == 0 &&
+			 pg_strcasecmp(prev_wd, "FROM") == 0)
+	{
+		COMPLETE_WITH_QUERY(Query_for_list_of_grant_roles);
 	}
 
 /* GROUP BY */
