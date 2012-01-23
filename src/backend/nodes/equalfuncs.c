@@ -1010,6 +1010,7 @@ _equalAlterTableStmt(const AlterTableStmt *a, const AlterTableStmt *b)
 	COMPARE_NODE_FIELD(relation);
 	COMPARE_NODE_FIELD(cmds);
 	COMPARE_SCALAR_FIELD(relkind);
+	COMPARE_SCALAR_FIELD(missing_ok);
 
 	return true;
 }
@@ -1310,6 +1311,7 @@ _equalRenameStmt(const RenameStmt *a, const RenameStmt *b)
 	COMPARE_STRING_FIELD(subname);
 	COMPARE_STRING_FIELD(newname);
 	COMPARE_SCALAR_FIELD(behavior);
+	COMPARE_SCALAR_FIELD(missing_ok);
 
 	return true;
 }
@@ -1323,6 +1325,7 @@ _equalAlterObjectSchemaStmt(const AlterObjectSchemaStmt *a, const AlterObjectSch
 	COMPARE_NODE_FIELD(objarg);
 	COMPARE_STRING_FIELD(addname);
 	COMPARE_STRING_FIELD(newschema);
+	COMPARE_SCALAR_FIELD(missing_ok);
 
 	return true;
 }
@@ -1576,6 +1579,7 @@ _equalAlterSeqStmt(const AlterSeqStmt *a, const AlterSeqStmt *b)
 {
 	COMPARE_NODE_FIELD(sequence);
 	COMPARE_NODE_FIELD(options);
+	COMPARE_SCALAR_FIELD(missing_ok);
 
 	return true;
 }

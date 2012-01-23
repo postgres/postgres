@@ -2283,7 +2283,15 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 	 * new commands we add after this must not upgrade the lock level
 	 * requested here.
 	 */
-	rel = relation_openrv(stmt->relation, lockmode);
+	rel = relation_openrv_extended(stmt->relation, lockmode, stmt->missing_ok);
+	if (rel == NULL)
+	{
+		/* this message is consistent with relation_openrv */
+		ereport(NOTICE,
+				(errmsg("relation \"%s\" does not exist, skipping",
+							stmt->relation->relname)));
+		return NIL;
+	}
 
 	/* Set up pstate and CreateStmtContext */
 	pstate = make_parsestate(NULL);

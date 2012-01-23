@@ -166,6 +166,9 @@ DROP TABLE tmp_new2;
 
 -- ALTER TABLE ... RENAME on non-table relations
 -- renaming indexes (FIXME: this should probably test the index's functionality)
+ALTER INDEX IF EXISTS __onek_unique1 RENAME TO tmp_onek_unique1;
+ALTER INDEX IF EXISTS __tmp_onek_unique1 RENAME TO onek_unique1;
+
 ALTER INDEX onek_unique1 RENAME TO tmp_onek_unique1;
 ALTER INDEX tmp_onek_unique1 RENAME TO onek_unique1;
 -- renaming views
@@ -898,6 +901,10 @@ alter table only renameColumn rename column a to d;
 alter table renameColumn rename column a to d;
 alter table renameColumnChild rename column b to a;
 
+-- these should work
+alter table if exists doesnt_exist_tab rename column a to d;
+alter table if exists doesnt_exist_tab rename column b to a;
+
 -- this should work
 alter table renameColumn add column w int;
 
@@ -1463,3 +1470,28 @@ ALTER TABLE ONLY test_drop_constr_parent DROP CONSTRAINT "test_drop_constr_paren
 -- should fail
 INSERT INTO test_drop_constr_child (c) VALUES (NULL);
 DROP TABLE test_drop_constr_parent CASCADE;
+
+--
+-- IF EXISTS test
+--
+ALTER TABLE IF EXISTS tt8 ADD COLUMN f int;
+ALTER TABLE IF EXISTS tt8 ADD CONSTRAINT xxx PRIMARY KEY(f);
+ALTER TABLE IF EXISTS tt8 ADD CHECK (f BETWEEN 0 AND 10);
+ALTER TABLE IF EXISTS tt8 ALTER COLUMN f SET DEFAULT 0;
+ALTER TABLE IF EXISTS tt8 RENAME COLUMN f TO f1;
+ALTER TABLE IF EXISTS tt8 SET SCHEMA alter2;
+
+CREATE TABLE tt8(a int);
+CREATE SCHEMA alter2;
+
+ALTER TABLE IF EXISTS tt8 ADD COLUMN f int;
+ALTER TABLE IF EXISTS tt8 ADD CONSTRAINT xxx PRIMARY KEY(f);
+ALTER TABLE IF EXISTS tt8 ADD CHECK (f BETWEEN 0 AND 10);
+ALTER TABLE IF EXISTS tt8 ALTER COLUMN f SET DEFAULT 0;
+ALTER TABLE IF EXISTS tt8 RENAME COLUMN f TO f1;
+ALTER TABLE IF EXISTS tt8 SET SCHEMA alter2;
+
+\d alter2.tt8
+
+DROP TABLE alter2.tt8;
+DROP SCHEMA alter2;

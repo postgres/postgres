@@ -425,7 +425,15 @@ AlterSequence(AlterSeqStmt *stmt)
 	List	   *owned_by;
 
 	/* Open and lock sequence. */
-	relid = RangeVarGetRelid(stmt->sequence, AccessShareLock, false);
+	relid = RangeVarGetRelid(stmt->sequence, AccessShareLock, stmt->missing_ok);
+	if (relid == InvalidOid)
+	{
+		ereport(NOTICE,
+				(errmsg("relation \"%s\" does not exist, skipping",
+							stmt->sequence->relname)));
+		return;
+	}
+
 	init_sequence(relid, &elm, &seqrel);
 
 	/* allow ALTER to sequence owner only */

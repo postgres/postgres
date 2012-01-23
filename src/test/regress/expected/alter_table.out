@@ -128,6 +128,10 @@ DROP TABLE tmp_new;
 DROP TABLE tmp_new2;
 -- ALTER TABLE ... RENAME on non-table relations
 -- renaming indexes (FIXME: this should probably test the index's functionality)
+ALTER INDEX IF EXISTS __onek_unique1 RENAME TO tmp_onek_unique1;
+NOTICE:  relation "__onek_unique1" does not exist, skipping
+ALTER INDEX IF EXISTS __tmp_onek_unique1 RENAME TO onek_unique1;
+NOTICE:  relation "__tmp_onek_unique1" does not exist, skipping
 ALTER INDEX onek_unique1 RENAME TO tmp_onek_unique1;
 ALTER INDEX tmp_onek_unique1 RENAME TO onek_unique1;
 -- renaming views
@@ -1185,6 +1189,11 @@ ERROR:  inherited column "a" must be renamed in child tables too
 -- these should work
 alter table renameColumn rename column a to d;
 alter table renameColumnChild rename column b to a;
+-- these should work
+alter table if exists doesnt_exist_tab rename column a to d;
+NOTICE:  relation "doesnt_exist_tab" does not exist, skipping
+alter table if exists doesnt_exist_tab rename column b to a;
+NOTICE:  relation "doesnt_exist_tab" does not exist, skipping
 -- this should work
 alter table renameColumn add column w int;
 -- this should fail
@@ -2130,3 +2139,40 @@ ERROR:  new row for relation "test_drop_constr_child" violates check constraint 
 DETAIL:  Failing row contains (null).
 DROP TABLE test_drop_constr_parent CASCADE;
 NOTICE:  drop cascades to table test_drop_constr_child
+--
+-- IF EXISTS test
+--
+ALTER TABLE IF EXISTS tt8 ADD COLUMN f int;
+NOTICE:  relation "tt8" does not exist, skipping
+ALTER TABLE IF EXISTS tt8 ADD CONSTRAINT xxx PRIMARY KEY(f);
+NOTICE:  relation "tt8" does not exist, skipping
+ALTER TABLE IF EXISTS tt8 ADD CHECK (f BETWEEN 0 AND 10);
+NOTICE:  relation "tt8" does not exist, skipping
+ALTER TABLE IF EXISTS tt8 ALTER COLUMN f SET DEFAULT 0;
+NOTICE:  relation "tt8" does not exist, skipping
+ALTER TABLE IF EXISTS tt8 RENAME COLUMN f TO f1;
+NOTICE:  relation "tt8" does not exist, skipping
+ALTER TABLE IF EXISTS tt8 SET SCHEMA alter2;
+NOTICE:  relation "tt8" does not exist, skipping
+CREATE TABLE tt8(a int);
+CREATE SCHEMA alter2;
+ALTER TABLE IF EXISTS tt8 ADD COLUMN f int;
+ALTER TABLE IF EXISTS tt8 ADD CONSTRAINT xxx PRIMARY KEY(f);
+NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "xxx" for table "tt8"
+ALTER TABLE IF EXISTS tt8 ADD CHECK (f BETWEEN 0 AND 10);
+ALTER TABLE IF EXISTS tt8 ALTER COLUMN f SET DEFAULT 0;
+ALTER TABLE IF EXISTS tt8 RENAME COLUMN f TO f1;
+ALTER TABLE IF EXISTS tt8 SET SCHEMA alter2;
+\d alter2.tt8
+          Table "alter2.tt8"
+ Column |  Type   |     Modifiers      
+--------+---------+--------------------
+ a      | integer | 
+ f1     | integer | not null default 0
+Indexes:
+    "xxx" PRIMARY KEY, btree (f1)
+Check constraints:
+    "tt8_f_check" CHECK (f1 >= 0 AND f1 <= 10)
+
+DROP TABLE alter2.tt8;
+DROP SCHEMA alter2;

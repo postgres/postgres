@@ -2310,9 +2310,18 @@ renameatt(RenameStmt *stmt)
 
 	/* lock level taken here should match renameatt_internal */
 	relid = RangeVarGetRelidExtended(stmt->relation, AccessExclusiveLock,
-									 false, false,
+									 stmt->missing_ok, false,
 									 RangeVarCallbackForRenameAttribute,
 									 NULL);
+
+	if (!OidIsValid(relid))
+	{
+		ereport(NOTICE,
+				(errmsg("relation \"%s\" does not exist, skipping",
+							stmt->relation->relname)));
+		return;
+	}
+
 	renameatt_internal(relid,
 					   stmt->subname,	/* old att name */
 					   stmt->newname,	/* new att name */
@@ -2338,9 +2347,17 @@ RenameRelation(RenameStmt *stmt)
 	 * lock escalation.
 	 */
 	relid = RangeVarGetRelidExtended(stmt->relation, AccessExclusiveLock,
-									 false, false,
+									 stmt->missing_ok, false,
 									 RangeVarCallbackForAlterRelation,
 									 (void *) stmt);
+
+	if (!OidIsValid(relid))
+	{
+		ereport(NOTICE,
+				(errmsg("relation \"%s\" does not exist, skipping",
+							stmt->relation->relname)));
+		return;
+	}
 
 	/* Do the work */
 	RenameRelationInternal(relid, stmt->newname);
@@ -2482,7 +2499,7 @@ CheckTableNotInUse(Relation rel, const char *stmt)
 Oid
 AlterTableLookupRelation(AlterTableStmt *stmt, LOCKMODE lockmode)
 {
-	return RangeVarGetRelidExtended(stmt->relation, lockmode, false, false,
+	return RangeVarGetRelidExtended(stmt->relation, lockmode, stmt->missing_ok, false,
 									RangeVarCallbackForAlterRelation,
 									(void *) stmt);
 }
@@ -9434,9 +9451,18 @@ AlterTableNamespace(AlterObjectSchemaStmt *stmt)
 	RangeVar   *newrv;
 
 	relid = RangeVarGetRelidExtended(stmt->relation, AccessExclusiveLock,
-									 false, false,
+									 stmt->missing_ok, false,
 									 RangeVarCallbackForAlterRelation,
 									 (void *) stmt);
+
+	if (!OidIsValid(relid))
+	{
+		ereport(NOTICE,
+				(errmsg("relation \"%s\" does not exist, skipping",
+							stmt->relation->relname)));
+		return;
+	}
+
 	rel = relation_open(relid, NoLock);
 
 	oldNspOid = RelationGetNamespace(rel);

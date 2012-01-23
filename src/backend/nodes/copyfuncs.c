@@ -2540,6 +2540,7 @@ _copyAlterTableStmt(const AlterTableStmt *from)
 	COPY_NODE_FIELD(relation);
 	COPY_NODE_FIELD(cmds);
 	COPY_SCALAR_FIELD(relkind);
+	COPY_SCALAR_FIELD(missing_ok);
 
 	return newnode;
 }
@@ -2904,6 +2905,7 @@ _copyRenameStmt(const RenameStmt *from)
 	COPY_STRING_FIELD(subname);
 	COPY_STRING_FIELD(newname);
 	COPY_SCALAR_FIELD(behavior);
+	COPY_SCALAR_FIELD(missing_ok);
 
 	return newnode;
 }
@@ -2919,6 +2921,7 @@ _copyAlterObjectSchemaStmt(const AlterObjectSchemaStmt *from)
 	COPY_NODE_FIELD(objarg);
 	COPY_STRING_FIELD(addname);
 	COPY_STRING_FIELD(newschema);
+	COPY_SCALAR_FIELD(missing_ok);
 
 	return newnode;
 }
@@ -3222,6 +3225,7 @@ _copyAlterSeqStmt(const AlterSeqStmt *from)
 
 	COPY_NODE_FIELD(sequence);
 	COPY_NODE_FIELD(options);
+	COPY_SCALAR_FIELD(missing_ok);
 
 	return newnode;
 }

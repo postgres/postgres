@@ -714,34 +714,41 @@ standard_ProcessUtility(Node *parsetree,
 				lockmode = AlterTableGetLockLevel(atstmt->cmds);
 				relid = AlterTableLookupRelation(atstmt, lockmode);
 
-				/* Run parse analysis ... */
-				stmts = transformAlterTableStmt(atstmt, queryString);
-
-				/* ... and do it */
-				foreach(l, stmts)
+				if (OidIsValid(relid))
 				{
-					Node	   *stmt = (Node *) lfirst(l);
+					/* Run parse analysis ... */
+					stmts = transformAlterTableStmt(atstmt, queryString);
 
-					if (IsA(stmt, AlterTableStmt))
+					/* ... and do it */
+					foreach(l, stmts)
 					{
-						/* Do the table alteration proper */
-						AlterTable(relid, lockmode, (AlterTableStmt *) stmt);
-					}
-					else
-					{
-						/* Recurse for anything else */
-						ProcessUtility(stmt,
-									   queryString,
-									   params,
-									   false,
-									   None_Receiver,
-									   NULL);
-					}
+						Node	   *stmt = (Node *) lfirst(l);
 
-					/* Need CCI between commands */
-					if (lnext(l) != NULL)
-						CommandCounterIncrement();
+						if (IsA(stmt, AlterTableStmt))
+						{
+							/* Do the table alteration proper */
+							AlterTable(relid, lockmode, (AlterTableStmt *) stmt);
+						}
+						else
+						{
+							/* Recurse for anything else */
+							ProcessUtility(stmt,
+										   queryString,
+										   params,
+										   false,
+										   None_Receiver,
+										   NULL);
+						}
+
+						/* Need CCI between commands */
+						if (lnext(l) != NULL)
+							CommandCounterIncrement();
+					}
 				}
+				else
+					ereport(NOTICE,
+						(errmsg("relation \"%s\" does not exist, skipping",
+							atstmt->relation->relname)));
 			}
 			break;
 
