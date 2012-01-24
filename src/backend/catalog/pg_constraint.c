@@ -653,7 +653,7 @@ RenameConstraintById(Oid conId, const char *newname)
 							 newname))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("constraint \"%s\" for domain \"%s\" already exists",
+				 errmsg("constraint \"%s\" for domain %s already exists",
 						newname, format_type_be(con->contypid))));
 
 	/* OK, do the rename --- tuple is a copy, so OK to scribble on it */
