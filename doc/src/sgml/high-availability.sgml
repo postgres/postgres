@@ -1011,6 +1011,16 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
    </para>
 
    <para>
+    Setting <varname>synchronous_commit</> to <literal>write</> will
+    cause each commit to wait for confirmation that the standby has received
+    the commit record to memory. This provides a lower level of durability
+    than <literal>on</> does. However, it's a practically useful setting
+    because it can decrease the response time for the transaction, and causes
+    no data loss unless both the primary and the standby crashes and
+    the database of the primary gets corrupted at the same time.
+   </para>
+
+   <para>
     Users will stop waiting if a fast shutdown is requested.  However, as
     when using asynchronous replication, the server will does not fully
     shutdown until all outstanding WAL records are transferred to the currently
@@ -1065,13 +1075,13 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
 
    <para>
     Commits made when <varname>synchronous_commit</> is set to <literal>on</>
-    will wait until the sync standby responds. The response may never occur
-    if the last, or only, standby should crash.
+    or <literal>write</> will wait until the synchronous standby responds. The response
+    may never occur if the last, or only, standby should crash.
    </para>
 
    <para>
     The best solution for avoiding data loss is to ensure you don't lose
-    your last remaining sync standby. This can be achieved by naming multiple
+    your last remaining synchronous standby. This can be achieved by naming multiple
     potential synchronous standbys using <varname>synchronous_standby_names</>.
     The first named standby will be used as the synchronous standby. Standbys
     listed after this will take over the role of synchronous standby if the

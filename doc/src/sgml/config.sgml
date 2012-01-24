@@ -1560,7 +1560,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Specifies whether transaction commit will wait for WAL records
         to be written to disk before the command returns a <quote>success</>
-        indication to the client.  Valid values are <literal>on</>,
+        indication to the client.  Valid values are <literal>on</>, <literal>write</>,
         <literal>local</>, and <literal>off</>.  The default, and safe, value
         is <literal>on</>.  When <literal>off</>, there can be a delay between
         when success is reported to the client and when the transaction is
@@ -1580,11 +1580,19 @@ SET ENABLE_SEQSCAN TO OFF;
         If <xref linkend="guc-synchronous-standby-names"> is set, this
         parameter also controls whether or not transaction commit will wait
         for the transaction's WAL records to be flushed to disk and replicated
-        to the standby server.  The commit wait will last until a reply from
-        the current synchronous standby indicates it has written the commit
-        record of the transaction to durable storage.  If synchronous
+        to the standby server.  When <literal>write</>, the commit wait will
+        last until a reply from the current synchronous standby indicates
+        it has received the commit record of the transaction to memory.
+        Normally this causes no data loss at the time of failover. However,
+        if both primary and standby crash, and the database cluster of
+        the primary gets corrupted, recent committed transactions might
+        be lost. When <literal>on</>,  the commit wait will last until a reply
+        from the current synchronous standby indicates it has flushed
+        the commit record of the transaction to durable storage. This
+        avoids any data loss unless the database cluster of both primary and
+        standby gets corrupted simultaneously. If synchronous
         replication is in use, it will normally be sensible either to wait
-        both for WAL records to reach both the local and remote disks, or
+        for both local flush and replication of WAL records, or
         to allow the transaction to commit asynchronously.  However, the
         special value <literal>local</> is available for transactions that
         wish to wait for local flush to disk, but not synchronous replication.

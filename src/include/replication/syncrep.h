@@ -15,6 +15,16 @@
 
 #include "utils/guc.h"
 
+#define SyncRepRequested() \
+	(max_wal_senders > 0 && synchronous_commit > SYNCHRONOUS_COMMIT_LOCAL_FLUSH)
+
+/* SyncRepWaitMode */
+#define SYNC_REP_NO_WAIT		-1
+#define SYNC_REP_WAIT_WRITE		0
+#define SYNC_REP_WAIT_FLUSH		1
+
+#define NUM_SYNC_REP_WAIT_MODE	2
+
 /* syncRepState */
 #define SYNC_REP_NOT_WAITING		0
 #define SYNC_REP_WAITING			1
@@ -37,8 +47,9 @@ extern void SyncRepReleaseWaiters(void);
 extern void SyncRepUpdateSyncStandbysDefined(void);
 
 /* called by various procs */
-extern int	SyncRepWakeQueue(bool all);
+extern int	SyncRepWakeQueue(bool all, int mode);
 
 extern bool check_synchronous_standby_names(char **newval, void **extra, GucSource source);
+extern void assign_synchronous_commit(int newval, void *extra);
 
 #endif   /* _SYNCREP_H */

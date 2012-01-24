@@ -14,6 +14,7 @@
 
 #include "access/xlog.h"
 #include "nodes/nodes.h"
+#include "replication/syncrep.h"
 #include "storage/latch.h"
 #include "storage/shmem.h"
 #include "storage/spin.h"
@@ -68,15 +69,16 @@ extern WalSnd *MyWalSnd;
 typedef struct
 {
 	/*
-	 * Synchronous replication queue. Protected by SyncRepLock.
+	 * Synchronous replication queue with one queue per request type.
+	 * Protected by SyncRepLock.
 	 */
-	SHM_QUEUE	SyncRepQueue;
+	SHM_QUEUE	SyncRepQueue[NUM_SYNC_REP_WAIT_MODE];
 
 	/*
 	 * Current location of the head of the queue. All waiters should have a
 	 * waitLSN that follows this value. Protected by SyncRepLock.
 	 */
-	XLogRecPtr	lsn;
+	XLogRecPtr	lsn[NUM_SYNC_REP_WAIT_MODE];
 
 	/*
 	 * Are any sync standbys defined?  Waiting backends can't reload the

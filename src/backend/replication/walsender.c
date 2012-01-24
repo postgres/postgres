@@ -1410,7 +1410,8 @@ WalSndShmemInit(void)
 		/* First time through, so initialize */
 		MemSet(WalSndCtl, 0, WalSndShmemSize());
 
-		SHMQueueInit(&(WalSndCtl->SyncRepQueue));
+		for (i = 0; i < NUM_SYNC_REP_WAIT_MODE; i++)
+			SHMQueueInit(&(WalSndCtl->SyncRepQueue[i]));
 
 		for (i = 0; i < max_wal_senders; i++)
 		{
