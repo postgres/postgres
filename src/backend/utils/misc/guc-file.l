@@ -487,7 +487,7 @@ bool
 ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 			  ConfigVariable **head_p, ConfigVariable **tail_p)
 {
-	bool		OK = true;
+	volatile bool OK = true;
 	unsigned int save_ConfigFileLineno = ConfigFileLineno;
 	sigjmp_buf *save_GUC_flex_fatal_jmp = GUC_flex_fatal_jmp;
 	sigjmp_buf	flex_fatal_jmp;
