@@ -2490,7 +2490,7 @@ pgstat_report_activity(BackendState state, const char *cmd_str)
 	volatile PgBackendStatus *beentry = MyBEEntry;
 	TimestampTz start_timestamp;
 	TimestampTz current_timestamp;
-	int			len;
+	int			len = 0;
 
 	TRACE_POSTGRESQL_STATEMENT_STATUS(cmd_str);
 
@@ -2524,8 +2524,8 @@ pgstat_report_activity(BackendState state, const char *cmd_str)
 	start_timestamp = GetCurrentStatementStartTimestamp();
 	if (cmd_str != NULL)
 	{
-		len = strlen(cmd_str);
-		len = pg_mbcliplen(cmd_str, len, pgstat_track_activity_query_size - 1);
+		len = pg_mbcliplen(cmd_str, strlen(cmd_str),
+						   pgstat_track_activity_query_size - 1);
 	}
 
 	/*
