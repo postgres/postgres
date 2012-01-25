@@ -171,6 +171,7 @@ static void CheckArchiveTimeout(void);
 static bool IsCheckpointOnSchedule(double progress);
 static bool ImmediateCheckpointRequested(void);
 static bool CompactCheckpointerRequestQueue(void);
+static void UpdateSharedMemoryConfig(void);
 
 /* Signal handlers */
 
@@ -351,8 +352,12 @@ CheckpointerMain(void)
 	if (RecoveryInProgress())
 		ThisTimeLineID = GetRecoveryTargetTLI();
 
-	/* Do this once before starting the loop, then just at SIGHUP time. */
-	SyncRepUpdateSyncStandbysDefined();
+	/*
+	 * Ensure all shared memory values are set correctly for the config.
+	 * Doing this here ensures no race conditions from other concurrent
+	 * updaters.
+	 */
+	UpdateSharedMemoryConfig();
 
 	/*
 	 * Loop forever
@@ -380,8 +385,19 @@ CheckpointerMain(void)
 		{
 			got_SIGHUP = false;
 			ProcessConfigFile(PGC_SIGHUP);
-			/* update global shmem state for sync rep */
-			SyncRepUpdateSyncStandbysDefined();
+
+			/*
+			 * Checkpointer is the last process to shutdown, so we ask
+			 * it to hold the keys for a range of other tasks required
+			 * most of which have nothing to do with checkpointing at all.
+			 *
+			 * For various reasons, some config values can change
+			 * dynamically so are the primary copy of them is held in
+			 * shared memory to make sure all backends see the same value.
+			 * We make Checkpointer responsible for updating the shared
+			 * memory copy if the parameter setting changes because of SIGHUP.
+			 */
+			UpdateSharedMemoryConfig();
 		}
 		if (checkpoint_requested)
 		{
@@ -1238,4 +1254,22 @@ AbsorbFsyncRequests(void)
 		pfree(requests);
 
 	END_CRIT_SECTION();
+}
+
+/*
+ * Update any shared memory configurations based on config parameters
+ */
+static void
+UpdateSharedMemoryConfig(void)
+{
+	/* update global shmem state for sync rep */
+	SyncRepUpdateSyncStandbysDefined();
+
+	/*
+	 * If full_page_writes has been changed by SIGHUP, we update it
+	 * in shared memory and write an XLOG_FPW_CHANGE record.
+	 */
+	UpdateFullPageWrites();
+
+	elog(DEBUG2, "checkpointer updated shared memory configuration values");
 }

@@ -64,6 +64,48 @@ PostgreSQL documentation
    better from a performance point of view to take only one backup, and copy
    the result.
   </para>
+
+  <para>
+   <application>pg_basebackup</application> can make a base backup from
+   not only the master but also the standby. To take a backup from the standby,
+   set up the standby so that it can accept replication connections (that is, set
+   <varname>max_wal_senders</> and <xref linkend="guc-hot-standby">,
+   and configure <link linkend="auth-pg-hba-conf">host-based authentication</link>).
+   You will also need to enable <xref linkend="guc-full-page-writes"> on the master.
+  </para>
+
+  <para>
+   Note that there are some limitations in an online backup from the standby:
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      The backup history file is not created in the database cluster backed up.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      There is no guarantee that all WAL files required for the backup are archived
+      at the end of backup. If you are planning to use the backup for an archive
+      recovery and want to ensure that all required files are available at that moment,
+      you need to include them into the backup by using <literal>-x</> option.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      If the standby is promoted to the master during online backup, the backup fails.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      All WAL records required for the backup must contain sufficient full-page writes,
+      which requires you to enable <varname>full_page_writes</> on the master and
+      not to use the tool like <application>pg_compresslog</> as
+      <varname>archive_command</> to remove full-page writes from WAL files.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
  </refsect1>
 
  <refsect1>

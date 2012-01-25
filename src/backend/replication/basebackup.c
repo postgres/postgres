@@ -180,6 +180,22 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 					ti->path == NULL ? 1 : strlen(ti->path),
 					false);
 
+			/* In the main tar, include pg_control last. */
+			if (ti->path == NULL)
+			{
+				struct stat statbuf;
+
+				if (lstat(XLOG_CONTROL_FILE, &statbuf) != 0)
+				{
+					ereport(ERROR,
+							(errcode_for_file_access(),
+							 errmsg("could not stat control file \"%s\": %m",
+									XLOG_CONTROL_FILE)));
+				}
+
+				sendFile(XLOG_CONTROL_FILE, XLOG_CONTROL_FILE, &statbuf);
+			}
+
 			/*
 			 * If we're including WAL, and this is the main data directory we
 			 * don't terminate the tar stream here. Instead, we will append
@@ -360,11 +376,6 @@ SendBaseBackup(BaseBackupCmd *cmd)
 	MemoryContext backup_context;
 	MemoryContext old_context;
 	basebackup_options opt;
-
-	if (am_cascading_walsender)
-		ereport(FATAL,
-				(errcode(ERRCODE_CANNOT_CONNECT_NOW),
-				 errmsg("recovery is still in progress, can't accept WAL streaming connections for backup")));
 
 	parse_basebackup_options(cmd->options, &opt);
 
@@ -607,6 +618,10 @@ sendDir(char *path, int basepathlen, bool sizeonly)
 		/* Skip postmaster.pid and postmaster.opts in the data directory */
 		if (strcmp(pathbuf, "./postmaster.pid") == 0 ||
 			strcmp(pathbuf, "./postmaster.opts") == 0)
+			continue;
+
+		/* Skip pg_control here to back up it last */
+		if (strcmp(pathbuf, "./global/pg_control") == 0)
 			continue;
 
 		if (lstat(pathbuf, &statbuf) != 0)

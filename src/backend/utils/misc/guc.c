@@ -130,7 +130,6 @@ extern int	CommitSiblings;
 extern char *default_tablespace;
 extern char *temp_tablespaces;
 extern bool synchronize_seqscans;
-extern bool fullPageWrites;
 extern int	ssl_renegotiation_limit;
 extern char *SSLCipherSuites;
 

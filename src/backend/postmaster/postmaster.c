@@ -3067,8 +3067,8 @@ PostmasterStateMachine(void)
 		else
 		{
 			/*
-			 * Terminate backup mode to avoid recovery after a clean fast
-			 * shutdown.  Since a backup can only be taken during normal
+			 * Terminate exclusive backup mode to avoid recovery after a clean fast
+			 * shutdown.  Since an exclusive backup can only be taken during normal
 			 * running (and not, for example, while running under Hot Standby)
 			 * it only makes sense to do this if we reached normal running. If
 			 * we're still in recovery, the backup file is one we're

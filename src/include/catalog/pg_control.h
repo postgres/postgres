@@ -21,7 +21,7 @@
 
 
 /* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	921
+#define PG_CONTROL_VERSION	922
 
 /*
  * Body of CheckPoint XLOG records.  This is declared here because we keep
@@ -33,6 +33,7 @@ typedef struct CheckPoint
 	XLogRecPtr	redo;			/* next RecPtr available when we began to
 								 * create CheckPoint (i.e. REDO start point) */
 	TimeLineID	ThisTimeLineID; /* current TLI */
+	bool			fullPageWrites;	/* current full_page_writes */
 	uint32		nextXidEpoch;	/* higher-order bits of nextXid */
 	TransactionId nextXid;		/* next free XID */
 	Oid			nextOid;		/* next free OID */
@@ -60,6 +61,7 @@ typedef struct CheckPoint
 #define XLOG_BACKUP_END					0x50
 #define XLOG_PARAMETER_CHANGE			0x60
 #define XLOG_RESTORE_POINT				0x70
+#define XLOG_FPW_CHANGE				0x80
 
 
 /*
@@ -138,6 +140,12 @@ typedef struct ControlFileData
 	 * record, to make sure the end-of-backup record corresponds the base
 	 * backup we're recovering from.
 	 *
+	 * backupEndPoint is the backup end location, if we are recovering from
+	 * an online backup which was taken from the standby and haven't reached
+	 * the end of backup yet. It is initialized to the minimum recovery point
+	 * in pg_control which was backed up last. It is reset to zero when
+	 * the end of backup is reached, and we mustn't start up before that.
+	 *
 	 * If backupEndRequired is true, we know for sure that we're restoring
 	 * from a backup, and must see a backup-end record before we can safely
 	 * start up. If it's false, but backupStartPoint is set, a backup_label
@@ -146,6 +154,7 @@ typedef struct ControlFileData
 	 */
 	XLogRecPtr	minRecoveryPoint;
 	XLogRecPtr	backupStartPoint;
+	XLogRecPtr	backupEndPoint;
 	bool		backupEndRequired;
 
 	/*
