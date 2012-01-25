@@ -12795,6 +12795,13 @@ postgres=# SELECT * FROM unnest2(ARRAY[[1,2],[3,4]]);
       </row>
 
       <row>
+       <entry><literal><function>pg_trigger_depth()</function></literal></entry>
+       <entry><type>int</type></entry>
+       <entry>current nesting level of <productname>PostgreSQL</> triggers
+       (0 if not called, directly or indirectly, from inside a trigger)</entry>
+      </row>
+
+      <row>
        <entry><literal><function>session_user</function></literal></entry>
        <entry><type>name</type></entry>
        <entry>session user name</entry>

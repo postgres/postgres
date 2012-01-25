@@ -59,6 +59,8 @@
 /* GUC variables */
 int			SessionReplicationRole = SESSION_REPLICATION_ROLE_ORIGIN;
 
+/* How many levels deep into trigger execution are we? */
+static int	MyTriggerDepth = 0;
 
 #define GetModifiedColumns(relinfo, estate) \
 	(rt_fetch((relinfo)->ri_RangeTableIndex, (estate)->es_range_table)->modifiedCols)
@@ -1838,7 +1840,18 @@ ExecCallTriggerFunc(TriggerData *trigdata,
 
 	pgstat_init_function_usage(&fcinfo, &fcusage);
 
-	result = FunctionCallInvoke(&fcinfo);
+	MyTriggerDepth++;
+	PG_TRY();
+	{
+		result = FunctionCallInvoke(&fcinfo);
+	}
+	PG_CATCH();
+	{
+		MyTriggerDepth--;
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+	MyTriggerDepth--;
 
 	pgstat_end_function_usage(&fcusage, true);
 
@@ -4631,4 +4644,10 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 		afterTriggerAddEvent(&afterTriggers->query_stack[afterTriggers->query_depth],
 							 &new_event, &new_shared);
 	}
+}
+
+Datum
+pg_trigger_depth(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT32(MyTriggerDepth);
 }

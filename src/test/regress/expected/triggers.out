@@ -1443,3 +1443,120 @@ NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to view city_view
 drop cascades to view european_city_view
 DROP TABLE country_table;
+-- Test pg_trigger_depth()
+create table depth_a (id int not null primary key);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "depth_a_pkey" for table "depth_a"
+create table depth_b (id int not null primary key);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "depth_b_pkey" for table "depth_b"
+create table depth_c (id int not null primary key);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "depth_c_pkey" for table "depth_c"
+create function depth_a_tf() returns trigger
+  language plpgsql as $$
+begin
+  raise notice '%: depth = %', tg_name, pg_trigger_depth();
+  insert into depth_b values (new.id);
+  raise notice '%: depth = %', tg_name, pg_trigger_depth();
+  return new;
+end;
+$$;
+create trigger depth_a_tr before insert on depth_a
+  for each row execute procedure depth_a_tf();
+create function depth_b_tf() returns trigger
+  language plpgsql as $$
+begin
+  raise notice '%: depth = %', tg_name, pg_trigger_depth();
+  begin
+    execute 'insert into depth_c values (' || new.id::text || ')';
+  exception
+    when sqlstate 'U9999' then
+      raise notice 'SQLSTATE = U9999: depth = %', pg_trigger_depth();
+  end;
+  raise notice '%: depth = %', tg_name, pg_trigger_depth();
+  if new.id = 1 then
+    execute 'insert into depth_c values (' || new.id::text || ')';
+  end if;
+  return new;
+end;
+$$;
+create trigger depth_b_tr before insert on depth_b
+  for each row execute procedure depth_b_tf();
+create function depth_c_tf() returns trigger
+  language plpgsql as $$
+begin
+  raise notice '%: depth = %', tg_name, pg_trigger_depth();
+  if new.id = 1 then
+    raise exception sqlstate 'U9999';
+  end if;
+  raise notice '%: depth = %', tg_name, pg_trigger_depth();
+  return new;
+end;
+$$;
+create trigger depth_c_tr before insert on depth_c
+  for each row execute procedure depth_c_tf();
+select pg_trigger_depth();
+ pg_trigger_depth 
+------------------
+                0
+(1 row)
+
+insert into depth_a values (1);
+NOTICE:  depth_a_tr: depth = 1
+NOTICE:  depth_b_tr: depth = 2
+CONTEXT:  SQL statement "insert into depth_b values (new.id)"
+PL/pgSQL function "depth_a_tf" line 4 at SQL statement
+NOTICE:  depth_c_tr: depth = 3
+CONTEXT:  SQL statement "insert into depth_c values (1)"
+PL/pgSQL function "depth_b_tf" line 5 at EXECUTE statement
+SQL statement "insert into depth_b values (new.id)"
+PL/pgSQL function "depth_a_tf" line 4 at SQL statement
+NOTICE:  SQLSTATE = U9999: depth = 2
+CONTEXT:  SQL statement "insert into depth_b values (new.id)"
+PL/pgSQL function "depth_a_tf" line 4 at SQL statement
+NOTICE:  depth_b_tr: depth = 2
+CONTEXT:  SQL statement "insert into depth_b values (new.id)"
+PL/pgSQL function "depth_a_tf" line 4 at SQL statement
+NOTICE:  depth_c_tr: depth = 3
+CONTEXT:  SQL statement "insert into depth_c values (1)"
+PL/pgSQL function "depth_b_tf" line 12 at EXECUTE statement
+SQL statement "insert into depth_b values (new.id)"
+PL/pgSQL function "depth_a_tf" line 4 at SQL statement
+ERROR:  U9999
+CONTEXT:  SQL statement "insert into depth_c values (1)"
+PL/pgSQL function "depth_b_tf" line 12 at EXECUTE statement
+SQL statement "insert into depth_b values (new.id)"
+PL/pgSQL function "depth_a_tf" line 4 at SQL statement
+select pg_trigger_depth();
+ pg_trigger_depth 
+------------------
+                0
+(1 row)
+
+insert into depth_a values (2);
+NOTICE:  depth_a_tr: depth = 1
+NOTICE:  depth_b_tr: depth = 2
+CONTEXT:  SQL statement "insert into depth_b values (new.id)"
+PL/pgSQL function "depth_a_tf" line 4 at SQL statement
+NOTICE:  depth_c_tr: depth = 3
+CONTEXT:  SQL statement "insert into depth_c values (2)"
+PL/pgSQL function "depth_b_tf" line 5 at EXECUTE statement
+SQL statement "insert into depth_b values (new.id)"
+PL/pgSQL function "depth_a_tf" line 4 at SQL statement
+NOTICE:  depth_c_tr: depth = 3
+CONTEXT:  SQL statement "insert into depth_c values (2)"
+PL/pgSQL function "depth_b_tf" line 5 at EXECUTE statement
+SQL statement "insert into depth_b values (new.id)"
+PL/pgSQL function "depth_a_tf" line 4 at SQL statement
+NOTICE:  depth_b_tr: depth = 2
+CONTEXT:  SQL statement "insert into depth_b values (new.id)"
+PL/pgSQL function "depth_a_tf" line 4 at SQL statement
+NOTICE:  depth_a_tr: depth = 1
+select pg_trigger_depth();
+ pg_trigger_depth 
+------------------
+                0
+(1 row)
+
+drop table depth_a, depth_b, depth_c;
+drop function depth_a_tf();
+drop function depth_b_tf();
+drop function depth_c_tf();

@@ -205,4 +205,6 @@ extern bool RI_Initial_Check(Trigger *trigger,
 
 extern int	RI_FKey_trigger_type(Oid tgfoid);
 
+extern Datum pg_trigger_depth(PG_FUNCTION_ARGS);
+
 #endif   /* TRIGGER_H */
