@@ -228,8 +228,24 @@ check_loadable_libraries(void)
 		char	   *cmd = (char *) pg_malloc(8 + 2 * llen + 1);
 		PGresult   *res;
 
+		/*
+		 *	In Postgres 9.0, Python 3 support was added, and to do that, a
+		 *	plpython2u language was created with library name plpython2.so
+		 *	as a symbolic link to plpython.so.  In Postgres 9.1, only the
+		 *	plpython2.so library was created, and both plpythonu and
+		 *	plpython2u pointing to it.  For this reason, any reference to
+		 *	library name "plpython" in an old PG <= 9.1 cluster must look
+		 *	for "plpython2" in the new cluster.
+		 */
+		if (GET_MAJOR_VERSION(old_cluster.major_version) < 901 &&
+			strcmp(lib, "$libdir/plpython") == 0)
+		{
+			lib = "$libdir/plpython2";
+			llen = strlen(lib);
+		}
+
 		strcpy(cmd, "LOAD '");
-		PQescapeStringConn(conn, cmd + 6, lib, llen, NULL);
+		PQescapeStringConn(conn, cmd + strlen(cmd), lib, llen, NULL);
 		strcat(cmd, "'");
 
 		res = PQexec(conn, cmd);
