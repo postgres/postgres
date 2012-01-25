@@ -224,7 +224,7 @@ check_loadable_libraries(void)
 	{
 		char	   *lib = os_info.libraries[libnum];
 		int			llen = strlen(lib);
-		char	   *cmd = (char *) pg_malloc(8 + 2 * llen + 1);
+		char		cmd[7 + 2 * MAXPGPATH + 1];
 		PGresult   *res;
 
 		/*
@@ -261,7 +261,6 @@ check_loadable_libraries(void)
 		}
 
 		PQclear(res);
-		pg_free(cmd);
 	}
 
 	PQfinish(conn);
