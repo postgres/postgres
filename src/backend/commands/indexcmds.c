@@ -23,6 +23,7 @@
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_tablespace.h"
+#include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
 #include "commands/tablecmds.h"
@@ -52,6 +53,7 @@
 /* non-export function prototypes */
 static void CheckPredicate(Expr *predicate);
 static void ComputeIndexAttrs(IndexInfo *indexInfo,
+				  Oid *typeOidP,
 				  Oid *collationOidP,
 				  Oid *classOidP,
 				  int16 *colOptionP,
@@ -87,18 +89,17 @@ static void RangeVarCallbackForReindexIndex(const RangeVar *relation,
  * of columns and that if one has an expression column or predicate, both do.
  * Errors arising from the attribute list still apply.
  *
- * Most column type changes that can skip a table rewrite will not invalidate
- * indexes.  For btree and hash indexes, we assume continued validity when
- * each column of an index would have the same operator family before and
- * after the change.  Since we do not document a contract for GIN or GiST
- * operator families, we require an exact operator class match for them and
- * for any other access methods.
- *
- * DefineIndex always verifies that each exclusion operator shares an operator
- * family with its corresponding index operator class.  For access methods
- * having no operator family contract, confirm that the old and new indexes
- * use the exact same exclusion operator.  For btree and hash, there's nothing
- * more to check.
+ * Most column type changes that can skip a table rewrite do not invalidate
+ * indexes.  We ackowledge this when all operator classes, collations and
+ * exclusion operators match.  Though we could further permit intra-opfamily
+ * changes for btree and hash indexes, that adds subtle complexity with no
+ * concrete benefit for core types.
+
+ * When a comparison or exclusion operator has a polymorphic input type, the
+ * actual input types must also match.  This defends against the possibility
+ * that operators could vary behavior in response to get_fn_expr_argtype().
+ * At present, this hazard is theoretical: check_exclusion_constraint() and
+ * all core index access methods decline to set fn_expr for such calls.
  *
  * We do not yet implement a test to verify compatibility of expression
  * columns or predicates, so assume any such index is incompatible.
@@ -111,6 +112,7 @@ CheckIndexCompatible(Oid oldId,
 					 List *exclusionOpNames)
 {
 	bool		isconstraint;
+	Oid		   *typeObjectId;
 	Oid		   *collationObjectId;
 	Oid		   *classObjectId;
 	Oid			accessMethodId;
@@ -123,10 +125,10 @@ CheckIndexCompatible(Oid oldId,
 	int			numberOfAttributes;
 	int			old_natts;
 	bool		isnull;
-	bool		family_am;
 	bool		ret = true;
 	oidvector  *old_indclass;
 	oidvector  *old_indcollation;
+	Relation	irel;
 	int			i;
 	Datum		d;
 
@@ -168,10 +170,12 @@ CheckIndexCompatible(Oid oldId,
 	indexInfo->ii_ExclusionOps = NULL;
 	indexInfo->ii_ExclusionProcs = NULL;
 	indexInfo->ii_ExclusionStrats = NULL;
+	typeObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
 	collationObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
 	classObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
 	coloptions = (int16 *) palloc(numberOfAttributes * sizeof(int16));
-	ComputeIndexAttrs(indexInfo, collationObjectId, classObjectId,
+	ComputeIndexAttrs(indexInfo,
+					  typeObjectId, collationObjectId, classObjectId,
 					  coloptions, attributeList,
 					  exclusionOpNames, relationId,
 					  accessMethodName, accessMethodId,
@@ -191,12 +195,7 @@ CheckIndexCompatible(Oid oldId,
 		return false;
 	}
 
-	/*
-	 * If the old and new operator class of any index column differ in
-	 * operator family or collation, regard the old index as incompatible.
-	 * For access methods other than btree and hash, a family match has no
-	 * defined meaning; require an exact operator class match.
-	 */
+	/* Any change in operator class or collation breaks compatibility. */
 	old_natts = ((Form_pg_index) GETSTRUCT(tuple))->indnatts;
 	Assert(old_natts == numberOfAttributes);
 
@@ -208,52 +207,42 @@ CheckIndexCompatible(Oid oldId,
 	Assert(!isnull);
 	old_indclass = (oidvector *) DatumGetPointer(d);
 
-	family_am = accessMethodId == BTREE_AM_OID || accessMethodId == HASH_AM_OID;
-
-	for (i = 0; i < old_natts; i++)
-	{
-		Oid			old_class = old_indclass->values[i];
-		Oid			new_class = classObjectId[i];
-
-		if (!(old_indcollation->values[i] == collationObjectId[i]
-			  && (old_class == new_class
-				  || (family_am && (get_opclass_family(old_class)
-									== get_opclass_family(new_class))))))
-		{
-			ret = false;
-			break;
-		}
-	}
+	ret = (memcmp(old_indclass->values, classObjectId,
+				  old_natts * sizeof(Oid)) == 0 &&
+		   memcmp(old_indcollation->values, collationObjectId,
+				  old_natts * sizeof(Oid)) == 0);
 
 	ReleaseSysCache(tuple);
 
-	/*
-	 * For btree and hash, exclusion operators need only fall in the same
-	 * operator family; ComputeIndexAttrs already verified that much.  If we
-	 * get this far, we know that the index operator family has not changed,
-	 * and we're done.  For other access methods, require exact matches for
-	 * all exclusion operators.
-	 */
-	if (ret && !family_am && indexInfo->ii_ExclusionOps != NULL)
+	/* For polymorphic opcintype, column type changes break compatibility. */
+	irel = index_open(oldId, AccessShareLock); /* caller probably has a lock */
+	for (i = 0; i < old_natts && ret; i++)
+		ret = (!IsPolymorphicType(get_opclass_input_type(classObjectId[i])) ||
+			   irel->rd_att->attrs[i]->atttypid == typeObjectId[i]);
+
+	/* Any change in exclusion operator selections breaks compatibility. */
+	if (ret && indexInfo->ii_ExclusionOps != NULL)
 	{
-		Relation	irel;
 		Oid		   *old_operators, *old_procs;
 		uint16	   *old_strats;
 
-		/* Caller probably already holds a stronger lock. */
-		irel = index_open(oldId, AccessShareLock);
 		RelationGetExclusionInfo(irel, &old_operators, &old_procs, &old_strats);
+		ret = memcmp(old_operators, indexInfo->ii_ExclusionOps,
+					 old_natts * sizeof(Oid)) == 0;
 
-		for (i = 0; i < old_natts; i++)
-			if (old_operators[i] != indexInfo->ii_ExclusionOps[i])
-			{
-				ret = false;
-				break;
-			}
+		/* Require an exact input type match for polymorphic operators. */
+		for (i = 0; i < old_natts && ret; i++)
+		{
+			Oid			left,
+						right;
 
-		index_close(irel, NoLock);
+			op_input_types(indexInfo->ii_ExclusionOps[i], &left, &right);
+			ret = (!(IsPolymorphicType(left) || IsPolymorphicType(right)) ||
+				   irel->rd_att->attrs[i]->atttypid == typeObjectId[i]);
+		}
 	}
 
+	index_close(irel, NoLock);
 	return ret;
 }
 
@@ -315,6 +304,7 @@ DefineIndex(RangeVar *heapRelation,
 			bool quiet,
 			bool concurrent)
 {
+	Oid		   *typeObjectId;
 	Oid		   *collationObjectId;
 	Oid		   *classObjectId;
 	Oid			accessMethodId;
@@ -550,10 +540,12 @@ DefineIndex(RangeVar *heapRelation,
 	indexInfo->ii_Concurrent = concurrent;
 	indexInfo->ii_BrokenHotChain = false;
 
+	typeObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
 	collationObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
 	classObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
 	coloptions = (int16 *) palloc(numberOfAttributes * sizeof(int16));
-	ComputeIndexAttrs(indexInfo, collationObjectId, classObjectId,
+	ComputeIndexAttrs(indexInfo,
+					  typeObjectId, collationObjectId, classObjectId,
 					  coloptions, attributeList,
 					  exclusionOpNames, relationId,
 					  accessMethodName, accessMethodId,
@@ -980,6 +972,7 @@ CheckPredicate(Expr *predicate)
  */
 static void
 ComputeIndexAttrs(IndexInfo *indexInfo,
+				  Oid *typeOidP,
 				  Oid *collationOidP,
 				  Oid *classOidP,
 				  int16 *colOptionP,
@@ -1107,6 +1100,8 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 							 errmsg("functions in index expression must be marked IMMUTABLE")));
 			}
 		}
+
+		typeOidP[attn] = atttype;
 
 		/*
 		 * Apply collation override if any

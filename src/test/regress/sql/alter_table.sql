@@ -1197,6 +1197,14 @@ select reltoastrelid <> 0 as has_toast_table
 from pg_class
 where oid = 'test_storage'::regclass;
 
+-- SET DATA TYPE without a rewrite
+CREATE DOMAIN other_textarr AS text[];
+CREATE TABLE norewrite_array(c text[] PRIMARY KEY);
+SET client_min_messages = debug1;
+ALTER TABLE norewrite_array ALTER c TYPE text[]; -- no work
+ALTER TABLE norewrite_array ALTER c TYPE other_textarr; -- rebuild index
+RESET client_min_messages;
+
 --
 -- lock levels
 --

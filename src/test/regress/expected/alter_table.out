@@ -1665,6 +1665,15 @@ where oid = 'test_storage'::regclass;
  t
 (1 row)
 
+-- SET DATA TYPE without a rewrite
+CREATE DOMAIN other_textarr AS text[];
+CREATE TABLE norewrite_array(c text[] PRIMARY KEY);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "norewrite_array_pkey" for table "norewrite_array"
+SET client_min_messages = debug1;
+ALTER TABLE norewrite_array ALTER c TYPE text[]; -- no work
+ALTER TABLE norewrite_array ALTER c TYPE other_textarr; -- rebuild index
+DEBUG:  building index "norewrite_array_pkey" on table "norewrite_array"
+RESET client_min_messages;
 --
 -- lock levels
 --
