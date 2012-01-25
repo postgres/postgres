@@ -204,7 +204,7 @@ get_db_infos(ClusterInfo *cluster)
 	/* we don't preserve pg_database.oid so we sort by name */
 			"ORDER BY 2",
 	/* 9.2 removed the spclocation column */
-			(GET_MAJOR_VERSION(old_cluster.major_version) <= 901) ?
+			(GET_MAJOR_VERSION(cluster->major_version) <= 901) ?
 			"t.spclocation" : "pg_catalog.pg_tablespace_location(t.oid) AS spclocation");
 
 	res = executeQueryOrDie(conn, "%s", query);
@@ -287,7 +287,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	/* we preserve pg_class.oid so we sort by it to match old/new */
 			 "ORDER BY 1;",
 	/* 9.2 removed the spclocation column */
-			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 901) ?
+			 (GET_MAJOR_VERSION(cluster->major_version) <= 901) ?
 			 "t.spclocation" : "pg_catalog.pg_tablespace_location(t.oid) AS spclocation",
 	/* see the comment at the top of old_8_3_create_sequence_script() */
 			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 803) ?

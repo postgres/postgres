@@ -53,7 +53,7 @@ get_tablespace_paths(void)
 			 "		spcname != 'pg_global'",
 	/* 9.2 removed the spclocation column */
 			(GET_MAJOR_VERSION(old_cluster.major_version) <= 901) ?
-			"t.spclocation" : "pg_catalog.pg_tablespace_location(oid) AS spclocation");
+			"spclocation" : "pg_catalog.pg_tablespace_location(oid) AS spclocation");
 
 	res = executeQueryOrDie(conn, "%s", query);
 
