@@ -236,6 +236,10 @@ check_loadable_libraries(void)
 		 *	plpython2u pointing to it.  For this reason, any reference to
 		 *	library name "plpython" in an old PG <= 9.1 cluster must look
 		 *	for "plpython2" in the new cluster.
+		 *
+		 *	For this case, we could check pg_pltemplate, but that only works
+		 *	for languages, and does not help with function shared objects,
+		 *	so we just do a general fix.
 		 */
 		if (GET_MAJOR_VERSION(old_cluster.major_version) < 901 &&
 			strcmp(lib, "$libdir/plpython") == 0)
