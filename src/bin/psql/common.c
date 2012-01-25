@@ -438,7 +438,7 @@ ResetCancelConn(void)
 static bool
 AcceptResult(const PGresult *result)
 {
-	bool		OK = true;
+	bool		OK;
 
 	if (!result)
 		OK = false;
@@ -450,11 +450,21 @@ AcceptResult(const PGresult *result)
 			case PGRES_EMPTY_QUERY:
 			case PGRES_COPY_IN:
 			case PGRES_COPY_OUT:
+			case PGRES_COPY_BOTH:
 				/* Fine, do nothing */
+				OK = true;
+				break;
+
+			case PGRES_BAD_RESPONSE:
+			case PGRES_NONFATAL_ERROR:
+			case PGRES_FATAL_ERROR:
+				OK = false;
 				break;
 
 			default:
 				OK = false;
+				psql_error("unexpected PQresultStatus (%d)",
+						   PQresultStatus(result));
 				break;
 		}
 
@@ -620,45 +630,114 @@ PrintQueryTuples(const PGresult *results)
 
 
 /*
- * ProcessCopyResult: if command was a COPY FROM STDIN/TO STDOUT, handle it
+ * ProcessResult: utility function for use by SendQuery() only
  *
- * Note: Utility function for use by SendQuery() only.
+ * When our command string contained a COPY FROM STDIN or COPY TO STDOUT,
+ * PQexec() has stopped at the PGresult associated with the first such
+ * command.  In that event, we'll marshal data for the COPY and then cycle
+ * through any subsequent PGresult objects.
  *
- * Returns true if the query executed successfully, false otherwise.
+ * When the command string contained no affected COPY command, this function
+ * degenerates to an AcceptResult() call.
+ *
+ * Changes its argument to point to the last PGresult of the command string,
+ * or NULL if that result was for a COPY FROM STDIN or COPY TO STDOUT.
+ *
+ * Returns true on complete success, false otherwise.  Possible failure modes
+ * include purely client-side problems; check the transaction status for the
+ * server-side opinion.
  */
 static bool
-ProcessCopyResult(PGresult *results)
+ProcessResult(PGresult **results)
 {
-	bool		success = false;
+	PGresult   *next_result;
+	bool		success = true;
+	bool		first_cycle = true;
 
-	if (!results)
-		return false;
-
-	switch (PQresultStatus(results))
+	do
 	{
-		case PGRES_TUPLES_OK:
-		case PGRES_COMMAND_OK:
-		case PGRES_EMPTY_QUERY:
-			/* nothing to do here */
-			success = true;
-			break;
+		ExecStatusType result_status;
+		bool		is_copy;
 
-		case PGRES_COPY_OUT:
+		if (!AcceptResult(*results))
+		{
+			/*
+			 * Failure at this point is always a server-side failure or a
+			 * failure to submit the command string.  Either way, we're
+			 * finished with this command string.
+			 */
+			success = false;
+			break;
+		}
+
+		result_status = PQresultStatus(*results);
+		switch (result_status)
+		{
+			case PGRES_COPY_BOTH:
+				/*
+				 * No now-existing SQL command can yield PGRES_COPY_BOTH, but
+				 * defend against the future.  PQexec() can't short-circuit
+				 * it's way out of a PGRES_COPY_BOTH, so the connection will
+				 * be useless at this point.  XXX is there a method for
+				 * clearing this status that's likely to work with every
+				 * future command that can initiate it?
+				 */
+				psql_error("unexpected PQresultStatus (%d)", result_status);
+				return false;
+
+			case PGRES_COPY_OUT:
+			case PGRES_COPY_IN:
+				is_copy = true;
+				break;
+
+			case PGRES_EMPTY_QUERY:
+			case PGRES_COMMAND_OK:
+			case PGRES_TUPLES_OK:
+				is_copy = false;
+				break;
+
+			default:
+				/* AcceptResult() should have caught anything else. */
+				is_copy = false;
+				psql_error("unexpected PQresultStatus (%d)", result_status);
+				break;
+		}
+
+		if (is_copy)
+		{
+			/*
+			 * Marshal the COPY data.  Either subroutine will get the
+			 * connection out of its COPY state, then call PQresultStatus()
+			 * once and report any error.
+			 */
 			SetCancelConn();
-			success = handleCopyOut(pset.db, pset.queryFout);
+			if (result_status == PGRES_COPY_OUT)
+				success = handleCopyOut(pset.db, pset.queryFout) && success;
+			else
+				success = handleCopyIn(pset.db, pset.cur_cmd_source,
+									   PQbinaryTuples(*results)) && success;
 			ResetCancelConn();
-			break;
 
-		case PGRES_COPY_IN:
-			SetCancelConn();
-			success = handleCopyIn(pset.db, pset.cur_cmd_source,
-								   PQbinaryTuples(results));
-			ResetCancelConn();
+			/*
+			 * Call PQgetResult() once more.  In the typical case of a
+			 * single-command string, it will return NULL.  Otherwise, we'll
+			 * have other results to process that may include other COPYs.
+			 */
+			PQclear(*results);
+			*results = next_result = PQgetResult(pset.db);
+		}
+		else if (first_cycle)
+			/* fast path: no COPY commands; PQexec visited all results */
 			break;
+		else if ((next_result = PQgetResult(pset.db)))
+		{
+			/* non-COPY command(s) after a COPY: keep the last one */
+			PQclear(*results);
+			*results = next_result;
+		}
 
-		default:
-			break;
-	}
+		first_cycle = false;
+	} while (next_result);
 
 	/* may need this to recover from conn loss during COPY */
 	if (!CheckConnection())
@@ -708,7 +787,7 @@ PrintQueryStatus(PGresult *results)
 static bool
 PrintQueryResults(PGresult *results)
 {
-	bool		success = false;
+	bool		success;
 	const char *cmdstatus;
 
 	if (!results)
@@ -738,11 +817,21 @@ PrintQueryResults(PGresult *results)
 
 		case PGRES_COPY_OUT:
 		case PGRES_COPY_IN:
+		case PGRES_COPY_BOTH:
 			/* nothing to do here */
 			success = true;
 			break;
 
+		case PGRES_BAD_RESPONSE:
+		case PGRES_NONFATAL_ERROR:
+		case PGRES_FATAL_ERROR:
+			success = false;
+			break;
+
 		default:
+			success = false;
+			psql_error("unexpected PQresultStatus (%d)",
+					   PQresultStatus(results));
 			break;
 	}
 
@@ -867,7 +956,7 @@ SendQuery(const char *query)
 
 		/* these operations are included in the timing result: */
 		ResetCancelConn();
-		OK = (AcceptResult(results) && ProcessCopyResult(results));
+		OK = ProcessResult(&results);
 
 		if (pset.timing)
 		{
@@ -877,7 +966,7 @@ SendQuery(const char *query)
 		}
 
 		/* but printing results isn't: */
-		if (OK)
+		if (OK && results)
 			OK = PrintQueryResults(results);
 	}
 	else
@@ -891,34 +980,44 @@ SendQuery(const char *query)
 	/* If we made a temporary savepoint, possibly release/rollback */
 	if (on_error_rollback_savepoint)
 	{
-		const char *svptcmd;
+		const char *svptcmd = NULL;
 
 		transaction_status = PQtransactionStatus(pset.db);
 
-		if (transaction_status == PQTRANS_INERROR)
+		switch (transaction_status)
 		{
-			/* We always rollback on an error */
-			svptcmd = "ROLLBACK TO pg_psql_temporary_savepoint";
-		}
-		else if (transaction_status != PQTRANS_INTRANS)
-		{
-			/* If they are no longer in a transaction, then do nothing */
-			svptcmd = NULL;
-		}
-		else
-		{
-			/*
-			 * Do nothing if they are messing with savepoints themselves: If
-			 * the user did RELEASE or ROLLBACK, our savepoint is gone. If
-			 * they issued a SAVEPOINT, releasing ours would remove theirs.
-			 */
-			if (results &&
-				(strcmp(PQcmdStatus(results), "SAVEPOINT") == 0 ||
-				 strcmp(PQcmdStatus(results), "RELEASE") == 0 ||
-				 strcmp(PQcmdStatus(results), "ROLLBACK") == 0))
-				svptcmd = NULL;
-			else
-				svptcmd = "RELEASE pg_psql_temporary_savepoint";
+			case PQTRANS_INERROR:
+				/* We always rollback on an error */
+				svptcmd = "ROLLBACK TO pg_psql_temporary_savepoint";
+				break;
+
+			case PQTRANS_IDLE:
+				/* If they are no longer in a transaction, then do nothing */
+				break;
+
+			case PQTRANS_INTRANS:
+				/*
+				 * Do nothing if they are messing with savepoints themselves:
+				 * If the user did RELEASE or ROLLBACK, our savepoint is
+				 * gone. If they issued a SAVEPOINT, releasing ours would
+				 * remove theirs.
+				 */
+				if (results &&
+					(strcmp(PQcmdStatus(results), "SAVEPOINT") == 0 ||
+					 strcmp(PQcmdStatus(results), "RELEASE") == 0 ||
+					 strcmp(PQcmdStatus(results), "ROLLBACK") == 0))
+					svptcmd = NULL;
+				else
+					svptcmd = "RELEASE pg_psql_temporary_savepoint";
+				break;
+
+			case PQTRANS_ACTIVE:
+			case PQTRANS_UNKNOWN:
+			default:
+				OK = false;
+				psql_error("unexpected transaction status (%d)\n",
+						   transaction_status);
+				break;
 		}
 
 		if (svptcmd)

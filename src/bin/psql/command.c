@@ -320,25 +320,10 @@ exec_command(const char *cmd,
 	/* \copy */
 	else if (pg_strcasecmp(cmd, "copy") == 0)
 	{
-		/* Default fetch-it-all-and-print mode */
-		instr_time	before,
-					after;
-
 		char	   *opt = psql_scan_slash_option(scan_state,
 												 OT_WHOLE_LINE, NULL, false);
 
-		if (pset.timing)
-			INSTR_TIME_SET_CURRENT(before);
-
 		success = do_copy(opt);
-
-		if (pset.timing && success)
-		{
-			INSTR_TIME_SET_CURRENT(after);
-			INSTR_TIME_SUBTRACT(after, before);
-			printf(_("Time: %.3f ms\n"), INSTR_TIME_GET_MILLISEC(after));
-		}
-
 		free(opt);
 	}
 
