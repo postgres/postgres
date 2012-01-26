@@ -214,11 +214,20 @@ CheckIndexCompatible(Oid oldId,
 
 	ReleaseSysCache(tuple);
 
+	if (!ret)
+		return false;
+
 	/* For polymorphic opcintype, column type changes break compatibility. */
 	irel = index_open(oldId, AccessShareLock); /* caller probably has a lock */
-	for (i = 0; i < old_natts && ret; i++)
-		ret = (!IsPolymorphicType(get_opclass_input_type(classObjectId[i])) ||
-			   irel->rd_att->attrs[i]->atttypid == typeObjectId[i]);
+	for (i = 0; i < old_natts; i++)
+	{
+		if (IsPolymorphicType(get_opclass_input_type(classObjectId[i])) &&
+		    irel->rd_att->attrs[i]->atttypid != typeObjectId[i])
+		{
+			ret = false;
+			break;
+		}
+	}
 
 	/* Any change in exclusion operator selections breaks compatibility. */
 	if (ret && indexInfo->ii_ExclusionOps != NULL)
@@ -231,14 +240,21 @@ CheckIndexCompatible(Oid oldId,
 					 old_natts * sizeof(Oid)) == 0;
 
 		/* Require an exact input type match for polymorphic operators. */
-		for (i = 0; i < old_natts && ret; i++)
+		if (ret)
 		{
-			Oid			left,
-						right;
+			for (i = 0; i < old_natts && ret; i++)
+			{
+				Oid			left,
+							right;
 
-			op_input_types(indexInfo->ii_ExclusionOps[i], &left, &right);
-			ret = (!(IsPolymorphicType(left) || IsPolymorphicType(right)) ||
-				   irel->rd_att->attrs[i]->atttypid == typeObjectId[i]);
+				op_input_types(indexInfo->ii_ExclusionOps[i], &left, &right);
+				if ((IsPolymorphicType(left) || IsPolymorphicType(right)) &&
+					   irel->rd_att->attrs[i]->atttypid != typeObjectId[i])
+				{
+					ret = false;
+					break;
+				}
+			}
 		}
 	}
 
