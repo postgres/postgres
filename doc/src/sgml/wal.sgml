@@ -419,7 +419,7 @@
   </para>
 
   <para>
-   The server's background writer process automatically performs
+   The server's checkpointer process automatically performs
    a checkpoint every so often.  A checkpoint is created every <xref
    linkend="guc-checkpoint-segments"> log segments, or every <xref
    linkend="guc-checkpoint-timeout"> seconds, whichever comes first.
