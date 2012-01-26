@@ -953,6 +953,7 @@ void
 MarkBufferDirty(Buffer buffer)
 {
 	volatile BufferDesc *bufHdr;
+	bool	dirtied = false;
 
 	if (!BufferIsValid(buffer))
 		elog(ERROR, "bad buffer ID: %d", buffer);
@@ -973,19 +974,25 @@ MarkBufferDirty(Buffer buffer)
 
 	Assert(bufHdr->refcount > 0);
 
-	/*
-	 * If the buffer was not dirty already, do vacuum accounting.
-	 */
 	if (!(bufHdr->flags & BM_DIRTY))
-	{
-		VacuumPageDirty++;
-		if (VacuumCostActive)
-			VacuumCostBalance += VacuumCostPageDirty;
-	}
+		dirtied = true;
 
 	bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
 
 	UnlockBufHdr(bufHdr);
+
+	/*
+	 * If the buffer was not dirty already, do vacuum accounting, and
+	 * nudge bgwriter.
+	 */
+	if (dirtied)
+	{
+		VacuumPageDirty++;
+		if (VacuumCostActive)
+			VacuumCostBalance += VacuumCostPageDirty;
+		if (ProcGlobal->bgwriterLatch)
+			SetLatch(ProcGlobal->bgwriterLatch);
+	}
 }
 
 /*
@@ -1307,8 +1314,12 @@ BufferSync(int flags)
  * BgBufferSync -- Write out some dirty buffers in the pool.
  *
  * This is called periodically by the background writer process.
+ *
+ * Returns true if the clocksweep has been "lapped", so that there's nothing
+ * to do. Also returns true if there's nothing to do because bgwriter was
+ * effectively disabled by setting bgwriter_lru_maxpages to 0.
  */
-void
+bool
 BgBufferSync(void)
 {
 	/* info obtained from freelist.c */
@@ -1365,7 +1376,7 @@ BgBufferSync(void)
 	if (bgwriter_lru_maxpages <= 0)
 	{
 		saved_info_valid = false;
-		return;
+		return true;
 	}
 
 	/*
@@ -1584,6 +1595,8 @@ BgBufferSync(void)
 			 recent_alloc, strategy_delta, scans_per_alloc, smoothed_density);
 #endif
 	}
+
+	return (bufs_to_lap == 0);
 }
 
 /*
@@ -2341,16 +2354,24 @@ SetBufferCommitInfoNeedsSave(Buffer buffer)
 	if ((bufHdr->flags & (BM_DIRTY | BM_JUST_DIRTIED)) !=
 		(BM_DIRTY | BM_JUST_DIRTIED))
 	{
+		bool		dirtied = false;
+
 		LockBufHdr(bufHdr);
 		Assert(bufHdr->refcount > 0);
 		if (!(bufHdr->flags & BM_DIRTY))
+			dirtied = true;
+		bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
+		UnlockBufHdr(bufHdr);
+
+		if (dirtied)
 		{
 			VacuumPageDirty++;
 			if (VacuumCostActive)
 				VacuumCostBalance += VacuumCostPageDirty;
+			/* The bgwriter may need to be woken. */
+			if (ProcGlobal->bgwriterLatch)
+				SetLatch(ProcGlobal->bgwriterLatch);
 		}
-		bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
-		UnlockBufHdr(bufHdr);
 	}
 }
 

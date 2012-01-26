@@ -213,7 +213,7 @@ extern bool HoldingBufferPinThatDelaysRecovery(void);
 extern void AbortBufferIO(void);
 
 extern void BufmgrCommit(void);
-extern void BgBufferSync(void);
+extern bool BgBufferSync(void);
 
 extern void AtProcExit_LocalBuffers(void);
 
