@@ -4454,7 +4454,7 @@ pgstat_recv_bgwriter(PgStat_MsgBgWriter *msg, int len)
 /* ----------
  * pgstat_recv_recoveryconflict() -
  *
- *	Process as RECOVERYCONFLICT message.
+ *	Process a RECOVERYCONFLICT message.
  * ----------
  */
 static void
@@ -4494,7 +4494,7 @@ pgstat_recv_recoveryconflict(PgStat_MsgRecoveryConflict *msg, int len)
 /* ----------
  * pgstat_recv_deadlock() -
  *
- *	Process as DEADLOCK message.
+ *	Process a DEADLOCK message.
  * ----------
  */
 static void
@@ -4510,7 +4510,7 @@ pgstat_recv_deadlock(PgStat_MsgDeadlock *msg, int len)
 /* ----------
  * pgstat_recv_tempfile() -
  *
- *	Process as PGSTAT_MTYPE_TEMPFILE message.
+ *	Process a TEMPFILE message.
  * ----------
  */
 static void
