@@ -1260,6 +1260,7 @@ typedef struct IndexScanState
  *		RelationDesc	   index relation descriptor
  *		ScanDesc		   index scan descriptor
  *		VMBuffer		   buffer in use for visibility map testing, if any
+ *		HeapFetches		   number of tuples we were forced to fetch from heap
  * ----------------
  */
 typedef struct IndexOnlyScanState
@@ -1277,6 +1278,7 @@ typedef struct IndexOnlyScanState
 	Relation	ioss_RelationDesc;
 	IndexScanDesc ioss_ScanDesc;
 	Buffer		ioss_VMBuffer;
+	long		ioss_HeapFetches;
 } IndexOnlyScanState;
 
 /* ----------------

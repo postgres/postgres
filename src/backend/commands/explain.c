@@ -1012,6 +1012,9 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			if (plan->qual)
 				show_instrumentation_count("Rows Removed by Filter", 1,
 										   planstate, es);
+			if (es->analyze)
+				ExplainPropertyLong("Heap Fetches",
+					((IndexOnlyScanState *) planstate)->ioss_HeapFetches, es);
 			break;
 		case T_BitmapIndexScan:
 			show_scan_qual(((BitmapIndexScan *) plan)->indexqualorig,
