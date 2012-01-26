@@ -109,7 +109,7 @@ alter table emp rename column salary to manager;
 ERROR:  column "manager" of relation "stud_emp" already exists
 -- conflict
 alter table emp rename column salary to oid;
-ERROR:  column "oid" of relation "stud_emp" already exists
+ERROR:  column name "oid" conflicts with a system column name
 --
 -- TRANSACTION STUFF
 -- not in a xact

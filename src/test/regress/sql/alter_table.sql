@@ -9,6 +9,8 @@ COMMENT ON TABLE tmp_wrong IS 'table comment';
 COMMENT ON TABLE tmp IS 'table comment';
 COMMENT ON TABLE tmp IS NULL;
 
+ALTER TABLE tmp ADD COLUMN xmin integer; -- fails
+
 ALTER TABLE tmp ADD COLUMN a int4 default 3;
 
 ALTER TABLE tmp ADD COLUMN b name;

@@ -304,6 +304,7 @@ static void ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recu
 static void ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 				ColumnDef *colDef, bool isOid,
 				bool recurse, bool recursing, LOCKMODE lockmode);
+static void check_for_column_name_collision(Relation rel, const char *colname);
 static void add_column_datatype_dependency(Oid relid, int32 attnum, Oid typid);
 static void add_column_collation_dependency(Oid relid, int32 attnum, Oid collid);
 static void ATPrepAddOids(List **wqueue, Relation rel, bool recurse,
@@ -2257,15 +2258,7 @@ renameatt_internal(Oid myrelid,
 						oldattname)));
 
 	/* new name should not already exist */
-
-	/* this test is deliberately not attisdropped-aware */
-	if (SearchSysCacheExists2(ATTNAME,
-							  ObjectIdGetDatum(myrelid),
-							  PointerGetDatum(newattname)))
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_COLUMN),
-				 errmsg("column \"%s\" of relation \"%s\" already exists",
-					  newattname, RelationGetRelationName(targetrelation))));
+	check_for_column_name_collision(targetrelation, newattname);
 
 	/* apply the update */
 	namestrcpy(&(attform->attname), newattname);
@@ -4310,17 +4303,8 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		elog(ERROR, "cache lookup failed for relation %u", myrelid);
 	relkind = ((Form_pg_class) GETSTRUCT(reltup))->relkind;
 
-	/*
-	 * this test is deliberately not attisdropped-aware, since if one tries to
-	 * add a column matching a dropped column name, it's gonna fail anyway.
-	 */
-	if (SearchSysCacheExists2(ATTNAME,
-							  ObjectIdGetDatum(myrelid),
-							  PointerGetDatum(colDef->colname)))
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_COLUMN),
-				 errmsg("column \"%s\" of relation \"%s\" already exists",
-						colDef->colname, RelationGetRelationName(rel))));
+	/* new name should not already exist */
+	check_for_column_name_collision(rel, colDef->colname);
 
 	/* Determine the new attribute's number */
 	if (isOid)
@@ -4560,6 +4544,46 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 
 		heap_close(childrel, NoLock);
 	}
+}
+
+/*
+ * If a new or renamed column will collide with the name of an existing
+ * column, error out.
+ */
+static void
+check_for_column_name_collision(Relation rel, const char *colname)
+{
+	HeapTuple	attTuple;
+   	int			attnum;
+
+	/*
+	 * this test is deliberately not attisdropped-aware, since if one tries to
+	 * add a column matching a dropped column name, it's gonna fail anyway.
+	 */
+	attTuple = SearchSysCache2(ATTNAME,
+							   ObjectIdGetDatum(RelationGetRelid(rel)),
+							   PointerGetDatum(colname));
+	if (!HeapTupleIsValid(attTuple))
+		return;
+
+   	attnum = ((Form_pg_attribute) GETSTRUCT(attTuple))->attnum;
+	ReleaseSysCache(attTuple);
+
+	/*
+	 * We throw a different error message for conflicts with system column
+	 * names, since they are normally not shown and the user might otherwise
+	 * be confused about the reason for the conflict.
+	 */
+   	if (attnum <= 0)
+	    ereport(ERROR,
+			    (errcode(ERRCODE_DUPLICATE_COLUMN),
+			     errmsg("column name \"%s\" conflicts with a system column name",
+					    colname)));
+   	else
+	    ereport(ERROR,
+			    (errcode(ERRCODE_DUPLICATE_COLUMN),
+			     errmsg("column \"%s\" of relation \"%s\" already exists",
+					    colname, RelationGetRelationName(rel))));
 }
 
 /*
