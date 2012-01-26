@@ -816,7 +816,7 @@ RemoveRelations(DropStmt *drop)
 		add_exact_object_address(&obj, objects);
 	}
 
-	performMultipleDeletions(objects, drop->behavior);
+	performMultipleDeletions(objects, drop->behavior, 0);
 
 	free_object_addresses(objects);
 }
@@ -4803,8 +4803,13 @@ ATExecColumnDefault(Relation rel, const char *colName,
 	 * Remove any old default for the column.  We use RESTRICT here for
 	 * safety, but at present we do not expect anything to depend on the
 	 * default.
+	 *
+	 * We treat removing the existing default as an internal operation when
+	 * it is preparatory to adding a new default, but as a user-initiated
+	 * operation when the user asked for a drop.
 	 */
-	RemoveAttrDefault(RelationGetRelid(rel), attnum, DROP_RESTRICT, false);
+	RemoveAttrDefault(RelationGetRelid(rel), attnum, DROP_RESTRICT, false,
+					  newDefault == NULL ? false : true);
 
 	if (newDefault)
 	{
@@ -5217,7 +5222,7 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 	object.objectId = RelationGetRelid(rel);
 	object.objectSubId = attnum;
 
-	performDeletion(&object, behavior);
+	performDeletion(&object, behavior, 0);
 
 	/*
 	 * If we dropped the OID column, must adjust pg_class.relhasoids and tell
@@ -6731,7 +6736,7 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 		conobj.objectId = HeapTupleGetOid(tuple);
 		conobj.objectSubId = 0;
 
-		performDeletion(&conobj, behavior);
+		performDeletion(&conobj, behavior, 0);
 
 		found = true;
 
@@ -7453,7 +7458,8 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 		 * We use RESTRICT here for safety, but at present we do not expect
 		 * anything to depend on the default.
 		 */
-		RemoveAttrDefault(RelationGetRelid(rel), attnum, DROP_RESTRICT, true);
+		RemoveAttrDefault(RelationGetRelid(rel), attnum, DROP_RESTRICT, true,
+						  true);
 
 		StoreAttrDefault(rel, attnum, defaultexpr);
 	}
@@ -7598,7 +7604,7 @@ ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab, LOCKMODE lockmode)
 		obj.classId = ConstraintRelationId;
 		obj.objectId = lfirst_oid(oid_item);
 		obj.objectSubId = 0;
-		performDeletion(&obj, DROP_RESTRICT);
+		performDeletion(&obj, DROP_RESTRICT, PERFORM_DELETION_INTERNAL);
 	}
 
 	foreach(oid_item, tab->changedIndexOids)
@@ -7606,7 +7612,7 @@ ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab, LOCKMODE lockmode)
 		obj.classId = RelationRelationId;
 		obj.objectId = lfirst_oid(oid_item);
 		obj.objectSubId = 0;
-		performDeletion(&obj, DROP_RESTRICT);
+		performDeletion(&obj, DROP_RESTRICT, PERFORM_DELETION_INTERNAL);
 	}
 
 	/*
@@ -9764,7 +9770,14 @@ PreCommit_on_commit_actions(void)
 					object.classId = RelationRelationId;
 					object.objectId = oc->relid;
 					object.objectSubId = 0;
-					performDeletion(&object, DROP_CASCADE);
+
+					/*
+					 * Since this is an automatic drop, rather than one
+					 * directly initiated by the user, we pass the
+					 * PERFORM_DELETION_INTERNAL flag.
+					 */
+					performDeletion(&object,
+									DROP_CASCADE, PERFORM_DELETION_INTERNAL);
 
 					/*
 					 * Note that table deletion will call

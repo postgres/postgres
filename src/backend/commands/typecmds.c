@@ -2318,7 +2318,7 @@ AlterDomainDropConstraint(List *names, const char *constrName,
 			conobj.objectId = HeapTupleGetOid(contup);
 			conobj.objectSubId = 0;
 
-			performDeletion(&conobj, behavior);
+			performDeletion(&conobj, behavior, 0);
 			found = true;
 		}
 	}

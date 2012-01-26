@@ -1286,7 +1286,7 @@ RemoveUserMapping(DropUserMappingStmt *stmt)
 	object.objectId = umId;
 	object.objectSubId = 0;
 
-	performDeletion(&object, DROP_CASCADE);
+	performDeletion(&object, DROP_CASCADE, 0);
 }
 
 

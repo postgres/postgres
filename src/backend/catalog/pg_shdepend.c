@@ -1240,7 +1240,7 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 	}
 
 	/* the dependency mechanism does the actual work */
-	performMultipleDeletions(deleteobjs, behavior);
+	performMultipleDeletions(deleteobjs, behavior, 0);
 
 	heap_close(sdepRel, RowExclusiveLock);
 

@@ -1519,7 +1519,7 @@ dropOperators(List *opfamilyname, Oid amoid, Oid opfamilyoid,
 		object.objectId = amopid;
 		object.objectSubId = 0;
 
-		performDeletion(&object, DROP_RESTRICT);
+		performDeletion(&object, DROP_RESTRICT, 0);
 	}
 }
 
@@ -1559,7 +1559,7 @@ dropProcedures(List *opfamilyname, Oid amoid, Oid opfamilyoid,
 		object.objectId = amprocid;
 		object.objectSubId = 0;
 
-		performDeletion(&object, DROP_RESTRICT);
+		performDeletion(&object, DROP_RESTRICT, 0);
 	}
 }
 

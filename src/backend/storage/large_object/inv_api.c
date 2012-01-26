@@ -307,7 +307,7 @@ inv_drop(Oid lobjId)
 	object.classId = LargeObjectRelationId;
 	object.objectId = lobjId;
 	object.objectSubId = 0;
-	performDeletion(&object, DROP_CASCADE);
+	performDeletion(&object, DROP_CASCADE, 0);
 
 	/*
 	 * Advance command counter so that tuple removal will be seen by later

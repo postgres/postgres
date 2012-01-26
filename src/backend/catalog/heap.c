@@ -1528,7 +1528,7 @@ RemoveAttributeById(Oid relid, AttrNumber attnum)
  */
 void
 RemoveAttrDefault(Oid relid, AttrNumber attnum,
-				  DropBehavior behavior, bool complain)
+				  DropBehavior behavior, bool complain, bool internal)
 {
 	Relation	attrdef_rel;
 	ScanKeyData scankeys[2];
@@ -1559,7 +1559,8 @@ RemoveAttrDefault(Oid relid, AttrNumber attnum,
 		object.objectId = HeapTupleGetOid(tuple);
 		object.objectSubId = 0;
 
-		performDeletion(&object, behavior);
+		performDeletion(&object, behavior,
+						internal ? PERFORM_DELETION_INTERNAL : 0);
 
 		found = true;
 	}

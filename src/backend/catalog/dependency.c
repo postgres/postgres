@@ -171,7 +171,8 @@ static void reportDependentObjects(const ObjectAddresses *targetObjects,
 					   DropBehavior behavior,
 					   int msglevel,
 					   const ObjectAddress *origObject);
-static void deleteOneObject(const ObjectAddress *object, Relation depRel);
+static void deleteOneObject(const ObjectAddress *object,
+							Relation depRel, int32 flags);
 static void doDeletion(const ObjectAddress *object);
 static void AcquireDeletionLock(const ObjectAddress *object);
 static void ReleaseDeletionLock(const ObjectAddress *object);
@@ -205,10 +206,17 @@ static void getOpFamilyDescription(StringInfo buffer, Oid opfid);
  * that can participate in dependencies.  Note that the next two routines
  * are variants on the same theme; if you change anything here you'll likely
  * need to fix them too.
+ *
+ * flags should include PERFORM_DELETION_INTERNAL when the drop operation is
+ * not the direct result of a user-initiated action.  For example, when a
+ * temporary schema is cleaned out so that a new backend can use it, or when
+ * a column default is dropped as an intermediate step while adding a new one,
+ * that's an internal operation.  On the other hand, when the we drop something
+ * because the user issued a DROP statement against it, that's not internal.
  */
 void
 performDeletion(const ObjectAddress *object,
-				DropBehavior behavior)
+				DropBehavior behavior, int flags)
 {
 	Relation	depRel;
 	ObjectAddresses *targetObjects;
@@ -254,7 +262,7 @@ performDeletion(const ObjectAddress *object,
 	{
 		ObjectAddress *thisobj = targetObjects->refs + i;
 
-		deleteOneObject(thisobj, depRel);
+		deleteOneObject(thisobj, depRel, flags);
 	}
 
 	/* And clean up */
@@ -274,7 +282,7 @@ performDeletion(const ObjectAddress *object,
  */
 void
 performMultipleDeletions(const ObjectAddresses *objects,
-						 DropBehavior behavior)
+						 DropBehavior behavior, int flags)
 {
 	Relation	depRel;
 	ObjectAddresses *targetObjects;
@@ -336,7 +344,7 @@ performMultipleDeletions(const ObjectAddresses *objects,
 	{
 		ObjectAddress *thisobj = targetObjects->refs + i;
 
-		deleteOneObject(thisobj, depRel);
+		deleteOneObject(thisobj, depRel, flags);
 	}
 
 	/* And clean up */
@@ -407,7 +415,14 @@ deleteWhatDependsOn(const ObjectAddress *object,
 		if (thisextra->flags & DEPFLAG_ORIGINAL)
 			continue;
 
-		deleteOneObject(thisobj, depRel);
+		/*
+		 * Since this function is currently only used to clean out temporary
+		 * schemas, we pass PERFORM_DELETION_INTERNAL here, indicating that
+		 * the operation is an automatic system operation rather than a user
+		 * action.  If, in the future, this function is used for other
+		 * purposes, we might need to revisit this.
+		 */
+		deleteOneObject(thisobj, depRel, PERFORM_DELETION_INTERNAL);
 	}
 
 	/* And clean up */
@@ -950,7 +965,7 @@ reportDependentObjects(const ObjectAddresses *targetObjects,
  * depRel is the already-open pg_depend relation.
  */
 static void
-deleteOneObject(const ObjectAddress *object, Relation depRel)
+deleteOneObject(const ObjectAddress *object, Relation depRel, int flags)
 {
 	ScanKeyData key[3];
 	int			nkeys;

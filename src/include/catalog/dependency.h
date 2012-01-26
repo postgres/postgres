@@ -152,11 +152,13 @@ typedef enum ObjectClass
 
 /* in dependency.c */
 
+#define PERFORM_DELETION_INTERNAL			0x0001
+
 extern void performDeletion(const ObjectAddress *object,
-				DropBehavior behavior);
+				DropBehavior behavior, int flags);
 
 extern void performMultipleDeletions(const ObjectAddresses *objects,
-						 DropBehavior behavior);
+						 DropBehavior behavior, int flags);
 
 extern void deleteWhatDependsOn(const ObjectAddress *object,
 					bool showNotices);

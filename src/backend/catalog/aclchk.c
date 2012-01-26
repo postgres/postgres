@@ -1211,7 +1211,7 @@ SetDefaultACL(InternalDefaultACL *iacls)
 			myself.objectId = HeapTupleGetOid(tuple);
 			myself.objectSubId = 0;
 
-			performDeletion(&myself, DROP_RESTRICT);
+			performDeletion(&myself, DROP_RESTRICT, 0);
 		}
 	}
 	else
