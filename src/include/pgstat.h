@@ -47,7 +47,8 @@ typedef enum StatMsgType
 	PGSTAT_MTYPE_BGWRITER,
 	PGSTAT_MTYPE_FUNCSTAT,
 	PGSTAT_MTYPE_FUNCPURGE,
-	PGSTAT_MTYPE_RECOVERYCONFLICT
+	PGSTAT_MTYPE_RECOVERYCONFLICT,
+	PGSTAT_MTYPE_TEMPFILE
 } StatMsgType;
 
 /* ----------
@@ -377,6 +378,18 @@ typedef struct PgStat_MsgRecoveryConflict
 } PgStat_MsgRecoveryConflict;
 
 /* ----------
+ * PgStat_MsgTempFile	Sent by the backend upon creating a temp file
+ * ----------
+ */
+typedef struct PgStat_MsgTempFile
+{
+	PgStat_MsgHdr m_hdr;
+
+	Oid			m_databaseid;
+	size_t		m_filesize;
+} PgStat_MsgTempFile;
+
+/* ----------
  * PgStat_FunctionCounts	The actual per-function counts kept by a backend
  *
  * This struct should contain only actual event counters, because we memcmp
@@ -507,6 +520,9 @@ typedef struct PgStat_StatDBEntry
 	PgStat_Counter n_conflict_snapshot;
 	PgStat_Counter n_conflict_bufferpin;
 	PgStat_Counter n_conflict_startup_deadlock;
+	PgStat_Counter n_temp_files;
+	PgStat_Counter n_temp_bytes;
+
 	TimestampTz stat_reset_timestamp;
 
 
@@ -735,6 +751,7 @@ extern void pgstat_initialize(void);
 extern void pgstat_bestart(void);
 
 extern void pgstat_report_activity(BackendState state, const char *cmd_str);
+extern void pgstat_report_tempfile(size_t filesize);
 extern void pgstat_report_appname(const char *appname);
 extern void pgstat_report_xact_timestamp(TimestampTz tstamp);
 extern void pgstat_report_waiting(bool waiting);

@@ -286,6 +286,7 @@ static void pgstat_recv_bgwriter(PgStat_MsgBgWriter *msg, int len);
 static void pgstat_recv_funcstat(PgStat_MsgFuncstat *msg, int len);
 static void pgstat_recv_funcpurge(PgStat_MsgFuncpurge *msg, int len);
 static void pgstat_recv_recoveryconflict(PgStat_MsgRecoveryConflict *msg, int len);
+static void pgstat_recv_tempfile(PgStat_MsgTempFile *msg, int len);
 
 
 /* ------------------------------------------------------------
@@ -1338,6 +1339,29 @@ pgstat_report_recovery_conflict(int reason)
 	msg.m_reason = reason;
 	pgstat_send(&msg, sizeof(msg));
 }
+
+
+/* --------
+ * pgstat_report_tempfile() -
+ *
+ *	Tell the collector about a temporary file.
+ * --------
+ */
+void
+pgstat_report_tempfile(size_t filesize)
+{
+	PgStat_MsgTempFile msg;
+
+	if (pgStatSock == PGINVALID_SOCKET || !pgstat_track_counts)
+		return;
+
+	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_TEMPFILE);
+	msg.m_databaseid = MyDatabaseId;
+	msg.m_filesize = filesize;
+	pgstat_send(&msg, sizeof(msg));
+}
+
+;
 
 /* ----------
  * pgstat_ping() -
@@ -3218,6 +3242,10 @@ PgstatCollectorMain(int argc, char *argv[])
 					pgstat_recv_recoveryconflict((PgStat_MsgRecoveryConflict *) &msg, len);
 					break;
 
+				case PGSTAT_MTYPE_TEMPFILE:
+					pgstat_recv_tempfile((PgStat_MsgTempFile *) &msg, len);
+					break;
+
 				default:
 					break;
 			}
@@ -3299,6 +3327,8 @@ pgstat_get_db_entry(Oid databaseid, bool create)
 		result->n_conflict_snapshot = 0;
 		result->n_conflict_bufferpin = 0;
 		result->n_conflict_startup_deadlock = 0;
+		result->n_temp_files = 0;
+		result->n_temp_bytes = 0;
 
 		result->stat_reset_timestamp = GetCurrentTimestamp();
 
@@ -4210,6 +4240,8 @@ pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len)
 	dbentry->n_tuples_updated = 0;
 	dbentry->n_tuples_deleted = 0;
 	dbentry->last_autovac_time = 0;
+	dbentry->n_temp_bytes = 0;
+	dbentry->n_temp_files = 0;
 
 	dbentry->stat_reset_timestamp = GetCurrentTimestamp();
 
@@ -4433,6 +4465,24 @@ pgstat_recv_recoveryconflict(PgStat_MsgRecoveryConflict *msg, int len)
 			dbentry->n_conflict_startup_deadlock++;
 			break;
 	}
+}
+
+/* ----------
+ * pgstat_recv_tempfile() -
+ *
+ *	Process as PGSTAT_MTYPE_TEMPFILE message.
+ * ----------
+ */
+static void
+pgstat_recv_tempfile(PgStat_MsgTempFile *msg, int len)
+{
+	PgStat_StatDBEntry *dbentry;
+
+	dbentry = pgstat_get_db_entry(msg->m_databaseid, true);
+
+	dbentry->n_temp_bytes += msg->m_filesize;
+	dbentry->n_temp_files += 1;
+
 }
 
 /* ----------

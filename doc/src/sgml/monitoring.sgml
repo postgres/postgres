@@ -283,7 +283,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       read requests avoided by finding the block already in buffer cache),
       number of rows returned, fetched, inserted, updated and deleted, the
       total number of queries canceled due to conflict with recovery (on
-      standby servers), and time of last statistics reset.
+      standby servers), number and size of temporary files used, and time
+      of last statistics reset.
      </entry>
      </row>
 
@@ -883,6 +884,28 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
        database, as well as upon execution of
        <function>pg_stat_reset_single_table_counters</function> against any
        table or index in it.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_db_temp_bytes</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       Amount of data written to temporary files by queries in the database.
+       All temporary files are counted, regardless of why the temporary file
+       was created (sorting or hash), and regardless of the
+       <xref linkend="guc-log-temp-files"> setting.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_db_temp_files</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       Number of temporary files written by queries in the database. All temporary
+       files are counted, regardless of why the temporary file was created
+       (sorting or hash) or file size, and regardless of the
+       <xref linkend="guc-log-temp-files"> setting.
       </entry>
      </row>
 

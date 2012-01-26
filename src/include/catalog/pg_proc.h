@@ -2636,6 +2636,10 @@ DATA(insert OID = 3070 (  pg_stat_get_db_conflict_all PGNSP PGUID 12 1 0 0 0 f f
 DESCR("statistics: recovery conflicts in database");
 DATA(insert OID = 3074 (  pg_stat_get_db_stat_reset_time PGNSP PGUID 12 1 0 0 0 f f f t f s 1 0 1184 "26" _null_ _null_ _null_ _null_ pg_stat_get_db_stat_reset_time _null_ _null_ _null_ ));
 DESCR("statistics: last reset for a database");
+DATA(insert OID = 3150 (  pg_stat_get_db_temp_files PGNSP PGUID 12 1 0 0 0 f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_db_temp_files _null_ _null_ _null_ ));
+DESCR("statistics: number of temporary files written");
+DATA(insert OID = 3151 (  pg_stat_get_db_temp_bytes PGNSP PGUID 12 1 0 0 0 f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_db_temp_bytes _null_ _null_ _null_ ));
+DESCR("statistics: number of bytes in temporary files written");
 DATA(insert OID = 2769 ( pg_stat_get_bgwriter_timed_checkpoints PGNSP PGUID 12 1 0 0 0 f f f t f s 0 0 20 "" _null_ _null_ _null_ _null_ pg_stat_get_bgwriter_timed_checkpoints _null_ _null_ _null_ ));
 DESCR("statistics: number of timed checkpoints started by the bgwriter");
 DATA(insert OID = 2770 ( pg_stat_get_bgwriter_requested_checkpoints PGNSP PGUID 12 1 0 0 0 f f f t f s 0 0 20 "" _null_ _null_ _null_ _null_ pg_stat_get_bgwriter_requested_checkpoints _null_ _null_ _null_ ));

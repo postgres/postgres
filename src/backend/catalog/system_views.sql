@@ -576,6 +576,8 @@ CREATE VIEW pg_stat_database AS
             pg_stat_get_db_tuples_updated(D.oid) AS tup_updated,
             pg_stat_get_db_tuples_deleted(D.oid) AS tup_deleted,
             pg_stat_get_db_conflict_all(D.oid) AS conflicts,
+            pg_stat_get_db_temp_files(D.oid) AS temp_files,
+            pg_stat_get_db_temp_bytes(D.oid) AS temp_bytes,
             pg_stat_get_db_stat_reset_time(D.oid) AS stats_reset
     FROM pg_database D;
 
