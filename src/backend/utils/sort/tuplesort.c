@@ -3047,16 +3047,18 @@ comparetup_index_btree(const SortTuple *a, const SortTuple *b,
 	 * sort algorithm wouldn't have checked whether one must appear before the
 	 * other.
 	 *
-	 * Some rather brain-dead implementations of qsort will sometimes call the
-	 * comparison routine to compare a value to itself.  (At this writing only
-	 * QNX 4 is known to do such silly things; we don't support QNX anymore,
-	 * but perhaps the behavior still exists elsewhere.)  Don't raise a bogus
-	 * error in that case.
 	 */
-	if (state->enforceUnique && !equal_hasnull && tuple1 != tuple2)
+	if (state->enforceUnique && !equal_hasnull)
 	{
 		Datum		values[INDEX_MAX_KEYS];
 		bool		isnull[INDEX_MAX_KEYS];
+
+		/*
+		 * Some rather brain-dead implementations of qsort (such as the one in QNX 4)
+		 * will sometimes call the comparison routine to compare a value to itself,
+		 * but we always use our own implementation, which does not.
+		 */
+		Assert(tuple1 != tuple2);
 
 		index_deform_tuple(tuple1, tupDes, values, isnull);
 		ereport(ERROR,
@@ -3070,9 +3072,8 @@ comparetup_index_btree(const SortTuple *a, const SortTuple *b,
 
 	/*
 	 * If key values are equal, we sort on ItemPointer.  This does not affect
-	 * validity of the finished index, but it offers cheap insurance against
-	 * performance problems with bad qsort implementations that have trouble
-	 * with large numbers of equal keys.
+	 * validity of the finished index, but it may be useful to have index scans
+	 * in physical order.
 	 */
 	{
 		BlockNumber blk1 = ItemPointerGetBlockNumber(&tuple1->t_tid);
@@ -3120,9 +3121,8 @@ comparetup_index_hash(const SortTuple *a, const SortTuple *b,
 
 	/*
 	 * If hash values are equal, we sort on ItemPointer.  This does not affect
-	 * validity of the finished index, but it offers cheap insurance against
-	 * performance problems with bad qsort implementations that have trouble
-	 * with large numbers of equal keys.
+	 * validity of the finished index, but it may be useful to have index scans
+	 * in physical order.
 	 */
 	tuple1 = (IndexTuple) a->tuple;
 	tuple2 = (IndexTuple) b->tuple;
