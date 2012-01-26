@@ -78,6 +78,7 @@ extern Datum pg_stat_get_db_conflict_snapshot(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_db_conflict_bufferpin(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_db_conflict_startup_deadlock(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_db_conflict_all(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_db_deadlocks(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_db_stat_reset_time(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_db_temp_files(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_db_temp_bytes(PG_FUNCTION_ARGS);
@@ -1337,6 +1338,21 @@ pg_stat_get_db_conflict_all(PG_FUNCTION_ARGS)
 						  dbentry->n_conflict_snapshot +
 						  dbentry->n_conflict_bufferpin +
 						  dbentry->n_conflict_startup_deadlock);
+
+	PG_RETURN_INT64(result);
+}
+
+Datum
+pg_stat_get_db_deadlocks(PG_FUNCTION_ARGS)
+{
+	Oid			dbid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_StatDBEntry *dbentry;
+
+	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
+		result = 0;
+	else
+		result = (int64) (dbentry->n_deadlocks);
 
 	PG_RETURN_INT64(result);
 }

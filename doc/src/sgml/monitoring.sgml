@@ -283,8 +283,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       read requests avoided by finding the block already in buffer cache),
       number of rows returned, fetched, inserted, updated and deleted, the
       total number of queries canceled due to conflict with recovery (on
-      standby servers), number and size of temporary files used, and time
-      of last statistics reset.
+      standby servers), number and size of temporary files used, total
+      number of deadlocks detected, and time of last statistics reset.
      </entry>
      </row>
 
@@ -906,6 +906,14 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
        files are counted, regardless of why the temporary file was created
        (sorting or hash) or file size, and regardless of the
        <xref linkend="guc-log-temp-files"> setting.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_db_deadlocks</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       Number of deadlocks detected in the database
       </entry>
      </row>
 

@@ -2634,6 +2634,8 @@ DATA(insert OID = 3069 (  pg_stat_get_db_conflict_startup_deadlock PGNSP PGUID 1
 DESCR("statistics: recovery conflicts in database caused by buffer deadlock");
 DATA(insert OID = 3070 (  pg_stat_get_db_conflict_all PGNSP PGUID 12 1 0 0 0 f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_db_conflict_all _null_ _null_ _null_ ));
 DESCR("statistics: recovery conflicts in database");
+DATA(insert OID = 3152 (  pg_stat_get_db_deadlocks PGNSP PGUID 12 1 0 0 0 f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_db_deadlocks _null_ _null_ _null_ ));
+DESCR("statistics: deadlocks detected in database");
 DATA(insert OID = 3074 (  pg_stat_get_db_stat_reset_time PGNSP PGUID 12 1 0 0 0 f f f t f s 1 0 1184 "26" _null_ _null_ _null_ _null_ pg_stat_get_db_stat_reset_time _null_ _null_ _null_ ));
 DESCR("statistics: last reset for a database");
 DATA(insert OID = 3150 (  pg_stat_get_db_temp_files PGNSP PGUID 12 1 0 0 0 f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_db_temp_files _null_ _null_ _null_ ));

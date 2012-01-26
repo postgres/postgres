@@ -48,7 +48,8 @@ typedef enum StatMsgType
 	PGSTAT_MTYPE_FUNCSTAT,
 	PGSTAT_MTYPE_FUNCPURGE,
 	PGSTAT_MTYPE_RECOVERYCONFLICT,
-	PGSTAT_MTYPE_TEMPFILE
+	PGSTAT_MTYPE_TEMPFILE,
+	PGSTAT_MTYPE_DEADLOCK
 } StatMsgType;
 
 /* ----------
@@ -462,6 +463,17 @@ typedef struct PgStat_MsgFuncpurge
 	Oid			m_functionid[PGSTAT_NUM_FUNCPURGE];
 } PgStat_MsgFuncpurge;
 
+/* ----------
+ * PgStat_MsgDeadlock			Sent by the backend to tell the collector
+ *								about a deadlock that occurred.
+ * ----------
+ */
+typedef struct PgStat_MsgDeadlock
+{
+	PgStat_MsgHdr m_hdr;
+	Oid			m_databaseid;
+} PgStat_MsgDeadlock;
+
 
 /* ----------
  * PgStat_Msg					Union over all possible messages.
@@ -485,6 +497,7 @@ typedef union PgStat_Msg
 	PgStat_MsgFuncstat msg_funcstat;
 	PgStat_MsgFuncpurge msg_funcpurge;
 	PgStat_MsgRecoveryConflict msg_recoveryconflict;
+	PgStat_MsgDeadlock msg_deadlock;
 } PgStat_Msg;
 
 
@@ -496,7 +509,7 @@ typedef union PgStat_Msg
  * ------------------------------------------------------------
  */
 
-#define PGSTAT_FILE_FORMAT_ID	0x01A5BC99
+#define PGSTAT_FILE_FORMAT_ID	0x01A5BC9A
 
 /* ----------
  * PgStat_StatDBEntry			The collector's data per database
@@ -522,6 +535,7 @@ typedef struct PgStat_StatDBEntry
 	PgStat_Counter n_conflict_startup_deadlock;
 	PgStat_Counter n_temp_files;
 	PgStat_Counter n_temp_bytes;
+	PgStat_Counter n_deadlocks;
 
 	TimestampTz stat_reset_timestamp;
 
@@ -746,6 +760,7 @@ extern void pgstat_report_analyze(Relation rel,
 					  PgStat_Counter livetuples, PgStat_Counter deadtuples);
 
 extern void pgstat_report_recovery_conflict(int reason);
+extern void pgstat_report_deadlock(void);
 
 extern void pgstat_initialize(void);
 extern void pgstat_bestart(void);
