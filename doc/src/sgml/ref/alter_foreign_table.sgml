@@ -79,8 +79,8 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
     <term><literal>IF EXISTS</literal></term>
     <listitem>
      <para>
-      Do not throw an error if the sequence does not exist. A notice is issued
-      in this case.
+      Do not throw an error if the foreign table does not exist. A notice is
+      issued in this case.
      </para>
     </listitem>
    </varlistentry>
