@@ -1094,6 +1094,8 @@ DESCR("contains");
 DATA(insert OID = 1062 (  aclitemeq		   PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 16 "1033 1033" _null_ _null_ _null_ _null_ aclitem_eq _null_ _null_ _null_ ));
 DATA(insert OID = 1365 (  makeaclitem	   PGNSP PGUID 12 1 0 0 0 f f f t f i 4 0 1033 "26 26 25 16" _null_ _null_ _null_ _null_ makeaclitem _null_ _null_ _null_ ));
 DESCR("make ACL item");
+DATA(insert OID = 3943 (  acldefault	PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 1034 "18 26" _null_ _null_ _null_ _null_  acldefault_sql _null_ _null_ _null_ ));
+DESCR("TODO");
 DATA(insert OID = 1689 (  aclexplode	PGNSP PGUID 12 1 10 0 0 f f f t t s 1 0 2249 "1034" "{1034,26,26,25,16}" "{i,o,o,o,o}" "{acl,grantor,grantee,privilege_type,is_grantable}" _null_ aclexplode _null_ _null_ _null_ ));
 DESCR("convert ACL item array to table, for use by information schema");
 DATA(insert OID = 1044 (  bpcharin		   PGNSP PGUID 12 1 0 0 0 f f f t f i 3 0 1042 "2275 26 23" _null_ _null_ _null_ _null_ bpcharin _null_ _null_ _null_ ));
