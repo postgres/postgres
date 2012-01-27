@@ -186,6 +186,7 @@ InitProcGlobal(void)
 	ProcGlobal->startupProc = NULL;
 	ProcGlobal->startupProcPid = 0;
 	ProcGlobal->startupBufferPinWaitBufId = -1;
+	ProcGlobal->bgwriterLatch = NULL;
 
 	/*
 	 * Create and initialize all the PGPROC structures we'll need (except for
