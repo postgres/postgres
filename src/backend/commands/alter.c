@@ -213,7 +213,7 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
 
 		case OBJECT_TYPE:
 		case OBJECT_DOMAIN:
-			AlterTypeNamespace(stmt->object, stmt->newschema);
+			AlterTypeNamespace(stmt->object, stmt->newschema, stmt->objectType);
 			break;
 
 		default:
@@ -510,7 +510,7 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 
 		case OBJECT_TYPE:
 		case OBJECT_DOMAIN:		/* same as TYPE */
-			AlterTypeOwner(stmt->object, newowner);
+			AlterTypeOwner(stmt->object, newowner, stmt->objectType);
 			break;
 
 		case OBJECT_TSDICTIONARY:

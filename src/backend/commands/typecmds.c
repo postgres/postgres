@@ -3165,7 +3165,7 @@ RenameType(RenameStmt *stmt)
  * Change the owner of a type.
  */
 void
-AlterTypeOwner(List *names, Oid newOwnerId)
+AlterTypeOwner(List *names, Oid newOwnerId, ObjectType objecttype)
 {
 	TypeName   *typename;
 	Oid			typeOid;
@@ -3194,6 +3194,13 @@ AlterTypeOwner(List *names, Oid newOwnerId)
 	ReleaseSysCache(tup);
 	tup = newtup;
 	typTup = (Form_pg_type) GETSTRUCT(tup);
+
+	/* Don't allow ALTER DOMAIN on a type */
+	if (objecttype == OBJECT_DOMAIN && typTup->typtype != TYPTYPE_DOMAIN)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("%s is not a domain",
+						format_type_be(typeOid))));
 
 	/*
 	 * If it's a composite type, we need to check that it really is a
@@ -3328,7 +3335,7 @@ AlterTypeOwnerInternal(Oid typeOid, Oid newOwnerId,
  * Execute ALTER TYPE SET SCHEMA
  */
 void
-AlterTypeNamespace(List *names, const char *newschema)
+AlterTypeNamespace(List *names, const char *newschema, ObjectType objecttype)
 {
 	TypeName   *typename;
 	Oid			typeOid;
@@ -3337,6 +3344,13 @@ AlterTypeNamespace(List *names, const char *newschema)
 	/* Make a TypeName so we can use standard type lookup machinery */
 	typename = makeTypeNameFromNameList(names);
 	typeOid = typenameTypeId(NULL, typename);
+
+	/* Don't allow ALTER DOMAIN on a type */
+	if (objecttype == OBJECT_DOMAIN && get_typtype(typeOid) != TYPTYPE_DOMAIN)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("%s is not a domain",
+						format_type_be(typeOid))));
 
 	/* get schema OID and check its permissions */
 	nspOid = LookupCreationNamespace(newschema);

@@ -38,10 +38,10 @@ extern void AlterDomainDropConstraint(List *names, const char *constrName,
 extern List *GetDomainConstraints(Oid typeOid);
 
 extern void RenameType(RenameStmt *stmt);
-extern void AlterTypeOwner(List *names, Oid newOwnerId);
+extern void AlterTypeOwner(List *names, Oid newOwnerId, ObjectType objecttype);
 extern void AlterTypeOwnerInternal(Oid typeOid, Oid newOwnerId,
 					   bool hasDependEntry);
-extern void AlterTypeNamespace(List *names, const char *newschema);
+extern void AlterTypeNamespace(List *names, const char *newschema, ObjectType objecttype);
 extern Oid	AlterTypeNamespace_oid(Oid typeOid, Oid nspOid);
 extern Oid AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 						   bool isImplicitArray,
