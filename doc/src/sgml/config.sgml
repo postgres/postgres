@@ -1322,12 +1322,14 @@ SET ENABLE_SEQSCAN TO OFF;
          background writer.  In each round the writer issues writes
          for some number of dirty buffers (controllable by the
          following parameters).  It then sleeps for <varname>bgwriter_delay</>
-         milliseconds, and repeats.  The default value is 200 milliseconds
-         (<literal>200ms</>). Note that on many systems, the effective
-         resolution of sleep delays is 10 milliseconds; setting
-         <varname>bgwriter_delay</> to a value that is not a multiple of
-         10 might have the same results as setting it to the next higher
-         multiple of 10.  This parameter can only be set in the
+         milliseconds, and repeats.  When there are no dirty buffers in the
+         buffer pool, though, it goes into a longer sleep regardless of
+         <varname>bgwriter_delay</>.  The default value is 200
+         milliseconds (<literal>200ms</>). Note that on many systems, the
+         effective resolution of sleep delays is 10 milliseconds; setting
+         <varname>bgwriter_delay</> to a value that is not a multiple of 10
+         might have the same results as setting it to the next higher multiple
+         of 10.  This parameter can only be set in the
          <filename>postgresql.conf</> file or on the server command line.
         </para>
        </listitem>
