@@ -264,7 +264,7 @@ Options:\n\
   -O, --new-options=OPTIONS     new cluster options to pass to the server\n\
   -p, --old-port=OLDPORT        old cluster port number (default %d)\n\
   -P, --new-port=NEWPORT        new cluster port number (default %d)\n\
-  -u, --user=NAME               clusters superuser (default \"%s\")\n\
+  -u, --user=NAME               cluster superuser (default \"%s\")\n\
   -v, --verbose                 enable verbose output\n\
   -V, --version                 display version information, then exit\n\
   -h, --help                    show this help, then exit\n\
