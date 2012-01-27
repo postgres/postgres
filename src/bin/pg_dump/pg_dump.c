@@ -145,6 +145,8 @@ static int	serializable_deferrable = 0;
 
 
 static void help(const char *progname);
+static void setup_connection(Archive *AH, const char *dumpencoding,
+				 char *use_role);
 static ArchiveFormat parseArchiveFormat(const char *format, ArchiveMode *mode);
 static void expand_schema_name_patterns(SimpleStringList *patterns,
 							SimpleOidList *oids);
@@ -262,7 +264,6 @@ main(int argc, char **argv)
 	const char *pgport = NULL;
 	const char *username = NULL;
 	const char *dumpencoding = NULL;
-	const char *std_strings;
 	bool		oids = false;
 	TableInfo  *tblinfo;
 	int			numTables;
@@ -608,70 +609,7 @@ main(int argc, char **argv)
 	g_conn = ConnectDatabase(g_fout, dbname, pghost, pgport,
 							 username, prompt_password);
 
-	/* Set the client encoding if requested */
-	if (dumpencoding)
-	{
-		if (PQsetClientEncoding(g_conn, dumpencoding) < 0)
-		{
-			write_msg(NULL, "invalid client encoding \"%s\" specified\n",
-					  dumpencoding);
-			exit(1);
-		}
-	}
-
-	/*
-	 * Get the active encoding and the standard_conforming_strings setting, so
-	 * we know how to escape strings.
-	 */
-	g_fout->encoding = PQclientEncoding(g_conn);
-
-	std_strings = PQparameterStatus(g_conn, "standard_conforming_strings");
-	g_fout->std_strings = (std_strings && strcmp(std_strings, "on") == 0);
-
-	/* Set the role if requested */
-	if (use_role && g_fout->remoteVersion >= 80100)
-	{
-		PQExpBuffer query = createPQExpBuffer();
-
-		appendPQExpBuffer(query, "SET ROLE %s", fmtId(use_role));
-		do_sql_command(g_conn, query->data);
-		destroyPQExpBuffer(query);
-	}
-
-	/* Set the datestyle to ISO to ensure the dump's portability */
-	do_sql_command(g_conn, "SET DATESTYLE = ISO");
-
-	/* Likewise, avoid using sql_standard intervalstyle */
-	if (g_fout->remoteVersion >= 80400)
-		do_sql_command(g_conn, "SET INTERVALSTYLE = POSTGRES");
-
-	/*
-	 * If supported, set extra_float_digits so that we can dump float data
-	 * exactly (given correctly implemented float I/O code, anyway)
-	 */
-	if (g_fout->remoteVersion >= 90000)
-		do_sql_command(g_conn, "SET extra_float_digits TO 3");
-	else if (g_fout->remoteVersion >= 70400)
-		do_sql_command(g_conn, "SET extra_float_digits TO 2");
-
-	/*
-	 * If synchronized scanning is supported, disable it, to prevent
-	 * unpredictable changes in row ordering across a dump and reload.
-	 */
-	if (g_fout->remoteVersion >= 80300)
-		do_sql_command(g_conn, "SET synchronize_seqscans TO off");
-
-	/*
-	 * Disable timeouts if supported.
-	 */
-	if (g_fout->remoteVersion >= 70300)
-		do_sql_command(g_conn, "SET statement_timeout = 0");
-
-	/*
-	 * Quote all identifiers, if requested.
-	 */
-	if (quote_all_identifiers && g_fout->remoteVersion >= 90100)
-		do_sql_command(g_conn, "SET quote_all_identifiers = true");
+	setup_connection(g_fout, dumpencoding, use_role);
 
 	/*
 	 * Disable security label support if server version < v9.1.x (prevents
@@ -920,6 +858,77 @@ exit_nicely(void)
 	if (g_verbose)
 		write_msg(NULL, "*** aborted because of error\n");
 	exit(1);
+}
+
+static void
+setup_connection(Archive *AH, const char *dumpencoding, char *use_role)
+{
+	const char *std_strings;
+
+	/* Set the client encoding if requested */
+	if (dumpencoding)
+	{
+		if (PQsetClientEncoding(g_conn, dumpencoding) < 0)
+		{
+			write_msg(NULL, "invalid client encoding \"%s\" specified\n",
+					  dumpencoding);
+			exit(1);
+		}
+	}
+
+	/*
+	 * Get the active encoding and the standard_conforming_strings setting, so
+	 * we know how to escape strings.
+	 */
+	AH->encoding = PQclientEncoding(g_conn);
+
+	std_strings = PQparameterStatus(g_conn, "standard_conforming_strings");
+	AH->std_strings = (std_strings && strcmp(std_strings, "on") == 0);
+
+	/* Set the role if requested */
+	if (use_role && AH->remoteVersion >= 80100)
+	{
+		PQExpBuffer query = createPQExpBuffer();
+
+		appendPQExpBuffer(query, "SET ROLE %s", fmtId(use_role));
+		do_sql_command(g_conn, query->data);
+		destroyPQExpBuffer(query);
+	}
+
+	/* Set the datestyle to ISO to ensure the dump's portability */
+	do_sql_command(g_conn, "SET DATESTYLE = ISO");
+
+	/* Likewise, avoid using sql_standard intervalstyle */
+	if (AH->remoteVersion >= 80400)
+		do_sql_command(g_conn, "SET INTERVALSTYLE = POSTGRES");
+
+	/*
+	 * If supported, set extra_float_digits so that we can dump float data
+	 * exactly (given correctly implemented float I/O code, anyway)
+	 */
+	if (AH->remoteVersion >= 90000)
+		do_sql_command(g_conn, "SET extra_float_digits TO 3");
+	else if (AH->remoteVersion >= 70400)
+		do_sql_command(g_conn, "SET extra_float_digits TO 2");
+
+	/*
+	 * If synchronized scanning is supported, disable it, to prevent
+	 * unpredictable changes in row ordering across a dump and reload.
+	 */
+	if (AH->remoteVersion >= 80300)
+		do_sql_command(g_conn, "SET synchronize_seqscans TO off");
+
+	/*
+	 * Disable timeouts if supported.
+	 */
+	if (AH->remoteVersion >= 70300)
+		do_sql_command(g_conn, "SET statement_timeout = 0");
+
+	/*
+	 * Quote all identifiers, if requested.
+	 */
+	if (quote_all_identifiers && AH->remoteVersion >= 90100)
+		do_sql_command(g_conn, "SET quote_all_identifiers = true");
 }
 
 static ArchiveFormat
