@@ -1273,6 +1273,8 @@ parse_hba_line(List *line, int line_num)
 	 * SSPI authentication can never be enabled on ctLocal connections,
 	 * because it's only supported on Windows, where ctLocal isn't supported.
 	 */
+
+
 	if (parsedline->conntype != ctHostSSL &&
 		parsedline->auth_method == uaCert)
 	{
