@@ -79,7 +79,7 @@ LOAD 'auto_explain';
       <para>
        When this parameter is on, per-plan-node timing occurs for all
        statements executed, whether or not they run long enough to actually
-       get logged.  This can have extremely negative impact on performance.
+       get logged.  This can have an extremely negative impact on performance.
       </para>
      </note>
     </listitem>
