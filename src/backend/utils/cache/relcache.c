@@ -3351,15 +3351,30 @@ RelationGetIndexList(Relation relation)
 	while (HeapTupleIsValid(htup = systable_getnext(indscan)))
 	{
 		Form_pg_index index = (Form_pg_index) GETSTRUCT(htup);
+		Datum		indclassDatum;
+		oidvector  *indclass;
+		bool		isnull;
 
 		/* Add index's OID to result list in the proper order */
 		result = insert_ordered_oid(result, index->indexrelid);
+
+		/*
+		 * indclass cannot be referenced directly through the C struct, because
+		 * it comes after the variable-width indkey field.  Must extract the
+		 * datum the hard way...
+		 */
+		indclassDatum = heap_getattr(htup,
+									 Anum_pg_index_indclass,
+									 GetPgIndexDescriptor(),
+									 &isnull);
+		Assert(!isnull);
+		indclass = (oidvector *) DatumGetPointer(indclassDatum);
 
 		/* Check to see if it is a unique, non-partial btree index on OID */
 		if (index->indnatts == 1 &&
 			index->indisunique && index->indimmediate &&
 			index->indkey.values[0] == ObjectIdAttributeNumber &&
-			index->indclass.values[0] == OID_BTREE_OPS_OID &&
+			indclass->values[0] == OID_BTREE_OPS_OID &&
 			heap_attisnull(htup, Anum_pg_index_indpred))
 			oidIndex = index->indexrelid;
 	}
