@@ -190,6 +190,12 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ ( <re
     or updated, the inheritance statistics will not be up to date unless you
     run <command>ANALYZE</command> manually.
   </para>
+
+  <para>
+    If the table being analyzed is completely empty, <command>ANALYZE</command>
+    will not record new statistics for that table.  Any existing statistics
+    will be retained.
+  </para>
  </refsect1>
 
  <refsect1>
