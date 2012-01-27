@@ -22,6 +22,16 @@
 /* Introduces a catalog's structure definition */
 #define CATALOG(name,oid)	typedef struct CppConcat(FormData_,name)
 
+/*
+ * This is never defined; it's here only for documentation.
+ *
+ * Variable-length catalog fields (except possibly the first not nullable one)
+ * should not be visible in C structures, so they are made invisible by #ifdefs
+ * of an undefined symbol.  See also MARKNOTNULL in bootstrap.c for how this is
+ * handled.
+ */
+#undef CATALOG_VARLEN
+
 /* Options that may appear after CATALOG (on the same line) */
 #define BKI_BOOTSTRAP
 #define BKI_SHARED_RELATION

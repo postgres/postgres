@@ -68,14 +68,11 @@ CATALOG(pg_class,1259) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83) BKI_SCHEMA_MACRO
 	bool		relhassubclass; /* has (or has had) derived classes */
 	TransactionId relfrozenxid; /* all Xids < this are frozen in this rel */
 
-	/*
-	 * VARIABLE LENGTH FIELDS start here.  These fields may be NULL, too.
-	 *
-	 * NOTE: these fields are not present in a relcache entry's rd_rel field.
-	 */
-
+#ifdef CATALOG_VARLEN			/* variable-length fields start here */
+	/* NOTE: These fields are not present in a relcache entry's rd_rel field. */
 	aclitem		relacl[1];		/* access permissions */
 	text		reloptions[1];	/* access-method-specific options */
+#endif
 } FormData_pg_class;
 
 /* Size of fixed part of pg_class tuples, not counting var-length fields */

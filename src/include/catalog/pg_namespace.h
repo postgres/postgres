@@ -37,7 +37,9 @@ CATALOG(pg_namespace,2615)
 {
 	NameData	nspname;
 	Oid			nspowner;
-	aclitem		nspacl[1];		/* VARIABLE LENGTH FIELD */
+#ifdef CATALOG_VARLEN			/* variable-length fields start here */
+	aclitem		nspacl[1];
+#endif
 } FormData_pg_namespace;
 
 /* ----------------

@@ -91,10 +91,7 @@ CATALOG(pg_constraint,2606)
 	/* Has a local definition and cannot be inherited */
 	bool		conisonly;
 
-	/*
-	 * VARIABLE LENGTH FIELDS start here.  These fields may be NULL, too.
-	 */
-
+#ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	/*
 	 * Columns of conrelid that the constraint applies to, if known (this is
 	 * NULL for trigger constraints)
@@ -139,6 +136,7 @@ CATALOG(pg_constraint,2606)
 	 * If a check constraint, source-text representation of expression
 	 */
 	text		consrc;
+#endif
 } FormData_pg_constraint;
 
 /* ----------------

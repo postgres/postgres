@@ -31,7 +31,9 @@
 CATALOG(pg_largeobject_metadata,2995)
 {
 	Oid			lomowner;		/* OID of the largeobject owner */
+#ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	aclitem		lomacl[1];		/* access permissions */
+#endif
 } FormData_pg_largeobject_metadata;
 
 /* ----------------

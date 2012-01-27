@@ -34,11 +34,10 @@ CATALOG(pg_foreign_data_wrapper,2328)
 	Oid			fdwowner;		/* FDW owner */
 	Oid			fdwhandler;		/* handler function, or 0 if none */
 	Oid			fdwvalidator;	/* option validation function, or 0 if none */
-
-	/* VARIABLE LENGTH FIELDS start here. */
-
+#ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	aclitem		fdwacl[1];		/* access permissions */
 	text		fdwoptions[1];	/* FDW options */
+#endif
 } FormData_pg_foreign_data_wrapper;
 
 /* ----------------

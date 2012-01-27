@@ -32,11 +32,9 @@ CATALOG(pg_user_mapping,1418)
 								 * wanted */
 	Oid			umserver;		/* server of this mapping */
 
-	/*
-	 * VARIABLE LENGTH FIELDS start here.  These fields may be NULL, too.
-	 */
-
+#ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	text		umoptions[1];	/* user mapping options */
+#endif
 } FormData_pg_user_mapping;
 
 /* ----------------

@@ -30,7 +30,9 @@ CATALOG(pg_foreign_table,3118) BKI_WITHOUT_OIDS
 {
 	Oid			ftrelid;		/* OID of foreign table */
 	Oid			ftserver;		/* OID of foreign server */
+#ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	text		ftoptions[1];	/* FDW-specific options */
+#endif
 } FormData_pg_foreign_table;
 
 /* ----------------

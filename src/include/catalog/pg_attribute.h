@@ -145,11 +145,8 @@ CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS BKI_ROWTYPE_OID(75) BK
 	/* attribute's collation */
 	Oid			attcollation;
 
-	/*
-	 * VARIABLE LENGTH FIELDS start here.  These fields may be NULL, too.
-	 *
-	 * NOTE: the following fields are not present in tuple descriptors!
-	 */
+#ifdef CATALOG_VARLEN			/* variable-length fields start here */
+	/* NOTE: The following fields are not present in tuple descriptors. */
 
 	/* Column-level access permissions */
 	aclitem		attacl[1];
@@ -159,6 +156,7 @@ CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS BKI_ROWTYPE_OID(75) BK
 
 	/* Column-level FDW options */
 	text		attfdwoptions[1];
+#endif
 } FormData_pg_attribute;
 
 /*

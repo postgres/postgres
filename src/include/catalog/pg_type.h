@@ -200,12 +200,13 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71) BKI_SCHEMA_MACRO
 	 */
 	Oid			typcollation;
 
+#ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	/*
 	 * If typdefaultbin is not NULL, it is the nodeToString representation of
 	 * a default expression for the type.  Currently this is only used for
 	 * domains.
 	 */
-	pg_node_tree typdefaultbin; /* VARIABLE LENGTH FIELD */
+	pg_node_tree typdefaultbin;
 
 	/*
 	 * typdefault is NULL if the type has no associated default value. If
@@ -215,12 +216,13 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71) BKI_SCHEMA_MACRO
 	 * external representation of the type's default value, which may be fed
 	 * to the type's input converter to produce a constant.
 	 */
-	text		typdefault;		/* VARIABLE LENGTH FIELD */
+	text		typdefault;
 
 	/*
 	 * Access permissions
 	 */
-	aclitem		typacl[1];		/* VARIABLE LENGTH FIELD */
+	aclitem		typacl[1];
+#endif
 } FormData_pg_type;
 
 /* ----------------

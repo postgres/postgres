@@ -53,8 +53,9 @@ CATALOG(pg_proc,1255) BKI_BOOTSTRAP BKI_ROWTYPE_OID(81) BKI_SCHEMA_MACRO
 	int2		pronargdefaults;	/* number of arguments with defaults */
 	Oid			prorettype;		/* OID of result type */
 
-	/* VARIABLE LENGTH FIELDS: */
+	/* variable-length fields start here, but we allow direct access to proargtypes */
 	oidvector	proargtypes;	/* parameter types (excludes OUT params) */
+#ifdef CATALOG_VARLEN
 	Oid			proallargtypes[1];		/* all param types (NULL if IN only) */
 	char		proargmodes[1]; /* parameter modes (NULL if IN only) */
 	text		proargnames[1]; /* parameter names (NULL if no names) */
@@ -64,6 +65,7 @@ CATALOG(pg_proc,1255) BKI_BOOTSTRAP BKI_ROWTYPE_OID(81) BKI_SCHEMA_MACRO
 	text		probin;			/* secondary procedure info (can be NULL) */
 	text		proconfig[1];	/* procedure-local GUC settings */
 	aclitem		proacl[1];		/* access permissions */
+#endif
 } FormData_pg_proc;
 
 /* ----------------

@@ -116,6 +116,7 @@ CATALOG(pg_statistic,2619) BKI_WITHOUT_OIDS
 	float4		stanumbers3[1];
 	float4		stanumbers4[1];
 
+#ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	/*
 	 * Values in these arrays are values of the column's data type.  We
 	 * presently have to cheat quite a bit to allow polymorphic arrays of this
@@ -125,6 +126,7 @@ CATALOG(pg_statistic,2619) BKI_WITHOUT_OIDS
 	anyarray	stavalues2;
 	anyarray	stavalues3;
 	anyarray	stavalues4;
+#endif
 } FormData_pg_statistic;
 
 #define STATISTIC_NUM_SLOTS  4

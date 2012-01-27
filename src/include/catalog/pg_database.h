@@ -42,7 +42,9 @@ CATALOG(pg_database,1262) BKI_SHARED_RELATION BKI_ROWTYPE_OID(1248) BKI_SCHEMA_M
 	Oid			datlastsysoid;	/* highest OID to consider a system OID */
 	TransactionId datfrozenxid; /* all Xids < this are frozen in this DB */
 	Oid			dattablespace;	/* default table space for this DB */
-	aclitem		datacl[1];		/* access permissions (VAR LENGTH) */
+#ifdef CATALOG_VARLEN			/* variable-length fields start here */
+	aclitem		datacl[1];		/* access permissions */
+#endif
 } FormData_pg_database;
 
 /* ----------------

@@ -143,6 +143,7 @@ sub Catalogs
             elsif ($declaring_attributes)
             {
                 next if (/^{|^$/);
+                next if (/^#/);
                 if (/^}/)
                 {
                     undef $declaring_attributes;
@@ -150,6 +151,7 @@ sub Catalogs
                 else
                 {
                     my ($atttype, $attname) = split /\s+/, $_;
+                    die "parse error ($input_file)" unless $attname;
                     if (exists $RENAME_ATTTYPE{$atttype})
                     {
                         $atttype = $RENAME_ATTTYPE{$atttype};
