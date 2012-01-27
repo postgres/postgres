@@ -11102,8 +11102,10 @@ SELECT b1 = ANY((SELECT b2 FROM t2 ...)) FROM t1 ...;
 <programlisting>
 SELECT count(*) FROM sometable;
 </programlisting>
-    will be executed by <productname>PostgreSQL</productname> using a
-    sequential scan of the entire table.
+    will require effort proportional to the size of the table:
+    <productname>PostgreSQL</productname> will need to scan either the
+    entire table or the entirety of an index which includes all rows in
+    the table.
    </para>
   </note>
 
