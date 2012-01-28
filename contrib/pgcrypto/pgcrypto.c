@@ -342,8 +342,8 @@ pg_encrypt_iv(PG_FUNCTION_ARGS)
 	err = px_combo_init(c, (uint8 *) VARDATA(key), klen,
 						(uint8 *) VARDATA(iv), ivlen);
 	if (!err)
-		px_combo_encrypt(c, (uint8 *) VARDATA(data), dlen,
-						 (uint8 *) VARDATA(res), &rlen);
+		err = px_combo_encrypt(c, (uint8 *) VARDATA(data), dlen,
+							   (uint8 *) VARDATA(res), &rlen);
 
 	px_combo_free(c);
 
@@ -396,8 +396,8 @@ pg_decrypt_iv(PG_FUNCTION_ARGS)
 	err = px_combo_init(c, (uint8 *) VARDATA(key), klen,
 						(uint8 *) VARDATA(iv), ivlen);
 	if (!err)
-		px_combo_decrypt(c, (uint8 *) VARDATA(data), dlen,
-						 (uint8 *) VARDATA(res), &rlen);
+		err = px_combo_decrypt(c, (uint8 *) VARDATA(data), dlen,
+							   (uint8 *) VARDATA(res), &rlen);
 
 	px_combo_free(c);
 
