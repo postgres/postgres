@@ -3,20 +3,33 @@ src/test/isolation/README
 Isolation tests
 ===============
 
-This directory contains a set of tests for the serializable isolation level.
-Testing isolation requires running multiple overlapping transactions,
-which requires multiple concurrent connections, and therefore can't be
-tested using the normal pg_regress program.
+This directory contains a set of tests for concurrent behaviors in
+PostgreSQL.  These tests require running multiple interacting transactions,
+which requires management of multiple concurrent connections, and therefore
+can't be tested using the normal pg_regress program.  The name "isolation"
+comes from the fact that the original motivation was to test the
+serializable isolation level; but tests for other sorts of concurrent
+behaviors have been added as well.
 
 To run the tests, you need to have a server running at the default port
 expected by libpq.  (You can set PGPORT and so forth in your environment
 to control this.)  Then run
     gmake installcheck
-Note that the prepared-transactions test will not pass unless you have
-the server's max_prepared_transactions parameter set to at least 3.
+To run just specific test(s), you can do something like
+    ./pg_isolation_regress fk-contention fk-deadlock
+(look into the specs/ subdirectory to see the available tests).
 
-To represent a test with overlapping transactions, we use a test specification
-file with a custom syntax, which is described in the next section.
+Note that the prepared-transactions test requires the server's
+max_prepared_transactions parameter to be set to at least 3.  We have
+provided a variant expected-output file that allows the test to "pass"
+when max_prepared_transactions has its default value of zero, but of
+course that is not really exercising the feature.
+
+To define tests with overlapping transactions, we use test specification
+files with a custom syntax, which is described in the next section.  To add
+a new test, place a spec file in the specs/ subdirectory, add the expected
+output in the expected/ subdirectory, and add the test's name to the
+isolation_schedule file.
 
 isolationtester is a program that uses libpq to open multiple connections,
 and executes a test specified by a spec file. A libpq connection string
@@ -24,7 +37,8 @@ specifies the server and database to connect to; defaults derived from
 environment variables are used otherwise.
 
 pg_isolation_regress is a tool similar to pg_regress, but instead of using
-psql to execute a test, it uses isolationtester.
+psql to execute a test, it uses isolationtester.  It accepts all the same
+command-line arguments as pg_regress.
 
 
 Test specification
@@ -36,48 +50,65 @@ subdirectory. A test specification consists of four parts, in this order:
 setup { <SQL> }
 
   The given SQL block is executed once, in one session only, before running
-  the test. Create any test tables or such objects here. This part is
-  optional.
+  the test. Create any test tables or other required objects here. This
+  part is optional.
 
 teardown { <SQL> }
 
   The teardown SQL block is executed once after the test is finished. Use
-  this to clean up, e.g dropping any test tables. This part is optional.
+  this to clean up in preparation for the next permutation, e.g dropping
+  any test tables created by setup. This part is optional.
 
 session "<name>"
 
-  Each session is executed in a separate connection. A session consists
-  of four parts: setup, teardown and one or more steps. The per-session
+  There are normally several "session" parts in a spec file. Each
+  session is executed in its own connection. A session part consists
+  of three parts: setup, teardown and one or more "steps". The per-session
   setup and teardown parts have the same syntax as the per-test setup and
-  teardown described above, but they are executed in every session,
-  before and after each permutation. The setup part typically contains a
-  "BEGIN" command to begin a transaction.
+  teardown described above, but they are executed in each session. The
+  setup part typically contains a "BEGIN" command to begin a transaction.
 
-  Each step has a syntax of
+  Each step has the syntax
 
   step "<name>" { <SQL> }
 
-  where <name> is a unique name identifying this step, and SQL is a SQL
-  statement (or statements, separated by semicolons) that is executed in the
-  step.
+  where <name> is a name identifying this step, and SQL is a SQL statement
+  (or statements, separated by semicolons) that is executed in the step.
+  Step names must be unique across the whole spec file.
 
 permutation "<step name>" ...
 
   A permutation line specifies a list of steps that are run in that order.
-  If no permutation lines are given, the test program automatically generates
-  all possible overlapping orderings of the given sessions.
+  Any number of permutation lines can appear.  If no permutation lines are
+  given, the test program automatically generates all possible orderings
+  of the steps from each session (running the steps of any one session in
+  order).  Note that the list of steps in a manually specified
+  "permutation" line doesn't actually have to be a permutation of the
+  available steps; it could for instance repeat some steps more than once,
+  or leave others out.
 
 Lines beginning with a # are considered comments.
+
+For each permutation of the session steps (whether these are manually
+specified in the spec file, or automatically generated), the isolation
+tester runs the main setup part, then per-session setup parts, then
+the selected session steps, then per-session teardown, then the main
+teardown script.  Each selected step is sent to the connection associated
+with its session.
 
 
 Support for blocking commands
 =============================
 
-Each spec may contain commands that block until further action has been taken
+Each step may contain commands that block until further action has been taken
 (most likely, some other session runs a step that unblocks it or causes a
-deadlock).  Such a spec needs to be careful to manually specify valid
+deadlock).  A test that uses this ability must manually specify valid
 permutations, i.e. those that would not expect a blocked session to execute a
-command.  If the spec fails to follow that rule, the spec is aborted.
+command.  If the test fails to follow that rule, the test is aborted.
 
-Only one command can be waiting at a time.  As long as one command is waiting,
-other commands are run to completion synchronously.
+Currently, at most one step can be waiting at a time.  As long as one
+step is waiting, subsequent steps are run to completion synchronously.
+
+Note that isolationtester recognizes that a command has blocked by looking
+to see if it is shown as waiting in the pg_locks view; therefore, only
+blocks on heavyweight locks will be detected.

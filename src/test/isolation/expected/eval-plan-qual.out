@@ -1,0 +1,51 @@
+Parsed test spec with 3 sessions
+
+starting permutation: wx1 wx2 c1 c2 read
+step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking';
+step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking'; <waiting ...>
+step c1: COMMIT;
+step wx2: <... completed>
+step c2: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid      balance        
+
+checking       850            
+savings        600            
+
+starting permutation: wy1 wy2 c1 c2 read
+step wy1: UPDATE accounts SET balance = balance + 500 WHERE accountid = 'checking';
+step wy2: UPDATE accounts SET balance = balance + 1000 WHERE accountid = 'checking' AND balance < 1000; <waiting ...>
+step c1: COMMIT;
+step wy2: <... completed>
+step c2: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid      balance        
+
+checking       1100           
+savings        600            
+
+starting permutation: upsert1 upsert2 c1 c2 read
+step upsert1: 
+	WITH upsert AS
+	  (UPDATE accounts SET balance = balance + 500
+	   WHERE accountid = 'savings'
+	   RETURNING accountid)
+	INSERT INTO accounts SELECT 'savings', 500
+	  WHERE NOT EXISTS (SELECT 1 FROM upsert);
+
+step upsert2: 
+	WITH upsert AS
+	  (UPDATE accounts SET balance = balance + 1234
+	   WHERE accountid = 'savings'
+	   RETURNING accountid)
+	INSERT INTO accounts SELECT 'savings', 1234
+	  WHERE NOT EXISTS (SELECT 1 FROM upsert);
+ <waiting ...>
+step c1: COMMIT;
+step upsert2: <... completed>
+step c2: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid      balance        
+
+checking       600            
+savings        2334           

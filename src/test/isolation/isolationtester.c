@@ -395,15 +395,9 @@ run_named_permutations(TestSpec * testspec)
 		Permutation *p = testspec->permutations[i];
 		Step	  **steps;
 
-		if (p->nsteps != nallsteps)
-		{
-			fprintf(stderr, "invalid number of steps in permutation %d\n", i + 1);
-			exit_nicely();
-		}
-
 		steps = malloc(p->nsteps * sizeof(Step *));
 
-		/* Find all the named steps from the lookup table */
+		/* Find all the named steps using the lookup table */
 		for (j = 0; j < p->nsteps; j++)
 		{
 			Step	**this = (Step **) bsearch(p->stepnames[j], allsteps,
@@ -418,7 +412,9 @@ run_named_permutations(TestSpec * testspec)
 			steps[j] = *this;
 		}
 
+		/* And run them */
 		run_permutation(testspec, p->nsteps, steps);
+
 		free(steps);
 	}
 }
@@ -483,6 +479,8 @@ report_two_error_messages(Step *step1, Step *step2)
 		free(step2->errormsg);
 		step2->errormsg = NULL;
 	}
+
+	free(prefix);
 }
 
 /*
@@ -700,7 +698,7 @@ try_complete_step(Step *step, int flags)
 
 	FD_ZERO(&read_set);
 
-	while (flags & STEP_NONBLOCK && PQisBusy(conn))
+	while ((flags & STEP_NONBLOCK) && PQisBusy(conn))
 	{
 		FD_SET(sock, &read_set);
 		timeout.tv_sec = 0;
@@ -739,7 +737,8 @@ try_complete_step(Step *step, int flags)
 		}
 		else if (!PQconsumeInput(conn)) /* select(): data available */
 		{
-			fprintf(stderr, "PQconsumeInput failed: %s", PQerrorMessage(conn));
+			fprintf(stderr, "PQconsumeInput failed: %s\n",
+					PQerrorMessage(conn));
 			exit_nicely();
 		}
 	}
