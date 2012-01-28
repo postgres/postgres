@@ -1128,11 +1128,11 @@ FileClose(File file)
 									vfdP->fileName,
 									(unsigned long) filestats.st_size)));
 			}
-			else
-			{
-				errno = stat_errno;
-				elog(LOG, "could not stat file \"%s\": %m", vfdP->fileName);
-			}
+		}
+		else
+		{
+			errno = stat_errno;
+			elog(LOG, "could not stat file \"%s\": %m", vfdP->fileName);
 		}
 	}
 
