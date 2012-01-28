@@ -2347,11 +2347,7 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 	 * ExecInitSubPlan expects to be able to find these entries. Some of the
 	 * SubPlans might not be used in the part of the plan tree we intend to
 	 * run, but since it's not easy to tell which, we just initialize them
-	 * all.  (However, if the subplan is headed by a ModifyTable node, then it
-	 * must be a data-modifying CTE, which we will certainly not need to
-	 * re-run, so we can skip initializing it.	This is just an efficiency
-	 * hack; it won't skip data-modifying CTEs for which the ModifyTable node
-	 * is not at the top.)
+	 * all.
 	 */
 	Assert(estate->es_subplanstates == NIL);
 	foreach(l, parentestate->es_plannedstmt->subplans)
@@ -2359,12 +2355,7 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 		Plan	   *subplan = (Plan *) lfirst(l);
 		PlanState  *subplanstate;
 
-		/* Don't initialize ModifyTable subplans, per comment above */
-		if (IsA(subplan, ModifyTable))
-			subplanstate = NULL;
-		else
-			subplanstate = ExecInitNode(subplan, estate, 0);
-
+		subplanstate = ExecInitNode(subplan, estate, 0);
 		estate->es_subplanstates = lappend(estate->es_subplanstates,
 										   subplanstate);
 	}

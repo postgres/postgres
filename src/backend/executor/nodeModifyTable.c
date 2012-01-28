@@ -716,6 +716,18 @@ ExecModifyTable(ModifyTableState *node)
 	HeapTupleHeader oldtuple = NULL;
 
 	/*
+	 * This should NOT get called during EvalPlanQual; we should have passed a
+	 * subplan tree to EvalPlanQual, instead.  Use a runtime test not just
+	 * Assert because this condition is easy to miss in testing.  (Note:
+	 * although ModifyTable should not get executed within an EvalPlanQual
+	 * operation, we do have to allow it to be initialized and shut down in
+	 * case it is within a CTE subplan.  Hence this test must be here, not in
+	 * ExecInitModifyTable.)
+	 */
+	if (estate->es_epqTuple != NULL)
+		elog(ERROR, "ModifyTable should not be called during EvalPlanQual");
+
+	/*
 	 * If we've already completed processing, don't try to do more.  We need
 	 * this test because ExecPostprocessPlan might call us an extra time, and
 	 * our subplan's nodes aren't necessarily robust against being called
@@ -893,14 +905,6 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
 
 	/*
-	 * This should NOT get called during EvalPlanQual; we should have passed a
-	 * subplan tree to EvalPlanQual, instead.  Use a runtime test not just
-	 * Assert because this condition is easy to miss in testing ...
-	 */
-	if (estate->es_epqTuple != NULL)
-		elog(ERROR, "ModifyTable should not be called during EvalPlanQual");
-
-	/*
 	 * create state structure
 	 */
 	mtstate = makeNode(ModifyTableState);
@@ -947,9 +951,13 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		 * descriptors in the result relation info, so that we can add new
 		 * index entries for the tuples we add/update.	We need not do this
 		 * for a DELETE, however, since deletion doesn't affect indexes.
+		 * Also, inside an EvalPlanQual operation, the indexes might be open
+		 * already, since we share the resultrel state with the original
+		 * query.
 		 */
 		if (resultRelInfo->ri_RelationDesc->rd_rel->relhasindex &&
-			operation != CMD_DELETE)
+			operation != CMD_DELETE &&
+			resultRelInfo->ri_IndexRelationDescs == NULL)
 			ExecOpenIndices(resultRelInfo);
 
 		/* Now init the plan for this result rel */
