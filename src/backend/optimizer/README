@@ -78,10 +78,10 @@ ways.  All the Paths made for a given relation are placed in its
 RelOptInfo.pathlist.  (Actually, we discard Paths that are obviously
 inferior alternatives before they ever get into the pathlist --- what
 ends up in the pathlist is the cheapest way of generating each potentially
-useful sort ordering of the relation.)  Also create a RelOptInfo.joininfo
-list including all the join clauses that involve this relation.  For
-example, the WHERE clause "tab1.col1 = tab2.col1" generates entries in
-both tab1 and tab2's joininfo lists.
+useful sort ordering and parameterization of the relation.)  Also create a
+RelOptInfo.joininfo list including all the join clauses that involve this
+relation.  For example, the WHERE clause "tab1.col1 = tab2.col1" generates
+entries in both tab1 and tab2's joininfo lists.
 
 If we have only a single base relation in the query, we are done.
 Otherwise we have to figure out how to join the base relations into a
@@ -173,12 +173,12 @@ for it or the cheapest path with the desired ordering (if that's cheaper
 than applying a sort to the cheapest other path).
 
 If the query contains one-sided outer joins (LEFT or RIGHT joins), or
-IN or EXISTS WHERE clauses that were converted to joins, then some of
-the possible join orders may be illegal.  These are excluded by having
-join_is_legal consult a side list of such "special" joins to see
-whether a proposed join is illegal.  (The same consultation allows it
-to see which join style should be applied for a valid join, ie,
-JOIN_INNER, JOIN_LEFT, etc.)
+IN or EXISTS WHERE clauses that were converted to semijoins or antijoins,
+then some of the possible join orders may be illegal.  These are excluded
+by having join_is_legal consult a side list of such "special" joins to see
+whether a proposed join is illegal.  (The same consultation allows it to
+see which join style should be applied for a valid join, ie, JOIN_INNER,
+JOIN_LEFT, etc.)
 
 
 Valid OUTER JOIN Optimizations
@@ -526,12 +526,11 @@ multi-column index generates a list with one element per index column.
 are two possible sort orders and two possible PathKey lists it can
 generate.)
 
-Note that a bitmap scan or multi-pass indexscan (OR clause scan) has NIL
-pathkeys since we can say nothing about the overall order of its result.
-Also, an indexscan on an unordered type of index generates NIL pathkeys.
-However, we can always create a pathkey by doing an explicit sort.  The
-pathkeys for a Sort plan's output just represent the sort key fields and
-the ordering operators used.
+Note that a bitmap scan has NIL pathkeys since we can say nothing about
+the overall order of its result.  Also, an indexscan on an unordered type
+of index generates NIL pathkeys.  However, we can always create a pathkey
+by doing an explicit sort.  The pathkeys for a Sort plan's output just
+represent the sort key fields and the ordering operators used.
 
 Things get more interesting when we consider joins.  Suppose we do a
 mergejoin between A and B using the mergeclause A.X = B.Y.  The output
@@ -666,6 +665,104 @@ minimized since it is impossible for query_planner to return a plan
 producing such a sort order, meaning a explicit sort will always be needed.
 Currently this happens only for queries involving multiple window functions
 with different orderings, for which extra sorts are needed anyway.
+
+
+Parameterized Paths
+-------------------
+
+The naive way to join two relations using a clause like WHERE A.X = B.Y
+is to generate a nestloop plan like this:
+
+	NestLoop
+		Filter: A.X = B.Y
+		-> Seq Scan on A
+		-> Seq Scan on B
+
+We can make this better by using a merge or hash join, but it still
+requires scanning all of both input relations.  If A is very small and B is
+very large, but there is an index on B.Y, it can be enormously better to do
+something like this:
+
+	NestLoop
+		-> Seq Scan on A
+		-> Index Scan using B_Y_IDX on B
+			Index Condition: B.Y = A.X
+
+Here, we are expecting that for each row scanned from A, the nestloop
+plan node will pass down the current value of A.X into the scan of B.
+That allows the indexscan to treat A.X as a constant for any one
+invocation, and thereby use it as an index key.  This is the only plan type
+that can avoid fetching all of B, and for small numbers of rows coming from
+A, that will dominate every other consideration.  (As A gets larger, this
+gets less attractive, and eventually a merge or hash join will win instead.
+So we have to cost out all the alternatives to decide what to do.)
+
+It can be useful for the parameter value to be passed down through
+intermediate layers of joins, for example:
+
+	NestLoop
+		-> Seq Scan on A
+		Hash Join
+			Join Condition: B.Y = C.W
+			-> Seq Scan on B
+			-> Index Scan using C_Z_IDX on C
+				Index Condition: C.Z = A.X
+
+If all joins are plain inner joins then this is unnecessary, because
+it's always possible to reorder the joins so that a parameter is used
+immediately below the nestloop node that provides it.  But in the
+presence of outer joins, join reordering may not be possible, and then
+this option can be critical.  Before version 9.2, Postgres used ad-hoc
+methods for planning and executing such queries, and those methods could
+not handle passing parameters down through multiple join levels.
+
+To plan such queries, we now use a notion of a "parameterized path",
+which is a path that makes use of a join clause to a relation that's not
+scanned by the path.  In the example just above, we would construct a
+path representing the possibility of doing this:
+
+	-> Index Scan using C_Z_IDX on C
+		Index Condition: C.Z = A.X
+
+This path will be marked as being parameterized by relation A.  (Note that
+this is only one of the possible access paths for C; we'd still have a
+plain unparameterized seqscan, and perhaps other possibilities.)  The
+parameterization marker does not prevent joining the path to B, so one of
+the paths generated for the joinrel {B C} will represent
+
+	Hash Join
+		Join Condition: B.Y = C.W
+		-> Seq Scan on B
+		-> Index Scan using C_Z_IDX on C
+			Index Condition: C.Z = A.X
+
+This path is still marked as being parameterized by A.  When we attempt to
+join {B C} to A to form the complete join tree, such a path can only be
+used as the inner side of a nestloop join: it will be ignored for other
+possible join types.  So we will form a join path representing the query
+plan shown above, and it will compete in the usual way with paths built
+from non-parameterized scans.
+
+To limit planning time, we have to avoid generating an unreasonably large
+number of parameterized paths.  We do this by only generating parameterized
+relation scan paths for index scans, and then only for indexes for which
+suitable join clauses are available.  There are also heuristics in join
+planning that try to limit the number of parameterized paths considered.
+
+In particular, there's been a deliberate policy decision to favor hash
+joins over merge joins for parameterized join steps (those occurring below
+a nestloop that provides parameters to the lower join's inputs).  While we
+do not ignore merge joins entirely, joinpath.c does not fully explore the
+space of potential merge joins with parameterized inputs.  Also, add_path
+treats parameterized paths as having no pathkeys, so that they compete
+only on cost and don't get preference for producing a special sort order.
+This creates additional bias against merge joins, since we might discard
+a path that could have been useful for performing a merge without an
+explicit sort step.  Since a parameterized path must ultimately be used
+on the inside of a nestloop, where its sort order is uninteresting, these
+choices do not affect any requirement for the final output order of a
+query --- they only make it harder to use a merge join at a lower level.
+The savings in planning work justifies that.
 
 
 -- bjm & tgl

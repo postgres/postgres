@@ -36,6 +36,15 @@ typedef struct Bitmapset
 } Bitmapset;					/* VARIABLE LENGTH STRUCT */
 
 
+/* result of bms_subset_compare */
+typedef enum
+{
+	BMS_EQUAL,					/* sets are equal */
+	BMS_SUBSET1,				/* first set is a subset of the second */
+	BMS_SUBSET2,				/* second set is a subset of the first */
+	BMS_DIFFERENT				/* neither set is a subset of the other */
+} BMS_Comparison;
+
 /* result of bms_membership */
 typedef enum
 {
@@ -58,6 +67,7 @@ extern Bitmapset *bms_union(const Bitmapset *a, const Bitmapset *b);
 extern Bitmapset *bms_intersect(const Bitmapset *a, const Bitmapset *b);
 extern Bitmapset *bms_difference(const Bitmapset *a, const Bitmapset *b);
 extern bool bms_is_subset(const Bitmapset *a, const Bitmapset *b);
+extern BMS_Comparison bms_subset_compare(const Bitmapset *a, const Bitmapset *b);
 extern bool bms_is_member(int x, const Bitmapset *a);
 extern bool bms_overlap(const Bitmapset *a, const Bitmapset *b);
 extern bool bms_nonempty_difference(const Bitmapset *a, const Bitmapset *b);

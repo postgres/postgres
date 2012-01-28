@@ -935,14 +935,11 @@ has_legal_joinclause(PlannerInfo *root, RelOptInfo *rel)
 
 /*
  * is_dummy_rel --- has relation been proven empty?
- *
- * If so, it will have a single path that is dummy.
  */
 static bool
 is_dummy_rel(RelOptInfo *rel)
 {
-	return (rel->cheapest_total_path != NULL &&
-			IS_DUMMY_PATH(rel->cheapest_total_path));
+	return IS_DUMMY_REL(rel);
 }
 
 /*
@@ -981,7 +978,7 @@ mark_dummy_rel(RelOptInfo *rel)
 	/* Set up the dummy path */
 	add_path(rel, (Path *) create_append_path(rel, NIL));
 
-	/* Set or update cheapest_total_path */
+	/* Set or update cheapest_total_path and related fields */
 	set_cheapest(rel);
 
 	MemoryContextSwitchTo(oldcontext);

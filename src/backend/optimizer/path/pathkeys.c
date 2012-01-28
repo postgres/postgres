@@ -403,14 +403,17 @@ pathkeys_contained_in(List *keys1, List *keys2)
 /*
  * get_cheapest_path_for_pathkeys
  *	  Find the cheapest path (according to the specified criterion) that
- *	  satisfies the given pathkeys.  Return NULL if no such path.
+ *	  satisfies the given pathkeys and parameterization.
+ *	  Return NULL if no such path.
  *
  * 'paths' is a list of possible paths that all generate the same relation
  * 'pathkeys' represents a required ordering (already canonicalized!)
+ * 'required_outer' denotes allowable outer relations for parameterized paths
  * 'cost_criterion' is STARTUP_COST or TOTAL_COST
  */
 Path *
 get_cheapest_path_for_pathkeys(List *paths, List *pathkeys,
+							   Relids required_outer,
 							   CostSelector cost_criterion)
 {
 	Path	   *matched_path = NULL;
@@ -428,7 +431,8 @@ get_cheapest_path_for_pathkeys(List *paths, List *pathkeys,
 			compare_path_costs(matched_path, path, cost_criterion) <= 0)
 			continue;
 
-		if (pathkeys_contained_in(pathkeys, path->pathkeys))
+		if (pathkeys_contained_in(pathkeys, path->pathkeys) &&
+			bms_is_subset(path->required_outer, required_outer))
 			matched_path = path;
 	}
 	return matched_path;
@@ -437,7 +441,7 @@ get_cheapest_path_for_pathkeys(List *paths, List *pathkeys,
 /*
  * get_cheapest_fractional_path_for_pathkeys
  *	  Find the cheapest path (for retrieving a specified fraction of all
- *	  the tuples) that satisfies the given pathkeys.
+ *	  the tuples) that satisfies the given pathkeys and parameterization.
  *	  Return NULL if no such path.
  *
  * See compare_fractional_path_costs() for the interpretation of the fraction
@@ -445,11 +449,13 @@ get_cheapest_path_for_pathkeys(List *paths, List *pathkeys,
  *
  * 'paths' is a list of possible paths that all generate the same relation
  * 'pathkeys' represents a required ordering (already canonicalized!)
+ * 'required_outer' denotes allowable outer relations for parameterized paths
  * 'fraction' is the fraction of the total tuples expected to be retrieved
  */
 Path *
 get_cheapest_fractional_path_for_pathkeys(List *paths,
 										  List *pathkeys,
+										  Relids required_outer,
 										  double fraction)
 {
 	Path	   *matched_path = NULL;
@@ -461,13 +467,14 @@ get_cheapest_fractional_path_for_pathkeys(List *paths,
 
 		/*
 		 * Since cost comparison is a lot cheaper than pathkey comparison, do
-		 * that first.
+		 * that first.	(XXX is that still true?)
 		 */
 		if (matched_path != NULL &&
 			compare_fractional_path_costs(matched_path, path, fraction) <= 0)
 			continue;
 
-		if (pathkeys_contained_in(pathkeys, path->pathkeys))
+		if (pathkeys_contained_in(pathkeys, path->pathkeys) &&
+			bms_is_subset(path->required_outer, required_outer))
 			matched_path = path;
 	}
 	return matched_path;

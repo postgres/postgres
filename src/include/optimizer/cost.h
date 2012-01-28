@@ -68,9 +68,9 @@ extern double index_pages_fetched(double tuples_fetched, BlockNumber pages,
 					double index_pages, PlannerInfo *root);
 extern void cost_seqscan(Path *path, PlannerInfo *root, RelOptInfo *baserel);
 extern void cost_index(IndexPath *path, PlannerInfo *root,
-					   RelOptInfo *outer_rel);
+					   double loop_count);
 extern void cost_bitmap_heap_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
-					  Path *bitmapqual, RelOptInfo *outer_rel);
+					  Path *bitmapqual, double loop_count);
 extern void cost_bitmap_and_node(BitmapAndPath *path, PlannerInfo *root);
 extern void cost_bitmap_or_node(BitmapOrPath *path, PlannerInfo *root);
 extern void cost_bitmap_tree_node(Path *path, Cost *cost, Selectivity *selec);
@@ -107,15 +107,47 @@ extern void cost_group(Path *path, PlannerInfo *root,
 		   int numGroupCols, double numGroups,
 		   Cost input_startup_cost, Cost input_total_cost,
 		   double input_tuples);
-extern void cost_nestloop(NestPath *path, PlannerInfo *root,
-			  SpecialJoinInfo *sjinfo);
-extern void cost_mergejoin(MergePath *path, PlannerInfo *root,
-			   SpecialJoinInfo *sjinfo);
-extern void cost_hashjoin(HashPath *path, PlannerInfo *root,
-			  SpecialJoinInfo *sjinfo);
+extern void initial_cost_nestloop(PlannerInfo *root,
+					  JoinCostWorkspace *workspace,
+					  JoinType jointype,
+					  Path *outer_path, Path *inner_path,
+					  SpecialJoinInfo *sjinfo,
+					  SemiAntiJoinFactors *semifactors);
+extern void final_cost_nestloop(PlannerInfo *root, NestPath *path,
+					JoinCostWorkspace *workspace,
+					SpecialJoinInfo *sjinfo,
+					SemiAntiJoinFactors *semifactors);
+extern void initial_cost_mergejoin(PlannerInfo *root,
+					   JoinCostWorkspace *workspace,
+					   JoinType jointype,
+					   List *mergeclauses,
+					   Path *outer_path, Path *inner_path,
+					   List *outersortkeys, List *innersortkeys,
+					   SpecialJoinInfo *sjinfo);
+extern void final_cost_mergejoin(PlannerInfo *root, MergePath *path,
+					 JoinCostWorkspace *workspace,
+					 SpecialJoinInfo *sjinfo);
+extern void initial_cost_hashjoin(PlannerInfo *root,
+					  JoinCostWorkspace *workspace,
+					  JoinType jointype,
+					  List *hashclauses,
+					  Path *outer_path, Path *inner_path,
+					  SpecialJoinInfo *sjinfo,
+					  SemiAntiJoinFactors *semifactors);
+extern void final_cost_hashjoin(PlannerInfo *root, HashPath *path,
+					JoinCostWorkspace *workspace,
+					SpecialJoinInfo *sjinfo,
+					SemiAntiJoinFactors *semifactors);
 extern void cost_subplan(PlannerInfo *root, SubPlan *subplan, Plan *plan);
 extern void cost_qual_eval(QualCost *cost, List *quals, PlannerInfo *root);
 extern void cost_qual_eval_node(QualCost *cost, Node *qual, PlannerInfo *root);
+extern void compute_semi_anti_join_factors(PlannerInfo *root,
+							   RelOptInfo *outerrel,
+							   RelOptInfo *innerrel,
+							   JoinType jointype,
+							   SpecialJoinInfo *sjinfo,
+							   List *restrictlist,
+							   SemiAntiJoinFactors *semifactors);
 extern void set_baserel_size_estimates(PlannerInfo *root, RelOptInfo *rel);
 extern void set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 						   RelOptInfo *outer_rel,

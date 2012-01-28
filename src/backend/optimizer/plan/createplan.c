@@ -932,7 +932,7 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 		long		numGroups;
 		Oid		   *groupOperators;
 
-		numGroups = (long) Min(best_path->rows, (double) LONG_MAX);
+		numGroups = (long) Min(best_path->path.rows, (double) LONG_MAX);
 
 		/*
 		 * Get the hashable equality operators for the Agg node to use.
@@ -1018,7 +1018,7 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 	}
 
 	/* Adjust output size estimate (other fields should be OK already) */
-	plan->plan_rows = best_path->rows;
+	plan->plan_rows = best_path->path.rows;
 
 	return plan;
 }
@@ -1112,7 +1112,7 @@ create_indexscan_plan(PlannerInfo *root,
 	fixed_indexorderbys = fix_indexorderby_references(root, best_path);
 
 	/*
-	 * If this is an innerjoin scan, the indexclauses will contain join
+	 * If this is a parameterized scan, the indexclauses will contain join
 	 * clauses that are not present in scan_clauses (since the passed-in value
 	 * is just the rel's baserestrictinfo list).  We must add these clauses to
 	 * scan_clauses to ensure they get checked.  In most cases we will remove
@@ -1122,7 +1122,7 @@ create_indexscan_plan(PlannerInfo *root,
 	 * Note: pointer comparison should be enough to determine RestrictInfo
 	 * matches.
 	 */
-	if (best_path->isjoininner)
+	if (best_path->path.required_outer)
 		scan_clauses = list_union_ptr(scan_clauses, best_path->indexclauses);
 
 	/*
@@ -1189,7 +1189,7 @@ create_indexscan_plan(PlannerInfo *root,
 	 * it'd break the comparisons to predicates above ... (or would it?  Those
 	 * wouldn't have outer refs)
 	 */
-	if (best_path->isjoininner)
+	if (best_path->path.required_outer)
 	{
 		stripped_indexquals = (List *)
 			replace_nestloop_params(root, (Node *) stripped_indexquals);
@@ -1221,8 +1221,6 @@ create_indexscan_plan(PlannerInfo *root,
 											best_path->indexscandir);
 
 	copy_path_costsize(&scan_plan->plan, &best_path->path);
-	/* use the indexscan-specific rows estimate, not the parent rel's */
-	scan_plan->plan.plan_rows = best_path->rows;
 
 	return scan_plan;
 }
@@ -1258,14 +1256,14 @@ create_bitmap_scan_plan(PlannerInfo *root,
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
 
 	/*
-	 * If this is a innerjoin scan, the indexclauses will contain join clauses
+	 * If this is a parameterized scan, the indexclauses will contain join clauses
 	 * that are not present in scan_clauses (since the passed-in value is just
 	 * the rel's baserestrictinfo list).  We must add these clauses to
 	 * scan_clauses to ensure they get checked.  In most cases we will remove
 	 * the join clauses again below, but if a join clause contains a special
 	 * operator, we need to make sure it gets into the scan_clauses.
 	 */
-	if (best_path->isjoininner)
+	if (best_path->path.required_outer)
 	{
 		scan_clauses = list_concat_unique(scan_clauses, bitmapqualorig);
 	}
@@ -1328,8 +1326,6 @@ create_bitmap_scan_plan(PlannerInfo *root,
 									 baserelid);
 
 	copy_path_costsize(&scan_plan->scan.plan, &best_path->path);
-	/* use the indexscan-specific rows estimate, not the parent rel's */
-	scan_plan->scan.plan.plan_rows = best_path->rows;
 
 	return scan_plan;
 }
@@ -1510,7 +1506,7 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 		 * Replace outer-relation variables with nestloop params, but only
 		 * after doing the above comparisons to index predicates.
 		 */
-		if (ipath->isjoininner)
+		if (ipath->path.required_outer)
 		{
 			*qual = (List *)
 				replace_nestloop_params(root, (Node *) *qual);
@@ -1883,14 +1879,13 @@ create_nestloop_plan(PlannerInfo *root,
 	ListCell   *next;
 
 	/*
-	 * If the inner path is a nestloop inner indexscan, it might be using some
-	 * of the join quals as index quals, in which case we don't have to check
-	 * them again at the join node.  Remove any join quals that are redundant.
+	 * If the inner path is parameterized, it might have already used some of
+	 * the join quals, in which case we don't have to check them again at the
+	 * join node.  Remove any join quals that are redundant.
 	 */
 	joinrestrictclauses =
-		select_nonredundant_join_clauses(root,
-										 joinrestrictclauses,
-										 best_path->innerjoinpath);
+		select_nonredundant_join_clauses(joinrestrictclauses,
+										 best_path->innerjoinpath->param_clauses);
 
 	/* Sort join qual clauses into best execution order */
 	joinrestrictclauses = order_qual_clauses(root, joinrestrictclauses);
@@ -2054,7 +2049,7 @@ create_mergejoin_plan(PlannerInfo *root,
 		/*
 		 * We assume the materialize will not spill to disk, and therefore
 		 * charge just cpu_operator_cost per tuple.  (Keep this estimate in
-		 * sync with cost_mergejoin.)
+		 * sync with final_cost_mergejoin.)
 		 */
 		copy_plan_costsize(matplan, inner_plan);
 		matplan->total_cost += cpu_operator_cost * matplan->plan_rows;
@@ -2885,7 +2880,7 @@ copy_path_costsize(Plan *dest, Path *src)
 	{
 		dest->startup_cost = src->startup_cost;
 		dest->total_cost = src->total_cost;
-		dest->plan_rows = src->parent->rows;
+		dest->plan_rows = src->rows;
 		dest->plan_width = src->parent->width;
 	}
 	else

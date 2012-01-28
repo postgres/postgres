@@ -29,6 +29,15 @@
 #include "utils/selfuncs.h"
 
 
+typedef enum
+{
+	COSTS_EQUAL,				/* path costs are fuzzily equal */
+	COSTS_BETTER1,				/* first path is cheaper than second */
+	COSTS_BETTER2,				/* second path is cheaper than first */
+	COSTS_DIFFERENT				/* neither path dominates the other on cost */
+} PathCostComparison;
+
+static void add_parameterized_path(RelOptInfo *parent_rel, Path *new_path);
 static List *translate_sub_tlist(List *tlist, int relid);
 static bool query_is_distinct_for(Query *query, List *colnos, List *opids);
 static Oid	distinct_col_search(int colno, List *colnos, List *opids);
@@ -81,58 +90,6 @@ compare_path_costs(Path *path1, Path *path2, CostSelector criterion)
 }
 
 /*
- * compare_fuzzy_path_costs
- *	  Return -1, 0, or +1 according as path1 is cheaper, the same cost,
- *	  or more expensive than path2 for the specified criterion.
- *
- * This differs from compare_path_costs in that we consider the costs the
- * same if they agree to within a "fuzz factor".  This is used by add_path
- * to avoid keeping both of a pair of paths that really have insignificantly
- * different cost.
- */
-static int
-compare_fuzzy_path_costs(Path *path1, Path *path2, CostSelector criterion)
-{
-	/*
-	 * We use a fuzz factor of 1% of the smaller cost.
-	 *
-	 * XXX does this percentage need to be user-configurable?
-	 */
-	if (criterion == STARTUP_COST)
-	{
-		if (path1->startup_cost > path2->startup_cost * 1.01)
-			return +1;
-		if (path2->startup_cost > path1->startup_cost * 1.01)
-			return -1;
-
-		/*
-		 * If paths have the same startup cost (not at all unlikely), order
-		 * them by total cost.
-		 */
-		if (path1->total_cost > path2->total_cost * 1.01)
-			return +1;
-		if (path2->total_cost > path1->total_cost * 1.01)
-			return -1;
-	}
-	else
-	{
-		if (path1->total_cost > path2->total_cost * 1.01)
-			return +1;
-		if (path2->total_cost > path1->total_cost * 1.01)
-			return -1;
-
-		/*
-		 * If paths have the same total cost, order them by startup cost.
-		 */
-		if (path1->startup_cost > path2->startup_cost * 1.01)
-			return +1;
-		if (path2->startup_cost > path1->startup_cost * 1.01)
-			return -1;
-	}
-	return 0;
-}
-
-/*
  * compare_path_fractional_costs
  *	  Return -1, 0, or +1 according as path1 is cheaper, the same cost,
  *	  or more expensive than path2 for fetching the specified fraction
@@ -162,38 +119,119 @@ compare_fractional_path_costs(Path *path1, Path *path2,
 }
 
 /*
+ * compare_path_costs_fuzzily
+ *	  Compare the costs of two paths to see if either can be said to
+ *	  dominate the other.
+ *
+ * We use fuzzy comparisons so that add_path() can avoid keeping both of
+ * a pair of paths that really have insignificantly different cost.
+ * The fuzz factor is 1% of the smaller cost.  (XXX does this percentage
+ * need to be user-configurable?)
+ *
+ * The two paths are said to have "equal" costs if both startup and total
+ * costs are fuzzily the same.  Path1 is said to be better than path2 if
+ * it has fuzzily better startup cost and fuzzily no worse total cost,
+ * or if it has fuzzily better total cost and fuzzily no worse startup cost.
+ * Path2 is better than path1 if the reverse holds.  Finally, if one path
+ * is fuzzily better than the other on startup cost and fuzzily worse on
+ * total cost, we just say that their costs are "different", since neither
+ * dominates the other across the whole performance spectrum.
+ */
+static PathCostComparison
+compare_path_costs_fuzzily(Path *path1, Path *path2)
+{
+	/*
+	 * Check total cost first since it's more likely to be different; many
+	 * paths have zero startup cost.
+	 */
+	if (path1->total_cost > path2->total_cost * 1.01)
+	{
+		/* path1 fuzzily worse on total cost */
+		if (path2->startup_cost > path1->startup_cost * 1.01)
+		{
+			/* ... but path2 fuzzily worse on startup, so DIFFERENT */
+			return COSTS_DIFFERENT;
+		}
+		/* else path2 dominates */
+		return COSTS_BETTER2;
+	}
+	if (path2->total_cost > path1->total_cost * 1.01)
+	{
+		/* path2 fuzzily worse on total cost */
+		if (path1->startup_cost > path2->startup_cost * 1.01)
+		{
+			/* ... but path1 fuzzily worse on startup, so DIFFERENT */
+			return COSTS_DIFFERENT;
+		}
+		/* else path1 dominates */
+		return COSTS_BETTER1;
+	}
+	/* fuzzily the same on total cost */
+	if (path1->startup_cost > path2->startup_cost * 1.01)
+	{
+		/* ... but path1 fuzzily worse on startup, so path2 wins */
+		return COSTS_BETTER2;
+	}
+	if (path2->startup_cost > path1->startup_cost * 1.01)
+	{
+		/* ... but path2 fuzzily worse on startup, so path1 wins */
+		return COSTS_BETTER1;
+	}
+	/* fuzzily the same on both costs */
+	return COSTS_EQUAL;
+}
+
+/*
  * set_cheapest
  *	  Find the minimum-cost paths from among a relation's paths,
  *	  and save them in the rel's cheapest-path fields.
  *
+ * Only unparameterized paths are considered candidates for cheapest_startup
+ * and cheapest_total.  The cheapest_parameterized_paths list collects paths
+ * that are cheapest-total for their parameterization (i.e., there is no
+ * cheaper path with the same or weaker parameterization).  This list always
+ * includes the unparameterized cheapest-total path, too.
+ *
  * This is normally called only after we've finished constructing the path
  * list for the rel node.
- *
- * If we find two paths of identical costs, try to keep the better-sorted one.
- * The paths might have unrelated sort orderings, in which case we can only
- * guess which might be better to keep, but if one is superior then we
- * definitely should keep it.
  */
 void
 set_cheapest(RelOptInfo *parent_rel)
 {
-	List	   *pathlist = parent_rel->pathlist;
-	ListCell   *p;
 	Path	   *cheapest_startup_path;
 	Path	   *cheapest_total_path;
+	bool		have_parameterized_paths;
+	ListCell   *p;
 
 	Assert(IsA(parent_rel, RelOptInfo));
 
-	if (pathlist == NIL)
-		elog(ERROR, "could not devise a query plan for the given query");
+	cheapest_startup_path = cheapest_total_path = NULL;
+	have_parameterized_paths = false;
 
-	cheapest_startup_path = cheapest_total_path = (Path *) linitial(pathlist);
-
-	for_each_cell(p, lnext(list_head(pathlist)))
+	foreach(p, parent_rel->pathlist)
 	{
 		Path	   *path = (Path *) lfirst(p);
 		int			cmp;
 
+		/* We only consider unparameterized paths in this step */
+		if (path->required_outer)
+		{
+			have_parameterized_paths = true;
+			continue;
+		}
+
+		if (cheapest_total_path == NULL)
+		{
+			cheapest_startup_path = cheapest_total_path = path;
+			continue;
+		}
+
+		/*
+		 * If we find two paths of identical costs, try to keep the
+		 * better-sorted one.  The paths might have unrelated sort orderings,
+		 * in which case we can only guess which might be better to keep, but
+		 * if one is superior then we definitely should keep that one.
+		 */
 		cmp = compare_path_costs(cheapest_startup_path, path, STARTUP_COST);
 		if (cmp > 0 ||
 			(cmp == 0 &&
@@ -209,9 +247,27 @@ set_cheapest(RelOptInfo *parent_rel)
 			cheapest_total_path = path;
 	}
 
+	if (cheapest_total_path == NULL)
+		elog(ERROR, "could not devise a query plan for the given query");
+
 	parent_rel->cheapest_startup_path = cheapest_startup_path;
 	parent_rel->cheapest_total_path = cheapest_total_path;
 	parent_rel->cheapest_unique_path = NULL;	/* computed only if needed */
+
+	/* Seed the parameterized-paths list with the cheapest total */
+	parent_rel->cheapest_parameterized_paths = list_make1(cheapest_total_path);
+
+	/* And, if there are any parameterized paths, add them in one at a time */
+	if (have_parameterized_paths)
+	{
+		foreach(p, parent_rel->pathlist)
+		{
+			Path	   *path = (Path *) lfirst(p);
+
+			if (path->required_outer)
+				add_parameterized_path(parent_rel, path);
+		}
+	}
 }
 
 /*
@@ -219,17 +275,25 @@ set_cheapest(RelOptInfo *parent_rel)
  *	  Consider a potential implementation path for the specified parent rel,
  *	  and add it to the rel's pathlist if it is worthy of consideration.
  *	  A path is worthy if it has either a better sort order (better pathkeys)
- *	  or cheaper cost (on either dimension) than any of the existing old paths.
+ *	  or cheaper cost (on either dimension) than any of the existing old paths
+ *	  that have the same or superset required_outer rels.
  *
  *	  We also remove from the rel's pathlist any old paths that are dominated
- *	  by new_path --- that is, new_path is both cheaper and at least as well
- *	  ordered.
+ *	  by new_path --- that is, new_path is cheaper, at least as well ordered,
+ *	  and requires no outer rels not required by old path.
  *
- *	  The pathlist is kept sorted by TOTAL_COST metric, with cheaper paths
- *	  at the front.  No code depends on that for correctness; it's simply
- *	  a speed hack within this routine.  Doing it that way makes it more
- *	  likely that we will reject an inferior path after a few comparisons,
- *	  rather than many comparisons.
+ *	  There is one policy decision embedded in this function, along with its
+ *	  sibling add_path_precheck: we treat all parameterized paths as having
+ *	  NIL pathkeys, so that they compete only on cost.  This is to reduce
+ *	  the number of parameterized paths that are kept.  See discussion in
+ *	  src/backend/optimizer/README.
+ *
+ *	  The pathlist is kept sorted by total_cost, with cheaper paths
+ *	  at the front.  Within this routine, that's simply a speed hack:
+ *	  doing it that way makes it more likely that we will reject an inferior
+ *	  path after a few comparisons, rather than many comparisons.
+ *	  However, add_path_precheck relies on this ordering to exit early
+ *	  when possible.
  *
  *	  NOTE: discarded Path objects are immediately pfree'd to reduce planner
  *	  memory consumption.  We dare not try to free the substructure of a Path,
@@ -250,6 +314,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 {
 	bool		accept_new = true;		/* unless we find a superior old path */
 	ListCell   *insert_after = NULL;	/* where to insert new item */
+	List	   *new_path_pathkeys;
 	ListCell   *p1;
 	ListCell   *p1_prev;
 	ListCell   *p1_next;
@@ -259,6 +324,9 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 	 * planner goes very long without calling add_path().
 	 */
 	CHECK_FOR_INTERRUPTS();
+
+	/* Pretend parameterized paths have no pathkeys, per comment above */
+	new_path_pathkeys = new_path->required_outer ? NIL : new_path->pathkeys;
 
 	/*
 	 * Loop to check proposed new path against old paths.  Note it is possible
@@ -273,62 +341,99 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 	{
 		Path	   *old_path = (Path *) lfirst(p1);
 		bool		remove_old = false; /* unless new proves superior */
-		int			costcmp;
+		PathCostComparison costcmp;
+		PathKeysComparison keyscmp;
+		BMS_Comparison outercmp;
 
 		p1_next = lnext(p1);
 
-		/*
-		 * As of Postgres 8.0, we use fuzzy cost comparison to avoid wasting
-		 * cycles keeping paths that are really not significantly different in
-		 * cost.
-		 */
-		costcmp = compare_fuzzy_path_costs(new_path, old_path, TOTAL_COST);
+		costcmp = compare_path_costs_fuzzily(new_path, old_path);
 
 		/*
 		 * If the two paths compare differently for startup and total cost,
-		 * then we want to keep both, and we can skip the (much slower)
-		 * comparison of pathkeys.	If they compare the same, proceed with the
-		 * pathkeys comparison.  Note: this test relies on the fact that
-		 * compare_fuzzy_path_costs will only return 0 if both costs are
-		 * effectively equal (and, therefore, there's no need to call it twice
-		 * in that case).
+		 * then we want to keep both, and we can skip comparing pathkeys and
+		 * required_outer rels.  If they compare the same, proceed with the
+		 * other comparisons.  (We make the tests in this order because the
+		 * cost comparison is most likely to turn out "different", and the
+		 * pathkeys comparison next most likely.)
 		 */
-		if (costcmp == 0 ||
-			costcmp == compare_fuzzy_path_costs(new_path, old_path,
-												STARTUP_COST))
+		if (costcmp != COSTS_DIFFERENT)
 		{
-			switch (compare_pathkeys(new_path->pathkeys, old_path->pathkeys))
+			/* Similarly check to see if either dominates on pathkeys */
+			List	   *old_path_pathkeys;
+
+			old_path_pathkeys = old_path->required_outer ? NIL : old_path->pathkeys;
+			keyscmp = compare_pathkeys(new_path_pathkeys,
+									   old_path_pathkeys);
+			if (keyscmp != PATHKEYS_DIFFERENT)
 			{
-				case PATHKEYS_EQUAL:
-					if (costcmp < 0)
-						remove_old = true;		/* new dominates old */
-					else if (costcmp > 0)
-						accept_new = false;		/* old dominates new */
-					else
-					{
+				switch (costcmp)
+				{
+					case COSTS_EQUAL:
+						outercmp = bms_subset_compare(new_path->required_outer,
+													  old_path->required_outer);
+						if (keyscmp == PATHKEYS_BETTER1)
+						{
+							if (outercmp == BMS_EQUAL ||
+								outercmp == BMS_SUBSET1)
+								remove_old = true;	/* new dominates old */
+						}
+						else if (keyscmp == PATHKEYS_BETTER2)
+						{
+							if (outercmp == BMS_EQUAL ||
+								outercmp == BMS_SUBSET2)
+								accept_new = false;	/* old dominates new */
+						}
+						else	/* keyscmp == PATHKEYS_EQUAL */
+						{
+							if (outercmp == BMS_EQUAL)
+							{
+								/*
+								 * Same pathkeys and outer rels, and fuzzily
+								 * the same cost, so keep just one --- but
+								 * we'll do an exact cost comparison to decide
+								 * which.
+								 */
+								if (compare_path_costs(new_path, old_path,
+													   TOTAL_COST) < 0)
+									remove_old = true;	/* new dominates old */
+								else
+									accept_new = false; /* old equals or dominates new */
+							}
+							else if (outercmp == BMS_SUBSET1)
+								remove_old = true;	/* new dominates old */
+							else if (outercmp == BMS_SUBSET2)
+								accept_new = false;	/* old dominates new */
+							/* else different parameterizations, keep both */
+						}
+						break;
+					case COSTS_BETTER1:
+						if (keyscmp != PATHKEYS_BETTER2)
+						{
+							outercmp = bms_subset_compare(new_path->required_outer,
+														  old_path->required_outer);
+							if (outercmp == BMS_EQUAL ||
+								outercmp == BMS_SUBSET1)
+								remove_old = true;	/* new dominates old */
+						}
+						break;
+					case COSTS_BETTER2:
+						if (keyscmp != PATHKEYS_BETTER1)
+						{
+							outercmp = bms_subset_compare(new_path->required_outer,
+														  old_path->required_outer);
+							if (outercmp == BMS_EQUAL ||
+								outercmp == BMS_SUBSET2)
+								accept_new = false;	/* old dominates new */
+						}
+						break;
+					case COSTS_DIFFERENT:
 						/*
-						 * Same pathkeys, and fuzzily the same cost, so keep
-						 * just one --- but we'll do an exact cost comparison
-						 * to decide which.
+						 * can't get here, but keep this case to keep compiler
+						 * quiet
 						 */
-						if (compare_path_costs(new_path, old_path,
-											   TOTAL_COST) < 0)
-							remove_old = true;	/* new dominates old */
-						else
-							accept_new = false; /* old equals or dominates new */
-					}
-					break;
-				case PATHKEYS_BETTER1:
-					if (costcmp <= 0)
-						remove_old = true;		/* new dominates old */
-					break;
-				case PATHKEYS_BETTER2:
-					if (costcmp >= 0)
-						accept_new = false;		/* old dominates new */
-					break;
-				case PATHKEYS_DIFFERENT:
-					/* keep both paths, since they have different ordering */
-					break;
+						break;
+				}
 			}
 		}
 
@@ -350,7 +455,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 		else
 		{
 			/* new belongs after this old path if it has cost >= old's */
-			if (costcmp >= 0)
+			if (new_path->total_cost >= old_path->total_cost)
 				insert_after = p1;
 			/* p1_prev advances */
 			p1_prev = p1;
@@ -381,6 +486,185 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 	}
 }
 
+/*
+ * add_path_precheck
+ *	  Check whether a proposed new path could possibly get accepted.
+ *	  We assume we know the path's pathkeys and parameterization accurately,
+ *	  and have lower bounds for its costs.
+ *
+ * At the time this is called, we haven't actually built a Path structure,
+ * so the required information has to be passed piecemeal.
+ */
+bool
+add_path_precheck(RelOptInfo *parent_rel,
+				  Cost startup_cost, Cost total_cost,
+				  List *pathkeys, Relids required_outer)
+{
+	List	   *new_path_pathkeys;
+	ListCell   *p1;
+
+	/* Pretend parameterized paths have no pathkeys, per comment above */
+	new_path_pathkeys = required_outer ? NIL : pathkeys;
+
+	foreach(p1, parent_rel->pathlist)
+	{
+		Path	   *old_path = (Path *) lfirst(p1);
+		PathKeysComparison keyscmp;
+		BMS_Comparison outercmp;
+
+		/*
+		 * We are looking for an old_path that dominates the new path across
+		 * all four metrics.  If we find one, we can reject the new path.
+		 *
+		 * For speed, we make exact rather than fuzzy cost comparisons.
+		 * If an old path dominates the new path exactly on both costs, it
+		 * will surely do so fuzzily.
+		 */
+		if (total_cost >= old_path->total_cost)
+		{
+			if (startup_cost >= old_path->startup_cost)
+			{
+				List	   *old_path_pathkeys;
+
+				old_path_pathkeys = old_path->required_outer ? NIL : old_path->pathkeys;
+				keyscmp = compare_pathkeys(new_path_pathkeys,
+										   old_path_pathkeys);
+				if (keyscmp == PATHKEYS_EQUAL ||
+					keyscmp == PATHKEYS_BETTER2)
+				{
+					outercmp = bms_subset_compare(required_outer,
+												  old_path->required_outer);
+					if (outercmp == BMS_EQUAL ||
+						outercmp == BMS_SUBSET2)
+						return false;
+				}
+			}
+		}
+		else
+		{
+			/*
+			 * Since the pathlist is sorted by total_cost, we can stop
+			 * looking once we reach a path with a total_cost larger
+			 * than the new path's.
+			 */
+			break;
+		}
+	}
+
+	return true;
+}
+
+/*
+ * add_parameterized_path
+ *	  Consider a parameterized implementation path for the specified rel,
+ *	  and add it to the rel's cheapest_parameterized_paths list if it
+ *	  belongs there, removing any old entries that it dominates.
+ *
+ *	  This is essentially a cut-down form of add_path(): we do not care about
+ *	  startup cost or sort ordering, only total cost and parameterization.
+ *	  Also, we should not recycle rejected paths, since they will still be
+ *	  present in the rel's pathlist.
+ *
+ * 'parent_rel' is the relation entry to which the path corresponds.
+ * 'new_path' is a parameterized path for parent_rel.
+ *
+ * Returns nothing, but modifies parent_rel->cheapest_parameterized_paths.
+ */
+static void
+add_parameterized_path(RelOptInfo *parent_rel, Path *new_path)
+{
+	bool		accept_new = true;		/* unless we find a superior old path */
+	ListCell   *insert_after = NULL;	/* where to insert new item */
+	ListCell   *p1;
+	ListCell   *p1_prev;
+	ListCell   *p1_next;
+
+	/*
+	 * Loop to check proposed new path against old paths.  Note it is possible
+	 * for more than one old path to be tossed out because new_path dominates
+	 * it.
+	 *
+	 * We can't use foreach here because the loop body may delete the current
+	 * list cell.
+	 */
+	p1_prev = NULL;
+	for (p1 = list_head(parent_rel->cheapest_parameterized_paths);
+		 p1 != NULL; p1 = p1_next)
+	{
+		Path	   *old_path = (Path *) lfirst(p1);
+		bool		remove_old = false; /* unless new proves superior */
+		int			costcmp;
+		BMS_Comparison outercmp;
+
+		p1_next = lnext(p1);
+
+		costcmp = compare_path_costs(new_path, old_path, TOTAL_COST);
+		outercmp = bms_subset_compare(new_path->required_outer,
+									  old_path->required_outer);
+		if (outercmp != BMS_DIFFERENT)
+		{
+			if (costcmp < 0)
+			{
+				if (outercmp != BMS_SUBSET2)
+					remove_old = true; /* new dominates old */
+			}
+			else if (costcmp > 0)
+			{
+				if (outercmp != BMS_SUBSET1)
+					accept_new = false;	/* old dominates new */
+			}
+			else if (outercmp == BMS_SUBSET1)
+				remove_old = true; /* new dominates old */
+			else if (outercmp == BMS_SUBSET2)
+				accept_new = false;	/* old dominates new */
+			else
+			{
+				/* Same cost and outer rels, arbitrarily keep the old */
+				accept_new = false; /* old equals or dominates new */
+			}
+		}
+
+		/*
+		 * Remove current element from cheapest_parameterized_paths if
+		 * dominated by new.
+		 */
+		if (remove_old)
+		{
+			parent_rel->cheapest_parameterized_paths =
+				list_delete_cell(parent_rel->cheapest_parameterized_paths,
+								 p1, p1_prev);
+			/* p1_prev does not advance */
+		}
+		else
+		{
+			/* new belongs after this old path if it has cost >= old's */
+			if (costcmp >= 0)
+				insert_after = p1;
+			/* p1_prev advances */
+			p1_prev = p1;
+		}
+
+		/*
+		 * If we found an old path that dominates new_path, we can quit
+		 * scanning the list; we will not add new_path, and we assume
+		 * new_path cannot dominate any other elements of the list.
+		 */
+		if (!accept_new)
+			break;
+	}
+
+	if (accept_new)
+	{
+		/* Accept the new path: insert it at proper place in list */
+		if (insert_after)
+			lappend_cell(parent_rel->cheapest_parameterized_paths,
+						 insert_after, new_path);
+		else
+			parent_rel->cheapest_parameterized_paths =
+				lcons(new_path, parent_rel->cheapest_parameterized_paths);
+	}
+}
+
 
 /*****************************************************************************
  *		PATH NODE CREATION ROUTINES
@@ -399,6 +683,8 @@ create_seqscan_path(PlannerInfo *root, RelOptInfo *rel)
 	pathnode->pathtype = T_SeqScan;
 	pathnode->parent = rel;
 	pathnode->pathkeys = NIL;	/* seqscan has unordered result */
+	pathnode->required_outer = NULL;
+	pathnode->param_clauses = NIL;
 
 	cost_seqscan(pathnode, root, rel);
 
@@ -423,8 +709,9 @@ create_seqscan_path(PlannerInfo *root, RelOptInfo *rel)
  *			for an ordered index, or NoMovementScanDirection for
  *			an unordered index.
  * 'indexonly' is true if an index-only scan is wanted.
- * 'outer_rel' is the outer relation if this is a join inner indexscan path.
- *			(pathkeys and indexscandir are ignored if so.)	NULL if not.
+ * 'required_outer' is the set of outer relids referenced in indexclauses.
+ * 'loop_count' is the number of repetitions of the indexscan to factor into
+ *		estimates of caching behavior.
  *
  * Returns the new path node.
  */
@@ -438,29 +725,35 @@ create_index_path(PlannerInfo *root,
 				  List *pathkeys,
 				  ScanDirection indexscandir,
 				  bool indexonly,
-				  RelOptInfo *outer_rel)
+				  Relids required_outer,
+				  double loop_count)
 {
 	IndexPath  *pathnode = makeNode(IndexPath);
 	RelOptInfo *rel = index->rel;
 	List	   *indexquals,
 			   *indexqualcols;
 
-	/*
-	 * For a join inner scan, there's no point in marking the path with any
-	 * pathkeys, since it will only ever be used as the inner path of a
-	 * nestloop, and so its ordering does not matter.  For the same reason we
-	 * don't really care what order it's scanned in.  (We could expect the
-	 * caller to supply the correct values, but it's easier to force it here.)
-	 */
-	if (outer_rel != NULL)
-	{
-		pathkeys = NIL;
-		indexscandir = NoMovementScanDirection;
-	}
-
 	pathnode->path.pathtype = indexonly ? T_IndexOnlyScan : T_IndexScan;
 	pathnode->path.parent = rel;
 	pathnode->path.pathkeys = pathkeys;
+	pathnode->path.required_outer = required_outer;
+	if (required_outer)
+	{
+		/* Identify index clauses that are join clauses */
+		List	   *jclauses = NIL;
+		ListCell   *lc;
+
+		foreach(lc, indexclauses)
+		{
+			RestrictInfo   *rinfo = (RestrictInfo *) lfirst(lc);
+
+			if (!bms_is_subset(rinfo->clause_relids, rel->relids))
+				jclauses = lappend(jclauses, rinfo);
+		}
+		pathnode->path.param_clauses = jclauses;
+	}
+	else
+		pathnode->path.param_clauses = NIL;
 
 	/* Convert clauses to indexquals the executor can handle */
 	expand_indexqual_conditions(index, indexclauses, indexclausecols,
@@ -473,50 +766,9 @@ create_index_path(PlannerInfo *root,
 	pathnode->indexqualcols = indexqualcols;
 	pathnode->indexorderbys = indexorderbys;
 	pathnode->indexorderbycols = indexorderbycols;
-
-	pathnode->isjoininner = (outer_rel != NULL);
 	pathnode->indexscandir = indexscandir;
 
-	if (outer_rel != NULL)
-	{
-		/*
-		 * We must compute the estimated number of output rows for the
-		 * indexscan.  This is less than rel->rows because of the additional
-		 * selectivity of the join clauses.  Since indexclauses may contain
-		 * both restriction and join clauses, we have to do a set union to get
-		 * the full set of clauses that must be considered to compute the
-		 * correct selectivity.  (Without the union operation, we might have
-		 * some restriction clauses appearing twice, which'd mislead
-		 * clauselist_selectivity into double-counting their selectivity.
-		 * However, since RestrictInfo nodes aren't copied when linking them
-		 * into different lists, it should be sufficient to use pointer
-		 * comparison to remove duplicates.)
-		 *
-		 * Note that we force the clauses to be treated as non-join clauses
-		 * during selectivity estimation.
-		 */
-		List	   *allclauses;
-
-		allclauses = list_union_ptr(rel->baserestrictinfo, indexclauses);
-		pathnode->rows = rel->tuples *
-			clauselist_selectivity(root,
-								   allclauses,
-								   rel->relid,	/* do not use 0! */
-								   JOIN_INNER,
-								   NULL);
-		/* Like costsize.c, force estimate to be at least one row */
-		pathnode->rows = clamp_row_est(pathnode->rows);
-	}
-	else
-	{
-		/*
-		 * The number of rows is the same as the parent rel's estimate, since
-		 * this isn't a join inner indexscan.
-		 */
-		pathnode->rows = rel->rows;
-	}
-
-	cost_index(pathnode, root, outer_rel);
+	cost_index(pathnode, root, loop_count);
 
 	return pathnode;
 }
@@ -526,55 +778,29 @@ create_index_path(PlannerInfo *root,
  *	  Creates a path node for a bitmap scan.
  *
  * 'bitmapqual' is a tree of IndexPath, BitmapAndPath, and BitmapOrPath nodes.
+ * 'loop_count' is the number of repetitions of the indexscan to factor into
+ *		estimates of caching behavior.
  *
- * If this is a join inner indexscan path, 'outer_rel' is the outer relation,
- * and all the component IndexPaths should have been costed accordingly.
+ * loop_count should match the value used when creating the component
+ * IndexPaths.
  */
 BitmapHeapPath *
 create_bitmap_heap_path(PlannerInfo *root,
 						RelOptInfo *rel,
 						Path *bitmapqual,
-						RelOptInfo *outer_rel)
+						double loop_count)
 {
 	BitmapHeapPath *pathnode = makeNode(BitmapHeapPath);
 
 	pathnode->path.pathtype = T_BitmapHeapScan;
 	pathnode->path.parent = rel;
 	pathnode->path.pathkeys = NIL;		/* always unordered */
+	pathnode->path.required_outer = bitmapqual->required_outer;
+	pathnode->path.param_clauses = bitmapqual->param_clauses;
 
 	pathnode->bitmapqual = bitmapqual;
-	pathnode->isjoininner = (outer_rel != NULL);
 
-	if (pathnode->isjoininner)
-	{
-		/*
-		 * We must compute the estimated number of output rows for the
-		 * indexscan.  This is less than rel->rows because of the additional
-		 * selectivity of the join clauses.  We make use of the selectivity
-		 * estimated for the bitmap to do this; this isn't really quite right
-		 * since there may be restriction conditions not included in the
-		 * bitmap ...
-		 */
-		Cost		indexTotalCost;
-		Selectivity indexSelectivity;
-
-		cost_bitmap_tree_node(bitmapqual, &indexTotalCost, &indexSelectivity);
-		pathnode->rows = rel->tuples * indexSelectivity;
-		if (pathnode->rows > rel->rows)
-			pathnode->rows = rel->rows;
-		/* Like costsize.c, force estimate to be at least one row */
-		pathnode->rows = clamp_row_est(pathnode->rows);
-	}
-	else
-	{
-		/*
-		 * The number of rows is the same as the parent rel's estimate, since
-		 * this isn't a join inner indexscan.
-		 */
-		pathnode->rows = rel->rows;
-	}
-
-	cost_bitmap_heap_scan(&pathnode->path, root, rel, bitmapqual, outer_rel);
+	cost_bitmap_heap_scan(&pathnode->path, root, rel, bitmapqual, loop_count);
 
 	return pathnode;
 }
@@ -589,12 +815,28 @@ create_bitmap_and_path(PlannerInfo *root,
 					   List *bitmapquals)
 {
 	BitmapAndPath *pathnode = makeNode(BitmapAndPath);
+	ListCell   *lc;
 
 	pathnode->path.pathtype = T_BitmapAnd;
 	pathnode->path.parent = rel;
 	pathnode->path.pathkeys = NIL;		/* always unordered */
+	pathnode->path.required_outer = NULL;
+	pathnode->path.param_clauses = NIL;
 
 	pathnode->bitmapquals = bitmapquals;
+
+	/* required_outer and param_clauses are the union of the inputs' values */
+	foreach(lc, bitmapquals)
+	{
+		Path   *bpath = (Path *) lfirst(lc);
+
+		pathnode->path.required_outer =
+			bms_add_members(pathnode->path.required_outer,
+							bpath->required_outer);
+		pathnode->path.param_clauses =
+			list_concat(pathnode->path.param_clauses,
+						list_copy(bpath->param_clauses));
+	}
 
 	/* this sets bitmapselectivity as well as the regular cost fields: */
 	cost_bitmap_and_node(pathnode, root);
@@ -612,12 +854,28 @@ create_bitmap_or_path(PlannerInfo *root,
 					  List *bitmapquals)
 {
 	BitmapOrPath *pathnode = makeNode(BitmapOrPath);
+	ListCell   *lc;
 
 	pathnode->path.pathtype = T_BitmapOr;
 	pathnode->path.parent = rel;
 	pathnode->path.pathkeys = NIL;		/* always unordered */
+	pathnode->path.required_outer = NULL;
+	pathnode->path.param_clauses = NIL;
 
 	pathnode->bitmapquals = bitmapquals;
+
+	/* required_outer and param_clauses are the union of the inputs' values */
+	foreach(lc, bitmapquals)
+	{
+		Path   *bpath = (Path *) lfirst(lc);
+
+		pathnode->path.required_outer =
+			bms_add_members(pathnode->path.required_outer,
+							bpath->required_outer);
+		pathnode->path.param_clauses =
+			list_concat(pathnode->path.param_clauses,
+						list_copy(bpath->param_clauses));
+	}
 
 	/* this sets bitmapselectivity as well as the regular cost fields: */
 	cost_bitmap_or_node(pathnode, root);
@@ -637,6 +895,8 @@ create_tidscan_path(PlannerInfo *root, RelOptInfo *rel, List *tidquals)
 	pathnode->path.pathtype = T_TidScan;
 	pathnode->path.parent = rel;
 	pathnode->path.pathkeys = NIL;
+	pathnode->path.required_outer = NULL;
+	pathnode->path.param_clauses = NIL;
 
 	pathnode->tidquals = tidquals;
 
@@ -662,24 +922,46 @@ create_append_path(RelOptInfo *rel, List *subpaths)
 	pathnode->path.parent = rel;
 	pathnode->path.pathkeys = NIL;		/* result is always considered
 										 * unsorted */
+	pathnode->path.required_outer = NULL; /* updated below */
+	pathnode->path.param_clauses = NIL;	/* XXX see below */
 	pathnode->subpaths = subpaths;
 
 	/*
-	 * Compute cost as sum of subplan costs.  We charge nothing extra for the
-	 * Append itself, which perhaps is too optimistic, but since it doesn't do
-	 * any selection or projection, it is a pretty cheap node.
+	 * We don't bother with inventing a cost_append(), but just do it here.
 	 *
-	 * If you change this, see also make_append().
+	 * Compute rows and costs as sums of subplan rows and costs.  We charge
+	 * nothing extra for the Append itself, which perhaps is too optimistic,
+	 * but since it doesn't do any selection or projection, it is a pretty
+	 * cheap node.  If you change this, see also make_append().
+	 *
+	 * We also compute the correct required_outer set, namely the union of
+	 * the input paths' requirements.
+	 *
+	 * XXX We should also compute a proper param_clauses list, but that
+	 * will require identifying which joinclauses are enforced by all the
+	 * subplans, as well as locating the original parent RestrictInfo from
+	 * which they were generated.  For the moment we punt and leave the list
+	 * as NIL.  This will result in uselessly rechecking such joinclauses
+	 * at the parameter-supplying nestloop join, which is slightly annoying,
+	 * as well as overestimating the sizes of any intermediate joins, which
+	 * is significantly more annoying.
 	 */
+	pathnode->path.rows = 0;
 	pathnode->path.startup_cost = 0;
 	pathnode->path.total_cost = 0;
 	foreach(l, subpaths)
 	{
 		Path	   *subpath = (Path *) lfirst(l);
 
+		pathnode->path.rows += subpath->rows;
+
 		if (l == list_head(subpaths))	/* first node? */
 			pathnode->path.startup_cost = subpath->startup_cost;
 		pathnode->path.total_cost += subpath->total_cost;
+
+		pathnode->path.required_outer =
+			bms_add_members(pathnode->path.required_outer,
+							subpath->required_outer);
 	}
 
 	return pathnode;
@@ -704,6 +986,8 @@ create_merge_append_path(PlannerInfo *root,
 	pathnode->path.pathtype = T_MergeAppend;
 	pathnode->path.parent = rel;
 	pathnode->path.pathkeys = pathkeys;
+	pathnode->path.required_outer = NULL; /* updated below */
+	pathnode->path.param_clauses = NIL;	/* XXX see below */
 	pathnode->subpaths = subpaths;
 
 	/*
@@ -735,12 +1019,21 @@ create_merge_append_path(PlannerInfo *root,
 		}
 	}
 
-	/* Add up all the costs of the input paths */
+	/*
+	 * Add up the sizes and costs of the input paths, and also compute the
+	 * real required_outer value.
+	 *
+	 * XXX as in create_append_path(), we should compute param_clauses but
+	 * it will require more work.
+	 */
+	pathnode->path.rows = 0;
 	input_startup_cost = 0;
 	input_total_cost = 0;
 	foreach(l, subpaths)
 	{
 		Path	   *subpath = (Path *) lfirst(l);
+
+		pathnode->path.rows += subpath->rows;
 
 		if (pathkeys_contained_in(pathkeys, subpath->pathkeys))
 		{
@@ -765,6 +1058,10 @@ create_merge_append_path(PlannerInfo *root,
 			input_startup_cost += sort_path.startup_cost;
 			input_total_cost += sort_path.total_cost;
 		}
+
+		pathnode->path.required_outer =
+			bms_add_members(pathnode->path.required_outer,
+							subpath->required_outer);
 	}
 
 	/* Now we can compute total costs of the MergeAppend */
@@ -789,9 +1086,12 @@ create_result_path(List *quals)
 	pathnode->path.pathtype = T_Result;
 	pathnode->path.parent = NULL;
 	pathnode->path.pathkeys = NIL;
+	pathnode->path.required_outer = NULL;
+	pathnode->path.param_clauses = NIL;
 	pathnode->quals = quals;
 
-	/* Ideally should define cost_result(), but I'm too lazy */
+	/* Hardly worth defining a cost_result() function ... just do it */
+	pathnode->path.rows = 1;
 	pathnode->path.startup_cost = 0;
 	pathnode->path.total_cost = cpu_tuple_cost;
 
@@ -817,15 +1117,16 @@ create_material_path(RelOptInfo *rel, Path *subpath)
 
 	pathnode->path.pathtype = T_Material;
 	pathnode->path.parent = rel;
-
 	pathnode->path.pathkeys = subpath->pathkeys;
+	pathnode->path.required_outer = subpath->required_outer;
+	pathnode->path.param_clauses = subpath->param_clauses;
 
 	pathnode->subpath = subpath;
 
 	cost_material(&pathnode->path,
 				  subpath->startup_cost,
 				  subpath->total_cost,
-				  rel->rows,
+				  subpath->rows,
 				  rel->width);
 
 	return pathnode;
@@ -874,7 +1175,6 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	/*
 	 * We must ensure path struct and subsidiary data are allocated in main
 	 * planning context; otherwise GEQO memory management causes trouble.
-	 * (Compare best_inner_indexscan().)
 	 */
 	oldcontext = MemoryContextSwitchTo(root->planner_cxt);
 
@@ -1032,6 +1332,8 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	 * to represent it.  (This might get overridden below.)
 	 */
 	pathnode->path.pathkeys = NIL;
+	pathnode->path.required_outer = subpath->required_outer;
+	pathnode->path.param_clauses = subpath->param_clauses;
 
 	pathnode->subpath = subpath;
 	pathnode->in_operators = in_operators;
@@ -1048,7 +1350,7 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 									  uniq_exprs, in_operators))
 	{
 		pathnode->umethod = UNIQUE_PATH_NOOP;
-		pathnode->rows = rel->rows;
+		pathnode->path.rows = rel->rows;
 		pathnode->path.startup_cost = subpath->startup_cost;
 		pathnode->path.total_cost = subpath->total_cost;
 		pathnode->path.pathkeys = subpath->pathkeys;
@@ -1081,7 +1383,7 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 								  sub_tlist_colnos, in_operators))
 		{
 			pathnode->umethod = UNIQUE_PATH_NOOP;
-			pathnode->rows = rel->rows;
+			pathnode->path.rows = rel->rows;
 			pathnode->path.startup_cost = subpath->startup_cost;
 			pathnode->path.total_cost = subpath->total_cost;
 			pathnode->path.pathkeys = subpath->pathkeys;
@@ -1095,7 +1397,7 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	}
 
 	/* Estimate number of output rows */
-	pathnode->rows = estimate_num_groups(root, uniq_exprs, rel->rows);
+	pathnode->path.rows = estimate_num_groups(root, uniq_exprs, rel->rows);
 	numCols = list_length(uniq_exprs);
 
 	if (all_btree)
@@ -1128,12 +1430,12 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 		 */
 		int			hashentrysize = rel->width + 64;
 
-		if (hashentrysize * pathnode->rows > work_mem * 1024L)
+		if (hashentrysize * pathnode->path.rows > work_mem * 1024L)
 			all_hash = false;	/* don't try to hash */
 		else
 			cost_agg(&agg_path, root,
 					 AGG_HASHED, NULL,
-					 numCols, pathnode->rows,
+					 numCols, pathnode->path.rows,
 					 subpath->startup_cost,
 					 subpath->total_cost,
 					 rel->rows);
@@ -1367,6 +1669,8 @@ create_subqueryscan_path(RelOptInfo *rel, List *pathkeys)
 	pathnode->pathtype = T_SubqueryScan;
 	pathnode->parent = rel;
 	pathnode->pathkeys = pathkeys;
+	pathnode->required_outer = NULL;
+	pathnode->param_clauses = NIL;
 
 	cost_subqueryscan(pathnode, rel);
 
@@ -1386,6 +1690,8 @@ create_functionscan_path(PlannerInfo *root, RelOptInfo *rel)
 	pathnode->pathtype = T_FunctionScan;
 	pathnode->parent = rel;
 	pathnode->pathkeys = NIL;	/* for now, assume unordered result */
+	pathnode->required_outer = NULL;
+	pathnode->param_clauses = NIL;
 
 	cost_functionscan(pathnode, root, rel);
 
@@ -1405,6 +1711,8 @@ create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel)
 	pathnode->pathtype = T_ValuesScan;
 	pathnode->parent = rel;
 	pathnode->pathkeys = NIL;	/* result is always unordered */
+	pathnode->required_outer = NULL;
+	pathnode->param_clauses = NIL;
 
 	cost_valuesscan(pathnode, root, rel);
 
@@ -1424,6 +1732,8 @@ create_ctescan_path(PlannerInfo *root, RelOptInfo *rel)
 	pathnode->pathtype = T_CteScan;
 	pathnode->parent = rel;
 	pathnode->pathkeys = NIL;	/* XXX for now, result is always unordered */
+	pathnode->required_outer = NULL;
+	pathnode->param_clauses = NIL;
 
 	cost_ctescan(pathnode, root, rel);
 
@@ -1443,6 +1753,8 @@ create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel)
 	pathnode->pathtype = T_WorkTableScan;
 	pathnode->parent = rel;
 	pathnode->pathkeys = NIL;	/* result is always unordered */
+	pathnode->required_outer = NULL;
+	pathnode->param_clauses = NIL;
 
 	/* Cost is the same as for a regular CTE scan */
 	cost_ctescan(pathnode, root, rel);
@@ -1466,6 +1778,8 @@ create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel)
 	pathnode->path.pathtype = T_ForeignScan;
 	pathnode->path.parent = rel;
 	pathnode->path.pathkeys = NIL;		/* result is always unordered */
+	pathnode->path.required_outer = NULL;
+	pathnode->path.param_clauses = NIL;
 
 	/* Get FDW's callback info */
 	rte = planner_rt_fetch(rel->relid, root);
@@ -1479,10 +1793,66 @@ create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel)
 	pathnode->fdwplan = fdwplan;
 
 	/* use costs estimated by FDW */
+	pathnode->path.rows = rel->rows;
 	pathnode->path.startup_cost = fdwplan->startup_cost;
 	pathnode->path.total_cost = fdwplan->total_cost;
 
 	return pathnode;
+}
+
+/*
+ * calc_nestloop_required_outer
+ *	  Compute the required_outer set for a nestloop join path
+ *
+ * Note: result must not share storage with either input
+ */
+Relids
+calc_nestloop_required_outer(Path *outer_path, Path *inner_path)
+{
+	Relids	required_outer;
+
+	/* inner_path can require rels from outer path, but not vice versa */
+	Assert(!bms_overlap(outer_path->required_outer,
+						inner_path->parent->relids));
+	/* easy case if inner path is not parameterized */
+	if (!inner_path->required_outer)
+		return bms_copy(outer_path->required_outer);
+	/* else, form the union ... */
+	required_outer = bms_union(outer_path->required_outer,
+							   inner_path->required_outer);
+	/* ... and remove any mention of now-satisfied outer rels */
+	required_outer = bms_del_members(required_outer,
+									 outer_path->parent->relids);
+	/* maintain invariant that required_outer is exactly NULL if empty */
+	if (bms_is_empty(required_outer))
+	{
+		bms_free(required_outer);
+		required_outer = NULL;
+	}
+	return required_outer;
+}
+
+/*
+ * calc_non_nestloop_required_outer
+ *	  Compute the required_outer set for a merge or hash join path
+ *
+ * Note: result must not share storage with either input
+ */
+Relids
+calc_non_nestloop_required_outer(Path *outer_path, Path *inner_path)
+{
+	Relids	required_outer;
+
+	/* neither path can require rels from the other */
+	Assert(!bms_overlap(outer_path->required_outer,
+						inner_path->parent->relids));
+	Assert(!bms_overlap(inner_path->required_outer,
+						outer_path->parent->relids));
+	/* form the union ... */
+	required_outer = bms_union(outer_path->required_outer,
+							   inner_path->required_outer);
+	/* we do not need an explicit test for empty; bms_union gets it right */
+	return required_outer;
 }
 
 /*
@@ -1492,11 +1862,14 @@ create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel)
  *
  * 'joinrel' is the join relation.
  * 'jointype' is the type of join required
+ * 'workspace' is the result from initial_cost_nestloop
  * 'sjinfo' is extra info about the join for selectivity estimation
+ * 'semifactors' contains valid data if jointype is SEMI or ANTI
  * 'outer_path' is the outer path
  * 'inner_path' is the inner path
  * 'restrict_clauses' are the RestrictInfo nodes to apply at the join
  * 'pathkeys' are the path keys of the new join path
+ * 'required_outer' is the set of required outer rels
  *
  * Returns the resulting path node.
  */
@@ -1504,23 +1877,46 @@ NestPath *
 create_nestloop_path(PlannerInfo *root,
 					 RelOptInfo *joinrel,
 					 JoinType jointype,
+					 JoinCostWorkspace *workspace,
 					 SpecialJoinInfo *sjinfo,
+					 SemiAntiJoinFactors *semifactors,
 					 Path *outer_path,
 					 Path *inner_path,
 					 List *restrict_clauses,
-					 List *pathkeys)
+					 List *pathkeys,
+					 Relids required_outer)
 {
 	NestPath   *pathnode = makeNode(NestPath);
 
 	pathnode->path.pathtype = T_NestLoop;
 	pathnode->path.parent = joinrel;
+	pathnode->path.pathkeys = pathkeys;
+	pathnode->path.required_outer = required_outer;
+	if (pathnode->path.required_outer)
+	{
+		/* Identify parameter clauses not yet applied here */
+		List	   *jclauses;
+		ListCell   *lc;
+
+		/* LHS clauses could not be satisfied here */
+		jclauses = list_copy(outer_path->param_clauses);
+		foreach(lc, inner_path->param_clauses)
+		{
+			RestrictInfo   *rinfo = (RestrictInfo *) lfirst(lc);
+
+			if (!bms_is_subset(rinfo->clause_relids, joinrel->relids))
+				jclauses = lappend(jclauses, rinfo);
+		}
+		pathnode->path.param_clauses = jclauses;
+	}
+	else
+		pathnode->path.param_clauses = NIL;
 	pathnode->jointype = jointype;
 	pathnode->outerjoinpath = outer_path;
 	pathnode->innerjoinpath = inner_path;
 	pathnode->joinrestrictinfo = restrict_clauses;
-	pathnode->path.pathkeys = pathkeys;
 
-	cost_nestloop(pathnode, root, sjinfo);
+	final_cost_nestloop(root, pathnode, workspace, sjinfo, semifactors);
 
 	return pathnode;
 }
@@ -1532,11 +1928,13 @@ create_nestloop_path(PlannerInfo *root,
  *
  * 'joinrel' is the join relation
  * 'jointype' is the type of join required
+ * 'workspace' is the result from initial_cost_mergejoin
  * 'sjinfo' is extra info about the join for selectivity estimation
  * 'outer_path' is the outer path
  * 'inner_path' is the inner path
  * 'restrict_clauses' are the RestrictInfo nodes to apply at the join
  * 'pathkeys' are the path keys of the new join path
+ * 'required_outer' is the set of required outer rels
  * 'mergeclauses' are the RestrictInfo nodes to use as merge clauses
  *		(this should be a subset of the restrict_clauses list)
  * 'outersortkeys' are the sort varkeys for the outer relation
@@ -1546,41 +1944,36 @@ MergePath *
 create_mergejoin_path(PlannerInfo *root,
 					  RelOptInfo *joinrel,
 					  JoinType jointype,
+					  JoinCostWorkspace *workspace,
 					  SpecialJoinInfo *sjinfo,
 					  Path *outer_path,
 					  Path *inner_path,
 					  List *restrict_clauses,
 					  List *pathkeys,
+					  Relids required_outer,
 					  List *mergeclauses,
 					  List *outersortkeys,
 					  List *innersortkeys)
 {
 	MergePath  *pathnode = makeNode(MergePath);
 
-	/*
-	 * If the given paths are already well enough ordered, we can skip doing
-	 * an explicit sort.
-	 */
-	if (outersortkeys &&
-		pathkeys_contained_in(outersortkeys, outer_path->pathkeys))
-		outersortkeys = NIL;
-	if (innersortkeys &&
-		pathkeys_contained_in(innersortkeys, inner_path->pathkeys))
-		innersortkeys = NIL;
-
 	pathnode->jpath.path.pathtype = T_MergeJoin;
 	pathnode->jpath.path.parent = joinrel;
+	pathnode->jpath.path.pathkeys = pathkeys;
+	pathnode->jpath.path.required_outer = required_outer;
+	pathnode->jpath.path.param_clauses =
+		list_concat(list_copy(outer_path->param_clauses),
+					inner_path->param_clauses);
 	pathnode->jpath.jointype = jointype;
 	pathnode->jpath.outerjoinpath = outer_path;
 	pathnode->jpath.innerjoinpath = inner_path;
 	pathnode->jpath.joinrestrictinfo = restrict_clauses;
-	pathnode->jpath.path.pathkeys = pathkeys;
 	pathnode->path_mergeclauses = mergeclauses;
 	pathnode->outersortkeys = outersortkeys;
 	pathnode->innersortkeys = innersortkeys;
-	/* pathnode->materialize_inner will be set by cost_mergejoin */
+	/* pathnode->materialize_inner will be set by final_cost_mergejoin */
 
-	cost_mergejoin(pathnode, root, sjinfo);
+	final_cost_mergejoin(root, pathnode, workspace, sjinfo);
 
 	return pathnode;
 }
@@ -1591,10 +1984,13 @@ create_mergejoin_path(PlannerInfo *root,
  *
  * 'joinrel' is the join relation
  * 'jointype' is the type of join required
+ * 'workspace' is the result from initial_cost_hashjoin
  * 'sjinfo' is extra info about the join for selectivity estimation
+ * 'semifactors' contains valid data if jointype is SEMI or ANTI
  * 'outer_path' is the cheapest outer path
  * 'inner_path' is the cheapest inner path
  * 'restrict_clauses' are the RestrictInfo nodes to apply at the join
+ * 'required_outer' is the set of required outer rels
  * 'hashclauses' are the RestrictInfo nodes to use as hash clauses
  *		(this should be a subset of the restrict_clauses list)
  */
@@ -1602,20 +1998,19 @@ HashPath *
 create_hashjoin_path(PlannerInfo *root,
 					 RelOptInfo *joinrel,
 					 JoinType jointype,
+					 JoinCostWorkspace *workspace,
 					 SpecialJoinInfo *sjinfo,
+					 SemiAntiJoinFactors *semifactors,
 					 Path *outer_path,
 					 Path *inner_path,
 					 List *restrict_clauses,
+					 Relids required_outer,
 					 List *hashclauses)
 {
 	HashPath   *pathnode = makeNode(HashPath);
 
 	pathnode->jpath.path.pathtype = T_HashJoin;
 	pathnode->jpath.path.parent = joinrel;
-	pathnode->jpath.jointype = jointype;
-	pathnode->jpath.outerjoinpath = outer_path;
-	pathnode->jpath.innerjoinpath = inner_path;
-	pathnode->jpath.joinrestrictinfo = restrict_clauses;
 
 	/*
 	 * A hashjoin never has pathkeys, since its output ordering is
@@ -1629,10 +2024,18 @@ create_hashjoin_path(PlannerInfo *root,
 	 * outer rel than it does now.)
 	 */
 	pathnode->jpath.path.pathkeys = NIL;
+	pathnode->jpath.path.required_outer = required_outer;
+	pathnode->jpath.path.param_clauses =
+		list_concat(list_copy(outer_path->param_clauses),
+					inner_path->param_clauses);
+	pathnode->jpath.jointype = jointype;
+	pathnode->jpath.outerjoinpath = outer_path;
+	pathnode->jpath.innerjoinpath = inner_path;
+	pathnode->jpath.joinrestrictinfo = restrict_clauses;
 	pathnode->path_hashclauses = hashclauses;
-	/* cost_hashjoin will fill in pathnode->num_batches */
+	/* final_cost_hashjoin will fill in pathnode->num_batches */
 
-	cost_hashjoin(pathnode, root, sjinfo);
+	final_cost_hashjoin(root, pathnode, workspace, sjinfo, semifactors);
 
 	return pathnode;
 }

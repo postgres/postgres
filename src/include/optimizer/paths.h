@@ -44,17 +44,14 @@ extern void debug_print_rel(PlannerInfo *root, RelOptInfo *rel);
  */
 extern void create_index_paths(PlannerInfo *root, RelOptInfo *rel);
 extern List *generate_bitmap_or_paths(PlannerInfo *root, RelOptInfo *rel,
-						 List *clauses, List *outer_clauses,
-						 RelOptInfo *outer_rel);
-extern void best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
-					 RelOptInfo *outer_rel, JoinType jointype,
-					 Path **cheapest_startup, Path **cheapest_total);
+						 List *clauses, List *other_clauses,
+						 bool restriction_only);
 extern bool relation_has_unique_index_for(PlannerInfo *root, RelOptInfo *rel,
 							  List *restrictlist,
 							  List *exprlist, List *oprlist);
-extern bool eclass_matches_any_index(EquivalenceClass *ec,
-						 EquivalenceMember *em,
-						 RelOptInfo *rel);
+extern bool eclass_member_matches_indexcol(EquivalenceClass *ec,
+										   EquivalenceMember *em,
+										   IndexOptInfo *index, int indexcol);
 extern bool match_index_to_operand(Node *operand, int indexcol,
 					   IndexOptInfo *index);
 extern void expand_indexqual_conditions(IndexOptInfo *index,
@@ -127,9 +124,9 @@ extern void add_child_rel_equivalences(PlannerInfo *root,
 extern void mutate_eclass_expressions(PlannerInfo *root,
 						  Node *(*mutator) (),
 						  void *context);
-extern List *find_eclass_clauses_for_index_join(PlannerInfo *root,
-								   RelOptInfo *rel,
-								   Relids outer_relids);
+extern List *generate_implied_equalities_for_indexcol(PlannerInfo *root,
+										 IndexOptInfo *index,
+										 int indexcol);
 extern bool have_relevant_eclass_joinclause(PlannerInfo *root,
 								RelOptInfo *rel1, RelOptInfo *rel2);
 extern bool has_relevant_eclass_joinclause(PlannerInfo *root,
@@ -153,9 +150,11 @@ extern List *canonicalize_pathkeys(PlannerInfo *root, List *pathkeys);
 extern PathKeysComparison compare_pathkeys(List *keys1, List *keys2);
 extern bool pathkeys_contained_in(List *keys1, List *keys2);
 extern Path *get_cheapest_path_for_pathkeys(List *paths, List *pathkeys,
+							   Relids required_outer,
 							   CostSelector cost_criterion);
 extern Path *get_cheapest_fractional_path_for_pathkeys(List *paths,
 										  List *pathkeys,
+										  Relids required_outer,
 										  double fraction);
 extern List *build_index_pathkeys(PlannerInfo *root, IndexOptInfo *index,
 					 ScanDirection scandir);

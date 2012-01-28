@@ -5971,7 +5971,7 @@ string_to_bytea_const(const char *str, size_t str_len)
 static void
 genericcostestimate(PlannerInfo *root,
 					IndexPath *path,
-					RelOptInfo *outer_rel,
+					double loop_count,
 					double numIndexTuples,
 					Cost *indexStartupCost,
 					Cost *indexTotalCost,
@@ -6119,16 +6119,8 @@ genericcostestimate(PlannerInfo *root,
 	 * Note that we are counting pages not tuples anymore, so we take N = T =
 	 * index size, as if there were one "tuple" per page.
 	 */
-	if (outer_rel != NULL && outer_rel->rows > 1)
-	{
-		num_outer_scans = outer_rel->rows;
-		num_scans = num_sa_scans * num_outer_scans;
-	}
-	else
-	{
-		num_outer_scans = 1;
-		num_scans = num_sa_scans;
-	}
+	num_outer_scans = loop_count;
+	num_scans = num_sa_scans * num_outer_scans;
 
 	if (num_scans > 1)
 	{
@@ -6234,7 +6226,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 {
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	IndexPath  *path = (IndexPath *) PG_GETARG_POINTER(1);
-	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(2);
+	double		loop_count = PG_GETARG_FLOAT8(2);
 	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(3);
 	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(4);
 	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
@@ -6410,7 +6402,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 		numIndexTuples = rint(numIndexTuples / num_sa_scans);
 	}
 
-	genericcostestimate(root, path, outer_rel,
+	genericcostestimate(root, path, loop_count,
 						numIndexTuples,
 						indexStartupCost, indexTotalCost,
 						indexSelectivity, indexCorrelation);
@@ -6527,13 +6519,13 @@ hashcostestimate(PG_FUNCTION_ARGS)
 {
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	IndexPath  *path = (IndexPath *) PG_GETARG_POINTER(1);
-	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(2);
+	double		loop_count = PG_GETARG_FLOAT8(2);
 	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(3);
 	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(4);
 	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
 	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(6);
 
-	genericcostestimate(root, path, outer_rel, 0.0,
+	genericcostestimate(root, path, loop_count, 0.0,
 						indexStartupCost, indexTotalCost,
 						indexSelectivity, indexCorrelation);
 
@@ -6545,13 +6537,13 @@ gistcostestimate(PG_FUNCTION_ARGS)
 {
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	IndexPath  *path = (IndexPath *) PG_GETARG_POINTER(1);
-	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(2);
+	double		loop_count = PG_GETARG_FLOAT8(2);
 	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(3);
 	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(4);
 	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
 	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(6);
 
-	genericcostestimate(root, path, outer_rel, 0.0,
+	genericcostestimate(root, path, loop_count, 0.0,
 						indexStartupCost, indexTotalCost,
 						indexSelectivity, indexCorrelation);
 
@@ -6563,13 +6555,13 @@ spgcostestimate(PG_FUNCTION_ARGS)
 {
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	IndexPath  *path = (IndexPath *) PG_GETARG_POINTER(1);
-	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(2);
+	double		loop_count = PG_GETARG_FLOAT8(2);
 	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(3);
 	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(4);
 	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
 	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(6);
 
-	genericcostestimate(root, path, outer_rel, 0.0,
+	genericcostestimate(root, path, loop_count, 0.0,
 						indexStartupCost, indexTotalCost,
 						indexSelectivity, indexCorrelation);
 
@@ -6884,7 +6876,7 @@ gincostestimate(PG_FUNCTION_ARGS)
 {
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	IndexPath  *path = (IndexPath *) PG_GETARG_POINTER(1);
-	RelOptInfo *outer_rel = (RelOptInfo *) PG_GETARG_POINTER(2);
+	double		loop_count = PG_GETARG_FLOAT8(2);
 	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(3);
 	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(4);
 	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
@@ -7051,10 +7043,7 @@ gincostestimate(PG_FUNCTION_ARGS)
 	}
 
 	/* Will we have more than one iteration of a nestloop scan? */
-	if (outer_rel != NULL && outer_rel->rows > 1)
-		outer_scans = outer_rel->rows;
-	else
-		outer_scans = 1;
+	outer_scans = loop_count;
 
 	/*
 	 * Compute cost to begin scan, first of all, pay attention to pending list.

@@ -232,7 +232,6 @@ typedef enum NodeTag
 	T_EquivalenceMember,
 	T_PathKey,
 	T_RestrictInfo,
-	T_InnerIndexscanInfo,
 	T_PlaceHolderVar,
 	T_SpecialJoinInfo,
 	T_AppendRelInfo,

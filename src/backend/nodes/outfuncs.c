@@ -1475,9 +1475,12 @@ _outPathInfo(StringInfo str, const Path *node)
 	WRITE_ENUM_FIELD(pathtype, NodeTag);
 	appendStringInfo(str, " :parent_relids ");
 	_outBitmapset(str, node->parent->relids);
+	WRITE_FLOAT_FIELD(rows, "%.0f");
 	WRITE_FLOAT_FIELD(startup_cost, "%.2f");
 	WRITE_FLOAT_FIELD(total_cost, "%.2f");
 	WRITE_NODE_FIELD(pathkeys);
+	WRITE_BITMAPSET_FIELD(required_outer);
+	WRITE_NODE_FIELD(param_clauses);
 }
 
 /*
@@ -1515,11 +1518,9 @@ _outIndexPath(StringInfo str, const IndexPath *node)
 	WRITE_NODE_FIELD(indexqualcols);
 	WRITE_NODE_FIELD(indexorderbys);
 	WRITE_NODE_FIELD(indexorderbycols);
-	WRITE_BOOL_FIELD(isjoininner);
 	WRITE_ENUM_FIELD(indexscandir, ScanDirection);
 	WRITE_FLOAT_FIELD(indextotalcost, "%.2f");
 	WRITE_FLOAT_FIELD(indexselectivity, "%.4f");
-	WRITE_FLOAT_FIELD(rows, "%.0f");
 }
 
 static void
@@ -1530,8 +1531,6 @@ _outBitmapHeapPath(StringInfo str, const BitmapHeapPath *node)
 	_outPathInfo(str, (const Path *) node);
 
 	WRITE_NODE_FIELD(bitmapqual);
-	WRITE_BOOL_FIELD(isjoininner);
-	WRITE_FLOAT_FIELD(rows, "%.0f");
 }
 
 static void
@@ -1628,7 +1627,6 @@ _outUniquePath(StringInfo str, const UniquePath *node)
 	WRITE_ENUM_FIELD(umethod, UniquePathMethod);
 	WRITE_NODE_FIELD(in_operators);
 	WRITE_NODE_FIELD(uniq_exprs);
-	WRITE_FLOAT_FIELD(rows, "%.0f");
 }
 
 static void
@@ -1691,6 +1689,7 @@ _outPlannerInfo(StringInfo str, const PlannerInfo *node)
 	WRITE_NODE_FIELD(parse);
 	WRITE_NODE_FIELD(glob);
 	WRITE_UINT_FIELD(query_level);
+	WRITE_BITMAPSET_FIELD(all_baserels);
 	WRITE_NODE_FIELD(join_rel_list);
 	WRITE_INT_FIELD(join_cur_level);
 	WRITE_NODE_FIELD(init_plans);
@@ -1738,6 +1737,7 @@ _outRelOptInfo(StringInfo str, const RelOptInfo *node)
 	WRITE_NODE_FIELD(cheapest_startup_path);
 	WRITE_NODE_FIELD(cheapest_total_path);
 	WRITE_NODE_FIELD(cheapest_unique_path);
+	WRITE_NODE_FIELD(cheapest_parameterized_paths);
 	WRITE_UINT_FIELD(relid);
 	WRITE_UINT_FIELD(reltablespace);
 	WRITE_ENUM_FIELD(rtekind, RTEKind);
@@ -1752,8 +1752,6 @@ _outRelOptInfo(StringInfo str, const RelOptInfo *node)
 	WRITE_NODE_FIELD(baserestrictinfo);
 	WRITE_NODE_FIELD(joininfo);
 	WRITE_BOOL_FIELD(has_eclass_joins);
-	WRITE_BITMAPSET_FIELD(index_outer_relids);
-	WRITE_NODE_FIELD(index_inner_paths);
 }
 
 static void
@@ -1852,16 +1850,6 @@ _outRestrictInfo(StringInfo str, const RestrictInfo *node)
 	WRITE_NODE_FIELD(right_em);
 	WRITE_BOOL_FIELD(outer_is_left);
 	WRITE_OID_FIELD(hashjoinoperator);
-}
-
-static void
-_outInnerIndexscanInfo(StringInfo str, const InnerIndexscanInfo *node)
-{
-	WRITE_NODE_TYPE("INNERINDEXSCANINFO");
-	WRITE_BITMAPSET_FIELD(other_relids);
-	WRITE_BOOL_FIELD(isouterjoin);
-	WRITE_NODE_FIELD(cheapest_startup_innerpath);
-	WRITE_NODE_FIELD(cheapest_total_innerpath);
 }
 
 static void
@@ -3014,9 +3002,6 @@ _outNode(StringInfo str, const void *obj)
 				break;
 			case T_RestrictInfo:
 				_outRestrictInfo(str, obj);
-				break;
-			case T_InnerIndexscanInfo:
-				_outInnerIndexscanInfo(str, obj);
 				break;
 			case T_PlaceHolderVar:
 				_outPlaceHolderVar(str, obj);

@@ -289,7 +289,7 @@ amcanreturn (Relation indexRelation);
 void
 amcostestimate (PlannerInfo *root,
                 IndexPath *path,
-                RelOptInfo *outer_rel,
+                double loop_count,
                 Cost *indexStartupCost,
                 Cost *indexTotalCost,
                 Selectivity *indexSelectivity,
@@ -928,7 +928,7 @@ amrestrpos (IndexScanDesc scan);
 void
 amcostestimate (PlannerInfo *root,
                 IndexPath *path,
-                RelOptInfo *outer_rel,
+                double loop_count,
                 Cost *indexStartupCost,
                 Cost *indexTotalCost,
                 Selectivity *indexSelectivity,
@@ -958,16 +958,15 @@ amcostestimate (PlannerInfo *root,
     </varlistentry>
 
     <varlistentry>
-     <term><parameter>outer_rel</></term>
+     <term><parameter>loop_count</></term>
      <listitem>
       <para>
-       If the index is being considered for use in a join inner indexscan,
-       the planner's information about the outer side of the join.  Otherwise
-       <symbol>NULL</>.  When non-<symbol>NULL</>, some of the qual clauses
-       will be join clauses for joins
-       with this rel rather than being simple restriction clauses.  Also,
-       the cost estimator should expect that the index scan will be repeated
-       for each row of the outer rel.
+       The number of repetitions of the index scan that should be factored
+       into the cost estimates.  This will typically be greater than one when
+       considering a parameterized scan for use in the inside of a nestloop
+       join.  Note that the cost estimates should still be for just one scan;
+       a larger <parameter>loop_count</> means that it may be appropriate
+       to allow for some caching effects across multiple scans.
       </para>
      </listitem>
     </varlistentry>
@@ -1062,8 +1061,8 @@ amcostestimate (PlannerInfo *root,
   </para>
 
   <para>
-   In the join case, the returned numbers should be averages expected for
-   any one scan of the index.
+   When <parameter>loop_count</> is greater than one, the returned numbers
+   should be averages expected for any one scan of the index.
   </para>
 
   <procedure>
@@ -1121,7 +1120,7 @@ cost_qual_eval(&amp;index_qual_cost, path-&gt;indexquals, root);
 </programlisting>
 
      However, the above does not account for amortization of index reads
-     across repeated index scans in the join case.
+     across repeated index scans.
     </para>
    </step>
 

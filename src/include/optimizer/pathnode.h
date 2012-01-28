@@ -26,6 +26,9 @@ extern int compare_fractional_path_costs(Path *path1, Path *path2,
 							  double fraction);
 extern void set_cheapest(RelOptInfo *parent_rel);
 extern void add_path(RelOptInfo *parent_rel, Path *new_path);
+extern bool add_path_precheck(RelOptInfo *parent_rel,
+				  Cost startup_cost, Cost total_cost,
+				  List *pathkeys, Relids required_outer);
 
 extern Path *create_seqscan_path(PlannerInfo *root, RelOptInfo *rel);
 extern IndexPath *create_index_path(PlannerInfo *root,
@@ -37,11 +40,12 @@ extern IndexPath *create_index_path(PlannerInfo *root,
 				  List *pathkeys,
 				  ScanDirection indexscandir,
 				  bool indexonly,
-				  RelOptInfo *outer_rel);
+				  Relids required_outer,
+				  double loop_count);
 extern BitmapHeapPath *create_bitmap_heap_path(PlannerInfo *root,
 						RelOptInfo *rel,
 						Path *bitmapqual,
-						RelOptInfo *outer_rel);
+						double loop_count);
 extern BitmapAndPath *create_bitmap_and_path(PlannerInfo *root,
 					   RelOptInfo *rel,
 					   List *bitmapquals);
@@ -66,23 +70,31 @@ extern Path *create_ctescan_path(PlannerInfo *root, RelOptInfo *rel);
 extern Path *create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel);
 extern ForeignPath *create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel);
 
+extern Relids calc_nestloop_required_outer(Path *outer_path, Path *inner_path);
+extern Relids calc_non_nestloop_required_outer(Path *outer_path, Path *inner_path);
+
 extern NestPath *create_nestloop_path(PlannerInfo *root,
 					 RelOptInfo *joinrel,
 					 JoinType jointype,
+					 JoinCostWorkspace *workspace,
 					 SpecialJoinInfo *sjinfo,
+					 SemiAntiJoinFactors *semifactors,
 					 Path *outer_path,
 					 Path *inner_path,
 					 List *restrict_clauses,
-					 List *pathkeys);
+					 List *pathkeys,
+					 Relids required_outer);
 
 extern MergePath *create_mergejoin_path(PlannerInfo *root,
 					  RelOptInfo *joinrel,
 					  JoinType jointype,
+					  JoinCostWorkspace *workspace,
 					  SpecialJoinInfo *sjinfo,
 					  Path *outer_path,
 					  Path *inner_path,
 					  List *restrict_clauses,
 					  List *pathkeys,
+					  Relids required_outer,
 					  List *mergeclauses,
 					  List *outersortkeys,
 					  List *innersortkeys);
@@ -90,10 +102,13 @@ extern MergePath *create_mergejoin_path(PlannerInfo *root,
 extern HashPath *create_hashjoin_path(PlannerInfo *root,
 					 RelOptInfo *joinrel,
 					 JoinType jointype,
+					 JoinCostWorkspace *workspace,
 					 SpecialJoinInfo *sjinfo,
+					 SemiAntiJoinFactors *semifactors,
 					 Path *outer_path,
 					 Path *inner_path,
 					 List *restrict_clauses,
+					 Relids required_outer,
 					 List *hashclauses);
 
 /*

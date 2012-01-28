@@ -3297,7 +3297,8 @@ plan_cluster_use_sort(Oid tableOid, Oid indexOid)
 	/* Estimate the cost of index scan */
 	indexScanPath = create_index_path(root, indexInfo,
 									  NIL, NIL, NIL, NIL, NIL,
-									  ForwardScanDirection, false, NULL);
+									  ForwardScanDirection, false,
+									  NULL, 1.0);
 
 	return (seqScanAndSortPath.total_cost < indexScanPath->path.total_cost);
 }

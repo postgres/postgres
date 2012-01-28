@@ -375,6 +375,7 @@ query_planner(PlannerInfo *root, List *tlist,
 	sortedpath =
 		get_cheapest_fractional_path_for_pathkeys(final_rel->pathlist,
 												  root->query_pathkeys,
+												  NULL,
 												  tuple_fraction);
 
 	/* Don't return same path in both guises; just wastes effort */
