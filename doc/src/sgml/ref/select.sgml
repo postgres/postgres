@@ -1050,8 +1050,13 @@ SELECT name FROM distributors ORDER BY code;
    </para>
 
    <para>
-    Character-string data is sorted according to the locale-specific
-    collation order that was established when the database was created.
+    Character-string data is sorted according to the collation that applies
+    to the column being sorted.  That can be overridden at need by including
+    a <literal>COLLATE</> clause in the
+    <replaceable class="parameter">expression</replaceable>, for example
+    <literal>ORDER BY mycolumn COLLATE "en_US"</>.
+    For more information see <xref linkend="sql-syntax-collate-exprs"> and
+    <xref linkend="collation">.
    </para>
   </refsect2>
 
