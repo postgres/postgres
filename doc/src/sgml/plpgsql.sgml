@@ -2561,7 +2561,10 @@ SELECT merge_db(1, 'dennis');
 
      This coding assumes the <literal>unique_violation</> error is caused by
      the <command>INSERT</>, and not by, say, an <command>INSERT</> in a
-     trigger function on the table.  More safety could be had by using the
+     trigger function on the table.  It might also misbehave if there is
+     more than one unique index on the table, since it will retry the
+     operation regardless of which index caused the error.
+     More safety could be had by using the
      features discussed next to check that the trapped error was the one
      expected.
     </para>
