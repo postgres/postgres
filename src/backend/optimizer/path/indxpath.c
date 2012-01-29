@@ -2581,6 +2581,15 @@ match_index_to_operand(Node *operand,
 	int			indkey;
 
 	/*
+	 * Ignore any PlaceHolderVar nodes above the operand.  This is needed so
+	 * that we can successfully use expression-index constraints pushed down
+	 * through appendrels (UNION ALL).  It's safe because a PlaceHolderVar
+	 * appearing in a relation-scan-level expression is certainly a no-op.
+	 */
+	while (operand && IsA(operand, PlaceHolderVar))
+		operand = (Node *) ((PlaceHolderVar *) operand)->phexpr;
+
+	/*
 	 * Ignore any RelabelType node above the operand.	This is needed to be
 	 * able to apply indexscanning in binary-compatible-operator cases. Note:
 	 * we can assume there is at most one RelabelType node;
