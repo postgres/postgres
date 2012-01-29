@@ -2623,8 +2623,11 @@ fix_indexqual_operand(Node *node, IndexOptInfo *index)
 	ListCell   *indexpr_item;
 
 	/*
-	 * Remove any binary-compatible relabeling of the indexkey
+	 * Remove any PlaceHolderVars or binary-compatible relabeling of the
+	 * indexkey (this must match logic in match_index_to_operand()).
 	 */
+	while (IsA(node, PlaceHolderVar))
+		node = (Node *) ((PlaceHolderVar *) node)->phexpr;
 	if (IsA(node, RelabelType))
 		node = (Node *) ((RelabelType *) node)->arg;
 
