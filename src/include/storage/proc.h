@@ -148,7 +148,7 @@ extern PGDLLIMPORT PGPROC *MyProc;
 extern PGDLLIMPORT struct PGXACT *MyPgXact;
 
 /*
- * Prior to PostgreSQL 9.2, the fieds below were stored as part of the
+ * Prior to PostgreSQL 9.2, the fields below were stored as part of the
  * PGPROC.  However, benchmarking revealed that packing these particular
  * members into a separate array as tightly as possible sped up GetSnapshotData
  * considerably on systems with many CPU cores, by reducing the number of
