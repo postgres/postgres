@@ -764,7 +764,6 @@ inheritance_planner(PlannerInfo *root)
 		subroot.parse = (Query *)
 			adjust_appendrel_attrs((Node *) parse,
 								   appinfo);
-		subroot.init_plans = NIL;
 		subroot.hasInheritedTarget = true;
 		/* We needn't modify the child's append_rel_list */
 		/* There shouldn't be any OJ info to translate, as yet */
@@ -789,7 +788,7 @@ inheritance_planner(PlannerInfo *root)
 		subplans = lappend(subplans, subplan);
 
 		/* Make sure any initplans from this rel get into the outer list */
-		root->init_plans = list_concat(root->init_plans, subroot.init_plans);
+		root->init_plans = subroot.init_plans;
 
 		/* Build list of target-relation RT indexes */
 		resultRelations = lappend_int(resultRelations, appinfo->child_relid);
