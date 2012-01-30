@@ -327,7 +327,7 @@ MarkAsPreparing(TransactionId xid, const char *gid,
 	proc->databaseId = databaseid;
 	proc->roleId = owner;
 	proc->lwWaiting = false;
-	proc->lwExclusive = false;
+	proc->lwWaitMode = 0;
 	proc->lwWaitLink = NULL;
 	proc->waitLock = NULL;
 	proc->waitProcLock = NULL;

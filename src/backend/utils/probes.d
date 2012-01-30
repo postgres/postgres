@@ -35,6 +35,8 @@ provider postgresql {
 	probe lwlock__wait__done(LWLockId, LWLockMode);
 	probe lwlock__condacquire(LWLockId, LWLockMode);
 	probe lwlock__condacquire__fail(LWLockId, LWLockMode);
+	probe lwlock__wait__until__free(LWLockId, LWLockMode);
+	probe lwlock__wait__until__free__fail(LWLockId, LWLockMode);
 
 	probe lock__wait__start(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, LOCKMODE);
 	probe lock__wait__done(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, LOCKMODE);
