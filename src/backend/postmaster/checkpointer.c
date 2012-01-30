@@ -92,7 +92,7 @@
  *
  * num_backend_writes is used to count the number of buffer writes performed
  * by user backend processes.  This counter should be wide enough that it
- * can't overflow during a single processingbgwriter cycle.  num_backend_fsync
+ * can't overflow during a single processing cycle.  num_backend_fsync
  * counts the subset of those writes that also had to do their own fsync,
  * because the background writer failed to absorb their request.
  *
@@ -892,7 +892,7 @@ BgWriterShmemInit(void)
  *		since the last one (implied by CHECKPOINT_IS_SHUTDOWN or
  *		CHECKPOINT_END_OF_RECOVERY).
  *	CHECKPOINT_WAIT: wait for completion before returning (otherwise,
- *		just signal bgwriter to do it, and return).
+ *		just signal checkpointer to do it, and return).
  *	CHECKPOINT_CAUSE_XLOG: checkpoint is requested due to xlog filling.
  *		(This affects logging, and in particular enables CheckPointWarning.)
  */
@@ -928,7 +928,7 @@ RequestCheckpoint(int flags)
 	/*
 	 * Atomically set the request flags, and take a snapshot of the counters.
 	 * When we see ckpt_started > old_started, we know the flags we set here
-	 * have been seen by bgwriter.
+	 * have been seen by checkpointer.
 	 *
 	 * Note that we OR the flags with any existing flags, to avoid overriding
 	 * a "stronger" request by another backend.  The flag senses must be
@@ -943,7 +943,7 @@ RequestCheckpoint(int flags)
 	SpinLockRelease(&bgs->ckpt_lck);
 
 	/*
-	 * Send signal to request checkpoint.  It's possible that the bgwriter
+	 * Send signal to request checkpoint.  It's possible that the checkpointer
 	 * hasn't started yet, or is in process of restarting, so we will retry a
 	 * few times if needed.  Also, if not told to wait for the checkpoint to
 	 * occur, we consider failure to send the signal to be nonfatal and merely
@@ -1027,10 +1027,10 @@ RequestCheckpoint(int flags)
 
 /*
  * ForwardFsyncRequest
- *		Forward a file-fsync request from a backend to the bgwriter
+ *		Forward a file-fsync request from a backend to the checkpointer
  *
  * Whenever a backend is compelled to write directly to a relation
- * (which should be seldom, if the bgwriter is getting its job done),
+ * (which should be seldom, if the checkpointer is getting its job done),
  * the backend calls this routine to pass over knowledge that the relation
  * is dirty and must be fsync'd before next checkpoint.  We also use this
  * opportunity to count such writes for statistical purposes.
@@ -1041,7 +1041,7 @@ RequestCheckpoint(int flags)
  * see for details.)
  *
  * To avoid holding the lock for longer than necessary, we normally write
- * to the requests[] queue without checking for duplicates.  The bgwriter
+ * to the requests[] queue without checking for duplicates.  The checkpointer
  * will have to eliminate dups internally anyway.  However, if we discover
  * that the queue is full, we make a pass over the entire queue to compact
  * it.	This is somewhat expensive, but the alternative is for the backend
@@ -1060,7 +1060,7 @@ ForwardFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
 		return false;			/* probably shouldn't even get here */
 
 	if (am_checkpointer)
-		elog(ERROR, "ForwardFsyncRequest must not be called in bgwriter");
+		elog(ERROR, "ForwardFsyncRequest must not be called in checkpointer");
 
 	LWLockAcquire(BgWriterCommLock, LW_EXCLUSIVE);
 
@@ -1132,7 +1132,7 @@ CompactCheckpointerRequestQueue()
 	ctl.keysize = sizeof(BgWriterRequest);
 	ctl.entrysize = sizeof(struct BgWriterSlotMapping);
 	ctl.hash = tag_hash;
-	htab = hash_create("CompactBgwriterRequestQueue",
+	htab = hash_create("CompactCheckpointerRequestQueue",
 					   BgWriterShmem->num_requests,
 					   &ctl,
 					   HASH_ELEM | HASH_FUNCTION);

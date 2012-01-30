@@ -82,7 +82,7 @@ typedef struct
 
 	/*
 	 * Are any sync standbys defined?  Waiting backends can't reload the
-	 * config file safely, so WAL writer updates this value as needed.
+	 * config file safely, so checkpointer updates this value as needed.
 	 * Protected by SyncRepLock.
 	 */
 	bool		sync_standbys_defined;
