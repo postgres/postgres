@@ -926,11 +926,22 @@ assign_default_tablespace(const char *newval, bool doit, GucSource source)
 		if (newval[0] != '\0' &&
 			!OidIsValid(get_tablespace_oid(newval)))
 		{
-			ereport(GUC_complaint_elevel(source),
+			/*
+			 * When source == PGC_S_TEST, we are checking the argument of an
+			 * ALTER DATABASE SET or ALTER USER SET command.  pg_dumpall dumps
+			 * all roles before tablespaces, so if we're restoring a
+			 * pg_dumpall script the tablespace might not yet exist, but will
+			 * be created later.  Because of that, issue a NOTICE if source ==
+			 * PGC_S_TEST, but accept the value anyway.
+			 */
+			ereport((source == PGC_S_TEST) ? NOTICE : GUC_complaint_elevel(source),
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("tablespace \"%s\" does not exist",
 							newval)));
-			return NULL;
+			if (source == PGC_S_TEST)
+				return newval;
+			else
+				return NULL;
 		}
 	}
 
@@ -1047,10 +1058,16 @@ assign_temp_tablespaces(const char *newval, bool doit, GucSource source)
 			{
 				/*
 				 * In an interactive SET command, we ereport for bad info.
+				 * When source == PGC_S_TEST, we are checking the argument of
+				 * an ALTER DATABASE SET or ALTER USER SET command.  pg_dumpall
+				 * dumps all roles before tablespaces, so if we're restoring a
+				 * pg_dumpall script the tablespace might not yet exist, but
+				 * will be created later.  Because of that, issue a NOTICE if
+				 * source == PGC_S_TEST, but accept the value anyway.
 				 * Otherwise, silently ignore any bad list elements.
 				 */
 				if (source >= PGC_S_INTERACTIVE)
-					ereport(ERROR,
+					ereport((source == PGC_S_TEST) ? NOTICE : ERROR,
 							(errcode(ERRCODE_UNDEFINED_OBJECT),
 							 errmsg("tablespace \"%s\" does not exist",
 									curname)));
