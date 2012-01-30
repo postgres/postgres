@@ -1031,9 +1031,27 @@ check_default_tablespace(char **newval, void **extra, GucSource source)
 		if (**newval != '\0' &&
 			!OidIsValid(get_tablespace_oid(*newval, true)))
 		{
-			GUC_check_errdetail("Tablespace \"%s\" does not exist.",
-								*newval);
-			return false;
+			/*
+			 * When source == PGC_S_TEST, we are checking the argument of an
+			 * ALTER DATABASE SET or ALTER USER SET command.  pg_dumpall dumps
+			 * all roles before tablespaces, so if we're restoring a
+			 * pg_dumpall script the tablespace might not yet exist, but will
+			 * be created later.  Because of that, issue a NOTICE if source ==
+			 * PGC_S_TEST, but accept the value anyway.
+			 */
+			if (source == PGC_S_TEST)
+			{
+				ereport(NOTICE,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("tablespace \"%s\" does not exist",
+								*newval)));
+			}
+			else
+			{
+				GUC_check_errdetail("Tablespace \"%s\" does not exist.",
+									*newval);
+				return false;
+			}
 		}
 	}
 
@@ -1148,12 +1166,25 @@ check_temp_tablespaces(char **newval, void **extra, GucSource source)
 			}
 
 			/*
-			 * In an interactive SET command, we ereport for bad info.
-			 * Otherwise, silently ignore any bad list elements.
+			 * In an interactive SET command, we ereport for bad info.  When
+			 * source == PGC_S_TEST, we are checking the argument of an ALTER
+			 * DATABASE SET or ALTER USER SET command.  pg_dumpall dumps all
+			 * roles before tablespaces, so if we're restoring a pg_dumpall
+			 * script the tablespace might not yet exist, but will be created
+			 * later.  Because of that, issue a NOTICE if source == PGC_S_TEST,
+			 * but accept the value anyway.  Otherwise, silently ignore any
+			 * bad list elements.
 			 */
-			curoid = get_tablespace_oid(curname, source < PGC_S_INTERACTIVE);
+			curoid = get_tablespace_oid(curname, source <= PGC_S_TEST);
 			if (curoid == InvalidOid)
+			{
+				if (source == PGC_S_TEST)
+					ereport(NOTICE,
+							(errcode(ERRCODE_UNDEFINED_OBJECT),
+							 errmsg("tablespace \"%s\" does not exist",
+									curname)));
 				continue;
+			}
 
 			/*
 			 * Allow explicit specification of database's default tablespace
