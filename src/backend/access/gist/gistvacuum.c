@@ -131,7 +131,7 @@ pushStackIfSplited(Page page, GistBDItem *stack)
 
 /*
  * Bulk deletion of all index entries pointing to a set of heap tuples and
- * check invalid tuples after crash recovery.
+ * check invalid tuples left after upgrade.
  * The set of target tuples is specified via a callback routine that tells
  * whether any given heap tuple (identified by ItemPointer) is being deleted.
  *

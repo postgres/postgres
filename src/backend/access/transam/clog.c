@@ -44,9 +44,10 @@
  *
  * Note: because TransactionIds are 32 bits and wrap around at 0xFFFFFFFF,
  * CLOG page numbering also wraps around at 0xFFFFFFFF/CLOG_XACTS_PER_PAGE,
- * and CLOG segment numbering at 0xFFFFFFFF/CLOG_XACTS_PER_SEGMENT.  We need
- * take no explicit notice of that fact in this module, except when comparing
- * segment and page numbers in TruncateCLOG (see CLOGPagePrecedes).
+ * and CLOG segment numbering at
+ * 0xFFFFFFFF/CLOG_XACTS_PER_PAGE/SLRU_PAGES_PER_SEGMENT.  We need take no
+ * explicit notice of that fact in this module, except when comparing segment
+ * and page numbers in TruncateCLOG (see CLOGPagePrecedes).
  */
 
 /* We need two bits per xact, so four xacts fit in a byte */

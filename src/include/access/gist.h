@@ -89,7 +89,7 @@ typedef GISTPageOpaqueData *GISTPageOpaque;
  * that corresponding spl_(r|l)datum already defined and
  * PickSplit should use that value. PickSplit should always set
  * spl_(r|l)datum_exists to false: GiST will check value to
- * control supportng this feature by PickSplit...
+ * control supporting this feature by PickSplit...
  */
 typedef struct GIST_SPLITVEC
 {

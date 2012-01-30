@@ -1214,7 +1214,7 @@ GetMaxSnapshotSubxidCount(void)
  *
  * We also update the following backend-global variables:
  *		TransactionXmin: the oldest xmin of any snapshot in use in the
- *			current transaction (this is the same as MyProc->xmin).
+ *			current transaction (this is the same as MyPgXact->xmin).
  *		RecentXmin: the xmin computed for the most recent snapshot.  XIDs
  *			older than this are known not running any more.
  *		RecentGlobalXmin: the global xmin (oldest TransactionXmin across all

@@ -1668,7 +1668,7 @@ ExecEndWindowAgg(WindowAggState *node)
 }
 
 /* -----------------
- * ExecRescanWindowAgg
+ * ExecReScanWindowAgg
  * -----------------
  */
 void

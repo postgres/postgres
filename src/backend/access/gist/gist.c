@@ -253,7 +253,7 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 		}
 
 		/*
-		 * Now that we know whick blocks the new pages go to, set up downlink
+		 * Now that we know which blocks the new pages go to, set up downlink
 		 * tuples to point to them.
 		 */
 		for (ptr = dist; ptr; ptr = ptr->next)

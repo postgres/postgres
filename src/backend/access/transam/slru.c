@@ -280,6 +280,8 @@ SimpleLruZeroPage(SlruCtl ctl, int pageno)
  * in a page from disk into an existing buffer.  (Such an old page cannot
  * have any interesting LSNs, since we'd have flushed them before writing
  * the page in the first place.)
+ *
+ * This assumes that InvalidXLogRecPtr is bitwise-all-0.
  */
 static void
 SimpleLruZeroLSNs(SlruCtl ctl, int slotno)

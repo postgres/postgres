@@ -1,7 +1,8 @@
 /*-------------------------------------------------------------------------
  *
  * gistproc.c
- *	  Support procedures for GiSTs over 2-D objects (boxes, polygons, circles).
+ *	  Support procedures for GiSTs over 2-D objects (boxes, polygons, circles,
+ *	  points).
  *
  * This gives R-tree behavior, with Guttman's poly-time split algorithm.
  *

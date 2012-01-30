@@ -22,7 +22,7 @@
 #include "utils/builtins.h"
 
 /*
- * static *S used for temrorary storage (saves stack and palloc() call)
+ * static *S used for temporary storage (saves stack and palloc() call)
  */
 
 static Datum attrS[INDEX_MAX_KEYS];
@@ -148,8 +148,8 @@ gistfillitupvec(IndexTuple *vec, int veclen, int *memlen)
 }
 
 /*
- * Make unions of keys in IndexTuple vector, return FALSE if itvec contains
- * invalid tuple. Resulting Datums aren't compressed.
+ * Make unions of keys in IndexTuple vector.
+ * Resulting Datums aren't compressed.
  */
 
 void

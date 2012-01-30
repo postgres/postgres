@@ -29,7 +29,7 @@ typedef struct
 
 /*
  * Forms unions of subkeys after page split, but
- * uses only tuples aren't in groups of equalent tuples
+ * uses only tuples that aren't in groups of equivalent tuples
  */
 static void
 gistunionsubkeyvec(GISTSTATE *giststate, IndexTuple *itvec,
@@ -200,8 +200,8 @@ do {	\
 
 /*
  * adjust left and right unions according to splits by previous
- * split by firsts columns. This function is called only in case
- * when pickSplit doesn't support subspplit.
+ * split by first columns. This function is called only in case
+ * when pickSplit doesn't support subsplit.
  */
 
 static void
@@ -503,8 +503,8 @@ gistSplitHalf(GIST_SPLITVEC *v, int len)
 }
 
 /*
- * trys to split page by attno key, in a case of null
- * values move its to separate page.
+ * tries to split page by attno key, in case of null
+ * values move those to separate page.
  */
 void
 gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len, GISTSTATE *giststate,
@@ -531,7 +531,7 @@ gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len, GISTSTATE *gist
 	{
 		/*
 		 * Corner case: All keys in attno column are null, we should try to
-		 * split by keys in next column. It all keys in all columns are NULL
+		 * split by keys in next column. If all keys in all columns are NULL
 		 * just split page half by half
 		 */
 		v->spl_risnull[attno] = v->spl_lisnull[attno] = TRUE;
@@ -582,7 +582,7 @@ gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len, GISTSTATE *gist
 			{
 				/*
 				 * simple case: left and right keys for attno column are
-				 * equial
+				 * equal
 				 */
 				gistSplitByKey(r, page, itup, len, giststate, v, entryvec, attno + 1);
 			}
