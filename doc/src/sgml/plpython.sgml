@@ -886,9 +886,12 @@ $$ LANGUAGE plpythonu;
    list or dictionary object.  The result object can be accessed by
    row number and column name.  It has these additional methods:
    <function>nrows</function> which returns the number of rows
-   returned by the query, and <function>status</function> which is the
-   <function>SPI_execute()</function> return value.  The result object
-   can be modified.
+   returned by the query, <function>status</function> which is the
+   <function>SPI_execute()</function> return value,
+   <function>colnames</function> which is the list of column names,
+   <function>coltypes</function> which is the list of column type OIDs,
+   and <function>coltypmods</function> which is the list of type-specific type
+   modifiers for the columns.  The result object can be modified.
   </para>
 
   <para>

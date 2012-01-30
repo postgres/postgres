@@ -12,6 +12,9 @@
 
 
 static void PLy_result_dealloc(PyObject *arg);
+static PyObject *PLy_result_colnames(PyObject *self, PyObject *unused);
+static PyObject *PLy_result_coltypes(PyObject *self, PyObject *unused);
+static PyObject *PLy_result_coltypmods(PyObject *self, PyObject *unused);
 static PyObject *PLy_result_nrows(PyObject *self, PyObject *args);
 static PyObject *PLy_result_status(PyObject *self, PyObject *args);
 static Py_ssize_t PLy_result_length(PyObject *arg);
@@ -35,6 +38,9 @@ static PySequenceMethods PLy_result_as_sequence = {
 };
 
 static PyMethodDef PLy_result_methods[] = {
+	{"colnames", PLy_result_colnames, METH_NOARGS, NULL},
+	{"coltypes", PLy_result_coltypes, METH_NOARGS, NULL},
+	{"coltypmods", PLy_result_coltypmods, METH_NOARGS, NULL},
 	{"nrows", PLy_result_nrows, METH_VARARGS, NULL},
 	{"status", PLy_result_status, METH_VARARGS, NULL},
 	{NULL, NULL, 0, NULL}
@@ -96,6 +102,7 @@ PLy_result_new(void)
 	ob->status = Py_None;
 	ob->nrows = PyInt_FromLong(-1);
 	ob->rows = PyList_New(0);
+	ob->tupdesc = NULL;
 
 	return (PyObject *) ob;
 }
@@ -108,8 +115,55 @@ PLy_result_dealloc(PyObject *arg)
 	Py_XDECREF(ob->nrows);
 	Py_XDECREF(ob->rows);
 	Py_XDECREF(ob->status);
+	if (ob->tupdesc)
+	{
+		FreeTupleDesc(ob->tupdesc);
+		ob->tupdesc = NULL;
+	}
 
 	arg->ob_type->tp_free(arg);
+}
+
+static PyObject *
+PLy_result_colnames(PyObject *self, PyObject *unused)
+{
+	PLyResultObject *ob = (PLyResultObject *) self;
+	PyObject   *list;
+	int			i;
+
+	list = PyList_New(ob->tupdesc->natts);
+	for (i = 0; i < ob->tupdesc->natts; i++)
+		PyList_SET_ITEM(list, i, PyString_FromString(NameStr(ob->tupdesc->attrs[i]->attname)));
+
+	return list;
+}
+
+static PyObject *
+PLy_result_coltypes(PyObject *self, PyObject *unused)
+{
+	PLyResultObject *ob = (PLyResultObject *) self;
+	PyObject   *list;
+	int			i;
+
+	list = PyList_New(ob->tupdesc->natts);
+	for (i = 0; i < ob->tupdesc->natts; i++)
+		PyList_SET_ITEM(list, i, PyInt_FromLong(ob->tupdesc->attrs[i]->atttypid));
+
+	return list;
+}
+
+static PyObject *
+PLy_result_coltypmods(PyObject *self, PyObject *unused)
+{
+	PLyResultObject *ob = (PLyResultObject *) self;
+	PyObject   *list;
+	int			i;
+
+	list = PyList_New(ob->tupdesc->natts);
+	for (i = 0; i < ob->tupdesc->natts; i++)
+		PyList_SET_ITEM(list, i, PyInt_FromLong(ob->tupdesc->attrs[i]->atttypmod));
+
+	return list;
 }
 
 static PyObject *

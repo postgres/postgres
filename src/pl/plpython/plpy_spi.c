@@ -398,6 +398,8 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, int rows, int status)
 		oldcontext = CurrentMemoryContext;
 		PG_TRY();
 		{
+			result->tupdesc = CreateTupleDescCopy(tuptable->tupdesc);
+
 			if (rows)
 			{
 				Py_DECREF(result->rows);
