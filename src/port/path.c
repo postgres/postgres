@@ -445,7 +445,7 @@ get_progname(const char *argv0)
 	if (progname == NULL)
 	{
 		fprintf(stderr, "%s: out of memory\n", nodir_name);
-		exit(1);				/* This could exit the postmaster */
+		abort();				/* This could exit the postmaster */
 	}
 
 #if defined(__CYGWIN__) || defined(WIN32)

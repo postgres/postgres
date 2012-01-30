@@ -483,7 +483,7 @@ extern pgthreadlock_t pg_g_threadlock;
 #define PGTHREAD_ERROR(msg) \
 	do { \
 		fprintf(stderr, "%s\n", msg); \
-		exit(1); \
+		abort(); \
 	} while (0)
 
 
