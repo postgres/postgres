@@ -754,23 +754,31 @@ LWLockRelease(LWLockId lockid)
 		if (lock->exclusive == 0 && lock->shared == 0 && lock->releaseOK)
 		{
 			/*
-			 * Remove the to-be-awakened PGPROCs from the queue.  If the front
-			 * waiter wants exclusive lock, awaken him only. Otherwise awaken
-			 * as many waiters as want shared access (or just want to be
-			 * woken up when the lock becomes free without acquiring it,
-			 * ie. LWLockWaitUntilFree).
+			 * Remove the to-be-awakened PGPROCs from the queue.
 			 */
 			bool releaseOK = true;
 
 			proc = head;
+
+			/*
+			 * First wake up any backends that want to be woken up without
+			 * acquiring the lock.
+			 */
+			while (proc->lwWaitMode == LW_WAIT_UNTIL_FREE && proc->lwWaitLink)
+				proc = proc->lwWaitLink;
+
+			/*
+			 * If the front waiter wants exclusive lock, awaken him only.
+			 * Otherwise awaken as many waiters as want shared access.
+			 */
 			if (proc->lwWaitMode != LW_EXCLUSIVE)
 			{
 				while (proc->lwWaitLink != NULL &&
 					   proc->lwWaitLink->lwWaitMode != LW_EXCLUSIVE)
 				{
-					proc = proc->lwWaitLink;
 					if (proc->lwWaitMode != LW_WAIT_UNTIL_FREE)
 						releaseOK = false;
+					proc = proc->lwWaitLink;
 				}
 			}
 			/* proc is now the last PGPROC to be released */
@@ -778,9 +786,8 @@ LWLockRelease(LWLockId lockid)
 			proc->lwWaitLink = NULL;
 			/*
 			 * Prevent additional wakeups until retryer gets to run. Backends
-			 * that are just waiting for the lock to become free don't prevent
-			 * wakeups, because they might decide that they don't want the
-			 * lock, after all.
+			 * that are just waiting for the lock to become free don't retry
+			 * automatically.
 			 */
 			if (proc->lwWaitMode != LW_WAIT_UNTIL_FREE)
 				releaseOK = false;
