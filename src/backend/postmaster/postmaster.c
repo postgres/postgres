@@ -4212,13 +4212,13 @@ sigusr1_handler(SIGNAL_ARGS)
 		FatalError = false;
 
 		/*
-		 * Crank up the background writer.	It doesn't matter if this fails,
+		 * Crank up the background writers.	It doesn't matter if this fails,
 		 * we'll just try again later.
 		 */
-		Assert(BgWriterPID == 0);
-		BgWriterPID = StartBackgroundWriter();
 		Assert(CheckpointerPID == 0);
 		CheckpointerPID = StartCheckpointer();
+		Assert(BgWriterPID == 0);
+		BgWriterPID = StartBackgroundWriter();
 
 		pmState = PM_RECOVERY;
 	}

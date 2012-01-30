@@ -62,9 +62,6 @@ char	   *SyncRepStandbyNames;
 #define SyncStandbysDefined() \
 	(SyncRepStandbyNames != NULL && SyncRepStandbyNames[0] != '\0')
 
-#define SyncRepRequested() \
-	(max_wal_senders > 0 && synchronous_commit > SYNCHRONOUS_COMMIT_LOCAL_FLUSH)
-
 static bool announce_next_takeover = true;
 
 static int	SyncRepWaitMode = SYNC_REP_NO_WAIT;
@@ -98,6 +95,7 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 {
 	char	   *new_status = NULL;
 	const char *old_status;
+	int			mode = SyncRepWaitMode;
 
 	/*
 	 * Fast exit if user has not requested sync replication, or there are no
@@ -122,7 +120,7 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 	 * be a low cost check.
 	 */
 	if (!WalSndCtl->sync_standbys_defined ||
-		XLByteLE(XactCommitLSN, WalSndCtl->lsn[SyncRepWaitMode]))
+		XLByteLE(XactCommitLSN, WalSndCtl->lsn[mode]))
 	{
 		LWLockRelease(SyncRepLock);
 		return;
@@ -134,8 +132,8 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 	 */
 	MyProc->waitLSN = XactCommitLSN;
 	MyProc->syncRepState = SYNC_REP_WAITING;
-	SyncRepQueueInsert(SyncRepWaitMode);
-	Assert(SyncRepQueueIsOrderedByLSN(SyncRepWaitMode));
+	SyncRepQueueInsert(mode);
+	Assert(SyncRepQueueIsOrderedByLSN(mode));
 	LWLockRelease(SyncRepLock);
 
 	/* Alter ps display to show waiting for sync rep. */

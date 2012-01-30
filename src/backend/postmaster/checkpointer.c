@@ -673,7 +673,7 @@ CheckpointWriteDelay(int flags, double progress)
 			got_SIGHUP = false;
 			ProcessConfigFile(PGC_SIGHUP);
 			/* update global shmem state for sync rep */
-			SyncRepUpdateSyncStandbysDefined();
+			UpdateSharedMemoryConfig();
 		}
 
 		AbsorbFsyncRequests();
