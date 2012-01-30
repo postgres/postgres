@@ -3839,7 +3839,7 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>object_type</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry><literal>COLLATION</literal> or <literal>DOMAIN</literal> or <literal>FOREIGN DATA WRAPPER</literal> or <literal>FOREIGN SERVER</literal></entry>
+      <entry><literal>COLLATION</literal> or <literal>DOMAIN</literal> or <literal>FOREIGN DATA WRAPPER</literal> or <literal>FOREIGN SERVER</literal> or <literal>SEQUENCE</literal></entry>
      </row>
 
      <row>
@@ -5859,7 +5859,7 @@ ORDER BY c.ordinal_position;
    <literal>USAGE</literal> privileges granted on various kinds of
    objects to a currently enabled role or by a currently enabled role.
    In <productname>PostgreSQL</productname>, this currently applies to
-   collations, domains, foreign-data wrappers, and foreign servers.  There is one
+   collations, domains, foreign-data wrappers, foreign servers, and sequences.  There is one
    row for each combination of object, grantor, and grantee.
   </para>
 
@@ -5869,6 +5869,13 @@ ORDER BY c.ordinal_position;
    non-grantable <literal>USAGE</literal> privileges granted by the
    owner to <literal>PUBLIC</literal> for all collations.  The other
    object types, however, show real privileges.
+  </para>
+
+  <para>
+   In PostgreSQL, sequences also support <literal>SELECT</literal>
+   and <literal>UPDATE</literal> privileges in addition to
+   the <literal>USAGE</literal> privilege.  These are nonstandard and therefore
+   not visible in the information schema.
   </para>
 
   <table>
@@ -5918,7 +5925,7 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>object_type</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry><literal>COLLATION</literal> or <literal>DOMAIN</literal> or <literal>FOREIGN DATA WRAPPER</literal> or <literal>FOREIGN SERVER</literal></entry>
+      <entry><literal>COLLATION</literal> or <literal>DOMAIN</literal> or <literal>FOREIGN DATA WRAPPER</literal> or <literal>FOREIGN SERVER</literal> or <literal>SEQUENCE</literal></entry>
      </row>
 
      <row>

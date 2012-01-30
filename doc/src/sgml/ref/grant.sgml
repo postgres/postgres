@@ -643,6 +643,18 @@ GRANT admins TO joe;
    </para>
 
    <para>
+    In the SQL standard, sequences only have a <literal>USAGE</literal>
+    privilege, which controls the use of the <literal>NEXT VALUE FOR</literal>
+    expression, which is equivalent to the
+    function <function>nextval</function> in PostgreSQL.  The sequence
+    privileges <literal>SELECT</literal> and <literal>UPDATE</literal> are
+    PostgreSQL extensions.  The application of the
+    sequence <literal>USAGE</literal> privilege to
+    the <literal>currval</literal> function is also a PostgreSQL extension (as
+    is the function itself).
+   </para>
+
+   <para>
     Privileges on databases, tablespaces, schemas, and languages are
     <productname>PostgreSQL</productname> extensions.
    </para>
