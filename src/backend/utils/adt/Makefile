@@ -18,7 +18,7 @@ endif
 OBJS = acl.o arrayfuncs.o array_userfuncs.o arrayutils.o bool.o \
 	cash.o char.o date.o datetime.o datum.o domains.o \
 	enum.o float.o format_type.o \
-	geo_ops.o geo_selfuncs.o int.o int8.o like.o lockfuncs.o \
+	geo_ops.o geo_selfuncs.o int.o int8.o json.o like.o lockfuncs.o \
 	misc.o nabstime.o name.o numeric.o numutils.o \
 	oid.o oracle_compat.o pseudotypes.o rangetypes.o rangetypes_gist.o \
 	rowtypes.o regexp.o regproc.o ruleutils.o selfuncs.o \

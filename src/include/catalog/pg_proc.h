@@ -4022,6 +4022,16 @@ DESCR("determine if a string is well formed XML document");
 DATA(insert OID = 3053 (  xml_is_well_formed_content	 PGNSP PGUID 12 1 0 0 0 f f f t f i 1 0 16 "25" _null_ _null_ _null_ _null_ xml_is_well_formed_content _null_ _null_ _null_ ));
 DESCR("determine if a string is well formed XML content");
 
+/* json */
+DATA(insert OID = 321 (  json_in		   PGNSP PGUID 12 1 0 0 0 f f f t f s 1 0 114 "2275" _null_ _null_ _null_ _null_ json_in _null_ _null_ _null_ ));
+DESCR("I/O");
+DATA(insert OID = 322 (  json_out		   PGNSP PGUID 12 1 0 0 0 f f f t f i 1 0 2275 "114" _null_ _null_ _null_ _null_ json_out _null_ _null_ _null_ ));
+DESCR("I/O");
+DATA(insert OID = 323 (  json_recv		   PGNSP PGUID 12 1 0 0 0 f f f t f s 1 0 114 "2281" _null_ _null_ _null_ _null_	json_recv _null_ _null_ _null_ ));
+DESCR("I/O");
+DATA(insert OID = 324 (  json_send		   PGNSP PGUID 12 1 0 0 0 f f f t f s 1 0 17 "114" _null_ _null_ _null_ _null_ json_send _null_ _null_ _null_ ));
+DESCR("I/O");
+
 /* uuid */
 DATA(insert OID = 2952 (  uuid_in		   PGNSP PGUID 12 1 0 0 0 f f f t f i 1 0 2950 "2275" _null_ _null_ _null_ _null_ uuid_in _null_ _null_ _null_ ));
 DESCR("I/O");

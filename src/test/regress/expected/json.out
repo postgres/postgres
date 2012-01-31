@@ -1,0 +1,258 @@
+-- Strings.
+SELECT '""'::json;				-- OK.
+ json 
+------
+ ""
+(1 row)
+
+SELECT $$''$$::json;			-- ERROR, single quotes are not allowed
+ERROR:  invalid input syntax for type json
+LINE 1: SELECT $$''$$::json;
+               ^
+DETAIL:  line 1: Token "'" is invalid.
+SELECT '"abc"'::json;			-- OK
+ json  
+-------
+ "abc"
+(1 row)
+
+SELECT '"abc'::json;			-- ERROR, quotes not closed
+ERROR:  invalid input syntax for type json
+LINE 1: SELECT '"abc'::json;
+               ^
+DETAIL:  line 1: Token ""abc" is invalid.
+SELECT '"abc
+def"'::json;					-- ERROR, unescaped newline in string constant
+ERROR:  invalid input syntax for type json
+LINE 1: SELECT '"abc
+               ^
+DETAIL:  line 1: Character "
+" must be escaped.
+SELECT '"\n\"\\"'::json;		-- OK, legal escapes
+   json   
+----------
+ "\n\"\\"
+(1 row)
+
+SELECT '"\v"'::json;			-- ERROR, not a valid JSON escape
+ERROR:  invalid input syntax for type json
+LINE 1: SELECT '"\v"'::json;
+               ^
+DETAIL:  line 1: Invalid escape "\v".
+SELECT '"\u"'::json;			-- ERROR, incomplete escape
+ERROR:  invalid input syntax for type json
+LINE 1: SELECT '"\u"'::json;
+               ^
+DETAIL:  line 1: "\u" must be followed by four hexadecimal digits.
+SELECT '"\u00"'::json;			-- ERROR, incomplete escape
+ERROR:  invalid input syntax for type json
+LINE 1: SELECT '"\u00"'::json;
+               ^
+DETAIL:  line 1: "\u" must be followed by four hexadecimal digits.
+SELECT '"\u000g"'::json;		-- ERROR, g is not a hex digit
+ERROR:  invalid input syntax for type json
+LINE 1: SELECT '"\u000g"'::json;
+               ^
+DETAIL:  line 1: "\u" must be followed by four hexadecimal digits.
+SELECT '"\u0000"'::json;		-- OK, legal escape
+   json   
+----------
+ "\u0000"
+(1 row)
+
+SELECT '"\uaBcD"'::json;		-- OK, uppercase and lower case both OK
+   json   
+----------
+ "\uaBcD"
+(1 row)
+
+-- Numbers.
+SELECT '1'::json;				-- OK
+ json 
+------
+ 1
+(1 row)
+
+SELECT '0'::json;				-- OK
+ json 
+------
+ 0
+(1 row)
+
+SELECT '01'::json;				-- ERROR, not valid according to JSON spec
+ERROR:  invalid input syntax for type json
+LINE 1: SELECT '01'::json;
+               ^
+DETAIL:  line 1: Token "01" is invalid.
+SELECT '0.1'::json;				-- OK
+ json 
+------
+ 0.1
+(1 row)
+
+SELECT '9223372036854775808'::json;	-- OK, even though it's too large for int8
+        json         
+---------------------
+ 9223372036854775808
+(1 row)
+
+SELECT '1e100'::json;			-- OK
+ json  
+-------
+ 1e100
+(1 row)
+
+SELECT '1.3e100'::json;			-- OK
+  json   
+---------
+ 1.3e100
+(1 row)
+
+SELECT '1f2'::json;				-- ERROR
+ERROR:  invalid input syntax for type json
+LINE 1: SELECT '1f2'::json;
+               ^
+DETAIL:  line 1: Token "1f2" is invalid.
+-- Arrays.
+SELECT '[]'::json;				-- OK
+ json 
+------
+ []
+(1 row)
+
+SELECT '[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]'::json;  -- OK
+                                                                                                   json                                                                                                   
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+(1 row)
+
+SELECT '[1,2]'::json;			-- OK
+ json  
+-------
+ [1,2]
+(1 row)
+
+SELECT '[1,2,]'::json;			-- ERROR, trailing comma
+ERROR:  invalid input syntax for type json: "[1,2,]"
+LINE 1: SELECT '[1,2,]'::json;
+               ^
+DETAIL:  line 1: Expected string, number, object, array, true, false, or null, but found "]".
+SELECT '[1,2'::json;			-- ERROR, no closing bracket
+ERROR:  invalid input syntax for type json: "[1,2"
+LINE 1: SELECT '[1,2'::json;
+               ^
+DETAIL:  The input string ended unexpectedly.
+SELECT '[1,[2]'::json;			-- ERROR, no closing bracket
+ERROR:  invalid input syntax for type json: "[1,[2]"
+LINE 1: SELECT '[1,[2]'::json;
+               ^
+DETAIL:  The input string ended unexpectedly.
+-- Objects.
+SELECT '{}'::json;				-- OK
+ json 
+------
+ {}
+(1 row)
+
+SELECT '{"abc"}'::json;			-- ERROR, no value
+ERROR:  invalid input syntax for type json: "{"abc"}"
+LINE 1: SELECT '{"abc"}'::json;
+               ^
+DETAIL:  line 1: Expected ":", but found "}".
+SELECT '{"abc":1}'::json;		-- OK
+   json    
+-----------
+ {"abc":1}
+(1 row)
+
+SELECT '{1:"abc"}'::json;		-- ERROR, keys must be strings
+ERROR:  invalid input syntax for type json: "{1:"abc"}"
+LINE 1: SELECT '{1:"abc"}'::json;
+               ^
+DETAIL:  line 1: Expected string or "}", but found "1".
+SELECT '{"abc",1}'::json;		-- ERROR, wrong separator
+ERROR:  invalid input syntax for type json: "{"abc",1}"
+LINE 1: SELECT '{"abc",1}'::json;
+               ^
+DETAIL:  line 1: Expected ":", but found ",".
+SELECT '{"abc"=1}'::json;		-- ERROR, totally wrong separator
+ERROR:  invalid input syntax for type json
+LINE 1: SELECT '{"abc"=1}'::json;
+               ^
+DETAIL:  line 1: Token "=" is invalid.
+SELECT '{"abc"::1}'::json;		-- ERROR, another wrong separator
+ERROR:  invalid input syntax for type json: "{"abc"::1}"
+LINE 1: SELECT '{"abc"::1}'::json;
+               ^
+DETAIL:  line 1: Expected string, number, object, array, true, false, or null, but found ":".
+SELECT '{"abc":1,"def":2,"ghi":[3,4],"hij":{"klm":5,"nop":[6]}}'::json; -- OK
+                          json                           
+---------------------------------------------------------
+ {"abc":1,"def":2,"ghi":[3,4],"hij":{"klm":5,"nop":[6]}}
+(1 row)
+
+SELECT '{"abc":1:2}'::json;		-- ERROR, colon in wrong spot
+ERROR:  invalid input syntax for type json: "{"abc":1:2}"
+LINE 1: SELECT '{"abc":1:2}'::json;
+               ^
+DETAIL:  line 1: Expected "," or "}", but found ":".
+SELECT '{"abc":1,3}'::json;		-- ERROR, no value
+ERROR:  invalid input syntax for type json: "{"abc":1,3}"
+LINE 1: SELECT '{"abc":1,3}'::json;
+               ^
+DETAIL:  line 1: Expected string, but found "3".
+-- Miscellaneous stuff.
+SELECT 'true'::json;			-- OK
+ json 
+------
+ true
+(1 row)
+
+SELECT 'false'::json;			-- OK
+ json  
+-------
+ false
+(1 row)
+
+SELECT 'null'::json;			-- OK
+ json 
+------
+ null
+(1 row)
+
+SELECT ' true '::json;			-- OK, even with extra whitespace
+  json  
+--------
+  true 
+(1 row)
+
+SELECT 'true false'::json;		-- ERROR, too many values
+ERROR:  invalid input syntax for type json: "true false"
+LINE 1: SELECT 'true false'::json;
+               ^
+DETAIL:  line 1: Expected end of input, but found "false".
+SELECT 'true, false'::json;		-- ERROR, too many values
+ERROR:  invalid input syntax for type json: "true, false"
+LINE 1: SELECT 'true, false'::json;
+               ^
+DETAIL:  line 1: Expected end of input, but found ",".
+SELECT 'truf'::json;			-- ERROR, not a keyword
+ERROR:  invalid input syntax for type json
+LINE 1: SELECT 'truf'::json;
+               ^
+DETAIL:  line 1: Token "truf" is invalid.
+SELECT 'trues'::json;			-- ERROR, not a keyword
+ERROR:  invalid input syntax for type json
+LINE 1: SELECT 'trues'::json;
+               ^
+DETAIL:  line 1: Token "trues" is invalid.
+SELECT ''::json;				-- ERROR, no value
+ERROR:  invalid input syntax for type json: ""
+LINE 1: SELECT ''::json;
+               ^
+DETAIL:  The input string ended unexpectedly.
+SELECT '    '::json;			-- ERROR, no value
+ERROR:  invalid input syntax for type json: "    "
+LINE 1: SELECT '    '::json;
+               ^
+DETAIL:  The input string ended unexpectedly.

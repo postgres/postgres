@@ -109,6 +109,7 @@ test: window
 test: xmlmap
 test: functional_deps
 test: advisory_lock
+test: json
 test: plancache
 test: limit
 test: plpgsql
