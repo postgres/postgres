@@ -123,7 +123,7 @@ static int	RestoringToDB(ArchiveHandle *AH);
 static void dump_lo_buf(ArchiveHandle *AH);
 static void vdie_horribly(ArchiveHandle *AH, const char *modulename,
 						  const char *fmt, va_list ap)
-	__attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 0)));
+	__attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 0), noreturn));
 
 static void dumpTimestamp(ArchiveHandle *AH, const char *msg, time_t tim);
 static void SetOutput(ArchiveHandle *AH, char *filename, int compression);

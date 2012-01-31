@@ -57,7 +57,7 @@ extern void write_msg(const char *modulename, const char *fmt,...)
 extern void vwrite_msg(const char *modulename, const char *fmt, va_list ap)
 				__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 0)));
 extern void exit_horribly(const char *modulename, const char *fmt,...)
-				__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
+				__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3), noreturn));
 extern void set_section (const char *arg, int *dumpSections);
 
 #endif   /* DUMPUTILS_H */

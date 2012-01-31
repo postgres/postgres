@@ -524,7 +524,7 @@ extern void simple_string_list_append(SimpleStringList *list, const char *val);
 extern bool simple_oid_list_member(SimpleOidList *list, Oid val);
 extern bool simple_string_list_member(SimpleStringList *list, const char *val);
 
-extern void exit_nicely(void);
+extern void exit_nicely(void) __attribute__((noreturn));
 
 extern void parseOidArray(const char *str, Oid *array, int arraysize);
 
