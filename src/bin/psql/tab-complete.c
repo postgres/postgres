@@ -3364,13 +3364,13 @@ complete_from_variables(char *text, const char *prefix, const char *suffix)
 {
 	char	  **matches;
 	int			overhead = strlen(prefix) + strlen(suffix) + 1;
-	const char **varnames;
+	char	  **varnames;
 	int			nvars = 0;
 	int			maxvars = 100;
 	int			i;
 	struct _variable *ptr;
 
-	varnames = (const char **) pg_malloc((maxvars + 1) * sizeof(char *));
+	varnames = (char **) pg_malloc((maxvars + 1) * sizeof(char *));
 
 	for (ptr = pset.vars->next; ptr; ptr = ptr->next)
 	{
@@ -3379,8 +3379,8 @@ complete_from_variables(char *text, const char *prefix, const char *suffix)
 		if (nvars >= maxvars)
 		{
 			maxvars *= 2;
-			varnames = (const char **) realloc(varnames,
-											 (maxvars + 1) * sizeof(char *));
+			varnames = (char **) realloc(varnames,
+										 (maxvars + 1) * sizeof(char *));
 			if (!varnames)
 			{
 				psql_error("out of memory\n");
@@ -3394,10 +3394,10 @@ complete_from_variables(char *text, const char *prefix, const char *suffix)
 	}
 
 	varnames[nvars] = NULL;
-	COMPLETE_WITH_LIST(varnames);
+	COMPLETE_WITH_LIST((const char * const *) varnames);
 
 	for (i = 0; i < nvars; i++)
-		free((void *) varnames[i]);
+		free(varnames[i]);
 	free(varnames);
 
 	return matches;
