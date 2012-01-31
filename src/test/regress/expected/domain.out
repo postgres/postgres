@@ -493,7 +493,7 @@ begin
 end$$ language plpgsql;
 select doubledecrement(3); -- fail because of implicit null assignment
 ERROR:  domain pos_int does not allow null values
-CONTEXT:  PL/pgSQL function "doubledecrement" line 3 during statement block local variable initialization
+CONTEXT:  PL/pgSQL function "doubledecrement(pos_int)" line 3 during statement block local variable initialization
 create or replace function doubledecrement(p1 pos_int) returns pos_int as $$
 declare v pos_int := 0;
 begin
@@ -501,7 +501,7 @@ begin
 end$$ language plpgsql;
 select doubledecrement(3); -- fail at initialization assignment
 ERROR:  value for domain pos_int violates check constraint "pos_int_check"
-CONTEXT:  PL/pgSQL function "doubledecrement" line 3 during statement block local variable initialization
+CONTEXT:  PL/pgSQL function "doubledecrement(pos_int)" line 3 during statement block local variable initialization
 create or replace function doubledecrement(p1 pos_int) returns pos_int as $$
 declare v pos_int := 1;
 begin
@@ -514,10 +514,10 @@ select doubledecrement(0); -- fail before call
 ERROR:  value for domain pos_int violates check constraint "pos_int_check"
 select doubledecrement(1); -- fail at assignment to v
 ERROR:  value for domain pos_int violates check constraint "pos_int_check"
-CONTEXT:  PL/pgSQL function "doubledecrement" line 4 at assignment
+CONTEXT:  PL/pgSQL function "doubledecrement(pos_int)" line 4 at assignment
 select doubledecrement(2); -- fail at return
 ERROR:  value for domain pos_int violates check constraint "pos_int_check"
-CONTEXT:  PL/pgSQL function "doubledecrement" while casting return value to function's return type
+CONTEXT:  PL/pgSQL function "doubledecrement(pos_int)" while casting return value to function's return type
 select doubledecrement(3); -- good
  doubledecrement 
 -----------------
@@ -566,7 +566,7 @@ end$$ language plpgsql;
 select array_elem_check(121.00);
 ERROR:  numeric field overflow
 DETAIL:  A field with precision 4, scale 2 must round to an absolute value less than 10^2.
-CONTEXT:  PL/pgSQL function "array_elem_check" line 5 at assignment
+CONTEXT:  PL/pgSQL function "array_elem_check(numeric)" line 5 at assignment
 select array_elem_check(1.23456);
  array_elem_check 
 ------------------
@@ -584,7 +584,7 @@ end$$ language plpgsql;
 select array_elem_check(121.00);
 ERROR:  numeric field overflow
 DETAIL:  A field with precision 4, scale 2 must round to an absolute value less than 10^2.
-CONTEXT:  PL/pgSQL function "array_elem_check" line 5 at assignment
+CONTEXT:  PL/pgSQL function "array_elem_check(numeric)" line 5 at assignment
 select array_elem_check(1.23456);
  array_elem_check 
 ------------------
@@ -602,7 +602,7 @@ end$$ language plpgsql;
 select array_elem_check(121.00);
 ERROR:  numeric field overflow
 DETAIL:  A field with precision 4, scale 2 must round to an absolute value less than 10^2.
-CONTEXT:  PL/pgSQL function "array_elem_check" line 5 at assignment
+CONTEXT:  PL/pgSQL function "array_elem_check(numeric)" line 5 at assignment
 select array_elem_check(1.23456);
  array_elem_check 
 ------------------
@@ -650,7 +650,7 @@ select array_elem_check(3);
 
 select array_elem_check(-1);
 ERROR:  value for domain orderedpair violates check constraint "orderedpair_check"
-CONTEXT:  PL/pgSQL function "array_elem_check" line 5 at assignment
+CONTEXT:  PL/pgSQL function "array_elem_check(integer)" line 5 at assignment
 drop function array_elem_check(int);
 --
 -- Renaming

@@ -799,7 +799,7 @@ plpgsql_exec_error_callback(void *arg)
 			 * local variable initialization"
 			 */
 			errcontext("PL/pgSQL function \"%s\" line %d %s",
-					   estate->func->fn_name,
+					   estate->func->fn_signature,
 					   estate->err_stmt->lineno,
 					   _(estate->err_text));
 		}
@@ -810,7 +810,7 @@ plpgsql_exec_error_callback(void *arg)
 			 * arguments into local variables"
 			 */
 			errcontext("PL/pgSQL function \"%s\" %s",
-					   estate->func->fn_name,
+					   estate->func->fn_signature,
 					   _(estate->err_text));
 		}
 	}
@@ -818,13 +818,13 @@ plpgsql_exec_error_callback(void *arg)
 	{
 		/* translator: last %s is a plpgsql statement type name */
 		errcontext("PL/pgSQL function \"%s\" line %d at %s",
-				   estate->func->fn_name,
+				   estate->func->fn_signature,
 				   estate->err_stmt->lineno,
 				   plpgsql_stmt_typename(estate->err_stmt));
 	}
 	else
 		errcontext("PL/pgSQL function \"%s\"",
-				   estate->func->fn_name);
+				   estate->func->fn_signature);
 }
 
 

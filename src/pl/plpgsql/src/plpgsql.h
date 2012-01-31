@@ -679,6 +679,7 @@ typedef struct PLpgSQL_func_hashkey
 typedef struct PLpgSQL_function
 {								/* Complete compiled function	  */
 	char	   *fn_name;
+	char	   *fn_signature;
 	Oid			fn_oid;
 	TransactionId fn_xmin;
 	ItemPointerData fn_tid;
