@@ -132,6 +132,7 @@ static const char *const * completion_charpp;	/* to pass a list of strings */
 static const char *completion_info_charp;		/* to pass a second string */
 static const char *completion_info_charp2;		/* to pass a third string */
 static const SchemaQuery *completion_squery;	/* to pass a SchemaQuery */
+static bool completion_case_sensitive;			/* completion is case sensitive */
 
 /*
  * A few macros to ease typing. You can use these to complete the given
@@ -155,15 +156,24 @@ do { \
 	matches = completion_matches(text, complete_from_schema_query); \
 } while (0)
 
+#define COMPLETE_WITH_LIST_CS(list) \
+do { \
+	completion_charpp = list; \
+	completion_case_sensitive = true; \
+	matches = completion_matches(text, complete_from_list); \
+} while (0)
+
 #define COMPLETE_WITH_LIST(list) \
 do { \
 	completion_charpp = list; \
+	completion_case_sensitive = false; \
 	matches = completion_matches(text, complete_from_list); \
 } while (0)
 
 #define COMPLETE_WITH_CONST(string) \
 do { \
 	completion_charp = string; \
+	completion_case_sensitive = false; \
 	matches = completion_matches(text, complete_from_const); \
 } while (0)
 
@@ -671,6 +681,7 @@ static char *complete_from_const(const char *text, int state);
 static char **complete_from_variables(char *text,
 						const char *prefix, const char *suffix);
 
+static char *pg_strdup_same_case(const char *s, const char *ref);
 static PGresult *exec_query(const char *query);
 
 static void get_previous_words(int point, char **previous_words, int nwords);
@@ -771,7 +782,7 @@ psql_completion(char *text, int start, int end)
 
 	/* If a backslash command was started, continue */
 	if (text[0] == '\\')
-		COMPLETE_WITH_LIST(backslash_commands);
+		COMPLETE_WITH_LIST_CS(backslash_commands);
 
 	/* Variable interpolation */
 	else if (text[0] == ':' && text[1] != ':')
@@ -2907,7 +2918,7 @@ psql_completion(char *text, int start, int end)
 			"null", "fieldsep", "tuples_only", "title", "tableattr",
 		"linestyle", "pager", "recordsep", NULL};
 
-		COMPLETE_WITH_LIST(my_list);
+		COMPLETE_WITH_LIST_CS(my_list);
 	}
 	else if (strcmp(prev2_wd, "\\pset") == 0)
 	{
@@ -2917,14 +2928,14 @@ psql_completion(char *text, int start, int end)
 			{"unaligned", "aligned", "wrapped", "html", "latex",
 			"troff-ms", NULL};
 
-			COMPLETE_WITH_LIST(my_list);
+			COMPLETE_WITH_LIST_CS(my_list);
 		}
 		else if (strcmp(prev_wd, "linestyle") == 0)
 		{
 			static const char *const my_list[] =
 			{"ascii", "old-ascii", "unicode", NULL};
 
-			COMPLETE_WITH_LIST(my_list);
+			COMPLETE_WITH_LIST_CS(my_list);
 		}
 	}
 	else if (strcmp(prev_wd, "\\set") == 0)
@@ -3030,7 +3041,7 @@ create_or_drop_command_generator(const char *text, int state, bits32 excluded)
 	{
 		if ((pg_strncasecmp(name, text, string_length) == 0) &&
 			!(words_after_create[list_index - 1].flags & excluded))
-			return pg_strdup(name);
+			return pg_strdup_same_case(name, text);
 	}
 	/* if nothing matches, return NULL */
 	return NULL;
@@ -3298,7 +3309,7 @@ complete_from_list(const char *text, int state)
 	{
 		list_index = 0;
 		string_length = strlen(text);
-		casesensitive = true;
+		casesensitive = completion_case_sensitive;
 		matches = 0;
 	}
 
@@ -3313,7 +3324,14 @@ complete_from_list(const char *text, int state)
 
 		/* Second pass is case insensitive, don't bother counting matches */
 		if (!casesensitive && pg_strncasecmp(text, item, string_length) == 0)
-			return pg_strdup(item);
+		{
+			if (completion_case_sensitive)
+				return pg_strdup(item);
+			else
+				/* If case insensitive matching was requested initially, return
+				 * it in the case of what was already entered. */
+				return pg_strdup_same_case(item, text);
+		}
 	}
 
 	/*
@@ -3343,12 +3361,16 @@ complete_from_list(const char *text, int state)
 static char *
 complete_from_const(const char *text, int state)
 {
-	(void) text;				/* We don't care about what was entered
-								 * already. */
-
 	psql_assert(completion_charp);
 	if (state == 0)
-		return pg_strdup(completion_charp);
+	{
+		if (completion_case_sensitive)
+			return pg_strdup(completion_charp);
+		else
+			/* If case insensitive matching was requested initially, return it
+			 * in the case of what was already entered. */
+			return pg_strdup_same_case(completion_charp, text);
+	}
 	else
 		return NULL;
 }
@@ -3394,7 +3416,7 @@ complete_from_variables(char *text, const char *prefix, const char *suffix)
 	}
 
 	varnames[nvars] = NULL;
-	COMPLETE_WITH_LIST((const char * const *) varnames);
+	COMPLETE_WITH_LIST_CS((const char * const *) varnames);
 
 	for (i = 0; i < nvars; i++)
 		free(varnames[i]);
@@ -3405,6 +3427,31 @@ complete_from_variables(char *text, const char *prefix, const char *suffix)
 
 
 /* HELPER FUNCTIONS */
+
+
+/*
+ * Make a pg_strdup copy of s and convert it to the same case as ref.
+ */
+static char *
+pg_strdup_same_case(const char *s, const char *ref)
+{
+	char *ret, *p;
+	unsigned char first = ref[0];
+
+	if (isalpha(first))
+	{
+		ret = pg_strdup(s);
+		if (islower(first))
+			for (p = ret; *p; p++)
+				*p = pg_tolower((unsigned char) *p);
+		else
+			for (p = ret; *p; p++)
+				*p = pg_toupper((unsigned char) *p);
+		return ret;
+	}
+	else
+		return pg_strdup(s);
+}
 
 
 /*
