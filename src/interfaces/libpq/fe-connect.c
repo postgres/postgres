@@ -2795,6 +2795,8 @@ freePGconn(PGconn *conn)
 		free(conn->sslrootcert);
 	if (conn->sslcrl)
 		free(conn->sslcrl);
+	if (conn->sslcompression)
+		free(conn->sslcompression);
 	if (conn->requirepeer)
 		free(conn->requirepeer);
 #if defined(KRB5) || defined(ENABLE_GSS) || defined(ENABLE_SSPI)
