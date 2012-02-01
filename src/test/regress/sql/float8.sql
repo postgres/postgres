@@ -16,6 +16,11 @@ SELECT '-10e400'::float8;
 SELECT '10e-400'::float8;
 SELECT '-10e-400'::float8;
 
+-- test whether denormalized values are accepted
+SELECT '4.95e-324'::float8 < '1.49e-323'::float8;
+SELECT '4.95e-324'::float8 > '0'::float8;
+SELECT substr('-4.95e-324'::float8::text, 1, 4);
+
 -- bad input
 INSERT INTO FLOAT8_TBL(f1) VALUES ('');
 INSERT INTO FLOAT8_TBL(f1) VALUES ('     ');

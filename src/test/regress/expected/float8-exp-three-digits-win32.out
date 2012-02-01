@@ -24,6 +24,25 @@ SELECT '-10e-400'::float8;
 ERROR:  "-10e-400" is out of range for type double precision
 LINE 1: SELECT '-10e-400'::float8;
                ^
+-- test whether denormalized values are accepted
+SELECT '4.95e-324'::float8 < '1.49e-323'::float8;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT '4.95e-324'::float8 > '0'::float8;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT substr('-4.95e-324'::float8::text, 1, 4);
+ substr 
+--------
+ -4.9
+(1 row)
+
 -- bad input
 INSERT INTO FLOAT8_TBL(f1) VALUES ('');
 ERROR:  invalid input syntax for type double precision: ""
