@@ -466,7 +466,7 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	 * Remove stale transactions, if any.
 	 */
 	ExpireOldKnownAssignedTransactionIds(running->oldestRunningXid);
-	StandbyReleaseOldLocks(running->oldestRunningXid);
+	StandbyReleaseOldLocks(running->xcnt, running->xids);
 
 	/*
 	 * If our snapshot is already valid, nothing else to do...
@@ -519,12 +519,6 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	/*
 	 * OK, we need to initialise from the RunningTransactionsData record
 	 */
-
-	/*
-	 * Release any locks belonging to old transactions that are not running
-	 * according to the running-xacts record.
-	 */
-	StandbyReleaseOldLocks(running->nextXid);
 
 	/*
 	 * Nobody else is running yet, but take locks anyhow
