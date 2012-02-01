@@ -48,7 +48,7 @@ extern void StandbyAcquireAccessExclusiveLock(TransactionId xid, Oid dbOid, Oid 
 extern void StandbyReleaseLockTree(TransactionId xid,
 					   int nsubxids, TransactionId *subxids);
 extern void StandbyReleaseAllLocks(void);
-extern void StandbyReleaseOldLocks(TransactionId removeXid);
+extern void StandbyReleaseOldLocks(int nxids, TransactionId *xids);
 
 /*
  * XLOG message types

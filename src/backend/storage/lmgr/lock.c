@@ -2317,8 +2317,18 @@ GetRunningTransactionLocks(int *nlocks)
 		{
 			PGPROC	   *proc = proclock->tag.myProc;
 			LOCK	   *lock = proclock->tag.myLock;
+			TransactionId xid = proc->xid;
 
-			accessExclusiveLocks[index].xid = proc->xid;
+			/*
+			 * Don't record locks for transactions if we know they have already
+			 * issued their WAL record for commit but not yet released lock.
+			 * It is still possible that we see locks held by already complete
+			 * transactions, if they haven't yet zeroed their xids.
+			 */
+			if (!TransactionIdIsValid(xid))
+				continue;
+
+			accessExclusiveLocks[index].xid = xid;
 			accessExclusiveLocks[index].dbOid = lock->tag.locktag_field1;
 			accessExclusiveLocks[index].relOid = lock->tag.locktag_field2;
 
