@@ -1461,7 +1461,7 @@ plpgsql_dumptree(PLpgSQL_function *func)
 	PLpgSQL_datum *d;
 
 	printf("\nExecution tree of successfully compiled PL/pgSQL function %s:\n",
-		   func->fn_name);
+		   func->fn_signature);
 
 	printf("\nFunction's data area:\n");
 	for (i = 0; i < func->ndatums; i++)
@@ -1538,6 +1538,6 @@ plpgsql_dumptree(PLpgSQL_function *func)
 	dump_indent = 0;
 	printf("%3d:", func->action->lineno);
 	dump_block(func->action);
-	printf("\nEnd of execution tree of function %s\n\n", func->fn_name);
+	printf("\nEnd of execution tree of function %s\n\n", func->fn_signature);
 	fflush(stdout);
 }

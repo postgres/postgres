@@ -798,7 +798,7 @@ plpgsql_exec_error_callback(void *arg)
 			 * translator: last %s is a phrase such as "during statement block
 			 * local variable initialization"
 			 */
-			errcontext("PL/pgSQL function \"%s\" line %d %s",
+			errcontext("PL/pgSQL function %s line %d %s",
 					   estate->func->fn_signature,
 					   estate->err_stmt->lineno,
 					   _(estate->err_text));
@@ -809,7 +809,7 @@ plpgsql_exec_error_callback(void *arg)
 			 * translator: last %s is a phrase such as "while storing call
 			 * arguments into local variables"
 			 */
-			errcontext("PL/pgSQL function \"%s\" %s",
+			errcontext("PL/pgSQL function %s %s",
 					   estate->func->fn_signature,
 					   _(estate->err_text));
 		}
@@ -817,13 +817,13 @@ plpgsql_exec_error_callback(void *arg)
 	else if (estate->err_stmt != NULL)
 	{
 		/* translator: last %s is a plpgsql statement type name */
-		errcontext("PL/pgSQL function \"%s\" line %d at %s",
+		errcontext("PL/pgSQL function %s line %d at %s",
 				   estate->func->fn_signature,
 				   estate->err_stmt->lineno,
 				   plpgsql_stmt_typename(estate->err_stmt));
 	}
 	else
-		errcontext("PL/pgSQL function \"%s\"",
+		errcontext("PL/pgSQL function %s",
 				   estate->func->fn_signature);
 }
 

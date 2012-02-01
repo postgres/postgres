@@ -341,7 +341,6 @@ do_compile(FunctionCallInfo fcinfo,
 									 ALLOCSET_DEFAULT_MAXSIZE);
 	compile_tmp_cxt = MemoryContextSwitchTo(func_cxt);
 
-	function->fn_name = pstrdup(NameStr(procStruct->proname));
 	function->fn_signature = format_procedure(fcinfo->flinfo->fn_oid);
 	function->fn_oid = fcinfo->flinfo->fn_oid;
 	function->fn_xmin = HeapTupleHeaderGetXmin(procTup->t_data);
@@ -803,7 +802,6 @@ plpgsql_compile_inline(char *proc_source)
 									 ALLOCSET_DEFAULT_MAXSIZE);
 	compile_tmp_cxt = MemoryContextSwitchTo(func_cxt);
 
-	function->fn_name = pstrdup(func_name);
 	function->fn_signature = pstrdup(func_name);
 	function->fn_is_trigger = false;
 	function->fn_input_collation = InvalidOid;
