@@ -118,10 +118,33 @@ PostgreSQL documentation
       <term><option>--auth=<replaceable class="parameter">authmethod</replaceable></option></term>
       <listitem>
        <para>
-        This option specifies the authentication method for local users
-        used in <filename>pg_hba.conf</>.  Do not use <literal>trust</>
-        unless you trust all local users on your system.  <literal>Trust</>
-        is the default for ease of installation.
+        This option specifies the authentication method for local users used
+        in <filename>pg_hba.conf</> (<literal>host</literal>
+        and <literal>local</literal> lines).  Do not use <literal>trust</>
+        unless you trust all local users on your system.  <literal>trust</> is
+        the default for ease of installation.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--auth-host=<replaceable class="parameter">authmethod</replaceable></option></term>
+      <listitem>
+       <para>
+        This option specifies the authentication method for local users via
+        TCP/IP connections used in <filename>pg_hba.conf</>
+        (<literal>host</literal> lines).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--auth-local=<replaceable class="parameter">authmethod</replaceable></option></term>
+      <listitem>
+       <para>
+        This option specifies the authentication method for local users via
+        Unix-domain socket connections used in <filename>pg_hba.conf</>
+        (<literal>local</literal> lines).
        </para>
       </listitem>
      </varlistentry>

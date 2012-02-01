@@ -64,6 +64,34 @@
 /* Ideally this would be in a .h file, but it hardly seems worth the trouble */
 extern const char *select_default_timezone(const char *share_path);
 
+static const char *auth_methods_host[] = {"trust", "reject", "md5", "password", "ident", "radius",
+#ifdef ENABLE_GSS
+								   "gss",
+#endif
+#ifdef ENABLE_SSPI
+								   "sspi",
+#endif
+#ifdef KRB5
+								   "krb5",
+#endif
+#ifdef USE_PAM
+								   "pam", "pam ",
+#endif
+#ifdef USE_LDAP
+								   "ldap",
+#endif
+#ifdef USE_SSL
+								   "cert",
+#endif
+								   NULL};
+static const char *auth_methods_local[] = {"trust", "reject", "md5", "password", "peer", "radius",
+#ifdef USE_PAM
+								   "pam", "pam ",
+#endif
+#ifdef USE_LDAP
+								   "ldap",
+#endif
+									NULL};
 
 /*
  * these values are passed in by makefile defines
@@ -84,8 +112,8 @@ static const char *default_text_search_config = "";
 static char *username = "";
 static bool pwprompt = false;
 static char *pwfilename = NULL;
-static char *authmethod = "";
-static char *authmethodlocal = "";
+static const char *authmethodhost = "";
+static const char *authmethodlocal = "";
 static bool debug = false;
 static bool noclean = false;
 static bool show_setting = false;
@@ -1090,15 +1118,15 @@ setup_config(void)
 
 	/* Replace default authentication methods */
 	conflines = replace_token(conflines,
-							  "@authmethod@",
-							  authmethod);
+							  "@authmethodhost@",
+							  authmethodhost);
 	conflines = replace_token(conflines,
 							  "@authmethodlocal@",
 							  authmethodlocal);
 
 	conflines = replace_token(conflines,
 							  "@authcomment@",
-					   strcmp(authmethod, "trust") != 0 ? "" : AUTHTRUST_WARNING);
+							  (strcmp(authmethodlocal, "trust") == 0 || strcmp(authmethodhost, "trust") == 0) ? AUTHTRUST_WARNING : "");
 
 	/* Replace username for replication */
 	conflines = replace_token(conflines,
@@ -2452,6 +2480,8 @@ usage(const char *progname)
 	printf(_("  %s [OPTION]... [DATADIR]\n"), progname);
 	printf(_("\nOptions:\n"));
 	printf(_("  -A, --auth=METHOD         default authentication method for local connections\n"));
+	printf(_("      --auth-host=METHOD    default authentication method for local TCP/IP connections\n"));
+	printf(_("      --auth-local=METHOD   default authentication method for local-socket connections\n"));
 	printf(_(" [-D, --pgdata=]DATADIR     location for this database cluster\n"));
 	printf(_("  -E, --encoding=ENCODING   set default encoding for new databases\n"));
 	printf(_("      --locale=LOCALE       set default locale for new databases\n"));
@@ -2479,6 +2509,50 @@ usage(const char *progname)
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
 
+static void
+check_authmethod_unspecified(const char **authmethod)
+{
+	if (*authmethod == NULL || strlen(*authmethod) == 0)
+	{
+		authwarning = _("\nWARNING: enabling \"trust\" authentication for local connections\n"
+						"You can change this by editing pg_hba.conf or using the option -A, or\n"
+						"--auth-local and --auth-host, the next time you run initdb.\n");
+		*authmethod = "trust";
+	}
+}
+
+static void
+check_authmethod_valid(const char *authmethod, const char **valid_methods, const char *conntype)
+{
+	const char **p;
+
+	for (p = valid_methods; *p; p++)
+	{
+		if (strcmp(authmethod, *p) == 0)
+			return;
+		/* with space = param */
+		if (strchr(authmethod, ' '))
+			if (strncmp(authmethod, *p, (authmethod - strchr(authmethod, ' '))) == 0)
+				return;
+	}
+
+	fprintf(stderr, _("%s: invalid authentication method \"%s\" for \"%s\" connections\n"),
+			progname, authmethod, conntype);
+	exit(1);
+}
+
+static void
+check_need_password(const char *authmethod)
+{
+	if ((strcmp(authmethod, "md5") == 0 ||
+		 strcmp(authmethod, "password") == 0) &&
+		!(pwprompt || pwfilename))
+	{
+		fprintf(stderr, _("%s: must specify a password for the superuser to enable %s authentication\n"), progname, authmethod);
+		exit(1);
+	}
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -2499,6 +2573,8 @@ main(int argc, char *argv[])
 		{"no-locale", no_argument, NULL, 8},
 		{"text-search-config", required_argument, NULL, 'T'},
 		{"auth", required_argument, NULL, 'A'},
+		{"auth-local", required_argument, NULL, 10},
+		{"auth-host", required_argument, NULL, 11},
 		{"pwprompt", no_argument, NULL, 'W'},
 		{"pwfile", required_argument, NULL, 9},
 		{"username", required_argument, NULL, 'U'},
@@ -2567,7 +2643,22 @@ main(int argc, char *argv[])
 		switch (c)
 		{
 			case 'A':
-				authmethod = xstrdup(optarg);
+				authmethodlocal = authmethodhost = xstrdup(optarg);
+				/*
+				 * When ident is specified, use peer for local connections.
+				 * Mirrored, when peer is specified, use ident for TCP/IP
+				 * connections.
+				 */
+				if (strcmp(authmethodhost, "ident") == 0)
+					authmethodlocal = "peer";
+				else if (strcmp(authmethodlocal, "peer") == 0)
+					authmethodhost = "ident";
+				break;
+			case 10:
+				authmethodlocal = xstrdup(optarg);
+				break;
+			case 11:
+				authmethodhost = xstrdup(optarg);
 				break;
 			case 'D':
 				pg_data = xstrdup(optarg);
@@ -2659,56 +2750,14 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if (authmethod == NULL || !strlen(authmethod))
-	{
-		authwarning = _("\nWARNING: enabling \"trust\" authentication for local connections\n"
-						"You can change this by editing pg_hba.conf or using the -A option the\n"
-						"next time you run initdb.\n");
-		authmethod = "trust";
-	}
+	check_authmethod_unspecified(&authmethodlocal);
+	check_authmethod_unspecified(&authmethodhost);
 
-	if (strcmp(authmethod, "md5") != 0 &&
-		strcmp(authmethod, "peer") != 0 &&
-		strcmp(authmethod, "ident") != 0 &&
-		strcmp(authmethod, "trust") != 0 &&
-#ifdef USE_PAM
-		strcmp(authmethod, "pam") != 0 &&
-		strncmp(authmethod, "pam ", 4) != 0 &&		/* pam with space = param */
-#endif
-		strcmp(authmethod, "password") != 0
-		)
+	check_authmethod_valid(authmethodlocal, auth_methods_local, "local");
+	check_authmethod_valid(authmethodhost, auth_methods_host, "host");
 
-		/*
-		 * Kerberos methods not listed because they are not supported over
-		 * local connections and are rejected in hba.c
-		 */
-	{
-		fprintf(stderr, _("%s: unrecognized authentication method \"%s\"\n"),
-				progname, authmethod);
-		exit(1);
-	}
-
-	if ((strcmp(authmethod, "md5") == 0 ||
-		 strcmp(authmethod, "password") == 0) &&
-		!(pwprompt || pwfilename))
-	{
-		fprintf(stderr, _("%s: must specify a password for the superuser to enable %s authentication\n"), progname, authmethod);
-		exit(1);
-	}
-
-	/*
-	 * When ident is specified, use peer for local connections. Mirrored, when
-	 * peer is specified, use ident for TCP connections.
-	 */
-	if (strcmp(authmethod, "ident") == 0)
-		authmethodlocal = "peer";
-	else if (strcmp(authmethod, "peer") == 0)
-	{
-		authmethodlocal = "peer";
-		authmethod = "ident";
-	}
-	else
-		authmethodlocal = authmethod;
+	check_need_password(authmethodlocal);
+	check_need_password(authmethodhost);
 
 	if (strlen(pg_data) == 0)
 	{
