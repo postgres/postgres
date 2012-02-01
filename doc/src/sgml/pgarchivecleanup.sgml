@@ -98,6 +98,15 @@ pg_archivecleanup:  removing file "archive/00000001000000370000000E"
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term><option>-n</option></term>
+      <listitem>
+       <para>
+        Print the names of the files that would have been removed on <filename>stdout</> (performs a dry run).
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
    </para>
 

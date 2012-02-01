@@ -36,6 +36,7 @@ const char *progname;
 
 /* Options and defaults */
 bool		debug = false;		/* are we debugging? */
+bool		dryrun = false;		/* are we performing a dry-run operation? */
 
 char	   *archiveLocation;	/* where to find the archive? */
 char	   *restartWALFileName; /* the file from which we can restart restore */
@@ -119,6 +120,22 @@ CleanupPriorWALFiles(void)
 			{
 				snprintf(WALFilePath, MAXPGPATH, "%s/%s",
 						 archiveLocation, xlde->d_name);
+
+				if (dryrun)
+				{
+					/*
+					 * Prints the name of the file to be removed and skips the
+					 * actual removal.  The regular printout is so that the
+					 * user can pipe the output into some other program.
+					 */
+					printf("%s\n", WALFilePath);
+					if (debug)
+						fprintf(stderr,
+								"%s: file \"%s\" would be removed\n",
+								progname, WALFilePath);
+					continue;
+				}
+
 				if (debug)
 					fprintf(stderr, "%s: removing file \"%s\"\n",
 							progname, WALFilePath);
@@ -205,6 +222,7 @@ usage(void)
 	printf("  %s [OPTION]... ARCHIVELOCATION OLDESTKEPTWALFILE\n", progname);
 	printf("\nOptions:\n");
 	printf("  -d                 generates debug output (verbose mode)\n");
+	printf("  -n                 shows the names of the files that would have been removed (dry-run)\n");
 	printf("  --help             show this help, then exit\n");
 	printf("  --version          output version information, then exit\n");
 	printf("\n"
@@ -241,12 +259,15 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt(argc, argv, "d")) != -1)
+	while ((c = getopt(argc, argv, "dn")) != -1)
 	{
 		switch (c)
 		{
 			case 'd':			/* Debug mode */
 				debug = true;
+				break;
+			case 'n':			/* Dry-Run mode */
+				dryrun = true;
 				break;
 			default:
 				fprintf(stderr, "Try \"%s --help\" for more information.\n", progname);
