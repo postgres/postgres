@@ -515,6 +515,12 @@ TAS         = @TAS@
 %.bz2: %
 	$(BZIP2) -c $< >$@
 
+# Direct builds of foo.c -> foo are disabled to avoid generating
+# *.dSYM junk on Macs.  All builds should normally go through the
+# foo.c -> foo.o -> foo steps.  This also ensures that dependency
+# tracking (see below) is used.
+%: %.c
+
 ifndef PGXS
 
 # Remake Makefile.global from Makefile.global.in if the latter
