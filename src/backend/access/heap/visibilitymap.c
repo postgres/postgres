@@ -88,6 +88,7 @@
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
 #include "storage/smgr.h"
+#include "utils/inval.h"
 
 
 /*#define TRACE_VISIBILITYMAP */
@@ -482,16 +483,20 @@ vm_readbuf(Relation rel, BlockNumber blkno, bool extend)
 {
 	Buffer		buf;
 
+	/*
+	 * We might not have opened the relation at the smgr level yet, or we might
+	 * have been forced to close it by a sinval message.  The code below won't
+	 * necessarily notice relation extension immediately when extend = false,
+	 * so we rely on sinval messages to ensure that our ideas about the size of
+	 * the map aren't too far out of date.
+	 */
 	RelationOpenSmgr(rel);
 
 	/*
 	 * If we haven't cached the size of the visibility map fork yet, check it
-	 * first.  Also recheck if the requested block seems to be past end, since
-	 * our cached value might be stale.  (We send smgr inval messages on
-	 * truncation, but not on extension.)
+	 * first.
 	 */
-	if (rel->rd_smgr->smgr_vm_nblocks == InvalidBlockNumber ||
-		blkno >= rel->rd_smgr->smgr_vm_nblocks)
+	if (rel->rd_smgr->smgr_vm_nblocks == InvalidBlockNumber)
 	{
 		if (smgrexists(rel->rd_smgr, VISIBILITYMAP_FORKNUM))
 			rel->rd_smgr->smgr_vm_nblocks = smgrnblocks(rel->rd_smgr,
@@ -560,12 +565,22 @@ vm_extend(Relation rel, BlockNumber vm_nblocks)
 
 	vm_nblocks_now = smgrnblocks(rel->rd_smgr, VISIBILITYMAP_FORKNUM);
 
+	/* Now extend the file */
 	while (vm_nblocks_now < vm_nblocks)
 	{
 		smgrextend(rel->rd_smgr, VISIBILITYMAP_FORKNUM, vm_nblocks_now,
 				   (char *) pg, false);
 		vm_nblocks_now++;
 	}
+
+	/*
+	 * Send a shared-inval message to force other backends to close any smgr
+	 * references they may have for this rel, which we are about to change.
+	 * This is a useful optimization because it means that backends don't have
+	 * to keep checking for creation or extension of the file, which happens
+	 * infrequently.
+	 */
+	CacheInvalidateSmgr(rel->rd_smgr->smgr_rnode);
 
 	/* Update local cache with the up-to-date size */
 	rel->rd_smgr->smgr_vm_nblocks = vm_nblocks_now;
