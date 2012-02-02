@@ -2847,7 +2847,7 @@ match_special_index_operator(Expr *clause, Oid opfamily, Oid idxcollation,
 	/*
 	 * Must also check that index's opfamily supports the operators we will
 	 * want to apply.  (A hash index, for example, will not support ">=".)
-	 * Currently, only btree supports the operators we need.
+	 * Currently, only btree and spgist support the operators we need.
 	 *
 	 * Note: actually, in the Pattern_Prefix_Exact case, we only need "=" so a
 	 * hash index would work.  Currently it doesn't seem worth checking for
@@ -2871,6 +2871,7 @@ match_special_index_operator(Expr *clause, Oid opfamily, Oid idxcollation,
 		case OID_TEXT_ICREGEXEQ_OP:
 			isIndexable =
 				(opfamily == TEXT_PATTERN_BTREE_FAM_OID) ||
+				(opfamily == TEXT_SPGIST_FAM_OID) ||
 				(opfamily == TEXT_BTREE_FAM_OID &&
 				 (pstatus == Pattern_Prefix_Exact ||
 				  lc_collate_is_c(idxcollation)));
@@ -3454,6 +3455,7 @@ prefix_quals(Node *leftop, Oid opfamily, Oid collation,
 	{
 		case TEXT_BTREE_FAM_OID:
 		case TEXT_PATTERN_BTREE_FAM_OID:
+		case TEXT_SPGIST_FAM_OID:
 			datatype = TEXTOID;
 			break;
 
