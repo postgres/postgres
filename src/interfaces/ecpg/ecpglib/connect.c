@@ -260,14 +260,6 @@ ECPGnoticeReceiver(void *arg, const PGresult *result)
 	ecpg_log("raising sqlcode %d\n", sqlcode);
 }
 
-static int
-strlen_or_null(const char *string)
-{
-	if (!string)
-		return 0;
-	return (strlen(string));
-}
-
 /* this contains some quick hacks, needs to be cleaned up, but it works */
 bool
 ECPGconnect(int lineno, int c, const char *name, const char *user, const char *passwd, const char *connection_name, int autocommit)
@@ -281,8 +273,9 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 			   *tmp,
 			   *port = NULL,
 			   *realname = NULL,
-			   *options = NULL,
-			   *connect_string = NULL;
+			   *options = NULL;
+	const char *conn_keywords[6];
+	const char *conn_values[6];
 
 	ecpg_init_sqlca(sqlca);
 
@@ -482,34 +475,52 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 			 options ? "with options " : "", options ? options : "",
 			 (user && strlen(user) > 0) ? "for user " : "", user ? user : "");
 
-	connect_string = ecpg_alloc(strlen_or_null(host)
-								+ strlen_or_null(port)
-								+ strlen_or_null(options)
-								+ strlen_or_null(realname)
-								+ strlen_or_null(user)
-								+ strlen_or_null(passwd)
-			  + sizeof(" host = port = dbname = user = password ="), lineno);
-
-	if (options)				/* replace '&' if tehre are any */
+	if (options)				/* replace '&' if there are any */
 		for (i = 0; options[i]; i++)
 			if (options[i] == '&')
 				options[i] = ' ';
 
-	sprintf(connect_string, "%s%s %s%s %s%s %s%s %s%s %s",
-			realname ? "dbname=" : "", realname ? realname : "",
-			host ? "host=" : "", host ? host : "",
-			port ? "port=" : "", port ? port : "",
-			(user && strlen(user) > 0) ? "user=" : "", user ? user : "",
-	 (passwd && strlen(passwd) > 0) ? "password=" : "", passwd ? passwd : "",
-			options ? options : "");
+	i = 0;
+	if (realname)
+	{
+		conn_keywords[i] = "dbname";
+		conn_values[i] = realname;
+		i++;
+	}
+	if (host)
+	{
+		conn_keywords[i] = "host";
+		conn_values[i] = host;
+		i++;
+	}
+	if (port)
+	{
+		conn_keywords[i] = "port";
+		conn_values[i] = port;
+		i++;
+	}
+	if (user && strlen(user) > 0)
+	{
+		conn_keywords[i] = "user";
+		conn_values[i] = user;
+		i++;
+	}
+	if (passwd && strlen(passwd) > 0)
+	{
+		conn_keywords[i] = "password";
+		conn_values[i] = passwd;
+		i++;
+	}
+	if (options)
+	{
+		conn_keywords[i] = "options";
+		conn_values[i] = options;
+		i++;
+	}
+	conn_keywords[i] = NULL;	/* terminator */
 
-	/*
-	 * this is deprecated this->connection = PQsetdbLogin(host, port, options,
-	 * NULL, realname, user, passwd);
-	 */
-	this->connection = PQconnectdb(connect_string);
+	this->connection = PQconnectdbParams(conn_keywords, conn_values, 0);
 
-	ecpg_free(connect_string);
 	if (host)
 		ecpg_free(host);
 	if (port)
