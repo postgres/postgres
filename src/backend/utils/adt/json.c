@@ -13,11 +13,17 @@
  */
 #include "postgres.h"
 
+#include "catalog/pg_type.h"
+#include "executor/spi.h"
 #include "lib/stringinfo.h"
 #include "libpq/pqformat.h"
 #include "mb/pg_wchar.h"
+#include "parser/parse_coerce.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "utils/json.h"
+#include "utils/typcache.h"
 
 typedef enum
 {
@@ -72,8 +78,11 @@ static void json_lex_number(JsonLexContext *lex, char *s);
 static void report_parse_error(JsonParseStack *stack, JsonLexContext *lex);
 static void report_invalid_token(JsonLexContext *lex);
 static char *extract_mb_char(char *s);
-
-extern Datum json_in(PG_FUNCTION_ARGS);
+static void composite_to_json(Datum composite, StringInfo result, bool use_line_feeds);
+static void array_dim_to_json(StringInfo result, int dim, int ndims,int * dims,
+							  Datum *vals, int * valcount, TYPCATEGORY tcategory,
+							  Oid typoutputfunc, bool use_line_feeds);
+static void array_to_json_internal(Datum array, StringInfo result, bool use_line_feeds);
 
 /*
  * Input.
@@ -663,3 +672,344 @@ extract_mb_char(char *s)
 
 	return res;
 }
+
+/*
+ * Turn a scalar Datum into JSON. Hand off a non-scalar datum to
+ * composite_to_json or array_to_json_internal as appropriate.
+ */
+static inline void
+datum_to_json(Datum val, StringInfo result, TYPCATEGORY tcategory,
+			  Oid typoutputfunc)
+{
+
+	char *outputstr;
+
+	if (val == (Datum) NULL)
+	{
+		appendStringInfoString(result,"null");
+		return;
+	}
+
+	switch (tcategory)
+	{
+		case TYPCATEGORY_ARRAY:
+			array_to_json_internal(val, result, false);
+			break;
+		case TYPCATEGORY_COMPOSITE:
+			composite_to_json(val, result, false);
+			break;
+		case TYPCATEGORY_BOOLEAN:
+			if (DatumGetBool(val))
+				appendStringInfoString(result,"true");
+			else
+				appendStringInfoString(result,"false");
+			break;
+		case TYPCATEGORY_NUMERIC:
+			outputstr = OidOutputFunctionCall(typoutputfunc, val);
+			/*
+			 * Don't call escape_json here. Numeric output should
+			 * be a valid JSON number and JSON numbers shouldn't
+			 * be quoted.
+			 */
+			appendStringInfoString(result, outputstr);
+			pfree(outputstr);
+			break;
+		default:
+			outputstr = OidOutputFunctionCall(typoutputfunc, val);
+			escape_json(result, outputstr);
+			pfree(outputstr);
+	}
+}
+
+/*
+ * Process a single dimension of an array.
+ * If it's the innermost dimension, output the values, otherwise call
+ * ourselves recursively to process the next dimension.
+ */
+static void
+array_dim_to_json(StringInfo result, int dim, int ndims,int * dims, Datum *vals,
+				  int * valcount, TYPCATEGORY tcategory, Oid typoutputfunc,
+				  bool use_line_feeds)
+{
+
+	int i;
+	char *sep;
+
+	Assert(dim < ndims);
+
+	sep = use_line_feeds ? ",\n " : ",";
+
+	appendStringInfoChar(result, '[');
+
+	for (i = 1; i <= dims[dim]; i++)
+	{
+		if (i > 1)
+			appendStringInfoString(result,sep);
+
+		if (dim + 1 == ndims)
+		{
+			datum_to_json(vals[*valcount],result,tcategory,typoutputfunc);
+			(*valcount)++;
+		}
+		else
+		{
+			/*
+			 * Do we want line feeds on inner dimensions of arrays?
+			 * For now we'll say no.
+			 */
+			array_dim_to_json(result, dim+1, ndims, dims, vals, valcount,
+							  tcategory,typoutputfunc,false);
+		}
+	}
+
+	appendStringInfoChar(result, ']');
+}
+
+/*
+ * Turn an array into JSON.
+ */
+static void
+array_to_json_internal(Datum array, StringInfo result, bool use_line_feeds)
+{
+	ArrayType  *v = DatumGetArrayTypeP(array);
+	Oid			element_type = ARR_ELEMTYPE(v);
+	int		   *dim;
+	int			ndim;
+	int			nitems;
+	int         count = 0;
+	Datum	   *elements;
+	bool       *nulls;
+
+	int16		typlen;
+	bool		typbyval;
+	char		typalign,
+				typdelim;
+	Oid			typioparam;
+	Oid			typoutputfunc;
+	TYPCATEGORY tcategory;
+
+	ndim = ARR_NDIM(v);
+	dim = ARR_DIMS(v);
+	nitems = ArrayGetNItems(ndim, dim);
+
+	if (nitems <= 0)
+	{
+		appendStringInfoString(result,"[]");
+		return;
+	}
+
+	get_type_io_data(element_type, IOFunc_output,
+					 &typlen, &typbyval, &typalign,
+					 &typdelim, &typioparam, &typoutputfunc);
+
+	deconstruct_array(v, element_type, typlen, typbyval,
+					  typalign, &elements, &nulls,
+					  &nitems);
+
+	/* can't have an array of arrays, so this is the only special case here */
+	if (element_type == RECORDOID)
+		tcategory = TYPCATEGORY_COMPOSITE;
+	else
+		tcategory = TypeCategory(element_type);
+
+	array_dim_to_json(result, 0, ndim, dim, elements, &count, tcategory,
+					  typoutputfunc, use_line_feeds);
+
+	pfree(elements);
+	pfree(nulls);
+}
+
+/*
+ * Turn a composite / record into JSON.
+ */
+static void
+composite_to_json(Datum composite, StringInfo result, bool use_line_feeds)
+{
+    HeapTupleHeader td;
+    Oid         tupType;
+    int32       tupTypmod;
+    TupleDesc   tupdesc;
+    HeapTupleData tmptup, *tuple;
+	int         i;
+	bool        needsep = false;
+	char       *sep;
+
+	sep = use_line_feeds ? ",\n " : ",";
+
+    td = DatumGetHeapTupleHeader(composite);
+
+    /* Extract rowtype info and find a tupdesc */
+    tupType = HeapTupleHeaderGetTypeId(td);
+    tupTypmod = HeapTupleHeaderGetTypMod(td);
+    tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+
+    /* Build a temporary HeapTuple control structure */
+    tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
+    tmptup.t_data = td;
+	tuple = &tmptup;
+
+	appendStringInfoChar(result,'{');
+
+    for (i = 0; i < tupdesc->natts; i++)
+    {
+        Datum       val, origval;
+        bool        isnull;
+        char       *attname;
+		TYPCATEGORY tcategory;
+		Oid			typoutput;
+		bool		typisvarlena;
+
+		if (tupdesc->attrs[i]->attisdropped)
+            continue;
+
+		if (needsep)
+			appendStringInfoString(result,sep);
+		needsep = true;
+
+        attname = NameStr(tupdesc->attrs[i]->attname);
+		escape_json(result,attname);
+		appendStringInfoChar(result,':');
+
+        origval = heap_getattr(tuple, i + 1, tupdesc, &isnull);
+
+		if (tupdesc->attrs[i]->atttypid == RECORDARRAYOID)
+			tcategory = TYPCATEGORY_ARRAY;
+		else if (tupdesc->attrs[i]->atttypid == RECORDOID)
+			tcategory = TYPCATEGORY_COMPOSITE;
+		else
+			tcategory = TypeCategory(tupdesc->attrs[i]->atttypid);
+
+		getTypeOutputInfo(tupdesc->attrs[i]->atttypid,
+						  &typoutput, &typisvarlena);
+
+		/*
+		 * If we have a toasted datum, forcibly detoast it here to avoid memory
+		 * leakage inside the type's output routine.
+		 */
+		if (typisvarlena && ! isnull)
+			val = PointerGetDatum(PG_DETOAST_DATUM(origval));
+		else
+			val = origval;
+
+		datum_to_json(val, result, tcategory, typoutput);
+
+		/* Clean up detoasted copy, if any */
+		if (val != origval)
+			pfree(DatumGetPointer(val));
+	}
+
+	appendStringInfoChar(result,'}');
+    ReleaseTupleDesc(tupdesc);
+}
+
+/*
+ * SQL function array_to_json(row)
+ */
+extern Datum
+array_to_json(PG_FUNCTION_ARGS)
+{
+	Datum    array = PG_GETARG_DATUM(0);
+	StringInfo	result;
+
+	result = makeStringInfo();
+
+	array_to_json_internal(array, result, false);
+
+	PG_RETURN_TEXT_P(cstring_to_text(result->data));
+};
+
+/*
+ * SQL function array_to_json(row, prettybool)
+ */
+extern Datum
+array_to_json_pretty(PG_FUNCTION_ARGS)
+{
+	Datum    array = PG_GETARG_DATUM(0);
+	bool     use_line_feeds = PG_GETARG_BOOL(1);
+	StringInfo	result;
+
+	result = makeStringInfo();
+
+	array_to_json_internal(array, result, use_line_feeds);
+
+	PG_RETURN_TEXT_P(cstring_to_text(result->data));
+};
+
+/*
+ * SQL function row_to_json(row)
+ */
+extern Datum
+row_to_json(PG_FUNCTION_ARGS)
+{
+	Datum    array = PG_GETARG_DATUM(0);
+	StringInfo	result;
+
+	result = makeStringInfo();
+
+	composite_to_json(array, result, false);
+
+	PG_RETURN_TEXT_P(cstring_to_text(result->data));
+};
+
+/*
+ * SQL function row_to_json(row, prettybool)
+ */
+extern Datum
+row_to_json_pretty(PG_FUNCTION_ARGS)
+{
+	Datum    array = PG_GETARG_DATUM(0);
+	bool     use_line_feeds = PG_GETARG_BOOL(1);
+	StringInfo	result;
+
+	result = makeStringInfo();
+
+	composite_to_json(array, result, use_line_feeds);
+
+	PG_RETURN_TEXT_P(cstring_to_text(result->data));
+};
+
+/*
+ * Produce a JSON string literal, properly escaping characters in the text.
+ */
+void
+escape_json(StringInfo buf, const char *str)
+{
+	const char *p;
+
+	appendStringInfoCharMacro(buf, '\"');
+	for (p = str; *p; p++)
+	{
+		switch (*p)
+		{
+			case '\b':
+				appendStringInfoString(buf, "\\b");
+				break;
+			case '\f':
+				appendStringInfoString(buf, "\\f");
+				break;
+			case '\n':
+				appendStringInfoString(buf, "\\n");
+				break;
+			case '\r':
+				appendStringInfoString(buf, "\\r");
+				break;
+			case '\t':
+				appendStringInfoString(buf, "\\t");
+				break;
+			case '"':
+				appendStringInfoString(buf, "\\\"");
+				break;
+			case '\\':
+				appendStringInfoString(buf, "\\\\");
+				break;
+			default:
+				if ((unsigned char) *p < ' ')
+					appendStringInfo(buf, "\\u%04x", (int) *p);
+				else
+					appendStringInfoCharMacro(buf, *p);
+				break;
+		}
+	}
+	appendStringInfoCharMacro(buf, '\"');
+}
+

@@ -20,5 +20,10 @@ extern Datum json_in(PG_FUNCTION_ARGS);
 extern Datum json_out(PG_FUNCTION_ARGS);
 extern Datum json_recv(PG_FUNCTION_ARGS);
 extern Datum json_send(PG_FUNCTION_ARGS);
+extern Datum array_to_json(PG_FUNCTION_ARGS);
+extern Datum array_to_json_pretty(PG_FUNCTION_ARGS);
+extern Datum row_to_json(PG_FUNCTION_ARGS);
+extern Datum row_to_json_pretty(PG_FUNCTION_ARGS);
+extern void  escape_json(StringInfo buf, const char *str);
 
 #endif   /* XML_H */

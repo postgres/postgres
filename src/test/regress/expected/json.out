@@ -256,3 +256,114 @@ ERROR:  invalid input syntax for type json: "    "
 LINE 1: SELECT '    '::json;
                ^
 DETAIL:  The input string ended unexpectedly.
+--constructors
+-- array_to_json
+SELECT array_to_json(array(select 1 as a));
+ array_to_json 
+---------------
+ [1]
+(1 row)
+
+SELECT array_to_json(array_agg(q),false) from (select x as b, x * 2 as c from generate_series(1,3) x) q;
+                   array_to_json                   
+---------------------------------------------------
+ [{"f1":1,"f2":2},{"f1":2,"f2":4},{"f1":3,"f2":6}]
+(1 row)
+
+SELECT array_to_json(array_agg(q),true) from (select x as b, x * 2 as c from generate_series(1,3) x) q;
+   array_to_json   
+-------------------
+ [{"f1":1,"f2":2},+
+  {"f1":2,"f2":4},+
+  {"f1":3,"f2":6}]
+(1 row)
+
+SELECT array_to_json(array_agg(q),false)
+  FROM ( SELECT $$a$$ || x AS b, y AS c, 
+               ARRAY[ROW(x.*,ARRAY[1,2,3]),
+               ROW(y.*,ARRAY[4,5,6])] AS z 
+         FROM generate_series(1,2) x, 
+              generate_series(4,5) y) q;
+                                                                                                                                 array_to_json                                                                                                                                 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ [{"b":"a1","c":4,"z":[{"f1":1,"f2":[1,2,3]},{"f1":4,"f2":[4,5,6]}]},{"b":"a1","c":5,"z":[{"f1":1,"f2":[1,2,3]},{"f1":5,"f2":[4,5,6]}]},{"b":"a2","c":4,"z":[{"f1":2,"f2":[1,2,3]},{"f1":4,"f2":[4,5,6]}]},{"b":"a2","c":5,"z":[{"f1":2,"f2":[1,2,3]},{"f1":5,"f2":[4,5,6]}]}]
+(1 row)
+
+SELECT array_to_json(array_agg(x),false) from generate_series(5,10) x;
+ array_to_json  
+----------------
+ [5,6,7,8,9,10]
+(1 row)
+
+SELECT array_to_json('{{1,5},{99,100}}'::int[]);
+  array_to_json   
+------------------
+ [[1,5],[99,100]]
+(1 row)
+
+-- row_to_json
+SELECT row_to_json(row(1,'foo'));
+     row_to_json     
+---------------------
+ {"f1":1,"f2":"foo"}
+(1 row)
+
+SELECT row_to_json(q) 
+FROM (SELECT $$a$$ || x AS b, 
+         y AS c, 
+         ARRAY[ROW(x.*,ARRAY[1,2,3]),
+               ROW(y.*,ARRAY[4,5,6])] AS z 
+      FROM generate_series(1,2) x, 
+           generate_series(4,5) y) q;
+                            row_to_json                             
+--------------------------------------------------------------------
+ {"b":"a1","c":4,"z":[{"f1":1,"f2":[1,2,3]},{"f1":4,"f2":[4,5,6]}]}
+ {"b":"a1","c":5,"z":[{"f1":1,"f2":[1,2,3]},{"f1":5,"f2":[4,5,6]}]}
+ {"b":"a2","c":4,"z":[{"f1":2,"f2":[1,2,3]},{"f1":4,"f2":[4,5,6]}]}
+ {"b":"a2","c":5,"z":[{"f1":2,"f2":[1,2,3]},{"f1":5,"f2":[4,5,6]}]}
+(4 rows)
+
+SELECT row_to_json(q,true) 
+FROM (SELECT $$a$$ || x AS b, 
+         y AS c, 
+         ARRAY[ROW(x.*,ARRAY[1,2,3]),
+               ROW(y.*,ARRAY[4,5,6])] AS z 
+      FROM generate_series(1,2) x, 
+           generate_series(4,5) y) q;
+                     row_to_json                     
+-----------------------------------------------------
+ {"b":"a1",                                         +
+  "c":4,                                            +
+  "z":[{"f1":1,"f2":[1,2,3]},{"f1":4,"f2":[4,5,6]}]}
+ {"b":"a1",                                         +
+  "c":5,                                            +
+  "z":[{"f1":1,"f2":[1,2,3]},{"f1":5,"f2":[4,5,6]}]}
+ {"b":"a2",                                         +
+  "c":4,                                            +
+  "z":[{"f1":2,"f2":[1,2,3]},{"f1":4,"f2":[4,5,6]}]}
+ {"b":"a2",                                         +
+  "c":5,                                            +
+  "z":[{"f1":2,"f2":[1,2,3]},{"f1":5,"f2":[4,5,6]}]}
+(4 rows)
+
+CREATE TEMP TABLE rows AS
+SELECT x, 'txt' || x as y
+FROM generate_series(1,3) AS x;
+SELECT row_to_json(q,true) 
+FROM rows q;
+ row_to_json  
+--------------
+ {"x":1,     +
+  "y":"txt1"}
+ {"x":2,     +
+  "y":"txt2"}
+ {"x":3,     +
+  "y":"txt3"}
+(3 rows)
+
+SELECT row_to_json(row((select array_agg(x) as d from generate_series(5,10) x)),false);
+      row_to_json      
+-----------------------
+ {"f1":[5,6,7,8,9,10]}
+(1 row)
+

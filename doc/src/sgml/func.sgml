@@ -9617,6 +9617,65 @@ table2-mapping
   </sect2>
  </sect1>
 
+ <sect1 id="functions-json">
+  <title>JSON functions</title>
+
+  <indexterm zone="datatype-json">
+	<primary>JSON</primary>
+	<secondary>Functions and operators</secondary>
+  </indexterm>
+
+  <para>
+    This section descripbes the functions that are available for creating
+    JSON (see <xref linkend="datatype-json">) data.
+  </para>
+
+  <table id="functions-json-table">
+    <title>JSON Support Functions</title>
+    <tgroup cols="4">
+     <thead>
+      <row>
+       <entry>Function</entry>
+       <entry>Description</entry>
+       <entry>Example</entry>
+       <entry>Example Result</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>
+         <indexterm>
+          <primary>array_to_json</primary>
+         </indexterm>
+         <literal>array_to_json(anyarray [, pretty_bool])</literal>
+       </entry>
+       <entry>
+         Returns the array as JSON. A Postgres multi-dimensional array 
+         becomes a JSON array of arrays. Line feeds will be added between 
+         dimension 1 elements if pretty_bool is true.
+       </entry>
+       <entry><literal>array_to_json('{{1,5},{99,100}}'::int[])</literal></entry>
+       <entry><literal>[[1,5],[99,100]]</literal></entry>
+      </row>
+      <row>
+       <entry>
+         <indexterm>
+          <primary>row_to_json</primary>
+         </indexterm>
+         <literal>row_to_json(record [, pretty_bool])</literal>
+       </entry>
+       <entry>
+         Returns the row as JSON. Line feeds will be added between level 
+         1 elements if pretty_bool is true.
+       </entry>
+       <entry><literal>row_to_json(row(1,'foo'))</literal></entry>
+       <entry><literal>{"f1":1,"f2":"foo"}</literal></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+ </sect1>
 
  <sect1 id="functions-sequence">
   <title>Sequence Manipulation Functions</title>

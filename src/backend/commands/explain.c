@@ -24,6 +24,7 @@
 #include "rewrite/rewriteHandler.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
+#include "utils/json.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
@@ -99,7 +100,6 @@ static void ExplainDummyGroup(const char *objtype, const char *labelname,
 static void ExplainXMLTag(const char *tagname, int flags, ExplainState *es);
 static void ExplainJSONLineEnding(ExplainState *es);
 static void ExplainYAMLLineStarting(ExplainState *es);
-static void escape_json(StringInfo buf, const char *str);
 static void escape_yaml(StringInfo buf, const char *str);
 
 
@@ -2316,51 +2316,6 @@ ExplainYAMLLineStarting(ExplainState *es)
 		appendStringInfoChar(es->str, '\n');
 		appendStringInfoSpaces(es->str, es->indent * 2);
 	}
-}
-
-/*
- * Produce a JSON string literal, properly escaping characters in the text.
- */
-static void
-escape_json(StringInfo buf, const char *str)
-{
-	const char *p;
-
-	appendStringInfoCharMacro(buf, '\"');
-	for (p = str; *p; p++)
-	{
-		switch (*p)
-		{
-			case '\b':
-				appendStringInfoString(buf, "\\b");
-				break;
-			case '\f':
-				appendStringInfoString(buf, "\\f");
-				break;
-			case '\n':
-				appendStringInfoString(buf, "\\n");
-				break;
-			case '\r':
-				appendStringInfoString(buf, "\\r");
-				break;
-			case '\t':
-				appendStringInfoString(buf, "\\t");
-				break;
-			case '"':
-				appendStringInfoString(buf, "\\\"");
-				break;
-			case '\\':
-				appendStringInfoString(buf, "\\\\");
-				break;
-			default:
-				if ((unsigned char) *p < ' ')
-					appendStringInfo(buf, "\\u%04x", (int) *p);
-				else
-					appendStringInfoCharMacro(buf, *p);
-				break;
-		}
-	}
-	appendStringInfoCharMacro(buf, '\"');
 }
 
 /*
