@@ -9621,8 +9621,8 @@ table2-mapping
   <title>JSON functions</title>
 
   <indexterm zone="datatype-json">
-	<primary>JSON</primary>
-	<secondary>Functions and operators</secondary>
+    <primary>JSON</primary>
+    <secondary>Functions and operators</secondary>
   </indexterm>
 
   <para>
