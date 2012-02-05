@@ -718,6 +718,9 @@ standby_redo(XLogRecPtr lsn, XLogRecord *record)
 {
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 
+	/* Backup blocks are not used in standby records */
+	Assert(!(record->xl_info & XLR_BKP_BLOCK_MASK));
+
 	/* Do nothing if we're not in hot standby mode */
 	if (standbyState == STANDBY_DISABLED)
 		return;
@@ -747,7 +750,7 @@ standby_redo(XLogRecPtr lsn, XLogRecord *record)
 		ProcArrayApplyRecoveryInfo(&running);
 	}
 	else
-		elog(PANIC, "relation_redo: unknown op code %u", info);
+		elog(PANIC, "standby_redo: unknown op code %u", info);
 }
 
 static void
