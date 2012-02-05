@@ -1521,6 +1521,7 @@ seq_redo(XLogRecPtr lsn, XLogRecord *record)
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 	Buffer		buffer;
 	Page		page;
+	Page		localpage;
 	char	   *item;
 	Size		itemsz;
 	xl_seq_rec *xlrec = (xl_seq_rec *) XLogRecGetData(record);
@@ -1536,23 +1537,37 @@ seq_redo(XLogRecPtr lsn, XLogRecord *record)
 	Assert(BufferIsValid(buffer));
 	page = (Page) BufferGetPage(buffer);
 
-	/* Always reinit the page and reinstall the magic number */
-	/* See comments in DefineSequence */
-	PageInit((Page) page, BufferGetPageSize(buffer), sizeof(sequence_magic));
-	sm = (sequence_magic *) PageGetSpecialPointer(page);
+	/*
+	 * We must always reinit the page and reinstall the magic number (see
+	 * comments in fill_seq_with_data).  However, since this WAL record type
+	 * is also used for updating sequences, it's possible that a hot-standby
+	 * backend is examining the page concurrently; so we mustn't transiently
+	 * trash the buffer.  The solution is to build the correct new page
+	 * contents in local workspace and then memcpy into the buffer.  Then
+	 * only bytes that are supposed to change will change, even transiently.
+	 * We must palloc the local page for alignment reasons.
+	 */
+	localpage = (Page) palloc(BufferGetPageSize(buffer));
+
+	PageInit(localpage, BufferGetPageSize(buffer), sizeof(sequence_magic));
+	sm = (sequence_magic *) PageGetSpecialPointer(localpage);
 	sm->magic = SEQ_MAGIC;
 
 	item = (char *) xlrec + sizeof(xl_seq_rec);
 	itemsz = record->xl_len - sizeof(xl_seq_rec);
 	itemsz = MAXALIGN(itemsz);
-	if (PageAddItem(page, (Item) item, itemsz,
+	if (PageAddItem(localpage, (Item) item, itemsz,
 					FirstOffsetNumber, false, false) == InvalidOffsetNumber)
 		elog(PANIC, "seq_redo: failed to add item to page");
 
-	PageSetLSN(page, lsn);
-	PageSetTLI(page, ThisTimeLineID);
+	PageSetLSN(localpage, lsn);
+	PageSetTLI(localpage, ThisTimeLineID);
+
+	memcpy(page, localpage, BufferGetPageSize(buffer));
 	MarkBufferDirty(buffer);
 	UnlockReleaseBuffer(buffer);
+
+	pfree(localpage);
 }
 
 void

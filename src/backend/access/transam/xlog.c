@@ -3716,9 +3716,9 @@ RestoreBkpBlocks(XLogRecPtr lsn, XLogRecord *record, bool cleanup)
 		}
 		else
 		{
-			/* must zero-fill the hole */
-			MemSet((char *) page, 0, BLCKSZ);
 			memcpy((char *) page, blk, bkpb.hole_offset);
+			/* must zero-fill the hole */
+			MemSet((char *) page + bkpb.hole_offset, 0, bkpb.hole_length);
 			memcpy((char *) page + (bkpb.hole_offset + bkpb.hole_length),
 				   blk + bkpb.hole_offset,
 				   BLCKSZ - (bkpb.hole_offset + bkpb.hole_length));
