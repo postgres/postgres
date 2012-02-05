@@ -154,14 +154,50 @@ SELECT clean_emp();
     the function (see <xref linkend="sql-syntax-strings">).
    </para>
 
-   <para>
-    Arguments to the SQL function are referenced in the function
-    body using the syntax <literal>$<replaceable>n</></>: <literal>$1</>
-    refers to the first argument, <literal>$2</> to the second, and so on.
-    If an argument is of a composite type, then the dot notation,
-    e.g., <literal>$1.name</literal>, can be used to access attributes
-    of the argument.  The arguments can only be used as data values,
-    not as identifiers.  Thus for example this is reasonable:
+   <sect2 id="xfunc-sql-function-arguments">
+    <title>Arguments for <acronym>SQL</acronym> Functions</title>
+
+   <indexterm>
+    <primary>function</primary>
+    <secondary>named argument</secondary>
+   </indexterm>
+
+    <para>
+     Arguments of a SQL function can be referenced in the function
+     body using either names or numbers.  Examples of both methods appear
+     below.
+    </para>
+
+    <para>
+     To use a name, declare the function argument as having a name, and
+     then just write that name in the function body.  If the argument name
+     is the same as any column name in the current SQL command within the
+     function, the column name will take precedence.  To override this,
+     qualify the argument name with the name of the function itself, that is
+     <literal><replaceable>function_name</>.<replaceable>argument_name</></literal>.
+     (If this would conflict with a qualified column name, again the column
+     name wins.  You can avoid the ambiguity by choosing a different alias for
+     the table within the SQL command.)
+    </para>
+
+    <para>
+     In the older numeric approach, arguments are referenced using the syntax
+     <literal>$<replaceable>n</></>: <literal>$1</> refers to the first input
+     argument, <literal>$2</> to the second, and so on.  This will work
+     whether or not the particular argument was declared with a name.
+    </para>
+
+    <para>
+     If an argument is of a composite type, then the dot notation,
+     e.g., <literal>argname.fieldname</literal> or
+     <literal>$1.fieldname</literal>, can be used to access attributes of the
+     argument.  Again, you might need to qualify the argument's name with the
+     function name to make the form with an argument name unambiguous.
+    </para>
+
+    <para>
+     SQL function arguments can only be used as data values,
+     not as identifiers.  Thus for example this is reasonable:
 <programlisting>
 INSERT INTO mytable VALUES ($1);
 </programlisting>
@@ -169,7 +205,16 @@ but this will not work:
 <programlisting>
 INSERT INTO $1 VALUES (42);
 </programlisting>
-   </para>
+    </para>
+
+    <note>
+     <para>
+      The ability to use names to reference SQL function arguments was added
+      in <productname>PostgreSQL</productname> 9.2.  Functions to be used in
+      older servers must use the <literal>$<replaceable>n</></> notation.
+     </para>
+    </note>
+   </sect2>
 
    <sect2 id="xfunc-sql-base-functions">
     <title><acronym>SQL</acronym> Functions on Base Types</title>
@@ -205,9 +250,24 @@ SELECT one();
 
     <para>
      It is almost as easy to define <acronym>SQL</acronym> functions
-     that take base types as arguments.  In the example below, notice
-     how we refer to the arguments within the function as <literal>$1</>
-     and <literal>$2</>.
+     that take base types as arguments:
+
+<screen>
+CREATE FUNCTION add_em(x integer, y integer) RETURNS integer AS $$
+    SELECT x + y;
+$$ LANGUAGE SQL;
+
+SELECT add_em(1, 2) AS answer;
+
+ answer
+--------
+      3
+</screen>
+    </para>
+
+    <para>
+     Alternatively, we could dispense with names for the arguments and
+     use numbers:
 
 <screen>
 CREATE FUNCTION add_em(integer, integer) RETURNS integer AS $$
@@ -227,10 +287,10 @@ SELECT add_em(1, 2) AS answer;
      bank account:
 
 <programlisting>
-CREATE FUNCTION tf1 (integer, numeric) RETURNS integer AS $$
+CREATE FUNCTION tf1 (accountno integer, debit numeric) RETURNS integer AS $$
     UPDATE bank
-        SET balance = balance - $2
-        WHERE accountno = $1;
+        SET balance = balance - debit
+        WHERE accountno = tf1.accountno;
     SELECT 1;
 $$ LANGUAGE SQL;
 </programlisting>
@@ -244,16 +304,25 @@ SELECT tf1(17, 100.0);
     </para>
 
     <para>
+     In this example, we chose the name <literal>accountno</> for the first
+     argument, but this is the same as the name of a column in the
+     <literal>bank</> table.  Within the <command>UPDATE</> command,
+     <literal>accountno</> refers to the column <literal>bank.accountno</>,
+     so <literal>tf1.accountno</> must be used to refer to the argument.
+     We could of course avoid this by using a different name for the argument.
+    </para>
+
+    <para>
      In practice one would probably like a more useful result from the
      function than a constant 1, so a more likely definition
      is:
 
 <programlisting>
-CREATE FUNCTION tf1 (integer, numeric) RETURNS numeric AS $$
+CREATE FUNCTION tf1 (accountno integer, debit numeric) RETURNS integer AS $$
     UPDATE bank
-        SET balance = balance - $2
-        WHERE accountno = $1;
-    SELECT balance FROM bank WHERE accountno = $1;
+        SET balance = balance - debit
+        WHERE accountno = tf1.accountno;
+    SELECT balance FROM bank WHERE accountno = tf1.accountno;
 $$ LANGUAGE SQL;
 </programlisting>
 
@@ -261,10 +330,10 @@ $$ LANGUAGE SQL;
      The same thing could be done in one command using <literal>RETURNING</>:
 
 <programlisting>
-CREATE FUNCTION tf1 (integer, numeric) RETURNS numeric AS $$
+CREATE FUNCTION tf1 (accountno integer, debit numeric) RETURNS integer AS $$
     UPDATE bank
-        SET balance = balance - $2
-        WHERE accountno = $1
+        SET balance = balance - debit
+        WHERE accountno = tf1.accountno
     RETURNING balance;
 $$ LANGUAGE SQL;
 </programlisting>
@@ -275,11 +344,9 @@ $$ LANGUAGE SQL;
     <title><acronym>SQL</acronym> Functions on Composite Types</title>
 
     <para>
-     When writing  functions with arguments of composite
-     types, we must  not  only  specify  which
-     argument  we  want (as we did above with <literal>$1</> and <literal>$2</literal>) but
-     also the desired attribute (field) of  that  argument.   For  example,
-     suppose that
+     When writing functions with arguments of composite types, we must not
+     only specify which argument we want but also the desired attribute
+     (field) of that argument.  For example, suppose that
      <type>emp</type> is a table containing employee data, and therefore
      also the name of the composite type of each row of the table.  Here
      is a function <function>double_salary</function> that computes what someone's
@@ -524,39 +591,6 @@ SELECT getname(new_emp());
     </para>
    </sect2>
 
-   <sect2 id="xfunc-named-parameters">
-    <title><acronym>SQL</> Functions with Parameter Names</title>
-
-   <indexterm>
-    <primary>function</primary>
-    <secondary>named parameter</secondary>
-   </indexterm>
-
-    <para>
-     It is possible to attach names to a function's parameters, for example
-
-<programlisting>
-CREATE FUNCTION tf1 (acct_no integer, debit numeric) RETURNS numeric AS $$
-    UPDATE bank
-        SET balance = balance - $2
-        WHERE accountno = $1
-    RETURNING balance;
-$$ LANGUAGE SQL;
-</programlisting>
-
-     Here the first parameter has been given the name <literal>acct_no</>,
-     and the second parameter the name <literal>debit</>.
-     So far as the SQL function itself is concerned, these names are just
-     decoration; you must still refer to the parameters as <literal>$1</>,
-     <literal>$2</>, etc within the function body.  (Some procedural
-     languages let you use the parameter names instead.)  However,
-     attaching names to the parameters is useful for documentation purposes.
-     When a function has many parameters, it is also useful to use the names
-     while calling the function, as described in
-     <xref linkend="sql-syntax-calling-funcs">.
-    </para>
-   </sect2>
-
    <sect2 id="xfunc-output-parameters">
     <title><acronym>SQL</> Functions with Output Parameters</title>
 
@@ -571,7 +605,7 @@ $$ LANGUAGE SQL;
 
 <screen>
 CREATE FUNCTION add_em (IN x int, IN y int, OUT sum int)
-AS 'SELECT $1 + $2'
+AS 'SELECT x + y'
 LANGUAGE SQL;
 
 SELECT add_em(3,7);
@@ -588,7 +622,7 @@ SELECT add_em(3,7);
 
 <screen>
 CREATE FUNCTION sum_n_product (x int, y int, OUT sum int, OUT product int)
-AS 'SELECT $1 + $2, $1 * $2'
+AS 'SELECT x + y, x * y'
 LANGUAGE SQL;
 
  SELECT * FROM sum_n_product(11,42);

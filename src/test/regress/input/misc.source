@@ -223,6 +223,20 @@ SELECT user_relns() AS user_relns
 
 SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer')));
 
+SELECT name(equipment(hobby_construct_named(text 'skywalking', text 'mer')));
+
+SELECT name(equipment_named(hobby_construct_named(text 'skywalking', text 'mer')));
+
+SELECT name(equipment_named_ambiguous_1a(hobby_construct_named(text 'skywalking', text 'mer')));
+
+SELECT name(equipment_named_ambiguous_1b(hobby_construct_named(text 'skywalking', text 'mer')));
+
+SELECT name(equipment_named_ambiguous_1c(hobby_construct_named(text 'skywalking', text 'mer')));
+
+SELECT name(equipment_named_ambiguous_2a(text 'skywalking'));
+
+SELECT name(equipment_named_ambiguous_2b(text 'skywalking'));
+
 SELECT hobbies_by_name('basketball');
 
 SELECT name, overpaid(emp.*) FROM emp;

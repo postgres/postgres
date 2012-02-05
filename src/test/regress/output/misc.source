@@ -693,6 +693,51 @@ SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer')));
  guts
 (1 row)
 
+SELECT name(equipment(hobby_construct_named(text 'skywalking', text 'mer')));
+ name 
+------
+ guts
+(1 row)
+
+SELECT name(equipment_named(hobby_construct_named(text 'skywalking', text 'mer')));
+ name 
+------
+ guts
+(1 row)
+
+SELECT name(equipment_named_ambiguous_1a(hobby_construct_named(text 'skywalking', text 'mer')));
+ name 
+------
+ guts
+(1 row)
+
+SELECT name(equipment_named_ambiguous_1b(hobby_construct_named(text 'skywalking', text 'mer')));
+ name 
+------
+ guts
+(1 row)
+
+SELECT name(equipment_named_ambiguous_1c(hobby_construct_named(text 'skywalking', text 'mer')));
+ name 
+------
+ guts
+(1 row)
+
+SELECT name(equipment_named_ambiguous_2a(text 'skywalking'));
+ name 
+------
+ guts
+(1 row)
+
+SELECT name(equipment_named_ambiguous_2b(text 'skywalking'));
+     name      
+---------------
+ advil
+ peet's coffee
+ hightops
+ guts
+(4 rows)
+
 SELECT hobbies_by_name('basketball');
  hobbies_by_name 
 -----------------
