@@ -626,9 +626,13 @@ create_tablespace_directories(const char *location, const Oid tablespaceoid)
 /*
  * destroy_tablespace_directories
  *
- * Attempt to remove filesystem infrastructure
+ * Attempt to remove filesystem infrastructure for the tablespace.
  *
- * 'redo' indicates we are redoing a drop from XLOG; okay if nothing there
+ * 'redo' indicates we are redoing a drop from XLOG; in that case we should
+ * not throw an ERROR for problems, just LOG them.  The worst consequence of
+ * not removing files here would be failure to release some disk space, which
+ * does not justify throwing an error that would require manual intervention
+ * to get the database running again.
  *
  * Returns TRUE if successful, FALSE if some subdirectory is not empty
  */
@@ -681,6 +685,16 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 			pfree(linkloc_with_version_dir);
 			return true;
 		}
+		else if (redo)
+		{
+			/* in redo, just log other types of error */
+			ereport(LOG,
+					(errcode_for_file_access(),
+					 errmsg("could not open directory \"%s\": %m",
+							linkloc_with_version_dir)));
+			pfree(linkloc_with_version_dir);
+			return false;
+		}
 		/* else let ReadDir report the error */
 	}
 
@@ -694,7 +708,7 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 		sprintf(subfile, "%s/%s", linkloc_with_version_dir, de->d_name);
 
 		/* This check is just to deliver a friendlier error message */
-		if (!directory_is_empty(subfile))
+		if (!redo && !directory_is_empty(subfile))
 		{
 			FreeDir(dirdesc);
 			pfree(subfile);
@@ -704,7 +718,7 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 
 		/* remove empty directory */
 		if (rmdir(subfile) < 0)
-			ereport(ERROR,
+			ereport(redo ? LOG : ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not remove directory \"%s\": %m",
 							subfile)));
@@ -716,23 +730,30 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 
 	/* remove version directory */
 	if (rmdir(linkloc_with_version_dir) < 0)
-		ereport(ERROR,
+	{
+		ereport(redo ? LOG : ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not remove directory \"%s\": %m",
 						linkloc_with_version_dir)));
+		pfree(linkloc_with_version_dir);
+		return false;
+	}
 
 	/*
 	 * Try to remove the symlink.  We must however deal with the possibility
 	 * that it's a directory instead of a symlink --- this could happen during
 	 * WAL replay (see TablespaceCreateDbspace), and it is also the case on
 	 * Windows where junction points lstat() as directories.
+	 *
+	 * Note: in the redo case, we'll return true if this final step fails;
+	 * there's no point in retrying it.
 	 */
 	linkloc = pstrdup(linkloc_with_version_dir);
 	get_parent_directory(linkloc);
 	if (lstat(linkloc, &st) == 0 && S_ISDIR(st.st_mode))
 	{
 		if (rmdir(linkloc) < 0)
-			ereport(ERROR,
+			ereport(redo ? LOG : ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not remove directory \"%s\": %m",
 							linkloc)));
@@ -740,7 +761,7 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 	else
 	{
 		if (unlink(linkloc) < 0)
-			ereport(ERROR,
+			ereport(redo ? LOG : ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not remove symbolic link \"%s\": %m",
 							linkloc)));
@@ -1451,14 +1472,19 @@ tblspc_redo(XLogRecPtr lsn, XLogRecord *record)
 		xl_tblspc_drop_rec *xlrec = (xl_tblspc_drop_rec *) XLogRecGetData(record);
 
 		/*
-		 * If we issued a WAL record for a drop tablespace it is because there
-		 * were no files in it at all. That means that no permanent objects
-		 * can exist in it at this point.
+		 * If we issued a WAL record for a drop tablespace it implies that
+		 * there were no files in it at all when the DROP was done. That means
+		 * that no permanent objects can exist in it at this point.
 		 *
 		 * It is possible for standby users to be using this tablespace as a
 		 * location for their temporary files, so if we fail to remove all
 		 * files then do conflict processing and try again, if currently
 		 * enabled.
+		 *
+		 * Other possible reasons for failure include bollixed file permissions
+		 * on a standby server when they were okay on the primary, etc etc.
+		 * There's not much we can do about that, so just remove what we can
+		 * and press on.
 		 */
 		if (!destroy_tablespace_directories(xlrec->ts_id, true))
 		{
@@ -1466,15 +1492,18 @@ tblspc_redo(XLogRecPtr lsn, XLogRecord *record)
 
 			/*
 			 * If we did recovery processing then hopefully the backends who
-			 * wrote temp files should have cleaned up and exited by now. So
-			 * lets recheck before we throw an error. If !process_conflicts
-			 * then this will just fail again.
+			 * wrote temp files should have cleaned up and exited by now.  So
+			 * retry before complaining.  If we fail again, this is just a LOG
+			 * condition, because it's not worth throwing an ERROR for (as
+			 * that would crash the database and require manual intervention
+			 * before we could get past this WAL record on restart).
 			 */
 			if (!destroy_tablespace_directories(xlrec->ts_id, true))
-				ereport(ERROR,
+				ereport(LOG,
 						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-						 errmsg("tablespace %u is not empty",
-								xlrec->ts_id)));
+						 errmsg("directories for tablespace %u could not be removed",
+								xlrec->ts_id),
+						 errhint("You can remove the directories manually if necessary.")));
 		}
 	}
 	else
@@ -1490,14 +1519,14 @@ tblspc_desc(StringInfo buf, uint8 xl_info, char *rec)
 	{
 		xl_tblspc_create_rec *xlrec = (xl_tblspc_create_rec *) rec;
 
-		appendStringInfo(buf, "create ts: %u \"%s\"",
+		appendStringInfo(buf, "create tablespace: %u \"%s\"",
 						 xlrec->ts_id, xlrec->ts_path);
 	}
 	else if (info == XLOG_TBLSPC_DROP)
 	{
 		xl_tblspc_drop_rec *xlrec = (xl_tblspc_drop_rec *) rec;
 
-		appendStringInfo(buf, "drop ts: %u", xlrec->ts_id);
+		appendStringInfo(buf, "drop tablespace: %u", xlrec->ts_id);
 	}
 	else
 		appendStringInfo(buf, "UNKNOWN");
