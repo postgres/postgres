@@ -7017,12 +7017,15 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 	{
 		Oid			nextOid;
 
+		/*
+		 * We used to try to take the maximum of ShmemVariableCache->nextOid
+		 * and the recorded nextOid, but that fails if the OID counter wraps
+		 * around.  Since no OID allocation should be happening during replay
+		 * anyway, better to just believe the record exactly.
+		 */
 		memcpy(&nextOid, XLogRecGetData(record), sizeof(Oid));
-		if (ShmemVariableCache->nextOid < nextOid)
-		{
-			ShmemVariableCache->nextOid = nextOid;
-			ShmemVariableCache->oidCount = 0;
-		}
+		ShmemVariableCache->nextOid = nextOid;
+		ShmemVariableCache->oidCount = 0;
 	}
 	else if (info == XLOG_CHECKPOINT_SHUTDOWN)
 	{
@@ -7062,15 +7065,13 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 		CheckPoint	checkPoint;
 
 		memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
-		/* In an ONLINE checkpoint, treat the counters like NEXTOID */
+		/* In an ONLINE checkpoint, treat the XID counter as a minimum */
 		if (TransactionIdPrecedes(ShmemVariableCache->nextXid,
 								  checkPoint.nextXid))
 			ShmemVariableCache->nextXid = checkPoint.nextXid;
-		if (ShmemVariableCache->nextOid < checkPoint.nextOid)
-		{
-			ShmemVariableCache->nextOid = checkPoint.nextOid;
-			ShmemVariableCache->oidCount = 0;
-		}
+		/* ... but still treat OID counter as exact */
+		ShmemVariableCache->nextOid = checkPoint.nextOid;
+		ShmemVariableCache->oidCount = 0;
 		MultiXactAdvanceNextMXact(checkPoint.nextMulti,
 								  checkPoint.nextMultiOffset);
 
