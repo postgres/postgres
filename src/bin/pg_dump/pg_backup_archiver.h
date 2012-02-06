@@ -102,7 +102,6 @@ typedef z_stream *z_streamp;
 
 struct _archiveHandle;
 struct _tocEntry;
-struct _restoreList;
 
 typedef void (*ClosePtr) (struct _archiveHandle * AH);
 typedef void (*ReopenPtr) (struct _archiveHandle * AH);
