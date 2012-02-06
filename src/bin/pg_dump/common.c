@@ -76,7 +76,7 @@ static int	strInArray(const char *pattern, char **arr, int arr_size);
  *	  Collect information about all potentially dumpable objects
  */
 TableInfo *
-getSchemaData(int *numTablesPtr)
+getSchemaData(Archive *fout, int *numTablesPtr)
 {
 	ExtensionInfo *extinfo;
 	InhInfo    *inhinfo;
@@ -101,7 +101,7 @@ getSchemaData(int *numTablesPtr)
 
 	if (g_verbose)
 		write_msg(NULL, "reading schemas\n");
-	getNamespaces(&numNamespaces);
+	getNamespaces(fout, &numNamespaces);
 
 	/*
 	 * getTables should be done as soon as possible, so as to minimize the
@@ -111,94 +111,94 @@ getSchemaData(int *numTablesPtr)
 	 */
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined tables\n");
-	tblinfo = getTables(&numTables);
+	tblinfo = getTables(fout, &numTables);
 	tblinfoindex = buildIndexArray(tblinfo, numTables, sizeof(TableInfo));
 
 	if (g_verbose)
 		write_msg(NULL, "reading extensions\n");
-	extinfo = getExtensions(&numExtensions);
+	extinfo = getExtensions(fout, &numExtensions);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined functions\n");
-	funinfo = getFuncs(&numFuncs);
+	funinfo = getFuncs(fout, &numFuncs);
 	funinfoindex = buildIndexArray(funinfo, numFuncs, sizeof(FuncInfo));
 
 	/* this must be after getTables and getFuncs */
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined types\n");
-	typinfo = getTypes(&numTypes);
+	typinfo = getTypes(fout, &numTypes);
 	typinfoindex = buildIndexArray(typinfo, numTypes, sizeof(TypeInfo));
 
 	/* this must be after getFuncs, too */
 	if (g_verbose)
 		write_msg(NULL, "reading procedural languages\n");
-	getProcLangs(&numProcLangs);
+	getProcLangs(fout, &numProcLangs);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined aggregate functions\n");
-	getAggregates(&numAggregates);
+	getAggregates(fout, &numAggregates);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined operators\n");
-	oprinfo = getOperators(&numOperators);
+	oprinfo = getOperators(fout, &numOperators);
 	oprinfoindex = buildIndexArray(oprinfo, numOperators, sizeof(OprInfo));
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined operator classes\n");
-	getOpclasses(&numOpclasses);
+	getOpclasses(fout, &numOpclasses);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined operator families\n");
-	getOpfamilies(&numOpfamilies);
+	getOpfamilies(fout, &numOpfamilies);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined text search parsers\n");
-	getTSParsers(&numTSParsers);
+	getTSParsers(fout, &numTSParsers);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined text search templates\n");
-	getTSTemplates(&numTSTemplates);
+	getTSTemplates(fout, &numTSTemplates);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined text search dictionaries\n");
-	getTSDictionaries(&numTSDicts);
+	getTSDictionaries(fout, &numTSDicts);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined text search configurations\n");
-	getTSConfigurations(&numTSConfigs);
+	getTSConfigurations(fout, &numTSConfigs);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined foreign-data wrappers\n");
-	getForeignDataWrappers(&numForeignDataWrappers);
+	getForeignDataWrappers(fout, &numForeignDataWrappers);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined foreign servers\n");
-	getForeignServers(&numForeignServers);
+	getForeignServers(fout, &numForeignServers);
 
 	if (g_verbose)
 		write_msg(NULL, "reading default privileges\n");
-	getDefaultACLs(&numDefaultACLs);
+	getDefaultACLs(fout, &numDefaultACLs);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined collations\n");
-	collinfo = getCollations(&numCollations);
+	collinfo = getCollations(fout, &numCollations);
 	collinfoindex = buildIndexArray(collinfo, numCollations, sizeof(CollInfo));
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined conversions\n");
-	getConversions(&numConversions);
+	getConversions(fout, &numConversions);
 
 	if (g_verbose)
 		write_msg(NULL, "reading type casts\n");
-	getCasts(&numCasts);
+	getCasts(fout, &numCasts);
 
 	if (g_verbose)
 		write_msg(NULL, "reading table inheritance information\n");
-	inhinfo = getInherits(&numInherits);
+	inhinfo = getInherits(fout, &numInherits);
 
 	if (g_verbose)
 		write_msg(NULL, "reading rewrite rules\n");
-	getRules(&numRules);
+	getRules(fout, &numRules);
 
 	/*
 	 * Identify extension member objects and mark them as not to be dumped.
@@ -207,7 +207,7 @@ getSchemaData(int *numTablesPtr)
 	 */
 	if (g_verbose)
 		write_msg(NULL, "finding extension members\n");
-	getExtensionMembership(extinfo, numExtensions);
+	getExtensionMembership(fout, extinfo, numExtensions);
 
 	/* Link tables to parents, mark parents of target tables interesting */
 	if (g_verbose)
@@ -216,7 +216,7 @@ getSchemaData(int *numTablesPtr)
 
 	if (g_verbose)
 		write_msg(NULL, "reading column info for interesting tables\n");
-	getTableAttrs(tblinfo, numTables);
+	getTableAttrs(fout, tblinfo, numTables);
 
 	if (g_verbose)
 		write_msg(NULL, "flagging inherited columns in subtables\n");
@@ -224,15 +224,15 @@ getSchemaData(int *numTablesPtr)
 
 	if (g_verbose)
 		write_msg(NULL, "reading indexes\n");
-	getIndexes(tblinfo, numTables);
+	getIndexes(fout, tblinfo, numTables);
 
 	if (g_verbose)
 		write_msg(NULL, "reading constraints\n");
-	getConstraints(tblinfo, numTables);
+	getConstraints(fout, tblinfo, numTables);
 
 	if (g_verbose)
 		write_msg(NULL, "reading triggers\n");
-	getTriggers(tblinfo, numTables);
+	getTriggers(fout, tblinfo, numTables);
 
 	*numTablesPtr = numTables;
 	return tblinfo;

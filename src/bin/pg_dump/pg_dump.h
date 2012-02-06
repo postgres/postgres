@@ -493,7 +493,10 @@ extern char g_opaque_type[10];	/* name for the opaque type */
  *	common utility functions
  */
 
-extern TableInfo *getSchemaData(int *numTablesPtr);
+struct Archive;
+typedef struct Archive Archive;
+
+extern TableInfo *getSchemaData(Archive *, int *numTablesPtr);
 
 typedef enum _OidOptions
 {
@@ -535,32 +538,35 @@ extern void sortDumpableObjectsByTypeOid(DumpableObject **objs, int numObjs);
 /*
  * version specific routines
  */
-extern NamespaceInfo *getNamespaces(int *numNamespaces);
-extern ExtensionInfo *getExtensions(int *numExtensions);
-extern TypeInfo *getTypes(int *numTypes);
-extern FuncInfo *getFuncs(int *numFuncs);
-extern AggInfo *getAggregates(int *numAggregates);
-extern OprInfo *getOperators(int *numOperators);
-extern OpclassInfo *getOpclasses(int *numOpclasses);
-extern OpfamilyInfo *getOpfamilies(int *numOpfamilies);
-extern CollInfo *getCollations(int *numCollations);
-extern ConvInfo *getConversions(int *numConversions);
-extern TableInfo *getTables(int *numTables);
-extern InhInfo *getInherits(int *numInherits);
-extern void getIndexes(TableInfo tblinfo[], int numTables);
-extern void getConstraints(TableInfo tblinfo[], int numTables);
-extern RuleInfo *getRules(int *numRules);
-extern void getTriggers(TableInfo tblinfo[], int numTables);
-extern ProcLangInfo *getProcLangs(int *numProcLangs);
-extern CastInfo *getCasts(int *numCasts);
-extern void getTableAttrs(TableInfo *tbinfo, int numTables);
-extern TSParserInfo *getTSParsers(int *numTSParsers);
-extern TSDictInfo *getTSDictionaries(int *numTSDicts);
-extern TSTemplateInfo *getTSTemplates(int *numTSTemplates);
-extern TSConfigInfo *getTSConfigurations(int *numTSConfigs);
-extern FdwInfo *getForeignDataWrappers(int *numForeignDataWrappers);
-extern ForeignServerInfo *getForeignServers(int *numForeignServers);
-extern DefaultACLInfo *getDefaultACLs(int *numDefaultACLs);
-extern void getExtensionMembership(ExtensionInfo extinfo[], int numExtensions);
+extern NamespaceInfo *getNamespaces(Archive *fout, int *numNamespaces);
+extern ExtensionInfo *getExtensions(Archive *fout, int *numExtensions);
+extern TypeInfo *getTypes(Archive *fout, int *numTypes);
+extern FuncInfo *getFuncs(Archive *fout, int *numFuncs);
+extern AggInfo *getAggregates(Archive *fout, int *numAggregates);
+extern OprInfo *getOperators(Archive *fout, int *numOperators);
+extern OpclassInfo *getOpclasses(Archive *fout, int *numOpclasses);
+extern OpfamilyInfo *getOpfamilies(Archive *fout, int *numOpfamilies);
+extern CollInfo *getCollations(Archive *fout, int *numCollations);
+extern ConvInfo *getConversions(Archive *fout, int *numConversions);
+extern TableInfo *getTables(Archive *fout, int *numTables);
+extern InhInfo *getInherits(Archive *fout, int *numInherits);
+extern void getIndexes(Archive *fout, TableInfo tblinfo[], int numTables);
+extern void getConstraints(Archive *fout, TableInfo tblinfo[], int numTables);
+extern RuleInfo *getRules(Archive *fout, int *numRules);
+extern void getTriggers(Archive *fout, TableInfo tblinfo[], int numTables);
+extern ProcLangInfo *getProcLangs(Archive *fout, int *numProcLangs);
+extern CastInfo *getCasts(Archive *fout, int *numCasts);
+extern void getTableAttrs(Archive *fout, TableInfo *tbinfo, int numTables);
+extern TSParserInfo *getTSParsers(Archive *fout, int *numTSParsers);
+extern TSDictInfo *getTSDictionaries(Archive *fout, int *numTSDicts);
+extern TSTemplateInfo *getTSTemplates(Archive *fout, int *numTSTemplates);
+extern TSConfigInfo *getTSConfigurations(Archive *fout, int *numTSConfigs);
+extern FdwInfo *getForeignDataWrappers(Archive *fout,
+					   int *numForeignDataWrappers);
+extern ForeignServerInfo *getForeignServers(Archive *fout,
+				  int *numForeignServers);
+extern DefaultACLInfo *getDefaultACLs(Archive *fout, int *numDefaultACLs);
+extern void getExtensionMembership(Archive *fout, ExtensionInfo extinfo[],
+					   int numExtensions);
 
 #endif   /* PG_DUMP_H */
