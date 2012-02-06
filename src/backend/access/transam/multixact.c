@@ -1655,8 +1655,9 @@ CheckPointMultiXact(void)
  * Set the next-to-be-assigned MultiXactId and offset
  *
  * This is used when we can determine the correct next ID/offset exactly
- * from a checkpoint record.  We need no locking since it is only called
- * during bootstrap and XLog replay.
+ * from a checkpoint record.  Although this is only called during bootstrap
+ * and XLog replay, we take the lock in case any hot-standby backends are
+ * examining the values.
  */
 void
 MultiXactSetNextMXact(MultiXactId nextMulti,
@@ -1664,8 +1665,10 @@ MultiXactSetNextMXact(MultiXactId nextMulti,
 {
 	debug_elog4(DEBUG2, "MultiXact: setting next multi to %u offset %u",
 				nextMulti, nextMultiOffset);
+	LWLockAcquire(MultiXactGenLock, LW_EXCLUSIVE);
 	MultiXactState->nextMXact = nextMulti;
 	MultiXactState->nextOffset = nextMultiOffset;
+	LWLockRelease(MultiXactGenLock);
 }
 
 /*
@@ -1674,12 +1677,14 @@ MultiXactSetNextMXact(MultiXactId nextMulti,
  *
  * This is used when we can determine minimum safe values from an XLog
  * record (either an on-line checkpoint or an mxact creation log entry).
- * We need no locking since it is only called during XLog replay.
+ * Although this is only called during XLog replay, we take the lock in case
+ * any hot-standby backends are examining the values.
  */
 void
 MultiXactAdvanceNextMXact(MultiXactId minMulti,
 						  MultiXactOffset minMultiOffset)
 {
+	LWLockAcquire(MultiXactGenLock, LW_EXCLUSIVE);
 	if (MultiXactIdPrecedes(MultiXactState->nextMXact, minMulti))
 	{
 		debug_elog3(DEBUG2, "MultiXact: setting next multi to %u", minMulti);
@@ -1691,6 +1696,7 @@ MultiXactAdvanceNextMXact(MultiXactId minMulti,
 					minMultiOffset);
 		MultiXactState->nextOffset = minMultiOffset;
 	}
+	LWLockRelease(MultiXactGenLock);
 }
 
 /*

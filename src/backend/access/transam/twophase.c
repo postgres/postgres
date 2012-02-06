@@ -1715,6 +1715,10 @@ PrescanPreparedTransactions(TransactionId **xids_p, int *nxids_p)
 			/*
 			 * Examine subtransaction XIDs ... they should all follow main
 			 * XID, and they may force us to advance nextXid.
+			 *
+			 * We don't expect anyone else to modify nextXid, hence we don't
+			 * need to hold a lock while examining it.  We still acquire the
+			 * lock to modify it, though.
 			 */
 			subxids = (TransactionId *)
 				(buf + MAXALIGN(sizeof(TwoPhaseFileHeader)));
@@ -1726,8 +1730,10 @@ PrescanPreparedTransactions(TransactionId **xids_p, int *nxids_p)
 				if (TransactionIdFollowsOrEquals(subxid,
 												 ShmemVariableCache->nextXid))
 				{
+					LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
 					ShmemVariableCache->nextXid = subxid;
 					TransactionIdAdvance(ShmemVariableCache->nextXid);
+					LWLockRelease(XidGenLock);
 				}
 			}
 
