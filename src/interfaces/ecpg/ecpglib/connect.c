@@ -274,7 +274,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 			   *port = NULL,
 			   *realname = NULL,
 			   *options = NULL;
-	const char *conn_keywords[6];
+	const char *conn_keywords[7];
 	const char *conn_values[6];
 
 	ecpg_init_sqlca(sqlca);
