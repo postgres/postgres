@@ -1289,7 +1289,7 @@ dumpTableData_copy(Archive *fout, void *dcontext)
 	 * column ordering of COPY will not be what we want in certain corner
 	 * cases involving ADD COLUMN and inheritance.)
 	 */
-	if (g_fout->remoteVersion >= 70300)
+	if (fout->remoteVersion >= 70300)
 		column_list = fmtCopyColumnList(tbinfo);
 	else
 		column_list = "";		/* can't select columns in COPY */
@@ -8157,7 +8157,7 @@ dumpDomain(Archive *fout, TypeInfo *tyinfo)
 	selectSourceSchema(tyinfo->dobj.namespace->dobj.name);
 
 	/* Fetch domain specific details */
-	if (g_fout->remoteVersion >= 90100)
+	if (fout->remoteVersion >= 90100)
 	{
 		/* typcollation is new in 9.1 */
 		appendPQExpBuffer(query, "SELECT t.typnotnull, "
@@ -9040,7 +9040,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	selectSourceSchema(finfo->dobj.namespace->dobj.name);
 
 	/* Fetch function-specific details */
-	if (g_fout->remoteVersion >= 80400)
+	if (fout->remoteVersion >= 80400)
 	{
 		/*
 		 * In 8.4 and up we rely on pg_get_function_arguments and
@@ -9058,7 +9058,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 						  "WHERE oid = '%u'::pg_catalog.oid",
 						  finfo->dobj.catId.oid);
 	}
-	else if (g_fout->remoteVersion >= 80300)
+	else if (fout->remoteVersion >= 80300)
 	{
 		appendPQExpBuffer(query,
 						  "SELECT proretset, prosrc, probin, "
@@ -9071,7 +9071,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 						  "WHERE oid = '%u'::pg_catalog.oid",
 						  finfo->dobj.catId.oid);
 	}
-	else if (g_fout->remoteVersion >= 80100)
+	else if (fout->remoteVersion >= 80100)
 	{
 		appendPQExpBuffer(query,
 						  "SELECT proretset, prosrc, probin, "
@@ -9084,7 +9084,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 						  "WHERE oid = '%u'::pg_catalog.oid",
 						  finfo->dobj.catId.oid);
 	}
-	else if (g_fout->remoteVersion >= 80000)
+	else if (fout->remoteVersion >= 80000)
 	{
 		appendPQExpBuffer(query,
 						  "SELECT proretset, prosrc, probin, "
@@ -9099,7 +9099,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 						  "WHERE oid = '%u'::pg_catalog.oid",
 						  finfo->dobj.catId.oid);
 	}
-	else if (g_fout->remoteVersion >= 70300)
+	else if (fout->remoteVersion >= 70300)
 	{
 		appendPQExpBuffer(query,
 						  "SELECT proretset, prosrc, probin, "
@@ -9641,7 +9641,7 @@ dumpOpr(Archive *fout, OprInfo *oprinfo)
 	/* Make sure we are in proper schema so regoperator works correctly */
 	selectSourceSchema(oprinfo->dobj.namespace->dobj.name);
 
-	if (g_fout->remoteVersion >= 80300)
+	if (fout->remoteVersion >= 80300)
 	{
 		appendPQExpBuffer(query, "SELECT oprkind, "
 						  "oprcode::pg_catalog.regprocedure, "
@@ -9656,7 +9656,7 @@ dumpOpr(Archive *fout, OprInfo *oprinfo)
 						  "WHERE oid = '%u'::pg_catalog.oid",
 						  oprinfo->dobj.catId.oid);
 	}
-	else if (g_fout->remoteVersion >= 70300)
+	else if (fout->remoteVersion >= 70300)
 	{
 		appendPQExpBuffer(query, "SELECT oprkind, "
 						  "oprcode::pg_catalog.regprocedure, "
@@ -9672,7 +9672,7 @@ dumpOpr(Archive *fout, OprInfo *oprinfo)
 						  "WHERE oid = '%u'::pg_catalog.oid",
 						  oprinfo->dobj.catId.oid);
 	}
-	else if (g_fout->remoteVersion >= 70100)
+	else if (fout->remoteVersion >= 70100)
 	{
 		appendPQExpBuffer(query, "SELECT oprkind, oprcode, "
 						  "CASE WHEN oprleft = 0 THEN '-' "
@@ -9750,7 +9750,7 @@ dumpOpr(Archive *fout, OprInfo *oprinfo)
 	if (strcmp(oprkind, "r") == 0 ||
 		strcmp(oprkind, "b") == 0)
 	{
-		if (g_fout->remoteVersion >= 70100)
+		if (fout->remoteVersion >= 70100)
 			name = oprleft;
 		else
 			name = fmtId(oprleft);
@@ -9763,7 +9763,7 @@ dumpOpr(Archive *fout, OprInfo *oprinfo)
 	if (strcmp(oprkind, "l") == 0 ||
 		strcmp(oprkind, "b") == 0)
 	{
-		if (g_fout->remoteVersion >= 70100)
+		if (fout->remoteVersion >= 70100)
 			name = oprright;
 		else
 			name = fmtId(oprright);
@@ -10034,7 +10034,7 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 	 * pre-7.3 databases.  This could be done but it seems not worth the
 	 * trouble.
 	 */
-	if (g_fout->remoteVersion < 70300)
+	if (fout->remoteVersion < 70300)
 		return;
 
 	query = createPQExpBuffer();
@@ -10046,7 +10046,7 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 	selectSourceSchema(opcinfo->dobj.namespace->dobj.name);
 
 	/* Get additional fields from the pg_opclass row */
-	if (g_fout->remoteVersion >= 80300)
+	if (fout->remoteVersion >= 80300)
 	{
 		appendPQExpBuffer(query, "SELECT opcintype::pg_catalog.regtype, "
 						  "opckeytype::pg_catalog.regtype, "
@@ -10159,7 +10159,7 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 	 */
 	resetPQExpBuffer(query);
 
-	if (g_fout->remoteVersion >= 90100)
+	if (fout->remoteVersion >= 90100)
 	{
 		appendPQExpBuffer(query, "SELECT amopstrategy, false AS amopreqcheck, "
 						  "amopopr::pg_catalog.regoperator, "
@@ -10176,7 +10176,7 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 						  opcinfo->dobj.catId.oid,
 						  opcfamily);
 	}
-	else if (g_fout->remoteVersion >= 80400)
+	else if (fout->remoteVersion >= 80400)
 	{
 		appendPQExpBuffer(query, "SELECT amopstrategy, false AS amopreqcheck, "
 						  "amopopr::pg_catalog.regoperator, "
@@ -10190,7 +10190,7 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 						  "ORDER BY amopstrategy",
 						  opcinfo->dobj.catId.oid);
 	}
-	else if (g_fout->remoteVersion >= 80300)
+	else if (fout->remoteVersion >= 80300)
 	{
 		appendPQExpBuffer(query, "SELECT amopstrategy, amopreqcheck, "
 						  "amopopr::pg_catalog.regoperator, "
@@ -10275,7 +10275,7 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 	 */
 	resetPQExpBuffer(query);
 
-	if (g_fout->remoteVersion >= 80300)
+	if (fout->remoteVersion >= 80300)
 	{
 		appendPQExpBuffer(query, "SELECT amprocnum, "
 						  "amproc::pg_catalog.regprocedure, "
@@ -10437,7 +10437,7 @@ dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo)
 	 * older server and then reload into that old version.	This can go away
 	 * once 8.3 is so old as to not be of interest to anyone.
 	 */
-	if (g_fout->remoteVersion >= 90100)
+	if (fout->remoteVersion >= 90100)
 	{
 		appendPQExpBuffer(query, "SELECT amopstrategy, false AS amopreqcheck, "
 						  "amopopr::pg_catalog.regoperator, "
@@ -10454,7 +10454,7 @@ dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo)
 						  opfinfo->dobj.catId.oid,
 						  opfinfo->dobj.catId.oid);
 	}
-	else if (g_fout->remoteVersion >= 80400)
+	else if (fout->remoteVersion >= 80400)
 	{
 		appendPQExpBuffer(query, "SELECT amopstrategy, false AS amopreqcheck, "
 						  "amopopr::pg_catalog.regoperator, "
@@ -10991,7 +10991,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	selectSourceSchema(agginfo->aggfn.dobj.namespace->dobj.name);
 
 	/* Get aggregate-specific details */
-	if (g_fout->remoteVersion >= 80100)
+	if (fout->remoteVersion >= 80100)
 	{
 		appendPQExpBuffer(query, "SELECT aggtransfn, "
 						  "aggfinalfn, aggtranstype::pg_catalog.regtype, "
@@ -11003,7 +11003,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 						  "AND p.oid = '%u'::pg_catalog.oid",
 						  agginfo->aggfn.dobj.catId.oid);
 	}
-	else if (g_fout->remoteVersion >= 70300)
+	else if (fout->remoteVersion >= 70300)
 	{
 		appendPQExpBuffer(query, "SELECT aggtransfn, "
 						  "aggfinalfn, aggtranstype::pg_catalog.regtype, "
@@ -11015,7 +11015,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 						  "AND p.oid = '%u'::pg_catalog.oid",
 						  agginfo->aggfn.dobj.catId.oid);
 	}
-	else if (g_fout->remoteVersion >= 70100)
+	else if (fout->remoteVersion >= 70100)
 	{
 		appendPQExpBuffer(query, "SELECT aggtransfn, aggfinalfn, "
 						  "format_type(aggtranstype, NULL) AS aggtranstype, "
@@ -11077,14 +11077,14 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 		return;
 	}
 
-	if (g_fout->remoteVersion >= 70300)
+	if (fout->remoteVersion >= 70300)
 	{
 		/* If using 7.3's regproc or regtype, data is already quoted */
 		appendPQExpBuffer(details, "    SFUNC = %s,\n    STYPE = %s",
 						  aggtransfn,
 						  aggtranstype);
 	}
-	else if (g_fout->remoteVersion >= 70100)
+	else if (fout->remoteVersion >= 70100)
 	{
 		/* format_type quotes, regproc does not */
 		appendPQExpBuffer(details, "    SFUNC = %s,\n    STYPE = %s",
@@ -12300,7 +12300,7 @@ dumpTable(Archive *fout, TableInfo *tbinfo)
 		 * query rather than trying to fetch them during getTableAttrs, so
 		 * that we won't miss ACLs on system columns.
 		 */
-		if (g_fout->remoteVersion >= 80400)
+		if (fout->remoteVersion >= 80400)
 		{
 			PQExpBuffer query = createPQExpBuffer();
 			PGresult   *res;
@@ -12377,7 +12377,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		reltypename = "VIEW";
 
 		/* Fetch the view definition */
-		if (g_fout->remoteVersion >= 70300)
+		if (fout->remoteVersion >= 70300)
 		{
 			/* Beginning in 7.3, viewname is not unique; rely on OID */
 			appendPQExpBuffer(query,
@@ -12570,7 +12570,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				{
 					appendPQExpBuffer(q, "WITH OPTIONS");
 				}
-				else if (g_fout->remoteVersion >= 70100)
+				else if (fout->remoteVersion >= 70100)
 				{
 					appendPQExpBuffer(q, "%s",
 									  tbinfo->atttypnames[j]);
@@ -13444,7 +13444,7 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 	snprintf(bufm, sizeof(bufm), INT64_FORMAT, SEQ_MINVALUE);
 	snprintf(bufx, sizeof(bufx), INT64_FORMAT, SEQ_MAXVALUE);
 
-	if (g_fout->remoteVersion >= 80400)
+	if (fout->remoteVersion >= 80400)
 	{
 		appendPQExpBuffer(query,
 						  "SELECT sequence_name, "
@@ -13545,7 +13545,7 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 						  "CREATE SEQUENCE %s\n",
 						  fmtId(tbinfo->dobj.name));
 
-		if (g_fout->remoteVersion >= 80400)
+		if (fout->remoteVersion >= 80400)
 			appendPQExpBuffer(query, "    START WITH %s\n", startv);
 		else
 		{
@@ -13765,7 +13765,7 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 			if (OidIsValid(tginfo->tgconstrrelid))
 			{
 				/* If we are using regclass, name is already quoted */
-				if (g_fout->remoteVersion >= 70300)
+				if (fout->remoteVersion >= 70300)
 					appendPQExpBuffer(query, "    FROM %s\n    ",
 									  tginfo->tgconstrrelname);
 				else
@@ -13787,7 +13787,7 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 			appendPQExpBuffer(query, "    FOR EACH STATEMENT\n    ");
 
 		/* In 7.3, result of regproc is already quoted */
-		if (g_fout->remoteVersion >= 70300)
+		if (fout->remoteVersion >= 70300)
 			appendPQExpBuffer(query, "EXECUTE PROCEDURE %s(",
 							  tginfo->tgfname);
 		else
@@ -13904,7 +13904,7 @@ dumpRule(Archive *fout, RuleInfo *rinfo)
 	delcmd = createPQExpBuffer();
 	labelq = createPQExpBuffer();
 
-	if (g_fout->remoteVersion >= 70300)
+	if (fout->remoteVersion >= 70300)
 	{
 		appendPQExpBuffer(query,
 						  "SELECT pg_catalog.pg_get_ruledef('%u'::pg_catalog.oid) AS definition",
