@@ -2142,8 +2142,10 @@ DATA(insert OID = 2917 (  numerictypmodin		PGNSP PGUID 12 1 0 0 0 f f f t f i 1 
 DESCR("I/O typmod");
 DATA(insert OID = 2918 (  numerictypmodout		PGNSP PGUID 12 1 0 0 0 f f f t f i 1 0 2275 "23" _null_ _null_ _null_ _null_	numerictypmodout _null_ _null_ _null_ ));
 DESCR("I/O typmod");
-DATA(insert OID = 1703 ( numeric				PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 1700 "1700 23" _null_ _null_ _null_ _null_ numeric _null_ _null_ _null_ ));
+DATA(insert OID = 1703 ( numeric				PGNSP PGUID 12 1 0 0 3157 f f f t f i 2 0 1700 "1700 23" _null_ _null_ _null_ _null_ numeric _null_ _null_ _null_ ));
 DESCR("adjust numeric to typmod precision/scale");
+DATA(insert OID = 3157 ( numeric_transform		PGNSP PGUID 12 1 0 0 0 f f f t f i 1 0 2281 "2281" _null_ _null_ _null_ _null_ numeric_transform _null_ _null_ _null_ ));
+DESCR("transform a numeric length coercion");
 DATA(insert OID = 1704 ( numeric_abs			PGNSP PGUID 12 1 0 0 0 f f f t f i 1 0 1700 "1700" _null_ _null_ _null_ _null_ numeric_abs _null_ _null_ _null_ ));
 DATA(insert OID = 1705 ( abs					PGNSP PGUID 12 1 0 0 0 f f f t f i 1 0 1700 "1700" _null_ _null_ _null_ _null_ numeric_abs _null_ _null_ _null_ ));
 DESCR("absolute value");

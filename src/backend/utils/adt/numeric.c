@@ -30,6 +30,8 @@
 #include "catalog/pg_type.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
+#include "nodes/nodeFuncs.h"
+#include "parser/parse_clause.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/int8.h"
@@ -711,6 +713,52 @@ numeric_send(PG_FUNCTION_ARGS)
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
+
+/*
+ * numeric_transform() -
+ *
+ * Flatten calls to our length coercion function that solely represent
+ * increases in allowable precision.  Scale changes mutate every datum, so
+ * they are unoptimizable.  Some values, e.g. 1E-1001, can only fit into an
+ * unconstrained numeric, so a change from an unconstrained numeric to any
+ * constrained numeric is also unoptimizable.
+ */
+Datum
+numeric_transform(PG_FUNCTION_ARGS)
+{
+	FuncExpr   *expr = (FuncExpr *) PG_GETARG_POINTER(0);
+	Node	   *typmod;
+	Node	   *ret = NULL;
+
+	if (!IsA(expr, FuncExpr))
+		PG_RETURN_POINTER(ret);
+
+	Assert(list_length(expr->args) == 2);
+	typmod = lsecond(expr->args);
+
+	if (IsA(typmod, Const))
+	{
+		Node	   *source = linitial(expr->args);
+		int32		old_typmod = exprTypmod(source);
+		int32		new_typmod = DatumGetInt32(((Const *) typmod)->constvalue);
+		int32		old_scale = (old_typmod - VARHDRSZ) & 0xffff;
+		int32		new_scale = (new_typmod - VARHDRSZ) & 0xffff;
+		int32		old_precision = (old_typmod - VARHDRSZ) >> 16 & 0xffff;
+		int32		new_precision = (new_typmod - VARHDRSZ) >> 16 & 0xffff;
+
+		/*
+		 * If new_typmod < VARHDRSZ, the destination is unconstrained; that's
+		 * always OK.  If old_typmod >= VARHDRSZ, the source is constained.
+		 * and we're OK if the scale is unchanged and the precison is not
+		 * decreasing.  See further nodes in function header comment.
+		 */
+		if (new_typmod < VARHDRSZ || (old_typmod >= VARHDRSZ &&
+			 new_scale == old_scale && new_precision >= old_precision))
+			ret = relabel_to_typmod(source, new_typmod);
+	}
+
+	PG_RETURN_POINTER(ret);
+}
 
 /*
  * numeric() -
