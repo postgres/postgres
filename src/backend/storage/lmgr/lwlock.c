@@ -123,6 +123,22 @@ LOG_LWDEBUG(const char *where, LWLockId lockid, const char *msg)
 
 #ifdef LWLOCK_STATS
 
+static void init_lwlock_stats(void);
+static void print_lwlock_stats(int code, Datum arg);
+
+static void
+init_lwlock_stats(void)
+{
+	int		   *LWLockCounter = (int *) ((char *) LWLockArray - 2 * sizeof(int));
+	int			numLocks = LWLockCounter[1];
+
+	sh_acquire_counts = calloc(numLocks, sizeof(int));
+	ex_acquire_counts = calloc(numLocks, sizeof(int));
+	block_counts = calloc(numLocks, sizeof(int));
+	counts_for_pid = MyProcPid;
+	on_shmem_exit(print_lwlock_stats, 0);
+}
+
 static void
 print_lwlock_stats(int code, Datum arg)
 {
@@ -332,16 +348,7 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 #ifdef LWLOCK_STATS
 	/* Set up local count state first time through in a given process */
 	if (counts_for_pid != MyProcPid)
-	{
-		int		   *LWLockCounter = (int *) ((char *) LWLockArray - 2 * sizeof(int));
-		int			numLocks = LWLockCounter[1];
-
-		sh_acquire_counts = calloc(numLocks, sizeof(int));
-		ex_acquire_counts = calloc(numLocks, sizeof(int));
-		block_counts = calloc(numLocks, sizeof(int));
-		counts_for_pid = MyProcPid;
-		on_shmem_exit(print_lwlock_stats, 0);
-	}
+		init_lwlock_stats();
 	/* Count lock acquisition attempts */
 	if (mode == LW_EXCLUSIVE)
 		ex_acquire_counts[lockid]++;
@@ -587,6 +594,12 @@ LWLockWaitUntilFree(LWLockId lockid, LWLockMode mode)
 	int			extraWaits = 0;
 
 	PRINT_LWDEBUG("LWLockWaitUntilFree", lockid, lock);
+
+#ifdef LWLOCK_STATS
+	/* Set up local count state first time through in a given process */
+	if (counts_for_pid != MyProcPid)
+		init_lwlock_stats();
+#endif
 
 	/* Ensure we will have room to remember the lock */
 	if (num_held_lwlocks >= MAX_SIMUL_LWLOCKS)
