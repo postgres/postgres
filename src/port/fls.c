@@ -11,7 +11,7 @@
  *
  * This file was taken from FreeBSD to provide an implementation of fls()
  * for platforms that lack it.  Note that the operating system's version may
- * be substantially more efficient thatn ours, since some platforms have an
+ * be substantially more efficient than ours, since some platforms have an
  * assembly instruction that does exactly this.
  *
  * The FreeBSD copyright terms follow.
