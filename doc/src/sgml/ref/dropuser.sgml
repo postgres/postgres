@@ -62,7 +62,9 @@ PostgreSQL documentation
       <listitem>
        <para>
         Specifies the name of the <productname>PostgreSQL</productname> user to be removed.
-        You will be prompted for a name if none is specified on the command line.
+        You will be prompted for a name if none is specified on the command
+        line and the <option>-i</option>/<option>--interactive</option> option
+        is used.
        </para>
       </listitem>
      </varlistentry>
@@ -83,7 +85,8 @@ PostgreSQL documentation
       <term><option>--interactive</></term>
       <listitem>
        <para>
-        Prompt for confirmation before actually removing the user.
+        Prompt for confirmation before actually removing the user, and prompt
+        for the user name if none is specified on the command line.
        </para>
       </listitem>
      </varlistentry>

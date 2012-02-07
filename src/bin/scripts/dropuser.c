@@ -106,7 +106,16 @@ main(int argc, char *argv[])
 	}
 
 	if (dropuser == NULL)
-		dropuser = simple_prompt("Enter name of role to drop: ", 128, true);
+	{
+		if (interactive)
+			dropuser = simple_prompt("Enter name of role to drop: ", 128, true);
+		else
+		{
+			fprintf(stderr, _("%s: missing required argument role name\n"), progname);
+			fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+			exit(1);
+		}
+	}
 
 	if (interactive)
 	{
@@ -148,7 +157,8 @@ help(const char *progname)
 	printf(_("  %s [OPTION]... [ROLENAME]\n"), progname);
 	printf(_("\nOptions:\n"));
 	printf(_("  -e, --echo                show the commands being sent to the server\n"));
-	printf(_("  -i, --interactive         prompt before deleting anything\n"));
+	printf(_("  -i, --interactive         prompt before deleting anything, and prompt for\n"
+			 "                            role name if not specified\n"));
 	printf(_("  --if-exists               don't report error if user doesn't exist\n"));
 	printf(_("  --help                    show this help, then exit\n"));
 	printf(_("  --version                 output version information, then exit\n"));

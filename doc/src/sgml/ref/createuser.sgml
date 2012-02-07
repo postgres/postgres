@@ -102,7 +102,8 @@ PostgreSQL documentation
       <term><option>--no-createdb</></term>
       <listitem>
        <para>
-        The new user will not be allowed to create databases.
+        The new user will not be allowed to create databases.  This is the
+        default.
        </para>
       </listitem>
      </varlistentry>
@@ -148,6 +149,20 @@ PostgreSQL documentation
        <para>
         The new role will not automatically inherit privileges of roles
         it is a member of.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--interactive</></term>
+      <listitem>
+       <para>
+        Prompt for the user name if none is specified on the command line, and
+        also prompt for whichever of the options
+        <option>-d</option>/<option>-D</option>,
+        <option>-r</option>/<option>-R</option>,
+        <option>-s</option>/<option>-S</option> is not specified on the command
+        line.  (This was the default behavior up to PostgreSQL 9.1.)
        </para>
       </listitem>
      </varlistentry>
@@ -215,7 +230,8 @@ PostgreSQL documentation
       <term><option>--no-createrole</></term>
       <listitem>
        <para>
-        The new user will not be allowed to create new roles.
+        The new user will not be allowed to create new roles.  This is the
+        default.
        </para>
       </listitem>
      </varlistentry>
@@ -235,7 +251,7 @@ PostgreSQL documentation
       <term><option>--no-superuser</></term>
       <listitem>
        <para>
-        The new user will not be a superuser.
+        The new user will not be a superuser.  This is the default.
        </para>
       </listitem>
      </varlistentry>
@@ -284,11 +300,6 @@ PostgreSQL documentation
      </varlistentry>
 
     </variablelist>
-  </para>
-
-  <para>
-   You will be prompted for a name and other missing information if it
-   is not specified on the command line.
   </para>
 
   <para>
@@ -422,6 +433,14 @@ PostgreSQL documentation
     server:
 <screen>
 <prompt>$ </prompt><userinput>createuser joe</userinput>
+</screen>
+   </para>
+
+   <para>
+    To create a user <literal>joe</literal> on the default database
+    server with prompting for some additional attributes:
+<screen>
+<prompt>$ </prompt><userinput>createuser --interactive joe</userinput>
 <computeroutput>Shall the new role be a superuser? (y/n) </computeroutput><userinput>n</userinput>
 <computeroutput>Shall the new role be allowed to create databases? (y/n) </computeroutput><userinput>n</userinput>
 <computeroutput>Shall the new role be allowed to create more new roles? (y/n) </computeroutput><userinput>n</userinput>
@@ -430,7 +449,7 @@ PostgreSQL documentation
 
    <para>
     To create the same user <literal>joe</literal> using the
-    server on host <literal>eden</>, port 5000, avoiding the prompts and
+    server on host <literal>eden</>, port 5000, with attributes explicitly specified,
     taking a look at the underlying command:
 <screen>
 <prompt>$ </prompt><userinput>createuser -h eden -p 5000 -S -D -R -e joe</userinput>

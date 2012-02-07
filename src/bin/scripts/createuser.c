@@ -39,6 +39,7 @@ main(int argc, char *argv[])
 		{"no-login", no_argument, NULL, 'L'},
 		{"replication", no_argument, NULL, 1},
 		{"no-replication", no_argument, NULL, 2},
+		{"interactive", no_argument, NULL, 3},
 		/* adduser is obsolete, undocumented spelling of superuser */
 		{"adduser", no_argument, NULL, 'a'},
 		{"no-adduser", no_argument, NULL, 'A'},
@@ -52,12 +53,13 @@ main(int argc, char *argv[])
 	const char *progname;
 	int			optindex;
 	int			c;
-	char	   *newuser = NULL;
+	const char *newuser = NULL;
 	char	   *host = NULL;
 	char	   *port = NULL;
 	char	   *username = NULL;
 	enum trivalue prompt_password = TRI_DEFAULT;
 	bool		echo = false;
+	bool		interactive = false;
 	char	   *conn_limit = NULL;
 	bool		pwprompt = false;
 	char	   *newpassword = NULL;
@@ -154,6 +156,9 @@ main(int argc, char *argv[])
 			case 2:
 				replication = TRI_NO;
 				break;
+			case 3:
+				interactive = true;
+				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
@@ -175,7 +180,17 @@ main(int argc, char *argv[])
 	}
 
 	if (newuser == NULL)
-		newuser = simple_prompt("Enter name of role to add: ", 128, true);
+	{
+		if (interactive)
+			newuser = simple_prompt("Enter name of role to add: ", 128, true);
+		else
+		{
+			if (getenv("PGUSER"))
+				newuser = getenv("PGUSER");
+			else
+				newuser = get_user_name(progname);
+		}
+	}
 
 	if (pwprompt)
 	{
@@ -195,7 +210,7 @@ main(int argc, char *argv[])
 
 	if (superuser == 0)
 	{
-		if (yesno_prompt("Shall the new role be a superuser?"))
+		if (interactive && yesno_prompt("Shall the new role be a superuser?"))
 			superuser = TRI_YES;
 		else
 			superuser = TRI_NO;
@@ -210,7 +225,7 @@ main(int argc, char *argv[])
 
 	if (createdb == 0)
 	{
-		if (yesno_prompt("Shall the new role be allowed to create databases?"))
+		if (interactive && yesno_prompt("Shall the new role be allowed to create databases?"))
 			createdb = TRI_YES;
 		else
 			createdb = TRI_NO;
@@ -218,7 +233,7 @@ main(int argc, char *argv[])
 
 	if (createrole == 0)
 	{
-		if (yesno_prompt("Shall the new role be allowed to create more new roles?"))
+		if (interactive && yesno_prompt("Shall the new role be allowed to create more new roles?"))
 			createrole = TRI_YES;
 		else
 			createrole = TRI_NO;
@@ -316,7 +331,7 @@ help(const char *progname)
 	printf(_("\nOptions:\n"));
 	printf(_("  -c, --connection-limit=N  connection limit for role (default: no limit)\n"));
 	printf(_("  -d, --createdb            role can create new databases\n"));
-	printf(_("  -D, --no-createdb         role cannot create databases\n"));
+	printf(_("  -D, --no-createdb         role cannot create databases (default)\n"));
 	printf(_("  -e, --echo                show the commands being sent to the server\n"));
 	printf(_("  -E, --encrypted           encrypt stored password\n"));
 	printf(_("  -i, --inherit             role inherits privileges of roles it is a\n"
@@ -327,9 +342,11 @@ help(const char *progname)
 	printf(_("  -N, --unencrypted         do not encrypt stored password\n"));
 	printf(_("  -P, --pwprompt            assign a password to new role\n"));
 	printf(_("  -r, --createrole          role can create new roles\n"));
-	printf(_("  -R, --no-createrole       role cannot create roles\n"));
+	printf(_("  -R, --no-createrole       role cannot create roles (default)\n"));
 	printf(_("  -s, --superuser           role will be superuser\n"));
-	printf(_("  -S, --no-superuser        role will not be superuser\n"));
+	printf(_("  -S, --no-superuser        role will not be superuser (default)\n"));
+	printf(_("  --interactive             prompt for missing role name and attributes rather\n"
+			 "                            than using defaults\n"));
 	printf(_("  --replication             role can initiate replication\n"));
 	printf(_("  --no-replication          role cannot initiate replication\n"));
 	printf(_("  --help                    show this help, then exit\n"));
@@ -340,7 +357,5 @@ help(const char *progname)
 	printf(_("  -U, --username=USERNAME   user name to connect as (not the one to create)\n"));
 	printf(_("  -w, --no-password         never prompt for password\n"));
 	printf(_("  -W, --password            force password prompt\n"));
-	printf(_("\nIf one of -d, -D, -r, -R, -s, -S, and ROLENAME is not specified, you will\n"
-			 "be prompted interactively.\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
