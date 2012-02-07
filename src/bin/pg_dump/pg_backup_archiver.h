@@ -325,6 +325,7 @@ typedef struct _tocEntry
 
 
 extern void die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt,...) __attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 4), noreturn));
+extern void die_on_query_failure(ArchiveHandle *AH, const char *modulename, const char *query) __attribute__((noreturn));
 extern void warn_or_die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt,...) __attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 4)));
 
 extern void WriteTOC(ArchiveHandle *AH);

@@ -1453,6 +1453,16 @@ die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt,...)
 	va_end(ap);
 }
 
+/* As above, but with a complaint about a particular query. */
+void
+die_on_query_failure(ArchiveHandle *AH, const char *modulename,
+					 const char *query)
+{
+	write_msg(modulename, "query failed: %s",
+			  PQerrorMessage(AH->connection));
+	die_horribly(AH, modulename, "query was: %s\n", query);
+}
+
 /* on some error, we may decide to go on... */
 void
 warn_or_die_horribly(ArchiveHandle *AH,

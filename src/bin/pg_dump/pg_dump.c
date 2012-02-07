@@ -57,6 +57,7 @@
 #include "libpq/libpq-fs.h"
 
 #include "pg_backup_archiver.h"
+#include "pg_backup_db.h"
 #include "dumpmem.h"
 #include "dumputils.h"
 
@@ -150,7 +151,8 @@ static ArchiveFormat parseArchiveFormat(const char *format, ArchiveMode *mode);
 static void expand_schema_name_patterns(Archive *fout,
 							SimpleStringList *patterns,
 							SimpleOidList *oids);
-static void expand_table_name_patterns(SimpleStringList *patterns,
+static void expand_table_name_patterns(Archive *fout,
+						   SimpleStringList *patterns,
 						   SimpleOidList *oids);
 static NamespaceInfo *findNamespace(Archive *fout, Oid nsoid, Oid objoid);
 static void dumpTableData(Archive *fout, TableDataInfo *tdinfo);
@@ -228,9 +230,9 @@ static char *format_function_signature(Archive *fout,
 static const char *convertRegProcReference(Archive *fout,
 										   const char *proc);
 static const char *convertOperatorReference(Archive *fout, const char *opr);
-static const char *convertTSFunction(Oid funcOid);
+static const char *convertTSFunction(Archive *fout, Oid funcOid);
 static Oid	findLastBuiltinOid_V71(Archive *fout, const char *);
-static Oid	findLastBuiltinOid_V70(void);
+static Oid	findLastBuiltinOid_V70(Archive *fout);
 static void selectSourceSchema(Archive *fout, const char *schemaName);
 static char *getFormattedTypeName(Archive *fout, Oid oid, OidOptions opts);
 static char *myFormatType(const char *typname, int32 typmod);
@@ -242,20 +244,18 @@ static int	dumpBlobs(Archive *fout, void *arg);
 static void dumpDatabase(Archive *AH);
 static void dumpEncoding(Archive *AH);
 static void dumpStdStrings(Archive *AH);
-static void binary_upgrade_set_type_oids_by_type_oid(
+static void binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 								PQExpBuffer upgrade_buffer, Oid pg_type_oid);
-static bool binary_upgrade_set_type_oids_by_rel_oid(
+static bool binary_upgrade_set_type_oids_by_rel_oid(Archive *fout,
 								 PQExpBuffer upgrade_buffer, Oid pg_rel_oid);
-static void binary_upgrade_set_pg_class_oids(PQExpBuffer upgrade_buffer,
+static void binary_upgrade_set_pg_class_oids(Archive *fout,
+								 PQExpBuffer upgrade_buffer,
 								 Oid pg_class_oid, bool is_index);
 static void binary_upgrade_extension_member(PQExpBuffer upgrade_buffer,
 								DumpableObject *dobj,
 								const char *objlabel);
 static const char *getAttrName(int attrnum, TableInfo *tblInfo);
 static const char *fmtCopyColumnList(const TableInfo *ti);
-static void do_sql_command(PGconn *conn, const char *query);
-static void check_sql_result(PGresult *res, PGconn *conn, const char *query,
-				 ExecStatusType expected);
 
 int
 main(int argc, char **argv)
@@ -626,19 +626,21 @@ main(int argc, char **argv)
 	/*
 	 * Start transaction-snapshot mode transaction to dump consistent data.
 	 */
-	do_sql_command(g_conn, "BEGIN");
+	ExecuteSqlStatement(fout, "BEGIN");
 	if (fout->remoteVersion >= 90100)
 	{
 		if (serializable_deferrable)
-			do_sql_command(g_conn,
-						   "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE, "
-						   "READ ONLY, DEFERRABLE");
+			ExecuteSqlStatement(fout,
+								"SET TRANSACTION ISOLATION LEVEL "
+								"SERIALIZABLE, READ ONLY, DEFERRABLE");
 		else
-			do_sql_command(g_conn,
-						   "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
+			ExecuteSqlStatement(fout,
+						   		"SET TRANSACTION ISOLATION LEVEL "
+								"REPEATABLE READ");
 	}
 	else
-		do_sql_command(g_conn, "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE");
+		ExecuteSqlStatement(fout,
+							"SET TRANSACTION ISOLATION LEVEL SERIALIZABLE");
 
 	/* Select the appropriate subquery to convert user IDs to names */
 	if (fout->remoteVersion >= 80100)
@@ -654,7 +656,7 @@ main(int argc, char **argv)
 		if (fout->remoteVersion >= 70100)
 			g_last_builtin_oid = findLastBuiltinOid_V71(fout, PQdb(g_conn));
 		else
-			g_last_builtin_oid = findLastBuiltinOid_V70();
+			g_last_builtin_oid = findLastBuiltinOid_V70(fout);
 		if (g_verbose)
 			write_msg(NULL, "last built-in OID is %u\n", g_last_builtin_oid);
 	}
@@ -677,7 +679,7 @@ main(int argc, char **argv)
 	/* Expand table selection patterns into OID lists */
 	if (table_include_patterns.head != NULL)
 	{
-		expand_table_name_patterns(&table_include_patterns,
+		expand_table_name_patterns(fout, &table_include_patterns,
 								   &table_include_oids);
 		if (table_include_oids.head == NULL)
 		{
@@ -685,10 +687,10 @@ main(int argc, char **argv)
 			exit_nicely();
 		}
 	}
-	expand_table_name_patterns(&table_exclude_patterns,
+	expand_table_name_patterns(fout, &table_exclude_patterns,
 							   &table_exclude_oids);
 
-	expand_table_name_patterns(&tabledata_exclude_patterns,
+	expand_table_name_patterns(fout, &tabledata_exclude_patterns,
 							   &tabledata_exclude_oids);
 
 	/* non-matching exclusion patterns aren't an error */
@@ -896,44 +898,44 @@ setup_connection(Archive *AH, const char *dumpencoding, char *use_role)
 		PQExpBuffer query = createPQExpBuffer();
 
 		appendPQExpBuffer(query, "SET ROLE %s", fmtId(use_role));
-		do_sql_command(g_conn, query->data);
+		ExecuteSqlStatement(AH, query->data);
 		destroyPQExpBuffer(query);
 	}
 
 	/* Set the datestyle to ISO to ensure the dump's portability */
-	do_sql_command(g_conn, "SET DATESTYLE = ISO");
+	ExecuteSqlStatement(AH, "SET DATESTYLE = ISO");
 
 	/* Likewise, avoid using sql_standard intervalstyle */
 	if (AH->remoteVersion >= 80400)
-		do_sql_command(g_conn, "SET INTERVALSTYLE = POSTGRES");
+		ExecuteSqlStatement(AH, "SET INTERVALSTYLE = POSTGRES");
 
 	/*
 	 * If supported, set extra_float_digits so that we can dump float data
 	 * exactly (given correctly implemented float I/O code, anyway)
 	 */
 	if (AH->remoteVersion >= 90000)
-		do_sql_command(g_conn, "SET extra_float_digits TO 3");
+		ExecuteSqlStatement(AH, "SET extra_float_digits TO 3");
 	else if (AH->remoteVersion >= 70400)
-		do_sql_command(g_conn, "SET extra_float_digits TO 2");
+		ExecuteSqlStatement(AH, "SET extra_float_digits TO 2");
 
 	/*
 	 * If synchronized scanning is supported, disable it, to prevent
 	 * unpredictable changes in row ordering across a dump and reload.
 	 */
 	if (AH->remoteVersion >= 80300)
-		do_sql_command(g_conn, "SET synchronize_seqscans TO off");
+		ExecuteSqlStatement(AH, "SET synchronize_seqscans TO off");
 
 	/*
 	 * Disable timeouts if supported.
 	 */
 	if (AH->remoteVersion >= 70300)
-		do_sql_command(g_conn, "SET statement_timeout = 0");
+		ExecuteSqlStatement(AH, "SET statement_timeout = 0");
 
 	/*
 	 * Quote all identifiers, if requested.
 	 */
 	if (quote_all_identifiers && AH->remoteVersion >= 90100)
-		do_sql_command(g_conn, "SET quote_all_identifiers = true");
+		ExecuteSqlStatement(AH, "SET quote_all_identifiers = true");
 }
 
 static ArchiveFormat
@@ -1021,8 +1023,7 @@ expand_schema_name_patterns(Archive *fout,
 							  NULL);
 	}
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
@@ -1038,7 +1039,8 @@ expand_schema_name_patterns(Archive *fout,
  * and append them to the given OID list.
  */
 static void
-expand_table_name_patterns(SimpleStringList *patterns, SimpleOidList *oids)
+expand_table_name_patterns(Archive *fout,
+						   SimpleStringList *patterns, SimpleOidList *oids)
 {
 	PQExpBuffer query;
 	PGresult   *res;
@@ -1071,8 +1073,7 @@ expand_table_name_patterns(SimpleStringList *patterns, SimpleOidList *oids)
 							  "pg_catalog.pg_table_is_visible(c.oid)");
 	}
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
@@ -1335,8 +1336,7 @@ dumpTableData_copy(Archive *fout, void *dcontext)
 										 classname),
 						  column_list);
 	}
-	res = PQexec(g_conn, q->data);
-	check_sql_result(res, g_conn, q->data, PGRES_COPY_OUT);
+	res = ExecuteSqlQuery(fout, q->data, PGRES_COPY_OUT);
 	PQclear(res);
 
 	for (;;)
@@ -1411,7 +1411,13 @@ dumpTableData_copy(Archive *fout, void *dcontext)
 
 	/* Check command status and return to normal libpq state */
 	res = PQgetResult(g_conn);
-	check_sql_result(res, g_conn, q->data, PGRES_COMMAND_OK);
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	{
+		write_msg(NULL, "Dumping the contents of table \"%s\" failed: PQgetResult() failed.\n", classname);
+		write_msg(NULL, "Error message from server: %s", PQerrorMessage(g_conn));
+		write_msg(NULL, "The command was: %s\n", q->data);
+		exit_nicely();
+	}
 	PQclear(res);
 
 	destroyPQExpBuffer(q);
@@ -1465,16 +1471,12 @@ dumpTableData_insert(Archive *fout, void *dcontext)
 	if (tdinfo->filtercond)
 		appendPQExpBuffer(q, " %s", tdinfo->filtercond);
 
-	res = PQexec(g_conn, q->data);
-	check_sql_result(res, g_conn, q->data, PGRES_COMMAND_OK);
+	ExecuteSqlStatement(fout, q->data);
 
-	do
+	while (1)
 	{
-		PQclear(res);
-
-		res = PQexec(g_conn, "FETCH 100 FROM _pg_dump_cursor");
-		check_sql_result(res, g_conn, "FETCH 100 FROM _pg_dump_cursor",
-						 PGRES_TUPLES_OK);
+		res = ExecuteSqlQuery(fout, "FETCH 100 FROM _pg_dump_cursor",
+							  PGRES_TUPLES_OK);
 		nfields = PQnfields(res);
 		for (tuple = 0; tuple < PQntuples(res); tuple++)
 		{
@@ -1565,13 +1567,18 @@ dumpTableData_insert(Archive *fout, void *dcontext)
 			}
 			archprintf(fout, ");\n");
 		}
-	} while (PQntuples(res) > 0);
 
-	PQclear(res);
+		if (PQntuples(res) <= 0)
+		{
+			PQclear(res);
+			break;
+		}
+		PQclear(res);
+	}
 
 	archprintf(fout, "\n\n");
 
-	do_sql_command(g_conn, "CLOSE _pg_dump_cursor");
+	ExecuteSqlStatement(fout, "CLOSE _pg_dump_cursor");
 
 	destroyPQExpBuffer(q);
 	return 1;
@@ -1917,8 +1924,7 @@ dumpDatabase(Archive *fout)
 		appendStringLiteralAH(dbQry, datname, fout);
 	}
 
-	res = PQexec(g_conn, dbQry->data);
-	check_sql_result(res, g_conn, dbQry->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, dbQry->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 
@@ -2030,8 +2036,7 @@ dumpDatabase(Archive *fout)
 						  "WHERE oid = %u;\n",
 						  LargeObjectRelationId);
 
-		lo_res = PQexec(g_conn, loFrozenQry->data);
-		check_sql_result(lo_res, g_conn, loFrozenQry->data, PGRES_TUPLES_OK);
+		lo_res = ExecuteSqlQuery(fout, loFrozenQry->data, PGRES_TUPLES_OK);
 
 		if (PQntuples(lo_res) != 1)
 		{
@@ -2069,8 +2074,7 @@ dumpDatabase(Archive *fout)
 							  "WHERE oid = %u;\n",
 							  LargeObjectMetadataRelationId);
 
-			lo_res = PQexec(g_conn, loFrozenQry->data);
-			check_sql_result(lo_res, g_conn, loFrozenQry->data, PGRES_TUPLES_OK);
+			lo_res = ExecuteSqlQuery(fout, loFrozenQry->data, PGRES_TUPLES_OK);
 
 			if (PQntuples(lo_res) != 1)
 			{
@@ -2143,8 +2147,7 @@ dumpDatabase(Archive *fout)
 		PQExpBuffer seclabelQry = createPQExpBuffer();
 
 		buildShSecLabelQuery(g_conn, "pg_database", dbCatId.oid, seclabelQry);
-		res = PQexec(g_conn, seclabelQry->data);
-		check_sql_result(res, g_conn, seclabelQry->data, PGRES_TUPLES_OK);
+		res = ExecuteSqlQuery(fout, seclabelQry->data, PGRES_TUPLES_OK);
 		resetPQExpBuffer(seclabelQry);
 		emitShSecLabels(g_conn, res, seclabelQry, "DATABASE", datname);
 		if (strlen(seclabelQry->data))
@@ -2251,8 +2254,7 @@ getBlobs(Archive *fout)
 						  "SELECT oid, NULL::oid, NULL::oid"
 						  " FROM pg_class WHERE relkind = 'l'");
 
-	res = PQexec(g_conn, blobQry->data);
-	check_sql_result(res, g_conn, blobQry->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, blobQry->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 	if (ntups > 0)
@@ -2379,19 +2381,15 @@ dumpBlobs(Archive *fout, void *arg)
 	else
 		blobQry = "DECLARE bloboid CURSOR FOR SELECT oid FROM pg_class WHERE relkind = 'l'";
 
-	res = PQexec(g_conn, blobQry);
-	check_sql_result(res, g_conn, blobQry, PGRES_COMMAND_OK);
+	ExecuteSqlStatement(fout, blobQry);
 
 	/* Command to fetch from cursor */
 	blobFetchQry = "FETCH 1000 IN bloboid";
 
 	do
 	{
-		PQclear(res);
-
 		/* Do a fetch */
-		res = PQexec(g_conn, blobFetchQry);
-		check_sql_result(res, g_conn, blobFetchQry, PGRES_TUPLES_OK);
+		res = ExecuteSqlQuery(fout, blobFetchQry, PGRES_TUPLES_OK);
 
 		/* Process the tuples, if any */
 		ntups = PQntuples(res);
@@ -2430,6 +2428,8 @@ dumpBlobs(Archive *fout, void *arg)
 
 			EndBlob(fout, blobOid);
 		}
+
+		PQclear(res);
 	} while (ntups > 0);
 
 	PQclear(res);
@@ -2438,7 +2438,8 @@ dumpBlobs(Archive *fout, void *arg)
 }
 
 static void
-binary_upgrade_set_type_oids_by_type_oid(PQExpBuffer upgrade_buffer,
+binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
+										 PQExpBuffer upgrade_buffer,
 										 Oid pg_type_oid)
 {
 	PQExpBuffer upgrade_query = createPQExpBuffer();
@@ -2458,8 +2459,7 @@ binary_upgrade_set_type_oids_by_type_oid(PQExpBuffer upgrade_buffer,
 					  "WHERE pg_type.oid = '%u'::pg_catalog.oid;",
 					  pg_type_oid);
 
-	upgrade_res = PQexec(g_conn, upgrade_query->data);
-	check_sql_result(upgrade_res, g_conn, upgrade_query->data, PGRES_TUPLES_OK);
+	upgrade_res = ExecuteSqlQuery(fout, upgrade_query->data, PGRES_TUPLES_OK);
 
 	/* Expecting a single result only */
 	ntups = PQntuples(upgrade_res);
@@ -2488,7 +2488,8 @@ binary_upgrade_set_type_oids_by_type_oid(PQExpBuffer upgrade_buffer,
 }
 
 static bool
-binary_upgrade_set_type_oids_by_rel_oid(PQExpBuffer upgrade_buffer,
+binary_upgrade_set_type_oids_by_rel_oid(Archive *fout,
+										PQExpBuffer upgrade_buffer,
 										Oid pg_rel_oid)
 {
 	PQExpBuffer upgrade_query = createPQExpBuffer();
@@ -2506,8 +2507,7 @@ binary_upgrade_set_type_oids_by_rel_oid(PQExpBuffer upgrade_buffer,
 					  "WHERE c.oid = '%u'::pg_catalog.oid;",
 					  pg_rel_oid);
 
-	upgrade_res = PQexec(g_conn, upgrade_query->data);
-	check_sql_result(upgrade_res, g_conn, upgrade_query->data, PGRES_TUPLES_OK);
+	upgrade_res = ExecuteSqlQuery(fout, upgrade_query->data, PGRES_TUPLES_OK);
 
 	/* Expecting a single result only */
 	ntups = PQntuples(upgrade_res);
@@ -2522,7 +2522,8 @@ binary_upgrade_set_type_oids_by_rel_oid(PQExpBuffer upgrade_buffer,
 
 	pg_type_oid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "crel")));
 
-	binary_upgrade_set_type_oids_by_type_oid(upgrade_buffer, pg_type_oid);
+	binary_upgrade_set_type_oids_by_type_oid(fout, upgrade_buffer,
+											 pg_type_oid);
 
 	if (!PQgetisnull(upgrade_res, 0, PQfnumber(upgrade_res, "trel")))
 	{
@@ -2545,7 +2546,8 @@ binary_upgrade_set_type_oids_by_rel_oid(PQExpBuffer upgrade_buffer,
 }
 
 static void
-binary_upgrade_set_pg_class_oids(PQExpBuffer upgrade_buffer, Oid pg_class_oid,
+binary_upgrade_set_pg_class_oids(Archive *fout,
+								 PQExpBuffer upgrade_buffer, Oid pg_class_oid,
 								 bool is_index)
 {
 	PQExpBuffer upgrade_query = createPQExpBuffer();
@@ -2561,8 +2563,7 @@ binary_upgrade_set_pg_class_oids(PQExpBuffer upgrade_buffer, Oid pg_class_oid,
 					  "WHERE c.oid = '%u'::pg_catalog.oid;",
 					  pg_class_oid);
 
-	upgrade_res = PQexec(g_conn, upgrade_query->data);
-	check_sql_result(upgrade_res, g_conn, upgrade_query->data, PGRES_TUPLES_OK);
+	upgrade_res = ExecuteSqlQuery(fout, upgrade_query->data, PGRES_TUPLES_OK);
 
 	/* Expecting a single result only */
 	ntups = PQntuples(upgrade_res);
@@ -2729,8 +2730,7 @@ getNamespaces(Archive *fout, int *numNamespaces)
 					  "nspacl FROM pg_namespace",
 					  username_subquery);
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 
@@ -2850,8 +2850,7 @@ getExtensions(Archive *fout, int *numExtensions)
 					  "FROM pg_extension x "
 					  "JOIN pg_namespace n ON n.oid = x.extnamespace");
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 
@@ -3003,8 +3002,7 @@ getTypes(Archive *fout, int *numTypes)
 						  username_subquery);
 	}
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 
@@ -3213,8 +3211,7 @@ getOperators(Archive *fout, int *numOprs)
 						  username_subquery);
 	}
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 	*numOprs = ntups;
@@ -3301,8 +3298,7 @@ getCollations(Archive *fout, int *numCollations)
 					  "FROM pg_collation",
 					  username_subquery);
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 	*numCollations = ntups;
@@ -3381,8 +3377,7 @@ getConversions(Archive *fout, int *numConversions)
 					  "FROM pg_conversion",
 					  username_subquery);
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 	*numConversions = ntups;
@@ -3473,8 +3468,7 @@ getOpclasses(Archive *fout, int *numOpclasses)
 						  "FROM pg_opclass");
 	}
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 	*numOpclasses = ntups;
@@ -3562,8 +3556,7 @@ getOpfamilies(Archive *fout, int *numOpfamilies)
 					  "FROM pg_opfamily",
 					  username_subquery);
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 	*numOpfamilies = ntups;
@@ -3704,8 +3697,7 @@ getAggregates(Archive *fout, int *numAggs)
 						  g_last_builtin_oid);
 	}
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 	*numAggs = ntups;
@@ -3867,8 +3859,7 @@ getFuncs(Archive *fout, int *numFuncs)
 						  g_last_builtin_oid);
 	}
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 
@@ -4288,8 +4279,7 @@ getTables(Archive *fout, int *numTables)
 						  RELKIND_RELATION, RELKIND_SEQUENCE);
 	}
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 
@@ -4341,7 +4331,7 @@ getTables(Archive *fout, int *numTables)
 		resetPQExpBuffer(query);
 		appendPQExpBuffer(query, "SET statement_timeout = ");
 		appendStringLiteralConn(query, lockWaitTimeout, g_conn);
-		do_sql_command(g_conn, query->data);
+		ExecuteSqlStatement(fout, query->data);
 	}
 
 	for (i = 0; i < ntups; i++)
@@ -4415,7 +4405,7 @@ getTables(Archive *fout, int *numTables)
 						 fmtQualifiedId(fout,
 										tblinfo[i].dobj.namespace->dobj.name,
 										tblinfo[i].dobj.name));
-			do_sql_command(g_conn, query->data);
+			ExecuteSqlStatement(fout, query->data);
 		}
 
 		/* Emit notice if join for owner failed */
@@ -4426,7 +4416,7 @@ getTables(Archive *fout, int *numTables)
 
 	if (lockWaitTimeout && fout->remoteVersion >= 70300)
 	{
-		do_sql_command(g_conn, "SET statement_timeout = 0");
+		ExecuteSqlStatement(fout, "SET statement_timeout = 0");
 	}
 
 	PQclear(res);
@@ -4491,8 +4481,7 @@ getInherits(Archive *fout, int *numInherits)
 
 	appendPQExpBuffer(query, "SELECT inhrelid, inhparent FROM pg_inherits");
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 
@@ -4741,8 +4730,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 							  tbinfo->dobj.catId.oid);
 		}
 
-		res = PQexec(g_conn, query->data);
-		check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+		res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 		ntups = PQntuples(res);
 
@@ -4900,8 +4888,7 @@ getConstraints(Archive *fout, TableInfo tblinfo[], int numTables)
 						  "WHERE conrelid = '%u'::pg_catalog.oid "
 						  "AND contype = 'f'",
 						  tbinfo->dobj.catId.oid);
-		res = PQexec(g_conn, query->data);
-		check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+		res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 		ntups = PQntuples(res);
 
@@ -4995,8 +4982,7 @@ getDomainConstraints(Archive *fout, TypeInfo *tyinfo)
 						  "ORDER BY conname",
 						  tyinfo->dobj.catId.oid);
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 
@@ -5102,8 +5088,7 @@ getRules(Archive *fout, int *numRules)
 						  "ORDER BY oid");
 	}
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 
@@ -5310,8 +5295,7 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 							  "WHERE tgrelid = '%u'::oid",
 							  tbinfo->dobj.catId.oid);
 		}
-		res = PQexec(g_conn, query->data);
-		check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+		res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 		ntups = PQntuples(res);
 
@@ -5494,8 +5478,7 @@ getProcLangs(Archive *fout, int *numProcLangs)
 						  "ORDER BY oid");
 	}
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 
@@ -5615,8 +5598,7 @@ getCasts(Archive *fout, int *numCasts)
 						  "ORDER BY 3,4");
 	}
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 
@@ -5882,8 +5864,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 							  tbinfo->dobj.catId.oid);
 		}
 
-		res = PQexec(g_conn, q->data);
-		check_sql_result(res, g_conn, q->data, PGRES_TUPLES_OK);
+		res = ExecuteSqlQuery(fout, q->data, PGRES_TUPLES_OK);
 
 		ntups = PQntuples(res);
 
@@ -6006,8 +5987,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 								  "WHERE adrelid = '%u'::oid",
 								  tbinfo->dobj.catId.oid);
 			}
-			res = PQexec(g_conn, q->data);
-			check_sql_result(res, g_conn, q->data, PGRES_TUPLES_OK);
+			res = ExecuteSqlQuery(fout, q->data, PGRES_TUPLES_OK);
 
 			numDefaults = PQntuples(res);
 			attrdefs = (AttrDefInfo *) pg_malloc(numDefaults * sizeof(AttrDefInfo));
@@ -6166,8 +6146,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 								  "ORDER BY rcname",
 								  tbinfo->dobj.catId.oid);
 			}
-			res = PQexec(g_conn, q->data);
-			check_sql_result(res, g_conn, q->data, PGRES_TUPLES_OK);
+			res = ExecuteSqlQuery(fout, q->data, PGRES_TUPLES_OK);
 
 			numConstrs = PQntuples(res);
 			if (numConstrs != tbinfo->ncheck)
@@ -6286,8 +6265,7 @@ getTSParsers(Archive *fout, int *numTSParsers)
 					  "prsend::oid, prsheadline::oid, prslextype::oid "
 					  "FROM pg_ts_parser");
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 	*numTSParsers = ntups;
@@ -6371,8 +6349,7 @@ getTSDictionaries(Archive *fout, int *numTSDicts)
 					  "FROM pg_ts_dict",
 					  username_subquery);
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 	*numTSDicts = ntups;
@@ -6452,8 +6429,7 @@ getTSTemplates(Archive *fout, int *numTSTemplates)
 					  "tmplnamespace, tmplinit::oid, tmpllexize::oid "
 					  "FROM pg_ts_template");
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 	*numTSTemplates = ntups;
@@ -6529,8 +6505,7 @@ getTSConfigurations(Archive *fout, int *numTSConfigs)
 					  "FROM pg_ts_config",
 					  username_subquery);
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 	*numTSConfigs = ntups;
@@ -6634,8 +6609,7 @@ getForeignDataWrappers(Archive *fout, int *numForeignDataWrappers)
 						  username_subquery);
 	}
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 	*numForeignDataWrappers = ntups;
@@ -6723,8 +6697,7 @@ getForeignServers(Archive *fout, int *numForeignServers)
 					  "FROM pg_foreign_server",
 					  username_subquery);
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 	*numForeignServers = ntups;
@@ -6808,8 +6781,7 @@ getDefaultACLs(Archive *fout, int *numDefaultACLs)
 					  "FROM pg_default_acl",
 					  username_subquery);
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 	*numDefaultACLs = ntups;
@@ -7158,8 +7130,7 @@ collectComments(Archive *fout, CommentItem **items)
 						  "ORDER BY objoid");
 	}
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	/* Construct lookup table containing OIDs in numeric form */
 
@@ -7558,8 +7529,7 @@ dumpEnumType(Archive *fout, TypeInfo *tyinfo)
 						  "ORDER BY oid",
 						  tyinfo->dobj.catId.oid);
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	num = PQntuples(res);
 
@@ -7574,7 +7544,8 @@ dumpEnumType(Archive *fout, TypeInfo *tyinfo)
 					  fmtId(tyinfo->dobj.name));
 
 	if (binary_upgrade)
-		binary_upgrade_set_type_oids_by_type_oid(q, tyinfo->dobj.catId.oid);
+		binary_upgrade_set_type_oids_by_type_oid(fout, q,
+												 tyinfo->dobj.catId.oid);
 
 	appendPQExpBuffer(q, "CREATE TYPE %s AS ENUM (",
 					  fmtId(tyinfo->dobj.name));
@@ -7682,8 +7653,7 @@ dumpRangeType(Archive *fout, TypeInfo *tyinfo)
 					  "rngtypid = '%u'",
 					  tyinfo->dobj.catId.oid);
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 	if (PQntuples(res) != 1)
 	{
 		write_msg(NULL, "query returned %d pg_range entries for range type \"%s\"\n",
@@ -7702,7 +7672,8 @@ dumpRangeType(Archive *fout, TypeInfo *tyinfo)
 					  fmtId(tyinfo->dobj.name));
 
 	if (binary_upgrade)
-		binary_upgrade_set_type_oids_by_type_oid(q, tyinfo->dobj.catId.oid);
+		binary_upgrade_set_type_oids_by_type_oid(fout,
+												 q, tyinfo->dobj.catId.oid);
 
 	appendPQExpBuffer(q, "CREATE TYPE %s AS RANGE (",
 					  fmtId(tyinfo->dobj.name));
@@ -7990,8 +7961,7 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 						  tyinfo->dobj.catId.oid);
 	}
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	/* Expecting a single result only */
 	ntups = PQntuples(res);
@@ -8047,7 +8017,8 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 
 	/* We might already have a shell type, but setting pg_type_oid is harmless */
 	if (binary_upgrade)
-		binary_upgrade_set_type_oids_by_type_oid(q, tyinfo->dobj.catId.oid);
+		binary_upgrade_set_type_oids_by_type_oid(fout, q,
+												 tyinfo->dobj.catId.oid);
 
 	appendPQExpBuffer(q,
 					  "CREATE TYPE %s (\n"
@@ -8221,8 +8192,7 @@ dumpDomain(Archive *fout, TypeInfo *tyinfo)
 						  tyinfo->dobj.catId.oid);
 	}
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	/* Expecting a single result only */
 	ntups = PQntuples(res);
@@ -8249,7 +8219,8 @@ dumpDomain(Archive *fout, TypeInfo *tyinfo)
 	typcollation = atooid(PQgetvalue(res, 0, PQfnumber(res, "typcollation")));
 
 	if (binary_upgrade)
-		binary_upgrade_set_type_oids_by_type_oid(q, tyinfo->dobj.catId.oid);
+		binary_upgrade_set_type_oids_by_type_oid(fout, q,
+												 tyinfo->dobj.catId.oid);
 
 	appendPQExpBuffer(q,
 					  "CREATE DOMAIN %s AS %s",
@@ -8407,8 +8378,7 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 						  tyinfo->dobj.catId.oid);
 	}
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 
@@ -8424,8 +8394,9 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 	{
 		Oid			typrelid = atooid(PQgetvalue(res, 0, i_typrelid));
 
-		binary_upgrade_set_type_oids_by_type_oid(q, tyinfo->dobj.catId.oid);
-		binary_upgrade_set_pg_class_oids(q, typrelid, false);
+		binary_upgrade_set_type_oids_by_type_oid(fout, q,
+												 tyinfo->dobj.catId.oid);
+		binary_upgrade_set_pg_class_oids(fout, q, typrelid, false);
 	}
 
 	appendPQExpBuffer(q, "CREATE TYPE %s AS (",
@@ -8581,8 +8552,7 @@ dumpCompositeTypeColComments(Archive *fout, TypeInfo *tyinfo)
 					  tyinfo->typrelid);
 
 	/* Fetch column attnames */
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 	if (ntups < 1)
@@ -8687,7 +8657,7 @@ dumpShellType(Archive *fout, ShellTypeInfo *stinfo)
 	 */
 
 	if (binary_upgrade)
-		binary_upgrade_set_type_oids_by_type_oid(q,
+		binary_upgrade_set_type_oids_by_type_oid(fout, q,
 										   stinfo->baseType->dobj.catId.oid);
 
 	appendPQExpBuffer(q, "CREATE TYPE %s;\n",
@@ -9189,8 +9159,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 						  finfo->dobj.catId.oid);
 	}
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	/* Expecting a single result only */
 	ntups = PQntuples(res);
@@ -9743,8 +9712,7 @@ dumpOpr(Archive *fout, OprInfo *oprinfo)
 						  oprinfo->dobj.catId.oid);
 	}
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	/* Expecting a single result only */
 	ntups = PQntuples(res);
@@ -9989,7 +9957,7 @@ convertOperatorReference(Archive *fout, const char *opr)
  * are search path dependent!
  */
 static const char *
-convertTSFunction(Oid funcOid)
+convertTSFunction(Archive *fout, Oid funcOid)
 {
 	char	   *result;
 	char		query[128];
@@ -9998,8 +9966,7 @@ convertTSFunction(Oid funcOid)
 
 	snprintf(query, sizeof(query),
 			 "SELECT '%u'::pg_catalog.regproc", funcOid);
-	res = PQexec(g_conn, query);
-	check_sql_result(res, g_conn, query, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 	if (ntups != 1)
@@ -10115,8 +10082,7 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 						  opcinfo->dobj.catId.oid);
 	}
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	/* Expecting a single result only */
 	ntups = PQntuples(res);
@@ -10262,8 +10228,7 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 						  opcinfo->dobj.catId.oid);
 	}
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 
@@ -10343,8 +10308,7 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 						  opcinfo->dobj.catId.oid);
 	}
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 
@@ -10525,8 +10489,7 @@ dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo)
 						  opfinfo->dobj.catId.oid);
 	}
 
-	res_ops = PQexec(g_conn, query->data);
-	check_sql_result(res_ops, g_conn, query->data, PGRES_TUPLES_OK);
+	res_ops = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	resetPQExpBuffer(query);
 
@@ -10542,8 +10505,7 @@ dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo)
 					  "ORDER BY amprocnum",
 					  opfinfo->dobj.catId.oid);
 
-	res_procs = PQexec(g_conn, query->data);
-	check_sql_result(res_procs, g_conn, query->data, PGRES_TUPLES_OK);
+	res_procs = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	if (PQntuples(res_ops) == 0 && PQntuples(res_procs) == 0)
 	{
@@ -10561,8 +10523,7 @@ dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo)
 						  "LIMIT 1",
 						  opfinfo->dobj.catId.oid);
 
-		res = PQexec(g_conn, query->data);
-		check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+		res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 		if (PQntuples(res) == 0)
 		{
@@ -10589,8 +10550,7 @@ dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo)
 					  "WHERE oid = '%u'::pg_catalog.oid",
 					  opfinfo->dobj.catId.oid);
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	/* Expecting a single result only */
 	ntups = PQntuples(res);
@@ -10775,8 +10735,7 @@ dumpCollation(Archive *fout, CollInfo *collinfo)
 					  "WHERE c.oid = '%u'::pg_catalog.oid",
 					  collinfo->dobj.catId.oid);
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	/* Expecting a single result only */
 	ntups = PQntuples(res);
@@ -10881,8 +10840,7 @@ dumpConversion(Archive *fout, ConvInfo *convinfo)
 					  "WHERE c.oid = '%u'::pg_catalog.oid",
 					  convinfo->dobj.catId.oid);
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	/* Expecting a single result only */
 	ntups = PQntuples(res);
@@ -11082,8 +11040,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 						  agginfo->aggfn.dobj.catId.oid);
 	}
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	/* Expecting a single result only */
 	ntups = PQntuples(res);
@@ -11250,16 +11207,16 @@ dumpTSParser(Archive *fout, TSParserInfo *prsinfo)
 					  fmtId(prsinfo->dobj.name));
 
 	appendPQExpBuffer(q, "    START = %s,\n",
-					  convertTSFunction(prsinfo->prsstart));
+					  convertTSFunction(fout, prsinfo->prsstart));
 	appendPQExpBuffer(q, "    GETTOKEN = %s,\n",
-					  convertTSFunction(prsinfo->prstoken));
+					  convertTSFunction(fout, prsinfo->prstoken));
 	appendPQExpBuffer(q, "    END = %s,\n",
-					  convertTSFunction(prsinfo->prsend));
+					  convertTSFunction(fout, prsinfo->prsend));
 	if (prsinfo->prsheadline != InvalidOid)
 		appendPQExpBuffer(q, "    HEADLINE = %s,\n",
-						  convertTSFunction(prsinfo->prsheadline));
+						  convertTSFunction(fout, prsinfo->prsheadline));
 	appendPQExpBuffer(q, "    LEXTYPES = %s );\n",
-					  convertTSFunction(prsinfo->prslextype));
+					  convertTSFunction(fout, prsinfo->prslextype));
 
 	/*
 	 * DROP must be fully qualified in case same name appears in pg_catalog
@@ -11326,8 +11283,7 @@ dumpTSDictionary(Archive *fout, TSDictInfo *dictinfo)
 					  "FROM pg_ts_template p, pg_namespace n "
 					  "WHERE p.oid = '%u' AND n.oid = tmplnamespace",
 					  dictinfo->dicttemplate);
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 	ntups = PQntuples(res);
 	if (ntups != 1)
 	{
@@ -11421,9 +11377,9 @@ dumpTSTemplate(Archive *fout, TSTemplateInfo *tmplinfo)
 
 	if (tmplinfo->tmplinit != InvalidOid)
 		appendPQExpBuffer(q, "    INIT = %s,\n",
-						  convertTSFunction(tmplinfo->tmplinit));
+						  convertTSFunction(fout, tmplinfo->tmplinit));
 	appendPQExpBuffer(q, "    LEXIZE = %s );\n",
-					  convertTSFunction(tmplinfo->tmpllexize));
+					  convertTSFunction(fout, tmplinfo->tmpllexize));
 
 	/*
 	 * DROP must be fully qualified in case same name appears in pg_catalog
@@ -11493,8 +11449,7 @@ dumpTSConfig(Archive *fout, TSConfigInfo *cfginfo)
 					  "FROM pg_ts_parser p, pg_namespace n "
 					  "WHERE p.oid = '%u' AND n.oid = prsnamespace",
 					  cfginfo->cfgparser);
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 	ntups = PQntuples(res);
 	if (ntups != 1)
 	{
@@ -11531,8 +11486,7 @@ dumpTSConfig(Archive *fout, TSConfigInfo *cfginfo)
 					  "ORDER BY m.mapcfg, m.maptokentype, m.mapseqno",
 					  cfginfo->cfgparser, cfginfo->dobj.catId.oid);
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 	ntups = PQntuples(res);
 
 	i_tokenname = PQfnumber(res, "tokenname");
@@ -11714,8 +11668,7 @@ dumpForeignServer(Archive *fout, ForeignServerInfo *srvinfo)
 					  "FROM pg_foreign_data_wrapper w "
 					  "WHERE w.oid = '%u'",
 					  srvinfo->srvfdw);
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 	ntups = PQntuples(res);
 	if (ntups != 1)
 	{
@@ -11841,8 +11794,7 @@ dumpUserMappings(Archive *fout,
 					  "ORDER BY usename",
 					  catalogId.oid);
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 	i_usename = PQfnumber(res, "usename");
@@ -12283,8 +12235,7 @@ collectSecLabels(Archive *fout, SecLabelItem **items)
 					  "FROM pg_catalog.pg_seclabel "
 					  "ORDER BY classoid, objoid, objsubid");
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	/* Construct lookup table containing OIDs in numeric form */
 	i_label = PQfnumber(res, "label");
@@ -12354,8 +12305,7 @@ dumpTable(Archive *fout, TableInfo *tbinfo)
 							  "WHERE attrelid = '%u' AND NOT attisdropped AND attacl IS NOT NULL "
 							  "ORDER BY attnum",
 							  tbinfo->dobj.catId.oid);
-			res = PQexec(g_conn, query->data);
-			check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+			res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 			for (i = 0; i < PQntuples(res); i++)
 			{
@@ -12409,7 +12359,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 	selectSourceSchema(fout, tbinfo->dobj.namespace->dobj.name);
 
 	if (binary_upgrade)
-		binary_upgrade_set_type_oids_by_rel_oid(q,
+		binary_upgrade_set_type_oids_by_rel_oid(fout, q,
 												tbinfo->dobj.catId.oid);
 
 	/* Is it a table or a view? */
@@ -12435,8 +12385,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			appendPQExpBuffer(query, ";");
 		}
 
-		res = PQexec(g_conn, query->data);
-		check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+		res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 		if (PQntuples(res) != 1)
 		{
@@ -12468,7 +12417,8 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 						  fmtId(tbinfo->dobj.name));
 
 		if (binary_upgrade)
-			binary_upgrade_set_pg_class_oids(q, tbinfo->dobj.catId.oid, false);
+			binary_upgrade_set_pg_class_oids(fout, q,
+											 tbinfo->dobj.catId.oid, false);
 
 		appendPQExpBuffer(q, "CREATE VIEW %s", fmtId(tbinfo->dobj.name));
 		if (tbinfo->reloptions && strlen(tbinfo->reloptions) > 0)
@@ -12503,8 +12453,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 							  "ON (fs.oid = ft.ftserver) "
 							  "WHERE ft.ftrelid = '%u'",
 							  tbinfo->dobj.catId.oid);
-			res = PQexec(g_conn, query->data);
-			check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+			res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 			if (PQntuples(res) != 1)
 			{
 				write_msg(NULL, ngettext("query returned %d foreign server entry for foreign table \"%s\"\n",
@@ -12541,7 +12490,8 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 						  fmtId(tbinfo->dobj.name));
 
 		if (binary_upgrade)
-			binary_upgrade_set_pg_class_oids(q, tbinfo->dobj.catId.oid, false);
+			binary_upgrade_set_pg_class_oids(fout, q,
+											 tbinfo->dobj.catId.oid, false);
 
 		appendPQExpBuffer(q, "CREATE %s%s %s",
 						  tbinfo->relpersistence == RELPERSISTENCE_UNLOGGED ?
@@ -13087,7 +13037,8 @@ dumpIndex(Archive *fout, IndxInfo *indxinfo)
 	if (indxinfo->indexconstraint == 0)
 	{
 		if (binary_upgrade)
-			binary_upgrade_set_pg_class_oids(q, indxinfo->dobj.catId.oid, true);
+			binary_upgrade_set_pg_class_oids(fout, q,
+											 indxinfo->dobj.catId.oid, true);
 
 		/* Plain secondary index */
 		appendPQExpBuffer(q, "%s;\n", indxinfo->indexdef);
@@ -13168,7 +13119,8 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 		}
 
 		if (binary_upgrade)
-			binary_upgrade_set_pg_class_oids(q, indxinfo->dobj.catId.oid, true);
+			binary_upgrade_set_pg_class_oids(fout, q,
+											 indxinfo->dobj.catId.oid, true);
 
 		appendPQExpBuffer(q, "ALTER TABLE ONLY %s\n",
 						  fmtId(tbinfo->dobj.name));
@@ -13407,8 +13359,7 @@ findLastBuiltinOid_V71(Archive *fout, const char *dbname)
 	appendPQExpBuffer(query, "SELECT datlastsysoid from pg_database where datname = ");
 	appendStringLiteralAH(query, dbname, fout);
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 	if (ntups < 1)
@@ -13436,17 +13387,15 @@ findLastBuiltinOid_V71(Archive *fout, const char *dbname)
  * initdb won't be changing anymore, it'll do.
  */
 static Oid
-findLastBuiltinOid_V70(void)
+findLastBuiltinOid_V70(Archive *fout)
 {
 	PGresult   *res;
 	int			ntups;
 	int			last_oid;
 
-	res = PQexec(g_conn,
-				 "SELECT oid FROM pg_class WHERE relname = 'pg_indexes'");
-	check_sql_result(res, g_conn,
-					 "SELECT oid FROM pg_class WHERE relname = 'pg_indexes'",
-					 PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout,
+				 	"SELECT oid FROM pg_class WHERE relname = 'pg_indexes'",
+					PGRES_TUPLES_OK);
 	ntups = PQntuples(res);
 	if (ntups < 1)
 	{
@@ -13522,8 +13471,7 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 						  fmtId(tbinfo->dobj.name));
 	}
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	if (PQntuples(res) != 1)
 	{
@@ -13580,8 +13528,10 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 
 		if (binary_upgrade)
 		{
-			binary_upgrade_set_pg_class_oids(query, tbinfo->dobj.catId.oid, false);
-			binary_upgrade_set_type_oids_by_rel_oid(query, tbinfo->dobj.catId.oid);
+			binary_upgrade_set_pg_class_oids(fout, query,
+											 tbinfo->dobj.catId.oid, false);
+			binary_upgrade_set_type_oids_by_rel_oid(fout, query,
+													tbinfo->dobj.catId.oid);
 		}
 
 		appendPQExpBuffer(query,
@@ -13961,8 +13911,7 @@ dumpRule(Archive *fout, RuleInfo *rinfo)
 						  rinfo->dobj.name);
 	}
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	if (PQntuples(res) != 1)
 	{
@@ -14074,8 +14023,7 @@ getExtensionMembership(Archive *fout, ExtensionInfo extinfo[],
 					  "AND deptype = 'e' "
 					  "ORDER BY 3,4");
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 
@@ -14241,8 +14189,7 @@ getDependencies(Archive *fout)
 					  "WHERE deptype != 'p' AND deptype != 'e' "
 					  "ORDER BY 1,2");
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	ntups = PQntuples(res);
 
@@ -14356,7 +14303,7 @@ selectSourceSchema(Archive *fout, const char *schemaName)
 	if (strcmp(schemaName, "pg_catalog") != 0)
 		appendPQExpBuffer(query, ", pg_catalog");
 
-	do_sql_command(g_conn, query->data);
+	ExecuteSqlStatement(fout, query->data);
 
 	destroyPQExpBuffer(query);
 	if (curSchemaName)
@@ -14410,8 +14357,7 @@ getFormattedTypeName(Archive *fout, Oid oid, OidOptions opts)
 						  oid);
 	}
 
-	res = PQexec(g_conn, query->data);
-	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
 	/* Expecting a single result only */
 	ntups = PQntuples(res);
@@ -14577,41 +14523,4 @@ fmtCopyColumnList(const TableInfo *ti)
 
 	appendPQExpBuffer(q, ")");
 	return q->data;
-}
-
-/*
- * Convenience subroutine to execute a SQL command and check for
- * COMMAND_OK status.
- */
-static void
-do_sql_command(PGconn *conn, const char *query)
-{
-	PGresult   *res;
-
-	res = PQexec(conn, query);
-	check_sql_result(res, conn, query, PGRES_COMMAND_OK);
-	PQclear(res);
-}
-
-/*
- * Convenience subroutine to verify a SQL command succeeded,
- * and exit with a useful error message if not.
- */
-static void
-check_sql_result(PGresult *res, PGconn *conn, const char *query,
-				 ExecStatusType expected)
-{
-	const char *err;
-
-	if (res && PQresultStatus(res) == expected)
-		return;					/* A-OK */
-
-	write_msg(NULL, "SQL command failed\n");
-	if (res)
-		err = PQresultErrorMessage(res);
-	else
-		err = PQerrorMessage(conn);
-	write_msg(NULL, "Error message from server: %s", err);
-	write_msg(NULL, "The command was: %s\n", query);
-	exit_nicely();
 }
