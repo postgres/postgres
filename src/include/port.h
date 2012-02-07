@@ -396,6 +396,10 @@ extern double pg_erand48(unsigned short xseed[3]);
 extern long pg_lrand48(void);
 extern void pg_srand48(long seed);
 
+#ifndef HAVE_FLS
+extern int fls(int mask);
+#endif
+
 #ifndef HAVE_FSEEKO
 #define fseeko(a, b, c) fseek(a, b, c)
 #define ftello(a)		ftell(a)

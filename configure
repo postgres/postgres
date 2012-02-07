@@ -20833,7 +20833,8 @@ LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 
 
 
-for ac_func in crypt getopt getrusage inet_aton random rint srandom strdup strerror strlcat strlcpy strtol strtoul
+
+for ac_func in crypt fls getopt getrusage inet_aton random rint srandom strdup strerror strlcat strlcpy strtol strtoul
 do
 as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 { $as_echo "$as_me:$LINENO: checking for $ac_func" >&5

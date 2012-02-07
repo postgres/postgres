@@ -158,6 +158,9 @@
 /* Define to 1 if you have the `fdatasync' function. */
 #undef HAVE_FDATASYNC
 
+/* Define to 1 if you have the `fls' function. */
+#undef HAVE_FLS
+
 /* Define to 1 if you have the `fpclass' function. */
 #undef HAVE_FPCLASS
 
