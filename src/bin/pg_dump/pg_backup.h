@@ -117,7 +117,7 @@ typedef struct _restoreOptions
 	char	   *use_role;		/* Issue SET ROLE to this */
 	int			dataOnly;
 	int			dropSchema;
-	char	   *filename;
+	const char *filename;
 	int			schemaOnly;
 	int         dumpSections;
 	int			verbose;

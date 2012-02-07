@@ -767,7 +767,7 @@ main(int argc, char **argv)
 	if (plainText)
 	{
 		ropt = NewRestoreOptions();
-		ropt->filename = (char *) filename;
+		ropt->filename = filename;
 		ropt->dropSchema = outputClean;
 		ropt->aclsSkip = aclsSkip;
 		ropt->superuser = outputSuperuser;

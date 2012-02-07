@@ -126,7 +126,7 @@ static void vdie_horribly(ArchiveHandle *AH, const char *modulename,
 	__attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 0), noreturn));
 
 static void dumpTimestamp(ArchiveHandle *AH, const char *msg, time_t tim);
-static void SetOutput(ArchiveHandle *AH, char *filename, int compression);
+static void SetOutput(ArchiveHandle *AH, const char *filename, int compression);
 static OutputContext SaveOutput(ArchiveHandle *AH);
 static void RestoreOutput(ArchiveHandle *AH, OutputContext savedContext);
 
@@ -1173,7 +1173,7 @@ archprintf(Archive *AH, const char *fmt,...)
  *******************************/
 
 static void
-SetOutput(ArchiveHandle *AH, char *filename, int compression)
+SetOutput(ArchiveHandle *AH, const char *filename, int compression)
 {
 	int			fn;
 
