@@ -116,6 +116,7 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 	TupOutputState *tstate;
 	List	   *rewritten;
 	ListCell   *lc;
+	bool	    timing_set = false;
 
 	/* Initialize ExplainState. */
 	ExplainInitState(&es);
@@ -133,6 +134,11 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 			es.costs = defGetBoolean(opt);
 		else if (strcmp(opt->defname, "buffers") == 0)
 			es.buffers = defGetBoolean(opt);
+		else if (strcmp(opt->defname, "timing") == 0)
+		{
+			timing_set = true;
+			es.timing = defGetBoolean(opt);
+		}
 		else if (strcmp(opt->defname, "format") == 0)
 		{
 			char	   *p = defGetString(opt);
@@ -162,6 +168,15 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("EXPLAIN option BUFFERS requires ANALYZE")));
+	
+	/* if the timing was not set explicitly, set default value */
+	es.timing = (timing_set) ? es.timing : es.analyze;
+
+	/* check that timing is used with EXPLAIN ANALYZE */
+	if (es.timing && !es.analyze)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("EXPLAIN option TIMING requires ANALYZE")));
 
 	/*
 	 * Parse analysis was done already, but we still have to run the rule
@@ -360,8 +375,11 @@ ExplainOnePlan(PlannedStmt *plannedstmt, ExplainState *es,
 	int			eflags;
 	int			instrument_option = 0;
 
-	if (es->analyze)
+	if (es->analyze && es->timing)
 		instrument_option |= INSTRUMENT_TIMER;
+	else if (es->analyze)
+		instrument_option |= INSTRUMENT_ROWS;
+
 	if (es->buffers)
 		instrument_option |= INSTRUMENT_BUFFERS;
 
@@ -956,29 +974,42 @@ ExplainNode(PlanState *planstate, List *ancestors,
 
 		if (es->format == EXPLAIN_FORMAT_TEXT)
 		{
-			appendStringInfo(es->str,
-							 " (actual time=%.3f..%.3f rows=%.0f loops=%.0f)",
-							 startup_sec, total_sec, rows, nloops);
+			if (planstate->instrument->need_timer)
+				appendStringInfo(es->str,
+								 " (actual time=%.3f..%.3f rows=%.0f loops=%.0f)",
+								 startup_sec, total_sec, rows, nloops);
+			else
+				appendStringInfo(es->str,
+								 " (actual rows=%.0f loops=%.0f)",
+								 rows, nloops);
 		}
 		else
 		{
-			ExplainPropertyFloat("Actual Startup Time", startup_sec, 3, es);
-			ExplainPropertyFloat("Actual Total Time", total_sec, 3, es);
+			if (planstate->instrument->need_timer)
+			{
+				ExplainPropertyFloat("Actual Startup Time", startup_sec, 3, es);
+				ExplainPropertyFloat("Actual Total Time", total_sec, 3, es);
+			}
 			ExplainPropertyFloat("Actual Rows", rows, 0, es);
 			ExplainPropertyFloat("Actual Loops", nloops, 0, es);
 		}
 	}
 	else if (es->analyze)
 	{
+
 		if (es->format == EXPLAIN_FORMAT_TEXT)
 			appendStringInfo(es->str, " (never executed)");
-		else
+		else if (planstate->instrument->need_timer)
 		{
 			ExplainPropertyFloat("Actual Startup Time", 0.0, 3, es);
 			ExplainPropertyFloat("Actual Total Time", 0.0, 3, es);
+		}
+		else
+		{
 			ExplainPropertyFloat("Actual Rows", 0.0, 0, es);
 			ExplainPropertyFloat("Actual Loops", 0.0, 0, es);
 		}
+
 	}
 
 	/* in text format, first line ends here */

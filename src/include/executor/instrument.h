@@ -31,14 +31,16 @@ typedef struct BufferUsage
 /* Flag bits included in InstrAlloc's instrument_options bitmask */
 typedef enum InstrumentOption
 {
-	INSTRUMENT_TIMER = 1 << 0,	/* needs timer */
+	INSTRUMENT_TIMER = 1 << 0,	/* needs timer (and row counts) */
 	INSTRUMENT_BUFFERS = 1 << 1,	/* needs buffer usage */
+	INSTRUMENT_ROWS = 1 << 2,	/* needs row count */
 	INSTRUMENT_ALL = 0x7FFFFFFF
 } InstrumentOption;
 
 typedef struct Instrumentation
 {
 	/* Parameters set at node creation: */
+	bool		need_timer;	    /* TRUE if we need timer data */
 	bool		need_bufusage;	/* TRUE if we need buffer usage data */
 	/* Info about current plan cycle: */
 	bool		running;		/* TRUE if we've completed first tuple */
