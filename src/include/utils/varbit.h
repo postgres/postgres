@@ -72,6 +72,7 @@ extern Datum varbit_send(PG_FUNCTION_ARGS);
 extern Datum varbittypmodin(PG_FUNCTION_ARGS);
 extern Datum varbittypmodout(PG_FUNCTION_ARGS);
 extern Datum bit(PG_FUNCTION_ARGS);
+extern Datum varbit_transform(PG_FUNCTION_ARGS);
 extern Datum varbit(PG_FUNCTION_ARGS);
 extern Datum biteq(PG_FUNCTION_ARGS);
 extern Datum bitne(PG_FUNCTION_ARGS);

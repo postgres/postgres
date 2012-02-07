@@ -18,6 +18,8 @@
 
 #include "access/htup.h"
 #include "libpq/pqformat.h"
+#include "nodes/nodeFuncs.h"
+#include "parser/parse_clause.h"
 #include "utils/array.h"
 #include "utils/varbit.h"
 
@@ -643,6 +645,39 @@ varbit_send(PG_FUNCTION_ARGS)
 	pq_sendint(&buf, VARBITLEN(s), sizeof(int32));
 	pq_sendbytes(&buf, (char *) VARBITS(s), VARBITBYTES(s));
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
+}
+
+/*
+ * varbit_transform()
+ * Flatten calls to our length coercion function that leave the new maximum
+ * length >= the previous maximum length.  We ignore the isExplicit argument,
+ * which only affects truncation.
+ */
+Datum
+varbit_transform(PG_FUNCTION_ARGS)
+{
+	FuncExpr   *expr = (FuncExpr *) PG_GETARG_POINTER(0);
+	Node	   *typmod;
+	Node	   *ret = NULL;
+
+	if (!IsA(expr, FuncExpr))
+		PG_RETURN_POINTER(ret);
+
+	Assert(list_length(expr->args) == 3);
+	typmod = lsecond(expr->args);
+
+	if (IsA(typmod, Const))
+	{
+		Node	   *source = linitial(expr->args);
+		int32		new_typmod = DatumGetInt32(((Const *) typmod)->constvalue);
+		int32		old_max = exprTypmod(source);
+		int32		new_max = new_typmod;
+
+		if (new_max <= 0 || (old_max >= 0 && old_max <= new_max))
+			ret = relabel_to_typmod(source, new_typmod);
+	}
+
+	PG_RETURN_POINTER(ret);
 }
 
 /*

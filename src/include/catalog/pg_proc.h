@@ -2009,7 +2009,9 @@ DESCR("convert bitstring to int4");
 
 DATA(insert OID = 1685 (  bit			   PGNSP PGUID 12 1 0 0 0 f f f t f i 3 0 1560 "1560 23 16" _null_ _null_ _null_ _null_ bit _null_ _null_ _null_ ));
 DESCR("adjust bit() to typmod length");
-DATA(insert OID = 1687 (  varbit		   PGNSP PGUID 12 1 0 0 0 f f f t f i 3 0 1562 "1562 23 16" _null_ _null_ _null_ _null_ varbit _null_ _null_ _null_ ));
+DATA(insert OID = 3158 ( varbit_transform  PGNSP PGUID 12 1 0 0 0 f f f t f i 1 0 2281 "2281" _null_ _null_ _null_ _null_ varbit_transform _null_ _null_ _null_ ));
+DESCR("transform a varbit length coercion");
+DATA(insert OID = 1687 (  varbit		   PGNSP PGUID 12 1 0 0 3158 f f f t f i 3 0 1562 "1562 23 16" _null_ _null_ _null_ _null_ varbit _null_ _null_ _null_ ));
 DESCR("adjust varbit() to typmod length");
 
 DATA(insert OID = 1698 (  position		   PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 23 "1560 1560" _null_ _null_ _null_ _null_ bitposition _null_ _null_ _null_ ));
