@@ -108,7 +108,7 @@ extern bool Trace_lwlocks;
 extern LWLockId LWLockAssign(void);
 extern void LWLockAcquire(LWLockId lockid, LWLockMode mode);
 extern bool LWLockConditionalAcquire(LWLockId lockid, LWLockMode mode);
-extern bool LWLockWaitUntilFree(LWLockId lockid, LWLockMode mode);
+extern bool LWLockAcquireOrWait(LWLockId lockid, LWLockMode mode);
 extern void LWLockRelease(LWLockId lockid);
 extern void LWLockReleaseAll(void);
 extern bool LWLockHeldByMe(LWLockId lockid);

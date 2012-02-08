@@ -572,7 +572,7 @@ LWLockConditionalAcquire(LWLockId lockid, LWLockMode mode)
 }
 
 /*
- * LWLockWaitUntilFree - Wait until a lock is free
+ * LWLockAcquireOrWait - Acquire lock, or wait until it's free
  *
  * The semantics of this function are a bit funky.  If the lock is currently
  * free, it is acquired in the given mode, and the function returns true.  If
@@ -586,14 +586,14 @@ LWLockConditionalAcquire(LWLockId lockid, LWLockMode mode)
  * wake up, observe that their records have already been flushed, and return.
  */
 bool
-LWLockWaitUntilFree(LWLockId lockid, LWLockMode mode)
+LWLockAcquireOrWait(LWLockId lockid, LWLockMode mode)
 {
 	volatile LWLock *lock = &(LWLockArray[lockid].lock);
 	PGPROC	   *proc = MyProc;
 	bool		mustwait;
 	int			extraWaits = 0;
 
-	PRINT_LWDEBUG("LWLockWaitUntilFree", lockid, lock);
+	PRINT_LWDEBUG("LWLockAcquireOrWait", lockid, lock);
 
 #ifdef LWLOCK_STATS
 	/* Set up local count state first time through in a given process */
@@ -665,7 +665,7 @@ LWLockWaitUntilFree(LWLockId lockid, LWLockMode mode)
 		 * Wait until awakened.  Like in LWLockAcquire, be prepared for bogus
 		 * wakups, because we share the semaphore with ProcWaitForSignal.
 		 */
-		LOG_LWDEBUG("LWLockWaitUntilFree", lockid, "waiting");
+		LOG_LWDEBUG("LWLockAcquireOrWait", lockid, "waiting");
 
 #ifdef LWLOCK_STATS
 		block_counts[lockid]++;
@@ -684,7 +684,7 @@ LWLockWaitUntilFree(LWLockId lockid, LWLockMode mode)
 
 		TRACE_POSTGRESQL_LWLOCK_WAIT_DONE(lockid, mode);
 
-		LOG_LWDEBUG("LWLockWaitUntilFree", lockid, "awakened");
+		LOG_LWDEBUG("LWLockAcquireOrWait", lockid, "awakened");
 	}
 	else
 	{
@@ -702,7 +702,7 @@ LWLockWaitUntilFree(LWLockId lockid, LWLockMode mode)
 	{
 		/* Failed to get lock, so release interrupt holdoff */
 		RESUME_INTERRUPTS();
-		LOG_LWDEBUG("LWLockWaitUntilFree", lockid, "failed");
+		LOG_LWDEBUG("LWLockAcquireOrWait", lockid, "failed");
 		TRACE_POSTGRESQL_LWLOCK_WAIT_UNTIL_FREE_FAIL(lockid, mode);
 	}
 	else
