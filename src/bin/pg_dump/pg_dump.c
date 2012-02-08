@@ -1140,15 +1140,6 @@ selectDumpableTable(TableInfo *tbinfo)
 		simple_oid_list_member(&table_exclude_oids,
 							   tbinfo->dobj.catId.oid))
 		tbinfo->dobj.dump = false;
-
-	/* If table is to be dumped, check that the data is not excluded */
-	if (tbinfo->dobj.dump && !
-		simple_oid_list_member(&tabledata_exclude_oids,
-							   tbinfo->dobj.catId.oid))
-		tbinfo->dobj.dumpdata = true;
-	else
-		tbinfo->dobj.dumpdata = false;
-
 }
 
 /*
@@ -1599,10 +1590,6 @@ dumpTableData(Archive *fout, TableDataInfo *tdinfo)
 	DataDumperPtr dumpFn;
 	char	   *copyStmt;
 
-	/* don't do anything if the data isn't wanted */
-	if (!tbinfo->dobj.dumpdata)
-		return;
-
 	if (!dump_inserts)
 	{
 		/* Dump/restore using COPY */
@@ -1644,33 +1631,50 @@ getTableData(TableInfo *tblinfo, int numTables, bool oids)
 
 	for (i = 0; i < numTables; i++)
 	{
-		/* Skip VIEWs (no data to dump) */
-		if (tblinfo[i].relkind == RELKIND_VIEW)
-			continue;
-		/* Skip SEQUENCEs (handled elsewhere) */
-		if (tblinfo[i].relkind == RELKIND_SEQUENCE)
-			continue;
-		/* Skip FOREIGN TABLEs (no data to dump) */
-		if (tblinfo[i].relkind == RELKIND_FOREIGN_TABLE)
-			continue;
-		/* Skip unlogged tables if so requested */
-		if (tblinfo[i].relpersistence == RELPERSISTENCE_UNLOGGED
-			&& no_unlogged_table_data)
-			continue;
-
-		if (tblinfo[i].dobj.dump && tblinfo[i].dataObj == NULL)
+		if (tblinfo[i].dobj.dump)
 			makeTableDataInfo(&(tblinfo[i]), oids);
 	}
 }
 
 /*
  * Make a dumpable object for the data of this specific table
+ *
+ * Note: we make a TableDataInfo if and only if we are going to dump the
+ * table data; the "dump" flag in such objects isn't used.
  */
 static void
 makeTableDataInfo(TableInfo *tbinfo, bool oids)
 {
 	TableDataInfo *tdinfo;
 
+	/*
+	 * Nothing to do if we already decided to dump the table.  This will
+	 * happen for "config" tables.
+	 */
+	if (tbinfo->dataObj != NULL)
+		return;
+
+	/* Skip VIEWs (no data to dump) */
+	if (tbinfo->relkind == RELKIND_VIEW)
+		return;
+	/* Skip SEQUENCEs (handled elsewhere) */
+	if (tbinfo->relkind == RELKIND_SEQUENCE)
+		return;
+	/* Skip FOREIGN TABLEs (no data to dump) */
+	if (tbinfo->relkind == RELKIND_FOREIGN_TABLE)
+		return;
+
+	/* Don't dump data in unlogged tables, if so requested */
+	if (tbinfo->relpersistence == RELPERSISTENCE_UNLOGGED &&
+		no_unlogged_table_data)
+		return;
+
+	/* Check that the data is not explicitly excluded */
+	if (simple_oid_list_member(&tabledata_exclude_oids,
+							   tbinfo->dobj.catId.oid))
+		return;
+
+	/* OK, let's dump it */
 	tdinfo = (TableDataInfo *) pg_malloc(sizeof(TableDataInfo));
 
 	tdinfo->dobj.objType = DO_TABLE_DATA;
@@ -14127,14 +14131,17 @@ getExtensionMembership(Archive *fout, ExtensionInfo extinfo[],
 				TableInfo  *configtbl;
 
 				configtbl = findTableByOid(atooid(extconfigarray[j]));
-				if (configtbl && configtbl->dataObj == NULL)
+				if (configtbl == NULL)
+					continue;
+
+				/*
+				 * Note: config tables are dumped without OIDs regardless
+				 * of the --oids setting.  This is because row filtering
+				 * conditions aren't compatible with dumping OIDs.
+				 */
+				makeTableDataInfo(configtbl, false);
+				if (configtbl->dataObj != NULL)
 				{
-					/*
-					 * Note: config tables are dumped without OIDs regardless
-					 * of the --oids setting.  This is because row filtering
-					 * conditions aren't compatible with dumping OIDs.
-					 */
-					makeTableDataInfo(configtbl, false);
 					if (strlen(extconditionarray[j]) > 0)
 						configtbl->dataObj->filtercond = pg_strdup(extconditionarray[j]);
 				}
