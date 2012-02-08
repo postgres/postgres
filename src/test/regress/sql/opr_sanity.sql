@@ -626,12 +626,12 @@ WHERE a.aggfnoid = p.oid AND
     NOT binary_coercible(p.proargtypes[0], a.aggtranstype);
 
 -- Cross-check aggsortop (if present) against pg_operator.
--- We expect to find only "<" for "min" and ">" for "max".
+-- We expect to find entries for bool_and, bool_or, every, max, and min.
 
 SELECT DISTINCT proname, oprname
 FROM pg_operator AS o, pg_aggregate AS a, pg_proc AS p
 WHERE a.aggfnoid = p.oid AND a.aggsortop = o.oid
-ORDER BY 1;
+ORDER BY 1, 2;
 
 -- Check datatypes match
 

@@ -205,9 +205,9 @@ DATA(insert ( 2828	float8_regr_accum	float8_covar_samp		0	1022	"{0,0,0,0,0,0}" )
 DATA(insert ( 2829	float8_regr_accum	float8_corr				0	1022	"{0,0,0,0,0,0}" ));
 
 /* boolean-and and boolean-or */
-DATA(insert ( 2517	booland_statefunc	-			0	16		_null_ ));
-DATA(insert ( 2518	boolor_statefunc	-			0	16		_null_ ));
-DATA(insert ( 2519	booland_statefunc	-			0	16		_null_ ));
+DATA(insert ( 2517	booland_statefunc	-			58	16		_null_ ));
+DATA(insert ( 2518	boolor_statefunc	-			59	16		_null_ ));
+DATA(insert ( 2519	booland_statefunc	-			58	16		_null_ ));
 
 /* bitwise integer */
 DATA(insert ( 2236 int2and		  -					0	21		_null_ ));
