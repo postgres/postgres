@@ -748,9 +748,9 @@ numeric_transform(PG_FUNCTION_ARGS)
 
 		/*
 		 * If new_typmod < VARHDRSZ, the destination is unconstrained; that's
-		 * always OK.  If old_typmod >= VARHDRSZ, the source is constained.
+		 * always OK.  If old_typmod >= VARHDRSZ, the source is constrained.
 		 * and we're OK if the scale is unchanged and the precison is not
-		 * decreasing.  See further nodes in function header comment.
+		 * decreasing.  See further notes in function header comment.
 		 */
 		if (new_typmod < VARHDRSZ || (old_typmod >= VARHDRSZ &&
 			 new_scale == old_scale && new_precision >= old_precision))
