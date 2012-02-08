@@ -154,6 +154,7 @@ extern Datum time_recv(PG_FUNCTION_ARGS);
 extern Datum time_send(PG_FUNCTION_ARGS);
 extern Datum timetypmodin(PG_FUNCTION_ARGS);
 extern Datum timetypmodout(PG_FUNCTION_ARGS);
+extern Datum time_transform(PG_FUNCTION_ARGS);
 extern Datum time_scale(PG_FUNCTION_ARGS);
 extern Datum time_eq(PG_FUNCTION_ARGS);
 extern Datum time_ne(PG_FUNCTION_ARGS);

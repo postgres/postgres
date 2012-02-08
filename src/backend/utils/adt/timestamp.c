@@ -27,6 +27,8 @@
 #include "funcapi.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
+#include "nodes/nodeFuncs.h"
+#include "parser/parse_clause.h"
 #include "parser/scansup.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
@@ -307,6 +309,21 @@ timestamptypmodout(PG_FUNCTION_ARGS)
 	PG_RETURN_CSTRING(anytimestamp_typmodout(false, typmod));
 }
 
+
+/* timestamp_transform()
+ * Flatten calls to timestamp_scale() and timestamptz_scale() that solely
+ * represent increases in allowed precision.
+ */
+Datum
+timestamp_transform(PG_FUNCTION_ARGS)
+{
+	/*
+	 * timestamp_scale throws an error when the typmod is out of range, but we
+	 * can't get there from a cast: our typmodin will have caught it already.
+	 */
+	PG_RETURN_POINTER(TemporalTransform(MAX_TIMESTAMP_PRECISION,
+										(Node *) PG_GETARG_POINTER(0)));
+}
 
 /* timestamp_scale()
  * Adjust time type for specified scale factor.
@@ -745,6 +762,18 @@ interval_send(PG_FUNCTION_ARGS)
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
+/*
+ * The interval typmod stores a "range" in its high 16 bits and a "precision"
+ * in its low 16 bits.  Both contribute to defining the resolution of the
+ * type.  Range addresses resolution granules larger than one second, and
+ * precision specifies resolution below one second.  This representation can
+ * express all SQL standard resolutions, but we implement them all in terms of
+ * truncating rightward from some position.  Range is a bitmap of permitted
+ * fields, but only the temporally-smallest such field is significant to our
+ * calculations.  Precision is a count of sub-second decimal places to retain.
+ * Setting all bits (INTERVAL_FULL_PRECISION) gives the same truncation
+ * semantics as choosing MAX_INTERVAL_PRECISION.
+ */
 Datum
 intervaltypmodin(PG_FUNCTION_ARGS)
 {
@@ -900,6 +929,63 @@ intervaltypmodout(PG_FUNCTION_ARGS)
 	PG_RETURN_CSTRING(res);
 }
 
+
+/* interval_transform()
+ * Flatten superfluous calls to interval_scale().  The interval typmod is
+ * complex to permit accepting and regurgitating all SQL standard variations.
+ * For truncation purposes, it boils down to a single, simple granularity.
+ */
+Datum
+interval_transform(PG_FUNCTION_ARGS)
+{
+	FuncExpr   *expr = (FuncExpr *) PG_GETARG_POINTER(0);
+	Node	   *typmod;
+	Node	   *ret = NULL;
+
+	if (!IsA(expr, FuncExpr))
+		PG_RETURN_POINTER(ret);
+
+	Assert(list_length(expr->args) == 2);
+	typmod = lsecond(expr->args);
+
+	if (IsA(typmod, Const))
+	{
+		Node	   *source = linitial(expr->args);
+		int32		old_typmod = exprTypmod(source);
+		int32		new_typmod = DatumGetInt32(((Const *) typmod)->constvalue);
+		int			old_range;
+		int			old_precis;
+		int			new_range = INTERVAL_RANGE(new_typmod);
+		int			new_precis = INTERVAL_PRECISION(new_typmod);
+		int			new_range_fls;
+
+		if (old_typmod == -1)
+		{
+			old_range = INTERVAL_FULL_RANGE;
+			old_precis = INTERVAL_FULL_PRECISION;
+		}
+		else
+		{
+			old_range = INTERVAL_RANGE(old_typmod);
+			old_precis = INTERVAL_PRECISION(old_typmod);
+		}
+
+		/*
+		 * Temporally-smaller fields occupy higher positions in the range
+		 * bitmap.  Since only the temporally-smallest bit matters for length
+		 * coercion purposes, we compare the last-set bits in the ranges.
+		 */
+		new_range_fls = fls(new_range);
+		if (new_typmod == -1 ||
+			((new_range_fls >= SECOND ||
+			  new_range_fls >= fls(old_range)) &&
+			 (new_precis >= MAX_INTERVAL_PRECISION ||
+			  new_precis >= old_precis)))
+			ret = relabel_to_typmod(source, new_typmod);
+	}
+
+	PG_RETURN_POINTER(ret);
+}
 
 /* interval_scale()
  * Adjust interval type for specified fields.

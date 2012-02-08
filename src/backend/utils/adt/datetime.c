@@ -23,6 +23,8 @@
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "miscadmin.h"
+#include "nodes/nodeFuncs.h"
+#include "parser/parse_clause.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datetime.h"
@@ -4139,6 +4141,39 @@ CheckDateTokenTables(void)
 	ok &= CheckDateTokenTable("datetktbl", datetktbl, szdatetktbl);
 	ok &= CheckDateTokenTable("deltatktbl", deltatktbl, szdeltatktbl);
 	return ok;
+}
+
+/*
+ * Helper for temporal protransform functions.  Types time, timetz, timestamp
+ * and timestamptz each have a range of allowed precisions.  An unspecified
+ * precision is rigorously equivalent to the highest specifiable precision.
+ */
+Node *
+TemporalTransform(int32 max_precis, Node *node)
+{
+	FuncExpr   *expr = (FuncExpr *) node;
+	Node	   *typmod;
+	Node	   *ret = NULL;
+
+	if (!IsA(expr, FuncExpr))
+		return ret;
+
+	Assert(list_length(expr->args) == 2);
+	typmod = lsecond(expr->args);
+
+	if (IsA(typmod, Const))
+	{
+		Node	   *source = linitial(expr->args);
+		int32		old_precis = exprTypmod(source);
+		int32		new_precis = DatumGetInt32(((Const *) typmod)->constvalue);
+
+		if (new_precis == -1 ||
+			new_precis == max_precis ||
+			(old_precis != -1 && new_precis >= old_precis))
+			ret = relabel_to_typmod(source, new_precis);
+	}
+
+	return ret;
 }
 
 /*

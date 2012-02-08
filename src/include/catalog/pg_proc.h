@@ -1257,7 +1257,9 @@ DESCR("date difference preserving months and years");
 
 /* OIDS 1200 - 1299 */
 
-DATA(insert OID = 1200 (  interval			PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 1186 "1186 23" _null_ _null_ _null_ _null_ interval_scale _null_ _null_ _null_ ));
+DATA(insert OID = 3918 (  interval_transform PGNSP PGUID 12 1 0 0 0 f f f t f i 1 0 2281 "2281" _null_ _null_ _null_ _null_ interval_transform _null_ _null_ _null_ ));
+DESCR("transform an interval length coercion");
+DATA(insert OID = 1200 (  interval			PGNSP PGUID 12 1 0 0 3918 f f f t f i 2 0 1186 "1186 23" _null_ _null_ _null_ _null_ interval_scale _null_ _null_ _null_ ));
 DESCR("adjust interval precision");
 
 DATA(insert OID = 1215 (  obj_description	PGNSP PGUID 14 100 0 0 0 f f f t f s 2 0 25 "26 19" _null_ _null_ _null_ _null_ "select description from pg_catalog.pg_description where objoid = $1 and classoid = (select oid from pg_catalog.pg_class where relname = $2 and relnamespace = PGNSP) and objsubid = 0" _null_ _null_ _null_ ));
@@ -2732,7 +2734,9 @@ DATA(insert OID = 1953 (  byteane		   PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 16 
 DATA(insert OID = 1954 (  byteacmp		   PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 23 "17 17" _null_ _null_ _null_ _null_ byteacmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 
-DATA(insert OID = 1961 (  timestamp		   PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 1114 "1114 23" _null_ _null_ _null_ _null_ timestamp_scale _null_ _null_ _null_ ));
+DATA(insert OID = 3917 (  timestamp_transform PGNSP PGUID 12 1 0 0 0 f f f t f i 1 0 2281 "2281" _null_ _null_ _null_ _null_ timestamp_transform _null_ _null_ _null_ ));
+DESCR("transform a timestamp length coercion");
+DATA(insert OID = 1961 (  timestamp		   PGNSP PGUID 12 1 0 0 3917 f f f t f i 2 0 1114 "1114 23" _null_ _null_ _null_ _null_ timestamp_scale _null_ _null_ _null_ ));
 DESCR("adjust timestamp precision");
 
 DATA(insert OID = 1965 (  oidlarger		   PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 26 "26 26" _null_ _null_ _null_ _null_ oidlarger _null_ _null_ _null_ ));
@@ -2740,11 +2744,13 @@ DESCR("larger of two");
 DATA(insert OID = 1966 (  oidsmaller	   PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 26 "26 26" _null_ _null_ _null_ _null_ oidsmaller _null_ _null_ _null_ ));
 DESCR("smaller of two");
 
-DATA(insert OID = 1967 (  timestamptz	   PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 1184 "1184 23" _null_ _null_ _null_ _null_ timestamptz_scale _null_ _null_ _null_ ));
+DATA(insert OID = 1967 (  timestamptz	   PGNSP PGUID 12 1 0 0 3917 f f f t f i 2 0 1184 "1184 23" _null_ _null_ _null_ _null_ timestamptz_scale _null_ _null_ _null_ ));
 DESCR("adjust timestamptz precision");
-DATA(insert OID = 1968 (  time			   PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 1083 "1083 23" _null_ _null_ _null_ _null_ time_scale _null_ _null_ _null_ ));
+DATA(insert OID = 3944 (  time_transform   PGNSP PGUID 12 1 0 0 0 f f f t f i 1 0 2281 "2281" _null_ _null_ _null_ _null_ time_transform _null_ _null_ _null_ ));
+DESCR("transform a time length coercion");
+DATA(insert OID = 1968 (  time			   PGNSP PGUID 12 1 0 0 3944 f f f t f i 2 0 1083 "1083 23" _null_ _null_ _null_ _null_ time_scale _null_ _null_ _null_ ));
 DESCR("adjust time precision");
-DATA(insert OID = 1969 (  timetz		   PGNSP PGUID 12 1 0 0 0 f f f t f i 2 0 1266 "1266 23" _null_ _null_ _null_ _null_ timetz_scale _null_ _null_ _null_ ));
+DATA(insert OID = 1969 (  timetz		   PGNSP PGUID 12 1 0 0 3944 f f f t f i 2 0 1266 "1266 23" _null_ _null_ _null_ _null_ timetz_scale _null_ _null_ _null_ ));
 DESCR("adjust time with time zone precision");
 
 DATA(insert OID = 2003 (  textanycat	   PGNSP PGUID 14 1 0 0 0 f f f t f v 2 0 25 "25 2776" _null_ _null_ _null_ _null_ "select $1 || $2::pg_catalog.text" _null_ _null_ _null_ ));

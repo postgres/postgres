@@ -1210,6 +1210,17 @@ timetypmodout(PG_FUNCTION_ARGS)
 }
 
 
+/* time_transform()
+ * Flatten calls to time_scale() and timetz_scale() that solely represent
+ * increases in allowed precision.
+ */
+Datum
+time_transform(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_POINTER(TemporalTransform(MAX_TIME_PRECISION,
+										(Node *) PG_GETARG_POINTER(0)));
+}
+
 /* time_scale()
  * Adjust time type for specified scale factor.
  * Used by PostgreSQL type system to stuff columns.
