@@ -316,12 +316,12 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
-	qry->hasAggs = pstate->p_hasAggs;
-	if (pstate->p_hasAggs)
-		parseCheckAggregates(pstate, qry);
 	qry->hasWindowFuncs = pstate->p_hasWindowFuncs;
 	if (pstate->p_hasWindowFuncs)
 		parseCheckWindowFuncs(pstate, qry);
+	qry->hasAggs = pstate->p_hasAggs;
+	if (pstate->p_hasAggs)
+		parseCheckAggregates(pstate, qry);
 
 	assign_query_collations(pstate, qry);
 
@@ -970,12 +970,12 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
-	qry->hasAggs = pstate->p_hasAggs;
-	if (pstate->p_hasAggs || qry->groupClause || qry->havingQual)
-		parseCheckAggregates(pstate, qry);
 	qry->hasWindowFuncs = pstate->p_hasWindowFuncs;
 	if (pstate->p_hasWindowFuncs)
 		parseCheckWindowFuncs(pstate, qry);
+	qry->hasAggs = pstate->p_hasAggs;
+	if (pstate->p_hasAggs || qry->groupClause || qry->havingQual)
+		parseCheckAggregates(pstate, qry);
 
 	foreach(l, stmt->lockingClause)
 	{
@@ -1448,12 +1448,12 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->jointree = makeFromExpr(pstate->p_joinlist, NULL);
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
-	qry->hasAggs = pstate->p_hasAggs;
-	if (pstate->p_hasAggs || qry->groupClause || qry->havingQual)
-		parseCheckAggregates(pstate, qry);
 	qry->hasWindowFuncs = pstate->p_hasWindowFuncs;
 	if (pstate->p_hasWindowFuncs)
 		parseCheckWindowFuncs(pstate, qry);
+	qry->hasAggs = pstate->p_hasAggs;
+	if (pstate->p_hasAggs || qry->groupClause || qry->havingQual)
+		parseCheckAggregates(pstate, qry);
 
 	foreach(l, lockingClause)
 	{
