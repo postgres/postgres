@@ -1069,7 +1069,8 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		 * nonzero "month" field.  However that seems a bit pointless when we
 		 * can't do it consistently.  (We cannot enforce a range limit on the
 		 * highest expected field, since we do not have any equivalent of
-		 * SQL's <interval leading field precision>.)
+		 * SQL's <interval leading field precision>.)  If we ever decide to
+		 * revisit this, interval_transform will likely requite adjusting.
 		 *
 		 * Note: before PG 8.4 we interpreted a limited set of fields as
 		 * actually causing a "modulo" operation on a given value, potentially
