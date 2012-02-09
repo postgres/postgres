@@ -123,6 +123,10 @@ usage(void)
 	printf(_("  -t, --tuples-only        print rows only\n"));
 	printf(_("  -T, --table-attr=TEXT    set HTML table tag attributes (e.g., width, border)\n"));
 	printf(_("  -x, --expanded           turn on expanded table output\n"));
+	printf(_("  -z, --field-separator-zero\n"
+			 "                           set field separator to zero byte\n"));
+	printf(_("  -0, --record-separator-zero\n"
+			 "                           set record separator to zero byte\n"));
 
 	printf(_("\nConnection options:\n"));
 	/* Display default host */
@@ -237,8 +241,8 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\H                     toggle HTML output mode (currently %s)\n"),
 			ON(pset.popt.topt.format == PRINT_HTML));
 	fprintf(output, _("  \\pset NAME [VALUE]     set table output option\n"
-					  "                         (NAME := {format|border|expanded|fieldsep|footer|null|\n"
-					  "                         numericlocale|recordsep|tuples_only|title|tableattr|pager})\n"));
+					  "                         (NAME := {format|border|expanded|fieldsep|fieldsep_zero|footer|null|\n"
+					  "                         numericlocale|recordsep|recordsep_zero|tuples_only|title|tableattr|pager})\n"));
 	fprintf(output, _("  \\t [on|off]            show only rows (currently %s)\n"),
 			ON(pset.popt.topt.tuples_only));
 	fprintf(output, _("  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n"));

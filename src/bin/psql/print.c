@@ -268,6 +268,16 @@ fputnbytes(FILE *f, const char *str, size_t n)
 }
 
 
+static void
+print_separator(struct separator sep, FILE *fout)
+{
+	if (sep.separator_zero)
+		fputc('\000', fout);
+	else if (sep.separator)
+		fputs(sep.separator, fout);
+}
+
+
 /*************************/
 /* Unaligned text		 */
 /*************************/
@@ -276,8 +286,6 @@ fputnbytes(FILE *f, const char *str, size_t n)
 static void
 print_unaligned_text(const printTableContent *cont, FILE *fout)
 {
-	const char *opt_fieldsep = cont->opt->fieldSep;
-	const char *opt_recordsep = cont->opt->recordSep;
 	bool		opt_tuples_only = cont->opt->tuples_only;
 	unsigned int i;
 	const char *const * ptr;
@@ -286,16 +294,14 @@ print_unaligned_text(const printTableContent *cont, FILE *fout)
 	if (cancel_pressed)
 		return;
 
-	if (!opt_fieldsep)
-		opt_fieldsep = "";
-	if (!opt_recordsep)
-		opt_recordsep = "";
-
 	if (cont->opt->start_table)
 	{
 		/* print title */
 		if (!opt_tuples_only && cont->title)
-			fprintf(fout, "%s%s", cont->title, opt_recordsep);
+		{
+			fputs(cont->title, fout);
+			print_separator(cont->opt->recordSep, fout);
+		}
 
 		/* print headers */
 		if (!opt_tuples_only)
@@ -303,7 +309,7 @@ print_unaligned_text(const printTableContent *cont, FILE *fout)
 			for (ptr = cont->headers; *ptr; ptr++)
 			{
 				if (ptr != cont->headers)
-					fputs(opt_fieldsep, fout);
+					print_separator(cont->opt->fieldSep, fout);
 				fputs(*ptr, fout);
 			}
 			need_recordsep = true;
@@ -318,7 +324,7 @@ print_unaligned_text(const printTableContent *cont, FILE *fout)
 	{
 		if (need_recordsep)
 		{
-			fputs(opt_recordsep, fout);
+			print_separator(cont->opt->recordSep, fout);
 			need_recordsep = false;
 			if (cancel_pressed)
 				break;
@@ -326,7 +332,7 @@ print_unaligned_text(const printTableContent *cont, FILE *fout)
 		fputs(*ptr, fout);
 
 		if ((i + 1) % cont->ncolumns)
-			fputs(opt_fieldsep, fout);
+			print_separator(cont->opt->fieldSep, fout);
 		else
 			need_recordsep = true;
 	}
@@ -342,16 +348,25 @@ print_unaligned_text(const printTableContent *cont, FILE *fout)
 			{
 				if (need_recordsep)
 				{
-					fputs(opt_recordsep, fout);
+					print_separator(cont->opt->recordSep, fout);
 					need_recordsep = false;
 				}
 				fputs(f->data, fout);
 				need_recordsep = true;
 			}
 		}
-		/* the last record needs to be concluded with a newline */
+		/*
+		 * The last record is terminated by a newline, independent of the set
+		 * record separator.  But when the record separator is a zero byte, we
+		 * use that (compatible with find -print0 and xargs).
+		 */
 		if (need_recordsep)
-			fputc('\n', fout);
+		{
+			if (cont->opt->recordSep.separator_zero)
+				print_separator(cont->opt->recordSep, fout);
+			else
+				fputc('\n', fout);
+		}
 	}
 }
 
@@ -359,8 +374,6 @@ print_unaligned_text(const printTableContent *cont, FILE *fout)
 static void
 print_unaligned_vertical(const printTableContent *cont, FILE *fout)
 {
-	const char *opt_fieldsep = cont->opt->fieldSep;
-	const char *opt_recordsep = cont->opt->recordSep;
 	bool		opt_tuples_only = cont->opt->tuples_only;
 	unsigned int i;
 	const char *const * ptr;
@@ -368,11 +381,6 @@ print_unaligned_vertical(const printTableContent *cont, FILE *fout)
 
 	if (cancel_pressed)
 		return;
-
-	if (!opt_fieldsep)
-		opt_fieldsep = "";
-	if (!opt_recordsep)
-		opt_recordsep = "";
 
 	if (cont->opt->start_table)
 	{
@@ -393,19 +401,19 @@ print_unaligned_vertical(const printTableContent *cont, FILE *fout)
 		if (need_recordsep)
 		{
 			/* record separator is 2 occurrences of recordsep in this mode */
-			fputs(opt_recordsep, fout);
-			fputs(opt_recordsep, fout);
+			print_separator(cont->opt->recordSep, fout);
+			print_separator(cont->opt->recordSep, fout);
 			need_recordsep = false;
 			if (cancel_pressed)
 				break;
 		}
 
 		fputs(cont->headers[i % cont->ncolumns], fout);
-		fputs(opt_fieldsep, fout);
+		print_separator(cont->opt->fieldSep, fout);
 		fputs(*ptr, fout);
 
 		if ((i + 1) % cont->ncolumns)
-			fputs(opt_recordsep, fout);
+			print_separator(cont->opt->recordSep, fout);
 		else
 			need_recordsep = true;
 	}
@@ -417,15 +425,19 @@ print_unaligned_vertical(const printTableContent *cont, FILE *fout)
 		{
 			printTableFooter *f;
 
-			fputs(opt_recordsep, fout);
+			print_separator(cont->opt->recordSep, fout);
 			for (f = cont->footers; f; f = f->next)
 			{
-				fputs(opt_recordsep, fout);
+				print_separator(cont->opt->recordSep, fout);
 				fputs(f->data, fout);
 			}
 		}
 
-		fputc('\n', fout);
+		/* see above in print_unaligned_text() */
+		if (cont->opt->recordSep.separator_zero)
+			print_separator(cont->opt->recordSep, fout);
+		else
+			fputc('\n', fout);
 	}
 }
 

@@ -67,6 +67,12 @@ typedef struct printTextFormat
 										 * marks when border=0? */
 } printTextFormat;
 
+struct separator
+{
+	char	   *separator;
+	bool		separator_zero;
+};
+
 typedef struct printTableOpt
 {
 	enum printFormat format;	/* see enum above */
@@ -81,8 +87,8 @@ typedef struct printTableOpt
 	bool		stop_table;		/* print stop decoration, eg </table> */
 	unsigned long prior_records;	/* start offset for record counters */
 	const printTextFormat *line_style;	/* line style (NULL for default) */
-	char	   *fieldSep;		/* field separator for unaligned text mode */
-	char	   *recordSep;		/* record separator for unaligned text mode */
+	struct separator fieldSep;	/* field separator for unaligned text mode */
+	struct separator recordSep;	/* record separator for unaligned text mode */
 	bool		numericLocale;	/* locale-aware numeric units separator and
 								 * decimal marker */
 	char	   *tableAttr;		/* attributes for HTML <table ...> */

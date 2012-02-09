@@ -482,6 +482,27 @@ PostgreSQL documentation
       </listitem>
     </varlistentry>
 
+    <varlistentry>
+      <term><option>-z</option></term>
+      <term><option>--field-separator-zero</option></term>
+      <listitem>
+      <para>
+      Set the field separator for unaligned output to a zero byte.
+      </para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><option>-0</option></term>
+      <term><option>--record-separator-zero</option></term>
+      <listitem>
+      <para>
+      Set the record separator for unaligned output to a zero byte.  This is
+      useful for interfacing, for example, with <literal>xargs -0</literal>.
+      </para>
+      </listitem>
+    </varlistentry>
+
      <varlistentry>
       <term><option>-1</option></term>
       <term><option>--single-transaction</option></term>
@@ -1909,6 +1930,16 @@ lo_import 152801
           </varlistentry>
 
           <varlistentry>
+          <term><literal>fieldsep_zero</literal></term>
+          <listitem>
+          <para>
+          Sets the field separator to use in unaligned output format to a zero
+          byte.
+          </para>
+          </listitem>
+          </varlistentry>
+
+          <varlistentry>
           <term><literal>footer</literal></term>
           <listitem>
           <para>
@@ -2073,6 +2104,16 @@ lo_import 152801
           <para>
           Specifies the record (line) separator to use in unaligned
           output format. The default is a newline character.
+          </para>
+          </listitem>
+          </varlistentry>
+
+          <varlistentry>
+          <term><literal>recordsep_zero</literal></term>
+          <listitem>
+          <para>
+          Sets the record separator to use in unaligned output format to a zero
+          byte.
           </para>
           </listitem>
           </varlistentry>

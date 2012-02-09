@@ -2272,11 +2272,26 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 	{
 		if (value)
 		{
-			free(popt->topt.fieldSep);
-			popt->topt.fieldSep = pg_strdup(value);
+			free(popt->topt.fieldSep.separator);
+			popt->topt.fieldSep.separator = pg_strdup(value);
+			popt->topt.fieldSep.separator_zero = false;
 		}
 		if (!quiet)
-			printf(_("Field separator is \"%s\".\n"), popt->topt.fieldSep);
+		{
+			if (popt->topt.fieldSep.separator_zero)
+				printf(_("Field separator is zero byte.\n"));
+			else
+				printf(_("Field separator is \"%s\".\n"), popt->topt.fieldSep.separator);
+		}
+	}
+
+	else if (strcmp(param, "fieldsep_zero") == 0)
+	{
+		free(popt->topt.fieldSep.separator);
+		popt->topt.fieldSep.separator = NULL;
+		popt->topt.fieldSep.separator_zero = true;
+		if (!quiet)
+			printf(_("Field separator is zero byte.\n"));
 	}
 
 	/* record separator for unaligned text */
@@ -2284,16 +2299,28 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 	{
 		if (value)
 		{
-			free(popt->topt.recordSep);
-			popt->topt.recordSep = pg_strdup(value);
+			free(popt->topt.recordSep.separator);
+			popt->topt.recordSep.separator = pg_strdup(value);
+			popt->topt.recordSep.separator_zero = false;
 		}
 		if (!quiet)
 		{
-			if (strcmp(popt->topt.recordSep, "\n") == 0)
+			if (popt->topt.recordSep.separator_zero)
+				printf(_("Record separator is zero byte.\n"));
+			else if (strcmp(popt->topt.recordSep.separator, "\n") == 0)
 				printf(_("Record separator is <newline>."));
 			else
-				printf(_("Record separator is \"%s\".\n"), popt->topt.recordSep);
+				printf(_("Record separator is \"%s\".\n"), popt->topt.recordSep.separator);
 		}
+	}
+
+	else if (strcmp(param, "recordsep_zero") == 0)
+	{
+		free(popt->topt.recordSep.separator);
+		popt->topt.recordSep.separator = NULL;
+		popt->topt.recordSep.separator_zero = true;
+		if (!quiet)
+			printf(_("Record separator is zero byte.\n"));
 	}
 
 	/* toggle between full and tuples-only format */
