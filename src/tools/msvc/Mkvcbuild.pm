@@ -53,9 +53,9 @@ sub mkvcbuild
     $solution = CreateSolution($vsVersion, $config);
 
     our @pgportfiles = qw(
-      chklocale.c crypt.c fseeko.c getrusage.c inet_aton.c random.c srandom.c
-      getaddrinfo.c gettimeofday.c inet_net_ntop.c kill.c open.c erand48.c
-      snprintf.c strlcat.c strlcpy.c dirmod.c exec.c noblock.c path.c
+      chklocale.c crypt.c fls.c fseeko.c getrusage.c inet_aton.c random.c
+      srandom.c getaddrinfo.c gettimeofday.c inet_net_ntop.c kill.c open.c
+      erand48.c snprintf.c strlcat.c strlcpy.c dirmod.c exec.c noblock.c path.c
       pgcheckdir.c pgmkdirp.c pgsleep.c pgstrcasecmp.c qsort.c qsort_arg.c
       sprompt.c thread.c getopt.c getopt_long.c dirent.c rint.c win32env.c
       win32error.c win32setlocale.c);
