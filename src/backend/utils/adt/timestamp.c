@@ -958,6 +958,7 @@ interval_transform(PG_FUNCTION_ARGS)
 		int			new_range = INTERVAL_RANGE(new_typmod);
 		int			new_precis = INTERVAL_PRECISION(new_typmod);
 		int			new_range_fls;
+		int			old_range_fls;
 
 		if (old_typmod == -1)
 		{
@@ -974,12 +975,16 @@ interval_transform(PG_FUNCTION_ARGS)
 		 * Temporally-smaller fields occupy higher positions in the range
 		 * bitmap.  Since only the temporally-smallest bit matters for length
 		 * coercion purposes, we compare the last-set bits in the ranges.
+		 * Precision, which is to say, sub-second precision, only affects
+		 * ranges that include SECOND.
 		 */
 		new_range_fls = fls(new_range);
+		old_range_fls = fls(old_range);
 		if (new_typmod == -1 ||
 			((new_range_fls >= SECOND ||
-			  new_range_fls >= fls(old_range)) &&
-			 (new_precis >= MAX_INTERVAL_PRECISION ||
+			  new_range_fls >= old_range_fls) &&
+			 (old_range_fls < SECOND ||
+			  new_precis >= MAX_INTERVAL_PRECISION ||
 			  new_precis >= old_precis)))
 			ret = relabel_to_typmod(source, new_typmod);
 	}
