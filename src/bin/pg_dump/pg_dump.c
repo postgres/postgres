@@ -14179,12 +14179,17 @@ getExtensionMembership(Archive *fout, ExtensionInfo extinfo[],
 	 */
 	for (i = 0; i < numExtensions; i++)
 	{
-		char	   *extconfig = extinfo[i].extconfig;
-		char	   *extcondition = extinfo[i].extcondition;
+		ExtensionInfo *curext = &(extinfo[i]);
+		char	   *extconfig = curext->extconfig;
+		char	   *extcondition = curext->extcondition;
 		char	  **extconfigarray = NULL;
 		char	  **extconditionarray = NULL;
 		int			nconfigitems;
 		int			nconditionitems;
+
+		/* Tables of not-to-be-dumped extensions shouldn't be dumped */
+		if (!curext->dobj.dump)
+			continue;
 
 		if (parsePGArray(extconfig, &extconfigarray, &nconfigitems) &&
 		  parsePGArray(extcondition, &extconditionarray, &nconditionitems) &&
