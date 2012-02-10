@@ -877,8 +877,8 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_bit_field opt_initialize
 						mmerror(PARSE_ERROR, ET_ERROR, "pointers to varchar are not implemented");
 
 					/* make sure varchar struct name is unique by adding a unique counter to its definition */
-					vcn = (char *) mm_alloc(strlen($2) + sizeof(int) * CHAR_BIT * 10 / 3);
-					sprintf(vcn, "%s_%d", $2, varchar_counter);
+					vcn = (char *) mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
+					sprintf(vcn, "%d", varchar_counter);
 					if (strcmp(dimension, "0") == 0)
 						$$ = cat_str(7, make2_str(mm_strdup(" struct varchar_"), vcn), mm_strdup(" { int len; char arr["), mm_strdup(length), mm_strdup("]; } *"), mm_strdup($2), $4, $5);
 					else

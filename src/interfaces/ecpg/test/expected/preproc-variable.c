@@ -75,7 +75,7 @@ main (void)
 #line 27 "variable.pgc"
  struct personal_struct { 
 #line 25 "variable.pgc"
-  struct varchar_name_1  { int len; char arr[ BUFFERSIZ ]; }  name ;
+  struct varchar_1  { int len; char arr[ BUFFERSIZ ]; }  name ;
  
 #line 26 "variable.pgc"
  struct birthinfo birth ;
@@ -94,10 +94,10 @@ main (void)
  ind ind_children ;
  struct t1 { 
 #line 32 "variable.pgc"
-  struct varchar_name_2  { int len; char arr[ BUFFERSIZ ]; }  name ;
+  struct varchar_2  { int len; char arr[ BUFFERSIZ ]; }  name ;
  } ; struct t2 { 
 #line 32 "variable.pgc"
-  struct varchar_name_3  { int len; char arr[ BUFFERSIZ ]; }  name ;
+  struct varchar_3  { int len; char arr[ BUFFERSIZ ]; }  name ;
  } ;/* exec sql end declare section */
 #line 33 "variable.pgc"
 
@@ -207,7 +207,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 	while (1) {
 		strcpy(msg, "fetch");
 		{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch cur", ECPGt_EOIT, 
-	ECPGt_varchar,&(p->name),(long)BUFFERSIZ,(long)1,sizeof(struct varchar_name_1), 
+	ECPGt_varchar,&(p->name),(long)BUFFERSIZ,(long)1,sizeof(struct varchar_1), 
 	ECPGt_int,&(i->ind_name),(long)1,(long)1,sizeof(int), 
 	ECPGt_long,&(p->birth.born),(long)1,(long)1,sizeof(long), 
 	ECPGt_long,&(i->ind_birth.born),(long)1,(long)1,sizeof(long), 
