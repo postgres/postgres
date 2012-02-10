@@ -277,17 +277,9 @@ typedef struct _tableInfo
 	char	  **attoptions;		/* per-attribute options */
 	Oid		   *attcollation;	/* per-attribute collation selection */
 	char	  **attfdwoptions;	/* per-attribute fdw options */
-
-	/*
-	 * Note: we need to store per-attribute notnull, default, and constraint
-	 * stuff for all interesting tables so that we can tell which constraints
-	 * were inherited.
-	 */
-	bool	   *notnull;		/* Not null constraints on attributes */
-	struct _attrDefInfo **attrdefs;		/* DEFAULT expressions */
-	bool	   *inhAttrs;		/* true if each attribute is inherited */
-	bool	   *inhAttrDef;		/* true if attr's default is inherited */
+	bool	   *notnull;		/* NOT NULL constraints on attributes */
 	bool	   *inhNotNull;		/* true if NOT NULL is inherited */
+	struct _attrDefInfo **attrdefs;		/* DEFAULT expressions */
 	struct _constraintInfo *checkexprs; /* CHECK constraints */
 
 	/*
@@ -300,7 +292,7 @@ typedef struct _tableInfo
 
 typedef struct _attrDefInfo
 {
-	DumpableObject dobj;
+	DumpableObject dobj;		/* note: dobj.name is name of table */
 	TableInfo  *adtable;		/* link to table of attribute */
 	int			adnum;
 	char	   *adef_expr;		/* decompiled DEFAULT expression */
@@ -556,6 +548,7 @@ extern void getTriggers(Archive *fout, TableInfo tblinfo[], int numTables);
 extern ProcLangInfo *getProcLangs(Archive *fout, int *numProcLangs);
 extern CastInfo *getCasts(Archive *fout, int *numCasts);
 extern void getTableAttrs(Archive *fout, TableInfo *tbinfo, int numTables);
+extern bool shouldPrintColumn(TableInfo *tbinfo, int colno);
 extern TSParserInfo *getTSParsers(Archive *fout, int *numTSParsers);
 extern TSDictInfo *getTSDictionaries(Archive *fout, int *numTSDicts);
 extern TSTemplateInfo *getTSTemplates(Archive *fout, int *numTSTemplates);

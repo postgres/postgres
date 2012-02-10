@@ -188,6 +188,15 @@ DOTypeNameCompare(const void *p1, const void *p2)
 		if (cmpval != 0)
 			return cmpval;
 	}
+	else if (obj1->objType == DO_ATTRDEF)
+	{
+		AttrDefInfo *adobj1 = *(AttrDefInfo * const *) p1;
+		AttrDefInfo *adobj2 = *(AttrDefInfo * const *) p2;
+
+		cmpval = (adobj1->adnum - adobj2->adnum);
+		if (cmpval != 0)
+			return cmpval;
+	}
 
 	/* Usually shouldn't get here, but if we do, sort by OID */
 	return oidcmp(obj1->catId.oid, obj2->catId.oid);

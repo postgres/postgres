@@ -5833,6 +5833,9 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 			 * attstattarget doesn't exist in 7.1.  It does exist in 7.2, but
 			 * we don't dump it because we can't tell whether it's been
 			 * explicitly set or was just a default.
+			 *
+			 * attislocal doesn't exist before 7.3, either; in older databases
+			 * we just assume that inherited columns had no local definition.
 			 */
 			appendPQExpBuffer(q, "SELECT a.attnum, a.attname, a.atttypmod, "
 							  "-1 AS attstattarget, a.attstorage, "
@@ -5900,14 +5903,12 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 		tbinfo->attlen = (int *) pg_malloc(ntups * sizeof(int));
 		tbinfo->attalign = (char *) pg_malloc(ntups * sizeof(char));
 		tbinfo->attislocal = (bool *) pg_malloc(ntups * sizeof(bool));
-		tbinfo->notnull = (bool *) pg_malloc(ntups * sizeof(bool));
-		tbinfo->attrdefs = (AttrDefInfo **) pg_malloc(ntups * sizeof(AttrDefInfo *));
 		tbinfo->attoptions = (char **) pg_malloc(ntups * sizeof(char *));
 		tbinfo->attcollation = (Oid *) pg_malloc(ntups * sizeof(Oid));
 		tbinfo->attfdwoptions = (char **) pg_malloc(ntups * sizeof(char *));
-		tbinfo->inhAttrs = (bool *) pg_malloc(ntups * sizeof(bool));
-		tbinfo->inhAttrDef = (bool *) pg_malloc(ntups * sizeof(bool));
+		tbinfo->notnull = (bool *) pg_malloc(ntups * sizeof(bool));
 		tbinfo->inhNotNull = (bool *) pg_malloc(ntups * sizeof(bool));
+		tbinfo->attrdefs = (AttrDefInfo **) pg_malloc(ntups * sizeof(AttrDefInfo *));
 		hasdefaults = false;
 
 		for (j = 0; j < ntups; j++)
@@ -5936,8 +5937,6 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 			if (PQgetvalue(res, j, i_atthasdef)[0] == 't')
 				hasdefaults = true;
 			/* these flags will be set in flagInhAttrs() */
-			tbinfo->inhAttrs[j] = false;
-			tbinfo->inhAttrDef[j] = false;
 			tbinfo->inhNotNull[j] = false;
 		}
 
@@ -6000,12 +5999,28 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 			{
 				int			adnum;
 
+				adnum = atoi(PQgetvalue(res, j, 2));
+
+				if (adnum <= 0 || adnum > ntups)
+				{
+					write_msg(NULL, "invalid adnum value %d for table \"%s\"\n",
+							  adnum, tbinfo->dobj.name);
+					exit_nicely();
+				}
+
+				/*
+				 * dropped columns shouldn't have defaults, but just in case,
+				 * ignore 'em
+				 */
+				if (tbinfo->attisdropped[adnum - 1])
+					continue;
+
 				attrdefs[j].dobj.objType = DO_ATTRDEF;
 				attrdefs[j].dobj.catId.tableoid = atooid(PQgetvalue(res, j, 0));
 				attrdefs[j].dobj.catId.oid = atooid(PQgetvalue(res, j, 1));
 				AssignDumpId(&attrdefs[j].dobj);
 				attrdefs[j].adtable = tbinfo;
-				attrdefs[j].adnum = adnum = atoi(PQgetvalue(res, j, 2));
+				attrdefs[j].adnum = adnum;
 				attrdefs[j].adef_expr = pg_strdup(PQgetvalue(res, j, 3));
 
 				attrdefs[j].dobj.name = pg_strdup(tbinfo->dobj.name);
@@ -6016,9 +6031,8 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 				/*
 				 * Defaults on a VIEW must always be dumped as separate ALTER
 				 * TABLE commands.	Defaults on regular tables are dumped as
-				 * part of the CREATE TABLE if possible.  To check if it's
-				 * safe, we mark the default as needing to appear before the
-				 * CREATE.
+				 * part of the CREATE TABLE if possible, which it won't be
+				 * if the column is not going to be emitted explicitly.
 				 */
 				if (tbinfo->relkind == RELKIND_VIEW)
 				{
@@ -6027,19 +6041,27 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 					addObjectDependency(&attrdefs[j].dobj,
 										tbinfo->dobj.dumpId);
 				}
+				else if (!shouldPrintColumn(tbinfo, adnum - 1))
+				{
+					/* column will be suppressed, print default separately */
+					attrdefs[j].separate = true;
+					/* needed in case pre-7.3 DB: */
+					addObjectDependency(&attrdefs[j].dobj,
+										tbinfo->dobj.dumpId);
+				}
 				else
 				{
 					attrdefs[j].separate = false;
+					/*
+					 * Mark the default as needing to appear before the table,
+					 * so that any dependencies it has must be emitted before
+					 * the CREATE TABLE.  If this is not possible, we'll
+					 * change to "separate" mode while sorting dependencies.
+					 */
 					addObjectDependency(&tbinfo->dobj,
 										attrdefs[j].dobj.dumpId);
 				}
 
-				if (adnum <= 0 || adnum > ntups)
-				{
-					write_msg(NULL, "invalid adnum value %d for table \"%s\"\n",
-							  adnum, tbinfo->dobj.name);
-					exit_nicely();
-				}
 				tbinfo->attrdefs[adnum - 1] = &attrdefs[j];
 			}
 			PQclear(res);
@@ -6221,6 +6243,28 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 	}
 
 	destroyPQExpBuffer(q);
+}
+
+/*
+ * Test whether a column should be printed as part of table's CREATE TABLE.
+ * Column number is zero-based.
+ *
+ * Normally this is always true, but it's false for dropped columns, as well
+ * as those that were inherited without any local definition.  (If we print
+ * such a column it will mistakenly get pg_attribute.attislocal set to true.)
+ * However, in binary_upgrade mode, we must print all such columns anyway and
+ * fix the attislocal/attisdropped state later, so as to keep control of the
+ * physical column order.
+ *
+ * This function exists because there are scattered nonobvious places that
+ * must be kept in sync with this decision.
+ */
+bool
+shouldPrintColumn(TableInfo *tbinfo, int colno)
+{
+	if (binary_upgrade)
+		return true;
+	return (tbinfo->attislocal[colno] && !tbinfo->attisdropped[colno]);
 }
 
 
@@ -12504,38 +12548,40 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 						  fmtId(tbinfo->dobj.name));
 
 		/*
-		 * In case of a binary upgrade, we dump the table normally and attach
-		 * it to the type afterward.
+		 * Attach to type, if reloftype; except in case of a binary upgrade,
+		 * we dump the table normally and attach it to the type afterward.
 		 */
 		if (tbinfo->reloftype && !binary_upgrade)
 			appendPQExpBuffer(q, " OF %s", tbinfo->reloftype);
+
+		/* Dump the attributes */
 		actual_atts = 0;
 		for (j = 0; j < tbinfo->numatts; j++)
 		{
 			/*
-			 * Normally, dump if it's one of the table's own attrs, and not
-			 * dropped.  But for binary upgrade, dump all the columns.
+			 * Normally, dump if it's locally defined in this table, and not
+			 * dropped.  But for binary upgrade, we'll dump all the columns,
+			 * and then fix up the dropped and nonlocal cases below.
 			 */
-			if ((!tbinfo->inhAttrs[j] && !tbinfo->attisdropped[j]) ||
-				binary_upgrade)
+			if (shouldPrintColumn(tbinfo, j))
 			{
 				/*
-				 * Default value --- suppress if inherited (except in
-				 * binary-upgrade case, where we're not doing normal
-				 * inheritance) or if it's to be printed separately.
+				 * Default value --- suppress if to be printed separately.
 				 */
-				bool		has_default = (tbinfo->attrdefs[j] != NULL
-								&& (!tbinfo->inhAttrDef[j] || binary_upgrade)
-										   && !tbinfo->attrdefs[j]->separate);
+				bool		has_default = (tbinfo->attrdefs[j] != NULL &&
+										   !tbinfo->attrdefs[j]->separate);
 
 				/*
 				 * Not Null constraint --- suppress if inherited, except in
-				 * binary-upgrade case.
+				 * binary-upgrade case where that won't work.
 				 */
-				bool		has_notnull = (tbinfo->notnull[j]
-							  && (!tbinfo->inhNotNull[j] || binary_upgrade));
+				bool		has_notnull = (tbinfo->notnull[j] &&
+										   (!tbinfo->inhNotNull[j] ||
+											binary_upgrade));
 
-				if (tbinfo->reloftype && !has_default && !has_notnull && !binary_upgrade)
+				/* Skip column if fully defined by reloftype */
+				if (tbinfo->reloftype &&
+					!has_default && !has_notnull && !binary_upgrade)
 					continue;
 
 				/* Format properly if not first attr */
@@ -12799,16 +12845,36 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			}
 		}
 
-		/* Loop dumping statistics and storage statements */
+		/*
+		 * Dump additional per-column properties that we can't handle in the
+		 * main CREATE TABLE command.
+		 */
 		for (j = 0; j < tbinfo->numatts; j++)
 		{
+			/* None of this applies to dropped columns */
+			if (tbinfo->attisdropped[j])
+				continue;
+
+			/*
+			 * If we didn't dump the column definition explicitly above, and
+			 * it is NOT NULL and did not inherit that property from a parent,
+			 * we have to mark it separately.
+			 */
+			if (!shouldPrintColumn(tbinfo, j) &&
+				tbinfo->notnull[j] && !tbinfo->inhNotNull[j])
+			{
+				appendPQExpBuffer(q, "ALTER TABLE ONLY %s ",
+								  fmtId(tbinfo->dobj.name));
+				appendPQExpBuffer(q, "ALTER COLUMN %s SET NOT NULL;\n",
+								  fmtId(tbinfo->attnames[j]));
+			}
+
 			/*
 			 * Dump per-column statistics information. We only issue an ALTER
 			 * TABLE statement if the attstattarget entry for this column is
 			 * non-negative (i.e. it's not the default value)
 			 */
-			if (tbinfo->attstattarget[j] >= 0 &&
-				!tbinfo->attisdropped[j])
+			if (tbinfo->attstattarget[j] >= 0)
 			{
 				appendPQExpBuffer(q, "ALTER TABLE ONLY %s ",
 								  fmtId(tbinfo->dobj.name));
@@ -12822,7 +12888,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			 * Dump per-column storage information.  The statement is only
 			 * dumped if the storage has been changed from the type's default.
 			 */
-			if (!tbinfo->attisdropped[j] && tbinfo->attstorage[j] != tbinfo->typstorage[j])
+			if (tbinfo->attstorage[j] != tbinfo->typstorage[j])
 			{
 				switch (tbinfo->attstorage[j])
 				{
@@ -12935,18 +13001,18 @@ dumpAttrDef(Archive *fout, AttrDefInfo *adinfo)
 	PQExpBuffer q;
 	PQExpBuffer delq;
 
-	/* Only print it if "separate" mode is selected */
-	if (!tbinfo->dobj.dump || !adinfo->separate || dataOnly)
+	/* Skip if table definition not to be dumped */
+	if (!tbinfo->dobj.dump || dataOnly)
 		return;
 
-	/* Don't print inherited defaults, either, except for binary upgrade */
-	if (tbinfo->inhAttrDef[adnum - 1] && !binary_upgrade)
+	/* Skip if not "separate"; it was dumped in the table's definition */
+	if (!adinfo->separate)
 		return;
 
 	q = createPQExpBuffer();
 	delq = createPQExpBuffer();
 
-	appendPQExpBuffer(q, "ALTER TABLE %s ",
+	appendPQExpBuffer(q, "ALTER TABLE ONLY %s ",
 					  fmtId(tbinfo->dobj.name));
 	appendPQExpBuffer(q, "ALTER COLUMN %s SET DEFAULT %s;\n",
 					  fmtId(tbinfo->attnames[adnum - 1]),

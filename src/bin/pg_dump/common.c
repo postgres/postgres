@@ -281,7 +281,13 @@ flagInhTables(TableInfo *tblinfo, int numTables,
 
 /* flagInhAttrs -
  *	 for each dumpable table in tblinfo, flag its inherited attributes
- * so when we dump the table out, we don't dump out the inherited attributes
+ *
+ * What we need to do here is detect child columns that inherit NOT NULL
+ * bits from their parents (so that we needn't specify that again for the
+ * child) and child columns that have DEFAULT NULL when their parents had
+ * some non-null default.  In the latter case, we make up a dummy AttrDefInfo
+ * object so that we'll correctly emit the necessary DEFAULT NULL clause;
+ * otherwise the backend will apply an inherited default to the column.
  *
  * modifies tblinfo
  */
@@ -297,7 +303,6 @@ flagInhAttrs(TableInfo *tblinfo, int numTables)
 		TableInfo  *tbinfo = &(tblinfo[i]);
 		int			numParents;
 		TableInfo **parents;
-		TableInfo  *parent;
 
 		/* Sequences and views never have parents */
 		if (tbinfo->relkind == RELKIND_SEQUENCE ||
@@ -314,132 +319,70 @@ flagInhAttrs(TableInfo *tblinfo, int numTables)
 		if (numParents == 0)
 			continue;			/* nothing to see here, move along */
 
-		/*----------------------------------------------------------------
-		 * For each attr, check the parent info: if no parent has an attr
-		 * with the same name, then it's not inherited. If there *is* an
-		 * attr with the same name, then only dump it if:
-		 *
-		 * - it is NOT NULL and zero parents are NOT NULL
-		 *	 OR
-		 * - it has a default value AND the default value does not match
-		 *	 all parent default values, or no parents specify a default.
-		 *
-		 * See discussion on -hackers around 2-Apr-2001.
-		 *----------------------------------------------------------------
-		 */
+		/* For each column, search for matching column names in parent(s) */
 		for (j = 0; j < tbinfo->numatts; j++)
 		{
-			bool		foundAttr;		/* Attr was found in a parent */
 			bool		foundNotNull;	/* Attr was NOT NULL in a parent */
-			bool		defaultsMatch;	/* All non-empty defaults match */
-			bool		defaultsFound;	/* Found a default in a parent */
-			AttrDefInfo *attrDef;
+			bool		foundDefault;	/* Found a default in a parent */
 
-			foundAttr = false;
+			/* no point in examining dropped columns */
+			if (tbinfo->attisdropped[j])
+				continue;
+
 			foundNotNull = false;
-			defaultsMatch = true;
-			defaultsFound = false;
-
-			attrDef = tbinfo->attrdefs[j];
-
+			foundDefault = false;
 			for (k = 0; k < numParents; k++)
 			{
+				TableInfo  *parent = parents[k];
 				int			inhAttrInd;
 
-				parent = parents[k];
 				inhAttrInd = strInArray(tbinfo->attnames[j],
 										parent->attnames,
 										parent->numatts);
-
-				if (inhAttrInd != -1)
+				if (inhAttrInd >= 0)
 				{
-					AttrDefInfo *inhDef = parent->attrdefs[inhAttrInd];
-
-					foundAttr = true;
 					foundNotNull |= parent->notnull[inhAttrInd];
-					if (inhDef != NULL)
-					{
-						defaultsFound = true;
-
-						/*
-						 * If any parent has a default and the child doesn't,
-						 * we have to emit an explicit DEFAULT NULL clause for
-						 * the child, else the parent's default will win.
-						 */
-						if (attrDef == NULL)
-						{
-							attrDef = (AttrDefInfo *) pg_malloc(sizeof(AttrDefInfo));
-							attrDef->dobj.objType = DO_ATTRDEF;
-							attrDef->dobj.catId.tableoid = 0;
-							attrDef->dobj.catId.oid = 0;
-							AssignDumpId(&attrDef->dobj);
-							attrDef->adtable = tbinfo;
-							attrDef->adnum = j + 1;
-							attrDef->adef_expr = pg_strdup("NULL");
-
-							attrDef->dobj.name = pg_strdup(tbinfo->dobj.name);
-							attrDef->dobj.namespace = tbinfo->dobj.namespace;
-
-							attrDef->dobj.dump = tbinfo->dobj.dump;
-
-							attrDef->separate = false;
-							addObjectDependency(&tbinfo->dobj,
-												attrDef->dobj.dumpId);
-
-							tbinfo->attrdefs[j] = attrDef;
-						}
-						if (strcmp(attrDef->adef_expr, inhDef->adef_expr) != 0)
-						{
-							defaultsMatch = false;
-
-							/*
-							 * Whenever there is a non-matching parent
-							 * default, add a dependency to force the parent
-							 * default to be dumped first, in case the
-							 * defaults end up being dumped as separate
-							 * commands.  Otherwise the parent default will
-							 * override the child's when it is applied.
-							 */
-							addObjectDependency(&attrDef->dobj,
-												inhDef->dobj.dumpId);
-						}
-					}
+					foundDefault |= (parent->attrdefs[inhAttrInd] != NULL);
 				}
 			}
 
-			/*
-			 * Based on the scan of the parents, decide if we can rely on the
-			 * inherited attr
-			 */
-			if (foundAttr)		/* Attr was inherited */
+			/* Remember if we found inherited NOT NULL */
+			tbinfo->inhNotNull[j] = foundNotNull;
+
+			/* Manufacture a DEFAULT NULL clause if necessary */
+			if (foundDefault && tbinfo->attrdefs[j] == NULL)
 			{
-				/* Set inherited flag by default */
-				tbinfo->inhAttrs[j] = true;
-				tbinfo->inhAttrDef[j] = true;
-				tbinfo->inhNotNull[j] = true;
+				AttrDefInfo *attrDef;
 
-				/*
-				 * Clear it if attr had a default, but parents did not, or
-				 * mismatch
-				 */
-				if ((attrDef != NULL) && (!defaultsFound || !defaultsMatch))
+				attrDef = (AttrDefInfo *) pg_malloc(sizeof(AttrDefInfo));
+				attrDef->dobj.objType = DO_ATTRDEF;
+				attrDef->dobj.catId.tableoid = 0;
+				attrDef->dobj.catId.oid = 0;
+				AssignDumpId(&attrDef->dobj);
+				attrDef->dobj.name = pg_strdup(tbinfo->dobj.name);
+				attrDef->dobj.namespace = tbinfo->dobj.namespace;
+				attrDef->dobj.dump = tbinfo->dobj.dump;
+
+				attrDef->adtable = tbinfo;
+				attrDef->adnum = j + 1;
+				attrDef->adef_expr = pg_strdup("NULL");
+
+				/* Will column be dumped explicitly? */
+				if (shouldPrintColumn(tbinfo, j))
 				{
-					tbinfo->inhAttrs[j] = false;
-					tbinfo->inhAttrDef[j] = false;
+					attrDef->separate = false;
+					/* No dependency needed: NULL cannot have dependencies */
+				}
+				else
+				{
+					/* column will be suppressed, print default separately */
+					attrDef->separate = true;
+					/* ensure it comes out after the table */
+					addObjectDependency(&attrDef->dobj,
+										tbinfo->dobj.dumpId);
 				}
 
-				/*
-				 * Clear it if NOT NULL and none of the parents were NOT NULL
-				 */
-				if (tbinfo->notnull[j] && !foundNotNull)
-				{
-					tbinfo->inhAttrs[j] = false;
-					tbinfo->inhNotNull[j] = false;
-				}
-
-				/* Clear it if attr has local definition */
-				if (tbinfo->attislocal[j])
-					tbinfo->inhAttrs[j] = false;
+				tbinfo->attrdefs[j] = attrDef;
 			}
 		}
 	}
