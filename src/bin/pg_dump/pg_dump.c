@@ -4406,10 +4406,10 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			 * explicitly set or was just a default.
 			 *
 			 * attislocal doesn't exist before 7.3, either; in older databases
-			 * we just assume that inherited columns had no local definition.
+			 * we assume it's TRUE, else we'd fail to dump non-inherited atts.
 			 */
 			appendPQExpBuffer(q, "SELECT a.attnum, a.attname, a.atttypmod, -1 as attstattarget, a.attstorage, t.typstorage, "
-							  "a.attnotnull, a.atthasdef, false as attisdropped, false as attislocal, "
+							  "a.attnotnull, a.atthasdef, false as attisdropped, true as attislocal, "
 							  "format_type(t.oid,a.atttypmod) as atttypname "
 							  "from pg_attribute a left join pg_type t "
 							  "on a.atttypid = t.oid "
@@ -4422,7 +4422,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		{
 			/* format_type not available before 7.1 */
 			appendPQExpBuffer(q, "SELECT attnum, attname, atttypmod, -1 as attstattarget, attstorage, attstorage as typstorage, "
-							  "attnotnull, atthasdef, false as attisdropped, false as attislocal, "
+							  "attnotnull, atthasdef, false as attisdropped, true as attislocal, "
 							  "(select typname from pg_type where oid = atttypid) as atttypname "
 							  "from pg_attribute a "
 							  "where attrelid = '%u'::oid "
