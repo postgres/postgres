@@ -143,7 +143,7 @@ create table p1(ff1 int);
 alter table only p1 add constraint p1chk check (ff1 > 0);
 alter table p1 add constraint p2chk check (ff1 > 10);
 -- conisonly should be true for ONLY constraint
-select pc.relname, pgc.conname, pgc.contype, pgc.conislocal, pgc.coninhcount, pgc.conisonly from pg_class as pc inner join pg_constraint as pgc on (pgc.conrelid = pc.oid) where pc.relname = 'p1';
+select pc.relname, pgc.conname, pgc.contype, pgc.conislocal, pgc.coninhcount, pgc.conisonly from pg_class as pc inner join pg_constraint as pgc on (pgc.conrelid = pc.oid) where pc.relname = 'p1' order by 1,2;
 
 -- Test that child does not inherit ONLY constraints
 create table c1 () inherits (p1);
