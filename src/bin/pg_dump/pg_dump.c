@@ -4404,6 +4404,9 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			 * attstattarget doesn't exist in 7.1.  It does exist in 7.2, but
 			 * we don't dump it because we can't tell whether it's been
 			 * explicitly set or was just a default.
+			 *
+			 * attislocal doesn't exist before 7.3, either; in older databases
+			 * we just assume that inherited columns had no local definition.
 			 */
 			appendPQExpBuffer(q, "SELECT a.attnum, a.attname, a.atttypmod, -1 as attstattarget, a.attstorage, t.typstorage, "
 							  "a.attnotnull, a.atthasdef, false as attisdropped, false as attislocal, "
@@ -4455,10 +4458,8 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		tbinfo->attisdropped = (bool *) malloc(ntups * sizeof(bool));
 		tbinfo->attislocal = (bool *) malloc(ntups * sizeof(bool));
 		tbinfo->notnull = (bool *) malloc(ntups * sizeof(bool));
-		tbinfo->attrdefs = (AttrDefInfo **) malloc(ntups * sizeof(AttrDefInfo *));
-		tbinfo->inhAttrs = (bool *) malloc(ntups * sizeof(bool));
-		tbinfo->inhAttrDef = (bool *) malloc(ntups * sizeof(bool));
 		tbinfo->inhNotNull = (bool *) malloc(ntups * sizeof(bool));
+		tbinfo->attrdefs = (AttrDefInfo **) malloc(ntups * sizeof(AttrDefInfo *));
 		hasdefaults = false;
 
 		for (j = 0; j < ntups; j++)
@@ -4482,8 +4483,6 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			if (PQgetvalue(res, j, i_atthasdef)[0] == 't')
 				hasdefaults = true;
 			/* these flags will be set in flagInhAttrs() */
-			tbinfo->inhAttrs[j] = false;
-			tbinfo->inhAttrDef[j] = false;
 			tbinfo->inhNotNull[j] = false;
 		}
 
@@ -4547,12 +4546,28 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			{
 				int			adnum;
 
+				adnum = atoi(PQgetvalue(res, j, 2));
+
+				if (adnum <= 0 || adnum > ntups)
+				{
+					write_msg(NULL, "invalid adnum value %d for table \"%s\"\n",
+							  adnum, tbinfo->dobj.name);
+					exit_nicely();
+				}
+
+				/*
+				 * dropped columns shouldn't have defaults, but just in case,
+				 * ignore 'em
+				 */
+				if (tbinfo->attisdropped[adnum - 1])
+					continue;
+
 				attrdefs[j].dobj.objType = DO_ATTRDEF;
 				attrdefs[j].dobj.catId.tableoid = atooid(PQgetvalue(res, j, 0));
 				attrdefs[j].dobj.catId.oid = atooid(PQgetvalue(res, j, 1));
 				AssignDumpId(&attrdefs[j].dobj);
 				attrdefs[j].adtable = tbinfo;
-				attrdefs[j].adnum = adnum = atoi(PQgetvalue(res, j, 2));
+				attrdefs[j].adnum = adnum;
 				attrdefs[j].adef_expr = strdup(PQgetvalue(res, j, 3));
 
 				attrdefs[j].dobj.name = strdup(tbinfo->dobj.name);
@@ -4563,9 +4578,8 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 				/*
 				 * Defaults on a VIEW must always be dumped as separate ALTER
 				 * TABLE commands.	Defaults on regular tables are dumped as
-				 * part of the CREATE TABLE if possible.  To check if it's
-				 * safe, we mark the default as needing to appear before the
-				 * CREATE.
+				 * part of the CREATE TABLE if possible, which it won't be
+				 * if the column is not going to be emitted explicitly.
 				 */
 				if (tbinfo->relkind == RELKIND_VIEW)
 				{
@@ -4574,19 +4588,27 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 					addObjectDependency(&attrdefs[j].dobj,
 										tbinfo->dobj.dumpId);
 				}
+				else if (!shouldPrintColumn(tbinfo, adnum - 1))
+				{
+					/* column will be suppressed, print default separately */
+					attrdefs[j].separate = true;
+					/* needed in case pre-7.3 DB: */
+					addObjectDependency(&attrdefs[j].dobj,
+										tbinfo->dobj.dumpId);
+				}
 				else
 				{
 					attrdefs[j].separate = false;
+					/*
+					 * Mark the default as needing to appear before the table,
+					 * so that any dependencies it has must be emitted before
+					 * the CREATE TABLE.  If this is not possible, we'll
+					 * change to "separate" mode while sorting dependencies.
+					 */
 					addObjectDependency(&tbinfo->dobj,
 										attrdefs[j].dobj.dumpId);
 				}
 
-				if (adnum <= 0 || adnum > ntups)
-				{
-					write_msg(NULL, "invalid adnum value %d for table \"%s\"\n",
-							  adnum, tbinfo->dobj.name);
-					exit_nicely();
-				}
 				tbinfo->attrdefs[adnum - 1] = &attrdefs[j];
 			}
 			PQclear(res);
@@ -4712,6 +4734,23 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 	}
 
 	destroyPQExpBuffer(q);
+}
+
+/*
+ * Test whether a column should be printed as part of table's CREATE TABLE.
+ * Column number is zero-based.
+ *
+ * Normally this is always true, but it's false for dropped columns, as well
+ * as those that were inherited without any local definition.  (If we print
+ * such a column it will mistakenly get pg_attribute.attislocal set to true.)
+ *
+ * This function exists because there are scattered nonobvious places that
+ * must be kept in sync with this decision.
+ */
+bool
+shouldPrintColumn(TableInfo *tbinfo, int colno)
+{
+	return (tbinfo->attislocal[colno] && !tbinfo->attisdropped[colno]);
 }
 
 
@@ -8766,8 +8805,8 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		actual_atts = 0;
 		for (j = 0; j < tbinfo->numatts; j++)
 		{
-			/* Is this one of the table's own attrs, and not dropped ? */
-			if (!tbinfo->inhAttrs[j] && !tbinfo->attisdropped[j])
+			/* Dump if it's locally defined in this table, and not dropped */
+			if (shouldPrintColumn(tbinfo, j))
 			{
 				/* Format properly if not first attr */
 				if (actual_atts > 0)
@@ -8793,11 +8832,9 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				}
 
 				/*
-				 * Default value --- suppress if inherited or to be printed
-				 * separately.
+				 * Default value --- suppress if to be printed separately.
 				 */
 				if (tbinfo->attrdefs[j] != NULL &&
-					!tbinfo->inhAttrDef[j] &&
 					!tbinfo->attrdefs[j]->separate)
 					appendPQExpBuffer(q, " DEFAULT %s",
 									  tbinfo->attrdefs[j]->adef_expr);
@@ -8857,16 +8894,36 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 
 		appendPQExpBuffer(q, ";\n");
 
-		/* Loop dumping statistics and storage statements */
+		/*
+		 * Dump additional per-column properties that we can't handle in the
+		 * main CREATE TABLE command.
+		 */
 		for (j = 0; j < tbinfo->numatts; j++)
 		{
+			/* None of this applies to dropped columns */
+			if (tbinfo->attisdropped[j])
+				continue;
+
+			/*
+			 * If we didn't dump the column definition explicitly above, and
+			 * it is NOT NULL and did not inherit that property from a parent,
+			 * we have to mark it separately.
+			 */
+			if (!shouldPrintColumn(tbinfo, j) &&
+				tbinfo->notnull[j] && !tbinfo->inhNotNull[j])
+			{
+				appendPQExpBuffer(q, "ALTER TABLE ONLY %s ",
+								  fmtId(tbinfo->dobj.name));
+				appendPQExpBuffer(q, "ALTER COLUMN %s SET NOT NULL;\n",
+								  fmtId(tbinfo->attnames[j]));
+			}
+
 			/*
 			 * Dump per-column statistics information. We only issue an ALTER
 			 * TABLE statement if the attstattarget entry for this column is
 			 * non-negative (i.e. it's not the default value)
 			 */
-			if (tbinfo->attstattarget[j] >= 0 &&
-				!tbinfo->attisdropped[j])
+			if (tbinfo->attstattarget[j] >= 0)
 			{
 				appendPQExpBuffer(q, "ALTER TABLE ONLY %s ",
 								  fmtId(tbinfo->dobj.name));
@@ -8880,7 +8937,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			 * Dump per-column storage information.  The statement is only
 			 * dumped if the storage has been changed from the type's default.
 			 */
-			if (!tbinfo->attisdropped[j] && tbinfo->attstorage[j] != tbinfo->typstorage[j])
+			if (tbinfo->attstorage[j] != tbinfo->typstorage[j])
 			{
 				switch (tbinfo->attstorage[j])
 				{
@@ -8956,18 +9013,18 @@ dumpAttrDef(Archive *fout, AttrDefInfo *adinfo)
 	PQExpBuffer q;
 	PQExpBuffer delq;
 
-	/* Only print it if "separate" mode is selected */
-	if (!tbinfo->dobj.dump || !adinfo->separate || dataOnly)
+	/* Skip if table definition not to be dumped */
+	if (!tbinfo->dobj.dump || dataOnly)
 		return;
 
-	/* Don't print inherited defaults, either */
-	if (tbinfo->inhAttrDef[adnum - 1])
+	/* Skip if not "separate"; it was dumped in the table's definition */
+	if (!adinfo->separate)
 		return;
 
 	q = createPQExpBuffer();
 	delq = createPQExpBuffer();
 
-	appendPQExpBuffer(q, "ALTER TABLE %s ",
+	appendPQExpBuffer(q, "ALTER TABLE ONLY %s ",
 					  fmtId(tbinfo->dobj.name));
 	appendPQExpBuffer(q, "ALTER COLUMN %s SET DEFAULT %s;\n",
 					  fmtId(tbinfo->attnames[adnum - 1]),
