@@ -179,14 +179,17 @@ static void exec_move_row(PLpgSQL_execstate *estate,
 static HeapTuple make_tuple_from_row(PLpgSQL_execstate *estate,
 					PLpgSQL_row *row,
 					TupleDesc tupdesc);
-static char *convert_value_to_string(Datum value, Oid valtype);
-static Datum exec_cast_value(Datum value, Oid valtype,
+static char *convert_value_to_string(PLpgSQL_execstate *estate,
+						Datum value, Oid valtype);
+static Datum exec_cast_value(PLpgSQL_execstate *estate,
+				Datum value, Oid valtype,
 				Oid reqtype,
 				FmgrInfo *reqinput,
 				Oid reqtypioparam,
 				int32 reqtypmod,
 				bool isnull);
-static Datum exec_simple_cast_value(Datum value, Oid valtype,
+static Datum exec_simple_cast_value(PLpgSQL_execstate *estate,
+					   Datum value, Oid valtype,
 					   Oid reqtype, int32 reqtypmod,
 					   bool isnull);
 static void exec_init_tuple_store(PLpgSQL_execstate *estate);
@@ -285,6 +288,8 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 						/* If arg is null, treat it as an empty row */
 						exec_move_row(&estate, NULL, row, NULL, NULL);
 					}
+					/* clean up after exec_move_row() */
+					exec_eval_cleanup(&estate);
 				}
 				break;
 
@@ -424,7 +429,9 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 		else
 		{
 			/* Cast value to proper type */
-			estate.retval = exec_cast_value(estate.retval, estate.rettype,
+			estate.retval = exec_cast_value(&estate,
+											estate.retval,
+											estate.rettype,
 											func->fn_rettype,
 											&(func->fn_retinput),
 											func->fn_rettypioparam,
@@ -1686,7 +1693,7 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 	 * Get the value of the lower bound
 	 */
 	value = exec_eval_expr(estate, stmt->lower, &isnull, &valtype);
-	value = exec_cast_value(value, valtype, var->datatype->typoid,
+	value = exec_cast_value(estate, value, valtype, var->datatype->typoid,
 							&(var->datatype->typinput),
 							var->datatype->typioparam,
 							var->datatype->atttypmod, isnull);
@@ -1701,7 +1708,7 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 	 * Get the value of the upper bound
 	 */
 	value = exec_eval_expr(estate, stmt->upper, &isnull, &valtype);
-	value = exec_cast_value(value, valtype, var->datatype->typoid,
+	value = exec_cast_value(estate, value, valtype, var->datatype->typoid,
 							&(var->datatype->typinput),
 							var->datatype->typioparam,
 							var->datatype->atttypmod, isnull);
@@ -1718,7 +1725,7 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 	if (stmt->step)
 	{
 		value = exec_eval_expr(estate, stmt->step, &isnull, &valtype);
-		value = exec_cast_value(value, valtype, var->datatype->typoid,
+		value = exec_cast_value(estate, value, valtype, var->datatype->typoid,
 								&(var->datatype->typinput),
 								var->datatype->typioparam,
 								var->datatype->atttypmod, isnull);
@@ -2189,7 +2196,8 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 						errmsg("wrong result type supplied in RETURN NEXT")));
 
 					/* coerce type if needed */
-					retval = exec_simple_cast_value(retval,
+					retval = exec_simple_cast_value(estate,
+													retval,
 													var->datatype->typoid,
 												 tupdesc->attrs[0]->atttypid,
 												tupdesc->attrs[0]->atttypmod,
@@ -2260,7 +2268,8 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 								&rettype);
 
 		/* coerce type if needed */
-		retval = exec_simple_cast_value(retval,
+		retval = exec_simple_cast_value(estate,
+										retval,
 										rettype,
 										tupdesc->attrs[0]->atttypid,
 										tupdesc->attrs[0]->atttypmod,
@@ -2268,8 +2277,6 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 
 		tuplestore_putvalues(estate->tuple_store, tupdesc,
 							 &retval, &isNull);
-
-		exec_eval_cleanup(estate);
 	}
 	else
 	{
@@ -2285,6 +2292,8 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 		if (free_tuple)
 			heap_freetuple(tuple);
 	}
+
+	exec_eval_cleanup(estate);
 
 	return PLPGSQL_RC_OK;
 }
@@ -2468,7 +2477,9 @@ exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 				if (paramisnull)
 					extval = "<NULL>";
 				else
-					extval = convert_value_to_string(paramvalue, paramtypeid);
+					extval = convert_value_to_string(estate,
+													 paramvalue,
+													 paramtypeid);
 				plpgsql_dstring_append(&ds, extval);
 				current_param = lnext(current_param);
 				exec_eval_cleanup(estate);
@@ -2506,7 +2517,7 @@ exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 					 errmsg("RAISE statement option cannot be null")));
 
-		extval = convert_value_to_string(optionvalue, optiontypeid);
+		extval = convert_value_to_string(estate, optionvalue, optiontypeid);
 
 		switch (opt->opt_type)
 		{
@@ -2921,6 +2932,7 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 		}
 
 		/* Clean up */
+		exec_eval_cleanup(estate);
 		SPI_freetuptable(SPI_tuptable);
 	}
 	else
@@ -2966,7 +2978,10 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 				 errmsg("query string argument of EXECUTE is null")));
 
 	/* Get the C-String representation */
-	querystr = convert_value_to_string(query, restype);
+	querystr = convert_value_to_string(estate, query, restype);
+
+	/* copy it out of the temporary context before we clean up */
+	querystr = pstrdup(querystr);
 
 	exec_eval_cleanup(estate);
 
@@ -3098,6 +3113,8 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 			/* Put the first result row into the target */
 			exec_move_row(estate, rec, row, tuptab->vals[0], tuptab->tupdesc);
 		}
+		/* clean up after exec_move_row() */
+		exec_eval_cleanup(estate);
 	}
 	else
 	{
@@ -3216,7 +3233,10 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 					 errmsg("query string argument of EXECUTE is null")));
 
 		/* Get the C-String representation */
-		querystr = convert_value_to_string(queryD, restype);
+		querystr = convert_value_to_string(estate, queryD, restype);
+
+		/* copy it out of the temporary context before we clean up */
+		querystr = pstrdup(querystr);
 
 		exec_eval_cleanup(estate);
 
@@ -3403,6 +3423,7 @@ exec_stmt_fetch(PLpgSQL_execstate *estate, PLpgSQL_stmt_fetch *stmt)
 		else
 			exec_move_row(estate, rec, row, tuptab->vals[0], tuptab->tupdesc);
 
+		exec_eval_cleanup(estate);
 		SPI_freetuptable(tuptab);
 	}
 	else
@@ -3480,7 +3501,7 @@ exec_assign_expr(PLpgSQL_execstate *estate, PLpgSQL_datum *target,
 /* ----------
  * exec_assign_value			Put a value into a target field
  *
- * Note: in some code paths, this may leak memory in the eval_econtext;
+ * Note: in some code paths, this will leak memory in the eval_econtext;
  * we assume that will be cleaned up later by exec_eval_cleanup.  We cannot
  * call exec_eval_cleanup here for fear of destroying the input Datum value.
  * ----------
@@ -3500,7 +3521,10 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				PLpgSQL_var *var = (PLpgSQL_var *) target;
 				Datum		newvalue;
 
-				newvalue = exec_cast_value(value, valtype, var->datatype->typoid,
+				newvalue = exec_cast_value(estate,
+										   value,
+										   valtype,
+										   var->datatype->typoid,
 										   &(var->datatype->typinput),
 										   var->datatype->typioparam,
 										   var->datatype->atttypmod,
@@ -3513,19 +3537,14 @@ exec_assign_value(PLpgSQL_execstate *estate,
 									var->refname)));
 
 				/*
-				 * If type is by-reference, make sure we have a freshly
-				 * palloc'd copy; the originally passed value may not live as
-				 * long as the variable!  But we don't need to re-copy if
-				 * exec_cast_value performed a conversion; its output must
-				 * already be palloc'd.
+				 * If type is by-reference, copy the new value (which is
+				 * probably in the eval_econtext) into the procedure's
+				 * memory context.
 				 */
 				if (!var->datatype->typbyval && !*isNull)
-				{
-					if (newvalue == value)
-						newvalue = datumCopy(newvalue,
-											 false,
-											 var->datatype->typlen);
-				}
+					newvalue = datumCopy(newvalue,
+										 false,
+										 var->datatype->typlen);
 
 				/*
 				 * Now free the old value.	(We can't do this any earlier
@@ -3641,7 +3660,6 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				Datum	   *values;
 				bool	   *nulls;
 				bool	   *replaces;
-				void	   *mustfree;
 				bool		attisnull;
 				Oid			atttype;
 				int32		atttypmod;
@@ -3693,21 +3711,13 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				atttype = SPI_gettypeid(rec->tupdesc, fno + 1);
 				atttypmod = rec->tupdesc->attrs[fno]->atttypmod;
 				attisnull = *isNull;
-				values[fno] = exec_simple_cast_value(value,
+				values[fno] = exec_simple_cast_value(estate,
+													 value,
 													 valtype,
 													 atttype,
 													 atttypmod,
 													 attisnull);
 				nulls[fno] = attisnull;
-
-				/*
-				 * Avoid leaking the result of exec_simple_cast_value, if it
-				 * performed a conversion to a pass-by-ref type.
-				 */
-				if (!attisnull && values[fno] != value && !get_typbyval(atttype))
-					mustfree = DatumGetPointer(values[fno]);
-				else
-					mustfree = NULL;
 
 				/*
 				 * Now call heap_modify_tuple() to create a new tuple that
@@ -3725,8 +3735,6 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				pfree(values);
 				pfree(nulls);
 				pfree(replaces);
-				if (mustfree)
-					pfree(mustfree);
 
 				break;
 			}
@@ -3752,6 +3760,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				ArrayType  *oldarrayval;
 				ArrayType  *newarrayval;
 				SPITupleTable *save_eval_tuptable;
+				MemoryContext oldcontext;
 
 				/*
 				 * We need to do subscript evaluation, which might require
@@ -3835,7 +3844,8 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				estate->eval_tuptable = save_eval_tuptable;
 
 				/* Coerce source value to match array element type. */
-				coerced_value = exec_simple_cast_value(value,
+				coerced_value = exec_simple_cast_value(estate,
+													   value,
 													   valtype,
 													   arrayelemtypeid,
 													   -1,
@@ -3855,6 +3865,9 @@ exec_assign_value(PLpgSQL_execstate *estate,
 					(oldarrayisnull || *isNull))
 					return;
 
+				/* oldarrayval and newarrayval should be short-lived */
+				oldcontext = MemoryContextSwitchTo(estate->eval_econtext->ecxt_per_tuple_memory);
+
 				if (oldarrayisnull)
 					oldarrayval = construct_empty_array(arrayelemtypeid);
 				else
@@ -3873,12 +3886,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 										elemtypbyval,
 										elemtypalign);
 
-				/*
-				 * Avoid leaking the result of exec_simple_cast_value, if it
-				 * performed a conversion to a pass-by-ref type.
-				 */
-				if (!*isNull && coerced_value != value && !elemtypbyval)
-					pfree(DatumGetPointer(coerced_value));
+				MemoryContextSwitchTo(oldcontext);
 
 				/*
 				 * Assign the new array to the base variable.  It's never NULL
@@ -3888,11 +3896,6 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				exec_assign_value(estate, target,
 								  PointerGetDatum(newarrayval),
 								  arraytypeid, isNull);
-
-				/*
-				 * Avoid leaking the modified array value, too.
-				 */
-				pfree(newarrayval);
 				break;
 			}
 
@@ -4082,7 +4085,7 @@ exec_eval_integer(PLpgSQL_execstate *estate,
 	Oid			exprtypeid;
 
 	exprdatum = exec_eval_expr(estate, expr, isNull, &exprtypeid);
-	exprdatum = exec_simple_cast_value(exprdatum, exprtypeid,
+	exprdatum = exec_simple_cast_value(estate, exprdatum, exprtypeid,
 									   INT4OID, -1,
 									   *isNull);
 	return DatumGetInt32(exprdatum);
@@ -4104,7 +4107,7 @@ exec_eval_boolean(PLpgSQL_execstate *estate,
 	Oid			exprtypeid;
 
 	exprdatum = exec_eval_expr(estate, expr, isNull, &exprtypeid);
-	exprdatum = exec_simple_cast_value(exprdatum, exprtypeid,
+	exprdatum = exec_simple_cast_value(estate, exprdatum, exprtypeid,
 									   BOOLOID, -1,
 									   *isNull);
 	return DatumGetBool(exprdatum);
@@ -4298,7 +4301,10 @@ exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
 	 * through with found = false.
 	 */
 	if (n <= 0)
+	{
 		exec_move_row(estate, rec, row, NULL, tuptab->tupdesc);
+		exec_eval_cleanup(estate);
+	}
 	else
 		found = true;			/* processed at least one tuple */
 
@@ -4315,6 +4321,7 @@ exec_for_query(PLpgSQL_execstate *estate, PLpgSQL_stmt_forq *stmt,
 			 * Assign the tuple to the target
 			 */
 			exec_move_row(estate, rec, row, tuptab->vals[i], tuptab->tupdesc);
+			exec_eval_cleanup(estate);
 
 			/*
 			 * Execute the statements
@@ -4623,6 +4630,9 @@ eval_expr_params(PLpgSQL_execstate *estate,
 
 /* ----------
  * exec_move_row			Move one tuple's values into a record or row
+ *
+ * Since this uses exec_assign_value, caller should eventually call
+ * exec_eval_cleanup to prevent long-term memory leaks.
  * ----------
  */
 static void
@@ -4819,28 +4829,44 @@ make_tuple_from_row(PLpgSQL_execstate *estate,
 /* ----------
  * convert_value_to_string			Convert a non-null Datum to C string
  *
- * Note: callers generally assume that the result is a palloc'd string and
- * should be pfree'd.  This is not all that safe an assumption ...
+ * Note: the result is in the estate's eval_econtext, and will be cleared
+ * by the next exec_eval_cleanup() call.  The invoked output function might
+ * leave additional cruft there as well, so just pfree'ing the result string
+ * would not be enough to avoid memory leaks if we did not do it like this.
+ * In most usages the Datum being passed in is also in that context (if
+ * pass-by-reference) and so an exec_eval_cleanup() call is needed anyway.
  *
  * Note: not caching the conversion function lookup is bad for performance.
  * ----------
  */
 static char *
-convert_value_to_string(Datum value, Oid valtype)
+convert_value_to_string(PLpgSQL_execstate *estate, Datum value, Oid valtype)
 {
+	char	   *result;
+	MemoryContext oldcontext;
 	Oid			typoutput;
 	bool		typIsVarlena;
 
+	oldcontext = MemoryContextSwitchTo(estate->eval_econtext->ecxt_per_tuple_memory);
 	getTypeOutputInfo(valtype, &typoutput, &typIsVarlena);
-	return OidOutputFunctionCall(typoutput, value);
+	result = OidOutputFunctionCall(typoutput, value);
+	MemoryContextSwitchTo(oldcontext);
+
+	return result;
 }
 
 /* ----------
  * exec_cast_value			Cast a value if required
+ *
+ * Note: the estate's eval_econtext is used for temporary storage, and may
+ * also contain the result Datum if we have to do a conversion to a pass-
+ * by-reference data type.  Be sure to do an exec_eval_cleanup() call when
+ * done with the result.
  * ----------
  */
 static Datum
-exec_cast_value(Datum value, Oid valtype,
+exec_cast_value(PLpgSQL_execstate *estate,
+				Datum value, Oid valtype,
 				Oid reqtype,
 				FmgrInfo *reqinput,
 				Oid reqtypioparam,
@@ -4848,25 +4874,27 @@ exec_cast_value(Datum value, Oid valtype,
 				bool isnull)
 {
 	/*
-	 * If the type of the queries return value isn't that of the variable,
-	 * convert it.
+	 * If the type of the given value isn't what's requested, convert it.
 	 */
 	if (valtype != reqtype || reqtypmod != -1)
 	{
+		MemoryContext oldcontext;
+
+		oldcontext = MemoryContextSwitchTo(estate->eval_econtext->ecxt_per_tuple_memory);
 		if (!isnull)
 		{
 			char	   *extval;
 
-			extval = convert_value_to_string(value, valtype);
+			extval = convert_value_to_string(estate, value, valtype);
 			value = InputFunctionCall(reqinput, extval,
 									  reqtypioparam, reqtypmod);
-			pfree(extval);
 		}
 		else
 		{
 			value = InputFunctionCall(reqinput, NULL,
 									  reqtypioparam, reqtypmod);
 		}
+		MemoryContextSwitchTo(oldcontext);
 	}
 
 	return value;
@@ -4881,7 +4909,8 @@ exec_cast_value(Datum value, Oid valtype,
  * ----------
  */
 static Datum
-exec_simple_cast_value(Datum value, Oid valtype,
+exec_simple_cast_value(PLpgSQL_execstate *estate,
+					   Datum value, Oid valtype,
 					   Oid reqtype, int32 reqtypmod,
 					   bool isnull)
 {
@@ -4895,7 +4924,8 @@ exec_simple_cast_value(Datum value, Oid valtype,
 
 		fmgr_info(typinput, &finfo_input);
 
-		value = exec_cast_value(value,
+		value = exec_cast_value(estate,
+								value,
 								valtype,
 								reqtype,
 								&finfo_input,
@@ -5533,7 +5563,10 @@ exec_dynquery_with_params(PLpgSQL_execstate *estate, PLpgSQL_expr *dynquery,
 				 errmsg("query string argument of EXECUTE is null")));
 
 	/* Get the C-String representation */
-	querystr = convert_value_to_string(query, restype);
+	querystr = convert_value_to_string(estate, query, restype);
+
+	/* copy it out of the temporary context before we clean up */
+	querystr = pstrdup(querystr);
 
 	exec_eval_cleanup(estate);
 
