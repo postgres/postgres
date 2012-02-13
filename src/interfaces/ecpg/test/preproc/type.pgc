@@ -29,7 +29,7 @@ main (void)
   struct TBempl empl;
   string str;
   c ptr = NULL;
-  struct varchar_vc
+  struct varchar
   {
   	int len;
 	char text[10];
