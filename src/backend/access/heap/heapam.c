@@ -2291,6 +2291,14 @@ heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 			CacheInvalidateHeapTuple(relation, heaptuples[i], NULL);
 	}
 
+	/*
+	 * Copy t_self fields back to the caller's original tuples. This does
+	 * nothing for untoasted tuples (tuples[i] == heaptuples[i)], but it's
+	 * probably faster to always copy than check.
+	 */
+	for (i = 0; i < ntuples; i++)
+		tuples[i]->t_self = heaptuples[i]->t_self;
+
 	pgstat_count_heap_insert(relation, ntuples);
 }
 
