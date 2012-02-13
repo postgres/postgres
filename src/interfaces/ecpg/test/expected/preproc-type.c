@@ -93,7 +93,7 @@ main (void)
  c ptr = NULL ;
  
 #line 36 "type.pgc"
- struct varchar_vc { 
+ struct varchar { 
 #line 34 "type.pgc"
  int len ;
  
@@ -150,7 +150,7 @@ main (void)
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_char,&(ptr),(long)0,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
-	ECPGt_varchar,&(vc),(long)10,(long)1,sizeof(struct varchar_vc), 
+	ECPGt_varchar,&(vc),(long)10,(long)1,sizeof(struct varchar), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);}
 #line 68 "type.pgc"
 

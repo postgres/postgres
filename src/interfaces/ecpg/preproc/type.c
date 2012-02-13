@@ -375,8 +375,6 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 	{
 		char	   *variable = (char *) mm_alloc(strlen(name) + ((prefix == NULL) ? 0 : strlen(prefix)) + 4);
 		char	   *offset = (char *) mm_alloc(strlen(name) + strlen("sizeof(struct varchar_)") + 1 + strlen(varcharsize) + sizeof(int) * CHAR_BIT * 10 / 3);
-		char	   *var_name,
-				   *ptr;
 
 		switch (type)
 		{
@@ -398,16 +396,11 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 				else
 					sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
 
-				/* remove trailing [] is name is array element */
-				var_name = mm_strdup(name);
-				ptr = strchr(var_name, '[');
-				if (ptr)
-					*ptr = '\0';
+				/* If we created a varchar structure atomatically, counter is greater than 0. */
 				if (counter)
-					sprintf(offset, "sizeof(struct varchar_%s_%d)", var_name, counter);
+					sprintf(offset, "sizeof(struct varchar_%d)", counter);
 				else
-					sprintf(offset, "sizeof(struct varchar_%s)", var_name);
-				free(var_name);
+					sprintf(offset, "sizeof(struct varchar)");
 				break;
 			case ECPGt_char:
 			case ECPGt_unsigned_char:
