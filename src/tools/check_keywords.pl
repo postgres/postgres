@@ -16,7 +16,6 @@ if (@ARGV) {
 	$path = ".";
 }
 
-$[ = 1;			# set array base to 1
 $, = ' ';		# set output field separator
 $\ = "\n";		# set output record separator
 
@@ -60,7 +59,7 @@ line: while (<GRAM>) {
     $n = (@arr = split(' ', $S));
 
     # Ok, we're in a keyword list. Go through each field in turn
-    for (my $fieldIndexer = 1; $fieldIndexer <= $n; $fieldIndexer++) {
+    for (my $fieldIndexer = 0; $fieldIndexer < $n; $fieldIndexer++) {
 	if ($arr[$fieldIndexer] eq '*/' && $comment) {
 	    $comment = 0;
 	    next;
