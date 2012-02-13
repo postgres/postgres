@@ -282,6 +282,13 @@ explain_ExecutorEnd(QueryDesc *queryDesc)
 			if (es.str->len > 0 && es.str->data[es.str->len - 1] == '\n')
 				es.str->data[--es.str->len] = '\0';
 
+			/* Fix JSON to output an object */
+			if (auto_explain_log_format == EXPLAIN_FORMAT_JSON)
+			{
+				es.str->data[0] = '{';
+				es.str->data[es.str->len - 1] = '}';
+			}
+
 			/*
 			 * Note: we rely on the existing logging of context or
 			 * debug_query_string to identify just which statement is being
