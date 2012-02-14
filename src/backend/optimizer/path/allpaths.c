@@ -1042,16 +1042,9 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 			Node	   *clause = (Node *) rinfo->clause;
 
-			/*
-			 * XXX.  You might wonder why we're testing rte->security_barrier
-			 * qual-by-qual here rather than hoisting the test up into the
-			 * surrounding if statement; after all, the answer will be the
-			 * same for all quals.  The answer is that we expect to shortly
-			 * change this logic to allow pushing down some quals that use only
-			 * "leakproof" operators even through a security barrier.
-			 */
 			if (!rinfo->pseudoconstant &&
-				!rte->security_barrier &&
+				(!rte->security_barrier ||
+				 !contain_leaky_functions(clause)) &&
 				qual_is_pushdown_safe(subquery, rti, clause, differentTypes))
 			{
 				/* Push it down */

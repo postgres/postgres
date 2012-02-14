@@ -91,6 +91,7 @@ extern Oid	get_func_signature(Oid funcid, Oid **argtypes, int *nargs);
 extern bool get_func_retset(Oid funcid);
 extern bool func_strict(Oid funcid);
 extern char func_volatile(Oid funcid);
+extern bool get_func_leakproof(Oid funcid);
 extern float4 get_func_cost(Oid funcid);
 extern float4 get_func_rows(Oid funcid);
 extern Oid	get_relname_relid(const char *relname, Oid relnamespace);

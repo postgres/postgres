@@ -61,6 +61,8 @@ extern bool contain_subplans(Node *clause);
 extern bool contain_mutable_functions(Node *clause);
 extern bool contain_volatile_functions(Node *clause);
 extern bool contain_nonstrict_functions(Node *clause);
+extern bool contain_leaky_functions(Node *clause);
+
 extern Relids find_nonnullable_rels(Node *clause);
 extern List *find_nonnullable_vars(Node *clause);
 extern List *find_forced_null_vars(Node *clause);

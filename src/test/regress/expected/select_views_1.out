@@ -1397,7 +1397,8 @@ EXPLAIN (COSTS OFF) SELECT * FROM my_credit_card_secure WHERE f_leak(cnum);
 
 --
 -- scenario: an external qualifier can be pushed-down by in-front-of the
---           views with "security_barrier" attribute
+--           views with "security_barrier" attribute, except for operators
+--           implemented with leakproof functions.
 --
 SELECT * FROM my_credit_card_usage_normal
        WHERE f_leak(cnum) AND ymd >= '2011-10-01' AND ymd < '2011-11-01';
@@ -1433,8 +1434,6 @@ SELECT * FROM my_credit_card_usage_secure
 NOTICE:  f_leak => 1111-2222-3333-4444
 NOTICE:  f_leak => 1111-2222-3333-4444
 NOTICE:  f_leak => 1111-2222-3333-4444
-NOTICE:  f_leak => 1111-2222-3333-4444
-NOTICE:  f_leak => 1111-2222-3333-4444
  cid |     name      |       tel        |  passwd   |        cnum         | climit |    ymd     | usage 
 -----+---------------+------------------+-----------+---------------------+--------+------------+-------
  101 | regress_alice | +81-12-3456-7890 | passwd123 | 1111-2222-3333-4444 |   4000 | 10-05-2011 |    90
@@ -1444,21 +1443,22 @@ NOTICE:  f_leak => 1111-2222-3333-4444
 
 EXPLAIN (COSTS OFF) SELECT * FROM my_credit_card_usage_secure
        WHERE f_leak(cnum) AND ymd >= '2011-10-01' AND ymd < '2011-11-01';
-                                                                                 QUERY PLAN                                                                                  
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                     QUERY PLAN                                     
+------------------------------------------------------------------------------------
  Subquery Scan on my_credit_card_usage_secure
-   Filter: (f_leak(my_credit_card_usage_secure.cnum) AND (my_credit_card_usage_secure.ymd >= '10-01-2011'::date) AND (my_credit_card_usage_secure.ymd < '11-01-2011'::date))
-   ->  Hash Join
-         Hash Cond: (r.cid = l.cid)
+   Filter: f_leak(my_credit_card_usage_secure.cnum)
+   ->  Nested Loop
+         Join Filter: (l.cid = r.cid)
          ->  Seq Scan on credit_usage r
-         ->  Hash
+               Filter: ((ymd >= '10-01-2011'::date) AND (ymd < '11-01-2011'::date))
+         ->  Materialize
                ->  Hash Join
                      Hash Cond: (r.cid = l.cid)
                      ->  Seq Scan on credit_card r
                      ->  Hash
                            ->  Seq Scan on customer l
                                  Filter: (name = ("current_user"())::text)
-(12 rows)
+(13 rows)
 
 --
 -- Test for the case when security_barrier gets changed between rewriter

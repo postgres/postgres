@@ -40,6 +40,7 @@ test: create_function_1
 test: create_type
 test: create_table
 test: create_function_2
+test: create_function_3
 
 # ----------
 # Load huge amounts of data

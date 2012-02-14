@@ -9071,6 +9071,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	char	   *provolatile;
 	char	   *proisstrict;
 	char	   *prosecdef;
+	char	   *proleakproof;
 	char	   *proconfig;
 	char	   *procost;
 	char	   *prorows;
@@ -9098,7 +9099,24 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	selectSourceSchema(fout, finfo->dobj.namespace->dobj.name);
 
 	/* Fetch function-specific details */
-	if (fout->remoteVersion >= 80400)
+	if (fout->remoteVersion >= 90200)
+	{
+		/*
+		 * proleakproof was added at v9.2
+		 */
+		appendPQExpBuffer(query,
+						  "SELECT proretset, prosrc, probin, "
+					"pg_catalog.pg_get_function_arguments(oid) AS funcargs, "
+		  "pg_catalog.pg_get_function_identity_arguments(oid) AS funciargs, "
+					 "pg_catalog.pg_get_function_result(oid) AS funcresult, "
+						  "proiswindow, provolatile, proisstrict, prosecdef, "
+						  "proleakproof, proconfig, procost, prorows, "
+						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) AS lanname "
+						  "FROM pg_catalog.pg_proc "
+						  "WHERE oid = '%u'::pg_catalog.oid",
+						  finfo->dobj.catId.oid);
+	}
+	else if (fout->remoteVersion >= 80400)
 	{
 		/*
 		 * In 8.4 and up we rely on pg_get_function_arguments and
@@ -9110,7 +9128,8 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 		  "pg_catalog.pg_get_function_identity_arguments(oid) AS funciargs, "
 					 "pg_catalog.pg_get_function_result(oid) AS funcresult, "
 						  "proiswindow, provolatile, proisstrict, prosecdef, "
-						  "proconfig, procost, prorows, "
+						  "false AS proleakproof, "
+						  " proconfig, procost, prorows, "
 						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) AS lanname "
 						  "FROM pg_catalog.pg_proc "
 						  "WHERE oid = '%u'::pg_catalog.oid",
@@ -9123,6 +9142,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 						  "proallargtypes, proargmodes, proargnames, "
 						  "false AS proiswindow, "
 						  "provolatile, proisstrict, prosecdef, "
+						  "false AS proleakproof, "
 						  "proconfig, procost, prorows, "
 						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) AS lanname "
 						  "FROM pg_catalog.pg_proc "
@@ -9136,6 +9156,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 						  "proallargtypes, proargmodes, proargnames, "
 						  "false AS proiswindow, "
 						  "provolatile, proisstrict, prosecdef, "
+						  "false AS proleakproof, "
 						  "null AS proconfig, 0 AS procost, 0 AS prorows, "
 						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) AS lanname "
 						  "FROM pg_catalog.pg_proc "
@@ -9151,6 +9172,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 						  "proargnames, "
 						  "false AS proiswindow, "
 						  "provolatile, proisstrict, prosecdef, "
+						  "false AS proleakproof, "
 						  "null AS proconfig, 0 AS procost, 0 AS prorows, "
 						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) AS lanname "
 						  "FROM pg_catalog.pg_proc "
@@ -9166,6 +9188,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 						  "null AS proargnames, "
 						  "false AS proiswindow, "
 						  "provolatile, proisstrict, prosecdef, "
+						  "false AS proleakproof, "
 						  "null AS proconfig, 0 AS procost, 0 AS prorows, "
 						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) AS lanname "
 						  "FROM pg_catalog.pg_proc "
@@ -9183,6 +9206,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 			 "case when proiscachable then 'i' else 'v' end AS provolatile, "
 						  "proisstrict, "
 						  "false AS prosecdef, "
+						  "false AS proleakproof, "
 						  "null AS proconfig, 0 AS procost, 0 AS prorows, "
 		  "(SELECT lanname FROM pg_language WHERE oid = prolang) AS lanname "
 						  "FROM pg_proc "
@@ -9200,6 +9224,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 			 "CASE WHEN proiscachable THEN 'i' ELSE 'v' END AS provolatile, "
 						  "false AS proisstrict, "
 						  "false AS prosecdef, "
+						  "false AS proleakproof, "
 						  "NULL AS proconfig, 0 AS procost, 0 AS prorows, "
 		  "(SELECT lanname FROM pg_language WHERE oid = prolang) AS lanname "
 						  "FROM pg_proc "
@@ -9241,6 +9266,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	provolatile = PQgetvalue(res, 0, PQfnumber(res, "provolatile"));
 	proisstrict = PQgetvalue(res, 0, PQfnumber(res, "proisstrict"));
 	prosecdef = PQgetvalue(res, 0, PQfnumber(res, "prosecdef"));
+	proleakproof = PQgetvalue(res, 0, PQfnumber(res, "proleakproof"));
 	proconfig = PQgetvalue(res, 0, PQfnumber(res, "proconfig"));
 	procost = PQgetvalue(res, 0, PQfnumber(res, "procost"));
 	prorows = PQgetvalue(res, 0, PQfnumber(res, "prorows"));
@@ -9403,6 +9429,9 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 
 	if (prosecdef[0] == 't')
 		appendPQExpBuffer(q, " SECURITY DEFINER");
+
+	if (proleakproof[0] == 't')
+		appendPQExpBuffer(q, " LEAKPROOF");
 
 	/*
 	 * COST and ROWS are emitted only if present and not default, so as not to

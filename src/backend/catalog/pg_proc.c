@@ -76,6 +76,7 @@ ProcedureCreate(const char *procedureName,
 				bool isAgg,
 				bool isWindowFunc,
 				bool security_definer,
+				bool isLeakProof,
 				bool isStrict,
 				char volatility,
 				oidvector *parameterTypes,
@@ -334,6 +335,7 @@ ProcedureCreate(const char *procedureName,
 	values[Anum_pg_proc_proisagg - 1] = BoolGetDatum(isAgg);
 	values[Anum_pg_proc_proiswindow - 1] = BoolGetDatum(isWindowFunc);
 	values[Anum_pg_proc_prosecdef - 1] = BoolGetDatum(security_definer);
+	values[Anum_pg_proc_proleakproof - 1] = BoolGetDatum(isLeakProof);
 	values[Anum_pg_proc_proisstrict - 1] = BoolGetDatum(isStrict);
 	values[Anum_pg_proc_proretset - 1] = BoolGetDatum(returnsSet);
 	values[Anum_pg_proc_provolatile - 1] = CharGetDatum(volatility);

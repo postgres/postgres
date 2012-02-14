@@ -1891,6 +1891,20 @@ CREATE VIEW phone_number WITH (security_barrier) AS
 </para>
 
 <para>
+    The query planner has more flexibility when dealing with functions that
+    have no side effects.  Such functions are referred to as LEAKPROOF, and
+    include many simple, commonly used operators, such as many equality
+    operators.  The query planner can safely allow such functions to be evaluated
+    at any point in the query execution process, since invoking them on rows
+    invisible to the user will not leak any information about the unseen rows.
+    In contrast, a function that might throw an error depending on the values
+    received as arguments (such as one that throws an error in the event of
+    overflow or division by zero) are not leak-proof, and could provide
+    significant information about the unseen rows if applied before the security
+    view's row filters.
+</para>
+
+<para>
     It is important to understand that even a view created with the
     <literal>security_barrier</literal> option is intended to be secure only
     in the limited sense that the contents of the invisible tuples will not be

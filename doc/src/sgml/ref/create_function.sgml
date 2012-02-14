@@ -26,7 +26,7 @@ CREATE [ OR REPLACE ] FUNCTION
       | RETURNS TABLE ( <replaceable class="parameter">column_name</replaceable> <replaceable class="parameter">column_type</replaceable> [, ...] ) ]
   { LANGUAGE <replaceable class="parameter">lang_name</replaceable>
     | WINDOW
-    | IMMUTABLE | STABLE | VOLATILE
+    | IMMUTABLE | STABLE | VOLATILE | LEAKPROOF
     | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT
     | [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER
     | COST <replaceable class="parameter">execution_cost</replaceable>
@@ -320,6 +320,23 @@ CREATE [ OR REPLACE ] FUNCTION
 
       <para>
        For additional details see <xref linkend="xfunc-volatility">.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>LEAKPROOF</literal></term>
+     <listitem>
+      <para>
+       <literal>LEAKPROOF</literal> indicates that the function has no side
+       effects.  It reveals no information about its arguments other than by
+       its return value.  For example, a function which throws an error message
+       for some argument values but not others, or which includes the argument
+       values in any error message, is not leakproof.   The query planner may
+       push leakproof functions (but not others) into views created with the
+       <literal>security_barrier</literal> option.  See
+       <xref linkend="sql-createview"> and <xref linkend="rules-privileges">.
+       This option can only be set by the superuser.
       </para>
      </listitem>
     </varlistentry>

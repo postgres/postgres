@@ -526,7 +526,7 @@ static void processCASbits(int cas_bits, int location, const char *constrType,
 
 	KEY
 
-	LABEL LANGUAGE LARGE_P LAST_P LC_COLLATE_P LC_CTYPE_P LEADING
+	LABEL LANGUAGE LARGE_P LAST_P LC_COLLATE_P LC_CTYPE_P LEADING LEAKPROOF
 	LEAST LEFT LEVEL LIKE LIMIT LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP
 	LOCATION LOCK_P
 
@@ -6114,6 +6114,10 @@ common_func_opt_item:
 			| SECURITY INVOKER
 				{
 					$$ = makeDefElem("security", (Node *)makeInteger(FALSE));
+				}
+			| LEAKPROOF
+				{
+					$$ = makeDefElem("leakproof", (Node *)makeInteger(TRUE));
 				}
 			| COST NumericOnly
 				{
@@ -12219,6 +12223,7 @@ unreserved_keyword:
 			| LAST_P
 			| LC_COLLATE_P
 			| LC_CTYPE_P
+			| LEAKPROOF
 			| LEVEL
 			| LISTEN
 			| LOAD

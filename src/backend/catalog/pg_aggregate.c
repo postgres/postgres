@@ -241,6 +241,7 @@ AggregateCreate(const char *aggName,
 							  false,	/* isWindowFunc */
 							  false,	/* security invoker (currently not
 										 * definable for agg) */
+							  false,	/* isLeakProof */
 							  false,	/* isStrict (not needed for agg) */
 							  PROVOLATILE_IMMUTABLE,	/* volatility (not
 														 * needed for agg) */

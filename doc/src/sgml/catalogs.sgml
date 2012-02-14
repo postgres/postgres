@@ -4424,6 +4424,18 @@
      </row>
 
      <row>
+      <entry><structfield>proleakproof</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       The function has no side effects.  No information about the
+       arguments is conveyed except via the return value.  Any function
+       that might throw an error depending on the values of its arguments
+       is not leakproof.
+      </entry>
+     </row>
+
+     <row>
       <entry><structfield>proisstrict</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>

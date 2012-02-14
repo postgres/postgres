@@ -108,7 +108,8 @@ EXPLAIN (COSTS OFF) SELECT * FROM my_credit_card_secure WHERE f_leak(cnum);
 
 --
 -- scenario: an external qualifier can be pushed-down by in-front-of the
---           views with "security_barrier" attribute
+--           views with "security_barrier" attribute, except for operators
+--           implemented with leakproof functions.
 --
 SELECT * FROM my_credit_card_usage_normal
        WHERE f_leak(cnum) AND ymd >= '2011-10-01' AND ymd < '2011-11-01';
