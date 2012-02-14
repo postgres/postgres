@@ -47,13 +47,13 @@ pg_test_fsync [options]
      </varlistentry>
 
      <varlistentry>
-      <term><option>-o</option></term>
-      <term><option>--ops-per-test</option></term>
+      <term><option>-s</option></term>
+      <term><option>--secs-per-test</option></term>
       <listitem>
        <para>
-        Specifies the number of operations per test.  The more operations
+        Specifies the number of seconds for each test.  The more time
         per test, the greater the test's accuracy, but the longer it takes
-        to run.  The default is 2000.
+        to run.  The default is 2 seconds.
        </para>
       </listitem>
      </varlistentry>
