@@ -69,30 +69,6 @@ SELECT proname, prosecdef FROM pg_proc
                      'functext_C_3'::regproc) ORDER BY proname;
 
 --
--- COST
---
-CREATE FUNCTION functext_D_1(int,int) RETURNS int LANGUAGE 'sql'
-       AS 'SELECT $1 + $2';
-CREATE FUNCTION functext_D_2(int,int) RETURNS int LANGUAGE 'internal'
-       AS 'int4pl';
-CREATE FUNCTION functext_D_3(int,int) RETURNS int LANGUAGE 'sql'
-       COST 500 AS 'SELECT $1 * $2';
-CREATE FUNCTION functext_D_4(int,int) RETURNS int LANGUAGE 'sql'
-       COST 0 AS 'SELECT $1 / $2';		-- Error
-SELECT proname, procost FROM pg_proc
-       WHERE oid in ('functext_D_1'::regproc,
-                     'functext_D_2'::regproc,
-                     'functext_D_3'::regproc) ORDER BY proname;
-
-ALTER FUNCTION functext_D_1(int,int) STABLE;	-- unrelated change, no effect
-ALTER FUNCTION functext_D_2(int,int) COST 50;
-ALTER FUNCTION functext_D_3(int,int) COST 0.0001;
-SELECT proname, procost FROM pg_proc
-       WHERE oid in ('functext_D_1'::regproc,
-                     'functext_D_2'::regproc,
-                     'functext_D_3'::regproc) ORDER BY proname;
-
---
 -- LEAKPROOF
 --
 CREATE FUNCTION functext_E_1(int) RETURNS bool LANGUAGE 'sql'
