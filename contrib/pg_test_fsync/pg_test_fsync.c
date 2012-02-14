@@ -358,11 +358,11 @@ test_open_syncs(void)
 	printf("(This is designed to compare the cost of writing 16kB\n");
 	printf("in different write open_sync sizes.)\n");
 
-	test_open_sync("16kB open_sync write", 16);
-	test_open_sync(" 8kB open_sync writes", 8);
-	test_open_sync(" 4kB open_sync writes", 4);
-	test_open_sync(" 2kB open_sync writes", 2);
-	test_open_sync(" 1kB open_sync writes", 1);
+	test_open_sync(" 1 * 16kB open_sync write", 16);
+	test_open_sync(" 2 *  8kB open_sync writes", 8);
+	test_open_sync(" 4 *  4kB open_sync writes", 4);
+	test_open_sync(" 8 *  2kB open_sync writes", 2);
+	test_open_sync("16 *  1kB open_sync writes", 1);
 }
 
 /*
