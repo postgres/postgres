@@ -52,6 +52,7 @@ extern Plan *plan_set_operations(PlannerInfo *root, double tuple_fraction,
 
 extern void expand_inherited_tables(PlannerInfo *root);
 
-extern Node *adjust_appendrel_attrs(Node *node, AppendRelInfo *appinfo);
+extern Node *adjust_appendrel_attrs(PlannerInfo *root, Node *node,
+									AppendRelInfo *appinfo);
 
 #endif   /* PREP_H */

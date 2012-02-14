@@ -954,27 +954,28 @@ ExecTypeFromTLInternal(List *targetList, bool hasoid, bool skipjunk)
 /*
  * ExecTypeFromExprList - build a tuple descriptor from a list of Exprs
  *
- * Here we must make up an arbitrary set of field names.
+ * Caller must also supply a list of field names (String nodes).
  */
 TupleDesc
-ExecTypeFromExprList(List *exprList)
+ExecTypeFromExprList(List *exprList, List *namesList)
 {
 	TupleDesc	typeInfo;
-	ListCell   *l;
+	ListCell   *le;
+	ListCell   *ln;
 	int			cur_resno = 1;
-	char		fldname[NAMEDATALEN];
+
+	Assert(list_length(exprList) == list_length(namesList));
 
 	typeInfo = CreateTemplateTupleDesc(list_length(exprList), false);
 
-	foreach(l, exprList)
+	forboth(le, exprList, ln, namesList)
 	{
-		Node	   *e = lfirst(l);
-
-		sprintf(fldname, "f%d", cur_resno);
+		Node	   *e = lfirst(le);
+		char	   *n = strVal(lfirst(ln));
 
 		TupleDescInitEntry(typeInfo,
 						   cur_resno,
-						   fldname,
+						   n,
 						   exprType(e),
 						   exprTypmod(e),
 						   0);

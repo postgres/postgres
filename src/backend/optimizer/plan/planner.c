@@ -772,7 +772,8 @@ inheritance_planner(PlannerInfo *root)
 		 * then fool around with subquery RTEs.
 		 */
 		subroot.parse = (Query *)
-			adjust_appendrel_attrs((Node *) parse,
+			adjust_appendrel_attrs(root,
+								   (Node *) parse,
 								   appinfo);
 
 		/*

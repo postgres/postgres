@@ -783,13 +783,16 @@ flatten_join_alias_vars_mutator(Node *node,
 			/* Must expand whole-row reference */
 			RowExpr    *rowexpr;
 			List	   *fields = NIL;
+			List	   *colnames = NIL;
 			AttrNumber	attnum;
-			ListCell   *l;
+			ListCell   *lv;
+			ListCell   *ln;
 
 			attnum = 0;
-			foreach(l, rte->joinaliasvars)
+			Assert(list_length(rte->joinaliasvars) == list_length(rte->eref->colnames));
+			forboth(lv, rte->joinaliasvars, ln, rte->eref->colnames)
 			{
-				newvar = (Node *) lfirst(l);
+				newvar = (Node *) lfirst(lv);
 				attnum++;
 				/* Ignore dropped columns */
 				if (IsA(newvar, Const))
@@ -809,12 +812,14 @@ flatten_join_alias_vars_mutator(Node *node,
 				/* (also takes care of setting inserted_sublink if needed) */
 				newvar = flatten_join_alias_vars_mutator(newvar, context);
 				fields = lappend(fields, newvar);
+				/* We need the names of non-dropped columns, too */
+				colnames = lappend(colnames, copyObject((Node *) lfirst(ln)));
 			}
 			rowexpr = makeNode(RowExpr);
 			rowexpr->args = fields;
 			rowexpr->row_typeid = var->vartype;
 			rowexpr->row_format = COERCE_IMPLICIT_CAST;
-			rowexpr->colnames = NIL;
+			rowexpr->colnames = colnames;
 			rowexpr->location = var->location;
 
 			return (Node *) rowexpr;

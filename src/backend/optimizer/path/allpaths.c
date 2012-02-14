@@ -492,7 +492,8 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		 * reconstitute the RestrictInfo layer.
 		 */
 		childquals = get_all_actual_clauses(rel->baserestrictinfo);
-		childquals = (List *) adjust_appendrel_attrs((Node *) childquals,
+		childquals = (List *) adjust_appendrel_attrs(root,
+													 (Node *) childquals,
 													 appinfo);
 		childqual = eval_const_expressions(root, (Node *)
 										   make_ands_explicit(childquals));
@@ -532,10 +533,12 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		 * while constructing attr_widths estimates below, though.
 		 */
 		childrel->joininfo = (List *)
-			adjust_appendrel_attrs((Node *) rel->joininfo,
+			adjust_appendrel_attrs(root,
+								   (Node *) rel->joininfo,
 								   appinfo);
 		childrel->reltargetlist = (List *)
-			adjust_appendrel_attrs((Node *) rel->reltargetlist,
+			adjust_appendrel_attrs(root,
+								   (Node *) rel->reltargetlist,
 								   appinfo);
 
 		/*

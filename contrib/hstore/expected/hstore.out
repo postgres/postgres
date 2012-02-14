@@ -907,9 +907,9 @@ select pg_column_size(hstore(ARRAY['a','b','asd'], ARRAY['g','h','i']))
 
 -- records
 select hstore(v) from (values (1, 'foo', 1.2, 3::float8)) v(a,b,c,d);
-                     hstore                     
-------------------------------------------------
- "f1"=>"1", "f2"=>"foo", "f3"=>"1.2", "f4"=>"3"
+                   hstore                   
+--------------------------------------------
+ "a"=>"1", "b"=>"foo", "c"=>"1.2", "d"=>"3"
 (1 row)
 
 create domain hstestdom1 as integer not null default 0;

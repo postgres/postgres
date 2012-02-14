@@ -4627,7 +4627,8 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				if (rowexpr->row_typeid == RECORDOID)
 				{
 					/* generic record, use runtime type assignment */
-					rstate->tupdesc = ExecTypeFromExprList(rowexpr->args);
+					rstate->tupdesc = ExecTypeFromExprList(rowexpr->args,
+														   rowexpr->colnames);
 					BlessTupleDesc(rstate->tupdesc);
 					/* we won't need to redo this at runtime */
 				}

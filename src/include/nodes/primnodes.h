@@ -846,11 +846,15 @@ typedef struct ArrayExpr
  * than vice versa.)  It is important not to assume that length(args) is
  * the same as the number of columns logically present in the rowtype.
  *
- * colnames is NIL in a RowExpr built from an ordinary ROW() expression.
- * It is provided in cases where we expand a whole-row Var into a RowExpr,
- * to retain the column alias names of the RTE that the Var referenced
- * (which would otherwise be very difficult to extract from the parsetree).
- * Like the args list, it is one-for-one with physical fields of the rowtype.
+ * colnames provides field names in cases where the names can't easily be
+ * obtained otherwise.  Names *must* be provided if row_typeid is RECORDOID.
+ * If row_typeid identifies a known composite type, colnames can be NIL to
+ * indicate the type's cataloged field names apply.  Note that colnames can
+ * be non-NIL even for a composite type, and typically is when the RowExpr
+ * was created by expanding a whole-row Var.  This is so that we can retain
+ * the column alias names of the RTE that the Var referenced (which would
+ * otherwise be very difficult to extract from the parsetree).  Like the
+ * args list, colnames is one-for-one with physical fields of the rowtype.
  */
 typedef struct RowExpr
 {
