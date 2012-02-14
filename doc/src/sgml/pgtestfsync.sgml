@@ -53,7 +53,8 @@ pg_test_fsync [options]
        <para>
         Specifies the number of seconds for each test.  The more time
         per test, the greater the test's accuracy, but the longer it takes
-        to run.  The default is 2 seconds.
+        to run.  The default is 2 seconds, which allows the program to
+        complete in about 30 seconds.
        </para>
       </listitem>
      </varlistentry>
