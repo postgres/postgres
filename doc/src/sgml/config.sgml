@@ -2604,6 +2604,26 @@ SET ENABLE_SEQSCAN TO OFF;
         parameters.
        </para>
 
+       <para>
+        Random access to mechanical disk storage is normally much more expensive
+        than four-times sequential access.  However, a lower default is used
+        (4.0) because the majority of random accesses to disk, such as indexed
+        reads, are assumed to be in cache.  The default value can be thought of
+        as modeling random access as 40 times slower than sequential, while
+        expecting 90% of random reads to be cached.
+       </para>
+
+       <para>
+        If you believe a 90% cache rate is an incorrect assumption
+        for your workload, you can increase random_page_cost to better
+        reflect the true cost of random storage reads. Correspondingly,
+        if your data is likely to be completely in cache, such as when
+        the database is smaller than the total server memory, decreasing
+        random_page_cost can be appropriate.  Storage that has a low random
+        read cost relative to sequential, e.g. solid-state drives, might
+        also be better modeled with a lower value for random_page_cost.
+       </para>
+
        <tip>
         <para>
          Although the system will let you set <varname>random_page_cost</> to
