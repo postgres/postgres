@@ -73,7 +73,7 @@
       <para>
         On <productname>Linux</>, IDE drives can be queried using
         <command>hdparm -I</command>; write caching is enabled if there is
-        a <literal>*</> next to <literal>Write cache</>.  <command>hdparm -W</>
+        a <literal>*</> next to <literal>Write cache</>.  <command>hdparm -W 0</>
         can be used to turn off write caching.  SCSI drives can be queried
         using <ulink url="http://sg.danny.cz/sg/sdparm.html"><application>sdparm</></ulink>.
         Use <command>sdparm --get=WCE</command> to check
