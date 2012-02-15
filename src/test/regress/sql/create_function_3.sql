@@ -3,7 +3,10 @@
 --
 -- sanity check of pg_proc catalog to the given parameters
 --
+CREATE USER regtest_unpriv_user;
+
 CREATE SCHEMA temp_func_test;
+GRANT ALL ON SCHEMA temp_func_test TO public;
 
 SET search_path TO temp_func_test, public;
 
@@ -85,6 +88,25 @@ SELECT proname, proleakproof FROM pg_proc
        WHERE oid in ('functext_E_1'::regproc,
                      'functext_E_2'::regproc) ORDER BY proname;
 
+ALTER FUNCTION functext_E_2(int) NOT LEAKPROOF;	-- remove leakproog attribute
+SELECT proname, proleakproof FROM pg_proc
+       WHERE oid in ('functext_E_1'::regproc,
+                     'functext_E_2'::regproc) ORDER BY proname;
+
+-- it takes superuser privilege to turn on leakproof, but not for turn off
+ALTER FUNCTION functext_E_1(int) OWNER TO regtest_unpriv_user;
+ALTER FUNCTION functext_E_2(int) OWNER TO regtest_unpriv_user;
+
+SET SESSION AUTHORIZATION regtest_unpriv_user;
+SET search_path TO temp_func_test, public;
+ALTER FUNCTION functext_E_1(int) NOT LEAKPROOF;
+ALTER FUNCTION functext_E_2(int) LEAKPROOF;
+
+CREATE FUNCTION functext_E_3(int) RETURNS bool LANGUAGE 'sql'
+       LEAKPROOF AS 'SELECT $1 < 200';	-- failed
+
+RESET SESSION AUTHORIZATION;
+
 -- list of built-in leakproof functions
 SELECT proname, prorettype::regtype, proargtypes::regtype[]
        FROM pg_proc JOIN pg_namespace ON pronamespace = pg_namespace.oid
@@ -118,4 +140,5 @@ SELECT proname, proisstrict FROM pg_proc
 
 -- Cleanups
 DROP SCHEMA temp_func_test CASCADE;
+DROP USER regtest_unpriv_user;
 RESET search_path;
