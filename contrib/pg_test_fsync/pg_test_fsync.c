@@ -36,6 +36,7 @@ do { \
 	gettimeofday(&start_t, NULL); \
 } while (0)
 #else
+/* WIN32 doesn't support alarm, so we create a thread and sleep there */
 #define START_TIMER	\
 do { \
 	alarm_triggered = false; \
@@ -76,7 +77,11 @@ static void test_sync(int writes_per_op);
 static void test_open_syncs(void);
 static void test_open_sync(const char *msg, int writes_size);
 static void test_file_descriptor_sync(void);
+#ifndef WIN32
 static void process_alarm(int sig);
+#else
+static DWORD WINAPI process_alarm(LPVOID param);
+#endif
 static void signal_cleanup(int sig);
 
 #ifdef HAVE_FSYNC_WRITETHROUGH
@@ -566,17 +571,22 @@ print_elapse(struct timeval start_t, struct timeval stop_t, int ops)
 	printf(OPS_FORMAT "\n", per_second);
 }
 
+#ifndef WIN32
 static void
 process_alarm(int sig)
 {
-#ifdef WIN32
-	sleep(secs_per_test);
-#endif
 	alarm_triggered = true;
-#ifdef WIN32
-	ExitThread(0);
-#endif
 }
+#else
+static DWORD WINAPI
+process_alarm(LPVOID param)
+{
+	/* WIN32 doesn't support alarm, so we create a thread and sleep here */
+	Sleep(secs_per_test * 1000);
+	alarm_triggered = true;
+	ExitThread(0);
+}
+#endif
 
 static void
 die(const char *str)
