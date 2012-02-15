@@ -224,7 +224,7 @@ PerformPortalClose(const char *name)
 	}
 
 	/*
-	 * Note: PortalCleanup is called as a side-effect
+	 * Note: PortalCleanup is called as a side-effect, if not already done.
 	 */
 	PortalDrop(portal, false);
 }
@@ -234,6 +234,10 @@ PerformPortalClose(const char *name)
  *
  * Clean up a portal when it's dropped.  This is the standard cleanup hook
  * for portals.
+ *
+ * Note: if portal->status is PORTAL_FAILED, we are probably being called
+ * during error abort, and must be careful to avoid doing anything that
+ * is likely to fail again.
  */
 void
 PortalCleanup(Portal portal)
@@ -420,7 +424,7 @@ PersistHoldablePortal(Portal portal)
 	PG_CATCH();
 	{
 		/* Uncaught error while executing portal: mark it dead */
-		portal->status = PORTAL_FAILED;
+		MarkPortalFailed(portal);
 
 		/* Restore global vars and propagate error */
 		ActivePortal = saveActivePortal;
