@@ -37,7 +37,8 @@ transfer_all_new_dbs(DbInfoArr *old_db_arr,
 	int			old_dbnum, new_dbnum;
 	const char *msg = NULL;
 
-	prep_status("Restoring user relation files\n");
+	prep_status("%s user relation files\n",
+		user_opts.transfer_mode == TRANSFER_MODE_LINK ? "Linking" : "Copying");
 
 	/* Scan the old cluster databases and transfer their files */
 	for (old_dbnum = new_dbnum = 0;
