@@ -22,6 +22,7 @@
 #include "catalog/pg_proc.h"
 #include "commands/dbcommands.h"
 #include "commands/seclabel.h"
+#include "libpq/auth.h"
 #include "libpq/libpq-be.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
@@ -33,6 +34,13 @@
 #include "sepgsql.h"
 
 #include <selinux/label.h>
+
+/*
+ * Saved hook entries (if stacked)
+ */
+static ClientAuthentication_hook_type next_client_auth_hook = NULL;
+static needs_fmgr_hook_type next_needs_fmgr_hook = NULL;
+static fmgr_hook_type next_fmgr_hook = NULL;
 
 /*
  * client_label
@@ -47,14 +55,197 @@ sepgsql_get_client_label(void)
 	return client_label;
 }
 
-char *
-sepgsql_set_client_label(char *new_label)
+/*
+ * sepgsql_client_auth
+ *
+ * Entrypoint of the client authentication hook.
+ * It switches the client label according to getpeercon(), and the current
+ * performing mode according to the GUC setting.
+ */
+static void
+sepgsql_client_auth(Port *port, int status)
 {
-	char	   *old_label = client_label;
+	if (next_client_auth_hook)
+		(*next_client_auth_hook) (port, status);
 
-	client_label = new_label;
+	/*
+	 * In the case when authentication failed, the supplied socket shall be
+	 * closed soon, so we don't need to do anything here.
+	 */
+	if (status != STATUS_OK)
+		return;
 
-	return old_label;
+	/*
+	 * Getting security label of the peer process using API of libselinux.
+	 */
+	if (getpeercon_raw(port->sock, &client_label) < 0)
+		ereport(FATAL,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("SELinux: unable to get peer label: %m")));
+
+	/*
+	 * Switch the current performing mode from INTERNAL to either DEFAULT or
+	 * PERMISSIVE.
+	 */
+	if (sepgsql_get_permissive())
+		sepgsql_set_mode(SEPGSQL_MODE_PERMISSIVE);
+	else
+		sepgsql_set_mode(SEPGSQL_MODE_DEFAULT);
+}
+
+/*
+ * sepgsql_needs_fmgr_hook
+ *
+ * It informs the core whether the supplied function is trusted procedure,
+ * or not. If true, sepgsql_fmgr_hook shall be invoked at start, end, and
+ * abort time of function invocation.
+ */
+static bool
+sepgsql_needs_fmgr_hook(Oid functionId)
+{
+	ObjectAddress	object;
+
+	if (next_needs_fmgr_hook &&
+		(*next_needs_fmgr_hook) (functionId))
+		return true;
+
+	/*
+	 * SELinux needs the function to be called via security_definer wrapper,
+	 * if this invocation will take a domain-transition. We call these
+	 * functions as trusted-procedure, if the security policy has a rule that
+	 * switches security label of the client on execution.
+	 */
+	if (sepgsql_avc_trusted_proc(functionId) != NULL)
+		return true;
+
+	/*
+	 * Even if not a trusted-procedure, this function should not be inlined
+	 * unless the client has db_procedure:{execute} permission. Please note
+	 * that it shall be actually failed later because of same reason with
+	 * ACL_EXECUTE.
+	 */
+	object.classId = ProcedureRelationId;
+	object.objectId = functionId;
+	object.objectSubId = 0;
+	if (!sepgsql_avc_check_perms(&object,
+								 SEPG_CLASS_DB_PROCEDURE,
+								 SEPG_DB_PROCEDURE__EXECUTE,
+								 SEPGSQL_AVC_NOAUDIT, false))
+		return true;
+
+	return false;
+}
+
+/*
+ * sepgsql_fmgr_hook
+ *
+ * It switches security label of the client on execution of trusted
+ * procedures.
+ */
+static void
+sepgsql_fmgr_hook(FmgrHookEventType event,
+				  FmgrInfo *flinfo, Datum *private)
+{
+	struct
+	{
+		char	   *old_label;
+		char	   *new_label;
+		Datum		next_private;
+	}		   *stack;
+
+	switch (event)
+	{
+		case FHET_START:
+			stack = (void *) DatumGetPointer(*private);
+			if (!stack)
+			{
+				MemoryContext oldcxt;
+
+				oldcxt = MemoryContextSwitchTo(flinfo->fn_mcxt);
+				stack = palloc(sizeof(*stack));
+				stack->old_label = NULL;
+				stack->new_label = sepgsql_avc_trusted_proc(flinfo->fn_oid);
+				stack->next_private = 0;
+
+				MemoryContextSwitchTo(oldcxt);
+
+				/*
+				 * process:transition permission between old and new label,
+				 * when user tries to switch security label of the client
+				 * on execution of trusted procedure.
+				 */
+				if (stack->new_label)
+					sepgsql_avc_check_perms_label(stack->new_label,
+												  SEPG_CLASS_PROCESS,
+												  SEPG_PROCESS__TRANSITION,
+												  NULL, true);
+
+				*private = PointerGetDatum(stack);
+			}
+			Assert(!stack->old_label);
+			if (stack->new_label)
+			{
+				stack->old_label = client_label;
+				client_label = stack->new_label;
+			}
+			if (next_fmgr_hook)
+				(*next_fmgr_hook) (event, flinfo, &stack->next_private);
+			break;
+
+		case FHET_END:
+		case FHET_ABORT:
+			stack = (void *) DatumGetPointer(*private);
+
+			if (next_fmgr_hook)
+				(*next_fmgr_hook) (event, flinfo, &stack->next_private);
+
+			if (stack->new_label)
+			{
+				client_label = stack->old_label;
+				stack->old_label = NULL;
+			}
+			break;
+
+		default:
+			elog(ERROR, "unexpected event type: %d", (int) event);
+			break;
+	}
+}
+
+/*
+ * sepgsql_init_client_label
+ *
+ * This routine initialize security label of the client, and set up related
+ * hooks to be invoked later.
+ */
+void
+sepgsql_init_client_label(void)
+{
+	/*
+	 * Set up dummy client label.
+	 *
+	 * XXX - note that PostgreSQL launches background worker process like
+	 * autovacuum without authentication steps. So, we initialize sepgsql_mode
+	 * with SEPGSQL_MODE_INTERNAL, and client_label with the security context
+	 * of server process. Later, it also launches background of user session.
+	 * In this case, the process is always hooked on post-authentication, and
+	 * we can initialize the sepgsql_mode and client_label correctly.
+	 */
+	if (getcon_raw(&client_label) < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("SELinux: failed to get server security label: %m")));
+
+	/* Client authentication hook */
+	next_client_auth_hook = ClientAuthentication_hook;
+	ClientAuthentication_hook = sepgsql_client_auth;
+
+	/* Trusted procedure hooks */
+	next_needs_fmgr_hook = needs_fmgr_hook;
+	needs_fmgr_hook = sepgsql_needs_fmgr_hook;
+
+	next_fmgr_hook = fmgr_hook;
+	fmgr_hook = sepgsql_fmgr_hook;
 }
 
 /*
