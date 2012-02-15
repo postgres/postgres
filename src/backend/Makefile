@@ -202,6 +202,7 @@ distprep:
 	$(MAKE) -C replication	repl_gram.c repl_scanner.c
 	$(MAKE) -C utils	fmgrtab.c fmgroids.h errcodes.h
 	$(MAKE) -C utils/misc	guc-file.c
+	$(MAKE) -C utils/sort	qsort_tuple.c
 
 
 ##########################################################################
@@ -315,7 +316,8 @@ maintainer-clean: distclean
 	      utils/fmgroids.h \
 	      utils/fmgrtab.c \
 	      utils/errcodes.h \
-	      utils/misc/guc-file.c
+	      utils/misc/guc-file.c \
+	      utils/misc/qsort_tuple.c
 
 
 ##########################################################################
