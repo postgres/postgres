@@ -28,12 +28,26 @@
 #define OPS_FORMAT			"%9.3f ops/sec"
 
 /* These are macros to avoid timing the function call overhead. */
+#ifndef WIN32
 #define START_TIMER	\
 do { \
 	alarm_triggered = false; \
 	alarm(secs_per_test); \
 	gettimeofday(&start_t, NULL); \
 } while (0)
+#else
+#define START_TIMER	\
+do { \
+	alarm_triggered = false; \
+	if (CreateThread(NULL, 0, process_alarm, NULL, 0, NULL) == \
+		INVALID_HANDLE_VALUE) \
+	{ \
+		fprintf(stderr, "Cannot create thread for alarm\n"); \
+		exit(1); \
+	} \
+	gettimeofday(&start_t, NULL); \
+} while (0)
+#endif
 
 #define STOP_TIMER	\
 do { \
@@ -82,7 +96,9 @@ main(int argc, char *argv[])
 	/* Prevent leaving behind the test file */
 	signal(SIGINT, signal_cleanup);
 	signal(SIGTERM, signal_cleanup);
+#ifndef WIN32
 	signal(SIGALRM, process_alarm);
+#endif
 #ifdef SIGHUP
 	/* Not defined on win32 */
 	signal(SIGHUP, signal_cleanup);
@@ -553,7 +569,13 @@ print_elapse(struct timeval start_t, struct timeval stop_t, int ops)
 static void
 process_alarm(int sig)
 {
+#ifdef WIN32
+	sleep(secs_per_test);
+#endif
 	alarm_triggered = true;
+#ifdef WIN32
+	ExitThread(0);
+#endif
 }
 
 static void
