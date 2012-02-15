@@ -345,42 +345,35 @@ $ sudo semodule -r sepgsql-regtest
 
    <para>
     For tables, <literal>db_table:select</>, <literal>db_table:insert</>,
-    <literal>db_table:update</> or <literal>db_table:delete</> is
+    <literal>db_table:update</> or <literal>db_table:delete</> are
     checked for all the referenced target tables depending on the kind of
-    statement;
-    in addition, <literal>db_table:select</> is also checked for
-    all the tables that contain the columns referenced in the
+    statement; in addition, <literal>db_table:select</> is also checked for
+    all the tables that contain columns referenced in the
     <literal>WHERE</> or <literal>RETURNING</> clause, as a data source
-    of <literal>UPDATE</>, and so on.  For example, consider:
+    for <literal>UPDATE</>, and so on.
+   </para>
 
+   <para>
+    Column-level permissions will also be checked for each referenced column.
+    <literal>db_column:select</> is checked on not only the columns being
+    read using <literal>SELECT</>, but those being referenced in other DML
+    statements; <literal>db_column:update</> or <literal>db_column:insert</>
+    will also be checked for columns being modified by <literal>UPDATE</> or
+    <literal>INSERT</>.
+   </para>
+
+   <para>
+   For example, consider:
 <synopsis>
 UPDATE t1 SET x = 2, y = md5sum(y) WHERE z = 100;
 </synopsis>
 
-    In this case we must have <literal>db_table:select</> in addition to
-    <literal>db_table:update</>, because <literal>t1.a</> is referenced
-    within the <literal>WHERE</> clause.  Column-level permissions will also be
-    checked for each referenced column.
-   </para>
-
-   <para>
-    For columns, <literal>db_column:select</> is checked on
-    not only the columns being read using <literal>SELECT</>, but those being
-    referenced in other DML statements.
-    Of course, it also checks <literal>db_column:update</> or
-    <literal>db_column:insert</> on columns being modified by
-    <literal>UPDATE</> or <literal>INSERT</>.
-   </para>
-
-   <para>
-<synopsis>
-UPDATE t1 SET x = 2, y = md5sum(y) WHERE z = 100;
-</synopsis>
-    In this case, it checks <literal>db_column:update</> on the column
-    <literal>t1.x</> being updated, <literal>db_column:{select update}</>
-    on the column <literal>t1.y</> being updated and referenced, and
-    <literal>db_column:select</> on the column <literal>t1.z</>, since that is
-    only referenced in the <literal>WHERE</> clause.
+    Here, <literal>db_column:update</> will be checked for
+    <literal>t1.x</>, since it is being updated,
+    <literal>db_column:{select update}</> will be checked for
+    <literal>t1.y</>, since it is both updated and referenced, and
+    <literal>db_column:select</> will be checked for <literal>t1.z</>, since
+    it is only referenced.
     <literal>db_table:{select update}</> will also be checked
     at the table level.
    </para>
