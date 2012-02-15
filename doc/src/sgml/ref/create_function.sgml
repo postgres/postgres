@@ -26,7 +26,7 @@ CREATE [ OR REPLACE ] FUNCTION
       | RETURNS TABLE ( <replaceable class="parameter">column_name</replaceable> <replaceable class="parameter">column_type</replaceable> [, ...] ) ]
   { LANGUAGE <replaceable class="parameter">lang_name</replaceable>
     | WINDOW
-    | IMMUTABLE | STABLE | VOLATILE | LEAKPROOF
+    | IMMUTABLE | STABLE | VOLATILE | [ NOT ] LEAKPROOF
     | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT
     | [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER
     | COST <replaceable class="parameter">execution_cost</replaceable>

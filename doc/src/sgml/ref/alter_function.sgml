@@ -33,7 +33,7 @@ ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="paramet
 <phrase>where <replaceable class="PARAMETER">action</replaceable> is one of:</phrase>
 
     CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT
-    IMMUTABLE | STABLE | VOLATILE | LEAKPROOF
+    IMMUTABLE | STABLE | VOLATILE | [ NOT ] LEAKPROOF
     [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER
     COST <replaceable class="parameter">execution_cost</replaceable>
     ROWS <replaceable class="parameter">result_rows</replaceable>

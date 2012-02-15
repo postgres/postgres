@@ -370,7 +370,7 @@ static void processCASbits(int cas_bits, int location, const char *constrType,
 
 %type <istmt>	insert_rest
 
-%type <vsetstmt> set_rest SetResetClause
+%type <vsetstmt> set_rest set_rest_more SetResetClause FunctionSetResetClause
 
 %type <node>	TableElement TypedTableElement ConstraintElem TableFuncElement
 				ForeignTableElement
@@ -1227,7 +1227,27 @@ VariableSetStmt:
 				}
 		;
 
-set_rest:	/* Generic SET syntaxes: */
+set_rest:
+			TRANSACTION transaction_mode_list
+				{
+					VariableSetStmt *n = makeNode(VariableSetStmt);
+					n->kind = VAR_SET_MULTI;
+					n->name = "TRANSACTION";
+					n->args = $2;
+					$$ = n;
+				}
+			| SESSION CHARACTERISTICS AS TRANSACTION transaction_mode_list
+				{
+					VariableSetStmt *n = makeNode(VariableSetStmt);
+					n->kind = VAR_SET_MULTI;
+					n->name = "SESSION CHARACTERISTICS";
+					n->args = $5;
+					$$ = n;
+				}
+			| set_rest_more
+			;
+
+set_rest_more:	/* Generic SET syntaxes: */
 			var_name TO var_list
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
@@ -1275,22 +1295,6 @@ set_rest:	/* Generic SET syntaxes: */
 						n->args = list_make1($3);
 					else
 						n->kind = VAR_SET_DEFAULT;
-					$$ = n;
-				}
-			| TRANSACTION transaction_mode_list
-				{
-					VariableSetStmt *n = makeNode(VariableSetStmt);
-					n->kind = VAR_SET_MULTI;
-					n->name = "TRANSACTION";
-					n->args = $2;
-					$$ = n;
-				}
-			| SESSION CHARACTERISTICS AS TRANSACTION transaction_mode_list
-				{
-					VariableSetStmt *n = makeNode(VariableSetStmt);
-					n->kind = VAR_SET_MULTI;
-					n->name = "SESSION CHARACTERISTICS";
-					n->args = $5;
 					$$ = n;
 				}
 			| CATALOG_P Sconst
@@ -1509,6 +1513,12 @@ VariableResetStmt:
 /* SetResetClause allows SET or RESET without LOCAL */
 SetResetClause:
 			SET set_rest					{ $$ = $2; }
+			| VariableResetStmt				{ $$ = (VariableSetStmt *) $1; }
+		;
+
+/* SetResetClause allows SET or RESET without LOCAL */
+FunctionSetResetClause:
+			SET set_rest_more				{ $$ = $2; }
 			| VariableResetStmt				{ $$ = (VariableSetStmt *) $1; }
 		;
 
@@ -6119,6 +6129,10 @@ common_func_opt_item:
 				{
 					$$ = makeDefElem("leakproof", (Node *)makeInteger(TRUE));
 				}
+			| NOT LEAKPROOF
+				{
+					$$ = makeDefElem("leakproof", (Node *)makeInteger(FALSE));
+				}
 			| COST NumericOnly
 				{
 					$$ = makeDefElem("cost", (Node *)$2);
@@ -6127,7 +6141,7 @@ common_func_opt_item:
 				{
 					$$ = makeDefElem("rows", (Node *)$2);
 				}
-			| SetResetClause
+			| FunctionSetResetClause
 				{
 					/* we abuse the normal content of a DefElem here */
 					$$ = makeDefElem("set", (Node *)$1);
