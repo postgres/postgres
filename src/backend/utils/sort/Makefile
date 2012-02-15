@@ -12,6 +12,8 @@ subdir = src/backend/utils/sort
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
+override CPPFLAGS := -I. -I$(srcdir) $(CPPFLAGS)
+
 OBJS = logtape.o sortsupport.o tuplesort.o tuplestore.o
 
 tuplesort.o: qsort_tuple.c
