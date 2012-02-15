@@ -607,7 +607,7 @@ PortalStart(Portal portal, ParamListInfo params, bool use_active_snapshot)
 	PG_CATCH();
 	{
 		/* Uncaught error while executing portal: mark it dead */
-		portal->status = PORTAL_FAILED;
+		MarkPortalFailed(portal);
 
 		/* Restore global vars and propagate error */
 		ActivePortal = saveActivePortal;
@@ -829,7 +829,7 @@ PortalRun(Portal portal, long count, bool isTopLevel,
 	PG_CATCH();
 	{
 		/* Uncaught error while executing portal: mark it dead */
-		portal->status = PORTAL_FAILED;
+		MarkPortalFailed(portal);
 
 		/* Restore global vars and propagate error */
 		if (saveMemoryContext == saveTopTransactionContext)
@@ -1446,7 +1446,7 @@ PortalRunFetch(Portal portal,
 	PG_CATCH();
 	{
 		/* Uncaught error while executing portal: mark it dead */
-		portal->status = PORTAL_FAILED;
+		MarkPortalFailed(portal);
 
 		/* Restore global vars and propagate error */
 		ActivePortal = saveActivePortal;

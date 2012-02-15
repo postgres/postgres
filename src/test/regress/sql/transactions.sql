@@ -368,8 +368,11 @@ fetch from foo;
 
 abort;
 
--- tests for the "tid" type
-SELECT '(3, 3)'::tid = '(3, 4)'::tid;
-SELECT '(3, 3)'::tid = '(3, 3)'::tid;
-SELECT '(3, 3)'::tid <> '(3, 3)'::tid;
-SELECT '(3, 3)'::tid <> '(3, 4)'::tid;
+-- Test for successful cleanup of an aborted transaction at session exit.
+-- THIS MUST BE THE LAST TEST IN THIS FILE.
+
+begin;
+select 1/0;
+rollback to X;
+
+-- DO NOT ADD ANYTHING HERE.

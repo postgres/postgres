@@ -405,6 +405,8 @@ UnpinPortal(Portal portal)
 /*
  * MarkPortalDone
  *		Transition a portal from ACTIVE to DONE state.
+ *
+ * NOTE: never set portal->status = PORTAL_DONE directly; call this instead.
  */
 void
 MarkPortalDone(Portal portal)
@@ -418,8 +420,36 @@ MarkPortalDone(Portal portal)
 	 * well do that now, since the portal can't be executed any more.
 	 *
 	 * In some cases involving execution of a ROLLBACK command in an already
-	 * aborted transaction, this prevents an assertion failure from reaching
-	 * AtCleanup_Portals with the cleanup hook still unexecuted.
+	 * aborted transaction, this prevents an assertion failure caused by
+	 * reaching AtCleanup_Portals with the cleanup hook still unexecuted.
+	 */
+	if (PointerIsValid(portal->cleanup))
+	{
+		(*portal->cleanup) (portal);
+		portal->cleanup = NULL;
+	}
+}
+
+/*
+ * MarkPortalFailed
+ *		Transition a portal into FAILED state.
+ *
+ * NOTE: never set portal->status = PORTAL_FAILED directly; call this instead.
+ */
+void
+MarkPortalFailed(Portal portal)
+{
+	/* Perform the state transition */
+	Assert(portal->status != PORTAL_DONE);
+	portal->status = PORTAL_FAILED;
+
+	/*
+	 * Allow portalcmds.c to clean up the state it knows about.  We might as
+	 * well do that now, since the portal can't be executed any more.
+	 *
+	 * In some cases involving cleanup of an already aborted transaction, this
+	 * prevents an assertion failure caused by reaching AtCleanup_Portals with
+	 * the cleanup hook still unexecuted.
 	 */
 	if (PointerIsValid(portal->cleanup))
 	{
@@ -455,6 +485,9 @@ PortalDrop(Portal portal, bool isTopCommit)
 	 * hook's responsibility to not try to do that more than once, in the case
 	 * that failure occurs and then we come back to drop the portal again
 	 * during transaction abort.
+	 *
+	 * Note: in most paths of control, this will have been done already in
+	 * MarkPortalDone or MarkPortalFailed.  We're just making sure.
 	 */
 	if (PointerIsValid(portal->cleanup))
 	{
@@ -713,7 +746,7 @@ AtAbort_Portals(void)
 
 		/* Any portal that was actually running has to be considered broken */
 		if (portal->status == PORTAL_ACTIVE)
-			portal->status = PORTAL_FAILED;
+			MarkPortalFailed(portal);
 
 		/*
 		 * Do nothing else to cursors held over from a previous transaction.
@@ -728,9 +761,12 @@ AtAbort_Portals(void)
 		 * AtSubAbort_Portals.
 		 */
 		if (portal->status == PORTAL_READY)
-			portal->status = PORTAL_FAILED;
+			MarkPortalFailed(portal);
 
-		/* let portalcmds.c clean up the state it knows about */
+		/*
+		 * Allow portalcmds.c to clean up the state it knows about, if we
+		 * haven't already.
+		 */
 		if (PointerIsValid(portal->cleanup))
 		{
 			(*portal->cleanup) (portal);
@@ -862,9 +898,12 @@ AtSubAbort_Portals(SubTransactionId mySubid,
 		 */
 		if (portal->status == PORTAL_READY ||
 			portal->status == PORTAL_ACTIVE)
-			portal->status = PORTAL_FAILED;
+			MarkPortalFailed(portal);
 
-		/* let portalcmds.c clean up the state it knows about */
+		/*
+		 * Allow portalcmds.c to clean up the state it knows about, if we
+		 * haven't already.
+		 */
 		if (PointerIsValid(portal->cleanup))
 		{
 			(*portal->cleanup) (portal);
