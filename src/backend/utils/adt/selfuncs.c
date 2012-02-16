@@ -110,6 +110,7 @@
 #include "optimizer/predtest.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/var.h"
+#include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
 #include "parser/parsetree.h"
 #include "utils/builtins.h"
@@ -255,10 +256,11 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 		return 0.0;
 
 	/*
-	 * If we matched the var to a unique index, assume there is exactly one
-	 * match regardless of anything else.  (This is slightly bogus, since the
-	 * index's equality operator might be different from ours, but it's more
-	 * likely to be right than ignoring the information.)
+	 * If we matched the var to a unique index or DISTINCT clause, assume
+	 * there is exactly one match regardless of anything else.  (This is
+	 * slightly bogus, since the index or clause's equality operator might be
+	 * different from ours, but it's much more likely to be right than
+	 * ignoring the information.)
 	 */
 	if (vardata->isunique && vardata->rel && vardata->rel->tuples >= 1.0)
 		return 1.0 / vardata->rel->tuples;
@@ -389,10 +391,11 @@ var_eq_non_const(VariableStatData *vardata, Oid operator,
 	bool		isdefault;
 
 	/*
-	 * If we matched the var to a unique index, assume there is exactly one
-	 * match regardless of anything else.  (This is slightly bogus, since the
-	 * index's equality operator might be different from ours, but it's more
-	 * likely to be right than ignoring the information.)
+	 * If we matched the var to a unique index or DISTINCT clause, assume
+	 * there is exactly one match regardless of anything else.  (This is
+	 * slightly bogus, since the index or clause's equality operator might be
+	 * different from ours, but it's much more likely to be right than
+	 * ignoring the information.)
 	 */
 	if (vardata->isunique && vardata->rel && vardata->rel->tuples >= 1.0)
 		return 1.0 / vardata->rel->tuples;
@@ -4128,10 +4131,11 @@ get_join_variables(PlannerInfo *root, List *args, SpecialJoinInfo *sjinfo,
  *	atttype, atttypmod: type data to pass to get_attstatsslot().  This is
  *		commonly the same as the exposed type of the variable argument,
  *		but can be different in binary-compatible-type cases.
- *	isunique: TRUE if we were able to match the var to a unique index,
- *		implying its values are unique for this query.  (Caution: this
- *		should be trusted for statistical purposes only, since we do not
- *		check indimmediate.)
+ *	isunique: TRUE if we were able to match the var to a unique index or a
+ *		single-column DISTINCT clause, implying its values are unique for
+ *		this query.  (Caution: this should be trusted for statistical
+ *		purposes only, since we do not check indimmediate nor verify that
+ *		the exact same definition of equality applies.)
  *
  * Caller is responsible for doing ReleaseVariableStats() before exiting.
  */
@@ -4357,32 +4361,21 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 	{
 		/*
 		 * Plain subquery (not one that was converted to an appendrel).
-		 *
-		 * Punt if subquery uses set operations, GROUP BY, or DISTINCT --- any
-		 * of these will mash underlying columns' stats beyond recognition.
-		 * (Set ops are particularly nasty; if we forged ahead, we would
-		 * return stats relevant to only the leftmost subselect...)
 		 */
 		Query	   *subquery = rte->subquery;
 		RelOptInfo *rel;
 		TargetEntry *ste;
 
-		if (subquery->setOperations ||
-			subquery->groupClause ||
-			subquery->distinctClause)
-			return;
-
 		/*
-		 * If the sub-query originated from a view with the security_barrier
-		 * attribute, we treat it as a black-box from outside of the view.
-		 * This is probably a harsher restriction than necessary; it's
-		 * certainly OK for the selectivity estimator (which is a C function,
-		 * and therefore omnipotent anyway) to look at the statistics.  But
-		 * many selectivity estimators will happily *invoke the operator
-		 * function* to try to work out a good estimate - and that's not OK.
-		 * So for now, we do this.
+		 * Punt if subquery uses set operations or GROUP BY, as these will
+		 * mash underlying columns' stats beyond recognition.  (Set ops are
+		 * particularly nasty; if we forged ahead, we would return stats
+		 * relevant to only the leftmost subselect...)  DISTINCT is also
+		 * problematic, but we check that later because there is a possibility
+		 * of learning something even with it.
 		 */
-		if (rte->security_barrier)
+		if (subquery->setOperations ||
+			subquery->groupClause)
 			return;
 
 		/*
@@ -4414,6 +4407,37 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 			elog(ERROR, "subquery %s does not have attribute %d",
 				 rte->eref->aliasname, var->varattno);
 		var = (Var *) ste->expr;
+
+		/*
+		 * If subquery uses DISTINCT, we can't make use of any stats for the
+		 * variable ... but, if it's the only DISTINCT column, we are entitled
+		 * to consider it unique.  We do the test this way so that it works
+		 * for cases involving DISTINCT ON.
+		 */
+		if (subquery->distinctClause)
+		{
+			if (list_length(subquery->distinctClause) == 1 &&
+				targetIsInSortList(ste, InvalidOid, subquery->distinctClause))
+				vardata->isunique = true;
+			/* cannot go further */
+			return;
+		}
+
+		/*
+		 * If the sub-query originated from a view with the security_barrier
+		 * attribute, we must not look at the variable's statistics, though
+		 * it seems all right to notice the existence of a DISTINCT clause.
+		 * So stop here.
+		 *
+		 * This is probably a harsher restriction than necessary; it's
+		 * certainly OK for the selectivity estimator (which is a C function,
+		 * and therefore omnipotent anyway) to look at the statistics.  But
+		 * many selectivity estimators will happily *invoke the operator
+		 * function* to try to work out a good estimate - and that's not OK.
+		 * So for now, don't dig down for stats.
+		 */
+		if (rte->security_barrier)
+			return;
 
 		/* Can only handle a simple Var of subquery's query level */
 		if (var && IsA(var, Var) &&
@@ -4513,10 +4537,10 @@ get_variable_numdistinct(VariableStatData *vardata, bool *isdefault)
 	}
 
 	/*
-	 * If there is a unique index for the variable, assume it is unique no
-	 * matter what pg_statistic says; the statistics could be out of date, or
-	 * we might have found a partial unique index that proves the var is
-	 * unique for this query.
+	 * If there is a unique index or DISTINCT clause for the variable, assume
+	 * it is unique no matter what pg_statistic says; the statistics could be
+	 * out of date, or we might have found a partial unique index that proves
+	 * the var is unique for this query.
 	 */
 	if (vardata->isunique)
 		stadistinct = -1.0;

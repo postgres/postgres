@@ -74,7 +74,7 @@ typedef struct VariableStatData
 	Oid			vartype;		/* exposed type of expression */
 	Oid			atttype;		/* type to pass to get_attstatsslot */
 	int32		atttypmod;		/* typmod to pass to get_attstatsslot */
-	bool		isunique;		/* true if matched to a unique index */
+	bool		isunique;		/* matches unique index or DISTINCT clause */
 } VariableStatData;
 
 #define ReleaseVariableStats(vardata)  \
