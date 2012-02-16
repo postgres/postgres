@@ -532,16 +532,10 @@ main(int argc, char **argv)
 		dump_inserts = 1;
 
 	if (dataOnly && schemaOnly)
-	{
-		write_msg(NULL, "options -s/--schema-only and -a/--data-only cannot be used together\n");
-		exit_nicely(1);
-	}
+		exit_horribly(NULL, "options -s/--schema-only and -a/--data-only cannot be used together\n");
 
 	if ((dataOnly || schemaOnly) && dumpSections != DUMP_UNSECTIONED)
-	{
-		write_msg(NULL, "options -s/--schema-only and -a/--data-only cannot be used with --section\n");
-		exit_nicely(1);
-	}
+		exit_horribly(NULL, "options -s/--schema-only and -a/--data-only cannot be used with --section\n");
 
 	if (dataOnly)
 		dumpSections = DUMP_DATA;
@@ -554,10 +548,7 @@ main(int argc, char **argv)
 	}
 
 	if (dataOnly && outputClean)
-	{
-		write_msg(NULL, "options -c/--clean and -a/--data-only cannot be used together\n");
-		exit_nicely(1);
-	}
+		exit_horribly(NULL, "options -c/--clean and -a/--data-only cannot be used together\n");
 
 	if (dump_inserts && oids)
 	{
@@ -587,20 +578,14 @@ main(int argc, char **argv)
 	on_exit_nicely(pgdump_cleanup_at_exit, fout);
 
 	if (fout == NULL)
-	{
-		write_msg(NULL, "could not open output file \"%s\" for writing\n", filename);
-		exit_nicely(1);
-	}
+		exit_horribly(NULL, "could not open output file \"%s\" for writing\n", filename);
 
 	/* Let the archiver know how noisy to be */
 	fout->verbose = g_verbose;
 
 	my_version = parse_version(PG_VERSION);
 	if (my_version < 0)
-	{
-		write_msg(NULL, "could not parse version string \"%s\"\n", PG_VERSION);
-		exit_nicely(1);
-	}
+		exit_horribly(NULL, "could not parse version string \"%s\"\n", PG_VERSION);
 
 	/*
 	 * We allow the server to be back to 7.0, and up to any minor release of
@@ -668,10 +653,7 @@ main(int argc, char **argv)
 		expand_schema_name_patterns(fout, &schema_include_patterns,
 									&schema_include_oids);
 		if (schema_include_oids.head == NULL)
-		{
-			write_msg(NULL, "No matching schemas were found\n");
-			exit_nicely(1);
-		}
+			exit_horribly(NULL, "No matching schemas were found\n");
 	}
 	expand_schema_name_patterns(fout, &schema_exclude_patterns,
 								&schema_exclude_oids);
@@ -683,10 +665,7 @@ main(int argc, char **argv)
 		expand_table_name_patterns(fout, &table_include_patterns,
 								   &table_include_oids);
 		if (table_include_oids.head == NULL)
-		{
-			write_msg(NULL, "No matching tables were found\n");
-			exit_nicely(1);
-		}
+			exit_horribly(NULL, "No matching tables were found\n");
 	}
 	expand_table_name_patterns(fout, &table_exclude_patterns,
 							   &table_exclude_oids);
@@ -875,11 +854,8 @@ setup_connection(Archive *AH, const char *dumpencoding, char *use_role)
 	if (dumpencoding)
 	{
 		if (PQsetClientEncoding(conn, dumpencoding) < 0)
-		{
-			write_msg(NULL, "invalid client encoding \"%s\" specified\n",
-					  dumpencoding);
-			exit_nicely(1);
-		}
+			exit_horribly(NULL, "invalid client encoding \"%s\" specified\n",
+						  dumpencoding);
 	}
 
 	/*
@@ -974,10 +950,7 @@ parseArchiveFormat(const char *format, ArchiveMode *mode)
 	else if (pg_strcasecmp(format, "tar") == 0)
 		archiveFormat = archTar;
 	else
-	{
-		write_msg(NULL, "invalid output format \"%s\" specified\n", format);
-		exit_nicely(1);
-	}
+		exit_horribly(NULL, "invalid output format \"%s\" specified\n", format);
 	return archiveFormat;
 }
 
@@ -999,10 +972,7 @@ expand_schema_name_patterns(Archive *fout,
 		return;					/* nothing to do */
 
 	if (fout->remoteVersion < 70300)
-	{
-		write_msg(NULL, "server version must be at least 7.3 to use schema selection switches\n");
-		exit_nicely(1);
-	}
+		exit_horribly(NULL, "server version must be at least 7.3 to use schema selection switches\n");
 
 	query = createPQExpBuffer();
 
@@ -1831,7 +1801,6 @@ dumpDatabase(Archive *fout)
 	PQExpBuffer creaQry = createPQExpBuffer();
 	PGconn	   *conn = GetConnection(fout);
 	PGresult   *res;
-	int			ntups;
 	int			i_tableoid,
 				i_oid,
 				i_dba,
@@ -1928,23 +1897,7 @@ dumpDatabase(Archive *fout)
 		appendStringLiteralAH(dbQry, datname, fout);
 	}
 
-	res = ExecuteSqlQuery(fout, dbQry->data, PGRES_TUPLES_OK);
-
-	ntups = PQntuples(res);
-
-	if (ntups <= 0)
-	{
-		write_msg(NULL, "missing pg_database entry for database \"%s\"\n",
-				  datname);
-		exit_nicely(1);
-	}
-
-	if (ntups != 1)
-	{
-		write_msg(NULL, "query returned more than one (%d) pg_database entry for database \"%s\"\n",
-				  ntups, datname);
-		exit_nicely(1);
-	}
+	res = ExecuteSqlQueryForSingleRow(fout, dbQry->data);
 
 	i_tableoid = PQfnumber(res, "tableoid");
 	i_oid = PQfnumber(res, "oid");
@@ -2040,13 +1993,7 @@ dumpDatabase(Archive *fout)
 						  "WHERE oid = %u;\n",
 						  LargeObjectRelationId);
 
-		lo_res = ExecuteSqlQuery(fout, loFrozenQry->data, PGRES_TUPLES_OK);
-
-		if (PQntuples(lo_res) != 1)
-		{
-			write_msg(NULL, "dumpDatabase(): could not find pg_largeobject.relfrozenxid\n");
-			exit_nicely(1);
-		}
+		lo_res = ExecuteSqlQueryForSingleRow(fout, loFrozenQry->data);
 
 		i_relfrozenxid = PQfnumber(lo_res, "relfrozenxid");
 
@@ -2078,13 +2025,7 @@ dumpDatabase(Archive *fout)
 							  "WHERE oid = %u;\n",
 							  LargeObjectMetadataRelationId);
 
-			lo_res = ExecuteSqlQuery(fout, loFrozenQry->data, PGRES_TUPLES_OK);
-
-			if (PQntuples(lo_res) != 1)
-			{
-				write_msg(NULL, "dumpDatabase(): could not find pg_largeobject_metadata.relfrozenxid\n");
-				exit_nicely(1);
-			}
+			lo_res = ExecuteSqlQueryForSingleRow(fout, loFrozenQry->data);
 
 			i_relfrozenxid = PQfnumber(lo_res, "relfrozenxid");
 
@@ -2407,11 +2348,8 @@ dumpBlobs(Archive *fout, void *arg)
 			/* Open the BLOB */
 			loFd = lo_open(conn, blobOid, INV_READ);
 			if (loFd == -1)
-			{
-				write_msg(NULL, "could not open large object %u: %s",
-						  blobOid, PQerrorMessage(conn));
-				exit_nicely(1);
-			}
+				exit_horribly(NULL, "could not open large object %u: %s",
+							  blobOid, PQerrorMessage(conn));
 
 			StartBlob(fout, blobOid);
 
@@ -2420,11 +2358,8 @@ dumpBlobs(Archive *fout, void *arg)
 			{
 				cnt = lo_read(conn, loFd, buf, LOBBUFSIZE);
 				if (cnt < 0)
-				{
-					write_msg(NULL, "error reading large object %u: %s",
-							  blobOid, PQerrorMessage(conn));
-					exit_nicely(1);
-				}
+					exit_horribly(NULL, "error reading large object %u: %s",
+								  blobOid, PQerrorMessage(conn));
 
 				WriteData(fout, buf, cnt);
 			} while (cnt > 0);
@@ -2618,10 +2553,7 @@ binary_upgrade_extension_member(PQExpBuffer upgrade_buffer,
 		extobj = NULL;
 	}
 	if (extobj == NULL)
-	{
-		write_msg(NULL, "could not find parent extension for %s", objlabel);
-		exit_nicely(1);
-	}
+		exit_horribly(NULL, "could not find parent extension for %s", objlabel);
 
 	appendPQExpBuffer(upgrade_buffer,
 	  "\n-- For binary upgrade, handle extension membership the hard way\n");
@@ -2760,8 +2692,7 @@ findNamespace(Archive *fout, Oid nsoid, Oid objoid)
 			if (nsoid == nsinfo->dobj.catId.oid)
 				return nsinfo;
 		}
-		write_msg(NULL, "schema with OID %u does not exist\n", nsoid);
-		exit_nicely(1);
+		exit_horribly(NULL, "schema with OID %u does not exist\n", nsoid);
 	}
 	else
 	{
@@ -5085,12 +5016,8 @@ getRules(Archive *fout, int *numRules)
 		ruletableoid = atooid(PQgetvalue(res, i, i_ruletable));
 		ruleinfo[i].ruletable = findTableByOid(ruletableoid);
 		if (ruleinfo[i].ruletable == NULL)
-		{
-			write_msg(NULL, "failed sanity check, parent table OID %u of pg_rewrite entry OID %u not found\n",
-					  ruletableoid,
-					  ruleinfo[i].dobj.catId.oid);
-			exit_nicely(1);
-		}
+			exit_horribly(NULL, "failed sanity check, parent table OID %u of pg_rewrite entry OID %u not found\n",
+						  ruletableoid, ruleinfo[i].dobj.catId.oid);
 		ruleinfo[i].dobj.namespace = ruleinfo[i].ruletable->dobj.namespace;
 		ruleinfo[i].dobj.dump = ruleinfo[i].ruletable->dobj.dump;
 		ruleinfo[i].ev_type = *(PQgetvalue(res, i, i_ev_type));
@@ -5331,12 +5258,10 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 					if (OidIsValid(tginfo[j].tgconstrrelid))
 					{
 						if (PQgetisnull(res, j, i_tgconstrrelname))
-						{
-							write_msg(NULL, "query produced null referenced table name for foreign key trigger \"%s\" on table \"%s\" (OID of table: %u)\n",
-									  tginfo[j].dobj.name, tbinfo->dobj.name,
-									  tginfo[j].tgconstrrelid);
-							exit_nicely(1);
-						}
+							exit_horribly(NULL, "query produced null referenced table name for foreign key trigger \"%s\" on table \"%s\" (OID of table: %u)\n",
+										  tginfo[j].dobj.name,
+										  tbinfo->dobj.name,
+										  tginfo[j].tgconstrrelid);
 						tginfo[j].tgconstrrelname = pg_strdup(PQgetvalue(res, j, i_tgconstrrelname));
 					}
 					else
@@ -5879,11 +5804,9 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 		for (j = 0; j < ntups; j++)
 		{
 			if (j + 1 != atoi(PQgetvalue(res, j, i_attnum)))
-			{
-				write_msg(NULL, "invalid column numbering in table \"%s\"\n",
-						  tbinfo->dobj.name);
-				exit_nicely(1);
-			}
+				exit_horribly(NULL,
+							  "invalid column numbering in table \"%s\"\n",
+							  tbinfo->dobj.name);
 			tbinfo->attnames[j] = pg_strdup(PQgetvalue(res, j, i_attname));
 			tbinfo->atttypnames[j] = pg_strdup(PQgetvalue(res, j, i_atttypname));
 			tbinfo->atttypmod[j] = atoi(PQgetvalue(res, j, i_atttypmod));
@@ -5967,11 +5890,9 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 				adnum = atoi(PQgetvalue(res, j, 2));
 
 				if (adnum <= 0 || adnum > ntups)
-				{
-					write_msg(NULL, "invalid adnum value %d for table \"%s\"\n",
-							  adnum, tbinfo->dobj.name);
-					exit_nicely(1);
-				}
+					exit_horribly(NULL,
+								  "invalid adnum value %d for table \"%s\"\n",
+								  adnum, tbinfo->dobj.name);
 
 				/*
 				 * dropped columns shouldn't have defaults, but just in case,
@@ -7666,13 +7587,7 @@ dumpRangeType(Archive *fout, TypeInfo *tyinfo)
 					  "rngtypid = '%u'",
 					  tyinfo->dobj.catId.oid);
 
-	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
-	if (PQntuples(res) != 1)
-	{
-		write_msg(NULL, "query returned %d pg_range entries for range type \"%s\"\n",
-				  PQntuples(res), tyinfo->dobj.name);
-		exit_nicely(1);
-	}
+	res = ExecuteSqlQueryForSingleRow(fout, query->data);
 
 	/*
 	 * DROP must be fully qualified in case same name appears in pg_catalog.
@@ -9346,11 +9261,8 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 		else if (provolatile[0] == PROVOLATILE_STABLE)
 			appendPQExpBuffer(q, " STABLE");
 		else if (provolatile[0] != PROVOLATILE_VOLATILE)
-		{
-			write_msg(NULL, "unrecognized provolatile value for function \"%s\"\n",
-					  finfo->dobj.name);
-			exit_nicely(1);
-		}
+			exit_horribly(NULL, "unrecognized provolatile value for function \"%s\"\n",
+						  finfo->dobj.name);
 	}
 
 	if (proisstrict[0] == 't')
@@ -11769,9 +11681,9 @@ dumpDefaultACL(Archive *fout, DefaultACLInfo *daclinfo)
 			break;
 		default:
 			/* shouldn't get here */
-			write_msg(NULL, "unknown object type (%d) in default privileges\n",
-					  (int) daclinfo->defaclobjtype);
-			exit_nicely(1);
+			exit_horribly(NULL,
+						  "unknown object type (%d) in default privileges\n",
+						  (int) daclinfo->defaclobjtype);
 			type = "";			/* keep compiler quiet */
 	}
 
@@ -11785,11 +11697,8 @@ dumpDefaultACL(Archive *fout, DefaultACLInfo *daclinfo)
 								 daclinfo->defaclrole,
 								 fout->remoteVersion,
 								 q))
-	{
-		write_msg(NULL, "could not parse default ACL list (%s)\n",
-				  daclinfo->defaclacl);
-		exit_nicely(1);
-	}
+		exit_horribly(NULL, "could not parse default ACL list (%s)\n",
+					  daclinfo->defaclacl);
 
 	ArchiveEntry(fout, daclinfo->dobj.catId, daclinfo->dobj.dumpId,
 				 tag->data,
@@ -11842,11 +11751,9 @@ dumpACL(Archive *fout, CatalogId objCatId, DumpId objDumpId,
 
 	if (!buildACLCommands(name, subname, type, acls, owner,
 						  "", fout->remoteVersion, sql))
-	{
-		write_msg(NULL, "could not parse ACL list (%s) for object \"%s\" (%s)\n",
-				  acls, name, type);
-		exit_nicely(1);
-	}
+		exit_horribly(NULL,
+					  "could not parse ACL list (%s) for object \"%s\" (%s)\n",
+					  acls, name, type);
 
 	if (sql->len > 0)
 		ArchiveEntry(fout, nilCatalogId, createDumpId(),
@@ -12286,22 +12193,18 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		if (PQntuples(res) != 1)
 		{
 			if (PQntuples(res) < 1)
-				write_msg(NULL, "query to obtain definition of view \"%s\" returned no data\n",
+				exit_horribly(NULL, "query to obtain definition of view \"%s\" returned no data\n",
 						  tbinfo->dobj.name);
 			else
-				write_msg(NULL, "query to obtain definition of view \"%s\" returned more than one definition\n",
+				exit_horribly(NULL, "query to obtain definition of view \"%s\" returned more than one definition\n",
 						  tbinfo->dobj.name);
-			exit_nicely(1);
 		}
 
 		viewdef = PQgetvalue(res, 0, 0);
 
 		if (strlen(viewdef) == 0)
-		{
-			write_msg(NULL, "definition of view \"%s\" appears to be empty (length zero)\n",
-					  tbinfo->dobj.name);
-			exit_nicely(1);
-		}
+			exit_horribly(NULL, "definition of view \"%s\" appears to be empty (length zero)\n",
+						  tbinfo->dobj.name);
 
 		/*
 		 * DROP must be fully qualified in case same name appears in
@@ -12349,15 +12252,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 							  "ON (fs.oid = ft.ftserver) "
 							  "WHERE ft.ftrelid = '%u'",
 							  tbinfo->dobj.catId.oid);
-			res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
-			if (PQntuples(res) != 1)
-			{
-				write_msg(NULL, ngettext("query returned %d foreign server entry for foreign table \"%s\"\n",
-										 "query returned %d foreign server entries for foreign table \"%s\"\n",
-										 PQntuples(res)),
-						  PQntuples(res), tbinfo->dobj.name);
-				exit_nicely(1);
-			}
+			res = ExecuteSqlQueryForSingleRow(fout, query->data);
 			i_srvname = PQfnumber(res, "srvname");
 			i_ftoptions = PQfnumber(res, "ftoptions");
 			srvname = pg_strdup(PQgetvalue(res, 0, i_srvname));
@@ -12919,9 +12814,8 @@ getAttrName(int attrnum, TableInfo *tblInfo)
 		case TableOidAttributeNumber:
 			return "tableoid";
 	}
-	write_msg(NULL, "invalid column number %d for table \"%s\"\n",
-			  attrnum, tblInfo->dobj.name);
-	exit_nicely(1);
+	exit_horribly(NULL, "invalid column number %d for table \"%s\"\n",
+				  attrnum, tblInfo->dobj.name);
 	return NULL;				/* keep compiler quiet */
 }
 
@@ -13030,11 +12924,8 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 		indxinfo = (IndxInfo *) findObjectByDumpId(coninfo->conindex);
 
 		if (indxinfo == NULL)
-		{
-			write_msg(NULL, "missing index for constraint \"%s\"\n",
-					  coninfo->dobj.name);
-			exit_nicely(1);
-		}
+			exit_horribly(NULL, "missing index for constraint \"%s\"\n",
+						  coninfo->dobj.name);
 
 		if (binary_upgrade)
 			binary_upgrade_set_pg_class_oids(fout, q,
@@ -13220,8 +13111,8 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 	}
 	else
 	{
-		write_msg(NULL, "unrecognized constraint type: %c\n", coninfo->contype);
-		exit_nicely(1);
+		exit_horribly(NULL, "unrecognized constraint type: %c\n",
+					  coninfo->contype);
 	}
 
 	/* Dump Constraint Comments --- only works for table constraints */
@@ -13269,7 +13160,6 @@ static Oid
 findLastBuiltinOid_V71(Archive *fout, const char *dbname)
 {
 	PGresult   *res;
-	int			ntups;
 	Oid			last_oid;
 	PQExpBuffer query = createPQExpBuffer();
 
@@ -13277,19 +13167,7 @@ findLastBuiltinOid_V71(Archive *fout, const char *dbname)
 	appendPQExpBuffer(query, "SELECT datlastsysoid from pg_database where datname = ");
 	appendStringLiteralAH(query, dbname, fout);
 
-	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
-
-	ntups = PQntuples(res);
-	if (ntups < 1)
-	{
-		write_msg(NULL, "missing pg_database entry for this database\n");
-		exit_nicely(1);
-	}
-	if (ntups > 1)
-	{
-		write_msg(NULL, "found more than one pg_database entry for this database\n");
-		exit_nicely(1);
-	}
+	res = ExecuteSqlQueryForSingleRow(fout, query->data);
 	last_oid = atooid(PQgetvalue(res, 0, PQfnumber(res, "datlastsysoid")));
 	PQclear(res);
 	destroyPQExpBuffer(query);
@@ -13308,23 +13186,10 @@ static Oid
 findLastBuiltinOid_V70(Archive *fout)
 {
 	PGresult   *res;
-	int			ntups;
 	int			last_oid;
 
-	res = ExecuteSqlQuery(fout,
-				 	"SELECT oid FROM pg_class WHERE relname = 'pg_indexes'",
-					PGRES_TUPLES_OK);
-	ntups = PQntuples(res);
-	if (ntups < 1)
-	{
-		write_msg(NULL, "could not find entry for pg_indexes in pg_class\n");
-		exit_nicely(1);
-	}
-	if (ntups > 1)
-	{
-		write_msg(NULL, "found more than one entry for pg_indexes in pg_class\n");
-		exit_nicely(1);
-	}
+	res = ExecuteSqlQueryForSingleRow(fout,
+				 	"SELECT oid FROM pg_class WHERE relname = 'pg_indexes'");
 	last_oid = atooid(PQgetvalue(res, 0, PQfnumber(res, "oid")));
 	PQclear(res);
 	return last_oid;
