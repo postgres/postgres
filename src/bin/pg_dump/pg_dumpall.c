@@ -151,12 +151,12 @@ main(int argc, char *argv[])
 		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
 		{
 			help();
-			exit(0);
+			exit_nicely(0);
 		}
 		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
 		{
 			puts("pg_dumpall (PostgreSQL) " PG_VERSION);
-			exit(0);
+			exit_nicely(0);
 		}
 	}
 
@@ -181,7 +181,7 @@ main(int argc, char *argv[])
 					  "but was not the same version as %s.\n"
 					  "Check your installation.\n"),
 					full_path, progname);
-		exit(1);
+		exit_nicely(1);
 	}
 
 	pgdumpopts = createPQExpBuffer();
@@ -296,7 +296,7 @@ main(int argc, char *argv[])
 
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
-				exit(1);
+				exit_nicely(1);
 		}
 	}
 
@@ -307,7 +307,7 @@ main(int argc, char *argv[])
 				progname, argv[optind]);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
-		exit(1);
+		exit_nicely(1);
 	}
 
 	/* Make sure the user hasn't specified a mix of globals-only options */
@@ -317,7 +317,7 @@ main(int argc, char *argv[])
 				progname);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
-		exit(1);
+		exit_nicely(1);
 	}
 
 	if (globals_only && tablespaces_only)
@@ -326,7 +326,7 @@ main(int argc, char *argv[])
 				progname);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
-		exit(1);
+		exit_nicely(1);
 	}
 
 	if (roles_only && tablespaces_only)
@@ -335,7 +335,7 @@ main(int argc, char *argv[])
 				progname);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
-		exit(1);
+		exit_nicely(1);
 	}
 
 	/* Add long options to the pg_dump argument list */
@@ -375,7 +375,7 @@ main(int argc, char *argv[])
 		{
 			fprintf(stderr, _("%s: could not connect to database \"%s\"\n"),
 					progname, pgdb);
-			exit(1);
+			exit_nicely(1);
 		}
 	}
 	else
@@ -393,7 +393,7 @@ main(int argc, char *argv[])
 					progname);
 			fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 					progname);
-			exit(1);
+			exit_nicely(1);
 		}
 	}
 
@@ -407,7 +407,7 @@ main(int argc, char *argv[])
 		{
 			fprintf(stderr, _("%s: could not open the output file \"%s\": %s\n"),
 					progname, filename, strerror(errno));
-			exit(1);
+			exit_nicely(1);
 		}
 	}
 	else
@@ -525,7 +525,7 @@ main(int argc, char *argv[])
 	if (filename)
 		fclose(OPF);
 
-	exit(0);
+	exit_nicely(0);
 }
 
 
@@ -1068,7 +1068,7 @@ dumpTablespaces(PGconn *conn)
 			fprintf(stderr, _("%s: could not parse ACL list (%s) for tablespace \"%s\"\n"),
 					progname, spcacl, fspcname);
 			PQfinish(conn);
-			exit(1);
+			exit_nicely(1);
 		}
 
 		if (spccomment && strlen(spccomment))
@@ -1372,7 +1372,7 @@ dumpCreateDB(PGconn *conn)
 			fprintf(stderr, _("%s: could not parse ACL list (%s) for database \"%s\"\n"),
 					progname, dbacl, fdbname);
 			PQfinish(conn);
-			exit(1);
+			exit_nicely(1);
 		}
 
 		fprintf(OPF, "%s", buf->data);
@@ -1587,7 +1587,7 @@ dumpDatabases(PGconn *conn)
 		if (ret != 0)
 		{
 			fprintf(stderr, _("%s: pg_dump failed on database \"%s\", exiting\n"), progname, dbname);
-			exit(1);
+			exit_nicely(1);
 		}
 
 		if (filename)
@@ -1597,7 +1597,7 @@ dumpDatabases(PGconn *conn)
 			{
 				fprintf(stderr, _("%s: could not re-open the output file \"%s\": %s\n"),
 						progname, filename, strerror(errno));
-				exit(1);
+				exit_nicely(1);
 			}
 		}
 
@@ -1724,7 +1724,7 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 		{
 			fprintf(stderr, _("%s: could not connect to database \"%s\"\n"),
 					progname, dbname);
-			exit(1);
+			exit_nicely(1);
 		}
 
 		if (PQstatus(conn) == CONNECTION_BAD &&
@@ -1746,7 +1746,7 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 			fprintf(stderr,
 					_("%s: could not connect to database \"%s\": %s\n"),
 					progname, dbname, PQerrorMessage(conn));
-			exit(1);
+			exit_nicely(1);
 		}
 		else
 		{
@@ -1759,14 +1759,14 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 	if (!remoteversion_str)
 	{
 		fprintf(stderr, _("%s: could not get server version\n"), progname);
-		exit(1);
+		exit_nicely(1);
 	}
 	server_version = parse_version(remoteversion_str);
 	if (server_version < 0)
 	{
 		fprintf(stderr, _("%s: could not parse server version \"%s\"\n"),
 				progname, remoteversion_str);
-		exit(1);
+		exit_nicely(1);
 	}
 
 	my_version = parse_version(PG_VERSION);
@@ -1774,7 +1774,7 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 	{
 		fprintf(stderr, _("%s: could not parse version \"%s\"\n"),
 				progname, PG_VERSION);
-		exit(1);
+		exit_nicely(1);
 	}
 
 	/*
@@ -1788,7 +1788,7 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 		fprintf(stderr, _("server version: %s; %s version: %s\n"),
 				remoteversion_str, progname, PG_VERSION);
 		fprintf(stderr, _("aborting because of server version mismatch\n"));
-		exit(1);
+		exit_nicely(1);
 	}
 
 	/*
@@ -1822,7 +1822,7 @@ executeQuery(PGconn *conn, const char *query)
 		fprintf(stderr, _("%s: query was: %s\n"),
 				progname, query);
 		PQfinish(conn);
-		exit(1);
+		exit_nicely(1);
 	}
 
 	return res;
@@ -1848,7 +1848,7 @@ executeCommand(PGconn *conn, const char *query)
 		fprintf(stderr, _("%s: query was: %s\n"),
 				progname, query);
 		PQfinish(conn);
-		exit(1);
+		exit_nicely(1);
 	}
 
 	PQclear(res);

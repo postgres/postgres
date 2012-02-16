@@ -145,6 +145,7 @@ static int	serializable_deferrable = 0;
 
 
 static void help(const char *progname);
+static void pgdump_cleanup_at_exit(int code, void *arg);
 static void setup_connection(Archive *AH, const char *dumpencoding,
 				 char *use_role);
 static ArchiveFormat parseArchiveFormat(const char *format, ArchiveMode *mode);
@@ -370,12 +371,12 @@ main(int argc, char **argv)
 		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
 		{
 			help(progname);
-			exit(0);
+			exit_nicely(0);
 		}
 		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
 		{
 			puts("pg_dump (PostgreSQL) " PG_VERSION);
-			exit(0);
+			exit_nicely(0);
 		}
 	}
 
@@ -508,7 +509,7 @@ main(int argc, char **argv)
 
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
-				exit(1);
+				exit_nicely(1);
 		}
 	}
 
@@ -523,7 +524,7 @@ main(int argc, char **argv)
 				progname, argv[optind]);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
-		exit(1);
+		exit_nicely(1);
 	}
 
 	/* --column-inserts implies --inserts */
@@ -533,13 +534,13 @@ main(int argc, char **argv)
 	if (dataOnly && schemaOnly)
 	{
 		write_msg(NULL, "options -s/--schema-only and -a/--data-only cannot be used together\n");
-		exit(1);
+		exit_nicely(1);
 	}
 
 	if ((dataOnly || schemaOnly) && dumpSections != DUMP_UNSECTIONED)
 	{
 		write_msg(NULL, "options -s/--schema-only and -a/--data-only cannot be used with --section\n");
-		exit(1);
+		exit_nicely(1);
 	}
 
 	if (dataOnly)
@@ -555,14 +556,14 @@ main(int argc, char **argv)
 	if (dataOnly && outputClean)
 	{
 		write_msg(NULL, "options -c/--clean and -a/--data-only cannot be used together\n");
-		exit(1);
+		exit_nicely(1);
 	}
 
 	if (dump_inserts && oids)
 	{
 		write_msg(NULL, "options --inserts/--column-inserts and -o/--oids cannot be used together\n");
 		write_msg(NULL, "(The INSERT command cannot set OIDs.)\n");
-		exit(1);
+		exit_nicely(1);
 	}
 
 	/* Identify archive format to emit */
@@ -583,11 +584,12 @@ main(int argc, char **argv)
 
 	/* Open the output file */
 	fout = CreateArchive(filename, archiveFormat, compressLevel, archiveMode);
+	on_exit_nicely(pgdump_cleanup_at_exit, fout);
 
 	if (fout == NULL)
 	{
 		write_msg(NULL, "could not open output file \"%s\" for writing\n", filename);
-		exit(1);
+		exit_nicely(1);
 	}
 
 	/* Let the archiver know how noisy to be */
@@ -597,7 +599,7 @@ main(int argc, char **argv)
 	if (my_version < 0)
 	{
 		write_msg(NULL, "could not parse version string \"%s\"\n", PG_VERSION);
-		exit(1);
+		exit_nicely(1);
 	}
 
 	/*
@@ -669,7 +671,7 @@ main(int argc, char **argv)
 		if (schema_include_oids.head == NULL)
 		{
 			write_msg(NULL, "No matching schemas were found\n");
-			exit_nicely();
+			exit_nicely(1);
 		}
 	}
 	expand_schema_name_patterns(fout, &schema_exclude_patterns,
@@ -684,7 +686,7 @@ main(int argc, char **argv)
 		if (table_include_oids.head == NULL)
 		{
 			write_msg(NULL, "No matching tables were found\n");
-			exit_nicely();
+			exit_nicely(1);
 		}
 	}
 	expand_table_name_patterns(fout, &table_exclude_patterns,
@@ -790,9 +792,7 @@ main(int argc, char **argv)
 
 	CloseArchive(fout);
 
-	PQfinish(g_conn);
-
-	exit(0);
+	exit_nicely(0);
 }
 
 
@@ -858,13 +858,12 @@ help(const char *progname)
 	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
 
-void
-exit_nicely(void)
+static void
+pgdump_cleanup_at_exit(int code, void *arg)
 {
-	PQfinish(g_conn);
-	if (g_verbose)
-		write_msg(NULL, "*** aborted because of error\n");
-	exit(1);
+	Archive	   *AH = (Archive *) arg;
+
+	DisconnectDatabase(AH);
 }
 
 static void
@@ -879,7 +878,7 @@ setup_connection(Archive *AH, const char *dumpencoding, char *use_role)
 		{
 			write_msg(NULL, "invalid client encoding \"%s\" specified\n",
 					  dumpencoding);
-			exit(1);
+			exit_nicely(1);
 		}
 	}
 
@@ -977,7 +976,7 @@ parseArchiveFormat(const char *format, ArchiveMode *mode)
 	else
 	{
 		write_msg(NULL, "invalid output format \"%s\" specified\n", format);
-		exit(1);
+		exit_nicely(1);
 	}
 	return archiveFormat;
 }
@@ -1002,7 +1001,7 @@ expand_schema_name_patterns(Archive *fout,
 	if (fout->remoteVersion < 70300)
 	{
 		write_msg(NULL, "server version must be at least 7.3 to use schema selection switches\n");
-		exit_nicely();
+		exit_nicely(1);
 	}
 
 	query = createPQExpBuffer();
@@ -1397,7 +1396,7 @@ dumpTableData_copy(Archive *fout, void *dcontext)
 		write_msg(NULL, "Dumping the contents of table \"%s\" failed: PQgetCopyData() failed.\n", classname);
 		write_msg(NULL, "Error message from server: %s", PQerrorMessage(g_conn));
 		write_msg(NULL, "The command was: %s\n", q->data);
-		exit_nicely();
+		exit_nicely(1);
 	}
 
 	/* Check command status and return to normal libpq state */
@@ -1407,7 +1406,7 @@ dumpTableData_copy(Archive *fout, void *dcontext)
 		write_msg(NULL, "Dumping the contents of table \"%s\" failed: PQgetResult() failed.\n", classname);
 		write_msg(NULL, "Error message from server: %s", PQerrorMessage(g_conn));
 		write_msg(NULL, "The command was: %s\n", q->data);
-		exit_nicely();
+		exit_nicely(1);
 	}
 	PQclear(res);
 
@@ -1936,14 +1935,14 @@ dumpDatabase(Archive *fout)
 	{
 		write_msg(NULL, "missing pg_database entry for database \"%s\"\n",
 				  datname);
-		exit_nicely();
+		exit_nicely(1);
 	}
 
 	if (ntups != 1)
 	{
 		write_msg(NULL, "query returned more than one (%d) pg_database entry for database \"%s\"\n",
 				  ntups, datname);
-		exit_nicely();
+		exit_nicely(1);
 	}
 
 	i_tableoid = PQfnumber(res, "tableoid");
@@ -2045,7 +2044,7 @@ dumpDatabase(Archive *fout)
 		if (PQntuples(lo_res) != 1)
 		{
 			write_msg(NULL, "dumpDatabase(): could not find pg_largeobject.relfrozenxid\n");
-			exit_nicely();
+			exit_nicely(1);
 		}
 
 		i_relfrozenxid = PQfnumber(lo_res, "relfrozenxid");
@@ -2083,7 +2082,7 @@ dumpDatabase(Archive *fout)
 			if (PQntuples(lo_res) != 1)
 			{
 				write_msg(NULL, "dumpDatabase(): could not find pg_largeobject_metadata.relfrozenxid\n");
-				exit_nicely();
+				exit_nicely(1);
 			}
 
 			i_relfrozenxid = PQfnumber(lo_res, "relfrozenxid");
@@ -2409,7 +2408,7 @@ dumpBlobs(Archive *fout, void *arg)
 			{
 				write_msg(NULL, "could not open large object %u: %s",
 						  blobOid, PQerrorMessage(g_conn));
-				exit_nicely();
+				exit_nicely(1);
 			}
 
 			StartBlob(fout, blobOid);
@@ -2422,7 +2421,7 @@ dumpBlobs(Archive *fout, void *arg)
 				{
 					write_msg(NULL, "error reading large object %u: %s",
 							  blobOid, PQerrorMessage(g_conn));
-					exit_nicely();
+					exit_nicely(1);
 				}
 
 				WriteData(fout, buf, cnt);
@@ -2473,7 +2472,7 @@ binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 							   "query returned %d rows instead of one: %s\n",
 								 ntups),
 				  ntups, upgrade_query->data);
-		exit_nicely();
+		exit_nicely(1);
 	}
 
 	pg_type_array_oid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "typarray")));
@@ -2521,7 +2520,7 @@ binary_upgrade_set_type_oids_by_rel_oid(Archive *fout,
 							   "query returned %d rows instead of one: %s\n",
 								 ntups),
 				  ntups, upgrade_query->data);
-		exit_nicely();
+		exit_nicely(1);
 	}
 
 	pg_type_oid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "crel")));
@@ -2577,7 +2576,7 @@ binary_upgrade_set_pg_class_oids(Archive *fout,
 							   "query returned %d rows instead of one: %s\n",
 								 ntups),
 				  ntups, upgrade_query->data);
-		exit_nicely();
+		exit_nicely(1);
 	}
 
 	pg_class_reltoastrelid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "reltoastrelid")));
@@ -2655,7 +2654,7 @@ binary_upgrade_extension_member(PQExpBuffer upgrade_buffer,
 	if (extobj == NULL)
 	{
 		write_msg(NULL, "could not find parent extension for %s", objlabel);
-		exit_nicely();
+		exit_nicely(1);
 	}
 
 	appendPQExpBuffer(upgrade_buffer,
@@ -2796,7 +2795,7 @@ findNamespace(Archive *fout, Oid nsoid, Oid objoid)
 				return nsinfo;
 		}
 		write_msg(NULL, "schema with OID %u does not exist\n", nsoid);
-		exit_nicely();
+		exit_nicely(1);
 	}
 	else
 	{
@@ -5124,7 +5123,7 @@ getRules(Archive *fout, int *numRules)
 			write_msg(NULL, "failed sanity check, parent table OID %u of pg_rewrite entry OID %u not found\n",
 					  ruletableoid,
 					  ruleinfo[i].dobj.catId.oid);
-			exit_nicely();
+			exit_nicely(1);
 		}
 		ruleinfo[i].dobj.namespace = ruleinfo[i].ruletable->dobj.namespace;
 		ruleinfo[i].dobj.dump = ruleinfo[i].ruletable->dobj.dump;
@@ -5370,7 +5369,7 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 							write_msg(NULL, "query produced null referenced table name for foreign key trigger \"%s\" on table \"%s\" (OID of table: %u)\n",
 									  tginfo[j].dobj.name, tbinfo->dobj.name,
 									  tginfo[j].tgconstrrelid);
-							exit_nicely();
+							exit_nicely(1);
 						}
 						tginfo[j].tgconstrrelname = pg_strdup(PQgetvalue(res, j, i_tgconstrrelname));
 					}
@@ -5917,7 +5916,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 			{
 				write_msg(NULL, "invalid column numbering in table \"%s\"\n",
 						  tbinfo->dobj.name);
-				exit_nicely();
+				exit_nicely(1);
 			}
 			tbinfo->attnames[j] = pg_strdup(PQgetvalue(res, j, i_attname));
 			tbinfo->atttypnames[j] = pg_strdup(PQgetvalue(res, j, i_atttypname));
@@ -6005,7 +6004,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 				{
 					write_msg(NULL, "invalid adnum value %d for table \"%s\"\n",
 							  adnum, tbinfo->dobj.name);
-					exit_nicely();
+					exit_nicely(1);
 				}
 
 				/*
@@ -6182,7 +6181,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 										 tbinfo->ncheck),
 						  tbinfo->ncheck, tbinfo->dobj.name, numConstrs);
 				write_msg(NULL, "(The system catalogs might be corrupted.)\n");
-				exit_nicely();
+				exit_nicely(1);
 			}
 
 			constrs = (ConstraintInfo *) pg_malloc(numConstrs * sizeof(ConstraintInfo));
@@ -7706,7 +7705,7 @@ dumpRangeType(Archive *fout, TypeInfo *tyinfo)
 	{
 		write_msg(NULL, "query returned %d pg_range entries for range type \"%s\"\n",
 				  PQntuples(res), tyinfo->dobj.name);
-		exit_nicely();
+		exit_nicely(1);
 	}
 
 	/*
@@ -8019,7 +8018,7 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 							   "query returned %d rows instead of one: %s\n",
 								 ntups),
 				  ntups, query->data);
-		exit_nicely();
+		exit_nicely(1);
 	}
 
 	typlen = PQgetvalue(res, 0, PQfnumber(res, "typlen"));
@@ -8250,7 +8249,7 @@ dumpDomain(Archive *fout, TypeInfo *tyinfo)
 							   "query returned %d rows instead of one: %s\n",
 								 ntups),
 				  ntups, query->data);
-		exit_nicely();
+		exit_nicely(1);
 	}
 
 	typnotnull = PQgetvalue(res, 0, PQfnumber(res, "typnotnull"));
@@ -9242,7 +9241,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 							   "query returned %d rows instead of one: %s\n",
 								 ntups),
 				  ntups, query->data);
-		exit_nicely();
+		exit_nicely(1);
 	}
 
 	proretset = PQgetvalue(res, 0, PQfnumber(res, "proretset"));
@@ -9420,7 +9419,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 		{
 			write_msg(NULL, "unrecognized provolatile value for function \"%s\"\n",
 					  finfo->dobj.name);
-			exit_nicely();
+			exit_nicely(1);
 		}
 	}
 
@@ -9799,7 +9798,7 @@ dumpOpr(Archive *fout, OprInfo *oprinfo)
 							   "query returned %d rows instead of one: %s\n",
 								 ntups),
 				  ntups, query->data);
-		exit_nicely();
+		exit_nicely(1);
 	}
 
 	i_oprkind = PQfnumber(res, "oprkind");
@@ -10052,7 +10051,7 @@ convertTSFunction(Archive *fout, Oid funcOid)
 							   "query returned %d rows instead of one: %s\n",
 								 ntups),
 				  ntups, query);
-		exit_nicely();
+		exit_nicely(1);
 	}
 
 	result = pg_strdup(PQgetvalue(res, 0, 0));
@@ -10169,7 +10168,7 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 							   "query returned %d rows instead of one: %s\n",
 								 ntups),
 				  ntups, query->data);
-		exit_nicely();
+		exit_nicely(1);
 	}
 
 	i_opcintype = PQfnumber(res, "opcintype");
@@ -10637,7 +10636,7 @@ dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo)
 							   "query returned %d rows instead of one: %s\n",
 								 ntups),
 				  ntups, query->data);
-		exit_nicely();
+		exit_nicely(1);
 	}
 
 	i_amname = PQfnumber(res, "amname");
@@ -10822,7 +10821,7 @@ dumpCollation(Archive *fout, CollInfo *collinfo)
 							   "query returned %d rows instead of one: %s\n",
 								 ntups),
 				  ntups, query->data);
-		exit_nicely();
+		exit_nicely(1);
 	}
 
 	i_collcollate = PQfnumber(res, "collcollate");
@@ -10927,7 +10926,7 @@ dumpConversion(Archive *fout, ConvInfo *convinfo)
 							   "query returned %d rows instead of one: %s\n",
 								 ntups),
 				  ntups, query->data);
-		exit_nicely();
+		exit_nicely(1);
 	}
 
 	i_conforencoding = PQfnumber(res, "conforencoding");
@@ -11127,7 +11126,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 							   "query returned %d rows instead of one: %s\n",
 								 ntups),
 				  ntups, query->data);
-		exit_nicely();
+		exit_nicely(1);
 	}
 
 	i_aggtransfn = PQfnumber(res, "aggtransfn");
@@ -11368,7 +11367,7 @@ dumpTSDictionary(Archive *fout, TSDictInfo *dictinfo)
 							   "query returned %d rows instead of one: %s\n",
 								 ntups),
 				  ntups, query->data);
-		exit_nicely();
+		exit_nicely(1);
 	}
 	nspname = PQgetvalue(res, 0, 0);
 	tmplname = PQgetvalue(res, 0, 1);
@@ -11534,7 +11533,7 @@ dumpTSConfig(Archive *fout, TSConfigInfo *cfginfo)
 							   "query returned %d rows instead of one: %s\n",
 								 ntups),
 				  ntups, query->data);
-		exit_nicely();
+		exit_nicely(1);
 	}
 	nspname = PQgetvalue(res, 0, 0);
 	prsname = PQgetvalue(res, 0, 1);
@@ -11753,7 +11752,7 @@ dumpForeignServer(Archive *fout, ForeignServerInfo *srvinfo)
 							   "query returned %d rows instead of one: %s\n",
 								 ntups),
 				  ntups, query->data);
-		exit_nicely();
+		exit_nicely(1);
 	}
 	fdwname = PQgetvalue(res, 0, 0);
 
@@ -11952,7 +11951,7 @@ dumpDefaultACL(Archive *fout, DefaultACLInfo *daclinfo)
 			/* shouldn't get here */
 			write_msg(NULL, "unknown object type (%d) in default privileges\n",
 					  (int) daclinfo->defaclobjtype);
-			exit_nicely();
+			exit_nicely(1);
 			type = "";			/* keep compiler quiet */
 	}
 
@@ -11969,7 +11968,7 @@ dumpDefaultACL(Archive *fout, DefaultACLInfo *daclinfo)
 	{
 		write_msg(NULL, "could not parse default ACL list (%s)\n",
 				  daclinfo->defaclacl);
-		exit_nicely();
+		exit_nicely(1);
 	}
 
 	ArchiveEntry(fout, daclinfo->dobj.catId, daclinfo->dobj.dumpId,
@@ -12026,7 +12025,7 @@ dumpACL(Archive *fout, CatalogId objCatId, DumpId objDumpId,
 	{
 		write_msg(NULL, "could not parse ACL list (%s) for object \"%s\" (%s)\n",
 				  acls, name, type);
-		exit_nicely();
+		exit_nicely(1);
 	}
 
 	if (sql->len > 0)
@@ -12472,7 +12471,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			else
 				write_msg(NULL, "query to obtain definition of view \"%s\" returned more than one definition\n",
 						  tbinfo->dobj.name);
-			exit_nicely();
+			exit_nicely(1);
 		}
 
 		viewdef = PQgetvalue(res, 0, 0);
@@ -12481,7 +12480,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 		{
 			write_msg(NULL, "definition of view \"%s\" appears to be empty (length zero)\n",
 					  tbinfo->dobj.name);
-			exit_nicely();
+			exit_nicely(1);
 		}
 
 		/*
@@ -12537,7 +12536,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 										 "query returned %d foreign server entries for foreign table \"%s\"\n",
 										 PQntuples(res)),
 						  PQntuples(res), tbinfo->dobj.name);
-				exit_nicely();
+				exit_nicely(1);
 			}
 			i_srvname = PQfnumber(res, "srvname");
 			i_ftoptions = PQfnumber(res, "ftoptions");
@@ -13102,7 +13101,7 @@ getAttrName(int attrnum, TableInfo *tblInfo)
 	}
 	write_msg(NULL, "invalid column number %d for table \"%s\"\n",
 			  attrnum, tblInfo->dobj.name);
-	exit_nicely();
+	exit_nicely(1);
 	return NULL;				/* keep compiler quiet */
 }
 
@@ -13214,7 +13213,7 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 		{
 			write_msg(NULL, "missing index for constraint \"%s\"\n",
 					  coninfo->dobj.name);
-			exit_nicely();
+			exit_nicely(1);
 		}
 
 		if (binary_upgrade)
@@ -13402,7 +13401,7 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 	else
 	{
 		write_msg(NULL, "unrecognized constraint type: %c\n", coninfo->contype);
-		exit_nicely();
+		exit_nicely(1);
 	}
 
 	/* Dump Constraint Comments --- only works for table constraints */
@@ -13464,12 +13463,12 @@ findLastBuiltinOid_V71(Archive *fout, const char *dbname)
 	if (ntups < 1)
 	{
 		write_msg(NULL, "missing pg_database entry for this database\n");
-		exit_nicely();
+		exit_nicely(1);
 	}
 	if (ntups > 1)
 	{
 		write_msg(NULL, "found more than one pg_database entry for this database\n");
-		exit_nicely();
+		exit_nicely(1);
 	}
 	last_oid = atooid(PQgetvalue(res, 0, PQfnumber(res, "datlastsysoid")));
 	PQclear(res);
@@ -13499,12 +13498,12 @@ findLastBuiltinOid_V70(Archive *fout)
 	if (ntups < 1)
 	{
 		write_msg(NULL, "could not find entry for pg_indexes in pg_class\n");
-		exit_nicely();
+		exit_nicely(1);
 	}
 	if (ntups > 1)
 	{
 		write_msg(NULL, "found more than one entry for pg_indexes in pg_class\n");
-		exit_nicely();
+		exit_nicely(1);
 	}
 	last_oid = atooid(PQgetvalue(res, 0, PQfnumber(res, "oid")));
 	PQclear(res);
@@ -13578,7 +13577,7 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 								 "query to get data of sequence \"%s\" returned %d rows (expected 1)\n",
 								 PQntuples(res)),
 				  tbinfo->dobj.name, PQntuples(res));
-		exit_nicely();
+		exit_nicely(1);
 	}
 
 	/* Disable this check: it fails if sequence has been renamed */
@@ -13587,7 +13586,7 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 	{
 		write_msg(NULL, "query to get data of sequence \"%s\" returned name \"%s\"\n",
 				  tbinfo->dobj.name, PQgetvalue(res, 0, 0));
-		exit_nicely();
+		exit_nicely(1);
 	}
 #endif
 
@@ -13816,7 +13815,7 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 		else
 		{
 			write_msg(NULL, "unexpected tgtype value: %d\n", tginfo->tgtype);
-			exit_nicely();
+			exit_nicely(1);
 		}
 
 		findx = 0;
@@ -13901,7 +13900,7 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 						  tginfo->tgargs,
 						  tginfo->dobj.name,
 						  tbinfo->dobj.name);
-				exit_nicely();
+				exit_nicely(1);
 			}
 
 			if (findx > 0)
@@ -14016,7 +14015,7 @@ dumpRule(Archive *fout, RuleInfo *rinfo)
 	{
 		write_msg(NULL, "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned\n",
 				  rinfo->dobj.name, tbinfo->dobj.name);
-		exit_nicely();
+		exit_nicely(1);
 	}
 
 	printfPQExpBuffer(cmd, "%s\n", PQgetvalue(res, 0, 0));
@@ -14474,7 +14473,7 @@ getFormattedTypeName(Archive *fout, Oid oid, OidOptions opts)
 							   "query returned %d rows instead of one: %s\n",
 								 ntups),
 				  ntups, query->data);
-		exit_nicely();
+		exit_nicely(1);
 	}
 
 	if (fout->remoteVersion >= 70100)

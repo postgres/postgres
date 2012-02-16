@@ -459,10 +459,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		RestoreOutput(AH, sav);
 
 	if (ropt->useDB)
-	{
-		PQfinish(AH->connection);
-		AH->connection = NULL;
-	}
+		DisconnectDatabase(&AH->public);
 }
 
 /*
@@ -1435,11 +1432,10 @@ vdie_horribly(ArchiveHandle *AH, const char *modulename,
 	{
 		if (AH->public.verbose)
 			write_msg(NULL, "*** aborted because of error\n");
-		if (AH->connection)
-			PQfinish(AH->connection);
+		DisconnectDatabase(&AH->public);
 	}
 
-	exit(1);
+	exit_nicely(1);
 }
 
 /* As above, but with variable arg list */
@@ -3332,8 +3328,7 @@ restore_toc_entries_parallel(ArchiveHandle *AH)
 	 * mainly to ensure that we don't exceed the specified number of parallel
 	 * connections.
 	 */
-	PQfinish(AH->connection);
-	AH->connection = NULL;
+	DisconnectDatabase(&AH->public);
 
 	/* blow away any transient state from the old connection */
 	if (AH->currUser)
@@ -3795,8 +3790,7 @@ parallel_restore(RestoreArgs *args)
 	retval = restore_toc_entry(AH, te, ropt, true);
 
 	/* And clean up */
-	PQfinish(AH->connection);
-	AH->connection = NULL;
+	DisconnectDatabase((Archive *) AH);
 
 	/* If we reopened the file, we are done with it, so close it now */
 	if (te->section == SECTION_DATA)

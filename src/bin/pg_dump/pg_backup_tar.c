@@ -29,6 +29,7 @@
 #include "pg_backup_archiver.h"
 #include "pg_backup_tar.h"
 #include "dumpmem.h"
+#include "dumputils.h"
 
 #include <sys/stat.h>
 #include <ctype.h>
@@ -178,17 +179,17 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 		{
 			ctx->tarFH = fopen(AH->fSpec, PG_BINARY_W);
 			if (ctx->tarFH == NULL)
-				die_horribly(NULL, modulename,
-						   "could not open TOC file \"%s\" for output: %s\n",
-							 AH->fSpec, strerror(errno));
+				exit_horribly(modulename,
+							  "could not open TOC file \"%s\" for output: %s\n",
+							  AH->fSpec, strerror(errno));
 		}
 		else
 		{
 			ctx->tarFH = stdout;
 			if (ctx->tarFH == NULL)
-				die_horribly(NULL, modulename,
-							 "could not open TOC file for output: %s\n",
-							 strerror(errno));
+				exit_horribly(modulename,
+							  "could not open TOC file for output: %s\n",
+							  strerror(errno));
 		}
 
 		ctx->tarFHpos = 0;
@@ -214,7 +215,8 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 		 * positioning.
 		 */
 		if (AH->compression != 0)
-			die_horribly(NULL, modulename, "compression is not supported by tar archive format\n");
+			exit_horribly(modulename,
+						  "compression is not supported by tar archive format\n");
 	}
 	else
 	{							/* Read Mode */
@@ -222,15 +224,15 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 		{
 			ctx->tarFH = fopen(AH->fSpec, PG_BINARY_R);
 			if (ctx->tarFH == NULL)
-				die_horribly(NULL, modulename, "could not open TOC file \"%s\" for input: %s\n",
-							 AH->fSpec, strerror(errno));
+				exit_horribly(modulename, "could not open TOC file \"%s\" for input: %s\n",
+							  AH->fSpec, strerror(errno));
 		}
 		else
 		{
 			ctx->tarFH = stdin;
 			if (ctx->tarFH == NULL)
-				die_horribly(NULL, modulename, "could not open TOC file for input: %s\n",
-							 strerror(errno));
+				exit_horribly(modulename, "could not open TOC file for input: %s\n",
+							  strerror(errno));
 		}
 
 		/*

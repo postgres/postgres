@@ -26,6 +26,15 @@
 int			quote_all_identifiers = 0;
 const char *progname = NULL;
 
+#define MAX_ON_EXIT_NICELY				20
+
+static struct
+{
+	on_exit_nicely_callback	function;
+	void	   *arg;
+} on_exit_nicely_list[MAX_ON_EXIT_NICELY];
+
+static int on_exit_nicely_index;
 
 #define supports_grant_options(version) ((version) >= 70400)
 
@@ -1261,7 +1270,7 @@ exit_horribly(const char *modulename, const char *fmt,...)
 	vwrite_msg(modulename, fmt, ap);
 	va_end(ap);
 
-	exit(1);
+	exit_nicely(1);
 }
 
 /*
@@ -1289,6 +1298,27 @@ set_section (const char *arg, int *dumpSections)
 				progname, arg);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
-		exit(1);
+		exit_nicely(1);
 	}
+}
+
+/* Register a callback to be run when exit_nicely is invoked. */
+void
+on_exit_nicely(on_exit_nicely_callback function, void *arg)
+{
+	if (on_exit_nicely_index >= MAX_ON_EXIT_NICELY)
+		exit_horribly(NULL, "out of on_exit_nicely slots");
+	on_exit_nicely_list[on_exit_nicely_index].function = function;
+	on_exit_nicely_list[on_exit_nicely_index].arg = arg;
+	on_exit_nicely_index++;
+}
+
+/* Run accumulated on_exit_nicely callbacks and then exit quietly. */
+void
+exit_nicely(int code)
+{
+	while (--on_exit_nicely_index >= 0)
+		(*on_exit_nicely_list[on_exit_nicely_index].function)(code,
+			on_exit_nicely_list[on_exit_nicely_index].arg);
+	exit(code);
 }

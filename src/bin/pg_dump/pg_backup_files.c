@@ -127,15 +127,15 @@ InitArchiveFmt_Files(ArchiveHandle *AH)
 		{
 			AH->FH = fopen(AH->fSpec, PG_BINARY_W);
 			if (AH->FH == NULL)
-				die_horribly(NULL, modulename, "could not open output file \"%s\": %s\n",
-							 AH->fSpec, strerror(errno));
+				exit_horribly(modulename, "could not open output file \"%s\": %s\n",
+							  AH->fSpec, strerror(errno));
 		}
 		else
 		{
 			AH->FH = stdout;
 			if (AH->FH == NULL)
-				die_horribly(NULL, modulename, "could not open output file: %s\n",
-							 strerror(errno));
+				exit_horribly(modulename, "could not open output file: %s\n",
+							  strerror(errno));
 		}
 
 		ctx->hasSeek = checkSeek(AH->FH);
@@ -152,15 +152,15 @@ InitArchiveFmt_Files(ArchiveHandle *AH)
 		{
 			AH->FH = fopen(AH->fSpec, PG_BINARY_R);
 			if (AH->FH == NULL)
-				die_horribly(NULL, modulename, "could not open input file \"%s\": %s\n",
-							 AH->fSpec, strerror(errno));
+				exit_horribly(modulename, "could not open input file \"%s\": %s\n",
+							  AH->fSpec, strerror(errno));
 		}
 		else
 		{
 			AH->FH = stdin;
 			if (AH->FH == NULL)
-				die_horribly(NULL, modulename, "could not open input file: %s\n",
-							 strerror(errno));
+				exit_horribly(modulename, "could not open input file: %s\n",
+							  strerror(errno));
 		}
 
 		ctx->hasSeek = checkSeek(AH->FH);

@@ -310,6 +310,15 @@ ConnectDatabase(Archive *AHX,
 	return AH->connection;
 }
 
+void
+DisconnectDatabase(Archive *AHX)
+{
+	ArchiveHandle *AH = (ArchiveHandle *) AHX;
+
+	PQfinish(AH->connection);		/* noop if AH->connection is NULL */
+	AH->connection = NULL;
+}
+
 
 static void
 notice_processor(void *arg, const char *message)

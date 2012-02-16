@@ -770,7 +770,7 @@ findParentsByOid(TableInfo *self,
 							  inhinfo[i].inhparent,
 							  self->dobj.name,
 							  oid);
-					exit_nicely();
+					exit_nicely(1);
 				}
 				self->parents[j++] = parent;
 			}
@@ -809,7 +809,7 @@ parseOidArray(const char *str, Oid *array, int arraysize)
 				if (argNum >= arraysize)
 				{
 					write_msg(NULL, "could not parse numeric array \"%s\": too many numbers\n", str);
-					exit_nicely();
+					exit_nicely(1);
 				}
 				temp[j] = '\0';
 				array[argNum++] = atooid(temp);
@@ -824,7 +824,7 @@ parseOidArray(const char *str, Oid *array, int arraysize)
 				j >= sizeof(temp) - 1)
 			{
 				write_msg(NULL, "could not parse numeric array \"%s\": invalid character in number\n", str);
-				exit_nicely();
+				exit_nicely(1);
 			}
 			temp[j++] = s;
 		}
