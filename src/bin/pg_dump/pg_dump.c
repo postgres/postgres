@@ -257,6 +257,7 @@ static void binary_upgrade_extension_member(PQExpBuffer upgrade_buffer,
 								const char *objlabel);
 static const char *getAttrName(int attrnum, TableInfo *tblInfo);
 static const char *fmtCopyColumnList(const TableInfo *ti);
+static PGresult *ExecuteSqlQueryForSingleRow(Archive *fout, char *query);
 
 int
 main(int argc, char **argv)
@@ -2446,7 +2447,6 @@ binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 										 Oid pg_type_oid)
 {
 	PQExpBuffer upgrade_query = createPQExpBuffer();
-	int			ntups;
 	PGresult   *upgrade_res;
 	Oid			pg_type_array_oid;
 
@@ -2462,18 +2462,7 @@ binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 					  "WHERE pg_type.oid = '%u'::pg_catalog.oid;",
 					  pg_type_oid);
 
-	upgrade_res = ExecuteSqlQuery(fout, upgrade_query->data, PGRES_TUPLES_OK);
-
-	/* Expecting a single result only */
-	ntups = PQntuples(upgrade_res);
-	if (ntups != 1)
-	{
-		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
-							   "query returned %d rows instead of one: %s\n",
-								 ntups),
-				  ntups, upgrade_query->data);
-		exit_nicely(1);
-	}
+	upgrade_res = ExecuteSqlQueryForSingleRow(fout, upgrade_query->data);
 
 	pg_type_array_oid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "typarray")));
 
@@ -2496,7 +2485,6 @@ binary_upgrade_set_type_oids_by_rel_oid(Archive *fout,
 										Oid pg_rel_oid)
 {
 	PQExpBuffer upgrade_query = createPQExpBuffer();
-	int			ntups;
 	PGresult   *upgrade_res;
 	Oid			pg_type_oid;
 	bool		toast_set = false;
@@ -2510,18 +2498,7 @@ binary_upgrade_set_type_oids_by_rel_oid(Archive *fout,
 					  "WHERE c.oid = '%u'::pg_catalog.oid;",
 					  pg_rel_oid);
 
-	upgrade_res = ExecuteSqlQuery(fout, upgrade_query->data, PGRES_TUPLES_OK);
-
-	/* Expecting a single result only */
-	ntups = PQntuples(upgrade_res);
-	if (ntups != 1)
-	{
-		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
-							   "query returned %d rows instead of one: %s\n",
-								 ntups),
-				  ntups, upgrade_query->data);
-		exit_nicely(1);
-	}
+	upgrade_res = ExecuteSqlQueryForSingleRow(fout, upgrade_query->data);
 
 	pg_type_oid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "crel")));
 
@@ -2554,7 +2531,6 @@ binary_upgrade_set_pg_class_oids(Archive *fout,
 								 bool is_index)
 {
 	PQExpBuffer upgrade_query = createPQExpBuffer();
-	int			ntups;
 	PGresult   *upgrade_res;
 	Oid			pg_class_reltoastrelid;
 	Oid			pg_class_reltoastidxid;
@@ -2566,18 +2542,7 @@ binary_upgrade_set_pg_class_oids(Archive *fout,
 					  "WHERE c.oid = '%u'::pg_catalog.oid;",
 					  pg_class_oid);
 
-	upgrade_res = ExecuteSqlQuery(fout, upgrade_query->data, PGRES_TUPLES_OK);
-
-	/* Expecting a single result only */
-	ntups = PQntuples(upgrade_res);
-	if (ntups != 1)
-	{
-		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
-							   "query returned %d rows instead of one: %s\n",
-								 ntups),
-				  ntups, upgrade_query->data);
-		exit_nicely(1);
-	}
+	upgrade_res = ExecuteSqlQueryForSingleRow(fout, upgrade_query->data);
 
 	pg_class_reltoastrelid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "reltoastrelid")));
 	pg_class_reltoastidxid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "reltoastidxid")));
@@ -7807,7 +7772,6 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 	PQExpBuffer labelq = createPQExpBuffer();
 	PQExpBuffer query = createPQExpBuffer();
 	PGresult   *res;
-	int			ntups;
 	char	   *typlen;
 	char	   *typinput;
 	char	   *typoutput;
@@ -8008,18 +7972,7 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 						  tyinfo->dobj.catId.oid);
 	}
 
-	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
-
-	/* Expecting a single result only */
-	ntups = PQntuples(res);
-	if (ntups != 1)
-	{
-		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
-							   "query returned %d rows instead of one: %s\n",
-								 ntups),
-				  ntups, query->data);
-		exit_nicely(1);
-	}
+	res = ExecuteSqlQueryForSingleRow(fout, query->data);
 
 	typlen = PQgetvalue(res, 0, PQfnumber(res, "typlen"));
 	typinput = PQgetvalue(res, 0, PQfnumber(res, "typinput"));
@@ -8201,7 +8154,6 @@ dumpDomain(Archive *fout, TypeInfo *tyinfo)
 	PQExpBuffer labelq = createPQExpBuffer();
 	PQExpBuffer query = createPQExpBuffer();
 	PGresult   *res;
-	int			ntups;
 	int			i;
 	char	   *typnotnull;
 	char	   *typdefn;
@@ -8239,18 +8191,7 @@ dumpDomain(Archive *fout, TypeInfo *tyinfo)
 						  tyinfo->dobj.catId.oid);
 	}
 
-	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
-
-	/* Expecting a single result only */
-	ntups = PQntuples(res);
-	if (ntups != 1)
-	{
-		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
-							   "query returned %d rows instead of one: %s\n",
-								 ntups),
-				  ntups, query->data);
-		exit_nicely(1);
-	}
+	res = ExecuteSqlQueryForSingleRow(fout, query->data);
 
 	typnotnull = PQgetvalue(res, 0, PQfnumber(res, "typnotnull"));
 	typdefn = PQgetvalue(res, 0, PQfnumber(res, "typdefn"));
@@ -9056,7 +8997,6 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	char	   *funcsig;		/* identity signature */
 	char	   *funcfullsig;	/* full signature */
 	char	   *funcsig_tag;
-	int			ntups;
 	char	   *proretset;
 	char	   *prosrc;
 	char	   *probin;
@@ -9231,18 +9171,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 						  finfo->dobj.catId.oid);
 	}
 
-	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
-
-	/* Expecting a single result only */
-	ntups = PQntuples(res);
-	if (ntups != 1)
-	{
-		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
-							   "query returned %d rows instead of one: %s\n",
-								 ntups),
-				  ntups, query->data);
-		exit_nicely(1);
-	}
+	res = ExecuteSqlQueryForSingleRow(fout, query->data);
 
 	proretset = PQgetvalue(res, 0, PQfnumber(res, "proretset"));
 	prosrc = PQgetvalue(res, 0, PQfnumber(res, "prosrc"));
@@ -9685,7 +9614,6 @@ dumpOpr(Archive *fout, OprInfo *oprinfo)
 	PQExpBuffer details;
 	const char *name;
 	PGresult   *res;
-	int			ntups;
 	int			i_oprkind;
 	int			i_oprcode;
 	int			i_oprleft;
@@ -9788,18 +9716,7 @@ dumpOpr(Archive *fout, OprInfo *oprinfo)
 						  oprinfo->dobj.catId.oid);
 	}
 
-	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
-
-	/* Expecting a single result only */
-	ntups = PQntuples(res);
-	if (ntups != 1)
-	{
-		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
-							   "query returned %d rows instead of one: %s\n",
-								 ntups),
-				  ntups, query->data);
-		exit_nicely(1);
-	}
+	res = ExecuteSqlQueryForSingleRow(fout, query->data);
 
 	i_oprkind = PQfnumber(res, "oprkind");
 	i_oprcode = PQfnumber(res, "oprcode");
@@ -10038,21 +9955,10 @@ convertTSFunction(Archive *fout, Oid funcOid)
 	char	   *result;
 	char		query[128];
 	PGresult   *res;
-	int			ntups;
 
 	snprintf(query, sizeof(query),
 			 "SELECT '%u'::pg_catalog.regproc", funcOid);
-	res = ExecuteSqlQuery(fout, query, PGRES_TUPLES_OK);
-
-	ntups = PQntuples(res);
-	if (ntups != 1)
-	{
-		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
-							   "query returned %d rows instead of one: %s\n",
-								 ntups),
-				  ntups, query);
-		exit_nicely(1);
-	}
+	res = ExecuteSqlQueryForSingleRow(fout, query);
 
 	result = pg_strdup(PQgetvalue(res, 0, 0));
 
@@ -10158,18 +10064,7 @@ dumpOpclass(Archive *fout, OpclassInfo *opcinfo)
 						  opcinfo->dobj.catId.oid);
 	}
 
-	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
-
-	/* Expecting a single result only */
-	ntups = PQntuples(res);
-	if (ntups != 1)
-	{
-		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
-							   "query returned %d rows instead of one: %s\n",
-								 ntups),
-				  ntups, query->data);
-		exit_nicely(1);
-	}
+	res = ExecuteSqlQueryForSingleRow(fout, query->data);
 
 	i_opcintype = PQfnumber(res, "opcintype");
 	i_opckeytype = PQfnumber(res, "opckeytype");
@@ -10626,18 +10521,7 @@ dumpOpfamily(Archive *fout, OpfamilyInfo *opfinfo)
 					  "WHERE oid = '%u'::pg_catalog.oid",
 					  opfinfo->dobj.catId.oid);
 
-	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
-
-	/* Expecting a single result only */
-	ntups = PQntuples(res);
-	if (ntups != 1)
-	{
-		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
-							   "query returned %d rows instead of one: %s\n",
-								 ntups),
-				  ntups, query->data);
-		exit_nicely(1);
-	}
+	res = ExecuteSqlQueryForSingleRow(fout, query->data);
 
 	i_amname = PQfnumber(res, "amname");
 
@@ -10785,7 +10669,6 @@ dumpCollation(Archive *fout, CollInfo *collinfo)
 	PQExpBuffer delq;
 	PQExpBuffer labelq;
 	PGresult   *res;
-	int			ntups;
 	int			i_collcollate;
 	int			i_collctype;
 	const char *collcollate;
@@ -10811,18 +10694,7 @@ dumpCollation(Archive *fout, CollInfo *collinfo)
 					  "WHERE c.oid = '%u'::pg_catalog.oid",
 					  collinfo->dobj.catId.oid);
 
-	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
-
-	/* Expecting a single result only */
-	ntups = PQntuples(res);
-	if (ntups != 1)
-	{
-		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
-							   "query returned %d rows instead of one: %s\n",
-								 ntups),
-				  ntups, query->data);
-		exit_nicely(1);
-	}
+	res = ExecuteSqlQueryForSingleRow(fout, query->data);
 
 	i_collcollate = PQfnumber(res, "collcollate");
 	i_collctype = PQfnumber(res, "collctype");
@@ -10885,7 +10757,6 @@ dumpConversion(Archive *fout, ConvInfo *convinfo)
 	PQExpBuffer delq;
 	PQExpBuffer labelq;
 	PGresult   *res;
-	int			ntups;
 	int			i_conforencoding;
 	int			i_contoencoding;
 	int			i_conproc;
@@ -10916,18 +10787,7 @@ dumpConversion(Archive *fout, ConvInfo *convinfo)
 					  "WHERE c.oid = '%u'::pg_catalog.oid",
 					  convinfo->dobj.catId.oid);
 
-	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
-
-	/* Expecting a single result only */
-	ntups = PQntuples(res);
-	if (ntups != 1)
-	{
-		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
-							   "query returned %d rows instead of one: %s\n",
-								 ntups),
-				  ntups, query->data);
-		exit_nicely(1);
-	}
+	res = ExecuteSqlQueryForSingleRow(fout, query->data);
 
 	i_conforencoding = PQfnumber(res, "conforencoding");
 	i_contoencoding = PQfnumber(res, "contoencoding");
@@ -11040,7 +10900,6 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	char	   *aggsig;
 	char	   *aggsig_tag;
 	PGresult   *res;
-	int			ntups;
 	int			i_aggtransfn;
 	int			i_aggfinalfn;
 	int			i_aggsortop;
@@ -11116,18 +10975,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 						  agginfo->aggfn.dobj.catId.oid);
 	}
 
-	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
-
-	/* Expecting a single result only */
-	ntups = PQntuples(res);
-	if (ntups != 1)
-	{
-		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
-							   "query returned %d rows instead of one: %s\n",
-								 ntups),
-				  ntups, query->data);
-		exit_nicely(1);
-	}
+	res = ExecuteSqlQueryForSingleRow(fout, query->data);
 
 	i_aggtransfn = PQfnumber(res, "aggtransfn");
 	i_aggfinalfn = PQfnumber(res, "aggfinalfn");
@@ -11340,7 +11188,6 @@ dumpTSDictionary(Archive *fout, TSDictInfo *dictinfo)
 	PQExpBuffer labelq;
 	PQExpBuffer query;
 	PGresult   *res;
-	int			ntups;
 	char	   *nspname;
 	char	   *tmplname;
 
@@ -11359,16 +11206,7 @@ dumpTSDictionary(Archive *fout, TSDictInfo *dictinfo)
 					  "FROM pg_ts_template p, pg_namespace n "
 					  "WHERE p.oid = '%u' AND n.oid = tmplnamespace",
 					  dictinfo->dicttemplate);
-	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
-	ntups = PQntuples(res);
-	if (ntups != 1)
-	{
-		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
-							   "query returned %d rows instead of one: %s\n",
-								 ntups),
-				  ntups, query->data);
-		exit_nicely(1);
-	}
+	res = ExecuteSqlQueryForSingleRow(fout, query->data);
 	nspname = PQgetvalue(res, 0, 0);
 	tmplname = PQgetvalue(res, 0, 1);
 
@@ -11525,16 +11363,7 @@ dumpTSConfig(Archive *fout, TSConfigInfo *cfginfo)
 					  "FROM pg_ts_parser p, pg_namespace n "
 					  "WHERE p.oid = '%u' AND n.oid = prsnamespace",
 					  cfginfo->cfgparser);
-	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
-	ntups = PQntuples(res);
-	if (ntups != 1)
-	{
-		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
-							   "query returned %d rows instead of one: %s\n",
-								 ntups),
-				  ntups, query->data);
-		exit_nicely(1);
-	}
+	res = ExecuteSqlQueryForSingleRow(fout, query->data);
 	nspname = PQgetvalue(res, 0, 0);
 	prsname = PQgetvalue(res, 0, 1);
 
@@ -11723,7 +11552,6 @@ dumpForeignServer(Archive *fout, ForeignServerInfo *srvinfo)
 	PQExpBuffer labelq;
 	PQExpBuffer query;
 	PGresult   *res;
-	int			ntups;
 	char	   *qsrvname;
 	char	   *fdwname;
 
@@ -11744,16 +11572,7 @@ dumpForeignServer(Archive *fout, ForeignServerInfo *srvinfo)
 					  "FROM pg_foreign_data_wrapper w "
 					  "WHERE w.oid = '%u'",
 					  srvinfo->srvfdw);
-	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
-	ntups = PQntuples(res);
-	if (ntups != 1)
-	{
-		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
-							   "query returned %d rows instead of one: %s\n",
-								 ntups),
-				  ntups, query->data);
-		exit_nicely(1);
-	}
+	res = ExecuteSqlQueryForSingleRow(fout, query->data);
 	fdwname = PQgetvalue(res, 0, 0);
 
 	appendPQExpBuffer(q, "CREATE SERVER %s", qsrvname);
@@ -14430,7 +14249,6 @@ getFormattedTypeName(Archive *fout, Oid oid, OidOptions opts)
 	char	   *result;
 	PQExpBuffer query;
 	PGresult   *res;
-	int			ntups;
 
 	if (oid == 0)
 	{
@@ -14463,18 +14281,7 @@ getFormattedTypeName(Archive *fout, Oid oid, OidOptions opts)
 						  oid);
 	}
 
-	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
-
-	/* Expecting a single result only */
-	ntups = PQntuples(res);
-	if (ntups != 1)
-	{
-		write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
-							   "query returned %d rows instead of one: %s\n",
-								 ntups),
-				  ntups, query->data);
-		exit_nicely(1);
-	}
+	res = ExecuteSqlQueryForSingleRow(fout, query->data);
 
 	if (fout->remoteVersion >= 70100)
 	{
@@ -14629,4 +14436,27 @@ fmtCopyColumnList(const TableInfo *ti)
 
 	appendPQExpBuffer(q, ")");
 	return q->data;
+}
+
+/*
+ * Execute an SQL query and verify that we got exactly one row back.
+ */
+static PGresult *
+ExecuteSqlQueryForSingleRow(Archive *fout, char *query)
+{
+	PGresult   *res;
+	int			ntups;
+
+	res = ExecuteSqlQuery(fout, query, PGRES_TUPLES_OK);
+
+	/* Expecting a single result only */
+	ntups = PQntuples(res);
+	if (ntups != 1)
+		exit_horribly(NULL,
+					  ngettext("query returned %d row instead of one: %s\n",
+							   "query returned %d rows instead of one: %s\n",
+								 ntups),
+					  ntups, query);
+
+	return res;
 }
