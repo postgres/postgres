@@ -53,6 +53,9 @@ exec sql end declare section;
 	exec sql connect to 'unix:postgresql://localhost/connectdb' as main user :user;
 	exec sql disconnect main;
 
+	exec sql connect to unix:postgresql://localhost/connectdb?connect_timeout=14&client_encoding=latin1 as main user connectuser;
+	exec sql disconnect main;
+
 	exec sql connect to "unix:postgresql://200.46.204.71/connectdb" as main user connectuser;
 	exec sql disconnect main;
 
