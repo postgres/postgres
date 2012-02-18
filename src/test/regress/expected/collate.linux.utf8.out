@@ -859,7 +859,7 @@ SELECT mylt2('a', 'B') as f;
 SELECT mylt2('a', 'B' collate "C") as fail; -- conflicting collations
 ERROR:  could not determine which collation to use for string comparison
 HINT:  Use the COLLATE clause to set the collation explicitly.
-CONTEXT:  PL/pgSQL function "mylt2" line 6 at RETURN
+CONTEXT:  PL/pgSQL function mylt2(text,text) line 6 at RETURN
 SELECT mylt2('a', 'B' collate "POSIX") as f;
  f 
 ---
