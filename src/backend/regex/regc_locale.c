@@ -499,7 +499,7 @@ cclass(struct vars * v,			/* context */
 {
 	size_t		len;
 	struct cvec *cv = NULL;
-	const char **namePtr;
+	const char * const *namePtr;
 	int			i,
 				index;
 
@@ -507,7 +507,7 @@ cclass(struct vars * v,			/* context */
 	 * The following arrays define the valid character class names.
 	 */
 
-	static const char *classNames[] = {
+	static const char * const classNames[] = {
 		"alnum", "alpha", "ascii", "blank", "cntrl", "digit", "graph",
 		"lower", "print", "punct", "space", "upper", "xdigit", NULL
 	};

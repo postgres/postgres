@@ -141,7 +141,6 @@ static int	dissect(struct vars *, struct subre *, chr *, chr *);
 static int	condissect(struct vars *, struct subre *, chr *, chr *);
 static int	altdissect(struct vars *, struct subre *, chr *, chr *);
 static int	cdissect(struct vars *, struct subre *, chr *, chr *);
-static int	ccaptdissect(struct vars *, struct subre *, chr *, chr *);
 static int	ccondissect(struct vars *, struct subre *, chr *, chr *);
 static int	crevdissect(struct vars *, struct subre *, chr *, chr *);
 static int	cbrdissect(struct vars *, struct subre *, chr *, chr *);
@@ -708,6 +707,8 @@ cdissect(struct vars * v,
 		 chr *begin,			/* beginning of relevant substring */
 		 chr *end)				/* end of same */
 {
+	int			er;
+
 	assert(t != NULL);
 	MDEBUG(("cdissect %ld-%ld %c\n", LOFF(begin), LOFF(end), t->op));
 
@@ -727,29 +728,14 @@ cdissect(struct vars * v,
 			return ccondissect(v, t, begin, end);
 		case '(':				/* capturing */
 			assert(t->left != NULL && t->right == NULL);
-			return ccaptdissect(v, t, begin, end);
+			assert(t->subno > 0);
+			er = cdissect(v, t->left, begin, end);
+			if (er == REG_OKAY)
+				subset(v, t, begin, end);
+			return er;
 		default:
 			return REG_ASSERT;
 	}
-}
-
-/*
- * ccaptdissect - capture subexpression matches (with complications)
- */
-static int						/* regexec return code */
-ccaptdissect(struct vars * v,
-			 struct subre * t,
-			 chr *begin,		/* beginning of relevant substring */
-			 chr *end)			/* end of same */
-{
-	int			er;
-
-	assert(t->subno > 0);
-
-	er = cdissect(v, t->left, begin, end);
-	if (er == REG_OKAY)
-		subset(v, t, begin, end);
-	return er;
 }
 
 /*
