@@ -10,7 +10,7 @@
 #include "extern.h"
 #include "sqlca.h"
 
-#ifdef WIN32
+#ifdef WIN32_ONLY_COMPILER
 #define strtok_r(s,d,p) strtok_s(s,d,p)
 #endif
 
