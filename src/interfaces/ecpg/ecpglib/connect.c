@@ -10,6 +10,10 @@
 #include "extern.h"
 #include "sqlca.h"
 
+#ifdef WIN32
+#define strtok_r(s,d,p) strtok_s(s,d,p)
+#endif
+
 #ifdef ENABLE_THREAD_SAFETY
 static pthread_mutex_t connections_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_key_t actual_connection_key;
