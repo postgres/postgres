@@ -10,10 +10,6 @@
 #include "extern.h"
 #include "sqlca.h"
 
-#ifdef WIN32_ONLY_COMPILER
-#define strtok_r(s,d,p) strtok_s(s,d,p)
-#endif
-
 #ifdef ENABLE_THREAD_SAFETY
 static pthread_mutex_t connections_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_key_t actual_connection_key;
@@ -560,25 +556,37 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 	}
 	if (options)
 	{
-		char *saveptr, *token1, *token2, *str;
+		char *str;
 
 		/* options look like this "option1 = value1 option2 = value2 ... */
 		/* we have to break up the string into single options */
-		for (str = options; ; str = NULL)
+		for (str = options; *str;)
 		{
-			token1 = strtok_r(str, "=", &saveptr);
-			if (token1 == NULL)
-				break;
-			/* strip leading blanks */
-			for (; *token1 && *token1 == ' '; token1++); 
+			int e, a;
+			char *token1, *token2;
 
-			token2 = strtok_r(NULL, "&", &saveptr);
-			if (token2 == NULL)
-                                break;
+			for (token1 = str; *token1 && *token1 == ' '; token1++); 
+			for (e = 0; token1[e] && token1[e] != '='; e++);
+			if (token1[e]) /* found "=" */
+			{
+				token1[e] = '\0';
+				for (token2 = token1 + e + 1; *token2 && *token2 == ' '; token2++);
+				for (a = 0; token2[a] && token2[a] != '&'; a++);
+				if (token2[a]) /* found "&" => another option follows */
+				{
+					token2[a] = '\0';
+					str = token2 + a + 1;
+				}
+				else
+					str = token2 + a;
 
-			conn_keywords[i] = token1;
-			conn_values[i] = token2;
-			i++;
+				conn_keywords[i] = token1;
+				conn_values[i] = token2;
+				i++;
+			}	
+			else
+				/* the parser should not be able to create this invalid option */
+				str = token1 + e; 
 		}
 
 	}
