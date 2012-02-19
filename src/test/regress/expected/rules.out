@@ -1568,3 +1568,36 @@ select * from only t1_2;
  19
 (10 rows)
 
+-- test various flavors of pg_get_viewdef()
+select pg_get_viewdef('shoe'::regclass) as unpretty;
+                                                                                                             unpretty                                                                                                              
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ SELECT sh.shoename, sh.sh_avail, sh.slcolor, sh.slminlen, (sh.slminlen * un.un_fact) AS slminlen_cm, sh.slmaxlen, (sh.slmaxlen * un.un_fact) AS slmaxlen_cm, sh.slunit FROM shoe_data sh, unit un WHERE (sh.slunit = un.un_name);
+(1 row)
+
+select pg_get_viewdef('shoe'::regclass,true) as pretty;
+                           pretty                            
+-------------------------------------------------------------
+  SELECT sh.shoename, sh.sh_avail, sh.slcolor, sh.slminlen, +
+     sh.slminlen * un.un_fact AS slminlen_cm, sh.slmaxlen,  +
+     sh.slmaxlen * un.un_fact AS slmaxlen_cm, sh.slunit     +
+    FROM shoe_data sh, unit un                              +
+   WHERE sh.slunit = un.un_name;
+(1 row)
+
+select pg_get_viewdef('shoe'::regclass,0) as prettier;
+                   prettier                    
+-----------------------------------------------
+  SELECT sh.shoename,                         +
+     sh.sh_avail,                             +
+     sh.slcolor,                              +
+     sh.slminlen,                             +
+     sh.slminlen * un.un_fact AS slminlen_cm, +
+     sh.slmaxlen,                             +
+     sh.slmaxlen * un.un_fact AS slmaxlen_cm, +
+     sh.slunit                                +
+    FROM shoe_data sh,                        +
+     unit un                                  +
+   WHERE sh.slunit = un.un_name;
+(1 row)
+

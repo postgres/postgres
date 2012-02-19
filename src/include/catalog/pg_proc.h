@@ -3743,6 +3743,8 @@ DATA(insert OID = 2505 (  pg_get_viewdef	   PGNSP PGUID 12 1 0 0 0 f f f f t f s
 DESCR("select statement of a view with pretty-print option");
 DATA(insert OID = 2506 (  pg_get_viewdef	   PGNSP PGUID 12 1 0 0 0 f f f f t f s 2 0 25 "26 16" _null_ _null_ _null_ _null_	pg_get_viewdef_ext _null_ _null_ _null_ ));
 DESCR("select statement of a view with pretty-print option");
+DATA(insert OID = 3159 (  pg_get_viewdef	   PGNSP PGUID 12 1 0 0 0 f f f f t f s 2 0 25 "26 23" _null_ _null_ _null_ _null_	pg_get_viewdef_wrap _null_ _null_ _null_ ));
+DESCR("select statement of a view with pretty-printing and specified line wrapping");
 DATA(insert OID = 2507 (  pg_get_indexdef	   PGNSP PGUID 12 1 0 0 0 f f f f t f s 3 0 25 "26 23 16" _null_ _null_ _null_ _null_	pg_get_indexdef_ext _null_ _null_ _null_ ));
 DESCR("index description (full create statement or single expression) with pretty-print option");
 DATA(insert OID = 2508 (  pg_get_constraintdef PGNSP PGUID 12 1 0 0 0 f f f f t f s 2 0 25 "26 16" _null_ _null_ _null_ _null_	pg_get_constraintdef_ext _null_ _null_ _null_ ));

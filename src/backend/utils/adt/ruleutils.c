@@ -73,6 +73,8 @@
 #define PRETTYFLAG_PAREN		1
 #define PRETTYFLAG_INDENT		2
 
+#define PRETTY_WRAP_DEFAULT     79
+
 /* macro to test if pretty action needed */
 #define PRETTY_PAREN(context)	((context)->prettyFlags & PRETTYFLAG_PAREN)
 #define PRETTY_INDENT(context)	((context)->prettyFlags & PRETTYFLAG_INDENT)
@@ -136,6 +138,7 @@ static SPIPlanPtr plan_getrulebyoid = NULL;
 static const char *query_getrulebyoid = "SELECT * FROM pg_catalog.pg_rewrite WHERE oid = $1";
 static SPIPlanPtr plan_getviewrule = NULL;
 static const char *query_getviewrule = "SELECT * FROM pg_catalog.pg_rewrite WHERE ev_class = $1 AND rulename = $2";
+static int pretty_wrap = PRETTY_WRAP_DEFAULT;
 
 /* GUC parameters */
 bool		quote_all_identifiers = false;
@@ -378,6 +381,23 @@ pg_get_viewdef_ext(PG_FUNCTION_ARGS)
 
 	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : 0;
 	PG_RETURN_TEXT_P(string_to_text(pg_get_viewdef_worker(viewoid, prettyFlags)));
+}
+
+Datum
+pg_get_viewdef_wrap(PG_FUNCTION_ARGS)
+{
+	/* By OID */
+	Oid			viewoid = PG_GETARG_OID(0);
+	int		    wrap = PG_GETARG_INT32(1);
+	int			prettyFlags;
+	char       *result;
+
+	/* calling this implies we want pretty printing */
+	prettyFlags = PRETTYFLAG_PAREN | PRETTYFLAG_INDENT;
+	pretty_wrap = wrap;
+	result = pg_get_viewdef_worker(viewoid, prettyFlags);
+	pretty_wrap = PRETTY_WRAP_DEFAULT;
+	PG_RETURN_TEXT_P(string_to_text(result));
 }
 
 Datum
@@ -3013,6 +3033,7 @@ get_target_list(List *targetList, deparse_context *context,
 	char	   *sep;
 	int			colno;
 	ListCell   *l;
+	bool        last_was_multiline = false;
 
 	sep = " ";
 	colno = 0;
@@ -3021,6 +3042,10 @@ get_target_list(List *targetList, deparse_context *context,
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
 		char	   *colname;
 		char	   *attname;
+		StringInfoData targetbuf;
+		int         leading_nl_pos =  -1;
+		char       *trailing_nl;
+		int         pos;
 
 		if (tle->resjunk)
 			continue;			/* ignore junk entries */
@@ -3028,6 +3053,15 @@ get_target_list(List *targetList, deparse_context *context,
 		appendStringInfoString(buf, sep);
 		sep = ", ";
 		colno++;
+
+		/*
+		 * Put the new field spec into targetbuf so we can
+		 * decide after we've got it whether or not it needs
+		 * to go on a new line.
+		 */
+
+		initStringInfo(&targetbuf);
+		context->buf = &targetbuf;
 
 		/*
 		 * We special-case Var nodes rather than using get_rule_expr. This is
@@ -3063,8 +3097,66 @@ get_target_list(List *targetList, deparse_context *context,
 		if (colname)			/* resname could be NULL */
 		{
 			if (attname == NULL || strcmp(attname, colname) != 0)
-				appendStringInfo(buf, " AS %s", quote_identifier(colname));
+				appendStringInfo(&targetbuf, " AS %s", quote_identifier(colname));
 		}
+
+		/* Restore context buffer */
+
+		context->buf = buf;
+
+		/* Does the new field start with whitespace plus a new line? */
+
+		for (pos=0; pos < targetbuf.len; pos++)
+		{
+			if (targetbuf.data[pos] == '\n')
+			{
+				leading_nl_pos = pos;
+				break;
+			}
+			if (targetbuf.data[pos] > ' ')
+				break;
+		}
+
+		/* Locate the start of the current  line in the buffer */
+
+		trailing_nl = (strrchr(buf->data,'\n'));
+		if (trailing_nl == NULL)
+			trailing_nl = buf->data;
+		else 
+			trailing_nl++;
+
+		/*
+		 * If the field we're adding is the first in the list, or it already 
+		 * has a leading newline, or wrap mode is disabled (pretty_wrap < 0), 
+		 * don't add anything.
+		 * Otherwise, add a newline, plus some  indentation, if either the 
+		 * new field would cause an overflow or the last field used more than
+		 * one line.
+		 */
+
+		if (colno > 1 &&
+			leading_nl_pos == -1 && 
+			pretty_wrap >= 0 &&
+			((strlen(trailing_nl) + strlen(targetbuf.data) > pretty_wrap) ||
+			 last_was_multiline))
+		{
+			appendContextKeyword(context, "", -PRETTYINDENT_STD, 
+								 PRETTYINDENT_STD, PRETTYINDENT_VAR);
+		}
+
+		/* Add the new field */
+
+		appendStringInfoString(buf, targetbuf.data);
+
+
+		/* Keep track of this field's status for next iteration */
+
+		last_was_multiline = 
+			(strchr(targetbuf.data + leading_nl_pos + 1,'\n') != NULL);
+
+		/* cleanup */
+
+		pfree (targetbuf.data);
 	}
 }
 
@@ -6445,11 +6537,52 @@ get_from_clause(Query *query, const char *prefix, deparse_context *context)
 			appendContextKeyword(context, prefix,
 								 -PRETTYINDENT_STD, PRETTYINDENT_STD, 2);
 			first = false;
+
+			get_from_clause_item(jtnode, query, context);
 		}
 		else
-			appendStringInfoString(buf, ", ");
+		{
+			StringInfoData targetbuf;
+			char          *trailing_nl;
 
-		get_from_clause_item(jtnode, query, context);
+			appendStringInfoString(buf, ", ");
+			
+			initStringInfo(&targetbuf);
+			context->buf = &targetbuf;
+
+			get_from_clause_item(jtnode, query, context);
+
+			context->buf = buf;
+
+			/* Locate the start of the current  line in the buffer */
+
+			trailing_nl = (strrchr(buf->data,'\n'));
+			if (trailing_nl == NULL)
+				trailing_nl = buf->data;
+			else 
+				trailing_nl++;
+			
+			/*
+			 * Add a newline, plus some  indentation, if pretty_wrap is on and the 
+			 * new from-clause item would cause an overflow.
+			 */
+			
+			if (pretty_wrap >= 0 &&
+				(strlen(trailing_nl) + strlen(targetbuf.data) > pretty_wrap))
+			{
+				appendContextKeyword(context, "", -PRETTYINDENT_STD, 
+									 PRETTYINDENT_STD, PRETTYINDENT_VAR);
+			}
+
+			/* Add the new item */
+
+			appendStringInfoString(buf, targetbuf.data);
+			
+			/* cleanup */
+
+			pfree (targetbuf.data);
+		}
+
 	}
 }
 
