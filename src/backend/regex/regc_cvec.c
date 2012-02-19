@@ -77,6 +77,7 @@ static void
 addchr(struct cvec * cv,		/* character vector */
 	   chr c)					/* character to add */
 {
+	assert(cv->nchrs < cv->chrspace);
 	cv->chrs[cv->nchrs++] = (chr) c;
 }
 
@@ -95,17 +96,27 @@ addrange(struct cvec * cv,		/* character vector */
 }
 
 /*
- * getcvec - get a cvec, remembering it as v->cv
+ * getcvec - get a transient cvec, initialized to empty
+ *
+ * The returned cvec is valid only until the next call of getcvec, which
+ * typically will recycle the space.  Callers should *not* free the cvec
+ * explicitly; it will be cleaned up when the struct vars is destroyed.
+ *
+ * This is typically used while interpreting bracket expressions.  In that
+ * usage the cvec is only needed momentarily until we build arcs from it,
+ * so transientness is a convenient behavior.
  */
 static struct cvec *
 getcvec(struct vars * v,		/* context */
 		int nchrs,				/* to hold this many chrs... */
 		int nranges)			/* ... and this many ranges */
 {
+	/* recycle existing transient cvec if large enough */
 	if (v->cv != NULL && nchrs <= v->cv->chrspace &&
 		nranges <= v->cv->rangespace)
 		return clearcvec(v->cv);
 
+	/* nope, make a new one */
 	if (v->cv != NULL)
 		freecvec(v->cv);
 	v->cv = newcvec(nchrs, nranges);

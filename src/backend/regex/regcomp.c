@@ -356,6 +356,7 @@ pg_regcomp(regex_t *re,
 	ZAPCNFA(g->search);
 	v->nfa = newnfa(v, v->cm, (struct nfa *) NULL);
 	CNOERR();
+	/* set up a reasonably-sized transient cvec for getcvec usage */
 	v->cv = newcvec(100, 20);
 	if (v->cv == NULL)
 		return freev(v, REG_ESPACE);
