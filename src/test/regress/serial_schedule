@@ -42,6 +42,7 @@ test: tstypes
 test: comments
 test: geometry
 test: horology
+test: regex
 test: oidjoins
 test: type_sanity
 test: opr_sanity

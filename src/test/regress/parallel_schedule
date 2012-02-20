@@ -30,7 +30,7 @@ test: point lseg box path polygon circle date time timetz timestamp timestamptz 
 # geometry depends on point, lseg, box, path, polygon and circle
 # horology depends on interval, timetz, timestamp, timestamptz, reltime and abstime
 # ----------
-test: geometry horology oidjoins type_sanity opr_sanity
+test: geometry horology regex oidjoins type_sanity opr_sanity
 
 # ----------
 # These four each depend on the previous one
