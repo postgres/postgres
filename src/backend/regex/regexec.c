@@ -719,7 +719,7 @@ cdissect(struct vars * v,
 		case '|':				/* alternation */
 			assert(t->left != NULL);
 			return caltdissect(v, t, begin, end);
-		case 'b':				/* back ref -- shouldn't be calling us! */
+		case 'b':				/* back reference */
 			assert(t->left == NULL && t->right == NULL);
 			return cbrdissect(v, t, begin, end);
 		case '.':				/* concatenation */
@@ -976,12 +976,12 @@ cbrdissect(struct vars * v,
 		   chr *begin,			/* beginning of relevant substring */
 		   chr *end)			/* end of same */
 {
-	int			i;
 	int			n = t->subno;
-	size_t		len;
-	chr		   *paren;
+	size_t		numreps;
+	size_t		tlen;
+	size_t		brlen;
+	chr		   *brstring;
 	chr		   *p;
-	chr		   *stop;
 	int			min = t->min;
 	int			max = t->max;
 
@@ -992,46 +992,65 @@ cbrdissect(struct vars * v,
 
 	MDEBUG(("cbackref n%d %d{%d-%d}\n", t->retry, n, min, max));
 
+	/* get the backreferenced string */
 	if (v->pmatch[n].rm_so == -1)
 		return REG_NOMATCH;
-	paren = v->start + v->pmatch[n].rm_so;
-	len = v->pmatch[n].rm_eo - v->pmatch[n].rm_so;
+	brstring = v->start + v->pmatch[n].rm_so;
+	brlen = v->pmatch[n].rm_eo - v->pmatch[n].rm_so;
 
 	/* no room to maneuver -- retries are pointless */
 	if (v->mem[t->retry])
 		return REG_NOMATCH;
 	v->mem[t->retry] = 1;
 
-	/* special-case zero-length string */
-	if (len == 0)
+	/* special cases for zero-length strings */
+	if (brlen == 0)
 	{
-		if (begin == end)
+		/*
+		 * matches only if target is zero length, but any number of
+		 * repetitions can be considered to be present
+		 */
+		if (begin == end && min <= max)
+		{
+			MDEBUG(("cbackref matched trivially\n"));
 			return REG_OKAY;
+		}
 		return REG_NOMATCH;
 	}
-
-	/* and too-short string */
-	assert(end >= begin);
-	if ((size_t) (end - begin) < len)
-		return REG_NOMATCH;
-	stop = end - len;
-
-	/* count occurrences */
-	i = 0;
-	for (p = begin; p <= stop && (i < max || max == INFINITY); p += len)
+	if (begin == end)
 	{
-		if ((*v->g->compare) (paren, p, len) != 0)
-			break;
-		i++;
-	}
-	MDEBUG(("cbackref found %d\n", i));
-
-	/* and sort it out */
-	if (p != end)				/* didn't consume all of it */
+		/* matches only if zero repetitions are okay */
+		if (min == 0)
+		{
+			MDEBUG(("cbackref matched trivially\n"));
+			return REG_OKAY;
+		}
 		return REG_NOMATCH;
-	if (min <= i && (i <= max || max == INFINITY))
-		return REG_OKAY;
-	return REG_NOMATCH;			/* out of range */
+	}
+
+	/*
+	 * check target length to see if it could possibly be an allowed number of
+	 * repetitions of brstring
+	 */
+	assert(end > begin);
+	tlen = end - begin;
+	if (tlen % brlen != 0)
+		return REG_NOMATCH;
+	numreps = tlen / brlen;
+	if (numreps < min || (numreps > max && max != INFINITY))
+		return REG_NOMATCH;
+
+	/* okay, compare the actual string contents */
+	p = begin;
+	while (numreps-- > 0)
+	{
+		if ((*v->g->compare) (brstring, p, brlen) != 0)
+			return REG_NOMATCH;
+		p += brlen;
+	}
+
+	MDEBUG(("cbackref matched\n"));
+	return REG_OKAY;
 }
 
 /*

@@ -1087,8 +1087,12 @@ parseqatom(struct vars * v,
 		NOERR();
 	}
 
-	/* it's quantifier time; first, turn x{0,...} into x{1,...}|empty */
-	if (m == 0)
+	/*
+	 * It's quantifier time.  If the atom is just a BACKREF, we'll let it deal
+	 * with quantifiers internally.  Otherwise, the first step is to turn
+	 * x{0,...} into x{1,...}|empty
+	 */
+	if (m == 0 && atomtype != BACKREF)
 	{
 		EMPTYARC(s2, atom->end);	/* the bypass */
 		assert(PREF(qprefer) != 0);
