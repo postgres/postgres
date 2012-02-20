@@ -6973,7 +6973,7 @@ python_additional_libs=`${PYTHON} -c "import distutils.sysconfig,string; print('
 echo "${ECHO_T}${python_libspec} ${python_additional_libs}" >&6; }
 
 
-# threaded python is not supported on bsd's
+# threaded python is not supported on OpenBSD
 { echo "$as_me:$LINENO: checking whether Python is compiled with thread support" >&5
 echo $ECHO_N "checking whether Python is compiled with thread support... $ECHO_C" >&6; }
 pythreads=`${PYTHON} -c "import sys; print(int('thread' in sys.builtin_module_names))"`
@@ -6981,7 +6981,7 @@ if test "$pythreads" = "1"; then
   { echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6; }
   case $host_os in
-  openbsd*|freebsd*)
+  openbsd*)
     { { echo "$as_me:$LINENO: error: threaded Python not supported on this platform" >&5
 echo "$as_me: error: threaded Python not supported on this platform" >&2;}
    { (exit 1); exit 1; }; }
