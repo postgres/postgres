@@ -97,3 +97,18 @@ SELECT row_to_json(q,true)
 FROM rows q;
 
 SELECT row_to_json(row((select array_agg(x) as d from generate_series(5,10) x)),false);
+
+-- non-numeric output
+SELECT row_to_json(q)
+FROM (SELECT 'NaN'::float8 AS "float8field") q;
+
+SELECT row_to_json(q)
+FROM (SELECT 'Infinity'::float8 AS "float8field") q;
+
+SELECT row_to_json(q)
+FROM (SELECT '-Infinity'::float8 AS "float8field") q;
+
+-- json input
+SELECT row_to_json(q)
+FROM (SELECT '{"a":1,"b": [2,3,4,"d","e","f"],"c":{"p":1,"q":2}}'::json AS "jsonfield") q;
+
