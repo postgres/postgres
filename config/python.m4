@@ -85,13 +85,13 @@ AC_SUBST(python_libdir)[]dnl
 AC_SUBST(python_libspec)[]dnl
 AC_SUBST(python_additional_libs)[]dnl
 
-# threaded python is not supported on bsd's
+# threaded python is not supported on OpenBSD
 AC_MSG_CHECKING(whether Python is compiled with thread support)
 pythreads=`${PYTHON} -c "import sys; print(int('thread' in sys.builtin_module_names))"`
 if test "$pythreads" = "1"; then
   AC_MSG_RESULT(yes)
   case $host_os in
-  openbsd*|freebsd*)
+  openbsd*)
     AC_MSG_ERROR([threaded Python not supported on this platform])
     ;;
   esac
