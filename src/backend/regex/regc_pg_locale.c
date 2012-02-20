@@ -1,7 +1,8 @@
 /*-------------------------------------------------------------------------
  *
  * regc_pg_locale.c
- *	  ctype functions adapted to work on pg_wchar (a/k/a chr)
+ *	  ctype functions adapted to work on pg_wchar (a/k/a chr),
+ *	  and functions to cache the results of wholesale ctype probing.
  *
  * This file is #included by regcomp.c; it's not meant to compile standalone.
  *
@@ -72,6 +73,7 @@ typedef enum
 
 static PG_Locale_Strategy pg_regex_strategy;
 static pg_locale_t pg_regex_locale;
+static Oid	pg_regex_collation;
 
 /*
  * Hard-wired character properties for C locale
@@ -233,6 +235,7 @@ pg_set_regex_collation(Oid collation)
 		/* C/POSIX collations use this path regardless of database encoding */
 		pg_regex_strategy = PG_REGEX_LOCALE_C;
 		pg_regex_locale = 0;
+		pg_regex_collation = C_COLLATION_OID;
 	}
 	else
 	{
@@ -275,6 +278,8 @@ pg_set_regex_collation(Oid collation)
 			else
 				pg_regex_strategy = PG_REGEX_LOCALE_1BYTE;
 		}
+
+		pg_regex_collation = collation;
 	}
 }
 
@@ -655,4 +660,219 @@ pg_wc_tolower(pg_wchar c)
 			return c;
 	}
 	return 0;					/* can't get here, but keep compiler quiet */
+}
+
+
+/*
+ * These functions cache the results of probing libc's ctype behavior for
+ * all character codes of interest in a given encoding/collation.  The
+ * result is provided as a "struct cvec", but notice that the representation
+ * is a touch different from a cvec created by regc_cvec.c: we allocate the
+ * chrs[] and ranges[] arrays separately from the struct so that we can
+ * realloc them larger at need.  This is okay since the cvecs made here
+ * should never be freed by freecvec().
+ *
+ * We use malloc not palloc since we mustn't lose control on out-of-memory;
+ * the main regex code expects us to return a failure indication instead.
+ */
+
+typedef int (*pg_wc_probefunc) (pg_wchar c);
+
+typedef struct pg_ctype_cache
+{
+	pg_wc_probefunc probefunc;		/* pg_wc_isalpha or a sibling */
+	Oid			collation;			/* collation this entry is for */
+	struct cvec cv;					/* cache entry contents */
+	struct pg_ctype_cache *next;	/* chain link */
+} pg_ctype_cache;
+
+static pg_ctype_cache *pg_ctype_cache_list = NULL;
+
+/*
+ * Add a chr or range to pcc->cv; return false if run out of memory
+ */
+static bool
+store_match(pg_ctype_cache *pcc, pg_wchar chr1, int nchrs)
+{
+	chr		   *newchrs;
+
+	if (nchrs > 1)
+	{
+		if (pcc->cv.nranges >= pcc->cv.rangespace)
+		{
+			pcc->cv.rangespace *= 2;
+			newchrs = (chr *) realloc(pcc->cv.ranges,
+									  pcc->cv.rangespace * sizeof(chr) * 2);
+			if (newchrs == NULL)
+				return false;
+			pcc->cv.ranges = newchrs;
+		}
+		pcc->cv.ranges[pcc->cv.nranges * 2] = chr1;
+		pcc->cv.ranges[pcc->cv.nranges * 2 + 1] = chr1 + nchrs - 1;
+		pcc->cv.nranges++;
+	}
+	else
+	{
+		assert(nchrs == 1);
+		if (pcc->cv.nchrs >= pcc->cv.chrspace)
+		{
+			pcc->cv.chrspace *= 2;
+			newchrs = (chr *) realloc(pcc->cv.chrs,
+									  pcc->cv.chrspace * sizeof(chr));
+			if (newchrs == NULL)
+				return false;
+			pcc->cv.chrs = newchrs;
+		}
+		pcc->cv.chrs[pcc->cv.nchrs++] = chr1;
+	}
+	return true;
+}
+
+/*
+ * Given a probe function (e.g., pg_wc_isalpha) get a struct cvec for all
+ * chrs satisfying the probe function.  The active collation is the one
+ * previously set by pg_set_regex_collation.  Return NULL if out of memory.
+ *
+ * Note that the result must not be freed or modified by caller.
+ */
+static struct cvec *
+pg_ctype_get_cache(pg_wc_probefunc probefunc)
+{
+	pg_ctype_cache *pcc;
+	pg_wchar	max_chr;
+	pg_wchar	cur_chr;
+	int			nmatches;
+	chr		   *newchrs;
+
+	/*
+	 * Do we already have the answer cached?
+	 */
+	for (pcc = pg_ctype_cache_list; pcc != NULL; pcc = pcc->next)
+	{
+		if (pcc->probefunc == probefunc &&
+			pcc->collation == pg_regex_collation)
+			return &pcc->cv;
+	}
+
+	/*
+	 * Nope, so initialize some workspace ...
+	 */
+	pcc = (pg_ctype_cache *) malloc(sizeof(pg_ctype_cache));
+	if (pcc == NULL)
+		return NULL;
+	pcc->probefunc = probefunc;
+	pcc->collation = pg_regex_collation;
+	pcc->cv.nchrs = 0;
+	pcc->cv.chrspace = 128;
+	pcc->cv.chrs = (chr *) malloc(pcc->cv.chrspace * sizeof(chr));
+	pcc->cv.nranges = 0;
+	pcc->cv.rangespace = 64;
+	pcc->cv.ranges = (chr *) malloc(pcc->cv.rangespace * sizeof(chr) * 2);
+	if (pcc->cv.chrs == NULL || pcc->cv.ranges == NULL)
+		goto out_of_memory;
+
+	/*
+	 * Decide how many character codes we ought to look through.  For C locale
+	 * there's no need to go further than 127.  Otherwise, if the encoding is
+	 * UTF8 go up to 0x7FF, which is a pretty arbitrary cutoff but we cannot
+	 * extend it as far as we'd like (say, 0xFFFF, the end of the Basic
+	 * Multilingual Plane) without creating significant performance issues due
+	 * to too many characters being fed through the colormap code.  This will
+	 * need redesign to fix reasonably, but at least for the moment we have
+	 * all common European languages covered.  Otherwise (not C, not UTF8) go
+	 * up to 255.  These limits are interrelated with restrictions discussed
+	 * at the head of this file.
+	 */
+	switch (pg_regex_strategy)
+	{
+		case PG_REGEX_LOCALE_C:
+			max_chr = (pg_wchar) 127;
+			break;
+		case PG_REGEX_LOCALE_WIDE:
+		case PG_REGEX_LOCALE_WIDE_L:
+			max_chr = (pg_wchar) 0x7FF;
+			break;
+		case PG_REGEX_LOCALE_1BYTE:
+		case PG_REGEX_LOCALE_1BYTE_L:
+			max_chr = (pg_wchar) UCHAR_MAX;
+			break;
+		default:
+			max_chr = 0;		/* can't get here, but keep compiler quiet */
+			break;
+	}
+
+	/*
+	 * And scan 'em ...
+	 */
+	nmatches = 0;				/* number of consecutive matches */
+
+	for (cur_chr = 0; cur_chr <= max_chr; cur_chr++)
+	{
+		if ((*probefunc) (cur_chr))
+			nmatches++;
+		else if (nmatches > 0)
+		{
+			if (!store_match(pcc, cur_chr - nmatches, nmatches))
+				goto out_of_memory;
+			nmatches = 0;
+		}
+	}
+
+	if (nmatches > 0)
+		if (!store_match(pcc, cur_chr - nmatches, nmatches))
+			goto out_of_memory;
+
+	/*
+	 * We might have allocated more memory than needed, if so free it
+	 */
+	if (pcc->cv.nchrs == 0)
+	{
+		free(pcc->cv.chrs);
+		pcc->cv.chrs = NULL;
+		pcc->cv.chrspace = 0;
+	}
+	else if (pcc->cv.nchrs < pcc->cv.chrspace)
+	{
+		newchrs = (chr *) realloc(pcc->cv.chrs,
+								  pcc->cv.nchrs * sizeof(chr));
+		if (newchrs == NULL)
+			goto out_of_memory;
+		pcc->cv.chrs = newchrs;
+		pcc->cv.chrspace = pcc->cv.nchrs;
+	}
+	if (pcc->cv.nranges == 0)
+	{
+		free(pcc->cv.ranges);
+		pcc->cv.ranges = NULL;
+		pcc->cv.rangespace = 0;
+	}
+	else if (pcc->cv.nranges < pcc->cv.rangespace)
+	{
+		newchrs = (chr *) realloc(pcc->cv.ranges,
+								  pcc->cv.nranges * sizeof(chr) * 2);
+		if (newchrs == NULL)
+			goto out_of_memory;
+		pcc->cv.ranges = newchrs;
+		pcc->cv.rangespace = pcc->cv.nranges;
+	}
+
+	/*
+	 * Success, link it into cache chain
+	 */
+	pcc->next = pg_ctype_cache_list;
+	pg_ctype_cache_list = pcc;
+
+	return &pcc->cv;
+
+	/*
+	 * Failure, clean up
+	 */
+out_of_memory:
+	if (pcc->cv.chrs)
+		free(pcc->cv.chrs);
+	if (pcc->cv.ranges)
+		free(pcc->cv.ranges);
+	free(pcc);
+
+	return NULL;
 }

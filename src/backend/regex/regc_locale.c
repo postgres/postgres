@@ -351,6 +351,16 @@ static const struct cname
 
 
 /*
+ * We do not use the hard-wired Unicode classification tables that Tcl does.
+ * This is because (a) we need to deal with other encodings besides Unicode,
+ * and (b) we want to track the behavior of the libc locale routines as
+ * closely as possible.  For example, it wouldn't be unreasonable for a
+ * locale to not consider every Unicode letter as a letter.  So we build
+ * character classification cvecs by asking libc, even for Unicode.
+ */
+
+
+/*
  * element - map collating-element name to celt
  */
 static celt
@@ -489,7 +499,11 @@ eclass(struct vars * v,			/* context */
 /*
  * cclass - supply cvec for a character class
  *
- * Must include case counterparts on request.
+ * Must include case counterparts if "cases" is true.
+ *
+ * The returned cvec might be either a transient cvec gotten from getcvec(),
+ * or a permanently cached one from pg_ctype_get_cache().  This is okay
+ * because callers are not supposed to explicitly free the result either way.
  */
 static struct cvec *
 cclass(struct vars * v,			/* context */
@@ -548,79 +562,54 @@ cclass(struct vars * v,			/* context */
 		index = (int) CC_ALPHA;
 
 	/*
-	 * Now compute the character class contents.
-	 *
-	 * For the moment, assume that only char codes < 256 can be in these
-	 * classes.
+	 * Now compute the character class contents.  For classes that are
+	 * based on the behavior of a <wctype.h> or <ctype.h> function, we use
+	 * pg_ctype_get_cache so that we can cache the results.  Other classes
+	 * have definitions that are hard-wired here, and for those we just
+	 * construct a transient cvec on the fly.
 	 */
 
 	switch ((enum classes) index)
 	{
 		case CC_PRINT:
-			cv = getcvec(v, UCHAR_MAX, 0);
-			if (cv)
-			{
-				for (i = 0; i <= UCHAR_MAX; i++)
-				{
-					if (pg_wc_isprint((chr) i))
-						addchr(cv, (chr) i);
-				}
-			}
+			cv = pg_ctype_get_cache(pg_wc_isprint);
 			break;
 		case CC_ALNUM:
-			cv = getcvec(v, UCHAR_MAX, 0);
-			if (cv)
-			{
-				for (i = 0; i <= UCHAR_MAX; i++)
-				{
-					if (pg_wc_isalnum((chr) i))
-						addchr(cv, (chr) i);
-				}
-			}
+			cv = pg_ctype_get_cache(pg_wc_isalnum);
 			break;
 		case CC_ALPHA:
-			cv = getcvec(v, UCHAR_MAX, 0);
-			if (cv)
-			{
-				for (i = 0; i <= UCHAR_MAX; i++)
-				{
-					if (pg_wc_isalpha((chr) i))
-						addchr(cv, (chr) i);
-				}
-			}
+			cv = pg_ctype_get_cache(pg_wc_isalpha);
 			break;
 		case CC_ASCII:
+			/* hard-wired meaning */
 			cv = getcvec(v, 0, 1);
 			if (cv)
 				addrange(cv, 0, 0x7f);
 			break;
 		case CC_BLANK:
+			/* hard-wired meaning */
 			cv = getcvec(v, 2, 0);
 			addchr(cv, '\t');
 			addchr(cv, ' ');
 			break;
 		case CC_CNTRL:
+			/* hard-wired meaning */
 			cv = getcvec(v, 0, 2);
 			addrange(cv, 0x0, 0x1f);
 			addrange(cv, 0x7f, 0x9f);
 			break;
 		case CC_DIGIT:
-			cv = getcvec(v, 0, 1);
-			if (cv)
-				addrange(cv, (chr) '0', (chr) '9');
+			cv = pg_ctype_get_cache(pg_wc_isdigit);
 			break;
 		case CC_PUNCT:
-			cv = getcvec(v, UCHAR_MAX, 0);
-			if (cv)
-			{
-				for (i = 0; i <= UCHAR_MAX; i++)
-				{
-					if (pg_wc_ispunct((chr) i))
-						addchr(cv, (chr) i);
-				}
-			}
+			cv = pg_ctype_get_cache(pg_wc_ispunct);
 			break;
 		case CC_XDIGIT:
+			/*
+			 * It's not clear how to define this in non-western locales, and
+			 * even less clear that there's any particular use in trying.
+			 * So just hard-wire the meaning.
+			 */
 			cv = getcvec(v, 0, 3);
 			if (cv)
 			{
@@ -630,50 +619,20 @@ cclass(struct vars * v,			/* context */
 			}
 			break;
 		case CC_SPACE:
-			cv = getcvec(v, UCHAR_MAX, 0);
-			if (cv)
-			{
-				for (i = 0; i <= UCHAR_MAX; i++)
-				{
-					if (pg_wc_isspace((chr) i))
-						addchr(cv, (chr) i);
-				}
-			}
+			cv = pg_ctype_get_cache(pg_wc_isspace);
 			break;
 		case CC_LOWER:
-			cv = getcvec(v, UCHAR_MAX, 0);
-			if (cv)
-			{
-				for (i = 0; i <= UCHAR_MAX; i++)
-				{
-					if (pg_wc_islower((chr) i))
-						addchr(cv, (chr) i);
-				}
-			}
+			cv = pg_ctype_get_cache(pg_wc_islower);
 			break;
 		case CC_UPPER:
-			cv = getcvec(v, UCHAR_MAX, 0);
-			if (cv)
-			{
-				for (i = 0; i <= UCHAR_MAX; i++)
-				{
-					if (pg_wc_isupper((chr) i))
-						addchr(cv, (chr) i);
-				}
-			}
+			cv = pg_ctype_get_cache(pg_wc_isupper);
 			break;
 		case CC_GRAPH:
-			cv = getcvec(v, UCHAR_MAX, 0);
-			if (cv)
-			{
-				for (i = 0; i <= UCHAR_MAX; i++)
-				{
-					if (pg_wc_isgraph((chr) i))
-						addchr(cv, (chr) i);
-				}
-			}
+			cv = pg_ctype_get_cache(pg_wc_isgraph);
 			break;
 	}
+
+	/* If cv is NULL now, the reason must be "out of memory" */
 	if (cv == NULL)
 		ERR(REG_ESPACE);
 	return cv;
