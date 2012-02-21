@@ -691,6 +691,8 @@ initialize_environment(void)
 {
 	char	   *tmp;
 
+	putenv("PGAPPNAME=pg_regress");
+
 	if (nolocale)
 	{
 		/*
