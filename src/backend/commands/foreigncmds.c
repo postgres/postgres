@@ -277,27 +277,24 @@ RenameForeignServer(const char *oldname, const char *newname)
 
 
 /*
- * Change foreign-data wrapper owner.
+ * Internal workhorse for changing a data wrapper's owner.
  *
  * Allow this only for superusers; also the new owner must be a
  * superuser.
  */
-void
-AlterForeignDataWrapperOwner(const char *name, Oid newOwnerId)
+static void
+AlterForeignDataWrapperOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 {
-	HeapTuple	tup;
-	Relation	rel;
-	Oid			fdwId;
 	Form_pg_foreign_data_wrapper form;
 
-	rel = heap_open(ForeignDataWrapperRelationId, RowExclusiveLock);
+	form = (Form_pg_foreign_data_wrapper) GETSTRUCT(tup);
 
 	/* Must be a superuser to change a FDW owner */
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied to change owner of foreign-data wrapper \"%s\"",
-						name),
+						NameStr(form->fdwname)),
 				 errhint("Must be superuser to change owner of a foreign-data wrapper.")));
 
 	/* New owner must also be a superuser */
@@ -305,18 +302,8 @@ AlterForeignDataWrapperOwner(const char *name, Oid newOwnerId)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied to change owner of foreign-data wrapper \"%s\"",
-						name),
+						NameStr(form->fdwname)),
 		errhint("The owner of a foreign-data wrapper must be a superuser.")));
-
-	tup = SearchSysCacheCopy1(FOREIGNDATAWRAPPERNAME, CStringGetDatum(name));
-
-	if (!HeapTupleIsValid(tup))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("foreign-data wrapper \"%s\" does not exist", name)));
-
-	fdwId = HeapTupleGetOid(tup);
-	form = (Form_pg_foreign_data_wrapper) GETSTRUCT(tup);
 
 	if (form->fdwowner != newOwnerId)
 	{
@@ -327,38 +314,73 @@ AlterForeignDataWrapperOwner(const char *name, Oid newOwnerId)
 
 		/* Update owner dependency reference */
 		changeDependencyOnOwner(ForeignDataWrapperRelationId,
-								fdwId,
+								HeapTupleGetOid(tup),
 								newOwnerId);
 	}
+}
+
+/*
+ * Change foreign-data wrapper owner -- by name
+ *
+ * Note restrictions in the "_internal" function, above.
+ */
+void
+AlterForeignDataWrapperOwner(const char *name, Oid newOwnerId)
+{
+	HeapTuple	tup;
+	Relation	rel;
+
+	rel = heap_open(ForeignDataWrapperRelationId, RowExclusiveLock);
+
+	tup = SearchSysCacheCopy1(FOREIGNDATAWRAPPERNAME, CStringGetDatum(name));
+
+	if (!HeapTupleIsValid(tup))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("foreign-data wrapper \"%s\" does not exist", name)));
+
+	AlterForeignDataWrapperOwner_internal(rel, tup, newOwnerId);
 
 	heap_freetuple(tup);
 
 	heap_close(rel, RowExclusiveLock);
 }
 
-
 /*
- * Change foreign server owner
+ * Change foreign-data wrapper owner -- by OID
+ *
+ * Note restrictions in the "_internal" function, above.
  */
 void
-AlterForeignServerOwner(const char *name, Oid newOwnerId)
+AlterForeignDataWrapperOwner_oid(Oid fwdId, Oid newOwnerId)
 {
 	HeapTuple	tup;
 	Relation	rel;
-	Oid			srvId;
-	AclResult	aclresult;
-	Form_pg_foreign_server form;
 
-	rel = heap_open(ForeignServerRelationId, RowExclusiveLock);
+	rel = heap_open(ForeignDataWrapperRelationId, RowExclusiveLock);
 
-	tup = SearchSysCacheCopy1(FOREIGNSERVERNAME, CStringGetDatum(name));
+	tup = SearchSysCacheCopy1(FOREIGNDATAWRAPPEROID, ObjectIdGetDatum(fwdId));
 
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("server \"%s\" does not exist", name)));
+				 errmsg("foreign-data wrapper with OID \"%u\" does not exist", fwdId)));
 
-	srvId = HeapTupleGetOid(tup);
+	AlterForeignDataWrapperOwner_internal(rel, tup, newOwnerId);
+
+	heap_freetuple(tup);
+
+	heap_close(rel, RowExclusiveLock);
+}
+
+/*
+ * Internal workhorse for changing a foreign server's owner
+ */
+static void
+AlterForeignServerOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
+{
+	Form_pg_foreign_server form;
+
 	form = (Form_pg_foreign_server) GETSTRUCT(tup);
 
 	if (form->srvowner != newOwnerId)
@@ -366,10 +388,15 @@ AlterForeignServerOwner(const char *name, Oid newOwnerId)
 		/* Superusers can always do it */
 		if (!superuser())
 		{
+			Oid			srvId;
+			AclResult	aclresult;
+
+			srvId = HeapTupleGetOid(tup);
+
 			/* Must be owner */
 			if (!pg_foreign_server_ownercheck(srvId, GetUserId()))
 				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_FOREIGN_SERVER,
-							   name);
+							   NameStr(form->srvname));
 
 			/* Must be able to become new owner */
 			check_is_member_of_role(GetUserId(), newOwnerId);
@@ -393,12 +420,57 @@ AlterForeignServerOwner(const char *name, Oid newOwnerId)
 		changeDependencyOnOwner(ForeignServerRelationId, HeapTupleGetOid(tup),
 								newOwnerId);
 	}
+}
+
+/*
+ * Change foreign server owner -- by name
+ */
+void
+AlterForeignServerOwner(const char *name, Oid newOwnerId)
+{
+	HeapTuple	tup;
+	Relation	rel;
+
+	rel = heap_open(ForeignServerRelationId, RowExclusiveLock);
+
+	tup = SearchSysCacheCopy1(FOREIGNSERVERNAME, CStringGetDatum(name));
+
+	if (!HeapTupleIsValid(tup))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("server \"%s\" does not exist", name)));
+
+	AlterForeignServerOwner_internal(rel, tup, newOwnerId);
 
 	heap_freetuple(tup);
 
 	heap_close(rel, RowExclusiveLock);
 }
 
+/*
+ * Change foreign server owner -- by OID
+ */
+void
+AlterForeignServerOwner_oid(Oid srvId, Oid newOwnerId)
+{
+	HeapTuple	tup;
+	Relation	rel;
+
+	rel = heap_open(ForeignServerRelationId, RowExclusiveLock);
+
+	tup = SearchSysCacheCopy1(FOREIGNSERVEROID, ObjectIdGetDatum(srvId));
+
+	if (!HeapTupleIsValid(tup))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("server with OID \"%u\" does not exist", srvId)));
+
+	AlterForeignServerOwner_internal(rel, tup, newOwnerId);
+
+	heap_freetuple(tup);
+
+	heap_close(rel, RowExclusiveLock);
+}
 
 /*
  * Convert a handler function name passed from the parser to an Oid.
