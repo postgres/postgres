@@ -650,7 +650,8 @@ _bt_page_recyclable(Page page)
  */
 void
 _bt_delitems(Relation rel, Buffer buf,
-			 OffsetNumber *itemnos, int nitems)
+			 OffsetNumber *itemnos, int nitems,
+			 bool inVacuum)
 {
 	Page		page = BufferGetPage(buf);
 	BTPageOpaque opaque;
@@ -662,11 +663,12 @@ _bt_delitems(Relation rel, Buffer buf,
 	PageIndexMultiDelete(page, itemnos, nitems);
 
 	/*
-	 * We can clear the vacuum cycle ID since this page has certainly been
-	 * processed by the current vacuum scan.
+	 * If this is within VACUUM, we can clear the vacuum cycle ID since this
+	 * page has certainly been processed by the current vacuum scan.
 	 */
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-	opaque->btpo_cycleid = 0;
+	if (inVacuum)
+		opaque->btpo_cycleid = 0;
 
 	/*
 	 * Mark the page as not containing any LP_DEAD items.  This is not
