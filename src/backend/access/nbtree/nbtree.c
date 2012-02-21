@@ -857,7 +857,7 @@ restart:
 		 */
 		if (ndeletable > 0)
 		{
-			_bt_delitems(rel, buf, deletable, ndeletable);
+			_bt_delitems(rel, buf, deletable, ndeletable, true);
 			stats->tuples_removed += ndeletable;
 			/* must recompute maxoff */
 			maxoff = PageGetMaxOffsetNumber(page);

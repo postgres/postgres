@@ -537,7 +537,7 @@ extern void _bt_relbuf(Relation rel, Buffer buf);
 extern void _bt_pageinit(Page page, Size size);
 extern bool _bt_page_recyclable(Page page);
 extern void _bt_delitems(Relation rel, Buffer buf,
-			 OffsetNumber *itemnos, int nitems);
+			 OffsetNumber *itemnos, int nitems, bool inVacuum);
 extern int _bt_pagedel(Relation rel, Buffer buf,
 			BTStack stack, bool vacuum_full);
 
