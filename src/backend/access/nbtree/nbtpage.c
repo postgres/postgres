@@ -715,7 +715,7 @@ _bt_page_recyclable(Page page)
 }
 
 /*
- * Delete item(s) from a btree page.
+ * Delete item(s) from a btree page during VACUUM.
  *
  * This must only be used for deleting leaf items.	Deleting an item on a
  * non-leaf page has to be done as part of an atomic action that includes
@@ -736,7 +736,8 @@ _bt_page_recyclable(Page page)
  */
 void
 _bt_delitems_vacuum(Relation rel, Buffer buf,
-			OffsetNumber *itemnos, int nitems, BlockNumber lastBlockVacuumed)
+					OffsetNumber *itemnos, int nitems,
+					BlockNumber lastBlockVacuumed)
 {
 	Page		page = BufferGetPage(buf);
 	BTPageOpaque opaque;
@@ -771,7 +772,6 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 	{
 		XLogRecPtr	recptr;
 		XLogRecData rdata[2];
-
 		xl_btree_vacuum xlrec_vacuum;
 
 		xlrec_vacuum.node = rel->rd_node;
@@ -811,13 +811,27 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 	END_CRIT_SECTION();
 }
 
+/*
+ * Delete item(s) from a btree page during single-page cleanup.
+ *
+ * As above, must only be used on leaf pages.
+ *
+ * This routine assumes that the caller has pinned and locked the buffer.
+ * Also, the given itemnos *must* appear in increasing order in the array.
+ *
+ * This is nearly the same as _bt_delitems_vacuum as far as what it does to
+ * the page, but the WAL logging considerations are quite different.  See
+ * comments for _bt_delitems_vacuum.
+ */
 void
 _bt_delitems_delete(Relation rel, Buffer buf,
-					OffsetNumber *itemnos, int nitems, Relation heapRel)
+					OffsetNumber *itemnos, int nitems,
+					Relation heapRel)
 {
 	Page		page = BufferGetPage(buf);
 	BTPageOpaque opaque;
 
+	/* Shouldn't be called unless there's something to do */
 	Assert(nitems > 0);
 
 	/* No ereport(ERROR) until changes are logged */
@@ -849,7 +863,6 @@ _bt_delitems_delete(Relation rel, Buffer buf,
 	{
 		XLogRecPtr	recptr;
 		XLogRecData rdata[3];
-
 		xl_btree_delete xlrec_delete;
 
 		xlrec_delete.node = rel->rd_node;
@@ -863,8 +876,9 @@ _bt_delitems_delete(Relation rel, Buffer buf,
 		rdata[0].next = &(rdata[1]);
 
 		/*
-		 * We need the target-offsets array whether or not we store the to
-		 * allow us to find the latestRemovedXid on a standby server.
+		 * We need the target-offsets array whether or not we store the whole
+		 * buffer, to allow us to find the latestRemovedXid on a standby
+		 * server.
 		 */
 		rdata[1].data = (char *) itemnos;
 		rdata[1].len = nitems * sizeof(OffsetNumber);

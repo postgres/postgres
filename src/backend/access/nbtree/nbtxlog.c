@@ -539,7 +539,7 @@ btree_xlog_vacuum(XLogRecPtr lsn, XLogRecord *record)
 
 	/*
 	 * Mark the page as not containing any LP_DEAD items --- see comments in
-	 * _bt_delitems().
+	 * _bt_delitems_vacuum().
 	 */
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	opaque->btpo_flags &= ~BTP_HAS_GARBAGE;
@@ -720,7 +720,7 @@ btree_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 
 	/*
 	 * Mark the page as not containing any LP_DEAD items --- see comments in
-	 * _bt_delitems().
+	 * _bt_delitems_delete().
 	 */
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	opaque->btpo_flags &= ~BTP_HAS_GARBAGE;

@@ -635,7 +635,8 @@ extern bool _bt_page_recyclable(Page page);
 extern void _bt_delitems_delete(Relation rel, Buffer buf,
 					OffsetNumber *itemnos, int nitems, Relation heapRel);
 extern void _bt_delitems_vacuum(Relation rel, Buffer buf,
-		   OffsetNumber *itemnos, int nitems, BlockNumber lastBlockVacuumed);
+					OffsetNumber *itemnos, int nitems,
+					BlockNumber lastBlockVacuumed);
 extern int	_bt_pagedel(Relation rel, Buffer buf, BTStack stack);
 
 /*
