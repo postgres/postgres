@@ -841,11 +841,9 @@ _bt_delitems_delete(Relation rel, Buffer buf,
 	PageIndexMultiDelete(page, itemnos, nitems);
 
 	/*
-	 * We can clear the vacuum cycle ID since this page has certainly been
-	 * processed by the current vacuum scan.
+	 * Unlike _bt_delitems_vacuum, we *must not* clear the vacuum cycle ID,
+	 * because this is not called by VACUUM.
 	 */
-	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-	opaque->btpo_cycleid = 0;
 
 	/*
 	 * Mark the page as not containing any LP_DEAD items.  This is not
@@ -854,6 +852,7 @@ _bt_delitems_delete(Relation rel, Buffer buf,
 	 * true and it doesn't seem worth an additional page scan to check it.
 	 * Remember that BTP_HAS_GARBAGE is only a hint anyway.
 	 */
+	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	opaque->btpo_flags &= ~BTP_HAS_GARBAGE;
 
 	MarkBufferDirty(buf);
