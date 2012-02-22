@@ -39,6 +39,7 @@
 #include "funcapi.h"
 #include "libpq/auth.h"
 #include "libpq/be-fsstubs.h"
+#include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "optimizer/cost.h"
@@ -2958,6 +2959,46 @@ static struct config_string ConfigureNamesString[] =
 		&external_pid_file,
 		NULL,
 		check_canonical_path, NULL, NULL
+	},
+
+	{
+		{"ssl_cert_file", PGC_POSTMASTER, CONN_AUTH_SECURITY,
+			gettext_noop("Location of the SSL server certificate file."),
+			NULL
+		},
+		&ssl_cert_file,
+		"server.crt",
+		NULL, NULL, NULL
+	},
+
+	{
+		{"ssl_key_file", PGC_POSTMASTER, CONN_AUTH_SECURITY,
+			gettext_noop("Location of the SSL server private key file."),
+			NULL
+		},
+		&ssl_key_file,
+		"server.key",
+		NULL, NULL, NULL
+	},
+
+	{
+		{"ssl_ca_file", PGC_POSTMASTER, CONN_AUTH_SECURITY,
+			gettext_noop("Location of the SSL certificate authority file."),
+			NULL
+		},
+		&ssl_ca_file,
+		"",
+		NULL, NULL, NULL
+	},
+
+	{
+		{"ssl_crl_file", PGC_POSTMASTER, CONN_AUTH_SECURITY,
+			gettext_noop("Location of the SSL certificate revocation list file."),
+			NULL
+		},
+		&ssl_crl_file,
+		"",
+		NULL, NULL, NULL
 	},
 
 	{

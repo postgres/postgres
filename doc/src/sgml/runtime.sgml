@@ -1831,10 +1831,8 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    SSL certificates and make sure that clients check the server's certificate.
    To do that, the server
    must be configured to accept only <literal>hostssl</> connections (<xref
-   linkend="auth-pg-hba-conf">) and have SSL
-   <filename>server.key</filename> (key) and
-   <filename>server.crt</filename> (certificate) files (<xref
-   linkend="ssl-tcp">). The TCP client must connect using
+   linkend="auth-pg-hba-conf">) and have SSL key and certificate files
+   (<xref linkend="ssl-tcp">). The TCP client must connect using
    <literal>sslmode=verify-ca</> or
    <literal>verify-full</> and have the appropriate root certificate
    file installed (<xref linkend="libpq-connect">).
@@ -2053,10 +2051,12 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
   </note>
 
   <para>
-   To start in <acronym>SSL</> mode, the files <filename>server.crt</>
-   and <filename>server.key</> must exist in the server's data directory.
-   These files should contain the server certificate and private key,
-   respectively.
+   To start in <acronym>SSL</> mode, files containing the server certificate
+   and private key must exist.  By default, these files are expected to be
+   named <filename>server.crt</> and <filename>server.key</>, respectively, in
+   the server's data directory, but other names and locations can be specified
+   using the configuration parameters <xref linkend="guc-ssl-cert-file">
+   and <xref linkend="guc-ssl-key-file">.
    On Unix systems, the permissions on <filename>server.key</filename> must
    disallow any access to world or group; achieve this by the command
    <command>chmod 0600 server.key</command>.
@@ -2083,7 +2083,9 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    To require the client to supply a trusted certificate, place
    certificates of the certificate authorities (<acronym>CA</acronym>s)
    you trust in the file <filename>root.crt</filename> in the data
-   directory, and set the <literal>clientcert</literal> parameter
+   directory, set the parameter <xref linkend="guc-ssl-ca-file"> in
+   <filename>postgresql.conf</filename> to <literal>root.crt</literal>,
+   and set the <literal>clientcert</literal> parameter
    to 1 on the appropriate <literal>hostssl</> line(s) in
    <filename>pg_hba.conf</>.
    A certificate will then be requested from the client during
@@ -2091,7 +2093,7 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    description of how to set up certificates on the client.)  The server will
    verify that the client's certificate is signed by one of the trusted
    certificate authorities.  Certificate Revocation List (CRL) entries
-   are also checked if the file <filename>root.crl</filename> exists.
+   are also checked if the parameter <xref linkend="guc-ssl-crl-file"> is set.
    <!-- If this URL changes replace it with a URL to www.archive.org. -->
    (See <ulink
    url="http://h71000.www7.hp.com/DOC/83final/BA554_90007/ch04s02.html"></>
@@ -2103,7 +2105,7 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    available for all authentication methods, but only for rows specified as
    <literal>hostssl</>.  When <literal>clientcert</literal> is not specified
    or is set to 0, the server will still verify presented client
-   certificates against <filename>root.crt</filename> if that file exists
+   certificates against its CA list, if one is configured,
    &mdash; but it will not insist that a client certificate be presented.
   </para>
 
@@ -2127,7 +2129,8 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
 
    <para>
     <xref linkend="ssl-file-usage"> summarizes the files that are
-    relevant to the SSL setup on the server.
+    relevant to the SSL setup on the server.  (The shown file names are default
+    or typical names.  The locally configured names could be different.)
    </para>
 
   <table id="ssl-file-usage">
@@ -2144,27 +2147,27 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
     <tbody>
 
      <row>
-      <entry><filename>$PGDATA/server.crt</></entry>
+      <entry><xref linkend="guc-ssl-cert-file"> (<filename>$PGDATA/server.crt</>)</entry>
       <entry>server certificate</entry>
       <entry>sent to client to indicate server's identity</entry>
      </row>
 
      <row>
-      <entry><filename>$PGDATA/server.key</></entry>
+      <entry><xref linkend="guc-ssl-key-file"> (<filename>$PGDATA/server.key</>)</entry>
       <entry>server private key</entry>
       <entry>proves server certificate was sent by the owner; does not indicate
       certificate owner is trustworthy</entry>
      </row>
 
      <row>
-      <entry><filename>$PGDATA/root.crt</></entry>
+      <entry><xref linkend="guc-ssl-ca-file"> (<filename>$PGDATA/root.crt</>)</entry>
       <entry>trusted certificate authorities</entry>
       <entry>checks that client certificate is
       signed by a trusted certificate authority</entry>
      </row>
 
      <row>
-      <entry><filename>$PGDATA/root.crl</></entry>
+      <entry><xref linkend="guc-ssl-crl-file"> (<filename>$PGDATA/root.crl</>)</entry>
       <entry>certificates revoked by certificate authorities</entry>
       <entry>client certificate must not be on this list</entry>
      </row>
@@ -2176,6 +2179,7 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    <para>
     The files <filename>server.key</>, <filename>server.crt</>,
     <filename>root.crt</filename>, and <filename>root.crl</filename>
+    (or their configured alternative names)
     are only examined during server start; so you must restart
     the server for changes in them to take effect.
    </para>

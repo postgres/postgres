@@ -77,10 +77,10 @@
 
 #ifdef USE_SSL
 
-#define ROOT_CERT_FILE			"root.crt"
-#define ROOT_CRL_FILE			"root.crl"
-#define SERVER_CERT_FILE		"server.crt"
-#define SERVER_PRIVATE_KEY_FILE "server.key"
+char *ssl_cert_file;
+char *ssl_key_file;
+char *ssl_ca_file;
+char *ssl_crl_file;
 
 static DH  *load_dh_file(int keylength);
 static DH  *load_dh_buffer(const char *, size_t);
@@ -746,17 +746,17 @@ initialize_SSL(void)
 		 * Load and verify server's certificate and private key
 		 */
 		if (SSL_CTX_use_certificate_chain_file(SSL_context,
-											   SERVER_CERT_FILE) != 1)
+											   ssl_cert_file) != 1)
 			ereport(FATAL,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				  errmsg("could not load server certificate file \"%s\": %s",
-						 SERVER_CERT_FILE, SSLerrmessage())));
+						 ssl_cert_file, SSLerrmessage())));
 
-		if (stat(SERVER_PRIVATE_KEY_FILE, &buf) != 0)
+		if (stat(ssl_key_file, &buf) != 0)
 			ereport(FATAL,
 					(errcode_for_file_access(),
 					 errmsg("could not access private key file \"%s\": %m",
-							SERVER_PRIVATE_KEY_FILE)));
+							ssl_key_file)));
 
 		/*
 		 * Require no public access to key file.
@@ -771,16 +771,16 @@ initialize_SSL(void)
 			ereport(FATAL,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				  errmsg("private key file \"%s\" has group or world access",
-						 SERVER_PRIVATE_KEY_FILE),
+						 ssl_key_file),
 				   errdetail("Permissions should be u=rw (0600) or less.")));
 #endif
 
 		if (SSL_CTX_use_PrivateKey_file(SSL_context,
-										SERVER_PRIVATE_KEY_FILE,
+										ssl_key_file,
 										SSL_FILETYPE_PEM) != 1)
 			ereport(FATAL,
 					(errmsg("could not load private key file \"%s\": %s",
-							SERVER_PRIVATE_KEY_FILE, SSLerrmessage())));
+							ssl_key_file, SSLerrmessage())));
 
 		if (SSL_CTX_check_private_key(SSL_context) != 1)
 			ereport(FATAL,
@@ -797,48 +797,30 @@ initialize_SSL(void)
 		elog(FATAL, "could not set the cipher list (no valid ciphers available)");
 
 	/*
-	 * Attempt to load CA store, so we can verify client certificates if
-	 * needed.
+	 * Load CA store, so we can verify client certificates if needed.
 	 */
-	ssl_loaded_verify_locations = false;
-
-	if (access(ROOT_CERT_FILE, R_OK) != 0)
+	if (ssl_ca_file[0])
 	{
-		/*
-		 * If root certificate file simply not found, don't log an error here,
-		 * because it's quite likely the user isn't planning on using client
-		 * certificates. If we can't access it for other reasons, it is an
-		 * error.
-		 */
-		if (errno != ENOENT)
+		if (SSL_CTX_load_verify_locations(SSL_context, ssl_ca_file, NULL) != 1 ||
+			(root_cert_list = SSL_load_client_CA_file(ssl_ca_file)) == NULL)
 			ereport(FATAL,
-				 (errmsg("could not access root certificate file \"%s\": %m",
-						 ROOT_CERT_FILE)));
+					(errmsg("could not load root certificate file \"%s\": %s",
+							ssl_ca_file, SSLerrmessage())));
 	}
-	else if (SSL_CTX_load_verify_locations(SSL_context, ROOT_CERT_FILE, NULL) != 1 ||
-		  (root_cert_list = SSL_load_client_CA_file(ROOT_CERT_FILE)) == NULL)
+
+	/*----------
+	 * Load the Certificate Revocation List (CRL).
+	 * http://searchsecurity.techtarget.com/sDefinition/0,,sid14_gci803160,00.html
+	 *----------
+	 */
+	if (ssl_crl_file[0])
 	{
-		/*
-		 * File was there, but we could not load it. This means the file is
-		 * somehow broken, and we cannot do verification at all - so fail.
-		 */
-		ereport(FATAL,
-				(errmsg("could not load root certificate file \"%s\": %s",
-						ROOT_CERT_FILE, SSLerrmessage())));
-	}
-	else
-	{
-		/*----------
-		 * Load the Certificate Revocation List (CRL) if file exists.
-		 * http://searchsecurity.techtarget.com/sDefinition/0,,sid14_gci803160,00.html
-		 *----------
-		 */
 		X509_STORE *cvstore = SSL_CTX_get_cert_store(SSL_context);
 
 		if (cvstore)
 		{
 			/* Set the flags to check against the complete CRL chain */
-			if (X509_STORE_load_locations(cvstore, ROOT_CRL_FILE, NULL) == 1)
+			if (X509_STORE_load_locations(cvstore, ssl_crl_file, NULL) == 1)
 			{
 				/* OpenSSL 0.96 does not support X509_V_FLAG_CRL_CHECK */
 #ifdef X509_V_FLAG_CRL_CHECK
@@ -847,32 +829,31 @@ initialize_SSL(void)
 #else
 				ereport(LOG,
 				(errmsg("SSL certificate revocation list file \"%s\" ignored",
-						ROOT_CRL_FILE),
+						ssl_crl_file),
 				 errdetail("SSL library does not support certificate revocation lists.")));
 #endif
 			}
 			else
-			{
-				/* Not fatal - we do not require CRL */
-				ereport(LOG,
-						(errmsg("SSL certificate revocation list file \"%s\" not found, skipping: %s",
-								ROOT_CRL_FILE, SSLerrmessage()),
-						 errdetail("Certificates will not be checked against revocation list.")));
-			}
-
-			/*
-			 * Always ask for SSL client cert, but don't fail if it's not
-			 * presented.  We might fail such connections later, depending on
-			 * what we find in pg_hba.conf.
-			 */
-			SSL_CTX_set_verify(SSL_context,
-							   (SSL_VERIFY_PEER |
-								SSL_VERIFY_CLIENT_ONCE),
-							   verify_cb);
-
-			/* Set flag to remember CA store is successfully loaded */
-			ssl_loaded_verify_locations = true;
+				ereport(FATAL,
+						(errmsg("could not load SSL certificate revocation list file \"%s\": %s",
+								ssl_crl_file, SSLerrmessage())));
 		}
+	}
+
+	if (ssl_ca_file[0])
+	{
+		/*
+		 * Always ask for SSL client cert, but don't fail if it's not
+		 * presented.  We might fail such connections later, depending on
+		 * what we find in pg_hba.conf.
+		 */
+		SSL_CTX_set_verify(SSL_context,
+						   (SSL_VERIFY_PEER |
+							SSL_VERIFY_CLIENT_ONCE),
+						   verify_cb);
+
+		/* Set flag to remember CA store is successfully loaded */
+		ssl_loaded_verify_locations = true;
 
 		/*
 		 * Tell OpenSSL to send the list of root certs we trust to clients in

@@ -668,6 +668,70 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-ssl-ca-file" xreflabel="ssl_ca_file">
+      <term><varname>ssl_ca_file</varname> (<type>string</type>)</term>
+      <indexterm>
+       <primary><varname>ssl_ca_file</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Specifies the name of the file containing the SSL server certificate
+        authority (CA).  The default is empty, meaning no CA file is loaded,
+        and client certificate verification is not performed.  (In previous
+        releases of PostgreSQL, the name of this file was hard-coded
+        as <filename>root.crt</filename>.)  Relative paths are relative to the
+        data directory.  This parameter can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-ssl-cert-file" xreflabel="ssl_cert_file">
+      <term><varname>ssl_cert_file</varname> (<type>string</type>)</term>
+      <indexterm>
+       <primary><varname>ssl_cert_file</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Specifies the name of the file containing the SSL server certificate.
+        The default is <filename>server.crt</filename>.  Relative paths are
+        relative to the data directory.  This parameter can only be set at
+        server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-ssl-crl-file" xreflabel="ssl_crl_file">
+      <term><varname>ssl_crl_file</varname> (<type>string</type>)</term>
+      <indexterm>
+       <primary><varname>ssl_crl_file</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Specifies the name of the file containing the SSL server certificate
+        revocation list (CRL).  The default is empty, meaning no CRL file is
+        loaded.  (In previous releases of PostgreSQL, the name of this file was
+        hard-coded as <filename>root.crl</filename>.)  Relative paths are
+        relative to the data directory.  This parameter can only be set at
+        server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-ssl-key-file" xreflabel="ssl_key_file">
+      <term><varname>ssl_key_file</varname> (<type>string</type>)</term>
+      <indexterm>
+       <primary><varname>ssl_key_file</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Specifies the name of the file containing the SSL server private key.
+        The default is <filename>server.key</filename>.  Relative paths are
+        relative to the data directory.  This parameter can only be set at
+        server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-ssl-renegotiation-limit" xreflabel="ssl_renegotiation_limit">
       <term><varname>ssl_renegotiation_limit</varname> (<type>integer</type>)</term>
       <indexterm>

@@ -1417,7 +1417,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline, int line_num)
 				ereport(LOG,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
 						 errmsg("client certificates can only be checked if a root certificate store is available"),
-						 errhint("Make sure the root.crt file is present and readable."),
+						 errhint("Make sure the configuration parameter \"ssl_ca_file\" is set."),
 				   errcontext("line %d of configuration file \"%s\"",
 							  line_num, HbaFileName)));
 				return false;
