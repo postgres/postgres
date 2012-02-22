@@ -111,7 +111,7 @@
      <varlistentry>
       <term><option>-l</option> <replaceable>log_filename</></term>
       <term><option>--logfile=</option><replaceable>log_filename</></term>
-      <listitem><para>log session activity to file</para></listitem>
+      <listitem><para>log internal activity to file</para></listitem>
      </varlistentry>
 
      <varlistentry>

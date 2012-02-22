@@ -259,7 +259,7 @@ Options:\n\
   -g, --debug                   enable debugging\n\
   -G, --debugfile=FILENAME      output debugging activity to file\n\
   -k, --link                    link instead of copying files to new cluster\n\
-  -l, --logfile=FILENAME        log session activity to file\n\
+  -l, --logfile=FILENAME        log internal activity to file\n\
   -o, --old-options=OPTIONS     old cluster options to pass to the server\n\
   -O, --new-options=OPTIONS     new cluster options to pass to the server\n\
   -p, --old-port=OLDPORT        old cluster port number (default %d)\n\
