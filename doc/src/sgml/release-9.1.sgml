@@ -1,6 +1,586 @@
 <!-- doc/src/sgml/release-9.1.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-1-3">
+  <title>Release 9.1.3</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2012-02-27</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 9.1.2.
+   For information about new features in the 9.1 major release, see
+   <xref linkend="release-9-1">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.1.3</title>
+
+   <para>
+    A dump/restore is not required for those running 9.1.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 9.1.2,
+    see the release notes for 9.1.2.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix btree index corruption from insertions concurrent with vacuuming
+      (Tom Lane)
+     </para>
+
+     <para>
+      An index page split caused by an insertion could sometimes cause a
+      concurrently-running <command>VACUUM</> to miss removing index entries
+      that it should remove.  After the corresponding table rows are removed,
+      the dangling index entries would cause errors (such as <quote>could not
+      read block N in file ...</>) or worse, silently wrong query results
+      after unrelated rows are re-inserted at the now-free table locations.
+      This bug has been present since release 8.2, but occurs so infrequently
+      that it was not diagnosed until now.  If you have reason to suspect
+      that it has happened in your database, reindexing the affected index
+      will fix things.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix transient zeroing of shared buffers during WAL replay (Tom Lane)
+     </para>
+
+     <para>
+      The replay logic would sometimes zero and refill a shared buffer, so
+      that the contents were transiently invalid.  In hot standby mode this
+      can result in a query that's executing in parallel seeing garbage data.
+      Various symptoms could result from that, but the most common one seems
+      to be <quote>invalid memory alloc request size</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix handling of data-modifying <literal>WITH</> subplans in
+      <literal>READ COMMITTED</> rechecking (Tom Lane)
+     </para>
+
+     <para>
+      A <literal>WITH</> clause containing
+      <command>INSERT</>/<command>UPDATE</>/<command>DELETE</> would crash
+      if the parent <command>UPDATE</> or <command>DELETE</> command needed
+      to be re-evaluated at one or more rows due to concurrent updates
+      in <literal>READ COMMITTED</> mode.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix corner case in SSI transaction cleanup
+      (Dan Ports)
+     </para>
+
+     <para>
+      When finishing up a read-write serializable transaction,
+      a crash could occur if all remaining active serializable transactions
+      are read-only.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix postmaster to attempt restart after a hot-standby crash (Tom Lane)
+     </para>
+
+     <para>
+      A logic error caused the postmaster to terminate, rather than attempt
+      to restart the cluster, if any backend process crashed while operating
+      in hot standby mode.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <command>CLUSTER</>/<command>VACUUM FULL</> handling of toast
+      values owned by recently-updated rows (Tom Lane)
+     </para>
+
+     <para>
+      This oversight could lead to <quote>duplicate key value violates unique
+      constraint</> errors being reported against the toast table's index
+      during one of these commands.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update per-column permissions, not only per-table permissions, when
+      changing table owner (Tom Lane)
+     </para>
+
+     <para>
+      Failure to do this meant that any previously granted column permissions
+      were still shown as having been granted by the old owner.  This meant
+      that neither the new owner nor a superuser could revoke the
+      now-untraceable-to-table-owner permissions.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Support foreign data wrappers and foreign servers in
+      <command>REASSIGN OWNED</> (Alvaro Herrera)
+     </para>
+
+     <para>
+      This command failed with <quote>unexpected classid</> errors if
+      it needed to change the ownership of any such objects.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow non-existent values for some settings in <command>ALTER
+      USER/DATABASE SET</> (Heikki Linnakangas)
+     </para>
+
+     <para>
+      Allow <varname>default_text_search_config</>,
+      <varname>default_tablespace</>, and <varname>temp_tablespaces</> to be
+      set to names that are not known.  This is because they might be known
+      in another database where the setting is intended to be used, or for the
+      tablespace cases because the tablespace might not be created yet.  The
+      same issue was previously recognized for <varname>search_path</>, and
+      these settings now act like that one.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <quote>unsupported node type</> error caused by <literal>COLLATE</>
+      in an <command>INSERT</> expression (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid crashing when we have problems deleting table files post-commit
+      (Tom Lane)
+     </para>
+
+     <para>
+      Dropping a table should lead to deleting the underlying disk files only
+      after the transaction commits.  In event of failure then (for instance,
+      because of wrong file permissions) the code is supposed to just emit a
+      warning message and go on, since it's too late to abort the
+      transaction.  This logic got broken as of release 8.4, causing such
+      situations to result in a PANIC and an unrestartable database.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Recover from errors occurring during WAL replay of <command>DROP
+      TABLESPACE</> (Tom Lane)
+     </para>
+
+     <para>
+      Replay will attempt to remove the tablespace's directories, but there
+      are various reasons why this might fail (for example, incorrect
+      ownership or permissions on those directories).  Formerly the replay
+      code would panic, rendering the database unrestartable without manual
+      intervention.  It seems better to log the problem and continue, since
+      the only consequence of failure to remove the directories is some
+      wasted disk space.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix race condition in logging AccessExclusiveLocks for hot standby
+      (Simon Riggs)
+     </para>
+
+     <para>
+      Sometimes a lock would be logged as being held by <quote>transaction
+      zero</>.  This is at least known to produce assertion failures on
+      slave servers, and might be the cause of more serious problems.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Track the OID counter correctly during WAL replay, even when it wraps
+      around (Tom Lane)
+     </para>
+
+     <para>
+      Previously the OID counter would remain stuck at a high value until the
+      system exited replay mode.  The practical consequences of that are
+      usually nil, but there are scenarios wherein a standby server that's
+      been promoted to master might take a long time to advance the OID
+      counter to a reasonable value once values are needed.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent emitting misleading <quote>consistent recovery state reached</>
+      log message at the beginning of crash recovery (Heikki Linnakangas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix initial value of
+      <structname>pg_stat_replication</>.<structfield>replay_location</>
+      (Fujii Masao)
+     </para>
+
+     <para>
+      Previously, the value shown would be wrong until at least one WAL
+      record had been replayed.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix regular expression back-references with <literal>*</> attached
+      (Tom Lane)
+     </para>
+
+     <para>
+      Rather than enforcing an exact string match, the code would effectively
+      accept any string that satisfies the pattern sub-expression referenced
+      by the back-reference symbol.
+     </para>
+
+     <para>
+      A similar problem still afflicts back-references that are embedded in a
+      larger quantified expression, rather than being the immediate subject
+      of the quantifier.  This will be addressed in a future
+      <productname>PostgreSQL</> release.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix recently-introduced memory leak in processing of
+      <type>inet</>/<type>cidr</> values (Heikki Linnakangas)
+     </para>
+
+     <para>
+      A patch in the December 2011 releases of <productname>PostgreSQL</>
+      caused memory leakage in these operations, which could be significant
+      in scenarios such as building a btree index on such a column.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix planner's ability to push down index-expression restrictions
+      through <literal>UNION ALL</> (Tom Lane)
+     </para>
+
+     <para>
+      This type of optimization was inadvertently disabled by a fix for
+      another problem in 9.1.2.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix planning of <literal>WITH</> clauses referenced in
+      <command>UPDATE</>/<command>DELETE</> on an inherited table
+      (Tom Lane)
+     </para>
+
+     <para>
+      This bug led to <quote>could not find plan for CTE</> failures.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix GIN cost estimation to handle <literal>column IN (...)</>
+      index conditions (Marti Raudsepp)
+     </para>
+
+     <para>
+      This oversight would usually lead to crashes if such a condition could
+      be used with a GIN index.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent assertion failure when exiting a session with an open, failed
+      transaction (Tom Lane)
+     </para>
+
+     <para>
+      This bug has no impact on normal builds with asserts not enabled.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix dangling pointer after <command>CREATE TABLE AS</>/<command>SELECT
+      INTO</> in a SQL-language function (Tom Lane)
+     </para>
+
+     <para>
+      In most cases this only led to an assertion failure in assert-enabled
+      builds, but worse consequences seem possible.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid double close of file handle in syslogger on Windows (MauMau)
+     </para>
+
+     <para>
+      Ordinarily this error was invisible, but it would cause an exception
+      when running on a debug version of Windows.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix I/O-conversion-related memory leaks in plpgsql
+      (Andres Freund, Jan Urbanski, Tom Lane)
+     </para>
+
+     <para>
+      Certain operations would leak memory until the end of the current
+      function.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Work around bug in perl's SvPVutf8() function (Andrew Dunstan)
+     </para>
+
+     <para>
+      This function crashes when handed a typeglob or certain read-only
+      objects such as <literal>$^V</>.  Make plperl avoid passing those to
+      it.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In <application>pg_dump</>, don't dump contents of an extension's
+      configuration tables if the extension itself is not being dumped
+      (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve <application>pg_dump</>'s handling of inherited table columns
+      (Tom Lane)
+     </para>
+
+     <para>
+      <application>pg_dump</> mishandled situations where a child column has
+      a different default expression than its parent column.  If the default
+      is textually identical to the parent's default, but not actually the
+      same (for instance, because of schema search path differences) it would
+      not be recognized as different, so that after dump and restore the
+      child would be allowed to inherit the parent's default.  Child columns
+      that are <literal>NOT NULL</> where their parent is not could also be
+      restored subtly incorrectly.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_restore</>'s direct-to-database mode for
+      INSERT-style table data (Tom Lane)
+     </para>
+
+     <para>
+      Direct-to-database restores from archive files made with
+      <option>--inserts</> or <option>--column-inserts</> options fail when
+      using <application>pg_restore</> from a release dated September or
+      December 2011, as a result of an oversight in a fix for another
+      problem.  The archive file itself is not at fault, and text-mode
+      output is okay.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Teach <application>pg_upgrade</> to handle renaming of
+      <application>plpython</>'s shared library (Bruce Momjian)
+     </para>
+
+     <para>
+      Upgrading a pre-9.1 database that included plpython would fail because
+      of this oversight.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow <application>pg_upgrade</> to process tables containing
+      <type>regclass</> columns (Bruce Momjian)
+     </para>
+
+     <para>
+      Since <application>pg_upgrade</> now takes care to preserve
+      <structname>pg_class</> OIDs, there was no longer any reason for this
+      restriction.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <application>libpq</> ignore <literal>ENOTDIR</> errors
+      when looking for an SSL client certificate file
+      (Magnus Hagander)
+     </para>
+
+     <para>
+      This allows SSL connections to be established, though without a
+      certificate, even when the user's home directory is set to something
+      like <literal>/dev/null</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix some more field alignment issues in <application>ecpg</>'s SQLDA area
+      (Zoltan Boszormenyi)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow <literal>AT</> option in <application>ecpg</>
+      <literal>DEALLOCATE</> statements (Michael Meskes)
+     </para>
+
+     <para>
+      The infrastructure to support this has been there for awhile, but
+      through an oversight there was still an error check rejecting the case.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Do not use the variable name when defining a varchar structure in ecpg
+      (Michael Meskes)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <filename>contrib/auto_explain</>'s JSON output mode to produce
+      valid JSON (Andrew Dunstan)
+     </para>
+
+     <para>
+      The output used brackets at the top level, when it should have used
+      braces.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix error in <filename>contrib/intarray</>'s <literal>int[] &amp;
+      int[]</> operator (Guillaume Lelarge)
+     </para>
+
+     <para>
+      If the smallest integer the two input arrays have in common is 1,
+      and there are smaller values in either array, then 1 would be
+      incorrectly omitted from the result.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix error detection in <filename>contrib/pgcrypto</>'s
+      <function>encrypt_iv()</> and <function>decrypt_iv()</>
+      (Marko Kreen)
+     </para>
+
+     <para>
+      These functions failed to report certain types of invalid-input errors,
+      and would instead return random garbage values for incorrect input.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix one-byte buffer overrun in <filename>contrib/test_parser</>
+      (Paul Guyot)
+     </para>
+
+     <para>
+      The code would try to read one more byte than it should, which would
+      crash in corner cases.
+      Since <filename>contrib/test_parser</> is only example code, this is
+      not a security issue in itself, but bad example code is still bad.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Use <function>__sync_lock_test_and_set()</> for spinlocks on ARM, if
+      available (Martin Pitt)
+     </para>
+
+     <para>
+      This function replaces our previous use of the <literal>SWPB</>
+      instruction, which is deprecated and not available on ARMv6 and later.
+      Reports suggest that the old code doesn't fail in an obvious way on
+      recent ARM boards, but simply doesn't interlock concurrent accesses,
+      leading to bizarre failures in multiprocess operation.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Use <option>-fexcess-precision=standard</> option when building with
+      gcc versions that accept it (Andrew Dunstan)
+     </para>
+
+     <para>
+      This prevents assorted scenarios wherein recent versions of gcc will
+      produce creative results.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow use of threaded Python on FreeBSD (Chris Rees)
+     </para>
+
+     <para>
+      Our configure script previously believed that this combination wouldn't
+      work; but FreeBSD fixed the problem, so remove that error check.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-1-2">
   <title>Release 9.1.2</title>
 
