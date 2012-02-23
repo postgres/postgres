@@ -176,7 +176,8 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
 
   <para>
    To create a trigger on a table, the user must have the
-   <literal>TRIGGER</literal> privilege on the table.
+   <literal>TRIGGER</literal> privilege on the table.  The user must
+   also have <literal>EXECUTE</literal> privilege on the trigger function.
   </para>
 
   <para>
