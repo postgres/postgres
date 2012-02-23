@@ -9192,14 +9192,12 @@ $as_echo "$as_me: error: library 'ssl' is required for OpenSSL" >&2;}
 fi
 
   else
-
-{ $as_echo "$as_me:$LINENO: checking for CRYPTO_new_ex_data in -leay32" >&5
-$as_echo_n "checking for CRYPTO_new_ex_data in -leay32... " >&6; }
-if test "${ac_cv_lib_eay32_CRYPTO_new_ex_data+set}" = set; then
+     { $as_echo "$as_me:$LINENO: checking for library containing CRYPTO_new_ex_data" >&5
+$as_echo_n "checking for library containing CRYPTO_new_ex_data... " >&6; }
+if test "${ac_cv_search_CRYPTO_new_ex_data+set}" = set; then
   $as_echo_n "(cached) " >&6
 else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-leay32  $LIBS"
+  ac_func_search_save_LIBS=$LIBS
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -9222,7 +9220,14 @@ return CRYPTO_new_ex_data ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+for ac_lib in '' eay32 crypto; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  rm -f conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -9243,42 +9248,47 @@ $as_echo "$ac_try_echo") >&5
 	 test "$cross_compiling" = yes ||
 	 $as_test_x conftest$ac_exeext
        }; then
-  ac_cv_lib_eay32_CRYPTO_new_ex_data=yes
+  ac_cv_search_CRYPTO_new_ex_data=$ac_res
 else
   $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_lib_eay32_CRYPTO_new_ex_data=no
+
 fi
 
 rm -rf conftest.dSYM
 rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
+      conftest$ac_exeext
+  if test "${ac_cv_search_CRYPTO_new_ex_data+set}" = set; then
+  break
 fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_eay32_CRYPTO_new_ex_data" >&5
-$as_echo "$ac_cv_lib_eay32_CRYPTO_new_ex_data" >&6; }
-if test "x$ac_cv_lib_eay32_CRYPTO_new_ex_data" = x""yes; then
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBEAY32 1
-_ACEOF
-
-  LIBS="-leay32 $LIBS"
+done
+if test "${ac_cv_search_CRYPTO_new_ex_data+set}" = set; then
+  :
+else
+  ac_cv_search_CRYPTO_new_ex_data=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_search_CRYPTO_new_ex_data" >&5
+$as_echo "$ac_cv_search_CRYPTO_new_ex_data" >&6; }
+ac_res=$ac_cv_search_CRYPTO_new_ex_data
+if test "$ac_res" != no; then
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
 else
-  { { $as_echo "$as_me:$LINENO: error: library 'eay32' is required for OpenSSL" >&5
-$as_echo "$as_me: error: library 'eay32' is required for OpenSSL" >&2;}
+  { { $as_echo "$as_me:$LINENO: error: library 'eay32' or 'crypto' is required for OpenSSL" >&5
+$as_echo "$as_me: error: library 'eay32' or 'crypto' is required for OpenSSL" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
-
-{ $as_echo "$as_me:$LINENO: checking for SSL_library_init in -lssleay32" >&5
-$as_echo_n "checking for SSL_library_init in -lssleay32... " >&6; }
-if test "${ac_cv_lib_ssleay32_SSL_library_init+set}" = set; then
+     { $as_echo "$as_me:$LINENO: checking for library containing SSL_library_init" >&5
+$as_echo_n "checking for library containing SSL_library_init... " >&6; }
+if test "${ac_cv_search_SSL_library_init+set}" = set; then
   $as_echo_n "(cached) " >&6
 else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lssleay32  $LIBS"
+  ac_func_search_save_LIBS=$LIBS
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -9301,7 +9311,14 @@ return SSL_library_init ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+for ac_lib in '' ssleay32 ssl; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  rm -f conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -9322,31 +9339,38 @@ $as_echo "$ac_try_echo") >&5
 	 test "$cross_compiling" = yes ||
 	 $as_test_x conftest$ac_exeext
        }; then
-  ac_cv_lib_ssleay32_SSL_library_init=yes
+  ac_cv_search_SSL_library_init=$ac_res
 else
   $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_lib_ssleay32_SSL_library_init=no
+
 fi
 
 rm -rf conftest.dSYM
 rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
+      conftest$ac_exeext
+  if test "${ac_cv_search_SSL_library_init+set}" = set; then
+  break
 fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_ssleay32_SSL_library_init" >&5
-$as_echo "$ac_cv_lib_ssleay32_SSL_library_init" >&6; }
-if test "x$ac_cv_lib_ssleay32_SSL_library_init" = x""yes; then
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBSSLEAY32 1
-_ACEOF
-
-  LIBS="-lssleay32 $LIBS"
+done
+if test "${ac_cv_search_SSL_library_init+set}" = set; then
+  :
+else
+  ac_cv_search_SSL_library_init=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_search_SSL_library_init" >&5
+$as_echo "$ac_cv_search_SSL_library_init" >&6; }
+ac_res=$ac_cv_search_SSL_library_init
+if test "$ac_res" != no; then
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
 else
-  { { $as_echo "$as_me:$LINENO: error: library 'ssleay32' is required for OpenSSL" >&5
-$as_echo "$as_me: error: library 'ssleay32' is required for OpenSSL" >&2;}
+  { { $as_echo "$as_me:$LINENO: error: library 'ssleay32' or 'ssl' is required for OpenSSL" >&5
+$as_echo "$as_me: error: library 'ssleay32' or 'ssl' is required for OpenSSL" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
