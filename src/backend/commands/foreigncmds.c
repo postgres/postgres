@@ -275,7 +275,7 @@ AlterForeignDataWrapperOwner_oid(Oid fwdId, Oid newOwnerId)
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("foreign-data wrapper with OID \"%u\" does not exist", fwdId)));
+				 errmsg("foreign-data wrapper with OID %u does not exist", fwdId)));
 
 	AlterForeignDataWrapperOwner_internal(rel, tup, newOwnerId);
 
@@ -373,7 +373,7 @@ AlterForeignServerOwner_oid(Oid srvId, Oid newOwnerId)
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("server with OID \"%u\" does not exist", srvId)));
+				 errmsg("foreign server with OID %u does not exist", srvId)));
 
 	AlterForeignServerOwner_internal(rel, tup, newOwnerId);
 
