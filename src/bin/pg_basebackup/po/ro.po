@@ -1,26 +1,29 @@
-# Spanish message translation file for pg_basebackup
-# Copyright (C) 2011-2012 PostgreSQL Global Development Group
+# LANGUAGE message translation file for pg_basebackup
+# Copyright (C) 2011 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Álvaro Herrera <alvherre@alvh.no-ip.org>, 2011-2012.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_basebackup (PostgreSQL 9.1)\n"
+"Project-Id-Version: PostgreSQL 9.1\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-02-21 16:45+0000\n"
-"PO-Revision-Date: 2012-02-21 22:39-0300\n"
-"Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
-"Language-Team: Spanish <pgsql-es-ayuda@postgresql.org>\n"
-"Language: es\n"
+"POT-Creation-Date: 2011-12-02 04:41+0000\n"
+"PO-Revision-Date: 2011-12-12 11:42-0000\n"
+"Last-Translator: Gheorge Rosca Codreanu <max@oceanline.co.uk>\n"
+"Language-Team: ROMANA <xsoftware.consultancy@gmail.com>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Plural-Forms: nplurals=3; plural=n==1 ? 0 : (n==0 || (n%100 > 0 && n%100 < 20)) ? 1 : 2;\n"
+"X-Poedit-Language: Romanian\n"
+"X-Poedit-Country: ROMANIA\n"
 
-#: pg_basebackup.c:96 pg_basebackup.c:110
+#: pg_basebackup.c:96
+#: pg_basebackup.c:110
 #, c-format
 msgid "%s: out of memory\n"
-msgstr "%s: memoria agotada\n"
+msgstr "%s: memorie insuficientă\n"
 
 #: pg_basebackup.c:121
 #, c-format
@@ -28,19 +31,18 @@ msgid ""
 "%s takes a base backup of a running PostgreSQL server.\n"
 "\n"
 msgstr ""
-"%s obtiene un respaldo base a partir de un servidor PostgreSQL en "
-"ejecución.\n"
+"%s face o copie de rezervă a bazei unui server PostgreSQL care rulează.\n"
 "\n"
 
 #: pg_basebackup.c:123
 #, c-format
 msgid "Usage:\n"
-msgstr "Empleo:\n"
+msgstr "Utilizare:\n"
 
 #: pg_basebackup.c:124
 #, c-format
 msgid "  %s [OPTION]...\n"
-msgstr "  %s [OPCIÓN]...\n"
+msgstr "  %s [OPŢIUNE]...\n"
 
 #: pg_basebackup.c:125
 #, c-format
@@ -49,37 +51,32 @@ msgid ""
 "Options controlling the output:\n"
 msgstr ""
 "\n"
-"Opciones que controlan la salida:\n"
+"Opţiuni care controlează ieşirile:\n"
 
 #: pg_basebackup.c:126
 #, c-format
 msgid "  -D, --pgdata=DIRECTORY   receive base backup into directory\n"
-msgstr "  -D, --pgdata=DIRECTORIO  recibir el respaldo base en directorio\n"
+msgstr "  -D, --pgdata=DIRECTOR   salvează copia de rezervă a bazei in directorul\n"
 
 #: pg_basebackup.c:127
 #, c-format
 msgid "  -F, --format=p|t         output format (plain, tar)\n"
-msgstr "  -F, --format=p|t         formato de salida (plano, tar)\n"
+msgstr "  -F, --format=p|t         formatul fişierului (p - text, t - arhivă de tip tar)\n"
 
 #: pg_basebackup.c:128
 #, c-format
 msgid "  -x, --xlog               include required WAL files in backup\n"
-msgstr ""
-"  -x, --xlog               incluye los archivos WAL necesarios en el "
-"respaldo\n"
+msgstr "  -x, --xlog               include fişierele WAL necesare în copia de rezervă\n"
 
 #: pg_basebackup.c:129
 #, c-format
 msgid "  -z, --gzip               compress tar output\n"
-msgstr "  -z, --gzip               comprimir la salida de tar\n"
+msgstr "  -z, --gzip               comprimă în format tar\n"
 
 #: pg_basebackup.c:130
 #, c-format
-msgid ""
-"  -Z, --compress=0-9       compress tar output with given compression level\n"
-msgstr ""
-"  -Z, --compress=0-9       comprimir salida tar con el nivel de compresión "
-"dado\n"
+msgid "  -Z, --compress=0-9       compress tar output with given compression level\n"
+msgstr "  -Z, --compress=0-9       comprimă în format tar cu specificarea nivelului de comprimare de la 0 la 9\n"
 
 #: pg_basebackup.c:131
 #, c-format
@@ -88,7 +85,7 @@ msgid ""
 "General options:\n"
 msgstr ""
 "\n"
-"Opciones generales:\n"
+"Opţiuni generale:\n"
 
 #: pg_basebackup.c:132
 #, c-format
@@ -97,33 +94,32 @@ msgid ""
 "                           set fast or spread checkpointing\n"
 msgstr ""
 "  -c, --checkpoint=fast|spread\n"
-"                           utilizar checkpoint rápido o extendido\n"
+"                           stabileşte tipul de checkpoint fast(rapid) sau spread(distribuit)\n"
 
 #: pg_basebackup.c:134
 #, c-format
 msgid "  -l, --label=LABEL        set backup label\n"
-msgstr "  -l, --label=ETIQUETA     establecer etiqueta del respaldo\n"
+msgstr "  -l, --label=ETICHETĂ  stabileşte eticheta copiei de rezervă\n"
 
 #: pg_basebackup.c:135
 #, c-format
 msgid "  -P, --progress           show progress information\n"
-msgstr "  -P, --progress           mostrar información de progreso\n"
+msgstr "  -P, --progress           arată informaţii despre progres\n"
 
 #: pg_basebackup.c:136
 #, c-format
 msgid "  -v, --verbose            output verbose messages\n"
-msgstr "  -v, --verbose            desplegar mensajes verbosos\n"
+msgstr "  -v, --verbose            afişează mesaje\n"
 
 #: pg_basebackup.c:137
 #, c-format
 msgid "  --help                   show this help, then exit\n"
-msgstr "  --help                   mostrar esta ayuda, luego salir\n"
+msgstr "  --help                   afişează acest ajutor, apoi iese\n"
 
 #: pg_basebackup.c:138
 #, c-format
 msgid "  --version                output version information, then exit\n"
-msgstr ""
-"  --version                desplegar información de versión, luego salir\n"
+msgstr "  --version                afişează informaţiile despre versiune, apoi iese\n"
 
 #: pg_basebackup.c:139
 #, c-format
@@ -132,37 +128,32 @@ msgid ""
 "Connection options:\n"
 msgstr ""
 "\n"
-"Opciones de conexión:\n"
+"Opţiuni de conectare:\n"
 
 #: pg_basebackup.c:140
 #, c-format
 msgid "  -h, --host=HOSTNAME      database server host or socket directory\n"
-msgstr ""
-"  -h, --host=ANFITRIÓN     dirección del servidor o directorio del socket\n"
+msgstr "  -h, --host=NUMEGAZDĂ    gazda serverului de baze de date sau directorul soclului\n"
 
 #: pg_basebackup.c:141
 #, c-format
 msgid "  -p, --port=PORT          database server port number\n"
-msgstr "  -p, --port=PORT          número de port del servidor\n"
+msgstr "  -p, --port=PORT          numărul portului serverului de baze de date\n"
 
 #: pg_basebackup.c:142
 #, c-format
 msgid "  -U, --username=NAME      connect as specified database user\n"
-msgstr "  -U, --username=NOMBRE    conectarse con el usuario especificado\n"
+msgstr "  -U, --username=NUME      conectare ca utilizatorul de baze de date specificat\n"
 
 #: pg_basebackup.c:143
 #, c-format
 msgid "  -w, --no-password        never prompt for password\n"
-msgstr "  -w, --no-password        no pedir contraseña\n"
+msgstr "  -w, --no-password        nu cere parolă\n"
 
 #: pg_basebackup.c:144
 #, c-format
-msgid ""
-"  -W, --password           force password prompt (should happen "
-"automatically)\n"
-msgstr ""
-"  -W, --password           forzar un prompt para la contraseña\n"
-"                           (debería ser automático)\n"
+msgid "  -W, --password           force password prompt (should happen automatically)\n"
+msgstr "  -W, --password           forţează solicitarea parolei (în mod normal, se face automat)\n"
 
 #: pg_basebackup.c:145
 #, c-format
@@ -171,216 +162,225 @@ msgid ""
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr ""
 "\n"
-"Reporte errores a <pgsql-bugs@postgresql.org>.\n"
+"Raportaţi erorile la <pgsql-bugs@postgresql.org>.\n"
 
-#: pg_basebackup.c:167 pg_basebackup.c:604
+#: pg_basebackup.c:167
+#: pg_basebackup.c:604
 #, c-format
 msgid "%s: could not create directory \"%s\": %s\n"
-msgstr "%s: no se pudo crear el directorio «%s»: %s\n"
+msgstr "%s: imposibil de creat directorul \"%s\": %s\n"
 
 #: pg_basebackup.c:184
 #, c-format
 msgid "%s: directory \"%s\" exists but is not empty\n"
-msgstr "%s: el directorio «%s» existe pero no está vacío\n"
+msgstr "%s: directorul \"%s\" există dar nu este gol\n"
 
 #: pg_basebackup.c:192
 #, c-format
 msgid "%s: could not access directory \"%s\": %s\n"
-msgstr "%s: no se pudo acceder al directorio «%s»: %s\n"
+msgstr "%s: imposibil de accesat directorul \"%s\": %s\n"
 
 #: pg_basebackup.c:239
 #, c-format
 msgid "%s/%s kB (100%%), %d/%d tablespace %35s"
 msgid_plural "%s/%s kB (100%%), %d/%d tablespaces %35s"
-msgstr[0] "%s/%s kB (100%%), %d/%d tablespace %35s"
-msgstr[1] "%s/%s kB (100%%), %d/%d tablespaces %35s"
+msgstr[0] "%s/%s kB (100%%), %d/%d spaţiutabelă %35s"
+msgstr[1] "%s/%s kB (100%%), %d/%d spaţiutabele %35s"
+msgstr[2] "%s/%s kB (100%%), %d/%d spaţiutabele %35s"
 
 #: pg_basebackup.c:245
 #, c-format
 msgid "%s/%s kB (%d%%), %d/%d tablespace (%-30.30s)"
 msgid_plural "%s/%s kB (%d%%), %d/%d tablespaces (%-30.30s)"
-msgstr[0] "%s/%s kB (%d%%), %d/%d tablespace (%-30.30s)"
-msgstr[1] "%s/%s kB (%d%%), %d/%d tablespaces (%-30.30s)"
+msgstr[0] "%s/%s kB (%d%%), %d/%d spaţiutabelă (tablespace)  (%-30.30s)"
+msgstr[1] "%s/%s kB (%d%%), %d/%d spaţiutabele (tablespaces) (%-30.30s)"
+msgstr[2] "%s/%s kB (%d%%), %d/%d spaţiutabele (tablespaces) (%-30.30s)"
 
 #: pg_basebackup.c:252
 #, c-format
 msgid "%s/%s kB (%d%%), %d/%d tablespace"
 msgid_plural "%s/%s kB (%d%%), %d/%d tablespaces"
-msgstr[0] "%s/%s kB (%d%%), %d/%d tablespace"
-msgstr[1] "%s/%s kB (%d%%), %d/%d tablespaces"
+msgstr[0] "%s/%s kB (%d%%), %d/%d spaţiutabelă (tablespace)"
+msgstr[1] "%s/%s kB (%d%%), %d/%d spaţiutabele (tablespaces)"
+msgstr[2] "%s/%s kB (%d%%), %d/%d spaţiutabele (tablespaces)"
 
-#: pg_basebackup.c:295 pg_basebackup.c:313 pg_basebackup.c:337
+#: pg_basebackup.c:295
+#: pg_basebackup.c:313
+#: pg_basebackup.c:337
 #, c-format
 msgid "%s: could not set compression level %i: %s\n"
-msgstr "%s: no se pudo definir el nivel de compresión %i: %s\n"
+msgstr "%s: nu pot stabili nivelul de compresie %i: %s\n"
 
 #: pg_basebackup.c:356
 #, c-format
 msgid "%s: could not create compressed file \"%s\": %s\n"
-msgstr "%s: no se pudo crear el archivo comprimido «%s»: %s\n"
+msgstr "%s: nu pot crea fişierul comprimat \"%s\": %s\n"
 
-#: pg_basebackup.c:367 pg_basebackup.c:643
+#: pg_basebackup.c:367
+#: pg_basebackup.c:643
 #, c-format
 msgid "%s: could not create file \"%s\": %s\n"
-msgstr "%s: no se pudo crear el archivo «%s»: %s\n"
+msgstr "%s: nu pot crea fişierul \"%s\": %s\n"
 
-#: pg_basebackup.c:379 pg_basebackup.c:516
+#: pg_basebackup.c:379
+#: pg_basebackup.c:516
 #, c-format
 msgid "%s: could not get COPY data stream: %s"
-msgstr "%s: no se pudo obtener un flujo de datos COPY: %s"
+msgstr "%s: nu pot obţine COPY flux date: %s"
 
-#: pg_basebackup.c:411 pg_basebackup.c:457
+#: pg_basebackup.c:411
+#: pg_basebackup.c:457
 #, c-format
 msgid "%s: could not write to compressed file \"%s\": %s\n"
-msgstr "%s: no se pudo escribir al archivo comprimido «%s»: %s\n"
+msgstr "%s: nu pot scrie în fişierul comprimat \"%s\": %s\n"
 
-#: pg_basebackup.c:420 pg_basebackup.c:466 pg_basebackup.c:683
+#: pg_basebackup.c:420
+#: pg_basebackup.c:466
+#: pg_basebackup.c:683
 #, c-format
 msgid "%s: could not write to file \"%s\": %s\n"
-msgstr "%s: no se pudo escribir al archivo «%s»: %s\n"
+msgstr "%s: nu pot scrie în fişierul \"%s\": %s\n"
 
-#: pg_basebackup.c:447 pg_basebackup.c:545
+#: pg_basebackup.c:447
+#: pg_basebackup.c:545
 #, c-format
 msgid "%s: could not read COPY data: %s"
-msgstr "%s: no fue posible leer datos COPY: %s"
+msgstr "%s: nu pot citi COPY date: %s"
 
 #: pg_basebackup.c:559
 #, c-format
 msgid "%s: invalid tar block header size: %i\n"
-msgstr "%s: tamaño de bloque de cabecera de tar no válido: %i\n"
+msgstr "%s: invalid tar block header size: %i\n"
 
 #: pg_basebackup.c:567
 #, c-format
 msgid "%s: could not parse file size\n"
-msgstr "%s: no se pudo interpretar el tamaño del archivo\n"
+msgstr "%s: nu pot analiza dimensiunea fişierului\n"
 
 #: pg_basebackup.c:575
 #, c-format
 msgid "%s: could not parse file mode\n"
-msgstr "%s: nose pudo interpretar el modo del archivo\n"
+msgstr "%s: nu pot analiza modul fişierului\n"
 
 #: pg_basebackup.c:610
 #, c-format
 msgid "%s: could not set permissions on directory \"%s\": %s\n"
-msgstr "%s: no se pudo definir los permisos en el directorio «%s»: %s\n"
+msgstr "%s: nu pot stabili drepturile de access pentru directorul \"%s\": %s\n"
 
 #: pg_basebackup.c:623
 #, c-format
 msgid "%s: could not create symbolic link from \"%s\" to \"%s\": %s\n"
-msgstr "%s: no se pudo crear un enlace simbólico desde «%s» a «%s»: %s\n"
+msgstr "%s: nu pot crea legătura simbolică de la \"%s\" la \"%s\": %s\n"
 
 #: pg_basebackup.c:630
 #, c-format
 msgid "%s: unrecognized link indicator \"%c\"\n"
-msgstr "%s: indicador de enlace «%c» no reconocido\n"
+msgstr "%s: indicator al legaturii necunoscut \"%c\"\n"
 
 #: pg_basebackup.c:650
 #, c-format
 msgid "%s: could not set permissions on file \"%s\": %s\n"
-msgstr "%s: no se pudo definir los permisos al archivo «%s»: %s\n"
+msgstr "%s: nu pot stabili drepturile de access pentru fişierul \"%s\": %s\n"
 
 #: pg_basebackup.c:708
 #, c-format
 msgid "%s: COPY stream ended before last file was finished\n"
-msgstr ""
-"%s: el flujo COPY terminó antes que el último archivo estuviera completo\n"
+msgstr "%s: fluxul COPY s-a întrerupt înainte de terminarea ultimul fişier\n"
 
 #: pg_basebackup.c:769
 msgid "Password: "
-msgstr "Contraseña: "
+msgstr "Parolă: "
 
 #: pg_basebackup.c:789
 #, c-format
 msgid "%s: could not connect to server: %s"
-msgstr "%s: no se pudo conectar al servidor: %s"
+msgstr "%s: nu pot realiza conexiunea la server: %s"
 
 #: pg_basebackup.c:829
 #, c-format
 msgid "%s: could not send base backup command: %s"
-msgstr "%s: no se pudo enviar la orden de respaldo base: %s"
+msgstr "%s: nu pot trimite comanda de realizarea copiei de rezervă: %s"
 
 #: pg_basebackup.c:840
 #, c-format
 msgid "%s: could not initiate base backup: %s"
-msgstr "%s: no se pudo iniciar el respaldo base: %s"
+msgstr "%s: nu pot iniţia copia de rezervă a bazei: %s"
 
 #: pg_basebackup.c:846
 #, c-format
 msgid "%s: no start point returned from server\n"
-msgstr "%s: el servidor no retornó un punto de inicio\n"
+msgstr "%s: serverul nu a returnat nici un punct de start\n"
 
 #: pg_basebackup.c:862
 #, c-format
 msgid "%s: could not get backup header: %s"
-msgstr "%s: no se pudo obtener la cabecera de respaldo: %s"
+msgstr "%s: nu pot obţine începutul de fişier al copiei de rezervă (backup header): %s"
 
 #: pg_basebackup.c:868
 #, c-format
 msgid "%s: no data returned from server\n"
-msgstr "%s: el servidor no retornó datos\n"
+msgstr "%s: serverul nu a returnat date\n"
 
 #: pg_basebackup.c:896
 #, c-format
 msgid "%s: can only write single tablespace to stdout, database has %i\n"
-msgstr ""
-"%s: sólo se puede escribir un tablespace a stdout, la base de datos tiene "
-"%i\n"
+msgstr "%s: pot scrie doar un singur spaţiu tabelă (tablespace) la ieşirea standard (stdout), baza de date are %i\n"
 
 #: pg_basebackup.c:925
 #, c-format
 msgid "%s: could not get WAL end position from server\n"
-msgstr "%s: no se pudo obtener la posición de fin de WAL del servidor\n"
+msgstr "%s: nu pot obţine de la server poziţia de sfârşit pentru WAL\n"
 
 #: pg_basebackup.c:931
 #, c-format
 msgid "%s: no WAL end position returned from server\n"
-msgstr "%s: el servidor no retornó un punto de fin de WAL\n"
+msgstr "%s: serverul nu a returnat poziţia de sfârşit pentru WAL\n"
 
 #: pg_basebackup.c:943
 #, c-format
 msgid "%s: final receive failed: %s"
-msgstr "%s: la recepción final falló: %s"
+msgstr "%s: recepţia finală a eşuat: %s"
 
 #: pg_basebackup.c:1017
 #, c-format
 msgid "%s: invalid output format \"%s\", must be \"plain\" or \"tar\"\n"
-msgstr "%s: formato de salida «%s» no válido, debe ser «plain» o «tar»\n"
+msgstr "%s: format de ieşire invalid \"%s\", trebuie să fiel \"plain\" sau \"tar\"\n"
 
 #: pg_basebackup.c:1039
 #, c-format
 msgid "%s: invalid compression level \"%s\"\n"
-msgstr "%s: valor de compresión «%s» no válido\n"
+msgstr "%s: nivel de compresie invalid \"%s\"\n"
 
 #: pg_basebackup.c:1051
 #, c-format
-msgid ""
-"%s: invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\"\n"
-msgstr ""
-"%s: argumento de checkpoint «%s» no válido, debe ser «fast» o «spread»\n"
+msgid "%s: invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\"\n"
+msgstr "%s: argument checkpoint invalid \"%s\", trebuie să fie \"fast\" sau \"spread\"\n"
 
-#: pg_basebackup.c:1082 pg_basebackup.c:1096 pg_basebackup.c:1107
+#: pg_basebackup.c:1082
+#: pg_basebackup.c:1096
+#: pg_basebackup.c:1107
 #: pg_basebackup.c:1120
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Use «%s --help» para obtener más información.\n"
+msgstr "Încercaţi \"%s --help\" pentru mai multe informaţii.\n"
 
 #: pg_basebackup.c:1094
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr ""
-"%s: demasiados argumentos en la línea de órdenes (el primero es «%s»)\n"
+msgstr "%s: prea multe argumente în linia de comandă (primul este \"%s\")\n"
 
 #: pg_basebackup.c:1106
 #, c-format
 msgid "%s: no target directory specified\n"
-msgstr "%s: no se especificó un directorio de salida\n"
+msgstr "%s: directorul destinaţie nu este specificat\n"
 
 #: pg_basebackup.c:1118
 #, c-format
 msgid "%s: only tar mode backups can be compressed\n"
-msgstr "%s: sólo los respaldos de modo tar pueden ser comprimidos\n"
+msgstr "%s: numai copiile de rezervă de tip tar pot fi comprimate\n"
 
 #: pg_basebackup.c:1129
 #, c-format
 msgid "%s: this build does not support compression\n"
-msgstr "%s: esta instalación no soporta compresión\n"
+msgstr "%s: această versiune de program nu suportă compresie\n"
+

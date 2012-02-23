@@ -1,21 +1,21 @@
 # Spanish translation of pg_ctl.
 #
-# Copyright (C) 2004-2011 PostgreSQL Global Development Group
+# Copyright (C) 2004-2012 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 #
-# Alvaro Herrera <alvherre@alvh.no-ip.org>, 2004-2011
+# Alvaro Herrera <alvherre@alvh.no-ip.org>, 2004-2012
 #
-# pgtranslation Id: pg_ctl.po,v 1.10 2011/09/03 02:09:22 alvherre Exp $
+# pgtranslation Id: pg_ctl.po,v 1.11 2012/02/22 01:59:11 alvherre Exp $
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_ctl (PostgreSQL 9.1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-09-02 10:54+0000\n"
-"PO-Revision-Date: 2011-09-02 23:08-0300\n"
+"POT-Creation-Date: 2012-02-21 16:45+0000\n"
+"PO-Revision-Date: 2012-02-21 22:53-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
-"Language: \n"
+"Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -61,7 +61,8 @@ msgid ""
 "%s: this data directory appears to be running a pre-existing postmaster\n"
 msgstr ""
 "\n"
-"%s: este directorio de datos parece estar ejecutando un postmaster pre-existente\n"
+"%s: este directorio de datos parece estar ejecutando un postmaster pre-"
+"existente\n"
 
 #: pg_ctl.c:638
 #, c-format
@@ -373,7 +374,8 @@ msgstr "%s: no se pudo iniciar el servicio «%s»: código de error %d\n"
 #: pg_ctl.c:1573
 #, c-format
 msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
-msgstr "%s: ATENCIÓN: no se pueden crear tokens restrigidos en esta plataforma\n"
+msgstr ""
+"%s: ATENCIÓN: no se pueden crear tokens restrigidos en esta plataforma\n"
 
 #: pg_ctl.c:1582
 #, c-format
@@ -393,7 +395,9 @@ msgstr "%s: no se pudo crear el token restringido: %lu\n"
 #: pg_ctl.c:1652
 #, c-format
 msgid "%s: WARNING: could not locate all job object functions in system API\n"
-msgstr "%s: ATENCIÓN: no fue posible encontrar todas las funciones de gestión de tareas en la API del sistema\n"
+msgstr ""
+"%s: ATENCIÓN: no fue posible encontrar todas las funciones de gestión de "
+"tareas en la API del sistema\n"
 
 #: pg_ctl.c:1738
 #, c-format
@@ -406,7 +410,8 @@ msgid ""
 "%s is a utility to initialize, start, stop, or control a PostgreSQL server.\n"
 "\n"
 msgstr ""
-"%s es un programa para inicializar, iniciar, detener o controlar un servidor PostgreSQL.\n"
+"%s es un programa para inicializar, iniciar, detener o controlar un servidor "
+"PostgreSQL.\n"
 
 #: pg_ctl.c:1747
 #, c-format
@@ -690,8 +695,7 @@ msgstr ""
 #: pg_ctl.c:1804
 #, c-format
 msgid "  demand     start service on demand\n"
-msgstr ""
-"  demand     iniciar el servicio en demanda\n"
+msgstr "  demand     iniciar el servicio en demanda\n"
 
 #: pg_ctl.c:1807
 #, c-format

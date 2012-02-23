@@ -1,22 +1,22 @@
 # Spanish message translation file for plpython
 #
-# Copyright (C) 2009-2011 PostgreSQL Global Development Group
+# Copyright (C) 2009-2012 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 #
 # Emanuel Calvo Franco <postgres.arg@gmail.com>, 2009.
-# Alvaro Herrera <alvherre@alvh.no-ip.org>, 2009-2011
+# Alvaro Herrera <alvherre@alvh.no-ip.org>, 2009-2012
 #
-# pgtranslation Id: plpython.po,v 1.8 2011/09/07 22:16:21 alvherre Exp $
+# pgtranslation Id: plpython.po,v 1.9 2012/02/22 01:59:11 alvherre Exp $
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL 9.1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-09-07 20:53+0000\n"
-"PO-Revision-Date: 2011-09-07 19:16-0300\n"
+"POT-Creation-Date: 2012-02-21 16:39+0000\n"
+"PO-Revision-Date: 2012-02-21 22:54-0300\n"
 "Last-Translator: Alvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
-"Language: \n"
+"Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -115,8 +115,8 @@ msgstr "error extrayendo el próximo elemento del iterador"
 msgid "PL/Python function with return type \"void\" did not return None"
 msgstr "función PL/Python con tipo de retorno «void» no retorna None"
 
-#: plpython.c:1287
 # FIXME not very happy with this
+#: plpython.c:1287
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "abortando una subtransacción que no se ha cerrado"
 
@@ -334,12 +334,12 @@ msgstr "no se pudo inicializar las globales"
 msgid "could not parse error message in plpy.elog"
 msgstr "no se pudo analizar el mensaje de error de plpy.elog"
 
-#: plpython.c:4267 plpython.c:4499 plpython.c:4500
+#: plpython.c:4267 plpython.c:4501 plpython.c:4502
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: plpython.c:4854
+#: plpython.c:4856
 msgid "could not convert Python Unicode object to PostgreSQL server encoding"
 msgstr ""
 "no se pudo convertir el objeto Unicode de Python a la codificación de "

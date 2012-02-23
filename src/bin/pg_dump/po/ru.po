@@ -1,0 +1,2558 @@
+# ru.po
+# PG_DUMP Translated Messages into the Russian Language (UTF-8)
+#
+# Copyright (c) 2001-2005 Serguei A. Mokhov, mokhov@cs.concordia.ca
+# Copyright (c) 2012 Alexander Lakhin, exclusion@gmail.com
+# Distributed under the same licensing terms as PostgreSQL itself.
+#
+# pgtranslation Id: pg_dump.po,v 1.4 2012/02/22 13:20:10 alvherre Exp $
+#
+# ChangeLog:
+#
+#   - February 21, 2012: Minor fixes. Alexander Lakhin <exclusion@gmail.com>.
+#     - With corrections from Sergey Burladyan <eshkinkot@gmail.com>
+#   - February 18, 2012: Complete translation for 9.1. Alexander Lakhin <exclusion@gmail.com>.
+#   - January 17, 2005: Complete translation for 8.0, Serguei A. Mokhov <mokhov@cs.concordia.ca>.
+#   - December, 2004: New translation by Oleg Bartunov <oleg@sai.msu.su>.
+#   - April 6 - December 10, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>.
+#   - July 24 - October 5, 2003: Updates for 7.4.x; <mokhov@cs.concordia.ca>.
+#   - October 12, 2002: Post-7.3 beta 2, Fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>.
+#   - September 14, 2002: Post-7.3 beta 1, Take II, Serguei A. Mokhov <mokhov@cs.concordia.ca>.
+#   - September 7, 2002: Post-7.3 beta 1 fuzzy message fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>.
+#   - September 2001 - August 2002: Initial translation and maintenance, Serguei A. Mokhov <mokhov@cs.concordia.ca>
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 9.1\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2012-02-20 06:46+0000\n"
+"PO-Revision-Date: 2012-02-21 15:30+0400\n"
+"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
+"Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Russian\n"
+"X-Poedit-Country: RUSSIAN FEDERATION\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Generator: Lokalize 1.4\n"
+
+#: pg_dump.c:489 pg_dump.c:503 pg_restore.c:274 pg_restore.c:290
+#: pg_restore.c:302 pg_dumpall.c:296 pg_dumpall.c:306 pg_dumpall.c:316
+#: pg_dumpall.c:325 pg_dumpall.c:334 pg_dumpall.c:392
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Для дополнительной информации попробуйте \"%s --help\".\n"
+
+#: pg_dump.c:501 pg_restore.c:288 pg_dumpall.c:304
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: слишком много аргументов командной строки (первый \"%s\")\n"
+
+#: pg_dump.c:514
+msgid "options -s/--schema-only and -a/--data-only cannot be used together\n"
+msgstr "параметры -s/--schema-only и -a/--data-only исключают друг друга\n"
+
+# TO REVEIW
+#: pg_dump.c:520
+msgid "options -c/--clean and -a/--data-only cannot be used together\n"
+msgstr "параметры -c/--clean и -a/--data-only исключают друг друга\n"
+
+#: pg_dump.c:526
+msgid ""
+"options --inserts/--column-inserts and -o/--oids cannot be used together\n"
+msgstr ""
+"параметры --inserts/--column-inserts и -o/--oids исключают друг друга\n"
+
+#: pg_dump.c:527
+msgid "(The INSERT command cannot set OIDs.)\n"
+msgstr "(В INSERT нельзя определять OID.)\n"
+
+#: pg_dump.c:552
+#, c-format
+msgid "could not open output file \"%s\" for writing\n"
+msgstr "не удалось открыть выходной файл \"%s\"  для записи\n"
+
+#: pg_dump.c:562 pg_backup_db.c:38
+#, c-format
+msgid "could not parse version string \"%s\"\n"
+msgstr "не удалось разобрать строку версии \"%s\"\n"
+
+#: pg_dump.c:585
+#, c-format
+msgid "invalid client encoding \"%s\" specified\n"
+msgstr "указана неверная клиентская кодировка \"%s\"\n"
+
+#: pg_dump.c:685
+#, c-format
+msgid "last built-in OID is %u\n"
+msgstr "последний системный OID: %u\n"
+
+#: pg_dump.c:695
+msgid "No matching schemas were found\n"
+msgstr "Соответствующие схемы не найдены\n"
+
+#: pg_dump.c:710
+msgid "No matching tables were found\n"
+msgstr "Соответствующие таблицы не найдены\n"
+
+#: pg_dump.c:822
+#, c-format
+msgid ""
+"%s dumps a database as a text file or to other formats.\n"
+"\n"
+msgstr ""
+"%s сохраняет резервную копию БД в текстовом файле или другом виде.\n"
+"\n"
+
+#: pg_dump.c:823 pg_restore.c:397 pg_dumpall.c:529
+#, c-format
+msgid "Usage:\n"
+msgstr "Использование:\n"
+
+#: pg_dump.c:824
+#, c-format
+msgid "  %s [OPTION]... [DBNAME]\n"
+msgstr "  %s [ПАРАМЕТР]... [БД]\n"
+
+#: pg_dump.c:826 pg_restore.c:400 pg_dumpall.c:532
+#, c-format
+msgid ""
+"\n"
+"General options:\n"
+msgstr ""
+"\n"
+"Общие параметры:\n"
+
+#: pg_dump.c:827
+#, c-format
+msgid "  -f, --file=FILENAME         output file or directory name\n"
+msgstr "  -f, --file=ИМЯ              имя выходного файла или каталога\n"
+
+#: pg_dump.c:828
+#, c-format
+msgid ""
+"  -F, --format=c|d|t|p        output file format (custom, directory, tar, "
+"plain text)\n"
+msgstr ""
+"  -F, --format=c|d|t|p        формат выводимых данных\n"
+"                              (пользовательский | каталог | tar | "
+"текстовый)\n"
+
+#: pg_dump.c:829
+#, c-format
+msgid "  -v, --verbose               verbose mode\n"
+msgstr "  -v, --verbose               режим подробных сообщений\n"
+
+#: pg_dump.c:830
+#, c-format
+msgid ""
+"  -Z, --compress=0-9          compression level for compressed formats\n"
+msgstr "  -Z, --compress=0-9          уровень сжатия при архивации\n"
+
+#: pg_dump.c:831 pg_dumpall.c:534
+#, c-format
+msgid ""
+"  --lock-wait-timeout=TIMEOUT fail after waiting TIMEOUT for a table lock\n"
+msgstr ""
+"  --lock-wait-timeout=ТАЙМАУТ прервать операцию при таймауте блокировки "
+"таблицы\n"
+
+#: pg_dump.c:832 pg_dumpall.c:535
+#, c-format
+msgid "  --help                      show this help, then exit\n"
+msgstr "  --help                      показать эту справку и выйти\n"
+
+#: pg_dump.c:833 pg_dumpall.c:536
+#, c-format
+msgid "  --version                   output version information, then exit\n"
+msgstr "  --version                   показать версию и выйти\n"
+
+#: pg_dump.c:835 pg_dumpall.c:537
+#, c-format
+msgid ""
+"\n"
+"Options controlling the output content:\n"
+msgstr ""
+"\n"
+"Параметры, управляющие выводом:\n"
+
+#: pg_dump.c:836 pg_dumpall.c:538
+#, c-format
+msgid "  -a, --data-only             dump only the data, not the schema\n"
+msgstr "  -a, --data-only             выгрузить только данные, без схемы\n"
+
+#: pg_dump.c:837
+#, c-format
+msgid "  -b, --blobs                 include large objects in dump\n"
+msgstr "  -b, --blobs                 выгрузить также большие объекты\n"
+
+#: pg_dump.c:838
+#, c-format
+msgid ""
+"  -c, --clean                 clean (drop) database objects before "
+"recreating\n"
+msgstr ""
+"  -c, --clean                 очистить (удалить) объекты БД при "
+"восстановлении\n"
+
+#: pg_dump.c:839
+#, c-format
+msgid ""
+"  -C, --create                include commands to create database in dump\n"
+msgstr ""
+"  -C, --create                добавить в копию команды создания базы данных\n"
+
+#: pg_dump.c:840
+#, c-format
+msgid "  -E, --encoding=ENCODING     dump the data in encoding ENCODING\n"
+msgstr "  -E, --encoding=КОДИРОВКА    выгружать данные в заданной кодировке\n"
+
+#: pg_dump.c:841
+#, c-format
+msgid "  -n, --schema=SCHEMA         dump the named schema(s) only\n"
+msgstr "  -n, --schema=СХЕМА          выгрузить только указанную схему(ы)\n"
+
+#: pg_dump.c:842
+#, c-format
+msgid "  -N, --exclude-schema=SCHEMA do NOT dump the named schema(s)\n"
+msgstr "  -N, --exclude-schema=СХЕМА  НЕ выгружать указанную схему(ы)\n"
+
+#: pg_dump.c:843 pg_dumpall.c:541
+#, c-format
+msgid "  -o, --oids                  include OIDs in dump\n"
+msgstr "  -o, --oids                  выгружать данные с OID\n"
+
+#: pg_dump.c:844
+#, c-format
+msgid ""
+"  -O, --no-owner              skip restoration of object ownership in\n"
+"                              plain-text format\n"
+msgstr ""
+"  -O, --no-owner              не восстанавливать владение объектами\n"
+"                              при использовании текстового формата\n"
+
+#: pg_dump.c:846 pg_dumpall.c:544
+#, c-format
+msgid "  -s, --schema-only           dump only the schema, no data\n"
+msgstr "  -s, --schema-only           выгрузить только схему, без данных\n"
+
+#: pg_dump.c:847
+#, c-format
+msgid ""
+"  -S, --superuser=NAME        superuser user name to use in plain-text "
+"format\n"
+msgstr ""
+"  -S, --superuser=ИМЯ         имя пользователя, который будет задействован\n"
+"                              при восстановлении из текстового формата\n"
+
+#: pg_dump.c:848
+#, c-format
+msgid "  -t, --table=TABLE           dump the named table(s) only\n"
+msgstr "  -t, --table=ТАБЛИЦА         выгрузить только указанную таблицу(ы)\n"
+
+#: pg_dump.c:849
+#, c-format
+msgid "  -T, --exclude-table=TABLE   do NOT dump the named table(s)\n"
+msgstr "  -T, --exclude-table=ТАБЛИЦА НЕ выгружать указанную таблицу(ы)\n"
+
+#: pg_dump.c:850 pg_dumpall.c:547
+#, c-format
+msgid "  -x, --no-privileges         do not dump privileges (grant/revoke)\n"
+msgstr "  -x, --no-privileges         не выгружать права (назначение/отзыв)\n"
+
+#: pg_dump.c:851 pg_dumpall.c:548
+#, c-format
+msgid "  --binary-upgrade            for use by upgrade utilities only\n"
+msgstr "  --binary-upgrade            только для утилит обновления БД\n"
+
+#: pg_dump.c:852 pg_dumpall.c:549
+#, c-format
+msgid ""
+"  --column-inserts            dump data as INSERT commands with column "
+"names\n"
+msgstr ""
+"  --column-inserts            выгружать данные в виде INSERT с именами "
+"колонок\n"
+
+#: pg_dump.c:853 pg_dumpall.c:550
+#, c-format
+msgid ""
+"  --disable-dollar-quoting    disable dollar quoting, use SQL standard "
+"quoting\n"
+msgstr ""
+"  --disable-dollar-quoting    отключить спецстроки с $, выводить строки\n"
+"                              по стандарту SQL\n"
+
+#: pg_dump.c:854 pg_dumpall.c:551
+#, c-format
+msgid ""
+"  --disable-triggers          disable triggers during data-only restore\n"
+msgstr ""
+"  --disable-triggers          отключить триггеры при восстановлении одних "
+"данных\n"
+
+#: pg_dump.c:855 pg_dumpall.c:552
+#, c-format
+msgid ""
+"  --inserts                   dump data as INSERT commands, rather than "
+"COPY\n"
+msgstr ""
+"  --inserts                   выгрузить данные в виде команд INSERT, вместо "
+"COPY\n"
+
+#: pg_dump.c:856 pg_dumpall.c:553
+#, c-format
+msgid "  --no-security-labels        do not dump security label assignments\n"
+msgstr ""
+"  --no-security-labels        не выгружать назначения меток безопасности\n"
+
+#: pg_dump.c:857 pg_dumpall.c:554
+#, c-format
+msgid "  --no-tablespaces            do not dump tablespace assignments\n"
+msgstr ""
+"  --no-tablespaces            не выгружать назначения табличных пространств\n"
+
+#: pg_dump.c:858 pg_dumpall.c:555
+#, c-format
+msgid "  --no-unlogged-table-data    do not dump unlogged table data\n"
+msgstr ""
+"  --no-unlogged-table-data    не выгружать данные нежурналируемых таблиц\n"
+
+#: pg_dump.c:859 pg_dumpall.c:556
+#, c-format
+msgid ""
+"  --quote-all-identifiers     quote all identifiers, even if not key words\n"
+msgstr ""
+"  --quote-all-identifiers     заключать в кавычки все идентификаторы,\n"
+"                              а не только ключевые слова\n"
+
+#: pg_dump.c:860
+#, c-format
+msgid ""
+"  --serializable-deferrable   wait until the dump can run without anomalies\n"
+msgstr ""
+"  --serializable-deferrable   дождаться момента для выгрузки данных без "
+"аномалий\n"
+
+#: pg_dump.c:861 pg_dumpall.c:557
+#, c-format
+msgid ""
+"  --use-set-session-authorization\n"
+"                              use SET SESSION AUTHORIZATION commands instead "
+"of\n"
+"                              ALTER OWNER commands to set ownership\n"
+msgstr ""
+"  --use-set-session-authorization\n"
+"                              устанавливать владельца, используя команды\n"
+"                              SET SESSION AUTHORIZATION вместо ALTER OWNER\n"
+
+#: pg_dump.c:865 pg_restore.c:439 pg_dumpall.c:561
+#, c-format
+msgid ""
+"\n"
+"Connection options:\n"
+msgstr ""
+"\n"
+"Параметры подключения:\n"
+
+#: pg_dump.c:866 pg_restore.c:440 pg_dumpall.c:562
+#, c-format
+msgid "  -h, --host=HOSTNAME      database server host or socket directory\n"
+msgstr ""
+"  -h, --host=ИМЯ           имя сервера баз данных или каталог сокетов\n"
+
+#: pg_dump.c:867 pg_restore.c:441 pg_dumpall.c:564
+#, c-format
+msgid "  -p, --port=PORT          database server port number\n"
+msgstr "  -p, --port=ПОРТ          номер порта сервера БД\n"
+
+#: pg_dump.c:868 pg_restore.c:442 pg_dumpall.c:565
+#, c-format
+msgid "  -U, --username=NAME      connect as specified database user\n"
+msgstr "  -U, --username=ИМЯ       имя пользователя баз данных\n"
+
+#: pg_dump.c:869 pg_restore.c:443 pg_dumpall.c:566
+#, c-format
+msgid "  -w, --no-password        never prompt for password\n"
+msgstr "  -w, --no-password        не запрашивать пароль\n"
+
+#: pg_dump.c:870 pg_restore.c:444 pg_dumpall.c:567
+#, c-format
+msgid ""
+"  -W, --password           force password prompt (should happen "
+"automatically)\n"
+msgstr ""
+"  -W, --password           запрашивать пароль всегда (обычно не требуется)\n"
+
+#: pg_dump.c:871 pg_dumpall.c:568
+#, c-format
+msgid "  --role=ROLENAME          do SET ROLE before dump\n"
+msgstr "  --role=ИМЯ_РОЛИ          выполнить SET ROLE перед выгрузкой\n"
+
+#: pg_dump.c:873
+#, c-format
+msgid ""
+"\n"
+"If no database name is supplied, then the PGDATABASE environment\n"
+"variable value is used.\n"
+"\n"
+msgstr ""
+"\n"
+"Если имя базы данных не указано, используется переменная окружения "
+"PGDATABASE.\n"
+"\n"
+
+#: pg_dump.c:875 pg_restore.c:448 pg_dumpall.c:572
+#, c-format
+msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr "Об ошибках сообщайте по адресу <pgsql-bugs@postgresql.org>.\n"
+
+#: pg_dump.c:883 pg_backup_archiver.c:1458
+msgid "*** aborted because of error\n"
+msgstr "*** аварийное завершение из-за ошибки\n"
+
+#: pg_dump.c:925
+#, c-format
+msgid "invalid output format \"%s\" specified\n"
+msgstr "указан неверный формат вывода: \"%s\"\n"
+
+#: pg_dump.c:948
+msgid "server version must be at least 7.3 to use schema selection switches\n"
+msgstr ""
+"для использования параметров выбора схемы нужен сервер версии 7.3 или новее\n"
+
+#: pg_dump.c:1220
+#, c-format
+msgid "dumping contents of table %s\n"
+msgstr "выгрузка содержимого таблицы %s\n"
+
+#: pg_dump.c:1340
+#, c-format
+msgid "Dumping the contents of table \"%s\" failed: PQgetCopyData() failed.\n"
+msgstr "Ошибка выгрузки таблицы \"%s\": сбой в PQendcopy().\n"
+
+#: pg_dump.c:1341 pg_dump.c:14252
+#, c-format
+msgid "Error message from server: %s"
+msgstr "Сообщение об ошибке с сервера: %s"
+
+#: pg_dump.c:1342 pg_dump.c:14253
+#, c-format
+msgid "The command was: %s\n"
+msgstr "Выполнялась команда: %s\n"
+
+#: pg_dump.c:1773
+msgid "saving database definition\n"
+msgstr "сохранение определения базы данных\n"
+
+#: pg_dump.c:1855
+#, c-format
+msgid "missing pg_database entry for database \"%s\"\n"
+msgstr "для базы данных \"%s\" отсутствует запись в pg_database\n"
+
+#: pg_dump.c:1862
+#, c-format
+msgid ""
+"query returned more than one (%d) pg_database entry for database \"%s\"\n"
+msgstr "в pg_database нашлось несколько записей (%d) для базы данных \"%s\"\n"
+
+#: pg_dump.c:1966
+msgid "dumpDatabase(): could not find pg_largeobject.relfrozenxid\n"
+msgstr "dumpDatabase(): не удалось найти pg_largeobject.relfrozenxid\n"
+
+#: pg_dump.c:2005
+msgid "dumpDatabase(): could not find pg_largeobject_metadata.relfrozenxid\n"
+msgstr ""
+"dumpDatabase(): не удалось найти pg_largeobject_metadata.relfrozenxid\n"
+
+#: pg_dump.c:2084
+#, c-format
+msgid "saving encoding = %s\n"
+msgstr "сохранение кодировки (%s)\n"
+
+#: pg_dump.c:2111
+#, c-format
+msgid "saving standard_conforming_strings = %s\n"
+msgstr "сохранение standard_conforming_strings (%s)\n"
+
+#: pg_dump.c:2144
+msgid "reading large objects\n"
+msgstr "чтение больших объектов\n"
+
+#: pg_dump.c:2276
+msgid "saving large objects\n"
+msgstr "сохранение больших объектов\n"
+
+#: pg_dump.c:2318 pg_backup_archiver.c:984
+#, c-format
+msgid "could not open large object %u: %s"
+msgstr "не удалось открыть большой объект %u: %s"
+
+#: pg_dump.c:2331
+#, c-format
+msgid "error reading large object %u: %s"
+msgstr "ошибка чтении большого объекта %u: %s"
+
+#: pg_dump.c:2378 pg_dump.c:2426 pg_dump.c:2481 pg_dump.c:7659 pg_dump.c:7890
+#: pg_dump.c:8856 pg_dump.c:9408 pg_dump.c:9662 pg_dump.c:9776 pg_dump.c:10232
+#: pg_dump.c:10418 pg_dump.c:10524 pg_dump.c:10724 pg_dump.c:10966
+#: pg_dump.c:11133 pg_dump.c:11354 pg_dump.c:14058
+#, c-format
+msgid "query returned %d row instead of one: %s\n"
+msgid_plural "query returned %d rows instead of one: %s\n"
+msgstr[0] "запрос вернул %d строку вместо одной: %s\n"
+msgstr[1] "запрос вернул %d строки вместо одной: %s\n"
+msgstr[2] "запрос вернул %d строк вместо одной: %s\n"
+
+#: pg_dump.c:2562
+#, c-format
+msgid "could not find parent extension for %s"
+msgstr "не удалось найти родительское расширение для %s"
+
+# TO REVIEW
+#: pg_dump.c:2669
+#, c-format
+msgid "WARNING: owner of schema \"%s\" appears to be invalid\n"
+msgstr "ВНИМАНИЕ: у схемы \"%s\" по-видимому неправильный владелец\n"
+
+#: pg_dump.c:2704
+#, c-format
+msgid "schema with OID %u does not exist\n"
+msgstr "схема с OID %u не существует\n"
+
+#: pg_dump.c:3045
+#, c-format
+msgid "WARNING: owner of data type \"%s\" appears to be invalid\n"
+msgstr "ВНИМАНИЕ: у типа данных \"%s\" по-видимому неправильный владелец\n"
+
+#: pg_dump.c:3149
+#, c-format
+msgid "WARNING: owner of operator \"%s\" appears to be invalid\n"
+msgstr "ВНИМАНИЕ: у оператора \"%s\" по-видимому неправильный владелец\n"
+
+#: pg_dump.c:3401
+#, c-format
+msgid "WARNING: owner of operator class \"%s\" appears to be invalid\n"
+msgstr ""
+"ВНИМАНИЕ: у класса операторов \"%s\" по-видимому неправильный владелец\n"
+
+#: pg_dump.c:3488
+#, c-format
+msgid "WARNING: owner of operator family \"%s\" appears to be invalid\n"
+msgstr ""
+"ВНИМАНИЕ: у семейства операторов \"%s\" по-видимому неправильный владелец\n"
+
+#: pg_dump.c:3625
+#, c-format
+msgid "WARNING: owner of aggregate function \"%s\" appears to be invalid\n"
+msgstr ""
+"ВНИМАНИЕ: у агрегатной функции \"%s\" по-видимому неправильный владелец\n"
+
+#: pg_dump.c:3795
+#, c-format
+msgid "WARNING: owner of function \"%s\" appears to be invalid\n"
+msgstr "ВНИМАНИЕ: у функции \"%s\" по-видимому неправильный владелец\n"
+
+#: pg_dump.c:4295
+#, c-format
+msgid "WARNING: owner of table \"%s\" appears to be invalid\n"
+msgstr "ВНИМАНИЕ: у таблицы \"%s\" по-видимому неправильный владелец\n"
+
+#: pg_dump.c:4438
+#, c-format
+msgid "reading indexes for table \"%s\"\n"
+msgstr "чтение индексов таблицы \"%s\"\n"
+
+#: pg_dump.c:4758
+#, c-format
+msgid "reading foreign key constraints for table \"%s\"\n"
+msgstr "чтение ограничений внешних ключей таблицы \"%s\"\n"
+
+#: pg_dump.c:4990
+#, c-format
+msgid ""
+"failed sanity check, parent table OID %u of pg_rewrite entry OID %u not "
+"found\n"
+msgstr ""
+"по OID %u не удалось найти родительскую таблицу для записи pg_rewrite с OID "
+"%u\n"
+
+#: pg_dump.c:5074
+#, c-format
+msgid "reading triggers for table \"%s\"\n"
+msgstr "чтение триггеров таблицы \"%s\"\n"
+
+#: pg_dump.c:5237
+#, c-format
+msgid ""
+"query produced null referenced table name for foreign key trigger \"%s\" on "
+"table \"%s\" (OID of table: %u)\n"
+msgstr ""
+"запрос не вернул имя целевой таблицы для триггера внешнего ключа \"%s\" в "
+"таблице \"%s\" (OID целевой таблицы: %u)\n"
+
+#: pg_dump.c:5608
+#, c-format
+msgid "finding the columns and types of table \"%s\"\n"
+msgstr "поиск колонок и типов таблицы \"%s\"\n"
+
+#: pg_dump.c:5754
+#, c-format
+msgid "invalid column numbering in table \"%s\"\n"
+msgstr "неверная нумерация колонок в таблице \"%s\"\n"
+
+#: pg_dump.c:5789
+#, c-format
+msgid "finding default expressions of table \"%s\"\n"
+msgstr "поиск выражений по умолчанию для таблицы \"%s\"\n"
+
+#: pg_dump.c:5842
+#, c-format
+msgid "invalid adnum value %d for table \"%s\"\n"
+msgstr "неверное значение adnum (%d) в таблице \"%s\"\n"
+
+#: pg_dump.c:5915
+#, c-format
+msgid "finding check constraints for table \"%s\"\n"
+msgstr "поиск ограничений-проверок для таблицы \"%s\"\n"
+
+#: pg_dump.c:5995
+#, c-format
+msgid "expected %d check constraint on table \"%s\" but found %d\n"
+msgid_plural "expected %d check constraints on table \"%s\" but found %d\n"
+msgstr[0] ""
+"ожидалось %d ограничение-проверка для таблицы \"%s\", но найдено: %d\n"
+msgstr[1] ""
+"ожидалось %d ограничения-проверки для таблицы \"%s\", но найдено: %d\n"
+msgstr[2] ""
+"ожидалось %d ограничений-проверок для таблицы \"%s\", но найдено: %d\n"
+
+#: pg_dump.c:5999
+msgid "(The system catalogs might be corrupted.)\n"
+msgstr "(Возможно повреждены системные каталоги.)\n"
+
+#: pg_dump.c:8622
+msgid "WARNING: bogus value in proargmodes array\n"
+msgstr "ВНИМАНИЕ: неприемлемое значение в массиве proargmodes\n"
+
+#: pg_dump.c:8936
+msgid "WARNING: could not parse proallargtypes array\n"
+msgstr "ВНИМАНИЕ: не удалось разобрать массив proallargtypes\n"
+
+#: pg_dump.c:8952
+msgid "WARNING: could not parse proargmodes array\n"
+msgstr "ВНИМАНИЕ: не удалось разобрать массив proargmodes\n"
+
+#: pg_dump.c:8966
+msgid "WARNING: could not parse proargnames array\n"
+msgstr "ВНИМАНИЕ: не удалось разобрать массив proargnames\n"
+
+#: pg_dump.c:8977
+msgid "WARNING: could not parse proconfig array\n"
+msgstr "ВНИМАНИЕ: не удалось разобрать массив proconfig\n"
+
+# TO REVEIW
+#: pg_dump.c:9033
+#, c-format
+msgid "unrecognized provolatile value for function \"%s\"\n"
+msgstr "недопустимое значение provolatile для функции \"%s\"\n"
+
+#: pg_dump.c:9249
+msgid "WARNING: bogus value in pg_cast.castmethod field\n"
+msgstr "WARNING: неприемлемое значение в поле pg_cast.castmethod\n"
+
+#: pg_dump.c:9631
+#, c-format
+msgid "WARNING: could not find operator with OID %s\n"
+msgstr "ВНИМАНИЕ: оператор с OID %s не найден\n"
+
+#: pg_dump.c:10750
+#, c-format
+msgid ""
+"WARNING: aggregate function %s could not be dumped correctly for this "
+"database version; ignored\n"
+msgstr ""
+"ВНИМАНИЕ: агрегатная функция %s не может быть правильно выгружена для этой "
+"версии базы данных; функция проигнорирована\n"
+
+#: pg_dump.c:11554
+#, c-format
+msgid "unknown object type (%d) in default privileges\n"
+msgstr "неизвестный тип объекта (%d) в определении прав по умолчанию\n"
+
+#: pg_dump.c:11571
+#, c-format
+msgid "could not parse default ACL list (%s)\n"
+msgstr "не удалось разобрать список прав по умолчанию (%s)\n"
+
+#: pg_dump.c:11628
+#, c-format
+msgid "could not parse ACL list (%s) for object \"%s\" (%s)\n"
+msgstr "не удалось разобрать список прав (%s) для объекта \"%s\" (%s)\n"
+
+#: pg_dump.c:12074
+#, c-format
+msgid "query to obtain definition of view \"%s\" returned no data\n"
+msgstr ""
+"запрос на получение определения представления \"%s\" не возвратил данные\n"
+
+#: pg_dump.c:12077
+#, c-format
+msgid ""
+"query to obtain definition of view \"%s\" returned more than one definition\n"
+msgstr ""
+"запрос на получения определения представления \"%s\" возвратил несколько "
+"определений\n"
+
+#: pg_dump.c:12086
+#, c-format
+msgid "definition of view \"%s\" appears to be empty (length zero)\n"
+msgstr "определение представления \"%s\" пустое (длина равна нулю)\n"
+
+#: pg_dump.c:12137
+#, c-format
+msgid "query returned %d foreign server entry for foreign table \"%s\"\n"
+msgid_plural ""
+"query returned %d foreign server entries for foreign table \"%s\"\n"
+msgstr[0] ""
+"запрос вернул %d запись о стороннем сервере для сторонней таблицы \"%s\"\n"
+msgstr[1] ""
+"запрос вернул %d записи о стороннем сервере для сторонней таблицы \"%s\"\n"
+msgstr[2] ""
+"запрос вернул %d записей о стороннем сервере для сторонней таблицы \"%s\"\n"
+
+#: pg_dump.c:12688
+#, c-format
+msgid "invalid column number %d for table \"%s\"\n"
+msgstr "неверный номер колонки %d для таблицы \"%s\"\n"
+
+#: pg_dump.c:12799
+#, c-format
+msgid "missing index for constraint \"%s\"\n"
+msgstr "отсутствует индекс для ограничения \"%s\"\n"
+
+#: pg_dump.c:12987
+#, c-format
+msgid "unrecognized constraint type: %c\n"
+msgstr "нераспознанный тип ограничения: %c\n"
+
+#: pg_dump.c:13050
+msgid "missing pg_database entry for this database\n"
+msgstr "для этой базы данных отсутствует запись в pg_database\n"
+
+#: pg_dump.c:13055
+msgid "found more than one pg_database entry for this database\n"
+msgstr "для этой базы данных найдено несколько записей в pg_database\n"
+
+#: pg_dump.c:13087
+msgid "could not find entry for pg_indexes in pg_class\n"
+msgstr "для pg_indexes не найдена запись в pg_class\n"
+
+#: pg_dump.c:13092
+msgid "found more than one entry for pg_indexes in pg_class\n"
+msgstr "для pg_indexes найдено несколько записей в pg_class\n"
+
+#: pg_dump.c:13164
+#, c-format
+msgid "query to get data of sequence \"%s\" returned %d row (expected 1)\n"
+msgid_plural ""
+"query to get data of sequence \"%s\" returned %d rows (expected 1)\n"
+msgstr[0] ""
+"запрос на получение данных последовательности \"%s\" вернул %d строку "
+"(ожидалась 1)\n"
+msgstr[1] ""
+"запрос на получение данных последовательности \"%s\" вернул %d строки "
+"(ожидалась 1)\n"
+msgstr[2] ""
+"запрос на получение данных последовательности \"%s\" вернул %d строк "
+"(ожидалась 1)\n"
+
+#: pg_dump.c:13175
+#, c-format
+msgid "query to get data of sequence \"%s\" returned name \"%s\"\n"
+msgstr ""
+"запрос на получение данных последовательности \"%s\" вернул имя \"%s\"\n"
+
+#: pg_dump.c:13403
+#, c-format
+msgid "unexpected tgtype value: %d\n"
+msgstr "неожиданное значение tgtype: %d\n"
+
+#: pg_dump.c:13485
+#, c-format
+msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\"\n"
+msgstr "неверная строка аргументов (%s) для триггера \"%s\" таблицы \"%s\"\n"
+
+#: pg_dump.c:13603
+#, c-format
+msgid ""
+"query to get rule \"%s\" for table \"%s\" failed: wrong number of rows "
+"returned\n"
+msgstr ""
+"запрос на получение правила \"%s\" для таблицы \"%s\" возвратил неверное "
+"число строк\n"
+
+#: pg_dump.c:13865
+msgid "reading dependency data\n"
+msgstr "чтение данных о зависимостях\n"
+
+#: pg_dump.c:14247
+msgid "SQL command failed\n"
+msgstr "ошибка SQL-команды\n"
+
+#: common.c:105
+msgid "reading schemas\n"
+msgstr "чтение схем\n"
+
+#: common.c:115
+msgid "reading user-defined tables\n"
+msgstr "чтение пользовательских таблиц\n"
+
+#: common.c:120
+msgid "reading extensions\n"
+msgstr "чтение расширений\n"
+
+#: common.c:124
+msgid "reading user-defined functions\n"
+msgstr "чтение пользовательских функций\n"
+
+#: common.c:130
+msgid "reading user-defined types\n"
+msgstr "чтение пользовательских типов\n"
+
+#: common.c:136
+msgid "reading procedural languages\n"
+msgstr "чтение процедурных языков\n"
+
+#: common.c:140
+msgid "reading user-defined aggregate functions\n"
+msgstr "чтение пользовательских агрегатных функций\n"
+
+#: common.c:144
+msgid "reading user-defined operators\n"
+msgstr "чтение пользовательских операторов\n"
+
+#: common.c:149
+msgid "reading user-defined operator classes\n"
+msgstr "чтение пользовательских классов операторов\n"
+
+#: common.c:153
+msgid "reading user-defined operator families\n"
+msgstr "чтение пользовательских семейств операторов\n"
+
+#: common.c:157
+msgid "reading user-defined text search parsers\n"
+msgstr "чтение пользовательских анализаторов текстового поиска\n"
+
+#: common.c:161
+msgid "reading user-defined text search templates\n"
+msgstr "чтение пользовательских шаблонов текстового поиска\n"
+
+#: common.c:165
+msgid "reading user-defined text search dictionaries\n"
+msgstr "чтение пользовательских словарей текстового поиска\n"
+
+#: common.c:169
+msgid "reading user-defined text search configurations\n"
+msgstr "чтение пользовательских конфигураций текстового поиска\n"
+
+#: common.c:173
+msgid "reading user-defined foreign-data wrappers\n"
+msgstr "чтение пользовательских оболочек сторонних данных\n"
+
+#: common.c:177
+msgid "reading user-defined foreign servers\n"
+msgstr "чтение пользовательских сторонних серверов\n"
+
+#: common.c:181
+msgid "reading default privileges\n"
+msgstr "чтение прав по умолчанию\n"
+
+#: common.c:185
+msgid "reading user-defined collations\n"
+msgstr "чтение пользовательских правил сортировки\n"
+
+#: common.c:190
+msgid "reading user-defined conversions\n"
+msgstr "чтение пользовательских преобразований\n"
+
+#: common.c:194
+msgid "reading type casts\n"
+msgstr "чтение приведений типов\n"
+
+#: common.c:198
+msgid "reading table inheritance information\n"
+msgstr "чтение информации о наследовании таблиц\n"
+
+#: common.c:202
+msgid "reading rewrite rules\n"
+msgstr "чтение правил перезаписи\n"
+
+#: common.c:211
+msgid "finding extension members\n"
+msgstr "поиск элементов расширений\n"
+
+#: common.c:216
+msgid "finding inheritance relationships\n"
+msgstr "поиск связей наследования\n"
+
+#: common.c:220
+msgid "reading column info for interesting tables\n"
+msgstr "чтение информации о колонках интересующих таблиц\n"
+
+#: common.c:224
+msgid "flagging inherited columns in subtables\n"
+msgstr "пометка наследованных колонок в подтаблицах\n"
+
+#: common.c:228
+msgid "reading indexes\n"
+msgstr "чтение индексов\n"
+
+#: common.c:232
+msgid "reading constraints\n"
+msgstr "чтение ограничений\n"
+
+#: common.c:236
+msgid "reading triggers\n"
+msgstr "чтение триггеров\n"
+
+#: common.c:771
+#, c-format
+msgid "failed sanity check, parent OID %u of table \"%s\" (OID %u) not found\n"
+msgstr "родительская таблица с OID %u для таблицы \"%s\" (OID %u) не найдена\n"
+
+#: common.c:813
+#, c-format
+msgid "could not parse numeric array \"%s\": too many numbers\n"
+msgstr "не удалось разобрать числовой массив \"%s\": слишком много чисел\n"
+
+#: common.c:828
+#, c-format
+msgid "could not parse numeric array \"%s\": invalid character in number\n"
+msgstr "не удалось разобрать числовой массив \"%s\": неверный символ в числе\n"
+
+#: common.c:941
+msgid "cannot duplicate null pointer\n"
+msgstr "попытка сделать копию нулевого указателя\n"
+
+#: common.c:944 common.c:955 common.c:966 common.c:977
+#: pg_backup_archiver.c:764 pg_backup_archiver.c:1160
+#: pg_backup_archiver.c:1291 pg_backup_archiver.c:1761
+#: pg_backup_archiver.c:1955 pg_backup_archiver.c:2001
+#: pg_backup_archiver.c:4211 pg_backup_custom.c:132 pg_backup_custom.c:139
+#: pg_backup_custom.c:780 pg_backup_custom.c:907 pg_backup_db.c:147
+#: pg_backup_db.c:157 pg_backup_db.c:205 pg_backup_db.c:249 pg_backup_db.c:264
+#: pg_backup_db.c:298 pg_backup_db.c:491 pg_backup_files.c:114
+#: pg_backup_null.c:72 pg_backup_tar.c:171 pg_backup_tar.c:1015
+msgid "out of memory\n"
+msgstr "нехватка памяти\n"
+
+#: pg_backup_archiver.c:88
+msgid "archiver"
+msgstr "архиватор"
+
+#: pg_backup_archiver.c:207 pg_backup_archiver.c:1259
+#, c-format
+msgid "could not close output file: %s\n"
+msgstr "не удалось закрыть выходной файл: %s\n"
+
+#: pg_backup_archiver.c:233
+msgid "-C and -c are incompatible options\n"
+msgstr "Параметры -C и -c несовместимы\n"
+
+#: pg_backup_archiver.c:240
+msgid "-C and -1 are incompatible options\n"
+msgstr "Параметры -C и -1 несовместимы\n"
+
+#: pg_backup_archiver.c:250
+msgid "parallel restore is not supported with this archive file format\n"
+msgstr ""
+"параллельное восстановление не поддерживается с выбранным форматом архивного "
+"файла\n"
+
+#: pg_backup_archiver.c:254
+msgid ""
+"parallel restore is not supported with archives made by pre-8.0 pg_dump\n"
+msgstr ""
+"параллельное восстановление возможно только для архивов, созданных pg_dump "
+"версии 8.0 и новее\n"
+
+#: pg_backup_archiver.c:273
+msgid ""
+"cannot restore from compressed archive (compression not supported in this "
+"installation)\n"
+msgstr ""
+"восстановить данные из сжатого архива нельзя (установленная версия не "
+"поддерживает сжатие)\n"
+
+#: pg_backup_archiver.c:283
+msgid "connecting to database for restore\n"
+msgstr "подключение к базе данных для восстановления\n"
+
+#: pg_backup_archiver.c:285
+msgid "direct database connections are not supported in pre-1.3 archives\n"
+msgstr ""
+"прямые подключения к базе данных не поддерживаются в архивах до версии 1.3\n"
+
+#: pg_backup_archiver.c:327
+msgid "implied data-only restore\n"
+msgstr "подразумевается восстановление только данных\n"
+
+#: pg_backup_archiver.c:379
+#, c-format
+msgid "dropping %s %s\n"
+msgstr "удаляется %s %s\n"
+
+#: pg_backup_archiver.c:431
+#, c-format
+msgid "setting owner and privileges for %s %s\n"
+msgstr "установка владельца и прав: %s %s\n"
+
+#: pg_backup_archiver.c:489 pg_backup_archiver.c:491
+#, c-format
+msgid "warning from original dump file: %s\n"
+msgstr "предупреждение из исходного файла: %s\n"
+
+#: pg_backup_archiver.c:498
+#, c-format
+msgid "creating %s %s\n"
+msgstr "создаётся %s %s\n"
+
+#: pg_backup_archiver.c:542
+#, c-format
+msgid "connecting to new database \"%s\"\n"
+msgstr "подключение к новой базе данных \"%s\"\n"
+
+#: pg_backup_archiver.c:570
+#, c-format
+msgid "restoring %s\n"
+msgstr "восстанавливается %s\n"
+
+#: pg_backup_archiver.c:584
+#, c-format
+msgid "restoring data for table \"%s\"\n"
+msgstr "восстанавливаются данные таблицы \"%s\"\n"
+
+#: pg_backup_archiver.c:646
+#, c-format
+msgid "executing %s %s\n"
+msgstr "выполняется %s %s\n"
+
+#: pg_backup_archiver.c:679
+#, c-format
+msgid "disabling triggers for %s\n"
+msgstr "отключаются триггеры таблицы %s\n"
+
+#: pg_backup_archiver.c:705
+#, c-format
+msgid "enabling triggers for %s\n"
+msgstr "включаются триггеры таблицы %s\n"
+
+#: pg_backup_archiver.c:735
+msgid ""
+"internal error -- WriteData cannot be called outside the context of a "
+"DataDumper routine\n"
+msgstr ""
+"внутренняя ошибка -- WriteData нельзя вызывать вне контекста процедуры "
+"DataDumper\n"
+
+#: pg_backup_archiver.c:892
+msgid "large-object output not supported in chosen format\n"
+msgstr "выбранный формат не поддерживает выгрузку больших объектов\n"
+
+#: pg_backup_archiver.c:946
+#, c-format
+msgid "restored %d large object\n"
+msgid_plural "restored %d large objects\n"
+msgstr[0] "восстановлен %d большой объект\n"
+msgstr[1] "восстановлено %d больших объекта\n"
+msgstr[2] "восстановлено %d больших объектов\n"
+
+#: pg_backup_archiver.c:967
+#, c-format
+msgid "restoring large object with OID %u\n"
+msgstr "восстановление большого объекта с OID %u\n"
+
+#: pg_backup_archiver.c:979
+#, c-format
+msgid "could not create large object %u: %s"
+msgstr "не удалось создать большой объект %u: %s"
+
+#: pg_backup_archiver.c:1041
+#, c-format
+msgid "could not open TOC file \"%s\": %s\n"
+msgstr "не удалось открыть файл оглавления \"%s\": %s\n"
+
+#: pg_backup_archiver.c:1082
+#, c-format
+msgid "WARNING: line ignored: %s\n"
+msgstr "ВНИМАНИЕ: строка проигнорирована: %s\n"
+
+#: pg_backup_archiver.c:1089
+#, c-format
+msgid "could not find entry for ID %d\n"
+msgstr "не найдена запись для ID %d\n"
+
+#: pg_backup_archiver.c:1110 pg_backup_files.c:172 pg_backup_files.c:457
+#, c-format
+msgid "could not close TOC file: %s\n"
+msgstr "не удалось закрыть файл оглавления: %s\n"
+
+#: pg_backup_archiver.c:1229 pg_backup_custom.c:152 pg_backup_files.c:130
+#: pg_backup_files.c:262
+#, c-format
+msgid "could not open output file \"%s\": %s\n"
+msgstr "не удалось открыть выходной файл \"%s\": %s\n"
+
+#: pg_backup_archiver.c:1232 pg_backup_custom.c:159 pg_backup_files.c:137
+#, c-format
+msgid "could not open output file: %s\n"
+msgstr "не удалось открыть выходной файл: %s\n"
+
+#: pg_backup_archiver.c:1334
+#, c-format
+msgid "wrote %lu byte of large object data (result = %lu)\n"
+msgid_plural "wrote %lu bytes of large object data (result = %lu)\n"
+msgstr[0] "записан %lu байт данных большого объекта (результат = %lu)\n"
+msgstr[1] "записано %lu байта данных большого объекта (результат = %lu)\n"
+msgstr[2] "записано %lu байт данных большого объекта (результат = %lu)\n"
+
+#: pg_backup_archiver.c:1340
+#, c-format
+msgid "could not write to large object (result: %lu, expected: %lu)\n"
+msgstr "не удалось записать большой объект (результат: %lu, ожидалось: %lu)\n"
+
+#: pg_backup_archiver.c:1398 pg_backup_archiver.c:1421 pg_backup_custom.c:652
+#: pg_backup_files.c:432 pg_backup_tar.c:590 pg_backup_tar.c:1093
+#: pg_backup_tar.c:1386
+#, c-format
+msgid "could not write to output file: %s\n"
+msgstr "не удалось записать в выходной файл: %s\n"
+
+#: pg_backup_archiver.c:1406
+msgid "could not write to custom output routine\n"
+msgstr "не удалось вывести данную в пользовательскую процедуру\n"
+
+#: pg_backup_archiver.c:1504
+msgid "Error while INITIALIZING:\n"
+msgstr "Ошибка при инициализации:\n"
+
+#: pg_backup_archiver.c:1509
+msgid "Error while PROCESSING TOC:\n"
+msgstr "Ошибка при обработке оглавления:\n"
+
+#: pg_backup_archiver.c:1514
+msgid "Error while FINALIZING:\n"
+msgstr "Ошибка при завершении:\n"
+
+#: pg_backup_archiver.c:1519
+#, c-format
+msgid "Error from TOC entry %d; %u %u %s %s %s\n"
+msgstr "Ошибка из записи оглавления %d; %u %u %s %s %s\n"
+
+#: pg_backup_archiver.c:1654
+#, c-format
+msgid "unexpected data offset flag %d\n"
+msgstr "неожиданный флаг смещения данных: %d\n"
+
+#: pg_backup_archiver.c:1667
+msgid "file offset in dump file is too large\n"
+msgstr "слишком большое смещение в файле вывода\n"
+
+#: pg_backup_archiver.c:1764 pg_backup_archiver.c:3115 pg_backup_custom.c:630
+#: pg_backup_files.c:419 pg_backup_tar.c:789
+msgid "unexpected end of file\n"
+msgstr "неожиданный конец файла\n"
+
+#: pg_backup_archiver.c:1781
+msgid "attempting to ascertain archive format\n"
+msgstr "попытка выяснить формат архива\n"
+
+#: pg_backup_archiver.c:1807 pg_backup_archiver.c:1817
+#, c-format
+msgid "directory name too long: \"%s\"\n"
+msgstr "слишком длинное имя каталога: \"%s\"\n"
+
+#: pg_backup_archiver.c:1825
+#, c-format
+msgid ""
+"directory \"%s\" does not appear to be a valid archive (\"toc.dat\" does not "
+"exist)\n"
+msgstr "каталог \"%s\" не похож на архивный (в нём отсутствует \"toc.dat\")\n"
+
+#: pg_backup_archiver.c:1833 pg_backup_custom.c:171 pg_backup_custom.c:762
+#: pg_backup_files.c:155 pg_backup_files.c:307
+#, c-format
+msgid "could not open input file \"%s\": %s\n"
+msgstr "не удалось открыть входной файл \"%s\": %s\n"
+
+#: pg_backup_archiver.c:1841 pg_backup_custom.c:178 pg_backup_files.c:162
+#, c-format
+msgid "could not open input file: %s\n"
+msgstr "не удалось открыть входной файл: %s\n"
+
+#: pg_backup_archiver.c:1850
+#, c-format
+msgid "could not read input file: %s\n"
+msgstr "не удалось прочитать входной файл: %s\n"
+
+#: pg_backup_archiver.c:1852
+#, c-format
+msgid "input file is too short (read %lu, expected 5)\n"
+msgstr "входной файл слишком короткий (прочитано байт: %lu, ожидалось: 5)\n"
+
+#: pg_backup_archiver.c:1910
+msgid "input file does not appear to be a valid archive (too short?)\n"
+msgstr "входной файл не похож на архив (возможно, слишком мал?)\n"
+
+#: pg_backup_archiver.c:1913
+msgid "input file does not appear to be a valid archive\n"
+msgstr "входной файл не похож на архив\n"
+
+#: pg_backup_archiver.c:1933
+#, c-format
+msgid "could not close input file: %s\n"
+msgstr "не удалось закрыть входной файл: %s\n"
+
+#: pg_backup_archiver.c:1950
+#, c-format
+msgid "allocating AH for %s, format %d\n"
+msgstr "выделение структуры AH для %s, формат %d\n"
+
+#: pg_backup_archiver.c:2061
+#, c-format
+msgid "unrecognized file format \"%d\"\n"
+msgstr "неопознанный формат файла: \"%d\"\n"
+
+#: pg_backup_archiver.c:2183
+#, c-format
+msgid "entry ID %d out of range -- perhaps a corrupt TOC\n"
+msgstr "ID записи %d вне диапазона - возможно повреждено оглавление\n"
+
+#: pg_backup_archiver.c:2299
+#, c-format
+msgid "read TOC entry %d (ID %d) for %s %s\n"
+msgstr "прочитана запись оглавления %d (ID %d): %s %s\n"
+
+#: pg_backup_archiver.c:2333
+#, c-format
+msgid "unrecognized encoding \"%s\"\n"
+msgstr "нераспознанная кодировка \"%s\"\n"
+
+#: pg_backup_archiver.c:2338
+#, c-format
+msgid "invalid ENCODING item: %s\n"
+msgstr "неверный элемент ENCODING: %s\n"
+
+#: pg_backup_archiver.c:2356
+#, c-format
+msgid "invalid STDSTRINGS item: %s\n"
+msgstr "неверный элемент STDSTRINGS: %s\n"
+
+#: pg_backup_archiver.c:2554
+#, c-format
+msgid "could not set session user to \"%s\": %s"
+msgstr "не удалось переключить пользователя сессии на \"%s\": %s"
+
+#: pg_backup_archiver.c:2894 pg_backup_archiver.c:3046
+#, c-format
+msgid "WARNING: don't know how to set owner for object type %s\n"
+msgstr "ВНИМАНИЕ: неизвестно, как назначить владельца для объекта типа %s\n"
+
+#: pg_backup_archiver.c:3078
+msgid ""
+"WARNING: requested compression not available in this installation -- archive "
+"will be uncompressed\n"
+msgstr ""
+"ВНИМАНИЕ: установленная версия программы не поддерживает сжатие -- архив не "
+"будет сжиматься\n"
+
+#: pg_backup_archiver.c:3118
+msgid "did not find magic string in file header\n"
+msgstr "в файле заголовка не найдена магическая строка\n"
+
+#: pg_backup_archiver.c:3131
+#, c-format
+msgid "unsupported version (%d.%d) in file header\n"
+msgstr "неподдерживаемая версия (%d.%d) в заголовке файла\n"
+
+#: pg_backup_archiver.c:3136
+#, c-format
+msgid "sanity check on integer size (%lu) failed\n"
+msgstr "несоответствие размера integer (%lu)\n"
+
+#: pg_backup_archiver.c:3140
+msgid ""
+"WARNING: archive was made on a machine with larger integers, some operations "
+"might fail\n"
+msgstr ""
+"ВНИМАНИЕ: архив был сделан на компьютере большей разрядности -- возможен "
+"сбой некоторых операций\n"
+
+#: pg_backup_archiver.c:3150
+#, c-format
+msgid "expected format (%d) differs from format found in file (%d)\n"
+msgstr "ожидаемый формат (%d) отличается от формата, указанного в файле (%d)\n"
+
+#: pg_backup_archiver.c:3166
+msgid ""
+"WARNING: archive is compressed, but this installation does not support "
+"compression -- no data will be available\n"
+msgstr ""
+"ВНИМАНИЕ: архив сжат, но установленная версия не поддерживает сжатие -- "
+"данные недоступны\n"
+
+#: pg_backup_archiver.c:3184
+msgid "WARNING: invalid creation date in header\n"
+msgstr "ВНИМАНИЕ: неверная дата создания в заголовке\n"
+
+#: pg_backup_archiver.c:3282
+msgid "entering restore_toc_entries_parallel\n"
+msgstr "вход в restore_toc_entries_parallel\n"
+
+#: pg_backup_archiver.c:3323
+#, c-format
+msgid "processing item %d %s %s\n"
+msgstr "обработка объекта %d %s %s\n"
+
+#: pg_backup_archiver.c:3399
+msgid "entering main parallel loop\n"
+msgstr "вход в основной параллельный цикл\n"
+
+#: pg_backup_archiver.c:3413
+#, c-format
+msgid "skipping item %d %s %s\n"
+msgstr "объект %d %s %s пропускается\n"
+
+#: pg_backup_archiver.c:3429
+#, c-format
+msgid "launching item %d %s %s\n"
+msgstr "объект %d %s %s запускается\n"
+
+#: pg_backup_archiver.c:3466
+#, c-format
+msgid "worker process crashed: status %d\n"
+msgstr "крах рабочего процесса: состояние %d\n"
+
+#: pg_backup_archiver.c:3471
+msgid "finished main parallel loop\n"
+msgstr "основной параллельный цикл закончен\n"
+
+#: pg_backup_archiver.c:3489
+#, c-format
+msgid "processing missed item %d %s %s\n"
+msgstr "обработка пропущенного объекта %d %s %s\n"
+
+#: pg_backup_archiver.c:3515
+msgid "parallel_restore should not return\n"
+msgstr "неожиданный выход из parallel_restore\n"
+
+#: pg_backup_archiver.c:3521
+#, c-format
+msgid "could not create worker process: %s\n"
+msgstr "не удалось создать рабочий процесс: %s\n"
+
+#: pg_backup_archiver.c:3529
+#, c-format
+msgid "could not create worker thread: %s\n"
+msgstr "не удалось создать рабочий поток: %s\n"
+
+#: pg_backup_archiver.c:3753
+msgid "no item ready\n"
+msgstr "элемент не готов\n"
+
+#: pg_backup_archiver.c:3848
+msgid "could not find slot of finished worker\n"
+msgstr "не удалось найти слот законченного рабочего объекта\n"
+
+#: pg_backup_archiver.c:3850
+#, c-format
+msgid "finished item %d %s %s\n"
+msgstr "закончен объект %d %s %s\n"
+
+#: pg_backup_archiver.c:3863
+#, c-format
+msgid "worker process failed: exit code %d\n"
+msgstr "рабочий процесс завершился с кодом возврата %d\n"
+
+#: pg_backup_archiver.c:4059
+#, c-format
+msgid "transferring dependency %d -> %d to %d\n"
+msgstr "переключение зависимости %d -> %d на %d\n"
+
+#: pg_backup_archiver.c:4128
+#, c-format
+msgid "reducing dependencies for %d\n"
+msgstr "уменьшение зависимостей для %d\n"
+
+#: pg_backup_archiver.c:4177
+#, c-format
+msgid "table \"%s\" could not be created, will not restore its data\n"
+msgstr "создать таблицу \"%s\" не удалось, её данные не будут восстановлены\n"
+
+#: pg_backup_custom.c:87
+msgid "custom archiver"
+msgstr "внешний архиватор"
+
+#: pg_backup_custom.c:373 pg_backup_null.c:153
+msgid "invalid OID for large object\n"
+msgstr "неверный OID большого объекта\n"
+
+#: pg_backup_custom.c:444
+#, c-format
+msgid "unrecognized data block type (%d) while searching archive\n"
+msgstr "нераспознанный тип блока данных (%d) при поиске архива\n"
+
+#: pg_backup_custom.c:455
+#, c-format
+msgid "error during file seek: %s\n"
+msgstr "ошибка при перемещении в файле: %s\n"
+
+#: pg_backup_custom.c:465
+#, c-format
+msgid ""
+"could not find block ID %d in archive -- possibly due to out-of-order "
+"restore request, which cannot be handled due to lack of data offsets in "
+"archive\n"
+msgstr ""
+"не удалось найти в архиве блок с ID %d -- возможно, по причине не "
+"последовательного запроса восстановления, который нельзя обработать из-за "
+"отсутствия смещений данных в архиве\n"
+
+#: pg_backup_custom.c:470
+#, c-format
+msgid ""
+"could not find block ID %d in archive -- possibly due to out-of-order "
+"restore request, which cannot be handled due to non-seekable input file\n"
+msgstr ""
+"не удалось найти в архиве блок с ID %d -- возможно, по причине не "
+"последовательного запроса восстановления, который нельзя обработать с "
+"файлом, не допускающим произвольный доступ\n"
+
+#: pg_backup_custom.c:475
+#, c-format
+msgid "could not find block ID %d in archive -- possibly corrupt archive\n"
+msgstr "не удалось найти в архиве блок с ID %d -- возможно, архив испорчен\n"
+
+#: pg_backup_custom.c:482
+#, c-format
+msgid "found unexpected block ID (%d) when reading data -- expected %d\n"
+msgstr "при чтении данных получен неожиданный ID блока (%d) -- ожидался: %d\n"
+
+#: pg_backup_custom.c:496
+#, c-format
+msgid "unrecognized data block type %d while restoring archive\n"
+msgstr "нераспознанный тип блока данных %d при восстановлении архива\n"
+
+#: pg_backup_custom.c:578 pg_backup_custom.c:916
+msgid "could not read from input file: end of file\n"
+msgstr "не удалось прочитать входной файл: конец файла\n"
+
+#: pg_backup_custom.c:581 pg_backup_custom.c:919
+#, c-format
+msgid "could not read from input file: %s\n"
+msgstr "не удалось прочитать входной файл: %s\n"
+
+#: pg_backup_custom.c:610
+#, c-format
+msgid "could not write byte: %s\n"
+msgstr "не удалось записать байт: %s\n"
+
+#: pg_backup_custom.c:718 pg_backup_custom.c:756
+#, c-format
+msgid "could not close archive file: %s\n"
+msgstr "не удалось закрыть файл архива: %s\n"
+
+#: pg_backup_custom.c:737
+msgid "can only reopen input archives\n"
+msgstr "повторно открыть можно только входные файлы\n"
+
+#: pg_backup_custom.c:744
+msgid "parallel restore from stdin is not supported\n"
+msgstr "параллельное восстановление из stdin не поддерживается\n"
+
+#: pg_backup_custom.c:746
+msgid "parallel restore from non-seekable file is not supported\n"
+msgstr ""
+"параллельное восстановление возможно только с файлом произвольного доступа\n"
+
+#: pg_backup_custom.c:751
+#, c-format
+msgid "could not determine seek position in archive file: %s\n"
+msgstr "не удалось определить позицию в файле архива: %s\n"
+
+#: pg_backup_custom.c:766
+#, c-format
+msgid "could not set seek position in archive file: %s\n"
+msgstr "не удалось задать текущую позицию в файле архива: %s\n"
+
+#: pg_backup_custom.c:786
+msgid "compressor active\n"
+msgstr "сжатие активно\n"
+
+#: pg_backup_custom.c:822
+msgid "WARNING: ftell mismatch with expected position -- ftell used\n"
+msgstr ""
+"ВНИМАНИЕ: позиция ftell не соответствует ожидаемой -- используется ftell\n"
+
+#: pg_backup_db.c:25
+msgid "archiver (db)"
+msgstr "архиватор (БД)"
+
+#: pg_backup_db.c:54
+msgid "could not get server_version from libpq\n"
+msgstr "%s: не удалось получить версию сервера из libpq\n"
+
+#: pg_backup_db.c:67 pg_dumpall.c:1741
+#, c-format
+msgid "server version: %s; %s version: %s\n"
+msgstr "версия сервера: %s; версия %s: %s\n"
+
+#: pg_backup_db.c:69 pg_dumpall.c:1743
+#, c-format
+msgid "aborting because of server version mismatch\n"
+msgstr "продолжение работы с другой версией сервера невозможно\n"
+
+#: pg_backup_db.c:140
+#, c-format
+msgid "connecting to database \"%s\" as user \"%s\"\n"
+msgstr "подключение к базе \"%s\" с именем пользователя \"%s\"\n"
+
+#: pg_backup_db.c:145 pg_backup_db.c:200 pg_backup_db.c:247 pg_backup_db.c:296
+#: pg_dumpall.c:1637 pg_dumpall.c:1689
+msgid "Password: "
+msgstr "Пароль: "
+
+#: pg_backup_db.c:181
+msgid "failed to reconnect to database\n"
+msgstr "ошибка переподключения к базе данных\n"
+
+#: pg_backup_db.c:186
+#, c-format
+msgid "could not reconnect to database: %s"
+msgstr "не удалось переподключиться к базе: %s"
+
+#: pg_backup_db.c:202
+msgid "connection needs password\n"
+msgstr "для подключения необходим пароль\n"
+
+#: pg_backup_db.c:243
+msgid "already connected to a database\n"
+msgstr "подключение к базе данных уже установлено\n"
+
+#: pg_backup_db.c:288
+msgid "failed to connect to database\n"
+msgstr "ошибка подключения к базе данных\n"
+
+#: pg_backup_db.c:307
+#, c-format
+msgid "connection to database \"%s\" failed: %s"
+msgstr "не удалось подключиться к базе \"%s\": %s"
+
+#: pg_backup_db.c:322
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pg_backup_db.c:414 pg_backup_db.c:485 pg_backup_db.c:494
+msgid "could not execute query"
+msgstr "не удалось выполнить запрос"
+
+#: pg_backup_db.c:465
+#, c-format
+msgid "error returned by PQputCopyData: %s"
+msgstr "ошибка в PQputCopyData: %s"
+
+#: pg_backup_db.c:513
+#, c-format
+msgid "error returned by PQputCopyEnd: %s"
+msgstr "ошибка в PQputCopyEnd: %s"
+
+#: pg_backup_db.c:530
+msgid "could not start database transaction"
+msgstr "не удаётся начать транзакцию"
+
+#: pg_backup_db.c:536
+msgid "could not commit database transaction"
+msgstr "не удалось зафиксировать транзакцию"
+
+#: pg_backup_files.c:68
+msgid "file archiver"
+msgstr "файловый архиватор"
+
+#: pg_backup_files.c:122
+msgid ""
+"WARNING:\n"
+"  This format is for demonstration purposes; it is not intended for\n"
+"  normal use. Files will be written in the current working directory.\n"
+msgstr ""
+"ПРЕДУПРЖДЕНИЕ:\n"
+"  Этот формат предназначен только для целей демонстрации, но не для\n"
+"  повседневного использования. Файлы сохраняются в текущий рабочий каталог.\n"
+
+#: pg_backup_files.c:283
+msgid "could not close data file\n"
+msgstr "не удалось закрыть файл данных\n"
+
+#: pg_backup_files.c:317
+msgid "could not close data file after reading\n"
+msgstr "не удалось закрыть файл данных после чтения\n"
+
+#: pg_backup_files.c:379
+#, c-format
+msgid "could not open large object TOC for input: %s\n"
+msgstr "не удалось открыть для чтения файл оглавления больших объектов: %s\n"
+
+#: pg_backup_files.c:392 pg_backup_files.c:561
+#, c-format
+msgid "could not close large object TOC file: %s\n"
+msgstr "не удалось закрыть файл оглавления больших объектов: %s\n"
+
+#: pg_backup_files.c:404
+msgid "could not write byte\n"
+msgstr "не удалось записать байт\n"
+
+#: pg_backup_files.c:490
+#, c-format
+msgid "could not open large object TOC for output: %s\n"
+msgstr "не удалось открыть для записи файл оглавления больших объектов: %s\n"
+
+#: pg_backup_files.c:510 pg_backup_tar.c:939
+#, c-format
+msgid "invalid OID for large object (%u)\n"
+msgstr "неверный OID для большого объекта (%u)\n"
+
+#: pg_backup_files.c:529
+#, c-format
+msgid "could not open large object file \"%s\" for input: %s\n"
+msgstr "не удалось открыть для чтения файл большого объекта \"%s\": %s\n"
+
+#: pg_backup_files.c:544
+msgid "could not close large object file\n"
+msgstr "не удалось закрыть файл большого объекта\n"
+
+#: pg_backup_null.c:78
+msgid "this format cannot be read\n"
+msgstr "этот формат нельзя прочитать\n"
+
+#: pg_backup_tar.c:105
+msgid "tar archiver"
+msgstr "архиватор tar"
+
+#: pg_backup_tar.c:183
+#, c-format
+msgid "could not open TOC file \"%s\" for output: %s\n"
+msgstr "не удалось открыть для записи файл оглавления \"%s\": %s\n"
+
+#: pg_backup_tar.c:191
+#, c-format
+msgid "could not open TOC file for output: %s\n"
+msgstr "не удалось открыть для записи файл оглавления: %s\n"
+
+#: pg_backup_tar.c:218 pg_backup_tar.c:374
+msgid "compression is not supported by tar archive format\n"
+msgstr "формат архива tar не поддерживает сжатие\n"
+
+#: pg_backup_tar.c:226
+#, c-format
+msgid "could not open TOC file \"%s\" for input: %s\n"
+msgstr "не удалось открыть для чтения файл оглавления \"%s\": %s\n"
+
+#: pg_backup_tar.c:233
+#, c-format
+msgid "could not open TOC file for input: %s\n"
+msgstr "не удалось открыть для чтения файл оглавления: %s\n"
+
+#: pg_backup_tar.c:360
+#, c-format
+msgid "could not find file \"%s\" in archive\n"
+msgstr "не удалось найти файл \"%s\" в архиве\n"
+
+#: pg_backup_tar.c:416
+#, c-format
+msgid "could not generate temporary file name: %s\n"
+msgstr "не удалось создать временный файл: %s\n"
+
+#: pg_backup_tar.c:425
+msgid "could not open temporary file\n"
+msgstr "не удалось открыть временный файл\n"
+
+#: pg_backup_tar.c:452
+msgid "could not close tar member\n"
+msgstr "не удалось закрыть компонент tar-архива\n"
+
+#: pg_backup_tar.c:552
+msgid "internal error -- neither th nor fh specified in tarReadRaw()\n"
+msgstr "внутренняя ошибка -- в tarReadRaw() не указан ни th, ни fh\n"
+
+#: pg_backup_tar.c:678
+#, c-format
+msgid "invalid COPY statement -- could not find \"copy\" in string \"%s\"\n"
+msgstr "неверный оператор COPY -- слово \"copy\" не найдено в строке \"%s\"\n"
+
+#: pg_backup_tar.c:696
+#, c-format
+msgid ""
+"invalid COPY statement -- could not find \"from stdin\" in string \"%s\" "
+"starting at position %lu\n"
+msgstr ""
+"неверный оператор COPY -- указание \"from stdin\" не найдено в строке \"%s"
+"\", начиная с позиции %lu\n"
+
+#: pg_backup_tar.c:733
+#, c-format
+msgid "restoring large object OID %u\n"
+msgstr "восстановление большого объекта с OID %u\n"
+
+#: pg_backup_tar.c:884
+msgid "could not write null block at end of tar archive\n"
+msgstr "не удалось записать нулевой блок в конец tar-архива\n"
+
+#: pg_backup_tar.c:1084
+msgid "archive member too large for tar format\n"
+msgstr "компонент архива слишком велик для формата tar\n"
+
+#: pg_backup_tar.c:1099
+#, c-format
+msgid "could not close temporary file: %s\n"
+msgstr "не удалось закрыть временный файл: %s\n"
+
+#: pg_backup_tar.c:1109
+#, c-format
+msgid "actual file length (%s) does not match expected (%s)\n"
+msgstr "действительная длина файла (%s) не равна ожидаемой (%s)\n"
+
+#: pg_backup_tar.c:1117
+msgid "could not output padding at end of tar member\n"
+msgstr "не удалось записать выравнивание для компонента tar\n"
+
+#: pg_backup_tar.c:1146
+#, c-format
+msgid "moving from position %s to next member at file position %s\n"
+msgstr "переход от позиции %s к следующему компоненту в позиции %s\n"
+
+#: pg_backup_tar.c:1157
+#, c-format
+msgid "now at file position %s\n"
+msgstr "текущая позиция в файле %s\n"
+
+#: pg_backup_tar.c:1166 pg_backup_tar.c:1196
+#, c-format
+msgid "could not find header for file \"%s\" in tar archive\n"
+msgstr "в архиве tar не найден заголовок для файла \"%s\"\n"
+
+#: pg_backup_tar.c:1180
+#, c-format
+msgid "skipping tar member %s\n"
+msgstr "пропускается компонент tar %s\n"
+
+#: pg_backup_tar.c:1184
+#, c-format
+msgid ""
+"restoring data out of order is not supported in this archive format: \"%s\" "
+"is required, but comes before \"%s\" in the archive file.\n"
+msgstr ""
+"непоследовательное восстановление данных для данного формата архива не "
+"поддерживается: требуется компонент %s, но в файле архива прежде идёт %s.\n"
+
+#: pg_backup_tar.c:1230
+#, c-format
+msgid "mismatch in actual vs. predicted file position (%s vs. %s)\n"
+msgstr "реальная позиция в файле отличается от предсказанной (%s и %s)\n"
+
+#: pg_backup_tar.c:1245
+#, c-format
+msgid "incomplete tar header found (%lu byte)\n"
+msgid_plural "incomplete tar header found (%lu bytes)\n"
+msgstr[0] "найден неполный tar-заголовок (размер %lu байт)\n"
+msgstr[1] "найден неполный tar-заголовок (размер %lu байта)\n"
+msgstr[2] "найден неполный tar-заголовок (размер %lu байтов)\n"
+
+#: pg_backup_tar.c:1283
+#, c-format
+msgid "TOC Entry %s at %s (length %lu, checksum %d)\n"
+msgstr "Запись оглавления %s в %s (длина: %lu, контр. сумма: %d)\n"
+
+#: pg_backup_tar.c:1293
+#, c-format
+msgid ""
+"corrupt tar header found in %s (expected %d, computed %d) file position %s\n"
+msgstr ""
+"tar-заголовок в %s повреждён (ожидалось: %d, получено: %d), позиция в файле: "
+"%s\n"
+
+# TO REVEIW
+#: pg_restore.c:300
+#, c-format
+msgid "%s: options -d/--dbname and -f/--file cannot be used together\n"
+msgstr "%s: параметры -d/--dbname и -f/--file исключают друг друга\n"
+
+#: pg_restore.c:312
+#, c-format
+msgid "%s: cannot specify both --single-transaction and multiple jobs\n"
+msgstr ""
+"%s: параметр --single-transaction допускается только с одним заданием\n"
+
+#: pg_restore.c:348
+#, c-format
+msgid ""
+"unrecognized archive format \"%s\"; please specify \"c\", \"d\", or \"t\"\n"
+msgstr "нераспознанный формат архива \"%s\"; укажите \"c\", \"d\" или \"t\"\n"
+
+#: pg_restore.c:382
+#, c-format
+msgid "WARNING: errors ignored on restore: %d\n"
+msgstr "ПРЕДУПРЕЖДЕНИЕ: при восстановление проигнорировано ошибок: %d\n"
+
+#: pg_restore.c:396
+#, c-format
+msgid ""
+"%s restores a PostgreSQL database from an archive created by pg_dump.\n"
+"\n"
+msgstr ""
+"%s восстанавливает базу данных PostgreSQL из архива, созданного командой "
+"pg_dump.\n"
+"\n"
+
+#: pg_restore.c:398
+#, c-format
+msgid "  %s [OPTION]... [FILE]\n"
+msgstr "  %s [ПАРАМЕТР]... [ФАЙЛ]\n"
+
+#: pg_restore.c:401
+#, c-format
+msgid "  -d, --dbname=NAME        connect to database name\n"
+msgstr "  -d, --dbname=БД          подключиться к указанной базе данных\n"
+
+#: pg_restore.c:402
+#, c-format
+msgid "  -f, --file=FILENAME      output file name\n"
+msgstr "  -f, --file=ИМЯ_ФАЙЛА     имя выходного файла\n"
+
+#: pg_restore.c:403
+#, c-format
+msgid "  -F, --format=c|d|t       backup file format (should be automatic)\n"
+msgstr ""
+"  -F, --format=c|d|t       формат файла (должен определяться автоматически)\n"
+
+#: pg_restore.c:404
+#, c-format
+msgid "  -l, --list               print summarized TOC of the archive\n"
+msgstr "  -l, --list               вывести краткое оглавление архива\n"
+
+#: pg_restore.c:405
+#, c-format
+msgid "  -v, --verbose            verbose mode\n"
+msgstr "  -v, --verbose            выводить подробные сообщения\n"
+
+#: pg_restore.c:406
+#, c-format
+msgid "  --help                   show this help, then exit\n"
+msgstr "  --help                   показать эту справку и выйти\n"
+
+#: pg_restore.c:407
+#, c-format
+msgid "  --version                output version information, then exit\n"
+msgstr "  --version                показать версию и выйти\n"
+
+#: pg_restore.c:409
+#, c-format
+msgid ""
+"\n"
+"Options controlling the restore:\n"
+msgstr ""
+"\n"
+"Параметры, управляющие восстановлением:\n"
+
+#: pg_restore.c:410
+#, c-format
+msgid "  -a, --data-only          restore only the data, no schema\n"
+msgstr "  -a, --data-only          восстановить только данные, без схемы\n"
+
+#: pg_restore.c:411
+#, c-format
+msgid ""
+"  -c, --clean              clean (drop) database objects before recreating\n"
+msgstr ""
+"  -c, --clean              очистить (удалить) объекты БД при восстановлении\n"
+
+#: pg_restore.c:412
+#, c-format
+msgid "  -C, --create             create the target database\n"
+msgstr "  -C, --create             создать целевую базу данных\n"
+
+#: pg_restore.c:413
+#, c-format
+msgid "  -e, --exit-on-error      exit on error, default is to continue\n"
+msgstr ""
+"  -e, --exit-on-error      выйти при ошибке (по умолчанию - продолжать)\n"
+
+#: pg_restore.c:414
+#, c-format
+msgid "  -I, --index=NAME         restore named index\n"
+msgstr "  -I, --index=ИМЯ          восстановить указанный индекс\n"
+
+#: pg_restore.c:415
+#, c-format
+msgid "  -j, --jobs=NUM           use this many parallel jobs to restore\n"
+msgstr ""
+"  -j, --jobs=ЧИСЛО         распараллелить восстановление на указанное число "
+"заданий\n"
+
+#: pg_restore.c:416
+#, c-format
+msgid ""
+"  -L, --use-list=FILENAME  use table of contents from this file for\n"
+"                           selecting/ordering output\n"
+msgstr ""
+"  -L, --use-list=ИМЯ_ФАЙЛА использовать оглавление из этого файла для\n"
+"                           чтения/упорядочивания данных\n"
+
+#: pg_restore.c:418
+#, c-format
+msgid "  -n, --schema=NAME        restore only objects in this schema\n"
+msgstr "  -n, --schema=ИМЯ         восстановить объекты только в этой схеме\n"
+
+#: pg_restore.c:419
+#, c-format
+msgid "  -O, --no-owner           skip restoration of object ownership\n"
+msgstr "  -O, --no-owner           не восстанавливать владение объектами\n"
+
+#: pg_restore.c:420
+#, c-format
+msgid ""
+"  -P, --function=NAME(args)\n"
+"                           restore named function\n"
+msgstr ""
+"  -P, --function=ИМЯ(аргументы)\n"
+"                           восстановить заданную функцию\n"
+
+#: pg_restore.c:422
+#, c-format
+msgid "  -s, --schema-only        restore only the schema, no data\n"
+msgstr "  -s, --schema-only        восстановить только схему, без данных\n"
+
+#: pg_restore.c:423
+#, c-format
+msgid ""
+"  -S, --superuser=NAME     superuser user name to use for disabling "
+"triggers\n"
+msgstr ""
+"  -S, --superuser=ИМЯ      имя суперпользователя для отключения триггеров\n"
+
+#: pg_restore.c:424
+#, c-format
+msgid "  -t, --table=NAME         restore named table\n"
+msgstr "  -t, --table=ИМЯ          восстановить заданную таблицу\n"
+
+#: pg_restore.c:425
+#, c-format
+msgid "  -T, --trigger=NAME       restore named trigger\n"
+msgstr "  -T, --trigger=ИМЯ        восстановить заданный триггер\n"
+
+#: pg_restore.c:426
+#, c-format
+msgid ""
+"  -x, --no-privileges      skip restoration of access privileges (grant/"
+"revoke)\n"
+msgstr ""
+"  -x, --no-privileges      не восстанавливать права доступа (назначение/"
+"отзыв)\n"
+
+#: pg_restore.c:427
+#, c-format
+msgid ""
+"  -1, --single-transaction\n"
+"                           restore as a single transaction\n"
+msgstr ""
+"  -1, --single-transaction\n"
+"                           выполнить восстановление в рамках одной "
+"транзакции\n"
+
+#: pg_restore.c:429
+#, c-format
+msgid "  --disable-triggers       disable triggers during data-only restore\n"
+msgstr ""
+"  --disable-triggers       отключить триггеры при восстановлении только "
+"данных\n"
+
+#: pg_restore.c:430
+#, c-format
+msgid ""
+"  --no-data-for-failed-tables\n"
+"                           do not restore data of tables that could not be\n"
+"                           created\n"
+msgstr ""
+"  --no-data-for-failed-tables\n"
+"                           не восстанавливать данные таблиц, которые\n"
+"                           не удалось создать\n"
+
+#: pg_restore.c:433
+#, c-format
+msgid "  --no-security-labels     do not restore security labels\n"
+msgstr "  --no-security-labels     не восстанавливать метки безопасности\n"
+
+#: pg_restore.c:434
+#, c-format
+msgid "  --no-tablespaces         do not restore tablespace assignments\n"
+msgstr ""
+"  --no-tablespaces         не восстанавливать назначения табличных "
+"пространств\n"
+
+#: pg_restore.c:435
+#, c-format
+msgid ""
+"  --use-set-session-authorization\n"
+"                           use SET SESSION AUTHORIZATION commands instead "
+"of\n"
+"                           ALTER OWNER commands to set ownership\n"
+msgstr ""
+"  --use-set-session-authorization\n"
+"                           устанавливать владельца, используя команды\n"
+"                           SET SESSION AUTHORIZATION вместо ALTER OWNER\n"
+
+#: pg_restore.c:445
+#, c-format
+msgid "  --role=ROLENAME          do SET ROLE before restore\n"
+msgstr "  --role=ИМЯ_РОЛИ          выполнить SET ROLE перед восстановлением\n"
+
+#: pg_restore.c:447
+#, c-format
+msgid ""
+"\n"
+"If no input file name is supplied, then standard input is used.\n"
+"\n"
+msgstr ""
+"\n"
+"Если имя входного файла не указано, используется стандартное устройство "
+"ввода.\n"
+"\n"
+
+#: pg_dumpall.c:171
+#, c-format
+msgid ""
+"The program \"pg_dump\" is needed by %s but was not found in the\n"
+"same directory as \"%s\".\n"
+"Check your installation.\n"
+msgstr ""
+"Для %s необходима программа \"pg_dump\", но она не найдена\n"
+"в каталоге \"%s\".\n"
+"Проверьте вашу установку PostgreSQL.\n"
+
+#: pg_dumpall.c:178
+#, c-format
+msgid ""
+"The program \"pg_dump\" was found by \"%s\"\n"
+"but was not the same version as %s.\n"
+"Check your installation.\n"
+msgstr ""
+"Программа \"pg_dump\" была найдена в \"%s\",\n"
+"но её версия отличается от версии %s.\n"
+"Проверьте вашу установку PostgreSQL.\n"
+
+#: pg_dumpall.c:314
+#, c-format
+msgid ""
+"%s: options -g/--globals-only and -r/--roles-only cannot be used together\n"
+msgstr ""
+"%s: параметры -g/--globals-only и -r/--roles-only исключают друг друга\n"
+
+#: pg_dumpall.c:323
+#, c-format
+msgid ""
+"%s: options -g/--globals-only and -t/--tablespaces-only cannot be used "
+"together\n"
+msgstr ""
+"%s: параметры -g/--globals-only и -t/--tablespaces-only исключают друг "
+"друга\n"
+
+#: pg_dumpall.c:332
+#, c-format
+msgid ""
+"%s: options -r/--roles-only and -t/--tablespaces-only cannot be used "
+"together\n"
+msgstr ""
+"%s: параметры -r/--roles-only и -t/--tablespaces-only исключают друг друга\n"
+
+#: pg_dumpall.c:374 pg_dumpall.c:1678
+#, c-format
+msgid "%s: could not connect to database \"%s\"\n"
+msgstr "%s: не удалось подключиться к базе данных: \"%s\"\n"
+
+#: pg_dumpall.c:389
+#, c-format
+msgid ""
+"%s: could not connect to databases \"postgres\" or \"template1\"\n"
+"Please specify an alternative database.\n"
+msgstr ""
+"%s: не удалось подключиться к базе данных \"postgres\" или \"template1\"\n"
+"Укажите другую базу данных.\n"
+
+#: pg_dumpall.c:406
+#, c-format
+msgid "%s: could not open the output file \"%s\": %s\n"
+msgstr "%s: не удалось открыть выходной файл \"%s\": %s\n"
+
+#: pg_dumpall.c:528
+#, c-format
+msgid ""
+"%s extracts a PostgreSQL database cluster into an SQL script file.\n"
+"\n"
+msgstr ""
+"%s экспортирует всё содержимое кластера баз данных PostgreSQL в SQL-скрипт.\n"
+"\n"
+
+#: pg_dumpall.c:530
+#, c-format
+msgid "  %s [OPTION]...\n"
+msgstr "  %s [ПАРАМЕТР]...\n"
+
+#: pg_dumpall.c:533
+#, c-format
+msgid "  -f, --file=FILENAME         output file name\n"
+msgstr "  -f, --file=ИМЯ_ФАЙЛА        имя выходного файла\n"
+
+#: pg_dumpall.c:539
+#, c-format
+msgid ""
+"  -c, --clean                 clean (drop) databases before recreating\n"
+msgstr ""
+"  -c, --clean                 очистить (удалить) базы данных при "
+"восстановлении\n"
+
+#: pg_dumpall.c:540
+#, c-format
+msgid "  -g, --globals-only          dump only global objects, no databases\n"
+msgstr ""
+"  -g, --globals-only          выгрузить только глобальные объекты, без баз\n"
+
+#: pg_dumpall.c:542
+#, c-format
+msgid "  -O, --no-owner              skip restoration of object ownership\n"
+msgstr "  -O, --no-owner              не восстанавливать владение объектами\n"
+
+#: pg_dumpall.c:543
+#, c-format
+msgid ""
+"  -r, --roles-only            dump only roles, no databases or tablespaces\n"
+msgstr ""
+"  -r, --roles-only            выгрузить только роли, без баз данных\n"
+"                              и табличных пространств\n"
+
+#: pg_dumpall.c:545
+#, c-format
+msgid "  -S, --superuser=NAME        superuser user name to use in the dump\n"
+msgstr ""
+"  -S, --superuser=ИМЯ         имя пользователя для выполнения выгрузки\n"
+
+#: pg_dumpall.c:546
+#, c-format
+msgid ""
+"  -t, --tablespaces-only      dump only tablespaces, no databases or roles\n"
+msgstr ""
+"  -t, --tablespaces-only      выгружать только табличные пространства,\n"
+"                              без баз данных и ролей\n"
+
+#: pg_dumpall.c:563
+#, c-format
+msgid "  -l, --database=DBNAME    alternative default database\n"
+msgstr "  -l, --database=ИМЯ_БД    выбор другой базы данных по умолчанию\n"
+
+#: pg_dumpall.c:570
+#, c-format
+msgid ""
+"\n"
+"If -f/--file is not used, then the SQL script will be written to the "
+"standard\n"
+"output.\n"
+"\n"
+msgstr ""
+"\n"
+"Если не указан параметр -f/--file, SQL-скрипт записывается в стандартный "
+"вывод.\n"
+"\n"
+
+#: pg_dumpall.c:1041
+#, c-format
+msgid "%s: could not parse ACL list (%s) for tablespace \"%s\"\n"
+msgstr ""
+"%s: не удалось разобрать список управления доступом (%s) для табл. "
+"пространства \"%s\"\n"
+
+#: pg_dumpall.c:1341
+#, c-format
+msgid "%s: could not parse ACL list (%s) for database \"%s\"\n"
+msgstr ""
+"%s: не удалось разобрать список управления доступом (%s) для базы данных \"%s"
+"\"\n"
+
+#: pg_dumpall.c:1548
+#, c-format
+msgid "%s: dumping database \"%s\"...\n"
+msgstr "%s: выгрузка базы данных \"%s\"...\n"
+
+#: pg_dumpall.c:1558
+#, c-format
+msgid "%s: pg_dump failed on database \"%s\", exiting\n"
+msgstr "%s: ошибка pg_dump для базы данных \"%s\", выход...\n"
+
+#: pg_dumpall.c:1567
+#, c-format
+msgid "%s: could not re-open the output file \"%s\": %s\n"
+msgstr "%s: не удалось повторно открыть выходной файл \"%s\": %s\n"
+
+#: pg_dumpall.c:1606
+#, c-format
+msgid "%s: running \"%s\"\n"
+msgstr "%s: выполняется \"%s\"\n"
+
+#: pg_dumpall.c:1651
+#, c-format
+msgid "%s: out of memory\n"
+msgstr "%s: нехватка памяти\n"
+
+#: pg_dumpall.c:1700
+#, c-format
+msgid "%s: could not connect to database \"%s\": %s\n"
+msgstr "%s: не удалось подключиться к базе \"%s\": %s\n"
+
+#: pg_dumpall.c:1714
+#, c-format
+msgid "%s: could not get server version\n"
+msgstr "%s: не удалось узнать версию сервера\n"
+
+#: pg_dumpall.c:1720
+#, c-format
+msgid "%s: could not parse server version \"%s\"\n"
+msgstr "%s: не удалось разобрать строку версии сервера \"%s\"\n"
+
+#: pg_dumpall.c:1728
+#, c-format
+msgid "%s: could not parse version \"%s\"\n"
+msgstr "%s: не удалось разобрать строку версии \"%s\"\n"
+
+#: pg_dumpall.c:1767 pg_dumpall.c:1793
+#, c-format
+msgid "%s: executing %s\n"
+msgstr "%s: выполняется %s\n"
+
+#: pg_dumpall.c:1773 pg_dumpall.c:1799
+#, c-format
+msgid "%s: query failed: %s"
+msgstr "%s: ошибка при выполнении запроса: %s"
+
+#: pg_dumpall.c:1775 pg_dumpall.c:1801
+#, c-format
+msgid "%s: query was: %s\n"
+msgstr "%s: запрос: %s\n"
+
+#: ../../port/exec.c:125 ../../port/exec.c:239 ../../port/exec.c:282
+#, c-format
+msgid "could not identify current directory: %s"
+msgstr "не удалось получить текущий каталог: %s"
+
+#: ../../port/exec.c:144
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "неверный двоичный файл \"%s\""
+
+#: ../../port/exec.c:193
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "не удалось прочитать двоичный файл \"%s\""
+
+#: ../../port/exec.c:200
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "не удалось найти запускаемый файл \"%s\""
+
+#: ../../port/exec.c:255 ../../port/exec.c:291
+#, c-format
+msgid "could not change directory to \"%s\""
+msgstr "не удалось перейти в каталог \"%s\""
+
+#: ../../port/exec.c:270
+#, c-format
+msgid "could not read symbolic link \"%s\""
+msgstr "не удалось прочитать символическую ссылку \"%s\""
+
+#: ../../port/exec.c:517
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "дочерний процесс завершился с кодом возврата %d"
+
+#: ../../port/exec.c:521
+#, c-format
+msgid "child process was terminated by exception 0x%X"
+msgstr "дочерний процесс прерван исключением 0x%X"
+
+#: ../../port/exec.c:530
+#, c-format
+msgid "child process was terminated by signal %s"
+msgstr "дочерний процесс завершён по сигналу %s"
+
+#: ../../port/exec.c:533
+#, c-format
+msgid "child process was terminated by signal %d"
+msgstr "дочерний процесс завершён по сигналу %d"
+
+#: ../../port/exec.c:537
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "дочерний процесс завершился с нераспознанным состоянием %d"
+
+#~ msgid "User name: "
+#~ msgstr "Имя пользователя: "
+
+#~ msgid "%s: invalid -X option -- %s\n"
+#~ msgstr "%s: неверная опция -X -- %s\n"
+
+#~ msgid "large-object output not supported for a single table\n"
+#~ msgstr "вывод больших объектов не поддерживается для отдельной таблицы\n"
+
+#~ msgid "use a full dump instead\n"
+#~ msgstr "вместо этого используйте полный дамп\n"
+
+#~ msgid "large-object output not supported for a single schema\n"
+#~ msgstr "вывод больших объектов не поддерживается для отдельной схемы\n"
+
+#~ msgid "INSERT (-d, -D) and OID (-o) options cannot be used together\n"
+#~ msgstr "опции INSERT (-d, -D) и OID (-o) не могут использоваться вместе\n"
+
+#~ msgid "large-object output is not supported for plain-text dump files\n"
+#~ msgstr ""
+#~ "вывод больших объектов не поддерживается для дампа в текстовые файлы\n"
+
+#~ msgid "(Use a different output format.)\n"
+#~ msgstr "(Используйте другой формат для вывода.)\n"
+
+#~ msgid ""
+#~ "  -i, --ignore-version     proceed even when server version mismatches\n"
+#~ "                           pg_dump version\n"
+#~ msgstr ""
+#~ "  -i, --ignore-version     продолжить даже если версия сервера не "
+#~ "совпадает с\n"
+#~ "                           версией pg_dump\n"
+
+#~ msgid "  -c, --clean              clean (drop) schema prior to create\n"
+#~ msgstr ""
+#~ "  -c, --clean              очистить (сбросить) схему перед созданием\n"
+
+#~ msgid ""
+#~ "  -S, --superuser=NAME     specify the superuser user name to use in\n"
+#~ "                           plain text format\n"
+#~ msgstr ""
+#~ "  -S, --superuser=ИМЯ      указать имя супер-пользователя для\n"
+#~ "                           формата \"только текст\"\n"
+
+#~ msgid "specified schema \"%s\" does not exist\n"
+#~ msgstr "указанная схема \"%s\" не существует\n"
+
+#~ msgid "specified table \"%s\" does not exist\n"
+#~ msgstr "указанная таблица \"%s\" не существует\n"
+
+#~ msgid "expected %d triggers on table \"%s\" but found %d\n"
+#~ msgstr "ожидалось %d триггеров для таблицы \"%s\", но было найдено %d\n"
+
+#~ msgid "Got %d rows instead of one from: %s"
+#~ msgstr "Получено строк: %d, тогда как ожидалась всего одна из: %s"
+
+#~ msgid "query yielded no rows: %s\n"
+#~ msgstr "запрос вернул ноль строк: %s\n"
+
+#~ msgid "inserted invalid OID\n"
+#~ msgstr "вставлен неверный OID\n"
+
+#~ msgid "maximum system OID is %u\n"
+#~ msgstr "максимальный системный OID: %u\n"
+
+#~ msgid "could not close output archive file\n"
+#~ msgstr "не удалось закрыть архивный файл вывода\n"
+
+#~ msgid "WARNING: skipping large-object restoration\n"
+#~ msgstr "ВНИМАНИЕ: пропускается восстановление больших объектов\n"
+
+#~ msgid "fixing up large-object cross-reference for \"%s\"\n"
+#~ msgstr "восстанавливаются кросс-ссылки среди больших объектов для \"%s\"\n"
+
+#~ msgid "committing large-object transactions\n"
+#~ msgstr "подтверждение транзакций для больших объектов (COMMIT)\n"
+
+#~ msgid "cannot restore large objects without a database connection\n"
+#~ msgstr ""
+#~ "восстановление больших объектов невозможно без подсоединения к базе "
+#~ "данных\n"
+
+#~ msgid "starting large-object transactions\n"
+#~ msgstr "начало транзакций для больших объектов\n"
+
+#~ msgid "restoring large object with OID %u as %u\n"
+#~ msgstr "восстанавливается большой объект с OID %u как %u\n"
+
+#~ msgid "could not open large object\n"
+#~ msgstr "не удалось открыть большой объект\n"
+
+#~ msgid "wrote remaining %lu bytes of large-object data (result = %lu)\n"
+#~ msgstr "число записанных байт большого объекта: %lu (результат = %lu)\n"
+
+#~ msgid "could not open TOC file\n"
+#~ msgstr "не удалось открыть файл оглавления\n"
+
+#~ msgid "could not write to compressed archive\n"
+#~ msgstr "не получилось записать в компрессированный архив\n"
+
+#~ msgid "could not write to output file (%lu != %lu)\n"
+#~ msgstr "не получилось записать в выходной файл (%lu != %lu)\n"
+
+#~ msgid "read %lu bytes into lookahead buffer\n"
+#~ msgstr "прочитано байт: %lu в буфер предварительного просмотра\n"
+
+#~ msgid "could not close the input file after reading header: %s\n"
+#~ msgstr "не удалось закрыть входной файл после прочтения заголовка: %s\n"
+
+#~ msgid "archive format is %d\n"
+#~ msgstr "формат архива: %d\n"
+
+#~ msgid "could not open archive file \"%s\": %s\n"
+#~ msgstr "не удалось открыть файл архива \"%s\": %s\n"
+
+#~ msgid ""
+#~ "Dumping a specific TOC data block out of order is not supported without "
+#~ "ID on this input stream (fseek required)\n"
+#~ msgstr ""
+#~ "Выгрузка конкретного блока данных оглавления не по порядку не "
+#~ "поддерживается без указания ID в данном входном потоке (необходим fseek)\n"
+
+#~ msgid "large objects cannot be loaded without a database connection\n"
+#~ msgstr "нельзя загрузить большие объекты без подсоединения к базе\n"
+
+#~ msgid "could not initialize compression library: %s\n"
+#~ msgstr "не удалось проинициализировать библиотеку компрессии: %s\n"
+
+#~ msgid "could not read data block -- expected %lu, got %lu\n"
+#~ msgstr "не удалось прочитать блок данный -- ожидалось %lu, получено %lu\n"
+
+#~ msgid "could not uncompress data: %s\n"
+#~ msgstr "не получилось раскомпрессировать данные: %s\n"
+
+#~ msgid "could not close compression library: %s\n"
+#~ msgstr "не удалось закрыть библиотеку компрессии: %s\n"
+
+#~ msgid "write error in _WriteBuf (%lu != %lu)\n"
+#~ msgstr "ошибка записи в _WriteBuf (%lu != %lu)\n"
+
+#~ msgid "could not compress data: %s\n"
+#~ msgstr "не удалось сжать данные: %s\n"
+
+#~ msgid "could not write compressed chunk\n"
+#~ msgstr "не получилось записать компрессированный блок\n"
+
+#~ msgid "could not write uncompressed chunk\n"
+#~ msgstr "не получилось записать несжатый блок\n"
+
+#~ msgid "could not close compression stream: %s\n"
+#~ msgstr "не удалось закрыть компрессированный поток: %s\n"
+
+#~ msgid ""
+#~ "aborting because of version mismatch  (Use the -i option to proceed "
+#~ "anyway.)\n"
+#~ msgstr ""
+#~ "остановка из-за несовпадения версий  (Используйте опцию -i для "
+#~ "игнорирования.)\n"
+
+#~ msgid "%s: no result from server\n"
+#~ msgstr "%s: нет результата с сервера\n"
+
+#~ msgid "COPY command executed in non-primary connection\n"
+#~ msgstr "Команда COPY выполнилась вне исходного соединения\n"
+
+#~ msgid "error returned by PQendcopy\n"
+#~ msgstr "PQendcopy вернула ошибку\n"
+
+#~ msgid "could not find OID columns of table \"%s\": %s"
+#~ msgstr "OID-колонки не найдены для таблицы \"%s\": %s"
+
+#~ msgid "no OID type columns in table %s\n"
+#~ msgstr "нет колонок типа OID в таблице %s\n"
+
+#~ msgid "fixing large object cross-references for %s.%s\n"
+#~ msgstr ""
+#~ "восстановление перекрёстных ссылок среди больших объектов для %s.%s\n"
+
+#~ msgid "SQL: %s\n"
+#~ msgstr "SQL: %s\n"
+
+#~ msgid "could not update column \"%s\" of table \"%s\": %s"
+#~ msgstr "не получилось обновить колонку \"%s\" таблицы \"%s\": %s"
+
+#~ msgid "error while updating column \"%s\" of table \"%s\": %s"
+#~ msgstr "ошибка при обновлении колонки \"%s\" таблицы \"%s\": %s"
+
+#~ msgid "creating table for large object cross-references\n"
+#~ msgstr "создание таблицы для перекрёстных ссылок больших объектов\n"
+
+#~ msgid "could not create large object cross-reference table"
+#~ msgstr "не удалось создать таблицу для перекрёстных ссылок больших объектов"
+
+#~ msgid "creating index for large object cross-references\n"
+#~ msgstr "создание индекса для перекрёстных ссылок больших объектов\n"
+
+#~ msgid "could not create index on large object cross-reference table"
+#~ msgstr ""
+#~ "не удалось создать индекс на таблицу перекрёстных ссылок больших объектов"
+
+#~ msgid "could not create large object cross-reference entry"
+#~ msgstr "не удалось создать запись для перекрёстных ссылок больших объектов"
+
+#~ msgid "could not start transaction for large object cross-references"
+#~ msgstr ""
+#~ "не удаётся начать транзакцию для перекрёстных ссылок больших объектов"
+
+#~ msgid "could not commit transaction for large object cross-references"
+#~ msgstr ""
+#~ "не удалось завершить транзакцию для перекрёстных ссылок больших объектов"
+
+#~ msgid "could not open data file for output\n"
+#~ msgstr "не удалось открыть файл данных для записи\n"
+
+#~ msgid "could not open data file for input\n"
+#~ msgstr "не удалось открыть файл данных для чтения\n"
+
+#~ msgid "could not open large object file\n"
+#~ msgstr "не удалось открыть файл с большим объектом\n"
+
+#~ msgid "compression support is disabled in this format\n"
+#~ msgstr "поддержка компрессии отключена для этого формата\n"
+
+#~ msgid "requested %d bytes, got %d from lookahead and %d from file\n"
+#~ msgstr ""
+#~ "запрошено байт: %d, получено %d из буфера предв. просмотра и %d из файла\n"
+
+#~ msgid "could not write to tar member (wrote %lu, attempted %lu)\n"
+#~ msgstr "не удалось записать в tar-компонент (записано: %lu, надо: %lu)\n"
+
+#~ msgid "write error appending to tar archive (wrote %lu, attempted %lu)\n"
+#~ msgstr ""
+#~ "ошибка записи при добавлении к tar-архиву (записано: %lu, надо: %lu)\n"
+
+#~ msgid "could not close tar member: %s\n"
+#~ msgstr "не удалось закрыть компонент tar-архива: %s\n"
+
+#~ msgid "could not write tar header\n"
+#~ msgstr "не удалось записать заголовок tar-архива\n"
+
+#~ msgid ""
+#~ "  -i, --ignore-version     proceed even when server version mismatches\n"
+#~ msgstr ""
+#~ "  -i, --ignore-version     продолжить, даже если версия сервера не "
+#~ "совпадает\n"
+
+#~ msgid ""
+#~ "  -i, --ignore-version     proceed even when server version mismatches\n"
+#~ "                           pg_dumpall version\n"
+#~ msgstr ""
+#~ "  -i, --ignore-version     продолжить, даже если версия сервера не "
+#~ "совпадает\n"
+#~ "                           с версией pg_dumpall\n"

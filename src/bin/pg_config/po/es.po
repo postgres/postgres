@@ -1,22 +1,23 @@
 # pg_config spanish translation
 #
-# Copyright (C) 2004-2010 PostgreSQL Global Development Group
+# Copyright (C) 2004-2012 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 #
-# Alvaro Herrera <alvherre@alvh.no-ip.org>, 2004-2010
+# Alvaro Herrera <alvherre@alvh.no-ip.org>, 2004-2012
 #
-# pgtranslation Id: pg_config.po,v 1.6 2010/08/31 04:57:53 alvherre Exp $
+# pgtranslation Id: pg_config.po,v 1.7 2012/02/22 01:59:11 alvherre Exp $
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_config (PostgreSQL 9.0)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-08-30 20:03+0000\n"
-"PO-Revision-Date: 2010-08-31 00:57-0400\n"
+"POT-Creation-Date: 2012-02-21 16:45+0000\n"
+"PO-Revision-Date: 2012-02-21 22:53-0300\n"
 "Last-Translator: Alvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: es <pgsql-es-ayuda@postgresql.org>\n"
+"Language: es\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: pg_config.c:243 pg_config.c:259 pg_config.c:275 pg_config.c:291
@@ -295,27 +296,27 @@ msgstr "no se pudo cambiar el directorio a «%s»"
 msgid "could not read symbolic link \"%s\""
 msgstr "no se pudo leer el enlace simbólico «%s»"
 
-#: ../../port/exec.c:516
+#: ../../port/exec.c:517
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "el proceso hijo terminó con código de salida %d"
 
-#: ../../port/exec.c:520
+#: ../../port/exec.c:521
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "el proceso hijo fue terminado por una excepción 0x%X"
 
-#: ../../port/exec.c:529
+#: ../../port/exec.c:530
 #, c-format
 msgid "child process was terminated by signal %s"
 msgstr "el proceso hijo fue terminado por una señal %s"
 
-#: ../../port/exec.c:532
+#: ../../port/exec.c:533
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "el proceso hijo fue terminado por una señal %d"
 
-#: ../../port/exec.c:536
+#: ../../port/exec.c:537
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "el proceso hijo terminó con código no reconocido %d"

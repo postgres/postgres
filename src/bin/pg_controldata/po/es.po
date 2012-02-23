@@ -1,21 +1,22 @@
 # Spanish message translation file for pg_controldata
 #
-# Copyright (C) 2002-2010 PostgreSQL Global Development Group
+# Copyright (C) 2002-2012 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 #
 # Karim Mribti <karim@mribti.com>, 2002.
-# Alvaro Herrera <alvherre@alvh.no-ip.org>, 2003-2010
+# Alvaro Herrera <alvherre@alvh.no-ip.org>, 2003-2012
 #
-# pgtranslation Id: pg_controldata.po,v 1.11 2010/08/31 17:31:32 alvherre Exp $
+# pgtranslation Id: pg_controldata.po,v 1.12 2012/02/22 01:59:11 alvherre Exp $
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_controldata (PostgreSQL 9.0)\n"
+"Project-Id-Version: pg_controldata (PostgreSQL 9.1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-08-31 07:16+0000\n"
-"PO-Revision-Date: 2010-08-31 13:31-0400\n"
+"POT-Creation-Date: 2012-02-21 16:46+0000\n"
+"PO-Revision-Date: 2012-02-21 22:53-0300\n"
 "Last-Translator: Alvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: Castellano <pgsql-es-ayuda@postgresql.org>\n"
+"Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
