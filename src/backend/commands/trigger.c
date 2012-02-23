@@ -108,8 +108,8 @@ static void AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
  * if TRUE causes us to modify the given trigger name to ensure uniqueness.
  *
  * When isInternal is not true we require ACL_TRIGGER permissions on the
- * relation.  For internal triggers the caller must apply any required
- * permission checks.
+ * relation, as well as ACL_EXECUTE on the trigger function.  For internal
+ * triggers the caller must apply any required permission checks.
  *
  * Note: can return InvalidOid if we decided to not create a trigger at all,
  * but a foreign-key constraint.  This is a kluge for backwards compatibility.
@@ -377,6 +377,13 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	 * Find and validate the trigger function.
 	 */
 	funcoid = LookupFuncName(stmt->funcname, 0, fargtypes, false);
+	if (!isInternal)
+	{
+		aclresult = pg_proc_aclcheck(funcoid, GetUserId(), ACL_EXECUTE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, ACL_KIND_PROC,
+						   NameListToString(stmt->funcname));
+	}
 	funcrettype = get_func_rettype(funcoid);
 	if (funcrettype != TRIGGEROID)
 	{
