@@ -36,6 +36,36 @@
 
     <listitem>
      <para>
+      Require execute permission on the trigger function for
+      <command>CREATE TRIGGER</> (Robert Haas)
+     </para>
+
+     <para>
+      This missing check could allow another user to execute a trigger
+      function with forged input data, by installing it on a table he owns.
+      This is only of significance for trigger functions marked
+      <literal>SECURITY DEFINER</>, since otherwise trigger functions run
+      as the table owner anyway.  (CVE-2012-0866)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Convert newlines to spaces in names written in <application>pg_dump</>
+      comments (Robert Haas)
+     </para>
+
+     <para>
+      <application>pg_dump</> was incautious about sanitizing object names
+      that are emitted within SQL comments in its output script.  A name
+      containing a newline would at least render the script syntactically
+      incorrect.  Maliciously crafted object names could present a SQL
+      injection risk when the script is reloaded.  (CVE-2012-0868)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Fix btree index corruption from insertions concurrent with vacuuming
       (Tom Lane)
      </para>
