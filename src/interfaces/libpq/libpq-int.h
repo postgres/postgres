@@ -405,8 +405,6 @@ struct pg_conn
 								 * attempting normal connection */
 	SSL		   *ssl;			/* SSL status, if have SSL connection */
 	X509	   *peer;			/* X509 cert of server */
-	char		peer_dn[256 + 1];		/* peer distinguished name */
-	char		peer_cn[SM_USER + 1];	/* peer common name */
 #ifdef USE_SSL_ENGINE
 	ENGINE	   *engine;			/* SSL engine, if any */
 #else
