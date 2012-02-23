@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL 8.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-09-22 08:46+0000\n"
+"POT-Creation-Date: 2012-02-22 15:02+0000\n"
 "PO-Revision-Date: 2011-09-22 11:32-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
@@ -53,134 +53,141 @@ msgstr "\\%s: no se pudo cambiar directorio a «%s»: %s\n"
 msgid "Time: %.3f ms\n"
 msgstr "Duración: %.3f ms\n"
 
-#: command.c:469 command.c:497 command.c:1037
+#: command.c:469 command.c:503 command.c:1043
 msgid "no query buffer\n"
 msgstr "no hay búfer de consulta\n"
 
-#: command.c:539
+#: command.c:497
+#, c-format
+msgid "The server (version %d.%d) does not support editing function source.\n"
+msgstr ""
+"El servidor (versión %d.%d) no soporta la edición del código fuente de "
+"funciones.\n"
+
+#: command.c:545
 msgid "No changes"
 msgstr "Sin cambios"
 
-#: command.c:593
+#: command.c:599
 #, c-format
 msgid "%s: invalid encoding name or conversion procedure not found\n"
 msgstr ""
 "%s: nombre de codificación no válido o procedimiento de conversión\n"
 "no encontrado\n"
 
-#: command.c:661 command.c:695 command.c:709 command.c:726 command.c:830
-#: command.c:880 command.c:1017 command.c:1048
+#: command.c:667 command.c:701 command.c:715 command.c:732 command.c:836
+#: command.c:886 command.c:1023 command.c:1054
 #, c-format
 msgid "\\%s: missing required argument\n"
 msgstr "\\%s: falta argumento requerido\n"
 
-#: command.c:758
+#: command.c:764
 msgid "Query buffer is empty."
 msgstr "El búfer de consulta está vacío."
 
-#: command.c:768
+#: command.c:774
 msgid "Enter new password: "
 msgstr "Ingrese la nueva contraseña: "
 
-#: command.c:769
+#: command.c:775
 msgid "Enter it again: "
 msgstr "Ingrésela nuevamente: "
 
-#: command.c:773
+#: command.c:779
 #, c-format
 msgid "Passwords didn't match.\n"
 msgstr "Las constraseñas no coinciden.\n"
 
-#: command.c:791
+#: command.c:797
 #, c-format
 msgid "Password encryption failed.\n"
 msgstr "El cifrado de la contraseña falló.\n"
 
-#: command.c:859 command.c:960 command.c:1022
+#: command.c:865 command.c:966 command.c:1028
 #, c-format
 msgid "\\%s: error\n"
 msgstr "\\%s: error\n"
 
-#: command.c:900
+#: command.c:906
 msgid "Query buffer reset (cleared)."
 msgstr "El búfer de consulta ha sido reiniciado (limpiado)."
 
-#: command.c:913
+#: command.c:919
 #, c-format
 msgid "Wrote history to file \"%s/%s\".\n"
 msgstr "Se escribió la historia en el archivo \"%s/%s\".\n"
 
-#: command.c:951 common.c:52 common.c:66 common.c:90 input.c:198 mainloop.c:70
+#: command.c:957 common.c:52 common.c:66 common.c:90 input.c:198 mainloop.c:70
 #: mainloop.c:228 print.c:61 print.c:75
 #, c-format
 msgid "out of memory\n"
 msgstr "memoria agotada\n"
 
-#: command.c:1002
+#: command.c:1008
 msgid "Timing is on."
 msgstr "El despliegue de duración está activado."
 
-#: command.c:1004
+#: command.c:1010
 msgid "Timing is off."
 msgstr "El despliegue de duración está desactivado."
 
-#: command.c:1065 command.c:1085 command.c:1584 command.c:1591 command.c:1600
-#: command.c:1610 command.c:1619 command.c:1633 command.c:1650 command.c:1683
+#: command.c:1071 command.c:1091 command.c:1590 command.c:1597 command.c:1606
+#: command.c:1616 command.c:1625 command.c:1639 command.c:1656 command.c:1689
 #: common.c:137 copy.c:517 copy.c:584
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
 
-#: command.c:1167 startup.c:159
+#: command.c:1173 startup.c:159
 msgid "Password: "
 msgstr "Contraseña: "
 
-#: command.c:1174 startup.c:162 startup.c:164
+#: command.c:1180 startup.c:162 startup.c:164
 #, c-format
 msgid "Password for user %s: "
 msgstr "Contraseña para usuario %s: "
 
-#: command.c:1270 command.c:2131 common.c:183 common.c:460 common.c:525
+#: command.c:1276 command.c:2137 common.c:183 common.c:460 common.c:525
 #: common.c:811 common.c:836 common.c:920 copy.c:655 copy.c:700 copy.c:830
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: command.c:1274
+#: command.c:1280
 msgid "Previous connection kept\n"
 msgstr "Se ha mantenido la conexión anterior\n"
 
-#: command.c:1278
+#: command.c:1284
 #, c-format
 msgid "\\connect: %s"
 msgstr "\\connect: %s"
 
-#: command.c:1302
+#: command.c:1308
 #, c-format
 msgid "You are now connected to database \"%s\""
 msgstr "Ahora está conectado a la base de datos «%s»"
 
-#: command.c:1305
+#: command.c:1311
 #, c-format
 msgid " on host \"%s\""
 msgstr " en el servidor «%s»"
 
-#: command.c:1308
+#: command.c:1314
 #, c-format
 msgid " at port \"%s\""
 msgstr " en el puerto «%s»"
 
-#: command.c:1311
+#: command.c:1317
 #, c-format
 msgid " as user \"%s\""
 msgstr " como el usuario «%s»"
 
-#: command.c:1346
+#: command.c:1352
 #, c-format
 msgid "%s (%s, server %s)\n"
 msgstr "%s (%s, servidor %s)\n"
 
-#: command.c:1353
+#: command.c:1359
 #, c-format
 msgid ""
 "WARNING: %s version %d.%d, server version %d.%d.\n"
@@ -189,17 +196,17 @@ msgstr ""
 "ADVERTENCIA: %s versión %d.%d, servidor versión %d.%d.\n"
 "          Algunas características de psql pueden no funcionar.\n"
 
-#: command.c:1383
+#: command.c:1389
 #, c-format
 msgid "SSL connection (cipher: %s, bits: %i)\n"
 msgstr "conexión SSL (cifrado: %s, bits: %i)\n"
 
-#: command.c:1393
+#: command.c:1399
 #, c-format
 msgid "SSL connection (unknown cipher)\n"
 msgstr "conexión SSL (cifrado desconocido)\n"
 
-#: command.c:1414
+#: command.c:1420
 #, c-format
 msgid ""
 "WARNING: Console code page (%u) differs from Windows code page (%u)\n"
@@ -212,26 +219,26 @@ msgstr ""
 "            Vea la página de referencia de psql «Notes for Windows users»\n"
 "            para obtener más detalles.\n"
 
-#: command.c:1503
+#: command.c:1509
 #, c-format
 msgid "could not start editor \"%s\"\n"
 msgstr "no se pudo iniciar el editor «%s»\n"
 
-#: command.c:1505
+#: command.c:1511
 msgid "could not start /bin/sh\n"
 msgstr "no se pudo iniciar /bin/sh\n"
 
-#: command.c:1542
+#: command.c:1548
 #, c-format
 msgid "cannot locate temporary directory: %s\n"
 msgstr "no se puede ubicar el directorio temporal: %s\n"
 
-#: command.c:1569
+#: command.c:1575
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "no se pudo abrir archivo temporal «%s»: %s\n"
 
-#: command.c:1785
+#: command.c:1791
 msgid ""
 "\\pset: allowed formats are unaligned, aligned, wrapped, html, latex, troff-"
 "ms\n"
@@ -239,113 +246,113 @@ msgstr ""
 "\\pset: formatos permitidos son unaligned, aligned, wrapped, html, latex, "
 "troff-ms\n"
 
-#: command.c:1790
+#: command.c:1796
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "El formato de salida es %s.\n"
 
-#: command.c:1800
+#: command.c:1806
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "El estilo de borde es %d.\n"
 
-#: command.c:1812
+#: command.c:1818
 #, c-format
 msgid "Expanded display is on.\n"
 msgstr "Se ha activado el despliegue expandido.\n"
 
-#: command.c:1813
+#: command.c:1819
 #, c-format
 msgid "Expanded display is off.\n"
 msgstr "Se ha desactivado el despliegue expandido.\n"
 
-#: command.c:1826
+#: command.c:1832
 msgid "Showing locale-adjusted numeric output."
 msgstr "Mostrando salida numérica ajustada localmente"
 
-#: command.c:1828
+#: command.c:1834
 msgid "Locale-adjusted numeric output is off."
 msgstr "La salida numérica ajustada localmente está deshabilitada. "
 
-#: command.c:1841
+#: command.c:1847
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Despliegue de nulos es «%s».\n"
 
-#: command.c:1853
+#: command.c:1859
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "El separador de campos es «%s».\n"
 
-#: command.c:1867
+#: command.c:1873
 #, c-format
 msgid "Record separator is <newline>."
 msgstr "El separador de filas es <salto de línea>."
 
-#: command.c:1869
+#: command.c:1875
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "El separador de filas es «%s».\n"
 
-#: command.c:1883
+#: command.c:1889
 msgid "Showing only tuples."
 msgstr "Mostrando sólo filas."
 
-#: command.c:1885
+#: command.c:1891
 msgid "Tuples only is off."
 msgstr "Mostrar sólo filas está desactivado."
 
-#: command.c:1901
+#: command.c:1907
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "El título es «%s».\n"
 
-#: command.c:1903
+#: command.c:1909
 #, c-format
 msgid "Title is unset.\n"
 msgstr "El título ha sido indefinido.\n"
 
-#: command.c:1919
+#: command.c:1925
 #, c-format
 msgid "Table attribute is \"%s\".\n"
 msgstr "Los atributos de tabla son «%s».\n"
 
-#: command.c:1921
+#: command.c:1927
 #, c-format
 msgid "Table attributes unset.\n"
 msgstr "Los atributos de tabla han sido indefinidos.\n"
 
-#: command.c:1942
+#: command.c:1948
 msgid "Pager is used for long output."
 msgstr "El paginador se usará para salida larga."
 
-#: command.c:1944
+#: command.c:1950
 msgid "Pager is always used."
 msgstr "El paginador se usará siempre."
 
-#: command.c:1946
+#: command.c:1952
 msgid "Pager usage is off."
 msgstr "El paginador no se usará."
 
-#: command.c:1960
+#: command.c:1966
 msgid "Default footer is on."
 msgstr "El pie por omisión está activo."
 
-#: command.c:1962
+#: command.c:1968
 msgid "Default footer is off."
 msgstr "El pie de página por omisión está desactivado."
 
-#: command.c:1973
+#: command.c:1979
 #, c-format
 msgid "Target width for \"wrapped\" format is %d.\n"
 msgstr "El ancho para el formato «wrapped» es %d.\n"
 
-#: command.c:1978
+#: command.c:1984
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: opción desconocida: %s\n"
 
-#: command.c:2032
+#: command.c:2038
 msgid "\\!: failed\n"
 msgstr "\\!: falló\n"
 
