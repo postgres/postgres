@@ -733,6 +733,11 @@ wildcard_certificate_match(const char *pattern, const char *string)
 static bool
 verify_peer_name_matches_certificate(PGconn *conn)
 {
+	char	   *peer_cn;
+	int			r;
+	int			len;
+	bool		result;
+
 	/*
 	 * If told not to verify the peer name, don't do it. Return true
 	 * indicating that the verification was successful.
@@ -740,33 +745,81 @@ verify_peer_name_matches_certificate(PGconn *conn)
 	if (strcmp(conn->sslmode, "verify-full") != 0)
 		return true;
 
+	/*
+	 * Extract the common name from the certificate.
+	 *
+	 * XXX: Should support alternate names here
+	 */
+	/* First find out the name's length and allocate a buffer for it. */
+	len = X509_NAME_get_text_by_NID(X509_get_subject_name(conn->peer),
+									NID_commonName, NULL, 0);
+	if (len == -1)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("could not get server common name from server certificate\n"));
+		return false;
+	}
+	peer_cn = malloc(len + 1);
+	if (peer_cn == NULL)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("out of memory\n"));
+		return false;
+	}
+
+	r = X509_NAME_get_text_by_NID(X509_get_subject_name(conn->peer),
+								  NID_commonName, peer_cn, len + 1);
+	if (r != len)
+	{
+		/* Got different length than on the first call. Shouldn't happen. */
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("could not get server common name from server certificate\n"));
+		free(peer_cn);
+		return false;
+	}
+	peer_cn[len] = '\0';
+
+	/*
+	 * Reject embedded NULLs in certificate common name to prevent attacks
+	 * like CVE-2009-4034.
+	 */
+	if (len != strlen(peer_cn))
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("SSL certificate's common name contains embedded null\n"));
+		free(peer_cn);
+		return false;
+	}
+
+	/*
+	 * We got the peer's common name. Now compare it against the originally
+	 * given hostname.
+	 */
 	if (!(conn->pghost && conn->pghost[0] != '\0'))
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("host name must be specified for a verified SSL connection\n"));
-		return false;
+		result = false;
 	}
 	else
 	{
-		/*
-		 * Compare CN to originally given hostname.
-		 *
-		 * XXX: Should support alternate names here
-		 */
-		if (pg_strcasecmp(conn->peer_cn, conn->pghost) == 0)
+		if (pg_strcasecmp(peer_cn, conn->pghost) == 0)
 			/* Exact name match */
-			return true;
-		else if (wildcard_certificate_match(conn->peer_cn, conn->pghost))
+			result = true;
+		else if (wildcard_certificate_match(peer_cn, conn->pghost))
 			/* Matched wildcard certificate */
-			return true;
+			result = true;
 		else
 		{
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("server common name \"%s\" does not match host name \"%s\"\n"),
-							  conn->peer_cn, conn->pghost);
-			return false;
+							  peer_cn, conn->pghost);
+			result = false;
 		}
 	}
+
+	free(peer_cn);
+	return result;
 }
 
 #ifdef ENABLE_THREAD_SAFETY
@@ -1372,7 +1425,7 @@ open_client_SSL(PGconn *conn)
 	 * SSL_CTX_set_verify(), if root.crt exists.
 	 */
 
-	/* pull out server distinguished and common names */
+	/* get server certificate */
 	conn->peer = SSL_get_peer_certificate(conn->ssl);
 	if (conn->peer == NULL)
 	{
@@ -1384,33 +1437,6 @@ open_client_SSL(PGconn *conn)
 		SSLerrfree(err);
 		close_SSL(conn);
 		return PGRES_POLLING_FAILED;
-	}
-
-	X509_NAME_oneline(X509_get_subject_name(conn->peer),
-					  conn->peer_dn, sizeof(conn->peer_dn));
-	conn->peer_dn[sizeof(conn->peer_dn) - 1] = '\0';
-
-	r = X509_NAME_get_text_by_NID(X509_get_subject_name(conn->peer),
-								  NID_commonName, conn->peer_cn, SM_USER);
-	conn->peer_cn[SM_USER] = '\0';		/* buffer is SM_USER+1 chars! */
-	if (r == -1)
-	{
-		/* Unable to get the CN, set it to blank so it can't be used */
-		conn->peer_cn[0] = '\0';
-	}
-	else
-	{
-		/*
-		 * Reject embedded NULLs in certificate common name to prevent attacks
-		 * like CVE-2009-4034.
-		 */
-		if (r != strlen(conn->peer_cn))
-		{
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("SSL certificate's common name contains embedded null\n"));
-			close_SSL(conn);
-			return PGRES_POLLING_FAILED;
-		}
 	}
 
 	if (!verify_peer_name_matches_certificate(conn))

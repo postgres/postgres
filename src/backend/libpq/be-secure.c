@@ -73,6 +73,7 @@
 
 #include "libpq/libpq.h"
 #include "tcop/tcopprot.h"
+#include "utils/memutils.h"
 
 
 #ifdef USE_SSL
@@ -945,44 +946,54 @@ aloop:
 
 	port->count = 0;
 
-	/* get client certificate, if available. */
+	/* Get client certificate, if available. */
 	port->peer = SSL_get_peer_certificate(port->ssl);
-	if (port->peer == NULL)
+
+	/* and extract the Common Name from it. */
+	port->peer_cn = NULL;
+	if (port->peer != NULL)
 	{
-		strlcpy(port->peer_dn, "(anonymous)", sizeof(port->peer_dn));
-		strlcpy(port->peer_cn, "(anonymous)", sizeof(port->peer_cn));
-	}
-	else
-	{
-		X509_NAME_oneline(X509_get_subject_name(port->peer),
-						  port->peer_dn, sizeof(port->peer_dn));
-		port->peer_dn[sizeof(port->peer_dn) - 1] = '\0';
-		r = X509_NAME_get_text_by_NID(X509_get_subject_name(port->peer),
-					   NID_commonName, port->peer_cn, sizeof(port->peer_cn));
-		port->peer_cn[sizeof(port->peer_cn) - 1] = '\0';
-		if (r == -1)
+		int		len;
+
+		len = X509_NAME_get_text_by_NID(X509_get_subject_name(port->peer),
+										NID_commonName, NULL, 0);
+		if (len != -1)
 		{
-			/* Unable to get the CN, set it to blank so it can't be used */
-			port->peer_cn[0] = '\0';
-		}
-		else
-		{
+			char	   *peer_cn;
+
+			peer_cn = MemoryContextAlloc(TopMemoryContext, len + 1);
+			r = X509_NAME_get_text_by_NID(X509_get_subject_name(port->peer),
+										  NID_commonName, peer_cn, len + 1);
+			peer_cn[len] = '\0';
+			if (r != len)
+			{
+				/* shouldn't happen */
+				pfree(peer_cn);
+				close_SSL(port);
+				return -1;
+			}
+
 			/*
 			 * Reject embedded NULLs in certificate common name to prevent
 			 * attacks like CVE-2009-4034.
 			 */
-			if (r != strlen(port->peer_cn))
+			if (len != strlen(peer_cn))
 			{
 				ereport(COMMERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						 errmsg("SSL certificate's common name contains embedded null")));
+				pfree(peer_cn);
 				close_SSL(port);
 				return -1;
 			}
+
+			port->peer_cn = peer_cn;
 		}
 	}
+
 	ereport(DEBUG2,
-			(errmsg("SSL connection from \"%s\"", port->peer_cn)));
+			(errmsg("SSL connection from \"%s\"",
+					port->peer_cn ? port->peer_cn : "(anonymous)")));
 
 	/* set up debugging/info callback */
 	SSL_CTX_set_info_callback(SSL_context, info_cb);
@@ -1007,6 +1018,12 @@ close_SSL(Port *port)
 	{
 		X509_free(port->peer);
 		port->peer = NULL;
+	}
+
+	if (port->peer_cn)
+	{
+		pfree(port->peer_cn);
+		port->peer_cn = NULL;
 	}
 }
 
