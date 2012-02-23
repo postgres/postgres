@@ -161,6 +161,10 @@ CreateTrigger(CreateTrigStmt *stmt, Oid constraintOid, bool checkPermissions)
 	 * Find and validate the trigger function.
 	 */
 	funcoid = LookupFuncName(stmt->funcname, 0, fargtypes, false);
+	aclresult = pg_proc_aclcheck(funcoid, GetUserId(), ACL_EXECUTE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, ACL_KIND_PROC,
+					   NameListToString(stmt->funcname));
 	funcrettype = get_func_rettype(funcoid);
 	if (funcrettype != TRIGGEROID)
 	{
