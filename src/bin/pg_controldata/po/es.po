@@ -2,14 +2,14 @@
 #  Karim Mribti <karim@mribti.com>, 2002.
 #  Alvaro Herrera <alvherre@alvh.no-ip.org>, 2003-2008
 #
-# pgtranslation Id: pg_controldata.po,v 1.5.2.2 2011/09/22 14:35:35 alvherre Exp $
+# pgtranslation Id: pg_controldata.po,v 1.5.2.3 2012/02/22 19:17:18 alvherre Exp $
 # $PostgreSQL$
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL 8.3)\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-09-22 05:26+0000\n"
+"POT-Creation-Date: 2012-02-22 15:08+0000\n"
 "PO-Revision-Date: 2008-01-30 12:08-0300\n"
 "Last-Translator: Alvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: Castellano <pgsql-es-ayuda@postgresql.org>\n"

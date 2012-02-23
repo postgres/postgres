@@ -2,14 +2,14 @@
 # (c) <alvherre@alvh.no-ip.org>, 2003-2008
 # (c) Diego A. Gil <diego@adminsa.com>, 2005
 #
-# pgtranslation Id: psql.po,v 1.8.2.3 2011/09/22 14:35:37 alvherre Exp $
+# pgtranslation Id: psql.po,v 1.8.2.4 2012/02/22 19:17:19 alvherre Exp $
 # $PostgreSQL$
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL 8.3)\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-09-22 05:26+0000\n"
+"POT-Creation-Date: 2012-02-22 15:07+0000\n"
 "PO-Revision-Date: 2008-09-17 19:51-0400\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: Castellano <pgsql-es-ayuda@postgresql.org>\n"
