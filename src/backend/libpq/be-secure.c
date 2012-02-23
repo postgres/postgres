@@ -77,11 +77,6 @@
 
 #ifdef USE_SSL
 
-char *ssl_cert_file;
-char *ssl_key_file;
-char *ssl_ca_file;
-char *ssl_crl_file;
-
 static DH  *load_dh_file(int keylength);
 static DH  *load_dh_buffer(const char *, size_t);
 static DH  *tmp_dh_cb(SSL *s, int is_export, int keylength);
@@ -92,6 +87,11 @@ static int	open_server_SSL(Port *);
 static void close_SSL(Port *);
 static const char *SSLerrmessage(void);
 #endif
+
+char *ssl_cert_file;
+char *ssl_key_file;
+char *ssl_ca_file;
+char *ssl_crl_file;
 
 /*
  *	How much data can be sent across a secure connection
