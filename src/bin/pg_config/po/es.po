@@ -5,13 +5,13 @@
 #
 # Alvaro Herrera <alvherre@alvh.no-ip.org>, 2004-2010
 #
-# pgtranslation Id: pg_config.po,v 1.6.2.1 2011/09/22 14:15:13 alvherre Exp $
+# pgtranslation Id: pg_config.po,v 1.6.2.2 2012/02/22 19:14:26 alvherre Exp $
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_config (PostgreSQL 9.0)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-09-22 05:07+0000\n"
+"POT-Creation-Date: 2012-02-22 14:54+0000\n"
 "PO-Revision-Date: 2010-08-31 00:57-0400\n"
 "Last-Translator: Alvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: es <pgsql-es-ayuda@postgresql.org>\n"

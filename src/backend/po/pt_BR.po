@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-12-01 17:44-0300\n"
+"POT-Creation-Date: 2011-12-02 01:16-0300\n"
 "PO-Revision-Date: 2010-05-11 08:53-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -170,19 +170,17 @@ msgid "abort reason: recovery conflict"
 msgstr "razão da interrupção: conflito de recuperação"
 
 #: tcop/postgres.c:2277
-#, fuzzy
 msgid "User was holding shared buffer pin for too long."
-msgstr "Usuário estava mantendo um buffer compartilhado por muito tempo."
+msgstr ""
+"Usuário estava mantendo um buffer compartilhado na cache por muito tempo."
 
 #: tcop/postgres.c:2280
-#, fuzzy
 msgid "User was holding a relation lock for too long."
 msgstr "Usuário estava mantendo um travamento de relação por muito tempo."
 
 #: tcop/postgres.c:2283
-#, fuzzy
 msgid "User was or might have been using tablespace that must be dropped."
-msgstr "Usuário estava ou pode estar usando tablespace que dev ser removida."
+msgstr "Usuário estava ou pode estar usando tablespace que deve ser removida."
 
 #: tcop/postgres.c:2286
 msgid "User query might have needed to see row versions that must be removed."
@@ -191,9 +189,8 @@ msgstr ""
 "devem ser removidas."
 
 #: tcop/postgres.c:2289 storage/ipc/standby.c:495
-#, fuzzy
 msgid "User transaction caused buffer deadlock with recovery."
-msgstr "Transação do usuário causou impasse de buffer com recuperação."
+msgstr "Transação do usuário causou impasse com a recuperação."
 
 #: tcop/postgres.c:2292
 msgid "User was connected to a database that must be dropped."
@@ -2357,14 +2354,13 @@ msgid "function \"%s\" already exists in schema \"%s\""
 msgstr "função \"%s\" já existe no esquema \"%s\""
 
 #: commands/functioncmds.c:1974
-#, fuzzy
 msgid "no inline code specified"
-msgstr "código inline não foi especificado"
+msgstr "código incorporado não foi especificado"
 
 #: commands/functioncmds.c:2022
-#, fuzzy, c-format
+#, c-format
 msgid "language \"%s\" does not support inline code execution"
-msgstr "linguagem \"%s\" não suporta execução de código inline"
+msgstr "linguagem \"%s\" não suporta execução de código incorporado"
 
 #: commands/copy.c:312 commands/copy.c:324 commands/copy.c:358
 #: commands/copy.c:368
@@ -3088,7 +3084,6 @@ msgstr ""
 "estimados"
 
 #: commands/analyze.c:1485 executor/execQual.c:2735
-#, fuzzy
 msgid "could not convert row type"
 msgstr "não pôde converter tipo row"
 
@@ -6231,9 +6226,9 @@ msgstr "select() falhou: %m"
 #: replication/libpqwalreceiver/libpqwalreceiver.c:364
 #: replication/libpqwalreceiver/libpqwalreceiver.c:385
 #: replication/libpqwalreceiver/libpqwalreceiver.c:390
-#, fuzzy, c-format
+#, c-format
 msgid "could not receive data from WAL stream: %s"
-msgstr "não pôde receber dados do stream do WAL: %s\n"
+msgstr "não pôde receber dados do fluxo do WAL: %s"
 
 #: replication/libpqwalreceiver/libpqwalreceiver.c:381
 msgid "replication terminated by primary server"
@@ -6260,14 +6255,14 @@ msgid "unexpected EOF on standby connection"
 msgstr "EOF inesperado durante conexão do servidor em espera"
 
 #: replication/walsender.c:319
-#, fuzzy, c-format
+#, c-format
 msgid "invalid standby handshake message type %d"
-msgstr "tipo de mensagem do servidor em espera %d é inválido"
+msgstr "tipo de mensagem de negociação %d do servidor em espera é inválido"
 
 #: replication/walsender.c:360
-#, fuzzy, c-format
+#, c-format
 msgid "invalid standby closing message type %d"
-msgstr "tipo de mensagem do servidor em espera %d é inválido"
+msgstr "tipo de mensagem de fechamento %d do servidor em espera é inválido"
 
 #: replication/walsender.c:506
 #, c-format
@@ -7151,14 +7146,14 @@ msgid "entering standby mode"
 msgstr "entrando no modo em espera"
 
 #: access/transam/xlog.c:5824
-#, fuzzy, c-format
+#, c-format
 msgid "starting point-in-time recovery to XID %u"
-msgstr "iniciando recuperação do arquivador"
+msgstr "iniciando recuperação de ponto no tempo para XID %u"
 
 #: access/transam/xlog.c:5828
-#, fuzzy, c-format
+#, c-format
 msgid "starting point-in-time recovery to %s"
-msgstr "iniciando recuperação do arquivador"
+msgstr "iniciando recuperação de ponto no tempo para %s"
 
 #: access/transam/xlog.c:5832
 msgid "starting archive recovery"
@@ -7170,9 +7165,10 @@ msgid "checkpoint record is at %X/%X"
 msgstr "registro do ponto de controle está em %X/%X"
 
 #: access/transam/xlog.c:5861
-#, fuzzy
 msgid "could not find redo location referenced by checkpoint record"
-msgstr "não pôde localizar registro do ponto de controle requerido"
+msgstr ""
+"não pôde encontrar local do redo referenciado pelo registro do ponto de "
+"controle"
 
 #: access/transam/xlog.c:5862 access/transam/xlog.c:5869
 #, c-format
@@ -7212,9 +7208,9 @@ msgid "next MultiXactId: %u; next MultiXactOffset: %u"
 msgstr "próximo MultiXactId: %u; próximo MultiXactOffset: %u"
 
 #: access/transam/xlog.c:5932
-#, fuzzy, c-format
+#, c-format
 msgid "oldest unfrozen transaction ID: %u, in database %u"
-msgstr "extensão da relação %u do banco de dados %u"
+msgstr "ID de transação descongelado mais antigo: %u, no banco de dados %u"
 
 #: access/transam/xlog.c:5936
 msgid "invalid next transaction ID"
@@ -7474,6 +7470,8 @@ msgstr "dado inválido no arquivo \"%s\""
 msgid ""
 "pg_stop_backup cleanup done, waiting for required WAL segments to be archived"
 msgstr ""
+"pg_stop_backup concluído, esperando os segmentos do WAL requeridos serem "
+"arquivados"
 
 #: access/transam/xlog.c:8747
 #, c-format
@@ -9750,7 +9748,7 @@ msgstr "faltando entrada para tabela \"%s\" na cláusula FROM"
 #: parser/parse_node.c:82
 #, c-format
 msgid "target lists can have at most %d entries"
-msgstr "listas de alvo podem ter no máximo %d entradas"
+msgstr "listas de alvos podem ter no máximo %d entradas"
 
 #: parser/parse_node.c:222
 #, c-format
@@ -10138,7 +10136,6 @@ msgstr ""
 
 #: scan.l:564 scan.l:572 scan.l:580 scan.l:581 scan.l:582 scan.l:1238
 #: scan.l:1265 scan.l:1269 scan.l:1307 scan.l:1311 scan.l:1333
-#, fuzzy
 msgid "invalid Unicode surrogate pair"
 msgstr "par substituto Unicode inválido"
 
@@ -11026,13 +11023,12 @@ msgid "SELECT FOR UPDATE/SHARE is not allowed with window functions"
 msgstr "SELECT FOR UPDATE/SHARE não é permitido com funções deslizantes"
 
 #: parser/analyze.c:2060
-#, fuzzy
 msgid ""
 "SELECT FOR UPDATE/SHARE is not allowed with set-returning functions in the "
 "target list"
 msgstr ""
 "SELECT FOR UPDATE/SHARE não é permitido em funções que retornam conjunto na "
-"lista alvo"
+"lista de alvos"
 
 #: parser/analyze.c:2136
 msgid "SELECT FOR UPDATE/SHARE must specify unqualified relation names"
@@ -12050,13 +12046,13 @@ msgstr ""
 "busca LDAP falhou para filtro \"%s\" no servidor \"%s\": usuário não existe"
 
 #: libpq/auth.c:2423
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "LDAP search failed for filter \"%s\" on server \"%s\": user is not unique "
 "(%ld matches)"
 msgstr ""
 "busca LDAP falhou para filtro \"%s\" no servidor \"%s\": usuário não é único "
-"(%ld usuários)"
+"(%ld ocorrências)"
 
 #: libpq/auth.c:2440
 #, c-format
@@ -12093,9 +12089,8 @@ msgid "RADIUS server not specified"
 msgstr "servidor RADIUS não foi especificado"
 
 #: libpq/auth.c:2656
-#, fuzzy
 msgid "RADIUS secret not specified"
-msgstr "segredo RADIUS não foi especificado"
+msgstr "segredo do RADIUS não foi especificado"
 
 #: libpq/auth.c:2700
 msgid ""
@@ -12104,14 +12099,12 @@ msgstr ""
 "autenticação RADIUS não suporta senhas mais longas do que 16 caracteres"
 
 #: libpq/auth.c:2711
-#, fuzzy
 msgid "could not generate random encryption vector"
-msgstr "não pôde gerar vetor de encriptação randômico"
+msgstr "não pôde gerar vetor de criptografia randômico"
 
 #: libpq/auth.c:2734
-#, fuzzy
 msgid "could not perform MD5 encryption of password"
-msgstr "não pôde realizar encriptação MD5 da senha"
+msgstr "não pôde realizar criptografia MD5 da senha"
 
 #: libpq/auth.c:2756
 #, c-format
@@ -12129,19 +12122,18 @@ msgid "could not send RADIUS packet: %m"
 msgstr "não pôde enviar pacote RADIUS: %m"
 
 #: libpq/auth.c:2816 libpq/auth.c:2841
-#, fuzzy
 msgid "timeout waiting for RADIUS response"
 msgstr "tempo de espera esgotado para resposta do RADIUS"
 
 #: libpq/auth.c:2834
-#, fuzzy, c-format
+#, c-format
 msgid "could not check status on RADIUS socket: %m"
-msgstr "não pôde verificar estado no soquete RADIUS: %m"
+msgstr "não pôde verificar status no soquete do RADIUS: %m"
 
 #: libpq/auth.c:2863
-#, fuzzy, c-format
+#, c-format
 msgid "could not read RADIUS response: %m"
-msgstr "não pôde ler resposta RADIUS: %m"
+msgstr "não pôde ler resposta do RADIUS: %m"
 
 #: libpq/auth.c:2875 libpq/auth.c:2879
 #, c-format
@@ -12164,9 +12156,8 @@ msgid "RADIUS response is to a different request: %i (should be %i)"
 msgstr "resposta RADIUS é para uma solicitação diferente: %i (deveria ser %i)"
 
 #: libpq/auth.c:2928
-#, fuzzy
 msgid "could not perform MD5 encryption of received packet"
-msgstr "não pôde realizar encriptação MD5 do pacote recebido"
+msgstr "não pôde realizar criptografia MD5 do pacote recebido"
 
 #: libpq/auth.c:2937
 msgid "RADIUS response has incorrect MD5 signature"
@@ -13453,12 +13444,16 @@ msgid ""
 "Sets the maximum delay before canceling queries when a hot standby server is "
 "processing archived WAL data."
 msgstr ""
+"Define o tempo máximo antes de cancelar consultas quando um servidor em "
+"espera ativo está processando dados do WAL arquivados."
 
 #: utils/misc/guc.c:1388
 msgid ""
 "Sets the maximum delay before canceling queries when a hot standby server is "
 "processing streamed WAL data."
 msgstr ""
+"Define o tempo máximo antes de cancelar consultas quando um servidor em "
+"espera ativo está processando dados do WAL enviados."
 
 #: utils/misc/guc.c:1408
 msgid "Sets the maximum number of concurrent connections."
@@ -13587,6 +13582,8 @@ msgid ""
 "Number of transactions by which VACUUM and HOT cleanup should be deferred, "
 "if any."
 msgstr ""
+"Número de transações pela qual a limpeza do VACUUM e HOT deve ser adiada, se "
+"houver."
 
 #: utils/misc/guc.c:1647
 msgid "Sets the maximum number of locks per transaction."

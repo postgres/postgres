@@ -6,13 +6,13 @@
 # Emanuel Calvo Franco <postgres.arg@gmail.com>, 2009.
 # Alvaro Herrera <alvherre@alvh.no-ip.org>, 2009-2010
 #
-# pgtranslation Id: plpython.po,v 1.6.2.1 2011/09/22 14:15:14 alvherre Exp $
+# pgtranslation Id: plpython.po,v 1.6.2.2 2012/02/22 19:14:27 alvherre Exp $
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL 9.0)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-09-22 05:06+0000\n"
+"POT-Creation-Date: 2012-02-22 14:50+0000\n"
 "PO-Revision-Date: 2010-08-31 14:19-0400\n"
 "Last-Translator: Alvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
