@@ -895,8 +895,8 @@ exec_command(const char *cmd,
 		char	   *pw1;
 		char	   *pw2;
 
-		pw1 = simple_prompt("Enter new password: ", 100, false);
-		pw2 = simple_prompt("Enter it again: ", 100, false);
+		pw1 = simple_prompt("Enter new password: ", MAX_PASSWD, false);
+		pw2 = simple_prompt("Enter it again: ", MAX_PASSWD, false);
 
 		if (strcmp(pw1, pw2) != 0)
 		{
@@ -1462,7 +1462,7 @@ prompt_for_password(const char *username)
 	char	   *result;
 
 	if (username == NULL)
-		result = simple_prompt("Password: ", 100, false);
+		result = simple_prompt("Password: ", MAX_PASSWD, false);
 	else
 	{
 		char	   *prompt_text;
@@ -1470,7 +1470,7 @@ prompt_for_password(const char *username)
 		prompt_text = malloc(strlen(username) + 100);
 		snprintf(prompt_text, strlen(username) + 100,
 				 _("Password for user %s: "), username);
-		result = simple_prompt(prompt_text, 100, false);
+		result = simple_prompt(prompt_text, MAX_PASSWD, false);
 		free(prompt_text);
 	}
 

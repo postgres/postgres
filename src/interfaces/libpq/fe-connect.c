@@ -4905,22 +4905,31 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 
 	while (!feof(fp) && !ferror(fp))
 	{
-		char	   *t = buf,
+		char	   *t = calloc(1,sizeof(char)),
 				   *ret,
 				   *p1,
 				   *p2;
 		int			len;
 
-		if (fgets(buf, sizeof(buf), fp) == NULL)
-			break;
 
-		len = strlen(buf);
+		do
+		{
+			if ( fgets(buf, LINELEN, fp) == NULL)
+				break;
+			t = realloc(t, strlen(t)+1+strlen(buf));
+			/* Out of memory? */
+			if( !t )
+				return NULL;
+			strcat(t, buf);
+			len = strlen(t);
+		} while (strlen(buf) > 0 && t[len-1] != '\n');
+
 		if (len == 0)
 			continue;
 
 		/* Remove trailing newline */
-		if (buf[len - 1] == '\n')
-			buf[len - 1] = 0;
+		while ( len > 0 && (t[len-1] == '\n' || t[len-1] == '\r'))
+			t[--len] = 0;
 
 		if ((t = pwdfMatchesString(t, hostname)) == NULL ||
 			(t = pwdfMatchesString(t, port)) == NULL ||
