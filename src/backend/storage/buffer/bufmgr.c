@@ -988,6 +988,7 @@ MarkBufferDirty(Buffer buffer)
 	if (dirtied)
 	{
 		VacuumPageDirty++;
+		pgBufferUsage.shared_blks_dirtied++;
 		if (VacuumCostActive)
 			VacuumCostBalance += VacuumCostPageDirty;
 		if (ProcGlobal->bgwriterLatch)

@@ -1183,12 +1183,14 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		{
 			bool		has_shared = (usage->shared_blks_hit > 0 ||
 									  usage->shared_blks_read > 0 ||
-									  usage->shared_blks_written);
+									  usage->shared_blks_dirtied > 0 ||
+									  usage->shared_blks_written > 0);
 			bool		has_local = (usage->local_blks_hit > 0 ||
 									 usage->local_blks_read > 0 ||
-									 usage->local_blks_written);
+									 usage->local_blks_dirtied > 0 ||
+									 usage->local_blks_written > 0);
 			bool		has_temp = (usage->temp_blks_read > 0 ||
-									usage->temp_blks_written);
+									usage->temp_blks_written > 0);
 
 			/* Show only positive counter values. */
 			if (has_shared || has_local || has_temp)
@@ -1205,6 +1207,9 @@ ExplainNode(PlanState *planstate, List *ancestors,
 					if (usage->shared_blks_read > 0)
 						appendStringInfo(es->str, " read=%ld",
 										 usage->shared_blks_read);
+					if (usage->shared_blks_dirtied > 0)
+						appendStringInfo(es->str, " dirtied=%ld",
+										 usage->shared_blks_dirtied);
 					if (usage->shared_blks_written > 0)
 						appendStringInfo(es->str, " written=%ld",
 										 usage->shared_blks_written);
@@ -1220,6 +1225,9 @@ ExplainNode(PlanState *planstate, List *ancestors,
 					if (usage->local_blks_read > 0)
 						appendStringInfo(es->str, " read=%ld",
 										 usage->local_blks_read);
+					if (usage->local_blks_dirtied > 0)
+						appendStringInfo(es->str, " dirtied=%ld",
+										 usage->local_blks_dirtied);
 					if (usage->local_blks_written > 0)
 						appendStringInfo(es->str, " written=%ld",
 										 usage->local_blks_written);
@@ -1243,9 +1251,11 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		{
 			ExplainPropertyLong("Shared Hit Blocks", usage->shared_blks_hit, es);
 			ExplainPropertyLong("Shared Read Blocks", usage->shared_blks_read, es);
+			ExplainPropertyLong("Shared Dirtied Blocks", usage->shared_blks_dirtied, es);
 			ExplainPropertyLong("Shared Written Blocks", usage->shared_blks_written, es);
 			ExplainPropertyLong("Local Hit Blocks", usage->local_blks_hit, es);
 			ExplainPropertyLong("Local Read Blocks", usage->local_blks_read, es);
+			ExplainPropertyLong("Local Dirtied Blocks", usage->local_blks_dirtied, es);
 			ExplainPropertyLong("Local Written Blocks", usage->local_blks_written, es);
 			ExplainPropertyLong("Temp Read Blocks", usage->temp_blks_read, es);
 			ExplainPropertyLong("Temp Written Blocks", usage->temp_blks_written, es);

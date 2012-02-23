@@ -276,6 +276,10 @@ MarkLocalBufferDirty(Buffer buffer)
 	Assert(LocalRefCount[bufid] > 0);
 
 	bufHdr = &LocalBufferDescriptors[bufid];
+
+	if (!(bufHdr->flags & BM_DIRTY))
+		pgBufferUsage.local_blks_dirtied++;
+
 	bufHdr->flags |= BM_DIRTY;
 }
 

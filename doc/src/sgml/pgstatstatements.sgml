@@ -100,6 +100,13 @@
      </row>
 
      <row>
+      <entry><structfield>shared_blks_dirtied</structfield></entry>
+      <entry><type>bigint</type></entry>
+      <entry></entry>
+      <entry>Total number of shared blocks dirtied by the statement</entry>
+     </row>
+
+     <row>
       <entry><structfield>shared_blks_written</structfield></entry>
       <entry><type>bigint</type></entry>
       <entry></entry>
@@ -118,6 +125,13 @@
       <entry><type>bigint</type></entry>
       <entry></entry>
       <entry>Total number of local blocks reads by the statement</entry>
+     </row>
+
+     <row>
+      <entry><structfield>local_blks_dirtied</structfield></entry>
+      <entry><type>bigint</type></entry>
+      <entry></entry>
+      <entry>Total number of local blocks dirtied by the statement</entry>
      </row>
 
      <row>
