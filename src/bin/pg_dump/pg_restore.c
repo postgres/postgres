@@ -463,7 +463,7 @@ usage(const char *progname)
 			 "                           created\n"));
 	printf(_("  --no-security-labels     do not restore security labels\n"));
 	printf(_("  --no-tablespaces         do not restore tablespace assignments\n"));
-	printf(_("  --section=SECTION        restore named section (pre-data, data or post-data)\n"));
+	printf(_("  --section=SECTION        restore named section (pre-data, data, or post-data)\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                           use SET SESSION AUTHORIZATION commands instead of\n"
 	  "                           ALTER OWNER commands to set ownership\n"));

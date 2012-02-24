@@ -1245,7 +1245,7 @@ main(int argc, char **argv)
 					streamwal = true;
 				else
 				{
-					fprintf(stderr, _("%s: invalid xlog option \"%s\", must be empty, \"fetch\" or \"stream\"\n"),
+					fprintf(stderr, _("%s: invalid xlog option \"%s\", must be empty, \"fetch\", or \"stream\"\n"),
 							progname, optarg);
 					exit(1);
 				}

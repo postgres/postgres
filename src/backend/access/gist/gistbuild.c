@@ -248,7 +248,7 @@ gistValidateBufferingOption(char *value)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("invalid value for \"buffering\" option"),
-			   errdetail("Valid values are \"on\", \"off\" and \"auto\".")));
+			   errdetail("Valid values are \"on\", \"off\", and \"auto\".")));
 	}
 }
 

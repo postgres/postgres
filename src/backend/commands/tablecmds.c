@@ -2115,7 +2115,7 @@ renameatt_check(Oid myrelid, Form_pg_class classform, bool recursing)
 		relkind != RELKIND_FOREIGN_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a table, view, composite type, index or foreign table",
+				 errmsg("\"%s\" is not a table, view, composite type, index, or foreign table",
 						NameStr(classform->relname))));
 
 	/*

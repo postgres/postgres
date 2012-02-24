@@ -1223,7 +1223,7 @@ width_bucket_numeric(PG_FUNCTION_ARGS)
 		NUMERIC_IS_NAN(bound2))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION),
-			  errmsg("operand, lower bound and upper bound cannot be NaN")));
+			  errmsg("operand, lower bound, and upper bound cannot be NaN")));
 
 	init_var(&result_var);
 	init_var(&count_var);

@@ -739,7 +739,7 @@ AtPrepare_Notify(void)
 	if (pendingActions || pendingNotifies)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot PREPARE a transaction that has executed LISTEN, UNLISTEN or NOTIFY")));
+				 errmsg("cannot PREPARE a transaction that has executed LISTEN, UNLISTEN, or NOTIFY")));
 }
 
 /*
