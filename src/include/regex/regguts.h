@@ -409,7 +409,7 @@ struct subre
 #define  PREF(f) ((f)&LOCAL)
 #define  PREF2(f1, f2)	 ((PREF(f1) != 0) ? PREF(f1) : PREF(f2))
 #define  COMBINE(f1, f2) (UP((f1)|(f2)) | PREF2(f1, f2))
-	short		id;				/* ID of subre (1..ntree) */
+	short		id;				/* ID of subre (1..ntree-1) */
 	int			subno;			/* subexpression number (for 'b' and '(') */
 	short		min;			/* min repetitions for iteration or backref */
 	short		max;			/* max repetitions for iteration or backref */
@@ -446,7 +446,7 @@ struct guts
 	size_t		nsub;			/* copy of re_nsub */
 	struct subre *tree;
 	struct cnfa search;			/* for fast preliminary search */
-	int			ntree;
+	int			ntree;			/* number of subre's, less one */
 	struct colormap cmap;
 	int			FUNCPTR(compare, (const chr *, const chr *, size_t));
 	struct subre *lacons;		/* lookahead-constraint vector */
