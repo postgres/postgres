@@ -409,7 +409,7 @@ struct subre
 #define  PREF(f) ((f)&LOCAL)
 #define  PREF2(f1, f2)	 ((PREF(f1) != 0) ? PREF(f1) : PREF(f2))
 #define  COMBINE(f1, f2) (UP((f1)|(f2)) | PREF2(f1, f2))
-	short		retry;			/* index into retry memory */
+	short		id;				/* ID of subre (1..ntree) */
 	int			subno;			/* subexpression number (for 'b' and '(') */
 	short		min;			/* min repetitions for iteration or backref */
 	short		max;			/* max repetitions for iteration or backref */

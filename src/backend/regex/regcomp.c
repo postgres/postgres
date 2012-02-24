@@ -1623,7 +1623,7 @@ subre(struct vars * v,
 
 	ret->op = op;
 	ret->flags = flags;
-	ret->retry = 0;
+	ret->id = 0;				/* will be assigned later */
 	ret->subno = 0;
 	ret->min = ret->max = 1;
 	ret->left = NULL;
@@ -1693,7 +1693,7 @@ optst(struct vars * v,
 }
 
 /*
- * numst - number tree nodes (assigning retry indexes)
+ * numst - number tree nodes (assigning "id" indexes)
  */
 static int						/* next number */
 numst(struct subre * t,
@@ -1704,7 +1704,7 @@ numst(struct subre * t,
 	assert(t != NULL);
 
 	i = start;
-	t->retry = (short) i++;
+	t->id = (short) i++;
 	if (t->left != NULL)
 		i = numst(t->left, i);
 	if (t->right != NULL)
@@ -1999,11 +1999,11 @@ stid(struct subre * t,
 	 char *buf,
 	 size_t bufsize)
 {
-	/* big enough for hex int or decimal t->retry? */
-	if (bufsize < sizeof(void *) * 2 + 3 || bufsize < sizeof(t->retry) * 3 + 1)
+	/* big enough for hex int or decimal t->id? */
+	if (bufsize < sizeof(void *) * 2 + 3 || bufsize < sizeof(t->id) * 3 + 1)
 		return "unable";
-	if (t->retry != 0)
-		sprintf(buf, "%d", t->retry);
+	if (t->id != 0)
+		sprintf(buf, "%d", t->id);
 	else
 		sprintf(buf, "%p", t);
 	return buf;
