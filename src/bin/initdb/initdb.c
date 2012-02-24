@@ -1303,8 +1303,8 @@ get_set_pwd(void)
 		/*
 		 * Read password from terminal
 		 */
-		pwd1 = simple_prompt("Enter new superuser password: ", 100, false);
-		pwd2 = simple_prompt("Enter it again: ", 100, false);
+		pwd1 = simple_prompt("Enter new superuser password: ", MAX_PASSWD, false);
+		pwd2 = simple_prompt("Enter it again: ", MAX_PASSWD, false);
 		if (strcmp(pwd1, pwd2) != 0)
 		{
 			fprintf(stderr, _("Passwords didn't match.\n"));
@@ -1323,7 +1323,7 @@ get_set_pwd(void)
 		 * for now.
 		 */
 		FILE	   *pwf = fopen(pwfilename, "r");
-		char		pwdbuf[MAXPGPATH];
+		char		*pwdbuf = calloc(1,1), buf[1024];
 		int			i;
 
 		if (!pwf)
@@ -1332,17 +1332,33 @@ get_set_pwd(void)
 					progname, pwfilename, strerror(errno));
 			exit_nicely();
 		}
-		if (!fgets(pwdbuf, sizeof(pwdbuf), pwf))
+
+		do
+		{
+			if (fgets(buf, sizeof(buf), pwf) == NULL)
+				break;
+			pwdbuf = realloc( pwdbuf, strlen(pwdbuf)+1+strlen(buf) );
+			if (!pwdbuf)
+			{
+				// Out of memory ?
+				fprintf(stderr, _("%s: could not read password from file \"%s\": %s\n"),
+					progname, pwfilename, strerror(errno));
+				exit_nicely();
+			}
+			strcat( pwdbuf, buf);
+			i = strlen(pwdbuf);
+		} while (strlen(buf) > 0 &&  pwdbuf[i-1] != '\n');
+
+		while (i > 0 && (pwdbuf[i - 1] == '\r' || pwdbuf[i - 1] == '\n'))
+			pwdbuf[--i] = '\0';
+
+		if (!i)
 		{
 			fprintf(stderr, _("%s: could not read password from file \"%s\": %s\n"),
 					progname, pwfilename, strerror(errno));
 			exit_nicely();
 		}
 		fclose(pwf);
-
-		i = strlen(pwdbuf);
-		while (i > 0 && (pwdbuf[i - 1] == '\r' || pwdbuf[i - 1] == '\n'))
-			pwdbuf[--i] = '\0';
 
 		pwd1 = xstrdup(pwdbuf);
 

@@ -1687,7 +1687,7 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 	static char *password = NULL;
 
 	if (prompt_password == TRI_YES && !password)
-		password = simple_prompt("Password: ", 100, false);
+		password = simple_prompt("Password: ", MAX_PASSWD, false);
 
 	/*
 	 * Start the connection.  Loop until we have a password if requested by
@@ -1733,7 +1733,7 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 			prompt_password != TRI_NO)
 		{
 			PQfinish(conn);
-			password = simple_prompt("Password: ", 100, false);
+			password = simple_prompt("Password: ", MAX_PASSWD, false);
 			new_pass = true;
 		}
 	} while (new_pass);

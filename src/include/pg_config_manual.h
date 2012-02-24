@@ -23,6 +23,20 @@
 #define NAMEDATALEN 64
 
 /*
+ * Maximum password length via command line tools
+ *
+ * If 0, no maximum password length is enforced.
+ * If greater than 0, this defines the maximum number of characters
+ * which will be read as input for a password prompt.  Input in
+ * excess of this maximum will be silently ignored.
+ *
+ * The database itself does not have a password length limit,
+ * regardless of this setting.
+ *
+ */
+#define MAX_PASSWD 0
+
+/*
  * Maximum number of arguments to a function.
  *
  * The minimum value is 8 (GIN indexes use 8-argument support functions).

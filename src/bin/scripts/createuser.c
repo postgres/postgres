@@ -197,8 +197,8 @@ main(int argc, char *argv[])
 		char	   *pw1,
 				   *pw2;
 
-		pw1 = simple_prompt("Enter password for new role: ", 100, false);
-		pw2 = simple_prompt("Enter it again: ", 100, false);
+		pw1 = simple_prompt("Enter password for new role: ", MAX_PASSWD, false);
+		pw2 = simple_prompt("Enter it again: ", MAX_PASSWD, false);
 		if (strcmp(pw1, pw2) != 0)
 		{
 			fprintf(stderr, _("Passwords didn't match.\n"));

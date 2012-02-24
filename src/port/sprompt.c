@@ -38,7 +38,10 @@ char *
 simple_prompt(const char *prompt, int maxlen, bool echo)
 {
 	int			length;
+	int			buflen;
+	int			bufsize = 1024;
 	char	   *destination;
+	char	   buf[bufsize];
 	FILE	   *termin,
 			   *termout;
 
@@ -52,7 +55,11 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 #endif
 #endif
 
-	destination = (char *) malloc(maxlen + 1);
+	if (maxlen > 0) {
+		destination = (char *) calloc(1, sizeof(char));
+	} else {
+		destination = (char *) malloc((maxlen + 1) * sizeof(char));
+	}
 	if (!destination)
 		return NULL;
 
@@ -108,21 +115,34 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 		fflush(termout);
 	}
 
-	if (fgets(destination, maxlen + 1, termin) == NULL)
-		destination[0] = '\0';
+	if (maxlen > 0) {
+		if (fgets(destination, maxlen + 1, termin) == NULL)
+			destination[0] = '\0';
 
-	length = strlen(destination);
-	if (length > 0 && destination[length - 1] != '\n')
-	{
-		/* eat rest of the line */
-		char		buf[128];
-		int			buflen;
+		length = strlen(destination);
+		if (length > 0 && destination[length - 1] != '\n')
+		{
+			/* eat rest of the line */
+			do
+			{
+				if (fgets(buf, bufsize, termin) == NULL)
+					break;
+				buflen = strlen(buf);
+			} while (buflen > 0 && buf[buflen - 1] != '\n');
+		}
 
+	} else {
 		do
 		{
-			if (fgets(buf, sizeof(buf), termin) == NULL)
+			if (fgets(buf, bufsize, termin) == NULL)
 				break;
 			buflen = strlen(buf);
+			destination = realloc( destination, strlen(destination)+1+buflen );
+			/* Out of memory ? */
+			if( !destination )
+				return NULL;
+			strcat( destination, buf );
+			length = strlen(destination);
 		} while (buflen > 0 && buf[buflen - 1] != '\n');
 	}
 

@@ -174,7 +174,7 @@ main(int argc, char *argv[])
 	}
 
 	if (pset.getPassword == TRI_YES)
-		password = simple_prompt(password_prompt, 100, false);
+		password = simple_prompt(password_prompt, MAX_PASSWD, false);
 
 	/* loop until we have a password if requested by backend */
 	do
@@ -213,7 +213,7 @@ main(int argc, char *argv[])
 			pset.getPassword != TRI_NO)
 		{
 			PQfinish(pset.db);
-			password = simple_prompt(password_prompt, 100, false);
+			password = simple_prompt(password_prompt, MAX_PASSWD, false);
 			new_pass = true;
 		}
 	} while (new_pass);
