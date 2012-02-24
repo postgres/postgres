@@ -34,3 +34,40 @@ select 'b' ~ '^([bc])\1*$' as t;
  t
 (1 row)
 
+-- Test quantified backref within a larger expression
+select 'abc abc abc' ~ '^(\w+)( \1)+$' as t;
+ t 
+---
+ t
+(1 row)
+
+select 'abc abd abc' ~ '^(\w+)( \1)+$' as f;
+ f 
+---
+ f
+(1 row)
+
+select 'abc abc abd' ~ '^(\w+)( \1)+$' as f;
+ f 
+---
+ f
+(1 row)
+
+select 'abc abc abc' ~ '^(.+)( \1)+$' as t;
+ t 
+---
+ t
+(1 row)
+
+select 'abc abd abc' ~ '^(.+)( \1)+$' as f;
+ f 
+---
+ f
+(1 row)
+
+select 'abc abc abd' ~ '^(.+)( \1)+$' as f;
+ f 
+---
+ f
+(1 row)
+

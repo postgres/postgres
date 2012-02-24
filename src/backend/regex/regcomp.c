@@ -1036,11 +1036,17 @@ parseqatom(struct vars * v,
 	/*----------
 	 * Prepare a general-purpose state skeleton.
 	 *
-	 *	  ---> [s] ---prefix---> [begin] ---atom---> [end] ----rest---> [rp]
-	 *	 /											  /
-	 * [lp] ----> [s2] ----bypass---------------------
+	 * In the no-backrefs case, we want this:
 	 *
-	 * where bypass is an empty, and prefix is some repetitions of atom
+	 * [lp] ---> [s] ---prefix---> [begin] ---atom---> [end] ---rest---> [rp]
+	 *
+	 * where prefix is some repetitions of atom.  In the general case we need
+	 *
+	 * [lp] ---> [s] ---iterator---> [s2] ---rest---> [rp]
+	 *
+	 * where the iterator wraps around [begin] ---atom---> [end]
+	 *
+	 * We make the s state here for both cases; s2 is made below if needed
 	 *----------
 	 */
 	s = newstate(v->nfa);		/* first, new endpoints for the atom */
@@ -1051,11 +1057,9 @@ parseqatom(struct vars * v,
 	NOERR();
 	atom->begin = s;
 	atom->end = s2;
-	s = newstate(v->nfa);		/* and spots for prefix and bypass */
-	s2 = newstate(v->nfa);
+	s = newstate(v->nfa);		/* set up starting state */
 	NOERR();
 	EMPTYARC(lp, s);
-	EMPTYARC(lp, s2);
 	NOERR();
 
 	/* break remaining subRE into x{...} and what follows */
@@ -1089,28 +1093,9 @@ parseqatom(struct vars * v,
 	}
 
 	/*
-	 * It's quantifier time.  If the atom is just a BACKREF, we'll let it deal
-	 * with quantifiers internally.  Otherwise, the first step is to turn
-	 * x{0,...} into x{1,...}|empty
+	 * It's quantifier time.  If the atom is just a backref, we'll let it deal
+	 * with quantifiers internally.
 	 */
-	if (m == 0 && atomtype != BACKREF)
-	{
-		EMPTYARC(s2, atom->end);	/* the bypass */
-		assert(PREF(qprefer) != 0);
-		f = COMBINE(qprefer, atom->flags);
-		t = subre(v, '|', f, lp, atom->end);
-		NOERR();
-		t->left = atom;
-		t->right = subre(v, '|', PREF(f), s2, atom->end);
-		NOERR();
-		t->right->left = subre(v, '=', 0, s2, atom->end);
-		NOERR();
-		*atomp = t;
-		atomp = &t->left;
-		m = 1;
-	}
-
-	/* deal with the rest of the quantifier */
 	if (atomtype == BACKREF)
 	{
 		/* special case:  backrefs have internal quantifiers */
@@ -1120,17 +1105,25 @@ parseqatom(struct vars * v,
 		atom->min = (short) m;
 		atom->max = (short) n;
 		atom->flags |= COMBINE(qprefer, atom->flags);
+		/* rest of branch can be strung starting from atom->end */
+		s2 = atom->end;
 	}
 	else if (m == 1 && n == 1)
 	{
 		/* no/vacuous quantifier:  done */
 		EMPTYARC(s, atom->begin);		/* empty prefix */
+		/* rest of branch can be strung starting from atom->end */
+		s2 = atom->end;
 	}
-	else
+	else if (m > 0 && !(atom->flags & BACKR))
 	{
 		/*
-		 * Turn x{m,n} into x{m-1,n-1}x, with capturing parens in only the
-		 * second x
+		 * If there's no backrefs involved, we can turn x{m,n} into
+		 * x{m-1,n-1}x, with capturing parens in only the second x.  This
+		 * is valid because we only care about capturing matches from the
+		 * final iteration of the quantifier.  It's a win because we can
+		 * implement the backref-free left side as a plain DFA node, since
+		 * we don't really care where its submatches are.
 		 */
 		dupnfa(v->nfa, atom->begin, atom->end, s, atom->begin);
 		assert(m >= 1 && m != INFINITY && n >= 1);
@@ -1142,16 +1135,36 @@ parseqatom(struct vars * v,
 		NOERR();
 		t->right = atom;
 		*atomp = t;
+		/* rest of branch can be strung starting from atom->end */
+		s2 = atom->end;
+	}
+	else
+	{
+		/* general case: need an iteration node */
+		s2 = newstate(v->nfa);
+		NOERR();
+		moveouts(v->nfa, atom->end, s2);
+		NOERR();
+		dupnfa(v->nfa, atom->begin, atom->end, s, s2);
+		repeat(v, s, s2, m, n);
+		f = COMBINE(qprefer, atom->flags);
+		t = subre(v, '*', f, s, s2);
+		NOERR();
+		t->min = (short) m;
+		t->max = (short) n;
+		t->left = atom;
+		*atomp = t;
+		/* rest of branch is to be strung from iteration's end state */
 	}
 
 	/* and finally, look after that postponed recursion */
 	t = top->right;
 	if (!(SEE('|') || SEE(stopper) || SEE(EOS)))
-		t->right = parsebranch(v, stopper, type, atom->end, rp, 1);
+		t->right = parsebranch(v, stopper, type, s2, rp, 1);
 	else
 	{
-		EMPTYARC(atom->end, rp);
-		t->right = subre(v, '=', 0, atom->end, rp);
+		EMPTYARC(s2, rp);
+		t->right = subre(v, '=', 0, s2, rp);
 	}
 	assert(SEE('|') || SEE(stopper) || SEE(EOS));
 	t->flags |= COMBINE(t->flags, t->right->flags);
@@ -1214,6 +1227,9 @@ scannum(struct vars * v)
 /*
  * repeat - replicate subNFA for quantifiers
  *
+ * The sub-NFA strung from lp to rp is modified to represent m to n
+ * repetitions of its initial contents.
+ *
  * The duplication sequences used here are chosen carefully so that any
  * pointers starting out pointing into the subexpression end up pointing into
  * the last occurrence.  (Note that it may not be strung between the same
@@ -1229,7 +1245,7 @@ repeat(struct vars * v,
 	   int n)
 {
 #define  SOME	 2
-#define  INF 3
+#define  INF	 3
 #define  PAIR(x, y)  ((x)*4 + (y))
 #define  REDUCE(x)	 ( ((x) == INFINITY) ? INF : (((x) > 1) ? SOME : (x)) )
 	const int	rm = REDUCE(m);
@@ -1603,7 +1619,7 @@ subre(struct vars * v,
 		v->treechain = ret;
 	}
 
-	assert(strchr("|.b(=", op) != NULL);
+	assert(strchr("=b|.*(", op) != NULL);
 
 	ret->op = op;
 	ret->flags = flags;

@@ -102,15 +102,15 @@ consists of a tree of sub-expressions ("subre"s).  Leaf tree nodes are
 either plain regular expressions (which are executed as DFAs in the manner
 described above) or back-references (which try to match the input to some
 previous substring).  Non-leaf nodes are capture nodes (which save the
-location of the substring currently matching their child node) or
-concatenation or alternation nodes.  At execution time, the executor
-recursively scans the tree.  At concatenation or alternation nodes,
-it considers each possible alternative way of matching the input string,
-ie each place where the string could be split for a concatenation, or each
-child node for an alternation.  It tries the next alternative if the match
-fails according to the child nodes.  This is exactly the sort of
-backtracking search done by a traditional NFA regex engine.  If there are
-many tree levels it can get very slow.
+location of the substring currently matching their child node),
+concatenation, alternation, or iteration nodes.  At execution time, the
+executor recursively scans the tree.  At concatenation, alternation, or
+iteration nodes, it considers each possible alternative way of matching the
+input string, that is each place where the string could be split for a
+concatenation or iteration, or each child node for an alternation.  It
+tries the next alternative if the match fails according to the child nodes.
+This is exactly the sort of backtracking search done by a traditional NFA
+regex engine.  If there are many tree levels it can get very slow.
 
 But all is not lost: we can still be smarter than the average pure NFA
 engine.  To do this, each subre node has an associated DFA, which

@@ -372,10 +372,28 @@ struct cnfa
 
 /*
  * subexpression tree
+ *
+ * "op" is one of:
+ *		'='  plain regex without interesting substructure (implemented as DFA)
+ *		'b'  back-reference (has no substructure either)
+ *		'('  capture node: captures the match of its single child
+ *		'.'  concatenation: matches a match for left, then a match for right
+ *		'|'  alternation: matches a match for left or a match for right
+ *		'*'  iteration: matches some number of matches of its single child
+ *
+ * Note: the right child of an alternation must be another alternation or
+ * NULL; hence, an N-way branch requires N alternation nodes, not N-1 as you
+ * might expect.  This could stand to be changed.  Actually I'd rather see
+ * a single alternation node with N children, but that will take revising
+ * the representation of struct subre.
+ *
+ * Note: when a backref is directly quantified, we stick the min/max counts
+ * into the backref rather than plastering an iteration node on top.  This is
+ * for efficiency: there is no need to search for possible division points.
  */
 struct subre
 {
-	char		op;				/* '|', '.' (concat), 'b' (backref), '(', '=' */
+	char		op;				/* see type codes above */
 	char		flags;
 #define  LONGER  01				/* prefers longer match */
 #define  SHORTER 02				/* prefers shorter match */
@@ -393,8 +411,8 @@ struct subre
 #define  COMBINE(f1, f2) (UP((f1)|(f2)) | PREF2(f1, f2))
 	short		retry;			/* index into retry memory */
 	int			subno;			/* subexpression number (for 'b' and '(') */
-	short		min;			/* min repetitions, for backref only */
-	short		max;			/* max repetitions, for backref only */
+	short		min;			/* min repetitions for iteration or backref */
+	short		max;			/* max repetitions for iteration or backref */
 	struct subre *left;			/* left child, if any (also freelist chain) */
 	struct subre *right;		/* right child, if any */
 	struct state *begin;		/* outarcs from here... */
