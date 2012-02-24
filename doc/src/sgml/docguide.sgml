@@ -272,7 +272,7 @@ CATALOG "docbook/4.2/catalog"
     available for <productname>Debian GNU/Linux</productname>.
     To install, simply use:
 <programlisting>
-apt-get install docbook docbook-dsssl docbook-xsl openjade1.3 xsltproc opensp
+apt-get install docbook docbook-dsssl docbook-xsl openjade1.3 opensp xsltproc
 </programlisting>
    </para>
   </sect2>
