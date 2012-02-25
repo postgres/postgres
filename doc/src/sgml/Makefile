@@ -89,6 +89,9 @@ man-stamp: stylesheet-man.xsl postgres.xml
 .PHONY: draft
 
 JADE.html.call = $(JADE) $(JADEFLAGS) $(SPFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t sgml -i output-html
+ifeq ($(STYLE),website)
+JADE.html.call += -V website-stylesheet
+endif
 
 # The draft target creates HTML output in draft mode, without index (for faster build).
 draft: postgres.sgml $(ALMOSTALLSGML) stylesheet.dsl
