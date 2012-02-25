@@ -269,7 +269,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
 
      <row>
       <entry><structname>pg_stat_database</><indexterm><primary>pg_stat_database</primary></indexterm></entry>
-      <entry>One row per database, showing database wide statistics. See
+      <entry>One row per database, showing database-wide statistics. See
        <xref linkend="pg-stat-database-view"> for more details.
       </entry>
      </row>
@@ -277,7 +277,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      <row>
       <entry><structname>pg_stat_database_conflicts</><indexterm><primary>pg_stat_database_conflicts</primary></indexterm></entry>
       <entry>
-       One row per database showing database wide statistics about
+       One row per database showing database-wide statistics about
        query cancels due to conflict with recovery on standby servers.
        Will only contain information on standby servers, since
        conflicts do not occur on master servers.
@@ -495,7 +495,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    queries that use the same underlying statistics access functions as
    these standard views do.  These functions are listed in <xref
    linkend="monitoring-stats-funcs-table">.  The per-database access
-   functions take a database OID as argument to identify which
+   functions take a database OID as an argument to identify which
    database to report on.  The per-table and per-index functions take
    a table or index OID.  The functions for function-call statistics
    take a function OID.  (Note that only tables, indexes, and functions
@@ -522,9 +522,9 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
     <row>
      <entry>datid</entry>
      <entry><type>oid</></entry>
-     <entry>The oid of the database the backend is connected to.
+     <entry>The OID of the database the backend is connected to.
      This value can also be returned by directly calling
-     the <function>pg_stat_get_backend_dbid</function>.</entry>
+     the <function>pg_stat_get_backend_dbid</function> function.</entry>
     </row>
     <row>
      <entry>datname</entry>
@@ -836,7 +836,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
     <row>
      <entry>datid</entry>
      <entry><type>oid</></entry>
-     <entry>The oid of the database</entry>
+     <entry>The OID of the database</entry>
     </row>
     <row>
      <entry>datname</entry>
@@ -855,15 +855,15 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
     <row>
      <entry>xact_commit</entry>
      <entry><type>bigint</></entry>
-     <entry>The number of transactions in this database that has committed.
-     This value can also be returned by directly calling
+     <entry>The number of transactions in this database that have been
+     committed. This value can also be returned by directly calling
      the <function>pg_stat_get_db_xact_commit</function> function.</entry>
     </row>
     <row>
      <entry>xact_rollback</entry>
      <entry><type>bigint</></entry>
-     <entry>The number of transactions in this database that has rolled back.
-     This value can also be returned by directly calling
+     <entry>The number of transactions in this database that have been
+     rolled back. This value can also be returned by directly calling
      the <function>pg_stat_get_db_xact_rollback</function> function.</entry>
     </row>
     <row>
@@ -974,7 +974,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
 
   <para>
    The <structname>pg_stat_database</structname> view will contain one row
-   for each database in the cluster showing database wide statistics.
+   for each database in the cluster showing database-wide statistics.
   </para>
 
   <table id="pg-stat-database-conflicts-view" xreflabel="pg_stat_database_conflicts">
@@ -992,7 +992,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
     <row>
      <entry>datid</entry>
      <entry><type>oid</></entry>
-     <entry>The oid of the database</entry>
+     <entry>The OID of the database</entry>
     </row>
     <row>
      <entry>datname</entry>
@@ -1041,7 +1041,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
 
   <para>
    The <structname>pg_stat_database_conflicts</structname> view will contain
-   one row per database showing database wide statistics about
+   one row per database showing database-wide statistics about
    query cancels due to conflict with recovery on standby servers.
    Will only contain information on standby servers, since
    conflicts do not occur on master servers.
@@ -1067,7 +1067,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
     <row>
      <entry>usesysid</entry>
      <entry><type>oid</></entry>
-     <entry>The oid of the user logged into this WAL sender process</entry>
+     <entry>The OID of the user logged into this WAL sender process</entry>
     </row>
     <row>
      <entry>usename</entry>
@@ -1102,7 +1102,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      <entry><type>integer</></entry>
      <entry>
       The remote TCP port that the client is using for communication
-      to the , or <symbol>NULL</> if a unix socket is used.
+      to the, or <symbol>NULL</> if a unix socket is used.
      </entry>
     </row>
     <row>
@@ -1179,7 +1179,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
     <row>
      <entry>relid</entry>
      <entry><type>oid</></entry>
-     <entry>The OID of the table this row</entry>
+     <entry>The OID of the table</entry>
     </row>
     <row>
      <entry>schemaname</entry>
