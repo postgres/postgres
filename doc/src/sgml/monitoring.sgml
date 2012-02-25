@@ -225,8 +225,9 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    <structname>pg_stat_xact_sys_tables</>,
    <structname>pg_stat_xact_user_tables</>, and
    <structname>pg_stat_xact_user_functions</>, or via these views' underlying
-   functions.  These numbers do not act as stated above; instead they update
-   continuously throughout the transaction.
+   functions (named the same as the standard statistics functions but with the
+   prefix <function>pg_stat_get_xact_</function>).  These numbers do not act
+   as stated above; instead they update continuously throughout the transaction.
   </para>
 
   <table id="monitoring-stats-views-table">
@@ -489,6 +490,22 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    into the kernel's handling of I/O.
   </para>
 
+  <para>
+   Other ways of looking at the statistics can be set up by writing
+   queries that use the same underlying statistics access functions as
+   these standard views do.  These functions are listed in <xref
+   linkend="monitoring-stats-funcs-table">.  The per-database access
+   functions take a database OID as argument to identify which
+   database to report on.  The per-table and per-index functions take
+   a table or index OID.  The functions for function-call statistics
+   take a function OID.  (Note that only tables, indexes, and functions
+   in the current database can be seen with these functions.)  The
+   per-server-process access functions take a server process
+   number, which ranges from one to the number of currently active
+   server processes.
+  </para>
+
+
   <table id="pg-stat-activity-view" xreflabel="pg_stat_activity">
    <title>pg_stat_activity view</title>
 
@@ -505,7 +522,9 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
     <row>
      <entry>datid</entry>
      <entry><type>oid</></entry>
-     <entry>The oid of the database the backend is connected to.</entry>
+     <entry>The oid of the database the backend is connected to.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_backend_dbid</function>.</entry>
     </row>
     <row>
      <entry>datname</entry>
@@ -515,12 +534,16 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
     <row>
      <entry>pid</entry>
      <entry><type>integer</></entry>
-     <entry>The process ID of the backend.</entry>
+     <entry>The process ID of the backend.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_backend_pid</function>.</entry>
     </row>
     <row>
      <entry>usesysid</entry>
      <entry><type>oid</></entry>
-     <entry>The id of the user logged into the backend.</entry>
+     <entry>The id of the user logged into the backend.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_backend_userid</function>.</entry>
     </row>
     <row>
      <entry>usename</entry>
@@ -540,6 +563,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       If this field is not set, it indicates that the client is either connected
       via a Unix socket on the server machine or is an internal process such
       as autovacuum.
+      This value can also be returned by directly calling
+      the <function>pg_stat_get_backend_client_addr</function>.
      </entry>
     </row>
     <row>
@@ -557,6 +582,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      <entry>
       The remote TCP port that the client is using for communication
       to the backend, or <symbol>NULL</> if a unix socket is used.
+      This value can also be returned by directly calling
+      the <function>pg_stat_get_backend_client_port</function>.
      </entry>
     </row>
     <row>
@@ -565,6 +592,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      <entry>
       The time when this process was started,  i.e. when the
       client connected to the server.
+      This value can also be returned by directly calling
+      the <function>pg_stat_get_backend_start</function>.
      </entry>
     </row>
     <row>
@@ -574,6 +603,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       The time when the current transaction was started. If the client is
       using autocommit for transactions, this value is equal to the
       query_start column.
+      This value can also be returned by directly calling
+      the <function>pg_stat_get_backend_xact_start</function>.
      </entry>
     </row>
     <row>
@@ -583,6 +614,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       The time when the currently active query started, or if
       <structfield>state</> is <literal>idle</>, when the last query
       was started.
+      This value can also be returned by directly calling
+      the <function>pg_stat_get_backend_activity_start</function>.
      </entry>
     </row>
     <row>
@@ -595,6 +628,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      <entry><type>boolean</></entry>
      <entry>
       Boolean indicating if a backend is currently waiting on a lock.
+      This value can also be returned by directly calling
+      the <function>pg_stat_get_backend_waiting</function>.
      </entry>
     </row>
     <row>
@@ -687,6 +722,18 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    per server process, showing information related to each connection to
    the server.
   </para>
+  <para>
+   All functions used in the view are indexed by backend id number. The
+   function <function>pg_stat_get_backend_idset</function> provides a
+   convenient way to generate one row for each active server process. For
+   example, to show the <acronym>PID</>s and current queries of all server processes:
+
+<programlisting>
+SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
+       pg_stat_get_backend_activity(s.backendid) AS query
+    FROM (SELECT pg_stat_get_backend_idset() AS backendid) AS s;
+</programlisting>
+  </para>
 
   <table id="pg-stat-bgwriter-view" xreflabel="pg_stat_bgwriter">
    <title>pg_stat_bgwriter view</title>
@@ -704,33 +751,45 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      <row>
       <entry>checkpoints_timed</entry>
       <entry><type>bigint</type></entry>
-      <entry>Number of scheduled checkpoints</entry>
+      <entry>Number of scheduled checkpoints.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_bgwriter_timed_checkpoints</function> function.</entry>
      </row>
      <row>
       <entry>checkpoints_requested</entry>
       <entry><type>bigint</type></entry>
-      <entry>Number of requested checkpoints</entry>
+      <entry>Number of requested checkpoints.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_bgwriter_requested_checkpoints</function> function.</entry>
      </row>
      <row>
       <entry>buffers_checkpoint</entry>
       <entry><type>bigint</type></entry>
-      <entry>Number of buffers written during checkpoints</entry>
+      <entry>Number of buffers written during checkpoints.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_bgwriter_buf_written_checkpoints</function> function.</entry>
      </row>
      <row>
       <entry>buffers_clean</entry>
       <entry><type>bigint</type></entry>
-      <entry>Number of buffers written by the background writer</entry>
+      <entry>Number of buffers written by the background writer.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_bgwriter_buf_written_clean</function> function.</entry>
      </row>
      <row>
       <entry>maxwritten_clean</entry>
       <entry><type>bigint</type></entry>
       <entry>Number of times the background writer stopped a cleaning
-      scan because it had written too many buffers</entry>
+      scan because it had written too many buffers.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_bgwriter_maxwritten_clean</function> function.</entry>
      </row>
      <row>
       <entry>buffers_backend</entry>
       <entry><type>bigint</type></entry>
-      <entry>Number of buffers written directly by a backend</entry>
+      <entry>Number of buffers written directly by a backend.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_buf_written_backend</function> function.</entry>
      </row>
      <row>
       <entry>buffers_backend_fsync</entry>
@@ -742,12 +801,16 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      <row>
       <entry>buffers_alloc</entry>
       <entry><type>bigint</type></entry>
-      <entry>Number of buffers allocated</entry>
+      <entry>Number of buffers allocated.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_buf_alloc</function> function.</entry>
      </row>
      <row>
       <entry>stats_reset</entry>
       <entry><type>bigint</type></entry>
-      <entry>The last time these statistics were reset</entry>
+      <entry>The last time these statistics were reset.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_bgwriter_stat_reset_time</function> function.</entry>
      </row>
     </tbody>
     </tgroup>
@@ -786,54 +849,75 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      <entry>The number of backends currently connected to this database.
      This is the only column in this view that returns a value for the
      current state, all other columns return the accumulated values since
-     the last reset.</entry>
+     the last reset. This value can also be returned by directly calling
+     the <function>pg_stat_get_db_numbackends</function> function.</entry>
     </row>
     <row>
      <entry>xact_commit</entry>
      <entry><type>bigint</></entry>
-     <entry>The number of transactions in this database that has committed</entry>
+     <entry>The number of transactions in this database that has committed.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_db_xact_commit</function> function.</entry>
     </row>
     <row>
      <entry>xact_rollback</entry>
      <entry><type>bigint</></entry>
-     <entry>The number of transactions in this database that has rolled back</entry>
+     <entry>The number of transactions in this database that has rolled back.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_db_xact_rollback</function> function.</entry>
     </row>
     <row>
      <entry>blks_read</entry>
      <entry><type>bigint</></entry>
-     <entry>The number of disk blocks read in this database</entry>
+     <entry>The number of disk blocks read in this database.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_db_blocks_fetched</function> and
+     <function>pg_stat_get_db_blocks_hit</function> functions and
+     subtracting the results.</entry>
     </row>
     <row>
      <entry>blks_hits</entry>
      <entry><type>bigint</></entry>
      <entry>The number of disk blocks read from the buffer cache
      (this only includes hits in the PostgreSQL buffer cache, and not
-     the operating system filesystem cache)</entry>
+     the operating system filesystem cache).
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_db_blocks_hit</function> function.</entry>
     </row>
     <row>
      <entry>tup_returned</entry>
      <entry><type>bigint</></entry>
-     <entry>The number of rows returned by queries in this database</entry>
+     <entry>The number of rows returned by queries in this database.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_db_tuples_returned</function> function.</entry>
     </row>
     <row>
      <entry>tup_fetched</entry>
      <entry><type>bigint</></entry>
-     <entry>The number of rows fetched by queries in this database</entry>
+     <entry>The number of rows fetched by queries in this database.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_db_tuples_fetched</function> function.</entry>
     </row>
     <row>
      <entry>tup_inserted</entry>
      <entry><type>bigint</></entry>
-     <entry>The number of rows inserted by queries in this database</entry>
+     <entry>The number of rows inserted by queries in this database.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_db_tuples_inserted</function> function.</entry>
     </row>
     <row>
      <entry>tup_updated</entry>
      <entry><type>bigint</></entry>
-     <entry>The number of rows updated by queries in this database</entry>
+     <entry>The number of rows updated by queries in this database.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_db_tuples_updated</function> function.</entry>
     </row>
     <row>
      <entry>tup_deleted</entry>
      <entry><type>bigint</></entry>
-     <entry>The number of rows deleted by queries in this database</entry>
+     <entry>The number of rows deleted by queries in this database.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_db_tuples_deleted</function> function.</entry>
     </row>
     <row>
      <entry>conflicts</entry>
@@ -841,7 +925,9 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      <entry>
       The number of queries canceled due to conflict with recovery
       (on standby servers) in this database. (See
-      <xref linkend="pg-stat-database-conflicts-view"> for more details)
+      <xref linkend="pg-stat-database-conflicts-view"> for more details).
+      This value can also be returned by directly calling
+      the <function>pg_stat_get_db_conflict_all</function> function.
      </entry>
     </row>
     <row>
@@ -852,6 +938,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       All temporary files are counted, regardless of why the temporary file
       was created (sorting or hash) or file size, and regardless of the
       <xref linkend="guc-log-temp-files"> setting.
+      This value can also be returned by directly calling
+      the <function>pg_stat_get_db_temp_files</function> function.
      </entry>
     </row>
     <row>
@@ -862,17 +950,23 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       the database. All temporary files are counted, regardless of why
       the temporary file was created (sorting or hash) or file size, and
       regardless of the <xref linkend="guc-log-temp-files"> setting.
+      This value can also be returned by directly calling
+      the <function>pg_stat_get_db_temp_bytes</function> function.
      </entry>
     </row>
     <row>
      <entry>deadlocks</entry>
      <entry><type>bigint</></entry>
-     <entry>Number of deadlocks detected in the database</entry>
+     <entry>Number of deadlocks detected in the database.
+      This value can also be returned by directly calling
+      the <function>pg_stat_get_db_deadlocks</function> function.</entry>
     </row>
     <row>
      <entry>stats_reset</entry>
      <entry><type>timestamptz</></entry>
-     <entry>The last time the statistics were reset</entry>
+     <entry>The last time the statistics were reset.
+      This value can also be returned by directly calling
+      the <function>pg_stat_get_reset_time</function> function.</entry>
     </row>
    </tbody>
    </tgroup>
@@ -909,31 +1003,37 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      <entry>confl_tablespace</entry>
      <entry><type>bigint</></entry>
      <entry>The number of queries that have been canceled due to
-      dropped tablespaces</entry>
+      dropped tablespaces. This value can also be returned by directly calling
+      the <function>pg_stat_get_db_conflict_tablespace</function> function.</entry>
     </row>
     <row>
      <entry>confl_lock</entry>
      <entry><type>bigint</></entry>
      <entry>The number of queries that have been canceled due to
-      lock timeouts</entry>
+      lock timeouts. This value can also be returned by directly calling
+      the <function>pg_stat_get_db_conflict_lock</function> function.</entry>
     </row>
     <row>
      <entry>confl_snapshot</entry>
      <entry><type>bigint</></entry>
      <entry>The number of queries that have been canceled due to
-      old snapshots</entry>
+      old snapshots. This value can also be returned by directly calling
+      the <function>pg_stat_get_db_conflict_snapshot</function> function.</entry>
     </row>
     <row>
      <entry>confl_bufferpin</entry>
      <entry><type>bigint</></entry>
      <entry>The number of queries that have been canceled due to
-      pinned buffers</entry>
+      pinned buffers. This value can also be returned by directly calling
+      the <function>pg_stat_get_db_conflict_bufferpin</function> function.</entry>
     </row>
     <row>
      <entry>confl_deadlock</entry>
      <entry><type>bigint</></entry>
      <entry>The number of queries that have been canceled due to
-      deadlocks</entry>
+      deadlocks. This value can also be returned by directly calling
+      the <function>pg_stat_get_db_conflict_startup_deadlock</function>
+      function.</entry>
     </row>
    </tbody>
    </tgroup>
@@ -1094,12 +1194,16 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
     <row>
      <entry>seq_scan</entry>
      <entry><type>bigint</></entry>
-     <entry>The number of sequential scans initiated on this table</entry>
+     <entry>The number of sequential scans initiated on this table.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_numscans</function> function.</entry>
     </row>
     <row>
      <entry>seq_tup_read</entry>
      <entry><type>bigint</></entry>
-     <entry>The number of live rows fetch by sequential scans</entry>
+     <entry>The number of live rows fetch by sequential scans.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_tuples_returned</function> function.</entry>
     </row>
     <row>
      <entry>idx_scan</entry>
@@ -1109,77 +1213,105 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
     <row>
      <entry>idx_tup_fetch</entry>
      <entry><type>bigint</></entry>
-     <entry>The number of live rows fetch by index scans</entry>
+     <entry>The number of live rows fetch by index scans.</entry>
     </row>
     <row>
      <entry>n_tup_ins</entry>
      <entry><type>bigint</></entry>
-     <entry>The number of rows inserted</entry>
+     <entry>The number of rows inserted.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_tuples_inserted</function> function.</entry>
     </row>
     <row>
      <entry>n_tup_upd</entry>
      <entry><type>bigint</></entry>
-     <entry>The number of rows updated</entry>
+     <entry>The number of rows updated.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_tuples_updated</function> function.</entry>
     </row>
     <row>
      <entry>n_tup_del</entry>
      <entry><type>bigint</></entry>
-     <entry>The number of rows deleted</entry>
+     <entry>The number of rows deleted.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_tuples_deleted</function> function.</entry>
     </row>
     <row>
      <entry>n_tup_hot_upd</entry>
      <entry><type>bigint</></entry>
-     <entry>The number of rows HOT (i.e., no separate index update) updated</entry>
+     <entry>The number of rows HOT (i.e., no separate index update) updated.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_tuples_hot_updated</function> function.</entry>
     </row>
     <row>
      <entry>n_live_tup</entry>
      <entry><type>bigint</></entry>
-     <entry>The number of live rows</entry>
+     <entry>The number of live rows.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_live_tuples</function> function.</entry>
     </row>
     <row>
      <entry>n_dead_tup</entry>
      <entry><type>bigint</></entry>
-     <entry>The number of dead rows</entry>
+     <entry>The number of dead rows.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_dead_tuples</function> function.</entry>
     </row>
     <row>
      <entry>last_vacuum</entry>
      <entry><type>timestamp with time zone</></entry>
-     <entry>The last time the table was manually non-<option>FULL</> vacuumed</entry>
+     <entry>The last time the table was manually non-<option>FULL</> vacuumed.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_last_vacuum_time</function> function.</entry>
     </row>
     <row>
      <entry>last_autovacuum</entry>
      <entry><type>timestamp with time zone</></entry>
-     <entry>The last time the table was vacuumed by the autovacuum daemon</entry>
+     <entry>The last time the table was vacuumed by the autovacuum daemon.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_last_autovacuum_time</function> function.</entry>
     </row>
     <row>
      <entry>last_analyze</entry>
      <entry><type>timestamp with time zone</></entry>
-     <entry>The last time the table was manually analyzed</entry>
+     <entry>The last time the table was manually analyzed.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_last_analyze_time</function> function.</entry>
     </row>
     <row>
      <entry>last_autoanalyze</entry>
      <entry><type>timestamp with time zone</></entry>
-     <entry>The last time the table was analyzed by the autovacuum daemon</entry>
+     <entry>The last time the table was analyzed by the autovacuum daemon.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_last_autoanalyze_time</function> function.</entry>
     </row>
     <row>
      <entry>vacuum_count</entry>
      <entry><type>bigint</></entry>
-     <entry>The number of times this table has been manually non-<option>FULL</> vacuumed</entry>
+     <entry>The number of times this table has been manually non-<option>FULL</> vacuumed.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_vacuum_count</function> function.</entry>
     </row>
     <row>
      <entry>autovacuum_count</entry>
      <entry><type>bigint</></entry>
-     <entry>The number of times this table has been vacuumed by the autovacuum daemon</entry>
+     <entry>The number of times this table has been vacuumed by the autovacuum daemon.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_autovacuum_count</function> function.</entry>
     </row>
     <row>
      <entry>analyze_count</entry>
      <entry><type>bigint</></entry>
-     <entry>The number of times this table has been manually analyzed</entry>
+     <entry>The number of times this table has been manually analyzed.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_analyze_count</function> function.</entry>
     </row>
     <row>
      <entry>autoanalyze_count</entry>
      <entry><type>bigint</></entry>
-     <entry>The number of times this table has been analyzed by the autovacuum daemon</entry>
+     <entry>The number of times this table has been analyzed by the autovacuum daemon.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_autoanalyze_count</function> function.</entry>
     </row>
    </tbody>
    </tgroup>
@@ -1234,17 +1366,23 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
     <row>
      <entry>idx_scan</entry>
      <entry><type>bigint</></entry>
-     <entry>Number of index scans initiated on this index</entry>
+     <entry>Number of index scans initiated on this index.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_numscans</function> function.</entry>
     </row>
     <row>
      <entry>idx_tup_read</entry>
      <entry><type>bigint</></entry>
-     <entry>Number of index entries returned by scans on this index</entry>
+     <entry>Number of index entries returned by scans on this index.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_tuples_returned</function> function.</entry>
     </row>
     <row>
      <entry>idx_tup_fetch</entry>
      <entry><type>bigint</></entry>
-     <entry>Number of live table rows fetched by simple index scans using this index</entry>
+     <entry>Number of live table rows fetched by simple index scans using this index.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_tuples_fetched</function> function.</entry>
     </row>
    </tbody>
    </tgroup>
@@ -1289,12 +1427,18 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
     <row>
      <entry>heap_blks_read</entry>
      <entry><type>name</></entry>
-     <entry>Number of disk blocks read from this table</entry>
+     <entry>Number of disk blocks read from this table.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_blocks_fetched</function> and
+     <function>pg_stat_get_blocks_hit</function> functions and
+     subtracting the results.</entry>
     </row>
     <row>
      <entry>heap_blks_hit</entry>
      <entry><type>name</></entry>
-     <entry>Number of buffer hits in this table</entry>
+     <entry>Number of buffer hits in this table.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_blocks_hit</function> function.</entry>
     </row>
     <row>
      <entry>idx_blks_read</entry>
@@ -1304,7 +1448,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
     <row>
      <entry>idx_blks_hit</entry>
      <entry><type>name</></entry>
-     <entry>Number of buffer hits in all indexes of this table</entry>
+     <entry>Number of buffer hits in all indexes of this table.</entry>
     </row>
     <row>
      <entry>toast_blks_read</entry>
@@ -1379,12 +1523,18 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
     <row>
      <entry>idx_blks_read</entry>
      <entry><type>name</></entry>
-     <entry>Number of disk blocks read from the index</entry>
+     <entry>Number of disk blocks read from the index.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_blocks_fetched</function> and
+     <function>pg_stat_get_blocks_hit</function> functions and
+     subtracting the results.</entry>
     </row>
     <row>
      <entry>idx_blks_hit</entry>
      <entry><type>name</></entry>
-     <entry>Number of buffer hits in the index</entry>
+     <entry>Number of buffer hits in the index.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_blocks_hit</function> function.</entry>
     </row>
    </tbody>
    </tgroup>
@@ -1476,19 +1626,25 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
     <row>
      <entry>calls</entry>
      <entry><type>bigint</></entry>
-     <entry>Number of times the function has been called</entry>
+     <entry>Number of times the function has been called.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_function_calls</function> function.</entry>
     </row>
     <row>
      <entry>total_time</entry>
      <entry><type>bigint</></entry>
      <entry>Total time spent in this functions and all other functions
-     called by it, in milliseconds.</entry>
+     called by it, in milliseconds.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_function_time</function> function.</entry>
     </row>
     <row>
      <entry>self_time</entry>
      <entry><type>bigint</></entry>
      <entry>Total time spent in this functions itself but not including
-     other functions called by it, in milliseconds.</entry>
+     other functions called by it, in milliseconds.
+     This value can also be returned by directly calling
+     the <function>pg_stat_get_function_self_time</function> function.</entry>
     </row>
    </tbody>
    </tgroup>
@@ -1501,25 +1657,11 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   </para>
 
  <sect3 id="monitoring-stats-functions">
-  <title>Statistics Access Functions</title>
+  <title>Other Statistics Functions</title>
 
-  <para>
-   Other ways of looking at the statistics can be set up by writing
-   queries that use the same underlying statistics access functions as
-   these standard views do.  These functions are listed in <xref
-   linkend="monitoring-stats-funcs-table">.  The per-database access
-   functions take a database OID as argument to identify which
-   database to report on.  The per-table and per-index functions take
-   a table or index OID.  The functions for function-call statistics
-   take a function OID.  (Note that only tables, indexes, and functions
-   in the current database can be seen with these functions.)  The
-   per-server-process access functions take a server process
-   number, which ranges from one to the number of currently active
-   server processes.
-  </para>
 
   <table id="monitoring-stats-funcs-table">
-   <title>Statistics Access Functions</title>
+   <title>Other Statistics Functions</title>
 
    <tgroup cols="3">
     <thead>
@@ -1531,401 +1673,6 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
     </thead>
 
     <tbody>
-     <row>
-      <entry><literal><function>pg_stat_get_db_numbackends</function>(<type>oid</type>)</literal></entry>
-      <entry><type>integer</type></entry>
-      <entry>
-       Number of active server processes for database
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_db_xact_commit</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of transactions committed in database
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_db_xact_rollback</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of transactions rolled back in database
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_db_blocks_fetched</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of disk block fetch requests for database
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_db_blocks_hit</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of disk block fetch requests found in cache for database
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_db_tuples_returned</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of tuples returned for database
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_db_tuples_fetched</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of tuples fetched for database
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_db_tuples_inserted</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of tuples inserted in database
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_db_tuples_updated</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of tuples updated in database
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_db_tuples_deleted</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of tuples deleted in database
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_db_conflict_tablespace</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of queries canceled because of recovery conflict with dropped tablespaces in database
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_db_conflict_lock</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of queries canceled because of recovery conflict with locks in database
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_db_conflict_snapshot</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of queries canceled because of recovery conflict with old snapshots in database
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_db_conflict_bufferpin</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of queries canceled because of recovery conflict with pinned buffers in database
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_db_conflict_startup_deadlock</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of queries canceled because of recovery conflict with deadlocks in database
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_db_stat_reset_time</function>(<type>oid</type>)</literal></entry>
-      <entry><type>timestamptz</type></entry>
-      <entry>
-       Time of the last statistics reset for the database.  Initialized to the
-       system time during the first connection to each database.  The reset time
-       is updated when you call <function>pg_stat_reset</function> on the
-       database, as well as upon execution of
-       <function>pg_stat_reset_single_table_counters</function> against any
-       table or index in it.
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_db_temp_bytes</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Amount of data written to temporary files by queries in the database.
-       All temporary files are counted, regardless of why the temporary file
-       was created (sorting or hash), and regardless of the
-       <xref linkend="guc-log-temp-files"> setting.
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_db_temp_files</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of temporary files written by queries in the database. All temporary
-       files are counted, regardless of why the temporary file was created
-       (sorting or hash) or file size, and regardless of the
-       <xref linkend="guc-log-temp-files"> setting.
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_db_deadlocks</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of deadlocks detected in the database
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_numscans</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of sequential scans done when argument is a table,
-       or number of index scans done when argument is an index
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_tuples_returned</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of rows read by sequential scans when argument is a table,
-       or number of index entries returned when argument is an index
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_tuples_fetched</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of table rows fetched by bitmap scans when argument is a table,
-       or table rows fetched by simple index scans using the index
-       when argument is an index
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_tuples_inserted</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of rows inserted into table
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_tuples_updated</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of rows updated in table (includes HOT updates)
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_tuples_deleted</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of rows deleted from table
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_tuples_hot_updated</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of rows HOT-updated in table
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_live_tuples</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of live rows in table
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_dead_tuples</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of dead rows in table
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_blocks_fetched</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of disk block fetch requests for table or index
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_blocks_hit</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of disk block requests found in cache for table or index
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_last_vacuum_time</function>(<type>oid</type>)</literal></entry>
-      <entry><type>timestamptz</type></entry>
-      <entry>
-       Time of the last non-<option>FULL</option> vacuum initiated by the user on this table
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_last_autovacuum_time</function>(<type>oid</type>)</literal></entry>
-      <entry><type>timestamptz</type></entry>
-      <entry>
-       Time of the last vacuum initiated by the autovacuum daemon on this table
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_last_analyze_time</function>(<type>oid</type>)</literal></entry>
-      <entry><type>timestamptz</type></entry>
-      <entry>
-       Time of the last analyze initiated by the user on this table
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_last_autoanalyze_time</function>(<type>oid</type>)</literal></entry>
-      <entry><type>timestamptz</type></entry>
-      <entry>
-       Time of the last analyze initiated by the autovacuum daemon on this
-       table
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_vacuum_count</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       The number of times this table has been non-<option>FULL</> vacuumed manually
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_autovacuum_count</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       The number of times this table has been vacuumed by the autovacuum daemon
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_analyze_count</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       The number of times this table has been analyzed manually
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_autoanalyze_count</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       The number of times this table has been analyzed by the autovacuum daemon
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_xact_numscans</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of sequential scans done when argument is a table,
-       or number of index scans done when argument is an index, in the current transaction
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_xact_tuples_returned</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of rows read by sequential scans when argument is a table,
-       or number of index entries returned when argument is an index, in the current transaction
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_xact_tuples_fetched</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of table rows fetched by bitmap scans when argument is a table,
-       or table rows fetched by simple index scans using the index
-       when argument is an index, in the current transaction
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_xact_tuples_inserted</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of rows inserted into table, in the current transaction
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_xact_tuples_updated</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of rows updated in table (includes HOT updates), in the current transaction
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_xact_tuples_deleted</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of rows deleted from table, in the current transaction
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_xact_tuples_hot_updated</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of rows HOT-updated in table, in the current transaction
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_xact_blocks_fetched</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of disk block fetch requests for table or index, in the current transaction
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_xact_blocks_hit</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of disk block requests found in cache for table or index, in the current transaction
-      </entry>
-     </row>
 
      <row>
        <!-- See also the entry for this in func.sgml -->
@@ -1948,59 +1695,6 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><literal><function>pg_stat_get_function_calls</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of times the function has been called
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_function_time</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Total wall clock time spent in the function, in microseconds.  Includes
-       the time spent in functions called by this one.
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_function_self_time</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Time spent in only this function. Time spent in called functions
-       is excluded.
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_xact_function_calls</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of times the function has been called, in the current transaction.
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_xact_function_time</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Total wall clock time spent in the function, in microseconds, in the
-       current transaction.  Includes the time spent in functions called by
-       this one.
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_xact_function_self_time</function>(<type>oid</type>)</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Time spent in only this function, in the current transaction. Time
-       spent in called functions is excluded.
-      </entry>
-     </row>
-
-     <row>
       <entry><literal><function>pg_stat_get_backend_idset()</function></literal></entry>
       <entry><type>setof integer</type></entry>
       <entry>
@@ -2009,181 +1703,6 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       </entry>
      </row>
 
-     <row>
-      <entry><literal><function>pg_stat_get_backend_pid</function>(<type>integer</type>)</literal></entry>
-      <entry><type>integer</type></entry>
-      <entry>
-       Process ID of the given server process
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_backend_dbid</function>(<type>integer</type>)</literal></entry>
-      <entry><type>oid</type></entry>
-      <entry>
-       Database ID of the given server process
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_backend_userid</function>(<type>integer</type>)</literal></entry>
-      <entry><type>oid</type></entry>
-      <entry>
-       User ID of the given server process
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_backend_activity</function>(<type>integer</type>)</literal></entry>
-      <entry><type>text</type></entry>
-      <entry>
-       Active command of the given server process, but only if the
-       current user is a superuser or the same user as that of
-       the session being queried (and
-       <varname>track_activities</varname> is on)
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_backend_waiting</function>(<type>integer</type>)</literal></entry>
-      <entry><type>boolean</type></entry>
-      <entry>
-       True if the given server process is waiting for a lock,
-       but only if the current user is a superuser or the same user as that of
-       the session being queried (and
-       <varname>track_activities</varname> is on)
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_backend_activity_start</function>(<type>integer</type>)</literal></entry>
-      <entry><type>timestamp with time zone</type></entry>
-      <entry>
-       The time at which the given server process' currently
-       executing query was started, but only if the
-       current user is a superuser or the same user as that of
-       the session being queried (and
-       <varname>track_activities</varname> is on)
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_backend_xact_start</function>(<type>integer</type>)</literal></entry>
-      <entry><type>timestamp with time zone</type></entry>
-      <entry>
-       The time at which the given server process' currently
-       executing transaction was started, but only if the
-       current user is a superuser or the same user as that of
-       the session being queried (and
-       <varname>track_activities</varname> is on)
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_backend_start</function>(<type>integer</type>)</literal></entry>
-      <entry><type>timestamp with time zone</type></entry>
-      <entry>
-       The time at which the given server process was started, or
-       null if the current user is not a superuser nor the same user
-       as that of the session being queried
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_backend_client_addr</function>(<type>integer</type>)</literal></entry>
-      <entry><type>inet</type></entry>
-      <entry>
-       The IP address of the client connected to the given
-       server process; null if the connection is over a Unix domain
-       socket, also null if the current user is not a superuser nor
-       the same user as that of the session being queried
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_backend_client_port</function>(<type>integer</type>)</literal></entry>
-      <entry><type>integer</type></entry>
-      <entry>
-       The TCP port number of the client connected to the given
-       server process; -1 if the connection is over a Unix domain
-       socket, null if the current user is not a superuser nor the
-       same user as that of the session being queried
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_bgwriter_timed_checkpoints()</function></literal></entry>
-       <entry><type>bigint</type></entry>
-       <entry>
-        Number of times the background writer has started timed checkpoints
-        (because the <varname>checkpoint_timeout</varname> time has expired)
-       </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_bgwriter_requested_checkpoints()</function></literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of times the background writer has started checkpoints based
-       on requests from backends because the <varname>checkpoint_segments</varname>
-       has been exceeded or because the <command>CHECKPOINT</command>
-       command has been issued
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_bgwriter_buf_written_checkpoints()</function></literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of buffers written by the background writer during checkpoints
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_bgwriter_buf_written_clean()</function></literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of buffers written by the background writer for routine cleaning of
-       dirty pages
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_bgwriter_maxwritten_clean()</function></literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of times the background writer has stopped its cleaning scan because
-       it has written more buffers than specified in the
-       <varname>bgwriter_lru_maxpages</varname> parameter
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_bgwriter_stat_reset_time()</function></literal></entry>
-      <entry><type>timestamptz</type></entry>
-      <entry>
-        Time of the last statistics reset for the background writer, updated
-        when executing <function>pg_stat_reset_shared('bgwriter')</function>
-        on the database cluster.
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_buf_written_backend()</function></literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Number of buffers written by backends because they needed
-       to allocate a new buffer
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_buf_alloc()</function></literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       Total number of buffer allocations
-      </entry>
-     </row>
 
      <row>
       <entry><literal><function>pg_stat_get_wal_senders()</function></literal></entry>
@@ -2242,31 +1761,6 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
     </tbody>
    </tgroup>
   </table>
-
-   <note>
-    <para>
-     <function>pg_stat_get_blocks_fetched</function> minus
-     <function>pg_stat_get_blocks_hit</function> gives the number of kernel
-     <function>read()</> calls issued for the table, index, or
-     database; the number of actual physical reads is usually
-     lower due to kernel-level buffering.  The <literal>*_blks_read</>
-     statistics columns use this subtraction, i.e., fetched minus hit.
-    </para>
-   </note>
-
-  <para>
-   All functions to access information about backends are indexed by backend id
-   number, except <function>pg_stat_get_activity</function> which is indexed by PID.
-   The function <function>pg_stat_get_backend_idset</function> provides
-   a convenient way to generate one row for each active server process.  For
-   example, to show the <acronym>PID</>s and current queries of all server processes:
-
-<programlisting>
-SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
-       pg_stat_get_backend_activity(s.backendid) AS query
-    FROM (SELECT pg_stat_get_backend_idset() AS backendid) AS s;
-</programlisting>
-  </para>
 
  </sect3>
  </sect2>
