@@ -89,7 +89,7 @@ md5_crypt_verify(const Port *port, const char *role, char *client_pass)
 			{
 				/* stored password already encrypted, only do salt */
 				if (!pg_md5_encrypt(shadow_pass + strlen("md5"),
-									(char *) port->md5Salt,
+									port->md5Salt,
 									sizeof(port->md5Salt), crypt_pwd))
 				{
 					pfree(crypt_pwd);
