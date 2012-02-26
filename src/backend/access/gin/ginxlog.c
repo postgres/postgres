@@ -58,9 +58,12 @@ forgetIncompleteSplit(RelFileNode node, BlockNumber leftBlkno, BlockNumber updat
 	{
 		ginIncompleteSplit *split = (ginIncompleteSplit *) lfirst(l);
 
-		if (RelFileNodeEquals(node, split->node) && leftBlkno == split->leftBlkno && updateBlkno == split->rightBlkno)
+		if (RelFileNodeEquals(node, split->node) &&
+			leftBlkno == split->leftBlkno &&
+			updateBlkno == split->rightBlkno)
 		{
 			incomplete_splits = list_delete_ptr(incomplete_splits, split);
+			pfree(split);
 			break;
 		}
 	}
@@ -486,7 +489,7 @@ ginRedoUpdateMetapage(XLogRecPtr lsn, XLogRecord *record)
 
 	metabuffer = XLogReadBuffer(data->node, GIN_METAPAGE_BLKNO, false);
 	if (!BufferIsValid(metabuffer))
-		elog(PANIC, "GIN metapage disappeared");
+		return;					/* assume index was deleted, nothing to do */
 	metapage = BufferGetPage(metabuffer);
 
 	if (!XLByteLE(lsn, PageGetLSN(metapage)))
@@ -631,7 +634,7 @@ ginRedoDeleteListPages(XLogRecPtr lsn, XLogRecord *record)
 
 	metabuffer = XLogReadBuffer(data->node, GIN_METAPAGE_BLKNO, false);
 	if (!BufferIsValid(metabuffer))
-		elog(PANIC, "GIN metapage disappeared");
+		return;					/* assume index was deleted, nothing to do */
 	metapage = BufferGetPage(metabuffer);
 
 	if (!XLByteLE(lsn, PageGetLSN(metapage)))
