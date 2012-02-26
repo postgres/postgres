@@ -1980,7 +1980,7 @@ AssignTypeArrayOid(void)
  *-------------------------------------------------------------------
  */
 Oid
-DefineCompositeType(const RangeVar *typevar, List *coldeflist)
+DefineCompositeType(RangeVar *typevar, List *coldeflist)
 {
 	CreateStmt *createStmt = makeNode(CreateStmt);
 	Oid			old_type_oid;
@@ -1991,7 +1991,7 @@ DefineCompositeType(const RangeVar *typevar, List *coldeflist)
 	 * now set the parameters for keys/inheritance etc. All of these are
 	 * uninteresting for composite types...
 	 */
-	createStmt->relation = (RangeVar *) typevar;
+	createStmt->relation = typevar;
 	createStmt->tableElts = coldeflist;
 	createStmt->inhRelations = NIL;
 	createStmt->constraints = NIL;

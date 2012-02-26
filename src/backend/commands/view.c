@@ -254,7 +254,7 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 		 * now set the parameters for keys/inheritance etc. All of these are
 		 * uninteresting for views...
 		 */
-		createStmt->relation = (RangeVar *) relation;
+		createStmt->relation = relation;
 		createStmt->tableElts = attrList;
 		createStmt->inhRelations = NIL;
 		createStmt->constraints = NIL;
