@@ -276,6 +276,8 @@ static Oid transformFkeyCheckAttrs(Relation pkrel,
 						int numattrs, int16 *attnums,
 						Oid *opclasses);
 static void checkFkeyPermissions(Relation rel, int16 *attnums, int natts);
+static CoercionPathType findFkeyCast(Oid targetTypeId, Oid sourceTypeId,
+			 Oid *funcid);
 static void validateCheckConstraint(Relation rel, HeapTuple constrtup);
 static void validateForeignKeyConstraint(char *conname,
 							 Relation rel, Relation pkrel,
@@ -358,6 +360,7 @@ static void ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab, LOCKMOD
 static void ATPostAlterTypeParse(Oid oldId, char *cmd,
 					 List **wqueue, LOCKMODE lockmode, bool rewrite);
 static void TryReuseIndex(Oid oldId, IndexStmt *stmt);
+static void TryReuseForeignKey(Oid oldId, Constraint *con);
 static void change_owner_fix_column_acls(Oid relationOid,
 							 Oid oldOwnerId, Oid newOwnerId);
 static void change_owner_recurse_to_sequences(Oid relationOid,
@@ -5620,6 +5623,8 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 				numpks;
 	Oid			indexOid;
 	Oid			constrOid;
+	bool		old_check_ok;
+	ListCell   *old_pfeqop_item = list_head(fkconstraint->old_conpfeqop);
 
 	/*
 	 * Grab an exclusive lock on the pk table, so that someone doesn't delete
@@ -5736,6 +5741,13 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 				(errcode(ERRCODE_INVALID_FOREIGN_KEY),
 				 errmsg("number of referencing and referenced columns for foreign key disagree")));
 
+	/*
+	 * On the strength of a previous constraint, we might avoid scanning
+	 * tables to validate this one.  See below.
+	 */
+	old_check_ok = (fkconstraint->old_conpfeqop != NIL);
+	Assert(!old_check_ok || numfks == list_length(fkconstraint->old_conpfeqop));
+
 	for (i = 0; i < numpks; i++)
 	{
 		Oid			pktype = pktypoid[i];
@@ -5750,6 +5762,7 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 		Oid			ppeqop;
 		Oid			ffeqop;
 		int16		eqstrategy;
+		Oid			pfeqop_right;
 
 		/* We need several fields out of the pg_opclass entry */
 		cla_ht = SearchSysCache1(CLAOID, ObjectIdGetDatum(opclasses[i]));
@@ -5792,10 +5805,17 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 		pfeqop = get_opfamily_member(opfamily, opcintype, fktyped,
 									 eqstrategy);
 		if (OidIsValid(pfeqop))
+		{
+			pfeqop_right = fktyped;
 			ffeqop = get_opfamily_member(opfamily, fktyped, fktyped,
 										 eqstrategy);
+		}
 		else
-			ffeqop = InvalidOid;	/* keep compiler quiet */
+		{
+			/* keep compiler quiet */
+			pfeqop_right = InvalidOid;
+			ffeqop = InvalidOid;
+		}
 
 		if (!(OidIsValid(pfeqop) && OidIsValid(ffeqop)))
 		{
@@ -5817,7 +5837,10 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 			target_typeids[1] = opcintype;
 			if (can_coerce_type(2, input_typeids, target_typeids,
 								COERCION_IMPLICIT))
+			{
 				pfeqop = ffeqop = ppeqop;
+				pfeqop_right = opcintype;
+			}
 		}
 
 		if (!(OidIsValid(pfeqop) && OidIsValid(ffeqop)))
@@ -5832,6 +5855,77 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 							   strVal(list_nth(fkconstraint->pk_attrs, i)),
 							   format_type_be(fktype),
 							   format_type_be(pktype))));
+
+		if (old_check_ok)
+		{
+			/*
+			 * When a pfeqop changes, revalidate the constraint.  We could
+			 * permit intra-opfamily changes, but that adds subtle complexity
+			 * without any concrete benefit for core types.  We need not
+			 * assess ppeqop or ffeqop, which RI_Initial_Check() does not use.
+			 */
+			old_check_ok = (pfeqop == lfirst_oid(old_pfeqop_item));
+			old_pfeqop_item = lnext(old_pfeqop_item);
+		}
+		if (old_check_ok)
+		{
+			Oid			old_fktype;
+			Oid			new_fktype;
+			CoercionPathType old_pathtype;
+			CoercionPathType new_pathtype;
+			Oid			old_castfunc;
+			Oid			new_castfunc;
+
+			/*
+			 * Identify coercion pathways from each of the old and new FK-side
+			 * column types to the right (foreign) operand type of the pfeqop.
+			 * We may assume that pg_constraint.conkey is not changing.
+			 */
+			old_fktype = tab->oldDesc->attrs[fkattnum[i] - 1]->atttypid;
+			new_fktype = fktype;
+			old_pathtype = findFkeyCast(pfeqop_right, old_fktype,
+										&old_castfunc);
+			new_pathtype = findFkeyCast(pfeqop_right, new_fktype,
+										&new_castfunc);
+
+			/*
+			 * Upon a change to the cast from the FK column to its pfeqop
+			 * operand, revalidate the constraint.  For this evaluation, a
+			 * binary coercion cast is equivalent to no cast at all.  While
+			 * type implementors should design implicit casts with an eye
+			 * toward consistency of operations like equality, we cannot assume
+			 * here that they have done so.
+			 *
+			 * A function with a polymorphic argument could change behavior
+			 * arbitrarily in response to get_fn_expr_argtype().  Therefore,
+			 * when the cast destination is polymorphic, we only avoid
+			 * revalidation if the input type has not changed at all.  Given
+			 * just the core data types and operator classes, this requirement
+			 * prevents no would-be optimizations.
+			 *
+			 * If the cast converts from a base type to a domain thereon, then
+			 * that domain type must be the opcintype of the unique index.
+			 * Necessarily, the primary key column must then be of the domain
+			 * type.  Since the constraint was previously valid, all values on
+			 * the foreign side necessarily exist on the primary side and in
+			 * turn conform to the domain.  Consequently, we need not treat
+			 * domains specially here.
+			 *
+			 * Since we require that all collations share the same notion of
+			 * equality (which they do, because texteq reduces to bitwise
+			 * equality), we don't compare collation here.
+			 *
+			 * We need not directly consider the PK type.  It's necessarily
+			 * binary coercible to the opcintype of the unique index column,
+			 * and ri_triggers.c will only deal with PK datums in terms of that
+			 * opcintype.  Changing the opcintype also changes pfeqop.
+			 */
+			old_check_ok = (new_pathtype == old_pathtype &&
+							new_castfunc == old_castfunc &&
+							(!IsPolymorphicType(pfeqop_right) ||
+							 new_fktype == old_fktype));
+
+		}
 
 		pfeqoperators[i] = pfeqop;
 		ppeqoperators[i] = ppeqop;
@@ -5877,10 +5971,12 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 
 	/*
 	 * Tell Phase 3 to check that the constraint is satisfied by existing rows.
-	 * We can skip this during table creation, or if requested explicitly by
-	 * specifying NOT VALID in an ADD FOREIGN KEY command.
+	 * We can skip this during table creation, when requested explicitly by
+	 * specifying NOT VALID in an ADD FOREIGN KEY command, and when we're
+	 * recreating a constraint following a SET DATA TYPE operation that did not
+	 * impugn its validity.
 	 */
-	if (!fkconstraint->skip_validation)
+	if (!old_check_ok && !fkconstraint->skip_validation)
 	{
 		NewConstraint *newcon;
 
@@ -6328,6 +6424,35 @@ transformFkeyCheckAttrs(Relation pkrel,
 	list_free(indexoidlist);
 
 	return indexoid;
+}
+
+/*
+ * findFkeyCast -
+ *
+ *	Wrapper around find_coercion_pathway() for ATAddForeignKeyConstraint().
+ *	Caller has equal regard for binary coercibility and for an exact match.
+*/
+static CoercionPathType
+findFkeyCast(Oid targetTypeId, Oid sourceTypeId, Oid *funcid)
+{
+	CoercionPathType ret;
+
+	if (targetTypeId == sourceTypeId)
+	{
+		ret = COERCION_PATH_RELABELTYPE;
+		*funcid = InvalidOid;
+	}
+	else
+	{
+		ret = find_coercion_pathway(targetTypeId, sourceTypeId,
+									COERCION_IMPLICIT, funcid);
+		if (ret == COERCION_PATH_NONE)
+			/* A previously-relied-upon cast is now gone. */
+			elog(ERROR, "could not find cast from %u to %u",
+				 sourceTypeId, targetTypeId);
+	}
+
+	return ret;
 }
 
 /* Permissions checks for ADD FOREIGN KEY */
@@ -7717,6 +7842,7 @@ ATPostAlterTypeParse(Oid oldId, char *cmd,
 					foreach(lcmd, stmt->cmds)
 					{
 						AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
+						Constraint *con;
 
 						switch (cmd->subtype)
 						{
@@ -7730,6 +7856,12 @@ ATPostAlterTypeParse(Oid oldId, char *cmd,
 									lappend(tab->subcmds[AT_PASS_OLD_INDEX], cmd);
 								break;
 							case AT_AddConstraint:
+								Assert(IsA(cmd->def, Constraint));
+								con = (Constraint *) cmd->def;
+								/* rewriting neither side of a FK */
+								if (con->contype == CONSTR_FOREIGN &&
+									!rewrite && !tab->rewrite)
+									TryReuseForeignKey(oldId, con);
 								tab->subcmds[AT_PASS_OLD_CONSTR] =
 									lappend(tab->subcmds[AT_PASS_OLD_CONSTR], cmd);
 								break;
@@ -7751,7 +7883,7 @@ ATPostAlterTypeParse(Oid oldId, char *cmd,
 /*
  * Subroutine for ATPostAlterTypeParse().  Calls out to CheckIndexCompatible()
  * for the real analysis, then mutates the IndexStmt based on that verdict.
-*/
+ */
 static void
 TryReuseIndex(Oid oldId, IndexStmt *stmt)
 {
@@ -7768,6 +7900,50 @@ TryReuseIndex(Oid oldId, IndexStmt *stmt)
 	}
 }
 
+/*
+ * Subroutine for ATPostAlterTypeParse().
+ *
+ * Stash the old P-F equality operator into the Constraint node, for possible
+ * use by ATAddForeignKeyConstraint() in determining whether revalidation of
+ * this constraint can be skipped.
+ */
+static void
+TryReuseForeignKey(Oid oldId, Constraint *con)
+{
+	HeapTuple	tup;
+	Datum		adatum;
+	bool		isNull;
+	ArrayType  *arr;
+	Oid		   *rawarr;
+	int			numkeys;
+	int			i;
+
+	Assert(con->contype == CONSTR_FOREIGN);
+	Assert(con->old_conpfeqop == NIL); /* already prepared this node */
+
+	tup = SearchSysCache1(CONSTROID, ObjectIdGetDatum(oldId));
+	if (!HeapTupleIsValid(tup)) /* should not happen */
+		elog(ERROR, "cache lookup failed for constraint %u", oldId);
+
+	adatum = SysCacheGetAttr(CONSTROID, tup,
+							 Anum_pg_constraint_conpfeqop, &isNull);
+	if (isNull)
+		elog(ERROR, "null conpfeqop for constraint %u", oldId);
+	arr = DatumGetArrayTypeP(adatum);	/* ensure not toasted */
+	numkeys = ARR_DIMS(arr)[0];
+	/* test follows the one in ri_FetchConstraintInfo() */
+	if (ARR_NDIM(arr) != 1 ||
+		ARR_HASNULL(arr) ||
+		ARR_ELEMTYPE(arr) != OIDOID)
+		elog(ERROR, "conpfeqop is not a 1-D Oid array");
+	rawarr = (Oid *) ARR_DATA_PTR(arr);
+
+	/* stash a List of the operator Oids in our Constraint node */
+	for (i = 0; i < numkeys; i++)
+		con->old_conpfeqop = lcons_oid(rawarr[i], con->old_conpfeqop);
+
+	ReleaseSysCache(tup);
+}
 
 /*
  * ALTER TABLE OWNER

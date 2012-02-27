@@ -3224,6 +3224,7 @@ ri_FetchConstraintInfo(RI_ConstraintInfo *riinfo,
 		elog(ERROR, "null conpfeqop for constraint %u", constraintOid);
 	arr = DatumGetArrayTypeP(adatum);	/* ensure not toasted */
 	numkeys = ARR_DIMS(arr)[0];
+	/* see TryReuseForeignKey if you change the test below */
 	if (ARR_NDIM(arr) != 1 ||
 		numkeys != riinfo->nkeys ||
 		numkeys > RI_MAX_NUMKEYS ||

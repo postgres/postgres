@@ -2364,6 +2364,7 @@ _copyConstraint(const Constraint *from)
 	COPY_SCALAR_FIELD(fk_matchtype);
 	COPY_SCALAR_FIELD(fk_upd_action);
 	COPY_SCALAR_FIELD(fk_del_action);
+	COPY_NODE_FIELD(old_conpfeqop);
 	COPY_SCALAR_FIELD(skip_validation);
 	COPY_SCALAR_FIELD(initially_valid);
 
