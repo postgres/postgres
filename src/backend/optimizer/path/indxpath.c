@@ -1702,9 +1702,9 @@ match_join_clauses_to_index(PlannerInfo *root,
 		 * outer join rules.
 		 *
 		 * Instead of considering required_relids, we ignore clauses for which
-		 * any referenced rel is in nullable_relids; that means there's an
-		 * outer join below the clause and so it can't be checked at the
-		 * relation scan level.
+		 * the indexed rel is in nullable_relids; that means there's an outer
+		 * join below the clause and so it can't be checked at the relation
+		 * scan level.
 		 *
 		 * Note: unlike create_or_index_quals(), we can accept clauses that
 		 * are marked !is_pushed_down (ie they are themselves outer-join
@@ -1712,7 +1712,7 @@ match_join_clauses_to_index(PlannerInfo *root,
 		 * could only be used in the inside of a nestloop join, which will be
 		 * the nullable side.
 		 */
-		if (bms_overlap(rinfo->clause_relids, rinfo->nullable_relids))
+		if (bms_overlap(rel->relids, rinfo->nullable_relids))
 			continue;
 
 		/* Potentially usable, so see if it matches the index or is an OR */
