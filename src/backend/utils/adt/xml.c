@@ -311,7 +311,7 @@ xml_recv(PG_FUNCTION_ARGS)
 	str = VARDATA(result);
 	str[nbytes] = '\0';
 
-	parse_xml_decl((xmlChar *) str, NULL, NULL, &encodingStr, NULL);
+	parse_xml_decl((const xmlChar *) str, NULL, NULL, &encodingStr, NULL);
 
 	/*
 	 * If encoding wasn't explicitly specified in the XML header, treat it as

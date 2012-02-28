@@ -332,7 +332,7 @@ typedef struct
 static int
 comparecost(const void *a, const void *b)
 {
-	return ((SPLITCOST *) a)->cost - ((SPLITCOST *) b)->cost;
+	return ((const SPLITCOST *) a)->cost - ((const SPLITCOST *) b)->cost;
 }
 
 

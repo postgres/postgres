@@ -275,8 +275,8 @@ static int
 treekey_cmp(const void *a, const void *b)
 {
 	return ltree_compare(
-						 ((RIX *) a)->r,
-						 ((RIX *) b)->r
+						 ((const RIX *) a)->r,
+						 ((const RIX *) b)->r
 		);
 }
 

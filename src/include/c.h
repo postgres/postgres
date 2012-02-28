@@ -478,7 +478,7 @@ typedef NameData *Name;
  * PointerIsValid
  *		True iff pointer is valid.
  */
-#define PointerIsValid(pointer) ((void*)(pointer) != NULL)
+#define PointerIsValid(pointer) ((const void*)(pointer) != NULL)
 
 /*
  * PointerIsAligned

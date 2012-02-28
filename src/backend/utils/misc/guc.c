@@ -3780,8 +3780,8 @@ find_option(const char *name, bool create_placeholders, int elevel)
 static int
 guc_var_compare(const void *a, const void *b)
 {
-	struct config_generic *confa = *(struct config_generic **) a;
-	struct config_generic *confb = *(struct config_generic **) b;
+	const struct config_generic *confa = *(struct config_generic * const *) a;
+	const struct config_generic *confb = *(struct config_generic * const *) b;
 
 	return guc_name_compare(confa->name, confb->name);
 }

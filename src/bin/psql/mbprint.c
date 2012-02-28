@@ -217,10 +217,10 @@ pg_wcssize(const unsigned char *pwcs, size_t len, int encoding,
 
 	for (; *pwcs && len > 0; pwcs += chlen)
 	{
-		chlen = PQmblen((char *) pwcs, encoding);
+		chlen = PQmblen((const char *) pwcs, encoding);
 		if (len < (size_t) chlen)
 			break;
-		w = PQdsplen((char *) pwcs, encoding);
+		w = PQdsplen((const char *) pwcs, encoding);
 
 		if (chlen == 1)			/* single-byte char */
 		{
@@ -298,10 +298,10 @@ pg_wcsformat(const unsigned char *pwcs, size_t len, int encoding,
 
 	for (; *pwcs && len > 0; pwcs += chlen)
 	{
-		chlen = PQmblen((char *) pwcs, encoding);
+		chlen = PQmblen((const char *) pwcs, encoding);
 		if (len < (size_t) chlen)
 			break;
-		w = PQdsplen((char *) pwcs, encoding);
+		w = PQdsplen((const char *) pwcs, encoding);
 
 		if (chlen == 1)			/* single-byte char */
 		{
