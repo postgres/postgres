@@ -19,4 +19,7 @@ extern char *strtokx(const char *s,
 		bool del_quotes,
 		int encoding);
 
+extern char *quote_if_needed(const char *source, const char *entails_quote,
+				char quote, char escape, int encoding);
+
 #endif   /* STRINGUTILS_H */

@@ -680,6 +680,7 @@ static char *complete_from_list(const char *text, int state);
 static char *complete_from_const(const char *text, int state);
 static char **complete_from_variables(char *text,
 						const char *prefix, const char *suffix);
+static char *complete_from_files(const char *text, int state);
 
 static char *pg_strdup_same_case(const char *s, const char *ref);
 static PGresult *exec_query(const char *query);
@@ -1630,7 +1631,10 @@ psql_completion(char *text, int start, int end)
 			  pg_strcasecmp(prev3_wd, "BINARY") == 0) &&
 			 (pg_strcasecmp(prev_wd, "FROM") == 0 ||
 			  pg_strcasecmp(prev_wd, "TO") == 0))
-		matches = completion_matches(text, filename_completion_function);
+	{
+		completion_charp = "";
+		matches = completion_matches(text, complete_from_files);
+	}
 
 	/* Handle COPY|BINARY <sth> FROM|TO filename */
 	else if ((pg_strcasecmp(prev4_wd, "COPY") == 0 ||
@@ -2953,7 +2957,10 @@ psql_completion(char *text, int start, int end)
 			 strcmp(prev_wd, "\\s") == 0 ||
 			 strcmp(prev_wd, "\\w") == 0 || strcmp(prev_wd, "\\write") == 0
 		)
-		matches = completion_matches(text, filename_completion_function);
+	{
+		completion_charp = "\\";
+		matches = completion_matches(text, complete_from_files);
+	}
 
 	/*
 	 * Finally, we look through the list of "things", such as TABLE, INDEX and
@@ -3423,6 +3430,53 @@ complete_from_variables(char *text, const char *prefix, const char *suffix)
 	free(varnames);
 
 	return matches;
+}
+
+
+/*
+ * This function wraps rl_filename_completion_function() to strip quotes from
+ * the input before searching for matches and to quote any matches for which
+ * the consuming command will require it.
+ */
+static char *
+complete_from_files(const char *text, int state)
+{
+	static const char *unquoted_text;
+	char	   *unquoted_match;
+	char	   *ret = NULL;
+
+	if (state == 0)
+	{
+		/* Initialization: stash the unquoted input. */
+		unquoted_text = strtokx(text, "", NULL, "'", *completion_charp,
+								false, true, pset.encoding);
+		/* expect a NULL return for the empty string only */
+		if (!unquoted_text)
+		{
+			psql_assert(!*text);
+			unquoted_text = text;
+		}
+	}
+
+	unquoted_match = filename_completion_function(unquoted_text, state);
+	if (unquoted_match)
+	{
+		/*
+		 * Caller sets completion_charp to a zero- or one-character string
+		 * containing the escape character.  This is necessary since \copy has
+		 * no escape character, but every other backslash command recognizes
+		 * "\" as an escape character.  Since we have only two callers, don't
+		 * bother providing a macro to simplify this.
+		 */
+		ret = quote_if_needed(unquoted_match, " \t\r\n\"`",
+							  '\'', *completion_charp, pset.encoding);
+		if (ret)
+			free(unquoted_match);
+		else
+			ret = unquoted_match;
+	}
+
+	return ret;
 }
 
 

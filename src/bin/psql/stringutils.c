@@ -272,3 +272,72 @@ strip_quotes(char *source, char quote, char escape, int encoding)
 
 	*dst = '\0';
 }
+
+
+/*
+ * quote_if_needed
+ *
+ * Opposite of strip_quotes().  If "source" denotes itself literally without
+ * quoting or escaping, returns NULL.  Otherwise, returns a malloc'd copy with
+ * quoting and escaping applied:
+ *
+ * source -			string to parse
+ * entails_quote -	any of these present?  need outer quotes
+ * quote -			doubled within string, affixed to both ends
+ * escape -			doubled within string
+ * encoding -		the active character-set encoding
+ *
+ * Do not use this as a substitute for PQescapeStringConn().  Use it for
+ * strings to be parsed by strtokx() or psql_scan_slash_option().
+ */
+char *
+quote_if_needed(const char *source, const char *entails_quote,
+				char quote, char escape, int encoding)
+{
+	const char *src;
+	char	   *ret;
+	char	   *dst;
+	bool		need_quotes = false;
+
+	psql_assert(source);
+	psql_assert(quote);
+
+	src = source;
+	dst = ret = pg_malloc(2 * strlen(src) + 3);	/* excess */
+
+	*dst++ = quote;
+
+	while (*src)
+	{
+		char		c = *src;
+		int			i;
+
+		if (c == quote)
+		{
+			need_quotes = true;
+			*dst++ = quote;
+		}
+		else if (c == escape)
+		{
+			need_quotes = true;
+			*dst++ = escape;
+		}
+		else if (strchr(entails_quote, c))
+			need_quotes = true;
+
+		i = PQmblen(src, encoding);
+		while (i--)
+			*dst++ = *src++;
+	}
+
+	*dst++ = quote;
+	*dst = '\0';
+
+	if (!need_quotes)
+	{
+		free(ret);
+		ret = NULL;
+	}
+
+	return ret;
+}
