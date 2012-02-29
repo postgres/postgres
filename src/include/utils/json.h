@@ -26,4 +26,4 @@ extern Datum row_to_json(PG_FUNCTION_ARGS);
 extern Datum row_to_json_pretty(PG_FUNCTION_ARGS);
 extern void  escape_json(StringInfo buf, const char *str);
 
-#endif   /* XML_H */
+#endif   /* JSON_H */
