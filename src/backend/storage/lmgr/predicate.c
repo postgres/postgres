@@ -4730,14 +4730,11 @@ AtPrepare_PredicateLocks(void)
 	xactRecord->flags = MySerializableXact->flags;
 
 	/*
-	 * Tweak the flags. Since we're not going to output the inConflicts and
-	 * outConflicts lists, if they're non-empty we'll represent that by
-	 * setting the appropriate summary conflict flags.
+	 * Note that we don't include the list of conflicts in our out in
+	 * the statefile, because new conflicts can be added even after the
+	 * transaction prepares. We'll just make a conservative assumption
+	 * during recovery instead.
 	 */
-	if (!SHMQueueEmpty(&MySerializableXact->inConflicts))
-		xactRecord->flags |= SXACT_FLAG_SUMMARY_CONFLICT_IN;
-	if (!SHMQueueEmpty(&MySerializableXact->outConflicts))
-		xactRecord->flags |= SXACT_FLAG_SUMMARY_CONFLICT_OUT;
 
 	RegisterTwoPhaseRecord(TWOPHASE_RM_PREDICATELOCK_ID, 0,
 						   &record, sizeof(record));
@@ -4872,15 +4869,6 @@ predicatelock_twophase_recover(TransactionId xid, uint16 info,
 
 		sxact->SeqNo.lastCommitBeforeSnapshot = RecoverySerCommitSeqNo;
 
-
-		/*
-		 * We don't need the details of a prepared transaction's conflicts,
-		 * just whether it had conflicts in or out (which we get from the
-		 * flags)
-		 */
-		SHMQueueInit(&(sxact->outConflicts));
-		SHMQueueInit(&(sxact->inConflicts));
-
 		/*
 		 * Don't need to track this; no transactions running at the time the
 		 * recovered xact started are still active, except possibly other
@@ -4901,6 +4889,17 @@ predicatelock_twophase_recover(TransactionId xid, uint16 info,
 			Assert(PredXact->WritableSxactCount <=
 				   (MaxBackends + max_prepared_xacts));
 		}
+
+		/*
+		 * We don't know whether the transaction had any conflicts or
+		 * not, so we'll conservatively assume that it had both a
+		 * conflict in and a conflict out, and represent that with the
+		 * summary conflict flags.
+		 */
+		SHMQueueInit(&(sxact->outConflicts));
+		SHMQueueInit(&(sxact->inConflicts));
+		sxact->flags |= SXACT_FLAG_SUMMARY_CONFLICT_IN;
+		sxact->flags |= SXACT_FLAG_SUMMARY_CONFLICT_OUT;
 
 		/* Register the transaction's xid */
 		sxidtag.xid = xid;
