@@ -402,9 +402,7 @@ IsSharedRelation(Oid relationId)
 		relationId == DbRoleSettingDatidRolidIndexId)
 		return true;
 	/* These are their toast tables and toast indexes (see toasting.h) */
-	if (relationId == PgDatabaseToastTable ||
-		relationId == PgDatabaseToastIndex ||
-		relationId == PgShdescriptionToastTable ||
+	if (relationId == PgShdescriptionToastTable ||
 		relationId == PgShdescriptionToastIndex ||
 		relationId == PgDbRoleSettingToastTable ||
 		relationId == PgDbRoleSettingToastIndex)
