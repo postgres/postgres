@@ -3368,8 +3368,8 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
 
    <para>
     <function>LIKE</function> pattern matching always covers the entire
-    string.  Therefore, to match a sequence anywhere within a string, the
-    pattern must start and end with a percent sign.
+    string.  Therefore, if it's desired to match a sequence anywhere within
+    a string, the pattern must start and end with a percent sign.
    </para>
 
    <para>
@@ -3382,17 +3382,13 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
     character itself, write two escape characters.
    </para>
 
-   <para>
-    Note that the backslash already has a special meaning in string literals,
-    so to write a pattern constant that contains a backslash you must write two
-    backslashes in an SQL statement (assuming escape string syntax is used, see
-    <xref linkend="sql-syntax-strings">).  Thus, writing a pattern that
-    actually matches a literal backslash means writing four backslashes in the
-    statement.  You can avoid this by selecting a different escape character
-    with <literal>ESCAPE</literal>; then a backslash is not special to
-    <function>LIKE</function> anymore. (But backslash is still special to the
-    string literal parser, so you still need two of them to match a backslash.)
-   </para>
+   <note>
+    <para>
+     If you have <xref linkend="guc-standard-conforming-strings"> turned off,
+     any backslashes you write in literal string constants will need to be
+     doubled.  See <xref linkend="sql-syntax-strings"> for more information.
+    </para>
+   </note>
 
    <para>
     It's also possible to select no escape character by writing
@@ -3720,8 +3716,7 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
      inserted, and it can contain <literal>\&amp;</> to indicate that the
      substring matching the entire pattern should be inserted.  Write
      <literal>\\</> if you need to put a literal backslash in the replacement
-     text.  (As always, remember to double backslashes written in literal
-     constant strings, assuming escape string syntax is used.)
+     text.
      The <replaceable>flags</> parameter is an optional text
      string containing zero or more single-letter flags that change the
      function's behavior.  Flag <literal>i</> specifies case-insensitive
@@ -4031,16 +4026,14 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
     </table>
 
    <para>
-    An RE cannot end with <literal>\</>.
+    An RE cannot end with a backslash (<literal>\</>).
    </para>
 
    <note>
     <para>
-     Remember that the backslash (<literal>\</literal>) already has a special
-     meaning in <productname>PostgreSQL</> string literals.
-     To write a pattern constant that contains a backslash,
-     you must write two backslashes in the statement, assuming escape
-     string syntax is used (see <xref linkend="sql-syntax-strings">).
+     If you have <xref linkend="guc-standard-conforming-strings"> turned off,
+     any backslashes you write in literal string constants will need to be
+     doubled.  See <xref linkend="sql-syntax-strings"> for more information.
     </para>
    </note>
 
@@ -5541,10 +5534,8 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
      <listitem>
       <para>
        If you want to have a double quote in the output you must
-       precede it with a backslash, for example <literal>E'\\"YYYY
-       Month\\"'</literal>. <!-- "" font-lock sanity :-) -->
-       (Two backslashes are necessary because the backslash
-       has special meaning when using the escape string syntax.)
+       precede it with a backslash, for example <literal>'\"YYYY
+       Month\"'</literal>. <!-- "" font-lock sanity :-) -->
       </para>
      </listitem>
 
