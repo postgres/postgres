@@ -1,7 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * pg_crc.c
- *	  PostgreSQL CRC support
+ * pg_crc_tables.h
+ *	  Polynomial lookup tables for CRC macros
+ *
+ * We make these tables available as a .h file so that programs not linked
+ * with libpgport can still use the macros in pg_crc.h.  They just need
+ * to #include this header as well.
  *
  * See Ross Williams' excellent introduction
  * A PAINLESS GUIDE TO CRC ERROR DETECTION ALGORITHMS, available from
@@ -17,16 +21,12 @@
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *
- * IDENTIFICATION
- *	  src/backend/utils/hash/pg_crc.c
+ * src/include/utils/pg_crc_tables.h
  *
  *-------------------------------------------------------------------------
  */
-
-/* Use c.h so that this file can be built in either frontend or backend */
-#include "c.h"
-
+#ifndef PG_CRC_TABLES_H
+#define PG_CRC_TABLES_H
 
 /*
  * This table is based on the polynomial
@@ -513,3 +513,5 @@ const uint64 pg_crc64_table[256] = {
 #endif   /* SIZEOF_VOID_P < 8 */
 
 #endif   /* PROVIDE_64BIT_CRC */
+
+#endif   /* PG_CRC_TABLES_H */

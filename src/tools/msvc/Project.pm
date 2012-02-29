@@ -261,8 +261,8 @@ sub AddDir
         $mf =~ s{OBJS[^=]*=\s*(.*)$}{}m;
     }
 
-    # Match rules that pull in source files from different directories
-    # example: pg_crc.c: $(top_srcdir)/src/backend/utils/hash/pg_crc.c
+    # Match rules that pull in source files from different directories, eg
+    # pgstrcasecmp.c rint.c snprintf.c: % : $(top_srcdir)/src/port/%
     my $replace_re = qr{^([^:\n\$]+\.c)\s*:\s*(?:%\s*: )?\$(\([^\)]+\))\/(.*)\/[^\/]+$}m;
     while ($mf =~ m{$replace_re}m)
     {
