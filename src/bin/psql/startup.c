@@ -313,8 +313,6 @@ main(int argc, char *argv[])
 			printf(_("Type \"help\" for help.\n\n"));
 		if (!pset.notty)
 			initializeInput(options.no_readline ? 0 : 1);
-		if (options.action_string)		/* -f - was used */
-			pset.inputfile = "<stdin>";
 
 		successResult = MainLoop(stdin);
 	}

@@ -2062,14 +2062,17 @@ process_file(char *filename, bool single_txn, bool use_relative_path)
 		}
 
 		fd = fopen(filename, PG_BINARY_R);
+
+		if (!fd)
+		{
+			psql_error("%s: %s\n", filename, strerror(errno));
+			return EXIT_FAILURE;
+		}
 	}
 	else
-		fd = stdin;
-
-	if (!fd)
 	{
-		psql_error("%s: %s\n", filename, strerror(errno));
-		return EXIT_FAILURE;
+		fd = stdin;
+		filename = "<stdin>";	/* for future error messages */
 	}
 
 	oldfilename = pset.inputfile;
