@@ -284,7 +284,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Sets the label for the backup. If none is specified, a default value of
-        <literal>pg_basebackup base backup</literal> will be used.
+        <quote><literal>pg_basebackup base backup</literal></quote> will be used.
        </para>
       </listitem>
      </varlistentry>
