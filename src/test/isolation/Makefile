@@ -70,10 +70,5 @@ maintainer-clean: distclean
 installcheck: all
 	./pg_isolation_regress --psqldir='$(PSQLDIR)' --inputdir=$(srcdir) --schedule=$(srcdir)/isolation_schedule
 
-# We can't support "make check" because isolationtester requires libpq, and
-# in fact (on typical platforms using shared libraries) requires libpq to
-# already be installed.  You could run "make install" and then run a check
-# using a temp installation, but there seems little point in that.
-check:
-	@echo "'make check' is not supported."
-	@echo "Install PostgreSQL, then 'make installcheck' instead."
+check: all
+	./pg_isolation_regress --temp-install=./tmp_check --inputdir=$(srcdir) --top-builddir=$(top_builddir) --schedule=$(srcdir)/isolation_schedule
