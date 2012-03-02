@@ -1785,14 +1785,11 @@ add_child_rel_equivalences(PlannerInfo *root,
 		ListCell   *lc2;
 
 		/*
-		 * If this EC contains a constant, then it's not useful for sorting or
-		 * driving an inner index-scan, so we skip generating child EMs.
-		 *
 		 * If this EC contains a volatile expression, then generating child
-		 * EMs would be downright dangerous.  We rely on a volatile EC having
-		 * only one EM.
+		 * EMs would be downright dangerous, so skip it.  We rely on a
+		 * volatile EC having only one EM.
 		 */
-		if (cur_ec->ec_has_const || cur_ec->ec_has_volatile)
+		if (cur_ec->ec_has_volatile)
 			continue;
 
 		/* No point in searching if parent rel not mentioned in eclass */
