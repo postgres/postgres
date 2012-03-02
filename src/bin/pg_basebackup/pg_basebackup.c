@@ -82,7 +82,7 @@ static bool segment_callback(XLogRecPtr segendpos, uint32 timeline);
 
 #ifdef HAVE_LIBZ
 static const char *
-get_gz_error(gzFile *gzf)
+get_gz_error(gzFile gzf)
 {
 	int			errnum;
 	const char *errmsg;
@@ -450,7 +450,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 	FILE	   *tarfile = NULL;
 
 #ifdef HAVE_LIBZ
-	gzFile	   *ztarfile = NULL;
+	gzFile		ztarfile = NULL;
 #endif
 
 	if (PQgetisnull(res, rownum, 0))

@@ -60,7 +60,7 @@ typedef struct
 typedef struct
 {
 #ifdef HAVE_LIBZ
-	gzFile	   *FH;
+	gzFile		FH;
 #else
 	FILE	   *FH;
 #endif
