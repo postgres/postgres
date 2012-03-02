@@ -1953,6 +1953,8 @@ DESCR("convert generic options array to name/value table");
 
 DATA(insert OID = 1619 (  pg_typeof				PGNSP PGUID 12 1 0 0 0 f f f f f f s 1 0 2206 "2276" _null_ _null_ _null_ _null_  pg_typeof _null_ _null_ _null_ ));
 DESCR("type of the argument");
+DATA(insert OID = 3162 (  pg_collation_for		PGNSP PGUID 12 1 0 0 0 f f f f f f s 1 0   25 "2276" _null_ _null_ _null_ _null_  pg_collation_for _null_ _null_ _null_ ));
+DESCR("collation of the argument; implementation of the COLLATION FOR expression");
 
 /* Deferrable unique constraint trigger */
 DATA(insert OID = 1250 (  unique_key_recheck	PGNSP PGUID 12 1 0 0 0 f f f f t f v 0 0 2279 "" _null_ _null_ _null_ _null_ unique_key_recheck _null_ _null_ _null_ ));

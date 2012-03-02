@@ -13698,6 +13698,10 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
     <primary>pg_typeof</primary>
    </indexterm>
 
+   <indexterm>
+    <primary>collation for</primary>
+   </indexterm>
+
   <para>
    <xref linkend="functions-info-catalog-table"> lists functions that
    extract information from the system catalogs.
@@ -13859,6 +13863,11 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry><type>regtype</type></entry>
        <entry>get the data type of any value</entry>
       </row>
+      <row>
+       <entry><literal><function>collation for (<parameter>any</parameter>)</function></literal></entry>
+       <entry><type>text</type></entry>
+       <entry>get the collation of the argument</entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
@@ -13983,6 +13992,27 @@ SELECT typlen FROM pg_type WHERE oid = pg_typeof(33);
       4
 (1 row)
 </programlisting>
+  </para>
+
+  <para>
+   The expression <literal>collation for</literal> returns the collation of the
+   value that is passed to it.  Example:
+<programlisting>
+SELECT collation for (description) FROM pg_description LIMIT 1;
+ pg_collation_for 
+------------------
+ "default"
+(1 row)
+
+SELECT collation for ('foo' COLLATE "de_DE");
+ pg_collation_for 
+------------------
+ "de_DE"
+(1 row)
+</programlisting>
+  The value might be quoted and schema-qualified.  If no collation is derived
+  for the argument expression, then a null value is returned.  If the argument
+  is not of a collatable data type, then an error is raised.
   </para>
 
    <indexterm>
