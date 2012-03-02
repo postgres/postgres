@@ -1083,7 +1083,7 @@ ecpg_store_input(const int lineno, const bool force_indicator, const struct vari
 }
 
 static void
-free_params(const char **paramValues, int nParams, bool print, int lineno)
+free_params(char **paramValues, int nParams, bool print, int lineno)
 {
 	int			n;
 
@@ -1091,7 +1091,7 @@ free_params(const char **paramValues, int nParams, bool print, int lineno)
 	{
 		if (print)
 			ecpg_log("free_params on line %d: parameter %d = %s\n", lineno, n + 1, paramValues[n] ? paramValues[n] : "null");
-		ecpg_free((void *) (paramValues[n]));
+		ecpg_free(paramValues[n]);
 	}
 	ecpg_free(paramValues);
 }
@@ -1138,7 +1138,7 @@ ecpg_execute(struct statement * stmt)
 	PGnotify   *notify;
 	struct variable *var;
 	int			desc_counter = 0;
-	const char **paramValues = NULL;
+	char	  **paramValues = NULL;
 	int			nParams = 0;
 	int			position = 0;
 	struct sqlca_t *sqlca = ECPGget_sqlca();
@@ -1380,7 +1380,7 @@ ecpg_execute(struct statement * stmt)
 		else
 		{
 			nParams++;
-			if (!(paramValues = (const char **) ecpg_realloc(paramValues, sizeof(const char *) * nParams, stmt->lineno)))
+			if (!(paramValues = (char **) ecpg_realloc(paramValues, sizeof(char *) * nParams, stmt->lineno)))
 			{
 				ecpg_free(paramValues);
 				return false;
@@ -1441,7 +1441,7 @@ ecpg_execute(struct statement * stmt)
 	ecpg_log("ecpg_execute on line %d: query: %s; with %d parameter(s) on connection %s\n", stmt->lineno, stmt->command, nParams, stmt->connection->name);
 	if (stmt->statement_type == ECPGst_execute)
 	{
-		results = PQexecPrepared(stmt->connection->connection, stmt->name, nParams, paramValues, NULL, NULL, 0);
+		results = PQexecPrepared(stmt->connection->connection, stmt->name, nParams, (const char *const*) paramValues, NULL, NULL, 0);
 		ecpg_log("ecpg_execute on line %d: using PQexecPrepared for \"%s\"\n", stmt->lineno, stmt->command);
 	}
 	else
@@ -1453,7 +1453,7 @@ ecpg_execute(struct statement * stmt)
 		}
 		else
 		{
-			results = PQexecParams(stmt->connection->connection, stmt->command, nParams, NULL, paramValues, NULL, NULL, 0);
+			results = PQexecParams(stmt->connection->connection, stmt->command, nParams, NULL, (const char *const*) paramValues, NULL, NULL, 0);
 			ecpg_log("ecpg_execute on line %d: using PQexecParams\n", stmt->lineno);
 		}
 	}
