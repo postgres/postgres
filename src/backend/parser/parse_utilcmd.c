@@ -636,26 +636,42 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 	TupleConstr *constr;
 	AclResult	aclresult;
 	char	   *comment;
+	ParseCallbackState pcbstate;
 
-	relation = parserOpenTable(cxt->pstate, table_like_clause->relation,
-							   AccessShareLock);
+	setup_parser_errposition_callback(&pcbstate, cxt->pstate, table_like_clause->relation->location);
+
+	relation = relation_openrv(table_like_clause->relation, AccessShareLock);
 
 	if (relation->rd_rel->relkind != RELKIND_RELATION
 		&& relation->rd_rel->relkind != RELKIND_VIEW
-		&& relation->rd_rel->relkind != RELKIND_FOREIGN_TABLE)
+		&& relation->rd_rel->relkind != RELKIND_FOREIGN_TABLE
+		&& relation->rd_rel->relkind != RELKIND_COMPOSITE_TYPE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("LIKE source relation \"%s\" is not a table, view, or foreign table",
+				 errmsg("\"%s\" is not a table, view, composite type, or foreign table",
 						table_like_clause->relation->relname)));
 
+	cancel_parser_errposition_callback(&pcbstate);
+
 	/*
-	 * Check for SELECT privileges
+	 * Check for privileges
 	 */
-	aclresult = pg_class_aclcheck(RelationGetRelid(relation), GetUserId(),
+	if (relation->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
+	{
+		aclresult = pg_type_aclcheck(relation->rd_rel->reltype, GetUserId(),
+									 ACL_USAGE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, ACL_KIND_TYPE,
+						   RelationGetRelationName(relation));
+	}
+	else
+	{
+		aclresult = pg_class_aclcheck(RelationGetRelid(relation), GetUserId(),
 								  ACL_SELECT);
-	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_CLASS,
-					   RelationGetRelationName(relation));
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, ACL_KIND_CLASS,
+						   RelationGetRelationName(relation));
+	}
 
 	tupleDesc = RelationGetDescr(relation);
 	constr = tupleDesc->constr;

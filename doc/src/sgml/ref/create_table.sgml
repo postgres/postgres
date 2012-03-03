@@ -370,7 +370,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
      </para>
      <para>
       The <literal>LIKE</literal> clause can also be used to copy columns from
-      views or foreign tables.  Inapplicable options (e.g., <literal>INCLUDING
+      views, foreign tables, or composite types.  Inapplicable options (e.g., <literal>INCLUDING
       INDEXES</literal> from a view) are ignored.
      </para>
     </listitem>

@@ -10,6 +10,8 @@ CREATE TABLE inhx (xx text DEFAULT 'text');
 CREATE TABLE ctla (aa TEXT);
 CREATE TABLE ctlb (bb TEXT) INHERITS (ctla);
 
+CREATE TABLE foo (LIKE nonexistent);
+
 CREATE TABLE inhe (ee text, LIKE inhx) inherits (ctlb);
 INSERT INTO inhe VALUES ('ee-col1', 'ee-col2', DEFAULT, 'ee-col4');
 SELECT * FROM inhe; /* Columns aa, bb, xx value NULL, ee */
@@ -111,7 +113,7 @@ CREATE TABLE ctlt11 (LIKE ctlv1);
 CREATE TABLE ctlt11a (LIKE ctlv1 INCLUDING ALL);
 
 CREATE TYPE ctlty1 AS (a int, b text);
-CREATE TABLE ctlt12 (LIKE ctlty1);  -- currently fails
+CREATE TABLE ctlt12 (LIKE ctlty1);
 
 DROP SEQUENCE ctlseq1;
 DROP TYPE ctlty1;
