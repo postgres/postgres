@@ -3341,6 +3341,26 @@ PSQL_EDITOR_LINENUMBER_ARG='--line '
    </varlistentry>
 
    <varlistentry>
+    <term><envar>PSQL_HISTORY</envar></term>
+
+    <listitem>
+     <para>
+      Alternative location for the command history file. Tilde ("~") expansion is performed.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><envar>PSQLRC</envar></term>
+
+    <listitem>
+     <para>
+      Alternative location of the user's .psqlrc file. Tilde ("~") expansion is performed.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><envar>SHELL</envar></term>
 
     <listitem>
@@ -3390,6 +3410,11 @@ PSQL_EDITOR_LINENUMBER_ARG='--line '
      to set up the client or the server to taste (using the <command>\set
      </command> and <command>SET</command> commands).
     </para>
+    <para>
+     The location of the user's <filename>~/.psqlrc</filename> file can
+     also be set explicitly via the <envar>PSQLRC</envar> environment
+     setting.
+    </para>
    </listitem>
 
    <listitem>
@@ -3410,6 +3435,11 @@ PSQL_EDITOR_LINENUMBER_ARG='--line '
      The command-line history is stored in the file
      <filename>~/.psql_history</filename>, or
      <filename>%APPDATA%\postgresql\psql_history</filename> on Windows.
+    </para>
+    <para>
+     The location of the history file can
+     also be set explicitly via the <envar>PSQL_HISTORY</envar> environment
+     setting.
     </para>
    </listitem>
   </itemizedlist>

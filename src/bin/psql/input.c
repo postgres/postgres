@@ -285,6 +285,15 @@ initializeInput(int flags)
 		history_lines_added = 0;
 
 		histfile = GetVariable(pset.vars, "HISTFILE");
+
+		if (histfile == NULL)
+		{
+			char * envhist;
+			envhist = getenv("PSQL_HISTORY");
+			if (envhist != NULL && strlen(envhist) > 0)
+				histfile = envhist;
+		}
+
 		if (histfile == NULL)
 		{
 			if (get_home_path(home))
