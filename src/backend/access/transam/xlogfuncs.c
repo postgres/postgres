@@ -30,6 +30,10 @@
 #include "utils/guc.h"
 #include "utils/timestamp.h"
 
+
+static void validate_xlog_location(char *str);
+
+
 /*
  * pg_start_backup: set up for taking an on-line backup dump
  *
@@ -289,6 +293,8 @@ pg_xlogfile_name_offset(PG_FUNCTION_ARGS)
 	 */
 	locationstr = text_to_cstring(location);
 
+	validate_xlog_location(locationstr);
+
 	if (sscanf(locationstr, "%X/%X", &uxlogid, &uxrecoff) != 2)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -360,6 +366,8 @@ pg_xlogfile_name(PG_FUNCTION_ARGS)
 		 errhint("pg_xlogfile_name() cannot be executed during recovery.")));
 
 	locationstr = text_to_cstring(location);
+
+	validate_xlog_location(locationstr);
 
 	if (sscanf(locationstr, "%X/%X", &uxlogid, &uxrecoff) != 2)
 		ereport(ERROR,
