@@ -609,7 +609,7 @@ DefineType(List *names, List *parameters)
 			   F_ARRAY_SEND,	/* send procedure */
 			   typmodinOid,		/* typmodin procedure */
 			   typmodoutOid,	/* typmodout procedure */
-			   InvalidOid,		/* analyze procedure - default */
+			   F_ARRAY_TYPANALYZE,	/* analyze procedure */
 			   typoid,			/* element type ID */
 			   true,			/* yes this is an array type */
 			   InvalidOid,		/* no further array type */
@@ -1140,7 +1140,7 @@ DefineEnum(CreateEnumStmt *stmt)
 			   F_ARRAY_SEND,	/* send procedure */
 			   InvalidOid,		/* typmodin procedure - none */
 			   InvalidOid,		/* typmodout procedure - none */
-			   InvalidOid,		/* analyze procedure - default */
+			   F_ARRAY_TYPANALYZE,	/* analyze procedure */
 			   enumTypeOid,		/* element type ID */
 			   true,			/* yes this is an array type */
 			   InvalidOid,		/* no further array type */
@@ -1450,7 +1450,7 @@ DefineRange(CreateRangeStmt *stmt)
 			   F_ARRAY_SEND,	/* send procedure */
 			   InvalidOid,		/* typmodin procedure - none */
 			   InvalidOid,		/* typmodout procedure - none */
-			   InvalidOid,		/* analyze procedure - default */
+			   F_ARRAY_TYPANALYZE,	/* analyze procedure */
 			   typoid,			/* element type ID */
 			   true,			/* yes this is an array type */
 			   InvalidOid,		/* no further array type */

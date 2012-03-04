@@ -5354,9 +5354,9 @@
        Column data values of the appropriate kind for the
        <replaceable>N</>th <quote>slot</quote>, or null if the slot
        kind does not store any data values.  Each array's element
-       values are actually of the specific column's data type, so there
-       is no way to define these columns' type more specifically than
-       <type>anyarray</>.
+       values are actually of the specific column's data type, or a related
+       type such as an array's element type, so there is no way to define
+       these columns' type more specifically than <type>anyarray</>.
       </entry>
      </row>
     </tbody>
@@ -8291,8 +8291,6 @@
       <entry>
        A list of the most common values in the column. (Null if
        no values seem to be more common than any others.)
-       For some data types such as <type>tsvector</>, this is a list of
-       the most common element values rather than values of the type itself.
       </entry>
      </row>
 
@@ -8301,12 +8299,9 @@
       <entry><type>real[]</type></entry>
       <entry></entry>
       <entry>
-       A list of the frequencies of the most common values or elements,
+       A list of the frequencies of the most common values,
        i.e., number of occurrences of each divided by total number of rows.
        (Null when <structfield>most_common_vals</structfield> is.)
-       For some data types such as <type>tsvector</>, it can also store some
-       additional information, making it longer than the
-       <structfield>most_common_vals</> array.
       </entry>
      </row>
 
@@ -8338,13 +8333,47 @@
        type does not have a <literal>&lt;</> operator.)
       </entry>
      </row>
+
+     <row>
+      <entry><structfield>most_common_elems</structfield></entry>
+      <entry><type>anyarray</type></entry>
+      <entry></entry>
+      <entry>
+       A list of non-null element values most often appearing within values of
+       the column. (Null for scalar types.)
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>most_common_elem_freqs</structfield></entry>
+      <entry><type>real[]</type></entry>
+      <entry></entry>
+      <entry>
+       A list of the frequencies of the most common element values, i.e., the
+       fraction of rows containing at least one instance of the given value.
+       Two or three additional values follow the per-element frequencies;
+       these are the minimum and maximum of the preceding per-element
+       frequencies, and optionally the frequency of null elements.
+       (Null when <structfield>most_common_elems</structfield> is.)
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>elem_count_histogram</structfield></entry>
+      <entry><type>real[]</type></entry>
+      <entry></entry>
+      <entry>
+       A histogram of the counts of distinct non-null element values within the
+       values of the column, followed by the average number of distinct
+       non-null elements.  (Null for scalar types.)
+      </entry>
+     </row>
     </tbody>
    </tgroup>
   </table>
 
   <para>
-   The maximum number of entries in the <structfield>most_common_vals</>
-   and <structfield>histogram_bounds</> arrays can be set on a
+   The maximum number of entries in the array fields can be controlled on a
    column-by-column basis using the <command>ALTER TABLE SET STATISTICS</>
    command, or globally by setting the
    <xref linkend="guc-default-statistics-target"> run-time parameter.

@@ -127,6 +127,7 @@
 #include "utils/syscache.h"
 #include "utils/timestamp.h"
 #include "utils/tqual.h"
+#include "utils/typcache.h"
 
 
 /* Hooks for plugins to get control when we ask for stats */
@@ -1701,27 +1702,18 @@ scalararraysel(PlannerInfo *root,
 {
 	Oid			operator = clause->opno;
 	bool		useOr = clause->useOr;
+	bool		isEquality = false;
+	bool		isInequality = false;
 	Node	   *leftop;
 	Node	   *rightop;
 	Oid			nominal_element_type;
 	Oid			nominal_element_collation;
+	TypeCacheEntry *typentry;
 	RegProcedure oprsel;
 	FmgrInfo	oprselproc;
 	Selectivity s1;
 
-	/*
-	 * First, look up the underlying operator's selectivity estimator. Punt if
-	 * it hasn't got one.
-	 */
-	if (is_join_clause)
-		oprsel = get_oprjoin(operator);
-	else
-		oprsel = get_oprrest(operator);
-	if (!oprsel)
-		return (Selectivity) 0.5;
-	fmgr_info(oprsel, &oprselproc);
-
-	/* deconstruct the expression */
+	/* First, deconstruct the expression */
 	Assert(list_length(clause->args) == 2);
 	leftop = (Node *) linitial(clause->args);
 	rightop = (Node *) lsecond(clause->args);
@@ -1735,6 +1727,46 @@ scalararraysel(PlannerInfo *root,
 
 	/* look through any binary-compatible relabeling of rightop */
 	rightop = strip_array_coercion(rightop);
+
+	/*
+	 * Detect whether the operator is the default equality or inequality
+	 * operator of the array element type.
+	 */
+	typentry = lookup_type_cache(nominal_element_type, TYPECACHE_EQ_OPR);
+	if (OidIsValid(typentry->eq_opr))
+	{
+		if (operator == typentry->eq_opr)
+			isEquality = true;
+		else if (get_negator(operator) == typentry->eq_opr)
+			isInequality = true;
+	}
+
+	/*
+	 * If it is equality or inequality, we might be able to estimate this as
+	 * a form of array containment; for instance "const = ANY(column)" can be
+	 * treated as "ARRAY[const] <@ column".  scalararraysel_containment tries
+	 * that, and returns the selectivity estimate if successful, or -1 if not.
+	 */
+	if ((isEquality || isInequality) && !is_join_clause)
+	{
+		s1 = scalararraysel_containment(root, leftop, rightop,
+										nominal_element_type,
+										isEquality, useOr, varRelid);
+		if (s1 >= 0.0)
+			return s1;
+	}
+
+	/*
+	 * Look up the underlying operator's selectivity estimator. Punt if it
+	 * hasn't got one.
+	 */
+	if (is_join_clause)
+		oprsel = get_oprjoin(operator);
+	else
+		oprsel = get_oprrest(operator);
+	if (!oprsel)
+		return (Selectivity) 0.5;
+	fmgr_info(oprsel, &oprselproc);
 
 	/*
 	 * We consider three cases:

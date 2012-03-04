@@ -272,6 +272,31 @@ WHERE p1.typanalyze = p2.oid AND NOT
      p2.proargtypes[0] = 'internal'::regtype AND
      p2.prorettype = 'bool'::regtype AND NOT p2.proretset);
 
+-- domains inherit their base type's typanalyze
+
+SELECT d.oid, d.typname, d.typanalyze, t.oid, t.typname, t.typanalyze
+FROM pg_type d JOIN pg_type t ON d.typbasetype = t.oid
+WHERE d.typanalyze != t.typanalyze;
+
+-- range_typanalyze should be used for all and only range types
+-- (but exclude domains, which we checked above)
+
+SELECT t.oid, t.typname, t.typanalyze
+FROM pg_type t LEFT JOIN pg_range r on t.oid = r.rngtypid
+WHERE t.typbasetype = 0 AND
+    (t.typanalyze = 'range_typanalyze'::regproc) != (r.rngtypid IS NOT NULL);
+
+-- array_typanalyze should be used for all and only array types
+-- (but exclude domains, which we checked above)
+-- As of 9.2 this finds int2vector and oidvector, which are weird anyway
+
+SELECT t.oid, t.typname, t.typanalyze
+FROM pg_type t
+WHERE t.typbasetype = 0 AND
+    (t.typanalyze = 'array_typanalyze'::regproc) !=
+    (typelem != 0 AND typlen < 0)
+ORDER BY 1;
+
 -- **************** pg_class ****************
 
 -- Look for illegal values in pg_class fields

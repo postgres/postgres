@@ -95,9 +95,6 @@ typedef enum
 	Pattern_Prefix_None, Pattern_Prefix_Partial, Pattern_Prefix_Exact
 } Pattern_Prefix_Status;
 
-
-/* selfuncs.c */
-
 /* Hooks for plugins to get control when we ask for stats */
 typedef bool (*get_relation_stats_hook_type) (PlannerInfo *root,
 														  RangeTblEntry *rte,
@@ -109,6 +106,8 @@ typedef bool (*get_index_stats_hook_type) (PlannerInfo *root,
 													   AttrNumber indexattnum,
 												  VariableStatData *vardata);
 extern PGDLLIMPORT get_index_stats_hook_type get_index_stats_hook;
+
+/* Functions in selfuncs.c */
 
 extern void examine_variable(PlannerInfo *root, Node *node, int varRelid,
 				 VariableStatData *vardata);
@@ -196,5 +195,14 @@ extern Datum hashcostestimate(PG_FUNCTION_ARGS);
 extern Datum gistcostestimate(PG_FUNCTION_ARGS);
 extern Datum spgcostestimate(PG_FUNCTION_ARGS);
 extern Datum gincostestimate(PG_FUNCTION_ARGS);
+
+/* Functions in array_selfuncs.c */
+
+extern Selectivity scalararraysel_containment(PlannerInfo *root,
+						   Node *leftop, Node *rightop,
+						   Oid elemtype, bool isEquality, bool useOr,
+						   int varRelid);
+extern Datum arraycontsel(PG_FUNCTION_ARGS);
+extern Datum arraycontjoinsel(PG_FUNCTION_ARGS);
 
 #endif   /* SELFUNCS_H */

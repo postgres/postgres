@@ -1520,12 +1520,15 @@ DATA(insert OID = 2590 (  "|&>"    PGNSP PGUID b f f 718 718	16	 0	 0 circle_ove
 DESCR("overlaps or is above");
 
 /* overlap/contains/contained for arrays */
-DATA(insert OID = 2750 (  "&&"	   PGNSP PGUID b f f 2277 2277	16 2750  0 arrayoverlap areasel areajoinsel ));
+DATA(insert OID = 2750 (  "&&"	   PGNSP PGUID b f f 2277 2277	16 2750  0 arrayoverlap arraycontsel arraycontjoinsel ));
 DESCR("overlaps");
-DATA(insert OID = 2751 (  "@>"	   PGNSP PGUID b f f 2277 2277	16 2752  0 arraycontains contsel contjoinsel ));
+#define OID_ARRAY_OVERLAP_OP	2750
+DATA(insert OID = 2751 (  "@>"	   PGNSP PGUID b f f 2277 2277	16 2752  0 arraycontains arraycontsel arraycontjoinsel ));
 DESCR("contains");
-DATA(insert OID = 2752 (  "<@"	   PGNSP PGUID b f f 2277 2277	16 2751  0 arraycontained contsel contjoinsel ));
+#define OID_ARRAY_CONTAINS_OP	2751
+DATA(insert OID = 2752 (  "<@"	   PGNSP PGUID b f f 2277 2277	16 2751  0 arraycontained arraycontsel arraycontjoinsel ));
 DESCR("is contained by");
+#define OID_ARRAY_CONTAINED_OP	2752
 
 /* capturing operators to preserve pre-8.3 behavior of text concatenation */
 DATA(insert OID = 2779 (  "||"	   PGNSP PGUID b f f 25 2776	25	 0 0 textanycat - - ));

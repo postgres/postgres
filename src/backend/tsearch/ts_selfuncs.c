@@ -220,6 +220,10 @@ mcelem_tsquery_selec(TSQuery query, Datum *mcelem, int nmcelem,
 	/*
 	 * There should be two more Numbers than Values, because the last two
 	 * cells are taken for minimal and maximal frequency.  Punt if not.
+	 *
+	 * (Note: the MCELEM statistics slot definition allows for a third extra
+	 * number containing the frequency of nulls, but we're not expecting that
+	 * to appear for a tsvector column.)
 	 */
 	if (nnumbers != nmcelem + 2)
 		return tsquery_opr_selec_no_stats(query);

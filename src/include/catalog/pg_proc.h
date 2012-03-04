@@ -869,6 +869,12 @@ DATA(insert OID = 2334 (  array_agg_finalfn   PGNSP PGUID 12 1 0 0 0 f f f f f f
 DESCR("aggregate final function");
 DATA(insert OID = 2335 (  array_agg		   PGNSP PGUID 12 1 0 0 0 t f f f f f i 1 0 2277 "2283" _null_ _null_ _null_ _null_ aggregate_dummy _null_ _null_ _null_ ));
 DESCR("concatenate aggregate input into an array");
+DATA(insert OID = 3816 (  array_typanalyze PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 16 "2281" _null_ _null_ _null_ _null_ array_typanalyze _null_ _null_ _null_ ));
+DESCR("array typanalyze");
+DATA(insert OID = 3817 (  arraycontsel	   PGNSP PGUID 12 1 0 0 0 f f f f t f s 4 0 701 "2281 26 2281 23" _null_ _null_ _null_ _null_ arraycontsel _null_ _null_ _null_ ));
+DESCR("restriction selectivity for array-containment operators");
+DATA(insert OID = 3818 (  arraycontjoinsel PGNSP PGUID 12 1 0 0 0 f f f f t f s 5 0 701 "2281 26 2281 21 2281" _null_ _null_ _null_ _null_ arraycontjoinsel _null_ _null_ _null_ ));
+DESCR("join selectivity for array-containment operators");
 
 DATA(insert OID = 760 (  smgrin			   PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 210 "2275" _null_ _null_ _null_ _null_	smgrin _null_ _null_ _null_ ));
 DESCR("I/O");

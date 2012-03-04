@@ -110,8 +110,6 @@ static void update_attstats(Oid relid, bool inh,
 static Datum std_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
 static Datum ind_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
 
-static bool std_typanalyze(VacAttrStats *stats);
-
 
 /*
  *	analyze_rel() -- analyze one relation
@@ -476,8 +474,7 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt, bool inh)
 		for (i = 0; i < attr_cnt; i++)
 		{
 			VacAttrStats *stats = vacattrstats[i];
-			AttributeOpts *aopt =
-			get_attribute_options(onerel->rd_id, stats->attr->attnum);
+			AttributeOpts *aopt;
 
 			stats->rows = rows;
 			stats->tupDesc = onerel->rd_att;
@@ -490,11 +487,12 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt, bool inh)
 			 * If the appropriate flavor of the n_distinct option is
 			 * specified, override with the corresponding value.
 			 */
+			aopt = get_attribute_options(onerel->rd_id, stats->attr->attnum);
 			if (aopt != NULL)
 			{
-				float8		n_distinct =
-				inh ? aopt->n_distinct_inherited : aopt->n_distinct;
+				float8		n_distinct;
 
+				n_distinct = inh ? aopt->n_distinct_inherited : aopt->n_distinct;
 				if (n_distinct != 0.0)
 					stats->stadistinct = n_distinct;
 			}
@@ -1794,7 +1792,7 @@ static int	compare_mcvs(const void *a, const void *b);
 /*
  * std_typanalyze -- the default type-specific typanalyze function
  */
-static bool
+bool
 std_typanalyze(VacAttrStats *stats)
 {
 	Form_pg_attribute attr = stats->attr;

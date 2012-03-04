@@ -377,6 +377,11 @@ compute_tsvector_stats(VacAttrStats *stats,
 			 * able to find out the minimal and maximal frequency without
 			 * going through all the values.  We keep those two extra
 			 * frequencies in two extra cells in mcelem_freqs.
+			 *
+			 * (Note: the MCELEM statistics slot definition allows for a third
+			 * extra number containing the frequency of nulls, but we don't
+			 * create that for a tsvector column, since null elements aren't
+			 * possible.)
 			 */
 			mcelem_values = (Datum *) palloc(num_mcelem * sizeof(Datum));
 			mcelem_freqs = (float4 *) palloc((num_mcelem + 2) * sizeof(float4));

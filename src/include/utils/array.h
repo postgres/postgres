@@ -289,4 +289,9 @@ extern ArrayType *create_singleton_array(FunctionCallInfo fcinfo,
 extern Datum array_agg_transfn(PG_FUNCTION_ARGS);
 extern Datum array_agg_finalfn(PG_FUNCTION_ARGS);
 
+/*
+ * prototypes for functions defined in array_typanalyze.c
+ */
+extern Datum array_typanalyze(PG_FUNCTION_ARGS);
+
 #endif   /* ARRAY_H */

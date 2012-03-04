@@ -61,6 +61,11 @@ typedef struct VacAttrStats *VacAttrStatsP;
 typedef Datum (*AnalyzeAttrFetchFunc) (VacAttrStatsP stats, int rownum,
 												   bool *isNull);
 
+typedef void (*AnalyzeAttrComputeStatsFunc) (VacAttrStatsP stats,
+											 AnalyzeAttrFetchFunc fetchfunc,
+											 int samplerows,
+											 double totalrows);
+
 typedef struct VacAttrStats
 {
 	/*
@@ -83,10 +88,7 @@ typedef struct VacAttrStats
 	 * These fields must be filled in by the typanalyze routine, unless it
 	 * returns FALSE.
 	 */
-	void		(*compute_stats) (VacAttrStatsP stats,
-											  AnalyzeAttrFetchFunc fetchfunc,
-											  int samplerows,
-											  double totalrows);
+	AnalyzeAttrComputeStatsFunc compute_stats;	/* function pointer */
 	int			minrows;		/* Minimum # of rows wanted for stats */
 	void	   *extra_data;		/* for extra type-specific data */
 
@@ -167,5 +169,6 @@ extern void lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 /* in commands/analyze.c */
 extern void analyze_rel(Oid relid, VacuumStmt *vacstmt,
 			BufferAccessStrategy bstrategy);
+extern bool std_typanalyze(VacAttrStats *stats);
 
 #endif   /* VACUUM_H */

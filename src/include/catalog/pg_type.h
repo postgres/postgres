@@ -357,8 +357,8 @@ DATA(insert OID = 114 ( json		   PGNSP PGUID -1 f b U f t \054 0 0 199 json_in j
 DATA(insert OID = 142 ( xml		   PGNSP PGUID -1 f b U f t \054 0 0 143 xml_in xml_out xml_recv xml_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("XML content");
 #define XMLOID 142
-DATA(insert OID = 143 ( _xml	   PGNSP PGUID -1 f b A f t \054 0 142 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 199 ( _json	   PGNSP PGUID -1 f b A f t \054 0 114 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 143 ( _xml	   PGNSP PGUID -1 f b A f t \054 0 142 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 199 ( _json	   PGNSP PGUID -1 f b A f t \054 0 114 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 
 DATA(insert OID = 194 ( pg_node_tree	PGNSP PGUID -1 f b S f t \054 0 0 0 pg_node_tree_in pg_node_tree_out pg_node_tree_recv pg_node_tree_send - - - i x f 0 -1 0 100 _null_ _null_ _null_ ));
 DESCR("string representing an internal node tree");
@@ -395,7 +395,7 @@ DESCR("geometric polygon '(pt1,...)'");
 DATA(insert OID = 628 (  line	   PGNSP PGUID 32 f b G f t \054 0 701 629 line_in line_out line_recv line_send - - - d p f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("geometric line (not implemented)");
 #define LINEOID			628
-DATA(insert OID = 629 (  _line	   PGNSP PGUID	-1 f b A f t \054 0 628 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 629 (  _line	   PGNSP PGUID	-1 f b A f t \054 0 628 0 array_in array_out array_recv array_send - - array_typanalyze d x f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("");
 
 /* OIDS 700 - 799 */
@@ -422,11 +422,11 @@ DESCR("");
 DATA(insert OID = 718 (  circle    PGNSP PGUID	24 f b G f t \054 0 0 719 circle_in circle_out circle_recv circle_send - - - d p f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("geometric circle '(center,radius)'");
 #define CIRCLEOID		718
-DATA(insert OID = 719 (  _circle   PGNSP PGUID	-1 f b A f t \054 0  718 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 719 (  _circle   PGNSP PGUID	-1 f b A f t \054 0  718 0 array_in array_out array_recv array_send - - array_typanalyze d x f 0 -1 0 0 _null_ _null_ _null_ ));
 DATA(insert OID = 790 (  money	   PGNSP PGUID	 8 FLOAT8PASSBYVAL b N f t \054 0 0 791 cash_in cash_out cash_recv cash_send - - - d p f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("monetary amounts, $d,ddd.cc");
 #define CASHOID 790
-DATA(insert OID = 791 (  _money    PGNSP PGUID	-1 f b A f t \054 0  790 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 791 (  _money    PGNSP PGUID	-1 f b A f t \054 0  790 0 array_in array_out array_recv array_send - - array_typanalyze d x f 0 -1 0 0 _null_ _null_ _null_ ));
 
 /* OIDS 800 - 899 */
 DATA(insert OID = 829 ( macaddr    PGNSP PGUID	6 f b U f t \054 0 0 1040 macaddr_in macaddr_out macaddr_recv macaddr_send - - - i p f 0 -1 0 0 _null_ _null_ _null_ ));
@@ -442,44 +442,44 @@ DESCR("network IP address/netmask, network address");
 /* OIDS 900 - 999 */
 
 /* OIDS 1000 - 1099 */
-DATA(insert OID = 1000 (  _bool		 PGNSP PGUID -1 f b A f t \054 0	16 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 1001 (  _bytea	 PGNSP PGUID -1 f b A f t \054 0	17 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 1002 (  _char		 PGNSP PGUID -1 f b A f t \054 0	18 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 1003 (  _name		 PGNSP PGUID -1 f b A f t \054 0	19 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 1005 (  _int2		 PGNSP PGUID -1 f b A f t \054 0	21 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 1006 (  _int2vector PGNSP PGUID -1 f b A f t \054 0	22 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 1007 (  _int4		 PGNSP PGUID -1 f b A f t \054 0	23 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1000 (  _bool		 PGNSP PGUID -1 f b A f t \054 0	16 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1001 (  _bytea	 PGNSP PGUID -1 f b A f t \054 0	17 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1002 (  _char		 PGNSP PGUID -1 f b A f t \054 0	18 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1003 (  _name		 PGNSP PGUID -1 f b A f t \054 0	19 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1005 (  _int2		 PGNSP PGUID -1 f b A f t \054 0	21 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1006 (  _int2vector PGNSP PGUID -1 f b A f t \054 0	22 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1007 (  _int4		 PGNSP PGUID -1 f b A f t \054 0	23 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 #define INT4ARRAYOID		1007
-DATA(insert OID = 1008 (  _regproc	 PGNSP PGUID -1 f b A f t \054 0	24 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 1009 (  _text		 PGNSP PGUID -1 f b A f t \054 0	25 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 100 _null_ _null_ _null_ ));
+DATA(insert OID = 1008 (  _regproc	 PGNSP PGUID -1 f b A f t \054 0	24 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1009 (  _text		 PGNSP PGUID -1 f b A f t \054 0	25 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 100 _null_ _null_ _null_ ));
 #define TEXTARRAYOID		1009
-DATA(insert OID = 1028 (  _oid		 PGNSP PGUID -1 f b A f t \054 0	26 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 1010 (  _tid		 PGNSP PGUID -1 f b A f t \054 0	27 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 1011 (  _xid		 PGNSP PGUID -1 f b A f t \054 0	28 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 1012 (  _cid		 PGNSP PGUID -1 f b A f t \054 0	29 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 1013 (  _oidvector PGNSP PGUID -1 f b A f t \054 0	30 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 1014 (  _bpchar	 PGNSP PGUID -1 f b A f t \054 0 1042 0 array_in array_out array_recv array_send bpchartypmodin bpchartypmodout - i x f 0 -1 0 100 _null_ _null_ _null_ ));
-DATA(insert OID = 1015 (  _varchar	 PGNSP PGUID -1 f b A f t \054 0 1043 0 array_in array_out array_recv array_send varchartypmodin varchartypmodout - i x f 0 -1 0 100 _null_ _null_ _null_ ));
-DATA(insert OID = 1016 (  _int8		 PGNSP PGUID -1 f b A f t \054 0	20 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 1017 (  _point	 PGNSP PGUID -1 f b A f t \054 0 600 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 1018 (  _lseg		 PGNSP PGUID -1 f b A f t \054 0 601 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 1019 (  _path		 PGNSP PGUID -1 f b A f t \054 0 602 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 1020 (  _box		 PGNSP PGUID -1 f b A f t \073 0 603 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 1021 (  _float4	 PGNSP PGUID -1 f b A f t \054 0 700 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1028 (  _oid		 PGNSP PGUID -1 f b A f t \054 0	26 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1010 (  _tid		 PGNSP PGUID -1 f b A f t \054 0	27 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1011 (  _xid		 PGNSP PGUID -1 f b A f t \054 0	28 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1012 (  _cid		 PGNSP PGUID -1 f b A f t \054 0	29 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1013 (  _oidvector PGNSP PGUID -1 f b A f t \054 0	30 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1014 (  _bpchar	 PGNSP PGUID -1 f b A f t \054 0 1042 0 array_in array_out array_recv array_send bpchartypmodin bpchartypmodout array_typanalyze i x f 0 -1 0 100 _null_ _null_ _null_ ));
+DATA(insert OID = 1015 (  _varchar	 PGNSP PGUID -1 f b A f t \054 0 1043 0 array_in array_out array_recv array_send varchartypmodin varchartypmodout array_typanalyze i x f 0 -1 0 100 _null_ _null_ _null_ ));
+DATA(insert OID = 1016 (  _int8		 PGNSP PGUID -1 f b A f t \054 0	20 0 array_in array_out array_recv array_send - - array_typanalyze d x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1017 (  _point	 PGNSP PGUID -1 f b A f t \054 0 600 0 array_in array_out array_recv array_send - - array_typanalyze d x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1018 (  _lseg		 PGNSP PGUID -1 f b A f t \054 0 601 0 array_in array_out array_recv array_send - - array_typanalyze d x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1019 (  _path		 PGNSP PGUID -1 f b A f t \054 0 602 0 array_in array_out array_recv array_send - - array_typanalyze d x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1020 (  _box		 PGNSP PGUID -1 f b A f t \073 0 603 0 array_in array_out array_recv array_send - - array_typanalyze d x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1021 (  _float4	 PGNSP PGUID -1 f b A f t \054 0 700 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 #define FLOAT4ARRAYOID 1021
-DATA(insert OID = 1022 (  _float8	 PGNSP PGUID -1 f b A f t \054 0 701 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 1023 (  _abstime	 PGNSP PGUID -1 f b A f t \054 0 702 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 1024 (  _reltime	 PGNSP PGUID -1 f b A f t \054 0 703 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 1025 (  _tinterval PGNSP PGUID -1 f b A f t \054 0 704 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 1027 (  _polygon	 PGNSP PGUID -1 f b A f t \054 0 604 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1022 (  _float8	 PGNSP PGUID -1 f b A f t \054 0 701 0 array_in array_out array_recv array_send - - array_typanalyze d x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1023 (  _abstime	 PGNSP PGUID -1 f b A f t \054 0 702 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1024 (  _reltime	 PGNSP PGUID -1 f b A f t \054 0 703 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1025 (  _tinterval PGNSP PGUID -1 f b A f t \054 0 704 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1027 (  _polygon	 PGNSP PGUID -1 f b A f t \054 0 604 0 array_in array_out array_recv array_send - - array_typanalyze d x f 0 -1 0 0 _null_ _null_ _null_ ));
 DATA(insert OID = 1033 (  aclitem	 PGNSP PGUID 12 f b U f t \054 0 0 1034 aclitemin aclitemout - - - - - i p f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("access control list");
 #define ACLITEMOID		1033
-DATA(insert OID = 1034 (  _aclitem	 PGNSP PGUID -1 f b A f t \054 0 1033 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 1040 (  _macaddr	 PGNSP PGUID -1 f b A f t \054 0  829 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 1041 (  _inet		 PGNSP PGUID -1 f b A f t \054 0  869 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 651  (  _cidr		 PGNSP PGUID -1 f b A f t \054 0  650 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 1263 (  _cstring	 PGNSP PGUID -1 f b A f t \054 0 2275 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1034 (  _aclitem	 PGNSP PGUID -1 f b A f t \054 0 1033 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1040 (  _macaddr	 PGNSP PGUID -1 f b A f t \054 0  829 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1041 (  _inet		 PGNSP PGUID -1 f b A f t \054 0  869 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 651  (  _cidr		 PGNSP PGUID -1 f b A f t \054 0  650 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1263 (  _cstring	 PGNSP PGUID -1 f b A f t \054 0 2275 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 #define CSTRINGARRAYOID		1263
 
 DATA(insert OID = 1042 ( bpchar		 PGNSP PGUID -1 f b S f t \054 0	0 1014 bpcharin bpcharout bpcharrecv bpcharsend bpchartypmodin bpchartypmodout - i x f 0 -1 0 100 _null_ _null_ _null_ ));
@@ -500,34 +500,34 @@ DESCR("time of day");
 DATA(insert OID = 1114 ( timestamp	 PGNSP PGUID	8 FLOAT8PASSBYVAL b D f t \054 0	0 1115 timestamp_in timestamp_out timestamp_recv timestamp_send timestamptypmodin timestamptypmodout - d p f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("date and time");
 #define TIMESTAMPOID	1114
-DATA(insert OID = 1115 ( _timestamp  PGNSP PGUID	-1 f b A f t \054 0 1114 0 array_in array_out array_recv array_send timestamptypmodin timestamptypmodout - d x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 1182 ( _date		 PGNSP PGUID	-1 f b A f t \054 0 1082 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 1183 ( _time		 PGNSP PGUID	-1 f b A f t \054 0 1083 0 array_in array_out array_recv array_send timetypmodin timetypmodout - d x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1115 ( _timestamp  PGNSP PGUID	-1 f b A f t \054 0 1114 0 array_in array_out array_recv array_send timestamptypmodin timestamptypmodout array_typanalyze d x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1182 ( _date		 PGNSP PGUID	-1 f b A f t \054 0 1082 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1183 ( _time		 PGNSP PGUID	-1 f b A f t \054 0 1083 0 array_in array_out array_recv array_send timetypmodin timetypmodout array_typanalyze d x f 0 -1 0 0 _null_ _null_ _null_ ));
 DATA(insert OID = 1184 ( timestamptz PGNSP PGUID	8 FLOAT8PASSBYVAL b D t t \054 0	0 1185 timestamptz_in timestamptz_out timestamptz_recv timestamptz_send timestamptztypmodin timestamptztypmodout - d p f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("date and time with time zone");
 #define TIMESTAMPTZOID	1184
-DATA(insert OID = 1185 ( _timestamptz PGNSP PGUID -1 f b A f t \054 0	1184 0 array_in array_out array_recv array_send timestamptztypmodin timestamptztypmodout - d x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1185 ( _timestamptz PGNSP PGUID -1 f b A f t \054 0	1184 0 array_in array_out array_recv array_send timestamptztypmodin timestamptztypmodout array_typanalyze d x f 0 -1 0 0 _null_ _null_ _null_ ));
 DATA(insert OID = 1186 ( interval	 PGNSP PGUID 16 f b T t t \054 0	0 1187 interval_in interval_out interval_recv interval_send intervaltypmodin intervaltypmodout - d p f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("@ <number> <units>, time interval");
 #define INTERVALOID		1186
-DATA(insert OID = 1187 ( _interval	 PGNSP PGUID	-1 f b A f t \054 0 1186 0 array_in array_out array_recv array_send intervaltypmodin intervaltypmodout - d x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1187 ( _interval	 PGNSP PGUID	-1 f b A f t \054 0 1186 0 array_in array_out array_recv array_send intervaltypmodin intervaltypmodout array_typanalyze d x f 0 -1 0 0 _null_ _null_ _null_ ));
 
 /* OIDS 1200 - 1299 */
-DATA(insert OID = 1231 (  _numeric	 PGNSP PGUID -1 f b A f t \054 0	1700 0 array_in array_out array_recv array_send numerictypmodin numerictypmodout - i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1231 (  _numeric	 PGNSP PGUID -1 f b A f t \054 0	1700 0 array_in array_out array_recv array_send numerictypmodin numerictypmodout array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 DATA(insert OID = 1266 ( timetz		 PGNSP PGUID 12 f b D f t \054 0	0 1270 timetz_in timetz_out timetz_recv timetz_send timetztypmodin timetztypmodout - d p f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("time of day with time zone");
 #define TIMETZOID		1266
-DATA(insert OID = 1270 ( _timetz	 PGNSP PGUID -1 f b A f t \054 0	1266 0 array_in array_out array_recv array_send timetztypmodin timetztypmodout - d x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1270 ( _timetz	 PGNSP PGUID -1 f b A f t \054 0	1266 0 array_in array_out array_recv array_send timetztypmodin timetztypmodout array_typanalyze d x f 0 -1 0 0 _null_ _null_ _null_ ));
 
 /* OIDS 1500 - 1599 */
 DATA(insert OID = 1560 ( bit		 PGNSP PGUID -1 f b V f t \054 0	0 1561 bit_in bit_out bit_recv bit_send bittypmodin bittypmodout - i x f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("fixed-length bit string");
 #define BITOID	 1560
-DATA(insert OID = 1561 ( _bit		 PGNSP PGUID -1 f b A f t \054 0	1560 0 array_in array_out array_recv array_send bittypmodin bittypmodout - i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1561 ( _bit		 PGNSP PGUID -1 f b A f t \054 0	1560 0 array_in array_out array_recv array_send bittypmodin bittypmodout array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 DATA(insert OID = 1562 ( varbit		 PGNSP PGUID -1 f b V t t \054 0	0 1563 varbit_in varbit_out varbit_recv varbit_send varbittypmodin varbittypmodout - i x f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("variable-length bit string");
 #define VARBITOID	  1562
-DATA(insert OID = 1563 ( _varbit	 PGNSP PGUID -1 f b A f t \054 0	1562 0 array_in array_out array_recv array_send varbittypmodin varbittypmodout - i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 1563 ( _varbit	 PGNSP PGUID -1 f b A f t \054 0	1562 0 array_in array_out array_recv array_send varbittypmodin varbittypmodout array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 
 /* OIDS 1600 - 1699 */
 
@@ -541,7 +541,7 @@ DESCR("reference to cursor (portal name)");
 #define REFCURSOROID	1790
 
 /* OIDS 2200 - 2299 */
-DATA(insert OID = 2201 ( _refcursor    PGNSP PGUID -1 f b A f t \054 0 1790 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 2201 ( _refcursor    PGNSP PGUID -1 f b A f t \054 0 1790 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 
 DATA(insert OID = 2202 ( regprocedure  PGNSP PGUID	4 t b N f t \054 0	 0 2207 regprocedurein regprocedureout regprocedurerecv regproceduresend - - - i p f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("registered procedure (with args)");
@@ -563,17 +563,17 @@ DATA(insert OID = 2206 ( regtype	   PGNSP PGUID	4 t b N f t \054 0	 0 2211 regty
 DESCR("registered type");
 #define REGTYPEOID		2206
 
-DATA(insert OID = 2207 ( _regprocedure PGNSP PGUID -1 f b A f t \054 0 2202 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 2208 ( _regoper	   PGNSP PGUID -1 f b A f t \054 0 2203 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 2209 ( _regoperator  PGNSP PGUID -1 f b A f t \054 0 2204 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 2210 ( _regclass	   PGNSP PGUID -1 f b A f t \054 0 2205 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 2211 ( _regtype	   PGNSP PGUID -1 f b A f t \054 0 2206 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 2207 ( _regprocedure PGNSP PGUID -1 f b A f t \054 0 2202 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 2208 ( _regoper	   PGNSP PGUID -1 f b A f t \054 0 2203 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 2209 ( _regoperator  PGNSP PGUID -1 f b A f t \054 0 2204 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 2210 ( _regclass	   PGNSP PGUID -1 f b A f t \054 0 2205 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 2211 ( _regtype	   PGNSP PGUID -1 f b A f t \054 0 2206 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 #define REGTYPEARRAYOID 2211
 
 /* uuid */
 DATA(insert OID = 2950 ( uuid			PGNSP PGUID 16 f b U f t \054 0 0 2951 uuid_in uuid_out uuid_recv uuid_send - - - c p f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("UUID datatype");
-DATA(insert OID = 2951 ( _uuid			PGNSP PGUID -1 f b A f t \054 0 2950 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 2951 ( _uuid			PGNSP PGUID -1 f b A f t \054 0 2950 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 
 /* text search */
 DATA(insert OID = 3614 ( tsvector		PGNSP PGUID -1 f b U f t \054 0 0 3643 tsvectorin tsvectorout tsvectorrecv tsvectorsend - - ts_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
@@ -592,36 +592,36 @@ DATA(insert OID = 3769 ( regdictionary	PGNSP PGUID 4 t b N f t \054 0 0 3770 reg
 DESCR("registered text search dictionary");
 #define REGDICTIONARYOID	3769
 
-DATA(insert OID = 3643 ( _tsvector		PGNSP PGUID -1 f b A f t \054 0 3614 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 3644 ( _gtsvector		PGNSP PGUID -1 f b A f t \054 0 3642 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 3645 ( _tsquery		PGNSP PGUID -1 f b A f t \054 0 3615 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 3735 ( _regconfig		PGNSP PGUID -1 f b A f t \054 0 3734 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
-DATA(insert OID = 3770 ( _regdictionary PGNSP PGUID -1 f b A f t \054 0 3769 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 3643 ( _tsvector		PGNSP PGUID -1 f b A f t \054 0 3614 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 3644 ( _gtsvector		PGNSP PGUID -1 f b A f t \054 0 3642 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 3645 ( _tsquery		PGNSP PGUID -1 f b A f t \054 0 3615 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 3735 ( _regconfig		PGNSP PGUID -1 f b A f t \054 0 3734 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 3770 ( _regdictionary PGNSP PGUID -1 f b A f t \054 0 3769 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 
 DATA(insert OID = 2970 ( txid_snapshot	PGNSP PGUID -1 f b U f t \054 0 0 2949 txid_snapshot_in txid_snapshot_out txid_snapshot_recv txid_snapshot_send - - - d x f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("txid snapshot");
-DATA(insert OID = 2949 ( _txid_snapshot PGNSP PGUID -1 f b A f t \054 0 2970 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 2949 ( _txid_snapshot PGNSP PGUID -1 f b A f t \054 0 2970 0 array_in array_out array_recv array_send - - array_typanalyze d x f 0 -1 0 0 _null_ _null_ _null_ ));
 
 /* range types */
 DATA(insert OID = 3904 ( int4range		PGNSP PGUID  -1 f r R f t \054 0 0 3905 range_in range_out range_recv range_send - - range_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("range of integers");
 #define INT4RANGEOID		3904
-DATA(insert OID = 3905 ( _int4range		PGNSP PGUID  -1 f b A f t \054 0 3904 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 3905 ( _int4range		PGNSP PGUID  -1 f b A f t \054 0 3904 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 DATA(insert OID = 3906 ( numrange		PGNSP PGUID  -1 f r R f t \054 0 0 3907 range_in range_out range_recv range_send - - range_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("range of numerics");
-DATA(insert OID = 3907 ( _numrange		PGNSP PGUID  -1 f b A f t \054 0 3906 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 3907 ( _numrange		PGNSP PGUID  -1 f b A f t \054 0 3906 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 DATA(insert OID = 3908 ( tsrange		PGNSP PGUID  -1 f r R f t \054 0 0 3909 range_in range_out range_recv range_send - - range_typanalyze d x f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("range of timestamps without time zone");
-DATA(insert OID = 3909 ( _tsrange		PGNSP PGUID  -1 f b A f t \054 0 3908 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 3909 ( _tsrange		PGNSP PGUID  -1 f b A f t \054 0 3908 0 array_in array_out array_recv array_send - - array_typanalyze d x f 0 -1 0 0 _null_ _null_ _null_ ));
 DATA(insert OID = 3910 ( tstzrange		PGNSP PGUID  -1 f r R f t \054 0 0 3911 range_in range_out range_recv range_send - - range_typanalyze d x f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("range of timestamps with time zone");
-DATA(insert OID = 3911 ( _tstzrange		PGNSP PGUID  -1 f b A f t \054 0 3910 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 3911 ( _tstzrange		PGNSP PGUID  -1 f b A f t \054 0 3910 0 array_in array_out array_recv array_send - - array_typanalyze d x f 0 -1 0 0 _null_ _null_ _null_ ));
 DATA(insert OID = 3912 ( daterange		PGNSP PGUID  -1 f r R f t \054 0 0 3913 range_in range_out range_recv range_send - - range_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("range of dates");
-DATA(insert OID = 3913 ( _daterange		PGNSP PGUID  -1 f b A f t \054 0 3912 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 3913 ( _daterange		PGNSP PGUID  -1 f b A f t \054 0 3912 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 DATA(insert OID = 3926 ( int8range		PGNSP PGUID  -1 f r R f t \054 0 0 3927 range_in range_out range_recv range_send - - range_typanalyze d x f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("range of bigints");
-DATA(insert OID = 3927 ( _int8range		PGNSP PGUID  -1 f b A f t \054 0 3926 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 3927 ( _int8range		PGNSP PGUID  -1 f b A f t \054 0 3926 0 array_in array_out array_recv array_send - - array_typanalyze d x f 0 -1 0 0 _null_ _null_ _null_ ));
 
 /*
  * pseudo-types
@@ -638,7 +638,7 @@ DATA(insert OID = 3927 ( _int8range		PGNSP PGUID  -1 f b A f t \054 0 3926 0 arr
  */
 DATA(insert OID = 2249 ( record			PGNSP PGUID -1 f p P f t \054 0 0 2287 record_in record_out record_recv record_send - - - d x f 0 -1 0 0 _null_ _null_ _null_ ));
 #define RECORDOID		2249
-DATA(insert OID = 2287 ( _record		PGNSP PGUID -1 f p P f t \054 0 2249 0 array_in array_out array_recv array_send - - - d x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 2287 ( _record		PGNSP PGUID -1 f p P f t \054 0 2249 0 array_in array_out array_recv array_send - - array_typanalyze d x f 0 -1 0 0 _null_ _null_ _null_ ));
 #define RECORDARRAYOID	2287
 DATA(insert OID = 2275 ( cstring		PGNSP PGUID -2 f p P f t \054 0 0 1263 cstring_in cstring_out cstring_recv cstring_send - - - c p f 0 -1 0 0 _null_ _null_ _null_ ));
 #define CSTRINGOID		2275

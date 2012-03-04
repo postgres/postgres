@@ -1182,7 +1182,7 @@ heap_create_with_catalog(const char *relname,
 				   F_ARRAY_SEND,	/* array send (bin) proc */
 				   InvalidOid,	/* typmodin procedure - none */
 				   InvalidOid,	/* typmodout procedure - none */
-				   InvalidOid,	/* analyze procedure - default */
+				   F_ARRAY_TYPANALYZE,	/* array analyze procedure */
 				   new_type_oid,	/* array element type - the rowtype */
 				   true,		/* yes, this is an array type */
 				   InvalidOid,	/* this has no array type */
