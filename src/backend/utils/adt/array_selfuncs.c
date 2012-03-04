@@ -242,8 +242,7 @@ scalararraysel_containment(PlannerInfo *root,
 }
 
 /*
- * arraycontsel -- restriction selectivity for "arraycolumn @> const",
- * "arraycolumn && const" or "arraycolumn <@ const"
+ * arraycontsel -- restriction selectivity for array @>, &&, <@ operators
  */
 Datum
 arraycontsel(PG_FUNCTION_ARGS)
@@ -323,8 +322,7 @@ arraycontsel(PG_FUNCTION_ARGS)
 }
 
 /*
- * arraycontjoinsel -- join selectivity for "arraycolumn @> const",
- * "arraycolumn && const" or "arraycolumn <@ const"
+ * arraycontjoinsel -- join selectivity for array @>, &&, <@ operators
  */
 Datum
 arraycontjoinsel(PG_FUNCTION_ARGS)
@@ -744,6 +742,10 @@ mcelem_array_contained_selec(Datum *mcelem, int nmcelem,
 	if (numbers == NULL || nnumbers != nmcelem + 3)
 		return DEFAULT_CONTAIN_SEL;
 
+	/* Can't do much without a count histogram, either */
+	if (hist == NULL || nhist < 3)
+		return DEFAULT_CONTAIN_SEL;
+
 	/*
 	 * Grab some of the summary statistics that compute_array_stats() stores:
 	 * lowest frequency, frequency of null elements, and average distinct
@@ -751,11 +753,7 @@ mcelem_array_contained_selec(Datum *mcelem, int nmcelem,
 	 */
 	minfreq = numbers[nmcelem];
 	nullelem_freq = numbers[nmcelem + 2];
-
-	if (hist && nhist > 0)
-		avg_count = hist[nhist - 1];
-	else
-		avg_count = 10.0f;		/* default assumption */
+	avg_count = hist[nhist - 1];
 
 	/*
 	 * "rest" will be the sum of the frequencies of all elements not
@@ -853,83 +851,71 @@ mcelem_array_contained_selec(Datum *mcelem, int nmcelem,
 	 */
 	mult *= exp(-rest);
 
-	/* Check we have nonempty distinct element count histogram */
-	if (hist && nhist >= 3)
-	{
-		/*----------
-		 * Using the distinct element count histogram requires
-		 *		O(unique_nitems * (nmcelem + unique_nitems))
-		 * operations.  Beyond a certain computational cost threshold, it's
-		 * reasonable to sacrifice accuracy for decreased planning time.
-		 * We limit the number of operations to EFFORT * nmcelem; since
-		 * nmcelem is limited by the column's statistics target, the work
-		 * done is user-controllable.
-		 *
-		 * If the number of operations would be too large, we can reduce it
-		 * without losing all accuracy by reducing unique_nitems and
-		 * considering only the most-common elements of the constant array.
-		 * To make the results exactly match what we would have gotten with
-		 * only those elements to start with, we'd have to remove any
-		 * discarded elements' frequencies from "mult", but since this is only
-		 * an approximation anyway, we don't bother with that.  Therefore it's
-		 * sufficient to qsort elem_selec[] and take the largest elements.
-		 * (They will no longer match up with the elements of array_data[],
-		 * but we don't care.)
-		 *----------
-		 */
+	/*----------
+	 * Using the distinct element count histogram requires
+	 *		O(unique_nitems * (nmcelem + unique_nitems))
+	 * operations.  Beyond a certain computational cost threshold, it's
+	 * reasonable to sacrifice accuracy for decreased planning time.  We limit
+	 * the number of operations to EFFORT * nmcelem; since nmcelem is limited
+	 * by the column's statistics target, the work done is user-controllable.
+	 *
+	 * If the number of operations would be too large, we can reduce it
+	 * without losing all accuracy by reducing unique_nitems and considering
+	 * only the most-common elements of the constant array.  To make the
+	 * results exactly match what we would have gotten with only those
+	 * elements to start with, we'd have to remove any discarded elements'
+	 * frequencies from "mult", but since this is only an approximation
+	 * anyway, we don't bother with that.  Therefore it's sufficient to qsort
+	 * elem_selec[] and take the largest elements.  (They will no longer match
+	 * up with the elements of array_data[], but we don't care.)
+	 *----------
+	 */
 #define EFFORT 100
 
-		if ((nmcelem + unique_nitems) > 0 &&
-			unique_nitems > EFFORT * nmcelem / (nmcelem + unique_nitems))
-		{
-			/*
-			 * Use the quadratic formula to solve for largest allowable N;
-			 * we have A = 1, B = nmcelem, C = - EFFORT * nmcelem.
-			 */
-			double	b = (double) nmcelem;
-			int		n;
-
-			n = (int) ((sqrt(b * b + 4 * EFFORT * b) - b) / 2);
-
-			/* Sort, then take just the first n elements */
-			qsort(elem_selec, unique_nitems, sizeof(float),
-				  float_compare_desc);
-			unique_nitems = n;
-		}
-
-		/*
-		 * Calculate probabilities of each distinct element count for both
-		 * mcelems and constant elements.  At this point, assume independent
-		 * element occurrence.
-		 */
-		dist = calc_distr(elem_selec, unique_nitems, unique_nitems, 0.0f);
-		mcelem_dist = calc_distr(numbers, nmcelem, unique_nitems, rest);
-
-		/* ignore hist[nhist-1], which is the avg not a histogram member */
-		hist_part = calc_hist(hist, nhist - 1, unique_nitems);
-
-		selec = 0.0f;
-		for (i = 0; i <= unique_nitems; i++)
-		{
-			/*
-			 * mult * dist[i] / mcelem_dist[i] gives us probability of qual
-			 * matching from assumption of independent element occurrence with
-			 * the condition that distinct element count = i.
-			 */
-			if (mcelem_dist[i] > 0)
-				selec += hist_part[i] * mult * dist[i] / mcelem_dist[i];
-		}
-
-		pfree(dist);
-		pfree(mcelem_dist);
-		pfree(hist_part);
-	}
-	else
+	if ((nmcelem + unique_nitems) > 0 &&
+		unique_nitems > EFFORT * nmcelem / (nmcelem + unique_nitems))
 	{
-		/* We don't have histogram.  Use a rough estimate. */
-		selec = mult;
+		/*
+		 * Use the quadratic formula to solve for largest allowable N.  We
+		 * have A = 1, B = nmcelem, C = - EFFORT * nmcelem.
+		 */
+		double	b = (double) nmcelem;
+		int		n;
+
+		n = (int) ((sqrt(b * b + 4 * EFFORT * b) - b) / 2);
+
+		/* Sort, then take just the first n elements */
+		qsort(elem_selec, unique_nitems, sizeof(float),
+			  float_compare_desc);
+		unique_nitems = n;
 	}
 
+	/*
+	 * Calculate probabilities of each distinct element count for both
+	 * mcelems and constant elements.  At this point, assume independent
+	 * element occurrence.
+	 */
+	dist = calc_distr(elem_selec, unique_nitems, unique_nitems, 0.0f);
+	mcelem_dist = calc_distr(numbers, nmcelem, unique_nitems, rest);
+
+	/* ignore hist[nhist-1], which is the average not a histogram member */
+	hist_part = calc_hist(hist, nhist - 1, unique_nitems);
+
+	selec = 0.0f;
+	for (i = 0; i <= unique_nitems; i++)
+	{
+		/*
+		 * mult * dist[i] / mcelem_dist[i] gives us probability of qual
+		 * matching from assumption of independent element occurrence with
+		 * the condition that distinct element count = i.
+		 */
+		if (mcelem_dist[i] > 0)
+			selec += hist_part[i] * mult * dist[i] / mcelem_dist[i];
+	}
+
+	pfree(dist);
+	pfree(mcelem_dist);
+	pfree(hist_part);
 	pfree(elem_selec);
 
 	/* Take into account occurrence of NULL element. */
