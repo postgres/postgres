@@ -14475,11 +14475,15 @@ SELECT set_config('log_statement_stats', 'off', false);
    <indexterm>
     <primary>pg_xlogfile_name_offset</primary>
    </indexterm>
+   <indexterm>
+    <primary>pg_xlog_location_diff</primary>
+   </indexterm>
 
    <para>
     The functions shown in <xref
     linkend="functions-admin-backup-table"> assist in making on-line backups.
-    These functions cannot be executed during recovery.
+    These functions cannot be executed during recovery (except
+    <function>pg_xlog_location_diff</function>).
    </para>
 
    <table id="functions-admin-backup-table">
@@ -14546,6 +14550,13 @@ SELECT set_config('log_statement_stats', 'off', false);
         </entry>
        <entry><type>text</>, <type>integer</></entry>
        <entry>Convert transaction log location string to file name and decimal byte offset within file</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_xlog_location_diff(<parameter>location</> <type>text</>, <parameter>location</> <type>text</>)</function></literal>
+       </entry>
+       <entry><type>numeric</></entry>
+       <entry>Calculate the difference between two transaction log locations</entry>
       </row>
      </tbody>
     </tgroup>
@@ -14637,6 +14648,13 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
     This is usually the desired behavior for managing transaction log archiving
     behavior, since the preceding file is the last one that currently
     needs to be archived.
+   </para>
+
+   <para>
+    <function>pg_xlog_location_diff</> calculates the difference in bytes
+    between two transaction log locations. It can be used with
+    <structname>pg_stat_replication</structname> or some functions shown in
+    <xref linkend="functions-admin-backup-table"> to get the replication lag.
    </para>
 
    <para>
