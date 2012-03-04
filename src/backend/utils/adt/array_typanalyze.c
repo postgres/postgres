@@ -579,9 +579,9 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 		{
 			int			num_hist = stats->attr->attstattarget;
 			DECountItem **sorted_count_items;
-			int			count_item_index;
+			int			j;
 			int			delta;
-			int			frac;
+			int64		frac;
 			float4	   *hist;
 
 			/* num_hist must be at least 2 for the loop below to work */
@@ -594,45 +594,70 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 			sorted_count_items = (DECountItem **)
 				palloc(sizeof(DECountItem *) * count_items_count);
 			hash_seq_init(&scan_status, count_tab);
-			count_item_index = 0;
+			j = 0;
 			while ((count_item = (DECountItem *) hash_seq_search(&scan_status)) != NULL)
 			{
-				sorted_count_items[count_item_index++] = count_item;
+				sorted_count_items[j++] = count_item;
 			}
 			qsort(sorted_count_items, count_items_count,
 				  sizeof(DECountItem *), countitem_compare_count);
 
 			/*
-			 * Fill stanumbers with the histogram, followed by the average
-			 * count.  This array must be stored in anl_context.
+			 * Prepare to fill stanumbers with the histogram, followed by the
+			 * average count.  This array must be stored in anl_context.
 			 */
 			hist = (float4 *)
 				MemoryContextAlloc(stats->anl_context,
 								   sizeof(float4) * (num_hist + 1));
 			hist[num_hist] = (double) element_no / (double) nonnull_cnt;
 
-			/*
-			 * Construct the histogram.
+			/*----------
+			 * Construct the histogram of distinct-element counts (DECs).
 			 *
-			 * XXX this needs work: frac could overflow, and it's not clear
-			 * how or why the code works.  Even if it does work, it needs
-			 * documented.
+			 * The object of this loop is to copy the min and max DECs to
+			 * hist[0] and hist[num_hist - 1], along with evenly-spaced DECs
+			 * in between (where "evenly-spaced" is with reference to the
+			 * whole input population of arrays).  If we had a complete sorted
+			 * array of DECs, one per analyzed row, the i'th hist value would
+			 * come from DECs[i * (analyzed_rows - 1) / (num_hist - 1)]
+			 * (compare the histogram-making loop in compute_scalar_stats()).
+			 * But instead of that we have the sorted_count_items[] array,
+			 * which holds unique DEC values with their frequencies (that is,
+			 * a run-length-compressed version of the full array).  So we
+			 * control advancing through sorted_count_items[] with the
+			 * variable "frac", which is defined as (x - y) * (num_hist - 1),
+			 * where x is the index in the notional DECs array corresponding
+			 * to the start of the next sorted_count_items[] element's run,
+			 * and y is the index in DECs from which we should take the next
+			 * histogram value.  We have to advance whenever x <= y, that is
+			 * frac <= 0.  The x component is the sum of the frequencies seen
+			 * so far (up through the current sorted_count_items[] element),
+			 * and of course y * (num_hist - 1) = i * (analyzed_rows - 1),
+			 * per the subscript calculation above.  (The subscript calculation
+			 * implies dropping any fractional part of y; in this formulation
+			 * that's handled by not advancing until frac reaches 1.)
+			 *
+			 * Even though frac has a bounded range, it could overflow int32
+			 * when working with very large statistics targets, so we do that
+			 * math in int64.
+			 *----------
 			 */
 			delta = analyzed_rows - 1;
-			count_item_index = 0;
-			frac = sorted_count_items[0]->frequency * (num_hist - 1);
+			j = 0;				/* current index in sorted_count_items */
+			/* Initialize frac for sorted_count_items[0]; y is initially 0 */
+			frac = (int64) sorted_count_items[0]->frequency * (num_hist - 1);
 			for (i = 0; i < num_hist; i++)
 			{
 				while (frac <= 0)
 				{
-					count_item_index++;
-					Assert(count_item_index < count_items_count);
-					frac += sorted_count_items[count_item_index]->frequency * (num_hist - 1);
+					/* Advance, and update x component of frac */
+					j++;
+					frac += (int64) sorted_count_items[j]->frequency * (num_hist - 1);
 				}
-				hist[i] = sorted_count_items[count_item_index]->count;
-				frac -= delta;
+				hist[i] = sorted_count_items[j]->count;
+				frac -= delta;		/* update y for upcoming i increment */
 			}
-			Assert(count_item_index == count_items_count - 1);
+			Assert(j == count_items_count - 1);
 
 			stats->stakind[slot_idx] = STATISTIC_KIND_DECHIST;
 			stats->staop[slot_idx] = extra_data->eq_opr;
