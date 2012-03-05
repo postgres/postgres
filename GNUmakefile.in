@@ -64,7 +64,7 @@ distclean maintainer-clean:
 check: all
 
 check installcheck installcheck-parallel:
-	$(MAKE) -C src/test $@
+	$(MAKE) -C src/test/regress $@
 
 $(call recurse,check-world,src/test src/pl src/interfaces/ecpg contrib,check)
 
