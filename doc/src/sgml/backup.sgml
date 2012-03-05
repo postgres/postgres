@@ -1279,9 +1279,6 @@ archive_command = 'local_backup_script.sh "%p" "%f"'
       This allows all complexity to be managed within the script, which
       can be written in a popular scripting language such as
       <application>bash</> or <application>perl</>.
-      Any messages written to <literal>stderr</> from the script will appear
-      in the database server log, allowing complex configurations to be
-      diagnosed easily if they fail.
      </para>
 
      <para>
@@ -1310,6 +1307,16 @@ archive_command = 'local_backup_script.sh "%p" "%f"'
        </listitem>
       </itemizedlist>
      </para>
+
+     <tip>
+      <para>
+       When using an <varname>archive_command</varname> script, it's desirable
+       to enable <xref linkend="guc-logging-collector">.
+       Any messages written to <systemitem>stderr</> from the script will then
+       appear in the database server log, allowing complex configurations to
+       be diagnosed easily if they fail.
+      </para>
+     </tip>
     </sect3>
   </sect2>
 
