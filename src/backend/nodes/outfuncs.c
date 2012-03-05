@@ -23,7 +23,9 @@
 
 #include <ctype.h>
 
-#include "foreign/fdwapi.h"
+#include "lib/stringinfo.h"
+#include "nodes/plannodes.h"
+#include "nodes/relation.h"
 #include "utils/datum.h"
 
 
@@ -558,16 +560,6 @@ _outForeignScan(StringInfo str, const ForeignScan *node)
 	_outScanInfo(str, (const Scan *) node);
 
 	WRITE_BOOL_FIELD(fsSystemCol);
-	WRITE_NODE_FIELD(fdwplan);
-}
-
-static void
-_outFdwPlan(StringInfo str, const FdwPlan *node)
-{
-	WRITE_NODE_TYPE("FDWPLAN");
-
-	WRITE_FLOAT_FIELD(startup_cost, "%.2f");
-	WRITE_FLOAT_FIELD(total_cost, "%.2f");
 	WRITE_NODE_FIELD(fdw_private);
 }
 
@@ -1572,7 +1564,7 @@ _outForeignPath(StringInfo str, const ForeignPath *node)
 
 	_outPathInfo(str, (const Path *) node);
 
-	WRITE_NODE_FIELD(fdwplan);
+	WRITE_NODE_FIELD(fdw_private);
 }
 
 static void
@@ -2744,9 +2736,6 @@ _outNode(StringInfo str, const void *obj)
 				break;
 			case T_ForeignScan:
 				_outForeignScan(str, obj);
-				break;
-			case T_FdwPlan:
-				_outFdwPlan(str, obj);
 				break;
 			case T_Join:
 				_outJoin(str, obj);

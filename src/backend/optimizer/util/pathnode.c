@@ -16,7 +16,6 @@
 
 #include <math.h>
 
-#include "foreign/fdwapi.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
@@ -1766,36 +1765,31 @@ create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel)
  * create_foreignscan_path
  *	  Creates a path corresponding to a scan of a foreign table,
  *	  returning the pathnode.
+ *
+ * This function is never called from core Postgres; rather, it's expected
+ * to be called by the PlanForeignScan function of a foreign data wrapper.
+ * We make the FDW supply all fields of the path, since we do not have any
+ * way to calculate them in core.
  */
 ForeignPath *
-create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel)
+create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
+						double rows, Cost startup_cost, Cost total_cost,
+						List *pathkeys,
+						Relids required_outer, List *param_clauses,
+						List *fdw_private)
 {
 	ForeignPath *pathnode = makeNode(ForeignPath);
-	RangeTblEntry *rte;
-	FdwRoutine *fdwroutine;
-	FdwPlan    *fdwplan;
 
 	pathnode->path.pathtype = T_ForeignScan;
 	pathnode->path.parent = rel;
-	pathnode->path.pathkeys = NIL;		/* result is always unordered */
-	pathnode->path.required_outer = NULL;
-	pathnode->path.param_clauses = NIL;
+	pathnode->path.rows = rows;
+	pathnode->path.startup_cost = startup_cost;
+	pathnode->path.total_cost = total_cost;
+	pathnode->path.pathkeys = pathkeys;
+	pathnode->path.required_outer = required_outer;
+	pathnode->path.param_clauses = param_clauses;
 
-	/* Get FDW's callback info */
-	rte = planner_rt_fetch(rel->relid, root);
-	fdwroutine = GetFdwRoutineByRelId(rte->relid);
-
-	/* Let the FDW do its planning */
-	fdwplan = fdwroutine->PlanForeignScan(rte->relid, root, rel);
-	if (fdwplan == NULL || !IsA(fdwplan, FdwPlan))
-		elog(ERROR, "foreign-data wrapper PlanForeignScan function for relation %u did not return an FdwPlan struct",
-			 rte->relid);
-	pathnode->fdwplan = fdwplan;
-
-	/* use costs estimated by FDW */
-	pathnode->path.rows = rel->rows;
-	pathnode->path.startup_cost = fdwplan->startup_cost;
-	pathnode->path.total_cost = fdwplan->total_cost;
+	pathnode->fdw_private = fdw_private;
 
 	return pathnode;
 }

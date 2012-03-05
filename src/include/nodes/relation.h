@@ -794,12 +794,18 @@ typedef struct TidPath
 
 /*
  * ForeignPath represents a scan of a foreign table
+ *
+ * fdw_private contains FDW private data about the scan, which will be copied
+ * to the final ForeignScan plan node so that it is available at execution
+ * time.  Note that everything in this list must be copiable by copyObject().
+ * One way to store an arbitrary blob of bytes is to represent it as a bytea
+ * Const.  Usually, though, you'll be better off choosing a representation
+ * that can be dumped usefully by nodeToString().
  */
 typedef struct ForeignPath
 {
 	Path		path;
-	/* use struct pointer to avoid including fdwapi.h here */
-	struct FdwPlan *fdwplan;
+	List	   *fdw_private;
 } ForeignPath;
 
 /*

@@ -20,41 +20,12 @@ struct ExplainState;
 
 
 /*
- * FdwPlan is the information returned to the planner by PlanForeignScan.
- */
-typedef struct FdwPlan
-{
-	NodeTag		type;
-
-	/*
-	 * Cost estimation info. The startup_cost is time before retrieving the
-	 * first row, so it should include costs of connecting to the remote host,
-	 * sending over the query, etc.  Note that PlanForeignScan also ought to
-	 * set baserel->rows and baserel->width if it can produce any usable
-	 * estimates of those values.
-	 */
-	Cost		startup_cost;	/* cost expended before fetching any tuples */
-	Cost		total_cost;		/* total cost (assuming all tuples fetched) */
-
-	/*
-	 * FDW private data, which will be available at execution time.
-	 *
-	 * Note that everything in this list must be copiable by copyObject(). One
-	 * way to store an arbitrary blob of bytes is to represent it as a bytea
-	 * Const.  Usually, though, you'll be better off choosing a representation
-	 * that can be dumped usefully by nodeToString().
-	 */
-	List	   *fdw_private;
-} FdwPlan;
-
-
-/*
  * Callback function signatures --- see fdwhandler.sgml for more info.
  */
 
-typedef FdwPlan *(*PlanForeignScan_function) (Oid foreigntableid,
-														  PlannerInfo *root,
-														RelOptInfo *baserel);
+typedef void (*PlanForeignScan_function) (Oid foreigntableid,
+										  PlannerInfo *root,
+										  RelOptInfo *baserel);
 
 typedef void (*ExplainForeignScan_function) (ForeignScanState *node,
 													struct ExplainState *es);

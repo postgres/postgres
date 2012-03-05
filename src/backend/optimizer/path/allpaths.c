@@ -18,6 +18,7 @@
 #include <math.h>
 
 #include "catalog/pg_class.h"
+#include "foreign/fdwapi.h"
 #include "nodes/nodeFuncs.h"
 #ifdef OPTIMIZER_DEBUG
 #include "nodes/print.h"
@@ -399,15 +400,18 @@ set_foreign_size(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 
 /*
  * set_foreign_pathlist
- *		Build the (single) access path for a foreign table RTE
+ *		Build access paths for a foreign table RTE
  */
 static void
 set_foreign_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 {
-	/* Generate appropriate path */
-	add_path(rel, (Path *) create_foreignscan_path(root, rel));
+	FdwRoutine *fdwroutine;
 
-	/* Select cheapest path (pretty easy in this case...) */
+	/* Call the FDW's PlanForeignScan function to generate path(s) */
+	fdwroutine = GetFdwRoutineByRelId(rte->relid);
+	fdwroutine->PlanForeignScan(rte->relid, root, rel);
+
+	/* Select cheapest path */
 	set_cheapest(rel);
 }
 

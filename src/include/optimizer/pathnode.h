@@ -68,7 +68,11 @@ extern Path *create_functionscan_path(PlannerInfo *root, RelOptInfo *rel);
 extern Path *create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel);
 extern Path *create_ctescan_path(PlannerInfo *root, RelOptInfo *rel);
 extern Path *create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel);
-extern ForeignPath *create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel);
+extern ForeignPath *create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
+						double rows, Cost startup_cost, Cost total_cost,
+						List *pathkeys,
+						Relids required_outer, List *param_clauses,
+						List *fdw_private);
 
 extern Relids calc_nestloop_required_outer(Path *outer_path, Path *inner_path);
 extern Relids calc_non_nestloop_required_outer(Path *outer_path, Path *inner_path);

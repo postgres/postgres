@@ -20,7 +20,6 @@
 #include <math.h>
 
 #include "access/skey.h"
-#include "foreign/fdwapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -121,7 +120,7 @@ static CteScan *make_ctescan(List *qptlist, List *qpqual,
 static WorkTableScan *make_worktablescan(List *qptlist, List *qpqual,
 				   Index scanrelid, int wtParam);
 static ForeignScan *make_foreignscan(List *qptlist, List *qpqual,
-				 Index scanrelid, bool fsSystemCol, FdwPlan *fdwplan);
+				 Index scanrelid, bool fsSystemCol, List *fdw_private);
 static BitmapAnd *make_bitmap_and(List *bitmapplans);
 static BitmapOr *make_bitmap_or(List *bitmapplans);
 static NestLoop *make_nestloop(List *tlist,
@@ -1847,7 +1846,7 @@ create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 								 scan_clauses,
 								 scan_relid,
 								 fsSystemCol,
-								 best_path->fdwplan);
+								 best_path->fdw_private);
 
 	copy_path_costsize(&scan_plan->scan.plan, &best_path->path);
 
@@ -3189,7 +3188,7 @@ make_foreignscan(List *qptlist,
 				 List *qpqual,
 				 Index scanrelid,
 				 bool fsSystemCol,
-				 FdwPlan *fdwplan)
+				 List *fdw_private)
 {
 	ForeignScan *node = makeNode(ForeignScan);
 	Plan	   *plan = &node->scan.plan;
@@ -3201,7 +3200,7 @@ make_foreignscan(List *qptlist,
 	plan->righttree = NULL;
 	node->scan.scanrelid = scanrelid;
 	node->fsSystemCol = fsSystemCol;
-	node->fdwplan = fdwplan;
+	node->fdw_private = fdw_private;
 
 	return node;
 }

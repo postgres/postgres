@@ -25,6 +25,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/cost.h"
+#include "optimizer/pathnode.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
@@ -93,7 +94,7 @@ PG_FUNCTION_INFO_V1(file_fdw_validator);
 /*
  * FDW callback routines
  */
-static FdwPlan *filePlanForeignScan(Oid foreigntableid,
+static void filePlanForeignScan(Oid foreigntableid,
 					PlannerInfo *root,
 					RelOptInfo *baserel);
 static void fileExplainForeignScan(ForeignScanState *node, ExplainState *es);
@@ -406,27 +407,44 @@ get_file_fdw_attribute_options(Oid relid)
 
 /*
  * filePlanForeignScan
- *		Create a FdwPlan for a scan on the foreign table
+ *		Create possible access paths for a scan on the foreign table
+ *
+ *		Currently we don't support any push-down feature, so there is only one
+ *		possible access path, which simply returns all records in the order in
+ *		the data file.
  */
-static FdwPlan *
+static void
 filePlanForeignScan(Oid foreigntableid,
 					PlannerInfo *root,
 					RelOptInfo *baserel)
 {
-	FdwPlan    *fdwplan;
 	char	   *filename;
 	List	   *options;
+	Cost		startup_cost;
+	Cost		total_cost;
 
 	/* Fetch options --- we only need filename at this point */
 	fileGetOptions(foreigntableid, &filename, &options);
 
-	/* Construct FdwPlan with cost estimates */
-	fdwplan = makeNode(FdwPlan);
+	/* Estimate costs and update baserel->rows */
 	estimate_costs(root, baserel, filename,
-				   &fdwplan->startup_cost, &fdwplan->total_cost);
-	fdwplan->fdw_private = NIL; /* not used */
+				   &startup_cost, &total_cost);
 
-	return fdwplan;
+	/* Create a ForeignPath node and add it as only possible path */
+	add_path(baserel, (Path *)
+			 create_foreignscan_path(root, baserel,
+									 baserel->rows,
+									 startup_cost,
+									 total_cost,
+									 NIL, /* no pathkeys */
+									 NULL, /* no outer rel either */
+									 NIL,
+									 NIL)); /* no fdw_private data */
+
+	/*
+	 * If data file was sorted, and we knew it somehow, we could insert
+	 * appropriate pathkeys into the ForeignPath node to tell the planner that.
+	 */
 }
 
 /*
@@ -576,6 +594,9 @@ fileReScanForeignScan(ForeignScanState *node)
 
 /*
  * Estimate costs of scanning a foreign table.
+ *
+ * In addition to setting *startup_cost and *total_cost, this should
+ * update baserel->rows.
  */
 static void
 estimate_costs(PlannerInfo *root, RelOptInfo *baserel,

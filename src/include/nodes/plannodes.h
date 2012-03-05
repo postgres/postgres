@@ -468,8 +468,7 @@ typedef struct ForeignScan
 {
 	Scan		scan;
 	bool		fsSystemCol;	/* true if any "system column" is needed */
-	/* use struct pointer to avoid including fdwapi.h here */
-	struct FdwPlan *fdwplan;
+	List	   *fdw_private;	/* private data for FDW */
 } ForeignScan;
 
 

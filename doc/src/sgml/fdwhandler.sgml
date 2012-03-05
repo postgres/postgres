@@ -88,21 +88,31 @@
 
     <para>
 <programlisting>
-FdwPlan *
+void
 PlanForeignScan (Oid foreigntableid,
                  PlannerInfo *root,
                  RelOptInfo *baserel);
 </programlisting>
 
-     Plan a scan on a foreign table. This is called when a query is planned.
+     Create possible access paths for a scan on a foreign table. This is
+     called when a query is planned.
      <literal>foreigntableid</> is the <structname>pg_class</> OID of the
      foreign table.  <literal>root</> is the planner's global information
      about the query, and <literal>baserel</> is the planner's information
      about this table.
-     The function must return a palloc'd struct that contains cost estimates
-     plus any FDW-private information that is needed to execute the foreign
-     scan at a later time.  (Note that the private information must be
-     represented in a form that <function>copyObject</> knows how to copy.)
+    </para>
+
+    <para>
+     The function must generate at least one access path (ForeignPath node)
+     for a scan on the foreign table and must call <function>add_path</> to
+     add the path to <literal>baserel-&gt;pathlist</>.  It's recommended to
+     use <function>create_foreignscan_path</> to build the ForeignPath node.
+     The function may generate multiple access paths, e.g., a path which has
+     valid <literal>pathkeys</> to represent a pre-sorted result.  Each access
+     path must contain cost estimates, and can contain any FDW-private
+     information that is needed to execute the foreign scan at a later time.
+     (Note that the private information must be represented in a form that
+     <function>copyObject</> knows how to copy.)
     </para>
 
     <para>
@@ -159,9 +169,8 @@ BeginForeignScan (ForeignScanState *node,
      its <structfield>fdw_state</> field is still NULL.  Information about
      the table to scan is accessible through the
      <structname>ForeignScanState</> node (in particular, from the underlying
-     <structname>ForeignScan</> plan node, which contains a pointer to the
-     <structname>FdwPlan</> structure returned by
-     <function>PlanForeignScan</>).
+     <structname>ForeignScan</> plan node, which contains any FDW-private
+     information provided by <function>PlanForeignScan</>).
     </para>
 
     <para>
@@ -228,9 +237,9 @@ EndForeignScan (ForeignScanState *node);
     </para>
 
     <para>
-     The <structname>FdwRoutine</> and <structname>FdwPlan</> struct types
-     are declared in <filename>src/include/foreign/fdwapi.h</>, which see
-     for additional details.
+     The <structname>FdwRoutine</> struct type is declared in
+     <filename>src/include/foreign/fdwapi.h</>, which see for additional
+     details.
     </para>
 
    </sect1>
