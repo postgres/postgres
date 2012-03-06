@@ -739,7 +739,8 @@ static int
 pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 {
 	int			ret;
-	char	   *crypt_pwd;
+	char	   *crypt_pwd = NULL;
+	const char *pwd_to_send;
 
 	/* Encrypt the password if needed. */
 
@@ -771,21 +772,22 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 					free(crypt_pwd);
 					return STATUS_ERROR;
 				}
+
+				pwd_to_send = crypt_pwd;
 				break;
 			}
 		case AUTH_REQ_PASSWORD:
-			/* discard const so we can assign it */
-			crypt_pwd = (char *) password;
+			pwd_to_send = password;
 			break;
 		default:
 			return STATUS_ERROR;
 	}
 	/* Packet has a message type as of protocol 3.0 */
 	if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
-		ret = pqPacketSend(conn, 'p', crypt_pwd, strlen(crypt_pwd) + 1);
+		ret = pqPacketSend(conn, 'p', pwd_to_send, strlen(pwd_to_send) + 1);
 	else
-		ret = pqPacketSend(conn, 0, crypt_pwd, strlen(crypt_pwd) + 1);
-	if (areq == AUTH_REQ_MD5)
+		ret = pqPacketSend(conn, 0, pwd_to_send, strlen(pwd_to_send) + 1);
+	if (crypt_pwd)
 		free(crypt_pwd);
 	return ret;
 }
