@@ -289,34 +289,15 @@ static XLogRecPtr RedoStartLSN = {0, 0};
  * These structs are identical but are declared separately to indicate their
  * slightly different functions.
  *
- * We do a lot of pushups to minimize the amount of access to lockable
- * shared memory values.  There are actually three shared-memory copies of
- * LogwrtResult, plus one unshared copy in each backend.  Here's how it works:
- *		XLogCtl->LogwrtResult is protected by info_lck
- *		XLogCtl->Write.LogwrtResult is protected by WALWriteLock
- *		XLogCtl->Insert.LogwrtResult is protected by WALInsertLock
- * One must hold the associated lock to read or write any of these, but
- * of course no lock is needed to read/write the unshared LogwrtResult.
- *
- * XLogCtl->LogwrtResult and XLogCtl->Write.LogwrtResult are both "always
- * right", since both are updated by a write or flush operation before
- * it releases WALWriteLock.  The point of keeping XLogCtl->Write.LogwrtResult
- * is that it can be examined/modified by code that already holds WALWriteLock
- * without needing to grab info_lck as well.
- *
- * XLogCtl->Insert.LogwrtResult may lag behind the reality of the other two,
- * but is updated when convenient.	Again, it exists for the convenience of
- * code that is already holding WALInsertLock but not the other locks.
- *
- * The unshared LogwrtResult may lag behind any or all of these, and again
- * is updated when convenient.
+ * To read XLogCtl->LogwrtResult, you must hold either info_lck or
+ * WALWriteLock.  To update it, you need to hold both locks.  The point of
+ * this arrangement is that the value can be examined by code that already
+ * holds WALWriteLock without needing to grab info_lck as well.  In addition
+ * to the shared variable, each backend has a private copy of LogwrtResult,
+ * which is updated when convenient.
  *
  * The request bookkeeping is simpler: there is a shared XLogCtl->LogwrtRqst
  * (protected by info_lck), but we don't need to cache any copies of it.
- *
- * Note that this all works because the request and result positions can only
- * advance forward, never back up, and so we can easily determine which of two
- * values is "more up to date".
  *
  * info_lck is only held long enough to read/update the protected variables,
  * so it's a plain spinlock.  The other locks are held longer (potentially
@@ -354,7 +335,6 @@ typedef struct XLogwrtResult
  */
 typedef struct XLogCtlInsert
 {
-	XLogwrtResult LogwrtResult; /* a recent value of LogwrtResult */
 	XLogRecPtr	PrevRecord;		/* start of previously-inserted record */
 	int			curridx;		/* current block index in cache */
 	XLogPageHeader currpage;	/* points to header of block in cache */
@@ -388,7 +368,6 @@ typedef struct XLogCtlInsert
  */
 typedef struct XLogCtlWrite
 {
-	XLogwrtResult LogwrtResult; /* current value of LogwrtResult */
 	int			curridx;		/* cache index of next block to write */
 	pg_time_t	lastSegSwitchTime;		/* time of last xlog segment switch */
 } XLogCtlWrite;
@@ -403,7 +382,6 @@ typedef struct XLogCtlData
 
 	/* Protected by info_lck: */
 	XLogwrtRqst LogwrtRqst;
-	XLogwrtResult LogwrtResult;
 	uint32		ckptXidEpoch;	/* nextXID & epoch of latest checkpoint */
 	TransactionId ckptXid;
 	XLogRecPtr	asyncXactLSN;	/* LSN of newest async commit/abort */
@@ -412,6 +390,12 @@ typedef struct XLogCtlData
 
 	/* Protected by WALWriteLock: */
 	XLogCtlWrite Write;
+
+	/*
+	 * Protected by info_lck and WALWriteLock (you must hold either lock to
+	 * read it, but both to update)
+	 */
+	XLogwrtResult LogwrtResult;
 
 	/*
 	 * These values do not change after startup, although the pointed-to pages
@@ -1015,7 +999,7 @@ begin:;
 		}
 
 		LWLockAcquire(WALWriteLock, LW_EXCLUSIVE);
-		LogwrtResult = XLogCtl->Write.LogwrtResult;
+		LogwrtResult = XLogCtl->LogwrtResult;
 		if (!XLByteLE(RecPtr, LogwrtResult.Flush))
 		{
 			XLogwrtRqst FlushRqst;
@@ -1187,8 +1171,6 @@ begin:;
 				xlogctl->LogwrtRqst.Flush = LogwrtResult.Flush;
 			SpinLockRelease(&xlogctl->info_lck);
 		}
-
-		Write->LogwrtResult = LogwrtResult;
 
 		LWLockRelease(WALWriteLock);
 
@@ -1477,17 +1459,12 @@ static bool
 AdvanceXLInsertBuffer(bool new_segment)
 {
 	XLogCtlInsert *Insert = &XLogCtl->Insert;
-	XLogCtlWrite *Write = &XLogCtl->Write;
 	int			nextidx = NextBufIdx(Insert->curridx);
 	bool		update_needed = true;
 	XLogRecPtr	OldPageRqstPtr;
 	XLogwrtRqst WriteRqst;
 	XLogRecPtr	NewPageEndPtr;
 	XLogPageHeader NewPage;
-
-	/* Use Insert->LogwrtResult copy if it's more fresh */
-	if (XLByteLT(LogwrtResult.Write, Insert->LogwrtResult.Write))
-		LogwrtResult = Insert->LogwrtResult;
 
 	/*
 	 * Get ending-offset of the buffer page we need to replace (this may be
@@ -1516,21 +1493,19 @@ AdvanceXLInsertBuffer(bool new_segment)
 
 		update_needed = false;	/* Did the shared-request update */
 
-		if (XLByteLE(OldPageRqstPtr, LogwrtResult.Write))
-		{
-			/* OK, someone wrote it already */
-			Insert->LogwrtResult = LogwrtResult;
-		}
-		else
+		/*
+		 * Now that we have an up-to-date LogwrtResult value, see if we still
+		 * need to write it or if someone else already did.
+		 */
+		if (!XLByteLE(OldPageRqstPtr, LogwrtResult.Write))
 		{
 			/* Must acquire write lock */
 			LWLockAcquire(WALWriteLock, LW_EXCLUSIVE);
-			LogwrtResult = Write->LogwrtResult;
+			LogwrtResult = XLogCtl->LogwrtResult;
 			if (XLByteLE(OldPageRqstPtr, LogwrtResult.Write))
 			{
 				/* OK, someone wrote it already */
 				LWLockRelease(WALWriteLock);
-				Insert->LogwrtResult = LogwrtResult;
 			}
 			else
 			{
@@ -1544,7 +1519,6 @@ AdvanceXLInsertBuffer(bool new_segment)
 				WriteRqst.Flush.xrecoff = 0;
 				XLogWrite(WriteRqst, false, false);
 				LWLockRelease(WALWriteLock);
-				Insert->LogwrtResult = LogwrtResult;
 				TRACE_POSTGRESQL_WAL_BUFFER_WRITE_DIRTY_DONE();
 			}
 		}
@@ -1697,7 +1671,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch)
 	/*
 	 * Update local LogwrtResult (caller probably did this already, but...)
 	 */
-	LogwrtResult = Write->LogwrtResult;
+	LogwrtResult = XLogCtl->LogwrtResult;
 
 	/*
 	 * Since successive pages in the xlog cache are consecutively allocated,
@@ -1931,8 +1905,6 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch)
 			xlogctl->LogwrtRqst.Flush = LogwrtResult.Flush;
 		SpinLockRelease(&xlogctl->info_lck);
 	}
-
-	Write->LogwrtResult = LogwrtResult;
 }
 
 /*
@@ -2126,7 +2098,7 @@ XLogFlush(XLogRecPtr record)
 			continue;
 		}
 		/* Got the lock */
-		LogwrtResult = XLogCtl->Write.LogwrtResult;
+		LogwrtResult = XLogCtl->LogwrtResult;
 		if (!XLByteLE(record, LogwrtResult.Flush))
 		{
 			/* try to write/flush later additions to XLOG as well */
@@ -2268,7 +2240,7 @@ XLogBackgroundFlush(void)
 
 	/* now wait for the write lock */
 	LWLockAcquire(WALWriteLock, LW_EXCLUSIVE);
-	LogwrtResult = XLogCtl->Write.LogwrtResult;
+	LogwrtResult = XLogCtl->LogwrtResult;
 	if (!XLByteLE(WriteRqstPtr, LogwrtResult.Flush))
 	{
 		XLogwrtRqst WriteRqst;
@@ -6831,8 +6803,6 @@ StartupXLOG(void)
 
 	LogwrtResult.Write = LogwrtResult.Flush = EndOfLog;
 
-	XLogCtl->Write.LogwrtResult = LogwrtResult;
-	Insert->LogwrtResult = LogwrtResult;
 	XLogCtl->LogwrtResult = LogwrtResult;
 
 	XLogCtl->LogwrtRqst.Write = EndOfLog;
