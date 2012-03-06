@@ -95,6 +95,15 @@ sigjmp_buf *PG_exception_stack = NULL;
 
 extern bool redirection_done;
 
+/*
+ * Hook for intercepting messages before they are sent to the server log.
+ * Note that the hook will not get called for messages that are suppressed
+ * by log_min_messages.  Also note that logging hooks implemented in preload
+ * libraries will miss any log messages that are generated before the
+ * library is loaded.
+ */
+emit_log_hook_type emit_log_hook = NULL;
+
 /* GUC parameters */
 int			Log_error_verbosity = PGERROR_VERBOSE;
 char	   *Log_line_prefix = NULL;		/* format for extra log line info */
@@ -1275,6 +1284,23 @@ EmitErrorReport(void)
 	recursion_depth++;
 	CHECK_STACK_DEPTH();
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
+
+	/*
+	 * Call hook before sending message to log.  The hook function is allowed
+	 * to turn off edata->output_to_server, so we must recheck that afterward.
+	 * Making any other change in the content of edata is not considered
+	 * supported.
+	 *
+	 * Note: the reason why the hook can only turn off output_to_server, and
+	 * not turn it on, is that it'd be unreliable: we will never get here at
+	 * all if errstart() deems the message uninteresting.  A hook that could
+	 * make decisions in that direction would have to hook into errstart(),
+	 * where it would have much less information available.  emit_log_hook is
+	 * intended for custom log filtering and custom log message transmission
+	 * mechanisms.
+	 */
+	if (edata->output_to_server && emit_log_hook)
+		(*emit_log_hook) (edata);
 
 	/* Send to server log, if enabled */
 	if (edata->output_to_server)
