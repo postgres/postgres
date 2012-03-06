@@ -731,8 +731,7 @@ XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata)
 	unsigned	i;
 	bool		updrqst;
 	bool		doPageWrites;
-	bool		isLogSwitch = false;
-	bool		fpwChange = false;
+	bool		isLogSwitch = (rmid == RM_XLOG_ID && info == XLOG_SWITCH);
 	uint8		info_orig = info;
 
 	/* cross-check on whether we should be here or not */
@@ -746,30 +745,11 @@ XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata)
 	TRACE_POSTGRESQL_XLOG_INSERT(rmid, info);
 
 	/*
-	 * Handle special cases/records.
+	 * In bootstrap mode, we don't actually log anything but XLOG resources;
+	 * return a phony record pointer.
 	 */
-	if (rmid == RM_XLOG_ID)
+	if (IsBootstrapProcessingMode() && rmid != RM_XLOG_ID)
 	{
-		switch (info)
-		{
-			case XLOG_SWITCH:
-				isLogSwitch = true;
-				break;
-
-			case XLOG_FPW_CHANGE:
-				fpwChange = true;
-				break;
-
-			default:
-				break;
-		}
-	}
-	else if (IsBootstrapProcessingMode())
-	{
-		/*
-		 * In bootstrap mode, we don't actually log anything but XLOG resources;
-		 * return a phony record pointer.
-		 */
 		RecPtr.xlogid = 0;
 		RecPtr.xrecoff = SizeOfXLogLongPHD;		/* start of 1st chkpt record */
 		return RecPtr;
@@ -1231,15 +1211,6 @@ begin:;
 		}
 		WriteRqst = XLogCtl->xlblocks[curridx];
 	}
-
-	/*
-	 * If the record is an XLOG_FPW_CHANGE, we update full_page_writes
-	 * in shared memory before releasing WALInsertLock. This ensures that
-	 * an XLOG_FPW_CHANGE record precedes any WAL record affected
-	 * by this change of full_page_writes.
-	 */
-	if (fpwChange)
-		Insert->fullPageWrites = fullPageWrites;
 
 	LWLockRelease(WALInsertLock);
 
@@ -8517,6 +8488,22 @@ UpdateFullPageWrites(void)
 	if (fullPageWrites == Insert->fullPageWrites)
 		return;
 
+	START_CRIT_SECTION();
+
+	/*
+	 * It's always safe to take full page images, even when not strictly
+	 * required, but not the other round. So if we're setting full_page_writes
+	 * to true, first set it true and then write the WAL record. If we're
+	 * setting it to false, first write the WAL record and then set the
+	 * global flag.
+	 */
+	if (fullPageWrites)
+	{
+		LWLockAcquire(WALInsertLock, LW_EXCLUSIVE);
+		Insert->fullPageWrites = true;
+		LWLockRelease(WALInsertLock);
+	}
+
 	/*
 	 * Write an XLOG_FPW_CHANGE record. This allows us to keep
 	 * track of full_page_writes during archive recovery, if required.
@@ -8532,12 +8519,15 @@ UpdateFullPageWrites(void)
 
 		XLogInsert(RM_XLOG_ID, XLOG_FPW_CHANGE, &rdata);
 	}
-	else
+
+
+	if (!fullPageWrites)
 	{
 		LWLockAcquire(WALInsertLock, LW_EXCLUSIVE);
-		Insert->fullPageWrites = fullPageWrites;
+		Insert->fullPageWrites = false;
 		LWLockRelease(WALInsertLock);
 	}
+	END_CRIT_SECTION();
 }
 
 /*
