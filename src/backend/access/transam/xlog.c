@@ -8442,6 +8442,9 @@ XLogReportParameters(void)
 /*
  * Update full_page_writes in shared memory, and write an
  * XLOG_FPW_CHANGE record if necessary.
+ *
+ * Note: this function assumes there is no other process running
+ * concurrently that could update it.
  */
 void
 UpdateFullPageWrites(void)
@@ -8452,8 +8455,8 @@ UpdateFullPageWrites(void)
 	 * Do nothing if full_page_writes has not been changed.
 	 *
 	 * It's safe to check the shared full_page_writes without the lock,
-	 * because we can guarantee that there is no concurrently running
-	 * process which can update it.
+	 * because we assume that there is no concurrently running process
+	 * which can update it.
 	 */
 	if (fullPageWrites == Insert->fullPageWrites)
 		return;
@@ -8489,7 +8492,6 @@ UpdateFullPageWrites(void)
 
 		XLogInsert(RM_XLOG_ID, XLOG_FPW_CHANGE, &rdata);
 	}
-
 
 	if (!fullPageWrites)
 	{
