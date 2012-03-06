@@ -148,9 +148,8 @@ report_clusters_compatible(void)
 	}
 
 	pg_log(PG_REPORT, "\n"
-		   "If pg_upgrade fails after this point, you must re-initdb the new cluster\n"
-		   "before continuing.  You will also need to remove the \".old\" suffix from\n"
-		   "%s/global/pg_control.old.\n", old_cluster.pgdata);
+		   "If pg_upgrade fails after this point, you must re-initdb the\n"
+		   "new cluster before continuing.\n");
 }
 
 
@@ -198,8 +197,8 @@ output_completion_banner(char *deletion_script_file_name)
 	/* Did we copy the free space files? */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) >= 804)
 		pg_log(PG_REPORT,
-			   "Optimizer statistics are not transferred by pg_upgrade so consider\n"
-			   "running:\n"
+			   "Optimizer statistics are not transferred by pg_upgrade so\n"
+			   "consider running:\n"
 			   "    vacuumdb --all --analyze-only\n"
 			   "on the newly-upgraded cluster.\n\n");
 	else

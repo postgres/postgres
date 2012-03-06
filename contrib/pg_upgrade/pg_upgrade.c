@@ -43,7 +43,6 @@
 #include <langinfo.h>
 #endif
 
-static void disable_old_cluster(void);
 static void prepare_new_cluster(void);
 static void prepare_new_databases(void);
 static void create_new_objects(void);
@@ -87,7 +86,6 @@ main(int argc, char **argv)
 	pg_log(PG_REPORT, "\nPerforming Upgrade\n");
 	pg_log(PG_REPORT, "------------------\n");
 
-	disable_old_cluster();
 	prepare_new_cluster();
 
 	stop_postmaster(false);
@@ -108,6 +106,16 @@ main(int argc, char **argv)
 	create_new_objects();
 
 	stop_postmaster(false);
+
+	/*
+	 *	Most failures happen in create_new_objects(), which has
+	 *	completed at this point.  We do this here because it is just
+	 *	before linking, which will link the old and new cluster data
+	 *	files, preventing the old cluster from being safely started
+	 *	once the new cluster is started.
+	 */
+	if (user_opts.transfer_mode == TRANSFER_MODE_LINK)
+		disable_old_cluster();
 
 	transfer_all_new_dbs(&old_cluster.dbarr, &new_cluster.dbarr,
 						 old_cluster.pgdata, new_cluster.pgdata);
@@ -173,14 +181,6 @@ setup(char *argv0, bool live_check)
 	*last_dir_separator(exec_path) = '\0';
 	canonicalize_path(exec_path);
 	os_info.exec_path = pg_strdup(exec_path);
-}
-
-
-static void
-disable_old_cluster(void)
-{
-	/* rename pg_control so old server cannot be accidentally started */
-	rename_old_pg_control();
 }
 
 

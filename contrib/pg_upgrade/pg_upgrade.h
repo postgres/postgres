@@ -282,8 +282,8 @@ void		create_script_for_old_cluster_deletion(char **deletion_script_file_name);
 /* controldata.c */
 
 void		get_control_data(ClusterInfo *cluster, bool live_check);
-void check_control_data(ControlData *oldctrl,
-				   ControlData *newctrl);
+void		check_control_data(ControlData *oldctrl, ControlData *newctrl);
+void		disable_old_cluster(void);
 
 
 /* dump.c */
@@ -298,7 +298,6 @@ int exec_prog(bool throw_error, const char *cmd, ...)
 	__attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
 void		verify_directories(void);
 bool		is_server_running(const char *datadir);
-void		rename_old_pg_control(void);
 
 
 /* file.c */
