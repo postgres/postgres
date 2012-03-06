@@ -6818,7 +6818,7 @@ StartupXLOG(void)
 	else
 	{
 		/*
-		 * Whenever Write.LogwrtResult points to exactly the end of a page,
+		 * Whenever LogwrtResult points to exactly the end of a page,
 		 * Write.curridx must point to the *next* page (see XLogWrite()).
 		 *
 		 * Note: it might seem we should do AdvanceXLInsertBuffer() here, but
