@@ -735,7 +735,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 		(output_columns < total_header_width || output_columns < width_total))
 	{
 		print_aligned_vertical(cont, fout);
-		return;
+		goto cleanup;
 	}
 
 	/* If we wrapped beyond the display width, use the pager */
@@ -1050,6 +1050,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 		fputc('\n', fout);
 	}
 
+cleanup:
 	/* clean up */
 	for (i = 0; i < col_count; i++)
 	{
