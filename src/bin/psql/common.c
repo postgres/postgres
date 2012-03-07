@@ -740,7 +740,7 @@ ProcessResult(PGresult **results)
 	} while (next_result);
 
 	/* may need this to recover from conn loss during COPY */
-	if (!CheckConnection())
+	if (!first_cycle && !CheckConnection())
 		return false;
 
 	return success;
@@ -1015,8 +1015,10 @@ SendQuery(const char *query)
 			case PQTRANS_UNKNOWN:
 			default:
 				OK = false;
-				psql_error("unexpected transaction status (%d)\n",
-						   transaction_status);
+				/* PQTRANS_UNKNOWN is expected given a broken connection. */
+				if (transaction_status != PQTRANS_UNKNOWN || ConnectionUp())
+					psql_error("unexpected transaction status (%d)\n",
+							   transaction_status);
 				break;
 		}
 
