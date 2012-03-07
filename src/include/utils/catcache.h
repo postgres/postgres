@@ -174,6 +174,10 @@ extern HeapTuple SearchCatCache(CatCache *cache,
 			   Datum v3, Datum v4);
 extern void ReleaseCatCache(HeapTuple tuple);
 
+extern uint32 GetCatCacheHashValue(CatCache *cache,
+					 Datum v1, Datum v2,
+					 Datum v3, Datum v4);
+
 extern CatCList *SearchCatCacheList(CatCache *cache, int nkeys,
 				   Datum v1, Datum v2,
 				   Datum v3, Datum v4);

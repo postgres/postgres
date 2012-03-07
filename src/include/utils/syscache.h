@@ -113,6 +113,9 @@ extern bool SearchSysCacheExistsAttName(Oid relid, const char *attname);
 extern Datum SysCacheGetAttr(int cacheId, HeapTuple tup,
 				AttrNumber attributeNumber, bool *isNull);
 
+extern uint32 GetSysCacheHashValue(int cacheId,
+					 Datum key1, Datum key2, Datum key3, Datum key4);
+
 /* list-search interface.  Users of this must import catcache.h too */
 extern struct catclist *SearchSysCacheList(int cacheId, int nkeys,
 				   Datum key1, Datum key2, Datum key3, Datum key4);
@@ -157,6 +160,15 @@ extern struct catclist *SearchSysCacheList(int cacheId, int nkeys,
 	GetSysCacheOid(cacheId, key1, key2, key3, 0)
 #define GetSysCacheOid4(cacheId, key1, key2, key3, key4) \
 	GetSysCacheOid(cacheId, key1, key2, key3, key4)
+
+#define GetSysCacheHashValue1(cacheId, key1) \
+	GetSysCacheHashValue(cacheId, key1, 0, 0, 0)
+#define GetSysCacheHashValue2(cacheId, key1, key2) \
+	GetSysCacheHashValue(cacheId, key1, key2, 0, 0)
+#define GetSysCacheHashValue3(cacheId, key1, key2, key3) \
+	GetSysCacheHashValue(cacheId, key1, key2, key3, 0)
+#define GetSysCacheHashValue4(cacheId, key1, key2, key3, key4) \
+	GetSysCacheHashValue(cacheId, key1, key2, key3, key4)
 
 #define SearchSysCacheList1(cacheId, key1) \
 	SearchSysCacheList(cacheId, 1, key1, 0, 0, 0)

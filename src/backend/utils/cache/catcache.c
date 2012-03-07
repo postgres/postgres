@@ -1282,6 +1282,46 @@ ReleaseCatCache(HeapTuple tuple)
 
 
 /*
+ *	GetCatCacheHashValue
+ *
+ *		Compute the hash value for a given set of search keys.
+ *
+ * The reason for exposing this as part of the API is that the hash value is
+ * exposed in cache invalidation operations, so there are places outside the
+ * catcache code that need to be able to compute the hash values.
+ */
+uint32
+GetCatCacheHashValue(CatCache *cache,
+					 Datum v1,
+					 Datum v2,
+					 Datum v3,
+					 Datum v4)
+{
+	ScanKeyData cur_skey[CATCACHE_MAXKEYS];
+
+	/*
+	 * one-time startup overhead for each cache
+	 */
+	if (cache->cc_tupdesc == NULL)
+		CatalogCacheInitializeCache(cache);
+
+	/*
+	 * initialize the search key information
+	 */
+	memcpy(cur_skey, cache->cc_skey, sizeof(cur_skey));
+	cur_skey[0].sk_argument = v1;
+	cur_skey[1].sk_argument = v2;
+	cur_skey[2].sk_argument = v3;
+	cur_skey[3].sk_argument = v4;
+
+	/*
+	 * calculate the hash value
+	 */
+	return CatalogCacheComputeHashValue(cache, cache->cc_nkeys, cur_skey);
+}
+
+
+/*
  *	SearchCatCacheList
  *
  *		Generate a list of all tuples matching a partial key (that is,
