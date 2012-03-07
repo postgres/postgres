@@ -27,7 +27,6 @@
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "utils/rel.h"
-#include "utils/syscache.h"
 
 PG_MODULE_MAGIC;
 
@@ -346,54 +345,30 @@ get_file_fdw_attribute_options(Oid relid)
 	/* Retrieve FDW options for all user-defined attributes. */
 	for (attnum = 1; attnum <= natts; attnum++)
 	{
-		HeapTuple	tuple;
-		Form_pg_attribute attr;
-		Datum		datum;
-		bool		isnull;
+		Form_pg_attribute attr = tupleDesc->attrs[attnum - 1];
+		List	   *options;
+		ListCell   *lc;
 
 		/* Skip dropped attributes. */
-		if (tupleDesc->attrs[attnum - 1]->attisdropped)
+		if (attr->attisdropped)
 			continue;
 
-		/*
-		 * We need the whole pg_attribute tuple not just what is in the
-		 * tupleDesc, so must do a catalog lookup.
-		 */
-		tuple = SearchSysCache2(ATTNUM,
-								RelationGetRelid(rel),
-								Int16GetDatum(attnum));
-		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "cache lookup failed for attribute %d of relation %u",
-				 attnum, RelationGetRelid(rel));
-		attr = (Form_pg_attribute) GETSTRUCT(tuple);
-
-		datum = SysCacheGetAttr(ATTNUM,
-								tuple,
-								Anum_pg_attribute_attfdwoptions,
-								&isnull);
-		if (!isnull)
+		options = GetForeignColumnOptions(relid, attnum);
+		foreach(lc, options)
 		{
-			List	   *options = untransformRelOptions(datum);
-			ListCell   *lc;
+			DefElem	   *def = (DefElem *) lfirst(lc);
 
-			foreach(lc, options)
+			if (strcmp(def->defname, "force_not_null") == 0)
 			{
-				DefElem	   *def = (DefElem *) lfirst(lc);
-
-				if (strcmp(def->defname, "force_not_null") == 0)
+				if (defGetBoolean(def))
 				{
-					if (defGetBoolean(def))
-					{
-						char   *attname = pstrdup(NameStr(attr->attname));
+					char   *attname = pstrdup(NameStr(attr->attname));
 
-						fnncolumns = lappend(fnncolumns, makeString(attname));
-					}
+					fnncolumns = lappend(fnncolumns, makeString(attname));
 				}
-				/* maybe in future handle other options here */
 			}
+			/* maybe in future handle other options here */
 		}
-
-		ReleaseSysCache(tuple);
 	}
 
 	heap_close(rel, AccessShareLock);

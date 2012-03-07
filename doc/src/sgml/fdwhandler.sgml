@@ -244,4 +244,109 @@ EndForeignScan (ForeignScanState *node);
 
    </sect1>
 
+   <sect1 id="fdw-helpers">
+    <title>Foreign Data Wrapper Helper Functions</title>
+
+    <para>
+     Several helper functions are exported from the core server so that
+     authors of foreign data wrappers can get easy access to attributes of
+     FDW-related objects, such as FDW options.
+     To use any of these functions, you need to include the header file
+     <filename>foreign/foreign.h</filename> in your source file.
+     That header also defines the struct types that are returned by
+     these functions.
+    </para>
+
+    <para>
+<programlisting>
+ForeignDataWrapper *
+GetForeignDataWrapper(Oid fdwid);
+</programlisting>
+
+     This function returns a <structname>ForeignDataWrapper</structname>
+     object for the foreign-data wrapper with the given OID.  A
+     <structname>ForeignDataWrapper</structname> object contains properties
+     of the FDW (see <filename>foreign/foreign.h</filename> for details).
+    </para>
+
+    <para>
+<programlisting>
+ForeignServer *
+GetForeignServer(Oid serverid);
+</programlisting>
+
+     This function returns a <structname>ForeignServer</structname> object
+     for the foreign server with the given OID.  A
+     <structname>ForeignServer</structname> object contains properties
+     of the server (see <filename>foreign/foreign.h</filename> for details).
+    </para>
+
+    <para>
+<programlisting>
+UserMapping *
+GetUserMapping(Oid userid, Oid serverid);
+</programlisting>
+
+     This function returns a <structname>UserMapping</structname> object for
+     the user mapping of the given role on the given server.  (If there is no
+     mapping for the specific user, it will return the mapping for
+     <literal>PUBLIC</>, or throw error if there is none.)  A
+     <structname>UserMapping</structname> object contains properties of the
+     user mapping (see <filename>foreign/foreign.h</filename> for details).
+    </para>
+
+    <para>
+<programlisting>
+ForeignTable *
+GetForeignTable(Oid relid);
+</programlisting>
+
+     This function returns a <structname>ForeignTable</structname> object for
+     the foreign table with the given OID.  A
+     <structname>ForeignTable</structname> object contains properties of the
+     foreign table (see <filename>foreign/foreign.h</filename> for details).
+    </para>
+
+    <para>
+<programlisting>
+List *
+GetForeignTableColumnOptions(Oid relid, AttrNumber attnum);
+</programlisting>
+
+     This function returns the per-column FDW options for the column with the
+     given foreign table OID and attribute number, in the form of a list of
+     <structname>DefElem</structname>.  NIL is returned if the column has no
+     options.
+    </para>
+
+    <para>
+     Some object types have name-based lookup functions in addition to the
+     OID-based ones:
+    </para>
+
+    <para>
+<programlisting>
+ForeignDataWrapper *
+GetForeignDataWrapperByName(const char *name, bool missing_ok);
+</programlisting>
+
+     This function returns a <structname>ForeignDataWrapper</structname>
+     object for the foreign-data wrapper with the given name.  If the wrapper
+     is not found, return NULL if missing_ok is true, otherwise raise an
+     error.
+    </para>
+
+    <para>
+<programlisting>
+ForeignServer *
+GetForeignServerByName(const char *name, bool missing_ok);
+</programlisting>
+
+     This function returns a <structname>ForeignServer</structname> object
+     for the foreign server with the given name.  If the server is not found,
+     return NULL if missing_ok is true, otherwise raise an error.
+    </para>
+
+  </sect1>
+
  </chapter>

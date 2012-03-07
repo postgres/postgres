@@ -28,7 +28,6 @@ extern Datum pg_options_to_table(PG_FUNCTION_ARGS);
 extern Datum postgresql_fdw_validator(PG_FUNCTION_ARGS);
 
 
-
 /*
  * GetForeignDataWrapper -	look up the foreign-data wrapper by OID.
  */
@@ -69,7 +68,6 @@ GetForeignDataWrapper(Oid fdwid)
 
 	return fdw;
 }
-
 
 
 /*
@@ -244,6 +242,39 @@ GetForeignTable(Oid relid)
 	ReleaseSysCache(tp);
 
 	return ft;
+}
+
+
+/*
+ * GetForeignColumnOptions - Get attfdwoptions of given relation/attnum
+ * as list of DefElem.
+ */
+List *
+GetForeignColumnOptions(Oid relid, AttrNumber attnum)
+{
+	List	   *options;
+	HeapTuple	tp;
+	Datum		datum;
+	bool		isnull;
+
+	tp = SearchSysCache2(ATTNUM,
+						 ObjectIdGetDatum(relid),
+						 Int16GetDatum(attnum));
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for attribute %d of relation %u",
+			 attnum, relid);
+	datum = SysCacheGetAttr(ATTNUM,
+							tp,
+							Anum_pg_attribute_attfdwoptions,
+							&isnull);
+	if (isnull)
+		options = NIL;
+	else
+		options = untransformRelOptions(datum);
+
+	ReleaseSysCache(tp);
+
+	return options;
 }
 
 
@@ -498,6 +529,7 @@ postgresql_fdw_validator(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(true);
 }
 
+
 /*
  * get_foreign_data_wrapper_oid - given a FDW name, look up the OID
  *
@@ -517,6 +549,7 @@ get_foreign_data_wrapper_oid(const char *fdwname, bool missing_ok)
 						fdwname)));
 	return oid;
 }
+
 
 /*
  * get_foreign_server_oid - given a FDW name, look up the OID
