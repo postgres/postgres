@@ -2744,6 +2744,8 @@ freePGconn(PGconn *conn)
 		free(conn->events[i].name);
 	}
 
+	if (conn->client_encoding_initial)
+		free(conn->client_encoding_initial);
 	if (conn->events)
 		free(conn->events);
 	if (conn->pghost)
