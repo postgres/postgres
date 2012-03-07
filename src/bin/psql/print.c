@@ -1177,8 +1177,8 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 	 * We now have all the information we need to setup the formatting
 	 * structures
 	 */
-	dlineptr = pg_local_malloc((sizeof(*dlineptr) + 1) * dheight);
-	hlineptr = pg_local_malloc((sizeof(*hlineptr) + 1) * hheight);
+	dlineptr = pg_local_malloc((sizeof(*dlineptr)) * (dheight + 1));
+	hlineptr = pg_local_malloc((sizeof(*hlineptr)) * (hheight + 1));
 
 	dlineptr->ptr = pg_local_malloc(dformatsize);
 	hlineptr->ptr = pg_local_malloc(hformatsize);
