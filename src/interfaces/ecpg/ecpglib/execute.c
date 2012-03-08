@@ -1776,6 +1776,7 @@ ECPGdo(const int lineno, const int compat, const int force_indicator, const char
 		{
 			setlocale(LC_NUMERIC, oldlocale);
 			ecpg_free(oldlocale);
+			free_statement(stmt);
 			va_end(args);
 			return (false);
 		}
@@ -1807,6 +1808,7 @@ ECPGdo(const int lineno, const int compat, const int force_indicator, const char
 			ecpg_raise(lineno, ECPG_INVALID_STMT, ECPG_SQLSTATE_INVALID_SQL_STATEMENT_NAME, stmt->command);
 			setlocale(LC_NUMERIC, oldlocale);
 			ecpg_free(oldlocale);
+			free_statement(stmt);
 			va_end(args);
 			return (false);
 		}

@@ -519,6 +519,10 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 			ecpg_free(realname);
 		if (dbname)
 			ecpg_free(dbname);
+		if (conn_keywords)
+			ecpg_free(conn_keywords);
+		if (conn_values)
+			ecpg_free(conn_values);
 		free(this);
 		return false;
 	}
