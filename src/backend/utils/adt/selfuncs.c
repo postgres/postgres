@@ -1712,6 +1712,7 @@ scalararraysel(PlannerInfo *root,
 	RegProcedure oprsel;
 	FmgrInfo	oprselproc;
 	Selectivity s1;
+	Selectivity s1disjoint;
 
 	/* First, deconstruct the expression */
 	Assert(list_length(clause->args) == 2);
@@ -1769,6 +1770,19 @@ scalararraysel(PlannerInfo *root,
 	fmgr_info(oprsel, &oprselproc);
 
 	/*
+	 * In the array-containment check above, we must only believe that an
+	 * operator is equality or inequality if it is the default btree equality
+	 * operator (or its negator) for the element type, since those are the
+	 * operators that array containment will use.  But in what follows, we can
+	 * be a little laxer, and also believe that any operators using eqsel() or
+	 * neqsel() as selectivity estimator act like equality or inequality.
+	 */
+	if (oprsel == F_EQSEL || oprsel == F_EQJOINSEL)
+		isEquality = true;
+	else if (oprsel == F_NEQSEL || oprsel == F_NEQJOINSEL)
+		isInequality = true;
+
+	/*
 	 * We consider three cases:
 	 *
 	 * 1. rightop is an Array constant: deconstruct the array, apply the
@@ -1802,7 +1816,23 @@ scalararraysel(PlannerInfo *root,
 						  ARR_ELEMTYPE(arrayval),
 						  elmlen, elmbyval, elmalign,
 						  &elem_values, &elem_nulls, &num_elems);
-		s1 = useOr ? 0.0 : 1.0;
+
+		/*
+		 * For generic operators, we assume the probability of success is
+		 * independent for each array element.  But for "= ANY" or "<> ALL",
+		 * if the array elements are distinct (which'd typically be the case)
+		 * then the probabilities are disjoint, and we should just sum them.
+		 *
+		 * If we were being really tense we would try to confirm that the
+		 * elements are all distinct, but that would be expensive and it
+		 * doesn't seem to be worth the cycles; it would amount to penalizing
+		 * well-written queries in favor of poorly-written ones.  However, we
+		 * do protect ourselves a little bit by checking whether the
+		 * disjointness assumption leads to an impossible (out of range)
+		 * probability; if so, we fall back to the normal calculation.
+		 */
+		s1 = s1disjoint = (useOr ? 0.0 : 1.0);
+
 		for (i = 0; i < num_elems; i++)
 		{
 			List	   *args;
@@ -1829,11 +1859,25 @@ scalararraysel(PlannerInfo *root,
 												  ObjectIdGetDatum(operator),
 												  PointerGetDatum(args),
 												  Int32GetDatum(varRelid)));
+
 			if (useOr)
+			{
 				s1 = s1 + s2 - s1 * s2;
+				if (isEquality)
+					s1disjoint += s2;
+			}
 			else
+			{
 				s1 = s1 * s2;
+				if (isInequality)
+					s1disjoint += s2 - 1.0;
+			}
 		}
+
+		/* accept disjoint-probability estimate if in range */
+		if ((useOr ? isEquality : isInequality) &&
+			s1disjoint >= 0.0 && s1disjoint <= 1.0)
+			s1 = s1disjoint;
 	}
 	else if (rightop && IsA(rightop, ArrayExpr) &&
 			 !((ArrayExpr *) rightop)->multidims)
@@ -1845,7 +1889,16 @@ scalararraysel(PlannerInfo *root,
 
 		get_typlenbyval(arrayexpr->element_typeid,
 						&elmlen, &elmbyval);
-		s1 = useOr ? 0.0 : 1.0;
+
+		/*
+		 * We use the assumption of disjoint probabilities here too, although
+		 * the odds of equal array elements are rather higher if the elements
+		 * are not all constants (which they won't be, else constant folding
+		 * would have reduced the ArrayExpr to a Const).  In this path it's
+		 * critical to have the sanity check on the s1disjoint estimate.
+		 */
+		s1 = s1disjoint = (useOr ? 0.0 : 1.0);
+
 		foreach(l, arrayexpr->elements)
 		{
 			Node	   *elem = (Node *) lfirst(l);
@@ -1871,11 +1924,25 @@ scalararraysel(PlannerInfo *root,
 												  ObjectIdGetDatum(operator),
 												  PointerGetDatum(args),
 												  Int32GetDatum(varRelid)));
+
 			if (useOr)
+			{
 				s1 = s1 + s2 - s1 * s2;
+				if (isEquality)
+					s1disjoint += s2;
+			}
 			else
+			{
 				s1 = s1 * s2;
+				if (isInequality)
+					s1disjoint += s2 - 1.0;
+			}
 		}
+
+		/* accept disjoint-probability estimate if in range */
+		if ((useOr ? isEquality : isInequality) &&
+			s1disjoint >= 0.0 && s1disjoint <= 1.0)
+			s1 = s1disjoint;
 	}
 	else
 	{
@@ -1911,7 +1978,8 @@ scalararraysel(PlannerInfo *root,
 
 		/*
 		 * Arbitrarily assume 10 elements in the eventual array value (see
-		 * also estimate_array_length)
+		 * also estimate_array_length).  We don't risk an assumption of
+		 * disjoint probabilities here.
 		 */
 		for (i = 0; i < 10; i++)
 		{
