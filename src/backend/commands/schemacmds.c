@@ -94,7 +94,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 							save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
 	/* Create the schema's namespace */
-	namespaceId = NamespaceCreate(schemaName, owner_uid);
+	namespaceId = NamespaceCreate(schemaName, owner_uid, false);
 
 	/* Advance cmd counter to make the namespace visible */
 	CommandCounterIncrement();
