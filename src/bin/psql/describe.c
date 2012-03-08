@@ -2156,22 +2156,28 @@ describeOneTableDetails(const char *schemaname,
 		if (!result)
 			goto error_return;
 		else
-			tuples = PQntuples(result);
-
-		for (i = 0; i < tuples; i++)
 		{
 			const char *s = _("Inherits");
+			int			sw = pg_wcswidth(s, strlen(s), pset.encoding);
 
-			if (i == 0)
-				printfPQExpBuffer(&buf, "%s: %s", s, PQgetvalue(result, i, 0));
-			else
-				printfPQExpBuffer(&buf, "%*s  %s", (int) strlen(s), "", PQgetvalue(result, i, 0));
-			if (i < tuples - 1)
-				appendPQExpBuffer(&buf, ",");
+			tuples = PQntuples(result);
 
-			printTableAddFooter(&cont, buf.data);
+			for (i = 0; i < tuples; i++)
+			{
+				if (i == 0)
+					printfPQExpBuffer(&buf, "%s: %s",
+									  s, PQgetvalue(result, i, 0));
+				else
+					printfPQExpBuffer(&buf, "%*s  %s",
+									  sw, "", PQgetvalue(result, i, 0));
+				if (i < tuples - 1)
+					appendPQExpBuffer(&buf, ",");
+
+				printTableAddFooter(&cont, buf.data);
+			}
+
+			PQclear(result);
 		}
-		PQclear(result);
 
 		/* print child tables */
 		if (pset.sversion >= 80300)
@@ -2198,6 +2204,7 @@ describeOneTableDetails(const char *schemaname,
 		{
 			/* display the list of child tables */
 			const char *ct = _("Child tables");
+			int			ctw = pg_wcswidth(ct, strlen(ct), pset.encoding);
 
 			for (i = 0; i < tuples; i++)
 			{
@@ -2206,8 +2213,7 @@ describeOneTableDetails(const char *schemaname,
 									  ct, PQgetvalue(result, i, 0));
 				else
 					printfPQExpBuffer(&buf, "%*s  %s",
-									  (int) strlen(ct), "",
-									  PQgetvalue(result, i, 0));
+									  ctw, "", PQgetvalue(result, i, 0));
 				if (i < tuples - 1)
 					appendPQExpBuffer(&buf, ",");
 
