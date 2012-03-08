@@ -1117,7 +1117,6 @@ begin:;
 	 */
 	if (isLogSwitch)
 	{
-		XLogCtlWrite *Write = &XLogCtl->Write;
 		XLogwrtRqst FlushRqst;
 		XLogRecPtr	OldSegEnd;
 
@@ -1140,7 +1139,7 @@ begin:;
 
 		/* There should be no unwritten data */
 		curridx = Insert->curridx;
-		Assert(curridx == Write->curridx);
+		Assert(curridx == XLogCtl->Write.curridx);
 
 		/* Compute end address of old segment */
 		OldSegEnd = XLogCtl->xlblocks[curridx];
