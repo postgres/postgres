@@ -207,7 +207,7 @@ format_numeric_locale(const char *my_str)
 				leading_digits;
 	int			groupdigits = atoi(grouping);
 	int			new_str_start = 0;
-	char	   *new_str = new_str = pg_local_malloc(
+	char	   *new_str = pg_local_malloc(
 									 strlen_with_numeric_locale(my_str) + 1);
 
 	leading_digits = (int_len % groupdigits != 0) ?
