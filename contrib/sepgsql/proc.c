@@ -131,6 +131,48 @@ sepgsql_proc_post_create(Oid functionId)
 }
 
 /*
+ * sepgsql_proc_drop
+ *
+ * It checks privileges to drop the supplied function.
+ */
+void
+sepgsql_proc_drop(Oid functionId)
+{
+	ObjectAddress	object;
+	char		   *audit_name;
+
+	/*
+	 * check db_schema:{remove_name} permission
+	 */
+	object.classId = NamespaceRelationId;
+	object.objectId = get_func_namespace(functionId);
+	object.objectSubId = 0;
+	audit_name = getObjectDescription(&object);
+
+	sepgsql_avc_check_perms(&object,
+							SEPG_CLASS_DB_SCHEMA,
+							SEPG_DB_SCHEMA__REMOVE_NAME,
+							audit_name,
+							true);
+	pfree(audit_name);
+
+    /*
+     * check db_procedure:{drop} permission
+     */
+	object.classId = ProcedureRelationId;
+	object.objectId = functionId;
+	object.objectSubId = 0;
+	audit_name = getObjectDescription(&object);
+
+    sepgsql_avc_check_perms(&object,
+                            SEPG_CLASS_DB_PROCEDURE,
+                            SEPG_DB_PROCEDURE__DROP,
+                            audit_name,
+                            true);
+	pfree(audit_name);
+}
+
+/*
  * sepgsql_proc_relabel
  *
  * It checks privileges to relabel the supplied function

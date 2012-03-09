@@ -441,6 +441,20 @@ UPDATE t1 SET x = 2, y = md5sum(y) WHERE z = 100;
    </para>
 
    <para>
+    When <literal>DROP</> command is executed, <literal>drop</> will be
+    checked on the object being removed for each object types.
+    Please note that it shall not be checked on the objects removed by
+    cascaded deletion according to the standard manner in SQL.
+   </para>
+   <para>
+    A few additional checks are applied depending on object types.
+    On deletion of objects underlying a particula schema (tables, views,
+    sequences and procedures), <literal>remove_name</> shall be also checked
+    on the schema, not only <literal>drop</> on the object being removed
+    itself.
+   </para>
+
+   <para>
     When <xref linkend="sql-security-label"> is executed, <literal>setattr</>
     and <literal>relabelfrom</> will be checked on the object being relabeled
     with its old security label, then <literal>relabelto</> with the supplied

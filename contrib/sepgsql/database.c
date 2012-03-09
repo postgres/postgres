@@ -119,6 +119,33 @@ sepgsql_database_post_create(Oid databaseId, const char *dtemplate)
 }
 
 /*
+ * sepgsql_database_drop
+ *
+ * It checks privileges to drop the supplied database
+ */
+void
+sepgsql_database_drop(Oid databaseId)
+{
+	ObjectAddress	object;
+	char		   *audit_name;
+
+	/*
+	 * check db_database:{drop} permission
+	 */
+	object.classId = DatabaseRelationId;
+	object.objectId = databaseId;
+	object.objectSubId = 0;
+	audit_name = getObjectDescription(&object);
+
+	sepgsql_avc_check_perms(&object,
+							SEPG_CLASS_DB_DATABASE,
+							SEPG_DB_DATABASE__DROP,
+							audit_name,
+							true);
+	pfree(audit_name);
+}
+
+/*
  * sepgsql_database_relabel
  *
  * It checks privileges to relabel the supplied database with the `seclabel'

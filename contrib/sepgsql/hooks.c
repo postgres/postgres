@@ -10,6 +10,7 @@
  */
 #include "postgres.h"
 
+#include "catalog/dependency.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_database.h"
@@ -87,10 +88,11 @@ static void
 sepgsql_object_access(ObjectAccessType access,
 					  Oid classId,
 					  Oid objectId,
-					  int subId)
+					  int subId,
+					  void *arg)
 {
 	if (next_object_access_hook)
-		(*next_object_access_hook) (access, classId, objectId, subId);
+		(*next_object_access_hook) (access, classId, objectId, subId, arg);
 
 	switch (access)
 	{
@@ -143,6 +145,46 @@ sepgsql_object_access(ObjectAccessType access,
 				default:
 					/* Ignore unsupported object classes */
 					break;
+			}
+			break;
+
+		case OAT_DROP:
+			{
+				ObjectAccessDrop *drop_arg = (ObjectAccessDrop *)arg;
+
+				/*
+				 * No need to apply permission checks on object deletion
+				 * due to internal cleanups; such as removal of temporary
+				 * database object on session closed.
+				 */
+				if ((drop_arg->dropflags & PERFORM_DELETION_INTERNAL) != 0)
+					break;
+
+				switch (classId)
+				{
+					case DatabaseRelationId:
+						sepgsql_database_drop(objectId);
+						break;
+
+					case NamespaceRelationId:
+						sepgsql_schema_drop(objectId);
+						break;
+
+					case RelationRelationId:
+						if (subId == 0)
+							sepgsql_relation_drop(objectId);
+						else
+							sepgsql_attribute_drop(objectId, subId);
+						break;
+
+					case ProcedureRelationId:
+						sepgsql_proc_drop(objectId);
+						break;
+
+					default:
+						/* Ignore unsupported object classes */
+						break;
+				}
 			}
 			break;
 

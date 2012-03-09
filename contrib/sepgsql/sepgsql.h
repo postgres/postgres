@@ -288,27 +288,32 @@ extern bool sepgsql_dml_privileges(List *rangeTabls, bool abort);
  */
 extern void sepgsql_database_post_create(Oid databaseId,
 										 const char *dtemplate);
+extern void sepgsql_database_drop(Oid databaseId);
 extern void sepgsql_database_relabel(Oid databaseId, const char *seclabel);
 
 /*
  * schema.c
  */
 extern void sepgsql_schema_post_create(Oid namespaceId);
+extern void sepgsql_schema_drop(Oid namespaceId);
 extern void sepgsql_schema_relabel(Oid namespaceId, const char *seclabel);
 
 /*
  * relation.c
  */
 extern void sepgsql_attribute_post_create(Oid relOid, AttrNumber attnum);
+extern void sepgsql_attribute_drop(Oid relOid, AttrNumber attnum);
 extern void sepgsql_attribute_relabel(Oid relOid, AttrNumber attnum,
 						  const char *seclabel);
 extern void sepgsql_relation_post_create(Oid relOid);
+extern void sepgsql_relation_drop(Oid relOid);
 extern void sepgsql_relation_relabel(Oid relOid, const char *seclabel);
 
 /*
  * proc.c
  */
 extern void sepgsql_proc_post_create(Oid functionId);
+extern void sepgsql_proc_drop(Oid functionId);
 extern void sepgsql_proc_relabel(Oid functionId, const char *seclabel);
 
 #endif   /* SEPGSQL_H */

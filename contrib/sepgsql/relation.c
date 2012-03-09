@@ -21,6 +21,7 @@
 #include "commands/seclabel.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
+#include "utils/syscache.h"
 #include "utils/tqual.h"
 
 #include "sepgsql.h"
@@ -107,6 +108,36 @@ sepgsql_attribute_post_create(Oid relOid, AttrNumber attnum)
 
 	pfree(tcontext);
 	pfree(ncontext);
+}
+
+/*
+ * sepgsql_attribute_drop
+ *
+ * It checks privileges to drop the supplied column.
+ */
+void
+sepgsql_attribute_drop(Oid relOid, AttrNumber attnum)
+{
+	ObjectAddress	object;
+	char		   *audit_name;
+
+	if (get_rel_relkind(relOid) != RELKIND_RELATION)
+		return;
+
+	/*
+	 * check db_column:{drop} permission
+	 */
+	object.classId = RelationRelationId;
+	object.objectId = relOid;
+	object.objectSubId = attnum;
+	audit_name = getObjectDescription(&object);
+
+	sepgsql_avc_check_perms(&object,
+							SEPG_CLASS_DB_COLUMN,
+							SEPG_DB_COLUMN__DROP,
+							audit_name,
+							true);
+	pfree(audit_name);
 }
 
 /*
@@ -307,6 +338,94 @@ sepgsql_relation_post_create(Oid relOid)
 out:
 	systable_endscan(sscan);
 	heap_close(rel, AccessShareLock);
+}
+
+/*
+ * sepgsql_relation_drop
+ *
+ * It checks privileges to drop the supplied relation.
+ */
+void
+sepgsql_relation_drop(Oid relOid)
+{
+	ObjectAddress	object;
+	char		   *audit_name;
+	uint16_t		tclass = 0;
+	char			relkind;
+
+	relkind = get_rel_relkind(relOid);
+	if (relkind == RELKIND_RELATION)
+		tclass = SEPG_CLASS_DB_TABLE;
+	else if (relkind == RELKIND_SEQUENCE)
+		tclass = SEPG_CLASS_DB_SEQUENCE;
+	else if (relkind == RELKIND_VIEW)
+		tclass = SEPG_CLASS_DB_VIEW;
+	else
+		return;
+
+	/*
+	 * check db_schema:{remove_name} permission
+	 */
+	object.classId = NamespaceRelationId;
+	object.objectId = get_rel_namespace(relOid);
+	object.objectSubId = 0;
+	audit_name = getObjectDescription(&object);
+
+	sepgsql_avc_check_perms(&object,
+							SEPG_CLASS_DB_SCHEMA,
+							SEPG_DB_SCHEMA__REMOVE_NAME,
+							audit_name,
+							true);
+	pfree(audit_name);
+
+	/*
+	 * check db_table/sequence/view:{drop} permission
+	 */
+	object.classId = RelationRelationId;
+	object.objectId = relOid;
+	object.objectSubId = 0;
+	audit_name = getObjectDescription(&object);
+
+	sepgsql_avc_check_perms(&object,
+							tclass,
+							SEPG_DB_TABLE__DROP,
+							audit_name,
+							true);
+	pfree(audit_name);
+
+	/*
+	 * check db_column:{drop} permission
+	 */
+	if (relkind == RELKIND_RELATION)
+	{
+		Form_pg_attribute	attForm;
+		CatCList   *attrList;
+		HeapTuple	atttup;
+		int			i;
+
+		attrList = SearchSysCacheList1(ATTNUM, ObjectIdGetDatum(relOid));
+		for (i=0; i < attrList->n_members; i++)
+		{
+			atttup = &attrList->members[i]->tuple;
+			attForm = (Form_pg_attribute) GETSTRUCT(atttup);
+
+			if (attForm->attisdropped)
+				continue;
+
+			object.classId = RelationRelationId;
+			object.objectId = relOid;
+			object.objectSubId = attForm->attnum;
+			audit_name = getObjectDescription(&object);
+
+			sepgsql_avc_check_perms(&object,
+									SEPG_CLASS_DB_COLUMN,
+									SEPG_DB_COLUMN__DROP,
+									audit_name,
+									true);
+			pfree(audit_name);
+		}
+		ReleaseCatCacheList(attrList);
+	}
 }
 
 /*

@@ -1,5 +1,5 @@
 --
--- Regression Test for Creation of Object Permission Checks
+-- Regression Test for DDL of Object Permission Checks
 --
 
 -- confirm required permissions using audit messages
@@ -7,9 +7,16 @@
 SET sepgsql.debug_audit = true;
 SET client_min_messages = LOG;
 
+--
+-- CREATE Permission checks
+--
 CREATE DATABASE regtest_sepgsql_test_database;
 
+CREATE USER regtest_sepgsql_test_user;
+
 CREATE SCHEMA regtest_schema;
+
+GRANT ALL ON SCHEMA regtest_schema TO regtest_sepgsql_test_user;
 
 SET search_path = regtest_schema, public;
 
@@ -38,9 +45,37 @@ CREATE AGGREGATE regtest_agg (
            sfunc1 = int4pl, basetype = int4, stype1 = int4, initcond1 = '0'
 );
 
---
--- clean-up
---
-DROP DATABASE IF EXISTS regtest_sepgsql_test_database;
+-- CREATE objects owned by others
+SET SESSION AUTHORIZATION regtest_sepgsql_test_user;
 
+SET search_path = regtest_schema, public;
+
+CREATE TABLE regtest_table_3 (x int, y serial);
+
+CREATE VIEW regtest_view_2 AS SELECT * FROM regtest_table_3 WHERE x < y;
+
+CREATE FUNCTION regtest_func_2(int) RETURNS bool LANGUAGE plpgsql
+           AS 'BEGIN RETURN $1 * $1 < 100; END';
+
+RESET SESSION AUTHORIZATION;
+
+--
+-- DROP Permission checks (with clean-up)
+--
+
+DROP FUNCTION regtest_func(text,int[]);
+DROP AGGREGATE regtest_agg(int);
+
+DROP SEQUENCE regtest_seq;
+DROP VIEW regtest_view;
+
+ALTER TABLE regtest_table DROP COLUMN y;
+ALTER TABLE regtest_table_2 SET WITHOUT OIDS;
+
+DROP TABLE regtest_table;
+
+DROP OWNED BY regtest_sepgsql_test_user;
+
+DROP DATABASE regtest_sepgsql_test_database;
+DROP USER regtest_sepgsql_test_user;
 DROP SCHEMA IF EXISTS regtest_schema CASCADE;
