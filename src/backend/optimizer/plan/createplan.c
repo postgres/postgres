@@ -20,6 +20,7 @@
 #include <math.h>
 
 #include "access/skey.h"
+#include "foreign/fdwapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -119,8 +120,6 @@ static CteScan *make_ctescan(List *qptlist, List *qpqual,
 			 Index scanrelid, int ctePlanId, int cteParam);
 static WorkTableScan *make_worktablescan(List *qptlist, List *qpqual,
 				   Index scanrelid, int wtParam);
-static ForeignScan *make_foreignscan(List *qptlist, List *qpqual,
-				 Index scanrelid, bool fsSystemCol, List *fdw_private);
 static BitmapAnd *make_bitmap_and(List *bitmapplans);
 static BitmapOr *make_bitmap_or(List *bitmapplans);
 static NestLoop *make_nestloop(List *tlist,
@@ -1816,7 +1815,6 @@ create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 	RelOptInfo *rel = best_path->path.parent;
 	Index		scan_relid = rel->relid;
 	RangeTblEntry *rte;
-	bool		fsSystemCol;
 	int			i;
 
 	/* it should be a base rel... */
@@ -1825,30 +1823,55 @@ create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 	rte = planner_rt_fetch(scan_relid, root);
 	Assert(rte->rtekind == RTE_RELATION);
 
-	/* Sort clauses into best execution order */
+	/*
+	 * Sort clauses into best execution order.  We do this first since the
+	 * FDW might have more info than we do and wish to adjust the ordering.
+	 */
 	scan_clauses = order_qual_clauses(root, scan_clauses);
 
-	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
-	scan_clauses = extract_actual_clauses(scan_clauses, false);
+	/*
+	 * Let the FDW perform its processing on the restriction clauses and
+	 * generate the plan node.  Note that the FDW might remove restriction
+	 * clauses that it intends to execute remotely, or even add more (if it
+	 * has selected some join clauses for remote use but also wants them
+	 * rechecked locally).
+	 */
+	scan_plan = rel->fdwroutine->GetForeignPlan(root, rel, rte->relid,
+												best_path,
+												tlist, scan_clauses);
 
-	/* Detect whether any system columns are requested from rel */
-	fsSystemCol = false;
+	/* Copy cost data from Path to Plan; no need to make FDW do this */
+	copy_path_costsize(&scan_plan->scan.plan, &best_path->path);
+
+	/*
+	 * Replace any outer-relation variables with nestloop params in the qual
+	 * and fdw_exprs expressions.  We do this last so that the FDW doesn't
+	 * have to be involved.  (Note that parts of fdw_exprs could have come
+	 * from join clauses, so doing this beforehand on the scan_clauses
+	 * wouldn't work.)
+	 */
+	if (best_path->path.required_outer)
+	{
+		scan_plan->scan.plan.qual = (List *)
+			replace_nestloop_params(root, (Node *) scan_plan->scan.plan.qual);
+		scan_plan->fdw_exprs = (List *)
+			replace_nestloop_params(root, (Node *) scan_plan->fdw_exprs);
+	}
+
+	/*
+	 * Detect whether any system columns are requested from rel.  This is a
+	 * bit of a kluge and might go away someday, so we intentionally leave it
+	 * out of the API presented to FDWs.
+	 */
+	scan_plan->fsSystemCol = false;
 	for (i = rel->min_attr; i < 0; i++)
 	{
 		if (!bms_is_empty(rel->attr_needed[i - rel->min_attr]))
 		{
-			fsSystemCol = true;
+			scan_plan->fsSystemCol = true;
 			break;
 		}
 	}
-
-	scan_plan = make_foreignscan(tlist,
-								 scan_clauses,
-								 scan_relid,
-								 fsSystemCol,
-								 best_path->fdw_private);
-
-	copy_path_costsize(&scan_plan->scan.plan, &best_path->path);
 
 	return scan_plan;
 }
@@ -3183,24 +3206,26 @@ make_worktablescan(List *qptlist,
 	return node;
 }
 
-static ForeignScan *
+ForeignScan *
 make_foreignscan(List *qptlist,
 				 List *qpqual,
 				 Index scanrelid,
-				 bool fsSystemCol,
+				 List *fdw_exprs,
 				 List *fdw_private)
 {
 	ForeignScan *node = makeNode(ForeignScan);
 	Plan	   *plan = &node->scan.plan;
 
-	/* cost should be inserted by caller */
+	/* cost will be filled in by create_foreignscan_plan */
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
 	plan->lefttree = NULL;
 	plan->righttree = NULL;
 	node->scan.scanrelid = scanrelid;
-	node->fsSystemCol = fsSystemCol;
+	node->fdw_exprs = fdw_exprs;
 	node->fdw_private = fdw_private;
+	/* fsSystemCol will be filled in by create_foreignscan_plan */
+	node->fsSystemCol = false;
 
 	return node;
 }

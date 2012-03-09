@@ -1767,7 +1767,7 @@ create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel)
  *	  returning the pathnode.
  *
  * This function is never called from core Postgres; rather, it's expected
- * to be called by the PlanForeignScan function of a foreign data wrapper.
+ * to be called by the GetForeignPaths function of a foreign data wrapper.
  * We make the FDW supply all fields of the path, since we do not have any
  * way to calculate them in core.
  */

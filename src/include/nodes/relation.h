@@ -334,10 +334,13 @@ typedef struct PlannerInfo
  *		allvisfrac - fraction of disk pages that are marked all-visible
  *		subplan - plan for subquery (NULL if it's not a subquery)
  *		subroot - PlannerInfo for subquery (NULL if it's not a subquery)
+ *		fdwroutine - function hooks for FDW, if foreign table (else NULL)
+ *		fdw_private - private state for FDW, if foreign table (else NULL)
  *
  *		Note: for a subquery, tuples, subplan, subroot are not set immediately
  *		upon creation of the RelOptInfo object; they are filled in when
- *		set_base_rel_pathlist processes the object.
+ *		set_subquery_pathlist processes the object.  Likewise, fdwroutine
+ *		and fdw_private are filled during initial path creation.
  *
  *		For otherrels that are appendrel members, these fields are filled
  *		in just as for a baserel.
@@ -414,8 +417,12 @@ typedef struct RelOptInfo
 	BlockNumber pages;			/* size estimates derived from pg_class */
 	double		tuples;
 	double		allvisfrac;
+	/* use "struct Plan" to avoid including plannodes.h here */
 	struct Plan *subplan;		/* if subquery */
 	PlannerInfo *subroot;		/* if subquery */
+	/* use "struct FdwRoutine" to avoid including fdwapi.h here */
+	struct FdwRoutine *fdwroutine;	/* if foreign table */
+	void	   *fdw_private;	/* if foreign table */
 
 	/* used by various scans and joins: */
 	List	   *baserestrictinfo;		/* RestrictInfo structures (if base
@@ -793,14 +800,13 @@ typedef struct TidPath
 } TidPath;
 
 /*
- * ForeignPath represents a scan of a foreign table
+ * ForeignPath represents a potential scan of a foreign table
  *
- * fdw_private contains FDW private data about the scan, which will be copied
- * to the final ForeignScan plan node so that it is available at execution
- * time.  Note that everything in this list must be copiable by copyObject().
- * One way to store an arbitrary blob of bytes is to represent it as a bytea
- * Const.  Usually, though, you'll be better off choosing a representation
- * that can be dumped usefully by nodeToString().
+ * fdw_private stores FDW private data about the scan.  While fdw_private is
+ * not actually touched by the core code during normal operations, it's
+ * generally a good idea to use a representation that can be dumped by
+ * nodeToString(), so that you can examine the structure during debugging
+ * with tools like pprint().
  */
 typedef struct ForeignPath
 {

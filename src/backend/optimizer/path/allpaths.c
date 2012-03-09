@@ -396,6 +396,12 @@ set_foreign_size(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 {
 	/* Mark rel with estimated output rows, width, etc */
 	set_foreign_size_estimates(root, rel);
+
+	/* Get FDW routine pointers for the rel */
+	rel->fdwroutine = GetFdwRoutineByRelId(rte->relid);
+
+	/* Let FDW adjust the size estimates, if it can */
+	rel->fdwroutine->GetForeignRelSize(root, rel, rte->relid);
 }
 
 /*
@@ -405,11 +411,8 @@ set_foreign_size(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 static void
 set_foreign_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 {
-	FdwRoutine *fdwroutine;
-
-	/* Call the FDW's PlanForeignScan function to generate path(s) */
-	fdwroutine = GetFdwRoutineByRelId(rte->relid);
-	fdwroutine->PlanForeignScan(rte->relid, root, rel);
+	/* Call the FDW's GetForeignPaths function to generate path(s) */
+	rel->fdwroutine->GetForeignPaths(root, rel, rte->relid);
 
 	/* Select cheapest path */
 	set_cheapest(rel);

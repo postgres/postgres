@@ -89,52 +89,92 @@
     <para>
 <programlisting>
 void
-PlanForeignScan (Oid foreigntableid,
-                 PlannerInfo *root,
-                 RelOptInfo *baserel);
+GetForeignRelSize (PlannerInfo *root,
+                   RelOptInfo *baserel,
+                   Oid foreigntableid);
 </programlisting>
 
-     Create possible access paths for a scan on a foreign table. This is
-     called when a query is planned.
+     Obtain relation size estimates for a foreign table.  This is called
+     at the beginning of planning for a query involving a foreign table.
+     <literal>root</> is the planner's global information about the query;
+     <literal>baserel</> is the planner's information about this table; and
      <literal>foreigntableid</> is the <structname>pg_class</> OID of the
-     foreign table.  <literal>root</> is the planner's global information
-     about the query, and <literal>baserel</> is the planner's information
-     about this table.
+     foreign table.  (<literal>foreigntableid</> could be obtained from the
+     planner data structures, but it's passed explicitly to save effort.)
     </para>
 
     <para>
-     The function must generate at least one access path (ForeignPath node)
-     for a scan on the foreign table and must call <function>add_path</> to
-     add the path to <literal>baserel-&gt;pathlist</>.  It's recommended to
-     use <function>create_foreignscan_path</> to build the ForeignPath node.
-     The function may generate multiple access paths, e.g., a path which has
-     valid <literal>pathkeys</> to represent a pre-sorted result.  Each access
-     path must contain cost estimates, and can contain any FDW-private
-     information that is needed to execute the foreign scan at a later time.
-     (Note that the private information must be represented in a form that
-     <function>copyObject</> knows how to copy.)
+     This function should update <literal>baserel-&gt;rows</> to be the
+     expected number of rows returned by the table scan, after accounting for
+     the filtering done by the restriction quals.  The initial value of
+     <literal>baserel-&gt;rows</> is just a constant default estimate, which
+     should be replaced if at all possible.  The function may also choose to
+     update <literal>baserel-&gt;width</> if it can compute a better estimate
+     of the average result row width.
     </para>
 
     <para>
-     The information in <literal>root</> and <literal>baserel</> can be used
-     to reduce the amount of information that has to be fetched from the
-     foreign table (and therefore reduce the cost estimate).
-     <literal>baserel-&gt;baserestrictinfo</> is particularly interesting, as
-     it contains restriction quals (<literal>WHERE</> clauses) that can be
-     used to filter the rows to be fetched.  (The FDW is not required to
-     enforce these quals, as the finished plan will recheck them anyway.)
-     <literal>baserel-&gt;reltargetlist</> can be used to determine which
-     columns need to be fetched.
+     See <xref linkend="fdw-planning"> for additional information.
     </para>
 
     <para>
-     In addition to returning cost estimates, the function should update
-     <literal>baserel-&gt;rows</> to be the expected number of rows returned
-     by the scan, after accounting for the filtering done by the restriction
-     quals.  The initial value of <literal>baserel-&gt;rows</> is just a
-     constant default estimate, which should be replaced if at all possible.
-     The function may also choose to update <literal>baserel-&gt;width</> if
-     it can compute a better estimate of the average result row width.
+<programlisting>
+void
+GetForeignPaths (PlannerInfo *root,
+                 RelOptInfo *baserel,
+                 Oid foreigntableid);
+</programlisting>
+
+     Create possible access paths for a scan on a foreign table.
+     This is called during query planning.
+     The parameters are the same as for <function>GetForeignRelSize</>,
+     which has already been called.
+    </para>
+
+    <para>
+     This function must generate at least one access path
+     (<structname>ForeignPath</> node) for a scan on the foreign table and
+     must call <function>add_path</> to add each such path to
+     <literal>baserel-&gt;pathlist</>.  It's recommended to use
+     <function>create_foreignscan_path</> to build the
+     <structname>ForeignPath</> nodes.  The function can generate multiple
+     access paths, e.g., a path which has valid <literal>pathkeys</> to
+     represent a pre-sorted result.  Each access path must contain cost
+     estimates, and can contain any FDW-private information that is needed to
+     identify the specific scan method intended.
+    </para>
+
+    <para>
+     See <xref linkend="fdw-planning"> for additional information.
+    </para>
+
+    <para>
+<programlisting>
+ForeignScan *
+GetForeignPlan (PlannerInfo *root,
+                RelOptInfo *baserel,
+                Oid foreigntableid,
+                ForeignPath *best_path,
+                List *tlist,
+                List *scan_clauses);
+</programlisting>
+
+     Create a <structname>ForeignScan</> plan node from the selected foreign
+     access path.  This is called at the end of query planning.
+     The parameters are as for <function>GetForeignRelSize</>, plus
+     the selected <structname>ForeignPath</> (previously produced by
+     <function>GetForeignPaths</>), the target list to be emitted by the
+     plan node, and the restriction clauses to be enforced by the plan node.
+    </para>
+
+    <para>
+     This function must create and return a <structname>ForeignScan</> plan
+     node; it's recommended to use <function>make_foreignscan</> to build the
+     <structname>ForeignScan</> node.
+    </para>
+
+    <para>
+     See <xref linkend="fdw-planning"> for additional information.
     </para>
 
     <para>
@@ -170,7 +210,7 @@ BeginForeignScan (ForeignScanState *node,
      the table to scan is accessible through the
      <structname>ForeignScanState</> node (in particular, from the underlying
      <structname>ForeignScan</> plan node, which contains any FDW-private
-     information provided by <function>PlanForeignScan</>).
+     information provided by <function>GetForeignPlan</>).
     </para>
 
     <para>
@@ -345,6 +385,126 @@ GetForeignServerByName(const char *name, bool missing_ok);
      This function returns a <structname>ForeignServer</structname> object
      for the foreign server with the given name.  If the server is not found,
      return NULL if missing_ok is true, otherwise raise an error.
+    </para>
+
+   </sect1>
+
+   <sect1 id="fdw-planning">
+    <title>Foreign Data Wrapper Query Planning</title>
+
+    <para>
+     The FDW callback functions <function>GetForeignRelSize</>,
+     <function>GetForeignPaths</>, and <function>GetForeignPlan</> must fit
+     into the workings of the <productname>PostgreSQL</> planner.  Here are
+     some notes about what they must do.
+    </para>
+
+    <para>
+     The information in <literal>root</> and <literal>baserel</> can be used
+     to reduce the amount of information that has to be fetched from the
+     foreign table (and therefore reduce the cost).
+     <literal>baserel-&gt;baserestrictinfo</> is particularly interesting, as
+     it contains restriction quals (<literal>WHERE</> clauses) that should be
+     used to filter the rows to be fetched.  (The FDW itself is not required
+     to enforce these quals, as the core executor can check them instead.)
+     <literal>baserel-&gt;reltargetlist</> can be used to determine which
+     columns need to be fetched; but note that it only lists columns that
+     have to be emitted by the <structname>ForeignScan</> plan node, not
+     columns that are used in qual evaluation but not output by the query.
+    </para>
+
+    <para>
+     Various private fields are available for the FDW planning functions to
+     keep information in.  Generally, whatever you store in FDW private fields
+     should be palloc'd, so that it will be reclaimed at the end of planning.
+    </para>
+
+    <para>
+     <literal>baserel-&gt;fdw_private</> is a <type>void</> pointer that is
+     available for FDW planning functions to store information relevant to
+     the particular foreign table.  The core planner does not touch it except
+     to initialize it to NULL when the <literal>baserel</> node is created.
+     It is useful for passing information forward from
+     <function>GetForeignRelSize</> to <function>GetForeignPaths</> and/or
+     <function>GetForeignPaths</> to <function>GetForeignPlan</>, thereby
+     avoiding recalculation.
+    </para>
+
+    <para>
+     <function>GetForeignPaths</> can identify the meaning of different
+     access paths by storing private information in the
+     <structfield>fdw_private</> field of <structname>ForeignPath</> nodes.
+     <structfield>fdw_private</> is declared as a <type>List</> pointer, but
+     could actually contain anything since the core planner does not touch
+     it.  However, best practice is to use a representation that's dumpable
+     by <function>nodeToString</>, for use with debugging support available
+     in the backend.
+    </para>
+
+    <para>
+     <function>GetForeignPlan</> can examine the <structfield>fdw_private</>
+     field of the selected <structname>ForeignPath</> node, and can generate
+     <structfield>fdw_exprs</> and <structfield>fdw_private</> lists to be
+     placed in the <structname>ForeignScan</> plan node, where they will be
+     available at execution time.  Both of these lists must be
+     represented in a form that <function>copyObject</> knows how to copy.
+     The <structfield>fdw_private</> list has no other restrictions and is
+     not interpreted by the core backend in any way.  The
+     <structfield>fdw_exprs</> list, if not NIL, is expected to contain
+     expression trees that are intended to be executed at runtime.  These
+     trees will undergo post-processing by the planner to make them fully
+     executable.
+    </para>
+
+    <para>
+     In <function>GetForeignPlan</>, generally the passed-in targetlist can
+     be copied into the plan node as-is.  The passed scan_clauses list
+     contains the same clauses as <literal>baserel-&gt;baserestrictinfo</>,
+     but may be re-ordered for better execution efficiency.  In simple cases
+     the FDW can just strip <structname>RestrictInfo</> nodes from the
+     scan_clauses list (using <function>extract_actual_clauses</>) and put
+     all the clauses into the plan node's qual list, which means that all the
+     clauses will be checked by the executor at runtime.  More complex FDWs
+     may be able to check some of the clauses internally, in which case those
+     clauses can be removed from the plan node's qual list so that the
+     executor doesn't waste time rechecking them.
+    </para>
+
+    <para>
+     As an example, the FDW might identify some restriction clauses of the
+     form <replaceable>foreign_variable</> <literal>=</>
+     <replaceable>sub_expression</>, which it determines can be executed on
+     the remote server given the locally-evaluated value of the
+     <replaceable>sub_expression</>.  The actual identification of such a
+     clause should happen during <function>GetForeignPaths</>, since it would
+     affect the cost estimate for the path.  The path's
+     <structfield>fdw_private</> field would probably include a pointer to
+     the identified clause's <structname>RestrictInfo</> node.  Then
+     <function>GetForeignPlan</> would remove that clause from scan_clauses,
+     but add the <replaceable>sub_expression</> to <structfield>fdw_exprs</>
+     to ensure that it gets massaged into executable form.  It would probably
+     also put control information into the plan node's
+     <structfield>fdw_private</> field to tell the execution functions what
+     to do at runtime.  The query transmitted to the remote server would
+     involve something like <literal>WHERE <replaceable>foreign_variable</> =
+     $1</literal>, with the parameter value obtained at runtime from
+     evaluation of the <structfield>fdw_exprs</> expression tree.
+    </para>
+
+    <para>
+     The FDW should always construct at least one path that depends only on
+     the table's restriction clauses.  In join queries, it might also choose
+     to construct path(s) that depend on join clauses, for example
+     <replaceable>foreign_variable</> <literal>=</>
+     <replaceable>local_variable</>.  Such clauses will not be found in
+     <literal>baserel-&gt;baserestrictinfo</> but must be sought in the
+     relation's join lists.  A path using such a clause is called a
+     <quote>parameterized path</>.  It must show the other relation(s) as
+     <literal>required_outer</> and list the specific join clause(s) in
+     <literal>param_clauses</>.  In <function>GetForeignPlan</>, the
+     <replaceable>local_variable</> portion of the join clause would be added
+     to <structfield>fdw_exprs</>, and then at runtime the case works the
+     same as for an ordinary restriction clause.
     </para>
 
   </sect1>

@@ -2137,6 +2137,8 @@ finalize_plan(PlannerInfo *root, Plan *plan, Bitmapset *valid_params,
 			break;
 
 		case T_ForeignScan:
+			finalize_primnode((Node *) ((ForeignScan *) plan)->fdw_exprs,
+							  &context);
 			context.paramids = bms_add_members(context.paramids, scan_params);
 			break;
 

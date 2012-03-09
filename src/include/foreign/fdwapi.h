@@ -23,9 +23,20 @@ struct ExplainState;
  * Callback function signatures --- see fdwhandler.sgml for more info.
  */
 
-typedef void (*PlanForeignScan_function) (Oid foreigntableid,
-										  PlannerInfo *root,
-										  RelOptInfo *baserel);
+typedef void (*GetForeignRelSize_function) (PlannerInfo *root,
+											RelOptInfo *baserel,
+											Oid foreigntableid);
+
+typedef void (*GetForeignPaths_function) (PlannerInfo *root,
+										  RelOptInfo *baserel,
+										  Oid foreigntableid);
+
+typedef ForeignScan *(*GetForeignPlan_function) (PlannerInfo *root,
+												 RelOptInfo *baserel,
+												 Oid foreigntableid,
+												 ForeignPath *best_path,
+												 List *tlist,
+												 List *scan_clauses);
 
 typedef void (*ExplainForeignScan_function) (ForeignScanState *node,
 													struct ExplainState *es);
@@ -53,7 +64,9 @@ typedef struct FdwRoutine
 {
 	NodeTag		type;
 
-	PlanForeignScan_function PlanForeignScan;
+	GetForeignRelSize_function GetForeignRelSize;
+	GetForeignPaths_function GetForeignPaths;
+	GetForeignPlan_function GetForeignPlan;
 	ExplainForeignScan_function ExplainForeignScan;
 	BeginForeignScan_function BeginForeignScan;
 	IterateForeignScan_function IterateForeignScan;

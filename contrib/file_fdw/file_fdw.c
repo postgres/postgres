@@ -26,6 +26,8 @@
 #include "nodes/makefuncs.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
+#include "optimizer/planmain.h"
+#include "optimizer/restrictinfo.h"
 #include "utils/rel.h"
 
 PG_MODULE_MAGIC;
@@ -48,7 +50,7 @@ struct FileFdwOption
  * Note: If you are adding new option for user mapping, you need to modify
  * fileGetOptions(), which currently doesn't bother to look at user mappings.
  */
-static struct FileFdwOption valid_options[] = {
+static const struct FileFdwOption valid_options[] = {
 	/* File options */
 	{"filename", ForeignTableRelationId},
 
@@ -72,6 +74,17 @@ static struct FileFdwOption valid_options[] = {
 };
 
 /*
+ * FDW-specific information for RelOptInfo.fdw_private.
+ */
+typedef struct FileFdwPlanState
+{
+	char	   *filename;		/* file to read */
+	List	   *options;		/* merged COPY options, excluding filename */
+	BlockNumber pages;			/* estimate of file's physical size */
+	double		ntuples;		/* estimate of number of rows in file */
+} FileFdwPlanState;
+
+/*
  * FDW-specific information for ForeignScanState.fdw_state.
  */
 typedef struct FileFdwExecutionState
@@ -93,9 +106,18 @@ PG_FUNCTION_INFO_V1(file_fdw_validator);
 /*
  * FDW callback routines
  */
-static void filePlanForeignScan(Oid foreigntableid,
-					PlannerInfo *root,
-					RelOptInfo *baserel);
+static void fileGetForeignRelSize(PlannerInfo *root,
+								  RelOptInfo *baserel,
+								  Oid foreigntableid);
+static void fileGetForeignPaths(PlannerInfo *root,
+								RelOptInfo *baserel,
+								Oid foreigntableid);
+static ForeignScan *fileGetForeignPlan(PlannerInfo *root,
+									   RelOptInfo *baserel,
+									   Oid foreigntableid,
+									   ForeignPath *best_path,
+									   List *tlist,
+									   List *scan_clauses);
 static void fileExplainForeignScan(ForeignScanState *node, ExplainState *es);
 static void fileBeginForeignScan(ForeignScanState *node, int eflags);
 static TupleTableSlot *fileIterateForeignScan(ForeignScanState *node);
@@ -109,8 +131,10 @@ static bool is_valid_option(const char *option, Oid context);
 static void fileGetOptions(Oid foreigntableid,
 			   char **filename, List **other_options);
 static List *get_file_fdw_attribute_options(Oid relid);
+static void estimate_size(PlannerInfo *root, RelOptInfo *baserel,
+			  FileFdwPlanState *fdw_private);
 static void estimate_costs(PlannerInfo *root, RelOptInfo *baserel,
-			   const char *filename,
+			   FileFdwPlanState *fdw_private,
 			   Cost *startup_cost, Cost *total_cost);
 
 
@@ -123,7 +147,9 @@ file_fdw_handler(PG_FUNCTION_ARGS)
 {
 	FdwRoutine *fdwroutine = makeNode(FdwRoutine);
 
-	fdwroutine->PlanForeignScan = filePlanForeignScan;
+	fdwroutine->GetForeignRelSize = fileGetForeignRelSize;
+	fdwroutine->GetForeignPaths = fileGetForeignPaths;
+	fdwroutine->GetForeignPlan = fileGetForeignPlan;
 	fdwroutine->ExplainForeignScan = fileExplainForeignScan;
 	fdwroutine->BeginForeignScan = fileBeginForeignScan;
 	fdwroutine->IterateForeignScan = fileIterateForeignScan;
@@ -177,7 +203,7 @@ file_fdw_validator(PG_FUNCTION_ARGS)
 
 		if (!is_valid_option(def->defname, catalog))
 		{
-			struct FileFdwOption *opt;
+			const struct FileFdwOption *opt;
 			StringInfoData buf;
 
 			/*
@@ -249,7 +275,7 @@ file_fdw_validator(PG_FUNCTION_ARGS)
 static bool
 is_valid_option(const char *option, Oid context)
 {
-	struct FileFdwOption *opt;
+	const struct FileFdwOption *opt;
 
 	for (opt = valid_options; opt->optname; opt++)
 	{
@@ -381,7 +407,31 @@ get_file_fdw_attribute_options(Oid relid)
 }
 
 /*
- * filePlanForeignScan
+ * fileGetForeignRelSize
+ *		Obtain relation size estimates for a foreign table
+ */
+static void
+fileGetForeignRelSize(PlannerInfo *root,
+					  RelOptInfo *baserel,
+					  Oid foreigntableid)
+{
+	FileFdwPlanState *fdw_private;
+
+	/*
+	 * Fetch options.  We only need filename at this point, but we might
+	 * as well get everything and not need to re-fetch it later in planning.
+	 */
+	fdw_private = (FileFdwPlanState *) palloc(sizeof(FileFdwPlanState));
+	fileGetOptions(foreigntableid,
+				   &fdw_private->filename, &fdw_private->options);
+	baserel->fdw_private = (void *) fdw_private;
+
+	/* Estimate relation size */
+	estimate_size(root, baserel, fdw_private);
+}
+
+/*
+ * fileGetForeignPaths
  *		Create possible access paths for a scan on the foreign table
  *
  *		Currently we don't support any push-down feature, so there is only one
@@ -389,20 +439,16 @@ get_file_fdw_attribute_options(Oid relid)
  *		the data file.
  */
 static void
-filePlanForeignScan(Oid foreigntableid,
-					PlannerInfo *root,
-					RelOptInfo *baserel)
+fileGetForeignPaths(PlannerInfo *root,
+					RelOptInfo *baserel,
+					Oid foreigntableid)
 {
-	char	   *filename;
-	List	   *options;
+	FileFdwPlanState *fdw_private = (FileFdwPlanState *) baserel->fdw_private;
 	Cost		startup_cost;
 	Cost		total_cost;
 
-	/* Fetch options --- we only need filename at this point */
-	fileGetOptions(foreigntableid, &filename, &options);
-
-	/* Estimate costs and update baserel->rows */
-	estimate_costs(root, baserel, filename,
+	/* Estimate costs */
+	estimate_costs(root, baserel, fdw_private,
 				   &startup_cost, &total_cost);
 
 	/* Create a ForeignPath node and add it as only possible path */
@@ -420,6 +466,37 @@ filePlanForeignScan(Oid foreigntableid,
 	 * If data file was sorted, and we knew it somehow, we could insert
 	 * appropriate pathkeys into the ForeignPath node to tell the planner that.
 	 */
+}
+
+/*
+ * fileGetForeignPlan
+ *		Create a ForeignScan plan node for scanning the foreign table
+ */
+static ForeignScan *
+fileGetForeignPlan(PlannerInfo *root,
+				   RelOptInfo *baserel,
+				   Oid foreigntableid,
+				   ForeignPath *best_path,
+				   List *tlist,
+				   List *scan_clauses)
+{
+	Index		scan_relid = baserel->relid;
+
+	/*
+	 * We have no native ability to evaluate restriction clauses, so we just
+	 * put all the scan_clauses into the plan node's qual list for the
+	 * executor to check.  So all we have to do here is strip RestrictInfo
+	 * nodes from the clauses and ignore pseudoconstants (which will be
+	 * handled elsewhere).
+	 */
+	scan_clauses = extract_actual_clauses(scan_clauses, false);
+
+	/* Create the ForeignScan node */
+	return make_foreignscan(tlist,
+							scan_clauses,
+							scan_relid,
+							NIL, /* no expressions to evaluate */
+							NIL); /* no private state either */
 }
 
 /*
@@ -568,37 +645,37 @@ fileReScanForeignScan(ForeignScanState *node)
 }
 
 /*
- * Estimate costs of scanning a foreign table.
+ * Estimate size of a foreign table.
  *
- * In addition to setting *startup_cost and *total_cost, this should
- * update baserel->rows.
+ * The main result is returned in baserel->rows.  We also set
+ * fdw_private->pages and fdw_private->ntuples for later use in the cost
+ * calculation.
  */
 static void
-estimate_costs(PlannerInfo *root, RelOptInfo *baserel,
-			   const char *filename,
-			   Cost *startup_cost, Cost *total_cost)
+estimate_size(PlannerInfo *root, RelOptInfo *baserel,
+			  FileFdwPlanState *fdw_private)
 {
 	struct stat stat_buf;
 	BlockNumber pages;
 	int			tuple_width;
 	double		ntuples;
 	double		nrows;
-	Cost		run_cost = 0;
-	Cost		cpu_per_tuple;
 
 	/*
 	 * Get size of the file.  It might not be there at plan time, though, in
 	 * which case we have to use a default estimate.
 	 */
-	if (stat(filename, &stat_buf) < 0)
+	if (stat(fdw_private->filename, &stat_buf) < 0)
 		stat_buf.st_size = 10 * BLCKSZ;
 
 	/*
-	 * Convert size to pages for use in I/O cost estimate below.
+	 * Convert size to pages for use in I/O cost estimate later.
 	 */
 	pages = (stat_buf.st_size + (BLCKSZ - 1)) / BLCKSZ;
 	if (pages < 1)
 		pages = 1;
+
+	fdw_private->pages = pages;
 
 	/*
 	 * Estimate the number of tuples in the file.  We back into this estimate
@@ -610,6 +687,8 @@ estimate_costs(PlannerInfo *root, RelOptInfo *baserel,
 	tuple_width = MAXALIGN(baserel->width) + MAXALIGN(sizeof(HeapTupleHeaderData));
 
 	ntuples = clamp_row_est((double) stat_buf.st_size / (double) tuple_width);
+
+	fdw_private->ntuples = ntuples;
 
 	/*
 	 * Now estimate the number of rows returned by the scan after applying the
@@ -627,12 +706,28 @@ estimate_costs(PlannerInfo *root, RelOptInfo *baserel,
 
 	/* Save the output-rows estimate for the planner */
 	baserel->rows = nrows;
+}
+
+/*
+ * Estimate costs of scanning a foreign table.
+ *
+ * Results are returned in *startup_cost and *total_cost.
+ */
+static void
+estimate_costs(PlannerInfo *root, RelOptInfo *baserel,
+			   FileFdwPlanState *fdw_private,
+			   Cost *startup_cost, Cost *total_cost)
+{
+	BlockNumber pages = fdw_private->pages;
+	double		ntuples = fdw_private->ntuples;
+	Cost		run_cost = 0;
+	Cost		cpu_per_tuple;
 
 	/*
-	 * Now estimate costs.	We estimate costs almost the same way as
-	 * cost_seqscan(), thus assuming that I/O costs are equivalent to a
-	 * regular table file of the same size.  However, we take per-tuple CPU
-	 * costs as 10x of a seqscan, to account for the cost of parsing records.
+	 * We estimate costs almost the same way as cost_seqscan(), thus assuming
+	 * that I/O costs are equivalent to a regular table file of the same size.
+	 * However, we take per-tuple CPU costs as 10x of a seqscan, to account
+	 * for the cost of parsing records.
 	 */
 	run_cost += seq_page_cost * pages;
 

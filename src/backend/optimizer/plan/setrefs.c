@@ -428,6 +428,8 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 					fix_scan_list(root, splan->scan.plan.targetlist, rtoffset);
 				splan->scan.plan.qual =
 					fix_scan_list(root, splan->scan.plan.qual, rtoffset);
+				splan->fdw_exprs =
+					fix_scan_list(root, splan->fdw_exprs, rtoffset);
 			}
 			break;
 

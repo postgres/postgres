@@ -591,8 +591,9 @@ _copyForeignScan(const ForeignScan *from)
 	/*
 	 * copy remainder of node
 	 */
-	COPY_SCALAR_FIELD(fsSystemCol);
+	COPY_NODE_FIELD(fdw_exprs);
 	COPY_NODE_FIELD(fdw_private);
+	COPY_SCALAR_FIELD(fsSystemCol);
 
 	return newnode;
 }
