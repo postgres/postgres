@@ -1759,7 +1759,8 @@ CreateCast(CreateCastStmt *stmt)
 	recordDependencyOnCurrentExtension(&myself, false);
 
 	/* Post creation hook for new cast */
-	InvokeObjectAccessHook(OAT_POST_CREATE, CastRelationId, castid, 0);
+	InvokeObjectAccessHook(OAT_POST_CREATE,
+						   CastRelationId, castid, 0, NULL);
 
 	heap_freetuple(tuple);
 

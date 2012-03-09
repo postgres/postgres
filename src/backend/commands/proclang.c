@@ -428,7 +428,7 @@ create_proc_lang(const char *languageName, bool replace,
 
 	/* Post creation hook for new procedural language */
 	InvokeObjectAccessHook(OAT_POST_CREATE,
-						   LanguageRelationId, myself.objectId, 0);
+						   LanguageRelationId, myself.objectId, 0, NULL);
 
 	heap_close(rel, RowExclusiveLock);
 }

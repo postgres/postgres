@@ -20,6 +20,7 @@
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/namespace.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_attrdef.h"
@@ -990,6 +991,15 @@ deleteOneObject(const ObjectAddress *object, Relation depRel, int flags)
 	int			nkeys;
 	SysScanDesc scan;
 	HeapTuple	tup;
+
+	/* DROP hook of the objects being removed */
+	if (object_access_hook)
+	{
+		ObjectAccessDrop	drop_arg;
+		drop_arg.dropflags = flags;
+		InvokeObjectAccessHook(OAT_DROP, object->classId, object->objectId,
+							   object->objectSubId, &drop_arg);
+	}
 
 	/*
 	 * First remove any pg_depend records that link from this object to

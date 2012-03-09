@@ -366,7 +366,8 @@ CreateConstraintEntry(const char *constraintName,
 	}
 
 	/* Post creation hook for new constraint */
-	InvokeObjectAccessHook(OAT_POST_CREATE, ConstraintRelationId, conOid, 0);
+	InvokeObjectAccessHook(OAT_POST_CREATE,
+						   ConstraintRelationId, conOid, 0, NULL);
 
 	return conOid;
 }

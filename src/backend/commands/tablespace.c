@@ -330,7 +330,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 
 	/* Post creation hook for new tablespace */
 	InvokeObjectAccessHook(OAT_POST_CREATE,
-						   TableSpaceRelationId, tablespaceoid, 0);
+						   TableSpaceRelationId, tablespaceoid, 0, NULL);
 
 	create_tablespace_directories(location, tablespaceoid);
 
@@ -433,6 +433,15 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 		tablespaceoid == DEFAULTTABLESPACE_OID)
 		aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_TABLESPACE,
 					   tablespacename);
+
+	/* DROP hook for the tablespace being removed */
+	if (object_access_hook)
+	{
+		ObjectAccessDrop    drop_arg;
+		memset(&drop_arg, 0, sizeof(ObjectAccessDrop));
+		InvokeObjectAccessHook(OAT_DROP, TableSpaceRelationId,
+							   tablespaceoid, 0, &drop_arg);
+	}
 
 	/*
 	 * Remove the pg_tablespace tuple (this will roll back if we fail below)

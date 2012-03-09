@@ -515,7 +515,8 @@ createdb(const CreatedbStmt *stmt)
 	copyTemplateDependencies(src_dboid, dboid);
 
 	/* Post creation hook for new database */
-	InvokeObjectAccessHook(OAT_POST_CREATE, DatabaseRelationId, dboid, 0);
+	InvokeObjectAccessHook(OAT_POST_CREATE,
+						   DatabaseRelationId, dboid, 0, NULL);
 
 	/*
 	 * Force a checkpoint before starting the copy. This will force dirty
@@ -776,6 +777,15 @@ dropdb(const char *dbname, bool missing_ok)
 	if (!pg_database_ownercheck(db_id, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
 					   dbname);
+
+	/* DROP hook for the database being removed */
+	if (object_access_hook)
+	{
+		ObjectAccessDrop    drop_arg;
+		memset(&drop_arg, 0, sizeof(ObjectAccessDrop));
+		InvokeObjectAccessHook(OAT_DROP,
+							   DatabaseRelationId, db_id, 0, &drop_arg);
+	}
 
 	/*
 	 * Disallow dropping a DB that is marked istemplate.  This is just to

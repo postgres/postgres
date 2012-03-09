@@ -425,7 +425,8 @@ CreateRole(CreateRoleStmt *stmt)
 				GetUserId(), false);
 
 	/* Post creation hook for new role */
-	InvokeObjectAccessHook(OAT_POST_CREATE, AuthIdRelationId, roleid, 0);
+	InvokeObjectAccessHook(OAT_POST_CREATE,
+						   AuthIdRelationId, roleid, 0, NULL);
 
 	/*
 	 * Close pg_authid, but keep lock till commit.
@@ -931,6 +932,15 @@ DropRole(DropRoleStmt *stmt)
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("must be superuser to drop superusers")));
+
+		/* DROP hook for the role being removed */
+		if (object_access_hook)
+		{
+			ObjectAccessDrop	drop_arg;
+			memset(&drop_arg, 0, sizeof(ObjectAccessDrop));
+			InvokeObjectAccessHook(OAT_DROP,
+								   AuthIdRelationId, roleid, 0, &drop_arg);
+		}
 
 		/*
 		 * Lock the role, so nobody can add dependencies to her while we drop

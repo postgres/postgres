@@ -275,7 +275,7 @@ OperatorShellMake(const char *operatorName,
 
 	/* Post creation hook for new shell operator */
 	InvokeObjectAccessHook(OAT_POST_CREATE,
-						   OperatorRelationId, operatorObjectId, 0);
+						   OperatorRelationId, operatorObjectId, 0, NULL);
 
 	/*
 	 * Make sure the tuple is visible for subsequent lookups/updates.
@@ -544,7 +544,7 @@ OperatorCreate(const char *operatorName,
 
 	/* Post creation hook for new operator */
 	InvokeObjectAccessHook(OAT_POST_CREATE,
-						   OperatorRelationId, operatorObjectId, 0);
+						   OperatorRelationId, operatorObjectId, 0, NULL);
 
 	heap_close(pg_operator_desc, RowExclusiveLock);
 

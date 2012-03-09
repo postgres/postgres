@@ -1286,7 +1286,8 @@ heap_create_with_catalog(const char *relname,
 	}
 
 	/* Post creation hook for new relation */
-	InvokeObjectAccessHook(OAT_POST_CREATE, RelationRelationId, relid, 0);
+	InvokeObjectAccessHook(OAT_POST_CREATE,
+						   RelationRelationId, relid, 0, NULL);
 
 	/*
 	 * Store any supplied constraints and defaults.

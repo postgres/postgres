@@ -19,28 +19,45 @@
  * Typically, this is done after inserting the primary catalog records and
  * associated dependencies.
  *
+ * OAT_DROP should be invoked just before deletion of objects; typically
+ * deleteOneObject(). Its arguments are packed within ObjectAccessDrop.
+ *
  * Other types may be added in the future.
  */
 typedef enum ObjectAccessType
 {
 	OAT_POST_CREATE,
+	OAT_DROP,
 } ObjectAccessType;
+
+/*
+ * Arguments of OAT_DROP event
+ */
+typedef struct
+{
+	/*
+	 * Flags to inform extensions the context of this deletion.
+	 * Also see PERFORM_DELETION_* in dependency.h
+	 */
+	int		dropflags;
+} ObjectAccessDrop;
 
 /*
  * Hook, and a macro to invoke it.
  */
-
 typedef void (*object_access_hook_type) (ObjectAccessType access,
 													 Oid classId,
 													 Oid objectId,
-													 int subId);
+													 int subId,
+													 void *arg);
 
 extern PGDLLIMPORT object_access_hook_type object_access_hook;
 
-#define InvokeObjectAccessHook(access,classId,objectId,subId)			\
-	do {																\
-		if (object_access_hook)											\
-			(*object_access_hook)((access),(classId),(objectId),(subId)); \
+#define InvokeObjectAccessHook(access,classId,objectId,subId,arg)	\
+	do {															\
+		if (object_access_hook)										\
+			(*object_access_hook)((access),(classId),				\
+								  (objectId),(subId),(arg));		\
 	} while(0)
 
 #endif   /* OBJECTACCESS_H */

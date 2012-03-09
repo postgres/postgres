@@ -217,7 +217,7 @@ inv_create(Oid lobjId)
 
 	/* Post creation hook for new large object */
 	InvokeObjectAccessHook(OAT_POST_CREATE,
-						   LargeObjectRelationId, lobjId_new, 0);
+						   LargeObjectRelationId, lobjId_new, 0, NULL);
 
 	/*
 	 * Advance command counter to make new tuple visible to later operations.

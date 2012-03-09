@@ -314,7 +314,7 @@ CreateOpFamily(char *amname, char *opfname, Oid namespaceoid, Oid amoid)
 
 	/* Post creation hook for new operator family */
 	InvokeObjectAccessHook(OAT_POST_CREATE,
-						   OperatorFamilyRelationId, opfamilyoid, 0);
+						   OperatorFamilyRelationId, opfamilyoid, 0, NULL);
 
 	heap_close(rel, RowExclusiveLock);
 
@@ -717,7 +717,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 
 	/* Post creation hook for new operator class */
 	InvokeObjectAccessHook(OAT_POST_CREATE,
-						   OperatorClassRelationId, opclassoid, 0);
+						   OperatorClassRelationId, opclassoid, 0, NULL);
 
 	heap_close(rel, RowExclusiveLock);
 }
