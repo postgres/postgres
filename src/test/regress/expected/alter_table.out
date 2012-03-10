@@ -160,6 +160,141 @@ DROP VIEW tmp_view_new;
 -- toast-like relation name
 alter table stud_emp rename to pg_toast_stud_emp;
 alter table pg_toast_stud_emp rename to stud_emp;
+-- renaming index should rename constraint as well
+ALTER TABLE onek ADD CONSTRAINT onek_unique1_constraint UNIQUE (unique1);
+NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "onek_unique1_constraint" for table "onek"
+ALTER INDEX onek_unique1_constraint RENAME TO onek_unique1_constraint_foo;
+ALTER TABLE onek DROP CONSTRAINT onek_unique1_constraint_foo;
+-- renaming constraint
+ALTER TABLE onek ADD CONSTRAINT onek_check_constraint CHECK (unique1 >= 0);
+ALTER TABLE onek RENAME CONSTRAINT onek_check_constraint TO onek_check_constraint_foo;
+ALTER TABLE onek DROP CONSTRAINT onek_check_constraint_foo;
+-- renaming constraint should rename index as well
+ALTER TABLE onek ADD CONSTRAINT onek_unique1_constraint UNIQUE (unique1);
+NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "onek_unique1_constraint" for table "onek"
+DROP INDEX onek_unique1_constraint;  -- to see whether it's there
+ERROR:  cannot drop index onek_unique1_constraint because constraint onek_unique1_constraint on table onek requires it
+HINT:  You can drop constraint onek_unique1_constraint on table onek instead.
+ALTER TABLE onek RENAME CONSTRAINT onek_unique1_constraint TO onek_unique1_constraint_foo;
+DROP INDEX onek_unique1_constraint_foo;  -- to see whether it's there
+ERROR:  cannot drop index onek_unique1_constraint_foo because constraint onek_unique1_constraint_foo on table onek requires it
+HINT:  You can drop constraint onek_unique1_constraint_foo on table onek instead.
+ALTER TABLE onek DROP CONSTRAINT onek_unique1_constraint_foo;
+-- renaming constraints vs. inheritance
+CREATE TABLE constraint_rename_test (a int CONSTRAINT con1 CHECK (a > 0), b int, c int);
+\d constraint_rename_test
+Table "public.constraint_rename_test"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ a      | integer | 
+ b      | integer | 
+ c      | integer | 
+Check constraints:
+    "con1" CHECK (a > 0)
+
+CREATE TABLE constraint_rename_test2 (a int CONSTRAINT con1 CHECK (a > 0), d int) INHERITS (constraint_rename_test);
+NOTICE:  merging column "a" with inherited definition
+NOTICE:  merging constraint "con1" with inherited definition
+\d constraint_rename_test2
+Table "public.constraint_rename_test2"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ a      | integer | 
+ b      | integer | 
+ c      | integer | 
+ d      | integer | 
+Check constraints:
+    "con1" CHECK (a > 0)
+Inherits: constraint_rename_test
+
+ALTER TABLE constraint_rename_test2 RENAME CONSTRAINT con1 TO con1foo; -- fail
+ERROR:  cannot rename inherited constraint "con1"
+ALTER TABLE ONLY constraint_rename_test RENAME CONSTRAINT con1 TO con1foo; -- fail
+ERROR:  inherited constraint "con1" must be renamed in child tables too
+ALTER TABLE constraint_rename_test RENAME CONSTRAINT con1 TO con1foo; -- ok
+\d constraint_rename_test
+Table "public.constraint_rename_test"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ a      | integer | 
+ b      | integer | 
+ c      | integer | 
+Check constraints:
+    "con1foo" CHECK (a > 0)
+Number of child tables: 1 (Use \d+ to list them.)
+
+\d constraint_rename_test2
+Table "public.constraint_rename_test2"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ a      | integer | 
+ b      | integer | 
+ c      | integer | 
+ d      | integer | 
+Check constraints:
+    "con1foo" CHECK (a > 0)
+Inherits: constraint_rename_test
+
+ALTER TABLE ONLY constraint_rename_test ADD CONSTRAINT con2 CHECK (b > 0);
+ALTER TABLE ONLY constraint_rename_test RENAME CONSTRAINT con2 TO con2foo; -- ok
+ALTER TABLE constraint_rename_test RENAME CONSTRAINT con2foo TO con2bar; -- ok
+\d constraint_rename_test
+Table "public.constraint_rename_test"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ a      | integer | 
+ b      | integer | 
+ c      | integer | 
+Check constraints:
+    "con2bar" (ONLY) CHECK (b > 0)
+    "con1foo" CHECK (a > 0)
+Number of child tables: 1 (Use \d+ to list them.)
+
+\d constraint_rename_test2
+Table "public.constraint_rename_test2"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ a      | integer | 
+ b      | integer | 
+ c      | integer | 
+ d      | integer | 
+Check constraints:
+    "con1foo" CHECK (a > 0)
+Inherits: constraint_rename_test
+
+ALTER TABLE constraint_rename_test ADD CONSTRAINT con3 PRIMARY KEY (a);
+NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "con3" for table "constraint_rename_test"
+ALTER TABLE constraint_rename_test RENAME CONSTRAINT con3 TO con3foo; -- ok
+\d constraint_rename_test
+Table "public.constraint_rename_test"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ a      | integer | not null
+ b      | integer | 
+ c      | integer | 
+Indexes:
+    "con3foo" PRIMARY KEY, btree (a)
+Check constraints:
+    "con2bar" (ONLY) CHECK (b > 0)
+    "con1foo" CHECK (a > 0)
+Number of child tables: 1 (Use \d+ to list them.)
+
+\d constraint_rename_test2
+Table "public.constraint_rename_test2"
+ Column |  Type   | Modifiers 
+--------+---------+-----------
+ a      | integer | 
+ b      | integer | 
+ c      | integer | 
+ d      | integer | 
+Check constraints:
+    "con1foo" CHECK (a > 0)
+Inherits: constraint_rename_test
+
+DROP TABLE constraint_rename_test2;
+DROP TABLE constraint_rename_test;
+ALTER TABLE IF EXISTS constraint_rename_test ADD CONSTRAINT con4 UNIQUE (a);
+NOTICE:  relation "constraint_rename_test" does not exist, skipping
 -- FOREIGN KEY CONSTRAINT adding TEST
 CREATE TABLE tmp2 (a int primary key);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "tmp2_pkey" for table "tmp2"

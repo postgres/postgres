@@ -25,6 +25,8 @@ ALTER TABLE [ IF EXISTS ] [ ONLY ] <replaceable class="PARAMETER">name</replacea
     <replaceable class="PARAMETER">action</replaceable> [, ... ]
 ALTER TABLE [ IF EXISTS ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
     RENAME [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> TO <replaceable class="PARAMETER">new_column</replaceable>
+ALTER TABLE [ IF EXISTS ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
+    RENAME CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> TO <replaceable class="PARAMETER">new_constraint_name</replaceable>
 ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
     RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
 ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
@@ -569,8 +571,8 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
     <listitem>
      <para>
       The <literal>RENAME</literal> forms change the name of a table
-      (or an index, sequence, or view) or the name of an individual column in
-      a table. There is no effect on the stored data.
+      (or an index, sequence, or view), the name of an individual column in
+      a table, or the name of a constraint of the table. There is no effect on the stored data.
      </para>
     </listitem>
    </varlistentry>
@@ -883,7 +885,8 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
 
    <para>
     If a table has any descendant tables, it is not permitted to add,
-    rename, or change the type of a column in the parent table without doing
+    rename, or change the type of a column, or rename an inherited constraint
+    in the parent table without doing
     the same to the descendants.  That is, <command>ALTER TABLE ONLY</command>
     will be rejected.  This ensures that the descendants always have
     columns matching the parent.
@@ -979,6 +982,13 @@ ALTER TABLE distributors RENAME COLUMN address TO city;
    To rename an existing table:
 <programlisting>
 ALTER TABLE distributors RENAME TO suppliers;
+</programlisting>
+  </para>
+
+  <para>
+   To rename an existing constraint:
+<programlisting>
+ALTER TABLE distributors RENAME CONSTRAINT zipchk TO zip_check;
 </programlisting>
   </para>
 

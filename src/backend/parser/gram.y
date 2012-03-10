@@ -6731,6 +6731,16 @@ RenameStmt: ALTER AGGREGATE func_name aggr_args RENAME TO name
 					n->missing_ok = true;
 					$$ = (Node *)n;
 				}
+			| ALTER TABLE relation_expr RENAME CONSTRAINT name TO name
+				{
+					RenameStmt *n = makeNode(RenameStmt);
+					n->renameType = OBJECT_CONSTRAINT;
+					n->relationType = OBJECT_TABLE;
+					n->relation = $3;
+					n->subname = $6;
+					n->newname = $8;
+					$$ = (Node *)n;
+				}
 			| ALTER FOREIGN TABLE relation_expr RENAME opt_column name TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);

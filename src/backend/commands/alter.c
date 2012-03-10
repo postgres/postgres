@@ -57,6 +57,10 @@ ExecRenameStmt(RenameStmt *stmt)
 			RenameCollation(stmt->object, stmt->newname);
 			break;
 
+		case OBJECT_CONSTRAINT:
+			RenameConstraint(stmt);
+			break;
+
 		case OBJECT_CONVERSION:
 			RenameConversion(stmt->object, stmt->newname);
 			break;

@@ -48,6 +48,8 @@ extern void SetRelationHasSubclass(Oid relationId, bool relhassubclass);
 
 extern void renameatt(RenameStmt *stmt);
 
+extern void RenameConstraint(RenameStmt *stmt);
+
 extern void RenameRelation(RenameStmt *stmt);
 
 extern void RenameRelationInternal(Oid myrelid,

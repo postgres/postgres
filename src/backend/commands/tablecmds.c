@@ -2327,6 +2327,108 @@ renameatt(RenameStmt *stmt)
 					   stmt->behavior);
 }
 
+
+/*
+ * same logic as renameatt_internal
+ */
+static void
+rename_constraint_internal(Oid myrelid,
+						   const char *oldconname,
+						   const char *newconname,
+						   bool recurse,
+						   bool recursing,
+						   int expected_parents)
+{
+	Relation	targetrelation;
+	Oid			constraintOid;
+	HeapTuple   tuple;
+	Form_pg_constraint con;
+
+	targetrelation = relation_open(myrelid, AccessExclusiveLock);
+	/* don't tell it whether we're recursing; we allow changing typed tables here */
+	renameatt_check(myrelid, RelationGetForm(targetrelation), false);
+
+	constraintOid = get_constraint_oid(myrelid, oldconname, false);
+
+	tuple = SearchSysCache1(CONSTROID, ObjectIdGetDatum(constraintOid));
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for constraint %u",
+			 constraintOid);
+	con = (Form_pg_constraint) GETSTRUCT(tuple);
+
+	if (con->contype == CONSTRAINT_CHECK && !con->conisonly)
+	{
+		if (recurse)
+		{
+			List	   *child_oids,
+				*child_numparents;
+			ListCell   *lo,
+				*li;
+
+			child_oids = find_all_inheritors(myrelid, AccessExclusiveLock,
+											 &child_numparents);
+
+			forboth(lo, child_oids, li, child_numparents)
+			{
+				Oid			childrelid = lfirst_oid(lo);
+				int			numparents = lfirst_int(li);
+
+				if (childrelid == myrelid)
+					continue;
+
+				rename_constraint_internal(childrelid, oldconname, newconname, false, true, numparents);
+			}
+		}
+		else
+		{
+			if (expected_parents == 0 &&
+				find_inheritance_children(myrelid, NoLock) != NIL)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+						 errmsg("inherited constraint \"%s\" must be renamed in child tables too",
+								oldconname)));
+		}
+
+		if (con->coninhcount > expected_parents)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+					 errmsg("cannot rename inherited constraint \"%s\"",
+							oldconname)));
+	}
+
+	if (con->conindid
+		&& (con->contype == CONSTRAINT_PRIMARY
+			|| con->contype == CONSTRAINT_UNIQUE
+			|| con->contype == CONSTRAINT_EXCLUSION))
+		/* rename the index; this renames the constraint as well */
+		RenameRelationInternal(con->conindid, newconname);
+	else
+		RenameConstraintById(constraintOid, newconname);
+
+	ReleaseSysCache(tuple);
+
+	relation_close(targetrelation, NoLock);		/* close rel but keep lock */
+}
+
+void
+RenameConstraint(RenameStmt *stmt)
+{
+	Oid			relid;
+
+	/* lock level taken here should match rename_constraint_internal */
+	relid = RangeVarGetRelidExtended(stmt->relation, AccessExclusiveLock,
+									 false, false,
+									 RangeVarCallbackForRenameAttribute,
+									 NULL);
+
+	rename_constraint_internal(relid,
+							   stmt->subname,
+							   stmt->newname,
+							   interpretInhOption(stmt->relation->inhOpt),		/* recursive? */
+							   false,	/* recursing? */
+							   0		/* expected inhcount */);
+}
+
 /*
  * Execute ALTER TABLE/INDEX/SEQUENCE/VIEW/FOREIGN TABLE RENAME
  */

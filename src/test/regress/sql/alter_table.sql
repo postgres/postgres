@@ -191,6 +191,46 @@ DROP VIEW tmp_view_new;
 alter table stud_emp rename to pg_toast_stud_emp;
 alter table pg_toast_stud_emp rename to stud_emp;
 
+-- renaming index should rename constraint as well
+ALTER TABLE onek ADD CONSTRAINT onek_unique1_constraint UNIQUE (unique1);
+ALTER INDEX onek_unique1_constraint RENAME TO onek_unique1_constraint_foo;
+ALTER TABLE onek DROP CONSTRAINT onek_unique1_constraint_foo;
+
+-- renaming constraint
+ALTER TABLE onek ADD CONSTRAINT onek_check_constraint CHECK (unique1 >= 0);
+ALTER TABLE onek RENAME CONSTRAINT onek_check_constraint TO onek_check_constraint_foo;
+ALTER TABLE onek DROP CONSTRAINT onek_check_constraint_foo;
+
+-- renaming constraint should rename index as well
+ALTER TABLE onek ADD CONSTRAINT onek_unique1_constraint UNIQUE (unique1);
+DROP INDEX onek_unique1_constraint;  -- to see whether it's there
+ALTER TABLE onek RENAME CONSTRAINT onek_unique1_constraint TO onek_unique1_constraint_foo;
+DROP INDEX onek_unique1_constraint_foo;  -- to see whether it's there
+ALTER TABLE onek DROP CONSTRAINT onek_unique1_constraint_foo;
+
+-- renaming constraints vs. inheritance
+CREATE TABLE constraint_rename_test (a int CONSTRAINT con1 CHECK (a > 0), b int, c int);
+\d constraint_rename_test
+CREATE TABLE constraint_rename_test2 (a int CONSTRAINT con1 CHECK (a > 0), d int) INHERITS (constraint_rename_test);
+\d constraint_rename_test2
+ALTER TABLE constraint_rename_test2 RENAME CONSTRAINT con1 TO con1foo; -- fail
+ALTER TABLE ONLY constraint_rename_test RENAME CONSTRAINT con1 TO con1foo; -- fail
+ALTER TABLE constraint_rename_test RENAME CONSTRAINT con1 TO con1foo; -- ok
+\d constraint_rename_test
+\d constraint_rename_test2
+ALTER TABLE ONLY constraint_rename_test ADD CONSTRAINT con2 CHECK (b > 0);
+ALTER TABLE ONLY constraint_rename_test RENAME CONSTRAINT con2 TO con2foo; -- ok
+ALTER TABLE constraint_rename_test RENAME CONSTRAINT con2foo TO con2bar; -- ok
+\d constraint_rename_test
+\d constraint_rename_test2
+ALTER TABLE constraint_rename_test ADD CONSTRAINT con3 PRIMARY KEY (a);
+ALTER TABLE constraint_rename_test RENAME CONSTRAINT con3 TO con3foo; -- ok
+\d constraint_rename_test
+\d constraint_rename_test2
+DROP TABLE constraint_rename_test2;
+DROP TABLE constraint_rename_test;
+ALTER TABLE IF EXISTS constraint_rename_test ADD CONSTRAINT con4 UNIQUE (a);
+
 -- FOREIGN KEY CONSTRAINT adding TEST
 
 CREATE TABLE tmp2 (a int primary key);
