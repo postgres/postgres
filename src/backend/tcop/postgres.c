@@ -3190,6 +3190,13 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx)
 		gucsource = PGC_S_CLIENT;		/* switches came from client */
 	}
 
+#ifdef HAVE_INT_OPTERR
+	/* Turn this off because it's either printed to stderr and not the log
+	 * where we'd want it, or argv[0] is now "--single", which would make for a
+	 * weird error message.  We print our own error message below. */
+	opterr = 0;
+#endif
+
 	/*
 	 * Parse command-line options.	CAUTION: keep this in sync with
 	 * postmaster/postmaster.c (the option sets should not conflict) and with
@@ -3363,32 +3370,38 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx)
 				errs++;
 				break;
 		}
+
+		if (errs)
+			break;
 	}
 
 	/*
 	 * Should be no more arguments except an optional database name, and
 	 * that's only in the secure case.
 	 */
-	if (errs || argc - optind > 1 || (argc != optind && !secure))
+	if (!errs && secure && argc - optind >= 1)
+		dbname = strdup(argv[optind++]);
+	else
+		dbname = NULL;
+
+	if (errs || argc != optind)
 	{
+		if (errs)
+			optind--;			/* complain about the previous argument */
+
 		/* spell the error message a bit differently depending on context */
 		if (IsUnderPostmaster)
 			ereport(FATAL,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("invalid command-line arguments for server process"),
+				 errmsg("invalid command-line argument for server process: %s", argv[optind]),
 			  errhint("Try \"%s --help\" for more information.", progname)));
 		else
 			ereport(FATAL,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("%s: invalid command-line arguments",
-							progname),
+					 errmsg("%s: invalid command-line argument: %s",
+							progname, argv[optind]),
 			  errhint("Try \"%s --help\" for more information.", progname)));
 	}
-
-	if (argc - optind == 1)
-		dbname = strdup(argv[optind]);
-	else
-		dbname = NULL;
 
 	/*
 	 * Reset getopt(3) library so that it will work correctly in subprocesses
