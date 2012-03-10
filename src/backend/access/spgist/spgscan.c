@@ -56,18 +56,25 @@ freeScanStack(SpGistScanOpaque so)
 }
 
 /*
- * Initialize scanStack with a single entry for the root page, resetting
+ * Initialize scanStack to search the root page, resetting
  * any previously active scan
  */
 static void
 resetSpGistScanOpaque(SpGistScanOpaque so)
 {
-	ScanStackEntry *startEntry = palloc0(sizeof(ScanStackEntry));
-
-	ItemPointerSet(&startEntry->ptr, SPGIST_HEAD_BLKNO, FirstOffsetNumber);
+	ScanStackEntry *startEntry;
 
 	freeScanStack(so);
-	so->scanStack = list_make1(startEntry);
+
+	Assert(!so->searchNulls);	/* XXX fixme */
+
+	if (so->searchNonNulls)
+	{
+		/* Stack a work item to scan the non-null index entries */
+		startEntry = (ScanStackEntry *) palloc0(sizeof(ScanStackEntry));
+		ItemPointerSet(&startEntry->ptr, SPGIST_HEAD_BLKNO, FirstOffsetNumber);
+		so->scanStack = list_make1(startEntry);
+	}
 
 	if (so->want_itup)
 	{
@@ -78,6 +85,82 @@ resetSpGistScanOpaque(SpGistScanOpaque so)
 			pfree(so->indexTups[i]);
 	}
 	so->iPtr = so->nPtrs = 0;
+}
+
+/*
+ * Prepare scan keys in SpGistScanOpaque from caller-given scan keys
+ *
+ * Sets searchNulls, searchNonNulls, numberOfKeys, keyData fields of *so.
+ *
+ * The point here is to eliminate null-related considerations from what the
+ * opclass consistent functions need to deal with.  We assume all SPGiST-
+ * indexable operators are strict, so any null RHS value makes the scan
+ * condition unsatisfiable.  We also pull out any IS NULL/IS NOT NULL
+ * conditions; their effect is reflected into searchNulls/searchNonNulls.
+ */
+static void
+spgPrepareScanKeys(IndexScanDesc scan)
+{
+	SpGistScanOpaque so = (SpGistScanOpaque) scan->opaque;
+	bool		qual_ok;
+	bool		haveIsNull;
+	bool		haveNotNull;
+	int			nkeys;
+	int			i;
+
+	if (scan->numberOfKeys <= 0)
+	{
+		/* If no quals, whole-index scan is required */
+		so->searchNulls = true;
+		so->searchNonNulls = true;
+		so->numberOfKeys = 0;
+		return;
+	}
+
+	/* Examine the given quals */
+	qual_ok = true;
+	haveIsNull = haveNotNull = false;
+	nkeys = 0;
+	for (i = 0; i < scan->numberOfKeys; i++)
+	{
+		ScanKey		skey = &scan->keyData[i];
+
+		if (skey->sk_flags & SK_SEARCHNULL)
+			haveIsNull = true;
+		else if (skey->sk_flags & SK_SEARCHNOTNULL)
+			haveNotNull = true;
+		else if (skey->sk_flags & SK_ISNULL)
+		{
+			/* ordinary qual with null argument - unsatisfiable */
+			qual_ok = false;
+			break;
+		}
+		else
+		{
+			/* ordinary qual, propagate into so->keyData */
+			so->keyData[nkeys++] = *skey;
+			/* this effectively creates a not-null requirement */
+			haveNotNull = true;
+		}
+	}
+
+	/* IS NULL in combination with something else is unsatisfiable */
+	if (haveIsNull && haveNotNull)
+		qual_ok = false;
+
+	/* Emit results */
+	if (qual_ok)
+	{
+		so->searchNulls = haveIsNull;
+		so->searchNonNulls = haveNotNull;
+		so->numberOfKeys = nkeys;
+	}
+	else
+	{
+		so->searchNulls = false;
+		so->searchNonNulls = false;
+		so->numberOfKeys = 0;
+	}
 }
 
 Datum
@@ -92,13 +175,16 @@ spgbeginscan(PG_FUNCTION_ARGS)
 	scan = RelationGetIndexScan(rel, keysz, 0);
 
 	so = (SpGistScanOpaque) palloc0(sizeof(SpGistScanOpaqueData));
+	if (keysz > 0)
+		so->keyData = (ScanKey) palloc(sizeof(ScanKeyData) * keysz);
+	else
+		so->keyData = NULL;
 	initSpGistState(&so->state, scan->indexRelation);
 	so->tempCxt = AllocSetContextCreate(CurrentMemoryContext,
 										"SP-GiST search temporary context",
 										ALLOCSET_DEFAULT_MINSIZE,
 										ALLOCSET_DEFAULT_INITSIZE,
 										ALLOCSET_DEFAULT_MAXSIZE);
-	resetSpGistScanOpaque(so);
 
 	/* Set up indexTupDesc and xs_itupdesc in case it's an index-only scan */
 	so->indexTupDesc = scan->xs_itupdesc = RelationGetDescr(rel);
@@ -115,12 +201,17 @@ spgrescan(PG_FUNCTION_ARGS)
 	SpGistScanOpaque so = (SpGistScanOpaque) scan->opaque;
 	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(1);
 
+	/* copy scankeys into local storage */
 	if (scankey && scan->numberOfKeys > 0)
 	{
 		memmove(scan->keyData, scankey,
 				scan->numberOfKeys * sizeof(ScanKeyData));
 	}
 
+	/* preprocess scankeys, set up the representation in *so */
+	spgPrepareScanKeys(scan);
+
+	/* set up starting stack entries */
 	resetSpGistScanOpaque(so);
 
 	PG_RETURN_VOID();
@@ -162,53 +253,34 @@ spgLeafTest(Relation index, SpGistScanOpaque so, Datum leafDatum,
 			int level, Datum reconstructedValue,
 			Datum *leafValue, bool *recheck)
 {
-	bool		result = true;
+	bool		result;
 	spgLeafConsistentIn in;
 	spgLeafConsistentOut out;
 	FmgrInfo   *procinfo;
 	MemoryContext oldCtx;
-	int			i;
 
-	*leafValue = (Datum) 0;
-	*recheck = false;
+	/* use temp context for calling leaf_consistent */
+	oldCtx = MemoryContextSwitchTo(so->tempCxt);
 
-	/* set up values that are the same for all quals */
+	in.scankeys = so->keyData;
+	in.nkeys = so->numberOfKeys;
 	in.reconstructedValue = reconstructedValue;
 	in.level = level;
 	in.returnData = so->want_itup;
 	in.leafDatum = leafDatum;
 
-	/* Apply each leaf consistency check, working in the temp context */
-	oldCtx = MemoryContextSwitchTo(so->tempCxt);
+	out.leafValue = (Datum) 0;
+	out.recheck = false;
 
 	procinfo = index_getprocinfo(index, 1, SPGIST_LEAF_CONSISTENT_PROC);
+	result = DatumGetBool(FunctionCall2Coll(procinfo,
+											index->rd_indcollation[0],
+											PointerGetDatum(&in),
+											PointerGetDatum(&out)));
 
-	for (i = 0; i < so->numberOfKeys; i++)
-	{
-		ScanKey		skey = &so->keyData[i];
+	*leafValue = out.leafValue;
+	*recheck = out.recheck;
 
-		/* Assume SPGiST-indexable operators are strict */
-		if (skey->sk_flags & SK_ISNULL)
-		{
-			result = false;
-			break;
-		}
-
-		in.strategy = skey->sk_strategy;
-		in.query = skey->sk_argument;
-
-		out.leafValue = (Datum) 0;
-		out.recheck = false;
-
-		result = DatumGetBool(FunctionCall2Coll(procinfo,
-												skey->sk_collation,
-												PointerGetDatum(&in),
-												PointerGetDatum(&out)));
-		*leafValue = out.leafValue;
-		*recheck |= out.recheck;
-		if (!result)
-			break;
-	}
 	MemoryContextSwitchTo(oldCtx);
 
 	return result;
@@ -349,8 +421,13 @@ redirect:
 		else	/* page is inner */
 		{
 			SpGistInnerTuple innerTuple;
+			spgInnerConsistentIn in;
+			spgInnerConsistentOut out;
+			FmgrInfo   *procinfo;
+			SpGistNodeTuple *nodes;
 			SpGistNodeTuple node;
 			int			i;
+			MemoryContext oldCtx;
 
 			innerTuple = (SpGistInnerTuple) PageGetItem(page,
 														PageGetItemId(page, offset));
@@ -368,144 +445,68 @@ redirect:
 					 innerTuple->tupstate);
 			}
 
-			if (so->numberOfKeys == 0)
+			/* use temp context for calling inner_consistent */
+			oldCtx = MemoryContextSwitchTo(so->tempCxt);
+
+			in.scankeys = so->keyData;
+			in.nkeys = so->numberOfKeys;
+			in.reconstructedValue = stackEntry->reconstructedValue;
+			in.level = stackEntry->level;
+			in.returnData = so->want_itup;
+			in.allTheSame = innerTuple->allTheSame;
+			in.hasPrefix = (innerTuple->prefixSize > 0);
+			in.prefixDatum = SGITDATUM(innerTuple, &so->state);
+			in.nNodes = innerTuple->nNodes;
+			in.nodeLabels = spgExtractNodeLabels(&so->state, innerTuple);
+
+			/* collect node pointers */
+			nodes = (SpGistNodeTuple *) palloc(sizeof(SpGistNodeTuple) * in.nNodes);
+			SGITITERATE(innerTuple, i, node)
 			{
-				/*
-				 * This case cannot happen at the moment, because we don't
-				 * set pg_am.amoptionalkey for SP-GiST.  In order for full
-				 * index scans to produce correct answers, we'd need to
-				 * index nulls, which we don't.
-				 */
-				Assert(false);
-
-#ifdef NOT_USED
-				/*
-				 * A full index scan could be done approximately like this,
-				 * but note that reconstruction of indexed values would be
-				 * impossible unless the API for inner_consistent is changed.
-				 */
-				SGITITERATE(innerTuple, i, node)
-				{
-					if (ItemPointerIsValid(&node->t_tid))
-					{
-						ScanStackEntry *newEntry = palloc(sizeof(ScanStackEntry));
-
-						newEntry->ptr = node->t_tid;
-						newEntry->level = -1;
-						newEntry->reconstructedValue = (Datum) 0;
-						so->scanStack = lcons(newEntry, so->scanStack);
-					}
-				}
-#endif
+				nodes[i] = node;
 			}
-			else
+
+			memset(&out, 0, sizeof(out));
+
+			procinfo = index_getprocinfo(index, 1, SPGIST_INNER_CONSISTENT_PROC);
+			FunctionCall2Coll(procinfo,
+							  index->rd_indcollation[0],
+							  PointerGetDatum(&in),
+							  PointerGetDatum(&out));
+
+			MemoryContextSwitchTo(oldCtx);
+
+			/* If allTheSame, they should all or none of 'em match */
+			if (innerTuple->allTheSame)
+				if (out.nNodes != 0 && out.nNodes != in.nNodes)
+					elog(ERROR, "inconsistent inner_consistent results for allTheSame inner tuple");
+
+			for (i = 0; i < out.nNodes; i++)
 			{
-				spgInnerConsistentIn in;
-				spgInnerConsistentOut out;
-				FmgrInfo   *procinfo;
-				SpGistNodeTuple *nodes;
-				int		   *andMap;
-				int		   *levelAdds;
-				Datum	   *reconstructedValues;
-				int			j,
-							nMatches = 0;
-				MemoryContext oldCtx;
+				int		nodeN = out.nodeNumbers[i];
 
-				/* use temp context for calling inner_consistent */
-				oldCtx = MemoryContextSwitchTo(so->tempCxt);
-
-				/* set up values that are the same for all scankeys */
-				in.reconstructedValue = stackEntry->reconstructedValue;
-				in.level = stackEntry->level;
-				in.returnData = so->want_itup;
-				in.allTheSame = innerTuple->allTheSame;
-				in.hasPrefix = (innerTuple->prefixSize > 0);
-				in.prefixDatum = SGITDATUM(innerTuple, &so->state);
-				in.nNodes = innerTuple->nNodes;
-				in.nodeLabels = spgExtractNodeLabels(&so->state, innerTuple);
-
-				/* collect node pointers */
-				nodes = (SpGistNodeTuple *) palloc(sizeof(SpGistNodeTuple) * in.nNodes);
-				SGITITERATE(innerTuple, i, node)
+				Assert(nodeN >= 0 && nodeN < in.nNodes);
+				if (ItemPointerIsValid(&nodes[nodeN]->t_tid))
 				{
-					nodes[i] = node;
-				}
+					ScanStackEntry *newEntry;
 
-				andMap = (int *) palloc0(sizeof(int) * in.nNodes);
-				levelAdds = (int *) palloc0(sizeof(int) * in.nNodes);
-				reconstructedValues = (Datum *) palloc0(sizeof(Datum) * in.nNodes);
+					/* Create new work item for this node */
+					newEntry = palloc(sizeof(ScanStackEntry));
+					newEntry->ptr = nodes[nodeN]->t_tid;
+					if (out.levelAdds)
+						newEntry->level = stackEntry->level + out.levelAdds[i];
+					else
+						newEntry->level = stackEntry->level;
+					/* Must copy value out of temp context */
+					if (out.reconstructedValues)
+						newEntry->reconstructedValue =
+							datumCopy(out.reconstructedValues[i],
+									  so->state.attType.attbyval,
+									  so->state.attType.attlen);
+					else
+						newEntry->reconstructedValue = (Datum) 0;
 
-				procinfo = index_getprocinfo(index, 1, SPGIST_INNER_CONSISTENT_PROC);
-
-				for (j = 0; j < so->numberOfKeys; j++)
-				{
-					ScanKey		skey = &so->keyData[j];
-
-					/* Assume SPGiST-indexable operators are strict */
-					if (skey->sk_flags & SK_ISNULL)
-					{
-						nMatches = 0;
-						break;
-					}
-
-					in.strategy = skey->sk_strategy;
-					in.query = skey->sk_argument;
-
-					memset(&out, 0, sizeof(out));
-
-					FunctionCall2Coll(procinfo,
-									  skey->sk_collation,
-									  PointerGetDatum(&in),
-									  PointerGetDatum(&out));
-
-					/* If allTheSame, they should all or none of 'em match */
-					if (innerTuple->allTheSame)
-						if (out.nNodes != 0 && out.nNodes != in.nNodes)
-							elog(ERROR, "inconsistent inner_consistent results for allTheSame inner tuple");
-
-					nMatches = 0;
-					for (i = 0; i < out.nNodes; i++)
-					{
-						int		nodeN = out.nodeNumbers[i];
-
-						andMap[nodeN]++;
-						if (andMap[nodeN] == j + 1)
-							nMatches++;
-						if (out.levelAdds)
-							levelAdds[nodeN] = out.levelAdds[i];
-						if (out.reconstructedValues)
-							reconstructedValues[nodeN] = out.reconstructedValues[i];
-					}
-
-					/* quit as soon as all nodes have failed some qual */
-					if (nMatches == 0)
-						break;
-				}
-
-				MemoryContextSwitchTo(oldCtx);
-
-				if (nMatches > 0)
-				{
-					for (i = 0; i < in.nNodes; i++)
-					{
-						if (andMap[i] == so->numberOfKeys &&
-							ItemPointerIsValid(&nodes[i]->t_tid))
-						{
-							ScanStackEntry *newEntry;
-
-							/* Create new work item for this node */
-							newEntry = palloc(sizeof(ScanStackEntry));
-							newEntry->ptr = nodes[i]->t_tid;
-							newEntry->level = stackEntry->level + levelAdds[i];
-							/* Must copy value out of temp context */
-							newEntry->reconstructedValue =
-								datumCopy(reconstructedValues[i],
-										  so->state.attType.attbyval,
-										  so->state.attType.attlen);
-
-							so->scanStack = lcons(newEntry, so->scanStack);
-						}
-					}
+					so->scanStack = lcons(newEntry, so->scanStack);
 				}
 			}
 		}
@@ -536,10 +537,7 @@ spggetbitmap(PG_FUNCTION_ARGS)
 	TIDBitmap  *tbm = (TIDBitmap *) PG_GETARG_POINTER(1);
 	SpGistScanOpaque so = (SpGistScanOpaque) scan->opaque;
 
-	/* Copy scankey to *so so we don't need to pass it around separately */
-	so->numberOfKeys = scan->numberOfKeys;
-	so->keyData = scan->keyData;
-	/* Ditto for the want_itup flag */
+	/* Copy want_itup to *so so we don't need to pass it around separately */
 	so->want_itup = false;
 
 	so->tbm = tbm;
@@ -583,10 +581,7 @@ spggettuple(PG_FUNCTION_ARGS)
 	if (dir != ForwardScanDirection)
 		elog(ERROR, "SP-GiST only supports forward scan direction");
 
-	/* Copy scankey to *so so we don't need to pass it around separately */
-	so->numberOfKeys = scan->numberOfKeys;
-	so->keyData = scan->keyData;
-	/* Ditto for the want_itup flag */
+	/* Copy want_itup to *so so we don't need to pass it around separately */
 	so->want_itup = scan->xs_want_itup;
 
 	for (;;)

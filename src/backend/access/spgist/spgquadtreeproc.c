@@ -190,45 +190,21 @@ spg_quad_picksplit(PG_FUNCTION_ARGS)
 }
 
 
-/* Subroutine to fill out->nodeNumbers[] for spg_quad_inner_consistent */
-static void
-setNodes(spgInnerConsistentOut *out, bool isAll, int first, int second)
-{
-	if (isAll)
-	{
-		out->nNodes = 4;
-		out->nodeNumbers[0] = 0;
-		out->nodeNumbers[1] = 1;
-		out->nodeNumbers[2] = 2;
-		out->nodeNumbers[3] = 3;
-	}
-	else
-	{
-		out->nNodes = 2;
-		out->nodeNumbers[0] = first - 1;
-		out->nodeNumbers[1] = second - 1;
-	}
-}
-
-
 Datum
 spg_quad_inner_consistent(PG_FUNCTION_ARGS)
 {
 	spgInnerConsistentIn *in = (spgInnerConsistentIn *) PG_GETARG_POINTER(0);
 	spgInnerConsistentOut *out = (spgInnerConsistentOut *) PG_GETARG_POINTER(1);
-	Point	   *query,
-			   *centroid;
-	BOX		   *boxQuery;
+	Point	   *centroid;
+	int			which;
+	int			i;
 
-	query = DatumGetPointP(in->query);
 	Assert(in->hasPrefix);
 	centroid = DatumGetPointP(in->prefixDatum);
 
 	if (in->allTheSame)
 	{
 		/* Report that all nodes should be visited */
-		int		i;
-
 		out->nNodes = in->nNodes;
 		out->nodeNumbers = (int *) palloc(sizeof(int) * in->nNodes);
 		for (i = 0; i < in->nNodes; i++)
@@ -237,76 +213,86 @@ spg_quad_inner_consistent(PG_FUNCTION_ARGS)
 	}
 
 	Assert(in->nNodes == 4);
-	out->nodeNumbers = (int *) palloc(sizeof(int) * 4);
 
-	switch (in->strategy)
+	/* "which" is a bitmask of quadrants that satisfy all constraints */
+	which = (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4);
+
+	for (i = 0; i < in->nkeys; i++)
 	{
-		case RTLeftStrategyNumber:
-			setNodes(out, SPTEST(point_left, centroid, query), 3, 4);
-			break;
-		case RTRightStrategyNumber:
-			setNodes(out, SPTEST(point_right, centroid, query), 1, 2);
-			break;
-		case RTSameStrategyNumber:
-			out->nNodes = 1;
-			out->nodeNumbers[0] = getQuadrant(centroid, query) - 1;
-			break;
-		case RTBelowStrategyNumber:
-			setNodes(out, SPTEST(point_below, centroid, query), 2, 3);
-			break;
-		case RTAboveStrategyNumber:
-			setNodes(out, SPTEST(point_above, centroid, query), 1, 4);
-			break;
-		case RTContainedByStrategyNumber:
+		Point	   *query = DatumGetPointP(in->scankeys[i].sk_argument);
+		BOX		   *boxQuery;
 
-			/*
-			 * For this operator, the query is a box not a point.  We cheat to
-			 * the extent of assuming that DatumGetPointP won't do anything
-			 * that would be bad for a pointer-to-box.
-			 */
-			boxQuery = DatumGetBoxP(in->query);
+		switch (in->scankeys[i].sk_strategy)
+		{
+			case RTLeftStrategyNumber:
+				if (SPTEST(point_right, centroid, query))
+					which &= (1 << 3) | (1 << 4);
+				break;
+			case RTRightStrategyNumber:
+				if (SPTEST(point_left, centroid, query))
+					which &= (1 << 1) | (1 << 2);
+				break;
+			case RTSameStrategyNumber:
+				which &= (1 << getQuadrant(centroid, query));
+				break;
+			case RTBelowStrategyNumber:
+				if (SPTEST(point_above, centroid, query))
+					which &= (1 << 2) | (1 << 3);
+				break;
+			case RTAboveStrategyNumber:
+				if (SPTEST(point_below, centroid, query))
+					which &= (1 << 1) | (1 << 4);
+				break;
+			case RTContainedByStrategyNumber:
 
-			if (DatumGetBool(DirectFunctionCall2(box_contain_pt,
-												 PointerGetDatum(boxQuery),
-												 PointerGetDatum(centroid))))
-			{
-				/* centroid is in box, so descend to all quadrants */
-				setNodes(out, true, 0, 0);
-			}
-			else
-			{
-				/* identify quadrant(s) containing all corners of box */
-				Point		p;
-				int			i,
-							r = 0;
+				/*
+				 * For this operator, the query is a box not a point.  We
+				 * cheat to the extent of assuming that DatumGetPointP won't
+				 * do anything that would be bad for a pointer-to-box.
+				 */
+				boxQuery = DatumGetBoxP(in->scankeys[i].sk_argument);
 
-				p = boxQuery->low;
-				r |= 1 << (getQuadrant(centroid, &p) - 1);
-
-				p.y = boxQuery->high.y;
-				r |= 1 << (getQuadrant(centroid, &p) - 1);
-
-				p = boxQuery->high;
-				r |= 1 << (getQuadrant(centroid, &p) - 1);
-
-				p.x = boxQuery->low.x;
-				r |= 1 << (getQuadrant(centroid, &p) - 1);
-
-				/* we must descend into those quadrant(s) */
-				out->nNodes = 0;
-				for (i = 0; i < 4; i++)
+				if (DatumGetBool(DirectFunctionCall2(box_contain_pt,
+													 PointerGetDatum(boxQuery),
+													 PointerGetDatum(centroid))))
 				{
-					if (r & (1 << i))
-					{
-						out->nodeNumbers[out->nNodes] = i;
-						out->nNodes++;
-					}
+					/* centroid is in box, so all quadrants are OK */
 				}
-			}
-			break;
-		default:
-			elog(ERROR, "unrecognized strategy number: %d", in->strategy);
-			break;
+				else
+				{
+					/* identify quadrant(s) containing all corners of box */
+					Point		p;
+					int			r = 0;
+
+					p = boxQuery->low;
+					r |= 1 << getQuadrant(centroid, &p);
+					p.y = boxQuery->high.y;
+					r |= 1 << getQuadrant(centroid, &p);
+					p = boxQuery->high;
+					r |= 1 << getQuadrant(centroid, &p);
+					p.x = boxQuery->low.x;
+					r |= 1 << getQuadrant(centroid, &p);
+
+					which &= r;
+				}
+				break;
+			default:
+				elog(ERROR, "unrecognized strategy number: %d",
+					 in->scankeys[i].sk_strategy);
+				break;
+		}
+
+		if (which == 0)
+			break;				/* no need to consider remaining conditions */
+	}
+
+	/* We must descend into the quadrant(s) identified by which */
+	out->nodeNumbers = (int *) palloc(sizeof(int) * 4);
+	out->nNodes = 0;
+	for (i = 1; i <= 4; i++)
+	{
+		if (which & (1 << i))
+			out->nodeNumbers[out->nNodes++] = i - 1;
 	}
 
 	PG_RETURN_VOID();
@@ -318,9 +304,9 @@ spg_quad_leaf_consistent(PG_FUNCTION_ARGS)
 {
 	spgLeafConsistentIn *in = (spgLeafConsistentIn *) PG_GETARG_POINTER(0);
 	spgLeafConsistentOut *out = (spgLeafConsistentOut *) PG_GETARG_POINTER(1);
-	Point	   *query = DatumGetPointP(in->query);
 	Point	   *datum = DatumGetPointP(in->leafDatum);
 	bool		res;
+	int			i;
 
 	/* all tests are exact */
 	out->recheck = false;
@@ -328,35 +314,45 @@ spg_quad_leaf_consistent(PG_FUNCTION_ARGS)
 	/* leafDatum is what it is... */
 	out->leafValue = in->leafDatum;
 
-	switch (in->strategy)
+	/* Perform the required comparison(s) */
+	res = true;
+	for (i = 0; i < in->nkeys; i++)
 	{
-		case RTLeftStrategyNumber:
-			res = SPTEST(point_left, datum, query);
-			break;
-		case RTRightStrategyNumber:
-			res = SPTEST(point_right, datum, query);
-			break;
-		case RTSameStrategyNumber:
-			res = SPTEST(point_eq, datum, query);
-			break;
-		case RTBelowStrategyNumber:
-			res = SPTEST(point_below, datum, query);
-			break;
-		case RTAboveStrategyNumber:
-			res = SPTEST(point_above, datum, query);
-			break;
-		case RTContainedByStrategyNumber:
+		Point	   *query = DatumGetPointP(in->scankeys[i].sk_argument);
 
-			/*
-			 * For this operator, the query is a box not a point.  We cheat to
-			 * the extent of assuming that DatumGetPointP won't do anything
-			 * that would be bad for a pointer-to-box.
-			 */
-			res = SPTEST(box_contain_pt, query, datum);
-			break;
-		default:
-			elog(ERROR, "unrecognized strategy number: %d", in->strategy);
-			res = false;
+		switch (in->scankeys[i].sk_strategy)
+		{
+			case RTLeftStrategyNumber:
+				res = SPTEST(point_left, datum, query);
+				break;
+			case RTRightStrategyNumber:
+				res = SPTEST(point_right, datum, query);
+				break;
+			case RTSameStrategyNumber:
+				res = SPTEST(point_eq, datum, query);
+				break;
+			case RTBelowStrategyNumber:
+				res = SPTEST(point_below, datum, query);
+				break;
+			case RTAboveStrategyNumber:
+				res = SPTEST(point_above, datum, query);
+				break;
+			case RTContainedByStrategyNumber:
+
+				/*
+				 * For this operator, the query is a box not a point.  We
+				 * cheat to the extent of assuming that DatumGetPointP won't
+				 * do anything that would be bad for a pointer-to-box.
+				 */
+				res = SPTEST(box_contain_pt, query, datum);
+				break;
+			default:
+				elog(ERROR, "unrecognized strategy number: %d",
+					 in->scankeys[i].sk_strategy);
+				break;
+		}
+
+		if (!res)
 			break;
 	}
 

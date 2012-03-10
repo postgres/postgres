@@ -362,25 +362,12 @@ spg_text_inner_consistent(PG_FUNCTION_ARGS)
 {
 	spgInnerConsistentIn *in = (spgInnerConsistentIn *) PG_GETARG_POINTER(0);
 	spgInnerConsistentOut *out = (spgInnerConsistentOut *) PG_GETARG_POINTER(1);
-	StrategyNumber strategy = in->strategy;
-	text	   *inText;
-	int			inSize;
-	int			i;
+	bool		collate_is_c = lc_collate_is_c(PG_GET_COLLATION());
 	text	   *reconstrText = NULL;
 	int			maxReconstrLen = 0;
 	text	   *prefixText = NULL;
 	int			prefixSize = 0;
-
-	/*
-	 * If it's a collation-aware operator, but the collation is C, we can
-	 * treat it as non-collation-aware.
-	 */
-	if (strategy > 10 &&
-		lc_collate_is_c(PG_GET_COLLATION()))
-		strategy -= 10;
-
-	inText = DatumGetTextPP(in->query);
-	inSize = VARSIZE_ANY_EXHDR(inText);
+	int			i;
 
 	/*
 	 * Reconstruct values represented at this tuple, including parent data,
@@ -431,8 +418,8 @@ spg_text_inner_consistent(PG_FUNCTION_ARGS)
 	{
 		uint8		nodeChar = DatumGetUInt8(in->nodeLabels[i]);
 		int			thisLen;
-		int			r;
-		bool		res = false;
+		bool		res = true;
+		int			j;
 
 		/* If nodeChar is zero, don't include it in data */
 		if (nodeChar == '\0')
@@ -443,38 +430,57 @@ spg_text_inner_consistent(PG_FUNCTION_ARGS)
 			thisLen = maxReconstrLen;
 		}
 
-		r = memcmp(VARDATA(reconstrText), VARDATA_ANY(inText),
-				   Min(inSize, thisLen));
-
-		switch (strategy)
+		for (j = 0; j < in->nkeys; j++)
 		{
-			case BTLessStrategyNumber:
-			case BTLessEqualStrategyNumber:
-				if (r <= 0)
-					res = true;
-				break;
-			case BTEqualStrategyNumber:
-				if (r == 0 && inSize >= thisLen)
-					res = true;
-				break;
-			case BTGreaterEqualStrategyNumber:
-			case BTGreaterStrategyNumber:
-				if (r >= 0)
-					res = true;
-				break;
-			case BTLessStrategyNumber + 10:
-			case BTLessEqualStrategyNumber + 10:
-			case BTGreaterEqualStrategyNumber + 10:
-			case BTGreaterStrategyNumber + 10:
-				/*
-				 * with non-C collation we need to traverse whole tree :-(
-				 */
-				res = true;
-				break;
-			default:
-				elog(ERROR, "unrecognized strategy number: %d",
-					 in->strategy);
-				break;
+			StrategyNumber strategy = in->scankeys[j].sk_strategy;
+			text	   *inText;
+			int			inSize;
+			int			r;
+
+			/*
+			 * If it's a collation-aware operator, but the collation is C, we
+			 * can treat it as non-collation-aware.  With non-C collation we
+			 * need to traverse whole tree :-( so there's no point in making
+			 * any check here.
+			 */
+			if (strategy > 10)
+			{
+				if (collate_is_c)
+					strategy -= 10;
+				else
+					continue;
+			}
+
+			inText = DatumGetTextPP(in->scankeys[j].sk_argument);
+			inSize = VARSIZE_ANY_EXHDR(inText);
+
+			r = memcmp(VARDATA(reconstrText), VARDATA_ANY(inText),
+					   Min(inSize, thisLen));
+
+			switch (strategy)
+			{
+				case BTLessStrategyNumber:
+				case BTLessEqualStrategyNumber:
+					if (r > 0)
+						res = false;
+					break;
+				case BTEqualStrategyNumber:
+					if (r != 0 || inSize < thisLen)
+						res = false;
+					break;
+				case BTGreaterEqualStrategyNumber:
+				case BTGreaterStrategyNumber:
+					if (r < 0)
+						res = false;
+					break;
+				default:
+					elog(ERROR, "unrecognized strategy number: %d",
+						 in->scankeys[j].sk_strategy);
+					break;
+			}
+
+			if (!res)
+				break;			/* no need to consider remaining conditions */
 		}
 
 		if (res)
@@ -496,16 +502,13 @@ spg_text_leaf_consistent(PG_FUNCTION_ARGS)
 {
 	spgLeafConsistentIn *in = (spgLeafConsistentIn *) PG_GETARG_POINTER(0);
 	spgLeafConsistentOut *out = (spgLeafConsistentOut *) PG_GETARG_POINTER(1);
-	StrategyNumber strategy = in->strategy;
-	text	   *query = DatumGetTextPP(in->query);
 	int			level = in->level;
 	text	   *leafValue,
 			   *reconstrValue = NULL;
 	char	   *fullValue;
 	int			fullLen;
-	int			queryLen;
-	int			r;
 	bool		res;
+	int			j;
 
 	/* all tests are exact */
 	out->recheck = false;
@@ -518,18 +521,8 @@ spg_text_leaf_consistent(PG_FUNCTION_ARGS)
 	Assert(level == 0 ? reconstrValue == NULL :
 		   VARSIZE_ANY_EXHDR(reconstrValue) == level);
 
+	/* Reconstruct the full string represented by this leaf tuple */
 	fullLen = level + VARSIZE_ANY_EXHDR(leafValue);
-
-	queryLen = VARSIZE_ANY_EXHDR(query);
-
-	/*
-	 * For an equality check, we needn't reconstruct fullValue if not same
-	 * length; it can't match
-	 */
-	if (strategy == BTEqualStrategyNumber && queryLen != fullLen)
-		PG_RETURN_BOOL(false);
-
-	/* Else, reconstruct the full string represented by this leaf tuple */
 	if (VARSIZE_ANY_EXHDR(leafValue) == 0 && level > 0)
 	{
 		fullValue = VARDATA(reconstrValue);
@@ -549,54 +542,67 @@ spg_text_leaf_consistent(PG_FUNCTION_ARGS)
 		out->leafValue = PointerGetDatum(fullText);
 	}
 
-	/* Run the appropriate type of comparison */
-	if (strategy > 10)
+	/* Perform the required comparison(s) */
+	res = true;
+	for (j = 0; j < in->nkeys; j++)
 	{
-		/* Collation-aware comparison */
-		strategy -= 10;
+		StrategyNumber strategy = in->scankeys[j].sk_strategy;
+		text	   *query = DatumGetTextPP(in->scankeys[j].sk_argument);
+		int			queryLen = VARSIZE_ANY_EXHDR(query);
+		int			r;
 
-		/* If asserts are enabled, verify encoding of reconstructed string */
-		Assert(pg_verifymbstr(fullValue, fullLen, false));
+		if (strategy > 10)
+		{
+			/* Collation-aware comparison */
+			strategy -= 10;
 
-		r = varstr_cmp(fullValue, Min(queryLen, fullLen),
-					   VARDATA_ANY(query), Min(queryLen, fullLen),
-					   PG_GET_COLLATION());
-	}
-	else
-	{
-		/* Non-collation-aware comparison */
-		r = memcmp(fullValue, VARDATA_ANY(query), Min(queryLen, fullLen));
-	}
+			/* If asserts enabled, verify encoding of reconstructed string */
+			Assert(pg_verifymbstr(fullValue, fullLen, false));
 
-	if (r == 0)
-	{
-		if (queryLen > fullLen)
-			r = -1;
-		else if (queryLen < fullLen)
-			r = 1;
-	}
+			r = varstr_cmp(fullValue, Min(queryLen, fullLen),
+						   VARDATA_ANY(query), Min(queryLen, fullLen),
+						   PG_GET_COLLATION());
+		}
+		else
+		{
+			/* Non-collation-aware comparison */
+			r = memcmp(fullValue, VARDATA_ANY(query), Min(queryLen, fullLen));
+		}
 
-	switch (strategy)
-	{
-		case BTLessStrategyNumber:
-			res = (r < 0);
-			break;
-		case BTLessEqualStrategyNumber:
-			res = (r <= 0);
-			break;
-		case BTEqualStrategyNumber:
-			res = (r == 0);
-			break;
-		case BTGreaterEqualStrategyNumber:
-			res = (r >= 0);
-			break;
-		case BTGreaterStrategyNumber:
-			res = (r > 0);
-			break;
-		default:
-			elog(ERROR, "unrecognized strategy number: %d", in->strategy);
-			res = false;
-			break;
+		if (r == 0)
+		{
+			if (queryLen > fullLen)
+				r = -1;
+			else if (queryLen < fullLen)
+				r = 1;
+		}
+
+		switch (strategy)
+		{
+			case BTLessStrategyNumber:
+				res = (r < 0);
+				break;
+			case BTLessEqualStrategyNumber:
+				res = (r <= 0);
+				break;
+			case BTEqualStrategyNumber:
+				res = (r == 0);
+				break;
+			case BTGreaterEqualStrategyNumber:
+				res = (r >= 0);
+				break;
+			case BTGreaterStrategyNumber:
+				res = (r > 0);
+				break;
+			default:
+				elog(ERROR, "unrecognized strategy number: %d",
+					 in->scankeys[j].sk_strategy);
+				res = false;
+				break;
+		}
+
+		if (!res)
+			break;				/* no need to consider remaining conditions */
 	}
 
 	PG_RETURN_BOOL(res);

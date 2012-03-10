@@ -159,11 +159,10 @@ spg_kd_inner_consistent(PG_FUNCTION_ARGS)
 {
 	spgInnerConsistentIn *in = (spgInnerConsistentIn *) PG_GETARG_POINTER(0);
 	spgInnerConsistentOut *out = (spgInnerConsistentOut *) PG_GETARG_POINTER(1);
-	Point	   *query;
-	BOX		   *boxQuery;
 	double		coord;
+	int			which;
+	int			i;
 
-	query = DatumGetPointP(in->query);
 	Assert(in->hasPrefix);
 	coord = DatumGetFloat8(in->prefixDatum);
 
@@ -171,123 +170,96 @@ spg_kd_inner_consistent(PG_FUNCTION_ARGS)
 		elog(ERROR, "allTheSame should not occur for k-d trees");
 
 	Assert(in->nNodes == 2);
+
+	/* "which" is a bitmask of children that satisfy all constraints */
+	which = (1 << 1) | (1 << 2);
+
+	for (i = 0; i < in->nkeys; i++)
+	{
+		Point	   *query = DatumGetPointP(in->scankeys[i].sk_argument);
+		BOX		   *boxQuery;
+
+		switch (in->scankeys[i].sk_strategy)
+		{
+			case RTLeftStrategyNumber:
+				if ((in->level % 2) != 0 && FPlt(query->x, coord))
+					which &= (1 << 1);
+				break;
+			case RTRightStrategyNumber:
+				if ((in->level % 2) != 0 && FPgt(query->x, coord))
+					which &= (1 << 2);
+				break;
+			case RTSameStrategyNumber:
+				if ((in->level % 2) != 0)
+				{
+					if (FPlt(query->x, coord))
+						which &= (1 << 1);
+					else if (FPgt(query->x, coord))
+						which &= (1 << 2);
+				}
+				else
+				{
+					if (FPlt(query->y, coord))
+						which &= (1 << 1);
+					else if (FPgt(query->y, coord))
+						which &= (1 << 2);
+				}
+				break;
+			case RTBelowStrategyNumber:
+				if ((in->level % 2) == 0 && FPlt(query->y, coord))
+					which &= (1 << 1);
+				break;
+			case RTAboveStrategyNumber:
+				if ((in->level % 2) == 0 && FPgt(query->y, coord))
+					which &= (1 << 2);
+				break;
+			case RTContainedByStrategyNumber:
+
+				/*
+				 * For this operator, the query is a box not a point.  We
+				 * cheat to the extent of assuming that DatumGetPointP won't
+				 * do anything that would be bad for a pointer-to-box.
+				 */
+				boxQuery = DatumGetBoxP(in->scankeys[i].sk_argument);
+
+				if ((in->level % 2) != 0)
+				{
+					if (FPlt(boxQuery->high.x, coord))
+						which &= (1 << 1);
+					else if (FPgt(boxQuery->low.x, coord))
+						which &= (1 << 2);
+				}
+				else
+				{
+					if (FPlt(boxQuery->high.y, coord))
+						which &= (1 << 1);
+					else if (FPgt(boxQuery->low.y, coord))
+						which &= (1 << 2);
+				}
+				break;
+			default:
+				elog(ERROR, "unrecognized strategy number: %d",
+					 in->scankeys[i].sk_strategy);
+				break;
+		}
+
+		if (which == 0)
+			break;				/* no need to consider remaining conditions */
+	}
+
+	/* We must descend into the children identified by which */
 	out->nodeNumbers = (int *) palloc(sizeof(int) * 2);
+	out->nNodes = 0;
+	for (i = 1; i <= 2; i++)
+	{
+		if (which & (1 << i))
+			out->nodeNumbers[out->nNodes++] = i - 1;
+	}
+
+	/* Set up level increments, too */
 	out->levelAdds = (int *) palloc(sizeof(int) * 2);
 	out->levelAdds[0] = 1;
 	out->levelAdds[1] = 1;
-	out->nNodes = 0;
-
-	switch (in->strategy)
-	{
-		case RTLeftStrategyNumber:
-			out->nNodes = 1;
-			out->nodeNumbers[0] = 0;
-
-			if ((in->level % 2) == 0 || FPge(query->x, coord))
-			{
-				out->nodeNumbers[1] = 1;
-				out->nNodes++;
-			}
-			break;
-		case RTRightStrategyNumber:
-			out->nNodes = 1;
-			out->nodeNumbers[0] = 1;
-
-			if ((in->level % 2) == 0 || FPle(query->x, coord))
-			{
-				out->nodeNumbers[1] = 0;
-				out->nNodes++;
-			}
-			break;
-		case RTSameStrategyNumber:
-			if (in->level % 2)
-			{
-				if (FPle(query->x, coord))
-				{
-					out->nodeNumbers[out->nNodes] = 0;
-					out->nNodes++;
-				}
-				if (FPge(query->x, coord))
-				{
-					out->nodeNumbers[out->nNodes] = 1;
-					out->nNodes++;
-				}
-			}
-			else
-			{
-				if (FPle(query->y, coord))
-				{
-					out->nodeNumbers[out->nNodes] = 0;
-					out->nNodes++;
-				}
-				if (FPge(query->y, coord))
-				{
-					out->nodeNumbers[out->nNodes] = 1;
-					out->nNodes++;
-				}
-			}
-			break;
-		case RTBelowStrategyNumber:
-			out->nNodes = 1;
-			out->nodeNumbers[0] = 0;
-
-			if ((in->level % 2) == 1 || FPge(query->y, coord))
-			{
-				out->nodeNumbers[1] = 1;
-				out->nNodes++;
-			}
-			break;
-		case RTAboveStrategyNumber:
-			out->nNodes = 1;
-			out->nodeNumbers[0] = 1;
-
-			if ((in->level % 2) == 1 || FPle(query->y, coord))
-			{
-				out->nodeNumbers[1] = 0;
-				out->nNodes++;
-			}
-			break;
-		case RTContainedByStrategyNumber:
-
-			/*
-			 * For this operator, the query is a box not a point.  We cheat to
-			 * the extent of assuming that DatumGetPointP won't do anything
-			 * that would be bad for a pointer-to-box.
-			 */
-			boxQuery = DatumGetBoxP(in->query);
-
-			out->nNodes = 1;
-			if (in->level % 2)
-			{
-				if (FPlt(boxQuery->high.x, coord))
-					out->nodeNumbers[0] = 0;
-				else if (FPgt(boxQuery->low.x, coord))
-					out->nodeNumbers[0] = 1;
-				else
-				{
-					out->nodeNumbers[0] = 0;
-					out->nodeNumbers[1] = 1;
-					out->nNodes = 2;
-				}
-			}
-			else
-			{
-				if (FPlt(boxQuery->high.y, coord))
-					out->nodeNumbers[0] = 0;
-				else if (FPgt(boxQuery->low.y, coord))
-					out->nodeNumbers[0] = 1;
-				else
-				{
-					out->nodeNumbers[0] = 0;
-					out->nodeNumbers[1] = 1;
-					out->nNodes = 2;
-				}
-			}
-			break;
-		default:
-			elog(ERROR, "unrecognized strategy number: %d", in->strategy);
-			break;
-	}
 
 	PG_RETURN_VOID();
 }

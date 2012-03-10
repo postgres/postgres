@@ -128,8 +128,8 @@ typedef struct spgPickSplitOut
  */
 typedef struct spgInnerConsistentIn
 {
-	StrategyNumber strategy;	/* operator strategy number */
-	Datum		query;			/* operator's RHS value */
+	ScanKey		scankeys;		/* array of operators and comparison values */
+	int			nkeys;			/* length of array */
 
 	Datum		reconstructedValue;		/* value reconstructed at parent */
 	int			level;			/* current level (counting from zero) */
@@ -156,8 +156,8 @@ typedef struct spgInnerConsistentOut
  */
 typedef struct spgLeafConsistentIn
 {
-	StrategyNumber strategy;	/* operator strategy number */
-	Datum		query;			/* operator's RHS value */
+	ScanKey		scankeys;		/* array of operators and comparison values */
+	int			nkeys;			/* length of array */
 
 	Datum		reconstructedValue;		/* value reconstructed at parent */
 	int			level;			/* current level (counting from zero) */

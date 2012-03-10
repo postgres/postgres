@@ -126,7 +126,11 @@ typedef struct SpGistScanOpaqueData
 	SpGistState state;			/* see above */
 	MemoryContext tempCxt;		/* short-lived memory context */
 
-	/* Index quals for scan (copied from IndexScanDesc for convenience) */
+	/* Control flags showing whether to search nulls and/or non-nulls */
+	bool		searchNulls;	/* scan matches (all) null entries */
+	bool		searchNonNulls;	/* scan matches (some) non-null entries */
+
+	/* Index quals to be passed to opclass (null-related quals removed) */
 	int			numberOfKeys;	/* number of index qualifier conditions */
 	ScanKey		keyData;		/* array of index qualifier descriptors */
 
