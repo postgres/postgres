@@ -4038,7 +4038,7 @@ typedef struct sqlvar_struct sqlvar_t;
          <term><literal>sqlname</></term>
           <listitem>
            <para>
-            The the name of the field.
+            The name of the field.
            </para>
           </listitem>
          </varlistentry>
