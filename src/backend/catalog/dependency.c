@@ -1744,6 +1744,37 @@ find_expr_references_walker(Node *node,
 		}
 
 		/*
+		 * If the query is an INSERT or UPDATE, we should create a dependency
+		 * on each target column, to prevent the specific target column from
+		 * being dropped.  Although we will visit the TargetEntry nodes again
+		 * during query_tree_walker, we won't have enough context to do this
+		 * conveniently, so do it here.
+		 */
+		if (query->commandType == CMD_INSERT ||
+			query->commandType == CMD_UPDATE)
+		{
+			RangeTblEntry *rte;
+
+			if (query->resultRelation <= 0 ||
+				query->resultRelation > list_length(query->rtable))
+				elog(ERROR, "invalid resultRelation %d",
+					 query->resultRelation);
+			rte = rt_fetch(query->resultRelation, query->rtable);
+			if (rte->rtekind == RTE_RELATION)
+			{
+				foreach(lc, query->targetList)
+				{
+					TargetEntry *tle = (TargetEntry *) lfirst(lc);
+
+					if (tle->resjunk)
+						continue;		/* ignore junk tlist items */
+					add_object_address(OCLASS_CLASS, rte->relid, tle->resno,
+									   context->addrs);
+				}
+			}
+		}
+
+		/*
 		 * Add dependencies on constraints listed in query's constraintDeps
 		 */
 		foreach(lc, query->constraintDeps)
