@@ -81,7 +81,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
       </listitem>
      </varlistentry>
      <varlistentry>
-      <term><replaceable class="parameter">use_name</replaceable></term>
+      <term><replaceable class="parameter">user_name</replaceable></term>
       <listitem>
        <para>
         The name of the database user who will own the new database,
