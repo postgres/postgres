@@ -68,6 +68,7 @@ CREATE TABLE quad_point_tbl AS
     SELECT point(unique1,unique2) AS p FROM tenk1;
 INSERT INTO quad_point_tbl
     SELECT '(333.0,400.0)'::point FROM generate_series(1,1000);
+INSERT INTO quad_point_tbl VALUES (NULL), (NULL), (NULL);
 CREATE INDEX sp_quad_ind ON quad_point_tbl USING spgist (p);
 CREATE TABLE kd_point_tbl AS SELECT * FROM quad_point_tbl;
 CREATE INDEX sp_kd_ind ON kd_point_tbl USING spgist (p kd_point_ops);
@@ -226,6 +227,24 @@ SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0
  (-10,0)
  (10,10)
 (4 rows)
+
+SELECT count(*) FROM quad_point_tbl WHERE p IS NULL;
+ count 
+-------
+     3
+(1 row)
+
+SELECT count(*) FROM quad_point_tbl WHERE p IS NOT NULL;
+ count 
+-------
+ 11000
+(1 row)
+
+SELECT count(*) FROM quad_point_tbl;
+ count 
+-------
+ 11003
+(1 row)
 
 SELECT count(*) FROM quad_point_tbl WHERE p <@ box '(200,200,1000,1000)';
  count 
@@ -679,6 +698,50 @@ SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0
 (4 rows)
 
 EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE p IS NULL;
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Aggregate
+   ->  Index Only Scan using sp_quad_ind on quad_point_tbl
+         Index Cond: (p IS NULL)
+(3 rows)
+
+SELECT count(*) FROM quad_point_tbl WHERE p IS NULL;
+ count 
+-------
+     3
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE p IS NOT NULL;
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Aggregate
+   ->  Index Only Scan using sp_quad_ind on quad_point_tbl
+         Index Cond: (p IS NOT NULL)
+(3 rows)
+
+SELECT count(*) FROM quad_point_tbl WHERE p IS NOT NULL;
+ count 
+-------
+ 11000
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl;
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Aggregate
+   ->  Index Only Scan using sp_quad_ind on quad_point_tbl
+(2 rows)
+
+SELECT count(*) FROM quad_point_tbl;
+ count 
+-------
+ 11003
+(1 row)
+
+EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl WHERE p <@ box '(200,200,1000,1000)';
                         QUERY PLAN                         
 -----------------------------------------------------------
@@ -1107,6 +1170,55 @@ SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0
  (-10,0)
  (10,10)
 (4 rows)
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE p IS NULL;
+                  QUERY PLAN                  
+----------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on quad_point_tbl
+         Recheck Cond: (p IS NULL)
+         ->  Bitmap Index Scan on sp_quad_ind
+               Index Cond: (p IS NULL)
+(5 rows)
+
+SELECT count(*) FROM quad_point_tbl WHERE p IS NULL;
+ count 
+-------
+     3
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE p IS NOT NULL;
+                  QUERY PLAN                  
+----------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on quad_point_tbl
+         Recheck Cond: (p IS NOT NULL)
+         ->  Bitmap Index Scan on sp_quad_ind
+               Index Cond: (p IS NOT NULL)
+(5 rows)
+
+SELECT count(*) FROM quad_point_tbl WHERE p IS NOT NULL;
+ count 
+-------
+ 11000
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl;
+                  QUERY PLAN                  
+----------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on quad_point_tbl
+         ->  Bitmap Index Scan on sp_quad_ind
+(3 rows)
+
+SELECT count(*) FROM quad_point_tbl;
+ count 
+-------
+ 11003
+(1 row)
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl WHERE p <@ box '(200,200,1000,1000)';

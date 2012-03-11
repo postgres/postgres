@@ -102,6 +102,8 @@ CREATE TABLE quad_point_tbl AS
 INSERT INTO quad_point_tbl
     SELECT '(333.0,400.0)'::point FROM generate_series(1,1000);
 
+INSERT INTO quad_point_tbl VALUES (NULL), (NULL), (NULL);
+
 CREATE INDEX sp_quad_ind ON quad_point_tbl USING spgist (p);
 
 CREATE TABLE kd_point_tbl AS SELECT * FROM quad_point_tbl;
@@ -171,6 +173,12 @@ SELECT * FROM point_tbl WHERE f1 IS NULL;
 SELECT * FROM point_tbl WHERE f1 IS NOT NULL ORDER BY f1 <-> '0,1';
 
 SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
+
+SELECT count(*) FROM quad_point_tbl WHERE p IS NULL;
+
+SELECT count(*) FROM quad_point_tbl WHERE p IS NOT NULL;
+
+SELECT count(*) FROM quad_point_tbl;
 
 SELECT count(*) FROM quad_point_tbl WHERE p <@ box '(200,200,1000,1000)';
 
@@ -306,6 +314,18 @@ SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0
 SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
 
 EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE p IS NULL;
+SELECT count(*) FROM quad_point_tbl WHERE p IS NULL;
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE p IS NOT NULL;
+SELECT count(*) FROM quad_point_tbl WHERE p IS NOT NULL;
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl;
+SELECT count(*) FROM quad_point_tbl;
+
+EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl WHERE p <@ box '(200,200,1000,1000)';
 SELECT count(*) FROM quad_point_tbl WHERE p <@ box '(200,200,1000,1000)';
 
@@ -421,6 +441,18 @@ SET enable_bitmapscan = ON;
 EXPLAIN (COSTS OFF)
 SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
 SELECT * FROM point_tbl WHERE f1 <@ '(-10,-10),(10,10)':: box ORDER BY f1 <-> '0,1';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE p IS NULL;
+SELECT count(*) FROM quad_point_tbl WHERE p IS NULL;
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl WHERE p IS NOT NULL;
+SELECT count(*) FROM quad_point_tbl WHERE p IS NOT NULL;
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM quad_point_tbl;
+SELECT count(*) FROM quad_point_tbl;
 
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM quad_point_tbl WHERE p <@ box '(200,200,1000,1000)';

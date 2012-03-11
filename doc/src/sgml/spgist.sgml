@@ -100,6 +100,18 @@
   value when that is needed.
  </para>
 
+ <note>
+  <para>
+   The <acronym>SP-GiST</acronym> core code takes care of NULL entries.
+   Although <acronym>SP-GiST</acronym> indexes do store entries for nulls
+   in indexed columns, this is hidden from the index operator class code:
+   no null index entries or search conditions will ever be passed to the
+   operator class methods.  (It is assumed that <acronym>SP-GiST</acronym>
+   operators are strict and so cannot succeed for NULL values.)  NULLs
+   are therefore not discussed further here.
+  </para>
+ </note>
+
  <para>
   There are five user-defined methods that an index operator class for
   <acronym>SP-GiST</acronym> must provide.  All five follow the convention

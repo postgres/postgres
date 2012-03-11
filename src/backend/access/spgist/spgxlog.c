@@ -84,9 +84,18 @@ spgRedoCreateIndex(XLogRecPtr lsn, XLogRecord *record)
 	MarkBufferDirty(buffer);
 	UnlockReleaseBuffer(buffer);
 
-	buffer = XLogReadBuffer(*node, SPGIST_HEAD_BLKNO, true);
+	buffer = XLogReadBuffer(*node, SPGIST_ROOT_BLKNO, true);
 	Assert(BufferIsValid(buffer));
 	SpGistInitBuffer(buffer, SPGIST_LEAF);
+	page = (Page) BufferGetPage(buffer);
+	PageSetLSN(page, lsn);
+	PageSetTLI(page, ThisTimeLineID);
+	MarkBufferDirty(buffer);
+	UnlockReleaseBuffer(buffer);
+
+	buffer = XLogReadBuffer(*node, SPGIST_NULL_BLKNO, true);
+	Assert(BufferIsValid(buffer));
+	SpGistInitBuffer(buffer, SPGIST_LEAF | SPGIST_NULLS);
 	page = (Page) BufferGetPage(buffer);
 	PageSetLSN(page, lsn);
 	PageSetTLI(page, ThisTimeLineID);
@@ -116,7 +125,8 @@ spgRedoAddLeaf(XLogRecPtr lsn, XLogRecord *record)
 			page = BufferGetPage(buffer);
 
 			if (xldata->newPage)
-				SpGistInitBuffer(buffer, SPGIST_LEAF);
+				SpGistInitBuffer(buffer,
+								 SPGIST_LEAF | (xldata->storesNulls ? SPGIST_NULLS : 0));
 
 			if (!XLByteLE(lsn, PageGetLSN(page)))
 			{
@@ -218,7 +228,8 @@ spgRedoMoveLeafs(XLogRecPtr lsn, XLogRecord *record)
 			page = BufferGetPage(buffer);
 
 			if (xldata->newPage)
-				SpGistInitBuffer(buffer, SPGIST_LEAF);
+				SpGistInitBuffer(buffer,
+								 SPGIST_LEAF | (xldata->storesNulls ? SPGIST_NULLS : 0));
 
 			if (!XLByteLE(lsn, PageGetLSN(page)))
 			{
@@ -344,6 +355,7 @@ spgRedoAddNode(XLogRecPtr lsn, XLogRecord *record)
 			{
 				page = BufferGetPage(buffer);
 
+				/* AddNode is not used for nulls pages */
 				if (xldata->newPage)
 					SpGistInitBuffer(buffer, 0);
 
@@ -464,6 +476,7 @@ spgRedoSplitTuple(XLogRecPtr lsn, XLogRecord *record)
 		{
 			page = BufferGetPage(buffer);
 
+			/* SplitTuple is not used for nulls pages */
 			if (xldata->newPage)
 				SpGistInitBuffer(buffer, 0);
 
@@ -545,7 +558,7 @@ spgRedoPickSplit(XLogRecPtr lsn, XLogRecord *record)
 	 */
 	bbi = 0;
 
-	if (xldata->blknoSrc == SPGIST_HEAD_BLKNO)
+	if (SpGistBlockIsRoot(xldata->blknoSrc))
 	{
 		/* when splitting root, we touch it only in the guise of new inner */
 		srcBuffer = InvalidBuffer;
@@ -557,7 +570,8 @@ spgRedoPickSplit(XLogRecPtr lsn, XLogRecord *record)
 		Assert(BufferIsValid(srcBuffer));
 		page = (Page) BufferGetPage(srcBuffer);
 
-		SpGistInitBuffer(srcBuffer, SPGIST_LEAF);
+		SpGistInitBuffer(srcBuffer,
+						 SPGIST_LEAF | (xldata->storesNulls ? SPGIST_NULLS : 0));
 		/* don't update LSN etc till we're done with it */
 	}
 	else
@@ -612,7 +626,8 @@ spgRedoPickSplit(XLogRecPtr lsn, XLogRecord *record)
 		Assert(BufferIsValid(destBuffer));
 		page = (Page) BufferGetPage(destBuffer);
 
-		SpGistInitBuffer(destBuffer, SPGIST_LEAF);
+		SpGistInitBuffer(destBuffer,
+						 SPGIST_LEAF | (xldata->storesNulls ? SPGIST_NULLS : 0));
 		/* don't update LSN etc till we're done with it */
 	}
 	else
@@ -678,7 +693,8 @@ spgRedoPickSplit(XLogRecPtr lsn, XLogRecord *record)
 			page = BufferGetPage(buffer);
 
 			if (xldata->initInner)
-				SpGistInitBuffer(buffer, 0);
+				SpGistInitBuffer(buffer,
+								 (xldata->storesNulls ? SPGIST_NULLS : 0));
 
 			if (!XLByteLE(lsn, PageGetLSN(page)))
 			{
@@ -709,7 +725,7 @@ spgRedoPickSplit(XLogRecPtr lsn, XLogRecord *record)
 	if (xldata->blknoParent == InvalidBlockNumber)
 	{
 		/* no parent cause we split the root */
-		Assert(xldata->blknoInner == SPGIST_HEAD_BLKNO);
+		Assert(SpGistBlockIsRoot(xldata->blknoInner));
 	}
 	else if (xldata->blknoInner != xldata->blknoParent)
 	{
@@ -842,7 +858,7 @@ spgRedoVacuumRoot(XLogRecPtr lsn, XLogRecord *record)
 
 	if (!(record->xl_info & XLR_BKP_BLOCK_1))
 	{
-		buffer = XLogReadBuffer(xldata->node, SPGIST_HEAD_BLKNO, false);
+		buffer = XLogReadBuffer(xldata->node, xldata->blkno, false);
 		if (BufferIsValid(buffer))
 		{
 			page = BufferGetPage(buffer);
@@ -1039,7 +1055,8 @@ spg_desc(StringInfo buf, uint8 xl_info, char *rec)
 			break;
 		case XLOG_SPGIST_VACUUM_ROOT:
 			out_target(buf, ((spgxlogVacuumRoot *) rec)->node);
-			appendStringInfo(buf, "vacuum leaf tuples on root page");
+			appendStringInfo(buf, "vacuum leaf tuples on root page %u",
+							 ((spgxlogVacuumRoot *) rec)->blkno);
 			break;
 		case XLOG_SPGIST_VACUUM_REDIRECT:
 			out_target(buf, ((spgxlogVacuumRedirect *) rec)->node);

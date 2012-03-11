@@ -148,10 +148,10 @@ SpGistNewBuffer(Relation index)
 			break;				/* nothing known to FSM */
 
 		/*
-		 * The root page shouldn't ever be listed in FSM, but just in case it
-		 * is, ignore it.
+		 * The fixed pages shouldn't ever be listed in FSM, but just in case
+		 * one is, ignore it.
 		 */
-		if (blkno == SPGIST_HEAD_BLKNO)
+		if (SpGistBlockIsFixed(blkno))
 			continue;
 
 		buffer = ReadBuffer(index, blkno);
@@ -226,9 +226,8 @@ SpGistUpdateMetaPage(Relation index)
 }
 
 /* Macro to select proper element of lastUsedPages cache depending on flags */
-#define GET_LUP(c, f)	(((f) & GBUF_LEAF) ? \
-						 &(c)->lastUsedPages.leafPage : \
-						 &(c)->lastUsedPages.innerPage[(f) & GBUF_PARITY_MASK])
+/* Masking flags with SPGIST_CACHED_PAGES is just for paranoia's sake */
+#define GET_LUP(c, f)  (&(c)->lastUsedPages.cachedPage[((unsigned int) (f)) % SPGIST_CACHED_PAGES])
 
 /*
  * Allocate and initialize a new buffer of the type and parity specified by
@@ -254,15 +253,21 @@ static Buffer
 allocNewBuffer(Relation index, int flags)
 {
 	SpGistCache *cache = spgGetCache(index);
+	uint16		pageflags = 0;
+
+	if (GBUF_REQ_LEAF(flags))
+		pageflags |= SPGIST_LEAF;
+	if (GBUF_REQ_NULLS(flags))
+		pageflags |= SPGIST_NULLS;
 
 	for (;;)
 	{
 		Buffer		buffer;
 
 		buffer = SpGistNewBuffer(index);
-		SpGistInitBuffer(buffer, (flags & GBUF_LEAF) ? SPGIST_LEAF : 0);
+		SpGistInitBuffer(buffer, pageflags);
 
-		if (flags & GBUF_LEAF)
+		if (pageflags & SPGIST_LEAF)
 		{
 			/* Leaf pages have no parity concerns, so just use it */
 			return buffer;
@@ -270,9 +275,9 @@ allocNewBuffer(Relation index, int flags)
 		else
 		{
 			BlockNumber blkno = BufferGetBlockNumber(buffer);
-			int		blkParity = blkno % 3;
+			int		blkFlags = GBUF_INNER_PARITY(blkno);
 
-			if ((flags & GBUF_PARITY_MASK) == blkParity)
+			if ((flags & GBUF_PARITY_MASK) == blkFlags)
 			{
 				/* Page has right parity, use it */
 				return buffer;
@@ -280,8 +285,10 @@ allocNewBuffer(Relation index, int flags)
 			else
 			{
 				/* Page has wrong parity, record it in cache and try again */
-				cache->lastUsedPages.innerPage[blkParity].blkno = blkno;
-				cache->lastUsedPages.innerPage[blkParity].freeSpace =
+				if (pageflags & SPGIST_NULLS)
+					blkFlags |= GBUF_NULLS;
+				cache->lastUsedPages.cachedPage[blkFlags].blkno = blkno;
+				cache->lastUsedPages.cachedPage[blkFlags].freeSpace =
 					PageGetExactFreeSpace(BufferGetPage(buffer));
 				UnlockReleaseBuffer(buffer);
 			}
@@ -329,8 +336,8 @@ SpGistGetBuffer(Relation index, int flags, int needSpace, bool *isNew)
 		return allocNewBuffer(index, flags);
 	}
 
-	/* root page should never be in cache */
-	Assert(lup->blkno != SPGIST_HEAD_BLKNO);
+	/* fixed pages should never be in cache */
+	Assert(!SpGistBlockIsFixed(lup->blkno));
 
 	/* If cached freeSpace isn't enough, don't bother looking at the page */
 	if (lup->freeSpace >= needSpace)
@@ -355,7 +362,13 @@ SpGistGetBuffer(Relation index, int flags, int needSpace, bool *isNew)
 		if (PageIsNew(page) || SpGistPageIsDeleted(page) || PageIsEmpty(page))
 		{
 			/* OK to initialize the page */
-			SpGistInitBuffer(buffer, (flags & GBUF_LEAF) ? SPGIST_LEAF : 0);
+			uint16		pageflags = 0;
+
+			if (GBUF_REQ_LEAF(flags))
+				pageflags |= SPGIST_LEAF;
+			if (GBUF_REQ_NULLS(flags))
+				pageflags |= SPGIST_NULLS;
+			SpGistInitBuffer(buffer, pageflags);
 			lup->freeSpace = PageGetExactFreeSpace(page) - needSpace;
 			*isNew = true;
 			return buffer;
@@ -365,8 +378,8 @@ SpGistGetBuffer(Relation index, int flags, int needSpace, bool *isNew)
 		 * Check that page is of right type and has enough space.  We must
 		 * recheck this since our cache isn't necessarily up to date.
 		 */
-		if ((flags & GBUF_LEAF) ? SpGistPageIsLeaf(page) :
-			!SpGistPageIsLeaf(page))
+		if ((GBUF_REQ_LEAF(flags) ? SpGistPageIsLeaf(page) : !SpGistPageIsLeaf(page)) &&
+			(GBUF_REQ_NULLS(flags) ? SpGistPageStoresNulls(page) : !SpGistPageStoresNulls(page)))
 		{
 			int			freeSpace = PageGetExactFreeSpace(page);
 
@@ -407,14 +420,16 @@ SpGistSetLastUsedPage(Relation index, Buffer buffer)
 	BlockNumber blkno = BufferGetBlockNumber(buffer);
 	int			flags;
 
-	/* Never enter the root page in cache, though */
-	if (blkno == SPGIST_HEAD_BLKNO)
+	/* Never enter fixed pages (root pages) in cache, though */
+	if (SpGistBlockIsFixed(blkno))
 		return;
 
 	if (SpGistPageIsLeaf(page))
 		flags = GBUF_LEAF;
 	else
 		flags = GBUF_INNER_PARITY(blkno);
+	if (SpGistPageStoresNulls(page))
+		flags |= GBUF_NULLS;
 
 	lup = GET_LUP(cache, flags);
 
@@ -459,6 +474,7 @@ void
 SpGistInitMetapage(Page page)
 {
 	SpGistMetaPageData *metadata;
+	int			i;
 
 	SpGistInitPage(page, SPGIST_META);
 	metadata = SpGistPageGetMeta(page);
@@ -466,10 +482,8 @@ SpGistInitMetapage(Page page)
 	metadata->magicNumber = SPGIST_MAGIC_NUMBER;
 
 	/* initialize last-used-page cache to empty */
-	metadata->lastUsedPages.innerPage[0].blkno = InvalidBlockNumber;
-	metadata->lastUsedPages.innerPage[1].blkno = InvalidBlockNumber;
-	metadata->lastUsedPages.innerPage[2].blkno = InvalidBlockNumber;
-	metadata->lastUsedPages.leafPage.blkno = InvalidBlockNumber;
+	for (i = 0; i < SPGIST_CACHED_PAGES; i++)
+		metadata->lastUsedPages.cachedPage[i].blkno = InvalidBlockNumber;
 }
 
 /*
@@ -490,7 +504,7 @@ spgoptions(PG_FUNCTION_ARGS)
 }
 
 /*
- * Get the space needed to store a datum of the indicated type.
+ * Get the space needed to store a non-null datum of the indicated type.
  * Note the result is already rounded up to a MAXALIGN boundary.
  * Also, we follow the SPGiST convention that pass-by-val types are
  * just stored in their Datum representation (compare memcpyDatum).
@@ -511,7 +525,7 @@ SpGistGetTypeSize(SpGistTypeDesc *att, Datum datum)
 }
 
 /*
- * Copy the given datum to *target
+ * Copy the given non-null datum to *target
  */
 static void
 memcpyDatum(void *target, SpGistTypeDesc *att, Datum datum)
@@ -533,17 +547,20 @@ memcpyDatum(void *target, SpGistTypeDesc *att, Datum datum)
  * Construct a leaf tuple containing the given heap TID and datum value
  */
 SpGistLeafTuple
-spgFormLeafTuple(SpGistState *state, ItemPointer heapPtr, Datum datum)
+spgFormLeafTuple(SpGistState *state, ItemPointer heapPtr,
+				 Datum datum, bool isnull)
 {
 	SpGistLeafTuple tup;
 	unsigned int size;
 
 	/* compute space needed (note result is already maxaligned) */
-	size = SGLTHDRSZ + SpGistGetTypeSize(&state->attType, datum);
+	size = SGLTHDRSZ;
+	if (!isnull)
+		size += SpGistGetTypeSize(&state->attType, datum);
 
 	/*
 	 * Ensure that we can replace the tuple with a dead tuple later.  This
-	 * test is unnecessary given current tuple layouts, but let's be safe.
+	 * test is unnecessary when !isnull, but let's be safe.
 	 */
 	if (size < SGDTSIZE)
 		size = SGDTSIZE;
@@ -554,7 +571,8 @@ spgFormLeafTuple(SpGistState *state, ItemPointer heapPtr, Datum datum)
 	tup->size = size;
 	tup->nextOffset = InvalidOffsetNumber;
 	tup->heapPtr = *heapPtr;
-	memcpyDatum(SGLTDATAPTR(tup), &state->attType, datum);
+	if (!isnull)
+		memcpyDatum(SGLTDATAPTR(tup), &state->attType, datum);
 
 	return tup;
 }

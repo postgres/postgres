@@ -11,6 +11,7 @@ should have a high fanout to minimize I/O.  The challenge is to map tree
 nodes to disk pages in such a way that the search algorithm accesses only a
 few disk pages, even if it traverses many nodes.
 
+
 COMMON STRUCTURE DESCRIPTION
 
 Logically, an SP-GiST tree is a set of tuples, each of which can be either
@@ -70,6 +71,21 @@ Leaf tuple consists of:
         quad and k-d tree - the point itself
 
   ItemPointer to the heap
+
+
+NULLS HANDLING
+
+We assume that SPGiST-indexable operators are strict (can never succeed for
+null inputs).  It is still desirable to index nulls, so that whole-table
+indexscans are possible and so that "x IS NULL" can be implemented by an
+SPGiST indexscan.  However, we prefer that SPGiST index opclasses not have
+to cope with nulls.  Therefore, the main tree of an SPGiST index does not
+include any null entries.  We store null entries in a separate SPGiST tree
+occupying a disjoint set of pages (in particular, its own root page).
+Insertions and searches in the nulls tree do not use any of the
+opclass-supplied functions, but just use hardwired logic comparable to
+AllTheSame cases in the normal tree.
+
 
 INSERTION ALGORITHM
 
@@ -181,6 +197,7 @@ described in (5).
 and a new tuple to another page, if the list is short enough. This improves
 space utilization, but doesn't change the basis of the algorithm.
 
+
 CONCURRENCY
 
 While descending the tree, the insertion algorithm holds exclusive lock on
@@ -217,6 +234,7 @@ inner tuple or leaf-tuple chain head that the link formerly led to.  Scans
 scan that had already visited the parent level could possibly reach such a
 redirect tuple, so we can remove redirects once all active transactions have
 been flushed out of the system.
+
 
 DEAD TUPLES
 
@@ -269,6 +287,7 @@ to PLACEHOLDER status by VACUUM, and are then candidates for replacement.
 DEAD state is not currently possible, since VACUUM does not attempt to
 remove unused inner tuples.
 
+
 VACUUM
 
 VACUUM (or more precisely, spgbulkdelete) performs a single sequential scan
@@ -302,13 +321,16 @@ performed; otherwise, it does an spgbulkdelete scan with an empty target
 list, so as to clean up redirections and placeholders, update the free
 space map, and gather statistics.
 
+
 LAST USED PAGE MANAGEMENT
 
-List of last used pages contains four pages - a leaf page and three inner
-pages, one from each "triple parity" group.  This list is stored between
-calls on the index meta page, but updates are never WAL-logged to decrease
-WAL traffic.  Incorrect data on meta page isn't critical, because we could
-allocate a new page at any moment.
+The list of last used pages contains four pages - a leaf page and three
+inner pages, one from each "triple parity" group.  (Actually, there's one
+such list for the main tree and a separate one for the nulls tree.)  This
+list is stored between calls on the index meta page, but updates are never
+WAL-logged to decrease WAL traffic.  Incorrect data on meta page isn't
+critical, because we could allocate a new page at any moment.
+
 
 AUTHORS
 

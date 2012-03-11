@@ -307,7 +307,7 @@ vacuumLeafPage(spgBulkDeleteState *bds, Relation index, Buffer buffer)
 }
 
 /*
- * Vacuum the root page when it is a leaf
+ * Vacuum a root page when it is also a leaf
  *
  * On the root, we just delete any dead leaf tuples; no fancy business
  */
@@ -321,6 +321,7 @@ vacuumLeafRoot(spgBulkDeleteState *bds, Relation index, Buffer buffer)
 	OffsetNumber i,
 				max = PageGetMaxOffsetNumber(page);
 
+	xlrec.blkno = BufferGetBlockNumber(buffer);
 	xlrec.nDelete = 0;
 
 	/* Scan page, identify tuples to delete, accumulate stats */
@@ -537,7 +538,7 @@ spgvacuumpage(spgBulkDeleteState *bds, BlockNumber blkno)
 	}
 	else if (SpGistPageIsLeaf(page))
 	{
-		if (blkno == SPGIST_HEAD_BLKNO)
+		if (SpGistBlockIsRoot(blkno))
 		{
 			vacuumLeafRoot(bds, index, buffer);
 			/* no need for vacuumRedirectAndPlaceholder */
@@ -560,7 +561,7 @@ spgvacuumpage(spgBulkDeleteState *bds, BlockNumber blkno)
 	 * put a new tuple.  Otherwise, check for empty/deletable page, and
 	 * make sure FSM knows about it.
 	 */
-	if (blkno != SPGIST_HEAD_BLKNO)
+	if (!SpGistBlockIsRoot(blkno))
 	{
 		/* If page is now empty, mark it deleted */
 		if (PageIsEmpty(page) && !SpGistPageIsDeleted(page))
@@ -598,7 +599,7 @@ spgvacuumscan(spgBulkDeleteState *bds)
 	/* Finish setting up spgBulkDeleteState */
 	initSpGistState(&bds->spgstate, index);
 	bds->OldestXmin = GetOldestXmin(true, false);
-	bds->lastFilledBlock = SPGIST_HEAD_BLKNO;
+	bds->lastFilledBlock = SPGIST_LAST_FIXED_BLKNO;
 
 	/*
 	 * Reset counts that will be incremented during the scan; needed in case
@@ -619,7 +620,7 @@ spgvacuumscan(spgBulkDeleteState *bds)
 	 * delete some deletable tuples.  See more extensive comments about
 	 * this in btvacuumscan().
 	 */
-	blkno = SPGIST_HEAD_BLKNO;
+	blkno = SPGIST_METAPAGE_BLKNO + 1;
 	for (;;)
 	{
 		/* Get the current relation length */
@@ -648,6 +649,12 @@ spgvacuumscan(spgBulkDeleteState *bds)
 	 * XXX disabled because it's unsafe due to possible concurrent inserts.
 	 * We'd have to rescan the pages to make sure they're still empty, and it
 	 * doesn't seem worth it.  Note that btree doesn't do this either.
+	 *
+	 * Another reason not to truncate is that it could invalidate the cached
+	 * pages-with-freespace pointers in the metapage and other backends'
+	 * relation caches, that is leave them pointing to nonexistent pages.
+	 * Adding RelationGetNumberOfBlocks calls to protect the places that use
+	 * those pointers would be unduly expensive.
 	 */
 #ifdef NOT_USED
 	if (num_pages > bds->lastFilledBlock + 1)

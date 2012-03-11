@@ -38,18 +38,15 @@ spgistBuildCallback(Relation index, HeapTuple htup, Datum *values,
 					bool *isnull, bool tupleIsAlive, void *state)
 {
 	SpGistBuildState *buildstate = (SpGistBuildState *) state;
+	MemoryContext oldCtx;
 
-	/* SPGiST doesn't index nulls */
-	if (*isnull == false)
-	{
-		/* Work in temp context, and reset it after each tuple */
-		MemoryContext oldCtx = MemoryContextSwitchTo(buildstate->tmpCtx);
+	/* Work in temp context, and reset it after each tuple */
+	oldCtx = MemoryContextSwitchTo(buildstate->tmpCtx);
 
-		spgdoinsert(index, &buildstate->spgstate, &htup->t_self, *values);
+	spgdoinsert(index, &buildstate->spgstate, &htup->t_self, *values, *isnull);
 
-		MemoryContextSwitchTo(oldCtx);
-		MemoryContextReset(buildstate->tmpCtx);
-	}
+	MemoryContextSwitchTo(oldCtx);
+	MemoryContextReset(buildstate->tmpCtx);
 }
 
 /*
@@ -65,20 +62,23 @@ spgbuild(PG_FUNCTION_ARGS)
 	double		reltuples;
 	SpGistBuildState buildstate;
 	Buffer		metabuffer,
-				rootbuffer;
+				rootbuffer,
+				nullbuffer;
 
 	if (RelationGetNumberOfBlocks(index) != 0)
 		elog(ERROR, "index \"%s\" already contains data",
 			 RelationGetRelationName(index));
 
 	/*
-	 * Initialize the meta page and root page
+	 * Initialize the meta page and root pages
 	 */
 	metabuffer = SpGistNewBuffer(index);
 	rootbuffer = SpGistNewBuffer(index);
+	nullbuffer = SpGistNewBuffer(index);
 
 	Assert(BufferGetBlockNumber(metabuffer) == SPGIST_METAPAGE_BLKNO);
-	Assert(BufferGetBlockNumber(rootbuffer) == SPGIST_HEAD_BLKNO);
+	Assert(BufferGetBlockNumber(rootbuffer) == SPGIST_ROOT_BLKNO);
+	Assert(BufferGetBlockNumber(nullbuffer) == SPGIST_NULL_BLKNO);
 
 	START_CRIT_SECTION();
 
@@ -86,6 +86,8 @@ spgbuild(PG_FUNCTION_ARGS)
 	MarkBufferDirty(metabuffer);
 	SpGistInitBuffer(rootbuffer, SPGIST_LEAF);
 	MarkBufferDirty(rootbuffer);
+	SpGistInitBuffer(nullbuffer, SPGIST_LEAF | SPGIST_NULLS);
+	MarkBufferDirty(nullbuffer);
 
 	if (RelationNeedsWAL(index))
 	{
@@ -104,12 +106,15 @@ spgbuild(PG_FUNCTION_ARGS)
 		PageSetTLI(BufferGetPage(metabuffer), ThisTimeLineID);
 		PageSetLSN(BufferGetPage(rootbuffer), recptr);
 		PageSetTLI(BufferGetPage(rootbuffer), ThisTimeLineID);
+		PageSetLSN(BufferGetPage(nullbuffer), recptr);
+		PageSetTLI(BufferGetPage(nullbuffer), ThisTimeLineID);
 	}
 
 	END_CRIT_SECTION();
 
 	UnlockReleaseBuffer(metabuffer);
 	UnlockReleaseBuffer(rootbuffer);
+	UnlockReleaseBuffer(nullbuffer);
 
 	/*
 	 * Now insert all the heap data into the index
@@ -159,11 +164,20 @@ spgbuildempty(PG_FUNCTION_ARGS)
 	/* Likewise for the root page. */
 	SpGistInitPage(page, SPGIST_LEAF);
 
-	smgrwrite(index->rd_smgr, INIT_FORKNUM, SPGIST_HEAD_BLKNO,
+	smgrwrite(index->rd_smgr, INIT_FORKNUM, SPGIST_ROOT_BLKNO,
 			  (char *) page, true);
 	if (XLogIsNeeded())
 		log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
-					SPGIST_HEAD_BLKNO, page);
+					SPGIST_ROOT_BLKNO, page);
+
+	/* Likewise for the null-tuples root page. */
+	SpGistInitPage(page, SPGIST_LEAF | SPGIST_NULLS);
+
+	smgrwrite(index->rd_smgr, INIT_FORKNUM, SPGIST_NULL_BLKNO,
+			  (char *) page, true);
+	if (XLogIsNeeded())
+		log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
+					SPGIST_NULL_BLKNO, page);
 
 	/*
 	 * An immediate sync is required even if we xlog'd the pages, because the
@@ -194,10 +208,6 @@ spginsert(PG_FUNCTION_ARGS)
 	MemoryContext oldCtx;
 	MemoryContext insertCtx;
 
-	/* SPGiST doesn't index nulls */
-	if (*isnull)
-		PG_RETURN_BOOL(false);
-
 	insertCtx = AllocSetContextCreate(CurrentMemoryContext,
 									  "SP-GiST insert temporary context",
 									  ALLOCSET_DEFAULT_MINSIZE,
@@ -207,7 +217,7 @@ spginsert(PG_FUNCTION_ARGS)
 
 	initSpGistState(&spgstate, index);
 
-	spgdoinsert(index, &spgstate, ht_ctid, *values);
+	spgdoinsert(index, &spgstate, ht_ctid, *values, *isnull);
 
 	SpGistUpdateMetaPage(index);
 

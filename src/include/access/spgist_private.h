@@ -21,8 +21,15 @@
 
 
 /* Page numbers of fixed-location pages */
-#define SPGIST_METAPAGE_BLKNO	 (0)
-#define SPGIST_HEAD_BLKNO		 (1)
+#define SPGIST_METAPAGE_BLKNO	 (0)	/* metapage */
+#define SPGIST_ROOT_BLKNO		 (1)	/* root for normal entries */
+#define SPGIST_NULL_BLKNO		 (2)	/* root for null-value entries */
+#define SPGIST_LAST_FIXED_BLKNO	 SPGIST_NULL_BLKNO
+
+#define SpGistBlockIsRoot(blkno) \
+	((blkno) == SPGIST_ROOT_BLKNO || (blkno) == SPGIST_NULL_BLKNO)
+#define SpGistBlockIsFixed(blkno) \
+	((BlockNumber) (blkno) <= (BlockNumber) SPGIST_LAST_FIXED_BLKNO)
 
 /*
  * Contents of page special space on SPGiST index pages
@@ -42,15 +49,14 @@ typedef SpGistPageOpaqueData *SpGistPageOpaque;
 #define SPGIST_META			(1<<0)
 #define SPGIST_DELETED		(1<<1)
 #define SPGIST_LEAF			(1<<2)
+#define SPGIST_NULLS		(1<<3)
 
 #define SpGistPageGetOpaque(page) ((SpGistPageOpaque) PageGetSpecialPointer(page))
 #define SpGistPageIsMeta(page) (SpGistPageGetOpaque(page)->flags & SPGIST_META)
 #define SpGistPageIsDeleted(page) (SpGistPageGetOpaque(page)->flags & SPGIST_DELETED)
 #define SpGistPageSetDeleted(page) (SpGistPageGetOpaque(page)->flags |= SPGIST_DELETED)
-#define SpGistPageSetNonDeleted(page) (SpGistPageGetOpaque(page)->flags &= ~SPGIST_DELETED)
 #define SpGistPageIsLeaf(page) (SpGistPageGetOpaque(page)->flags & SPGIST_LEAF)
-#define SpGistPageSetLeaf(page) (SpGistPageGetOpaque(page)->flags |= SPGIST_LEAF)
-#define SpGistPageSetInner(page) (SpGistPageGetOpaque(page)->flags &= ~SPGIST_LEAF)
+#define SpGistPageStoresNulls(page) (SpGistPageGetOpaque(page)->flags & SPGIST_NULLS)
 
 /*
  * The page ID is for the convenience of pg_filedump and similar utilities,
@@ -67,14 +73,16 @@ typedef SpGistPageOpaqueData *SpGistPageOpaque;
  */
 typedef struct SpGistLastUsedPage
 {
-	BlockNumber blkno;			/* block number of described page */
-	int			freeSpace;		/* its free space (could be obsolete!) */
+	BlockNumber blkno;			/* block number, or InvalidBlockNumber */
+	int			freeSpace;		/* page's free space (could be obsolete!) */
 } SpGistLastUsedPage;
+
+/* Note: indexes in cachedPage[] match flag assignments for SpGistGetBuffer */
+#define SPGIST_CACHED_PAGES 8
 
 typedef struct SpGistLUPCache
 {
-	SpGistLastUsedPage innerPage[3];	/* one per triple-parity group */
-	SpGistLastUsedPage leafPage;
+	SpGistLastUsedPage cachedPage[SPGIST_CACHED_PAGES];
 } SpGistLUPCache;
 
 /*
@@ -86,7 +94,7 @@ typedef struct SpGistMetaPageData
 	SpGistLUPCache lastUsedPages;	/* shared storage of last-used info */
 } SpGistMetaPageData;
 
-#define SPGIST_MAGIC_NUMBER (0xBA0BABED)
+#define SPGIST_MAGIC_NUMBER (0xBA0BABEE)
 
 #define SpGistPageGetMeta(p) \
 	((SpGistMetaPageData *) PageGetContents(p))
@@ -266,7 +274,15 @@ typedef SpGistNodeTupleData *SpGistNodeTuple;
  * node (which must be on the same page).  But when the root page is a leaf
  * page, we don't chain its tuples, so nextOffset is always 0 on the root.
  *
- * size must be a multiple of MAXALIGN
+ * size must be a multiple of MAXALIGN; also, it must be at least SGDTSIZE
+ * so that the tuple can be converted to REDIRECT status later.  (This
+ * restriction only adds bytes for the null-datum case, otherwise alignment
+ * restrictions force it anyway.)
+ *
+ * In a leaf tuple for a NULL indexed value, there's no useful datum value;
+ * however, the SGDTSIZE limit ensures that's there's a Datum word there
+ * anyway, so SGLTDATUM can be applied safely as long as you don't do
+ * anything with the result.
  */
 typedef struct SpGistLeafTupleData
 {
@@ -397,6 +413,7 @@ typedef struct spgxlogAddLeaf
 
 	BlockNumber blknoLeaf;		/* destination page for leaf tuple */
 	bool		newPage;		/* init dest page? */
+	bool		storesNulls;	/* page is in the nulls tree? */
 	OffsetNumber offnumLeaf;	/* offset where leaf tuple gets placed */
 	OffsetNumber offnumHeadLeaf; /* offset of head tuple in chain, if any */
 
@@ -419,6 +436,7 @@ typedef struct spgxlogMoveLeafs
 	uint16		nMoves;			/* number of tuples moved from source page */
 	bool		newPage;		/* init dest page? */
 	bool		replaceDead;	/* are we replacing a DEAD source tuple? */
+	bool		storesNulls;	/* pages are in the nulls tree? */
 
 	BlockNumber blknoParent;	/* where the parent downlink is */
 	OffsetNumber offnumParent;
@@ -502,6 +520,8 @@ typedef struct spgxlogPickSplit
 	OffsetNumber offnumInner;
 	bool		initInner;		/* re-init the Inner page? */
 
+	bool		storesNulls;	/* pages are in the nulls tree? */
+
 	BlockNumber blknoParent;	/* where the parent downlink is, if any */
 	OffsetNumber offnumParent;
 	uint16		nodeI;
@@ -553,9 +573,10 @@ typedef struct spgxlogVacuumLeaf
 
 typedef struct spgxlogVacuumRoot
 {
-	/* vacuum root page when it is a leaf */
+	/* vacuum a root page when it is also a leaf */
 	RelFileNode node;
 
+	BlockNumber blkno;			/* block number to clean */
 	uint16		nDelete;		/* number of tuples to delete */
 
 	spgxlogState stateSrc;
@@ -580,10 +601,18 @@ typedef struct spgxlogVacuumRedirect
  * page in the same triple-parity group as the specified block number.
  * (Typically, this should be GBUF_INNER_PARITY(parentBlockNumber + 1)
  * to follow the rule described in spgist/README.)
+ * In addition, GBUF_NULLS can be OR'd in to get a page for storage of
+ * null-valued tuples.
+ *
+ * Note: these flag values are used as indexes into lastUsedPages.
  */
-#define GBUF_PARITY_MASK		0x03
-#define GBUF_LEAF				0x04
+#define GBUF_LEAF				0x03
 #define GBUF_INNER_PARITY(x)	((x) % 3)
+#define GBUF_NULLS				0x04
+
+#define GBUF_PARITY_MASK		0x03
+#define GBUF_REQ_LEAF(flags)	(((flags) & GBUF_PARITY_MASK) == GBUF_LEAF)
+#define GBUF_REQ_NULLS(flags)	((flags) & GBUF_NULLS)
 
 /* spgutils.c */
 extern SpGistCache *spgGetCache(Relation index);
@@ -598,7 +627,8 @@ extern void SpGistInitBuffer(Buffer b, uint16 f);
 extern void SpGistInitMetapage(Page page);
 extern unsigned int SpGistGetTypeSize(SpGistTypeDesc *att, Datum datum);
 extern SpGistLeafTuple spgFormLeafTuple(SpGistState *state,
-										ItemPointer heapPtr, Datum datum);
+										ItemPointer heapPtr,
+										Datum datum, bool isnull);
 extern SpGistNodeTuple spgFormNodeTuple(SpGistState *state,
 										Datum label, bool isnull);
 extern SpGistInnerTuple spgFormInnerTuple(SpGistState *state,
@@ -621,6 +651,6 @@ extern void spgPageIndexMultiDelete(SpGistState *state, Page page,
 						int firststate, int reststate,
 						BlockNumber blkno, OffsetNumber offnum);
 extern void spgdoinsert(Relation index, SpGistState *state,
-						ItemPointer heapPtr, Datum datum);
+						ItemPointer heapPtr, Datum datum, bool isnull);
 
 #endif   /* SPGIST_PRIVATE_H */
