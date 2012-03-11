@@ -823,7 +823,7 @@ data. Empty in ordinary tables.</entry>
   </row>
   <row>
    <entry>t_infomask2</entry>
-   <entry>int16</entry>
+   <entry>uint16</entry>
    <entry>2 bytes</entry>
    <entry>number of attributes, plus various flag bits</entry>
   </row>
