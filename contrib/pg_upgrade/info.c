@@ -132,19 +132,19 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 void
 print_maps(FileNameMap *maps, int n_maps, const char *db_name)
 {
-	if (log_opts.debug)
+	if (log_opts.verbose)
 	{
 		int			mapnum;
 
-		pg_log(PG_DEBUG, "mappings for database \"%s\":\n", db_name);
+		pg_log(PG_VERBOSE, "mappings for database \"%s\":\n", db_name);
 
 		for (mapnum = 0; mapnum < n_maps; mapnum++)
-			pg_log(PG_DEBUG, "%s.%s: %u to %u\n",
+			pg_log(PG_VERBOSE, "%s.%s: %u to %u\n",
 				   maps[mapnum].nspname, maps[mapnum].relname,
 				   maps[mapnum].old_relfilenode,
 				   maps[mapnum].new_relfilenode);
 
-		pg_log(PG_DEBUG, "\n\n");
+		pg_log(PG_VERBOSE, "\n\n");
 	}
 }
 
@@ -168,11 +168,9 @@ get_db_and_rel_infos(ClusterInfo *cluster)
 	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
 		get_rel_infos(cluster, &cluster->dbarr.dbs[dbnum]);
 
-	if (log_opts.debug)
-	{
-		pg_log(PG_DEBUG, "\n%s databases:\n", CLUSTER_NAME(cluster));
+	pg_log(PG_VERBOSE, "\n%s databases:\n", CLUSTER_NAME(cluster));
+	if (log_opts.verbose)
 		print_db_infos(&cluster->dbarr);
-	}
 }
 
 
@@ -368,9 +366,9 @@ print_db_infos(DbInfoArr *db_arr)
 
 	for (dbnum = 0; dbnum < db_arr->ndbs; dbnum++)
 	{
-		pg_log(PG_DEBUG, "Database: %s\n", db_arr->dbs[dbnum].db_name);
+		pg_log(PG_VERBOSE, "Database: %s\n", db_arr->dbs[dbnum].db_name);
 		print_rel_infos(&db_arr->dbs[dbnum].rel_arr);
-		pg_log(PG_DEBUG, "\n\n");
+		pg_log(PG_VERBOSE, "\n\n");
 	}
 }
 
@@ -381,7 +379,7 @@ print_rel_infos(RelInfoArr *arr)
 	int			relnum;
 
 	for (relnum = 0; relnum < arr->nrels; relnum++)
-		pg_log(PG_DEBUG, "relname: %s.%s: reloid: %u reltblspace: %s\n",
+		pg_log(PG_VERBOSE, "relname: %s.%s: reloid: %u reltblspace: %s\n",
 			   arr->rels[relnum].nspname, arr->rels[relnum].relname,
 			   arr->rels[relnum].reloid, arr->rels[relnum].tablespace);
 }

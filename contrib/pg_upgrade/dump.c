@@ -11,6 +11,7 @@
 
 #include "pg_upgrade.h"
 
+#include <sys/types.h>
 
 void
 generate_old_dump(void)
@@ -22,10 +23,12 @@ generate_old_dump(void)
 	 * --binary-upgrade records the width of dropped columns in pg_class, and
 	 * restores the frozenid's for databases and relations.
 	 */
-	exec_prog(true,
+	exec_prog(true, true, UTILITY_LOG_FILE,
 			  SYSTEMQUOTE "\"%s/pg_dumpall\" --port %d --username \"%s\" "
-			  "--schema-only --binary-upgrade > \"%s/" ALL_DUMP_FILE "\""
-			  SYSTEMQUOTE, new_cluster.bindir, old_cluster.port, os_info.user, os_info.cwd);
+			  "--schema-only --binary-upgrade %s > \"%s\" 2>> \"%s\""
+			  SYSTEMQUOTE, new_cluster.bindir, old_cluster.port, os_info.user,
+			  log_opts.verbose ? "--verbose" : "",
+			  ALL_DUMP_FILE, UTILITY_LOG_FILE);
 	check_ok();
 }
 
@@ -56,15 +59,16 @@ split_old_dump(void)
 	char		filename[MAXPGPATH];
 	bool		suppressed_username = false;
 
-	snprintf(filename, sizeof(filename), "%s/%s", os_info.cwd, ALL_DUMP_FILE);
+	snprintf(filename, sizeof(filename), "%s", ALL_DUMP_FILE);
 	if ((all_dump = fopen(filename, "r")) == NULL)
 		pg_log(PG_FATAL, "Could not open dump file \"%s\": %s\n", filename, getErrorText(errno));
-	snprintf(filename, sizeof(filename), "%s/%s", os_info.cwd, GLOBALS_DUMP_FILE);
-	if ((globals_dump = fopen(filename, "w")) == NULL)
+	snprintf(filename, sizeof(filename), "%s", GLOBALS_DUMP_FILE);
+	if ((globals_dump = fopen_priv(filename, "w")) == NULL)
 		pg_log(PG_FATAL, "Could not write to dump file \"%s\": %s\n", filename, getErrorText(errno));
-	snprintf(filename, sizeof(filename), "%s/%s", os_info.cwd, DB_DUMP_FILE);
-	if ((db_dump = fopen(filename, "w")) == NULL)
+	snprintf(filename, sizeof(filename), "%s", DB_DUMP_FILE);
+	if ((db_dump = fopen_priv(filename, "w")) == NULL)
 		pg_log(PG_FATAL, "Could not write to dump file \"%s\": %s\n", filename, getErrorText(errno));
+
 	current_output = globals_dump;
 
 	/* patterns used to prevent our own username from being recreated */

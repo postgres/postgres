@@ -30,8 +30,7 @@ old_8_3_check_for_name_data_type_usage(ClusterInfo *cluster)
 
 	prep_status("Checking for invalid \"name\" user columns");
 
-	snprintf(output_path, sizeof(output_path), "%s/tables_using_name.txt",
-			 os_info.cwd);
+	snprintf(output_path, sizeof(output_path), "tables_using_name.txt");
 
 	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
 	{
@@ -73,7 +72,7 @@ old_8_3_check_for_name_data_type_usage(ClusterInfo *cluster)
 		for (rowno = 0; rowno < ntups; rowno++)
 		{
 			found = true;
-			if (script == NULL && (script = fopen(output_path, "w")) == NULL)
+			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
 				pg_log(PG_FATAL, "could not open file \"%s\": %s\n", output_path, getErrorText(errno));
 			if (!db_used)
 			{
@@ -126,8 +125,7 @@ old_8_3_check_for_tsquery_usage(ClusterInfo *cluster)
 
 	prep_status("Checking for tsquery user columns");
 
-	snprintf(output_path, sizeof(output_path), "%s/tables_using_tsquery.txt",
-			 os_info.cwd);
+	snprintf(output_path, sizeof(output_path), "tables_using_tsquery.txt");
 
 	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
 	{
@@ -164,7 +162,7 @@ old_8_3_check_for_tsquery_usage(ClusterInfo *cluster)
 		for (rowno = 0; rowno < ntups; rowno++)
 		{
 			found = true;
-			if (script == NULL && (script = fopen(output_path, "w")) == NULL)
+			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
 				pg_log(PG_FATAL, "could not open file \"%s\": %s\n", output_path, getErrorText(errno));
 			if (!db_used)
 			{
@@ -216,8 +214,7 @@ old_8_3_check_ltree_usage(ClusterInfo *cluster)
 
 	prep_status("Checking for contrib/ltree");
 
-	snprintf(output_path, sizeof(output_path), "%s/contrib_ltree.txt",
-			 os_info.cwd);
+	snprintf(output_path, sizeof(output_path), "contrib_ltree.txt");
 
 	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
 	{
@@ -244,7 +241,7 @@ old_8_3_check_ltree_usage(ClusterInfo *cluster)
 		for (rowno = 0; rowno < ntups; rowno++)
 		{
 			found = true;
-			if (script == NULL && (script = fopen(output_path, "w")) == NULL)
+			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
 				pg_log(PG_FATAL, "Could not open file \"%s\": %s\n",
 					   output_path, getErrorText(errno));
 			if (!db_used)
@@ -304,8 +301,7 @@ old_8_3_rebuild_tsvector_tables(ClusterInfo *cluster, bool check_mode)
 
 	prep_status("Checking for tsvector user columns");
 
-	snprintf(output_path, sizeof(output_path), "%s/rebuild_tsvector_tables.sql",
-			 os_info.cwd);
+	snprintf(output_path, sizeof(output_path), "rebuild_tsvector_tables.sql");
 
 	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
 	{
@@ -364,7 +360,7 @@ old_8_3_rebuild_tsvector_tables(ClusterInfo *cluster, bool check_mode)
 			found = true;
 			if (!check_mode)
 			{
-				if (script == NULL && (script = fopen(output_path, "w")) == NULL)
+				if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
 					pg_log(PG_FATAL, "could not open file \"%s\": %s\n", output_path, getErrorText(errno));
 				if (!db_used)
 				{
@@ -446,8 +442,7 @@ old_8_3_invalidate_hash_gin_indexes(ClusterInfo *cluster, bool check_mode)
 
 	prep_status("Checking for hash and GIN indexes");
 
-	snprintf(output_path, sizeof(output_path), "%s/reindex_hash_and_gin.sql",
-			 os_info.cwd);
+	snprintf(output_path, sizeof(output_path), "reindex_hash_and_gin.sql");
 
 	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
 	{
@@ -481,7 +476,7 @@ old_8_3_invalidate_hash_gin_indexes(ClusterInfo *cluster, bool check_mode)
 			found = true;
 			if (!check_mode)
 			{
-				if (script == NULL && (script = fopen(output_path, "w")) == NULL)
+				if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
 					pg_log(PG_FATAL, "could not open file \"%s\": %s\n", output_path, getErrorText(errno));
 				if (!db_used)
 				{
@@ -556,8 +551,7 @@ old_8_3_invalidate_bpchar_pattern_ops_indexes(ClusterInfo *cluster,
 
 	prep_status("Checking for bpchar_pattern_ops indexes");
 
-	snprintf(output_path, sizeof(output_path), "%s/reindex_bpchar_ops.sql",
-			 os_info.cwd);
+	snprintf(output_path, sizeof(output_path), "reindex_bpchar_ops.sql");
 
 	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
 	{
@@ -601,7 +595,7 @@ old_8_3_invalidate_bpchar_pattern_ops_indexes(ClusterInfo *cluster,
 			found = true;
 			if (!check_mode)
 			{
-				if (script == NULL && (script = fopen(output_path, "w")) == NULL)
+				if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
 					pg_log(PG_FATAL, "could not open file \"%s\": %s\n", output_path, getErrorText(errno));
 				if (!db_used)
 				{
@@ -683,7 +677,7 @@ old_8_3_create_sequence_script(ClusterInfo *cluster)
 	bool		found = false;
 	char	   *output_path = pg_malloc(MAXPGPATH);
 
-	snprintf(output_path, MAXPGPATH, "%s/adjust_sequences.sql", os_info.cwd);
+	snprintf(output_path, MAXPGPATH, "adjust_sequences.sql");
 
 	prep_status("Creating script to adjust sequences");
 
@@ -723,7 +717,7 @@ old_8_3_create_sequence_script(ClusterInfo *cluster)
 
 			found = true;
 
-			if (script == NULL && (script = fopen(output_path, "w")) == NULL)
+			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
 				pg_log(PG_FATAL, "could not open file \"%s\": %s\n", output_path, getErrorText(errno));
 			if (!db_used)
 			{

@@ -267,7 +267,7 @@ transfer_relfile(pageCnvCtx *pageConverter, const char *old_file,
 
 	if (user_opts.transfer_mode == TRANSFER_MODE_COPY)
 	{
-		pg_log(PG_INFO, "copying \"%s\" to \"%s\"\n", old_file, new_file);
+		pg_log(PG_VERBOSE, "copying \"%s\" to \"%s\"\n", old_file, new_file);
 
 		if ((msg = copyAndUpdateFile(pageConverter, old_file, new_file, true)) != NULL)
 			pg_log(PG_FATAL, "error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
@@ -275,7 +275,7 @@ transfer_relfile(pageCnvCtx *pageConverter, const char *old_file,
 	}
 	else
 	{
-		pg_log(PG_INFO, "linking \"%s\" to \"%s\"\n", old_file, new_file);
+		pg_log(PG_VERBOSE, "linking \"%s\" to \"%s\"\n", old_file, new_file);
 
 		if ((msg = linkAndUpdateFile(pageConverter, old_file, new_file)) != NULL)
 			pg_log(PG_FATAL,

@@ -28,8 +28,7 @@ new_9_0_populate_pg_largeobject_metadata(ClusterInfo *cluster, bool check_mode)
 
 	prep_status("Checking for large objects");
 
-	snprintf(output_path, sizeof(output_path), "%s/pg_largeobject.sql",
-			 os_info.cwd);
+	snprintf(output_path, sizeof(output_path), "pg_largeobject.sql");
 
 	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
 	{
@@ -49,7 +48,7 @@ new_9_0_populate_pg_largeobject_metadata(ClusterInfo *cluster, bool check_mode)
 			found = true;
 			if (!check_mode)
 			{
-				if (script == NULL && (script = fopen(output_path, "w")) == NULL)
+				if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
 					pg_log(PG_FATAL, "could not open file \"%s\": %s\n", output_path, getErrorText(errno));
 				fprintf(script, "\\connect %s\n",
 						quote_identifier(active_db->db_name));

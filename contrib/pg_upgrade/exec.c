@@ -13,7 +13,7 @@
 
 #include <fcntl.h>
 #include <unistd.h>
-
+#include <sys/types.h>
 
 static void check_data_dir(const char *pg_data);
 static void check_bin_dir(ClusterInfo *cluster);
@@ -34,24 +34,37 @@ static int win32_check_directory_write_permissions(void);
  *	instead of returning should an error occur.
  */
 int
-exec_prog(bool throw_error, const char *fmt,...)
+exec_prog(bool throw_error, bool is_priv,
+		  const char *log_file, const char *fmt,...)
 {
 	va_list		args;
 	int			result;
 	char		cmd[MAXPGPATH];
+	mode_t old_umask;
+
+	if (is_priv)
+		old_umask = umask(S_IRWXG | S_IRWXO);
 
 	va_start(args, fmt);
 	vsnprintf(cmd, MAXPGPATH, fmt, args);
 	va_end(args);
 
-	pg_log(PG_INFO, "%s\n", cmd);
+	pg_log(PG_VERBOSE, "%s\n", cmd);
 
 	result = system(cmd);
 
+	if (is_priv)
+		umask(old_umask);
+
 	if (result != 0)
 	{
-		pg_log(throw_error ? PG_FATAL : PG_INFO,
-			   "There were problems executing \"%s\"\n", cmd);
+		report_status(PG_REPORT, "*failure*");
+		fflush(stdout);
+		pg_log(PG_VERBOSE, "There were problems executing \"%s\"\n", cmd);
+		pg_log(throw_error ? PG_FATAL : PG_REPORT,
+			   "Consult the last few lines of \"%s\" for\n"
+			   "the probable cause of the failure.\n",
+				log_file);
 		return 1;
 	}
 

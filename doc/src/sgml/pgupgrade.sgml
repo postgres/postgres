@@ -91,27 +91,9 @@
      </varlistentry>
 
      <varlistentry>
-      <term><option>-g</option></term>
-      <term><option>--debug</option></term>
-      <listitem><para>enable debugging</para></listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-G</option> <replaceable>debug_filename</></term>
-      <term><option>--debugfile=</option><replaceable>debug_filename</></term>
-      <listitem><para>output debugging activity to file</para></listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-k</option></term>
       <term><option>--link</option></term>
       <listitem><para>use hard links instead of copying files to the new cluster</para></listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-l</option> <replaceable>log_filename</></term>
-      <term><option>--logfile=</option><replaceable>log_filename</></term>
-      <listitem><para>log internal activity to file</para></listitem>
      </varlistentry>
 
      <varlistentry>
@@ -143,6 +125,13 @@
      </varlistentry>
 
      <varlistentry>
+      <term><option>-r</option></term>
+      <term><option>--retain</option></term>
+      <listitem><para>retain SQL and log files even after successful completion
+      </para></listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-u</option> <replaceable>user_name</></term>
       <term><option>--user=</option><replaceable>user_name</></term>
       <listitem><para>cluster's super user name; environment
@@ -152,7 +141,7 @@
      <varlistentry>
       <term><option>-v</option></term>
       <term><option>--verbose</option></term>
-      <listitem><para>enable verbose output</para></listitem>
+      <listitem><para>enable verbose internal logging</para></listitem>
      </varlistentry>
 
      <varlistentry>

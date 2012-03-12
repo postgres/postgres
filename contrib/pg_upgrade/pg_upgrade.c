@@ -55,6 +55,14 @@ ClusterInfo old_cluster,
 			new_cluster;
 OSInfo		os_info;
 
+char *output_files[NUM_LOG_FILES] = {
+	SERVER_LOG_FILE,
+	RESTORE_LOG_FILE,
+	UTILITY_LOG_FILE,
+	INTERNAL_LOG_FILE
+};
+
+
 int
 main(int argc, char **argv)
 {
@@ -127,9 +135,11 @@ main(int argc, char **argv)
 	 * because there is no need to have the schema load use new oids.
 	 */
 	prep_status("Setting next OID for new cluster");
-	exec_prog(true, SYSTEMQUOTE "\"%s/pg_resetxlog\" -o %u \"%s\" > "
-			  DEVNULL SYSTEMQUOTE,
-			  new_cluster.bindir, old_cluster.controldata.chkpnt_nxtoid, new_cluster.pgdata);
+	exec_prog(true, true, UTILITY_LOG_FILE,
+			  SYSTEMQUOTE "\"%s/pg_resetxlog\" -o %u \"%s\" >> \"%s\" 2>&1"
+			  SYSTEMQUOTE,
+			  new_cluster.bindir, old_cluster.controldata.chkpnt_nxtoid,
+			  new_cluster.pgdata, UTILITY_LOG_FILE);
 	check_ok();
 
 	create_script_for_old_cluster_deletion(&deletion_script_file_name);
@@ -193,10 +203,11 @@ prepare_new_cluster(void)
 	 * --analyze so autovacuum doesn't update statistics later
 	 */
 	prep_status("Analyzing all rows in the new cluster");
-	exec_prog(true,
+	exec_prog(true, true, UTILITY_LOG_FILE,
 			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --username \"%s\" "
-			  "--all --analyze >> \"%s\" 2>&1" SYSTEMQUOTE,
-	  new_cluster.bindir, new_cluster.port, os_info.user, log_opts.filename2);
+			  "--all --analyze %s >> \"%s\" 2>&1" SYSTEMQUOTE,
+	  new_cluster.bindir, new_cluster.port, os_info.user,
+	  log_opts.verbose ? "--verbose" : "", UTILITY_LOG_FILE);
 	check_ok();
 
 	/*
@@ -206,10 +217,11 @@ prepare_new_cluster(void)
 	 * later.
 	 */
 	prep_status("Freezing all rows on the new cluster");
-	exec_prog(true,
+	exec_prog(true, true, UTILITY_LOG_FILE,
 			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --username \"%s\" "
-			  "--all --freeze >> \"%s\" 2>&1" SYSTEMQUOTE,
-	  new_cluster.bindir, new_cluster.port, os_info.user, log_opts.filename2);
+			  "--all --freeze %s >> \"%s\" 2>&1" SYSTEMQUOTE,
+	  new_cluster.bindir, new_cluster.port, os_info.user,
+	  log_opts.verbose ? "--verbose" : "", UTILITY_LOG_FILE);
 	check_ok();
 
 	get_pg_database_relfilenode(&new_cluster);
@@ -243,13 +255,14 @@ prepare_new_databases(void)
 	 * support functions in template1 but pg_dumpall creates database using
 	 * the template0 template.
 	 */
-	exec_prog(true,
-			  SYSTEMQUOTE "\"%s/psql\" --set ON_ERROR_STOP=on "
-	/* --no-psqlrc prevents AUTOCOMMIT=off */
+	exec_prog(true, true, RESTORE_LOG_FILE,
+			  SYSTEMQUOTE "\"%s/psql\" --echo-queries "
+			  "--set ON_ERROR_STOP=on "
+			  /* --no-psqlrc prevents AUTOCOMMIT=off */
 			  "--no-psqlrc --port %d --username \"%s\" "
-			  "-f \"%s/%s\" --dbname template1 >> \"%s\"" SYSTEMQUOTE,
-			  new_cluster.bindir, new_cluster.port, os_info.user, os_info.cwd,
-			  GLOBALS_DUMP_FILE, log_opts.filename2);
+			  "-f \"%s\" --dbname template1 >> \"%s\" 2>&1" SYSTEMQUOTE,
+			  new_cluster.bindir, new_cluster.port, os_info.user,
+			  GLOBALS_DUMP_FILE, RESTORE_LOG_FILE);
 	check_ok();
 
 	/* we load this to get a current list of databases */
@@ -275,12 +288,13 @@ create_new_objects(void)
 	check_ok();
 
 	prep_status("Restoring database schema to new cluster");
-	exec_prog(true,
-			  SYSTEMQUOTE "\"%s/psql\" --set ON_ERROR_STOP=on "
+	exec_prog(true, true, RESTORE_LOG_FILE,
+			  SYSTEMQUOTE "\"%s/psql\" --echo-queries "
+			  "--set ON_ERROR_STOP=on "
 			  "--no-psqlrc --port %d --username \"%s\" "
-			  "-f \"%s/%s\" --dbname template1 >> \"%s\"" SYSTEMQUOTE,
-			  new_cluster.bindir, new_cluster.port, os_info.user, os_info.cwd,
-			  DB_DUMP_FILE, log_opts.filename2);
+			  "-f \"%s\" --dbname template1 >> \"%s\" 2>&1" SYSTEMQUOTE,
+			  new_cluster.bindir, new_cluster.port, os_info.user,
+			  DB_DUMP_FILE, RESTORE_LOG_FILE);
 	check_ok();
 
 	/* regenerate now that we have objects in the databases */
@@ -306,29 +320,38 @@ copy_clog_xlog_xid(void)
 	check_ok();
 
 	prep_status("Copying old commit clogs to new server");
+	exec_prog(true, false, UTILITY_LOG_FILE,
 #ifndef WIN32
-	exec_prog(true, SYSTEMQUOTE "%s \"%s\" \"%s\"" SYSTEMQUOTE,
+			  SYSTEMQUOTE "%s \"%s\" \"%s\" >> \"%s\" 2>&1" SYSTEMQUOTE,
 			  "cp -Rf",
 #else
 	/* flags: everything, no confirm, quiet, overwrite read-only */
-	exec_prog(true, SYSTEMQUOTE "%s \"%s\" \"%s\\\"" SYSTEMQUOTE,
+			  SYSTEMQUOTE "%s \"%s\" \"%s\\\" >> \"%s\" 2>&1" SYSTEMQUOTE,
 			  "xcopy /e /y /q /r",
 #endif
-			  old_clog_path, new_clog_path);
+			  old_clog_path, new_clog_path, UTILITY_LOG_FILE);
 	check_ok();
 
 	/* set the next transaction id of the new cluster */
 	prep_status("Setting next transaction ID for new cluster");
-	exec_prog(true, SYSTEMQUOTE "\"%s/pg_resetxlog\" -f -x %u \"%s\" > " DEVNULL SYSTEMQUOTE,
-			  new_cluster.bindir, old_cluster.controldata.chkpnt_nxtxid, new_cluster.pgdata);
+	exec_prog(true, true, UTILITY_LOG_FILE,
+			  SYSTEMQUOTE
+			  "\"%s/pg_resetxlog\" -f -x %u \"%s\" >> \"%s\" 2>&1"
+			  SYSTEMQUOTE, new_cluster.bindir,
+			  old_cluster.controldata.chkpnt_nxtxid,
+			  new_cluster.pgdata, UTILITY_LOG_FILE);
 	check_ok();
 
 	/* now reset the wal archives in the new cluster */
 	prep_status("Resetting WAL archives");
-	exec_prog(true, SYSTEMQUOTE "\"%s/pg_resetxlog\" -l %u,%u,%u \"%s\" >> \"%s\" 2>&1" SYSTEMQUOTE,
-			  new_cluster.bindir, old_cluster.controldata.chkpnt_tli,
-			old_cluster.controldata.logid, old_cluster.controldata.nxtlogseg,
-			  new_cluster.pgdata, log_opts.filename2);
+	exec_prog(true, true, UTILITY_LOG_FILE,
+			  SYSTEMQUOTE
+			  "\"%s/pg_resetxlog\" -l %u,%u,%u \"%s\" >> \"%s\" 2>&1"
+			  SYSTEMQUOTE, new_cluster.bindir,
+			  old_cluster.controldata.chkpnt_tli,
+			  old_cluster.controldata.logid,
+			  old_cluster.controldata.nxtlogseg,
+			  new_cluster.pgdata, UTILITY_LOG_FILE);
 	check_ok();
 }
 
@@ -421,18 +444,27 @@ set_frozenxids(void)
 static void
 cleanup(void)
 {
-	char		filename[MAXPGPATH];
+	
+	fclose(log_opts.internal);
 
-	if (log_opts.fd)
-		fclose(log_opts.fd);
+	/* Remove dump and log files? */
+	if (!log_opts.retain)
+	{
+		char		filename[MAXPGPATH];
+		int i;
 
-	if (log_opts.debug_fd)
-		fclose(log_opts.debug_fd);
+		for (i = 0; i < NUM_LOG_FILES; i++)
+		{
+			snprintf(filename, sizeof(filename), "%s", output_files[i]);
+			unlink(filename);
+		}
 
-	snprintf(filename, sizeof(filename), "%s/%s", os_info.cwd, ALL_DUMP_FILE);
-	unlink(filename);
-	snprintf(filename, sizeof(filename), "%s/%s", os_info.cwd, GLOBALS_DUMP_FILE);
-	unlink(filename);
-	snprintf(filename, sizeof(filename), "%s/%s", os_info.cwd, DB_DUMP_FILE);
-	unlink(filename);
+		/* remove SQL files */
+		snprintf(filename, sizeof(filename), "%s", ALL_DUMP_FILE);
+		unlink(filename);
+		snprintf(filename, sizeof(filename), "%s", GLOBALS_DUMP_FILE);
+		unlink(filename);
+		snprintf(filename, sizeof(filename), "%s", DB_DUMP_FILE);
+		unlink(filename);
+	}
 }

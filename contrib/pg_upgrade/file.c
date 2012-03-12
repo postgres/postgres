@@ -316,3 +316,19 @@ win32_pghardlink(const char *src, const char *dst)
 }
 
 #endif
+
+
+/* fopen() file with no group/other permissions */
+FILE *
+fopen_priv(const char *path, const char *mode)
+{
+	mode_t old_umask = umask(S_IRWXG | S_IRWXO);
+	FILE	*fp;
+
+	fp = fopen(path, mode);
+	umask(old_umask);
+
+	return fp;
+}
+	
+

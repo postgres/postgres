@@ -80,7 +80,7 @@ executeQueryOrDie(PGconn *conn, const char *fmt,...)
 	vsnprintf(command, sizeof(command), fmt, args);
 	va_end(args);
 
-	pg_log(PG_DEBUG, "executing: %s\n", command);
+	pg_log(PG_VERBOSE, "executing: %s\n", command);
 	result = PQexec(conn, command);
 	status = PQresultStatus(result);
 
@@ -161,17 +161,22 @@ start_postmaster(ClusterInfo *cluster)
 	snprintf(cmd, sizeof(cmd),
 			 SYSTEMQUOTE "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" "
 			 "-o \"-p %d %s %s\" start >> \"%s\" 2>&1" SYSTEMQUOTE,
-			 cluster->bindir, log_opts.filename2, cluster->pgconfig, cluster->port,
+			 cluster->bindir, SERVER_LOG_FILE, cluster->pgconfig, cluster->port,
 			 (cluster->controldata.cat_ver >=
 			  BINARY_UPGRADE_SERVER_FLAG_CAT_VER) ? "-b" :
 			 "-c autovacuum=off -c autovacuum_freeze_max_age=2000000000",
-			 cluster->pgopts ? cluster->pgopts : "", log_opts.filename2);
+			 cluster->pgopts ? cluster->pgopts : "", SERVER_LOG_FILE2);
 
 	/*
 	 * Don't throw an error right away, let connecting throw the error because
 	 * it might supply a reason for the failure.
 	 */
-	pg_ctl_return = exec_prog(false, "%s", cmd);
+	pg_ctl_return = exec_prog(false, true,
+					/* pass both file names if the differ */
+					(strcmp(SERVER_LOG_FILE, SERVER_LOG_FILE2) == 0) ?
+						SERVER_LOG_FILE :
+						SERVER_LOG_FILE " or " SERVER_LOG_FILE2,
+					"%s", cmd);
 
 	/* Check to see if we can connect to the server; if not, report it. */
 	if ((conn = get_db_conn(cluster, "template1")) == NULL ||
@@ -211,11 +216,11 @@ stop_postmaster(bool fast)
 	snprintf(cmd, sizeof(cmd),
 			 SYSTEMQUOTE "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" -o \"%s\" "
 			 "%s stop >> \"%s\" 2>&1" SYSTEMQUOTE,
-			 cluster->bindir, log_opts.filename2, cluster->pgconfig,
+			 cluster->bindir, SERVER_LOG_FILE2, cluster->pgconfig,
 			 cluster->pgopts ? cluster->pgopts : "",
-			fast ? "-m fast" : "", log_opts.filename2);
+			fast ? "-m fast" : "", SERVER_LOG_FILE2);
 
-	exec_prog(fast ? false : true, "%s", cmd);
+	exec_prog(fast ? false : true, true, SERVER_LOG_FILE2, "%s", cmd);
 
 	os_info.running_cluster = NULL;
 }

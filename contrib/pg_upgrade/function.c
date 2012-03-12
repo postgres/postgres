@@ -218,8 +218,7 @@ check_loadable_libraries(void)
 
 	prep_status("Checking for presence of required libraries");
 
-	snprintf(output_path, sizeof(output_path), "%s/loadable_libraries.txt",
-			 os_info.cwd);
+	snprintf(output_path, sizeof(output_path), "loadable_libraries.txt");
 
 	for (libnum = 0; libnum < os_info.num_libraries; libnum++)
 	{
@@ -257,7 +256,7 @@ check_loadable_libraries(void)
 		if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		{
 			found = true;
-			if (script == NULL && (script = fopen(output_path, "w")) == NULL)
+			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
 				pg_log(PG_FATAL, "Could not open file \"%s\": %s\n",
 					   output_path, getErrorText(errno));
 			fprintf(script, "Could not load library \"%s\"\n%s\n",
