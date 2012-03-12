@@ -314,6 +314,27 @@ the reverse map of the nextOffset links (ie, when we see tuple x links to
 tuple y, we set predecessor[y] = x).  Then head tuples are the ones with
 no predecessor.
 
+Because insertions can occur while VACUUM runs, a pure sequential scan
+could miss deleting some target leaf tuples, because they could get moved
+from a not-yet-visited leaf page to an already-visited leaf page as a
+consequence of a PickSplit or MoveLeafs operation.  Failing to delete any
+target TID is not acceptable, so we have to extend the algorithm to cope
+with such cases.  We recognize that such a move might have occurred when
+we see a leaf-page REDIRECT tuple whose XID indicates it might have been
+created after the VACUUM scan started.  We add the redirection target TID
+to a "pending list" of places we need to recheck.  Between pages of the
+main sequential scan, we empty the pending list by visiting each listed
+TID.  If it points to an inner tuple (from a PickSplit), add each downlink
+TID to the pending list.  If it points to a leaf page, vacuum that page.
+(We could just vacuum the single pointed-to chain, but vacuuming the
+whole page simplifies the code and reduces the odds of VACUUM having to
+modify the same page multiple times.)  To ensure that pending-list
+processing can never get into an endless loop, even in the face of
+concurrent index changes, we don't remove list entries immediately but
+only after we've completed all pending-list processing; instead we just
+mark items as done after processing them.  Adding a TID that's already in
+the list is a no-op, whether or not that item is marked done yet.
+
 spgbulkdelete also updates the index's free space map.
 
 Currently, spgvacuumcleanup has nothing to do if spgbulkdelete was
