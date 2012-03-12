@@ -212,7 +212,7 @@ PostgreSQL documentation
       <term><option>--no-locale</option></term>
       <listitem>
        <para>
-		Equivalent to <option>--locale=C</option>.
+        Equivalent to <option>--locale=C</option>.
        </para>
       </listitem>
      </varlistentry>
@@ -231,8 +231,8 @@ PostgreSQL documentation
       <term><option>--text-search-config=<replaceable>CFG</></option></term>
       <listitem>
        <para>
-		Sets the default text search configuration.
-		See <xref linkend="guc-default-text-search-config"> for further information.
+        Sets the default text search configuration.
+        See <xref linkend="guc-default-text-search-config"> for further information.
        </para>
       </listitem>
      </varlistentry>
