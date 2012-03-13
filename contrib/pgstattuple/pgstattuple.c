@@ -231,6 +231,9 @@ pgstat_relation(Relation rel, FunctionCallInfo fcinfo)
 				case GIN_AM_OID:
 					err = "gin index";
 					break;
+				case SPGIST_AM_OID:
+					err = "spgist index";
+					break;
 				default:
 					err = "unknown index";
 					break;
