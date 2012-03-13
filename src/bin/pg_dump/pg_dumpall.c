@@ -1525,12 +1525,17 @@ makeAlterConfigCommand(PGconn *conn, const char *arrayitem,
 {
 	char	   *pos;
 	char	   *mine;
-	PQExpBuffer buf = createPQExpBuffer();
+	PQExpBuffer buf;
 
 	mine = pg_strdup(arrayitem);
 	pos = strchr(mine, '=');
 	if (pos == NULL)
+	{
+		free(mine);
 		return;
+	}
+
+	buf = createPQExpBuffer();
 
 	*pos = 0;
 	appendPQExpBuffer(buf, "ALTER %s %s ", type, fmtId(name));
