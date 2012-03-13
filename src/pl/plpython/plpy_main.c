@@ -12,6 +12,7 @@
 #include "executor/spi.h"
 #include "miscadmin.h"
 #include "utils/guc.h"
+#include "utils/memutils.h"
 #include "utils/syscache.h"
 
 #include "plpython.h"
@@ -66,10 +67,16 @@ static void plpython_error_callback(void *arg);
 static void plpython_inline_error_callback(void *arg);
 static void PLy_init_interp(void);
 
+static PLyExecutionContext *PLy_push_execution_context(void);
+static void PLy_pop_execution_context(void);
+
 static const int plpython_python_version = PY_MAJOR_VERSION;
 
 /* initialize global variables */
 PyObject *PLy_interp_globals = NULL;
+
+/* this doesn't need to be global; use PLy_current_execution_context() */
+static PLyExecutionContext *PLy_execution_contexts = NULL;
 
 
 void
@@ -113,6 +120,8 @@ _PG_init(void)
 	init_procedure_caches();
 
 	explicit_subtransactions = NIL;
+
+	PLy_execution_contexts = NULL;
 
 	inited = true;
 }
@@ -179,13 +188,20 @@ Datum
 plpython_call_handler(PG_FUNCTION_ARGS)
 {
 	Datum		retval;
-	PLyProcedure *save_curr_proc;
+	PLyExecutionContext *exec_ctx;
 	ErrorContextCallback plerrcontext;
 
+	/* Note: SPI_finish() happens in plpy_exec.c, which is dubious design */
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed");
 
-	save_curr_proc = PLy_curr_procedure;
+	/*
+	 * Push execution context onto stack.  It is important that this get
+	 * popped again, so avoid putting anything that could throw error between
+	 * here and the PG_TRY.  (plpython_error_callback expects the stack entry
+	 * to be there, so we have to make the context first.)
+	 */
+	exec_ctx = PLy_push_execution_context();
 
 	/*
 	 * Setup error traceback support for ereport()
@@ -203,20 +219,20 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 			HeapTuple	trv;
 
 			proc = PLy_procedure_get(fcinfo->flinfo->fn_oid, true);
-			PLy_curr_procedure = proc;
+			exec_ctx->curr_proc = proc;
 			trv = PLy_exec_trigger(fcinfo, proc);
 			retval = PointerGetDatum(trv);
 		}
 		else
 		{
 			proc = PLy_procedure_get(fcinfo->flinfo->fn_oid, false);
-			PLy_curr_procedure = proc;
+			exec_ctx->curr_proc = proc;
 			retval = PLy_exec_function(fcinfo, proc);
 		}
 	}
 	PG_CATCH();
 	{
-		PLy_curr_procedure = save_curr_proc;
+		PLy_pop_execution_context();
 		PyErr_Clear();
 		PG_RE_THROW();
 	}
@@ -224,8 +240,8 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 
 	/* Pop the error context stack */
 	error_context_stack = plerrcontext.previous;
-
-	PLy_curr_procedure = save_curr_proc;
+	/* ... and then the execution context */
+	PLy_pop_execution_context();
 
 	return retval;
 }
@@ -244,21 +260,13 @@ plpython_inline_handler(PG_FUNCTION_ARGS)
 	InlineCodeBlock *codeblock = (InlineCodeBlock *) DatumGetPointer(PG_GETARG_DATUM(0));
 	FunctionCallInfoData fake_fcinfo;
 	FmgrInfo	flinfo;
-	PLyProcedure *save_curr_proc;
 	PLyProcedure proc;
+	PLyExecutionContext *exec_ctx;
 	ErrorContextCallback plerrcontext;
 
+	/* Note: SPI_finish() happens in plpy_exec.c, which is dubious design */
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed");
-
-	save_curr_proc = PLy_curr_procedure;
-
-	/*
-	 * Setup error traceback support for ereport()
-	 */
-	plerrcontext.callback = plpython_inline_error_callback;
-	plerrcontext.previous = error_context_stack;
-	error_context_stack = &plerrcontext;
 
 	MemSet(&fake_fcinfo, 0, sizeof(fake_fcinfo));
 	MemSet(&flinfo, 0, sizeof(flinfo));
@@ -270,27 +278,44 @@ plpython_inline_handler(PG_FUNCTION_ARGS)
 	proc.pyname = PLy_strdup("__plpython_inline_block");
 	proc.result.out.d.typoid = VOIDOID;
 
+	/*
+	 * Push execution context onto stack.  It is important that this get
+	 * popped again, so avoid putting anything that could throw error between
+	 * here and the PG_TRY.  (plpython_inline_error_callback doesn't currently
+	 * need the stack entry, but for consistency with plpython_call_handler
+	 * we do it in this order.)
+	 */
+	exec_ctx = PLy_push_execution_context();
+
+	/*
+	 * Setup error traceback support for ereport()
+	 */
+	plerrcontext.callback = plpython_inline_error_callback;
+	plerrcontext.previous = error_context_stack;
+	error_context_stack = &plerrcontext;
+
 	PG_TRY();
 	{
 		PLy_procedure_compile(&proc, codeblock->source_text);
-		PLy_curr_procedure = &proc;
+		exec_ctx->curr_proc = &proc;
 		PLy_exec_function(&fake_fcinfo, &proc);
 	}
 	PG_CATCH();
 	{
+		PLy_pop_execution_context();
 		PLy_procedure_delete(&proc);
-		PLy_curr_procedure = save_curr_proc;
 		PyErr_Clear();
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
-	PLy_procedure_delete(&proc);
-
 	/* Pop the error context stack */
 	error_context_stack = plerrcontext.previous;
+	/* ... and then the execution context */
+	PLy_pop_execution_context();
 
-	PLy_curr_procedure = save_curr_proc;
+	/* Now clean up the transient procedure we made */
+	PLy_procedure_delete(&proc);
 
 	PG_RETURN_VOID();
 }
@@ -313,13 +338,54 @@ static bool PLy_procedure_is_trigger(Form_pg_proc procStruct)
 static void
 plpython_error_callback(void *arg)
 {
-	if (PLy_curr_procedure)
+	PLyExecutionContext *exec_ctx = PLy_current_execution_context();
+
+	if (exec_ctx->curr_proc)
 		errcontext("PL/Python function \"%s\"",
-				   PLy_procedure_name(PLy_curr_procedure));
+				   PLy_procedure_name(exec_ctx->curr_proc));
 }
 
 static void
 plpython_inline_error_callback(void *arg)
 {
 	errcontext("PL/Python anonymous code block");
+}
+
+PLyExecutionContext *
+PLy_current_execution_context(void)
+{
+	if (PLy_execution_contexts == NULL)
+		elog(ERROR, "no Python function is currently executing");
+
+	return PLy_execution_contexts;
+}
+
+static PLyExecutionContext *
+PLy_push_execution_context(void)
+{
+	PLyExecutionContext	*context = PLy_malloc(sizeof(PLyExecutionContext));
+
+	context->curr_proc = NULL;
+	context->scratch_ctx = AllocSetContextCreate(TopTransactionContext,
+												 "PL/Python scratch context",
+												 ALLOCSET_DEFAULT_MINSIZE,
+												 ALLOCSET_DEFAULT_INITSIZE,
+												 ALLOCSET_DEFAULT_MAXSIZE);
+	context->next = PLy_execution_contexts;
+	PLy_execution_contexts = context;
+	return context;
+}
+
+static void
+PLy_pop_execution_context(void)
+{
+	PLyExecutionContext	*context = PLy_execution_contexts;
+
+	if (context == NULL)
+		elog(ERROR, "no Python function is currently executing");
+
+	PLy_execution_contexts = context->next;
+
+	MemoryContextDelete(context->scratch_ctx);
+	PLy_free(context);
 }

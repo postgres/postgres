@@ -23,6 +23,7 @@
 #include "plpy_typeio.h"
 
 #include "plpy_elog.h"
+#include "plpy_main.h"
 
 
 /* I/O function caching */
@@ -258,10 +259,15 @@ PLy_output_record_funcs(PLyTypeInfo *arg, TupleDesc desc)
 	Assert(arg->is_rowtype == 1);
 }
 
+/*
+ * Transform a tuple into a Python dict object.
+ */
 PyObject *
 PLyDict_FromTuple(PLyTypeInfo *info, HeapTuple tuple, TupleDesc desc)
 {
 	PyObject   *volatile dict;
+	PLyExecutionContext *exec_ctx = PLy_current_execution_context();
+	MemoryContext oldcontext = CurrentMemoryContext;
 	int			i;
 
 	if (info->is_rowtype != 1)
@@ -273,6 +279,11 @@ PLyDict_FromTuple(PLyTypeInfo *info, HeapTuple tuple, TupleDesc desc)
 
 	PG_TRY();
 	{
+		/*
+		 * Do the work in the scratch context to avoid leaking memory from
+		 * the datatype output function calls.
+		 */
+		MemoryContextSwitchTo(exec_ctx->scratch_ctx);
 		for (i = 0; i < info->in.r.natts; i++)
 		{
 			char	   *key;
@@ -295,9 +306,12 @@ PLyDict_FromTuple(PLyTypeInfo *info, HeapTuple tuple, TupleDesc desc)
 				Py_DECREF(value);
 			}
 		}
+		MemoryContextSwitchTo(oldcontext);
+		MemoryContextReset(exec_ctx->scratch_ctx);
 	}
 	PG_CATCH();
 	{
+		MemoryContextSwitchTo(oldcontext);
 		Py_DECREF(dict);
 		PG_RE_THROW();
 	}

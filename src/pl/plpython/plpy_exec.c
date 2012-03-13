@@ -455,7 +455,9 @@ PLy_function_delete_args(PLyProcedure *proc)
 static void
 plpython_return_error_callback(void *arg)
 {
-	if (PLy_curr_procedure)
+	PLyExecutionContext *exec_ctx = PLy_current_execution_context();
+
+	if (exec_ctx->curr_proc)
 		errcontext("while creating return value");
 }
 
@@ -781,7 +783,9 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 static void
 plpython_trigger_error_callback(void *arg)
 {
-	if (PLy_curr_procedure)
+	PLyExecutionContext *exec_ctx = PLy_current_execution_context();
+
+	if (exec_ctx->curr_proc)
 		errcontext("while modifying trigger row");
 }
 

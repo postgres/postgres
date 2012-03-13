@@ -12,6 +12,7 @@
 
 #include "plpy_elog.h"
 
+#include "plpy_main.h"
 #include "plpy_procedure.h"
 
 
@@ -255,6 +256,7 @@ PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
 		/* The first frame always points at <module>, skip it. */
 		if (*tb_depth > 0)
 		{
+			PLyExecutionContext	*exec_ctx = PLy_current_execution_context();
 			char	   *proname;
 			char	   *fname;
 			char	   *line;
@@ -270,7 +272,7 @@ PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
 			else
 				fname = PyString_AsString(name);
 
-			proname = PLy_procedure_name(PLy_curr_procedure);
+			proname = PLy_procedure_name(exec_ctx->curr_proc);
 			plain_filename = PyString_AsString(filename);
 			plain_lineno = PyInt_AsLong(lineno);
 
@@ -287,7 +289,7 @@ PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
 			 * function code object was compiled with "<string>" as the
 			 * filename
 			 */
-			if (PLy_curr_procedure && plain_filename != NULL &&
+			if (exec_ctx->curr_proc && plain_filename != NULL &&
 				strcmp(plain_filename, "<string>") == 0)
 			{
 				/*
@@ -299,7 +301,7 @@ PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
 				 * for.  But we do not go as far as traceback.py in reading
 				 * the source of imported modules.
 				 */
-				line = get_source_line(PLy_curr_procedure->src, plain_lineno);
+				line = get_source_line(exec_ctx->curr_proc->src, plain_lineno);
 				if (line)
 				{
 					appendStringInfo(&tbstr, "\n    %s", line);

@@ -18,6 +18,7 @@
 #include "plpy_spi.h"
 
 #include "plpy_elog.h"
+#include "plpy_main.h"
 #include "plpy_planobject.h"
 #include "plpy_plpymodule.h"
 #include "plpy_procedure.h"
@@ -236,6 +237,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 
 	PG_TRY();
 	{
+		PLyExecutionContext *exec_ctx = PLy_current_execution_context();
 		char	   *volatile nulls;
 		volatile int j;
 
@@ -281,7 +283,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 		}
 
 		rv = SPI_execute_plan(plan->plan, plan->values, nulls,
-							  PLy_curr_procedure->fn_readonly, limit);
+							  exec_ctx->curr_proc->fn_readonly, limit);
 		ret = PLy_spi_execute_fetch_result(SPI_tuptable, SPI_processed, rv);
 
 		if (nargs > 0)
@@ -347,8 +349,10 @@ PLy_spi_execute_query(char *query, long limit)
 
 	PG_TRY();
 	{
+		PLyExecutionContext	*exec_ctx = PLy_current_execution_context();
+
 		pg_verifymbstr(query, strlen(query), false);
-		rv = SPI_execute(query, PLy_curr_procedure->fn_readonly, limit);
+		rv = SPI_execute(query, exec_ctx->curr_proc->fn_readonly, limit);
 		ret = PLy_spi_execute_fetch_result(SPI_tuptable, SPI_processed, rv);
 
 		PLy_spi_subtransaction_commit(oldcontext, oldowner);

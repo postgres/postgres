@@ -14,6 +14,7 @@
 #include "plpy_cursorobject.h"
 
 #include "plpy_elog.h"
+#include "plpy_main.h"
 #include "plpy_planobject.h"
 #include "plpy_procedure.h"
 #include "plpy_resultobject.h"
@@ -119,6 +120,7 @@ PLy_cursor_query(const char *query)
 
 	PG_TRY();
 	{
+		PLyExecutionContext	*exec_ctx = PLy_current_execution_context();
 		SPIPlanPtr	plan;
 		Portal		portal;
 
@@ -130,7 +132,7 @@ PLy_cursor_query(const char *query)
 				 SPI_result_code_string(SPI_result));
 
 		portal = SPI_cursor_open(NULL, plan, NULL, NULL,
-								 PLy_curr_procedure->fn_readonly);
+								 exec_ctx->curr_proc->fn_readonly);
 		SPI_freeplan(plan);
 
 		if (portal == NULL)
@@ -207,6 +209,7 @@ PLy_cursor_plan(PyObject *ob, PyObject *args)
 
 	PG_TRY();
 	{
+		PLyExecutionContext *exec_ctx = PLy_current_execution_context();
 		Portal		portal;
 		char	   *volatile nulls;
 		volatile int j;
@@ -253,7 +256,7 @@ PLy_cursor_plan(PyObject *ob, PyObject *args)
 		}
 
 		portal = SPI_cursor_open(NULL, plan->plan, plan->values, nulls,
-								 PLy_curr_procedure->fn_readonly);
+								 exec_ctx->curr_proc->fn_readonly);
 		if (portal == NULL)
 			elog(ERROR, "SPI_cursor_open() failed: %s",
 				 SPI_result_code_string(SPI_result));

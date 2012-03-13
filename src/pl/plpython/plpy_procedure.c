@@ -22,9 +22,6 @@
 #include "plpy_main.h"
 
 
-PLyProcedure *PLy_curr_procedure = NULL;
-
-
 static HTAB *PLy_procedure_cache = NULL;
 static HTAB *PLy_trigger_cache = NULL;
 

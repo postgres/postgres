@@ -45,8 +45,4 @@ extern PLyProcedure *PLy_procedure_get(Oid fn_oid, bool is_trigger);
 extern void PLy_procedure_compile(PLyProcedure *proc, const char *src);
 extern void PLy_procedure_delete(PLyProcedure *proc);
 
-
-/* currently active plpython function */
-extern PLyProcedure *PLy_curr_procedure;
-
 #endif	/* PLPY_PROCEDURE_H */
