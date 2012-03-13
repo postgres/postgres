@@ -367,6 +367,10 @@ get_source_line(const char *src, int lineno)
 	const char *next = src;
 	int			current = 0;
 
+	/* sanity check */
+	if (lineno <= 0)
+		return NULL;
+
 	while (current < lineno)
 	{
 		s = next;

@@ -584,6 +584,8 @@ PLyList_FromArray(PLyDatumToOb *arg, Datum d)
 	length = ARR_DIMS(array)[0];
 	lbound = ARR_LBOUND(array)[0];
 	list = PyList_New(length);
+	if (list == NULL)
+		PLy_elog(ERROR, "could not create new Python list");
 
 	for (i = 0; i < length; i++)
 	{

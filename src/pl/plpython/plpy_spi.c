@@ -340,7 +340,7 @@ PLy_spi_execute_query(char *query, long limit)
 	int			rv;
 	volatile MemoryContext oldcontext;
 	volatile ResourceOwner oldowner;
-	PyObject   *ret;
+	PyObject   *ret = NULL;
 
 	oldcontext = CurrentMemoryContext;
 	oldowner = CurrentResourceOwner;
@@ -366,6 +366,7 @@ PLy_spi_execute_query(char *query, long limit)
 
 	if (rv < 0)
 	{
+		Py_XDECREF(ret);
 		PLy_exception_set(PLy_exc_spi_error,
 						  "SPI_execute failed: %s",
 						  SPI_result_code_string(rv));

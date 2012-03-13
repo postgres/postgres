@@ -173,9 +173,11 @@ PLy_init_plpy(void)
 	main_mod = PyImport_AddModule("__main__");
 	main_dict = PyModule_GetDict(main_mod);
 	plpy_mod = PyImport_AddModule("plpy");
+	if (plpy_mod == NULL)
+		PLy_elog(ERROR, "could not initialize plpy");
 	PyDict_SetItemString(main_dict, "plpy", plpy_mod);
 	if (PyErr_Occurred())
-		elog(ERROR, "could not initialize plpy");
+		PLy_elog(ERROR, "could not initialize plpy");
 }
 
 static void
@@ -207,6 +209,11 @@ PLy_add_exceptions(PyObject *plpy)
 	PLy_exc_error = PyErr_NewException("plpy.Error", NULL, NULL);
 	PLy_exc_fatal = PyErr_NewException("plpy.Fatal", NULL, NULL);
 	PLy_exc_spi_error = PyErr_NewException("plpy.SPIError", NULL, NULL);
+
+	if (PLy_exc_error == NULL ||
+		PLy_exc_fatal == NULL ||
+		PLy_exc_spi_error == NULL)
+		PLy_elog(ERROR, "could not create the base SPI exceptions");
 
 	Py_INCREF(PLy_exc_error);
 	PyModule_AddObject(plpy, "Error", PLy_exc_error);
@@ -241,7 +248,13 @@ PLy_generate_spi_exceptions(PyObject *mod, PyObject *base)
 		PyObject   *sqlstate;
 		PyObject   *dict = PyDict_New();
 
+		if (dict == NULL)
+			PLy_elog(ERROR, "could not generate SPI exceptions");
+
 		sqlstate = PyString_FromString(unpack_sql_state(exception_map[i].sqlstate));
+		if (sqlstate == NULL)
+			PLy_elog(ERROR, "could not generate SPI exceptions");
+
 		PyDict_SetItemString(dict, "sqlstate", sqlstate);
 		Py_DECREF(sqlstate);
 		exc = PyErr_NewException(exception_map[i].name, base, dict);
@@ -370,7 +383,8 @@ PLy_output(volatile int level, PyObject *self, PyObject *args)
 		 */
 		PyObject   *o;
 
-		PyArg_UnpackTuple(args, "plpy.elog", 1, 1, &o);
+		if (!PyArg_UnpackTuple(args, "plpy.elog", 1, 1, &o))
+			PLy_elog(ERROR, "could not unpack arguments in plpy.elog");
 		so = PyObject_Str(o);
 	}
 	else
