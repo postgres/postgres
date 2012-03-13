@@ -74,8 +74,20 @@ PLy_typeinfo_dealloc(PLyTypeInfo *arg)
 {
 	if (arg->is_rowtype == 1)
 	{
+		int			i;
+
+		for (i = 0; i < arg->in.r.natts; i++)
+		{
+			if (arg->in.r.atts[i].elm != NULL)
+				PLy_free(arg->in.r.atts[i].elm);
+		}
 		if (arg->in.r.atts)
 			PLy_free(arg->in.r.atts);
+		for (i = 0; i < arg->out.r.natts; i++)
+		{
+			if (arg->out.r.atts[i].elm != NULL)
+				PLy_free(arg->out.r.atts[i].elm);
+		}
 		if (arg->out.r.atts)
 			PLy_free(arg->out.r.atts);
 	}
