@@ -2345,6 +2345,8 @@ PLyList_FromArray(PLyDatumToOb *arg, Datum d)
 	length = ARR_DIMS(array)[0];
 	lbound = ARR_LBOUND(array)[0];
 	list = PyList_New(length);
+	if (list == NULL)
+		PLy_elog(ERROR, "could not create new list");
 
 	for (i = 0; i < length; i++)
 	{
@@ -3664,7 +3666,7 @@ PLy_spi_execute_query(char *query, long limit)
 	int			rv;
 	volatile MemoryContext oldcontext;
 	volatile ResourceOwner oldowner;
-	PyObject   *ret;
+	PyObject   *ret = NULL;
 
 	oldcontext = CurrentMemoryContext;
 	oldowner = CurrentResourceOwner;
@@ -3727,6 +3729,7 @@ PLy_spi_execute_query(char *query, long limit)
 
 	if (rv < 0)
 	{
+		Py_XDECREF(ret);
 		PLy_exception_set(PLy_exc_spi_error,
 						  "SPI_execute failed: %s",
 						  SPI_result_code_string(rv));
@@ -3967,7 +3970,13 @@ PLy_generate_spi_exceptions(PyObject *mod, PyObject *base)
 		PyObject   *sqlstate;
 		PyObject   *dict = PyDict_New();
 
+		if (dict == NULL)
+			PLy_elog(ERROR, "could not generate SPI exceptions");
+
 		sqlstate = PyString_FromString(unpack_sql_state(exception_map[i].sqlstate));
+		if (sqlstate == NULL)
+			PLy_elog(ERROR, "could not generate SPI exceptions");
+
 		PyDict_SetItemString(dict, "sqlstate", sqlstate);
 		Py_DECREF(sqlstate);
 		exc = PyErr_NewException(exception_map[i].name, base, dict);
@@ -4007,6 +4016,11 @@ PLy_add_exceptions(PyObject *plpy)
 	PLy_exc_error = PyErr_NewException("plpy.Error", NULL, NULL);
 	PLy_exc_fatal = PyErr_NewException("plpy.Fatal", NULL, NULL);
 	PLy_exc_spi_error = PyErr_NewException("plpy.SPIError", NULL, NULL);
+
+	if (PLy_exc_error == NULL ||
+		PLy_exc_fatal == NULL ||
+		PLy_exc_spi_error == NULL)
+		PLy_elog(ERROR, "could not create the base SPI exceptions");
 
 	Py_INCREF(PLy_exc_error);
 	PyModule_AddObject(plpy, "Error", PLy_exc_error);
@@ -4124,6 +4138,8 @@ PLy_init_interp(void)
 	Py_INCREF(mainmod);
 	PLy_interp_globals = PyModule_GetDict(mainmod);
 	PLy_interp_safe_globals = PyDict_New();
+	if (PLy_interp_safe_globals == NULL)
+		PLy_elog(ERROR, "could not create globals");
 	PyDict_SetItemString(PLy_interp_globals, "GD", PLy_interp_safe_globals);
 	Py_DECREF(mainmod);
 	if (PLy_interp_globals == NULL || PyErr_Occurred())
@@ -4164,9 +4180,11 @@ PLy_init_plpy(void)
 	main_mod = PyImport_AddModule("__main__");
 	main_dict = PyModule_GetDict(main_mod);
 	plpy_mod = PyImport_AddModule("plpy");
+	if (plpy_mod == NULL)
+		PLy_elog(ERROR, "could not initialize plpy");
 	PyDict_SetItemString(main_dict, "plpy", plpy_mod);
 	if (PyErr_Occurred())
-		elog(ERROR, "could not initialize plpy");
+		PLy_elog(ERROR, "could not initialize plpy");
 }
 
 /* the python interface to the elog function
@@ -4232,7 +4250,8 @@ PLy_output(volatile int level, PyObject *self, PyObject *args)
 		 */
 		PyObject   *o;
 
-		PyArg_UnpackTuple(args, "plpy.elog", 1, 1, &o);
+		if (!PyArg_UnpackTuple(args, "plpy.elog", 1, 1, &o))
+			PLy_elog(ERROR, "could not unpack arguments in plpy.elog");
 		so = PyObject_Str(o);
 	}
 	else
@@ -4553,6 +4572,10 @@ get_source_line(const char *src, int lineno)
 	const char *s = NULL;
 	const char *next = src;
 	int			current = 0;
+
+	/* sanity check */
+	if (lineno <= 0)
+		return NULL;
 
 	while (current < lineno)
 	{
