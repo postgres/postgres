@@ -797,6 +797,8 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 
 	if (is_from)
 	{
+		Assert(rel);
+
 		/* check read-only transaction */
 		if (XactReadOnly && rel->rd_backend != MyBackendId)
 			PreventCommandIfReadOnly("COPY FROM");
