@@ -9481,7 +9481,7 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive)
 	 * during the backup.
 	 */
 	ptr = strstr(remaining, "BACKUP FROM:");
-	if (sscanf(ptr, "BACKUP FROM: %19s\n", backupfrom) != 1)
+	if (!ptr || sscanf(ptr, "BACKUP FROM: %19s\n", backupfrom) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("invalid data in file \"%s\"", BACKUP_LABEL_FILE)));
