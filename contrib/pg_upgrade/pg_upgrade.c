@@ -146,7 +146,7 @@ main(int argc, char **argv)
 
 	issue_warnings(sequence_script_file_name);
 
-	pg_log(PG_REPORT, "\nUpgrade complete\n");
+	pg_log(PG_REPORT, "\nUpgrade Complete\n");
 	pg_log(PG_REPORT, "----------------\n");
 
 	output_completion_banner(deletion_script_file_name);
