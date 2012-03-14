@@ -1987,7 +1987,6 @@ map_sql_value_to_xml_value(Datum value, Oid type, bool xml_escape_strings)
 					Timestamp	timestamp;
 					struct pg_tm tm;
 					fsec_t		fsec;
-					char	   *tzn = NULL;
 					char		buf[MAXDATELEN + 1];
 
 					timestamp = DatumGetTimestamp(value);
@@ -1999,7 +1998,7 @@ map_sql_value_to_xml_value(Datum value, Oid type, bool xml_escape_strings)
 								 errmsg("timestamp out of range"),
 								 errdetail("XML does not support infinite timestamp values.")));
 					else if (timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, NULL) == 0)
-						EncodeDateTime(&tm, fsec, NULL, &tzn, USE_XSD_DATES, buf);
+						EncodeDateTime(&tm, fsec, false, 0, NULL, USE_XSD_DATES, buf);
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
@@ -2026,7 +2025,7 @@ map_sql_value_to_xml_value(Datum value, Oid type, bool xml_escape_strings)
 								 errmsg("timestamp out of range"),
 								 errdetail("XML does not support infinite timestamp values.")));
 					else if (timestamp2tm(timestamp, &tz, &tm, &fsec, &tzn, NULL) == 0)
-						EncodeDateTime(&tm, fsec, &tz, &tzn, USE_XSD_DATES, buf);
+						EncodeDateTime(&tm, fsec, true, tz, tzn, USE_XSD_DATES, buf);
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),

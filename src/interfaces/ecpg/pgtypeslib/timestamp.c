@@ -354,7 +354,6 @@ PGTYPEStimestamp_to_asc(timestamp tstamp)
 	struct tm	tt,
 			   *tm = &tt;
 	char		buf[MAXDATELEN + 1];
-	char	   *tzn = NULL;
 	fsec_t		fsec;
 	int			DateStyle = 1;	/* this defaults to ISO_DATES, shall we make
 								 * it an option? */
@@ -362,7 +361,7 @@ PGTYPEStimestamp_to_asc(timestamp tstamp)
 	if (TIMESTAMP_NOT_FINITE(tstamp))
 		EncodeSpecialTimestamp(tstamp, buf);
 	else if (timestamp2tm(tstamp, NULL, tm, &fsec, NULL) == 0)
-		EncodeDateTime(tm, fsec, NULL, &tzn, DateStyle, buf, 0);
+		EncodeDateTime(tm, fsec, false, 0, NULL, DateStyle, buf, 0);
 	else
 	{
 		errno = PGTYPES_TS_BAD_TIMESTAMP;

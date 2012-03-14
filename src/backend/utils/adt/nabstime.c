@@ -311,7 +311,7 @@ abstimeout(PG_FUNCTION_ARGS)
 			break;
 		default:
 			abstime2tm(time, &tz, tm, &tzn);
-			EncodeDateTime(tm, fsec, &tz, &tzn, DateStyle, buf);
+			EncodeDateTime(tm, fsec, true, tz, tzn, DateStyle, buf);
 			break;
 	}
 

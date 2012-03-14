@@ -3679,38 +3679,53 @@ EncodeDateOnly(struct pg_tm * tm, int style, char *str)
 
 /* EncodeTimeOnly()
  * Encode time fields only.
+ *
+ * tm and fsec are the value to encode, print_tz determines whether to include
+ * a time zone (the difference between time and timetz types), tz is the
+ * numeric time zone offset, style is the date style, str is where to write the
+ * output.
  */
 void
-EncodeTimeOnly(struct pg_tm * tm, fsec_t fsec, int *tzp, int style, char *str)
+EncodeTimeOnly(struct pg_tm * tm, fsec_t fsec, bool print_tz, int tz, int style, char *str)
 {
 	sprintf(str, "%02d:%02d:", tm->tm_hour, tm->tm_min);
 	str += strlen(str);
 
 	AppendSeconds(str, tm->tm_sec, fsec, MAX_TIME_PRECISION, true);
 
-	if (tzp != NULL)
-		EncodeTimezone(str, *tzp, style);
+	if (print_tz)
+		EncodeTimezone(str, tz, style);
 }
 
 
 /* EncodeDateTime()
  * Encode date and time interpreted as local time.
- * Support several date styles:
+ *
+ * tm and fsec are the value to encode, print_tz determines whether to include
+ * a time zone (the difference between timestamp and timestamptz types), tz is
+ * the numeric time zone offset, tzn is the textual time zone, which if
+ * specified will be used instead of tz by some styles, style is the date
+ * style, str is where to write the output.
+ *
+ * Supported date styles:
  *	Postgres - day mon hh:mm:ss yyyy tz
  *	SQL - mm/dd/yyyy hh:mm:ss.ss tz
  *	ISO - yyyy-mm-dd hh:mm:ss+/-tz
  *	German - dd.mm.yyyy hh:mm:ss tz
  *	XSD - yyyy-mm-ddThh:mm:ss.ss+/-tz
- * Variants (affects order of month and day for Postgres and SQL styles):
- *	US - mm/dd/yyyy
- *	European - dd/mm/yyyy
  */
 void
-EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, char *str)
+EncodeDateTime(struct pg_tm * tm, fsec_t fsec, bool print_tz, int tz, const char *tzn, int style, char *str)
 {
 	int			day;
 
 	Assert(tm->tm_mon >= 1 && tm->tm_mon <= MONTHS_PER_YEAR);
+
+	/*
+	 * Negative tm_isdst means we have no valid time zone translation.
+	 */
+	if (tm->tm_isdst < 0)
+		print_tz = false;
 
 	switch (style)
 	{
@@ -3729,14 +3744,8 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 
 			AppendTimestampSeconds(str + strlen(str), tm, fsec);
 
-			/*
-			 * tzp == NULL indicates that we don't want *any* time zone info
-			 * in the output string. *tzn != NULL indicates that we have alpha
-			 * time zone info available. tm_isdst != -1 indicates that we have
-			 * a valid time zone translation.
-			 */
-			if (tzp != NULL && tm->tm_isdst >= 0)
-				EncodeTimezone(str, *tzp, style);
+			if (print_tz)
+				EncodeTimezone(str, tz, style);
 
 			if (tm->tm_year <= 0)
 				sprintf(str + strlen(str), " BC");
@@ -3762,12 +3771,12 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 			 * TZ abbreviations in the Olson database are plain ASCII.
 			 */
 
-			if (tzp != NULL && tm->tm_isdst >= 0)
+			if (print_tz)
 			{
-				if (*tzn != NULL)
-					sprintf(str + strlen(str), " %.*s", MAXTZLEN, *tzn);
+				if (tzn)
+					sprintf(str + strlen(str), " %.*s", MAXTZLEN, tzn);
 				else
-					EncodeTimezone(str, *tzp, style);
+					EncodeTimezone(str, tz, style);
 			}
 
 			if (tm->tm_year <= 0)
@@ -3785,12 +3794,12 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 
 			AppendTimestampSeconds(str + strlen(str), tm, fsec);
 
-			if (tzp != NULL && tm->tm_isdst >= 0)
+			if (print_tz)
 			{
-				if (*tzn != NULL)
-					sprintf(str + strlen(str), " %.*s", MAXTZLEN, *tzn);
+				if (tzn)
+					sprintf(str + strlen(str), " %.*s", MAXTZLEN, tzn);
 				else
-					EncodeTimezone(str, *tzp, style);
+					EncodeTimezone(str, tz, style);
 			}
 
 			if (tm->tm_year <= 0)
@@ -3819,10 +3828,10 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 			sprintf(str + strlen(str), " %04d",
 					(tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1));
 
-			if (tzp != NULL && tm->tm_isdst >= 0)
+			if (print_tz)
 			{
-				if (*tzn != NULL)
-					sprintf(str + strlen(str), " %.*s", MAXTZLEN, *tzn);
+				if (tzn)
+					sprintf(str + strlen(str), " %.*s", MAXTZLEN, tzn);
 				else
 				{
 					/*
@@ -3832,7 +3841,7 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 					 * the date/time parser later. - thomas 2001-10-19
 					 */
 					sprintf(str + strlen(str), " ");
-					EncodeTimezone(str, *tzp, style);
+					EncodeTimezone(str, tz, style);
 				}
 			}
 

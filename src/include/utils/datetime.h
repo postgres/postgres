@@ -290,8 +290,8 @@ extern void DateTimeParseError(int dterr, const char *str,
 extern int	DetermineTimeZoneOffset(struct pg_tm * tm, pg_tz *tzp);
 
 extern void EncodeDateOnly(struct pg_tm * tm, int style, char *str);
-extern void EncodeTimeOnly(struct pg_tm * tm, fsec_t fsec, int *tzp, int style, char *str);
-extern void EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, char *str);
+extern void EncodeTimeOnly(struct pg_tm * tm, fsec_t fsec, bool print_tz, int tz, int style, char *str);
+extern void EncodeDateTime(struct pg_tm * tm, fsec_t fsec, bool print_tz, int tz, const char *tzn, int style, char *str);
 extern void EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str);
 
 extern int	DecodeSpecial(int field, char *lowtoken, int *val);

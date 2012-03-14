@@ -215,13 +215,12 @@ timestamp_out(PG_FUNCTION_ARGS)
 	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
-	char	   *tzn = NULL;
 	char		buf[MAXDATELEN + 1];
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		EncodeSpecialTimestamp(timestamp, buf);
 	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) == 0)
-		EncodeDateTime(tm, fsec, NULL, &tzn, DateStyle, buf);
+		EncodeDateTime(tm, fsec, false, 0, NULL, DateStyle, buf);
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
@@ -501,7 +500,7 @@ timestamptz_out(PG_FUNCTION_ARGS)
 	if (TIMESTAMP_NOT_FINITE(dt))
 		EncodeSpecialTimestamp(dt, buf);
 	else if (timestamp2tm(dt, &tz, tm, &fsec, &tzn, NULL) == 0)
-		EncodeDateTime(tm, fsec, &tz, &tzn, DateStyle, buf);
+		EncodeDateTime(tm, fsec, true, tz, tzn, DateStyle, buf);
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
@@ -1422,7 +1421,7 @@ timestamptz_to_str(TimestampTz t)
 	if (TIMESTAMP_NOT_FINITE(t))
 		EncodeSpecialTimestamp(t, buf);
 	else if (timestamp2tm(t, &tz, tm, &fsec, &tzn, NULL) == 0)
-		EncodeDateTime(tm, fsec, &tz, &tzn, USE_ISO_DATES, buf);
+		EncodeDateTime(tm, fsec, true, tz, tzn, USE_ISO_DATES, buf);
 	else
 		strlcpy(buf, "(timestamp out of range)", sizeof(buf));
 

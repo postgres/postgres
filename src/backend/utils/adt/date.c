@@ -1131,7 +1131,7 @@ time_out(PG_FUNCTION_ARGS)
 	char		buf[MAXDATELEN + 1];
 
 	time2tm(time, tm, &fsec);
-	EncodeTimeOnly(tm, fsec, NULL, DateStyle, buf);
+	EncodeTimeOnly(tm, fsec, false, 0, DateStyle, buf);
 
 	result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
@@ -1918,7 +1918,7 @@ timetz_out(PG_FUNCTION_ARGS)
 	char		buf[MAXDATELEN + 1];
 
 	timetz2tm(time, tm, &fsec, &tz);
-	EncodeTimeOnly(tm, fsec, &tz, DateStyle, buf);
+	EncodeTimeOnly(tm, fsec, true, tz, DateStyle, buf);
 
 	result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
