@@ -530,7 +530,6 @@ timestamptz_recv(PG_FUNCTION_ARGS)
 	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
-	char	   *tzn;
 
 #ifdef HAVE_INT64_TIMESTAMP
 	timestamp = (TimestampTz) pq_getmsgint64(buf);
@@ -541,7 +540,7 @@ timestamptz_recv(PG_FUNCTION_ARGS)
 	/* rangecheck: see if timestamptz_out would like it */
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		 /* ok */ ;
-	else if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) != 0)
+	else if (timestamp2tm(timestamp, &tz, tm, &fsec, NULL, NULL) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
@@ -2723,7 +2722,6 @@ timestamptz_pl_interval(PG_FUNCTION_ARGS)
 	Interval   *span = PG_GETARG_INTERVAL_P(1);
 	TimestampTz result;
 	int			tz;
-	char	   *tzn;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		result = timestamp;
@@ -2735,7 +2733,7 @@ timestamptz_pl_interval(PG_FUNCTION_ARGS)
 					   *tm = &tt;
 			fsec_t		fsec;
 
-			if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) != 0)
+			if (timestamp2tm(timestamp, &tz, tm, &fsec, NULL, NULL) != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("timestamp out of range")));
@@ -2771,7 +2769,7 @@ timestamptz_pl_interval(PG_FUNCTION_ARGS)
 			fsec_t		fsec;
 			int			julian;
 
-			if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) != 0)
+			if (timestamp2tm(timestamp, &tz, tm, &fsec, NULL, NULL) != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("timestamp out of range")));
@@ -3250,12 +3248,11 @@ timestamptz_age(PG_FUNCTION_ARGS)
 			   *tm2 = &tt2;
 	int			tz1;
 	int			tz2;
-	char	   *tzn;
 
 	result = (Interval *) palloc(sizeof(Interval));
 
-	if (timestamp2tm(dt1, &tz1, tm1, &fsec1, &tzn, NULL) == 0 &&
-		timestamp2tm(dt2, &tz2, tm2, &fsec2, &tzn, NULL) == 0)
+	if (timestamp2tm(dt1, &tz1, tm1, &fsec1, NULL, NULL) == 0 &&
+		timestamp2tm(dt2, &tz2, tm2, &fsec2, NULL, NULL) == 0)
 	{
 		/* form the symbolic difference */
 		fsec = fsec1 - fsec2;
@@ -3509,7 +3506,6 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 	bool		redotz = false;
 	char	   *lowunits;
 	fsec_t		fsec;
-	char	   *tzn;
 	struct pg_tm tt,
 			   *tm = &tt;
 
@@ -3524,7 +3520,7 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 
 	if (type == UNITS)
 	{
-		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) != 0)
+		if (timestamp2tm(timestamp, &tz, tm, &fsec, NULL, NULL) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("timestamp out of range")));
@@ -4159,7 +4155,6 @@ timestamptz_part(PG_FUNCTION_ARGS)
 	char	   *lowunits;
 	double		dummy;
 	fsec_t		fsec;
-	char	   *tzn;
 	struct pg_tm tt,
 			   *tm = &tt;
 
@@ -4179,7 +4174,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 
 	if (type == UNITS)
 	{
-		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) != 0)
+		if (timestamp2tm(timestamp, &tz, tm, &fsec, NULL, NULL) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("timestamp out of range")));
@@ -4319,7 +4314,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 
 			case DTK_DOW:
 			case DTK_ISODOW:
-				if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) != 0)
+				if (timestamp2tm(timestamp, &tz, tm, &fsec, NULL, NULL) != 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 							 errmsg("timestamp out of range")));
@@ -4329,7 +4324,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 				break;
 
 			case DTK_DOY:
-				if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) != 0)
+				if (timestamp2tm(timestamp, &tz, tm, &fsec, NULL, NULL) != 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 							 errmsg("timestamp out of range")));
@@ -4650,14 +4645,13 @@ timestamptz_timestamp(PG_FUNCTION_ARGS)
 	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
-	char	   *tzn;
 	int			tz;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		result = timestamp;
 	else
 	{
-		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) != 0)
+		if (timestamp2tm(timestamp, &tz, tm, &fsec, NULL, NULL) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("timestamp out of range")));
