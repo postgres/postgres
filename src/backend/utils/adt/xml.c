@@ -2013,7 +2013,7 @@ map_sql_value_to_xml_value(Datum value, Oid type, bool xml_escape_strings)
 					struct pg_tm tm;
 					int			tz;
 					fsec_t		fsec;
-					char	   *tzn = NULL;
+					const char *tzn = NULL;
 					char		buf[MAXDATELEN + 1];
 
 					timestamp = DatumGetTimestamp(value);

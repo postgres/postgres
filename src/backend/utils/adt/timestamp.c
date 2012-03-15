@@ -494,7 +494,7 @@ timestamptz_out(PG_FUNCTION_ARGS)
 	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
-	char	   *tzn;
+	const char *tzn;
 	char		buf[MAXDATELEN + 1];
 
 	if (TIMESTAMP_NOT_FINITE(dt))
@@ -1415,7 +1415,7 @@ timestamptz_to_str(TimestampTz t)
 	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
-	char	   *tzn;
+	const char *tzn;
 
 	if (TIMESTAMP_NOT_FINITE(t))
 		EncodeSpecialTimestamp(t, buf);
@@ -1466,7 +1466,7 @@ dt2time(Timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
  * timezone) will be used.
  */
 int
-timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm, fsec_t *fsec, char **tzn, pg_tz *attimezone)
+timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm, fsec_t *fsec, const char **tzn, pg_tz *attimezone)
 {
 	Timestamp	date;
 	Timestamp	time;
@@ -1602,7 +1602,7 @@ recalc_t:
 		tm->tm_zone = tx->tm_zone;
 		*tzp = -tm->tm_gmtoff;
 		if (tzn != NULL)
-			*tzn = (char *) tm->tm_zone;
+			*tzn = tm->tm_zone;
 	}
 	else
 	{

@@ -4337,7 +4337,7 @@ pg_timezone_names(PG_FUNCTION_ARGS)
 	int			tzoff;
 	struct pg_tm tm;
 	fsec_t		fsec;
-	char	   *tzn;
+	const char *tzn;
 	Interval   *resInterval;
 	struct pg_tm itm;
 
