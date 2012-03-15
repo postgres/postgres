@@ -31,7 +31,38 @@ CREATE FUNCTION f4 () RETURNS text
     AS 'SELECT sepgsql_getcon()'
     LANGUAGE sql;
 SECURITY LABEL ON FUNCTION f4()
+    IS 'system_u:object_r:sepgsql_nosuch_trusted_proc_exec_t:s0';
+
+CREATE FUNCTION f5 (text) RETURNS bool
+	AS 'SELECT sepgsql_setcon($1)'
+    LANGUAGE sql;
+SECURITY LABEL ON FUNCTION f5(text)
     IS 'system_u:object_r:sepgsql_regtest_trusted_proc_exec_t:s0';
+
+CREATE TABLE auth_tbl(uname text, credential text, label text);
+INSERT INTO auth_tbl
+    VALUES ('foo', 'acbd18db4cc2f85cedef654fccc4a4d8', 'sepgsql_regtest_foo_t:s0'),
+           ('var', 'b2145aac704ce76dbe1ac7adac535b23', 'sepgsql_regtest_var_t:s0'),
+           ('baz', 'b2145aac704ce76dbe1ac7adac535b23', 'sepgsql_regtest_baz_t:s0');
+SECURITY LABEL ON TABLE auth_tbl
+    IS 'system_u:object_r:sepgsql_secret_table_t:s0';
+
+CREATE FUNCTION auth_func(text, text) RETURNS bool
+    LANGUAGE sql
+    AS 'SELECT sepgsql_setcon(regexp_replace(sepgsql_getcon(), ''_r:.*$'', ''_r:'' || label))
+        FROM auth_tbl WHERE uname = $1 AND credential = $2';
+SECURITY LABEL ON FUNCTION auth_func(text,text)
+    IS 'system_u:object_r:sepgsql_regtest_trusted_proc_exec_t:s0';
+
+CREATE TABLE foo_tbl(a int, b text);
+INSERT INTO foo_tbl VALUES (1, 'aaa'), (2,'bbb'), (3,'ccc'), (4,'ddd');
+SECURITY LABEL ON TABLE foo_tbl
+	IS 'system_u:object_r:sepgsql_regtest_foo_table_t:s0';
+
+CREATE TABLE var_tbl(x int, y text);
+INSERT INTO var_tbl VALUES (2,'xxx'), (3,'yyy'), (4,'zzz'), (5,'xyz');
+SECURITY LABEL ON TABLE var_tbl
+	IS 'system_u:object_r:sepgsql_regtest_var_table_t:s0';
 
 --
 -- Tests for default labeling behavior
@@ -69,6 +100,129 @@ SELECT f4();			-- failed on domain transition
 SELECT sepgsql_getcon();	-- client's label must be restored
 
 --
+-- Test for Dynamic Domain Transition
+--
+
+-- validation of transaction aware dynamic-transition
+-- @SECURITY-CONTEXT=unconfined_u:unconfined_r:unconfined_t:s0:c0.c25
+SELECT sepgsql_setcon('unconfined_u:unconfined_r:unconfined_t:s0:c0.c15');
+SELECT sepgsql_getcon();
+
+SELECT sepgsql_setcon(NULL);	-- failed to reset
+SELECT sepgsql_getcon();
+
+BEGIN;
+SELECT sepgsql_setcon('unconfined_u:unconfined_r:unconfined_t:s0:c0.c12');
+SELECT sepgsql_getcon();
+
+SAVEPOINT svpt_1;
+SELECT sepgsql_setcon('unconfined_u:unconfined_r:unconfined_t:s0:c0.c9');
+SELECT sepgsql_getcon();
+
+SAVEPOINT svpt_2;
+SELECT sepgsql_setcon('unconfined_u:unconfined_r:unconfined_t:s0:c0.c6');
+SELECT sepgsql_getcon();
+
+SAVEPOINT svpt_3;
+SELECT sepgsql_setcon('unconfined_u:unconfined_r:unconfined_t:s0:c0.c3');
+SELECT sepgsql_getcon();
+
+ROLLBACK TO SAVEPOINT svpt_2;
+SELECT sepgsql_getcon();		-- should be 's0:c0.c9'
+
+ROLLBACK TO SAVEPOINT svpt_1;
+SELECT sepgsql_getcon();		-- should be 's0:c0.c12'
+
+ABORT;
+SELECT sepgsql_getcon();		-- should be 's0:c0.c15'
+
+BEGIN;
+SELECT sepgsql_setcon('unconfined_u:unconfined_r:unconfined_t:s0:c0.c8');
+SELECT sepgsql_getcon();
+
+SAVEPOINT svpt_1;
+SELECT sepgsql_setcon('unconfined_u:unconfined_r:unconfined_t:s0:c0.c4');
+SELECT sepgsql_getcon();
+
+ROLLBACK TO SAVEPOINT svpt_1;
+SELECT sepgsql_getcon();		-- should be 's0:c0.c8'
+SELECT sepgsql_setcon('unconfined_u:unconfined_r:unconfined_t:s0:c0.c6');
+
+COMMIT;
+SELECT sepgsql_getcon();		-- should be 's0:c0.c6'
+
+-- sepgsql_regtest_user_t is not available dynamic-transition,
+-- unless sepgsql_setcon() is called inside of trusted-procedure
+-- @SECURITY-CONTEXT=unconfined_u:unconfined_r:sepgsql_regtest_user_t:s0:c0.c15
+
+-- sepgsql_regtest_user_t has no permission to switch current label
+SELECT sepgsql_setcon('unconfined_u:unconfined_r:sepgsql_regtest_user_t:s0');	-- failed
+SELECT sepgsql_getcon();
+
+-- trusted procedure allows to switch, but unavailable to override MCS rules
+SELECT f5('unconfined_u:unconfined_r:sepgsql_regtest_user_t:s0:c0.c7');	-- OK
+SELECT sepgsql_getcon();
+
+SELECT f5('unconfined_u:unconfined_r:sepgsql_regtest_user_t:s0:c0.c31');	-- Failed
+SELECT sepgsql_getcon();
+
+SELECT f5(NULL);	-- Failed
+SELECT sepgsql_getcon();
+
+BEGIN;
+SELECT f5('unconfined_u:unconfined_r:sepgsql_regtest_user_t:s0:c0.c3');	-- OK
+SELECT sepgsql_getcon();
+
+ABORT;
+SELECT sepgsql_getcon();
+
+--
+-- Test for simulation of typical connection pooling server
+--
+-- @SECURITY-CONTEXT=unconfined_u:unconfined_r:sepgsql_regtest_pool_t:s0
+
+-- we shouldn't allow to switch client label without trusted procedure
+SELECT sepgsql_setcon('unconfined_u:unconfined_r:sepgsql_regtest_foo_t:s0');
+
+SELECT * FROM auth_tbl;	-- failed, no permission to reference
+
+-- switch to "foo"
+SELECT auth_func('foo', 'acbd18db4cc2f85cedef654fccc4a4d8');
+
+SELECT sepgsql_getcon();
+
+SELECT * FROM foo_tbl;	-- OK
+
+SELECT * FROM var_tbl;	-- failed
+
+SELECT * FROM auth_tbl;	-- failed
+
+SELECT sepgsql_setcon(NULL);	-- end of session
+SELECT sepgsql_getcon();
+
+-- the pooler cannot touch these tables directry
+SELECT * FROM foo_tbl;	-- failed
+
+SELECT * FROM var_tbl;	-- failed
+
+-- switch to "var"
+SELECT auth_func('var', 'b2145aac704ce76dbe1ac7adac535b23');
+
+SELECT sepgsql_getcon();
+
+SELECT * FROM foo_tbl;  -- failed
+
+SELECT * FROM var_tbl;  -- OK
+
+SELECT * FROM auth_tbl;	-- failed
+
+SELECT sepgsql_setcon(NULL);    -- end of session
+
+-- misc checks
+SELECT auth_func('var', 'invalid credential');	-- not works
+SELECT sepgsql_getcon();
+
+--
 -- Clean up
 --
 -- @SECURITY-CONTEXT=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c255
@@ -79,3 +233,4 @@ DROP FUNCTION IF EXISTS f1() CASCADE;
 DROP FUNCTION IF EXISTS f2() CASCADE;
 DROP FUNCTION IF EXISTS f3() CASCADE;
 DROP FUNCTION IF EXISTS f4() CASCADE;
+DROP FUNCTION IF EXISTS f5(text) CASCADE;

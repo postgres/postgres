@@ -187,7 +187,7 @@ $ cd .../contrib/sepgsql
 $ make -f /usr/share/selinux/devel/Makefile
 $ sudo semodule -u sepgsql-regtest.pp
 $ sudo semodule -l | grep sepgsql
-sepgsql-regtest 1.03
+sepgsql-regtest 1.04
 </screen>
 
   <para>
@@ -526,6 +526,68 @@ postgres=# SELECT cid, cname, show_credit(cid) FROM customer;
   </sect3>
 
   <sect3>
+   <title>Dynamic domain transitions</title>
+   <para>
+    It is possible to use SELinux's dynamic domain transition feature
+    to switch the security label of the client process, the client domain,
+    to a new context, if that is allowed by the security policy.
+    The client domain needs the 'setcurrent' permission and also
+    'dyntransaction' from the old to the new domain.
+   </para>
+   <para>
+    Dynamic domain transitions should be considered carefully, because it
+    means we allows users to switch their label (also peforms a set of
+    privileges in SELinux model) in arbitrary way, unlike regular
+    mandatory way such as trusted procedures.
+    Thus, The dyntransition permission is only considered safe when used
+    to switch to a domain with a smaller set of privileges than the
+    original one, for example:
+   </para>
+<screen>
+regression=# select sepgsql_getcon();
+                    sepgsql_getcon
+-------------------------------------------------------
+ unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023
+(1 row)
+
+regression=# SELECT sepgsql_setcon('unconfined_u:unconfined_r:unconfined_t:s0-s0:c1.c4');
+ sepgsql_setcon 
+----------------
+ t
+(1 row)
+
+regression=# SELECT sepgsql_setcon('unconfined_u:unconfined_r:unconfined_t:s0-s0:c1.c1023');
+ERROR:  SELinux: security policy violation
+</screen>
+   <para>
+    In this example above we were allowed to switch from the larger MCS
+    range c1.c1023 to the smaller range c1.c4, but switching back was
+    denied.
+   </para>
+   <para>
+    A combination of dynamic domain transition and trusted procedure
+    enables an interesting use case that fits typical process life-
+    cycle of connection pooling software.
+    Even if your connection pooling software is not allowed to run most
+    of SQL commands, it shall be available to switch the security label
+    of the client using <literal>sepgsql_setcon()</literal> function
+    to be invoked inside of the trusted procedure; that should take some
+    credential to authorize the request to switch the client label.
+    After that, this session performs with privileges of the user being
+    switched, but it shall be unavailable to reference database objects
+    labeled as other user's one.
+    Then, it can revert the security label alsp using
+    <literal>sepgsql_setcon()</literal> with <literal>NULL</literal>
+    argument, unless the security policy prevent it.
+    The points of this use case are the trusted procedure is only way
+    for the connection pooling software to switch security label of
+    the clinet, and the trusted procedure does not work without
+    appropriate credentials. In addition, it is also a point that the
+    table to store credentials is only visible from trusted procedure.
+   </para>
+  </sect3>
+
+  <sect3>
    <title>Miscellaneous</title>
    <para>
     We reject the <xref linkend="sql-load"> command across the board, because
@@ -533,6 +595,56 @@ postgres=# SELECT cid, cname, show_credit(cid) FROM customer;
    </para>
 
   </sect3>
+</sect2>
+
+ <sect2 id="sepgsql-functions">
+  <title>Sepgsql Functions</title>
+  <para>
+   <xref linkend="sepgsql-functions-table"> shows the available functions.
+  </para>
+
+  <table id="sepgsql-functions-table">
+   <title>Sepgsql Functions</title>
+   <tgroup cols="2">
+    <tbody>
+     <row>
+      <entry><literal>sepgsql_getcon() returns text</literal></entry>
+      <entry>
+       Returns the client domain, the current security label of the client.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>sepgsql_setcon(text) returns bool</literal></entry>
+      <entry>
+       Switches the client domain of the current session to the new domain,
+       if allowed by the security policy.
+       It also accepts <literal>NULL</literal> input, and it shall be
+       considered as a transition to the original one.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>sepgsql_mcstrans_in(text) returns text</literal></entry>
+      <entry>Translates the given qualifies MLS/MCS range into raw format if
+      the mcstrans daemon is running.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>sepgsql_mcstrans_out(text) returns text</literal></entry>
+      <entry>Translates the given raw MCS/MCS range into qualified format if
+      the mcstrans daemon is running.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>sepgsql_restorecon(text) returns bool</literal></entry>
+      <entry>
+       Sets up initial security labels for all objectes within the
+       current database. The argument may be NULL, or the name of a specfile
+       to be used as alternative of the system default.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
  </sect2>
 
  <sect2 id="sepgsql-limitations">

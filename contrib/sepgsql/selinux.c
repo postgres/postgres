@@ -46,6 +46,12 @@ static struct
 				"transition", SEPG_PROCESS__TRANSITION
 			},
 			{
+				"dyntransition", SEPG_PROCESS__DYNTRANSITION
+			},
+			{
+				"setcurrent", SEPG_PROCESS__SETCURRENT
+			},
+			{
 				NULL, 0UL
 			}
 		}

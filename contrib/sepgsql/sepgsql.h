@@ -57,6 +57,8 @@
  * Internally used code of access vectors
  */
 #define SEPG_PROCESS__TRANSITION			(1<<0)
+#define SEPG_PROCESS__DYNTRANSITION			(1<<1)
+#define SEPG_PROCESS__SETCURRENT			(1<<2)
 
 #define SEPG_FILE__READ						(1<<0)
 #define SEPG_FILE__WRITE					(1<<1)
@@ -274,6 +276,7 @@ extern void sepgsql_object_relabel(const ObjectAddress *object,
 					   const char *seclabel);
 
 extern Datum sepgsql_getcon(PG_FUNCTION_ARGS);
+extern Datum sepgsql_setcon(PG_FUNCTION_ARGS);
 extern Datum sepgsql_mcstrans_in(PG_FUNCTION_ARGS);
 extern Datum sepgsql_mcstrans_out(PG_FUNCTION_ARGS);
 extern Datum sepgsql_restorecon(PG_FUNCTION_ARGS);

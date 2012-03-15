@@ -12,6 +12,7 @@
 
 #include "access/heapam.h"
 #include "access/genam.h"
+#include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
@@ -27,7 +28,9 @@
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/guc.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/tqual.h"
 
@@ -43,16 +46,182 @@ static needs_fmgr_hook_type next_needs_fmgr_hook = NULL;
 static fmgr_hook_type next_fmgr_hook = NULL;
 
 /*
- * client_label
+ * client_label_*
  *
- * security label of the client process
+ * security label of the database client.  Initially the client security label
+ * is equal to client_label_peer, and can be changed by one or more calls to
+ * sepgsql_setcon(), and also be temporarily overridden during execution of a
+ * trusted-procedure.
+ *
+ * sepgsql_setcon() is a transaction-aware operation; a (sub-)transaction
+ * rollback should also rollback the current client security label.  Therefore
+ * we use the list client_label_pending of pending_label to keep track of which
+ * labels were set during the (sub-)transactions.
  */
-static char *client_label = NULL;
+static char *client_label_peer		= NULL;	/* set by getpeercon(3) */
+static List *client_label_pending	= NIL;	/* pending list being set by
+											 * sepgsql_setcon() */
+static char *client_label_committed	= NULL;	/* set by sepgsql_setcon(),
+											 * and already committed */
+static char *client_label_func		= NULL;	/* set by trusted procedure */
 
+typedef struct {
+	SubTransactionId	subid;
+	char			   *label;
+} pending_label;
+
+/*
+ * sepgsql_get_client_label
+ *
+ * Returns the current security label of the client.  All code should use this
+ * routine to get the current label, instead of refering to the client_label_*
+ * variables above.
+ */
 char *
 sepgsql_get_client_label(void)
 {
-	return client_label;
+	/* trusted procedure client label override */
+	if (client_label_func)
+		return client_label_func;
+
+	/* uncommitted sepgsql_setcon() value */
+	if (client_label_pending)
+	{
+		pending_label  *plabel = llast(client_label_pending);
+
+		if (plabel->label)
+			return plabel->label;
+	}
+	else if (client_label_committed)
+		return client_label_committed;	/* set by sepgsql_setcon() committed */
+
+	/* default label */
+	Assert(client_label_peer != NULL);
+	return client_label_peer;
+}
+
+/*
+ * sepgsql_set_client_label
+ *
+ * This routine tries to switch the current security label of the client, and
+ * checks related permissions.  The supplied new label shall be added to the
+ * client_label_pending list, then saved at transaction-commit time to ensure
+ * transaction-awareness.
+ */
+static void
+sepgsql_set_client_label(const char *new_label)
+{
+	const char	   *tcontext;
+	MemoryContext	oldcxt;
+	pending_label  *plabel;
+
+	/* Reset to the initial client label, if NULL */
+	if (!new_label)
+		tcontext = client_label_peer;
+	else
+	{
+		if (security_check_context_raw((security_context_t) new_label) < 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_NAME),
+					 errmsg("SELinux: invalid security label: \"%s\"",
+							new_label)));
+		tcontext = new_label;
+	}
+
+	/* Check process:{setcurrent} permission. */
+	sepgsql_avc_check_perms_label(sepgsql_get_client_label(),
+								  SEPG_CLASS_PROCESS,
+								  SEPG_PROCESS__SETCURRENT,
+								  NULL,
+								  true);
+	/* Check process:{dyntransition} permission. */
+	sepgsql_avc_check_perms_label(tcontext,
+								  SEPG_CLASS_PROCESS,
+								  SEPG_PROCESS__DYNTRANSITION,
+								  NULL,
+								  true);
+	/*
+	 * Append the supplied new_label on the pending list until
+	 * the current transaction is committed.
+	 */
+	oldcxt = MemoryContextSwitchTo(CurTransactionContext);
+
+	plabel = palloc0(sizeof(pending_label));
+	plabel->subid = GetCurrentSubTransactionId();
+	if (new_label)
+		plabel->label = pstrdup(new_label);
+	client_label_pending = lappend(client_label_pending, plabel);
+
+	MemoryContextSwitchTo(oldcxt);
+}
+
+/*
+ * sepgsql_xact_callback
+ *
+ * A callback routine of transaction commit/abort/prepare.  Commmit or abort
+ * changes in the client_label_pending list.
+ */
+static void
+sepgsql_xact_callback(XactEvent event, void *arg)
+{
+	if (event == XACT_EVENT_COMMIT)
+	{
+		if (client_label_pending != NIL)
+		{
+			pending_label  *plabel = llast(client_label_pending);
+			char		   *new_label;
+
+			if (plabel->label)
+				new_label = MemoryContextStrdup(TopMemoryContext,
+												plabel->label);
+			else
+				new_label = NULL;
+
+			if (client_label_committed)
+				pfree(client_label_committed);
+
+			client_label_committed = new_label;
+			/*
+			 * XXX - Note that items of client_label_pending are allocated
+			 * on CurTransactionContext, thus, all acquired memory region
+			 * shall be released implicitly.
+			 */
+			client_label_pending = NIL;
+		}
+	}
+	else if (event == XACT_EVENT_ABORT)
+		client_label_pending = NIL;
+}
+
+/*
+ * sepgsql_subxact_callback
+ *
+ * A callback routine of sub-transaction start/abort/commit.  Releases all
+ * security labels that are set within the sub-transaction that is aborted.
+ */
+static void
+sepgsql_subxact_callback(SubXactEvent event, SubTransactionId mySubid,
+						 SubTransactionId parentSubid, void *arg)
+{
+	ListCell   *cell;
+	ListCell   *prev;
+	ListCell   *next;
+
+	if (event == SUBXACT_EVENT_ABORT_SUB)
+	{
+		prev = NULL;
+		for (cell = list_head(client_label_pending); cell; cell = next)
+		{
+			pending_label  *plabel = lfirst(cell);
+			next = lnext(cell);
+
+			if (plabel->subid == mySubid)
+				client_label_pending
+					= list_delete_cell(client_label_pending, cell, prev);
+			else
+				prev = cell;
+		}
+	}
 }
 
 /*
@@ -78,7 +247,7 @@ sepgsql_client_auth(Port *port, int status)
 	/*
 	 * Getting security label of the peer process using API of libselinux.
 	 */
-	if (getpeercon_raw(port->sock, &client_label) < 0)
+	if (getpeercon_raw(port->sock, &client_label_peer) < 0)
 		ereport(FATAL,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("SELinux: unable to get peer label: %m")));
@@ -185,8 +354,8 @@ sepgsql_fmgr_hook(FmgrHookEventType event,
 			Assert(!stack->old_label);
 			if (stack->new_label)
 			{
-				stack->old_label = client_label;
-				client_label = stack->new_label;
+				stack->old_label = client_label_func;
+				client_label_func = stack->new_label;
 			}
 			if (next_fmgr_hook)
 				(*next_fmgr_hook) (event, flinfo, &stack->next_private);
@@ -201,7 +370,7 @@ sepgsql_fmgr_hook(FmgrHookEventType event,
 
 			if (stack->new_label)
 			{
-				client_label = stack->old_label;
+				client_label_func = stack->old_label;
 				stack->old_label = NULL;
 			}
 			break;
@@ -215,8 +384,8 @@ sepgsql_fmgr_hook(FmgrHookEventType event,
 /*
  * sepgsql_init_client_label
  *
- * This routine initialize security label of the client, and set up related
- * hooks to be invoked later.
+ * Initializes the client security label and sets up related hooks for client
+ * label management.
  */
 void
 sepgsql_init_client_label(void)
@@ -231,7 +400,7 @@ sepgsql_init_client_label(void)
 	 * In this case, the process is always hooked on post-authentication, and
 	 * we can initialize the sepgsql_mode and client_label correctly.
 	 */
-	if (getcon_raw(&client_label) < 0)
+	if (getcon_raw(&client_label_peer) < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("SELinux: failed to get server security label: %m")));
@@ -246,6 +415,10 @@ sepgsql_init_client_label(void)
 
 	next_fmgr_hook = fmgr_hook;
 	fmgr_hook = sepgsql_fmgr_hook;
+
+	/* Transaction/Sub-transaction callbacks */
+	RegisterXactCallback(sepgsql_xact_callback, NULL);
+	RegisterSubXactCallback(sepgsql_subxact_callback, NULL);
 }
 
 /*
@@ -358,6 +531,27 @@ sepgsql_getcon(PG_FUNCTION_ARGS)
 	client_label = sepgsql_get_client_label();
 
 	PG_RETURN_TEXT_P(cstring_to_text(client_label));
+}
+
+/*
+ * BOOL sepgsql_setcon(TEXT)
+ *
+ * It switches the security label of the client.
+ */
+PG_FUNCTION_INFO_V1(sepgsql_setcon);
+Datum
+sepgsql_setcon(PG_FUNCTION_ARGS)
+{
+	const char *new_label;
+
+	if (PG_ARGISNULL(0))
+		new_label = NULL;
+	else
+		new_label = TextDatumGetCString(PG_GETARG_DATUM(0));
+
+	sepgsql_set_client_label(new_label);
+
+	PG_RETURN_BOOL(true);
 }
 
 /*

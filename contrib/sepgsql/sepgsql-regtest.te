@@ -1,4 +1,4 @@
-policy_module(sepgsql-regtest, 1.03)
+policy_module(sepgsql-regtest, 1.04)
 
 gen_require(`
 	all_userspace_class_perms
@@ -17,6 +17,8 @@ gen_tunable(sepgsql_regression_test_mode, false)
 #
 type sepgsql_regtest_trusted_proc_exec_t;
 postgresql_procedure_object(sepgsql_regtest_trusted_proc_exec_t)
+type sepgsql_nosuch_trusted_proc_exec_t;
+postgresql_procedure_object(sepgsql_nosuch_trusted_proc_exec_t)
 
 #
 # Test domains for database administrators
@@ -35,6 +37,12 @@ optional_policy(`
 	unconfined_rw_pipes(sepgsql_regtest_dba_t)
 ')
 
+# Type transition rules
+allow sepgsql_regtest_dba_t self : process { setcurrent };
+allow sepgsql_regtest_dba_t sepgsql_regtest_user_t : process { dyntransition };
+allow sepgsql_regtest_dba_t sepgsql_regtest_foo_t : process { dyntransition };
+allow sepgsql_regtest_dba_t sepgsql_regtest_var_t : process { dyntransition };
+
 #
 # Dummy domain for unpriv users
 #
@@ -51,6 +59,72 @@ optional_policy(`
 	unconfined_stream_connect(sepgsql_regtest_user_t)
 	unconfined_rw_pipes(sepgsql_regtest_user_t)
 ')
+# Type transition rules
+allow sepgsql_regtest_user_t sepgsql_regtest_dba_t : process { transition };
+type_transition sepgsql_regtest_user_t sepgsql_regtest_trusted_proc_exec_t:process sepgsql_regtest_dba_t;
+type_transition sepgsql_regtest_user_t sepgsql_nosuch_trusted_proc_exec_t:process sepgsql_regtest_nosuch_t;
+
+#
+# Dummy domain for (virtual) connection pooler software
+#
+# XXX - this test scenario assumes sepgsql_regtest_pool_t domain performs
+# as a typical connection pool server; that switches the client label of
+# this session prior to any user queries. The sepgsql_regtest_(foo|var)_t
+# is allowed to access its own table types, but not allowed to reference
+# other's one.
+#
+role sepgsql_regtest_pool_r;
+userdom_base_user_template(sepgsql_regtest_pool)
+userdom_manage_home_role(sepgsql_regtest_pool_r, sepgsql_regtest_pool_t)
+userdom_exec_user_home_content_files(sepgsql_regtest_pool_t)
+userdom_write_user_tmp_sockets(sepgsql_regtest_pool_t)
+
+type sepgsql_regtest_foo_t;
+type sepgsql_regtest_var_t;
+type sepgsql_regtest_foo_table_t;
+type sepgsql_regtest_var_table_t;
+
+allow sepgsql_regtest_foo_t sepgsql_regtest_foo_table_t:db_table { getattr select update insert delete lock };
+allow sepgsql_regtest_foo_t sepgsql_regtest_foo_table_t:db_column { getattr select update insert };
+allow sepgsql_regtest_foo_t sepgsql_regtest_foo_table_t:db_tuple { select update insert delete };
+
+allow sepgsql_regtest_var_t sepgsql_regtest_var_table_t:db_table { getattr select update insert delete lock };
+allow sepgsql_regtest_var_t sepgsql_regtest_var_table_t:db_column { getattr select update insert };
+allow sepgsql_regtest_var_t sepgsql_regtest_var_table_t:db_tuple { select update insert delete };
+
+optional_policy(`
+	gen_require(`
+		role unconfined_r;
+	')
+	postgresql_role(unconfined_r, sepgsql_regtest_foo_t)
+	postgresql_role(unconfined_r, sepgsql_regtest_var_t)
+	postgresql_table_object(sepgsql_regtest_foo_table_t)
+	postgresql_table_object(sepgsql_regtest_var_table_t)
+')
+optional_policy(`
+	postgresql_stream_connect(sepgsql_regtest_pool_t)
+	postgresql_role(sepgsql_regtest_pool_r, sepgsql_regtest_pool_t)
+')
+optional_policy(`
+	unconfined_stream_connect(sepgsql_regtest_pool_t)
+	unconfined_rw_pipes(sepgsql_regtest_pool_t)
+')
+# type transitions
+allow sepgsql_regtest_pool_t self:process { setcurrent };
+allow sepgsql_regtest_pool_t sepgsql_regtest_dba_t:process { transition };
+type_transition sepgsql_regtest_pool_t sepgsql_regtest_trusted_proc_exec_t:process sepgsql_regtest_dba_t;
+
+allow { sepgsql_regtest_foo_t sepgsql_regtest_var_t } self:process { setcurrent };
+allow { sepgsql_regtest_foo_t sepgsql_regtest_var_t } sepgsql_regtest_pool_t:process { dyntransition };
+
+#
+# Dummy domain for non-exist users
+#
+role sepgsql_regtest_nosuch_r;
+userdom_base_user_template(sepgsql_regtest_nosuch)
+optional_policy(`
+    postgresql_role(sepgsql_regtest_nosuch_r, sepgsql_regtest_nosuch_t)
+')
 
 #
 # Rules to launch psql in the dummy domains
@@ -62,26 +136,43 @@ optional_policy(`
 		type sepgsql_trusted_proc_t;
 	')
 	tunable_policy(`sepgsql_regression_test_mode',`
-		allow unconfined_t sepgsql_regtest_dba_t : process { transition };
-		allow unconfined_t sepgsql_regtest_user_t : process { transition };
+		allow unconfined_t self : process { setcurrent dyntransition };
+		allow unconfined_t sepgsql_regtest_dba_t : process { transition dyntransition };
+		allow unconfined_t sepgsql_regtest_user_t : process { transition dyntransition };
+		allow unconfined_t sepgsql_regtest_pool_t : process { transition dyntransition };
 	')
 	role unconfined_r types sepgsql_regtest_dba_t;
 	role unconfined_r types sepgsql_regtest_user_t;
+	role unconfined_r types sepgsql_regtest_nosuch_t;
 	role unconfined_r types sepgsql_trusted_proc_t;
+
+	role unconfined_r types sepgsql_regtest_pool_t;
+	role unconfined_r types sepgsql_regtest_foo_t;
+	role unconfined_r types sepgsql_regtest_var_t;
 ')
 
 #
-# Rule to check 
+# Rule to execute original trusted procedures
+#
+# XXX - sepgsql_client_type contains any valid client types, so we allow
+# them to execute the original trusted procedure at once.
 #
 optional_policy(`
-	# These rules intends sepgsql_regtest_user_t domain to translate
-	# sepgsql_regtest_dba_t on execution of procedures labeled as
-	# sepgsql_regtest_trusted_proc_exec_t, but does not allow transition
-	# permission from sepgsql_regtest_user_t to sepgsql_regtest_dba_t.
-	#
 	gen_require(`
 		attribute sepgsql_client_type;
 	')
-	allow sepgsql_client_type sepgsql_regtest_trusted_proc_exec_t:db_procedure { getattr execute install };
-	type_transition sepgsql_regtest_user_t sepgsql_regtest_trusted_proc_exec_t:process sepgsql_regtest_dba_t;
+	allow sepgsql_client_type { sepgsql_regtest_trusted_proc_exec_t sepgsql_nosuch_trusted_proc_exec_t }:db_procedure { getattr execute };
+
+	# These rules intends sepgsql_regtest_user_t domain to translate
+	# sepgsql_regtest_dba_t on execution of procedures labeled as
+	# sepgsql_regtest_trusted_proc_exec_t.
+	#
+#	allow sepgsql_client_type sepgsql_regtest_trusted_proc_exec_t:db_procedure { getattr execute };
+
+	# These rules intends sepgsql_regtest_user_t domain to translate
+	# sepgsql_regtest_nosuch_t on execution of procedures labeled as
+	# sepgsql_nosuch_trusted_proc_exec_t, without permissions to
+	# translate to sepgsql_nosuch_trusted_proc_exec_t.
+	#
+#	allow sepgsql_client_type sepgsql_nosuch_trusted_proc_exec_t:db_procedure { getattr execute install };
 ')
