@@ -561,8 +561,8 @@ ERROR:  SELinux: security policy violation
    </para>
    <para>
     A combination of dynamic domain transition and trusted procedure
-    enables an interesting use case that fits the typical process life-
-    cycle of connection pooling software.
+    enables an interesting use case that fits the typical process life-cycle
+    of connection pooling software.
     Even if your connection pooling software is not allowed to run most
     of SQL commands, you can allow it to switch the security label
     of the client using the <literal>sepgsql_setcon()</literal> function
@@ -576,7 +576,7 @@ ERROR:  SELinux: security policy violation
     procedure with appropriate permissions checks.
     The point here is that only the trusted procedure actually has permission
     to change the effective security label, and only does so when given proper
-    credentials.  Of course, for secure operation, the credential store must
+    credentials.  Of course, for secure operation, the credential store
     (table, procedure definition, or whatever) must be protected from
     unauthorized access.
    </para>
