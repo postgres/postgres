@@ -192,9 +192,9 @@ sepgsql-regtest 1.04
 
   <para>
    Third, turn on <literal>sepgsql_regression_test_mode</>.
-   We don't enable all the rules in <filename>sepgsql-regtest</>
-   by default, for your system's safety.
-   The <literal>sepgsql_regression_test_mode</literal> parameter enables
+   For security reasons, the rules in <filename>sepgsql-regtest</>
+   are not enabled by default;
+   the <literal>sepgsql_regression_test_mode</literal> parameter enables
    the rules needed to launch the regression tests.
    It can be turned on using the <command>setsebool</> command:
   </para>
@@ -415,43 +415,38 @@ UPDATE t1 SET x = 2, y = md5sum(y) WHERE z = 100;
    <title>DDL Permissions</title>
    <para>
     <productname>SELinux</> defines several permissions to control common
-    operations for each object types; such as creation, alter, drop and
-    relabel of security label. In addition, several object types has its
-    special permissions to control its characteristic operations; such as
-    addition or deletion of name entries underlying a particular schema.
+    operations for each object type; such as creation, alter, drop and
+    relabel of security label. In addition, several object types have
+    special permissions to control their characteristic operations; such as
+    addition or deletion of name entries within a particular schema.
    </para>
    <para>
-    When <literal>CREATE</> command is executed, <literal>create</> will
+    When a <literal>CREATE</> command is executed, <literal>create</> will
     be checked on the object being constructed for each object types.
-    A default security label shall be assigned on the new database object,
-    and the <literal>create</> permission needs to be allowed on the pair
+    A default security label will be assigned to the new database object,
+    and the <literal>create</> permission will be checked on the pair
     of security label of the client and the new object itself.
-    We consider <xref linkend="sql-createtable"> construct a table and
-    underlying columns at the same time, so it requires users permission
-    to create both of table and columns.
+    We consider <xref linkend="sql-createtable"> to construct a table and
+    underlying columns at the same time, so it requires the users to have
+    permission to create both the table and its columns.
    </para>
    <para>
     A few additional checks are applied depending on object types.
     On <xref linkend="sql-createdatabase">, <literal>getattr</> permission
-    shall be checked on the source or template database of the new database,
+    will be checked on the source or template database of the new database,
     not only <literal>create</> on the new database.
-    On creation of objects underlying a particula schema (tables, views,
-    sequences and procedures), <literal>add_name</> shall be also chechked
+    On creation of objects within a particula schema (tables, views,
+    sequences and procedures), <literal>add_name</> will be also chechked
     on the schema, not only <literal>create</> on the new object itself.
    </para>
 
    <para>
     When <literal>DROP</> command is executed, <literal>drop</> will be
-    checked on the object being removed for each object types.
-    Please note that it shall not be checked on the objects removed by
-    cascaded deletion according to the standard manner in SQL.
-   </para>
-   <para>
-    A few additional checks are applied depending on object types.
-    On deletion of objects underlying a particula schema (tables, views,
-    sequences and procedures), <literal>remove_name</> shall be also checked
-    on the schema, not only <literal>drop</> on the object being removed
-    itself.
+    checked on the object being removed for each object types.  Permissions
+    will not be checked for objects dropped indirectly via <literal>CASCADE</>.
+    Deletion of objects contained within a particular schema (tables, views,
+    sequences and procedures) additionally requires
+    <literal>remove_name</> on the schema.
    </para>
 
    <para>
@@ -526,22 +521,22 @@ postgres=# SELECT cid, cname, show_credit(cid) FROM customer;
   </sect3>
 
   <sect3>
-   <title>Dynamic domain transitions</title>
+   <title>Dynamic Domain Transitions</title>
    <para>
     It is possible to use SELinux's dynamic domain transition feature
     to switch the security label of the client process, the client domain,
     to a new context, if that is allowed by the security policy.
-    The client domain needs the 'setcurrent' permission and also
-    'dyntransaction' from the old to the new domain.
+    The client domain needs the <literal>setcurrent</> permission and also
+    <literal>dyntransaction</> from the old to the new domain.
    </para>
    <para>
-    Dynamic domain transitions should be considered carefully, because it
-    means we allows users to switch their label (also peforms a set of
-    privileges in SELinux model) in arbitrary way, unlike regular
-    mandatory way such as trusted procedures.
-    Thus, The dyntransition permission is only considered safe when used
-    to switch to a domain with a smaller set of privileges than the
-    original one, for example:
+    Dynamic domain transitions should be considered carefully, because they
+    allow users to switch their label, and therefore their privileges, in
+    at their option, rather than (as in the case of a trusted procedure)
+    as mandated by the system.
+    Thus, the <literal>dyntransition</literal> permission is only considered
+    safe when used to switch to a domain with a smaller set of privileges than
+    the original one. For example:
    </para>
 <screen>
 regression=# select sepgsql_getcon();
@@ -561,29 +556,29 @@ ERROR:  SELinux: security policy violation
 </screen>
    <para>
     In this example above we were allowed to switch from the larger MCS
-    range c1.c1023 to the smaller range c1.c4, but switching back was
-    denied.
+    range <literal>c1.c1023</> to the smaller range <literal>c1.c4</>, but
+    switching back was denied.
    </para>
    <para>
     A combination of dynamic domain transition and trusted procedure
-    enables an interesting use case that fits typical process life-
+    enables an interesting use case that fits the typical process life-
     cycle of connection pooling software.
     Even if your connection pooling software is not allowed to run most
-    of SQL commands, it shall be available to switch the security label
-    of the client using <literal>sepgsql_setcon()</literal> function
-    to be invoked inside of the trusted procedure; that should take some
+    of SQL commands, you can allow it to switch the security label
+    of the client using the <literal>sepgsql_setcon()</literal> function
+    from within a trusted procedure; that should take some
     credential to authorize the request to switch the client label.
-    After that, this session performs with privileges of the user being
-    switched, but it shall be unavailable to reference database objects
-    labeled as other user's one.
-    Then, it can revert the security label alsp using
-    <literal>sepgsql_setcon()</literal> with <literal>NULL</literal>
-    argument, unless the security policy prevent it.
-    The points of this use case are the trusted procedure is only way
-    for the connection pooling software to switch security label of
-    the clinet, and the trusted procedure does not work without
-    appropriate credentials. In addition, it is also a point that the
-    table to store credentials is only visible from trusted procedure.
+    After that, this session will have the privileges of the target user,
+    rather than the connection pooler.
+    The connection pooler can later revert the security label change by
+    again using <literal>sepgsql_setcon()</literal> with
+    <literal>NULL</literal> argument, again invoked from within a trusted
+    procedure with appropriate permissions checks.
+    The point here is that only the trusted procedure actually has permission
+    to change the effective security label, and only does so when given proper
+    credentials.  Of course, for secure operation, the credential store must
+    (table, procedure definition, or whatever) must be protected from
+    unauthorized access.
    </para>
   </sect3>
 
@@ -618,8 +613,8 @@ ERROR:  SELinux: security policy violation
       <entry>
        Switches the client domain of the current session to the new domain,
        if allowed by the security policy.
-       It also accepts <literal>NULL</literal> input, and it shall be
-       considered as a transition to the original one.
+       It also accepts <literal>NULL</literal> input as a request to transition
+       to the client's original domain.
       </entry>
      </row>
      <row>
@@ -655,8 +650,8 @@ ERROR:  SELinux: security policy violation
     <term>Data Definition Language (DDL) Permissions</term>
     <listitem>
      <para>
-      Due to implementation restrictions, some of DDL permissions are not
-      checked.
+      Due to implementation restrictions, some DDL operations do not
+      check permissions.
      </para>
     </listitem>
    </varlistentry>
@@ -665,7 +660,8 @@ ERROR:  SELinux: security policy violation
     <term>Data Control Language (DCL) Permissions</term>
     <listitem>
      <para>
-      Due to implementation restrictions, DCL permissions are not checked.
+      Due to implementation restrictions, DCL operations do not check
+      permissions.
      </para>
     </listitem>
    </varlistentry>
