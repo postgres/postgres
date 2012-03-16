@@ -107,6 +107,7 @@ extern EquivalenceClass *get_eclass_for_sort_expr(PlannerInfo *root,
 						 Oid opcintype,
 						 Oid collation,
 						 Index sortref,
+						 Relids rel,
 						 bool create_it);
 extern void generate_base_implied_equalities(PlannerInfo *root);
 extern List *generate_join_implied_equalities(PlannerInfo *root,

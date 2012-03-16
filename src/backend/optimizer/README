@@ -496,6 +496,14 @@ it's possible that it belongs to more than one.  We keep track of all the
 families to ensure that we can make use of an index belonging to any one of
 the families for mergejoin purposes.)
 
+An EquivalenceClass can contain "em_is_child" members, which are copies
+of members that contain appendrel parent relation Vars, transposed to
+contain the equivalent child-relation variables or expressions.  These
+members are *not* full-fledged members of the EquivalenceClass and do not
+affect the class's overall properties at all.  They are kept only to
+simplify matching of child-relation expressions to EquivalenceClasses.
+Most operations on EquivalenceClasses should ignore child members.
+
 
 PathKeys
 --------

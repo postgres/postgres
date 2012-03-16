@@ -199,3 +199,11 @@ explain (costs off)
 reset enable_seqscan;
 reset enable_indexscan;
 reset enable_bitmapscan;
+
+-- Test constraint exclusion of UNION ALL subqueries
+explain (costs off)
+ SELECT * FROM
+  (SELECT 1 AS t, * FROM tenk1 a
+   UNION ALL
+   SELECT 2 AS t, * FROM tenk1 b) c
+ WHERE t = 2;
