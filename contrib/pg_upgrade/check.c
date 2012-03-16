@@ -23,6 +23,11 @@ static void check_for_reg_data_type_usage(ClusterInfo *cluster);
 static void check_for_support_lib(ClusterInfo *cluster);
 static void get_bin_version(ClusterInfo *cluster);
 
+#ifndef WIN32
+#define	ECHO_QUOTE	"'"
+#else
+#define	ECHO_QUOTE	""
+#endif
 
 void
 output_check_banner(bool *live_check)
@@ -193,21 +198,20 @@ issue_warnings(char *sequence_script_file_name)
 
 
 void
-output_completion_banner(char *deletion_script_file_name)
+output_completion_banner(char *analyze_script_file_name,
+						 char *deletion_script_file_name)
 {
 	/* Did we copy the free space files? */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) >= 804)
 		pg_log(PG_REPORT,
-			   "Optimizer statistics are not transferred by pg_upgrade so\n"
-			   "consider running:\n"
-			   "    vacuumdb --all --analyze-only\n"
-			   "on the newly-upgraded cluster.\n\n");
+			   "Optimizer statistics are not transferred by pg_upgrade so,\n"
+			   "once you start the new server, consider running:\n"
+			   "    %s\n\n", analyze_script_file_name);
 	else
 		pg_log(PG_REPORT,
 			   "Optimizer statistics and free space information are not transferred\n"
-			   "by pg_upgrade so consider running:\n"
-			   "    vacuumdb --all --analyze\n"
-			   "on the newly-upgraded cluster.\n\n");
+			   "by pg_upgrade so, once you start the new server, consider running:\n"
+			   "    %s\n\n", analyze_script_file_name);
 
 	pg_log(PG_REPORT,
 		   "Running this script will delete the old cluster's data files:\n"
@@ -376,6 +380,130 @@ check_new_cluster_is_empty(void)
 		}
 	}
 
+}
+
+
+/*
+ * create_script_for_cluster_analyze()
+ *
+ *	This incrementally generates better optimizer statistics
+ */
+void
+create_script_for_cluster_analyze(char **analyze_script_file_name)
+{
+	FILE	   *script = NULL;
+
+	*analyze_script_file_name = pg_malloc(MAXPGPATH);
+
+	prep_status("Creating script to analyze new cluster");
+
+	snprintf(*analyze_script_file_name, MAXPGPATH, "analyze_new_cluster.%s",
+			 SCRIPT_EXT);
+
+	if ((script = fopen_priv(*analyze_script_file_name, "w")) == NULL)
+		pg_log(PG_FATAL, "Could not open file \"%s\": %s\n",
+			   *analyze_script_file_name, getErrorText(errno));
+
+#ifndef WIN32
+	/* add shebang header */
+	fprintf(script, "#!/bin/sh\n\n");
+#endif
+
+	fprintf(script, "echo %sThis script will generate minimal optimizer statistics rapidly%s\n",
+					ECHO_QUOTE, ECHO_QUOTE);
+	fprintf(script, "echo %sso your system is usable, and then gather statistics twice more%s\n",
+					ECHO_QUOTE, ECHO_QUOTE);
+	fprintf(script, "echo %swith increasing accuracy.  When it is done, your system will%s\n",
+					ECHO_QUOTE, ECHO_QUOTE);
+	fprintf(script, "echo %shave the default level of optimizer statistics.%s\n",
+					ECHO_QUOTE, ECHO_QUOTE);
+	fprintf(script, "echo\n\n");
+
+	fprintf(script, "echo %sIf you have used ALTER TABLE to modify the statistics target for%s\n",
+					ECHO_QUOTE, ECHO_QUOTE);
+	fprintf(script, "echo %sany tables, you might want to remove them and restore them after%s\n",
+					ECHO_QUOTE, ECHO_QUOTE);
+	fprintf(script, "echo %srunning this script because they will delay fast statistics generation.%s\n",
+					ECHO_QUOTE, ECHO_QUOTE);
+	fprintf(script, "echo\n\n");
+
+	fprintf(script, "echo %sIf you would like default statistics as quickly as possible, cancel%s\n",
+					ECHO_QUOTE, ECHO_QUOTE);
+	fprintf(script, "echo %sthis script and run:%s\n",
+					ECHO_QUOTE, ECHO_QUOTE);
+	fprintf(script, "echo %s    vacuumdb --all %s%s\n", ECHO_QUOTE,
+		/* Did we copy the free space files? */
+		(GET_MAJOR_VERSION(old_cluster.major_version) >= 804) ?
+		"--analyze-only" : "--analyze", ECHO_QUOTE);
+	fprintf(script, "echo\n\n");
+
+#ifndef WIN32
+	fprintf(script, "sleep 2\n");
+	fprintf(script, "PGOPTIONS='-c default_statistics_target=1 -c vacuum_cost_delay=0'\n");
+	/* only need to export once */
+	fprintf(script, "export PGOPTIONS\n");
+#else
+	fprintf(script, "REM simulate sleep 2\n");
+	fprintf(script, "PING 1.1.1.1 -n 1 -w 2000 > nul\n");
+	fprintf(script, "SET PGOPTIONS=-c default_statistics_target=1 -c vacuum_cost_delay=0\n");
+#endif
+
+	fprintf(script, "echo %sGenerating minimal optimizer statistics (1 target)%s\n",
+					ECHO_QUOTE, ECHO_QUOTE);
+	fprintf(script, "echo %s--------------------------------------------------%s\n",
+					ECHO_QUOTE, ECHO_QUOTE);
+	fprintf(script, "vacuumdb --all --analyze-only\n");
+	fprintf(script, "echo\n");
+	fprintf(script, "echo %sThe server is now available with minimal optimizer statistics.%s\n",
+					ECHO_QUOTE, ECHO_QUOTE);
+	fprintf(script, "echo %sQuery performance will be optimal once this script completes.%s\n",
+					ECHO_QUOTE, ECHO_QUOTE);
+	fprintf(script, "echo\n\n");
+
+#ifndef WIN32
+	fprintf(script, "sleep 2\n");
+	fprintf(script, "PGOPTIONS='-c default_statistics_target=10'\n");
+#else
+	fprintf(script, "REM simulate sleep\n");
+	fprintf(script, "PING 1.1.1.1 -n 1 -w 2000 > nul\n");
+	fprintf(script, "SET PGOPTIONS=-c default_statistics_target=10\n");
+#endif
+
+	fprintf(script, "echo %sGenerating medium optimizer statistics (10 targets)%s\n",
+					ECHO_QUOTE, ECHO_QUOTE);
+	fprintf(script, "echo %s---------------------------------------------------%s\n",
+					ECHO_QUOTE, ECHO_QUOTE);
+	fprintf(script, "vacuumdb --all --analyze-only\n");
+	fprintf(script, "echo\n\n");
+
+#ifndef WIN32
+	fprintf(script, "unset PGOPTIONS\n");
+#else
+	fprintf(script, "SET PGOPTIONS\n");
+#endif
+
+	fprintf(script, "echo %sGenerating default (full) optimizer statistics (100 targets?)%s\n",
+					ECHO_QUOTE, ECHO_QUOTE);
+	fprintf(script, "echo %s-------------------------------------------------------------%s\n",
+					ECHO_QUOTE, ECHO_QUOTE);
+	fprintf(script, "vacuumdb --all %s\n",
+		/* Did we copy the free space files? */
+		(GET_MAJOR_VERSION(old_cluster.major_version) >= 804) ?
+		"--analyze-only" : "--analyze");
+
+	fprintf(script, "echo\n\n");
+	fprintf(script, "echo %sDone%s\n",
+					ECHO_QUOTE, ECHO_QUOTE);
+
+	fclose(script);
+
+#ifndef WIN32
+	if (chmod(*analyze_script_file_name, S_IRWXU) != 0)
+		pg_log(PG_FATAL, "Could not add execute permission to file \"%s\": %s\n",
+			   *analyze_script_file_name, getErrorText(errno));
+#endif
+
+	check_ok();
 }
 
 

@@ -67,6 +67,7 @@ int
 main(int argc, char **argv)
 {
 	char	   *sequence_script_file_name = NULL;
+	char	   *analyze_script_file_name = NULL;
 	char	   *deletion_script_file_name = NULL;
 	bool		live_check = false;
 
@@ -142,6 +143,7 @@ main(int argc, char **argv)
 			  new_cluster.pgdata, UTILITY_LOG_FILE);
 	check_ok();
 
+	create_script_for_cluster_analyze(&analyze_script_file_name);
 	create_script_for_old_cluster_deletion(&deletion_script_file_name);
 
 	issue_warnings(sequence_script_file_name);
@@ -149,8 +151,10 @@ main(int argc, char **argv)
 	pg_log(PG_REPORT, "\nUpgrade Complete\n");
 	pg_log(PG_REPORT, "----------------\n");
 
-	output_completion_banner(deletion_script_file_name);
+	output_completion_banner(analyze_script_file_name,
+							 deletion_script_file_name);
 
+	pg_free(analyze_script_file_name);
 	pg_free(deletion_script_file_name);
 	pg_free(sequence_script_file_name);
 

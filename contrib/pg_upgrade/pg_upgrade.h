@@ -283,10 +283,12 @@ void check_old_cluster(bool live_check,
 void		check_new_cluster(void);
 void		report_clusters_compatible(void);
 void		issue_warnings(char *sequence_script_file_name);
-void		output_completion_banner(char *deletion_script_file_name);
+void		output_completion_banner(char *analyze_script_file_name,
+									 char *deletion_script_file_name);
 void		check_cluster_versions(void);
 void		check_cluster_compatibility(bool live_check);
 void		create_script_for_old_cluster_deletion(char **deletion_script_file_name);
+void		create_script_for_cluster_analyze(char **analyze_script_file_name);
 
 
 /* controldata.c */
