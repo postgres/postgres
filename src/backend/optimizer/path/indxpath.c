@@ -2174,6 +2174,13 @@ match_pathkeys_to_index(IndexOptInfo *index, List *pathkeys,
 			if (!bms_equal(member->em_relids, index->rel->relids))
 				continue;
 
+			/*
+			 * We allow any column of the index to match each pathkey; they
+			 * don't have to match left-to-right as you might expect.  This
+			 * is correct for GiST, which is the sole existing AM supporting
+			 * amcanorderbyop.  We might need different logic in future for
+			 * other implementations.
+			 */
 			for (indexcol = 0; indexcol < index->ncolumns; indexcol++)
 			{
 				Expr	   *expr;
