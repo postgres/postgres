@@ -9477,18 +9477,21 @@ dumpCast(Archive *fout, CastInfo *cast)
 			appendPQExpBuffer(defqry, "WITH INOUT");
 			break;
 		case COERCION_METHOD_FUNCTION:
-		{
-			char   *fsig = format_function_signature(fout, funcInfo, true);
+			if (funcInfo)
+			{
+				char   *fsig = format_function_signature(fout, funcInfo, true);
 
-			/*
-			 * Always qualify the function name, in case it is not in
-			 * pg_catalog schema (format_function_signature won't qualify it).
-			 */
-			appendPQExpBuffer(defqry, "WITH FUNCTION %s.%s",
-							  fmtId(funcInfo->dobj.namespace->dobj.name), fsig);
-			free(fsig);
+				/*
+				 * Always qualify the function name, in case it is not in
+				 * pg_catalog schema (format_function_signature won't qualify it).
+				 */
+				appendPQExpBuffer(defqry, "WITH FUNCTION %s.%s",
+								  fmtId(funcInfo->dobj.namespace->dobj.name), fsig);
+				free(fsig);
+			}
+			else
+				write_msg(NULL, "WARNING: bogus value in pg_cast.castfunc or pg_cast.castmethod field\n");
 			break;
-		}
 		default:
 			write_msg(NULL, "WARNING: bogus value in pg_cast.castmethod field\n");
 	}
