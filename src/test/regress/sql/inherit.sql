@@ -326,13 +326,13 @@ drop table matest0 cascade;
 
 --
 -- Test merge-append for UNION ALL append relations
--- Check handling of duplicated, constant, or volatile targetlist items
 --
 
 set enable_seqscan = off;
 set enable_indexscan = on;
 set enable_bitmapscan = off;
 
+-- Check handling of duplicated, constant, or volatile targetlist items
 explain (costs off)
 SELECT thousand, tenthous FROM tenk1
 UNION ALL
@@ -350,6 +350,27 @@ SELECT thousand, tenthous FROM tenk1
 UNION ALL
 SELECT thousand, random()::integer FROM tenk1
 ORDER BY thousand, tenthous;
+
+-- Check min/max aggregate optimization
+explain (costs off)
+SELECT min(x) FROM
+  (SELECT unique1 AS x FROM tenk1 a
+   UNION ALL
+   SELECT unique2 AS x FROM tenk1 b) s;
+
+explain (costs off)
+SELECT min(y) FROM
+  (SELECT unique1 AS x, unique1 AS y FROM tenk1 a
+   UNION ALL
+   SELECT unique2 AS x, unique2 AS y FROM tenk1 b) s;
+
+-- XXX planner doesn't recognize that index on unique2 is sufficiently sorted
+explain (costs off)
+SELECT x, y FROM
+  (SELECT thousand AS x, tenthous AS y FROM tenk1 a
+   UNION ALL
+   SELECT unique2 AS x, unique2 AS y FROM tenk1 b) s
+ORDER BY x, y;
 
 reset enable_seqscan;
 reset enable_indexscan;

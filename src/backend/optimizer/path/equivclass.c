@@ -491,6 +491,15 @@ add_eq_member(EquivalenceClass *ec, Expr *expr, Relids relids,
  * sortref is the SortGroupRef of the originating SortGroupClause, if any,
  * or zero if not.	(It should never be zero if the expression is volatile!)
  *
+ * If rel is not NULL, it identifies a specific relation we're considering
+ * a path for, and indicates that child EC members for that relation can be
+ * considered.  Otherwise child members are ignored.  (Note: since child EC
+ * members aren't guaranteed unique, a non-NULL value means that there could
+ * be more than one EC that matches the expression; if so it's order-dependent
+ * which one you get.  This is annoying but it only happens in corner cases,
+ * so for now we live with just reporting the first match.  See also
+ * generate_implied_equalities_for_indexcol and match_pathkeys_to_index.)
+ *
  * If create_it is TRUE, we'll build a new EquivalenceClass when there is no
  * match.  If create_it is FALSE, we just return NULL when no match.
  *
@@ -511,6 +520,7 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 						 Oid opcintype,
 						 Oid collation,
 						 Index sortref,
+						 Relids rel,
 						 bool create_it)
 {
 	EquivalenceClass *newec;
@@ -547,6 +557,13 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 		foreach(lc2, cur_ec->ec_members)
 		{
 			EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc2);
+
+			/*
+			 * Ignore child members unless they match the request.
+			 */
+			if (cur_em->em_is_child &&
+				!bms_equal(cur_em->em_relids, rel))
+				continue;
 
 			/*
 			 * If below an outer join, don't match constants: they're not as
@@ -1505,6 +1522,7 @@ reconsider_outer_join_clause(PlannerInfo *root, RestrictInfo *rinfo,
 		{
 			EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc2);
 
+			Assert(!cur_em->em_is_child);		/* no children yet */
 			if (equal(outervar, cur_em->em_expr))
 			{
 				match = true;
@@ -1626,6 +1644,7 @@ reconsider_full_join_clause(PlannerInfo *root, RestrictInfo *rinfo)
 		foreach(lc2, cur_ec->ec_members)
 		{
 			coal_em = (EquivalenceMember *) lfirst(lc2);
+			Assert(!coal_em->em_is_child);		/* no children yet */
 			if (IsA(coal_em->em_expr, CoalesceExpr))
 			{
 				CoalesceExpr *cexpr = (CoalesceExpr *) coal_em->em_expr;
@@ -1747,6 +1766,8 @@ exprs_known_equal(PlannerInfo *root, Node *item1, Node *item2)
 		{
 			EquivalenceMember *em = (EquivalenceMember *) lfirst(lc2);
 
+			if (em->em_is_child)
+				continue;		/* ignore children here */
 			if (equal(item1, em->em_expr))
 				item1member = true;
 			else if (equal(item2, em->em_expr))
@@ -1799,6 +1820,9 @@ add_child_rel_equivalences(PlannerInfo *root,
 		foreach(lc2, cur_ec->ec_members)
 		{
 			EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc2);
+
+			if (cur_em->em_is_child)
+				continue;		/* ignore children here */
 
 			/* Does it reference (only) parent_rel? */
 			if (bms_equal(cur_em->em_relids, parent_rel->relids))
@@ -1908,7 +1932,16 @@ generate_implied_equalities_for_indexcol(PlannerInfo *root,
 			!bms_is_subset(rel->relids, cur_ec->ec_relids))
 			continue;
 
-		/* Scan members, looking for a match to the indexable column */
+		/*
+		 * Scan members, looking for a match to the indexable column.  Note
+		 * that child EC members are considered, but only when they belong to
+		 * the target relation.  (Unlike regular members, the same expression
+		 * could be a child member of more than one EC.  Therefore, it's
+		 * potentially order-dependent which EC a child relation's index
+		 * column gets matched to.  This is annoying but it only happens in
+		 * corner cases, so for now we live with just reporting the first
+		 * match.  See also get_eclass_for_sort_expr.)
+		 */
 		cur_em = NULL;
 		foreach(lc2, cur_ec->ec_members)
 		{
@@ -1932,6 +1965,9 @@ generate_implied_equalities_for_indexcol(PlannerInfo *root,
 			EquivalenceMember *other_em = (EquivalenceMember *) lfirst(lc2);
 			Oid			eq_op;
 			RestrictInfo *rinfo;
+
+			if (other_em->em_is_child)
+				continue;		/* ignore children here */
 
 			/* Make sure it'll be a join to a different rel */
 			if (other_em == cur_em ||
@@ -2187,8 +2223,10 @@ eclass_useful_for_merging(EquivalenceClass *eclass,
 	{
 		EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc);
 
-		if (!cur_em->em_is_child &&
-			!bms_overlap(cur_em->em_relids, rel->relids))
+		if (cur_em->em_is_child)
+			continue;			/* ignore children here */
+
+		if (!bms_overlap(cur_em->em_relids, rel->relids))
 			return true;
 	}
 

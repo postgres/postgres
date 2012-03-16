@@ -2157,7 +2157,14 @@ match_pathkeys_to_index(IndexOptInfo *index, List *pathkeys,
 		if (pathkey->pk_eclass->ec_has_volatile)
 			return;
 
-		/* Try to match eclass member expression(s) to index */
+		/*
+		 * Try to match eclass member expression(s) to index.  Note that child
+		 * EC members are considered, but only when they belong to the target
+		 * relation.  (Unlike regular members, the same expression could be a
+		 * child member of more than one EC.  Therefore, the same index could
+		 * be considered to match more than one pathkey list, which is OK
+		 * here.  See also get_eclass_for_sort_expr.)
+		 */
 		foreach(lc2, pathkey->pk_eclass->ec_members)
 		{
 			EquivalenceMember *member = (EquivalenceMember *) lfirst(lc2);
@@ -2579,15 +2586,6 @@ match_index_to_operand(Node *operand,
 					   IndexOptInfo *index)
 {
 	int			indkey;
-
-	/*
-	 * Ignore any PlaceHolderVar nodes above the operand.  This is needed so
-	 * that we can successfully use expression-index constraints pushed down
-	 * through appendrels (UNION ALL).  It's safe because a PlaceHolderVar
-	 * appearing in a relation-scan-level expression is certainly a no-op.
-	 */
-	while (operand && IsA(operand, PlaceHolderVar))
-		operand = (Node *) ((PlaceHolderVar *) operand)->phexpr;
 
 	/*
 	 * Ignore any RelabelType node above the operand.	This is needed to be

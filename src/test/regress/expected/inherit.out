@@ -1067,11 +1067,11 @@ drop cascades to table matest2
 drop cascades to table matest3
 --
 -- Test merge-append for UNION ALL append relations
--- Check handling of duplicated, constant, or volatile targetlist items
 --
 set enable_seqscan = off;
 set enable_indexscan = on;
 set enable_bitmapscan = off;
+-- Check handling of duplicated, constant, or volatile targetlist items
 explain (costs off)
 SELECT thousand, tenthous FROM tenk1
 UNION ALL
@@ -1118,6 +1118,61 @@ ORDER BY thousand, tenthous;
          ->  Sort
                Sort Key: public.tenk1.thousand, ((random())::integer)
                ->  Index Only Scan using tenk1_thous_tenthous on tenk1
+(7 rows)
+
+-- Check min/max aggregate optimization
+explain (costs off)
+SELECT min(x) FROM
+  (SELECT unique1 AS x FROM tenk1 a
+   UNION ALL
+   SELECT unique2 AS x FROM tenk1 b) s;
+                             QUERY PLAN                             
+--------------------------------------------------------------------
+ Result
+   InitPlan 1 (returns $0)
+     ->  Limit
+           ->  Merge Append
+                 Sort Key: a.unique1
+                 ->  Index Only Scan using tenk1_unique1 on tenk1 a
+                       Index Cond: (unique1 IS NOT NULL)
+                 ->  Index Only Scan using tenk1_unique2 on tenk1 b
+                       Index Cond: (unique2 IS NOT NULL)
+(9 rows)
+
+explain (costs off)
+SELECT min(y) FROM
+  (SELECT unique1 AS x, unique1 AS y FROM tenk1 a
+   UNION ALL
+   SELECT unique2 AS x, unique2 AS y FROM tenk1 b) s;
+                             QUERY PLAN                             
+--------------------------------------------------------------------
+ Result
+   InitPlan 1 (returns $0)
+     ->  Limit
+           ->  Merge Append
+                 Sort Key: a.unique1
+                 ->  Index Only Scan using tenk1_unique1 on tenk1 a
+                       Index Cond: (unique1 IS NOT NULL)
+                 ->  Index Only Scan using tenk1_unique2 on tenk1 b
+                       Index Cond: (unique2 IS NOT NULL)
+(9 rows)
+
+-- XXX planner doesn't recognize that index on unique2 is sufficiently sorted
+explain (costs off)
+SELECT x, y FROM
+  (SELECT thousand AS x, tenthous AS y FROM tenk1 a
+   UNION ALL
+   SELECT unique2 AS x, unique2 AS y FROM tenk1 b) s
+ORDER BY x, y;
+                            QUERY PLAN                             
+-------------------------------------------------------------------
+ Result
+   ->  Merge Append
+         Sort Key: a.thousand, a.tenthous
+         ->  Index Only Scan using tenk1_thous_tenthous on tenk1 a
+         ->  Sort
+               Sort Key: b.unique2, b.unique2
+               ->  Index Only Scan using tenk1_unique2 on tenk1 b
 (7 rows)
 
 reset enable_seqscan;
