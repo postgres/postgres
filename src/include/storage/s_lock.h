@@ -234,7 +234,23 @@ spin_delay(void)
 #endif	 /* __x86_64__ */
 
 
-#if defined(__ia64__) || defined(__ia64)	/* Intel Itanium */
+#if defined(__ia64__) || defined(__ia64)
+/*
+ * Intel Itanium, gcc or Intel's compiler.
+ *
+ * Itanium has weak memory ordering, but we rely on the compiler to enforce
+ * strict ordering of accesses to volatile data.  In particular, while the
+ * xchg instruction implicitly acts as a memory barrier with 'acquire'
+ * semantics, we do not have an explicit memory fence instruction in the
+ * S_UNLOCK macro.  We use a regular assignment to clear the spinlock, and
+ * trust that the compiler marks the generated store instruction with the
+ * ".rel" opcode.
+ *
+ * Testing shows that assumption to hold on gcc, although I could not find
+ * any explicit statement on that in the gcc manual.  In Intel's compiler,
+ * the -m[no-]serialize-volatile option controls that, and testing shows that
+ * it is enabled by default.
+ */
 #define HAS_TEST_AND_SET
 
 typedef unsigned int slock_t;
@@ -785,7 +801,19 @@ tas(volatile slock_t *lock)
 
 
 #if defined(__hpux) && defined(__ia64) && !defined(__GNUC__)
-
+/*
+ * HP-UX on Itanium, non-gcc compiler
+ *
+ * We assume that the compiler enforces strict ordering of loads/stores on
+ * volatile data (see comments on the gcc-version earlier in this file).
+ * Note that this assumption does *not* hold if you use the
+ * +Ovolatile=__unordered option on the HP-UX compiler, so don't do that.
+ *
+ * See also Implementing Spinlocks on the Intel Itanium Architecture and
+ * PA-RISC, by Tor Ekqvist and David Graves, for more information.  As of
+ * this writing, version 1.0 of the manual is available at:
+ * http://h21007.www2.hp.com/portal/download/files/unprot/itanium/spinlocks.pdf
+ */
 #define HAS_TEST_AND_SET
 
 typedef unsigned int slock_t;
