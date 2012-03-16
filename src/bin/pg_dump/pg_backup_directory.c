@@ -365,6 +365,9 @@ _PrintFileData(ArchiveHandle *AH, char *filename, RestoreOptions *ropt)
 		ahwrite(buf, 1, cnt, AH);
 
 	free(buf);
+	if (cfclose(cfp) != 0)
+		die_horribly(AH, modulename, "could not close data file: %s\n",
+					 strerror(errno));
 }
 
 /*
