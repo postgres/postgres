@@ -4095,6 +4095,7 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	{
 		write_stderr("%s cannot access the server configuration file \"%s\": %s\n",
 					 progname, ConfigFileName, strerror(errno));
+		free(configdir);
 		return false;
 	}
 
