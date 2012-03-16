@@ -385,7 +385,7 @@ unsigned char *
 mbvalidate(unsigned char *pwcs, int encoding)
 {
 	if (encoding == PG_UTF8)
-		mb_utf_validate((unsigned char *) pwcs);
+		mb_utf_validate(pwcs);
 	else
 	{
 		/*
