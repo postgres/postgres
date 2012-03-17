@@ -391,7 +391,7 @@ replace_string(char *string, char *replace, char *replacement)
  * the given suffix.
  */
 static void
-convert_sourcefiles_in(char *source, char *dest, char *suffix)
+convert_sourcefiles_in(char *source, char * dest_dir, char *dest, char *suffix)
 {
 	char		abs_srcdir[MAXPGPATH];
 	char		abs_builddir[MAXPGPATH];
@@ -490,7 +490,8 @@ convert_sourcefiles_in(char *source, char *dest, char *suffix)
 		/* build the full actual paths to open */
 		snprintf(prefix, strlen(*name) - 6, "%s", *name);
 		snprintf(srcfile, MAXPGPATH, "%s/%s", indir, *name);
-		snprintf(destfile, MAXPGPATH, "%s/%s.%s", dest, prefix, suffix);
+		snprintf(destfile, MAXPGPATH, "%s/%s/%s.%s", dest_dir, dest, 
+				 prefix, suffix);
 
 		infile = fopen(srcfile, "r");
 		if (!infile)
@@ -536,8 +537,8 @@ convert_sourcefiles_in(char *source, char *dest, char *suffix)
 static void
 convert_sourcefiles(void)
 {
-	convert_sourcefiles_in("input", "sql", "sql");
-	convert_sourcefiles_in("output", "expected", "out");
+	convert_sourcefiles_in("input", inputdir, "sql", "sql");
+	convert_sourcefiles_in("output", outputdir, "expected", "out");
 }
 
 /*
