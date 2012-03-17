@@ -162,6 +162,8 @@ REVOKE [ ADMIN OPTION FOR ]
   <para>
    When revoking privileges on a table, the corresponding column privileges
    (if any) are automatically revoked on each column of the table, as well.
+   On the other hand, if a role has been granted privileges on a table, then
+   revoking the same privileges from individual columns will have no effect.
   </para>
 
   <para>
