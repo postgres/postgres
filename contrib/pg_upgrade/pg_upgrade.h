@@ -63,6 +63,7 @@ extern char *output_files[];
 #define SERVER_LOG_FILE2	UTILITY_LOG_FILE
 #endif
 
+
 #ifndef WIN32
 #define pg_copy_file		copy_file
 #define pg_mv_file			rename
@@ -70,6 +71,7 @@ extern char *output_files[];
 #define RM_CMD				"rm -f"
 #define RMDIR_CMD			"rm -rf"
 #define SCRIPT_EXT			"sh"
+#define	ECHO_QUOTE	"'"
 #else
 #define pg_copy_file		CopyFile
 #define pg_mv_file			pgrename
@@ -79,6 +81,7 @@ extern char *output_files[];
 #define RMDIR_CMD			"RMDIR /s/q"
 #define SCRIPT_EXT			"bat"
 #define EXE_EXT				".exe"
+#define	ECHO_QUOTE	""
 #endif
 
 #define CLUSTER_NAME(cluster)	((cluster) == &old_cluster ? "old" : \

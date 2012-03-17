@@ -23,11 +23,6 @@ static void check_for_reg_data_type_usage(ClusterInfo *cluster);
 static void check_for_support_lib(ClusterInfo *cluster);
 static void get_bin_version(ClusterInfo *cluster);
 
-#ifndef WIN32
-#define	ECHO_QUOTE	"'"
-#else
-#define	ECHO_QUOTE	""
-#endif
 
 void
 output_check_banner(bool *live_check)
