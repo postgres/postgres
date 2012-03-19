@@ -13,6 +13,7 @@
 
 #include "access/transam.h"
 
+#define PG_UPGRADE_SUPPORT	"$libdir/pg_upgrade_support"
 
 /*
  * install_support_functions_in_new_db()
@@ -154,17 +155,17 @@ get_loadable_libraries(void)
 		PQfinish(conn);
 	}
 
+	totaltups++;	/* reserve for pg_upgrade_support */
+
 	/* Allocate what's certainly enough space */
-	if (totaltups > 0)
-		os_info.libraries = (char **) pg_malloc(totaltups * sizeof(char *));
-	else
-		os_info.libraries = NULL;
+	os_info.libraries = (char **) pg_malloc(totaltups * sizeof(char *));
 
 	/*
 	 * Now remove duplicates across DBs.  This is pretty inefficient code, but
 	 * there probably aren't enough entries to matter.
 	 */
 	totaltups = 0;
+	os_info.libraries[totaltups++] = pg_strdup(PG_UPGRADE_SUPPORT);
 
 	for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
 	{
@@ -256,6 +257,12 @@ check_loadable_libraries(void)
 		if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		{
 			found = true;
+
+			/* exit and report missing support library with special message */
+			if (strcmp(lib, PG_UPGRADE_SUPPORT) == 0)
+				pg_log(PG_FATAL,
+				   "The pg_upgrade_support module must be created and installed in the new cluster.\n");
+
 			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
 				pg_log(PG_FATAL, "Could not open file \"%s\": %s\n",
 					   output_path, getErrorText(errno));
