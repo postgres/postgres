@@ -34,6 +34,8 @@ extern bool UtilityReturnsTuples(Node *parsetree);
 
 extern TupleDesc UtilityTupleDescriptor(Node *parsetree);
 
+extern Query *UtilityContainsQuery(Node *parsetree);
+
 extern const char *CreateCommandTag(Node *parsetree);
 
 extern LogStmtLevel GetCommandLogLevel(Node *parsetree);

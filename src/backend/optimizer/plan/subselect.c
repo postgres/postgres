@@ -1399,7 +1399,6 @@ simplify_EXISTS_query(Query *query)
 	 * are complex.
 	 */
 	if (query->commandType != CMD_SELECT ||
-		query->intoClause ||
 		query->setOperations ||
 		query->hasAggs ||
 		query->hasWindowFuncs ||

@@ -624,7 +624,7 @@ pg_analyze_and_rewrite_params(Node *parsetree,
 	pstate->p_sourcetext = query_string;
 	(*parserSetup) (pstate, parserSetupArg);
 
-	query = transformStmt(pstate, parsetree);
+	query = transformTopLevelStmt(pstate, parsetree);
 
 	free_parsestate(pstate);
 
@@ -975,7 +975,7 @@ exec_simple_query(const char *query_string)
 		 * end up being able to do this, keeping the parse/plan snapshot around
 		 * until after we start the portal doesn't cost much.
 		 */
-		PortalStart(portal, NULL, snapshot_set);
+		PortalStart(portal, NULL, 0, snapshot_set);
 
 		/* Done with the snapshot used for parsing/planning */
 		if (snapshot_set)
@@ -1709,7 +1709,7 @@ exec_bind_message(StringInfo input_message)
 	 * for query execution (currently, reuse will only occur if
 	 * PORTAL_ONE_SELECT mode is chosen).
 	 */
-	PortalStart(portal, params, snapshot_set);
+	PortalStart(portal, params, 0, snapshot_set);
 
 	/* Done with the snapshot used for parameter I/O and parsing/planning */
 	if (snapshot_set)

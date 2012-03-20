@@ -260,8 +260,7 @@ ChoosePortalStrategy(List *stmts)
 			if (query->canSetTag)
 			{
 				if (query->commandType == CMD_SELECT &&
-					query->utilityStmt == NULL &&
-					query->intoClause == NULL)
+					query->utilityStmt == NULL)
 				{
 					if (query->hasModifyingCTE)
 						return PORTAL_ONE_MOD_WITH;
@@ -285,8 +284,7 @@ ChoosePortalStrategy(List *stmts)
 			if (pstmt->canSetTag)
 			{
 				if (pstmt->commandType == CMD_SELECT &&
-					pstmt->utilityStmt == NULL &&
-					pstmt->intoClause == NULL)
+					pstmt->utilityStmt == NULL)
 				{
 					if (pstmt->hasModifyingCTE)
 						return PORTAL_ONE_MOD_WITH;
@@ -395,8 +393,7 @@ FetchStatementTargetList(Node *stmt)
 		else
 		{
 			if (query->commandType == CMD_SELECT &&
-				query->utilityStmt == NULL &&
-				query->intoClause == NULL)
+				query->utilityStmt == NULL)
 				return query->targetList;
 			if (query->returningList)
 				return query->returningList;
@@ -408,8 +405,7 @@ FetchStatementTargetList(Node *stmt)
 		PlannedStmt *pstmt = (PlannedStmt *) stmt;
 
 		if (pstmt->commandType == CMD_SELECT &&
-			pstmt->utilityStmt == NULL &&
-			pstmt->intoClause == NULL)
+			pstmt->utilityStmt == NULL)
 			return pstmt->planTree->targetlist;
 		if (pstmt->hasReturning)
 			return pstmt->planTree->targetlist;
@@ -430,7 +426,6 @@ FetchStatementTargetList(Node *stmt)
 		ExecuteStmt *estmt = (ExecuteStmt *) stmt;
 		PreparedStatement *entry;
 
-		Assert(!estmt->into);
 		entry = FetchPreparedStatement(estmt->name, true);
 		return FetchPreparedStatementTargetList(entry);
 	}
@@ -442,9 +437,15 @@ FetchStatementTargetList(Node *stmt)
  *		Prepare a portal for execution.
  *
  * Caller must already have created the portal, done PortalDefineQuery(),
- * and adjusted portal options if needed.  If parameters are needed by
- * the query, they must be passed in here (caller is responsible for
- * giving them appropriate lifetime).
+ * and adjusted portal options if needed.
+ *
+ * If parameters are needed by the query, they must be passed in "params"
+ * (caller is responsible for giving them appropriate lifetime).
+ *
+ * The caller can also provide an initial set of "eflags" to be passed to
+ * ExecutorStart (but note these can be modified internally, and they are
+ * currently only honored for PORTAL_ONE_SELECT portals).  Most callers
+ * should simply pass zero.
  *
  * The use_active_snapshot parameter is currently used only for
  * PORTAL_ONE_SELECT portals.  If it is true, the active snapshot will
@@ -456,14 +457,15 @@ FetchStatementTargetList(Node *stmt)
  * tupdesc (if any) is known.
  */
 void
-PortalStart(Portal portal, ParamListInfo params, bool use_active_snapshot)
+PortalStart(Portal portal, ParamListInfo params,
+			int eflags, bool use_active_snapshot)
 {
 	Portal		saveActivePortal;
 	ResourceOwner saveResourceOwner;
 	MemoryContext savePortalContext;
 	MemoryContext oldContext;
 	QueryDesc  *queryDesc;
-	int			eflags;
+	int			myeflags;
 
 	AssertArg(PortalIsValid(portal));
 	AssertState(portal->status == PORTAL_DEFINED);
@@ -517,17 +519,18 @@ PortalStart(Portal portal, ParamListInfo params, bool use_active_snapshot)
 
 				/*
 				 * If it's a scrollable cursor, executor needs to support
-				 * REWIND and backwards scan.
+				 * REWIND and backwards scan, as well as whatever the caller
+				 * might've asked for.
 				 */
 				if (portal->cursorOptions & CURSOR_OPT_SCROLL)
-					eflags = EXEC_FLAG_REWIND | EXEC_FLAG_BACKWARD;
+					myeflags = eflags | EXEC_FLAG_REWIND | EXEC_FLAG_BACKWARD;
 				else
-					eflags = 0; /* default run-to-completion flags */
+					myeflags = eflags;
 
 				/*
 				 * Call ExecutorStart to prepare the plan for execution
 				 */
-				ExecutorStart(queryDesc, eflags);
+				ExecutorStart(queryDesc, myeflags);
 
 				/*
 				 * This tells PortalCleanup to shut down the executor

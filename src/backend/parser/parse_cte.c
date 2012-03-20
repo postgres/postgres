@@ -253,13 +253,6 @@ analyzeCTE(ParseState *pstate, CommonTableExpr *cte)
 	if (query->utilityStmt != NULL)
 		elog(ERROR, "unexpected utility statement in WITH");
 
-	if (query->intoClause)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("subquery in WITH cannot have SELECT INTO"),
-				 parser_errposition(pstate,
-								 exprLocation((Node *) query->intoClause))));
-
 	/*
 	 * We disallow data-modifying WITH except at the top level of a query,
 	 * because it's not clear when such a modification should be executed.

@@ -3291,24 +3291,14 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 			 * We want to disallow SELECT INTO for now, because its behavior
 			 * is not consistent with SELECT INTO in a normal plpgsql context.
 			 * (We need to reimplement EXECUTE to parse the string as a
-			 * plpgsql command, not just feed it to SPI_execute.) However,
-			 * CREATE AS should be allowed ... and since it produces the same
-			 * parsetree as SELECT INTO, there's no way to tell the difference
-			 * except to look at the source text.  Wotta kluge!
+			 * plpgsql command, not just feed it to SPI_execute.)  This is not
+			 * a functional limitation because CREATE TABLE AS is allowed.
 			 */
-			{
-				char	   *ptr;
-
-				for (ptr = querystr; *ptr; ptr++)
-					if (!scanner_isspace(*ptr))
-						break;
-				if (*ptr == 'S' || *ptr == 's')
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("EXECUTE of SELECT ... INTO is not implemented"),
-							 errhint("You might want to use EXECUTE ... INTO or EXECUTE CREATE TABLE ... AS instead.")));
-				break;
-			}
+			ereport(ERROR,
+			        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			         errmsg("EXECUTE of SELECT ... INTO is not implemented"),
+			         errhint("You might want to use EXECUTE ... INTO or EXECUTE CREATE TABLE ... AS instead.")));
+			break;
 
 			/* Some SPI errors deserve specific error messages */
 		case SPI_ERROR_COPY:
@@ -5759,7 +5749,7 @@ exec_simple_check_plan(PLpgSQL_expr *expr)
 	 */
 	if (!IsA(query, Query))
 		return;
-	if (query->commandType != CMD_SELECT || query->intoClause)
+	if (query->commandType != CMD_SELECT)
 		return;
 	if (query->rtable != NIL)
 		return;
@@ -5833,7 +5823,7 @@ exec_simple_recheck_plan(PLpgSQL_expr *expr, CachedPlan *cplan)
 	 */
 	if (!IsA(stmt, PlannedStmt))
 		return;
-	if (stmt->commandType != CMD_SELECT || stmt->intoClause)
+	if (stmt->commandType != CMD_SELECT)
 		return;
 	plan = stmt->planTree;
 	if (!IsA(plan, Result))

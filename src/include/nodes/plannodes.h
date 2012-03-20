@@ -54,8 +54,6 @@ typedef struct PlannedStmt
 
 	Node	   *utilityStmt;	/* non-null if this is DECLARE CURSOR */
 
-	IntoClause *intoClause;		/* target for SELECT INTO / CREATE TABLE AS */
-
 	List	   *subplans;		/* Plan trees for SubPlan expressions */
 
 	Bitmapset  *rewindPlanIDs;	/* indices of subplans that require REWIND */

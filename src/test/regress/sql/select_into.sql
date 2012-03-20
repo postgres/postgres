@@ -67,3 +67,12 @@ SELECT make_table();
 SELECT * FROM created_table;
 
 DROP TABLE created_table;
+
+--
+-- Disallowed uses of SELECT ... INTO.  All should fail
+--
+DECLARE foo CURSOR FOR SELECT 1 INTO b;
+COPY (SELECT 1 INTO frak UNION SELECT 2) TO 'blob';
+SELECT * FROM (SELECT 1 INTO f) bar;
+CREATE VIEW foo AS SELECT 1 INTO b;
+INSERT INTO b SELECT 1 INTO f;

@@ -250,7 +250,6 @@ _outPlannedStmt(StringInfo str, const PlannedStmt *node)
 	WRITE_NODE_FIELD(rtable);
 	WRITE_NODE_FIELD(resultRelations);
 	WRITE_NODE_FIELD(utilityStmt);
-	WRITE_NODE_FIELD(intoClause);
 	WRITE_NODE_FIELD(subplans);
 	WRITE_BITMAPSET_FIELD(rewindPlanIDs);
 	WRITE_NODE_FIELD(rowMarks);
@@ -2181,7 +2180,6 @@ _outQuery(StringInfo str, const Query *node)
 		appendStringInfo(str, " :utilityStmt <>");
 
 	WRITE_INT_FIELD(resultRelation);
-	WRITE_NODE_FIELD(intoClause);
 	WRITE_BOOL_FIELD(hasAggs);
 	WRITE_BOOL_FIELD(hasWindowFuncs);
 	WRITE_BOOL_FIELD(hasSubLinks);

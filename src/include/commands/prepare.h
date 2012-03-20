@@ -35,11 +35,12 @@ typedef struct
 
 /* Utility statements PREPARE, EXECUTE, DEALLOCATE, EXPLAIN EXECUTE */
 extern void PrepareQuery(PrepareStmt *stmt, const char *queryString);
-extern void ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
-			 ParamListInfo params,
+extern void ExecuteQuery(ExecuteStmt *stmt, IntoClause *intoClause,
+			 const char *queryString, ParamListInfo params,
 			 DestReceiver *dest, char *completionTag);
 extern void DeallocateQuery(DeallocateStmt *stmt);
-extern void ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainState *es,
+extern void ExplainExecuteQuery(ExecuteStmt *execstmt, IntoClause *into,
+					ExplainState *es,
 					const char *queryString, ParamListInfo params);
 
 /* Low-level access to stored prepared statements */
@@ -52,6 +53,6 @@ extern void DropPreparedStatement(const char *stmt_name, bool showError);
 extern TupleDesc FetchPreparedStatementResultDesc(PreparedStatement *stmt);
 extern List *FetchPreparedStatementTargetList(PreparedStatement *stmt);
 
-void		DropAllPreparedStatements(void);
+extern void DropAllPreparedStatements(void);
 
 #endif   /* PREPARE_H */

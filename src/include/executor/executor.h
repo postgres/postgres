@@ -30,8 +30,8 @@
  *
  * EXPLAIN_ONLY indicates that the plan tree is being initialized just so
  * EXPLAIN can print it out; it will not be run.  Hence, no side-effects
- * of startup should occur (such as creating a SELECT INTO target table).
- * However, error checks (such as permission checks) should be performed.
+ * of startup should occur.  However, error checks (such as permission checks)
+ * should be performed.
  *
  * REWIND indicates that the plan node should try to efficiently support
  * rescans without parameter changes.  (Nodes must support ExecReScan calls
@@ -49,12 +49,18 @@
  * AfterTriggerBeginQuery/AfterTriggerEndQuery.  This does not necessarily
  * mean that the plan can't queue any AFTER triggers; just that the caller
  * is responsible for there being a trigger context for them to be queued in.
+ *
+ * WITH/WITHOUT_OIDS tell the executor to emit tuples with or without space
+ * for OIDs, respectively.  These are currently used only for CREATE TABLE AS.
+ * If neither is set, the plan may or may not produce tuples including OIDs.
  */
 #define EXEC_FLAG_EXPLAIN_ONLY	0x0001	/* EXPLAIN, no ANALYZE */
 #define EXEC_FLAG_REWIND		0x0002	/* need efficient rescan */
 #define EXEC_FLAG_BACKWARD		0x0004	/* need backward scan */
 #define EXEC_FLAG_MARK			0x0008	/* need mark/restore */
 #define EXEC_FLAG_SKIP_TRIGGERS 0x0010	/* skip AfterTrigger calls */
+#define EXEC_FLAG_WITH_OIDS		0x0020	/* force OIDs in returned tuples */
+#define EXEC_FLAG_WITHOUT_OIDS	0x0040	/* force no OIDs in returned tuples */
 
 
 /*
@@ -204,7 +210,6 @@ extern void EvalPlanQualFetchRowMarks(EPQState *epqstate);
 extern TupleTableSlot *EvalPlanQualNext(EPQState *epqstate);
 extern void EvalPlanQualBegin(EPQState *epqstate, EState *parentestate);
 extern void EvalPlanQualEnd(EPQState *epqstate);
-extern DestReceiver *CreateIntoRelDestReceiver(void);
 
 /*
  * prototypes from functions in execProcnode.c

@@ -900,7 +900,6 @@ _equalQuery(const Query *a, const Query *b)
 	COMPARE_SCALAR_FIELD(canSetTag);
 	COMPARE_NODE_FIELD(utilityStmt);
 	COMPARE_SCALAR_FIELD(resultRelation);
-	COMPARE_NODE_FIELD(intoClause);
 	COMPARE_SCALAR_FIELD(hasAggs);
 	COMPARE_SCALAR_FIELD(hasWindowFuncs);
 	COMPARE_SCALAR_FIELD(hasSubLinks);
@@ -1565,6 +1564,16 @@ _equalExplainStmt(const ExplainStmt *a, const ExplainStmt *b)
 }
 
 static bool
+_equalCreateTableAsStmt(const CreateTableAsStmt *a, const CreateTableAsStmt *b)
+{
+	COMPARE_NODE_FIELD(query);
+	COMPARE_NODE_FIELD(into);
+	COMPARE_SCALAR_FIELD(is_select_into);
+
+	return true;
+}
+
+static bool
 _equalCreateSeqStmt(const CreateSeqStmt *a, const CreateSeqStmt *b)
 {
 	COMPARE_NODE_FIELD(sequence);
@@ -1908,7 +1917,6 @@ static bool
 _equalExecuteStmt(const ExecuteStmt *a, const ExecuteStmt *b)
 {
 	COMPARE_STRING_FIELD(name);
-	COMPARE_NODE_FIELD(into);
 	COMPARE_NODE_FIELD(params);
 
 	return true;
@@ -2792,6 +2800,9 @@ equal(const void *a, const void *b)
 			break;
 		case T_ExplainStmt:
 			retval = _equalExplainStmt(a, b);
+			break;
+		case T_CreateTableAsStmt:
+			retval = _equalCreateTableAsStmt(a, b);
 			break;
 		case T_CreateSeqStmt:
 			retval = _equalCreateSeqStmt(a, b);

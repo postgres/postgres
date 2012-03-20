@@ -1210,14 +1210,16 @@ BeginCopy(bool is_from,
 			elog(ERROR, "unexpected rewrite result");
 
 		query = (Query *) linitial(rewritten);
-		Assert(query->commandType == CMD_SELECT);
-		Assert(query->utilityStmt == NULL);
 
-		/* Query mustn't use INTO, either */
-		if (query->intoClause)
+		/* The grammar allows SELECT INTO, but we don't support that */
+		if (query->utilityStmt != NULL &&
+			IsA(query->utilityStmt, CreateTableAsStmt))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("COPY (SELECT INTO) is not supported")));
+
+		Assert(query->commandType == CMD_SELECT);
+		Assert(query->utilityStmt == NULL);
 
 		/* plan the query */
 		plan = planner(query, 0, NULL);

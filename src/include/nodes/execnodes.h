@@ -371,8 +371,6 @@ typedef struct EState
 
 	int			es_top_eflags;	/* eflags passed to ExecutorStart */
 	int			es_instrument;	/* OR of InstrumentOption flags */
-	bool		es_select_into; /* true if doing SELECT INTO */
-	bool		es_into_oids;	/* true to generate OIDs in SELECT INTO */
 	bool		es_finished;	/* true when ExecutorFinish is done */
 
 	List	   *es_exprcontexts;	/* List of ExprContexts within EState */

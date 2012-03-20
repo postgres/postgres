@@ -139,7 +139,7 @@ SELECT * FROM writetest, temptest; -- ok
 (0 rows)
 
 CREATE TABLE test AS SELECT * FROM writetest; -- fail
-ERROR:  cannot execute SELECT INTO in a read-only transaction
+ERROR:  cannot execute CREATE TABLE AS in a read-only transaction
 START TRANSACTION READ WRITE;
 DROP TABLE writetest; -- ok
 COMMIT;

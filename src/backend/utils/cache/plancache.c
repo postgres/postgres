@@ -1232,20 +1232,16 @@ AcquireExecutorLocks(List *stmt_list, bool acquire)
 		if (!IsA(plannedstmt, PlannedStmt))
 		{
 			/*
-			 * Ignore utility statements, except EXPLAIN which contains a
-			 * parsed-but-not-planned query.  Note: it's okay to use
+			 * Ignore utility statements, except those (such as EXPLAIN) that
+			 * contain a parsed-but-not-planned query.  Note: it's okay to use
 			 * ScanQueryForLocks, even though the query hasn't been through
 			 * rule rewriting, because rewriting doesn't change the query
 			 * representation.
 			 */
-			if (IsA(plannedstmt, ExplainStmt))
-			{
-				Query	   *query;
+			Query	   *query = UtilityContainsQuery((Node *) plannedstmt);
 
-				query = (Query *) ((ExplainStmt *) plannedstmt)->query;
-				Assert(IsA(query, Query));
+			if (query)
 				ScanQueryForLocks(query, acquire);
-			}
 			continue;
 		}
 
@@ -1304,13 +1300,10 @@ AcquirePlannerLocks(List *stmt_list, bool acquire)
 
 		if (query->commandType == CMD_UTILITY)
 		{
-			/* Ignore utility statements, except EXPLAIN */
-			if (IsA(query->utilityStmt, ExplainStmt))
-			{
-				query = (Query *) ((ExplainStmt *) query->utilityStmt)->query;
-				Assert(IsA(query, Query));
+			/* Ignore utility statements, unless they contain a Query */
+			query = UtilityContainsQuery(query->utilityStmt);
+			if (query)
 				ScanQueryForLocks(query, acquire);
-			}
 			continue;
 		}
 
@@ -1648,9 +1641,9 @@ ResetPlanCache(void)
 		 * aborted transactions when we can't revalidate them (cf bug #5269).
 		 * In general there is no point in invalidating utility statements
 		 * since they have no plans anyway.  So invalidate it only if it
-		 * contains at least one non-utility statement.  (EXPLAIN counts as a
-		 * non-utility statement, though, since it contains an analyzed query
-		 * that might have dependencies.)
+		 * contains at least one non-utility statement, or contains a utility
+		 * statement that contains a pre-analyzed query (which could have
+		 * dependencies.)
 		 */
 		foreach(lc, plansource->query_list)
 		{
@@ -1658,12 +1651,13 @@ ResetPlanCache(void)
 
 			Assert(IsA(query, Query));
 			if (query->commandType != CMD_UTILITY ||
-				IsA(query->utilityStmt, ExplainStmt))
+				UtilityContainsQuery(query->utilityStmt))
 			{
 				/* non-utility statement, so invalidate */
 				plansource->is_valid = false;
 				if (plansource->gplan)
 					plansource->gplan->is_valid = false;
+				/* no need to look further */
 				break;
 			}
 		}

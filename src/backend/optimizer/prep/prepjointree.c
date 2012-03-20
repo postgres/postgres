@@ -1136,8 +1136,7 @@ is_simple_subquery(Query *subquery)
 	 */
 	if (!IsA(subquery, Query) ||
 		subquery->commandType != CMD_SELECT ||
-		subquery->utilityStmt != NULL ||
-		subquery->intoClause != NULL)
+		subquery->utilityStmt != NULL)
 		elog(ERROR, "subquery is bogus");
 
 	/*
@@ -1223,8 +1222,7 @@ is_simple_union_all(Query *subquery)
 	/* Let's just make sure it's a valid subselect ... */
 	if (!IsA(subquery, Query) ||
 		subquery->commandType != CMD_SELECT ||
-		subquery->utilityStmt != NULL ||
-		subquery->intoClause != NULL)
+		subquery->utilityStmt != NULL)
 		elog(ERROR, "subquery is bogus");
 
 	/* Is it a set-operation query at all? */

@@ -1284,11 +1284,11 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 	 * Start portal execution.
 	 */
 	if (read_only)
-		PortalStart(portal, paramLI, true);
+		PortalStart(portal, paramLI, 0, true);
 	else
 	{
 		CommandCounterIncrement();
-		PortalStart(portal, paramLI, false);
+		PortalStart(portal, paramLI, 0, false);
 	}
 
 	Assert(portal->strategy != PORTAL_MULTI_QUERY);
@@ -1907,17 +1907,39 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 			}
 			else
 			{
+				char	completionTag[COMPLETION_TAG_BUFSIZE];
+
 				ProcessUtility(stmt,
 							   plansource->query_string,
 							   paramLI,
 							   false,	/* not top level */
 							   dest,
-							   NULL);
+							   completionTag);
+
 				/* Update "processed" if stmt returned tuples */
 				if (_SPI_current->tuptable)
 					_SPI_current->processed = _SPI_current->tuptable->alloced -
 						_SPI_current->tuptable->free;
-				res = SPI_OK_UTILITY;
+
+				/*
+				 * CREATE TABLE AS is a messy special case for historical
+				 * reasons.  We must set _SPI_current->processed even though
+				 * the tuples weren't returned to the caller, and we must
+				 * return a special result code if the statement was spelled
+				 * SELECT INTO.
+				 */
+				if (IsA(stmt, CreateTableAsStmt))
+				{
+					Assert(strncmp(completionTag, "SELECT ", 7) == 0);
+					_SPI_current->processed = strtoul(completionTag + 7,
+													  NULL, 10);
+					if (((CreateTableAsStmt *) stmt)->is_select_into)
+						res = SPI_OK_SELINTO;
+					else
+						res = SPI_OK_UTILITY;
+				}
+				else
+					res = SPI_OK_UTILITY;
 			}
 
 			/*
@@ -2042,9 +2064,7 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, long tcount)
 	{
 		case CMD_SELECT:
 			Assert(queryDesc->plannedstmt->utilityStmt == NULL);
-			if (queryDesc->plannedstmt->intoClause)		/* select into table? */
-				res = SPI_OK_SELINTO;
-			else if (queryDesc->dest->mydest != DestSPI)
+			if (queryDesc->dest->mydest != DestSPI)
 			{
 				/* Don't return SPI_OK_SELECT if we're discarding result */
 				res = SPI_OK_UTILITY;

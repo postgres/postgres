@@ -439,9 +439,17 @@ DefineView(ViewStmt *stmt, const char *queryString)
 
 	/*
 	 * The grammar should ensure that the result is a single SELECT Query.
+	 * However, it doesn't forbid SELECT INTO, so we have to check for that.
 	 */
-	if (!IsA(viewParse, Query) ||
-		viewParse->commandType != CMD_SELECT)
+	if (!IsA(viewParse, Query))
+		elog(ERROR, "unexpected parse analysis result");
+	if (viewParse->utilityStmt != NULL &&
+		IsA(viewParse->utilityStmt, CreateTableAsStmt))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("views must not contain SELECT INTO")));
+	if (viewParse->commandType != CMD_SELECT ||
+		viewParse->utilityStmt != NULL)
 		elog(ERROR, "unexpected parse analysis result");
 
 	/*
@@ -449,10 +457,6 @@ DefineView(ViewStmt *stmt, const char *queryString)
 	 * DefineQueryRewrite(), but that function will complain about a bogus ON
 	 * SELECT rule, and we'd rather the message complain about a view.
 	 */
-	if (viewParse->intoClause != NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("views must not contain SELECT INTO")));
 	if (viewParse->hasModifyingCTE)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),

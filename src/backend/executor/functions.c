@@ -535,7 +535,6 @@ init_execution_state(List *queryTree_list,
 
 			if (ps->commandType == CMD_SELECT &&
 				ps->utilityStmt == NULL &&
-				ps->intoClause == NULL &&
 				!ps->hasModifyingCTE)
 				fcache->lazyEval = lasttages->lazyEval = true;
 		}
@@ -1493,8 +1492,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	 */
 	if (parse &&
 		parse->commandType == CMD_SELECT &&
-		parse->utilityStmt == NULL &&
-		parse->intoClause == NULL)
+		parse->utilityStmt == NULL)
 	{
 		tlist_ptr = &parse->targetList;
 		tlist = parse->targetList;

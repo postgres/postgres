@@ -18,6 +18,7 @@
 
 #include "access/xact.h"
 #include "catalog/pg_type.h"
+#include "commands/createas.h"
 #include "commands/prepare.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
@@ -170,7 +171,12 @@ PrepareQuery(PrepareStmt *stmt, const char *queryString)
 }
 
 /*
- * Implements the 'EXECUTE' utility statement.
+ * ExecuteQuery --- implement the 'EXECUTE' utility statement.
+ *
+ * This code also supports CREATE TABLE ... AS EXECUTE.  That case is
+ * indicated by passing a non-null intoClause.  The DestReceiver is already
+ * set up correctly for CREATE TABLE AS, but we still have to make a few
+ * other adjustments here.
  *
  * Note: this is one of very few places in the code that needs to deal with
  * two query strings at once.  The passed-in queryString is that of the
@@ -179,8 +185,8 @@ PrepareQuery(PrepareStmt *stmt, const char *queryString)
  * source is that of the original PREPARE.
  */
 void
-ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
-			 ParamListInfo params,
+ExecuteQuery(ExecuteStmt *stmt, IntoClause *intoClause,
+			 const char *queryString, ParamListInfo params,
 			 DestReceiver *dest, char *completionTag)
 {
 	PreparedStatement *entry;
@@ -190,6 +196,8 @@ ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 	EState	   *estate = NULL;
 	Portal		portal;
 	char	   *query_string;
+	int			eflags;
+	long		count;
 
 	/* Look it up in the hash table */
 	entry = FetchPreparedStatement(stmt->name, true);
@@ -222,24 +230,26 @@ ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 	query_string = MemoryContextStrdup(PortalGetHeapMemory(portal),
 									   entry->plansource->query_string);
 
+	/* Replan if needed, and increment plan refcount for portal */
+	cplan = GetCachedPlan(entry->plansource, paramLI, false);
+	plan_list = cplan->stmt_list;
+
 	/*
-	 * For CREATE TABLE / AS EXECUTE, we must make a copy of the stored query
-	 * so that we can modify its destination (yech, but this has always been
-	 * ugly).  For regular EXECUTE we can just use the cached query, since the
-	 * executor is read-only.
+	 * For CREATE TABLE ... AS EXECUTE, we must verify that the prepared
+	 * statement is one that produces tuples.  Currently we insist that it be
+	 * a plain old SELECT.  In future we might consider supporting other
+	 * things such as INSERT ... RETURNING, but there are a couple of issues
+	 * to be settled first, notably how WITH NO DATA should be handled in such
+	 * a case (do we really want to suppress execution?) and how to pass down
+	 * the OID-determining eflags (PortalStart won't handle them in such a
+	 * case, and for that matter it's not clear the executor will either).
+	 *
+	 * For CREATE TABLE ... AS EXECUTE, we also have to ensure that the
+	 * proper eflags and fetch count are passed to PortalStart/PortalRun.
 	 */
-	if (stmt->into)
+	if (intoClause)
 	{
-		MemoryContext oldContext;
 		PlannedStmt *pstmt;
-
-		/* Replan if needed, and increment plan refcount transiently */
-		cplan = GetCachedPlan(entry->plansource, paramLI, true);
-
-		/* Copy plan into portal's context, and modify */
-		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
-
-		plan_list = copyObject(cplan->stmt_list);
 
 		if (list_length(plan_list) != 1)
 			ereport(ERROR,
@@ -252,20 +262,21 @@ ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("prepared statement is not a SELECT")));
-		pstmt->intoClause = copyObject(stmt->into);
 
-		MemoryContextSwitchTo(oldContext);
+		/* Set appropriate eflags */
+		eflags = GetIntoRelEFlags(intoClause);
 
-		/* We no longer need the cached plan refcount ... */
-		ReleaseCachedPlan(cplan, true);
-		/* ... and we don't want the portal to depend on it, either */
-		cplan = NULL;
+		/* And tell PortalRun whether to run to completion or not */
+		if (intoClause->skipData)
+			count = 0;
+		else
+			count = FETCH_ALL;
 	}
 	else
 	{
-		/* Replan if needed, and increment plan refcount for portal */
-		cplan = GetCachedPlan(entry->plansource, paramLI, false);
-		plan_list = cplan->stmt_list;
+		/* Plain old EXECUTE */
+		eflags = 0;
+		count = FETCH_ALL;
 	}
 
 	PortalDefineQuery(portal,
@@ -276,11 +287,11 @@ ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 					  cplan);
 
 	/*
-	 * Run the portal to completion.
+	 * Run the portal as appropriate.
 	 */
-	PortalStart(portal, paramLI, true);
+	PortalStart(portal, paramLI, eflags, true);
 
-	(void) PortalRun(portal, FETCH_ALL, false, dest, dest, completionTag);
+	(void) PortalRun(portal, count, false, dest, dest, completionTag);
 
 	PortalDrop(portal, false);
 
@@ -615,11 +626,14 @@ DropAllPreparedStatements(void)
 /*
  * Implements the 'EXPLAIN EXECUTE' utility statement.
  *
+ * "into" is NULL unless we are doing EXPLAIN CREATE TABLE AS EXECUTE,
+ * in which case executing the query should result in creating that table.
+ *
  * Note: the passed-in queryString is that of the EXPLAIN EXECUTE,
  * not the original PREPARE; we get the latter string from the plancache.
  */
 void
-ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainState *es,
+ExplainExecuteQuery(ExecuteStmt *execstmt, IntoClause *into, ExplainState *es,
 					const char *queryString, ParamListInfo params)
 {
 	PreparedStatement *entry;
@@ -665,27 +679,9 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainState *es,
 		PlannedStmt *pstmt = (PlannedStmt *) lfirst(p);
 
 		if (IsA(pstmt, PlannedStmt))
-		{
-			if (execstmt->into)
-			{
-				if (pstmt->commandType != CMD_SELECT ||
-					pstmt->utilityStmt != NULL)
-					ereport(ERROR,
-							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-							 errmsg("prepared statement is not a SELECT")));
-
-				/* Copy the stmt so we can modify it */
-				pstmt = copyObject(pstmt);
-
-				pstmt->intoClause = execstmt->into;
-			}
-
-			ExplainOnePlan(pstmt, es, query_string, paramLI);
-		}
+			ExplainOnePlan(pstmt, into, es, query_string, paramLI);
 		else
-		{
-			ExplainOneUtility((Node *) pstmt, es, query_string, paramLI);
-		}
+			ExplainOneUtility((Node *) pstmt, into, es, query_string, paramLI);
 
 		/* No need for CommandCounterIncrement, as ExplainOnePlan did it */
 

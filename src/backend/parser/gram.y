@@ -124,7 +124,6 @@ static void check_qualified_name(List *names, core_yyscan_t yyscanner);
 static List *check_func_name(List *names, core_yyscan_t yyscanner);
 static List *check_indirection(List *indirection, core_yyscan_t yyscanner);
 static List *extractArgTypes(List *parameters);
-static SelectStmt *findLeftmostSelect(SelectStmt *node);
 static void insertSelectOptions(SelectStmt *stmt,
 								List *sortClause, List *lockingClause,
 								Node *limitOffset, Node *limitCount,
@@ -3044,31 +3043,27 @@ ExistingIndex:   USING INDEX index_name				{ $$ = $3; }
 		;
 
 
-/*
- * Note: CREATE TABLE ... AS SELECT ... is just another spelling for
- * SELECT ... INTO.
- */
+/*****************************************************************************
+ *
+ *		QUERY :
+ *				CREATE TABLE relname AS SelectStmt [ WITH [NO] DATA ]
+ *
+ *
+ * Note: SELECT ... INTO is a now-deprecated alternative for this.
+ *
+ *****************************************************************************/
 
 CreateAsStmt:
 		CREATE OptTemp TABLE create_as_target AS SelectStmt opt_with_data
 				{
-					/*
-					 * When the SelectStmt is a set-operation tree, we must
-					 * stuff the INTO information into the leftmost component
-					 * Select, because that's where analyze.c will expect
-					 * to find it.
-					 */
-					SelectStmt *n = findLeftmostSelect((SelectStmt *) $6);
-					if (n->intoClause != NULL)
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("CREATE TABLE AS cannot specify INTO"),
-								 parser_errposition(exprLocation((Node *) n->intoClause))));
-					n->intoClause = $4;
+					CreateTableAsStmt *ctas = makeNode(CreateTableAsStmt);
+					ctas->query = $6;
+					ctas->into = $4;
+					ctas->is_select_into = false;
 					/* cram additional flags into the IntoClause */
 					$4->rel->relpersistence = $2;
 					$4->skipData = !($7);
-					$$ = $6;
+					$$ = (Node *) ctas;
 				}
 		;
 
@@ -8285,20 +8280,22 @@ ExecuteStmt: EXECUTE name execute_param_clause
 					ExecuteStmt *n = makeNode(ExecuteStmt);
 					n->name = $2;
 					n->params = $3;
-					n->into = NULL;
 					$$ = (Node *) n;
 				}
 			| CREATE OptTemp TABLE create_as_target AS
 				EXECUTE name execute_param_clause opt_with_data
 				{
+					CreateTableAsStmt *ctas = makeNode(CreateTableAsStmt);
 					ExecuteStmt *n = makeNode(ExecuteStmt);
 					n->name = $7;
 					n->params = $8;
-					n->into = $4;
+					ctas->query = (Node *) n;
+					ctas->into = $4;
+					ctas->is_select_into = false;
 					/* cram additional flags into the IntoClause */
 					$4->rel->relpersistence = $2;
 					$4->skipData = !($9);
-					$$ = (Node *) n;
+					$$ = (Node *) ctas;
 				}
 		;
 
@@ -12868,18 +12865,6 @@ extractArgTypes(List *parameters)
 			result = lappend(result, p->argType);
 	}
 	return result;
-}
-
-/* findLeftmostSelect()
- * Find the leftmost component SelectStmt in a set-operation parsetree.
- */
-static SelectStmt *
-findLeftmostSelect(SelectStmt *node)
-{
-	while (node && node->op != SETOP_NONE)
-		node = node->larg;
-	Assert(node && IsA(node, SelectStmt) && node->larg == NULL);
-	return node;
 }
 
 /* insertSelectOptions()

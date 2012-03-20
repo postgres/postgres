@@ -31,7 +31,7 @@
 #include "access/printtup.h"
 #include "access/xact.h"
 #include "commands/copy.h"
-#include "executor/executor.h"
+#include "commands/createas.h"
 #include "executor/functions.h"
 #include "executor/tstoreReceiver.h"
 #include "libpq/libpq.h"
@@ -118,7 +118,7 @@ CreateDestReceiver(CommandDest dest)
 			return CreateTuplestoreDestReceiver();
 
 		case DestIntoRel:
-			return CreateIntoRelDestReceiver();
+			return CreateIntoRelDestReceiver(NULL);
 
 		case DestCopyOut:
 			return CreateCopyDestReceiver();

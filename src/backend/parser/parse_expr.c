@@ -1408,12 +1408,6 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		qtree->commandType != CMD_SELECT ||
 		qtree->utilityStmt != NULL)
 		elog(ERROR, "unexpected non-SELECT command in SubLink");
-	if (qtree->intoClause)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("subquery cannot have SELECT INTO"),
-				 parser_errposition(pstate,
-								 exprLocation((Node *) qtree->intoClause))));
 
 	sublink->subselect = (Node *) qtree;
 

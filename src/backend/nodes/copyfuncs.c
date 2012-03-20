@@ -86,7 +86,6 @@ _copyPlannedStmt(const PlannedStmt *from)
 	COPY_NODE_FIELD(rtable);
 	COPY_NODE_FIELD(resultRelations);
 	COPY_NODE_FIELD(utilityStmt);
-	COPY_NODE_FIELD(intoClause);
 	COPY_NODE_FIELD(subplans);
 	COPY_BITMAPSET_FIELD(rewindPlanIDs);
 	COPY_NODE_FIELD(rowMarks);
@@ -2406,7 +2405,6 @@ _copyQuery(const Query *from)
 	COPY_SCALAR_FIELD(canSetTag);
 	COPY_NODE_FIELD(utilityStmt);
 	COPY_SCALAR_FIELD(resultRelation);
-	COPY_NODE_FIELD(intoClause);
 	COPY_SCALAR_FIELD(hasAggs);
 	COPY_SCALAR_FIELD(hasWindowFuncs);
 	COPY_SCALAR_FIELD(hasSubLinks);
@@ -3194,6 +3192,18 @@ _copyExplainStmt(const ExplainStmt *from)
 	return newnode;
 }
 
+static CreateTableAsStmt *
+_copyCreateTableAsStmt(const CreateTableAsStmt *from)
+{
+	CreateTableAsStmt *newnode = makeNode(CreateTableAsStmt);
+
+	COPY_NODE_FIELD(query);
+	COPY_NODE_FIELD(into);
+	COPY_SCALAR_FIELD(is_select_into);
+
+	return newnode;
+}
+
 static CreateSeqStmt *
 _copyCreateSeqStmt(const CreateSeqStmt *from)
 {
@@ -3602,7 +3612,6 @@ _copyExecuteStmt(const ExecuteStmt *from)
 	ExecuteStmt *newnode = makeNode(ExecuteStmt);
 
 	COPY_STRING_FIELD(name);
-	COPY_NODE_FIELD(into);
 	COPY_NODE_FIELD(params);
 
 	return newnode;
@@ -4233,6 +4242,9 @@ copyObject(const void *from)
 			break;
 		case T_ExplainStmt:
 			retval = _copyExplainStmt(from);
+			break;
+		case T_CreateTableAsStmt:
+			retval = _copyCreateTableAsStmt(from);
 			break;
 		case T_CreateSeqStmt:
 			retval = _copyCreateSeqStmt(from);

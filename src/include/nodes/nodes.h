@@ -303,6 +303,7 @@ typedef enum NodeTag
 	T_DropdbStmt,
 	T_VacuumStmt,
 	T_ExplainStmt,
+	T_CreateTableAsStmt,
 	T_CreateSeqStmt,
 	T_AlterSeqStmt,
 	T_VariableSetStmt,

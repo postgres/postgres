@@ -495,12 +495,6 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 		query->commandType != CMD_SELECT ||
 		query->utilityStmt != NULL)
 		elog(ERROR, "unexpected non-SELECT command in subquery in FROM");
-	if (query->intoClause)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("subquery in FROM cannot have SELECT INTO"),
-				 parser_errposition(pstate,
-								 exprLocation((Node *) query->intoClause))));
 
 	/*
 	 * The subquery cannot make use of any variables from FROM items created

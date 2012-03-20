@@ -25,6 +25,8 @@ extern Query *parse_analyze_varparams(Node *parseTree, const char *sourceText,
 extern Query *parse_sub_analyze(Node *parseTree, ParseState *parentParseState,
 				  CommonTableExpr *parentCTE,
 				  bool locked_from_parent);
+
+extern Query *transformTopLevelStmt(ParseState *pstate, Node *parseTree);
 extern Query *transformStmt(ParseState *pstate, Node *parseTree);
 
 extern bool analyze_requires_snapshot(Node *parseTree);

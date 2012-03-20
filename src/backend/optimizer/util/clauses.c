@@ -4158,7 +4158,7 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 	pstate->p_sourcetext = src;
 	sql_fn_parser_setup(pstate, pinfo);
 
-	querytree = transformStmt(pstate, linitial(raw_parsetree_list));
+	querytree = transformTopLevelStmt(pstate, linitial(raw_parsetree_list));
 
 	free_parsestate(pstate);
 
@@ -4168,7 +4168,6 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 	if (!IsA(querytree, Query) ||
 		querytree->commandType != CMD_SELECT ||
 		querytree->utilityStmt ||
-		querytree->intoClause ||
 		querytree->hasAggs ||
 		querytree->hasWindowFuncs ||
 		querytree->hasSubLinks ||
@@ -4678,12 +4677,11 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	querytree = linitial(querytree_list);
 
 	/*
-	 * The single command must be a regular results-returning SELECT.
+	 * The single command must be a plain SELECT.
 	 */
 	if (!IsA(querytree, Query) ||
 		querytree->commandType != CMD_SELECT ||
-		querytree->utilityStmt ||
-		querytree->intoClause)
+		querytree->utilityStmt)
 		goto fail;
 
 	/*
