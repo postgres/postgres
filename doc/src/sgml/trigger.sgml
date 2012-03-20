@@ -582,7 +582,7 @@ typedef struct Trigger
     char       *tgname;
     Oid         tgfoid;
     int16       tgtype;
-    bool        tgenabled;
+    char        tgenabled;
     bool        tgisinternal;
     Oid         tgconstrrelid;
     Oid         tgconstrindid;
