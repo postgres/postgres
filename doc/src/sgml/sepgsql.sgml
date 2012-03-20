@@ -531,7 +531,7 @@ postgres=# SELECT cid, cname, show_credit(cid) FROM customer;
    </para>
    <para>
     Dynamic domain transitions should be considered carefully, because they
-    allow users to switch their label, and therefore their privileges, in
+    allow users to switch their label, and therefore their privileges,
     at their option, rather than (as in the case of a trusted procedure)
     as mandated by the system.
     Thus, the <literal>dyntransition</literal> permission is only considered
