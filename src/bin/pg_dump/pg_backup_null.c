@@ -74,7 +74,7 @@ InitArchiveFmt_Null(ArchiveHandle *AH)
 	 * Now prevent reading...
 	 */
 	if (AH->mode == archModeRead)
-		die_horribly(AH, NULL, "this format cannot be read\n");
+		exit_horribly(NULL, "this format cannot be read\n");
 }
 
 /*
@@ -149,7 +149,7 @@ _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 	bool		old_blob_style = (AH->version < K_VERS_1_12);
 
 	if (oid == 0)
-		die_horribly(AH, NULL, "invalid OID for large object\n");
+		exit_horribly(NULL, "invalid OID for large object\n");
 
 	/* With an old archive we must do drop and create logic here */
 	if (old_blob_style && AH->ropt->dropSchema)

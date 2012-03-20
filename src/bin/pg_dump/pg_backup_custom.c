@@ -146,15 +146,15 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 		{
 			AH->FH = fopen(AH->fSpec, PG_BINARY_W);
 			if (!AH->FH)
-				die_horribly(AH, modulename, "could not open output file \"%s\": %s\n",
-							 AH->fSpec, strerror(errno));
+				exit_horribly(modulename, "could not open output file \"%s\": %s\n",
+							  AH->fSpec, strerror(errno));
 		}
 		else
 		{
 			AH->FH = stdout;
 			if (!AH->FH)
-				die_horribly(AH, modulename, "could not open output file: %s\n",
-							 strerror(errno));
+				exit_horribly(modulename, "could not open output file: %s\n",
+							  strerror(errno));
 		}
 
 		ctx->hasSeek = checkSeek(AH->FH);
@@ -165,15 +165,15 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 		{
 			AH->FH = fopen(AH->fSpec, PG_BINARY_R);
 			if (!AH->FH)
-				die_horribly(AH, modulename, "could not open input file \"%s\": %s\n",
-							 AH->fSpec, strerror(errno));
+				exit_horribly(modulename, "could not open input file \"%s\": %s\n",
+							  AH->fSpec, strerror(errno));
 		}
 		else
 		{
 			AH->FH = stdin;
 			if (!AH->FH)
-				die_horribly(AH, modulename, "could not open input file: %s\n",
-							 strerror(errno));
+				exit_horribly(modulename, "could not open input file: %s\n",
+							  strerror(errno));
 		}
 
 		ctx->hasSeek = checkSeek(AH->FH);
@@ -367,7 +367,7 @@ _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 	lclContext *ctx = (lclContext *) AH->formatData;
 
 	if (oid == 0)
-		die_horribly(AH, modulename, "invalid OID for large object\n");
+		exit_horribly(modulename, "invalid OID for large object\n");
 
 	WriteInt(AH, oid);
 
@@ -437,9 +437,9 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 					break;
 
 				default:		/* Always have a default */
-					die_horribly(AH, modulename,
-								 "unrecognized data block type (%d) while searching archive\n",
-								 blkType);
+					exit_horribly(modulename,
+								  "unrecognized data block type (%d) while searching archive\n",
+								  blkType);
 					break;
 			}
 			_readBlockHeader(AH, &blkType, &id);
@@ -449,8 +449,8 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 	{
 		/* We can just seek to the place we need to be. */
 		if (fseeko(AH->FH, tctx->dataPos, SEEK_SET) != 0)
-			die_horribly(AH, modulename, "error during file seek: %s\n",
-						 strerror(errno));
+			exit_horribly(modulename, "error during file seek: %s\n",
+						  strerror(errno));
 
 		_readBlockHeader(AH, &blkType, &id);
 	}
@@ -459,25 +459,25 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 	if (blkType == EOF)
 	{
 		if (tctx->dataState == K_OFFSET_POS_NOT_SET)
-			die_horribly(AH, modulename, "could not find block ID %d in archive -- "
-						 "possibly due to out-of-order restore request, "
-						 "which cannot be handled due to lack of data offsets in archive\n",
-						 te->dumpId);
+			exit_horribly(modulename, "could not find block ID %d in archive -- "
+						  "possibly due to out-of-order restore request, "
+						  "which cannot be handled due to lack of data offsets in archive\n",
+						  te->dumpId);
 		else if (!ctx->hasSeek)
-			die_horribly(AH, modulename, "could not find block ID %d in archive -- "
-						 "possibly due to out-of-order restore request, "
-				  "which cannot be handled due to non-seekable input file\n",
-						 te->dumpId);
+			exit_horribly(modulename, "could not find block ID %d in archive -- "
+						  "possibly due to out-of-order restore request, "
+						  "which cannot be handled due to non-seekable input file\n",
+						  te->dumpId);
 		else	/* huh, the dataPos led us to EOF? */
-			die_horribly(AH, modulename, "could not find block ID %d in archive -- "
-						 "possibly corrupt archive\n",
-						 te->dumpId);
+			exit_horribly(modulename, "could not find block ID %d in archive -- "
+						  "possibly corrupt archive\n",
+						  te->dumpId);
 	}
 
 	/* Are we sane? */
 	if (id != te->dumpId)
-		die_horribly(AH, modulename, "found unexpected block ID (%d) when reading data -- expected %d\n",
-					 id, te->dumpId);
+		exit_horribly(modulename, "found unexpected block ID (%d) when reading data -- expected %d\n",
+					  id, te->dumpId);
 
 	switch (blkType)
 	{
@@ -490,8 +490,8 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 			break;
 
 		default:				/* Always have a default */
-			die_horribly(AH, modulename, "unrecognized data block type %d while restoring archive\n",
-						 blkType);
+			exit_horribly(modulename, "unrecognized data block type %d while restoring archive\n",
+						  blkType);
 			break;
 	}
 }
@@ -571,11 +571,11 @@ _skipData(ArchiveHandle *AH)
 		if (cnt != blkLen)
 		{
 			if (feof(AH->FH))
-				die_horribly(AH, modulename,
-							 "could not read from input file: end of file\n");
+				exit_horribly(modulename,
+							  "could not read from input file: end of file\n");
 			else
-				die_horribly(AH, modulename,
-					"could not read from input file: %s\n", strerror(errno));
+				exit_horribly(modulename,
+							  "could not read from input file: %s\n", strerror(errno));
 		}
 
 		ctx->filePos += blkLen;
@@ -604,7 +604,7 @@ _WriteByte(ArchiveHandle *AH, const int i)
 	if (res != EOF)
 		ctx->filePos += 1;
 	else
-		die_horribly(AH, modulename, "could not write byte: %s\n", strerror(errno));
+		exit_horribly(modulename, "could not write byte: %s\n", strerror(errno));
 	return res;
 }
 
@@ -624,7 +624,7 @@ _ReadByte(ArchiveHandle *AH)
 
 	res = getc(AH->FH);
 	if (res == EOF)
-		die_horribly(AH, modulename, "unexpected end of file\n");
+		exit_horribly(modulename, "unexpected end of file\n");
 	ctx->filePos += 1;
 	return res;
 }
@@ -645,7 +645,7 @@ _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len)
 	res = fwrite(buf, 1, len, AH->FH);
 
 	if (res != len)
-		die_horribly(AH, modulename,
+		exit_horribly(modulename,
 					 "could not write to output file: %s\n", strerror(errno));
 
 	ctx->filePos += res;
@@ -712,7 +712,7 @@ _CloseArchive(ArchiveHandle *AH)
 	}
 
 	if (fclose(AH->FH) != 0)
-		die_horribly(AH, modulename, "could not close archive file: %s\n", strerror(errno));
+		exit_horribly(modulename, "could not close archive file: %s\n", strerror(errno));
 
 	AH->FH = NULL;
 }
@@ -731,37 +731,37 @@ _ReopenArchive(ArchiveHandle *AH)
 	pgoff_t		tpos;
 
 	if (AH->mode == archModeWrite)
-		die_horribly(AH, modulename, "can only reopen input archives\n");
+		exit_horribly(modulename, "can only reopen input archives\n");
 
 	/*
 	 * These two cases are user-facing errors since they represent unsupported
 	 * (but not invalid) use-cases.  Word the error messages appropriately.
 	 */
 	if (AH->fSpec == NULL || strcmp(AH->fSpec, "") == 0)
-		die_horribly(AH, modulename, "parallel restore from stdin is not supported\n");
+		exit_horribly(modulename, "parallel restore from stdin is not supported\n");
 	if (!ctx->hasSeek)
-		die_horribly(AH, modulename, "parallel restore from non-seekable file is not supported\n");
+		exit_horribly(modulename, "parallel restore from non-seekable file is not supported\n");
 
 	errno = 0;
 	tpos = ftello(AH->FH);
 	if (errno)
-		die_horribly(AH, modulename, "could not determine seek position in archive file: %s\n",
-					 strerror(errno));
+		exit_horribly(modulename, "could not determine seek position in archive file: %s\n",
+					  strerror(errno));
 
 #ifndef WIN32
 	if (fclose(AH->FH) != 0)
-		die_horribly(AH, modulename, "could not close archive file: %s\n",
-					 strerror(errno));
+		exit_horribly(modulename, "could not close archive file: %s\n",
+					  strerror(errno));
 #endif
 
 	AH->FH = fopen(AH->fSpec, PG_BINARY_R);
 	if (!AH->FH)
-		die_horribly(AH, modulename, "could not open input file \"%s\": %s\n",
-					 AH->fSpec, strerror(errno));
+		exit_horribly(modulename, "could not open input file \"%s\": %s\n",
+					  AH->fSpec, strerror(errno));
 
 	if (fseeko(AH->FH, tpos, SEEK_SET) != 0)
-		die_horribly(AH, modulename, "could not set seek position in archive file: %s\n",
-					 strerror(errno));
+		exit_horribly(modulename, "could not set seek position in archive file: %s\n",
+					  strerror(errno));
 }
 
 /*
@@ -778,7 +778,7 @@ _Clone(ArchiveHandle *AH)
 
 	/* sanity check, shouldn't happen */
 	if (ctx->cs != NULL)
-		die_horribly(AH, modulename, "compressor active\n");
+		exit_horribly(modulename, "compressor active\n");
 
 	/*
 	 * Note: we do not make a local lo_buf because we expect at most one BLOBS
@@ -840,7 +840,7 @@ _readBlockHeader(ArchiveHandle *AH, int *type, int *id)
 	int			byt;
 
 	/*
-	 * Note: if we are at EOF with a pre-1.3 input file, we'll die_horribly
+	 * Note: if we are at EOF with a pre-1.3 input file, we'll exit_horribly
 	 * inside ReadInt rather than returning EOF.  It doesn't seem worth
 	 * jumping through hoops to deal with that case better, because no such
 	 * files are likely to exist in the wild: only some 7.1 development
@@ -905,10 +905,10 @@ _CustomReadFunc(ArchiveHandle *AH, char **buf, size_t *buflen)
 	if (cnt != blkLen)
 	{
 		if (feof(AH->FH))
-			die_horribly(AH, modulename,
-						 "could not read from input file: end of file\n");
+			exit_horribly(modulename,
+						  "could not read from input file: end of file\n");
 		else
-			die_horribly(AH, modulename,
+			exit_horribly(modulename,
 					"could not read from input file: %s\n", strerror(errno));
 	}
 	return cnt;

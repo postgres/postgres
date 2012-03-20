@@ -144,7 +144,6 @@ static int	serializable_deferrable = 0;
 
 
 static void help(const char *progname);
-static void pgdump_cleanup_at_exit(int code, void *arg);
 static void setup_connection(Archive *AH, const char *dumpencoding,
 				 char *use_role);
 static ArchiveFormat parseArchiveFormat(const char *format, ArchiveMode *mode);
@@ -575,7 +574,9 @@ main(int argc, char **argv)
 
 	/* Open the output file */
 	fout = CreateArchive(filename, archiveFormat, compressLevel, archiveMode);
-	on_exit_nicely(pgdump_cleanup_at_exit, fout);
+
+	/* Register the cleanup hook */
+	on_exit_close_archive(fout);
 
 	if (fout == NULL)
 		exit_horribly(NULL, "could not open output file \"%s\" for writing\n", filename);
@@ -834,14 +835,6 @@ help(const char *progname)
 	printf(_("\nIf no database name is supplied, then the PGDATABASE environment\n"
 			 "variable value is used.\n\n"));
 	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
-}
-
-static void
-pgdump_cleanup_at_exit(int code, void *arg)
-{
-	Archive	   *AH = (Archive *) arg;
-
-	DisconnectDatabase(AH);
 }
 
 static void

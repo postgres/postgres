@@ -256,8 +256,8 @@ EndCompressorZlib(ArchiveHandle *AH, CompressorState *cs)
 	DeflateCompressorZlib(AH, cs, true);
 
 	if (deflateEnd(zp) != Z_OK)
-		die_horribly(AH, modulename,
-					 "could not close compression stream: %s\n", zp->msg);
+		exit_horribly(modulename,
+					  "could not close compression stream: %s\n", zp->msg);
 
 	free(cs->zlibOut);
 	free(cs->zp);
@@ -274,8 +274,8 @@ DeflateCompressorZlib(ArchiveHandle *AH, CompressorState *cs, bool flush)
 	{
 		res = deflate(zp, flush ? Z_FINISH : Z_NO_FLUSH);
 		if (res == Z_STREAM_ERROR)
-			die_horribly(AH, modulename,
-						 "could not compress data: %s\n", zp->msg);
+			exit_horribly(modulename,
+						  "could not compress data: %s\n", zp->msg);
 		if ((flush && (zp->avail_out < cs->zlibOutSize))
 			|| (zp->avail_out == 0)
 			|| (zp->avail_in != 0)
@@ -295,9 +295,9 @@ DeflateCompressorZlib(ArchiveHandle *AH, CompressorState *cs, bool flush)
 				size_t		len = cs->zlibOutSize - zp->avail_out;
 
 				if (cs->writeF(AH, out, len) != len)
-					die_horribly(AH, modulename,
-								 "could not write to output file: %s\n",
-								 strerror(errno));
+					exit_horribly(modulename,
+								  "could not write to output file: %s\n",
+								  strerror(errno));
 			}
 			zp->next_out = (void *) out;
 			zp->avail_out = cs->zlibOutSize;
@@ -318,7 +318,7 @@ WriteDataToArchiveZlib(ArchiveHandle *AH, CompressorState *cs,
 
 	/*
 	 * we have either succeeded in writing dLen bytes or we have called
-	 * die_horribly()
+	 * exit_horribly()
 	 */
 	return dLen;
 }
@@ -361,8 +361,8 @@ ReadDataFromArchiveZlib(ArchiveHandle *AH, ReadFunc readF)
 
 			res = inflate(zp, 0);
 			if (res != Z_OK && res != Z_STREAM_END)
-				die_horribly(AH, modulename,
-							 "could not uncompress data: %s\n", zp->msg);
+				exit_horribly(modulename,
+							  "could not uncompress data: %s\n", zp->msg);
 
 			out[ZLIB_OUT_SIZE - zp->avail_out] = '\0';
 			ahwrite(out, 1, ZLIB_OUT_SIZE - zp->avail_out, AH);
@@ -377,16 +377,16 @@ ReadDataFromArchiveZlib(ArchiveHandle *AH, ReadFunc readF)
 		zp->avail_out = ZLIB_OUT_SIZE;
 		res = inflate(zp, 0);
 		if (res != Z_OK && res != Z_STREAM_END)
-			die_horribly(AH, modulename,
-						 "could not uncompress data: %s\n", zp->msg);
+			exit_horribly(modulename,
+						  "could not uncompress data: %s\n", zp->msg);
 
 		out[ZLIB_OUT_SIZE - zp->avail_out] = '\0';
 		ahwrite(out, 1, ZLIB_OUT_SIZE - zp->avail_out, AH);
 	}
 
 	if (inflateEnd(zp) != Z_OK)
-		die_horribly(AH, modulename,
-					 "could not close compression library: %s\n", zp->msg);
+		exit_horribly(modulename,
+					  "could not close compression library: %s\n", zp->msg);
 
 	free(buf);
 	free(out);
@@ -426,9 +426,9 @@ WriteDataToArchiveNone(ArchiveHandle *AH, CompressorState *cs,
 	 * do a check here as well...
 	 */
 	if (cs->writeF(AH, data, dLen) != dLen)
-		die_horribly(AH, modulename,
-					 "could not write to output file: %s\n",
-					 strerror(errno));
+		exit_horribly(modulename,
+					  "could not write to output file: %s\n",
+					  strerror(errno));
 	return dLen;
 }
 
