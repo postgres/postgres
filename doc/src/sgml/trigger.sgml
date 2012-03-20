@@ -573,7 +573,7 @@ typedef struct TriggerData
       <listitem>
        <para>
         A pointer to a structure of type <structname>Trigger</>,
-        defined in <filename>utils/rel.h</>:
+        defined in <filename>utils/reltrigger.h</>:
 
 <programlisting>
 typedef struct Trigger
@@ -671,7 +671,8 @@ CREATE TABLE ttest (
 <programlisting><![CDATA[
 #include "postgres.h"
 #include "executor/spi.h"       /* this is what you need to work with SPI */
-#include "commands/trigger.h"   /* ... and triggers */
+#include "commands/trigger.h"   /* ... triggers ... */
+#include "utils/rel.h"          /* ... and relations */
 
 #ifdef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
