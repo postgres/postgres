@@ -934,13 +934,6 @@ parseArchiveFormat(const char *format, ArchiveMode *mode)
 		archiveFormat = archDirectory;
 	else if (pg_strcasecmp(format, "directory") == 0)
 		archiveFormat = archDirectory;
-	else if (pg_strcasecmp(format, "f") == 0 || pg_strcasecmp(format, "file") == 0)
-
-		/*
-		 * Dump files into the current directory; for demonstration only, not
-		 * documented.
-		 */
-		archiveFormat = archFiles;
 	else if (pg_strcasecmp(format, "p") == 0)
 		archiveFormat = archNull;
 	else if (pg_strcasecmp(format, "plain") == 0)
