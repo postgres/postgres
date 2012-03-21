@@ -494,11 +494,16 @@ Note that indexes do not have VMs.
 <para>
 The visibility map simply stores one bit per heap page. A set bit means
 that all tuples on the page are known to be visible to all transactions.
-This means that the page does not contain any tuples that need to be vacuumed;
-in future it might also be used to avoid visiting the page for visibility
-checks. The map is conservative in the sense that we
-make sure that whenever a bit is set, we know the condition is true, but if
-a bit is not set, it might or might not be true.
+This means that the page does not contain any tuples that need to be vacuumed.
+This information can also be used by <firstterm>index-only scans</> to answer
+queries using only the index tuple.
+</para>
+
+<para>
+The map is conservative in the sense that we make sure that whenever a bit is
+set, we know the condition is true, but if a bit is not set, it might or
+might not be true. Visibility map bits are only set by vacuum, but are
+cleared by any data-modifying operations on a page.
 </para>
 
 </sect1>
