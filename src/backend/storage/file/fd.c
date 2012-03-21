@@ -685,7 +685,7 @@ LruInsert(File file)
 		/* seek to the right position */
 		if (vfdP->seekPos != (off_t) 0)
 		{
-			off_t		returnValue;
+			off_t		returnValue PG_USED_FOR_ASSERTS_ONLY;
 
 			returnValue = lseek(vfdP->fd, vfdP->seekPos, SEEK_SET);
 			Assert(returnValue != (off_t) -1);

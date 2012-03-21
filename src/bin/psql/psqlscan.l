@@ -1474,7 +1474,7 @@ psql_scan_slash_option(PsqlScanState state,
 					   bool semicolon)
 {
 	PQExpBufferData mybuf;
-	int			lexresult;
+	int			lexresult PG_USED_FOR_ASSERTS_ONLY;
 	char		local_quote;
 
 	/* Must be scanning already */

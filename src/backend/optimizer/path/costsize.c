@@ -3583,7 +3583,7 @@ void
 set_subquery_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 {
 	PlannerInfo *subroot = rel->subroot;
-	RangeTblEntry *rte;
+	RangeTblEntry *rte PG_USED_FOR_ASSERTS_ONLY;
 	ListCell   *lc;
 
 	/* Should only be applied to base relations that are subqueries */

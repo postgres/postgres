@@ -1373,7 +1373,7 @@ fail:
 void
 pq_putmessage_noblock(char msgtype, const char *s, size_t len)
 {
-	int			res;
+	int			res PG_USED_FOR_ASSERTS_ONLY;
 	int			required;
 
 	/*

@@ -30,7 +30,6 @@ static TupleTableSlot *
 WorkTableScanNext(WorkTableScanState *node)
 {
 	TupleTableSlot *slot;
-	EState	   *estate;
 	Tuplestorestate *tuplestorestate;
 
 	/*
@@ -48,8 +47,7 @@ WorkTableScanNext(WorkTableScanState *node)
 	 * worktable.  Therefore, we don't need a private read pointer for the
 	 * tuplestore, nor do we need to tell tuplestore_gettupleslot to copy.
 	 */
-	estate = node->ss.ps.state;
-	Assert(ScanDirectionIsForward(estate->es_direction));
+	Assert(ScanDirectionIsForward(node->ss.ps.state->es_direction));
 
 	tuplestorestate = node->rustate->working_table;
 

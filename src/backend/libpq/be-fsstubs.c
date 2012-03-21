@@ -378,7 +378,7 @@ lo_import_internal(text *filename, Oid lobjOid)
 {
 	File		fd;
 	int			nbytes,
-				tmp;
+				tmp PG_USED_FOR_ASSERTS_ONLY;
 	char		buf[BUFSIZE];
 	char		fnamebuf[MAXPGPATH];
 	LargeObjectDesc *lobj;

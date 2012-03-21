@@ -2013,7 +2013,7 @@ RestoreScratchTarget(bool lockheld)
 static void
 RemoveTargetIfNoLongerUsed(PREDICATELOCKTARGET *target, uint32 targettaghash)
 {
-	PREDICATELOCKTARGET *rmtarget;
+	PREDICATELOCKTARGET *rmtarget PG_USED_FOR_ASSERTS_ONLY;
 
 	Assert(LWLockHeldByMe(SerializablePredicateLockListLock));
 
@@ -2074,7 +2074,7 @@ DeleteChildTargetLocks(const PREDICATELOCKTARGETTAG *newtargettag)
 		{
 			uint32		oldtargettaghash;
 			LWLockId	partitionLock;
-			PREDICATELOCK *rmpredlock;
+			PREDICATELOCK *rmpredlock PG_USED_FOR_ASSERTS_ONLY;
 
 			oldtargettaghash = PredicateLockTargetTagHashCode(&oldtargettag);
 			partitionLock = PredicateLockHashPartitionLock(oldtargettaghash);
@@ -2227,7 +2227,7 @@ DecrementParentLocks(const PREDICATELOCKTARGETTAG *targettag)
 	{
 		uint32		targettaghash;
 		LOCALPREDICATELOCK *parentlock,
-				   *rmlock;
+				   *rmlock PG_USED_FOR_ASSERTS_ONLY;
 
 		parenttag = nexttag;
 		targettaghash = PredicateLockTargetTagHashCode(&parenttag);

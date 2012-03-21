@@ -808,7 +808,7 @@ static void
 AuxiliaryProcKill(int code, Datum arg)
 {
 	int			proctype = DatumGetInt32(arg);
-	PGPROC	   *auxproc;
+	PGPROC	   *auxproc PG_USED_FOR_ASSERTS_ONLY;
 
 	Assert(proctype >= 0 && proctype < NUM_AUXILIARY_PROCS);
 

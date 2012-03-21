@@ -3874,7 +3874,7 @@ convert_string_datum(Datum value, Oid typid)
 	{
 		char	   *xfrmstr;
 		size_t		xfrmlen;
-		size_t		xfrmlen2;
+		size_t		xfrmlen2 PG_USED_FOR_ASSERTS_ONLY;
 
 		/*
 		 * Note: originally we guessed at a suitable output buffer size, and
@@ -6408,7 +6408,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lcc);
 		Expr	   *clause;
 		Node	   *leftop,
-				   *rightop;
+				   *rightop PG_USED_FOR_ASSERTS_ONLY;
 		Oid			clause_op;
 		int			op_strategy;
 		bool		is_null_op = false;
