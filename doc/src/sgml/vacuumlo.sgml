@@ -50,6 +50,19 @@ vacuumlo [options] database [database2 ... databaseN]
    </varlistentry>
 
    <varlistentry>
+    <term><option>-l</option> <replaceable>limit</></term>
+    <listitem>
+     <para>
+      Remove no more than <replaceable>limit</> large objects per
+      transaction (default 1000).  Since the server acquires a lock per LO
+      removed, removing too many LOs in one transaction risks exceeding
+      <xref linkend="guc-max-locks-per-transaction">.  Set the limit to
+      zero if you want all removals done in a single transaction.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><option>-U</option> <replaceable>username</></term>
     <listitem>
      <para>User name to connect as.</para>
@@ -110,18 +123,19 @@ vacuumlo [options] database [database2 ... databaseN]
   <title>Method</title>
 
   <para>
-   First, it builds a temporary table which contains all of the OIDs of the
-   large objects in that database.
+   First, <application>vacuumlo</> builds a temporary table which contains all
+   of the OIDs of the large objects in the selected database.
   </para>
 
   <para>
    It then scans through all columns in the database that are of type
    <type>oid</> or <type>lo</>, and removes matching entries from the
-  temporary table.
+   temporary table.  (Note: only types with these names are considered;
+   in particular, domains over them are not considered.)
   </para>
 
   <para>
-   The remaining entries in the temp table identify orphaned LOs.
+   The remaining entries in the temporary table identify orphaned LOs.
    These are removed.
   </para>
  </sect2>
