@@ -197,17 +197,7 @@ connectMaintenanceDatabase(const char *maintenance_db, const char *pghost,
 						   progname, true);
 	if (!conn)
 		conn = connectDatabase("template1", pghost, pgport, pguser,
-							   prompt_password, progname, true);
-
-	if (!conn)
-	{
-		fprintf(stderr, _("%s: could not connect to databases \"postgres\" or \"template1\"\n"
-						  "Please specify an alternative maintenance database.\n"),
-				progname);
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
-		exit(1);
-	}
+							   prompt_password, progname, false);
 
 	return conn;
 }
