@@ -1168,6 +1168,7 @@ puttuple_common(Tuplesortstate *state, SortTuple *tuple)
 			{
 				/* new tuple <= top of the heap, so we can discard it */
 				free_sort_tuple(state, tuple);
+				CHECK_FOR_INTERRUPTS();
 			}
 			else
 			{
@@ -2431,6 +2432,7 @@ make_bounded_heap(Tuplesortstate *state)
 		{
 			/* New tuple would just get thrown out, so skip it */
 			free_sort_tuple(state, &state->memtuples[i]);
+			CHECK_FOR_INTERRUPTS();
 		}
 		else
 		{
@@ -2518,6 +2520,8 @@ tuplesort_heap_insert(Tuplesortstate *state, SortTuple *tuple,
 	memtuples = state->memtuples;
 	Assert(state->memtupcount < state->memtupsize);
 
+	CHECK_FOR_INTERRUPTS();
+
 	/*
 	 * Sift-up the new entry, per Knuth 5.2.3 exercise 16. Note that Knuth is
 	 * using 1-based array indexes, not 0-based.
@@ -2549,6 +2553,9 @@ tuplesort_heap_siftup(Tuplesortstate *state, bool checkIndex)
 
 	if (--state->memtupcount <= 0)
 		return;
+
+	CHECK_FOR_INTERRUPTS();
+
 	n = state->memtupcount;
 	tuple = &memtuples[n];		/* tuple that must be reinserted */
 	i = 0;						/* i is where the "hole" is */
