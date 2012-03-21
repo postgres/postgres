@@ -38,6 +38,7 @@
 #include "access/xact.h"
 #include "catalog/heap.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_tablespace.h"
 #include "catalog/toasting.h"
 #include "commands/tablespace.h"
 #include "commands/trigger.h"
@@ -2248,6 +2249,12 @@ OpenIntoRel(QueryDesc *queryDesc)
 			aclcheck_error(aclresult, ACL_KIND_TABLESPACE,
 						   get_tablespace_name(tablespaceId));
 	}
+
+	/* In all cases disallow placing user relations in pg_global */
+	if (tablespaceId == GLOBALTABLESPACE_OID)
+		ereport(ERROR,
+		        (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+		         errmsg("only shared relations can be placed in pg_global tablespace")));
 
 	/* Parse and validate any reloptions */
 	reloptions = transformRelOptions((Datum) 0,
