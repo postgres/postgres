@@ -837,8 +837,11 @@ perform_relmap_update(bool shared, const RelMapFile *updates)
 	else
 		memcpy(&newmap, &local_map, sizeof(RelMapFile));
 
-	/* Apply the updates to newmap.  No new mappings should appear. */
-	merge_map_updates(&newmap, updates, false);
+	/*
+	 * Apply the updates to newmap.  No new mappings should appear, unless
+	 * somebody is adding indexes to system catalogs.
+	 */
+	merge_map_updates(&newmap, updates, allowSystemTableMods);
 
 	/* Write out the updated map and do other necessary tasks */
 	write_relmap_file(shared, &newmap, true, true, true,
