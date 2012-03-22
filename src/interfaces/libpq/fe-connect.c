@@ -121,9 +121,9 @@ static int ldapServiceLookup(const char *purl, PQconninfoOption *options,
  * fallback is available. If after all no value can be determined
  * for an option, an error is returned.
  *
- * The value for the username is treated specially in conninfo_parse.
- * If the Compiled-in resource is specified as a NULL value, the
- * user is determined by pg_fe_getauthname().
+ * The value for the username is treated specially in conninfo_add_defaults.
+ * If the value is not obtained any other way, the username is determined
+ * by pg_fe_getauthname().
  *
  * The Label and Disp-Char entries are provided for applications that
  * want to use PQconndefaults() to create a generic database connection
@@ -292,11 +292,14 @@ static PGconn *makeEmptyPGconn(void);
 static void fillPGconn(PGconn *conn, PQconninfoOption *connOptions);
 static void freePGconn(PGconn *conn);
 static void closePGconn(PGconn *conn);
+static PQconninfoOption *conninfo_init(PQExpBuffer errorMessage);
 static PQconninfoOption *conninfo_parse(const char *conninfo,
 			   PQExpBuffer errorMessage, bool use_defaults);
 static PQconninfoOption *conninfo_array_parse(const char *const * keywords,
 					 const char *const * values, PQExpBuffer errorMessage,
 					 bool use_defaults, int expand_dbname);
+static bool conninfo_add_defaults(PQconninfoOption *options,
+					  PQExpBuffer errorMessage);
 static char *conninfo_getval(PQconninfoOption *connOptions,
 				const char *keyword);
 static void defaultNoticeReceiver(void *arg, const PGresult *res);
@@ -813,10 +816,9 @@ connectOptions2(PGconn *conn)
 /*
  *		PQconndefaults
  *
- * Parse an empty string like PQconnectdb() would do and return the
- * resulting connection options array, ie, all the default values that are
- * available from the environment etc.	On error (eg out of memory),
- * NULL is returned.
+ * Construct a default connection options array, which identifies all the
+ * available options and shows any default values that are available from the
+ * environment etc.  On error (eg out of memory), NULL is returned.
  *
  * Using this function, an application may determine all possible options
  * and their current default values.
@@ -833,10 +835,21 @@ PQconndefaults(void)
 	PQExpBufferData errorBuf;
 	PQconninfoOption *connOptions;
 
+	/* We don't actually report any errors here, but callees want a buffer */
 	initPQExpBuffer(&errorBuf);
 	if (PQExpBufferDataBroken(errorBuf))
 		return NULL;			/* out of memory already :-( */
-	connOptions = conninfo_parse("", &errorBuf, true);
+
+	connOptions = conninfo_init(&errorBuf);
+	if (connOptions != NULL)
+	{
+		if (!conninfo_add_defaults(connOptions, &errorBuf))
+		{
+			PQconninfoFree(connOptions);
+			connOptions = NULL;
+		}
+	}
+
 	termPQExpBuffer(&errorBuf);
 	return connOptions;
 }
@@ -3987,6 +4000,25 @@ PQconninfoParse(const char *conninfo, char **errmsg)
 }
 
 /*
+ * Build a working copy of the constant PQconninfoOptions array.
+ */
+static PQconninfoOption *
+conninfo_init(PQExpBuffer errorMessage)
+{
+	PQconninfoOption *options;
+
+	options = (PQconninfoOption *) malloc(sizeof(PQconninfoOptions));
+	if (options == NULL)
+	{
+		printfPQExpBuffer(errorMessage,
+						  libpq_gettext("out of memory\n"));
+		return NULL;
+	}
+	memcpy(options, PQconninfoOptions, sizeof(PQconninfoOptions));
+	return options;
+}
+
+/*
  * Conninfo parser routine
  *
  * If successful, a malloc'd PQconninfoOption array is returned.
@@ -4002,21 +4034,15 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage,
 	char	   *pname;
 	char	   *pval;
 	char	   *buf;
-	char	   *tmp;
 	char	   *cp;
 	char	   *cp2;
 	PQconninfoOption *options;
 	PQconninfoOption *option;
 
 	/* Make a working copy of PQconninfoOptions */
-	options = malloc(sizeof(PQconninfoOptions));
+	options = conninfo_init(errorMessage);
 	if (options == NULL)
-	{
-		printfPQExpBuffer(errorMessage,
-						  libpq_gettext("out of memory\n"));
 		return NULL;
-	}
-	memcpy(options, PQconninfoOptions, sizeof(PQconninfoOptions));
 
 	/* Need a modifiable copy of the input string */
 	if ((buf = strdup(conninfo)) == NULL)
@@ -4170,73 +4196,14 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage,
 	free(buf);
 
 	/*
-	 * Stop here if caller doesn't want defaults filled in.
+	 * Add in defaults if the caller wants that.
 	 */
-	if (!use_defaults)
-		return options;
-
-	/*
-	 * If there's a service spec, use it to obtain any not-explicitly-given
-	 * parameters.
-	 */
-	if (parseServiceInfo(options, errorMessage))
+	if (use_defaults)
 	{
-		PQconninfoFree(options);
-		return NULL;
-	}
-
-	/*
-	 * Get the fallback resources for parameters not specified in the conninfo
-	 * string nor the service.
-	 */
-	for (option = options; option->keyword != NULL; option++)
-	{
-		if (option->val != NULL)
-			continue;			/* Value was in conninfo or service */
-
-		/*
-		 * Try to get the environment variable fallback
-		 */
-		if (option->envvar != NULL)
+		if (!conninfo_add_defaults(options, errorMessage))
 		{
-			if ((tmp = getenv(option->envvar)) != NULL)
-			{
-				option->val = strdup(tmp);
-				if (!option->val)
-				{
-					printfPQExpBuffer(errorMessage,
-									  libpq_gettext("out of memory\n"));
-					PQconninfoFree(options);
-					return NULL;
-				}
-				continue;
-			}
-		}
-
-		/*
-		 * No environment variable specified or this one isn't set - try
-		 * compiled in
-		 */
-		if (option->compiled != NULL)
-		{
-			option->val = strdup(option->compiled);
-			if (!option->val)
-			{
-				printfPQExpBuffer(errorMessage,
-								  libpq_gettext("out of memory\n"));
-				PQconninfoFree(options);
-				return NULL;
-			}
-			continue;
-		}
-
-		/*
-		 * Special handling for user
-		 */
-		if (strcmp(option->keyword, "user") == 0)
-		{
-			option->val = pg_fe_getauthname(errorMessage);
-			continue;
+			PQconninfoFree(options);
+			return NULL;
 		}
 	}
 
@@ -4262,7 +4229,6 @@ conninfo_array_parse(const char *const * keywords, const char *const * values,
 					 PQExpBuffer errorMessage, bool use_defaults,
 					 int expand_dbname)
 {
-	char	   *tmp;
 	PQconninfoOption *options;
 	PQconninfoOption *str_options = NULL;
 	PQconninfoOption *option;
@@ -4298,18 +4264,15 @@ conninfo_array_parse(const char *const * keywords, const char *const * values,
 	}
 
 	/* Make a working copy of PQconninfoOptions */
-	options = malloc(sizeof(PQconninfoOptions));
+	options = conninfo_init(errorMessage);
 	if (options == NULL)
 	{
-		printfPQExpBuffer(errorMessage,
-						  libpq_gettext("out of memory\n"));
 		PQconninfoFree(str_options);
 		return NULL;
 	}
-	memcpy(options, PQconninfoOptions, sizeof(PQconninfoOptions));
 
-	i = 0;
 	/* Parse the keywords/values arrays */
+	i = 0;
 	while (keywords[i])
 	{
 		const char *pname = keywords[i];
@@ -4386,20 +4349,42 @@ conninfo_array_parse(const char *const * keywords, const char *const * values,
 	PQconninfoFree(str_options);
 
 	/*
-	 * Stop here if caller doesn't want defaults filled in.
+	 * Add in defaults if the caller wants that.
 	 */
-	if (!use_defaults)
-		return options;
+	if (use_defaults)
+	{
+		if (!conninfo_add_defaults(options, errorMessage))
+		{
+			PQconninfoFree(options);
+			return NULL;
+		}
+	}
+
+	return options;
+}
+
+/*
+ * Add the default values for any unspecified options to the connection
+ * options array.
+ *
+ * Defaults are obtained from a service file, environment variables, etc.
+ *
+ * Returns TRUE if successful, otherwise FALSE; errorMessage is filled in
+ * upon failure.  Note that failure to locate a default value is not an
+ * error condition here --- we just leave the option's value as NULL.
+ */
+static bool
+conninfo_add_defaults(PQconninfoOption *options, PQExpBuffer errorMessage)
+{
+	PQconninfoOption *option;
+	char	   *tmp;
 
 	/*
 	 * If there's a service spec, use it to obtain any not-explicitly-given
 	 * parameters.
 	 */
-	if (parseServiceInfo(options, errorMessage))
-	{
-		PQconninfoFree(options);
-		return NULL;
-	}
+	if (parseServiceInfo(options, errorMessage) != 0)
+		return false;
 
 	/*
 	 * Get the fallback resources for parameters not specified in the conninfo
@@ -4422,16 +4407,15 @@ conninfo_array_parse(const char *const * keywords, const char *const * values,
 				{
 					printfPQExpBuffer(errorMessage,
 									  libpq_gettext("out of memory\n"));
-					PQconninfoFree(options);
-					return NULL;
+					return false;
 				}
 				continue;
 			}
 		}
 
 		/*
-		 * No environment variable specified or this one isn't set - try
-		 * compiled in
+		 * No environment variable specified or the variable isn't set - try
+		 * compiled-in default
 		 */
 		if (option->compiled != NULL)
 		{
@@ -4440,14 +4424,13 @@ conninfo_array_parse(const char *const * keywords, const char *const * values,
 			{
 				printfPQExpBuffer(errorMessage,
 								  libpq_gettext("out of memory\n"));
-				PQconninfoFree(options);
-				return NULL;
+				return false;
 			}
 			continue;
 		}
 
 		/*
-		 * Special handling for user
+		 * Special handling for "user" option
 		 */
 		if (strcmp(option->keyword, "user") == 0)
 		{
@@ -4456,7 +4439,7 @@ conninfo_array_parse(const char *const * keywords, const char *const * values,
 		}
 	}
 
-	return options;
+	return true;
 }
 
 static char *
