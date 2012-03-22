@@ -568,7 +568,7 @@ NUMERIC
      type is more akin to <type>varchar(<replaceable>n</>)</type>
      than to <type>char(<replaceable>n</>)</type>.)  The actual storage
      requirement is two bytes for each group of four decimal digits,
-     plus five to eight bytes overhead.
+     plus three to eight bytes overhead.
     </para>
 
     <indexterm>
