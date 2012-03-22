@@ -89,11 +89,14 @@ fi])# PGAC_PATH_DOCBOOK_STYLESHEETS
 
 # PGAC_PATH_COLLATEINDEX
 # ----------------------
+# Some DocBook installations provide collateindex.pl in $DOCBOOKSTYLE/bin,
+# but it's not necessarily marked executable, so we can't use AC_PATH_PROG
+# to check for it there.  Other installations just put it in the PATH.
 AC_DEFUN([PGAC_PATH_COLLATEINDEX],
 [AC_REQUIRE([PGAC_PATH_DOCBOOK_STYLESHEETS])dnl
-if test -n "$DOCBOOKSTYLE"; then
-  AC_PATH_PROGS(COLLATEINDEX, collateindex.pl, [],
-                [$DOCBOOKSTYLE/bin $PATH])
+if test -n "$DOCBOOKSTYLE" -a -r "$DOCBOOKSTYLE/bin/collateindex.pl"; then
+  COLLATEINDEX="$DOCBOOKSTYLE/bin/collateindex.pl"
+  AC_SUBST([COLLATEINDEX])
 else
-  AC_PATH_PROGS(COLLATEINDEX, collateindex.pl)
+  AC_PATH_PROG(COLLATEINDEX, collateindex.pl)
 fi])# PGAC_PATH_COLLATEINDEX
