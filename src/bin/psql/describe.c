@@ -2378,7 +2378,7 @@ describeRoles(const char *pattern, bool verbose)
 		printfPQExpBuffer(&buf,
 						  "SELECT r.rolname, r.rolsuper, r.rolinherit,\n"
 						  "  r.rolcreaterole, r.rolcreatedb, r.rolcanlogin,\n"
-						  "  r.rolconnlimit,\n"
+						  "  r.rolconnlimit, r.rolvaliduntil,\n"
 						  "  ARRAY(SELECT b.rolname\n"
 						  "        FROM pg_catalog.pg_auth_members m\n"
 				 "        JOIN pg_catalog.pg_roles b ON (m.roleid = b.oid)\n"
@@ -2406,7 +2406,8 @@ describeRoles(const char *pattern, bool verbose)
 						  "  u.usesuper AS rolsuper,\n"
 						  "  true AS rolinherit, false AS rolcreaterole,\n"
 					 "  u.usecreatedb AS rolcreatedb, true AS rolcanlogin,\n"
-						  "  -1 AS rolconnlimit,\n"
+						  "  -1 AS rolconnlimit,"
+						  "  u.valuntil as rolvaliduntil,\n"
 						  "  ARRAY(SELECT g.groname FROM pg_catalog.pg_group g WHERE u.usesysid = ANY(g.grolist)) as memberof"
 						  "\nFROM pg_catalog.pg_user u\n");
 
@@ -2453,7 +2454,7 @@ describeRoles(const char *pattern, bool verbose)
 			add_role_attribute(&buf, _("Cannot login"));
 
 		if (pset.sversion >= 90100)
-			if (strcmp(PQgetvalue(res, i, (verbose ? 9 : 8)), "t") == 0)
+			if (strcmp(PQgetvalue(res, i, (verbose ? 10 : 9)), "t") == 0)
 				add_role_attribute(&buf, _("Replication"));
 
 		conns = atoi(PQgetvalue(res, i, 6));
@@ -2471,14 +2472,22 @@ describeRoles(const char *pattern, bool verbose)
 								  conns);
 		}
 
+		if (strcmp(PQgetvalue(res, i, 7), "") != 0)
+		{
+			if (buf.len > 0)
+				appendPQExpBufferStr(&buf, "\n");
+			appendPQExpBufferStr(&buf, _("Password valid until "));
+			appendPQExpBufferStr(&buf, PQgetvalue(res, i, 7));
+		}
+
 		attr[i] = pg_strdup(buf.data);
 
 		printTableAddCell(&cont, attr[i], false, false);
 
-		printTableAddCell(&cont, PQgetvalue(res, i, 7), false, false);
+		printTableAddCell(&cont, PQgetvalue(res, i, 8), false, false);
 
 		if (verbose && pset.sversion >= 80200)
-			printTableAddCell(&cont, PQgetvalue(res, i, 8), false, false);
+			printTableAddCell(&cont, PQgetvalue(res, i, 9), false, false);
 	}
 	termPQExpBuffer(&buf);
 

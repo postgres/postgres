@@ -1267,12 +1267,15 @@ testdb=&gt;
         <term><literal>\dg[+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
-        Lists database roles. If <replaceable
-        class="parameter">pattern</replaceable> is specified, only
-        those roles whose names match the pattern are listed.
-        (This command is now effectively the same as <literal>\du</literal>).
+        Lists database roles.
+        (Since the concepts of <quote>users</> and <quote>groups</> have been
+        unified into <quote>roles</>, this command is now equivalent to
+        <literal>\du</literal>.)
+        If <replaceable class="parameter">pattern</replaceable> is specified,
+        only those roles whose names match the pattern are listed.
         If the form <literal>\dg+</literal> is used, additional information
-        is shown about each role, including the comment for each role.
+        is shown about each role; currently this adds the comment for each
+        role.
         </para>
         </listitem>
       </varlistentry>
@@ -1421,11 +1424,15 @@ testdb=&gt;
         <term><literal>\du[+] [ <link linkend="APP-PSQL-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
-        Lists database roles. If <replaceable
-        class="parameter">pattern</replaceable> is specified, only
-        those roles whose names match the pattern are listed.
+        Lists database roles.
+        (Since the concepts of <quote>users</> and <quote>groups</> have been
+        unified into <quote>roles</>, this command is now equivalent to
+        <literal>\dg</literal>.)
+        If <replaceable class="parameter">pattern</replaceable> is specified,
+        only those roles whose names match the pattern are listed.
         If the form <literal>\du+</literal> is used, additional information
-        is shown about each role, including the comment for each role.
+        is shown about each role; currently this adds the comment for each
+        role.
         </para>
         </listitem>
       </varlistentry>
