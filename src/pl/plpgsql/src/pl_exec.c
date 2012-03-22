@@ -1447,16 +1447,8 @@ exec_stmt_getdiag(PLpgSQL_execstate *estate, PLpgSQL_stmt_getdiag *stmt)
 	foreach(lc, stmt->diag_items)
 	{
 		PLpgSQL_diag_item *diag_item = (PLpgSQL_diag_item *) lfirst(lc);
-		PLpgSQL_datum *var;
+		PLpgSQL_datum *var = estate->datums[diag_item->target];
 		bool		isnull = false;
-
-		if (diag_item->target <= 0)
-			continue;
-
-		var = estate->datums[diag_item->target];
-
-		if (var == NULL)
-			continue;
 
 		switch (diag_item->kind)
 		{
