@@ -1767,7 +1767,8 @@ typedef struct
     <para>
      Finally, all variable-length types must also be  passed
      by  reference.   All  variable-length  types must begin
-     with a length field of exactly 4 bytes, and all data to
+     with an opaque length field of exactly 4 bytes, which will be set
+     by SET_VARSIZE; never set this field directly! All data to
      be  stored within that type must be located in the memory
      immediately  following  that  length  field.   The
      length field contains the total length of the structure,
@@ -1833,7 +1834,7 @@ memcpy(destination->data, buffer, 40);
 ]]>
 </programlisting>
 
-     <literal>VARHDRSZ</> is the same as <literal>sizeof(int4)</>, but
+     <literal>VARHDRSZ</> is the same as <literal>sizeof(int32)</>, but
      it's considered good style to use the macro <literal>VARHDRSZ</>
      to refer to the size of the overhead for a variable-length type.
      Also, the length field <emphasis>must</> be set using the
