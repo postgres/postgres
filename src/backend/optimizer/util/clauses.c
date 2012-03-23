@@ -109,16 +109,13 @@ static List *simplify_and_arguments(List *args,
 static Node *simplify_boolean_equality(Oid opno, List *args);
 static Expr *simplify_function(Oid funcid,
 				  Oid result_type, int32 result_typmod,
-				  Oid result_collid, Oid input_collid, List **args,
-				  bool has_named_args,
-				  bool allow_non_const,
+				  Oid result_collid, Oid input_collid, List **args_p,
+				  bool process_args, bool allow_non_const,
 				  eval_const_expressions_context *context);
-static List *reorder_function_arguments(List *args, Oid result_type,
-						   HeapTuple func_tuple,
-						   eval_const_expressions_context *context);
-static List *add_function_defaults(List *args, Oid result_type,
-					  HeapTuple func_tuple,
-					  eval_const_expressions_context *context);
+static List *expand_function_arguments(List *args, Oid result_type,
+									   HeapTuple func_tuple);
+static List *reorder_function_arguments(List *args, HeapTuple func_tuple);
+static List *add_function_defaults(List *args, HeapTuple func_tuple);
 static List *fetch_function_defaults(HeapTuple func_tuple);
 static void recheck_cast_function_args(List *args, Oid result_type,
 						   HeapTuple func_tuple);
@@ -2303,27 +2300,9 @@ eval_const_expressions_mutator(Node *node,
 		case T_FuncExpr:
 			{
 				FuncExpr   *expr = (FuncExpr *) node;
-				List	   *args;
-				bool		has_named_args;
+				List	   *args = expr->args;
 				Expr	   *simple;
 				FuncExpr   *newexpr;
-				ListCell   *lc;
-
-				/*
-				 * Reduce constants in the FuncExpr's arguments, and check to
-				 * see if there are any named args.
-				 */
-				args = NIL;
-				has_named_args = false;
-				foreach(lc, expr->args)
-				{
-					Node	   *arg = (Node *) lfirst(lc);
-
-					arg = eval_const_expressions_mutator(arg, context);
-					if (IsA(arg, NamedArgExpr))
-						has_named_args = true;
-					args = lappend(args, arg);
-				}
 
 				/*
 				 * Code for op/func reduction is pretty bulky, so split it out
@@ -2338,7 +2317,7 @@ eval_const_expressions_mutator(Node *node,
 										   expr->funccollid,
 										   expr->inputcollid,
 										   &args,
-										   has_named_args,
+										   true,
 										   true,
 										   context);
 				if (simple)		/* successfully simplified it */
@@ -2364,19 +2343,9 @@ eval_const_expressions_mutator(Node *node,
 		case T_OpExpr:
 			{
 				OpExpr	   *expr = (OpExpr *) node;
-				List	   *args;
+				List	   *args = expr->args;
 				Expr	   *simple;
 				OpExpr	   *newexpr;
-
-				/*
-				 * Reduce constants in the OpExpr's arguments.  We know args
-				 * is either NIL or a List node, so we can call
-				 * expression_tree_mutator directly rather than recursing to
-				 * self.
-				 */
-				args = (List *) expression_tree_mutator((Node *) expr->args,
-											  eval_const_expressions_mutator,
-														(void *) context);
 
 				/*
 				 * Need to get OID of underlying function.	Okay to scribble
@@ -2393,7 +2362,9 @@ eval_const_expressions_mutator(Node *node,
 										   expr->opcollid,
 										   expr->inputcollid,
 										   &args,
-										   false, true, context);
+										   true,
+										   true,
+										   context);
 				if (simple)		/* successfully simplified it */
 					return (Node *) simple;
 
@@ -2494,7 +2465,9 @@ eval_const_expressions_mutator(Node *node,
 											   expr->opcollid,
 											   expr->inputcollid,
 											   &args,
-											   false, false, context);
+											   false,
+											   false,
+											   context);
 					if (simple) /* successfully simplified it */
 					{
 						/*
@@ -2665,7 +2638,6 @@ eval_const_expressions_mutator(Node *node,
 		case T_CoerceViaIO:
 			{
 				CoerceViaIO *expr = (CoerceViaIO *) node;
-				Expr	   *arg;
 				List	   *args;
 				Oid			outfunc;
 				bool		outtypisvarlena;
@@ -2674,12 +2646,8 @@ eval_const_expressions_mutator(Node *node,
 				Expr	   *simple;
 				CoerceViaIO *newexpr;
 
-				/*
-				 * Reduce constants in the CoerceViaIO's argument.
-				 */
-				arg = (Expr *) eval_const_expressions_mutator((Node *) expr->arg,
-															  context);
-				args = list_make1(arg);
+				/* Make a List so we can use simplify_function */
+				args = list_make1(expr->arg);
 
 				/*
 				 * CoerceViaIO represents calling the source type's output
@@ -2690,7 +2658,7 @@ eval_const_expressions_mutator(Node *node,
 				 * Note that the coercion functions are assumed not to care
 				 * about input collation, so we just pass InvalidOid for that.
 				 */
-				getTypeOutputInfo(exprType((Node *) arg),
+				getTypeOutputInfo(exprType((Node *) expr->arg),
 								  &outfunc, &outtypisvarlena);
 				getTypeInputInfo(expr->resulttype,
 								 &infunc, &intypioparam);
@@ -2700,7 +2668,9 @@ eval_const_expressions_mutator(Node *node,
 										   InvalidOid,
 										   InvalidOid,
 										   &args,
-										   false, true, context);
+										   true,
+										   true,
+										   context);
 				if (simple)		/* successfully simplified output fn */
 				{
 					/*
@@ -2729,7 +2699,9 @@ eval_const_expressions_mutator(Node *node,
 											   expr->resultcollid,
 											   InvalidOid,
 											   &args,
-											   false, true, context);
+											   false,
+											   true,
+											   context);
 					if (simple) /* successfully simplified input fn */
 						return (Node *) simple;
 				}
@@ -2740,7 +2712,7 @@ eval_const_expressions_mutator(Node *node,
 				 * possibly-simplified argument.
 				 */
 				newexpr = makeNode(CoerceViaIO);
-				newexpr->arg = arg;
+				newexpr->arg = (Expr *) linitial(args);
 				newexpr->resulttype = expr->resulttype;
 				newexpr->resultcollid = expr->resultcollid;
 				newexpr->coerceformat = expr->coerceformat;
@@ -3577,9 +3549,9 @@ simplify_boolean_equality(Oid opno, List *args)
  * (which might originally have been an operator; we don't care)
  *
  * Inputs are the function OID, actual result type OID (which is needed for
- * polymorphic functions), result typmod, result collation,
- * the input collation to use for the function,
- * the pre-simplified argument list, and some flags;
+ * polymorphic functions), result typmod, result collation, the input
+ * collation to use for the function, the original argument list (not
+ * const-simplified yet, unless process_args is false), and some flags;
  * also the context data for eval_const_expressions.
  *
  * Returns a simplified expression if successful, or NULL if cannot
@@ -3587,17 +3559,19 @@ simplify_boolean_equality(Oid opno, List *args)
  *
  * This function is also responsible for converting named-notation argument
  * lists into positional notation and/or adding any needed default argument
- * expressions; which is a bit grotty, but it avoids an extra fetch of the
+ * expressions; which is a bit grotty, but it avoids extra fetches of the
  * function's pg_proc tuple.  For this reason, the args list is
- * pass-by-reference, and it may get modified even if simplification fails.
+ * pass-by-reference.  Conversion and const-simplification of the args list
+ * will be done even if simplification of the function call itself is not
+ * possible.
  */
 static Expr *
 simplify_function(Oid funcid, Oid result_type, int32 result_typmod,
-				  Oid result_collid, Oid input_collid, List **args,
-				  bool has_named_args,
-				  bool allow_non_const,
+				  Oid result_collid, Oid input_collid, List **args_p,
+				  bool process_args, bool allow_non_const,
 				  eval_const_expressions_context *context)
 {
+	List	   *args = *args_p;
 	HeapTuple	func_tuple;
 	Form_pg_proc func_form;
 	Expr	   *newexpr;
@@ -3620,17 +3594,25 @@ simplify_function(Oid funcid, Oid result_type, int32 result_typmod,
 	func_form = (Form_pg_proc) GETSTRUCT(func_tuple);
 
 	/*
-	 * While we have the tuple, reorder named arguments and add default
-	 * arguments if needed.
+	 * Process the function arguments, unless the caller did it already.
+	 *
+	 * Here we must deal with named or defaulted arguments, and then
+	 * recursively apply eval_const_expressions to the whole argument list.
 	 */
-	if (has_named_args)
-		*args = reorder_function_arguments(*args, result_type, func_tuple,
-										   context);
-	else if (func_form->pronargs > list_length(*args))
-		*args = add_function_defaults(*args, result_type, func_tuple, context);
+	if (process_args)
+	{
+		args = expand_function_arguments(args, result_type, func_tuple);
+		args = (List *) expression_tree_mutator((Node *) args,
+												eval_const_expressions_mutator,
+												(void *) context);
+		/* Argument processing done, give it back to the caller */
+		*args_p = args;
+	}
+
+	/* Now attempt simplification of the function call proper. */
 
 	newexpr = evaluate_function(funcid, result_type, result_typmod,
-								result_collid, input_collid, *args,
+								result_collid, input_collid, args,
 								func_tuple, context);
 
 	if (!newexpr && allow_non_const && OidIsValid(func_form->protransform))
@@ -3649,7 +3631,7 @@ simplify_function(Oid funcid, Oid result_type, int32 result_typmod,
 		fexpr.funcformat = COERCE_DONTCARE;
 		fexpr.funccollid = result_collid;
 		fexpr.inputcollid = input_collid;
-		fexpr.args = *args;
+		fexpr.args = args;
 		fexpr.location = -1;
 
 		newexpr = (Expr *)
@@ -3659,12 +3641,60 @@ simplify_function(Oid funcid, Oid result_type, int32 result_typmod,
 
 	if (!newexpr && allow_non_const)
 		newexpr = inline_function(funcid, result_type, result_collid,
-								  input_collid, *args,
+								  input_collid, args,
 								  func_tuple, context);
 
 	ReleaseSysCache(func_tuple);
 
 	return newexpr;
+}
+
+/*
+ * expand_function_arguments: convert named-notation args to positional args
+ * and/or insert default args, as needed
+ *
+ * If we need to change anything, the input argument list is copied, not
+ * modified.
+ *
+ * Note: this gets applied to operator argument lists too, even though the
+ * cases it handles should never occur there.  This should be OK since it
+ * will fall through very quickly if there's nothing to do.
+ */
+static List *
+expand_function_arguments(List *args, Oid result_type, HeapTuple func_tuple)
+{
+	Form_pg_proc funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
+	bool		has_named_args = false;
+	ListCell   *lc;
+
+	/* Do we have any named arguments? */
+	foreach(lc, args)
+	{
+		Node	   *arg = (Node *) lfirst(lc);
+
+		if (IsA(arg, NamedArgExpr))
+		{
+			has_named_args = true;
+			break;
+		}
+	}
+
+	/* If so, we must apply reorder_function_arguments */
+	if (has_named_args)
+	{
+		args = reorder_function_arguments(args, func_tuple);
+		/* Recheck argument types and add casts if needed */
+		recheck_cast_function_args(args, result_type, func_tuple);
+	}
+	else if (list_length(args) < funcform->pronargs)
+	{
+		/* No named args, but we seem to be short some defaults */
+		args = add_function_defaults(args, func_tuple);
+		/* Recheck argument types and add casts if needed */
+		recheck_cast_function_args(args, result_type, func_tuple);
+	}
+
+	return args;
 }
 
 /*
@@ -3674,14 +3704,12 @@ simplify_function(Oid funcid, Oid result_type, int32 result_typmod,
  * impossible to form a truly valid positional call without that.
  */
 static List *
-reorder_function_arguments(List *args, Oid result_type, HeapTuple func_tuple,
-						   eval_const_expressions_context *context)
+reorder_function_arguments(List *args, HeapTuple func_tuple)
 {
 	Form_pg_proc funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
 	int			pronargs = funcform->pronargs;
 	int			nargsprovided = list_length(args);
 	Node	   *argarray[FUNC_MAX_ARGS];
-	Bitmapset  *defargnumbers;
 	ListCell   *lc;
 	int			i;
 
@@ -3715,7 +3743,6 @@ reorder_function_arguments(List *args, Oid result_type, HeapTuple func_tuple,
 	 * Fetch default expressions, if needed, and insert into array at proper
 	 * locations (they aren't necessarily consecutive or all used)
 	 */
-	defargnumbers = NULL;
 	if (nargsprovided < pronargs)
 	{
 		List	   *defaults = fetch_function_defaults(func_tuple);
@@ -3724,10 +3751,7 @@ reorder_function_arguments(List *args, Oid result_type, HeapTuple func_tuple,
 		foreach(lc, defaults)
 		{
 			if (argarray[i] == NULL)
-			{
 				argarray[i] = (Node *) lfirst(lc);
-				defargnumbers = bms_add_member(defargnumbers, i);
-			}
 			i++;
 		}
 	}
@@ -3740,32 +3764,6 @@ reorder_function_arguments(List *args, Oid result_type, HeapTuple func_tuple,
 		args = lappend(args, argarray[i]);
 	}
 
-	/* Recheck argument types and add casts if needed */
-	recheck_cast_function_args(args, result_type, func_tuple);
-
-	/*
-	 * Lastly, we have to recursively simplify the defaults we just added (but
-	 * don't recurse on the args passed in, as we already did those). This
-	 * isn't merely an optimization, it's *necessary* since there could be
-	 * functions with named or defaulted arguments down in there.
-	 *
-	 * Note that we do this last in hopes of simplifying any typecasts that
-	 * were added by recheck_cast_function_args --- there shouldn't be any new
-	 * casts added to the explicit arguments, but casts on the defaults are
-	 * possible.
-	 */
-	if (defargnumbers != NULL)
-	{
-		i = 0;
-		foreach(lc, args)
-		{
-			if (bms_is_member(i, defargnumbers))
-				lfirst(lc) = eval_const_expressions_mutator((Node *) lfirst(lc),
-															context);
-			i++;
-		}
-	}
-
 	return args;
 }
 
@@ -3776,14 +3774,12 @@ reorder_function_arguments(List *args, Oid result_type, HeapTuple func_tuple,
  * and so we know we just need to add defaults at the end.
  */
 static List *
-add_function_defaults(List *args, Oid result_type, HeapTuple func_tuple,
-					  eval_const_expressions_context *context)
+add_function_defaults(List *args, HeapTuple func_tuple)
 {
 	Form_pg_proc funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
 	int			nargsprovided = list_length(args);
 	List	   *defaults;
 	int			ndelete;
-	ListCell   *lc;
 
 	/* Get all the default expressions from the pg_proc tuple */
 	defaults = fetch_function_defaults(func_tuple);
@@ -3795,32 +3791,8 @@ add_function_defaults(List *args, Oid result_type, HeapTuple func_tuple,
 	while (ndelete-- > 0)
 		defaults = list_delete_first(defaults);
 
-	/* And form the combined argument list */
-	args = list_concat(args, defaults);
-
-	/* Recheck argument types and add casts if needed */
-	recheck_cast_function_args(args, result_type, func_tuple);
-
-	/*
-	 * Lastly, we have to recursively simplify the defaults we just added (but
-	 * don't recurse on the args passed in, as we already did those). This
-	 * isn't merely an optimization, it's *necessary* since there could be
-	 * functions with named or defaulted arguments down in there.
-	 *
-	 * Note that we do this last in hopes of simplifying any typecasts that
-	 * were added by recheck_cast_function_args --- there shouldn't be any new
-	 * casts added to the explicit arguments, but casts on the defaults are
-	 * possible.
-	 */
-	foreach(lc, args)
-	{
-		if (nargsprovided-- > 0)
-			continue;			/* skip original arg positions */
-		lfirst(lc) = eval_const_expressions_mutator((Node *) lfirst(lc),
-													context);
-	}
-
-	return args;
+	/* And form the combined argument list, not modifying the input list */
+	return list_concat(list_copy(args), defaults);
 }
 
 /*
@@ -3859,7 +3831,8 @@ fetch_function_defaults(HeapTuple func_tuple)
  * This should be a no-op if there are no polymorphic arguments,
  * but we do it anyway to be sure.
  *
- * Note: if any casts are needed, the args list is modified in-place.
+ * Note: if any casts are needed, the args list is modified in-place;
+ * caller should have already copied the list structure.
  */
 static void
 recheck_cast_function_args(List *args, Oid result_type, HeapTuple func_tuple)
