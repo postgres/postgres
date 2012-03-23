@@ -1027,8 +1027,10 @@ PQconninfoOption *PQconninfoParse(const char *conninfo, char **errmsg);
       </para>
 
       <para>
-       Note that only options explicitly specified in the string will have
-       values set in the result array; no defaults are inserted.
+       All legal options will be present in the result array, but the
+       <literal>PQconninfoOption</literal> for any option not present
+       in the connection string will have <literal>val</literal> set to
+       <literal>NULL</literal>; default values are not inserted.
       </para>
 
       <para>
