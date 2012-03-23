@@ -24,7 +24,6 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
-#include "parser/parse_clause.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datetime.h"
@@ -4153,32 +4152,34 @@ CheckDateTokenTables(void)
 }
 
 /*
- * Helper for temporal protransform functions.  Types time, timetz, timestamp
- * and timestamptz each have a range of allowed precisions.  An unspecified
- * precision is rigorously equivalent to the highest specifiable precision.
+ * Common code for temporal protransform functions.  Types time, timetz,
+ * timestamp and timestamptz each have a range of allowed precisions.  An
+ * unspecified precision is rigorously equivalent to the highest specifiable
+ * precision.
+ *
+ * Note: timestamp_scale throws an error when the typmod is out of range, but
+ * we can't get there from a cast: our typmodin will have caught it already.
  */
 Node *
 TemporalTransform(int32 max_precis, Node *node)
 {
 	FuncExpr   *expr = (FuncExpr *) node;
-	Node	   *typmod;
 	Node	   *ret = NULL;
+	Node	   *typmod;
 
-	if (!IsA(expr, FuncExpr))
-		return ret;
+	Assert(IsA(expr, FuncExpr));
+	Assert(list_length(expr->args) >= 2);
 
-	Assert(list_length(expr->args) == 2);
-	typmod = lsecond(expr->args);
+	typmod = (Node *) lsecond(expr->args);
 
-	if (IsA(typmod, Const))
+	if (IsA(typmod, Const) && !((Const *) typmod)->constisnull)
 	{
-		Node	   *source = linitial(expr->args);
+		Node	   *source = (Node *) linitial(expr->args);
 		int32		old_precis = exprTypmod(source);
 		int32		new_precis = DatumGetInt32(((Const *) typmod)->constvalue);
 
-		if (new_precis == -1 ||
-			new_precis == max_precis ||
-			(old_precis != -1 && new_precis >= old_precis))
+		if (new_precis < 0 || new_precis == max_precis ||
+			(old_precis >= 0 && new_precis >= old_precis))
 			ret = relabel_to_typmod(source, new_precis);
 	}
 

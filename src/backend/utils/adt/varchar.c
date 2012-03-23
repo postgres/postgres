@@ -19,7 +19,6 @@
 #include "access/tuptoaster.h"
 #include "libpq/pqformat.h"
 #include "nodes/nodeFuncs.h"
-#include "parser/parse_clause.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "mb/pg_wchar.h"
@@ -551,31 +550,32 @@ varcharsend(PG_FUNCTION_ARGS)
 
 
 /*
- * Flatten calls to our length coercion function that leave the new maximum
- * length >= the previous maximum length.  We ignore the isExplicit argument,
- * which only affects truncation.
+ * varchar_transform()
+ * Flatten calls to varchar's length coercion function that set the new maximum
+ * length >= the previous maximum length.  We can ignore the isExplicit
+ * argument, since that only affects truncation cases.
  */
 Datum
 varchar_transform(PG_FUNCTION_ARGS)
 {
 	FuncExpr   *expr = (FuncExpr *) PG_GETARG_POINTER(0);
-	Node	   *typmod;
 	Node	   *ret = NULL;
+	Node	   *typmod;
 
-	if (!IsA(expr, FuncExpr))
-		PG_RETURN_POINTER(ret);
+	Assert(IsA(expr, FuncExpr));
+	Assert(list_length(expr->args) >= 2);
 
-	Assert(list_length(expr->args) == 3);
-	typmod = lsecond(expr->args);
+	typmod = (Node *) lsecond(expr->args);
 
-	if (IsA(typmod, Const))
+	if (IsA(typmod, Const) && !((Const *) typmod)->constisnull)
 	{
-		Node	   *source = linitial(expr->args);
+		Node	   *source = (Node *) linitial(expr->args);
+		int32		old_typmod = exprTypmod(source);
 		int32		new_typmod = DatumGetInt32(((Const *) typmod)->constvalue);
-		int32		old_max = exprTypmod(source) - VARHDRSZ;
+		int32		old_max = old_typmod - VARHDRSZ;
 		int32		new_max = new_typmod - VARHDRSZ;
 
-		if (new_max < 0 || (old_max >= 0 && old_max <= new_max))
+		if (new_typmod < 0 || (old_typmod >= 0 && old_max <= new_max))
 			ret = relabel_to_typmod(source, new_typmod);
 	}
 

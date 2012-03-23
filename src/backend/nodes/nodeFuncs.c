@@ -17,6 +17,7 @@
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "nodes/relation.h"
 #include "utils/builtins.h"
@@ -545,6 +546,30 @@ exprIsLengthCoercion(const Node *expr, int32 *coercedTypmod)
 	}
 
 	return false;
+}
+
+/*
+ * relabel_to_typmod
+ *		Add a RelabelType node that changes just the typmod of the expression.
+ *
+ * This is primarily intended to be used during planning.  Therefore, it
+ * strips any existing RelabelType nodes to maintain the planner's invariant
+ * that there are not adjacent RelabelTypes, and it uses COERCE_DONTCARE
+ * which would typically be inappropriate earlier.
+ */
+Node *
+relabel_to_typmod(Node *expr, int32 typmod)
+{
+	Oid			type = exprType(expr);
+	Oid			coll = exprCollation(expr);
+
+	/* Strip any existing RelabelType node(s) */
+	while (expr && IsA(expr, RelabelType))
+		expr = (Node *) ((RelabelType *) expr)->arg;
+
+	/* Apply new typmod, preserving the previous exposed type and collation */
+	return (Node *) makeRelabelType((Expr *) expr, type, typmod, coll,
+									COERCE_DONTCARE);
 }
 
 /*
@@ -2694,7 +2719,9 @@ query_or_expression_tree_mutator(Node *node,
  * that could appear under it, but not other statement types.
  */
 bool
-			raw_expression_tree_walker(Node *node, bool (*walker) (), void *context)
+raw_expression_tree_walker(Node *node,
+						   bool (*walker) (),
+						   void *context)
 {
 	ListCell   *temp;
 

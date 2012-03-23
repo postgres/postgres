@@ -256,6 +256,13 @@ FROM pg_proc as p1
 WHERE proargmodes IS NOT NULL AND proargnames IS NOT NULL AND
     array_length(proargmodes,1) <> array_length(proargnames,1);
 
+-- Check for protransform functions with the wrong signature
+SELECT p1.oid, p1.proname, p2.oid, p2.proname
+FROM pg_proc AS p1, pg_proc AS p2
+WHERE p2.oid = p1.protransform AND
+    (p2.prorettype != 'internal'::regtype OR p2.proretset OR p2.pronargs != 1
+     OR p2.proargtypes[0] != 'internal'::regtype);
+
 -- Insist that all built-in pg_proc entries have descriptions
 SELECT p1.oid, p1.proname
 FROM pg_proc as p1 LEFT JOIN pg_description as d

@@ -3177,6 +3177,40 @@ CREATE FUNCTION make_array(anyelement) RETURNS anyarray
     </para>
    </sect2>
 
+   <sect2 id="xfunc-transform-functions">
+    <title>Transform Functions</title>
+
+    <para>
+     Some function calls can be simplified during planning based on
+     properties specific to the function.  For example,
+     <literal>int4mul(n, 1)</> could be simplified to just <literal>n</>.
+     To define such function-specific optimizations, write a
+     <firstterm>transform function</> and place its OID in the
+     <structfield>protransform</> field of the primary function's
+     <structname>pg_proc</> entry.  The transform function must have the SQL
+     signature <literal>protransform(internal) RETURNS internal</>.  The
+     argument, actually <type>FuncExpr *</>, is a dummy node representing a
+     call to the primary function.  If the transform function's study of the
+     expression tree proves that a simplified expression tree can substitute
+     for all possible concrete calls represented thereby, build and return
+     that simplified expression.  Otherwise, return a <literal>NULL</>
+     pointer (<emphasis>not</> a SQL null).
+    </para>
+
+    <para>
+     We make no guarantee that <productname>PostgreSQL</> will never call the
+     primary function in cases that the transform function could simplify.
+     Ensure rigorous equivalence between the simplified expression and an
+     actual call to the primary function.
+    </para>
+
+    <para>
+     Currently, this facility is not exposed to users at the SQL level
+     because of security concerns, so it is only practical to use for
+     optimizing built-in functions.
+    </para>
+   </sect2>
+
    <sect2>
     <title>Shared Memory and LWLocks</title>
 

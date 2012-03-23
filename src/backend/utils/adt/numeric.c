@@ -31,7 +31,6 @@
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
-#include "parser/parse_clause.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/int8.h"
@@ -717,7 +716,7 @@ numeric_send(PG_FUNCTION_ARGS)
 /*
  * numeric_transform() -
  *
- * Flatten calls to our length coercion function that solely represent
+ * Flatten calls to numeric's length coercion function that solely represent
  * increases in allowable precision.  Scale changes mutate every datum, so
  * they are unoptimizable.  Some values, e.g. 1E-1001, can only fit into an
  * unconstrained numeric, so a change from an unconstrained numeric to any
@@ -727,18 +726,17 @@ Datum
 numeric_transform(PG_FUNCTION_ARGS)
 {
 	FuncExpr   *expr = (FuncExpr *) PG_GETARG_POINTER(0);
-	Node	   *typmod;
 	Node	   *ret = NULL;
+	Node	   *typmod;
 
-	if (!IsA(expr, FuncExpr))
-		PG_RETURN_POINTER(ret);
+	Assert(IsA(expr, FuncExpr));
+	Assert(list_length(expr->args) >= 2);
 
-	Assert(list_length(expr->args) == 2);
-	typmod = lsecond(expr->args);
+	typmod = (Node *) lsecond(expr->args);
 
-	if (IsA(typmod, Const))
+	if (IsA(typmod, Const) && !((Const *) typmod)->constisnull)
 	{
-		Node	   *source = linitial(expr->args);
+		Node	   *source = (Node *) linitial(expr->args);
 		int32		old_typmod = exprTypmod(source);
 		int32		new_typmod = DatumGetInt32(((Const *) typmod)->constvalue);
 		int32		old_scale = (old_typmod - VARHDRSZ) & 0xffff;
@@ -748,11 +746,12 @@ numeric_transform(PG_FUNCTION_ARGS)
 
 		/*
 		 * If new_typmod < VARHDRSZ, the destination is unconstrained; that's
-		 * always OK.  If old_typmod >= VARHDRSZ, the source is constrained.
-		 * and we're OK if the scale is unchanged and the precison is not
+		 * always OK.  If old_typmod >= VARHDRSZ, the source is constrained,
+		 * and we're OK if the scale is unchanged and the precision is not
 		 * decreasing.  See further notes in function header comment.
 		 */
-		if (new_typmod < VARHDRSZ || (old_typmod >= VARHDRSZ &&
+		if (new_typmod < (int32) VARHDRSZ ||
+			(old_typmod >= (int32) VARHDRSZ &&
 			 new_scale == old_scale && new_precision >= old_precision))
 			ret = relabel_to_typmod(source, new_typmod);
 	}

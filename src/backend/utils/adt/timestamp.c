@@ -28,7 +28,6 @@
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
-#include "parser/parse_clause.h"
 #include "parser/scansup.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
@@ -316,10 +315,6 @@ timestamptypmodout(PG_FUNCTION_ARGS)
 Datum
 timestamp_transform(PG_FUNCTION_ARGS)
 {
-	/*
-	 * timestamp_scale throws an error when the typmod is out of range, but we
-	 * can't get there from a cast: our typmodin will have caught it already.
-	 */
 	PG_RETURN_POINTER(TemporalTransform(MAX_TIMESTAMP_PRECISION,
 										(Node *) PG_GETARG_POINTER(0)));
 }
@@ -937,18 +932,17 @@ Datum
 interval_transform(PG_FUNCTION_ARGS)
 {
 	FuncExpr   *expr = (FuncExpr *) PG_GETARG_POINTER(0);
-	Node	   *typmod;
 	Node	   *ret = NULL;
+	Node	   *typmod;
 
-	if (!IsA(expr, FuncExpr))
-		PG_RETURN_POINTER(ret);
+	Assert(IsA(expr, FuncExpr));
+	Assert(list_length(expr->args) >= 2);
 
-	Assert(list_length(expr->args) == 2);
-	typmod = lsecond(expr->args);
+	typmod = (Node *) lsecond(expr->args);
 
-	if (IsA(typmod, Const))
+	if (IsA(typmod, Const) && !((Const *) typmod)->constisnull)
 	{
-		Node	   *source = linitial(expr->args);
+		Node	   *source = (Node *) linitial(expr->args);
 		int32		old_typmod = exprTypmod(source);
 		int32		new_typmod = DatumGetInt32(((Const *) typmod)->constvalue);
 		int			old_range;
@@ -958,7 +952,7 @@ interval_transform(PG_FUNCTION_ARGS)
 		int			new_range_fls;
 		int			old_range_fls;
 
-		if (old_typmod == -1)
+		if (old_typmod < 0)
 		{
 			old_range = INTERVAL_FULL_RANGE;
 			old_precis = INTERVAL_FULL_PRECISION;
@@ -978,11 +972,9 @@ interval_transform(PG_FUNCTION_ARGS)
 		 */
 		new_range_fls = fls(new_range);
 		old_range_fls = fls(old_range);
-		if (new_typmod == -1 ||
-			((new_range_fls >= SECOND ||
-			  new_range_fls >= old_range_fls) &&
-			 (old_range_fls < SECOND ||
-			  new_precis >= MAX_INTERVAL_PRECISION ||
+		if (new_typmod < 0 ||
+			((new_range_fls >= SECOND || new_range_fls >= old_range_fls) &&
+			 (old_range_fls < SECOND || new_precis >= MAX_INTERVAL_PRECISION ||
 			  new_precis >= old_precis)))
 			ret = relabel_to_typmod(source, new_typmod);
 	}
@@ -1068,7 +1060,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		 * can't do it consistently.  (We cannot enforce a range limit on the
 		 * highest expected field, since we do not have any equivalent of
 		 * SQL's <interval leading field precision>.)  If we ever decide to
-		 * revisit this, interval_transform will likely requite adjusting.
+		 * revisit this, interval_transform will likely require adjusting.
 		 *
 		 * Note: before PG 8.4 we interpreted a limited set of fields as
 		 * actually causing a "modulo" operation on a given value, potentially
