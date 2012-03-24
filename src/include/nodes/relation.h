@@ -1445,8 +1445,10 @@ typedef struct MinMaxAggInfo
  * from a NestLoop node of that level to its inner scan.  The varlevelsup
  * value in the Var will always be zero.
  *
- * A PlaceHolderVar: this works much like the Var case.  It is currently
- * only needed for NestLoop parameters, not outer references.
+ * A PlaceHolderVar: this works much like the Var case, except that the
+ * entry is a PlaceHolderVar node with a contained expression.  The PHV
+ * will have phlevelsup = 0, and the contained expression is adjusted
+ * to match in level.
  *
  * An Aggref (with an expression tree representing its argument): the slot
  * represents an aggregate expression that is an outer reference for some
