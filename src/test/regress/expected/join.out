@@ -2572,6 +2572,53 @@ SELECT qq, unique1
 (3 rows)
 
 --
+-- test case where a PlaceHolderVar is propagated into a subquery
+--
+explain (costs off)
+select * from
+  int8_tbl t1 left join
+  (select q1 as x, 42 as y from int8_tbl t2) ss
+  on t1.q2 = ss.x
+where
+  1 = (select 1 from int8_tbl t3 where ss.y is not null limit 1)
+order by 1,2;
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Sort
+   Sort Key: t1.q1, t1.q2
+   ->  Hash Left Join
+         Hash Cond: (t1.q2 = t2.q1)
+         Filter: (1 = (SubPlan 1))
+         ->  Seq Scan on int8_tbl t1
+         ->  Hash
+               ->  Seq Scan on int8_tbl t2
+         SubPlan 1
+           ->  Limit
+                 ->  Result
+                       One-Time Filter: ((42) IS NOT NULL)
+                       ->  Seq Scan on int8_tbl t3
+(13 rows)
+
+select * from
+  int8_tbl t1 left join
+  (select q1 as x, 42 as y from int8_tbl t2) ss
+  on t1.q2 = ss.x
+where
+  1 = (select 1 from int8_tbl t3 where ss.y is not null limit 1)
+order by 1,2;
+        q1        |        q2        |        x         | y  
+------------------+------------------+------------------+----
+              123 | 4567890123456789 | 4567890123456789 | 42
+              123 | 4567890123456789 | 4567890123456789 | 42
+              123 | 4567890123456789 | 4567890123456789 | 42
+ 4567890123456789 |              123 |              123 | 42
+ 4567890123456789 |              123 |              123 | 42
+ 4567890123456789 | 4567890123456789 | 4567890123456789 | 42
+ 4567890123456789 | 4567890123456789 | 4567890123456789 | 42
+ 4567890123456789 | 4567890123456789 | 4567890123456789 | 42
+(8 rows)
+
+--
 -- test the corner cases FULL JOIN ON TRUE and FULL JOIN ON FALSE
 --
 select * from int4_tbl a full join int4_tbl b on true;
