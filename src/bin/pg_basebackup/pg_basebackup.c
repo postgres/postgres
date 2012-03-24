@@ -1103,7 +1103,7 @@ BaseBackup(void)
 		if (r != bgchild)
 		{
 			fprintf(stderr, _("%s: child %i died, expected %i\n"),
-					progname, r, bgchild);
+					progname, r, (int) bgchild);
 			disconnect_and_exit(1);
 		}
 		if (!WIFEXITED(status))

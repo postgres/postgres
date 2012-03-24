@@ -867,7 +867,7 @@ _tarWriteHeader(const char *filename, const char *linktarget,
 	}
 
 	/* Mode 8 */
-	sprintf(&h[100], "%07o ", statbuf->st_mode);
+	sprintf(&h[100], "%07o ", (int) statbuf->st_mode);
 
 	/* User ID 8 */
 	sprintf(&h[108], "%07o ", statbuf->st_uid);
