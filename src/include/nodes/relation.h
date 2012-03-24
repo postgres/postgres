@@ -1318,11 +1318,16 @@ typedef struct PlaceHolderInfo
  *
  * Each paramlist item shows the absolute query level it is associated with,
  * where the outermost query is level 1 and nested subqueries have higher
- * numbers.  The item the parameter slot represents can be one of three kinds:
+ * numbers.  The item the parameter slot represents can be one of four kinds:
  *
  * A Var: the slot represents a variable of that level that must be passed
  * down because subqueries have outer references to it.  The varlevelsup
  * value in the Var will always be zero.
+ *
+ * A PlaceHolderVar: this works much like the Var case, except that the
+ * entry is a PlaceHolderVar node with a contained expression.  The PHV
+ * will have phlevelsup = 0, and the contained expression is adjusted
+ * to match in level.
  *
  * An Aggref (with an expression tree representing its argument): the slot
  * represents an aggregate expression that is an outer reference for some
@@ -1333,14 +1338,14 @@ typedef struct PlaceHolderInfo
  * for that subplan).  The absolute level shown for such items corresponds
  * to the parent query of the subplan.
  *
- * Note: we detect duplicate Var parameters and coalesce them into one slot,
- * but we do not do this for Aggref or Param slots.
+ * Note: we detect duplicate Var and PlaceHolderVar parameters and coalesce
+ * them into one slot, but we do not do this for Aggref or Param slots.
  */
 typedef struct PlannerParamItem
 {
 	NodeTag		type;
 
-	Node	   *item;			/* the Var, Aggref, or Param */
+	Node	   *item;			/* the Var, PlaceHolderVar, Aggref, or Param */
 	Index		abslevel;		/* its absolute query level */
 } PlannerParamItem;
 

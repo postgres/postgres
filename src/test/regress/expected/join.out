@@ -2507,6 +2507,28 @@ ON sub1.key1 = sub2.key3;
 (1 row)
 
 --
+-- test case where a PlaceHolderVar is propagated into a subquery
+--
+select * from
+  int8_tbl t1 left join
+  (select q1 as x, 42 as y from int8_tbl t2) ss
+  on t1.q2 = ss.x
+where
+  1 = (select 1 from int8_tbl t3 where ss.y is not null limit 1)
+order by 1,2;
+        q1        |        q2        |        x         | y  
+------------------+------------------+------------------+----
+              123 | 4567890123456789 | 4567890123456789 | 42
+              123 | 4567890123456789 | 4567890123456789 | 42
+              123 | 4567890123456789 | 4567890123456789 | 42
+ 4567890123456789 |              123 |              123 | 42
+ 4567890123456789 |              123 |              123 | 42
+ 4567890123456789 | 4567890123456789 | 4567890123456789 | 42
+ 4567890123456789 | 4567890123456789 | 4567890123456789 | 42
+ 4567890123456789 | 4567890123456789 | 4567890123456789 | 42
+(8 rows)
+
+--
 -- test the corner cases FULL JOIN ON TRUE and FULL JOIN ON FALSE
 --
 select * from int4_tbl a full join int4_tbl b on true;
