@@ -1882,8 +1882,6 @@ reduce_outer_joins_pass2(Node *jtnode,
  *
  * Find any PlaceHolderVar nodes in the given tree that reference the
  * pulled-up relid, and change them to reference the replacement relid(s).
- * We do not need to recurse into subqueries, since no subquery of the current
- * top query could (yet) contain such a reference.
  *
  * NOTE: although this has the form of a walker, we cheat and modify the
  * nodes in-place.	This should be OK since the tree was copied by
@@ -1894,6 +1892,7 @@ reduce_outer_joins_pass2(Node *jtnode,
 typedef struct
 {
 	int			varno;
+	int			sublevels_up;
 	Relids		subrelids;
 } substitute_multiple_relids_context;
 
@@ -1907,7 +1906,8 @@ substitute_multiple_relids_walker(Node *node,
 	{
 		PlaceHolderVar *phv = (PlaceHolderVar *) node;
 
-		if (bms_is_member(context->varno, phv->phrels))
+		if (phv->phlevelsup == context->sublevels_up &&
+			bms_is_member(context->varno, phv->phrels))
 		{
 			phv->phrels = bms_union(phv->phrels,
 									context->subrelids);
@@ -1915,6 +1915,18 @@ substitute_multiple_relids_walker(Node *node,
 										 context->varno);
 		}
 		/* fall through to examine children */
+	}
+	if (IsA(node, Query))
+	{
+		/* Recurse into subselects */
+		bool		result;
+
+		context->sublevels_up++;
+		result = query_tree_walker((Query *) node,
+								   substitute_multiple_relids_walker,
+								   (void *) context, 0);
+		context->sublevels_up--;
+		return result;
 	}
 	/* Shouldn't need to handle planner auxiliary nodes here */
 	Assert(!IsA(node, SpecialJoinInfo));
@@ -1931,6 +1943,7 @@ substitute_multiple_relids(Node *node, int varno, Relids subrelids)
 	substitute_multiple_relids_context context;
 
 	context.varno = varno;
+	context.sublevels_up = 0;
 	context.subrelids = subrelids;
 
 	/*

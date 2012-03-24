@@ -149,6 +149,65 @@ replace_outer_var(PlannerInfo *root, Var *var)
 }
 
 /*
+ * Generate a Param node to replace the given PlaceHolderVar,
+ * which is expected to have phlevelsup > 0 (ie, it is not local).
+ *
+ * This is just like replace_outer_var, except for PlaceHolderVars.
+ */
+static Param *
+replace_outer_placeholdervar(PlannerInfo *root, PlaceHolderVar *phv)
+{
+	Param	   *retval;
+	ListCell   *ppl;
+	PlannerParamItem *pitem;
+	Index		abslevel;
+	int			i;
+
+	Assert(phv->phlevelsup > 0 && phv->phlevelsup < root->query_level);
+	abslevel = root->query_level - phv->phlevelsup;
+
+	/* If there's already a paramlist entry for this same PHV, just use it */
+	i = 0;
+	foreach(ppl, root->glob->paramlist)
+	{
+		pitem = (PlannerParamItem *) lfirst(ppl);
+		if (pitem->abslevel == abslevel && IsA(pitem->item, PlaceHolderVar))
+		{
+			PlaceHolderVar *pphv = (PlaceHolderVar *) pitem->item;
+
+			/* We assume comparing the PHIDs is sufficient */
+			if (pphv->phid == phv->phid)
+				break;
+		}
+		i++;
+	}
+
+	if (!ppl)
+	{
+		/* Nope, so make a new one */
+		phv = (PlaceHolderVar *) copyObject(phv);
+		IncrementVarSublevelsUp((Node *) phv, -((int) phv->phlevelsup), 0);
+		Assert(phv->phlevelsup == 0);
+
+		pitem = makeNode(PlannerParamItem);
+		pitem->item = (Node *) phv;
+		pitem->abslevel = abslevel;
+
+		root->glob->paramlist = lappend(root->glob->paramlist, pitem);
+		/* i is already the correct index for the new item */
+	}
+
+	retval = makeNode(Param);
+	retval->paramkind = PARAM_EXEC;
+	retval->paramid = i;
+	retval->paramtype = exprType((Node *) phv->phexpr);
+	retval->paramtypmod = exprTypmod((Node *) phv->phexpr);
+	retval->location = -1;
+
+	return retval;
+}
+
+/*
  * Generate a Param node to replace the given Aggref
  * which is expected to have agglevelsup > 0 (ie, it is not local).
  */
@@ -449,17 +508,19 @@ build_subplan(PlannerInfo *root, Plan *plan, List *rtable, List *rowmarks,
 			Node	   *arg;
 
 			/*
-			 * The Var or Aggref has already been adjusted to have the correct
-			 * varlevelsup or agglevelsup.	We probably don't even need to
-			 * copy it again, but be safe.
+			 * The Var, PlaceHolderVar, or Aggref has already been adjusted to
+			 * have the correct varlevelsup, phlevelsup, or agglevelsup.  We
+			 * probably don't even need to copy it again, but be safe.
 			 */
 			arg = copyObject(pitem->item);
 
 			/*
-			 * If it's an Aggref, its arguments might contain SubLinks, which
-			 * have not yet been processed.  Do that now.
+			 * If it's a PlaceHolderVar or Aggref, its arguments might contain
+			 * SubLinks, which have not yet been processed (see the comments
+			 * for SS_replace_correlation_vars).  Do that now.
 			 */
-			if (IsA(arg, Aggref))
+			if (IsA(arg, PlaceHolderVar) ||
+				IsA(arg, Aggref))
 				arg = SS_process_sublinks(root, arg, false);
 
 			splan->parParam = lappend_int(splan->parParam, paramid);
@@ -1539,24 +1600,25 @@ convert_EXISTS_to_ANY(PlannerInfo *root, Query *subselect,
 /*
  * Replace correlation vars (uplevel vars) with Params.
  *
- * Uplevel aggregates are replaced, too.
+ * Uplevel PlaceHolderVars and aggregates are replaced, too.
  *
  * Note: it is critical that this runs immediately after SS_process_sublinks.
- * Since we do not recurse into the arguments of uplevel aggregates, they will
- * get copied to the appropriate subplan args list in the parent query with
- * uplevel vars not replaced by Params, but only adjusted in level (see
- * replace_outer_agg).	That's exactly what we want for the vars of the parent
- * level --- but if an aggregate's argument contains any further-up variables,
- * they have to be replaced with Params in their turn.	That will happen when
- * the parent level runs SS_replace_correlation_vars.  Therefore it must do
- * so after expanding its sublinks to subplans.  And we don't want any steps
- * in between, else those steps would never get applied to the aggregate
- * argument expressions, either in the parent or the child level.
+ * Since we do not recurse into the arguments of uplevel PHVs and aggregates,
+ * they will get copied to the appropriate subplan args list in the parent
+ * query with uplevel vars not replaced by Params, but only adjusted in level
+ * (see replace_outer_placeholdervar and replace_outer_agg).  That's exactly
+ * what we want for the vars of the parent level --- but if a PHV's or
+ * aggregate's argument contains any further-up variables, they have to be
+ * replaced with Params in their turn. That will happen when the parent level
+ * runs SS_replace_correlation_vars.  Therefore it must do so after expanding
+ * its sublinks to subplans.  And we don't want any steps in between, else
+ * those steps would never get applied to the argument expressions, either in
+ * the parent or the child level.
  *
  * Another fairly tricky thing going on here is the handling of SubLinks in
- * the arguments of uplevel aggregates.  Those are not touched inside the
- * intermediate query level, either.  Instead, SS_process_sublinks recurses
- * on them after copying the Aggref expression into the parent plan level
+ * the arguments of uplevel PHVs/aggregates.  Those are not touched inside the
+ * intermediate query level, either.  Instead, SS_process_sublinks recurses on
+ * them after copying the PHV or Aggref expression into the parent plan level
  * (this is actually taken care of in build_subplan).
  */
 Node *
@@ -1575,6 +1637,12 @@ replace_correlation_vars_mutator(Node *node, PlannerInfo *root)
 	{
 		if (((Var *) node)->varlevelsup > 0)
 			return (Node *) replace_outer_var(root, (Var *) node);
+	}
+	if (IsA(node, PlaceHolderVar))
+	{
+		if (((PlaceHolderVar *) node)->phlevelsup > 0)
+			return (Node *) replace_outer_placeholdervar(root,
+													(PlaceHolderVar *) node);
 	}
 	if (IsA(node, Aggref))
 	{
@@ -1635,12 +1703,17 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
 	}
 
 	/*
-	 * Don't recurse into the arguments of an outer aggregate here. Any
-	 * SubLinks in the arguments have to be dealt with at the outer query
-	 * level; they'll be handled when build_subplan collects the Aggref into
-	 * the arguments to be passed down to the current subplan.
+	 * Don't recurse into the arguments of an outer PHV or aggregate here.
+	 * Any SubLinks in the arguments have to be dealt with at the outer query
+	 * level; they'll be handled when build_subplan collects the PHV or Aggref
+	 * into the arguments to be passed down to the current subplan.
 	 */
-	if (IsA(node, Aggref))
+	if (IsA(node, PlaceHolderVar))
+	{
+		if (((PlaceHolderVar *) node)->phlevelsup > 0)
+			return node;
+	}
+	else if (IsA(node, Aggref))
 	{
 		if (((Aggref *) node)->agglevelsup > 0)
 			return node;
