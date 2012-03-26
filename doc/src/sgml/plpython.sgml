@@ -877,134 +877,169 @@ $$ LANGUAGE plpythonu;
     <title>Database Access Functions</title>
 
   <para>
-   The <literal>plpy</literal> module provides two
-   functions called <function>execute</function> and
-   <function>prepare</function>.  Calling
-   <function>plpy.execute</function> with a query string and an
-   optional limit argument causes that query to be run and the result
-   to be returned in a result object.  The result object emulates a
-   list or dictionary object.  The result object can be accessed by
-   row number and column name.  It has these additional methods:
-   <function>nrows</function> which returns the number of rows
-   returned by the query, <function>status</function> which is the
-   <function>SPI_execute()</function> return value,
-   <function>colnames</function> which is the list of column names,
-   <function>coltypes</function> which is the list of column type OIDs,
-   and <function>coltypmods</function> which is the list of type-specific type
-   modifiers for the columns.  The result object can be modified.
+   The <literal>plpy</literal> module provides several functions to execute
+   database commands:
   </para>
 
-  <para>
-   Note that calling <literal>plpy.execute</literal> will cause the entire
-   result set to be read into memory.  Only use that function when you are sure
-   that the result set will be relatively small.  If you don't want to risk
-   excessive memory usage when fetching large results,
-   use <literal>plpy.cursor</literal> rather
-   than <literal>plpy.execute</literal>.
-  </para>
+  <variablelist>
+   <varlistentry>
+    <term><literal>plpy.<function>execute</function>(<replaceable>query</replaceable> [, <replaceable>max-rows</replaceable>])</literal></term>
+    <listitem>
+     <para>
+      Calling <function>plpy.execute</function> with a query string and an
+      optional row limit argument causes that query to be run and the result to
+      be returned in a result object.
+     </para>
 
-  <para>
-   For example:
+     <para>
+      The result object emulates a list or dictionary object.  The result
+      object can be accessed by row number and column name.  For example:
 <programlisting>
 rv = plpy.execute("SELECT * FROM my_table", 5)
 </programlisting>
-   returns up to 5 rows from <literal>my_table</literal>.  If
-   <literal>my_table</literal> has a column
-   <literal>my_column</literal>, it would be accessed as:
+      returns up to 5 rows from <literal>my_table</literal>.  If
+      <literal>my_table</literal> has a column
+      <literal>my_column</literal>, it would be accessed as:
 <programlisting>
 foo = rv[i]["my_column"]
 </programlisting>
-  </para>
+     </para>
 
-  <para>
-   <indexterm><primary>preparing a query</><secondary>in PL/Python</></indexterm>
-   The second function, <function>plpy.prepare</function>, prepares
-   the execution plan for a query.  It is called with a query string
-   and a list of parameter types, if you have parameter references in
-   the query.  For example:
+     <para>
+      The result object has these additional methods:
+      <variablelist>
+       <varlistentry>
+        <term><literal><function>nrows</function>()</literal></term>
+        <listitem>
+         <para>
+          Returns the number of rows returned or processed by the query.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal><function>status</function>()</literal></term>
+        <listitem>
+         <para>
+          The <function>SPI_execute()</function> return value.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal><function>colnames</function>()</literal></term>
+        <term><literal><function>coltypes</function>()</literal></term>
+        <term><literal><function>coltypmods</function>()</literal></term>
+        <listitem>
+         <para>
+          Return a list of column names, list of column type OIDs, and list of
+          type-specific type modifiers for the columns, respectively.
+         </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
+     </para>
+
+     <para>
+      The result object can be modified.
+     </para>
+
+     <para>
+      Note that calling <literal>plpy.execute</literal> will cause the entire
+      result set to be read into memory.  Only use that function when you are
+      sure that the result set will be relatively small.  If you don't want to
+      risk excessive memory usage when fetching large results,
+      use <literal>plpy.cursor</literal> rather
+      than <literal>plpy.execute</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>plpy.<function>prepare</function>(<replaceable>query</replaceable> [, <replaceable>argtypes</replaceable>])</literal></term>
+    <term><literal>plpy.<function>execute</function>(<replaceable>plan</replaceable> [, <replaceable>arguments</replaceable> [, <replaceable>max-rows</replaceable>]])</literal></term>
+    <listitem>
+     <para>
+      <indexterm><primary>preparing a query</><secondary>in PL/Python</></indexterm>
+      <function>plpy.prepare</function> prepares the execution plan for a
+      query.  It is called with a query string and a list of parameter types,
+      if you have parameter references in the query.  For example:
 <programlisting>
-plan = plpy.prepare("SELECT last_name FROM my_users WHERE first_name = $1", [ "text" ])
+plan = plpy.prepare("SELECT last_name FROM my_users WHERE first_name = $1", ["text"])
 </programlisting>
-   <literal>text</literal> is the type of the variable you will be
-   passing for <literal>$1</literal>.  After preparing a statement, you
-   use the function <function>plpy.execute</function> to run it:
+      <literal>text</literal> is the type of the variable you will be passing
+      for <literal>$1</literal>.  The second argument is optional if you don't
+      want to pass any parameters to the query.
+     </para>
+     <para>
+      After preparing a statement, you use a variant of the
+      function <function>plpy.execute</function> to run it:
 <programlisting>
-rv = plpy.execute(plan, [ "name" ], 5)
+rv = plpy.execute(plan, ["name"], 5)
 </programlisting>
-   The third argument is the limit and is optional.
-  </para>
+      Pass the plan as the first argument (instead of the query string), and a
+      list of values to substitute into the query as the second argument.  The
+      second argument is optional if the query does not expect any parameters.
+      The third argument is the optional row limit as before.
+     </para>
 
-  <para>
-   Query parameters and result row fields are converted between
-   PostgreSQL and Python data types as described
-   in <xref linkend="plpython-data">.  The exception is that composite
-   types are currently not supported: They will be rejected as query
-   parameters and are converted to strings when appearing in a query
-   result.  As a workaround for the latter problem, the query can
-   sometimes be rewritten so that the composite type result appears as
-   a result row rather than as a field of the result row.
-   Alternatively, the resulting string could be parsed apart by hand,
-   but this approach is not recommended because it is not
-   future-proof.
-  </para>
+     <para>
+      Query parameters and result row fields are converted between PostgreSQL
+      and Python data types as described in <xref linkend="plpython-data">.
+      The exception is that composite types are currently not supported: They
+      will be rejected as query parameters and are converted to strings when
+      appearing in a query result.  As a workaround for the latter problem, the
+      query can sometimes be rewritten so that the composite type result
+      appears as a result row rather than as a field of the result row.
+      Alternatively, the resulting string could be parsed apart by hand, but
+      this approach is not recommended because it is not future-proof.
+     </para>
 
-  <para>
-   When you prepare a plan using the PL/Python module it is
-   automatically saved.  Read the SPI documentation (<xref
-   linkend="spi">) for a description of what this means.
-   In order to make effective use of this across function calls
-   one needs to use one of the persistent storage dictionaries
-   <literal>SD</literal> or <literal>GD</literal> (see
-   <xref linkend="plpython-sharing">). For example:
+     <para>
+      When you prepare a plan using the PL/Python module it is automatically
+      saved.  Read the SPI documentation (<xref linkend="spi">) for a
+      description of what this means.  In order to make effective use of this
+      across function calls one needs to use one of the persistent storage
+      dictionaries <literal>SD</literal> or <literal>GD</literal> (see
+      <xref linkend="plpython-sharing">). For example:
 <programlisting>
 CREATE FUNCTION usesavedplan() RETURNS trigger AS $$
     plan = SD.setdefault("plan", plpy.prepare("SELECT 1"))
     # rest of function
 $$ LANGUAGE plpythonu;
 </programlisting>
-  </para>
+     </para>
+    </listitem>
+   </varlistentry>
 
-  </sect2>
+   <varlistentry>
+    <term><literal>plpy.<function>cursor</function>(<replaceable>query</replaceable>)</literal></term>
+    <term><literal>plpy.<function>cursor</function>(<replaceable>plan</replaceable> [, <replaceable>arguments</replaceable>])</literal></term>
+    <listitem>
+     <para>
+      The <literal>plpy.cursor</literal> function accepts the same arguments
+      as <literal>plpy.execute</literal> (except for the row limit) and returns
+      a cursor object, which allows you to process large result sets in smaller
+      chunks.  As with <literal>plpy.execute</literal>, either a query string
+      or a plan object along with a list of arguments can be used.
+     </para>
 
-  <sect2>
-   <title>Accessing Data with Cursors</title>
+     <para>
+      The cursor object provides a <literal>fetch</literal> method that accepts
+      an integer parameter and returns a result object.  Each time you
+      call <literal>fetch</literal>, the returned object will contain the next
+      batch of rows, never larger than the parameter value.  Once all rows are
+      exhausted, <literal>fetch</literal> starts returning an empty result
+      object.  Cursor objects also provide an
+      <ulink url="http://docs.python.org/library/stdtypes.html#iterator-types">iterator
+      interface</ulink>, yielding one row at a time until all rows are
+      exhausted.  Data fetched that way is not returned as result objects, but
+      rather as dictionaries, each dictionary corresponding to a single result
+      row.
+     </para>
 
-   <para>
-    The <literal>plpy.cursor</literal> function accepts the same arguments
-    as <literal>plpy.execute</literal> (except for <literal>limit</literal>)
-    and returns a cursor object, which allows you to process large result sets
-    in smaller chunks.  As with <literal>plpy.execute</literal>, either a query
-    string or a plan object along with a list of arguments can be used.  The
-    cursor object provides a <literal>fetch</literal> method that accepts an
-    integer parameter and returns a result object.  Each time you
-    call <literal>fetch</literal>, the returned object will contain the next
-    batch of rows, never larger than the parameter value.  Once all rows are
-    exhausted, <literal>fetch</literal> starts returning an empty result
-    object.  Cursor objects also provide an
-    <ulink url="http://docs.python.org/library/stdtypes.html#iterator-types">iterator
-    interface</ulink>, yielding one row at a time until all rows are exhausted.
-    Data fetched that way is not returned as result objects, but rather as
-    dictionaries, each dictionary corresponding to a single result row.
-   </para>
-
-   <para>
-    Cursors are automatically disposed of.  But if you want to explicitly
-    release all resources held by a cursor, use the <literal>close</literal>
-    method.  Once closed, a cursor cannot be fetched from anymore.
-   </para>
-
-   <tip>
-    <para>
-      Do not confuse objects created by <literal>plpy.cursor</literal> with
-      DB-API cursors as defined by
-      the <ulink url="http://www.python.org/dev/peps/pep-0249/">Python Database
-      API specification</ulink>.  They don't have anything in common except for
-      the name.
-    </para>
-   </tip>
-
-   <para>
-    An example of two ways of processing data from a large table is:
+     <para>
+      An example of two ways of processing data from a large table is:
 <programlisting>
 CREATE FUNCTION count_odd_iterator() RETURNS integer AS $$
 odd = 0
@@ -1035,7 +1070,27 @@ rows = list(plpy.cursor(plan, [2]))
 return len(rows)
 $$ LANGUAGE plpythonu;
 </programlisting>
-   </para>
+     </para>
+
+     <para>
+      Cursors are automatically disposed of.  But if you want to explicitly
+      release all resources held by a cursor, use the <literal>close</literal>
+      method.  Once closed, a cursor cannot be fetched from anymore.
+     </para>
+
+     <tip>
+      <para>
+        Do not confuse objects created by <literal>plpy.cursor</literal> with
+        DB-API cursors as defined by
+        the <ulink url="http://www.python.org/dev/peps/pep-0249/">Python
+        Database API specification</ulink>.  They don't have anything in common
+        except for the name.
+      </para>
+     </tip>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+
   </sect2>
 
   <sect2 id="plpython-trapping">
