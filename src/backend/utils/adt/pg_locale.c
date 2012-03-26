@@ -222,29 +222,43 @@ pg_perm_setlocale(int category, const char *locale)
 
 /*
  * Is the locale name valid for the locale category?
+ *
+ * If successful, and canonname isn't NULL, a palloc'd copy of the locale's
+ * canonical name is stored there.  This is especially useful for figuring out
+ * what locale name "" means (ie, the server environment value).  (Actually,
+ * it seems that on most implementations that's the only thing it's good for;
+ * we could wish that setlocale gave back a canonically spelled version of
+ * the locale name, but typically it doesn't.)
  */
 bool
-check_locale(int category, const char *value)
+check_locale(int category, const char *locale, char **canonname)
 {
 	char	   *save;
-	bool		ret;
+	char	   *res;
+
+	if (canonname)
+		*canonname = NULL;		/* in case of failure */
 
 	save = setlocale(category, NULL);
 	if (!save)
 		return false;			/* won't happen, we hope */
 
-	/* save may be pointing at a modifiable scratch variable, see above */
+	/* save may be pointing at a modifiable scratch variable, see above. */
 	save = pstrdup(save);
 
 	/* set the locale with setlocale, to see if it accepts it. */
-	ret = (setlocale(category, value) != NULL);
+	res = setlocale(category, locale);
+
+	/* save canonical name if requested. */
+	if (res && canonname)
+		*canonname = pstrdup(res);
 
 	/* restore old value. */
 	if (!setlocale(category, save))
-		elog(WARNING, "failed to restore old locale");
+		elog(WARNING, "failed to restore old locale \"%s\"", save);
 	pfree(save);
 
-	return ret;
+	return (res != NULL);
 }
 
 
@@ -262,7 +276,7 @@ check_locale(int category, const char *value)
 bool
 check_locale_monetary(char **newval, void **extra, GucSource source)
 {
-	return check_locale(LC_MONETARY, *newval);
+	return check_locale(LC_MONETARY, *newval, NULL);
 }
 
 void
@@ -274,7 +288,7 @@ assign_locale_monetary(const char *newval, void *extra)
 bool
 check_locale_numeric(char **newval, void **extra, GucSource source)
 {
-	return check_locale(LC_NUMERIC, *newval);
+	return check_locale(LC_NUMERIC, *newval, NULL);
 }
 
 void
@@ -286,7 +300,7 @@ assign_locale_numeric(const char *newval, void *extra)
 bool
 check_locale_time(char **newval, void **extra, GucSource source)
 {
-	return check_locale(LC_TIME, *newval);
+	return check_locale(LC_TIME, *newval, NULL);
 }
 
 void
@@ -322,7 +336,7 @@ check_locale_messages(char **newval, void **extra, GucSource source)
 	 * On Windows, we can't even check the value, so accept blindly
 	 */
 #if defined(LC_MESSAGES) && !defined(WIN32)
-	return check_locale(LC_MESSAGES, *newval);
+	return check_locale(LC_MESSAGES, *newval, NULL);
 #else
 	return true;
 #endif

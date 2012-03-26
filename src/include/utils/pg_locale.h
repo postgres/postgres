@@ -42,7 +42,7 @@ extern void assign_locale_numeric(const char *newval, void *extra);
 extern bool check_locale_time(char **newval, void **extra, GucSource source);
 extern void assign_locale_time(const char *newval, void *extra);
 
-extern bool check_locale(int category, const char *locale);
+extern bool check_locale(int category, const char *locale, char **canonname);
 extern char *pg_perm_setlocale(int category, const char *locale);
 
 extern bool lc_collate_is_c(Oid collation);

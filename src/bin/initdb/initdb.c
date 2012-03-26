@@ -213,7 +213,8 @@ static void trapsig(int signum);
 static void check_ok(void);
 static char *escape_quotes(const char *src);
 static int	locale_date_order(const char *locale);
-static bool check_locale_name(const char *locale);
+static bool check_locale_name(int category, const char *locale,
+							  char **canonname);
 static bool check_locale_encoding(const char *locale, int encoding);
 static void setlocales(void);
 static void usage(const char *progname);
@@ -2240,33 +2241,52 @@ locale_date_order(const char *locale)
 }
 
 /*
- * check if given string is a valid locale specifier
+ * Is the locale name valid for the locale category?
  *
- * this should match the backend check_locale() function
+ * If successful, and canonname isn't NULL, a malloc'd copy of the locale's
+ * canonical name is stored there.  This is especially useful for figuring out
+ * what locale name "" means (ie, the environment value).  (Actually,
+ * it seems that on most implementations that's the only thing it's good for;
+ * we could wish that setlocale gave back a canonically spelled version of
+ * the locale name, but typically it doesn't.)
+ *
+ * this should match the backend's check_locale() function
  */
 static bool
-check_locale_name(const char *locale)
+check_locale_name(int category, const char *locale, char **canonname)
 {
-	bool		ret;
-	int			category = LC_CTYPE;
 	char	   *save;
+	char	   *res;
+
+	if (canonname)
+		*canonname = NULL;		/* in case of failure */
 
 	save = setlocale(category, NULL);
 	if (!save)
-		return false;			/* should not happen; */
+		return false;			/* won't happen, we hope */
 
+	/* save may be pointing at a modifiable scratch variable, so copy it. */
 	save = xstrdup(save);
 
-	ret = (setlocale(category, locale) != NULL);
+	/* set the locale with setlocale, to see if it accepts it. */
+	res = setlocale(category, locale);
 
-	setlocale(category, save);
+	/* save canonical name if requested. */
+	if (res && canonname)
+		*canonname = xstrdup(res);
+
+	/* restore old value. */
+	if (!setlocale(category, save))
+		fprintf(stderr, _("%s: failed to restore old locale \"%s\"\n"),
+				progname, save);
 	free(save);
 
 	/* should we exit here? */
-	if (!ret)
-		fprintf(stderr, _("%s: invalid locale name \"%s\"\n"), progname, locale);
+	if (res == NULL)
+		fprintf(stderr, _("%s: invalid locale name \"%s\"\n"),
+				progname, locale);
 
-	return ret;
+	return (res != NULL);
 }
 
 /*
@@ -2308,11 +2328,13 @@ check_locale_encoding(const char *locale, int user_enc)
 /*
  * set up the locale variables
  *
- * assumes we have called setlocale(LC_ALL,"")
+ * assumes we have called setlocale(LC_ALL, "") -- see set_pglocale_pgservice
  */
 static void
 setlocales(void)
 {
+	char	   *canonname;
+
 	/* set empty lc_* values to locale config if set */
 
 	if (strlen(locale) > 0)
@@ -2332,32 +2354,42 @@ setlocales(void)
 	}
 
 	/*
-	 * override absent/invalid config settings from initdb's locale settings
+	 * canonicalize locale names, and override any missing/invalid values from
+	 * our current environment
 	 */
 
-	if (strlen(lc_ctype) == 0 || !check_locale_name(lc_ctype))
+	if (check_locale_name(LC_CTYPE, lc_ctype, &canonname))
+		lc_ctype = canonname;
+	else
 		lc_ctype = xstrdup(setlocale(LC_CTYPE, NULL));
-	if (strlen(lc_collate) == 0 || !check_locale_name(lc_collate))
+	if (check_locale_name(LC_COLLATE, lc_collate, &canonname))
+		lc_collate = canonname;
+	else
 		lc_collate = xstrdup(setlocale(LC_COLLATE, NULL));
-	if (strlen(lc_numeric) == 0 || !check_locale_name(lc_numeric))
+	if (check_locale_name(LC_NUMERIC, lc_numeric, &canonname))
+		lc_numeric = canonname;
+	else
 		lc_numeric = xstrdup(setlocale(LC_NUMERIC, NULL));
-	if (strlen(lc_time) == 0 || !check_locale_name(lc_time))
+	if (check_locale_name(LC_TIME, lc_time, &canonname))
+		lc_time = canonname;
+	else
 		lc_time = xstrdup(setlocale(LC_TIME, NULL));
-	if (strlen(lc_monetary) == 0 || !check_locale_name(lc_monetary))
+	if (check_locale_name(LC_MONETARY, lc_monetary, &canonname))
+		lc_monetary = canonname;
+	else
 		lc_monetary = xstrdup(setlocale(LC_MONETARY, NULL));
-	if (strlen(lc_messages) == 0 || !check_locale_name(lc_messages))
 #if defined(LC_MESSAGES) && !defined(WIN32)
-	{
-		/* when available get the current locale setting */
+	if (check_locale_name(LC_MESSAGES, lc_messages, &canonname))
+		lc_messages = canonname;
+	else
 		lc_messages = xstrdup(setlocale(LC_MESSAGES, NULL));
-	}
 #else
-	{
-		/* when not available, get the CTYPE setting */
+	/* when LC_MESSAGES is not available, use the LC_CTYPE setting */
+	if (check_locale_name(LC_CTYPE, lc_messages, &canonname))
+		lc_messages = canonname;
+	else
 		lc_messages = xstrdup(setlocale(LC_CTYPE, NULL));
-	}
 #endif
-
 }
 
 #ifdef WIN32

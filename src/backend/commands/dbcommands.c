@@ -123,6 +123,7 @@ createdb(const CreatedbStmt *stmt)
 	const char *dbtemplate = NULL;
 	char	   *dbcollate = NULL;
 	char	   *dbctype = NULL;
+	char	   *canonname;
 	int			encoding = -1;
 	int			dbconnlimit = -1;
 	int			notherbackends;
@@ -318,15 +319,17 @@ createdb(const CreatedbStmt *stmt)
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("invalid server encoding %d", encoding)));
 
-	/* Check that the chosen locales are valid */
-	if (!check_locale(LC_COLLATE, dbcollate))
+	/* Check that the chosen locales are valid, and get canonical spellings */
+	if (!check_locale(LC_COLLATE, dbcollate, &canonname))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("invalid locale name %s", dbcollate)));
-	if (!check_locale(LC_CTYPE, dbctype))
+	dbcollate = canonname;
+	if (!check_locale(LC_CTYPE, dbctype, &canonname))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("invalid locale name %s", dbctype)));
+	dbctype = canonname;
 
 	check_encoding_locale_matches(encoding, dbcollate, dbctype);
 
