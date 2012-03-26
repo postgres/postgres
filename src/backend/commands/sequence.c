@@ -258,7 +258,7 @@ ResetSequence(Oid seq_relid)
 	 * indeed a sequence.
 	 */
 	init_sequence(seq_relid, &elm, &seq_rel);
-	seq = read_info(elm, seq_rel, &buf);
+	read_info(elm, seq_rel, &buf);
 
 	/*
 	 * Copy the existing sequence tuple.
