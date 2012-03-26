@@ -164,6 +164,21 @@ c\.d
 
 COPY testeoc TO stdout CSV;
 
+-- test handling of nonstandard null marker that violates escaping rules
+
+CREATE TEMP TABLE testnull(a int, b text);
+INSERT INTO testnull VALUES (1, E'\\0'), (NULL, NULL);
+
+COPY testnull TO stdout WITH NULL AS E'\\0';
+
+COPY testnull FROM stdin WITH NULL AS E'\\0';
+42	\\0
+\0	\0
+\.
+
+SELECT * FROM testnull;
+
+
 DROP TABLE x, y;
 DROP FUNCTION fn_x_before();
 DROP FUNCTION fn_x_after();
