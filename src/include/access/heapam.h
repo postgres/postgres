@@ -111,8 +111,7 @@ extern HTSU_Result heap_lock_tuple(Relation relation, HeapTuple tuple,
 				TransactionId *update_xmax, CommandId cid,
 				LockTupleMode mode, bool nowait);
 extern void heap_inplace_update(Relation relation, HeapTuple tuple);
-extern bool heap_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
-				  Buffer buf);
+extern bool heap_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid);
 extern bool heap_tuple_needs_freeze(HeapTupleHeader tuple, TransactionId cutoff_xid,
 				  Buffer buf);
 

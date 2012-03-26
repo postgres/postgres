@@ -335,13 +335,8 @@ rewrite_heap_tuple(RewriteState state,
 	/*
 	 * While we have our hands on the tuple, we may as well freeze any
 	 * very-old xmin or xmax, so that future VACUUM effort can be saved.
-	 *
-	 * Note we abuse heap_freeze_tuple() a bit here, since it's expecting to
-	 * be given a pointer to a tuple in a disk buffer.	It happens though that
-	 * we can get the right things to happen by passing InvalidBuffer for the
-	 * buffer.
 	 */
-	heap_freeze_tuple(new_tuple->t_data, state->rs_freeze_xid, InvalidBuffer);
+	heap_freeze_tuple(new_tuple->t_data, state->rs_freeze_xid);
 
 	/*
 	 * Invalid ctid means that ctid should point to the tuple itself. We'll

@@ -3947,10 +3947,8 @@ heap_inplace_update(Relation relation, HeapTuple tuple)
  * because this function is applied during WAL recovery, when we don't have
  * access to any such state, and can't depend on the hint bits to be set.)
  *
- * In lazy VACUUM, we call this while initially holding only a shared lock
- * on the tuple's buffer.  If any change is needed, we trade that in for an
- * exclusive lock before making the change.  Caller should pass the buffer ID
- * if shared lock is held, InvalidBuffer if exclusive lock is already held.
+ * If the tuple is in a shared buffer, caller must hold an exclusive lock on
+ * that buffer.
  *
  * Note: it might seem we could make the changes without exclusive lock, since
  * TransactionId read/write is assumed atomic anyway.  However there is a race
@@ -3962,8 +3960,7 @@ heap_inplace_update(Relation relation, HeapTuple tuple)
  * infomask bits.
  */
 bool
-heap_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
-				  Buffer buf)
+heap_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid)
 {
 	bool		changed = false;
 	TransactionId xid;
@@ -3972,13 +3969,6 @@ heap_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
 	if (TransactionIdIsNormal(xid) &&
 		TransactionIdPrecedes(xid, cutoff_xid))
 	{
-		if (buf != InvalidBuffer)
-		{
-			/* trade in share lock for exclusive lock */
-			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-			LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
-			buf = InvalidBuffer;
-		}
 		HeapTupleHeaderSetXmin(tuple, FrozenTransactionId);
 
 		/*
@@ -3990,28 +3980,12 @@ heap_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
 		changed = true;
 	}
 
-	/*
-	 * When we release shared lock, it's possible for someone else to change
-	 * xmax before we get the lock back, so repeat the check after acquiring
-	 * exclusive lock.	(We don't need this pushup for xmin, because only
-	 * VACUUM could be interested in changing an existing tuple's xmin, and
-	 * there's only one VACUUM allowed on a table at a time.)
-	 */
-recheck_xmax:
 	if (!(tuple->t_infomask & HEAP_XMAX_IS_MULTI))
 	{
 		xid = HeapTupleHeaderGetXmax(tuple);
 		if (TransactionIdIsNormal(xid) &&
 			TransactionIdPrecedes(xid, cutoff_xid))
 		{
-			if (buf != InvalidBuffer)
-			{
-				/* trade in share lock for exclusive lock */
-				LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-				LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
-				buf = InvalidBuffer;
-				goto recheck_xmax;		/* see comment above */
-			}
 			HeapTupleHeaderSetXmax(tuple, InvalidTransactionId);
 
 			/*
@@ -4046,30 +4020,15 @@ recheck_xmax:
 	}
 
 	/*
-	 * Although xvac per se could only be set by old-style VACUUM FULL, it
-	 * shares physical storage space with cmax, and so could be wiped out by
-	 * someone setting xmax.  Hence recheck after changing lock, same as for
-	 * xmax itself.
-	 *
 	 * Old-style VACUUM FULL is gone, but we have to keep this code as long as
 	 * we support having MOVED_OFF/MOVED_IN tuples in the database.
 	 */
-recheck_xvac:
 	if (tuple->t_infomask & HEAP_MOVED)
 	{
 		xid = HeapTupleHeaderGetXvac(tuple);
 		if (TransactionIdIsNormal(xid) &&
 			TransactionIdPrecedes(xid, cutoff_xid))
 		{
-			if (buf != InvalidBuffer)
-			{
-				/* trade in share lock for exclusive lock */
-				LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-				LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
-				buf = InvalidBuffer;
-				goto recheck_xvac;		/* see comment above */
-			}
-
 			/*
 			 * If a MOVED_OFF tuple is not dead, the xvac transaction must
 			 * have failed; whereas a non-dead MOVED_IN tuple must mean the
@@ -4711,7 +4670,7 @@ heap_xlog_freeze(XLogRecPtr lsn, XLogRecord *record)
 			ItemId		lp = PageGetItemId(page, *offsets);
 			HeapTupleHeader tuple = (HeapTupleHeader) PageGetItem(page, lp);
 
-			(void) heap_freeze_tuple(tuple, cutoff_xid, InvalidBuffer);
+			(void) heap_freeze_tuple(tuple, cutoff_xid);
 			offsets++;
 		}
 	}
