@@ -4284,6 +4284,21 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-track-iotiming" xreflabel="track_iotiming">
+      <term><varname>track_iotiming</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>track_iotiming</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Enables timing of database I/O calls.  This parameter is off by
+        default, because it will repeatedly query the operating system for
+        the current time, which may cause significant overhead on some
+        platforms.  Only superusers can change this setting.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-track-functions" xreflabel="track_functions">
       <term><varname>track_functions</varname> (<type>enum</type>)</term>
       <indexterm>

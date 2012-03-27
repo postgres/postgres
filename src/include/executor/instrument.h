@@ -28,6 +28,8 @@ typedef struct BufferUsage
 	long		local_blks_written;		/* # of local disk blocks written */
 	long		temp_blks_read; /* # of temp blocks read */
 	long		temp_blks_written;		/* # of temp blocks written */
+	instr_time	time_read;				/* time spent reading */
+	instr_time	time_write;				/* time spent writing */
 } BufferUsage;
 
 /* Flag bits included in InstrAlloc's instrument_options bitmask */

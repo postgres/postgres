@@ -1018,6 +1018,15 @@ static struct config_bool ConfigureNamesBool[] =
 		true,
 		NULL, NULL, NULL
 	},
+	{
+		{"track_iotiming", PGC_SUSET, STATS_COLLECTOR,
+			gettext_noop("Collects timing information for database IO activity."),
+			NULL
+		},
+		&track_iotiming,
+		false,
+		NULL, NULL, NULL
+	},
 
 	{
 		{"update_process_title", PGC_SUSET, STATS_COLLECTOR,

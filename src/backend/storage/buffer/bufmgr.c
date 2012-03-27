@@ -67,6 +67,7 @@
 bool		zero_damaged_pages = false;
 int			bgwriter_lru_maxpages = 100;
 double		bgwriter_lru_multiplier = 2.0;
+bool		track_iotiming = false;
 
 /*
  * How many buffers PrefetchBuffer callers should try to stay ahead of their
@@ -437,7 +438,20 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 			MemSet((char *) bufBlock, 0, BLCKSZ);
 		else
 		{
+			instr_time	io_start,
+						io_time;
+
+			if (track_iotiming)
+				INSTR_TIME_SET_CURRENT(io_start);
+
 			smgrread(smgr, forkNum, blockNum, (char *) bufBlock);
+
+			if (track_iotiming)
+			{
+				INSTR_TIME_SET_CURRENT(io_time);
+				INSTR_TIME_SUBTRACT(io_time, io_start);
+				INSTR_TIME_ADD(pgBufferUsage.time_read, io_time);
+			}
 
 			/* check for garbage data */
 			if (!PageHeaderIsValid((PageHeader) bufBlock))
@@ -1874,6 +1888,7 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 {
 	XLogRecPtr	recptr;
 	ErrorContextCallback errcontext;
+	instr_time io_start, io_end;
 
 	/*
 	 * Acquire the buffer's io_in_progress lock.  If StartBufferIO returns
@@ -1921,11 +1936,20 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 	buf->flags &= ~BM_JUST_DIRTIED;
 	UnlockBufHdr(buf);
 
+	if (track_iotiming)
+		INSTR_TIME_SET_CURRENT(io_start);
+
 	smgrwrite(reln,
 			  buf->tag.forkNum,
 			  buf->tag.blockNum,
 			  (char *) BufHdrGetBlock(buf),
 			  false);
+
+	if (track_iotiming)
+	{
+		INSTR_TIME_SET_CURRENT(io_end);
+		INSTR_TIME_ACCUM_DIFF(pgBufferUsage.time_write, io_end, io_start);
+	}
 
 	pgBufferUsage.shared_blks_written++;
 
