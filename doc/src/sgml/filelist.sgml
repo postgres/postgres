@@ -129,6 +129,7 @@
 <!ENTITY pgstatstatements SYSTEM "pgstatstatements.sgml">
 <!ENTITY pgstattuple     SYSTEM "pgstattuple.sgml">
 <!ENTITY pgtestfsync     SYSTEM "pgtestfsync.sgml">
+<!ENTITY pgtesttiming    SYSTEM "pgtesttiming.sgml">
 <!ENTITY pgtrgm          SYSTEM "pgtrgm.sgml">
 <!ENTITY pgupgrade       SYSTEM "pgupgrade.sgml">
 <!ENTITY seg             SYSTEM "seg.sgml">

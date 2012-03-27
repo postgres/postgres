@@ -4294,7 +4294,9 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         Enables timing of database I/O calls.  This parameter is off by
         default, because it will repeatedly query the operating system for
         the current time, which may cause significant overhead on some
-        platforms.  Only superusers can change this setting.
+        platforms.  You can use the <xref linkend="pgtesttiming"> tool to
+        measure the overhead of timing on your system.  Only superusers can
+        change this setting.
        </para>
       </listitem>
      </varlistentry>

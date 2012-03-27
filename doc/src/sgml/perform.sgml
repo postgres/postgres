@@ -770,7 +770,9 @@ ROLLBACK;
     network transmission costs and I/O conversion costs are not included.
     Second, the measurement overhead added by <command>EXPLAIN
     ANALYZE</command> can be significant, especially on machines with slow
-    <function>gettimeofday()</> operating-system calls.
+    <function>gettimeofday()</> operating-system calls. You can use the
+    <xref linkend="pgtesttiming"> tool to measure the overhead of timing
+    on your system.
    </para>
 
    <para>

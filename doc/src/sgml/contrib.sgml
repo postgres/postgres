@@ -121,6 +121,7 @@ CREATE EXTENSION <replaceable>module_name</> FROM unpackaged;
  &pgstatstatements;
  &pgstattuple;
  &pgtestfsync;
+ &pgtesttiming;
  &pgtrgm;
  &pgupgrade;
  &seg;
