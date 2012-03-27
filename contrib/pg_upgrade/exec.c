@@ -40,7 +40,7 @@ exec_prog(bool throw_error, bool is_priv,
 	va_list		args;
 	int			result;
 	char		cmd[MAXPGPATH];
-	mode_t old_umask;
+	mode_t		old_umask = 0;
 
 	if (is_priv)
 		old_umask = umask(S_IRWXG | S_IRWXO);
