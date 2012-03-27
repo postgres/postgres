@@ -85,6 +85,8 @@ typedef struct Counters
 	int64		local_blks_written;		/* # of local disk blocks written */
 	int64		temp_blks_read; /* # of temp blocks read */
 	int64		temp_blks_written;		/* # of temp blocks written */
+	double		time_read;		/* time spent reading in seconds */
+	double		time_write;		/* time spent writing in seconds */
 	double		usage;			/* usage factor */
 } Counters;
 
@@ -618,9 +620,9 @@ pgss_ProcessUtility(Node *parsetree, const char *queryString,
 		instr_time	start;
 		instr_time	duration;
 		uint64		rows = 0;
-		BufferUsage bufusage;
+		BufferUsage bufusage_start, bufusage;
 
-		bufusage = pgBufferUsage;
+		bufusage_start = pgBufferUsage;
 		INSTR_TIME_SET_CURRENT(start);
 
 		nested_level++;
@@ -651,25 +653,29 @@ pgss_ProcessUtility(Node *parsetree, const char *queryString,
 
 		/* calc differences of buffer counters. */
 		bufusage.shared_blks_hit =
-			pgBufferUsage.shared_blks_hit - bufusage.shared_blks_hit;
+			pgBufferUsage.shared_blks_hit - bufusage_start.shared_blks_hit;
 		bufusage.shared_blks_read =
-			pgBufferUsage.shared_blks_read - bufusage.shared_blks_read;
+			pgBufferUsage.shared_blks_read - bufusage_start.shared_blks_read;
 		bufusage.shared_blks_dirtied =
-			pgBufferUsage.shared_blks_dirtied - bufusage.shared_blks_dirtied;
+			pgBufferUsage.shared_blks_dirtied - bufusage_start.shared_blks_dirtied;
 		bufusage.shared_blks_written =
-			pgBufferUsage.shared_blks_written - bufusage.shared_blks_written;
+			pgBufferUsage.shared_blks_written - bufusage_start.shared_blks_written;
 		bufusage.local_blks_hit =
-			pgBufferUsage.local_blks_hit - bufusage.local_blks_hit;
+			pgBufferUsage.local_blks_hit - bufusage_start.local_blks_hit;
 		bufusage.local_blks_read =
-			pgBufferUsage.local_blks_read - bufusage.local_blks_read;
+			pgBufferUsage.local_blks_read - bufusage_start.local_blks_read;
 		bufusage.local_blks_dirtied =
-			pgBufferUsage.local_blks_dirtied - bufusage.local_blks_dirtied;
+			pgBufferUsage.local_blks_dirtied - bufusage_start.local_blks_dirtied;
 		bufusage.local_blks_written =
-			pgBufferUsage.local_blks_written - bufusage.local_blks_written;
+			pgBufferUsage.local_blks_written - bufusage_start.local_blks_written;
 		bufusage.temp_blks_read =
-			pgBufferUsage.temp_blks_read - bufusage.temp_blks_read;
+			pgBufferUsage.temp_blks_read - bufusage_start.temp_blks_read;
 		bufusage.temp_blks_written =
-			pgBufferUsage.temp_blks_written - bufusage.temp_blks_written;
+			pgBufferUsage.temp_blks_written - bufusage_start.temp_blks_written;
+		bufusage.time_read = pgBufferUsage.time_read;
+		INSTR_TIME_SUBTRACT(bufusage.time_read, bufusage_start.time_read);
+		bufusage.time_write = pgBufferUsage.time_write;
+		INSTR_TIME_SUBTRACT(bufusage.time_write, bufusage_start.time_write);
 
 		pgss_store(queryString, INSTR_TIME_GET_DOUBLE(duration), rows,
 				   &bufusage);
@@ -780,6 +786,8 @@ pgss_store(const char *query, double total_time, uint64 rows,
 		e->counters.local_blks_written += bufusage->local_blks_written;
 		e->counters.temp_blks_read += bufusage->temp_blks_read;
 		e->counters.temp_blks_written += bufusage->temp_blks_written;
+		e->counters.time_read +=  INSTR_TIME_GET_DOUBLE(bufusage->time_read);
+		e->counters.time_write += INSTR_TIME_GET_DOUBLE(bufusage->time_write);
 		e->counters.usage += usage;
 		SpinLockRelease(&e->mutex);
 	}
@@ -802,7 +810,7 @@ pg_stat_statements_reset(PG_FUNCTION_ARGS)
 }
 
 #define PG_STAT_STATEMENTS_COLS_V1_0	14
-#define PG_STAT_STATEMENTS_COLS			16
+#define PG_STAT_STATEMENTS_COLS			18
 
 /*
  * Retrieve statement statistics.
@@ -819,7 +827,7 @@ pg_stat_statements(PG_FUNCTION_ARGS)
 	bool		is_superuser = superuser();
 	HASH_SEQ_STATUS hash_seq;
 	pgssEntry  *entry;
-	bool		sql_supports_dirty_counters = true;
+	bool		sql_supports_v1_1_counters = true;
 
 	if (!pgss || !pgss_hash)
 		ereport(ERROR,
@@ -841,7 +849,7 @@ pg_stat_statements(PG_FUNCTION_ARGS)
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 	if (tupdesc->natts == PG_STAT_STATEMENTS_COLS_V1_0)
-		sql_supports_dirty_counters = false;
+		sql_supports_v1_1_counters = false;
 
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
@@ -899,18 +907,23 @@ pg_stat_statements(PG_FUNCTION_ARGS)
 		values[i++] = Int64GetDatumFast(tmp.rows);
 		values[i++] = Int64GetDatumFast(tmp.shared_blks_hit);
 		values[i++] = Int64GetDatumFast(tmp.shared_blks_read);
-		if (sql_supports_dirty_counters)
+		if (sql_supports_v1_1_counters)
 			values[i++] = Int64GetDatumFast(tmp.shared_blks_dirtied);
 		values[i++] = Int64GetDatumFast(tmp.shared_blks_written);
 		values[i++] = Int64GetDatumFast(tmp.local_blks_hit);
 		values[i++] = Int64GetDatumFast(tmp.local_blks_read);
-		if (sql_supports_dirty_counters)
+		if (sql_supports_v1_1_counters)
 			values[i++] = Int64GetDatumFast(tmp.local_blks_dirtied);
 		values[i++] = Int64GetDatumFast(tmp.local_blks_written);
 		values[i++] = Int64GetDatumFast(tmp.temp_blks_read);
 		values[i++] = Int64GetDatumFast(tmp.temp_blks_written);
+		if (sql_supports_v1_1_counters)
+		{
+			values[i++] = Float8GetDatumFast(tmp.time_read);
+			values[i++] = Float8GetDatumFast(tmp.time_write);
+		}
 
-		Assert(i == sql_supports_dirty_counters ? \
+		Assert(i == sql_supports_v1_1_counters ? \
 			PG_STAT_STATEMENTS_COLS : PG_STAT_STATEMENTS_COLS_V1_0);
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);

@@ -155,6 +155,26 @@
       <entry>Total number of temp blocks writes by the statement</entry>
      </row>
 
+     <row>
+      <entry><structfield>time_read</structfield></entry>
+      <entry><type>double precision</type></entry>
+      <entry></entry>
+      <entry>
+        Total time the statement spent reading blocks, in seconds
+        (if <xref linkend="guc-track-iotiming"> is enabled, otherwise zero)
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>time_write</structfield></entry>
+      <entry><type>double precision</type></entry>
+      <entry></entry>
+      <entry>
+        Total time the statement spent writing blocks, in seconds
+        (if <xref linkend="guc-track-iotiming"> is enabled, otherwise zero)
+      </entry>
+     </row>
+
     </tbody>
    </tgroup>
   </table>
