@@ -280,13 +280,13 @@ coerce_type(ParseState *pstate, Node *node,
 		newcon->constlen = typeLen(targetType);
 		newcon->constbyval = typeByVal(targetType);
 		newcon->constisnull = con->constisnull;
-		/* Use the leftmost of the constant's and coercion's locations */
-		if (location < 0)
-			newcon->location = con->location;
-		else if (con->location >= 0 && con->location < location)
-			newcon->location = con->location;
-		else
-			newcon->location = location;
+
+		/*
+		 * We use the original literal's location regardless of the position
+		 * of the coercion.  This is a change from pre-9.2 behavior, meant to
+		 * simplify life for pg_stat_statements.
+		 */
+		newcon->location = con->location;
 
 		/*
 		 * Set up to point at the constant's text if the input routine throws
