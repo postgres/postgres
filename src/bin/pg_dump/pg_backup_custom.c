@@ -738,7 +738,7 @@ _ReopenArchive(ArchiveHandle *AH)
 	 * (but not invalid) use-cases.  Word the error messages appropriately.
 	 */
 	if (AH->fSpec == NULL || strcmp(AH->fSpec, "") == 0)
-		exit_horribly(modulename, "parallel restore from stdin is not supported\n");
+		exit_horribly(modulename, "parallel restore from standard input is not supported\n");
 	if (!ctx->hasSeek)
 		exit_horribly(modulename, "parallel restore from non-seekable file is not supported\n");
 
