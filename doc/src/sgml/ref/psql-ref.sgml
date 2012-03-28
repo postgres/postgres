@@ -1017,8 +1017,7 @@ testdb=&gt;
         those object types.
         </para>
 
-        <para>
-        <literal>\dd</literal> displays descriptions for objects matching the
+        <para><literal>\dd</literal> displays descriptions for objects matching the
         <replaceable class="parameter">pattern</replaceable>, or of visible
         objects of the appropriate type if no argument is given.  But in either
         case, only objects that have a description are listed.
@@ -2302,8 +2301,7 @@ lo_import 152801
 <programlisting>
 testdb=&gt; <userinput>\setenv PAGER less</userinput>
 testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
-</programlisting>
-        </para>
+</programlisting></para>
         </listitem>
       </varlistentry>
 

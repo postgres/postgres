@@ -235,8 +235,7 @@ SELECT pg_export_snapshot();
 <programlisting>
 BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 SET TRANSACTION SNAPSHOT '000003A1-1';
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1 id="R1-SQL-SET-TRANSACTION-3">
