@@ -36,6 +36,7 @@ LANGUAGES = $(AVAIL_LANGUAGES)
 endif
 
 PO_FILES = $(addprefix po/, $(addsuffix .po, $(LANGUAGES)))
+ALL_PO_FILES = $(addprefix po/, $(addsuffix .po, $(AVAIL_LANGUAGES)))
 MO_FILES = $(addprefix po/, $(addsuffix .mo, $(LANGUAGES)))
 
 ifdef XGETTEXT
@@ -108,7 +109,7 @@ clean-po:
 	rm -f po/$(CATALOG_NAME).pot
 
 
-maintainer-check-po: $(PO_FILES)
+maintainer-check-po: $(ALL_PO_FILES)
 	for file in $^; do \
 	  $(MSGFMT) -c -v -o /dev/null $$file || exit 1; \
 	done
