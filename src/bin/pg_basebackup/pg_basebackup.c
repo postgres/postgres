@@ -914,7 +914,7 @@ BaseBackup(void)
 	res = PQexec(conn, "IDENTIFY_SYSTEM");
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, _("%s: could not identify system: %s\n"),
+		fprintf(stderr, _("%s: could not identify system: %s"),
 				progname, PQerrorMessage(conn));
 		disconnect_and_exit(1);
 	}
@@ -1049,8 +1049,8 @@ BaseBackup(void)
 	res = PQgetResult(conn);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, _("%s: could not get WAL end position from server\n"),
-				progname);
+		fprintf(stderr, _("%s: could not get WAL end position from server: %s"),
+				progname, PQerrorMessage(conn));
 		disconnect_and_exit(1);
 	}
 	if (PQntuples(res) != 1)
