@@ -28,8 +28,8 @@ pg_test_timing [options]
     <variablelist>
 
      <varlistentry>
-      <term><option>-d</option></term>
-      <term><option>--duration</option></term>
+      <term><option>-d <replaceable class="parameter">duration</replaceable></option></term>
+      <term><option>--duration=<replaceable class="parameter">duration</replaceable></option></term>
       <listitem>
        <para>
         Specifies the test duration, in seconds. Longer durations
