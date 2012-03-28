@@ -31,7 +31,7 @@ my $contrib_defines = {'refint' => 'REFINT_VERBOSE'};
 my @contrib_uselibpq = ('dblink', 'oid2name', 'pgbench', 'pg_upgrade','vacuumlo');
 my @contrib_uselibpgport =(
     'oid2name', 'pgbench', 'pg_standby','pg_archivecleanup',
-    'pg_test_fsync', 'pg_upgrade', 'vacuumlo'
+    'pg_test_fsync', 'pg_test_timing', 'pg_upgrade', 'vacuumlo'
 );
 my $contrib_extralibs = {'pgbench' => ['wsock32.lib']};
 my $contrib_extraincludes = {'tsearch2' => ['contrib/tsearch2'], 'dblink' => ['src/backend']};
