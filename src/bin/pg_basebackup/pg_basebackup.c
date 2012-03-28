@@ -584,6 +584,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 				{
 					fprintf(stderr, _("%s: could not write to compressed file \"%s\": %s\n"),
 							progname, filename, get_gz_error(ztarfile));
+					disconnect_and_exit(1);
 				}
 			}
 			else
@@ -597,21 +598,28 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 				}
 			}
 
-			if (strcmp(basedir, "-") == 0)
-			{
 #ifdef HAVE_LIBZ
-				if (ztarfile)
-					gzclose(ztarfile);
-#endif
+			if (ztarfile != NULL)
+			{
+				if (gzclose(ztarfile) != 0)
+				{
+					fprintf(stderr, _("%s: could not close compressed file \"%s\": %s\n"),
+							progname, filename, get_gz_error(ztarfile));
+					disconnect_and_exit(1);
+				}
 			}
 			else
-			{
-#ifdef HAVE_LIBZ
-				if (ztarfile != NULL)
-					gzclose(ztarfile);
 #endif
-				if (tarfile != NULL)
-					fclose(tarfile);
+			{
+				if (strcmp(basedir, "-") != 0)
+				{
+					if (fclose(tarfile) != 0)
+					{
+						fprintf(stderr, _("%s: could not close file \"%s\": %s\n"),
+								progname, filename, strerror(errno));
+						disconnect_and_exit(1);
+					}
+				}
 			}
 
 			break;
@@ -630,6 +638,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 			{
 				fprintf(stderr, _("%s: could not write to compressed file \"%s\": %s\n"),
 						progname, filename, get_gz_error(ztarfile));
+				disconnect_and_exit(1);
 			}
 		}
 		else
