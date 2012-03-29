@@ -25,7 +25,7 @@
   <para>
    The statistics gathered by the module are made available via a system view
    named <structname>pg_stat_statements</>.  This view contains one row for
-   each distinct query text, database ID, and user ID (up to the maximum
+   each distinct query, database ID, and user ID (up to the maximum
    number of distinct statements that the module can track).  The columns
    of the view are shown in <xref linkend="pgstatstatements-columns">.
   </para>
@@ -61,7 +61,7 @@
       <entry><structfield>query</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
-      <entry>Text of the statement (up to <xref linkend="guc-track-activity-query-size"> bytes)</entry>
+      <entry>Text of a representative statement (up to <xref linkend="guc-track-activity-query-size"> bytes)</entry>
      </row>
 
      <row>
@@ -195,10 +195,38 @@
   </para>
 
   <para>
-   Note that statements are considered the same if they have the same text,
-   regardless of the values of any out-of-line parameters used in the
-   statement.  Using out-of-line parameters will help to group statements
-   together and may make the statistics more useful.
+   Plannable queries (that is, <command>SELECT</>, <command>INSERT</>,
+   <command>UPDATE</>, and <command>DELETE</>) are combined into a single
+   <structname>pg_stat_statements</> entry whenever they have identical query
+   structures according to an internal hash calculation.  Typically, two
+   queries will be considered the same for this purpose if they are
+   semantically equivalent except for the values of literal constants
+   appearing in the query.  Utility commands (that is, all other commands)
+   are compared strictly on the basis of their textual query strings, however.
+  </para>
+
+  <para>
+   When a constant's value has been ignored for purposes of matching the
+   query to other queries, the constant is replaced by <literal>?</literal>
+   in the <structname>pg_stat_statements</> display.  The rest of the query
+   text is that of the first query that had the particular hash value
+   associated with the <structname>pg_stat_statements</> entry.
+  </para>
+
+  <para>
+   In some cases, queries with visibly different texts might get merged into a
+   single <structname>pg_stat_statements</> entry.  Normally this will happen
+   only for semantically equivalent queries, but there is a small chance of
+   hash collisions causing unrelated queries to be merged into one entry.
+   (This cannot happen for queries belonging to different users or databases,
+   however.)
+  </para>
+
+  <para>
+   Since the hash value is computed on the post-parse-analysis representation
+   of the queries, the opposite is also possible: queries with identical texts
+   might appear as separate entries, if they have different meanings as a
+   result of factors such as different <varname>search_path</> settings.
   </para>
  </sect2>
 
@@ -329,20 +357,20 @@ pg_stat_statements.track = all
 bench=# SELECT pg_stat_statements_reset();
 
 $ pgbench -i bench
-$ pgbench -c10 -t300 -M prepared bench
+$ pgbench -c10 -t300 bench
 
 bench=# \x
 bench=# SELECT query, calls, total_time, rows, 100.0 * shared_blks_hit /
                nullif(shared_blks_hit + shared_blks_read, 0) AS hit_percent
           FROM pg_stat_statements ORDER BY total_time DESC LIMIT 5;
 -[ RECORD 1 ]---------------------------------------------------------------------
-query       | UPDATE pgbench_branches SET bbalance = bbalance + $1 WHERE bid = $2;
+query       | UPDATE pgbench_branches SET bbalance = bbalance + ? WHERE bid = ?;
 calls       | 3000
 total_time  | 9.60900100000002
 rows        | 2836
 hit_percent | 99.9778970000200936
 -[ RECORD 2 ]---------------------------------------------------------------------
-query       | UPDATE pgbench_tellers SET tbalance = tbalance + $1 WHERE tid = $2;
+query       | UPDATE pgbench_tellers SET tbalance = tbalance + ? WHERE tid = ?;
 calls       | 3000
 total_time  | 8.015156
 rows        | 2990
@@ -354,7 +382,7 @@ total_time  | 0.310624
 rows        | 100000
 hit_percent | 0.30395136778115501520
 -[ RECORD 4 ]---------------------------------------------------------------------
-query       | UPDATE pgbench_accounts SET abalance = abalance + $1 WHERE aid = $2;
+query       | UPDATE pgbench_accounts SET abalance = abalance + ? WHERE aid = ?;
 calls       | 3000
 total_time  | 0.271741999999997
 rows        | 3000
