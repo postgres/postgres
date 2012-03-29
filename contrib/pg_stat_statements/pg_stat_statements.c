@@ -174,7 +174,7 @@ typedef struct pgssJumbleState
 
 /*---- Local variables ----*/
 
-/* Current nesting depth of ExecutorRun calls */
+/* Current nesting depth of ExecutorRun+ProcessUtility calls */
 static int	nested_level = 0;
 
 /* Saved hook values in case of unload */
@@ -773,7 +773,22 @@ pgss_ProcessUtility(Node *parsetree, const char *queryString,
 					ParamListInfo params, bool isTopLevel,
 					DestReceiver *dest, char *completionTag)
 {
-	if (pgss_track_utility && pgss_enabled())
+	/*
+	 * If it's an EXECUTE statement, we don't track it and don't increment
+	 * the nesting level.  This allows the cycles to be charged to the
+	 * underlying PREPARE instead (by the Executor hooks), which is much more
+	 * useful.
+	 *
+	 * We also don't track execution of PREPARE.  If we did, we would get one
+	 * hash table entry for the PREPARE (with hash calculated from the query
+	 * string), and then a different one with the same query string (but hash
+	 * calculated from the query tree) would be used to accumulate costs of
+	 * ensuing EXECUTEs.  This would be confusing, and inconsistent with other
+	 * cases where planning time is not included at all.
+	 */
+	if (pgss_track_utility && pgss_enabled() &&
+		!IsA(parsetree, ExecuteStmt) &&
+		!IsA(parsetree, PrepareStmt))
 	{
 		instr_time	start;
 		instr_time	duration;
