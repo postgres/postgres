@@ -391,9 +391,9 @@ SysLoggerMain(int argc, char *argv[])
 		}
 		else if (rc > 0 && FD_ISSET(syslogPipe[0], &rfds))
 		{
-			bytesRead = piperead(syslogPipe[0],
-								 logbuffer + bytes_in_logbuffer,
-								 sizeof(logbuffer) - bytes_in_logbuffer);
+			bytesRead = read(syslogPipe[0],
+							 logbuffer + bytes_in_logbuffer,
+							 sizeof(logbuffer) - bytes_in_logbuffer);
 			if (bytesRead < 0)
 			{
 				if (errno != EINTR)
@@ -487,7 +487,7 @@ SysLogger_Start(void)
 #ifndef WIN32
 	if (syslogPipe[0] < 0)
 	{
-		if (pgpipe(syslogPipe) < 0)
+		if (pipe(syslogPipe) < 0)
 			ereport(FATAL,
 					(errcode_for_socket_access(),
 					 (errmsg("could not create pipe for syslog: %m"))));

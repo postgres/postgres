@@ -73,7 +73,6 @@ sub mkvcbuild
     $postgres->ReplaceFile('src\backend\port\pg_shmem.c','src\backend\port\win32_shmem.c');
     $postgres->ReplaceFile('src\backend\port\pg_latch.c','src\backend\port\win32_latch.c');
     $postgres->AddFiles('src\port',@pgportfiles);
-    $postgres->AddFile('src\backend\port\pipe.c');
     $postgres->AddDir('src\timezone');
     $postgres->AddFiles('src\backend\parser','scan.l','gram.y');
     $postgres->AddFiles('src\backend\bootstrap','bootscanner.l','bootparse.y');

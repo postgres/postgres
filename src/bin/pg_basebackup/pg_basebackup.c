@@ -162,7 +162,7 @@ segment_callback(XLogRecPtr segendpos, uint32 timeline)
 			char		xlogend[64];
 
 			MemSet(xlogend, 0, sizeof(xlogend));
-			r = piperead(bgpipe[0], xlogend, sizeof(xlogend));
+			r = read(bgpipe[0], xlogend, sizeof(xlogend));
 			if (r < 0)
 			{
 				fprintf(stderr, _("%s: could not read from ready pipe: %s\n"),
@@ -270,7 +270,7 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier)
 
 #ifndef WIN32
 	/* Create our background pipe */
-	if (pgpipe(bgpipe) < 0)
+	if (pipe(bgpipe) < 0)
 	{
 		fprintf(stderr, _("%s: could not create pipe for background process: %s\n"),
 				progname, strerror(errno));
@@ -1094,7 +1094,7 @@ BaseBackup(void)
 			fprintf(stderr, _("%s: waiting for background process to finish streaming...\n"), progname);
 
 #ifndef WIN32
-		if (pipewrite(bgpipe[1], xlogend, strlen(xlogend)) != strlen(xlogend))
+		if (write(bgpipe[1], xlogend, strlen(xlogend)) != strlen(xlogend))
 		{
 			fprintf(stderr, _("%s: could not send command to background pipe: %s\n"),
 					progname, strerror(errno));

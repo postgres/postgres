@@ -250,26 +250,7 @@ extern char *pgwin32_setlocale(int category, const char *locale);
 /* Portable prompt handling */
 extern char *simple_prompt(const char *prompt, int maxlen, bool echo);
 
-/*
- *	WIN32 doesn't allow descriptors returned by pipe() to be used in select(),
- *	so for that platform we use socket() instead of pipe().
- *	There is some inconsistency here because sometimes we require pg*, like
- *	pgpipe, but in other cases we define rename to pgrename just on Win32.
- */
-#ifndef WIN32
-/*
- *	The function prototypes are not supplied because every C file
- *	includes this file.
- */
-#define pgpipe(a)			pipe(a)
-#define piperead(a,b,c)		read(a,b,c)
-#define pipewrite(a,b,c)	write(a,b,c)
-#else
-extern int	pgpipe(int handles[2]);
-extern int	piperead(int s, char *buf, int len);
-
-#define pipewrite(a,b,c)	send(a,b,c,0)
-
+#ifdef WIN32
 #define PG_SIGNAL_COUNT 32
 #define kill(pid,sig)	pgkill(pid,sig)
 extern int	pgkill(int pid, int sig);
