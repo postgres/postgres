@@ -371,7 +371,7 @@ SELECT *
 FROM dblink('myconn','SELECT * FROM foobar',false) AS t(a int, b text, c text[])
 WHERE t.a > 7;
 NOTICE:  relation "foobar" does not exist
-CONTEXT:  Error occurred on dblink connection named "unnamed": could not execute query.
+CONTEXT:  Error occurred on dblink connection named "myconn": could not execute query.
  a | b | c 
 ---+---+---
 (0 rows)
@@ -494,7 +494,7 @@ SELECT dblink_close('myconn','rmt_foo_cursor');
 -- this should fail because there is no open transaction
 SELECT dblink_exec('myconn','DECLARE xact_test CURSOR FOR SELECT * FROM foo');
 ERROR:  DECLARE CURSOR can only be used in transaction blocks
-CONTEXT:  Error occurred on dblink connection named "unnamed": could not execute command.
+CONTEXT:  Error occurred on dblink connection named "myconn": could not execute command.
 -- reset remote transaction state
 SELECT dblink_exec('myconn','ABORT');
  dblink_exec 
