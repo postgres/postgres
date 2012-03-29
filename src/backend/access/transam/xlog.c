@@ -6320,6 +6320,10 @@ StartupXLOG(void)
 		/* No need to hold ControlFileLock yet, we aren't up far enough */
 		UpdateControlFile();
 
+		/* initialize shared-memory copy of latest checkpoint XID/epoch */
+		XLogCtl->ckptXidEpoch = ControlFile->checkPointCopy.nextXidEpoch;
+		XLogCtl->ckptXid = ControlFile->checkPointCopy.nextXid;
+
 		/* initialize our local copy of minRecoveryPoint */
 		minRecoveryPoint = ControlFile->minRecoveryPoint;
 
@@ -6914,10 +6918,6 @@ StartupXLOG(void)
 
 	/* start the archive_timeout timer running */
 	XLogCtl->Write.lastSegSwitchTime = (pg_time_t) time(NULL);
-
-	/* initialize shared-memory copy of latest checkpoint XID/epoch */
-	XLogCtl->ckptXidEpoch = ControlFile->checkPointCopy.nextXidEpoch;
-	XLogCtl->ckptXid = ControlFile->checkPointCopy.nextXid;
 
 	/* also initialize latestCompletedXid, to nextXid - 1 */
 	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
@@ -8601,6 +8601,17 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 		ControlFile->checkPointCopy.nextXidEpoch = checkPoint.nextXidEpoch;
 		ControlFile->checkPointCopy.nextXid = checkPoint.nextXid;
 
+		/* Update shared-memory copy of checkpoint XID/epoch */
+		{
+			/* use volatile pointer to prevent code rearrangement */
+			volatile XLogCtlData *xlogctl = XLogCtl;
+
+			SpinLockAcquire(&xlogctl->info_lck);
+			xlogctl->ckptXidEpoch = checkPoint.nextXidEpoch;
+			xlogctl->ckptXid = checkPoint.nextXid;
+			SpinLockRelease(&xlogctl->info_lck);
+		}
+
 		/*
 		 * TLI may change in a shutdown checkpoint, but it shouldn't decrease
 		 */
@@ -8644,6 +8655,17 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 		/* ControlFile->checkPointCopy always tracks the latest ckpt XID */
 		ControlFile->checkPointCopy.nextXidEpoch = checkPoint.nextXidEpoch;
 		ControlFile->checkPointCopy.nextXid = checkPoint.nextXid;
+
+		/* Update shared-memory copy of checkpoint XID/epoch */
+		{
+			/* use volatile pointer to prevent code rearrangement */
+			volatile XLogCtlData *xlogctl = XLogCtl;
+
+			SpinLockAcquire(&xlogctl->info_lck);
+			xlogctl->ckptXidEpoch = checkPoint.nextXidEpoch;
+			xlogctl->ckptXid = checkPoint.nextXid;
+			SpinLockRelease(&xlogctl->info_lck);
+		}
 
 		/* TLI should not change in an on-line checkpoint */
 		if (checkPoint.ThisTimeLineID != ThisTimeLineID)
