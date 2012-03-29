@@ -168,9 +168,10 @@ typedef struct remoteConnHashEnt
 	do { \
 			char *conname_or_str = text_to_cstring(PG_GETARG_TEXT_PP(0)); \
 			rconn = getConnectionByName(conname_or_str); \
-			if(rconn) \
+			if (rconn) \
 			{ \
 				conn = rconn->conn; \
+				conname = conname_or_str; \
 			} \
 			else \
 			{ \
@@ -198,9 +199,9 @@ typedef struct remoteConnHashEnt
 
 #define DBLINK_GET_NAMED_CONN \
 	do { \
-			char *conname = text_to_cstring(PG_GETARG_TEXT_PP(0)); \
+			conname = text_to_cstring(PG_GETARG_TEXT_PP(0)); \
 			rconn = getConnectionByName(conname); \
-			if(rconn) \
+			if (rconn) \
 				conn = rconn->conn; \
 			else \
 				DBLINK_CONN_NOT_AVAIL; \
@@ -613,6 +614,7 @@ PG_FUNCTION_INFO_V1(dblink_send_query);
 Datum
 dblink_send_query(PG_FUNCTION_ARGS)
 {
+	char	   *conname = NULL;
 	PGconn	   *conn = NULL;
 	char	   *connstr = NULL;
 	char	   *sql = NULL;
@@ -937,6 +939,7 @@ PG_FUNCTION_INFO_V1(dblink_is_busy);
 Datum
 dblink_is_busy(PG_FUNCTION_ARGS)
 {
+	char	   *conname = NULL;
 	PGconn	   *conn = NULL;
 	remoteConn *rconn = NULL;
 
@@ -963,6 +966,7 @@ Datum
 dblink_cancel_query(PG_FUNCTION_ARGS)
 {
 	int			res = 0;
+	char	   *conname = NULL;
 	PGconn	   *conn = NULL;
 	remoteConn *rconn = NULL;
 	PGcancel   *cancel;
@@ -997,6 +1001,7 @@ Datum
 dblink_error_message(PG_FUNCTION_ARGS)
 {
 	char	   *msg;
+	char	   *conname = NULL;
 	PGconn	   *conn = NULL;
 	remoteConn *rconn = NULL;
 
@@ -1506,6 +1511,7 @@ PG_FUNCTION_INFO_V1(dblink_get_notify);
 Datum
 dblink_get_notify(PG_FUNCTION_ARGS)
 {
+	char	   *conname = NULL;
 	PGconn	   *conn = NULL;
 	remoteConn *rconn = NULL;
 	PGnotify   *notify;
