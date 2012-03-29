@@ -438,6 +438,7 @@ typedef struct
 	TimestampTz PgReloadTime;
 	bool		redirection_done;
 	bool		IsBinaryUpgrade;
+	int			max_safe_fds;
 #ifdef WIN32
 	HANDLE		PostmasterHandle;
 	HANDLE		initial_signal_pipe;
@@ -4741,6 +4742,7 @@ save_backend_variables(BackendParameters *param, Port *port,
 
 	param->redirection_done = redirection_done;
 	param->IsBinaryUpgrade = IsBinaryUpgrade;
+	param->max_safe_fds = max_safe_fds;
 
 #ifdef WIN32
 	param->PostmasterHandle = PostmasterHandle;
@@ -4964,6 +4966,7 @@ restore_backend_variables(BackendParameters *param, Port *port)
 
 	redirection_done = param->redirection_done;
 	IsBinaryUpgrade = param->IsBinaryUpgrade;
+	max_safe_fds = param->max_safe_fds;
 
 #ifdef WIN32
 	PostmasterHandle = param->PostmasterHandle;

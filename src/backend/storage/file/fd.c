@@ -103,7 +103,7 @@ int			max_files_per_process = 1000;
  * Note: the value of max_files_per_process is taken into account while
  * setting this variable, and so need not be tested separately.
  */
-static int	max_safe_fds = 32;	/* default if not changed */
+int			max_safe_fds = 32;	/* default if not changed */
 
 
 /* Debugging.... */
