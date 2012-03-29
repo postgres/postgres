@@ -602,9 +602,19 @@ pgss_post_parse_analyze(ParseState *pstate, Query *query)
 	if (!pgss || !pgss_hash)
 		return;
 
-	/* We do nothing with utility statements at this stage */
+	/*
+	 * Utility statements get queryId zero.  We do this even in cases where
+	 * the statement contains an optimizable statement for which a queryId
+	 * could be derived (such as EXPLAIN or DECLARE CURSOR).  For such cases,
+	 * runtime control will first go through ProcessUtility and then the
+	 * executor, and we don't want the executor hooks to do anything, since
+	 * we are already measuring the statement's costs at the utility level.
+	 */
 	if (query->utilityStmt)
+	{
+		query->queryId = 0;
 		return;
+	}
 
 	/* Set up workspace for query jumbling */
 	jstate.jumble = (unsigned char *) palloc(JUMBLE_SIZE);
@@ -617,6 +627,13 @@ pgss_post_parse_analyze(ParseState *pstate, Query *query)
 	/* Compute query ID and mark the Query node with it */
 	JumbleQuery(&jstate, query);
 	query->queryId = hash_any(jstate.jumble, jstate.jumble_len);
+
+	/*
+	 * If we are unlucky enough to get a hash of zero, use 1 instead, to
+	 * prevent confusion with the utility-statement case.
+	 */
+	if (query->queryId == 0)
+		query->queryId = 1;
 
 	/*
 	 * If we were able to identify any ignorable constants, we immediately
@@ -649,7 +666,12 @@ pgss_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	else
 		standard_ExecutorStart(queryDesc, eflags);
 
-	if (pgss_enabled())
+	/*
+	 * If query has queryId zero, don't track it.  This prevents double
+	 * counting of optimizable statements that are directly contained in
+	 * utility statements.
+	 */
+	if (pgss_enabled() && queryDesc->plannedstmt->queryId != 0)
 	{
 		/*
 		 * Set up to track total elapsed time in ExecutorRun.  Make sure the
@@ -719,13 +741,10 @@ pgss_ExecutorFinish(QueryDesc *queryDesc)
 static void
 pgss_ExecutorEnd(QueryDesc *queryDesc)
 {
-	if (queryDesc->totaltime && pgss_enabled())
+	uint32		queryId = queryDesc->plannedstmt->queryId;
+
+	if (queryId != 0 && queryDesc->totaltime && pgss_enabled())
 	{
-		uint32		queryId;
-
-		/* Query's ID should have been filled in by post-analyze hook */
-		queryId = queryDesc->plannedstmt->queryId;
-
 		/*
 		 * Make sure stats accumulation is done.  (Note: it's okay if several
 		 * levels of hook all do this.)
@@ -1794,6 +1813,8 @@ JumbleExpr(pgssJumbleState * jstate, Node *node)
 			{
 				CommonTableExpr *cte = (CommonTableExpr *) node;
 
+				/* we store the string name because RTE_CTE RTEs need it */
+				APP_JUMB_STRING(cte->ctename);
 				JumbleQuery(jstate, (Query *) cte->ctequery);
 			}
 			break;
