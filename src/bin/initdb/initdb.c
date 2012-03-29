@@ -2431,7 +2431,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo)
 
 	if (_CreateRestrictedToken == NULL)
 	{
-		fprintf(stderr, "WARNING: cannot create restricted tokens on this platform\n");
+		fprintf(stderr, _("%s: WARNING: cannot create restricted tokens on this platform\n"), progname);
 		if (Advapi32Handle != NULL)
 			FreeLibrary(Advapi32Handle);
 		return 0;
@@ -2440,7 +2440,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo)
 	/* Open the current token to use as a base for the restricted one */
 	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &origToken))
 	{
-		fprintf(stderr, "Failed to open process token: error code %lu\n", GetLastError());
+		fprintf(stderr, _("%s: could not open process token: error code %lu\n"), progname, GetLastError());
 		return 0;
 	}
 
@@ -2453,7 +2453,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo)
 	SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_POWER_USERS, 0, 0, 0, 0, 0,
 								  0, &dropSids[1].Sid))
 	{
-		fprintf(stderr, "Failed to allocate SIDs: error code %lu\n", GetLastError());
+		fprintf(stderr, _("%s: could not to allocate SIDs: error code %lu\n"), progname, GetLastError());
 		return 0;
 	}
 
@@ -2472,7 +2472,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo)
 
 	if (!b)
 	{
-		fprintf(stderr, "Failed to create restricted token: error code %lu\n", GetLastError());
+		fprintf(stderr, _("%s: could not create restricted token: error code %lu\n"), progname, GetLastError());
 		return 0;
 	}
 
@@ -2493,7 +2493,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo)
 							 processInfo))
 
 	{
-		fprintf(stderr, "CreateProcessAsUser failed: error code %lu\n", GetLastError());
+		fprintf(stderr, _("%s: could not start process for \"%s\": error code %lu\n"), progname, cmd, GetLastError());
 		return 0;
 	}
 
@@ -2835,7 +2835,7 @@ main(int argc, char *argv[])
 
 		if (!CreateRestrictedProcess(cmdline, &pi))
 		{
-			fprintf(stderr, "Failed to re-exec with restricted token: error code %lu\n", GetLastError());
+			fprintf(stderr, _("%s: could not re-exec with restricted token: error code %lu\n"), progname, GetLastError());
 		}
 		else
 		{
@@ -2850,7 +2850,7 @@ main(int argc, char *argv[])
 
 			if (!GetExitCodeProcess(pi.hProcess, &x))
 			{
-				fprintf(stderr, "Failed to get exit code from subprocess: error code %lu\n", GetLastError());
+				fprintf(stderr, _("%s: could not get exit code from subprocess: error code %lu\n"), progname, GetLastError());
 				exit(1);
 			}
 			exit(x);
