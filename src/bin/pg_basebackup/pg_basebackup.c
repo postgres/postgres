@@ -929,7 +929,7 @@ BaseBackup(void)
 	}
 	if (PQntuples(res) != 1 || PQnfields(res) != 3)
 	{
-		fprintf(stderr, _("%s: could not identify system, got %i rows and %i fields\n"),
+		fprintf(stderr, _("%s: could not identify system, got %d rows and %d fields\n"),
 				progname, PQntuples(res), PQnfields(res));
 		disconnect_and_exit(1);
 	}
@@ -1111,7 +1111,7 @@ BaseBackup(void)
 		}
 		if (r != bgchild)
 		{
-			fprintf(stderr, _("%s: child %i died, expected %i\n"),
+			fprintf(stderr, _("%s: child %d died, expected %d\n"),
 					progname, r, (int) bgchild);
 			disconnect_and_exit(1);
 		}
@@ -1123,7 +1123,7 @@ BaseBackup(void)
 		}
 		if (WEXITSTATUS(status) != 0)
 		{
-			fprintf(stderr, _("%s: child process exited with error %i\n"),
+			fprintf(stderr, _("%s: child process exited with error %d\n"),
 					progname, WEXITSTATUS(status));
 			disconnect_and_exit(1);
 		}

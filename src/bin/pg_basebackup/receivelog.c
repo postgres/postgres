@@ -237,7 +237,7 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysi
 		}
 		if (PQnfields(res) != 3 || PQntuples(res) != 1)
 		{
-			fprintf(stderr, _("%s: could not identify system, got %i rows and %i fields\n"),
+			fprintf(stderr, _("%s: could not identify system, got %d rows and %d fields\n"),
 					progname, PQntuples(res), PQnfields(res));
 			PQclear(res);
 			return false;
@@ -391,7 +391,7 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysi
 			 */
 			if (r != STREAMING_KEEPALIVE_SIZE)
 			{
-				fprintf(stderr, _("%s: keepalive message is incorrect size: %i\n"),
+				fprintf(stderr, _("%s: keepalive message is incorrect size: %d\n"),
 						progname, r);
 				return false;
 			}
@@ -405,7 +405,7 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysi
 		}
 		if (r < STREAMING_HEADER_SIZE + 1)
 		{
-			fprintf(stderr, _("%s: streaming header too small: %i\n"),
+			fprintf(stderr, _("%s: streaming header too small: %d\n"),
 					progname, r);
 			return false;
 		}

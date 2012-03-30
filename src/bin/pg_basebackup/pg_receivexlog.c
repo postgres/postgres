@@ -237,7 +237,7 @@ StreamLog(void)
 	}
 	if (PQntuples(res) != 1 || PQnfields(res) != 3)
 	{
-		fprintf(stderr, _("%s: could not identify system, got %i rows and %i fields\n"),
+		fprintf(stderr, _("%s: could not identify system, got %d rows and %d fields\n"),
 				progname, PQntuples(res), PQnfields(res));
 		disconnect_and_exit(1);
 	}
