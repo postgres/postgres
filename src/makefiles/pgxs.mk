@@ -64,6 +64,16 @@ include $(top_builddir)/src/Makefile.global
 top_srcdir = $(top_builddir)
 srcdir = .
 VPATH =
+
+# These might be set in Makefile.global, but if they were not found
+# during the build of PostgreSQL, supply default values so that users
+# of pgxs can use the variables.
+ifeq ($(BISON),)
+BISON = bison
+endif
+ifeq ($(FLEX),)
+FLEX = flex
+endif
 endif
 
 
