@@ -107,6 +107,7 @@ test_timing(int32 duration)
 	instr_time start_time, end_time, temp;
 
 	static int64 histogram[32];
+	char	buf[100];
 
 	total_time = duration > 0 ? duration * 1000000 : 0;
 
@@ -150,13 +151,15 @@ test_timing(int32 duration)
 	printf("%9s: %10s %9s\n", "< usec", "count", "percent");
 
 	found = 0;
-    for (i = 31; i >= 0; i--)
-    {
-        if (found || histogram[i])
-        {
-            found = 1;
-            printf("%9ld: %10ld %8.5f%%\n", 1l << i, histogram[i],
-                (double) histogram[i] * 100 / loop_count);
-        }
-    }
+	for (i = 31; i >= 0; i--)
+	{
+		if (found || histogram[i])
+		{
+			found = 1;
+			/* lame hack to work around INT64_FORMAT deficiencies */
+			snprintf(buf, sizeof(buf), INT64_FORMAT, histogram[i]);
+			printf("%9ld: %10s %8.5f%%\n", 1l << i, buf,
+				   (double) histogram[i] * 100 / loop_count);
+		}
+	}
 }
