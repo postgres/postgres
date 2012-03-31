@@ -538,6 +538,7 @@ extern OpfamilyInfo *getOpfamilies(Archive *fout, int *numOpfamilies);
 extern CollInfo *getCollations(Archive *fout, int *numCollations);
 extern ConvInfo *getConversions(Archive *fout, int *numConversions);
 extern TableInfo *getTables(Archive *fout, int *numTables);
+extern void getOwnedSeqs(Archive *fout, TableInfo tblinfo[], int numTables);
 extern InhInfo *getInherits(Archive *fout, int *numInherits);
 extern void getIndexes(Archive *fout, TableInfo tblinfo[], int numTables);
 extern void getConstraints(Archive *fout, TableInfo tblinfo[], int numTables);

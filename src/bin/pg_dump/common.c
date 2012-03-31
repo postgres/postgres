@@ -114,6 +114,9 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	tblinfo = getTables(fout, &numTables);
 	tblinfoindex = buildIndexArray(tblinfo, numTables, sizeof(TableInfo));
 
+	/* Do this after we've built tblinfoindex */
+	getOwnedSeqs(fout, tblinfo, numTables);
+
 	if (g_verbose)
 		write_msg(NULL, "reading extensions\n");
 	extinfo = getExtensions(fout, &numExtensions);
