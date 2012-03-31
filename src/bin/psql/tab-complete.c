@@ -3595,7 +3595,7 @@ get_previous_words(int point, char **previous_words, int nwords)
 			{
 				if (buf[start] == '"')
 					inquotes = !inquotes;
-				else if (!inquotes)
+				if (!inquotes)
 				{
 					if (buf[start] == ')')
 						parentheses++;
