@@ -16,13 +16,17 @@
 #include "extern.h"
 #include "preproc.h"
 
+/* Globals from keywords.c */
+extern const ScanKeyword SQLScanKeywords[];
+extern const int NumSQLScanKeywords;
+
 /*
  * List of (keyword-name, keyword-token-value) pairs.
  *
  * !!WARNING!!: This list must be sorted, because binary
  *		 search is used to locate entries.
  */
-static const ScanKeyword ScanECPGKeywords[] = {
+static const ScanKeyword ECPGScanKeywords[] = {
 	/* name, value, category */
 
 	/*
@@ -87,12 +91,12 @@ ScanECPGKeywordLookup(const char *text)
 	const ScanKeyword *res;
 
 	/* First check SQL symbols defined by the backend. */
-	res = ScanKeywordLookup(text, ScanKeywords, NumScanKeywords);
+	res = ScanKeywordLookup(text, SQLScanKeywords, NumSQLScanKeywords);
 	if (res)
 		return res;
 
 	/* Try ECPG-specific keywords. */
-	res = ScanKeywordLookup(text, ScanECPGKeywords, lengthof(ScanECPGKeywords));
+	res = ScanKeywordLookup(text, ECPGScanKeywords, lengthof(ECPGScanKeywords));
 	if (res)
 		return res;
 

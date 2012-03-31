@@ -22,8 +22,8 @@
 #define PG_KEYWORD(a,b,c) {a,b,c},
 
 
-const ScanKeyword ScanKeywords[] = {
+const ScanKeyword SQLScanKeywords[] = {
 #include "parser/kwlist.h"
 };
 
-const int	NumScanKeywords = lengthof(ScanKeywords);
+const int	NumSQLScanKeywords = lengthof(SQLScanKeywords);

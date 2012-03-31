@@ -22,6 +22,10 @@
 #include "parser/keywords.h"
 
 
+/* Globals from keywords.c */
+extern const ScanKeyword FEScanKeywords[];
+extern const int NumFEScanKeywords;
+
 /* Globals exported by this file */
 int			quote_all_identifiers = 0;
 const char *progname = NULL;
@@ -150,8 +154,8 @@ fmtId(const char *rawid)
 		 * that's fine, since we already know we have all-lower-case.
 		 */
 		const ScanKeyword *keyword = ScanKeywordLookup(rawid,
-													   ScanKeywords,
-													   NumScanKeywords);
+													   FEScanKeywords,
+													   NumFEScanKeywords);
 
 		if (keyword != NULL && keyword->category != UNRESERVED_KEYWORD)
 			need_quotes = true;
