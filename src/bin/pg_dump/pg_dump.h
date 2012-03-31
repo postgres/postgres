@@ -540,6 +540,7 @@ extern OpfamilyInfo *getOpfamilies(int *numOpfamilies);
 extern CollInfo *getCollations(int *numCollations);
 extern ConvInfo *getConversions(int *numConversions);
 extern TableInfo *getTables(int *numTables);
+extern void getOwnedSeqs(TableInfo tblinfo[], int numTables);
 extern InhInfo *getInherits(int *numInherits);
 extern void getIndexes(TableInfo tblinfo[], int numTables);
 extern void getConstraints(TableInfo tblinfo[], int numTables);
