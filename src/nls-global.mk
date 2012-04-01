@@ -136,14 +136,14 @@ endif
 update-po: $(ALL_LANGUAGES:%=po/%.po.new)
 
 $(AVAIL_LANGUAGES:%=po/%.po.new): po/%.po.new: po/%.po po/$(CATALOG_NAME).pot $(all_compendia)
-	$(MSGMERGE) $(word 1, $^) $(word 2,$^) -o $@ $(addprefix --compendium=,$(filter %/$*.po,$(wordlist 3,$(words $^),$^)))
+	$(MSGMERGE) --lang=$* $(word 1, $^) $(word 2,$^) -o $@ $(addprefix --compendium=,$(filter %/$*.po,$(wordlist 3,$(words $^),$^)))
 
 # For languages not yet available, merge against oneself, to pick
 # up translations from the compendia.  (Merging against /dev/null
 # doesn't work so well; it inserts the headers from the first-named
 # compendium.)
 po/%.po.new: po/$(CATALOG_NAME).pot $(all_compendia)
-	$(MSGMERGE) $(word 1,$^) $(word 1,$^) -o $@ $(addprefix --compendium=,$(filter %/$*.po,$(wordlist 2,$(words $^),$^)))
+	$(MSGMERGE) --lang=$* $(word 1,$^) $(word 1,$^) -o $@ $(addprefix --compendium=,$(filter %/$*.po,$(wordlist 2,$(words $^),$^)))
 
 
 all: all-po
