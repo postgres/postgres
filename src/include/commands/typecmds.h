@@ -14,6 +14,7 @@
 #ifndef TYPECMDS_H
 #define TYPECMDS_H
 
+#include "access/htup.h"
 #include "nodes/parsenodes.h"
 
 
@@ -34,6 +35,8 @@ extern void AlterDomainAddConstraint(List *names, Node *constr);
 extern void AlterDomainValidateConstraint(List *names, char *constrName);
 extern void AlterDomainDropConstraint(List *names, const char *constrName,
 									  DropBehavior behavior, bool missing_ok);
+
+extern void checkDomainOwner(HeapTuple tup);
 
 extern List *GetDomainConstraints(Oid typeOid);
 

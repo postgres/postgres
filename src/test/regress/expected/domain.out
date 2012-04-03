@@ -659,3 +659,10 @@ create domain testdomain1 as int;
 alter domain testdomain1 rename to testdomain2;
 alter type testdomain2 rename to testdomain3;  -- alter type also works
 drop domain testdomain3;
+--
+-- Renaming domain constraints
+--
+create domain testdomain1 as int constraint unsigned check (value > 0);
+alter domain testdomain1 rename constraint unsigned to unsigned_foo;
+alter domain testdomain1 drop constraint unsigned_foo;
+drop domain testdomain1;

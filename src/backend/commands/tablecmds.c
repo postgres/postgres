@@ -2333,22 +2333,32 @@ renameatt(RenameStmt *stmt)
  */
 static void
 rename_constraint_internal(Oid myrelid,
+						   Oid mytypid,
 						   const char *oldconname,
 						   const char *newconname,
 						   bool recurse,
 						   bool recursing,
 						   int expected_parents)
 {
-	Relation	targetrelation;
+	Relation	targetrelation = NULL;
 	Oid			constraintOid;
 	HeapTuple   tuple;
 	Form_pg_constraint con;
 
-	targetrelation = relation_open(myrelid, AccessExclusiveLock);
-	/* don't tell it whether we're recursing; we allow changing typed tables here */
-	renameatt_check(myrelid, RelationGetForm(targetrelation), false);
+	AssertArg(!myrelid || !mytypid);
 
-	constraintOid = get_constraint_oid(myrelid, oldconname, false);
+	if (mytypid)
+	{
+		constraintOid = get_domain_constraint_oid(mytypid, oldconname, false);
+	}
+	else
+	{
+		targetrelation = relation_open(myrelid, AccessExclusiveLock);
+		/* don't tell it whether we're recursing; we allow changing typed tables here */
+		renameatt_check(myrelid, RelationGetForm(targetrelation), false);
+
+		constraintOid = get_relation_constraint_oid(myrelid, oldconname, false);
+	}
 
 	tuple = SearchSysCache1(CONSTROID, ObjectIdGetDatum(constraintOid));
 	if (!HeapTupleIsValid(tuple))
@@ -2356,7 +2366,7 @@ rename_constraint_internal(Oid myrelid,
 			 constraintOid);
 	con = (Form_pg_constraint) GETSTRUCT(tuple);
 
-	if (con->contype == CONSTRAINT_CHECK && !con->conisonly)
+	if (myrelid && con->contype == CONSTRAINT_CHECK && !con->conisonly)
 	{
 		if (recurse)
 		{
@@ -2376,7 +2386,7 @@ rename_constraint_internal(Oid myrelid,
 				if (childrelid == myrelid)
 					continue;
 
-				rename_constraint_internal(childrelid, oldconname, newconname, false, true, numparents);
+				rename_constraint_internal(childrelid, InvalidOid, oldconname, newconname, false, true, numparents);
 			}
 		}
 		else
@@ -2407,24 +2417,43 @@ rename_constraint_internal(Oid myrelid,
 
 	ReleaseSysCache(tuple);
 
-	relation_close(targetrelation, NoLock);		/* close rel but keep lock */
+	if (targetrelation)
+		relation_close(targetrelation, NoLock);		/* close rel but keep lock */
 }
 
 void
 RenameConstraint(RenameStmt *stmt)
 {
-	Oid			relid;
+	Oid			relid = InvalidOid;
+	Oid			typid = InvalidOid;
 
-	/* lock level taken here should match rename_constraint_internal */
-	relid = RangeVarGetRelidExtended(stmt->relation, AccessExclusiveLock,
-									 false, false,
-									 RangeVarCallbackForRenameAttribute,
-									 NULL);
+	if (stmt->relationType == OBJECT_DOMAIN)
+	{
+		Relation	rel;
+		HeapTuple	tup;
 
-	rename_constraint_internal(relid,
+		typid = typenameTypeId(NULL,  makeTypeNameFromNameList(stmt->object));
+		rel = heap_open(TypeRelationId, RowExclusiveLock);
+		tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typid));
+		if (!HeapTupleIsValid(tup))
+			elog(ERROR, "cache lookup failed for type %u", typid);
+		checkDomainOwner(tup);
+		ReleaseSysCache(tup);
+		heap_close(rel, NoLock);
+	}
+	else
+	{
+		/* lock level taken here should match rename_constraint_internal */
+		relid = RangeVarGetRelidExtended(stmt->relation, AccessExclusiveLock,
+										 false, false,
+										 RangeVarCallbackForRenameAttribute,
+										 NULL);
+	}
+
+	rename_constraint_internal(relid, typid,
 							   stmt->subname,
 							   stmt->newname,
-							   interpretInhOption(stmt->relation->inhOpt),		/* recursive? */
+							   stmt->relation ? interpretInhOption(stmt->relation->inhOpt) : false,		/* recursive? */
 							   false,	/* recursing? */
 							   0		/* expected inhcount */);
 }

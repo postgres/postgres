@@ -244,7 +244,8 @@ extern char *ChooseConstraintName(const char *name1, const char *name2,
 
 extern void AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 						  Oid newNspId, bool isType);
-extern Oid	get_constraint_oid(Oid relid, const char *conname, bool missing_ok);
+extern Oid	get_relation_constraint_oid(Oid relid, const char *conname, bool missing_ok);
+extern Oid	get_domain_constraint_oid(Oid typid, const char *conname, bool missing_ok);
 
 extern bool check_functional_grouping(Oid relid,
 						  Index varno, Index varlevelsup,

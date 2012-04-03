@@ -753,7 +753,7 @@ get_object_address_relobject(ObjectType objtype, List *objname,
 			case OBJECT_CONSTRAINT:
 				address.classId = ConstraintRelationId;
 				address.objectId =
-					get_constraint_oid(reloid, depname, missing_ok);
+					get_relation_constraint_oid(reloid, depname, missing_ok);
 				address.objectSubId = 0;
 				break;
 			default:

@@ -98,7 +98,6 @@ static Oid	findRangeCanonicalFunction(List *procname, Oid typeOid);
 static Oid	findRangeSubtypeDiffFunction(List *procname, Oid subtype);
 static void validateDomainConstraint(Oid domainoid, char *ccbin);
 static List *get_rels_with_domain(Oid domainOid, LOCKMODE lockmode);
-static void checkDomainOwner(HeapTuple tup);
 static void checkEnumOwner(HeapTuple tup);
 static char *domainAddConstraint(Oid domainOid, Oid domainNamespace,
 					Oid baseTypeOid,
@@ -2794,7 +2793,7 @@ get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
  * Check that the type is actually a domain and that the current user
  * has permission to do ALTER DOMAIN on it.  Throw an error if not.
  */
-static void
+void
 checkDomainOwner(HeapTuple tup)
 {
 	Form_pg_type typTup = (Form_pg_type) GETSTRUCT(tup);

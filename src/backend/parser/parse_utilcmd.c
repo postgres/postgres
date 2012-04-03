@@ -802,7 +802,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 
 			/* Copy comment on constraint */
 			if ((table_like_clause->options & CREATE_TABLE_LIKE_COMMENTS) &&
-				(comment = GetComment(get_constraint_oid(RelationGetRelid(relation),
+				(comment = GetComment(get_relation_constraint_oid(RelationGetRelid(relation),
 														 n->conname, false),
 									  ConstraintRelationId,
 									  0)) != NULL)

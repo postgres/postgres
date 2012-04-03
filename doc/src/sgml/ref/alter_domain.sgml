@@ -32,6 +32,8 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
 ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
     DROP CONSTRAINT [ IF EXISTS ] <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
 ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
+     RENAME CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> TO <replaceable class="PARAMETER">new_constraint_name</replaceable>
+ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
     VALIDATE CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable>
 ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
     OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
@@ -98,6 +100,15 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
       This form drops constraints on a domain.
       If <literal>IF EXISTS</literal> is specified and the constraint
       does not exist, no error is thrown. In this case a notice is issued instead.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>RENAME CONSTRAINT</term>
+    <listitem>
+     <para>
+      This form changes the name of a constraint on a domain.
      </para>
     </listitem>
    </varlistentry>
@@ -182,7 +193,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
       <term><replaceable class="PARAMETER">constraint_name</replaceable></term>
       <listitem>
        <para>
-        Name of an existing constraint to drop.
+        Name of an existing constraint to drop or rename.
        </para>
       </listitem>
      </varlistentry>
@@ -221,6 +232,15 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
       <listitem>
        <para>
         The new name for the domain.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">new_constraint_name</replaceable></term>
+      <listitem>
+       <para>
+        The new name for the constraint.
        </para>
       </listitem>
      </varlistentry>
@@ -285,6 +305,13 @@ ALTER DOMAIN zipcode ADD CONSTRAINT zipchk CHECK (char_length(VALUE) = 5);
    To remove a check constraint from a domain:
 <programlisting>
 ALTER DOMAIN zipcode DROP CONSTRAINT zipchk;
+</programlisting>
+  </para>
+
+  <para>
+   To rename a check constraint on a domain:
+<programlisting>
+ALTER DOMAIN zipcode RENAME CONSTRAINT zipchk TO zip_check;
 </programlisting>
   </para>
 
