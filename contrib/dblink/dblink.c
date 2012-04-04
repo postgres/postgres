@@ -1127,19 +1127,22 @@ PG_FUNCTION_INFO_V1(dblink_exec);
 Datum
 dblink_exec(PG_FUNCTION_ARGS)
 {
+	text	   *volatile sql_cmd_status = NULL;
+	PGconn	   *volatile conn = NULL;
+	volatile bool freeconn = false;
+
+	DBLINK_INIT;
+
+	PG_TRY();
+	{
 	char	   *msg;
 	PGresult   *res = NULL;
-	text	   *sql_cmd_status = NULL;
 	TupleDesc	tupdesc = NULL;
-	PGconn	   *conn = NULL;
 	char	   *connstr = NULL;
 	char	   *sql = NULL;
 	char	   *conname = NULL;
 	remoteConn *rconn = NULL;
-	bool		freeconn = false;
 	bool		fail = true;	/* default to backward compatible behavior */
-
-	DBLINK_INIT;
 
 	if (PG_NARGS() == 3)
 	{
@@ -1215,8 +1218,17 @@ dblink_exec(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED),
 				 errmsg("statement returning results not allowed")));
 	}
+	}
+	PG_CATCH();
+	{
+		/* if needed, close the connection to the database */
+		if (freeconn)
+			PQfinish(conn);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 
-	/* if needed, close the connection to the database and cleanup */
+	/* if needed, close the connection to the database */
 	if (freeconn)
 		PQfinish(conn);
 
