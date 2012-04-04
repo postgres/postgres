@@ -324,6 +324,10 @@ struct pg_conn
 	/* Optional file to write trace info to */
 	FILE	   *Pfdebug;
 
+	/* Callback procedure for per-row processing */
+	PQrowProcessor rowProcessor;	/* function pointer */
+	void	   *rowProcessorParam;	/* passthrough argument */
+
 	/* Callback procedures for notice message processing */
 	PGNoticeHooks noticeHooks;
 
@@ -396,9 +400,14 @@ struct pg_conn
 								 * msg has no length word */
 	int			outMsgEnd;		/* offset to msg end (so far) */
 
+	/* Row processor interface workspace */
+	PGdataValue *rowBuf;		/* array for passing values to rowProcessor */
+	int			rowBufLen;		/* number of entries allocated in rowBuf */
+
 	/* Status for asynchronous result construction */
 	PGresult   *result;			/* result being constructed */
-	PGresAttValue *curTuple;	/* tuple currently being read */
+
+	/* Assorted state for SSL, GSS, etc */
 
 #ifdef USE_SSL
 	bool		allow_ssl_try;	/* Allowed to try SSL negotiation */
@@ -434,7 +443,6 @@ struct pg_conn
 	int			usesspi;		/* Indicate if SSPI is in use on the
 								 * connection */
 #endif
-
 
 	/* Buffer for current error message */
 	PQExpBufferData errorMessage;		/* expansible string */
@@ -505,7 +513,6 @@ extern void
 pqInternalNotice(const PGNoticeHooks *hooks, const char *fmt,...)
 /* This lets gcc check the format string for consistency. */
 __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
-extern int	pqAddTuple(PGresult *res, PGresAttValue *tup);
 extern void pqSaveMessageField(PGresult *res, char code,
 				   const char *value);
 extern void pqSaveParameterStatus(PGconn *conn, const char *name,
@@ -558,6 +565,7 @@ extern int	pqGets(PQExpBuffer buf, PGconn *conn);
 extern int	pqGets_append(PQExpBuffer buf, PGconn *conn);
 extern int	pqPuts(const char *s, PGconn *conn);
 extern int	pqGetnchar(char *s, size_t len, PGconn *conn);
+extern int	pqSkipnchar(size_t len, PGconn *conn);
 extern int	pqPutnchar(const char *s, size_t len, PGconn *conn);
 extern int	pqGetInt(int *result, size_t bytes, PGconn *conn);
 extern int	pqPutInt(int value, size_t bytes, PGconn *conn);

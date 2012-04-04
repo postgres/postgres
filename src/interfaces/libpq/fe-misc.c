@@ -219,6 +219,32 @@ pqGetnchar(char *s, size_t len, PGconn *conn)
 }
 
 /*
+ * pqSkipnchar:
+ *	skip over len bytes in input buffer.
+ *
+ * Note: this is primarily useful for its debug output, which should
+ * be exactly the same as for pqGetnchar.  We assume the data in question
+ * will actually be used, but just isn't getting copied anywhere as yet.
+ */
+int
+pqSkipnchar(size_t len, PGconn *conn)
+{
+	if (len > (size_t) (conn->inEnd - conn->inCursor))
+		return EOF;
+
+	if (conn->Pfdebug)
+	{
+		fprintf(conn->Pfdebug, "From backend (%lu)> ", (unsigned long) len);
+		fputnbytes(conn->Pfdebug, conn->inBuffer + conn->inCursor, len);
+		fprintf(conn->Pfdebug, "\n");
+	}
+
+	conn->inCursor += len;
+
+	return 0;
+}
+
+/*
  * pqPutnchar:
  *	write exactly len bytes to the current message
  */

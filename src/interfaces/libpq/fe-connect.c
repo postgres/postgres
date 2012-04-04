@@ -2425,7 +2425,7 @@ keep_going:						/* We will come back to here until there is
 					conn->status = CONNECTION_AUTH_OK;
 
 					/*
-					 * Set asyncStatus so that PQsetResult will think that
+					 * Set asyncStatus so that PQgetResult will think that
 					 * what comes back next is the result of a query.  See
 					 * below.
 					 */
@@ -2686,8 +2686,11 @@ makeEmptyPGconn(void)
 	/* Zero all pointers and booleans */
 	MemSet(conn, 0, sizeof(PGconn));
 
+	/* install default row processor and notice hooks */
+	PQsetRowProcessor(conn, NULL, NULL);
 	conn->noticeHooks.noticeRec = defaultNoticeReceiver;
 	conn->noticeHooks.noticeProc = defaultNoticeProcessor;
+
 	conn->status = CONNECTION_BAD;
 	conn->asyncStatus = PGASYNC_IDLE;
 	conn->xactStatus = PQTRANS_IDLE;
@@ -2721,11 +2724,14 @@ makeEmptyPGconn(void)
 	conn->inBuffer = (char *) malloc(conn->inBufSize);
 	conn->outBufSize = 16 * 1024;
 	conn->outBuffer = (char *) malloc(conn->outBufSize);
+	conn->rowBufLen = 32;
+	conn->rowBuf = (PGdataValue *) malloc(conn->rowBufLen * sizeof(PGdataValue));
 	initPQExpBuffer(&conn->errorMessage);
 	initPQExpBuffer(&conn->workBuffer);
 
 	if (conn->inBuffer == NULL ||
 		conn->outBuffer == NULL ||
+		conn->rowBuf == NULL ||
 		PQExpBufferBroken(&conn->errorMessage) ||
 		PQExpBufferBroken(&conn->workBuffer))
 	{
@@ -2829,6 +2835,8 @@ freePGconn(PGconn *conn)
 		free(conn->inBuffer);
 	if (conn->outBuffer)
 		free(conn->outBuffer);
+	if (conn->rowBuf)
+		free(conn->rowBuf);
 	termPQExpBuffer(&conn->errorMessage);
 	termPQExpBuffer(&conn->workBuffer);
 
@@ -2888,7 +2896,7 @@ closePGconn(PGconn *conn)
 	conn->status = CONNECTION_BAD;		/* Well, not really _bad_ - just
 										 * absent */
 	conn->asyncStatus = PGASYNC_IDLE;
-	pqClearAsyncResult(conn);	/* deallocate result and curTuple */
+	pqClearAsyncResult(conn);	/* deallocate result */
 	pg_freeaddrinfo_all(conn->addrlist_family, conn->addrlist);
 	conn->addrlist = NULL;
 	conn->addr_cur = NULL;
