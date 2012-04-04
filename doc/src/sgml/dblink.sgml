@@ -426,14 +426,6 @@ SELECT *
    <title>Notes</title>
 
    <para>
-    <function>dblink</> fetches the entire remote query result before
-    returning any of it to the local system.  If the query is expected
-    to return a large number of rows, it's better to open it as a cursor
-    with <function>dblink_open</> and then fetch a manageable number
-    of rows at a time.
-   </para>
-
-   <para>
     A convenient way to use <function>dblink</> with predetermined
     queries is to create a view.
     This allows the column type information to be buried in the view,
@@ -1431,6 +1423,18 @@ dblink_get_result(text connname [, bool fail_on_error]) returns setof record
     It must be called once for each query
     sent, and one additional time to obtain an empty set result,
     before the connection can be used again.
+   </para>
+
+   <para>
+    When using <function>dblink_send_query</> and
+    <function>dblink_get_result</>, <application>dblink</> fetches the entire
+    remote query result before returning any of it to the local query
+    processor.  If the query returns a large number of rows, this can result
+    in transient memory bloat in the local session.  It may be better to open
+    such a query as a cursor with <function>dblink_open</> and then fetch a
+    manageable number of rows at a time.  Alternatively, use plain
+    <function>dblink()</>, which avoids memory bloat by spooling large result
+    sets to disk.
    </para>
   </refsect1>
 
