@@ -3394,11 +3394,11 @@ read_cursor_args(PLpgSQL_var *cursor, int until, const char *expected)
 	PLpgSQL_expr *expr;
 	PLpgSQL_row *row;
 	int			tok;
-	int			argc = 0;
+	int			argc;
 	char	  **argv;
 	StringInfoData ds;
 	char	   *sqlstart = "SELECT ";
-	bool		named = false;
+	bool		any_named = false;
 
 	tok = yylex();
 	if (cursor->cursor_explicit_argrow < 0)
@@ -3417,9 +3417,6 @@ read_cursor_args(PLpgSQL_var *cursor, int until, const char *expected)
 		return NULL;
 	}
 
-	row = (PLpgSQL_row *) plpgsql_Datums[cursor->cursor_explicit_argrow];
-	argv = (char **) palloc0(row->nfields * sizeof(char *));
-
 	/* Else better provide arguments */
 	if (tok != '(')
 		ereport(ERROR,
@@ -3431,6 +3428,9 @@ read_cursor_args(PLpgSQL_var *cursor, int until, const char *expected)
 	/*
 	 * Read the arguments, one by one.
 	 */
+	row = (PLpgSQL_row *) plpgsql_Datums[cursor->cursor_explicit_argrow];
+	argv = (char **) palloc0(row->nfields * sizeof(char *));
+
 	for (argc = 0; argc < row->nfields; argc++)
 	{
 		PLpgSQL_expr *item;
@@ -3445,11 +3445,16 @@ read_cursor_args(PLpgSQL_var *cursor, int until, const char *expected)
 		if (tok1 == IDENT && tok2 == COLON_EQUALS)
 		{
 			char   *argname;
+			IdentifierLookup save_IdentifierLookup;
 
-			/* Read the argument name, and find its position */
+			/* Read the argument name, ignoring any matching variable */
+			save_IdentifierLookup = plpgsql_IdentifierLookup;
+			plpgsql_IdentifierLookup = IDENTIFIER_LOOKUP_DECLARE;
 			yylex();
 			argname = yylval.str;
+			plpgsql_IdentifierLookup = save_IdentifierLookup;
 
+			/* Match argument name to cursor arguments */
 			for (argpos = 0; argpos < row->nfields; argpos++)
 			{
 				if (strcmp(row->fieldnames[argpos], argname) == 0)
@@ -3470,10 +3475,17 @@ read_cursor_args(PLpgSQL_var *cursor, int until, const char *expected)
 			if (tok2 != COLON_EQUALS)
 				yyerror("syntax error");
 
-			named = true;
+			any_named = true;
 		}
 		else
 			argpos = argc;
+
+		if (argv[argpos] != NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("duplicate value for cursor \"%s\" parameter \"%s\"",
+							cursor->refname, row->fieldnames[argpos]),
+					 parser_errposition(arglocation)));
 
 		/*
 		 * Read the value expression. To provide the user with meaningful
@@ -3491,6 +3503,8 @@ read_cursor_args(PLpgSQL_var *cursor, int until, const char *expected)
 								  false, /* do not trim */
 								  NULL, &endtoken);
 
+		argv[argpos] = item->query + strlen(sqlstart);
+
 		if (endtoken == ')' && !(argc == row->nfields - 1))
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
@@ -3504,15 +3518,6 @@ read_cursor_args(PLpgSQL_var *cursor, int until, const char *expected)
 					 errmsg("too many arguments for cursor \"%s\"",
 							cursor->refname),
 					 parser_errposition(yylloc)));
-
-		if (argv[argpos] != NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("duplicate value for cursor \"%s\" parameter \"%s\"",
-							cursor->refname, row->fieldnames[argpos]),
-					 parser_errposition(arglocation)));
-
-		argv[argpos] = item->query + strlen(sqlstart);
 	}
 
 	/* Make positional argument list */
@@ -3527,7 +3532,7 @@ read_cursor_args(PLpgSQL_var *cursor, int until, const char *expected)
 		 * the parameter name for meaningful runtime errors.
 		 */
 		appendStringInfoString(&ds, argv[argc]);
-		if (named)
+		if (any_named)
 			appendStringInfo(&ds, " AS %s",
 							 quote_identifier(row->fieldnames[argc]));
 		if (argc < row->nfields - 1)
