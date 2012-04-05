@@ -37,6 +37,7 @@ const char *progname;
 /* Options and defaults */
 bool		debug = false;		/* are we debugging? */
 bool		dryrun = false;		/* are we performing a dry-run operation? */
+char	   *additional_ext = NULL;	/* Extension to remove from filenames */
 
 char	   *archiveLocation;	/* where to find the archive? */
 char	   *restartWALFileName; /* the file from which we can restart restore */
@@ -91,16 +92,36 @@ Initialize(void)
 }
 
 static void
+TrimExtension(char *filename, char *extension)
+{
+	int			flen;
+	int			elen;
+
+	if (extension == NULL)
+		return;
+
+	elen = strlen(extension);
+	flen = strlen(filename);
+
+	if (flen > elen && strcmp(filename + flen - elen, extension) == 0)
+		filename[flen - elen] = '\0';
+}
+
+static void
 CleanupPriorWALFiles(void)
 {
 	int			rc;
 	DIR		   *xldir;
 	struct dirent *xlde;
+	char		walfile[MAXPGPATH];
 
 	if ((xldir = opendir(archiveLocation)) != NULL)
 	{
 		while ((xlde = readdir(xldir)) != NULL)
 		{
+			strncpy(walfile, xlde->d_name, MAXPGPATH);
+			TrimExtension(walfile, additional_ext);
+
 			/*
 			 * We ignore the timeline part of the XLOG segment identifiers in
 			 * deciding whether a segment is still needed.	This ensures that
@@ -114,10 +135,14 @@ CleanupPriorWALFiles(void)
 			 * file. Note that this means files are not removed in the order
 			 * they were originally written, in case this worries you.
 			 */
-			if (strlen(xlde->d_name) == XLOG_DATA_FNAME_LEN &&
-			strspn(xlde->d_name, "0123456789ABCDEF") == XLOG_DATA_FNAME_LEN &&
-				strcmp(xlde->d_name + 8, exclusiveCleanupFileName + 8) < 0)
+			if (strlen(walfile) == XLOG_DATA_FNAME_LEN &&
+			strspn(walfile, "0123456789ABCDEF") == XLOG_DATA_FNAME_LEN &&
+				strcmp(walfile + 8, exclusiveCleanupFileName + 8) < 0)
 			{
+				/* 
+				 * Use the original file name again now, including any extension
+				 * that might have been chopped off before testing the sequence.
+				 */
 				snprintf(WALFilePath, MAXPGPATH, "%s/%s",
 						 archiveLocation, xlde->d_name);
 
@@ -166,6 +191,8 @@ static void
 SetWALFileNameForCleanup(void)
 {
 	bool		fnameOK = false;
+
+	TrimExtension(restartWALFileName, additional_ext);
 
 	/*
 	 * If restartWALFileName is a WAL file name then just use it directly. If
@@ -223,6 +250,7 @@ usage(void)
 	printf("\nOptions:\n");
 	printf("  -d                 generates debug output (verbose mode)\n");
 	printf("  -n                 shows the names of the files that would have been removed (dry-run)\n");
+ 	printf("  -x EXT             cleanup files if they have this same extension\n");
 	printf("  --help             show this help, then exit\n");
 	printf("  --version          output version information, then exit\n");
 	printf("\n"
@@ -259,7 +287,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt(argc, argv, "dn")) != -1)
+	while ((c = getopt(argc, argv, "x:dn")) != -1)
 	{
 		switch (c)
 		{
@@ -268,6 +296,9 @@ main(int argc, char **argv)
 				break;
 			case 'n':			/* Dry-Run mode */
 				dryrun = true;
+				break;
+			case 'x':
+				additional_ext = optarg; /* Extension to remove from xlogfile names */
 				break;
 			default:
 				fprintf(stderr, "Try \"%s --help\" for more information.\n", progname);
