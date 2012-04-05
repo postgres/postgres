@@ -450,6 +450,7 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 			{
 				INSTR_TIME_SET_CURRENT(io_time);
 				INSTR_TIME_SUBTRACT(io_time, io_start);
+				pgstat_count_buffer_read_time(INSTR_TIME_GET_MICROSEC(io_time));
 				INSTR_TIME_ADD(pgBufferUsage.time_read, io_time);
 			}
 
@@ -1888,7 +1889,8 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 {
 	XLogRecPtr	recptr;
 	ErrorContextCallback errcontext;
-	instr_time io_start, io_end;
+	instr_time	io_start,
+				io_time;
 
 	/*
 	 * Acquire the buffer's io_in_progress lock.  If StartBufferIO returns
@@ -1947,8 +1949,10 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 
 	if (track_iotiming)
 	{
-		INSTR_TIME_SET_CURRENT(io_end);
-		INSTR_TIME_ACCUM_DIFF(pgBufferUsage.time_write, io_end, io_start);
+		INSTR_TIME_SET_CURRENT(io_time);
+		INSTR_TIME_SUBTRACT(io_time, io_start);
+		pgstat_count_buffer_write_time(INSTR_TIME_GET_MICROSEC(io_time));
+		INSTR_TIME_ADD(pgBufferUsage.time_write, io_time);
 	}
 
 	pgBufferUsage.shared_blks_written++;

@@ -145,6 +145,11 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   </para>
 
   <para>
+   The parameter <xref linkend="guc-track-iotiming"> enables monitoring
+   of block read and write times.
+  </para>
+
+  <para>
    The parameter <xref linkend="guc-track-functions"> enables tracking of
    usage of user-defined functions.
   </para>
@@ -960,6 +965,20 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      <entry>Number of deadlocks detected in the database.
       This value can also be returned by directly calling
       the <function>pg_stat_get_db_deadlocks</function> function.</entry>
+    </row>
+    <row>
+     <entry>block_read_time</entry>
+     <entry><type>bigint</></entry>
+     <entry>Time spent by backends reading data file blocks, in milliseconds.
+      The same value can be returned in microseconds by directly calling
+      the <function>pg_stat_get_db_block_time_read</function> function.</entry>
+    </row>
+    <row>
+     <entry>block_write_time</entry>
+     <entry><type>bigint</></entry>
+     <entry>Time spent by backends writing data file blocks, in milliseconds.
+      The same value can be returned in microseconds by directly calling
+      the <function>pg_stat_get_db_block_time_write</function> function.</entry>
     </row>
     <row>
      <entry>stats_reset</entry>

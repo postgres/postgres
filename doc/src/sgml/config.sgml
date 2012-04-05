@@ -4295,8 +4295,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         default, because it will repeatedly query the operating system for
         the current time, which may cause significant overhead on some
         platforms.  You can use the <xref linkend="pgtesttiming"> tool to
-        measure the overhead of timing on your system.  Only superusers can
-        change this setting.
+        measure the overhead of timing on your system.  Timing information is
+        displayed in <xref linkend="pg-stat-database-view">, in the output of
+        <xref linkend="sql-explain"> when the <literal>BUFFERS</> option is
+        used, and by <xref linkend="pgstatstatements">.  Only superusers can
+        change this setting.  
        </para>
       </listitem>
      </varlistentry>

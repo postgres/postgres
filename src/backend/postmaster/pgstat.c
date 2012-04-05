@@ -197,6 +197,8 @@ static PgStat_SubXactStatus *pgStatXactStack = NULL;
 
 static int	pgStatXactCommit = 0;
 static int	pgStatXactRollback = 0;
+PgStat_Counter pgStatBlockTimeRead = 0;
+PgStat_Counter pgStatBlockTimeWrite = 0;
 
 /* Record that's written to 2PC state file when pgstat state is persisted */
 typedef struct TwoPhasePgStatRecord
@@ -782,13 +784,15 @@ pgstat_send_tabstat(PgStat_MsgTabstat *tsmsg)
 		return;
 
 	/*
-	 * Report accumulated xact commit/rollback whenever we send a normal
-	 * tabstat message
+	 * Report accumulated xact commit/rollback and I/O timings whenever we send
+	 * a normal tabstat message
 	 */
 	if (OidIsValid(tsmsg->m_databaseid))
 	{
 		tsmsg->m_xact_commit = pgStatXactCommit;
 		tsmsg->m_xact_rollback = pgStatXactRollback;
+		tsmsg->m_block_time_read = pgStatBlockTimeRead;
+		tsmsg->m_block_time_write = pgStatBlockTimeWrite;
 		pgStatXactCommit = 0;
 		pgStatXactRollback = 0;
 	}
@@ -796,6 +800,8 @@ pgstat_send_tabstat(PgStat_MsgTabstat *tsmsg)
 	{
 		tsmsg->m_xact_commit = 0;
 		tsmsg->m_xact_rollback = 0;
+		tsmsg->m_block_time_read = 0;
+		tsmsg->m_block_time_write = 0;
 	}
 
 	n = tsmsg->m_nentries;
@@ -3352,6 +3358,8 @@ pgstat_get_db_entry(Oid databaseid, bool create)
 		result->n_temp_files = 0;
 		result->n_temp_bytes = 0;
 		result->n_deadlocks = 0;
+		result->n_block_time_read = 0;
+		result->n_block_time_write = 0;
 
 		result->stat_reset_timestamp = GetCurrentTimestamp();
 
@@ -4070,6 +4078,8 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 	 */
 	dbentry->n_xact_commit += (PgStat_Counter) (msg->m_xact_commit);
 	dbentry->n_xact_rollback += (PgStat_Counter) (msg->m_xact_rollback);
+	dbentry->n_block_time_read += msg->m_block_time_read;
+	dbentry->n_block_time_write += msg->m_block_time_write;
 
 	/*
 	 * Process all table entries in the message.
@@ -4266,6 +4276,8 @@ pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len)
 	dbentry->n_temp_bytes = 0;
 	dbentry->n_temp_files = 0;
 	dbentry->n_deadlocks = 0;
+	dbentry->n_block_time_read = 0;
+	dbentry->n_block_time_write = 0;
 
 	dbentry->stat_reset_timestamp = GetCurrentTimestamp();
 
