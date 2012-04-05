@@ -4455,6 +4455,8 @@ pgstat_recv_bgwriter(PgStat_MsgBgWriter *msg, int len)
 {
 	globalStats.timed_checkpoints += msg->m_timed_checkpoints;
 	globalStats.requested_checkpoints += msg->m_requested_checkpoints;
+	globalStats.checkpoint_write_time += msg->m_checkpoint_write_time;
+	globalStats.checkpoint_sync_time += msg->m_checkpoint_sync_time;
 	globalStats.buf_written_checkpoints += msg->m_buf_written_checkpoints;
 	globalStats.buf_written_clean += msg->m_buf_written_clean;
 	globalStats.maxwritten_clean += msg->m_maxwritten_clean;

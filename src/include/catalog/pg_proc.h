@@ -2678,6 +2678,10 @@ DATA(insert OID = 2773 ( pg_stat_get_bgwriter_maxwritten_clean PGNSP PGUID 12 1 
 DESCR("statistics: number of times the bgwriter stopped processing when it had written too many buffers while cleaning");
 DATA(insert OID = 3075 ( pg_stat_get_bgwriter_stat_reset_time PGNSP PGUID 12 1 0 0 0 f f f f t f s 0 0 1184 "" _null_ _null_ _null_ _null_	pg_stat_get_bgwriter_stat_reset_time _null_ _null_ _null_ ));
 DESCR("statistics: last reset for the bgwriter");
+DATA(insert OID = 3160 ( pg_stat_get_checkpoint_write_time PGNSP PGUID 12 1 0 0 0 f f f f t f s 0 0 20 "" _null_ _null_ _null_ _null_ pg_stat_get_checkpoint_write_time _null_ _null_ _null_ ));
+DESCR("statistics: total amount of checkpoint time spent writing buffers to disk");
+DATA(insert OID = 3161 ( pg_stat_get_checkpoint_sync_time PGNSP PGUID 12 1 0 0 0 f f f f t f s 0 0 20 "" _null_ _null_ _null_ _null_ pg_stat_get_checkpoint_sync_time _null_ _null_ _null_ ));
+DESCR("statistics: total amount of checkpoint time spent synchronizing buffers to disk");
 DATA(insert OID = 2775 ( pg_stat_get_buf_written_backend PGNSP PGUID 12 1 0 0 0 f f f f t f s 0 0 20 "" _null_ _null_ _null_ _null_ pg_stat_get_buf_written_backend _null_ _null_ _null_ ));
 DESCR("statistics: number of buffers written by backends");
 DATA(insert OID = 3063 ( pg_stat_get_buf_fsync_backend PGNSP PGUID 12 1 0 0 0 f f f f t f s 0 0 20 "" _null_ _null_ _null_ _null_ pg_stat_get_buf_fsync_backend _null_ _null_ _null_ ));

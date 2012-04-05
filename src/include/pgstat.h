@@ -366,6 +366,8 @@ typedef struct PgStat_MsgBgWriter
 	PgStat_Counter m_buf_written_backend;
 	PgStat_Counter m_buf_fsync_backend;
 	PgStat_Counter m_buf_alloc;
+	PgStat_Counter m_checkpoint_write_time;
+	PgStat_Counter m_checkpoint_sync_time;
 } PgStat_MsgBgWriter;
 
 /* ----------
@@ -612,6 +614,8 @@ typedef struct PgStat_GlobalStats
 	TimestampTz stats_timestamp;	/* time of stats file update */
 	PgStat_Counter timed_checkpoints;
 	PgStat_Counter requested_checkpoints;
+	PgStat_Counter checkpoint_write_time;		/* times in milliseconds */
+	PgStat_Counter checkpoint_sync_time;
 	PgStat_Counter buf_written_checkpoints;
 	PgStat_Counter buf_written_clean;
 	PgStat_Counter maxwritten_clean;

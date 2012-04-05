@@ -1094,27 +1094,22 @@ mdsync(void)
 							  entry->tag.segno * ((BlockNumber) RELSEG_SIZE),
 								   false, EXTENSION_RETURN_NULL);
 
-				if (log_checkpoints)
-					INSTR_TIME_SET_CURRENT(sync_start);
-				else
-					INSTR_TIME_SET_ZERO(sync_start);
+				INSTR_TIME_SET_CURRENT(sync_start);
 
 				if (seg != NULL &&
 					FileSync(seg->mdfd_vfd) >= 0)
 				{
-					if (log_checkpoints && (!INSTR_TIME_IS_ZERO(sync_start)))
-					{
-						INSTR_TIME_SET_CURRENT(sync_end);
-						sync_diff = sync_end;
-						INSTR_TIME_SUBTRACT(sync_diff, sync_start);
-						elapsed = INSTR_TIME_GET_MICROSEC(sync_diff);
-						if (elapsed > longest)
-							longest = elapsed;
-						total_elapsed += elapsed;
-						processed++;
+					INSTR_TIME_SET_CURRENT(sync_end);
+					sync_diff = sync_end;
+					INSTR_TIME_SUBTRACT(sync_diff, sync_start);
+					elapsed = INSTR_TIME_GET_MICROSEC(sync_diff);
+					if (elapsed > longest)
+						longest = elapsed;
+					total_elapsed += elapsed;
+					processed++;
+					if (log_checkpoints)
 						elog(DEBUG1, "checkpoint sync: number=%d file=%s time=%.3f msec",
 							 processed, FilePathName(seg->mdfd_vfd), (double) elapsed / 1000);
-					}
 
 					break;		/* success; break out of retry loop */
 				}

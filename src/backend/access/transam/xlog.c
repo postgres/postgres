@@ -7511,9 +7511,6 @@ LogCheckpointEnd(bool restartpoint)
 
 	CheckpointStats.ckpt_end_t = GetCurrentTimestamp();
 
-	TimestampDifference(CheckpointStats.ckpt_start_t,
-						CheckpointStats.ckpt_end_t,
-						&total_secs, &total_usecs);
 
 	TimestampDifference(CheckpointStats.ckpt_write_t,
 						CheckpointStats.ckpt_sync_t,
@@ -7522,6 +7519,23 @@ LogCheckpointEnd(bool restartpoint)
 	TimestampDifference(CheckpointStats.ckpt_sync_t,
 						CheckpointStats.ckpt_sync_end_t,
 						&sync_secs, &sync_usecs);
+
+	/* Record checkpoint timing summary data. */
+	BgWriterStats.m_checkpoint_write_time +=
+		write_secs * 1000 + write_usecs / 1000;
+	BgWriterStats.m_checkpoint_sync_time +=
+		sync_secs * 1000 + sync_usecs / 1000;
+
+	/*
+	 * All of the published timing statistics are accounted for.  Only
+	 * continue if a log message is to be written.
+	 */
+	if (!log_checkpoints)
+		return;
+
+	TimestampDifference(CheckpointStats.ckpt_start_t,
+						CheckpointStats.ckpt_end_t,
+						&total_secs, &total_usecs);
 
 	/*
 	 * Timing values returned from CheckpointStats are in microseconds.
@@ -7971,9 +7985,8 @@ CreateCheckPoint(int flags)
 	if (!RecoveryInProgress())
 		TruncateSUBTRANS(GetOldestXmin(true, false));
 
-	/* All real work is done, but log before releasing lock. */
-	if (log_checkpoints)
-		LogCheckpointEnd(false);
+	/* Real work is done, but log and update stats before releasing lock. */
+	LogCheckpointEnd(false);
 
 	TRACE_POSTGRESQL_CHECKPOINT_DONE(CheckpointStats.ckpt_bufs_written,
 									 NBuffers,
@@ -8237,9 +8250,8 @@ CreateRestartPoint(int flags)
 	if (EnableHotStandby)
 		TruncateSUBTRANS(GetOldestXmin(true, false));
 
-	/* All real work is done, but log before releasing lock. */
-	if (log_checkpoints)
-		LogCheckpointEnd(true);
+	/* Real work is done, but log and update before releasing lock. */
+	LogCheckpointEnd(true);
 
 	xtime = GetLatestXTime();
 	ereport((log_checkpoints ? LOG : DEBUG2),

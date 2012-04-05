@@ -768,6 +768,28 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      the <function>pg_stat_get_bgwriter_requested_checkpoints</function> function.</entry>
      </row>
      <row>
+      <entry>checkpoint_write_time</entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+        Total amount of time that has been spent in the portion of
+        checkpoint processing where files are written to disk, in milliseconds.
+        This value can also be returned by directly calling the
+        <function>pg_stat_get_checkpoint_write_time</function>
+        function.
+      </entry>
+     </row>
+     <row>
+      <entry>checkpoint_sync_time</entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+        Total amount of time that has been spent in the portion of
+        checkpoint processing where files are synchronized to disk, in
+        milliseconds.  This value can also be returned by directly calling
+        the <function>pg_stat_get_checkpoint_sync_time</function>
+        function.
+      </entry>
+     </row>
+     <row>
       <entry>buffers_checkpoint</entry>
       <entry><type>bigint</type></entry>
       <entry>Number of buffers written during checkpoints.

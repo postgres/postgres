@@ -87,6 +87,8 @@ extern Datum pg_stat_get_db_block_time_write(PG_FUNCTION_ARGS);
 
 extern Datum pg_stat_get_bgwriter_timed_checkpoints(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_bgwriter_requested_checkpoints(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_checkpoint_write_time(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_checkpoint_sync_time(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_bgwriter_buf_written_checkpoints(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_bgwriter_buf_written_clean(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_bgwriter_maxwritten_clean(PG_FUNCTION_ARGS);
@@ -1417,6 +1419,18 @@ Datum
 pg_stat_get_bgwriter_maxwritten_clean(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_INT64(pgstat_fetch_global()->maxwritten_clean);
+}
+
+Datum
+pg_stat_get_checkpoint_write_time(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT64(pgstat_fetch_global()->checkpoint_write_time);
+}
+
+Datum
+pg_stat_get_checkpoint_sync_time(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT64(pgstat_fetch_global()->checkpoint_sync_time);
 }
 
 Datum
