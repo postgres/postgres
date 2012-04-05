@@ -3847,13 +3847,13 @@ getTables(Archive *fout, int *numTables)
 	selectSourceSchema(fout, "pg_catalog");
 
 	/*
-	 * Find all the tables (including views and sequences).
+	 * Find all the tables and table-like objects.
 	 *
 	 * We include system catalogs, so that we can work if a user table is
 	 * defined to inherit from a system catalog (pretty weird, but...)
 	 *
-	 * We ignore tables that are not type 'r' (ordinary relation), 'S'
-	 * (sequence), 'v' (view), or 'c' (composite type).
+	 * We ignore relations that are not ordinary tables, sequences, views,
+	 * composite types, or foreign tables.
 	 *
 	 * Composite-type table entries won't be dumped as such, but we have to
 	 * make a DumpableObject for them so that we can track dependencies of the
