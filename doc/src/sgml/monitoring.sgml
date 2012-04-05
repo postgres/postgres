@@ -1654,7 +1654,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      <entry><type>bigint</></entry>
      <entry>Total time spent in this functions and all other functions
      called by it, in milliseconds.
-     This value can also be returned by directly calling
+     The same value can be returned in microseconds by directly calling
      the <function>pg_stat_get_function_time</function> function.</entry>
     </row>
     <row>
@@ -1662,7 +1662,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      <entry><type>bigint</></entry>
      <entry>Total time spent in this functions itself but not including
      other functions called by it, in milliseconds.
-     This value can also be returned by directly calling
+     The same value can be returned in microseconds by directly calling
      the <function>pg_stat_get_function_self_time</function> function.</entry>
     </row>
    </tbody>
