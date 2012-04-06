@@ -631,10 +631,15 @@ standard_ProcessUtility(Node *parsetree,
 		case T_DropStmt:
 			switch (((DropStmt *) parsetree)->removeType)
 			{
+				case OBJECT_INDEX:
+					if (((DropStmt *) parsetree)->concurrent)
+						PreventTransactionChain(isTopLevel,
+											"DROP INDEX CONCURRENTLY");
+					/* fall through */
+
 				case OBJECT_TABLE:
 				case OBJECT_SEQUENCE:
 				case OBJECT_VIEW:
-				case OBJECT_INDEX:
 				case OBJECT_FOREIGN_TABLE:
 					RemoveRelations((DropStmt *) parsetree);
 					break;

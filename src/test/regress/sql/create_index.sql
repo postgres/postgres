@@ -727,6 +727,27 @@ COMMIT;
 
 \d concur_heap
 
+--
+-- Try some concurrent index drops
+--
+DROP INDEX CONCURRENTLY "concur_index2";				-- works
+DROP INDEX CONCURRENTLY IF EXISTS "concur_index2";		-- notice
+
+-- failures
+DROP INDEX CONCURRENTLY "concur_index2", "concur_index3";
+BEGIN;
+DROP INDEX CONCURRENTLY "concur_index5";
+ROLLBACK;
+
+-- successes
+DROP INDEX CONCURRENTLY IF EXISTS "concur_index3";
+DROP INDEX CONCURRENTLY "concur_index4";
+DROP INDEX CONCURRENTLY "concur_index5";
+DROP INDEX CONCURRENTLY "concur_index1";
+DROP INDEX CONCURRENTLY "concur_heap_expr_idx";
+
+\d concur_heap
+
 DROP TABLE concur_heap;
 
 --

@@ -1189,6 +1189,7 @@ _equalDropStmt(const DropStmt *a, const DropStmt *b)
 	COMPARE_SCALAR_FIELD(removeType);
 	COMPARE_SCALAR_FIELD(behavior);
 	COMPARE_SCALAR_FIELD(missing_ok);
+	COMPARE_SCALAR_FIELD(concurrent);
 
 	return true;
 }

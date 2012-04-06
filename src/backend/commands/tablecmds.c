@@ -239,6 +239,7 @@ struct DropRelationCallbackState
 {
 	char	relkind;
 	Oid		heapOid;
+	bool	concurrent;
 };
 
 /* Alter table target-type flags for ATSimplePermissions */
@@ -738,6 +739,21 @@ RemoveRelations(DropStmt *drop)
 	ObjectAddresses *objects;
 	char		relkind;
 	ListCell   *cell;
+	int			flags = 0;
+	LOCKMODE	lockmode = AccessExclusiveLock;
+
+	if (drop->concurrent)
+	{
+		lockmode = ShareUpdateExclusiveLock;
+		if (list_length(drop->objects) > 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("DROP INDEX CONCURRENTLY does not support dropping multiple objects")));
+		if (drop->behavior == DROP_CASCADE)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("DROP INDEX CONCURRENTLY does not support CASCADE")));
+	}
 
 	/*
 	 * First we identify all the relations, then we delete them in a single
@@ -800,7 +816,8 @@ RemoveRelations(DropStmt *drop)
 		/* Look up the appropriate relation using namespace search. */
 		state.relkind = relkind;
 		state.heapOid = InvalidOid;
-		relOid = RangeVarGetRelidExtended(rel, AccessExclusiveLock, true,
+		state.concurrent = drop->concurrent;
+		relOid = RangeVarGetRelidExtended(rel, lockmode, true,
 										  false,
 										  RangeVarCallbackForDropRelation,
 										  (void *) &state);
@@ -820,7 +837,20 @@ RemoveRelations(DropStmt *drop)
 		add_exact_object_address(&obj, objects);
 	}
 
-	performMultipleDeletions(objects, drop->behavior, 0);
+	/*
+	 * Set options and check further requirements for concurrent drop
+	 */
+	if (drop->concurrent)
+	{
+		/*
+		 * Confirm that concurrent behaviour is restricted in grammar.
+		 */
+		Assert(drop->removeType == OBJECT_INDEX);
+
+		flags |= PERFORM_DELETION_CONCURRENTLY;
+	}
+
+	performMultipleDeletions(objects, drop->behavior, flags);
 
 	free_object_addresses(objects);
 }
@@ -837,9 +867,12 @@ RangeVarCallbackForDropRelation(const RangeVar *rel, Oid relOid, Oid oldRelOid,
 	struct DropRelationCallbackState *state;
 	char		relkind;
 	Form_pg_class classform;
+	LOCKMODE	heap_lockmode;
 
 	state = (struct DropRelationCallbackState *) arg;
 	relkind = state->relkind;
+	heap_lockmode = state->concurrent ?
+		ShareUpdateExclusiveLock : AccessExclusiveLock;
 
 	/*
 	 * If we previously locked some other index's heap, and the name we're
@@ -848,7 +881,7 @@ RangeVarCallbackForDropRelation(const RangeVar *rel, Oid relOid, Oid oldRelOid,
 	 */
 	if (relOid != oldRelOid && OidIsValid(state->heapOid))
 	{
-		UnlockRelationOid(state->heapOid, AccessExclusiveLock);
+		UnlockRelationOid(state->heapOid, heap_lockmode);
 		state->heapOid = InvalidOid;
 	}
 
@@ -889,7 +922,7 @@ RangeVarCallbackForDropRelation(const RangeVar *rel, Oid relOid, Oid oldRelOid,
 	{
 		state->heapOid = IndexGetRelation(relOid, true);
 		if (OidIsValid(state->heapOid))
-			LockRelationOid(state->heapOid, AccessExclusiveLock);
+			LockRelationOid(state->heapOid, heap_lockmode);
 	}
 }
 

@@ -63,7 +63,7 @@ extern void index_constraint_create(Relation heapRelation,
 						bool update_pgindex,
 						bool allow_system_table_mods);
 
-extern void index_drop(Oid indexId);
+extern void index_drop(Oid indexId, bool concurrent);
 
 extern IndexInfo *BuildIndexInfo(Relation index);
 

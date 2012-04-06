@@ -2751,6 +2751,7 @@ _copyDropStmt(const DropStmt *from)
 	COPY_SCALAR_FIELD(removeType);
 	COPY_SCALAR_FIELD(behavior);
 	COPY_SCALAR_FIELD(missing_ok);
+	COPY_SCALAR_FIELD(concurrent);
 
 	return newnode;
 }

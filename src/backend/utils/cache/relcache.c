@@ -3355,6 +3355,12 @@ RelationGetIndexList(Relation relation)
 		oidvector  *indclass;
 		bool		isnull;
 
+		/*
+		 * Ignore any indexes that are currently being dropped
+		 */
+		if (!index->indisvalid && !index->indisready)
+			continue;
+
 		/* Add index's OID to result list in the proper order */
 		result = insert_ordered_oid(result, index->indexrelid);
 

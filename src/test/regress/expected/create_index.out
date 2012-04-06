@@ -2316,6 +2316,34 @@ Indexes:
     "concur_index5" btree (f2) WHERE f1 = 'x'::text
     "std_index" btree (f2)
 
+--
+-- Try some concurrent index drops
+--
+DROP INDEX CONCURRENTLY "concur_index2";				-- works
+DROP INDEX CONCURRENTLY IF EXISTS "concur_index2";		-- notice
+ERROR:  index "concur_index2" does not exist
+-- failures
+DROP INDEX CONCURRENTLY "concur_index2", "concur_index3";
+ERROR:  DROP INDEX CONCURRENTLY does not support dropping multiple objects
+BEGIN;
+DROP INDEX CONCURRENTLY "concur_index5";
+ERROR:  DROP INDEX CONCURRENTLY cannot run inside a transaction block
+ROLLBACK;
+-- successes
+DROP INDEX CONCURRENTLY IF EXISTS "concur_index3";
+DROP INDEX CONCURRENTLY "concur_index4";
+DROP INDEX CONCURRENTLY "concur_index5";
+DROP INDEX CONCURRENTLY "concur_index1";
+DROP INDEX CONCURRENTLY "concur_heap_expr_idx";
+\d concur_heap
+Table "public.concur_heap"
+ Column | Type | Modifiers 
+--------+------+-----------
+ f1     | text | 
+ f2     | text | 
+Indexes:
+    "std_index" btree (f2)
+
 DROP TABLE concur_heap;
 --
 -- Test ADD CONSTRAINT USING INDEX
