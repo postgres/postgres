@@ -50,20 +50,32 @@ typedef void (*ReScanForeignScan_function) (ForeignScanState *node);
 
 typedef void (*EndForeignScan_function) (ForeignScanState *node);
 
+typedef int (*AcquireSampleRowsFunc) (Relation relation, int elevel,
+									  HeapTuple *rows, int targrows,
+									  double *totalrows,
+									  double *totaldeadrows,
+									  BlockNumber *totalpages);
+
+typedef AcquireSampleRowsFunc (*AnalyzeForeignTable_function) (Relation relation);
+
 
 /*
  * FdwRoutine is the struct returned by a foreign-data wrapper's handler
  * function.  It provides pointers to the callback functions needed by the
  * planner and executor.
  *
- * Currently, all functions must be supplied.  Later there may be optional
- * additions.  It's recommended that the handler initialize the struct with
- * makeNode(FdwRoutine) so that all fields are set to zero.
+ * More function pointers are likely to be added in the future.  Therefore
+ * it's recommended that the handler initialize the struct with
+ * makeNode(FdwRoutine) so that all fields are set to NULL.  This will
+ * ensure that no fields are accidentally left undefined.
  */
 typedef struct FdwRoutine
 {
 	NodeTag		type;
 
+	/*
+	 * These functions are required.
+	 */
 	GetForeignRelSize_function GetForeignRelSize;
 	GetForeignPaths_function GetForeignPaths;
 	GetForeignPlan_function GetForeignPlan;
@@ -72,6 +84,12 @@ typedef struct FdwRoutine
 	IterateForeignScan_function IterateForeignScan;
 	ReScanForeignScan_function ReScanForeignScan;
 	EndForeignScan_function EndForeignScan;
+
+	/*
+	 * These functions are optional.  Set the pointer to NULL for any
+	 * that are not provided.
+	 */
+	AnalyzeForeignTable_function AnalyzeForeignTable;
 } FdwRoutine;
 
 

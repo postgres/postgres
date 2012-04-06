@@ -332,6 +332,16 @@
      plans that use the expression index.
     </para>
    </tip>
+
+   <tip>
+    <para>
+     The autovacuum daemon does not issue <command>ANALYZE</> commands for
+     foreign tables, since it has no means of determining how often that
+     might be useful.  If your queries require statistics on foreign tables
+     for proper planning, it's a good idea to run manually-managed
+     <command>ANALYZE</> commands on those tables on a suitable schedule.
+    </para>
+   </tip>
   </sect2>
 
   <sect2 id="vacuum-for-visibility-map">

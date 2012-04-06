@@ -409,6 +409,21 @@ static const SchemaQuery Query_for_list_of_tsvf = {
 	NULL
 };
 
+static const SchemaQuery Query_for_list_of_tf = {
+	/* catname */
+	"pg_catalog.pg_class c",
+	/* selcondition */
+	"c.relkind IN ('r', 'f')",
+	/* viscondition */
+	"pg_catalog.pg_table_is_visible(c.oid)",
+	/* namespace */
+	"c.relnamespace",
+	/* result */
+	"pg_catalog.quote_ident(c.relname)",
+	/* qualresult */
+	NULL
+};
+
 static const SchemaQuery Query_for_list_of_views = {
 	/* catname */
 	"pg_catalog.pg_class c",
@@ -2833,7 +2848,7 @@ psql_completion(char *text, int start, int end)
 /* ANALYZE */
 	/* If the previous word is ANALYZE, produce list of tables */
 	else if (pg_strcasecmp(prev_wd, "ANALYZE") == 0)
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tf, NULL);
 
 /* WHERE */
 	/* Simple case of the word before the where being the table name */

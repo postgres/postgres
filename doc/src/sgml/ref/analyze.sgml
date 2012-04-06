@@ -63,7 +63,8 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ ( <re
     <listitem>
      <para>
       The name (possibly schema-qualified) of a specific table to
-      analyze. Defaults to all tables in the current database.
+      analyze.  If omitted, all regular tables (but not foreign tables)
+      in the current database are analyzed.
      </para>
     </listitem>
    </varlistentry>
@@ -91,6 +92,13 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ ( <re
 
  <refsect1>
   <title>Notes</title>
+
+  <para>
+   Foreign tables are analyzed only when explicitly selected.  Not all
+   foreign data wrappers support <command>ANALYZE</>.  If the table's
+   wrapper does not support <command>ANALYZE</>, the command prints a
+   warning and does nothing.
+  </para>
 
   <para>
    In the default <productname>PostgreSQL</productname> configuration,

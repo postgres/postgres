@@ -10,8 +10,8 @@
 
    <para>
     All operations on a foreign table are handled through its foreign data
-    wrapper, which consists of a set of functions that the planner and
-    executor call. The foreign data wrapper is responsible for fetching
+    wrapper, which consists of a set of functions that the core server
+    calls.  The foreign data wrapper is responsible for fetching
     data from the remote data source and returning it to the
     <productname>PostgreSQL</productname> executor. This chapter outlines how
     to write a new foreign data wrapper.
@@ -47,7 +47,8 @@
 
     <para>
      The handler function simply returns a struct of function pointers to
-     callback functions that will be called by the planner and executor.
+     callback functions that will be called by the planner, executor, and
+     various maintenance commands.
      Most of the effort in writing an FDW is in implementing these callback
      functions.
      The handler function must be registered with
@@ -274,6 +275,41 @@ EndForeignScan (ForeignScanState *node);
      End the scan and release resources.  It is normally not important
      to release palloc'd memory, but for example open files and connections
      to remote servers should be cleaned up.
+    </para>
+
+    <para>
+<programlisting>
+AcquireSampleRowsFunc
+AnalyzeForeignTable (Relation relation);
+</programlisting>
+
+     This function is called when <xref linkend="sql-analyze"> is executed on
+     a foreign table.  If the FDW supports collecting statistics for this
+     foreign table, it should return a pointer to a function that will collect
+     sample rows from the table.  Otherwise, return <literal>NULL</>.  If the
+     FDW does not support collecting statistics for any tables, the
+     <function>AnalyzeForeignTable</> pointer can be set to <literal>NULL</>.
+    </para>
+
+    <para>
+     If provided, the sample collection function must have the signature
+<programlisting>
+int
+AcquireSampleRowsFunc (Relation relation, int elevel,
+                       HeapTuple *rows, int targrows,
+                       double *totalrows,
+                       double *totaldeadrows,
+                       BlockNumber *totalpages);
+</programlisting>
+
+     A random sample of up to <parameter>targrows</> rows should be collected
+     from the table and stored into the caller-provided <parameter>rows</>
+     array.  The actual number of rows collected must be returned.  In
+     addition, store estimates of the total numbers of live rows, dead rows,
+     and pages in the table into the output parameters
+     <parameter>totalrows</>, <parameter>totaldeadrows</>, and
+     <parameter>totalpages</>.  These numbers will be recorded in the table's
+     <structname>pg_class</> entry for future use.
     </para>
 
     <para>

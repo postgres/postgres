@@ -30,6 +30,7 @@
 #include "commands/tablecmds.h"
 #include "commands/vacuum.h"
 #include "executor/executor.h"
+#include "foreign/fdwapi.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parse_oper.h"
@@ -78,14 +79,12 @@ typedef struct AnlIndexData
 int			default_statistics_target = 100;
 
 /* A few variables that don't seem worth passing around as parameters */
-static int	elevel = -1;
-
 static MemoryContext anl_context = NULL;
-
 static BufferAccessStrategy vac_strategy;
 
 
-static void do_analyze_rel(Relation onerel, VacuumStmt *vacstmt, bool inh);
+static void do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
+			   AcquireSampleRowsFunc acquirefunc, bool inh, int elevel);
 static void BlockSampler_Init(BlockSampler bs, BlockNumber nblocks,
 				  int samplesize);
 static bool BlockSampler_HasMore(BlockSampler bs);
@@ -96,13 +95,12 @@ static void compute_index_stats(Relation onerel, double totalrows,
 					MemoryContext col_context);
 static VacAttrStats *examine_attribute(Relation onerel, int attnum,
 				  Node *index_expr);
-static int acquire_sample_rows(Relation onerel, HeapTuple *rows,
-					int targrows, double *totalrows, double *totaldeadrows);
-static double random_fract(void);
-static double init_selection_state(int n);
-static double get_next_S(double t, int n, double *stateptr);
+static int	acquire_sample_rows(Relation onerel, int elevel,
+					HeapTuple *rows, int targrows,
+					double *totalrows, double *totaldeadrows,
+					BlockNumber *totalpages);
 static int	compare_rows(const void *a, const void *b);
-static int acquire_inherited_sample_rows(Relation onerel,
+static int	acquire_inherited_sample_rows(Relation onerel, int elevel,
 							  HeapTuple *rows, int targrows,
 							  double *totalrows, double *totaldeadrows);
 static void update_attstats(Oid relid, bool inh,
@@ -118,13 +116,16 @@ void
 analyze_rel(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
 {
 	Relation	onerel;
+	int			elevel;
+	AcquireSampleRowsFunc acquirefunc;
 
-	/* Set up static variables */
+	/* Select logging level */
 	if (vacstmt->options & VACOPT_VERBOSE)
 		elevel = INFO;
 	else
 		elevel = DEBUG2;
 
+	/* Set up static variables */
 	vac_strategy = bstrategy;
 
 	/*
@@ -182,10 +183,40 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
 	}
 
 	/*
-	 * Check that it's a plain table; we used to do this in get_rel_oids() but
-	 * seems safer to check after we've locked the relation.
+	 * Check that it's a plain table or foreign table; we used to do this
+	 * in get_rel_oids() but seems safer to check after we've locked the
+	 * relation.
 	 */
-	if (onerel->rd_rel->relkind != RELKIND_RELATION)
+	if (onerel->rd_rel->relkind == RELKIND_RELATION)
+	{
+		/* Regular table, so we'll use the regular row acquisition function */
+		acquirefunc = acquire_sample_rows;
+	}
+	else if (onerel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
+	{
+		/*
+		 * For a foreign table, call the FDW's hook function to see whether it
+		 * supports analysis.
+		 */
+		FdwRoutine *fdwroutine;
+
+		fdwroutine = GetFdwRoutineByRelId(RelationGetRelid(onerel));
+
+		if (fdwroutine->AnalyzeForeignTable != NULL)
+			acquirefunc = fdwroutine->AnalyzeForeignTable(onerel);
+		else
+			acquirefunc = NULL;
+
+		if (acquirefunc == NULL)
+		{
+			ereport(WARNING,
+					(errmsg("skipping \"%s\" --- cannot analyze this foreign table",
+							RelationGetRelationName(onerel))));
+			relation_close(onerel, ShareUpdateExclusiveLock);
+			return;
+		}
+	}
+	else
 	{
 		/* No need for a WARNING if we already complained during VACUUM */
 		if (!(vacstmt->options & VACOPT_VACUUM))
@@ -227,13 +258,13 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
 	/*
 	 * Do the normal non-recursive ANALYZE.
 	 */
-	do_analyze_rel(onerel, vacstmt, false);
+	do_analyze_rel(onerel, vacstmt, acquirefunc, false, elevel);
 
 	/*
 	 * If there are child tables, do recursive ANALYZE.
 	 */
 	if (onerel->rd_rel->relhassubclass)
-		do_analyze_rel(onerel, vacstmt, true);
+		do_analyze_rel(onerel, vacstmt, acquirefunc, true, elevel);
 
 	/*
 	 * Close source relation now, but keep lock so that no one deletes it
@@ -254,9 +285,15 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
 
 /*
  *	do_analyze_rel() -- analyze one relation, recursively or not
+ *
+ * Note that "acquirefunc" is only relevant for the non-inherited case.
+ * If we supported foreign tables in inheritance trees,
+ * acquire_inherited_sample_rows would need to determine the appropriate
+ * acquirefunc for each child table.
  */
 static void
-do_analyze_rel(Relation onerel, VacuumStmt *vacstmt, bool inh)
+do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
+			   AcquireSampleRowsFunc acquirefunc, bool inh, int elevel)
 {
 	int			attr_cnt,
 				tcnt,
@@ -271,6 +308,7 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt, bool inh)
 				numrows;
 	double		totalrows,
 				totaldeadrows;
+	BlockNumber totalpages;
 	HeapTuple  *rows;
 	PGRUsage	ru0;
 	TimestampTz starttime = 0;
@@ -447,11 +485,17 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt, bool inh)
 	 */
 	rows = (HeapTuple *) palloc(targrows * sizeof(HeapTuple));
 	if (inh)
-		numrows = acquire_inherited_sample_rows(onerel, rows, targrows,
+	{
+		numrows = acquire_inherited_sample_rows(onerel, elevel,
+												rows, targrows,
 												&totalrows, &totaldeadrows);
+		totalpages = 0;			/* not needed in this path */
+	}
 	else
-		numrows = acquire_sample_rows(onerel, rows, targrows,
-									  &totalrows, &totaldeadrows);
+		numrows = (*acquirefunc) (onerel, elevel,
+								  rows, targrows,
+								  &totalrows, &totaldeadrows,
+								  &totalpages);
 
 	/*
 	 * Compute the statistics.	Temporary results during the calculations for
@@ -532,7 +576,7 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt, bool inh)
 	 */
 	if (!inh)
 		vac_update_relstats(onerel,
-							RelationGetNumberOfBlocks(onerel),
+							totalpages,
 							totalrows,
 							visibilitymap_count(onerel),
 							hasindex,
@@ -947,8 +991,8 @@ BlockSampler_Next(BlockSampler bs)
 	 * Knuth says to skip the current block with probability 1 - k/K.
 	 * If we are to skip, we should advance t (hence decrease K), and
 	 * repeat the same probabilistic test for the next block.  The naive
-	 * implementation thus requires a random_fract() call for each block
-	 * number.	But we can reduce this to one random_fract() call per
+	 * implementation thus requires an anl_random_fract() call for each block
+	 * number.	But we can reduce this to one anl_random_fract() call per
 	 * selected block, by noting that each time the while-test succeeds,
 	 * we can reinterpret V as a uniform random number in the range 0 to p.
 	 * Therefore, instead of choosing a new V, we just adjust p to be
@@ -963,7 +1007,7 @@ BlockSampler_Next(BlockSampler bs)
 	 * less than k, which means that we cannot fail to select enough blocks.
 	 *----------
 	 */
-	V = random_fract();
+	V = anl_random_fract();
 	p = 1.0 - (double) k / (double) K;
 	while (V < p)
 	{
@@ -988,6 +1032,7 @@ BlockSampler_Next(BlockSampler bs)
  * The actual number of rows selected is returned as the function result.
  * We also estimate the total numbers of live and dead rows in the table,
  * and return them into *totalrows and *totaldeadrows, respectively.
+ * Also, the number of pages in the relation is returned into *totalpages.
  *
  * The returned list of tuples is in order by physical position in the table.
  * (We will rely on this later to derive correlation estimates.)
@@ -1014,8 +1059,10 @@ BlockSampler_Next(BlockSampler bs)
  * density near the start of the table.
  */
 static int
-acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
-					double *totalrows, double *totaldeadrows)
+acquire_sample_rows(Relation onerel, int elevel,
+					HeapTuple *rows, int targrows,
+					double *totalrows, double *totaldeadrows,
+					BlockNumber *totalpages)
 {
 	int			numrows = 0;	/* # rows now in reservoir */
 	double		samplerows = 0; /* total # rows collected */
@@ -1030,6 +1077,7 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 	Assert(targrows > 0);
 
 	totalblocks = RelationGetNumberOfBlocks(onerel);
+	*totalpages = totalblocks;
 
 	/* Need a cutoff xmin for HeapTupleSatisfiesVacuum */
 	OldestXmin = GetOldestXmin(onerel->rd_rel->relisshared, true);
@@ -1037,7 +1085,7 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 	/* Prepare for sampling block numbers */
 	BlockSampler_Init(&bs, totalblocks, targrows);
 	/* Prepare for sampling rows */
-	rstate = init_selection_state(targrows);
+	rstate = anl_init_selection_state(targrows);
 
 	/* Outer loop over blocks to sample */
 	while (BlockSampler_HasMore(&bs))
@@ -1184,7 +1232,8 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 					 * t.
 					 */
 					if (rowstoskip < 0)
-						rowstoskip = get_next_S(samplerows, targrows, &rstate);
+						rowstoskip = anl_get_next_S(samplerows, targrows,
+													&rstate);
 
 					if (rowstoskip <= 0)
 					{
@@ -1192,7 +1241,7 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 						 * Found a suitable tuple, so save it, replacing one
 						 * old tuple at random
 						 */
-						int			k = (int) (targrows * random_fract());
+						int			k = (int) (targrows * anl_random_fract());
 
 						Assert(k >= 0 && k < targrows);
 						heap_freetuple(rows[k]);
@@ -1252,8 +1301,8 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 }
 
 /* Select a random value R uniformly distributed in (0 - 1) */
-static double
-random_fract(void)
+double
+anl_random_fract(void)
 {
 	return ((double) random() + 1) / ((double) MAX_RANDOM_VALUE + 2);
 }
@@ -1266,21 +1315,21 @@ random_fract(void)
  * It is computed primarily based on t, the number of records already read.
  * The only extra state needed between calls is W, a random state variable.
  *
- * init_selection_state computes the initial W value.
+ * anl_init_selection_state computes the initial W value.
  *
- * Given that we've already read t records (t >= n), get_next_S
+ * Given that we've already read t records (t >= n), anl_get_next_S
  * determines the number of records to skip before the next record is
  * processed.
  */
-static double
-init_selection_state(int n)
+double
+anl_init_selection_state(int n)
 {
 	/* Initial value of W (for use when Algorithm Z is first applied) */
-	return exp(-log(random_fract()) / n);
+	return exp(-log(anl_random_fract()) / n);
 }
 
-static double
-get_next_S(double t, int n, double *stateptr)
+double
+anl_get_next_S(double t, int n, double *stateptr)
 {
 	double		S;
 
@@ -1291,7 +1340,7 @@ get_next_S(double t, int n, double *stateptr)
 		double		V,
 					quot;
 
-		V = random_fract();		/* Generate V */
+		V = anl_random_fract();		/* Generate V */
 		S = 0;
 		t += 1;
 		/* Note: "num" in Vitter's code is always equal to t - n */
@@ -1323,7 +1372,7 @@ get_next_S(double t, int n, double *stateptr)
 						tmp;
 
 			/* Generate U and X */
-			U = random_fract();
+			U = anl_random_fract();
 			X = t * (W - 1.0);
 			S = floor(X);		/* S is tentatively set to floor(X) */
 			/* Test if U <= h(S)/cg(X) in the manner of (6.3) */
@@ -1352,7 +1401,7 @@ get_next_S(double t, int n, double *stateptr)
 				y *= numer / denom;
 				denom -= 1;
 			}
-			W = exp(-log(random_fract()) / n);	/* Generate W in advance */
+			W = exp(-log(anl_random_fract()) / n);	/* Generate W in advance */
 			if (exp(log(y) / n) <= (t + X) / t)
 				break;
 		}
@@ -1389,12 +1438,13 @@ compare_rows(const void *a, const void *b)
 /*
  * acquire_inherited_sample_rows -- acquire sample rows from inheritance tree
  *
- * This has the same API as acquire_sample_rows, except that rows are
+ * This has largely the same API as acquire_sample_rows, except that rows are
  * collected from all inheritance children as well as the specified table.
  * We fail and return zero if there are no inheritance children.
  */
 static int
-acquire_inherited_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
+acquire_inherited_sample_rows(Relation onerel, int elevel,
+							  HeapTuple *rows, int targrows,
 							  double *totalrows, double *totaldeadrows)
 {
 	List	   *tableOIDs;
@@ -1431,6 +1481,11 @@ acquire_inherited_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 	/*
 	 * Count the blocks in all the relations.  The result could overflow
 	 * BlockNumber, so we use double arithmetic.
+	 *
+	 * XXX eventually we will probably want to allow child tables that are
+	 * foreign tables.  Since we can't do RelationGetNumberOfBlocks on a
+	 * foreign table, it's not very clear what fraction of the total to assign
+	 * to it here.
 	 */
 	rels = (Relation *) palloc(list_length(tableOIDs) * sizeof(Relation));
 	relblocks = (double *) palloc(list_length(tableOIDs) * sizeof(double));
@@ -1485,13 +1540,16 @@ acquire_inherited_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 				int			childrows;
 				double		trows,
 							tdrows;
+				BlockNumber	tpages;
 
 				/* Fetch a random sample of the child's rows */
 				childrows = acquire_sample_rows(childrel,
+												elevel,
 												rows + numrows,
 												childtargrows,
 												&trows,
-												&tdrows);
+												&tdrows,
+												&tpages);
 
 				/* We may need to convert from child's rowtype to parent's */
 				if (childrows > 0 &&

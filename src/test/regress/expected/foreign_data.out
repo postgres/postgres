@@ -679,12 +679,12 @@ CREATE FOREIGN TABLE ft1 (
 COMMENT ON FOREIGN TABLE ft1 IS 'ft1';
 COMMENT ON COLUMN ft1.c1 IS 'ft1.c1';
 \d+ ft1
-                               Foreign table "public.ft1"
- Column |  Type   | Modifiers |          FDW Options           | Storage  | Description 
---------+---------+-----------+--------------------------------+----------+-------------
- c1     | integer | not null  | ("param 1" 'val1')             | plain    | ft1.c1
- c2     | text    |           | (param2 'val2', param3 'val3') | extended | 
- c3     | date    |           |                                | plain    | 
+                                      Foreign table "public.ft1"
+ Column |  Type   | Modifiers |          FDW Options           | Storage  | Stats target | Description 
+--------+---------+-----------+--------------------------------+----------+--------------+-------------
+ c1     | integer | not null  | ("param 1" 'val1')             | plain    |              | ft1.c1
+ c2     | text    |           | (param2 'val2', param3 'val3') | extended |              | 
+ c3     | date    |           |                                | plain    |              | 
 Server: s0
 FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
 Has OIDs: no
@@ -730,19 +730,22 @@ ERROR:  cannot alter system column "xmin"
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c7 OPTIONS (ADD p1 'v1', ADD p2 'v2'),
                         ALTER COLUMN c8 OPTIONS (ADD p1 'v1', ADD p2 'v2');
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 OPTIONS (SET p2 'V2', DROP p1);
+ALTER FOREIGN TABLE ft1 ALTER COLUMN c1 SET STATISTICS 10000;
+ALTER FOREIGN TABLE ft1 ALTER COLUMN c1 SET (n_distinct = 100);
+ALTER FOREIGN TABLE ft1 ALTER COLUMN c8 SET STATISTICS -1;
 \d+ ft1
-                               Foreign table "public.ft1"
- Column |  Type   | Modifiers |          FDW Options           | Storage  | Description 
---------+---------+-----------+--------------------------------+----------+-------------
- c1     | integer | not null  | ("param 1" 'val1')             | plain    | 
- c2     | text    |           | (param2 'val2', param3 'val3') | extended | 
- c3     | date    |           |                                | plain    | 
- c4     | integer |           |                                | plain    | 
- c6     | integer | not null  |                                | plain    | 
- c7     | integer |           | (p1 'v1', p2 'v2')             | plain    | 
- c8     | text    |           | (p2 'V2')                      | extended | 
- c9     | integer |           |                                | plain    | 
- c10    | integer |           | (p1 'v1')                      | plain    | 
+                                      Foreign table "public.ft1"
+ Column |  Type   | Modifiers |          FDW Options           | Storage  | Stats target | Description 
+--------+---------+-----------+--------------------------------+----------+--------------+-------------
+ c1     | integer | not null  | ("param 1" 'val1')             | plain    | 10000        | 
+ c2     | text    |           | (param2 'val2', param3 'val3') | extended |              | 
+ c3     | date    |           |                                | plain    |              | 
+ c4     | integer |           |                                | plain    |              | 
+ c6     | integer | not null  |                                | plain    |              | 
+ c7     | integer |           | (p1 'v1', p2 'v2')             | plain    |              | 
+ c8     | text    |           | (p2 'V2')                      | extended |              | 
+ c9     | integer |           |                                | plain    |              | 
+ c10    | integer |           | (p1 'v1')                      | plain    |              | 
 Server: s0
 FDW Options: (delimiter ',', quote '"', "be quoted" 'value')
 Has OIDs: no
