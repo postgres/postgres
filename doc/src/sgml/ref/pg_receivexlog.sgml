@@ -254,7 +254,7 @@ PostgreSQL documentation
    <literal>mydbserver</literal> and store it in the local directory
    <filename>/usr/local/pgsql/archive</filename>:
 <screen>
-<prompt>$</prompt> <userinput>pg_receivexlog -h mydbserver -D /home/pgbackup/archive</userinput>
+<prompt>$</prompt> <userinput>pg_receivexlog -h mydbserver -D /usr/local/pgsql/archive</userinput>
 </screen></para>
  </refsect1>
 
