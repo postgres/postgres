@@ -5172,7 +5172,7 @@
      </row>
      <row>
       <entry><structfield>provider</structfield></entry>
-      <entry><type>name</type></entry>
+      <entry><type>text</type></entry>
       <entry></entry>
       <entry>The label provider associated with this label.</entry>
      </row>
@@ -6399,6 +6399,18 @@
        the type's default value, which can be fed to the type's input
        converter to produce a constant.
       </para></entry>
+     </row>
+
+     <row>
+      <entry><structfield>typacl</structfield></entry>
+      <entry><type>aclitem[]</type></entry>
+      <entry></entry>
+      <entry>
+       Access privileges; see
+       <xref linkend="sql-grant"> and
+       <xref linkend="sql-revoke">
+       for details
+      </entry>
      </row>
     </tbody>
    </tgroup>
@@ -8162,6 +8174,16 @@
      </row>
 
      <row>
+      <entry><structfield>userepl</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       User can initiate streaming replication and put the system in and
+       out of backup mode.
+      </entry>
+     </row>
+
+     <row>
       <entry><structfield>passwd</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
@@ -8596,8 +8618,8 @@
 
      <row>
       <entry><structfield>usesysid</structfield></entry>
-      <entry><type>int4</type></entry>
-      <entry>User ID (arbitrary number used to reference this user)</entry>
+      <entry><type>oid</type></entry>
+      <entry>ID of this user</entry>
      </row>
 
      <row>
@@ -8618,6 +8640,15 @@
       <entry>
        User can update system catalogs.  (Even a superuser cannot do
        this unless this column is true.)
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>userepl</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry>
+       User can initiate streaming replication and put the system in and
+       out of backup mode.
       </entry>
      </row>
 
@@ -8692,8 +8723,8 @@
 
      <row>
       <entry><structfield>srvname</structfield></entry>
-      <entry><type>text</type></entry>
-      <entry></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-foreign-server"><structname>pg_foreign_server</structname></link>.srvname</literal></entry>
       <entry>
        Name of the foreign server
       </entry>
