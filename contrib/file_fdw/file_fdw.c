@@ -125,7 +125,9 @@ static void fileBeginForeignScan(ForeignScanState *node, int eflags);
 static TupleTableSlot *fileIterateForeignScan(ForeignScanState *node);
 static void fileReScanForeignScan(ForeignScanState *node);
 static void fileEndForeignScan(ForeignScanState *node);
-static AcquireSampleRowsFunc fileAnalyzeForeignTable(Relation relation);
+static bool fileAnalyzeForeignTable(Relation relation,
+						AcquireSampleRowsFunc *func,
+						BlockNumber *totalpages);
 
 /*
  * Helper functions
@@ -141,8 +143,7 @@ static void estimate_costs(PlannerInfo *root, RelOptInfo *baserel,
 			   Cost *startup_cost, Cost *total_cost);
 static int	file_acquire_sample_rows(Relation onerel, int elevel,
 						 HeapTuple *rows, int targrows,
-						 double *totalrows, double *totaldeadrows,
-						 BlockNumber *totalpages);
+						 double *totalrows, double *totaldeadrows);
 
 
 /*
@@ -656,10 +657,39 @@ fileEndForeignScan(ForeignScanState *node)
  * fileAnalyzeForeignTable
  *		Test whether analyzing this foreign table is supported
  */
-static AcquireSampleRowsFunc
-fileAnalyzeForeignTable(Relation relation)
+static bool
+fileAnalyzeForeignTable(Relation relation,
+						AcquireSampleRowsFunc *func,
+						BlockNumber *totalpages)
 {
-	return file_acquire_sample_rows;
+	char	   *filename;
+	List	   *options;
+	struct stat	stat_buf;
+
+	/* Fetch options of foreign table */
+	fileGetOptions(RelationGetRelid(relation), &filename, &options);
+
+	/*
+	 * Get size of the file.  (XXX if we fail here, would it be better to
+	 * just return false to skip analyzing the table?)
+	 */
+	if (stat(filename, &stat_buf) < 0)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not stat file \"%s\": %m",
+						filename)));
+
+	/*
+	 * Convert size to pages.  Must return at least 1 so that we can tell
+	 * later on that pg_class.relpages is not default.
+	 */
+	*totalpages = (stat_buf.st_size + (BLCKSZ - 1)) / BLCKSZ;
+	if (*totalpages < 1)
+		*totalpages = 1;
+
+	*func = file_acquire_sample_rows;
+
+	return true;
 }
 
 /*
@@ -780,8 +810,7 @@ estimate_costs(PlannerInfo *root, RelOptInfo *baserel,
  * which must have at least targrows entries.
  * The actual number of rows selected is returned as the function result.
  * We also count the total number of rows in the file and return it into
- * *totalrows, and return the file's physical size in *totalpages.
- * Note that *totaldeadrows is always set to 0.
+ * *totalrows.  Note that *totaldeadrows is always set to 0.
  *
  * Note that the returned list of rows is not always in order by physical
  * position in the file.  Therefore, correlation estimates derived later
@@ -791,8 +820,7 @@ estimate_costs(PlannerInfo *root, RelOptInfo *baserel,
 static int
 file_acquire_sample_rows(Relation onerel, int elevel,
 						 HeapTuple *rows, int targrows,
-						 double *totalrows, double *totaldeadrows,
-						 BlockNumber *totalpages)
+						 double *totalrows, double *totaldeadrows)
 {
 	int			numrows = 0;
 	double		rowstoskip = -1; /* -1 means not set yet */
@@ -802,7 +830,6 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 	bool	   *nulls;
 	bool		found;
 	char	   *filename;
-	struct stat	stat_buf;
 	List	   *options;
 	CopyState	cstate;
 	ErrorContextCallback errcontext;
@@ -818,22 +845,6 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 
 	/* Fetch options of foreign table */
 	fileGetOptions(RelationGetRelid(onerel), &filename, &options);
-
-	/*
-	 * Get size of the file.
-	 */
-	if (stat(filename, &stat_buf) < 0)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not stat file \"%s\": %m",
-						filename)));
-
-	/*
-	 * Convert size to pages for use in I/O cost estimate.
-	 */
-	*totalpages = (stat_buf.st_size + (BLCKSZ - 1)) / BLCKSZ;
-	if (*totalpages < 1)
-		*totalpages = 1;
 
 	/*
 	 * Create CopyState from FDW options.
@@ -931,10 +942,10 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 	 * Emit some interesting relation info
 	 */
 	ereport(elevel,
-			(errmsg("\"%s\": scanned %u pages containing %.0f rows; "
+			(errmsg("\"%s\": file contains %.0f rows; "
 					"%d rows in sample",
 					RelationGetRelationName(onerel),
-					*totalpages, *totalrows, numrows)));
+					*totalrows, numrows)));
 
 	return numrows;
 }

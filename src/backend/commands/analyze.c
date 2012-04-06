@@ -84,7 +84,8 @@ static BufferAccessStrategy vac_strategy;
 
 
 static void do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
-			   AcquireSampleRowsFunc acquirefunc, bool inh, int elevel);
+			   AcquireSampleRowsFunc acquirefunc, BlockNumber relpages,
+			   bool inh, int elevel);
 static void BlockSampler_Init(BlockSampler bs, BlockNumber nblocks,
 				  int samplesize);
 static bool BlockSampler_HasMore(BlockSampler bs);
@@ -97,8 +98,7 @@ static VacAttrStats *examine_attribute(Relation onerel, int attnum,
 				  Node *index_expr);
 static int	acquire_sample_rows(Relation onerel, int elevel,
 					HeapTuple *rows, int targrows,
-					double *totalrows, double *totaldeadrows,
-					BlockNumber *totalpages);
+					double *totalrows, double *totaldeadrows);
 static int	compare_rows(const void *a, const void *b);
 static int	acquire_inherited_sample_rows(Relation onerel, int elevel,
 							  HeapTuple *rows, int targrows,
@@ -117,7 +117,8 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
 {
 	Relation	onerel;
 	int			elevel;
-	AcquireSampleRowsFunc acquirefunc;
+	AcquireSampleRowsFunc acquirefunc = NULL;
+	BlockNumber	relpages = 0;
 
 	/* Select logging level */
 	if (vacstmt->options & VACOPT_VERBOSE)
@@ -183,51 +184,6 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
 	}
 
 	/*
-	 * Check that it's a plain table or foreign table; we used to do this
-	 * in get_rel_oids() but seems safer to check after we've locked the
-	 * relation.
-	 */
-	if (onerel->rd_rel->relkind == RELKIND_RELATION)
-	{
-		/* Regular table, so we'll use the regular row acquisition function */
-		acquirefunc = acquire_sample_rows;
-	}
-	else if (onerel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
-	{
-		/*
-		 * For a foreign table, call the FDW's hook function to see whether it
-		 * supports analysis.
-		 */
-		FdwRoutine *fdwroutine;
-
-		fdwroutine = GetFdwRoutineByRelId(RelationGetRelid(onerel));
-
-		if (fdwroutine->AnalyzeForeignTable != NULL)
-			acquirefunc = fdwroutine->AnalyzeForeignTable(onerel);
-		else
-			acquirefunc = NULL;
-
-		if (acquirefunc == NULL)
-		{
-			ereport(WARNING,
-					(errmsg("skipping \"%s\" --- cannot analyze this foreign table",
-							RelationGetRelationName(onerel))));
-			relation_close(onerel, ShareUpdateExclusiveLock);
-			return;
-		}
-	}
-	else
-	{
-		/* No need for a WARNING if we already complained during VACUUM */
-		if (!(vacstmt->options & VACOPT_VACUUM))
-			ereport(WARNING,
-					(errmsg("skipping \"%s\" --- cannot analyze non-tables or special system tables",
-							RelationGetRelationName(onerel))));
-		relation_close(onerel, ShareUpdateExclusiveLock);
-		return;
-	}
-
-	/*
 	 * Silently ignore tables that are temp tables of other backends ---
 	 * trying to analyze these is rather pointless, since their contents are
 	 * probably not up-to-date on disk.  (We don't throw a warning here; it
@@ -249,6 +205,54 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
 	}
 
 	/*
+	 * Check that it's a plain table or foreign table; we used to do this
+	 * in get_rel_oids() but seems safer to check after we've locked the
+	 * relation.
+	 */
+	if (onerel->rd_rel->relkind == RELKIND_RELATION)
+	{
+		/* Regular table, so we'll use the regular row acquisition function */
+		acquirefunc = acquire_sample_rows;
+		/* Also get regular table's size */
+		relpages = RelationGetNumberOfBlocks(onerel);
+	}
+	else if (onerel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
+	{
+		/*
+		 * For a foreign table, call the FDW's hook function to see whether it
+		 * supports analysis.
+		 */
+		FdwRoutine *fdwroutine;
+		bool		ok = false;
+
+		fdwroutine = GetFdwRoutineByRelId(RelationGetRelid(onerel));
+
+		if (fdwroutine->AnalyzeForeignTable != NULL)
+			ok = fdwroutine->AnalyzeForeignTable(onerel,
+												 &acquirefunc,
+												 &relpages);
+
+		if (!ok)
+		{
+			ereport(WARNING,
+					(errmsg("skipping \"%s\" --- cannot analyze this foreign table",
+							RelationGetRelationName(onerel))));
+			relation_close(onerel, ShareUpdateExclusiveLock);
+			return;
+		}
+	}
+	else
+	{
+		/* No need for a WARNING if we already complained during VACUUM */
+		if (!(vacstmt->options & VACOPT_VACUUM))
+			ereport(WARNING,
+					(errmsg("skipping \"%s\" --- cannot analyze non-tables or special system tables",
+							RelationGetRelationName(onerel))));
+		relation_close(onerel, ShareUpdateExclusiveLock);
+		return;
+	}
+
+	/*
 	 * OK, let's do it.  First let other backends know I'm in ANALYZE.
 	 */
 	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
@@ -258,13 +262,13 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
 	/*
 	 * Do the normal non-recursive ANALYZE.
 	 */
-	do_analyze_rel(onerel, vacstmt, acquirefunc, false, elevel);
+	do_analyze_rel(onerel, vacstmt, acquirefunc, relpages, false, elevel);
 
 	/*
 	 * If there are child tables, do recursive ANALYZE.
 	 */
 	if (onerel->rd_rel->relhassubclass)
-		do_analyze_rel(onerel, vacstmt, acquirefunc, true, elevel);
+		do_analyze_rel(onerel, vacstmt, acquirefunc, relpages, true, elevel);
 
 	/*
 	 * Close source relation now, but keep lock so that no one deletes it
@@ -293,7 +297,8 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
  */
 static void
 do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
-			   AcquireSampleRowsFunc acquirefunc, bool inh, int elevel)
+			   AcquireSampleRowsFunc acquirefunc, BlockNumber relpages,
+			   bool inh, int elevel)
 {
 	int			attr_cnt,
 				tcnt,
@@ -308,7 +313,6 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 				numrows;
 	double		totalrows,
 				totaldeadrows;
-	BlockNumber totalpages;
 	HeapTuple  *rows;
 	PGRUsage	ru0;
 	TimestampTz starttime = 0;
@@ -485,17 +489,13 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 	 */
 	rows = (HeapTuple *) palloc(targrows * sizeof(HeapTuple));
 	if (inh)
-	{
 		numrows = acquire_inherited_sample_rows(onerel, elevel,
 												rows, targrows,
 												&totalrows, &totaldeadrows);
-		totalpages = 0;			/* not needed in this path */
-	}
 	else
 		numrows = (*acquirefunc) (onerel, elevel,
 								  rows, targrows,
-								  &totalrows, &totaldeadrows,
-								  &totalpages);
+								  &totalrows, &totaldeadrows);
 
 	/*
 	 * Compute the statistics.	Temporary results during the calculations for
@@ -576,7 +576,7 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 	 */
 	if (!inh)
 		vac_update_relstats(onerel,
-							totalpages,
+							relpages,
 							totalrows,
 							visibilitymap_count(onerel),
 							hasindex,
@@ -1032,7 +1032,6 @@ BlockSampler_Next(BlockSampler bs)
  * The actual number of rows selected is returned as the function result.
  * We also estimate the total numbers of live and dead rows in the table,
  * and return them into *totalrows and *totaldeadrows, respectively.
- * Also, the number of pages in the relation is returned into *totalpages.
  *
  * The returned list of tuples is in order by physical position in the table.
  * (We will rely on this later to derive correlation estimates.)
@@ -1061,8 +1060,7 @@ BlockSampler_Next(BlockSampler bs)
 static int
 acquire_sample_rows(Relation onerel, int elevel,
 					HeapTuple *rows, int targrows,
-					double *totalrows, double *totaldeadrows,
-					BlockNumber *totalpages)
+					double *totalrows, double *totaldeadrows)
 {
 	int			numrows = 0;	/* # rows now in reservoir */
 	double		samplerows = 0; /* total # rows collected */
@@ -1077,7 +1075,6 @@ acquire_sample_rows(Relation onerel, int elevel,
 	Assert(targrows > 0);
 
 	totalblocks = RelationGetNumberOfBlocks(onerel);
-	*totalpages = totalblocks;
 
 	/* Need a cutoff xmin for HeapTupleSatisfiesVacuum */
 	OldestXmin = GetOldestXmin(onerel->rd_rel->relisshared, true);
@@ -1438,7 +1435,7 @@ compare_rows(const void *a, const void *b)
 /*
  * acquire_inherited_sample_rows -- acquire sample rows from inheritance tree
  *
- * This has largely the same API as acquire_sample_rows, except that rows are
+ * This has the same API as acquire_sample_rows, except that rows are
  * collected from all inheritance children as well as the specified table.
  * We fail and return zero if there are no inheritance children.
  */
@@ -1481,11 +1478,6 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 	/*
 	 * Count the blocks in all the relations.  The result could overflow
 	 * BlockNumber, so we use double arithmetic.
-	 *
-	 * XXX eventually we will probably want to allow child tables that are
-	 * foreign tables.  Since we can't do RelationGetNumberOfBlocks on a
-	 * foreign table, it's not very clear what fraction of the total to assign
-	 * to it here.
 	 */
 	rels = (Relation *) palloc(list_length(tableOIDs) * sizeof(Relation));
 	relblocks = (double *) palloc(list_length(tableOIDs) * sizeof(double));
@@ -1540,7 +1532,6 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 				int			childrows;
 				double		trows,
 							tdrows;
-				BlockNumber	tpages;
 
 				/* Fetch a random sample of the child's rows */
 				childrows = acquire_sample_rows(childrel,
@@ -1548,8 +1539,7 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 												rows + numrows,
 												childtargrows,
 												&trows,
-												&tdrows,
-												&tpages);
+												&tdrows);
 
 				/* We may need to convert from child's rowtype to parent's */
 				if (childrows > 0 &&

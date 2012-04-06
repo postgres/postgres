@@ -53,11 +53,11 @@ typedef void (*EndForeignScan_function) (ForeignScanState *node);
 typedef int (*AcquireSampleRowsFunc) (Relation relation, int elevel,
 									  HeapTuple *rows, int targrows,
 									  double *totalrows,
-									  double *totaldeadrows,
-									  BlockNumber *totalpages);
+									  double *totaldeadrows);
 
-typedef AcquireSampleRowsFunc (*AnalyzeForeignTable_function) (Relation relation);
-
+typedef bool (*AnalyzeForeignTable_function) (Relation relation,
+											  AcquireSampleRowsFunc *func,
+											  BlockNumber *totalpages);
 
 /*
  * FdwRoutine is the struct returned by a foreign-data wrapper's handler
