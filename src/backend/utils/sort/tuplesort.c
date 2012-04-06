@@ -345,6 +345,12 @@ struct Tuplesortstate
 	SortSupport	sortKeys;		/* array of length nKeys */
 
 	/*
+	 * This variable is shared by the single-key MinimalTuple case and the
+	 * Datum case.  Otherwise it's NULL.
+	 */
+	SortSupport	onlyKey;
+
+	/*
 	 * These variables are specific to the CLUSTER case; they are set by
 	 * tuplesort_begin_cluster.  Note CLUSTER also uses tupDesc and
 	 * indexScanKey.
@@ -364,9 +370,6 @@ struct Tuplesortstate
 
 	/* These are specific to the index_hash subcase: */
 	uint32		hash_mask;		/* mask for sortable part of hash code */
-
-	/* This is initialized when, and only when, there's just one key. */
-	SortSupport	onlyKey;
 
 	/*
 	 * These variables are specific to the Datum case; they are set by
@@ -497,7 +500,8 @@ static void reversedirection_datum(Tuplesortstate *state);
 static void free_sort_tuple(Tuplesortstate *state, SortTuple *stup);
 
 /*
- * Special version of qsort, just for SortTuple objects.
+ * Special versions of qsort just for SortTuple objects.  We have one for the
+ * single-key case (qsort_ssup) and one for multi-key cases (qsort_tuple).
  */
 #include "qsort_tuple.c"
 
@@ -1236,6 +1240,7 @@ tuplesort_performsort(Tuplesortstate *state)
 			 */
 			if (state->memtupcount > 1)
 			{
+				/* Can we use the single-key sort function? */
 				if (state->onlyKey != NULL)
 					qsort_ssup(state->memtuples, state->memtupcount,
 							   state->onlyKey);
@@ -3061,7 +3066,6 @@ comparetup_index_btree(const SortTuple *a, const SortTuple *b,
 	 * they *must* get compared at some stage of the sort --- otherwise the
 	 * sort algorithm wouldn't have checked whether one must appear before the
 	 * other.
-	 *
 	 */
 	if (state->enforceUnique && !equal_hasnull)
 	{
@@ -3243,9 +3247,9 @@ reversedirection_index_hash(Tuplesortstate *state)
 static int
 comparetup_datum(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 {
-	/* Not currently needed */
-	elog(ERROR, "comparetup_datum() should not be called");
-	return 0;
+	return ApplySortComparator(a->datum1, a->isnull1,
+							   b->datum1, b->isnull1,
+							   state->onlyKey);
 }
 
 static void
