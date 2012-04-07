@@ -1292,8 +1292,7 @@ index_drop(Oid indexId, bool concurrent)
 	bool		hasexprs;
 	LockRelId	heaprelid,
 				indexrelid;
-	LOCKTAG		heaplocktag,
-				indexlocktag;
+	LOCKTAG		heaplocktag;
 	VirtualTransactionId *old_lockholders;
 	Form_pg_index indexForm;
 
@@ -1366,7 +1365,6 @@ index_drop(Oid indexId, bool concurrent)
 		heap_close(userHeapRelation, NoLock);
 
 		indexrelid = userIndexRelation->rd_lockInfo.lockRelId;
-		SET_LOCKTAG_RELATION(indexlocktag, indexrelid.dbId, indexrelid.relId);
 		index_close(userIndexRelation, NoLock);
 
 		/*
