@@ -346,7 +346,7 @@ struct Tuplesortstate
 
 	/*
 	 * This variable is shared by the single-key MinimalTuple case and the
-	 * Datum case.  Otherwise it's NULL.
+	 * Datum case (which both use qsort_ssup()).  Otherwise it's NULL.
 	 */
 	SortSupport	onlyKey;
 
@@ -500,8 +500,11 @@ static void reversedirection_datum(Tuplesortstate *state);
 static void free_sort_tuple(Tuplesortstate *state, SortTuple *stup);
 
 /*
- * Special versions of qsort just for SortTuple objects.  We have one for the
- * single-key case (qsort_ssup) and one for multi-key cases (qsort_tuple).
+ * Special versions of qsort just for SortTuple objects.  qsort_tuple() sorts
+ * any variant of SortTuples, using the appropriate comparetup function.
+ * qsort_ssup() is specialized for the case where the comparetup function
+ * reduces to ApplySortComparator(), that is single-key MinimalTuple sorts
+ * and Datum sorts.
  */
 #include "qsort_tuple.c"
 
