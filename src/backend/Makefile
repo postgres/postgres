@@ -317,7 +317,7 @@ maintainer-clean: distclean
 	      utils/fmgrtab.c \
 	      utils/errcodes.h \
 	      utils/misc/guc-file.c \
-	      utils/misc/qsort_tuple.c
+	      utils/sort/qsort_tuple.c
 
 
 ##########################################################################
