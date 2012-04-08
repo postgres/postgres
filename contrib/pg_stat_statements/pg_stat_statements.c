@@ -72,8 +72,9 @@ static const uint32 PGSS_FILE_HEADER = 0x20120328;
 /* XXX: Should USAGE_EXEC reflect execution time and/or buffer usage? */
 #define USAGE_EXEC(duration)	(1.0)
 #define USAGE_INIT				(1.0)	/* including initial planning */
-#define USAGE_NON_EXEC_STICK	(3.0)	/* to make new entries sticky */
+#define ASSUMED_MEDIAN_INIT		(10.0)	/* initial assumed median usage */
 #define USAGE_DECREASE_FACTOR	(0.99)	/* decreased every entry_dealloc */
+#define STICKY_DECREASE_FACTOR	(0.50)	/* factor for sticky entries */
 #define USAGE_DEALLOC_PERCENT	5		/* free this % of entries at once */
 
 #define JUMBLE_SIZE				1024	/* query serialization buffer size */
@@ -139,6 +140,7 @@ typedef struct pgssSharedState
 {
 	LWLockId	lock;			/* protects hashtable search/modification */
 	int			query_size;		/* max query length in bytes */
+	double		cur_median_usage;	/* current median usage in hashtable */
 } pgssSharedState;
 
 /*
@@ -413,6 +415,7 @@ pgss_shmem_startup(void)
 		/* First time through ... */
 		pgss->lock = LWLockAssign();
 		pgss->query_size = pgstat_track_activity_query_size;
+		pgss->cur_median_usage = ASSUMED_MEDIAN_INIT;
 	}
 
 	/* Be sure everyone agrees on the hash table entry size */
@@ -908,7 +911,7 @@ pgss_match_fn(const void *key1, const void *key2, Size keysize)
 /*
  * Given an arbitrarily long query string, produce a hash for the purposes of
  * identifying the query, without normalizing constants.  Used when hashing
- * utility statements, or for legacy compatibility mode.
+ * utility statements.
  */
 static uint32
 pgss_hash_string(const char *str)
@@ -951,17 +954,28 @@ pgss_store(const char *query, uint32 queryId,
 
 	entry = (pgssEntry *) hash_search(pgss_hash, &key, HASH_FIND, NULL);
 
-	/*
-	 * When creating an entry just to store the normalized string, make it
-	 * artificially sticky so that it will probably still be there when
-	 * executed.  Strictly speaking, query strings are normalized on a best
-	 * effort basis, though it would be difficult to demonstrate this even
-	 * under artificial conditions.
-	 */
-	if (jstate && !entry)
-		usage = USAGE_NON_EXEC_STICK;
+	if (jstate)
+	{
+		/*
+		 * When creating an entry just to store the normalized string, make it
+		 * artificially sticky so that it will probably still be there when
+		 * the query gets executed.  We do this by giving it a median usage
+		 * value rather than the normal value.  (Strictly speaking, query
+		 * strings are normalized on a best effort basis, though it would be
+		 * difficult to demonstrate this even under artificial conditions.)
+		 * But if we found the entry already present, don't let this call
+		 * increment its usage.
+		 */
+		if (!entry)
+			usage = pgss->cur_median_usage;
+		else
+			usage = 0;
+	}
 	else
+	{
+		/* normal case, increment usage by normal amount */
 		usage = USAGE_EXEC(duration);
+	}
 
 	if (!entry)
 	{
@@ -1185,8 +1199,8 @@ pg_stat_statements(PG_FUNCTION_ARGS)
 			values[i++] = Float8GetDatumFast(tmp.time_write);
 		}
 
-		Assert(i == sql_supports_v1_1_counters ?
-			   PG_STAT_STATEMENTS_COLS : PG_STAT_STATEMENTS_COLS_V1_0);
+		Assert(i == (sql_supports_v1_1_counters ?
+					 PG_STAT_STATEMENTS_COLS : PG_STAT_STATEMENTS_COLS_V1_0));
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
@@ -1288,7 +1302,11 @@ entry_dealloc(void)
 	int			nvictims;
 	int			i;
 
-	/* Sort entries by usage and deallocate USAGE_DEALLOC_PERCENT of them. */
+	/*
+	 * Sort entries by usage and deallocate USAGE_DEALLOC_PERCENT of them.
+	 * While we're scanning the table, apply the decay factor to the usage
+	 * values.
+	 */
 
 	entries = palloc(hash_get_num_entries(pgss_hash) * sizeof(pgssEntry *));
 
@@ -1297,10 +1315,19 @@ entry_dealloc(void)
 	while ((entry = hash_seq_search(&hash_seq)) != NULL)
 	{
 		entries[i++] = entry;
-		entry->counters.usage *= USAGE_DECREASE_FACTOR;
+		/* "Sticky" entries get a different usage decay rate. */
+		if (entry->counters.calls == 0)
+			entry->counters.usage *= STICKY_DECREASE_FACTOR;
+		else
+			entry->counters.usage *= USAGE_DECREASE_FACTOR;
 	}
 
 	qsort(entries, i, sizeof(pgssEntry *), entry_cmp);
+
+	/* Also, record the (approximate) median usage */
+	if (i > 0)
+		pgss->cur_median_usage = entries[i / 2]->counters.usage;
+
 	nvictims = Max(10, i * USAGE_DEALLOC_PERCENT / 100);
 	nvictims = Min(nvictims, i);
 
