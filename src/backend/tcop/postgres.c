@@ -3508,9 +3508,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 	SetProcessingMode(InitProcessing);
 
-	/* Set up reference point for stack depth checking */
-	set_stack_base();
-
 	/* Compute paths, if we didn't inherit them from postmaster */
 	if (my_exec_path[0] == '\0')
 	{
