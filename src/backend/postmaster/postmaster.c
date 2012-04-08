@@ -971,6 +971,11 @@ PostmasterMain(int argc, char *argv[])
 	set_max_safe_fds();
 
 	/*
+	 * Set reference point for stack-depth checking.
+	 */
+	set_stack_base();
+
+	/*
 	 * Initialize the list of active backends.
 	 */
 	BackendList = DLNewList();
@@ -3976,6 +3981,11 @@ SubPostmasterMain(int argc, char *argv[])
 	/* Read in the variables file */
 	memset(&port, 0, sizeof(Port));
 	read_backend_variables(argv[2], &port);
+
+	/*
+	 * Set reference point for stack-depth checking
+	 */
+	set_stack_base();
 
 	/*
 	 * Set up memory area for GSS information. Mirrors the code in ConnCreate
