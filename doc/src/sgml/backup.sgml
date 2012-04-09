@@ -1246,6 +1246,17 @@ tar -rf /var/lib/pgsql/backup.tar /var/lib/pgsql/archive/
       Please remember to add error handling to your backup scripts.
      </para>
 
+     <para>
+      If archive storage size is a concern, you can use
+      <application>gzip</application> to compress the archive files:
+<programlisting>
+archive_command = 'gzip &lt; %p &gt; /var/lib/pgsql/archive/%f'
+</programlisting>
+      You will then need to use <application>gunzip</> during recovery:
+<programlisting>
+restore_command = 'gunzip &lt; /mnt/server/archivedir/%f &gt; %p'
+</programlisting>
+     </para>
     </sect3>
 
     <sect3 id="backup-scripts">
