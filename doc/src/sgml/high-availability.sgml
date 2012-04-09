@@ -140,7 +140,7 @@ protocol to make nodes agree on a serializable transactional order.
   </varlistentry>
 
   <varlistentry>
-   <term>Warm and Hot Standby Using Point-In-Time Recovery (<acronym>PITR</>)</term>
+   <term>Transaction Log Shipping</term>
    <listitem>
 
     <para>
@@ -148,11 +148,11 @@ protocol to make nodes agree on a serializable transactional order.
      stream of write-ahead log (<acronym>WAL</>)
      records.  If the main server fails, the standby contains
      almost all of the data of the main server, and can be quickly
-     made the new master database server.  This is asynchronous and
-     can only be done for the entire database server.
+     made the new master database server.  This can be synchronous or
+     asynchronous and can only be done for the entire database server.
     </para>
     <para>
-     A PITR standby server can be implemented using file-based log shipping
+     A standby server can be implemented using file-based log shipping
      (<xref linkend="warm-standby">) or streaming replication (see
      <xref linkend="streaming-replication">), or a combination of both. For
      information on hot standby, see <xref linkend="hot-standby">.
@@ -291,7 +291,7 @@ protocol to make nodes agree on a serializable transactional order.
      <entry>Feature</entry>
      <entry>Shared Disk Failover</entry>
      <entry>File System Replication</entry>
-     <entry>Hot/Warm Standby Using PITR</entry>
+     <entry>Transaction Log Shipping</entry>
      <entry>Trigger-Based Master-Standby Replication</entry>
      <entry>Statement-Based Replication Middleware</entry>
      <entry>Asynchronous Multimaster Replication</entry>
@@ -305,7 +305,7 @@ protocol to make nodes agree on a serializable transactional order.
      <entry>Most Common Implementation</entry>
      <entry align="center">NAS</entry>
      <entry align="center">DRBD</entry>
-     <entry align="center">PITR</entry>
+     <entry align="center">Streaming Repl.</entry>
      <entry align="center">Slony</entry>
      <entry align="center">pgpool-II</entry>
      <entry align="center">Bucardo</entry>
@@ -360,7 +360,7 @@ protocol to make nodes agree on a serializable transactional order.
      <entry>No waiting for multiple servers</entry>
      <entry align="center">&bull;</entry>
      <entry align="center"></entry>
-     <entry align="center">&bull;</entry>
+     <entry align="center">with sync off</entry>
      <entry align="center">&bull;</entry>
      <entry align="center"></entry>
      <entry align="center">&bull;</entry>
@@ -371,7 +371,7 @@ protocol to make nodes agree on a serializable transactional order.
      <entry>Master failure will never lose data</entry>
      <entry align="center">&bull;</entry>
      <entry align="center">&bull;</entry>
-     <entry align="center"></entry>
+     <entry align="center">with sync on</entry>
      <entry align="center"></entry>
      <entry align="center">&bull;</entry>
      <entry align="center"></entry>
@@ -382,7 +382,7 @@ protocol to make nodes agree on a serializable transactional order.
      <entry>Standby accept read-only queries</entry>
      <entry align="center"></entry>
      <entry align="center"></entry>
-     <entry align="center">Hot only</entry>
+     <entry align="center">with hot</entry>
      <entry align="center">&bull;</entry>
      <entry align="center">&bull;</entry>
      <entry align="center">&bull;</entry>
