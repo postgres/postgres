@@ -250,7 +250,8 @@ static void pgss_store(const char *query, uint32 queryId,
 		   const BufferUsage *bufusage,
 		   pgssJumbleState * jstate);
 static Size pgss_memsize(void);
-static pgssEntry *entry_alloc(pgssHashKey *key, const char *query, int query_len);
+static pgssEntry *entry_alloc(pgssHashKey *key, const char *query,
+							  int query_len, bool sticky);
 static void entry_dealloc(void);
 static void entry_reset(void);
 static void AppendJumble(pgssJumbleState * jstate,
@@ -502,7 +503,7 @@ pgss_shmem_startup(void)
 												   query_size - 1);
 
 		/* make the hashtable entry (discards old entries if too many) */
-		entry = entry_alloc(&temp.key, buffer, temp.query_len);
+		entry = entry_alloc(&temp.key, buffer, temp.query_len, false);
 
 		/* copy in the actual stats */
 		entry->counters = temp.counters;
@@ -596,7 +597,6 @@ static void
 pgss_post_parse_analyze(ParseState *pstate, Query *query)
 {
 	pgssJumbleState jstate;
-	BufferUsage bufusage;
 
 	/* Assert we didn't do this already */
 	Assert(query->queryId == 0);
@@ -646,16 +646,12 @@ pgss_post_parse_analyze(ParseState *pstate, Query *query)
 	 * there's no need for an early entry.
 	 */
 	if (jstate.clocations_count > 0)
-	{
-		memset(&bufusage, 0, sizeof(bufusage));
-
 		pgss_store(pstate->p_sourcetext,
 				   query->queryId,
 				   0,
 				   0,
-				   &bufusage,
+				   NULL,
 				   &jstate);
-	}
 }
 
 /*
@@ -924,7 +920,7 @@ pgss_hash_string(const char *str)
  *
  * If jstate is not NULL then we're trying to create an entry for which
  * we have no statistics as yet; we just want to record the normalized
- * query string while we can.
+ * query string.  total_time, rows, bufusage are ignored in this case.
  */
 static void
 pgss_store(const char *query, uint32 queryId,
@@ -933,7 +929,6 @@ pgss_store(const char *query, uint32 queryId,
 		   pgssJumbleState * jstate)
 {
 	pgssHashKey key;
-	double		usage;
 	pgssEntry  *entry;
 	char	   *norm_query = NULL;
 
@@ -954,29 +949,7 @@ pgss_store(const char *query, uint32 queryId,
 
 	entry = (pgssEntry *) hash_search(pgss_hash, &key, HASH_FIND, NULL);
 
-	if (jstate)
-	{
-		/*
-		 * When creating an entry just to store the normalized string, make it
-		 * artificially sticky so that it will probably still be there when
-		 * the query gets executed.  We do this by giving it a median usage
-		 * value rather than the normal value.  (Strictly speaking, query
-		 * strings are normalized on a best effort basis, though it would be
-		 * difficult to demonstrate this even under artificial conditions.)
-		 * But if we found the entry already present, don't let this call
-		 * increment its usage.
-		 */
-		if (!entry)
-			usage = pgss->cur_median_usage;
-		else
-			usage = 0;
-	}
-	else
-	{
-		/* normal case, increment usage by normal amount */
-		usage = USAGE_EXEC(duration);
-	}
-
+	/* Create new entry, if not present */
 	if (!entry)
 	{
 		int			query_len;
@@ -999,7 +972,7 @@ pgss_store(const char *query, uint32 queryId,
 			/* Acquire exclusive lock as required by entry_alloc() */
 			LWLockAcquire(pgss->lock, LW_EXCLUSIVE);
 
-			entry = entry_alloc(&key, norm_query, query_len);
+			entry = entry_alloc(&key, norm_query, query_len, true);
 		}
 		else
 		{
@@ -1016,31 +989,26 @@ pgss_store(const char *query, uint32 queryId,
 			/* Acquire exclusive lock as required by entry_alloc() */
 			LWLockAcquire(pgss->lock, LW_EXCLUSIVE);
 
-			entry = entry_alloc(&key, query, query_len);
+			entry = entry_alloc(&key, query, query_len, false);
 		}
 	}
 
-	/*
-	 * Grab the spinlock while updating the counters (see comment about
-	 * locking rules at the head of the file)
-	 */
+	/* Increment the counts, except when jstate is not NULL */
+	if (!jstate)
 	{
+		/*
+		 * Grab the spinlock while updating the counters (see comment about
+		 * locking rules at the head of the file)
+		 */
 		volatile pgssEntry *e = (volatile pgssEntry *) entry;
 
 		SpinLockAcquire(&e->mutex);
 
-		/*
-		 * If we're entering real data, "unstick" entry if it was previously
-		 * sticky, and then increment calls.
-		 */
-		if (!jstate)
-		{
-			if (e->counters.calls == 0)
-				e->counters.usage = USAGE_INIT;
+		/* "Unstick" entry if it was previously sticky */
+		if (e->counters.calls == 0)
+			e->counters.usage = USAGE_INIT;
 
-			e->counters.calls += 1;
-		}
-
+		e->counters.calls += 1;
 		e->counters.total_time += total_time;
 		e->counters.rows += rows;
 		e->counters.shared_blks_hit += bufusage->shared_blks_hit;
@@ -1055,7 +1023,7 @@ pgss_store(const char *query, uint32 queryId,
 		e->counters.temp_blks_written += bufusage->temp_blks_written;
 		e->counters.time_read += INSTR_TIME_GET_DOUBLE(bufusage->time_read);
 		e->counters.time_write += INSTR_TIME_GET_DOUBLE(bufusage->time_write);
-		e->counters.usage += usage;
+		e->counters.usage += USAGE_EXEC(duration);
 
 		SpinLockRelease(&e->mutex);
 	}
@@ -1235,13 +1203,19 @@ pgss_memsize(void)
  *
  * "query" need not be null-terminated; we rely on query_len instead
  *
+ * If "sticky" is true, make the new entry artificially sticky so that it will
+ * probably still be there when the query finishes execution.  We do this by
+ * giving it a median usage value rather than the normal value.  (Strictly
+ * speaking, query strings are normalized on a best effort basis, though it
+ * would be difficult to demonstrate this even under artificial conditions.)
+ *
  * Note: despite needing exclusive lock, it's not an error for the target
  * entry to already exist.	This is because pgss_store releases and
  * reacquires lock after failing to find a match; so someone else could
  * have made the entry while we waited to get exclusive lock.
  */
 static pgssEntry *
-entry_alloc(pgssHashKey *key, const char *query, int query_len)
+entry_alloc(pgssHashKey *key, const char *query, int query_len, bool sticky)
 {
 	pgssEntry  *entry;
 	bool		found;
@@ -1259,7 +1233,8 @@ entry_alloc(pgssHashKey *key, const char *query, int query_len)
 
 		/* reset the statistics */
 		memset(&entry->counters, 0, sizeof(Counters));
-		entry->counters.usage = USAGE_INIT;
+		/* set the appropriate initial usage count */
+		entry->counters.usage = sticky ? pgss->cur_median_usage : USAGE_INIT;
 		/* re-initialize the mutex each time ... we assume no one using it */
 		SpinLockInit(&entry->mutex);
 		/* ... and don't forget the query text */
