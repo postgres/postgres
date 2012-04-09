@@ -3182,8 +3182,13 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows)
 	double		numdistinct;
 	ListCell   *l;
 
-	/* We should not be called unless query has GROUP BY (or DISTINCT) */
-	Assert(groupExprs != NIL);
+	/*
+	 * If no grouping columns, there's exactly one group.  (This can't happen
+	 * for normal cases with GROUP BY or DISTINCT, but it is possible for
+	 * corner cases with set operations.)
+	 */
+	if (groupExprs == NIL)
+		return 1.0;
 
 	/*
 	 * Count groups derived from boolean grouping expressions.	For other
