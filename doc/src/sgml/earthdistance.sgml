@@ -79,7 +79,7 @@
       <entry><function>sec_to_gc(float8)</function></entry>
       <entry><type>float8</type></entry>
       <entry>Converts the normal straight line
-       (secant) distance between between two points on the surface of the Earth
+       (secant) distance between two points on the surface of the Earth
        to the great circle distance between them.
       </entry>
      </row>

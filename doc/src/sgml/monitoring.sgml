@@ -2188,7 +2188,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
     <row>
      <entry>wal-buffer-write-dirty-start</entry>
      <entry>()</entry>
-     <entry>Probe that fires when when a server process begins to write a
+     <entry>Probe that fires when a server process begins to write a
       dirty WAL buffer because no more WAL buffer space is available.
       (If this happens often, it implies that
       <xref linkend="guc-wal-buffers"> is too small.)</entry>
