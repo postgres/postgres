@@ -4066,32 +4066,13 @@ timestamp_part(PG_FUNCTION_ARGS)
 		switch (val)
 		{
 			case DTK_EPOCH:
-				{
-					int			tz;
-					TimestampTz timestamptz;
-
-					/*
-					 * convert to timestamptz to produce consistent results
-					 */
-					if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0)
-						ereport(ERROR,
-								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-								 errmsg("timestamp out of range")));
-
-					tz = DetermineTimeZoneOffset(tm, session_timezone);
-
-					if (tm2timestamp(tm, fsec, &tz, &timestamptz) != 0)
-						ereport(ERROR,
-								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-								 errmsg("timestamp out of range")));
-
 #ifdef HAVE_INT64_TIMESTAMP
-					result = (timestamptz - SetEpochTimestamp()) / 1000000.0;
+					result = (timestamp - SetEpochTimestamp()) / 1000000.0;
 #else
-					result = timestamptz - SetEpochTimestamp();
+					result = timestamp - SetEpochTimestamp();
 #endif
 					break;
-				}
+
 			case DTK_DOW:
 			case DTK_ISODOW:
 				if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0)

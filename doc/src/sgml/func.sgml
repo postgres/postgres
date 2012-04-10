@@ -6684,8 +6684,10 @@ SELECT EXTRACT(DOY FROM TIMESTAMP '2001-02-16 20:38:40');
       <term><literal>epoch</literal></term>
       <listitem>
        <para>
-        For <type>date</type> and <type>timestamp</type> values, the
+        For <type>timestamp with time zone</type> values, the
         number of seconds since 1970-01-01 00:00:00 UTC (can be negative);
+        for <type>date</type> and <type>timestamp</type> values, the
+        number of seconds since 1970-01-01 00:00:00 local time;
         for <type>interval</type> values, the total number
         of seconds in the interval
        </para>
