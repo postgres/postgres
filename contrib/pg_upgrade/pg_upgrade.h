@@ -109,7 +109,8 @@ typedef struct
 	char		relname[NAMEDATALEN];	/* relation name */
 	Oid			reloid;			/* relation oid */
 	Oid			relfilenode;	/* relation relfile node */
-	char		tablespace[MAXPGPATH];	/* relations tablespace path */
+	/* relation tablespace path, or "" for the cluster default */
+	char		tablespace[MAXPGPATH];	
 } RelInfo;
 
 typedef struct
