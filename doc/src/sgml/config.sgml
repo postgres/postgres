@@ -2784,8 +2784,7 @@ SET ENABLE_SEQSCAN TO OFF;
       planning using heuristic searching.  This reduces planning time for
       complex queries (those joining many relations), at the cost of producing
       plans that are sometimes inferior to those found by the normal
-      exhaustive-search algorithm.  Also, GEQO's searching is randomized and
-      therefore its plans may vary nondeterministically.
+      exhaustive-search algorithm.
       For more information see <xref linkend="geqo">.
      </para>
 
@@ -2824,9 +2823,11 @@ SET ENABLE_SEQSCAN TO OFF;
         this many <literal>FROM</> items involved. (Note that a
         <literal>FULL OUTER JOIN</> construct counts as only one <literal>FROM</>
         item.) The default is 12. For simpler queries it is usually best
-        to use the deterministic, exhaustive planner, but for queries with
-        many tables the deterministic planner takes too long, often
-        longer than the penalty of executing a suboptimal plan.
+        to use the regular, exhaustive-search planner, but for queries with
+        many tables the exhaustive search takes too long, often
+        longer than the penalty of executing a suboptimal plan.  Thus,
+        a threshold on the size of the query is a convenient way to manage
+        use of GEQO.
        </para>
       </listitem>
      </varlistentry>
@@ -3038,7 +3039,7 @@ SELECT * FROM parent WHERE key = 2400;
 
        <para>
         Setting this value to <xref linkend="guc-geqo-threshold"> or more
-        may trigger use of the GEQO planner, resulting in nondeterministic
+        may trigger use of the GEQO planner, resulting in non-optimal
         plans.  See <xref linkend="runtime-config-query-geqo">.
        </para>
       </listitem>
@@ -3073,7 +3074,7 @@ SELECT * FROM parent WHERE key = 2400;
 
        <para>
         Setting this value to <xref linkend="guc-geqo-threshold"> or more
-        may trigger use of the GEQO planner, resulting in nondeterministic
+        may trigger use of the GEQO planner, resulting in non-optimal
         plans.  See <xref linkend="runtime-config-query-geqo">.
        </para>
       </listitem>
@@ -4299,7 +4300,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         displayed in <xref linkend="pg-stat-database-view">, in the output of
         <xref linkend="sql-explain"> when the <literal>BUFFERS</> option is
         used, and by <xref linkend="pgstatstatements">.  Only superusers can
-        change this setting.  
+        change this setting.
        </para>
       </listitem>
      </varlistentry>
