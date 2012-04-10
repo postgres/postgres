@@ -250,7 +250,8 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 				i_nspname,
 				i_relname,
 				i_oid,
-				i_relfilenode;
+				i_relfilenode,
+				i_reltablespace;
 	char		query[QUERY_ALLOC];
 
 	/*
@@ -263,7 +264,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 
 	snprintf(query, sizeof(query),
 			 "SELECT c.oid, n.nspname, c.relname, "
-			 "	c.relfilenode, t.spclocation "
+			 "	c.relfilenode, c.reltablespace, t.spclocation "
 			 "FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n "
 			 "	   ON c.relnamespace = n.oid "
 			 "  LEFT OUTER JOIN pg_catalog.pg_tablespace t "
@@ -297,6 +298,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	i_nspname = PQfnumber(res, "nspname");
 	i_relname = PQfnumber(res, "relname");
 	i_relfilenode = PQfnumber(res, "relfilenode");
+	i_reltablespace = PQfnumber(res, "reltablespace");
 	i_spclocation = PQfnumber(res, "spclocation");
 
 	for (relnum = 0; relnum < ntups; relnum++)
@@ -314,10 +316,13 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 
 		curr->relfilenode = atooid(PQgetvalue(res, relnum, i_relfilenode));
 
-		tblspace = PQgetvalue(res, relnum, i_spclocation);
-		/* if no table tablespace, use the database tablespace */
-		if (strlen(tblspace) == 0)
+		if (atooid(PQgetvalue(res, relnum, i_reltablespace)) != 0)
+			/* Might be "", meaning the cluster default location. */
+			tblspace = PQgetvalue(res, relnum, i_spclocation);
+		else
+			/* A zero reltablespace indicates the database tablespace. */
 			tblspace = dbinfo->db_tblspace;
+
 		strlcpy(curr->tablespace, tblspace, sizeof(curr->tablespace));
 	}
 	PQclear(res);
