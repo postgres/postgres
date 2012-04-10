@@ -69,7 +69,8 @@ typedef struct
 	Oid			reloid;			/* relation oid				 */
 	Oid			relfilenode;	/* relation relfile node	 */
 	Oid			toastrelid;		/* oid of the toast relation */
-	char		tablespace[MAXPGPATH];	/* relations tablespace path */
+	/* relation tablespace path, or "" for the cluster default */
+	char		tablespace[MAXPGPATH];	
 } RelInfo;
 
 typedef struct

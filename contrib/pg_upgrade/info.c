@@ -306,6 +306,7 @@ get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
 	int			i_relname = -1;
 	int			i_oid = -1;
 	int			i_relfilenode = -1;
+	int			i_reltablespace = -1;
 	int			i_reltoastrelid = -1;
 	char		query[QUERY_ALLOC];
 
@@ -320,7 +321,7 @@ get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
 
 	snprintf(query, sizeof(query),
 			 "SELECT DISTINCT c.oid, n.nspname, c.relname, "
-			 "	c.relfilenode, c.reltoastrelid, t.spclocation "
+			 "	c.relfilenode, c.reltoastrelid, c.reltablespace, t.spclocation "
 			 "FROM pg_catalog.pg_class c JOIN "
 			 "		pg_catalog.pg_namespace n "
 			 "	ON c.relnamespace = n.oid "
@@ -339,7 +340,7 @@ get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
 			 "        ('pg_largeobject', 'pg_largeobject_loid_pn_index'%s) )) "
 			 "	AND relkind IN ('r','t', 'i'%s)"
 			 "GROUP BY  c.oid, n.nspname, c.relname, c.relfilenode,"
-			 "			c.reltoastrelid, t.spclocation, "
+			 "			c.reltoastrelid, c.reltablespace, t.spclocation, "
 			 "			n.nspname "
 			 "ORDER BY n.nspname, c.relname;",
 			 FirstNormalObjectId,
@@ -361,6 +362,7 @@ get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
 	i_relname = PQfnumber(res, "relname");
 	i_relfilenode = PQfnumber(res, "relfilenode");
 	i_reltoastrelid = PQfnumber(res, "reltoastrelid");
+	i_reltablespace = PQfnumber(res, "reltablespace");
 	i_spclocation = PQfnumber(res, "spclocation");
 
 	for (relnum = 0; relnum < ntups; relnum++)
@@ -379,10 +381,13 @@ get_rel_infos(migratorContext *ctx, const DbInfo *dbinfo,
 		curr->relfilenode = atooid(PQgetvalue(res, relnum, i_relfilenode));
 		curr->toastrelid = atooid(PQgetvalue(res, relnum, i_reltoastrelid));
 
-		tblspace = PQgetvalue(res, relnum, i_spclocation);
-		/* if no table tablespace, use the database tablespace */
-		if (strlen(tblspace) == 0)
+		if (atooid(PQgetvalue(res, relnum, i_reltablespace)) != 0)
+			/* Might be "", meaning the cluster default location. */
+			tblspace = PQgetvalue(res, relnum, i_spclocation);
+		else
+			/* A zero reltablespace indicates the database tablespace. */
 			tblspace = dbinfo->db_tblspace;
+
 		strlcpy(curr->tablespace, tblspace, sizeof(curr->tablespace));
 	}
 	PQclear(res);
