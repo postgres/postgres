@@ -3565,8 +3565,10 @@ check_search_path(char **newval, void **extra, GucSource source)
 	/*
 	 * If we aren't inside a transaction, we cannot do database access so
 	 * cannot verify the individual names.	Must accept the list on faith.
+	 * Also, if the value is coming from a noninteractive source, accept it
+	 * anyway.
 	 */
-	if (IsTransactionState())
+	if (IsTransactionState() && source >= PGC_S_INTERACTIVE)
 	{
 		/*
 		 * Verify that all the names are either valid namespace names or
