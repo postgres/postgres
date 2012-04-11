@@ -117,9 +117,15 @@ PGconn *PQconnectdbParams(const char * const *keywords,
       </para>
 
       <para>
+       The currently recognized parameter key words are listed in
+       <xref linkend="libpq-paramkeywords">.
+      </para>
+
+      <para>
        When <literal>expand_dbname</literal> is non-zero, the
        <parameter>dbname</parameter> key word value is allowed to be recognized
-       as a <parameter>conninfo</parameter> string. See below for details.
+       as a connection string. More details on the possible formats appear in
+       <xref linkend="libpq-connstring">.
       </para>
 
       <para>
@@ -130,507 +136,6 @@ PGconn *PQconnectdbParams(const char * const *keywords,
       </para>
 
       <para>
-       The currently recognized parameter key words are:
-
-       <variablelist>
-        <varlistentry id="libpq-connect-host" xreflabel="host">
-         <term><literal>host</literal></term>
-         <listitem>
-          <para>
-           Name of host to connect to.<indexterm><primary>host name</></>
-           If this begins with a slash, it specifies Unix-domain
-           communication rather than TCP/IP communication; the value is the
-           name of the directory in which the socket file is stored.  The
-           default behavior when <literal>host</literal> is not specified
-           is to connect to a Unix-domain
-           socket<indexterm><primary>Unix domain socket</></> in
-           <filename>/tmp</filename> (or whatever socket directory was specified
-           when <productname>PostgreSQL</> was built). On machines without
-           Unix-domain sockets, the default is to connect to <literal>localhost</>.
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="libpq-connect-hostaddr" xreflabel="hostaddr">
-         <term><literal>hostaddr</literal></term>
-         <listitem>
-          <para>
-           Numeric IP address of host to connect to.  This should be in the
-           standard IPv4 address format, e.g., <literal>172.28.40.9</>.  If
-           your machine supports IPv6, you can also use those addresses.
-           TCP/IP communication is
-           always used when a nonempty string is specified for this parameter.
-          </para>
-
-          <para>
-           Using <literal>hostaddr</> instead of <literal>host</> allows the
-           application to avoid a host name look-up, which might be important
-           in applications with time constraints. However, a host name is
-           required for Kerberos, GSSAPI, or SSPI authentication
-           methods, as well as for <literal>verify-full</> SSL
-           certificate verification.  The following rules are used:
-           <itemizedlist>
-            <listitem>
-             <para>
-              If <literal>host</> is specified without <literal>hostaddr</>,
-              a host name lookup occurs.
-             </para>
-            </listitem>
-            <listitem>
-             <para>
-              If <literal>hostaddr</> is specified without <literal>host</>,
-              the value for <literal>hostaddr</> gives the server network address.
-              The connection attempt will fail if the authentication
-              method requires a host name.
-             </para>
-            </listitem>
-            <listitem>
-             <para>
-              If both <literal>host</> and <literal>hostaddr</> are specified,
-              the value for <literal>hostaddr</> gives the server network address.
-              The value for <literal>host</> is ignored unless the
-              authentication method requires it, in which case it will be
-              used as the host name.
-             </para>
-            </listitem>
-           </itemizedlist>
-           Note that authentication is likely to fail if <literal>host</>
-           is not the name of the server at network address <literal>hostaddr</>.
-           Also, note that <literal>host</> rather than <literal>hostaddr</>
-           is used to identify the connection in <filename>~/.pgpass</> (see
-           <xref linkend="libpq-pgpass">).
-          </para>
-
-          <para>
-           Without either a host name or host address,
-           <application>libpq</application> will connect using a
-           local Unix-domain socket; or on machines without Unix-domain
-           sockets, it will attempt to connect to <literal>localhost</>.
-          </para>
-          </listitem>
-         </varlistentry>
-
-         <varlistentry id="libpq-connect-port" xreflabel="port">
-          <term><literal>port</literal></term>
-          <listitem>
-          <para>
-           Port number to connect to at the server host, or socket file
-           name extension for Unix-domain
-           connections.<indexterm><primary>port</></>
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="libpq-connect-dbname" xreflabel="dbname">
-         <term><literal>dbname</literal></term>
-         <listitem>
-         <para>
-          The database name.  Defaults to be the same as the user name.
-         </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="libpq-connect-user" xreflabel="user">
-         <term><literal>user</literal></term>
-         <listitem>
-         <para>
-          <productname>PostgreSQL</productname> user name to connect as.
-          Defaults to be the same as the operating system name of the user
-          running the application.
-         </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="libpq-connect-password" xreflabel="password">
-         <term><literal>password</literal></term>
-         <listitem>
-         <para>
-          Password to be used if the server demands password authentication.
-         </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="libpq-connect-connect-timeout" xreflabel="connect_timeout">
-         <term><literal>connect_timeout</literal></term>
-         <listitem>
-         <para>
-          Maximum wait for connection, in seconds (write as a decimal integer
-          string). Zero or not specified means wait indefinitely.  It is not
-          recommended to use a timeout of less than 2 seconds.
-         </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="libpq-connect-client-encoding" xreflabel="client_encoding">
-         <term><literal>client_encoding</literal></term>
-         <listitem>
-         <para>
-          This sets the <varname>client_encoding</varname>
-          configuration parameter for this connection.  In addition to
-          the values accepted by the corresponding server option, you
-          can use <literal>auto</literal> to determine the right
-          encoding from the current locale in the client
-          (<envar>LC_CTYPE</envar> environment variable on Unix
-          systems).
-         </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="libpq-connect-options" xreflabel="options">
-         <term><literal>options</literal></term>
-         <listitem>
-          <para>
-           Adds command-line options to send to the server at run-time.
-           For example, setting this to <literal>-c geqo=off</> sets the
-           session's value of the <varname>geqo</> parameter to
-           <literal>off</>.  For a detailed discussion of the available
-           options, consult <xref linkend="runtime-config">.
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="libpq-connect-application-name" xreflabel="application_name">
-         <term><literal>application_name</literal></term>
-         <listitem>
-          <para>
-           Specifies a value for the <xref linkend="guc-application-name">
-           configuration parameter.
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="libpq-connect-fallback-application-name" xreflabel="fallback_application_name">
-         <term><literal>fallback_application_name</literal></term>
-         <listitem>
-          <para>
-           Specifies a fallback value for the <xref
-           linkend="guc-application-name"> configuration parameter.
-           This value will be used if no value has been given for
-           <literal>application_name</> via a connection parameter or the
-           <envar>PGAPPNAME</envar> environment variable.  Specifying
-           a fallback name is useful in generic utility programs that
-           wish to set a default application name but allow it to be
-           overridden by the user.
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="libpq-keepalives" xreflabel="keepalives">
-         <term><literal>keepalives</literal></term>
-         <listitem>
-          <para>
-           Controls whether client-side TCP keepalives are used. The default
-           value is 1, meaning on, but you can change this to 0, meaning off,
-           if keepalives are not wanted.  This parameter is ignored for
-           connections made via a Unix-domain socket.
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="libpq-keepalives-idle" xreflabel="keepalives_idle">
-         <term><literal>keepalives_idle</literal></term>
-         <listitem>
-          <para>
-           Controls the number of seconds of inactivity after which TCP should
-           send a keepalive message to the server.  A value of zero uses the
-           system default. This parameter is ignored for connections made via a
-           Unix-domain socket, or if keepalives are disabled. It is only supported
-           on systems where the <symbol>TCP_KEEPIDLE</> or <symbol>TCP_KEEPALIVE</>
-           socket option is available, and on Windows; on other systems, it has no
-           effect.
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="libpq-keepalives-interval" xreflabel="keepalives_interval">
-         <term><literal>keepalives_interval</literal></term>
-         <listitem>
-          <para>
-           Controls the number of seconds after which a TCP keepalive message
-           that is not acknowledged by the server should be retransmitted.  A
-           value of zero uses the system default. This parameter is ignored for
-           connections made via a Unix-domain socket, or if keepalives are disabled.
-           It is only supported on systems where the <symbol>TCP_KEEPINTVL</>
-           socket option is available, and on Windows; on other systems, it has no
-           effect.
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="libpq-keepalives-count" xreflabel="keepalives_count">
-         <term><literal>keepalives_count</literal></term>
-         <listitem>
-          <para>
-           Controls the number of TCP keepalives that can be lost before the
-           client's connection to the server is considered dead.  A value of
-           zero uses the system default. This parameter is ignored for
-           connections made via a Unix-domain socket, or if keepalives are disabled.
-           It is only supported on systems where the <symbol>TCP_KEEPCNT</>
-           socket option is available; on other systems, it has no effect.
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="libpq-connect-tty" xreflabel="tty">
-         <term><literal>tty</literal></term>
-         <listitem>
-         <para>
-          Ignored (formerly, this specified where to send server debug output).
-         </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="libpq-connect-sslmode" xreflabel="sslmode">
-         <term><literal>sslmode</literal></term>
-         <listitem>
-          <para>
-           This option determines whether or with what priority a secure
-           <acronym>SSL</> TCP/IP connection will be negotiated with the
-           server. There are six modes:
-
-           <variablelist>
-            <varlistentry>
-             <term><literal>disable</literal></term>
-             <listitem>
-              <para>
-               only try a non-<acronym>SSL</> connection
-              </para>
-             </listitem>
-            </varlistentry>
-
-            <varlistentry>
-             <term><literal>allow</literal></term>
-             <listitem>
-              <para>
-               first try a non-<acronym>SSL</> connection; if that
-               fails, try an <acronym>SSL</> connection
-              </para>
-             </listitem>
-            </varlistentry>
-
-            <varlistentry>
-             <term><literal>prefer</literal> (default)</term>
-             <listitem>
-              <para>
-               first try an <acronym>SSL</> connection; if that fails,
-               try a non-<acronym>SSL</> connection
-              </para>
-             </listitem>
-            </varlistentry>
-
-            <varlistentry>
-             <term><literal>require</literal></term>
-             <listitem>
-              <para>
-               only try an <acronym>SSL</> connection. If a root CA
-               file is present, verify the certificate in the same way as
-               if <literal>verify-ca</literal> was specified
-              </para>
-             </listitem>
-            </varlistentry>
-
-            <varlistentry>
-             <term><literal>verify-ca</literal></term>
-             <listitem>
-              <para>
-               only try an <acronym>SSL</> connection, and verify that
-               the server certificate is issued by a trusted
-               certificate authority (<acronym>CA</>)
-              </para>
-             </listitem>
-            </varlistentry>
-
-            <varlistentry>
-             <term><literal>verify-full</literal></term>
-             <listitem>
-              <para>
-               only try an <acronym>SSL</> connection, verify that the
-               server certificate is issued by a
-               trusted <acronym>CA</> and that the server host name
-               matches that in the certificate
-              </para>
-             </listitem>
-            </varlistentry>
-           </variablelist>
-
-           See <xref linkend="libpq-ssl"> for a detailed description of how
-           these options work.
-          </para>
-
-          <para>
-           <literal>sslmode</> is ignored for Unix domain socket
-           communication.
-           If <productname>PostgreSQL</> is compiled without SSL support,
-           using options <literal>require</>, <literal>verify-ca</>, or
-           <literal>verify-full</> will cause an error, while
-           options <literal>allow</> and <literal>prefer</> will be
-           accepted but <application>libpq</> will not actually attempt
-           an <acronym>SSL</>
-           connection.<indexterm><primary>SSL</><secondary
-           sortas="libpq">with libpq</></indexterm>
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="libpq-connect-requiressl" xreflabel="requiressl">
-         <term><literal>requiressl</literal></term>
-         <listitem>
-          <para>
-           This option is deprecated in favor of the <literal>sslmode</>
-           setting.
-          </para>
-
-          <para>
-           If set to 1, an <acronym>SSL</acronym> connection to the server
-           is required (this is equivalent to <literal>sslmode</>
-           <literal>require</>).  <application>libpq</> will then refuse
-           to connect if the server does not accept an
-           <acronym>SSL</acronym> connection.  If set to 0 (default),
-           <application>libpq</> will negotiate the connection type with
-           the server (equivalent to <literal>sslmode</>
-           <literal>prefer</>).  This option is only available if
-           <productname>PostgreSQL</> is compiled with SSL support.
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="libpq-connect-sslcompression" xreflabel="sslcompression">
-         <term><literal>sslcompression</literal></term>
-         <listitem>
-          <para>
-           If set to 1 (default), data sent over SSL connections will be
-           compressed (this requires <productname>OpenSSL</> version
-           0.9.8 or later).
-           If set to 0, compression will be disabled (this requires
-           <productname>OpenSSL</> 1.0.0 or later).
-           This parameter is ignored if a connection without SSL is made,
-           or if the version of <productname>OpenSSL</> used does not support
-           it.
-          </para>
-          <para>
-           Compression uses CPU time, but can improve throughput if
-           the network is the bottleneck.
-           Disabling compression can improve response time and throughput
-           if CPU performance is the limiting factor.
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="libpq-connect-sslcert" xreflabel="sslcert">
-         <term><literal>sslcert</literal></term>
-         <listitem>
-          <para>
-           This parameter specifies the file name of the client SSL
-           certificate, replacing the default
-           <filename>~/.postgresql/postgresql.crt</>.
-           This parameter is ignored if an SSL connection is not made.
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="libpq-connect-sslkey" xreflabel="sslkey">
-         <term><literal>sslkey</literal></term>
-         <listitem>
-          <para>
-           This parameter specifies the location for the secret key used for
-           the client certificate. It can either specify a file name that will
-           be used instead of the default
-           <filename>~/.postgresql/postgresql.key</>, or it can specify a key
-           obtained from an external <quote>engine</> (engines are
-           <productname>OpenSSL</> loadable modules).  An external engine
-           specification should consist of a colon-separated engine name and
-           an engine-specific key identifier.  This parameter is ignored if an
-           SSL connection is not made.
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="libpq-connect-sslrootcert" xreflabel="sslrootcert">
-         <term><literal>sslrootcert</literal></term>
-         <listitem>
-          <para>
-           This parameter specifies the name of a file containing SSL
-           certificate authority (<acronym>CA</>) certificate(s).
-           If the file exists, the server's certificate will be verified
-           to be signed by one of these authorities.  The default is
-           <filename>~/.postgresql/root.crt</>.
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="libpq-connect-sslcrl" xreflabel="sslcrl">
-         <term><literal>sslcrl</literal></term>
-         <listitem>
-          <para>
-           This parameter specifies the file name of the SSL certificate
-           revocation list (CRL).  Certificates listed in this file, if it
-           exists, will be rejected while attempting to authenticate the
-           server's certificate.  The default is
-           <filename>~/.postgresql/root.crl</>.
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="libpq-connect-requirepeer" xreflabel="requirepeer">
-         <term><literal>requirepeer</literal></term>
-         <listitem>
-          <para>
-           This parameter specifies the operating-system user name of the
-           server, for example <literal>requirepeer=postgres</literal>.
-           When making a Unix-domain socket connection, if this
-           parameter is set, the client checks at the beginning of the
-           connection that the server process is running under the specified
-           user name; if it is not, the connection is aborted with an error.
-           This parameter can be used to provide server authentication similar
-           to that available with SSL certificates on TCP/IP connections.
-           (Note that if the Unix-domain socket is in
-           <filename>/tmp</filename> or another publicly writable location,
-           any user could start a server listening there.  Use this parameter
-           to ensure that you are connected to a server run by a trusted user.)
-           This option is only supported on platforms for which the
-           <literal>peer</> authentication method is implemented; see
-           <xref linkend="auth-peer">.
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="libpq-connect-krbsrvname" xreflabel="krbsrvname">
-         <term><literal>krbsrvname</literal></term>
-         <listitem>
-          <para>
-           Kerberos service name to use when authenticating with Kerberos 5
-           or GSSAPI.
-           This must match the service name specified in the server
-           configuration for Kerberos authentication to succeed. (See also
-           <xref linkend="kerberos-auth"> and <xref linkend="gssapi-auth">.)
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="libpq-connect-gsslib" xreflabel="gsslib">
-         <term><literal>gsslib</literal></term>
-         <listitem>
-          <para>
-           GSS library to use for GSSAPI authentication. Only used on Windows.
-           Set to <literal>gssapi</literal> to force libpq to use the GSSAPI
-           library for authentication instead of the default SSPI.
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="libpq-connect-service" xreflabel="service">
-         <term><literal>service</literal></term>
-         <listitem>
-          <para>
-           Service name to use for additional parameters.  It specifies a service
-           name in <filename>pg_service.conf</filename> that holds additional connection parameters.
-           This allows applications to specify only a service name so connection parameters
-           can be centrally maintained. See <xref linkend="libpq-pgservice">.
-          </para>
-         </listitem>
-        </varlistentry>
-       </variablelist>
-
        If  any  parameter is unspecified, then the corresponding
        environment variable (see <xref linkend="libpq-envars">)
        is checked. If the  environment  variable is not set either,
@@ -638,20 +143,11 @@ PGconn *PQconnectdbParams(const char * const *keywords,
       </para>
 
       <para>
-        If <literal>expand_dbname</literal> is non-zero and
-        <parameter>dbname</parameter> contains an <symbol>=</symbol> sign, it
-        is taken as a <parameter>conninfo</parameter> string in exactly the same way as
-        if it had been passed to <function>PQconnectdb</function>(see below). Previously
-        processed key words will be overridden by key words in the
-        <parameter>conninfo</parameter> string.
-      </para>
-
-      <para>
-        In general key words are processed from the beginning of these arrays in index
-        order. The effect of this is that when key words are repeated, the last processed
-        value is retained. Therefore, through careful placement of the
-        <parameter>dbname</parameter> key word, it is possible to determine what may
-        be overridden by a <parameter>conninfo</parameter> string, and what may not.
+       In general key words are processed from the beginning of these arrays in index
+       order. The effect of this is that when key words are repeated, the last processed
+       value is retained. Therefore, through careful placement of the
+       <parameter>dbname</parameter> key word, it is possible to determine what may
+       be overridden by a <parameter>conninfo</parameter> string, and what may not.
       </para>
 
      </listitem>
@@ -675,19 +171,13 @@ PGconn *PQconnectdb(const char *conninfo);
 
       <para>
        The passed string can be empty to use all default parameters, or it can
-       contain one or more parameter settings separated by whitespace.
-       Each parameter setting is in the form <literal>keyword = value</literal>.
-       Spaces around the equal sign are optional. To write an empty value,
-       or a value containing spaces, surround it with single quotes, e.g.,
-       <literal>keyword = 'a value'</literal>. Single quotes and backslashes
-       within the value must be escaped with a backslash, i.e.,
-       <literal>\'</literal> and <literal>\\</literal>.
-      </para>
+       contain one or more parameter settings separated by whitespace,
+       or it can contain a <acronym>URI</acronym>.
+       See <xref linkend="libpq-connstring"> for details.
+     </para>
 
-      <para>
-       The currently recognized parameter key words are the same as above.
-      </para>
-     </listitem>
+
+    </listitem>
     </varlistentry>
 
     <varlistentry id="libpq-pqsetdblogin">
@@ -714,10 +204,11 @@ PGconn *PQsetdbLogin(const char *pghost,
       </para>
 
       <para>
-        If the <parameter>dbName</parameter> contains an <symbol>=</symbol> sign, it
+        If the <parameter>dbName</parameter> contains
+        an <symbol>=</symbol> sign or has a valid connection <acronym>URI</acronym> prefix, it
         is taken as a <parameter>conninfo</parameter> string in exactly the same way as
         if it had been passed to <function>PQconnectdb</function>, and the remaining
-        parameters are then applied as above.
+        parameters are then applied as specified for <function>PQconnectdbParams</>.
       </para>
      </listitem>
     </varlistentry>
@@ -795,7 +286,7 @@ PostgresPollingStatusType PQconnectPoll(PGconn *conn);
          <para>
           The <literal>hostaddr</> and <literal>host</> parameters are used appropriately to ensure that
           name and reverse name queries are not made. See the documentation of
-          these parameters under <function>PQconnectdbParams</function> above for details.
+          these parameters in <xref linkend="libpq-paramkeywords"> for details.
          </para>
         </listitem>
 
@@ -1219,6 +710,617 @@ PGPing PQping(const char *conninfo);
 
    </variablelist>
   </para>
+
+  <sect2 id="libpq-paramkeywords">
+   <title>Parameter Key Words</title>
+
+   <para>
+    The currently recognized parameter key words are:
+
+    <variablelist>
+     <varlistentry id="libpq-connect-host" xreflabel="host">
+      <term><literal>host</literal></term>
+      <listitem>
+       <para>
+        Name of host to connect to.<indexterm><primary>host name</></>
+        If this begins with a slash, it specifies Unix-domain
+        communication rather than TCP/IP communication; the value is the
+        name of the directory in which the socket file is stored.  The
+        default behavior when <literal>host</literal> is not specified
+        is to connect to a Unix-domain
+        socket<indexterm><primary>Unix domain socket</></> in
+        <filename>/tmp</filename> (or whatever socket directory was specified
+        when <productname>PostgreSQL</> was built). On machines without
+        Unix-domain sockets, the default is to connect to <literal>localhost</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-connect-hostaddr" xreflabel="hostaddr">
+      <term><literal>hostaddr</literal></term>
+      <listitem>
+       <para>
+        Numeric IP address of host to connect to.  This should be in the
+        standard IPv4 address format, e.g., <literal>172.28.40.9</>.  If
+        your machine supports IPv6, you can also use those addresses.
+        TCP/IP communication is
+        always used when a nonempty string is specified for this parameter.
+       </para>
+
+       <para>
+        Using <literal>hostaddr</> instead of <literal>host</> allows the
+        application to avoid a host name look-up, which might be important
+        in applications with time constraints. However, a host name is
+        required for Kerberos, GSSAPI, or SSPI authentication
+        methods, as well as for <literal>verify-full</> SSL
+        certificate verification.  The following rules are used:
+        <itemizedlist>
+         <listitem>
+          <para>
+           If <literal>host</> is specified without <literal>hostaddr</>,
+           a host name lookup occurs.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           If <literal>hostaddr</> is specified without <literal>host</>,
+           the value for <literal>hostaddr</> gives the server network address.
+           The connection attempt will fail if the authentication
+           method requires a host name.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           If both <literal>host</> and <literal>hostaddr</> are specified,
+           the value for <literal>hostaddr</> gives the server network address.
+           The value for <literal>host</> is ignored unless the
+           authentication method requires it, in which case it will be
+           used as the host name.
+          </para>
+         </listitem>
+        </itemizedlist>
+        Note that authentication is likely to fail if <literal>host</>
+        is not the name of the server at network address <literal>hostaddr</>.
+        Also, note that <literal>host</> rather than <literal>hostaddr</>
+        is used to identify the connection in <filename>~/.pgpass</> (see
+        <xref linkend="libpq-pgpass">).
+       </para>
+
+       <para>
+        Without either a host name or host address,
+        <application>libpq</application> will connect using a
+        local Unix-domain socket; or on machines without Unix-domain
+        sockets, it will attempt to connect to <literal>localhost</>.
+       </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="libpq-connect-port" xreflabel="port">
+       <term><literal>port</literal></term>
+       <listitem>
+       <para>
+        Port number to connect to at the server host, or socket file
+        name extension for Unix-domain
+        connections.<indexterm><primary>port</></>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-connect-dbname" xreflabel="dbname">
+      <term><literal>dbname</literal></term>
+      <listitem>
+      <para>
+       The database name.  Defaults to be the same as the user name.
+       In certain contexts, the value is checked for extended
+       formats; see <xref linkend="libpq-connstring"> for more details on
+       those.
+      </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-connect-user" xreflabel="user">
+      <term><literal>user</literal></term>
+      <listitem>
+      <para>
+       <productname>PostgreSQL</productname> user name to connect as.
+       Defaults to be the same as the operating system name of the user
+       running the application.
+      </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-connect-password" xreflabel="password">
+      <term><literal>password</literal></term>
+      <listitem>
+      <para>
+       Password to be used if the server demands password authentication.
+      </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-connect-connect-timeout" xreflabel="connect_timeout">
+      <term><literal>connect_timeout</literal></term>
+      <listitem>
+      <para>
+       Maximum wait for connection, in seconds (write as a decimal integer
+       string). Zero or not specified means wait indefinitely.  It is not
+       recommended to use a timeout of less than 2 seconds.
+      </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-connect-client-encoding" xreflabel="client_encoding">
+      <term><literal>client_encoding</literal></term>
+      <listitem>
+      <para>
+       This sets the <varname>client_encoding</varname>
+       configuration parameter for this connection.  In addition to
+       the values accepted by the corresponding server option, you
+       can use <literal>auto</literal> to determine the right
+       encoding from the current locale in the client
+       (<envar>LC_CTYPE</envar> environment variable on Unix
+       systems).
+      </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-connect-options" xreflabel="options">
+      <term><literal>options</literal></term>
+      <listitem>
+       <para>
+        Adds command-line options to send to the server at run-time.
+        For example, setting this to <literal>-c geqo=off</> sets the
+        session's value of the <varname>geqo</> parameter to
+        <literal>off</>.  For a detailed discussion of the available
+        options, consult <xref linkend="runtime-config">.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-connect-application-name" xreflabel="application_name">
+      <term><literal>application_name</literal></term>
+      <listitem>
+       <para>
+        Specifies a value for the <xref linkend="guc-application-name">
+        configuration parameter.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-connect-fallback-application-name" xreflabel="fallback_application_name">
+      <term><literal>fallback_application_name</literal></term>
+      <listitem>
+       <para>
+        Specifies a fallback value for the <xref
+        linkend="guc-application-name"> configuration parameter.
+        This value will be used if no value has been given for
+        <literal>application_name</> via a connection parameter or the
+        <envar>PGAPPNAME</envar> environment variable.  Specifying
+        a fallback name is useful in generic utility programs that
+        wish to set a default application name but allow it to be
+        overridden by the user.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-keepalives" xreflabel="keepalives">
+      <term><literal>keepalives</literal></term>
+      <listitem>
+       <para>
+        Controls whether client-side TCP keepalives are used. The default
+        value is 1, meaning on, but you can change this to 0, meaning off,
+        if keepalives are not wanted.  This parameter is ignored for
+        connections made via a Unix-domain socket.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-keepalives-idle" xreflabel="keepalives_idle">
+      <term><literal>keepalives_idle</literal></term>
+      <listitem>
+       <para>
+        Controls the number of seconds of inactivity after which TCP should
+        send a keepalive message to the server.  A value of zero uses the
+        system default. This parameter is ignored for connections made via a
+        Unix-domain socket, or if keepalives are disabled. It is only supported
+        on systems where the <symbol>TCP_KEEPIDLE</> or <symbol>TCP_KEEPALIVE</>
+        socket option is available, and on Windows; on other systems, it has no
+        effect.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-keepalives-interval" xreflabel="keepalives_interval">
+      <term><literal>keepalives_interval</literal></term>
+      <listitem>
+       <para>
+        Controls the number of seconds after which a TCP keepalive message
+        that is not acknowledged by the server should be retransmitted.  A
+        value of zero uses the system default. This parameter is ignored for
+        connections made via a Unix-domain socket, or if keepalives are disabled.
+        It is only supported on systems where the <symbol>TCP_KEEPINTVL</>
+        socket option is available, and on Windows; on other systems, it has no
+        effect.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-keepalives-count" xreflabel="keepalives_count">
+      <term><literal>keepalives_count</literal></term>
+      <listitem>
+       <para>
+        Controls the number of TCP keepalives that can be lost before the
+        client's connection to the server is considered dead.  A value of
+        zero uses the system default. This parameter is ignored for
+        connections made via a Unix-domain socket, or if keepalives are disabled.
+        It is only supported on systems where the <symbol>TCP_KEEPCNT</>
+        socket option is available; on other systems, it has no effect.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-connect-tty" xreflabel="tty">
+      <term><literal>tty</literal></term>
+      <listitem>
+      <para>
+       Ignored (formerly, this specified where to send server debug output).
+      </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-connect-sslmode" xreflabel="sslmode">
+      <term><literal>sslmode</literal></term>
+      <listitem>
+       <para>
+        This option determines whether or with what priority a secure
+        <acronym>SSL</> TCP/IP connection will be negotiated with the
+        server. There are six modes:
+
+        <variablelist>
+         <varlistentry>
+          <term><literal>disable</literal></term>
+          <listitem>
+           <para>
+            only try a non-<acronym>SSL</> connection
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>allow</literal></term>
+          <listitem>
+           <para>
+            first try a non-<acronym>SSL</> connection; if that
+            fails, try an <acronym>SSL</> connection
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>prefer</literal> (default)</term>
+          <listitem>
+           <para>
+            first try an <acronym>SSL</> connection; if that fails,
+            try a non-<acronym>SSL</> connection
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>require</literal></term>
+          <listitem>
+           <para>
+            only try an <acronym>SSL</> connection. If a root CA
+            file is present, verify the certificate in the same way as
+            if <literal>verify-ca</literal> was specified
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>verify-ca</literal></term>
+          <listitem>
+           <para>
+            only try an <acronym>SSL</> connection, and verify that
+            the server certificate is issued by a trusted
+            certificate authority (<acronym>CA</>)
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>verify-full</literal></term>
+          <listitem>
+           <para>
+            only try an <acronym>SSL</> connection, verify that the
+            server certificate is issued by a
+            trusted <acronym>CA</> and that the server host name
+            matches that in the certificate
+           </para>
+          </listitem>
+         </varlistentry>
+        </variablelist>
+
+        See <xref linkend="libpq-ssl"> for a detailed description of how
+        these options work.
+       </para>
+
+       <para>
+        <literal>sslmode</> is ignored for Unix domain socket
+        communication.
+        If <productname>PostgreSQL</> is compiled without SSL support,
+        using options <literal>require</>, <literal>verify-ca</>, or
+        <literal>verify-full</> will cause an error, while
+        options <literal>allow</> and <literal>prefer</> will be
+        accepted but <application>libpq</> will not actually attempt
+        an <acronym>SSL</>
+        connection.<indexterm><primary>SSL</><secondary
+        sortas="libpq">with libpq</></indexterm>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-connect-requiressl" xreflabel="requiressl">
+      <term><literal>requiressl</literal></term>
+      <listitem>
+       <para>
+        This option is deprecated in favor of the <literal>sslmode</>
+        setting.
+       </para>
+
+       <para>
+        If set to 1, an <acronym>SSL</acronym> connection to the server
+        is required (this is equivalent to <literal>sslmode</>
+        <literal>require</>).  <application>libpq</> will then refuse
+        to connect if the server does not accept an
+        <acronym>SSL</acronym> connection.  If set to 0 (default),
+        <application>libpq</> will negotiate the connection type with
+        the server (equivalent to <literal>sslmode</>
+        <literal>prefer</>).  This option is only available if
+        <productname>PostgreSQL</> is compiled with SSL support.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-connect-sslcompression" xreflabel="sslcompression">
+      <term><literal>sslcompression</literal></term>
+      <listitem>
+       <para>
+        If set to 1 (default), data sent over SSL connections will be
+        compressed (this requires <productname>OpenSSL</> version
+        0.9.8 or later).
+        If set to 0, compression will be disabled (this requires
+        <productname>OpenSSL</> 1.0.0 or later).
+        This parameter is ignored if a connection without SSL is made,
+        or if the version of <productname>OpenSSL</> used does not support
+        it.
+       </para>
+       <para>
+        Compression uses CPU time, but can improve throughput if
+        the network is the bottleneck.
+        Disabling compression can improve response time and throughput
+        if CPU performance is the limiting factor.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-connect-sslcert" xreflabel="sslcert">
+      <term><literal>sslcert</literal></term>
+      <listitem>
+       <para>
+        This parameter specifies the file name of the client SSL
+        certificate, replacing the default
+        <filename>~/.postgresql/postgresql.crt</>.
+        This parameter is ignored if an SSL connection is not made.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-connect-sslkey" xreflabel="sslkey">
+      <term><literal>sslkey</literal></term>
+      <listitem>
+       <para>
+        This parameter specifies the location for the secret key used for
+        the client certificate. It can either specify a file name that will
+        be used instead of the default
+        <filename>~/.postgresql/postgresql.key</>, or it can specify a key
+        obtained from an external <quote>engine</> (engines are
+        <productname>OpenSSL</> loadable modules).  An external engine
+        specification should consist of a colon-separated engine name and
+        an engine-specific key identifier.  This parameter is ignored if an
+        SSL connection is not made.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-connect-sslrootcert" xreflabel="sslrootcert">
+      <term><literal>sslrootcert</literal></term>
+      <listitem>
+       <para>
+        This parameter specifies the name of a file containing SSL
+        certificate authority (<acronym>CA</>) certificate(s).
+        If the file exists, the server's certificate will be verified
+        to be signed by one of these authorities.  The default is
+        <filename>~/.postgresql/root.crt</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-connect-sslcrl" xreflabel="sslcrl">
+      <term><literal>sslcrl</literal></term>
+      <listitem>
+       <para>
+        This parameter specifies the file name of the SSL certificate
+        revocation list (CRL).  Certificates listed in this file, if it
+        exists, will be rejected while attempting to authenticate the
+        server's certificate.  The default is
+        <filename>~/.postgresql/root.crl</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-connect-requirepeer" xreflabel="requirepeer">
+      <term><literal>requirepeer</literal></term>
+      <listitem>
+       <para>
+        This parameter specifies the operating-system user name of the
+        server, for example <literal>requirepeer=postgres</literal>.
+        When making a Unix-domain socket connection, if this
+        parameter is set, the client checks at the beginning of the
+        connection that the server process is running under the specified
+        user name; if it is not, the connection is aborted with an error.
+        This parameter can be used to provide server authentication similar
+        to that available with SSL certificates on TCP/IP connections.
+        (Note that if the Unix-domain socket is in
+        <filename>/tmp</filename> or another publicly writable location,
+        any user could start a server listening there.  Use this parameter
+        to ensure that you are connected to a server run by a trusted user.)
+        This option is only supported on platforms for which the
+        <literal>peer</> authentication method is implemented; see
+        <xref linkend="auth-peer">.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-connect-krbsrvname" xreflabel="krbsrvname">
+      <term><literal>krbsrvname</literal></term>
+      <listitem>
+       <para>
+        Kerberos service name to use when authenticating with Kerberos 5
+        or GSSAPI.
+        This must match the service name specified in the server
+        configuration for Kerberos authentication to succeed. (See also
+        <xref linkend="kerberos-auth"> and <xref linkend="gssapi-auth">.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-connect-gsslib" xreflabel="gsslib">
+      <term><literal>gsslib</literal></term>
+      <listitem>
+       <para>
+        GSS library to use for GSSAPI authentication. Only used on Windows.
+        Set to <literal>gssapi</literal> to force libpq to use the GSSAPI
+        library for authentication instead of the default SSPI.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-connect-service" xreflabel="service">
+      <term><literal>service</literal></term>
+      <listitem>
+       <para>
+        Service name to use for additional parameters.  It specifies a service
+        name in <filename>pg_service.conf</filename> that holds additional connection parameters.
+        This allows applications to specify only a service name so connection parameters
+        can be centrally maintained. See <xref linkend="libpq-pgservice">.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </sect2>
+
+  <sect2 id="libpq-connstring">
+   <title>Connection Strings</title>
+
+   <indexterm zone="libpq-connstring">
+    <primary><literal>conninfo</literal></primary>
+   </indexterm>
+
+   <indexterm zone="libpq-connstring">
+    <primary><literal>URI</literal></primary>
+   </indexterm>
+
+   <para>
+    Several <application>libpq</> functions parse a user-specified string to obtain
+    connection parameters.  There are two accepted formats for these strings:
+    plain <literal>keyword = value</literal> strings, and URIs.
+   </para>
+
+   <para>
+    In the first format, each parameter setting is in the form
+    <literal>keyword = value</literal>.  Spaces around the equal sign are
+    optional. To write an empty value, or a value containing spaces, surround it
+    with single quotes, e.g., <literal>keyword = 'a value'</literal>. Single
+    quotes and backslashes within
+    the value must be escaped with a backslash, i.e., <literal>\'</literal> and
+    <literal>\\</literal>.
+   </para>
+
+   <para>
+    The currently recognized parameter key words are listed in
+    <xref linkend="libpq-paramkeywords">.
+   </para>
+
+   <para>
+   The general form for connection <acronym>URI</acronym> is the
+   following:
+<synopsis>
+postgresql://[user[:password]@][unix-socket][:port[/dbname]][?param1=value1&amp;...]
+postgresql://[user[:password]@][net-location][:port][/dbname][?param1=value1&amp;...]
+</synopsis>
+   </para>
+
+   <para>
+    The <acronym>URI</acronym> designator can be either
+    <literal>postgresql://</literal> or <literal>postgres://</literal> and
+    each of the <acronym>URI</acronym> parts is optional.  The following
+    examples illustrate valid <acronym>URI</acronym> syntax uses:
+<synopsis>
+postgresql://
+postgresql://localhost
+postgresql://localhost:5433
+postgresql://localhost/mydb
+postgresql://user@localhost
+postgresql://user:secret@localhost
+postgresql://other@localhost/otherdb
+</synopsis>
+   </para>
+
+   <para>
+    Percent-encoding may be used to include a symbol with special meaning in
+    any of the <acronym>URI</acronym> parts.
+   </para>
+
+   <para>
+    Additional connection parameters may optionally follow the base <acronym>URI</acronym>.
+    Any connection parameters not corresponding to key words listed
+    in <xref linkend="libpq-paramkeywords"> are ignored and a warning message
+    about them is sent to <filename>stderr</filename>.
+   </para>
+
+   <para>
+    For improved compatibility with JDBC connection <acronym>URI</acronym>
+    syntax, instances of parameter <literal>ssl=true</literal> are translated
+    into <literal>sslmode=require</literal> (see above.)
+   </para>
+
+   <para>
+    The host part may be either hostname or an IP address.  To specify an
+    IPv6 host address, enclose it in square brackets:
+<synopsis>
+postgresql://[2001:db8::1234]/database
+</synopsis>
+    As a special case, a host part which starts with <symbol>/</symbol> is
+    treated as a local Unix socket directory to look for the connection
+    socket special file:
+<synopsis>
+postgresql:///path/to/pgsql/socket/dir
+</synopsis>
+    The whole connection string up to the extra parameters designator
+    (<symbol>?</symbol>) or the port designator (<symbol>:</symbol>) is treated
+    as the absolute path to the socket directory
+    (<literal>/path/to/pgsql/socket/dir</literal> in this example.)  To specify
+    a non-default database name in this case you can use either of the following
+    syntaxes:
+<synopsis>
+postgresql:///path/to/pgsql/socket/dir?dbname=otherdb
+postgresql:///path/to/pgsql/socket/dir:5432/otherdb
+</synopsis>
+   </para>
+  </sect2>
+
  </sect1>
 
  <sect1 id="libpq-status">

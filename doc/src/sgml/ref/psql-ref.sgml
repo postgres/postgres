@@ -115,7 +115,10 @@ PostgreSQL documentation
        argument on the command line.
       </para>
       <para>
-       If this parameter contains an <symbol>=</symbol> sign, it is treated as a
+       If this parameter contains an <symbol>=</symbol> sign or starts
+       with a valid <acronym>URI</acronym> prefix
+       (<literal>postgresql://</literal>
+       or <literal>postgres://</literal>), it is treated as a
        <parameter>conninfo</parameter> string. See <xref linkend="libpq-connect"> for more information.
       </para>
       </listitem>
@@ -596,11 +599,13 @@ PostgreSQL documentation
 
     <para>
      An alternative way to specify connection parameters is in a
-     <parameter>conninfo</parameter> string, which is used instead of a
-     database name. This mechanism give you very wide control over the
+     <parameter>conninfo</parameter> string or
+     a <acronym>URI</acronym>, which is used instead of a database
+     name. This mechanism give you very wide control over the
      connection. For example:
 <programlisting>
 $ <userinput>psql "service=myservice sslmode=require"</userinput>
+$ <userinput>psql postgresql://dbmaster:5433/mydb?sslmode=require</userinput>
 </programlisting>
      This way you can also use LDAP for connection parameter lookup as
      described in <xref linkend="libpq-ldap">.
