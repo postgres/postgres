@@ -335,7 +335,15 @@ pg_tablespace_location(PG_FUNCTION_ARGS)
 	int		rllen;
 
 	/*
-	 * Return empty string for our default tablespaces
+	 * It's useful to apply this function to pg_class.reltablespace, wherein
+	 * zero means "the database's default tablespace".  So, rather than
+	 * throwing an error for zero, we choose to assume that's what is meant.
+	 */
+	if (tablespaceOid == InvalidOid)
+		tablespaceOid = MyDatabaseTableSpace;
+
+	/*
+	 * Return empty string for the cluster's default tablespaces
 	 */
 	if (tablespaceOid == DEFAULTTABLESPACE_OID ||
 		tablespaceOid == GLOBALTABLESPACE_OID)
