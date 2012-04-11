@@ -4670,10 +4670,17 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
 
        <para>
         The value for <varname>search_path</varname> must be a comma-separated
-        list of schema names.  If one of the list items is
-        the special value <literal>$user</literal>, then the schema
-        having the name returned by <function>SESSION_USER</> is substituted, if there
-        is such a schema.  (If not, <literal>$user</literal> is ignored.)
+        list of schema names.  Any name that is not an existing schema, or is
+        a schema for which the user does not have <literal>USAGE</>
+        permission, is silently ignored.
+       </para>
+
+       <para>
+        If one of the list items is the special name
+        <literal>$user</literal>, then the schema having the name returned by
+        <function>SESSION_USER</> is substituted, if there is such a schema
+        and the user has <literal>USAGE</> permission for it.
+        (If not, <literal>$user</literal> is ignored.)
        </para>
 
        <para>
@@ -4697,16 +4704,15 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
 
        <para>
         When objects are created without specifying a particular target
-        schema, they will be placed in the first schema listed
-        in the search path.  An error is reported if the search path is
-        empty.
+        schema, they will be placed in the first valid schema named in
+        <varname>search_path</varname>.  An error is reported if the search
+        path is empty.
        </para>
 
        <para>
         The default value for this parameter is
-        <literal>'"$user", public'</literal> (where the second part will be
-        ignored if there is no schema named <literal>public</>).
-        This supports shared use of a database (where no users
+        <literal>"$user", public</literal>.
+        This setting supports shared use of a database (where no users
         have private schemas, and all share use of <literal>public</>),
         private per-user schemas, and combinations of these.  Other
         effects can be obtained by altering the default search path

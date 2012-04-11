@@ -183,6 +183,18 @@ SELECT current_user = 'temp_reset_user';
 DROP ROLE temp_reset_user;
 
 --
+-- search_path should react to changes in pg_namespace
+--
+
+set search_path = foo, public, not_there_initially;
+select current_schemas(false);
+create schema not_there_initially;
+select current_schemas(false);
+drop schema not_there_initially;
+select current_schemas(false);
+reset search_path;
+
+--
 -- Tests for function-local GUC settings
 --
 
@@ -194,13 +206,7 @@ set work_mem = '1MB';
 
 select report_guc('work_mem'), current_setting('work_mem');
 
--- this should draw only a warning
-alter function report_guc(text) set search_path = no_such_schema;
-
--- with error occurring here
-select report_guc('work_mem'), current_setting('work_mem');
-
-alter function report_guc(text) reset search_path set work_mem = '2MB';
+alter function report_guc(text) set work_mem = '2MB';
 
 select report_guc('work_mem'), current_setting('work_mem');
 
