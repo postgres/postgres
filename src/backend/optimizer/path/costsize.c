@@ -228,6 +228,7 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count)
 	IndexOptInfo *index = path->indexinfo;
 	RelOptInfo *baserel = index->rel;
 	bool		indexonly = (path->path.pathtype == T_IndexOnlyScan);
+	List	   *allclauses;
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
 	Cost		indexStartupCost;
@@ -239,6 +240,7 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count)
 				spc_random_page_cost;
 	Cost		min_IO_cost,
 				max_IO_cost;
+	QualCost	qpqual_cost;
 	Cost		cpu_per_tuple;
 	double		tuples_fetched;
 	double		pages_fetched;
@@ -267,8 +269,6 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count)
 		 * Note that we force the clauses to be treated as non-join clauses
 		 * during selectivity estimation.
 		 */
-		List	   *allclauses;
-
 		allclauses = list_union_ptr(baserel->baserestrictinfo,
 									path->indexclauses);
 		path->path.rows = baserel->tuples *
@@ -283,6 +283,9 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count)
 	}
 	else
 	{
+		/* allclauses should just be the rel's restriction clauses */
+		allclauses = baserel->baserestrictinfo;
+
 		/*
 		 * The number of rows is the same as the parent rel's estimate, since
 		 * this isn't a parameterized path.
@@ -442,24 +445,23 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count)
 	/*
 	 * Estimate CPU costs per tuple.
 	 *
-	 * Normally the indexquals will be removed from the list of restriction
-	 * clauses that we have to evaluate as qpquals, so we should subtract
-	 * their costs from baserestrictcost.  But if we are doing a join then
-	 * some of the indexquals are join clauses and shouldn't be subtracted.
-	 * Rather than work out exactly how much to subtract, we don't subtract
-	 * anything.
+	 * What we want here is cpu_tuple_cost plus the evaluation costs of any
+	 * qual clauses that we have to evaluate as qpquals.  We approximate that
+	 * list as allclauses minus any clauses appearing in indexquals (as
+	 * before, assuming that pointer equality is enough to recognize duplicate
+	 * RestrictInfos).  This method neglects some considerations such as
+	 * clauses that needn't be checked because they are implied by a partial
+	 * index's predicate.  It does not seem worth the cycles to try to factor
+	 * those things in at this stage, even though createplan.c will take pains
+	 * to remove such unnecessary clauses from the qpquals list if this path
+	 * is selected for use.
 	 */
-	startup_cost += baserel->baserestrictcost.startup;
-	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost.per_tuple;
+	cost_qual_eval(&qpqual_cost,
+				   list_difference_ptr(allclauses, path->indexquals),
+				   root);
 
-	if (path->path.required_outer == NULL)
-	{
-		QualCost	index_qual_cost;
-
-		cost_qual_eval(&index_qual_cost, path->indexquals, root);
-		/* any startup cost still has to be paid ... */
-		cpu_per_tuple -= index_qual_cost.per_tuple;
-	}
+	startup_cost += qpqual_cost.startup;
+	cpu_per_tuple = cpu_tuple_cost + qpqual_cost.per_tuple;
 
 	run_cost += cpu_per_tuple * tuples_fetched;
 
