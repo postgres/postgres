@@ -9619,7 +9619,7 @@ table2-mapping
   </indexterm>
 
   <para>
-    This section descripbes the functions that are available for creating
+    This section describes the functions that are available for creating
     JSON (see <xref linkend="datatype-json">) data.
   </para>
 

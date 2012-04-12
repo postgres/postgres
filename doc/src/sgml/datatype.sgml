@@ -856,7 +856,7 @@ ALTER SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceab
      column.  <type>bigserial</type> should be used if you anticipate
      the use of more than 2<superscript>31</> identifiers over the
      lifetime of the table. The type names <type>smallserial</type> and
-     <type>serial2</type> also work the same way, execpt that they
+     <type>serial2</type> also work the same way, except that they
      create a <type>smallint</type> column.
     </para>
 

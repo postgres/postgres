@@ -30,7 +30,7 @@
   for primary key columns.  Each part is separated from the next by a comma.
   For ease of parsing using regular expressions, table and column names are
   always wrapped in double quotes, and data values are always wrapped in
-  single quotes.  Embeded quotes are doubled.
+  single quotes.  Embedded quotes are doubled.
  </para>
 
  <para>

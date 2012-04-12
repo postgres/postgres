@@ -435,8 +435,8 @@ UPDATE t1 SET x = 2, y = md5sum(y) WHERE z = 100;
     On <xref linkend="sql-createdatabase">, <literal>getattr</> permission
     will be checked on the source or template database of the new database,
     not only <literal>create</> on the new database.
-    On creation of objects within a particula schema (tables, views,
-    sequences and procedures), <literal>add_name</> will be also chechked
+    On creation of objects within a particular schema (tables, views,
+    sequences and procedures), <literal>add_name</> will be also checked
     on the schema, not only <literal>create</> on the new object itself.
    </para>
 
@@ -527,7 +527,7 @@ postgres=# SELECT cid, cname, show_credit(cid) FROM customer;
     to switch the security label of the client process, the client domain,
     to a new context, if that is allowed by the security policy.
     The client domain needs the <literal>setcurrent</> permission and also
-    <literal>dyntransaction</> from the old to the new domain.
+    <literal>dyntransition</> from the old to the new domain.
    </para>
    <para>
     Dynamic domain transitions should be considered carefully, because they
@@ -632,7 +632,7 @@ ERROR:  SELinux: security policy violation
      <row>
       <entry><literal>sepgsql_restorecon(text) returns bool</literal></entry>
       <entry>
-       Sets up initial security labels for all objectes within the
+       Sets up initial security labels for all objects within the
        current database. The argument may be NULL, or the name of a specfile
        to be used as alternative of the system default.
       </entry>

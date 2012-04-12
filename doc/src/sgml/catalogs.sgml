@@ -5128,7 +5128,7 @@
 
   <para>
    The catalog <structname>pg_shseclabel</structname> stores security
-   lables on shared database objects.  Security labels can be manipulated
+   labels on shared database objects.  Security labels can be manipulated
    with the <xref linkend="sql-security-label"> command.  For an easier
    way to view security labels, see <xref linkend="view-pg-seclabels">.
   </para>
