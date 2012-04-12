@@ -388,6 +388,14 @@ cost_index(IndexPath *path, PlannerInfo *root,
 	 * some of the indexquals are join clauses and shouldn't be subtracted.
 	 * Rather than work out exactly how much to subtract, we don't subtract
 	 * anything.
+	 *
+	 * XXX actually, this calculation is almost completely bogus, because
+	 * indexquals will contain derived indexable conditions which might be
+	 * quite different from the "original" quals in baserestrictinfo.  We
+	 * ought to determine the actual qpqual list and cost that, rather than
+	 * using this shortcut.  But that's too invasive a change to consider
+	 * back-patching, so for the moment we just mask the worst aspects of the
+	 * problem by clamping the subtracted amount.
 	 */
 	startup_cost += baserel->baserestrictcost.startup;
 	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost.per_tuple;
@@ -398,7 +406,8 @@ cost_index(IndexPath *path, PlannerInfo *root,
 
 		cost_qual_eval(&index_qual_cost, indexQuals, root);
 		/* any startup cost still has to be paid ... */
-		cpu_per_tuple -= index_qual_cost.per_tuple;
+		cpu_per_tuple -= Min(index_qual_cost.per_tuple,
+							 baserel->baserestrictcost.per_tuple);
 	}
 
 	run_cost += cpu_per_tuple * tuples_fetched;
