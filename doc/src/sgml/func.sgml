@@ -3160,6 +3160,11 @@
    right within each byte; for example bit 0 is the least significant bit of
    the first byte, and bit 15 is the most significant bit of the second byte.
   </para>
+
+  <para>
+   See also the aggregate function <function>string_agg</function> in
+   <xref linkend="functions-aggregate">.
+  </para>
  </sect1>
 
 
@@ -10965,24 +10970,6 @@ SELECT NULLIF(value, '(none)') ...
      <row>
       <entry>
        <indexterm>
-        <primary>bytea_agg</primary>
-       </indexterm>
-       <function>
-         bytea_agg(<replaceable class="parameter">expression</replaceable>)
-       </function>
-      </entry>
-      <entry>
-       <type>bytea</type>
-      </entry>
-      <entry>
-       <type>bytea</type>
-      </entry>
-      <entry>input values concatenated into a bytea</entry>
-     </row>
-
-     <row>
-      <entry>
-       <indexterm>
         <primary>count</primary>
        </indexterm>
        <function>count(*)</function>
@@ -11061,10 +11048,10 @@ SELECT NULLIF(value, '(none)') ...
        </function>
       </entry>
       <entry>
-       <type>text</type>, <type>text</type>
+       (<type>text</type>, <type>text</type>) or (<type>bytea</type>, <type>bytea</type>)
       </entry>
       <entry>
-       <type>text</type>
+       same as argument types
       </entry>
       <entry>input values concatenated into a string, separated by delimiter</entry>
      </row>

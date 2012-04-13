@@ -397,7 +397,7 @@ byteasend(PG_FUNCTION_ARGS)
 }
 
 Datum
-bytea_agg_transfn(PG_FUNCTION_ARGS)
+bytea_string_agg_transfn(PG_FUNCTION_ARGS)
 {
 	StringInfo	state;
 
@@ -408,21 +408,28 @@ bytea_agg_transfn(PG_FUNCTION_ARGS)
 	{
 		bytea	   *value = PG_GETARG_BYTEA_PP(1);
 
+		/* On the first time through, we ignore the delimiter. */
 		if (state == NULL)
 			state = makeStringAggState(fcinfo);
+		else if (!PG_ARGISNULL(2))
+		{
+			bytea	   *delim = PG_GETARG_BYTEA_PP(2);
+
+			appendBinaryStringInfo(state, VARDATA_ANY(delim), VARSIZE_ANY_EXHDR(delim));
+		}
 
 		appendBinaryStringInfo(state, VARDATA_ANY(value), VARSIZE_ANY_EXHDR(value));
 	}
 
 	/*
-	 * The transition type for bytea_agg() is declared to be "internal",
+	 * The transition type for string_agg() is declared to be "internal",
 	 * which is a pass-by-value type the same size as a pointer.
 	 */
 	PG_RETURN_POINTER(state);
 }
 
 Datum
-bytea_agg_finalfn(PG_FUNCTION_ARGS)
+bytea_string_agg_finalfn(PG_FUNCTION_ARGS)
 {
 	StringInfo	state;
 

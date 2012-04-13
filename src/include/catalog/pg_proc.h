@@ -2433,11 +2433,11 @@ DATA(insert OID = 3536 (  string_agg_finalfn		PGNSP PGUID 12 1 0 0 0 f f f f f f
 DESCR("aggregate final function");
 DATA(insert OID = 3538 (  string_agg				PGNSP PGUID 12 1 0 0 0 t f f f f f i 2 0 25 "25 25" _null_ _null_ _null_ _null_ aggregate_dummy _null_ _null_ _null_ ));
 DESCR("concatenate aggregate input into a string");
-DATA(insert OID = 3543 (  bytea_agg_transfn		PGNSP PGUID 12 1 0 0 0 f f f f f f i 2 0 2281 "2281 17" _null_ _null_ _null_ _null_ bytea_agg_transfn _null_ _null_ _null_ ));
+DATA(insert OID = 3543 (  bytea_string_agg_transfn	PGNSP PGUID 12 1 0 0 0 f f f f f f i 3 0 2281 "2281 17 17" _null_ _null_ _null_ _null_ bytea_string_agg_transfn _null_ _null_ _null_ ));
 DESCR("aggregate transition function");
-DATA(insert OID = 3544 (  bytea_agg_finalfn		PGNSP PGUID 12 1 0 0 0 f f f f f f i 1 0 17 "2281" _null_ _null_ _null_ _null_ bytea_agg_finalfn _null_ _null_ _null_ ));
+DATA(insert OID = 3544 (  bytea_string_agg_finalfn	PGNSP PGUID 12 1 0 0 0 f f f f f f i 1 0 17 "2281" _null_ _null_ _null_ _null_ bytea_string_agg_finalfn _null_ _null_ _null_ ));
 DESCR("aggregate final function");
-DATA(insert OID = 3545 (  bytea_agg				PGNSP PGUID 12 1 0 0 0 t f f f f f i 1 0 17 "17" _null_ _null_ _null_ _null_ aggregate_dummy _null_ _null_ _null_ ));
+DATA(insert OID = 3545 (  string_agg				PGNSP PGUID 12 1 0 0 0 t f f f f f i 2 0 17 "17 17" _null_ _null_ _null_ _null_ aggregate_dummy _null_ _null_ _null_ ));
 DESCR("concatenate aggregate input into a bytea");
 
 /* To ASCII conversion */
