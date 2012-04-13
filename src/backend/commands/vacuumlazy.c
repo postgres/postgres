@@ -534,7 +534,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			 * does, we wait for cleanup lock.
 			 *
 			 * We could defer the lock request further by remembering the page
-			 * and coming back to it later, of we could even register
+			 * and coming back to it later, or we could even register
 			 * ourselves for multiple buffers and then service whichever one
 			 * is received first.  For now, this seems good enough.
 			 */
