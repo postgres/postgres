@@ -102,7 +102,7 @@
 
    <listitem>
     <para>
-     Specifies the file's encoding.
+     Specifies the file's encoding,
      the same as <command>COPY</>'s <literal>ENCODING</literal> option.
     </para>
    </listitem>
