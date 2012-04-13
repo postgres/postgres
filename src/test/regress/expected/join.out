@@ -2667,6 +2667,57 @@ select * from int4_tbl a full join int4_tbl b on false;
 (10 rows)
 
 --
+-- test for ability to use a cartesian join when necessary
+--
+explain (costs off)
+select * from
+  tenk1 join int4_tbl on f1 = twothousand,
+  int4(sin(1)) q1,
+  int4(sin(0)) q2
+where q1 = thousand or q2 = thousand;
+                                 QUERY PLAN                                  
+-----------------------------------------------------------------------------
+ Hash Join
+   Hash Cond: (tenk1.twothousand = int4_tbl.f1)
+   ->  Nested Loop
+         Join Filter: ((q1.q1 = tenk1.thousand) OR (q2.q2 = tenk1.thousand))
+         ->  Nested Loop
+               ->  Function Scan on q1
+               ->  Function Scan on q2
+         ->  Bitmap Heap Scan on tenk1
+               Recheck Cond: ((q1.q1 = thousand) OR (q2.q2 = thousand))
+               ->  BitmapOr
+                     ->  Bitmap Index Scan on tenk1_thous_tenthous
+                           Index Cond: (q1.q1 = thousand)
+                     ->  Bitmap Index Scan on tenk1_thous_tenthous
+                           Index Cond: (q2.q2 = thousand)
+   ->  Hash
+         ->  Seq Scan on int4_tbl
+(16 rows)
+
+explain (costs off)
+select * from
+  tenk1 join int4_tbl on f1 = twothousand,
+  int4(sin(1)) q1,
+  int4(sin(0)) q2
+where thousand = (q1 + q2);
+                          QUERY PLAN                          
+--------------------------------------------------------------
+ Hash Join
+   Hash Cond: (tenk1.twothousand = int4_tbl.f1)
+   ->  Nested Loop
+         ->  Nested Loop
+               ->  Function Scan on q1
+               ->  Function Scan on q2
+         ->  Bitmap Heap Scan on tenk1
+               Recheck Cond: (thousand = (q1.q1 + q2.q2))
+               ->  Bitmap Index Scan on tenk1_thous_tenthous
+                     Index Cond: (thousand = (q1.q1 + q2.q2))
+   ->  Hash
+         ->  Seq Scan on int4_tbl
+(12 rows)
+
+--
 -- test join removal
 --
 begin;

@@ -88,13 +88,9 @@ join_search_one_level(PlannerInfo *root, int level)
 			has_join_restriction(root, old_rel))
 		{
 			/*
-			 * Note that if all available join clauses for this rel require
-			 * more than one other rel, we will fail to make any joins against
-			 * it here.  In most cases that's OK; it'll be considered by
-			 * "bushy plan" join code in a higher-level pass where we have
-			 * those other rels collected into a join rel.
-			 *
-			 * See also the last-ditch case below.
+			 * There are relevant join clauses or join order restrictions,
+			 * so consider joins between this rel and (only) those rels it is
+			 * linked to by a clause or restriction.
 			 */
 			make_rels_by_clause_joins(root,
 									  old_rel,
@@ -160,8 +156,8 @@ join_search_one_level(PlannerInfo *root, int level)
 				{
 					/*
 					 * OK, we can build a rel of the right level from this
-					 * pair of rels.  Do so if there is at least one usable
-					 * join clause or a relevant join restriction.
+					 * pair of rels.  Do so if there is at least one relevant
+					 * join clause or join order restriction.
 					 */
 					if (have_relevant_joinclause(root, old_rel, new_rel) ||
 						have_join_order_restriction(root, old_rel, new_rel))

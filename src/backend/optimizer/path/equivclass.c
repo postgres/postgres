@@ -2035,7 +2035,7 @@ get_parent_relid(PlannerInfo *root, RelOptInfo *rel)
 /*
  * have_relevant_eclass_joinclause
  *		Detect whether there is an EquivalenceClass that could produce
- *		a joinclause between the two given relations.
+ *		a joinclause involving the two given relations.
  *
  * This is essentially a very cut-down version of
  * generate_join_implied_equalities().	Note it's OK to occasionally say "yes"
@@ -2051,9 +2051,6 @@ have_relevant_eclass_joinclause(PlannerInfo *root,
 	foreach(lc1, root->eq_classes)
 	{
 		EquivalenceClass *ec = (EquivalenceClass *) lfirst(lc1);
-		bool		has_rel1;
-		bool		has_rel2;
-		ListCell   *lc2;
 
 		/*
 		 * Won't generate joinclauses if single-member (this test covers the
@@ -2063,9 +2060,18 @@ have_relevant_eclass_joinclause(PlannerInfo *root,
 			continue;
 
 		/*
+		 * We do not need to examine the individual members of the EC, because
+		 * all that we care about is whether each rel overlaps the relids of
+		 * at least one member, and a test on ec_relids is sufficient to prove
+		 * that.  (As with have_relevant_joinclause(), it is not necessary
+		 * that the EC be able to form a joinclause relating exactly the two
+		 * given rels, only that it be able to form a joinclause mentioning
+		 * both, and this will surely be true if both of them overlap
+		 * ec_relids.)
+		 *
 		 * Note we don't test ec_broken; if we did, we'd need a separate code
-		 * path to look through ec_sources.  Checking the members anyway is OK
-		 * as a possibly-overoptimistic heuristic.
+		 * path to look through ec_sources.  Checking the membership anyway is
+		 * OK as a possibly-overoptimistic heuristic.
 		 *
 		 * We don't test ec_has_const either, even though a const eclass won't
 		 * generate real join clauses.	This is because if we had "WHERE a.x =
@@ -2073,35 +2079,8 @@ have_relevant_eclass_joinclause(PlannerInfo *root,
 		 * since the join result is likely to be small even though it'll end
 		 * up being an unqualified nestloop.
 		 */
-
-		/* Needn't scan if it couldn't contain members from each rel */
-		if (!bms_overlap(rel1->relids, ec->ec_relids) ||
-			!bms_overlap(rel2->relids, ec->ec_relids))
-			continue;
-
-		/* Scan the EC to see if it has member(s) in each rel */
-		has_rel1 = has_rel2 = false;
-		foreach(lc2, ec->ec_members)
-		{
-			EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc2);
-
-			if (cur_em->em_is_const || cur_em->em_is_child)
-				continue;		/* ignore consts and children here */
-			if (bms_is_subset(cur_em->em_relids, rel1->relids))
-			{
-				has_rel1 = true;
-				if (has_rel2)
-					break;
-			}
-			if (bms_is_subset(cur_em->em_relids, rel2->relids))
-			{
-				has_rel2 = true;
-				if (has_rel1)
-					break;
-			}
-		}
-
-		if (has_rel1 && has_rel2)
+		if (bms_overlap(rel1->relids, ec->ec_relids) &&
+			bms_overlap(rel2->relids, ec->ec_relids))
 			return true;
 	}
 
@@ -2112,7 +2091,7 @@ have_relevant_eclass_joinclause(PlannerInfo *root,
 /*
  * has_relevant_eclass_joinclause
  *		Detect whether there is an EquivalenceClass that could produce
- *		a joinclause between the given relation and anything else.
+ *		a joinclause involving the given relation and anything else.
  *
  * This is the same as have_relevant_eclass_joinclause with the other rel
  * implicitly defined as "everything else in the query".
@@ -2125,9 +2104,6 @@ has_relevant_eclass_joinclause(PlannerInfo *root, RelOptInfo *rel1)
 	foreach(lc1, root->eq_classes)
 	{
 		EquivalenceClass *ec = (EquivalenceClass *) lfirst(lc1);
-		bool		has_rel1;
-		bool		has_rel2;
-		ListCell   *lc2;
 
 		/*
 		 * Won't generate joinclauses if single-member (this test covers the
@@ -2137,45 +2113,11 @@ has_relevant_eclass_joinclause(PlannerInfo *root, RelOptInfo *rel1)
 			continue;
 
 		/*
-		 * Note we don't test ec_broken; if we did, we'd need a separate code
-		 * path to look through ec_sources.  Checking the members anyway is OK
-		 * as a possibly-overoptimistic heuristic.
-		 *
-		 * We don't test ec_has_const either, even though a const eclass won't
-		 * generate real join clauses.	This is because if we had "WHERE a.x =
-		 * b.y and a.x = 42", it is worth considering a join between a and b,
-		 * since the join result is likely to be small even though it'll end
-		 * up being an unqualified nestloop.
+		 * Per the comment in have_relevant_eclass_joinclause, it's sufficient
+		 * to find an EC that mentions both this rel and some other rel.
 		 */
-
-		/* Needn't scan if it couldn't contain members from each rel */
-		if (!bms_overlap(rel1->relids, ec->ec_relids) ||
-			bms_is_subset(ec->ec_relids, rel1->relids))
-			continue;
-
-		/* Scan the EC to see if it has member(s) in each rel */
-		has_rel1 = has_rel2 = false;
-		foreach(lc2, ec->ec_members)
-		{
-			EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc2);
-
-			if (cur_em->em_is_const || cur_em->em_is_child)
-				continue;		/* ignore consts and children here */
-			if (bms_is_subset(cur_em->em_relids, rel1->relids))
-			{
-				has_rel1 = true;
-				if (has_rel2)
-					break;
-			}
-			if (!bms_overlap(cur_em->em_relids, rel1->relids))
-			{
-				has_rel2 = true;
-				if (has_rel1)
-					break;
-			}
-		}
-
-		if (has_rel1 && has_rel2)
+		if (bms_overlap(rel1->relids, ec->ec_relids) &&
+			!bms_is_subset(ec->ec_relids, rel1->relids))
 			return true;
 	}
 

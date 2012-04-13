@@ -21,34 +21,46 @@
 
 /*
  * have_relevant_joinclause
- *		Detect whether there is a joinclause that can be used to join
+ *		Detect whether there is a joinclause that involves
  *		the two given relations.
+ *
+ * Note: the joinclause does not have to be evaluatable with only these two
+ * relations.  This is intentional.  For example consider
+ *		SELECT * FROM a, b, c WHERE a.x = (b.y + c.z)
+ * If a is much larger than the other tables, it may be worthwhile to
+ * cross-join b and c and then use an inner indexscan on a.x.  Therefore
+ * we should consider this joinclause as reason to join b to c, even though
+ * it can't be applied at that join step.
  */
 bool
 have_relevant_joinclause(PlannerInfo *root,
 						 RelOptInfo *rel1, RelOptInfo *rel2)
 {
 	bool		result = false;
-	Relids		join_relids;
 	List	   *joininfo;
+	Relids		other_relids;
 	ListCell   *l;
-
-	join_relids = bms_union(rel1->relids, rel2->relids);
 
 	/*
 	 * We could scan either relation's joininfo list; may as well use the
 	 * shorter one.
 	 */
 	if (list_length(rel1->joininfo) <= list_length(rel2->joininfo))
+	{
 		joininfo = rel1->joininfo;
+		other_relids = rel2->relids;
+	}
 	else
+	{
 		joininfo = rel2->joininfo;
+		other_relids = rel1->relids;
+	}
 
 	foreach(l, joininfo)
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 
-		if (bms_is_subset(rinfo->required_relids, join_relids))
+		if (bms_overlap(other_relids, rinfo->required_relids))
 		{
 			result = true;
 			break;
@@ -61,8 +73,6 @@ have_relevant_joinclause(PlannerInfo *root,
 	 */
 	if (!result && rel1->has_eclass_joins && rel2->has_eclass_joins)
 		result = have_relevant_eclass_joinclause(root, rel1, rel2);
-
-	bms_free(join_relids);
 
 	return result;
 }
