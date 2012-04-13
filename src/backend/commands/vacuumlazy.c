@@ -342,13 +342,18 @@ vacuum_log_cleanup_info(Relation rel, LVRelStats *vacrelstats)
 /*
  *	lazy_scan_heap() -- scan an open heap relation
  *
- *		This routine sets commit status bits, builds lists of dead tuples
- *		and pages with free space, and calculates statistics on the number
- *		of live tuples in the heap.  When done, or when we run low on space
- *		for dead-tuple TIDs, invoke vacuuming of indexes and heap.
+ *		This routine prunes each page in the heap, which will among other
+ *		things truncate dead tuples to dead line pointers, defragment the
+ *		page, and set commit status bits (see heap_page_prune).  It also builds
+ *		lists of dead tuples and pages with free space, calculates statistics
+ *		on the number of live tuples in the heap, and marks pages as
+ *		all-visible if appropriate.  When done, or when we run low on space for
+ *		dead-tuple TIDs, invoke vacuuming of indexes and call lazy_vacuum_heap
+ *		to reclaim dead line pointers.
  *
- *		If there are no indexes then we just vacuum each dirty page as we
- *		process it, since there's no point in gathering many tuples.
+ *		If there are no indexes then we can reclaim line pointers on the fly;
+ *		dead line pointers need only be retained until all index pointers that
+ *		reference them have been killed.
  */
 static void
 lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
