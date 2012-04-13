@@ -1022,7 +1022,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
 
    <para>
     Users will stop waiting if a fast shutdown is requested.  However, as
-    when using asynchronous replication, the server will does not fully
+    when using asynchronous replication, the server will not fully
     shutdown until all outstanding WAL records are transferred to the currently
     connected standby servers.
    </para>
@@ -1126,7 +1126,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
 
    <para>
     If you need to re-create a standby server while transactions are
-    waiting, make sure that the commands to run pg_start_backup() and
+    waiting, make sure that the commands pg_start_backup() and
     pg_stop_backup() are run in a session with
     <varname>synchronous_commit</> = <literal>off</>, otherwise those
     requests will wait forever for the standby to appear.
