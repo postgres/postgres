@@ -397,10 +397,11 @@ hit_percent | 34.4947735191637631
  </sect2>
 
  <sect2>
-  <title>Author</title>
+  <title>Authors</title>
 
   <para>
-   Takahiro Itagaki <email>itagaki.takahiro@oss.ntt.co.jp</email>
+   Takahiro Itagaki <email>itagaki.takahiro@oss.ntt.co.jp</email>.
+   Query normalization added by Peter Geoghegan <email>peter@2ndquadrant.com</email>.
   </para>
  </sect2>
 
