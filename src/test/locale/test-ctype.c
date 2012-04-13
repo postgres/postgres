@@ -64,7 +64,7 @@ main()
 
 	cur_locale = setlocale(LC_ALL, "");
 	if (cur_locale)
-		fprintf(stderr, "Successfulle set locale to %s\n", cur_locale);
+		fprintf(stderr, "Successfully set locale to \"%s\"\n", cur_locale);
 	else
 	{
 		fprintf(stderr, "Cannot setup locale. Either your libc does not provide\nlocale support, or your locale data is corrupt, or you have not set\nLANG or LC_CTYPE environment variable to proper value. Program aborted.\n");

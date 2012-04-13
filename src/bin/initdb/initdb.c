@@ -1651,7 +1651,7 @@ setup_collation(void)
 		if (len == 0 || localebuf[len - 1] != '\n')
 		{
 			if (debug)
-				fprintf(stderr, _("%s: locale name too long, skipped: %s\n"),
+				fprintf(stderr, _("%s: locale name too long, skipped: \"%s\"\n"),
 						progname, localebuf);
 			continue;
 		}
@@ -1676,7 +1676,7 @@ setup_collation(void)
 		if (skip)
 		{
 			if (debug)
-				fprintf(stderr, _("%s: locale name has non-ASCII characters, skipped: %s\n"),
+				fprintf(stderr, _("%s: locale name has non-ASCII characters, skipped: \"%s\"\n"),
 						progname, localebuf);
 			continue;
 		}
@@ -2971,7 +2971,7 @@ main(int argc, char *argv[])
 		strcmp(lc_ctype, lc_numeric) == 0 &&
 		strcmp(lc_ctype, lc_monetary) == 0 &&
 		strcmp(lc_ctype, lc_messages) == 0)
-		printf(_("The database cluster will be initialized with locale %s.\n"), lc_ctype);
+		printf(_("The database cluster will be initialized with locale \"%s\".\n"), lc_ctype);
 	else
 	{
 		printf(_("The database cluster will be initialized with locales\n"
@@ -2998,7 +2998,7 @@ main(int argc, char *argv[])
 		if (ctype_enc == -1)
 		{
 			/* Couldn't recognize the locale's codeset */
-			fprintf(stderr, _("%s: could not find suitable encoding for locale %s\n"),
+			fprintf(stderr, _("%s: could not find suitable encoding for locale \"%s\"\n"),
 					progname, lc_ctype);
 			fprintf(stderr, _("Rerun %s with the -E option.\n"), progname);
 			fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
@@ -3013,18 +3013,18 @@ main(int argc, char *argv[])
 			 * UTF-8.
 			 */
 #ifdef WIN32
-			printf(_("Encoding %s implied by locale is not allowed as a server-side encoding.\n"
-			   "The default database encoding will be set to %s instead.\n"),
+			printf(_("Encoding \"%s\" implied by locale is not allowed as a server-side encoding.\n"
+			   "The default database encoding will be set to \"%s\" instead.\n"),
 				   pg_encoding_to_char(ctype_enc),
 				   pg_encoding_to_char(PG_UTF8));
 			ctype_enc = PG_UTF8;
 			encodingid = encodingid_to_string(ctype_enc);
 #else
 			fprintf(stderr,
-					_("%s: locale %s requires unsupported encoding %s\n"),
+					_("%s: locale \"%s\" requires unsupported encoding \"%s\"\n"),
 					progname, lc_ctype, pg_encoding_to_char(ctype_enc));
 			fprintf(stderr,
-				  _("Encoding %s is not allowed as a server-side encoding.\n"
+				  _("Encoding \"%s\" is not allowed as a server-side encoding.\n"
 					"Rerun %s with a different locale selection.\n"),
 					pg_encoding_to_char(ctype_enc), progname);
 			exit(1);
@@ -3033,7 +3033,7 @@ main(int argc, char *argv[])
 		else
 		{
 			encodingid = encodingid_to_string(ctype_enc);
-			printf(_("The default database encoding has accordingly been set to %s.\n"),
+			printf(_("The default database encoding has accordingly been set to \"%s\".\n"),
 				   pg_encoding_to_char(ctype_enc));
 		}
 	}
@@ -3050,7 +3050,7 @@ main(int argc, char *argv[])
 		default_text_search_config = find_matching_ts_config(lc_ctype);
 		if (default_text_search_config == NULL)
 		{
-			printf(_("%s: could not find suitable text search configuration for locale %s\n"),
+			printf(_("%s: could not find suitable text search configuration for locale \"%s\"\n"),
 				   progname, lc_ctype);
 			default_text_search_config = "simple";
 		}
@@ -3061,12 +3061,12 @@ main(int argc, char *argv[])
 
 		if (checkmatch == NULL)
 		{
-			printf(_("%s: warning: suitable text search configuration for locale %s is unknown\n"),
+			printf(_("%s: warning: suitable text search configuration for locale \"%s\" is unknown\n"),
 				   progname, lc_ctype);
 		}
 		else if (strcmp(checkmatch, default_text_search_config) != 0)
 		{
-			printf(_("%s: warning: specified text search configuration \"%s\" might not match locale %s\n"),
+			printf(_("%s: warning: specified text search configuration \"%s\" might not match locale \"%s\"\n"),
 				   progname, default_text_search_config, lc_ctype);
 		}
 	}
