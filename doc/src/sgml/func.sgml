@@ -14981,7 +14981,20 @@ postgres=# SELECT * FROM pg_xlogfile_name_offset(pg_stop_backup());
         <literal><function>pg_size_pretty(<type>bigint</type>)</function></literal>
         </entry>
        <entry><type>text</type></entry>
-       <entry>Converts a size in bytes into a human-readable format with size units</entry>
+       <entry>
+         Converts a size in bytes expressed as a 64-bit integer into a
+         human-readable format with size units
+       </entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_size_pretty(<type>numeric</type>)</function></literal>
+        </entry>
+       <entry><type>text</type></entry>
+       <entry>
+         Converts a size in bytes expressed as a numeric value into a
+         human-readable format with size units
+       </entry>
       </row>
       <row>
        <entry>
