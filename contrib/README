@@ -2,210 +2,27 @@ The PostgreSQL contrib tree
 ---------------------------
 
 This subtree contains porting tools, analysis utilities, and plug-in
-features that are not part of the core PostgreSQL system, mainly because
-they address a limited audience or are too experimental to be part of
-the main source tree.  This does not preclude their usefulness.
+features that are not part of the core PostgreSQL system, mainly
+because they address a limited audience or are too experimental to be
+part of the main source tree.  This does not preclude their
+usefulness.
 
-User documentation for each module appears in the main SGML documentation.
+User documentation for each module appears in the main SGML
+documentation.
 
-Most items can be built with `gmake all' and installed with
-`gmake install' in the usual fashion, after you have run the `configure'
-script in the top-level directory.  Some directories supply new
-user-defined functions, operators, or types.  In these cases, after you have
-installed the files you need to register the new entities in the database
-system by running the commands in the supplied .sql file.  For example,
+When building from the source distribution, these modules are not
+built automatically, unless you build the "world" target.  You can
+also build and install them all by running "gmake all" and "gmake
+install" in this directory; or to build and install just one selected
+module, do the same in that module's subdirectory.
 
-	$ psql -d dbname -f module.sql
+Some directories supply new user-defined functions, operators, or
+types.  To make use of one of these modules, after you have installed
+the code you need to register the new SQL objects in the database
+system by executing a CREATE EXTENSION command.  In a fresh database,
+you can simply do
+
+    CREATE EXTENSION module_name;
 
 See the PostgreSQL documentation for more information about this
 procedure.
-
-
-Index:
-------
-
-adminpack -
-	File and log manipulation routines, used by pgAdmin
-	by Dave Page <dpage@vale-housing.co.uk>
-
-auth_delay
-	Add a short delay after a failed authentication attempt, to make
-	brute-force attacks on database passwords a bit harder.
-	by KaiGai Kohei <kaigai@ak.jp.nec.com>
-
-auto_explain -
-	Log EXPLAIN output for long-running queries
-	by Takahiro Itagaki <itagaki.takahiro@oss.ntt.co.jp>
-
-btree_gin -
-	Support for emulating BTREE indexing in GIN
-	by Oleg Bartunov <oleg@sai.msu.su> and Teodor Sigaev <teodor@sigaev.ru>
-
-btree_gist -
-	Support for emulating BTREE indexing in GiST
-	by Oleg Bartunov <oleg@sai.msu.su> and Teodor Sigaev <teodor@sigaev.ru>
-
-chkpass -
-	An auto-encrypted password datatype
-	by D'Arcy J.M. Cain <darcy@druid.net>
-
-citext -
-	A case-insensitive character string datatype
-	by David E. Wheeler <david@kineticode.com>
-
-cube -
-	Multidimensional-cube datatype (GiST indexing example)
-	by Gene Selkov, Jr. <selkovjr@mcs.anl.gov>
-
-dblink -
-	Allows remote query execution
-	by Joe Conway <mail@joeconway.com>
-
-dict_int -
-	Text search dictionary template for integers
-	by Sergey Karpov <karpov@sao.ru>
-
-dict_xsyn -
-	Text search dictionary template for extended synonym processing
-	by Sergey Karpov <karpov@sao.ru>
-
-earthdistance -
-	Functions for computing distances between two points on Earth
-	by Bruno Wolff III <bruno@wolff.to> and Hal Snyder <hal@vailsys.com>
-
-file_fdw
-	Foreign-data wrapper for server-side CSV/TEXT files
-	by Shigeru Hanada <hanada@metrosystems.co.jp>
-
-fuzzystrmatch -
-	Levenshtein, metaphone, and soundex fuzzy string matching
-	by Joe Conway <mail@joeconway.com> and Joel Burton <jburton@scw.org>
-
-hstore -
-	Module for storing (key, value) pairs
-	by Oleg Bartunov <oleg@sai.msu.su> and Teodor Sigaev <teodor@sigaev.ru>
-
-intagg -
-	Integer aggregator
-	by mlw <markw@mohawksoft.com>
-
-intarray -
-	Index support for arrays of int4, using GiST
-	by Teodor Sigaev <teodor@sigaev.ru> and Oleg Bartunov <oleg@sai.msu.su>
-
-isn -
-	PostgreSQL type extensions for ISBN, ISSN, ISMN, EAN13 product numbers
-	by Germán Méndez Bravo (Kronuz) <kronuz@hotmail.com>
-
-lo -
-	Large Object maintenance
-	by Peter Mount <peter@retep.org.uk>
-
-ltree -
-	Tree-like data structures
-	by Teodor Sigaev <teodor@sigaev.ru> and Oleg Bartunov <oleg@sai.msu.su>
-
-oid2name -
-	Maps numeric files to table names
-	by B Palmer <bpalmer@crimelabs.net>
-
-pageinspect -
-	Allows inspection of database pages
-	Heikki Linnakangas <heikki@enterprisedb.com>
-
-passwordcheck -
-	Simple password strength checker
-	Laurenz Albe <laurenz.albe@wien.gv.at>
-
-pg_buffercache -
-	Real time queries on the shared buffer cache
-	by Mark Kirkwood <markir@paradise.net.nz>
-
-pg_freespacemap -
-	Displays the contents of the free space map (FSM)
-	by Mark Kirkwood <markir@paradise.net.nz>
-
-pg_standby -
-	Sample archive_command for warm standby operation
-	by Simon Riggs <simon@2ndquadrant.com>
-
-pg_stat_statements -
-	Track statement execution times across a whole database cluster
-	by Takahiro Itagaki <itagaki.takahiro@oss.ntt.co.jp>
-
-pg_test_fsync -
-	Test different wal_sync_method settings
-	by Bruce Momjian <bruce@momjian.us>
-
-pg_trgm -
-	Functions for determining the similarity of text based on trigram
-	matching.
-	by Oleg Bartunov <oleg@sai.msu.su> and Teodor Sigaev <teodor@sigaev.ru>
-
-pg_upgrade -
-	Support for in-place upgrade between major releases of PostgreSQL
-	Bruce Momjian <bruce@momjian.us> and others
-
-pgbench -
-	TPC-B like benchmarking tool
-	by Tatsuo Ishii <ishii@sraoss.co.jp>
-
-pgcrypto -
-	Cryptographic functions
-	by Marko Kreen <marko@l-t.ee>
-
-pgrowlocks -
-	A function to return row locking information
-	by Tatsuo Ishii <ishii@sraoss.co.jp>
-
-pgstattuple -
-	Functions to return statistics about "dead" tuples and free
-	space within a table
-	by Tatsuo Ishii <ishii@sraoss.co.jp>
-
-seg -
-	Confidence-interval datatype (GiST indexing example)
-	by Gene Selkov, Jr. <selkovjr@mcs.anl.gov>
-
-sepgsql -
-	External security provider using SELinux
-	by KaiGai Kohei <kaigai@ak.jp.nec.com>
-
-spi -
-	Various trigger functions, examples for using SPI.
-
-sslinfo -
-	Functions to get information about SSL certificates
-	by Victor Wagner <vitus@cryptocom.ru>
-
-start-scripts -
-	Scripts for starting the server at boot time on various platforms.
-
-tablefunc -
-	Examples of functions returning tables
-	by Joe Conway <mail@joeconway.com>
-
-test_parser -
-	Sample text search parser
-	by Sergey Karpov <karpov@sao.ru>
-
-tsearch2 -
-	Compatibility package for the pre-8.3 implementation of text search.
-	Pavel Stehule <pavel.stehule@gmail.com>, based on code originally by
-	Teodor Sigaev <teodor@sigaev.ru> and Oleg Bartunov <oleg@sai.msu.su>.
-
-unaccent -
-	Unaccent dictionary for text search
-	Teodor Sigaev <teodor@sigaev.ru> and Oleg Bartunov <oleg@sai.msu.su>.
-
-uuid-ossp -
-	UUID generation functions
-	by Peter Eisentraut <peter_e@gmx.net>
-
-vacuumlo -
-	Remove orphaned large objects
-	by Peter T Mount <peter@retep.org.uk>
-
-xml2 -
-	Storing XML in PostgreSQL
-	by John Gray <jgray@azuli.co.uk>
