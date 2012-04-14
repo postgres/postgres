@@ -1011,7 +1011,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
    </para>
 
    <para>
-    Setting <varname>synchronous_commit</> to <literal>write</> will
+    Setting <varname>synchronous_commit</> to <literal>remote_write</> will
     cause each commit to wait for confirmation that the standby has received
     the commit record to memory. This provides a lower level of durability
     than <literal>on</> does. However, it's a practically useful setting
@@ -1075,7 +1075,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
 
    <para>
     Commits made when <varname>synchronous_commit</> is set to <literal>on</>
-    or <literal>write</> will wait until the synchronous standby responds. The response
+    or <literal>remote_write</> will wait until the synchronous standby responds. The response
     may never occur if the last, or only, standby should crash.
    </para>
 

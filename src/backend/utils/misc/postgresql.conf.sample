@@ -162,7 +162,8 @@
 #wal_level = minimal			# minimal, archive, or hot_standby
 					# (change requires restart)
 #fsync = on				# turns forced synchronization on or off
-#synchronous_commit = on		# synchronization level; on, off, or local
+#synchronous_commit = on		# synchronization level;
+					# off, local, remote_write, or on
 #wal_sync_method = fsync		# the default is the first option
 					# supported by the operating system:
 					#   open_datasync

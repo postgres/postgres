@@ -1626,7 +1626,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Specifies whether transaction commit will wait for WAL records
         to be written to disk before the command returns a <quote>success</>
-        indication to the client.  Valid values are <literal>on</>, <literal>write</>,
+        indication to the client.  Valid values are <literal>on</>, <literal>remote_write</>,
         <literal>local</>, and <literal>off</>.  The default, and safe, value
         is <literal>on</>.  When <literal>off</>, there can be a delay between
         when success is reported to the client and when the transaction is
@@ -1646,7 +1646,7 @@ SET ENABLE_SEQSCAN TO OFF;
         If <xref linkend="guc-synchronous-standby-names"> is set, this
         parameter also controls whether or not transaction commit will wait
         for the transaction's WAL records to be flushed to disk and replicated
-        to the standby server.  When <literal>write</>, the commit wait will
+        to the standby server.  When <literal>remote_write</>, the commit wait will
         last until a reply from the current synchronous standby indicates
         it has received the commit record of the transaction to memory.
         Normally this causes no data loss at the time of failover. However,
