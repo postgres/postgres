@@ -935,6 +935,14 @@ foo = rv[i]["my_column"]
           Return a list of column names, list of column type OIDs, and list of
           type-specific type modifiers for the columns, respectively.
          </para>
+
+         <para>
+          These methods raise an exception when called on a result object from
+          a command that did not produce a result set, e.g.,
+          <command>UPDATE</command> without <literal>RETURNING</literal>, or
+          <command>DROP TABLE</command>.  But it is OK to use these methods on
+          a result set containing zero rows.
+         </para>
         </listitem>
        </varlistentry>
       </variablelist>

@@ -93,9 +93,9 @@ SELECT join_sequences(sequences) FROM sequences
 -- plan and result objects
 --
 
-CREATE FUNCTION result_nrows_test() RETURNS int
+CREATE FUNCTION result_metadata_test(cmd text) RETURNS int
 AS $$
-plan = plpy.prepare("SELECT 1 AS foo, '11'::text AS bar UNION SELECT 2, '22'")
+plan = plpy.prepare(cmd)
 plpy.info(plan.status()) # not really documented or useful
 result = plpy.execute(plan)
 if result.status() > 0:
@@ -107,7 +107,8 @@ else:
    return None
 $$ LANGUAGE plpythonu;
 
-SELECT result_nrows_test();
+SELECT result_metadata_test($$SELECT 1 AS foo, '11'::text AS bar UNION SELECT 2, '22'$$);
+SELECT result_metadata_test($$CREATE TEMPORARY TABLE foo1 (a int, b text)$$);
 
 
 -- cursor objects

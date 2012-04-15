@@ -9,6 +9,7 @@
 #include "plpython.h"
 
 #include "plpy_resultobject.h"
+#include "plpy_elog.h"
 
 
 static void PLy_result_dealloc(PyObject *arg);
@@ -131,6 +132,12 @@ PLy_result_colnames(PyObject *self, PyObject *unused)
 	PyObject   *list;
 	int			i;
 
+	if (!ob->tupdesc)
+	{
+		PLy_exception_set(PLy_exc_error, "command did not produce a result set");
+		return NULL;
+	}
+
 	list = PyList_New(ob->tupdesc->natts);
 	for (i = 0; i < ob->tupdesc->natts; i++)
 		PyList_SET_ITEM(list, i, PyString_FromString(NameStr(ob->tupdesc->attrs[i]->attname)));
@@ -145,6 +152,12 @@ PLy_result_coltypes(PyObject *self, PyObject *unused)
 	PyObject   *list;
 	int			i;
 
+	if (!ob->tupdesc)
+	{
+		PLy_exception_set(PLy_exc_error, "command did not produce a result set");
+		return NULL;
+	}
+
 	list = PyList_New(ob->tupdesc->natts);
 	for (i = 0; i < ob->tupdesc->natts; i++)
 		PyList_SET_ITEM(list, i, PyInt_FromLong(ob->tupdesc->attrs[i]->atttypid));
@@ -158,6 +171,12 @@ PLy_result_coltypmods(PyObject *self, PyObject *unused)
 	PLyResultObject *ob = (PLyResultObject *) self;
 	PyObject   *list;
 	int			i;
+
+	if (!ob->tupdesc)
+	{
+		PLy_exception_set(PLy_exc_error, "command did not produce a result set");
+		return NULL;
+	}
 
 	list = PyList_New(ob->tupdesc->natts);
 	for (i = 0; i < ob->tupdesc->natts; i++)
