@@ -501,6 +501,8 @@ sub CopyIncludeFiles
     my $D;
     opendir($D, 'src/include') || croak "Could not opendir on src/include!\n";
 
+    CopyFiles('PL/pgSQL header', $target . '/include/server/','src/pl/plpgsql/src/', 'plpgsql.h');
+
     # some xcopy progs don't like mixed slash style paths
     (my $ctarget = $target) =~ s!/!\\!g;
     while (my $d = readdir($D))
