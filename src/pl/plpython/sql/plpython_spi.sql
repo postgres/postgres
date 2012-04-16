@@ -110,6 +110,28 @@ $$ LANGUAGE plpythonu;
 SELECT result_metadata_test($$SELECT 1 AS foo, '11'::text AS bar UNION SELECT 2, '22'$$);
 SELECT result_metadata_test($$CREATE TEMPORARY TABLE foo1 (a int, b text)$$);
 
+CREATE FUNCTION result_nrows_test(cmd text) RETURNS int
+AS $$
+result = plpy.execute(cmd)
+return result.nrows()
+$$ LANGUAGE plpythonu;
+
+SELECT result_nrows_test($$SELECT 1$$);
+SELECT result_nrows_test($$CREATE TEMPORARY TABLE foo2 (a int, b text)$$);
+SELECT result_nrows_test($$INSERT INTO foo2 VALUES (1, 'one'), (2, 'two')$$);
+SELECT result_nrows_test($$UPDATE foo2 SET b = '' WHERE a = 2$$);
+
+CREATE FUNCTION result_len_test(cmd text) RETURNS int
+AS $$
+result = plpy.execute(cmd)
+return len(result)
+$$ LANGUAGE plpythonu;
+
+SELECT result_len_test($$SELECT 1$$);
+SELECT result_len_test($$CREATE TEMPORARY TABLE foo3 (a int, b text)$$);
+SELECT result_len_test($$INSERT INTO foo3 VALUES (1, 'one'), (2, 'two')$$);
+SELECT result_len_test($$UPDATE foo3 SET b= '' WHERE a = 2$$);
+
 
 -- cursor objects
 

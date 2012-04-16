@@ -903,6 +903,8 @@ rv = plpy.execute("SELECT * FROM my_table", 5)
 <programlisting>
 foo = rv[i]["my_column"]
 </programlisting>
+      The number of rows returned can be obtained using the built-in
+      <function>len</function> function.
      </para>
 
      <para>
@@ -912,7 +914,10 @@ foo = rv[i]["my_column"]
         <term><literal><function>nrows</function>()</literal></term>
         <listitem>
          <para>
-          Returns the number of rows returned or processed by the query.
+          Returns the number of rows processed by the command.  Note that this
+          is not necessarily the same as the number of rows returned.  For
+          example, an <command>UPDATE</command> command will set this value but
+          won't return any rows (unless <literal>RETURNING</literal> is used).
          </para>
         </listitem>
        </varlistentry>

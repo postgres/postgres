@@ -150,6 +150,64 @@ CONTEXT:  Traceback (most recent call last):
   PL/Python function "result_metadata_test", line 6, in <module>
     plpy.info(result.colnames())
 PL/Python function "result_metadata_test"
+CREATE FUNCTION result_nrows_test(cmd text) RETURNS int
+AS $$
+result = plpy.execute(cmd)
+return result.nrows()
+$$ LANGUAGE plpythonu;
+SELECT result_nrows_test($$SELECT 1$$);
+ result_nrows_test 
+-------------------
+                 1
+(1 row)
+
+SELECT result_nrows_test($$CREATE TEMPORARY TABLE foo2 (a int, b text)$$);
+ result_nrows_test 
+-------------------
+                 0
+(1 row)
+
+SELECT result_nrows_test($$INSERT INTO foo2 VALUES (1, 'one'), (2, 'two')$$);
+ result_nrows_test 
+-------------------
+                 2
+(1 row)
+
+SELECT result_nrows_test($$UPDATE foo2 SET b = '' WHERE a = 2$$);
+ result_nrows_test 
+-------------------
+                 1
+(1 row)
+
+CREATE FUNCTION result_len_test(cmd text) RETURNS int
+AS $$
+result = plpy.execute(cmd)
+return len(result)
+$$ LANGUAGE plpythonu;
+SELECT result_len_test($$SELECT 1$$);
+ result_len_test 
+-----------------
+               1
+(1 row)
+
+SELECT result_len_test($$CREATE TEMPORARY TABLE foo3 (a int, b text)$$);
+ result_len_test 
+-----------------
+               0
+(1 row)
+
+SELECT result_len_test($$INSERT INTO foo3 VALUES (1, 'one'), (2, 'two')$$);
+ result_len_test 
+-----------------
+               0
+(1 row)
+
+SELECT result_len_test($$UPDATE foo3 SET b= '' WHERE a = 2$$);
+ result_len_test 
+-----------------
+               0
+(1 row)
+
 -- cursor objects
 CREATE FUNCTION simple_cursor_test() RETURNS int AS $$
 res = plpy.cursor("select fname, lname from users")
