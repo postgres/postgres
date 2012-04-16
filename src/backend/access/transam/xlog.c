@@ -6354,10 +6354,10 @@ StartupXLOG(void)
 		CheckRequiredParameterValues();
 
 		/*
-		 * We're in recovery, so unlogged relations relations may be trashed
-		 * and must be reset.  This should be done BEFORE allowing Hot Standby
-		 * connections, so that read-only backends don't try to read whatever
-		 * garbage is left over from before.
+		 * We're in recovery, so unlogged relations may be trashed and must be
+		 * reset.  This should be done BEFORE allowing Hot Standby connections,
+		 * so that read-only backends don't try to read whatever garbage is
+		 * left over from before.
 		 */
 		ResetUnloggedRelations(UNLOGGED_RELATION_CLEANUP);
 
