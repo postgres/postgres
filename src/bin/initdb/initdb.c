@@ -2760,8 +2760,11 @@ main(int argc, char *argv[])
 	}
 
 
-	/* Non-option argument specifies data directory */
-	if (optind < argc)
+	/* 
+	 * Non-option argument specifies data directory
+	 * as long as it wasn't already specified with -D / --pgdata
+	 */
+	if (optind < argc && strlen(pg_data) == 0)
 	{
 		pg_data = xstrdup(argv[optind]);
 		optind++;

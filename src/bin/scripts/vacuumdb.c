@@ -135,18 +135,23 @@ main(int argc, char *argv[])
 		}
 	}
 
-	switch (argc - optind)
+	
+	/* 
+	 * Non-option argument specifies database name
+	 * as long as it wasn't already specified with -d / --dbname
+	 */
+	if (optind < argc && dbname == NULL)
 	{
-		case 0:
-			break;
-		case 1:
-			dbname = argv[optind];
-			break;
-		default:
-			fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
-					progname, argv[optind + 1]);
-			fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
-			exit(1);
+		dbname = argv[optind];
+		optind++;
+	}
+
+	if (optind < argc)
+	{
+		fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
+				progname, argv[optind + 1]);
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+		exit(1);
 	}
 
 	if (analyze_only)
