@@ -603,7 +603,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			if (!PageIsAllVisible(page))
 			{
 				PageSetAllVisible(page);
-				SetBufferCommitInfoNeedsSave(buf);
+				MarkBufferDirty(buf);
 			}
 
 			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
@@ -838,7 +838,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		if (!PageIsAllVisible(page) && all_visible)
 		{
 			PageSetAllVisible(page);
-			SetBufferCommitInfoNeedsSave(buf);
+			MarkBufferDirty(buf);
 		}
 
 		/*
