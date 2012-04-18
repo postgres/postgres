@@ -98,24 +98,14 @@ main(int argc, char *argv[])
 		}
 	}
 
-	/*
-	 * We set dbname from positional arguments if it is not
-	 * already set by option arguments -d. If not doing
-	 * listlangs, positional dbname must follow positional
-	 * langname.
-	 */
-
 	if (argc - optind > 0)
 	{
 		if (listlangs)
-		{
-			if (dbname == NULL)
-				dbname = argv[optind++];
-		}
+			dbname = argv[optind++];
 		else
 		{
 			langname = argv[optind++];
-			if (argc - optind > 0 && dbname == NULL)
+			if (argc - optind > 0)
 				dbname = argv[optind++];
 		}
 	}

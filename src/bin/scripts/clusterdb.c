@@ -97,22 +97,18 @@ main(int argc, char *argv[])
 		}
 	}
 
-	/* 
-	 * Non-option argument specifies database name
-	 * as long as it wasn't already specified with -d / --dbname
-	 */
-	if (optind < argc && dbname == NULL)
+	switch (argc - optind)
 	{
-		dbname = argv[optind];
-		optind++;
-	}
-
-	if (optind < argc)
-	{
-		fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
-				progname, argv[optind + 1]);
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
-		exit(1);
+		case 0:
+			break;
+		case 1:
+			dbname = argv[optind];
+			break;
+		default:
+			fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
+					progname, argv[optind + 1]);
+			fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+			exit(1);
 	}
 
 	setup_cancel_handler();
