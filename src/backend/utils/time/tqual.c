@@ -323,16 +323,6 @@ HeapTupleSatisfiesSelf(HeapTupleHeader tuple, Snapshot snapshot, Buffer buffer)
  *		 (Xmax != my-transaction &&			the row was deleted by another transaction
  *		  Xmax is not committed))))			that has not been committed
  *
- *		mao says 17 march 1993:  the tests in this routine are correct;
- *		if you think they're not, you're wrong, and you should think
- *		about it again.  i know, it happened to me.  we don't need to
- *		check commit time against the start time of this transaction
- *		because 2ph locking protects us from doing the wrong thing.
- *		if you mess around here, you'll break serializability.  the only
- *		problem with this code is that it does the wrong thing for system
- *		catalog updates, because the catalogs aren't subject to 2ph, so
- *		the serializability guarantees we provide don't extend to xacts
- *		that do catalog accesses.  this is unfortunate, but not critical.
  */
 bool
 HeapTupleSatisfiesNow(HeapTupleHeader tuple, Snapshot snapshot, Buffer buffer)
