@@ -1024,9 +1024,26 @@ psql_completion(char *text, int start, int end)
 			"ENCRYPTED", "INHERIT", "LOGIN", "NOCREATEDB", "NOCREATEROLE",
 			"NOCREATEUSER", "NOINHERIT", "NOLOGIN", "NOREPLICATION",
 			"NOSUPERUSER", "RENAME TO", "REPLICATION", "RESET", "SET",
-		"SUPERUSER", "UNENCRYPTED", "VALID UNTIL", NULL};
+		"SUPERUSER", "UNENCRYPTED", "VALID UNTIL", "WITH", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTERUSER);
+	}
+
+	/* ALTER USER,ROLE <name> WITH */
+	else if ((pg_strcasecmp(prev4_wd, "ALTER") == 0 &&
+			  (pg_strcasecmp(prev3_wd, "USER") == 0 ||
+			   pg_strcasecmp(prev3_wd, "ROLE") == 0) &&
+			  pg_strcasecmp(prev_wd, "WITH") == 0))
+	{
+		/* Similar to the above, but don't complete "WITH" again. */
+		static const char *const list_ALTERUSER_WITH[] =
+		{"CONNECTION LIMIT", "CREATEDB", "CREATEROLE", "CREATEUSER",
+			"ENCRYPTED", "INHERIT", "LOGIN", "NOCREATEDB", "NOCREATEROLE",
+			"NOCREATEUSER", "NOINHERIT", "NOLOGIN", "NOREPLICATION",
+			"NOSUPERUSER", "RENAME TO", "REPLICATION", "RESET", "SET",
+		 "SUPERUSER", "UNENCRYPTED", "VALID UNTIL", NULL};
+
+		COMPLETE_WITH_LIST(list_ALTERUSER_WITH);
 	}
 
 	/* complete ALTER USER,ROLE <name> ENCRYPTED,UNENCRYPTED with PASSWORD */
@@ -1947,7 +1964,7 @@ psql_completion(char *text, int start, int end)
 			 prev2_wd[0] != '\0')
 		COMPLETE_WITH_CONST("PROCEDURE");
 
-/* CREATE ROLE,USER,GROUP */
+/* CREATE ROLE,USER,GROUP <name> */
 	else if (pg_strcasecmp(prev3_wd, "CREATE") == 0 &&
 			 !(pg_strcasecmp(prev2_wd, "USER") == 0 && pg_strcasecmp(prev_wd, "MAPPING") == 0) &&
 			 (pg_strcasecmp(prev2_wd, "ROLE") == 0 ||
@@ -1958,9 +1975,27 @@ psql_completion(char *text, int start, int end)
 			"ENCRYPTED", "IN", "INHERIT", "LOGIN", "NOCREATEDB",
 			"NOCREATEROLE", "NOCREATEUSER", "NOINHERIT", "NOLOGIN",
 			"NOREPLICATION", "NOSUPERUSER", "REPLICATION", "ROLE",
-		"SUPERUSER", "SYSID", "UNENCRYPTED", "VALID UNTIL", NULL};
+		"SUPERUSER", "SYSID", "UNENCRYPTED", "VALID UNTIL", "WITH", NULL};
 
 		COMPLETE_WITH_LIST(list_CREATEROLE);
+	}
+
+/* CREATE ROLE,USER,GROUP <name> WITH */
+	else if ((pg_strcasecmp(prev4_wd, "CREATE") == 0 &&
+			  (pg_strcasecmp(prev3_wd, "ROLE") == 0 ||
+			   pg_strcasecmp(prev3_wd, "GROUP") == 0 ||
+			   pg_strcasecmp(prev3_wd, "USER") == 0) &&
+			  pg_strcasecmp(prev_wd, "WITH") == 0))
+	{
+		/* Similar to the above, but don't complete "WITH" again. */
+		static const char *const list_CREATEROLE_WITH[] =
+		{"ADMIN", "CONNECTION LIMIT", "CREATEDB", "CREATEROLE", "CREATEUSER",
+			"ENCRYPTED", "IN", "INHERIT", "LOGIN", "NOCREATEDB",
+			"NOCREATEROLE", "NOCREATEUSER", "NOINHERIT", "NOLOGIN",
+			"NOREPLICATION", "NOSUPERUSER", "REPLICATION", "ROLE",
+		 "SUPERUSER", "SYSID", "UNENCRYPTED", "VALID UNTIL", NULL};
+
+		COMPLETE_WITH_LIST(list_CREATEROLE_WITH);
 	}
 
 	/*
