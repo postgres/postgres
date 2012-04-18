@@ -1837,7 +1837,7 @@ static bool
 _equalReassignOwnedStmt(ReassignOwnedStmt *a, ReassignOwnedStmt *b)
 {
 	COMPARE_NODE_FIELD(roles);
-	COMPARE_NODE_FIELD(newrole);
+	COMPARE_STRING_FIELD(newrole);
 
 	return true;
 }
