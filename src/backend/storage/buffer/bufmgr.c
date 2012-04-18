@@ -2376,9 +2376,11 @@ SetBufferCommitInfoNeedsSave(Buffer buffer)
 	 * making the first scan after commit of an xact that added/deleted many
 	 * tuples.	So, be as quick as we can if the buffer is already dirty.  We
 	 * do this by not acquiring spinlock if it looks like the status bits are
-	 * already OK.	(Note it is okay if someone else clears BM_JUST_DIRTIED
-	 * immediately after we look, because the buffer content update is already
-	 * done and will be reflected in the I/O.)
+	 * already.  Since we make this test unlocked, there's a chance we might
+	 * fail to notice that the flags have just been cleared, and failed to reset
+	 * them, due to memory-ordering issues.  But since this function is only
+	 * intended to be used in cases where failing to write out the data would
+	 * be harmless anyway, it doesn't really matter.
 	 */
 	if ((bufHdr->flags & (BM_DIRTY | BM_JUST_DIRTIED)) !=
 		(BM_DIRTY | BM_JUST_DIRTIED))
