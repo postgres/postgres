@@ -635,16 +635,19 @@ IsWaitingForLock(void)
 }
 
 /*
- * Cancel any pending wait for lock, when aborting a transaction.
+ * Cancel any pending wait for lock, when aborting a transaction, and revert
+ * any strong lock count acquisition for a lock being acquired.
  *
  * (Normally, this would only happen if we accept a cancel/die
- * interrupt while waiting; but an ereport(ERROR) while waiting is
- * within the realm of possibility, too.)
+ * interrupt while waiting; but an ereport(ERROR) before or during the lock
+ * wait is within the realm of possibility, too.)
  */
 void
-LockWaitCancel(void)
+LockErrorCleanup(void)
 {
 	LWLockId	partitionLock;
+
+	AbortStrongLockAcquire();
 
 	/* Nothing to do if we weren't waiting for a lock */
 	if (lockAwaited == NULL)
@@ -709,7 +712,7 @@ ProcReleaseLocks(bool isCommit)
 	if (!MyProc)
 		return;
 	/* If waiting, get off wait queue (should only be needed after error) */
-	LockWaitCancel();
+	LockErrorCleanup();
 	/* Release locks */
 	LockReleaseAll(DEFAULT_LOCKMETHOD, !isCommit);
 
@@ -1019,7 +1022,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 	 * NOTE: this may also cause us to exit critical-section state, possibly
 	 * allowing a cancel/die interrupt to be accepted. This is OK because we
 	 * have recorded the fact that we are waiting for a lock, and so
-	 * LockWaitCancel will clean up if cancel/die happens.
+	 * LockErrorCleanup will clean up if cancel/die happens.
 	 */
 	LWLockRelease(partitionLock);
 
@@ -1062,7 +1065,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 	 * don't, because we have no shared-state-change work to do after being
 	 * granted the lock (the grantor did it all).  We do have to worry about
 	 * updating the locallock table, but if we lose control to an error,
-	 * LockWaitCancel will fix that up.
+	 * LockErrorCleanup will fix that up.
 	 */
 	do
 	{
@@ -1207,7 +1210,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 	LWLockAcquire(partitionLock, LW_EXCLUSIVE);
 
 	/*
-	 * We no longer want LockWaitCancel to do anything.
+	 * We no longer want LockErrorCleanup to do anything.
 	 */
 	lockAwaited = NULL;
 

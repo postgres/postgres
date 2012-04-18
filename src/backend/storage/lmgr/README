@@ -560,7 +560,7 @@ examines every member of the wait queue (this was not true in the 7.0
 implementation, BTW).  Therefore, if ProcLockWakeup is always invoked
 after a lock is released or a wait queue is rearranged, there can be no
 failure to wake a wakable process.  One should also note that
-LockWaitCancel (abort a waiter due to outside factors) must run
+LockErrorCleanup (abort a waiter due to outside factors) must run
 ProcLockWakeup, in case the canceled waiter was soft-blocking other
 waiters.
 

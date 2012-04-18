@@ -2575,7 +2575,7 @@ die(SIGNAL_ARGS)
 			/* bump holdoff count to make ProcessInterrupts() a no-op */
 			/* until we are done getting ready for it */
 			InterruptHoldoffCount++;
-			LockWaitCancel();	/* prevent CheckDeadLock from running */
+			LockErrorCleanup();	/* prevent CheckDeadLock from running */
 			DisableNotifyInterrupt();
 			DisableCatchupInterrupt();
 			InterruptHoldoffCount--;
@@ -2617,7 +2617,7 @@ StatementCancelHandler(SIGNAL_ARGS)
 			/* bump holdoff count to make ProcessInterrupts() a no-op */
 			/* until we are done getting ready for it */
 			InterruptHoldoffCount++;
-			LockWaitCancel();	/* prevent CheckDeadLock from running */
+			LockErrorCleanup();	/* prevent CheckDeadLock from running */
 			DisableNotifyInterrupt();
 			DisableCatchupInterrupt();
 			InterruptHoldoffCount--;
@@ -2776,7 +2776,7 @@ RecoveryConflictInterrupt(ProcSignalReason reason)
 			/* bump holdoff count to make ProcessInterrupts() a no-op */
 			/* until we are done getting ready for it */
 			InterruptHoldoffCount++;
-			LockWaitCancel();	/* prevent CheckDeadLock from running */
+			LockErrorCleanup();	/* prevent CheckDeadLock from running */
 			DisableNotifyInterrupt();
 			DisableCatchupInterrupt();
 			InterruptHoldoffCount--;

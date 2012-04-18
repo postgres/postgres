@@ -489,6 +489,7 @@ extern LockAcquireResult LockAcquireExtended(const LOCKTAG *locktag,
 					bool sessionLock,
 					bool dontWait,
 					bool report_memory_error);
+extern void AbortStrongLockAcquire(void);
 extern bool LockRelease(const LOCKTAG *locktag,
 			LOCKMODE lockmode, bool sessionLock);
 extern void LockReleaseSession(LOCKMETHODID lockmethodid);
