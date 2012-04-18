@@ -412,7 +412,7 @@ typedef struct LOCALLOCK
 	int64		nLocks;			/* total number of times lock is held */
 	int			numLockOwners;	/* # of relevant ResourceOwners */
 	int			maxLockOwners;	/* allocated size of array */
-	bool		holdsStrongLockCount;	/* did we bump FastPathStrongLocks? */
+	bool		holdsStrongLockCount;	/* bumped FastPathStrongRelatonLocks? */
 	LOCALLOCKOWNER *lockOwners; /* dynamically resizable array */
 } LOCALLOCK;
 

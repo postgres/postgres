@@ -314,18 +314,18 @@ A performs a store, A and B both acquire an LWLock in either order, and B
 then performs a load on the same memory location, it is guaranteed to see
 A's store.  In this case, each backend's fast-path lock queue is protected
 by an LWLock.  A backend wishing to acquire a fast-path lock grabs this
-LWLock before examining FastPathStrongLocks to check for the presence of a
-conflicting strong lock.  And the backend attempting to acquire a strong
+LWLock before examining FastPathStrongRelationLocks to check for the presence of
+a conflicting strong lock.  And the backend attempting to acquire a strong
 lock, because it must transfer any matching weak locks taken via the fast-path
 mechanism to the shared lock table, will acquire every LWLock protecting
-a backend fast-path queue in turn.  Thus, if we examine FastPathStrongLocks
+a backend fast-path queue in turn.  So, if we examine FastPathStrongRelationLocks
 and see a zero, then either the value is truly zero, or if it is a stale value,
 the strong locker has yet to acquire the per-backend LWLock we now hold (or,
 indeed, even the first per-backend LWLock) and will notice any weak lock we
 take when it does.
 
-Fast-path VXID locks do not use the FastPathStrongLocks table.  The first
-lock taken on a VXID is always the ExclusiveLock taken by its owner.  Any
+Fast-path VXID locks do not use the FastPathStrongRelationLocks table.  The
+first lock taken on a VXID is always the ExclusiveLock taken by its owner.  Any
 subsequent lockers are share lockers waiting for the VXID to terminate.
 Indeed, the only reason VXID locks use the lock manager at all (rather than
 waiting for the VXID to terminate via some other method) is for deadlock

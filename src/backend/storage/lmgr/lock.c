@@ -723,8 +723,8 @@ LockAcquireExtended(const LOCKTAG *locktag,
 			/*
 			 * LWLockAcquire acts as a memory sequencing point, so it's safe
 			 * to assume that any strong locker whose increment to
-			 * FastPathStrongLocks->counts becomes visible after we test it has
-			 * yet to begin to transfer fast-path locks.
+			 * FastPathStrongRelationLocks->counts becomes visible after we test
+			 * it has yet to begin to transfer fast-path locks.
 			 */
 			LWLockAcquire(MyProc->backendLock, LW_EXCLUSIVE);
 			if (FastPathStrongRelationLocks->count[fasthashcode] != 0)
