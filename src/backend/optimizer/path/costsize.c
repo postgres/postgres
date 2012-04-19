@@ -77,6 +77,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
+#include "optimizer/paths.h"
 #include "optimizer/placeholder.h"
 #include "optimizer/plancat.h"
 #include "optimizer/planmain.h"
@@ -125,12 +126,12 @@ static MergeScanSelCache *cached_scansel(PlannerInfo *root,
 static void cost_rescan(PlannerInfo *root, Path *path,
 			Cost *rescan_startup_cost, Cost *rescan_total_cost);
 static bool cost_qual_eval_walker(Node *node, cost_qual_eval_context *context);
-static bool has_indexed_join_quals(NestPath *path, List *joinclauses);
+static void get_restriction_qual_cost(PlannerInfo *root, RelOptInfo *baserel,
+						  ParamPathInfo *param_info,
+						  QualCost *qpqual_cost);
+static bool has_indexed_join_quals(NestPath *joinpath);
 static double approx_tuple_count(PlannerInfo *root, JoinPath *path,
 				   List *quals);
-static void set_joinpath_size_estimate(PlannerInfo *root, JoinPath *path,
-						   SpecialJoinInfo *sjinfo,
-						   List *restrictlist);
 static double calc_joinrel_size_estimate(PlannerInfo *root,
 						   double outer_rows,
 						   double inner_rows,
@@ -165,22 +166,29 @@ clamp_row_est(double nrows)
 /*
  * cost_seqscan
  *	  Determines and returns the cost of scanning a relation sequentially.
+ *
+ * 'baserel' is the relation to be scanned
+ * 'param_info' is the ParamPathInfo if this is a parameterized path, else NULL
  */
 void
 cost_seqscan(Path *path, PlannerInfo *root,
-			 RelOptInfo *baserel)
+			 RelOptInfo *baserel, ParamPathInfo *param_info)
 {
-	double		spc_seq_page_cost;
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
+	double		spc_seq_page_cost;
+	QualCost	qpqual_cost;
 	Cost		cpu_per_tuple;
 
 	/* Should only be applied to base relations */
 	Assert(baserel->relid > 0);
 	Assert(baserel->rtekind == RTE_RELATION);
 
-	/* For now, at least, seqscans are never parameterized */
-	path->rows = baserel->rows;
+	/* Mark the path with the correct row estimate */
+	if (param_info)
+		path->rows = param_info->ppi_rows;
+	else
+		path->rows = baserel->rows;
 
 	if (!enable_seqscan)
 		startup_cost += disable_cost;
@@ -196,8 +204,10 @@ cost_seqscan(Path *path, PlannerInfo *root,
 	run_cost += spc_seq_page_cost * baserel->pages;
 
 	/* CPU costs */
-	startup_cost += baserel->baserestrictcost.startup;
-	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost.per_tuple;
+	get_restriction_qual_cost(root, baserel, param_info, &qpqual_cost);
+
+	startup_cost += qpqual_cost.startup;
+	cpu_per_tuple = cpu_tuple_cost + qpqual_cost.per_tuple;
 	run_cost += cpu_per_tuple * baserel->tuples;
 
 	path->startup_cost = startup_cost;
@@ -251,46 +261,19 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count)
 	Assert(baserel->relid > 0);
 	Assert(baserel->rtekind == RTE_RELATION);
 
-	/* Estimate the number of rows returned by the indexscan */
-	if (path->path.required_outer)
+	/* Mark the path with the correct row estimate */
+	if (path->path.param_info)
 	{
-		/*
-		 * The estimate should be less than baserel->rows because of the
-		 * additional selectivity of the join clauses.  Since indexclauses may
-		 * contain both restriction and join clauses, we have to do a set
-		 * union to get the full set of clauses that must be considered to
-		 * compute the correct selectivity.  (Without the union operation, we
-		 * might have some restriction clauses appearing twice, which'd
-		 * mislead clauselist_selectivity into double-counting their
-		 * selectivity.  However, since RestrictInfo nodes aren't copied when
-		 * linking them into different lists, it should be sufficient to use
-		 * pointer comparison to remove duplicates.)
-		 *
-		 * Note that we force the clauses to be treated as non-join clauses
-		 * during selectivity estimation.
-		 */
-		allclauses = list_union_ptr(baserel->baserestrictinfo,
-									path->indexclauses);
-		path->path.rows = baserel->tuples *
-			clauselist_selectivity(root,
-								   allclauses,
-								   baserel->relid,	/* do not use 0! */
-								   JOIN_INNER,
-								   NULL);
-		if (path->path.rows > baserel->rows)
-			path->path.rows = baserel->rows;
-		path->path.rows = clamp_row_est(path->path.rows);
+		path->path.rows = path->path.param_info->ppi_rows;
+		/* also get the set of clauses that should be enforced by the scan */
+		allclauses = list_concat(list_copy(path->path.param_info->ppi_clauses),
+								 baserel->baserestrictinfo);
 	}
 	else
 	{
+		path->path.rows = baserel->rows;
 		/* allclauses should just be the rel's restriction clauses */
 		allclauses = baserel->baserestrictinfo;
-
-		/*
-		 * The number of rows is the same as the parent rel's estimate, since
-		 * this isn't a parameterized path.
-		 */
-		path->path.rows = baserel->rows;
 	}
 
 	if (!enable_indexscan)
@@ -447,9 +430,9 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count)
 	 *
 	 * What we want here is cpu_tuple_cost plus the evaluation costs of any
 	 * qual clauses that we have to evaluate as qpquals.  We approximate that
-	 * list as allclauses minus any clauses appearing in indexquals (as
-	 * before, assuming that pointer equality is enough to recognize duplicate
-	 * RestrictInfos).  This method neglects some considerations such as
+	 * list as allclauses minus any clauses appearing in indexquals.  (We
+	 * assume that pointer equality is enough to recognize duplicate
+	 * RestrictInfos.)  This method neglects some considerations such as
 	 * clauses that needn't be checked because they are implied by a partial
 	 * index's predicate.  It does not seem worth the cycles to try to factor
 	 * those things in at this stage, even though createplan.c will take pains
@@ -614,6 +597,7 @@ get_indexpath_pages(Path *bitmapqual)
  *	  index-then-heap plan.
  *
  * 'baserel' is the relation to be scanned
+ * 'param_info' is the ParamPathInfo if this is a parameterized path, else NULL
  * 'bitmapqual' is a tree of IndexPaths, BitmapAndPaths, and BitmapOrPaths
  * 'loop_count' is the number of repetitions of the indexscan to factor into
  *		estimates of caching behavior
@@ -623,12 +607,14 @@ get_indexpath_pages(Path *bitmapqual)
  */
 void
 cost_bitmap_heap_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
+					  ParamPathInfo *param_info,
 					  Path *bitmapqual, double loop_count)
 {
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
 	Cost		indexTotalCost;
 	Selectivity indexSelectivity;
+	QualCost	qpqual_cost;
 	Cost		cpu_per_tuple;
 	Cost		cost_per_page;
 	double		tuples_fetched;
@@ -642,33 +628,11 @@ cost_bitmap_heap_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 	Assert(baserel->relid > 0);
 	Assert(baserel->rtekind == RTE_RELATION);
 
-	/* Estimate the number of rows returned by the bitmap scan */
-	if (path->required_outer)
-	{
-		/*
-		 * The estimate should be less than baserel->rows because of the
-		 * additional selectivity of the join clauses.  We make use of the
-		 * selectivity estimated for the bitmap to do this; this isn't really
-		 * quite right since there may be restriction conditions not included
-		 * in the bitmap ...
-		 */
-		Cost		indexTotalCost;
-		Selectivity indexSelectivity;
-
-		cost_bitmap_tree_node(bitmapqual, &indexTotalCost, &indexSelectivity);
-		path->rows = baserel->tuples * indexSelectivity;
-		if (path->rows > baserel->rows)
-			path->rows = baserel->rows;
-		path->rows = clamp_row_est(path->rows);
-	}
+	/* Mark the path with the correct row estimate */
+	if (param_info)
+		path->rows = param_info->ppi_rows;
 	else
-	{
-		/*
-		 * The number of rows is the same as the parent rel's estimate, since
-		 * this isn't a parameterized path.
-		 */
 		path->rows = baserel->rows;
-	}
 
 	if (!enable_bitmapscan)
 		startup_cost += disable_cost;
@@ -743,10 +707,13 @@ cost_bitmap_heap_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 	 * Often the indexquals don't need to be rechecked at each tuple ... but
 	 * not always, especially not if there are enough tuples involved that the
 	 * bitmaps become lossy.  For the moment, just assume they will be
-	 * rechecked always.
+	 * rechecked always.  This means we charge the full freight for all the
+	 * scan clauses.
 	 */
-	startup_cost += baserel->baserestrictcost.startup;
-	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost.per_tuple;
+	get_restriction_qual_cost(root, baserel, param_info, &qpqual_cost);
+
+	startup_cost += qpqual_cost.startup;
+	cpu_per_tuple = cpu_tuple_cost + qpqual_cost.per_tuple;
 
 	run_cost += cpu_per_tuple * tuples_fetched;
 
@@ -978,20 +945,28 @@ cost_tidscan(Path *path, PlannerInfo *root,
 /*
  * cost_subqueryscan
  *	  Determines and returns the cost of scanning a subquery RTE.
+ *
+ * 'baserel' is the relation to be scanned
+ * 'param_info' is the ParamPathInfo if this is a parameterized path, else NULL
  */
 void
-cost_subqueryscan(Path *path, RelOptInfo *baserel)
+cost_subqueryscan(Path *path, PlannerInfo *root,
+				  RelOptInfo *baserel, ParamPathInfo *param_info)
 {
 	Cost		startup_cost;
 	Cost		run_cost;
+	QualCost	qpqual_cost;
 	Cost		cpu_per_tuple;
 
 	/* Should only be applied to base relations that are subqueries */
 	Assert(baserel->relid > 0);
 	Assert(baserel->rtekind == RTE_SUBQUERY);
 
-	/* subqueryscans are never parameterized */
-	path->rows = baserel->rows;
+	/* Mark the path with the correct row estimate */
+	if (param_info)
+		path->rows = param_info->ppi_rows;
+	else
+		path->rows = baserel->rows;
 
 	/*
 	 * Cost of path is cost of evaluating the subplan, plus cost of evaluating
@@ -1001,8 +976,10 @@ cost_subqueryscan(Path *path, RelOptInfo *baserel)
 	path->startup_cost = baserel->subplan->startup_cost;
 	path->total_cost = baserel->subplan->total_cost;
 
-	startup_cost = baserel->baserestrictcost.startup;
-	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost.per_tuple;
+	get_restriction_qual_cost(root, baserel, param_info, &qpqual_cost);
+
+	startup_cost = qpqual_cost.startup;
+	cpu_per_tuple = cpu_tuple_cost + qpqual_cost.per_tuple;
 	run_cost = cpu_per_tuple * baserel->tuples;
 
 	path->startup_cost += startup_cost;
@@ -1764,33 +1741,14 @@ final_cost_nestloop(PlannerInfo *root, NestPath *path,
 	Cost		run_cost = workspace->run_cost;
 	Cost		inner_rescan_run_cost = workspace->inner_rescan_run_cost;
 	Cost		cpu_per_tuple;
-	List	   *joinclauses;
 	QualCost	restrict_qual_cost;
 	double		ntuples;
 
-	/* Estimate the number of rows returned by the join */
-	if (path->path.required_outer)
-	{
-		/*
-		 * The nestloop is (still) parameterized because of upper-level join
-		 * clauses used by the input paths.  So the rowcount estimate should
-		 * be less than the joinrel's row count because of the additional
-		 * selectivity of those join clauses.  To estimate the size we need
-		 * to know which of the joinrestrictinfo clauses nominally associated
-		 * with the join have been applied in the inner input path.
-		 *
-		 * We should also assume that such clauses won't be evaluated at the
-		 * join node at runtime, so exclude them from restrict_qual_cost.
-		 */
-		joinclauses = select_nonredundant_join_clauses(path->joinrestrictinfo,
-										 path->innerjoinpath->param_clauses);
-		set_joinpath_size_estimate(root, path, sjinfo, joinclauses);
-	}
+	/* Mark the path with the correct row estimate */
+	if (path->path.param_info)
+		path->path.rows = path->path.param_info->ppi_rows;
 	else
-	{
-		joinclauses = path->joinrestrictinfo;
 		path->path.rows = path->path.parent->rows;
-	}
 
 	/*
 	 * We could include disable_cost in the preliminary estimate, but that
@@ -1822,7 +1780,7 @@ final_cost_nestloop(PlannerInfo *root, NestPath *path,
 		 * return the first tuple of a nonempty scan.  Otherwise, the executor
 		 * will have to scan the whole inner rel; not so cheap.
 		 */
-		if (has_indexed_join_quals(path, joinclauses))
+		if (has_indexed_join_quals(path))
 		{
 			run_cost += (outer_path_rows - outer_matched_rows) *
 				inner_rescan_run_cost / inner_path_rows;
@@ -1849,7 +1807,7 @@ final_cost_nestloop(PlannerInfo *root, NestPath *path,
 	}
 
 	/* CPU costs */
-	cost_qual_eval(&restrict_qual_cost, joinclauses, root);
+	cost_qual_eval(&restrict_qual_cost, path->joinrestrictinfo, root);
 	startup_cost += restrict_qual_cost.startup;
 	cpu_per_tuple = cpu_tuple_cost + restrict_qual_cost.per_tuple;
 	run_cost += cpu_per_tuple * ntuples;
@@ -2141,9 +2099,11 @@ final_cost_mergejoin(PlannerInfo *root, MergePath *path,
 	if (inner_path_rows <= 0 || isnan(inner_path_rows))
 		inner_path_rows = 1;
 
-	/* Estimate the number of rows returned by the join */
-	set_joinpath_size_estimate(root, &path->jpath, sjinfo,
-							   path->jpath.joinrestrictinfo);
+	/* Mark the path with the correct row estimate */
+	if (path->jpath.path.param_info)
+		path->jpath.path.rows = path->jpath.path.param_info->ppi_rows;
+	else
+		path->jpath.path.rows = path->jpath.path.parent->rows;
 
 	/*
 	 * We could include disable_cost in the preliminary estimate, but that
@@ -2513,9 +2473,11 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 	Selectivity innerbucketsize;
 	ListCell   *hcl;
 
-	/* Estimate the number of rows returned by the join */
-	set_joinpath_size_estimate(root, &path->jpath, sjinfo,
-							   path->jpath.joinrestrictinfo);
+	/* Mark the path with the correct row estimate */
+	if (path->jpath.path.param_info)
+		path->jpath.path.rows = path->jpath.path.param_info->ppi_rows;
+	else
+		path->jpath.path.rows = path->jpath.path.parent->rows;
 
 	/*
 	 * We could include disable_cost in the preliminary estimate, but that
@@ -3125,6 +3087,35 @@ cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
 								  (void *) context);
 }
 
+/*
+ * get_restriction_qual_cost
+ *	  Compute evaluation costs of a baserel's restriction quals, plus any
+ *	  movable join quals that have been pushed down to the scan.
+ *	  Results are returned into *qpqual_cost.
+ *
+ * This is a convenience subroutine that works for seqscans and other cases
+ * where all the given quals will be evaluated the hard way.  It's not useful
+ * for cost_index(), for example, where the index machinery takes care of
+ * some of the quals.  We assume baserestrictcost was previously set by
+ * set_baserel_size_estimates().
+ */
+static void
+get_restriction_qual_cost(PlannerInfo *root, RelOptInfo *baserel,
+						  ParamPathInfo *param_info,
+						  QualCost *qpqual_cost)
+{
+	if (param_info)
+	{
+		/* Include costs of pushed-down clauses */
+		cost_qual_eval(qpqual_cost, param_info->ppi_clauses, root);
+
+		qpqual_cost->startup += baserel->baserestrictcost.startup;
+		qpqual_cost->per_tuple += baserel->baserestrictcost.per_tuple;
+	}
+	else
+		*qpqual_cost = baserel->baserestrictcost;
+}
+
 
 /*
  * compute_semi_anti_join_factors
@@ -3257,34 +3248,70 @@ compute_semi_anti_join_factors(PlannerInfo *root,
  * expensive.
  */
 static bool
-has_indexed_join_quals(NestPath *path, List *joinclauses)
+has_indexed_join_quals(NestPath *joinpath)
 {
-	NodeTag		pathtype = path->innerjoinpath->pathtype;
+	Relids		joinrelids = joinpath->path.parent->relids;
+	Path	   *innerpath = joinpath->innerjoinpath;
+	List	   *indexclauses;
+	bool		found_one;
+	ListCell   *lc;
 
-	if (pathtype == T_IndexScan ||
-		pathtype == T_IndexOnlyScan ||
-		pathtype == T_BitmapHeapScan)
-	{
-		if (path->joinrestrictinfo != NIL)
-		{
-			/* OK if all those clauses were found to be redundant */
-			return (joinclauses == NIL);
-		}
-		else
-		{
-			/* a clauseless join does NOT qualify */
-			return false;
-		}
-	}
-	else
-	{
-		/*
-		 * If it's not a simple indexscan, it probably doesn't run quickly for
-		 * zero rows out, even if it's a parameterized path using all the
-		 * joinquals.
-		 */
+	/* If join still has quals to evaluate, it's not fast */
+	if (joinpath->joinrestrictinfo != NIL)
 		return false;
+	/* Nor if the inner path isn't parameterized at all */
+	if (innerpath->param_info == NULL)
+		return false;
+
+	/* Find the indexclauses list for the inner scan */
+	switch (innerpath->pathtype)
+	{
+		case T_IndexScan:
+		case T_IndexOnlyScan:
+			indexclauses = ((IndexPath *) innerpath)->indexclauses;
+			break;
+		case T_BitmapHeapScan:
+		{
+			/* Accept only a simple bitmap scan, not AND/OR cases */
+			Path   *bmqual = ((BitmapHeapPath *) innerpath)->bitmapqual;
+
+			if (IsA(bmqual, IndexPath))
+				indexclauses = ((IndexPath *) bmqual)->indexclauses;
+			else
+				return false;
+			break;
+		}
+		default:
+			/*
+			 * If it's not a simple indexscan, it probably doesn't run quickly
+			 * for zero rows out, even if it's a parameterized path using all
+			 * the joinquals.
+			 */
+			return false;
 	}
+
+	/*
+	 * Examine the inner path's param clauses.  Any that are from the outer
+	 * path must be found in the indexclauses list, either exactly or in an
+	 * equivalent form generated by equivclass.c.  Also, we must find at
+	 * least one such clause, else it's a clauseless join which isn't fast.
+	 */
+	found_one = false;
+	foreach(lc, innerpath->param_info->ppi_clauses)
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+
+		if (join_clause_is_movable_into(rinfo,
+										innerpath->parent->relids,
+										joinrelids))
+		{
+			if (!(list_member_ptr(indexclauses, rinfo) ||
+				  is_redundant_derived_clause(rinfo, indexclauses)))
+				return false;
+			found_one = true;
+		}
+	}
+	return found_one;
 }
 
 
@@ -3388,6 +3415,42 @@ set_baserel_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 }
 
 /*
+ * get_parameterized_baserel_size
+ *		Make a size estimate for a parameterized scan of a base relation.
+ *
+ * 'param_clauses' lists the additional join clauses to be used.
+ *
+ * set_baserel_size_estimates must have been applied already.
+ */
+double
+get_parameterized_baserel_size(PlannerInfo *root, RelOptInfo *rel,
+							   List *param_clauses)
+{
+	List	   *allclauses;
+	double		nrows;
+
+	/*
+	 * Estimate the number of rows returned by the parameterized scan, knowing
+	 * that it will apply all the extra join clauses as well as the rel's own
+	 * restriction clauses.  Note that we force the clauses to be treated as
+	 * non-join clauses during selectivity estimation.
+	 */
+	allclauses = list_concat(list_copy(param_clauses),
+							 rel->baserestrictinfo);
+	nrows = rel->tuples *
+		clauselist_selectivity(root,
+							   allclauses,
+							   rel->relid,		/* do not use 0! */
+							   JOIN_INNER,
+							   NULL);
+	nrows = clamp_row_est(nrows);
+	/* For safety, make sure result is not more than the base estimate */
+	if (nrows > rel->rows)
+		nrows = rel->rows;
+	return nrows;
+}
+
+/*
  * set_joinrel_size_estimates
  *		Set the size estimates for the given join relation.
  *
@@ -3402,7 +3465,9 @@ set_baserel_size_estimates(PlannerInfo *root, RelOptInfo *rel)
  * routines don't handle all cases equally well, we might not.  But there's
  * not much to be done about it.  (Would it make sense to repeat the
  * calculations for each pair of input rels that's encountered, and somehow
- * average the results?  Probably way more trouble than it's worth.)
+ * average the results?  Probably way more trouble than it's worth, and
+ * anyway we must keep the rowcount estimate the same for all paths for the
+ * joinrel.)
  *
  * We set only the rows field here.  The width field was already set by
  * build_joinrel_tlist, and baserestrictcost is not used for join rels.
@@ -3422,39 +3487,53 @@ set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 }
 
 /*
- * set_joinpath_size_estimate
- *		Set the rows estimate for the given join path.
+ * get_parameterized_joinrel_size
+ *		Make a size estimate for a parameterized scan of a join relation.
  *
- * If the join is not parameterized by any joinclauses from higher joins, the
- * estimate is the same as previously computed by set_joinrel_size_estimates.
- * Otherwise, we estimate afresh using the identical logic, but with the rows
- * estimates from the input paths (which are typically less than their rels'
- * regular row estimates) and the restriction clauses actually being applied
- * at the join.
+ * 'rel' is the joinrel under consideration.
+ * 'outer_rows', 'inner_rows' are the sizes of the (probably also
+ *		parameterized) join inputs under consideration.
+ * 'sjinfo' is any SpecialJoinInfo relevant to this join.
+ * 'restrict_clauses' lists the join clauses that need to be applied at the
+ * join node (including any movable clauses that were moved down to this join,
+ * and not including any movable clauses that were pushed down into the
+ * child paths).
+ *
+ * set_joinrel_size_estimates must have been applied already.
  */
-static void
-set_joinpath_size_estimate(PlannerInfo *root, JoinPath *path,
-						   SpecialJoinInfo *sjinfo,
-						   List *restrictlist)
+double
+get_parameterized_joinrel_size(PlannerInfo *root, RelOptInfo *rel,
+							   double outer_rows,
+							   double inner_rows,
+							   SpecialJoinInfo *sjinfo,
+							   List *restrict_clauses)
 {
-	if (path->path.required_outer)
-	{
-		path->path.rows = calc_joinrel_size_estimate(root,
-													 path->outerjoinpath->rows,
-													 path->innerjoinpath->rows,
-													 sjinfo,
-													 restrictlist);
-		/* For safety, make sure result is not more than the base estimate */
-		if (path->path.rows > path->path.parent->rows)
-			path->path.rows = path->path.parent->rows;
-	}
-	else
-		path->path.rows = path->path.parent->rows;
+	double		nrows;
+
+	/*
+	 * Estimate the number of rows returned by the parameterized join as the
+	 * sizes of the input paths times the selectivity of the clauses that have
+	 * ended up at this join node.
+	 *
+	 * As with set_joinrel_size_estimates, the rowcount estimate could depend
+	 * on the pair of input paths provided, though ideally we'd get the same
+	 * estimate for any pair with the same parameterization.
+	 */
+	nrows = calc_joinrel_size_estimate(root,
+									   outer_rows,
+									   inner_rows,
+									   sjinfo,
+									   restrict_clauses);
+	/* For safety, make sure result is not more than the base estimate */
+	if (nrows > rel->rows)
+		nrows = rel->rows;
+	return nrows;
 }
 
 /*
  * calc_joinrel_size_estimate
- *		Workhorse for set_joinrel_size_estimates and set_joinpath_size_estimate
+ *		Workhorse for set_joinrel_size_estimates and
+ *		get_parameterized_joinrel_size.
  */
 static double
 calc_joinrel_size_estimate(PlannerInfo *root,

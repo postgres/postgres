@@ -111,6 +111,7 @@ static Cost bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel,
 								List *paths);
 static PathClauseUsage *classify_index_clause_usage(Path *path,
 							List **clauselist);
+static Relids get_bitmap_tree_required_outer(Path *bitmapqual);
 static void find_indexpath_quals(Path *bitmapqual, List **quals, List **preds);
 static int	find_list_position(Node *node, List **nodelist);
 static bool check_index_only(RelOptInfo *rel, IndexOptInfo *index);
@@ -303,7 +304,7 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 		BitmapHeapPath *bpath;
 
 		bitmapqual = choose_bitmap_and(root, rel, bitindexpaths);
-		bpath = create_bitmap_heap_path(root, rel, bitmapqual, 1.0);
+		bpath = create_bitmap_heap_path(root, rel, bitmapqual, NULL, 1.0);
 		add_path(rel, (Path *) bpath);
 	}
 
@@ -318,12 +319,15 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 	if (bitjoinpaths != NIL)
 	{
 		Path	   *bitmapqual;
+		Relids		required_outer;
 		double		loop_count;
 		BitmapHeapPath *bpath;
 
 		bitmapqual = choose_bitmap_and(root, rel, bitjoinpaths);
-		loop_count = get_loop_count(root, bitmapqual->required_outer);
-		bpath = create_bitmap_heap_path(root, rel, bitmapqual, loop_count);
+		required_outer = get_bitmap_tree_required_outer(bitmapqual);
+		loop_count = get_loop_count(root, required_outer);
+		bpath = create_bitmap_heap_path(root, rel, bitmapqual,
+										required_outer, loop_count);
 		add_path(rel, (Path *) bpath);
 	}
 }
@@ -1320,17 +1324,21 @@ bitmap_scan_cost_est(PlannerInfo *root, RelOptInfo *rel, Path *ipath)
 {
 	BitmapHeapPath bpath;
 
+	/* Must be a simple IndexPath so that we can just copy its param_info */
+	Assert(IsA(ipath, IndexPath));
+
 	/* Set up a dummy BitmapHeapPath */
 	bpath.path.type = T_BitmapHeapPath;
 	bpath.path.pathtype = T_BitmapHeapScan;
 	bpath.path.parent = rel;
+	bpath.path.param_info = ipath->param_info;
 	bpath.path.pathkeys = NIL;
-	bpath.path.required_outer = ipath->required_outer;
-	bpath.path.param_clauses = ipath->param_clauses;
 	bpath.bitmapqual = ipath;
 
-	cost_bitmap_heap_scan((Path *) &bpath, root, rel, ipath,
-						  get_loop_count(root, bpath.path.required_outer));
+	cost_bitmap_heap_scan(&bpath.path, root, rel,
+						  bpath.path.param_info,
+						  ipath,
+						  get_loop_count(root, PATH_REQ_OUTER(ipath)));
 
 	return bpath.path.total_cost;
 }
@@ -1342,28 +1350,36 @@ bitmap_scan_cost_est(PlannerInfo *root, RelOptInfo *rel, Path *ipath)
 static Cost
 bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel, List *paths)
 {
-	BitmapAndPath *apath;
+	BitmapAndPath apath;
 	BitmapHeapPath bpath;
+	Relids		required_outer;
 
-	/*
-	 * Create a temporary BitmapAndPath.  (Because it needs realistic
-	 * required_outer and param_clauses values, making a dummy one would
-	 * take more code than it's worth.)
-	 */
-	apath = create_bitmap_and_path(root, rel, paths);
+	/* Set up a dummy BitmapAndPath */
+	apath.path.type = T_BitmapAndPath;
+	apath.path.pathtype = T_BitmapAnd;
+	apath.path.parent = rel;
+	apath.path.param_info = NULL;	/* not used in bitmap trees */
+	apath.path.pathkeys = NIL;
+	apath.bitmapquals = paths;
+	cost_bitmap_and_node(&apath, root);
+
+	/* Identify required outer rels, in case it's a parameterized scan */
+	required_outer = get_bitmap_tree_required_outer((Path *) &apath);
 
 	/* Set up a dummy BitmapHeapPath */
 	bpath.path.type = T_BitmapHeapPath;
 	bpath.path.pathtype = T_BitmapHeapScan;
 	bpath.path.parent = rel;
+	bpath.path.param_info = get_baserel_parampathinfo(root, rel,
+													  required_outer);
 	bpath.path.pathkeys = NIL;
-	bpath.path.required_outer = apath->path.required_outer;
-	bpath.path.param_clauses = apath->path.param_clauses;
-	bpath.bitmapqual = (Path *) apath;
+	bpath.bitmapqual = (Path *) &apath;
 
 	/* Now we can do cost_bitmap_heap_scan */
-	cost_bitmap_heap_scan((Path *) &bpath, root, rel, (Path *) apath,
-						  get_loop_count(root, bpath.path.required_outer));
+	cost_bitmap_heap_scan(&bpath.path, root, rel,
+						  bpath.path.param_info,
+						  (Path *) &apath,
+						  get_loop_count(root, required_outer));
 
 	return bpath.path.total_cost;
 }
@@ -1415,6 +1431,49 @@ classify_index_clause_usage(Path *path, List **clauselist)
 								   find_list_position(node, clauselist));
 	}
 	result->clauseids = clauseids;
+
+	return result;
+}
+
+
+/*
+ * get_bitmap_tree_required_outer
+ *		Find the required outer rels for a bitmap tree (index/and/or)
+ *
+ * We don't associate any particular parameterization with a BitmapAnd or
+ * BitmapOr node; however, the IndexPaths have parameterization info, in
+ * their capacity as standalone access paths.  The parameterization required
+ * for the bitmap heap scan node is the union of rels referenced in the
+ * child IndexPaths.
+ */
+static Relids
+get_bitmap_tree_required_outer(Path *bitmapqual)
+{
+	Relids		result = NULL;
+	ListCell   *lc;
+
+	if (IsA(bitmapqual, IndexPath))
+	{
+		return bms_copy(PATH_REQ_OUTER(bitmapqual));
+	}
+	else if (IsA(bitmapqual, BitmapAndPath))
+	{
+		foreach(lc, ((BitmapAndPath *) bitmapqual)->bitmapquals)
+		{
+			result = bms_join(result,
+						  get_bitmap_tree_required_outer((Path *) lfirst(lc)));
+		}
+	}
+	else if (IsA(bitmapqual, BitmapOrPath))
+	{
+		foreach(lc, ((BitmapOrPath *) bitmapqual)->bitmapquals)
+		{
+			result = bms_join(result,
+						  get_bitmap_tree_required_outer((Path *) lfirst(lc)));
+		}
+	}
+	else
+		elog(ERROR, "unrecognized node type: %d", nodeTag(bitmapqual));
 
 	return result;
 }
@@ -1661,58 +1720,15 @@ match_join_clauses_to_index(PlannerInfo *root,
 							IndexClauseSet *clauseset,
 							List **joinorclauses)
 {
-	Relids		inner_baserels;
 	ListCell   *lc;
 
-	/*
-	 * There is no value in considering join clauses for outer joins in which
-	 * the indexed relation is on the outside, since there'd be no way to
-	 * perform such a join with a parameterized nestloop.  So first, identify
-	 * all baserels that are on the inside of such joins.
-	 */
-	inner_baserels = NULL;
-	foreach(lc, root->join_info_list)
-	{
-		SpecialJoinInfo *sjinfo = (SpecialJoinInfo *) lfirst(lc);
-
-		if (bms_overlap(rel->relids, sjinfo->min_lefthand))
-			inner_baserels = bms_add_members(inner_baserels,
-											 sjinfo->min_righthand);
-		/* full joins constrain both sides symmetrically */
-		if (sjinfo->jointype == JOIN_FULL &&
-			bms_overlap(rel->relids, sjinfo->min_righthand))
-			inner_baserels = bms_add_members(inner_baserels,
-											 sjinfo->min_lefthand);
-	}
-
-	/* Now scan the rel's join clauses */
+	/* Scan the rel's join clauses */
 	foreach(lc, rel->joininfo)
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
 
-		/* Ignore if it mentions anything from wrong side of an outer join */
-		if (bms_overlap(rinfo->clause_relids, inner_baserels))
-			continue;
-
-		/*
-		 * Note that we ignore required_relids; that's okay because we are
-		 * intentionally ignoring the normal rules for placing evaluation of
-		 * join clauses.  The whole point here is to evaluate join clauses
-		 * below their join, even if they would normally be delayed by
-		 * outer join rules.
-		 *
-		 * Instead of considering required_relids, we ignore clauses for which
-		 * the indexed rel is in nullable_relids; that means there's an outer
-		 * join below the clause and so it can't be checked at the relation
-		 * scan level.
-		 *
-		 * Note: unlike create_or_index_quals(), we can accept clauses that
-		 * are marked !is_pushed_down (ie they are themselves outer-join
-		 * clauses).  This is OK because any path generated with these clauses
-		 * could only be used in the inside of a nestloop join, which will be
-		 * the nullable side.
-		 */
-		if (bms_overlap(rel->relids, rinfo->nullable_relids))
+		/* Check if clause can be moved to this rel */
+		if (!join_clause_is_movable_to(rinfo, rel->relid))
 			continue;
 
 		/* Potentially usable, so see if it matches the index or is an OR */

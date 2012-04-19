@@ -67,7 +67,7 @@
  * Path for a given relation generates the same number of rows.  Without
  * this assumption we'd not be able to optimize solely on the cost of Paths,
  * but would have to take number of output rows into account as well.
- * (Perhaps someday that'd be worth doing, but it's a pretty big change...)
+ * (The parameterized-paths stuff almost fixes this, but not quite...)
  *
  * 'rel' is the relation entry for which quals are to be created
  *
@@ -93,26 +93,17 @@ create_or_index_quals(PlannerInfo *root, RelOptInfo *rel)
 		return false;
 
 	/*
-	 * Find potentially interesting OR joinclauses.
-	 *
-	 * We must ignore clauses for which the target rel is in nullable_relids;
-	 * that means there's an outer join below the clause and so it can't be
-	 * enforced at the relation scan level.
-	 *
-	 * We must also ignore clauses that are marked !is_pushed_down (ie they
-	 * are themselves outer-join clauses).	It would be safe to extract an
-	 * index condition from such a clause if we are within the nullable rather
-	 * than the non-nullable side of its join, but we haven't got enough
-	 * context here to tell which applies.	OR clauses in outer-join quals
-	 * aren't exactly common, so we'll let that case go unoptimized for now.
+	 * Find potentially interesting OR joinclauses.  We can use any joinclause
+	 * that is considered safe to move to this rel by the parameterized-path
+	 * machinery, even though what we are going to do with it is not exactly
+	 * a parameterized path.
 	 */
 	foreach(i, rel->joininfo)
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(i);
 
 		if (restriction_is_or_clause(rinfo) &&
-			rinfo->is_pushed_down &&
-			!bms_is_member(rel->relid, rinfo->nullable_relids))
+			join_clause_is_movable_to(rinfo, rel->relid))
 		{
 			/*
 			 * Use the generate_bitmap_or_paths() machinery to estimate the

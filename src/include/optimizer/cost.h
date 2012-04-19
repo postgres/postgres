@@ -66,17 +66,20 @@ extern int	constraint_exclusion;
 extern double clamp_row_est(double nrows);
 extern double index_pages_fetched(double tuples_fetched, BlockNumber pages,
 					double index_pages, PlannerInfo *root);
-extern void cost_seqscan(Path *path, PlannerInfo *root, RelOptInfo *baserel);
+extern void cost_seqscan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
+						 ParamPathInfo *param_info);
 extern void cost_index(IndexPath *path, PlannerInfo *root,
 					   double loop_count);
 extern void cost_bitmap_heap_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
+					  ParamPathInfo *param_info,
 					  Path *bitmapqual, double loop_count);
 extern void cost_bitmap_and_node(BitmapAndPath *path, PlannerInfo *root);
 extern void cost_bitmap_or_node(BitmapOrPath *path, PlannerInfo *root);
 extern void cost_bitmap_tree_node(Path *path, Cost *cost, Selectivity *selec);
 extern void cost_tidscan(Path *path, PlannerInfo *root,
 			 RelOptInfo *baserel, List *tidquals);
-extern void cost_subqueryscan(Path *path, RelOptInfo *baserel);
+extern void cost_subqueryscan(Path *path, PlannerInfo *root,
+							  RelOptInfo *baserel, ParamPathInfo *param_info);
 extern void cost_functionscan(Path *path, PlannerInfo *root,
 				  RelOptInfo *baserel);
 extern void cost_valuesscan(Path *path, PlannerInfo *root,
@@ -149,6 +152,15 @@ extern void compute_semi_anti_join_factors(PlannerInfo *root,
 							   List *restrictlist,
 							   SemiAntiJoinFactors *semifactors);
 extern void set_baserel_size_estimates(PlannerInfo *root, RelOptInfo *rel);
+extern double get_parameterized_baserel_size(PlannerInfo *root,
+											 RelOptInfo *rel,
+											 List *param_clauses);
+extern double get_parameterized_joinrel_size(PlannerInfo *root,
+											 RelOptInfo *rel,
+											 double outer_rows,
+											 double inner_rows,
+											 SpecialJoinInfo *sjinfo,
+											 List *restrict_clauses);
 extern void set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 						   RelOptInfo *outer_rel,
 						   RelOptInfo *inner_rel,

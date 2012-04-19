@@ -304,6 +304,7 @@ typedef struct PlannerInfo
  *						ConvertRowtypeExpr representing a whole-row Var.
  *		pathlist - List of Path nodes, one for each potentially useful
  *				   method of generating the relation
+ *		ppilist - ParamPathInfo nodes for parameterized Paths, if any
  *		cheapest_startup_path - the pathlist member with lowest startup cost
  *								(regardless of its ordering; but must be
  *								 unparameterized)
@@ -400,6 +401,7 @@ typedef struct RelOptInfo
 	/* materialization information */
 	List	   *reltargetlist;	/* Vars to be output by scan of relation */
 	List	   *pathlist;		/* Path structures */
+	List	   *ppilist;		/* ParamPathInfos used in pathlist */
 	struct Path *cheapest_startup_path;
 	struct Path *cheapest_total_path;
 	struct Path *cheapest_unique_path;
@@ -628,6 +630,31 @@ typedef struct PathKey
 	bool		pk_nulls_first; /* do NULLs come before normal values? */
 } PathKey;
 
+
+/*
+ * ParamPathInfo
+ *
+ * All parameterized paths for a given relation with given required outer rels
+ * link to a single ParamPathInfo, which stores common information such as
+ * the estimated rowcount for this parameterization.  We do this partly to
+ * avoid recalculations, but mostly to ensure that the estimated rowcount
+ * is in fact the same for every such path.
+ *
+ * Note: ppi_clauses is only used in ParamPathInfos for base relation paths;
+ * in join cases it's NIL because the set of relevant clauses varies depending
+ * on how the join is formed.  The relevant clauses will appear in each
+ * parameterized join path's joinrestrictinfo list, instead.
+ */
+typedef struct ParamPathInfo
+{
+	NodeTag		type;
+
+	Relids		ppi_req_outer;	/* rels supplying parameters used by path */
+	double		ppi_rows;		/* estimated number of result tuples */
+	List	   *ppi_clauses;	/* join clauses available from outer rels */
+} ParamPathInfo;
+
+
 /*
  * Type "Path" is used as-is for sequential-scan paths, as well as some other
  * simple plan types that we don't need any extra information in the path for.
@@ -638,25 +665,19 @@ typedef struct PathKey
  * the same Path type for multiple Plan types when there is no need to
  * distinguish the Plan type during path processing.
  *
+ * "param_info", if not NULL, links to a ParamPathInfo that identifies outer
+ * relation(s) that provide parameter values to each scan of this path.
+ * That means this path can only be joined to those rels by means of nestloop
+ * joins with this path on the inside.  Also note that a parameterized path
+ * is responsible for testing all "movable" joinclauses involving this rel
+ * and the specified outer rel(s).
+ *
  * "rows" is the same as parent->rows in simple paths, but in parameterized
  * paths and UniquePaths it can be less than parent->rows, reflecting the
  * fact that we've filtered by extra join conditions or removed duplicates.
  *
  * "pathkeys" is a List of PathKey nodes (see above), describing the sort
  * ordering of the path's output rows.
- *
- * "required_outer", if not NULL, contains the relids of one or more relations
- * that must provide parameter values to each scan of this path, because the
- * path relies on join clauses using those rels. That means this path can only
- * be joined to those rels by means of nestloop joins with this path on the
- * inside.  Note: for a normal unparameterized path, required_outer must be
- * NULL, not an empty-but-not-null Bitmapset.
- *
- * "param_clauses" is a List of RestrictInfo nodes, containing the join
- * clauses used by a parameterized path.  Ideally param_clauses should be NIL
- * if and only if required_outer is NULL.  XXX for the moment, however, we do
- * not compute param_clauses for Append and MergeAppend paths, so the list
- * is inaccurate in those paths and possibly paths above them.
  */
 typedef struct Path
 {
@@ -665,6 +686,7 @@ typedef struct Path
 	NodeTag		pathtype;		/* tag identifying scan/join method */
 
 	RelOptInfo *parent;			/* the relation this path can build */
+	ParamPathInfo *param_info;	/* parameterization info, or NULL if none */
 
 	/* estimated size/costs for path (see costsize.c for more info) */
 	double		rows;			/* estimated number of result tuples */
@@ -672,10 +694,12 @@ typedef struct Path
 	Cost		total_cost;		/* total cost (assuming all tuples fetched) */
 
 	List	   *pathkeys;		/* sort ordering of path's output */
-
-	Relids		required_outer;	/* rels supplying parameters used by path */
-	List	   *param_clauses;	/* join clauses that use such parameters */
+	/* pathkeys is a List of PathKey nodes; see above */
 } Path;
+
+/* Macro for extracting a path's parameterization relids; beware double eval */
+#define PATH_REQ_OUTER(path)  \
+	((path)->param_info ? (path)->param_info->ppi_req_outer : (Relids) NULL)
 
 /*----------
  * IndexPath represents an index scan over a single index.
@@ -924,8 +948,9 @@ typedef struct JoinPath
 	List	   *joinrestrictinfo;		/* RestrictInfos to apply to join */
 
 	/*
-	 * See the notes for RelOptInfo to understand why joinrestrictinfo is
-	 * needed in JoinPath, and can't be merged into the parent RelOptInfo.
+	 * See the notes for RelOptInfo and ParamPathInfo to understand why
+	 * joinrestrictinfo is needed in JoinPath, and can't be merged into the
+	 * parent RelOptInfo.
 	 */
 } JoinPath;
 
@@ -1061,13 +1086,22 @@ typedef struct HashPath
  * RestrictInfo nodes also contain an outerjoin_delayed flag, which is true
  * if the clause's applicability must be delayed due to any outer joins
  * appearing below it (ie, it has to be postponed to some join level higher
- * than the set of relations it actually references).  There is also a
- * nullable_relids field, which is the set of rels it references that can be
- * forced null by some outer join below the clause.  outerjoin_delayed = true
- * is subtly different from nullable_relids != NULL: a clause might reference
- * some nullable rels and yet not be outerjoin_delayed because it also
- * references all the other rels of the outer join(s).	A clause that is not
- * outerjoin_delayed can be enforced anywhere it is computable.
+ * than the set of relations it actually references).
+ *
+ * There is also an outer_relids field, which is NULL except for outer join
+ * clauses; for those, it is the set of relids on the outer side of the
+ * clause's outer join.  (These are rels that the clause cannot be applied to
+ * in parameterized scans, since pushing it into the join's outer side would
+ * lead to wrong answers.)
+ *
+ * There is also a nullable_relids field, which is the set of rels the clause
+ * references that can be forced null by some outer join below the clause.
+ *
+ * outerjoin_delayed = true is subtly different from nullable_relids != NULL:
+ * a clause might reference some nullable rels and yet not be
+ * outerjoin_delayed because it also references all the other rels of the
+ * outer join(s). A clause that is not outerjoin_delayed can be enforced
+ * anywhere it is computable.
  *
  * In general, the referenced clause might be arbitrarily complex.	The
  * kinds of clauses we can handle as indexscan quals, mergejoin clauses,
@@ -1128,6 +1162,9 @@ typedef struct RestrictInfo
 
 	/* The set of relids required to evaluate the clause: */
 	Relids		required_relids;
+
+	/* If an outer-join clause, the outer-side relations, else NULL: */
+	Relids		outer_relids;
 
 	/* The relids used in the clause that are nullable by lower outer joins: */
 	Relids		nullable_relids;

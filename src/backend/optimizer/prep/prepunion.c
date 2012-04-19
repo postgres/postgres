@@ -1778,6 +1778,9 @@ adjust_appendrel_attrs_mutator(Node *node,
 		newinfo->required_relids = adjust_relid_set(oldinfo->required_relids,
 													appinfo->parent_relid,
 													appinfo->child_relid);
+		newinfo->outer_relids = adjust_relid_set(oldinfo->outer_relids,
+												 appinfo->parent_relid,
+												 appinfo->child_relid);
 		newinfo->nullable_relids = adjust_relid_set(oldinfo->nullable_relids,
 													appinfo->parent_relid,
 													appinfo->child_relid);

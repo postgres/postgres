@@ -2675,12 +2675,11 @@ select * from
   int4(sin(1)) q1,
   int4(sin(0)) q2
 where q1 = thousand or q2 = thousand;
-                                 QUERY PLAN                                  
------------------------------------------------------------------------------
+                               QUERY PLAN                               
+------------------------------------------------------------------------
  Hash Join
    Hash Cond: (tenk1.twothousand = int4_tbl.f1)
    ->  Nested Loop
-         Join Filter: ((q1.q1 = tenk1.thousand) OR (q2.q2 = tenk1.thousand))
          ->  Nested Loop
                ->  Function Scan on q1
                ->  Function Scan on q2
@@ -2693,7 +2692,7 @@ where q1 = thousand or q2 = thousand;
                            Index Cond: (q2.q2 = thousand)
    ->  Hash
          ->  Seq Scan on int4_tbl
-(16 rows)
+(15 rows)
 
 explain (costs off)
 select * from
@@ -2716,6 +2715,116 @@ where thousand = (q1 + q2);
    ->  Hash
          ->  Seq Scan on int4_tbl
 (12 rows)
+
+--
+-- test placement of movable quals in a parameterized join tree
+--
+explain (costs off)
+select * from tenk1 t1 left join
+  (tenk1 t2 join tenk1 t3 on t2.thousand = t3.unique2)
+  on t1.hundred = t2.hundred and t1.ten = t3.ten
+where t1.unique1 = 1;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Nested Loop Left Join
+   ->  Index Scan using tenk1_unique1 on tenk1 t1
+         Index Cond: (unique1 = 1)
+   ->  Nested Loop
+         Join Filter: (t1.ten = t3.ten)
+         ->  Index Scan using tenk1_hundred on tenk1 t2
+               Index Cond: (t1.hundred = hundred)
+         ->  Index Scan using tenk1_unique2 on tenk1 t3
+               Index Cond: (unique2 = t2.thousand)
+(9 rows)
+
+explain (costs off)
+select * from tenk1 t1 left join
+  (tenk1 t2 join tenk1 t3 on t2.thousand = t3.unique2)
+  on t1.hundred = t2.hundred and t1.ten + t2.ten = t3.ten
+where t1.unique1 = 1;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Nested Loop Left Join
+   ->  Index Scan using tenk1_unique1 on tenk1 t1
+         Index Cond: (unique1 = 1)
+   ->  Nested Loop
+         Join Filter: ((t1.ten + t2.ten) = t3.ten)
+         ->  Index Scan using tenk1_hundred on tenk1 t2
+               Index Cond: (t1.hundred = hundred)
+         ->  Index Scan using tenk1_unique2 on tenk1 t3
+               Index Cond: (unique2 = t2.thousand)
+(9 rows)
+
+explain (costs off)
+select count(*) from
+  tenk1 a join tenk1 b on a.unique1 = b.unique2
+  left join tenk1 c on a.unique2 = b.unique1 and c.thousand = a.thousand
+  join int4_tbl on b.thousand = f1;
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
+ Aggregate
+   ->  Nested Loop Left Join
+         Join Filter: (a.unique2 = b.unique1)
+         ->  Nested Loop
+               ->  Nested Loop
+                     ->  Seq Scan on int4_tbl
+                     ->  Index Scan using tenk1_thous_tenthous on tenk1 b
+                           Index Cond: (thousand = int4_tbl.f1)
+               ->  Index Scan using tenk1_unique1 on tenk1 a
+                     Index Cond: (unique1 = b.unique2)
+         ->  Index Only Scan using tenk1_thous_tenthous on tenk1 c
+               Index Cond: (thousand = a.thousand)
+(12 rows)
+
+select count(*) from
+  tenk1 a join tenk1 b on a.unique1 = b.unique2
+  left join tenk1 c on a.unique2 = b.unique1 and c.thousand = a.thousand
+  join int4_tbl on b.thousand = f1;
+ count 
+-------
+    10
+(1 row)
+
+explain (costs off)
+select b.unique1 from
+  tenk1 a join tenk1 b on a.unique1 = b.unique2
+  left join tenk1 c on b.unique1 = 42 and c.thousand = a.thousand
+  join int4_tbl i1 on b.thousand = f1
+  right join int4_tbl i2 on i2.f1 = b.tenthous
+  order by 1;
+                                       QUERY PLAN                                        
+-----------------------------------------------------------------------------------------
+ Sort
+   Sort Key: b.unique1
+   ->  Nested Loop Left Join
+         ->  Seq Scan on int4_tbl i2
+         ->  Nested Loop Left Join
+               Join Filter: (b.unique1 = 42)
+               ->  Nested Loop
+                     ->  Nested Loop
+                           ->  Seq Scan on int4_tbl i1
+                           ->  Index Scan using tenk1_thous_tenthous on tenk1 b
+                                 Index Cond: ((thousand = i1.f1) AND (i2.f1 = tenthous))
+                     ->  Index Scan using tenk1_unique1 on tenk1 a
+                           Index Cond: (unique1 = b.unique2)
+               ->  Index Only Scan using tenk1_thous_tenthous on tenk1 c
+                     Index Cond: (thousand = a.thousand)
+(15 rows)
+
+select b.unique1 from
+  tenk1 a join tenk1 b on a.unique1 = b.unique2
+  left join tenk1 c on b.unique1 = 42 and c.thousand = a.thousand
+  join int4_tbl i1 on b.thousand = f1
+  right join int4_tbl i2 on i2.f1 = b.tenthous
+  order by 1;
+ unique1 
+---------
+       0
+        
+        
+        
+        
+(5 rows)
 
 --
 -- test join removal

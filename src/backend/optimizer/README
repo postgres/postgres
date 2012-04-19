@@ -751,6 +751,32 @@ possible join types.  So we will form a join path representing the query
 plan shown above, and it will compete in the usual way with paths built
 from non-parameterized scans.
 
+While all ordinary paths for a particular relation generate the same set
+of rows (since they must all apply the same set of restriction clauses),
+parameterized paths typically generate fewer rows than less-parameterized
+paths, since they have additional clauses to work with.  This means we
+must consider the number of rows generated as an additional figure of
+merit.  A path that costs more than another, but generates fewer rows,
+must be kept since the smaller number of rows might save work at some
+intermediate join level.  (It would not save anything if joined
+immediately to the source of the parameters.)
+
+To keep cost estimation rules relatively simple, we make an implementation
+restriction that all paths for a given relation of the same parameterization
+(i.e., the same set of outer relations supplying parameters) must have the
+same rowcount estimate.  This is justified by insisting that each such path
+apply *all* join clauses that are available with the named outer relations.
+Different paths might, for instance, choose different join clauses to use
+as index clauses; but they must then apply any other join clauses available
+from the same outer relations as filter conditions, so that the set of rows
+returned is held constant.  This restriction doesn't degrade the quality of
+the finished plan: it amounts to saying that we should always push down
+movable join clauses to the lowest possible evaluation level, which is a
+good thing anyway.  The restriction is useful in particular to support
+pre-filtering of join paths in add_path_precheck.  Without this rule we
+could never reject a parameterized path in advance of computing its rowcount
+estimate, which would greatly reduce the value of the pre-filter mechanism.
+
 To limit planning time, we have to avoid generating an unreasonably large
 number of parameterized paths.  We do this by only generating parameterized
 relation scan paths for index scans, and then only for indexes for which
@@ -763,14 +789,14 @@ a nestloop that provides parameters to the lower join's inputs).  While we
 do not ignore merge joins entirely, joinpath.c does not fully explore the
 space of potential merge joins with parameterized inputs.  Also, add_path
 treats parameterized paths as having no pathkeys, so that they compete
-only on cost and don't get preference for producing a special sort order.
-This creates additional bias against merge joins, since we might discard
-a path that could have been useful for performing a merge without an
-explicit sort step.  Since a parameterized path must ultimately be used
-on the inside of a nestloop, where its sort order is uninteresting, these
-choices do not affect any requirement for the final output order of a
-query --- they only make it harder to use a merge join at a lower level.
-The savings in planning work justifies that.
+only on cost and rowcount; they don't get preference for producing a
+special sort order.  This creates additional bias against merge joins,
+since we might discard a path that could have been useful for performing
+a merge without an explicit sort step.  Since a parameterized path must
+ultimately be used on the inside of a nestloop, where its sort order is
+uninteresting, these choices do not affect any requirement for the final
+output order of a query --- they only make it harder to use a merge join
+at a lower level.  The savings in planning work justifies that.
 
 
 -- bjm & tgl

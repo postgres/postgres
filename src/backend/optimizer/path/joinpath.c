@@ -728,7 +728,7 @@ match_unsorted_outer(PlannerInfo *root,
 		/*
 		 * We cannot use an outer path that is parameterized by the inner rel.
 		 */
-		if (bms_overlap(outerpath->required_outer, innerrel->relids))
+		if (bms_overlap(PATH_REQ_OUTER(outerpath), innerrel->relids))
 			continue;
 
 		/*
@@ -1172,7 +1172,7 @@ hash_inner_and_outer(PlannerInfo *root,
 				 * We cannot use an outer path that is parameterized by the
 				 * inner rel.
 				 */
-				if (bms_overlap(outerpath->required_outer, innerrel->relids))
+				if (bms_overlap(PATH_REQ_OUTER(outerpath), innerrel->relids))
 					continue;
 
 				foreach(lc2, innerrel->cheapest_parameterized_paths)
@@ -1183,7 +1183,7 @@ hash_inner_and_outer(PlannerInfo *root,
 					 * We cannot use an inner path that is parameterized by
 					 * the outer rel, either.
 					 */
-					if (bms_overlap(innerpath->required_outer,
+					if (bms_overlap(PATH_REQ_OUTER(innerpath),
 									outerrel->relids))
 						continue;
 

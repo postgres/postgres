@@ -292,6 +292,37 @@ SELECT a.attrelid::regclass, a.attname, a.attinhcount, e.expected
 DROP TABLE inht1, inhs1 CASCADE;
 
 --
+-- Test parameterized append plans for inheritance trees
+--
+
+create temp table patest0 (id, x) as
+  select x, x from generate_series(0,1000) x;
+create temp table patest1() inherits (patest0);
+insert into patest1
+  select x, x from generate_series(0,1000) x;
+create temp table patest2() inherits (patest0);
+insert into patest2
+  select x, x from generate_series(0,1000) x;
+create index patest0i on patest0(id);
+create index patest1i on patest1(id);
+create index patest2i on patest2(id);
+analyze patest0;
+analyze patest1;
+analyze patest2;
+
+explain (costs off)
+select * from patest0 join (select f1 from int4_tbl limit 1) ss on id = f1;
+select * from patest0 join (select f1 from int4_tbl limit 1) ss on id = f1;
+
+drop index patest2i;
+
+explain (costs off)
+select * from patest0 join (select f1 from int4_tbl limit 1) ss on id = f1;
+select * from patest0 join (select f1 from int4_tbl limit 1) ss on id = f1;
+
+drop table patest0 cascade;
+
+--
 -- Test merge-append plans for inheritance trees
 --
 

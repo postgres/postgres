@@ -60,7 +60,7 @@ static BitmapHeapScan *create_bitmap_scan_plan(PlannerInfo *root,
 						BitmapHeapPath *best_path,
 						List *tlist, List *scan_clauses);
 static Plan *create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
-					  List **qual, List **indexqual);
+					  List **qual, List **indexqual, List **indexECs);
 static TidScan *create_tidscan_plan(PlannerInfo *root, TidPath *best_path,
 					List *tlist, List *scan_clauses);
 static SubqueryScan *create_subqueryscan_plan(PlannerInfo *root, Path *best_path,
@@ -304,6 +304,16 @@ create_scan_plan(PlannerInfo *root, Path *best_path)
 	 * pseudoconstants which we'll take care of below.
 	 */
 	scan_clauses = rel->baserestrictinfo;
+
+	/*
+	 * If this is a parameterized scan, we also need to enforce all the join
+	 * clauses available from the outer relation(s).
+	 *
+	 * For paranoia's sake, don't modify the stored baserestrictinfo list.
+	 */
+	if (best_path->param_info)
+		scan_clauses = list_concat(list_copy(scan_clauses),
+								   best_path->param_info->ppi_clauses);
 
 	switch (best_path->pathtype)
 	{
@@ -1060,6 +1070,13 @@ create_seqscan_plan(PlannerInfo *root, Path *best_path,
 	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
 
+	/* Replace any outer-relation variables with nestloop params */
+	if (best_path->param_info)
+	{
+		scan_clauses = (List *)
+			replace_nestloop_params(root, (Node *) scan_clauses);
+	}
+
 	scan_plan = make_seqscan(tlist,
 							 scan_clauses,
 							 scan_relid);
@@ -1119,34 +1136,29 @@ create_indexscan_plan(PlannerInfo *root,
 	fixed_indexorderbys = fix_indexorderby_references(root, best_path);
 
 	/*
-	 * If this is a parameterized scan, the indexclauses will contain join
-	 * clauses that are not present in scan_clauses (since the passed-in value
-	 * is just the rel's baserestrictinfo list).  We must add these clauses to
-	 * scan_clauses to ensure they get checked.  In most cases we will remove
-	 * the join clauses again below, but if a join clause contains a special
-	 * operator, we need to make sure it gets into the scan_clauses.
-	 *
-	 * Note: pointer comparison should be enough to determine RestrictInfo
-	 * matches.
-	 */
-	if (best_path->path.required_outer)
-		scan_clauses = list_union_ptr(scan_clauses, best_path->indexclauses);
-
-	/*
 	 * The qpqual list must contain all restrictions not automatically handled
-	 * by the index.  All the predicates in the indexquals will be checked
-	 * (either by the index itself, or by nodeIndexscan.c), but if there are
-	 * any "special" operators involved then they must be included in qpqual.
-	 * The upshot is that qpqual must contain scan_clauses minus whatever
-	 * appears in indexquals.
+	 * by the index, other than pseudoconstant clauses which will be handled
+	 * by a separate gating plan node.  All the predicates in the indexquals
+	 * will be checked (either by the index itself, or by nodeIndexscan.c),
+	 * but if there are any "special" operators involved then they must be
+	 * included in qpqual.  The upshot is that qpqual must contain
+	 * scan_clauses minus whatever appears in indexquals.
 	 *
 	 * In normal cases simple pointer equality checks will be enough to spot
-	 * duplicate RestrictInfos, so we try that first.  In some situations
-	 * (particularly with OR'd index conditions) we may have scan_clauses that
-	 * are not equal to, but are logically implied by, the index quals; so we
-	 * also try a predicate_implied_by() check to see if we can discard quals
-	 * that way.  (predicate_implied_by assumes its first input contains only
-	 * immutable functions, so we have to check that.)
+	 * duplicate RestrictInfos, so we try that first.
+	 *
+	 * Another common case is that a scan_clauses entry is generated from the
+	 * same EquivalenceClass as some indexqual, and is therefore redundant
+	 * with it, though not equal.  (This happens when indxpath.c prefers a
+	 * different derived equality than what generate_join_implied_equalities
+	 * picked for a parameterized scan's ppi_clauses.)
+	 *
+	 * In some situations (particularly with OR'd index conditions) we may
+	 * have scan_clauses that are not equal to, but are logically implied by,
+	 * the index quals; so we also try a predicate_implied_by() check to see
+	 * if we can discard quals that way.  (predicate_implied_by assumes its
+	 * first input contains only immutable functions, so we have to check
+	 * that.)
 	 *
 	 * We can also discard quals that are implied by a partial index's
 	 * predicate, but only in a plain SELECT; when scanning a target relation
@@ -1162,20 +1174,22 @@ create_indexscan_plan(PlannerInfo *root,
 		if (rinfo->pseudoconstant)
 			continue;			/* we may drop pseudoconstants here */
 		if (list_member_ptr(indexquals, rinfo))
-			continue;
+			continue;			/* simple duplicate */
+		if (is_redundant_derived_clause(rinfo, indexquals))
+			continue;			/* derived from same EquivalenceClass */
 		if (!contain_mutable_functions((Node *) rinfo->clause))
 		{
 			List	   *clausel = list_make1(rinfo->clause);
 
 			if (predicate_implied_by(clausel, indexquals))
-				continue;
+				continue;		/* provably implied by indexquals */
 			if (best_path->indexinfo->indpred)
 			{
 				if (baserelid != root->parse->resultRelation &&
 					get_parse_rowmark(root->parse, baserelid) == NULL)
 					if (predicate_implied_by(clausel,
 											 best_path->indexinfo->indpred))
-						continue;
+						continue; /* implied by index predicate */
 			}
 		}
 		qpqual = lappend(qpqual, rinfo);
@@ -1196,7 +1210,7 @@ create_indexscan_plan(PlannerInfo *root,
 	 * it'd break the comparisons to predicates above ... (or would it?  Those
 	 * wouldn't have outer refs)
 	 */
-	if (best_path->path.required_outer)
+	if (best_path->path.param_info)
 	{
 		stripped_indexquals = (List *)
 			replace_nestloop_params(root, (Node *) stripped_indexquals);
@@ -1247,6 +1261,7 @@ create_bitmap_scan_plan(PlannerInfo *root,
 	Plan	   *bitmapqualplan;
 	List	   *bitmapqualorig;
 	List	   *indexquals;
+	List	   *indexECs;
 	List	   *qpqual;
 	ListCell   *l;
 	BitmapHeapScan *scan_plan;
@@ -1257,65 +1272,62 @@ create_bitmap_scan_plan(PlannerInfo *root,
 
 	/* Process the bitmapqual tree into a Plan tree and qual lists */
 	bitmapqualplan = create_bitmap_subplan(root, best_path->bitmapqual,
-										   &bitmapqualorig, &indexquals);
-
-	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
-	scan_clauses = extract_actual_clauses(scan_clauses, false);
-
-	/*
-	 * If this is a parameterized scan, the indexclauses will contain join clauses
-	 * that are not present in scan_clauses (since the passed-in value is just
-	 * the rel's baserestrictinfo list).  We must add these clauses to
-	 * scan_clauses to ensure they get checked.  In most cases we will remove
-	 * the join clauses again below, but if a join clause contains a special
-	 * operator, we need to make sure it gets into the scan_clauses.
-	 */
-	if (best_path->path.required_outer)
-	{
-		scan_clauses = list_concat_unique(scan_clauses, bitmapqualorig);
-	}
+										   &bitmapqualorig, &indexquals,
+										   &indexECs);
 
 	/*
 	 * The qpqual list must contain all restrictions not automatically handled
-	 * by the index.  All the predicates in the indexquals will be checked
-	 * (either by the index itself, or by nodeBitmapHeapscan.c), but if there
-	 * are any "special" operators involved then they must be added to qpqual.
-	 * The upshot is that qpqual must contain scan_clauses minus whatever
-	 * appears in indexquals.
+	 * by the index, other than pseudoconstant clauses which will be handled
+	 * by a separate gating plan node.  All the predicates in the indexquals
+	 * will be checked (either by the index itself, or by
+	 * nodeBitmapHeapscan.c), but if there are any "special" operators
+	 * involved then they must be added to qpqual.  The upshot is that qpqual
+	 * must contain scan_clauses minus whatever appears in indexquals.
+	 *
+	 * This loop is similar to the comparable code in create_indexscan_plan(),
+	 * but with some differences because it has to compare the scan clauses to
+	 * stripped (no RestrictInfos) indexquals.  See comments there for more
+	 * info.
 	 *
 	 * In normal cases simple equal() checks will be enough to spot duplicate
-	 * clauses, so we try that first.  In some situations (particularly with
-	 * OR'd index conditions) we may have scan_clauses that are not equal to,
-	 * but are logically implied by, the index quals; so we also try a
-	 * predicate_implied_by() check to see if we can discard quals that way.
-	 * (predicate_implied_by assumes its first input contains only immutable
-	 * functions, so we have to check that.)
+	 * clauses, so we try that first.  We next see if the scan clause is
+	 * redundant with any top-level indexqual by virtue of being generated
+	 * from the same EC.  After that, try predicate_implied_by().
 	 *
 	 * Unlike create_indexscan_plan(), we need take no special thought here
 	 * for partial index predicates; this is because the predicate conditions
 	 * are already listed in bitmapqualorig and indexquals.  Bitmap scans have
 	 * to do it that way because predicate conditions need to be rechecked if
-	 * the scan becomes lossy.
+	 * the scan becomes lossy, so they have to be included in bitmapqualorig.
 	 */
 	qpqual = NIL;
 	foreach(l, scan_clauses)
 	{
-		Node	   *clause = (Node *) lfirst(l);
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
+		Node	   *clause = (Node *) rinfo->clause;
 
+		Assert(IsA(rinfo, RestrictInfo));
+		if (rinfo->pseudoconstant)
+			continue;			/* we may drop pseudoconstants here */
 		if (list_member(indexquals, clause))
-			continue;
+			continue;			/* simple duplicate */
+		if (rinfo->parent_ec && list_member_ptr(indexECs, rinfo->parent_ec))
+			continue;			/* derived from same EquivalenceClass */
 		if (!contain_mutable_functions(clause))
 		{
 			List	   *clausel = list_make1(clause);
 
 			if (predicate_implied_by(clausel, indexquals))
-				continue;
+				continue;		/* provably implied by indexquals */
 		}
-		qpqual = lappend(qpqual, clause);
+		qpqual = lappend(qpqual, rinfo);
 	}
 
 	/* Sort clauses into best execution order */
 	qpqual = order_qual_clauses(root, qpqual);
+
+	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
+	qpqual = extract_actual_clauses(qpqual, false);
 
 	/*
 	 * When dealing with special operators, we will at this point have
@@ -1324,6 +1336,19 @@ create_bitmap_scan_plan(PlannerInfo *root,
 	 * twice.
 	 */
 	bitmapqualorig = list_difference_ptr(bitmapqualorig, qpqual);
+
+	/*
+	 * We have to replace any outer-relation variables with nestloop params in
+	 * the qpqual and bitmapqualorig expressions.  (This was already done for
+	 * expressions attached to plan nodes in the bitmapqualplan tree.)
+	 */
+	if (best_path->path.param_info)
+	{
+		qpqual = (List *)
+			replace_nestloop_params(root, (Node *) qpqual);
+		bitmapqualorig = (List *)
+			replace_nestloop_params(root, (Node *) bitmapqualorig);
+	}
 
 	/* Finally ready to build the plan node */
 	scan_plan = make_bitmap_heapscan(tlist,
@@ -1349,12 +1374,20 @@ create_bitmap_scan_plan(PlannerInfo *root,
  * predicates, because we have to recheck predicates as well as index
  * conditions if the bitmap scan becomes lossy.
  *
+ * In addition, we return a list of EquivalenceClass pointers for all the
+ * top-level indexquals that were possibly-redundantly derived from ECs.
+ * This allows removal of scan_clauses that are redundant with such quals.
+ * (We do not attempt to detect such redundancies for quals that are within
+ * OR subtrees.  This could be done in a less hacky way if we returned the
+ * indexquals in RestrictInfo form, but that would be slower and still pretty
+ * messy, since we'd have to build new RestrictInfos in many cases.)
+ *
  * Note: if you find yourself changing this, you probably need to change
  * make_restrictinfo_from_bitmapqual too.
  */
 static Plan *
 create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
-					  List **qual, List **indexqual)
+					  List **qual, List **indexqual, List **indexECs)
 {
 	Plan	   *plan;
 
@@ -1364,6 +1397,7 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 		List	   *subplans = NIL;
 		List	   *subquals = NIL;
 		List	   *subindexquals = NIL;
+		List	   *subindexECs = NIL;
 		ListCell   *l;
 
 		/*
@@ -1378,12 +1412,16 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 			Plan	   *subplan;
 			List	   *subqual;
 			List	   *subindexqual;
+			List	   *subindexEC;
 
 			subplan = create_bitmap_subplan(root, (Path *) lfirst(l),
-											&subqual, &subindexqual);
+											&subqual, &subindexqual,
+											&subindexEC);
 			subplans = lappend(subplans, subplan);
 			subquals = list_concat_unique(subquals, subqual);
 			subindexquals = list_concat_unique(subindexquals, subindexqual);
+			/* Duplicates in indexECs aren't worth getting rid of */
+			subindexECs = list_concat(subindexECs, subindexEC);
 		}
 		plan = (Plan *) make_bitmap_and(subplans);
 		plan->startup_cost = apath->path.startup_cost;
@@ -1393,6 +1431,7 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 		plan->plan_width = 0;	/* meaningless */
 		*qual = subquals;
 		*indexqual = subindexquals;
+		*indexECs = subindexECs;
 	}
 	else if (IsA(bitmapqual, BitmapOrPath))
 	{
@@ -1418,9 +1457,11 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 			Plan	   *subplan;
 			List	   *subqual;
 			List	   *subindexqual;
+			List	   *subindexEC;
 
 			subplan = create_bitmap_subplan(root, (Path *) lfirst(l),
-											&subqual, &subindexqual);
+											&subqual, &subindexqual,
+											&subindexEC);
 			subplans = lappend(subplans, subplan);
 			if (subqual == NIL)
 				const_true_subqual = true;
@@ -1469,11 +1510,13 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 			*indexqual = subindexquals;
 		else
 			*indexqual = list_make1(make_orclause(subindexquals));
+		*indexECs = NIL;
 	}
 	else if (IsA(bitmapqual, IndexPath))
 	{
 		IndexPath  *ipath = (IndexPath *) bitmapqual;
 		IndexScan  *iscan;
+		List	   *subindexECs;
 		ListCell   *l;
 
 		/* Use the regular indexscan plan build machinery... */
@@ -1508,18 +1551,15 @@ create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,
 				*indexqual = lappend(*indexqual, pred);
 			}
 		}
-
-		/*
-		 * Replace outer-relation variables with nestloop params, but only
-		 * after doing the above comparisons to index predicates.
-		 */
-		if (ipath->path.required_outer)
+		subindexECs = NIL;
+		foreach(l, ipath->indexquals)
 		{
-			*qual = (List *)
-				replace_nestloop_params(root, (Node *) *qual);
-			*indexqual = (List *)
-				replace_nestloop_params(root, (Node *) *indexqual);
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
+
+			if (rinfo->parent_ec)
+				subindexECs = lappend(subindexECs, rinfo->parent_ec);
 		}
+		*indexECs = subindexECs;
 	}
 	else
 	{
@@ -1593,6 +1633,13 @@ create_subqueryscan_plan(PlannerInfo *root, Path *best_path,
 
 	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
+
+	/* Replace any outer-relation variables with nestloop params */
+	if (best_path->param_info)
+	{
+		scan_clauses = (List *)
+			replace_nestloop_params(root, (Node *) scan_clauses);
+	}
 
 	scan_plan = make_subqueryscan(tlist,
 								  scan_clauses,
@@ -1859,7 +1906,7 @@ create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 	 * from join clauses, so doing this beforehand on the scan_clauses
 	 * wouldn't work.)
 	 */
-	if (best_path->path.required_outer)
+	if (best_path->path.param_info)
 	{
 		scan_plan->scan.plan.qual = (List *)
 			replace_nestloop_params(root, (Node *) scan_plan->scan.plan.qual);
@@ -1909,15 +1956,6 @@ create_nestloop_plan(PlannerInfo *root,
 	ListCell   *prev;
 	ListCell   *next;
 
-	/*
-	 * If the inner path is parameterized, it might have already used some of
-	 * the join quals, in which case we don't have to check them again at the
-	 * join node.  Remove any join quals that are redundant.
-	 */
-	joinrestrictclauses =
-		select_nonredundant_join_clauses(joinrestrictclauses,
-										 best_path->innerjoinpath->param_clauses);
-
 	/* Sort join qual clauses into best execution order */
 	joinrestrictclauses = order_qual_clauses(root, joinrestrictclauses);
 
@@ -1933,6 +1971,15 @@ create_nestloop_plan(PlannerInfo *root,
 		/* We can treat all clauses alike for an inner join */
 		joinclauses = extract_actual_clauses(joinrestrictclauses, false);
 		otherclauses = NIL;
+	}
+
+	/* Replace any outer-relation variables with nestloop params */
+	if (best_path->path.param_info)
+	{
+		joinclauses = (List *)
+			replace_nestloop_params(root, (Node *) joinclauses);
+		otherclauses = (List *)
+			replace_nestloop_params(root, (Node *) otherclauses);
 	}
 
 	/*
@@ -2030,6 +2077,18 @@ create_mergejoin_plan(PlannerInfo *root,
 	 */
 	mergeclauses = get_actual_clauses(best_path->path_mergeclauses);
 	joinclauses = list_difference(joinclauses, mergeclauses);
+
+	/*
+	 * Replace any outer-relation variables with nestloop params.  There
+	 * should not be any in the mergeclauses.
+	 */
+	if (best_path->jpath.path.param_info)
+	{
+		joinclauses = (List *)
+			replace_nestloop_params(root, (Node *) joinclauses);
+		otherclauses = (List *)
+			replace_nestloop_params(root, (Node *) otherclauses);
+	}
 
 	/*
 	 * Rearrange mergeclauses, if needed, so that the outer variable is always
@@ -2308,6 +2367,18 @@ create_hashjoin_plan(PlannerInfo *root,
 	 */
 	hashclauses = get_actual_clauses(best_path->path_hashclauses);
 	joinclauses = list_difference(joinclauses, hashclauses);
+
+	/*
+	 * Replace any outer-relation variables with nestloop params.  There
+	 * should not be any in the hashclauses.
+	 */
+	if (best_path->jpath.path.param_info)
+	{
+		joinclauses = (List *)
+			replace_nestloop_params(root, (Node *) joinclauses);
+		otherclauses = (List *)
+			replace_nestloop_params(root, (Node *) otherclauses);
+	}
 
 	/*
 	 * Rearrange hashclauses, if needed, so that the outer variable is always

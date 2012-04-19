@@ -1017,6 +1017,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 									 outerjoin_delayed,
 									 pseudoconstant,
 									 relids,
+									 outerjoin_nonnullable,
 									 nullable_relids);
 
 	/*
@@ -1466,6 +1467,7 @@ build_implied_join_equality(Oid opno,
 									 false,		/* outerjoin_delayed */
 									 false,		/* pseudoconstant */
 									 qualscope, /* required_relids */
+									 NULL,		/* outer_relids */
 									 NULL);		/* nullable_relids */
 
 	/* Set mergejoinability/hashjoinability flags */

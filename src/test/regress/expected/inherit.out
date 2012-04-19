@@ -971,6 +971,76 @@ drop cascades to table inhts
 drop cascades to table inht3
 drop cascades to table inht4
 --
+-- Test parameterized append plans for inheritance trees
+--
+create temp table patest0 (id, x) as
+  select x, x from generate_series(0,1000) x;
+create temp table patest1() inherits (patest0);
+insert into patest1
+  select x, x from generate_series(0,1000) x;
+create temp table patest2() inherits (patest0);
+insert into patest2
+  select x, x from generate_series(0,1000) x;
+create index patest0i on patest0(id);
+create index patest1i on patest1(id);
+create index patest2i on patest2(id);
+analyze patest0;
+analyze patest1;
+analyze patest2;
+explain (costs off)
+select * from patest0 join (select f1 from int4_tbl limit 1) ss on id = f1;
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Nested Loop
+   ->  Limit
+         ->  Seq Scan on int4_tbl
+   ->  Append
+         ->  Index Scan using patest0i on patest0
+               Index Cond: (id = int4_tbl.f1)
+         ->  Index Scan using patest1i on patest1 patest0
+               Index Cond: (id = int4_tbl.f1)
+         ->  Index Scan using patest2i on patest2 patest0
+               Index Cond: (id = int4_tbl.f1)
+(10 rows)
+
+select * from patest0 join (select f1 from int4_tbl limit 1) ss on id = f1;
+ id | x | f1 
+----+---+----
+  0 | 0 |  0
+  0 | 0 |  0
+  0 | 0 |  0
+(3 rows)
+
+drop index patest2i;
+explain (costs off)
+select * from patest0 join (select f1 from int4_tbl limit 1) ss on id = f1;
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Nested Loop
+   ->  Limit
+         ->  Seq Scan on int4_tbl
+   ->  Append
+         ->  Index Scan using patest0i on patest0
+               Index Cond: (id = int4_tbl.f1)
+         ->  Index Scan using patest1i on patest1 patest0
+               Index Cond: (id = int4_tbl.f1)
+         ->  Seq Scan on patest2 patest0
+               Filter: (int4_tbl.f1 = id)
+(10 rows)
+
+select * from patest0 join (select f1 from int4_tbl limit 1) ss on id = f1;
+ id | x | f1 
+----+---+----
+  0 | 0 |  0
+  0 | 0 |  0
+  0 | 0 |  0
+(3 rows)
+
+drop table patest0 cascade;
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to table patest1
+drop cascades to table patest2
+--
 -- Test merge-append plans for inheritance trees
 --
 create table matest0 (id serial primary key, name text);

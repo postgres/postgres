@@ -439,7 +439,7 @@ get_cheapest_path_for_pathkeys(List *paths, List *pathkeys,
 			continue;
 
 		if (pathkeys_contained_in(pathkeys, path->pathkeys) &&
-			bms_is_subset(path->required_outer, required_outer))
+			bms_is_subset(PATH_REQ_OUTER(path), required_outer))
 			matched_path = path;
 	}
 	return matched_path;
@@ -481,7 +481,7 @@ get_cheapest_fractional_path_for_pathkeys(List *paths,
 			continue;
 
 		if (pathkeys_contained_in(pathkeys, path->pathkeys) &&
-			bms_is_subset(path->required_outer, required_outer))
+			bms_is_subset(PATH_REQ_OUTER(path), required_outer))
 			matched_path = path;
 	}
 	return matched_path;
