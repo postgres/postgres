@@ -219,10 +219,10 @@
 ;; Returns the depth of auto TOC that should be made at the nd-level
 (define (toc-depth nd)
   (cond ((string=? (gi nd) (normalize "book")) 2)
-	((string=? (gi nd) (normalize "set")) 2)
-	((string=? (gi nd) (normalize "part")) 2)
-	((string=? (gi nd) (normalize "chapter")) 2)
-	(else 1)))
+        ((string=? (gi nd) (normalize "set")) 2)
+        ((string=? (gi nd) (normalize "part")) 2)
+        ((string=? (gi nd) (normalize "chapter")) 2)
+        (else 1)))
 
 ;; Put a horizontal line in the set TOC (just like the book TOC looks)
 (define (set-titlepage-separator side)
@@ -233,7 +233,7 @@
 ;; Add character encoding and time of creation into HTML header
 (define %html-header-tags%
   (list (list "META" '("HTTP-EQUIV" "Content-Type") '("CONTENT" "text/html; charset=ISO-8859-1"))
-	(list "META" '("NAME" "creation") (list "CONTENT" (time->string (time) #t)))))
+        (list "META" '("NAME" "creation") (list "CONTENT" (time->string (time) #t)))))
 
 
 ;; Block elements are allowed in PARA in DocBook, but not in P in
@@ -257,10 +257,10 @@
               (make element gi: "TR"
                     (make element gi: "TD"
                           content)))
-	(make sequence
-	  (para-check)
-	  content
-	  (para-check 'restart)))))
+        (make sequence
+          (para-check)
+          content
+          (para-check 'restart)))))
 
 ;; ...and for notes.
 (element note
@@ -287,83 +287,83 @@
 ;; dbcommon.dsl)
 (define (default-header-nav-tbl-ff elemnode prev next prevsib nextsib)
   (let* ((r1? (nav-banner? elemnode))
-	 (r1-sosofo (make element gi: "TR"
-			  (make element gi: "TH"
-				attributes: (list
-					     (list "COLSPAN" "5")
-					     (list "ALIGN" "center")
-					     (list "VALIGN" "bottom"))
-				(make element gi: "A"
-				      attributes: (list
-						   (list "HREF" (href-to (nav-home elemnode))))
-				      (nav-banner elemnode)))))
-	 (r2? (or (not (node-list-empty? prev))
-		  (not (node-list-empty? next))
-		  (nav-context? elemnode)))
-	 (r2-sosofo (make element gi: "TR"
-			  (make element gi: "TD"
-				attributes: (list
-					     (list "WIDTH" "10%")
-					     (list "ALIGN" "left")
-					     (list "VALIGN" "top"))
-				(if (node-list-empty? prev)
-				    (make entity-ref name: "nbsp")
-				    (make element gi: "A"
-					  attributes: (list
-						       (list "TITLE" (element-title-string prev))
-						       (list "HREF"
-							     (href-to
-							      prev))
-						       (list "ACCESSKEY"
-							     "P"))
-					  (gentext-nav-prev prev))))
-			  (make element gi: "TD"
-				attributes: (list
-					     (list "WIDTH" "10%")
-					     (list "ALIGN" "left")
-					     (list "VALIGN" "top"))
-				(if (nav-up? elemnode)
-				    (nav-up elemnode)
-				    (nav-home-link elemnode)))
-			  (make element gi: "TD"
-				attributes: (list
-					     (list "WIDTH" "60%")
-					     (list "ALIGN" "center")
-					     (list "VALIGN" "bottom"))
-				(nav-context elemnode))
-			  (make element gi: "TD"
-				attributes: (list
-					     (list "WIDTH" "20%")
-					     (list "ALIGN" "right")
-					     (list "VALIGN" "top"))
-				(if (node-list-empty? next)
-				    (make entity-ref name: "nbsp")
-				    (make element gi: "A"
-					  attributes: (list
-						       (list "TITLE" (element-title-string next))
-						       (list "HREF"
-							     (href-to
-							      next))
-						       (list "ACCESSKEY"
-							     "N"))
-					  (gentext-nav-next next)))))))
+         (r1-sosofo (make element gi: "TR"
+                          (make element gi: "TH"
+                                attributes: (list
+                                             (list "COLSPAN" "5")
+                                             (list "ALIGN" "center")
+                                             (list "VALIGN" "bottom"))
+                                (make element gi: "A"
+                                      attributes: (list
+                                                   (list "HREF" (href-to (nav-home elemnode))))
+                                      (nav-banner elemnode)))))
+         (r2? (or (not (node-list-empty? prev))
+                  (not (node-list-empty? next))
+                  (nav-context? elemnode)))
+         (r2-sosofo (make element gi: "TR"
+                          (make element gi: "TD"
+                                attributes: (list
+                                             (list "WIDTH" "10%")
+                                             (list "ALIGN" "left")
+                                             (list "VALIGN" "top"))
+                                (if (node-list-empty? prev)
+                                    (make entity-ref name: "nbsp")
+                                    (make element gi: "A"
+                                          attributes: (list
+                                                       (list "TITLE" (element-title-string prev))
+                                                       (list "HREF"
+                                                             (href-to
+                                                              prev))
+                                                       (list "ACCESSKEY"
+                                                             "P"))
+                                          (gentext-nav-prev prev))))
+                          (make element gi: "TD"
+                                attributes: (list
+                                             (list "WIDTH" "10%")
+                                             (list "ALIGN" "left")
+                                             (list "VALIGN" "top"))
+                                (if (nav-up? elemnode)
+                                    (nav-up elemnode)
+                                    (nav-home-link elemnode)))
+                          (make element gi: "TD"
+                                attributes: (list
+                                             (list "WIDTH" "60%")
+                                             (list "ALIGN" "center")
+                                             (list "VALIGN" "bottom"))
+                                (nav-context elemnode))
+                          (make element gi: "TD"
+                                attributes: (list
+                                             (list "WIDTH" "20%")
+                                             (list "ALIGN" "right")
+                                             (list "VALIGN" "top"))
+                                (if (node-list-empty? next)
+                                    (make entity-ref name: "nbsp")
+                                    (make element gi: "A"
+                                          attributes: (list
+                                                       (list "TITLE" (element-title-string next))
+                                                       (list "HREF"
+                                                             (href-to
+                                                              next))
+                                                       (list "ACCESSKEY"
+                                                             "N"))
+                                          (gentext-nav-next next)))))))
     (if (or r1? r2?)
-	(make element gi: "DIV"
-	      attributes: '(("CLASS" "NAVHEADER"))
-	  (make element gi: "TABLE"
-		attributes: (list
-			     (list "SUMMARY" "Header navigation table")
-			     (list "WIDTH" %gentext-nav-tblwidth%)
-			     (list "BORDER" "0")
-			     (list "CELLPADDING" "0")
-			     (list "CELLSPACING" "0"))
-		(if r1? r1-sosofo (empty-sosofo))
-		(if r2? r2-sosofo (empty-sosofo)))
-	  (make empty-element gi: "HR"
-		attributes: (list
-			     (list "ALIGN" "LEFT")
-			     (list "WIDTH" %gentext-nav-tblwidth%))))
-	(empty-sosofo))))
+        (make element gi: "DIV"
+              attributes: '(("CLASS" "NAVHEADER"))
+          (make element gi: "TABLE"
+                attributes: (list
+                             (list "SUMMARY" "Header navigation table")
+                             (list "WIDTH" %gentext-nav-tblwidth%)
+                             (list "BORDER" "0")
+                             (list "CELLPADDING" "0")
+                             (list "CELLSPACING" "0"))
+                (if r1? r1-sosofo (empty-sosofo))
+                (if r2? r2-sosofo (empty-sosofo)))
+          (make empty-element gi: "HR"
+                attributes: (list
+                             (list "ALIGN" "LEFT")
+                             (list "WIDTH" %gentext-nav-tblwidth%))))
+        (empty-sosofo))))
 
 
 ;; Put index "quicklinks" (A | B | C | ...) at the top of the bookindex page.
@@ -373,8 +373,8 @@
                    (children (current-node))
                    (list (normalize "indexentry"))))
         (indexdivs  (node-list-filter-by-gi
-		     (children (current-node))
-		     (list (normalize "indexdiv"))))
+                     (children (current-node))
+                     (list (normalize "indexdiv"))))
         (entries  (node-list-filter-by-gi
                    (children (current-node))
                    (list (normalize "indexentry")))))
@@ -385,12 +385,12 @@
            attributes: (list (list "CLASS" (gi)))
            ($component-separator$)
            ($component-title$)
-	   (if (node-list-empty? indexdivs)
-	       (empty-sosofo)
-	       (make element gi: "P"
-		     attributes: (list (list "CLASS" "INDEXDIV-QUICKLINKS"))
-		     (with-mode indexdiv-quicklinks-mode
-		       (process-node-list indexdivs))))
+           (if (node-list-empty? indexdivs)
+               (empty-sosofo)
+               (make element gi: "P"
+                     attributes: (list (list "CLASS" "INDEXDIV-QUICKLINKS"))
+                     (with-mode indexdiv-quicklinks-mode
+                       (process-node-list indexdivs))))
            (process-node-list preamble)
            (if (node-list-empty? entries)
                (empty-sosofo)
@@ -402,11 +402,11 @@
   (element indexdiv
     (make sequence
       (make element gi: "A"
-	    attributes: (list (list "HREF" (href-to (current-node))))
-	    (element-title-sosofo))
+            attributes: (list (list "HREF" (href-to (current-node))))
+            (element-title-sosofo))
       (if (not (last-sibling?))
-	  (literal " | ")
-	  (literal "")))))
+          (literal " | ")
+          (literal "")))))
 
 
 ;; Changed to strip and normalize index term content (overrides
@@ -478,8 +478,8 @@
 
 (define %graphic-default-extension%
   (cond (tex-backend (if texpdf-output "pdf" "eps"))
-	(rtf-backend "gif")
-	(else "XXX")))
+        (rtf-backend "gif")
+        (else "XXX")))
 
 ;; Need to add pdf here so that the above works.  Default setup
 ;; doesn't know about PDF.
@@ -499,15 +499,15 @@
 (mode book-titlepage-verso-mode
   (element (legalnotice para)
     (make paragraph
-      use: book-titlepage-verso-style	;; alter this if ever it needs to appear elsewhere
+      use: book-titlepage-verso-style   ;; alter this if ever it needs to appear elsewhere
       quadding: %default-quadding%
       line-spacing: (* 0.8 (inherited-line-spacing))
       font-size: (* 0.8 (inherited-font-size))
       space-before: (* 0.8 %para-sep%)
       space-after: (* 0.8 %para-sep%)
       first-line-start-indent: (if (is-first-para)
-				   (* 0.8 %para-indent-firstpara%)
-				   (* 0.8 %para-indent%))
+                                   (* 0.8 %para-indent-firstpara%)
+                                   (* 0.8 %para-indent%))
       (process-children))))
 
 
@@ -516,8 +516,8 @@
 (element (varlistentry term)
   (make paragraph
     space-before: (if (first-sibling?)
-		      %para-sep%
-		      0pt)
+                      %para-sep%
+                      0pt)
     keep-with-next?: #t
     (process-children)))
 
@@ -560,13 +560,13 @@
         (members (select-elements (children (current-node)) (normalize "member"))))
     (cond
        ((equal? type (normalize "inline"))
-	(if (equal? (gi (parent (current-node)))
-		    (normalize "para"))
-	    (process-children)
-	    (make paragraph
-	      space-before: %para-sep%
-	      space-after: %para-sep%
-	      start-indent: (inherited-start-indent))))
+        (if (equal? (gi (parent (current-node)))
+                    (normalize "para"))
+            (process-children)
+            (make paragraph
+              space-before: %para-sep%
+              space-after: %para-sep%
+              start-indent: (inherited-start-indent))))
        ((equal? type (normalize "vert"))
         (my-simplelist-vert members))
        ((equal? type (normalize "horiz"))
@@ -577,18 +577,18 @@
     (cond
      ((equal? type (normalize "inline"))
       (make sequence
-	(process-children)
-	(if (not (last-sibling?))
-	    (literal ", ")
-	    (literal ""))))
+        (process-children)
+        (if (not (last-sibling?))
+            (literal ", ")
+            (literal ""))))
       ((equal? type (normalize "vert"))
        (make paragraph
-	 space-before: 0pt
-	 space-after: 0pt))
+         space-before: 0pt
+         space-after: 0pt))
       ((equal? type (normalize "horiz"))
        (make paragraph
-	 quadding: 'start
-	 (process-children))))))
+         quadding: 'start
+         (process-children))))))
 
 
 ;; Jadetex doesn't handle links to the content of tables, so
@@ -599,8 +599,8 @@
 (define (find-parent-table nd)
   (let ((table (ancestor-member nd ($table-element-list$))))
     (if (node-list-empty? table)
-	nd
-	table)))
+        nd
+        table)))
 
 ;; (The function below overrides the one in print/dbindex.dsl.)
 
@@ -635,173 +635,173 @@
 
 (define (first-part?)
   (let* ((book (ancestor (normalize "book")))
-	 (nd   (ancestor-member (current-node)
-				(append
-				 (component-element-list)
-				 (division-element-list))))
-	 (bookch (children book)))
+         (nd   (ancestor-member (current-node)
+                                (append
+                                 (component-element-list)
+                                 (division-element-list))))
+         (bookch (children book)))
     (let loop ((nl bookch))
       (if (node-list-empty? nl)
-	  #f
-	  (if (equal? (gi (node-list-first nl)) (normalize "part"))
-	      (if (node-list=? (node-list-first nl) nd)
-		  #t
-		  #f)
-	      (loop (node-list-rest nl)))))))
+          #f
+          (if (equal? (gi (node-list-first nl)) (normalize "part"))
+              (if (node-list=? (node-list-first nl) nd)
+                  #t
+                  #f)
+              (loop (node-list-rest nl)))))))
 
 (define (first-reference?)
   (let* ((book (ancestor (normalize "book")))
-	 (nd   (ancestor-member (current-node)
-				(append
-				 (component-element-list)
-				 (division-element-list))))
-	 (bookch (children book)))
+         (nd   (ancestor-member (current-node)
+                                (append
+                                 (component-element-list)
+                                 (division-element-list))))
+         (bookch (children book)))
     (let loop ((nl bookch))
       (if (node-list-empty? nl)
-	  #f
-	  (if (equal? (gi (node-list-first nl)) (normalize "reference"))
-	      (if (node-list=? (node-list-first nl) nd)
-		  #t
-		  #f)
-	      (loop (node-list-rest nl)))))))
+          #f
+          (if (equal? (gi (node-list-first nl)) (normalize "reference"))
+              (if (node-list=? (node-list-first nl) nd)
+                  #t
+                  #f)
+              (loop (node-list-rest nl)))))))
 
 
 (define (part-titlepage elements #!optional (side 'recto))
   (let ((nodelist (titlepage-nodelist
-		   (if (equal? side 'recto)
-		       (reference-titlepage-recto-elements)
-		       (reference-titlepage-verso-elements))
-		   elements))
+                   (if (equal? side 'recto)
+                       (reference-titlepage-recto-elements)
+                       (reference-titlepage-verso-elements))
+                   elements))
         ;; partintro is a special case...
-	(partintro (node-list-first
-		    (node-list-filter-by-gi elements (list (normalize "partintro"))))))
+        (partintro (node-list-first
+                    (node-list-filter-by-gi elements (list (normalize "partintro"))))))
     (if (part-titlepage-content? elements side)
-	(make simple-page-sequence
-	  page-n-columns: %titlepage-n-columns%
-	  ;; Make sure that page number format is correct.
-	  page-number-format: ($page-number-format$)
-	  ;; Make sure that the page number is set to 1 if this is the
-	  ;; first part in the book
-	  page-number-restart?: (first-part?)
-	  input-whitespace-treatment: 'collapse
-	  use: default-text-style
+        (make simple-page-sequence
+          page-n-columns: %titlepage-n-columns%
+          ;; Make sure that page number format is correct.
+          page-number-format: ($page-number-format$)
+          ;; Make sure that the page number is set to 1 if this is the
+          ;; first part in the book
+          page-number-restart?: (first-part?)
+          input-whitespace-treatment: 'collapse
+          use: default-text-style
 
-	  ;; This hack is required for the RTF backend. If an external-graphic
-	  ;; is the first thing on the page, RTF doesn't seem to do the right
-	  ;; thing (the graphic winds up on the baseline of the first line
-	  ;; of the page, left justified).  This "one point rule" fixes
-	  ;; that problem.
-	  (make paragraph
-	    line-spacing: 1pt
-	    (literal ""))
+          ;; This hack is required for the RTF backend. If an external-graphic
+          ;; is the first thing on the page, RTF doesn't seem to do the right
+          ;; thing (the graphic winds up on the baseline of the first line
+          ;; of the page, left justified).  This "one point rule" fixes
+          ;; that problem.
+          (make paragraph
+            line-spacing: 1pt
+            (literal ""))
 
-	  (let loop ((nl nodelist) (lastnode (empty-node-list)))
-	    (if (node-list-empty? nl)
-		(empty-sosofo)
-		(make sequence
-		  (if (or (node-list-empty? lastnode)
-			  (not (equal? (gi (node-list-first nl))
-				       (gi lastnode))))
-		      (part-titlepage-before (node-list-first nl) side)
-		      (empty-sosofo))
-		  (cond
-		   ((equal? (gi (node-list-first nl)) (normalize "subtitle"))
-		    (part-titlepage-subtitle (node-list-first nl) side))
-		   ((equal? (gi (node-list-first nl)) (normalize "title"))
-		    (part-titlepage-title (node-list-first nl) side))
-		   (else
-		    (part-titlepage-default (node-list-first nl) side)))
-		  (loop (node-list-rest nl) (node-list-first nl)))))
+          (let loop ((nl nodelist) (lastnode (empty-node-list)))
+            (if (node-list-empty? nl)
+                (empty-sosofo)
+                (make sequence
+                  (if (or (node-list-empty? lastnode)
+                          (not (equal? (gi (node-list-first nl))
+                                       (gi lastnode))))
+                      (part-titlepage-before (node-list-first nl) side)
+                      (empty-sosofo))
+                  (cond
+                   ((equal? (gi (node-list-first nl)) (normalize "subtitle"))
+                    (part-titlepage-subtitle (node-list-first nl) side))
+                   ((equal? (gi (node-list-first nl)) (normalize "title"))
+                    (part-titlepage-title (node-list-first nl) side))
+                   (else
+                    (part-titlepage-default (node-list-first nl) side)))
+                  (loop (node-list-rest nl) (node-list-first nl)))))
 
-	  (if (and %generate-part-toc%
-		   %generate-part-toc-on-titlepage%
-		   (equal? side 'recto))
-	      (make display-group
-		(build-toc (current-node)
-			   (toc-depth (current-node))))
-	      (empty-sosofo))
+          (if (and %generate-part-toc%
+                   %generate-part-toc-on-titlepage%
+                   (equal? side 'recto))
+              (make display-group
+                (build-toc (current-node)
+                           (toc-depth (current-node))))
+              (empty-sosofo))
 
-	  ;; PartIntro is a special case
-	  (if (and (equal? side 'recto)
-		   (not (node-list-empty? partintro))
-		   %generate-partintro-on-titlepage%)
-	      ($process-partintro$ partintro #f)
-	      (empty-sosofo)))
+          ;; PartIntro is a special case
+          (if (and (equal? side 'recto)
+                   (not (node-list-empty? partintro))
+                   %generate-partintro-on-titlepage%)
+              ($process-partintro$ partintro #f)
+              (empty-sosofo)))
 
-	(empty-sosofo))))
+        (empty-sosofo))))
 
 
 (define (reference-titlepage elements #!optional (side 'recto))
   (let ((nodelist (titlepage-nodelist
-		   (if (equal? side 'recto)
-		       (reference-titlepage-recto-elements)
-		       (reference-titlepage-verso-elements))
-		   elements))
+                   (if (equal? side 'recto)
+                       (reference-titlepage-recto-elements)
+                       (reference-titlepage-verso-elements))
+                   elements))
         ;; partintro is a special case...
-	(partintro (node-list-first
-		    (node-list-filter-by-gi elements (list (normalize "partintro"))))))
+        (partintro (node-list-first
+                    (node-list-filter-by-gi elements (list (normalize "partintro"))))))
     (if (reference-titlepage-content? elements side)
-	(make simple-page-sequence
-	  page-n-columns: %titlepage-n-columns%
-	  ;; Make sure that page number format is correct.
-	  page-number-format: ($page-number-format$)
-	  ;; Make sure that the page number is set to 1 if this is the
-	  ;; first part in the book
-	  page-number-restart?: (first-reference?)
-	  input-whitespace-treatment: 'collapse
-	  use: default-text-style
+        (make simple-page-sequence
+          page-n-columns: %titlepage-n-columns%
+          ;; Make sure that page number format is correct.
+          page-number-format: ($page-number-format$)
+          ;; Make sure that the page number is set to 1 if this is the
+          ;; first part in the book
+          page-number-restart?: (first-reference?)
+          input-whitespace-treatment: 'collapse
+          use: default-text-style
 
-	  ;; This hack is required for the RTF backend. If an external-graphic
-	  ;; is the first thing on the page, RTF doesn't seem to do the right
-	  ;; thing (the graphic winds up on the baseline of the first line
-	  ;; of the page, left justified).  This "one point rule" fixes
-	  ;; that problem.
-	  (make paragraph
-	    line-spacing: 1pt
-	    (literal ""))
+          ;; This hack is required for the RTF backend. If an external-graphic
+          ;; is the first thing on the page, RTF doesn't seem to do the right
+          ;; thing (the graphic winds up on the baseline of the first line
+          ;; of the page, left justified).  This "one point rule" fixes
+          ;; that problem.
+          (make paragraph
+            line-spacing: 1pt
+            (literal ""))
 
-	  (let loop ((nl nodelist) (lastnode (empty-node-list)))
-	    (if (node-list-empty? nl)
-		(empty-sosofo)
-		(make sequence
-		  (if (or (node-list-empty? lastnode)
-			  (not (equal? (gi (node-list-first nl))
-				       (gi lastnode))))
-		      (reference-titlepage-before (node-list-first nl) side)
-		      (empty-sosofo))
-		  (cond
-		   ((equal? (gi (node-list-first nl)) (normalize "author"))
-		    (reference-titlepage-author (node-list-first nl) side))
-		   ((equal? (gi (node-list-first nl)) (normalize "authorgroup"))
-		    (reference-titlepage-authorgroup (node-list-first nl) side))
-		   ((equal? (gi (node-list-first nl)) (normalize "corpauthor"))
-		    (reference-titlepage-corpauthor (node-list-first nl) side))
-		   ((equal? (gi (node-list-first nl)) (normalize "editor"))
-		    (reference-titlepage-editor (node-list-first nl) side))
-		   ((equal? (gi (node-list-first nl)) (normalize "subtitle"))
-		    (reference-titlepage-subtitle (node-list-first nl) side))
-		   ((equal? (gi (node-list-first nl)) (normalize "title"))
-		    (reference-titlepage-title (node-list-first nl) side))
-		   (else
-		    (reference-titlepage-default (node-list-first nl) side)))
-		  (loop (node-list-rest nl) (node-list-first nl)))))
+          (let loop ((nl nodelist) (lastnode (empty-node-list)))
+            (if (node-list-empty? nl)
+                (empty-sosofo)
+                (make sequence
+                  (if (or (node-list-empty? lastnode)
+                          (not (equal? (gi (node-list-first nl))
+                                       (gi lastnode))))
+                      (reference-titlepage-before (node-list-first nl) side)
+                      (empty-sosofo))
+                  (cond
+                   ((equal? (gi (node-list-first nl)) (normalize "author"))
+                    (reference-titlepage-author (node-list-first nl) side))
+                   ((equal? (gi (node-list-first nl)) (normalize "authorgroup"))
+                    (reference-titlepage-authorgroup (node-list-first nl) side))
+                   ((equal? (gi (node-list-first nl)) (normalize "corpauthor"))
+                    (reference-titlepage-corpauthor (node-list-first nl) side))
+                   ((equal? (gi (node-list-first nl)) (normalize "editor"))
+                    (reference-titlepage-editor (node-list-first nl) side))
+                   ((equal? (gi (node-list-first nl)) (normalize "subtitle"))
+                    (reference-titlepage-subtitle (node-list-first nl) side))
+                   ((equal? (gi (node-list-first nl)) (normalize "title"))
+                    (reference-titlepage-title (node-list-first nl) side))
+                   (else
+                    (reference-titlepage-default (node-list-first nl) side)))
+                  (loop (node-list-rest nl) (node-list-first nl)))))
 
-	  (if (and %generate-reference-toc%
-		   %generate-reference-toc-on-titlepage%
-		   (equal? side 'recto))
-	      (make display-group
-		(build-toc (current-node)
-			   (toc-depth (current-node))))
-	      (empty-sosofo))
+          (if (and %generate-reference-toc%
+                   %generate-reference-toc-on-titlepage%
+                   (equal? side 'recto))
+              (make display-group
+                (build-toc (current-node)
+                           (toc-depth (current-node))))
+              (empty-sosofo))
 
-	  ;; PartIntro is a special case
-	  (if (and (equal? side 'recto)
-		   (not (node-list-empty? partintro))
-		   %generate-partintro-on-titlepage%)
-	      ($process-partintro$ partintro #f)
-	      (empty-sosofo)))
+          ;; PartIntro is a special case
+          (if (and (equal? side 'recto)
+                   (not (node-list-empty? partintro))
+                   %generate-partintro-on-titlepage%)
+              ($process-partintro$ partintro #f)
+              (empty-sosofo)))
 
-	(empty-sosofo))))
+        (empty-sosofo))))
 
 ]]> <!-- %output-print -->
 

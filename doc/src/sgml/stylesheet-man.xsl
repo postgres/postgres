@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-		xmlns:exsl="http://exslt.org/common"
+                xmlns:exsl="http://exslt.org/common"
                 version='1.0'
                 exclude-result-prefixes="exsl">
 
@@ -58,16 +58,16 @@
     <xsl:otherwise>
       <xsl:choose>
         <xsl:when test="refmeta/refentrytitle">
-	 <xsl:call-template name="bold">
-	  <xsl:with-param name="node" select="refmeta/refentrytitle"/>
-	  <xsl:with-param name="context" select="."/>
-	 </xsl:call-template>
+         <xsl:call-template name="bold">
+          <xsl:with-param name="node" select="refmeta/refentrytitle"/>
+          <xsl:with-param name="context" select="."/>
+         </xsl:call-template>
         </xsl:when>
         <xsl:otherwise>
-	 <xsl:call-template name="bold">
-	  <xsl:with-param name="node" select="refnamediv/refname[1]"/>
-	  <xsl:with-param name="context" select="."/>
-	 </xsl:call-template>
+         <xsl:call-template name="bold">
+          <xsl:with-param name="node" select="refnamediv/refname[1]"/>
+          <xsl:with-param name="context" select="."/>
+         </xsl:call-template>
         </xsl:otherwise>
       </xsl:choose>
       <xsl:apply-templates select="refmeta/manvolnum"/>
@@ -143,14 +143,14 @@
           <xsl:with-param name="message-prolog">Note: </xsl:with-param>
           <xsl:with-param name="message-epilog"> (soelim stub)</xsl:with-param>
           <xsl:with-param name="content">
-	    <xsl:choose>
-	      <xsl:when test="$man.output.in.separate.dir = 0">
-		<xsl:value-of select="concat('.so man', $section, '/')"/>
-	      </xsl:when>
-	      <xsl:otherwise>
-		<xsl:value-of select="'.so '"/> <!-- added case -->
-	      </xsl:otherwise>
-	    </xsl:choose>
+            <xsl:choose>
+              <xsl:when test="$man.output.in.separate.dir = 0">
+                <xsl:value-of select="concat('.so man', $section, '/')"/>
+              </xsl:when>
+              <xsl:otherwise>
+                <xsl:value-of select="'.so '"/> <!-- added case -->
+              </xsl:otherwise>
+            </xsl:choose>
             <xsl:call-template name="make.adjusted.man.filename">
               <xsl:with-param name="name" select="$first.refname"/>
               <xsl:with-param name="section" select="$section"/>
