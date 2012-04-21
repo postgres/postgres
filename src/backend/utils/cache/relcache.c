@@ -3262,7 +3262,7 @@ CheckConstraintFetch(Relation relation)
 				 RelationGetRelationName(relation));
 
 		check[found].ccvalid = conform->convalidated;
-		check[found].cconly	= conform->conisonly;
+		check[found].ccnoinherit = conform->connoinherit;
 		check[found].ccname = MemoryContextStrdup(CacheMemoryContext,
 												  NameStr(conform->conname));
 

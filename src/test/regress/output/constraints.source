@@ -228,6 +228,39 @@ SELECT * FROM INSERT_CHILD;
 
 DROP TABLE INSERT_CHILD;
 --
+-- Check NO INHERIT type of constraints and inheritance
+--
+CREATE TABLE ATACC1 (TEST INT
+	CHECK NO INHERIT (TEST > 0));
+CREATE TABLE ATACC2 (TEST2 INT) INHERITS (ATACC1);
+-- check constraint is not there on child
+INSERT INTO ATACC2 (TEST) VALUES (-3);
+-- check constraint is there on parent
+INSERT INTO ATACC1 (TEST) VALUES (-3);
+ERROR:  new row for relation "atacc1" violates check constraint "atacc1_test_check"
+DETAIL:  Failing row contains (-3).
+DROP TABLE ATACC1 CASCADE;
+NOTICE:  drop cascades to table atacc2
+CREATE TABLE ATACC1 (TEST INT, TEST2 INT
+	CHECK (TEST > 0), CHECK NO INHERIT (TEST2 > 10));
+CREATE TABLE ATACC2 () INHERITS (ATACC1);
+-- check constraint is there on child
+INSERT INTO ATACC2 (TEST) VALUES (-3);
+ERROR:  new row for relation "atacc2" violates check constraint "atacc1_test_check"
+DETAIL:  Failing row contains (-3, null).
+-- check constraint is there on parent
+INSERT INTO ATACC1 (TEST) VALUES (-3);
+ERROR:  new row for relation "atacc1" violates check constraint "atacc1_test_check"
+DETAIL:  Failing row contains (-3, null).
+-- check constraint is not there on child
+INSERT INTO ATACC2 (TEST2) VALUES (3);
+-- check constraint is there on parent
+INSERT INTO ATACC1 (TEST2) VALUES (3);
+ERROR:  new row for relation "atacc1" violates check constraint "atacc1_test2_check"
+DETAIL:  Failing row contains (null, 3).
+DROP TABLE ATACC1 CASCADE;
+NOTICE:  drop cascades to table atacc2
+--
 -- Check constraints on INSERT INTO
 --
 DELETE FROM INSERT_TBL;

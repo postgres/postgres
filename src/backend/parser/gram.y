@@ -420,7 +420,7 @@ static void processCASbits(int cas_bits, int location, const char *constrType,
 %type <str>		character
 %type <str>		extract_arg
 %type <str>		opt_charset
-%type <boolean> opt_varying opt_timezone
+%type <boolean> opt_varying opt_timezone opt_no_inherit
 
 %type <ival>	Iconst SignedIconst
 %type <str>		Sconst comment_text notify_payload
@@ -2685,12 +2685,13 @@ ColConstraintElem:
 					n->indexspace = $4;
 					$$ = (Node *)n;
 				}
-			| CHECK '(' a_expr ')'
+			| CHECK opt_no_inherit '(' a_expr ')'
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_CHECK;
 					n->location = @1;
-					n->raw_expr = $3;
+					n->is_no_inherit = $2;
+					n->raw_expr = $4;
 					n->cooked_expr = NULL;
 					$$ = (Node *)n;
 				}
@@ -2810,14 +2811,15 @@ TableConstraint:
 		;
 
 ConstraintElem:
-			CHECK '(' a_expr ')' ConstraintAttributeSpec
+			CHECK opt_no_inherit '(' a_expr ')' ConstraintAttributeSpec
 				{
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_CHECK;
 					n->location = @1;
-					n->raw_expr = $3;
+					n->is_no_inherit = $2;
+					n->raw_expr = $4;
 					n->cooked_expr = NULL;
-					processCASbits($5, @5, "CHECK",
+					processCASbits($6, @6, "CHECK",
 								   NULL, NULL, &n->skip_validation,
 								   yyscanner);
 					n->initially_valid = !n->skip_validation;
@@ -2918,6 +2920,10 @@ ConstraintElem:
 					n->initially_valid = !n->skip_validation;
 					$$ = (Node *)n;
 				}
+		;
+
+opt_no_inherit:	NO INHERIT							{  $$ = TRUE; }
+			| /* EMPTY */							{  $$ = FALSE; }
 		;
 
 opt_column_list:

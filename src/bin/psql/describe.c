@@ -1786,20 +1786,13 @@ describeOneTableDetails(const char *schemaname,
 		/* print table (and column) check constraints */
 		if (tableinfo.checks)
 		{
-			char *is_only;
-
-			if (pset.sversion >= 90200)
-				is_only = "r.conisonly";
-			else
-				is_only = "false AS conisonly";
-
 			printfPQExpBuffer(&buf,
-							  "SELECT r.conname, %s, "
+							  "SELECT r.conname, "
 							  "pg_catalog.pg_get_constraintdef(r.oid, true)\n"
 							  "FROM pg_catalog.pg_constraint r\n"
-				   "WHERE r.conrelid = '%s' AND r.contype = 'c'\n"
-				   			  "ORDER BY 2 DESC, 1;",
-							  is_only, oid);
+							  "WHERE r.conrelid = '%s' AND r.contype = 'c'\n"
+							  "ORDER BY 1;",
+							  oid);
 			result = PSQLexec(buf.data, false);
 			if (!result)
 				goto error_return;
@@ -1812,10 +1805,9 @@ describeOneTableDetails(const char *schemaname,
 				for (i = 0; i < tuples; i++)
 				{
 					/* untranslated contraint name and def */
-					printfPQExpBuffer(&buf, "    \"%s\"%s%s",
+					printfPQExpBuffer(&buf, "    \"%s\" %s",
 									  PQgetvalue(result, i, 0),
-									  (strcmp(PQgetvalue(result, i, 1), "t") == 0) ? " (ONLY) ":" ",
-									  PQgetvalue(result, i, 2));
+									  PQgetvalue(result, i, 1));
 
 					printTableAddFooter(&cont, buf.data);
 				}

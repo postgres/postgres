@@ -47,7 +47,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
 [ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
 { NOT NULL |
   NULL |
-  CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) |
+  CHECK [ NO INHERIT ] ( <replaceable class="PARAMETER">expression</replaceable> ) |
   DEFAULT <replaceable>default_expr</replaceable> |
   UNIQUE <replaceable class="PARAMETER">index_parameters</replaceable> |
   PRIMARY KEY <replaceable class="PARAMETER">index_parameters</replaceable> |
@@ -58,7 +58,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
 <phrase>and <replaceable class="PARAMETER">table_constraint</replaceable> is:</phrase>
 
 [ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
-{ CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) |
+{ CHECK [ NO INHERIT ] ( <replaceable class="PARAMETER">expression</replaceable> ) |
   UNIQUE ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) <replaceable class="PARAMETER">index_parameters</replaceable> |
   PRIMARY KEY ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) <replaceable class="PARAMETER">index_parameters</replaceable> |
   EXCLUDE [ USING <replaceable class="parameter">index_method</replaceable> ] ( <replaceable class="parameter">exclude_element</replaceable> WITH <replaceable class="parameter">operator</replaceable> [, ... ] ) <replaceable class="parameter">index_parameters</replaceable> [ WHERE ( <replaceable class="parameter">predicate</replaceable> ) ] |
@@ -299,7 +299,8 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       contain identically-named <literal>CHECK</> constraints, these
       constraints must all have the same check expression, or an error will be
       reported.  Constraints having the same name and expression will
-      be merged into one copy.  Notice that an unnamed <literal>CHECK</>
+      be merged into one copy.  A constraint marked <literal>NO INHERIT</> in a
+      parent will not be considered.  Notice that an unnamed <literal>CHECK</>
       constraint in the new table will never be merged, since a unique name
       will always be chosen for it.
      </para>
@@ -415,7 +416,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
    </varlistentry>
 
    <varlistentry>
-    <term><literal>CHECK ( <replaceable class="PARAMETER">expression</replaceable> )</literal></term>
+    <term><literal>CHECK [ NO INHERIT ] ( <replaceable class="PARAMETER">expression</replaceable> )</literal></term>
     <listitem>
      <para>
       The <literal>CHECK</> clause specifies an expression producing a
@@ -433,6 +434,11 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       Currently, <literal>CHECK</literal> expressions cannot contain
       subqueries nor refer to variables other than columns of the
       current row.
+     </para>
+
+     <para>
+      A constraint marked with <literal>NO INHERIT</> will not propagate to
+      children tables.
      </para>
     </listitem>
    </varlistentry>

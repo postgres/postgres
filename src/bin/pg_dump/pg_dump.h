@@ -370,7 +370,6 @@ typedef struct _constraintInfo
 	bool		condeferrable;	/* TRUE if constraint is DEFERRABLE */
 	bool		condeferred;	/* TRUE if constraint is INITIALLY DEFERRED */
 	bool		conislocal;		/* TRUE if constraint has local definition */
-	bool		conisonly;		/* TRUE if constraint is non-inheritable */
 	bool		separate;		/* TRUE if must dump as separate item */
 } ConstraintInfo;
 

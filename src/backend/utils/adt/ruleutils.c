@@ -1332,7 +1332,10 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 												   prettyFlags, 0);
 
 				/*
-				 * Now emit the constraint definition.	There are cases where
+				 * Now emit the constraint definition, adding NO INHERIT if
+				 * necessary.
+				 *
+				 * There are cases where
 				 * the constraint expression will be fully parenthesized and
 				 * we don't need the outer parens ... but there are other
 				 * cases where we do need 'em.  Be conservative for now.
@@ -1340,7 +1343,9 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 				 * Note that simply checking for leading '(' and trailing ')'
 				 * would NOT be good enough, consider "(x > 0) AND (y > 0)".
 				 */
-				appendStringInfo(&buf, "CHECK (%s)", consrc);
+				appendStringInfo(&buf, "CHECK %s(%s)",
+								 conForm->connoinherit ? "NO INHERIT " : "",
+								 consrc);
 
 				break;
 			}

@@ -5960,13 +5960,12 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 			if (fout->remoteVersion >= 90200)
 			{
 				/*
-				 * conisonly and convalidated are new in 9.2 (actually, the latter
-				 * is there in 9.1, but it wasn't ever false for check constraints
-				 * until 9.2).
+				 * convalidated is new in 9.2 (actually, it is there in 9.1,
+				 * but it wasn't ever false for check constraints until 9.2).
 				 */
 				appendPQExpBuffer(q, "SELECT tableoid, oid, conname, "
 						   "pg_catalog.pg_get_constraintdef(oid) AS consrc, "
-								  "conislocal, convalidated, conisonly "
+								  "conislocal, convalidated "
 								  "FROM pg_catalog.pg_constraint "
 								  "WHERE conrelid = '%u'::pg_catalog.oid "
 								  "   AND contype = 'c' "
@@ -5975,10 +5974,10 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 			}
 			else if (fout->remoteVersion >= 80400)
 			{
+				/* conislocal is new in 8.4 */
 				appendPQExpBuffer(q, "SELECT tableoid, oid, conname, "
 						   "pg_catalog.pg_get_constraintdef(oid) AS consrc, "
-								  "conislocal, true AS convalidated, "
-								  "false as conisonly "
+								  "conislocal, true AS convalidated "
 								  "FROM pg_catalog.pg_constraint "
 								  "WHERE conrelid = '%u'::pg_catalog.oid "
 								  "   AND contype = 'c' "
@@ -5989,8 +5988,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 			{
 				appendPQExpBuffer(q, "SELECT tableoid, oid, conname, "
 						   "pg_catalog.pg_get_constraintdef(oid) AS consrc, "
-								  "true AS conislocal, true AS convalidated, "
-								  "false as conisonly "
+								  "true AS conislocal, true AS convalidated "
 								  "FROM pg_catalog.pg_constraint "
 								  "WHERE conrelid = '%u'::pg_catalog.oid "
 								  "   AND contype = 'c' "
@@ -6002,8 +6000,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 				/* no pg_get_constraintdef, must use consrc */
 				appendPQExpBuffer(q, "SELECT tableoid, oid, conname, "
 								  "'CHECK (' || consrc || ')' AS consrc, "
-								  "true AS conislocal, true AS convalidated, "
-								  "false as conisonly "
+								  "true AS conislocal, true AS convalidated "
 								  "FROM pg_catalog.pg_constraint "
 								  "WHERE conrelid = '%u'::pg_catalog.oid "
 								  "   AND contype = 'c' "
@@ -6016,8 +6013,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 				appendPQExpBuffer(q, "SELECT tableoid, 0 AS oid, "
 								  "rcname AS conname, "
 								  "'CHECK (' || rcsrc || ')' AS consrc, "
-								  "true AS conislocal, true AS convalidated, "
-								  "false as conisonly "
+								  "true AS conislocal, true AS convalidated "
 								  "FROM pg_relcheck "
 								  "WHERE rcrelid = '%u'::oid "
 								  "ORDER BY rcname",
@@ -6028,8 +6024,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 				appendPQExpBuffer(q, "SELECT tableoid, oid, "
 								  "rcname AS conname, "
 								  "'CHECK (' || rcsrc || ')' AS consrc, "
-								  "true AS conislocal, true AS convalidated, "
-								  "false as conisonly "
+								  "true AS conislocal, true AS convalidated "
 								  "FROM pg_relcheck "
 								  "WHERE rcrelid = '%u'::oid "
 								  "ORDER BY rcname",
@@ -6042,8 +6037,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 								  "(SELECT oid FROM pg_class WHERE relname = 'pg_relcheck') AS tableoid, "
 								  "oid, rcname AS conname, "
 								  "'CHECK (' || rcsrc || ')' AS consrc, "
-								  "true AS conislocal, true AS convalidated, "
-								  "false as conisonly "
+								  "true AS conislocal, true AS convalidated "
 								  "FROM pg_relcheck "
 								  "WHERE rcrelid = '%u'::oid "
 								  "ORDER BY rcname",
@@ -6068,7 +6062,6 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 			for (j = 0; j < numConstrs; j++)
 			{
 				bool	validated = PQgetvalue(res, j, 5)[0] == 't';
-				bool	isonly = PQgetvalue(res, j, 6)[0] == 't';
 
 				constrs[j].dobj.objType = DO_CONSTRAINT;
 				constrs[j].dobj.catId.tableoid = atooid(PQgetvalue(res, j, 0));
@@ -6085,14 +6078,12 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 				constrs[j].condeferrable = false;
 				constrs[j].condeferred = false;
 				constrs[j].conislocal = (PQgetvalue(res, j, 4)[0] == 't');
-				constrs[j].conisonly = isonly;
 				/*
 				 * An unvalidated constraint needs to be dumped separately, so
 				 * that potentially-violating existing data is loaded before
-				 * the constraint.  An ONLY constraint needs to be dumped
-				 * separately too.
+				 * the constraint.
 				 */
-				constrs[j].separate = !validated || isonly;
+				constrs[j].separate = !validated;
 
 				constrs[j].dobj.dump = tbinfo->dobj.dump;
 
@@ -13048,9 +13039,9 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 		/* Ignore if not to be dumped separately */
 		if (coninfo->separate)
 		{
-			/* add ONLY if we do not want it to propagate to children */
-			appendPQExpBuffer(q, "ALTER TABLE %s %s\n",
-							 coninfo->conisonly ? "ONLY" : "", fmtId(tbinfo->dobj.name));
+			/* not ONLY since we want it to propagate to children */
+			appendPQExpBuffer(q, "ALTER TABLE %s\n",
+							  fmtId(tbinfo->dobj.name));
 			appendPQExpBuffer(q, "    ADD CONSTRAINT %s %s;\n",
 							  fmtId(coninfo->dobj.name),
 							  coninfo->condef);

@@ -601,7 +601,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 			cooked->skip_validation = false;
 			cooked->is_local = true;	/* not used for defaults */
 			cooked->inhcount = 0;		/* ditto */
-			cooked->is_only = false;
+			cooked->is_no_inherit = false;
 			cookedDefaults = lappend(cookedDefaults, cooked);
 			descriptor->attrs[attnum - 1]->atthasdef = true;
 		}
@@ -661,7 +661,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId)
 	 */
 	if (rawDefaults || stmt->constraints)
 		AddRelationNewConstraints(rel, rawDefaults, stmt->constraints,
-								  true, true, false);
+								  true, true);
 
 	/*
 	 * Clean up.  We keep lock on new relation (although it shouldn't be
@@ -1655,7 +1655,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				Node	   *expr;
 
 				/* ignore if the constraint is non-inheritable */
-				if (check[i].cconly)
+				if (check[i].ccnoinherit)
 					continue;
 
 				/* adjust varattnos of ccbin here */
@@ -1676,7 +1676,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 					cooked->skip_validation = false;
 					cooked->is_local = false;
 					cooked->inhcount = 1;
-					cooked->is_only = false;
+					cooked->is_no_inherit = false;
 					constraints = lappend(constraints, cooked);
 				}
 			}
@@ -2399,7 +2399,7 @@ rename_constraint_internal(Oid myrelid,
 			 constraintOid);
 	con = (Form_pg_constraint) GETSTRUCT(tuple);
 
-	if (myrelid && con->contype == CONSTRAINT_CHECK && !con->conisonly)
+	if (myrelid && con->contype == CONSTRAINT_CHECK && !con->connoinherit)
 	{
 		if (recurse)
 		{
@@ -4573,7 +4573,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		 * This function is intended for CREATE TABLE, so it processes a
 		 * _list_ of defaults, but we just do one.
 		 */
-		AddRelationNewConstraints(rel, list_make1(rawEnt), NIL, false, true, false);
+		AddRelationNewConstraints(rel, list_make1(rawEnt), NIL, false, true);
 
 		/* Make the additional catalog changes visible */
 		CommandCounterIncrement();
@@ -5015,7 +5015,7 @@ ATExecColumnDefault(Relation rel, const char *colName,
 		 * This function is intended for CREATE TABLE, so it processes a
 		 * _list_ of defaults, but we just do one.
 		 */
-		AddRelationNewConstraints(rel, list_make1(rawEnt), NIL, false, true, false);
+		AddRelationNewConstraints(rel, list_make1(rawEnt), NIL, false, true);
 	}
 }
 
@@ -5680,16 +5680,11 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	 * omitted from the returned list, which is what we want: we do not need
 	 * to do any validation work.  That can only happen at child tables,
 	 * though, since we disallow merging at the top level.
-	 *
-	 * Note: we set is_only based on the recurse flag which is false when
-	 * interpretInhOption() of our statement returns false all the way up
-	 * in AlterTable and gets passed all the way down to here.
 	 */
 	newcons = AddRelationNewConstraints(rel, NIL,
 										list_make1(copyObject(constr)),
-										recursing, /* allow_merge */
-										!recursing, /* is_local */
-										!recurse && !recursing); /* is_only */
+										recursing,   /* allow_merge */
+										!recursing); /* is_local */
 
 	/* Add each to-be-validated constraint to Phase 3's queue */
 	foreach(lcon, newcons)
@@ -5730,9 +5725,9 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		return;
 
 	/*
-	 * Adding an ONLY constraint? No need to find our children
+	 * Adding a NO INHERIT constraint? No need to find our children
 	 */
-	if (!recurse && !recursing)
+	if (constr->is_no_inherit)
 		return;
 
 	/*
@@ -5741,6 +5736,16 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	 * use find_all_inheritors to do it in one pass.
 	 */
 	children = find_inheritance_children(RelationGetRelid(rel), lockmode);
+
+	/*
+	 * Check if ONLY was specified with ALTER TABLE.  If so, allow the
+	 * contraint creation only if there are no children currently.  Error out
+	 * otherwise.
+	 */
+	if (!recurse && children != NIL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				 errmsg("constraint must be added to child tables too")));
 
 	foreach(child, children)
 	{
@@ -6127,7 +6132,7 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 									  NULL,
 									  true,		/* islocal */
 									  0,		/* inhcount */
-									  false);	/* isonly */
+									  false);	/* isnoinherit */
 
 	/*
 	 * Create the triggers that will enforce the constraint.
@@ -6998,8 +7003,7 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 	ScanKeyData key;
 	HeapTuple	tuple;
 	bool		found = false;
-	bool		is_check_constraint = false;
-	bool		is_only_constraint = false;
+	bool		is_no_inherit_constraint = false;
 
 	/* At top level, permission check was done in ATPrepCmd, else do it */
 	if (recursing)
@@ -7033,15 +7037,7 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 					 errmsg("cannot drop inherited constraint \"%s\" of relation \"%s\"",
 							constrName, RelationGetRelationName(rel))));
 
-		/* Right now only CHECK constraints can be inherited */
-		if (con->contype == CONSTRAINT_CHECK)
-			is_check_constraint = true;
-		
-		if (con->conisonly)
-		{
-			Assert(is_check_constraint);
-			is_only_constraint = true;
-		}
+		is_no_inherit_constraint = con->connoinherit;
 
 		/*
 		 * Perform the actual constraint deletion
@@ -7084,7 +7080,7 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 	 * routines, we have to do this one level of recursion at a time; we can't
 	 * use find_all_inheritors to do it in one pass.
 	 */
-	if (is_check_constraint && !is_only_constraint)
+	if (!is_no_inherit_constraint)
 		children = find_inheritance_children(RelationGetRelid(rel), lockmode);
 	else
 		children = NIL;
@@ -9250,8 +9246,8 @@ MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel)
 		if (parent_con->contype != CONSTRAINT_CHECK)
 			continue;
 
-		/* if the parent's constraint is marked ONLY, it's not inherited */
-		if (parent_con->conisonly)
+		/* if the parent's constraint is marked NO INHERIT, it's not inherited */
+		if (parent_con->connoinherit)
 			continue;
 
 		/* Search for a child constraint matching this one */
@@ -9281,8 +9277,8 @@ MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel)
 								RelationGetRelationName(child_rel),
 								NameStr(parent_con->conname))));
 
-			/* If the constraint is "only" then cannot merge */
-			if (child_con->conisonly)
+			/* If the constraint is "no inherit" then cannot merge */
+			if (child_con->connoinherit)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 						 errmsg("constraint \"%s\" conflicts with non-inherited constraint on child table \"%s\"",

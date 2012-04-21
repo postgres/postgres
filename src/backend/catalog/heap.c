@@ -92,10 +92,12 @@ static Oid AddNewRelationType(const char *typeName,
 				   Oid new_array_type);
 static void RelationRemoveInheritance(Oid relid);
 static void StoreRelCheck(Relation rel, char *ccname, Node *expr,
-			  bool is_validated, bool is_local, int inhcount, bool is_only);
+			  bool is_validated, bool is_local, int inhcount,
+			  bool is_no_inherit);
 static void StoreConstraints(Relation rel, List *cooked_constraints);
 static bool MergeWithExistingConstraint(Relation rel, char *ccname, Node *expr,
-							bool allow_merge, bool is_local, bool is_only);
+							bool allow_merge, bool is_local,
+							bool is_no_inherit);
 static void SetRelationNumChecks(Relation rel, int numchecks);
 static Node *cookConstraint(ParseState *pstate,
 			   Node *raw_constraint,
@@ -1868,7 +1870,8 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, Node *expr)
  */
 static void
 StoreRelCheck(Relation rel, char *ccname, Node *expr,
-			  bool is_validated, bool is_local, int inhcount, bool is_only)
+			  bool is_validated, bool is_local, int inhcount,
+			  bool is_no_inherit)
 {
 	char	   *ccbin;
 	char	   *ccsrc;
@@ -1952,7 +1955,7 @@ StoreRelCheck(Relation rel, char *ccname, Node *expr,
 						  ccsrc,	/* Source form of check constraint */
 						  is_local,		/* conislocal */
 						  inhcount,		/* coninhcount */
-						  is_only);		/* conisonly */
+						  is_no_inherit);	/* connoinherit */
 
 	pfree(ccbin);
 	pfree(ccsrc);
@@ -1993,7 +1996,7 @@ StoreConstraints(Relation rel, List *cooked_constraints)
 				break;
 			case CONSTR_CHECK:
 				StoreRelCheck(rel, con->name, con->expr, !con->skip_validation,
-							  con->is_local, con->inhcount, con->is_only);
+							  con->is_local, con->inhcount, con->is_no_inherit);
 				numchecks++;
 				break;
 			default:
@@ -2036,8 +2039,7 @@ AddRelationNewConstraints(Relation rel,
 						  List *newColDefaults,
 						  List *newConstraints,
 						  bool allow_merge,
-						  bool is_local,
-						  bool is_only)
+						  bool is_local)
 {
 	List	   *cookedConstraints = NIL;
 	TupleDesc	tupleDesc;
@@ -2110,7 +2112,7 @@ AddRelationNewConstraints(Relation rel,
 		cooked->skip_validation = false;
 		cooked->is_local = is_local;
 		cooked->inhcount = is_local ? 0 : 1;
-		cooked->is_only = is_only;
+		cooked->is_no_inherit = false;
 		cookedConstraints = lappend(cookedConstraints, cooked);
 	}
 
@@ -2178,7 +2180,8 @@ AddRelationNewConstraints(Relation rel,
 			 * what ATAddCheckConstraint wants.)
 			 */
 			if (MergeWithExistingConstraint(rel, ccname, expr,
-								allow_merge, is_local, is_only))
+											allow_merge, is_local,
+											cdef->is_no_inherit))
 				continue;
 		}
 		else
@@ -2225,7 +2228,7 @@ AddRelationNewConstraints(Relation rel,
 		 * OK, store it.
 		 */
 		StoreRelCheck(rel, ccname, expr, !cdef->skip_validation, is_local,
-					  is_local ? 0 : 1, is_only);
+					  is_local ? 0 : 1, cdef->is_no_inherit);
 
 		numchecks++;
 
@@ -2237,7 +2240,7 @@ AddRelationNewConstraints(Relation rel,
 		cooked->skip_validation = cdef->skip_validation;
 		cooked->is_local = is_local;
 		cooked->inhcount = is_local ? 0 : 1;
-		cooked->is_only = is_only;
+		cooked->is_no_inherit = cdef->is_no_inherit;
 		cookedConstraints = lappend(cookedConstraints, cooked);
 	}
 
@@ -2266,7 +2269,7 @@ AddRelationNewConstraints(Relation rel,
 static bool
 MergeWithExistingConstraint(Relation rel, char *ccname, Node *expr,
 							bool allow_merge, bool is_local,
-							bool is_only)
+							bool is_no_inherit)
 {
 	bool		found;
 	Relation	conDesc;
@@ -2322,8 +2325,8 @@ MergeWithExistingConstraint(Relation rel, char *ccname, Node *expr,
 			tup = heap_copytuple(tup);
 			con = (Form_pg_constraint) GETSTRUCT(tup);
 
-			/* If the constraint is "only" then cannot merge */
-			if (con->conisonly)
+			/* If the constraint is "no inherit" then cannot merge */
+			if (con->connoinherit)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 						 errmsg("constraint \"%s\" conflicts with non-inherited constraint on relation \"%s\"",
@@ -2333,10 +2336,10 @@ MergeWithExistingConstraint(Relation rel, char *ccname, Node *expr,
 				con->conislocal = true;
 			else
 				con->coninhcount++;
-			if (is_only)
+			if (is_no_inherit)
 			{
 				Assert(is_local);
-				con->conisonly = true;
+				con->connoinherit = true;
 			}
 			/* OK to update the tuple */
 			ereport(NOTICE,

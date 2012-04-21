@@ -2607,6 +2607,7 @@ _outConstraint(StringInfo str, const Constraint *node)
 
 		case CONSTR_CHECK:
 			appendStringInfo(str, "CHECK");
+			WRITE_BOOL_FIELD(is_no_inherit);
 			WRITE_NODE_FIELD(raw_expr);
 			WRITE_STRING_FIELD(cooked_expr);
 			break;

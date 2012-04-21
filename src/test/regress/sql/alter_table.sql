@@ -218,7 +218,7 @@ ALTER TABLE ONLY constraint_rename_test RENAME CONSTRAINT con1 TO con1foo; -- fa
 ALTER TABLE constraint_rename_test RENAME CONSTRAINT con1 TO con1foo; -- ok
 \d constraint_rename_test
 \d constraint_rename_test2
-ALTER TABLE ONLY constraint_rename_test ADD CONSTRAINT con2 CHECK (b > 0);
+ALTER TABLE constraint_rename_test ADD CONSTRAINT con2 CHECK NO INHERIT (b > 0);
 ALTER TABLE ONLY constraint_rename_test RENAME CONSTRAINT con2 TO con2foo; -- ok
 ALTER TABLE constraint_rename_test RENAME CONSTRAINT con2foo TO con2bar; -- ok
 \d constraint_rename_test
@@ -500,14 +500,14 @@ drop table atacc1;
 create table atacc1 (test int);
 create table atacc2 (test2 int) inherits (atacc1);
 -- ok:
-alter table only atacc1 add constraint foo check (test>0);
+alter table atacc1 add constraint foo check no inherit (test>0);
 -- check constraint is not there on child
 insert into atacc2 (test) values (-3);
 -- check constraint is there on parent
 insert into atacc1 (test) values (-3);
 insert into atacc1 (test) values (3);
 -- fail, violating row:
-alter table only atacc2 add constraint foo check (test>0);
+alter table atacc2 add constraint foo check no inherit (test>0);
 drop table atacc2;
 drop table atacc1;
 

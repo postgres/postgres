@@ -907,7 +907,8 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
     and <literal>TABLESPACE</> actions never recurse to descendant tables;
     that is, they always act as though <literal>ONLY</> were specified.
     Adding a constraint can recurse only for <literal>CHECK</> constraints,
-    and is required to do so for such constraints.
+    and is required to do so for such constraints, except those that are
+    explicitely marked <literal>NO INHERIT</>.
    </para>
 
    <para>
@@ -1013,7 +1014,7 @@ ALTER TABLE distributors ADD CONSTRAINT zipchk CHECK (char_length(zipcode) = 5);
   <para>
    To add a check constraint only to a table and not to its children:
 <programlisting>
-ALTER TABLE ONLY distributors ADD CONSTRAINT zipchk CHECK (char_length(zipcode) = 5);
+ALTER TABLE distributors ADD CONSTRAINT zipchk CHECK NO INHERIT (char_length(zipcode) = 5);
 </programlisting>
    (The check constraint will not be inherited by future children, either.)
   </para>
