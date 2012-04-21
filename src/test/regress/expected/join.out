@@ -2798,17 +2798,17 @@ select b.unique1 from
    Sort Key: b.unique1
    ->  Nested Loop Left Join
          ->  Seq Scan on int4_tbl i2
-         ->  Nested Loop Left Join
-               Join Filter: (b.unique1 = 42)
-               ->  Nested Loop
+         ->  Nested Loop
+               ->  Seq Scan on int4_tbl i1
+               ->  Nested Loop Left Join
+                     Join Filter: (b.unique1 = 42)
                      ->  Nested Loop
-                           ->  Seq Scan on int4_tbl i1
                            ->  Index Scan using tenk1_thous_tenthous on tenk1 b
                                  Index Cond: ((thousand = i1.f1) AND (i2.f1 = tenthous))
-                     ->  Index Scan using tenk1_unique1 on tenk1 a
-                           Index Cond: (unique1 = b.unique2)
-               ->  Index Only Scan using tenk1_thous_tenthous on tenk1 c
-                     Index Cond: (thousand = a.thousand)
+                           ->  Index Scan using tenk1_unique1 on tenk1 a
+                                 Index Cond: (unique1 = b.unique2)
+                     ->  Index Only Scan using tenk1_thous_tenthous on tenk1 c
+                           Index Cond: (thousand = a.thousand)
 (15 rows)
 
 select b.unique1 from

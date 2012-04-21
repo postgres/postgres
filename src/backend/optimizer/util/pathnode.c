@@ -125,8 +125,11 @@ compare_fractional_path_costs(Path *path1, Path *path2,
  *
  * We use fuzzy comparisons so that add_path() can avoid keeping both of
  * a pair of paths that really have insignificantly different cost.
- * The fuzz factor is 1% of the smaller cost.  (XXX does this percentage
- * need to be user-configurable?)
+ *
+ * The fuzz_factor argument must be 1.0 plus delta, where delta is the
+ * fraction of the smaller cost that is considered to be a significant
+ * difference.  For example, fuzz_factor = 1.01 makes the fuzziness limit
+ * be 1% of the smaller cost.
  *
  * The two paths are said to have "equal" costs if both startup and total
  * costs are fuzzily the same.  Path1 is said to be better than path2 if
@@ -138,16 +141,16 @@ compare_fractional_path_costs(Path *path1, Path *path2,
  * dominates the other across the whole performance spectrum.
  */
 static PathCostComparison
-compare_path_costs_fuzzily(Path *path1, Path *path2)
+compare_path_costs_fuzzily(Path *path1, Path *path2, double fuzz_factor)
 {
 	/*
 	 * Check total cost first since it's more likely to be different; many
 	 * paths have zero startup cost.
 	 */
-	if (path1->total_cost > path2->total_cost * 1.01)
+	if (path1->total_cost > path2->total_cost * fuzz_factor)
 	{
 		/* path1 fuzzily worse on total cost */
-		if (path2->startup_cost > path1->startup_cost * 1.01)
+		if (path2->startup_cost > path1->startup_cost * fuzz_factor)
 		{
 			/* ... but path2 fuzzily worse on startup, so DIFFERENT */
 			return COSTS_DIFFERENT;
@@ -155,10 +158,10 @@ compare_path_costs_fuzzily(Path *path1, Path *path2)
 		/* else path2 dominates */
 		return COSTS_BETTER2;
 	}
-	if (path2->total_cost > path1->total_cost * 1.01)
+	if (path2->total_cost > path1->total_cost * fuzz_factor)
 	{
 		/* path2 fuzzily worse on total cost */
-		if (path1->startup_cost > path2->startup_cost * 1.01)
+		if (path1->startup_cost > path2->startup_cost * fuzz_factor)
 		{
 			/* ... but path1 fuzzily worse on startup, so DIFFERENT */
 			return COSTS_DIFFERENT;
@@ -167,12 +170,12 @@ compare_path_costs_fuzzily(Path *path1, Path *path2)
 		return COSTS_BETTER1;
 	}
 	/* fuzzily the same on total cost */
-	if (path1->startup_cost > path2->startup_cost * 1.01)
+	if (path1->startup_cost > path2->startup_cost * fuzz_factor)
 	{
 		/* ... but path1 fuzzily worse on startup, so path2 wins */
 		return COSTS_BETTER2;
 	}
-	if (path2->startup_cost > path1->startup_cost * 1.01)
+	if (path2->startup_cost > path1->startup_cost * fuzz_factor)
 	{
 		/* ... but path2 fuzzily worse on startup, so path1 wins */
 		return COSTS_BETTER1;
@@ -354,7 +357,11 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 
 		p1_next = lnext(p1);
 
-		costcmp = compare_path_costs_fuzzily(new_path, old_path);
+		/*
+		 * Do a fuzzy cost comparison with 1% fuzziness limit.  (XXX does this
+		 * percentage need to be user-configurable?)
+		 */
+		costcmp = compare_path_costs_fuzzily(new_path, old_path, 1.01);
 
 		/*
 		 * If the two paths compare differently for startup and total cost,
@@ -403,15 +410,24 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 								/*
 								 * Same pathkeys and outer rels, and fuzzily
 								 * the same cost, so keep just one; to decide
-								 * which, first check rows and then do an
-								 * exact cost comparison.
+								 * which, first check rows and then do a fuzzy
+								 * cost comparison with very small fuzz limit.
+								 * (We used to do an exact cost comparison,
+								 * but that results in annoying
+								 * platform-specific plan variations due to
+								 * roundoff in the cost estimates.)  If things
+								 * are still tied, arbitrarily keep only the
+								 * old path.  Notice that we will keep only
+								 * the old path even if the less-fuzzy
+								 * comparison decides the startup and total
+								 * costs compare differently.
 								 */
 								if (new_path->rows < old_path->rows)
 									remove_old = true;	/* new dominates old */
 								else if (new_path->rows > old_path->rows)
 									accept_new = false;	/* old dominates new */
-								else if (compare_path_costs(new_path, old_path,
-													   TOTAL_COST) < 0)
+								else if (compare_path_costs_fuzzily(new_path, old_path,
+																	1.0000000001) == COSTS_BETTER1)
 									remove_old = true;	/* new dominates old */
 								else
 									accept_new = false; /* old equals or dominates new */
