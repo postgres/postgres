@@ -65,33 +65,34 @@ join_search_one_level(PlannerInfo *root, int level)
 	 * We prefer to join using join clauses, but if we find a rel of level-1
 	 * members that has no join clauses, we will generate Cartesian-product
 	 * joins against all initial rels not already contained in it.
-	 *
-	 * In the first pass (level == 2), we try to join each initial rel to each
-	 * initial rel that appears later in joinrels[1].  (The mirror-image joins
-	 * are handled automatically by make_join_rel.)  In later passes, we try
-	 * to join rels of size level-1 from joinrels[level-1] to each initial rel
-	 * in joinrels[1].
 	 */
 	foreach(r, joinrels[level - 1])
 	{
 		RelOptInfo *old_rel = (RelOptInfo *) lfirst(r);
-		ListCell   *other_rels;
-
-		if (level == 2)
-			other_rels = lnext(r);		/* only consider remaining initial
-										 * rels */
-		else
-			other_rels = list_head(joinrels[1]);		/* consider all initial
-														 * rels */
 
 		if (old_rel->joininfo != NIL || old_rel->has_eclass_joins ||
 			has_join_restriction(root, old_rel))
 		{
 			/*
-			 * There are relevant join clauses or join order restrictions,
-			 * so consider joins between this rel and (only) those rels it is
-			 * linked to by a clause or restriction.
+			 * There are join clauses or join order restrictions relevant to
+			 * this rel, so consider joins between this rel and (only) those
+			 * initial rels it is linked to by a clause or restriction.
+			 *
+			 * At level 2 this condition is symmetric, so there is no need to
+			 * look at initial rels before this one in the list; we already
+			 * considered such joins when we were at the earlier rel.  (The
+			 * mirror-image joins are handled automatically by make_join_rel.)
+			 * In later passes (level > 2), we join rels of the previous level
+			 * to each initial rel they don't already include but have a join
+			 * clause or restriction with.
 			 */
+			ListCell   *other_rels;
+
+			if (level == 2)		/* consider remaining initial rels */
+				other_rels = lnext(r);
+			else				/* consider all initial rels */
+				other_rels = list_head(joinrels[1]);
+
 			make_rels_by_clause_joins(root,
 									  old_rel,
 									  other_rels);
@@ -102,10 +103,17 @@ join_search_one_level(PlannerInfo *root, int level)
 			 * Oops, we have a relation that is not joined to any other
 			 * relation, either directly or by join-order restrictions.
 			 * Cartesian product time.
+			 *
+			 * We consider a cartesian product with each not-already-included
+			 * initial rel, whether it has other join clauses or not.  At
+			 * level 2, if there are two or more clauseless initial rels, we
+			 * will redundantly consider joining them in both directions; but
+			 * such cases aren't common enough to justify adding complexity to
+			 * avoid the duplicated effort.
 			 */
 			make_rels_by_clauseless_joins(root,
 										  old_rel,
-										  other_rels);
+										  list_head(joinrels[1]));
 		}
 	}
 
@@ -135,7 +143,7 @@ join_search_one_level(PlannerInfo *root, int level)
 			ListCell   *r2;
 
 			/*
-			 * We can ignore clauseless joins here, *except* when they
+			 * We can ignore relations without join clauses here, unless they
 			 * participate in join-order restrictions --- then we might have
 			 * to force a bushy join plan.
 			 */
