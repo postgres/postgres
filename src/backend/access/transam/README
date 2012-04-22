@@ -197,7 +197,7 @@ If a subtransaction requires an XID, we always first assign one to its
 parent.  This maintains the invariant that child transactions have XIDs later
 than their parents, which is assumed in a number of places.
 
-The subsidiary actions of obtaining a lock on the XID and and entering it into
+The subsidiary actions of obtaining a lock on the XID and entering it into
 pg_subtrans and PG_PROC are done at the time it is assigned.
 
 A transaction that has no XID still needs to be identified for various
