@@ -12145,7 +12145,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 	PGresult   *res;
 	int			numParents;
 	TableInfo **parents;
-	int			actual_atts;	/* number of attrs in this CREATE statment */
+	int			actual_atts;	/* number of attrs in this CREATE statement */
 	const char *reltypename;
 	char	   *storage;
 	char	   *srvname;

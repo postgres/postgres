@@ -856,7 +856,7 @@ ginInsertCleanup(GinState *ginstate,
 			 * added to it.  If so, process those entries immediately.	There
 			 * shouldn't be very many, so we don't worry about the fact that
 			 * we're doing this with exclusive lock. Insertion algorithm
-			 * gurantees that inserted row(s) will not continue on next page.
+			 * guarantees that inserted row(s) will not continue on next page.
 			 * NOTE: intentionally no vacuum_delay_point in this loop.
 			 */
 			if (PageGetMaxOffsetNumber(page) != maxoff)

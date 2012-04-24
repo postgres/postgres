@@ -1580,7 +1580,7 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 			break;
 
 		/*
-		 * When first_call is true (and thus, skip is initally false) we'll
+		 * When first_call is true (and thus, skip is initially false) we'll
 		 * return the first tuple we find.  But on later passes, heapTuple
 		 * will initially be pointing to the tuple we returned last time.
 		 * Returning it again would be incorrect (and would loop forever),

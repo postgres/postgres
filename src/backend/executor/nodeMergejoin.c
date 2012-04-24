@@ -1361,7 +1361,7 @@ ExecMergeJoin(MergeJoinState *node)
 				/*
 				 * EXEC_MJ_ENDOUTER means we have run out of outer tuples, but
 				 * are doing a right/full join and therefore must null-fill
-				 * any remaing unmatched inner tuples.
+				 * any remaining unmatched inner tuples.
 				 */
 			case EXEC_MJ_ENDOUTER:
 				MJ_printf("ExecMergeJoin: EXEC_MJ_ENDOUTER\n");
@@ -1407,7 +1407,7 @@ ExecMergeJoin(MergeJoinState *node)
 				/*
 				 * EXEC_MJ_ENDINNER means we have run out of inner tuples, but
 				 * are doing a left/full join and therefore must null- fill
-				 * any remaing unmatched outer tuples.
+				 * any remaining unmatched outer tuples.
 				 */
 			case EXEC_MJ_ENDINNER:
 				MJ_printf("ExecMergeJoin: EXEC_MJ_ENDINNER\n");

@@ -228,7 +228,7 @@ _WriteExtraToc(ArchiveHandle *AH, TocEntry *te)
  *
  * Optional.
  *
- * Needs to match the order defined in _WriteExtraToc, and sould also
+ * Needs to match the order defined in _WriteExtraToc, and should also
  * use the Archiver input routines.
  */
 static void

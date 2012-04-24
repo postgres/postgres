@@ -2186,7 +2186,7 @@ from_char_parse_int_len(int *dest, char **src, const int len, FormatNode *node)
  * Don't call this function if the field differs in length from the format
  * keyword (as with HH24; the keyword length is 4, but the field length is 2).
  * In such cases, call from_char_parse_int_len() instead to specify the
- * required length explictly.
+ * required length explicitly.
  */
 static int
 from_char_parse_int(int *dest, char **src, FormatNode *node)

@@ -57,7 +57,7 @@ static void fill(int length, int max, char filler, FILE *fp);
  *
  * Format results of a query for printing.
  *
- * PQprintOpt is a typedef (structure) that containes
+ * PQprintOpt is a typedef (structure) that contains
  * various flags and options. consult libpq-fe.h for
  * details
  *

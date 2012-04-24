@@ -277,7 +277,7 @@ struct MessageDLL
  * to find it in the lookup table, and if that fails, tries
  * to load any of the winsock dlls to find that message.
  * The DLL thing works from Nt4 (spX ?) up, but some special
- * versions of winsock might have this aswell (seen on Win98 SE
+ * versions of winsock might have this as well (seen on Win98 SE
  * special install)			   / Magnus Naeslund (mag@fbab.net)
  *
  */

@@ -171,7 +171,7 @@ levenshtein_internal(text *s, text *t,
 			 * length.	Each additional deletion forces another insertion, so
 			 * the best-case total cost increases by ins_c + del_c. If the
 			 * string is shrinking, the minimum theoretical cost assumes no
-			 * excess deletions; that is, we're starting no futher right than
+			 * excess deletions; that is, we're starting no further right than
 			 * column n - m.  If we do start further right, the best-case
 			 * total cost increases by ins_c + del_c for each move right.
 			 */

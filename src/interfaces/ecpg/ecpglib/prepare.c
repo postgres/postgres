@@ -124,7 +124,7 @@ prepare_common(int lineno, struct connection * con, const char *name, const char
 	stmt->command = ecpg_strdup(variable, lineno);
 	stmt->inlist = stmt->outlist = NULL;
 
-	/* if we have C variables in our statment replace them with '?' */
+	/* if we have C variables in our statement replace them with '?' */
 	replace_variables(&(stmt->command), lineno);
 
 	/* add prepared statement to our list */
@@ -463,7 +463,7 @@ AddStmtToCache(int lineno,		/* line # of statement		*/
 	return (entNo);
 }
 
-/* handle cache and preparation of statments in auto-prepare mode */
+/* handle cache and preparation of statements in auto-prepare mode */
 bool
 ecpg_auto_prepare(int lineno, const char *connection_name, const int compat, char **name, const char *query)
 {

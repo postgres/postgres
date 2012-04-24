@@ -310,7 +310,7 @@ static datetkn datetktbl[] = {
 #if 0
 	phst
 #endif
-	{"pht", TZ, POS(32)},		/* Phillipine Time */
+	{"pht", TZ, POS(32)},		/* Philippine Time */
 	{"pkt", TZ, POS(20)},		/* Pakistan Time */
 	{"pm", AMPM, PM},
 	{"pmdt", DTZ, NEG(8)},		/* Pierre & Miquelon Daylight Time */
@@ -2342,7 +2342,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						 */
 						tmask = 0;
 
-						/* No preceeding date? Then quit... */
+						/* No preceding date? Then quit... */
 						if ((fmask & DTK_DATE_M) != DTK_DATE_M)
 							return -1;
 

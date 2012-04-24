@@ -15,7 +15,7 @@
  *	oids are the same between old and new clusters.  This is important
  *	because toast oids are stored as toast pointers in user tables.
  *
- *	FYI, while pg_class.oid and pg_class.relfilenode are intially the same
+ *	FYI, while pg_class.oid and pg_class.relfilenode are initially the same
  *	in a cluster, but they can diverge due to CLUSTER, REINDEX, or VACUUM
  *	FULL.  The new cluster will have matching pg_class.oid and
  *	pg_class.relfilenode values and be based on the old oid value.	This can

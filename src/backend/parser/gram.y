@@ -9631,7 +9631,7 @@ SimpleTypename:
  * makes no sense for constructs like CHAR 'hi' and BIT '0101',
  * where there is an obvious better choice to make.
  * Note that ConstInterval is not included here since it must
- * be pushed up higher in the rules to accomodate the postfix
+ * be pushed up higher in the rules to accommodate the postfix
  * options (e.g. INTERVAL '1' YEAR). Likewise, we have to handle
  * the generic-type-name case in AExprConst to avoid premature
  * reduce/reduce conflicts against function names.

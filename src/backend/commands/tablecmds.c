@@ -6247,7 +6247,7 @@ ATExecValidateConstraint(Relation rel, char *constrName, bool recurse,
 			heap_close(refrel, NoLock);
 
 			/*
-			 * Foreign keys do not inherit, so we purposedly ignore the
+			 * Foreign keys do not inherit, so we purposely ignore the
 			 * recursion bit here
 			 */
 		}

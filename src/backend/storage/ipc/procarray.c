@@ -279,10 +279,10 @@ ProcArrayAdd(PGPROC *proc)
 	/*
 	 * Keep the procs array sorted by (PGPROC *) so that we can utilize
 	 * locality of references much better. This is useful while traversing the
-	 * ProcArray because there is a increased likelyhood of finding the next
+	 * ProcArray because there is a increased likelihood of finding the next
 	 * PGPROC structure in the cache.
 	 * 
-	 * Since the occurance of adding/removing a proc is much lower than the
+	 * Since the occurrence of adding/removing a proc is much lower than the
 	 * access to the ProcArray itself, the overhead should be marginal
 	 */
 	for (index = 0; index < arrayP->numProcs; index++)

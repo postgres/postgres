@@ -173,7 +173,7 @@ static MultiXactId *OldestVisibleMXactId;
  * Definitions for the backend-local MultiXactId cache.
  *
  * We use this cache to store known MultiXacts, so we don't need to go to
- * SLRU areas everytime.
+ * SLRU areas every time.
  *
  * The cache lasts for the duration of a single transaction, the rationale
  * for this being that most entries will contain our own TransactionId and

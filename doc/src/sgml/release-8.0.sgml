@@ -1539,7 +1539,7 @@
      </para>
 
      <para>
-      An explictly casted constant would be shown incorrectly.  This could
+      An explicitly casted constant would be shown incorrectly.  This could
       for example lead to corruption of a view definition during
       dump and reload.
      </para>

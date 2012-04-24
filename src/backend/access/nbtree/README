@@ -373,7 +373,7 @@ leaf-item deletions (if the deletion brings the leaf page to zero items,
 it is now a candidate to be deleted, but that is a separate action).
 
 An insertion that causes a page split is logged as a single WAL entry for
-the changes occuring on the insertion's level --- including update of the
+the changes occurring on the insertion's level --- including update of the
 right sibling's left-link --- followed by a second WAL entry for the
 insertion on the parent level (which might itself be a page split, requiring
 an additional insertion above that, etc).

@@ -1795,7 +1795,7 @@ dblink_current_query(PG_FUNCTION_ARGS)
 /*
  * Retrieve async notifications for a connection.
  *
- * Returns an setof record of notifications, or an empty set if none recieved.
+ * Returns an setof record of notifications, or an empty set if none received.
  * Can optionally take a named connection as parameter, but uses the unnamed connection per default.
  *
  */

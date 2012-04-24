@@ -486,7 +486,7 @@ pgwin32_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, c
 
 					/*
 					 * Not completed, and not just "would block", so an error
-					 * occured
+					 * occurred
 					 */
 					FD_SET(writefds->fd_array[i], &outwritefds);
 			}

@@ -647,7 +647,7 @@ mp_int_add(mp_int a, mp_int b, mp_int c)
 		/* Different signs -- subtract magnitudes, preserve sign of greater */
 		mp_int		x,
 					y;
-		int			cmp = s_ucmp(a, b); /* magnitude comparision, sign ignored */
+		int			cmp = s_ucmp(a, b); /* magnitude comparison, sign ignored */
 
 		/* Set x to max(a, b), y to min(a, b) to simplify later code */
 		if (cmp >= 0)

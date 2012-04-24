@@ -81,7 +81,7 @@ sub DetermineVisualStudioVersion
     if (!defined($nmakeVersion))
     {
 
-        # Determine version of nmake command, to set proper verison of visual studio
+        # Determine version of nmake command, to set proper version of visual studio
         # we use nmake as it has existed for a long time and still exists in visual studio 2010
         open(P,"nmake /? 2>&1 |")
           || croak "Unable to determine Visual Studio version: The nmake command wasn't found.";

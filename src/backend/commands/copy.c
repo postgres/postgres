@@ -1984,7 +1984,7 @@ CopyFrom(CopyState cstate)
 	AfterTriggerBeginQuery();
 
 	/*
-	 * Check BEFORE STATEMENT insertion triggers. It's debateable whether we
+	 * Check BEFORE STATEMENT insertion triggers. It's debatable whether we
 	 * should do this for COPY, since it's not really an "INSERT" statement as
 	 * such. However, executing these triggers maintains consistency with the
 	 * EACH ROW triggers that we already fire on COPY.

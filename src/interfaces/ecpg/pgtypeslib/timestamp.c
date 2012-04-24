@@ -342,7 +342,7 @@ PGTYPEStimestamp_from_asc(char *str, char **endptr)
 
 	/*
 	 * Since it's difficult to test for noresult, make sure errno is 0 if no
-	 * error occured.
+	 * error occurred.
 	 */
 	errno = 0;
 	return result;

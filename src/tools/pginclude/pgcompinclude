@@ -17,7 +17,7 @@ do
 	sed 's/->[a-zA-Z0-9_\.]*//g' "$FILE" >/tmp/$$a
 	echo "#include \"postgres.h\"" >/tmp/$$.c
 
-	# supress fcinfo errors
+	# suppress fcinfo errors
 	echo "struct {Datum       arg[1];} *fcinfo;" >>/tmp/$$.c
 
 	echo "#include \"/tmp/$$a\"" >>/tmp/$$.c

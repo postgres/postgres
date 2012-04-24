@@ -36,7 +36,7 @@ create table T_dta2 (
 
 
 --
--- Function to check key existance in T_pkey1
+-- Function to check key existence in T_pkey1
 --
 create function check_pkey1_exists(int4, bpchar) returns bool as E'
     if {![info exists GD]} {

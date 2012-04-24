@@ -145,7 +145,7 @@ static int	pg_krb5_recvauth(Port *port);
 #include <com_err.h>
 #endif
 /*
- * Various krb5 state which is not connection specfic, and a flag to
+ * Various krb5 state which is not connection specific, and a flag to
  * indicate whether we have initialised it yet.
  */
 static int	pg_krb5_initialised;

@@ -234,7 +234,7 @@ get_db_infos(ClusterInfo *cluster)
 /*
  * get_rel_infos()
  *
- * gets the relinfos for all the user tables of the database refered
+ * gets the relinfos for all the user tables of the database referred
  * by "db".
  *
  * NOTE: we assume that relations/entities with oids greater than

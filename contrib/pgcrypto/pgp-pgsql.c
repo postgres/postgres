@@ -625,7 +625,7 @@ out:
 	px_set_debug_handler(NULL);
 
 	/*
-	 * add successfull decryptions also into RNG
+	 * add successful decryptions also into RNG
 	 */
 	add_entropy(res, key, keypsw);
 

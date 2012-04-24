@@ -8,7 +8,7 @@
  *
  * This is a C implementation of the previous shell script written by
  * Peter Eisentraut <peter_e@gmx.net>, with adjustments made to
- * accomodate the possibility that the installation has been relocated from
+ * accommodate the possibility that the installation has been relocated from
  * the place originally configured.
  *
  * author of C translation: Andrew Dunstan	   mailto:andrew@dunslane.net

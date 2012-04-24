@@ -534,8 +534,8 @@ $(top_builddir)/src/Makefile.global: $(top_srcdir)/src/Makefile.global.in $(top_
 # config.status will not change the timestamp on pg_config.h if it
 # doesn't change, so as to avoid recompiling the entire tree
 # unnecessarily. Therefore we make config.status update a timestamp file
-# stamp-h everytime it runs, so that we don't trigger this rule everytime.
-# (We do trigger the null rule for stamp-h to pg_config.h everytime; so it's
+# stamp-h every time it runs, so that we don't trigger this rule every time.
+# (We do trigger the null rule for stamp-h to pg_config.h every time; so it's
 # important for that rule to be null!)
 #
 # Of course you need to turn on dependency tracking to get any

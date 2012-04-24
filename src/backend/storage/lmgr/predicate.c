@@ -1234,7 +1234,7 @@ InitPredicateLocks(void)
 	 * that this will prevent resource exhaustion in even the most pessimal
 	 * loads up to max_connections = 200 with all 200 connections pounding the
 	 * database with serializable transactions.  Beyond that, there may be
-	 * occassional transactions canceled when trying to flag conflicts. That's
+	 * occasional transactions canceled when trying to flag conflicts. That's
 	 * probably OK.
 	 */
 	max_table_size *= 5;

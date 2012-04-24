@@ -2754,7 +2754,7 @@ get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
 
 		/*
 		 * Confirm column has not been dropped, and is of the expected type.
-		 * This defends against an ALTER DROP COLUMN occuring just before we
+		 * This defends against an ALTER DROP COLUMN occurring just before we
 		 * acquired lock ... but if the whole table were dropped, we'd still
 		 * have a problem.
 		 */

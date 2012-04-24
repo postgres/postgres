@@ -214,7 +214,7 @@ pg_euccn2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 			*to |= *from++;
 			len -= 3;
 		}
-		else if (*from == SS3 && len >= 3)		/* code set 3 (unsed ?) */
+		else if (*from == SS3 && len >= 3)		/* code set 3 (unused ?) */
 		{
 			from++;
 			*to = (SS3 << 16) | (*from++ << 8);

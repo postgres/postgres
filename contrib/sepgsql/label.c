@@ -74,7 +74,7 @@ typedef struct {
  * sepgsql_get_client_label
  *
  * Returns the current security label of the client.  All code should use this
- * routine to get the current label, instead of refering to the client_label_*
+ * routine to get the current label, instead of referring to the client_label_*
  * variables above.
  */
 char *

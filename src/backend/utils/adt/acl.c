@@ -821,7 +821,7 @@ acldefault(GrantObjectType objtype, Oid ownerId)
 	 * owner's ordinary privileges are self-granted; this lets him revoke
 	 * them.  We implement the owner's grant options without any explicit
 	 * "_SYSTEM"-like ACL entry, by internally special-casing the owner
-	 * whereever we are testing grant options.
+	 * wherever we are testing grant options.
 	 */
 	if (owner_default != ACL_NO_RIGHTS)
 	{

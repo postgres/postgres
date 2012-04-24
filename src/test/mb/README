@@ -5,6 +5,6 @@ README for multibyte regression test
 							Tatsuo Ishii
 
 This directory contains a set of tests for multibyte supporting
-extentions for PostgreSQL. To run the test, simply type:
+extensions for PostgreSQL. To run the test, simply type:
 
 % sh mbregress.sh

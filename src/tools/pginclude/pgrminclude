@@ -90,7 +90,7 @@ compile_file() {
 
 	if [ "$IS_INCLUDE" = "Y" ]
 	then	echo "#include \"postgres.h\"" >/tmp/$$.c
-		# supress fcinfo errors
+		# suppress fcinfo errors
 		echo "struct {Datum       arg[1];} *fcinfo;" >>/tmp/$$.c
 	else	>/tmp/$$.c
 	fi

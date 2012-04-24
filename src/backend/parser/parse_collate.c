@@ -49,7 +49,7 @@
 /*
  * Collation strength (the SQL standard calls this "derivation").  Order is
  * chosen to allow comparisons to work usefully.  Note: the standard doesn't
- * seem to distingish between NONE and CONFLICT.
+ * seem to distinguish between NONE and CONFLICT.
  */
 typedef enum
 {

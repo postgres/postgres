@@ -447,9 +447,9 @@ entryIsEnoughSpace(GinBtree btree, Buffer buf, OffsetNumber off)
 }
 
 /*
- * Delete tuple on leaf page if tuples was existed and we
+ * Delete tuple on leaf page if tuples existed and we
  * should update it, update old child blkno to new right page
- * if child split is occured
+ * if child split occurred
  */
 static BlockNumber
 entryPreparePage(GinBtree btree, Page page, OffsetNumber off)

@@ -392,7 +392,7 @@ getOidListDiff(Oid *list1, int *nlist1, Oid *list2, int *nlist2)
  * nnewmembers, newmembers: array of roleids appearing in new ACL
  *
  * We calculate the differences between the new and old lists of roles,
- * and then insert or delete from pg_shdepend as appropiate.
+ * and then insert or delete from pg_shdepend as appropriate.
  *
  * Note that we can't just insert all referenced roles blindly during GRANT,
  * because we would end up with duplicate registered dependencies.	We could

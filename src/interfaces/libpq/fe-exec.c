@@ -218,7 +218,7 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
  *
  * Set the attributes for a given result.  This function fails if there are
  * already attributes contained in the provided result.  The call is
- * ignored if numAttributes is is zero or attDescs is NULL.  If the
+ * ignored if numAttributes is zero or attDescs is NULL.  If the
  * function fails, it returns zero.  If the function succeeds, it
  * returns a non-zero value.
  */

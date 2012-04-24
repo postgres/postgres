@@ -396,7 +396,7 @@ old_8_3_rebuild_tsvector_tables(ClusterInfo *cluster, bool check_mode)
 
 		PQclear(res);
 
-		/* XXX Mark tables as not accessable somehow */
+		/* XXX Mark tables as not accessible somehow */
 
 		PQfinish(conn);
 	}
@@ -666,7 +666,7 @@ old_8_3_invalidate_bpchar_pattern_ops_indexes(ClusterInfo *cluster,
  *	we don't transfer sequence files but instead use the CREATE SEQUENCE
  *	command from the schema dump, and use setval() to restore the sequence
  *	value and 'is_called' from the old database.  This is safe to run
- *	by pg_upgrade because sequence files are not transfered from the old
+ *	by pg_upgrade because sequence files are not transferred from the old
  *	server, even in link mode.
  */
 char *

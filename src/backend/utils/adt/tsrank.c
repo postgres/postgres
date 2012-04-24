@@ -603,7 +603,7 @@ Cover(DocRepresentation *doc, int len, QueryRepresentation *qr, Extention *ext)
 	if (ext->p <= ext->q)
 	{
 		/*
-		 * set position for next try to next lexeme after begining of founded
+		 * set position for next try to next lexeme after beginning of found
 		 * cover
 		 */
 		ext->pos = (ptr - doc) + 1;

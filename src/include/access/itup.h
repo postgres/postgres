@@ -37,7 +37,7 @@ typedef struct IndexTupleData
 	ItemPointerData t_tid;		/* reference TID to heap tuple */
 
 	/* ---------------
-	 * t_info is layed out in the following fashion:
+	 * t_info is laid out in the following fashion:
 	 *
 	 * 15th (high) bit: has nulls
 	 * 14th bit: has var-width attributes

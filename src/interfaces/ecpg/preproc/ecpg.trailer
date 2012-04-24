@@ -1104,7 +1104,7 @@ opt_output:	SQL_OUTPUT	{ $$ = mm_strdup("output"); }
 
 /*
  * dynamic SQL: descriptor based access
- *	originall written by Christof Petig <christof.petig@wtal.de>
+ *	originally written by Christof Petig <christof.petig@wtal.de>
  *			and Peter Eisentraut <peter.eisentraut@credativ.de>
  */
 

@@ -345,7 +345,7 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 /*
  * Basic parsing of putative relation filenames.
  *
- * This funtion returns true if the file appears to be in the correct format
+ * This function returns true if the file appears to be in the correct format
  * for a non-temporary relation and false otherwise.
  *
  * NB: If this function returns true, the caller is entitled to assume that

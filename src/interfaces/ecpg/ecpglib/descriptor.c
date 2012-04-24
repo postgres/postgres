@@ -479,7 +479,7 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 		memset(&stmt, 0, sizeof stmt);
 		stmt.lineno = lineno;
 
-		/* desparate try to guess something sensible */
+		/* desperate try to guess something sensible */
 		stmt.connection = ecpg_get_connection(NULL);
 		ecpg_store_result(ECPGresult, index, &stmt, &data_var);
 
