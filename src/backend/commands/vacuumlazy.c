@@ -490,6 +490,18 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		if ((vacrelstats->max_dead_tuples - vacrelstats->num_dead_tuples) < MaxHeapTuplesPerPage &&
 			vacrelstats->num_dead_tuples > 0)
 		{
+			/*
+			 * Before beginning index vacuuming, we release any pin we may hold
+			 * on the visibility map page.  This isn't necessary for correctness,
+			 * but we do it anyway to avoid holding the pin across a lengthy,
+			 * unrelated operation.
+			 */
+			if (BufferIsValid(vmbuffer))
+			{
+				ReleaseBuffer(vmbuffer);
+				vmbuffer = InvalidBuffer;
+			}
+
 			/* Log cleanup info before we touch indexes */
 			vacuum_log_cleanup_info(onerel, vacrelstats);
 
@@ -509,6 +521,16 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			vacrelstats->num_dead_tuples = 0;
 			vacrelstats->num_index_scans++;
 		}
+
+		/*
+		 * Pin the visibility map page in case we need to mark the page
+		 * all-visible.  In most cases this will be very cheap, because we'll
+		 * already have the correct page pinned anyway.  However, it's possible
+		 * that (a) next_not_all_visible_block is covered by a different VM page
+		 * than the current block or (b) we released our pin and did a cycle of
+		 * index vacuuming.
+		 */
+		visibilitymap_pin(onerel, blkno, &vmbuffer);
 
 		buf = ReadBufferExtended(onerel, MAIN_FORKNUM, blkno,
 								 RBM_NORMAL, vac_strategy);
@@ -600,26 +622,15 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			empty_pages++;
 			freespace = PageGetHeapFreeSpace(page);
 
+			/* empty pages are always all-visible */
 			if (!PageIsAllVisible(page))
 			{
 				PageSetAllVisible(page);
 				MarkBufferDirty(buf);
+				visibilitymap_set(onerel, blkno, InvalidXLogRecPtr, vmbuffer);
 			}
 
-			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-
-			/* Update the visibility map */
-			if (!all_visible_according_to_vm)
-			{
-				visibilitymap_pin(onerel, blkno, &vmbuffer);
-				LockBuffer(buf, BUFFER_LOCK_SHARE);
-				if (PageIsAllVisible(page))
-					visibilitymap_set(onerel, blkno, InvalidXLogRecPtr,
-									  vmbuffer);
-				LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-			}
-
-			ReleaseBuffer(buf);
+			UnlockReleaseBuffer(buf);
 			RecordPageWithFreeSpace(onerel, blkno, freespace);
 			continue;
 		}
@@ -834,11 +845,26 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 
 		freespace = PageGetHeapFreeSpace(page);
 
-		/* Update the all-visible flag on the page */
-		if (!PageIsAllVisible(page) && all_visible)
+		/* mark page all-visible, if appropriate */
+		if (all_visible && !all_visible_according_to_vm)
 		{
-			PageSetAllVisible(page);
-			MarkBufferDirty(buf);
+			if (!PageIsAllVisible(page))
+			{
+				PageSetAllVisible(page);
+				MarkBufferDirty(buf);
+			}
+			visibilitymap_set(onerel, blkno, InvalidXLogRecPtr, vmbuffer);
+		}
+
+		/*
+		 * As of PostgreSQL 9.2, the visibility map bit should never be set if
+		 * the page-level bit is clear.
+		 */
+		else if (all_visible_according_to_vm && !PageIsAllVisible(page))
+		{
+			elog(WARNING, "page is not marked all-visible but visibility map bit is set in relation \"%s\" page %u",
+				 relname, blkno);
+			visibilitymap_clear(onerel, blkno, vmbuffer);
 		}
 
 		/*
@@ -859,30 +885,11 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			elog(WARNING, "page containing dead tuples is marked as all-visible in relation \"%s\" page %u",
 				 relname, blkno);
 			PageClearAllVisible(page);
-			SetBufferCommitInfoNeedsSave(buf);
-
-			/*
-			 * Normally, we would drop the lock on the heap page before
-			 * updating the visibility map, but since this case shouldn't
-			 * happen anyway, don't worry about that.
-			 */
-			visibilitymap_pin(onerel, blkno, &vmbuffer);
+			MarkBufferDirty(buf);
 			visibilitymap_clear(onerel, blkno, vmbuffer);
 		}
 
-		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-
-		/* Update the visibility map */
-		if (!all_visible_according_to_vm && all_visible)
-		{
-			visibilitymap_pin(onerel, blkno, &vmbuffer);
-			LockBuffer(buf, BUFFER_LOCK_SHARE);
-			if (PageIsAllVisible(page))
-				visibilitymap_set(onerel, blkno, InvalidXLogRecPtr, vmbuffer);
-			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-		}
-
-		ReleaseBuffer(buf);
+		UnlockReleaseBuffer(buf);
 
 		/* Remember the location of the last page with nonremovable tuples */
 		if (hastup)
