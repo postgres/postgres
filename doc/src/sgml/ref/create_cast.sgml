@@ -288,6 +288,11 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
    convert between data types and a second to apply the modifier.
   </para>
 
+  <para>
+   A cast to or from a domain type currently has no effect.  Casting
+   to or from a domain uses the casts associated with its underlying type.
+  </para>
+
  </refsect1>
 
  <refsect1 id="sql-createcast-notes">

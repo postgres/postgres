@@ -571,6 +571,7 @@ CREATE DOMAIN testdomain2b AS testdomain1;
 CREATE DOMAIN testdomain3b AS int;
 CREATE FUNCTION castfunc(int) RETURNS testdomain3b AS $$ SELECT $1::testdomain3b $$ LANGUAGE SQL;
 CREATE CAST (testdomain1 AS testdomain3b) WITH FUNCTION castfunc(int);
+WARNING:  cast will be ignored because the source data type is a domain
 CREATE FUNCTION testfunc5b(a testdomain1) RETURNS int LANGUAGE SQL AS $$ SELECT $1 $$;
 CREATE FUNCTION testfunc6b(b int) RETURNS testdomain1 LANGUAGE SQL AS $$ SELECT $1::testdomain1 $$;
 CREATE OPERATOR !! (PROCEDURE = testfunc5b, RIGHTARG = testdomain1);

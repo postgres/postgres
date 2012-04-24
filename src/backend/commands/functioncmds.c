@@ -1517,6 +1517,17 @@ CreateCast(CreateCastStmt *stmt)
 		aclcheck_error(aclresult, ACL_KIND_TYPE,
 					   format_type_be(targettypeid));
 
+	/* Domains are allowed for historical reasons, but we warn */
+	if (sourcetyptype == TYPTYPE_DOMAIN)
+		ereport(WARNING,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cast will be ignored because the source data type is a domain")));
+
+	else if (targettyptype == TYPTYPE_DOMAIN)
+		ereport(WARNING,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("cast will be ignored because the target data type is a domain")));
+
 	/* Detemine the cast method */
 	if (stmt->func != NULL)
 		castmethod = COERCION_METHOD_FUNCTION;
