@@ -282,7 +282,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 	elem_hash_ctl.match = element_match;
 	elem_hash_ctl.hcxt = CurrentMemoryContext;
 	elements_tab = hash_create("Analyzed elements table",
-							   bucket_width * 7,
+							   num_mcelem,
 							   &elem_hash_ctl,
 					HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
 
