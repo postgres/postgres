@@ -5,17 +5,11 @@
 TARGET = entab
 BINDIR = /usr/local/bin
 XFLAGS =
-CFLAGS = -O
+CFLAGS = -O $(XFLAGS)
 LIBS =
 
-$(TARGET) : entab.o halt.o
-	$(CC) -o $(TARGET) $(XFLAGS) $(CFLAGS) entab.o halt.o $(LIBS)
-
-entab.o	: entab.c
-	$(CC) -c $(XFLAGS) $(CFLAGS) entab.c
-
-halt.o	: halt.c
-	$(CC) -c $(XFLAGS) $(CFLAGS) halt.c
+$(TARGET): entab.o halt.o
+	$(CC) -o $@ $(CFLAGS) $^ $(LIBS)
 
 clean:
 	rm -f *.o $(TARGET) log core
