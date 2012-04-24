@@ -1252,7 +1252,7 @@ plperl.on_init = 'use lib "/my/app"; use MyApp::PgInit;'
        indirectly, will be available for use by <literal>plperl</>.  This may
        create a security risk. To see what modules have been loaded you can use:
 <programlisting>
-DO 'elog(WARNING, join ", ", sort keys %INC)' language plperl;
+DO 'elog(WARNING, join ", ", sort keys %INC)' LANGUAGE plperl;
 </programlisting>
        </para>
        <para>
