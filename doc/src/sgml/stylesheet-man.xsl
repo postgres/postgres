@@ -41,13 +41,13 @@
          the man page to read about it. -->
     <xsl:when test="contains(refnamediv/refname[1],' ')">
       <xsl:variable name="mangled.title">
-       <xsl:value-of select="translate(refnamediv/refname[1],' ','_')"/>
+        <xsl:value-of select="translate(refnamediv/refname[1],' ','_')"/>
       </xsl:variable>
       <xsl:apply-templates select="refnamediv/refname[1]"/>
       <xsl:text> (</xsl:text>
       <xsl:call-template name="bold">
-       <xsl:with-param name="node" select="exsl:node-set($mangled.title)"/>
-       <xsl:with-param name="context" select="."/>
+        <xsl:with-param name="node" select="exsl:node-set($mangled.title)"/>
+        <xsl:with-param name="context" select="."/>
       </xsl:call-template>
       <xsl:apply-templates select="refmeta/manvolnum"/>
       <xsl:text>)</xsl:text>
@@ -58,16 +58,16 @@
     <xsl:otherwise>
       <xsl:choose>
         <xsl:when test="refmeta/refentrytitle">
-         <xsl:call-template name="bold">
-          <xsl:with-param name="node" select="refmeta/refentrytitle"/>
-          <xsl:with-param name="context" select="."/>
-         </xsl:call-template>
+          <xsl:call-template name="bold">
+            <xsl:with-param name="node" select="refmeta/refentrytitle"/>
+            <xsl:with-param name="context" select="."/>
+          </xsl:call-template>
         </xsl:when>
         <xsl:otherwise>
-         <xsl:call-template name="bold">
-          <xsl:with-param name="node" select="refnamediv/refname[1]"/>
-          <xsl:with-param name="context" select="."/>
-         </xsl:call-template>
+          <xsl:call-template name="bold">
+            <xsl:with-param name="node" select="refnamediv/refname[1]"/>
+            <xsl:with-param name="context" select="."/>
+          </xsl:call-template>
         </xsl:otherwise>
       </xsl:choose>
       <xsl:apply-templates select="refmeta/manvolnum"/>
