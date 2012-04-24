@@ -438,7 +438,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
 
      <para>
       A constraint marked with <literal>NO INHERIT</> will not propagate to
-      children tables.
+      child tables.
      </para>
     </listitem>
    </varlistentry>

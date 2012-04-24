@@ -906,9 +906,8 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
     The <literal>TRIGGER</>, <literal>CLUSTER</>, <literal>OWNER</>,
     and <literal>TABLESPACE</> actions never recurse to descendant tables;
     that is, they always act as though <literal>ONLY</> were specified.
-    Adding a constraint can recurse only for <literal>CHECK</> constraints,
-    and is required to do so for such constraints, except those that are
-    explicitely marked <literal>NO INHERIT</>.
+    Adding a constraint recurses only for <literal>CHECK</> constraints
+    that are not marked <literal>NO INHERIT</>.
    </para>
 
    <para>
