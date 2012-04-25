@@ -545,8 +545,8 @@ add_string_reloption(bits32 kinds, char *name, char *desc, char *default_val,
  *
  * Note that this is not responsible for determining whether the options
  * are valid, but it does check that namespaces for all the options given are
- * listed in validnsps.  The NULL namespace is always valid and needs not be
- * explicitely listed.	Passing a NULL pointer means that only the NULL
+ * listed in validnsps.  The NULL namespace is always valid and need not be
+ * explicitly listed.  Passing a NULL pointer means that only the NULL
  * namespace is valid.
  *
  * Both oldOptions and the result are text arrays (or NULL for "default"),
