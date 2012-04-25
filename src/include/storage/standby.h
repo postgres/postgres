@@ -29,7 +29,6 @@ extern void ShutdownRecoveryTransactionEnvironment(void);
 
 extern void ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid,
 									RelFileNode node);
-extern void ResolveRecoveryConflictWithRemovedTransactionId(void);
 extern void ResolveRecoveryConflictWithTablespace(Oid tsid);
 extern void ResolveRecoveryConflictWithDatabase(Oid dbid);
 
