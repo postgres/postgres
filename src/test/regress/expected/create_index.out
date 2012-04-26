@@ -2600,6 +2600,57 @@ RESET enable_indexscan;
 RESET enable_bitmapscan;
 DROP TABLE onek_with_null;
 --
+-- Check bitmap index path planning
+--
+EXPLAIN (COSTS OFF)
+SELECT * FROM tenk1
+  WHERE thousand = 42 AND (tenthous = 1 OR tenthous = 3 OR tenthous = 42);
+                                                               QUERY PLAN                                                                
+-----------------------------------------------------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on tenk1
+   Recheck Cond: (((thousand = 42) AND (tenthous = 1)) OR ((thousand = 42) AND (tenthous = 3)) OR ((thousand = 42) AND (tenthous = 42)))
+   ->  BitmapOr
+         ->  Bitmap Index Scan on tenk1_thous_tenthous
+               Index Cond: ((thousand = 42) AND (tenthous = 1))
+         ->  Bitmap Index Scan on tenk1_thous_tenthous
+               Index Cond: ((thousand = 42) AND (tenthous = 3))
+         ->  Bitmap Index Scan on tenk1_thous_tenthous
+               Index Cond: ((thousand = 42) AND (tenthous = 42))
+(9 rows)
+
+SELECT * FROM tenk1
+  WHERE thousand = 42 AND (tenthous = 1 OR tenthous = 3 OR tenthous = 42);
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+      42 |    5530 |   0 |    2 |   2 |      2 |      42 |       42 |          42 |        42 |       42 |  84 |   85 | QBAAAA   | SEIAAA   | OOOOxx
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM tenk1
+  WHERE hundred = 42 AND (thousand = 42 OR thousand = 99);
+                                   QUERY PLAN                                    
+---------------------------------------------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on tenk1
+         Recheck Cond: ((hundred = 42) AND ((thousand = 42) OR (thousand = 99)))
+         ->  BitmapAnd
+               ->  Bitmap Index Scan on tenk1_hundred
+                     Index Cond: (hundred = 42)
+               ->  BitmapOr
+                     ->  Bitmap Index Scan on tenk1_thous_tenthous
+                           Index Cond: (thousand = 42)
+                     ->  Bitmap Index Scan on tenk1_thous_tenthous
+                           Index Cond: (thousand = 99)
+(11 rows)
+
+SELECT count(*) FROM tenk1
+  WHERE hundred = 42 AND (thousand = 42 OR thousand = 99);
+ count 
+-------
+    10
+(1 row)
+
+--
 -- Check behavior with duplicate index column contents
 --
 CREATE TABLE dupindexcols AS

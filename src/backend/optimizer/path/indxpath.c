@@ -1317,28 +1317,31 @@ path_usage_comparator(const void *a, const void *b)
 
 /*
  * Estimate the cost of actually executing a bitmap scan with a single
- * index path (no BitmapAnd, at least not at this level).
+ * index path (no BitmapAnd, at least not at this level; but it could be
+ * a BitmapOr).
  */
 static Cost
 bitmap_scan_cost_est(PlannerInfo *root, RelOptInfo *rel, Path *ipath)
 {
 	BitmapHeapPath bpath;
+	Relids		required_outer;
 
-	/* Must be a simple IndexPath so that we can just copy its param_info */
-	Assert(IsA(ipath, IndexPath));
+	/* Identify required outer rels, in case it's a parameterized scan */
+	required_outer = get_bitmap_tree_required_outer(ipath);
 
 	/* Set up a dummy BitmapHeapPath */
 	bpath.path.type = T_BitmapHeapPath;
 	bpath.path.pathtype = T_BitmapHeapScan;
 	bpath.path.parent = rel;
-	bpath.path.param_info = ipath->param_info;
+	bpath.path.param_info = get_baserel_parampathinfo(root, rel,
+													  required_outer);
 	bpath.path.pathkeys = NIL;
 	bpath.bitmapqual = ipath;
 
 	cost_bitmap_heap_scan(&bpath.path, root, rel,
 						  bpath.path.param_info,
 						  ipath,
-						  get_loop_count(root, PATH_REQ_OUTER(ipath)));
+						  get_loop_count(root, required_outer));
 
 	return bpath.path.total_cost;
 }
