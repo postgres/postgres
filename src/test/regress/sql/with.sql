@@ -791,6 +791,12 @@ DELETE FROM parent USING wcte WHERE id = newid;
 
 SELECT * FROM parent;
 
+-- check EXPLAIN VERBOSE for a wCTE with RETURNING
+
+EXPLAIN (VERBOSE, COSTS OFF)
+WITH wcte AS ( INSERT INTO int8_tbl VALUES ( 42, 47 ) RETURNING q2 )
+DELETE FROM a USING wcte WHERE aa = q2;
+
 -- error cases
 
 -- data-modifying WITH tries to use its own output
