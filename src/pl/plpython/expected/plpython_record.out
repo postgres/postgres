@@ -38,6 +38,8 @@ elif typ == 'obj':
 	type_record.first = first
 	type_record.second = second
 	return type_record
+elif typ == 'str':
+	return "('%s',%r)" % (first, second)
 $$ LANGUAGE plpythonu;
 CREATE FUNCTION test_in_out_params(first in text, second out text) AS $$
 return first + '_in_to_out';
@@ -290,6 +292,12 @@ SELECT * FROM test_type_record_as('obj', null, null, true);
        |       
 (1 row)
 
+SELECT * FROM test_type_record_as('str', 'one', 1, false);
+ first | second 
+-------+--------
+ 'one' |      1
+(1 row)
+
 SELECT * FROM test_in_out_params('test_in');
       second       
 -------------------
@@ -355,3 +363,11 @@ ERROR:  attribute "second" does not exist in Python object
 HINT:  To return null in a column, let the returned object have an attribute named after column with value None.
 CONTEXT:  while creating return value
 PL/Python function "test_type_record_error3"
+CREATE FUNCTION test_type_record_error4() RETURNS type_record AS $$
+    return 'foo'
+$$ LANGUAGE plpythonu;
+SELECT * FROM test_type_record_error4();
+ERROR:  malformed record literal: "foo"
+DETAIL:  Missing left parenthesis.
+CONTEXT:  while creating return value
+PL/Python function "test_type_record_error4"
