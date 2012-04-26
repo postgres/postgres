@@ -43,6 +43,8 @@ elif typ == 'obj':
 	type_record.first = first
 	type_record.second = second
 	return type_record
+elif typ == 'str':
+	return "('%s',%r)" % (first, second)
 $$ LANGUAGE plpythonu;
 
 CREATE FUNCTION test_in_out_params(first in text, second out text) AS $$
@@ -108,6 +110,8 @@ SELECT * FROM test_type_record_as('obj', null, 2, false);
 SELECT * FROM test_type_record_as('obj', 'three', 3, false);
 SELECT * FROM test_type_record_as('obj', null, null, true);
 
+SELECT * FROM test_type_record_as('str', 'one', 1, false);
+
 SELECT * FROM test_in_out_params('test_in');
 SELECT * FROM test_in_out_params_multi('test_in');
 SELECT * FROM test_inout_params('test_in');
@@ -151,3 +155,9 @@ CREATE FUNCTION test_type_record_error3() RETURNS type_record AS $$
 $$ LANGUAGE plpythonu;
 
 SELECT * FROM test_type_record_error3();
+
+CREATE FUNCTION test_type_record_error4() RETURNS type_record AS $$
+    return 'foo'
+$$ LANGUAGE plpythonu;
+
+SELECT * FROM test_type_record_error4();

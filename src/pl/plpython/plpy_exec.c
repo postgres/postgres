@@ -180,8 +180,7 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 		}
 		else if (proc->result.is_rowtype >= 1)
 		{
-			TupleDesc	desc;
-			HeapTuple	tuple = NULL;
+			TupleDesc desc;
 
 			/* make sure it's not an unnamed record */
 			Assert((proc->result.out.d.typoid == RECORDOID &&
@@ -192,18 +191,8 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 			desc = lookup_rowtype_tupdesc(proc->result.out.d.typoid,
 										  proc->result.out.d.typmod);
 
-			tuple = PLyObject_ToTuple(&proc->result, desc, plrv);
-
-			if (tuple != NULL)
-			{
-				fcinfo->isnull = false;
-				rv = HeapTupleGetDatum(tuple);
-			}
-			else
-			{
-				fcinfo->isnull = true;
-				rv = (Datum) NULL;
-			}
+			rv = PLyObject_ToCompositeDatum(&proc->result, desc, plrv);
+			fcinfo->isnull = (rv == (Datum) NULL);
 		}
 		else
 		{

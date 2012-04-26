@@ -98,8 +98,8 @@ extern void PLy_output_tuple_funcs(PLyTypeInfo *arg, TupleDesc desc);
 
 extern void PLy_output_record_funcs(PLyTypeInfo *arg, TupleDesc desc);
 
-/* conversion from Python objects to heap tuples */
-extern HeapTuple PLyObject_ToTuple(PLyTypeInfo *info, TupleDesc desc, PyObject *plrv);
+/* conversion from Python objects to composite Datums */
+extern Datum PLyObject_ToCompositeDatum(PLyTypeInfo *info, TupleDesc desc, PyObject *plrv);
 
 /* conversion from heap tuples to Python dictionaries */
 extern PyObject *PLyDict_FromTuple(PLyTypeInfo *info, HeapTuple tuple, TupleDesc desc);
