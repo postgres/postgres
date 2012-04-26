@@ -1857,6 +1857,48 @@ SELECT * FROM parent;
   42 | new2
 (5 rows)
 
+-- check EXPLAIN VERBOSE for a wCTE with RETURNING
+EXPLAIN (VERBOSE, COSTS OFF)
+WITH wcte AS ( INSERT INTO int8_tbl VALUES ( 42, 47 ) RETURNING q2 )
+DELETE FROM a USING wcte WHERE aa = q2;
+                    QUERY PLAN                    
+--------------------------------------------------
+ Delete on public.a
+   CTE wcte
+     ->  Insert on public.int8_tbl
+           Output: int8_tbl.q2
+           ->  Result
+                 Output: 42::bigint, 47::bigint
+   ->  Nested Loop
+         Output: public.a.ctid, wcte.*
+         Join Filter: (public.a.aa = wcte.q2)
+         ->  Seq Scan on public.a
+               Output: public.a.ctid, public.a.aa
+         ->  CTE Scan on wcte
+               Output: wcte.*, wcte.q2
+   ->  Nested Loop
+         Output: public.a.ctid, wcte.*
+         Join Filter: (public.a.aa = wcte.q2)
+         ->  Seq Scan on public.b a
+               Output: public.a.ctid, public.a.aa
+         ->  CTE Scan on wcte
+               Output: wcte.*, wcte.q2
+   ->  Nested Loop
+         Output: public.a.ctid, wcte.*
+         Join Filter: (public.a.aa = wcte.q2)
+         ->  Seq Scan on public.c a
+               Output: public.a.ctid, public.a.aa
+         ->  CTE Scan on wcte
+               Output: wcte.*, wcte.q2
+   ->  Nested Loop
+         Output: public.a.ctid, wcte.*
+         Join Filter: (public.a.aa = wcte.q2)
+         ->  Seq Scan on public.d a
+               Output: public.a.ctid, public.a.aa
+         ->  CTE Scan on wcte
+               Output: wcte.*, wcte.q2
+(34 rows)
+
 -- error cases
 -- data-modifying WITH tries to use its own output
 WITH RECURSIVE t AS (

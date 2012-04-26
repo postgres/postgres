@@ -120,10 +120,6 @@ extern List *remove_useless_joins(PlannerInfo *root, List *joinlist);
  * prototypes for plan/setrefs.c
  */
 extern Plan *set_plan_references(PlannerInfo *root, Plan *plan);
-extern List *set_returning_clause_references(PlannerInfo *root,
-								List *rlist,
-								Plan *topplan,
-								Index resultRelation);
 extern void fix_opfuncids(Node *node);
 extern void set_opfuncid(OpExpr *opexpr);
 extern void set_sa_opfuncid(ScalarArrayOpExpr *opexpr);

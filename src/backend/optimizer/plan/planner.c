@@ -529,22 +529,10 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 			List	   *rowMarks;
 
 			/*
-			 * Deal with the RETURNING clause if any.  It's convenient to pass
-			 * the returningList through setrefs.c now rather than at top
-			 * level (if we waited, handling inherited UPDATE/DELETE would be
-			 * much harder).
+			 * Set up the RETURNING list-of-lists, if needed.
 			 */
 			if (parse->returningList)
-			{
-				List	   *rlist;
-
-				Assert(parse->resultRelation);
-				rlist = set_returning_clause_references(root,
-														parse->returningList,
-														plan,
-													  parse->resultRelation);
-				returningLists = list_make1(rlist);
-			}
+				returningLists = list_make1(parse->returningList);
 			else
 				returningLists = NIL;
 
@@ -889,15 +877,8 @@ inheritance_planner(PlannerInfo *root)
 
 		/* Build list of per-relation RETURNING targetlists */
 		if (parse->returningList)
-		{
-			List	   *rlist;
-
-			rlist = set_returning_clause_references(&subroot,
-												subroot.parse->returningList,
-													subplan,
-													appinfo->child_relid);
-			returningLists = lappend(returningLists, rlist);
-		}
+			returningLists = lappend(returningLists,
+									 subroot.parse->returningList);
 	}
 
 	/* Mark result as unordered (probably unnecessary) */

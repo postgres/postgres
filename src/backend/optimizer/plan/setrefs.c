@@ -121,6 +121,11 @@ static Node *fix_upper_expr(PlannerInfo *root,
 			   int rtoffset);
 static Node *fix_upper_expr_mutator(Node *node,
 					   fix_upper_expr_context *context);
+static List *set_returning_clause_references(PlannerInfo *root,
+								List *rlist,
+								Plan *topplan,
+								Index resultRelation,
+								int rtoffset);
 static bool fix_opfuncids_walker(Node *node, void *context);
 static bool extract_query_dependencies_walker(Node *node,
 								  PlannerInfo *context);
@@ -548,12 +553,49 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 			{
 				ModifyTable *splan = (ModifyTable *) plan;
 
-				/*
-				 * planner.c already called set_returning_clause_references,
-				 * so we should not process either the targetlist or the
-				 * returningLists.
-				 */
+				Assert(splan->plan.targetlist == NIL);
 				Assert(splan->plan.qual == NIL);
+
+				if (splan->returningLists)
+				{
+					List	   *newRL = NIL;
+					ListCell   *lcrl,
+							   *lcrr,
+							   *lcp;
+
+					/*
+					 * Pass each per-subplan returningList through
+					 * set_returning_clause_references().
+					 */
+					Assert(list_length(splan->returningLists) == list_length(splan->resultRelations));
+					Assert(list_length(splan->returningLists) == list_length(splan->plans));
+					forthree(lcrl, splan->returningLists,
+							 lcrr, splan->resultRelations,
+							 lcp, splan->plans)
+					{
+						List   *rlist = (List *) lfirst(lcrl);
+						Index	resultrel = lfirst_int(lcrr);
+						Plan   *subplan = (Plan *) lfirst(lcp);
+
+						rlist = set_returning_clause_references(root,
+																rlist,
+																subplan,
+																resultrel,
+																rtoffset);
+						newRL = lappend(newRL, rlist);
+					}
+					splan->returningLists = newRL;
+
+					/*
+					 * Set up the visible plan targetlist as being the same as
+					 * the first RETURNING list. This is for the use of
+					 * EXPLAIN; the executor won't pay any attention to the
+					 * targetlist.  We postpone this step until here so that
+					 * we don't have to do set_returning_clause_references()
+					 * twice on identical targetlists.
+					 */
+					splan->plan.targetlist = copyObject(linitial(newRL));
+				}
 
 				foreach(l, splan->resultRelations)
 				{
@@ -1532,6 +1574,7 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 		if (var->varno == context->acceptable_rel)
 		{
 			var = copyVar(var);
+			var->varno += context->rtoffset;
 			if (var->varnoold > 0)
 				var->varnoold += context->rtoffset;
 			return (Node *) var;
@@ -1691,25 +1734,31 @@ fix_upper_expr_mutator(Node *node, fix_upper_expr_context *context)
  * entries in the top subplan's targetlist.  Vars referencing the result
  * table should be left alone, however (the executor will evaluate them
  * using the actual heap tuple, after firing triggers if any).	In the
- * adjusted RETURNING list, result-table Vars will still have their
- * original varno, but Vars for other rels will have varno OUTER_VAR.
+ * adjusted RETURNING list, result-table Vars will have their original
+ * varno (plus rtoffset), but Vars for other rels will have varno OUTER_VAR.
  *
  * We also must perform opcode lookup and add regclass OIDs to
  * root->glob->relationOids.
  *
  * 'rlist': the RETURNING targetlist to be fixed
  * 'topplan': the top subplan node that will be just below the ModifyTable
- *		node (note it's not yet passed through set_plan_references)
+ *		node (note it's not yet passed through set_plan_refs)
  * 'resultRelation': RT index of the associated result relation
+ * 'rtoffset': how much to increment varnos by
  *
- * Note: we assume that result relations will have rtoffset zero, that is,
- * they are not coming from a subplan.
+ * Note: the given 'root' is for the parent query level, not the 'topplan'.
+ * This does not matter currently since we only access the dependency-item
+ * lists in root->glob, but it would need some hacking if we wanted a root
+ * that actually matches the subplan.
+ *
+ * Note: resultRelation is not yet adjusted by rtoffset.
  */
-List *
+static List *
 set_returning_clause_references(PlannerInfo *root,
 								List *rlist,
 								Plan *topplan,
-								Index resultRelation)
+								Index resultRelation,
+								int rtoffset)
 {
 	indexed_tlist *itlist;
 
@@ -1734,7 +1783,7 @@ set_returning_clause_references(PlannerInfo *root,
 						  itlist,
 						  NULL,
 						  resultRelation,
-						  0);
+						  rtoffset);
 
 	pfree(itlist);
 
