@@ -1511,6 +1511,9 @@ SELECT E'\\xDEADBEEF';
     linkend="datatype-datetime-table">.  The operations available
     on these data types are described in
     <xref linkend="functions-datetime">.
+    Dates are counted according to the Gregorian calendar, even in
+    years before that calendar was introduced (see <xref
+    linkend="datetime-units-history"> for more information).
    </para>
 
     <table id="datatype-datetime-table">
@@ -1804,7 +1807,7 @@ MINUTE TO SECOND
         </row>
         <row>
          <entry>J2451187</entry>
-         <entry>Julian day</entry>
+         <entry>Julian date</entry>
         </row>
         <row>
          <entry>January 8, 99 BC</entry>
@@ -2755,23 +2758,6 @@ P <optional> <replaceable>years</>-<replaceable>months</>-<replaceable>days</> <
        </tgroup>
     </table>
 
-   </sect2>
-
-   <sect2 id="datatype-datetime-internals">
-    <title>Internals</title>
-
-    <para>
-     <productname>PostgreSQL</productname> uses Julian dates
-     for all date/time calculations. This has the useful property of correctly
-     calculating dates from 4713 BC
-     to far into the future, using the assumption that the length of the
-     year is 365.2425 days.
-    </para>
-
-    <para>
-     Date conventions before the 19th century make for interesting reading,
-     but are not consistent enough to warrant coding into a date/time handler.
-    </para>
    </sect2>
 
   </sect1>

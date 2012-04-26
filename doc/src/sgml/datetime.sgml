@@ -318,7 +318,7 @@
        </row>
        <row>
         <entry><literal>JULIAN</>, <literal>JD</>, <literal>J</></entry>
-        <entry>Next field is Julian Day</entry>
+        <entry>Next field is Julian Date</entry>
        </row>
        <row>
         <entry><literal>ON</literal></entry>
@@ -456,6 +456,24 @@
   <sect1 id="datetime-units-history">
   <title>History of Units</title>
 
+  <indexterm zone="datetime-units-history">
+   <primary>Gregorian calendar</primary>
+  </indexterm>
+  <indexterm zone="datetime-units-history">
+   <primary>Julian date</primary>
+  </indexterm>
+
+  <para>
+   The SQL standard states that <quote>Within the definition of a
+   <quote>datetime literal</quote>, the <quote>datetime
+   values</quote> are constrained by the natural rules for dates and
+   times according to the Gregorian calendar</quote>.
+   <productname>PostgreSQL</> follows the SQL
+   standard's lead by counting dates exclusively in the Gregorian
+   calendar, even for years before that calendar was in use.
+   This rule is known as the <firstterm>proleptic Gregorian calendar</>.
+  </para>
+
   <para>
    The Julian calendar was introduced by Julius Caesar in 45 BC.
    It was in common use in the Western world
@@ -507,8 +525,8 @@
    reluctant to change, and the Greek Orthodox countries didn't change
    until the start of the 20th century.
 
-   The reform was observed by Great Britain and Dominions (including what is
-   now the USA) in 1752.
+   The reform was observed by Great Britain and its dominions (including what
+   is now the USA) in 1752.
    Thus 2 September 1752 was followed by 14 September 1752.
 
    This is why Unix systems have the <command>cal</command> program
@@ -522,18 +540,14 @@ $ <userinput>cal 9 1752</userinput>
 17 18 19 20 21 22 23
 24 25 26 27 28 29 30
 </screen>
-  </para>
 
-  <para>
-   The SQL standard states that <quote>Within the definition of a
-   <quote>datetime literal</quote>, the <quote>datetime
-   value</quote>s are constrained by the natural rules for dates and
-   times according to the Gregorian calendar</quote>.  Dates between
-   1582-10-05 and 1582-10-14, although eliminated in some countries
-   by Papal fiat, conform to <quote>natural rules</quote> and are
-   hence valid dates.  <productname>PostgreSQL</> follows the SQL
-   standard's lead by counting dates exclusively in the Gregorian
-   calendar, even for years before that calendar was in use.
+   But, of course, this calendar is only valid for Great Britain and
+   dominions, not other places.
+   Since it would be difficult and confusing to try to track the actual
+   calendars that were in use in various places at various times,
+   <productname>PostgreSQL</> does not try, but rather follows the Gregorian
+   calendar rules for all dates, even though this method is not historically
+   accurate.
   </para>
 
   <para>
@@ -551,8 +565,9 @@ $ <userinput>cal 9 1752</userinput>
   </para>
 
   <para>
-   The <quote>Julian Date</quote> is unrelated to the <quote>Julian
-   calendar</quote>.
+   The <firstterm>Julian Date</firstterm> system is another type of
+   calendar, unrelated to the Julian calendar though it is confusingly
+   named similarly to that calendar.
    The Julian Date system was invented by the French scholar
    Joseph Justus Scaliger (1540-1609)
    and probably takes its name from Scaliger's father,
@@ -564,15 +579,15 @@ $ <userinput>cal 9 1752</userinput>
    is most often used by astronomers for labeling their nightly observations,
    and therefore a date runs from noon UTC to the next noon UTC, rather than
    from midnight to midnight: JD 0 designates the 24 hours from noon UTC on
-   1 January 4713 BC to noon UTC on 2 January 4713 BC.
+   24 November 4714 BC to noon UTC on 25 November 4714 BC.
   </para>
 
   <para>
    Although <productname>PostgreSQL</> supports Julian Date notation for
-   input and output of dates (and also uses them for some internal datetime
-   calculations), it does not observe the nicety of having dates run from
-   noon to noon.  <productname>PostgreSQL</> treats a Julian Date as running
-   from midnight to midnight.
+   input and output of dates (and also uses Julian dates for some internal
+   datetime calculations), it does not observe the nicety of having dates
+   run from noon to noon.  <productname>PostgreSQL</> treats a Julian Date
+   as running from midnight to midnight.
   </para>
 
  </sect1>
