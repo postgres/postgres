@@ -1090,7 +1090,7 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev2_wd, "DOMAIN") == 0)
 	{
 		static const char *const list_ALTERDOMAIN[] =
-		{"ADD", "DROP", "OWNER TO", "SET", NULL};
+		{"ADD", "DROP", "OWNER TO", "RENAME", "SET", "VALIDATE CONSTRAINT", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTERDOMAIN);
 	}
@@ -1104,6 +1104,22 @@ psql_completion(char *text, int start, int end)
 
 		COMPLETE_WITH_LIST(list_ALTERDOMAIN2);
 	}
+	/* ALTER DOMAIN <sth> RENAME */
+	else if (pg_strcasecmp(prev4_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev3_wd, "DOMAIN") == 0 &&
+			 pg_strcasecmp(prev_wd, "RENAME") == 0)
+	{
+		static const char *const list_ALTERDOMAIN[] =
+		{"CONSTRAINT", "TO", NULL};
+
+		COMPLETE_WITH_LIST(list_ALTERDOMAIN);
+	}
+	/* ALTER DOMAIN <sth> RENAME CONSTRAINT <sth> */
+	else if (pg_strcasecmp(prev5_wd, "DOMAIN") == 0 &&
+			 pg_strcasecmp(prev3_wd, "RENAME") == 0 &&
+			 pg_strcasecmp(prev2_wd, "CONSTRAINT") == 0)
+		COMPLETE_WITH_CONST("TO");
+
 	/* ALTER DOMAIN <sth> SET */
 	else if (pg_strcasecmp(prev4_wd, "ALTER") == 0 &&
 			 pg_strcasecmp(prev3_wd, "DOMAIN") == 0 &&
@@ -1220,11 +1236,17 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_LIST(list_ALTERDISABLE);
 	}
 
-	/* If we have TABLE <sth> ALTER|RENAME, provide list of columns */
-	else if (pg_strcasecmp(prev3_wd, "TABLE") == 0 &&
-			 (pg_strcasecmp(prev_wd, "ALTER") == 0 ||
-			  pg_strcasecmp(prev_wd, "RENAME") == 0))
+	/* ALTER TABLE xxx ALTER */
+	else if (pg_strcasecmp(prev4_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev3_wd, "TABLE") == 0 &&
+			 pg_strcasecmp(prev_wd, "ALTER") == 0)
 		COMPLETE_WITH_ATTR(prev2_wd, " UNION SELECT 'COLUMN'");
+
+	/* ALTER TABLE xxx RENAME */
+	else if (pg_strcasecmp(prev4_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev3_wd, "TABLE") == 0 &&
+			 pg_strcasecmp(prev_wd, "RENAME") == 0)
+		COMPLETE_WITH_ATTR(prev2_wd, " UNION SELECT 'COLUMN' UNION SELECT 'CONSTRAINT' UNION SELECT 'TO'");
 
 	/*
 	 * If we have TABLE <sth> ALTER COLUMN|RENAME COLUMN, provide list of
@@ -1239,13 +1261,15 @@ psql_completion(char *text, int start, int end)
 	/* ALTER TABLE xxx RENAME yyy */
 	else if (pg_strcasecmp(prev4_wd, "TABLE") == 0 &&
 			 pg_strcasecmp(prev2_wd, "RENAME") == 0 &&
+			 pg_strcasecmp(prev_wd, "CONSTRAINT") != 0 &&
 			 pg_strcasecmp(prev_wd, "TO") != 0)
 		COMPLETE_WITH_CONST("TO");
 
-	/* ALTER TABLE xxx RENAME COLUMN yyy */
+	/* ALTER TABLE xxx RENAME COLUMN/CONSTRAINT yyy */
 	else if (pg_strcasecmp(prev5_wd, "TABLE") == 0 &&
 			 pg_strcasecmp(prev3_wd, "RENAME") == 0 &&
-			 pg_strcasecmp(prev2_wd, "COLUMN") == 0 &&
+			 (pg_strcasecmp(prev2_wd, "COLUMN") == 0 ||
+			  pg_strcasecmp(prev2_wd, "CONSTRAINT") == 0) &&
 			 pg_strcasecmp(prev_wd, "TO") != 0)
 		COMPLETE_WITH_CONST("TO");
 
