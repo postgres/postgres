@@ -865,10 +865,10 @@ DROP TABLE onek_with_null;
 CREATE TABLE dupindexcols AS
   SELECT unique1 as id, stringu2::text as f1 FROM tenk1;
 CREATE INDEX dupindexcols_i ON dupindexcols (f1, id, f1 text_pattern_ops);
-VACUUM ANALYZE dupindexcols;
+ANALYZE dupindexcols;
 
 EXPLAIN (COSTS OFF)
   SELECT count(*) FROM dupindexcols
-    WHERE f1 > 'MA' and id < 1000 and f1 ~<~ 'YX';
+    WHERE f1 > 'WA' and id < 1000 and f1 ~<~ 'YX';
 SELECT count(*) FROM dupindexcols
-  WHERE f1 > 'MA' and id < 1000 and f1 ~<~ 'YX';
+  WHERE f1 > 'WA' and id < 1000 and f1 ~<~ 'YX';
