@@ -448,6 +448,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		bool		all_visible_according_to_vm;
 		bool		all_visible;
 		bool		has_dead_tuples;
+		TransactionId visibility_cutoff_xid = InvalidTransactionId;
 
 		if (blkno == next_not_all_visible_block)
 		{
@@ -627,7 +628,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			{
 				PageSetAllVisible(page);
 				MarkBufferDirty(buf);
-				visibilitymap_set(onerel, blkno, InvalidXLogRecPtr, vmbuffer);
+				visibilitymap_set(onerel, blkno, InvalidXLogRecPtr, vmbuffer,
+								  InvalidTransactionId);
 			}
 
 			UnlockReleaseBuffer(buf);
@@ -759,6 +761,10 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 							all_visible = false;
 							break;
 						}
+
+						/* Track newest xmin on page. */
+						if (TransactionIdFollows(xmin, visibility_cutoff_xid))
+							visibility_cutoff_xid = xmin;
 					}
 					break;
 				case HEAPTUPLE_RECENTLY_DEAD:
@@ -853,7 +859,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 				PageSetAllVisible(page);
 				MarkBufferDirty(buf);
 			}
-			visibilitymap_set(onerel, blkno, InvalidXLogRecPtr, vmbuffer);
+			visibilitymap_set(onerel, blkno, InvalidXLogRecPtr, vmbuffer,
+							  visibility_cutoff_xid);
 		}
 
 		/*

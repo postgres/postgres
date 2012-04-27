@@ -229,7 +229,9 @@ visibilitymap_pin_ok(BlockNumber heapBlk, Buffer buf)
  * recptr is the LSN of the XLOG record we're replaying, if we're in recovery,
  * or InvalidXLogRecPtr in normal running.  The page LSN is advanced to the
  * one provided; in normal running, we generate a new XLOG record and set the
- * page LSN to that value.
+ * page LSN to that value.  cutoff_xid is the largest xmin on the page being
+ * marked all-visible; it is needed for Hot Standby, and can be
+ * InvalidTransactionId if the page contains no tuples.
  *
  * You must pass a buffer containing the correct map page to this function.
  * Call visibilitymap_pin first to pin the right one. This function doesn't do
@@ -237,7 +239,7 @@ visibilitymap_pin_ok(BlockNumber heapBlk, Buffer buf)
  */
 void
 visibilitymap_set(Relation rel, BlockNumber heapBlk, XLogRecPtr recptr,
-				  Buffer buf)
+				  Buffer buf, TransactionId cutoff_xid)
 {
 	BlockNumber mapBlock = HEAPBLK_TO_MAPBLOCK(heapBlk);
 	uint32		mapByte = HEAPBLK_TO_MAPBYTE(heapBlk);
@@ -269,7 +271,8 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, XLogRecPtr recptr,
 		if (RelationNeedsWAL(rel))
 		{
 			if (XLogRecPtrIsInvalid(recptr))
-				recptr = log_heap_visible(rel->rd_node, heapBlk, buf);
+				recptr = log_heap_visible(rel->rd_node, heapBlk, buf,
+										  cutoff_xid);
 			PageSetLSN(page, recptr);
 			PageSetTLI(page, ThisTimeLineID);
 		}

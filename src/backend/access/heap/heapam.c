@@ -4368,7 +4368,8 @@ log_heap_freeze(Relation reln, Buffer buffer,
  * and dirtied.
  */
 XLogRecPtr
-log_heap_visible(RelFileNode rnode, BlockNumber block, Buffer vm_buffer)
+log_heap_visible(RelFileNode rnode, BlockNumber block, Buffer vm_buffer,
+				 TransactionId cutoff_xid)
 {
 	xl_heap_visible xlrec;
 	XLogRecPtr	recptr;
@@ -4376,6 +4377,7 @@ log_heap_visible(RelFileNode rnode, BlockNumber block, Buffer vm_buffer)
 
 	xlrec.node = rnode;
 	xlrec.block = block;
+	xlrec.cutoff_xid = cutoff_xid;
 
 	rdata[0].data = (char *) &xlrec;
 	rdata[0].len = SizeOfHeapVisible;
@@ -4708,6 +4710,17 @@ heap_xlog_visible(XLogRecPtr lsn, XLogRecord *record)
 		return;
 	page = (Page) BufferGetPage(buffer);
 
+	/*
+	 * If there are any Hot Standby transactions running that have an xmin
+	 * horizon old enough that this page isn't all-visible for them, they
+	 * might incorrectly decide that an index-only scan can skip a heap fetch.
+	 *
+	 * NB: It might be better to throw some kind of "soft" conflict here that
+	 * forces any index-only scan that is in flight to perform heap fetches,
+	 * rather than killing the transaction outright.
+	 */
+	ResolveRecoveryConflictWithSnapshot(xlrec->cutoff_xid, xlrec->node);
+
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 
 	/*
@@ -4760,7 +4773,8 @@ heap_xlog_visible(XLogRecPtr lsn, XLogRecord *record)
 		 * harm is done; and the next VACUUM will fix it.
 		 */
 		if (!XLByteLE(lsn, PageGetLSN(BufferGetPage(vmbuffer))))
-			visibilitymap_set(reln, xlrec->block, lsn, vmbuffer);
+			visibilitymap_set(reln, xlrec->block, lsn, vmbuffer,
+							  xlrec->cutoff_xid);
 
 		ReleaseBuffer(vmbuffer);
 		FreeFakeRelcacheEntry(reln);

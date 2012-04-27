@@ -788,9 +788,10 @@ typedef struct xl_heap_visible
 {
 	RelFileNode node;
 	BlockNumber block;
+	TransactionId cutoff_xid;
 } xl_heap_visible;
 
-#define SizeOfHeapVisible (offsetof(xl_heap_visible, block) + sizeof(BlockNumber))
+#define SizeOfHeapVisible (offsetof(xl_heap_visible, cutoff_xid) + sizeof(TransactionId))
 
 extern void HeapTupleHeaderAdvanceLatestRemovedXid(HeapTupleHeader tuple,
 									   TransactionId *latestRemovedXid);
