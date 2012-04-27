@@ -40,10 +40,19 @@ my @BRANCHES = qw(master
 # Might want to make this parameter user-settable.
 my $timestamp_slop = 600;
 
+my $details_after = 0;
 my $post_date = 0;
+my $master_only = 0;
+my $oldest_first = 0;
 my $since;
-Getopt::Long::GetOptions('post-date' => \$post_date,
-                         'since=s' => \$since) || usage();
+my @output_buffer;
+my $output_line = '';
+
+Getopt::Long::GetOptions('details-after' => \$details_after,
+			 'master-only' => \$master_only,
+			 'post-date' => \$post_date,
+			 'oldest-first' => \$oldest_first,
+			 'since=s' => \$since) || usage();
 usage() if @ARGV;
 
 my @git = qw(git log --format=fuller --date=iso);
@@ -179,17 +188,17 @@ while (1) {
 	last if !defined $best_branch;
 	my $winner =
 		$all_commits_by_branch{$best_branch}->[$position{$best_branch}];
-	printf "Author: %s\n", $winner->{'author'};
-	foreach my $c (@{$winner->{'commits'}}) {
-	    printf "Branch: %s", $c->{'branch'};
-	    if (defined $c->{'last_tag'}) {
-		printf " Release: %s", $c->{'last_tag'};
-	    }
-	    printf " [%s] %s\n", substr($c->{'commit'}, 0, 9), $c->{'date'};
+
+	# check for master-only
+	if (! $master_only || ($winner->{'commits'}[0]->{'branch'} eq 'master' &&
+	    @{$winner->{'commits'}} == 1)) {
+		output_details($winner) if (! $details_after);
+		output_str("%s", $winner->{'message'} . "\n");
+		output_details($winner) if ($details_after);
+		unshift(@output_buffer, $output_line) if ($oldest_first);
+		$output_line = '';
 	}
-	print "\n";
-	print $winner->{'message'};
-	print "\n";
+
 	$winner->{'done'} = 1;
 	for my $branch (@BRANCHES) {
 		my $leader = $all_commits_by_branch{$branch}->[$position{$branch}];
@@ -199,6 +208,8 @@ while (1) {
 		}
 	}
 }
+
+print @output_buffer if ($oldest_first);
 
 sub push_commit {
 	my ($c) = @_;
@@ -258,11 +269,38 @@ sub parse_datetime {
 	return $gm - $tzoffset;
 }
 
+sub output_str {
+	($oldest_first) ? ($output_line .= sprintf(shift, @_)) : printf(@_);
+}
+
+sub output_details {
+	my $item = shift;
+
+	if ($details_after) {
+		$item->{'author'} =~ m{^(.*?)\s*<[^>]*>$};
+		# output only author name, not email address
+		output_str("(%s)\n", $1);
+	} else {
+		output_str("Author: %s\n", $item->{'author'});
+	}
+	foreach my $c (@{$item->{'commits'}}) {
+	    output_str("Branch: %s ", $c->{'branch'}) if (! $master_only);
+	    if (defined $c->{'last_tag'}) {
+		output_str("Release: %s ", $c->{'last_tag'});
+	    }
+	    output_str("[%s] %s\n", substr($c->{'commit'}, 0, 9), $c->{'date'});
+	}
+	output_str("\n");
+}
+
 sub usage {
 	print STDERR <<EOM;
-Usage: git_changelog [--post-date/-p] [--since=SINCE]
-    --post-date Show branches made after a commit occurred
-    --since     Print only commits dated since SINCE
+Usage: git_changelog [--details-after/-d] [--master-only/-m] [--oldest-first/-o] [--post-date/-p] [--since=SINCE]
+    --details-after Show branch and author info after the commit description
+    --master-only   Show commits made exclusively to the master branch
+    --oldest-first  Show oldest commits first
+    --post-date     Show branches made after a commit occurred
+    --since         Print only commits dated since SINCE
 EOM
 	exit 1;
 }
