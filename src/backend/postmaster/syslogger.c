@@ -88,6 +88,7 @@ extern bool redirection_done;
  */
 static pg_time_t next_rotation_time;
 static bool pipe_eof_seen = false;
+static bool rotation_disabled = false;
 static FILE *syslogFile = NULL;
 static FILE *csvlogFile = NULL;
 static char *last_file_name = NULL;
@@ -318,6 +319,11 @@ SysLoggerMain(int argc, char *argv[])
 				pfree(currentLogDir);
 				currentLogDir = pstrdup(Log_directory);
 				rotation_requested = true;
+
+				/*
+				 * Also, create new directory if not present; ignore errors
+				 */
+				mkdir(Log_directory, S_IRWXU);
 			}
 			if (strcmp(Log_filename, currentLogFilename) != 0)
 			{
@@ -335,9 +341,19 @@ SysLoggerMain(int argc, char *argv[])
 				currentLogRotationAge = Log_RotationAge;
 				set_next_rotation_time();
 			}
+
+			/*
+			 * If we had a rotation-disabling failure, re-enable rotation
+			 * attempts after SIGHUP, and force one immediately.
+			 */
+			if (rotation_disabled)
+			{
+				rotation_disabled = false;
+				rotation_requested = true;
+			}
 		}
 
-		if (!rotation_requested && Log_RotationAge > 0)
+		if (!rotation_requested && Log_RotationAge > 0 && !rotation_disabled)
 		{
 			/* Do a logfile rotation if it's time */
 			pg_time_t	now = (pg_time_t) time(NULL);
@@ -346,7 +362,7 @@ SysLoggerMain(int argc, char *argv[])
 				rotation_requested = time_based_rotation = true;
 		}
 
-		if (!rotation_requested && Log_RotationSize > 0)
+		if (!rotation_requested && Log_RotationSize > 0 && !rotation_disabled)
 		{
 			/* Do a rotation if file is too big */
 			if (ftell(syslogFile) >= Log_RotationSize * 1024L)
@@ -1122,8 +1138,7 @@ logfile_rotate(bool time_based_rotation, int size_rotation_for)
 			{
 				ereport(LOG,
 						(errmsg("disabling automatic rotation (use SIGHUP to re-enable)")));
-				Log_RotationAge = 0;
-				Log_RotationSize = 0;
+				rotation_disabled = true;
 			}
 
 			if (filename)
@@ -1167,8 +1182,7 @@ logfile_rotate(bool time_based_rotation, int size_rotation_for)
 			{
 				ereport(LOG,
 						(errmsg("disabling automatic rotation (use SIGHUP to re-enable)")));
-				Log_RotationAge = 0;
-				Log_RotationSize = 0;
+				rotation_disabled = true;
 			}
 
 			if (filename)
