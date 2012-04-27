@@ -209,7 +209,7 @@ static void get_rule_orderby(List *orderList, List *targetList,
 static void get_rule_windowclause(Query *query, deparse_context *context);
 static void get_rule_windowspec(WindowClause *wc, List *targetList,
 					deparse_context *context);
-static char *get_variable(Var *var, int levelsup, bool showstar,
+static char *get_variable(Var *var, int levelsup, bool istoplevel,
 			 deparse_context *context);
 static RangeTblEntry *find_rte_by_refname(const char *refname,
 					deparse_context *context);
@@ -3074,11 +3074,12 @@ get_target_list(List *targetList, deparse_context *context,
 		 * "foo.*", which is the preferred notation in most contexts, but at
 		 * the top level of a SELECT list it's not right (the parser will
 		 * expand that notation into multiple columns, yielding behavior
-		 * different from a whole-row Var).  We want just "foo", instead.
+		 * different from a whole-row Var).  We need to call get_variable
+		 * directly so that we can tell it to do the right thing.
 		 */
 		if (tle->expr && IsA(tle->expr, Var))
 		{
-			attname = get_variable((Var *) tle->expr, 0, false, context);
+			attname = get_variable((Var *) tle->expr, 0, true, context);
 		}
 		else
 		{
@@ -3803,13 +3804,20 @@ get_utility_query_def(Query *query, deparse_context *context)
  * the Var's varlevelsup has to be interpreted with respect to a context
  * above the current one; levelsup indicates the offset.
  *
- * If showstar is TRUE, whole-row Vars are displayed as "foo.*";
- * if FALSE, merely as "foo".
+ * If istoplevel is TRUE, the Var is at the top level of a SELECT's
+ * targetlist, which means we need special treatment of whole-row Vars.
+ * Instead of the normal "tab.*", we'll print "tab.*::typename", which is a
+ * dirty hack to prevent "tab.*" from being expanded into multiple columns.
+ * (The parser will strip the useless coercion, so no inefficiency is added in
+ * dump and reload.)  We used to print just "tab" in such cases, but that is
+ * ambiguous and will yield the wrong result if "tab" is also a plain column
+ * name in the query.
  *
- * Returns the attname of the Var, or NULL if not determinable.
+ * Returns the attname of the Var, or NULL if the Var has no attname (because
+ * it is a whole-row Var).
  */
 static char *
-get_variable(Var *var, int levelsup, bool showstar, deparse_context *context)
+get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
 	RangeTblEntry *rte;
@@ -3998,10 +4006,16 @@ get_variable(Var *var, int levelsup, bool showstar, deparse_context *context)
 				if (IsA(aliasvar, Var))
 				{
 					return get_variable(aliasvar, var->varlevelsup + levelsup,
-										showstar, context);
+										istoplevel, context);
 				}
 			}
-			/* Unnamed join has neither schemaname nor refname */
+
+			/*
+			 * Unnamed join has neither schemaname nor refname.  (Note: since
+			 * it's unnamed, there is no way the user could have referenced it
+			 * to create a whole-row Var for it.  So we don't have to cover
+			 * that case below.)
+			 */
 			refname = NULL;
 		}
 	}
@@ -4017,13 +4031,18 @@ get_variable(Var *var, int levelsup, bool showstar, deparse_context *context)
 			appendStringInfo(buf, "%s.",
 							 quote_identifier(schemaname));
 		appendStringInfoString(buf, quote_identifier(refname));
-		if (attname || showstar)
-			appendStringInfoChar(buf, '.');
+		appendStringInfoChar(buf, '.');
 	}
 	if (attname)
 		appendStringInfoString(buf, quote_identifier(attname));
-	else if (showstar)
+	else
+	{
 		appendStringInfoChar(buf, '*');
+		if (istoplevel)
+			appendStringInfo(buf, "::%s",
+							 format_type_with_typemod(var->vartype,
+													  var->vartypmod));
+	}
 
 	return attname;
 }
@@ -4974,7 +4993,7 @@ get_rule_expr(Node *node, deparse_context *context,
 	switch (nodeTag(node))
 	{
 		case T_Var:
-			(void) get_variable((Var *) node, 0, true, context);
+			(void) get_variable((Var *) node, 0, false, context);
 			break;
 
 		case T_Const:
