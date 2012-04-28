@@ -784,8 +784,8 @@ pgstat_send_tabstat(PgStat_MsgTabstat *tsmsg)
 		return;
 
 	/*
-	 * Report accumulated xact commit/rollback and I/O timings whenever we send
-	 * a normal tabstat message
+	 * Report and reset accumulated xact commit/rollback and I/O timings
+	 * whenever we send a normal tabstat message
 	 */
 	if (OidIsValid(tsmsg->m_databaseid))
 	{
@@ -795,6 +795,8 @@ pgstat_send_tabstat(PgStat_MsgTabstat *tsmsg)
 		tsmsg->m_block_time_write = pgStatBlockTimeWrite;
 		pgStatXactCommit = 0;
 		pgStatXactRollback = 0;
+		pgStatBlockTimeRead = 0;
+		pgStatBlockTimeWrite = 0;
 	}
 	else
 	{
