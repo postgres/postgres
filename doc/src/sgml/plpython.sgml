@@ -1408,6 +1408,10 @@ plpy.execute("UPDATE tbl SET %s = %s WHERE key = %s" % (
     <listitem>
      <para><envar>PYTHONUSERBASE</envar></para>
     </listitem>
+
+    <listitem>
+     <para><envar>PYTHONHASHSEED</envar></para>
+    </listitem>
    </itemizedlist>
 
    (It appears to be a Python implementation detail beyond the control
