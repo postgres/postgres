@@ -101,7 +101,7 @@ typedef struct pgssHashKey
 typedef struct Counters
 {
 	int64		calls;			/* # of times executed */
-	double		total_time;		/* total execution time in seconds */
+	double		total_time;		/* total execution time, in msec */
 	int64		rows;			/* total # of retrieved or affected rows */
 	int64		shared_blks_hit;	/* # of shared buffer hits */
 	int64		shared_blks_read;		/* # of shared disk blocks read */
@@ -113,8 +113,8 @@ typedef struct Counters
 	int64		local_blks_written;		/* # of local disk blocks written */
 	int64		temp_blks_read; /* # of temp blocks read */
 	int64		temp_blks_written;		/* # of temp blocks written */
-	double		time_read;		/* time spent reading in seconds */
-	double		time_write;		/* time spent writing in seconds */
+	double		time_read;		/* time spent reading, in msec */
+	double		time_write;		/* time spent writing, in msec */
 	double		usage;			/* usage factor */
 } Counters;
 
@@ -752,7 +752,7 @@ pgss_ExecutorEnd(QueryDesc *queryDesc)
 
 		pgss_store(queryDesc->sourceText,
 				   queryId,
-				   queryDesc->totaltime->total,
+				   queryDesc->totaltime->total * 1000.0, /* convert to msec */
 				   queryDesc->estate->es_processed,
 				   &queryDesc->totaltime->bufusage,
 				   NULL);
@@ -856,7 +856,7 @@ pgss_ProcessUtility(Node *parsetree, const char *queryString,
 
 		pgss_store(queryString,
 				   queryId,
-				   INSTR_TIME_GET_DOUBLE(duration),
+				   INSTR_TIME_GET_MILLISEC(duration),
 				   rows,
 				   &bufusage,
 				   NULL);
@@ -1021,9 +1021,9 @@ pgss_store(const char *query, uint32 queryId,
 		e->counters.local_blks_written += bufusage->local_blks_written;
 		e->counters.temp_blks_read += bufusage->temp_blks_read;
 		e->counters.temp_blks_written += bufusage->temp_blks_written;
-		e->counters.time_read += INSTR_TIME_GET_DOUBLE(bufusage->time_read);
-		e->counters.time_write += INSTR_TIME_GET_DOUBLE(bufusage->time_write);
-		e->counters.usage += USAGE_EXEC(duration);
+		e->counters.time_read += INSTR_TIME_GET_MILLISEC(bufusage->time_read);
+		e->counters.time_write += INSTR_TIME_GET_MILLISEC(bufusage->time_write);
+		e->counters.usage += USAGE_EXEC(total_time);
 
 		SpinLockRelease(&e->mutex);
 	}

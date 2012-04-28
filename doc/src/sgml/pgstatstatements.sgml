@@ -75,7 +75,7 @@
       <entry><structfield>total_time</structfield></entry>
       <entry><type>double precision</type></entry>
       <entry></entry>
-      <entry>Total time spent in the statement, in seconds</entry>
+      <entry>Total time spent in the statement, in milliseconds</entry>
      </row>
 
      <row>
@@ -89,14 +89,14 @@
       <entry><structfield>shared_blks_hit</structfield></entry>
       <entry><type>bigint</type></entry>
       <entry></entry>
-      <entry>Total number of shared blocks hits by the statement</entry>
+      <entry>Total number of shared block cache hits by the statement</entry>
      </row>
 
      <row>
       <entry><structfield>shared_blks_read</structfield></entry>
       <entry><type>bigint</type></entry>
       <entry></entry>
-      <entry>Total number of shared blocks reads by the statement</entry>
+      <entry>Total number of shared blocks read by the statement</entry>
      </row>
 
      <row>
@@ -110,21 +110,21 @@
       <entry><structfield>shared_blks_written</structfield></entry>
       <entry><type>bigint</type></entry>
       <entry></entry>
-      <entry>Total number of shared blocks writes by the statement</entry>
+      <entry>Total number of shared blocks written by the statement</entry>
      </row>
 
      <row>
       <entry><structfield>local_blks_hit</structfield></entry>
       <entry><type>bigint</type></entry>
       <entry></entry>
-      <entry>Total number of local blocks hits by the statement</entry>
+      <entry>Total number of local block cache hits by the statement</entry>
      </row>
 
      <row>
       <entry><structfield>local_blks_read</structfield></entry>
       <entry><type>bigint</type></entry>
       <entry></entry>
-      <entry>Total number of local blocks reads by the statement</entry>
+      <entry>Total number of local blocks read by the statement</entry>
      </row>
 
      <row>
@@ -138,21 +138,21 @@
       <entry><structfield>local_blks_written</structfield></entry>
       <entry><type>bigint</type></entry>
       <entry></entry>
-      <entry>Total number of local blocks writes by the statement</entry>
+      <entry>Total number of local blocks written by the statement</entry>
      </row>
 
      <row>
       <entry><structfield>temp_blks_read</structfield></entry>
       <entry><type>bigint</type></entry>
       <entry></entry>
-      <entry>Total number of temp blocks reads by the statement</entry>
+      <entry>Total number of temp blocks read by the statement</entry>
      </row>
 
      <row>
       <entry><structfield>temp_blks_written</structfield></entry>
       <entry><type>bigint</type></entry>
       <entry></entry>
-      <entry>Total number of temp blocks writes by the statement</entry>
+      <entry>Total number of temp blocks written by the statement</entry>
      </row>
 
      <row>
@@ -160,7 +160,7 @@
       <entry><type>double precision</type></entry>
       <entry></entry>
       <entry>
-        Total time the statement spent reading blocks, in seconds
+        Total time the statement spent reading blocks, in milliseconds
         (if <xref linkend="guc-track-iotiming"> is enabled, otherwise zero)
       </entry>
      </row>
@@ -170,7 +170,7 @@
       <entry><type>double precision</type></entry>
       <entry></entry>
       <entry>
-        Total time the statement spent writing blocks, in seconds
+        Total time the statement spent writing blocks, in milliseconds
         (if <xref linkend="guc-track-iotiming"> is enabled, otherwise zero)
       </entry>
      </row>
@@ -285,7 +285,7 @@
       Specify <literal>top</> to track top-level statements (those issued
       directly by clients), <literal>all</> to also track nested statements
       (such as statements invoked within functions), or <literal>none</> to
-      disable.
+      disable statement statistics collection.
       The default value is <literal>top</>.
       Only superusers can change this setting.
      </para>
@@ -366,31 +366,31 @@ bench=# SELECT query, calls, total_time, rows, 100.0 * shared_blks_hit /
 -[ RECORD 1 ]---------------------------------------------------------------------
 query       | UPDATE pgbench_branches SET bbalance = bbalance + ? WHERE bid = ?;
 calls       | 3000
-total_time  | 9.60900100000002
+total_time  | 9609.00100000002
 rows        | 2836
 hit_percent | 99.9778970000200936
 -[ RECORD 2 ]---------------------------------------------------------------------
 query       | UPDATE pgbench_tellers SET tbalance = tbalance + ? WHERE tid = ?;
 calls       | 3000
-total_time  | 8.015156
+total_time  | 8015.156
 rows        | 2990
 hit_percent | 99.9731126579631345
 -[ RECORD 3 ]---------------------------------------------------------------------
 query       | copy pgbench_accounts from stdin
 calls       | 1
-total_time  | 0.310624
+total_time  | 310.624
 rows        | 100000
 hit_percent | 0.30395136778115501520
 -[ RECORD 4 ]---------------------------------------------------------------------
 query       | UPDATE pgbench_accounts SET abalance = abalance + ? WHERE aid = ?;
 calls       | 3000
-total_time  | 0.271741999999997
+total_time  | 271.741999999997
 rows        | 3000
 hit_percent | 93.7968855088209426
 -[ RECORD 5 ]---------------------------------------------------------------------
 query       | alter table pgbench_accounts add primary key (aid)
 calls       | 1
-total_time  | 0.08142
+total_time  | 81.42
 rows        | 0
 hit_percent | 34.4947735191637631
 </screen>
