@@ -451,7 +451,7 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 				INSTR_TIME_SET_CURRENT(io_time);
 				INSTR_TIME_SUBTRACT(io_time, io_start);
 				pgstat_count_buffer_read_time(INSTR_TIME_GET_MICROSEC(io_time));
-				INSTR_TIME_ADD(pgBufferUsage.time_read, io_time);
+				INSTR_TIME_ADD(pgBufferUsage.blk_read_time, io_time);
 			}
 
 			/* check for garbage data */
@@ -1952,7 +1952,7 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 		INSTR_TIME_SET_CURRENT(io_time);
 		INSTR_TIME_SUBTRACT(io_time, io_start);
 		pgstat_count_buffer_write_time(INSTR_TIME_GET_MICROSEC(io_time));
-		INSTR_TIME_ADD(pgBufferUsage.time_write, io_time);
+		INSTR_TIME_ADD(pgBufferUsage.blk_write_time, io_time);
 	}
 
 	pgBufferUsage.shared_blks_written++;

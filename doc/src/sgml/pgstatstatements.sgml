@@ -156,7 +156,7 @@
      </row>
 
      <row>
-      <entry><structfield>time_read</structfield></entry>
+      <entry><structfield>blk_read_time</structfield></entry>
       <entry><type>double precision</type></entry>
       <entry></entry>
       <entry>
@@ -166,7 +166,7 @@
      </row>
 
      <row>
-      <entry><structfield>time_write</structfield></entry>
+      <entry><structfield>blk_write_time</structfield></entry>
       <entry><type>double precision</type></entry>
       <entry></entry>
       <entry>

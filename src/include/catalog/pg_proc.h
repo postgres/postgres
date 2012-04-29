@@ -2662,9 +2662,9 @@ DATA(insert OID = 3150 (  pg_stat_get_db_temp_files PGNSP PGUID 12 1 0 0 0 f f f
 DESCR("statistics: number of temporary files written");
 DATA(insert OID = 3151 (  pg_stat_get_db_temp_bytes PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_db_temp_bytes _null_ _null_ _null_ ));
 DESCR("statistics: number of bytes in temporary files written");
-DATA(insert OID = 2844 (  pg_stat_get_db_block_time_read	PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_db_block_time_read _null_ _null_ _null_ ));
+DATA(insert OID = 2844 (  pg_stat_get_db_blk_read_time	PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_db_blk_read_time _null_ _null_ _null_ ));
 DESCR("statistics: block read time in microseconds");
-DATA(insert OID = 2845 (  pg_stat_get_db_block_time_write	PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_db_block_time_write _null_ _null_ _null_ ));
+DATA(insert OID = 2845 (  pg_stat_get_db_blk_write_time	PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_db_blk_write_time _null_ _null_ _null_ ));
 DESCR("statistics: block write time in microseconds");
 DATA(insert OID = 2769 ( pg_stat_get_bgwriter_timed_checkpoints PGNSP PGUID 12 1 0 0 0 f f f f t f s 0 0 20 "" _null_ _null_ _null_ _null_ pg_stat_get_bgwriter_timed_checkpoints _null_ _null_ _null_ ));
 DESCR("statistics: number of timed checkpoints started by the bgwriter");

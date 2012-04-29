@@ -1236,8 +1236,8 @@ ExplainNode(PlanState *planstate, List *ancestors,
 									 usage->local_blks_written > 0);
 			bool		has_temp = (usage->temp_blks_read > 0 ||
 									usage->temp_blks_written > 0);
-			bool		has_timing = (!INSTR_TIME_IS_ZERO(usage->time_read) ||
-									  !INSTR_TIME_IS_ZERO(usage->time_write));
+			bool		has_timing = (!INSTR_TIME_IS_ZERO(usage->blk_read_time) ||
+									  !INSTR_TIME_IS_ZERO(usage->blk_write_time));
 
 			/* Show only positive counter values. */
 			if (has_shared || has_local || has_temp)
@@ -1299,12 +1299,12 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			{
 				appendStringInfoSpaces(es->str, es->indent * 2);
 				appendStringInfoString(es->str, "I/O Timings:");
-				if (!INSTR_TIME_IS_ZERO(usage->time_read))
-					appendStringInfo(es->str, " read=%0.2f",
-								 INSTR_TIME_GET_MILLISEC(usage->time_read));
-				if (!INSTR_TIME_IS_ZERO(usage->time_write))
-					appendStringInfo(es->str, " write=%0.2f",
-								 INSTR_TIME_GET_MILLISEC(usage->time_write));
+				if (!INSTR_TIME_IS_ZERO(usage->blk_read_time))
+					appendStringInfo(es->str, " read=%0.3f",
+								INSTR_TIME_GET_MILLISEC(usage->blk_read_time));
+				if (!INSTR_TIME_IS_ZERO(usage->blk_write_time))
+					appendStringInfo(es->str, " write=%0.3f",
+								INSTR_TIME_GET_MILLISEC(usage->blk_write_time));
 				appendStringInfoChar(es->str, '\n');
 			}
 		}
@@ -1320,8 +1320,8 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			ExplainPropertyLong("Local Written Blocks", usage->local_blks_written, es);
 			ExplainPropertyLong("Temp Read Blocks", usage->temp_blks_read, es);
 			ExplainPropertyLong("Temp Written Blocks", usage->temp_blks_written, es);
-			ExplainPropertyFloat("I/O Read Time", INSTR_TIME_GET_MILLISEC(usage->time_read), 3, es);
-			ExplainPropertyFloat("I/O Write Time", INSTR_TIME_GET_MILLISEC(usage->time_write), 3, es);
+			ExplainPropertyFloat("I/O Read Time", INSTR_TIME_GET_MILLISEC(usage->blk_read_time), 3, es);
+			ExplainPropertyFloat("I/O Write Time", INSTR_TIME_GET_MILLISEC(usage->blk_write_time), 3, es);
 		}
 	}
 

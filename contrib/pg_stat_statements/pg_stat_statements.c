@@ -103,19 +103,19 @@ typedef struct Counters
 	int64		calls;			/* # of times executed */
 	double		total_time;		/* total execution time, in msec */
 	int64		rows;			/* total # of retrieved or affected rows */
-	int64		shared_blks_hit;	/* # of shared buffer hits */
+	int64		shared_blks_hit;		/* # of shared buffer hits */
 	int64		shared_blks_read;		/* # of shared disk blocks read */
 	int64		shared_blks_dirtied;	/* # of shared disk blocks dirtied */
 	int64		shared_blks_written;	/* # of shared disk blocks written */
-	int64		local_blks_hit; /* # of local buffer hits */
-	int64		local_blks_read;	/* # of local disk blocks read */
+	int64		local_blks_hit;			/* # of local buffer hits */
+	int64		local_blks_read;		/* # of local disk blocks read */
 	int64		local_blks_dirtied;		/* # of local disk blocks dirtied */
 	int64		local_blks_written;		/* # of local disk blocks written */
-	int64		temp_blks_read; /* # of temp blocks read */
+	int64		temp_blks_read;			/* # of temp blocks read */
 	int64		temp_blks_written;		/* # of temp blocks written */
-	double		time_read;		/* time spent reading, in msec */
-	double		time_write;		/* time spent writing, in msec */
-	double		usage;			/* usage factor */
+	double		blk_read_time;			/* time spent reading, in msec */
+	double		blk_write_time;			/* time spent writing, in msec */
+	double		usage;					/* usage factor */
 } Counters;
 
 /*
@@ -846,10 +846,10 @@ pgss_ProcessUtility(Node *parsetree, const char *queryString,
 			pgBufferUsage.temp_blks_read - bufusage_start.temp_blks_read;
 		bufusage.temp_blks_written =
 			pgBufferUsage.temp_blks_written - bufusage_start.temp_blks_written;
-		bufusage.time_read = pgBufferUsage.time_read;
-		INSTR_TIME_SUBTRACT(bufusage.time_read, bufusage_start.time_read);
-		bufusage.time_write = pgBufferUsage.time_write;
-		INSTR_TIME_SUBTRACT(bufusage.time_write, bufusage_start.time_write);
+		bufusage.blk_read_time = pgBufferUsage.blk_read_time;
+		INSTR_TIME_SUBTRACT(bufusage.blk_read_time, bufusage_start.blk_read_time);
+		bufusage.blk_write_time = pgBufferUsage.blk_write_time;
+		INSTR_TIME_SUBTRACT(bufusage.blk_write_time, bufusage_start.blk_write_time);
 
 		/* For utility statements, we just hash the query string directly */
 		queryId = pgss_hash_string(queryString);
@@ -1021,8 +1021,8 @@ pgss_store(const char *query, uint32 queryId,
 		e->counters.local_blks_written += bufusage->local_blks_written;
 		e->counters.temp_blks_read += bufusage->temp_blks_read;
 		e->counters.temp_blks_written += bufusage->temp_blks_written;
-		e->counters.time_read += INSTR_TIME_GET_MILLISEC(bufusage->time_read);
-		e->counters.time_write += INSTR_TIME_GET_MILLISEC(bufusage->time_write);
+		e->counters.blk_read_time += INSTR_TIME_GET_MILLISEC(bufusage->blk_read_time);
+		e->counters.blk_write_time += INSTR_TIME_GET_MILLISEC(bufusage->blk_write_time);
 		e->counters.usage += USAGE_EXEC(total_time);
 
 		SpinLockRelease(&e->mutex);
@@ -1163,8 +1163,8 @@ pg_stat_statements(PG_FUNCTION_ARGS)
 		values[i++] = Int64GetDatumFast(tmp.temp_blks_written);
 		if (sql_supports_v1_1_counters)
 		{
-			values[i++] = Float8GetDatumFast(tmp.time_read);
-			values[i++] = Float8GetDatumFast(tmp.time_write);
+			values[i++] = Float8GetDatumFast(tmp.blk_read_time);
+			values[i++] = Float8GetDatumFast(tmp.blk_write_time);
 		}
 
 		Assert(i == (sql_supports_v1_1_counters ?

@@ -233,8 +233,8 @@ typedef struct PgStat_MsgTabstat
 	int			m_nentries;
 	int			m_xact_commit;
 	int			m_xact_rollback;
-	PgStat_Counter	  m_block_time_read;
-	PgStat_Counter	  m_block_time_write;
+	PgStat_Counter	  m_block_read_time;
+	PgStat_Counter	  m_block_write_time;
 	PgStat_TableEntry m_entry[PGSTAT_NUM_TABENTRIES];
 } PgStat_MsgTabstat;
 
@@ -540,8 +540,8 @@ typedef struct PgStat_StatDBEntry
 	PgStat_Counter n_temp_files;
 	PgStat_Counter n_temp_bytes;
 	PgStat_Counter n_deadlocks;
-	PgStat_Counter n_block_time_read;		/* times in microseconds */
-	PgStat_Counter n_block_time_write;
+	PgStat_Counter n_block_read_time;		/* times in microseconds */
+	PgStat_Counter n_block_write_time;
 
 	TimestampTz stat_reset_timestamp;
 
@@ -732,8 +732,8 @@ extern PgStat_MsgBgWriter BgWriterStats;
 /*
  * Updated by pgstat_count_time_* macros.
  */
-extern PgStat_Counter pgStatBlockTimeRead;
-extern PgStat_Counter pgStatBlockTimeWrite;
+extern PgStat_Counter pgStatBlockReadTime;
+extern PgStat_Counter pgStatBlockWriteTime;
 
 /* ----------
  * Functions called from postmaster
@@ -831,9 +831,9 @@ extern void pgstat_initstats(Relation rel);
 			(rel)->pgstat_info->t_counts.t_blocks_hit++;			\
 	} while (0)
 #define pgstat_count_buffer_read_time(n)							\
-	pgStatBlockTimeRead += (n);
+	(pgStatBlockReadTime += (n))
 #define pgstat_count_buffer_write_time(n)							\
-	pgStatBlockTimeWrite += (n);
+	(pgStatBlockWriteTime += (n))
 
 extern void pgstat_count_heap_insert(Relation rel, int n);
 extern void pgstat_count_heap_update(Relation rel, bool hot);

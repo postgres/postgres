@@ -839,13 +839,13 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      <entry>Number of deadlocks detected in this database</entry>
     </row>
     <row>
-     <entry><structfield>block_read_time</></entry>
+     <entry><structfield>blk_read_time</></entry>
      <entry><type>bigint</></entry>
      <entry>Time spent reading data file blocks by backends in this database,
       in milliseconds</entry>
     </row>
     <row>
-     <entry><structfield>block_write_time</></entry>
+     <entry><structfield>blk_write_time</></entry>
      <entry><type>bigint</></entry>
      <entry>Time spent writing data file blocks by backends in this database,
       in milliseconds</entry>
@@ -1709,8 +1709,6 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
       <entry><literal><function>pg_stat_get_backend_start(integer)</function></literal></entry>
       <entry><type>timestamp with time zone</type></entry>
       <entry>Time when this process was started</entry>
-      <entry>
-      </entry>
      </row>
 
      <row>

@@ -197,8 +197,8 @@ static PgStat_SubXactStatus *pgStatXactStack = NULL;
 
 static int	pgStatXactCommit = 0;
 static int	pgStatXactRollback = 0;
-PgStat_Counter pgStatBlockTimeRead = 0;
-PgStat_Counter pgStatBlockTimeWrite = 0;
+PgStat_Counter pgStatBlockReadTime = 0;
+PgStat_Counter pgStatBlockWriteTime = 0;
 
 /* Record that's written to 2PC state file when pgstat state is persisted */
 typedef struct TwoPhasePgStatRecord
@@ -791,19 +791,19 @@ pgstat_send_tabstat(PgStat_MsgTabstat *tsmsg)
 	{
 		tsmsg->m_xact_commit = pgStatXactCommit;
 		tsmsg->m_xact_rollback = pgStatXactRollback;
-		tsmsg->m_block_time_read = pgStatBlockTimeRead;
-		tsmsg->m_block_time_write = pgStatBlockTimeWrite;
+		tsmsg->m_block_read_time = pgStatBlockReadTime;
+		tsmsg->m_block_write_time = pgStatBlockWriteTime;
 		pgStatXactCommit = 0;
 		pgStatXactRollback = 0;
-		pgStatBlockTimeRead = 0;
-		pgStatBlockTimeWrite = 0;
+		pgStatBlockReadTime = 0;
+		pgStatBlockWriteTime = 0;
 	}
 	else
 	{
 		tsmsg->m_xact_commit = 0;
 		tsmsg->m_xact_rollback = 0;
-		tsmsg->m_block_time_read = 0;
-		tsmsg->m_block_time_write = 0;
+		tsmsg->m_block_read_time = 0;
+		tsmsg->m_block_write_time = 0;
 	}
 
 	n = tsmsg->m_nentries;
@@ -3360,8 +3360,8 @@ pgstat_get_db_entry(Oid databaseid, bool create)
 		result->n_temp_files = 0;
 		result->n_temp_bytes = 0;
 		result->n_deadlocks = 0;
-		result->n_block_time_read = 0;
-		result->n_block_time_write = 0;
+		result->n_block_read_time = 0;
+		result->n_block_write_time = 0;
 
 		result->stat_reset_timestamp = GetCurrentTimestamp();
 
@@ -4080,8 +4080,8 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 	 */
 	dbentry->n_xact_commit += (PgStat_Counter) (msg->m_xact_commit);
 	dbentry->n_xact_rollback += (PgStat_Counter) (msg->m_xact_rollback);
-	dbentry->n_block_time_read += msg->m_block_time_read;
-	dbentry->n_block_time_write += msg->m_block_time_write;
+	dbentry->n_block_read_time += msg->m_block_read_time;
+	dbentry->n_block_write_time += msg->m_block_write_time;
 
 	/*
 	 * Process all table entries in the message.
@@ -4278,8 +4278,8 @@ pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len)
 	dbentry->n_temp_bytes = 0;
 	dbentry->n_temp_files = 0;
 	dbentry->n_deadlocks = 0;
-	dbentry->n_block_time_read = 0;
-	dbentry->n_block_time_write = 0;
+	dbentry->n_block_read_time = 0;
+	dbentry->n_block_write_time = 0;
 
 	dbentry->stat_reset_timestamp = GetCurrentTimestamp();
 

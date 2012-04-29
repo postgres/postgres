@@ -29,8 +29,8 @@ CREATE FUNCTION pg_stat_statements(
     OUT local_blks_written int8,
     OUT temp_blks_read int8,
     OUT temp_blks_written int8,
-    OUT time_read float8,
-    OUT time_write float8
+    OUT blk_read_time float8,
+    OUT blk_write_time float8
 )
 RETURNS SETOF record
 AS 'MODULE_PATHNAME'
