@@ -655,14 +655,14 @@ extern PGDLLIMPORT bool assert_enabled;
 /*
  *	TrapMacro is the same as Trap but it's intended for use in macros:
  *
- *		#define foo(x) (AssertMacro(x != 0) && bar(x))
+ *		#define foo(x) (AssertMacro(x != 0), bar(x))
  *
  *	Isn't CPP fun?
  */
 #define TrapMacro(condition, errorType) \
 	((bool) ((! assert_enabled) || ! (condition) || \
 			 (ExceptionalCondition(CppAsString(condition), (errorType), \
-								   __FILE__, __LINE__))))
+								   __FILE__, __LINE__), 0)))
 
 #ifndef USE_ASSERT_CHECKING
 #define Assert(condition)
@@ -683,8 +683,8 @@ extern PGDLLIMPORT bool assert_enabled;
 		Trap(!(condition), "BadState")
 #endif   /* USE_ASSERT_CHECKING */
 
-extern int ExceptionalCondition(const char *conditionName,
+extern void ExceptionalCondition(const char *conditionName,
 					 const char *errorType,
-					 const char *fileName, int lineNumber);
+					 const char *fileName, int lineNumber) __attribute__((noreturn));
 
 #endif   /* POSTGRES_H */
