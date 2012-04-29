@@ -53,8 +53,7 @@ libpgport.a: $(OBJS)
 	$(AR) $(AROPT) $@ $^
 
 # thread.o needs PTHREAD_CFLAGS (but thread_srv.o does not)
-thread.o: thread.c
-	$(CC) $(CFLAGS) $(CPPFLAGS) $(PTHREAD_CFLAGS) -c $<
+thread.o: CFLAGS+=$(PTHREAD_CFLAGS)
 
 #
 # Server versions of object files
