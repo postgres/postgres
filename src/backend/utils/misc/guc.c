@@ -1019,11 +1019,11 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
-		{"track_iotiming", PGC_SUSET, STATS_COLLECTOR,
-			gettext_noop("Collects timing information for database IO activity."),
+		{"track_io_timing", PGC_SUSET, STATS_COLLECTOR,
+			gettext_noop("Collects timing statistics for database I/O activity."),
 			NULL
 		},
-		&track_iotiming,
+		&track_io_timing,
 		false,
 		NULL, NULL, NULL
 	},

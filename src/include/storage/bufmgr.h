@@ -48,7 +48,7 @@ extern PGDLLIMPORT int NBuffers;
 extern bool zero_damaged_pages;
 extern int	bgwriter_lru_maxpages;
 extern double bgwriter_lru_multiplier;
-extern bool track_iotiming;
+extern bool track_io_timing;
 extern int	target_prefetch_pages;
 
 /* in buf_init.c */

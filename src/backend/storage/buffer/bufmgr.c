@@ -67,7 +67,7 @@
 bool		zero_damaged_pages = false;
 int			bgwriter_lru_maxpages = 100;
 double		bgwriter_lru_multiplier = 2.0;
-bool		track_iotiming = false;
+bool		track_io_timing = false;
 
 /*
  * How many buffers PrefetchBuffer callers should try to stay ahead of their
@@ -441,12 +441,12 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 			instr_time	io_start,
 						io_time;
 
-			if (track_iotiming)
+			if (track_io_timing)
 				INSTR_TIME_SET_CURRENT(io_start);
 
 			smgrread(smgr, forkNum, blockNum, (char *) bufBlock);
 
-			if (track_iotiming)
+			if (track_io_timing)
 			{
 				INSTR_TIME_SET_CURRENT(io_time);
 				INSTR_TIME_SUBTRACT(io_time, io_start);
@@ -1938,7 +1938,7 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 	buf->flags &= ~BM_JUST_DIRTIED;
 	UnlockBufHdr(buf);
 
-	if (track_iotiming)
+	if (track_io_timing)
 		INSTR_TIME_SET_CURRENT(io_start);
 
 	smgrwrite(reln,
@@ -1947,7 +1947,7 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 			  (char *) BufHdrGetBlock(buf),
 			  false);
 
-	if (track_iotiming)
+	if (track_io_timing)
 	{
 		INSTR_TIME_SET_CURRENT(io_time);
 		INSTR_TIME_SUBTRACT(io_time, io_start);

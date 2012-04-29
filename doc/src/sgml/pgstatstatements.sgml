@@ -161,7 +161,7 @@
       <entry></entry>
       <entry>
         Total time the statement spent reading blocks, in milliseconds
-        (if <xref linkend="guc-track-iotiming"> is enabled, otherwise zero)
+        (if <xref linkend="guc-track-io-timing"> is enabled, otherwise zero)
       </entry>
      </row>
 
@@ -171,7 +171,7 @@
       <entry></entry>
       <entry>
         Total time the statement spent writing blocks, in milliseconds
-        (if <xref linkend="guc-track-iotiming"> is enabled, otherwise zero)
+        (if <xref linkend="guc-track-io-timing"> is enabled, otherwise zero)
       </entry>
      </row>
 

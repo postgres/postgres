@@ -4288,10 +4288,10 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-track-iotiming" xreflabel="track_iotiming">
-      <term><varname>track_iotiming</varname> (<type>boolean</type>)</term>
+     <varlistentry id="guc-track-io-timing" xreflabel="track_io_timing">
+      <term><varname>track_io_timing</varname> (<type>boolean</type>)</term>
       <indexterm>
-       <primary><varname>track_iotiming</> configuration parameter</primary>
+       <primary><varname>track_io_timing</> configuration parameter</primary>
       </indexterm>
       <listitem>
        <para>
@@ -4299,7 +4299,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         default, because it will repeatedly query the operating system for
         the current time, which may cause significant overhead on some
         platforms.  You can use the <xref linkend="pgtesttiming"> tool to
-        measure the overhead of timing on your system.  Timing information is
+        measure the overhead of timing on your system.
+        I/O timing information is
         displayed in <xref linkend="pg-stat-database-view">, in the output of
         <xref linkend="sql-explain"> when the <literal>BUFFERS</> option is
         used, and by <xref linkend="pgstatstatements">.  Only superusers can

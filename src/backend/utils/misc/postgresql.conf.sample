@@ -425,7 +425,7 @@
 
 #track_activities = on
 #track_counts = on
-#track_iotiming = off
+#track_io_timing = off
 #track_functions = none			# none, pl, all
 #track_activity_query_size = 1024 	# (change requires restart)
 #update_process_title = on

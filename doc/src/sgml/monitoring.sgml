@@ -155,7 +155,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   </para>
 
   <para>
-   The parameter <xref linkend="guc-track-iotiming"> enables monitoring
+   The parameter <xref linkend="guc-track-io-timing"> enables monitoring
    of block read and write times.
   </para>
 
