@@ -331,7 +331,7 @@ extern void EmitErrorReport(void);
 extern ErrorData *CopyErrorData(void);
 extern void FreeErrorData(ErrorData *edata);
 extern void FlushErrorState(void);
-extern void ReThrowError(ErrorData *edata);
+extern void ReThrowError(ErrorData *edata) __attribute__((noreturn));
 extern void pg_re_throw(void) __attribute__((noreturn));
 
 /* Hook for intercepting messages before they are sent to the server log */
