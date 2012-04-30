@@ -1909,7 +1909,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch)
 /*
  * Record the LSN for an asynchronous transaction commit/abort
  * and nudge the WALWriter if there is a complete page to write.
- * (This should not be called for for synchronous commits.)
+ * (This should not be called for synchronous commits.)
  */
 void
 XLogSetAsyncXactLSN(XLogRecPtr asyncXactLSN)
