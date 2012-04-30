@@ -20,6 +20,12 @@
 <xsl:param name="chunk.quietly" select="1"></xsl:param>
 
 
+<!-- Change display of some elements -->
+
+<xsl:template match="command">
+  <xsl:call-template name="inline.monoseq"/>
+</xsl:template>
+
 <!--
   Format multiple terms in varlistentry vertically, instead
   of comma-separated.

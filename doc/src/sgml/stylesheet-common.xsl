@@ -42,10 +42,6 @@
 
 <!-- Change display of some elements -->
 
-<xsl:template match="command">
-  <xsl:call-template name="inline.monoseq"/>
-</xsl:template>
-
 <xsl:template match="productname">
   <xsl:call-template name="inline.charseq"/>
 </xsl:template>
