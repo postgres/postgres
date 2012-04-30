@@ -21,6 +21,12 @@
 # we sort a merged commit according to its timestamp on the newest branch
 # it appears in.
 #
+# Typical usage to generate major release notes:
+#   pggitlog --since '2010-07-09 00:00:00' --master-only --oldest-first --details-after
+#
+# To find the branch start date, use:
+#   pggit show $(git merge-base REL9_0_STABLE master)
+
 
 use strict;
 use warnings;
