@@ -848,8 +848,8 @@ pgstat_send_funcstats(void)
 		m_ent = &msg.m_entry[msg.m_nentries];
 		m_ent->f_id = entry->f_id;
 		m_ent->f_numcalls = entry->f_counts.f_numcalls;
-		m_ent->f_time = INSTR_TIME_GET_MICROSEC(entry->f_counts.f_time);
-		m_ent->f_time_self = INSTR_TIME_GET_MICROSEC(entry->f_counts.f_time_self);
+		m_ent->f_total_time = INSTR_TIME_GET_MICROSEC(entry->f_counts.f_total_time);
+		m_ent->f_self_time = INSTR_TIME_GET_MICROSEC(entry->f_counts.f_self_time);
 
 		if (++msg.m_nentries >= PGSTAT_NUM_FUNCENTRIES)
 		{
@@ -1467,7 +1467,7 @@ pgstat_init_function_usage(FunctionCallInfoData *fcinfo,
 	fcu->fs = &htabent->f_counts;
 
 	/* save stats for this function, later used to compensate for recursion */
-	fcu->save_f_time = htabent->f_counts.f_time;
+	fcu->save_f_total_time = htabent->f_counts.f_total_time;
 
 	/* save current backend-wide total time */
 	fcu->save_total = total_func_time;
@@ -1528,19 +1528,19 @@ pgstat_end_function_usage(PgStat_FunctionCallUsage *fcu, bool finalize)
 	INSTR_TIME_ADD(total_func_time, f_self);
 
 	/*
-	 * Compute the new total f_time as the total elapsed time added to the
-	 * pre-call value of f_time.  This is necessary to avoid double-counting
-	 * any time taken by recursive calls of myself.  (We do not need any
-	 * similar kluge for self time, since that already excludes any recursive
-	 * calls.)
+	 * Compute the new f_total_time as the total elapsed time added to the
+	 * pre-call value of f_total_time.  This is necessary to avoid
+	 * double-counting any time taken by recursive calls of myself.  (We do
+	 * not need any similar kluge for self time, since that already excludes
+	 * any recursive calls.)
 	 */
-	INSTR_TIME_ADD(f_total, fcu->save_f_time);
+	INSTR_TIME_ADD(f_total, fcu->save_f_total_time);
 
 	/* update counters in function stats table */
 	if (finalize)
 		fs->f_numcalls++;
-	fs->f_time = f_total;
-	INSTR_TIME_ADD(fs->f_time_self, f_self);
+	fs->f_total_time = f_total;
+	INSTR_TIME_ADD(fs->f_self_time, f_self);
 
 	/* indicate that we have something to send */
 	have_function_stats = true;
@@ -4573,8 +4573,8 @@ pgstat_recv_funcstat(PgStat_MsgFuncstat *msg, int len)
 			 * we just got.
 			 */
 			funcentry->f_numcalls = funcmsg->f_numcalls;
-			funcentry->f_time = funcmsg->f_time;
-			funcentry->f_time_self = funcmsg->f_time_self;
+			funcentry->f_total_time = funcmsg->f_total_time;
+			funcentry->f_self_time = funcmsg->f_self_time;
 		}
 		else
 		{
@@ -4582,8 +4582,8 @@ pgstat_recv_funcstat(PgStat_MsgFuncstat *msg, int len)
 			 * Otherwise add the values to the existing entry.
 			 */
 			funcentry->f_numcalls += funcmsg->f_numcalls;
-			funcentry->f_time += funcmsg->f_time;
-			funcentry->f_time_self += funcmsg->f_time_self;
+			funcentry->f_total_time += funcmsg->f_total_time;
+			funcentry->f_self_time += funcmsg->f_self_time;
 		}
 	}
 }

@@ -7511,7 +7511,6 @@ LogCheckpointEnd(bool restartpoint)
 
 	CheckpointStats.ckpt_end_t = GetCurrentTimestamp();
 
-
 	TimestampDifference(CheckpointStats.ckpt_write_t,
 						CheckpointStats.ckpt_sync_t,
 						&write_secs, &write_usecs);
@@ -7520,7 +7519,7 @@ LogCheckpointEnd(bool restartpoint)
 						CheckpointStats.ckpt_sync_end_t,
 						&sync_secs, &sync_usecs);
 
-	/* Record checkpoint timing summary data. */
+	/* Accumulate checkpoint timing summary data, in milliseconds. */
 	BgWriterStats.m_checkpoint_write_time +=
 		write_secs * 1000 + write_usecs / 1000;
 	BgWriterStats.m_checkpoint_sync_time +=

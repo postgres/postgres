@@ -2662,10 +2662,10 @@ DATA(insert OID = 3150 (  pg_stat_get_db_temp_files PGNSP PGUID 12 1 0 0 0 f f f
 DESCR("statistics: number of temporary files written");
 DATA(insert OID = 3151 (  pg_stat_get_db_temp_bytes PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_db_temp_bytes _null_ _null_ _null_ ));
 DESCR("statistics: number of bytes in temporary files written");
-DATA(insert OID = 2844 (  pg_stat_get_db_blk_read_time	PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_db_blk_read_time _null_ _null_ _null_ ));
-DESCR("statistics: block read time in microseconds");
-DATA(insert OID = 2845 (  pg_stat_get_db_blk_write_time	PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_db_blk_write_time _null_ _null_ _null_ ));
-DESCR("statistics: block write time in microseconds");
+DATA(insert OID = 2844 (  pg_stat_get_db_blk_read_time	PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 701 "26" _null_ _null_ _null_ _null_ pg_stat_get_db_blk_read_time _null_ _null_ _null_ ));
+DESCR("statistics: block read time, in msec");
+DATA(insert OID = 2845 (  pg_stat_get_db_blk_write_time	PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 701 "26" _null_ _null_ _null_ _null_ pg_stat_get_db_blk_write_time _null_ _null_ _null_ ));
+DESCR("statistics: block write time, in msec");
 DATA(insert OID = 2769 ( pg_stat_get_bgwriter_timed_checkpoints PGNSP PGUID 12 1 0 0 0 f f f f t f s 0 0 20 "" _null_ _null_ _null_ _null_ pg_stat_get_bgwriter_timed_checkpoints _null_ _null_ _null_ ));
 DESCR("statistics: number of timed checkpoints started by the bgwriter");
 DATA(insert OID = 2770 ( pg_stat_get_bgwriter_requested_checkpoints PGNSP PGUID 12 1 0 0 0 f f f f t f s 0 0 20 "" _null_ _null_ _null_ _null_ pg_stat_get_bgwriter_requested_checkpoints _null_ _null_ _null_ ));
@@ -2678,10 +2678,10 @@ DATA(insert OID = 2773 ( pg_stat_get_bgwriter_maxwritten_clean PGNSP PGUID 12 1 
 DESCR("statistics: number of times the bgwriter stopped processing when it had written too many buffers while cleaning");
 DATA(insert OID = 3075 ( pg_stat_get_bgwriter_stat_reset_time PGNSP PGUID 12 1 0 0 0 f f f f t f s 0 0 1184 "" _null_ _null_ _null_ _null_	pg_stat_get_bgwriter_stat_reset_time _null_ _null_ _null_ ));
 DESCR("statistics: last reset for the bgwriter");
-DATA(insert OID = 3160 ( pg_stat_get_checkpoint_write_time PGNSP PGUID 12 1 0 0 0 f f f f t f s 0 0 20 "" _null_ _null_ _null_ _null_ pg_stat_get_checkpoint_write_time _null_ _null_ _null_ ));
-DESCR("statistics: total amount of checkpoint time spent writing buffers to disk");
-DATA(insert OID = 3161 ( pg_stat_get_checkpoint_sync_time PGNSP PGUID 12 1 0 0 0 f f f f t f s 0 0 20 "" _null_ _null_ _null_ _null_ pg_stat_get_checkpoint_sync_time _null_ _null_ _null_ ));
-DESCR("statistics: total amount of checkpoint time spent synchronizing buffers to disk");
+DATA(insert OID = 3160 ( pg_stat_get_checkpoint_write_time PGNSP PGUID 12 1 0 0 0 f f f f t f s 0 0 701 "" _null_ _null_ _null_ _null_ pg_stat_get_checkpoint_write_time _null_ _null_ _null_ ));
+DESCR("statistics: checkpoint time spent writing buffers to disk, in msec");
+DATA(insert OID = 3161 ( pg_stat_get_checkpoint_sync_time PGNSP PGUID 12 1 0 0 0 f f f f t f s 0 0 701 "" _null_ _null_ _null_ _null_ pg_stat_get_checkpoint_sync_time _null_ _null_ _null_ ));
+DESCR("statistics: checkpoint time spent synchronizing buffers to disk, in msec");
 DATA(insert OID = 2775 ( pg_stat_get_buf_written_backend PGNSP PGUID 12 1 0 0 0 f f f f t f s 0 0 20 "" _null_ _null_ _null_ _null_ pg_stat_get_buf_written_backend _null_ _null_ _null_ ));
 DESCR("statistics: number of buffers written by backends");
 DATA(insert OID = 3063 ( pg_stat_get_buf_fsync_backend PGNSP PGUID 12 1 0 0 0 f f f f t f s 0 0 20 "" _null_ _null_ _null_ _null_ pg_stat_get_buf_fsync_backend _null_ _null_ _null_ ));
@@ -2691,10 +2691,10 @@ DESCR("statistics: number of buffer allocations");
 
 DATA(insert OID = 2978 (  pg_stat_get_function_calls		PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_function_calls _null_ _null_ _null_ ));
 DESCR("statistics: number of function calls");
-DATA(insert OID = 2979 (  pg_stat_get_function_time			PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_function_time _null_ _null_ _null_ ));
-DESCR("statistics: execution time of function");
-DATA(insert OID = 2980 (  pg_stat_get_function_self_time	PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_function_self_time _null_ _null_ _null_ ));
-DESCR("statistics: self execution time of function");
+DATA(insert OID = 2979 (  pg_stat_get_function_total_time	PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 701 "26" _null_ _null_ _null_ _null_ pg_stat_get_function_total_time _null_ _null_ _null_ ));
+DESCR("statistics: total execution time of function, in msec");
+DATA(insert OID = 2980 (  pg_stat_get_function_self_time	PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 701 "26" _null_ _null_ _null_ _null_ pg_stat_get_function_self_time _null_ _null_ _null_ ));
+DESCR("statistics: self execution time of function, in msec");
 
 DATA(insert OID = 3037 (  pg_stat_get_xact_numscans				PGNSP PGUID 12 1 0 0 0 f f f f t f v 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_xact_numscans _null_ _null_ _null_ ));
 DESCR("statistics: number of scans done for table/index in current transaction");
@@ -2716,10 +2716,10 @@ DATA(insert OID = 3045 (  pg_stat_get_xact_blocks_hit			PGNSP PGUID 12 1 0 0 0 f
 DESCR("statistics: number of blocks found in cache in current transaction");
 DATA(insert OID = 3046 (  pg_stat_get_xact_function_calls		PGNSP PGUID 12 1 0 0 0 f f f f t f v 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_xact_function_calls _null_ _null_ _null_ ));
 DESCR("statistics: number of function calls in current transaction");
-DATA(insert OID = 3047 (  pg_stat_get_xact_function_time		PGNSP PGUID 12 1 0 0 0 f f f f t f v 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_xact_function_time _null_ _null_ _null_ ));
-DESCR("statistics: execution time of function in current transaction");
-DATA(insert OID = 3048 (  pg_stat_get_xact_function_self_time	PGNSP PGUID 12 1 0 0 0 f f f f t f v 1 0 20 "26" _null_ _null_ _null_ _null_ pg_stat_get_xact_function_self_time _null_ _null_ _null_ ));
-DESCR("statistics: self execution time of function in current transaction");
+DATA(insert OID = 3047 (  pg_stat_get_xact_function_total_time	PGNSP PGUID 12 1 0 0 0 f f f f t f v 1 0 701 "26" _null_ _null_ _null_ _null_ pg_stat_get_xact_function_total_time _null_ _null_ _null_ ));
+DESCR("statistics: total execution time of function in current transaction, in msec");
+DATA(insert OID = 3048 (  pg_stat_get_xact_function_self_time	PGNSP PGUID 12 1 0 0 0 f f f f t f v 1 0 701 "26" _null_ _null_ _null_ _null_ pg_stat_get_xact_function_self_time _null_ _null_ _null_ ));
+DESCR("statistics: self execution time of function in current transaction, in msec");
 
 DATA(insert OID = 2230 (  pg_stat_clear_snapshot		PGNSP PGUID 12 1 0 0 0 f f f f f f v 0 0 2278 "" _null_ _null_ _null_ _null_	pg_stat_clear_snapshot _null_ _null_ _null_ ));
 DESCR("statistics: discard current transaction's statistics snapshot");

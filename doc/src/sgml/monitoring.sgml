@@ -665,7 +665,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
      <row>
       <entry><structfield>checkpoint_write_time</></entry>
-      <entry><type>bigint</type></entry>
+      <entry><type>double precision</type></entry>
       <entry>
         Total amount of time that has been spent in the portion of
         checkpoint processing where files are written to disk, in milliseconds
@@ -673,7 +673,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
      <row>
       <entry><structfield>checkpoint_sync_time</></entry>
-      <entry><type>bigint</type></entry>
+      <entry><type>double precision</type></entry>
       <entry>
         Total amount of time that has been spent in the portion of
         checkpoint processing where files are synchronized to disk, in
@@ -840,13 +840,13 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
     </row>
     <row>
      <entry><structfield>blk_read_time</></entry>
-     <entry><type>bigint</></entry>
+     <entry><type>double precision</></entry>
      <entry>Time spent reading data file blocks by backends in this database,
       in milliseconds</entry>
     </row>
     <row>
      <entry><structfield>blk_write_time</></entry>
-     <entry><type>bigint</></entry>
+     <entry><type>double precision</></entry>
      <entry>Time spent writing data file blocks by backends in this database,
       in milliseconds</entry>
     </row>
@@ -1318,13 +1318,13 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
     </row>
     <row>
      <entry><structfield>total_time</></entry>
-     <entry><type>bigint</></entry>
+     <entry><type>double precision</></entry>
      <entry>Total time spent in this function and all other functions
      called by it, in milliseconds</entry>
     </row>
     <row>
      <entry><structfield>self_time</></entry>
-     <entry><type>bigint</></entry>
+     <entry><type>double precision</></entry>
      <entry>Total time spent in this function itself, not including
      other functions called by it, in milliseconds</entry>
     </row>
@@ -1534,8 +1534,6 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    The functions for per-function statistics take a function OID.
    Note that only tables, indexes, and functions in the current database
    can be seen with these functions.
-   It should also be noted that while the views present timing values in
-   milliseconds, the underlying functions report timings in microseconds.
   </para>
 
   <para>

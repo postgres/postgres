@@ -45,7 +45,7 @@ extern Datum pg_stat_get_analyze_count(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_autoanalyze_count(PG_FUNCTION_ARGS);
 
 extern Datum pg_stat_get_function_calls(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_function_time(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_function_total_time(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_function_self_time(PG_FUNCTION_ARGS);
 
 extern Datum pg_stat_get_backend_idset(PG_FUNCTION_ARGS);
@@ -108,7 +108,7 @@ extern Datum pg_stat_get_xact_blocks_fetched(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_xact_blocks_hit(PG_FUNCTION_ARGS);
 
 extern Datum pg_stat_get_xact_function_calls(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_xact_function_time(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_xact_function_total_time(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_xact_function_self_time(PG_FUNCTION_ARGS);
 
 extern Datum pg_stat_clear_snapshot(PG_FUNCTION_ARGS);
@@ -439,14 +439,15 @@ pg_stat_get_function_calls(PG_FUNCTION_ARGS)
 }
 
 Datum
-pg_stat_get_function_time(PG_FUNCTION_ARGS)
+pg_stat_get_function_total_time(PG_FUNCTION_ARGS)
 {
 	Oid			funcid = PG_GETARG_OID(0);
 	PgStat_StatFuncEntry *funcentry;
 
 	if ((funcentry = pgstat_fetch_stat_funcentry(funcid)) == NULL)
 		PG_RETURN_NULL();
-	PG_RETURN_INT64(funcentry->f_time);
+	/* convert counter from microsec to millisec for display */
+	PG_RETURN_FLOAT8(((double) funcentry->f_total_time) / 1000.0);
 }
 
 Datum
@@ -457,7 +458,8 @@ pg_stat_get_function_self_time(PG_FUNCTION_ARGS)
 
 	if ((funcentry = pgstat_fetch_stat_funcentry(funcid)) == NULL)
 		PG_RETURN_NULL();
-	PG_RETURN_INT64(funcentry->f_time_self);
+	/* convert counter from microsec to millisec for display */
+	PG_RETURN_FLOAT8(((double) funcentry->f_self_time) / 1000.0);
 }
 
 Datum
@@ -1365,30 +1367,32 @@ Datum
 pg_stat_get_db_blk_read_time(PG_FUNCTION_ARGS)
 {
 	Oid			dbid = PG_GETARG_OID(0);
-	int64		result;
+	double		result;
 	PgStat_StatDBEntry *dbentry;
 
+	/* convert counter from microsec to millisec for display */
 	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
 		result = 0;
 	else
-		result = (int64) (dbentry->n_block_read_time);
+		result = ((double) dbentry->n_block_read_time) / 1000.0;
 
-	PG_RETURN_INT64(result);
+	PG_RETURN_FLOAT8(result);
 }
 
 Datum
 pg_stat_get_db_blk_write_time(PG_FUNCTION_ARGS)
 {
 	Oid			dbid = PG_GETARG_OID(0);
-	int64		result;
+	double		result;
 	PgStat_StatDBEntry *dbentry;
 
+	/* convert counter from microsec to millisec for display */
 	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
 		result = 0;
 	else
-		result = (int64) (dbentry->n_block_write_time);
+		result = ((double) dbentry->n_block_write_time) / 1000.0;
 
-	PG_RETURN_INT64(result);
+	PG_RETURN_FLOAT8(result);
 }
 
 Datum
@@ -1424,13 +1428,15 @@ pg_stat_get_bgwriter_maxwritten_clean(PG_FUNCTION_ARGS)
 Datum
 pg_stat_get_checkpoint_write_time(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_INT64(pgstat_fetch_global()->checkpoint_write_time);
+	/* time is already in msec, just convert to double for presentation */
+	PG_RETURN_FLOAT8((double) pgstat_fetch_global()->checkpoint_write_time);
 }
 
 Datum
 pg_stat_get_checkpoint_sync_time(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_INT64(pgstat_fetch_global()->checkpoint_sync_time);
+	/* time is already in msec, just convert to double for presentation */
+	PG_RETURN_FLOAT8((double) pgstat_fetch_global()->checkpoint_sync_time);
 }
 
 Datum
@@ -1622,14 +1628,14 @@ pg_stat_get_xact_function_calls(PG_FUNCTION_ARGS)
 }
 
 Datum
-pg_stat_get_xact_function_time(PG_FUNCTION_ARGS)
+pg_stat_get_xact_function_total_time(PG_FUNCTION_ARGS)
 {
 	Oid			funcid = PG_GETARG_OID(0);
 	PgStat_BackendFunctionEntry *funcentry;
 
 	if ((funcentry = find_funcstat_entry(funcid)) == NULL)
 		PG_RETURN_NULL();
-	PG_RETURN_INT64(INSTR_TIME_GET_MICROSEC(funcentry->f_counts.f_time));
+	PG_RETURN_FLOAT8(INSTR_TIME_GET_MILLISEC(funcentry->f_counts.f_total_time));
 }
 
 Datum
@@ -1640,7 +1646,7 @@ pg_stat_get_xact_function_self_time(PG_FUNCTION_ARGS)
 
 	if ((funcentry = find_funcstat_entry(funcid)) == NULL)
 		PG_RETURN_NULL();
-	PG_RETURN_INT64(INSTR_TIME_GET_MICROSEC(funcentry->f_counts.f_time_self));
+	PG_RETURN_FLOAT8(INSTR_TIME_GET_MILLISEC(funcentry->f_counts.f_self_time));
 }
 
 
