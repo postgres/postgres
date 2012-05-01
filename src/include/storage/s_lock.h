@@ -884,19 +884,6 @@ typedef int slock_t;
 #endif	 /* _AIX */
 
 
-#if defined (nextstep)		/* Nextstep */
-#define HAS_TEST_AND_SET
-
-typedef struct mutex slock_t;
-
-#define S_LOCK(lock)	mutex_lock(lock)
-#define S_UNLOCK(lock)	mutex_unlock(lock)
-#define S_INIT_LOCK(lock)	mutex_init(lock)
-/* For Mach, we have to delve inside the entrails of `struct mutex'.  Ick! */
-#define S_LOCK_FREE(alock)	((alock)->lock == 0)
-#endif	 /* nextstep */
-
-
 /* These are in s_lock.c */
 
 

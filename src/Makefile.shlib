@@ -268,10 +268,6 @@ ifeq ($(PORTNAME), solaris)
   endif
 endif
 
-ifeq ($(PORTNAME), sunos4)
-  LINK.shared		= $(LD) -assert pure-text -Bdynamic
-endif
-
 ifeq ($(PORTNAME), osf)
   LINK.shared		= $(LD) -shared -expect_unresolved '*'
 endif
@@ -286,14 +282,6 @@ ifeq ($(PORTNAME), sco)
   ifdef soname
     LINK.shared		+= -Wl,-h,$(soname)
   endif
-endif
-
-ifeq ($(PORTNAME), svr4)
-  LINK.shared		= $(LD) -G
-endif
-
-ifeq ($(PORTNAME), univel)
-  LINK.shared		= $(LD) -G -z text
 endif
 
 ifeq ($(PORTNAME), unixware)

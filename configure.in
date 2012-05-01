@@ -59,7 +59,6 @@ case $host_os in
   cygwin*) template=cygwin ;;
   darwin*) template=darwin ;;
 dragonfly*) template=netbsd ;;
-    dgux*) template=dgux ;;
  freebsd*) template=freebsd ;;
     hpux*) template=hpux ;;
     irix*) template=irix ;;
@@ -67,19 +66,11 @@ dragonfly*) template=netbsd ;;
            template=linux ;;
    mingw*) template=win32 ;;
   netbsd*) template=netbsd ;;
-nextstep*) template=nextstep ;;
  openbsd*) template=openbsd ;;
      osf*) template=osf ;;
      sco*) template=sco ;;
  solaris*) template=solaris ;;
-   sunos*) template=sunos4 ;;
- sysv4.2*)
-        case $host_vendor in
-          univel) template=univel ;;
-        esac ;;
-   sysv4*) template=svr4 ;;
    sysv5*) template=unixware ;;
-  ultrix*) template=ultrix4 ;;
 esac
 
   if test x"$template" = x"" ; then

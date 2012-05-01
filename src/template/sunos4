@@ -1,7 +1,0 @@
-if test "$GCC" != yes ; then
-  CC="$CC -Xa"			# relaxed ISO C mode
-  CFLAGS="-v -DSUNOS_CC"	# -v is like gcc -Wall
-  if test "$enable_debug" != yes; then
-    CFLAGS="$CFLAGS -O"		# any optimization breaks debug
-  fi
-fi

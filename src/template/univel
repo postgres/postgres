@@ -1,2 +1,0 @@
-CFLAGS="-v -O -K i486,host,inline,loop_unroll -Dsvr4"
-LIBS="-lc89"

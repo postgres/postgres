@@ -224,10 +224,6 @@ startup_hacks(const char *progname)
 	 */
 #ifdef NOFIXADE
 
-#if defined(ultrix4)
-	syscall(SYS_sysmips, MIPS_FIXADE, 0, NULL, NULL, NULL);
-#endif
-
 #if defined(__alpha)			/* no __alpha__ ? */
 	{
 		int			buffer[] = {SSIN_UACPROC, UAC_SIGBUS | UAC_NOPRINT};
