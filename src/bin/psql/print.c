@@ -44,6 +44,9 @@ static char *decimal_point;
 static char *grouping;
 static char *thousands_sep;
 
+static char	default_footer[100];
+static printTableFooter default_footer_cell = { default_footer, NULL };
+
 /* Line style control structures */
 const printTextFormat pg_asciiformat =
 {
@@ -278,6 +281,34 @@ print_separator(struct separator sep, FILE *fout)
 }
 
 
+/*
+ * Return the list of explicitly-requested footers or, when applicable, the
+ * default "(xx rows)" footer.  Always omit the default footer when given
+ * non-default footers, "\pset footer off", or a specific instruction to that
+ * effect from a calling backslash command.  Vertical formats number each row,
+ * making the default footer redundant; they do not call this function.
+ *
+ * The return value may point to static storage; do not keep it across calls.
+ */
+static printTableFooter *
+footers_with_default(const printTableContent *cont)
+{
+	if (cont->footers == NULL && cont->opt->default_footer)
+	{
+		unsigned long total_records;
+
+		total_records = cont->opt->prior_records + cont->nrows;
+		snprintf(default_footer, sizeof(default_footer),
+				 ngettext("(%lu row)", "(%lu rows)", total_records),
+				 total_records);
+
+		return &default_footer_cell;
+	}
+	else
+		return cont->footers;
+}
+
+
 /*************************/
 /* Unaligned text		 */
 /*************************/
@@ -340,11 +371,13 @@ print_unaligned_text(const printTableContent *cont, FILE *fout)
 	/* print footers */
 	if (cont->opt->stop_table)
 	{
-		if (!opt_tuples_only && cont->footers != NULL && !cancel_pressed)
+		printTableFooter *footers = footers_with_default(cont);
+
+		if (!opt_tuples_only && footers != NULL && !cancel_pressed)
 		{
 			printTableFooter *f;
 
-			for (f = cont->footers; f; f = f->next)
+			for (f = footers; f; f = f->next)
 			{
 				if (need_recordsep)
 				{
@@ -1034,16 +1067,18 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 
 	if (cont->opt->stop_table)
 	{
+		printTableFooter *footers = footers_with_default(cont);
+
 		if (opt_border == 2 && !cancel_pressed)
 			_print_horizontal_line(col_count, width_wrap, opt_border,
 								   PRINT_RULE_BOTTOM, format, fout);
 
 		/* print footers */
-		if (cont->footers && !opt_tuples_only && !cancel_pressed)
+		if (footers && !opt_tuples_only && !cancel_pressed)
 		{
 			printTableFooter *f;
 
-			for (f = cont->footers; f; f = f->next)
+			for (f = footers; f; f = f->next)
 				fprintf(fout, "%s\n", f->data);
 		}
 
@@ -1447,15 +1482,17 @@ print_html_text(const printTableContent *cont, FILE *fout)
 
 	if (cont->opt->stop_table)
 	{
+		printTableFooter *footers = footers_with_default(cont);
+
 		fputs("</table>\n", fout);
 
 		/* print footers */
-		if (!opt_tuples_only && cont->footers != NULL && !cancel_pressed)
+		if (!opt_tuples_only && footers != NULL && !cancel_pressed)
 		{
 			printTableFooter *f;
 
 			fputs("<p>", fout);
-			for (f = cont->footers; f; f = f->next)
+			for (f = footers; f; f = f->next)
 			{
 				html_escaped_print(f->data, fout);
 				fputs("<br />\n", fout);
@@ -1668,17 +1705,19 @@ print_latex_text(const printTableContent *cont, FILE *fout)
 
 	if (cont->opt->stop_table)
 	{
+		printTableFooter *footers = footers_with_default(cont);
+
 		if (opt_border == 2)
 			fputs("\\hline\n", fout);
 
 		fputs("\\end{tabular}\n\n\\noindent ", fout);
 
 		/* print footers */
-		if (cont->footers && !opt_tuples_only && !cancel_pressed)
+		if (footers && !opt_tuples_only && !cancel_pressed)
 		{
 			printTableFooter *f;
 
-			for (f = cont->footers; f; f = f->next)
+			for (f = footers; f; f = f->next)
 			{
 				latex_escaped_print(f->data, fout);
 				fputs(" \\\\\n", fout);
@@ -1871,14 +1910,16 @@ print_troff_ms_text(const printTableContent *cont, FILE *fout)
 
 	if (cont->opt->stop_table)
 	{
+		printTableFooter *footers = footers_with_default(cont);
+
 		fputs(".TE\n.DS L\n", fout);
 
 		/* print footers */
-		if (cont->footers && !opt_tuples_only && !cancel_pressed)
+		if (footers && !opt_tuples_only && !cancel_pressed)
 		{
 			printTableFooter *f;
 
-			for (f = cont->footers; f; f = f->next)
+			for (f = footers; f; f = f->next)
 			{
 				troff_ms_escaped_print(f->data, fout);
 				fputc('\n', fout);
@@ -2480,18 +2521,6 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *f
 
 		for (footer = opt->footers; *footer; footer++)
 			printTableAddFooter(&cont, *footer);
-	}
-	else if (!opt->topt.expanded && opt->default_footer)
-	{
-		unsigned long total_records;
-		char		default_footer[100];
-
-		total_records = opt->topt.prior_records + cont.nrows;
-		snprintf(default_footer, sizeof(default_footer),
-				 ngettext("(%lu row)", "(%lu rows)", total_records),
-				 total_records);
-
-		printTableAddFooter(&cont, default_footer);
 	}
 
 	printTable(&cont, fout, flog);

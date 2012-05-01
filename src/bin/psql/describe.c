@@ -1130,6 +1130,7 @@ describeOneTableDetails(const char *schemaname,
 
 	retval = false;
 
+	myopt.default_footer = false;
 	/* This output looks confusing in expanded mode. */
 	myopt.expanded = false;
 
@@ -2363,6 +2364,8 @@ describeRoles(const char *pattern, bool verbose)
 	const char	align = 'l';
 	char	  **attr;
 
+	myopt.default_footer = false;
+
 	initPQExpBuffer(&buf);
 
 	if (pset.sversion >= 80100)
@@ -3362,7 +3365,7 @@ describeOneTSParser(const char *oid, const char *nspname, const char *prsname)
 		sprintf(title, _("Text search parser \"%s\""), prsname);
 	myopt.title = title;
 	myopt.footers = NULL;
-	myopt.default_footer = false;
+	myopt.topt.default_footer = false;
 	myopt.translate_header = true;
 	myopt.translate_columns = translate_columns;
 
@@ -3393,7 +3396,7 @@ describeOneTSParser(const char *oid, const char *nspname, const char *prsname)
 		sprintf(title, _("Token types for parser \"%s\""), prsname);
 	myopt.title = title;
 	myopt.footers = NULL;
-	myopt.default_footer = true;
+	myopt.topt.default_footer = true;
 	myopt.translate_header = true;
 	myopt.translate_columns = NULL;
 
@@ -3725,7 +3728,7 @@ describeOneTSConfig(const char *oid, const char *nspname, const char *cfgname,
 	myopt.nullPrint = NULL;
 	myopt.title = title.data;
 	myopt.footers = NULL;
-	myopt.default_footer = false;
+	myopt.topt.default_footer = false;
 	myopt.translate_header = true;
 
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);

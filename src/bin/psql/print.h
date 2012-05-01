@@ -85,6 +85,7 @@ typedef struct printTableOpt
 	bool		tuples_only;	/* don't output headers, row counts, etc. */
 	bool		start_table;	/* print start decoration, eg <table> */
 	bool		stop_table;		/* print stop decoration, eg </table> */
+	bool		default_footer; /* allow "(xx rows)" default footer */
 	unsigned long prior_records;	/* start offset for record counters */
 	const printTextFormat *line_style;	/* line style (NULL for default) */
 	struct separator fieldSep;	/* field separator for unaligned text mode */
@@ -141,7 +142,6 @@ typedef struct printQueryOpt
 	bool		quote;			/* quote all values as much as possible */
 	char	   *title;			/* override title */
 	char	  **footers;		/* override footer (default is "(xx rows)") */
-	bool		default_footer; /* print default footer if footers==NULL */
 	bool		translate_header;		/* do gettext on column headers */
 	const bool *translate_columns;		/* translate_columns[i-1] => do
 										 * gettext on col i */

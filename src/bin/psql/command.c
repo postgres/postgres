@@ -2407,12 +2407,12 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 	else if (strcmp(param, "footer") == 0)
 	{
 		if (value)
-			popt->default_footer = ParseVariableBool(value);
+			popt->topt.default_footer = ParseVariableBool(value);
 		else
-			popt->default_footer = !popt->default_footer;
+			popt->topt.default_footer = !popt->topt.default_footer;
 		if (!quiet)
 		{
-			if (popt->default_footer)
+			if (popt->topt.default_footer)
 				puts(_("Default footer is on."));
 			else
 				puts(_("Default footer is off."));
