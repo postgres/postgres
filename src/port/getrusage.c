@@ -18,11 +18,9 @@
 #include "rusagestub.h"
 
 /* This code works on:
- *		univel
- *		solaris_i386
  *		sco
+ *		solaris_i386
  *		solaris_sparc
- *		svr4
  *		hpux 9.*
  *		win32
  * which currently is all the supported platforms that don't have a
