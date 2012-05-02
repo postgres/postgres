@@ -818,7 +818,7 @@ doPickSplit(Relation index, SpGistState *state,
 
 	/*
 	 * We may not actually insert new tuple because another picksplit may be
-	 * necessary due to too large value, but we will try to to allocate enough
+	 * necessary due to too large value, but we will try to allocate enough
 	 * space to include it; and in any case it has to be included in the input
 	 * for the picksplit function.  So don't increment nToInsert yet.
 	 */

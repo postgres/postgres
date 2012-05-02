@@ -283,7 +283,7 @@ ResolveRecoveryConflictWithTablespace(Oid tsid)
 	VirtualTransactionId *temp_file_users;
 
 	/*
-	 * Standby users may be currently using this tablespace for for their
+	 * Standby users may be currently using this tablespace for their
 	 * temporary files. We only care about current users because
 	 * temp_tablespace parameter will just ignore tablespaces that no longer
 	 * exist.

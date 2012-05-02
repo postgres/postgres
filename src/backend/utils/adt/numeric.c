@@ -3503,7 +3503,7 @@ get_str_from_var(NumericVar *var, int dscale)
 	/*
 	 * Allocate space for the result.
 	 *
-	 * i is set to to # of decimal digits before decimal point. dscale is the
+	 * i is set to the # of decimal digits before decimal point. dscale is the
 	 * # of decimal digits we will print after decimal point. We may generate
 	 * as many as DEC_DIGITS-1 excess digits at the end, and in addition we
 	 * need room for sign, decimal point, null terminator.

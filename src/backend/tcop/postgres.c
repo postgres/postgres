@@ -3021,7 +3021,7 @@ check_stack_depth(void)
 	long		stack_depth;
 
 	/*
-	 * Compute distance from reference point to to my local variables
+	 * Compute distance from reference point to my local variables
 	 */
 	stack_depth = (long) (stack_base_ptr - &stack_top_loc);
 
