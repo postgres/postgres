@@ -62,3 +62,15 @@ SELECT test_setof_as_iterator(2, 'list');
 SELECT test_setof_as_iterator(2, null);
 
 SELECT test_setof_spi_in_iterator();
+
+
+-- setof function with an SPI result set (used to crash because of
+-- memory management issues across multiple calls)
+
+CREATE OR REPLACE FUNCTION get_user_records()
+RETURNS SETOF users
+AS $$
+    return plpy.execute("SELECT * FROM users ORDER BY username")
+$$ LANGUAGE plpythonu;
+
+SELECT get_user_records();

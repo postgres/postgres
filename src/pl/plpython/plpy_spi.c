@@ -11,6 +11,7 @@
 #include "executor/spi_priv.h"
 #include "mb/pg_wchar.h"
 #include "parser/parse_type.h"
+#include "utils/memutils.h"
 #include "utils/syscache.h"
 
 #include "plpython.h"
@@ -403,7 +404,17 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, int rows, int status)
 		oldcontext = CurrentMemoryContext;
 		PG_TRY();
 		{
+			MemoryContext oldcontext2;
+
+			/*
+			 * Save tuple descriptor for later use by result set metadata
+			 * functions.  Save it in TopMemoryContext so that it survives
+			 * outside of an SPI context.  We trust that PLy_result_dealloc()
+			 * will clean it up when the time is right.
+			 */
+			oldcontext2 = MemoryContextSwitchTo(TopMemoryContext);
 			result->tupdesc = CreateTupleDescCopy(tuptable->tupdesc);
+			MemoryContextSwitchTo(oldcontext2);
 
 			if (rows)
 			{
