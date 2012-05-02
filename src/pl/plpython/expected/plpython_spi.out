@@ -1,4 +1,24 @@
 --
+-- result objects
+--
+CREATE FUNCTION test_resultobject_access() RETURNS void
+AS $$
+rv = plpy.execute("SELECT fname, lname, username FROM users ORDER BY username")
+plpy.info([row for row in rv])
+rv[1] = dict([(k, v*2) for (k, v) in rv[1].items()])
+plpy.info([row for row in rv])
+$$ LANGUAGE plpythonu;
+SELECT test_resultobject_access();
+INFO:  [{'lname': 'doe', 'username': 'j_doe', 'fname': 'jane'}, {'lname': 'doe', 'username': 'johnd', 'fname': 'john'}, {'lname': 'smith', 'username': 'slash', 'fname': 'rick'}, {'lname': 'doe', 'username': 'w_doe', 'fname': 'willem'}]
+CONTEXT:  PL/Python function "test_resultobject_access"
+INFO:  [{'lname': 'doe', 'username': 'j_doe', 'fname': 'jane'}, {'lname': 'doedoe', 'username': 'johndjohnd', 'fname': 'johnjohn'}, {'lname': 'smith', 'username': 'slash', 'fname': 'rick'}, {'lname': 'doe', 'username': 'w_doe', 'fname': 'willem'}]
+CONTEXT:  PL/Python function "test_resultobject_access"
+ test_resultobject_access 
+--------------------------
+ 
+(1 row)
+
+--
 -- nested calls
 --
 CREATE FUNCTION nested_call_one(a text) RETURNS text

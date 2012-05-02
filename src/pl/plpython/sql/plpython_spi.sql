@@ -1,4 +1,19 @@
 --
+-- result objects
+--
+
+CREATE FUNCTION test_resultobject_access() RETURNS void
+AS $$
+rv = plpy.execute("SELECT fname, lname, username FROM users ORDER BY username")
+plpy.info([row for row in rv])
+rv[1] = dict([(k, v*2) for (k, v) in rv[1].items()])
+plpy.info([row for row in rv])
+$$ LANGUAGE plpythonu;
+
+SELECT test_resultobject_access();
+
+
+--
 -- nested calls
 --
 
