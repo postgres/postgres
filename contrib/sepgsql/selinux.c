@@ -830,7 +830,7 @@ sepgsql_compute_avd(const char *scontext,
  * given security context.
  *
  * scontext: security context of the subject (mostly, peer process).
- * tcontext: security context of the the upper database object.
+ * tcontext: security context of the upper database object.
  * tclass: class code (SEPG_CLASS_*) of the new object in creation
  */
 char *

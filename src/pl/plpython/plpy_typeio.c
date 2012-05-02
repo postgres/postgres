@@ -267,7 +267,7 @@ PLy_output_record_funcs(PLyTypeInfo *arg, TupleDesc desc)
 
 	/*
 	 * it should change is_rowtype to 1, so we won't go through this again
-	 * unless the the output record description changes
+	 * unless the output record description changes
 	 */
 	Assert(arg->is_rowtype == 1);
 }
