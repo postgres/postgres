@@ -1009,7 +1009,7 @@ LogAccessExclusiveLockPrepare(void)
 	 * RecordTransactionAbort() do not optimise away the transaction
 	 * completion record which recovery relies upon to release locks. It's a
 	 * hack, but for a corner case not worth adding code for into the main
-	 * commit path. Second, must must assign an xid before the lock is
+	 * commit path. Second, we must assign an xid before the lock is
 	 * recorded in shared memory, otherwise a concurrently executing
 	 * GetRunningTransactionLocks() might see a lock associated with an
 	 * InvalidTransactionId which we later assert cannot happen.

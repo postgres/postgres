@@ -125,7 +125,7 @@ we get a disk layout like this:
 where the numbers are page numbers *at that level*, starting from 0.
 
 To find the physical block # corresponding to leaf page n, we need to
-count the number number of leaf and upper-level pages preceding page n.
+count the number of leaf and upper-level pages preceding page n.
 This turns out to be
 
 y = n + (n / F + 1) + (n / F^2 + 1) + ... + 1

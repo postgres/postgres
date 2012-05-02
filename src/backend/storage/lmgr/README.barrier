@@ -128,7 +128,7 @@ And the reader can do this:
 
 On machines with strong memory ordering, these weaker barriers will simply
 prevent compiler rearrangement, without emitting any actual machine code.
-On machines with weak memory ordering, they will will prevent compiler
+On machines with weak memory ordering, they will prevent compiler
 reordering and also emit whatever hardware barrier may be required.  Even
 on machines with weak memory ordering, a read or write barrier may be able
 to use a less expensive instruction than a full barrier.
