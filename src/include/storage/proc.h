@@ -180,7 +180,7 @@ typedef struct PROC_HDR
 {
 	/* Array of PGPROC structures (not including dummies for prepared txns) */
 	PGPROC	   *allProcs;
-	/* Array of PGXACT structures (not including dummies for prepared txns */
+	/* Array of PGXACT structures (not including dummies for prepared txns) */
 	PGXACT	   *allPgXact;
 	/* Length of allProcs array */
 	uint32		allProcCount;
