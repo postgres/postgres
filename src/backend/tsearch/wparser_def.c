@@ -2508,7 +2508,7 @@ prsd_headline(PG_FUNCTION_ARGS)
 	List	   *prsoptions = (List *) PG_GETARG_POINTER(1);
 	TSQuery		query = PG_GETARG_TSQUERY(2);
 
-	/* from opt + start and and tag */
+	/* from opt + start and end tag */
 	int			min_words = 15;
 	int			max_words = 35;
 	int			shortword = 3;

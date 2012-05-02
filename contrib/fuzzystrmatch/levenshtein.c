@@ -349,8 +349,8 @@ levenshtein_internal(text *s, text *t,
 			 * remaining portions of the strings are of equal length.  There
 			 * are (n - 1) characters in the target string, of which j have
 			 * been transformed.  There are (m - 1) characters in the source
-			 * string, so we want to find the value for zp where where (n - 1)
-			 * - j = (m - 1) - zp.
+			 * string, so we want to find the value for zp where (n - 1) - j =
+			 * (m - 1) - zp.
 			 */
 			int			zp = j - (n - m);
 
