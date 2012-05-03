@@ -56,24 +56,6 @@
 
   <variablelist>
    <varlistentry>
-    <term><systemitem class="osname">BSD/OS</></term>
-    <indexterm><primary>BSD/OS</><secondary>shared library</></>
-    <listitem>
-     <para>
-      The compiler flag to create <acronym>PIC</acronym> is
-      <option>-fpic</option>.  The linker flag to create shared
-      libraries is <option>-shared</option>.
-<programlisting>
-gcc -fpic -c foo.c
-ld -shared -o foo.so foo.o
-</programlisting>
-      This is applicable as of version 4.0 of
-      <systemitem class="osname">BSD/OS</>.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
     <term><systemitem class="osname">FreeBSD</></term>
     <indexterm><primary>FreeBSD</><secondary>shared library</></>
     <listitem>

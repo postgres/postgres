@@ -8,7 +8,7 @@
 # For this program to work, you must have compiled all binaries with
 # debugging symbols.
 #
-# This is run on BSD/OS 4.0 or Linux, so you may need to make changes.
+# This is run on Linux, so you may need to make changes.
 #
 # Ignore the nm errors about a file not being a binary file.
 #
@@ -52,11 +52,6 @@ do	# if objdump -W is recognized, only one line of error should appear
 		readelf -w "$DIR"/* |
 		egrep -A3 '\(DW_TAG_typedef\)' |
 		awk ' $1 == "DW_AT_name" {print $NF}'
-	else	# BSD/OS
-		# BSD/OS reports all typedefs, even those defined in system
-		# include files but never referenced in the PG code.
-		objdump --stabs "$DIR"/* |
-		awk ' $2 == "LSYM" && $7 ~ /:t/ {sub(":.*", "", $7); print $7}'
 	fi
 done |
 grep -v ' ' | # some typedefs have spaces, remove them

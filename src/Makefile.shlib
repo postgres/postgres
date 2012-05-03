@@ -157,19 +157,6 @@ ifeq ($(PORTNAME), openbsd)
   endif
 endif
 
-ifeq ($(PORTNAME), bsdi)
-  ifeq ($(DLSUFFIX), .so)
-    LINK.shared		= $(COMPILER) -shared
-    ifdef soname
-      LINK.shared	+= -Wl,-x,-soname,$(soname)
-    endif
-    SHLIB_LINK		+= -lc
-  endif
-  ifeq ($(DLSUFFIX), .o)
-    LINK.shared		= shlicc -O $(LDREL)
-  endif
-endif
-
 ifeq ($(PORTNAME), freebsd)
   ifdef ELF_SYSTEM
     ifdef SO_MAJOR_VERSION

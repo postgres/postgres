@@ -55,7 +55,6 @@ PGAC_ARG_REQ(with, template, [NAME], [override operating system template],
 
 case $host_os in
      aix*) template=aix ;;
-    bsdi*) template=bsdi ;;
   cygwin*) template=cygwin ;;
   darwin*) template=darwin ;;
 dragonfly*) template=netbsd ;;
@@ -1211,9 +1210,9 @@ AC_CHECK_FUNCS([cbrt dlopen fcvt fdatasync getifaddrs getpeerucred getrlimit mem
 
 AC_REPLACE_FUNCS(fseeko)
 case $host_os in
-	# BSD/OS & NetBSD use a custom fseeko/ftello built on fsetpos/fgetpos
+	# NetBSD uses a custom fseeko/ftello built on fsetpos/fgetpos
 	# Mingw uses macros to access Win32 API calls
-	bsdi*|netbsd*|mingw*)
+	netbsd*|mingw*)
 		AC_DEFINE(HAVE_FSEEKO, 1, [Define to 1 because replacement version used.])
 		ac_cv_func_fseeko=yes;;
 	*)

@@ -1622,8 +1622,8 @@ PostgreSQL, contrib and HTML documentation successfully made. Ready to install.
     On some systems with shared libraries
     you need to tell the system how to find the newly installed
     shared libraries.  The systems on which this is
-    <emphasis>not</emphasis> necessary include <systemitem
-    class="osname">BSD/OS</>, <systemitem class="osname">FreeBSD</>,
+    <emphasis>not</emphasis> necessary include 
+    <systemitem class="osname">FreeBSD</>,
     <systemitem class="osname">HP-UX</>, <systemitem
     class="osname">IRIX</>, <systemitem class="osname">Linux</>,
     <systemitem class="osname">NetBSD</>, <systemitem
@@ -1682,9 +1682,8 @@ libpq.so.2.1: cannot open shared object file: No such file or directory
     <indexterm>
      <primary>ldconfig</primary>
     </indexterm>
-    If you are on <systemitem class="osname">BSD/OS</>
-    or <systemitem class="osname">Linux</>, and you have root access you can
-    run:
+    If you are on <systemitem class="osname">Linux</> and you have root
+    access, you can run:
 <programlisting>
 /sbin/ldconfig /usr/local/pgsql/lib
 </programlisting>

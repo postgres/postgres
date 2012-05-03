@@ -741,47 +741,6 @@ psql: could not connect to server: No such file or directory
       </listitem>
      </varlistentry>
 
-     <varlistentry>
-      <term><systemitem class="osname">BSD/OS</></term>
-      <indexterm><primary>BSD/OS</><secondary>IPC configuration</></>
-      <listitem>
-       <formalpara>
-        <title>Shared Memory</title>
-        <para>
-         By default, only 4 MB of shared memory is supported. Keep in
-         mind that shared memory is not pageable; it is locked in RAM.
-         To increase the amount of shared memory supported by your
-         system, add something like the following to your kernel configuration
-         file:
-<programlisting>
-options "SHMALL=8192"
-options "SHMMAX=\(SHMALL*PAGE_SIZE\)"
-</programlisting>
-         <varname>SHMALL</> is measured in 4 kB pages, so a value of
-         1024 represents 4 MB of shared memory. Therefore the above increases
-         the maximum shared memory area to 32 MB.
-         For those running 4.3 or later, you will probably also need to increase
-         <varname>KERNEL_VIRTUAL_MB</> above the default <literal>248</>.
-         Once all changes have been made, recompile the kernel, and reboot.
-        </para>
-       </formalpara>
-
-       <formalpara>
-        <title>Semaphores</title>
-        <para>
-         You will probably want to increase the number of semaphores
-         as well; the default system total of 60 will only allow about
-         50 <productname>PostgreSQL</productname> connections.  Set the
-         values you want in your kernel configuration file, e.g.:
-<programlisting>
-options "SEMMNI=40"
-options "SEMMNS=240"
-</programlisting>
-        </para>
-       </formalpara>
-      </listitem>
-     </varlistentry>
-
 
      <varlistentry>
       <term><systemitem class="osname">FreeBSD</></term>

@@ -2190,7 +2190,6 @@ else
 
 case $host_os in
      aix*) template=aix ;;
-    bsdi*) template=bsdi ;;
   cygwin*) template=cygwin ;;
   darwin*) template=darwin ;;
 dragonfly*) template=netbsd ;;
@@ -19489,9 +19488,9 @@ done
 
 
 case $host_os in
-	# BSD/OS & NetBSD use a custom fseeko/ftello built on fsetpos/fgetpos
+	# NetBSD uses a custom fseeko/ftello built on fsetpos/fgetpos
 	# Mingw uses macros to access Win32 API calls
-	bsdi*|netbsd*|mingw*)
+	netbsd*|mingw*)
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_FSEEKO 1
