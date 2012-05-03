@@ -24,7 +24,7 @@ PostgreSQL documentation
    <command>createuser</command>
    <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
    <arg rep="repeat"><replaceable>option</replaceable></arg>
-   <arg><replaceable>username</replaceable></arg>
+   <arg choice="opt"><replaceable>username</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 

@@ -23,16 +23,16 @@ PostgreSQL documentation
   <cmdsynopsis>
    <command>clusterdb</command>
    <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
-   <group><arg><option>--verbose</option></arg><arg><option>-v</option></arg></group>
-   <arg><group choice="plain"><arg><option>--table</option></arg><arg><option>-t</option></arg></group> <replaceable>table</replaceable> </arg>
-   <arg><replaceable>dbname</replaceable></arg>
+   <group choice="opt"><arg choice="plain"><option>--verbose</option></arg><arg choice="plain"><option>-v</option></arg></group>
+   <arg choice="opt"><group choice="plain"><arg choice="plain"><option>--table</option></arg><arg choice="plain"><option>-t</option></arg></group> <replaceable>table</replaceable> </arg>
+   <arg choice="opt"><replaceable>dbname</replaceable></arg>
   </cmdsynopsis>
 
   <cmdsynopsis>
    <command>clusterdb</command>
    <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
-   <group><arg><option>--verbose</option></arg><arg><option>-v</option></arg></group>
-   <group><arg><option>--all</option></arg><arg><option>-a</option></arg></group>
+   <group choice="opt"><arg choice="plain"><option>--verbose</option></arg><arg choice="plain"><option>-v</option></arg></group>
+   <group choice="plain"><arg choice="plain"><option>--all</option></arg><arg choice="plain"><option>-a</option></arg></group>
   </cmdsynopsis>
  </refsynopsisdiv>
 

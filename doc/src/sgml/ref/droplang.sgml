@@ -24,14 +24,14 @@ PostgreSQL documentation
    <command>droplang</command>
    <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
    <arg choice="plain"><replaceable>langname</replaceable></arg>
-   <arg><replaceable>dbname</replaceable></arg>
+   <arg choice="opt"><replaceable>dbname</replaceable></arg>
   </cmdsynopsis>
 
   <cmdsynopsis>
    <command>droplang</command>
    <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
-   <group choice="plain"><arg><option>--list</option></arg><arg><option>-l</option></arg></group>
-   <arg choice="plain"><replaceable>dbname</replaceable></arg>
+   <group choice="plain"><arg choice="plain"><option>--list</option></arg><arg choice="plain"><option>-l</option></arg></group>
+   <arg choice="opt"><replaceable>dbname</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 

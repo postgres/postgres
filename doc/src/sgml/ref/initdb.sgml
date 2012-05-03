@@ -25,8 +25,8 @@ PostgreSQL documentation
    <arg rep="repeat"><replaceable>option</replaceable></arg>
    <group choice="plain">
     <group choice="opt">
-     <arg><option>--pgdata</option></arg>
-     <arg><option>-D</option></arg>
+     <arg choice="plain"><option>--pgdata</option></arg>
+     <arg choice="plain"><option>-D</option></arg>
     </group>
     <replaceable> directory</replaceable>
    </group>

@@ -22,8 +22,8 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>pg_controldata</command>
-   <arg><replaceable class="parameter">option</replaceable></arg>
-   <arg><replaceable class="parameter">datadir</replaceable></arg>
+   <arg choice="opt"><replaceable class="parameter">option</replaceable></arg>
+   <arg choice="opt"><replaceable class="parameter">datadir</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 

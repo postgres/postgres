@@ -1103,7 +1103,7 @@ SELECT sname, pname from supplier
             <arg choice="opt"> NATURAL </arg>
             <group choice="opt">
                 <arg choice="opt"> INNER </arg>
-                <arg>
+                <arg choice="plain">
                 <group choice="req">
                     <arg choice="plain"> LEFT </arg>
                     <arg choice="plain"> RIGHT </arg>
@@ -1115,8 +1115,8 @@ SELECT sname, pname from supplier
             <command> JOIN </command>
             <arg choice="req"> <replaceable class="parameter">T2</replaceable> </arg>
             <group choice="req">
-                <arg> ON <replaceable>search condition</replaceable></arg>
-                <arg> USING ( <replaceable>join column list</replaceable> ) </arg>
+                <arg choice="plain"> ON <replaceable>search condition</replaceable></arg>
+                <arg choice="plain"> USING ( <replaceable>join column list</replaceable> ) </arg>
             </group>
             </cmdsynopsis>
 
@@ -1141,7 +1141,7 @@ SELECT sname, pname from supplier
             <varlistentry>
                 <term>
                     <cmdsynopsis>
-                        <arg> INNER </arg>
+                        <arg choice="opt"> INNER </arg>
                         <command> JOIN </command>
                     </cmdsynopsis>
                 </term>
@@ -1163,7 +1163,7 @@ SELECT sname, pname from supplier
                 <term>
                     <cmdsynopsis>
                         <arg choice="plain"> LEFT </arg>
-                        <arg> OUTER </arg>
+                        <arg choice="opt"> OUTER </arg>
                         <command> JOIN </command>
                     </cmdsynopsis>
                 </term>
@@ -1185,7 +1185,7 @@ SELECT sname, pname from supplier
                 <term>
                     <cmdsynopsis>
                         <arg choice="plain"> RIGHT </arg>
-                        <arg> OUTER </arg>
+                        <arg choice="opt"> OUTER </arg>
                         <command> JOIN </command>
                     </cmdsynopsis>
                 </term>
@@ -1207,7 +1207,7 @@ SELECT sname, pname from supplier
                 <term>
                     <cmdsynopsis>
                         <arg choice="plain"> FULL </arg>
-                        <arg> OUTER </arg>
+                        <arg choice="opt"> OUTER </arg>
                         <command> JOIN </command>
                     </cmdsynopsis>
                 </term>

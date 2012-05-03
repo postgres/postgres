@@ -24,8 +24,8 @@ PostgreSQL documentation
    <command>createdb</command>
    <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
    <arg rep="repeat"><replaceable>option</replaceable></arg>
-   <arg><replaceable>dbname</replaceable></arg>
-   <arg><replaceable>description</replaceable></arg>
+   <arg choice="opt"><replaceable>dbname</replaceable>
+   <arg choice="opt"><replaceable>description</replaceable></arg></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 

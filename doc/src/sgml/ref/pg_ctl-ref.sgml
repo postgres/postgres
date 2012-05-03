@@ -23,36 +23,36 @@ PostgreSQL documentation
   <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain"><option>init[db]</option></arg>
-   <arg><option>-s</option></arg>
-   <arg><option>-D</option> <replaceable>datadir</replaceable></arg>
-   <arg><option>-o</option> <replaceable>initdb-options</replaceable></arg>
+   <arg choice="opt"><option>-s</option></arg>
+   <arg choice="opt"><option>-D</option> <replaceable>datadir</replaceable></arg>
+   <arg choice="opt"><option>-o</option> <replaceable>initdb-options</replaceable></arg>
   </cmdsynopsis>
 
   <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain"><option>start</option></arg>
-   <arg><option>-w</option></arg>
-   <arg><option>-t</option> <replaceable>seconds</replaceable></arg>
-   <arg><option>-s</option></arg>
-   <arg><option>-D</option> <replaceable>datadir</replaceable></arg>
-   <arg><option>-l</option> <replaceable>filename</replaceable></arg>
-   <arg><option>-o</option> <replaceable>options</replaceable></arg>
-   <arg><option>-p</option> <replaceable>path</replaceable></arg>
-   <arg><option>-c</option></arg>
+   <arg choice="opt"><option>-w</option></arg>
+   <arg choice="opt"><option>-t</option> <replaceable>seconds</replaceable></arg>
+   <arg choice="opt"><option>-s</option></arg>
+   <arg choice="opt"><option>-D</option> <replaceable>datadir</replaceable></arg>
+   <arg choice="opt"><option>-l</option> <replaceable>filename</replaceable></arg>
+   <arg choice="opt"><option>-o</option> <replaceable>options</replaceable></arg>
+   <arg choice="opt"><option>-p</option> <replaceable>path</replaceable></arg>
+   <arg choice="opt"><option>-c</option></arg>
   </cmdsynopsis>
 
   <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain"><option>stop</option></arg>
-   <arg><option>-W</option></arg>
-   <arg><option>-t</option> <replaceable>seconds</replaceable></arg>
-   <arg><option>-s</option></arg>
-   <arg><option>-D</option> <replaceable>datadir</replaceable></arg>
-   <arg><option>-m</option>
+   <arg choice="opt"><option>-W</option></arg>
+   <arg choice="opt"><option>-t</option> <replaceable>seconds</replaceable></arg>
+   <arg choice="opt"><option>-s</option></arg>
+   <arg choice="opt"><option>-D</option> <replaceable>datadir</replaceable></arg>
+   <arg choice="opt"><option>-m</option>
      <group choice="plain">
-       <arg><option>s[mart]</option></arg>
-       <arg><option>f[ast]</option></arg>
-       <arg><option>i[mmediate]</option></arg>
+       <arg choice="plain"><option>s[mart]</option></arg>
+       <arg choice="plain"><option>f[ast]</option></arg>
+       <arg choice="plain"><option>i[mmediate]</option></arg>
      </group>
    </arg>
   </cmdsynopsis>
@@ -60,39 +60,39 @@ PostgreSQL documentation
   <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain"><option>restart</option></arg>
-   <arg><option>-w</option></arg>
-   <arg><option>-t</option> <replaceable>seconds</replaceable></arg>
-   <arg><option>-s</option></arg>
-   <arg><option>-D</option> <replaceable>datadir</replaceable></arg>
-   <arg><option>-c</option></arg>
-   <arg><option>-m</option>
+   <arg choice="opt"><option>-w</option></arg>
+   <arg choice="opt"><option>-t</option> <replaceable>seconds</replaceable></arg>
+   <arg choice="opt"><option>-s</option></arg>
+   <arg choice="opt"><option>-D</option> <replaceable>datadir</replaceable></arg>
+   <arg choice="opt"><option>-c</option></arg>
+   <arg choice="opt"><option>-m</option>
      <group choice="plain">
-       <arg><option>s[mart]</option></arg>
-       <arg><option>f[ast]</option></arg>
-       <arg><option>i[mmediate]</option></arg>
+       <arg choice="plain"><option>s[mart]</option></arg>
+       <arg choice="plain"><option>f[ast]</option></arg>
+       <arg choice="plain"><option>i[mmediate]</option></arg>
      </group>
    </arg>
-   <arg><option>-o</option> <replaceable>options</replaceable></arg>
+   <arg choice="opt"><option>-o</option> <replaceable>options</replaceable></arg>
   </cmdsynopsis>
 
   <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain"><option>reload</option></arg>
-   <arg><option>-s</option></arg>
-   <arg><option>-D</option> <replaceable>datadir</replaceable></arg>
+   <arg choice="opt"><option>-s</option></arg>
+   <arg choice="opt"><option>-D</option> <replaceable>datadir</replaceable></arg>
   </cmdsynopsis>
 
   <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain"><option>status</option></arg>
-   <arg><option>-D</option> <replaceable>datadir</replaceable></arg>
+   <arg choice="opt"><option>-D</option> <replaceable>datadir</replaceable></arg>
   </cmdsynopsis>
 
   <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain"><option>promote</option></arg>
-   <arg><option>-s</option></arg>
-   <arg><option>-D</option> <replaceable>datadir</replaceable></arg>
+   <arg choice="opt"><option>-s</option></arg>
+   <arg choice="opt"><option>-D</option> <replaceable>datadir</replaceable></arg>
   </cmdsynopsis>
 
   <cmdsynopsis>
@@ -105,26 +105,26 @@ PostgreSQL documentation
   <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain"><option>register</option></arg>
-   <arg><option>-N</option> <replaceable>servicename</replaceable></arg>
-   <arg><option>-U</option> <replaceable>username</replaceable></arg>
-   <arg><option>-P</option> <replaceable>password</replaceable></arg>
-   <arg><option>-D</option> <replaceable>datadir</replaceable></arg>
-   <arg><option>-S</option>
+   <arg choice="opt"><option>-N</option> <replaceable>servicename</replaceable></arg>
+   <arg choice="opt"><option>-U</option> <replaceable>username</replaceable></arg>
+   <arg choice="opt"><option>-P</option> <replaceable>password</replaceable></arg>
+   <arg choice="opt"><option>-D</option> <replaceable>datadir</replaceable></arg>
+   <arg choice="opt"><option>-S</option>
      <group choice="plain">
-       <arg><option>a[uto]</option></arg>
-       <arg><option>d[emand]</option></arg>
+       <arg choice="plain"><option>a[uto]</option></arg>
+       <arg choice="plain"><option>d[emand]</option></arg>
      </group>
    </arg>
-   <arg><option>-w</option></arg>
-   <arg><option>-t</option> <replaceable>seconds</replaceable></arg>
-   <arg><option>-s</option></arg>
-   <arg><option>-o</option> <replaceable>options</replaceable></arg>
+   <arg choice="opt"><option>-w</option></arg>
+   <arg choice="opt"><option>-t</option> <replaceable>seconds</replaceable></arg>
+   <arg choice="opt"><option>-s</option></arg>
+   <arg choice="opt"><option>-o</option> <replaceable>options</replaceable></arg>
   </cmdsynopsis>
 
   <cmdsynopsis>
    <command>pg_ctl</command>
    <arg choice="plain"><option>unregister</option></arg>
-   <arg><option>-N</option> <replaceable>servicename</replaceable></arg>
+   <arg choice="opt"><option>-N</option> <replaceable>servicename</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 

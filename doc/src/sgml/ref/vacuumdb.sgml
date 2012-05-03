@@ -24,15 +24,15 @@ PostgreSQL documentation
    <command>vacuumdb</command>
    <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
    <arg rep="repeat"><replaceable>option</replaceable></arg>
-   <arg>
+   <arg choice="opt">
     <group choice="plain">
-     <arg><option>--table</option></arg>
-     <arg><option>-t</option></arg>
+     <arg choice="plain"><option>--table</option></arg>
+     <arg choice="plain"><option>-t</option></arg>
     </group>
     <replaceable>table</replaceable>
-    <arg>( <replaceable class="parameter">column</replaceable> [,...] )</arg>
+    <arg choice="opt">( <replaceable class="parameter">column</replaceable> [,...] )</arg>
    </arg>
-   <arg><replaceable>dbname</replaceable></arg>
+   <arg choice="opt"><replaceable>dbname</replaceable></arg>
   </cmdsynopsis>
 
   <cmdsynopsis>
@@ -40,8 +40,8 @@ PostgreSQL documentation
    <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
    <arg rep="repeat"><replaceable>option</replaceable></arg>
    <group choice="plain">
-    <arg><option>--all</option></arg>
-    <arg><option>-a</option></arg>
+    <arg choice="plain"><option>--all</option></arg>
+    <arg choice="plain"><option>-a</option></arg>
    </group>
   </cmdsynopsis>
  </refsynopsisdiv>

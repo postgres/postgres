@@ -25,7 +25,7 @@
    <command>pg_restore</command>
    <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
    <arg rep="repeat"><replaceable>option</replaceable></arg>
-   <arg><replaceable>filename</replaceable></arg>
+   <arg choice="opt"><replaceable>filename</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 

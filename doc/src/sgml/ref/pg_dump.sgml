@@ -27,7 +27,7 @@ PostgreSQL documentation
    <command>pg_dump</command>
    <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
    <arg rep="repeat"><replaceable>option</replaceable></arg>
-   <arg><replaceable>dbname</replaceable></arg>
+   <arg choice="opt"><replaceable>dbname</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 

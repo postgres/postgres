@@ -22,14 +22,14 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>pg_resetxlog</command>
-   <arg><option>-f</option></arg>
-   <arg><option>-n</option></arg>
-   <arg><option>-o</option> <replaceable class="parameter">oid</replaceable></arg>
-   <arg><option>-x</option> <replaceable class="parameter">xid</replaceable></arg>
-   <arg><option>-e</option> <replaceable class="parameter">xid_epoch</replaceable></arg>
-   <arg><option>-m</option> <replaceable class="parameter">mxid</replaceable></arg>
-   <arg><option>-O</option> <replaceable class="parameter">mxoff</replaceable></arg>
-   <arg><option>-l</option> <replaceable class="parameter">timelineid</replaceable>,<replaceable class="parameter">fileid</replaceable>,<replaceable class="parameter">seg</replaceable></arg>
+   <arg choice="opt"><option>-f</option></arg>
+   <arg choice="opt"><option>-n</option></arg>
+   <arg choice="opt"><option>-o</option> <replaceable class="parameter">oid</replaceable></arg>
+   <arg choice="opt"><option>-x</option> <replaceable class="parameter">xid</replaceable></arg>
+   <arg choice="opt"><option>-e</option> <replaceable class="parameter">xid_epoch</replaceable></arg>
+   <arg choice="opt"><option>-m</option> <replaceable class="parameter">mxid</replaceable></arg>
+   <arg choice="opt"><option>-O</option> <replaceable class="parameter">mxoff</replaceable></arg>
+   <arg choice="opt"><option>-l</option> <replaceable class="parameter">timelineid</replaceable>,<replaceable class="parameter">fileid</replaceable>,<replaceable class="parameter">seg</replaceable></arg>
    <arg choice="plain"><replaceable>datadir</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
