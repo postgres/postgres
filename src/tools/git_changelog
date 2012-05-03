@@ -22,10 +22,10 @@
 # it appears in.
 #
 # Typical usage to generate major release notes:
-#   pggitlog --since '2010-07-09 00:00:00' --master-only --oldest-first --details-after
+#   git_changelog --since '2010-07-09 00:00:00' --master-only --oldest-first --details-after
 #
 # To find the branch start date, use:
-#   pggit show $(git merge-base REL9_0_STABLE master)
+#   git show $(git merge-base REL9_0_STABLE master)
 
 
 use strict;
