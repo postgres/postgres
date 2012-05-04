@@ -587,8 +587,8 @@ The caller can then send a cancellation signal.  This implements the
 principle that autovacuum has a low locking priority (eg it must not block
 DDL on the table).
 
-User Locks
-----------
+User Locks (Advisory Locks)
+---------------------------
 
 User locks are handled totally on the application side as long term
 cooperative locks which may extend beyond the normal transaction boundaries.
@@ -602,12 +602,12 @@ level by someone.
 User locks and normal locks are completely orthogonal and they don't
 interfere with each other.
 
-There are two types of user locks: session level and transaction level.
-Session level user locks are not released at transaction end.  They must
-be released explicitly by the application --- but they are released
-automatically when a backend terminates. On the other hand, transaction
-level user locks are released automatically at the end of the transaction
-as like as other normal locks.
+User locks can be acquired either at session level or transaction level.
+A session-level lock request is not automatically released at transaction
+end, but must be explicitly released by the application.  (However, any
+remaining locks are always released at session end.)  Transaction-level
+user lock requests behave the same as normal lock requests, in that they
+are released at transaction end and do not need explicit unlocking.
 
 Locking during Hot Standby
 --------------------------

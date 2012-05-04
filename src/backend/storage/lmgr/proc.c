@@ -697,8 +697,11 @@ LockErrorCleanup(void)
  * ProcReleaseLocks() -- release locks associated with current transaction
  *			at main transaction commit or abort
  *
- * At main transaction commit, we release all locks except session locks.
+ * At main transaction commit, we release standard locks except session locks.
  * At main transaction abort, we release all locks including session locks.
+ *
+ * Advisory locks are released only if they are transaction-level;
+ * session-level holds remain, whether this is a commit or not.
  *
  * At subtransaction commit, we don't release any locks (so this func is not
  * needed at all); we will defer the releasing to the parent transaction.
@@ -713,10 +716,9 @@ ProcReleaseLocks(bool isCommit)
 		return;
 	/* If waiting, get off wait queue (should only be needed after error) */
 	LockErrorCleanup();
-	/* Release locks */
+	/* Release standard locks, including session-level if aborting */
 	LockReleaseAll(DEFAULT_LOCKMETHOD, !isCommit);
-
-	/* Release transaction level advisory locks */
+	/* Release transaction-level advisory locks */
 	LockReleaseAll(USER_LOCKMETHOD, false);
 }
 

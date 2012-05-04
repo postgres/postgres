@@ -96,14 +96,11 @@ typedef int LOCKMODE;
 /*
  * This data structure defines the locking semantics associated with a
  * "lock method".  The semantics specify the meaning of each lock mode
- * (by defining which lock modes it conflicts with), and also whether locks
- * of this method are transactional (ie, are released at transaction end).
+ * (by defining which lock modes it conflicts with).
  * All of this data is constant and is kept in const tables.
  *
  * numLockModes -- number of lock modes (READ,WRITE,etc) that
  *		are defined in this lock method.  Must be less than MAX_LOCKMODES.
- *
- * transactional -- TRUE if locks are released automatically at xact end.
  *
  * conflictTab -- this is an array of bitmasks showing lock
  *		mode conflicts.  conflictTab[i] is a mask with the j-th bit
@@ -112,12 +109,13 @@ typedef int LOCKMODE;
  *
  * lockModeNames -- ID strings for debug printouts.
  *
- * trace_flag -- pointer to GUC trace flag for this lock method.
+ * trace_flag -- pointer to GUC trace flag for this lock method.  (The
+ * GUC variable is not constant, but we use "const" here to denote that
+ * it can't be changed through this reference.)
  */
 typedef struct LockMethodData
 {
 	int			numLockModes;
-	bool		transactional;
 	const LOCKMASK *conflictTab;
 	const char *const * lockModeNames;
 	const bool *trace_flag;
@@ -492,8 +490,8 @@ extern LockAcquireResult LockAcquireExtended(const LOCKTAG *locktag,
 extern void AbortStrongLockAcquire(void);
 extern bool LockRelease(const LOCKTAG *locktag,
 			LOCKMODE lockmode, bool sessionLock);
-extern void LockReleaseSession(LOCKMETHODID lockmethodid);
 extern void LockReleaseAll(LOCKMETHODID lockmethodid, bool allLocks);
+extern void LockReleaseSession(LOCKMETHODID lockmethodid);
 extern void LockReleaseCurrentOwner(void);
 extern void LockReassignCurrentOwner(void);
 extern VirtualTransactionId *GetLockConflicts(const LOCKTAG *locktag,

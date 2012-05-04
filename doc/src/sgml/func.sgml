@@ -15382,7 +15382,7 @@ SELECT (pg_stat_file('filename')).modification;
         <literal><function>pg_advisory_xact_lock_shared(<parameter>key1</> <type>int</>, <parameter>key2</> <type>int</>)</function></literal>
        </entry>
        <entry><type>void</type></entry>
-       <entry>Obtain shared advisory lock for the current transaction</entry>
+       <entry>Obtain shared transaction level advisory lock</entry>
       </row>
       <row>
        <entry>
@@ -15451,11 +15451,10 @@ SELECT (pg_stat_file('filename')).modification;
     <function>pg_advisory_lock</> locks an application-defined resource,
     which can be identified either by a single 64-bit key value or two
     32-bit key values (note that these two key spaces do not overlap).
-    The key type is specified in <literal>pg_locks.objid</>.  If
-    another session already holds a lock on the same resource, the
-    function will wait until the resource becomes available.  The lock
+    If another session already holds a lock on the same resource identifier,
+    this function will wait until the resource becomes available.  The lock
     is exclusive.  Multiple lock requests stack, so that if the same resource
-    is locked three times it must be also unlocked three times to be
+    is locked three times it must then be unlocked three times to be
     released for other sessions' use.
    </para>
 
@@ -15487,6 +15486,35 @@ SELECT (pg_stat_file('filename')).modification;
     <function>pg_try_advisory_lock_shared</> works the same as
     <function>pg_try_advisory_lock</>, except it attempts to acquire
     a shared rather than an exclusive lock.
+   </para>
+
+   <indexterm>
+    <primary>pg_advisory_unlock</primary>
+   </indexterm>
+   <para>
+    <function>pg_advisory_unlock</> will release a previously-acquired
+    exclusive session level advisory lock.  It
+    returns <literal>true</> if the lock is successfully released.
+    If the lock was not held, it will return <literal>false</>,
+    and in addition, an SQL warning will be reported by the server.
+   </para>
+
+   <indexterm>
+    <primary>pg_advisory_unlock_shared</primary>
+   </indexterm>
+   <para>
+    <function>pg_advisory_unlock_shared</> works the same as
+    <function>pg_advisory_unlock</>,
+    except it releases a shared session level advisory lock.
+   </para>
+
+   <indexterm>
+    <primary>pg_advisory_unlock_all</primary>
+   </indexterm>
+   <para>
+    <function>pg_advisory_unlock_all</> will release all session level advisory
+    locks held by the current session.  (This function is implicitly invoked
+    at session end, even if the client disconnects ungracefully.)
    </para>
 
    <indexterm>
@@ -15525,35 +15553,6 @@ SELECT (pg_stat_file('filename')).modification;
     <function>pg_try_advisory_lock_shared</>, except the lock, if acquired,
     is automatically released at the end of the current transaction and
     cannot be released explicitly.
-   </para>
-
-   <indexterm>
-    <primary>pg_advisory_unlock</primary>
-   </indexterm>
-   <para>
-    <function>pg_advisory_unlock</> will release a previously-acquired
-    exclusive session level advisory lock.  It
-    returns <literal>true</> if the lock is successfully released.
-    If the lock was not held, it will return <literal>false</>,
-    and in addition, an SQL warning will be raised by the server.
-   </para>
-
-   <indexterm>
-    <primary>pg_advisory_unlock_shared</primary>
-   </indexterm>
-   <para>
-    <function>pg_advisory_unlock_shared</> works the same as
-    <function>pg_advisory_unlock</>,
-    except it releases a shared session level advisory lock.
-   </para>
-
-   <indexterm>
-    <primary>pg_advisory_unlock_all</primary>
-   </indexterm>
-   <para>
-    <function>pg_advisory_unlock_all</> will release all session level advisory
-    locks held by the current session.  (This function is implicitly invoked
-    at session end, even if the client disconnects ungracefully.)
    </para>
 
   </sect2>
