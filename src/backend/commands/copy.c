@@ -547,7 +547,7 @@ CopyGetData(CopyState cstate, void *databuf, int minread, int maxread)
 				/* Only a \. terminator is legal EOF in old protocol */
 				ereport(ERROR,
 						(errcode(ERRCODE_CONNECTION_FAILURE),
-						 errmsg("unexpected EOF on client connection")));
+						 errmsg("unexpected EOF on client connection with an open transaction")));
 			}
 			bytesread = minread;
 			break;
@@ -566,11 +566,11 @@ CopyGetData(CopyState cstate, void *databuf, int minread, int maxread)
 					if (mtype == EOF)
 						ereport(ERROR,
 								(errcode(ERRCODE_CONNECTION_FAILURE),
-							 errmsg("unexpected EOF on client connection")));
+							 errmsg("unexpected EOF on client connection with an open transaction")));
 					if (pq_getmessage(cstate->fe_msgbuf, 0))
 						ereport(ERROR,
 								(errcode(ERRCODE_CONNECTION_FAILURE),
-							 errmsg("unexpected EOF on client connection")));
+							 errmsg("unexpected EOF on client connection with an open transaction")));
 					switch (mtype)
 					{
 						case 'd':		/* CopyData */
