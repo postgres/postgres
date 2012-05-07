@@ -3430,7 +3430,7 @@ PSQL_EDITOR_LINENUMBER_ARG='--line '
    <listitem>
     <para>
      Both the system-wide <filename>psqlrc</filename> file and the user's
-     <filename>~/.psqlrc</filename> file can be made version-specific
+     <filename>~/.psqlrc</filename> file can be made psql-version-specific
      by appending a dash and the <productname>PostgreSQL</productname>
      major or minor <application>psql</application> release number,
      for example <filename>~/.psqlrc-9.2</filename> or
