@@ -1325,7 +1325,7 @@ fi
 pgac_save_LIBS="$LIBS"
 LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 
-AC_REPLACE_FUNCS([crypt fls getopt getrusage inet_aton random rint srandom strdup strerror strlcat strlcpy strtol strtoul])
+AC_REPLACE_FUNCS([crypt fls getopt getrusage inet_aton random rint srandom strerror strlcat strlcpy])
 
 case $host_os in
 

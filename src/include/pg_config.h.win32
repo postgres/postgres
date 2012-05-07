@@ -355,9 +355,6 @@
 /* Define to 1 if you have the <stdlib.h> header file. */
 #define HAVE_STDLIB_H 1
 
-/* Define to 1 if you have the `strdup' function. */
-#define HAVE_STRDUP 1
-
 /* Define to 1 if you have the `strerror' function. */
 #ifndef HAVE_STRERROR
 #define HAVE_STRERROR 1
@@ -375,17 +372,11 @@
 /* Define to 1 if you have the <string.h> header file. */
 #define HAVE_STRING_H 1
 
-/* Define to 1 if you have the `strtol' function. */
-#define HAVE_STRTOL 1
-
 /* Define to 1 if you have the `strtoll' function. */
 //#define HAVE_STRTOLL 1
 
 /* Define to 1 if you have the `strtoq' function. */
 /* #undef HAVE_STRTOQ */
-
-/* Define to 1 if you have the `strtoul' function. */
-#define HAVE_STRTOUL 1
 
 /* Define to 1 if you have the `strtoull' function. */
 //#define HAVE_STRTOULL 1

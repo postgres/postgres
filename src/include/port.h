@@ -408,10 +408,6 @@ extern double rint(double x);
 extern int	inet_aton(const char *cp, struct in_addr * addr);
 #endif
 
-#ifndef HAVE_STRDUP
-extern char *strdup(const char *str);
-#endif
-
 #if !HAVE_DECL_STRLCAT
 extern size_t strlcat(char *dst, const char *src, size_t siz);
 #endif
