@@ -2657,6 +2657,22 @@ bar
       </varlistentry>
 
       <varlistentry>
+        <term><varname>COMP_KEYWORD_CASE</varname></term>
+        <listitem>
+        <para>
+        Determines which letter case to use when completing an SQL key word.
+        If set to <literal>lower</literal> or <literal>upper</literal>, the
+        completed word will be in lower or upper case, respectively.  If set
+        to <literal>preserve-lower</literal>
+        or <literal>preserve-upper</literal> (the default), the completed word
+        will be in the case of the word already entered, but words being
+        completed without anything entered will be in lower or upper case,
+        respectively.
+        </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term><varname>DBNAME</varname></term>
         <listitem>
         <para>

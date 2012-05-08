@@ -697,7 +697,7 @@ static char **complete_from_variables(char *text,
 						const char *prefix, const char *suffix);
 static char *complete_from_files(const char *text, int state);
 
-static char *pg_strdup_same_case(const char *s, const char *ref);
+static char *pg_strdup_keyword_case(const char *s, const char *ref);
 static PGresult *exec_query(const char *query);
 
 static void get_previous_words(int point, char **previous_words, int nwords);
@@ -3125,7 +3125,7 @@ create_or_drop_command_generator(const char *text, int state, bits32 excluded)
 	{
 		if ((pg_strncasecmp(name, text, string_length) == 0) &&
 			!(words_after_create[list_index - 1].flags & excluded))
-			return pg_strdup_same_case(name, text);
+			return pg_strdup_keyword_case(name, text);
 	}
 	/* if nothing matches, return NULL */
 	return NULL;
@@ -3412,9 +3412,9 @@ complete_from_list(const char *text, int state)
 			if (completion_case_sensitive)
 				return pg_strdup(item);
 			else
-				/* If case insensitive matching was requested initially, return
-				 * it in the case of what was already entered. */
-				return pg_strdup_same_case(item, text);
+				/* If case insensitive matching was requested initially, adjust
+				 * the case according to setting. */
+				return pg_strdup_keyword_case(item, text);
 		}
 	}
 
@@ -3451,9 +3451,9 @@ complete_from_const(const char *text, int state)
 		if (completion_case_sensitive)
 			return pg_strdup(completion_charp);
 		else
-			/* If case insensitive matching was requested initially, return it
-			 * in the case of what was already entered. */
-			return pg_strdup_same_case(completion_charp, text);
+			/* If case insensitive matching was requested initially, adjust the
+			 * case according to setting. */
+			return pg_strdup_keyword_case(completion_charp, text);
 	}
 	else
 		return NULL;
@@ -3561,27 +3561,48 @@ complete_from_files(const char *text, int state)
 
 
 /*
- * Make a pg_strdup copy of s and convert it to the same case as ref.
+ * Make a pg_strdup copy of s and convert the case according to
+ * COMP_KEYWORD_CASE variable, using ref as the text that was already entered.
  */
 static char *
-pg_strdup_same_case(const char *s, const char *ref)
+pg_strdup_keyword_case(const char *s, const char *ref)
 {
 	char *ret, *p;
 	unsigned char first = ref[0];
+	int		tocase;
+	const char *varval;
 
-	if (isalpha(first))
-	{
-		ret = pg_strdup(s);
-		if (islower(first))
-			for (p = ret; *p; p++)
-				*p = pg_tolower((unsigned char) *p);
-		else
-			for (p = ret; *p; p++)
-				*p = pg_toupper((unsigned char) *p);
-		return ret;
-	}
+	varval = GetVariable(pset.vars, "COMP_KEYWORD_CASE");
+	if (!varval)
+		tocase = 0;
+	else if (strcmp(varval, "lower") == 0)
+		tocase = -2;
+	else if (strcmp(varval, "preserve-lower") == 0)
+		tocase = -1;
+	else if (strcmp(varval, "preserve-upper") == 0)
+		tocase = +1;
+	else if (strcmp(varval, "upper") == 0)
+		tocase = +2;
 	else
-		return pg_strdup(s);
+		tocase = 0;
+
+	/* default */
+	if (tocase == 0)
+		tocase = +1;
+
+	ret = pg_strdup(s);
+
+	if (tocase == -2
+		|| ((tocase == -1 || tocase == +1) && islower(first))
+		|| (tocase == -1 && !isalpha(first))
+		)
+		for (p = ret; *p; p++)
+			*p = pg_tolower((unsigned char) *p);
+	else
+		for (p = ret; *p; p++)
+			*p = pg_toupper((unsigned char) *p);
+
+	return ret;
 }
 
 
