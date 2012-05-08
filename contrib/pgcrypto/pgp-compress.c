@@ -105,7 +105,7 @@ compress_init(PushFilter *next, void *init_arg, void **priv_p)
 
 /* writes compressed data packet */
 
-/* cant handle zero-len incoming data, but shouldnt */
+/* can handle zero-len incoming data, but shouldn't */
 static int
 compress_process(PushFilter *next, void *priv, const uint8 *data, int len)
 {

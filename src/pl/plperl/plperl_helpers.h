@@ -62,7 +62,7 @@ sv2cstr(SV *sv)
 		(SvTYPE(sv) > SVt_PVLV && SvTYPE(sv) != SVt_PVFM))
 		sv = newSVsv(sv);
 	else
-		/* increase the reference count so we cant just SvREFCNT_dec() it when
+		/* increase the reference count so we can just SvREFCNT_dec() it when
 		 * we are done */
 		SvREFCNT_inc(sv);
 
