@@ -218,7 +218,7 @@ usage(void)
 {
 	printf(_("pg_upgrade upgrades a PostgreSQL cluster to a different major version.\n\
 \nUsage:\n\
-  pg_upgrade [OPTIONS]...\n\
+  pg_upgrade [OPTION]...\n\
 \n\
 Options:\n\
   -b, --old-bindir=OLDBINDIR    old cluster executable directory\n\

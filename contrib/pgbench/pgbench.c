@@ -338,7 +338,7 @@ usage(const char *progname)
 {
 	printf("%s is a benchmarking tool for PostgreSQL.\n\n"
 		   "Usage:\n"
-		   "  %s [OPTIONS]... [DBNAME]\n"
+		   "  %s [OPTION]... [DBNAME]\n"
 		   "\nInitialization options:\n"
 		   "  -i           invokes initialization mode\n"
 		   "  -F NUM       fill factor\n"
