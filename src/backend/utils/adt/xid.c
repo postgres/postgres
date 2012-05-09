@@ -93,7 +93,10 @@ Datum
 xid_age(PG_FUNCTION_ARGS)
 {
 	TransactionId xid = PG_GETARG_TRANSACTIONID(0);
-	TransactionId now = GetTopTransactionId();
+	TransactionId now = GetTopTransactionIdIfAny();
+
+	if (!TransactionIdIsValid(now))
+		now = ReadNewTransactionId();
 
 	/* Permanent XIDs are always infinitely old */
 	if (!TransactionIdIsNormal(xid))
