@@ -56,7 +56,12 @@ postgres.shdescription: postgres.bki ;
 
 schemapg.h: postgres.bki ;
 
-postgres.bki: genbki.pl Catalog.pm $(POSTGRES_BKI_SRCS)
+# Technically, this should depend on Makefile.global, but then
+# postgres.bki would need to be rebuilt after every configure run,
+# even in distribution tarballs.  So this is cheating a bit, but it
+# will achieve the goal of updating the version number when it
+# changes.
+postgres.bki: genbki.pl Catalog.pm $(POSTGRES_BKI_SRCS) $(top_srcdir)/configure
 	$(PERL) -I $(catalogdir) $< $(pg_includes) --set-version=$(MAJORVERSION) $(POSTGRES_BKI_SRCS)
 
 .PHONY: install-data
