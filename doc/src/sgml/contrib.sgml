@@ -29,12 +29,13 @@
   Many of the modules have regression tests, which can be executed by
   running:
 <screen>
+<userinput>gmake check</userinput>
+</screen>
+  before installation or
+<screen>
 <userinput>gmake installcheck</userinput>
 </screen>
-  once you have a <productname>PostgreSQL</> server running.  (Note that
-  <literal>gmake check</> is not supported; you must have an operational
-  database server to perform these tests, and you must have built and
-  installed the module(s) to be tested.)
+  once you have a <productname>PostgreSQL</> server running.
  </para>
 
  <para>
