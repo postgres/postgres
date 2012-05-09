@@ -15,7 +15,8 @@ psql                            <application>
 pg_[A-Za-z0-9_]+                <application>, <structname>
 [A-Z][A-Z][A-Z_ ]*              <type>, <varname>
 
-non-ASCII characters            convert to HTML4 entity (&) escapes
+non-ASCII characters            find using grep -P '[\x80-\xFF]'
+                                convert to HTML4 entity (&) escapes
 
         official:      http://www.w3.org/TR/html4/sgml/entities.html
         one page:      http://www.zipcon.net/~swhite/docs/computers/browsers/entities_page.html
