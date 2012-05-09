@@ -1,11 +1,30 @@
 <!-- doc/src/sgml/pgtestfsync.sgml -->
 
-<sect1 id="pgtestfsync" xreflabel="pg_test_fsync">
- <title>pg_test_fsync</title>
+<refentry id="pgtestfsync">
+ <refmeta>
+  <refentrytitle><application>pg_test_fsync</application></refentrytitle>
+  <manvolnum>1</manvolnum>
+  <refmiscinfo>Application</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>pg_test_fsync</refname>
+  <refpurpose>determine fastest wal_sync_method for <productname>PostgreSQL</productname></refpurpose>
+ </refnamediv>
 
  <indexterm zone="pgtestfsync">
   <primary>pg_test_fsync</primary>
  </indexterm>
+
+ <refsynopsisdiv>
+  <cmdsynopsis>
+   <command>pg_test_fsync</command>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
+  </cmdsynopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
 
  <para>
   <application>pg_test_fsync</> is intended to give you a reasonable
@@ -17,13 +36,10 @@
   since many database servers are not speed-limited by their transaction
   logs.
  </para>
+ </refsect1>
 
- <sect2>
-  <title>Usage</title>
-
-<synopsis>
-pg_test_fsync [options]
-</synopsis>
+ <refsect1>
+  <title>Options</title>
 
    <para>
     <application>pg_test_fsync</application> accepts the following
@@ -62,14 +78,21 @@ pg_test_fsync [options]
     </variablelist>
    </para>
 
- </sect2>
+ </refsect1>
 
- <sect2>
+ <refsect1>
   <title>Author</title>
 
   <para>
    Bruce Momjian <email>bruce@momjian.us</email>
   </para>
- </sect2>
+ </refsect1>
 
-</sect1>
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="app-postgres"></member>
+  </simplelist>
+ </refsect1>
+</refentry>

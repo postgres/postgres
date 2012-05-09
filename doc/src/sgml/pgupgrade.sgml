@@ -1,11 +1,38 @@
 <!-- doc/src/sgml/pgupgrade.sgml -->
 
-<sect1 id="pgupgrade" xreflabel="pg_upgrade">
- <title>pg_upgrade</title>
+<refentry id="pgupgrade">
+ <refmeta>
+  <refentrytitle><application>pg_upgrade</application></refentrytitle>
+  <manvolnum>1</manvolnum>
+  <refmiscinfo>Application</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>pg_upgrade</refname>
+  <refpurpose>upgrade a <productname>PostgreSQL</productname> server instance</refpurpose>
+ </refnamediv>
 
  <indexterm zone="pgupgrade">
   <primary>pg_upgrade</primary>
  </indexterm>
+
+ <refsynopsisdiv>
+  <cmdsynopsis>
+   <command>pg_upgrade</command>
+   <arg choice="plain"><option>-b</option></arg>
+   <arg choice="plain"><replaceable>oldbindir</replaceable></arg>
+   <arg choice="plain"><option>-B</option></arg>
+   <arg choice="plain"><replaceable>newbindir</replaceable></arg>
+   <arg choice="plain"><option>-d</option></arg>
+   <arg choice="plain"><replaceable>olddatadir</replaceable></arg>
+   <arg choice="plain"><option>-D</option></arg>
+   <arg choice="plain"><replaceable>newdatadir</replaceable></arg>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
+  </cmdsynopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
 
  <para>
   <application>pg_upgrade</> (formerly called <application>pg_migrator</>) allows data
@@ -37,19 +64,14 @@
   be checked by <application>pg_upgrade</>.
  </para>
 
- <sect2>
-  <title>Supported Versions</title>
-
   <para>
    pg_upgrade supports upgrades from 8.3.X and later to the current
    major release of <productname>PostgreSQL</>, including snapshot and alpha releases.
-
   </para>
+ </refsect1>
 
- </sect2>
-
- <sect2>
-  <title><application>pg_upgrade</> Options</title>
+ <refsect1>
+  <title>Options</title>
 
    <para>
     <application>pg_upgrade</application> accepts the following command-line arguments:
@@ -160,10 +182,15 @@
     </variablelist>
    </para>
 
- </sect2>
+ </refsect1>
 
- <sect2>
-  <title>Upgrade Steps</title>
+ <refsect1>
+  <title>Usage</title>
+
+  <para>
+   These are the steps to perform an upgrade
+   with <application>pg_upgrade</application>:
+  </para>
 
   <procedure>
    <step performance="optional">
@@ -459,13 +486,54 @@ psql --username postgres --file script.sql postgres
    </step>
   </procedure>
 
- </sect2>
+ </refsect1>
 
- <sect2>
-  <title>Limitations in Upgrading <emphasis>from</> PostgreSQL 8.3</title>
+ <refsect1>
+  <title>Notes</title>
 
   <para>
-   Upgrading from PostgreSQL 8.3 has additional restrictions not present
+   <application>pg_upgrade</> does not support upgrading of databases
+   containing these <type>reg*</> OID-referencing system data types:
+   <type>regproc</>, <type>regprocedure</>, <type>regoper</>,
+   <type>regoperator</>, <type>regconfig</>, and
+   <type>regdictionary</>.  (<type>regtype</> can be upgraded.)
+  </para>
+
+  <para>
+   All failure, rebuild, and reindex cases will be reported by
+   <application>pg_upgrade</> if they affect your installation;
+   post-upgrade scripts to rebuild tables and indexes will be
+   generated automatically.
+  </para>
+
+  <para>
+   For deployment testing, create a schema-only copy of the old cluster,
+   insert dummy data, and upgrade that.
+  </para>
+
+  <para>
+   If you are upgrading a pre-<productname>PostgreSQL</> 9.2 cluster
+   that uses a configuration-file-only directory, you must pass the
+   real data directory location to <application>pg_upgrade</>, and
+   pass the configuration directory location to the server, e.g.
+   <literal>-d /real-data-directory -o '-D /configuration-directory'</>.
+  </para>
+
+  <para>
+   If you want to use link mode and you do not want your old cluster
+   to be modified when the new cluster is started, make a copy of the
+   old cluster and upgrade that in link mode. To make a valid copy
+   of the old cluster, use <command>rsync</> to create a dirty
+   copy of the old cluster while the server is running, then shut down
+   the old server and run <command>rsync</> again to update the copy with any
+   changes to make it consistent.
+  </para>
+
+ <refsect2>
+  <title>Limitations in Upgrading PostgreSQL 8.3</title>
+
+  <para>
+   Upgrading <emphasis>from</emphasis> PostgreSQL 8.3 has additional restrictions not present
    when upgrading from later PostgreSQL releases.  For example,
    pg_upgrade will not work for upgrading from 8.3 if a user column
    is defined as:
@@ -534,49 +602,18 @@ psql --username postgres --file script.sql postgres
    possible to upgrade from the MSI installer to the one-click installer.
   </para>
 
- </sect2>
+ </refsect2>
 
- <sect2>
-  <title>Notes</title>
+ </refsect1>
 
-  <para>
-   <application>pg_upgrade</> does not support upgrading of databases
-   containing these <type>reg*</> OID-referencing system data types:
-   <type>regproc</>, <type>regprocedure</>, <type>regoper</>,
-   <type>regoperator</>, <type>regconfig</>, and
-   <type>regdictionary</>.  (<type>regtype</> can be upgraded.)
-  </para>
+ <refsect1>
+  <title>See Also</title>
 
-  <para>
-   All failure, rebuild, and reindex cases will be reported by
-   <application>pg_upgrade</> if they affect your installation;
-   post-upgrade scripts to rebuild tables and indexes will be
-   generated automatically.
-  </para>
-
-  <para>
-   For deployment testing, create a schema-only copy of the old cluster,
-   insert dummy data, and upgrade that.
-  </para>
-
-  <para>
-   If you are upgrading a pre-<productname>PostgreSQL</> 9.2 cluster
-   that uses a configuration-file-only directory, you must pass the
-   real data directory location to <application>pg_upgrade</>, and
-   pass the configuration directory location to the server, e.g.
-   <literal>-d /real-data-directory -o '-D /configuration-directory'</>.
-  </para>
-
-  <para>
-   If you want to use link mode and you do not want your old cluster
-   to be modified when the new cluster is started, make a copy of the
-   old cluster and upgrade that in link mode. To make a valid copy
-   of the old cluster, use <command>rsync</> to create a dirty
-   copy of the old cluster while the server is running, then shut down
-   the old server and run <command>rsync</> again to update the copy with any
-   changes to make it consistent.
-  </para>
-
- </sect2>
-
-</sect1>
+  <simplelist type="inline">
+   <member><xref linkend="app-initdb"></member>
+   <member><xref linkend="app-pg-ctl"></member>
+   <member><xref linkend="app-pgdump"></member>
+   <member><xref linkend="app-postgres"></member>
+  </simplelist>
+ </refsect1>
+</refentry>

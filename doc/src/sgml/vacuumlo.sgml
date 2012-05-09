@@ -1,11 +1,31 @@
 <!-- doc/src/sgml/vacuumlo.sgml -->
 
-<sect1 id="vacuumlo" xreflabel="vacuumlo">
- <title>vacuumlo</title>
+<refentry id="vacuumlo">
+ <refmeta>
+  <refentrytitle><application>vacuumlo</application></refentrytitle>
+  <manvolnum>1</manvolnum>
+  <refmiscinfo>Application</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>vacuumlo</refname>
+  <refpurpose>remove orphaned large objects from a <productname>PostgreSQL</productname> database</refpurpose>
+ </refnamediv>
 
  <indexterm zone="vacuumlo">
   <primary>vacuumlo</primary>
  </indexterm>
+
+ <refsynopsisdiv>
+  <cmdsynopsis>
+   <command>vacuumlo</command>
+   <arg choice="opt" rep="repeat"><replaceable>option</replaceable></arg>
+   <arg choice="plain" rep="repeat"><replaceable>dbname</replaceable></arg>
+  </cmdsynopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
 
  <para>
   <application>vacuumlo</> is a simple utility program that will remove any
@@ -22,30 +42,19 @@
   to avoid creating orphaned LOs in the first place.
  </para>
 
- <sect2>
-  <title>Usage</title>
-
-<synopsis>
-vacuumlo [options] database [database2 ... databaseN]
-</synopsis>
-
   <para>
-   All databases named on the command line are processed.  Available options
-   include:
+   All databases named on the command line are processed.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Options</title>
 
   <variablelist>
    <varlistentry>
-    <term><option>-v</option></term>
+    <term><option>-h</option> <replaceable>hostname</></term>
     <listitem>
-     <para>Write a lot of progress messages.</para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><option>-n</option></term>
-    <listitem>
-     <para>Don't remove anything, just show what would be done.</para>
+     <para>Database server's host.</para>
     </listitem>
    </varlistentry>
 
@@ -63,9 +72,30 @@ vacuumlo [options] database [database2 ... databaseN]
    </varlistentry>
 
    <varlistentry>
+    <term><option>-n</option></term>
+    <listitem>
+     <para>Don't remove anything, just show what would be done.</para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><option>-p</option> <replaceable>port</></term>
+    <listitem>
+     <para>Database server's port.</para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><option>-U</option> <replaceable>username</></term>
     <listitem>
      <para>User name to connect as.</para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><option>-v</option></term>
+    <listitem>
+     <para>Write a lot of progress messages.</para>
     </listitem>
    </varlistentry>
 
@@ -102,50 +132,30 @@ vacuumlo [options] database [database2 ... databaseN]
      </para>
     </listitem>
    </varlistentry>
-
-   <varlistentry>
-    <term><option>-h</option> <replaceable>hostname</></term>
-    <listitem>
-     <para>Database server's host.</para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><option>-p</option> <replaceable>port</></term>
-    <listitem>
-     <para>Database server's port.</para>
-    </listitem>
-   </varlistentry>
   </variablelist>
- </sect2>
+ </refsect1>
 
- <sect2>
-  <title>Method</title>
+ <refsect1>
+  <title>Notes</title>
 
   <para>
+   <application>vacuumlo</application> works by the following method:
    First, <application>vacuumlo</> builds a temporary table which contains all
-   of the OIDs of the large objects in the selected database.
+   of the OIDs of the large objects in the selected database.  It then scans
+   through all columns in the database that are of type
+   <type>oid</> or <type>lo</>, and removes matching entries from the temporary
+   table.  (Note: Only types with these names are considered; in particular,
+   domains over them are not considered.)  The remaining entries in the
+   temporary table identify orphaned LOs.  These are removed.
   </para>
+ </refsect1>
 
-  <para>
-   It then scans through all columns in the database that are of type
-   <type>oid</> or <type>lo</>, and removes matching entries from the
-   temporary table.  (Note: only types with these names are considered;
-   in particular, domains over them are not considered.)
-  </para>
-
-  <para>
-   The remaining entries in the temporary table identify orphaned LOs.
-   These are removed.
-  </para>
- </sect2>
-
- <sect2>
+ <refsect1>
   <title>Author</title>
 
   <para>
    Peter Mount <email>peter@retep.org.uk</email>
   </para>
- </sect2>
+ </refsect1>
 
-</sect1>
+</refentry>

@@ -1,11 +1,30 @@
 <!-- doc/src/sgml/oid2name.sgml -->
 
-<sect1 id="oid2name" xreflabel="oid2name">
- <title>oid2name</title>
+<refentry id="oid2name">
+ <refmeta>
+  <refentrytitle>oid2name</refentrytitle>
+  <manvolnum>1</manvolnum>
+  <refmiscinfo>Application</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>oid2name</refname>
+  <refpurpose>resolve OIDs and file nodes in a <productname>PostgreSQL</productname> data directory</refpurpose>
+ </refnamediv>
 
  <indexterm zone="oid2name">
   <primary>oid2name</primary>
  </indexterm>
+
+ <refsynopsisdiv>
+  <cmdsynopsis>
+   <command>oid2name</command>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
+  </cmdsynopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
 
  <para>
   <application>oid2name</> is a utility program that helps administrators to
@@ -24,19 +43,16 @@
   </para>
  </note>
 
- <sect2>
-  <title>Overview</title>
-
   <para>
    <application>oid2name</application> connects to a target database and
    extracts OID, filenode, and/or table name information.  You can also have
    it show database OIDs or tablespace OIDs.
   </para>
 
- </sect2>
+ </refsect1>
 
- <sect2>
-  <title><application>oid2name</> Options</title>
+ <refsect1>
+  <title>Options</title>
 
   <para>
    <application>oid2name</application> accepts the following command-line arguments:
@@ -142,9 +158,19 @@
    OIDs.  Alternatively you can give <option>-s</> to get a tablespace
    listing.
   </para>
- </sect2>
+ </refsect1>
 
- <sect2>
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   <application>oid2name</> requires a running database server with
+   non-corrupt system catalogs.  It is therefore of only limited use
+   for recovering from catastrophic database corruption situations.
+  </para>
+ </refsect1>
+
+ <refsect1>
   <title>Examples</title>
 
 <screen>
@@ -265,24 +291,14 @@ From database "alvherre":
 ----------------------
     155156         foo
 </screen>
- </sect2>
+ </refsect1>
 
- <sect2>
-  <title>Limitations</title>
-
-  <para>
-   <application>oid2name</> requires a running database server with
-   non-corrupt system catalogs.  It is therefore of only limited use
-   for recovering from catastrophic database corruption situations.
-  </para>
- </sect2>
-
- <sect2>
+ <refsect1>
   <title>Author</title>
 
   <para>
    B. Palmer <email>bpalmer@crimelabs.net</email>
   </para>
- </sect2>
+ </refsect1>
 
-</sect1>
+</refentry>

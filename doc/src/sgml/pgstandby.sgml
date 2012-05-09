@@ -1,11 +1,34 @@
 <!-- doc/src/sgml/pgstandby.sgml -->
 
-<sect1 id="pgstandby" xreflabel="pg_standby">
- <title>pg_standby</title>
+<refentry id="pgstandby">
+ <refmeta>
+  <refentrytitle><application>pg_standby</application></refentrytitle>
+  <manvolnum>1</manvolnum>
+  <refmiscinfo>Application</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>pg_standby</refname>
+  <refpurpose>supports the creation of a <productname>PostgreSQL</productname> warm standby server</refpurpose>
+ </refnamediv>
 
  <indexterm zone="pgstandby">
   <primary>pg_standby</primary>
  </indexterm>
+
+ <refsynopsisdiv>
+  <cmdsynopsis>
+   <command>pg_standby</command>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
+   <arg choice="plain"><replaceable>archivelocation</replaceable></arg>
+   <arg choice="plain"><replaceable>nextwalfile</replaceable></arg>
+   <arg choice="plain"><replaceable>xlogfilepath</replaceable></arg>
+   <arg choice="opt"><replaceable>restartwalfile</replaceable></arg>
+  </cmdsynopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
 
  <para>
   <application>pg_standby</> supports creation of a <quote>warm standby</>
@@ -21,31 +44,6 @@
   server manual (see <xref linkend="warm-standby">).
  </para>
 
- <para>
-  <application>pg_standby</application> features include:
- </para>
- <itemizedlist>
-  <listitem>
-   <para>
-    Written in C, so very portable and easy to install
-   </para>
-  </listitem>
-  <listitem>
-   <para>
-    Easy-to-modify source code, with specifically designated
-    sections to modify for your own needs
-   </para>
-  </listitem>
-  <listitem>
-   <para>
-    Already tested on Linux and Windows
-   </para>
-  </listitem>
- </itemizedlist>
-
- <sect2>
-  <title>Usage</title>
-
   <para>
    To configure a standby
    server to use <application>pg_standby</>, put this into its
@@ -55,16 +53,6 @@ restore_command = 'pg_standby <replaceable>archiveDir</> %f %p %r'
 </programlisting>
    where <replaceable>archiveDir</> is the directory from which WAL segment
    files should be restored.
-  </para>
-  <para>
-   The full syntax of <application>pg_standby</>'s command line is
-<synopsis>
-pg_standby <optional> <replaceable>option</> ... </optional> <replaceable>archivelocation</> <replaceable>nextwalfile</> <replaceable>xlogfilepath</> <optional> <replaceable>restartwalfile</> </optional>
-</synopsis>
-   When used within <varname>restore_command</>, the <literal>%f</> and
-   <literal>%p</> macros should be specified for <replaceable>nextwalfile</>
-   and <replaceable>xlogfilepath</> respectively, to provide the actual file
-   and path required for the restore.
   </para>
   <para>
    If <replaceable>restartwalfile</> is specified, normally by using the
@@ -118,10 +106,10 @@ pg_standby <optional> <replaceable>option</> ... </optional> <replaceable>archiv
    </variablelist>
   </para>
 
- </sect2>
+ </refsect1>
 
- <sect2>
-  <title><application>pg_standby</> Options</title>
+ <refsect1>
+  <title>Options</title>
 
    <para>
     <application>pg_standby</application> accepts the following command-line arguments:
@@ -226,9 +214,36 @@ pg_standby <optional> <replaceable>option</> ... </optional> <replaceable>archiv
     </variablelist>
    </para>
 
- </sect2>
+ </refsect1>
 
- <sect2>
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   <application>pg_standby</application> is designed to work with
+   <productname>PostgreSQL</> 8.2 and later.
+  </para>
+  <para>
+   <productname>PostgreSQL</> 8.3 provides the <literal>%r</literal> macro,
+   which is designed to let <application>pg_standby</application> know the
+   last file it needs to keep.  With <productname>PostgreSQL</> 8.2, the
+   <literal>-k</literal> option must be used if archive cleanup is
+   required.  This option remains available in 8.3, but its use is deprecated.
+  </para>
+  <para>
+   <productname>PostgreSQL</> 8.4 provides the
+   <varname>recovery_end_command</> option.  Without this option
+   a leftover trigger file can be hazardous.
+  </para>
+
+  <para>
+   <application>pg_standby</application> is written in C and has an
+   easy-to-modify source code, with specifically designated sections to modify
+   for your own needs
+  </para>
+ </refsect1>
+
+ <refsect1>
   <title>Examples</title>
 
   <para>On Linux or Unix systems, you might use:
@@ -339,35 +354,21 @@ recovery_end_command = 'del C:\pgsql.trigger.5442'
    network.
   </para>
 
- </sect2>
+ </refsect1>
 
- <sect2>
-  <title>Supported Server Versions</title>
-
-  <para>
-   <application>pg_standby</application> is designed to work with
-   <productname>PostgreSQL</> 8.2 and later.
-  </para>
-  <para>
-   <productname>PostgreSQL</> 8.3 provides the <literal>%r</literal> macro,
-   which is designed to let <application>pg_standby</application> know the
-   last file it needs to keep.  With <productname>PostgreSQL</> 8.2, the
-   <literal>-k</literal> option must be used if archive cleanup is
-   required.  This option remains available in 8.3, but its use is deprecated.
-  </para>
-  <para>
-   <productname>PostgreSQL</> 8.4 provides the
-   <varname>recovery_end_command</> option.  Without this option
-   a leftover trigger file can be hazardous.
-  </para>
- </sect2>
-
- <sect2>
+ <refsect1>
   <title>Author</title>
 
   <para>
    Simon Riggs <email>simon@2ndquadrant.com</email>
   </para>
- </sect2>
+ </refsect1>
 
-</sect1>
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="pgarchivecleanup"></member>
+  </simplelist>
+ </refsect1>
+</refentry>

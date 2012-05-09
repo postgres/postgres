@@ -1,11 +1,30 @@
 <!-- doc/src/sgml/pgtesttiming.sgml -->
 
-<sect1 id="pgtesttiming" xreflabel="pg_test_timing">
- <title>pg_test_timing</title>
+<refentry id="pgtesttiming">
+ <refmeta>
+  <refentrytitle><application>pg_test_timing</application></refentrytitle>
+  <manvolnum>1</manvolnum>
+  <refmiscinfo>Application</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>pg_test_timing</refname>
+  <refpurpose>measure timing overhead</refpurpose>
+ </refnamediv>
 
  <indexterm zone="pgtesttiming">
   <primary>pg_test_timing</primary>
  </indexterm>
+
+ <refsynopsisdiv>
+  <cmdsynopsis>
+   <command>pg_test_timing</command>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
+  </cmdsynopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
 
  <para>
   <application>pg_test_timing</> is a tool to measure the timing overhead
@@ -13,13 +32,10 @@
   Systems that are slow to collect timing data can give less accurate 
   <command>EXPLAIN ANALYZE</command> results.
  </para>
+ </refsect1>
 
- <sect2>
-  <title>Usage</title>
-
-<synopsis>
-pg_test_timing [options]
-</synopsis>
+ <refsect1>
+  <title>Options</title>
 
    <para>
     <application>pg_test_timing</application> accepts the following
@@ -43,9 +59,12 @@ pg_test_timing [options]
     </variablelist>
    </para>
 
- </sect2>
+ </refsect1>
 
- <sect2>
+ <refsect1>
+  <title>Usage</title>
+
+ <refsect2>
   <title>Interpreting results</title>
 
   <para>
@@ -74,8 +93,8 @@ Histogram of timing durations:
         one microsecond (usec).
   </para>
 
- </sect2>
- <sect2>
+ </refsect2>
+ <refsect2>
   <title>Measuring executor timing overhead</title>
 
   <para>
@@ -103,8 +122,9 @@ EXPLAIN ANALYZE SELECT COUNT(*) FROM t;
         timing overhead would be less problematic.
   </para>
 
- </sect2>
- <sect2>
+ </refsect2>
+
+ <refsect2>
   <title>Changing time sources</title>
   <para>
         On some newer Linux systems, it's possible to change the clock
@@ -178,8 +198,8 @@ Histogram of timing durations:
         1:   27694571 90.23734%
 </screen>
 
- </sect2>
- <sect2>
+ </refsect2>
+ <refsect2>
   <title>Clock hardware and timing accuracy</title>
 
   <para>
@@ -248,14 +268,22 @@ Histogram of timing durations:
         Programmable Interrupt Controller (APIC) timer, and the Cyclone
         timer.  These timers aim for millisecond resolution.
   </para>
- </sect2>
+  </refsect2>
+ </refsect1>
 
- <sect2>
+ <refsect1>
   <title>Author</title>
 
   <para>
    Ants Aasma <email>ants.aasma@eesti.ee</email>
   </para>
- </sect2>
+ </refsect1>
 
-</sect1>
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-explain"></member>
+  </simplelist>
+ </refsect1>
+</refentry>

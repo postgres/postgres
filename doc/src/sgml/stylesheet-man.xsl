@@ -30,6 +30,16 @@
 
 <!-- Custom templates -->
 
+<!-- Improve output of email element.  See also
+     <https://sourceforge.net/tracker/?func=detail&aid=3524417&group_id=21935&atid=373747>
+ -->
+<xsl:template match="email">
+  <xsl:text>&lt;</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>&gt;</xsl:text>
+</xsl:template>
+
+
 <xsl:template match="refentry" mode="xref-to">
   <xsl:param name="referrer"/>
   <xsl:param name="xrefstyle"/>

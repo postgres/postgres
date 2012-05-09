@@ -1241,6 +1241,15 @@ save_size.pdfjadetex = 15000
      </varlistentry>
 
      <varlistentry>
+      <term>Author</term>
+      <listitem>
+       <para>
+        Author (only used in the contrib section)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term>See Also</term>
       <listitem>
        <para>

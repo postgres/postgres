@@ -1,12 +1,37 @@
 <!-- doc/src/sgml/pgbench.sgml -->
 
-<sect1 id="pgbench" xreflabel="pgbench">
- <title>pgbench</title>
+<refentry id="pgbench">
+ <refmeta>
+  <refentrytitle><application>pgbench</application></refentrytitle>
+  <manvolnum>1</manvolnum>
+  <refmiscinfo>Application</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>pgbench</refname>
+  <refpurpose>run a benchmark test on <productname>PostgreSQL</productname></refpurpose>
+ </refnamediv>
 
  <indexterm zone="pgbench">
   <primary>pgbench</primary>
  </indexterm>
 
+ <refsynopsisdiv>
+  <cmdsynopsis>
+   <command>pgbench</command>
+   <arg choice="plain"><option>-i</option></arg>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
+   <arg choice="opt"><replaceable>dbname</replaceable></arg>
+  </cmdsynopsis>
+  <cmdsynopsis>
+   <command>pgbench</command>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
+   <arg choice="opt"><replaceable>dbname</replaceable></arg>
+  </cmdsynopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
  <para>
   <application>pgbench</application> is a simple program for running benchmark
   tests on <productname>PostgreSQL</>.  It runs the same sequence of SQL
@@ -38,19 +63,16 @@ tps = 85.296346 (excluding connections establishing)
   settings.  The next line reports the number of transactions completed
   and intended (the latter being just the product of number of clients
   and number of transactions per client); these will be equal unless the run
-  failed before completion.  (In <literal>-T</> mode, only the actual
+  failed before completion.  (In <option>-T</> mode, only the actual
   number of transactions is printed.)
   The last two lines report the number of transactions per second,
   figured with and without counting the time to start database sessions.
  </para>
 
- <sect2>
-  <title>Overview</title>
-
   <para>
    The default TPC-B-like transaction test requires specific tables to be
    set up beforehand.  <application>pgbench</> should be invoked with
-   the <literal>-i</> (initialize) option to create and populate these
+   the <option>-i</> (initialize) option to create and populate these
    tables.  (When you are testing a custom script, you don't need this
    step, but will instead need to do whatever setup your test needs.)
    Initialization looks like:
@@ -60,8 +82,8 @@ pgbench -i <optional> <replaceable>other-options</> </optional> <replaceable>dbn
 </programlisting>
 
    where <replaceable>dbname</> is the name of the already-created
-   database to test in.  (You may also need <literal>-h</>,
-   <literal>-p</>, and/or <literal>-U</> options to specify how to
+   database to test in.  (You may also need <option>-h</>,
+   <option>-p</>, and/or <option>-U</> options to specify how to
    connect to the database server.)
   </para>
 
@@ -88,38 +110,37 @@ pgbench_accounts        100000
 pgbench_history         0
 </screen>
    You can (and, for most purposes, probably should) increase the number
-   of rows by using the <literal>-s</> (scale factor) option.  The
-   <literal>-F</> (fillfactor) option might also be used at this point.
+   of rows by using the <option>-s</> (scale factor) option.  The
+   <option>-F</> (fillfactor) option might also be used at this point.
   </para>
 
   <para>
    Once you have done the necessary setup, you can run your benchmark
-   with a command that doesn't include <literal>-i</>, that is
+   with a command that doesn't include <option>-i</>, that is
 
 <programlisting>
 pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
 </programlisting>
 
    In nearly all cases, you'll need some options to make a useful test.
-   The most important options are <literal>-c</> (number of clients),
-   <literal>-t</> (number of transactions), <literal>-T</> (time limit),
-   and <literal>-f</> (specify a custom script file).
+   The most important options are <option>-c</> (number of clients),
+   <option>-t</> (number of transactions), <option>-T</> (time limit),
+   and <option>-f</> (specify a custom script file).
    See below for a full list.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Options</title>
 
   <para>
-   <xref linkend="pgbench-init-options"> shows options that are used
-   during database initialization, while
-   <xref linkend="pgbench-run-options"> shows options that are used
-   while running benchmarks, and
-   <xref linkend="pgbench-common-options"> shows options that are useful
-   in both cases.
+   The following is divided into three subsections: Different options are used
+   during database initialization and while running benchmarks, some options
+   are useful in both cases.
   </para>
 
- </sect2>
-
- <sect2 id="pgbench-init-options">
-  <title><application>pgbench</> Initialization Options</title>
+ <refsect2 id="pgbench-init-options">
+  <title>Initialization Options</title>
 
    <para>
     <application>pgbench</application> accepts the following command-line
@@ -191,10 +212,10 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
     </variablelist>
    </para>
 
- </sect2>
+ </refsect2>
 
- <sect2 id="pgbench-run-options">
-  <title><application>pgbench</> Benchmarking Options</title>
+ <refsect2 id="pgbench-run-options">
+  <title>Benchmarking Options</title>
 
    <para>
     <application>pgbench</application> accepts the following command-line
@@ -237,7 +258,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <listitem>
        <para>
         Define a variable for use by a custom script (see below).
-        Multiple <literal>-D</> options are allowed.
+        Multiple <option>-D</> options are allowed.
        </para>
       </listitem>
      </varlistentry>
@@ -248,7 +269,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
        <para>
         Read transaction script from <replaceable>filename</>.
         See below for details.
-        <literal>-N</literal>, <literal>-S</literal>, and <literal>-f</literal>
+        <option>-N</option>, <option>-S</option>, and <option>-f</option>
         are mutually exclusive.
        </para>
       </listitem>
@@ -344,7 +365,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
         output.  With the built-in tests, this is not necessary; the
         correct scale factor will be detected by counting the number of
         rows in the <structname>pgbench_branches</> table.  However, when testing
-        custom benchmarks (<literal>-f</> option), the scale factor
+        custom benchmarks (<option>-f</> option), the scale factor
         will be reported as 1 unless this option is used.
        </para>
       </listitem>
@@ -373,8 +394,8 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <listitem>
        <para>
         Run the test for this many seconds, rather than a fixed number of
-        transactions per client. <literal>-t</literal> and
-        <literal>-T</literal> are mutually exclusive.
+        transactions per client. <option>-t</option> and
+        <option>-T</option> are mutually exclusive.
        </para>
       </listitem>
      </varlistentry>
@@ -384,7 +405,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <listitem>
        <para>
         Vacuum all four standard tables before running the test.
-        With neither <literal>-n</> nor <literal>-v</>, pgbench will vacuum the
+        With neither <option>-n</> nor <option>-v</>, pgbench will vacuum the
         <structname>pgbench_tellers</> and <structname>pgbench_branches</>
         tables, and will truncate <structname>pgbench_history</>.
        </para>
@@ -394,10 +415,10 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
     </variablelist>
    </para>
 
- </sect2>
+ </refsect2>
 
- <sect2 id="pgbench-common-options">
-  <title><application>pgbench</> Common Options</title>
+ <refsect2 id="pgbench-common-options">
+  <title>Common Options</title>
 
    <para>
     <application>pgbench</application> accepts the following command-line
@@ -435,9 +456,13 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
     </variablelist>
    </para>
 
- </sect2>
+ </refsect2>
+ </refsect1>
 
- <sect2>
+ <refsect1>
+  <title>Notes</title>
+
+ <refsect2>
   <title>What is the <quote>Transaction</> Actually Performed in pgbench?</title>
 
   <para>
@@ -455,22 +480,22 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
   </orderedlist>
 
   <para>
-   If you specify <literal>-N</>, steps 4 and 5 aren't included in the
-   transaction.  If you specify <literal>-S</>, only the <command>SELECT</> is
+   If you specify <option>-N</>, steps 4 and 5 aren't included in the
+   transaction.  If you specify <option>-S</>, only the <command>SELECT</> is
    issued.
   </para>
- </sect2>
+ </refsect2>
 
- <sect2>
+ <refsect2>
   <title>Custom Scripts</title>
 
   <para>
    <application>pgbench</application> has support for running custom
    benchmark scenarios by replacing the default transaction script
    (described above) with a transaction script read from a file
-   (<literal>-f</literal> option).  In this case a <quote>transaction</>
+   (<option>-f</option> option).  In this case a <quote>transaction</>
    counts as one execution of a script file.  You can even specify
-   multiple scripts (multiple <literal>-f</literal> options), in which
+   multiple scripts (multiple <option>-f</option> options), in which
    case a random one of the scripts is chosen each time a client session
    starts a new transaction.
   </para>
@@ -485,9 +510,9 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
 
   <para>
    There is a simple variable-substitution facility for script files.
-   Variables can be set by the command-line <literal>-D</> option,
+   Variables can be set by the command-line <option>-D</> option,
    explained above, or by the meta commands explained below.
-   In addition to any variables preset by <literal>-D</> command-line options,
+   In addition to any variables preset by <option>-D</> command-line options,
    the variable <literal>scale</> is preset to the current scale factor.
    Once set, a variable's
    value can be inserted into a SQL command by writing
@@ -648,17 +673,17 @@ END;
    otherwise they'd not be independently touching different rows.)
   </para>
 
- </sect2>
+ </refsect2>
 
- <sect2>
+ <refsect2>
   <title>Per-Transaction Logging</title>
 
   <para>
-   With the <literal>-l</> option, <application>pgbench</> writes the time
+   With the <option>-l</> option, <application>pgbench</> writes the time
    taken by each transaction to a log file.  The log file will be named
    <filename>pgbench_log.<replaceable>nnn</></filename>, where
    <replaceable>nnn</> is the PID of the pgbench process.
-   If the <literal>-j</> option is 2 or higher, creating multiple worker
+   If the <option>-j</> option is 2 or higher, creating multiple worker
    threads, each will have its own log file. The first worker will use the
    same name for its log file as in the standard single worker case.
    The additional log files for the other workers will be named
@@ -676,7 +701,7 @@ END;
 
    where <replaceable>time</> is the total elapsed transaction time in microseconds,
    <replaceable>file_no</> identifies which script file was used
-   (useful when multiple scripts were specified with <literal>-f</>),
+   (useful when multiple scripts were specified with <option>-f</>),
    and <replaceable>time_epoch</>/<replaceable>time_us</> are a
    UNIX epoch format timestamp and an offset
    in microseconds (suitable for creating a ISO 8601
@@ -693,13 +718,13 @@ END;
  0 202 2038 0 1175850569 2663
 </screen>
   </para>
- </sect2>
+ </refsect2>
 
- <sect2>
+ <refsect2>
   <title>Per-Statement Latencies</title>
 
   <para>
-   With the <literal>-r</> option, <application>pgbench</> collects
+   With the <option>-r</> option, <application>pgbench</> collects
    the elapsed transaction time of each statement executed by every
    client.  It then reports an average of those values, referred to
    as the latency for each statement, after the benchmark has finished.
@@ -749,9 +774,9 @@ statement latencies in milliseconds:
    Comparing average TPS values with and without latency reporting enabled
    is a good way to measure if the timing overhead is significant.
   </para>
- </sect2>
+ </refsect2>
 
- <sect2>
+ <refsect2>
   <title>Good Practices</title>
 
   <para>
@@ -762,7 +787,7 @@ statement latencies in milliseconds:
 
   <para>
    In the first place, <emphasis>never</> believe any test that runs
-   for only a few seconds.  Use the <literal>-t</> or <literal>-T</> option
+   for only a few seconds.  Use the <option>-t</> or <option>-T</> option
    to make the run last at least a few minutes, so as to average out noise.
    In some cases you could need hours to get numbers that are reproducible.
    It's a good idea to try the test run a few times, to find out if your
@@ -771,11 +796,11 @@ statement latencies in milliseconds:
 
   <para>
    For the default TPC-B-like test scenario, the initialization scale factor
-   (<literal>-s</>) should be at least as large as the largest number of
-   clients you intend to test (<literal>-c</>); else you'll mostly be
-   measuring update contention.  There are only <literal>-s</> rows in
+   (<option>-s</>) should be at least as large as the largest number of
+   clients you intend to test (<option>-c</>); else you'll mostly be
+   measuring update contention.  There are only <option>-s</> rows in
    the <structname>pgbench_branches</> table, and every transaction wants to
-   update one of them, so <literal>-c</> values in excess of <literal>-s</>
+   update one of them, so <option>-c</> values in excess of <option>-s</>
    will undoubtedly result in lots of transactions blocked waiting for
    other transactions.
   </para>
@@ -798,6 +823,6 @@ statement latencies in milliseconds:
    instances concurrently, on several client machines, against the same
    database server.
   </para>
- </sect2>
-
-</sect1>
+ </refsect2>
+ </refsect1>
+</refentry>
