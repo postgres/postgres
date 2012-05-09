@@ -63,7 +63,7 @@ typedef enum LWLockId
 	MultiXactOffsetControlLock,
 	MultiXactMemberControlLock,
 	RelCacheInitLock,
-	BgWriterCommLock,
+	CheckpointerCommLock,
 	TwoPhaseStateLock,
 	TablespaceCreateLock,
 	BtreeVacuumLock,

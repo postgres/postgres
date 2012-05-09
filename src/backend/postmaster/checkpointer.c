@@ -101,7 +101,7 @@
  * absorbed by the checkpointer.
  *
  * Unlike the checkpoint fields, num_backend_writes, num_backend_fsync, and
- * the requests fields are protected by BgWriterCommLock.
+ * the requests fields are protected by CheckpointerCommLock.
  *----------
  */
 typedef struct
@@ -1118,7 +1118,7 @@ ForwardFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
 	if (am_checkpointer)
 		elog(ERROR, "ForwardFsyncRequest must not be called in checkpointer");
 
-	LWLockAcquire(BgWriterCommLock, LW_EXCLUSIVE);
+	LWLockAcquire(CheckpointerCommLock, LW_EXCLUSIVE);
 
 	/* Count all backend writes regardless of if they fit in the queue */
 	BgWriterShmem->num_backend_writes++;
@@ -1137,7 +1137,7 @@ ForwardFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
 		 * fsync
 		 */
 		BgWriterShmem->num_backend_fsync++;
-		LWLockRelease(BgWriterCommLock);
+		LWLockRelease(CheckpointerCommLock);
 		return false;
 	}
 
@@ -1151,7 +1151,7 @@ ForwardFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
 	too_full = (BgWriterShmem->num_requests >=
 				BgWriterShmem->max_requests / 2);
 
-	LWLockRelease(BgWriterCommLock);
+	LWLockRelease(CheckpointerCommLock);
 
 	/* ... but not till after we release the lock */
 	if (too_full && ProcGlobal->checkpointerLatch)
@@ -1191,8 +1191,8 @@ CompactCheckpointerRequestQueue(void)
 	HTAB	   *htab;
 	bool	   *skip_slot;
 
-	/* must hold BgWriterCommLock in exclusive mode */
-	Assert(LWLockHeldByMe(BgWriterCommLock));
+	/* must hold CheckpointerCommLock in exclusive mode */
+	Assert(LWLockHeldByMe(CheckpointerCommLock));
 
 	/* Initialize temporary hash table */
 	MemSet(&ctl, 0, sizeof(ctl));
@@ -1295,7 +1295,7 @@ AbsorbFsyncRequests(void)
 	 * We try to avoid holding the lock for a long time by copying the request
 	 * array.
 	 */
-	LWLockAcquire(BgWriterCommLock, LW_EXCLUSIVE);
+	LWLockAcquire(CheckpointerCommLock, LW_EXCLUSIVE);
 
 	/* Transfer stats counts into pending pgstats message */
 	BgWriterStats.m_buf_written_backend += BgWriterShmem->num_backend_writes;
@@ -1312,7 +1312,7 @@ AbsorbFsyncRequests(void)
 	}
 	BgWriterShmem->num_requests = 0;
 
-	LWLockRelease(BgWriterCommLock);
+	LWLockRelease(CheckpointerCommLock);
 
 	for (request = requests; n > 0; request++, n--)
 		RememberFsyncRequest(request->rnode, request->forknum, request->segno);
