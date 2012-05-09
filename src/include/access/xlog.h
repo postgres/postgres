@@ -316,6 +316,7 @@ extern TimeLineID GetRecoveryTargetTLI(void);
 
 extern bool CheckPromoteSignal(void);
 extern void WakeupRecovery(void);
+extern void SetWalWriterSleeping(bool sleeping);
 
 /*
  * Starting/stopping a base backup

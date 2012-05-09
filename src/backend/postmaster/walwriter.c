@@ -99,6 +99,7 @@ WalWriterMain(void)
 	sigjmp_buf	local_sigjmp_buf;
 	MemoryContext walwriter_context;
 	int			left_till_hibernate;
+	bool		hibernating;
 
 	/*
 	 * If possible, make this process a group leader, so that the postmaster
@@ -230,6 +231,8 @@ WalWriterMain(void)
 	 * Reset hibernation state after any error.
 	 */
 	left_till_hibernate = LOOPS_UNTIL_HIBERNATE;
+	hibernating = false;
+	SetWalWriterSleeping(false);
 
 	/*
 	 * Advertise our latch that backends can use to wake us up while we're
@@ -243,6 +246,21 @@ WalWriterMain(void)
 	for (;;)
 	{
 		long	cur_timeout;
+
+		/*
+		 * Advertise whether we might hibernate in this cycle.  We do this
+		 * before resetting the latch to ensure that any async commits will
+		 * see the flag set if they might possibly need to wake us up, and
+		 * that we won't miss any signal they send us.  (If we discover work
+		 * to do in the last cycle before we would hibernate, the global flag
+		 * will be set unnecessarily, but little harm is done.)  But avoid
+		 * touching the global flag if it doesn't need to change.
+		 */
+		if (hibernating != (left_till_hibernate <= 1))
+		{
+			hibernating = (left_till_hibernate <= 1);
+			SetWalWriterSleeping(hibernating);
+		}
 
 		/* Clear any already-pending wakeups */
 		ResetLatch(&MyProc->procLatch);

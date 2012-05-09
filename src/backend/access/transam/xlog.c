@@ -427,6 +427,13 @@ typedef struct XLogCtlData
 	bool		SharedHotStandbyActive;
 
 	/*
+	 * WalWriterSleeping indicates whether the WAL writer is currently in
+	 * low-power mode (and hence should be nudged if an async commit occurs).
+	 * Protected by info_lck.
+	 */
+	bool		WalWriterSleeping;
+
+	/*
 	 * recoveryWakeupLatch is used to wake up the startup process to continue
 	 * WAL replay, if it is waiting for WAL to arrive or failover trigger file
 	 * to appear.
@@ -1903,32 +1910,44 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch)
 
 /*
  * Record the LSN for an asynchronous transaction commit/abort
- * and nudge the WALWriter if there is a complete page to write.
+ * and nudge the WALWriter if there is work for it to do.
  * (This should not be called for synchronous commits.)
  */
 void
 XLogSetAsyncXactLSN(XLogRecPtr asyncXactLSN)
 {
 	XLogRecPtr	WriteRqstPtr = asyncXactLSN;
+	bool		sleeping;
 
 	/* use volatile pointer to prevent code rearrangement */
 	volatile XLogCtlData *xlogctl = XLogCtl;
 
 	SpinLockAcquire(&xlogctl->info_lck);
 	LogwrtResult = xlogctl->LogwrtResult;
+	sleeping = xlogctl->WalWriterSleeping;
 	if (XLByteLT(xlogctl->asyncXactLSN, asyncXactLSN))
 		xlogctl->asyncXactLSN = asyncXactLSN;
 	SpinLockRelease(&xlogctl->info_lck);
 
-	/* back off to last completed page boundary */
-	WriteRqstPtr.xrecoff -= WriteRqstPtr.xrecoff % XLOG_BLCKSZ;
+	/*
+	 * If the WALWriter is sleeping, we should kick it to make it come out of
+	 * low-power mode.  Otherwise, determine whether there's a full page of
+	 * WAL available to write.
+	 */
+	if (!sleeping)
+	{
+		/* back off to last completed page boundary */
+		WriteRqstPtr.xrecoff -= WriteRqstPtr.xrecoff % XLOG_BLCKSZ;
 
-	/* if we have already flushed that far, we're done */
-	if (XLByteLE(WriteRqstPtr, LogwrtResult.Flush))
-		return;
+		/* if we have already flushed that far, we're done */
+		if (XLByteLE(WriteRqstPtr, LogwrtResult.Flush))
+			return;
+	}
 
 	/*
-	 * Nudge the WALWriter if we have a full page of WAL to write.
+	 * Nudge the WALWriter: it has a full page of WAL to write, or we want
+	 * it to come out of low-power mode so that this async commit will reach
+	 * disk within the expected amount of time.
 	 */
 	if (ProcGlobal->walwriterLatch)
 		SetLatch(ProcGlobal->walwriterLatch);
@@ -5100,6 +5119,7 @@ XLOGShmemInit(void)
 	XLogCtl->XLogCacheBlck = XLOGbuffers - 1;
 	XLogCtl->SharedRecoveryInProgress = true;
 	XLogCtl->SharedHotStandbyActive = false;
+	XLogCtl->WalWriterSleeping = false;
 	XLogCtl->Insert.currpage = (XLogPageHeader) (XLogCtl->pages);
 	SpinLockInit(&XLogCtl->info_lck);
 	InitSharedLatch(&XLogCtl->recoveryWakeupLatch);
@@ -10478,4 +10498,18 @@ void
 WakeupRecovery(void)
 {
 	SetLatch(&XLogCtl->recoveryWakeupLatch);
+}
+
+/*
+ * Update the WalWriterSleeping flag.
+ */
+void
+SetWalWriterSleeping(bool sleeping)
+{
+	/* use volatile pointer to prevent code rearrangement */
+	volatile XLogCtlData *xlogctl = XLogCtl;
+
+	SpinLockAcquire(&xlogctl->info_lck);
+	xlogctl->WalWriterSleeping = sleeping;
+	SpinLockRelease(&xlogctl->info_lck);
 }
