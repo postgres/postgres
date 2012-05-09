@@ -64,6 +64,15 @@
  * will be lifted in future by inserting suitable memory barriers into
  * SetLatch and ResetLatch.
  *
+ * Note that use of the process latch (PGPROC.procLatch) is generally better
+ * than an ad-hoc shared latch for signaling auxiliary processes.  This is
+ * because generic signal handlers will call SetLatch on the process latch
+ * only, so using any latch other than the process latch effectively precludes
+ * ever registering a generic handler.  Since signals have the potential to
+ * invalidate the latch timeout on some platforms, resulting in a
+ * denial-of-service, it is important to verify that all signal handlers
+ * within all WaitLatch-calling processes call SetLatch.
+ *
  *
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California

@@ -16,7 +16,6 @@
 #include "datatype/timestamp.h"
 #include "lib/stringinfo.h"
 #include "storage/buf.h"
-#include "storage/latch.h"
 #include "utils/pg_crc.h"
 
 /*
@@ -266,7 +265,7 @@ extern CheckpointStatsData CheckpointStats;
 
 extern XLogRecPtr XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata);
 extern void XLogFlush(XLogRecPtr RecPtr);
-extern void XLogBackgroundFlush(void);
+extern bool XLogBackgroundFlush(void);
 extern bool XLogNeedsFlush(XLogRecPtr RecPtr);
 extern int XLogFileInit(uint32 log, uint32 seg,
 			 bool *use_existent, bool use_lock);
@@ -317,7 +316,6 @@ extern TimeLineID GetRecoveryTargetTLI(void);
 
 extern bool CheckPromoteSignal(void);
 extern void WakeupRecovery(void);
-extern Latch *WALWriterLatch(void);
 
 /*
  * Starting/stopping a base backup

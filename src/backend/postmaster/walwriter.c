@@ -54,6 +54,7 @@
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
 #include "storage/pmsignal.h"
+#include "storage/proc.h"
 #include "storage/smgr.h"
 #include "utils/guc.h"
 #include "utils/hsearch.h"
@@ -67,6 +68,14 @@
 int			WalWriterDelay = 200;
 
 /*
+ * Number of do-nothing loops before lengthening the delay time, and the
+ * multiplier to apply to WalWriterDelay when we do decide to hibernate.
+ * (Perhaps these need to be configurable?)
+ */
+#define LOOPS_UNTIL_HIBERNATE		50
+#define HIBERNATE_FACTOR			25
+
+/*
  * Flags set by interrupt handlers for later service in the main loop.
  */
 static volatile sig_atomic_t got_SIGHUP = false;
@@ -76,6 +85,7 @@ static volatile sig_atomic_t shutdown_requested = false;
 static void wal_quickdie(SIGNAL_ARGS);
 static void WalSigHupHandler(SIGNAL_ARGS);
 static void WalShutdownHandler(SIGNAL_ARGS);
+static void walwriter_sigusr1_handler(SIGNAL_ARGS);
 
 /*
  * Main entry point for walwriter process
@@ -88,8 +98,7 @@ WalWriterMain(void)
 {
 	sigjmp_buf	local_sigjmp_buf;
 	MemoryContext walwriter_context;
-
-	InitLatch(WALWriterLatch()); /* initialize latch used in main loop */
+	int			left_till_hibernate;
 
 	/*
 	 * If possible, make this process a group leader, so that the postmaster
@@ -114,7 +123,7 @@ WalWriterMain(void)
 	pqsignal(SIGQUIT, wal_quickdie);	/* hard crash time */
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
-	pqsignal(SIGUSR1, SIG_IGN); /* reserve for ProcSignal */
+	pqsignal(SIGUSR1, walwriter_sigusr1_handler);
 	pqsignal(SIGUSR2, SIG_IGN); /* not used */
 
 	/*
@@ -218,11 +227,25 @@ WalWriterMain(void)
 	PG_SETMASK(&UnBlockSig);
 
 	/*
+	 * Reset hibernation state after any error.
+	 */
+	left_till_hibernate = LOOPS_UNTIL_HIBERNATE;
+
+	/*
+	 * Advertise our latch that backends can use to wake us up while we're
+	 * sleeping.
+	 */
+	ProcGlobal->walwriterLatch = &MyProc->procLatch;
+
+	/*
 	 * Loop forever
 	 */
 	for (;;)
 	{
-		ResetLatch(WALWriterLatch());
+		long	cur_timeout;
+
+		/* Clear any already-pending wakeups */
+		ResetLatch(&MyProc->procLatch);
 
 		/*
 		 * Emergency bailout if postmaster has died.  This is to avoid the
@@ -246,13 +269,27 @@ WalWriterMain(void)
 		}
 
 		/*
-		 * Do what we're here for...
+		 * Do what we're here for; then, if XLogBackgroundFlush() found useful
+		 * work to do, reset hibernation counter.
 		 */
-		XLogBackgroundFlush();
+		if (XLogBackgroundFlush())
+			left_till_hibernate = LOOPS_UNTIL_HIBERNATE;
+		else if (left_till_hibernate > 0)
+			left_till_hibernate--;
 
-		(void) WaitLatch(WALWriterLatch(),
-							   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-							   WalWriterDelay /* ms */);
+		/*
+		 * Sleep until we are signaled or WalWriterDelay has elapsed.  If we
+		 * haven't done anything useful for quite some time, lengthen the
+		 * sleep time so as to reduce the server's idle power consumption.
+		 */
+		if (left_till_hibernate > 0)
+			cur_timeout = WalWriterDelay; /* in ms */
+		else
+			cur_timeout = WalWriterDelay * HIBERNATE_FACTOR;
+
+		(void) WaitLatch(&MyProc->procLatch,
+						 WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
+						 cur_timeout);
 	}
 }
 
@@ -298,14 +335,35 @@ wal_quickdie(SIGNAL_ARGS)
 static void
 WalSigHupHandler(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	got_SIGHUP = true;
-	SetLatch(WALWriterLatch());
+	if (MyProc)
+		SetLatch(&MyProc->procLatch);
+
+	errno = save_errno;
 }
 
 /* SIGTERM: set flag to exit normally */
 static void
 WalShutdownHandler(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	shutdown_requested = true;
-	SetLatch(WALWriterLatch());
+	if (MyProc)
+		SetLatch(&MyProc->procLatch);
+
+	errno = save_errno;
+}
+
+/* SIGUSR1: used for latch wakeups */
+static void
+walwriter_sigusr1_handler(SIGNAL_ARGS)
+{
+	int			save_errno = errno;
+
+	latch_sigusr1_handler();
+
+	errno = save_errno;
 }

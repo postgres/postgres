@@ -51,6 +51,7 @@
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
 #include "storage/pmsignal.h"
+#include "storage/proc.h"
 #include "storage/shmem.h"
 #include "storage/smgr.h"
 #include "storage/spin.h"
@@ -178,6 +179,7 @@ static void UpdateSharedMemoryConfig(void);
 static void chkpt_quickdie(SIGNAL_ARGS);
 static void ChkptSigHupHandler(SIGNAL_ARGS);
 static void ReqCheckpointHandler(SIGNAL_ARGS);
+static void chkpt_sigusr1_handler(SIGNAL_ARGS);
 static void ReqShutdownHandler(SIGNAL_ARGS);
 
 
@@ -224,7 +226,7 @@ CheckpointerMain(void)
 	pqsignal(SIGQUIT, chkpt_quickdie);		/* hard crash time */
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
-	pqsignal(SIGUSR1, SIG_IGN); /* reserve for ProcSignal */
+	pqsignal(SIGUSR1, chkpt_sigusr1_handler);
 	pqsignal(SIGUSR2, ReqShutdownHandler);		/* request shutdown */
 
 	/*
@@ -360,6 +362,12 @@ CheckpointerMain(void)
 	UpdateSharedMemoryConfig();
 
 	/*
+	 * Advertise our latch that backends can use to wake us up while we're
+	 * sleeping.
+	 */
+	ProcGlobal->checkpointerLatch = &MyProc->procLatch;
+
+	/*
 	 * Loop forever
 	 */
 	for (;;)
@@ -368,6 +376,10 @@ CheckpointerMain(void)
 		int			flags = 0;
 		pg_time_t	now;
 		int			elapsed_secs;
+		int			cur_timeout;
+
+		/* Clear any already-pending wakeups */
+		ResetLatch(&MyProc->procLatch);
 
 		/*
 		 * Emergency bailout if postmaster has died.  This is to avoid the
@@ -387,15 +399,15 @@ CheckpointerMain(void)
 			ProcessConfigFile(PGC_SIGHUP);
 
 			/*
-			 * Checkpointer is the last process to shutdown, so we ask
+			 * Checkpointer is the last process to shut down, so we ask
 			 * it to hold the keys for a range of other tasks required
 			 * most of which have nothing to do with checkpointing at all.
 			 *
-			 * For various reasons, some config values can change
-			 * dynamically so are the primary copy of them is held in
-			 * shared memory to make sure all backends see the same value.
-			 * We make Checkpointer responsible for updating the shared
-			 * memory copy if the parameter setting changes because of SIGHUP.
+			 * For various reasons, some config values can change dynamically
+			 * so the primary copy of them is held in shared memory to make
+			 * sure all backends see the same value.  We make Checkpointer
+			 * responsible for updating the shared memory copy if the
+			 * parameter setting changes because of SIGHUP.
 			 */
 			UpdateSharedMemoryConfig();
 		}
@@ -488,7 +500,7 @@ CheckpointerMain(void)
 						 errhint("Consider increasing the configuration parameter \"checkpoint_segments\".")));
 
 			/*
-			 * Initialize checkpointer-private variables used during checkpoint.
+			 * Initialize checkpointer-private variables used during checkpoint
 			 */
 			ckpt_active = true;
 			if (!do_restartpoint)
@@ -543,20 +555,34 @@ CheckpointerMain(void)
 			ckpt_active = false;
 		}
 
+		/* Check for archive_timeout and switch xlog files if necessary. */
+		CheckArchiveTimeout();
+
 		/*
 		 * Send off activity statistics to the stats collector
 		 */
 		pgstat_send_bgwriter();
 
 		/*
-		 * Nap for a while and then loop again. Later patches will replace
-		 * this with a latch loop. Keep it simple now for clarity.
-		 * Relatively long sleep because the bgwriter does cleanup now.
+		 * Sleep until we are signaled or it's time for another checkpoint
+		 * or xlog file switch.
 		 */
-		pg_usleep(500000L);
+		now = (pg_time_t) time(NULL);
+		elapsed_secs = now - last_checkpoint_time;
+		if (elapsed_secs >= CheckPointTimeout)
+			continue;			/* no sleep for us ... */
+		cur_timeout = CheckPointTimeout - elapsed_secs;
+		if (XLogArchiveTimeout > 0 && !RecoveryInProgress())
+		{
+			elapsed_secs = now - last_xlog_switch_time;
+			if (elapsed_secs >= XLogArchiveTimeout)
+				continue;		/* no sleep for us ... */
+			cur_timeout = Min(cur_timeout, XLogArchiveTimeout - elapsed_secs);
+		}
 
-		/* Check for archive_timeout and switch xlog files if necessary. */
-		CheckArchiveTimeout();
+		(void) WaitLatch(&MyProc->procLatch,
+						 WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
+						 cur_timeout * 1000L /* convert to ms */);
 	}
 }
 
@@ -814,21 +840,50 @@ chkpt_quickdie(SIGNAL_ARGS)
 static void
 ChkptSigHupHandler(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	got_SIGHUP = true;
+	if (MyProc)
+		SetLatch(&MyProc->procLatch);
+
+	errno = save_errno;
 }
 
 /* SIGINT: set flag to run a normal checkpoint right away */
 static void
 ReqCheckpointHandler(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	checkpoint_requested = true;
+	if (MyProc)
+		SetLatch(&MyProc->procLatch);
+
+	errno = save_errno;
+}
+
+/* SIGUSR1: used for latch wakeups */
+static void
+chkpt_sigusr1_handler(SIGNAL_ARGS)
+{
+	int			save_errno = errno;
+
+	latch_sigusr1_handler();
+
+	errno = save_errno;
 }
 
 /* SIGUSR2: set flag to run a shutdown checkpoint and exit */
 static void
 ReqShutdownHandler(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	shutdown_requested = true;
+	if (MyProc)
+		SetLatch(&MyProc->procLatch);
+
+	errno = save_errno;
 }
 
 
@@ -1055,6 +1110,7 @@ ForwardFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
 					BlockNumber segno)
 {
 	BgWriterRequest *request;
+	bool		too_full;
 
 	if (!IsUnderPostmaster)
 		return false;			/* probably shouldn't even get here */
@@ -1068,14 +1124,13 @@ ForwardFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
 	BgWriterShmem->num_backend_writes++;
 
 	/*
-	 * If the background writer isn't running or the request queue is full,
+	 * If the checkpointer isn't running or the request queue is full,
 	 * the backend will have to perform its own fsync request.	But before
-	 * forcing that to happen, we can try to compact the background writer
-	 * request queue.
+	 * forcing that to happen, we can try to compact the request queue.
 	 */
 	if (BgWriterShmem->checkpointer_pid == 0 ||
-		(BgWriterShmem->num_requests >= BgWriterShmem->max_requests
-		 && !CompactCheckpointerRequestQueue()))
+		(BgWriterShmem->num_requests >= BgWriterShmem->max_requests &&
+		 !CompactCheckpointerRequestQueue()))
 	{
 		/*
 		 * Count the subset of writes where backends have to do their own
@@ -1085,11 +1140,23 @@ ForwardFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
 		LWLockRelease(BgWriterCommLock);
 		return false;
 	}
+
+	/* OK, insert request */
 	request = &BgWriterShmem->requests[BgWriterShmem->num_requests++];
 	request->rnode = rnode;
 	request->forknum = forknum;
 	request->segno = segno;
+
+	/* If queue is more than half full, nudge the checkpointer to empty it */
+	too_full = (BgWriterShmem->num_requests >=
+				BgWriterShmem->max_requests / 2);
+
 	LWLockRelease(BgWriterCommLock);
+
+	/* ... but not till after we release the lock */
+	if (too_full && ProcGlobal->checkpointerLatch)
+		SetLatch(ProcGlobal->checkpointerLatch);
+
 	return true;
 }
 
@@ -1109,7 +1176,7 @@ ForwardFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
  * practice: there's one queue entry per shared buffer.
  */
 static bool
-CompactCheckpointerRequestQueue()
+CompactCheckpointerRequestQueue(void)
 {
 	struct BgWriterSlotMapping
 	{
@@ -1230,7 +1297,7 @@ AbsorbFsyncRequests(void)
 	 */
 	LWLockAcquire(BgWriterCommLock, LW_EXCLUSIVE);
 
-	/* Transfer write count into pending pgstats message */
+	/* Transfer stats counts into pending pgstats message */
 	BgWriterStats.m_buf_written_backend += BgWriterShmem->num_backend_writes;
 	BgWriterStats.m_buf_fsync_backend += BgWriterShmem->num_backend_fsync;
 

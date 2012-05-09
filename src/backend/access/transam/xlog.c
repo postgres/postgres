@@ -434,11 +434,6 @@ typedef struct XLogCtlData
 	Latch		recoveryWakeupLatch;
 
 	/*
-	 * WALWriterLatch is used to wake up the WALWriter to write some WAL.
-	 */
-	Latch		WALWriterLatch;
-
-	/*
 	 * During recovery, we keep a copy of the latest checkpoint record here.
 	 * Used by the background writer when it wants to create a restartpoint.
 	 *
@@ -1935,7 +1930,8 @@ XLogSetAsyncXactLSN(XLogRecPtr asyncXactLSN)
 	/*
 	 * Nudge the WALWriter if we have a full page of WAL to write.
 	 */
-	SetLatch(&XLogCtl->WALWriterLatch);
+	if (ProcGlobal->walwriterLatch)
+		SetLatch(ProcGlobal->walwriterLatch);
 }
 
 /*
@@ -2167,22 +2163,25 @@ XLogFlush(XLogRecPtr record)
  * block, and flush through the latest one of those.  Thus, if async commits
  * are not being used, we will flush complete blocks only.	We can guarantee
  * that async commits reach disk after at most three cycles; normally only
- * one or two.	(We allow XLogWrite to write "flexibly", meaning it can stop
- * at the end of the buffer ring; this makes a difference only with very high
- * load or long wal_writer_delay, but imposes one extra cycle for the worst
- * case for async commits.)
+ * one or two.  (When flushing complete blocks, we allow XLogWrite to write
+ * "flexibly", meaning it can stop at the end of the buffer ring; this makes a
+ * difference only with very high load or long wal_writer_delay, but imposes
+ * one extra cycle for the worst case for async commits.)
  *
  * This routine is invoked periodically by the background walwriter process.
+ *
+ * Returns TRUE if we flushed anything.
  */
-void
+bool
 XLogBackgroundFlush(void)
 {
 	XLogRecPtr	WriteRqstPtr;
 	bool		flexible = true;
+	bool		wrote_something = false;
 
 	/* XLOG doesn't need flushing during recovery */
 	if (RecoveryInProgress())
-		return;
+		return false;
 
 	/* read LogwrtResult and update local state */
 	{
@@ -2224,7 +2223,7 @@ XLogBackgroundFlush(void)
 				XLogFileClose();
 			}
 		}
-		return;
+		return false;
 	}
 
 #ifdef WAL_DEBUG
@@ -2247,10 +2246,13 @@ XLogBackgroundFlush(void)
 		WriteRqst.Write = WriteRqstPtr;
 		WriteRqst.Flush = WriteRqstPtr;
 		XLogWrite(WriteRqst, flexible, false);
+		wrote_something = true;
 	}
 	LWLockRelease(WALWriteLock);
 
 	END_CRIT_SECTION();
+
+	return wrote_something;
 }
 
 /*
@@ -5101,7 +5103,6 @@ XLOGShmemInit(void)
 	XLogCtl->Insert.currpage = (XLogPageHeader) (XLogCtl->pages);
 	SpinLockInit(&XLogCtl->info_lck);
 	InitSharedLatch(&XLogCtl->recoveryWakeupLatch);
-	InitSharedLatch(&XLogCtl->WALWriterLatch);
 
 	/*
 	 * If we are not in bootstrap mode, pg_control should already exist. Read
@@ -10477,13 +10478,4 @@ void
 WakeupRecovery(void)
 {
 	SetLatch(&XLogCtl->recoveryWakeupLatch);
-}
-
-/*
- * Manage the WALWriterLatch
- */
-Latch *
-WALWriterLatch(void)
-{
-	return &XLogCtl->WALWriterLatch;
 }
