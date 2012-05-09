@@ -28,12 +28,6 @@
 #include <arpa/inet.h>
 #include <signal.h>
 #include <time.h>
-#ifdef HAVE_POLL_H
-#include <poll.h>
-#endif
-#ifdef HAVE_SYS_POLL_H
-#include <sys/poll.h>
-#endif
 
 #include "pgstat.h"
 
@@ -55,6 +49,7 @@
 #include "storage/backendid.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
+#include "storage/latch.h"
 #include "storage/pg_shmem.h"
 #include "storage/pmsignal.h"
 #include "storage/procsignal.h"
@@ -93,9 +88,6 @@
 #define PGSTAT_RESTART_INTERVAL 60		/* How often to attempt to restart a
 										 * failed statistics collector; in
 										 * seconds. */
-
-#define PGSTAT_SELECT_TIMEOUT	2		/* How often to check for postmaster
-										 * death; in seconds. */
 
 #define PGSTAT_POLL_LOOP_COUNT	(PGSTAT_MAX_WAIT_TIME / PGSTAT_RETRY_DELAY)
 #define PGSTAT_INQ_LOOP_COUNT	(PGSTAT_INQ_INTERVAL / PGSTAT_RETRY_DELAY)
@@ -138,6 +130,8 @@ PgStat_MsgBgWriter BgWriterStats;
  * ----------
  */
 NON_EXEC_STATIC pgsocket pgStatSock = PGINVALID_SOCKET;
+
+static Latch pgStatLatch;
 
 static struct sockaddr_storage pgStatAddr;
 
@@ -3009,15 +3003,7 @@ PgstatCollectorMain(int argc, char *argv[])
 {
 	int			len;
 	PgStat_Msg	msg;
-
-#ifndef WIN32
-#ifdef HAVE_POLL
-	struct pollfd input_fd;
-#else
-	struct timeval sel_timeout;
-	fd_set		rfds;
-#endif
-#endif
+	int			wr;
 
 	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
 
@@ -3036,9 +3022,13 @@ PgstatCollectorMain(int argc, char *argv[])
 		elog(FATAL, "setsid() failed: %m");
 #endif
 
+	/* Initialize private latch for use by signal handlers */
+	InitLatch(&pgStatLatch);
+
 	/*
 	 * Ignore all signals usually bound to some action in the postmaster,
-	 * except SIGQUIT.
+	 * except SIGHUP and SIGQUIT.  Note we don't need a SIGUSR1 handler to
+	 * support latch operations, because pgStatLatch is local not shared.
 	 */
 	pqsignal(SIGHUP, pgstat_sighup_handler);
 	pqsignal(SIGINT, SIG_IGN);
@@ -3074,25 +3064,23 @@ PgstatCollectorMain(int argc, char *argv[])
 	pgStatDBHash = pgstat_read_statsfile(InvalidOid, true);
 
 	/*
-	 * Setup the descriptor set for select(2).	Since only one bit in the set
-	 * ever changes, we need not repeat FD_ZERO each time.
-	 */
-#if !defined(HAVE_POLL) && !defined(WIN32)
-	FD_ZERO(&rfds);
-#endif
-
-	/*
 	 * Loop to process messages until we get SIGQUIT or detect ungraceful
 	 * death of our parent postmaster.
 	 *
-	 * For performance reasons, we don't want to do a PostmasterIsAlive() test
-	 * after every message; instead, do it only when select()/poll() is
-	 * interrupted by timeout.	In essence, we'll stay alive as long as
-	 * backends keep sending us stuff often, even if the postmaster is gone.
+	 * For performance reasons, we don't want to do ResetLatch/WaitLatch after
+	 * every message; instead, do that only after a recv() fails to obtain a
+	 * message.  (This effectively means that if backends are sending us stuff
+	 * like mad, we won't notice postmaster death until things slack off a
+	 * bit; which seems fine.)  To do that, we have an inner loop that
+	 * iterates as long as recv() succeeds.  We do recognize got_SIGHUP inside
+	 * the inner loop, which means that such interrupts will get serviced but
+	 * the latch won't get cleared until next time there is a break in the
+	 * action.
 	 */
 	for (;;)
 	{
-		int			got_data;
+		/* Clear any already-pending wakeups */
+		ResetLatch(&pgStatLatch);
 
 		/*
 		 * Quit if we get SIGQUIT from the postmaster.
@@ -3101,87 +3089,37 @@ PgstatCollectorMain(int argc, char *argv[])
 			break;
 
 		/*
-		 * Reload configuration if we got SIGHUP from the postmaster.
+		 * Inner loop iterates as long as we keep getting messages, or until
+		 * need_exit becomes set.
 		 */
-		if (got_SIGHUP)
+		while (!need_exit)
 		{
-			ProcessConfigFile(PGC_SIGHUP);
-			got_SIGHUP = false;
-		}
+			/*
+			 * Reload configuration if we got SIGHUP from the postmaster.
+			 */
+			if (got_SIGHUP)
+			{
+				got_SIGHUP = false;
+				ProcessConfigFile(PGC_SIGHUP);
+			}
 
-		/*
-		 * Write the stats file if a new request has arrived that is not
-		 * satisfied by existing file.
-		 */
-		if (last_statwrite < last_statrequest)
-			pgstat_write_statsfile(false);
+			/*
+			 * Write the stats file if a new request has arrived that is not
+			 * satisfied by existing file.
+			 */
+			if (last_statwrite < last_statrequest)
+				pgstat_write_statsfile(false);
 
-		/*
-		 * Wait for a message to arrive; but not for more than
-		 * PGSTAT_SELECT_TIMEOUT seconds. (This determines how quickly we will
-		 * shut down after an ungraceful postmaster termination; so it needn't
-		 * be very fast.  However, on some systems SIGQUIT won't interrupt the
-		 * poll/select call, so this also limits speed of response to SIGQUIT,
-		 * which is more important.)
-		 *
-		 * We use poll(2) if available, otherwise select(2). Win32 has its own
-		 * implementation.
-		 */
-#ifndef WIN32
-#ifdef HAVE_POLL
-		input_fd.fd = pgStatSock;
-		input_fd.events = POLLIN | POLLERR;
-		input_fd.revents = 0;
-
-		if (poll(&input_fd, 1, PGSTAT_SELECT_TIMEOUT * 1000) < 0)
-		{
-			if (errno == EINTR)
-				continue;
-			ereport(ERROR,
-					(errcode_for_socket_access(),
-					 errmsg("poll() failed in statistics collector: %m")));
-		}
-
-		got_data = (input_fd.revents != 0);
-#else							/* !HAVE_POLL */
-
-		FD_SET(pgStatSock, &rfds);
-
-		/*
-		 * timeout struct is modified by select() on some operating systems,
-		 * so re-fill it each time.
-		 */
-		sel_timeout.tv_sec = PGSTAT_SELECT_TIMEOUT;
-		sel_timeout.tv_usec = 0;
-
-		if (select(pgStatSock + 1, &rfds, NULL, NULL, &sel_timeout) < 0)
-		{
-			if (errno == EINTR)
-				continue;
-			ereport(ERROR,
-					(errcode_for_socket_access(),
-					 errmsg("select() failed in statistics collector: %m")));
-		}
-
-		got_data = FD_ISSET(pgStatSock, &rfds);
-#endif   /* HAVE_POLL */
-#else							/* WIN32 */
-		got_data = pgwin32_waitforsinglesocket(pgStatSock, FD_READ,
-											   PGSTAT_SELECT_TIMEOUT * 1000);
-#endif
-
-		/*
-		 * If there is a message on the socket, read it and check for
-		 * validity.
-		 */
-		if (got_data)
-		{
+			/*
+			 * Try to receive and process a message.  This will not block,
+			 * since the socket is set to non-blocking mode.
+			 */
 			len = recv(pgStatSock, (char *) &msg,
 					   sizeof(PgStat_Msg), 0);
 			if (len < 0)
 			{
-				if (errno == EINTR)
-					continue;
+				if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
+					break;		/* out of inner loop */
 				ereport(ERROR,
 						(errcode_for_socket_access(),
 						 errmsg("could not read statistics message: %m")));
@@ -3279,17 +3217,18 @@ PgstatCollectorMain(int argc, char *argv[])
 				default:
 					break;
 			}
-		}
-		else
-		{
-			/*
-			 * We can only get here if the select/poll timeout elapsed. Check
-			 * for postmaster death.
-			 */
-			if (!PostmasterIsAlive())
-				break;
-		}
-	}							/* end of message-processing loop */
+		}						/* end of inner message-processing loop */
+
+		/* Sleep until there's something to do */
+		wr = WaitLatchOrSocket(&pgStatLatch,
+							   WL_LATCH_SET | WL_POSTMASTER_DEATH | WL_SOCKET_READABLE,
+							   pgStatSock,
+							   -1L);
+
+		/* Check for postmaster death */
+		if (wr & WL_POSTMASTER_DEATH)
+			break;
+	}							/* end of outer loop */
 
 	/*
 	 * Save the final stats to reuse at next startup.
@@ -3304,14 +3243,24 @@ PgstatCollectorMain(int argc, char *argv[])
 static void
 pgstat_exit(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	need_exit = true;
+	SetLatch(&pgStatLatch);
+
+	errno = save_errno;
 }
 
 /* SIGHUP handler for collector process */
 static void
 pgstat_sighup_handler(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	got_SIGHUP = true;
+	SetLatch(&pgStatLatch);
+
+	errno = save_errno;
 }
 
 
