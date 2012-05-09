@@ -119,7 +119,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 		size = add_size(size, SInvalShmemSize());
 		size = add_size(size, PMSignalShmemSize());
 		size = add_size(size, ProcSignalShmemSize());
-		size = add_size(size, BgWriterShmemSize());
+		size = add_size(size, CheckpointerShmemSize());
 		size = add_size(size, AutoVacuumShmemSize());
 		size = add_size(size, WalSndShmemSize());
 		size = add_size(size, WalRcvShmemSize());
@@ -224,7 +224,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 	 */
 	PMSignalShmemInit();
 	ProcSignalShmemInit();
-	BgWriterShmemInit();
+	CheckpointerShmemInit();
 	AutoVacuumShmemInit();
 	WalSndShmemInit();
 	WalRcvShmemInit();

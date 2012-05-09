@@ -110,7 +110,7 @@ typedef struct
 	ForkNumber	forknum;
 	BlockNumber segno;			/* see md.c for special values */
 	/* might add a real request-type field later; not needed yet */
-} BgWriterRequest;
+} CheckpointerRequest;
 
 typedef struct
 {
@@ -129,10 +129,10 @@ typedef struct
 
 	int			num_requests;	/* current # of requests */
 	int			max_requests;	/* allocated array size */
-	BgWriterRequest requests[1];	/* VARIABLE LENGTH ARRAY */
-} BgWriterShmemStruct;
+	CheckpointerRequest requests[1];	/* VARIABLE LENGTH ARRAY */
+} CheckpointerShmemStruct;
 
-static BgWriterShmemStruct *BgWriterShmem;
+static CheckpointerShmemStruct *CheckpointerShmem;
 
 /* interval for calling AbsorbFsyncRequests in CheckpointWriteDelay */
 #define WRITES_PER_ABSORB		1000
@@ -195,7 +195,7 @@ CheckpointerMain(void)
 	sigjmp_buf	local_sigjmp_buf;
 	MemoryContext checkpointer_context;
 
-	BgWriterShmem->checkpointer_pid = MyProcPid;
+	CheckpointerShmem->checkpointer_pid = MyProcPid;
 	am_checkpointer = true;
 
 	/*
@@ -302,7 +302,7 @@ CheckpointerMain(void)
 		if (ckpt_active)
 		{
 			/* use volatile pointer to prevent code rearrangement */
-			volatile BgWriterShmemStruct *bgs = BgWriterShmem;
+			volatile CheckpointerShmemStruct *bgs = CheckpointerShmem;
 
 			SpinLockAcquire(&bgs->ckpt_lck);
 			bgs->ckpt_failed++;
@@ -455,7 +455,7 @@ CheckpointerMain(void)
 			bool		do_restartpoint;
 
 			/* use volatile pointer to prevent code rearrangement */
-			volatile BgWriterShmemStruct *bgs = BgWriterShmem;
+			volatile CheckpointerShmemStruct *bgs = CheckpointerShmem;
 
 			/*
 			 * Check if we should perform a checkpoint or a restartpoint. As a
@@ -651,7 +651,7 @@ ImmediateCheckpointRequested(void)
 {
 	if (checkpoint_requested)
 	{
-		volatile BgWriterShmemStruct *bgs = BgWriterShmem;
+		volatile CheckpointerShmemStruct *bgs = CheckpointerShmem;
 
 		/*
 		 * We don't need to acquire the ckpt_lck in this case because we're
@@ -893,11 +893,11 @@ ReqShutdownHandler(SIGNAL_ARGS)
  */
 
 /*
- * BgWriterShmemSize
+ * CheckpointerShmemSize
  *		Compute space needed for bgwriter-related shared memory
  */
 Size
-BgWriterShmemSize(void)
+CheckpointerShmemSize(void)
 {
 	Size		size;
 
@@ -905,32 +905,32 @@ BgWriterShmemSize(void)
 	 * Currently, the size of the requests[] array is arbitrarily set equal to
 	 * NBuffers.  This may prove too large or small ...
 	 */
-	size = offsetof(BgWriterShmemStruct, requests);
-	size = add_size(size, mul_size(NBuffers, sizeof(BgWriterRequest)));
+	size = offsetof(CheckpointerShmemStruct, requests);
+	size = add_size(size, mul_size(NBuffers, sizeof(CheckpointerRequest)));
 
 	return size;
 }
 
 /*
- * BgWriterShmemInit
+ * CheckpointerShmemInit
  *		Allocate and initialize bgwriter-related shared memory
  */
 void
-BgWriterShmemInit(void)
+CheckpointerShmemInit(void)
 {
 	bool		found;
 
-	BgWriterShmem = (BgWriterShmemStruct *)
+	CheckpointerShmem = (CheckpointerShmemStruct *)
 		ShmemInitStruct("Background Writer Data",
-						BgWriterShmemSize(),
+						CheckpointerShmemSize(),
 						&found);
 
 	if (!found)
 	{
 		/* First time through, so initialize */
-		MemSet(BgWriterShmem, 0, sizeof(BgWriterShmemStruct));
-		SpinLockInit(&BgWriterShmem->ckpt_lck);
-		BgWriterShmem->max_requests = NBuffers;
+		MemSet(CheckpointerShmem, 0, sizeof(CheckpointerShmemStruct));
+		SpinLockInit(&CheckpointerShmem->ckpt_lck);
+		CheckpointerShmem->max_requests = NBuffers;
 	}
 }
 
@@ -955,7 +955,7 @@ void
 RequestCheckpoint(int flags)
 {
 	/* use volatile pointer to prevent code rearrangement */
-	volatile BgWriterShmemStruct *bgs = BgWriterShmem;
+	volatile CheckpointerShmemStruct *bgs = CheckpointerShmem;
 	int			ntries;
 	int			old_failed,
 				old_started;
@@ -1006,7 +1006,7 @@ RequestCheckpoint(int flags)
 	 */
 	for (ntries = 0;; ntries++)
 	{
-		if (BgWriterShmem->checkpointer_pid == 0)
+		if (CheckpointerShmem->checkpointer_pid == 0)
 		{
 			if (ntries >= 20)	/* max wait 2.0 sec */
 			{
@@ -1015,7 +1015,7 @@ RequestCheckpoint(int flags)
 				break;
 			}
 		}
-		else if (kill(BgWriterShmem->checkpointer_pid, SIGINT) != 0)
+		else if (kill(CheckpointerShmem->checkpointer_pid, SIGINT) != 0)
 		{
 			if (ntries >= 20)	/* max wait 2.0 sec */
 			{
@@ -1109,7 +1109,7 @@ bool
 ForwardFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
 					BlockNumber segno)
 {
-	BgWriterRequest *request;
+	CheckpointerRequest *request;
 	bool		too_full;
 
 	if (!IsUnderPostmaster)
@@ -1121,35 +1121,35 @@ ForwardFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
 	LWLockAcquire(CheckpointerCommLock, LW_EXCLUSIVE);
 
 	/* Count all backend writes regardless of if they fit in the queue */
-	BgWriterShmem->num_backend_writes++;
+	CheckpointerShmem->num_backend_writes++;
 
 	/*
 	 * If the checkpointer isn't running or the request queue is full,
 	 * the backend will have to perform its own fsync request.	But before
 	 * forcing that to happen, we can try to compact the request queue.
 	 */
-	if (BgWriterShmem->checkpointer_pid == 0 ||
-		(BgWriterShmem->num_requests >= BgWriterShmem->max_requests &&
+	if (CheckpointerShmem->checkpointer_pid == 0 ||
+		(CheckpointerShmem->num_requests >= CheckpointerShmem->max_requests &&
 		 !CompactCheckpointerRequestQueue()))
 	{
 		/*
 		 * Count the subset of writes where backends have to do their own
 		 * fsync
 		 */
-		BgWriterShmem->num_backend_fsync++;
+		CheckpointerShmem->num_backend_fsync++;
 		LWLockRelease(CheckpointerCommLock);
 		return false;
 	}
 
 	/* OK, insert request */
-	request = &BgWriterShmem->requests[BgWriterShmem->num_requests++];
+	request = &CheckpointerShmem->requests[CheckpointerShmem->num_requests++];
 	request->rnode = rnode;
 	request->forknum = forknum;
 	request->segno = segno;
 
 	/* If queue is more than half full, nudge the checkpointer to empty it */
-	too_full = (BgWriterShmem->num_requests >=
-				BgWriterShmem->max_requests / 2);
+	too_full = (CheckpointerShmem->num_requests >=
+				CheckpointerShmem->max_requests / 2);
 
 	LWLockRelease(CheckpointerCommLock);
 
@@ -1180,7 +1180,7 @@ CompactCheckpointerRequestQueue(void)
 {
 	struct BgWriterSlotMapping
 	{
-		BgWriterRequest request;
+		CheckpointerRequest request;
 		int			slot;
 	};
 
@@ -1196,16 +1196,16 @@ CompactCheckpointerRequestQueue(void)
 
 	/* Initialize temporary hash table */
 	MemSet(&ctl, 0, sizeof(ctl));
-	ctl.keysize = sizeof(BgWriterRequest);
+	ctl.keysize = sizeof(CheckpointerRequest);
 	ctl.entrysize = sizeof(struct BgWriterSlotMapping);
 	ctl.hash = tag_hash;
 	htab = hash_create("CompactCheckpointerRequestQueue",
-					   BgWriterShmem->num_requests,
+					   CheckpointerShmem->num_requests,
 					   &ctl,
 					   HASH_ELEM | HASH_FUNCTION);
 
 	/* Initialize skip_slot array */
-	skip_slot = palloc0(sizeof(bool) * BgWriterShmem->num_requests);
+	skip_slot = palloc0(sizeof(bool) * CheckpointerShmem->num_requests);
 
 	/*
 	 * The basic idea here is that a request can be skipped if it's followed
@@ -1220,13 +1220,13 @@ CompactCheckpointerRequestQueue(void)
 	 * anyhow), but it's not clear that the extra complexity would buy us
 	 * anything.
 	 */
-	for (n = 0; n < BgWriterShmem->num_requests; ++n)
+	for (n = 0; n < CheckpointerShmem->num_requests; ++n)
 	{
-		BgWriterRequest *request;
+		CheckpointerRequest *request;
 		struct BgWriterSlotMapping *slotmap;
 		bool		found;
 
-		request = &BgWriterShmem->requests[n];
+		request = &CheckpointerShmem->requests[n];
 		slotmap = hash_search(htab, request, HASH_ENTER, &found);
 		if (found)
 		{
@@ -1247,16 +1247,16 @@ CompactCheckpointerRequestQueue(void)
 	}
 
 	/* We found some duplicates; remove them. */
-	for (n = 0, preserve_count = 0; n < BgWriterShmem->num_requests; ++n)
+	for (n = 0, preserve_count = 0; n < CheckpointerShmem->num_requests; ++n)
 	{
 		if (skip_slot[n])
 			continue;
-		BgWriterShmem->requests[preserve_count++] = BgWriterShmem->requests[n];
+		CheckpointerShmem->requests[preserve_count++] = CheckpointerShmem->requests[n];
 	}
 	ereport(DEBUG1,
 	   (errmsg("compacted fsync request queue from %d entries to %d entries",
-			   BgWriterShmem->num_requests, preserve_count)));
-	BgWriterShmem->num_requests = preserve_count;
+			   CheckpointerShmem->num_requests, preserve_count)));
+	CheckpointerShmem->num_requests = preserve_count;
 
 	/* Cleanup. */
 	pfree(skip_slot);
@@ -1275,8 +1275,8 @@ CompactCheckpointerRequestQueue(void)
 void
 AbsorbFsyncRequests(void)
 {
-	BgWriterRequest *requests = NULL;
-	BgWriterRequest *request;
+	CheckpointerRequest *requests = NULL;
+	CheckpointerRequest *request;
 	int			n;
 
 	if (!am_checkpointer)
@@ -1298,19 +1298,19 @@ AbsorbFsyncRequests(void)
 	LWLockAcquire(CheckpointerCommLock, LW_EXCLUSIVE);
 
 	/* Transfer stats counts into pending pgstats message */
-	BgWriterStats.m_buf_written_backend += BgWriterShmem->num_backend_writes;
-	BgWriterStats.m_buf_fsync_backend += BgWriterShmem->num_backend_fsync;
+	BgWriterStats.m_buf_written_backend += CheckpointerShmem->num_backend_writes;
+	BgWriterStats.m_buf_fsync_backend += CheckpointerShmem->num_backend_fsync;
 
-	BgWriterShmem->num_backend_writes = 0;
-	BgWriterShmem->num_backend_fsync = 0;
+	CheckpointerShmem->num_backend_writes = 0;
+	CheckpointerShmem->num_backend_fsync = 0;
 
-	n = BgWriterShmem->num_requests;
+	n = CheckpointerShmem->num_requests;
 	if (n > 0)
 	{
-		requests = (BgWriterRequest *) palloc(n * sizeof(BgWriterRequest));
-		memcpy(requests, BgWriterShmem->requests, n * sizeof(BgWriterRequest));
+		requests = (CheckpointerRequest *) palloc(n * sizeof(CheckpointerRequest));
+		memcpy(requests, CheckpointerShmem->requests, n * sizeof(CheckpointerRequest));
 	}
-	BgWriterShmem->num_requests = 0;
+	CheckpointerShmem->num_requests = 0;
 
 	LWLockRelease(CheckpointerCommLock);
 

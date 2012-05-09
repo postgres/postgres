@@ -32,7 +32,8 @@ extern bool ForwardFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
 					BlockNumber segno);
 extern void AbsorbFsyncRequests(void);
 
-extern Size BgWriterShmemSize(void);
-extern void BgWriterShmemInit(void);
+/* These were previously called BgWriterShmem... */
+extern Size CheckpointerShmemSize(void);
+extern void CheckpointerShmemInit(void);
 
 #endif   /* _BGWRITER_H */
