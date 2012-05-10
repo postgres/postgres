@@ -5151,10 +5151,10 @@ SET XML OPTION { DOCUMENT | CONTENT };
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-timezone" xreflabel="timezone">
-      <term><varname>timezone</varname> (<type>string</type>)</term>
+     <varlistentry id="guc-timezone" xreflabel="TimeZone">
+      <term><varname>TimeZone</varname> (<type>string</type>)</term>
       <indexterm>
-       <primary><varname>timezone</> configuration parameter</primary>
+       <primary><varname>TimeZone</> configuration parameter</primary>
       </indexterm>
       <indexterm><primary>time zone</></>
       <listitem>
