@@ -17,7 +17,7 @@ pg_[A-Za-z0-9_]+                <application>, <structname>
 [a-z]+_[a-z_]+                   <varname>
 
 non-ASCII characters            find using grep -P '[\x80-\xFF]'
-                                convert to HTML4 entity (&) escapes
+                                convert to HTML4 named entity (&) escapes
 
         official:      http://www.w3.org/TR/html4/sgml/entities.html
         one page:      http://www.zipcon.net/~swhite/docs/computers/browsers/entities_page.html
@@ -30,7 +30,9 @@ non-ASCII characters            find using grep -P '[\x80-\xFF]'
         does not support it
           http://www.pemberley.com/janeinfo/latin1.html#latexta
 
-        Alvaro Herrera is &Aacute;lvaro Herrera
+        do not use numeric character escapes (&#nnn;), they are not portable
+
+        Example: Alvaro Herrera is &Aacute;lvaro Herrera
 
 wrap long lines
 
