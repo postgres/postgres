@@ -121,8 +121,13 @@ PGSemaphoreLock(PGSemaphore sema, bool interruptOK)
 	DWORD		ret;
 	HANDLE		wh[2];
 
-	wh[0] = *sema;
-	wh[1] = pgwin32_signal_event;
+	/*
+	 * Note: pgwin32_signal_event should be first to ensure that it will be
+	 * reported when multiple events are set.  We want to guarantee that
+	 * pending signals are serviced.
+	 */
+	wh[0] = pgwin32_signal_event;
+	wh[1] = *sema;
 
 	/*
 	 * As in other implementations of PGSemaphoreLock, we need to check for
@@ -135,19 +140,18 @@ PGSemaphoreLock(PGSemaphore sema, bool interruptOK)
 		ImmediateInterruptOK = interruptOK;
 		CHECK_FOR_INTERRUPTS();
 
-		errno = 0;
 		ret = WaitForMultipleObjectsEx(2, wh, FALSE, INFINITE, TRUE);
 
 		if (ret == WAIT_OBJECT_0)
 		{
-			/* We got it! */
-			return;
-		}
-		else if (ret == WAIT_OBJECT_0 + 1)
-		{
 			/* Signal event is set - we have a signal to deliver */
 			pgwin32_dispatch_queued_signals();
 			errno = EINTR;
+		}
+		else if (ret == WAIT_OBJECT_0 + 1)
+		{
+			/* We got it! */
+			errno = 0;
 		}
 		else
 			/* Otherwise we are in trouble */
