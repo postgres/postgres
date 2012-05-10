@@ -2472,6 +2472,7 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 					{
 						tuple = do_convert_tuple(tuple, tupmap);
 						free_conversion_map(tupmap);
+						free_tuple = true;
 					}
 				}
 				break;
