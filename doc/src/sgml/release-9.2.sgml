@@ -1567,7 +1567,7 @@
        
        <para>
         The range data type records a lower and upper bound, and supports
-        comparisons like contains, overlaps, and intersection.
+        operations like contains, overlaps, and intersection.
        </para>
       </listitem>
       
@@ -1659,7 +1659,7 @@
 
       <listitem>
        <para>
-        Allow a user to cancel queries in other owned sessions using <link
+        Allow users to cancel queries in user-matching sessions using <link
         linkend="functions-admin-signal"><function>pg_cancel_backend()</></link>
         (Magnus Hagander)
        </para>
@@ -1730,8 +1730,8 @@
 
       <listitem>
        <para>
-        Change default names of triggers to fire action triggers before
-        check triggers (Tom Lane)
+        Change default names of triggers to fire "action" triggers before
+        "check" triggers (Tom Lane)
        </para>
        
        <para>
@@ -2229,7 +2229,7 @@
       <listitem>
        <para>
         In <application>psql</> tab completion,
-        complete <acronym>SQL</acronym> key words based on
+        complete <acronym>SQL</acronym> keywords based on
         <varname>COMP_KEYWORD_CASE</> setting and the perhaps case of
         the partially-supplied word (Peter Eisentraut, Fujii Masao)
        </para>
