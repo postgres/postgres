@@ -24,7 +24,6 @@ non-ASCII characters            find using grep -P '[\x80-\xFF]'
         other lists:   http://www.zipcon.net/~swhite/docs/computers/browsers/entities.html
                        http://www.zipcon.net/~swhite/docs/computers/browsers/entities_page.html
                        http://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references
-                       http://webdesign.about.com/library/bl_htmlcodes.htm
 
         we cannot use UTF8 because SGML Docbook
         does not support it
