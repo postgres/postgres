@@ -404,6 +404,7 @@
        </para>
        
        <para>
+        This is often called "index-only scans" or "covering indexes".
         This is possible for heap pages with exclusively all-visible
         tuples, as reported by the visibility map.
        </para>
@@ -426,7 +427,7 @@
       
       <listitem>
        <para>
-        Reduce overhead of creating virtual transaction id locks ((Robert
+        Reduce overhead of creating virtual transaction id locks (Robert
         Haas, Jeff Davis)
        </para>
       </listitem>
