@@ -574,6 +574,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 		TimestampTz current_time = 0;
 		bool		can_launch;
 		Dlelem	   *elem;
+		int			rc;
 
 		/*
 		 * This loop is a bit different from the normal use of WaitLatch,
@@ -592,9 +593,9 @@ AutoVacLauncherMain(int argc, char *argv[])
 		 * Wait until naptime expires or we get some type of signal (all the
 		 * signal handlers will wake us by calling SetLatch).
 		 */
-		WaitLatch(&MyProc->procLatch,
-				  WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-				  (nap.tv_sec * 1000L) + (nap.tv_usec / 1000L));
+		rc = WaitLatch(&MyProc->procLatch,
+					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
+					   (nap.tv_sec * 1000L) + (nap.tv_usec / 1000L));
 
 		ResetLatch(&MyProc->procLatch);
 
@@ -604,7 +605,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 		 * Emergency bailout if postmaster has died.  This is to avoid the
 		 * necessity for manual cleanup of all postmaster children.
 		 */
-		if (!PostmasterIsAlive())
+		if (rc & WL_POSTMASTER_DEATH)
 			proc_exit(1);
 
 		/* the normal shutdown case */

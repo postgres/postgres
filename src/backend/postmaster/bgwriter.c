@@ -48,7 +48,6 @@
 #include "storage/buf_internals.h"
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
-#include "storage/pmsignal.h"
 #include "storage/proc.h"
 #include "storage/shmem.h"
 #include "storage/smgr.h"
@@ -323,11 +322,9 @@ BackgroundWriterMain(void)
 
 		/*
 		 * Emergency bailout if postmaster has died.  This is to avoid the
-		 * necessity for manual cleanup of all postmaster children.  Note
-		 * that we mustn't trust the WL_POSTMASTER_DEATH result flag entirely;
-		 * if it is set, recheck with PostmasterIsAlive before believing it.
+		 * necessity for manual cleanup of all postmaster children.
 		 */
-		if ((rc & WL_POSTMASTER_DEATH) && !PostmasterIsAlive())
+		if (rc & WL_POSTMASTER_DEATH)
 			exit(1);
 
 		prev_hibernate = can_hibernate;

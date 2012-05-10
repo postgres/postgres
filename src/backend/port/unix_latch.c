@@ -50,6 +50,7 @@
 #include "miscadmin.h"
 #include "postmaster/postmaster.h"
 #include "storage/latch.h"
+#include "storage/pmsignal.h"
 #include "storage/shmem.h"
 
 /* Are we currently in WaitLatch? The signal handler would like to know. */
@@ -160,15 +161,7 @@ DisownLatch(volatile Latch *latch)
  *
  * Returns bit mask indicating which condition(s) caused the wake-up. Note
  * that if multiple wake-up conditions are true, there is no guarantee that
- * we return all of them in one call, but we will return at least one. Also,
- * according to the select(2) man page on Linux, select(2) may spuriously
- * return and report a file descriptor as readable, when it's not. We use
- * select(2), so WaitLatch can also spuriously claim that a socket is
- * readable, or postmaster has died, even when none of the wake conditions
- * have been satisfied. That should be rare in practice, but the caller
- * should not use the return value for anything critical, re-checking the
- * situation with PostmasterIsAlive() or read() on a socket as necessary.
- * The latch and timeout flag bits can be trusted, however.
+ * we return all of them in one call, but we will return at least one.
  */
 int
 WaitLatch(volatile Latch *latch, int wakeEvents, long timeout)
@@ -318,7 +311,17 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 		if ((wakeEvents & WL_POSTMASTER_DEATH) &&
 			(pfds[nfds - 1].revents & (POLLHUP | POLLIN | POLLERR | POLLNVAL)))
 		{
-			result |= WL_POSTMASTER_DEATH;
+			/*
+			 * According to the select(2) man page on Linux, select(2) may
+			 * spuriously return and report a file descriptor as readable,
+			 * when it's not; and presumably so can poll(2).  It's not clear
+			 * that the relevant cases would ever apply to the postmaster
+			 * pipe, but since the consequences of falsely returning
+			 * WL_POSTMASTER_DEATH could be pretty unpleasant, we take the
+			 * trouble to positively verify EOF with PostmasterIsAlive().
+			 */
+			if (!PostmasterIsAlive())
+				result |= WL_POSTMASTER_DEATH;
 		}
 
 #else /* !HAVE_POLL */
@@ -380,7 +383,17 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 		if ((wakeEvents & WL_POSTMASTER_DEATH) &&
 			 FD_ISSET(postmaster_alive_fds[POSTMASTER_FD_WATCH], &input_mask))
 		{
-			result |= WL_POSTMASTER_DEATH;
+			/*
+			 * According to the select(2) man page on Linux, select(2) may
+			 * spuriously return and report a file descriptor as readable,
+			 * when it's not; and presumably so can poll(2).  It's not clear
+			 * that the relevant cases would ever apply to the postmaster
+			 * pipe, but since the consequences of falsely returning
+			 * WL_POSTMASTER_DEATH could be pretty unpleasant, we take the
+			 * trouble to positively verify EOF with PostmasterIsAlive().
+			 */
+			if (!PostmasterIsAlive())
+				result |= WL_POSTMASTER_DEATH;
 		}
 #endif /* HAVE_POLL */
 	} while (result == 0);

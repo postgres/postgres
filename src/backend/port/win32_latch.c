@@ -26,6 +26,7 @@
 #include "miscadmin.h"
 #include "postmaster/postmaster.h"
 #include "storage/latch.h"
+#include "storage/pmsignal.h"
 #include "storage/shmem.h"
 
 
@@ -217,8 +218,15 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 		else if ((wakeEvents & WL_POSTMASTER_DEATH) &&
 				 rc == WAIT_OBJECT_0 + pmdeath_eventno)
 		{
-			/* Postmaster died */
-			result |= WL_POSTMASTER_DEATH;
+			/*
+			 * Postmaster apparently died.  Since the consequences of falsely
+			 * returning WL_POSTMASTER_DEATH could be pretty unpleasant, we
+			 * take the trouble to positively verify this with
+			 * PostmasterIsAlive(), even though there is no known reason to
+			 * think that the event could be falsely set on Windows.
+			 */
+			if (!PostmasterIsAlive())
+				result |= WL_POSTMASTER_DEATH;
 		}
 		else
 			elog(ERROR, "unexpected return code from WaitForMultipleObjects(): %lu", rc);
