@@ -307,6 +307,22 @@
        </para>
       </listitem>
       
+      <listitem>
+       <para>
+        Add libpq <link linkend="guc-ssl-key-file">parameters</link> for
+        specifying the locations of server-side <acronym>SSL</acronym>
+        files (Peter Eisentraut)
+       </para>
+       
+       <para>
+        This allows changing the location of the files that were previously
+        hard-coded to <filename>server.crt</>, <filename>server.key</>,
+        <filename>root.crt</>, <filename>root.crl</>.  <acronym>CA</>
+        (crt) and <acronym>CRL</acronym> files no longer have default
+        names, and if specified, these files must exist.
+       </para>
+      </listitem>
+      
     </itemizedlist>
    </sect3>
 
@@ -363,30 +379,6 @@
 
    </sect3>
 
-   <sect3>
-    <title>Other Incompatibilities</title>
-
-    <itemizedlist>
-
-      <listitem>
-       <para>
-        Add libpq <link linkend="libpq-ssl">parameters</link> for
-        specifying the locations of server-side <acronym>SSL</acronym>
-        files (Peter Eisentraut)
-       </para>
-       
-       <para>
-        This allows changing the location of the files that were previously
-        hard-coded to <filename>server.crt</>, <filename>server.key</>,
-        <filename>root.crt</>, <filename>root.crl</>.  <acronym>CA</>
-        (crt) and <acronym>CRL</acronym> files no longer have default
-        names, and if specified, these files must exist.
-       </para>
-      </listitem>
-      
-    </itemizedlist>
-
-   </sect3>
   </sect2>
 
   <sect2>
@@ -2392,8 +2384,9 @@
       
       <listitem>
        <para>
-        Add a libpq connection option to disable <acronym>SSL</acronym>
-        compression (Laurenz Albe)
+        Add a libpq <link linkend="libpq-connect-sslcompression">connection
+        option</link> to disable <acronym>SSL</acronym> compression
+        (Laurenz Albe)
        </para>
        
        <para>
