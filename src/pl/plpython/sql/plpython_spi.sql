@@ -1,19 +1,4 @@
 --
--- result objects
---
-
-CREATE FUNCTION test_resultobject_access() RETURNS void
-AS $$
-rv = plpy.execute("SELECT fname, lname, username FROM users ORDER BY username")
-plpy.info([row for row in rv])
-rv[1] = dict([(k, v*2) for (k, v) in rv[1].items()])
-plpy.info([row for row in rv])
-$$ LANGUAGE plpythonu;
-
-SELECT test_resultobject_access();
-
-
---
 -- nested calls
 --
 
@@ -147,6 +132,42 @@ SELECT result_len_test($$CREATE TEMPORARY TABLE foo3 (a int, b text)$$);
 SELECT result_len_test($$INSERT INTO foo3 VALUES (1, 'one'), (2, 'two')$$);
 SELECT result_len_test($$UPDATE foo3 SET b= '' WHERE a = 2$$);
 
+CREATE FUNCTION result_subscript_test() RETURNS void
+AS $$
+result = plpy.execute("SELECT 1 AS c UNION SELECT 2 "
+                      "UNION SELECT 3 UNION SELECT 4")
+
+plpy.info(result[1]['c'])
+plpy.info(result[-1]['c'])
+
+plpy.info([item['c'] for item in result[1:3]])
+plpy.info([item['c'] for item in result[::2]])
+
+result[-1] = {'c': 1000}
+result[:2] = [{'c': 10}, {'c': 100}]
+plpy.info([item['c'] for item in result[:]])
+
+# raises TypeError, but the message differs on Python 2.6, so silence it
+try:
+    plpy.info(result['foo'])
+except TypeError:
+    pass
+else:
+    assert False, "TypeError not raised"
+
+$$ LANGUAGE plpythonu;
+
+SELECT result_subscript_test();
+
+CREATE FUNCTION result_empty_test() RETURNS void
+AS $$
+result = plpy.execute("select 1 where false")
+
+plpy.info(result[:])
+
+$$ LANGUAGE plpythonu;
+
+SELECT result_empty_test();
 
 -- cursor objects
 

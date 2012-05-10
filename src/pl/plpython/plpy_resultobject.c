@@ -23,6 +23,8 @@ static PyObject *PLy_result_item(PyObject *arg, Py_ssize_t idx);
 static PyObject *PLy_result_slice(PyObject *arg, Py_ssize_t lidx, Py_ssize_t hidx);
 static int	PLy_result_ass_item(PyObject *arg, Py_ssize_t idx, PyObject *item);
 static int	PLy_result_ass_slice(PyObject *rg, Py_ssize_t lidx, Py_ssize_t hidx, PyObject *slice);
+static PyObject *PLy_result_subscript(PyObject *arg, PyObject *item);
+static int PLy_result_ass_subscript(PyObject* self, PyObject* item, PyObject* value);
 
 static char PLy_result_doc[] = {
 	"Results of a PostgreSQL query"
@@ -36,6 +38,12 @@ static PySequenceMethods PLy_result_as_sequence = {
 	PLy_result_slice,			/* sq_slice */
 	PLy_result_ass_item,		/* sq_ass_item */
 	PLy_result_ass_slice,		/* sq_ass_slice */
+};
+
+static PyMappingMethods PLy_result_as_mapping = {
+	PLy_result_length,			/* mp_length */
+	PLy_result_subscript,		/* mp_subscript */
+	PLy_result_ass_subscript,	/* mp_ass_subscript */
 };
 
 static PyMethodDef PLy_result_methods[] = {
@@ -64,7 +72,7 @@ static PyTypeObject PLy_ResultType = {
 	0,							/* tp_repr */
 	0,							/* tp_as_number */
 	&PLy_result_as_sequence,	/* tp_as_sequence */
-	0,							/* tp_as_mapping */
+	&PLy_result_as_mapping,		/* tp_as_mapping */
 	0,							/* tp_hash */
 	0,							/* tp_call */
 	0,							/* tp_str */
@@ -250,4 +258,20 @@ PLy_result_ass_slice(PyObject *arg, Py_ssize_t lidx, Py_ssize_t hidx, PyObject *
 
 	rv = PyList_SetSlice(ob->rows, lidx, hidx, slice);
 	return rv;
+}
+
+static PyObject *
+PLy_result_subscript(PyObject *arg, PyObject *item)
+{
+	PLyResultObject	*ob = (PLyResultObject *) arg;
+
+	return PyObject_GetItem(ob->rows, item);
+}
+
+static int
+PLy_result_ass_subscript(PyObject *arg, PyObject *item, PyObject *value)
+{
+	PLyResultObject	*ob = (PLyResultObject *) arg;
+
+	return PyObject_SetItem(ob->rows, item, value);
 }
