@@ -13,7 +13,8 @@ postgresql.conf, pg_hba.conf,
 [A-Za-z_]/[A-Za-z_]+            <filename>
 psql                            <application>
 pg_[A-Za-z0-9_]+                <application>, <structname>
-[A-Z][A-Z][A-Z_ ]*              <type>, <varname>
+[A-Z][A-Z][A-Z_ ]*              <type>
+[a-z]+_[a-z_]+                   <varname>
 
 non-ASCII characters            find using grep -P '[\x80-\xFF]'
                                 convert to HTML4 entity (&) escapes
@@ -75,6 +76,7 @@ can be created without links to the main documentation.  Don't use <xref>.
   The reason for splitting the release notes this way is so that appropriate
   subsets can easily be copied into back branches.
 -->
+&release-9.2;
 &release-9.1;
 &release-9.0;
 &release-8.4;
