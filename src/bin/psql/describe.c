@@ -2893,6 +2893,13 @@ listCollations(const char *pattern, bool verbose, bool showSystem)
 	printQueryOpt myopt = pset.popt;
 	static const bool translate_columns[] = {false, false, false, false, false};
 
+	if (pset.sversion < 90100)
+	{
+		fprintf(stderr, _("The server (version %d.%d) does not support collations.\n"),
+				pset.sversion / 10000, (pset.sversion / 100) % 100);
+		return true;
+	}
+
 	initPQExpBuffer(&buf);
 
 	printfPQExpBuffer(&buf,
