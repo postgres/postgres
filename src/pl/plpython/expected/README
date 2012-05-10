@@ -9,6 +9,3 @@ plpython_subtransaction_0.out	Python 2.4 and older (without with statement)
 plpython_subtransaction_5.out	Python 2.5 (without with statement)
 
 plpython_types_3.out			Python 3.x
-
-Note: Building with Python 2.2 is supported, but there are no expected
-files for it (too much work to maintain).

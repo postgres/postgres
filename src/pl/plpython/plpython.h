@@ -68,13 +68,6 @@ typedef int Py_ssize_t;
 #endif
 
 /*
- * PyBool_FromLong is supported from 2.3.
- */
-#if PY_VERSION_HEX < 0x02030000
-#define PyBool_FromLong(x) PyInt_FromLong(x)
-#endif
-
-/*
  * Python 2/3 strings/unicode/bytes handling.  Python 2 has strings
  * and unicode, Python 3 has strings, which are unicode on the C
  * level, and bytes.  The porting convention, which is similarly used

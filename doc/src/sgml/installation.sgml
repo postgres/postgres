@@ -206,7 +206,7 @@ su - postgres
       installation with the header files and
       the <application>distutils</application> module.  The minimum
       required version is <productname>Python</productname>
-      2.2.  <productname>Python 3</productname> is supported if it's
+      2.3.  <productname>Python 3</productname> is supported if it's
       version 3.1 or later; but see
       <![%standalone-include[the <application>PL/Python</> documentation]]>
       <![%standalone-ignore[<xref linkend="plpython-python23">]]>
