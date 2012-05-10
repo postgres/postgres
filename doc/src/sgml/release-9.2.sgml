@@ -72,8 +72,8 @@
        
        <para>
         Users should now use hstore(text, text).  Since
-        <productname>PostgreSQL</productname> 9.0, we have emitted a
-        warning message when an operator named =&gt; is created because
+        <productname>PostgreSQL</productname> 9.0, a warning message is
+        emitted when an operator named =&gt; is created because
         the <acronym>SQL</acronym> standard reserves that token for
         another use.
        </para>
@@ -462,17 +462,6 @@
       
       <listitem>
        <para>
-        Make the visibility map crash-safe (Robert Haas, Noah Misch)
-       </para>
-       
-       <para>
-        This helps vacuum be more efficient, and is necessary for
-        index-only scans.
-       </para>
-      </listitem>
-      
-      <listitem>
-       <para>
         Improve GiST box and point index performance by producing better
         trees with less memory allocation overhead (Alexander Korotkov,
         Heikki Linnakangas, Kevin Grittner)
@@ -545,9 +534,19 @@
       
       <listitem>
        <para>
-        Improve performance of <acronym>WAL</acronym> writes when multiple
-        transactions commit at the same time (Peter Geoghegan, Simon Riggs,
-        Heikki Linnakangas)
+        Improve performance of <acronym>WAL</acronym> writes using group
+        commit (Peter Geoghegan, Simon Riggs, Heikki Linnakangas)
+       </para>
+      </listitem>
+      
+      <listitem>
+       <para>
+        Make the visibility map crash-safe (Robert Haas, Noah Misch)
+       </para>
+       
+       <para>
+        This helps vacuum be more efficient, and is necessary for
+        index-only scans.
        </para>
       </listitem>
       
@@ -608,14 +607,15 @@
       <listitem>
        <para>
         Allow the <link linkend="pg-stat-bgwriter-view">bgwriter</link>,
-        <link linkend="guc-wal-writer-delay">walwriter</link>, and <link
-        linkend="monitoring-stats">statistics collector</link> to sleep
-        more efficiently during periods of inactivity (Peter Geoghegan,
-        Heikki Linnakangas, Tom Lane)
+        <link linkend="guc-wal-writer-delay">walwriter</link>, <link
+        linkend="monitoring-stats">statistics collector</link>, archiver,
+        and checkpointer to sleep more efficiently during periods of
+        inactivity (Peter Geoghegan, Heikki Linnakangas, Tom Lane)
        </para>
        
        <para>
-        This reduces <acronym>CPU</acronym> wake-ups.
+        This reduces <acronym>CPU</acronym> wake-ups, which dramatically
+        reduces power consumption on idle servers.
        </para>
       </listitem>
       
@@ -2071,7 +2071,8 @@
        </para>
        
        <para>
-        We already supported minor-version-specific <filename>.psqlrc</>
+        <application>psql</> already supported minor-version-specific
+        <filename>.psqlrc</>
         files.
        </para>
       </listitem>
@@ -2745,7 +2746,7 @@
        
        <para>
         Specifically, only lock the old cluster if link mode is used,
-        and do it right after we restore the schema.
+        and do it right after the schema is restored.
        </para>
       </listitem>
       
