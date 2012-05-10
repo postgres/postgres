@@ -97,7 +97,7 @@
         Remove the <link
         linkend="catalog-pg-tablespace"><structname>spclocation</></link>
         field from <structname>pg_tablespace</> (Magnus Hagander,
-        Tom Lane))
+        Tom Lane)
        </para>
        
        <para>
@@ -601,7 +601,7 @@
        </para>
        
        <para>
-        These are internally called "latches".
+        The wait events are internally called "latches".
        </para>
       </listitem>
       
@@ -1195,7 +1195,7 @@
        </para>
        
        <para>
-        Such casts have no affect.
+        Such casts have no effect.
        </para>
       </listitem>
       
@@ -1312,25 +1312,9 @@
 
       <listitem>
        <para>
-        Avoid table and index rebuilds when <type>NUMERIC</>,
-        <type>VARBIT</>, and temporal columns are changed in compatible
-        ways (Noah Misch)
-       </para>
-      </listitem>
-      
-      <listitem>
-       <para>
-        Reduce need to rebuild indexes for various <link
+        Reduce need to rebuild tables and indexes for various <link
         linkend="SQL-ALTERTABLE"><command>ALTER TABLE</command></link>
         operations (Noah Misch) DUPLICATE?
-       </para>
-      </listitem>
-      
-      <listitem>
-       <para>
-        Avoid index rebuilds for no-rewrite <command>ALTER TABLE</command>
-        / <link linkend="SQL-ALTERTYPE"><literal>ALTER TYPE</></link>
-        (Noah Misch)
        </para>
       </listitem>
       
@@ -2291,13 +2275,6 @@
 
       <listitem>
        <para>
-        Parallel <application>pg_dump</> (Robert Haas, Joachim Wieland)
-        DETAILS?
-       </para>
-      </listitem>
-      
-      <listitem>
-       <para>
         Add an <option>--exclude-table-data</> option to
         <application>pg_dump</> (Andrew Dunstan)
        </para>
@@ -2513,7 +2490,7 @@
        </para>
        
        <para>
-        This is currently unused.  STILL TRUE?
+        This is currently unused.
        </para>
       </listitem>
       
