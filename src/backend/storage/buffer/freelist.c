@@ -41,6 +41,11 @@ typedef struct
 	 */
 	uint32		completePasses; /* Complete cycles of the clock sweep */
 	uint32		numBufferAllocs;	/* Buffers allocated since last reset */
+
+	/*
+	 * Notification latch, or NULL if none.  See StrategyNotifyBgWriter.
+	 */
+	Latch	   *bgwriterLatch;
 } BufferStrategyControl;
 
 /* Pointers to shared state */
@@ -107,6 +112,7 @@ volatile BufferDesc *
 StrategyGetBuffer(BufferAccessStrategy strategy, bool *lock_held)
 {
 	volatile BufferDesc *buf;
+	Latch	   *bgwriterLatch;
 	int			trycounter;
 
 	/*
@@ -133,6 +139,21 @@ StrategyGetBuffer(BufferAccessStrategy strategy, bool *lock_held)
 	 * strategy object are intentionally not counted here.
 	 */
 	StrategyControl->numBufferAllocs++;
+
+	/*
+	 * If bgwriterLatch is set, we need to waken the bgwriter, but we should
+	 * not do so while holding BufFreelistLock; so release and re-grab.  This
+	 * is annoyingly tedious, but it happens at most once per bgwriter cycle,
+	 * so the performance hit is minimal.
+	 */
+	bgwriterLatch = StrategyControl->bgwriterLatch;
+	if (bgwriterLatch)
+	{
+		StrategyControl->bgwriterLatch = NULL;
+		LWLockRelease(BufFreelistLock);
+		SetLatch(bgwriterLatch);
+		LWLockAcquire(BufFreelistLock, LW_EXCLUSIVE);
+	}
 
 	/*
 	 * Try to get a buffer from the freelist.  Note that the freeNext fields
@@ -269,6 +290,27 @@ StrategySyncStart(uint32 *complete_passes, uint32 *num_buf_alloc)
 	return result;
 }
 
+/*
+ * StrategyNotifyBgWriter -- set or clear allocation notification latch
+ *
+ * If bgwriterLatch isn't NULL, the next invocation of StrategyGetBuffer will
+ * set that latch.  Pass NULL to clear the pending notification before it
+ * happens.  This feature is used by the bgwriter process to wake itself up
+ * from hibernation, and is not meant for anybody else to use.
+ */
+void
+StrategyNotifyBgWriter(Latch *bgwriterLatch)
+{
+	/*
+	 * We acquire the BufFreelistLock just to ensure that the store appears
+	 * atomic to StrategyGetBuffer.  The bgwriter should call this rather
+	 * infrequently, so there's no performance penalty from being safe.
+	 */
+	LWLockAcquire(BufFreelistLock, LW_EXCLUSIVE);
+	StrategyControl->bgwriterLatch = bgwriterLatch;
+	LWLockRelease(BufFreelistLock);
+}
+
 
 /*
  * StrategyShmemSize
@@ -344,6 +386,9 @@ StrategyInitialize(bool init)
 		/* Clear statistics */
 		StrategyControl->completePasses = 0;
 		StrategyControl->numBufferAllocs = 0;
+
+		/* No pending notification */
+		StrategyControl->bgwriterLatch = NULL;
 	}
 	else
 		Assert(!init);

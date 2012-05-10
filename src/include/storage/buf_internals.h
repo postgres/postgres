@@ -16,6 +16,7 @@
 #define BUFMGR_INTERNALS_H
 
 #include "storage/buf.h"
+#include "storage/latch.h"
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
 #include "storage/smgr.h"
@@ -188,6 +189,8 @@ extern bool StrategyRejectBuffer(BufferAccessStrategy strategy,
 					 volatile BufferDesc *buf);
 
 extern int	StrategySyncStart(uint32 *complete_passes, uint32 *num_buf_alloc);
+extern void StrategyNotifyBgWriter(Latch *bgwriterLatch);
+
 extern Size StrategyShmemSize(void);
 extern void StrategyInitialize(bool init);
 

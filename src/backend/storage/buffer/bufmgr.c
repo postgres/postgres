@@ -968,7 +968,6 @@ void
 MarkBufferDirty(Buffer buffer)
 {
 	volatile BufferDesc *bufHdr;
-	bool	dirtied = false;
 
 	if (!BufferIsValid(buffer))
 		elog(ERROR, "bad buffer ID: %d", buffer);
@@ -989,26 +988,20 @@ MarkBufferDirty(Buffer buffer)
 
 	Assert(bufHdr->refcount > 0);
 
-	if (!(bufHdr->flags & BM_DIRTY))
-		dirtied = true;
-
-	bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
-
-	UnlockBufHdr(bufHdr);
-
 	/*
-	 * If the buffer was not dirty already, do vacuum accounting, and
-	 * nudge bgwriter.
+	 * If the buffer was not dirty already, do vacuum accounting.
 	 */
-	if (dirtied)
+	if (!(bufHdr->flags & BM_DIRTY))
 	{
 		VacuumPageDirty++;
 		pgBufferUsage.shared_blks_dirtied++;
 		if (VacuumCostActive)
 			VacuumCostBalance += VacuumCostPageDirty;
-		if (ProcGlobal->bgwriterLatch)
-			SetLatch(ProcGlobal->bgwriterLatch);
 	}
+
+	bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
+
+	UnlockBufHdr(bufHdr);
 }
 
 /*
@@ -1331,9 +1324,11 @@ BufferSync(int flags)
  *
  * This is called periodically by the background writer process.
  *
- * Returns true if the clocksweep has been "lapped", so that there's nothing
- * to do. Also returns true if there's nothing to do because bgwriter was
- * effectively disabled by setting bgwriter_lru_maxpages to 0.
+ * Returns true if it's appropriate for the bgwriter process to go into
+ * low-power hibernation mode.  (This happens if the strategy clock sweep
+ * has been "lapped" and no buffer allocations have occurred recently,
+ * or if the bgwriter has been effectively disabled by setting
+ * bgwriter_lru_maxpages to 0.)
  */
 bool
 BgBufferSync(void)
@@ -1374,6 +1369,10 @@ BgBufferSync(void)
 	int			num_to_scan;
 	int			num_written;
 	int			reusable_buffers;
+
+	/* Variables for final smoothed_density update */
+	long		new_strategy_delta;
+	uint32		new_recent_alloc;
 
 	/*
 	 * Find out where the freelist clock sweep currently is, and how many
@@ -1598,21 +1597,23 @@ BgBufferSync(void)
 	 * which is helpful because a long memory isn't as desirable on the
 	 * density estimates.
 	 */
-	strategy_delta = bufs_to_lap - num_to_scan;
-	recent_alloc = reusable_buffers - reusable_buffers_est;
-	if (strategy_delta > 0 && recent_alloc > 0)
+	new_strategy_delta = bufs_to_lap - num_to_scan;
+	new_recent_alloc = reusable_buffers - reusable_buffers_est;
+	if (new_strategy_delta > 0 && new_recent_alloc > 0)
 	{
-		scans_per_alloc = (float) strategy_delta / (float) recent_alloc;
+		scans_per_alloc = (float) new_strategy_delta / (float) new_recent_alloc;
 		smoothed_density += (scans_per_alloc - smoothed_density) /
 			smoothing_samples;
 
 #ifdef BGW_DEBUG
 		elog(DEBUG2, "bgwriter: cleaner density alloc=%u scan=%ld density=%.2f new smoothed=%.2f",
-			 recent_alloc, strategy_delta, scans_per_alloc, smoothed_density);
+			 new_recent_alloc, new_strategy_delta,
+			 scans_per_alloc, smoothed_density);
 #endif
 	}
 
-	return (bufs_to_lap == 0);
+	/* Return true if OK to hibernate */
+	return (bufs_to_lap == 0 && recent_alloc == 0);
 }
 
 /*
@@ -2385,24 +2386,17 @@ SetBufferCommitInfoNeedsSave(Buffer buffer)
 	if ((bufHdr->flags & (BM_DIRTY | BM_JUST_DIRTIED)) !=
 		(BM_DIRTY | BM_JUST_DIRTIED))
 	{
-		bool		dirtied = false;
-
 		LockBufHdr(bufHdr);
 		Assert(bufHdr->refcount > 0);
 		if (!(bufHdr->flags & BM_DIRTY))
-			dirtied = true;
-		bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
-		UnlockBufHdr(bufHdr);
-
-		if (dirtied)
 		{
+			/* Do vacuum cost accounting */
 			VacuumPageDirty++;
 			if (VacuumCostActive)
 				VacuumCostBalance += VacuumCostPageDirty;
-			/* The bgwriter may need to be woken. */
-			if (ProcGlobal->bgwriterLatch)
-				SetLatch(ProcGlobal->bgwriterLatch);
 		}
+		bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
+		UnlockBufHdr(bufHdr);
 	}
 }
 

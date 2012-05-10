@@ -186,7 +186,6 @@ InitProcGlobal(void)
 	ProcGlobal->startupProc = NULL;
 	ProcGlobal->startupProcPid = 0;
 	ProcGlobal->startupBufferPinWaitBufId = -1;
-	ProcGlobal->bgwriterLatch = NULL;
 	ProcGlobal->walwriterLatch = NULL;
 	ProcGlobal->checkpointerLatch = NULL;
 
@@ -627,6 +626,9 @@ HaveNFreeProcs(int n)
 	return (n <= 0);
 }
 
+/*
+ * Check if the current process is awaiting a lock.
+ */
 bool
 IsWaitingForLock(void)
 {

@@ -1,7 +1,10 @@
 /*-------------------------------------------------------------------------
  *
  * bgwriter.h
- *	  Exports from postmaster/bgwriter.c.
+ *	  Exports from postmaster/bgwriter.c and postmaster/checkpointer.c.
+ *
+ * The bgwriter process used to handle checkpointing duties too.  Now
+ * there is a separate process, but we did not bother to split this header.
  *
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  *
@@ -32,7 +35,6 @@ extern bool ForwardFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
 					BlockNumber segno);
 extern void AbsorbFsyncRequests(void);
 
-/* These were previously called BgWriterShmem... */
 extern Size CheckpointerShmemSize(void);
 extern void CheckpointerShmemInit(void);
 

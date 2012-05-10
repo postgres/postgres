@@ -21,10 +21,7 @@
  *
  * If the bgwriter exits unexpectedly, the postmaster treats that the same
  * as a backend crash: shared memory may be corrupted, so remaining backends
- * should be killed by SIGQUIT and then a recovery cycle started.  (Even if
- * shared memory isn't corrupted, we have lost information about which
- * files need to be fsync'd for the next checkpoint, and so a system
- * restart needs to be forced.)
+ * should be killed by SIGQUIT and then a recovery cycle started.
  *
  *
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
@@ -48,6 +45,7 @@
 #include "pgstat.h"
 #include "postmaster/bgwriter.h"
 #include "storage/bufmgr.h"
+#include "storage/buf_internals.h"
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
 #include "storage/pmsignal.h"
@@ -66,9 +64,10 @@
 int			BgWriterDelay = 200;
 
 /*
- * Time to sleep between bgwriter rounds, when it has no work to do.
+ * Multiplier to apply to BgWriterDelay when we decide to hibernate.
+ * (Perhaps this needs to be configurable?)
  */
-#define BGWRITER_HIBERNATE_MS			10000
+#define HIBERNATE_FACTOR			50
 
 /*
  * Flags set by interrupt handlers for later service in the main loop.
@@ -80,10 +79,6 @@ static volatile sig_atomic_t shutdown_requested = false;
  * Private state
  */
 static bool am_bg_writer = false;
-
-/* Prototypes for private functions */
-
-static void BgWriterNap(bool hibernating);
 
 /* Signal handlers */
 
@@ -104,7 +99,7 @@ BackgroundWriterMain(void)
 {
 	sigjmp_buf	local_sigjmp_buf;
 	MemoryContext bgwriter_context;
-	bool		hibernating;
+	bool		prev_hibernate;
 
 	am_bg_writer = true;
 
@@ -126,7 +121,7 @@ BackgroundWriterMain(void)
 	 * handler is still needed for latch wakeups.
 	 */
 	pqsignal(SIGHUP, BgSigHupHandler);	/* set flag to read config file */
-	pqsignal(SIGINT, SIG_IGN);			/* as of 9.2 no longer requests checkpoint */
+	pqsignal(SIGINT, SIG_IGN);
 	pqsignal(SIGTERM, ReqShutdownHandler); 	/* shutdown */
 	pqsignal(SIGQUIT, bg_quickdie);		/* hard crash time */
 	pqsignal(SIGALRM, SIG_IGN);
@@ -145,12 +140,6 @@ BackgroundWriterMain(void)
 
 	/* We allow SIGQUIT (quickdie) at all times */
 	sigdelset(&BlockSig, SIGQUIT);
-
-	/*
-	 * Advertise our latch that backends can use to wake us up while we're
-	 * sleeping.
-	 */
-	ProcGlobal->bgwriterLatch = &MyProc->procLatch;
 
 	/*
 	 * Create a resource owner to keep track of our resources (currently only
@@ -247,25 +236,25 @@ BackgroundWriterMain(void)
 		ThisTimeLineID = GetRecoveryTargetTLI();
 
 	/*
+	 * Reset hibernation state after any error.
+	 */
+	prev_hibernate = false;
+
+	/*
 	 * Loop forever
 	 */
-	hibernating = false;
 	for (;;)
 	{
-		bool		lapped;
+		bool	can_hibernate;
+		int		rc;
 
-		/*
-		 * Emergency bailout if postmaster has died.  This is to avoid the
-		 * necessity for manual cleanup of all postmaster children.
-		 */
-		if (!PostmasterIsAlive())
-			exit(1);
+		/* Clear any already-pending wakeups */
+		ResetLatch(&MyProc->procLatch);
 
 		if (got_SIGHUP)
 		{
 			got_SIGHUP = false;
 			ProcessConfigFile(PGC_SIGHUP);
-			/* update global shmem state for sync rep */
 		}
 		if (shutdown_requested)
 		{
@@ -281,125 +270,68 @@ BackgroundWriterMain(void)
 		/*
 		 * Do one cycle of dirty-buffer writing.
 		 */
-		if (hibernating && bgwriter_lru_maxpages > 0)
-			ResetLatch(&MyProc->procLatch);
-		lapped = BgBufferSync();
-
-		if (lapped && !hibernating)
-		{
-			/*
-			 * BgBufferSync did nothing. Since there doesn't seem to be any
-			 * work for the bgwriter to do, go into slower-paced
-			 * "hibernation" mode, where we sleep for much longer times than
-			 * bgwriter_delay says. Fewer wakeups saves electricity. If a
-			 * backend starts dirtying pages again, it will wake us up by
-			 * setting our latch.
-			 *
-			 * The latch is kept set during productive cycles where buffers
-			 * are written, and only reset before going into a longer sleep.
-			 * That ensures that when there's a constant trickle of activity,
-			 * the SetLatch() calls that backends have to do will see the
-			 * latch as already set, and are not slowed down by having to
-			 * actually set the latch and signal us.
-			 */
-			hibernating = true;
-
-			/*
-			 * Take one more short nap and perform one more bgwriter cycle -
-			 * someone might've dirtied a buffer just after we finished the
-			 * previous bgwriter cycle, while the latch was still set. If
-			 * we still find nothing to do after this cycle, the next sleep
-			 * will be longer.
-			 */
-			BgWriterNap(false);
-			continue;
-		}
-		else if (!lapped && hibernating)
-		{
-			/*
-			 * Woken up from hibernation. Set the latch just in case it's
-			 * not set yet (usually we wake up from hibernation because a
-			 * backend already set the latch, but not necessarily).
-			 */
-			SetLatch(&MyProc->procLatch);
-			hibernating = false;
-		}
+		can_hibernate = BgBufferSync();
 
 		/*
-		 * Take a short or long nap, depending on whether there was any work
-		 * to do.
+		 * Send off activity statistics to the stats collector
 		 */
-		BgWriterNap(hibernating);
-	}
-}
+		pgstat_send_bgwriter();
 
-/*
- * BgWriterNap -- Nap for the configured time or until a signal is received.
- *
- * If 'hibernating' is false, sleeps for bgwriter_delay milliseconds.
- * Otherwise sleeps longer, but also wakes up if the process latch is set.
- */
-static void
-BgWriterNap(bool hibernating)
-{
-	long		udelay;
-
-	/*
-	 * Send off activity statistics to the stats collector
-	 */
-	pgstat_send_bgwriter();
-
-	/*
-	 * If there was no work to do in the previous bgwriter cycle, take a
-	 * longer nap.
-	 */
-	if (hibernating)
-	{
 		/*
-		 * We wake on a buffer being dirtied. It's possible that some
-		 * useful work will become available for the bgwriter to do without
-		 * a buffer actually being dirtied, like when a dirty buffer's usage
-		 * count is decremented to zero or it's unpinned. This corner case
-		 * is judged as too marginal to justify adding additional SetLatch()
-		 * calls in very hot code paths, cheap though those calls may be.
+		 * Sleep until we are signaled or BgWriterDelay has elapsed.
 		 *
-		 * We still wake up periodically, so that BufferAlloc stats are
-		 * updated reasonably promptly.
+		 * Note: the feedback control loop in BgBufferSync() expects that we
+		 * will call it every BgWriterDelay msec.  While it's not critical for
+		 * correctness that that be exact, the feedback loop might misbehave
+		 * if we stray too far from that.  Hence, avoid loading this process
+		 * down with latch events that are likely to happen frequently during
+		 * normal operation.
 		 */
-		int res = WaitLatch(&MyProc->procLatch,
-							WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-							BGWRITER_HIBERNATE_MS);
+		rc = WaitLatch(&MyProc->procLatch,
+					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
+					   BgWriterDelay /* ms */);
 
 		/*
-		 * Only do a quick return if timeout was reached (or postmaster died)
-		 * to ensure that no less than BgWriterDelay ms has passed between
-		 * BgBufferSyncs - WaitLatch() might have returned instantaneously.
+		 * If no latch event and BgBufferSync says nothing's happening, extend
+		 * the sleep in "hibernation" mode, where we sleep for much longer
+		 * than bgwriter_delay says.  Fewer wakeups save electricity.  When a
+		 * backend starts using buffers again, it will wake us up by setting
+		 * our latch.  Because the extra sleep will persist only as long as no
+		 * buffer allocations happen, this should not distort the behavior of
+		 * BgBufferSync's control loop too badly; essentially, it will think
+		 * that the system-wide idle interval didn't exist.
+		 *
+		 * There is a race condition here, in that a backend might allocate a
+		 * buffer between the time BgBufferSync saw the alloc count as zero
+		 * and the time we call StrategyNotifyBgWriter.  While it's not
+		 * critical that we not hibernate anyway, we try to reduce the odds of
+		 * that by only hibernating when BgBufferSync says nothing's happening
+		 * for two consecutive cycles.  Also, we mitigate any possible
+		 * consequences of a missed wakeup by not hibernating forever.
 		 */
-		if (res & (WL_TIMEOUT | WL_POSTMASTER_DEATH))
-			return;
+		if (rc == WL_TIMEOUT && can_hibernate && prev_hibernate)
+		{
+			/* Ask for notification at next buffer allocation */
+			StrategyNotifyBgWriter(&MyProc->procLatch);
+			/* Sleep ... */
+			rc = WaitLatch(&MyProc->procLatch,
+						   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
+						   BgWriterDelay * HIBERNATE_FACTOR);
+			/* Reset the notification request in case we timed out */
+			StrategyNotifyBgWriter(NULL);
+		}
+
+		/*
+		 * Emergency bailout if postmaster has died.  This is to avoid the
+		 * necessity for manual cleanup of all postmaster children.
+		 */
+		if (rc & WL_POSTMASTER_DEATH)
+			exit(1);
+
+		prev_hibernate = can_hibernate;
 	}
-
-	/*
-	 * Nap for the configured time.
-	 *
-	 * On some platforms, signals won't interrupt the sleep.  To ensure we
-	 * respond reasonably promptly when someone signals us, break down the
-	 * sleep into 1-second increments, and check for interrupts after each
-	 * nap.
-	 */
-	udelay = BgWriterDelay * 1000L;
-
-	while (udelay > 999999L)
-	{
-		if (got_SIGHUP || shutdown_requested)
-			break;
-		pg_usleep(1000000L);
-		udelay -= 1000000L;
-	}
-
-	if (!(got_SIGHUP || shutdown_requested))
-		pg_usleep(udelay);
 }
+
 
 /* --------------------------------
  *		signal handler routines
