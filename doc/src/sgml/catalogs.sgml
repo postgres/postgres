@@ -1427,8 +1427,7 @@
 
   <para>
    The catalog <structname>pg_cast</structname> stores data type conversion
-   paths, both built-in paths and those defined with
-   <xref linkend="sql-createcast">.
+   paths, both built-in and user-defined.
   </para>
 
   <para>
