@@ -153,7 +153,7 @@
        </para>
        
        <para>
-        Previously supplied years and year masks of less than four digits
+        Previously, supplied years and year masks of less than four digits
         wrapped inconsistently.
        </para>
       </listitem>
@@ -1010,7 +1010,7 @@
        </para>
        
        <para>
-        Previously such not-valid-for-session errors would cause all
+        Previously, such not-valid-for-session errors would cause all
         setting changes to be ignored by that backend.
        </para>
       </listitem>
@@ -1165,7 +1165,7 @@
        </para>
        
        <para>
-        Previously the generic label <literal>?column?</> was used.
+        Previously, the generic label <literal>?column?</> was used.
        </para>
       </listitem>
       
@@ -1852,7 +1852,7 @@
        </para>
        
        <para>
-        Previously default permissions generated <literal>NULL</> fields.
+        Previously, default permissions generated <literal>NULL</> fields.
         (WAS IT NULL?)
        </para>
       </listitem>
@@ -2389,7 +2389,7 @@
        </para>
        
        <para>
-        Previously libpq collected the entire query result into memory
+        Previously, libpq collected the entire query result into memory
         before passing it back to the application.
        </para>
       </listitem>
