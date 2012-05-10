@@ -115,14 +115,19 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 	else
 		timeout = INFINITE;
 
-	/* Construct an array of event handles for WaitforMultipleObjects() */
+	/*
+	 * Construct an array of event handles for WaitforMultipleObjects().
+	 *
+	 * Note: pgwin32_signal_event should be first to ensure that it will be
+	 * reported when multiple events are set.  We want to guarantee that
+	 * pending signals are serviced.
+	 */
 	latchevent = latch->event;
 
-	events[0] = latchevent;
-	events[1] = pgwin32_signal_event;
+	events[0] = pgwin32_signal_event;
+	events[1] = latchevent;
 	numevents = 2;
-	if ((wakeEvents & WL_SOCKET_READABLE) ||
-		(wakeEvents & WL_SOCKET_WRITEABLE))
+	if (wakeEvents & (WL_SOCKET_READABLE | WL_SOCKET_WRITEABLE))
 	{
 		int			flags = 0;
 
@@ -132,7 +137,13 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 			flags |= FD_WRITE;
 
 		sockevent = WSACreateEvent();
-		WSAEventSelect(sock, sockevent, flags);
+		if (sockevent == WSA_INVALID_EVENT)
+			elog(ERROR, "failed to create event for socket: error code %u",
+				 WSAGetLastError());
+		if (WSAEventSelect(sock, sockevent, flags) != 0)
+			elog(ERROR, "failed to set up event for socket: error code %u",
+				 WSAGetLastError());
+
 		events[numevents++] = sockevent;
 	}
 	if (wakeEvents & WL_POSTMASTER_DEATH)
@@ -140,6 +151,9 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 		pmdeath_eventno = numevents;
 		events[numevents++] = PostmasterHandle;
 	}
+
+	/* Ensure that signals are serviced even if latch is already set */
+	pgwin32_dispatch_queued_signals();
 
 	do
 	{
@@ -151,6 +165,7 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 		 */
 		if (!ResetEvent(latchevent))
 			elog(ERROR, "ResetEvent failed: error code %lu", GetLastError());
+
 		if ((wakeEvents & WL_LATCH_SET) && latch->is_set)
 		{
 			result |= WL_LATCH_SET;
@@ -164,21 +179,20 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 		rc = WaitForMultipleObjects(numevents, events, FALSE, timeout);
 
 		if (rc == WAIT_FAILED)
-			elog(ERROR, "WaitForMultipleObjects() failed: error code %lu", GetLastError());
-
-		/* Participate in Windows signal emulation */
-		else if (rc == WAIT_OBJECT_0 + 1)
-			pgwin32_dispatch_queued_signals();
-
+			elog(ERROR, "WaitForMultipleObjects() failed: error code %lu",
+				 GetLastError());
 		else if (rc == WAIT_TIMEOUT)
 		{
 			result |= WL_TIMEOUT;
 		}
-		else if ((wakeEvents & WL_POSTMASTER_DEATH) &&
-				 rc == WAIT_OBJECT_0 + pmdeath_eventno)
+		else if (rc == WAIT_OBJECT_0)
 		{
-			/* Postmaster died */
-			result |= WL_POSTMASTER_DEATH;
+			/* Service newly-arrived signals */
+			pgwin32_dispatch_queued_signals();
+		}
+		else if (rc == WAIT_OBJECT_0 + 1)
+		{
+			/* Latch is set, we'll handle that on next iteration of loop */
 		}
 		else if ((wakeEvents & (WL_SOCKET_READABLE | WL_SOCKET_WRITEABLE)) &&
 				 rc == WAIT_OBJECT_0 + 2)	/* socket is at event slot 2 */
@@ -187,9 +201,8 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 
 			ZeroMemory(&resEvents, sizeof(resEvents));
 			if (WSAEnumNetworkEvents(sock, sockevent, &resEvents) == SOCKET_ERROR)
-				ereport(FATAL,
-						(errmsg_internal("failed to enumerate network events: error code %lu", GetLastError())));
-
+				elog(ERROR, "failed to enumerate network events: error code %lu",
+					 GetLastError());
 			if ((wakeEvents & WL_SOCKET_READABLE) &&
 				(resEvents.lNetworkEvents & FD_READ))
 			{
@@ -201,8 +214,13 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 				result |= WL_SOCKET_WRITEABLE;
 			}
 		}
-		/* Otherwise it must be the latch event */
-		else if (rc != WAIT_OBJECT_0)
+		else if ((wakeEvents & WL_POSTMASTER_DEATH) &&
+				 rc == WAIT_OBJECT_0 + pmdeath_eventno)
+		{
+			/* Postmaster died */
+			result |= WL_POSTMASTER_DEATH;
+		}
+		else
 			elog(ERROR, "unexpected return code from WaitForMultipleObjects(): %lu", rc);
 	}
 	while (result == 0);
