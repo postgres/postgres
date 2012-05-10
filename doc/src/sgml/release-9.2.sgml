@@ -309,7 +309,7 @@
       
       <listitem>
        <para>
-        Add libpq <link linkend="guc-ssl-key-file">parameters</link> for
+        Add GUC <link linkend="guc-ssl-key-file">parameters</link> for
         specifying the locations of server-side <acronym>SSL</acronym>
         files (Peter Eisentraut)
        </para>
