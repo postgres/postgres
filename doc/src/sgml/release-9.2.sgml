@@ -949,7 +949,7 @@
       
       <listitem>
        <para>
-        Allow a superuser to <command>SET</command> an extension's a
+        Allow a superuser to <command>SET</command> an extension's
         superuser-only custom variable before loading the associated
         extension (Tom Lane)
        </para>
@@ -1022,8 +1022,9 @@
       <listitem>
        <para>
         Check the server time zone during initdb, and set
-        <filename>postgresql.conf</filename> values timezone and <link
-        linkend="guc-log-timezone"><varname>log_timezone</></link>
+        <filename>postgresql.conf</filename> values
+        <link linkend="guc-timezone"><varname>timezone</></link> and
+        <link linkend="guc-log-timezone"><varname>log_timezone</></link>
         accordingly (Tom Lane)
        </para>
        
@@ -1401,7 +1402,7 @@
        </para>
        
        <para>
-        This also allows a table to be created who's schema matches a view.
+        This also allows a table to be created whose schema matches a view.
        </para>
       </listitem>
       
@@ -2417,8 +2418,8 @@
       
       <listitem>
        <para>
-        Allow libpq's .pgpass file to process escaped characters in the
-        password field (Robert Haas, Ross Reedstrom)
+        Allow libpq's <filename>.pgpass</> file to process escaped characters
+        in the password field (Robert Haas, Ross Reedstrom)
        </para>
       </listitem>
       
@@ -2466,7 +2467,7 @@
       
       <listitem>
        <para>
-        Install plpgsql.h into include/server during installation
+        Install <filename>plpgsql.h</> into <filename>include/server</> during installation
         (Heikki Linnakangas)
        </para>
       </listitem>
