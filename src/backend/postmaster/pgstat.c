@@ -3225,8 +3225,13 @@ PgstatCollectorMain(int argc, char *argv[])
 							   pgStatSock,
 							   -1L);
 
-		/* Check for postmaster death */
-		if (wr & WL_POSTMASTER_DEATH)
+		/*
+		 * Emergency bailout if postmaster has died.  This is to avoid the
+		 * necessity for manual cleanup of all postmaster children.  Note
+		 * that we mustn't trust the WL_POSTMASTER_DEATH result flag entirely;
+		 * if it is set, recheck with PostmasterIsAlive before believing it.
+		 */
+		if ((wr & WL_POSTMASTER_DEATH) && !PostmasterIsAlive())
 			break;
 	}							/* end of outer loop */
 

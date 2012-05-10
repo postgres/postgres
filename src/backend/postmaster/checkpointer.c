@@ -374,16 +374,10 @@ CheckpointerMain(void)
 		pg_time_t	now;
 		int			elapsed_secs;
 		int			cur_timeout;
+		int			rc;
 
 		/* Clear any already-pending wakeups */
 		ResetLatch(&MyProc->procLatch);
-
-		/*
-		 * Emergency bailout if postmaster has died.  This is to avoid the
-		 * necessity for manual cleanup of all postmaster children.
-		 */
-		if (!PostmasterIsAlive())
-			exit(1);
 
 		/*
 		 * Process any requests or signals received recently.
@@ -581,9 +575,18 @@ CheckpointerMain(void)
 			cur_timeout = Min(cur_timeout, XLogArchiveTimeout - elapsed_secs);
 		}
 
-		(void) WaitLatch(&MyProc->procLatch,
-						 WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-						 cur_timeout * 1000L /* convert to ms */);
+		rc = WaitLatch(&MyProc->procLatch,
+					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
+					   cur_timeout * 1000L /* convert to ms */);
+
+		/*
+		 * Emergency bailout if postmaster has died.  This is to avoid the
+		 * necessity for manual cleanup of all postmaster children.  Note
+		 * that we mustn't trust the WL_POSTMASTER_DEATH result flag entirely;
+		 * if it is set, recheck with PostmasterIsAlive before believing it.
+		 */
+		if ((rc & WL_POSTMASTER_DEATH) && !PostmasterIsAlive())
+			exit(1);
 	}
 }
 
