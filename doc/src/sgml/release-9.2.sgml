@@ -413,10 +413,11 @@
        <para>
         This is often called "index-only scans" or "covering indexes".
         This is possible for heap pages with exclusively all-visible
-        tuples, as reported by the visibility map.
+        tuples, as reported by the visibility map.  The visibility map was
+        made crash-safe as a necessary part of implementing this feature.
        </para>
       </listitem>
-      
+
       <listitem>
        <para>
         Allow frequently uncontended locks to be recorded using a new
@@ -536,17 +537,6 @@
        <para>
         Improve performance of <acronym>WAL</acronym> writes using group
         commit (Peter Geoghegan, Simon Riggs, Heikki Linnakangas)
-       </para>
-      </listitem>
-      
-      <listitem>
-       <para>
-        Make the visibility map crash-safe (Robert Haas, Noah Misch)
-       </para>
-       
-       <para>
-        This helps vacuum be more efficient, and is necessary for
-        index-only scans.
        </para>
       </listitem>
       
