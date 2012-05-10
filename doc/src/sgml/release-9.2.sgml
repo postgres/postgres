@@ -335,7 +335,7 @@
        <para>
         Rename <link
         linkend="monitoring-stats-views-table"><structname>pg_stat_activity</></link><structname>.procpid</>
-        to <literal>pid</>, to match other system tables (Magnus Hagander)
+        to <structname>pid</>, to match other system tables (Magnus Hagander)
        </para>
       </listitem>
       
@@ -347,8 +347,15 @@
        </para>
        
        <para>
-        The previous query values are preserved, allowing for enhanced
-        analysis.
+        The last query values are preserved, allowing for enhanced analysis.
+       </para>
+      </listitem>
+      
+      <listitem>
+       <para>
+        Rename <structname>pg_stat_activity.current_query</> to
+        <structname>query</> because it is not cleared when the query
+        completes (Magnus Hagander)
        </para>
       </listitem>
       
