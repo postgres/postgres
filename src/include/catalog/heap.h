@@ -69,6 +69,8 @@ extern Oid heap_create_with_catalog(const char *relname,
 						 bool use_user_acl,
 						 bool allow_system_table_mods);
 
+extern void heap_create_init_fork(Relation rel);
+
 extern void heap_drop_with_catalog(Oid relid);
 
 extern void heap_truncate(List *relids);

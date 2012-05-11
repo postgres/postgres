@@ -1155,6 +1155,8 @@ ExecuteTruncate(TruncateStmt *stmt)
 			 * deletion at commit.
 			 */
 			RelationSetNewRelfilenode(rel, RecentXmin);
+			if (rel->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED)
+				heap_create_init_fork(rel);
 
 			heap_relid = RelationGetRelid(rel);
 			toast_relid = rel->rd_rel->reltoastrelid;
@@ -1166,6 +1168,8 @@ ExecuteTruncate(TruncateStmt *stmt)
 			{
 				rel = relation_open(toast_relid, AccessExclusiveLock);
 				RelationSetNewRelfilenode(rel, RecentXmin);
+				if (rel->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED)
+					heap_create_init_fork(rel);
 				heap_close(rel, NoLock);
 			}
 

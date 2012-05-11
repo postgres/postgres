@@ -1306,24 +1306,10 @@ heap_create_with_catalog(const char *relname,
 	if (oncommit != ONCOMMIT_NOOP)
 		register_on_commit_action(relid, oncommit);
 
-	/*
-	 * If this is an unlogged relation, it needs an init fork so that it can
-	 * be correctly reinitialized on restart.  Since we're going to do an
-	 * immediate sync, we only need to xlog this if archiving or streaming is
-	 * enabled.  And the immediate sync is required, because otherwise there's
-	 * no guarantee that this will hit the disk before the next checkpoint
-	 * moves the redo pointer.
-	 */
 	if (relpersistence == RELPERSISTENCE_UNLOGGED)
 	{
 		Assert(relkind == RELKIND_RELATION || relkind == RELKIND_TOASTVALUE);
-
-		RelationOpenSmgr(new_rel_desc);
-		smgrcreate(new_rel_desc->rd_smgr, INIT_FORKNUM, false);
-		if (XLogIsNeeded())
-			log_smgrcreate(&new_rel_desc->rd_smgr->smgr_rnode.node,
-						   INIT_FORKNUM);
-		smgrimmedsync(new_rel_desc->rd_smgr, INIT_FORKNUM);
+		heap_create_init_fork(new_rel_desc);
 	}
 
 	/*
@@ -1336,6 +1322,22 @@ heap_create_with_catalog(const char *relname,
 	return relid;
 }
 
+/*
+ * Set up an init fork for an unlogged table so that it can be correctly
+ * reinitialized on restart.  Since we're going to do an immediate sync, we
+ * only need to xlog this if archiving or streaming is enabled.  And the
+ * immediate sync is required, because otherwise there's no guarantee that
+ * this will hit the disk before the next checkpoint moves the redo pointer.
+ */
+void
+heap_create_init_fork(Relation rel)
+{
+	RelationOpenSmgr(rel);
+	smgrcreate(rel->rd_smgr, INIT_FORKNUM, false);
+	if (XLogIsNeeded())
+		log_smgrcreate(&rel->rd_smgr->smgr_rnode.node, INIT_FORKNUM);
+	smgrimmedsync(rel->rd_smgr, INIT_FORKNUM);
+}
 
 /*
  *		RelationRemoveInheritance
