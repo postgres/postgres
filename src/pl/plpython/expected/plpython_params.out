@@ -11,7 +11,14 @@ return True
 $$ LANGUAGE plpythonu;
 CREATE FUNCTION test_param_names2(u users) RETURNS text AS $$
 assert u == args[0]
-return str(u)
+if isinstance(u, dict):
+    # stringify dict the hard way because otherwise the order is implementation-dependent
+    u_keys = list(u.keys())
+    u_keys.sort()
+    s = '{' + ', '.join([repr(k) + ': ' + repr(u[k]) for k in u_keys]) + '}'
+else:
+    s = str(u)
+return s
 $$ LANGUAGE plpythonu;
 -- use deliberately wrong parameter names
 CREATE FUNCTION test_param_names3(a0 integer) RETURNS boolean AS $$
@@ -37,10 +44,10 @@ SELECT test_param_names1(1,'text');
 SELECT test_param_names2(users) from users;
                            test_param_names2                           
 -----------------------------------------------------------------------
- {'lname': 'doe', 'username': 'j_doe', 'userid': 1, 'fname': 'jane'}
- {'lname': 'doe', 'username': 'johnd', 'userid': 2, 'fname': 'john'}
- {'lname': 'doe', 'username': 'w_doe', 'userid': 3, 'fname': 'willem'}
- {'lname': 'smith', 'username': 'slash', 'userid': 4, 'fname': 'rick'}
+ {'fname': 'jane', 'lname': 'doe', 'userid': 1, 'username': 'j_doe'}
+ {'fname': 'john', 'lname': 'doe', 'userid': 2, 'username': 'johnd'}
+ {'fname': 'willem', 'lname': 'doe', 'userid': 3, 'username': 'w_doe'}
+ {'fname': 'rick', 'lname': 'smith', 'userid': 4, 'username': 'slash'}
 (4 rows)
 
 SELECT test_param_names2(NULL);

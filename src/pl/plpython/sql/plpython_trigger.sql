@@ -75,8 +75,14 @@ if 'relid' in TD:
 skeys = list(TD.keys())
 skeys.sort()
 for key in skeys:
-	val = TD[key]
-	plpy.notice("TD[" + key + "] => " + str(val))
+    val = TD[key]
+    if not isinstance(val, dict):
+        plpy.notice("TD[" + key + "] => " + str(val))
+    else:
+        # print dicts the hard way because otherwise the order is implementation-dependent
+        valkeys = list(val.keys())
+        valkeys.sort()
+        plpy.notice("TD[" + key + "] => " + '{' + ', '.join([repr(k) + ': ' + repr(val[k]) for k in valkeys]) + '}')
 
 return None
 

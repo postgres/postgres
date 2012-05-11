@@ -3,8 +3,7 @@ CREATE FUNCTION import_fail() returns text
     AS
 'try:
 	import foosocket
-except Exception, ex:
-	plpy.notice("import socket failed -- %s" % str(ex))
+except ImportError:
 	return "failed as expected"
 return "succeeded, that wasn''t supposed to happen"'
     LANGUAGE plpythonu;
@@ -51,8 +50,6 @@ return "sha hash of " + plain + " is " + digest.hexdigest()'
 -- import python modules
 --
 SELECT import_fail();
-NOTICE:  import socket failed -- No module named foosocket
-CONTEXT:  PL/Python function "import_fail"
     import_fail     
 --------------------
  failed as expected
