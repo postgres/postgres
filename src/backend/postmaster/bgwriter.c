@@ -15,9 +15,9 @@
  * The bgwriter is started by the postmaster as soon as the startup subprocess
  * finishes, or as soon as recovery begins if we are doing archive recovery.
  * It remains alive until the postmaster commands it to terminate.
- * Normal termination is by SIGUSR2, which instructs the bgwriter to exit(0).
- * Emergency termination is by SIGQUIT; like any
- * backend, the bgwriter will simply abort and exit on SIGQUIT.
+ * Normal termination is by SIGTERM, which instructs the bgwriter to exit(0).
+ * Emergency termination is by SIGQUIT; like any backend, the bgwriter will
+ * simply abort and exit on SIGQUIT.
  *
  * If the bgwriter exits unexpectedly, the postmaster treats that the same
  * as a backend crash: shared memory may be corrupted, so remaining backends
