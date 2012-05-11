@@ -667,10 +667,13 @@
    </para>
 
    <para>
-    Also, if your installation was upgraded from a previous major release
-    by running <application>pg_upgrade</>, and it contains table columns of
-    the <type>citext</> data type, you should run <literal>CREATE EXTENSION
-    citext FROM unpackaged</>.  If you've already done that before
+    Also, if you use the <type>citext</> data type, and you upgraded
+    from a previous major release by running <application>pg_upgrade</>,
+    you should run <literal>CREATE EXTENSION citext FROM unpackaged</>
+    to avoid collation-related failures in <type>citext</> operations.
+    The same is necessary if you restore a dump from a pre-9.1 database
+    that contains an instance of the <type>citext</> data type.
+    If you've already run the <command>CREATE EXTENSION</> command before
     upgrading to 9.1.2, you will instead need to do manual catalog updates
     as explained in the second changelog item.
    </para>
@@ -717,7 +720,9 @@
      <para>
       Existing <type>citext</> columns and indexes aren't correctly marked as
       being of a collatable data type during <application>pg_upgrade</> from
-      a pre-9.1 server.  That leads to operations on them failing with errors
+      a pre-9.1 server, or when a pre-9.1 dump containing the <type>citext</>
+      type is loaded into a 9.1 server.
+      That leads to operations on these columns failing with errors
       such as <quote>could not determine which collation to use for string
       comparison</>.  This change allows them to be fixed by the same
       script that upgrades the <type>citext</> module into a proper 9.1
@@ -732,6 +737,7 @@
       <filename><replaceable>SHAREDIR</>/extension/citext--unpackaged--1.0.sql</filename>.
       (Run <literal>pg_config --sharedir</> if you're uncertain where
       <replaceable>SHAREDIR</> is.)
+      There is no harm in doing this again if unsure.
      </para>
     </listitem>
 
