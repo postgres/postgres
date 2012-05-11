@@ -392,6 +392,28 @@ GetCurrentTransactionIdIfAny(void)
 
 
 /*
+ *	GetStableLatestTransactionIdIfAny
+ *
+ * Get the latest XID once and then return same value for rest of transaction.
+ * Acts as a useful reference point for maintenance tasks.
+ */
+TransactionId
+GetStableLatestTransactionId(void)
+{
+	static LocalTransactionId lxid = InvalidLocalTransactionId;
+	static TransactionId stablexid = InvalidTransactionId;
+
+	if (lxid != MyProc->lxid ||
+		!TransactionIdIsValid(stablexid))
+	{
+		lxid = MyProc->lxid;
+		stablexid = ReadNewTransactionId();
+	}
+
+	return stablexid;
+}
+
+/*
  * AssignTransactionId
  *
  * Assigns a new permanent XID to the given TransactionState.
