@@ -48,23 +48,27 @@
 
 <screen>
 $ ps auxww | grep ^postgres
-postgres   960  0.0  1.1  6104 1480 pts/1    SN   13:17   0:00 postgres -i
-postgres   963  0.0  1.1  7084 1472 pts/1    SN   13:17   0:00 postgres: writer process
-postgres   965  0.0  1.1  6152 1512 pts/1    SN   13:17   0:00 postgres: stats collector process
-postgres   998  0.0  2.3  6532 2992 pts/1    SN   13:18   0:00 postgres: tgl runbug 127.0.0.1 idle
-postgres  1003  0.0  2.4  6532 3128 pts/1    SN   13:19   0:00 postgres: tgl regression [local] SELECT waiting
-postgres  1016  0.1  2.4  6532 3080 pts/1    SN   13:19   0:00 postgres: tgl regression [local] idle in transaction
+postgres  15551  0.0  0.1  57536  7132 pts/0    S    18:02   0:00 postgres -i
+postgres  15554  0.0  0.0  57536  1184 ?        Ss   18:02   0:00 postgres: writer process
+postgres  15555  0.0  0.0  57536   916 ?        Ss   18:02   0:00 postgres: checkpointer process
+postgres  15556  0.0  0.0  57536   916 ?        Ss   18:02   0:00 postgres: wal writer process
+postgres  15557  0.0  0.0  58504  2244 ?        Ss   18:02   0:00 postgres: autovacuum launcher process
+postgres  15558  0.0  0.0  17512  1068 ?        Ss   18:02   0:00 postgres: stats collector process
+postgres  15582  0.0  0.0  58772  3080 ?        Ss   18:04   0:00 postgres: joe runbug 127.0.0.1 idle
+postgres  15606  0.0  0.0  58772  3052 ?        Ss   18:07   0:00 postgres: tgl regression [local] SELECT waiting
+postgres  15610  0.0  0.0  58772  3056 ?        Ss   18:07   0:00 postgres: tgl regression [local] idle in transaction
 </screen>
 
    (The appropriate invocation of <command>ps</> varies across different
    platforms, as do the details of what is shown.  This example is from a
    recent Linux system.)  The first process listed here is the
    master server process.  The command arguments
-   shown for it are the same ones used when it was launched.  The next two
+   shown for it are the same ones used when it was launched.  The next five
    processes are background worker processes automatically launched by the
    master process.  (The <quote>stats collector</> process will not be present
-   if you have set
-   the system not to start the statistics collector.)  Each of the remaining
+   if you have set the system not to start the statistics collector; likewise
+   the <quote>autovacuum launcher</> process can be disabled.)
+   Each of the remaining
    processes is a server process handling one client connection.  Each such
    process sets its command line display in the form
 
@@ -79,8 +83,12 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   or a command type name such as <literal>SELECT</>.  Also,
   <literal>waiting</> is appended if the server process is presently waiting
   on a lock held by another session.  In the above example we can infer
-  that process 1003 is waiting for process 1016 to complete its transaction and
-  thereby release some lock.
+  that process 15606 is waiting for process 15610 to complete its transaction
+  and thereby release some lock.  (Process 15610 must be the blocker, because
+  there is no other active session.  In more complicated cases it would be
+  necessary to look into the
+  <link linkend="view-pg-locks"><structname>pg_locks</structname></link>
+  system view to determine who is blocking whom.)
   </para>
 
   <para>
