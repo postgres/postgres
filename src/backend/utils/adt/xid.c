@@ -19,6 +19,7 @@
 #include "access/transam.h"
 #include "access/xact.h"
 #include "libpq/pqformat.h"
+#include "storage/proc.h"
 #include "utils/builtins.h"
 
 #define PG_GETARG_TRANSACTIONID(n)	DatumGetTransactionId(PG_GETARG_DATUM(n))
@@ -87,16 +88,13 @@ xideq(PG_FUNCTION_ARGS)
 }
 
 /*
- *		xid_age			- compute age of an XID (relative to current xact)
+ *		xid_age			- compute age of an XID (relative to latest stable xid)
  */
 Datum
 xid_age(PG_FUNCTION_ARGS)
 {
 	TransactionId xid = PG_GETARG_TRANSACTIONID(0);
-	TransactionId now = GetTopTransactionIdIfAny();
-
-	if (!TransactionIdIsValid(now))
-		now = ReadNewTransactionId();
+	TransactionId now = GetStableLatestTransactionId();
 
 	/* Permanent XIDs are always infinitely old */
 	if (!TransactionIdIsNormal(xid))
