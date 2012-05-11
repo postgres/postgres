@@ -19,7 +19,6 @@
 #include "access/transam.h"
 #include "access/xact.h"
 #include "libpq/pqformat.h"
-#include "storage/proc.h"
 #include "utils/builtins.h"
 
 #define PG_GETARG_TRANSACTIONID(n)	DatumGetTransactionId(PG_GETARG_DATUM(n))
