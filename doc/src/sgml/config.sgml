@@ -18,45 +18,52 @@
   <sect1 id="config-setting">
    <title>Setting Parameters</title>
 
-   <para>
-    All parameter names are case-insensitive. Every parameter takes a
-    value of one of five types: Boolean, integer, floating point,
-    string or enum. Boolean values can be written as <literal>on</literal>,
-    <literal>off</literal>, <literal>true</literal>,
-    <literal>false</literal>, <literal>yes</literal>,
-    <literal>no</literal>, <literal>1</literal>, <literal>0</literal>
-    (all case-insensitive) or any unambiguous prefix of these.
-   </para>
+   <sect2 id="config-setting-names-values">
+    <title>Parameter Names and Values</title>
 
-   <para>
-    Some settings specify a memory or time value.  Each of these has an
-    implicit unit, which is either kilobytes, blocks (typically eight
-    kilobytes), milliseconds, seconds, or minutes.  Default units can be
-    found by referencing <structname>pg_settings</>.<structfield>unit</>.
-    For convenience,
-    a different unit can also be specified explicitly.  Valid memory units
-    are <literal>kB</literal> (kilobytes), <literal>MB</literal>
-    (megabytes), and <literal>GB</literal> (gigabytes); valid time units
-    are <literal>ms</literal> (milliseconds), <literal>s</literal>
-    (seconds), <literal>min</literal> (minutes), <literal>h</literal>
-    (hours), and <literal>d</literal> (days).  Note that the multiplier
-    for memory units is 1024, not 1000.
-   </para>
+    <para>
+     All parameter names are case-insensitive. Every parameter takes a
+     value of one of five types: Boolean, integer, floating point,
+     string or enum. Boolean values can be written as <literal>on</literal>,
+     <literal>off</literal>, <literal>true</literal>,
+     <literal>false</literal>, <literal>yes</literal>,
+     <literal>no</literal>, <literal>1</literal>, <literal>0</literal>
+     (all case-insensitive) or any unambiguous prefix of these.
+    </para>
 
-   <para>
-    Parameters of type <quote>enum</> are specified in the same way as string
-    parameters, but are restricted to a limited set of values.  The allowed
-    values can be found
-    from <structname>pg_settings</>.<structfield>enumvals</>.
-    Enum parameter values are case-insensitive.
-   </para>
+    <para>
+     Some settings specify a memory or time value.  Each of these has an
+     implicit unit, which is either kilobytes, blocks (typically eight
+     kilobytes), milliseconds, seconds, or minutes.  Default units can be
+     found by referencing <structname>pg_settings</>.<structfield>unit</>.
+     For convenience,
+     a different unit can also be specified explicitly.  Valid memory units
+     are <literal>kB</literal> (kilobytes), <literal>MB</literal>
+     (megabytes), and <literal>GB</literal> (gigabytes); valid time units
+     are <literal>ms</literal> (milliseconds), <literal>s</literal>
+     (seconds), <literal>min</literal> (minutes), <literal>h</literal>
+     (hours), and <literal>d</literal> (days).  Note that the multiplier
+     for memory units is 1024, not 1000.
+    </para>
 
-   <para>
-    One way to set these parameters is to edit the file
-    <filename>postgresql.conf</><indexterm><primary>postgresql.conf</></>,
-    which is normally kept in the data directory.  (A default copy is
-    installed there when the database cluster directory is
-    initialized.)  An example of what this file might look like is:
+    <para>
+     Parameters of type <quote>enum</> are specified in the same way as string
+     parameters, but are restricted to a limited set of values.  The allowed
+     values can be found
+     from <structname>pg_settings</>.<structfield>enumvals</>.
+     Enum parameter values are case-insensitive.
+    </para>
+   </sect2>
+
+   <sect2 id="config-setting-configuration-file">
+    <title>Setting Parameters via the Configuration File</title>
+
+    <para>
+     One way to set these parameters is to edit the file
+     <filename>postgresql.conf</><indexterm><primary>postgresql.conf</></>,
+     which is normally kept in the data directory.  (A default copy is
+     installed there when the database cluster directory is
+     initialized.)  An example of what this file might look like is:
 <programlisting>
 # This is a comment
 log_connections = yes
@@ -64,132 +71,147 @@ log_destination = 'syslog'
 search_path = '"$user", public'
 shared_buffers = 128MB
 </programlisting>
-    One parameter is specified per line. The equal sign between name and
-    value is optional. Whitespace is insignificant and blank lines are
-    ignored. Hash marks (<literal>#</literal>) designate the rest of the
-    line as a comment.  Parameter values that are not simple identifiers or
-    numbers must be single-quoted.  To embed a single quote in a parameter
-    value, write either two quotes (preferred) or backslash-quote.
-   </para>
+     One parameter is specified per line. The equal sign between name and
+     value is optional. Whitespace is insignificant and blank lines are
+     ignored. Hash marks (<literal>#</literal>) designate the remainder of the
+     line as a comment.  Parameter values that are not simple identifiers or
+     numbers must be single-quoted.  To embed a single quote in a parameter
+     value, write either two quotes (preferred) or backslash-quote.
+    </para>
 
-   <para>
-    <indexterm>
-     <primary><literal>include</></primary>
-     <secondary>in configuration file</secondary>
-    </indexterm>
-    In addition to parameter settings, the <filename>postgresql.conf</>
-    file can contain <firstterm>include directives</>, which specify
-    another file to read and process as if it were inserted into the
-    configuration file at this point.  Include directives simply look like:
+    <para>
+     <indexterm>
+      <primary><literal>include</></primary>
+      <secondary>in configuration file</secondary>
+     </indexterm>
+     In addition to parameter settings, the <filename>postgresql.conf</>
+     file can contain <firstterm>include directives</>, which specify
+     another file to read and process as if it were inserted into the
+     configuration file at this point.  This feature allows a configuration
+     file to be divided into physically separate parts.
+     Include directives simply look like:
 <programlisting>
 include 'filename'
 </programlisting>
-    If the file name is not an absolute path, it is taken as relative to
-    the directory containing the referencing configuration file.
-    Inclusions can be nested.
-   </para>
+     If the file name is not an absolute path, it is taken as relative to
+     the directory containing the referencing configuration file.
+     Inclusions can be nested.
+    </para>
 
-   <para>
-    <indexterm>
-     <primary><literal>include_if_exists</></primary>
-     <secondary>in configuration file</secondary>
-    </indexterm>
-    Use the same approach as the <literal>include</> directive, continuing
-    normally if the file does not exist.  A regular <literal>include</>
-    will stop with an error if the referenced file is missing, while
-    <literal>include_if_exists</> does not.  A warning about the missing
-    file will be logged.
-   </para>
+    <para>
+     <indexterm>
+      <primary><literal>include_if_exists</></primary>
+      <secondary>in configuration file</secondary>
+     </indexterm>
+     There is also an <literal>include_if_exists</> directive, which acts
+     the same as the <literal>include</> directive, except for the behavior
+     when the referenced file does not exist or cannot be read.  A regular
+     <literal>include</> will consider this an error condition, but
+     <literal>include_if_exists</> merely logs a message and continues
+     processing the referencing configuration file.
+    </para>
 
-   <para>
-    <indexterm>
-     <primary>SIGHUP</primary>
-    </indexterm>
-    The configuration file is reread whenever the main server process receives a
-    <systemitem>SIGHUP</> signal (which is most easily sent by means
-    of <literal>pg_ctl reload</>). The main server process
-    also propagates this signal to all currently running server
-    processes so that existing sessions also get the new
-    value. Alternatively, you can send the signal to a single server
-    process directly.  Some parameters can only be set at server start;
-    any changes to their entries in the configuration file will be ignored
-    until the server is restarted.  Invalid parameter settings in the
-    configuration file are likewise ignored (but logged) during
-    <systemitem>SIGHUP</> processing.
-   </para>
+    <para>
+     <indexterm>
+      <primary>SIGHUP</primary>
+     </indexterm>
+     The configuration file is reread whenever the main server process
+     receives a
+     <systemitem>SIGHUP</> signal (which is most easily sent by means
+     of <literal>pg_ctl reload</>). The main server process
+     also propagates this signal to all currently running server
+     processes so that existing sessions also get the new
+     value. Alternatively, you can send the signal to a single server
+     process directly.  Some parameters can only be set at server start;
+     any changes to their entries in the configuration file will be ignored
+     until the server is restarted.  Invalid parameter settings in the
+     configuration file are likewise ignored (but logged) during
+     <systemitem>SIGHUP</> processing.
+    </para>
+   </sect2>
 
-   <para>
-    A second way to set these configuration parameters is to give them
-    as a command-line option to the <command>postgres</command> command, such as:
+   <sect2 id="config-setting-other-methods">
+    <title>Other Ways to Set Parameters</title>
+
+    <para>
+     A second way to set these configuration parameters is to give them
+     as a command-line option to the <command>postgres</command> command,
+     such as:
 <programlisting>
 postgres -c log_connections=yes -c log_destination='syslog'
 </programlisting>
-    Command-line options override any conflicting settings in
-    <filename>postgresql.conf</filename>.  Note that this means you won't
-    be able to change the value on-the-fly by editing
-    <filename>postgresql.conf</filename>, so while the command-line
-    method might be convenient, it can cost you flexibility later.
-   </para>
+     Command-line options override any conflicting settings in
+     <filename>postgresql.conf</filename>.  Note that this means you won't
+     be able to change the value on-the-fly by editing
+     <filename>postgresql.conf</filename>, so while the command-line
+     method might be convenient, it can cost you flexibility later.
+    </para>
 
-   <para>
-    Occasionally it is useful to give a command line option to
-    one particular session only. The environment variable
-    <envar>PGOPTIONS</envar> can be used for this purpose on the
-    client side:
+    <para>
+     Occasionally it is useful to give a command line option to
+     one particular session only. The environment variable
+     <envar>PGOPTIONS</envar> can be used for this purpose on the
+     client side:
 <programlisting>
 env PGOPTIONS='-c geqo=off' psql
 </programlisting>
-    (This works for any <application>libpq</>-based client application, not
-    just <application>psql</application>.) Note that this won't work for
-    parameters that are fixed when the server is started or that must be
-    specified in <filename>postgresql.conf</filename>.
-   </para>
+     (This works for any <application>libpq</>-based client application, not
+     just <application>psql</application>.) Note that this won't work for
+     parameters that are fixed when the server is started or that must be
+     specified in <filename>postgresql.conf</filename>.
+    </para>
 
-   <para>
-    Furthermore, it is possible to assign a set of parameter settings to
-    a user or a database.  Whenever a session is started, the default
-    settings for the user and database involved are loaded.  The
-    commands <xref linkend="sql-alterrole">
-    and <xref linkend="sql-alterdatabase">,
-    respectively, are used to configure these settings.  Per-database
-    settings override anything received from the
-    <command>postgres</command> command-line or the configuration
-    file, and in turn are overridden by per-user settings; both are
-    overridden by per-session settings.
-   </para>
+    <para>
+     Furthermore, it is possible to assign a set of parameter settings to
+     a user or a database.  Whenever a session is started, the default
+     settings for the user and database involved are loaded.  The
+     commands <xref linkend="sql-alterrole">
+     and <xref linkend="sql-alterdatabase">,
+     respectively, are used to configure these settings.  Per-database
+     settings override anything received from the
+     <command>postgres</command> command-line or the configuration
+     file, and in turn are overridden by per-user settings; both are
+     overridden by per-session settings.
+    </para>
 
-   <para>
-    Some parameters can be changed in individual <acronym>SQL</acronym>
-    sessions with the <xref linkend="SQL-SET">
-    command, for example:
+    <para>
+     Some parameters can be changed in individual <acronym>SQL</acronym>
+     sessions with the <xref linkend="SQL-SET">
+     command, for example:
 <screen>
 SET ENABLE_SEQSCAN TO OFF;
 </screen>
-    If <command>SET</> is allowed, it overrides all other sources of
-    values for the parameter. Some parameters cannot be changed via
-    <command>SET</command>: for example, if they control behavior that
-    cannot be changed without restarting the entire
-    <productname>PostgreSQL</productname> server.  Also,
-    some <command>SET</command> or <command>ALTER</> parameter modifications
-    require superuser permission.
-   </para>
+     If <command>SET</> is allowed, it overrides all other sources of
+     values for the parameter. Some parameters cannot be changed via
+     <command>SET</command>: for example, if they control behavior that
+     cannot be changed without restarting the entire
+     <productname>PostgreSQL</productname> server.  Also, some parameters
+     require superuser permission to change via <command>SET</command> or
+     <command>ALTER</>.
+    </para>
+   </sect2>
 
-   <para>
-    The <xref linkend="SQL-SHOW">
-    command allows inspection of the current values of all parameters.
-   </para>
+   <sect2 id="config-setting-examining">
+    <title>Examining Parameter Settings</title>
 
-   <para>
-    The virtual table <structname>pg_settings</structname> also allows
-    displaying and updating session run-time parameters;  see <xref
-    linkend="view-pg-settings"> for details and a description of the
-    different variable types and when they can be changed.
-    <structname>pg_settings</structname> is equivalent to <command>SHOW</>
-    and <command>SET</>, but can be more convenient
-    to use because it can be joined with other tables, or selected from using
-    any desired selection condition. It also contains more information about
-    what values are allowed for the parameters.
-   </para>
+    <para>
+     The <xref linkend="SQL-SHOW">
+     command allows inspection of the current values of all parameters.
+    </para>
+
+    <para>
+     The virtual table <structname>pg_settings</structname> also allows
+     displaying and updating session run-time parameters;  see <xref
+     linkend="view-pg-settings"> for details and a description of the
+     different variable types and when they can be changed.
+     <structname>pg_settings</structname> is equivalent to <command>SHOW</>
+     and <command>SET</>, but can be more convenient
+     to use because it can be joined with other tables, or selected from using
+     any desired selection condition. It also contains more information about
+     each parameter than is available from <command>SHOW</>.
+    </para>
+
+   </sect2>
   </sect1>
 
    <sect1 id="runtime-config-file-locations">
