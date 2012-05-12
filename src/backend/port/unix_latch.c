@@ -293,7 +293,7 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 			result |= WL_TIMEOUT;
 		}
 		if ((wakeEvents & WL_SOCKET_READABLE) &&
-			(pfds[0].revents & POLLIN))
+			(pfds[0].revents & (POLLIN | POLLHUP | POLLERR | POLLNVAL)))
 		{
 			/* data available in socket */
 			result |= WL_SOCKET_READABLE;
