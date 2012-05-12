@@ -9,8 +9,7 @@
  * in postgresql.conf. If these limits are reached or passed, the
  * current logfile is closed and a new one is created (rotated).
  * The logfiles are stored in a subdirectory (configurable in
- * postgresql.conf), using an internal naming scheme that mangles
- * creation time and current postmaster pid.
+ * postgresql.conf), using a user-selectable naming scheme.
  *
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *
@@ -40,6 +39,7 @@
 #include "postmaster/postmaster.h"
 #include "postmaster/syslogger.h"
 #include "storage/ipc.h"
+#include "storage/latch.h"
 #include "storage/pg_shmem.h"
 #include "utils/guc.h"
 #include "utils/ps_status.h"
@@ -93,6 +93,7 @@ static FILE *syslogFile = NULL;
 static FILE *csvlogFile = NULL;
 static char *last_file_name = NULL;
 static char *last_csv_file_name = NULL;
+static Latch sysLoggerLatch;
 
 /*
  * Buffers for saving partial messages from different backends.
@@ -168,12 +169,14 @@ SysLoggerMain(int argc, char *argv[])
 	char	   *currentLogDir;
 	char	   *currentLogFilename;
 	int			currentLogRotationAge;
+	pg_time_t	now;
 
 	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
 
 	MyProcPid = getpid();		/* reset MyProcPid */
 
 	MyStartTime = time(NULL);	/* set our start time in case we call elog */
+	now = MyStartTime;
 
 #ifdef EXEC_BACKEND
 	syslogger_parseArgs(argc, argv);
@@ -246,6 +249,9 @@ SysLoggerMain(int argc, char *argv[])
 		elog(FATAL, "setsid() failed: %m");
 #endif
 
+	/* Initialize private latch for use by signal handlers */
+	InitLatch(&sysLoggerLatch);
+
 	/*
 	 * Properly accept or ignore signals the postmaster might send us
 	 *
@@ -296,14 +302,19 @@ SysLoggerMain(int argc, char *argv[])
 	{
 		bool		time_based_rotation = false;
 		int			size_rotation_for = 0;
+		long		cur_timeout;
+		int			cur_flags;
 
 #ifndef WIN32
-		int			bytesRead;
 		int			rc;
-		fd_set		rfds;
-		struct timeval timeout;
 #endif
 
+		/* Clear any already-pending wakeups */
+		ResetLatch(&sysLoggerLatch);
+
+		/*
+		 * Process any requests or signals received recently.
+		 */
 		if (got_SIGHUP)
 		{
 			got_SIGHUP = false;
@@ -353,11 +364,10 @@ SysLoggerMain(int argc, char *argv[])
 			}
 		}
 
-		if (!rotation_requested && Log_RotationAge > 0 && !rotation_disabled)
+		if (Log_RotationAge > 0 && !rotation_disabled)
 		{
 			/* Do a logfile rotation if it's time */
-			pg_time_t	now = (pg_time_t) time(NULL);
-
+			now = (pg_time_t) time(NULL);
 			if (now >= next_rotation_time)
 				rotation_requested = time_based_rotation = true;
 		}
@@ -389,28 +399,40 @@ SysLoggerMain(int argc, char *argv[])
 			logfile_rotate(time_based_rotation, size_rotation_for);
 		}
 
-#ifndef WIN32
+		/*
+		 * Calculate time till next time-based rotation, so that we don't
+		 * sleep longer than that.  We assume the value of "now" obtained
+		 * above is still close enough.  Note we can't make this calculation
+		 * until after calling logfile_rotate(), since it will advance
+		 * next_rotation_time.
+		 */
+		if (Log_RotationAge > 0 && !rotation_disabled)
+		{
+			if (now < next_rotation_time)
+				cur_timeout = (next_rotation_time - now) * 1000L; /* msec */
+			else
+				cur_timeout = 0;
+			cur_flags = WL_TIMEOUT;
+		}
+		else
+		{
+			cur_timeout = -1L;
+			cur_flags = 0;
+		}
 
 		/*
-		 * Wait for some data, timing out after 1 second
+		 * Sleep until there's something to do
 		 */
-		FD_ZERO(&rfds);
-		FD_SET(syslogPipe[0], &rfds);
+#ifndef WIN32
+		rc = WaitLatchOrSocket(&sysLoggerLatch,
+							   WL_LATCH_SET | WL_SOCKET_READABLE | cur_flags,
+							   syslogPipe[0],
+							   cur_timeout);
 
-		timeout.tv_sec = 1;
-		timeout.tv_usec = 0;
-
-		rc = select(syslogPipe[0] + 1, &rfds, NULL, NULL, &timeout);
-
-		if (rc < 0)
+		if (rc & WL_SOCKET_READABLE)
 		{
-			if (errno != EINTR)
-				ereport(LOG,
-						(errcode_for_socket_access(),
-						 errmsg("select() failed in logger process: %m")));
-		}
-		else if (rc > 0 && FD_ISSET(syslogPipe[0], &rfds))
-		{
+			int			bytesRead;
+
 			bytesRead = read(syslogPipe[0],
 							 logbuffer + bytes_in_logbuffer,
 							 sizeof(logbuffer) - bytes_in_logbuffer);
@@ -445,8 +467,8 @@ SysLoggerMain(int argc, char *argv[])
 
 		/*
 		 * On Windows we leave it to a separate thread to transfer data and
-		 * detect pipe EOF.  The main thread just wakes up once a second to
-		 * check for SIGHUP and rotation conditions.
+		 * detect pipe EOF.  The main thread just wakes up to handle SIGHUP
+		 * and rotation conditions.
 		 *
 		 * Server code isn't generally thread-safe, so we ensure that only one
 		 * of the threads is active at a time by entering the critical section
@@ -454,7 +476,9 @@ SysLoggerMain(int argc, char *argv[])
 		 */
 		LeaveCriticalSection(&sysloggerSection);
 
-		pg_usleep(1000000L);
+		(void) WaitLatch(&sysLoggerLatch,
+						 WL_LATCH_SET | cur_flags,
+						 cur_timeout);
 
 		EnterCriticalSection(&sysloggerSection);
 #endif   /* WIN32 */
@@ -957,7 +981,7 @@ write_syslogger_file(const char *buffer, int count, int destination)
 /*
  * Worker thread to transfer data from the pipe to the current logfile.
  *
- * We need this because on Windows, WaitForSingleObject does not work on
+ * We need this because on Windows, WaitforMultipleObjects does not work on
  * unnamed pipes: it always reports "signaled", so the blocking ReadFile won't
  * allow for SIGHUP; and select is for sockets only.
  */
@@ -1009,6 +1033,9 @@ pipeThread(void *arg)
 
 	/* if there's any data left then force it out now */
 	flush_pipe_input(logbuffer, &bytes_in_logbuffer);
+
+	/* set the latch to waken the main thread, which will quit */
+	SetLatch(&sysLoggerLatch);
 
 	LeaveCriticalSection(&sysloggerSection);
 	_endthread();
@@ -1285,12 +1312,22 @@ set_next_rotation_time(void)
 static void
 sigHupHandler(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	got_SIGHUP = true;
+	SetLatch(&sysLoggerLatch);
+
+	errno = save_errno;
 }
 
 /* SIGUSR1: set flag to rotate logfile */
 static void
 sigUsr1Handler(SIGNAL_ARGS)
 {
+	int			save_errno = errno;
+
 	rotation_requested = true;
+	SetLatch(&sysLoggerLatch);
+
+	errno = save_errno;
 }
