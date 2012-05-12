@@ -538,8 +538,8 @@
 
       <listitem>
        <para>
-        Improve performance of <acronym>WAL</acronym> writes using group
-        commit (Peter Geoghegan, Simon Riggs, Heikki Linnakangas)
+        Improve locking performance during group commit (Peter Geoghegan,
+        Simon Riggs, Heikki Linnakangas)
        </para>
       </listitem>
 
