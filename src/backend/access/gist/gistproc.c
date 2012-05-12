@@ -327,7 +327,7 @@ non_negative(float val)
 /*
  * Consider replacement of currently selected split with the better one.
  */
-static void inline
+static inline void
 g_box_consider_split(ConsiderSplitContext *context, int dimNum,
 					 double rightLower, int minLeftCount,
 					 double leftUpper, int maxLeftCount)
