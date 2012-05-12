@@ -717,12 +717,7 @@ XML2_CONFIG
 with_ossp_uuid
 with_selinux
 with_openssl
-with_bonjour
-with_ldap
-with_pam
 krb_srvtab
-with_krb5
-with_gssapi
 with_python
 with_perl
 with_tcl
@@ -747,7 +742,6 @@ enable_coverage
 GENHTML
 LCOV
 GCOV
-enable_profiling
 enable_debug
 enable_rpath
 enable_shared
@@ -2618,7 +2612,6 @@ else
   enable_profiling=no
 
 fi
-
 
 
 
@@ -5380,7 +5373,6 @@ fi
 { $as_echo "$as_me:$LINENO: result: $with_gssapi" >&5
 $as_echo "$with_gssapi" >&6; }
 
-
 #
 # Kerberos 5
 #
@@ -5421,7 +5413,6 @@ fi
 
 { $as_echo "$as_me:$LINENO: result: $with_krb5" >&5
 $as_echo "$with_krb5" >&6; }
-
 
 
 
@@ -5503,7 +5494,6 @@ fi
 $as_echo "$with_pam" >&6; }
 
 
-
 #
 # LDAP
 #
@@ -5543,7 +5533,6 @@ fi
 $as_echo "$with_ldap" >&6; }
 
 
-
 #
 # Bonjour
 #
@@ -5581,7 +5570,6 @@ fi
 
 { $as_echo "$as_me:$LINENO: result: $with_bonjour" >&5
 $as_echo "$with_bonjour" >&6; }
-
 
 
 #

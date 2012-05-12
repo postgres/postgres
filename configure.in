@@ -195,7 +195,6 @@ AC_SUBST(enable_debug)
 #
 PGAC_ARG_BOOL(enable, profiling, no,
               [build with profiling enabled ])
-AC_SUBST(enable_profiling)
 
 #
 # --enable-coverage enables generation of code coverage metrics with gcov
@@ -605,7 +604,6 @@ PGAC_ARG_BOOL(with, gssapi, no, [build with GSSAPI support],
   krb_srvtab="FILE:\$(sysconfdir)/krb5.keytab"
 ])
 AC_MSG_RESULT([$with_gssapi])
-AC_SUBST(with_gssapi)
 
 #
 # Kerberos 5
@@ -617,7 +615,6 @@ PGAC_ARG_BOOL(with, krb5, no, [build with Kerberos 5 support],
   krb_srvtab="FILE:\$(sysconfdir)/krb5.keytab"
 ])
 AC_MSG_RESULT([$with_krb5])
-AC_SUBST(with_krb5)
 
 
 AC_SUBST(krb_srvtab)
@@ -642,7 +639,6 @@ PGAC_ARG_BOOL(with, pam, no,
               [build with PAM support],
               [AC_DEFINE([USE_PAM], 1, [Define to 1 to build with PAM support. (--with-pam)])])
 AC_MSG_RESULT([$with_pam])
-AC_SUBST(with_pam)
 
 
 #
@@ -653,7 +649,6 @@ PGAC_ARG_BOOL(with, ldap, no,
               [build with LDAP support],
               [AC_DEFINE([USE_LDAP], 1, [Define to 1 to build with LDAP support. (--with-ldap)])])
 AC_MSG_RESULT([$with_ldap])
-AC_SUBST(with_ldap)
 
 
 #
@@ -664,7 +659,6 @@ PGAC_ARG_BOOL(with, bonjour, no,
               [build with Bonjour support],
               [AC_DEFINE([USE_BONJOUR], 1, [Define to 1 to build with Bonjour support. (--with-bonjour)])])
 AC_MSG_RESULT([$with_bonjour])
-AC_SUBST(with_bonjour)
 
 
 #
