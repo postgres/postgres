@@ -130,10 +130,11 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 	numevents = 2;
 	if (wakeEvents & (WL_SOCKET_READABLE | WL_SOCKET_WRITEABLE))
 	{
+		/* Need an event object to represent events on the socket */
 		int			flags = 0;
 
 		if (wakeEvents & WL_SOCKET_READABLE)
-			flags |= FD_READ;
+			flags |= (FD_READ | FD_CLOSE);
 		if (wakeEvents & WL_SOCKET_WRITEABLE)
 			flags |= FD_WRITE;
 
@@ -201,11 +202,11 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 			WSANETWORKEVENTS resEvents;
 
 			ZeroMemory(&resEvents, sizeof(resEvents));
-			if (WSAEnumNetworkEvents(sock, sockevent, &resEvents) == SOCKET_ERROR)
-				elog(ERROR, "failed to enumerate network events: error code %lu",
-					 GetLastError());
+			if (WSAEnumNetworkEvents(sock, sockevent, &resEvents) != 0)
+				elog(ERROR, "failed to enumerate network events: error code %u",
+					 WSAGetLastError());
 			if ((wakeEvents & WL_SOCKET_READABLE) &&
-				(resEvents.lNetworkEvents & FD_READ))
+				(resEvents.lNetworkEvents & (FD_READ | FD_CLOSE)))
 			{
 				result |= WL_SOCKET_READABLE;
 			}
@@ -233,10 +234,10 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 	}
 	while (result == 0);
 
-	/* Clean up the handle we created for the socket */
+	/* Clean up the event object we created for the socket */
 	if (sockevent != WSA_INVALID_EVENT)
 	{
-		WSAEventSelect(sock, sockevent, 0);
+		WSAEventSelect(sock, NULL, 0);
 		WSACloseEvent(sockevent);
 	}
 

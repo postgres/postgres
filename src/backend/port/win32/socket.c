@@ -137,6 +137,7 @@ pgwin32_waitforsinglesocket(SOCKET s, int what, int timeout)
 	HANDLE		events[2];
 	int			r;
 
+	/* Create an event object just once and use it on all future calls */
 	if (waitevent == INVALID_HANDLE_VALUE)
 	{
 		waitevent = CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -150,20 +151,19 @@ pgwin32_waitforsinglesocket(SOCKET s, int what, int timeout)
 				(errmsg_internal("could not reset socket waiting event: error code %lu", GetLastError())));
 
 	/*
-	 * make sure we don't multiplex this kernel event object with a different
-	 * socket from a previous call
+	 * Track whether socket is UDP or not.  (NB: most likely, this is both
+	 * useless and wrong; there is no reason to think that the behavior of
+	 * WSAEventSelect is different for TCP and UDP.)
 	 */
-
 	if (current_socket != s)
-	{
-		if (current_socket != -1)
-			WSAEventSelect(current_socket, waitevent, 0);
 		isUDP = isDataGram(s);
-	}
-
 	current_socket = s;
 
-	if (WSAEventSelect(s, waitevent, what) == SOCKET_ERROR)
+	/*
+	 * Attach event to socket.  NOTE: we must detach it again before returning,
+	 * since other bits of code may try to attach other events to the socket.
+	 */
+	if (WSAEventSelect(s, waitevent, what) != 0)
 	{
 		TranslateSocketError();
 		return 0;
@@ -196,10 +196,14 @@ pgwin32_waitforsinglesocket(SOCKET s, int what, int timeout)
 
 				r = WSASend(s, &buf, 1, &sent, 0, NULL, NULL);
 				if (r == 0)		/* Completed - means things are fine! */
+				{
+					WSAEventSelect(s, NULL, 0);
 					return 1;
+				}
 				else if (WSAGetLastError() != WSAEWOULDBLOCK)
 				{
 					TranslateSocketError();
+					WSAEventSelect(s, NULL, 0);
 					return 0;
 				}
 			}
@@ -210,6 +214,8 @@ pgwin32_waitforsinglesocket(SOCKET s, int what, int timeout)
 	else
 		r = WaitForMultipleObjectsEx(2, events, FALSE, timeout, TRUE);
 
+	WSAEventSelect(s, NULL, 0);
+
 	if (r == WAIT_OBJECT_0 || r == WAIT_IO_COMPLETION)
 	{
 		pgwin32_dispatch_queued_signals();
@@ -219,9 +225,12 @@ pgwin32_waitforsinglesocket(SOCKET s, int what, int timeout)
 	if (r == WAIT_OBJECT_0 + 1)
 		return 1;
 	if (r == WAIT_TIMEOUT)
+	{
+		errno = EWOULDBLOCK;
 		return 0;
+	}
 	ereport(ERROR,
-			(errmsg_internal("unrecognized return value from WaitForMultipleObjects: %d (%lu)", r, GetLastError())));
+			(errmsg_internal("unrecognized return value from WaitForMultipleObjects: %d (error code %lu)", r, GetLastError())));
 	return 0;
 }
 
@@ -543,9 +552,12 @@ pgwin32_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, c
 		if (writefds && FD_ISSET(sockets[i], writefds))
 			flags |= FD_WRITE | FD_CLOSE;
 
-		if (WSAEventSelect(sockets[i], events[i], flags) == SOCKET_ERROR)
+		if (WSAEventSelect(sockets[i], events[i], flags) != 0)
 		{
 			TranslateSocketError();
+			/* release already-assigned event objects */
+			while (--i >= 0)
+				WSAEventSelect(sockets[i], NULL, 0);
 			for (i = 0; i < numevents; i++)
 				WSACloseEvent(events[i]);
 			return -1;
@@ -565,9 +577,9 @@ pgwin32_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, c
 		for (i = 0; i < numevents; i++)
 		{
 			ZeroMemory(&resEvents, sizeof(resEvents));
-			if (WSAEnumNetworkEvents(sockets[i], events[i], &resEvents) == SOCKET_ERROR)
-				ereport(FATAL,
-						(errmsg_internal("failed to enumerate network events: error code %lu", GetLastError())));
+			if (WSAEnumNetworkEvents(sockets[i], events[i], &resEvents) != 0)
+				elog(ERROR, "failed to enumerate network events: error code %u",
+					 WSAGetLastError());
 			/* Read activity? */
 			if (readfds && FD_ISSET(sockets[i], readfds))
 			{
@@ -594,10 +606,10 @@ pgwin32_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, c
 		}
 	}
 
-	/* Clean up all handles */
+	/* Clean up all the event objects */
 	for (i = 0; i < numevents; i++)
 	{
-		WSAEventSelect(sockets[i], events[i], 0);
+		WSAEventSelect(sockets[i], NULL, 0);
 		WSACloseEvent(events[i]);
 	}
 
