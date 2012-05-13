@@ -678,8 +678,9 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 	 * with a warning.	This is because even though ProcessUtility disallows
 	 * DROP TABLESPACE in a transaction block, it's possible that a previous
 	 * DROP failed and rolled back after removing the tablespace directories
-	 * and symlink.  We want to allow a new DROP attempt to succeed at
-	 * removing the catalog entries, so we should not give a hard error here.
+	 * and/or symlink.  We want to allow a new DROP attempt to succeed at
+	 * removing the catalog entries (and symlink if still present), so we
+	 * should not give a hard error here.
 	 */
 	dirdesc = AllocateDir(linkloc_with_version_dir);
 	if (dirdesc == NULL)
@@ -691,8 +692,8 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 						(errcode_for_file_access(),
 						 errmsg("could not open directory \"%s\": %m",
 								linkloc_with_version_dir)));
-			pfree(linkloc_with_version_dir);
-			return true;
+			/* The symlink might still exist, so go try to remove it */
+			goto remove_symlink;
 		}
 		else if (redo)
 		{
@@ -755,8 +756,10 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 	 * Windows where junction points lstat() as directories.
 	 *
 	 * Note: in the redo case, we'll return true if this final step fails;
-	 * there's no point in retrying it.
+	 * there's no point in retrying it.  Also, ENOENT should provoke no more
+	 * than a warning.
 	 */
+remove_symlink:
 	linkloc = pstrdup(linkloc_with_version_dir);
 	get_parent_directory(linkloc);
 	if (lstat(linkloc, &st) == 0 && S_ISDIR(st.st_mode))
@@ -770,7 +773,7 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 	else
 	{
 		if (unlink(linkloc) < 0)
-			ereport(redo ? LOG : ERROR,
+			ereport(redo ? LOG : (errno == ENOENT ? WARNING : ERROR),
 					(errcode_for_file_access(),
 					 errmsg("could not remove symbolic link \"%s\": %m",
 							linkloc)));
