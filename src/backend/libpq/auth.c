@@ -1600,9 +1600,9 @@ ident_inet(hbaPort *port)
 	const SockAddr remote_addr = port->raddr;
 	const SockAddr local_addr = port->laddr;
 	char		ident_user[IDENT_USERNAME_MAX + 1];
-	pgsocket	sock_fd,		/* File descriptor for socket on which we talk
+	pgsocket	sock_fd;		/* File descriptor for socket on which we talk
 								 * to Ident */
-				rc;				/* Return code from a locally called function */
+	int			rc;				/* Return code from a locally called function */
 	bool		ident_return;
 	char		remote_addr_s[NI_MAXHOST];
 	char		remote_port[NI_MAXSERV];
