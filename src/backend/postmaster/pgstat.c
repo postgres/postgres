@@ -3241,10 +3241,11 @@ PgstatCollectorMain(int argc, char *argv[])
 		elog(LOG, "pgstat: waiting");
 
 		/* Sleep until there's something to do */
+		/* XXX should not need a timeout here */
 		wr = WaitLatchOrSocket(&pgStatLatch,
-							   WL_LATCH_SET | WL_POSTMASTER_DEATH | WL_SOCKET_READABLE,
+							   WL_LATCH_SET | WL_POSTMASTER_DEATH | WL_SOCKET_READABLE | WL_TIMEOUT,
 							   pgStatSock,
-							   -1L);
+							   2000L);
 
 		elog(LOG, "pgstat: wait result 0x%x", wr);
 
