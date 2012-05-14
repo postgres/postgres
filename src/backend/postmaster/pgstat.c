@@ -3117,9 +3117,21 @@ PgstatCollectorMain(int argc, char *argv[])
 			/*
 			 * Try to receive and process a message.  This will not block,
 			 * since the socket is set to non-blocking mode.
+			 *
+			 * XXX On Windows, we have to force pgwin32_recv to cooperate.
+			 * This is extremely broken and should be fixed someday.
 			 */
+#ifdef WIN32
+			pgwin32_noblock = 1;
+#endif
+
 			len = recv(pgStatSock, (char *) &msg,
 					   sizeof(PgStat_Msg), 0);
+
+#ifdef WIN32
+			pgwin32_noblock = 0;
+#endif
+
 			if (len < 0)
 			{
 				if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
