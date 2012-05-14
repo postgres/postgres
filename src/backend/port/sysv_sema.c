@@ -23,9 +23,6 @@
 #ifdef HAVE_SYS_SEM_H
 #include <sys/sem.h>
 #endif
-#ifdef HAVE_KERNEL_OS_H
-#include <kernel/OS.h>
-#endif
 
 #include "miscadmin.h"
 #include "storage/ipc.h"

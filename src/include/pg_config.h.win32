@@ -193,12 +193,6 @@
 /* Define to 1 if you have isinf(). */
 #define HAVE_ISINF 1
 
-/* Define to 1 if you have the <kernel/image.h> header file. */
-/* #undef HAVE_KERNEL_IMAGE_H */
-
-/* Define to 1 if you have the <kernel/OS.h> header file. */
-/* #undef HAVE_KERNEL_OS_H */
-
 /* Define to 1 if `e_data' is member of `krb5_error'. */
 /* #undef HAVE_KRB5_ERROR_E_DATA */
 
@@ -422,9 +416,6 @@
 
 /* Define to 1 if `tm_zone' is member of `struct tm'. */
 /* #undef HAVE_STRUCT_TM_TM_ZONE */
-
-/* Define to 1 if you have the <SupportDefs.h> header file. */
-/* #undef HAVE_SUPPORTDEFS_H */
 
 /* Define to 1 if you have the `symlink' function. */
 #define HAVE_SYMLINK 1

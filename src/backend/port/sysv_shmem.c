@@ -26,9 +26,6 @@
 #ifdef HAVE_SYS_SHM_H
 #include <sys/shm.h>
 #endif
-#ifdef HAVE_KERNEL_OS_H
-#include <kernel/OS.h>
-#endif
 
 #include "miscadmin.h"
 #include "storage/ipc.h"

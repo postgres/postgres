@@ -81,9 +81,6 @@
 #if defined(WIN32) || defined(__CYGWIN__)
 #include <fcntl.h>				/* ensure O_BINARY is available */
 #endif
-#ifdef HAVE_SUPPORTDEFS_H
-#include <SupportDefs.h>
-#endif
 
 #if defined(WIN32) || defined(__CYGWIN__)
 /* We have to redefine some system functions after they are included above. */
