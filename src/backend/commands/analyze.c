@@ -279,7 +279,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt, BufferAccessStrategy bstrategy)
 	relation_close(onerel, NoLock);
 
 	/*
-	 * Reset my PGPROC flag.  Note: we need this here, and not in vacuum_rel,
+	 * Reset my PGXACT flag.  Note: we need this here, and not in vacuum_rel,
 	 * because the vacuum flag is cleared by the end-of-xact code.
 	 */
 	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);

@@ -38,7 +38,7 @@ struct XidCache
 	TransactionId xids[PGPROC_MAX_CACHED_SUBXIDS];
 };
 
-/* Flags for PGPROC->vacuumFlags */
+/* Flags for PGXACT->vacuumFlags */
 #define		PROC_IS_AUTOVACUUM	0x01	/* is it an autovac worker? */
 #define		PROC_IN_VACUUM		0x02	/* currently running lazy vacuum */
 #define		PROC_IN_ANALYZE		0x04	/* currently running analyze */

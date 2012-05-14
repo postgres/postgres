@@ -56,7 +56,7 @@ int			DeadlockTimeout = 1000;
 int			StatementTimeout = 0;
 bool		log_lock_waits = false;
 
-/* Pointer to this process's PGPROC struct, if any */
+/* Pointer to this process's PGPROC and PGXACT structs, if any */
 PGPROC	   *MyProc = NULL;
 PGXACT	   *MyPgXact = NULL;
 
@@ -190,15 +190,11 @@ InitProcGlobal(void)
 	ProcGlobal->checkpointerLatch = NULL;
 
 	/*
-	 * Create and initialize all the PGPROC structures we'll need (except for
-	 * those used for 2PC, which are embedded within a GlobalTransactionData
-	 * struct).
-	 *
-	 * There are four separate consumers of PGPROC structures: (1) normal
-	 * backends, (2) autovacuum workers and the autovacuum launcher, (3)
-	 * auxiliary processes, and (4) prepared transactions.  Each PGPROC
-	 * structure is dedicated to exactly one of these purposes, and they do
-	 * not move between groups.
+	 * Create and initialize all the PGPROC structures we'll need.  There are
+	 * four separate consumers: (1) normal backends, (2) autovacuum workers
+	 * and the autovacuum launcher, (3) auxiliary processes, and (4) prepared
+	 * transactions.  Each PGPROC structure is dedicated to exactly one of
+	 * these purposes, and they do not move between groups.
 	 */
 	procs = (PGPROC *) ShmemAlloc(TotalProcs * sizeof(PGPROC));
 	ProcGlobal->allProcs = procs;
@@ -214,7 +210,7 @@ InitProcGlobal(void)
 	 * from the main PGPROC array so that the most heavily accessed data is
 	 * stored contiguously in memory in as few cache lines as possible. This
 	 * provides significant performance benefits, especially on a
-	 * multiprocessor system.  Thereis one PGXACT structure for every PGPROC
+	 * multiprocessor system.  There is one PGXACT structure for every PGPROC
 	 * structure.
 	 */
 	pgxacts = (PGXACT *) ShmemAlloc(TotalProcs * sizeof(PGXACT));

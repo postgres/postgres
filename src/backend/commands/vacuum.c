@@ -892,7 +892,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, bool do_toast, bool for_wraparound)
 		 *
 		 * Note: these flags remain set until CommitTransaction or
 		 * AbortTransaction.  We don't want to clear them until we reset
-		 * MyProc->xid/xmin, else OldestXmin might appear to go backwards,
+		 * MyPgXact->xid/xmin, else OldestXmin might appear to go backwards,
 		 * which is probably Not Good.
 		 */
 		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);

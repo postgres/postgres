@@ -19,7 +19,7 @@
  * have regd_count = 1 and are counted in RegisteredSnapshots, but are not
  * tracked by any resource owner.
  *
- * These arrangements let us reset MyProc->xmin when there are no snapshots
+ * These arrangements let us reset MyPgXact->xmin when there are no snapshots
  * referenced by this transaction.	(One possible improvement would be to be
  * able to advance Xmin when the snapshot with the earliest Xmin is no longer
  * referenced.	That's a bit harder though, it requires more locking, and
@@ -104,7 +104,7 @@ static ActiveSnapshotElt *ActiveSnapshot = NULL;
  * How many snapshots is resowner.c tracking for us?
  *
  * Note: for now, a simple counter is enough.  However, if we ever want to be
- * smarter about advancing our MyProc->xmin we will need to be more
+ * smarter about advancing our MyPgXact->xmin we will need to be more
  * sophisticated about this, perhaps keeping our own list of snapshots.
  */
 static int	RegisteredSnapshots = 0;
@@ -266,7 +266,7 @@ SetTransactionSnapshot(Snapshot sourcesnap, TransactionId sourcexid)
 	/* NB: curcid should NOT be copied, it's a local matter */
 
 	/*
-	 * Now we have to fix what GetSnapshotData did with MyProc->xmin and
+	 * Now we have to fix what GetSnapshotData did with MyPgXact->xmin and
 	 * TransactionXmin.  There is a race condition: to make sure we are not
 	 * causing the global xmin to go backwards, we have to test that the
 	 * source transaction is still running, and that has to be done atomically.
@@ -569,7 +569,7 @@ UnregisterSnapshotFromOwner(Snapshot snapshot, ResourceOwner owner)
 /*
  * SnapshotResetXmin
  *
- * If there are no more snapshots, we can reset our PGPROC->xmin to InvalidXid.
+ * If there are no more snapshots, we can reset our PGXACT->xmin to InvalidXid.
  * Note we can do this without locking because we assume that storing an Xid
  * is atomic.
  */

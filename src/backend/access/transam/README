@@ -251,7 +251,7 @@ enforce, and it assists with some other issues as explained below.)  The
 implementation of this is that GetSnapshotData takes the ProcArrayLock in
 shared mode (so that multiple backends can take snapshots in parallel),
 but ProcArrayEndTransaction must take the ProcArrayLock in exclusive mode
-while clearing MyProc->xid at transaction end (either commit or abort).
+while clearing MyPgXact->xid at transaction end (either commit or abort).
 
 ProcArrayEndTransaction also holds the lock while advancing the shared
 latestCompletedXid variable.  This allows GetSnapshotData to use
@@ -275,12 +275,12 @@ present in the ProcArray, or not running anymore.  (This guarantee doesn't
 apply to subtransaction XIDs, because of the possibility that there's not
 room for them in the subxid array; instead we guarantee that they are
 present or the overflow flag is set.)  If a backend released XidGenLock
-before storing its XID into MyProc, then it would be possible for another
+before storing its XID into MyPgXact, then it would be possible for another
 backend to allocate and commit a later XID, causing latestCompletedXid to
 pass the first backend's XID, before that value became visible in the
 ProcArray.  That would break GetOldestXmin, as discussed below.
 
-We allow GetNewTransactionId to store the XID into MyProc->xid (or the
+We allow GetNewTransactionId to store the XID into MyPgXact->xid (or the
 subxid array) without taking ProcArrayLock.  This was once necessary to
 avoid deadlock; while that is no longer the case, it's still beneficial for
 performance.  We are thereby relying on fetch/store of an XID to be atomic,
@@ -293,7 +293,7 @@ ensure that the C compiler does exactly what you tell it to.)
 Another important activity that uses the shared ProcArray is GetOldestXmin,
 which must determine a lower bound for the oldest xmin of any active MVCC
 snapshot, system-wide.  Each individual backend advertises the smallest
-xmin of its own snapshots in MyProc->xmin, or zero if it currently has no
+xmin of its own snapshots in MyPgXact->xmin, or zero if it currently has no
 live snapshots (eg, if it's between transactions or hasn't yet set a
 snapshot for a new transaction).  GetOldestXmin takes the MIN() of the
 valid xmin fields.  It does this with only shared lock on ProcArrayLock,
@@ -320,7 +320,7 @@ too expensive.  Note that while it is certain that two concurrent
 executions of GetSnapshotData will compute the same xmin for their own
 snapshots, as argued above, it is not certain that they will arrive at the
 same estimate of RecentGlobalXmin.  This is because we allow XID-less
-transactions to clear their MyProc->xmin asynchronously (without taking
+transactions to clear their MyPgXact->xmin asynchronously (without taking
 ProcArrayLock), so one execution might see what had been the oldest xmin,
 and another not.  This is OK since RecentGlobalXmin need only be a valid
 lower bound.  As noted above, we are already assuming that fetch/store
@@ -371,7 +371,7 @@ Top-level transactions do not have a parent, so they leave their pg_subtrans
 entries set to the default value of zero (InvalidTransactionId).
 
 pg_subtrans is used to check whether the transaction in question is still
-running --- the main Xid of a transaction is recorded in the PGPROC struct,
+running --- the main Xid of a transaction is recorded in the PGXACT struct,
 but since we allow arbitrary nesting of subtransactions, we can't fit all Xids
 in shared memory, so we have to store them on disk.  Note, however, that for
 each transaction we keep a "cache" of Xids that are known to be part of the

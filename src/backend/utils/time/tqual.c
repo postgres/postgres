@@ -10,12 +10,12 @@
  * the passed-in buffer.  The caller must hold not only a pin, but at least
  * shared buffer content lock on the buffer containing the tuple.
  *
- * NOTE: must check TransactionIdIsInProgress (which looks in PGPROC array)
+ * NOTE: must check TransactionIdIsInProgress (which looks in PGXACT array)
  * before TransactionIdDidCommit/TransactionIdDidAbort (which look in
  * pg_clog).  Otherwise we have a race condition: we might decide that a
  * just-committed transaction crashed, because none of the tests succeed.
  * xact.c is careful to record commit/abort in pg_clog before it unsets
- * MyProc->xid in PGPROC array.  That fixes that problem, but it also
+ * MyPgXact->xid in PGXACT array.  That fixes that problem, but it also
  * means there is a window where TransactionIdIsInProgress and
  * TransactionIdDidCommit will both return true.  If we check only
  * TransactionIdDidCommit, we could consider a tuple committed when a

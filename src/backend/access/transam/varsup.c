@@ -35,7 +35,7 @@ VariableCache ShmemVariableCache = NULL;
 /*
  * Allocate the next XID for a new transaction or subtransaction.
  *
- * The new XID is also stored into MyProc before returning.
+ * The new XID is also stored into MyPgXact before returning.
  *
  * Note: when this is called, we are actually already inside a valid
  * transaction, since XIDs are now not allocated until the transaction
@@ -174,19 +174,19 @@ GetNewTransactionId(bool isSubXact)
 	 * latestCompletedXid is present in the ProcArray, which is essential for
 	 * correct OldestXmin tracking; see src/backend/access/transam/README.
 	 *
-	 * XXX by storing xid into MyProc without acquiring ProcArrayLock, we are
+	 * XXX by storing xid into MyPgXact without acquiring ProcArrayLock, we are
 	 * relying on fetch/store of an xid to be atomic, else other backends
 	 * might see a partially-set xid here.	But holding both locks at once
 	 * would be a nasty concurrency hit.  So for now, assume atomicity.
 	 *
-	 * Note that readers of PGPROC xid fields should be careful to fetch the
+	 * Note that readers of PGXACT xid fields should be careful to fetch the
 	 * value only once, rather than assume they can read a value multiple
 	 * times and get the same answer each time.
 	 *
 	 * The same comments apply to the subxact xid count and overflow fields.
 	 *
-	 * A solution to the atomic-store problem would be to give each PGPROC its
-	 * own spinlock used only for fetching/storing that PGPROC's xid and
+	 * A solution to the atomic-store problem would be to give each PGXACT its
+	 * own spinlock used only for fetching/storing that PGXACT's xid and
 	 * related fields.
 	 *
 	 * If there's no room to fit a subtransaction XID into PGPROC, set the

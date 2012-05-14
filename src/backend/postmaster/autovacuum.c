@@ -2327,7 +2327,7 @@ do_autovacuum(void)
 						   tab->at_datname, tab->at_nspname, tab->at_relname);
 			EmitErrorReport();
 
-			/* this resets the PGPROC flags too */
+			/* this resets the PGXACT flags too */
 			AbortOutOfAnyTransaction();
 			FlushErrorState();
 			MemoryContextResetAndDeleteChildren(PortalContext);
@@ -2338,7 +2338,7 @@ do_autovacuum(void)
 		}
 		PG_END_TRY();
 
-		/* the PGPROC flags are reset at the next end of transaction */
+		/* the PGXACT flags are reset at the next end of transaction */
 
 		/* be tidy */
 deleted:
