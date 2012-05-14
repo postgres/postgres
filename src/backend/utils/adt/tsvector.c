@@ -198,8 +198,6 @@ tsvectorin(PG_FUNCTION_ARGS)
 	char	   *cur;
 	int			buflen = 256;	/* allocated size of tmpbuf */
 
-	pg_verifymbstr(buf, strlen(buf), false);
-
 	state = init_tsvector_parser(buf, false, false);
 
 	arrlen = 64;
