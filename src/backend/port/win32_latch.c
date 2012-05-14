@@ -106,6 +106,8 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 		wakeEvents &= ~(WL_SOCKET_READABLE | WL_SOCKET_WRITEABLE);
 
 	Assert(wakeEvents != 0);	/* must have at least one wake event */
+	/* Cannot specify WL_SOCKET_WRITEABLE without WL_SOCKET_READABLE */
+	Assert((wakeEvents & (WL_SOCKET_READABLE | WL_SOCKET_WRITEABLE)) != WL_SOCKET_WRITEABLE);
 
 	if ((wakeEvents & WL_LATCH_SET) && latch->owner_pid != MyProcPid)
 		elog(ERROR, "cannot wait on a latch owned by another process");
