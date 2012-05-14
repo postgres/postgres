@@ -220,9 +220,7 @@ AC_SUBST(enable_coverage)
 #
 PGAC_ARG_BOOL(enable, dtrace, no,
               [build with DTrace support],
-[AC_DEFINE([ENABLE_DTRACE], 1,
-           [Define to 1 to enable DTrace support. (--enable-dtrace)])
-AC_CHECK_PROGS(DTRACE, dtrace)
+[AC_CHECK_PROGS(DTRACE, dtrace)
 if test -z "$DTRACE"; then
   AC_MSG_ERROR([dtrace not found])
 fi
@@ -1046,7 +1044,6 @@ fi
 if test "$with_openssl" = yes ; then
   AC_CHECK_HEADER(openssl/ssl.h, [], [AC_MSG_ERROR([header file <openssl/ssl.h> is required for OpenSSL])])
   AC_CHECK_HEADER(openssl/err.h, [], [AC_MSG_ERROR([header file <openssl/err.h> is required for OpenSSL])])
-  AC_CHECK_FUNCS([ERR_set_mark])
 fi
 
 if test "$with_pam" = yes ; then
@@ -1200,7 +1197,7 @@ PGAC_VAR_INT_TIMEZONE
 AC_FUNC_ACCEPT_ARGTYPES
 PGAC_FUNC_GETTIMEOFDAY_1ARG
 
-AC_CHECK_FUNCS([cbrt dlopen fcvt fdatasync getifaddrs getpeerucred getrlimit memmove poll pstat readlink setproctitle setsid sigprocmask symlink sysconf towlower utime utimes waitpid wcstombs wcstombs_l])
+AC_CHECK_FUNCS([cbrt dlopen fdatasync getifaddrs getpeerucred getrlimit memmove poll pstat readlink setproctitle setsid sigprocmask symlink towlower utime utimes waitpid wcstombs wcstombs_l])
 
 AC_REPLACE_FUNCS(fseeko)
 case $host_os in

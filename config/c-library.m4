@@ -30,8 +30,7 @@ fi])# PGAC_VAR_INT_TIMEZONE
 # This is the same as the standard macro AC_STRUCT_TIMEZONE, except that
 # tzname[] is checked for regardless of whether we find tm_zone.
 AC_DEFUN([PGAC_STRUCT_TIMEZONE],
-[AC_REQUIRE([AC_STRUCT_TM])dnl
-AC_CHECK_MEMBERS([struct tm.tm_zone],,,[#include <sys/types.h>
+[AC_CHECK_MEMBERS([struct tm.tm_zone],,,[#include <sys/types.h>
 #include <$ac_cv_struct_tm>
 ])
 if test "$ac_cv_member_struct_tm_tm_zone" = yes; then
@@ -139,7 +138,7 @@ AC_DEFUN([PGAC_UNION_SEMUN],
 # If `struct sockaddr_un' exists, define HAVE_UNIX_SOCKETS.
 # (Requires test for <sys/un.h>!)
 AC_DEFUN([PGAC_STRUCT_SOCKADDR_UN],
-[AC_CHECK_TYPES([struct sockaddr_un], [AC_DEFINE(HAVE_UNIX_SOCKETS, 1, [Define to 1 if you have unix sockets.])], [],
+[AC_CHECK_TYPE([struct sockaddr_un], [AC_DEFINE(HAVE_UNIX_SOCKETS, 1, [Define to 1 if you have unix sockets.])], [],
 [#include <sys/types.h>
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
