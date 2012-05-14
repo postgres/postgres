@@ -150,7 +150,7 @@
 
 # - Asynchronous Behavior -
 
-#effective_io_concurrency = 1		# 1-1000. 0 disables prefetching
+#effective_io_concurrency = 1		# 1-1000; 0 disables prefetching
 
 
 #------------------------------------------------------------------------------
@@ -204,7 +204,7 @@
 
 # - Sending Server(s) -
 
-# Set these on the master and on any standby that will send replication data
+# Set these on the master and on any standby that will send replication data.
 
 #max_wal_senders = 0		# max number of walsender processes
 				# (change requires restart)
@@ -213,7 +213,7 @@
 
 # - Master Server -
 
-# These settings are ignored on a standby server
+# These settings are ignored on a standby server.
 
 #synchronous_standby_names = ''	# standby servers that provide sync rep
 				# comma-separated list of application_name
@@ -222,7 +222,7 @@
 
 # - Standby Servers -
 
-# These settings are ignored on a master server
+# These settings are ignored on a master server.
 
 #hot_standby = off			# "on" allows queries during recovery
 					# (change requires restart)
@@ -535,6 +535,7 @@
 # lock table slots.
 #max_pred_locks_per_transaction = 64	# min 10
 					# (change requires restart)
+
 
 #------------------------------------------------------------------------------
 # VERSION/PLATFORM COMPATIBILITY
