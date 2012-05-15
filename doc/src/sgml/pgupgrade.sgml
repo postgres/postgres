@@ -240,8 +240,7 @@ mv /usr/local/pgsql /usr/local/pgsql.old
 
 <programlisting>
 gmake prefix=/usr/local/pgsql.new install
-</programlisting>
-    </para>
+</programlisting></para>
    </step>
 
    <step>
@@ -311,8 +310,7 @@ NET STOP postgresql-9.0
 
 <programlisting>
 NET STOP pgsql-8.3  (<productname>PostgreSQL</> 8.3 and older used a different service name)
-</programlisting>
-    </para>
+</programlisting></para>
    </step>
 
    <step>

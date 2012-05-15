@@ -2264,8 +2264,7 @@ lo_import 152801
         unset a variable, use the <command>\unset</command> command.
         </para>
 
-        <para>
-        <command>\set</> without any arguments displays the names and values
+        <para><command>\set</> without any arguments displays the names and values
         of all currently-set <application>psql</> variables.
         </para>
 

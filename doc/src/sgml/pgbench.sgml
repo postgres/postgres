@@ -545,8 +545,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       Example:
 <programlisting>
 \set ntellers 10 * :scale
-</programlisting>
-     </para>
+</programlisting></para>
     </listitem>
    </varlistentry>
 
@@ -568,8 +567,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       Example:
 <programlisting>
 \setrandom aid 1 :naccounts
-</programlisting>
-     </para>
+</programlisting></para>
     </listitem>
    </varlistentry>
 
@@ -592,8 +590,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       Example:
 <programlisting>
 \sleep 10 ms
-</programlisting>
-     </para>
+</programlisting></para>
     </listitem>
    </varlistentry>
 
@@ -621,8 +618,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       Example:
 <programlisting>
 \setshell variable_to_be_assigned command literal_argument :variable ::literal_starting_with_colon
-</programlisting>
-     </para>
+</programlisting></para>
     </listitem>
    </varlistentry>
 
@@ -640,8 +636,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       Example:
 <programlisting>
 \shell command literal_argument :variable ::literal_starting_with_colon
-</programlisting>
-     </para>
+</programlisting></para>
     </listitem>
    </varlistentry>
   </variablelist>
@@ -716,8 +711,7 @@ END;
  0 200 2465 0 1175850568 998079
  0 201 2513 0 1175850569 608
  0 202 2038 0 1175850569 2663
-</screen>
-  </para>
+</screen></para>
  </refsect2>
 
  <refsect2>
