@@ -9616,7 +9616,7 @@ table2-mapping
  </sect1>
 
  <sect1 id="functions-json">
-  <title>JSON functions</title>
+  <title>JSON Functions</title>
 
   <indexterm zone="datatype-json">
     <primary>JSON</primary>
@@ -9624,8 +9624,8 @@ table2-mapping
   </indexterm>
 
   <para>
-    This section describes the functions that are available for creating
-    JSON (see <xref linkend="datatype-json">) data.
+   <xref linkend="functions-json-table"> shows the functions that are available
+   for creating JSON (see <xref linkend="datatype-json">) data.
   </para>
 
   <table id="functions-json-table">

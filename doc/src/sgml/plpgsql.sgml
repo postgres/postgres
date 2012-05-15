@@ -2601,7 +2601,8 @@ GET STACKED DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item<
      Each <replaceable>item</replaceable> is a key word identifying a status
      value to be assigned to the specified variable (which should be
      of the right data type to receive it).  The currently available
-     status items are:
+     status items are shown in <xref linkend="plpgsql-exception-diagnostics-values">.
+    </para>
 
      <table id="plpgsql-exception-diagnostics-values">
       <title>Error diagnostics values</title>
@@ -2642,7 +2643,6 @@ GET STACKED DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item<
        </tbody>
       </tgroup>
      </table>
-    </para>
 
     <para>
      If the exception did not set a value for an item, an empty string
