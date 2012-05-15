@@ -30,7 +30,8 @@ fi])# PGAC_VAR_INT_TIMEZONE
 # This is the same as the standard macro AC_STRUCT_TIMEZONE, except that
 # tzname[] is checked for regardless of whether we find tm_zone.
 AC_DEFUN([PGAC_STRUCT_TIMEZONE],
-[AC_CHECK_MEMBERS([struct tm.tm_zone],,,[#include <sys/types.h>
+[AC_REQUIRE([AC_STRUCT_TM])dnl
+AC_CHECK_MEMBERS([struct tm.tm_zone],,,[#include <sys/types.h>
 #include <$ac_cv_struct_tm>
 ])
 if test "$ac_cv_member_struct_tm_tm_zone" = yes; then
