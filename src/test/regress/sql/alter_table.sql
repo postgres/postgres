@@ -327,7 +327,7 @@ DROP TABLE tmp2;
 -- NOT VALID with plan invalidation -- ensure we don't use a constraint for
 -- exclusion until validated
 set constraint_exclusion TO 'partition';
-create table nv_parent (d date); 
+create table nv_parent (d date);
 create table nv_child_2010 () inherits (nv_parent);
 create table nv_child_2011 () inherits (nv_parent);
 alter table nv_child_2010 add check (d between '2010-01-01'::date and '2010-12-31'::date) not valid;
@@ -1348,7 +1348,7 @@ create domain alter1.posint integer check (value > 0);
 
 create type alter1.ctype as (f1 int, f2 text);
 
-create function alter1.same(alter1.ctype, alter1.ctype) returns boolean language sql 
+create function alter1.same(alter1.ctype, alter1.ctype) returns boolean language sql
 as 'select $1.f1 is not distinct from $2.f1 and $1.f2 is not distinct from $2.f2';
 
 create operator alter1.=(procedure = alter1.same, leftarg  = alter1.ctype, rightarg = alter1.ctype);

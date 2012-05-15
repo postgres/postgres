@@ -11,7 +11,7 @@ GRANT ALL ON SCHEMA temp_func_test TO public;
 SET search_path TO temp_func_test, public;
 
 --
--- ARGUMENT and RETURN TYPES 
+-- ARGUMENT and RETURN TYPES
 --
 CREATE FUNCTION functest_A_1(text, date) RETURNS bool LANGUAGE 'sql'
        AS 'SELECT $1 = ''abcd'' AND $2 > ''2001-01-01''';

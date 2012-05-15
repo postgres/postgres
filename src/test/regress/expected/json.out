@@ -279,10 +279,10 @@ SELECT array_to_json(array_agg(q),true) from (select x as b, x * 2 as c from gen
 (1 row)
 
 SELECT array_to_json(array_agg(q),false)
-  FROM ( SELECT $$a$$ || x AS b, y AS c, 
+  FROM ( SELECT $$a$$ || x AS b, y AS c,
                ARRAY[ROW(x.*,ARRAY[1,2,3]),
-               ROW(y.*,ARRAY[4,5,6])] AS z 
-         FROM generate_series(1,2) x, 
+               ROW(y.*,ARRAY[4,5,6])] AS z
+         FROM generate_series(1,2) x,
               generate_series(4,5) y) q;
                                                                                                                                  array_to_json                                                                                                                                 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -308,12 +308,12 @@ SELECT row_to_json(row(1,'foo'));
  {"f1":1,"f2":"foo"}
 (1 row)
 
-SELECT row_to_json(q) 
-FROM (SELECT $$a$$ || x AS b, 
-         y AS c, 
+SELECT row_to_json(q)
+FROM (SELECT $$a$$ || x AS b,
+         y AS c,
          ARRAY[ROW(x.*,ARRAY[1,2,3]),
-               ROW(y.*,ARRAY[4,5,6])] AS z 
-      FROM generate_series(1,2) x, 
+               ROW(y.*,ARRAY[4,5,6])] AS z
+      FROM generate_series(1,2) x,
            generate_series(4,5) y) q;
                             row_to_json                             
 --------------------------------------------------------------------
@@ -323,12 +323,12 @@ FROM (SELECT $$a$$ || x AS b,
  {"b":"a2","c":5,"z":[{"f1":2,"f2":[1,2,3]},{"f1":5,"f2":[4,5,6]}]}
 (4 rows)
 
-SELECT row_to_json(q,true) 
-FROM (SELECT $$a$$ || x AS b, 
-         y AS c, 
+SELECT row_to_json(q,true)
+FROM (SELECT $$a$$ || x AS b,
+         y AS c,
          ARRAY[ROW(x.*,ARRAY[1,2,3]),
-               ROW(y.*,ARRAY[4,5,6])] AS z 
-      FROM generate_series(1,2) x, 
+               ROW(y.*,ARRAY[4,5,6])] AS z
+      FROM generate_series(1,2) x,
            generate_series(4,5) y) q;
                      row_to_json                     
 -----------------------------------------------------
@@ -349,7 +349,7 @@ FROM (SELECT $$a$$ || x AS b,
 CREATE TEMP TABLE rows AS
 SELECT x, 'txt' || x as y
 FROM generate_series(1,3) AS x;
-SELECT row_to_json(q,true) 
+SELECT row_to_json(q,true)
 FROM rows q;
  row_to_json  
 --------------

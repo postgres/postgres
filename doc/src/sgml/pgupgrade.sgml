@@ -270,7 +270,7 @@ gmake prefix=/usr/local/pgsql.new install
 
     <para>
      Install any custom shared object files (or DLLs) used by the old cluster
-     into the new cluster, e.g. <filename>pgcrypto.so</filename>, 
+     into the new cluster, e.g. <filename>pgcrypto.so</filename>,
      whether they are from <filename>contrib</filename>
      or some other source. Do not install the schema definitions, e.g.
      <filename>pgcrypto.sql</>, because these will be upgraded from the old cluster.

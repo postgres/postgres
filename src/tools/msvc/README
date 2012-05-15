@@ -76,7 +76,7 @@ Solution.pm            module containing the code to generate the Visual
                        Studio solution files.
 VCBuildProject.pm      module containing the code to generate VCBuild based
                        project files (Visual Studio 2005/2008)
-VSObjectFactory.pm     factory module providing the code to create the 
+VSObjectFactory.pm     factory module providing the code to create the
                        appropriate project/solution files for the current
                        environment
 

@@ -431,8 +431,8 @@ ParseConfigFile(const char *config_file, const char *calling_file, bool strict,
 			return false;
 		}
 
-		ereport(LOG, 
-				(errmsg("skipping missing configuration file \"%s\"", 
+		ereport(LOG,
+				(errmsg("skipping missing configuration file \"%s\"",
 						config_file)));
 		return OK;
 	}

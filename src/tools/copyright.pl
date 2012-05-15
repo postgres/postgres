@@ -1,4 +1,4 @@
-#!/usr/bin/perl 
+#!/usr/bin/perl
 #################################################################
 # copyright.pl -- update copyright notices throughout the source tree, idempotently.
 #

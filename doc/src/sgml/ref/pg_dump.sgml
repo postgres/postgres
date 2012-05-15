@@ -403,11 +403,11 @@ PostgreSQL documentation
         Dump only the object definitions (schema), not data.
        </para>
        <para>
-        To exclude table data for only a subset of tables in the database, 
+        To exclude table data for only a subset of tables in the database,
         see <option>--exclude-table-data</>.
        </para>
        <para>
-        This option is equivalent to specifying 
+        This option is equivalent to specifying
         <option>--section=pre-data --section=post-data</>.
        </para>
       </listitem>
@@ -417,13 +417,13 @@ PostgreSQL documentation
        <term><option>--section=<replaceable class="parameter">sectionname</replaceable></option></term>
        <listitem>
          <para>
-           Only dump the named section. The name can be one of <option>pre-data</>, <option>data</> 
-           and <option>post-data</>. 
+           Only dump the named section. The name can be one of <option>pre-data</>, <option>data</>
+           and <option>post-data</>.
            This option can be specified more than once. The default is to dump all sections.
          </para>
          <para>
-           Post-data items consist of definitions of indexes, triggers, rules 
-           and constraints other than validated check constraints. 
+           Post-data items consist of definitions of indexes, triggers, rules
+           and constraints other than validated check constraints.
            Pre-data items consist of all other data definition items.
          </para>
        </listitem>
@@ -640,7 +640,7 @@ PostgreSQL documentation
         Do not dump data for any tables matching the <replaceable
         class="parameter">table</replaceable> pattern. The pattern is
         interpreted according to the same rules as for <option>-t</>.
-        <option>--exclude-table-data</> can be given more than once to 
+        <option>--exclude-table-data</> can be given more than once to
         exclude tables matching any of several patterns. This option is
         useful when you need the definition of a particular table even
         though you do not need the data in it.

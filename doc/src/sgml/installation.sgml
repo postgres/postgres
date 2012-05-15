@@ -1622,7 +1622,7 @@ PostgreSQL, contrib and HTML documentation successfully made. Ready to install.
     On some systems with shared libraries
     you need to tell the system how to find the newly installed
     shared libraries.  The systems on which this is
-    <emphasis>not</emphasis> necessary include 
+    <emphasis>not</emphasis> necessary include
     <systemitem class="osname">FreeBSD</>,
     <systemitem class="osname">HP-UX</>, <systemitem
     class="osname">IRIX</>, <systemitem class="osname">Linux</>,

@@ -13,8 +13,8 @@ Here are the steps needed to create a regression database dump file:
     This database can be created by running 'gmake installcheck' from
     src/test/regression.
 
-2)  Use pg_dump to dump out the regression database.  Use the new 
-    cluster's pg_dump on the old database to minimize whitespace 
+2)  Use pg_dump to dump out the regression database.  Use the new
+    cluster's pg_dump on the old database to minimize whitespace
     differences in the diff.
 
 3)  Adjust the regression database dump file

@@ -85,7 +85,7 @@ backend_src = $(top_srcdir)/src/backend
 # compile with appropriate options to build a shared lib, we can't
 # necessarily use the same object files as the backend uses. Instead,
 # symlink the source files in here and build our own object file.
-# For some libpgport modules, this only happens if configure decides 
+# For some libpgport modules, this only happens if configure decides
 # the module is needed (see filter hack in OBJS, above).
 
 chklocale.c crypt.c getaddrinfo.c getpeereid.c inet_aton.c inet_net_ntop.c noblock.c open.c pgsleep.c pgstrcasecmp.c snprintf.c strerror.c strlcpy.c thread.c win32error.c win32setlocale.c: % : $(top_srcdir)/src/port/%
@@ -141,7 +141,7 @@ clean distclean: clean-lib
 	rm -f pg_config_paths.h
 	rm -f inet_net_ntop.c noblock.c pgstrcasecmp.c thread.c
 	rm -f chklocale.c crypt.c getaddrinfo.c getpeereid.c inet_aton.c open.c snprintf.c strerror.c strlcpy.c win32error.c win32setlocale.c
-	rm -f pgsleep.c	
+	rm -f pgsleep.c
 	rm -f md5.c ip.c
 	rm -f encnames.c wchar.c
 

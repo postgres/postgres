@@ -90,7 +90,7 @@ CREATE OR REPLACE FUNCTION plperl_sum_row_elements(rowfoo) RETURNS TEXT AS $$
 	}
 	else {
 		$result = $row_ref->{bar};
-		die "not an array reference".ref ($row_ref->{baz}) 
+		die "not an array reference".ref ($row_ref->{baz})
 		unless (is_array_ref($row_ref->{baz}));
 		# process a single-dimensional array
 		foreach my $elem (@{$row_ref->{baz}}) {
@@ -116,7 +116,7 @@ CREATE OR REPLACE FUNCTION plperl_sum_array_of_rows(rowbar) RETURNS TEXT AS $$
 			foreach my $row_ref (@{$row_array_ref}) {
 				if (ref $row_ref eq 'HASH') {
 					$result += $row_ref->{bar};
-					die "not an array reference".ref ($row_ref->{baz}) 
+					die "not an array reference".ref ($row_ref->{baz})
 					unless (is_array_ref($row_ref->{baz}));
 					foreach my $elem (@{$row_ref->{baz}}) {
 						$result += $elem unless ref $elem;
@@ -135,7 +135,7 @@ CREATE OR REPLACE FUNCTION plperl_sum_array_of_rows(rowbar) RETURNS TEXT AS $$
 	return $result;
 $$ LANGUAGE plperl;
 
-select plperl_sum_array_of_rows(ROW(ARRAY[ROW(1, ARRAY[2,3,4,5,6,7,8,9,10])::rowfoo, 
+select plperl_sum_array_of_rows(ROW(ARRAY[ROW(1, ARRAY[2,3,4,5,6,7,8,9,10])::rowfoo,
 ROW(11, ARRAY[12,13,14,15,16,17,18,19,20])::rowfoo])::rowbar);
 
 -- check arrays as out parameters

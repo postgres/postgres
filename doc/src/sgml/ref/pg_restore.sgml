@@ -363,7 +363,7 @@
         uses the word <quote>schema</> in a different meaning.)
        </para>
        <para>
-        This option is equivalent to specifying 
+        This option is equivalent to specifying
         <option>--section=pre-data --section=post-data</>.
        </para>
       </listitem>
@@ -515,13 +515,13 @@
        <term><option>--section=<replaceable class="parameter">sectionname</replaceable></option></term>
        <listitem>
          <para>
-           Only restore the named section. The name can be one of <option>pre-data</>, <option>data</> 
-           and <option>post-data</>. 
+           Only restore the named section. The name can be one of <option>pre-data</>, <option>data</>
+           and <option>post-data</>.
            This option can be specified more than once. The default is to restore all sections.
          </para>
          <para>
-           Post-data items consist of definitions of indexes, triggers, rules 
-           and constraints other than validated check constraints. 
+           Post-data items consist of definitions of indexes, triggers, rules
+           and constraints other than validated check constraints.
            Pre-data items consist of all other data definition items.
          </para>
        </listitem>

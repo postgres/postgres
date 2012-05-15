@@ -29,7 +29,7 @@ non-ASCII characters            find using grep -P '[\x80-\xFF]'
         does not support it
           http://www.pemberley.com/janeinfo/latin1.html#latexta
 
-        do not use numeric _UTF_ numeric character escapes (&#nnn;), 
+        do not use numeric _UTF_ numeric character escapes (&#nnn;),
         we can only use Latin1
 
         Example: Alvaro Herrera is &Aacute;lvaro Herrera
