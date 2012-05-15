@@ -3113,7 +3113,8 @@ PgstatCollectorMain(int argc, char *argv[])
 			 * Try to receive and process a message.  This will not block,
 			 * since the socket is set to non-blocking mode.
 			 *
-			 * XXX On Windows, we have to force pgwin32_recv to cooperate.
+			 * XXX On Windows, we have to force pgwin32_recv to cooperate,
+			 * despite the previous use of pg_set_noblock() on the socket.
 			 * This is extremely broken and should be fixed someday.
 			 */
 #ifdef WIN32
@@ -3231,11 +3232,27 @@ PgstatCollectorMain(int argc, char *argv[])
 		}						/* end of inner message-processing loop */
 
 		/* Sleep until there's something to do */
-		/* XXX should not need a timeout here */
+#ifndef WIN32
+		wr = WaitLatchOrSocket(&pgStatLatch,
+							   WL_LATCH_SET | WL_POSTMASTER_DEATH | WL_SOCKET_READABLE,
+							   pgStatSock,
+							   -1L);
+#else
+		/*
+		 * Windows, at least in its Windows Server 2003 R2 incarnation,
+		 * sometimes loses FD_READ events.  Waking up and retrying the recv()
+		 * fixes that, so don't sleep indefinitely.  This is a crock of the
+		 * first water, but until somebody wants to debug exactly what's
+		 * happening there, this is the best we can do.  The two-second
+		 * timeout matches our pre-9.2 behavior, and needs to be short enough
+		 * to not provoke "pgstat wait timeout" complaints from
+		 * backend_read_statsfile.
+		 */
 		wr = WaitLatchOrSocket(&pgStatLatch,
 							   WL_LATCH_SET | WL_POSTMASTER_DEATH | WL_SOCKET_READABLE | WL_TIMEOUT,
 							   pgStatSock,
-							   2000L);
+							   2 * 1000L /* msec */);
+#endif
 
 		/*
 		 * Emergency bailout if postmaster has died.  This is to avoid the
