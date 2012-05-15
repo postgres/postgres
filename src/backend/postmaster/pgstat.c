@@ -3107,12 +3107,7 @@ PgstatCollectorMain(int argc, char *argv[])
 			 * satisfied by existing file.
 			 */
 			if (last_statwrite < last_statrequest)
-			{
-				elog(LOG, "pgstat: writing new stats file");
 				pgstat_write_statsfile(false);
-			}
-
-			elog(LOG, "pgstat: attempting recv()");
 
 			/*
 			 * Try to receive and process a message.  This will not block,
@@ -3140,9 +3135,6 @@ PgstatCollectorMain(int argc, char *argv[])
 						(errcode_for_socket_access(),
 						 errmsg("could not read statistics message: %m")));
 			}
-
-			elog(LOG, "pgstat: received msg type %d len %d",
-				 msg.msg_hdr.m_type, len);
 
 			/*
 			 * We ignore messages that are smaller than our common header
@@ -3238,16 +3230,12 @@ PgstatCollectorMain(int argc, char *argv[])
 			}
 		}						/* end of inner message-processing loop */
 
-		elog(LOG, "pgstat: waiting");
-
 		/* Sleep until there's something to do */
 		/* XXX should not need a timeout here */
 		wr = WaitLatchOrSocket(&pgStatLatch,
 							   WL_LATCH_SET | WL_POSTMASTER_DEATH | WL_SOCKET_READABLE | WL_TIMEOUT,
 							   pgStatSock,
 							   2000L);
-
-		elog(LOG, "pgstat: wait result 0x%x", wr);
 
 		/*
 		 * Emergency bailout if postmaster has died.  This is to avoid the
@@ -4031,15 +4019,7 @@ static void
 pgstat_recv_inquiry(PgStat_MsgInquiry *msg, int len)
 {
 	if (msg->inquiry_time > last_statrequest)
-	{
 		last_statrequest = msg->inquiry_time;
-		if (last_statwrite < last_statrequest)
-			elog(LOG, "pgstat: received new inquiry message");
-		else
-			elog(LOG, "pgstat: received stale inquiry message");
-	}
-	else
-		elog(LOG, "pgstat: received out-of-order inquiry message");
 }
 
 
