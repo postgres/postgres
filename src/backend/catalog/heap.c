@@ -1957,7 +1957,7 @@ StoreRelCheck(Relation rel, char *ccname, Node *expr,
 						  ccsrc,	/* Source form of check constraint */
 						  is_local,		/* conislocal */
 						  inhcount,		/* coninhcount */
-						  is_no_inherit);	/* connoinherit */
+						  is_no_inherit);	/* connoinherit */
 
 	pfree(ccbin);
 	pfree(ccsrc);
