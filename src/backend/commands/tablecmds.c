@@ -7315,8 +7315,9 @@ ATPrepAlterColumnType(List **wqueue,
 		if (transform == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("column \"%s\" cannot be cast to type %s",
-							colName, format_type_be(targettype))));
+					 errmsg("column \"%s\" cannot be cast automatically to type %s",
+							colName, format_type_be(targettype)),
+					 errhint("Specify a USING expression to perform the conversion.")));
 
 		/* Fix collations after all else */
 		assign_expr_collations(pstate, transform);
@@ -7482,7 +7483,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 		if (defaultexpr == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-				errmsg("default for column \"%s\" cannot be cast to type %s",
+				errmsg("default for column \"%s\" cannot be cast automatically to type %s",
 					   colName, format_type_be(targettype))));
 	}
 	else
