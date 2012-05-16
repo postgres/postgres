@@ -2159,7 +2159,7 @@ heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 		{
 			HeapTuple	heaptup = heaptuples[ndone + nthispage];
 
-			if (PageGetHeapFreeSpace(page) - saveFreeSpace < MAXALIGN(heaptup->t_len))
+			if (PageGetHeapFreeSpace(page) < MAXALIGN(heaptup->t_len) + saveFreeSpace)
 				break;
 
 			RelationPutHeapTuple(relation, buffer, heaptup);
