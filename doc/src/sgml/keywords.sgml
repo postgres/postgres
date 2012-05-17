@@ -817,7 +817,7 @@
    </row>
    <row>
     <entry><token>COLLATION</token></entry>
-    <entry>non-reserved</entry>
+    <entry>reserved (can be function or type)</entry>
     <entry>non-reserved</entry>
     <entry>non-reserved</entry>
     <entry>reserved</entry>
@@ -2816,6 +2816,14 @@
     <entry>reserved</entry>
    </row>
    <row>
+    <entry><token>LEAKPROOF</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>LEAST</token></entry>
     <entry>non-reserved (cannot be function or type)</entry>
     <entry></entry>
@@ -4744,6 +4752,14 @@
     <entry>reserved</entry>
    </row>
    <row>
+    <entry><token>SNAPSHOT</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+   </row>
+   <row>
     <entry><token>SOME</token></entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
@@ -5390,6 +5406,14 @@
     <entry>non-reserved</entry>
     <entry>non-reserved</entry>
     <entry>non-reserved</entry>
+   </row>
+   <row>
+    <entry><token>TYPES</token></entry>
+    <entry>non-reserved</entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
+    <entry></entry>
    </row>
    <row>
     <entry><token>UESCAPE</token></entry>
