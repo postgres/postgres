@@ -14,9 +14,9 @@
  <para>
   The formal name of the SQL standard is ISO/IEC 9075 <quote>Database
   Language SQL</quote>.  A revised version of the standard is released
-  from time to time; the most recent update appearing in 2008.
-  The 2008 version is referred to as ISO/IEC 9075:2008, or simply as SQL:2008.
-  The versions prior to that were SQL:2003, SQL:1999, and SQL-92.  Each version
+  from time to time; the most recent update appearing in 2011.
+  The 2011 version is referred to as ISO/IEC 9075:2011, or simply as SQL:2011.
+  The versions prior to that were SQL:2008, SQL:2003, SQL:1999, and SQL-92.  Each version
   replaces the previous one, so claims of conformance to earlier
   versions have no official merit.
   <productname>PostgreSQL</productname> development aims for
@@ -50,8 +50,8 @@
  </para>
 
  <para>
-  The <acronym>SQL:2008</acronym> and <acronym>SQL:2003</acronym>
-  standard versions are also split into a number
+  The standard versions beginning with <acronym>SQL:2003</acronym>
+  are also split into a number
   of parts.  Each is known by a shorthand name.  Note that these parts
   are not consecutively numbered.
 
@@ -78,18 +78,18 @@
  </para>
 
  <para>
-  PostgreSQL supports most of the major features of SQL:2008.  Out of
+  PostgreSQL supports most of the major features of SQL:2011.  Out of
   179 mandatory features required for full Core conformance,
   PostgreSQL conforms to at least 160.  In addition, there is a long
   list of supported optional features.  It might be worth noting that at
   the time of writing, no current version of any database management
-  system claims full conformance to Core SQL:2008.
+  system claims full conformance to Core SQL:2011.
  </para>
 
  <para>
   In the following two sections, we provide a list of those features
   that <productname>PostgreSQL</productname> supports, followed by a
-  list of the features defined in <acronym>SQL:2008</acronym> which
+  list of the features defined in <acronym>SQL:2011</acronym> which
   are not yet supported in <productname>PostgreSQL</productname>.
   Both of these lists are approximate: There might be minor details that
   are nonconforming for a feature that is listed as supported, and
@@ -132,7 +132,7 @@
    <title>Unsupported Features</title>
 
    <para>
-    The following features defined in <acronym>SQL:2008</acronym> are not
+    The following features defined in <acronym>SQL:2011</acronym> are not
     implemented in this release of
     <productname>PostgreSQL</productname>. In a few cases, equivalent
     functionality is available.
