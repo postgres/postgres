@@ -114,13 +114,13 @@ SELECT * FROM text_csv;
 -- force_not_null is not allowed to be specified at any foreign object level:
 ALTER FOREIGN DATA WRAPPER file_fdw OPTIONS (ADD force_not_null '*'); -- ERROR
 ERROR:  invalid option "force_not_null"
-HINT:  Valid options in this context are: 
+HINT:  There are no valid options in this context.
 ALTER SERVER file_server OPTIONS (ADD force_not_null '*'); -- ERROR
 ERROR:  invalid option "force_not_null"
-HINT:  Valid options in this context are: 
+HINT:  There are no valid options in this context.
 CREATE USER MAPPING FOR public SERVER file_server OPTIONS (force_not_null '*'); -- ERROR
 ERROR:  invalid option "force_not_null"
-HINT:  Valid options in this context are: 
+HINT:  There are no valid options in this context.
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (force_not_null '*'); -- ERROR
 ERROR:  invalid option "force_not_null"
 HINT:  Valid options in this context are: filename, format, header, delimiter, quote, escape, null, encoding
