@@ -326,6 +326,9 @@ typedef struct
 	/* is this buffer queued for emptying? */
 	bool		queuedForEmptying;
 
+	/* is this a temporary copy, not in the hash table? */
+	bool		isTemp;
+
 	struct GISTBufferingInsertStack *path;
 } GISTNodeBuffer;
 

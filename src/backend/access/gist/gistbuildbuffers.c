@@ -148,8 +148,10 @@ gistGetNodeBuffer(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 		int			level;
 		MemoryContext oldcxt = MemoryContextSwitchTo(gfbb->context);
 
-		nodeBuffer->pageBuffer = NULL;
+		/* nodeBuffer->nodeBlocknum is the hash key and was filled in already */
 		nodeBuffer->blocksCount = 0;
+		nodeBuffer->pageBlocknum = InvalidBlockNumber;
+		nodeBuffer->pageBuffer = NULL;
 		nodeBuffer->queuedForEmptying = false;
 
 		/*
@@ -244,11 +246,15 @@ gistAllocateNewPageBuffer(GISTBuildBuffers *gfbb)
 }
 
 /*
- * Add specified block number into loadedBuffers array.
+ * Add specified buffer into loadedBuffers array.
  */
 static void
 gistAddLoadedBuffer(GISTBuildBuffers *gfbb, GISTNodeBuffer *nodeBuffer)
 {
+	/* Never add a temporary buffer to the array */
+	if (nodeBuffer->isTemp)
+		return;
+
 	/* Enlarge the array if needed */
 	if (gfbb->loadedBuffersCount >= gfbb->loadedBuffersLen)
 	{
@@ -591,7 +597,7 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 				i;
 	GISTENTRY	entry[INDEX_MAX_KEYS];
 	bool		isnull[INDEX_MAX_KEYS];
-	GISTNodeBuffer nodebuf;
+	GISTNodeBuffer oldBuf;
 	ListCell   *lc;
 
 	/* If the splitted page doesn't have buffers, we have nothing to do. */
@@ -619,15 +625,13 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 	 * read the tuples straight from the heap instead of the root buffer.
 	 */
 	Assert(blocknum != GIST_ROOT_BLKNO);
-	memcpy(&nodebuf, nodeBuffer, sizeof(GISTNodeBuffer));
+	memcpy(&oldBuf, nodeBuffer, sizeof(GISTNodeBuffer));
+	oldBuf.isTemp = true;
 
 	/* Reset the old buffer, used for the new left page from now on */
 	nodeBuffer->blocksCount = 0;
 	nodeBuffer->pageBuffer = NULL;
 	nodeBuffer->pageBlocknum = InvalidBlockNumber;
-
-	/* Reassign pointer to the saved copy. */
-	nodeBuffer = &nodebuf;
 
 	/*
 	 * Allocate memory for information about relocation buffers.
@@ -675,7 +679,7 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 	 * Loop through all index tuples on the buffer on the splitted page,
 	 * moving them to buffers on the new pages.
 	 */
-	while (gistPopItupFromNodeBuffer(gfbb, nodeBuffer, &itup))
+	while (gistPopItupFromNodeBuffer(gfbb, &oldBuf, &itup))
 	{
 		float		sum_grow,
 					which_grow[INDEX_MAX_KEYS];
