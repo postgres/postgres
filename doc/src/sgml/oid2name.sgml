@@ -60,18 +60,23 @@
    <variablelist>
 
     <varlistentry>
-     <term><option>-o</option> <replaceable>oid</></term>
-     <listitem><para>show info for table with OID <replaceable>oid</></para></listitem>
-    </varlistentry>
-
-    <varlistentry>
      <term><option>-f</option> <replaceable>filenode</></term>
      <listitem><para>show info for table with filenode <replaceable>filenode</></para></listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><option>-t</option> <replaceable>tablename_pattern</></term>
-     <listitem><para>show info for table(s) matching <replaceable>tablename_pattern</></para></listitem>
+     <term><option>-i</option></term>
+     <listitem><para>include indexes and sequences in the listing</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-o</option> <replaceable>oid</></term>
+     <listitem><para>show info for table with OID <replaceable>oid</></para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-q</option></term>
+     <listitem><para>omit headers (useful for scripting)</para></listitem>
     </varlistentry>
 
     <varlistentry>
@@ -88,8 +93,8 @@
     </varlistentry>
 
     <varlistentry>
-     <term><option>-i</option></term>
-     <listitem><para>include indexes and sequences in the listing</para></listitem>
+     <term><option>-t</option> <replaceable>tablename_pattern</></term>
+     <listitem><para>show info for table(s) matching <replaceable>tablename_pattern</></para></listitem>
     </varlistentry>
 
     <varlistentry>
@@ -98,12 +103,14 @@
       schema name, and OID
      </para></listitem>
     </varlistentry>
+   </variablelist>
+  </para>
 
-    <varlistentry>
-     <term><option>-q</option></term>
-     <listitem><para>omit headers (useful for scripting)</para></listitem>
-    </varlistentry>
+  <para>
+   <application>oid2name</application> also accepts the following command-line
+   arguments for connection parameters:
 
+   <variablelist>
     <varlistentry>
      <term><option>-d</option> <replaceable>database</></term>
      <listitem><para>database to connect to</para></listitem>

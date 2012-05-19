@@ -230,6 +230,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-T <replaceable>CFG</></option></term>
       <term><option>--text-search-config=<replaceable>CFG</></option></term>
       <listitem>
        <para>
@@ -283,7 +284,7 @@ PostgreSQL documentation
    </para>
 
    <para>
-    Other, less commonly used, parameters are also available:
+    Other, less commonly used, options are also available:
 
     <variablelist>
      <varlistentry>
