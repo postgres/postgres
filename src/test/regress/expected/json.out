@@ -113,6 +113,16 @@ ERROR:  invalid input syntax for type json
 LINE 1: SELECT '1f2'::json;
                ^
 DETAIL:  line 1: Token "1f2" is invalid.
+SELECT '0.x1'::json;			-- ERROR
+ERROR:  invalid input syntax for type json
+LINE 1: SELECT '0.x1'::json;
+               ^
+DETAIL:  line 1: Token "0.x1" is invalid.
+SELECT '1.3ex100'::json;		-- ERROR
+ERROR:  invalid input syntax for type json
+LINE 1: SELECT '1.3ex100'::json;
+               ^
+DETAIL:  line 1: Token "1.3ex100" is invalid.
 -- Arrays.
 SELECT '[]'::json;				-- OK
  json 

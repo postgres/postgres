@@ -541,7 +541,7 @@ json_lex_number(JsonLexContext *lex, char *s)
 	if (*s == '.')
 	{
 		++s;
-		if (*s < '0' && *s > '9')
+		if (*s < '0' || *s > '9')
 			error = true;
 		else
 		{
@@ -558,7 +558,7 @@ json_lex_number(JsonLexContext *lex, char *s)
 		++s;
 		if (*s == '+' || *s == '-')
 			++s;
-		if (*s < '0' && *s > '9')
+		if (*s < '0' || *s > '9')
 			error = true;
 		else
 		{

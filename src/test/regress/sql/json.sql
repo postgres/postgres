@@ -22,6 +22,8 @@ SELECT '9223372036854775808'::json;	-- OK, even though it's too large for int8
 SELECT '1e100'::json;			-- OK
 SELECT '1.3e100'::json;			-- OK
 SELECT '1f2'::json;				-- ERROR
+SELECT '0.x1'::json;			-- ERROR
+SELECT '1.3ex100'::json;		-- ERROR
 
 -- Arrays.
 SELECT '[]'::json;				-- OK
