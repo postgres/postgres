@@ -528,7 +528,7 @@ psql --username postgres --file script.sql postgres
   </para>
 
  <refsect2>
-  <title>Limitations in Upgrading PostgreSQL 8.3</title>
+  <title>Limitations in Upgrading from PostgreSQL 8.3</title>
 
   <para>
    Upgrading <emphasis>from</emphasis> PostgreSQL 8.3 has additional restrictions not present
