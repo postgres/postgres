@@ -465,8 +465,8 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
     identical things, and you want to allow these things to be accessed
     directly by subscripting, in addition to whatever operations you plan
     to provide for the type as a whole.  For example, type <type>point</>
-    is represented as just two floating-point numbers, which it allows to be
-    accessed as <literal>point[0]</> and <literal>point[1]</>.
+    is represented as just two floating-point numbers, each can be accessed using
+    <literal>point[0]</> and <literal>point[1]</>.
     Note that
     this facility only works for fixed-length types whose internal form
     is exactly a sequence of identical fixed-length fields.  A subscriptable
