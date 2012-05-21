@@ -2206,28 +2206,38 @@ January 8 04:05:06 1999 PST
        </thead>
        <tbody>
         <row>
-         <entry>ISO</entry>
-         <entry>ISO 8601/SQL standard</entry>
-         <entry>1997-12-17 07:37:16-08</entry>
+         <entry><literal>ISO</literal></entry>
+         <entry>ISO 8601, SQL standard</entry>
+         <entry><literal>1997-12-17 07:37:16-08</literal></entry>
         </row>
         <row>
-         <entry>SQL</entry>
+         <entry><literal>SQL</literal></entry>
          <entry>traditional style</entry>
-         <entry>12/17/1997 07:37:16.00 PST</entry>
+         <entry><literal>12/17/1997 07:37:16.00 PST</literal></entry>
         </row>
         <row>
-         <entry>POSTGRES</entry>
+         <entry><literal>Postgres</literal></entry>
          <entry>original style</entry>
-         <entry>Wed Dec 17 07:37:16 1997 PST</entry>
+         <entry><literal>Wed Dec 17 07:37:16 1997 PST</literal></entry>
         </row>
         <row>
-         <entry>German</entry>
+         <entry><literal>German</literal></entry>
          <entry>regional style</entry>
-         <entry>17.12.1997 07:37:16.00 PST</entry>
+         <entry><literal>17.12.1997 07:37:16.00 PST</literal></entry>
         </row>
        </tbody>
       </tgroup>
      </table>
+
+    <note>
+     <para>
+      ISO 8601 specifies the use of uppercase letter <literal>T</> to separate
+      the date and time.  <productname>PostgreSQL</> accepts that format on
+      input, but on output it uses a space rather than <literal>T</>, as shown
+      above.  This is for readability and for consistency with RFC 3339 as
+      well as some other database systems.
+     </para>
+    </note>
 
     <para>
      In the <acronym>SQL</acronym> and POSTGRES styles, day appears before
@@ -2235,8 +2245,7 @@ January 8 04:05:06 1999 PST
      before day.
      (See <xref linkend="datatype-datetime-input">
      for how this setting also affects interpretation of input values.)
-     <xref linkend="datatype-datetime-output2-table"> shows an
-     example.
+     <xref linkend="datatype-datetime-output2-table"> shows examples.
     </para>
 
      <table id="datatype-datetime-output2-table">
@@ -2253,29 +2262,33 @@ January 8 04:05:06 1999 PST
         <row>
          <entry><literal>SQL, DMY</></entry>
          <entry><replaceable>day</replaceable>/<replaceable>month</replaceable>/<replaceable>year</replaceable></entry>
-         <entry>17/12/1997 15:37:16.00 CET</entry>
+         <entry><literal>17/12/1997 15:37:16.00 CET</literal></entry>
         </row>
         <row>
          <entry><literal>SQL, MDY</></entry>
          <entry><replaceable>month</replaceable>/<replaceable>day</replaceable>/<replaceable>year</replaceable></entry>
-         <entry>12/17/1997 07:37:16.00 PST</entry>
+         <entry><literal>12/17/1997 07:37:16.00 PST</literal></entry>
         </row>
         <row>
          <entry><literal>Postgres, DMY</></entry>
          <entry><replaceable>day</replaceable>/<replaceable>month</replaceable>/<replaceable>year</replaceable></entry>
-         <entry>Wed 17 Dec 07:37:16 1997 PST</entry>
+         <entry><literal>Wed 17 Dec 07:37:16 1997 PST</literal></entry>
         </row>
        </tbody>
       </tgroup>
      </table>
 
     <para>
-     The date/time styles can be selected by the user using the
+     The date/time style can be selected by the user using the
      <command>SET datestyle</command> command, the <xref
      linkend="guc-datestyle"> parameter in the
      <filename>postgresql.conf</filename> configuration file, or the
      <envar>PGDATESTYLE</envar> environment variable on the server or
-     client.  The formatting function <function>to_char</function>
+     client.
+    </para>
+
+    <para>
+     The formatting function <function>to_char</function>
      (see <xref linkend="functions-formatting">) is also available as
      a more flexible way to format date/time output.
     </para>
