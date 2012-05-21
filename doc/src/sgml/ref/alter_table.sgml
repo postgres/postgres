@@ -387,7 +387,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>CLUSTER</literal></term>
+    <term><literal>CLUSTER ON</literal></term>
     <listitem>
      <para>
       This form selects the default index for future
