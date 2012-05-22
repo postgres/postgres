@@ -110,7 +110,7 @@
       <listitem>
        <para>
         Move <type>tsvector</> most-common-element statistics to new
-        <link linkend="view-pg-stats"><structname>pg_stats</></> columns
+        <link linkend="view-pg-stats"><structname>pg_stats</></link> columns
         (Alexander Korotkov)
        </para>
 
@@ -174,7 +174,7 @@
      </itemizedlist>
     </sect4>
 
-    </sect3>
+   </sect3>
 
    <sect3>
     <title>Object Modification</title>
