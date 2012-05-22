@@ -222,6 +222,13 @@ heapgetpage(HeapScanDesc scan, BlockNumber page)
 		scan->rs_cbuf = InvalidBuffer;
 	}
 
+	/*
+	 * Be sure to check for interrupts at least once per page.  Checks at
+	 * higher code levels won't be able to stop a seqscan that encounters
+	 * many pages' worth of consecutive dead tuples.
+	 */
+	CHECK_FOR_INTERRUPTS();
+
 	/* read page using selected strategy */
 	scan->rs_cbuf = ReadBufferExtended(scan->rs_rd, MAIN_FORKNUM, page,
 									   RBM_NORMAL, scan->rs_strategy);
