@@ -109,6 +109,21 @@
        </para>
       </listitem>
 
+      <listitem>
+       <para>
+        Move <type>tsvector</> most-common-element statistics to new
+        <link linkend="view-pg-stats"><structname>pg_stats</></> columns
+        (Alexander Korotkov)
+       </para>
+
+       <para>
+        Consult <structname>most_common_elems</>
+        and <structname>most_common_elem_freqs</> for the data formerly
+        available in <structname>most_common_vals</>
+        and <structname>most_common_freqs</>.
+       </para>
+      </listitem>
+
     </itemizedlist>
 
     <sect4>
@@ -2125,13 +2140,13 @@
 
       <listitem>
        <para>
-        Have <application>psql</> <command>\copy</> use libpq's
-        <function>SendQuery()</> (Noah Misch)
+        Unify and tighten <application>psql</> treatment of <command>\copy</>
+        and plain <command>COPY</> (Noah Misch)
        </para>
 
        <para>
-        This makes <command>\copy</> failure behavior more predictable,
-        and honors <envar>ON_ERROR_ROLLBACK</>.
+        This makes failure behavior more predictable and honors <command>\set
+        ON_ERROR_ROLLBACK</>.
        </para>
       </listitem>
 
