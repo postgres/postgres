@@ -169,8 +169,8 @@ need to take system-wide locks during common operations.  It works like
 this:
 
 Each buffer header contains a usage counter, which is incremented (up to a
-small limit value) whenever the buffer is unpinned.  (This requires only the
-buffer header spinlock, which would have to be taken anyway to decrement the
+small limit value) whenever the buffer is pinned.  (This requires only the
+buffer header spinlock, which would have to be taken anyway to increment the
 buffer reference count, so it's nearly free.)
 
 The "clock hand" is a buffer index, NextVictimBuffer, that moves circularly
