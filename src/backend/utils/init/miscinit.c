@@ -629,18 +629,10 @@ GetUserNameFromId(Oid roleid)
  *
  * These routines are used to create both a data-directory lockfile
  * ($DATADIR/postmaster.pid) and a Unix-socket-file lockfile ($SOCKFILE.lock).
- * Both kinds of files contain the same info:
- *
- *		Owning process' PID
- *		Data directory path
- *
- * By convention, the owning process' PID is negated if it is a standalone
- * backend rather than a postmaster.  This is just for informational purposes.
- * The path is also just for informational purposes (so that a socket lockfile
- * can be more easily traced to the associated postmaster).
- *
- * A data-directory lockfile can optionally contain a third line, containing
- * the key and ID for the shared memory block used by this postmaster.
+ * Both kinds of files contain the same info initially, although we can add
+ * more information to a data-directory lockfile after it's created, using
+ * AddToDataDirLockFile().  See miscadmin.h for documentation of the contents
+ * of these lockfiles.
  *
  * On successful lockfile creation, a proc_exit callback to remove the
  * lockfile is automatically created.
