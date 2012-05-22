@@ -477,7 +477,7 @@
 
       <listitem>
        <para>
-        Improve GiST box and point index performance by producing better
+        Improve GiST geometric type index performance by producing better
         trees with less memory allocation overhead (Alexander Korotkov)
        </para>
       </listitem>
