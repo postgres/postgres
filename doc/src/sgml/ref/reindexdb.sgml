@@ -267,7 +267,7 @@ PostgreSQL documentation
       <listitem>
        <para>
          Specifies the name of the database to connect to discover what other
-         databases should be vacuumed. If not specified, the
+         databases should be reindexed. If not specified, the
          <literal>postgres</literal> database will be used,
          and if that does not exist, <literal>template1</literal> will be used.
        </para>
