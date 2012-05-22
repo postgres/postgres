@@ -827,12 +827,6 @@ PostmasterMain(int argc, char *argv[])
 	process_shared_preload_libraries();
 
 	/*
-	 * Remove old temporary files.	At this point there can be no other
-	 * Postgres processes running in this directory, so this should be safe.
-	 */
-	RemovePgTempFiles();
-
-	/*
 	 * Establish input sockets.
 	 */
 	for (i = 0; i < MAXLISTEN; i++)
@@ -1098,6 +1092,12 @@ PostmasterMain(int argc, char *argv[])
 				(errmsg("could not load pg_hba.conf")));
 	}
 	load_ident();
+
+	/*
+	 * Remove old temporary files.	At this point there can be no other
+	 * Postgres processes running in this directory, so this should be safe.
+	 */
+	RemovePgTempFiles();
 
 	/*
 	 * Remember postmaster startup time
