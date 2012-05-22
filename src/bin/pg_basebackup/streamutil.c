@@ -75,6 +75,7 @@ GetConnection(void)
 	const char **keywords;
 	const char **values;
 	char	   *password = NULL;
+	const char *tmpparam;
 
 	if (dbhost)
 		argcount++;
@@ -156,6 +157,29 @@ GetConnection(void)
 		/* Connection ok! */
 		free(values);
 		free(keywords);
+
+		/*
+		 * Ensure we have the same value of integer timestamps as the
+		 * server we are connecting to.
+		 */
+		tmpparam = PQparameterStatus(tmpconn, "integer_datetimes");
+		if (!tmpparam)
+		{
+			fprintf(stderr, _("%s: could not determine server setting for integer_datetimes\n"),
+					progname);
+			exit(1);
+		}
+
+#ifdef HAVE_INT64_TIMESTAMP
+		if (strcmp(tmpparam, "on") != 0)
+#else
+		if (strcmp(tmpparam, "off") != 0)
+#endif
+		{
+			fprintf(stderr, _("%s: integer_datetimes compile flag does not match server\n"),
+					progname);
+			exit(1);
+		}
 
 		/* Store the password for next run */
 		if (password)
