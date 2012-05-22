@@ -45,6 +45,8 @@ LOAD '@abs_builddir@/dummy_seclabel@DLSUFFIX@';
 SET SESSION AUTHORIZATION seclabel_user1;
 SECURITY LABEL ON TABLE seclabel_tbl1 IS 'classified';			-- OK
 SECURITY LABEL ON COLUMN seclabel_tbl1.a IS 'unclassified';		-- OK
+SECURITY LABEL ON COLUMN seclabel_tbl1 IS 'unclassified';	-- fail
+ERROR:  column name must be qualified
 SECURITY LABEL ON TABLE seclabel_tbl1 IS '...invalid label...';	-- fail
 ERROR:  '...invalid label...' is not a valid security label
 SECURITY LABEL FOR 'dummy' ON TABLE seclabel_tbl1 IS 'unclassified';	-- OK

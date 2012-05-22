@@ -91,7 +91,7 @@ SECURITY LABEL ON TABLE t2
 ERROR:  SELinux: invalid security label: "invalid security context"
 SECURITY LABEL ON COLUMN t2
     IS 'system_u:object_r:sepgsql_ro_table_t:s0';	-- be failed
-ERROR:  improper relation name (too many dotted names): 
+ERROR:  column name must be qualified
 SECURITY LABEL ON COLUMN t2.b
     IS 'system_u:object_r:sepgsql_ro_table_t:s0';	-- ok
 --

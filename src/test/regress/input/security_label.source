@@ -49,6 +49,7 @@ SET SESSION AUTHORIZATION seclabel_user1;
 
 SECURITY LABEL ON TABLE seclabel_tbl1 IS 'classified';			-- OK
 SECURITY LABEL ON COLUMN seclabel_tbl1.a IS 'unclassified';		-- OK
+SECURITY LABEL ON COLUMN seclabel_tbl1 IS 'unclassified';	-- fail
 SECURITY LABEL ON TABLE seclabel_tbl1 IS '...invalid label...';	-- fail
 SECURITY LABEL FOR 'dummy' ON TABLE seclabel_tbl1 IS 'unclassified';	-- OK
 SECURITY LABEL FOR 'unknown_seclabel' ON TABLE seclabel_tbl1 IS 'classified';	-- fail
