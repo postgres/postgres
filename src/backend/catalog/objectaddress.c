@@ -526,6 +526,10 @@ get_object_address_attribute(ObjectType objtype, List *objname,
 	const char *attname;
 
 	/* Extract relation name and open relation. */
+	if (list_length(objname) < 2)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("column name must be qualified")));
 	attname = strVal(lfirst(list_tail(objname)));
 	relname = list_truncate(list_copy(objname), list_length(objname) - 1);
 	relation = relation_openrv(makeRangeVarFromNameList(relname), lockmode);
