@@ -54,8 +54,7 @@
        <para>
         Ensure that <link
         linkend="functions-xml-processing"><function>xpath()</></link>
-        escapes special characters in string values (Florian Pflug,
-        Radoslaw Smogura)
+        escapes special characters in string values (Florian Pflug)
        </para>
 
        <para>
@@ -67,7 +66,7 @@
       <listitem>
        <para>
         Remove <link linkend="hstore">hstore</link>'s <literal>=&gt;</>
-        operator (Robert Haas, David Wheeler)
+        operator (Robert Haas)
        </para>
 
        <para>
@@ -96,8 +95,7 @@
        <para>
         Remove the <link
         linkend="catalog-pg-tablespace"><structname>spclocation</></link>
-        field from <structname>pg_tablespace</> (Magnus Hagander,
-        Tom Lane)
+        field from <structname>pg_tablespace</> (Magnus Hagander)
        </para>
 
        <para>
@@ -253,8 +251,7 @@
        <para>
         Disable prompting for the user name in <link
         linkend="APP-DROPDB"><application>dropdb</></link> unless
-        <option>--interactive</> is specified (Peter Eisentraut, Josh
-        Kupershmidt)
+        <option>--interactive</> is specified (Peter Eisentraut)
        </para>
       </listitem>
 
@@ -262,7 +259,7 @@
        <para>
         No longer have <link
         linkend="APP-CREATEUSER"><application>createuser</></link> prompt
-        for settings (Peter Eisentraut, Josh Kupershmidt)
+        for settings (Peter Eisentraut)
        </para>
 
        <para>
@@ -360,8 +357,7 @@
       <listitem>
        <para>
         Create a separate <structname>pg_stat_activity</> column to
-        report state information, e.g. idle (Scott Mead, Magnus Hagander,
-        Greg Smith)
+        report state information, e.g. idle (Scott Mead, Magnus Hagander)
        </para>
 
        <para>
@@ -425,7 +421,7 @@
       <listitem>
        <para>
         Allow queries to retrieve data only from indexes, avoiding heap
-        access (Robert Haas, Ibrar Ahmed, Tom Lane)
+        access (Robert Haas, Ibrar Ahmed, Heikki Linnakangas, Tom Lane)
        </para>
 
        <para>
@@ -439,7 +435,7 @@
       <listitem>
        <para>
         Allow frequently uncontended locks to be recorded using a new
-        lightweight lock mechanism (Robert Haas, Jeff Davis)
+        lightweight lock mechanism (Robert Haas)
        </para>
       </listitem>
 
@@ -454,21 +450,21 @@
       <listitem>
        <para>
         Reduce overhead of creating virtual transaction id locks (Robert
-        Haas, Jeff Davis)
+        Haas)
        </para>
       </listitem>
 
       <listitem>
        <para>
         Reduce overhead for shared invalidation cache messages (Robert
-        Haas, Noah Misch)
+        Haas)
        </para>
       </listitem>
 
       <listitem>
        <para>
         Improve performance of transactions using many savepoints (Simon
-        Riggs, Robert Haas)  PARTIALLY REVERTED.  KEEP?
+        Riggs)  PARTIALLY REVERTED.  KEEP?
        </para>
       </listitem>
 
@@ -482,8 +478,7 @@
       <listitem>
        <para>
         Improve GiST box and point index performance by producing better
-        trees with less memory allocation overhead (Alexander Korotkov,
-        Heikki Linnakangas, Kevin Grittner)
+        trees with less memory allocation overhead (Alexander Korotkov)
        </para>
       </listitem>
 
@@ -512,8 +507,8 @@
       <listitem>
        <para>
         Add the <link linkend="SPGiST">SP-GiST</link> (Space-Partitioned
-        GiST) index access method (Teodor Sigaev, Oleg Bartunov, Tom Lane,
-        Robert Haas)
+        GiST) index access method (Teodor Sigaev, Oleg Bartunov, Tom
+        Lane, Robert Haas)
        </para>
 
        <para>
@@ -532,7 +527,7 @@
       <listitem>
        <para>
         Take fewer <acronym>MVCC</acronym> snapshots, for performance
-        (Robert Haas, Dimitri Fontaine)
+        (Robert Haas)
        </para>
       </listitem>
 
@@ -540,28 +535,27 @@
        <para>
         Have the number of clog buffer count scale based on <link
         linkend="guc-shared-buffers"><varname>shared_buffers</></link>
-        (Robert Haas)
+        (Robert Haas, Simon Riggs, Tom Lane)
        </para>
       </listitem>
 
       <listitem>
        <para>
         Reduce the overhead of serializable isolation level locks (Dan
-        Ports, Heikki Linnakangas)
+        Ports)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Improve locking performance during group commit (Peter Geoghegan,
-        Simon Riggs, Heikki Linnakangas)
+        Improve locking performance during group commit (Peter Geoghegan)
        </para>
       </listitem>
 
       <listitem>
        <para>
         Improve PowerPC and Itanium spinlock performance (Manabu Ori,
-        Tom Lane, Robert Haas)
+        Robert Haas, Tom Lane)
        </para>
       </listitem>
 
@@ -577,7 +571,7 @@
       <listitem>
        <para>
         Create a dedicated worker process to perform checkpoints (Simon
-        Riggs, Dickson Guedes)
+        Riggs)
        </para>
 
        <para>
@@ -604,7 +598,7 @@
       <listitem>
        <para>
         Allow backends to detect postmaster death via a pipe read failure,
-        rather than polling (Peter Geoghegan, Heikki Linnakangas)
+        rather than polling (Peter Geoghegan, Heikki Linnakangas, Tom Lane)
        </para>
 
        <para>
@@ -618,7 +612,7 @@
         <link linkend="guc-wal-writer-delay">walwriter</link>, <link
         linkend="monitoring-stats">statistics collector</link>, archiver,
         and checkpointer to sleep more efficiently during periods of
-        inactivity (Peter Geoghegan, Heikki Linnakangas, Tom Lane)
+        inactivity (Peter Geoghegan, Tom Lane)
        </para>
 
        <para>
@@ -706,7 +700,7 @@
       <listitem>
        <para>
         Support <function>MIN</>/<function>MAX</> index optimizations on
-        boolean columns (Marti Raudsepp, Abhijit Menon-Sen)
+        boolean columns (Marti Raudsepp)
        </para>
       </listitem>
 
@@ -733,7 +727,7 @@
       <listitem>
        <para>
         Collect and use element-frequency statistics for arrays (Alexander
-        Korotkov, Noah Misch, Nathan Boley, Tom Lane, Daniele Varrazzo)
+        Korotkov, Tom Lane)
        </para>
 
        <para>
@@ -751,7 +745,7 @@
       <listitem>
        <para>
         Allow analyze statistics to be collected for foreign tables
-        (Etsuro Fujita, Shigeru Hanada, Tom Lane)
+        (Etsuro Fujita)
        </para>
       </listitem>
 
@@ -770,7 +764,7 @@
        <para>
         Do not assume roles and <literal>samerole</> specified in <link
         linkend="auth-pg-hba-conf"><filename>pg_hba.conf</filename></link>
-        include superusers (Andrew Dunstan, Robert Haas)
+        include superusers (Andrew Dunstan)
        </para>
 
        <para>
@@ -792,7 +786,7 @@
        <para>
         Adjust <filename>pg_hba.conf</filename> processing to more
         consistently handle token parsing (Brendan Jurd, &Aacute;lvaro
-        Herrera, Pavel Stehule)
+        Herrera)
        </para>
       </listitem>
 
@@ -818,14 +812,14 @@
       <listitem>
        <para>
         Attempt to log the current query string before a backend crash
-        (Marti Raudsepp, <acronym>PDXPUG</>, Tom Lane)
+        (Marti Raudsepp)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Make logging of autovacuum I/O activity more verbose (Greg Smith,
-        Noah Misch)
+        Make logging of autovacuum I/O activity more verbose (Greg
+        Smith, Noah Misch)
        </para>
 
        <para>
@@ -850,8 +844,7 @@
        <para>
         Add <link
         linkend="functions-admin-backup"><function>pg_xlog_location_diff()</></link>
-        to simplify xlog comparisons (Euler Taveira de Oliveira, Fujii
-        Masao, Magnus Hagander)
+        to simplify xlog comparisons (Euler Taveira de Oliveira)
        </para>
 
        <para>
@@ -861,8 +854,8 @@
 
       <listitem>
        <para>
-        Support configurable eventlog application names on Windows (MauMau,
-        Magnus Hagander)
+        Support configurable eventlog application names on Windows
+        (MauMau, Magnus Hagander)
        </para>
 
        <para>
@@ -901,7 +894,7 @@
       <listitem>
        <para>
         Add a deadlock counter to the <structname>pg_stat_database</>
-        system view (Magnus Hagander, Jaime Casanova)
+        system view (Magnus Hagander)
        </para>
       </listitem>
 
@@ -909,7 +902,7 @@
        <para>
         Add a <acronym>GUC</acronym> setting <link
         linkend="guc-track-io-timing"><varname>track_io_timing</></link>
-        to track I/O timings (Ants Aasma, Greg Smith, Robert Haas)
+        to track I/O timings (Ants Aasma, Robert Haas)
        </para>
       </listitem>
 
@@ -935,7 +928,7 @@
         Allow <link
         linkend="guc-deadlock-timeout"><varname>deadlock_timeout</></link>
         to be set per-session by superusers, not just per-cluster (Noah
-        Misch, Shigeru Hanada)
+        Misch)
        </para>
 
        <para>
@@ -951,8 +944,7 @@
        <para>
         Add <acronym>GUC</acronym> parameter <link
         linkend="guc-temp-file-limit"><varname>temp_file_limit</></link>
-        to constrain temporary file space usage per session (Mark Kirkwood,
-        C&eacute;dric Villemain, Tatsuo Ishii)
+        to constrain temporary file space usage per session (Mark Kirkwood)
        </para>
       </listitem>
 
@@ -1006,7 +998,7 @@
        <para>
         Allow multiple errors in <filename>postgresql.conf</filename>
         to be reported, rather than just the first one (Alexey Klyukin,
-        Andy Colson)
+        Tom Lane)
        </para>
       </listitem>
 
@@ -1014,7 +1006,7 @@
        <para>
         Allow a reload of <filename>postgresql.conf</filename> to be
         processed by all backends even if there are some settings that
-        are invalid for that session (Alexey Klyukin, Andy Colson)
+        are invalid for that session (Alexey Klyukin)
        </para>
 
        <para>
@@ -1026,7 +1018,7 @@
       <listitem>
        <para>
         Add an <literal>include_if_exists</> facility for configuration
-        files (Greg Smith, Euler Taveira de Oliveira)
+        files (Greg Smith)
        </para>
 
        <para>
@@ -1077,7 +1069,7 @@
       <listitem>
        <para>
         Allow streaming replications slaves to serve other slaves (Fujii
-        Masao, Simon Riggs)
+        Masao)
        </para>
 
        <para>
@@ -1091,8 +1083,7 @@
        <para>
         Add new <link
         linkend="guc-synchronous-commit"><varname>synchronous_commit</></link>
-        replication mode <literal>remote_write</> (Fujii Masao and
-        Simon Riggs)
+        replication mode <literal>remote_write</> (Fujii Masao, Simon Riggs)
        </para>
 
        <para>
@@ -1168,8 +1159,7 @@
 
       <listitem>
        <para>
-        Improve columns labels produced by subqueries (Marti Raudsepp,
-        Kyotaro Horiugchi)
+        Improve columns labels produced by subqueries (Marti Raudsepp)
        </para>
 
        <para>
@@ -1185,8 +1175,7 @@
 
       <listitem>
        <para>
-        Cancel queries if clients get disconnected (Florian Pflug, Greg
-        Jaskiewicz)
+        Cancel queries if clients get disconnected (Florian Pflug)
        </para>
       </listitem>
 
@@ -1211,7 +1200,7 @@
        <para>
         When a row fails a <literal>CHECK</> or <literal>NOT NULL</>
         constraint, show the row's contents in errdetail (Jan
-        Kundr&aacute;t, Royce Ausburn, Tom Lane)
+        Kundr&aacute;t)
        </para>
 
        <para>
@@ -1259,7 +1248,7 @@
        <para>
         Allow <link linkend="ddl-constraints"><literal>CHECK</></link>
         constraints to be declared <literal>NOT VALID</> (&Aacute;lvaro
-        Herrera, Thom Brown, Dean Rasheed, Jaime Casanova)
+        Herrera)
        </para>
 
        <para>
@@ -1376,7 +1365,8 @@
     </sect4>
 
     <sect4>
-     <title><link linkend="SQL-CREATETABLE"><command>CREATE/ALTER TABLE</></link></title>
+     <title><link linkend="SQL-CREATETABLE"><command>CREATE/ALTER
+     TABLE</></link></title>
 
      <itemizedlist>
 
@@ -1408,7 +1398,8 @@
 
       <listitem>
        <para>
-        Tighten creation of tables in temporary schemas (Robert Haas)
+        Tighten creation of tables in temporary schemas (Robert Haas,
+        Amit Khandekar)
        </para>
 
        <para>
@@ -1431,7 +1422,7 @@
        <para>
         Add a <link
         linkend="SQL-CREATEVIEW"><literal>security_barrier</></link>
-        option for views (KaiGai Kohei, Noah Misch)
+        option for views (KaiGai Kohei)
        </para>
 
        <para>
@@ -1452,8 +1443,7 @@
 
       <listitem>
        <para>
-        Add support for privileges on date types (Peter Eisentraut,
-        Yeb Havinga)
+        Add support for privileges on date types (Peter Eisentraut)
        </para>
 
        <para>
@@ -1467,8 +1457,7 @@
       <listitem>
        <para>
         Check for <command>INSERT</command> privileges in <command>SELECT
-        INTO</command> / <command>CREATE TABLE AS</command> (KaiGai Kohei,
-        Albe Laurenz)
+        INTO</command> / <command>CREATE TABLE AS</command> (KaiGai Kohei)
        </para>
 
        <para>
@@ -1513,21 +1502,21 @@
       <listitem>
        <para>
         Make <command>EXPLAIN (BUFFERS)</command> track blocks dirtied
-        and written (Robert Haas, Fujii Masao, Greg Smith)
+        and written (Robert Haas)
        </para>
       </listitem>
 
       <listitem>
        <para>
         Have <command>EXPLAIN ANALYZE</command> report the number of rows
-        rejected by filter steps (Marko Tiikkaja, Marc Cousin)
+        rejected by filter steps (Marko Tiikkaja)
        </para>
       </listitem>
 
       <listitem>
        <para>
         Allow <command>EXPLAIN</command> to avoid timing overhead when
-        time values are unwanted (Tomas Vondra, Eric Theise)
+        time values are unwanted (Tomas Vondra)
        </para>
 
        <para>
@@ -1563,14 +1552,14 @@
        <para>
         Add <link
         linkend="functions-json"><function>array_to_json()</></link>
-        and <function>row_to_json()</> (Andrew Dunstan, Abhijit Menon-Sen)
+        and <function>row_to_json()</> (Andrew Dunstan)
        </para>
       </listitem>
 
       <listitem>
        <para>
         Add support for <link linkend="rangetypes">range data types</link>
-        (Jeff Davis, Tom Lane, Alexander Korotkov)
+        (Jeff Davis, Tom Lane)
        </para>
 
        <para>
@@ -1582,7 +1571,7 @@
       <listitem>
        <para>
         Add <link linkend="datatype-serial"><type>SMALLSERIAL</></link>
-        data type (Mike Pultz, Brar Piening, Josh Kupershmidt)
+        data type (Mike Pultz)
        </para>
 
        <para>
@@ -1594,8 +1583,7 @@
       <listitem>
        <para>
         Allow <link linkend="SQL-CREATEDOMAIN">domains</link> to be
-        declared <literal>NOT VALID</> (&Aacute;lvaro Herrera, Thom Brown,
-        Dean Rasheed, Jaime Casanova, Peter Eisentraut)
+        declared <literal>NOT VALID</> (&Aacute;lvaro Herrera)
        </para>
 
        <para>
@@ -1622,7 +1610,7 @@
        <para>
         Add bitwise "and", "or", and "not" <link
         linkend="macaddr-functions-table">operators</link> for the macaddr
-        data type (Brendan Jurd, Fujii Masao)
+        data type (Brendan Jurd)
        </para>
       </listitem>
 
@@ -1637,7 +1625,7 @@
        <para>
         Allow <function>xpath()</> to return a single-element
         <acronym>XML</acronym> array when supplied a scalar value (Florian
-        Pflug, Radoslaw Smogura)
+        Pflug)
        </para>
 
        <para>
@@ -1650,7 +1638,7 @@
       <listitem>
        <para>
         Improve <acronym>XML</acronym> error handling to be more robust
-        (Florian Pflug, Tom Lane, Noah Misch)
+        (Florian Pflug)
        </para>
       </listitem>
 
@@ -1669,7 +1657,7 @@
        <para>
         Allow users to cancel queries in user-matching sessions using <link
         linkend="functions-admin-signal"><function>pg_cancel_backend()</></link>
-        (Magnus Hagander)
+        (Magnus Hagander, Josh Kupershmidt)
        </para>
 
        <para>
@@ -1681,7 +1669,7 @@
        <para>
         Allow <link
         linkend="functions-aggregate-table"><function>string_agg()</></link>
-        to process bytea values (Pavel Stehule, Peter Eisentraut)
+        to process bytea values (Pavel Stehule)
        </para>
       </listitem>
 
@@ -1698,7 +1686,7 @@
       <listitem>
        <para>
         Allow importing and exporting of transaction snapshots (Joachim
-        Wieland, Marko Tiikkaja, Tom Lane)
+        Wieland, Tom Lane)
        </para>
 
        <para>
@@ -1713,7 +1701,7 @@
        <para>
         Support <link
         linkend="functions-info-catalog-table"><literal>COLLATION
-        FOR</></link> on expressions (Peter Eisentraut, Jaime Casanova)
+        FOR</></link> on expressions (Peter Eisentraut)
        </para>
 
        <para>
@@ -1778,7 +1766,7 @@
       <listitem>
        <para>
         Allow per-column foreign data wrapper options and
-        <literal>force_not_null</> (Shigeru Hanada, KaiGai Kohei)
+        <literal>force_not_null</> (Shigeru Hanada)
        </para>
 
        <para>
@@ -1790,8 +1778,7 @@
 
       <listitem>
        <para>
-        Improve pretty printing of view definitions (Andrew Dunstan,
-        Hitoshi Harada)
+        Improve pretty printing of view definitions (Andrew Dunstan)
        </para>
       </listitem>
 
@@ -1856,7 +1843,7 @@
       <listitem>
        <para>
         Have the information schema show default privileges (Peter
-        Eisentraut, Abhijit Menon-Sen)
+        Eisentraut)
        </para>
 
        <para>
@@ -1882,15 +1869,14 @@
       <listitem>
        <para>
         Allow the PL/pgSQL <command>OPEN</> cursor command to supply
-        parameters by name (Yeb Havinga, Kevin Grittner, Tom Lane)
+        parameters by name (Yeb Havinga)
        </para>
       </listitem>
 
       <listitem>
        <para>
         Add a <command>GET STACKED DIAGNOSTICS</command> PL/pgSQL command
-        to retrieve exception info (Pavel Stehule, Shigeru Hanada,
-        David Wheeler)
+        to retrieve exception info (Pavel Stehule)
        </para>
       </listitem>
 
@@ -1911,7 +1897,7 @@
       <listitem>
        <para>
         Output the function signature, not just the name, in PL/pgSQL
-        error messages (Pavel Stehule, Abhijit Menon-Sen, Tom Lane)
+        error messages (Pavel Stehule)
        </para>
       </listitem>
 
@@ -1943,7 +1929,7 @@
       <listitem>
        <para>
         Add PL/Python <acronym>SPI</acronym> cursor support (Jan
-        Urbanski, Steve Singer)
+        Urbanski)
        </para>
 
        <para>
@@ -1953,8 +1939,7 @@
 
       <listitem>
        <para>
-        Add result metadata functions to PL/Python (Peter Eisentraut,
-        Abhijit Menon-Sen)
+        Add result metadata functions to PL/Python (Peter Eisentraut)
        </para>
 
        <para>
@@ -1974,7 +1959,7 @@
       <listitem>
        <para>
         Allow <acronym>SQL</acronym>-language functions to reference
-        parameters by name (Matthew Draper, Hitoshi Harada)
+        parameters by name (Matthew Draper)
        </para>
 
        <para>
@@ -1997,7 +1982,7 @@
        <para>
         Add <link linkend="APP-INITDB"><application>initdb</></link>
         options <option>--auth-local</> and <option>--auth-host</>
-        (Peter Eisentraut, Pavel Stehule)
+        (Peter Eisentraut)
        </para>
 
        <para>
@@ -2011,8 +1996,7 @@
        <para>
         Add <option>--replication</>/<option>--no-replication</> flags to
         <link linkend="APP-CREATEUSER"><application>createuser</></link>
-        to control replication permission (Fujii Masao, C&eacute;dric
-        Villemain)
+        to control replication permission (Fujii Masao)
        </para>
       </listitem>
 
@@ -2043,7 +2027,7 @@
       <listitem>
        <para>
         Add <application>psql</> mode to auto-expand output based on the
-        display width (Peter Eisentraut, Noah Misch)
+        display width (Peter Eisentraut)
        </para>
 
        <para>
@@ -2057,7 +2041,7 @@
        <para>
         Allow inclusion of <application>psql</> files relative to the
         directory of the input file from which it was invoked (Gurjeet
-        Singh, Josh Kupershmidt)
+        Singh)
        </para>
 
        <para>
@@ -2100,8 +2084,7 @@
       <listitem>
        <para>
         Add a <application>psql</> <command>\setenv</> command to modify
-        the environment variables used by child processes (Andrew Dunstan,
-        Josh Kupershmidt)
+        the environment variables used by child processes (Andrew Dunstan)
        </para>
 
        <para>
@@ -2119,7 +2102,7 @@
       <listitem>
        <para>
         Allows <application>psql</> to use zero-byte field and record
-        separators (Peter Eisentraut, Abhijit Menon-Sen)
+        separators (Peter Eisentraut)
        </para>
 
        <para>
@@ -2240,14 +2223,14 @@
         In <application>psql</> tab completion,
         complete <acronym>SQL</acronym> keywords based on
         <varname>COMP_KEYWORD_CASE</> setting and the perhaps case of
-        the partially-supplied word (Peter Eisentraut, Fujii Masao)
+        the partially-supplied word (Peter Eisentraut)
        </para>
       </listitem>
 
       <listitem>
        <para>
         Add <application>psql</> tab completion support for
-        <command>EXECUTE</command> (Andreas Karlsson, Josh Kupershmidt)
+        <command>EXECUTE</command> (Andreas Karlsson)
        </para>
       </listitem>
 
@@ -2255,7 +2238,7 @@
        <para>
         Allow tab completion of role references in
         <command>GRANT</command>/<command>REVOKE</command> (Peter
-        Eisentraut, Pavel Stehule)
+        Eisentraut)
        </para>
       </listitem>
 
@@ -2297,7 +2280,7 @@
       <listitem>
        <para>
         Add a <option>--section</> option to <application>pg_dump</>
-        and <application>pg_restore</> (Andrew Dunstan, Joachim Wieland)
+        and <application>pg_restore</> (Andrew Dunstan)
        </para>
 
        <para>
@@ -2393,7 +2376,7 @@
       <listitem>
        <para>
         Add a row processor <acronym>API</acronym> to libpq for better
-        handling of large result sets (Kyotaro Horiguchi, Marko Kreen)
+        handling of large result sets (Kyotaro Horiguchi)
        </para>
 
        <para>
@@ -2406,14 +2389,14 @@
        <para>
         Enhance <literal>const</> qualifiers in the libpq functions
         PQconnectdbParams, PQconnectStartParams, and PQpingParams (Lionel
-        Elie Mamane, Craig Ringer)
+        Elie Mamane)
        </para>
       </listitem>
 
       <listitem>
        <para>
         Allow libpq's <filename>.pgpass</> file to process escaped characters
-        in the password field (Robert Haas, Ross Reedstrom)
+        in the password field (Robert Haas)
        </para>
       </listitem>
 
@@ -2448,14 +2431,13 @@
       <listitem>
        <para>
         Add support for building with <link linkend="install-windows">MS
-        Visual Studio 2010</link> (Brar Piening, Craig Ringer)
+        Visual Studio 2010</link> (Brar Piening)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Enable compiling with the MinGW-w64 32-bit compiler (Lars Kanis,
-        Nishiyama Tomoaki)
+        Enable compiling with the MinGW-w64 32-bit compiler (Lars Kanis)
        </para>
       </listitem>
 
@@ -2475,7 +2457,7 @@
       <listitem>
        <para>
         Improve the concurrent transaction regression tests
-        (isolationtester) (Noah Misch, Alexander Shulgin)
+        (isolationtester) (Noah Misch)
        </para>
       </listitem>
 
@@ -2488,8 +2470,7 @@
 
       <listitem>
        <para>
-        Improve flex and bison warning and error reporting (Tom Lane,
-        Noah Misch)
+        Improve flex and bison warning and error reporting (Tom Lane)
        </para>
       </listitem>
 
@@ -2512,7 +2493,7 @@
       <listitem>
        <para>
         Add a hook for processing messages due to be sent to the server
-        log (Martin Pihlak, Marti Raudsepp)
+        log (Martin Pihlak)
        </para>
       </listitem>
 
@@ -2546,7 +2527,7 @@
       <listitem>
        <para>
         Move <acronym>CRC</acronym> tables to libpgport, and provide them
-        in a separate include file (Daniel Farina, Abhijit Menon-Sen)
+        in a separate include file (Daniel Farina)
        </para>
       </listitem>
 
@@ -2581,7 +2562,7 @@
        <para>
         Improve efficiency of <link linkend="dblink">dblink</link> by
         using libpq's new row processor <acronym>API</acronym> (Kyotaro
-        Horiguchi, Marko Kreen)
+        Horiguchi)
        </para>
 
        <para>
@@ -2602,7 +2583,7 @@
        <para>
         Implement dry-run mode for <link
         linkend="pgarchivecleanup"><application>pg_archivecleanup</></link>
-        (Gabriele Bartolini, Josh Kupershmidt)
+        (Gabriele Bartolini)
        </para>
 
        <para>
@@ -2621,8 +2602,7 @@
       <listitem>
        <para>
         Have <link linkend="vacuumlo">vacuumlo</link> remove large objects
-        in batches, to reduce locking (Tim Lewis, Josh Kupershmidt,
-        Tom Lane)
+        in batches, to reduce locking (Tim Lewis, Tom Lane)
        </para>
 
        <para>
@@ -2770,7 +2750,7 @@
       <listitem>
        <para>
         Improve <application>pg_stat_statements</> to aggregate similar
-        queries (Peter Geoghegan, Daniel Farina, Tom Lane)
+        queries (Tom Lane, Peter Geoghegan)
        </para>
       </listitem>
 
@@ -2785,8 +2765,7 @@
       <listitem>
        <para>
         Add dirtied and written block counts to
-        <application>pg_stat_statements</> (Robert Haas, Fujii Masao,
-        Greg Smith)
+        <application>pg_stat_statements</> (Robert Haas)
        </para>
       </listitem>
 
@@ -2800,8 +2779,8 @@
      <itemizedlist>
       <listitem>
        <para>
-        Support <literal>SECURITY LABEL</> on global objects (KaiGai Kohei,
-        Robert Haas)
+        Support <literal>SECURITY LABEL</> on global objects (KaiGai
+        Kohei, Robert Haas)
        </para>
 
        <para>
@@ -2819,14 +2798,14 @@
       <listitem>
        <para>
         Perform sepgsql permission checks during the creation of various
-        objects (KaiGai Kohei, Dimitri Fontaine)
+        objects (KaiGai Kohei)
        </para>
       </listitem>
 
       <listitem>
        <para>
         Add <function>sepgsql_setcon()</> and related functions to control
-        the sepgsql security domain (KaiGai Kohei, Yeb Havinga)
+        the sepgsql security domain (KaiGai Kohei)
        </para>
       </listitem>
 
@@ -2875,7 +2854,7 @@
       <listitem>
        <para>
         Improve the foreign data wrapper <acronym>API</acronym> and
-        documentation (Hanada Shigeru, KaiGai Kohei)
+        documentation (Hanada Shigeru)
        </para>
       </listitem>
 
