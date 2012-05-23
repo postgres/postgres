@@ -520,7 +520,8 @@
 
       <listitem>
        <para>
-        Improve GiST index build times (Alexander Korotkov)
+        Improve GiST index build times (Alexander Korotkov, Heikki
+        Linnakangas)
        </para>
       </listitem>
 
@@ -1559,7 +1560,7 @@
       <listitem>
        <para>
         Add support for <link linkend="rangetypes">range data types</link>
-        (Jeff Davis, Tom Lane)
+        (Jeff Davis, Tom Lane, Alexander Korotkov)
        </para>
 
        <para>
