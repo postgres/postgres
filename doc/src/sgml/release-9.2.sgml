@@ -534,7 +534,7 @@
 
       <listitem>
        <para>
-        Have the number of clog buffer count scale based on <link
+        Have the number of clog buffers scale based on <link
         linkend="guc-shared-buffers"><varname>shared_buffers</></link>
         (Robert Haas, Simon Riggs, Tom Lane)
        </para>
