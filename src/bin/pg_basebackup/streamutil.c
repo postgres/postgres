@@ -167,6 +167,7 @@ GetConnection(void)
 		{
 			fprintf(stderr, _("%s: could not determine server setting for integer_datetimes\n"),
 					progname);
+			PQfinish(tmpconn);
 			exit(1);
 		}
 
@@ -178,6 +179,7 @@ GetConnection(void)
 		{
 			fprintf(stderr, _("%s: integer_datetimes compile flag does not match server\n"),
 					progname);
+			PQfinish(tmpconn);
 			exit(1);
 		}
 
