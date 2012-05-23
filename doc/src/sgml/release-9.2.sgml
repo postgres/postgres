@@ -2751,7 +2751,7 @@
       <listitem>
        <para>
         Improve <application>pg_stat_statements</> to aggregate similar
-        queries (Tom Lane, Peter Geoghegan)
+        queries (Peter Geoghegan, Tom Lane)
        </para>
       </listitem>
 
