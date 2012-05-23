@@ -483,7 +483,7 @@ RestoreWALFileForRecovery(void)
 
 	if (debug)
 	{
-		fprintf(stderr, "running restore		:");
+		fprintf(stderr, "running restore:      ");
 		fflush(stderr);
 	}
 
@@ -494,7 +494,7 @@ RestoreWALFileForRecovery(void)
 		{
 			if (debug)
 			{
-				fprintf(stderr, " OK\n");
+				fprintf(stderr, "OK\n");
 				fflush(stderr);
 			}
 			return true;
