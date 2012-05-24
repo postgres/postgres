@@ -1907,22 +1907,6 @@
     </sect4>
 
     <sect4>
-     <title><link linkend="plperl">PL/Perl</link> Server-Side Language</title>
-
-     <itemizedlist>
-
-      <listitem>
-       <para>
-        Properly handle empty arrays returned by PL/Perl functions
-        (Andrew Dunstan) DETAILS?
-       </para>
-      </listitem>
-
-     </itemizedlist>
-
-    </sect4>
-
-    <sect4>
      <title><link linkend="plpython">PL/Python</link> Server-Side Language</title>
 
      <itemizedlist>
