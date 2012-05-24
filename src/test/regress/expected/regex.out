@@ -71,3 +71,22 @@ select 'abc abc abd' ~ '^(.+)( \1)+$' as f;
  f
 (1 row)
 
+-- Test some cases that crashed in 9.2beta1 due to pmatch[] array overrun
+select substring('asd TO foo' from ' TO (([a-z0-9._]+|"([^"]+|"")+")+)');
+ substring 
+-----------
+ foo
+(1 row)
+
+select substring('a' from '((a))+');
+ substring 
+-----------
+ a
+(1 row)
+
+select substring('a' from '((a)+)');
+ substring 
+-----------
+ a
+(1 row)
+

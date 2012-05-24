@@ -531,9 +531,14 @@ zaptreesubs(struct vars * v,
 {
 	if (t->op == '(')
 	{
-		assert(t->subno > 0);
-		v->pmatch[t->subno].rm_so = -1;
-		v->pmatch[t->subno].rm_eo = -1;
+		int		n = t->subno;
+
+		assert(n > 0);
+		if ((size_t) n < v->nmatch)
+		{
+			v->pmatch[n].rm_so = -1;
+			v->pmatch[n].rm_eo = -1;
+		}
 	}
 
 	if (t->left != NULL)
@@ -543,7 +548,7 @@ zaptreesubs(struct vars * v,
 }
 
 /*
- * subset - set any subexpression relevant to a successful subre
+ * subset - set subexpression match data for a successful subre
  */
 static void
 subset(struct vars * v,

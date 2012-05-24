@@ -19,3 +19,8 @@ select 'abc abc abd' ~ '^(\w+)( \1)+$' as f;
 select 'abc abc abc' ~ '^(.+)( \1)+$' as t;
 select 'abc abd abc' ~ '^(.+)( \1)+$' as f;
 select 'abc abc abd' ~ '^(.+)( \1)+$' as f;
+
+-- Test some cases that crashed in 9.2beta1 due to pmatch[] array overrun
+select substring('asd TO foo' from ' TO (([a-z0-9._]+|"([^"]+|"")+")+)');
+select substring('a' from '((a))+');
+select substring('a' from '((a)+)');
