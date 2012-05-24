@@ -2741,15 +2741,15 @@
 
       <listitem>
        <para>
-        Add dirtied and written block counts to
-        <application>pg_stat_statements</> (Robert Haas)
+        Add dirtied and written block counts and read/write times to
+        <application>pg_stat_statements</> (Robert Haas, Ants Aasma)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Improve <application>pg_stat_statements</>' handling of
-        <command>PREPARE</command>/<command>EXECUTE</command> statements
+        Prevent <application>pg_stat_statements</> from double-counting
+        <command>PREPARE</command> and <command>EXECUTE</command> commands
         (Tom Lane)
        </para>
       </listitem>
