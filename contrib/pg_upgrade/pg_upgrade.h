@@ -40,7 +40,6 @@
 #define UTILITY_LOG_FILE	"pg_upgrade_utility.log"
 #define INTERNAL_LOG_FILE	"pg_upgrade_internal.log"
 
-#define NUM_LOG_FILES		4
 extern char *output_files[];
 
 /*
@@ -49,8 +48,10 @@ extern char *output_files[];
  * On Win32, we can't send both pg_upgrade output and command output to the
  * same file because we get the error: "The process cannot access the file
  * because it is being used by another process." so send the pg_ctl
- * command-line output to the utility log file on Windows, rather than
- * into the server log file.
+ * command-line output to a new file, rather than into the server log file.
+ * Ideally we could use UTILITY_LOG_FILE for this, but some Windows platforms
+ * keep the pg_ctl output file open even after pg_ctl exits, perhaps by the
+ * running postmaster.
  *
  * We could use the Windows pgwin32_open() flags to allow shared file
  * writes but is unclear how all other tools would use those flags, so
@@ -60,7 +61,7 @@ extern char *output_files[];
 #ifndef WIN32
 #define SERVER_LOG_FILE2	SERVER_LOG_FILE
 #else
-#define SERVER_LOG_FILE2	UTILITY_LOG_FILE
+#define SERVER_LOG_FILE2	"pg_upgrade_server2.log"
 #endif
 
 

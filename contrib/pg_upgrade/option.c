@@ -57,7 +57,7 @@ parseCommandLine(int argc, char *argv[])
 	int			optindex = 0;	/* used by getopt_long */
 	int			os_user_effective_id;
 	FILE		*fp;
-	int			i;
+	char		**filename;
 	time_t		run_time = time(NULL);
 	
 	user_opts.transfer_mode = TRANSFER_MODE_COPY;
@@ -188,11 +188,12 @@ parseCommandLine(int argc, char *argv[])
 	}
 
 	/* label start of upgrade in logfiles */
-	for (i = 0; i < NUM_LOG_FILES; i++)
+	for (filename = output_files; *filename != NULL; filename++)
 	{
-		if ((fp = fopen_priv(output_files[i], "a")) == NULL)
-			pg_log(PG_FATAL, "cannot write to log file %s\n",
-				   output_files[i]);
+		if ((fp = fopen_priv(*filename, "a")) == NULL)
+			pg_log(PG_FATAL, "cannot write to log file %s\n", *filename);
+
+		/* Start with newline because we might be appending to a file. */
 		fprintf(fp, "\n"
 		"-----------------------------------------------------------------\n"
 		"  pg_upgrade run on %s"
