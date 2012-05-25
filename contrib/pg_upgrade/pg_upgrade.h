@@ -50,8 +50,8 @@ extern char *output_files[];
  * because it is being used by another process." so send the pg_ctl
  * command-line output to a new file, rather than into the server log file.
  * Ideally we could use UTILITY_LOG_FILE for this, but some Windows platforms
- * keep the pg_ctl output file open even after pg_ctl exits, perhaps by the
- * running postmaster.
+ * keep the pg_ctl output file open by the running postmaster, even after
+ * pg_ctl exits.
  *
  * We could use the Windows pgwin32_open() flags to allow shared file
  * writes but is unclear how all other tools would use those flags, so
@@ -59,9 +59,11 @@ extern char *output_files[];
  * the error message appropriately.
  */
 #ifndef WIN32
-#define SERVER_LOG_FILE2	SERVER_LOG_FILE
+#define SERVER_START_LOG_FILE	SERVER_LOG_FILE
+#define SERVER_STOP_LOG_FILE	SERVER_LOG_FILE
 #else
-#define SERVER_LOG_FILE2	"pg_upgrade_server2.log"
+#define SERVER_START_LOG_FILE	"pg_upgrade_server_start.log"
+#define SERVER_STOP_LOG_FILE	"pg_upgrade_server_stop.log"
 #endif
 
 

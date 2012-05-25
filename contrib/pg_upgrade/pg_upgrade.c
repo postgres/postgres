@@ -58,8 +58,8 @@ OSInfo		os_info;
 char *output_files[] = {
 	SERVER_LOG_FILE,
 #ifdef WIN32
-	/* file is unique on Win32 */
-	SERVER_LOG_FILE2,
+	SERVER_START_LOG_FILE,
+	SERVER_STOP_LOG_FILE,
 #endif
 	RESTORE_LOG_FILE,
 	UTILITY_LOG_FILE,

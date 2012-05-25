@@ -165,7 +165,7 @@ start_postmaster(ClusterInfo *cluster)
 			 (cluster->controldata.cat_ver >=
 			  BINARY_UPGRADE_SERVER_FLAG_CAT_VER) ? "-b" :
 			 "-c autovacuum=off -c autovacuum_freeze_max_age=2000000000",
-			 cluster->pgopts ? cluster->pgopts : "", SERVER_LOG_FILE2);
+			 cluster->pgopts ? cluster->pgopts : "", SERVER_START_LOG_FILE);
 
 	/*
 	 * Don't throw an error right away, let connecting throw the error because
@@ -173,9 +173,9 @@ start_postmaster(ClusterInfo *cluster)
 	 */
 	pg_ctl_return = exec_prog(false, true,
 					/* pass both file names if the differ */
-					(strcmp(SERVER_LOG_FILE, SERVER_LOG_FILE2) == 0) ?
+					(strcmp(SERVER_LOG_FILE, SERVER_START_LOG_FILE) == 0) ?
 						SERVER_LOG_FILE :
-						SERVER_LOG_FILE " or " SERVER_LOG_FILE2,
+						SERVER_LOG_FILE " or " SERVER_START_LOG_FILE,
 					"%s", cmd);
 
 	/* Check to see if we can connect to the server; if not, report it. */
@@ -214,13 +214,13 @@ stop_postmaster(bool fast)
 		return;		/* no cluster running */
 
 	snprintf(cmd, sizeof(cmd),
-			 SYSTEMQUOTE "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" -o \"%s\" "
+			 SYSTEMQUOTE "\"%s/pg_ctl\" -w -D \"%s\" -o \"%s\" "
 			 "%s stop >> \"%s\" 2>&1" SYSTEMQUOTE,
-			 cluster->bindir, SERVER_LOG_FILE2, cluster->pgconfig,
+			 cluster->bindir, cluster->pgconfig,
 			 cluster->pgopts ? cluster->pgopts : "",
-			fast ? "-m fast" : "", SERVER_LOG_FILE2);
+			fast ? "-m fast" : "", SERVER_STOP_LOG_FILE);
 
-	exec_prog(fast ? false : true, true, SERVER_LOG_FILE2, "%s", cmd);
+	exec_prog(fast ? false : true, true, SERVER_STOP_LOG_FILE, "%s", cmd);
 
 	os_info.running_cluster = NULL;
 }
