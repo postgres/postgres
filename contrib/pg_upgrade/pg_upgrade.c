@@ -58,8 +58,8 @@ OSInfo		os_info;
 char *output_files[] = {
 	SERVER_LOG_FILE,
 #ifdef WIN32
+	/* unique file for pg_ctl start */
 	SERVER_START_LOG_FILE,
-	SERVER_STOP_LOG_FILE,
 #endif
 	RESTORE_LOG_FILE,
 	UTILITY_LOG_FILE,
