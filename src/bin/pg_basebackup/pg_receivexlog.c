@@ -43,7 +43,7 @@ volatile bool time_to_abort = false;
 static void usage(void);
 static XLogRecPtr FindStreamingStart(XLogRecPtr currentpos, uint32 currenttimeline);
 static void StreamLog();
-static bool segment_callback(XLogRecPtr segendpos, uint32 timeline);
+static bool stop_streaming(XLogRecPtr segendpos, uint32 timeline, bool segment_finished);
 
 static void
 usage(void)
@@ -69,21 +69,12 @@ usage(void)
 }
 
 static bool
-segment_callback(XLogRecPtr segendpos, uint32 timeline)
+stop_streaming(XLogRecPtr segendpos, uint32 timeline, bool segment_finished)
 {
-	if (verbose)
+	if (verbose && segment_finished)
 		fprintf(stderr, _("%s: finished segment at %X/%X (timeline %u)\n"),
 				progname, segendpos.xlogid, segendpos.xrecoff, timeline);
 
-	/*
-	 * Never abort from this - we handle all aborting in continue_streaming()
-	 */
-	return false;
-}
-
-static bool
-continue_streaming(void)
-{
 	if (time_to_abort)
 	{
 		fprintf(stderr, _("%s: received interrupt signal, exiting.\n"),
@@ -268,8 +259,8 @@ StreamLog(void)
 				progname, startpos.xlogid, startpos.xrecoff, timeline);
 
 	ReceiveXlogStream(conn, startpos, timeline, NULL, basedir,
-					  segment_callback, continue_streaming,
-					  standby_message_timeout);
+					  stop_streaming,
+					  standby_message_timeout, false);
 
 	PQfinish(conn);
 }

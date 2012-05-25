@@ -113,8 +113,14 @@ open_walfile(XLogRecPtr startpoint, uint32 timeline, char *basedir, char *namebu
 	return f;
 }
 
+/*
+ * Close the current WAL file, and rename it to the correct filename if it's complete.
+ *
+ * If segment_complete is true, rename the current WAL file even if we've not
+ * completed writing the whole segment.
+ */
 static bool
-close_walfile(int walfile, char *basedir, char *walname)
+close_walfile(int walfile, char *basedir, char *walname, bool segment_complete)
 {
 	off_t		currpos = lseek(walfile, 0, SEEK_CUR);
 
@@ -141,9 +147,9 @@ close_walfile(int walfile, char *basedir, char *walname)
 
 	/*
 	 * Rename the .partial file only if we've completed writing the
-	 * whole segment.
+	 * whole segment or segment_complete is true.
 	 */
-	if (currpos == XLOG_SEG_SIZE)
+	if (currpos == XLOG_SEG_SIZE || segment_complete)
 	{
 		char		oldfn[MAXPGPATH];
 		char		newfn[MAXPGPATH];
@@ -199,11 +205,10 @@ localGetCurrentTimestamp(void)
  * All received segments will be written to the directory
  * specified by basedir.
  *
- * The segment_finish callback will be called after each segment
- * has been finished, and the stream_continue callback will be
- * called every time data is received. If either of these callbacks
- * return true, the streaming will stop and the function
- * return. As long as they return false, streaming will continue
+ * The stream_stop callback will be called every time data
+ * is received, and whenever a segment is completed. If it returns
+ * true, the streaming will stop and the function
+ * return. As long as it returns false, streaming will continue
  * indefinitely.
  *
  * standby_message_timeout controls how often we send a message
@@ -214,7 +219,7 @@ localGetCurrentTimestamp(void)
  * Note: The log position *must* be at a log segment start!
  */
 bool
-ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysidentifier, char *basedir, segment_finish_callback segment_finish, stream_continue_callback stream_continue, int standby_message_timeout)
+ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysidentifier, char *basedir, stream_stop_callback stream_stop, int standby_message_timeout, bool rename_partial)
 {
 	char		query[128];
 	char		current_walfile_name[MAXPGPATH];
@@ -288,11 +293,11 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysi
 		/*
 		 * Check if we should continue streaming, or abort at this point.
 		 */
-		if (stream_continue && stream_continue())
+		if (stream_stop && stream_stop(blockpos, timeline, false))
 		{
 			if (walfile != -1)
 				/* Potential error message is written by close_walfile */
-				return close_walfile(walfile, basedir, current_walfile_name);
+				return close_walfile(walfile, basedir, current_walfile_name, rename_partial);
 			return true;
 		}
 
@@ -486,20 +491,20 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysi
 			/* Did we reach the end of a WAL segment? */
 			if (blockpos.xrecoff % XLOG_SEG_SIZE == 0)
 			{
-				if (!close_walfile(walfile, basedir, current_walfile_name))
+				if (!close_walfile(walfile, basedir, current_walfile_name, false))
 					/* Error message written in close_walfile() */
 					return false;
 
 				walfile = -1;
 				xlogoff = 0;
 
-				if (segment_finish != NULL)
+				if (stream_stop != NULL)
 				{
 					/*
 					 * Callback when the segment finished, and return if it
 					 * told us to.
 					 */
-					if (segment_finish(blockpos, timeline))
+					if (stream_stop(blockpos, timeline, true))
 						return true;
 				}
 			}

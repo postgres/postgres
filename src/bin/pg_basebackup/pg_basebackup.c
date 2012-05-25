@@ -78,7 +78,7 @@ static void ReceiveTarFile(PGconn *conn, PGresult *res, int rownum);
 static void ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum);
 static void BaseBackup(void);
 
-static bool segment_callback(XLogRecPtr segendpos, uint32 timeline);
+static bool reached_end_position(XLogRecPtr segendpos, uint32 timeline, bool segment_finished);
 
 #ifdef HAVE_LIBZ
 static const char *
@@ -129,8 +129,7 @@ usage(void)
 
 
 /*
- * Called in the background process whenever a complete segment of WAL
- * has been received.
+ * Called in the background process every time data is received.
  * On Unix, we check to see if there is any data on our pipe
  * (which would mean we have a stop position), and if it is, check if
  * it is time to stop.
@@ -138,7 +137,7 @@ usage(void)
  * time to stop.
  */
 static bool
-segment_callback(XLogRecPtr segendpos, uint32 timeline)
+reached_end_position(XLogRecPtr segendpos, uint32 timeline, bool segment_finished)
 {
 	if (!has_xlogendptr)
 	{
@@ -231,7 +230,7 @@ LogStreamerMain(logstreamer_param * param)
 {
 	if (!ReceiveXlogStream(param->bgconn, param->startptr, param->timeline,
 						   param->sysidentifier, param->xlogdir,
-						   segment_callback, NULL, standby_message_timeout))
+						   reached_end_position, standby_message_timeout, true))
 
 		/*
 		 * Any errors will already have been reported in the function process,
