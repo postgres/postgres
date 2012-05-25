@@ -50,14 +50,17 @@ static TableInfo *tblinfo;
 static TypeInfo *typinfo;
 static FuncInfo *funinfo;
 static OprInfo *oprinfo;
+static NamespaceInfo *nspinfo;
 static int	numTables;
 static int	numTypes;
 static int	numFuncs;
 static int	numOperators;
+static int	numNamespaces;
 static DumpableObject **tblinfoindex;
 static DumpableObject **typinfoindex;
 static DumpableObject **funinfoindex;
 static DumpableObject **oprinfoindex;
+static DumpableObject **nspinfoindex;
 
 
 static void flagInhTables(TableInfo *tbinfo, int numTables,
@@ -78,7 +81,6 @@ static int	strInArray(const char *pattern, char **arr, int arr_size);
 TableInfo *
 getSchemaData(int *numTablesPtr)
 {
-	NamespaceInfo *nsinfo;
 	AggInfo    *agginfo;
 	InhInfo    *inhinfo;
 	RuleInfo   *ruleinfo;
@@ -93,7 +95,6 @@ getSchemaData(int *numTablesPtr)
 	TSConfigInfo *cfginfo;
 	FdwInfo    *fdwinfo;
 	ForeignServerInfo *srvinfo;
-	int			numNamespaces;
 	int			numAggregates;
 	int			numInherits;
 	int			numRules;
@@ -111,7 +112,8 @@ getSchemaData(int *numTablesPtr)
 
 	if (g_verbose)
 		write_msg(NULL, "reading schemas\n");
-	nsinfo = getNamespaces(&numNamespaces);
+	nspinfo = getNamespaces(&numNamespaces);
+	nspinfoindex = buildIndexArray(nspinfo, numNamespaces, sizeof(NamespaceInfo));
 
 	/*
 	 * getTables should be done as soon as possible, so as to minimize the
@@ -706,6 +708,17 @@ OprInfo *
 findOprByOid(Oid oid)
 {
 	return (OprInfo *) findObjectByOid(oid, oprinfoindex, numOperators);
+}
+
+/*
+ * findNamespaceByOid
+ *	  finds the entry (in nspinfo) of the namespace with the given oid
+ *	  returns NULL if not found
+ */
+NamespaceInfo *
+findNamespaceByOid(Oid oid)
+{
+	return (NamespaceInfo *) findObjectByOid(oid, nspinfoindex, numNamespaces);
 }
 
 
