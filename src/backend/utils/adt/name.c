@@ -46,13 +46,17 @@ Datum
 namein(PG_FUNCTION_ARGS)
 {
 	char	   *s = PG_GETARG_CSTRING(0);
-	NameData   *result;
+	Name		result;
 	int			len;
 
 	len = strlen(s);
-	len = pg_mbcliplen(s, len, NAMEDATALEN - 1);
 
-	result = (NameData *) palloc0(NAMEDATALEN);
+	/* Truncate oversize input */
+	if (len >= NAMEDATALEN)
+		len = pg_mbcliplen(s, len, NAMEDATALEN - 1);
+
+	/* We use palloc0 here to ensure result is zero-padded */
+	result = (Name) palloc0(NAMEDATALEN);
 	memcpy(NameStr(*result), s, len);
 
 	PG_RETURN_NAME(result);
