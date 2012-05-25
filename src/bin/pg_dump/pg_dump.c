@@ -126,10 +126,6 @@ char		g_comment_end[10];
 
 static const CatalogId nilCatalogId = {0, 0};
 
-/* these are to avoid passing around info for findNamespace() */
-static NamespaceInfo *g_namespaces;
-static int	g_numNamespaces;
-
 /* flags for various command-line long options */
 static int	binary_upgrade = 0;
 static int	disable_dollar_quoting = 0;
@@ -2619,8 +2615,7 @@ getNamespaces(int *numNamespaces)
 
 		selectDumpableNamespace(&nsinfo[1]);
 
-		g_namespaces = nsinfo;
-		g_numNamespaces = *numNamespaces = 2;
+		*numNamespaces = 2;
 
 		return nsinfo;
 	}
@@ -2673,8 +2668,7 @@ getNamespaces(int *numNamespaces)
 	PQclear(res);
 	destroyPQExpBuffer(query);
 
-	g_namespaces = nsinfo;
-	g_numNamespaces = *numNamespaces = ntups;
+	*numNamespaces = ntups;
 
 	return nsinfo;
 }
@@ -2685,36 +2679,37 @@ getNamespaces(int *numNamespaces)
  *		getNamespaces
  *
  * NB: for pre-7.3 source database, we use object OID to guess whether it's
- * a system object or not.	In 7.3 and later there is no guessing.
+ * a system object or not.	In 7.3 and later there is no guessing, and we
+ * don't use objoid at all.
  */
 static NamespaceInfo *
 findNamespace(Oid nsoid, Oid objoid)
 {
-	int			i;
+	NamespaceInfo *nsinfo;
 
 	if (g_fout->remoteVersion >= 70300)
 	{
-		for (i = 0; i < g_numNamespaces; i++)
-		{
-			NamespaceInfo *nsinfo = &g_namespaces[i];
-
-			if (nsoid == nsinfo->dobj.catId.oid)
-				return nsinfo;
-		}
-		write_msg(NULL, "schema with OID %u does not exist\n", nsoid);
-		exit_nicely();
+		nsinfo = findNamespaceByOid(nsoid);
 	}
 	else
 	{
-		/* This code depends on the layout set up by getNamespaces. */
+		/* This code depends on the dummy objects set up by getNamespaces. */
+		Oid		i;
+
 		if (objoid > g_last_builtin_oid)
 			i = 0;				/* user object */
 		else
 			i = 1;				/* system object */
-		return &g_namespaces[i];
+		nsinfo = findNamespaceByOid(i);
 	}
 
-	return NULL;				/* keep compiler quiet */
+	if (nsinfo == NULL)
+	{
+		write_msg(NULL, "schema with OID %u does not exist\n", nsoid);
+		exit_nicely();
+	}
+
+	return nsinfo;
 }
 
 /*
