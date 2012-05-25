@@ -371,9 +371,9 @@ bpchar_name(PG_FUNCTION_ARGS)
 	len = VARSIZE_ANY_EXHDR(s);
 	s_data = VARDATA_ANY(s);
 
-	/* Truncate to max length for a Name */
+	/* Truncate oversize input */
 	if (len >= NAMEDATALEN)
-		len = NAMEDATALEN - 1;
+		len = pg_mbcliplen(s_data, len, NAMEDATALEN - 1);
 
 	/* Remove trailing blanks */
 	while (len > 0)
@@ -383,15 +383,9 @@ bpchar_name(PG_FUNCTION_ARGS)
 		len--;
 	}
 
-	result = (NameData *) palloc(NAMEDATALEN);
+	/* We use palloc0 here to ensure result is zero-padded */
+	result = (Name) palloc0(NAMEDATALEN);
 	memcpy(NameStr(*result), s_data, len);
-
-	/* Now null pad to full length... */
-	while (len < NAMEDATALEN)
-	{
-		*(NameStr(*result) + len) = '\0';
-		len++;
-	}
 
 	PG_RETURN_NAME(result);
 }
