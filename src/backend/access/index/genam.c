@@ -291,7 +291,16 @@ systable_beginscan(Relation heapRelation,
 	}
 	else
 	{
-		sysscan->scan = heap_beginscan(heapRelation, snapshot, nkeys, key);
+		/*
+		 * We disallow synchronized scans when forced to use a heapscan on a
+		 * catalog.  In most cases the desired rows are near the front, so
+		 * that the unpredictable start point of a syncscan is a serious
+		 * disadvantage; and there are no compensating advantages, because
+		 * it's unlikely that such scans will occur in parallel.
+		 */
+		sysscan->scan = heap_beginscan_strat(heapRelation, snapshot,
+											 nkeys, key,
+											 true, false);
 		sysscan->iscan = NULL;
 	}
 
