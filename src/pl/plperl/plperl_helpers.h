@@ -64,7 +64,7 @@ sv2cstr(SV *sv)
 	else
 		/* increase the reference count so we can just SvREFCNT_dec() it when
 		 * we are done */
-		SvREFCNT_inc(sv);
+		SvREFCNT_inc_simple_void(sv);
 
 	val = SvPVutf8(sv, len);
 
