@@ -142,7 +142,12 @@ get_loadable_libraries(void)
 		DbInfo	   *active_db = &old_cluster.dbarr.dbs[dbnum];
 		PGconn	   *conn = connectToServer(&old_cluster, active_db->db_name);
 
-		/* Fetch all libraries referenced in this DB */
+		/*
+		 *	Fetch all libraries referenced in this DB.  We can't exclude
+		 *	the "pg_catalog" schema because, while such functions are not
+		 *	explicitly dumped by pg_dump, they do reference implicit objects
+		 *	that pg_dump does dump, e.g. creation of the plperl language.
+		 */
 		ress[dbnum] = executeQueryOrDie(conn,
 										"SELECT DISTINCT probin "
 										"FROM	pg_catalog.pg_proc "
