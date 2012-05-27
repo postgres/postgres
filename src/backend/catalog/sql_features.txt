@@ -84,7 +84,7 @@ E071	Basic query expressions	02	UNION ALL table operator	YES
 E071	Basic query expressions	03	EXCEPT DISTINCT table operator	YES	
 E071	Basic query expressions	05	Columns combined via table operators need not have exactly the same data type	YES	
 E071	Basic query expressions	06	Table operators in subqueries	YES	
-E081	Basic Privileges			NO	
+E081	Basic Privileges			YES	
 E081	Basic Privileges	01	SELECT privilege	YES	
 E081	Basic Privileges	02	DELETE privilege	YES	
 E081	Basic Privileges	03	INSERT privilege at the table level	YES	
@@ -93,7 +93,7 @@ E081	Basic Privileges	05	UPDATE privilege at the column level	YES
 E081	Basic Privileges	06	REFERENCES privilege at the table level	YES	
 E081	Basic Privileges	07	REFERENCES privilege at the column level	YES	
 E081	Basic Privileges	08	WITH GRANT OPTION	YES	
-E081	Basic Privileges	09	USAGE privilege	NO	
+E081	Basic Privileges	09	USAGE privilege	YES	
 E081	Basic Privileges	10	EXECUTE privilege	YES	
 E091	Set functions			YES	
 E091	Set functions	01	AVG	YES	
