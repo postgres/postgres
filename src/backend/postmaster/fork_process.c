@@ -87,9 +87,11 @@ fork_process(void)
 			if (fd >= 0)
 			{
 				char		buf[16];
+				int			rc;
 
 				snprintf(buf, sizeof(buf), "%d\n", LINUX_OOM_ADJ);
-				(void) write(fd, buf, strlen(buf));
+				rc = write(fd, buf, strlen(buf));
+				(void) rc;
 				close(fd);
 			}
 		}
