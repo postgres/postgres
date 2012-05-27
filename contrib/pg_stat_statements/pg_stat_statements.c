@@ -511,6 +511,13 @@ pgss_shmem_startup(void)
 
 	pfree(buffer);
 	FreeFile(file);
+
+	/*
+	 * Remove the file so it's not included in backups/replication
+	 * slaves, etc. A new file will be written on next shutdown.
+	 */
+	unlink(PGSS_DUMP_FILE);
+
 	return;
 
 error:
@@ -552,7 +559,7 @@ pgss_shmem_shutdown(int code, Datum arg)
 	if (!pgss_save)
 		return;
 
-	file = AllocateFile(PGSS_DUMP_FILE, PG_BINARY_W);
+	file = AllocateFile(PGSS_DUMP_FILE ".tmp", PG_BINARY_W);
 	if (file == NULL)
 		goto error;
 
@@ -578,16 +585,25 @@ pgss_shmem_shutdown(int code, Datum arg)
 		goto error;
 	}
 
+	/*
+	 * Rename file into place, so we atomically replace the old one.
+	 */
+	if (rename(PGSS_DUMP_FILE ".tmp", PGSS_DUMP_FILE) != 0)
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not rename pg_stat_statement file \"%s\": %m",
+						PGSS_DUMP_FILE ".tmp")));
+
 	return;
 
 error:
 	ereport(LOG,
 			(errcode_for_file_access(),
 			 errmsg("could not write pg_stat_statement file \"%s\": %m",
-					PGSS_DUMP_FILE)));
+					PGSS_DUMP_FILE  ".tmp")));
 	if (file)
 		FreeFile(file);
-	unlink(PGSS_DUMP_FILE);
+	unlink(PGSS_DUMP_FILE ".tmp");
 }
 
 /*
