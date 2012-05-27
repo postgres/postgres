@@ -651,10 +651,6 @@ static void
 showVersion(void)
 {
 	puts("psql (PostgreSQL) " PG_VERSION);
-
-#if defined(USE_READLINE)
-	puts(_("contains support for command-line editing"));
-#endif
 }
 
 
