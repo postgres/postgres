@@ -240,6 +240,12 @@ check_loadable_libraries(void)
 		 *	For this case, we could check pg_pltemplate, but that only works
 		 *	for languages, and does not help with function shared objects,
 		 *	so we just do a general fix.
+		 *
+		 *	Some systems have plpython_call_handler() that references
+		 *	"plpython" defined in the "public" schema, causing pg_dump to
+		 *	dump it an generate an error on pg_dumpall restore;  not sure
+		 *	on the cause, see:
+		 *	http://archives.postgresql.org/pgsql-hackers/2012-03/msg01101.php
 		 */
 		if (GET_MAJOR_VERSION(old_cluster.major_version) < 901 &&
 			strcmp(lib, "$libdir/plpython") == 0)
