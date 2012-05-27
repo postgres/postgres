@@ -146,7 +146,7 @@ get_loadable_libraries(void)
 		 *	Fetch all libraries referenced in this DB.  We can't exclude
 		 *	the "pg_catalog" schema because, while such functions are not
 		 *	explicitly dumped by pg_dump, they do reference implicit objects
-		 *	that pg_dump does dump, e.g. creation of the plperl language.
+		 *	that pg_dump does dump, e.g. CREATE LANGUAGE plperl.
 		 */
 		ress[dbnum] = executeQueryOrDie(conn,
 										"SELECT DISTINCT probin "
