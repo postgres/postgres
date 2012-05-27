@@ -58,6 +58,14 @@ PostgreSQL documentation
    configured with <xref linkend="guc-max-wal-senders"> set high enough to
    leave at least one session available for the stream.
   </para>
+
+  <para>
+   If the connection is lost, or if it cannot be initially established,
+   with a non-fatal error, <application>pg_receivexlog</application> will
+   retry the connection indefinitely, and reestablish streaming as soon
+   as possible. To avoid this behavior, use the <literal>-n</literal>
+   parameter.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -86,6 +94,17 @@ PostgreSQL documentation
     The following command-line options control the running of the program.
 
     <variablelist>
+     <varlistentry>
+      <term><option>-n</option></term>
+      <term><option>--noloop</option></term>
+      <listitem>
+       <para>
+        Don't loop on connection errors. Instead, exit right away with
+        an error.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry>
       <term><option>-v</option></term>
       <term><option>--verbose</option></term>

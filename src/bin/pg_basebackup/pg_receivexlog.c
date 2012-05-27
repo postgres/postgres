@@ -33,9 +33,13 @@
 
 #include "getopt_long.h"
 
+/* Time to sleep between reconnection attempts */
+#define RECONNECT_SLEEP_TIME 5
+
 /* Global options */
 char	   *basedir = NULL;
 int			verbose = 0;
+int			noloop = 0;
 int			standby_message_timeout = 10;		/* 10 sec = default */
 volatile bool time_to_abort = false;
 
@@ -55,6 +59,7 @@ usage(void)
 	printf(_("\nOptions controlling the output:\n"));
 	printf(_("  -D, --dir=directory       receive xlog files into this directory\n"));
 	printf(_("\nGeneral options:\n"));
+	printf(_("  -n, --noloop              do not loop on connection lost\n"));
 	printf(_("  -v, --verbose             output verbose messages\n"));
 	printf(_("  -?, --help                show this help, then exit\n"));
 	printf(_("  -V, --version             output version information, then exit\n"));
@@ -214,6 +219,9 @@ StreamLog(void)
 	 * Connect in replication mode to the server
 	 */
 	conn = GetConnection();
+	if (!conn)
+		/* Error message already written in GetConnection() */
+		return;
 
 	/*
 	 * Run IDENTIFY_SYSTEM so we can get the timeline and current xlog
@@ -289,6 +297,7 @@ main(int argc, char **argv)
 		{"host", required_argument, NULL, 'h'},
 		{"port", required_argument, NULL, 'p'},
 		{"username", required_argument, NULL, 'U'},
+		{"noloop", no_argument, NULL, 'n'},
 		{"no-password", no_argument, NULL, 'w'},
 		{"password", no_argument, NULL, 'W'},
 		{"statusint", required_argument, NULL, 's'},
@@ -317,7 +326,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "D:h:p:U:s:wWv",
+	while ((c = getopt_long(argc, argv, "D:h:p:U:s:nwWv",
 							long_options, &option_index)) != -1)
 	{
 		switch (c)
@@ -354,6 +363,9 @@ main(int argc, char **argv)
 							progname, optarg);
 					exit(1);
 				}
+				break;
+			case 'n':
+				noloop = 1;
 				break;
 			case 'v':
 				verbose++;
@@ -397,7 +409,28 @@ main(int argc, char **argv)
 	pqsignal(SIGINT, sigint_handler);
 #endif
 
-	StreamLog();
+	while (true)
+	{
+		StreamLog();
+		if (time_to_abort)
+			/*
+			 * We've been Ctrl-C'ed. That's not an error, so exit without
+			 * an errorcode.
+			 */
+			exit(0);
+		else if (noloop)
+		{
+			fprintf(stderr, _("%s: disconnected.\n"), progname);
+			exit(1);
+		}
+		else
+		{
+			fprintf(stderr, _("%s: disconnected. Waiting %d seconds to try again\n"),
+					progname, RECONNECT_SLEEP_TIME);
+			pg_usleep(RECONNECT_SLEEP_TIME * 1000000);
+		}
+	}
 
-	exit(0);
+	/* Never get here */
+	exit(2);
 }

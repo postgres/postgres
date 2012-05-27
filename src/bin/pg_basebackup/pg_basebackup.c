@@ -279,6 +279,9 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier)
 
 	/* Get a second connection */
 	param->bgconn = GetConnection();
+	if (!param->bgconn)
+		/* Error message already written in GetConnection() */
+		exit(1);
 
 	/*
 	 * Always in plain format, so we can write to basedir/pg_xlog. But the
@@ -915,6 +918,9 @@ BaseBackup(void)
 	 * Connect in replication mode to the server
 	 */
 	conn = GetConnection();
+	if (!conn)
+		/* Error message already written in GetConnection() */
+		exit(1);
 
 	/*
 	 * Run IDENTIFY_SYSTEM so we can get the timeline

@@ -65,6 +65,11 @@ xmalloc0(int size)
 }
 
 
+/*
+ * Connect to the server. Returns a valid PGconn pointer if connected,
+ * or NULL on non-permanent error. On permanent error, the function will
+ * call exit(1) directly.
+ */
 PGconn *
 GetConnection(void)
 {
@@ -151,7 +156,7 @@ GetConnection(void)
 		{
 			fprintf(stderr, _("%s: could not connect to server: %s\n"),
 					progname, PQerrorMessage(tmpconn));
-			exit(1);
+			return NULL;
 		}
 
 		/* Connection ok! */
