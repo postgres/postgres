@@ -28,7 +28,10 @@ postgresql://[2001:db8::1234]/
 postgresql://[200z:db8::1234]/
 postgresql://[::1]
 postgres://
-postgres:///tmp
+postgres:///
+postgres:///db
+postgres://uri-user@/db
+postgres://?host=/path/to/socket/dir
 postgresql://host?uzer=
 postgre://
 postgres://[::1
@@ -44,6 +47,11 @@ postgresql://%1
 postgresql://%
 postgres://@host
 postgres://host:/
-postgres://otheruser@/no/such/directory
-postgres://otheruser@/no/such/socket/path:12345
-postgres://otheruser@/path/to/socket:12345/db
+postgres://:12345/
+postgres://otheruser@?host=/no/such/directory
+postgres://otheruser@/?host=/no/such/directory
+postgres://otheruser@:12345?host=/no/such/socket/path
+postgres://otheruser@:12345/db?host=/path/to/socket
+postgres://:12345/db?host=/path/to/socket
+postgres://:12345?host=/path/to/socket
+postgres://%2Fvar%2Flib%2Fpostgresql/dbname

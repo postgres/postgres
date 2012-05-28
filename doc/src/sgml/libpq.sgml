@@ -711,6 +711,124 @@ PGPing PQping(const char *conninfo);
    </variablelist>
   </para>
 
+  <sect2 id="libpq-connstring">
+   <title>Connection Strings</title>
+
+   <indexterm zone="libpq-connstring">
+    <primary><literal>conninfo</literal></primary>
+   </indexterm>
+
+   <indexterm zone="libpq-connstring">
+    <primary><literal>URI</literal></primary>
+   </indexterm>
+
+   <para>
+    Several <application>libpq</> functions parse a user-specified string to obtain
+    connection parameters.  There are two accepted formats for these strings:
+    plain <literal>keyword = value</literal> strings
+    and <ulink url="http://www.ietf.org/rfc/rfc3986.txt">RFC
+    3986</ulink> URIs.
+   </para>
+
+   <sect3>
+    <title>Keyword/Value Connection Strings</title>
+
+   <para>
+    In the first format, each parameter setting is in the form
+    <literal>keyword = value</literal>.  Spaces around the equal sign are
+    optional. To write an empty value, or a value containing spaces, surround it
+    with single quotes, e.g., <literal>keyword = 'a value'</literal>. Single
+    quotes and backslashes within
+    the value must be escaped with a backslash, i.e., <literal>\'</literal> and
+    <literal>\\</literal>.
+   </para>
+
+   <para>
+    Example:
+<programlisting>
+host=localhost port=5432 dbname=mydb connect_timeout=10
+</programlisting>
+   </para>
+
+   <para>
+    The recognized parameter key words are listed in <xref
+    linkend="libpq-paramkeywords">.
+   </para>
+   </sect3>
+
+   <sect3>
+    <title>Connection URIs</title>
+
+   <para>
+   The general form for a connection <acronym>URI</acronym> is:
+<synopsis>
+postgresql://[user[:password]@][netloc][:port][/dbname][?param1=value1&amp;...]
+</synopsis>
+   </para>
+
+   <para>
+    The <acronym>URI</acronym> scheme designator can be either
+    <literal>postgresql://</literal> or <literal>postgres://</literal>.  Each
+    of the <acronym>URI</acronym> parts is optional.  The following examples
+    illustrate valid <acronym>URI</acronym> syntax uses:
+<programlisting>
+postgresql://
+postgresql://localhost
+postgresql://localhost:5433
+postgresql://localhost/mydb
+postgresql://user@localhost
+postgresql://user:secret@localhost
+postgresql://other@localhost/otherdb?connect_timeout=10&amp;application_name=myapp
+</programlisting>
+    Components of the hierarchical part of the <acronym>URI</acronym> can also
+    be given as parameters.  For example:
+<programlisting>
+postgresql:///mydb?host=localhost&amp;port=5433
+</programlisting>
+   </para>
+
+   <para>
+    Percent-encoding may be used to include symbols with special meaning in any
+    of the <acronym>URI</acronym> parts.
+   </para>
+
+   <para>
+    Any connection parameters not corresponding to key words listed in <xref
+    linkend="libpq-paramkeywords"> are ignored and a warning message about them
+    is sent to <filename>stderr</filename>.
+   </para>
+
+   <para>
+    For improved compatibility with JDBC connection <acronym>URI</acronym>s,
+    instances of parameter <literal>ssl=true</literal> are translated into
+    <literal>sslmode=require</literal>.
+   </para>
+
+   <para>
+    The host part may be either hostname or an IP address.  To specify an
+    IPv6 host address, enclose it in square brackets:
+<synopsis>
+postgresql://[2001:db8::1234]/database
+</synopsis>
+   </para>
+
+   <para>
+    The host component is interpreted as described for the parameter <xref
+    linkend="libpq-connect-host">.  In particular, a Unix-domain socket
+    connection is chosen if the host part is either empty or starts with a
+    slash, otherwise a TCP/IP connection is initiated.  Note, however, that the
+    slash is a reserved character in the hierarchical part of the URI.  So, to
+    specify a non-standard Unix-domain socket directory, either omit the host
+    specification in the URI and specify the host as a parameter, or
+    percent-encode the path in the host component of the URI:
+<programlisting>
+postgresql:///dbname?host=/var/lib/postgresql
+postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
+</programlisting>
+   </para>
+   </sect3>
+  </sect2>
+
   <sect2 id="libpq-paramkeywords">
    <title>Parameter Key Words</title>
 
@@ -1220,107 +1338,6 @@ PGPing PQping(const char *conninfo);
     </variablelist>
    </para>
   </sect2>
-
-  <sect2 id="libpq-connstring">
-   <title>Connection Strings</title>
-
-   <indexterm zone="libpq-connstring">
-    <primary><literal>conninfo</literal></primary>
-   </indexterm>
-
-   <indexterm zone="libpq-connstring">
-    <primary><literal>URI</literal></primary>
-   </indexterm>
-
-   <para>
-    Several <application>libpq</> functions parse a user-specified string to obtain
-    connection parameters.  There are two accepted formats for these strings:
-    plain <literal>keyword = value</literal> strings, and URIs.
-   </para>
-
-   <para>
-    In the first format, each parameter setting is in the form
-    <literal>keyword = value</literal>.  Spaces around the equal sign are
-    optional. To write an empty value, or a value containing spaces, surround it
-    with single quotes, e.g., <literal>keyword = 'a value'</literal>. Single
-    quotes and backslashes within
-    the value must be escaped with a backslash, i.e., <literal>\'</literal> and
-    <literal>\\</literal>.
-   </para>
-
-   <para>
-    The currently recognized parameter key words are listed in
-    <xref linkend="libpq-paramkeywords">.
-   </para>
-
-   <para>
-   The general form for connection <acronym>URI</acronym> is the
-   following:
-<synopsis>
-postgresql://[user[:password]@][unix-socket][:port[/dbname]][?param1=value1&amp;...]
-postgresql://[user[:password]@][net-location][:port][/dbname][?param1=value1&amp;...]
-</synopsis>
-   </para>
-
-   <para>
-    The <acronym>URI</acronym> designator can be either
-    <literal>postgresql://</literal> or <literal>postgres://</literal> and
-    each of the <acronym>URI</acronym> parts is optional.  The following
-    examples illustrate valid <acronym>URI</acronym> syntax uses:
-<synopsis>
-postgresql://
-postgresql://localhost
-postgresql://localhost:5433
-postgresql://localhost/mydb
-postgresql://user@localhost
-postgresql://user:secret@localhost
-postgresql://other@localhost/otherdb
-</synopsis>
-   </para>
-
-   <para>
-    Percent-encoding may be used to include a symbol with special meaning in
-    any of the <acronym>URI</acronym> parts.
-   </para>
-
-   <para>
-    Additional connection parameters may optionally follow the base <acronym>URI</acronym>.
-    Any connection parameters not corresponding to key words listed
-    in <xref linkend="libpq-paramkeywords"> are ignored and a warning message
-    about them is sent to <filename>stderr</filename>.
-   </para>
-
-   <para>
-    For improved compatibility with JDBC connection <acronym>URI</acronym>
-    syntax, instances of parameter <literal>ssl=true</literal> are translated
-    into <literal>sslmode=require</literal> (see above.)
-   </para>
-
-   <para>
-    The host part may be either hostname or an IP address.  To specify an
-    IPv6 host address, enclose it in square brackets:
-<synopsis>
-postgresql://[2001:db8::1234]/database
-</synopsis>
-    As a special case, a host part which starts with <symbol>/</symbol> is
-    treated as a local Unix socket directory to look for the connection
-    socket special file:
-<synopsis>
-postgresql:///path/to/pgsql/socket/dir
-</synopsis>
-    The whole connection string up to the extra parameters designator
-    (<symbol>?</symbol>) or the port designator (<symbol>:</symbol>) is treated
-    as the absolute path to the socket directory
-    (<literal>/path/to/pgsql/socket/dir</literal> in this example.)  To specify
-    a non-default database name in this case you can use either of the following
-    syntaxes:
-<synopsis>
-postgresql:///path/to/pgsql/socket/dir?dbname=otherdb
-postgresql:///path/to/pgsql/socket/dir:5432/otherdb
-</synopsis>
-   </para>
-  </sect2>
-
  </sect1>
 
  <sect1 id="libpq-status">
