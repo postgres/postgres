@@ -251,9 +251,13 @@ typedef struct _archiveHandle
 	void	   *OF;
 	int			gzOut;			/* Output file */
 
-	struct _tocEntry *toc;		/* List of TOC entries */
+	struct _tocEntry *toc;		/* Header of circular list of TOC entries */
 	int			tocCount;		/* Number of TOC entries */
 	DumpId		maxDumpId;		/* largest DumpId among all TOC entries */
+
+	/* arrays created after the TOC list is complete: */
+	struct _tocEntry **tocsByDumpId;		/* TOCs indexed by dumpId */
+	DumpId	   *tableDataId;	/* TABLE DATA ids, indexed by table dumpId */
 
 	struct _tocEntry *currToc;	/* Used when dumping data */
 	int			compression;	/* Compression requested on open Possible

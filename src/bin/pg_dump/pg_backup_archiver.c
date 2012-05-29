@@ -114,10 +114,6 @@ typedef struct _outputContext
 
 static const char *modulename = gettext_noop("archiver");
 
-/* index array created by fix_dependencies -- only used in parallel restore */
-static TocEntry **tocsByDumpId; /* index by dumpId - 1 */
-static DumpId maxDumpId;		/* length of above array */
-
 
 static ArchiveHandle *_allocAH(const char *FileSpec, const ArchiveFormat fmt,
 		 const int compression, ArchiveMode mode);
@@ -125,8 +121,6 @@ static void _getObjectDescription(PQExpBuffer buf, TocEntry *te,
 					  ArchiveHandle *AH);
 static void _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData, bool acl_pass);
 static char *replace_line_endings(const char *str);
-
-
 static void _doSetFixedOutputState(ArchiveHandle *AH);
 static void _doSetSessionAuth(ArchiveHandle *AH, const char *user);
 static void _doSetWithOids(ArchiveHandle *AH, const bool withOids);
@@ -141,6 +135,7 @@ static teReqs _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool include
 static bool _tocEntryIsACL(TocEntry *te);
 static void _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 static void _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
+static void buildTocEntryArrays(ArchiveHandle *AH);
 static TocEntry *getTocEntryByDumpId(ArchiveHandle *AH, DumpId id);
 static void _moveBefore(ArchiveHandle *AH, TocEntry *pos, TocEntry *te);
 static int	_discoverArchiveFormat(ArchiveHandle *AH);
@@ -171,9 +166,8 @@ static void mark_work_done(ArchiveHandle *AH, TocEntry *ready_list,
 			   ParallelSlot *slots, int n_slots);
 static void fix_dependencies(ArchiveHandle *AH);
 static bool has_lock_conflicts(TocEntry *te1, TocEntry *te2);
-static void repoint_table_dependencies(ArchiveHandle *AH,
-						   DumpId tableId, DumpId tableDataId);
-static void identify_locking_dependencies(TocEntry *te);
+static void repoint_table_dependencies(ArchiveHandle *AH);
+static void identify_locking_dependencies(ArchiveHandle *AH, TocEntry *te);
 static void reduce_dependencies(ArchiveHandle *AH, TocEntry *te,
 					TocEntry *ready_list);
 static void mark_create_done(ArchiveHandle *AH, TocEntry *te);
@@ -304,6 +298,13 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		}
 	}
 #endif
+
+	/*
+	 * Prepare index arrays, so we can assume we have them throughout restore.
+	 * It's possible we already did this, though.
+	 */
+	if (AH->tocsByDumpId == NULL)
+		buildTocEntryArrays(AH);
 
 	/*
 	 * If we're using a DB connection, then connect it.
@@ -1524,16 +1525,68 @@ _moveBefore(ArchiveHandle *AH, TocEntry *pos, TocEntry *te)
 	pos->prev = te;
 }
 
-static TocEntry *
-getTocEntryByDumpId(ArchiveHandle *AH, DumpId id)
+/*
+ * Build index arrays for the TOC list
+ *
+ * This should be invoked only after we have created or read in all the TOC
+ * items.
+ *
+ * The arrays are indexed by dump ID (so entry zero is unused).  Note that the
+ * array entries run only up to maxDumpId.  We might see dependency dump IDs
+ * beyond that (if the dump was partial); so always check the array bound
+ * before trying to touch an array entry.
+ */
+static void
+buildTocEntryArrays(ArchiveHandle *AH)
 {
+	DumpId		maxDumpId = AH->maxDumpId;
 	TocEntry   *te;
+
+	AH->tocsByDumpId = (TocEntry **) pg_calloc(maxDumpId + 1, sizeof(TocEntry *));
+	AH->tableDataId = (DumpId *) pg_calloc(maxDumpId + 1, sizeof(DumpId));
 
 	for (te = AH->toc->next; te != AH->toc; te = te->next)
 	{
-		if (te->dumpId == id)
-			return te;
+		/* this check is purely paranoia, maxDumpId should be correct */
+		if (te->dumpId <= 0 || te->dumpId > maxDumpId)
+			exit_horribly(modulename, "bad dumpId");
+
+		/* tocsByDumpId indexes all TOCs by their dump ID */
+		AH->tocsByDumpId[te->dumpId] = te;
+
+		/*
+		 * tableDataId provides the TABLE DATA item's dump ID for each TABLE
+		 * TOC entry that has a DATA item.  We compute this by reversing the
+		 * TABLE DATA item's dependency, knowing that a TABLE DATA item has
+		 * just one dependency and it is the TABLE item.
+		 */
+		if (strcmp(te->desc, "TABLE DATA") == 0 && te->nDeps > 0)
+		{
+			DumpId		tableId = te->dependencies[0];
+
+			/*
+			 * The TABLE item might not have been in the archive, if this was
+			 * a data-only dump; but its dump ID should be less than its data
+			 * item's dump ID, so there should be a place for it in the array.
+			 */
+			if (tableId <= 0 || tableId > maxDumpId)
+				exit_horribly(modulename, "bad table dumpId for TABLE DATA item");
+
+			AH->tableDataId[tableId] = te->dumpId;
+		}
 	}
+}
+
+static TocEntry *
+getTocEntryByDumpId(ArchiveHandle *AH, DumpId id)
+{
+	/* build index arrays if we didn't already */
+	if (AH->tocsByDumpId == NULL)
+		buildTocEntryArrays(AH);
+
+	if (id > 0 && id <= AH->maxDumpId)
+		return AH->tocsByDumpId[id];
+
 	return NULL;
 }
 
@@ -3978,9 +4031,8 @@ mark_work_done(ArchiveHandle *AH, TocEntry *ready_list,
  * This function takes care of fixing up some missing or badly designed
  * dependencies, and then prepares subsidiary data structures that will be
  * used in the main parallel-restore logic, including:
- * 1. We build the tocsByDumpId[] index array.
- * 2. We build the revDeps[] arrays of incoming dependency dumpIds.
- * 3. We set up depCount fields that are the number of as-yet-unprocessed
+ * 1. We build the revDeps[] arrays of incoming dependency dumpIds.
+ * 2. We set up depCount fields that are the number of as-yet-unprocessed
  * dependencies for each TOC entry.
  *
  * We also identify locking dependencies so that we can avoid trying to
@@ -3993,22 +4045,11 @@ fix_dependencies(ArchiveHandle *AH)
 	int			i;
 
 	/*
-	 * It is convenient to have an array that indexes the TOC entries by dump
-	 * ID, rather than searching the TOC list repeatedly.  Entries for dump
-	 * IDs not present in the TOC will be NULL.
-	 *
-	 * NOTE: because maxDumpId is just the highest dump ID defined in the
-	 * archive, there might be dependencies for IDs > maxDumpId.  All uses of
-	 * this array must guard against out-of-range dependency numbers.
-	 *
-	 * Also, initialize the depCount/revDeps/nRevDeps fields, and make sure
-	 * the TOC items are marked as not being in any parallel-processing list.
+	 * Initialize the depCount/revDeps/nRevDeps fields, and make sure the TOC
+	 * items are marked as not being in any parallel-processing list.
 	 */
-	maxDumpId = AH->maxDumpId;
-	tocsByDumpId = (TocEntry **) pg_calloc(maxDumpId, sizeof(TocEntry *));
 	for (te = AH->toc->next; te != AH->toc; te = te->next)
 	{
-		tocsByDumpId[te->dumpId - 1] = te;
 		te->depCount = te->nDeps;
 		te->revDeps = NULL;
 		te->nRevDeps = 0;
@@ -4019,34 +4060,9 @@ fix_dependencies(ArchiveHandle *AH)
 	/*
 	 * POST_DATA items that are shown as depending on a table need to be
 	 * re-pointed to depend on that table's data, instead.  This ensures they
-	 * won't get scheduled until the data has been loaded.  We handle this by
-	 * first finding TABLE/TABLE DATA pairs and then scanning all the
-	 * dependencies.
-	 *
-	 * Note: currently, a TABLE DATA should always have exactly one
-	 * dependency, on its TABLE item.  So we don't bother to search, but look
-	 * just at the first dependency.  We do trouble to make sure that it's a
-	 * TABLE, if possible.	However, if the dependency isn't in the archive
-	 * then just assume it was a TABLE; this is to cover cases where the table
-	 * was suppressed but we have the data and some dependent post-data items.
-	 *
-	 * XXX this is O(N^2) if there are a lot of tables.  We ought to fix
-	 * pg_dump to produce correctly-linked dependencies in the first place.
+	 * won't get scheduled until the data has been loaded.
 	 */
-	for (te = AH->toc->next; te != AH->toc; te = te->next)
-	{
-		if (strcmp(te->desc, "TABLE DATA") == 0 && te->nDeps > 0)
-		{
-			DumpId		tableId = te->dependencies[0];
-
-			if (tableId > maxDumpId ||
-				tocsByDumpId[tableId - 1] == NULL ||
-				strcmp(tocsByDumpId[tableId - 1]->desc, "TABLE") == 0)
-			{
-				repoint_table_dependencies(AH, tableId, te->dumpId);
-			}
-		}
-	}
+	repoint_table_dependencies(AH);
 
 	/*
 	 * Pre-8.4 versions of pg_dump neglected to set up a dependency from BLOB
@@ -4093,8 +4109,8 @@ fix_dependencies(ArchiveHandle *AH)
 		{
 			DumpId		depid = te->dependencies[i];
 
-			if (depid <= maxDumpId && tocsByDumpId[depid - 1] != NULL)
-				tocsByDumpId[depid - 1]->nRevDeps++;
+			if (depid <= AH->maxDumpId && AH->tocsByDumpId[depid] != NULL)
+				AH->tocsByDumpId[depid]->nRevDeps++;
 			else
 				te->depCount--;
 		}
@@ -4121,9 +4137,9 @@ fix_dependencies(ArchiveHandle *AH)
 		{
 			DumpId		depid = te->dependencies[i];
 
-			if (depid <= maxDumpId && tocsByDumpId[depid - 1] != NULL)
+			if (depid <= AH->maxDumpId && AH->tocsByDumpId[depid] != NULL)
 			{
-				TocEntry   *otherte = tocsByDumpId[depid - 1];
+				TocEntry   *otherte = AH->tocsByDumpId[depid];
 
 				otherte->revDeps[otherte->nRevDeps++] = te->dumpId;
 			}
@@ -4137,20 +4153,20 @@ fix_dependencies(ArchiveHandle *AH)
 	{
 		te->lockDeps = NULL;
 		te->nLockDeps = 0;
-		identify_locking_dependencies(te);
+		identify_locking_dependencies(AH, te);
 	}
 }
 
 /*
- * Change dependencies on tableId to depend on tableDataId instead,
+ * Change dependencies on table items to depend on table data items instead,
  * but only in POST_DATA items.
  */
 static void
-repoint_table_dependencies(ArchiveHandle *AH,
-						   DumpId tableId, DumpId tableDataId)
+repoint_table_dependencies(ArchiveHandle *AH)
 {
 	TocEntry   *te;
 	int			i;
+	DumpId		olddep;
 
 	for (te = AH->toc->next; te != AH->toc; te = te->next)
 	{
@@ -4158,11 +4174,13 @@ repoint_table_dependencies(ArchiveHandle *AH,
 			continue;
 		for (i = 0; i < te->nDeps; i++)
 		{
-			if (te->dependencies[i] == tableId)
+			olddep = te->dependencies[i];
+			if (olddep <= AH->maxDumpId &&
+				AH->tableDataId[olddep] != 0)
 			{
-				te->dependencies[i] = tableDataId;
+				te->dependencies[i] = AH->tableDataId[olddep];
 				ahlog(AH, 2, "transferring dependency %d -> %d to %d\n",
-					  te->dumpId, tableId, tableDataId);
+					  te->dumpId, olddep, AH->tableDataId[olddep]);
 			}
 		}
 	}
@@ -4174,7 +4192,7 @@ repoint_table_dependencies(ArchiveHandle *AH,
  * itself).  Record their dump IDs in the entry's lockDeps[] array.
  */
 static void
-identify_locking_dependencies(TocEntry *te)
+identify_locking_dependencies(ArchiveHandle *AH, TocEntry *te)
 {
 	DumpId	   *lockids;
 	int			nlockids;
@@ -4205,8 +4223,8 @@ identify_locking_dependencies(TocEntry *te)
 	{
 		DumpId		depid = te->dependencies[i];
 
-		if (depid <= maxDumpId && tocsByDumpId[depid - 1] &&
-			strcmp(tocsByDumpId[depid - 1]->desc, "TABLE DATA") == 0)
+		if (depid <= AH->maxDumpId && AH->tocsByDumpId[depid] != NULL &&
+			strcmp(AH->tocsByDumpId[depid]->desc, "TABLE DATA") == 0)
 			lockids[nlockids++] = depid;
 	}
 
@@ -4234,7 +4252,7 @@ reduce_dependencies(ArchiveHandle *AH, TocEntry *te, TocEntry *ready_list)
 
 	for (i = 0; i < te->nRevDeps; i++)
 	{
-		TocEntry   *otherte = tocsByDumpId[te->revDeps[i] - 1];
+		TocEntry   *otherte = AH->tocsByDumpId[te->revDeps[i]];
 
 		otherte->depCount--;
 		if (otherte->depCount == 0 && otherte->par_prev != NULL)
@@ -4254,18 +4272,11 @@ reduce_dependencies(ArchiveHandle *AH, TocEntry *te, TocEntry *ready_list)
 static void
 mark_create_done(ArchiveHandle *AH, TocEntry *te)
 {
-	TocEntry   *tes;
-
-	for (tes = AH->toc->next; tes != AH->toc; tes = tes->next)
+	if (AH->tableDataId[te->dumpId] != 0)
 	{
-		if (strcmp(tes->desc, "TABLE DATA") == 0 &&
-			strcmp(tes->tag, te->tag) == 0 &&
-			strcmp(tes->namespace ? tes->namespace : "",
-				   te->namespace ? te->namespace : "") == 0)
-		{
-			tes->created = true;
-			break;
-		}
+		TocEntry   *ted = AH->tocsByDumpId[AH->tableDataId[te->dumpId]];
+
+		ted->created = true;
 	}
 }
 
@@ -4277,22 +4288,14 @@ static void
 inhibit_data_for_failed_table(ArchiveHandle *AH, TocEntry *te)
 {
 	RestoreOptions *ropt = AH->ropt;
-	TocEntry   *tes;
 
 	ahlog(AH, 1, "table \"%s\" could not be created, will not restore its data\n",
 		  te->tag);
 
-	for (tes = AH->toc->next; tes != AH->toc; tes = tes->next)
+	if (AH->tableDataId[te->dumpId] != 0)
 	{
-		if (strcmp(tes->desc, "TABLE DATA") == 0 &&
-			strcmp(tes->tag, te->tag) == 0 &&
-			strcmp(tes->namespace ? tes->namespace : "",
-				   te->namespace ? te->namespace : "") == 0)
-		{
-			/* mark it unwanted; we assume idWanted array already exists */
-			ropt->idWanted[tes->dumpId - 1] = false;
-			break;
-		}
+		/* mark it unwanted; we assume idWanted array already exists */
+		ropt->idWanted[AH->tableDataId[te->dumpId] - 1] = false;
 	}
 }
 
