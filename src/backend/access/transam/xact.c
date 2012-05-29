@@ -3861,7 +3861,24 @@ AbortOutOfAnyTransaction(void)
 		switch (s->blockState)
 		{
 			case TBLOCK_DEFAULT:
-				/* Not in a transaction, do nothing */
+				if (s->state == TRANS_DEFAULT)
+				{
+					/* Not in a transaction, do nothing */
+				}
+				else
+				{
+					/*
+					 * We can get here after an error during transaction start
+					 * (state will be TRANS_START).  Need to clean up the
+					 * incompletely started transaction.  First, adjust the
+					 * low-level state to suppress warning message from
+					 * AbortTransaction.
+					 */
+					if (s->state == TRANS_START)
+						s->state = TRANS_INPROGRESS;
+					AbortTransaction();
+					CleanupTransaction();
+				}
 				break;
 			case TBLOCK_STARTED:
 			case TBLOCK_BEGIN:
