@@ -323,8 +323,8 @@ gistInitBuffering(GISTBuildState *buildstate)
 	 * calculating levelStep is very close to Arge et al's formula. For a
 	 * large B, our formula gives a value that is 2x higher.
 	 *
-	 * The average size of a subtree of depth n can be calculated as a
-	 * geometric series:
+	 * The average size (in pages) of a subtree of depth n can be calculated
+	 * as a geometric series:
 	 *
 	 * B^0 + B^1 + B^2 + ... + B^n = (1 - B^(n + 1)) / (1 - B)
 	 *
@@ -353,14 +353,28 @@ gistInitBuffering(GISTBuildState *buildstate)
 	 * the hash table.
 	 */
 	levelStep = 1;
-	while (
-	/* subtree must fit in cache (with safety factor of 4) */
-		   (1 - pow(avgIndexTuplesPerPage, (double) (levelStep + 1))) / (1 - avgIndexTuplesPerPage) < effective_cache_size / 4
-		   &&
-	/* each node in the lowest level of a subtree has one page in memory */
-		   (pow(maxIndexTuplesPerPage, (double) levelStep) < (maintenance_work_mem * 1024) / BLCKSZ)
-		)
+	for (;;)
 	{
+		double		subtreesize;
+		double		maxlowestlevelpages;
+
+		/* size of an average subtree at this levelStep (in pages). */
+		subtreesize =
+			(1 - pow(avgIndexTuplesPerPage, (double) (levelStep + 1))) /
+			(1 - avgIndexTuplesPerPage);
+
+		/* max number of pages at the lowest level of a subtree */
+		maxlowestlevelpages = pow(maxIndexTuplesPerPage, (double) levelStep);
+
+		/* subtree must fit in cache (with safety factor of 4) */
+		if (subtreesize > effective_cache_size / 4)
+			break;
+
+		/* each node in the lowest level of a subtree has one page in memory */
+		if (maxlowestlevelpages > ((double) maintenance_work_mem * 1024) / BLCKSZ)
+			break;
+
+		/* Good, we can handle this levelStep. See if we can go one higher. */
 		levelStep++;
 	}
 
