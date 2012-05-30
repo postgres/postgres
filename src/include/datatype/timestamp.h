@@ -106,6 +106,16 @@ typedef struct
 #define USECS_PER_SEC	INT64CONST(1000000)
 
 /*
+ * We allow numeric timezone offsets up to 15:59:59 either way from Greenwich.
+ * Currently, the record holders for wackiest offsets in actual use are zones
+ * Asia/Manila, at -15:56:00 until 1844, and America/Metlakatla, at +15:13:42
+ * until 1867.  If we were to reject such values we would fail to dump and
+ * restore old timestamptz values with these zone settings.
+ */
+#define MAX_TZDISP_HOUR		15				/* maximum allowed hour part */
+#define TZDISP_LIMIT		((MAX_TZDISP_HOUR + 1) * SECS_PER_HOUR)
+
+/*
  * DT_NOBEGIN represents timestamp -infinity; DT_NOEND represents +infinity
  */
 #ifdef HAVE_INT64_TIMESTAMP
