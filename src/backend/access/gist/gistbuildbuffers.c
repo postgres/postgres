@@ -58,7 +58,7 @@ gistInitBuildBuffers(int pagesPerBuffer, int levelStep, int maxLevel)
 	 * Create a temporary file to hold buffer pages that are swapped out of
 	 * memory.
 	 */
-	gfbb->pfile = BufFileCreateTemp(true);
+	gfbb->pfile = BufFileCreateTemp(false);
 	gfbb->nFileBlocks = 0;
 
 	/* Initialize free page management. */

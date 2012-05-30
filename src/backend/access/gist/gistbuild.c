@@ -214,6 +214,7 @@ gistbuild(PG_FUNCTION_ARGS)
 	{
 		elog(DEBUG1, "all tuples processed, emptying buffers");
 		gistEmptyAllBuffers(&buildstate);
+		gistFreeBuildBuffers(buildstate.gfbb);
 	}
 
 	/* okay, all heap tuples are indexed */
