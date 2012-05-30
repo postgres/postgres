@@ -274,7 +274,7 @@ main(int argc, char **argv)
 				break;
 
 			case 3:				/* section */
-				set_section(optarg, &(opts->dumpSections));
+				set_dump_section(optarg, &(opts->dumpSections));
 				break;
 
 			default:
@@ -297,30 +297,6 @@ main(int argc, char **argv)
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
 		exit_nicely(1);
-	}
-
-	if (opts->dataOnly && opts->schemaOnly)
-	{
-		fprintf(stderr, _("%s: options -s/--schema-only and -a/--data-only cannot be used together\n"),
-			progname);
-		exit_nicely(1);
-	}
-
-	if ((opts->dataOnly || opts->schemaOnly) && (opts->dumpSections != DUMP_UNSECTIONED))
-	{
-		fprintf(stderr, _("%s: options -s/--schema-only and -a/--data-only cannot be used with --section\n"),
-			progname);
-		exit_nicely(1);
-	}
-
-	if (opts->dataOnly)
-		opts->dumpSections = DUMP_DATA;
-	else if (opts->schemaOnly)
-		opts->dumpSections = DUMP_PRE_DATA | DUMP_POST_DATA;
-	else if ( opts->dumpSections != DUMP_UNSECTIONED)
-	{
-		opts->dataOnly = opts->dumpSections == DUMP_DATA;
-		opts->schemaOnly = !(opts->dumpSections & DUMP_DATA);
 	}
 
 	/* Should get at most one of -d and -f, else user is confused */
@@ -396,19 +372,14 @@ main(int argc, char **argv)
 
 	if (opts->tocFile)
 		SortTocFromFile(AH, opts);
-	else if (opts->noDataForFailedTables)
-	{
-		/*
-		 * we implement this option by clearing idWanted entries, so must
-		 * create a dummy idWanted array if there wasn't a tocFile
-		 */
-		InitDummyWantedList(AH, opts);
-	}
 
 	if (opts->tocSummary)
 		PrintTOCSummary(AH, opts);
 	else
-		RestoreArchive(AH, opts);
+	{
+		SetArchiveRestoreOptions(AH, opts);
+		RestoreArchive(AH);
+	}
 
 	/* done, print a summary of ignored errors */
 	if (AH->n_errors)

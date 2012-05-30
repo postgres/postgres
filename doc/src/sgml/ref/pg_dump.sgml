@@ -113,10 +113,12 @@ PostgreSQL documentation
       <listitem>
        <para>
         Dump only the data, not the schema (data definitions).
+        Table data, large objects, and sequence values are dumped.
        </para>
 
        <para>
-        This option is equivalent to specifying <option>--section=data</>.
+        This option is similar to, but for historical reasons not identical
+        to, specifying <option>--section=data</>.
        </para>
       </listitem>
      </varlistentry>
@@ -403,12 +405,18 @@ PostgreSQL documentation
         Dump only the object definitions (schema), not data.
        </para>
        <para>
-        To exclude table data for only a subset of tables in the database,
-        see <option>--exclude-table-data</>.
+        This option is the inverse of <option>--data-only</>.
+        It is similar to, but for historical reasons not identical to,
+        specifying
+        <option>--section=pre-data --section=post-data</>.
        </para>
        <para>
-        This option is equivalent to specifying
-        <option>--section=pre-data --section=post-data</>.
+        (Do not confuse this with the <option>--schema</> option, which
+        uses the word <quote>schema</> in a different meaning.)
+       </para>
+       <para>
+        To exclude table data for only a subset of tables in the database,
+        see <option>--exclude-table-data</>.
        </para>
       </listitem>
      </varlistentry>
@@ -722,14 +730,17 @@ PostgreSQL documentation
        <term><option>--section=<replaceable class="parameter">sectionname</replaceable></option></term>
        <listitem>
          <para>
-           Only dump the named section. The name can be one of <option>pre-data</>, <option>data</>
-           and <option>post-data</>.
-           This option can be specified more than once. The default is to dump all sections.
+          Only dump the named section. The section name can be
+          <option>pre-data</>, <option>data</>, or <option>post-data</>.
+          This option can be specified more than once to select multiple
+          sections. The default is to dump all sections.
          </para>
          <para>
-           Post-data items consist of definitions of indexes, triggers, rules
-           and constraints other than validated check constraints.
-           Pre-data items consist of all other data definition items.
+          The data section contains actual table data as well as large-object
+          definitions.
+          Post-data items consist of definitions of indexes, triggers, rules
+          and constraints other than validated check constraints.
+          Pre-data items consist of all other data definition items.
          </para>
        </listitem>
      </varlistentry>

@@ -131,7 +131,7 @@ static void _selectOutputSchema(ArchiveHandle *AH, const char *schemaName);
 static void _selectTablespace(ArchiveHandle *AH, const char *tablespace);
 static void processEncodingEntry(ArchiveHandle *AH, TocEntry *te);
 static void processStdStringsEntry(ArchiveHandle *AH, TocEntry *te);
-static teReqs _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool include_acls);
+static teReqs _tocEntryRequired(TocEntry *te, teSection curSection, RestoreOptions *ropt);
 static bool _tocEntryIsACL(TocEntry *te);
 static void _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 static void _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
@@ -234,15 +234,35 @@ CloseArchive(Archive *AHX)
 
 /* Public */
 void
-RestoreArchive(Archive *AHX, RestoreOptions *ropt)
+SetArchiveRestoreOptions(Archive *AHX, RestoreOptions *ropt)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
+	TocEntry   *te;
+	teSection	curSection;
+
+	/* Save options for later access */
+	AH->ropt = ropt;
+
+	/* Decide which TOC entries will be dumped/restored, and mark them */
+	curSection = SECTION_PRE_DATA;
+	for (te = AH->toc->next; te != AH->toc; te = te->next)
+	{
+		if (te->section != SECTION_NONE)
+			curSection = te->section;
+		te->reqs = _tocEntryRequired(te, curSection, ropt);
+	}
+}
+
+/* Public */
+void
+RestoreArchive(Archive *AHX)
+{
+	ArchiveHandle *AH = (ArchiveHandle *) AHX;
+	RestoreOptions *ropt = AH->ropt;
 	bool		parallel_mode;
 	TocEntry   *te;
-	teReqs		reqs;
 	OutputContext sav;
 
-	AH->ropt = ropt;
 	AH->stage = STAGE_INITIALIZING;
 
 	/*
@@ -292,8 +312,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	{
 		for (te = AH->toc->next; te != AH->toc; te = te->next)
 		{
-			reqs = _tocEntryRequired(te, ropt, false);
-			if (te->hadDumper && (reqs & REQ_DATA) != 0)
+			if (te->hadDumper && (te->reqs & REQ_DATA) != 0)
 				exit_horribly(modulename, "cannot restore from compressed archive (compression not supported in this installation)\n");
 		}
 	}
@@ -345,8 +364,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 
 		for (te = AH->toc->next; te != AH->toc; te = te->next)
 		{
-			reqs = _tocEntryRequired(te, ropt, true);
-			if ((reqs & REQ_SCHEMA) != 0)
+			if ((te->reqs & REQ_SCHEMA) != 0)
 			{					/* It's schema, and it's wanted */
 				impliedDataOnly = 0;
 				break;
@@ -403,9 +421,8 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		{
 			AH->currentTE = te;
 
-			reqs = _tocEntryRequired(te, ropt, false /* needn't drop ACLs */ );
 			/* We want anything that's selected and has a dropStmt */
-			if (((reqs & (REQ_SCHEMA | REQ_DATA)) != 0) && te->dropStmt)
+			if (((te->reqs & (REQ_SCHEMA | REQ_DATA)) != 0) && te->dropStmt)
 			{
 				ahlog(AH, 1, "dropping %s %s\n", te->desc, te->tag);
 				/* Select owner and schema as necessary */
@@ -453,11 +470,8 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	{
 		AH->currentTE = te;
 
-		/* Work out what, if anything, we want from this entry */
-		reqs = _tocEntryRequired(te, ropt, true);
-
 		/* Both schema and data objects might now have ownership/ACLs */
-		if ((reqs & (REQ_SCHEMA | REQ_DATA)) != 0)
+		if ((te->reqs & (REQ_SCHEMA | REQ_DATA)) != 0)
 		{
 			ahlog(AH, 1, "setting owner and privileges for %s %s\n",
 				  te->desc, te->tag);
@@ -508,7 +522,18 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te,
 	AH->currentTE = te;
 
 	/* Work out what, if anything, we want from this entry */
-	reqs = _tocEntryRequired(te, ropt, false);
+	if (_tocEntryIsACL(te))
+		reqs = 0;				/* ACLs are never restored here */
+	else
+		reqs = te->reqs;
+
+	/*
+	 * Ignore DATABASE entry unless we should create it.  We must check this
+	 * here, not in _tocEntryRequired, because the createDB option should
+	 * not affect emitting a DATABASE entry to an archive file.
+	 */
+	if (!ropt->createDB && strcmp(te->desc, "DATABASE") == 0)
+		reqs = 0;
 
 	/* Dump any relevant dump warnings to stderr */
 	if (!ropt->suppressDumpWarnings && strcmp(te->desc, "WARNING") == 0)
@@ -588,7 +613,7 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te,
 			/*
 			 * If we can output the data, then restore it.
 			 */
-			if (AH->PrintTocDataPtr !=NULL && (reqs & REQ_DATA) != 0)
+			if (AH->PrintTocDataPtr !=NULL)
 			{
 				_printTocEntry(AH, te, ropt, true, false);
 
@@ -841,8 +866,9 @@ PrintTOCSummary(Archive *AHX, RestoreOptions *ropt)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 	TocEntry   *te;
+	teSection	curSection;
 	OutputContext sav;
-	char	   *fmtName;
+	const char *fmtName;
 
 	sav = SaveOutput(AH);
 	if (ropt->filename)
@@ -880,9 +906,13 @@ PrintTOCSummary(Archive *AHX, RestoreOptions *ropt)
 	/* We should print DATABASE entries whether or not -C was specified */
 	ropt->createDB = 1;
 
+	curSection = SECTION_PRE_DATA;
 	for (te = AH->toc->next; te != AH->toc; te = te->next)
 	{
-		if (ropt->verbose || _tocEntryRequired(te, ropt, true) != 0)
+		if (te->section != SECTION_NONE)
+			curSection = te->section;
+		if (ropt->verbose ||
+			(_tocEntryRequired(te, curSection, ropt) & (REQ_SCHEMA | REQ_DATA)) != 0)
 			ahprintf(AH, "%d; %u %u %s %s %s %s\n", te->dumpId,
 					 te->catalogId.tableoid, te->catalogId.oid,
 					 te->desc, te->namespace ? te->namespace : "-",
@@ -1133,19 +1163,6 @@ SortTocFromFile(Archive *AHX, RestoreOptions *ropt)
 	if (fclose(fh) != 0)
 		exit_horribly(modulename, "could not close TOC file: %s\n",
 					  strerror(errno));
-}
-
-/*
- * Set up a dummy ID filter that selects all dump IDs
- */
-void
-InitDummyWantedList(Archive *AHX, RestoreOptions *ropt)
-{
-	ArchiveHandle *AH = (ArchiveHandle *) AHX;
-
-	/* Allocate space for the 'wanted' array, and init it to 1's */
-	ropt->idWanted = (bool *) pg_malloc(sizeof(bool) * AH->maxDumpId);
-	memset(ropt->idWanted, 1, sizeof(bool) * AH->maxDumpId);
 }
 
 /**********************
@@ -1591,14 +1608,14 @@ getTocEntryByDumpId(ArchiveHandle *AH, DumpId id)
 }
 
 teReqs
-TocIDRequired(ArchiveHandle *AH, DumpId id, RestoreOptions *ropt)
+TocIDRequired(ArchiveHandle *AH, DumpId id)
 {
 	TocEntry   *te = getTocEntryByDumpId(AH, id);
 
 	if (!te)
 		return 0;
 
-	return _tocEntryRequired(te, ropt, true);
+	return te->reqs;
 }
 
 size_t
@@ -2082,7 +2099,7 @@ WriteDataChunks(ArchiveHandle *AH)
 
 	for (te = AH->toc->next; te != AH->toc; te = te->next)
 	{
-		if (te->dataDumper != NULL)
+		if (te->dataDumper != NULL && (te->reqs & REQ_DATA) != 0)
 		{
 			AH->currToc = te;
 			/* printf("Writing data for %d (%x)\n", te->id, te); */
@@ -2123,14 +2140,26 @@ WriteToc(ArchiveHandle *AH)
 {
 	TocEntry   *te;
 	char		workbuf[32];
+	int			tocCount;
 	int			i;
 
-	/* printf("%d TOC Entries to save\n", AH->tocCount); */
+	/* count entries that will actually be dumped */
+	tocCount = 0;
+	for (te = AH->toc->next; te != AH->toc; te = te->next)
+	{
+		if ((te->reqs & (REQ_SCHEMA | REQ_DATA | REQ_SPECIAL)) != 0)
+			tocCount++;
+	}
 
-	WriteInt(AH, AH->tocCount);
+	/* printf("%d TOC Entries to save\n", tocCount); */
+
+	WriteInt(AH, tocCount);
 
 	for (te = AH->toc->next; te != AH->toc; te = te->next)
 	{
+		if ((te->reqs & (REQ_SCHEMA | REQ_DATA | REQ_SPECIAL)) == 0)
+			continue;
+
 		WriteInt(AH, te->dumpId);
 		WriteInt(AH, te->dataDumper ? 1 : 0);
 
@@ -2173,7 +2202,6 @@ ReadToc(ArchiveHandle *AH)
 	int			depIdx;
 	int			depSize;
 	TocEntry   *te;
-	bool        in_post_data = false;
 
 	AH->tocCount = ReadInt(AH);
 	AH->maxDumpId = 0;
@@ -2238,12 +2266,6 @@ ReadToc(ArchiveHandle *AH)
 			else
 				te->section = SECTION_PRE_DATA;
 		}
-
-		/* will stay true even for SECTION_NONE items */
-		if (te->section == SECTION_POST_DATA)
-			in_post_data = true;
-
-		te->inPostData = in_post_data;
 
 		te->defn = ReadStr(AH);
 		te->dropStmt = ReadStr(AH);
@@ -2373,37 +2395,42 @@ processStdStringsEntry(ArchiveHandle *AH, TocEntry *te)
 }
 
 static teReqs
-_tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool include_acls)
+_tocEntryRequired(TocEntry *te, teSection curSection, RestoreOptions *ropt)
 {
-	teReqs		res = REQ_ALL;
+	teReqs		res = REQ_SCHEMA | REQ_DATA;
 
-	/* ENCODING and STDSTRINGS items are dumped specially, so always reject */
+	/* ENCODING and STDSTRINGS items are treated specially */
 	if (strcmp(te->desc, "ENCODING") == 0 ||
 		strcmp(te->desc, "STDSTRINGS") == 0)
-		return 0;
+		return REQ_SPECIAL;
 
 	/* If it's an ACL, maybe ignore it */
-	if ((!include_acls || ropt->aclsSkip) && _tocEntryIsACL(te))
+	if (ropt->aclsSkip && _tocEntryIsACL(te))
 		return 0;
 
 	/* If it's security labels, maybe ignore it */
 	if (ropt->no_security_labels && strcmp(te->desc, "SECURITY LABEL") == 0)
 		return 0;
 
-	/* Ignore DATABASE entry unless we should create it */
-	if (!ropt->createDB && strcmp(te->desc, "DATABASE") == 0)
-		return 0;
-
-	/* skip (all but) post data section as required */
-	/* table data is filtered if necessary lower down */
-	if (ropt->dumpSections != DUMP_UNSECTIONED)
+	/* Ignore it if section is not to be dumped/restored */
+	switch (curSection)
 	{
-		if (!(ropt->dumpSections & DUMP_POST_DATA) && te->inPostData)
-			return 0;
-		if (!(ropt->dumpSections & DUMP_PRE_DATA) && ! te->inPostData && strcmp(te->desc, "TABLE DATA") != 0)
+		case SECTION_PRE_DATA:
+			if (!(ropt->dumpSections & DUMP_PRE_DATA))
+				return 0;
+			break;
+		case SECTION_DATA:
+			if (!(ropt->dumpSections & DUMP_DATA))
+				return 0;
+			break;
+		case SECTION_POST_DATA:
+			if (!(ropt->dumpSections & DUMP_POST_DATA))
+				return 0;
+			break;
+		default:
+			/* shouldn't get here, really, but ignore it */
 			return 0;
 	}
-
 
 	/* Check options for selective dump/restore */
 	if (ropt->schemaNames)
@@ -2486,7 +2513,7 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool include_acls)
 	if (ropt->schemaOnly)
 		res = res & REQ_SCHEMA;
 
-	/* Mask it we only want data */
+	/* Mask it if we only want data */
 	if (ropt->dataOnly)
 		res = res & REQ_DATA;
 
@@ -3553,11 +3580,9 @@ restore_toc_entries_parallel(ArchiveHandle *AH)
 	{
 		if (next_work_item != NULL)
 		{
-			teReqs		reqs;
-
-			/* If not to be dumped, don't waste time launching a worker */
-			reqs = _tocEntryRequired(next_work_item, AH->ropt, false);
-			if ((reqs & (REQ_SCHEMA | REQ_DATA)) == 0)
+			/* If not to be restored, don't waste time launching a worker */
+			if ((next_work_item->reqs & (REQ_SCHEMA | REQ_DATA)) == 0 ||
+				_tocEntryIsACL(next_work_item))
 			{
 				ahlog(AH, 1, "skipping item %d %s %s\n",
 					  next_work_item->dumpId,
@@ -4287,15 +4312,14 @@ mark_create_done(ArchiveHandle *AH, TocEntry *te)
 static void
 inhibit_data_for_failed_table(ArchiveHandle *AH, TocEntry *te)
 {
-	RestoreOptions *ropt = AH->ropt;
-
 	ahlog(AH, 1, "table \"%s\" could not be created, will not restore its data\n",
 		  te->tag);
 
 	if (AH->tableDataId[te->dumpId] != 0)
 	{
-		/* mark it unwanted; we assume idWanted array already exists */
-		ropt->idWanted[AH->tableDataId[te->dumpId] - 1] = false;
+		TocEntry   *ted = AH->tocsByDumpId[AH->tableDataId[te->dumpId]];
+
+		ted->reqs = 0;
 	}
 }
 

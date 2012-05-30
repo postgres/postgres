@@ -90,7 +90,7 @@ bool		g_verbose;			/* User wants verbose narration of our
 /* various user-settable parameters */
 bool		schemaOnly;
 bool		dataOnly;
-int         dumpSections; /* bitmask of chosen sections */
+int			dumpSections;		/* bitmask of chosen sections */
 bool		aclsSkip;
 const char *lockWaitTimeout;
 
@@ -252,6 +252,7 @@ static void binary_upgrade_extension_member(PQExpBuffer upgrade_buffer,
 static const char *getAttrName(int attrnum, TableInfo *tblInfo);
 static const char *fmtCopyColumnList(const TableInfo *ti);
 static PGresult *ExecuteSqlQueryForSingleRow(Archive *fout, char *query);
+
 
 int
 main(int argc, char **argv)
@@ -499,7 +500,7 @@ main(int argc, char **argv)
 				break;
 
 			case 5:				/* section */
-				set_section(optarg, &dumpSections);
+				set_dump_section(optarg, &dumpSections);
 				break;
 
 			default:
@@ -528,19 +529,6 @@ main(int argc, char **argv)
 
 	if (dataOnly && schemaOnly)
 		exit_horribly(NULL, "options -s/--schema-only and -a/--data-only cannot be used together\n");
-
-	if ((dataOnly || schemaOnly) && dumpSections != DUMP_UNSECTIONED)
-		exit_horribly(NULL, "options -s/--schema-only and -a/--data-only cannot be used with --section\n");
-
-	if (dataOnly)
-		dumpSections = DUMP_DATA;
-	else if (schemaOnly)
-		dumpSections = DUMP_PRE_DATA | DUMP_POST_DATA;
-	else if ( dumpSections != DUMP_UNSECTIONED)
-	{
-		dataOnly = dumpSections == DUMP_DATA;
-		schemaOnly = !(dumpSections & DUMP_DATA);
-	}
 
 	if (dataOnly && outputClean)
 		exit_horribly(NULL, "options -c/--clean and -a/--data-only cannot be used together\n");
@@ -739,31 +727,40 @@ main(int argc, char **argv)
 		dumpDumpableObject(fout, dobjs[i]);
 
 	/*
+	 * Set up options info to ensure we dump what we want.
+	 */
+	ropt = NewRestoreOptions();
+	ropt->filename = filename;
+	ropt->dropSchema = outputClean;
+	ropt->dataOnly = dataOnly;
+	ropt->schemaOnly = schemaOnly;
+	ropt->dumpSections = dumpSections;
+	ropt->aclsSkip = aclsSkip;
+	ropt->superuser = outputSuperuser;
+	ropt->createDB = outputCreateDB;
+	ropt->noOwner = outputNoOwner;
+	ropt->noTablespace = outputNoTablespaces;
+	ropt->disable_triggers = disable_triggers;
+	ropt->use_setsessauth = use_setsessauth;
+
+	if (compressLevel == -1)
+		ropt->compression = 0;
+	else
+		ropt->compression = compressLevel;
+
+	ropt->suppressDumpWarnings = true;		/* We've already shown them */
+
+	SetArchiveRestoreOptions(fout, ropt);
+
+	/*
 	 * And finally we can do the actual output.
+	 *
+	 * Note: for non-plain-text output formats, the output file is written
+	 * inside CloseArchive().  This is, um, bizarre; but not worth changing
+	 * right now.
 	 */
 	if (plainText)
-	{
-		ropt = NewRestoreOptions();
-		ropt->filename = filename;
-		ropt->dropSchema = outputClean;
-		ropt->aclsSkip = aclsSkip;
-		ropt->superuser = outputSuperuser;
-		ropt->createDB = outputCreateDB;
-		ropt->noOwner = outputNoOwner;
-		ropt->noTablespace = outputNoTablespaces;
-		ropt->disable_triggers = disable_triggers;
-		ropt->use_setsessauth = use_setsessauth;
-		ropt->dataOnly = dataOnly;
-
-		if (compressLevel == -1)
-			ropt->compression = 0;
-		else
-			ropt->compression = compressLevel;
-
-		ropt->suppressDumpWarnings = true;		/* We've already shown them */
-
-		RestoreArchive(fout, ropt);
-	}
+		RestoreArchive(fout);
 
 	CloseArchive(fout);
 
@@ -7084,28 +7081,6 @@ collectComments(Archive *fout, CommentItem **items)
 static void
 dumpDumpableObject(Archive *fout, DumpableObject *dobj)
 {
-
-	bool skip = false;
-
-	switch (dobj->objType)
-	{
-		case DO_INDEX:
-		case DO_TRIGGER:
-		case DO_CONSTRAINT:
-		case DO_FK_CONSTRAINT:
-		case DO_RULE:
-			skip = !(dumpSections & DUMP_POST_DATA);
-			break;
-		case DO_TABLE_DATA:
-			skip = !(dumpSections & DUMP_DATA);
-			break;
-		default:
-			skip = !(dumpSections & DUMP_PRE_DATA);
-	}
-
-	if (skip)
-		return;
-
 	switch (dobj->objType)
 	{
 		case DO_NAMESPACE:

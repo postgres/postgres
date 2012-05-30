@@ -817,6 +817,7 @@ _CloseArchive(ArchiveHandle *AH)
 	lclContext *ctx = (lclContext *) AH->formatData;
 	TAR_MEMBER *th;
 	RestoreOptions *ropt;
+	RestoreOptions *savRopt;
 	int			savVerbose,
 				i;
 
@@ -860,16 +861,21 @@ _CloseArchive(ArchiveHandle *AH)
 		ctx->scriptTH = th;
 
 		ropt = NewRestoreOptions();
+		memcpy(ropt, AH->ropt, sizeof(RestoreOptions));
 		ropt->dropSchema = 1;
 		ropt->compression = 0;
 		ropt->superuser = NULL;
 		ropt->suppressDumpWarnings = true;
 
+		savRopt = AH->ropt;
+		AH->ropt = ropt;
+
 		savVerbose = AH->public.verbose;
 		AH->public.verbose = 0;
 
-		RestoreArchive((Archive *) AH, ropt);
+		RestoreArchive((Archive *) AH);
 
+		AH->ropt = savRopt;
 		AH->public.verbose = savVerbose;
 
 		tarClose(AH, th);
@@ -1176,7 +1182,7 @@ _tarPositionTo(ArchiveHandle *AH, const char *filename)
 		ahlog(AH, 4, "skipping tar member %s\n", th->targetFile);
 
 		id = atoi(th->targetFile);
-		if ((TocIDRequired(AH, id, AH->ropt) & REQ_DATA) != 0)
+		if ((TocIDRequired(AH, id) & REQ_DATA) != 0)
 			exit_horribly(modulename, "restoring data out of order is not supported in this archive format: "
 						  "\"%s\" is required, but comes before \"%s\" in the archive file.\n",
 						  th->targetFile, filename);
