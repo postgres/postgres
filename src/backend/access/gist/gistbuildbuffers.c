@@ -107,16 +107,7 @@ gistInitBuildBuffers(int pagesPerBuffer, int levelStep, int maxLevel)
 												   sizeof(GISTNodeBuffer *));
 	gfbb->loadedBuffersCount = 0;
 
-	/*
-	 * Root path item of the tree. Updated on each root node split.
-	 */
-	gfbb->rootitem = (GISTBufferingInsertStack *) MemoryContextAlloc(
-							gfbb->context, sizeof(GISTBufferingInsertStack));
-	gfbb->rootitem->parent = NULL;
-	gfbb->rootitem->blkno = GIST_ROOT_BLKNO;
-	gfbb->rootitem->downlinkoffnum = InvalidOffsetNumber;
-	gfbb->rootitem->level = maxLevel;
-	gfbb->rootitem->refCount = 1;
+	gfbb->rootlevel = maxLevel;
 
 	return gfbb;
 }
@@ -127,9 +118,7 @@ gistInitBuildBuffers(int pagesPerBuffer, int levelStep, int maxLevel)
  */
 GISTNodeBuffer *
 gistGetNodeBuffer(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
-				  BlockNumber nodeBlocknum,
-				  OffsetNumber downlinkoffnum,
-				  GISTBufferingInsertStack *parent)
+				  BlockNumber nodeBlocknum, int level)
 {
 	GISTNodeBuffer *nodeBuffer;
 	bool		found;
@@ -144,8 +133,6 @@ gistGetNodeBuffer(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 		/*
 		 * Node buffer wasn't found. Initialize the new buffer as empty.
 		 */
-		GISTBufferingInsertStack *path;
-		int			level;
 		MemoryContext oldcxt = MemoryContextSwitchTo(gfbb->context);
 
 		/* nodeBuffer->nodeBlocknum is the hash key and was filled in already */
@@ -153,33 +140,12 @@ gistGetNodeBuffer(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 		nodeBuffer->pageBlocknum = InvalidBlockNumber;
 		nodeBuffer->pageBuffer = NULL;
 		nodeBuffer->queuedForEmptying = false;
-
-		/*
-		 * Create a path stack for the page.
-		 */
-		if (nodeBlocknum != GIST_ROOT_BLKNO)
-		{
-			path = (GISTBufferingInsertStack *) palloc(
-										   sizeof(GISTBufferingInsertStack));
-			path->parent = parent;
-			path->blkno = nodeBlocknum;
-			path->downlinkoffnum = downlinkoffnum;
-			path->level = parent->level - 1;
-			path->refCount = 0; /* initially unreferenced */
-			parent->refCount++; /* this path references its parent */
-			Assert(path->level > 0);
-		}
-		else
-			path = gfbb->rootitem;
-
-		nodeBuffer->path = path;
-		path->refCount++;
+		nodeBuffer->level = level;
 
 		/*
 		 * Add this buffer to the list of buffers on this level. Enlarge
 		 * buffersOnLevels array if needed.
 		 */
-		level = path->level;
 		if (level >= gfbb->buffersOnLevelsLen)
 		{
 			int			i;
@@ -209,20 +175,6 @@ gistGetNodeBuffer(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 											 gfbb->buffersOnLevels[level]);
 
 		MemoryContextSwitchTo(oldcxt);
-	}
-	else
-	{
-		if (parent != nodeBuffer->path->parent)
-		{
-			/*
-			 * A different parent path item was provided than we've
-			 * remembered. We trust caller to provide more correct parent than
-			 * we have. Previous parent may be outdated by page split.
-			 */
-			gistDecreasePathRefcount(nodeBuffer->path->parent);
-			nodeBuffer->path->parent = parent;
-			parent->refCount++;
-		}
 	}
 
 	return nodeBuffer;
@@ -585,7 +537,7 @@ typedef struct
  */
 void
 gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
-								Relation r, GISTBufferingInsertStack *path,
+								Relation r, int level,
 								Buffer buffer, List *splitinfo)
 {
 	RelocationBufferInfo *relocationBuffersInfos;
@@ -601,7 +553,7 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 	ListCell   *lc;
 
 	/* If the splitted page doesn't have buffers, we have nothing to do. */
-	if (!LEVEL_HAS_BUFFERS(path->level, gfbb))
+	if (!LEVEL_HAS_BUFFERS(level, gfbb))
 		return;
 
 	/*
@@ -660,14 +612,11 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 		/*
 		 * Create a node buffer for the page. The leftmost half is on the same
 		 * block as the old page before split, so for the leftmost half this
-		 * will return the original buffer, which was emptied earlier in this
-		 * function.
+		 * will return the original buffer. The tuples on the original buffer
+		 * were relinked to the temporary buffer, so the original one is now
+		 * empty.
 		 */
-		newNodeBuffer = gistGetNodeBuffer(gfbb,
-										  giststate,
-										  BufferGetBlockNumber(si->buf),
-										  path->downlinkoffnum,
-										  path->parent);
+		newNodeBuffer = gistGetNodeBuffer(gfbb, giststate, BufferGetBlockNumber(si->buf), level);
 
 		relocationBuffersInfos[i].nodeBuffer = newNodeBuffer;
 		relocationBuffersInfos[i].splitinfo = si;

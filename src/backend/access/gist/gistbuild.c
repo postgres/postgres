@@ -55,16 +55,24 @@ typedef struct
 {
 	Relation	indexrel;
 	GISTSTATE  *giststate;
-	GISTBuildBuffers *gfbb;
 
 	int64		indtuples;		/* number of tuples indexed */
 	int64		indtuplesSize;	/* total size of all indexed tuples */
 
 	Size		freespace;		/* amount of free space to leave on pages */
 
+	/*
+	 * Extra data structures used during a buffering build. 'gfbb' contains
+	 * information related to managing the build buffers. 'parentMap' is a
+	 * lookup table of the parent of each internal page.
+	 */
+	GISTBuildBuffers *gfbb;
+	HTAB	   *parentMap;
+
 	GistBufferingMode bufferingMode;
 } GISTBuildState;
 
+/* prototypes for private functions */
 static void gistInitBuffering(GISTBuildState *buildstate);
 static int	calculatePagesPerBuffer(GISTBuildState *buildstate, int levelStep);
 static void gistBuildCallback(Relation index,
@@ -76,18 +84,24 @@ static void gistBuildCallback(Relation index,
 static void gistBufferingBuildInsert(GISTBuildState *buildstate,
 						 IndexTuple itup);
 static bool gistProcessItup(GISTBuildState *buildstate, IndexTuple itup,
-				GISTBufferingInsertStack *startparent);
+				BlockNumber startblkno, int startlevel);
 static void gistbufferinginserttuples(GISTBuildState *buildstate,
-						  Buffer buffer,
+						  Buffer buffer, int level,
 						  IndexTuple *itup, int ntup, OffsetNumber oldoffnum,
-						  GISTBufferingInsertStack *path);
-static void gistBufferingFindCorrectParent(GISTBuildState *buildstate,
-							   GISTBufferingInsertStack *child);
+						  BlockNumber parentblk, OffsetNumber downlinkoffnum);
+static Buffer gistBufferingFindCorrectParent(GISTBuildState *buildstate,
+							   BlockNumber childblkno, int level,
+							   BlockNumber *parentblk,
+							   OffsetNumber *downlinkoffnum);
 static void gistProcessEmptyingQueue(GISTBuildState *buildstate);
 static void gistEmptyAllBuffers(GISTBuildState *buildstate);
-static void gistFreeUnreferencedPath(GISTBufferingInsertStack *path);
 static int	gistGetMaxLevel(Relation index);
 
+static void gistInitParentMap(GISTBuildState *buildstate);
+static void gistMemorizeParent(GISTBuildState *buildstate, BlockNumber child,
+				   BlockNumber parent);
+static void gistMemorizeAllDownlinks(GISTBuildState *buildstate, Buffer parent);
+static BlockNumber gistGetParent(GISTBuildState *buildstate, BlockNumber child);
 
 /*
  * Main entry point to GiST index build. Initially calls insert over and over,
@@ -407,6 +421,8 @@ gistInitBuffering(GISTBuildState *buildstate)
 	buildstate->gfbb = gistInitBuildBuffers(pagesPerBuffer, levelStep,
 											gistGetMaxLevel(index));
 
+	gistInitParentMap(buildstate);
+
 	buildstate->bufferingMode = GIST_BUFFERING_ACTIVE;
 
 	elog(DEBUG1, "switched to buffered GiST build; level step = %d, pagesPerBuffer = %d",
@@ -529,7 +545,7 @@ static void
 gistBufferingBuildInsert(GISTBuildState *buildstate, IndexTuple itup)
 {
 	/* Insert the tuple to buffers. */
-	gistProcessItup(buildstate, itup, NULL);
+	gistProcessItup(buildstate, itup, 0, buildstate->gfbb->rootlevel);
 
 	/* If we filled up (half of a) buffer, process buffer emptying. */
 	gistProcessEmptyingQueue(buildstate);
@@ -543,30 +559,28 @@ gistBufferingBuildInsert(GISTBuildState *buildstate, IndexTuple itup)
  */
 static bool
 gistProcessItup(GISTBuildState *buildstate, IndexTuple itup,
-				GISTBufferingInsertStack *startparent)
+				BlockNumber startblkno, int startlevel)
 {
 	GISTSTATE  *giststate = buildstate->giststate;
 	GISTBuildBuffers *gfbb = buildstate->gfbb;
 	Relation	indexrel = buildstate->indexrel;
-	GISTBufferingInsertStack *path;
 	BlockNumber childblkno;
 	Buffer		buffer;
 	bool		result = false;
+	BlockNumber	blkno;
+	int			level;
+	OffsetNumber downlinkoffnum = InvalidOffsetNumber;
+	BlockNumber parentblkno = InvalidBlockNumber;
 
-	/*
-	 * NULL passed in startparent means that we start index tuple processing
-	 * from the root.
-	 */
-	if (!startparent)
-		path = gfbb->rootitem;
-	else
-		path = startparent;
+	CHECK_FOR_INTERRUPTS();
 
 	/*
 	 * Loop until we reach a leaf page (level == 0) or a level with buffers
 	 * (not including the level we start at, because we would otherwise make
 	 * no progress).
 	 */
+	blkno = startblkno;
+	level = startlevel;
 	for (;;)
 	{
 		ItemId		iid;
@@ -574,21 +588,21 @@ gistProcessItup(GISTBuildState *buildstate, IndexTuple itup,
 					newtup;
 		Page		page;
 		OffsetNumber childoffnum;
-		GISTBufferingInsertStack *parent;
 
 		/* Have we reached a level with buffers? */
-		if (LEVEL_HAS_BUFFERS(path->level, gfbb) && path != startparent)
+		if (LEVEL_HAS_BUFFERS(level, gfbb) && level != startlevel)
 			break;
 
 		/* Have we reached a leaf page? */
-		if (path->level == 0)
+		if (level == 0)
 			break;
 
 		/*
 		 * Nope. Descend down to the next level then. Choose a child to
 		 * descend down to.
 		 */
-		buffer = ReadBuffer(indexrel, path->blkno);
+
+		buffer = ReadBuffer(indexrel, blkno);
 		LockBuffer(buffer, GIST_EXCLUSIVE);
 
 		page = (Page) BufferGetPage(buffer);
@@ -597,32 +611,33 @@ gistProcessItup(GISTBuildState *buildstate, IndexTuple itup,
 		idxtuple = (IndexTuple) PageGetItem(page, iid);
 		childblkno = ItemPointerGetBlockNumber(&(idxtuple->t_tid));
 
+		if (level > 1)
+			gistMemorizeParent(buildstate, childblkno, blkno);
+
 		/*
 		 * Check that the key representing the target child node is consistent
 		 * with the key we're inserting. Update it if it's not.
 		 */
 		newtup = gistgetadjusted(indexrel, idxtuple, itup, giststate);
 		if (newtup)
-			gistbufferinginserttuples(buildstate, buffer, &newtup, 1,
-									  childoffnum, path);
-		UnlockReleaseBuffer(buffer);
+		{
+			gistbufferinginserttuples(buildstate, buffer, level,
+									  &newtup, 1, childoffnum,
+									  InvalidBlockNumber, InvalidOffsetNumber);
+			/* gistbufferinginserttuples() released the buffer */
+		}
+		else
+			UnlockReleaseBuffer(buffer);
 
-		/* Create new path item representing current page */
-		parent = path;
-		path = (GISTBufferingInsertStack *) MemoryContextAlloc(gfbb->context,
-										   sizeof(GISTBufferingInsertStack));
-		path->parent = parent;
-		path->level = parent->level - 1;
-		path->blkno = childblkno;
-		path->downlinkoffnum = childoffnum;
-		path->refCount = 0;		/* it's unreferenced for now */
-
-		/* Adjust reference count of parent */
-		if (parent)
-			parent->refCount++;
+		/* Descend to the child */
+		parentblkno = blkno;
+		blkno = childblkno;
+		downlinkoffnum = childoffnum;
+		Assert(level > 0);
+		level--;
 	}
 
-	if (LEVEL_HAS_BUFFERS(path->level, gfbb))
+	if (LEVEL_HAS_BUFFERS(level, gfbb))
 	{
 		/*
 		 * We've reached level with buffers. Place the index tuple to the
@@ -631,8 +646,7 @@ gistProcessItup(GISTBuildState *buildstate, IndexTuple itup,
 		GISTNodeBuffer *childNodeBuffer;
 
 		/* Find the buffer or create a new one */
-		childNodeBuffer = gistGetNodeBuffer(gfbb, giststate, path->blkno,
-										 path->downlinkoffnum, path->parent);
+		childNodeBuffer = gistGetNodeBuffer(gfbb, giststate, blkno, level);
 
 		/* Add index tuple to it */
 		gistPushItupToNodeBuffer(gfbb, childNodeBuffer, itup);
@@ -645,18 +659,14 @@ gistProcessItup(GISTBuildState *buildstate, IndexTuple itup,
 		/*
 		 * We've reached a leaf page. Place the tuple here.
 		 */
-		buffer = ReadBuffer(indexrel, path->blkno);
+		Assert(level == 0);
+		buffer = ReadBuffer(indexrel, blkno);
 		LockBuffer(buffer, GIST_EXCLUSIVE);
-		gistbufferinginserttuples(buildstate, buffer, &itup, 1,
-								  InvalidOffsetNumber, path);
-		UnlockReleaseBuffer(buffer);
+		gistbufferinginserttuples(buildstate, buffer, level,
+								  &itup, 1, InvalidOffsetNumber,
+								  parentblkno, downlinkoffnum);
+		/* gistbufferinginserttuples() released the buffer */
 	}
-
-	/*
-	 * Free unreferenced path items, if any. Path item may be referenced by
-	 * node buffer.
-	 */
-	gistFreeUnreferencedPath(path);
 
 	return result;
 }
@@ -665,11 +675,14 @@ gistProcessItup(GISTBuildState *buildstate, IndexTuple itup,
  * Insert tuples to a given page.
  *
  * This is analogous with gistinserttuples() in the regular insertion code.
+ *
+ * Caller should hold a lock on 'buffer' on entry. This function will unlock
+ * and unpin it.
  */
 static void
-gistbufferinginserttuples(GISTBuildState *buildstate, Buffer buffer,
+gistbufferinginserttuples(GISTBuildState *buildstate, Buffer buffer, int level,
 						  IndexTuple *itup, int ntup, OffsetNumber oldoffnum,
-						  GISTBufferingInsertStack *path)
+						  BlockNumber parentblk, OffsetNumber downlinkoffnum)
 {
 	GISTBuildBuffers *gfbb = buildstate->gfbb;
 	List	   *splitinfo;
@@ -692,33 +705,41 @@ gistbufferinginserttuples(GISTBuildState *buildstate, Buffer buffer,
 	 */
 	if (is_split && BufferGetBlockNumber(buffer) == GIST_ROOT_BLKNO)
 	{
-		GISTBufferingInsertStack *oldroot = gfbb->rootitem;
 		Page		page = BufferGetPage(buffer);
-		ItemId		iid;
-		IndexTuple	idxtuple;
-		BlockNumber leftmostchild;
+		OffsetNumber off;
+		OffsetNumber maxoff;
 
-		gfbb->rootitem = (GISTBufferingInsertStack *) MemoryContextAlloc(
-							gfbb->context, sizeof(GISTBufferingInsertStack));
-		gfbb->rootitem->parent = NULL;
-		gfbb->rootitem->blkno = GIST_ROOT_BLKNO;
-		gfbb->rootitem->downlinkoffnum = InvalidOffsetNumber;
-		gfbb->rootitem->level = oldroot->level + 1;
-		gfbb->rootitem->refCount = 1;
+		Assert(level == gfbb->rootlevel);
+		gfbb->rootlevel++;
+
+		elog(DEBUG2, "splitting GiST root page, now %d levels deep", gfbb->rootlevel);
 
 		/*
 		 * All the downlinks on the old root page are now on one of the child
-		 * pages. Change the block number of the old root entry in the stack
-		 * to point to the leftmost child. The other child pages will be
-		 * accessible from there by walking right.
+		 * pages. Visit all the new child pages to memorize the parents of
+		 * the grandchildren.
 		 */
-		iid = PageGetItemId(page, FirstOffsetNumber);
-		idxtuple = (IndexTuple) PageGetItem(page, iid);
-		leftmostchild = ItemPointerGetBlockNumber(&(idxtuple->t_tid));
+		if (gfbb->rootlevel > 1)
+		{
+			maxoff = PageGetMaxOffsetNumber(page);
+			for (off = FirstOffsetNumber; off <= maxoff; off++)
+			{
+				ItemId iid = PageGetItemId(page, off);
+				IndexTuple idxtuple = (IndexTuple) PageGetItem(page, iid);
+				BlockNumber childblkno = ItemPointerGetBlockNumber(&(idxtuple->t_tid));
+				Buffer childbuf = ReadBuffer(buildstate->indexrel, childblkno);
 
-		oldroot->parent = gfbb->rootitem;
-		oldroot->blkno = leftmostchild;
-		oldroot->downlinkoffnum = InvalidOffsetNumber;
+				LockBuffer(childbuf, GIST_SHARE);
+				gistMemorizeAllDownlinks(buildstate, childbuf);
+				UnlockReleaseBuffer(childbuf);
+
+				/*
+				 * Also remember that the parent of the new child page is
+				 * the root block.
+				 */
+				gistMemorizeParent(buildstate, childblkno, GIST_ROOT_BLKNO);
+			}
+		}
 	}
 
 	if (splitinfo)
@@ -726,7 +747,8 @@ gistbufferinginserttuples(GISTBuildState *buildstate, Buffer buffer,
 		/*
 		 * Insert the downlinks to the parent. This is analogous with
 		 * gistfinishsplit() in the regular insertion code, but the locking is
-		 * simpler, and we have to maintain the buffers.
+		 * simpler, and we have to maintain the buffers on internal nodes and
+		 * the parent map.
 		 */
 		IndexTuple *downlinks;
 		int			ndownlinks,
@@ -735,7 +757,12 @@ gistbufferinginserttuples(GISTBuildState *buildstate, Buffer buffer,
 		ListCell   *lc;
 
 		/* Parent may have changed since we memorized this path. */
-		gistBufferingFindCorrectParent(buildstate, path);
+		parentBuffer =
+			gistBufferingFindCorrectParent(buildstate,
+										   BufferGetBlockNumber(buffer),
+										   level,
+										   &parentblk,
+										   &downlinkoffnum);
 
 		/*
 		 * If there's a buffer associated with this page, that needs to be
@@ -747,7 +774,8 @@ gistbufferinginserttuples(GISTBuildState *buildstate, Buffer buffer,
 		gistRelocateBuildBuffersOnSplit(gfbb,
 										buildstate->giststate,
 										buildstate->indexrel,
-										path, buffer, splitinfo);
+										level,
+										buffer, splitinfo);
 
 		/* Create an array of all the downlink tuples */
 		ndownlinks = list_length(splitinfo);
@@ -758,124 +786,129 @@ gistbufferinginserttuples(GISTBuildState *buildstate, Buffer buffer,
 			GISTPageSplitInfo *splitinfo = lfirst(lc);
 
 			/*
-			 * Since there's no concurrent access, we can release the lower
-			 * level buffers immediately. Don't release the buffer for the
-			 * original page, though, because the caller will release that.
+			 * Remember the parent of each new child page in our parent map.
+			 * This assumes that the downlinks fit on the parent page. If the
+			 * parent page is split, too, when we recurse up to insert the
+			 * downlinks, the recursive gistbufferinginserttuples() call
+			 * will update the map again.
 			 */
-			if (splitinfo->buf != buffer)
-				UnlockReleaseBuffer(splitinfo->buf);
+			if (level > 0)
+				gistMemorizeParent(buildstate,
+								   BufferGetBlockNumber(splitinfo->buf),
+								   BufferGetBlockNumber(parentBuffer));
+
+			/*
+			 * Also update the parent map for all the downlinks that got moved
+			 * to a different page. (actually this also loops through the
+			 * downlinks that stayed on the original page, but it does no
+			 * harm).
+			 */
+			if (level > 1)
+				gistMemorizeAllDownlinks(buildstate, splitinfo->buf);
+
+			/*
+			 * Since there's no concurrent access, we can release the lower
+			 * level buffers immediately. This includes the original page.
+			 */
+			UnlockReleaseBuffer(splitinfo->buf);
 			downlinks[i++] = splitinfo->downlink;
 		}
 
 		/* Insert them into parent. */
-		parentBuffer = ReadBuffer(buildstate->indexrel, path->parent->blkno);
-		LockBuffer(parentBuffer, GIST_EXCLUSIVE);
-		gistbufferinginserttuples(buildstate, parentBuffer,
-								  downlinks, ndownlinks,
-								  path->downlinkoffnum, path->parent);
-		UnlockReleaseBuffer(parentBuffer);
+		gistbufferinginserttuples(buildstate, parentBuffer, level + 1,
+								  downlinks, ndownlinks, downlinkoffnum,
+								  InvalidBlockNumber, InvalidOffsetNumber);
 
 		list_free_deep(splitinfo);		/* we don't need this anymore */
 	}
+	else
+		UnlockReleaseBuffer(buffer);
 }
 
 /*
- * Find correct parent by following rightlinks in buffering index build. This
- * method of parent searching is possible because no concurrent activity is
- * possible while index builds.
+ * Find the downlink pointing to a child page.
+ *
+ * 'childblkno' indicates the child page to find the parent for. 'level' is
+ * the level of the child. On entry, *parentblkno and *downlinkoffnum can
+ * point to a location where the downlink used to be - we will check that
+ * location first, and save some cycles if it hasn't moved. The function
+ * returns a buffer containing the downlink, exclusively-locked, and
+ * *parentblkno and *downlinkoffnum are set to the real location of the
+ * downlink.
+ *
+ * If the child page is a leaf (level == 0), the caller must supply a correct
+ * parentblkno. Otherwise we use the parent map hash table to find the parent
+ * block.
+ *
+ * This function serves the same purpose as gistFindCorrectParent() during
+ * normal index inserts, but this is simpler because we don't need to deal
+ * with concurrent inserts.
  */
-static void
+static Buffer
 gistBufferingFindCorrectParent(GISTBuildState *buildstate,
-							   GISTBufferingInsertStack *child)
+							   BlockNumber childblkno, int level,
+							   BlockNumber *parentblkno,
+							   OffsetNumber *downlinkoffnum)
 {
-	GISTBuildBuffers *gfbb = buildstate->gfbb;
-	Relation	indexrel = buildstate->indexrel;
-	GISTBufferingInsertStack *parent = child->parent;
-	OffsetNumber i,
-				maxoff;
-	ItemId		iid;
-	IndexTuple	idxtuple;
+	BlockNumber parent;
 	Buffer		buffer;
 	Page		page;
-	bool		copied = false;
+	OffsetNumber maxoff;
+	OffsetNumber off;
 
-	buffer = ReadBuffer(indexrel, parent->blkno);
+	if (level > 0)
+		parent = gistGetParent(buildstate, childblkno);
+	else
+	{
+		/*
+		 * For a leaf page, the caller must supply a correct parent block
+		 * number.
+		 */
+		if (*parentblkno == InvalidBlockNumber)
+			elog(ERROR, "no parent buffer provided of child %d", childblkno);
+		parent = *parentblkno;
+	}
+
+	buffer = ReadBuffer(buildstate->indexrel, parent);
 	page = BufferGetPage(buffer);
 	LockBuffer(buffer, GIST_EXCLUSIVE);
-	gistcheckpage(indexrel, buffer);
+	gistcheckpage(buildstate->indexrel, buffer);
+	maxoff = PageGetMaxOffsetNumber(page);
 
 	/* Check if it was not moved */
-	if (child->downlinkoffnum != InvalidOffsetNumber &&
-		child->downlinkoffnum <= PageGetMaxOffsetNumber(page))
+	if (parent == *parentblkno && *parentblkno != InvalidBlockNumber &&
+		*downlinkoffnum != InvalidOffsetNumber && *downlinkoffnum <= maxoff)
 	{
-		iid = PageGetItemId(page, child->downlinkoffnum);
-		idxtuple = (IndexTuple) PageGetItem(page, iid);
-		if (ItemPointerGetBlockNumber(&(idxtuple->t_tid)) == child->blkno)
+		ItemId iid = PageGetItemId(page, *downlinkoffnum);
+		IndexTuple idxtuple = (IndexTuple) PageGetItem(page, iid);
+		if (ItemPointerGetBlockNumber(&(idxtuple->t_tid)) == childblkno)
 		{
 			/* Still there */
-			UnlockReleaseBuffer(buffer);
-			return;
+			return buffer;
 		}
 	}
 
-	/* parent has changed, look child in right links until found */
-	while (true)
+	/*
+	 * Downlink was not at the offset where it used to be. Scan the page
+	 * to find it. During normal gist insertions, it might've moved to another
+	 * page, to the right, but during a buffering build, we keep track of
+	 * the parent of each page in the lookup table so we should always know
+	 * what page it's on.
+	 */
+	for (off = FirstOffsetNumber; off <= maxoff; off = OffsetNumberNext(off))
 	{
-		/* Search for relevant downlink in the current page */
-		maxoff = PageGetMaxOffsetNumber(page);
-		for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
+		ItemId iid = PageGetItemId(page, off);
+		IndexTuple idxtuple = (IndexTuple) PageGetItem(page, iid);
+		if (ItemPointerGetBlockNumber(&(idxtuple->t_tid)) == childblkno)
 		{
-			iid = PageGetItemId(page, i);
-			idxtuple = (IndexTuple) PageGetItem(page, iid);
-			if (ItemPointerGetBlockNumber(&(idxtuple->t_tid)) == child->blkno)
-			{
-				/* yes!!, found */
-				child->downlinkoffnum = i;
-				UnlockReleaseBuffer(buffer);
-				return;
-			}
+			/* yes!!, found it */
+			*downlinkoffnum = off;
+			return buffer;
 		}
-
-		/*
-		 * We should copy parent path item because some other path items can
-		 * refer to it.
-		 */
-		if (!copied)
-		{
-			parent = (GISTBufferingInsertStack *) MemoryContextAlloc(gfbb->context,
-										   sizeof(GISTBufferingInsertStack));
-			memcpy(parent, child->parent, sizeof(GISTBufferingInsertStack));
-			if (parent->parent)
-				parent->parent->refCount++;
-			gistDecreasePathRefcount(child->parent);
-			child->parent = parent;
-			parent->refCount = 1;
-			copied = true;
-		}
-
-		/*
-		 * Not found in current page. Move towards rightlink.
-		 */
-		parent->blkno = GistPageGetOpaque(page)->rightlink;
-		UnlockReleaseBuffer(buffer);
-
-		if (parent->blkno == InvalidBlockNumber)
-		{
-			/*
-			 * End of chain and still didn't find parent. Should not happen
-			 * during index build.
-			 */
-			break;
-		}
-
-		/* Get the next page */
-		buffer = ReadBuffer(indexrel, parent->blkno);
-		page = BufferGetPage(buffer);
-		LockBuffer(buffer, GIST_EXCLUSIVE);
-		gistcheckpage(indexrel, buffer);
 	}
 
-	elog(ERROR, "failed to re-find parent for block %u", child->blkno);
+	elog(ERROR, "failed to re-find parent for block %u", childblkno);
+	return InvalidBuffer; /* keep compiler quiet */
 }
 
 /*
@@ -934,7 +967,7 @@ gistProcessEmptyingQueue(GISTBuildState *buildstate)
 			 * threshold, but we might as well keep flushing tuples from it
 			 * until we fill a lower-level buffer.
 			 */
-			if (gistProcessItup(buildstate, itup, emptyingNodeBuffer->path))
+			if (gistProcessItup(buildstate, itup, emptyingNodeBuffer->nodeBlocknum, emptyingNodeBuffer->level))
 			{
 				/*
 				 * A lower level buffer filled up. Stop emptying this buffer,
@@ -1003,43 +1036,9 @@ gistEmptyAllBuffers(GISTBuildState *buildstate)
 				gfbb->buffersOnLevels[i] =
 					list_delete_first(gfbb->buffersOnLevels[i]);
 		}
+		elog(DEBUG2, "emptied all buffers at level %d", i);
 	}
 	MemoryContextSwitchTo(oldCtx);
-}
-
-/*
- * Free unreferenced parts of a path stack.
- */
-static void
-gistFreeUnreferencedPath(GISTBufferingInsertStack *path)
-{
-	while (path->refCount == 0)
-	{
-		/*
-		 * Path part is unreferenced. We can free it and decrease reference
-		 * count of parent. If parent becomes unreferenced too procedure
-		 * should be repeated for it.
-		 */
-		GISTBufferingInsertStack *tmp = path->parent;
-
-		pfree(path);
-		path = tmp;
-		if (path)
-			path->refCount--;
-		else
-			break;
-	}
-}
-
-/*
- * Decrease reference count of a path part, and free any unreferenced parts of
- * the path stack.
- */
-void
-gistDecreasePathRefcount(GISTBufferingInsertStack *path)
-{
-	path->refCount--;
-	gistFreeUnreferencedPath(path);
 }
 
 /*
@@ -1091,9 +1090,114 @@ gistGetMaxLevel(Relation index)
 
 		/*
 		 * We're going down on the tree. It means that there is yet one more
-		 * level is the tree.
+		 * level in the tree.
 		 */
 		maxLevel++;
 	}
 	return maxLevel;
+}
+
+
+/*
+ * Routines for managing the parent map.
+ *
+ * Whenever a page is split, we need to insert the downlinks into the parent.
+ * We need to somehow find the parent page to do that. In normal insertions,
+ * we keep a stack of nodes visited when we descend the tree. However, in
+ * buffering build, we can start descending the tree from any internal node,
+ * when we empty a buffer by cascading tuples to its children. So we don't
+ * have a full stack up to the root available at that time.
+ *
+ * So instead, we maintain a hash table to track the parent of every internal
+ * page. We don't need to track the parents of leaf nodes, however. Whenever
+ * we insert to a leaf, we've just descended down from its parent, so we know
+ * its immediate parent already. This helps a lot to limit the memory used
+ * by this hash table.
+ *
+ * Whenever an internal node is split, the parent map needs to be updated.
+ * the parent of the new child page needs to be recorded, and also the
+ * entries for all page whose downlinks are moved to a new page at the split
+ * needs to be updated.
+ *
+ * We also update the parent map whenever we descend the tree. That might seem
+ * unnecessary, because we maintain the map whenever a downlink is moved or
+ * created, but it is needed because we switch to buffering mode after
+ * creating a tree with regular index inserts. Any pages created before
+ * switching to buffering mode will not be present in the parent map initially,
+ * but will be added there the first time we visit them.
+ */
+
+typedef struct
+{
+	BlockNumber childblkno; /* hash key */
+	BlockNumber parentblkno;
+} ParentMapEntry;
+
+static void
+gistInitParentMap(GISTBuildState *buildstate)
+{
+	HASHCTL		hashCtl;
+
+	hashCtl.keysize = sizeof(BlockNumber);
+	hashCtl.entrysize = sizeof(ParentMapEntry);
+	hashCtl.hcxt = CurrentMemoryContext;
+	hashCtl.hash = oid_hash;
+	buildstate->parentMap = hash_create("gistbuild parent map",
+										1024,
+										&hashCtl,
+										HASH_ELEM | HASH_CONTEXT
+										| HASH_FUNCTION);
+}
+
+static void
+gistMemorizeParent(GISTBuildState *buildstate, BlockNumber child, BlockNumber parent)
+{
+	ParentMapEntry *entry;
+	bool		found;
+
+	entry = (ParentMapEntry *) hash_search(buildstate->parentMap,
+										  (const void *) &child,
+										  HASH_ENTER,
+										  &found);
+	entry->parentblkno = parent;
+}
+
+/*
+ * Scan all downlinks on a page, and memorize their parent.
+ */
+static void
+gistMemorizeAllDownlinks(GISTBuildState *buildstate, Buffer parentbuf)
+{
+	OffsetNumber maxoff;
+	OffsetNumber off;
+	BlockNumber parentblkno = BufferGetBlockNumber(parentbuf);
+	Page page = BufferGetPage(parentbuf);
+
+	Assert(!GistPageIsLeaf(page));
+
+	maxoff = PageGetMaxOffsetNumber(page);
+	for (off = FirstOffsetNumber; off <= maxoff; off++)
+	{
+		ItemId iid = PageGetItemId(page, off);
+		IndexTuple idxtuple = (IndexTuple) PageGetItem(page, iid);
+		BlockNumber childblkno = ItemPointerGetBlockNumber(&(idxtuple->t_tid));
+		gistMemorizeParent(buildstate, childblkno, parentblkno);
+	}
+}
+
+static BlockNumber
+gistGetParent(GISTBuildState *buildstate, BlockNumber child)
+{
+	ParentMapEntry *entry;
+	bool		found;
+
+	/* Find node buffer in hash table */
+	entry = (ParentMapEntry *) hash_search(buildstate->parentMap,
+										  (const void *) &child,
+										  HASH_FIND,
+										  &found);
+	if (!found)
+		elog(ERROR, "could not find parent of block %d in lookup table", child);
+
+	return entry->parentblkno;
 }

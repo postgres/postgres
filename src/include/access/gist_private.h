@@ -329,7 +329,7 @@ typedef struct
 	/* is this a temporary copy, not in the hash table? */
 	bool		isTemp;
 
-	struct GISTBufferingInsertStack *path;
+	int			level;			/* 0 == leaf */
 } GISTNodeBuffer;
 
 /*
@@ -338,7 +338,7 @@ typedef struct
  */
 #define LEVEL_HAS_BUFFERS(nlevel, gfbb) \
 	((nlevel) != 0 && (nlevel) % (gfbb)->levelStep == 0 && \
-	 (nlevel) != (gfbb)->rootitem->level)
+	 (nlevel) != (gfbb)->rootlevel)
 
 /* Is specified buffer at least half-filled (should be queued for emptying)? */
 #define BUFFER_HALF_FILLED(nodeBuffer, gfbb) \
@@ -351,26 +351,6 @@ typedef struct
  */
 #define BUFFER_OVERFLOWED(nodeBuffer, gfbb) \
 	((nodeBuffer)->blocksCount > (gfbb)->pagesPerBuffer)
-
-/*
- * Extended GISTInsertStack for buffering GiST index build.
- */
-typedef struct GISTBufferingInsertStack
-{
-	/* current page */
-	BlockNumber blkno;
-
-	/* offset of the downlink in the parent page, that points to this page */
-	OffsetNumber downlinkoffnum;
-
-	/* pointer to parent */
-	struct GISTBufferingInsertStack *parent;
-
-	int			refCount;
-
-	/* level number */
-	int			level;
-} GISTBufferingInsertStack;
 
 /*
  * Data structure with general information about build buffers.
@@ -416,8 +396,8 @@ typedef struct GISTBuildBuffers
 	int			loadedBuffersCount;		/* # of entries in loadedBuffers */
 	int			loadedBuffersLen;		/* allocated size of loadedBuffers */
 
-	/* A path item that points to the current root node */
-	GISTBufferingInsertStack *rootitem;
+	/* Level of the current root node (= height of the index tree - 1) */
+	int			rootlevel;
 } GISTBuildBuffers;
 
 /*
@@ -551,15 +531,13 @@ extern void gistSplitByKey(Relation r, Page page, IndexTuple *itup,
 /* gistbuild.c */
 extern Datum gistbuild(PG_FUNCTION_ARGS);
 extern void gistValidateBufferingOption(char *value);
-extern void gistDecreasePathRefcount(GISTBufferingInsertStack *path);
 
 /* gistbuildbuffers.c */
 extern GISTBuildBuffers *gistInitBuildBuffers(int pagesPerBuffer, int levelStep,
 					 int maxLevel);
 extern GISTNodeBuffer *gistGetNodeBuffer(GISTBuildBuffers *gfbb,
 				  GISTSTATE *giststate,
-				  BlockNumber blkno, OffsetNumber downlinkoffnum,
-				  GISTBufferingInsertStack *parent);
+				  BlockNumber blkno, int level);
 extern void gistPushItupToNodeBuffer(GISTBuildBuffers *gfbb,
 						 GISTNodeBuffer *nodeBuffer, IndexTuple item);
 extern bool gistPopItupFromNodeBuffer(GISTBuildBuffers *gfbb,
@@ -567,7 +545,7 @@ extern bool gistPopItupFromNodeBuffer(GISTBuildBuffers *gfbb,
 extern void gistFreeBuildBuffers(GISTBuildBuffers *gfbb);
 extern void gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb,
 								GISTSTATE *giststate, Relation r,
-								GISTBufferingInsertStack *path, Buffer buffer,
+								int level, Buffer buffer,
 								List *splitinfo);
 extern void gistUnloadNodeBuffers(GISTBuildBuffers *gfbb);
 
