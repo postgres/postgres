@@ -1924,9 +1924,8 @@ timetz_recv(PG_FUNCTION_ARGS)
 
 	result->zone = pq_getmsgint(buf, sizeof(result->zone));
 
-	/* we allow GMT displacements up to 14:59:59, cf DecodeTimezone() */
-	if (result->zone <= -15 * SECS_PER_HOUR ||
-		result->zone >= 15 * SECS_PER_HOUR)
+	/* Check for sane GMT displacement; see notes in utils/timestamp.h */
+	if (result->zone <= -TZDISP_LIMIT || result->zone >= TZDISP_LIMIT)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TIME_ZONE_DISPLACEMENT_VALUE),
 				 errmsg("time zone displacement out of range")));

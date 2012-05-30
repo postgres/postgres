@@ -2702,9 +2702,6 @@ DecodeNumberField(int len, char *str, int fmask,
  * Return 0 if okay (and set *tzp), a DTERR code if not okay.
  *
  * NB: this must *not* ereport on failure; see commands/variable.c.
- *
- * Note: we allow timezone offsets up to 13:59.  There are places that
- * use +1300 summer time.
  */
 static int
 DecodeTimezone(char *str, int *tzp)
@@ -2749,7 +2746,8 @@ DecodeTimezone(char *str, int *tzp)
 	else
 		min = 0;
 
-	if (hr < 0 || hr > 14)
+	/* Range-check the values; see notes in utils/timestamp.h */
+	if (hr < 0 || hr > MAX_TZDISP_HOUR)
 		return DTERR_TZDISP_OVERFLOW;
 	if (min < 0 || min >= MINS_PER_HOUR)
 		return DTERR_TZDISP_OVERFLOW;
