@@ -1,6 +1,291 @@
 <!-- doc/src/sgml/release-8.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-8-4-12">
+  <title>Release 8.4.12</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2012-06-04</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.4.11.
+   For information about new features in the 8.4 major release, see
+   <xref linkend="release-8-4">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.4.12</title>
+
+   <para>
+    A dump/restore is not required for those running 8.4.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 8.4.10,
+    see the release notes for 8.4.10.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix incorrect password transformation in
+      <filename>contrib/pgcrypto</>'s DES <function>crypt()</> function
+      (Solar Designer)
+     </para>
+
+     <para>
+      If a password string contained the byte value <literal>0x80</>, the
+      remainder of the password was ignored, causing the password to be much
+      weaker than it appeared.  With this fix, the rest of the string is
+      properly included in the DES hash.  Any stored password values that are
+      affected by this bug will thus no longer match, so the stored values may
+      need to be updated.  (CVE-2012-2143)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ignore <literal>SECURITY DEFINER</> and <literal>SET</> attributes for
+      a procedural language's call handler (Tom Lane)
+     </para>
+
+     <para>
+      Applying such attributes to a call handler could crash the server.
+      (CVE-2012-2655)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow numeric timezone offsets in <type>timestamp</> input to be up to
+      16 hours away from UTC (Tom Lane)
+     </para>
+
+     <para>
+      Some historical time zones have offsets larger than 15 hours, the
+      previous limit.  This could result in dumped data values being rejected
+      during reload.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix timestamp conversion to cope when the given time is exactly the
+      last DST transition time for the current timezone (Tom Lane)
+     </para>
+
+     <para>
+      This oversight has been there a long time, but was not noticed
+      previously because most DST-using zones are presumed to have an
+      indefinite sequence of future DST transitions.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <type>text</> to <type>name</> and <type>char</> to <type>name</>
+      casts to perform string truncation correctly in multibyte encodings
+      (Karl Schnaitter)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix memory copying bug in <function>to_tsquery()</> (Heikki Linnakangas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix planner's handling of outer PlaceHolderVars within subqueries (Tom
+      Lane)
+     </para>
+
+     <para>
+      This bug concerns sub-SELECTs that reference variables coming from the
+      nullable side of an outer join of the surrounding query.
+      In 9.1, queries affected by this bug would fail with <quote>ERROR:
+      Upper-level PlaceHolderVar found where not expected</>.  But in 9.0 and
+      8.4, you'd silently get possibly-wrong answers, since the value
+      transmitted into the subquery wouldn't go to null when it should.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix slow session startup when <structname>pg_attribute</> is very large
+      (Tom Lane)
+     </para>
+
+     <para>
+      If <structname>pg_attribute</> exceeds one-fourth of
+      <varname>shared_buffers</>, cache rebuilding code that is sometimes
+      needed during session start would trigger the synchronized-scan logic,
+      causing it to take many times longer than normal.  The problem was
+      particularly acute if many new sessions were starting at once.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure sequential scans check for query cancel reasonably often (Merlin
+      Moncure)
+     </para>
+
+     <para>
+      A scan encountering many consecutive pages that contain no live tuples
+      would not respond to interrupts meanwhile.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure the Windows implementation of <function>PGSemaphoreLock()</>
+      clears <varname>ImmediateInterruptOK</> before returning (Tom Lane)
+     </para>
+
+     <para>
+      This oversight meant that a query-cancel interrupt received later
+      in the same query could be accepted at an unsafe time, with
+      unpredictable but not good consequences.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Show whole-row variables safely when printing views or rules
+      (Abbas Butt, Tom Lane)
+     </para>
+
+     <para>
+      Corner cases involving ambiguous names (that is, the name could be
+      either a table or column name of the query) were printed in an
+      ambiguous way, risking that the view or rule would be interpreted
+      differently after dump and reload.  Avoid the ambiguous case by
+      attaching a no-op cast.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <command>COPY FROM</> to properly handle null marker strings that
+      correspond to invalid encoding (Tom Lane)
+     </para>
+
+     <para>
+      A null marker string such as <literal>E'\\0'</> should work, and did
+      work in the past, but the case got broken in 8.4.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure autovacuum worker processes perform stack depth checking
+      properly (Heikki Linnakangas)
+     </para>
+
+     <para>
+      Previously, infinite recursion in a function invoked by
+      auto-<command>ANALYZE</> could crash worker processes.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix logging collector to not lose log coherency under high load (Andrew
+      Dunstan)
+     </para>
+
+     <para>
+      The collector previously could fail to reassemble large messages if it
+      got too busy.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix logging collector to ensure it will restart file rotation
+      after receiving <systemitem>SIGHUP</> (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix WAL replay logic for GIN indexes to not fail if the index was
+      subsequently dropped (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix memory leak in PL/pgSQL's <command>RETURN NEXT</> command (Joe
+      Conway)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix PL/pgSQL's <command>GET DIAGNOSTICS</> command when the target
+      is the function's first variable (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix potential access off the end of memory in <application>psql</>'s
+      expanded display (<command>\x</>) mode (Peter Eisentraut)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix several performance problems in <application>pg_dump</> when
+      the database contains many objects (Jeff Janes, Tom Lane)
+     </para>
+
+     <para>
+      <application>pg_dump</> could get very slow if the database contained
+      many schemas, or if many objects are in dependency loops, or if there
+      are many owned sequences.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <filename>contrib/dblink</>'s <function>dblink_exec()</> to not leak
+      temporary database connections upon error (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <filename>contrib/dblink</> to report the correct connection name in
+      error messages (Kyotaro Horiguchi)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2012c
+      for DST law changes in Antarctica, Armenia, Chile, Cuba, Falkland
+      Islands, Gaza, Haiti, Hebron, Morocco, Syria, and Tokelau Islands;
+      also historical corrections for Canada.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-8-4-11">
   <title>Release 8.4.11</title>
 
