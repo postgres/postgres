@@ -87,13 +87,13 @@ xideq(PG_FUNCTION_ARGS)
 }
 
 /*
- *		xid_age			- compute age of an XID (relative to latest stable xid)
+ *		xid_age			- compute age of an XID (relative to current xact)
  */
 Datum
 xid_age(PG_FUNCTION_ARGS)
 {
 	TransactionId xid = PG_GETARG_TRANSACTIONID(0);
-	TransactionId now = GetStableLatestTransactionId();
+	TransactionId now = GetTopTransactionId();
 
 	/* Permanent XIDs are always infinitely old */
 	if (!TransactionIdIsNormal(xid))
