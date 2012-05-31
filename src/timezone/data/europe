@@ -1,5 +1,5 @@
 # <pre>
-# @(#)europe	8.40
+# @(#)europe	8.41
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -211,8 +211,14 @@
 # the history of summer time legislation in the United Kingdom.
 # Since 1998 Joseph S. Myers has been updating
 # and extending this list, which can be found in
-# <a href="http://student.cusu.cam.ac.uk/~jsm28/british-time/">
+# http://student.cusu.cam.ac.uk/~jsm28/british-time/
+# <a href="http://www.polyomino.org.uk/british-time/">
 # History of legal time in Britain
+# </a>
+# Rob Crowther (2012-01-04) reports that that URL no longer
+# exists, and the article can now be found at:
+# <a href="http://www.polyomino.org.uk/british-time/">
+# http://www.polyomino.org.uk/british-time/
 # </a>
 
 # From Joseph S. Myers (1998-01-06):
@@ -1151,10 +1157,10 @@ Rule	France	1940	only	-	Feb	25	 2:00	1:00	S
 # write that they were used in Monaco and in many French locations.
 # Le Corre writes that the upper limit of the free zone was Arneguy, Orthez,
 # Mont-de-Marsan, Bazas, Langon, Lamotte-Montravel, Marouil, La
-# Rochefoucault, Champagne-Mouton, La Roche-Posay, La Haye-Decartes,
+# Rochefoucault, Champagne-Mouton, La Roche-Posay, La Haye-Descartes,
 # Loches, Montrichard, Vierzon, Bourges, Moulins, Digoin,
 # Paray-le-Monial, Montceau-les-Mines, Chalons-sur-Saone, Arbois,
-# Dole, Morez, St-Claude, and Collognes (Haute-Savioe).
+# Dole, Morez, St-Claude, and Collonges (Haute-Savoie).
 Rule	France	1941	only	-	May	 5	 0:00	2:00	M # Midsummer
 # Shanks & Pottenger say this transition occurred at Oct 6 1:00,
 # but go with Denis Excoffier (1997-12-12),

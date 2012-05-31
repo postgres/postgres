@@ -1,5 +1,5 @@
 # <pre>
-# @(#)australasia	8.29
+# @(#)australasia	8.30
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -616,6 +616,11 @@ Zone Pacific/Pago_Pago	 12:37:12 -	LMT	1879 Jul  5
 # Dateline Change skip Friday 30th Dec 2011
 # Thursday 29th December 2011	23:59:59 Hours
 # Saturday 31st December 2011	00:00:00 Hours
+#
+# Clarification by Tim Parenti (2012-01-03):
+# Although Samoa has used Daylight Saving Time in the 2010-2011 and 2011-2012
+# seasons, there is not yet any indication that this trend will continue on
+# a regular basis. For now, we have explicitly listed the transitions below.
 Zone Pacific/Apia	 12:33:04 -	LMT	1879 Jul  5
 			-11:26:56 -	LMT	1911
 			-11:30	-	SAMT	1950		# Samoa Time
@@ -633,9 +638,28 @@ Zone Pacific/Guadalcanal 10:39:48 -	LMT	1912 Oct	# Honiara
 			11:00	-	SBT	# Solomon Is Time
 
 # Tokelau Is
+#
+# From Gwillim Law (2011-12-29)
+# A correspondent informed me that Tokelau, like Samoa, will be skipping
+# December 31 this year, thereby changing its time zone from UTC-10 to
+# UTC+14. When I tried to verify this statement, I found a confirming
+# article in Time magazine online
+# <a href="http://www.time.com/time/world/article/0,8599,2103243,00.html">
+# (http://www.time.com/time/world/article/0,8599,2103243,00.html).
+# </a>
+#
+# From Jonathan Leffler (2011-12-29)
+# Information from the BBC to the same effect:
+# <a href="http://www.bbc.co.uk/news/world-asia-16351377">
+# http://www.bbc.co.uk/news/world-asia-16351377
+# </a>
+#
+# Patch supplied by Tim Parenti (2011-12-29)
+
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Pacific/Fakaofo	-11:24:56 -	LMT	1901
-			-10:00	-	TKT	# Tokelau Time
+			-10:00	-	TKT 2011 Dec 30	# Tokelau Time
+			14:00	-	TKT
 
 # Tonga
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
