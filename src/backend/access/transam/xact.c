@@ -393,8 +393,10 @@ GetCurrentTransactionIdIfAny(void)
 /*
  *	GetStableLatestTransactionId
  *
- * Get the XID once and then return same value for rest of transaction.
- * Acts as a useful reference point for maintenance tasks.
+ * Get the transaction's XID if it has one, else read the next-to-be-assigned
+ * XID.  Once we have a value, return that same value for the remainder of the
+ * current transaction.  This is meant to provide the reference point for the
+ * age(xid) function, but might be useful for other maintenance tasks as well.
  */
 TransactionId
 GetStableLatestTransactionId(void)
