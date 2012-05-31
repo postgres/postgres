@@ -1,8 +1,6 @@
 # German message translation file for pg_dump and friends
 # Peter Eisentraut <peter_e@gmx.net>, 2001 - 2009.
 #
-# pgtranslation Id: pg_dump.po,v 1.10.2.4 2011/05/10 18:01:37 petere Exp $
-#
 # Use these quotes: »%s«
 #
 msgid ""
@@ -10,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 8.3\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-01-15 19:17+0000\n"
-"PO-Revision-Date: 2011-05-10 21:00+0300\n"
+"PO-Revision-Date: 2012-05-03 22:17+0300\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -373,9 +371,7 @@ msgstr "gebe Inhalt der Tabelle %s aus\n"
 #: pg_dump.c:1125
 #, c-format
 msgid "Dumping the contents of table \"%s\" failed: PQgetCopyData() failed.\n"
-msgstr ""
-"Ausgabe des Inhalts der Tabelle »%s« fehlgeschlagen: PQendcopy() "
-"fehlgeschlagen.\n"
+msgstr "Ausgabe des Inhalts der Tabelle »%s« fehlgeschlagen: PQgetCopyData() fehlgeschlagen.\n"
 
 #: pg_dump.c:1126 pg_dump.c:10295
 #, c-format
@@ -944,7 +940,7 @@ msgstr "konnte Large Object %u nicht erstellen\n"
 
 #: pg_backup_archiver.c:766
 msgid "could not open large object\n"
-msgstr "konnte Large Object nicht öffnen: %s\n"
+msgstr "konnte Large Object nicht öffnen\n"
 
 #: pg_backup_archiver.c:824
 #, c-format
@@ -1838,8 +1834,7 @@ msgstr "%s: konnte die Ausgabedatei »%s« nicht öffnen: %s\n"
 msgid ""
 "%s extracts a PostgreSQL database cluster into an SQL script file.\n"
 "\n"
-msgstr ""
-"%s gibt eines PostgreSQL-Datenbankcluster in eine SQL-Skriptdatei aus.\n"
+msgstr "%s gibt einen PostgreSQL-Datenbankcluster in eine SQL-Skriptdatei aus.\n\n"
 
 #: pg_dumpall.c:481
 #, c-format

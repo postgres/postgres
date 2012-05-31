@@ -1,8 +1,6 @@
 # German message translation file for PostgreSQL server
 # Peter Eisentraut <peter_e@gmx.net>, 2001 - 2010.
 #
-# pgtranslation Id: postgres.po,v 1.47.2.22 2011/09/22 03:41:59 petere Exp $
-#
 # Use these quotes: »%s«
 #
 msgid ""
@@ -10,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 8.3\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-09-16 09:27+0000\n"
-"PO-Revision-Date: 2011-09-22 06:41+0300\n"
+"PO-Revision-Date: 2012-05-03 22:21+0300\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -2855,9 +2853,7 @@ msgstr "nicht unterstützte Kombination aus ON COMMIT und Fremdschlüssel"
 msgid ""
 "Table \"%s\" references \"%s\", but they do not have the same ON COMMIT "
 "setting."
-msgstr ""
-"Tabelle »%s« verweist auf »%s«, aber sie haben nicht die gleiche ON-COMMIT-"
-"Einstellung"
+msgstr "Tabelle »%s« verweist auf »%s«, aber sie haben nicht die gleiche ON-COMMIT-Einstellung."
 
 #: catalog/heap.c:2341
 msgid "cannot truncate a table referenced in a foreign key constraint"
@@ -4239,7 +4235,7 @@ msgstr ""
 #: commands/functioncmds.c:1365
 #, c-format
 msgid "source data type %s is a pseudo-type"
-msgstr "Quelldatentyp %s ist ein Pseudotyp."
+msgstr "Quelldatentyp %s ist ein Pseudotyp"
 
 #: commands/functioncmds.c:1371
 #, c-format
@@ -5619,8 +5615,7 @@ msgstr "Typausgabefunktion muss angegeben werden"
 msgid ""
 "type modifier output function is useless without a type modifier input "
 "function"
-msgstr ""
-"Typmodifikatorausgabefunktion ist nutzlos ohne Typmodifikatoreingabefunktion."
+msgstr "Typmodifikatorausgabefunktion ist nutzlos ohne Typmodifikatoreingabefunktion"
 
 #: commands/typecmds.c:315
 #, c-format
@@ -6817,7 +6812,7 @@ msgstr "konnte Funktion _ldap_start_tls_sA in wldap32.dll nicht laden"
 
 #: libpq/auth.c:1576
 msgid "LDAP over SSL is not supported on this platform."
-msgstr "LDAP über SSL wird auf dieser Plattform nicht unterstützt"
+msgstr "LDAP über SSL wird auf dieser Plattform nicht unterstützt."
 
 #: libpq/auth.c:1591
 #, c-format
@@ -7489,7 +7484,7 @@ msgstr "  DBNAME          Datenbankname (Standard: Benutzername)\n"
 #: main/main.c:308
 #, c-format
 msgid "  -d 0-5          override debugging level\n"
-msgstr "  -d 1-5          Debug-Level setzen\n"
+msgstr "  -d 0-5          Debug-Level setzen\n"
 
 #: main/main.c:309
 #, c-format
@@ -7611,7 +7606,7 @@ msgstr "konnte Segment %u der Relation %u/%u/%u nicht entfernen: %m"
 #: storage/smgr/md.c:415
 #, c-format
 msgid "cannot extend relation %u/%u/%u beyond %u blocks"
-msgstr "konnte Relation %u/%u/%u nicht auf über %u Blöcke erweitern: %m"
+msgstr "kann Relation %u/%u/%u nicht auf über %u Blöcke erweitern"
 
 #: storage/smgr/md.c:442 storage/smgr/md.c:596 storage/smgr/md.c:666
 #, c-format
@@ -8037,7 +8032,7 @@ msgstr "VALUES darf keine Verweise auf OLD oder NEW enthalten"
 
 #: parser/analyze.c:572 parser/analyze.c:994
 msgid "Use SELECT ... UNION ALL ... instead."
-msgstr "Verwenden Sie stattdessen SELECT ... UNION ALL ..."
+msgstr "Verwenden Sie stattdessen SELECT ... UNION ALL ... ."
 
 #: parser/analyze.c:666 parser/analyze.c:1004
 msgid "cannot use aggregate function in VALUES"
@@ -10839,7 +10834,7 @@ msgstr "kann Arrays mit verschiedenen Elementtypen nicht vergleichen"
 
 #: utils/adt/arrayutils.c:209
 msgid "typmod array must be type cstring[]"
-msgstr "Typmod-Array muss Typ cstring[] haben."
+msgstr "Typmod-Array muss Typ cstring[] haben"
 
 #: utils/adt/arrayutils.c:214
 msgid "typmod array must be one-dimensional"
@@ -10992,7 +10987,7 @@ msgstr "ungültige hexadezimale Daten: ungerade Anzahl Ziffern"
 
 #: utils/adt/encode.c:295
 msgid "unexpected \"=\""
-msgstr "unerwartetes »%s«"
+msgstr "unerwartetes »=«"
 
 #: utils/adt/encode.c:307
 msgid "invalid symbol"
@@ -11515,7 +11510,7 @@ msgstr "ungültige ESCAPE-Zeichenkette"
 
 #: utils/adt/like_match.c:281 utils/adt/regexp.c:709
 msgid "Escape string must be empty or one character."
-msgstr "ESCAPE-Zeichenkette muss null oder ein Zeichen lang sein"
+msgstr "ESCAPE-Zeichenkette muss null oder ein Zeichen lang sein."
 
 #: utils/adt/mac.c:65
 #, c-format
@@ -11903,9 +11898,7 @@ msgstr ""
 
 #: utils/adt/ri_triggers.c:403 utils/adt/ri_triggers.c:2798
 msgid "MATCH FULL does not allow mixing of null and nonnull key values."
-msgstr ""
-"MATCH FULL erlaubt das Mischen von Schlüsseln, die NULL und nicht NULL sind, "
-"nicht"
+msgstr "MATCH FULL erlaubt das Mischen von Schlüsseln, die NULL und nicht NULL sind, nicht."
 
 #: utils/adt/ri_triggers.c:2995
 #, c-format

@@ -2,7 +2,6 @@
 # This file is put in the public domain.
 # Álvaro Herrera <alvherre@alvh.no-ip.org>, 2004-2006
 #
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL 8.2)\n"

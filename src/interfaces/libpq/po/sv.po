@@ -2,8 +2,6 @@
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 # Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004, 2005, 2006.
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/po/sv.po,v 1.17 2008/01/30 11:05:41 petere Exp $
-#
 # Use these quotes: "%s"
 #
 msgid ""

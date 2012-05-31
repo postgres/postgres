@@ -2,9 +2,6 @@
 #  Karim Mribti <karim@mribti.com>, 2002.
 #  Alvaro Herrera <alvherre@alvh.no-ip.org>, 2003-2008
 #
-# pgtranslation Id: pg_controldata.po,v 1.5.2.3 2012/02/22 19:17:18 alvherre Exp $
-# $PostgreSQL$
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL 8.3)\n"

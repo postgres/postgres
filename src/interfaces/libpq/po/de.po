@@ -1,8 +1,6 @@
 # German message translation file for libpq
 # Peter Eisentraut <peter_e@gmx.net>, 2001 - 2007.
 #
-# pgtranslation Id: libpq.po,v 1.7.2.2 2011/07/27 20:52:29 petere Exp $
-#
 # Use these quotes: »%s«
 #
 msgid ""

@@ -1,8 +1,6 @@
 # translation of postgres-fr.po to FR_fr
 # French message translation file for postgres
 #
-# $PostgreSQL: pgsql/src/backend/po/fr.po,v 1.18.2.3 2008/10/30 21:30:19 petere Exp $
-#
 # Use these quotes: « %s »
 # Guillaume Lelarge <guillaume@lelarge.info>, 2003-2008.
 #

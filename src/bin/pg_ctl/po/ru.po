@@ -4,8 +4,6 @@
 # Copyright (c) 2004-2005 Serguei A. Mokhov, mokhov@cs.concordia.ca
 # Distributed under the same licensing terms as PostgreSQL itself.
 #
-# $PostgreSQL: pgsql/src/bin/pg_ctl/po/ru.po,v 1.10.6.1 2009/09/03 19:25:44 petere Exp $
-#
 # translation of subject-specific terminology, see:
 # перевод некоторых специфичных терминов:
 # http://wiki.postgresql.org/wiki/NLS/ru/dict

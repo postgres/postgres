@@ -1,8 +1,6 @@
 # translation of pgscripts-fr.po to FR_fr
 # French message translation file for pgscripts
 #
-# $PostgreSQL: pgsql/src/bin/scripts/po/fr.po,v 1.15.2.2 2008/10/30 21:30:20 petere Exp $
-#
 # Use these quotes: « %s »
 # Guillaume Lelarge <guillaume@lelarge.info>, 2004-2008.
 #

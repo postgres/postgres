@@ -2,9 +2,6 @@
 # (c) <alvherre@alvh.no-ip.org>, 2003-2008
 # (c) Diego A. Gil <diego@adminsa.com>, 2005
 #
-# pgtranslation Id: psql.po,v 1.8.2.4 2012/02/22 19:17:19 alvherre Exp $
-# $PostgreSQL$
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL 8.3)\n"
