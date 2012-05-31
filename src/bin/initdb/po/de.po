@@ -3,14 +3,12 @@
 #
 # Use these quotes: »%s«
 #
-# pgtranslation Id$
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2009-04-10 19:10+0000\n"
-"PO-Revision-Date: 2010-09-25 00:30+0300\n"
+"PO-Revision-Date: 2012-05-03 22:09+0300\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: Peter Eisentraut <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -399,7 +397,7 @@ msgstr "  -W, --pwprompt            frage nach Passwort für neuen Superuser\n"
 #, c-format
 msgid ""
 "  -X, --xlogdir=XLOGDIR     location for the transaction log directory\n"
-msgstr " -X, --xlogdir=XLOGVERZ     Verzeichnis für den Transaktionslog\n"
+msgstr "  -X, --xlogdir=XLOGVERZ    Verzeichnis für den Transaktionslog\n"
 
 #: initdb.c:2446
 #, c-format

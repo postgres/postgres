@@ -1,8 +1,6 @@
 # German message translation file for "scripts".
 # Peter Eisentraut <peter_e@gmx.net>, 2003 - 2009.
 #
-# pgtranslation Id: pgscripts.po,v 1.9 2009/03/02 09:41:27 petere Exp $
-#
 # Use these quotes: »%s«
 #
 msgid ""
@@ -10,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2009-03-01 07:22+0000\n"
-"PO-Revision-Date: 2009-03-02 11:39+0200\n"
+"PO-Revision-Date: 2012-05-03 22:11+0300\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -252,7 +250,7 @@ msgstr ""
 #: createlang.c:216 droplang.c:333
 #, c-format
 msgid "  %s [OPTION]... LANGNAME [DBNAME]\n"
-msgstr "%s [OPTION]... SPRACHE [DBNAME]\n"
+msgstr "  %s [OPTION]... SPRACHE [DBNAME]\n"
 
 #: createlang.c:218
 #, c-format
@@ -504,7 +502,7 @@ msgstr ""
 #: dropdb.c:141
 #, c-format
 msgid "  %s [OPTION]... DBNAME\n"
-msgstr " %s [OPTION]... DBNAME\n"
+msgstr "  %s [OPTION]... DBNAME\n"
 
 #: dropdb.c:144 dropuser.c:143
 #, c-format
@@ -580,13 +578,12 @@ msgstr ""
 #: clusterdb.c:129
 #, c-format
 msgid "%s: cannot cluster all databases and a specific one at the same time\n"
-msgstr ""
-"%s: kann nicht alle Datenbanken und eine bestimmte gleichzeitig clustern.\n"
+msgstr "%s: kann nicht alle Datenbanken und eine bestimmte gleichzeitig clustern\n"
 
 #: clusterdb.c:135
 #, c-format
 msgid "%s: cannot cluster a specific table in all databases\n"
-msgstr "%s: kann nicht eine bestimmte Tabelle in allen Datenbanken clustern.\n"
+msgstr "%s: kann nicht eine bestimmte Tabelle in allen Datenbanken clustern\n"
 
 #: clusterdb.c:187
 #, c-format

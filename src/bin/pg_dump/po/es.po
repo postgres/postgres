@@ -6,8 +6,6 @@
 # Manuel Sugawara <masm@fciencias.unam.mx>, 2003.
 # Alvaro Herrera <alvherre@alvh.no-ip.org>, 2004-2007, 2009-2010
 #
-# pgtranslation Id$
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL 8.4)\n"

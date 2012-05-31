@@ -6,8 +6,6 @@
 # Karim Mribti <karim@mribti.com>, 2002.
 # Alvaro Herrera <alvherre@alvh.no-ip.org>, 2003-2010
 #
-# pgtranslation Id$
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL 8.4)\n"

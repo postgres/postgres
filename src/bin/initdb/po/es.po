@@ -5,8 +5,6 @@
 #
 # Álvaro Herrera <alvherre@alvh.no-ip.org>, 2004-2010
 #
-# pgtranslation Id$
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL 8.4)\n"

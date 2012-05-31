@@ -1,8 +1,6 @@
 # German message translation file for psql
 # Peter Eisentraut <peter_e@gmx.net>, 2001 - 2009.
 #
-# pgtranslation Id$
-#
 # Use these quotes: »%s«
 #
 msgid ""
@@ -10,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2011-11-29 11:11+0000\n"
-"PO-Revision-Date: 2011-11-29 21:34+0200\n"
+"PO-Revision-Date: 2012-05-03 22:15+0300\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -1062,7 +1060,7 @@ msgstr "  \\l[+]                  alle Datenbanken auflisten\n"
 #: help.c:225
 #, c-format
 msgid "  \\z      [PATTERN]      same as \\dp\n"
-msgstr "  \\z      [MUSTER]       äquivalent zu \\dp \n"
+msgstr "  \\z      [MUSTER]       äquivalent zu \\dp\n"
 
 #: help.c:228
 #, c-format
@@ -1977,7 +1975,7 @@ msgstr "Vorlage"
 
 #: describe.c:2730
 msgid "Init options"
-msgstr "Initialisierungsoptionen:"
+msgstr "Initialisierungsoptionen"
 
 #: describe.c:2752
 msgid "List of text search dictionaries"

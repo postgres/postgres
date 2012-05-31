@@ -1,7 +1,6 @@
 # Korean message translation file for psql
 # Ioseph Kim. <ioseph@uri.sarang.net>, 2004.
 #
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"

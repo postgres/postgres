@@ -6,8 +6,6 @@
 # Álvaro Herrera <alvherre@alvh.no-ip.org> 2008-2010
 # Emanuel Calvo Franco <postgres.arg@gmail.com> 2008
 #
-# pgtranslation Id$
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: plpgsql (PostgreSQL 8.4)\n"

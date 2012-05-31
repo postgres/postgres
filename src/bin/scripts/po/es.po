@@ -6,8 +6,6 @@
 # Alvaro Herrera, <alvherre@alvh.no-ip.org>, 2003-2009
 # Jaime Casanova, <systemguards@gmail.com>, 2005
 #
-# pgtranslation Id$
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL 8.4)\n"

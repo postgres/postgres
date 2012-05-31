@@ -1,8 +1,6 @@
 # translation of pgscripts.po to fr_fr
 # french message translation file for pgscripts
 #
-# $PostgreSQL: pgsql/src/bin/scripts/po/fr.po,v 1.17 2009/05/14 21:41:52 alvherre Exp $
-#
 # Use these quotes: « %s »
 #
 # Guillaume Lelarge <guillaume@lelarge.info>, 2004-2009.
@@ -701,7 +699,6 @@ msgstr ""
 #, c-format
 msgid "%s: clustering database \"%s\"\n"
 msgstr "%s : réorganisation de la base de données « %s » via la commande CLUSTER\n"
-
 
 #: clusterdb.c:235
 #, c-format

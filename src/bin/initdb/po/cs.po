@@ -698,7 +698,6 @@ msgstr ""
 "Pokud chcete v tomto adresáři ukládat transakční log odstraňte nebo\n"
 "vyprázdněte adresář \"%s\".\n"
 
-
 #: initdb.c:3109
 #, c-format
 msgid "%s: could not create symbolic link \"%s\": %s\n"

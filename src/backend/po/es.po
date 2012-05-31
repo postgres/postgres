@@ -8,8 +8,6 @@
 # Jaime Casanova <systemguards@gmail.com> 2005, 2006
 # Emanuel Calvo Franco <postgres-arg@gmail.com> 2008
 #
-# pgtranslation Id$
-#
 # FIXME -- quizas sea necesario buscar un termino mejor que
 # "Entrada" para traducir "entry".
 #

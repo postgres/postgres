@@ -5,8 +5,6 @@
 #
 # Emanuel Calvo Franco <postgres.arg@gmail.com>, 2009.
 #
-# pgtranslation Id$
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"

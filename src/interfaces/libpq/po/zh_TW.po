@@ -703,7 +703,6 @@ msgid "unexpected field count in \"D\" message\n"
 msgstr "非預期的\"D\"訊息欄位數\n"
 
 #  translator: %s represents a digit string
-#  translator: %s represents a digit string
 # fe-protocol3.c:651
 # fe-protocol3.c:659
 #. translator: %s represents a digit string

@@ -7,8 +7,6 @@
 # Alvaro Herrera <alvherre@alvh.no-ip.org>, 2009
 # Franco Catena, <francocatena@gmail.com>, 2009
 #
-# pgtranslation Id$
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"

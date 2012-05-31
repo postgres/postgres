@@ -1,8 +1,6 @@
 # German message translation file for pg_resetxlog
 # Peter Eisentraut <peter_e@gmx.net>, 2002 - 2009.
 #
-# pgtranslation Id: pg_resetxlog.po,v 1.8 2009/01/19 21:07:42 petere Exp $
-#
 # Use these quotes: »%s«
 #
 msgid ""
