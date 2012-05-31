@@ -5,8 +5,6 @@
 #
 # Alvaro Herrera <alvherre@alvh.no-ip.org>, 2004-2012
 #
-# pgtranslation Id: pg_config.po,v 1.7 2012/02/22 01:59:11 alvherre Exp $
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_config (PostgreSQL 9.0)\n"

@@ -5,8 +5,6 @@
 #
 # Alvaro Herrera <alvherre@alvh.no-ip.org>, 2004-2012
 #
-# pgtranslation Id: pg_ctl.po,v 1.11 2012/02/22 01:59:11 alvherre Exp $
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_ctl (PostgreSQL 9.1)\n"
@@ -819,14 +817,3 @@ msgstr "el proceso hijo fue terminado por una señal %d"
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "el proceso hijo terminó con código no reconocido %d"
-
-#~ msgid ""
-#~ "%s is a utility to start, stop, restart, reload configuration files,\n"
-#~ "report the status of a PostgreSQL server, or signal a PostgreSQL "
-#~ "process.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "%s es un programa para iniciar, detener, reiniciar, recargar archivos de\n"
-#~ "configuración, reportar el estado de un servidor PostgreSQL o enviar una\n"
-#~ "señal a un proceso PostgreSQL.\n"
-#~ "\n"

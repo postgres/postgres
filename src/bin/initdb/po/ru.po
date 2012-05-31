@@ -5,8 +5,6 @@
 # Copyright (c) 2012 Alexander Lakhin <exclusion@gmail.com>
 # Distributed under the same licensing terms as PostgreSQL itself.
 #
-# pgtranslation Id: initdb.po,v 1.6 2012/02/22 13:20:10 alvherre Exp $
-#
 # translation of subject-specific terminology, see:
 # перевод некоторых специфичных терминов:
 # http://wiki.postgresql.org/wiki/NLS/ru/dict

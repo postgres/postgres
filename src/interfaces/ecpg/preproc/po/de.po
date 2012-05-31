@@ -3,8 +3,6 @@
 # This file is distributed under the same license as the PostgreSQL package.
 # Peter Eisentraut <peter_e@gmx.net>, 2009-2010.
 #
-# pgtranslation Id: ecpg.po,v 1.11 2010/04/05 10:44:08 petere Exp $
-#
 # Use these quotes: »%s«
 #
 msgid ""

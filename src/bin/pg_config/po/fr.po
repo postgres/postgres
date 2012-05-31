@@ -1,8 +1,6 @@
 # translation of pg_config.po to fr_fr
 # french message translation file for pg_config
 #
-# $PostgreSQL$
-#
 # Use these quotes: « %s »
 #
 # Guillaume Lelarge <guillaume@lelarge.info>, 2004-2009.

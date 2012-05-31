@@ -6,8 +6,6 @@
 # Emanuel Calvo Franco <postgres.arg@gmail.com>, 2008.
 # Alvaro Herrera <alvherre@alvh.no-ip.org>, 2009-2012
 #
-# pgtranslation Id: plperl.po,v 1.10 2012/02/22 01:59:11 alvherre Exp $
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: plperl (PostgreSQL 9.1)\n"
@@ -201,8 +199,3 @@ msgstr "compilación de la función PL/Perl «%s»"
 #: plperl.c:3676
 msgid "PL/Perl anonymous code block"
 msgstr "bloque de código anónimo de PL/Perl"
-
-#~ msgid "composite-returning PL/Perl function must return reference to hash"
-#~ msgstr ""
-#~ "una función Perl que retorna un tipo compuesto debe retornar una "
-#~ "referencia a un hash"

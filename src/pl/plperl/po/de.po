@@ -3,8 +3,6 @@
 # This file is distributed under the same license as the PostgreSQL package.
 # Peter Eisentraut <peter_e@gmx.net>, 2009 - 2011.
 #
-# pgtranslation Id: plperl.po,v 1.8 2011/11/30 06:10:49 petere Exp $
-#
 # Use these quotes: »%s«
 #
 msgid ""

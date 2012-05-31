@@ -5,8 +5,6 @@
 #
 # Emanuel Calvo Franco <postgres.arg@gmail.com>, 2009.
 #
-# pgtranslation Id: ecpglib.po,v 1.5 2012/02/22 01:59:10 alvherre Exp $
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.1\n"

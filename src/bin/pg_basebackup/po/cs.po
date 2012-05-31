@@ -381,4 +381,3 @@ msgstr "%s: pouze tar zálohy mohou být komprimované\n"
 msgid "%s: this build does not support compression\n"
 msgstr "%s: tento build nepodporuje kompresi\n"
 
-

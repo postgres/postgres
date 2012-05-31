@@ -1,8 +1,6 @@
 # simplified Chinese translation file for libpq
 # Bao Wei <weibao@forevertek.com>, 2002
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/po/zh_CN.po,v 1.8 2005/01/06 09:07:17 petere Exp $
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL 9.0)\n"

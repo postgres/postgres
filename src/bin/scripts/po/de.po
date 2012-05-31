@@ -1,8 +1,6 @@
 # German message translation file for "scripts".
 # Peter Eisentraut <peter_e@gmx.net>, 2003 - 2010.
 #
-# pgtranslation Id: pgscripts.po,v 1.12 2011/07/15 19:32:37 petere Exp $
-#
 # Use these quotes: »%s«
 #
 msgid ""
@@ -10,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2011-07-15 08:56+0000\n"
-"PO-Revision-Date: 2011-07-15 21:38+0300\n"
+"PO-Revision-Date: 2012-05-03 21:50+0300\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -254,7 +252,7 @@ msgstr ""
 #: createlang.c:224 droplang.c:225
 #, c-format
 msgid "  %s [OPTION]... LANGNAME [DBNAME]\n"
-msgstr "%s [OPTION]... SPRACHE [DBNAME]\n"
+msgstr "  %s [OPTION]... SPRACHE [DBNAME]\n"
 
 #: createlang.c:226
 #, c-format
@@ -506,7 +504,7 @@ msgstr ""
 #: dropdb.c:145
 #, c-format
 msgid "  %s [OPTION]... DBNAME\n"
-msgstr " %s [OPTION]... DBNAME\n"
+msgstr "  %s [OPTION]... DBNAME\n"
 
 #: dropdb.c:148 dropuser.c:143
 #, c-format
@@ -575,13 +573,12 @@ msgstr ""
 #: clusterdb.c:129
 #, c-format
 msgid "%s: cannot cluster all databases and a specific one at the same time\n"
-msgstr ""
-"%s: kann nicht alle Datenbanken und eine bestimmte gleichzeitig clustern.\n"
+msgstr "%s: kann nicht alle Datenbanken und eine bestimmte gleichzeitig clustern\n"
 
 #: clusterdb.c:135
 #, c-format
 msgid "%s: cannot cluster a specific table in all databases\n"
-msgstr "%s: kann nicht eine bestimmte Tabelle in allen Datenbanken clustern.\n"
+msgstr "%s: kann nicht eine bestimmte Tabelle in allen Datenbanken clustern\n"
 
 #: clusterdb.c:187
 #, c-format
@@ -971,9 +968,3 @@ msgstr "Abbruchsanforderung gesendet\n"
 #, c-format
 msgid "Could not send cancel request: %s"
 msgstr "Konnte Abbruchsanforderung nicht senden: %s"
-
-#~ msgid ""
-#~ "%s: still %s functions declared in language \"%s\"; language not removed\n"
-#~ msgstr ""
-#~ "%s: noch %s Funktionen in Sprache »%s« deklariert; Sprache nicht "
-#~ "gelöscht\n"

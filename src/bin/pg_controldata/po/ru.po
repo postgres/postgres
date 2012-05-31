@@ -1,8 +1,6 @@
 # ru.po
 # PG_CONTROLDATA Translated Messages into the Russian Language (UTF-8)
 #
-# pgtranslation Id: pg_controldata.po,v 1.4 2012/02/21 18:49:35 alvherre Exp $
-#
 # ChangeLog:
 #
 #   - February 17, 2012: Minor fixes. Alexander Lakhin <exclusion@gmail.com>.

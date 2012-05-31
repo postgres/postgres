@@ -6,8 +6,6 @@
 # Alvaro Herrera, <alvherre@alvh.no-ip.org>, 2003-2012
 # Jaime Casanova, <systemguards@gmail.com>, 2005
 #
-# pgtranslation Id: pgscripts.po,v 1.9 2012/02/22 01:59:11 alvherre Exp $
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL 9.1)\n"
@@ -983,9 +981,3 @@ msgstr "Petición de cancelación enviada\n"
 #, c-format
 msgid "Could not send cancel request: %s"
 msgstr "No se pudo enviar el paquete de cancelación: %s"
-
-#~ msgid ""
-#~ "%s: still %s functions declared in language \"%s\"; language not removed\n"
-#~ msgstr ""
-#~ "%s: aún hay %s funciones declaradas en el lenguaje «%s»;\n"
-#~ "el lenguaje no ha sido eliminado\n"

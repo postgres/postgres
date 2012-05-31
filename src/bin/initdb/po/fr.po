@@ -1,8 +1,6 @@
 # translation of initdb.po to fr_fr
 # french message translation file for initdb
 #
-# $PostgreSQL$
-#
 # Use these quotes: « %s »
 #
 # Guillaume Lelarge <guillaume@lelarge.info>, 2004-2009.

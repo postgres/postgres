@@ -7,8 +7,6 @@
 # Alvaro Herrera <alvherre@alvh.no-ip.org>, 2004-2012
 # Jaime Casanova <systemguards@gmail.com>, 2005
 #
-# pgtranslation Id: pg_resetxlog.po,v 1.9 2012/02/22 01:59:11 alvherre Exp $
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetxlog (PostgreSQL 9.1)\n"

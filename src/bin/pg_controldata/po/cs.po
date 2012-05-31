@@ -1,8 +1,6 @@
 # translation of pg_controldata-cs.po to Czech
 # Czech translation of pg_controldata messages.
 #
-# pgtranslation Id: pg_controldata.po,v 1.4 2011/09/08 18:23:05 petere Exp $
-#
 # Karel Zak <zakkr@zf.jcu.cz>, 2003, 2004, 2011.
 msgid ""
 msgstr ""

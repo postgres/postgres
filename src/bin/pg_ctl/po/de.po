@@ -1,8 +1,6 @@
 # German message translation file for pg_ctl
 # Peter Eisentraut <peter_e@gmx.net>, 2004 - 2011.
 #
-# pgtranslation Id: pg_ctl.po,v 1.16 2011/07/15 19:32:37 petere Exp $
-#
 # Use these quotes: »%s«
 #
 msgid ""

@@ -1,8 +1,6 @@
 # translation of plperl.po to fr_fr
 # french message translation file for plperl
 #
-# $PostgreSQL$
-#
 # Use these quotes: « %s »
 # Guillaume Lelarge <guillaume@lelarge.info>, 2009.
 #

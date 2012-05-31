@@ -7,8 +7,6 @@
 # Alvaro Herrera <alvherre@alvh.no-ip.org>, 2009-2012
 # Franco Catena, <francocatena@gmail.com>, 2009
 #
-# pgtranslation Id: ecpg.po,v 1.9 2012/02/22 01:59:10 alvherre Exp $
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.1\n"
@@ -623,15 +621,3 @@ msgstr "los punteros a puntero no están soportados para este tipo de dato"
 #: variable.c:549
 msgid "multidimensional arrays for structures are not supported"
 msgstr "los arrays multidimensionales para estructuras no están soportados"
-
-#~ msgid "AT option not allowed in DEALLOCATE statement"
-#~ msgstr "la opción AT no está permitida en la sentencia DEALLOCATE"
-
-#~ msgid "constraint declared INITIALLY DEFERRED must be DEFERRABLE"
-#~ msgstr "una restricción declarada INITIALLY DEFERRED debe ser DEFERRABLE"
-
-#~ msgid "OLD used in query that is not in a rule"
-#~ msgstr "se usó OLD en una consulta que no es una regla"
-
-#~ msgid "NEW used in query that is not in a rule"
-#~ msgstr "se usó NEW en una consulta que no es una regla"

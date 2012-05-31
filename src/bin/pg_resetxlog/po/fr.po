@@ -1,8 +1,6 @@
 # translation of pg_resetxlog.po to fr_fr
 # french message translation file for pg_resetxlog
 #
-# $PostgreSQL$
-#
 # Use these quotes: « %s »
 #
 # Guillaume Lelarge <guillaume@lelarge.info>, 2003-2009.

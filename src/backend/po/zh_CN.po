@@ -1,8 +1,6 @@
 # simplified Chinese translation file for PostgreSQL server
 # Weiping He <laser@zhengmai.com.cn>, 2001.
 #
-# $PostgreSQL: pgsql/src/backend/po/zh_CN.po,v 1.10 2005/01/06 09:07:12 petere Exp $
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: postgres (PostgreSQL 9.0)\n"

@@ -188,4 +188,3 @@ msgstr "kompilace PL/Perl funkce \"%s\""
 msgid "PL/Perl anonymous code block"
 msgstr "PL/Perl anonymní blok kódu"
 
-

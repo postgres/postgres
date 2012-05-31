@@ -6,8 +6,6 @@
 # Emanuel Calvo Franco <postgres.arg@gmail.com>, 2009.
 # Alvaro Herrera <alvherre@alvh.no-ip.org>, 2009-2012
 #
-# pgtranslation Id: pltcl.po,v 1.3 2012/02/22 01:59:11 alvherre Exp $
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: pltcl (PostgreSQL 9.1)\n"

@@ -1,8 +1,6 @@
 # translation of pg_resetxlog-cs.po to Czech
 # Czech translation of pg_resetxlog messages
 #
-# pgtranslation Id: pg_resetxlog.po,v 1.3 2011/09/03 14:06:12 petere Exp $
-#
 # Karel Zak <zakkr@zf.jcu.cz>, 2003, 2004, 2011.
 msgid ""
 msgstr ""

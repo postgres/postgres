@@ -5,8 +5,6 @@
 #
 # Álvaro Herrera <alvherre@alvh.no-ip.org>, 2004-2012
 #
-# pgtranslation Id: initdb.po,v 1.12 2012/02/22 01:59:10 alvherre Exp $
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL 9.1)\n"
@@ -881,18 +879,3 @@ msgstr "el proceso hijo fue terminado por una señal %d"
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "el proceso hijo terminó con código no reconocido %d"
-
-#~ msgid ""
-#~ "%s: The password file was not generated. Please report this problem.\n"
-#~ msgstr ""
-#~ "%s: El archivo de contraseña no fue generado.\n"
-#~ "Por favor reporte este problema.\n"
-
-#~ msgid "%s: could not determine valid short version string\n"
-#~ msgstr "%s: no se pudo determinar una cadena corta de número de versión\n"
-
-#~ msgid ""
-#~ "  --locale=LOCALE           initialize database cluster with given "
-#~ "locale\n"
-#~ msgstr ""
-#~ "  --locale=LOCALE           inicializar usando esta configuración local\n"

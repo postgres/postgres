@@ -8,8 +8,6 @@
 # Emanuel Calvo Franco <postgres.arg@gmail.com> 2008
 # Jaime Casanova <jcasanov@systemguards.com.ec> 2010
 #
-# pgtranslation Id: plpgsql.po,v 1.13 2012/02/22 01:59:11 alvherre Exp $
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: plpgsql (PostgreSQL 9.1)\n"

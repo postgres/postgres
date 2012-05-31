@@ -5,8 +5,6 @@
 # Copyright (c) 2012 Alexander Lakhin, exclusion@gmail.com
 # Distributed under the same licensing terms as PostgreSQL itself.
 #
-# pgtranslation Id: pg_dump.po,v 1.4 2012/02/22 13:20:10 alvherre Exp $
-#
 # ChangeLog:
 #
 #   - February 21, 2012: Minor fixes. Alexander Lakhin <exclusion@gmail.com>.

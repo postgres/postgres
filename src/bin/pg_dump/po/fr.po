@@ -1,8 +1,6 @@
 # translation of pg_dump.po to fr_fr
 # french message translation file for pg_dump
 #
-# $PostgreSQL$
-#
 # Use these quotes: « %s »
 #
 # Guillaume Lelarge <guillaume@lelarge.info>, 2004-2009.
@@ -2072,7 +2070,7 @@ msgstr ""
 #: pg_restore.c:433
 #, c-format
 msgid "  --no-security-labels     do not restore security labels\n"
-msgstr "  --no-tablespaces             ne restaure pas les labels de sécurité\n"
+msgstr "  --no-security-labels         ne restaure pas les labels de sécurité\n"
 
 #: pg_restore.c:434
 #, c-format

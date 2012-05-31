@@ -5,8 +5,6 @@
 # Copyright (c) 2012 Alexander Lakhin <exclusion@gmail.com>
 # Distributed under the same licensing terms as PostgreSQL itself.
 #
-# pgtranslation Id: libpq.po,v 1.6 2012/02/22 13:20:10 alvherre Exp $
-#
 # ChangeLog:
 #
 #   - February 22, 2012: Minor fix. Alexander Lakhin <exclusion@gmail.com>.
