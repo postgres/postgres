@@ -1,8 +1,6 @@
 # German message translation file for PostgreSQL server
 # Peter Eisentraut <peter_e@gmx.net>, 2001 - 2012.
 #
-# pgtranslation Id: postgres.po,v 1.89.2.7 2012/02/22 20:16:01 petere Exp $
-#
 # Use these quotes: »%s«
 #
 msgid ""
@@ -10,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2012-02-22 18:42+0000\n"
-"PO-Revision-Date: 2012-02-22 22:14+0200\n"
+"PO-Revision-Date: 2012-05-03 22:07+0300\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -3702,7 +3700,7 @@ msgstr "ungültige ESCAPE-Zeichenkette"
 
 #: utils/adt/regexp.c:669 utils/adt/like_match.c:288
 msgid "Escape string must be empty or one character."
-msgstr "ESCAPE-Zeichenkette muss null oder ein Zeichen lang sein"
+msgstr "ESCAPE-Zeichenkette muss null oder ein Zeichen lang sein."
 
 #: utils/adt/regexp.c:865
 msgid "regexp_split does not support the global option"
@@ -3844,7 +3842,7 @@ msgstr "Arraygröße überschreitet erlaubtes Maximum (%d)"
 
 #: utils/adt/arrayutils.c:209
 msgid "typmod array must be type cstring[]"
-msgstr "Typmod-Array muss Typ cstring[] haben."
+msgstr "Typmod-Array muss Typ cstring[] haben"
 
 #: utils/adt/arrayutils.c:214
 msgid "typmod array must be one-dimensional"
@@ -4326,9 +4324,7 @@ msgstr "»EEEE« ist mit anderen Formaten inkompatibel"
 #: utils/adt/formatting.c:1211
 msgid ""
 "\"EEEE\" may only be used together with digit and decimal point patterns."
-msgstr ""
-"»EEEE« kann nur zusammen mit Platzhaltern für Ziffern oder Dezimalpunkt "
-"verwendet werden"
+msgstr "»EEEE« kann nur zusammen mit Platzhaltern für Ziffern oder Dezimalpunkt verwendet werden."
 
 #: utils/adt/formatting.c:1411
 #, c-format
@@ -5304,7 +5300,7 @@ msgstr "ungültige hexadezimale Daten: ungerade Anzahl Ziffern"
 
 #: utils/adt/encode.c:295
 msgid "unexpected \"=\""
-msgstr "unerwartetes »%s«"
+msgstr "unerwartetes »=«"
 
 #: utils/adt/encode.c:307
 msgid "invalid symbol"
@@ -5476,9 +5472,7 @@ msgstr ""
 
 #: utils/adt/ri_triggers.c:410 utils/adt/ri_triggers.c:2806
 msgid "MATCH FULL does not allow mixing of null and nonnull key values."
-msgstr ""
-"MATCH FULL erlaubt das Mischen von Schlüsseln, die NULL und nicht NULL sind, "
-"nicht"
+msgstr "MATCH FULL erlaubt das Mischen von Schlüsseln, die NULL und nicht NULL sind, nicht."
 
 #: utils/adt/ri_triggers.c:2999 commands/constraint.c:59
 #, c-format
@@ -7840,9 +7834,7 @@ msgstr "Wiederherstellung läuft"
 #: access/transam/xlog.c:8802 access/transam/xlog.c:8830
 #: access/transam/xlog.c:8863
 msgid "WAL control functions cannot be executed during recovery."
-msgstr ""
-"während der Wiederherstellung können keine WAL-Kontrollfunktionen ausgeführt "
-"werden"
+msgstr "während der Wiederherstellung können keine WAL-Kontrollfunktionen ausgeführt werden."
 
 #: access/transam/xlog.c:8412 access/transam/xlog.c:8604
 msgid "WAL level not sufficient for making an online backup"
@@ -9283,7 +9275,7 @@ msgstr ""
 #: commands/functioncmds.c:1508
 #, c-format
 msgid "source data type %s is a pseudo-type"
-msgstr "Quelldatentyp %s ist ein Pseudotyp."
+msgstr "Quelldatentyp %s ist ein Pseudotyp"
 
 #: commands/functioncmds.c:1514
 #, c-format
@@ -11263,8 +11255,7 @@ msgstr "Typausgabefunktion muss angegeben werden"
 msgid ""
 "type modifier output function is useless without a type modifier input "
 "function"
-msgstr ""
-"Typmodifikatorausgabefunktion ist nutzlos ohne Typmodifikatoreingabefunktion."
+msgstr "Typmodifikatorausgabefunktion ist nutzlos ohne Typmodifikatoreingabefunktion"
 
 #: commands/typecmds.c:430
 #, c-format
@@ -12883,7 +12874,7 @@ msgstr "konnte Funktion _ldap_start_tls_sA in wldap32.dll nicht laden"
 
 #: libpq/auth.c:2280
 msgid "LDAP over SSL is not supported on this platform."
-msgstr "LDAP über SSL wird auf dieser Plattform nicht unterstützt"
+msgstr "LDAP über SSL wird auf dieser Plattform nicht unterstützt."
 
 #: libpq/auth.c:2295
 #, c-format
@@ -15047,9 +15038,7 @@ msgstr "nicht unterstützte Kombination aus ON COMMIT und Fremdschlüssel"
 msgid ""
 "Table \"%s\" references \"%s\", but they do not have the same ON COMMIT "
 "setting."
-msgstr ""
-"Tabelle »%s« verweist auf »%s«, aber sie haben nicht die gleiche ON-COMMIT-"
-"Einstellung"
+msgstr "Tabelle »%s« verweist auf »%s«, aber sie haben nicht die gleiche ON-COMMIT-Einstellung."
 
 #: catalog/heap.c:2615
 msgid "cannot truncate a table referenced in a foreign key constraint"
@@ -15281,7 +15270,7 @@ msgstr "  DBNAME          Datenbankname (Standard: Benutzername)\n"
 #: main/main.c:308
 #, c-format
 msgid "  -d 0-5          override debugging level\n"
-msgstr "  -d 1-5          Debug-Level setzen\n"
+msgstr "  -d 0-5          Debug-Level setzen\n"
 
 #: main/main.c:309
 #, c-format
@@ -15849,7 +15838,7 @@ msgstr "VALUES darf keine Verweise auf OLD oder NEW enthalten"
 
 #: parser/analyze.c:588 parser/analyze.c:1098
 msgid "Use SELECT ... UNION ALL ... instead."
-msgstr "Verwenden Sie stattdessen SELECT ... UNION ALL ..."
+msgstr "Verwenden Sie stattdessen SELECT ... UNION ALL ... ."
 
 #: parser/analyze.c:698 parser/analyze.c:1110
 msgid "cannot use aggregate function in VALUES"

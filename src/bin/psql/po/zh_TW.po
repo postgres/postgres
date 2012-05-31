@@ -4302,7 +4302,6 @@ msgid "null_string"
 msgstr "null_string"
 
 #  translator: %s represents a digit string
-#  translator: %s represents a digit string
 # fe-protocol3.c:651
 # fe-protocol3.c:659
 #: sql_help.c:934

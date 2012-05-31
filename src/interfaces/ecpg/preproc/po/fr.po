@@ -1,8 +1,6 @@
 # translation of ecpg.po to fr_fr
 # french message translation file for ecpg
 #
-# pgtranslation Id: ecpg.po,v 1.8 2010/04/24 15:18:45 gleu Exp $
-#
 # Use these quotes: « %s »
 #
 # Guillaume Lelarge <guillaume@lelarge.info>, 2009.

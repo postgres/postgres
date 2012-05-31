@@ -1,8 +1,6 @@
 # German message translation file for psql
 # Peter Eisentraut <peter_e@gmx.net>, 2001 - 2010.
 #
-# pgtranslation Id: psql.po,v 1.43.2.3 2011/11/30 19:21:01 petere Exp $
-#
 # Use these quotes: »%s«
 #
 msgid ""
@@ -10,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2011-11-29 10:58+0000\n"
-"PO-Revision-Date: 2011-11-30 21:20+0200\n"
+"PO-Revision-Date: 2012-05-03 22:07+0300\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -1092,7 +1090,7 @@ msgstr "  \\l[+]                  alle Datenbanken auflisten\n"
 #: help.c:227
 #, c-format
 msgid "  \\z      [PATTERN]      same as \\dp\n"
-msgstr "  \\z      [MUSTER]       äquivalent zu \\dp \n"
+msgstr "  \\z      [MUSTER]       äquivalent zu \\dp\n"
 
 #: help.c:230
 #, c-format
@@ -1820,7 +1818,7 @@ msgstr "Erbt von"
 #: describe.c:1975
 #, c-format
 msgid "Number of child tables: %d (Use \\d+ to list them.)"
-msgstr "Anzahl Kindtabellen: %d (Mit \\\\d+ alle anzeigen.)"
+msgstr "Anzahl Kindtabellen: %d (Mit \\d+ alle anzeigen.)"
 
 #: describe.c:1982
 msgid "Child tables"
@@ -2071,7 +2069,7 @@ msgstr "Vorlage"
 
 #: describe.c:2988
 msgid "Init options"
-msgstr "Initialisierungsoptionen:"
+msgstr "Initialisierungsoptionen"
 
 #: describe.c:3010
 msgid "List of text search dictionaries"
@@ -3668,7 +3666,7 @@ msgstr "wobei From-Element Folgendes sein kann:"
 #: sql_help.c:2674 sql_help.c:2677 sql_help.c:2680 sql_help.c:2684
 #: sql_help.c:2826 sql_help.c:2829 sql_help.c:2832 sql_help.c:2836
 msgid "column_alias"
-msgstr " Spaltenalias"
+msgstr "Spaltenalias"
 
 #: sql_help.c:2479 sql_help.c:2496 sql_help.c:2500 sql_help.c:2678
 #: sql_help.c:2695 sql_help.c:2699 sql_help.c:2830 sql_help.c:2847

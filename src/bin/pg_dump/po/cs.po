@@ -2,8 +2,6 @@
 # translation of pg_dump-cs.po to Czech
 # Czech translation of pg_dump messages
 #
-# pgtranslation Id: pg_dump.po,v 1.2.2.2 2011/09/22 04:00:08 petere Exp $
-#
 # Karel Zak <zakkr@zf.jcu.cz>, 2001-2003, 2004, 2011.
 msgid ""
 msgstr ""

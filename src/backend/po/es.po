@@ -8,9 +8,6 @@
 # Jaime Casanova <systemguards@gmail.com> 2005, 2006
 # Emanuel Calvo Franco <postgres-arg@gmail.com> 2008
 #
-# pgtranslation Id: postgres.po,v 1.33.2.2 2012/02/22 19:14:27 alvherre Exp $
-#
-#
 # Glosario:
 #
 # character				carácter

@@ -7,8 +7,6 @@
 # Alvaro Herrera <alvherre@alvh.no-ip.org>, 2009
 # Franco Catena, <francocatena@gmail.com>, 2009
 #
-# pgtranslation Id: ecpg.po,v 1.8.2.2 2012/02/22 19:14:26 alvherre Exp $
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"

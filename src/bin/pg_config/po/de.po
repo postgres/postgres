@@ -1,8 +1,6 @@
 # German message translation file for pg_config
 # Peter Eisentraut <peter_e@gmx.net>, 2004 - 2010.
 #
-# pgtranslation Id: pg_config.po,v 1.13 2010/07/08 21:23:53 petere Exp $
-#
 # Use these quotes: »%s«
 #
 msgid ""

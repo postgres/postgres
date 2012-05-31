@@ -1,8 +1,6 @@
 # German message translation file for pg_dump and friends
 # Peter Eisentraut <peter_e@gmx.net>, 2001 - 2010.
 #
-# pgtranslation Id: pg_dump.po,v 1.26.2.3 2011/09/22 03:38:13 petere Exp $
-#
 # Use these quotes: »%s«
 #
 msgid ""
@@ -10,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2011-09-21 23:08+0000\n"
-"PO-Revision-Date: 2011-09-22 06:36+0300\n"
+"PO-Revision-Date: 2012-05-03 22:03+0300\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -405,9 +403,7 @@ msgstr "gebe Inhalt der Tabelle %s aus\n"
 #: pg_dump.c:1217
 #, c-format
 msgid "Dumping the contents of table \"%s\" failed: PQgetCopyData() failed.\n"
-msgstr ""
-"Ausgabe des Inhalts der Tabelle »%s« fehlgeschlagen: PQendcopy() "
-"fehlgeschlagen.\n"
+msgstr "Ausgabe des Inhalts der Tabelle »%s« fehlgeschlagen: PQgetCopyData() fehlgeschlagen.\n"
 
 #: pg_dump.c:1218 pg_dump.c:12451
 #, c-format
@@ -2065,8 +2061,7 @@ msgstr "%s: konnte die Ausgabedatei »%s« nicht öffnen: %s\n"
 msgid ""
 "%s extracts a PostgreSQL database cluster into an SQL script file.\n"
 "\n"
-msgstr ""
-"%s gibt eines PostgreSQL-Datenbankcluster in eine SQL-Skriptdatei aus.\n"
+msgstr "%s gibt einen PostgreSQL-Datenbankcluster in eine SQL-Skriptdatei aus.\n\n"
 
 #: pg_dumpall.c:537
 #, c-format

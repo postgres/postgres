@@ -340,4 +340,3 @@ msgstr "nedostatek paměti"
 msgid "could not convert Python Unicode object to PostgreSQL server encoding"
 msgstr "nelze převést Python Unicode objekt do serverového kódování PostgreSQL"
 
-

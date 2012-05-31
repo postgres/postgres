@@ -7,13 +7,11 @@
 # Updated on 2003-2010 by Alvaro Herrera <alvherre@alvh.no-ip.org>
 # Mario González <gonzalemario@gmail.com>, 2005
 #
-# pgtranslation Id: libpq.po,v 1.12.2.2 2012/02/22 19:14:26 alvherre Exp $
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL 9.0)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-02-22 14:51+0000\n"
+"POT-Creation-Date: 2012-05-29 18:51+0000\n"
 "PO-Revision-Date: 2010-08-31 13:26-0400\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
@@ -62,6 +60,7 @@ msgstr "error en continuación de SSPI"
 #: fe-connect.c:3924 fe-connect.c:3970 fe-connect.c:3988 fe-connect.c:4067
 #: fe-connect.c:4137 fe-connect.c:4183 fe-connect.c:4201 fe-exec.c:3102
 #: fe-exec.c:3267 fe-lobj.c:696 fe-protocol2.c:1027 fe-protocol3.c:1421
+#: fe-secure.c:766
 msgid "out of memory\n"
 msgstr "memoria agotada\n"
 
@@ -709,16 +708,16 @@ msgstr "PQgetline: no se está haciendo COPY OUT de texto\n"
 msgid "could not establish SSL connection: %s\n"
 msgstr "no se pudo establecer conexión SSL: %s\n"
 
-#: fe-secure.c:369 fe-secure.c:529 fe-secure.c:1331
+#: fe-secure.c:369 fe-secure.c:529 fe-secure.c:1384
 #, c-format
 msgid "SSL SYSCALL error: %s\n"
 msgstr "ERROR en llamada SSL: %s\n"
 
-#: fe-secure.c:376 fe-secure.c:536 fe-secure.c:1335
+#: fe-secure.c:376 fe-secure.c:536 fe-secure.c:1388
 msgid "SSL SYSCALL error: EOF detected\n"
 msgstr "ERROR en llamada SSL: detectado fin de archivo\n"
 
-#: fe-secure.c:387 fe-secure.c:547 fe-secure.c:1344
+#: fe-secure.c:387 fe-secure.c:547 fe-secure.c:1397
 #, c-format
 msgid "SSL error: %s\n"
 msgstr "error de SSL: %s\n"
@@ -727,7 +726,7 @@ msgstr "error de SSL: %s\n"
 msgid "SSL connection has been closed unexpectedly\n"
 msgstr "la conexión SSL se ha cerrado inesperadamente\n"
 
-#: fe-secure.c:407 fe-secure.c:567 fe-secure.c:1353
+#: fe-secure.c:407 fe-secure.c:567 fe-secure.c:1406
 #, c-format
 msgid "unrecognized SSL error code: %d\n"
 msgstr "código de error SSL no reconocido: %d\n"
@@ -742,62 +741,71 @@ msgstr "no se pudo recibir datos del servidor: %s\n"
 msgid "could not send data to server: %s\n"
 msgstr "no se pudo enviar datos al servidor: %s\n"
 
-#: fe-secure.c:746
+#: fe-secure.c:759 fe-secure.c:776
+msgid "could not get server common name from server certificate\n"
+msgstr ""
+"no se pudo obtener el common name del certificado del servidor\n"
+
+#: fe-secure.c:789
+msgid "SSL certificate's common name contains embedded null\n"
+msgstr "el common name del certificado SSL contiene un null\n"
+
+#: fe-secure.c:801
 msgid "host name must be specified for a verified SSL connection\n"
 msgstr ""
 "el nombre de servidor debe ser especificado para una conexión SSL "
 "verificada\n"
 
-#: fe-secure.c:765
+#: fe-secure.c:815
 #, c-format
 msgid "server common name \"%s\" does not match host name \"%s\"\n"
 msgstr ""
 "el common name «%s» del servidor no coincide con el nombre de anfitrión "
 "«%s»\n"
 
-#: fe-secure.c:897
+#: fe-secure.c:950
 #, c-format
 msgid "could not create SSL context: %s\n"
 msgstr "no se pudo crear el contexto SSL: %s\n"
 
-#: fe-secure.c:1019
+#: fe-secure.c:1072
 #, c-format
 msgid "could not open certificate file \"%s\": %s\n"
 msgstr "no se pudo abrir el archivo de certificado «%s»: %s\n"
 
-#: fe-secure.c:1044 fe-secure.c:1054
+#: fe-secure.c:1097 fe-secure.c:1107
 #, c-format
 msgid "could not read certificate file \"%s\": %s\n"
 msgstr "no se pudo leer el archivo de certificado «%s»: %s\n"
 
-#: fe-secure.c:1091
+#: fe-secure.c:1144
 #, c-format
 msgid "could not load SSL engine \"%s\": %s\n"
 msgstr "no se pudo cargar el motor SSL «%s»: %s\n"
 
-#: fe-secure.c:1103
+#: fe-secure.c:1156
 #, c-format
 msgid "could not initialize SSL engine \"%s\": %s\n"
 msgstr "no se pudo inicializar el motor SSL «%s»: %s\n"
 
-#: fe-secure.c:1119
+#: fe-secure.c:1172
 #, c-format
 msgid "could not read private SSL key \"%s\" from engine \"%s\": %s\n"
 msgstr ""
 "no se pudo leer el archivo de la llave privada SSL «%s» desde el motor «%s»: "
 "%s\n"
 
-#: fe-secure.c:1133
+#: fe-secure.c:1186
 #, c-format
 msgid "could not load private SSL key \"%s\" from engine \"%s\": %s\n"
 msgstr "no se pudo leer la llave privada SSL «%s» desde el motor «%s»: %s\n"
 
-#: fe-secure.c:1170
+#: fe-secure.c:1223
 #, c-format
 msgid "certificate present, but not private key file \"%s\"\n"
 msgstr "el certificado está presente, pero no la llave privada «%s»\n"
 
-#: fe-secure.c:1178
+#: fe-secure.c:1231
 #, c-format
 msgid ""
 "private key file \"%s\" has group or world access; permissions should be "
@@ -806,27 +814,27 @@ msgstr ""
 "el archivo de la llave privada «%s» tiene permiso de lectura para el grupo u "
 "otros; los permisos deberían ser u=rw (0600) o menos\n"
 
-#: fe-secure.c:1189
+#: fe-secure.c:1242
 #, c-format
 msgid "could not load private key file \"%s\": %s\n"
 msgstr "no se pudo cargar el archivo de la llave privada «%s»: %s\n"
 
-#: fe-secure.c:1203
+#: fe-secure.c:1256
 #, c-format
 msgid "certificate does not match private key file \"%s\": %s\n"
 msgstr "el certificado no coincide con la llave privada «%s»: %s\n"
 
-#: fe-secure.c:1231
+#: fe-secure.c:1284
 #, c-format
 msgid "could not read root certificate file \"%s\": %s\n"
 msgstr "no se pudo leer la lista de certificado raíz «%s»: %s\n"
 
-#: fe-secure.c:1258
+#: fe-secure.c:1311
 #, c-format
 msgid "SSL library does not support CRL certificates (file \"%s\")\n"
 msgstr "la biblioteca SSL no soporta certificados CRL (archivo «%s»)\n"
 
-#: fe-secure.c:1285
+#: fe-secure.c:1338
 msgid ""
 "could not get home directory to locate root certificate file\n"
 "Either provide the file or change sslmode to disable server certificate "
@@ -837,7 +845,7 @@ msgstr ""
 "Debe ya sea entregar este archivo, o bien cambiar sslmode para deshabilitar "
 "la verificación de certificados del servidor.\n"
 
-#: fe-secure.c:1289
+#: fe-secure.c:1342
 #, c-format
 msgid ""
 "root certificate file \"%s\" does not exist\n"
@@ -848,44 +856,16 @@ msgstr ""
 "Debe ya sea entregar este archivo, o bien cambiar sslmode para deshabilitar "
 "la verificación de certificados del servidor.\n"
 
-#: fe-secure.c:1372
+#: fe-secure.c:1425
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "el certificado no pudo ser obtenido: %s\n"
 
-#: fe-secure.c:1400
-msgid "SSL certificate's common name contains embedded null\n"
-msgstr "el common name del certificado SSL contiene un null\n"
-
-#: fe-secure.c:1476
+#: fe-secure.c:1502
 msgid "no SSL error reported"
 msgstr "sin error SSL reportado"
 
-#: fe-secure.c:1485
+#: fe-secure.c:1511
 #, c-format
 msgid "SSL error code %lu"
 msgstr "código de error SSL %lu"
-
-#~ msgid "could not get peer credentials: %s\n"
-#~ msgstr "no se pudo obtener credenciales de la contraparte: %s\n"
-
-#~ msgid "could not get effective UID from peer credentials: %s\n"
-#~ msgstr ""
-#~ "no se pudo obtener el UID efectivo desde las credenciales de la "
-#~ "contraparte: %s\n"
-
-#~ msgid "local user with ID %d does not exist\n"
-#~ msgstr "no existe un usuario local con ID %d\n"
-
-#~ msgid "requirepeer specifies \"%s\", but actual peer user name is \"%s\"\n"
-#~ msgstr ""
-#~ "requirepeer especifica «%s», pero el nombre de usuario de la contraparte "
-#~ "es «%s»\n"
-
-#~ msgid "requirepeer parameter is not supported on this platform\n"
-#~ msgstr "el parámetro requirepeer no está soportado en esta plataforma\n"
-
-#~ msgid "could not get home directory to locate client certificate files\n"
-#~ msgstr ""
-#~ "no se pudo obtener el directorio home para localizar los archivos de "
-#~ "certificado de cliente\n"

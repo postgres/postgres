@@ -1,8 +1,6 @@
 # translation of psql.po to fr_fr
 # french message translation file for psql
 #
-# $PostgreSQL$
-#
 # Use these quotes: « %s »
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 # Guillaume Lelarge <guillaume@lelarge.info>, 2003-2009.

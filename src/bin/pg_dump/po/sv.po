@@ -2,8 +2,6 @@
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2009, 2010.
 # Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004, 2005, 2006.
 #
-# pgtranslation Id: pg_dump.po,v 1.7 2010/07/03 02:01:18 petere Exp $
-#
 # Use these quotes: "%s"
 #
 msgid ""
