@@ -4725,7 +4725,8 @@ heap_xlog_visible(XLogRecPtr lsn, XLogRecord *record)
 	 * forces any index-only scan that is in flight to perform heap fetches,
 	 * rather than killing the transaction outright.
 	 */
-	ResolveRecoveryConflictWithSnapshot(xlrec->cutoff_xid, xlrec->node);
+	if (InHotStandby)
+		ResolveRecoveryConflictWithSnapshot(xlrec->cutoff_xid, xlrec->node);
 
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 
