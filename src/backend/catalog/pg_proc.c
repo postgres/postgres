@@ -69,6 +69,7 @@ ProcedureCreate(const char *procedureName,
 				bool replace,
 				bool returnsSet,
 				Oid returnType,
+				Oid proowner,
 				Oid languageObjectId,
 				Oid languageValidator,
 				const char *prosrc,
@@ -100,7 +101,6 @@ ProcedureCreate(const char *procedureName,
 	bool		internalInParam = false;
 	bool		internalOutParam = false;
 	Oid			variadicType = InvalidOid;
-	Oid			proowner = GetUserId();
 	Acl		   *proacl = NULL;
 	Relation	rel;
 	HeapTuple	tup;

@@ -233,6 +233,7 @@ AggregateCreate(const char *aggName,
 							  false,	/* no replacement */
 							  false,	/* doesn't return a set */
 							  finaltype,		/* returnType */
+							  GetUserId(),		/* proowner */
 							  INTERNALlanguageId,		/* languageObjectId */
 							  InvalidOid,		/* no validator */
 							  "aggregate_dummy",		/* placeholder proc */

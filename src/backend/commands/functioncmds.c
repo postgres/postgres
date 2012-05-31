@@ -978,6 +978,7 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 					stmt->replace,
 					returnsSet,
 					prorettype,
+					GetUserId(),
 					languageOid,
 					languageValidator,
 					prosrc_str, /* converted to text later */

@@ -38,6 +38,7 @@
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/indexing.h"
+#include "catalog/pg_authid.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_depend.h"
@@ -1513,6 +1514,7 @@ makeRangeConstructors(const char *name, Oid namespace,
 								  false,		/* replace */
 								  false,		/* returns set */
 								  rangeOid,		/* return type */
+								  BOOTSTRAP_SUPERUSERID,		/* proowner */
 								  INTERNALlanguageId,	/* language */
 								  F_FMGR_INTERNAL_VALIDATOR,	/* language validator */
 								  prosrc[i],	/* prosrc */
