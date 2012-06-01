@@ -463,13 +463,6 @@
 
       <listitem>
        <para>
-        Improve performance of transactions using many savepoints (Simon
-        Riggs)  PARTIALLY REVERTED.  KEEP?
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Improve <command>COPY</command> performance by adding tuples to
         the heap in batches (Heikki Linnakangas)
        </para>
@@ -549,7 +542,13 @@
 
       <listitem>
        <para>
-        Improve locking performance during group commit (Peter Geoghegan)
+        Allow group commit to work effectively under heavy load (Peter
+        Geoghegan, Simon Riggs)
+       </para>
+
+       <para>
+        Previously, batching of commits became ineffective as the write
+        workload increased because of internal lock contention.
        </para>
       </listitem>
 
