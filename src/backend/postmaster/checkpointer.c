@@ -709,6 +709,11 @@ CheckpointWriteDelay(int flags, double progress)
 		CheckArchiveTimeout();
 
 		/*
+		 * Report interim activity statistics to the stats collector.
+		 */
+		pgstat_send_bgwriter();
+
+		/*
 		 * This sleep used to be connected to bgwriter_delay, typically 200ms.
 		 * That resulted in more frequent wakeups if not much work to do.
 		 * Checkpointer and bgwriter are no longer related so take the Big Sleep.
