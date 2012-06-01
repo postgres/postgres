@@ -1346,3 +1346,28 @@ UpdateSharedMemoryConfig(void)
 
 	elog(DEBUG2, "checkpointer updated shared memory configuration values");
 }
+
+/*
+ * FirstCallSinceLastCheckpoint allows a process to take an action once
+ * per checkpoint cycle by asynchronously checking for checkpoint completion.
+ */
+bool
+FirstCallSinceLastCheckpoint(void)
+{
+	/* use volatile pointer to prevent code rearrangement */
+	volatile CheckpointerShmemStruct *cps = CheckpointerShmem;
+	static int 	ckpt_done = 0;
+	int 		new_done;
+	bool 		FirstCall = false;
+
+	SpinLockAcquire(&cps->ckpt_lck);
+	new_done = cps->ckpt_done;
+	SpinLockRelease(&cps->ckpt_lck);
+
+	if (new_done != ckpt_done)
+		FirstCall = true;
+
+	ckpt_done = new_done;
+
+	return FirstCall;
+}

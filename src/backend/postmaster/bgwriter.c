@@ -276,6 +276,15 @@ BackgroundWriterMain(void)
 		 */
 		pgstat_send_bgwriter();
 
+		if (FirstCallSinceLastCheckpoint())
+		{
+			/*
+			 * After any checkpoint, close all smgr files.	This is so we
+			 * won't hang onto smgr references to deleted files indefinitely.
+			 */
+			smgrcloseall();
+		}
+
 		/*
 		 * Sleep until we are signaled or BgWriterDelay has elapsed.
 		 *
