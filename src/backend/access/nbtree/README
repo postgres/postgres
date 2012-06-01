@@ -261,13 +261,15 @@ we need to be sure we don't miss or re-scan any items.
 
 A deleted page can only be reclaimed once there is no scan or search that
 has a reference to it; until then, it must stay in place with its
-right-link undisturbed.  We implement this by waiting until all
-transactions that were running at the time of deletion are dead; which is
+right-link undisturbed.  We implement this by waiting until all active
+snapshots and registered snapshots as of the deletion are gone; which is
 overly strong, but is simple to implement within Postgres.  When marked
 dead, a deleted page is labeled with the next-transaction counter value.
 VACUUM can reclaim the page for re-use when this transaction number is
-older than the oldest open transaction.  (NOTE: VACUUM FULL can reclaim
-such pages immediately.)
+older than RecentGlobalXmin.  As collateral damage, this implementation
+also waits for running XIDs with no snapshots and for snapshots taken
+until the next transaction to allocate an XID commits.
+(NOTE: VACUUM FULL can reclaim such pages immediately.)
 
 Reclaiming a page doesn't actually change its state on disk --- we simply
 record it in the shared-memory free space map, from which it will be
