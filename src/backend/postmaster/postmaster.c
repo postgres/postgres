@@ -1378,10 +1378,10 @@ ServerLoop(void)
 		if (pmState == PM_RUN || pmState == PM_RECOVERY ||
 			pmState == PM_HOT_STANDBY)
 		{
-			if (BgWriterPID == 0)
-				BgWriterPID = StartBackgroundWriter();
 			if (CheckpointerPID == 0)
 				CheckpointerPID = StartCheckpointer();
+			if (BgWriterPID == 0)
+				BgWriterPID = StartBackgroundWriter();
 		}
 
 		/*
@@ -2372,10 +2372,10 @@ reaper(SIGNAL_ARGS)
 			 * when we entered consistent recovery state.  It doesn't matter
 			 * if this fails, we'll just try again later.
 			 */
-			if (BgWriterPID == 0)
-				BgWriterPID = StartBackgroundWriter();
 			if (CheckpointerPID == 0)
 				CheckpointerPID = StartCheckpointer();
+			if (BgWriterPID == 0)
+				BgWriterPID = StartBackgroundWriter();
 			if (WalWriterPID == 0)
 				WalWriterPID = StartWalWriter();
 
@@ -4239,10 +4239,10 @@ sigusr1_handler(SIGNAL_ARGS)
 		 * Crank up the background tasks.  It doesn't matter if this fails,
 		 * we'll just try again later.
 		 */
-		Assert(BgWriterPID == 0);
-		BgWriterPID = StartBackgroundWriter();
 		Assert(CheckpointerPID == 0);
 		CheckpointerPID = StartCheckpointer();
+		Assert(BgWriterPID == 0);
+		BgWriterPID = StartBackgroundWriter();
 
 		pmState = PM_RECOVERY;
 	}
