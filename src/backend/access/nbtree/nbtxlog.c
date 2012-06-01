@@ -968,7 +968,11 @@ btree_redo(XLogRecPtr lsn, XLogRecord *record)
 				/*
 				 * Btree reuse page records exist to provide a conflict point
 				 * when we reuse pages in the index via the FSM. That's all it
-				 * does though.
+				 * does though. latestRemovedXid was the page's btpo.xact. The
+				 * btpo.xact < RecentGlobalXmin test in _bt_page_recyclable()
+				 * conceptually mirrors the pgxact->xmin > limitXmin test in
+				 * GetConflictingVirtualXIDs().  Consequently, one XID value
+				 * achieves the same exclusion effect on master and standby.
 				 */
 				{
 					xl_btree_reuse_page *xlrec = (xl_btree_reuse_page *) XLogRecGetData(record);
