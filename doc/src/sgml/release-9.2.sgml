@@ -425,7 +425,8 @@
        </para>
 
        <para>
-        This is often called "index-only scans" or "covering indexes".
+        This is often called "index-only scans", a feature which now enables
+        the use of indexes with additional columns, or "covering indexes".
         This is possible for heap pages with exclusively all-visible
         tuples, as reported by the visibility map.  The visibility map was
         made crash-safe as a necessary part of implementing this feature.
