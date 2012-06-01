@@ -2734,8 +2734,14 @@
 
       <listitem>
        <para>
-        Improve <application>pg_stat_statements</> to aggregate similar
-        queries (Peter Geoghegan, Tom Lane)
+        Allow <application>pg_stat_statements</> to aggregate similar
+        queries via SQL text normalisation (Peter Geoghegan, Tom Lane)
+       </para>
+
+       <para>
+        Users with applications that use non-parameterized SQL will now
+        be able to monitor query performance without using log file
+        analysis.
        </para>
       </listitem>
 
