@@ -560,19 +560,9 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 					 */
 					if (XLogStandbyInfoActive())
 					{
-						TransactionId latestRemovedXid;
-
 						BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
-						/*
-						 * opaque->btpo.xact is the threshold value not the
-						 * value to measure conflicts against. We must retreat
-						 * by one from it to get the correct conflict xid.
-						 */
-						latestRemovedXid = opaque->btpo.xact;
-						TransactionIdRetreat(latestRemovedXid);
-
-						_bt_log_reuse_page(rel, blkno, latestRemovedXid);
+						_bt_log_reuse_page(rel, blkno, opaque->btpo.xact);
 					}
 
 					/* Okay to use page.  Re-initialize and return it */
@@ -687,7 +677,6 @@ bool
 _bt_page_recyclable(Page page)
 {
 	BTPageOpaque opaque;
-	TransactionId cutoff;
 
 	/*
 	 * It's possible to find an all-zeroes page in an index --- for example, a
@@ -700,18 +689,11 @@ _bt_page_recyclable(Page page)
 
 	/*
 	 * Otherwise, recycle if deleted and too old to have any processes
-	 * interested in it.  If we are generating records for Hot Standby
-	 * defer page recycling until RecentGlobalXmin to respect user
-	 * controls specified by vacuum_defer_cleanup_age or hot_standby_feedback.
+	 * interested in it.
 	 */
-	if (XLogStandbyInfoActive())
-		cutoff = RecentGlobalXmin;
-	else
-		cutoff = RecentXmin;
-
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	if (P_ISDELETED(opaque) &&
-		TransactionIdPrecedesOrEquals(opaque->btpo.xact, cutoff))
+		TransactionIdPrecedes(opaque->btpo.xact, RecentGlobalXmin))
 		return true;
 	return false;
 }
@@ -1364,7 +1346,13 @@ _bt_pagedel(Relation rel, Buffer buf, BTStack stack)
 
 	/*
 	 * Mark the page itself deleted.  It can be recycled when all current
-	 * transactions are gone.
+	 * transactions are gone.  Storing GetTopTransactionId() would work, but
+	 * we're in VACUUM and would not otherwise have an XID.  Having already
+	 * updated links to the target, ReadNewTransactionId() suffices as an
+	 * upper bound.  Any scan having retained a now-stale link is advertising
+	 * in its PGPROC an xmin less than or equal to the value we read here.  It
+	 * will continue to do so, holding back RecentGlobalXmin, for the duration
+	 * of that scan.
 	 */
 	page = BufferGetPage(buf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
