@@ -600,7 +600,10 @@ buildACLCommands(const char *name, const char *subname,
 	{
 		if (!parseAclItem(aclitems[i], type, name, subname, remoteVersion,
 						  grantee, grantor, privs, privswgo))
+		{
+			free(aclitems);
 			return false;
+		}
 
 		if (grantor->len == 0 && owner)
 			printfPQExpBuffer(grantor, "%s", owner);
@@ -789,7 +792,10 @@ parseAclItem(const char *item, const char *type,
 	/* user or group name is string up to = */
 	eqpos = copyAclUserName(grantee, buf);
 	if (*eqpos != '=')
+	{
+		free(buf);
 		return false;
+	}
 
 	/* grantor may be listed after / */
 	slpos = strchr(eqpos + 1, '/');
@@ -798,7 +804,10 @@ parseAclItem(const char *item, const char *type,
 		*slpos++ = '\0';
 		slpos = copyAclUserName(grantor, slpos);
 		if (*slpos != '\0')
+		{
+			free(buf);
 			return false;
+		}
 	}
 	else
 		resetPQExpBuffer(grantor);
