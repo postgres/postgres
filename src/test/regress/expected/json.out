@@ -26,8 +26,7 @@ def"'::json;					-- ERROR, unescaped newline in string constant
 ERROR:  invalid input syntax for type json
 LINE 1: SELECT '"abc
                ^
-DETAIL:  line 1: Character "
-" must be escaped.
+DETAIL:  line 1: Character with value "0x0a" must be escaped.
 SELECT '"\n\"\\"'::json;		-- OK, legal escapes
    json   
 ----------
