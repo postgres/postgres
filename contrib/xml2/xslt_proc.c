@@ -116,6 +116,16 @@ xslt_process(PG_FUNCTION_ARGS)
 	}
 
 	restree = xsltApplyStylesheet(stylesheet, doctree, params);
+
+	if (restree == NULL)
+	{
+		xsltFreeStylesheet(stylesheet);
+		xmlFreeDoc(doctree);
+		xsltCleanupGlobals();
+		xml_ereport(ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
+					"failed to apply stylesheet");
+	}
+
 	resstat = xsltSaveResultToString(&resstr, &reslen, restree, stylesheet);
 
 	xsltFreeStylesheet(stylesheet);
@@ -124,12 +134,16 @@ xslt_process(PG_FUNCTION_ARGS)
 
 	xsltCleanupGlobals();
 
+	/* XXX this is pretty dubious, really ought to throw error instead */
 	if (resstat < 0)
 		PG_RETURN_NULL();
 
 	tres = palloc(reslen + VARHDRSZ);
 	memcpy(VARDATA(tres), resstr, reslen);
 	SET_VARSIZE(tres, reslen + VARHDRSZ);
+
+	if (resstr)
+		xmlFree(resstr);
 
 	PG_RETURN_TEXT_P(tres);
 
