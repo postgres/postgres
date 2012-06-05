@@ -54,6 +54,7 @@ xslt_process(PG_FUNCTION_ARGS)
 
 	text	   *doct = PG_GETARG_TEXT_P(0);
 	text	   *ssheet = PG_GETARG_TEXT_P(1);
+	text	   *result;
 	text	   *paramstr;
 	const char **params;
 	PgXmlErrorContext *xmlerrcxt;
@@ -112,6 +113,11 @@ xslt_process(PG_FUNCTION_ARGS)
 					"failed to parse stylesheet");
 
 	restree = xsltApplyStylesheet(stylesheet, doctree, params);
+
+	if (restree == NULL)
+		xml_ereport(xmlerrcxt, ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
+					"failed to apply stylesheet");
+
 	resstat = xsltSaveResultToString(&resstr, &reslen, restree, stylesheet);
 	}
 	PG_CATCH();
@@ -137,10 +143,16 @@ xslt_process(PG_FUNCTION_ARGS)
 
 	pg_xml_done(xmlerrcxt, false);
 
+	/* XXX this is pretty dubious, really ought to throw error instead */
 	if (resstat < 0)
 		PG_RETURN_NULL();
 
-	PG_RETURN_TEXT_P(cstring_to_text_with_len((char *) resstr, reslen));
+	result = cstring_to_text_with_len((char *) resstr, reslen);
+
+	if (resstr)
+		xmlFree(resstr);
+
+	PG_RETURN_TEXT_P(result);
 #else							/* !USE_LIBXSLT */
 
 	ereport(ERROR,
