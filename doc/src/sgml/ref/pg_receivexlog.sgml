@@ -260,7 +260,13 @@ PostgreSQL documentation
    recycle transaction log files even if the backups are not properly
    archived, since there is no command that fails. This can be worked
    around by having an <xref linkend="guc-archive-command"> that fails
-   when the file has not been properly archived yet.
+   when the file has not been properly archived yet, for example:
+<programlisting>
+archive_command = 'sleep 5 &amp;&amp; test -f /mnt/server/archivedir/%f'
+</programlisting>
+   The initial timeout is necessary because
+   <application>pg_receivexlog</application> works using asynchronous
+   replication and can therefor be slightly behind the master.
   </para>
 
  </refsect1>
