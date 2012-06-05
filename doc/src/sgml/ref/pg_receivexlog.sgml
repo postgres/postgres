@@ -266,7 +266,7 @@ archive_command = 'sleep 5 &amp;&amp; test -f /mnt/server/archivedir/%f'
 </programlisting>
    The initial timeout is necessary because
    <application>pg_receivexlog</application> works using asynchronous
-   replication and can therefor be slightly behind the master.
+   replication and can therefore be slightly behind the master.
   </para>
 
  </refsect1>
