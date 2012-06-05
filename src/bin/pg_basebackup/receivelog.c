@@ -366,7 +366,8 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysi
 			}
 			else if (r < 0)
 			{
-				fprintf(stderr, _("%s: select() failed: %m\n"), progname);
+				fprintf(stderr, _("%s: select() failed: %s\n"),
+						progname, strerror(errno));
 				return false;
 			}
 			/* Else there is actually data on the socket */
