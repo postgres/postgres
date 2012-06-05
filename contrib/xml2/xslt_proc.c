@@ -56,6 +56,7 @@ xslt_process(PG_FUNCTION_ARGS)
 
 	text	   *doct = PG_GETARG_TEXT_P(0);
 	text	   *ssheet = PG_GETARG_TEXT_P(1);
+	text	   *result;
 	text	   *paramstr;
 	const char *params[MAXPARAMS + 1];	/* +1 for the terminator */
 	xsltStylesheetPtr stylesheet = NULL;
@@ -116,6 +117,16 @@ xslt_process(PG_FUNCTION_ARGS)
 	}
 
 	restree = xsltApplyStylesheet(stylesheet, doctree, params);
+
+	if (restree == NULL)
+	{
+		xsltFreeStylesheet(stylesheet);
+		xmlFreeDoc(doctree);
+		xsltCleanupGlobals();
+		xml_ereport(ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
+					"failed to apply stylesheet");
+	}
+
 	resstat = xsltSaveResultToString(&resstr, &reslen, restree, stylesheet);
 
 	xsltFreeStylesheet(stylesheet);
@@ -124,10 +135,16 @@ xslt_process(PG_FUNCTION_ARGS)
 
 	xsltCleanupGlobals();
 
+	/* XXX this is pretty dubious, really ought to throw error instead */
 	if (resstat < 0)
 		PG_RETURN_NULL();
 
-	PG_RETURN_TEXT_P(cstring_to_text_with_len((char *) resstr, reslen));
+	result = cstring_to_text_with_len((char *) resstr, reslen);
+
+	if (resstr)
+		xmlFree(resstr);
+
+	PG_RETURN_TEXT_P(result);
 #else							/* !USE_LIBXSLT */
 
 	ereport(ERROR,
