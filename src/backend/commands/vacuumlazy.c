@@ -419,6 +419,15 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	 * Note: if scan_all is true, we won't actually skip any pages; but we
 	 * maintain next_not_all_visible_block anyway, so as to set up the
 	 * all_visible_according_to_vm flag correctly for each page.
+	 *
+	 * Note: The value returned by visibilitymap_test could be slightly
+	 * out-of-date, since we make this test before reading the corresponding
+	 * heap page or locking the buffer.  This is OK.  If we mistakenly think
+	 * that the page is all-visible when in fact the flag's just been cleared,
+	 * we might fail to vacuum the page.  But it's OK to skip pages when
+	 * scan_all is not set, so no great harm done; the next vacuum will find
+	 * them.  If we make the reverse mistake and vacuum a page unnecessarily,
+	 * it'll just be a no-op.
 	 */
 	for (next_not_all_visible_block = 0;
 		 next_not_all_visible_block < nblocks;
@@ -852,22 +861,37 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		freespace = PageGetHeapFreeSpace(page);
 
 		/* mark page all-visible, if appropriate */
-		if (all_visible && !all_visible_according_to_vm)
+		if (all_visible)
 		{
 			if (!PageIsAllVisible(page))
 			{
 				PageSetAllVisible(page);
 				MarkBufferDirty(buf);
+				visibilitymap_set(onerel, blkno, InvalidXLogRecPtr, vmbuffer,
+								  visibility_cutoff_xid);
 			}
-			visibilitymap_set(onerel, blkno, InvalidXLogRecPtr, vmbuffer,
-							  visibility_cutoff_xid);
+			else if (!all_visible_according_to_vm)
+			{
+				/*
+				 * It should never be the case that the visibility map page
+				 * is set while the page-level bit is clear, but the reverse
+				 * is allowed.  Set the visibility map bit as well so that
+				 * we get back in sync.
+				 */
+				visibilitymap_set(onerel, blkno, InvalidXLogRecPtr, vmbuffer,
+								  visibility_cutoff_xid);
+			}
 		}
 
 		/*
 		 * As of PostgreSQL 9.2, the visibility map bit should never be set if
-		 * the page-level bit is clear.
+		 * the page-level bit is clear.  However, it's possible that the bit
+		 * got cleared after we checked it and before we took the buffer
+		 * content lock, so we must recheck before jumping to the conclusion
+		 * that something bad has happened.
 		 */
-		else if (all_visible_according_to_vm && !PageIsAllVisible(page))
+		else if (all_visible_according_to_vm && !PageIsAllVisible(page)
+				 && visibilitymap_test(onerel, blkno, &vmbuffer))
 		{
 			elog(WARNING, "page is not marked all-visible but visibility map bit is set in relation \"%s\" page %u",
 				 relname, blkno);

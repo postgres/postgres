@@ -2149,15 +2149,6 @@ heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 										   &vmbuffer, NULL);
 		page = BufferGetPage(buffer);
 
-		if (PageIsAllVisible(page))
-		{
-			all_visible_cleared = true;
-			PageClearAllVisible(page);
-			visibilitymap_clear(relation,
-								BufferGetBlockNumber(buffer),
-								vmbuffer);
-		}
-
 		/* NO EREPORT(ERROR) from here till changes are logged */
 		START_CRIT_SECTION();
 
@@ -2170,6 +2161,15 @@ heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 				break;
 
 			RelationPutHeapTuple(relation, buffer, heaptup);
+		}
+
+		if (PageIsAllVisible(page))
+		{
+			all_visible_cleared = true;
+			PageClearAllVisible(page);
+			visibilitymap_clear(relation,
+								BufferGetBlockNumber(buffer),
+								vmbuffer);
 		}
 
 		/*

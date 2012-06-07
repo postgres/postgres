@@ -82,6 +82,19 @@ IndexOnlyNext(IndexOnlyScanState *node)
 		 * We can skip the heap fetch if the TID references a heap page on
 		 * which all tuples are known visible to everybody.  In any case,
 		 * we'll use the index tuple not the heap tuple as the data source.
+		 *
+		 * Note on Memory Ordering Effects: visibilitymap_test does not lock
+		 * the visibility map buffer, and therefore the result we read here
+		 * could be slightly stale.  However, it can't be stale enough to
+		 * matter.  It suffices to show that (1) there is a read barrier
+		 * between the time we read the index TID and the time we test the
+		 * visibility map; and (2) there is a write barrier between the time
+		 * some other concurrent process clears the visibility map bit and the
+		 * time it inserts the index TID.  Since acquiring or releasing a
+		 * LWLock interposes a full barrier, this is easy to show: (1) is
+		 * satisfied by the release of the index buffer content lock after
+		 * reading the TID; and (2) is satisfied by the acquisition of the
+		 * buffer content lock in order to insert the TID.
 		 */
 		if (!visibilitymap_test(scandesc->heapRelation,
 								ItemPointerGetBlockNumber(tid),

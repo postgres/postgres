@@ -293,6 +293,13 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, XLogRecPtr recptr,
  * relation. On return, *buf is a valid buffer with the map page containing
  * the bit for heapBlk, or InvalidBuffer. The caller is responsible for
  * releasing *buf after it's done testing and setting bits.
+ *
+ * NOTE: This function is typically called without a lock on the heap page,
+ * so somebody else could change the bit just after we look at it.  In fact,
+ * since we don't lock the visibility map page either, it's even possible that
+ * someone else could have changed the bit just before we look at it, but yet
+ * we might see the old value.  It is the caller's responsibility to deal with
+ * all concurrency issues!
  */
 bool
 visibilitymap_test(Relation rel, BlockNumber heapBlk, Buffer *buf)
@@ -327,7 +334,9 @@ visibilitymap_test(Relation rel, BlockNumber heapBlk, Buffer *buf)
 	map = PageGetContents(BufferGetPage(*buf));
 
 	/*
-	 * We don't need to lock the page, as we're only looking at a single bit.
+	 * A single-bit read is atomic.  There could be memory-ordering effects
+	 * here, but for performance reasons we make it the caller's job to worry
+	 * about that.
 	 */
 	result = (map[mapByte] & (1 << mapBit)) ? true : false;
 
