@@ -2048,6 +2048,7 @@ DropRelFileNodeBuffers(RelFileNodeBackend rnode, ForkNumber forkNum,
 {
 	int			i;
 
+	/* If it's a local relation, it's localbuf.c's problem. */
 	if (rnode.backend != InvalidBackendId)
 	{
 		if (rnode.backend == MyBackendId)
@@ -2058,6 +2059,25 @@ DropRelFileNodeBuffers(RelFileNodeBackend rnode, ForkNumber forkNum,
 	for (i = 0; i < NBuffers; i++)
 	{
 		volatile BufferDesc *bufHdr = &BufferDescriptors[i];
+
+		/*
+		 * We can make this a tad faster by prechecking the buffer tag before
+		 * we attempt to lock the buffer; this saves a lot of lock
+		 * acquisitions in typical cases.  It should be safe because the
+		 * caller must have AccessExclusiveLock on the relation, or some other
+		 * reason to be certain that no one is loading new pages of the rel
+		 * into the buffer pool.  (Otherwise we might well miss such pages
+		 * entirely.)  Therefore, while the tag might be changing while we
+		 * look at it, it can't be changing *to* a value we care about, only
+		 * *away* from such a value.  So false negatives are impossible, and
+		 * false positives are safe because we'll recheck after getting the
+		 * buffer lock.
+		 *
+		 * We could check forkNum and blockNum as well as the rnode, but the
+		 * incremental win from doing so seems small.
+		 */
+		if (!RelFileNodeEquals(bufHdr->tag.rnode, rnode.node))
+			continue;
 
 		LockBufHdr(bufHdr);
 		if (RelFileNodeEquals(bufHdr->tag.rnode, rnode.node) &&
@@ -2084,7 +2104,6 @@ void
 DropDatabaseBuffers(Oid dbid)
 {
 	int			i;
-	volatile BufferDesc *bufHdr;
 
 	/*
 	 * We needn't consider local buffers, since by assumption the target
@@ -2093,7 +2112,15 @@ DropDatabaseBuffers(Oid dbid)
 
 	for (i = 0; i < NBuffers; i++)
 	{
-		bufHdr = &BufferDescriptors[i];
+		volatile BufferDesc *bufHdr = &BufferDescriptors[i];
+
+		/*
+		 * As in DropRelFileNodeBuffers, an unlocked precheck should be safe
+		 * and saves some cycles.
+		 */
+		if (bufHdr->tag.rnode.dbNode != dbid)
+			continue;
+
 		LockBufHdr(bufHdr);
 		if (bufHdr->tag.rnode.dbNode == dbid)
 			InvalidateBuffer(bufHdr);	/* releases spinlock */
@@ -2220,6 +2247,14 @@ FlushRelationBuffers(Relation rel)
 	for (i = 0; i < NBuffers; i++)
 	{
 		bufHdr = &BufferDescriptors[i];
+
+		/*
+		 * As in DropRelFileNodeBuffers, an unlocked precheck should be safe
+		 * and saves some cycles.
+		 */
+		if (!RelFileNodeEquals(bufHdr->tag.rnode, rel->rd_node))
+			continue;
+
 		LockBufHdr(bufHdr);
 		if (RelFileNodeEquals(bufHdr->tag.rnode, rel->rd_node) &&
 			(bufHdr->flags & BM_VALID) && (bufHdr->flags & BM_DIRTY))
@@ -2262,6 +2297,14 @@ FlushDatabaseBuffers(Oid dbid)
 	for (i = 0; i < NBuffers; i++)
 	{
 		bufHdr = &BufferDescriptors[i];
+
+		/*
+		 * As in DropRelFileNodeBuffers, an unlocked precheck should be safe
+		 * and saves some cycles.
+		 */
+		if (bufHdr->tag.rnode.dbNode != dbid)
+			continue;
+
 		LockBufHdr(bufHdr);
 		if (bufHdr->tag.rnode.dbNode == dbid &&
 			(bufHdr->flags & BM_VALID) && (bufHdr->flags & BM_DIRTY))
