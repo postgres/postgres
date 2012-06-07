@@ -2020,7 +2020,7 @@ BufferIsPermanent(Buffer buffer)
  *		DropRelFileNodeBuffers
  *
  *		This function removes from the buffer pool all the pages of the
- *		specified relation that have block numbers >= firstDelBlock.
+ *		specified relation fork that have block numbers >= firstDelBlock.
  *		(In particular, with firstDelBlock = 0, all pages are removed.)
  *		Dirty pages are simply dropped, without bothering to write them
  *		out first.	Therefore, this is NOT rollback-able, and so should be
@@ -2083,6 +2083,46 @@ DropRelFileNodeBuffers(RelFileNodeBackend rnode, ForkNumber forkNum,
 		if (RelFileNodeEquals(bufHdr->tag.rnode, rnode.node) &&
 			bufHdr->tag.forkNum == forkNum &&
 			bufHdr->tag.blockNum >= firstDelBlock)
+			InvalidateBuffer(bufHdr);	/* releases spinlock */
+		else
+			UnlockBufHdr(bufHdr);
+	}
+}
+
+/* ---------------------------------------------------------------------
+ *		DropRelFileNodeAllBuffers
+ *
+ *		This function removes from the buffer pool all the pages of all
+ *		forks of the specified relation.  It's equivalent to calling
+ *		DropRelFileNodeBuffers once per fork with firstDelBlock = 0.
+ * --------------------------------------------------------------------
+ */
+void
+DropRelFileNodeAllBuffers(RelFileNodeBackend rnode)
+{
+	int			i;
+
+	/* If it's a local relation, it's localbuf.c's problem. */
+	if (rnode.backend != InvalidBackendId)
+	{
+		if (rnode.backend == MyBackendId)
+			DropRelFileNodeAllLocalBuffers(rnode.node);
+		return;
+	}
+
+	for (i = 0; i < NBuffers; i++)
+	{
+		volatile BufferDesc *bufHdr = &BufferDescriptors[i];
+
+		/*
+		 * As in DropRelFileNodeBuffers, an unlocked precheck should be safe
+		 * and saves some cycles.
+		 */
+		if (!RelFileNodeEquals(bufHdr->tag.rnode, rnode.node))
+			continue;
+
+		LockBufHdr(bufHdr);
+		if (RelFileNodeEquals(bufHdr->tag.rnode, rnode.node))
 			InvalidateBuffer(bufHdr);	/* releases spinlock */
 		else
 			UnlockBufHdr(bufHdr);

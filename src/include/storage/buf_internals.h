@@ -210,6 +210,7 @@ extern BufferDesc *LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum,
 extern void MarkLocalBufferDirty(Buffer buffer);
 extern void DropRelFileNodeLocalBuffers(RelFileNode rnode, ForkNumber forkNum,
 							BlockNumber firstDelBlock);
+extern void DropRelFileNodeAllLocalBuffers(RelFileNode rnode);
 extern void AtEOXact_LocalBuffers(bool isCommit);
 
 #endif   /* BUFMGR_INTERNALS_H */

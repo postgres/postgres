@@ -4638,10 +4638,8 @@ xact_redo_commit_internal(TransactionId xid, XLogRecPtr lsn,
 		ForkNumber	fork;
 
 		for (fork = 0; fork <= MAX_FORKNUM; fork++)
-		{
 			XLogDropRelation(xnodes[i], fork);
-			smgrdounlink(srel, fork, true);
-		}
+		smgrdounlink(srel, true);
 		smgrclose(srel);
 	}
 
@@ -4778,10 +4776,8 @@ xact_redo_abort(xl_xact_abort *xlrec, TransactionId xid)
 		ForkNumber	fork;
 
 		for (fork = 0; fork <= MAX_FORKNUM; fork++)
-		{
 			XLogDropRelation(xlrec->xnodes[i], fork);
-			smgrdounlink(srel, fork, true);
-		}
+		smgrdounlink(srel, true);
 		smgrclose(srel);
 	}
 }

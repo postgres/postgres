@@ -356,13 +356,9 @@ smgrDoPendingDeletes(bool isCommit)
 			if (pending->atCommit == isCommit)
 			{
 				SMgrRelation srel;
-				int			i;
 
 				srel = smgropen(pending->relnode, pending->backend);
-				for (i = 0; i <= MAX_FORKNUM; i++)
-				{
-					smgrdounlink(srel, i, false);
-				}
+				smgrdounlink(srel, false);
 				smgrclose(srel);
 			}
 			/* must explicitly free the list entry */

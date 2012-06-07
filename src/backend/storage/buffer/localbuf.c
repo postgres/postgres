@@ -331,6 +331,46 @@ DropRelFileNodeLocalBuffers(RelFileNode rnode, ForkNumber forkNum,
 }
 
 /*
+ * DropRelFileNodeAllLocalBuffers
+ *		This function removes from the buffer pool all pages of all forks
+ *		of the specified relation.
+ *
+ *		See DropRelFileNodeAllBuffers in bufmgr.c for more notes.
+ */
+void
+DropRelFileNodeAllLocalBuffers(RelFileNode rnode)
+{
+	int			i;
+
+	for (i = 0; i < NLocBuffer; i++)
+	{
+		BufferDesc *bufHdr = &LocalBufferDescriptors[i];
+		LocalBufferLookupEnt *hresult;
+
+		if ((bufHdr->flags & BM_TAG_VALID) &&
+			RelFileNodeEquals(bufHdr->tag.rnode, rnode))
+		{
+			if (LocalRefCount[i] != 0)
+				elog(ERROR, "block %u of %s is still referenced (local %u)",
+					 bufHdr->tag.blockNum,
+					 relpathbackend(bufHdr->tag.rnode, MyBackendId,
+									bufHdr->tag.forkNum),
+					 LocalRefCount[i]);
+			/* Remove entry from hashtable */
+			hresult = (LocalBufferLookupEnt *)
+				hash_search(LocalBufHash, (void *) &bufHdr->tag,
+							HASH_REMOVE, NULL);
+			if (!hresult)		/* shouldn't happen */
+				elog(ERROR, "local buffer hash table corrupted");
+			/* Mark buffer invalid */
+			CLEAR_BUFFERTAG(bufHdr->tag);
+			bufHdr->flags = 0;
+			bufHdr->usage_count = 0;
+		}
+	}
+}
+
+/*
  * InitLocalBuffers -
  *	  init the local buffer cache. Since most queries (esp. multi-user ones)
  *	  don't involve local buffers, we delay allocating actual memory for the

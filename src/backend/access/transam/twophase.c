@@ -1356,12 +1356,8 @@ FinishPreparedTransaction(const char *gid, bool isCommit)
 	for (i = 0; i < ndelrels; i++)
 	{
 		SMgrRelation srel = smgropen(delrels[i], InvalidBackendId);
-		ForkNumber	fork;
 
-		for (fork = 0; fork <= MAX_FORKNUM; fork++)
-		{
-			smgrdounlink(srel, fork, false);
-		}
+		smgrdounlink(srel, false);
 		smgrclose(srel);
 	}
 
