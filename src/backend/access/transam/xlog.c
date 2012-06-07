@@ -2271,6 +2271,13 @@ XLogBackgroundFlush(void)
 
 	END_CRIT_SECTION();
 
+	/*
+	 * If we wrote something then we have something to send to standbys also,
+	 * otherwise the replication delay become around 7s with just async commit.
+	 */
+	if (wrote_something)
+		WalSndWakeup();
+
 	return wrote_something;
 }
 
