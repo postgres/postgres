@@ -1926,7 +1926,7 @@ adjust_data_dir(void)
 	fd = popen(cmd, "r");
 	if (fd == NULL || fgets(filename, sizeof(filename), fd) == NULL)
 	{
-		write_stderr(_("%s: cannot find the data directory using %s\n"), progname, my_exec_path);
+		write_stderr(_("%s: could not determine the data directory using \"%s\"\n"), progname, cmd);
 		exit(1);
 	}
 	pclose(fd);

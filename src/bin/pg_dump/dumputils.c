@@ -1260,7 +1260,7 @@ set_dump_section(const char *arg, int *dumpSections)
 		*dumpSections |= DUMP_POST_DATA;
 	else
 	{
-		fprintf(stderr, _("%s: unknown section name \"%s\")\n"),
+		fprintf(stderr, _("%s: unrecognized section name: \"%s\"\n"),
 				progname, arg);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);

@@ -110,7 +110,7 @@ ParseCompressionOption(int compression, CompressionAlgorithm *alg, int *level)
 		*alg = COMPR_ALG_NONE;
 	else
 	{
-		exit_horribly(modulename, "Invalid compression code: %d\n",
+		exit_horribly(modulename, "invalid compression code: %d\n",
 					  compression);
 		*alg = COMPR_ALG_NONE;	/* keep compiler quiet */
 	}

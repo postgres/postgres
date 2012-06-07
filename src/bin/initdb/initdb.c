@@ -2493,7 +2493,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo)
 							 processInfo))
 
 	{
-		fprintf(stderr, _("%s: could not start process for \"%s\": error code %lu\n"), progname, cmd, GetLastError());
+		fprintf(stderr, _("%s: could not start process for command \"%s\": error code %lu\n"), progname, cmd, GetLastError());
 		return 0;
 	}
 
@@ -2838,7 +2838,7 @@ main(int argc, char *argv[])
 
 		if (!CreateRestrictedProcess(cmdline, &pi))
 		{
-			fprintf(stderr, _("%s: could not re-exec with restricted token: error code %lu\n"), progname, GetLastError());
+			fprintf(stderr, _("%s: could not re-execute with restricted token: error code %lu\n"), progname, GetLastError());
 		}
 		else
 		{

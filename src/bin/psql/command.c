@@ -1114,7 +1114,7 @@ exec_command(const char *cmd,
 		}
 		else if (strchr(envvar,'=') != NULL)
 		{
-			psql_error("\\%s: environment variable name must not contain '='\n",
+			psql_error("\\%s: environment variable name must not contain \"=\"\n",
 					   cmd);
 			success = false;
 		}

@@ -407,8 +407,8 @@ _LoadBlobs(ArchiveHandle *AH, RestoreOptions *ropt)
 		char		path[MAXPGPATH];
 
 		if (sscanf(line, "%u %s\n", &oid, fname) != 2)
-			exit_horribly(modulename, "invalid line in large object TOC file: %s\n",
-						  line);
+			exit_horribly(modulename, "invalid line in large object TOC file \"%s\": \"%s\"\n",
+						  fname, line);
 
 		StartRestoreBlob(AH, oid, ropt->dropSchema);
 		snprintf(path, MAXPGPATH, "%s/%s", ctx->directory, fname);
@@ -667,7 +667,7 @@ prependDirectory(ArchiveHandle *AH, const char *relativeFilename)
 	dname = ctx->directory;
 
 	if (strlen(dname) + 1 + strlen(relativeFilename) + 1 > MAXPGPATH)
-		exit_horribly(modulename, "path name too long: %s", dname);
+		exit_horribly(modulename, "file name too long: \"%s\"", dname);
 
 	strcpy(buf, dname);
 	strcat(buf, "/");

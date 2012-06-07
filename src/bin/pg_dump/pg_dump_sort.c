@@ -993,7 +993,7 @@ repairDependencyLoop(DumpableObject **loop,
 		write_msg(NULL, "NOTICE: there are circular foreign-key constraints among these table(s):\n");
 		for (i = 0; i < nLoop; i++)
 			write_msg(NULL, "  %s\n", loop[i]->name);
-		write_msg(NULL, "You may not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints.\n");
+		write_msg(NULL, "You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints.\n");
 		write_msg(NULL, "Consider using a full dump instead of a --data-only dump to avoid this problem.\n");
 		if (nLoop > 1)
 			removeObjectDependency(loop[0], loop[1]->dumpId);

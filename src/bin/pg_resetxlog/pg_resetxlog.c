@@ -570,7 +570,7 @@ PrintControlValues(bool guessed)
 		   sysident_str);
 	printf(_("Latest checkpoint's TimeLineID:       %u\n"),
 		   ControlFile.checkPointCopy.ThisTimeLineID);
-	printf(_("Latest checkpoint's full_page_writes:       %s\n"),
+	printf(_("Latest checkpoint's full_page_writes: %s\n"),
 		   ControlFile.checkPointCopy.fullPageWrites ? _("on") : _("off"));
 	printf(_("Latest checkpoint's NextXID:          %u/%u\n"),
 		   ControlFile.checkPointCopy.nextXidEpoch,
