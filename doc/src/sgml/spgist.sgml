@@ -102,12 +102,12 @@
 
  <note>
   <para>
-   The <acronym>SP-GiST</acronym> core code takes care of NULL entries.
+   The <acronym>SP-GiST</acronym> core code takes care of null entries.
    Although <acronym>SP-GiST</acronym> indexes do store entries for nulls
    in indexed columns, this is hidden from the index operator class code:
    no null index entries or search conditions will ever be passed to the
    operator class methods.  (It is assumed that <acronym>SP-GiST</acronym>
-   operators are strict and so cannot succeed for NULL values.)  NULLs
+   operators are strict and so cannot succeed for null values.)  Null values
    are therefore not discussed further here.
   </para>
  </note>
@@ -136,7 +136,7 @@
      <listitem>
       <para>
        Returns static information about the index implementation, including
-       the datatype OIDs of the prefix and node label data types.
+       the data type OIDs of the prefix and node label data types.
       </para>
      <para>
       The <acronym>SQL</> declaration of the function must look like this:
@@ -163,7 +163,7 @@ typedef struct spgConfigOut
 </programlisting>
 
       <structfield>attType</> is passed in order to support polymorphic
-      index operator classes; for ordinary fixed-data-type opclasses, it
+      index operator classes; for ordinary fixed-data-type operator classes, it
       will always have the same value and so can be ignored.
      </para>
 
@@ -626,7 +626,7 @@ typedef struct spgLeafConsistentOut
 
   <para>
    This section covers implementation details and other tricks that are
-   useful for implementors of <acronym>SP-GiST</acronym> operator classes to
+   useful for implementers of <acronym>SP-GiST</acronym> operator classes to
    know.
   </para>
 

@@ -1768,7 +1768,7 @@ typedef struct
      Finally, all variable-length types must also be  passed
      by  reference.   All  variable-length  types must begin
      with an opaque length field of exactly 4 bytes, which will be set
-     by SET_VARSIZE; never set this field directly! All data to
+     by <symbol>SET_VARSIZE</symbol>; never set this field directly! All data to
      be  stored within that type must be located in the memory
      immediately  following  that  length  field.   The
      length field contains the total length of the structure,

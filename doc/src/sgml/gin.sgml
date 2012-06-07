@@ -107,9 +107,9 @@
        If any of the keys can be null, also palloc an array of
        <literal>*nkeys</> booleans, store its address at
        <literal>*nullFlags</>, and set these null flags as needed.
-       <literal>*nullFlags</> can be left NULL (its initial value)
+       <literal>*nullFlags</> can be left <symbol>NULL</symbol> (its initial value)
        if all keys are non-null.
-       The return value can be NULL if the item contains no keys.
+       The return value can be <symbol>NULL</symbol> if the item contains no keys.
       </para>
      </listitem>
     </varlistentry>
@@ -313,7 +313,7 @@
  </para>
 
  <para>
-  Multi-column <acronym>GIN</acronym> indexes are implemented by building
+  Multicolumn <acronym>GIN</acronym> indexes are implemented by building
   a single B-tree over composite values (column number, key value).  The
   key values for different columns can be of different types.
  </para>

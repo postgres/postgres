@@ -191,7 +191,7 @@ ExplainForeignScan (ForeignScanState *node,
      related functions to add fields to the <command>EXPLAIN</> output.
      The flag fields in <literal>es</> can be used to determine what to
      print, and the state of the <structname>ForeignScanState</> node
-     can be inspected to provide runtime statistics in the <command>EXPLAIN
+     can be inspected to provide run-time statistics in the <command>EXPLAIN
      ANALYZE</> case.
     </para>
 
@@ -489,20 +489,20 @@ GetForeignServerByName(const char *name, bool missing_ok);
      The <structfield>fdw_private</> list has no other restrictions and is
      not interpreted by the core backend in any way.  The
      <structfield>fdw_exprs</> list, if not NIL, is expected to contain
-     expression trees that are intended to be executed at runtime.  These
+     expression trees that are intended to be executed at run time.  These
      trees will undergo post-processing by the planner to make them fully
      executable.
     </para>
 
     <para>
-     In <function>GetForeignPlan</>, generally the passed-in targetlist can
+     In <function>GetForeignPlan</>, generally the passed-in target list can
      be copied into the plan node as-is.  The passed scan_clauses list
      contains the same clauses as <literal>baserel-&gt;baserestrictinfo</>,
      but may be re-ordered for better execution efficiency.  In simple cases
      the FDW can just strip <structname>RestrictInfo</> nodes from the
      scan_clauses list (using <function>extract_actual_clauses</>) and put
      all the clauses into the plan node's qual list, which means that all the
-     clauses will be checked by the executor at runtime.  More complex FDWs
+     clauses will be checked by the executor at run time.  More complex FDWs
      may be able to check some of the clauses internally, in which case those
      clauses can be removed from the plan node's qual list so that the
      executor doesn't waste time rechecking them.
@@ -523,9 +523,9 @@ GetForeignServerByName(const char *name, bool missing_ok);
      to ensure that it gets massaged into executable form.  It would probably
      also put control information into the plan node's
      <structfield>fdw_private</> field to tell the execution functions what
-     to do at runtime.  The query transmitted to the remote server would
+     to do at run time.  The query transmitted to the remote server would
      involve something like <literal>WHERE <replaceable>foreign_variable</> =
-     $1</literal>, with the parameter value obtained at runtime from
+     $1</literal>, with the parameter value obtained at run time from
      evaluation of the <structfield>fdw_exprs</> expression tree.
     </para>
 
@@ -541,7 +541,7 @@ GetForeignServerByName(const char *name, bool missing_ok);
      <literal>required_outer</> and list the specific join clause(s) in
      <literal>param_clauses</>.  In <function>GetForeignPlan</>, the
      <replaceable>local_variable</> portion of the join clause would be added
-     to <structfield>fdw_exprs</>, and then at runtime the case works the
+     to <structfield>fdw_exprs</>, and then at run time the case works the
      same as for an ordinary restriction clause.
     </para>
 

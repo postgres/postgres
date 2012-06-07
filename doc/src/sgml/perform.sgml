@@ -265,7 +265,7 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND stringu1 = 'xxx';
 </screen>
 
     The added condition <literal>stringu1 = 'xxx'</literal> reduces the
-    output-rowcount estimate, but not the cost because we still have to visit
+    output row count estimate, but not the cost because we still have to visit
     the same set of rows.  Notice that the <literal>stringu1</> clause
     cannot be applied as an index condition, since this index is only on
     the <literal>unique1</> column.  Instead it is applied as a filter on
@@ -385,7 +385,7 @@ WHERE t1.unique1 &lt; 10 AND t1.unique2 = t2.unique2;
     <literal>SELECT ... WHERE t2.unique2 = <replaceable>constant</></> case.
     (The estimated cost is actually a bit lower than what was seen above,
     as a result of caching that's expected to occur during the repeated
-    indexscans on <literal>t2</>.)  The
+    index scans on <literal>t2</>.)  The
     costs of the loop node are then set on the basis of the cost of the outer
     scan, plus one repetition of the inner scan for each outer row (10 * 7.87,
     here), plus a little CPU time for join processing.
@@ -489,8 +489,8 @@ WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
     the rows in the correct order, but a sequential scan and sort is preferred
     for <literal>onek</>, because there are many more rows to be visited in
     that table.
-    (Seqscan-and-sort frequently beats an indexscan for sorting many rows,
-    because of the nonsequential disk access required by the indexscan.)
+    (Sequential-scan-and-sort frequently beats an index scan for sorting many rows,
+    because of the nonsequential disk access required by the index scan.)
    </para>
 
    <para>
@@ -499,7 +499,7 @@ WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
     flags described in <xref linkend="runtime-config-query-enable">.
     (This is a crude tool, but useful.  See
     also <xref linkend="explicit-joins">.)
-    For example, if we're unconvinced that seqscan-and-sort is the best way to
+    For example, if we're unconvinced that sequential-scan-and-sort is the best way to
     deal with table <literal>onek</> in the previous example, we could try
 
 <screen>
@@ -519,7 +519,7 @@ WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
 </screen>
 
     which shows that the planner thinks that sorting <literal>onek</> by
-    indexscanning is about 12% more expensive than seqscan-and-sort.
+    index-scanning is about 12% more expensive than sequential-scan-and-sort.
     Of course, the next question is whether it's right about that.
     We can investigate that using <command>EXPLAIN ANALYZE</>, as discussed
     below.
@@ -573,7 +573,7 @@ WHERE t1.unique1 &lt; 10 AND t1.unique2 = t2.unique2;
     comparable with the way that the cost estimates are shown.  Multiply by
     the <literal>loops</> value to get the total time actually spent in
     the node.  In the above example, we spent a total of 0.480 milliseconds
-    executing the indexscans on <literal>tenk2</>.
+    executing the index scans on <literal>tenk2</>.
    </para>
 
    <para>
@@ -634,7 +634,7 @@ EXPLAIN ANALYZE SELECT * FROM tenk1 WHERE ten &lt; 7;
 
    <para>
     A case similar to filter conditions occurs with <quote>lossy</>
-    indexscans.  For example, consider this search for polygons containing a
+    index scans.  For example, consider this search for polygons containing a
     specific point:
 
 <screen>
@@ -649,9 +649,9 @@ EXPLAIN ANALYZE SELECT * FROM polygon_tbl WHERE f1 @&gt; polygon '(0.5,2.0)';
 </screen>
 
     The planner thinks (quite correctly) that this sample table is too small
-    to bother with an indexscan, so we have a plain sequential scan in which
+    to bother with an index scan, so we have a plain sequential scan in which
     all the rows got rejected by the filter condition.  But if we force an
-    indexscan to be used, we see:
+    index scan to be used, we see:
 
 <screen>
 SET enable_seqscan TO off;
@@ -808,9 +808,9 @@ EXPLAIN ANALYZE SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND unique2 &gt; 9000
  Total runtime: 2.857 ms
 </screen>
 
-    the estimated cost and rowcount for the Index Scan node are shown as
+    the estimated cost and row count for the Index Scan node are shown as
     though it were run to completion.  But in reality the Limit node stopped
-    requesting rows after it got two, so the actual rowcount is only 2 and
+    requesting rows after it got two, so the actual row count is only 2 and
     the runtime is less than the cost estimate would suggest.  This is not
     an estimation error, only a discrepancy in the way the estimates and true
     values are displayed.
@@ -827,13 +827,13 @@ EXPLAIN ANALYZE SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND unique2 &gt; 9000
     the inner (second) child is backed up and rescanned for the portion of its
     rows matching that key value.  <command>EXPLAIN ANALYZE</> counts these
     repeated emissions of the same inner rows as if they were real additional
-    rows.  When there are many outer duplicates, the reported actual rowcount
+    rows.  When there are many outer duplicates, the reported actual row count
     for the inner child plan node can be significantly larger than the number
     of rows that are actually in the inner relation.
    </para>
 
    <para>
-    BitmapAnd and BitmapOr nodes always report their actual rowcounts as zero,
+    BitmapAnd and BitmapOr nodes always report their actual row counts as zero,
     due to implementation limitations.
    </para>
   </sect2>

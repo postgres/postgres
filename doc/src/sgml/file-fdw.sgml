@@ -122,7 +122,7 @@
 
    <listitem>
     <para>
-     This is a boolean option.  If true, it specifies that values of the
+     This is a Boolean option.  If true, it specifies that values of the
      column should not be matched against the null string (that is, the
      file-level <literal>null</literal> option).  This has the same effect
      as listing the column in <command>COPY</>'s
@@ -184,7 +184,7 @@ CREATE SERVER pglog FOREIGN DATA WRAPPER file_fdw;
   <para>
    Now you are ready to create the foreign data table.  Using the
    <command>CREATE FOREIGN TABLE</> command, you will need to define
-   the columns for the table, the CSV filename, and its format:
+   the columns for the table, the CSV file name, and its format:
 
 <programlisting>
 CREATE FOREIGN TABLE pglog (

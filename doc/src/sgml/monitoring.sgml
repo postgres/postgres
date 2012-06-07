@@ -210,7 +210,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    the collector just before going idle; so a query or transaction still in
    progress does not affect the displayed totals.  Also, the collector itself
    emits a new report at most once per <varname>PGSTAT_STAT_INTERVAL</varname>
-   milliseconds (500 msec unless altered while building the server).  So the
+   milliseconds (500 ms unless altered while building the server).  So the
    displayed information lags behind actual activity.  However, current-query
    information collected by <varname>track_activities</varname> is
    always up-to-date.
@@ -472,7 +472,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
 
 
   <table id="pg-stat-activity-view" xreflabel="pg_stat_activity">
-   <title>pg_stat_activity view</title>
+   <title><structname>pg_stat_activity</structname> View</title>
 
    <tgroup cols="3">
     <thead>
@@ -649,7 +649,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   </note>
 
   <table id="pg-stat-bgwriter-view" xreflabel="pg_stat_bgwriter">
-   <title>pg_stat_bgwriter view</title>
+   <title><structname>pg_stat_bgwriter</structname> View</title>
 
    <tgroup cols="3">
     <thead>
@@ -736,7 +736,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   </para>
 
   <table id="pg-stat-database-view" xreflabel="pg_stat_database">
-   <title>pg_stat_database view</title>
+   <title><structname>pg_stat_database</structname> View</title>
    <tgroup cols="3">
     <thead>
     <row>
@@ -787,7 +787,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      <entry><type>bigint</></entry>
      <entry>Number of times disk blocks were found already in the buffer
       cache, so that a read was not necessary (this only includes hits in the
-      PostgreSQL buffer cache, not the operating system's filesystem cache)
+      PostgreSQL buffer cache, not the operating system's file system cache)
      </entry>
     </row>
     <row>
@@ -873,7 +873,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   </para>
 
   <table id="pg-stat-all-tables-view" xreflabel="pg_stat_all_tables">
-   <title>pg_stat_all_tables view</title>
+   <title><structname>pg_stat_all_tables</structname> View</title>
    <tgroup cols="3">
     <thead>
     <row>
@@ -1011,7 +1011,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   </para>
 
   <table id="pg-stat-all-indexes-view" xreflabel="pg_stat_all_indexes">
-   <title>pg_stat_all_indexes view</title>
+   <title><structname>pg_stat_all_indexes</structname> View</title>
    <tgroup cols="3">
     <thead>
     <row>
@@ -1104,7 +1104,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   </note>
 
   <table id="pg-statio-all-tables-view" xreflabel="pg_statio_all_tables">
-   <title>pg_statio_all_tables view</title>
+   <title><structname>pg_statio_all_tables</structname> View</title>
    <tgroup cols="3">
     <thead>
     <row>
@@ -1185,7 +1185,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   </para>
 
   <table id="pg-statio-all-indexes-view" xreflabel="pg_statio_all_indexes">
-   <title>pg_statio_all_indexes view</title>
+   <title><structname>pg_statio_all_indexes</structname> View</title>
    <tgroup cols="3">
     <thead>
     <row>
@@ -1246,7 +1246,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   </para>
 
   <table id="pg-statio-all-sequences-view" xreflabel="pg_statio_all_sequences">
-   <title>pg_statio_all_sequences view</title>
+   <title><structname>pg_statio_all_sequences</structname> View</title>
    <tgroup cols="3">
     <thead>
     <row>
@@ -1293,7 +1293,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   </para>
 
   <table id="pg-stat-user-functions-view" xreflabel="pg_stat_user_functions">
-   <title>pg_stat_user_functions view</title>
+   <title><structname>pg_stat_user_functions</structname> View</title>
    <tgroup cols="3">
     <thead>
     <row>
@@ -1348,7 +1348,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   </para>
 
   <table id="pg-stat-replication-view" xreflabel="pg_stat_replication">
-   <title>pg_stat_replication view</title>
+   <title><structname>pg_stat_replication</structname> View</title>
    <tgroup cols="3">
     <thead>
     <row>
@@ -1462,7 +1462,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   </para>
 
   <table id="pg-stat-database-conflicts-view" xreflabel="pg_stat_database_conflicts">
-   <title>pg_stat_database_conflicts view</title>
+   <title><structname>pg_stat_database_conflicts</structname> View</title>
    <tgroup cols="3">
     <thead>
     <row>

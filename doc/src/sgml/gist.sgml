@@ -665,7 +665,7 @@ my_distance(PG_FUNCTION_ARGS)
    a lot of random I/O.  Beginning in version 9.2, PostgreSQL supports a more
    efficient method to build GiST indexes based on buffering, which can
    dramatically reduce the number of random I/Os needed for non-ordered data
-   sets. For well-ordered datasets the benefit is smaller or non-existent,
+   sets. For well-ordered data sets the benefit is smaller or non-existent,
    because only a small number of pages receive new tuples at a time, and
    those pages fit in cache even if the index as whole does not.
   </para>

@@ -101,7 +101,7 @@ Histogram of timing durations:
    When the query executor is running a statement using
    <command>EXPLAIN ANALYZE</command>, individual operations are timed as well
    as showing a summary.  The overhead of your system can be checked by
-   counting rows with the psql program:
+   counting rows with the <application>psql</application> program:
 
 <screen>
 CREATE TABLE t AS SELECT * FROM generate_series(1,100000);
@@ -226,7 +226,7 @@ Histogram of timing durations:
    reliable. There are several ways that TSC can fail to provide an accurate
    timing source, making it unreliable. Older systems can have a TSC clock that
    varies based on the CPU temperature, making it unusable for timing. Trying
-   to use TSC on some older multi-core CPUs can give a reported time that's
+   to use TSC on some older multicore CPUs can give a reported time that's
    inconsistent among multiple cores. This can result in the time going
    backwards, a problem this program checks for.  And even the newest systems
    can fail to provide accurate TSC timing with very aggressive power saving

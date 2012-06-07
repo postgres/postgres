@@ -2752,7 +2752,7 @@ timestamp PGTYPEStimestamp_from_asc(char *str, char **endptr);
        <para>
         In general, the input string can contain any combination of an allowed
         date specification, a whitespace character and an allowed time
-        specification. Note that timezones are not supported by ECPG. It can
+        specification. Note that time zones are not supported by ECPG. It can
         parse them but does not apply any calculation as the
         <productname>PostgreSQL</> server does for example. Timezone
         specifiers are silently discarded.
@@ -9164,7 +9164,7 @@ int rtypwidth(int sqltype, int sqllen);
 int rsetnull(int t, char *ptr);
 </synopsis>
         The function receives an integer that indicates the type of the
-        variable and a pointer to the variable itself that is casted to a C
+        variable and a pointer to the variable itself that is cast to a C
         char* pointer.
        </para>
        <para>
@@ -9249,7 +9249,7 @@ int risnull(int t, char *ptr);
 </synopsis>
         The function receives the type of the variable to test (<literal>t</>)
         as well a pointer to this variable (<literal>ptr</>). Note that the
-        latter needs to be casted to a char*. See the function <xref
+        latter needs to be cast to a char*. See the function <xref
         linkend="rsetnull"> for a list of possible variable types.
        </para>
        <para>

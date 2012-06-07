@@ -52,22 +52,22 @@ pgrowlocks(text) returns setof record
      <row>
       <entry><structfield>locker</structfield></entry>
       <entry><type>xid</type></entry>
-      <entry>Transaction ID of locker, or multixact ID if multi-transaction</entry>
+      <entry>Transaction ID of locker, or multixact ID if multitransaction</entry>
      </row>
      <row>
       <entry><structfield>multi</structfield></entry>
       <entry><type>boolean</type></entry>
-      <entry>True if locker is a multi-transaction</entry>
+      <entry>True if locker is a multitransaction</entry>
      </row>
      <row>
       <entry><structfield>xids</structfield></entry>
       <entry><type>xid[]</type></entry>
-      <entry>Transaction IDs of lockers (more than one if multi-transaction)</entry>
+      <entry>Transaction IDs of lockers (more than one if multitransaction)</entry>
      </row>
      <row>
       <entry><structfield>pids</structfield></entry>
       <entry><type>integer[]</type></entry>
-      <entry>Process IDs of locking backends (more than one if multi-transaction)</entry>
+      <entry>Process IDs of locking backends (more than one if multitransaction)</entry>
      </row>
 
     </tbody>

@@ -363,7 +363,7 @@ amrescan (IndexScanDesc scan,
           ScanKey orderbys,
           int norderbys);
 </programlisting>
-   Start or restart an indexscan, possibly with new scan keys.  (To restart
+   Start or restart an index scan, possibly with new scan keys.  (To restart
    using previously-passed keys, NULL is passed for <literal>keys</> and/or
    <literal>orderbys</>.)  Note that it is not allowed for
    the number of keys or order-by operators to be larger than

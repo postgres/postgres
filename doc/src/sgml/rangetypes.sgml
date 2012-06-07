@@ -473,7 +473,7 @@ with existing key (during)=([ 2010-01-01 14:30:00, 2010-01-01 15:30:00 )).
 
   <para>
    You can use the <link linkend="btree-gist"><literal>btree_gist</></link>
-   extension to define exclusion constraints on plain scalar datatypes, which
+   extension to define exclusion constraints on plain scalar data types, which
    can then be combined with range exclusions for maximum flexibility.  For
    example, after <literal>btree_gist</literal> is installed, the following
    constraint will reject overlapping ranges only if the meeting room numbers

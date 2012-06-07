@@ -9648,9 +9648,9 @@ table2-mapping
          <literal>array_to_json(anyarray [, pretty_bool])</literal>
        </entry>
        <entry>
-         Returns the array as JSON. A Postgres multi-dimensional array
+         Returns the array as JSON. A PostgreSQL multidimensional array
          becomes a JSON array of arrays. Line feeds will be added between
-         dimension 1 elements if pretty_bool is true.
+         dimension 1 elements if <parameter>pretty_bool</parameter> is true.
        </entry>
        <entry><literal>array_to_json('{{1,5},{99,100}}'::int[])</literal></entry>
        <entry><literal>[[1,5],[99,100]]</literal></entry>
@@ -9664,7 +9664,7 @@ table2-mapping
        </entry>
        <entry>
          Returns the row as JSON. Line feeds will be added between level
-         1 elements if pretty_bool is true.
+         1 elements if <parameter>pretty_bool</parameter> is true.
        </entry>
        <entry><literal>row_to_json(row(1,'foo'))</literal></entry>
        <entry><literal>{"f1":1,"f2":"foo"}</literal></entry>
@@ -13813,7 +13813,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry><literal><function>pg_get_viewdef(<parameter>view_name</parameter>, <parameter>pretty_bool</>)</function></literal></entry>
        <entry><type>text</type></entry>
        <entry>get underlying <command>SELECT</command> command for view,
-              lines with fields are wrapped to 80 columns if pretty_bool is true (<emphasis>deprecated</emphasis>)</entry>
+              lines with fields are wrapped to 80 columns if <parameter>pretty_bool</parameter> is true (<emphasis>deprecated</emphasis>)</entry>
       </row>
       <row>
        <entry><literal><function>pg_get_viewdef(<parameter>view_oid</parameter>)</function></literal></entry>
@@ -13824,7 +13824,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry><literal><function>pg_get_viewdef(<parameter>view_oid</parameter>, <parameter>pretty_bool</>)</function></literal></entry>
        <entry><type>text</type></entry>
        <entry>get underlying <command>SELECT</command> command for view,
-              lines with fields are wrapped to 80 columns if pretty_bool is true</entry>
+              lines with fields are wrapped to 80 columns if <parameter>pretty_bool</parameter> is true</entry>
       </row>
       <row>
        <entry><literal><function>pg_get_viewdef(<parameter>view_oid</parameter>, <parameter>wrap_int</>)</function></literal></entry>
@@ -13845,7 +13845,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
       <row>
        <entry><literal><function>pg_tablespace_location(<parameter>tablespace_oid</parameter>)</function></literal></entry>
        <entry><type>text</type></entry>
-       <entry>get the path in the filesystem that this tablespace is located in</entry>
+       <entry>get the path in the file system that this tablespace is located in</entry>
       </row>
       <row>
        <entry><literal><function>pg_typeof(<parameter>any</parameter>)</function></literal></entry>

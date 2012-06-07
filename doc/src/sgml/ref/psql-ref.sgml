@@ -249,7 +249,7 @@ PostgreSQL documentation
       <term><option>--no-readline</></term>
       <listitem>
       <para>
-       Do not use readline for line editing and do not use the history.
+       Do not use <application>readline</application> for line editing and do not use the history.
        This can be useful to turn off tab expansion when cutting and pasting.
       </para>
       </listitem>
@@ -289,7 +289,7 @@ PostgreSQL documentation
       Specifies printing options, in the style of
       <command>\pset</command>. Note that here you
       have to separate name and value with an equal sign instead of a
-      space. For example, to set the output format to LaTeX, you could write
+      space. For example, to set the output format to <application>LaTeX</application>, you could write
       <literal>-P format=latex</literal>.
       </para>
       </listitem>
@@ -607,7 +607,7 @@ PostgreSQL documentation
 $ <userinput>psql "service=myservice sslmode=require"</userinput>
 $ <userinput>psql postgresql://dbmaster:5433/mydb?sslmode=require</userinput>
 </programlisting>
-     This way you can also use LDAP for connection parameter lookup as
+     This way you can also use <acronym>LDAP</acronym> for connection parameter lookup as
      described in <xref linkend="libpq-ldap">.
      See <xref linkend="libpq-connect"> for more information on all the
      available connection options.
@@ -1670,9 +1670,9 @@ Tue Oct 26 21:40:57 CEST 1999
         <listitem>
         <para>
         The <literal>\ir</> command is similar to <literal>\i</>, but resolves
-        relative pathnames differently.  When executing in interactive mode,
+        relative file names differently.  When executing in interactive mode,
         the two commands behave identically.  However, when invoked from a
-        script, <literal>\ir</literal> interprets pathnames relative to the
+        script, <literal>\ir</literal> interprets file names relative to the
         directory in which the script is located, rather than the current
         working directory.
         </para>
@@ -2001,7 +2001,7 @@ lo_import 152801
           formats put out tables that are intended to
           be included in documents using the respective mark-up
           language. They are not complete documents! (This might not be
-          so dramatic in <acronym>HTML</acronym>, but in LaTeX you must
+          so dramatic in <acronym>HTML</acronym>, but in <application>LaTeX</application> you must
           have a complete document wrapper.)
           </para>
           </listitem>
@@ -3031,7 +3031,7 @@ testdb=&gt; <userinput>\set content `cat my_file.txt`</userinput>
 testdb=&gt; <userinput>INSERT INTO my_table VALUES (:'content');</userinput>
 </programlisting>
     (Note that this still won't work if <filename>my_file.txt</filename> contains NUL bytes.
-    psql does not support embedded NUL bytes in variable values.)
+    <application>psql</application> does not support embedded NUL bytes in variable values.)
     </para>
 
     <para>
@@ -3370,7 +3370,7 @@ PSQL_EDITOR_LINENUMBER_ARG='--line '
 
     <listitem>
      <para>
-      Alternative location for the command history file. Tilde ("~") expansion is performed.
+      Alternative location for the command history file. Tilde (<literal>~</literal>) expansion is performed.
      </para>
     </listitem>
    </varlistentry>
@@ -3380,7 +3380,7 @@ PSQL_EDITOR_LINENUMBER_ARG='--line '
 
     <listitem>
      <para>
-      Alternative location of the user's .psqlrc file. Tilde ("~") expansion is performed.
+      Alternative location of the user's <filename>.psqlrc</filename> file. Tilde (<literal>~</literal>) expansion is performed.
      </para>
     </listitem>
    </varlistentry>
@@ -3445,7 +3445,7 @@ PSQL_EDITOR_LINENUMBER_ARG='--line '
    <listitem>
     <para>
      Both the system-wide <filename>psqlrc</filename> file and the user's
-     <filename>~/.psqlrc</filename> file can be made psql-version-specific
+     <filename>~/.psqlrc</filename> file can be made <application>psql</application>-version-specific
      by appending a dash and the <productname>PostgreSQL</productname>
      major or minor <application>psql</application> release number,
      for example <filename>~/.psqlrc-9.2</filename> or

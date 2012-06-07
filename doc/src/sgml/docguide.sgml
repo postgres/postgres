@@ -317,12 +317,12 @@ make install
        <note>
        <para>
         Some users have reported encountering a segmentation fault using
-        openjade 1.4devel to build the PDFs, with a message like:
+        OpenJade 1.4devel to build the PDFs, with a message like:
 <screen>
 openjade:./stylesheet.dsl:664:2:E: flow object not accepted by port; only display flow objects accepted
 make: *** [postgres-A4.tex-pdf] Segmentation fault
 </screen>
-        Downgrading to openjade 1.3 should get rid of this error.
+        Downgrading to OpenJade 1.3 should get rid of this error.
        </para>
        </note>
 

@@ -865,10 +865,10 @@ pg_ctl start | rotatelogs /var/log/pgsql_log 86400
   </para>
 
   <para>
-   <ulink url="http://pgfouine.projects.postgresql.org/">pgFouine</ulink>
+   <ulink url="http://pgfouine.projects.postgresql.org/"><productname>pgFouine</productname></ulink>
    is an external project that does sophisticated log file analysis.
    <ulink
-   url="http://bucardo.org/wiki/Check_postgres">check_postgres</ulink>
+   url="http://bucardo.org/wiki/Check_postgres"><productname>check_postgres</productname></ulink>
    provides Nagios alerts when important messages appear in the log
    files, as well as detection of many other extraordinary conditions.
   </para>

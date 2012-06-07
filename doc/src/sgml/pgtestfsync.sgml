@@ -31,7 +31,7 @@
   idea of what the fastest <xref linkend="guc-wal-sync-method"> is on your
   specific system,
   as well as supplying diagnostic information in the event of an
-  identified I/O problem.  However, differences shown by pg_test_fsync
+  identified I/O problem.  However, differences shown by <application>pg_test_fsync</application>
   might not make any difference in real database throughput, especially
   since many database servers are not speed-limited by their transaction
   logs.

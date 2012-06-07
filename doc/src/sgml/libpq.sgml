@@ -805,7 +805,7 @@ postgresql:///mydb?host=localhost&amp;port=5433
    </para>
 
    <para>
-    The host part may be either hostname or an IP address.  To specify an
+    The host part may be either host name or an IP address.  To specify an
     IPv6 host address, enclose it in square brackets:
 <synopsis>
 postgresql://[2001:db8::1234]/database

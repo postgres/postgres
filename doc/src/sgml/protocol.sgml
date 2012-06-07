@@ -1783,13 +1783,13 @@ The commands accepted in walsender mode are:
        <listitem>
         <para>
          <filename>pg_xlog</>, including subdirectories. If the backup is run
-         with wal files included, a synthesized version of pg_xlog will be
+         with WAL files included, a synthesized version of <filename>pg_xlog</filename> will be
          included, but it will only contain the files necessary for the
          backup to work, not the rest of the contents.
         </para>
        </listitem>
       </itemizedlist>
-      Owner, group and file mode are set if the underlying filesystem on
+      Owner, group and file mode are set if the underlying file system on
       the server supports it.
      </para>
      <para>

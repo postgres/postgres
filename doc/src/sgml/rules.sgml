@@ -1892,7 +1892,7 @@ CREATE VIEW phone_number WITH (security_barrier) AS
 
 <para>
     The query planner has more flexibility when dealing with functions that
-    have no side effects.  Such functions are referred to as LEAKPROOF, and
+    have no side effects.  Such functions are referred to as <literal>LEAKPROOF</literal>, and
     include many simple, commonly used operators, such as many equality
     operators.  The query planner can safely allow such functions to be evaluated
     at any point in the query execution process, since invoking them on rows
@@ -1910,11 +1910,11 @@ CREATE VIEW phone_number WITH (security_barrier) AS
     in the limited sense that the contents of the invisible tuples will not be
     passed to possibly-insecure functions.  The user may well have other means
     of making inferences about the unseen data; for example, they can see the
-    query plan using <command>EXPLAIN</command>, or measure the runtime of
+    query plan using <command>EXPLAIN</command>, or measure the run time of
     queries against the view.  A malicious attacker might be able to infer
     something about the amount of unseen data, or even gain some information
     about the data distribution or most common values (since these things may
-    affect the runtime of the plan; or even, since they are also reflected in
+    affect the run time of the plan; or even, since they are also reflected in
     the optimizer statistics, the choice of plan).  If these types of "covert
     channel" attacks are of concern, it is probably unwise to grant any access
     to the data at all.

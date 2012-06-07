@@ -178,7 +178,7 @@ $ for DBNAME in template0 template1 postgres; do
    Once built, install this policy package using the
    <command>semodule</> command, which loads supplied policy packages
    into the kernel.  If the package is correctly installed,
-   <literal><command>semodule</> -l</> should list sepgsql-regtest as an
+   <literal><command>semodule</> -l</> should list <literal>sepgsql-regtest</literal> as an
    available policy package:
   </para>
 
@@ -467,7 +467,7 @@ UPDATE t1 SET x = 2, y = md5sum(y) WHERE z = 100;
   <sect3>
    <title>Trusted Procedures</title>
    <para>
-    Trusted procedures are similar to security definer functions or set-uid
+    Trusted procedures are similar to security definer functions or setuid
     commands. <productname>SELinux</> provides a feature to allow trusted
     code to run using a security label different from that of the client,
     generally for the purpose of providing highly controlled access to

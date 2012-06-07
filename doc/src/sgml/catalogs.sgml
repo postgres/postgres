@@ -3886,7 +3886,7 @@
    particular operator family is applicable to a particular indexable column
    data type.  The set of operators from the family that are actually usable
    with the indexed column are whichever ones accept the column's data type
-   as their lefthand input.
+   as their left-hand input.
   </para>
 
   <para>
@@ -4431,7 +4431,7 @@
        The function has no side effects.  No information about the
        arguments is conveyed except via the return value.  Any function
        that might throw an error depending on the values of its arguments
-       is not leakproof.
+       is not leak-proof.
       </entry>
      </row>
 
