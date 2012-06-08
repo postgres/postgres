@@ -35,32 +35,32 @@
   <itemizedlist>
     <listitem>
       <para>
-       <type>INT4RANGE</type> &mdash; Range of <type>INTEGER</type>
+       <type>int4range</type> &mdash; Range of <type>integer</type>
       </para>
     </listitem>
     <listitem>
       <para>
-       <type>INT8RANGE</type> &mdash; Range of <type>BIGINT</type>
+       <type>int8range</type> &mdash; Range of <type>bigint</type>
       </para>
     </listitem>
     <listitem>
       <para>
-       <type>NUMRANGE</type> &mdash; Range of <type>NUMERIC</type>
+       <type>numrange</type> &mdash; Range of <type>numeric</type>
       </para>
     </listitem>
     <listitem>
       <para>
-       <type>TSRANGE</type> &mdash; Range of <type>TIMESTAMP WITHOUT TIME ZONE</type>
+       <type>tsrange</type> &mdash; Range of <type>timestamp without time zone</type>
       </para>
     </listitem>
     <listitem>
       <para>
-       <type>TSTZRANGE</type> &mdash; Range of <type>TIMESTAMP WITH TIME ZONE</type>
+       <type>tstzrange</type> &mdash; Range of <type>timestamp with time zone</type>
       </para>
     </listitem>
     <listitem>
       <para>
-       <type>DATERANGE</type> &mdash; Range of <type>DATE</type>
+       <type>daterange</type> &mdash; Range of <type>date</type>
       </para>
     </listitem>
   </itemizedlist>
@@ -74,9 +74,9 @@
 
   <para>
 <programlisting>
-CREATE TABLE reservation ( room int, during TSRANGE );
+CREATE TABLE reservation (room int, during tsrange);
 INSERT INTO reservation VALUES
-  ( 1108, '[2010-01-01 14:30, 2010-01-01 15:30)' );
+    (1108, '[2010-01-01 14:30, 2010-01-01 15:30)');
 
 -- Containment
 SELECT int4range(10, 20) @> 3;
@@ -223,16 +223,16 @@ empty
   Examples:
 <programlisting>
 -- includes 3, does not include 7, and does include all points in between
-select '[3,7)'::int4range;
+SELECT '[3,7)'::int4range;
 
 -- does not include either 3 or 7, but includes all points in between
-select '(3,7)'::int4range;
+SELECT '(3,7)'::int4range;
 
 -- includes only the single point 4
-select '[4,4]'::int4range;
+SELECT '[4,4]'::int4range;
 
 -- includes no points (and will be normalized to 'empty')
-select '[4,4)'::int4range;
+SELECT '[4,4)'::int4range;
 </programlisting>
   </para>
  </sect2>
@@ -279,13 +279,13 @@ SELECT numrange(NULL, 2.2);
 
   <para>
    A discrete range is one whose element type has a well-defined
-   <quote>step</quote>, such as <type>INTEGER</type> or <type>DATE</type>.
+   <quote>step</quote>, such as <type>integer</type> or <type>date</type>.
    In these types two elements can be said to be adjacent, when there are
    no valid values between them.  This contrasts with continuous ranges,
    where it's always (or almost always) possible to identify other element
    values between two given values.  For example, a range over the
-   <type>NUMERIC</> type is continuous, as is a range over <type>TIMESTAMP</>.
-   (Even though <type>TIMESTAMP</> has limited precision, and so could
+   <type>numeric</> type is continuous, as is a range over <type>timestamp</>.
+   (Even though <type>timestamp</> has limited precision, and so could
    theoretically be treated as discrete, it's better to consider it continuous
    since the step size is normally not of interest.)
   </para>
@@ -313,8 +313,8 @@ SELECT numrange(NULL, 2.2);
   </para>
 
   <para>
-   The built-in range types <type>INT4RANGE</type>, <type>INT8RANGE</type>,
-   and <type>DATERANGE</type> all use a canonical form that includes
+   The built-in range types <type>int4range</type>, <type>int8range</type>,
+   and <type>daterange</type> all use a canonical form that includes
    the lower bound and excludes the upper bound; that is,
    <literal>[)</literal>. User-defined range types can use other conventions,
    however.
@@ -332,8 +332,8 @@ SELECT numrange(NULL, 2.2);
 
 <programlisting>
 CREATE TYPE floatrange AS RANGE (
-  subtype = float8,
-  subtype_diff = float8mi
+    subtype = float8,
+    subtype_diff = float8mi
 );
 
 SELECT '[1.234, 5.678]'::floatrange;
@@ -451,8 +451,7 @@ CREATE INDEX reservation_idx ON reservation USING gist (during);
    range type. For example:
 
 <programlisting>
-ALTER TABLE reservation
-  ADD EXCLUDE USING gist (during WITH &amp;&amp;);
+ALTER TABLE reservation ADD EXCLUDE USING gist (during WITH &amp;&amp;);
 </programlisting>
 
    That constraint will prevent any overlapping values from existing
@@ -460,11 +459,11 @@ ALTER TABLE reservation
 
 <programlisting>
 INSERT INTO reservation VALUES
-  ( 1108, '[2010-01-01 11:30, 2010-01-01 13:00)' );
+    (1108, '[2010-01-01 11:30, 2010-01-01 13:00)');
 INSERT 0 1
 
 INSERT INTO reservation VALUES
-  ( 1108, '[2010-01-01 14:45, 2010-01-01 15:45)' );
+    (1108, '[2010-01-01 14:45, 2010-01-01 15:45)');
 ERROR:  conflicting key value violates exclusion constraint "reservation_during_excl"
 DETAIL:  Key (during)=([ 2010-01-01 14:45:00, 2010-01-01 15:45:00 )) conflicts
 with existing key (during)=([ 2010-01-01 14:30:00, 2010-01-01 15:30:00 )).
@@ -480,25 +479,24 @@ with existing key (during)=([ 2010-01-01 14:30:00, 2010-01-01 15:30:00 )).
    are equal:
 
 <programlisting>
-CREATE TABLE room_reservation
-(
-  room TEXT,
-  during TSRANGE,
-  EXCLUDE USING gist (room WITH =, during WITH &amp;&amp;)
+CREATE TABLE room_reservation (
+    room text,
+    during tsrange,
+    EXCLUDE USING gist (room WITH =, during WITH &amp;&amp;)
 );
 
 INSERT INTO room_reservation VALUES
-  ( '123A', '[2010-01-01 14:00, 2010-01-01 15:00)' );
+    ('123A', '[2010-01-01 14:00, 2010-01-01 15:00)');
 INSERT 0 1
 
 INSERT INTO room_reservation VALUES
-  ( '123A', '[2010-01-01 14:30, 2010-01-01 15:30)' );
+    ('123A', '[2010-01-01 14:30, 2010-01-01 15:30)');
 ERROR:  conflicting key value violates exclusion constraint "room_reservation_room_during_excl"
 DETAIL:  Key (room, during)=(123A, [ 2010-01-01 14:30:00, 2010-01-01 15:30:00 )) conflicts with
 existing key (room, during)=(123A, [ 2010-01-01 14:00:00, 2010-01-01 15:00:00 )).
 
 INSERT INTO room_reservation VALUES
-  ( '123B', '[2010-01-01 14:30, 2010-01-01 15:30)' );
+    ('123B', '[2010-01-01 14:30, 2010-01-01 15:30)');
 INSERT 0 1
 </programlisting>
   </para>
