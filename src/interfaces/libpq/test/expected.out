@@ -59,8 +59,8 @@ trying postgresql://host/db?u%73er=someotheruser&port=12345
 user='someotheruser' dbname='db' host='host' port='12345' (inet)
 
 trying postgresql://host/db?u%7aer=someotheruser&port=12345
-WARNING: ignoring unrecognized URI query parameter: uzer
-dbname='db' host='host' port='12345' (inet)
+uri-regress: invalid URI query parameter "uzer"
+
 
 trying postgresql://host:12345?user=uri-user
 user='uri-user' host='host' port='12345' (inet)
@@ -102,8 +102,8 @@ trying postgres://?host=/path/to/socket/dir
 host='/path/to/socket/dir' (local)
 
 trying postgresql://host?uzer=
-WARNING: ignoring unrecognized URI query parameter: uzer
-host='host' (inet)
+uri-regress: invalid URI query parameter "uzer"
+
 
 trying postgre://
 uri-regress: missing "=" after "postgre://" in connection info string

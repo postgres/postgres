@@ -4874,9 +4874,11 @@ conninfo_uri_parse_params(char *params,
 				return false;
 			}
 
-			fprintf(stderr,
-					libpq_gettext("WARNING: ignoring unrecognized URI query parameter: %s\n"),
-					keyword);
+			printfPQExpBuffer(errorMessage,
+							  libpq_gettext(
+								  "invalid URI query parameter \"%s\"\n"),
+							  keyword);
+			return false;
 		}
 		if (malloced)
 		{
