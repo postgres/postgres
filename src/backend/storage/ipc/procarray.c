@@ -160,6 +160,7 @@ static int KnownAssignedXidsGetAndSetXmin(TransactionId *xarray,
 							   TransactionId xmax);
 static TransactionId KnownAssignedXidsGetOldestXmin(void);
 static void KnownAssignedXidsDisplay(int trace_level);
+static void KnownAssignedXidsReset(void);
 
 /*
  * Report shared-memory space needed by CreateSharedProcArray.
@@ -526,6 +527,11 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 		 */
 		if (!running->subxid_overflow || running->xcnt == 0)
 		{
+			/*
+			 * If we have already collected known assigned xids, we need to
+			 * throw them away before we apply the recovery snapshot.
+			 */
+			KnownAssignedXidsReset();
 			standbyState = STANDBY_INITIALIZED;
 		}
 		else
@@ -569,7 +575,6 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	 * xids to subtrans. If RunningXacts is overflowed then we don't have
 	 * enough information to correctly update subtrans anyway.
 	 */
-	Assert(procArray->numKnownAssignedXids == 0);
 
 	/*
 	 * Allocate a temporary array to avoid modifying the array passed as
@@ -599,6 +604,12 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 
 	if (nxids > 0)
 	{
+		if (procArray->numKnownAssignedXids != 0)
+		{
+			LWLockRelease(ProcArrayLock);
+			elog(ERROR, "KnownAssignedXids is not empty");
+		}
+
 		/*
 		 * Sort the array so that we can add them safely into
 		 * KnownAssignedXids.
@@ -3339,4 +3350,23 @@ KnownAssignedXidsDisplay(int trace_level)
 		 buf.data);
 
 	pfree(buf.data);
+}
+
+/*
+ * KnownAssignedXidsReset
+ *		Resets KnownAssignedXids to be empty
+ */
+static void
+KnownAssignedXidsReset(void)
+{
+	/* use volatile pointer to prevent code rearrangement */
+	volatile ProcArrayStruct *pArray = procArray;
+
+	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
+
+	pArray->numKnownAssignedXids = 0;
+	pArray->tailKnownAssignedXids = 0;
+	pArray->headKnownAssignedXids = 0;
+
+	LWLockRelease(ProcArrayLock);
 }
