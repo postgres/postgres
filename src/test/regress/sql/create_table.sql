@@ -250,3 +250,8 @@ CREATE TEMP TABLE explicitly_temp (a int primary key);			-- also OK
 CREATE TEMP TABLE pg_temp.doubly_temp (a int primary key);		-- also OK
 CREATE TEMP TABLE public.temp_to_perm (a int primary key);		-- not OK
 DROP TABLE unlogged1, public.unlogged2;
+
+CREATE GLOBAL TEMPORARY TABLE global_temp1 (a int, b text);		-- not yet OK
+CREATE GLOBAL TEMP TABLE global_temp2 (a int, b text);			-- not yet OK
+CREATE LOCAL TEMP TABLE local_temp (a int, b text);				-- not yet OK
+CREATE LOCAL TEMP TABLE local_temp (a int, b text);				-- not yet OK

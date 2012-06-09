@@ -2507,15 +2507,43 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
  * Redundancy here is needed to avoid shift/reduce conflicts,
  * since TEMP is not a reserved word.  See also OptTempTableName.
  *
- * NOTE: we accept both GLOBAL and LOCAL options; since we have no modules
- * the LOCAL keyword is really meaningless.
+ * NOTE: we don't accept either the GLOBAL or LOCAL options: not yet implemented.
  */
 OptTemp:	TEMPORARY					{ $$ = RELPERSISTENCE_TEMP; }
 			| TEMP						{ $$ = RELPERSISTENCE_TEMP; }
-			| LOCAL TEMPORARY			{ $$ = RELPERSISTENCE_TEMP; }
-			| LOCAL TEMP				{ $$ = RELPERSISTENCE_TEMP; }
-			| GLOBAL TEMPORARY			{ $$ = RELPERSISTENCE_TEMP; }
-			| GLOBAL TEMP				{ $$ = RELPERSISTENCE_TEMP; }
+			| LOCAL TEMPORARY
+				{
+					ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("LOCAL TEMPORARY not yet implemented"),
+						 parser_errposition(@1)));
+					$$ = RELPERSISTENCE_TEMP;
+				}
+			| LOCAL TEMP
+				{
+					ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("LOCAL TEMPORARY not yet implemented"),
+						 parser_errposition(@1)));
+					$$ = RELPERSISTENCE_TEMP;
+				}
+			| GLOBAL TEMPORARY
+				{
+					ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("GLOBAL TEMPORARY not yet implemented"),
+						 parser_errposition(@1)));
+					$$ = RELPERSISTENCE_TEMP;
+				}
+			| GLOBAL TEMP
+				{
+					ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("GLOBAL TEMPORARY not yet implemented"),
+						 parser_errposition(@1)));
+					$$ = RELPERSISTENCE_TEMP;
+				}
+
 			| UNLOGGED					{ $$ = RELPERSISTENCE_UNLOGGED; }
 			| /*EMPTY*/					{ $$ = RELPERSISTENCE_PERMANENT; }
 		;
@@ -8921,21 +8949,37 @@ OptTempTableName:
 			| LOCAL TEMPORARY opt_table qualified_name
 				{
 					$$ = $4;
+					ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("LOCAL TEMPORARY not yet implemented"),
+						 parser_errposition(@1)));
 					$$->relpersistence = RELPERSISTENCE_TEMP;
 				}
 			| LOCAL TEMP opt_table qualified_name
 				{
 					$$ = $4;
+					ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("LOCAL TEMPORARY not yet implemented"),
+						 parser_errposition(@1)));
 					$$->relpersistence = RELPERSISTENCE_TEMP;
 				}
 			| GLOBAL TEMPORARY opt_table qualified_name
 				{
 					$$ = $4;
+					ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("GLOBAL TEMPORARY not yet implemented"),
+						 parser_errposition(@1)));
 					$$->relpersistence = RELPERSISTENCE_TEMP;
 				}
 			| GLOBAL TEMP opt_table qualified_name
 				{
 					$$ = $4;
+					ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("GLOBAL TEMPORARY not yet implemented"),
+						 parser_errposition(@1)));
 					$$->relpersistence = RELPERSISTENCE_TEMP;
 				}
 			| UNLOGGED opt_table qualified_name
