@@ -338,8 +338,8 @@ PostgreSQL documentation
         Specifies the number of seconds between status packets sent back to the
         server. This is required when streaming the transaction log (using
         <literal>--xlog=stream</literal>) if replication timeout is configured
-        on the server, and allows for easier monitoring. The default value is
-        10 seconds.
+        on the server, and allows for easier monitoring. A value of zero disables
+        the status updates completely. The default value is 10 seconds.
        </para>
       </listitem>
      </varlistentry>

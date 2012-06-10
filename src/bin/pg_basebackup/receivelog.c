@@ -23,6 +23,7 @@
 #include "access/xlog_internal.h"
 #include "replication/walprotocol.h"
 #include "utils/datetime.h"
+#include "utils/timestamp.h"
 
 #include "receivelog.h"
 #include "streamutil.h"
@@ -196,6 +197,51 @@ localGetCurrentTimestamp(void)
 }
 
 /*
+ * Local version of TimestampDifference(), since we are not
+ * linked with backend code.
+ */
+static void
+localTimestampDifference(TimestampTz start_time, TimestampTz stop_time,
+					long *secs, int *microsecs)
+{
+	TimestampTz diff = stop_time - start_time;
+
+	if (diff <= 0)
+	{
+		*secs = 0;
+		*microsecs = 0;
+	}
+	else
+	{
+#ifdef HAVE_INT64_TIMESTAMP
+		*secs = (long) (diff / USECS_PER_SEC);
+		*microsecs = (int) (diff % USECS_PER_SEC);
+#else
+		*secs = (long) diff;
+		*microsecs = (int) ((diff - *secs) * 1000000.0);
+#endif
+	}
+}
+
+/*
+ * Local version of TimestampDifferenceExceeds(), since we are not
+ * linked with backend code.
+ */
+static bool
+localTimestampDifferenceExceeds(TimestampTz start_time,
+						   TimestampTz stop_time,
+						   int msec)
+{
+	TimestampTz diff = stop_time - start_time;
+
+#ifdef HAVE_INT64_TIMESTAMP
+	return (diff >= msec * INT64CONST(1000));
+#else
+	return (diff * 1000.0 >= msec);
+#endif
+}
+
+/*
  * Receive a log stream starting at the specified position.
  *
  * If sysidentifier is specified, validate that both the system
@@ -306,7 +352,8 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysi
 		 */
 		now = localGetCurrentTimestamp();
 		if (standby_message_timeout > 0 &&
-			last_status < now - standby_message_timeout * 1000000)
+			localTimestampDifferenceExceeds(last_status, now,
+											standby_message_timeout))
 		{
 			/* Time to send feedback! */
 			char		replybuf[sizeof(StandbyReplyMessage) + 1];
@@ -345,10 +392,16 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysi
 			FD_SET(PQsocket(conn), &input_mask);
 			if (standby_message_timeout)
 			{
-				timeout.tv_sec = last_status + standby_message_timeout - now - 1;
+				TimestampTz	targettime;
+
+				targettime = TimestampTzPlusMilliseconds(last_status,
+														  standby_message_timeout - 1);
+				localTimestampDifference(now,
+										 targettime,
+										 &timeout.tv_sec,
+										 (int *)&timeout.tv_usec);
 				if (timeout.tv_sec <= 0)
 					timeout.tv_sec = 1; /* Always sleep at least 1 sec */
-				timeout.tv_usec = 0;
 				timeoutptr = &timeout;
 			}
 			else

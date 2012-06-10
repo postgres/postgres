@@ -129,8 +129,8 @@ PostgreSQL documentation
        <para>
         Specifies the number of seconds between status packets sent back to the
         server. This is required if replication timeout is configured on the
-        server, and allows for easier monitoring. The default value is
-        10 seconds.
+        server, and allows for easier monitoring. A value of zero disables the
+        status updates completely. The default value is 10 seconds.
        </para>
       </listitem>
      </varlistentry>

@@ -40,7 +40,7 @@
 char	   *basedir = NULL;
 int			verbose = 0;
 int			noloop = 0;
-int			standby_message_timeout = 10;		/* 10 sec = default */
+int			standby_message_timeout = 10 * 1000;		/* 10 sec = default */
 volatile bool time_to_abort = false;
 
 
@@ -356,7 +356,7 @@ main(int argc, char **argv)
 				dbgetpassword = 1;
 				break;
 			case 's':
-				standby_message_timeout = atoi(optarg);
+				standby_message_timeout = atoi(optarg) * 1000;
 				if (standby_message_timeout < 0)
 				{
 					fprintf(stderr, _("%s: invalid status interval \"%s\"\n"),
