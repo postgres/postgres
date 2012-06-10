@@ -18,4 +18,4 @@ extern char *PLyUnicode_AsString(PyObject *unicode);
 extern PyObject *PLyUnicode_FromString(const char *s);
 #endif
 
-#endif	/* PLPY_UTIL_H */
+#endif   /* PLPY_UTIL_H */

@@ -85,40 +85,40 @@ xslt_process(PG_FUNCTION_ARGS)
 	{
 		/* Check to see if document is a file or a literal */
 
-	if (VARDATA(doct)[0] == '<')
-		doctree = xmlParseMemory((char *) VARDATA(doct), VARSIZE(doct) - VARHDRSZ);
-	else
-		doctree = xmlParseFile(text_to_cstring(doct));
+		if (VARDATA(doct)[0] == '<')
+			doctree = xmlParseMemory((char *) VARDATA(doct), VARSIZE(doct) - VARHDRSZ);
+		else
+			doctree = xmlParseFile(text_to_cstring(doct));
 
-	if (doctree == NULL)
-		xml_ereport(xmlerrcxt, ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
-					"error parsing XML document");
-
-	/* Same for stylesheet */
-	if (VARDATA(ssheet)[0] == '<')
-	{
-		ssdoc = xmlParseMemory((char *) VARDATA(ssheet),
-							   VARSIZE(ssheet) - VARHDRSZ);
-		if (ssdoc == NULL)
+		if (doctree == NULL)
 			xml_ereport(xmlerrcxt, ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
-						"error parsing stylesheet as XML document");
+						"error parsing XML document");
 
-		stylesheet = xsltParseStylesheetDoc(ssdoc);
-	}
-	else
-		stylesheet = xsltParseStylesheetFile((xmlChar *) text_to_cstring(ssheet));
+		/* Same for stylesheet */
+		if (VARDATA(ssheet)[0] == '<')
+		{
+			ssdoc = xmlParseMemory((char *) VARDATA(ssheet),
+								   VARSIZE(ssheet) - VARHDRSZ);
+			if (ssdoc == NULL)
+				xml_ereport(xmlerrcxt, ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
+							"error parsing stylesheet as XML document");
 
-	if (stylesheet == NULL)
-		xml_ereport(xmlerrcxt, ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
-					"failed to parse stylesheet");
+			stylesheet = xsltParseStylesheetDoc(ssdoc);
+		}
+		else
+			stylesheet = xsltParseStylesheetFile((xmlChar *) text_to_cstring(ssheet));
 
-	restree = xsltApplyStylesheet(stylesheet, doctree, params);
+		if (stylesheet == NULL)
+			xml_ereport(xmlerrcxt, ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
+						"failed to parse stylesheet");
 
-	if (restree == NULL)
-		xml_ereport(xmlerrcxt, ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
-					"failed to apply stylesheet");
+		restree = xsltApplyStylesheet(stylesheet, doctree, params);
 
-	resstat = xsltSaveResultToString(&resstr, &reslen, restree, stylesheet);
+		if (restree == NULL)
+			xml_ereport(xmlerrcxt, ERROR, ERRCODE_EXTERNAL_ROUTINE_EXCEPTION,
+						"failed to apply stylesheet");
+
+		resstat = xsltSaveResultToString(&resstr, &reslen, restree, stylesheet);
 	}
 	PG_CATCH();
 	{

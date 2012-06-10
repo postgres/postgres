@@ -418,12 +418,12 @@ typedef struct xl_btree_newroot
 /*
  *	When a new operator class is declared, we require that the user
  *	supply us with an amproc procedure (BTORDER_PROC) for determining
- *	whether, for two keys a and b, a < b, a = b, or a > b.  This routine
+ *	whether, for two keys a and b, a < b, a = b, or a > b.	This routine
  *	must return < 0, 0, > 0, respectively, in these three cases.  (It must
  *	not return INT_MIN, since we may negate the result before using it.)
  *
  *	To facilitate accelerated sorting, an operator class may choose to
- *	offer a second procedure (BTSORTSUPPORT_PROC).  For full details, see
+ *	offer a second procedure (BTSORTSUPPORT_PROC).	For full details, see
  *	src/include/utils/sortsupport.h.
  */
 
@@ -551,7 +551,7 @@ typedef struct BTScanOpaqueData
 	int			numArrayKeys;	/* number of equality-type array keys (-1 if
 								 * there are any unsatisfiable array keys) */
 	BTArrayKeyInfo *arrayKeys;	/* info about each equality-type array key */
-	MemoryContext arrayContext;	/* scan-lifespan context for array data */
+	MemoryContext arrayContext; /* scan-lifespan context for array data */
 
 	/* info about killed items if any (killedItems is NULL if never used) */
 	int		   *killedItems;	/* currPos.items indexes of killed items */
@@ -559,8 +559,8 @@ typedef struct BTScanOpaqueData
 
 	/*
 	 * If we are doing an index-only scan, these are the tuple storage
-	 * workspaces for the currPos and markPos respectively.  Each is of
-	 * size BLCKSZ, so it can hold as much as a full page's worth of tuples.
+	 * workspaces for the currPos and markPos respectively.  Each is of size
+	 * BLCKSZ, so it can hold as much as a full page's worth of tuples.
 	 */
 	char	   *currTuples;		/* tuple storage for currPos */
 	char	   *markTuples;		/* tuple storage for markPos */

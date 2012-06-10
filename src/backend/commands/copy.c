@@ -150,7 +150,7 @@ typedef struct CopyStateData
 	Oid		   *typioparams;	/* array of element types for in_functions */
 	int		   *defmap;			/* array of default att numbers */
 	ExprState **defexprs;		/* array of default att expressions */
-	bool		volatile_defexprs; /* is any of defexprs volatile? */
+	bool		volatile_defexprs;		/* is any of defexprs volatile? */
 
 	/*
 	 * These variables are used to reduce overhead in textual COPY FROM.
@@ -566,11 +566,11 @@ CopyGetData(CopyState cstate, void *databuf, int minread, int maxread)
 					if (mtype == EOF)
 						ereport(ERROR,
 								(errcode(ERRCODE_CONNECTION_FAILURE),
-							 errmsg("unexpected EOF on client connection with an open transaction")));
+								 errmsg("unexpected EOF on client connection with an open transaction")));
 					if (pq_getmessage(cstate->fe_msgbuf, 0))
 						ereport(ERROR,
 								(errcode(ERRCODE_CONNECTION_FAILURE),
-							 errmsg("unexpected EOF on client connection with an open transaction")));
+								 errmsg("unexpected EOF on client connection with an open transaction")));
 					switch (mtype)
 					{
 						case 'd':		/* CopyData */
@@ -1861,6 +1861,7 @@ CopyFrom(CopyState cstate)
 	uint64		processed = 0;
 	bool		useHeapMultiInsert;
 	int			nBufferedTuples = 0;
+
 #define MAX_BUFFERED_TUPLES 1000
 	HeapTuple  *bufferedTuples = NULL;	/* initialize to silence warning */
 	Size		bufferedTuplesSize = 0;
@@ -1968,8 +1969,8 @@ CopyFrom(CopyState cstate)
 	 * processed and prepared for insertion are not there.
 	 */
 	if ((resultRelInfo->ri_TrigDesc != NULL &&
-		(resultRelInfo->ri_TrigDesc->trig_insert_before_row ||
-		 resultRelInfo->ri_TrigDesc->trig_insert_instead_row)) ||
+		 (resultRelInfo->ri_TrigDesc->trig_insert_before_row ||
+		  resultRelInfo->ri_TrigDesc->trig_insert_instead_row)) ||
 		cstate->volatile_defexprs)
 	{
 		useHeapMultiInsert = false;
@@ -2162,8 +2163,8 @@ CopyFromInsertBatch(CopyState cstate, EState *estate, CommandId mycid,
 	int			i;
 
 	/*
-	 * heap_multi_insert leaks memory, so switch to short-lived memory
-	 * context before calling it.
+	 * heap_multi_insert leaks memory, so switch to short-lived memory context
+	 * before calling it.
 	 */
 	oldcontext = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
 	heap_multi_insert(cstate->rel,
@@ -2175,14 +2176,14 @@ CopyFromInsertBatch(CopyState cstate, EState *estate, CommandId mycid,
 	MemoryContextSwitchTo(oldcontext);
 
 	/*
-	 * If there are any indexes, update them for all the inserted tuples,
-	 * and run AFTER ROW INSERT triggers.
+	 * If there are any indexes, update them for all the inserted tuples, and
+	 * run AFTER ROW INSERT triggers.
 	 */
 	if (resultRelInfo->ri_NumIndices > 0)
 	{
 		for (i = 0; i < nBufferedTuples; i++)
 		{
-			List *recheckIndexes;
+			List	   *recheckIndexes;
 
 			ExecStoreTuple(bufferedTuples[i], myslot, InvalidBuffer, false);
 			recheckIndexes =
@@ -2194,6 +2195,7 @@ CopyFromInsertBatch(CopyState cstate, EState *estate, CommandId mycid,
 			list_free(recheckIndexes);
 		}
 	}
+
 	/*
 	 * There's no indexes, but see if we need to run AFTER ROW INSERT triggers
 	 * anyway.

@@ -24,7 +24,7 @@
 
 
 typedef void (*storeRes_func) (SpGistScanOpaque so, ItemPointer heapPtr,
-							   Datum leafValue, bool isnull, bool recheck);
+								 Datum leafValue, bool isnull, bool recheck);
 
 typedef struct ScanStackEntry
 {
@@ -88,7 +88,7 @@ resetSpGistScanOpaque(SpGistScanOpaque so)
 	if (so->want_itup)
 	{
 		/* Must pfree IndexTuples to avoid memory leak */
-		int		i;
+		int			i;
 
 		for (i = 0; i < so->nPtrs; i++)
 			pfree(so->indexTups[i]);
@@ -102,7 +102,7 @@ resetSpGistScanOpaque(SpGistScanOpaque so)
  * Sets searchNulls, searchNonNulls, numberOfKeys, keyData fields of *so.
  *
  * The point here is to eliminate null-related considerations from what the
- * opclass consistent functions need to deal with.  We assume all SPGiST-
+ * opclass consistent functions need to deal with.	We assume all SPGiST-
  * indexable operators are strict, so any null RHS value makes the scan
  * condition unsatisfiable.  We also pull out any IS NULL/IS NOT NULL
  * conditions; their effect is reflected into searchNulls/searchNonNulls.
@@ -177,6 +177,7 @@ spgbeginscan(PG_FUNCTION_ARGS)
 {
 	Relation	rel = (Relation) PG_GETARG_POINTER(0);
 	int			keysz = PG_GETARG_INT32(1);
+
 	/* ScanKey			scankey = (ScanKey) PG_GETARG_POINTER(2); */
 	IndexScanDesc scan;
 	SpGistScanOpaque so;
@@ -457,7 +458,7 @@ redirect:
 			MemoryContext oldCtx;
 
 			innerTuple = (SpGistInnerTuple) PageGetItem(page,
-														PageGetItemId(page, offset));
+												PageGetItemId(page, offset));
 
 			if (innerTuple->tupstate != SPGIST_LIVE)
 			{
@@ -522,7 +523,7 @@ redirect:
 
 			for (i = 0; i < out.nNodes; i++)
 			{
-				int		nodeN = out.nodeNumbers[i];
+				int			nodeN = out.nodeNumbers[i];
 
 				Assert(nodeN >= 0 && nodeN < in.nNodes);
 				if (ItemPointerIsValid(&nodes[nodeN]->t_tid))
@@ -598,7 +599,7 @@ storeGettuple(SpGistScanOpaque so, ItemPointer heapPtr,
 	if (so->want_itup)
 	{
 		/*
-		 * Reconstruct desired IndexTuple.  We have to copy the datum out of
+		 * Reconstruct desired IndexTuple.	We have to copy the datum out of
 		 * the temp context anyway, so we may as well create the tuple here.
 		 */
 		so->indexTups[so->nPtrs] = index_form_tuple(so->indexTupDesc,
@@ -636,7 +637,7 @@ spggettuple(PG_FUNCTION_ARGS)
 		if (so->want_itup)
 		{
 			/* Must pfree IndexTuples to avoid memory leak */
-			int		i;
+			int			i;
 
 			for (i = 0; i < so->nPtrs; i++)
 				pfree(so->indexTups[i]);

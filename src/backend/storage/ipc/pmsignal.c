@@ -272,8 +272,8 @@ bool
 PostmasterIsAlive(void)
 {
 #ifndef WIN32
-	char c;
-	ssize_t rc;
+	char		c;
+	ssize_t		rc;
 
 	rc = read(postmaster_alive_fds[POSTMASTER_FD_WATCH], &c, 1);
 	if (rc < 0)
@@ -287,7 +287,6 @@ PostmasterIsAlive(void)
 		elog(FATAL, "unexpected data in postmaster death monitoring pipe");
 
 	return false;
-
 #else							/* WIN32 */
 	return (WaitForSingleObject(PostmasterHandle, 0) == WAIT_TIMEOUT);
 #endif   /* WIN32 */

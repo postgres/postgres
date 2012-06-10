@@ -185,7 +185,7 @@ connectMaintenanceDatabase(const char *maintenance_db, const char *pghost,
 						   enum trivalue prompt_password,
 						   const char *progname)
 {
-	PGconn *conn;
+	PGconn	   *conn;
 
 	/* If a maintenance database name was specified, just connect to it. */
 	if (maintenance_db)

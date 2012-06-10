@@ -528,7 +528,7 @@ typedef struct
 	bool		isnull[INDEX_MAX_KEYS];
 	GISTPageSplitInfo *splitinfo;
 	GISTNodeBuffer *nodeBuffer;
-}	RelocationBufferInfo;
+} RelocationBufferInfo;
 
 /*
  * At page split, distribute tuples from the buffer of the split page to

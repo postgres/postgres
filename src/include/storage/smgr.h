@@ -60,7 +60,7 @@ typedef struct SMgrRelationData
 	 * submodules.	Do not touch them from elsewhere.
 	 */
 	int			smgr_which;		/* storage manager selector */
-	bool		smgr_transient;	/* T if files are to be closed at EOXact */
+	bool		smgr_transient; /* T if files are to be closed at EOXact */
 
 	/* for md.c; NULL for forks that are not open */
 	struct _MdfdVec *md_fd[MAX_FORKNUM + 1];

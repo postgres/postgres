@@ -49,7 +49,7 @@
 #define READ_TEMP_LOCALS()	\
 	char	   *token;		\
 	int			length;		\
-	(void) token /* possibly unused */
+	(void) token				/* possibly unused */
 
 /* ... but most need both */
 #define READ_LOCALS(nodeTypeName)			\
@@ -195,7 +195,7 @@ _readQuery(void)
 
 	READ_ENUM_FIELD(commandType, CmdType);
 	READ_ENUM_FIELD(querySource, QuerySource);
-	local_node->queryId = 0;			/* not saved in output format */
+	local_node->queryId = 0;	/* not saved in output format */
 	READ_BOOL_FIELD(canSetTag);
 	READ_NODE_FIELD(utilityStmt);
 	READ_INT_FIELD(resultRelation);

@@ -437,7 +437,8 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 	/* DROP hook for the tablespace being removed */
 	if (object_access_hook)
 	{
-		ObjectAccessDrop    drop_arg;
+		ObjectAccessDrop drop_arg;
+
 		memset(&drop_arg, 0, sizeof(ObjectAccessDrop));
 		InvokeObjectAccessHook(OAT_DROP, TableSpaceRelationId,
 							   tablespaceoid, 0, &drop_arg);
@@ -638,7 +639,7 @@ create_tablespace_directories(const char *location, const Oid tablespaceoid)
  * Attempt to remove filesystem infrastructure for the tablespace.
  *
  * 'redo' indicates we are redoing a drop from XLOG; in that case we should
- * not throw an ERROR for problems, just LOG them.  The worst consequence of
+ * not throw an ERROR for problems, just LOG them.	The worst consequence of
  * not removing files here would be failure to release some disk space, which
  * does not justify throwing an error that would require manual intervention
  * to get the database running again.
@@ -678,7 +679,7 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 	 * with a warning.	This is because even though ProcessUtility disallows
 	 * DROP TABLESPACE in a transaction block, it's possible that a previous
 	 * DROP failed and rolled back after removing the tablespace directories
-	 * and/or symlink.  We want to allow a new DROP attempt to succeed at
+	 * and/or symlink.	We want to allow a new DROP attempt to succeed at
 	 * removing the catalog entries (and symlink if still present), so we
 	 * should not give a hard error here.
 	 */
@@ -1199,14 +1200,14 @@ check_temp_tablespaces(char **newval, void **extra, GucSource source)
 			}
 
 			/*
-			 * In an interactive SET command, we ereport for bad info.  When
+			 * In an interactive SET command, we ereport for bad info.	When
 			 * source == PGC_S_TEST, we are checking the argument of an ALTER
-			 * DATABASE SET or ALTER USER SET command.  pg_dumpall dumps all
+			 * DATABASE SET or ALTER USER SET command.	pg_dumpall dumps all
 			 * roles before tablespaces, so if we're restoring a pg_dumpall
 			 * script the tablespace might not yet exist, but will be created
-			 * later.  Because of that, issue a NOTICE if source == PGC_S_TEST,
-			 * but accept the value anyway.  Otherwise, silently ignore any
-			 * bad list elements.
+			 * later.  Because of that, issue a NOTICE if source ==
+			 * PGC_S_TEST, but accept the value anyway.  Otherwise, silently
+			 * ignore any bad list elements.
 			 */
 			curoid = get_tablespace_oid(curname, source <= PGC_S_TEST);
 			if (curoid == InvalidOid)
@@ -1493,10 +1494,10 @@ tblspc_redo(XLogRecPtr lsn, XLogRecord *record)
 		 * files then do conflict processing and try again, if currently
 		 * enabled.
 		 *
-		 * Other possible reasons for failure include bollixed file permissions
-		 * on a standby server when they were okay on the primary, etc etc.
-		 * There's not much we can do about that, so just remove what we can
-		 * and press on.
+		 * Other possible reasons for failure include bollixed file
+		 * permissions on a standby server when they were okay on the primary,
+		 * etc etc. There's not much we can do about that, so just remove what
+		 * we can and press on.
 		 */
 		if (!destroy_tablespace_directories(xlrec->ts_id, true))
 		{
@@ -1513,8 +1514,8 @@ tblspc_redo(XLogRecPtr lsn, XLogRecord *record)
 			if (!destroy_tablespace_directories(xlrec->ts_id, true))
 				ereport(LOG,
 						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-						 errmsg("directories for tablespace %u could not be removed",
-								xlrec->ts_id),
+				 errmsg("directories for tablespace %u could not be removed",
+						xlrec->ts_id),
 						 errhint("You can remove the directories manually if necessary.")));
 		}
 	}

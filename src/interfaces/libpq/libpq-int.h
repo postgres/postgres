@@ -310,7 +310,7 @@ struct pg_conn
 	char	   *keepalives_count;		/* maximum number of TCP keepalive
 										 * retransmits */
 	char	   *sslmode;		/* SSL mode (require,prefer,allow,disable) */
-	char	   *sslcompression;	/* SSL compression (0 or 1) */
+	char	   *sslcompression; /* SSL compression (0 or 1) */
 	char	   *sslkey;			/* client key filename */
 	char	   *sslcert;		/* client certificate filename */
 	char	   *sslrootcert;	/* root certificate filename */
@@ -326,7 +326,7 @@ struct pg_conn
 
 	/* Callback procedure for per-row processing */
 	PQrowProcessor rowProcessor;	/* function pointer */
-	void	   *rowProcessorParam;	/* passthrough argument */
+	void	   *rowProcessorParam;		/* passthrough argument */
 
 	/* Callback procedures for notice message processing */
 	PGNoticeHooks noticeHooks;

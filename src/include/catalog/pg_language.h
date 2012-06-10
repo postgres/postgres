@@ -37,6 +37,7 @@ CATALOG(pg_language,2612)
 	Oid			lanplcallfoid;	/* Call handler for PL */
 	Oid			laninline;		/* Optional anonymous-block handler function */
 	Oid			lanvalidator;	/* Optional validation function */
+
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	aclitem		lanacl[1];		/* Access privileges */
 #endif

@@ -82,10 +82,10 @@ typedef struct ProcArrayStruct
 	TransactionId lastOverflowedXid;
 
 	/*
-	 * We declare pgprocnos[] as 1 entry because C wants a fixed-size array, but
-	 * actually it is maxProcs entries long.
+	 * We declare pgprocnos[] as 1 entry because C wants a fixed-size array,
+	 * but actually it is maxProcs entries long.
 	 */
-	int			pgprocnos[1];		/* VARIABLE LENGTH ARRAY */
+	int			pgprocnos[1];	/* VARIABLE LENGTH ARRAY */
 } ProcArrayStruct;
 
 static ProcArrayStruct *procArray;
@@ -282,22 +282,22 @@ ProcArrayAdd(PGPROC *proc)
 	 * locality of references much better. This is useful while traversing the
 	 * ProcArray because there is a increased likelihood of finding the next
 	 * PGPROC structure in the cache.
-	 * 
+	 *
 	 * Since the occurrence of adding/removing a proc is much lower than the
 	 * access to the ProcArray itself, the overhead should be marginal
 	 */
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
 		/*
-		 * If we are the first PGPROC or if we have found our right position in
-		 * the array, break
+		 * If we are the first PGPROC or if we have found our right position
+		 * in the array, break
 		 */
 		if ((arrayP->pgprocnos[index] == -1) || (arrayP->pgprocnos[index] > proc->pgprocno))
 			break;
 	}
 
 	memmove(&arrayP->pgprocnos[index + 1], &arrayP->pgprocnos[index],
-			(arrayP->numProcs - index) * sizeof (int));
+			(arrayP->numProcs - index) * sizeof(int));
 	arrayP->pgprocnos[index] = proc->pgprocno;
 	arrayP->numProcs++;
 
@@ -349,8 +349,8 @@ ProcArrayRemove(PGPROC *proc, TransactionId latestXid)
 		{
 			/* Keep the PGPROC array sorted. See notes above */
 			memmove(&arrayP->pgprocnos[index], &arrayP->pgprocnos[index + 1],
-					(arrayP->numProcs - index - 1) * sizeof (int));
-			arrayP->pgprocnos[arrayP->numProcs - 1] = -1; /* for debugging */
+					(arrayP->numProcs - index - 1) * sizeof(int));
+			arrayP->pgprocnos[arrayP->numProcs - 1] = -1;		/* for debugging */
 			arrayP->numProcs--;
 			LWLockRelease(ProcArrayLock);
 			return;
@@ -380,7 +380,7 @@ ProcArrayRemove(PGPROC *proc, TransactionId latestXid)
 void
 ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 {
-	PGXACT *pgxact = &allPgXact[proc->pgprocno];
+	PGXACT	   *pgxact = &allPgXact[proc->pgprocno];
 
 	if (TransactionIdIsValid(latestXid))
 	{
@@ -399,7 +399,7 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 		pgxact->xmin = InvalidTransactionId;
 		/* must be cleared with xid/xmin: */
 		pgxact->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
-		pgxact->inCommit = false; /* be sure this is cleared in abort */
+		pgxact->inCommit = false;		/* be sure this is cleared in abort */
 		proc->recoveryConflictPending = false;
 
 		/* Clear the subtransaction-XID cache too while holding the lock */
@@ -426,7 +426,7 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 		pgxact->xmin = InvalidTransactionId;
 		/* must be cleared with xid/xmin: */
 		pgxact->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
-		pgxact->inCommit = false; /* be sure this is cleared in abort */
+		pgxact->inCommit = false;		/* be sure this is cleared in abort */
 		proc->recoveryConflictPending = false;
 
 		Assert(pgxact->nxids == 0);
@@ -446,7 +446,7 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 void
 ProcArrayClearTransaction(PGPROC *proc)
 {
-	PGXACT *pgxact = &allPgXact[proc->pgprocno];
+	PGXACT	   *pgxact = &allPgXact[proc->pgprocno];
 
 	/*
 	 * We can skip locking ProcArrayLock here, because this action does not
@@ -511,9 +511,9 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	/*
 	 * If our initial RunningTransactionsData had an overflowed snapshot then
 	 * we knew we were missing some subxids from our snapshot. If we continue
-	 * to see overflowed snapshots then we might never be able to start up,
-	 * so we make another test to see if our snapshot is now valid. We know
-	 * that the missing subxids are equal to or earlier than nextXid. After we
+	 * to see overflowed snapshots then we might never be able to start up, so
+	 * we make another test to see if our snapshot is now valid. We know that
+	 * the missing subxids are equal to or earlier than nextXid. After we
 	 * initialise we continue to apply changes during recovery, so once the
 	 * oldestRunningXid is later than the nextXid from the initial snapshot we
 	 * know that we no longer have missing information and can mark the
@@ -522,8 +522,8 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	if (standbyState == STANDBY_SNAPSHOT_PENDING)
 	{
 		/*
-		 * If the snapshot isn't overflowed or if its empty we can
-		 * reset our pending state and use this snapshot instead.
+		 * If the snapshot isn't overflowed or if its empty we can reset our
+		 * pending state and use this snapshot instead.
 		 */
 		if (!running->subxid_overflow || running->xcnt == 0)
 		{
@@ -545,8 +545,8 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 			}
 			else
 				elog(trace_recovery(DEBUG1),
-					 "recovery snapshot waiting for non-overflowed snapshot or "
-					 "until oldest active xid on standby is at least %u (now %u)",
+				  "recovery snapshot waiting for non-overflowed snapshot or "
+				"until oldest active xid on standby is at least %u (now %u)",
 					 standbySnapshotPendingXmin,
 					 running->oldestRunningXid);
 			return;
@@ -673,7 +673,7 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	 * ShmemVariableCache->nextXid must be beyond any observed xid.
 	 *
 	 * We don't expect anyone else to modify nextXid, hence we don't need to
-	 * hold a lock while examining it.  We still acquire the lock to modify
+	 * hold a lock while examining it.	We still acquire the lock to modify
 	 * it, though.
 	 */
 	nextXid = latestObservedXid;
@@ -861,10 +861,10 @@ TransactionIdIsInProgress(TransactionId xid)
 	/* No shortcuts, gotta grovel through the array */
 	for (i = 0; i < arrayP->numProcs; i++)
 	{
-		int		pgprocno = arrayP->pgprocnos[i];
-		volatile PGPROC    *proc = &allProcs[pgprocno];
-		volatile PGXACT    *pgxact = &allPgXact[pgprocno];
-		TransactionId	pxid;
+		int			pgprocno = arrayP->pgprocnos[i];
+		volatile PGPROC *proc = &allProcs[pgprocno];
+		volatile PGXACT *pgxact = &allPgXact[pgprocno];
+		TransactionId pxid;
 
 		/* Ignore my own proc --- dealt with it above */
 		if (proc == MyProc)
@@ -1017,10 +1017,10 @@ TransactionIdIsActive(TransactionId xid)
 
 	for (i = 0; i < arrayP->numProcs; i++)
 	{
-		int		pgprocno = arrayP->pgprocnos[i];
-		volatile PGPROC    *proc = &allProcs[pgprocno];
-		volatile PGXACT    *pgxact = &allPgXact[pgprocno];
-		TransactionId	pxid;
+		int			pgprocno = arrayP->pgprocnos[i];
+		volatile PGPROC *proc = &allProcs[pgprocno];
+		volatile PGXACT *pgxact = &allPgXact[pgprocno];
+		TransactionId pxid;
 
 		/* Fetch xid just once - see GetNewTransactionId */
 		pxid = pgxact->xid;
@@ -1115,9 +1115,9 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		int		pgprocno = arrayP->pgprocnos[index];
-		volatile PGPROC    *proc = &allProcs[pgprocno];
-		volatile PGXACT    *pgxact = &allPgXact[pgprocno];
+		int			pgprocno = arrayP->pgprocnos[index];
+		volatile PGPROC *proc = &allProcs[pgprocno];
+		volatile PGXACT *pgxact = &allPgXact[pgprocno];
 
 		if (ignoreVacuum && (pgxact->vacuumFlags & PROC_IN_VACUUM))
 			continue;
@@ -1141,7 +1141,7 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
 			 * have an Xmin but not (yet) an Xid; conversely, if it has an
 			 * Xid, that could determine some not-yet-set Xmin.
 			 */
-			xid = pgxact->xmin;	/* Fetch just once */
+			xid = pgxact->xmin; /* Fetch just once */
 			if (TransactionIdIsNormal(xid) &&
 				TransactionIdPrecedes(xid, result))
 				result = xid;
@@ -1318,7 +1318,7 @@ GetSnapshotData(Snapshot snapshot)
 
 	if (!snapshot->takenDuringRecovery)
 	{
-		int *pgprocnos = arrayP->pgprocnos;
+		int		   *pgprocnos = arrayP->pgprocnos;
 		int			numProcs;
 
 		/*
@@ -1329,32 +1329,32 @@ GetSnapshotData(Snapshot snapshot)
 		numProcs = arrayP->numProcs;
 		for (index = 0; index < numProcs; index++)
 		{
-			int		pgprocno = pgprocnos[index];
-			volatile PGXACT    *pgxact = &allPgXact[pgprocno];
-			TransactionId	xid;
+			int			pgprocno = pgprocnos[index];
+			volatile PGXACT *pgxact = &allPgXact[pgprocno];
+			TransactionId xid;
 
 			/* Ignore procs running LAZY VACUUM */
 			if (pgxact->vacuumFlags & PROC_IN_VACUUM)
 				continue;
 
 			/* Update globalxmin to be the smallest valid xmin */
-			xid = pgxact->xmin;	/* fetch just once */
+			xid = pgxact->xmin; /* fetch just once */
 			if (TransactionIdIsNormal(xid) &&
 				NormalTransactionIdPrecedes(xid, globalxmin))
-					globalxmin = xid;
+				globalxmin = xid;
 
 			/* Fetch xid just once - see GetNewTransactionId */
 			xid = pgxact->xid;
 
 			/*
-			 * If the transaction has no XID assigned, we can skip it; it won't
-			 * have sub-XIDs either.  If the XID is >= xmax, we can also skip
-			 * it; such transactions will be treated as running anyway (and any
-			 * sub-XIDs will also be >= xmax).
+			 * If the transaction has no XID assigned, we can skip it; it
+			 * won't have sub-XIDs either.  If the XID is >= xmax, we can also
+			 * skip it; such transactions will be treated as running anyway
+			 * (and any sub-XIDs will also be >= xmax).
 			 */
 			if (!TransactionIdIsNormal(xid)
 				|| !NormalTransactionIdPrecedes(xid, xmax))
-					continue;
+				continue;
 
 			/*
 			 * We don't include our own XIDs (if any) in the snapshot, but we
@@ -1394,6 +1394,7 @@ GetSnapshotData(Snapshot snapshot)
 					if (nxids > 0)
 					{
 						volatile PGPROC *proc = &allProcs[pgprocno];
+
 						memcpy(snapshot->subxip + subcount,
 							   (void *) proc->subxids.xids,
 							   nxids * sizeof(TransactionId));
@@ -1498,23 +1499,23 @@ ProcArrayInstallImportedXmin(TransactionId xmin, TransactionId sourcexid)
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		int		pgprocno = arrayP->pgprocnos[index];
-		volatile PGPROC    *proc = &allProcs[pgprocno];
-		volatile PGXACT    *pgxact = &allPgXact[pgprocno];
-		TransactionId	xid;
+		int			pgprocno = arrayP->pgprocnos[index];
+		volatile PGPROC *proc = &allProcs[pgprocno];
+		volatile PGXACT *pgxact = &allPgXact[pgprocno];
+		TransactionId xid;
 
 		/* Ignore procs running LAZY VACUUM */
 		if (pgxact->vacuumFlags & PROC_IN_VACUUM)
 			continue;
 
-		xid = pgxact->xid;	/* fetch just once */
+		xid = pgxact->xid;		/* fetch just once */
 		if (xid != sourcexid)
 			continue;
 
 		/*
-		 * We check the transaction's database ID for paranoia's sake: if
-		 * it's in another DB then its xmin does not cover us.  Caller should
-		 * have detected this already, so we just treat any funny cases as
+		 * We check the transaction's database ID for paranoia's sake: if it's
+		 * in another DB then its xmin does not cover us.  Caller should have
+		 * detected this already, so we just treat any funny cases as
 		 * "transaction not found".
 		 */
 		if (proc->databaseId != MyDatabaseId)
@@ -1523,7 +1524,7 @@ ProcArrayInstallImportedXmin(TransactionId xmin, TransactionId sourcexid)
 		/*
 		 * Likewise, let's just make real sure its xmin does cover us.
 		 */
-		xid = pgxact->xmin;	/* fetch just once */
+		xid = pgxact->xmin;		/* fetch just once */
 		if (!TransactionIdIsNormal(xid) ||
 			!TransactionIdPrecedesOrEquals(xid, xmin))
 			continue;
@@ -1531,8 +1532,8 @@ ProcArrayInstallImportedXmin(TransactionId xmin, TransactionId sourcexid)
 		/*
 		 * We're good.  Install the new xmin.  As in GetSnapshotData, set
 		 * TransactionXmin too.  (Note that because snapmgr.c called
-		 * GetSnapshotData first, we'll be overwriting a valid xmin here,
-		 * so we don't check that.)
+		 * GetSnapshotData first, we'll be overwriting a valid xmin here, so
+		 * we don't check that.)
 		 */
 		MyPgXact->xmin = TransactionXmin = xmin;
 
@@ -1626,7 +1627,7 @@ GetRunningTransactionData(void)
 	 */
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		int		pgprocno = arrayP->pgprocnos[index];
+		int			pgprocno = arrayP->pgprocnos[index];
 		volatile PGPROC *proc = &allProcs[pgprocno];
 		volatile PGXACT *pgxact = &allPgXact[pgprocno];
 		TransactionId xid;
@@ -1726,7 +1727,7 @@ GetOldestActiveTransactionId(void)
 	 */
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		int		pgprocno = arrayP->pgprocnos[index];
+		int			pgprocno = arrayP->pgprocnos[index];
 		volatile PGXACT *pgxact = &allPgXact[pgprocno];
 		TransactionId xid;
 
@@ -1783,7 +1784,7 @@ GetTransactionsInCommit(TransactionId **xids_p)
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		int		pgprocno = arrayP->pgprocnos[index];
+		int			pgprocno = arrayP->pgprocnos[index];
 		volatile PGXACT *pgxact = &allPgXact[pgprocno];
 		TransactionId pxid;
 
@@ -1820,9 +1821,9 @@ HaveTransactionsInCommit(TransactionId *xids, int nxids)
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		int		pgprocno = arrayP->pgprocnos[index];
-		volatile PGXACT    *pgxact = &allPgXact[pgprocno];
-		TransactionId	pxid;
+		int			pgprocno = arrayP->pgprocnos[index];
+		volatile PGXACT *pgxact = &allPgXact[pgprocno];
+		TransactionId pxid;
 
 		/* Fetch xid just once - see GetNewTransactionId */
 		pxid = pgxact->xid;
@@ -1911,9 +1912,9 @@ BackendXidGetPid(TransactionId xid)
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		int		pgprocno = arrayP->pgprocnos[index];
-		volatile PGPROC    *proc = &allProcs[pgprocno];
-		volatile PGXACT    *pgxact = &allPgXact[pgprocno];
+		int			pgprocno = arrayP->pgprocnos[index];
+		volatile PGPROC *proc = &allProcs[pgprocno];
+		volatile PGXACT *pgxact = &allPgXact[pgprocno];
 
 		if (pgxact->xid == xid)
 		{
@@ -1981,9 +1982,9 @@ GetCurrentVirtualXIDs(TransactionId limitXmin, bool excludeXmin0,
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		int		pgprocno = arrayP->pgprocnos[index];
-		volatile PGPROC    *proc = &allProcs[pgprocno];
-		volatile PGXACT    *pgxact = &allPgXact[pgprocno];
+		int			pgprocno = arrayP->pgprocnos[index];
+		volatile PGPROC *proc = &allProcs[pgprocno];
+		volatile PGXACT *pgxact = &allPgXact[pgprocno];
 
 		if (proc == MyProc)
 			continue;
@@ -2078,9 +2079,9 @@ GetConflictingVirtualXIDs(TransactionId limitXmin, Oid dbOid)
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		int		pgprocno = arrayP->pgprocnos[index];
-		volatile PGPROC    *proc = &allProcs[pgprocno];
-		volatile PGXACT    *pgxact = &allPgXact[pgprocno];
+		int			pgprocno = arrayP->pgprocnos[index];
+		volatile PGPROC *proc = &allProcs[pgprocno];
+		volatile PGXACT *pgxact = &allPgXact[pgprocno];
 
 		/* Exclude prepared transactions */
 		if (proc->pid == 0)
@@ -2134,9 +2135,9 @@ CancelVirtualTransaction(VirtualTransactionId vxid, ProcSignalReason sigmode)
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		int		pgprocno = arrayP->pgprocnos[index];
-		volatile PGPROC    *proc = &allProcs[pgprocno];
-		VirtualTransactionId	procvxid;
+		int			pgprocno = arrayP->pgprocnos[index];
+		volatile PGPROC *proc = &allProcs[pgprocno];
+		VirtualTransactionId procvxid;
 
 		GET_VXID_FROM_PGPROC(procvxid, *proc);
 
@@ -2189,9 +2190,9 @@ MinimumActiveBackends(int min)
 	 */
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		int		pgprocno = arrayP->pgprocnos[index];
-		volatile PGPROC    *proc = &allProcs[pgprocno];
-		volatile PGXACT    *pgxact = &allPgXact[pgprocno];
+		int			pgprocno = arrayP->pgprocnos[index];
+		volatile PGPROC *proc = &allProcs[pgprocno];
+		volatile PGXACT *pgxact = &allPgXact[pgprocno];
 
 		/*
 		 * Since we're not holding a lock, need to check that the pointer is
@@ -2237,7 +2238,7 @@ CountDBBackends(Oid databaseid)
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		int pgprocno = arrayP->pgprocnos[index];
+		int			pgprocno = arrayP->pgprocnos[index];
 		volatile PGPROC *proc = &allProcs[pgprocno];
 
 		if (proc->pid == 0)
@@ -2267,7 +2268,7 @@ CancelDBBackends(Oid databaseid, ProcSignalReason sigmode, bool conflictPending)
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		int pgprocno = arrayP->pgprocnos[index];
+		int			pgprocno = arrayP->pgprocnos[index];
 		volatile PGPROC *proc = &allProcs[pgprocno];
 
 		if (databaseid == InvalidOid || proc->databaseId == databaseid)
@@ -2306,7 +2307,7 @@ CountUserBackends(Oid roleid)
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		int pgprocno = arrayP->pgprocnos[index];
+		int			pgprocno = arrayP->pgprocnos[index];
 		volatile PGPROC *proc = &allProcs[pgprocno];
 
 		if (proc->pid == 0)
@@ -2367,7 +2368,7 @@ CountOtherDBBackends(Oid databaseId, int *nbackends, int *nprepared)
 
 		for (index = 0; index < arrayP->numProcs; index++)
 		{
-			int pgprocno = arrayP->pgprocnos[index];
+			int			pgprocno = arrayP->pgprocnos[index];
 			volatile PGPROC *proc = &allProcs[pgprocno];
 			volatile PGXACT *pgxact = &allPgXact[pgprocno];
 

@@ -117,7 +117,7 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 	TupOutputState *tstate;
 	List	   *rewritten;
 	ListCell   *lc;
-	bool	    timing_set = false;
+	bool		timing_set = false;
 
 	/* Initialize ExplainState. */
 	ExplainInitState(&es);
@@ -169,7 +169,7 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("EXPLAIN option BUFFERS requires ANALYZE")));
-	
+
 	/* if the timing was not set explicitly, set default value */
 	es.timing = (timing_set) ? es.timing : es.analyze;
 
@@ -340,9 +340,9 @@ ExplainOneUtility(Node *utilityStmt, IntoClause *into, ExplainState *es,
 	if (IsA(utilityStmt, CreateTableAsStmt))
 	{
 		/*
-		 * We have to rewrite the contained SELECT and then pass it back
-		 * to ExplainOneQuery.  It's probably not really necessary to copy
-		 * the contained parsetree another time, but let's be safe.
+		 * We have to rewrite the contained SELECT and then pass it back to
+		 * ExplainOneQuery.  It's probably not really necessary to copy the
+		 * contained parsetree another time, but let's be safe.
 		 */
 		CreateTableAsStmt *ctas = (CreateTableAsStmt *) utilityStmt;
 		List	   *rewritten;
@@ -1021,7 +1021,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		{
 			if (planstate->instrument->need_timer)
 				appendStringInfo(es->str,
-								 " (actual time=%.3f..%.3f rows=%.0f loops=%.0f)",
+							" (actual time=%.3f..%.3f rows=%.0f loops=%.0f)",
 								 startup_sec, total_sec, rows, nloops);
 			else
 				appendStringInfo(es->str,
@@ -1095,7 +1095,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 										   planstate, es);
 			if (es->analyze)
 				ExplainPropertyLong("Heap Fetches",
-					((IndexOnlyScanState *) planstate)->ioss_HeapFetches, es);
+				   ((IndexOnlyScanState *) planstate)->ioss_HeapFetches, es);
 			break;
 		case T_BitmapIndexScan:
 			show_scan_qual(((BitmapIndexScan *) plan)->indexqualorig,
@@ -1237,7 +1237,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 			bool		has_temp = (usage->temp_blks_read > 0 ||
 									usage->temp_blks_written > 0);
 			bool		has_timing = (!INSTR_TIME_IS_ZERO(usage->blk_read_time) ||
-									  !INSTR_TIME_IS_ZERO(usage->blk_write_time));
+								 !INSTR_TIME_IS_ZERO(usage->blk_write_time));
 
 			/* Show only positive counter values. */
 			if (has_shared || has_local || has_temp)
@@ -1301,10 +1301,10 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				appendStringInfoString(es->str, "I/O Timings:");
 				if (!INSTR_TIME_IS_ZERO(usage->blk_read_time))
 					appendStringInfo(es->str, " read=%0.3f",
-								INSTR_TIME_GET_MILLISEC(usage->blk_read_time));
+							  INSTR_TIME_GET_MILLISEC(usage->blk_read_time));
 				if (!INSTR_TIME_IS_ZERO(usage->blk_write_time))
 					appendStringInfo(es->str, " write=%0.3f",
-								INSTR_TIME_GET_MILLISEC(usage->blk_write_time));
+							 INSTR_TIME_GET_MILLISEC(usage->blk_write_time));
 				appendStringInfoChar(es->str, '\n');
 			}
 		}

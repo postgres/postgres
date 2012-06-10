@@ -118,7 +118,7 @@ extern void ShutdownWalRcv(void);
 extern bool WalRcvInProgress(void);
 extern void RequestXLogStreaming(XLogRecPtr recptr, const char *conninfo);
 extern XLogRecPtr GetWalRcvWriteRecPtr(XLogRecPtr *latestChunkStart);
-extern int GetReplicationApplyDelay(void);
-extern int GetReplicationTransferLatency(void);
+extern int	GetReplicationApplyDelay(void);
+extern int	GetReplicationTransferLatency(void);
 
 #endif   /* _WALRECEIVER_H */

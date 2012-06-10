@@ -1167,7 +1167,7 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 			if (procform->prorettype != INT4OID)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("btree comparison procedures must return integer")));
+				 errmsg("btree comparison procedures must return integer")));
 
 			/*
 			 * If lefttype/righttype isn't specified, use the proc's input
@@ -1188,7 +1188,7 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 			if (procform->prorettype != VOIDOID)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("btree sort support procedures must return void")));
+				  errmsg("btree sort support procedures must return void")));
 
 			/*
 			 * Can't infer lefttype/righttype from proc, so use default rule
@@ -1217,7 +1217,7 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 
 	/*
 	 * The default in CREATE OPERATOR CLASS is to use the class' opcintype as
-	 * lefttype and righttype.  In CREATE or ALTER OPERATOR FAMILY, opcintype
+	 * lefttype and righttype.	In CREATE or ALTER OPERATOR FAMILY, opcintype
 	 * isn't available, so make the user specify the types.
 	 */
 	if (!OidIsValid(member->lefttype))

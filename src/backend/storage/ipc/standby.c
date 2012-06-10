@@ -467,7 +467,7 @@ SendRecoveryConflictWithBufferPin(ProcSignalReason reason)
  * determine whether an actual deadlock condition is present: the lock we
  * need to wait for might be unrelated to any held by the Startup process.
  * Sooner or later, this mechanism should get ripped out in favor of somehow
- * accounting for buffer locks in DeadLockCheck().  However, errors here
+ * accounting for buffer locks in DeadLockCheck().	However, errors here
  * seem to be very low-probability in practice, so for now it's not worth
  * the trouble.
  */
@@ -658,7 +658,7 @@ StandbyReleaseOldLocks(int nxids, TransactionId *xids)
 	for (cell = list_head(RecoveryLockList); cell; cell = next)
 	{
 		xl_standby_lock *lock = (xl_standby_lock *) lfirst(cell);
-		bool	remove = false;
+		bool		remove = false;
 
 		next = lnext(cell);
 
@@ -668,8 +668,8 @@ StandbyReleaseOldLocks(int nxids, TransactionId *xids)
 			remove = false;
 		else
 		{
-			int		i;
-			bool	found = false;
+			int			i;
+			bool		found = false;
 
 			for (i = 0; i < nxids; i++)
 			{
@@ -1009,8 +1009,8 @@ LogAccessExclusiveLockPrepare(void)
 	 * RecordTransactionAbort() do not optimise away the transaction
 	 * completion record which recovery relies upon to release locks. It's a
 	 * hack, but for a corner case not worth adding code for into the main
-	 * commit path. Second, we must assign an xid before the lock is
-	 * recorded in shared memory, otherwise a concurrently executing
+	 * commit path. Second, we must assign an xid before the lock is recorded
+	 * in shared memory, otherwise a concurrently executing
 	 * GetRunningTransactionLocks() might see a lock associated with an
 	 * InvalidTransactionId which we later assert cannot happen.
 	 */

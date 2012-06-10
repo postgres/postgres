@@ -1019,6 +1019,7 @@ RecordTransactionCommit(void)
 			XLogRecData rdata[4];
 			int			lastrdata = 0;
 			xl_xact_commit xlrec;
+
 			/*
 			 * Set flags required for recovery processing of commits.
 			 */
@@ -1073,7 +1074,8 @@ RecordTransactionCommit(void)
 		{
 			XLogRecData rdata[2];
 			int			lastrdata = 0;
-			xl_xact_commit_compact	xlrec;
+			xl_xact_commit_compact xlrec;
+
 			xlrec.xact_time = xactStopTimestamp;
 			xlrec.nsubxacts = nchildren;
 			rdata[0].data = (char *) (&xlrec);
@@ -2102,7 +2104,7 @@ PrepareTransaction(void)
 	if (XactHasExportedSnapshots())
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot PREPARE a transaction that has exported snapshots")));
+		errmsg("cannot PREPARE a transaction that has exported snapshots")));
 
 	/* Prevent cancel/die interrupt while cleaning up */
 	HOLD_INTERRUPTS();
@@ -2602,10 +2604,10 @@ CommitTransactionCommand(void)
 			break;
 
 			/*
-			 * We were issued a RELEASE command, so we end the
-			 * current subtransaction and return to the parent transaction.
-			 * The parent might be ended too, so repeat till we find an
-			 * INPROGRESS transaction or subtransaction.
+			 * We were issued a RELEASE command, so we end the current
+			 * subtransaction and return to the parent transaction. The parent
+			 * might be ended too, so repeat till we find an INPROGRESS
+			 * transaction or subtransaction.
 			 */
 		case TBLOCK_SUBRELEASE:
 			do
@@ -2623,9 +2625,9 @@ CommitTransactionCommand(void)
 			 * hierarchy and perform final commit. We do this by rolling up
 			 * any subtransactions into their parent, which leads to O(N^2)
 			 * operations with respect to resource owners - this isn't that
-			 * bad until we approach a thousands of savepoints but is necessary
-			 * for correctness should after triggers create new resource
-			 * owners.
+			 * bad until we approach a thousands of savepoints but is
+			 * necessary for correctness should after triggers create new
+			 * resource owners.
 			 */
 		case TBLOCK_SUBCOMMIT:
 			do
@@ -4551,11 +4553,11 @@ xactGetCommittedChildren(TransactionId **ptr)
  */
 static void
 xact_redo_commit_internal(TransactionId xid, XLogRecPtr lsn,
-					TransactionId *sub_xids, int nsubxacts,
-					SharedInvalidationMessage *inval_msgs, int nmsgs,
-					RelFileNode *xnodes, int nrels,
-					Oid dbId, Oid tsId,
-					uint32 xinfo)
+						  TransactionId *sub_xids, int nsubxacts,
+						  SharedInvalidationMessage *inval_msgs, int nmsgs,
+						  RelFileNode *xnodes, int nrels,
+						  Oid dbId, Oid tsId,
+						  uint32 xinfo)
 {
 	TransactionId max_xid;
 	int			i;
@@ -4659,12 +4661,13 @@ xact_redo_commit_internal(TransactionId xid, XLogRecPtr lsn,
 		XLogFlush(lsn);
 
 }
+
 /*
  * Utility function to call xact_redo_commit_internal after breaking down xlrec
  */
 static void
 xact_redo_commit(xl_xact_commit *xlrec,
-							TransactionId xid, XLogRecPtr lsn)
+				 TransactionId xid, XLogRecPtr lsn)
 {
 	TransactionId *subxacts;
 	SharedInvalidationMessage *inval_msgs;
@@ -4675,11 +4678,11 @@ xact_redo_commit(xl_xact_commit *xlrec,
 	inval_msgs = (SharedInvalidationMessage *) &(subxacts[xlrec->nsubxacts]);
 
 	xact_redo_commit_internal(xid, lsn, subxacts, xlrec->nsubxacts,
-								inval_msgs, xlrec->nmsgs,
-								xlrec->xnodes, xlrec->nrels,
-								xlrec->dbId,
-								xlrec->tsId,
-								xlrec->xinfo);
+							  inval_msgs, xlrec->nmsgs,
+							  xlrec->xnodes, xlrec->nrels,
+							  xlrec->dbId,
+							  xlrec->tsId,
+							  xlrec->xinfo);
 }
 
 /*
@@ -4687,14 +4690,14 @@ xact_redo_commit(xl_xact_commit *xlrec,
  */
 static void
 xact_redo_commit_compact(xl_xact_commit_compact *xlrec,
-							TransactionId xid, XLogRecPtr lsn)
+						 TransactionId xid, XLogRecPtr lsn)
 {
 	xact_redo_commit_internal(xid, lsn, xlrec->subxacts, xlrec->nsubxacts,
-								NULL, 0,		/* inval msgs */
-								NULL, 0,		/* relfilenodes */
-								InvalidOid,		/* dbId */
-								InvalidOid,		/* tsId */
-								0);				/* xinfo */
+							  NULL, 0,	/* inval msgs */
+							  NULL, 0,	/* relfilenodes */
+							  InvalidOid,		/* dbId */
+							  InvalidOid,		/* tsId */
+							  0);		/* xinfo */
 }
 
 /*

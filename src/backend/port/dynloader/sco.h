@@ -15,7 +15,7 @@
 #define PORT_PROTOS_H
 
 #include <dlfcn.h>
-#include "utils/dynamic_loader.h"	/* pgrminclude ignore */
+#include "utils/dynamic_loader.h"		/* pgrminclude ignore */
 
 /*
  * Dynamic Loader on SCO 3.2v5.0.2

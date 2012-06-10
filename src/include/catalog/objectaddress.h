@@ -28,8 +28,8 @@ typedef struct ObjectAddress
 } ObjectAddress;
 
 extern ObjectAddress get_object_address(ObjectType objtype, List *objname,
-										List *objargs, Relation *relp,
-										LOCKMODE lockmode, bool missing_ok);
+				   List *objargs, Relation *relp,
+				   LOCKMODE lockmode, bool missing_ok);
 
 extern void check_object_ownership(Oid roleid,
 					   ObjectType objtype, ObjectAddress address,

@@ -129,6 +129,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		pg_log(PG_VERBOSE, "%s", bufin);
 
 #ifdef WIN32
+
 		/*
 		 * Due to an installer bug, LANG=C doesn't work for PG 8.3.3, but does
 		 * work 8.2.6 and 8.3.7, so check for non-ASCII output and suggest a
@@ -506,7 +507,7 @@ check_control_data(ControlData *oldctrl,
 		 * This is a common 8.3 -> 8.4 upgrade problem, so we are more verbose
 		 */
 		pg_log(PG_FATAL,
-			   "You will need to rebuild the new server with configure option\n"
+			"You will need to rebuild the new server with configure option\n"
 			   "--disable-integer-datetimes or get server binaries built with those\n"
 			   "options.\n");
 	}
@@ -531,6 +532,6 @@ disable_old_cluster(void)
 	pg_log(PG_REPORT, "\n"
 		   "If you want to start the old cluster, you will need to remove\n"
 		   "the \".old\" suffix from %s/global/pg_control.old.\n"
-		   "Because \"link\" mode was used, the old cluster cannot be safely\n"
-		   "started once the new cluster has been started.\n\n", old_cluster.pgdata);
+		 "Because \"link\" mode was used, the old cluster cannot be safely\n"
+	"started once the new cluster has been started.\n\n", old_cluster.pgdata);
 }

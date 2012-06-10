@@ -609,7 +609,7 @@ DefineType(List *names, List *parameters)
 			   F_ARRAY_SEND,	/* send procedure */
 			   typmodinOid,		/* typmodin procedure */
 			   typmodoutOid,	/* typmodout procedure */
-			   F_ARRAY_TYPANALYZE,	/* analyze procedure */
+			   F_ARRAY_TYPANALYZE,		/* analyze procedure */
 			   typoid,			/* element type ID */
 			   true,			/* yes this is an array type */
 			   InvalidOid,		/* no further array type */
@@ -1140,7 +1140,7 @@ DefineEnum(CreateEnumStmt *stmt)
 			   F_ARRAY_SEND,	/* send procedure */
 			   InvalidOid,		/* typmodin procedure - none */
 			   InvalidOid,		/* typmodout procedure - none */
-			   F_ARRAY_TYPANALYZE,	/* analyze procedure */
+			   F_ARRAY_TYPANALYZE,		/* analyze procedure */
 			   enumTypeOid,		/* element type ID */
 			   true,			/* yes this is an array type */
 			   InvalidOid,		/* no further array type */
@@ -1450,7 +1450,7 @@ DefineRange(CreateRangeStmt *stmt)
 			   F_ARRAY_SEND,	/* send procedure */
 			   InvalidOid,		/* typmodin procedure - none */
 			   InvalidOid,		/* typmodout procedure - none */
-			   F_ARRAY_TYPANALYZE,	/* analyze procedure */
+			   F_ARRAY_TYPANALYZE,		/* analyze procedure */
 			   typoid,			/* element type ID */
 			   true,			/* yes this is an array type */
 			   InvalidOid,		/* no further array type */
@@ -1477,15 +1477,15 @@ DefineRange(CreateRangeStmt *stmt)
  * impossible to define a polymorphic constructor; we have to generate new
  * constructor functions explicitly for each range type.
  *
- * We actually define 4 functions, with 0 through 3 arguments.  This is just
+ * We actually define 4 functions, with 0 through 3 arguments.	This is just
  * to offer more convenience for the user.
  */
 static void
 makeRangeConstructors(const char *name, Oid namespace,
 					  Oid rangeOid, Oid subtype)
 {
-	static const char * const prosrc[2] = {"range_constructor2",
-										   "range_constructor3"};
+	static const char *const prosrc[2] = {"range_constructor2",
+	"range_constructor3"};
 	static const int pronargs[2] = {2, 3};
 
 	Oid			constructorArgTypes[3];
@@ -1509,7 +1509,7 @@ makeRangeConstructors(const char *name, Oid namespace,
 		constructorArgTypesVector = buildoidvector(constructorArgTypes,
 												   pronargs[i]);
 
-		procOid = ProcedureCreate(name,			/* name: same as range type */
+		procOid = ProcedureCreate(name, /* name: same as range type */
 								  namespace,	/* namespace */
 								  false,		/* replace */
 								  false,		/* returns set */
@@ -1518,7 +1518,7 @@ makeRangeConstructors(const char *name, Oid namespace,
 								  INTERNALlanguageId,	/* language */
 								  F_FMGR_INTERNAL_VALIDATOR,	/* language validator */
 								  prosrc[i],	/* prosrc */
-								  NULL,			/* probin */
+								  NULL, /* probin */
 								  false,		/* isAgg */
 								  false,		/* isWindowFunc */
 								  false,		/* security_definer */
@@ -1834,9 +1834,9 @@ findRangeSubOpclass(List *opcname, Oid subtype)
 		if (!IsBinaryCoercible(subtype, opInputType))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("operator class \"%s\" does not accept data type %s",
-							NameListToString(opcname),
-							format_type_be(subtype))));
+				 errmsg("operator class \"%s\" does not accept data type %s",
+						NameListToString(opcname),
+						format_type_be(subtype))));
 	}
 	else
 	{
@@ -2335,8 +2335,8 @@ AlterDomainDropConstraint(List *names, const char *constrName,
 		if (!missing_ok)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("constraint \"%s\" of domain \"%s\" does not exist",
-					   constrName, TypeNameToString(typename))));
+				  errmsg("constraint \"%s\" of domain \"%s\" does not exist",
+						 constrName, TypeNameToString(typename))));
 		else
 			ereport(NOTICE,
 					(errmsg("constraint \"%s\" of domain \"%s\" does not exist, skipping",
@@ -2958,7 +2958,7 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 						  ccsrc,	/* Source form of check constraint */
 						  true, /* is local */
 						  0,	/* inhcount */
-						  false);	/* is only */
+						  false);		/* is only */
 
 	/*
 	 * Return the compiled constraint expression so the calling routine can

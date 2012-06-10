@@ -30,7 +30,7 @@ typedef struct
 } RangeType;
 
 /* Use this macro in preference to fetching rangetypid field directly */
-#define RangeTypeGetOid(r)  ((r)->rangetypid)
+#define RangeTypeGetOid(r)	((r)->rangetypid)
 
 /* A range's flags byte contains these bits: */
 #define RANGE_EMPTY			0x01	/* range is empty */
@@ -40,8 +40,8 @@ typedef struct
 #define RANGE_UB_INF		0x10	/* upper bound is +infinity */
 #define RANGE_LB_NULL		0x20	/* lower bound is null (NOT USED) */
 #define RANGE_UB_NULL		0x40	/* upper bound is null (NOT USED) */
-#define RANGE_CONTAIN_EMPTY	0x80	/* marks a GiST internal-page entry whose
-									 * subtree contains some empty ranges */
+#define RANGE_CONTAIN_EMPTY 0x80/* marks a GiST internal-page entry whose
+								 * subtree contains some empty ranges */
 
 #define RANGE_HAS_LBOUND(flags) (!((flags) & (RANGE_EMPTY | \
 											  RANGE_LB_NULL | \
@@ -149,18 +149,18 @@ extern Datum tstzrange_subdiff(PG_FUNCTION_ARGS);
 
 /* assorted support functions */
 extern TypeCacheEntry *range_get_typcache(FunctionCallInfo fcinfo,
-										  Oid rngtypid);
+				   Oid rngtypid);
 extern RangeType *range_serialize(TypeCacheEntry *typcache, RangeBound *lower,
-							 RangeBound *upper, bool empty);
+				RangeBound *upper, bool empty);
 extern void range_deserialize(TypeCacheEntry *typcache, RangeType *range,
-							  RangeBound *lower, RangeBound *upper,
-							  bool *empty);
+				  RangeBound *lower, RangeBound *upper,
+				  bool *empty);
 extern char range_get_flags(RangeType *range);
 extern void range_set_contain_empty(RangeType *range);
 extern RangeType *make_range(TypeCacheEntry *typcache, RangeBound *lower,
-						RangeBound *upper, bool empty);
+		   RangeBound *upper, bool empty);
 extern int range_cmp_bounds(TypeCacheEntry *typcache, RangeBound *b1,
-							RangeBound *b2);
+				 RangeBound *b2);
 extern int range_cmp_bound_values(TypeCacheEntry *typcache, RangeBound *b1,
 					   RangeBound *b2);
 extern RangeType *make_empty_range(TypeCacheEntry *typcache);

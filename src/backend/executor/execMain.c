@@ -80,7 +80,7 @@ static void ExecutePlan(EState *estate, PlanState *planstate,
 static bool ExecCheckRTEPerms(RangeTblEntry *rte);
 static void ExecCheckXactReadOnly(PlannedStmt *plannedstmt);
 static char *ExecBuildSlotValueDescription(TupleTableSlot *slot,
-										   int maxfieldlen);
+							  int maxfieldlen);
 static void EvalPlanQualStart(EPQState *epqstate, EState *parentestate,
 				  Plan *planTree);
 
@@ -1520,7 +1520,7 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 				ereport(ERROR,
 						(errcode(ERRCODE_NOT_NULL_VIOLATION),
 						 errmsg("null value in column \"%s\" violates not-null constraint",
-						NameStr(rel->rd_att->attrs[attrChk - 1]->attname)),
+						  NameStr(rel->rd_att->attrs[attrChk - 1]->attname)),
 						 errdetail("Failing row contains %s.",
 								   ExecBuildSlotValueDescription(slot, 64))));
 		}

@@ -233,8 +233,8 @@ typedef struct PgStat_MsgTabstat
 	int			m_nentries;
 	int			m_xact_commit;
 	int			m_xact_rollback;
-	PgStat_Counter	  m_block_read_time;		/* times in microseconds */
-	PgStat_Counter	  m_block_write_time;
+	PgStat_Counter m_block_read_time;	/* times in microseconds */
+	PgStat_Counter m_block_write_time;
 	PgStat_TableEntry m_entry[PGSTAT_NUM_TABENTRIES];
 } PgStat_MsgTabstat;
 
@@ -429,7 +429,7 @@ typedef struct PgStat_FunctionEntry
 {
 	Oid			f_id;
 	PgStat_Counter f_numcalls;
-	PgStat_Counter f_total_time;		/* times in microseconds */
+	PgStat_Counter f_total_time;	/* times in microseconds */
 	PgStat_Counter f_self_time;
 } PgStat_FunctionEntry;
 
@@ -540,7 +540,7 @@ typedef struct PgStat_StatDBEntry
 	PgStat_Counter n_temp_files;
 	PgStat_Counter n_temp_bytes;
 	PgStat_Counter n_deadlocks;
-	PgStat_Counter n_block_read_time;		/* times in microseconds */
+	PgStat_Counter n_block_read_time;	/* times in microseconds */
 	PgStat_Counter n_block_write_time;
 
 	TimestampTz stat_reset_timestamp;
@@ -600,7 +600,7 @@ typedef struct PgStat_StatFuncEntry
 
 	PgStat_Counter f_numcalls;
 
-	PgStat_Counter f_total_time;		/* times in microseconds */
+	PgStat_Counter f_total_time;	/* times in microseconds */
 	PgStat_Counter f_self_time;
 } PgStat_StatFuncEntry;
 
@@ -629,7 +629,8 @@ typedef struct PgStat_GlobalStats
  * Backend states
  * ----------
  */
-typedef enum BackendState {
+typedef enum BackendState
+{
 	STATE_UNDEFINED,
 	STATE_IDLE,
 	STATE_RUNNING,
@@ -674,7 +675,7 @@ typedef struct PgBackendStatus
 	TimestampTz st_proc_start_timestamp;
 	TimestampTz st_xact_start_timestamp;
 	TimestampTz st_activity_start_timestamp;
-    TimestampTz st_state_start_timestamp;
+	TimestampTz st_state_start_timestamp;
 
 	/* Database OID, owning user's OID, connection client address */
 	Oid			st_databaseid;
@@ -685,8 +686,8 @@ typedef struct PgBackendStatus
 	/* Is backend currently waiting on an lmgr lock? */
 	bool		st_waiting;
 
-    /* current state */
-    BackendState	st_state;
+	/* current state */
+	BackendState st_state;
 
 	/* application name; MUST be null-terminated */
 	char	   *st_appname;

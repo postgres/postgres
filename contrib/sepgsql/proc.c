@@ -42,9 +42,9 @@ sepgsql_proc_post_create(Oid functionId)
 	char	   *tcontext;
 	char	   *ncontext;
 	int			i;
-	StringInfoData	audit_name;
-	ObjectAddress	object;
-	Form_pg_proc	proForm;
+	StringInfoData audit_name;
+	ObjectAddress object;
+	Form_pg_proc proForm;
 
 	/*
 	 * Fetch namespace of the new procedure. Because pg_proc entry is not
@@ -77,6 +77,7 @@ sepgsql_proc_post_create(Oid functionId)
 							SEPG_DB_SCHEMA__ADD_NAME,
 							getObjectDescription(&object),
 							true);
+
 	/*
 	 * XXX - db_language:{implement} also should be checked here
 	 */
@@ -97,9 +98,10 @@ sepgsql_proc_post_create(Oid functionId)
 	 */
 	initStringInfo(&audit_name);
 	appendStringInfo(&audit_name, "function %s(", NameStr(proForm->proname));
-	for (i=0; i < proForm->pronargs; i++)
+	for (i = 0; i < proForm->pronargs; i++)
 	{
-		Oid		typeoid = proForm->proargtypes.values[i];
+		Oid			typeoid = proForm->proargtypes.values[i];
+
 		if (i > 0)
 			appendStringInfoChar(&audit_name, ',');
 		appendStringInfoString(&audit_name, format_type_be(typeoid));
@@ -111,6 +113,7 @@ sepgsql_proc_post_create(Oid functionId)
 								  SEPG_DB_PROCEDURE__CREATE,
 								  audit_name.data,
 								  true);
+
 	/*
 	 * Assign the default security label on a new procedure
 	 */
@@ -138,8 +141,8 @@ sepgsql_proc_post_create(Oid functionId)
 void
 sepgsql_proc_drop(Oid functionId)
 {
-	ObjectAddress	object;
-	char		   *audit_name;
+	ObjectAddress object;
+	char	   *audit_name;
 
 	/*
 	 * check db_schema:{remove_name} permission
@@ -156,19 +159,19 @@ sepgsql_proc_drop(Oid functionId)
 							true);
 	pfree(audit_name);
 
-    /*
-     * check db_procedure:{drop} permission
-     */
+	/*
+	 * check db_procedure:{drop} permission
+	 */
 	object.classId = ProcedureRelationId;
 	object.objectId = functionId;
 	object.objectSubId = 0;
 	audit_name = getObjectDescription(&object);
 
-    sepgsql_avc_check_perms(&object,
-                            SEPG_CLASS_DB_PROCEDURE,
-                            SEPG_DB_PROCEDURE__DROP,
-                            audit_name,
-                            true);
+	sepgsql_avc_check_perms(&object,
+							SEPG_CLASS_DB_PROCEDURE,
+							SEPG_DB_PROCEDURE__DROP,
+							audit_name,
+							true);
 	pfree(audit_name);
 }
 
@@ -181,8 +184,8 @@ sepgsql_proc_drop(Oid functionId)
 void
 sepgsql_proc_relabel(Oid functionId, const char *seclabel)
 {
-	ObjectAddress	object;
-	char		   *audit_name;
+	ObjectAddress object;
+	char	   *audit_name;
 
 	object.classId = ProcedureRelationId;
 	object.objectId = functionId;
@@ -198,6 +201,7 @@ sepgsql_proc_relabel(Oid functionId, const char *seclabel)
 							SEPG_DB_PROCEDURE__RELABELFROM,
 							audit_name,
 							true);
+
 	/*
 	 * check db_procedure:{relabelto} permission
 	 */

@@ -11,7 +11,7 @@
 typedef struct PLyCursorObject
 {
 	PyObject_HEAD
-	char		*portalname;
+	char	   *portalname;
 	PLyTypeInfo result;
 	bool		closed;
 } PLyCursorObject;
@@ -19,4 +19,4 @@ typedef struct PLyCursorObject
 extern void PLy_cursor_init_type(void);
 extern PyObject *PLy_cursor(PyObject *self, PyObject *args);
 
-#endif	/* PLPY_CURSOROBJECT_H */
+#endif   /* PLPY_CURSOROBJECT_H */

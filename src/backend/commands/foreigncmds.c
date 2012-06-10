@@ -166,7 +166,7 @@ transformGenericOptions(Oid catalogId,
 
 	if (OidIsValid(fdwvalidator))
 	{
-		Datum	valarg = result;
+		Datum		valarg = result;
 
 		/*
 		 * Pass a null options list as an empty array, so that validators
@@ -215,13 +215,13 @@ RenameForeignDataWrapper(const char *oldname, const char *newname)
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("foreign-data wrapper \"%s\" does not exist", oldname)));
+			 errmsg("foreign-data wrapper \"%s\" does not exist", oldname)));
 
 	/* make sure the new name doesn't exist */
 	if (SearchSysCacheExists1(FOREIGNDATAWRAPPERNAME, CStringGetDatum(newname)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("foreign-data wrapper \"%s\" already exists", newname)));
+			 errmsg("foreign-data wrapper \"%s\" already exists", newname)));
 
 	/* must be owner of FDW */
 	if (!pg_foreign_data_wrapper_ownercheck(HeapTupleGetOid(tup), GetUserId()))
@@ -364,7 +364,7 @@ AlterForeignDataWrapperOwner_oid(Oid fwdId, Oid newOwnerId)
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("foreign-data wrapper with OID %u does not exist", fwdId)));
+		  errmsg("foreign-data wrapper with OID %u does not exist", fwdId)));
 
 	AlterForeignDataWrapperOwner_internal(rel, tup, newOwnerId);
 

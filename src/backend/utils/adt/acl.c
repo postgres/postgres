@@ -835,15 +835,15 @@ acldefault(GrantObjectType objtype, Oid ownerId)
 
 
 /*
- * SQL-accessible version of acldefault().  Hackish mapping from "char" type to
+ * SQL-accessible version of acldefault().	Hackish mapping from "char" type to
  * ACL_OBJECT_* values, but it's only used in the information schema, not
  * documented for general use.
  */
 Datum
 acldefault_sql(PG_FUNCTION_ARGS)
 {
-	char	objtypec = PG_GETARG_CHAR(0);
-	Oid		owner = PG_GETARG_OID(1);
+	char		objtypec = PG_GETARG_CHAR(0);
+	Oid			owner = PG_GETARG_OID(1);
 	GrantObjectType objtype = 0;
 
 	switch (objtypec)

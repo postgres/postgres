@@ -1287,7 +1287,7 @@ shdepReassignOwned(List *roleids, Oid newrole)
 			ereport(ERROR,
 					(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
 					 errmsg("cannot reassign ownership of objects owned by %s because they are required by the database system",
-						  getObjectDescription(&obj))));
+							getObjectDescription(&obj))));
 
 			/*
 			 * There's no need to tell the whole truth, which is that we

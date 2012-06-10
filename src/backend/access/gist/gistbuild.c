@@ -48,7 +48,7 @@ typedef enum
 								 * before switching to the buffering build
 								 * mode */
 	GIST_BUFFERING_ACTIVE		/* in buffering build mode */
-}	GistBufferingMode;
+} GistBufferingMode;
 
 /* Working state for gistbuild and its callback */
 typedef struct
@@ -263,7 +263,7 @@ gistValidateBufferingOption(char *value)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("invalid value for \"buffering\" option"),
-			   errdetail("Valid values are \"on\", \"off\", and \"auto\".")));
+			  errdetail("Valid values are \"on\", \"off\", and \"auto\".")));
 	}
 }
 
@@ -567,7 +567,7 @@ gistProcessItup(GISTBuildState *buildstate, IndexTuple itup,
 	BlockNumber childblkno;
 	Buffer		buffer;
 	bool		result = false;
-	BlockNumber	blkno;
+	BlockNumber blkno;
 	int			level;
 	OffsetNumber downlinkoffnum = InvalidOffsetNumber;
 	BlockNumber parentblkno = InvalidBlockNumber;
@@ -623,7 +623,7 @@ gistProcessItup(GISTBuildState *buildstate, IndexTuple itup,
 		{
 			gistbufferinginserttuples(buildstate, buffer, level,
 									  &newtup, 1, childoffnum,
-									  InvalidBlockNumber, InvalidOffsetNumber);
+									InvalidBlockNumber, InvalidOffsetNumber);
 			/* gistbufferinginserttuples() released the buffer */
 		}
 		else
@@ -716,26 +716,26 @@ gistbufferinginserttuples(GISTBuildState *buildstate, Buffer buffer, int level,
 
 		/*
 		 * All the downlinks on the old root page are now on one of the child
-		 * pages. Visit all the new child pages to memorize the parents of
-		 * the grandchildren.
+		 * pages. Visit all the new child pages to memorize the parents of the
+		 * grandchildren.
 		 */
 		if (gfbb->rootlevel > 1)
 		{
 			maxoff = PageGetMaxOffsetNumber(page);
 			for (off = FirstOffsetNumber; off <= maxoff; off++)
 			{
-				ItemId iid = PageGetItemId(page, off);
-				IndexTuple idxtuple = (IndexTuple) PageGetItem(page, iid);
+				ItemId		iid = PageGetItemId(page, off);
+				IndexTuple	idxtuple = (IndexTuple) PageGetItem(page, iid);
 				BlockNumber childblkno = ItemPointerGetBlockNumber(&(idxtuple->t_tid));
-				Buffer childbuf = ReadBuffer(buildstate->indexrel, childblkno);
+				Buffer		childbuf = ReadBuffer(buildstate->indexrel, childblkno);
 
 				LockBuffer(childbuf, GIST_SHARE);
 				gistMemorizeAllDownlinks(buildstate, childbuf);
 				UnlockReleaseBuffer(childbuf);
 
 				/*
-				 * Also remember that the parent of the new child page is
-				 * the root block.
+				 * Also remember that the parent of the new child page is the
+				 * root block.
 				 */
 				gistMemorizeParent(buildstate, childblkno, GIST_ROOT_BLKNO);
 			}
@@ -789,8 +789,8 @@ gistbufferinginserttuples(GISTBuildState *buildstate, Buffer buffer, int level,
 			 * Remember the parent of each new child page in our parent map.
 			 * This assumes that the downlinks fit on the parent page. If the
 			 * parent page is split, too, when we recurse up to insert the
-			 * downlinks, the recursive gistbufferinginserttuples() call
-			 * will update the map again.
+			 * downlinks, the recursive gistbufferinginserttuples() call will
+			 * update the map again.
 			 */
 			if (level > 0)
 				gistMemorizeParent(buildstate,
@@ -879,8 +879,9 @@ gistBufferingFindCorrectParent(GISTBuildState *buildstate,
 	if (parent == *parentblkno && *parentblkno != InvalidBlockNumber &&
 		*downlinkoffnum != InvalidOffsetNumber && *downlinkoffnum <= maxoff)
 	{
-		ItemId iid = PageGetItemId(page, *downlinkoffnum);
-		IndexTuple idxtuple = (IndexTuple) PageGetItem(page, iid);
+		ItemId		iid = PageGetItemId(page, *downlinkoffnum);
+		IndexTuple	idxtuple = (IndexTuple) PageGetItem(page, iid);
+
 		if (ItemPointerGetBlockNumber(&(idxtuple->t_tid)) == childblkno)
 		{
 			/* Still there */
@@ -889,16 +890,17 @@ gistBufferingFindCorrectParent(GISTBuildState *buildstate,
 	}
 
 	/*
-	 * Downlink was not at the offset where it used to be. Scan the page
-	 * to find it. During normal gist insertions, it might've moved to another
-	 * page, to the right, but during a buffering build, we keep track of
-	 * the parent of each page in the lookup table so we should always know
-	 * what page it's on.
+	 * Downlink was not at the offset where it used to be. Scan the page to
+	 * find it. During normal gist insertions, it might've moved to another
+	 * page, to the right, but during a buffering build, we keep track of the
+	 * parent of each page in the lookup table so we should always know what
+	 * page it's on.
 	 */
 	for (off = FirstOffsetNumber; off <= maxoff; off = OffsetNumberNext(off))
 	{
-		ItemId iid = PageGetItemId(page, off);
-		IndexTuple idxtuple = (IndexTuple) PageGetItem(page, iid);
+		ItemId		iid = PageGetItemId(page, off);
+		IndexTuple	idxtuple = (IndexTuple) PageGetItem(page, iid);
+
 		if (ItemPointerGetBlockNumber(&(idxtuple->t_tid)) == childblkno)
 		{
 			/* yes!!, found it */
@@ -908,7 +910,7 @@ gistBufferingFindCorrectParent(GISTBuildState *buildstate,
 	}
 
 	elog(ERROR, "failed to re-find parent for block %u", childblkno);
-	return InvalidBuffer; /* keep compiler quiet */
+	return InvalidBuffer;		/* keep compiler quiet */
 }
 
 /*
@@ -1129,7 +1131,7 @@ gistGetMaxLevel(Relation index)
 
 typedef struct
 {
-	BlockNumber childblkno; /* hash key */
+	BlockNumber childblkno;		/* hash key */
 	BlockNumber parentblkno;
 } ParentMapEntry;
 
@@ -1156,9 +1158,9 @@ gistMemorizeParent(GISTBuildState *buildstate, BlockNumber child, BlockNumber pa
 	bool		found;
 
 	entry = (ParentMapEntry *) hash_search(buildstate->parentMap,
-										  (const void *) &child,
-										  HASH_ENTER,
-										  &found);
+										   (const void *) &child,
+										   HASH_ENTER,
+										   &found);
 	entry->parentblkno = parent;
 }
 
@@ -1171,16 +1173,17 @@ gistMemorizeAllDownlinks(GISTBuildState *buildstate, Buffer parentbuf)
 	OffsetNumber maxoff;
 	OffsetNumber off;
 	BlockNumber parentblkno = BufferGetBlockNumber(parentbuf);
-	Page page = BufferGetPage(parentbuf);
+	Page		page = BufferGetPage(parentbuf);
 
 	Assert(!GistPageIsLeaf(page));
 
 	maxoff = PageGetMaxOffsetNumber(page);
 	for (off = FirstOffsetNumber; off <= maxoff; off++)
 	{
-		ItemId iid = PageGetItemId(page, off);
-		IndexTuple idxtuple = (IndexTuple) PageGetItem(page, iid);
+		ItemId		iid = PageGetItemId(page, off);
+		IndexTuple	idxtuple = (IndexTuple) PageGetItem(page, iid);
 		BlockNumber childblkno = ItemPointerGetBlockNumber(&(idxtuple->t_tid));
+
 		gistMemorizeParent(buildstate, childblkno, parentblkno);
 	}
 }
@@ -1193,9 +1196,9 @@ gistGetParent(GISTBuildState *buildstate, BlockNumber child)
 
 	/* Find node buffer in hash table */
 	entry = (ParentMapEntry *) hash_search(buildstate->parentMap,
-										  (const void *) &child,
-										  HASH_FIND,
-										  &found);
+										   (const void *) &child,
+										   HASH_FIND,
+										   &found);
 	if (!found)
 		elog(ERROR, "could not find parent of block %d in lookup table", child);
 

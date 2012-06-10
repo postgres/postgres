@@ -381,7 +381,7 @@ _copyIndexScan(const IndexScan *from)
 static IndexOnlyScan *
 _copyIndexOnlyScan(const IndexOnlyScan *from)
 {
-	IndexOnlyScan  *newnode = makeNode(IndexOnlyScan);
+	IndexOnlyScan *newnode = makeNode(IndexOnlyScan);
 
 	/*
 	 * copy node superclass fields
@@ -4473,7 +4473,7 @@ copyObject(const void *from)
 
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(from));
-			retval = 0;		/* keep compiler quiet */
+			retval = 0;			/* keep compiler quiet */
 			break;
 	}
 

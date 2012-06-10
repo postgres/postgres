@@ -95,7 +95,7 @@ pgstatindex(PG_FUNCTION_ARGS)
 	BlockNumber nblocks;
 	BlockNumber blkno;
 	BTIndexStat indexStat;
- 	BufferAccessStrategy bstrategy = GetAccessStrategy(BAS_BULKREAD);
+	BufferAccessStrategy bstrategy = GetAccessStrategy(BAS_BULKREAD);
 
 	if (!superuser())
 		ereport(ERROR,
@@ -160,7 +160,7 @@ pgstatindex(PG_FUNCTION_ARGS)
 		CHECK_FOR_INTERRUPTS();
 
 		/* Read and lock buffer */
- 		buffer = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL, bstrategy);
+		buffer = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL, bstrategy);
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
 		page = BufferGetPage(buffer);

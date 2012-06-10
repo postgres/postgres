@@ -55,7 +55,7 @@ ClusterInfo old_cluster,
 			new_cluster;
 OSInfo		os_info;
 
-char *output_files[] = {
+char	   *output_files[] = {
 	SERVER_LOG_FILE,
 #ifdef WIN32
 	/* unique file for pg_ctl start */
@@ -122,11 +122,10 @@ main(int argc, char **argv)
 	stop_postmaster(false);
 
 	/*
-	 *	Most failures happen in create_new_objects(), which has
-	 *	completed at this point.  We do this here because it is just
-	 *	before linking, which will link the old and new cluster data
-	 *	files, preventing the old cluster from being safely started
-	 *	once the new cluster is started.
+	 * Most failures happen in create_new_objects(), which has completed at
+	 * this point.	We do this here because it is just before linking, which
+	 * will link the old and new cluster data files, preventing the old
+	 * cluster from being safely started once the new cluster is started.
 	 */
 	if (user_opts.transfer_mode == TRANSFER_MODE_LINK)
 		disable_old_cluster();
@@ -215,8 +214,8 @@ prepare_new_cluster(void)
 	exec_prog(true, true, UTILITY_LOG_FILE,
 			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --username \"%s\" "
 			  "--all --analyze %s >> \"%s\" 2>&1" SYSTEMQUOTE,
-	  new_cluster.bindir, new_cluster.port, os_info.user,
-	  log_opts.verbose ? "--verbose" : "", UTILITY_LOG_FILE);
+			  new_cluster.bindir, new_cluster.port, os_info.user,
+			  log_opts.verbose ? "--verbose" : "", UTILITY_LOG_FILE);
 	check_ok();
 
 	/*
@@ -229,8 +228,8 @@ prepare_new_cluster(void)
 	exec_prog(true, true, UTILITY_LOG_FILE,
 			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --username \"%s\" "
 			  "--all --freeze %s >> \"%s\" 2>&1" SYSTEMQUOTE,
-	  new_cluster.bindir, new_cluster.port, os_info.user,
-	  log_opts.verbose ? "--verbose" : "", UTILITY_LOG_FILE);
+			  new_cluster.bindir, new_cluster.port, os_info.user,
+			  log_opts.verbose ? "--verbose" : "", UTILITY_LOG_FILE);
 	check_ok();
 
 	get_pg_database_relfilenode(&new_cluster);
@@ -252,8 +251,8 @@ prepare_new_databases(void)
 
 	/*
 	 * Install support functions in the global-object restore database to
-	 * preserve pg_authid.oid.  pg_dumpall uses 'template0' as its template
-	 * database so objects we add into 'template1' are not propogated.  They
+	 * preserve pg_authid.oid.	pg_dumpall uses 'template0' as its template
+	 * database so objects we add into 'template1' are not propogated.	They
 	 * are removed on pg_upgrade exit.
 	 */
 	install_support_functions_in_new_db("template1");
@@ -267,7 +266,7 @@ prepare_new_databases(void)
 	exec_prog(true, true, RESTORE_LOG_FILE,
 			  SYSTEMQUOTE "\"%s/psql\" --echo-queries "
 			  "--set ON_ERROR_STOP=on "
-			  /* --no-psqlrc prevents AUTOCOMMIT=off */
+	/* --no-psqlrc prevents AUTOCOMMIT=off */
 			  "--no-psqlrc --port %d --username \"%s\" "
 			  "-f \"%s\" --dbname template1 >> \"%s\" 2>&1" SYSTEMQUOTE,
 			  new_cluster.bindir, new_cluster.port, os_info.user,
@@ -453,13 +452,13 @@ set_frozenxids(void)
 static void
 cleanup(void)
 {
-	
+
 	fclose(log_opts.internal);
 
 	/* Remove dump and log files? */
 	if (!log_opts.retain)
 	{
-		char		**filename;
+		char	  **filename;
 
 		for (filename = output_files; *filename != NULL; filename++)
 			unlink(*filename);

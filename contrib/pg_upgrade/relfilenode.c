@@ -34,26 +34,28 @@ const char *
 transfer_all_new_dbs(DbInfoArr *old_db_arr,
 				   DbInfoArr *new_db_arr, char *old_pgdata, char *new_pgdata)
 {
-	int			old_dbnum, new_dbnum;
+	int			old_dbnum,
+				new_dbnum;
 	const char *msg = NULL;
 
 	prep_status("%s user relation files\n",
-		user_opts.transfer_mode == TRANSFER_MODE_LINK ? "Linking" : "Copying");
+	  user_opts.transfer_mode == TRANSFER_MODE_LINK ? "Linking" : "Copying");
 
 	/* Scan the old cluster databases and transfer their files */
 	for (old_dbnum = new_dbnum = 0;
 		 old_dbnum < old_db_arr->ndbs;
 		 old_dbnum++, new_dbnum++)
 	{
-		DbInfo	   *old_db = &old_db_arr->dbs[old_dbnum], *new_db = NULL;
+		DbInfo	   *old_db = &old_db_arr->dbs[old_dbnum],
+				   *new_db = NULL;
 		FileNameMap *mappings;
 		int			n_maps;
 		pageCnvCtx *pageConverter = NULL;
 
 		/*
-		 *	Advance past any databases that exist in the new cluster
-		 *	but not in the old, e.g. "postgres".  (The user might
-		 *	have removed the 'postgres' database from the old cluster.)
+		 * Advance past any databases that exist in the new cluster but not in
+		 * the old, e.g. "postgres".  (The user might have removed the
+		 * 'postgres' database from the old cluster.)
 		 */
 		for (; new_dbnum < new_db_arr->ndbs; new_dbnum++)
 		{
@@ -83,8 +85,8 @@ transfer_all_new_dbs(DbInfoArr *old_db_arr,
 		}
 	}
 
-	prep_status(" ");			/* in case nothing printed; pass a space so gcc
-								 * doesn't complain about empty format
+	prep_status(" ");			/* in case nothing printed; pass a space so
+								 * gcc doesn't complain about empty format
 								 * string */
 	check_ok();
 
@@ -137,14 +139,14 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 	int			mapnum;
 	int			fileno;
 	bool		vm_crashsafe_change = false;
-	
+
 	old_dir[0] = '\0';
 
 	/* Do not copy non-crashsafe vm files for binaries that assume crashsafety */
 	if (old_cluster.controldata.cat_ver < VISIBILITY_MAP_CRASHSAFE_CAT_VER &&
 		new_cluster.controldata.cat_ver >= VISIBILITY_MAP_CRASHSAFE_CAT_VER)
 		vm_crashsafe_change = true;
-	
+
 	for (mapnum = 0; mapnum < size; mapnum++)
 	{
 		char		old_file[MAXPGPATH];
@@ -190,8 +192,8 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 
 			for (fileno = 0; fileno < numFiles; fileno++)
 			{
-				char *vm_offset = strstr(namelist[fileno]->d_name, "_vm");
-				bool is_vm_file = false;
+				char	   *vm_offset = strstr(namelist[fileno]->d_name, "_vm");
+				bool		is_vm_file = false;
 
 				/* Is a visibility map file? (name ends with _vm) */
 				if (vm_offset && strlen(vm_offset) == strlen("_vm"))

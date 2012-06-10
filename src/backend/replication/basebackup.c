@@ -141,6 +141,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			ti->size = opt->progress ? sendDir(linkpath, strlen(linkpath), true) : -1;
 			tablespaces = lappend(tablespaces, ti);
 #else
+
 			/*
 			 * If the platform does not have symbolic links, it should not be
 			 * possible to have tablespaces - clearly somebody else created
@@ -148,7 +149,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			 */
 			ereport(WARNING,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("tablespaces are not supported on this platform")));
+				  errmsg("tablespaces are not supported on this platform")));
 #endif
 		}
 
@@ -661,9 +662,9 @@ sendDir(char *path, int basepathlen, bool sizeonly)
 		/* Allow symbolic links in pg_tblspc only */
 		if (strcmp(path, "./pg_tblspc") == 0 &&
 #ifndef WIN32
-				 S_ISLNK(statbuf.st_mode)
+			S_ISLNK(statbuf.st_mode)
 #else
-				 pgwin32_is_junction(pathbuf)
+			pgwin32_is_junction(pathbuf)
 #endif
 			)
 		{
@@ -687,6 +688,7 @@ sendDir(char *path, int basepathlen, bool sizeonly)
 				_tarWriteHeader(pathbuf + basepathlen + 1, linkpath, &statbuf);
 			size += 512;		/* Size of the header just added */
 #else
+
 			/*
 			 * If the platform does not have symbolic links, it should not be
 			 * possible to have tablespaces - clearly somebody else created
@@ -694,9 +696,9 @@ sendDir(char *path, int basepathlen, bool sizeonly)
 			 */
 			ereport(WARNING,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("tablespaces are not supported on this platform")));
+				  errmsg("tablespaces are not supported on this platform")));
 			continue;
-#endif /* HAVE_READLINK */
+#endif   /* HAVE_READLINK */
 		}
 		else if (S_ISDIR(statbuf.st_mode))
 		{

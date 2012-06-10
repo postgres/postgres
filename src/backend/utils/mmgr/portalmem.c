@@ -487,7 +487,7 @@ PortalDrop(Portal portal, bool isTopCommit)
 	 * during transaction abort.
 	 *
 	 * Note: in most paths of control, this will have been done already in
-	 * MarkPortalDone or MarkPortalFailed.  We're just making sure.
+	 * MarkPortalDone or MarkPortalFailed.	We're just making sure.
 	 */
 	if (PointerIsValid(portal->cleanup))
 	{

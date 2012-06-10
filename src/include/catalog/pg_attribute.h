@@ -201,7 +201,7 @@ typedef FormData_pg_attribute *Form_pg_attribute;
 #define Anum_pg_attribute_attcollation	18
 #define Anum_pg_attribute_attacl		19
 #define Anum_pg_attribute_attoptions	20
-#define Anum_pg_attribute_attfdwoptions	21
+#define Anum_pg_attribute_attfdwoptions 21
 
 
 /* ----------------

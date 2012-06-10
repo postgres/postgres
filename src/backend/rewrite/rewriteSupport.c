@@ -168,8 +168,8 @@ get_rewrite_oid_without_relid(const char *rulename,
 		if (HeapTupleIsValid(htup))
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
-					 errmsg("there are multiple rules named \"%s\"", rulename),
-					 errhint("Specify a relation name as well as a rule name.")));
+				   errmsg("there are multiple rules named \"%s\"", rulename),
+				errhint("Specify a relation name as well as a rule name.")));
 	}
 	heap_endscan(scanDesc);
 	heap_close(RewriteRelation, AccessShareLock);

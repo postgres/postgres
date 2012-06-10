@@ -22,7 +22,7 @@
 #include "utils/inval.h"
 
 
-uint64 SharedInvalidMessageCounter;
+uint64		SharedInvalidMessageCounter;
 
 
 /*

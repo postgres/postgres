@@ -252,8 +252,8 @@ GetReplicationApplyDelay(void)
 	XLogRecPtr	receivePtr;
 	XLogRecPtr	replayPtr;
 
-	long	secs;
-	int		usecs;
+	long		secs;
+	int			usecs;
 
 	SpinLockAcquire(&walrcv->mutex);
 	receivePtr = walrcv->receivedUpto;
@@ -284,9 +284,9 @@ GetReplicationTransferLatency(void)
 	TimestampTz lastMsgSendTime;
 	TimestampTz lastMsgReceiptTime;
 
-	long	secs = 0;
-	int		usecs = 0;
-	int		ms;
+	long		secs = 0;
+	int			usecs = 0;
+	int			ms;
 
 	SpinLockAcquire(&walrcv->mutex);
 	lastMsgSendTime = walrcv->lastMsgSendTime;

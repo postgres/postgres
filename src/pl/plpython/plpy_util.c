@@ -122,4 +122,5 @@ PLyUnicode_FromString(const char *s)
 
 	return o;
 }
+
 #endif   /* PY_MAJOR_VERSION >= 3 */

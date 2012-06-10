@@ -361,9 +361,9 @@ pgarch_MainLoop(void)
 	wakened = true;
 
 	/*
-	 * There shouldn't be anything for the archiver to do except to wait
-	 * for a signal ... however, the archiver exists to protect our data,
-	 * so she wakes up occasionally to allow herself to be proactive.
+	 * There shouldn't be anything for the archiver to do except to wait for a
+	 * signal ... however, the archiver exists to protect our data, so she
+	 * wakes up occasionally to allow herself to be proactive.
 	 */
 	do
 	{
@@ -410,18 +410,18 @@ pgarch_MainLoop(void)
 		 * PGARCH_AUTOWAKE_INTERVAL having passed since last_copy_time, or
 		 * until postmaster dies.
 		 */
-		if (!time_to_stop) /* Don't wait during last iteration */
+		if (!time_to_stop)		/* Don't wait during last iteration */
 		{
-			pg_time_t curtime = (pg_time_t) time(NULL);
-			int		timeout;
+			pg_time_t	curtime = (pg_time_t) time(NULL);
+			int			timeout;
 
 			timeout = PGARCH_AUTOWAKE_INTERVAL - (curtime - last_copy_time);
 			if (timeout > 0)
 			{
-				int		rc;
+				int			rc;
 
 				rc = WaitLatch(&mainloop_latch,
-							   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
+							 WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
 							   timeout * 1000L);
 				if (rc & WL_TIMEOUT)
 					wakened = true;

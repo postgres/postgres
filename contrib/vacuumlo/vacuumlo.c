@@ -69,7 +69,7 @@ vacuumlo(const char *database, const struct _param * param)
 	int			i;
 	static char *password = NULL;
 	bool		new_pass;
-	bool        success = true;
+	bool		success = true;
 
 	/* Note: password can be carried over from a previous call */
 	if (param->pg_prompt == TRI_YES && password == NULL)
@@ -261,8 +261,8 @@ vacuumlo(const char *database, const struct _param * param)
 	 * We don't want to run each delete as an individual transaction, because
 	 * the commit overhead would be high.  However, since 9.0 the backend will
 	 * acquire a lock per deleted LO, so deleting too many LOs per transaction
-	 * risks running out of room in the shared-memory lock table.
-	 * Accordingly, we delete up to transaction_limit LOs per transaction.
+	 * risks running out of room in the shared-memory lock table. Accordingly,
+	 * we delete up to transaction_limit LOs per transaction.
 	 */
 	res = PQexec(conn, "begin");
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
@@ -459,8 +459,8 @@ main(int argc, char **argv)
 				if (param.transaction_limit < 0)
 				{
 					fprintf(stderr,
-				"%s: transaction limit must not be negative (0 disables)\n",
-						progname);
+							"%s: transaction limit must not be negative (0 disables)\n",
+							progname);
 					exit(1);
 				}
 				break;

@@ -950,8 +950,8 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		 * If there are indices on the result relation, open them and save
 		 * descriptors in the result relation info, so that we can add new
 		 * index entries for the tuples we add/update.	We need not do this
-		 * for a DELETE, however, since deletion doesn't affect indexes.
-		 * Also, inside an EvalPlanQual operation, the indexes might be open
+		 * for a DELETE, however, since deletion doesn't affect indexes. Also,
+		 * inside an EvalPlanQual operation, the indexes might be open
 		 * already, since we share the resultrel state with the original
 		 * query.
 		 */

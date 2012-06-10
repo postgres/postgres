@@ -173,6 +173,7 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 		if ((wakeEvents & WL_LATCH_SET) && latch->is_set)
 		{
 			result |= WL_LATCH_SET;
+
 			/*
 			 * Leave loop immediately, avoid blocking again. We don't attempt
 			 * to report any other events that might also be satisfied.
@@ -199,7 +200,7 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 			/* Latch is set, we'll handle that on next iteration of loop */
 		}
 		else if ((wakeEvents & (WL_SOCKET_READABLE | WL_SOCKET_WRITEABLE)) &&
-				 rc == WAIT_OBJECT_0 + 2)	/* socket is at event slot 2 */
+				 rc == WAIT_OBJECT_0 + 2)		/* socket is at event slot 2 */
 		{
 			WSANETWORKEVENTS resEvents;
 
@@ -222,7 +223,7 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 				 rc == WAIT_OBJECT_0 + pmdeath_eventno)
 		{
 			/*
-			 * Postmaster apparently died.  Since the consequences of falsely
+			 * Postmaster apparently died.	Since the consequences of falsely
 			 * returning WL_POSTMASTER_DEATH could be pretty unpleasant, we
 			 * take the trouble to positively verify this with
 			 * PostmasterIsAlive(), even though there is no known reason to

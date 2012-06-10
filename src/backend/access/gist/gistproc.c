@@ -244,7 +244,7 @@ typedef struct
 	int			index;
 	/* Delta between penalties of entry insertion into different groups */
 	double		delta;
-}	CommonEntry;
+} CommonEntry;
 
 /*
  * Context for g_box_consider_split. Contains information about currently
@@ -267,7 +267,7 @@ typedef struct
 	int			dim;			/* axis of this split */
 	double		range;			/* width of general MBR projection to the
 								 * selected axis */
-}	ConsiderSplitContext;
+} ConsiderSplitContext;
 
 /*
  * Interval represents projection of box to axis.
@@ -276,7 +276,7 @@ typedef struct
 {
 	double		lower,
 				upper;
-}	SplitInterval;
+} SplitInterval;
 
 /*
  * Interval comparison function by lower bound of the interval;

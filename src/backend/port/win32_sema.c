@@ -162,7 +162,7 @@ PGSemaphoreLock(PGSemaphore sema, bool interruptOK)
 
 	if (errno != 0)
 		ereport(FATAL,
-				(errmsg("could not lock semaphore: error code %lu", GetLastError())));
+		(errmsg("could not lock semaphore: error code %lu", GetLastError())));
 }
 
 /*
@@ -204,7 +204,7 @@ PGSemaphoreTryLock(PGSemaphore sema)
 
 	/* Otherwise we are in trouble */
 	ereport(FATAL,
-			(errmsg("could not try-lock semaphore: error code %lu", GetLastError())));
+	(errmsg("could not try-lock semaphore: error code %lu", GetLastError())));
 
 	/* keep compiler quiet */
 	return false;

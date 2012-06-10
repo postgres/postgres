@@ -1302,26 +1302,26 @@ coerce_to_common_type(ParseState *pstate, Node *node,
  *
  * 1) All arguments declared ANYELEMENT must have the same datatype.
  * 2) All arguments declared ANYARRAY must have the same datatype,
- *    which must be a varlena array type.
+ *	  which must be a varlena array type.
  * 3) All arguments declared ANYRANGE must have the same datatype,
- *    which must be a range type.
+ *	  which must be a range type.
  * 4) If there are arguments of both ANYELEMENT and ANYARRAY, make sure the
- *    actual ANYELEMENT datatype is in fact the element type for the actual
- *    ANYARRAY datatype.
+ *	  actual ANYELEMENT datatype is in fact the element type for the actual
+ *	  ANYARRAY datatype.
  * 5) Similarly, if there are arguments of both ANYELEMENT and ANYRANGE,
- *    make sure the actual ANYELEMENT datatype is in fact the subtype for
- *    the actual ANYRANGE type.
+ *	  make sure the actual ANYELEMENT datatype is in fact the subtype for
+ *	  the actual ANYRANGE type.
  * 6) ANYENUM is treated the same as ANYELEMENT except that if it is used
- *    (alone or in combination with plain ANYELEMENT), we add the extra
- *    condition that the ANYELEMENT type must be an enum.
+ *	  (alone or in combination with plain ANYELEMENT), we add the extra
+ *	  condition that the ANYELEMENT type must be an enum.
  * 7) ANYNONARRAY is treated the same as ANYELEMENT except that if it is used,
- *    we add the extra condition that the ANYELEMENT type must not be an array.
- *    (This is a no-op if used in combination with ANYARRAY or ANYENUM, but
- *    is an extra restriction if not.)
+ *	  we add the extra condition that the ANYELEMENT type must not be an array.
+ *	  (This is a no-op if used in combination with ANYARRAY or ANYENUM, but
+ *	  is an extra restriction if not.)
  *
  * Domains over arrays match ANYARRAY, and are immediately flattened to their
  * base type.  (Thus, for example, we will consider it a match if one ANYARRAY
- * argument is a domain over int4[] while another one is just int4[].)  Also
+ * argument is a domain over int4[] while another one is just int4[].)	Also
  * notice that such a domain does *not* match ANYNONARRAY.
  *
  * Similarly, domains over ranges match ANYRANGE, and are immediately
@@ -1475,7 +1475,7 @@ check_generic_type_consistency(Oid *actual_arg_types,
  *
  * If any polymorphic pseudotype is used in a function's arguments or
  * return type, we make sure the actual data types are consistent with
- * each other.  The argument consistency rules are shown above for
+ * each other.	The argument consistency rules are shown above for
  * check_generic_type_consistency().
  *
  * If we have UNKNOWN input (ie, an untyped literal) for any polymorphic
@@ -1487,35 +1487,35 @@ check_generic_type_consistency(Oid *actual_arg_types,
  * if it is declared as a polymorphic type:
  *
  * 1) If return type is ANYARRAY, and any argument is ANYARRAY, use the
- *    argument's actual type as the function's return type.
+ *	  argument's actual type as the function's return type.
  * 2) Similarly, if return type is ANYRANGE, and any argument is ANYRANGE,
- *    use the argument's actual type as the function's return type.
+ *	  use the argument's actual type as the function's return type.
  * 3) If return type is ANYARRAY, no argument is ANYARRAY, but any argument is
- *    ANYELEMENT, use the actual type of the argument to determine the
- *    function's return type, i.e. the element type's corresponding array
- *    type.  (Note: similar behavior does not exist for ANYRANGE, because it's
- *    impossible to determine the range type from the subtype alone.)
+ *	  ANYELEMENT, use the actual type of the argument to determine the
+ *	  function's return type, i.e. the element type's corresponding array
+ *	  type.  (Note: similar behavior does not exist for ANYRANGE, because it's
+ *	  impossible to determine the range type from the subtype alone.)
  * 4) If return type is ANYARRAY, but no argument is ANYARRAY or ANYELEMENT,
- *    generate an error.  Similarly, if return type is ANYRANGE, but no
- *    argument is ANYRANGE, generate an error.  (These conditions are
- *    prevented by CREATE FUNCTION and therefore are not expected here.)
+ *	  generate an error.  Similarly, if return type is ANYRANGE, but no
+ *	  argument is ANYRANGE, generate an error.	(These conditions are
+ *	  prevented by CREATE FUNCTION and therefore are not expected here.)
  * 5) If return type is ANYELEMENT, and any argument is ANYELEMENT, use the
- *    argument's actual type as the function's return type.
+ *	  argument's actual type as the function's return type.
  * 6) If return type is ANYELEMENT, no argument is ANYELEMENT, but any argument
- *    is ANYARRAY or ANYRANGE, use the actual type of the argument to determine
- *    the function's return type, i.e. the array type's corresponding element
- *    type or the range type's corresponding subtype (or both, in which case
- *    they must match).
+ *	  is ANYARRAY or ANYRANGE, use the actual type of the argument to determine
+ *	  the function's return type, i.e. the array type's corresponding element
+ *	  type or the range type's corresponding subtype (or both, in which case
+ *	  they must match).
  * 7) If return type is ANYELEMENT, no argument is ANYELEMENT, ANYARRAY, or
- *    ANYRANGE, generate an error.  (This condition is prevented by CREATE
- *    FUNCTION and therefore is not expected here.)
+ *	  ANYRANGE, generate an error.	(This condition is prevented by CREATE
+ *	  FUNCTION and therefore is not expected here.)
  * 8) ANYENUM is treated the same as ANYELEMENT except that if it is used
- *    (alone or in combination with plain ANYELEMENT), we add the extra
- *    condition that the ANYELEMENT type must be an enum.
+ *	  (alone or in combination with plain ANYELEMENT), we add the extra
+ *	  condition that the ANYELEMENT type must be an enum.
  * 9) ANYNONARRAY is treated the same as ANYELEMENT except that if it is used,
- *    we add the extra condition that the ANYELEMENT type must not be an array.
- *    (This is a no-op if used in combination with ANYARRAY or ANYENUM, but
- *    is an extra restriction if not.)
+ *	  we add the extra condition that the ANYELEMENT type must not be an array.
+ *	  (This is a no-op if used in combination with ANYARRAY or ANYENUM, but
+ *	  is an extra restriction if not.)
  *
  * Domains over arrays or ranges match ANYARRAY or ANYRANGE arguments,
  * respectively, and are immediately flattened to their base type. (In
@@ -1524,14 +1524,14 @@ check_generic_type_consistency(Oid *actual_arg_types,
  *
  * When allow_poly is false, we are not expecting any of the actual_arg_types
  * to be polymorphic, and we should not return a polymorphic result type
- * either.  When allow_poly is true, it is okay to have polymorphic "actual"
+ * either.	When allow_poly is true, it is okay to have polymorphic "actual"
  * arg types, and we can return ANYARRAY, ANYRANGE, or ANYELEMENT as the
- * result.  (This case is currently used only to check compatibility of an
+ * result.	(This case is currently used only to check compatibility of an
  * aggregate's declaration with the underlying transfn.)
  *
  * A special case is that we could see ANYARRAY as an actual_arg_type even
  * when allow_poly is false (this is possible only because pg_statistic has
- * columns shown as anyarray in the catalogs).  We allow this to match a
+ * columns shown as anyarray in the catalogs).	We allow this to match a
  * declared ANYARRAY argument, but only if there is no ANYELEMENT argument
  * or result (since we can't determine a specific element type to match to
  * ANYELEMENT).  Note this means that functions taking ANYARRAY had better

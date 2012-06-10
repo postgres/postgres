@@ -511,7 +511,6 @@ const uint64 pg_crc64_table[256] = {
 	UINT64CONST(0xD80C07CD676F8394), UINT64CONST(0x9AFCE626CE85B507)
 };
 #endif   /* SIZEOF_VOID_P < 8 */
-
 #endif   /* PROVIDE_64BIT_CRC */
 
 #endif   /* PG_CRC_TABLES_H */

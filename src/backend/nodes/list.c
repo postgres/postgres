@@ -443,7 +443,7 @@ list_nth_oid(const List *list, int n)
 bool
 list_member(const List *list, const void *datum)
 {
-	const ListCell   *cell;
+	const ListCell *cell;
 
 	Assert(IsPointerList(list));
 	check_list_invariants(list);
@@ -464,7 +464,7 @@ list_member(const List *list, const void *datum)
 bool
 list_member_ptr(const List *list, const void *datum)
 {
-	const ListCell   *cell;
+	const ListCell *cell;
 
 	Assert(IsPointerList(list));
 	check_list_invariants(list);
@@ -484,7 +484,7 @@ list_member_ptr(const List *list, const void *datum)
 bool
 list_member_int(const List *list, int datum)
 {
-	const ListCell   *cell;
+	const ListCell *cell;
 
 	Assert(IsIntegerList(list));
 	check_list_invariants(list);
@@ -504,7 +504,7 @@ list_member_int(const List *list, int datum)
 bool
 list_member_oid(const List *list, Oid datum)
 {
-	const ListCell   *cell;
+	const ListCell *cell;
 
 	Assert(IsOidList(list));
 	check_list_invariants(list);
@@ -697,7 +697,7 @@ List *
 list_union(const List *list1, const List *list2)
 {
 	List	   *result;
-	const ListCell   *cell;
+	const ListCell *cell;
 
 	Assert(IsPointerList(list1));
 	Assert(IsPointerList(list2));
@@ -721,7 +721,7 @@ List *
 list_union_ptr(const List *list1, const List *list2)
 {
 	List	   *result;
-	const ListCell   *cell;
+	const ListCell *cell;
 
 	Assert(IsPointerList(list1));
 	Assert(IsPointerList(list2));
@@ -744,7 +744,7 @@ List *
 list_union_int(const List *list1, const List *list2)
 {
 	List	   *result;
-	const ListCell   *cell;
+	const ListCell *cell;
 
 	Assert(IsIntegerList(list1));
 	Assert(IsIntegerList(list2));
@@ -767,7 +767,7 @@ List *
 list_union_oid(const List *list1, const List *list2)
 {
 	List	   *result;
-	const ListCell   *cell;
+	const ListCell *cell;
 
 	Assert(IsOidList(list1));
 	Assert(IsOidList(list2));
@@ -800,7 +800,7 @@ List *
 list_intersection(const List *list1, const List *list2)
 {
 	List	   *result;
-	const ListCell   *cell;
+	const ListCell *cell;
 
 	if (list1 == NIL || list2 == NIL)
 		return NIL;
@@ -831,7 +831,7 @@ list_intersection(const List *list1, const List *list2)
 List *
 list_difference(const List *list1, const List *list2)
 {
-	const ListCell   *cell;
+	const ListCell *cell;
 	List	   *result = NIL;
 
 	Assert(IsPointerList(list1));
@@ -857,7 +857,7 @@ list_difference(const List *list1, const List *list2)
 List *
 list_difference_ptr(const List *list1, const List *list2)
 {
-	const ListCell   *cell;
+	const ListCell *cell;
 	List	   *result = NIL;
 
 	Assert(IsPointerList(list1));
@@ -882,7 +882,7 @@ list_difference_ptr(const List *list1, const List *list2)
 List *
 list_difference_int(const List *list1, const List *list2)
 {
-	const ListCell   *cell;
+	const ListCell *cell;
 	List	   *result = NIL;
 
 	Assert(IsIntegerList(list1));
@@ -907,7 +907,7 @@ list_difference_int(const List *list1, const List *list2)
 List *
 list_difference_oid(const List *list1, const List *list2)
 {
-	const ListCell   *cell;
+	const ListCell *cell;
 	List	   *result = NIL;
 
 	Assert(IsOidList(list1));

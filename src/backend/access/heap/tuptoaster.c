@@ -75,7 +75,7 @@ do { \
 
 static void toast_delete_datum(Relation rel, Datum value);
 static Datum toast_save_datum(Relation rel, Datum value,
-				 struct varlena *oldexternal, int options);
+				 struct varlena * oldexternal, int options);
 static bool toastrel_valueid_exists(Relation toastrel, Oid valueid);
 static bool toastid_valueid_exists(Oid toastrelid, Oid valueid);
 static struct varlena *toast_fetch_datum(struct varlena * attr);
@@ -1233,7 +1233,7 @@ toast_compress_datum(Datum value)
  */
 static Datum
 toast_save_datum(Relation rel, Datum value,
-				 struct varlena *oldexternal, int options)
+				 struct varlena * oldexternal, int options)
 {
 	Relation	toastrel;
 	Relation	toastidx;
@@ -1353,7 +1353,7 @@ toast_save_datum(Relation rel, Datum value,
 				 * those versions could easily reference the same toast value.
 				 * When we copy the second or later version of such a row,
 				 * reusing the OID will mean we select an OID that's already
-				 * in the new toast table.  Check for that, and if so, just
+				 * in the new toast table.	Check for that, and if so, just
 				 * fall through without writing the data again.
 				 *
 				 * While annoying and ugly-looking, this is a good thing

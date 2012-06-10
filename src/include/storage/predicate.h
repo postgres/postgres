@@ -44,7 +44,7 @@ extern bool PageIsPredicateLocked(Relation relation, BlockNumber blkno);
 /* predicate lock maintenance */
 extern Snapshot GetSerializableTransactionSnapshot(Snapshot snapshot);
 extern void SetSerializableTransactionSnapshot(Snapshot snapshot,
-											   TransactionId sourcexid);
+								   TransactionId sourcexid);
 extern void RegisterPredicateLockingXid(TransactionId xid);
 extern void PredicateLockRelation(Relation relation, Snapshot snapshot);
 extern void PredicateLockPage(Relation relation, BlockNumber blkno, Snapshot snapshot);

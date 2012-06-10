@@ -718,7 +718,7 @@ numeric_send(PG_FUNCTION_ARGS)
  *
  * Flatten calls to numeric's length coercion function that solely represent
  * increases in allowable precision.  Scale changes mutate every datum, so
- * they are unoptimizable.  Some values, e.g. 1E-1001, can only fit into an
+ * they are unoptimizable.	Some values, e.g. 1E-1001, can only fit into an
  * unconstrained numeric, so a change from an unconstrained numeric to any
  * constrained numeric is also unoptimizable.
  */
@@ -734,7 +734,7 @@ numeric_transform(PG_FUNCTION_ARGS)
 
 	typmod = (Node *) lsecond(expr->args);
 
-	if (IsA(typmod, Const) && !((Const *) typmod)->constisnull)
+	if (IsA(typmod, Const) &&!((Const *) typmod)->constisnull)
 	{
 		Node	   *source = (Node *) linitial(expr->args);
 		int32		old_typmod = exprTypmod(source);
@@ -748,7 +748,7 @@ numeric_transform(PG_FUNCTION_ARGS)
 		 * If new_typmod < VARHDRSZ, the destination is unconstrained; that's
 		 * always OK.  If old_typmod >= VARHDRSZ, the source is constrained,
 		 * and we're OK if the scale is unchanged and the precision is not
-		 * decreasing.  See further notes in function header comment.
+		 * decreasing.	See further notes in function header comment.
 		 */
 		if (new_typmod < (int32) VARHDRSZ ||
 			(old_typmod >= (int32) VARHDRSZ &&
@@ -1222,7 +1222,7 @@ width_bucket_numeric(PG_FUNCTION_ARGS)
 		NUMERIC_IS_NAN(bound2))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION),
-			  errmsg("operand, lower bound, and upper bound cannot be NaN")));
+			 errmsg("operand, lower bound, and upper bound cannot be NaN")));
 
 	init_var(&result_var);
 	init_var(&count_var);

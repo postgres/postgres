@@ -192,9 +192,9 @@ add_vars_to_targetlist(PlannerInfo *root, List *vars,
 												where_needed);
 
 			/*
-			 * If we are creating PlaceHolderInfos, mark them with the
-			 * correct maybe-needed locations.  Otherwise, it's too late to
-			 * change that.
+			 * If we are creating PlaceHolderInfos, mark them with the correct
+			 * maybe-needed locations.	Otherwise, it's too late to change
+			 * that.
 			 */
 			if (create_new_ph)
 				mark_placeholder_maybe_needed(root, phinfo, where_needed);

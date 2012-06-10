@@ -490,9 +490,9 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 												   ANYARRAYOID);
 		if (OidIsValid(anyrange_type))
 		{
-			Oid		subtype = resolve_generic_type(ANYELEMENTOID,
-												   anyrange_type,
-												   ANYRANGEOID);
+			Oid			subtype = resolve_generic_type(ANYELEMENTOID,
+													   anyrange_type,
+													   ANYRANGEOID);
 
 			/* check for inconsistent array and range results */
 			if (OidIsValid(anyelement_type) && anyelement_type != subtype)
@@ -524,8 +524,8 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 	/*
 	 * Identify the collation to use for polymorphic OUT parameters. (It'll
 	 * necessarily be the same for both anyelement and anyarray.)  Note that
-	 * range types are not collatable, so any possible internal collation of
-	 * a range type is not considered here.
+	 * range types are not collatable, so any possible internal collation of a
+	 * range type is not considered here.
 	 */
 	if (OidIsValid(anyelement_type))
 		anycollation = get_typcollation(anyelement_type);
@@ -687,9 +687,9 @@ resolve_polymorphic_argtypes(int numargs, Oid *argtypes, char *argmodes,
 												   ANYARRAYOID);
 		if (OidIsValid(anyrange_type))
 		{
-			Oid		subtype = resolve_generic_type(ANYELEMENTOID,
-												   anyrange_type,
-												   ANYRANGEOID);
+			Oid			subtype = resolve_generic_type(ANYELEMENTOID,
+													   anyrange_type,
+													   ANYRANGEOID);
 
 			/* check for inconsistent array and range results */
 			if (OidIsValid(anyelement_type) && anyelement_type != subtype)

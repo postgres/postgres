@@ -150,7 +150,7 @@ check_relation_privileges(Oid relOid,
 						  uint32 required,
 						  bool abort)
 {
-	ObjectAddress	object;
+	ObjectAddress object;
 	char	   *audit_name;
 	Bitmapset  *columns;
 	int			index;

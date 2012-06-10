@@ -42,7 +42,6 @@
 #define PG_RETURN_TIMESTAMP(x) return TimestampGetDatum(x)
 #define PG_RETURN_TIMESTAMPTZ(x) return TimestampTzGetDatum(x)
 #define PG_RETURN_INTERVAL_P(x) return IntervalPGetDatum(x)
-
 #else							/* !HAVE_INT64_TIMESTAMP */
 
 #define DatumGetTimestamp(X)  ((Timestamp) DatumGetFloat8(X))
@@ -60,7 +59,6 @@
 #define PG_RETURN_TIMESTAMP(x) return TimestampGetDatum(x)
 #define PG_RETURN_TIMESTAMPTZ(x) return TimestampTzGetDatum(x)
 #define PG_RETURN_INTERVAL_P(x) return IntervalPGetDatum(x)
-
 #endif   /* HAVE_INT64_TIMESTAMP */
 
 

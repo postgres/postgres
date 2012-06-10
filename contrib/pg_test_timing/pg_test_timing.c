@@ -1,7 +1,7 @@
 /*
  *	pg_test_timing.c
- *		tests overhead of timing calls and their monotonicity:  that
- * 		they always move forward
+ *		tests overhead of timing calls and their monotonicity:	that
+ *		they always move forward
  */
 
 #include "postgres_fe.h"
@@ -35,8 +35,8 @@ handle_args(int argc, char *argv[])
 		{"duration", required_argument, NULL, 'd'},
 		{NULL, 0, NULL, 0}
 	};
-	int option;			/* Command line option */
-	int	optindex = 0;	/* used by getopt_long */
+	int			option;			/* Command line option */
+	int			optindex = 0;	/* used by getopt_long */
 
 	if (argc > 1)
 	{
@@ -87,7 +87,7 @@ handle_args(int argc, char *argv[])
 	else
 	{
 		fprintf(stderr,
-				"%s: duration must be a positive integer (duration is \"%d\")\n",
+			"%s: duration must be a positive integer (duration is \"%d\")\n",
 				progname, test_duration);
 		fprintf(stderr, "Try \"%s --help\" for more information.\n",
 				progname);
@@ -98,16 +98,22 @@ handle_args(int argc, char *argv[])
 static void
 test_timing(int32 duration)
 {
-	uint64 total_time;
-	int64 time_elapsed = 0;
-	uint64 loop_count = 0;
-	uint64 prev, cur;
-	int32 diff, i, bits, found;
+	uint64		total_time;
+	int64		time_elapsed = 0;
+	uint64		loop_count = 0;
+	uint64		prev,
+				cur;
+	int32		diff,
+				i,
+				bits,
+				found;
 
-	instr_time start_time, end_time, temp;
+	instr_time	start_time,
+				end_time,
+				temp;
 
 	static int64 histogram[32];
-	char	buf[100];
+	char		buf[100];
 
 	total_time = duration > 0 ? duration * 1000000 : 0;
 
@@ -146,7 +152,7 @@ test_timing(int32 duration)
 	INSTR_TIME_SUBTRACT(end_time, start_time);
 
 	printf("Per loop time including overhead: %0.2f nsec\n",
-			INSTR_TIME_GET_DOUBLE(end_time) * 1e9 / loop_count);
+		   INSTR_TIME_GET_DOUBLE(end_time) * 1e9 / loop_count);
 	printf("Histogram of timing durations:\n");
 	printf("%9s: %10s %9s\n", "< usec", "count", "percent");
 

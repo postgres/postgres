@@ -247,8 +247,8 @@ hashmacaddr(PG_FUNCTION_ARGS)
 Datum
 macaddr_not(PG_FUNCTION_ARGS)
 {
-	macaddr	   *addr = PG_GETARG_MACADDR_P(0);
-	macaddr	   *result;
+	macaddr    *addr = PG_GETARG_MACADDR_P(0);
+	macaddr    *result;
 
 	result = (macaddr *) palloc(sizeof(macaddr));
 	result->a = ~addr->a;
@@ -263,9 +263,9 @@ macaddr_not(PG_FUNCTION_ARGS)
 Datum
 macaddr_and(PG_FUNCTION_ARGS)
 {
-	macaddr	   *addr1 = PG_GETARG_MACADDR_P(0);
-	macaddr	   *addr2 = PG_GETARG_MACADDR_P(1);
-	macaddr	   *result;
+	macaddr    *addr1 = PG_GETARG_MACADDR_P(0);
+	macaddr    *addr2 = PG_GETARG_MACADDR_P(1);
+	macaddr    *result;
 
 	result = (macaddr *) palloc(sizeof(macaddr));
 	result->a = addr1->a & addr2->a;
@@ -280,9 +280,9 @@ macaddr_and(PG_FUNCTION_ARGS)
 Datum
 macaddr_or(PG_FUNCTION_ARGS)
 {
-	macaddr	   *addr1 = PG_GETARG_MACADDR_P(0);
-	macaddr	   *addr2 = PG_GETARG_MACADDR_P(1);
-	macaddr	   *result;
+	macaddr    *addr1 = PG_GETARG_MACADDR_P(0);
+	macaddr    *addr2 = PG_GETARG_MACADDR_P(1);
+	macaddr    *result;
 
 	result = (macaddr *) palloc(sizeof(macaddr));
 	result->a = addr1->a | addr2->a;

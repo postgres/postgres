@@ -1674,8 +1674,8 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan, ParamListInfo boundParams)
 	raw_parsetree_list = pg_parse_query(src);
 
 	/*
-	 * Do parse analysis and rule rewrite for each raw parsetree, storing
-	 * the results into unsaved plancache entries.
+	 * Do parse analysis and rule rewrite for each raw parsetree, storing the
+	 * results into unsaved plancache entries.
 	 */
 	plancache_list = NIL;
 
@@ -1686,8 +1686,8 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan, ParamListInfo boundParams)
 		CachedPlanSource *plansource;
 
 		/*
-		 * Create the CachedPlanSource before we do parse analysis, since
-		 * it needs to see the unmodified raw parse tree.
+		 * Create the CachedPlanSource before we do parse analysis, since it
+		 * needs to see the unmodified raw parse tree.
 		 */
 		plansource = CreateCachedPlan(parsetree,
 									  src,
@@ -1722,7 +1722,7 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan, ParamListInfo boundParams)
 						   plan->parserSetup,
 						   plan->parserSetupArg,
 						   cursor_options,
-						   false);	/* not fixed result */
+						   false);		/* not fixed result */
 
 		plancache_list = lappend(plancache_list, plansource);
 	}
@@ -1907,7 +1907,7 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 			}
 			else
 			{
-				char	completionTag[COMPLETION_TAG_BUFSIZE];
+				char		completionTag[COMPLETION_TAG_BUFSIZE];
 
 				ProcessUtility(stmt,
 							   plansource->query_string,
@@ -2335,9 +2335,9 @@ _SPI_make_plan_non_temp(SPIPlanPtr plan)
 
 	/*
 	 * Reparent all the CachedPlanSources into the procedure context.  In
-	 * theory this could fail partway through due to the pallocs, but we
-	 * don't care too much since both the procedure context and the executor
-	 * context would go away on error.
+	 * theory this could fail partway through due to the pallocs, but we don't
+	 * care too much since both the procedure context and the executor context
+	 * would go away on error.
 	 */
 	foreach(lc, plan->plancache_list)
 	{

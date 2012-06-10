@@ -172,10 +172,10 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 		 * never update it again, so we can't be seeing a stale value in that
 		 * case.
 		 *
-		 * Note: on machines with weak memory ordering, the acquisition of
-		 * the lock is essential to avoid race conditions: we cannot be sure
-		 * the sender's state update has reached main memory until we acquire
-		 * the lock.  We could get rid of this dance if SetLatch/ResetLatch
+		 * Note: on machines with weak memory ordering, the acquisition of the
+		 * lock is essential to avoid race conditions: we cannot be sure the
+		 * sender's state update has reached main memory until we acquire the
+		 * lock.  We could get rid of this dance if SetLatch/ResetLatch
 		 * contained memory barriers.
 		 */
 		syncRepState = MyProc->syncRepState;
@@ -241,8 +241,8 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 		}
 
 		/*
-		 * Wait on latch.  Any condition that should wake us up will set
-		 * the latch, so no need for timeout.
+		 * Wait on latch.  Any condition that should wake us up will set the
+		 * latch, so no need for timeout.
 		 */
 		WaitLatch(&MyProc->procLatch, WL_LATCH_SET | WL_POSTMASTER_DEATH, -1);
 	}
@@ -422,8 +422,8 @@ SyncRepReleaseWaiters(void)
 	}
 
 	/*
-	 * Set the lsn first so that when we wake backends they will release
-	 * up to this location.
+	 * Set the lsn first so that when we wake backends they will release up to
+	 * this location.
 	 */
 	if (XLByteLT(walsndctl->lsn[SYNC_REP_WAIT_WRITE], MyWalSnd->write))
 	{
@@ -477,8 +477,8 @@ SyncRepGetStandbyPriority(void)
 	bool		found = false;
 
 	/*
-	 * Since synchronous cascade replication is not allowed, we always
-	 * set the priority of cascading walsender to zero.
+	 * Since synchronous cascade replication is not allowed, we always set the
+	 * priority of cascading walsender to zero.
 	 */
 	if (am_cascading_walsender)
 		return 0;
@@ -517,7 +517,7 @@ SyncRepGetStandbyPriority(void)
 }
 
 /*
- * Walk the specified queue from head.  Set the state of any backends that
+ * Walk the specified queue from head.	Set the state of any backends that
  * need to be woken, remove them from the queue, and then wake them.
  * Pass all = true to wake whole queue; otherwise, just wake up to
  * the walsender's LSN.
@@ -601,7 +601,7 @@ SyncRepUpdateSyncStandbysDefined(void)
 		 */
 		if (!sync_standbys_defined)
 		{
-			int	i;
+			int			i;
 
 			for (i = 0; i < NUM_SYNC_REP_WAIT_MODE; i++)
 				SyncRepWakeQueue(true, i);

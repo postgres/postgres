@@ -627,7 +627,7 @@ set_error_result:
 	pqSaveErrorResult(conn);
 
 	/*
-	 * Return zero to allow input parsing to continue.  Subsequent "D"
+	 * Return zero to allow input parsing to continue.	Subsequent "D"
 	 * messages will be ignored until we get to end of data, since an error
 	 * result is already set up.
 	 */
@@ -829,7 +829,7 @@ set_error_result:
 	pqSaveErrorResult(conn);
 
 	/*
-	 * Return zero to allow input parsing to continue.  Subsequent "D"
+	 * Return zero to allow input parsing to continue.	Subsequent "D"
 	 * messages will be ignored until we get to end of data, since an error
 	 * result is already set up.
 	 */

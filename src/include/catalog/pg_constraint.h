@@ -92,6 +92,7 @@ CATALOG(pg_constraint,2606)
 	bool		connoinherit;
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
+
 	/*
 	 * Columns of conrelid that the constraint applies to, if known (this is
 	 * NULL for trigger constraints)

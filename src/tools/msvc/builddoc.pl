@@ -26,7 +26,7 @@ die "bad DOCROOT '$docroot'" unless ($docroot && -d $docroot);
 my @notfound;
 foreach my $dir ('docbook', $openjade, $dsssl)
 {
-    push(@notfound,$dir) unless -d "$docroot/$dir";
+	push(@notfound,$dir) unless -d "$docroot/$dir";
 }
 missing() if @notfound;
 
@@ -94,28 +94,28 @@ exit;
 sub renamefiles
 {
 
-    # Rename ISO entity files
-    my $savedir = getcwd();
-    chdir "$docroot/docbook";
-    foreach my $f (glob('ISO*'))
-    {
-        next if $f =~ /\.gml$/i;
-        my $nf = $f;
-        $nf =~ s/ISO(.*)/ISO-$1.gml/;
-        move $f, $nf;
-    }
-    chdir $savedir;
+	# Rename ISO entity files
+	my $savedir = getcwd();
+	chdir "$docroot/docbook";
+	foreach my $f (glob('ISO*'))
+	{
+		next if $f =~ /\.gml$/i;
+		my $nf = $f;
+		$nf =~ s/ISO(.*)/ISO-$1.gml/;
+		move $f, $nf;
+	}
+	chdir $savedir;
 
 }
 
 sub missing
 {
-    print STDERR "could not find $docroot/$_\n" foreach (@notfound);
-    exit 1;
+	print STDERR "could not find $docroot/$_\n" foreach (@notfound);
+	exit 1;
 }
 
 sub noversion
 {
-    print STDERR "Could not find version.sgml. ","Please run mkvcbuild.pl first!\n";
-    exit 1;
+	print STDERR "Could not find version.sgml. ","Please run mkvcbuild.pl first!\n";
+	exit 1;
 }

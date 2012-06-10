@@ -840,12 +840,12 @@ get_joinrel_parampathinfo(PlannerInfo *root, RelOptInfo *joinrel,
 		outer_and_req = bms_union(outer_path->parent->relids,
 								  PATH_REQ_OUTER(outer_path));
 	else
-		outer_and_req = NULL;		/* outer path does not accept parameters */
+		outer_and_req = NULL;	/* outer path does not accept parameters */
 	if (inner_path->param_info)
 		inner_and_req = bms_union(inner_path->parent->relids,
 								  PATH_REQ_OUTER(inner_path));
 	else
-		inner_and_req = NULL;		/* inner path does not accept parameters */
+		inner_and_req = NULL;	/* inner path does not accept parameters */
 
 	pclauses = NIL;
 	foreach(lc, joinrel->joininfo)
@@ -909,7 +909,7 @@ get_joinrel_parampathinfo(PlannerInfo *root, RelOptInfo *joinrel,
 										  *restrict_clauses);
 
 	/*
-	 * And now we can build the ParamPathInfo.  No point in saving the
+	 * And now we can build the ParamPathInfo.	No point in saving the
 	 * input-pair-dependent clause list, though.
 	 *
 	 * Note: in GEQO mode, we'll be called in a temporary memory context, but
@@ -929,8 +929,8 @@ get_joinrel_parampathinfo(PlannerInfo *root, RelOptInfo *joinrel,
  *		Get the ParamPathInfo for a parameterized path for an append relation.
  *
  * For an append relation, the rowcount estimate will just be the sum of
- * the estimates for its children.  However, we still need a ParamPathInfo
- * to flag the fact that the path requires parameters.  So this just creates
+ * the estimates for its children.	However, we still need a ParamPathInfo
+ * to flag the fact that the path requires parameters.	So this just creates
  * a suitable struct with zero ppi_rows (and no ppi_clauses either, since
  * the Append node isn't responsible for checking quals).
  */

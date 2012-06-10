@@ -936,7 +936,8 @@ DropRole(DropRoleStmt *stmt)
 		/* DROP hook for the role being removed */
 		if (object_access_hook)
 		{
-			ObjectAccessDrop	drop_arg;
+			ObjectAccessDrop drop_arg;
+
 			memset(&drop_arg, 0, sizeof(ObjectAccessDrop));
 			InvokeObjectAccessHook(OAT_DROP,
 								   AuthIdRelationId, roleid, 0, &drop_arg);

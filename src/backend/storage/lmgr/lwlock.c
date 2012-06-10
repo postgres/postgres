@@ -574,7 +574,7 @@ LWLockConditionalAcquire(LWLockId lockid, LWLockMode mode)
 /*
  * LWLockAcquireOrWait - Acquire lock, or wait until it's free
  *
- * The semantics of this function are a bit funky.  If the lock is currently
+ * The semantics of this function are a bit funky.	If the lock is currently
  * free, it is acquired in the given mode, and the function returns true.  If
  * the lock isn't immediately free, the function waits until it is released
  * and returns false, but does not acquire the lock.
@@ -769,7 +769,7 @@ LWLockRelease(LWLockId lockid)
 			/*
 			 * Remove the to-be-awakened PGPROCs from the queue.
 			 */
-			bool releaseOK = true;
+			bool		releaseOK = true;
 
 			proc = head;
 
@@ -797,6 +797,7 @@ LWLockRelease(LWLockId lockid)
 			/* proc is now the last PGPROC to be released */
 			lock->head = proc->lwWaitLink;
 			proc->lwWaitLink = NULL;
+
 			/*
 			 * Prevent additional wakeups until retryer gets to run. Backends
 			 * that are just waiting for the lock to become free don't retry

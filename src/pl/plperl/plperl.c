@@ -1259,19 +1259,19 @@ plperl_sv_to_datum(SV *sv, Oid typid, int32 typmod,
 			if (!type_is_rowtype(typid))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("cannot convert Perl hash to non-composite type %s",
-								format_type_be(typid))));
+				  errmsg("cannot convert Perl hash to non-composite type %s",
+						 format_type_be(typid))));
 
 			td = lookup_rowtype_tupdesc_noerror(typid, typmod, true);
 			if (td == NULL)
 			{
 				/* Try to look it up based on our result type */
 				if (fcinfo == NULL ||
-					get_call_result_type(fcinfo, NULL, &td) != TYPEFUNC_COMPOSITE)
+				get_call_result_type(fcinfo, NULL, &td) != TYPEFUNC_COMPOSITE)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("function returning record called in context "
-									"that cannot accept type record")));
+						errmsg("function returning record called in context "
+							   "that cannot accept type record")));
 			}
 
 			ret = plperl_hash_to_datum(sv, td);

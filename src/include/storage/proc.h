@@ -131,14 +131,15 @@ struct PGPROC
 
 	struct XidCache subxids;	/* cache for subtransaction XIDs */
 
-	/* Per-backend LWLock.  Protects fields below. */
+	/* Per-backend LWLock.	Protects fields below. */
 	LWLockId	backendLock;	/* protects the fields below */
 
 	/* Lock manager data, recording fast-path locks taken by this backend. */
 	uint64		fpLockBits;		/* lock modes held for each fast-path slot */
-	Oid			fpRelId[FP_LOCK_SLOTS_PER_BACKEND]; /* slots for rel oids */
+	Oid			fpRelId[FP_LOCK_SLOTS_PER_BACKEND];		/* slots for rel oids */
 	bool		fpVXIDLock;		/* are we holding a fast-path VXID lock? */
-	LocalTransactionId fpLocalTransactionId;	/* lxid for fast-path VXID lock */
+	LocalTransactionId fpLocalTransactionId;	/* lxid for fast-path VXID
+												 * lock */
 };
 
 /* NOTE: "typedef struct PGPROC PGPROC" appears in storage/lock.h. */
@@ -149,7 +150,7 @@ extern PGDLLIMPORT struct PGXACT *MyPgXact;
 
 /*
  * Prior to PostgreSQL 9.2, the fields below were stored as part of the
- * PGPROC.  However, benchmarking revealed that packing these particular
+ * PGPROC.	However, benchmarking revealed that packing these particular
  * members into a separate array as tightly as possible sped up GetSnapshotData
  * considerably on systems with many CPU cores, by reducing the number of
  * cache lines needing to be fetched.  Thus, think very carefully before adding

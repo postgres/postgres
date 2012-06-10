@@ -75,6 +75,6 @@ extern void AtEOSubXact_on_commit_actions(bool isCommit,
 							  SubTransactionId parentSubid);
 
 extern void RangeVarCallbackOwnsTable(const RangeVar *relation,
-									  Oid relId, Oid oldRelId, void *arg);
+						  Oid relId, Oid oldRelId, void *arg);
 
 #endif   /* TABLECMDS_H */

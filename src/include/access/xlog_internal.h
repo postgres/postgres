@@ -157,8 +157,8 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 #define NextLogPage(recptr) \
 	do {	\
 		if ((recptr).xrecoff % XLOG_BLCKSZ != 0)	\
-			(recptr).xrecoff +=	\
-				(XLOG_BLCKSZ - (recptr).xrecoff % XLOG_BLCKSZ);	\
+			(recptr).xrecoff += \
+				(XLOG_BLCKSZ - (recptr).xrecoff % XLOG_BLCKSZ); \
 		if ((recptr).xrecoff >= XLogFileSize) \
 		{	\
 			((recptr).xlogid)++;	\

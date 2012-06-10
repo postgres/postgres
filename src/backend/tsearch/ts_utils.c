@@ -62,7 +62,7 @@ get_tsearch_config_filename(const char *basename,
 static int
 comparestr(const void *a, const void *b)
 {
-	return strcmp(*(char * const *) a, *(char * const *) b);
+	return strcmp(*(char *const *) a, *(char *const *) b);
 }
 
 /*

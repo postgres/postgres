@@ -24,7 +24,7 @@
 /*
  * SPPageDesc tracks all info about a page we are inserting into.  In some
  * situations it actually identifies a tuple, or even a specific node within
- * an inner tuple.  But any of the fields can be invalid.  If the buffer
+ * an inner tuple.	But any of the fields can be invalid.  If the buffer
  * field is valid, it implies we hold pin and exclusive lock on that buffer.
  * page pointer should be valid exactly when buffer is.
  */
@@ -129,8 +129,8 @@ spgPageIndexMultiDelete(SpGistState *state, Page page,
 						int firststate, int reststate,
 						BlockNumber blkno, OffsetNumber offnum)
 {
-	OffsetNumber	firstItem;
-	OffsetNumber   *sortednos;
+	OffsetNumber firstItem;
+	OffsetNumber *sortednos;
 	SpGistDeadTuple tuple = NULL;
 	int			i;
 
@@ -155,8 +155,8 @@ spgPageIndexMultiDelete(SpGistState *state, Page page,
 
 	for (i = 0; i < nitems; i++)
 	{
-		OffsetNumber	itemno = sortednos[i];
-		int				tupstate;
+		OffsetNumber itemno = sortednos[i];
+		int			tupstate;
 
 		tupstate = (itemno == firstItem) ? firststate : reststate;
 		if (tuple == NULL || tuple->tupstate != tupstate)
@@ -200,7 +200,7 @@ saveNodeLink(Relation index, SPPageDesc *parent,
  */
 static void
 addLeafTuple(Relation index, SpGistState *state, SpGistLeafTuple leafTuple,
-			 SPPageDesc *current, SPPageDesc *parent, bool isNulls, bool isNew)
+		   SPPageDesc *current, SPPageDesc *parent, bool isNulls, bool isNew)
 {
 	XLogRecData rdata[4];
 	spgxlogAddLeaf xlrec;
@@ -230,7 +230,7 @@ addLeafTuple(Relation index, SpGistState *state, SpGistLeafTuple leafTuple,
 		/* Tuple is not part of a chain */
 		leafTuple->nextOffset = InvalidOffsetNumber;
 		current->offnum = SpGistPageAddNewItem(state, current->page,
-											   (Item) leafTuple, leafTuple->size,
+										   (Item) leafTuple, leafTuple->size,
 											   NULL, false);
 
 		xlrec.offnumLeaf = current->offnum;
@@ -250,9 +250,9 @@ addLeafTuple(Relation index, SpGistState *state, SpGistLeafTuple leafTuple,
 	else
 	{
 		/*
-		 * Tuple must be inserted into existing chain.  We mustn't change
-		 * the chain's head address, but we don't need to chase the entire
-		 * chain to put the tuple at the end; we can insert it second.
+		 * Tuple must be inserted into existing chain.	We mustn't change the
+		 * chain's head address, but we don't need to chase the entire chain
+		 * to put the tuple at the end; we can insert it second.
 		 *
 		 * Also, it's possible that the "chain" consists only of a DEAD tuple,
 		 * in which case we should replace the DEAD tuple in-place.
@@ -261,7 +261,7 @@ addLeafTuple(Relation index, SpGistState *state, SpGistLeafTuple leafTuple,
 		OffsetNumber offnum;
 
 		head = (SpGistLeafTuple) PageGetItem(current->page,
-											 PageGetItemId(current->page, current->offnum));
+							  PageGetItemId(current->page, current->offnum));
 		if (head->tupstate == SPGIST_LIVE)
 		{
 			leafTuple->nextOffset = head->nextOffset;
@@ -274,7 +274,7 @@ addLeafTuple(Relation index, SpGistState *state, SpGistLeafTuple leafTuple,
 			 * and set new second element
 			 */
 			head = (SpGistLeafTuple) PageGetItem(current->page,
-											 PageGetItemId(current->page, current->offnum));
+							  PageGetItemId(current->page, current->offnum));
 			head->nextOffset = offnum;
 
 			xlrec.offnumLeaf = offnum;
@@ -483,7 +483,7 @@ moveLeafs(Relation index, SpGistState *state,
 		for (i = 0; i < nDelete; i++)
 		{
 			it = (SpGistLeafTuple) PageGetItem(current->page,
-											   PageGetItemId(current->page, toDelete[i]));
+								  PageGetItemId(current->page, toDelete[i]));
 			Assert(it->tupstate == SPGIST_LIVE);
 
 			/*
@@ -516,12 +516,12 @@ moveLeafs(Relation index, SpGistState *state,
 	leafptr += newLeafTuple->size;
 
 	/*
-	 * Now delete the old tuples, leaving a redirection pointer behind for
-	 * the first one, unless we're doing an index build; in which case there
-	 * can't be any concurrent scan so we need not provide a redirect.
+	 * Now delete the old tuples, leaving a redirection pointer behind for the
+	 * first one, unless we're doing an index build; in which case there can't
+	 * be any concurrent scan so we need not provide a redirect.
 	 */
 	spgPageIndexMultiDelete(state, current->page, toDelete, nDelete,
-							state->isBuild ? SPGIST_PLACEHOLDER : SPGIST_REDIRECT,
+					   state->isBuild ? SPGIST_PLACEHOLDER : SPGIST_REDIRECT,
 							SPGIST_PLACEHOLDER,
 							nblkno, r);
 
@@ -575,7 +575,7 @@ setRedirectionTuple(SPPageDesc *current, OffsetNumber position,
 	SpGistDeadTuple dt;
 
 	dt = (SpGistDeadTuple) PageGetItem(current->page,
-									   PageGetItemId(current->page, position));
+									 PageGetItemId(current->page, position));
 	Assert(dt->tupstate == SPGIST_REDIRECT);
 	Assert(ItemPointerGetBlockNumber(&dt->pointer) == SPGIST_METAPAGE_BLKNO);
 	ItemPointerSet(&dt->pointer, blkno, offnum);
@@ -640,7 +640,7 @@ checkAllTheSame(spgPickSplitIn *in, spgPickSplitOut *out, bool tooBig,
 	/* The opclass may not use node labels, but if it does, duplicate 'em */
 	if (out->nodeLabels)
 	{
-		Datum	theLabel = out->nodeLabels[theNode];
+		Datum		theLabel = out->nodeLabels[theNode];
 
 		out->nodeLabels = (Datum *) palloc(sizeof(Datum) * out->nNodes);
 		for (i = 0; i < out->nNodes; i++)
@@ -754,8 +754,8 @@ doPickSplit(Relation index, SpGistState *state,
 	{
 		/*
 		 * We are splitting the root (which up to now is also a leaf page).
-		 * Its tuples are not linked, so scan sequentially to get them all.
-		 * We ignore the original value of current->offnum.
+		 * Its tuples are not linked, so scan sequentially to get them all. We
+		 * ignore the original value of current->offnum.
 		 */
 		for (i = FirstOffsetNumber; i <= max; i++)
 		{
@@ -773,7 +773,7 @@ doPickSplit(Relation index, SpGistState *state,
 				/* we will delete the tuple altogether, so count full space */
 				spaceToDelete += it->size + sizeof(ItemIdData);
 			}
-			else				/* tuples on root should be live */
+			else	/* tuples on root should be live */
 				elog(ERROR, "unexpected SPGiST tuple state: %d", it->tupstate);
 		}
 	}
@@ -820,7 +820,7 @@ doPickSplit(Relation index, SpGistState *state,
 	 * We may not actually insert new tuple because another picksplit may be
 	 * necessary due to too large value, but we will try to allocate enough
 	 * space to include it; and in any case it has to be included in the input
-	 * for the picksplit function.  So don't increment nToInsert yet.
+	 * for the picksplit function.	So don't increment nToInsert yet.
 	 */
 	in.datums[in.nTuples] = SGLTDATUM(newLeafTuple, state);
 	heapPtrs[in.nTuples] = newLeafTuple->heapPtr;
@@ -878,7 +878,7 @@ doPickSplit(Relation index, SpGistState *state,
 	/*
 	 * Check to see if the picksplit function failed to separate the values,
 	 * ie, it put them all into the same child node.  If so, select allTheSame
-	 * mode and create a random split instead.  See comments for
+	 * mode and create a random split instead.	See comments for
 	 * checkAllTheSame as to why we need to know if the new leaf tuples could
 	 * fit on one page.
 	 */
@@ -924,8 +924,8 @@ doPickSplit(Relation index, SpGistState *state,
 	innerTuple->allTheSame = allTheSame;
 
 	/*
-	 * Update nodes[] array to point into the newly formed innerTuple, so
-	 * that we can adjust their downlinks below.
+	 * Update nodes[] array to point into the newly formed innerTuple, so that
+	 * we can adjust their downlinks below.
 	 */
 	SGITITERATE(innerTuple, i, node)
 	{
@@ -944,13 +944,13 @@ doPickSplit(Relation index, SpGistState *state,
 	}
 
 	/*
-	 * To perform the split, we must insert a new inner tuple, which can't
-	 * go on a leaf page; and unless we are splitting the root page, we
-	 * must then update the parent tuple's downlink to point to the inner
-	 * tuple.  If there is room, we'll put the new inner tuple on the same
-	 * page as the parent tuple, otherwise we need another non-leaf buffer.
-	 * But if the parent page is the root, we can't add the new inner tuple
-	 * there, because the root page must have only one inner tuple.
+	 * To perform the split, we must insert a new inner tuple, which can't go
+	 * on a leaf page; and unless we are splitting the root page, we must then
+	 * update the parent tuple's downlink to point to the inner tuple.  If
+	 * there is room, we'll put the new inner tuple on the same page as the
+	 * parent tuple, otherwise we need another non-leaf buffer. But if the
+	 * parent page is the root, we can't add the new inner tuple there,
+	 * because the root page must have only one inner tuple.
 	 */
 	xlrec.initInner = false;
 	if (parent->buffer != InvalidBuffer &&
@@ -965,9 +965,9 @@ doPickSplit(Relation index, SpGistState *state,
 	{
 		/* Send tuple to page with next triple parity (see README) */
 		newInnerBuffer = SpGistGetBuffer(index,
-										 GBUF_INNER_PARITY(parent->blkno + 1) |
+									   GBUF_INNER_PARITY(parent->blkno + 1) |
 										 (isNulls ? GBUF_NULLS : 0),
-										 innerTuple->size + sizeof(ItemIdData),
+									   innerTuple->size + sizeof(ItemIdData),
 										 &xlrec.initInner);
 	}
 	else
@@ -977,22 +977,22 @@ doPickSplit(Relation index, SpGistState *state,
 	}
 
 	/*
-	 * Because a WAL record can't involve more than four buffers, we can
-	 * only afford to deal with two leaf pages in each picksplit action,
-	 * ie the current page and at most one other.
+	 * Because a WAL record can't involve more than four buffers, we can only
+	 * afford to deal with two leaf pages in each picksplit action, ie the
+	 * current page and at most one other.
 	 *
-	 * The new leaf tuples converted from the existing ones should require
-	 * the same or less space, and therefore should all fit onto one page
+	 * The new leaf tuples converted from the existing ones should require the
+	 * same or less space, and therefore should all fit onto one page
 	 * (although that's not necessarily the current page, since we can't
 	 * delete the old tuples but only replace them with placeholders).
-	 * However, the incoming new tuple might not also fit, in which case
-	 * we might need another picksplit cycle to reduce it some more.
+	 * However, the incoming new tuple might not also fit, in which case we
+	 * might need another picksplit cycle to reduce it some more.
 	 *
-	 * If there's not room to put everything back onto the current page,
-	 * then we decide on a per-node basis which tuples go to the new page.
-	 * (We do it like that because leaf tuple chains can't cross pages,
-	 * so we must place all leaf tuples belonging to the same parent node
-	 * on the same page.)
+	 * If there's not room to put everything back onto the current page, then
+	 * we decide on a per-node basis which tuples go to the new page. (We do
+	 * it like that because leaf tuple chains can't cross pages, so we must
+	 * place all leaf tuples belonging to the same parent node on the same
+	 * page.)
 	 *
 	 * If we are splitting the root page (turning it from a leaf page into an
 	 * inner page), then no leaf tuples can go back to the current page; they
@@ -1037,12 +1037,13 @@ doPickSplit(Relation index, SpGistState *state,
 		int			newspace;
 
 		newLeafBuffer = SpGistGetBuffer(index,
-										GBUF_LEAF | (isNulls ? GBUF_NULLS : 0),
+									  GBUF_LEAF | (isNulls ? GBUF_NULLS : 0),
 										Min(totalLeafSizes,
 											SPGIST_PAGE_CAPACITY),
 										&xlrec.initDest);
+
 		/*
-		 * Attempt to assign node groups to the two pages.  We might fail to
+		 * Attempt to assign node groups to the two pages.	We might fail to
 		 * do so, even if totalLeafSizes is less than the available space,
 		 * because we can't split a group across pages.
 		 */
@@ -1054,12 +1055,12 @@ doPickSplit(Relation index, SpGistState *state,
 		{
 			if (leafSizes[i] <= curspace)
 			{
-				nodePageSelect[i] = 0; /* signifies current page */
+				nodePageSelect[i] = 0;	/* signifies current page */
 				curspace -= leafSizes[i];
 			}
 			else
 			{
-				nodePageSelect[i] = 1; /* signifies new leaf page */
+				nodePageSelect[i] = 1;	/* signifies new leaf page */
 				newspace -= leafSizes[i];
 			}
 		}
@@ -1075,7 +1076,7 @@ doPickSplit(Relation index, SpGistState *state,
 		else if (includeNew)
 		{
 			/* We must exclude the new leaf tuple from the split */
-			int		nodeOfNewTuple = out.mapTuplesToNodes[in.nTuples - 1];
+			int			nodeOfNewTuple = out.mapTuplesToNodes[in.nTuples - 1];
 
 			leafSizes[nodeOfNewTuple] -=
 				newLeafs[in.nTuples - 1]->size + sizeof(ItemIdData);
@@ -1087,12 +1088,12 @@ doPickSplit(Relation index, SpGistState *state,
 			{
 				if (leafSizes[i] <= curspace)
 				{
-					nodePageSelect[i] = 0; /* signifies current page */
+					nodePageSelect[i] = 0;		/* signifies current page */
 					curspace -= leafSizes[i];
 				}
 				else
 				{
-					nodePageSelect[i] = 1; /* signifies new leaf page */
+					nodePageSelect[i] = 1;		/* signifies new leaf page */
 					newspace -= leafSizes[i];
 				}
 			}
@@ -1204,7 +1205,7 @@ doPickSplit(Relation index, SpGistState *state,
 	for (i = 0; i < nToInsert; i++)
 	{
 		SpGistLeafTuple it = newLeafs[i];
-		Buffer	leafBuffer;
+		Buffer		leafBuffer;
 		BlockNumber leafBlock;
 		OffsetNumber newoffset;
 
@@ -1584,12 +1585,12 @@ spgAddNodeAction(Relation index, SpGistState *state,
 		xlrec.nodeI = parent->node;
 
 		/*
-		 * obtain new buffer with the same parity as current, since it will
-		 * be a child of same parent tuple
+		 * obtain new buffer with the same parity as current, since it will be
+		 * a child of same parent tuple
 		 */
 		current->buffer = SpGistGetBuffer(index,
 										  GBUF_INNER_PARITY(current->blkno),
-										  newInnerTuple->size + sizeof(ItemIdData),
+									newInnerTuple->size + sizeof(ItemIdData),
 										  &xlrec.newPage);
 		current->blkno = BufferGetBlockNumber(current->buffer);
 		current->page = BufferGetPage(current->buffer);
@@ -1597,15 +1598,15 @@ spgAddNodeAction(Relation index, SpGistState *state,
 		xlrec.blknoNew = current->blkno;
 
 		/*
-		 * Let's just make real sure new current isn't same as old.  Right
-		 * now that's impossible, but if SpGistGetBuffer ever got smart enough
-		 * to delete placeholder tuples before checking space, maybe it
-		 * wouldn't be impossible.  The case would appear to work except that
-		 * WAL replay would be subtly wrong, so I think a mere assert isn't
-		 * enough here.
+		 * Let's just make real sure new current isn't same as old.  Right now
+		 * that's impossible, but if SpGistGetBuffer ever got smart enough to
+		 * delete placeholder tuples before checking space, maybe it wouldn't
+		 * be impossible.  The case would appear to work except that WAL
+		 * replay would be subtly wrong, so I think a mere assert isn't enough
+		 * here.
 		 */
-		 if (xlrec.blknoNew == xlrec.blkno)
-			 elog(ERROR, "SPGiST new buffer shouldn't be same as old buffer");
+		if (xlrec.blknoNew == xlrec.blkno)
+			elog(ERROR, "SPGiST new buffer shouldn't be same as old buffer");
 
 		/*
 		 * New current and parent buffer will both be modified; but note that
@@ -1707,9 +1708,9 @@ spgSplitNodeAction(Relation index, SpGistState *state,
 	Assert(!SpGistPageStoresNulls(current->page));
 
 	/*
-	 * Construct new prefix tuple, containing a single node with the
-	 * specified label.  (We'll update the node's downlink to point to the
-	 * new postfix tuple, below.)
+	 * Construct new prefix tuple, containing a single node with the specified
+	 * label.  (We'll update the node's downlink to point to the new postfix
+	 * tuple, below.)
 	 */
 	node = spgFormNodeTuple(state, out->result.splitTuple.nodeLabel, false);
 
@@ -1888,9 +1889,9 @@ spgdoinsert(Relation index, SpGistState *state,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 			errmsg("index row size %lu exceeds maximum %lu for index \"%s\"",
 				   (unsigned long) (leafSize - sizeof(ItemIdData)),
-				   (unsigned long) (SPGIST_PAGE_CAPACITY - sizeof(ItemIdData)),
+				 (unsigned long) (SPGIST_PAGE_CAPACITY - sizeof(ItemIdData)),
 				   RelationGetRelationName(index)),
-		  errhint("Values larger than a buffer page cannot be indexed.")));
+			errhint("Values larger than a buffer page cannot be indexed.")));
 
 	/* Initialize "current" to the appropriate root page */
 	current.blkno = isnull ? SPGIST_NULL_BLKNO : SPGIST_ROOT_BLKNO;
@@ -1920,7 +1921,7 @@ spgdoinsert(Relation index, SpGistState *state,
 		if (current.blkno == InvalidBlockNumber)
 		{
 			/*
-			 * Create a leaf page.  If leafSize is too large to fit on a page,
+			 * Create a leaf page.	If leafSize is too large to fit on a page,
 			 * we won't actually use the page yet, but it simplifies the API
 			 * for doPickSplit to always have a leaf page at hand; so just
 			 * quietly limit our request to a page size.
@@ -1968,7 +1969,7 @@ spgdoinsert(Relation index, SpGistState *state,
 			}
 			else if ((sizeToSplit =
 					  checkSplitConditions(index, state, &current,
-										   &nToSplit)) < SPGIST_PAGE_CAPACITY / 2 &&
+									&nToSplit)) < SPGIST_PAGE_CAPACITY / 2 &&
 					 nToSplit < 64 &&
 					 leafTuple->size + sizeof(ItemIdData) + sizeToSplit <= SPGIST_PAGE_CAPACITY)
 			{
@@ -2077,8 +2078,8 @@ spgdoinsert(Relation index, SpGistState *state,
 					}
 
 					/*
-					 * Loop around and attempt to insert the new leafDatum
-					 * at "current" (which might reference an existing child
+					 * Loop around and attempt to insert the new leafDatum at
+					 * "current" (which might reference an existing child
 					 * tuple, or might be invalid to force us to find a new
 					 * page for the tuple).
 					 *
@@ -2102,8 +2103,8 @@ spgdoinsert(Relation index, SpGistState *state,
 									 out.result.addNode.nodeLabel);
 
 					/*
-					 * Retry insertion into the enlarged node.  We assume
-					 * that we'll get a MatchNode result this time.
+					 * Retry insertion into the enlarged node.	We assume that
+					 * we'll get a MatchNode result this time.
 					 */
 					goto process_inner_tuple;
 					break;

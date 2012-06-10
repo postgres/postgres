@@ -50,9 +50,12 @@ CATALOG(pg_trigger,2620)
 	bool		tginitdeferred; /* constraint trigger is deferred initially */
 	int2		tgnargs;		/* # of extra arguments in tgargs */
 
-	/* Variable-length fields start here, but we allow direct access to tgattr.
-	 * Note: tgattr and tgargs must not be null. */
+	/*
+	 * Variable-length fields start here, but we allow direct access to
+	 * tgattr. Note: tgattr and tgargs must not be null.
+	 */
 	int2vector	tgattr;			/* column numbers, if trigger is on columns */
+
 #ifdef CATALOG_VARLEN
 	bytea		tgargs;			/* first\000second\000tgnargs\000 */
 	pg_node_tree tgqual;		/* WHEN expression, or NULL if none */

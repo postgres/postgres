@@ -283,7 +283,7 @@ get_sort_function_for_ordering_op(Oid opno, Oid *sortfunc,
 										  opcintype,
 										  opcintype,
 										  BTORDER_PROC);
-			if (!OidIsValid(*sortfunc))		/* should not happen */
+			if (!OidIsValid(*sortfunc)) /* should not happen */
 				elog(ERROR, "missing support function %d(%u,%u) in opfamily %u",
 					 BTORDER_PROC, opcintype, opcintype, opfamily);
 			*issupport = false;
@@ -1549,7 +1549,7 @@ func_volatile(Oid funcid)
 
 /*
  * get_func_leakproof
- *     Given procedure id, return the function's leakproof field.
+ *	   Given procedure id, return the function's leakproof field.
  */
 bool
 get_func_leakproof(Oid funcid)
@@ -2914,8 +2914,8 @@ get_range_subtype(Oid rangeOid)
 	tp = SearchSysCache1(RANGETYPE, ObjectIdGetDatum(rangeOid));
 	if (HeapTupleIsValid(tp))
 	{
-		Form_pg_range	rngtup = (Form_pg_range) GETSTRUCT(tp);
-		Oid				result;
+		Form_pg_range rngtup = (Form_pg_range) GETSTRUCT(tp);
+		Oid			result;
 
 		result = rngtup->rngsubtype;
 		ReleaseSysCache(tp);

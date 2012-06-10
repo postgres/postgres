@@ -1362,7 +1362,7 @@ _bt_pagedel(Relation rel, Buffer buf, BTStack stack)
 	 * we're in VACUUM and would not otherwise have an XID.  Having already
 	 * updated links to the target, ReadNewTransactionId() suffices as an
 	 * upper bound.  Any scan having retained a now-stale link is advertising
-	 * in its PGXACT an xmin less than or equal to the value we read here.  It
+	 * in its PGXACT an xmin less than or equal to the value we read here.	It
 	 * will continue to do so, holding back RecentGlobalXmin, for the duration
 	 * of that scan.
 	 */

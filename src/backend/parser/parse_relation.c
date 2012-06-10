@@ -274,10 +274,11 @@ searchRangeTable(ParseState *pstate, RangeVar *relation)
 	 * relation.
 	 *
 	 * NB: It's not critical that RangeVarGetRelid return the correct answer
-	 * here in the face of concurrent DDL.  If it doesn't, the worst case
-	 * scenario is a less-clear error message.  Also, the tables involved in
+	 * here in the face of concurrent DDL.	If it doesn't, the worst case
+	 * scenario is a less-clear error message.	Also, the tables involved in
 	 * the query are already locked, which reduces the number of cases in
-	 * which surprising behavior can occur.  So we do the name lookup unlocked.
+	 * which surprising behavior can occur.  So we do the name lookup
+	 * unlocked.
 	 */
 	if (!relation->schemaname)
 		cte = scanNameSpaceForCTE(pstate, refname, &ctelevelsup);

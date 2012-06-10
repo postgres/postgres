@@ -73,13 +73,13 @@ typedef struct TypeCacheEntry
 	TupleDesc	tupDesc;
 
 	/*
-	 * Fields computed when TYPECACHE_RANGE_INFO is requested.  Zeroes if
-	 * not a range type or information hasn't yet been requested.  Note that
+	 * Fields computed when TYPECACHE_RANGE_INFO is requested.	Zeroes if not
+	 * a range type or information hasn't yet been requested.  Note that
 	 * rng_cmp_proc_finfo could be different from the element type's default
 	 * btree comparison function.
 	 */
-	struct TypeCacheEntry *rngelemtype;	/* range's element type */
-	Oid			rng_collation;			/* collation for comparisons, if any */
+	struct TypeCacheEntry *rngelemtype; /* range's element type */
+	Oid			rng_collation;	/* collation for comparisons, if any */
 	FmgrInfo	rng_cmp_proc_finfo;		/* comparison function */
 	FmgrInfo	rng_canonical_finfo;	/* canonicalization function, if any */
 	FmgrInfo	rng_subdiff_finfo;		/* difference function, if any */

@@ -581,8 +581,7 @@ gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len, GISTSTATE *gist
 			if (v->spl_equiv == NULL)
 			{
 				/*
-				 * simple case: left and right keys for attno column are
-				 * equal
+				 * simple case: left and right keys for attno column are equal
 				 */
 				gistSplitByKey(r, page, itup, len, giststate, v, entryvec, attno + 1);
 			}

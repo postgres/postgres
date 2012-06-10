@@ -3333,7 +3333,7 @@ static void InitializeOneGUCOption(struct config_generic * gconf);
 static void push_old_value(struct config_generic * gconf, GucAction action);
 static void ReportGUCOption(struct config_generic * record);
 static void reapply_stacked_values(struct config_generic * variable,
-					   struct config_string *pHolder,
+					   struct config_string * pHolder,
 					   GucStack *stack,
 					   const char *curvalue,
 					   GucContext curscontext, GucSource cursource);
@@ -4143,8 +4143,8 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 
 	/*
 	 * If timezone_abbreviations wasn't set in the configuration file, install
-	 * the default value.  We do it this way because we can't safely install
-	 * a "real" value until my_exec_path is set, which may not have happened
+	 * the default value.  We do it this way because we can't safely install a
+	 * "real" value until my_exec_path is set, which may not have happened
 	 * when InitializeGUCOptions runs, so the bootstrap default value cannot
 	 * be the real desired default.
 	 */
@@ -4415,7 +4415,7 @@ NewGUCNestLevel(void)
 /*
  * Do GUC processing at transaction or subtransaction commit or abort, or
  * when exiting a function that has proconfig settings, or when undoing a
- * transient assignment to some GUC variables.  (The name is thus a bit of
+ * transient assignment to some GUC variables.	(The name is thus a bit of
  * a misnomer; perhaps it should be ExitGUCNestLevel or some such.)
  * During abort, we discard all GUC settings that were applied at nesting
  * levels >= nestLevel.  nestLevel == 1 corresponds to the main transaction.
@@ -5106,7 +5106,7 @@ config_enum_get_options(struct config_enum * record, const char *prefix,
  *
  * Return value:
  *	+1: the value is valid and was successfully applied.
- *	0:  the name or value is invalid (but see below).
+ *	0:	the name or value is invalid (but see below).
  *	-1: the value was not applied because of context, priority, or changeVal.
  *
  * If there is an error (non-existing option, invalid value) then an
@@ -6441,7 +6441,7 @@ define_custom_variable(struct config_generic * variable)
 	 * variable.  Essentially, we need to duplicate all the active and stacked
 	 * values, but with appropriate validation and datatype adjustment.
 	 *
-	 * If an assignment fails, we report a WARNING and keep going.  We don't
+	 * If an assignment fails, we report a WARNING and keep going.	We don't
 	 * want to throw ERROR for bad values, because it'd bollix the add-on
 	 * module that's presumably halfway through getting loaded.  In such cases
 	 * the default or previous state will become active instead.
@@ -6469,7 +6469,7 @@ define_custom_variable(struct config_generic * variable)
 	/*
 	 * Free up as much as we conveniently can of the placeholder structure.
 	 * (This neglects any stack items, so it's possible for some memory to be
-	 * leaked.  Since this can only happen once per session per variable, it
+	 * leaked.	Since this can only happen once per session per variable, it
 	 * doesn't seem worth spending much code on.)
 	 */
 	set_string_field(pHolder, pHolder->variable, NULL);
@@ -6487,7 +6487,7 @@ define_custom_variable(struct config_generic * variable)
  */
 static void
 reapply_stacked_values(struct config_generic * variable,
-					   struct config_string *pHolder,
+					   struct config_string * pHolder,
 					   GucStack *stack,
 					   const char *curvalue,
 					   GucContext curscontext, GucSource cursource)
@@ -6526,7 +6526,7 @@ reapply_stacked_values(struct config_generic * variable,
 			case GUC_SET_LOCAL:
 				/* first, apply the masked value as SET */
 				(void) set_config_option(name, stack->masked.val.stringval,
-										 stack->masked_scontext, PGC_S_SESSION,
+									   stack->masked_scontext, PGC_S_SESSION,
 										 GUC_ACTION_SET, true, WARNING);
 				/* then apply the current value as LOCAL */
 				(void) set_config_option(name, curvalue,
@@ -6542,7 +6542,7 @@ reapply_stacked_values(struct config_generic * variable,
 	else
 	{
 		/*
-		 * We are at the end of the stack.  If the active/previous value is
+		 * We are at the end of the stack.	If the active/previous value is
 		 * different from the reset value, it must represent a previously
 		 * committed session value.  Apply it, and then drop the stack entry
 		 * that set_config_option will have created under the impression that
@@ -8028,8 +8028,8 @@ validate_option_array_item(const char *name, const char *value,
 	 *
 	 * name is not known, but exists or can be created as a placeholder (i.e.,
 	 * it has a prefixed name).  We allow this case if you're a superuser,
-	 * otherwise not.  Superusers are assumed to know what they're doing.
-	 * We can't allow it for other users, because when the placeholder is
+	 * otherwise not.  Superusers are assumed to know what they're doing. We
+	 * can't allow it for other users, because when the placeholder is
 	 * resolved it might turn out to be a SUSET variable;
 	 * define_custom_variable assumes we checked that.
 	 *

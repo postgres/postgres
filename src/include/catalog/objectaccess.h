@@ -36,10 +36,10 @@ typedef enum ObjectAccessType
 typedef struct
 {
 	/*
-	 * Flags to inform extensions the context of this deletion.
-	 * Also see PERFORM_DELETION_* in dependency.h
+	 * Flags to inform extensions the context of this deletion. Also see
+	 * PERFORM_DELETION_* in dependency.h
 	 */
-	int		dropflags;
+	int			dropflags;
 } ObjectAccessDrop;
 
 /*

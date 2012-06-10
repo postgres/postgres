@@ -536,8 +536,7 @@ check_foreign_key(PG_FUNCTION_ARGS)
 
 			/*
 			 * Remember that SPI_prepare places plan in current memory context
-			 * - so, we have to save plan in Top memory context for later
-			 * use.
+			 * - so, we have to save plan in Top memory context for later use.
 			 */
 			if (SPI_keepplan(pplan))
 				/* internal error */

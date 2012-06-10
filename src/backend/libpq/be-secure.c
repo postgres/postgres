@@ -89,10 +89,10 @@ static void close_SSL(Port *);
 static const char *SSLerrmessage(void);
 #endif
 
-char *ssl_cert_file;
-char *ssl_key_file;
-char *ssl_ca_file;
-char *ssl_crl_file;
+char	   *ssl_cert_file;
+char	   *ssl_key_file;
+char	   *ssl_ca_file;
+char	   *ssl_crl_file;
 
 /*
  *	How much data can be sent across a secure connection
@@ -845,8 +845,8 @@ initialize_SSL(void)
 	{
 		/*
 		 * Always ask for SSL client cert, but don't fail if it's not
-		 * presented.  We might fail such connections later, depending on
-		 * what we find in pg_hba.conf.
+		 * presented.  We might fail such connections later, depending on what
+		 * we find in pg_hba.conf.
 		 */
 		SSL_CTX_set_verify(SSL_context,
 						   (SSL_VERIFY_PEER |
@@ -953,7 +953,7 @@ aloop:
 	port->peer_cn = NULL;
 	if (port->peer != NULL)
 	{
-		int		len;
+		int			len;
 
 		len = X509_NAME_get_text_by_NID(X509_get_subject_name(port->peer),
 										NID_commonName, NULL, 0);

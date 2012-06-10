@@ -10,4 +10,4 @@
 extern Datum PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc);
 extern HeapTuple PLy_exec_trigger(FunctionCallInfo fcinfo, PLyProcedure *proc);
 
-#endif	/* PLPY_EXEC_H */
+#endif   /* PLPY_EXEC_H */

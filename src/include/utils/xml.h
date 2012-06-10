@@ -37,11 +37,11 @@ typedef enum
 
 typedef enum
 {
-	PG_XML_STRICTNESS_LEGACY,		/* ignore errors unless function result
-									 * indicates error condition */
-	PG_XML_STRICTNESS_WELLFORMED,	/* ignore non-parser messages */
-	PG_XML_STRICTNESS_ALL			/* report all notices/warnings/errors */
-}	PgXmlStrictness;
+	PG_XML_STRICTNESS_LEGACY,	/* ignore errors unless function result
+								 * indicates error condition */
+	PG_XML_STRICTNESS_WELLFORMED,		/* ignore non-parser messages */
+	PG_XML_STRICTNESS_ALL		/* report all notices/warnings/errors */
+} PgXmlStrictness;
 
 /* struct PgXmlErrorContext is private to xml.c */
 typedef struct PgXmlErrorContext PgXmlErrorContext;
@@ -90,7 +90,7 @@ extern PgXmlErrorContext *pg_xml_init(PgXmlStrictness strictness);
 extern void pg_xml_done(PgXmlErrorContext *errcxt, bool isError);
 extern bool pg_xml_error_occurred(PgXmlErrorContext *errcxt);
 extern void xml_ereport(PgXmlErrorContext *errcxt, int level, int sqlcode,
-						const char *msg);
+			const char *msg);
 
 extern xmltype *xmlconcat(List *args);
 extern xmltype *xmlelement(XmlExprState *xmlExpr, ExprContext *econtext);

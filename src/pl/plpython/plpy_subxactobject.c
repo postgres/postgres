@@ -16,7 +16,7 @@
 #include "plpy_elog.h"
 
 
-List *explicit_subtransactions = NIL;
+List	   *explicit_subtransactions = NIL;
 
 
 static void PLy_subtransaction_dealloc(PyObject *subxact);

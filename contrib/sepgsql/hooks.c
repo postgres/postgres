@@ -52,9 +52,9 @@ typedef struct
 	 * command. Elsewhere (including the case of default) NULL.
 	 */
 	const char *createdb_dtemplate;
-} sepgsql_context_info_t;
+}	sepgsql_context_info_t;
 
-static sepgsql_context_info_t	sepgsql_context_info;
+static sepgsql_context_info_t sepgsql_context_info;
 
 /*
  * GUC: sepgsql.permissive = (on|off)
@@ -101,7 +101,7 @@ sepgsql_object_access(ObjectAccessType access,
 			{
 				case DatabaseRelationId:
 					sepgsql_database_post_create(objectId,
-								sepgsql_context_info.createdb_dtemplate);
+									sepgsql_context_info.createdb_dtemplate);
 					break;
 
 				case NamespaceRelationId:
@@ -115,9 +115,8 @@ sepgsql_object_access(ObjectAccessType access,
 						 * All cases we want to apply permission checks on
 						 * creation of a new relation are invocation of the
 						 * heap_create_with_catalog via DefineRelation or
-						 * OpenIntoRel.
-						 * Elsewhere, we need neither assignment of security
-						 * label nor permission checks.
+						 * OpenIntoRel. Elsewhere, we need neither assignment
+						 * of security label nor permission checks.
 						 */
 						switch (sepgsql_context_info.cmdtype)
 						{
@@ -150,12 +149,12 @@ sepgsql_object_access(ObjectAccessType access,
 
 		case OAT_DROP:
 			{
-				ObjectAccessDrop *drop_arg = (ObjectAccessDrop *)arg;
+				ObjectAccessDrop *drop_arg = (ObjectAccessDrop *) arg;
 
 				/*
-				 * No need to apply permission checks on object deletion
-				 * due to internal cleanups; such as removal of temporary
-				 * database object on session closed.
+				 * No need to apply permission checks on object deletion due
+				 * to internal cleanups; such as removal of temporary database
+				 * object on session closed.
 				 */
 				if ((drop_arg->dropflags & PERFORM_DELETION_INTERNAL) != 0)
 					break;
@@ -219,13 +218,13 @@ sepgsql_exec_check_perms(List *rangeTabls, bool abort)
 /*
  * sepgsql_executor_start
  *
- * It saves contextual information during ExecutorStart to distinguish 
+ * It saves contextual information during ExecutorStart to distinguish
  * a case with/without permission checks later.
  */
 static void
 sepgsql_executor_start(QueryDesc *queryDesc, int eflags)
 {
-	sepgsql_context_info_t	saved_context_info = sepgsql_context_info;
+	sepgsql_context_info_t saved_context_info = sepgsql_context_info;
 
 	PG_TRY();
 	{
@@ -270,28 +269,29 @@ sepgsql_utility_command(Node *parsetree,
 						DestReceiver *dest,
 						char *completionTag)
 {
-	sepgsql_context_info_t	saved_context_info = sepgsql_context_info;
-	ListCell	   *cell;
+	sepgsql_context_info_t saved_context_info = sepgsql_context_info;
+	ListCell   *cell;
 
 	PG_TRY();
 	{
 		/*
 		 * Check command tag to avoid nefarious operations, and save the
-		 * current contextual information to determine whether we should
-		 * apply permission checks here, or not.
+		 * current contextual information to determine whether we should apply
+		 * permission checks here, or not.
 		 */
 		sepgsql_context_info.cmdtype = nodeTag(parsetree);
 
 		switch (nodeTag(parsetree))
 		{
 			case T_CreatedbStmt:
+
 				/*
 				 * We hope to reference name of the source database, but it
 				 * does not appear in system catalog. So, we save it here.
 				 */
-				foreach (cell, ((CreatedbStmt *) parsetree)->options)
+				foreach(cell, ((CreatedbStmt *) parsetree)->options)
 				{
-					DefElem	   *defel = (DefElem *) lfirst(cell);
+					DefElem    *defel = (DefElem *) lfirst(cell);
 
 					if (strcmp(defel->defname, "template") == 0)
 					{
@@ -303,6 +303,7 @@ sepgsql_utility_command(Node *parsetree,
 				break;
 
 			case T_LoadStmt:
+
 				/*
 				 * We reject LOAD command across the board on enforcing mode,
 				 * because a binary module can arbitrarily override hooks.
@@ -315,6 +316,7 @@ sepgsql_utility_command(Node *parsetree,
 				}
 				break;
 			default:
+
 				/*
 				 * Right now we don't check any other utility commands,
 				 * because it needs more detailed information to make access

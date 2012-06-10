@@ -40,7 +40,7 @@ static PyMethodDef PLy_cursor_methods[] = {
 
 static PyTypeObject PLy_CursorType = {
 	PyVarObject_HEAD_INIT(NULL, 0)
-	"PLyCursor",		/* tp_name */
+	"PLyCursor",				/* tp_name */
 	sizeof(PLyCursorObject),	/* tp_size */
 	0,							/* tp_itemsize */
 
@@ -103,7 +103,7 @@ PLy_cursor(PyObject *self, PyObject *args)
 static PyObject *
 PLy_cursor_query(const char *query)
 {
-	PLyCursorObject	*cursor;
+	PLyCursorObject *cursor;
 	volatile MemoryContext oldcontext;
 	volatile ResourceOwner oldowner;
 
@@ -120,7 +120,7 @@ PLy_cursor_query(const char *query)
 
 	PG_TRY();
 	{
-		PLyExecutionContext	*exec_ctx = PLy_current_execution_context();
+		PLyExecutionContext *exec_ctx = PLy_current_execution_context();
 		SPIPlanPtr	plan;
 		Portal		portal;
 
@@ -157,7 +157,7 @@ PLy_cursor_query(const char *query)
 static PyObject *
 PLy_cursor_plan(PyObject *ob, PyObject *args)
 {
-	PLyCursorObject	*cursor;
+	PLyCursorObject *cursor;
 	volatile int nargs;
 	int			i;
 	PLyPlanObject *plan;
@@ -187,8 +187,8 @@ PLy_cursor_plan(PyObject *ob, PyObject *args)
 			PLy_elog(ERROR, "could not execute plan");
 		sv = PyString_AsString(so);
 		PLy_exception_set_plural(PyExc_TypeError,
-								 "Expected sequence of %d argument, got %d: %s",
-								 "Expected sequence of %d arguments, got %d: %s",
+							  "Expected sequence of %d argument, got %d: %s",
+							 "Expected sequence of %d arguments, got %d: %s",
 								 plan->nargs,
 								 plan->nargs, nargs, sv);
 		Py_DECREF(so);
@@ -305,7 +305,7 @@ static void
 PLy_cursor_dealloc(PyObject *arg)
 {
 	PLyCursorObject *cursor;
-	Portal			portal;
+	Portal		portal;
 
 	cursor = (PLyCursorObject *) arg;
 
@@ -328,10 +328,10 @@ static PyObject *
 PLy_cursor_iternext(PyObject *self)
 {
 	PLyCursorObject *cursor;
-	PyObject		*ret;
+	PyObject   *ret;
 	volatile MemoryContext oldcontext;
 	volatile ResourceOwner oldowner;
-	Portal			portal;
+	Portal		portal;
 
 	cursor = (PLyCursorObject *) self;
 
@@ -391,11 +391,11 @@ static PyObject *
 PLy_cursor_fetch(PyObject *self, PyObject *args)
 {
 	PLyCursorObject *cursor;
-	int				count;
-	PLyResultObject	*ret;
+	int			count;
+	PLyResultObject *ret;
 	volatile MemoryContext oldcontext;
 	volatile ResourceOwner oldowner;
-	Portal			portal;
+	Portal		portal;
 
 	if (!PyArg_ParseTuple(args, "i", &count))
 		return NULL;
@@ -440,7 +440,7 @@ PLy_cursor_fetch(PyObject *self, PyObject *args)
 
 		if (SPI_processed != 0)
 		{
-			int	i;
+			int			i;
 
 			Py_DECREF(ret->rows);
 			ret->rows = PyList_New(SPI_processed);
@@ -450,6 +450,7 @@ PLy_cursor_fetch(PyObject *self, PyObject *args)
 				PyObject   *row = PLyDict_FromTuple(&cursor->result,
 													SPI_tuptable->vals[i],
 													SPI_tuptable->tupdesc);
+
 				PyList_SetItem(ret->rows, i, row);
 			}
 		}
@@ -477,12 +478,12 @@ PLy_cursor_close(PyObject *self, PyObject *unused)
 
 	if (!cursor->closed)
 	{
-		Portal portal = GetPortalByName(cursor->portalname);
+		Portal		portal = GetPortalByName(cursor->portalname);
 
 		if (!PortalIsValid(portal))
 		{
 			PLy_exception_set(PyExc_ValueError,
-							  "closing a cursor in an aborted subtransaction");
+							"closing a cursor in an aborted subtransaction");
 			return NULL;
 		}
 

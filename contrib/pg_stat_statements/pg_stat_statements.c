@@ -103,19 +103,19 @@ typedef struct Counters
 	int64		calls;			/* # of times executed */
 	double		total_time;		/* total execution time, in msec */
 	int64		rows;			/* total # of retrieved or affected rows */
-	int64		shared_blks_hit;		/* # of shared buffer hits */
+	int64		shared_blks_hit;	/* # of shared buffer hits */
 	int64		shared_blks_read;		/* # of shared disk blocks read */
 	int64		shared_blks_dirtied;	/* # of shared disk blocks dirtied */
 	int64		shared_blks_written;	/* # of shared disk blocks written */
-	int64		local_blks_hit;			/* # of local buffer hits */
-	int64		local_blks_read;		/* # of local disk blocks read */
+	int64		local_blks_hit; /* # of local buffer hits */
+	int64		local_blks_read;	/* # of local disk blocks read */
 	int64		local_blks_dirtied;		/* # of local disk blocks dirtied */
 	int64		local_blks_written;		/* # of local disk blocks written */
-	int64		temp_blks_read;			/* # of temp blocks read */
+	int64		temp_blks_read; /* # of temp blocks read */
 	int64		temp_blks_written;		/* # of temp blocks written */
-	double		blk_read_time;			/* time spent reading, in msec */
-	double		blk_write_time;			/* time spent writing, in msec */
-	double		usage;					/* usage factor */
+	double		blk_read_time;	/* time spent reading, in msec */
+	double		blk_write_time; /* time spent writing, in msec */
+	double		usage;			/* usage factor */
 } Counters;
 
 /*
@@ -140,7 +140,7 @@ typedef struct pgssSharedState
 {
 	LWLockId	lock;			/* protects hashtable search/modification */
 	int			query_size;		/* max query length in bytes */
-	double		cur_median_usage;	/* current median usage in hashtable */
+	double		cur_median_usage;		/* current median usage in hashtable */
 } pgssSharedState;
 
 /*
@@ -150,7 +150,7 @@ typedef struct pgssLocationLen
 {
 	int			location;		/* start offset in query text */
 	int			length;			/* length in bytes, or -1 to ignore */
-}	pgssLocationLen;
+} pgssLocationLen;
 
 /*
  * Working state for computing a query jumble and producing a normalized
@@ -172,7 +172,7 @@ typedef struct pgssJumbleState
 
 	/* Current number of valid entries in clocations array */
 	int			clocations_count;
-}	pgssJumbleState;
+} pgssJumbleState;
 
 /*---- Local variables ----*/
 
@@ -248,21 +248,21 @@ static uint32 pgss_hash_string(const char *str);
 static void pgss_store(const char *query, uint32 queryId,
 		   double total_time, uint64 rows,
 		   const BufferUsage *bufusage,
-		   pgssJumbleState * jstate);
+		   pgssJumbleState *jstate);
 static Size pgss_memsize(void);
 static pgssEntry *entry_alloc(pgssHashKey *key, const char *query,
-							  int query_len, bool sticky);
+			int query_len, bool sticky);
 static void entry_dealloc(void);
 static void entry_reset(void);
-static void AppendJumble(pgssJumbleState * jstate,
+static void AppendJumble(pgssJumbleState *jstate,
 			 const unsigned char *item, Size size);
-static void JumbleQuery(pgssJumbleState * jstate, Query *query);
-static void JumbleRangeTable(pgssJumbleState * jstate, List *rtable);
-static void JumbleExpr(pgssJumbleState * jstate, Node *node);
-static void RecordConstLocation(pgssJumbleState * jstate, int location);
-static char *generate_normalized_query(pgssJumbleState * jstate, const char *query,
+static void JumbleQuery(pgssJumbleState *jstate, Query *query);
+static void JumbleRangeTable(pgssJumbleState *jstate, List *rtable);
+static void JumbleExpr(pgssJumbleState *jstate, Node *node);
+static void RecordConstLocation(pgssJumbleState *jstate, int location);
+static char *generate_normalized_query(pgssJumbleState *jstate, const char *query,
 						  int *query_len_p, int encoding);
-static void fill_in_constant_lengths(pgssJumbleState * jstate, const char *query);
+static void fill_in_constant_lengths(pgssJumbleState *jstate, const char *query);
 static int	comp_location(const void *a, const void *b);
 
 
@@ -513,8 +513,8 @@ pgss_shmem_startup(void)
 	FreeFile(file);
 
 	/*
-	 * Remove the file so it's not included in backups/replication
-	 * slaves, etc. A new file will be written on next shutdown.
+	 * Remove the file so it's not included in backups/replication slaves,
+	 * etc. A new file will be written on next shutdown.
 	 */
 	unlink(PGSS_DUMP_FILE);
 
@@ -600,7 +600,7 @@ error:
 	ereport(LOG,
 			(errcode_for_file_access(),
 			 errmsg("could not write pg_stat_statement file \"%s\": %m",
-					PGSS_DUMP_FILE  ".tmp")));
+					PGSS_DUMP_FILE ".tmp")));
 	if (file)
 		FreeFile(file);
 	unlink(PGSS_DUMP_FILE ".tmp");
@@ -626,8 +626,8 @@ pgss_post_parse_analyze(ParseState *pstate, Query *query)
 	 * the statement contains an optimizable statement for which a queryId
 	 * could be derived (such as EXPLAIN or DECLARE CURSOR).  For such cases,
 	 * runtime control will first go through ProcessUtility and then the
-	 * executor, and we don't want the executor hooks to do anything, since
-	 * we are already measuring the statement's costs at the utility level.
+	 * executor, and we don't want the executor hooks to do anything, since we
+	 * are already measuring the statement's costs at the utility level.
 	 */
 	if (query->utilityStmt)
 	{
@@ -768,7 +768,7 @@ pgss_ExecutorEnd(QueryDesc *queryDesc)
 
 		pgss_store(queryDesc->sourceText,
 				   queryId,
-				   queryDesc->totaltime->total * 1000.0, /* convert to msec */
+				   queryDesc->totaltime->total * 1000.0,		/* convert to msec */
 				   queryDesc->estate->es_processed,
 				   &queryDesc->totaltime->bufusage,
 				   NULL);
@@ -789,10 +789,9 @@ pgss_ProcessUtility(Node *parsetree, const char *queryString,
 					DestReceiver *dest, char *completionTag)
 {
 	/*
-	 * If it's an EXECUTE statement, we don't track it and don't increment
-	 * the nesting level.  This allows the cycles to be charged to the
-	 * underlying PREPARE instead (by the Executor hooks), which is much more
-	 * useful.
+	 * If it's an EXECUTE statement, we don't track it and don't increment the
+	 * nesting level.  This allows the cycles to be charged to the underlying
+	 * PREPARE instead (by the Executor hooks), which is much more useful.
 	 *
 	 * We also don't track execution of PREPARE.  If we did, we would get one
 	 * hash table entry for the PREPARE (with hash calculated from the query
@@ -942,7 +941,7 @@ static void
 pgss_store(const char *query, uint32 queryId,
 		   double total_time, uint64 rows,
 		   const BufferUsage *bufusage,
-		   pgssJumbleState * jstate)
+		   pgssJumbleState *jstate)
 {
 	pgssHashKey key;
 	pgssEntry  *entry;
@@ -1355,7 +1354,7 @@ entry_reset(void)
  * the current jumble.
  */
 static void
-AppendJumble(pgssJumbleState * jstate, const unsigned char *item, Size size)
+AppendJumble(pgssJumbleState *jstate, const unsigned char *item, Size size)
 {
 	unsigned char *jumble = jstate->jumble;
 	Size		jumble_len = jstate->jumble_len;
@@ -1404,7 +1403,7 @@ AppendJumble(pgssJumbleState * jstate, const unsigned char *item, Size size)
  * of information).
  */
 static void
-JumbleQuery(pgssJumbleState * jstate, Query *query)
+JumbleQuery(pgssJumbleState *jstate, Query *query)
 {
 	Assert(IsA(query, Query));
 	Assert(query->utilityStmt == NULL);
@@ -1431,7 +1430,7 @@ JumbleQuery(pgssJumbleState * jstate, Query *query)
  * Jumble a range table
  */
 static void
-JumbleRangeTable(pgssJumbleState * jstate, List *rtable)
+JumbleRangeTable(pgssJumbleState *jstate, List *rtable)
 {
 	ListCell   *lc;
 
@@ -1485,11 +1484,11 @@ JumbleRangeTable(pgssJumbleState * jstate, List *rtable)
  *
  * Note: the reason we don't simply use expression_tree_walker() is that the
  * point of that function is to support tree walkers that don't care about
- * most tree node types, but here we care about all types.  We should complain
+ * most tree node types, but here we care about all types.	We should complain
  * about any unrecognized node type.
  */
 static void
-JumbleExpr(pgssJumbleState * jstate, Node *node)
+JumbleExpr(pgssJumbleState *jstate, Node *node)
 {
 	ListCell   *temp;
 
@@ -1874,7 +1873,7 @@ JumbleExpr(pgssJumbleState * jstate, Node *node)
  * that is currently being walked.
  */
 static void
-RecordConstLocation(pgssJumbleState * jstate, int location)
+RecordConstLocation(pgssJumbleState *jstate, int location)
 {
 	/* -1 indicates unknown or undefined location */
 	if (location >= 0)
@@ -1909,7 +1908,7 @@ RecordConstLocation(pgssJumbleState * jstate, int location)
  * Returns a palloc'd string, which is not necessarily null-terminated.
  */
 static char *
-generate_normalized_query(pgssJumbleState * jstate, const char *query,
+generate_normalized_query(pgssJumbleState *jstate, const char *query,
 						  int *query_len_p, int encoding)
 {
 	char	   *norm_query;
@@ -2007,7 +2006,7 @@ generate_normalized_query(pgssJumbleState * jstate, const char *query,
  * a problem.
  *
  * Duplicate constant pointers are possible, and will have their lengths
- * marked as '-1', so that they are later ignored.  (Actually, we assume the
+ * marked as '-1', so that they are later ignored.	(Actually, we assume the
  * lengths were initialized as -1 to start with, and don't change them here.)
  *
  * N.B. There is an assumption that a '-' character at a Const location begins
@@ -2015,7 +2014,7 @@ generate_normalized_query(pgssJumbleState * jstate, const char *query,
  * reason for a constant to start with a '-'.
  */
 static void
-fill_in_constant_lengths(pgssJumbleState * jstate, const char *query)
+fill_in_constant_lengths(pgssJumbleState *jstate, const char *query)
 {
 	pgssLocationLen *locs;
 	core_yyscan_t yyscanner;

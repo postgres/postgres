@@ -95,8 +95,8 @@ create_or_index_quals(PlannerInfo *root, RelOptInfo *rel)
 	/*
 	 * Find potentially interesting OR joinclauses.  We can use any joinclause
 	 * that is considered safe to move to this rel by the parameterized-path
-	 * machinery, even though what we are going to do with it is not exactly
-	 * a parameterized path.
+	 * machinery, even though what we are going to do with it is not exactly a
+	 * parameterized path.
 	 */
 	foreach(i, rel->joininfo)
 	{
@@ -109,7 +109,7 @@ create_or_index_quals(PlannerInfo *root, RelOptInfo *rel)
 			 * Use the generate_bitmap_or_paths() machinery to estimate the
 			 * value of each OR clause.  We can use regular restriction
 			 * clauses along with the OR clause contents to generate
-			 * indexquals.  We pass restriction_only = true so that any
+			 * indexquals.	We pass restriction_only = true so that any
 			 * sub-clauses that are actually joins will be ignored.
 			 */
 			List	   *orpaths;

@@ -33,11 +33,11 @@ const char *progname = NULL;
 
 static struct
 {
-	on_exit_nicely_callback	function;
+	on_exit_nicely_callback function;
 	void	   *arg;
-} on_exit_nicely_list[MAX_ON_EXIT_NICELY];
+}	on_exit_nicely_list[MAX_ON_EXIT_NICELY];
 
-static int on_exit_nicely_index;
+static int	on_exit_nicely_index;
 
 #define supports_grant_options(version) ((version) >= 70400)
 
@@ -1221,9 +1221,9 @@ emitShSecLabels(PGconn *conn, PGresult *res, PQExpBuffer buffer,
 	int			i;
 
 	for (i = 0; i < PQntuples(res); i++)
-    {
-		char   *provider = PQgetvalue(res, i, 0);
-		char   *label = PQgetvalue(res, i, 1);
+	{
+		char	   *provider = PQgetvalue(res, i, 0);
+		char	   *label = PQgetvalue(res, i, 1);
 
 		/* must use fmtId result before calling it again */
 		appendPQExpBuffer(buffer,
@@ -1233,7 +1233,7 @@ emitShSecLabels(PGconn *conn, PGresult *res, PQExpBuffer buffer,
 						  " %s IS ",
 						  fmtId(objname));
 		appendStringLiteralConn(buffer, label, conn);
-        appendPQExpBuffer(buffer, ";\n");
+		appendPQExpBuffer(buffer, ";\n");
 	}
 }
 
@@ -1252,11 +1252,11 @@ set_dump_section(const char *arg, int *dumpSections)
 	if (*dumpSections == DUMP_UNSECTIONED)
 		*dumpSections = 0;
 
-	if (strcmp(arg,"pre-data") == 0)
+	if (strcmp(arg, "pre-data") == 0)
 		*dumpSections |= DUMP_PRE_DATA;
-	else if (strcmp(arg,"data") == 0)
+	else if (strcmp(arg, "data") == 0)
 		*dumpSections |= DUMP_DATA;
-	else if (strcmp(arg,"post-data") == 0)
+	else if (strcmp(arg, "post-data") == 0)
 		*dumpSections |= DUMP_POST_DATA;
 	else
 	{
@@ -1304,7 +1304,7 @@ vwrite_msg(const char *modulename, const char *fmt, va_list ap)
 
 
 /*
- * Fail and die, with a message to stderr.  Parameters as for write_msg.
+ * Fail and die, with a message to stderr.	Parameters as for write_msg.
  */
 void
 exit_horribly(const char *modulename, const char *fmt,...)
@@ -1336,11 +1336,11 @@ on_exit_nicely(on_exit_nicely_callback function, void *arg)
 void
 exit_nicely(int code)
 {
-	int		i;
+	int			i;
 
 	for (i = on_exit_nicely_index - 1; i >= 0; i--)
-		(*on_exit_nicely_list[i].function)(code,
-			on_exit_nicely_list[i].arg);
+		(*on_exit_nicely_list[i].function) (code,
+											on_exit_nicely_list[i].arg);
 
 #ifdef WIN32
 	if (parallel_init_done && GetCurrentThreadId() != mainThreadId)

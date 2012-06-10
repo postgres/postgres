@@ -34,7 +34,8 @@ CATALOG(pg_extension,3079)
 	Oid			extowner;		/* extension owner */
 	Oid			extnamespace;	/* namespace of contained objects */
 	bool		extrelocatable; /* if true, allow ALTER EXTENSION SET SCHEMA */
-#ifdef CATALOG_VARLEN			 /* variable-length fields start here */
+
+#ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	/* extversion should never be null, but the others can be. */
 	text		extversion;		/* extension version name */
 	Oid			extconfig[1];	/* dumpable configuration tables */

@@ -150,9 +150,9 @@ plan_set_operations(PlannerInfo *root, double tuple_fraction,
 	Assert(parse->distinctClause == NIL);
 
 	/*
-	 * We'll need to build RelOptInfos for each of the leaf subqueries,
-	 * which are RTE_SUBQUERY rangetable entries in this Query.  Prepare the
-	 * index arrays for that.
+	 * We'll need to build RelOptInfos for each of the leaf subqueries, which
+	 * are RTE_SUBQUERY rangetable entries in this Query.  Prepare the index
+	 * arrays for that.
 	 */
 	setup_simple_rel_arrays(root);
 

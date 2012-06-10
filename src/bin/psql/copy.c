@@ -394,7 +394,7 @@ handleCopyOut(PGconn *conn, FILE *copystream)
 	/*
 	 * Check command status and return to normal libpq state.  After a
 	 * client-side error, the server will remain ready to deliver data.  The
-	 * cleanest thing is to fully drain and discard that data.  If the
+	 * cleanest thing is to fully drain and discard that data.	If the
 	 * client-side error happened early in a large file, this takes a long
 	 * time.  Instead, take advantage of the fact that PQexec() will silently
 	 * end any ongoing PGRES_COPY_OUT state.  This does cause us to lose the
@@ -405,7 +405,7 @@ handleCopyOut(PGconn *conn, FILE *copystream)
 	 * We must not ever return with the status still PGRES_COPY_OUT.  Our
 	 * caller is unable to distinguish that situation from reaching the next
 	 * COPY in a command string that happened to contain two consecutive COPY
-	 * TO STDOUT commands.  We trust that no condition can make PQexec() fail
+	 * TO STDOUT commands.	We trust that no condition can make PQexec() fail
 	 * indefinitely while retaining status PGRES_COPY_OUT.
 	 */
 	while (res = PQgetResult(conn), PQresultStatus(res) == PGRES_COPY_OUT)
@@ -584,6 +584,7 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary)
 		OK = false;
 
 copyin_cleanup:
+
 	/*
 	 * Check command status and return to normal libpq state
 	 *

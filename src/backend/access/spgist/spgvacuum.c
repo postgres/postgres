@@ -31,8 +31,8 @@
 /* Entry in pending-list of TIDs we need to revisit */
 typedef struct spgVacPendingItem
 {
-	ItemPointerData tid;				/* redirection target to visit */
-	bool		done;					/* have we dealt with this? */
+	ItemPointerData tid;		/* redirection target to visit */
+	bool		done;			/* have we dealt with this? */
 	struct spgVacPendingItem *next;		/* list link */
 } spgVacPendingItem;
 
@@ -46,10 +46,10 @@ typedef struct spgBulkDeleteState
 	void	   *callback_state;
 
 	/* Additional working state */
-	SpGistState spgstate;			/* for SPGiST operations that need one */
-	spgVacPendingItem *pendingList;	/* TIDs we need to (re)visit */
-	TransactionId myXmin;			/* for detecting newly-added redirects */
-	TransactionId OldestXmin;		/* for deciding a redirect is obsolete */
+	SpGistState spgstate;		/* for SPGiST operations that need one */
+	spgVacPendingItem *pendingList;		/* TIDs we need to (re)visit */
+	TransactionId myXmin;		/* for detecting newly-added redirects */
+	TransactionId OldestXmin;	/* for deciding a redirect is obsolete */
 	BlockNumber lastFilledBlock;	/* last non-deletable block */
 } spgBulkDeleteState;
 
@@ -213,7 +213,7 @@ vacuumLeafPage(spgBulkDeleteState *bds, Relation index, Buffer buffer,
 	 * Figure out exactly what we have to do.  We do this separately from
 	 * actually modifying the page, mainly so that we have a representation
 	 * that can be dumped into WAL and then the replay code can do exactly
-	 * the same thing.  The output of this step consists of six arrays
+	 * the same thing.	The output of this step consists of six arrays
 	 * describing four kinds of operations, to be performed in this order:
 	 *
 	 * toDead[]: tuple numbers to be replaced with DEAD tuples
@@ -276,8 +276,8 @@ vacuumLeafPage(spgBulkDeleteState *bds, Relation index, Buffer buffer,
 			else if (prevLive == InvalidOffsetNumber)
 			{
 				/*
-				 * This is the first live tuple in the chain.  It has
-				 * to move to the head position.
+				 * This is the first live tuple in the chain.  It has to move
+				 * to the head position.
 				 */
 				moveSrc[xlrec.nMove] = j;
 				moveDest[xlrec.nMove] = i;
@@ -289,7 +289,7 @@ vacuumLeafPage(spgBulkDeleteState *bds, Relation index, Buffer buffer,
 			else
 			{
 				/*
-				 * Second or later live tuple.  Arrange to re-chain it to the
+				 * Second or later live tuple.	Arrange to re-chain it to the
 				 * previous live one, if there was a gap.
 				 */
 				if (interveningDeletable)
@@ -353,11 +353,11 @@ vacuumLeafPage(spgBulkDeleteState *bds, Relation index, Buffer buffer,
 							InvalidBlockNumber, InvalidOffsetNumber);
 
 	/*
-	 * We implement the move step by swapping the item pointers of the
-	 * source and target tuples, then replacing the newly-source tuples
-	 * with placeholders.  This is perhaps unduly friendly with the page
-	 * data representation, but it's fast and doesn't risk page overflow
-	 * when a tuple to be relocated is large.
+	 * We implement the move step by swapping the item pointers of the source
+	 * and target tuples, then replacing the newly-source tuples with
+	 * placeholders.  This is perhaps unduly friendly with the page data
+	 * representation, but it's fast and doesn't risk page overflow when a
+	 * tuple to be relocated is large.
 	 */
 	for (i = 0; i < xlrec.nMove; i++)
 	{
@@ -518,7 +518,7 @@ vacuumRedirectAndPlaceholder(Relation index, Buffer buffer,
 	 */
 	for (i = max;
 		 i >= FirstOffsetNumber &&
-			 (opaque->nRedirection > 0 || !hasNonPlaceholder);
+		 (opaque->nRedirection > 0 || !hasNonPlaceholder);
 		 i--)
 	{
 		SpGistDeadTuple dt;
@@ -651,9 +651,9 @@ spgvacuumpage(spgBulkDeleteState *bds, BlockNumber blkno)
 
 	/*
 	 * The root pages must never be deleted, nor marked as available in FSM,
-	 * because we don't want them ever returned by a search for a place to
-	 * put a new tuple.  Otherwise, check for empty/deletable page, and
-	 * make sure FSM knows about it.
+	 * because we don't want them ever returned by a search for a place to put
+	 * a new tuple.  Otherwise, check for empty/deletable page, and make sure
+	 * FSM knows about it.
 	 */
 	if (!SpGistBlockIsRoot(blkno))
 	{
@@ -688,7 +688,7 @@ spgprocesspending(spgBulkDeleteState *bds)
 	Relation	index = bds->info->index;
 	spgVacPendingItem *pitem;
 	spgVacPendingItem *nitem;
-	BlockNumber	blkno;
+	BlockNumber blkno;
 	Buffer		buffer;
 	Page		page;
 
@@ -741,11 +741,11 @@ spgprocesspending(spgBulkDeleteState *bds)
 		else
 		{
 			/*
-			 * On an inner page, visit the referenced inner tuple and add
-			 * all its downlinks to the pending list.  We might have pending
-			 * items for more than one inner tuple on the same page (in fact
-			 * this is pretty likely given the way space allocation works),
-			 * so get them all while we are here.
+			 * On an inner page, visit the referenced inner tuple and add all
+			 * its downlinks to the pending list.  We might have pending items
+			 * for more than one inner tuple on the same page (in fact this is
+			 * pretty likely given the way space allocation works), so get
+			 * them all while we are here.
 			 */
 			for (nitem = pitem; nitem != NULL; nitem = nitem->next)
 			{
@@ -774,7 +774,7 @@ spgprocesspending(spgBulkDeleteState *bds)
 					{
 						/* transfer attention to redirect point */
 						spgAddPendingTID(bds,
-										 &((SpGistDeadTuple) innerTuple)->pointer);
+								   &((SpGistDeadTuple) innerTuple)->pointer);
 					}
 					else
 						elog(ERROR, "unexpected SPGiST tuple state: %d",
@@ -825,8 +825,8 @@ spgvacuumscan(spgBulkDeleteState *bds)
 	 * physical order (we hope the kernel will cooperate in providing
 	 * read-ahead for speed).  It is critical that we visit all leaf pages,
 	 * including ones added after we start the scan, else we might fail to
-	 * delete some deletable tuples.  See more extensive comments about
-	 * this in btvacuumscan().
+	 * delete some deletable tuples.  See more extensive comments about this
+	 * in btvacuumscan().
 	 */
 	blkno = SPGIST_METAPAGE_BLKNO + 1;
 	for (;;)

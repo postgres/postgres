@@ -63,6 +63,7 @@ static pid_t bgchild = -1;
 
 /* End position for xlog streaming, empty string if unknown yet */
 static XLogRecPtr xlogendptr;
+
 #ifndef WIN32
 static int	has_xlogendptr = 0;
 #else
@@ -223,14 +224,14 @@ typedef struct
 	char		xlogdir[MAXPGPATH];
 	char	   *sysidentifier;
 	int			timeline;
-}	logstreamer_param;
+} logstreamer_param;
 
 static int
-LogStreamerMain(logstreamer_param * param)
+LogStreamerMain(logstreamer_param *param)
 {
 	if (!ReceiveXlogStream(param->bgconn, param->startptr, param->timeline,
 						   param->sysidentifier, param->xlogdir,
-						   reached_end_position, standby_message_timeout, true))
+						reached_end_position, standby_message_timeout, true))
 
 		/*
 		 * Any errors will already have been reported in the function process,
@@ -1092,7 +1093,7 @@ BaseBackup(void)
 		int			status;
 		int			r;
 #else
-		DWORD       status;
+		DWORD		status;
 #endif
 
 		if (verbose)

@@ -27,7 +27,7 @@
 /* non-export function prototypes */
 static void gistfixsplit(GISTInsertState *state, GISTSTATE *giststate);
 static bool gistinserttuple(GISTInsertState *state, GISTInsertStack *stack,
-				GISTSTATE *giststate, IndexTuple tuple, OffsetNumber oldoffnum);
+			 GISTSTATE *giststate, IndexTuple tuple, OffsetNumber oldoffnum);
 static bool gistinserttuples(GISTInsertState *state, GISTInsertStack *stack,
 				 GISTSTATE *giststate,
 				 IndexTuple *tuples, int ntup, OffsetNumber oldoffnum,
@@ -781,8 +781,8 @@ gistFindPath(Relation r, BlockNumber child, OffsetNumber *downlinkoffnum)
 		{
 			/*
 			 * Page was split while we looked elsewhere. We didn't see the
-			 * downlink to the right page when we scanned the parent, so
-			 * add it to the queue now.
+			 * downlink to the right page when we scanned the parent, so add
+			 * it to the queue now.
 			 *
 			 * Put the right page ahead of the queue, so that we visit it
 			 * next. That's important, because if this is the lowest internal
@@ -829,7 +829,7 @@ gistFindPath(Relation r, BlockNumber child, OffsetNumber *downlinkoffnum)
 
 	elog(ERROR, "failed to re-find parent of a page in index \"%s\", block %u",
 		 RelationGetRelationName(r), child);
-	return NULL; /* keep compiler quiet */
+	return NULL;				/* keep compiler quiet */
 }
 
 /*
@@ -1046,7 +1046,7 @@ gistfixsplit(GISTInsertState *state, GISTSTATE *giststate)
  */
 static bool
 gistinserttuple(GISTInsertState *state, GISTInsertStack *stack,
-				GISTSTATE *giststate, IndexTuple tuple, OffsetNumber oldoffnum)
+			  GISTSTATE *giststate, IndexTuple tuple, OffsetNumber oldoffnum)
 {
 	return gistinserttuples(state, stack, giststate, &tuple, 1, oldoffnum,
 							InvalidBuffer, InvalidBuffer, false, false);
@@ -1308,7 +1308,7 @@ initGISTstate(Relation index)
 	giststate = (GISTSTATE *) palloc(sizeof(GISTSTATE));
 
 	giststate->scanCxt = scanCxt;
-	giststate->tempCxt = scanCxt;	/* caller must change this if needed */
+	giststate->tempCxt = scanCxt;		/* caller must change this if needed */
 	giststate->tupdesc = index->rd_att;
 
 	for (i = 0; i < index->rd_att->natts; i++)

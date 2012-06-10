@@ -133,7 +133,7 @@ get_loadable_libraries(void)
 	int			totaltups;
 	int			dbnum;
 	bool		found_public_plpython_handler = false;
-	
+
 	ress = (PGresult **) pg_malloc(old_cluster.dbarr.ndbs * sizeof(PGresult *));
 	totaltups = 0;
 
@@ -144,10 +144,10 @@ get_loadable_libraries(void)
 		PGconn	   *conn = connectToServer(&old_cluster, active_db->db_name);
 
 		/*
-		 *	Fetch all libraries referenced in this DB.  We can't exclude
-		 *	the "pg_catalog" schema because, while such functions are not
-		 *	explicitly dumped by pg_dump, they do reference implicit objects
-		 *	that pg_dump does dump, e.g. CREATE LANGUAGE plperl.
+		 * Fetch all libraries referenced in this DB.  We can't exclude the
+		 * "pg_catalog" schema because, while such functions are not
+		 * explicitly dumped by pg_dump, they do reference implicit objects
+		 * that pg_dump does dump, e.g. CREATE LANGUAGE plperl.
 		 */
 		ress[dbnum] = executeQueryOrDie(conn,
 										"SELECT DISTINCT probin "
@@ -158,26 +158,26 @@ get_loadable_libraries(void)
 										FirstNormalObjectId);
 		totaltups += PQntuples(ress[dbnum]);
 
-		 /*
-		  *	Systems that install plpython before 8.1 have
-		  *	plpython_call_handler() defined in the "public" schema, causing
-		  *	pg_dumpall to dump it.  However that function still references
-		  *	"plpython" (no "2"), so it throws an error on restore.  This code
-		  *	checks for the problem function, reports affected databases to the
-		  *	user and explains how to remove them.
-		  *	8.1 git commit: e0dedd0559f005d60c69c9772163e69c204bac69
-		  *	http://archives.postgresql.org/pgsql-hackers/2012-03/msg01101.php
-		  *	http://archives.postgresql.org/pgsql-bugs/2012-05/msg00206.php
-		  */
+		/*
+		 * Systems that install plpython before 8.1 have
+		 * plpython_call_handler() defined in the "public" schema, causing
+		 * pg_dumpall to dump it.  However that function still references
+		 * "plpython" (no "2"), so it throws an error on restore.  This code
+		 * checks for the problem function, reports affected databases to the
+		 * user and explains how to remove them. 8.1 git commit:
+		 * e0dedd0559f005d60c69c9772163e69c204bac69
+		 * http://archives.postgresql.org/pgsql-hackers/2012-03/msg01101.php
+		 * http://archives.postgresql.org/pgsql-bugs/2012-05/msg00206.php
+		 */
 		if (GET_MAJOR_VERSION(old_cluster.major_version) < 901)
 		{
-			PGresult  *res;
+			PGresult   *res;
 
 			res = executeQueryOrDie(conn,
 									"SELECT 1 "
-									"FROM	pg_catalog.pg_proc JOIN pg_namespace "
-									"		ON pronamespace = pg_namespace.oid "
-									"WHERE proname = 'plpython_call_handler' AND "
+						   "FROM	pg_catalog.pg_proc JOIN pg_namespace "
+							 "		ON pronamespace = pg_namespace.oid "
+							   "WHERE proname = 'plpython_call_handler' AND "
 									"nspname = 'public' AND "
 									"prolang = 13 /* C */ AND "
 									"probin = '$libdir/plpython' AND "
@@ -188,23 +188,23 @@ get_loadable_libraries(void)
 				if (!found_public_plpython_handler)
 				{
 					pg_log(PG_WARNING,
-		   "\nThe old cluster has a \"plpython_call_handler\" function defined\n"
-	   		"in the \"public\" schema which is a duplicate of the one defined\n"
-		    "in the \"pg_catalog\" schema.  You can confirm this by executing\n"
-			"in psql:\n"
-			"\n"
-			"	\\df *.plpython_call_handler\n"
-			"\n"
-			"The \"public\" schema version of this function was created by a\n"
-			"pre-8.1 install of plpython, and must be removed for pg_upgrade\n"
-			"to complete because it references a now-obsolete \"plpython\"\n"
-			"shared object file.  You can remove the \"public\" schema version\n"
-			"of this function by running the following command:\n"
-			"\n"
-			"	DROP FUNCTION public.plpython_call_handler()\n"
-			"\n"
-			"in each affected database:\n"
-			"\n");
+						   "\nThe old cluster has a \"plpython_call_handler\" function defined\n"
+						   "in the \"public\" schema which is a duplicate of the one defined\n"
+						   "in the \"pg_catalog\" schema.  You can confirm this by executing\n"
+						   "in psql:\n"
+						   "\n"
+						   "	\\df *.plpython_call_handler\n"
+						   "\n"
+						   "The \"public\" schema version of this function was created by a\n"
+						   "pre-8.1 install of plpython, and must be removed for pg_upgrade\n"
+						   "to complete because it references a now-obsolete \"plpython\"\n"
+						   "shared object file.  You can remove the \"public\" schema version\n"
+					   "of this function by running the following command:\n"
+						   "\n"
+						 "	DROP FUNCTION public.plpython_call_handler()\n"
+						   "\n"
+						   "in each affected database:\n"
+						   "\n");
 				}
 				pg_log(PG_WARNING, "	%s\n", active_db->db_name);
 				found_public_plpython_handler = true;
@@ -217,9 +217,9 @@ get_loadable_libraries(void)
 
 	if (found_public_plpython_handler)
 		pg_log(PG_FATAL,
-		   "Remove the problem functions from the old cluster to continue.\n");
-	
-	totaltups++;	/* reserve for pg_upgrade_support */
+		 "Remove the problem functions from the old cluster to continue.\n");
+
+	totaltups++;				/* reserve for pg_upgrade_support */
 
 	/* Allocate what's certainly enough space */
 	os_info.libraries = (char **) pg_malloc(totaltups * sizeof(char *));
@@ -293,17 +293,17 @@ check_loadable_libraries(void)
 		PGresult   *res;
 
 		/*
-		 *	In Postgres 9.0, Python 3 support was added, and to do that, a
-		 *	plpython2u language was created with library name plpython2.so
-		 *	as a symbolic link to plpython.so.  In Postgres 9.1, only the
-		 *	plpython2.so library was created, and both plpythonu and
-		 *	plpython2u pointing to it.  For this reason, any reference to
-		 *	library name "plpython" in an old PG <= 9.1 cluster must look
-		 *	for "plpython2" in the new cluster.
+		 * In Postgres 9.0, Python 3 support was added, and to do that, a
+		 * plpython2u language was created with library name plpython2.so as a
+		 * symbolic link to plpython.so.  In Postgres 9.1, only the
+		 * plpython2.so library was created, and both plpythonu and plpython2u
+		 * pointing to it.	For this reason, any reference to library name
+		 * "plpython" in an old PG <= 9.1 cluster must look for "plpython2" in
+		 * the new cluster.
 		 *
-		 *	For this case, we could check pg_pltemplate, but that only works
-		 *	for languages, and does not help with function shared objects,
-		 *	so we just do a general fix.
+		 * For this case, we could check pg_pltemplate, but that only works
+		 * for languages, and does not help with function shared objects, so
+		 * we just do a general fix.
 		 */
 		if (GET_MAJOR_VERSION(old_cluster.major_version) < 901 &&
 			strcmp(lib, "$libdir/plpython") == 0)
@@ -325,7 +325,7 @@ check_loadable_libraries(void)
 			/* exit and report missing support library with special message */
 			if (strcmp(lib, PG_UPGRADE_SUPPORT) == 0)
 				pg_log(PG_FATAL,
-				   "The pg_upgrade_support module must be created and installed in the new cluster.\n");
+					   "The pg_upgrade_support module must be created and installed in the new cluster.\n");
 
 			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
 				pg_log(PG_FATAL, "Could not open file \"%s\": %s\n",

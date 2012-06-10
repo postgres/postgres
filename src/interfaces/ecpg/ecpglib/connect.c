@@ -267,7 +267,8 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 	enum COMPAT_MODE compat = c;
 	struct connection *this;
-	int			i, connect_params = 0;
+	int			i,
+				connect_params = 0;
 	char	   *dbname = name ? ecpg_strdup(name, lineno) : NULL,
 			   *host = NULL,
 			   *tmp,
@@ -505,10 +506,10 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 		connect_params++;
 
 	/* allocate enough space for all connection parameters */
-	conn_keywords = (const char **) ecpg_alloc((connect_params + 1) * sizeof (char *), lineno);
-	conn_values = (const char **) ecpg_alloc(connect_params * sizeof (char *), lineno);
+	conn_keywords = (const char **) ecpg_alloc((connect_params + 1) * sizeof(char *), lineno);
+	conn_values = (const char **) ecpg_alloc(connect_params * sizeof(char *), lineno);
 	if (conn_keywords == NULL || conn_values == NULL)
-	{ 
+	{
 		if (host)
 			ecpg_free(host);
 		if (port)
@@ -560,23 +561,25 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 	}
 	if (options)
 	{
-		char *str;
+		char	   *str;
 
 		/* options look like this "option1 = value1 option2 = value2 ... */
 		/* we have to break up the string into single options */
 		for (str = options; *str;)
 		{
-			int e, a;
-			char *token1, *token2;
+			int			e,
+						a;
+			char	   *token1,
+					   *token2;
 
-			for (token1 = str; *token1 && *token1 == ' '; token1++); 
+			for (token1 = str; *token1 && *token1 == ' '; token1++);
 			for (e = 0; token1[e] && token1[e] != '='; e++);
-			if (token1[e]) /* found "=" */
+			if (token1[e])		/* found "=" */
 			{
 				token1[e] = '\0';
 				for (token2 = token1 + e + 1; *token2 && *token2 == ' '; token2++);
 				for (a = 0; token2[a] && token2[a] != '&'; a++);
-				if (token2[a]) /* found "&" => another option follows */
+				if (token2[a])	/* found "&" => another option follows */
 				{
 					token2[a] = '\0';
 					str = token2 + a + 1;
@@ -587,10 +590,10 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 				conn_keywords[i] = token1;
 				conn_values[i] = token2;
 				i++;
-			}	
+			}
 			else
 				/* the parser should not be able to create this invalid option */
-				str = token1 + e; 
+				str = token1 + e;
 		}
 
 	}

@@ -1119,11 +1119,11 @@ parseqatom(struct vars * v,
 	{
 		/*
 		 * If there's no backrefs involved, we can turn x{m,n} into
-		 * x{m-1,n-1}x, with capturing parens in only the second x.  This
-		 * is valid because we only care about capturing matches from the
-		 * final iteration of the quantifier.  It's a win because we can
-		 * implement the backref-free left side as a plain DFA node, since
-		 * we don't really care where its submatches are.
+		 * x{m-1,n-1}x, with capturing parens in only the second x.  This is
+		 * valid because we only care about capturing matches from the final
+		 * iteration of the quantifier.  It's a win because we can implement
+		 * the backref-free left side as a plain DFA node, since we don't
+		 * really care where its submatches are.
 		 */
 		dupnfa(v->nfa, atom->begin, atom->end, s, atom->begin);
 		assert(m >= 1 && m != INFINITY && n >= 1);

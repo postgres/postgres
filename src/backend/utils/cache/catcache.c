@@ -1637,8 +1637,8 @@ CatalogCacheCreateEntry(CatCache *cache, HeapTuple ntp,
 
 	/*
 	 * If there are any out-of-line toasted fields in the tuple, expand them
-	 * in-line.  This saves cycles during later use of the catcache entry,
-	 * and also protects us against the possibility of the toast tuples being
+	 * in-line.  This saves cycles during later use of the catcache entry, and
+	 * also protects us against the possibility of the toast tuples being
 	 * freed before we attempt to fetch them, in case of something using a
 	 * slightly stale catcache entry.
 	 */

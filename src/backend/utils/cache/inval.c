@@ -820,7 +820,7 @@ ProcessCommittedInvalidationMessages(SharedInvalidationMessage *msgs,
  * since they'll not have seen our changed tuples anyway.  We can forget
  * about CurrentCmdInvalidMsgs too, since those changes haven't touched
  * the caches yet.
- * 
+ *
  * In any case, reset the various lists to empty.  We need not physically
  * free memory here, since TopTransactionContext is about to be emptied
  * anyway.

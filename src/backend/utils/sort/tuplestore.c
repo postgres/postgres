@@ -569,7 +569,7 @@ tuplestore_puttuple(Tuplestorestate *state, HeapTuple tuple)
 	MemoryContext oldcxt = MemoryContextSwitchTo(state->context);
 
 	/*
-	 * Copy the tuple.  (Must do this even in WRITEFILE case.  Note that
+	 * Copy the tuple.	(Must do this even in WRITEFILE case.  Note that
 	 * COPYTUP includes USEMEM, so we needn't do that here.)
 	 */
 	tuple = COPYTUP(state, tuple);

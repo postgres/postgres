@@ -148,12 +148,12 @@ static char *VoidString = "";
 static int
 cmpspell(const void *s1, const void *s2)
 {
-	return (strcmp((*(SPELL * const *) s1)->word, (*(SPELL * const *) s2)->word));
+	return (strcmp((*(SPELL *const *) s1)->word, (*(SPELL *const *) s2)->word));
 }
 static int
 cmpspellaffix(const void *s1, const void *s2)
 {
-	return (strncmp((*(SPELL * const *) s1)->p.flag, (*(SPELL * const *) s2)->p.flag, MAXFLAGLEN));
+	return (strncmp((*(SPELL *const *) s1)->p.flag, (*(SPELL *const *) s2)->p.flag, MAXFLAGLEN));
 }
 
 static char *

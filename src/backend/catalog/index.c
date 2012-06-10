@@ -1155,7 +1155,7 @@ index_constraint_create(Relation heapRelation,
 								   NULL,
 								   NULL,
 								   true,		/* islocal */
-								   0,			/* inhcount */
+								   0,	/* inhcount */
 								   false);		/* noinherit */
 
 	/*
@@ -1324,8 +1324,8 @@ index_drop(Oid indexId, bool concurrent)
 	CheckTableNotInUse(userIndexRelation, "DROP INDEX");
 
 	/*
-	 * Drop Index concurrently is similar in many ways to creating an
-	 * index concurrently, so some actions are similar to DefineIndex()
+	 * Drop Index concurrently is similar in many ways to creating an index
+	 * concurrently, so some actions are similar to DefineIndex()
 	 */
 	if (concurrent)
 	{
@@ -1339,7 +1339,7 @@ index_drop(Oid indexId, bool concurrent)
 		indexRelation = heap_open(IndexRelationId, RowExclusiveLock);
 
 		tuple = SearchSysCacheCopy1(INDEXRELID,
-										 ObjectIdGetDatum(indexId));
+									ObjectIdGetDatum(indexId));
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for index %u", indexId);
 		indexForm = (Form_pg_index) GETSTRUCT(tuple);
@@ -1373,15 +1373,15 @@ index_drop(Oid indexId, bool concurrent)
 		 * will be marked not indisvalid, so that no one else tries to either
 		 * insert into it or use it for queries.
 		 *
-		 * We must commit our current transaction so that the index update becomes
-		 * visible; then start another.  Note that all the data structures we just
-		 * built are lost in the commit.  The only data we keep past here are the
-		 * relation IDs.
+		 * We must commit our current transaction so that the index update
+		 * becomes visible; then start another.  Note that all the data
+		 * structures we just built are lost in the commit.  The only data we
+		 * keep past here are the relation IDs.
 		 *
 		 * Before committing, get a session-level lock on the table, to ensure
 		 * that neither it nor the index can be dropped before we finish. This
-		 * cannot block, even if someone else is waiting for access, because we
-		 * already have the same lock within our transaction.
+		 * cannot block, even if someone else is waiting for access, because
+		 * we already have the same lock within our transaction.
 		 */
 		LockRelationIdForSession(&heaprelid, ShareUpdateExclusiveLock);
 		LockRelationIdForSession(&indexrelid, ShareUpdateExclusiveLock);
@@ -1391,23 +1391,23 @@ index_drop(Oid indexId, bool concurrent)
 		StartTransactionCommand();
 
 		/*
-		 * Now we must wait until no running transaction could have the table open
-		 * with the old list of indexes.  To do this, inquire which xacts
-		 * currently would conflict with AccessExclusiveLock on the table -- ie,
-		 * which ones have a lock of any kind on the table.	Then wait for each of
-		 * these xacts to commit or abort.	Note we do not need to worry about
-		 * xacts that open the table for writing after this point; they will see
-		 * the index as invalid when they open the relation.
+		 * Now we must wait until no running transaction could have the table
+		 * open with the old list of indexes.  To do this, inquire which xacts
+		 * currently would conflict with AccessExclusiveLock on the table --
+		 * ie, which ones have a lock of any kind on the table. Then wait for
+		 * each of these xacts to commit or abort.	Note we do not need to
+		 * worry about xacts that open the table for writing after this point;
+		 * they will see the index as invalid when they open the relation.
 		 *
-		 * Note: the reason we use actual lock acquisition here, rather than just
-		 * checking the ProcArray and sleeping, is that deadlock is possible if
-		 * one of the transactions in question is blocked trying to acquire an
-		 * exclusive lock on our table.  The lock code will detect deadlock and
-		 * error out properly.
+		 * Note: the reason we use actual lock acquisition here, rather than
+		 * just checking the ProcArray and sleeping, is that deadlock is
+		 * possible if one of the transactions in question is blocked trying
+		 * to acquire an exclusive lock on our table.  The lock code will
+		 * detect deadlock and error out properly.
 		 *
-		 * Note: GetLockConflicts() never reports our own xid, hence we need not
-		 * check for that.	Also, prepared xacts are not reported, which is fine
-		 * since they certainly aren't going to do anything more.
+		 * Note: GetLockConflicts() never reports our own xid, hence we need
+		 * not check for that.	Also, prepared xacts are not reported, which
+		 * is fine since they certainly aren't going to do anything more.
 		 */
 		old_lockholders = GetLockConflicts(&heaplocktag, AccessExclusiveLock);
 
@@ -1786,7 +1786,7 @@ index_update_stats(Relation rel,
 
 		if (rd_rel->relkind != RELKIND_INDEX)
 			relallvisible = visibilitymap_count(rel);
-		else					/* don't bother for indexes */
+		else	/* don't bother for indexes */
 			relallvisible = 0;
 
 		if (rd_rel->relpages != (int32) relpages)

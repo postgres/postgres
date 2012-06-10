@@ -467,15 +467,16 @@ SIInsertDataEntries(const SharedInvalidationMessage *data, int n)
 		}
 
 		/*
-		 * Now that the maxMsgNum change is globally visible, we give
-		 * everyone a swift kick to make sure they read the newly added
-		 * messages.  Releasing SInvalWriteLock will enforce a full memory
-		 * barrier, so these (unlocked) changes will be committed to memory
-		 * before we exit the function.
+		 * Now that the maxMsgNum change is globally visible, we give everyone
+		 * a swift kick to make sure they read the newly added messages.
+		 * Releasing SInvalWriteLock will enforce a full memory barrier, so
+		 * these (unlocked) changes will be committed to memory before we exit
+		 * the function.
 		 */
 		for (i = 0; i < segP->lastBackend; i++)
 		{
 			ProcState  *stateP = &segP->procState[i];
+
 			stateP->hasMessages = true;
 		}
 
@@ -524,12 +525,12 @@ SIGetDataEntries(SharedInvalidationMessage *data, int datasize)
 
 	/*
 	 * Before starting to take locks, do a quick, unlocked test to see whether
-	 * there can possibly be anything to read.  On a multiprocessor system,
-	 * it's possible that this load could migrate backwards and occur before we
-	 * actually enter this function, so we might miss a sinval message that
-	 * was just added by some other processor.  But they can't migrate
-	 * backwards over a preceding lock acquisition, so it should be OK.  If
-	 * we haven't acquired a lock preventing against further relevant
+	 * there can possibly be anything to read.	On a multiprocessor system,
+	 * it's possible that this load could migrate backwards and occur before
+	 * we actually enter this function, so we might miss a sinval message that
+	 * was just added by some other processor.	But they can't migrate
+	 * backwards over a preceding lock acquisition, so it should be OK.  If we
+	 * haven't acquired a lock preventing against further relevant
 	 * invalidations, any such occurrence is not much different than if the
 	 * invalidation had arrived slightly later in the first place.
 	 */

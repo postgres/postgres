@@ -73,7 +73,7 @@
 #define PRETTYFLAG_PAREN		1
 #define PRETTYFLAG_INDENT		2
 
-#define PRETTY_WRAP_DEFAULT     79
+#define PRETTY_WRAP_DEFAULT		79
 
 /* macro to test if pretty action needed */
 #define PRETTY_PAREN(context)	((context)->prettyFlags & PRETTYFLAG_PAREN)
@@ -138,7 +138,7 @@ static SPIPlanPtr plan_getrulebyoid = NULL;
 static const char *query_getrulebyoid = "SELECT * FROM pg_catalog.pg_rewrite WHERE oid = $1";
 static SPIPlanPtr plan_getviewrule = NULL;
 static const char *query_getviewrule = "SELECT * FROM pg_catalog.pg_rewrite WHERE ev_class = $1 AND rulename = $2";
-static int pretty_wrap = PRETTY_WRAP_DEFAULT;
+static int	pretty_wrap = PRETTY_WRAP_DEFAULT;
 
 /* GUC parameters */
 bool		quote_all_identifiers = false;
@@ -388,9 +388,9 @@ pg_get_viewdef_wrap(PG_FUNCTION_ARGS)
 {
 	/* By OID */
 	Oid			viewoid = PG_GETARG_OID(0);
-	int		    wrap = PG_GETARG_INT32(1);
+	int			wrap = PG_GETARG_INT32(1);
 	int			prettyFlags;
-	char       *result;
+	char	   *result;
 
 	/* calling this implies we want pretty printing */
 	prettyFlags = PRETTYFLAG_PAREN | PRETTYFLAG_INDENT;
@@ -1335,10 +1335,10 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 				 * Now emit the constraint definition, adding NO INHERIT if
 				 * necessary.
 				 *
-				 * There are cases where
-				 * the constraint expression will be fully parenthesized and
-				 * we don't need the outer parens ... but there are other
-				 * cases where we do need 'em.  Be conservative for now.
+				 * There are cases where the constraint expression will be
+				 * fully parenthesized and we don't need the outer parens ...
+				 * but there are other cases where we do need 'em.  Be
+				 * conservative for now.
 				 *
 				 * Note that simply checking for leading '(' and trailing ')'
 				 * would NOT be good enough, consider "(x > 0) AND (y > 0)".
@@ -1599,7 +1599,7 @@ pg_get_serial_sequence(PG_FUNCTION_ARGS)
 	SysScanDesc scan;
 	HeapTuple	tup;
 
-	/* Look up table name.  Can't lock it - we might not have privileges. */
+	/* Look up table name.	Can't lock it - we might not have privileges. */
 	tablerv = makeRangeVarFromNameList(textToQualifiedNameList(tablename));
 	tableOid = RangeVarGetRelid(tablerv, NoLock, false);
 
@@ -3038,7 +3038,7 @@ get_target_list(List *targetList, deparse_context *context,
 	char	   *sep;
 	int			colno;
 	ListCell   *l;
-	bool        last_was_multiline = false;
+	bool		last_was_multiline = false;
 
 	sep = " ";
 	colno = 0;
@@ -3048,9 +3048,9 @@ get_target_list(List *targetList, deparse_context *context,
 		char	   *colname;
 		char	   *attname;
 		StringInfoData targetbuf;
-		int         leading_nl_pos =  -1;
-		char       *trailing_nl;
-		int         pos;
+		int			leading_nl_pos = -1;
+		char	   *trailing_nl;
+		int			pos;
 
 		if (tle->resjunk)
 			continue;			/* ignore junk entries */
@@ -3060,9 +3060,8 @@ get_target_list(List *targetList, deparse_context *context,
 		colno++;
 
 		/*
-		 * Put the new field spec into targetbuf so we can
-		 * decide after we've got it whether or not it needs
-		 * to go on a new line.
+		 * Put the new field spec into targetbuf so we can decide after we've
+		 * got it whether or not it needs to go on a new line.
 		 */
 
 		initStringInfo(&targetbuf);
@@ -3112,7 +3111,7 @@ get_target_list(List *targetList, deparse_context *context,
 
 		/* Does the new field start with whitespace plus a new line? */
 
-		for (pos=0; pos < targetbuf.len; pos++)
+		for (pos = 0; pos < targetbuf.len; pos++)
 		{
 			if (targetbuf.data[pos] == '\n')
 			{
@@ -3123,30 +3122,29 @@ get_target_list(List *targetList, deparse_context *context,
 				break;
 		}
 
-		/* Locate the start of the current  line in the buffer */
+		/* Locate the start of the current	line in the buffer */
 
-		trailing_nl = (strrchr(buf->data,'\n'));
+		trailing_nl = (strrchr(buf->data, '\n'));
 		if (trailing_nl == NULL)
 			trailing_nl = buf->data;
-		else 
+		else
 			trailing_nl++;
 
 		/*
-		 * If the field we're adding is the first in the list, or it already 
-		 * has a leading newline, or wrap mode is disabled (pretty_wrap < 0), 
-		 * don't add anything.
-		 * Otherwise, add a newline, plus some  indentation, if either the 
-		 * new field would cause an overflow or the last field used more than
-		 * one line.
+		 * If the field we're adding is the first in the list, or it already
+		 * has a leading newline, or wrap mode is disabled (pretty_wrap < 0),
+		 * don't add anything. Otherwise, add a newline, plus some
+		 * indentation, if either the new field would cause an overflow or the
+		 * last field used more than one line.
 		 */
 
 		if (colno > 1 &&
-			leading_nl_pos == -1 && 
+			leading_nl_pos == -1 &&
 			pretty_wrap >= 0 &&
 			((strlen(trailing_nl) + strlen(targetbuf.data) > pretty_wrap) ||
 			 last_was_multiline))
 		{
-			appendContextKeyword(context, "", -PRETTYINDENT_STD, 
+			appendContextKeyword(context, "", -PRETTYINDENT_STD,
 								 PRETTYINDENT_STD, PRETTYINDENT_VAR);
 		}
 
@@ -3157,12 +3155,12 @@ get_target_list(List *targetList, deparse_context *context,
 
 		/* Keep track of this field's status for next iteration */
 
-		last_was_multiline = 
-			(strchr(targetbuf.data + leading_nl_pos + 1,'\n') != NULL);
+		last_was_multiline =
+			(strchr(targetbuf.data + leading_nl_pos + 1, '\n') != NULL);
 
 		/* cleanup */
 
-		pfree (targetbuf.data);
+		pfree(targetbuf.data);
 	}
 }
 
@@ -4049,7 +4047,7 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 
 
 /*
- * Get the name of a field of an expression of composite type.  The
+ * Get the name of a field of an expression of composite type.	The
  * expression is usually a Var, but we handle other cases too.
  *
  * levelsup is an extra offset to interpret the Var's varlevelsup correctly.
@@ -4059,7 +4057,7 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
  * could also be RECORD.  Since no actual table or view column is allowed to
  * have type RECORD, a Var of type RECORD must refer to a JOIN or FUNCTION RTE
  * or to a subquery output.  We drill down to find the ultimate defining
- * expression and attempt to infer the field name from it.  We ereport if we
+ * expression and attempt to infer the field name from it.	We ereport if we
  * can't determine the name.
  *
  * Similarly, a PARAM of type RECORD has to refer to some expression of
@@ -4483,7 +4481,7 @@ find_rte_by_refname(const char *refname, deparse_context *context)
  * reference a parameter supplied by an upper NestLoop or SubPlan plan node.
  *
  * If successful, return the expression and set *dpns_p and *ancestor_cell_p
- * appropriately for calling push_ancestor_plan().  If no referent can be
+ * appropriately for calling push_ancestor_plan().	If no referent can be
  * found, return NULL.
  */
 static Node *
@@ -4615,7 +4613,7 @@ get_parameter(Param *param, deparse_context *context)
 
 	/*
 	 * If it's a PARAM_EXEC parameter, try to locate the expression from which
-	 * the parameter was computed.  Note that failing to find a referent isn't
+	 * the parameter was computed.	Note that failing to find a referent isn't
 	 * an error, since the Param might well be a subplan output rather than an
 	 * input.
 	 */
@@ -6567,10 +6565,10 @@ get_from_clause(Query *query, const char *prefix, deparse_context *context)
 		else
 		{
 			StringInfoData targetbuf;
-			char          *trailing_nl;
+			char	   *trailing_nl;
 
 			appendStringInfoString(buf, ", ");
-			
+
 			initStringInfo(&targetbuf);
 			context->buf = &targetbuf;
 
@@ -6578,33 +6576,33 @@ get_from_clause(Query *query, const char *prefix, deparse_context *context)
 
 			context->buf = buf;
 
-			/* Locate the start of the current  line in the buffer */
+			/* Locate the start of the current	line in the buffer */
 
-			trailing_nl = (strrchr(buf->data,'\n'));
+			trailing_nl = (strrchr(buf->data, '\n'));
 			if (trailing_nl == NULL)
 				trailing_nl = buf->data;
-			else 
+			else
 				trailing_nl++;
-			
+
 			/*
-			 * Add a newline, plus some  indentation, if pretty_wrap is on and the 
-			 * new from-clause item would cause an overflow.
+			 * Add a newline, plus some  indentation, if pretty_wrap is on and
+			 * the new from-clause item would cause an overflow.
 			 */
-			
+
 			if (pretty_wrap >= 0 &&
 				(strlen(trailing_nl) + strlen(targetbuf.data) > pretty_wrap))
 			{
-				appendContextKeyword(context, "", -PRETTYINDENT_STD, 
+				appendContextKeyword(context, "", -PRETTYINDENT_STD,
 									 PRETTYINDENT_STD, PRETTYINDENT_VAR);
 			}
 
 			/* Add the new item */
 
 			appendStringInfoString(buf, targetbuf.data);
-			
+
 			/* cleanup */
 
-			pfree (targetbuf.data);
+			pfree(targetbuf.data);
 		}
 
 	}

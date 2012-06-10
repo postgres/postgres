@@ -272,7 +272,7 @@ static struct dfa *
 newdfa(struct vars * v,
 	   struct cnfa * cnfa,
 	   struct colormap * cm,
-	   struct smalldfa * sml) /* preallocated space, may be NULL */
+	   struct smalldfa * sml)	/* preallocated space, may be NULL */
 {
 	struct dfa *d;
 	size_t		nss = cnfa->nstates * 2;

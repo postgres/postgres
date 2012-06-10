@@ -96,7 +96,7 @@ static void RangeVarCallbackForReindexIndex(const RangeVar *relation,
  * concrete benefit for core types.
 
  * When a comparison or exclusion operator has a polymorphic input type, the
- * actual input types must also match.  This defends against the possibility
+ * actual input types must also match.	This defends against the possibility
  * that operators could vary behavior in response to get_fn_expr_argtype().
  * At present, this hazard is theoretical: check_exclusion_constraint() and
  * all core index access methods decline to set fn_expr for such calls.
@@ -134,6 +134,7 @@ CheckIndexCompatible(Oid oldId,
 
 	/* Caller should already have the relation locked in some way. */
 	relationId = RangeVarGetRelid(heapRelation, NoLock, false);
+
 	/*
 	 * We can pretend isconstraint = false unconditionally.  It only serves to
 	 * decide the text of an error message that should never happen for us.
@@ -157,10 +158,10 @@ CheckIndexCompatible(Oid oldId,
 	ReleaseSysCache(tuple);
 
 	/*
-	 * Compute the operator classes, collations, and exclusion operators
-	 * for the new index, so we can test whether it's compatible with the
-	 * existing one.  Note that ComputeIndexAttrs might fail here, but that's
-	 * OK: DefineIndex would have called this function with the same arguments
+	 * Compute the operator classes, collations, and exclusion operators for
+	 * the new index, so we can test whether it's compatible with the existing
+	 * one.  Note that ComputeIndexAttrs might fail here, but that's OK:
+	 * DefineIndex would have called this function with the same arguments
 	 * later on, and it would have failed then anyway.
 	 */
 	indexInfo = makeNode(IndexInfo);
@@ -218,11 +219,11 @@ CheckIndexCompatible(Oid oldId,
 		return false;
 
 	/* For polymorphic opcintype, column type changes break compatibility. */
-	irel = index_open(oldId, AccessShareLock); /* caller probably has a lock */
+	irel = index_open(oldId, AccessShareLock);	/* caller probably has a lock */
 	for (i = 0; i < old_natts; i++)
 	{
 		if (IsPolymorphicType(get_opclass_input_type(classObjectId[i])) &&
-		    irel->rd_att->attrs[i]->atttypid != typeObjectId[i])
+			irel->rd_att->attrs[i]->atttypid != typeObjectId[i])
 		{
 			ret = false;
 			break;
@@ -232,7 +233,8 @@ CheckIndexCompatible(Oid oldId,
 	/* Any change in exclusion operator selections breaks compatibility. */
 	if (ret && indexInfo->ii_ExclusionOps != NULL)
 	{
-		Oid		   *old_operators, *old_procs;
+		Oid		   *old_operators,
+				   *old_procs;
 		uint16	   *old_strats;
 
 		RelationGetExclusionInfo(irel, &old_operators, &old_procs, &old_strats);
@@ -249,7 +251,7 @@ CheckIndexCompatible(Oid oldId,
 
 				op_input_types(indexInfo->ii_ExclusionOps[i], &left, &right);
 				if ((IsPolymorphicType(left) || IsPolymorphicType(right)) &&
-					   irel->rd_att->attrs[i]->atttypid != typeObjectId[i])
+					irel->rd_att->attrs[i]->atttypid != typeObjectId[i])
 				{
 					ret = false;
 					break;
@@ -1778,9 +1780,9 @@ RangeVarCallbackForReindexIndex(const RangeVar *relation,
 		return;
 
 	/*
-	 * If the relation does exist, check whether it's an index.  But note
-	 * that the relation might have been dropped between the time we did the
-	 * name lookup and now.  In that case, there's nothing to do.
+	 * If the relation does exist, check whether it's an index.  But note that
+	 * the relation might have been dropped between the time we did the name
+	 * lookup and now.	In that case, there's nothing to do.
 	 */
 	relkind = get_rel_relkind(relId);
 	if (!relkind)
@@ -1798,9 +1800,9 @@ RangeVarCallbackForReindexIndex(const RangeVar *relation,
 	if (relId != oldRelId)
 	{
 		/*
-		 * Lock level here should match reindex_index() heap lock.
-		 * If the OID isn't valid, it means the index as concurrently dropped,
-		 * which is not a problem for us; just return normally.
+		 * Lock level here should match reindex_index() heap lock. If the OID
+		 * isn't valid, it means the index as concurrently dropped, which is
+		 * not a problem for us; just return normally.
 		 */
 		*heapOid = IndexGetRelation(relId, true);
 		if (OidIsValid(*heapOid))

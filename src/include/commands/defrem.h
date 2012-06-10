@@ -149,7 +149,7 @@ extern List *deserialize_deflist(Datum txt);
 extern void RenameForeignServer(const char *oldname, const char *newname);
 extern void RenameForeignDataWrapper(const char *oldname, const char *newname);
 extern void AlterForeignServerOwner(const char *name, Oid newOwnerId);
-extern void AlterForeignServerOwner_oid(Oid , Oid newOwnerId);
+extern void AlterForeignServerOwner_oid(Oid, Oid newOwnerId);
 extern void AlterForeignDataWrapperOwner(const char *name, Oid newOwnerId);
 extern void AlterForeignDataWrapperOwner_oid(Oid fwdId, Oid newOwnerId);
 extern void CreateForeignDataWrapper(CreateFdwStmt *stmt);

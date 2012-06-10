@@ -337,7 +337,7 @@ date_fastcmp(Datum x, Datum y, SortSupport ssup)
 Datum
 date_sortsupport(PG_FUNCTION_ARGS)
 {
-	SortSupport	ssup = (SortSupport) PG_GETARG_POINTER(0);
+	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
 
 	ssup->comparator = date_fastcmp;
 	PG_RETURN_VOID();

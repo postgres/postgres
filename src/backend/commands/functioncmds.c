@@ -890,9 +890,9 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 	ReleaseSysCache(languageTuple);
 
 	/*
-	 * Only superuser is allowed to create leakproof functions because
-	 * it possibly allows unprivileged users to reference invisible tuples
-	 * to be filtered out using views for row-level security.
+	 * Only superuser is allowed to create leakproof functions because it
+	 * possibly allows unprivileged users to reference invisible tuples to be
+	 * filtered out using views for row-level security.
 	 */
 	if (isLeakProof && !superuser())
 		ereport(ERROR,
@@ -1320,7 +1320,7 @@ AlterFunction(AlterFunctionStmt *stmt)
 		if (intVal(leakproof_item->arg) && !superuser())
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("only superuser can define a leakproof function")));
+				  errmsg("only superuser can define a leakproof function")));
 		procForm->proleakproof = intVal(leakproof_item->arg);
 	}
 	if (cost_item)

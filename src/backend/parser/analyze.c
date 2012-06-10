@@ -181,7 +181,7 @@ transformTopLevelStmt(ParseState *pstate, Node *parseTree)
 		/* If it's a set-operation tree, drill down to leftmost SelectStmt */
 		while (stmt && stmt->op != SETOP_NONE)
 			stmt = stmt->larg;
-		Assert(stmt && IsA(stmt, SelectStmt) && stmt->larg == NULL);
+		Assert(stmt && IsA(stmt, SelectStmt) &&stmt->larg == NULL);
 
 		if (stmt->intoClause)
 		{
@@ -950,7 +950,7 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("SELECT ... INTO is not allowed here"),
 				 parser_errposition(pstate,
-									exprLocation((Node *) stmt->intoClause))));
+								  exprLocation((Node *) stmt->intoClause))));
 
 	/* make FOR UPDATE/FOR SHARE info available to addRangeTableEntry */
 	pstate->p_locking_clause = stmt->lockingClause;
@@ -1364,12 +1364,12 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("SELECT ... INTO is not allowed here"),
 				 parser_errposition(pstate,
-									exprLocation((Node *) leftmostSelect->intoClause))));
+						exprLocation((Node *) leftmostSelect->intoClause))));
 
 	/*
-	 * We need to extract ORDER BY and other top-level clauses here and
-	 * not let transformSetOperationTree() see them --- else it'll just
-	 * recurse right back here!
+	 * We need to extract ORDER BY and other top-level clauses here and not
+	 * let transformSetOperationTree() see them --- else it'll just recurse
+	 * right back here!
 	 */
 	sortClause = stmt->sortClause;
 	limitOffset = stmt->limitOffset;

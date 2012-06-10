@@ -128,11 +128,11 @@ compare_fractional_path_costs(Path *path1, Path *path2,
  *
  * The fuzz_factor argument must be 1.0 plus delta, where delta is the
  * fraction of the smaller cost that is considered to be a significant
- * difference.  For example, fuzz_factor = 1.01 makes the fuzziness limit
+ * difference.	For example, fuzz_factor = 1.01 makes the fuzziness limit
  * be 1% of the smaller cost.
  *
  * The two paths are said to have "equal" costs if both startup and total
- * costs are fuzzily the same.  Path1 is said to be better than path2 if
+ * costs are fuzzily the same.	Path1 is said to be better than path2 if
  * it has fuzzily better startup cost and fuzzily no worse total cost,
  * or if it has fuzzily better total cost and fuzzily no worse startup cost.
  * Path2 is better than path1 if the reverse holds.  Finally, if one path
@@ -190,9 +190,9 @@ compare_path_costs_fuzzily(Path *path1, Path *path2, double fuzz_factor)
  *	  and save them in the rel's cheapest-path fields.
  *
  * Only unparameterized paths are considered candidates for cheapest_startup
- * and cheapest_total.  The cheapest_parameterized_paths list collects paths
+ * and cheapest_total.	The cheapest_parameterized_paths list collects paths
  * that are cheapest-total for their parameterization (i.e., there is no
- * cheaper path with the same or weaker parameterization).  This list always
+ * cheaper path with the same or weaker parameterization).	This list always
  * includes the unparameterized cheapest-total path, too.
  *
  * This is normally called only after we've finished constructing the path
@@ -294,8 +294,8 @@ set_cheapest(RelOptInfo *parent_rel)
  *
  *	  There is one policy decision embedded in this function, along with its
  *	  sibling add_path_precheck: we treat all parameterized paths as having
- *	  NIL pathkeys, so that they compete only on cost.  This is to reduce
- *	  the number of parameterized paths that are kept.  See discussion in
+ *	  NIL pathkeys, so that they compete only on cost.	This is to reduce
+ *	  the number of parameterized paths that are kept.	See discussion in
  *	  src/backend/optimizer/README.
  *
  *	  The pathlist is kept sorted by total_cost, with cheaper paths
@@ -358,7 +358,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 		p1_next = lnext(p1);
 
 		/*
-		 * Do a fuzzy cost comparison with 1% fuzziness limit.  (XXX does this
+		 * Do a fuzzy cost comparison with 1% fuzziness limit.	(XXX does this
 		 * percentage need to be user-configurable?)
 		 */
 		costcmp = compare_path_costs_fuzzily(new_path, old_path, 1.01);
@@ -388,20 +388,20 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 				{
 					case COSTS_EQUAL:
 						outercmp = bms_subset_compare(PATH_REQ_OUTER(new_path),
-													  PATH_REQ_OUTER(old_path));
+												   PATH_REQ_OUTER(old_path));
 						if (keyscmp == PATHKEYS_BETTER1)
 						{
 							if ((outercmp == BMS_EQUAL ||
 								 outercmp == BMS_SUBSET1) &&
 								new_path->rows <= old_path->rows)
-								remove_old = true;	/* new dominates old */
+								remove_old = true;		/* new dominates old */
 						}
 						else if (keyscmp == PATHKEYS_BETTER2)
 						{
 							if ((outercmp == BMS_EQUAL ||
 								 outercmp == BMS_SUBSET2) &&
 								new_path->rows >= old_path->rows)
-								accept_new = false;	/* old dominates new */
+								accept_new = false;		/* old dominates new */
 						}
 						else	/* keyscmp == PATHKEYS_EQUAL */
 						{
@@ -425,19 +425,20 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 								if (new_path->rows < old_path->rows)
 									remove_old = true;	/* new dominates old */
 								else if (new_path->rows > old_path->rows)
-									accept_new = false;	/* old dominates new */
+									accept_new = false; /* old dominates new */
 								else if (compare_path_costs_fuzzily(new_path, old_path,
-																	1.0000000001) == COSTS_BETTER1)
+											  1.0000000001) == COSTS_BETTER1)
 									remove_old = true;	/* new dominates old */
 								else
-									accept_new = false; /* old equals or dominates new */
+									accept_new = false; /* old equals or
+														 * dominates new */
 							}
 							else if (outercmp == BMS_SUBSET1 &&
 									 new_path->rows <= old_path->rows)
-								remove_old = true;	/* new dominates old */
+								remove_old = true;		/* new dominates old */
 							else if (outercmp == BMS_SUBSET2 &&
 									 new_path->rows >= old_path->rows)
-								accept_new = false;	/* old dominates new */
+								accept_new = false;		/* old dominates new */
 							/* else different parameterizations, keep both */
 						}
 						break;
@@ -445,25 +446,26 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 						if (keyscmp != PATHKEYS_BETTER2)
 						{
 							outercmp = bms_subset_compare(PATH_REQ_OUTER(new_path),
-														  PATH_REQ_OUTER(old_path));
+												   PATH_REQ_OUTER(old_path));
 							if ((outercmp == BMS_EQUAL ||
 								 outercmp == BMS_SUBSET1) &&
 								new_path->rows <= old_path->rows)
-								remove_old = true;	/* new dominates old */
+								remove_old = true;		/* new dominates old */
 						}
 						break;
 					case COSTS_BETTER2:
 						if (keyscmp != PATHKEYS_BETTER1)
 						{
 							outercmp = bms_subset_compare(PATH_REQ_OUTER(new_path),
-														  PATH_REQ_OUTER(old_path));
+												   PATH_REQ_OUTER(old_path));
 							if ((outercmp == BMS_EQUAL ||
 								 outercmp == BMS_SUBSET2) &&
 								new_path->rows >= old_path->rows)
-								accept_new = false;	/* old dominates new */
+								accept_new = false;		/* old dominates new */
 						}
 						break;
 					case COSTS_DIFFERENT:
+
 						/*
 						 * can't get here, but keep this case to keep compiler
 						 * quiet
@@ -529,7 +531,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
  *	  and have lower bounds for its costs.
  *
  * Note that we do not know the path's rowcount, since getting an estimate for
- * that is too expensive to do before prechecking.  We assume here that paths
+ * that is too expensive to do before prechecking.	We assume here that paths
  * of a superset parameterization will generate fewer rows; if that holds,
  * then paths with different parameterizations cannot dominate each other
  * and so we can simply ignore existing paths of another parameterization.
@@ -561,9 +563,9 @@ add_path_precheck(RelOptInfo *parent_rel,
 		 * pathkeys as well as both cost metrics.  If we find one, we can
 		 * reject the new path.
 		 *
-		 * For speed, we make exact rather than fuzzy cost comparisons.
-		 * If an old path dominates the new path exactly on both costs, it
-		 * will surely do so fuzzily.
+		 * For speed, we make exact rather than fuzzy cost comparisons. If an
+		 * old path dominates the new path exactly on both costs, it will
+		 * surely do so fuzzily.
 		 */
 		if (total_cost >= old_path->total_cost)
 		{
@@ -588,9 +590,9 @@ add_path_precheck(RelOptInfo *parent_rel,
 		else
 		{
 			/*
-			 * Since the pathlist is sorted by total_cost, we can stop
-			 * looking once we reach a path with a total_cost larger
-			 * than the new path's.
+			 * Since the pathlist is sorted by total_cost, we can stop looking
+			 * once we reach a path with a total_cost larger than the new
+			 * path's.
 			 */
 			break;
 		}
@@ -652,26 +654,26 @@ add_parameterized_path(RelOptInfo *parent_rel, Path *new_path)
 			{
 				if (outercmp != BMS_SUBSET2 &&
 					new_path->rows <= old_path->rows)
-					remove_old = true; /* new dominates old */
+					remove_old = true;	/* new dominates old */
 			}
 			else if (costcmp > 0)
 			{
 				if (outercmp != BMS_SUBSET1 &&
 					new_path->rows >= old_path->rows)
-					accept_new = false;	/* old dominates new */
+					accept_new = false; /* old dominates new */
 			}
 			else if (outercmp == BMS_SUBSET1 &&
 					 new_path->rows <= old_path->rows)
-				remove_old = true; /* new dominates old */
+				remove_old = true;		/* new dominates old */
 			else if (outercmp == BMS_SUBSET2 &&
 					 new_path->rows >= old_path->rows)
-				accept_new = false;	/* old dominates new */
+				accept_new = false;		/* old dominates new */
 			else if (new_path->rows < old_path->rows)
-				remove_old = true; /* new dominates old */
+				remove_old = true;		/* new dominates old */
 			else
 			{
 				/* Same cost, rows, and param rels; arbitrarily keep old */
-				accept_new = false; /* old equals or dominates new */
+				accept_new = false;		/* old equals or dominates new */
 			}
 		}
 
@@ -697,8 +699,8 @@ add_parameterized_path(RelOptInfo *parent_rel, Path *new_path)
 
 		/*
 		 * If we found an old path that dominates new_path, we can quit
-		 * scanning the list; we will not add new_path, and we assume
-		 * new_path cannot dominate any other elements of the list.
+		 * scanning the list; we will not add new_path, and we assume new_path
+		 * cannot dominate any other elements of the list.
 		 */
 		if (!accept_new)
 			break;
@@ -940,7 +942,7 @@ create_append_path(RelOptInfo *rel, List *subpaths, Relids required_outer)
 	 * Compute rows and costs as sums of subplan rows and costs.  We charge
 	 * nothing extra for the Append itself, which perhaps is too optimistic,
 	 * but since it doesn't do any selection or projection, it is a pretty
-	 * cheap node.  If you change this, see also make_append().
+	 * cheap node.	If you change this, see also make_append().
 	 */
 	pathnode->path.rows = 0;
 	pathnode->path.startup_cost = 0;
@@ -1772,9 +1774,9 @@ create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
 Relids
 calc_nestloop_required_outer(Path *outer_path, Path *inner_path)
 {
-	Relids	outer_paramrels = PATH_REQ_OUTER(outer_path);
-	Relids	inner_paramrels = PATH_REQ_OUTER(inner_path);
-	Relids	required_outer;
+	Relids		outer_paramrels = PATH_REQ_OUTER(outer_path);
+	Relids		inner_paramrels = PATH_REQ_OUTER(inner_path);
+	Relids		required_outer;
 
 	/* inner_path can require rels from outer path, but not vice versa */
 	Assert(!bms_overlap(outer_paramrels, inner_path->parent->relids));
@@ -1804,9 +1806,9 @@ calc_nestloop_required_outer(Path *outer_path, Path *inner_path)
 Relids
 calc_non_nestloop_required_outer(Path *outer_path, Path *inner_path)
 {
-	Relids	outer_paramrels = PATH_REQ_OUTER(outer_path);
-	Relids	inner_paramrels = PATH_REQ_OUTER(inner_path);
-	Relids	required_outer;
+	Relids		outer_paramrels = PATH_REQ_OUTER(outer_path);
+	Relids		inner_paramrels = PATH_REQ_OUTER(inner_path);
+	Relids		required_outer;
 
 	/* neither path can require rels from the other */
 	Assert(!bms_overlap(outer_paramrels, inner_path->parent->relids));
@@ -1853,9 +1855,9 @@ create_nestloop_path(PlannerInfo *root,
 
 	/*
 	 * If the inner path is parameterized by the outer, we must drop any
-	 * restrict_clauses that are due to be moved into the inner path.  We
-	 * have to do this now, rather than postpone the work till createplan
-	 * time, because the restrict_clauses list can affect the size and cost
+	 * restrict_clauses that are due to be moved into the inner path.  We have
+	 * to do this now, rather than postpone the work till createplan time,
+	 * because the restrict_clauses list can affect the size and cost
 	 * estimates for this path.
 	 */
 	if (bms_overlap(inner_req_outer, outer_path->parent->relids))
@@ -2033,7 +2035,7 @@ create_hashjoin_path(PlannerInfo *root,
  * same parameterization level, ensuring that they all enforce the same set
  * of join quals (and thus that that parameterization can be attributed to
  * an append path built from such paths).  Currently, only a few path types
- * are supported here, though more could be added at need.  We return NULL
+ * are supported here, though more could be added at need.	We return NULL
  * if we can't reparameterize the given path.
  *
  * Note: we intentionally do not pass created paths to add_path(); it would
@@ -2058,32 +2060,33 @@ reparameterize_path(PlannerInfo *root, Path *path,
 			return create_seqscan_path(root, rel, required_outer);
 		case T_IndexScan:
 		case T_IndexOnlyScan:
-		{
-			IndexPath  *ipath = (IndexPath *) path;
-			IndexPath  *newpath = makeNode(IndexPath);
+			{
+				IndexPath  *ipath = (IndexPath *) path;
+				IndexPath  *newpath = makeNode(IndexPath);
 
-			/*
-			 * We can't use create_index_path directly, and would not want to
-			 * because it would re-compute the indexqual conditions which is
-			 * wasted effort.  Instead we hack things a bit: flat-copy the
-			 * path node, revise its param_info, and redo the cost estimate.
-			 */
-			memcpy(newpath, ipath, sizeof(IndexPath));
-			newpath->path.param_info =
-				get_baserel_parampathinfo(root, rel, required_outer);
-			cost_index(newpath, root, loop_count);
-			return (Path *) newpath;
-		}
+				/*
+				 * We can't use create_index_path directly, and would not want
+				 * to because it would re-compute the indexqual conditions
+				 * which is wasted effort.	Instead we hack things a bit:
+				 * flat-copy the path node, revise its param_info, and redo
+				 * the cost estimate.
+				 */
+				memcpy(newpath, ipath, sizeof(IndexPath));
+				newpath->path.param_info =
+					get_baserel_parampathinfo(root, rel, required_outer);
+				cost_index(newpath, root, loop_count);
+				return (Path *) newpath;
+			}
 		case T_BitmapHeapScan:
-		{
-			BitmapHeapPath *bpath = (BitmapHeapPath *) path;
+			{
+				BitmapHeapPath *bpath = (BitmapHeapPath *) path;
 
-			return (Path *) create_bitmap_heap_path(root,
-													rel,
-													bpath->bitmapqual,
-													required_outer,
-													loop_count);
-		}
+				return (Path *) create_bitmap_heap_path(root,
+														rel,
+														bpath->bitmapqual,
+														required_outer,
+														loop_count);
+			}
 		case T_SubqueryScan:
 			return create_subqueryscan_path(root, rel, path->pathkeys,
 											required_outer);

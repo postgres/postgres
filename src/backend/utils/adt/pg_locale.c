@@ -224,7 +224,7 @@ pg_perm_setlocale(int category, const char *locale)
  * Is the locale name valid for the locale category?
  *
  * If successful, and canonname isn't NULL, a palloc'd copy of the locale's
- * canonical name is stored there.  This is especially useful for figuring out
+ * canonical name is stored there.	This is especially useful for figuring out
  * what locale name "" means (ie, the server environment value).  (Actually,
  * it seems that on most implementations that's the only thing it's good for;
  * we could wish that setlocale gave back a canonically spelled version of
@@ -578,7 +578,7 @@ strftime_win32(char *dst, size_t dstlen, const wchar_t *format, const struct tm 
 	len = WideCharToMultiByte(CP_UTF8, 0, wbuf, len, dst, dstlen, NULL, NULL);
 	if (len == 0)
 		elog(ERROR,
-			 "could not convert string to UTF-8: error code %lu", GetLastError());
+		"could not convert string to UTF-8: error code %lu", GetLastError());
 
 	dst[len] = '\0';
 	if (encoding != PG_UTF8)
@@ -970,7 +970,7 @@ report_newlocale_failure(const char *localename)
 			  errdetail("The operating system could not find any locale data for the locale name \"%s\".",
 						localename) : 0)));
 }
-#endif /* HAVE_LOCALE_T */
+#endif   /* HAVE_LOCALE_T */
 
 
 /*

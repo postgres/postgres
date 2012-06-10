@@ -396,7 +396,10 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 				else
 					sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
 
-				/* If we created a varchar structure atomatically, counter is greater than 0. */
+				/*
+				 * If we created a varchar structure atomatically, counter is
+				 * greater than 0.
+				 */
 				if (counter)
 					sprintf(offset, "sizeof(struct varchar_%d)", counter);
 				else

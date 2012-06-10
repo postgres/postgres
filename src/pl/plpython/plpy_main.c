@@ -73,7 +73,7 @@ static void PLy_pop_execution_context(void);
 static const int plpython_python_version = PY_MAJOR_VERSION;
 
 /* initialize global variables */
-PyObject *PLy_interp_globals = NULL;
+PyObject   *PLy_interp_globals = NULL;
 
 /* this doesn't need to be global; use PLy_current_execution_context() */
 static PLyExecutionContext *PLy_execution_contexts = NULL;
@@ -284,8 +284,8 @@ plpython_inline_handler(PG_FUNCTION_ARGS)
 	 * Push execution context onto stack.  It is important that this get
 	 * popped again, so avoid putting anything that could throw error between
 	 * here and the PG_TRY.  (plpython_inline_error_callback doesn't currently
-	 * need the stack entry, but for consistency with plpython_call_handler
-	 * we do it in this order.)
+	 * need the stack entry, but for consistency with plpython_call_handler we
+	 * do it in this order.)
 	 */
 	exec_ctx = PLy_push_execution_context();
 
@@ -330,7 +330,8 @@ plpython2_inline_handler(PG_FUNCTION_ARGS)
 }
 #endif   /* PY_MAJOR_VERSION < 3 */
 
-static bool PLy_procedure_is_trigger(Form_pg_proc procStruct)
+static bool
+PLy_procedure_is_trigger(Form_pg_proc procStruct)
 {
 	return (procStruct->prorettype == TRIGGEROID ||
 			(procStruct->prorettype == OPAQUEOID &&
@@ -365,7 +366,7 @@ PLy_current_execution_context(void)
 static PLyExecutionContext *
 PLy_push_execution_context(void)
 {
-	PLyExecutionContext	*context = PLy_malloc(sizeof(PLyExecutionContext));
+	PLyExecutionContext *context = PLy_malloc(sizeof(PLyExecutionContext));
 
 	context->curr_proc = NULL;
 	context->scratch_ctx = AllocSetContextCreate(TopTransactionContext,
@@ -381,7 +382,7 @@ PLy_push_execution_context(void)
 static void
 PLy_pop_execution_context(void)
 {
-	PLyExecutionContext	*context = PLy_execution_contexts;
+	PLyExecutionContext *context = PLy_execution_contexts;
 
 	if (context == NULL)
 		elog(ERROR, "no Python function is currently executing");

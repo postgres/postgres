@@ -899,8 +899,8 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 		{
 			t_sql = DirectFunctionCall3(replace_text,
 										t_sql,
-										CStringGetTextDatum("MODULE_PATHNAME"),
-							CStringGetTextDatum(control->module_pathname));
+									  CStringGetTextDatum("MODULE_PATHNAME"),
+							  CStringGetTextDatum(control->module_pathname));
 		}
 
 		/* And now back to C string */
@@ -1585,14 +1585,14 @@ RemoveExtensionById(Oid extId)
 	 * might write "DROP EXTENSION foo" in foo's own script files, as because
 	 * errors in dependency management in extension script files could give
 	 * rise to cases where an extension is dropped as a result of recursing
-	 * from some contained object.  Because of that, we must test for the case
+	 * from some contained object.	Because of that, we must test for the case
 	 * here, not at some higher level of the DROP EXTENSION command.
 	 */
 	if (extId == CurrentExtensionObject)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("cannot drop extension \"%s\" because it is being modified",
-						get_extension_name(extId))));
+		  errmsg("cannot drop extension \"%s\" because it is being modified",
+				 get_extension_name(extId))));
 
 	rel = heap_open(ExtensionRelationId, RowExclusiveLock);
 

@@ -10,8 +10,8 @@
 #define COMMON_H
 
 #include "libpq-fe.h"
-#include "getopt_long.h"	/* pgrminclude ignore */
-#include "pqexpbuffer.h"	/* pgrminclude ignore */
+#include "getopt_long.h"		/* pgrminclude ignore */
+#include "pqexpbuffer.h"		/* pgrminclude ignore */
 
 enum trivalue
 {
@@ -34,8 +34,8 @@ extern PGconn *connectDatabase(const char *dbname, const char *pghost,
 				bool fail_ok);
 
 extern PGconn *connectMaintenanceDatabase(const char *maintenance_db,
-				const char *pghost, const char *pgport, const char *pguser,
-				enum trivalue prompt_password, const char *progname);
+				  const char *pghost, const char *pgport, const char *pguser,
+						enum trivalue prompt_password, const char *progname);
 
 extern PGresult *executeQuery(PGconn *conn, const char *query,
 			 const char *progname, bool echo);

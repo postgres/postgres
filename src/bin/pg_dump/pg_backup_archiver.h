@@ -256,7 +256,7 @@ typedef struct _archiveHandle
 	DumpId		maxDumpId;		/* largest DumpId among all TOC entries */
 
 	/* arrays created after the TOC list is complete: */
-	struct _tocEntry **tocsByDumpId;		/* TOCs indexed by dumpId */
+	struct _tocEntry **tocsByDumpId;	/* TOCs indexed by dumpId */
 	DumpId	   *tableDataId;	/* TABLE DATA ids, indexed by table dumpId */
 
 	struct _tocEntry *currToc;	/* Used when dumping data */

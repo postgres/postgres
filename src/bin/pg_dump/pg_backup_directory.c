@@ -178,7 +178,7 @@ InitArchiveFmt_Directory(ArchiveHandle *AH)
 		/* Nothing else in the file, so close it again... */
 		if (cfclose(tocFH) != 0)
 			exit_horribly(modulename, "could not close TOC file: %s\n",
-						 strerror(errno));
+						  strerror(errno));
 		ctx->dataFH = NULL;
 	}
 }
@@ -347,7 +347,7 @@ _PrintFileData(ArchiveHandle *AH, char *filename, RestoreOptions *ropt)
 
 	if (!cfp)
 		exit_horribly(modulename, "could not open input file \"%s\": %s\n",
-					 filename, strerror(errno));
+					  filename, strerror(errno));
 
 	buf = pg_malloc(ZLIB_OUT_SIZE);
 	buflen = ZLIB_OUT_SIZE;
@@ -356,9 +356,9 @@ _PrintFileData(ArchiveHandle *AH, char *filename, RestoreOptions *ropt)
 		ahwrite(buf, 1, cnt, AH);
 
 	free(buf);
-	if (cfclose(cfp) != 0)
+	if (cfclose(cfp) !=0)
 		exit_horribly(modulename, "could not close data file: %s\n",
-					 strerror(errno));
+					  strerror(errno));
 }
 
 /*
@@ -417,7 +417,7 @@ _LoadBlobs(ArchiveHandle *AH, RestoreOptions *ropt)
 	}
 	if (!cfeof(ctx->blobsTocFH))
 		exit_horribly(modulename, "error reading large object TOC file \"%s\"\n",
-					 fname);
+					  fname);
 
 	if (cfclose(ctx->blobsTocFH) != 0)
 		exit_horribly(modulename, "could not close large object TOC file \"%s\": %s\n",
@@ -478,7 +478,7 @@ _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len)
 	res = cfwrite(buf, len, ctx->dataFH);
 	if (res != len)
 		exit_horribly(modulename, "could not write to output file: %s\n",
-					 strerror(errno));
+					  strerror(errno));
 
 	return res;
 }
@@ -589,7 +589,7 @@ _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 
 	if (ctx->dataFH == NULL)
 		exit_horribly(modulename, "could not open output file \"%s\": %s\n",
-					 fname, strerror(errno));
+					  fname, strerror(errno));
 }
 
 /*

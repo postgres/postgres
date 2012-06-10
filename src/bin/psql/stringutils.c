@@ -277,7 +277,7 @@ strip_quotes(char *source, char quote, char escape, int encoding)
 /*
  * quote_if_needed
  *
- * Opposite of strip_quotes().  If "source" denotes itself literally without
+ * Opposite of strip_quotes().	If "source" denotes itself literally without
  * quoting or escaping, returns NULL.  Otherwise, returns a malloc'd copy with
  * quoting and escaping applied:
  *
@@ -303,7 +303,7 @@ quote_if_needed(const char *source, const char *entails_quote,
 	psql_assert(quote);
 
 	src = source;
-	dst = ret = pg_malloc(2 * strlen(src) + 3);	/* excess */
+	dst = ret = pg_malloc(2 * strlen(src) + 3); /* excess */
 
 	*dst++ = quote;
 

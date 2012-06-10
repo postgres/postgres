@@ -1987,8 +1987,8 @@ static int
 adjust_partial_year_to_2020(int year)
 {
 	/*
-	 * Adjust all dates toward 2020;  this is effectively what happens
-	 * when we assume '70' is 1970 and '69' is 2069.
+	 * Adjust all dates toward 2020;  this is effectively what happens when we
+	 * assume '70' is 1970 and '69' is 2069.
 	 */
 	/* Force 0-69 into the 2000's */
 	if (year < 70)
@@ -4485,7 +4485,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 			 */
 			if (Np->last_relevant && Np->Num->zero_end > Np->num_pre)
 			{
-				char   *last_zero;
+				char	   *last_zero;
 
 				last_zero = Np->number + (Np->Num->zero_end - Np->num_pre);
 				if (Np->last_relevant < last_zero)

@@ -58,17 +58,18 @@ static fmgr_hook_type next_fmgr_hook = NULL;
  * we use the list client_label_pending of pending_label to keep track of which
  * labels were set during the (sub-)transactions.
  */
-static char *client_label_peer		= NULL;	/* set by getpeercon(3) */
-static List *client_label_pending	= NIL;	/* pending list being set by
-											 * sepgsql_setcon() */
-static char *client_label_committed	= NULL;	/* set by sepgsql_setcon(),
-											 * and already committed */
-static char *client_label_func		= NULL;	/* set by trusted procedure */
+static char *client_label_peer = NULL;	/* set by getpeercon(3) */
+static List *client_label_pending = NIL;		/* pending list being set by
+												 * sepgsql_setcon() */
+static char *client_label_committed = NULL;		/* set by sepgsql_setcon(),
+												 * and already committed */
+static char *client_label_func = NULL;	/* set by trusted procedure */
 
-typedef struct {
-	SubTransactionId	subid;
-	char			   *label;
-} pending_label;
+typedef struct
+{
+	SubTransactionId subid;
+	char	   *label;
+}	pending_label;
 
 /*
  * sepgsql_get_client_label
@@ -87,7 +88,7 @@ sepgsql_get_client_label(void)
 	/* uncommitted sepgsql_setcon() value */
 	if (client_label_pending)
 	{
-		pending_label  *plabel = llast(client_label_pending);
+		pending_label *plabel = llast(client_label_pending);
 
 		if (plabel->label)
 			return plabel->label;
@@ -104,16 +105,16 @@ sepgsql_get_client_label(void)
  * sepgsql_set_client_label
  *
  * This routine tries to switch the current security label of the client, and
- * checks related permissions.  The supplied new label shall be added to the
+ * checks related permissions.	The supplied new label shall be added to the
  * client_label_pending list, then saved at transaction-commit time to ensure
  * transaction-awareness.
  */
 static void
 sepgsql_set_client_label(const char *new_label)
 {
-	const char	   *tcontext;
-	MemoryContext	oldcxt;
-	pending_label  *plabel;
+	const char *tcontext;
+	MemoryContext oldcxt;
+	pending_label *plabel;
 
 	/* Reset to the initial client label, if NULL */
 	if (!new_label)
@@ -140,9 +141,10 @@ sepgsql_set_client_label(const char *new_label)
 								  SEPG_PROCESS__DYNTRANSITION,
 								  NULL,
 								  true);
+
 	/*
-	 * Append the supplied new_label on the pending list until
-	 * the current transaction is committed.
+	 * Append the supplied new_label on the pending list until the current
+	 * transaction is committed.
 	 */
 	oldcxt = MemoryContextSwitchTo(CurTransactionContext);
 
@@ -158,7 +160,7 @@ sepgsql_set_client_label(const char *new_label)
 /*
  * sepgsql_xact_callback
  *
- * A callback routine of transaction commit/abort/prepare.  Commmit or abort
+ * A callback routine of transaction commit/abort/prepare.	Commmit or abort
  * changes in the client_label_pending list.
  */
 static void
@@ -168,8 +170,8 @@ sepgsql_xact_callback(XactEvent event, void *arg)
 	{
 		if (client_label_pending != NIL)
 		{
-			pending_label  *plabel = llast(client_label_pending);
-			char		   *new_label;
+			pending_label *plabel = llast(client_label_pending);
+			char	   *new_label;
 
 			if (plabel->label)
 				new_label = MemoryContextStrdup(TopMemoryContext,
@@ -181,10 +183,11 @@ sepgsql_xact_callback(XactEvent event, void *arg)
 				pfree(client_label_committed);
 
 			client_label_committed = new_label;
+
 			/*
-			 * XXX - Note that items of client_label_pending are allocated
-			 * on CurTransactionContext, thus, all acquired memory region
-			 * shall be released implicitly.
+			 * XXX - Note that items of client_label_pending are allocated on
+			 * CurTransactionContext, thus, all acquired memory region shall
+			 * be released implicitly.
 			 */
 			client_label_pending = NIL;
 		}
@@ -212,7 +215,8 @@ sepgsql_subxact_callback(SubXactEvent event, SubTransactionId mySubid,
 		prev = NULL;
 		for (cell = list_head(client_label_pending); cell; cell = next)
 		{
-			pending_label  *plabel = lfirst(cell);
+			pending_label *plabel = lfirst(cell);
+
 			next = lnext(cell);
 
 			if (plabel->subid == mySubid)
@@ -272,7 +276,7 @@ sepgsql_client_auth(Port *port, int status)
 static bool
 sepgsql_needs_fmgr_hook(Oid functionId)
 {
-	ObjectAddress	object;
+	ObjectAddress object;
 
 	if (next_needs_fmgr_hook &&
 		(*next_needs_fmgr_hook) (functionId))
@@ -340,8 +344,8 @@ sepgsql_fmgr_hook(FmgrHookEventType event,
 
 				/*
 				 * process:transition permission between old and new label,
-				 * when user tries to switch security label of the client
-				 * on execution of trusted procedure.
+				 * when user tries to switch security label of the client on
+				 * execution of trusted procedure.
 				 */
 				if (stack->new_label)
 					sepgsql_avc_check_perms_label(stack->new_label,

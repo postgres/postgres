@@ -361,19 +361,19 @@ rloop:
 						result_errno == ECONNRESET)
 						printfPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext(
-											  "server closed the connection unexpectedly\n"
-											  "\tThis probably means the server terminated abnormally\n"
-											  "\tbefore or while processing the request.\n"));
+								"server closed the connection unexpectedly\n"
+														"\tThis probably means the server terminated abnormally\n"
+							 "\tbefore or while processing the request.\n"));
 					else
 						printfPQExpBuffer(&conn->errorMessage,
-										  libpq_gettext("SSL SYSCALL error: %s\n"),
+									libpq_gettext("SSL SYSCALL error: %s\n"),
 										  SOCK_STRERROR(result_errno,
-														sebuf, sizeof(sebuf)));
+													  sebuf, sizeof(sebuf)));
 				}
 				else
 				{
 					printfPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext("SSL SYSCALL error: EOF detected\n"));
+						 libpq_gettext("SSL SYSCALL error: EOF detected\n"));
 					/* assume the connection is broken */
 					result_errno = ECONNRESET;
 					n = -1;
@@ -392,6 +392,7 @@ rloop:
 					break;
 				}
 			case SSL_ERROR_ZERO_RETURN:
+
 				/*
 				 * Per OpenSSL documentation, this error code is only returned
 				 * for a clean connection closure, so we should not report it
@@ -415,7 +416,7 @@ rloop:
 		RESTORE_SIGPIPE(conn, spinfo);
 	}
 	else
-#endif /* USE_SSL */
+#endif   /* USE_SSL */
 	{
 		n = recv(conn->sock, ptr, len, 0);
 
@@ -440,15 +441,15 @@ rloop:
 				case ECONNRESET:
 					printfPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext(
-										  "server closed the connection unexpectedly\n"
-										  "\tThis probably means the server terminated abnormally\n"
-										  "\tbefore or while processing the request.\n"));
+								"server closed the connection unexpectedly\n"
+					"\tThis probably means the server terminated abnormally\n"
+							 "\tbefore or while processing the request.\n"));
 					break;
 #endif
 
 				default:
 					printfPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext("could not receive data from server: %s\n"),
+					libpq_gettext("could not receive data from server: %s\n"),
 									  SOCK_STRERROR(result_errno,
 													sebuf, sizeof(sebuf)));
 					break;
@@ -521,19 +522,19 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 						result_errno == ECONNRESET)
 						printfPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext(
-											  "server closed the connection unexpectedly\n"
-											  "\tThis probably means the server terminated abnormally\n"
-											  "\tbefore or while processing the request.\n"));
+								"server closed the connection unexpectedly\n"
+														"\tThis probably means the server terminated abnormally\n"
+							 "\tbefore or while processing the request.\n"));
 					else
 						printfPQExpBuffer(&conn->errorMessage,
-										  libpq_gettext("SSL SYSCALL error: %s\n"),
+									libpq_gettext("SSL SYSCALL error: %s\n"),
 										  SOCK_STRERROR(result_errno,
-														sebuf, sizeof(sebuf)));
+													  sebuf, sizeof(sebuf)));
 				}
 				else
 				{
 					printfPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext("SSL SYSCALL error: EOF detected\n"));
+						 libpq_gettext("SSL SYSCALL error: EOF detected\n"));
 					/* assume the connection is broken */
 					result_errno = ECONNRESET;
 					n = -1;
@@ -552,6 +553,7 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 					break;
 				}
 			case SSL_ERROR_ZERO_RETURN:
+
 				/*
 				 * Per OpenSSL documentation, this error code is only returned
 				 * for a clean connection closure, so we should not report it
@@ -573,7 +575,7 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 		}
 	}
 	else
-#endif /* USE_SSL */
+#endif   /* USE_SSL */
 	{
 		int			flags = 0;
 
@@ -629,14 +631,14 @@ retry_masked:
 #endif
 					printfPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext(
-										  "server closed the connection unexpectedly\n"
-										  "\tThis probably means the server terminated abnormally\n"
-										  "\tbefore or while processing the request.\n"));
+								"server closed the connection unexpectedly\n"
+					"\tThis probably means the server terminated abnormally\n"
+							 "\tbefore or while processing the request.\n"));
 					break;
 
 				default:
 					printfPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext("could not send data to server: %s\n"),
+						libpq_gettext("could not send data to server: %s\n"),
 									  SOCK_STRERROR(result_errno,
 													sebuf, sizeof(sebuf)));
 					break;
@@ -1346,11 +1348,12 @@ initialize_SSL(PGconn *conn)
 	}
 
 	/*
-	 * If the OpenSSL version used supports it (from 1.0.0 on)
-	 * and the user requested it, disable SSL compression.
+	 * If the OpenSSL version used supports it (from 1.0.0 on) and the user
+	 * requested it, disable SSL compression.
 	 */
 #ifdef SSL_OP_NO_COMPRESSION
-	if (conn->sslcompression && conn->sslcompression[0] == '0') {
+	if (conn->sslcompression && conn->sslcompression[0] == '0')
+	{
 		SSL_set_options(conn->ssl, SSL_OP_NO_COMPRESSION);
 	}
 #endif

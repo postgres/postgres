@@ -128,11 +128,11 @@ typedef struct SQLFunctionParseInfo
 /* non-export function prototypes */
 static Node *sql_fn_param_ref(ParseState *pstate, ParamRef *pref);
 static Node *sql_fn_post_column_ref(ParseState *pstate,
-									ColumnRef *cref, Node *var);
+					   ColumnRef *cref, Node *var);
 static Node *sql_fn_make_param(SQLFunctionParseInfoPtr pinfo,
-							   int paramno, int location);
+				  int paramno, int location);
 static Node *sql_fn_resolve_param_name(SQLFunctionParseInfoPtr pinfo,
-									   const char *paramname, int location);
+						  const char *paramname, int location);
 static List *init_execution_state(List *queryTree_list,
 					 SQLFunctionCachePtr fcache,
 					 bool lazyEvalOK);
@@ -227,13 +227,13 @@ prepare_sql_fn_parse_info(HeapTuple procedureTuple,
 									  Anum_pg_proc_proargnames,
 									  &isNull);
 		if (isNull)
-			proargnames = PointerGetDatum(NULL);	/* just to be sure */
+			proargnames = PointerGetDatum(NULL);		/* just to be sure */
 
 		proargmodes = SysCacheGetAttr(PROCNAMEARGSNSP, procedureTuple,
 									  Anum_pg_proc_proargmodes,
 									  &isNull);
 		if (isNull)
-			proargmodes = PointerGetDatum(NULL);	/* just to be sure */
+			proargmodes = PointerGetDatum(NULL);		/* just to be sure */
 
 		n_arg_names = get_func_input_arg_names(proargnames, proargmodes,
 											   &pinfo->argnames);
@@ -422,7 +422,7 @@ static Node *
 sql_fn_resolve_param_name(SQLFunctionParseInfoPtr pinfo,
 						  const char *paramname, int location)
 {
-	int		i;
+	int			i;
 
 	if (pinfo->argnames == NULL)
 		return NULL;

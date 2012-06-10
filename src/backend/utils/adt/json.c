@@ -42,7 +42,7 @@ typedef struct
 	char	   *input;
 	char	   *token_start;
 	char	   *token_terminator;
-	JsonValueType	token_type;
+	JsonValueType token_type;
 	int			line_number;
 	char	   *line_start;
 } JsonLexContext;
@@ -60,7 +60,7 @@ typedef enum
 
 typedef struct JsonParseStack
 {
-	JsonParseState	state;
+	JsonParseState state;
 } JsonParseStack;
 
 typedef enum
@@ -80,9 +80,9 @@ static void report_invalid_token(JsonLexContext *lex);
 static char *extract_mb_char(char *s);
 static void composite_to_json(Datum composite, StringInfo result, bool use_line_feeds);
 static void array_dim_to_json(StringInfo result, int dim, int ndims, int *dims,
-							  Datum *vals, bool *nulls, int *valcount, 
-							  TYPCATEGORY tcategory, Oid typoutputfunc, 
-							  bool use_line_feeds);
+				  Datum *vals, bool *nulls, int *valcount,
+				  TYPCATEGORY tcategory, Oid typoutputfunc,
+				  bool use_line_feeds);
 static void array_to_json_internal(Datum array, StringInfo result, bool use_line_feeds);
 
 /* fake type category for JSON so we can distinguish it in datum_to_json */
@@ -95,7 +95,7 @@ static void array_to_json_internal(Datum array, StringInfo result, bool use_line
 Datum
 json_in(PG_FUNCTION_ARGS)
 {
-	char    *text = PG_GETARG_CSTRING(0);
+	char	   *text = PG_GETARG_CSTRING(0);
 
 	json_validate_cstring(text);
 
@@ -108,7 +108,7 @@ json_in(PG_FUNCTION_ARGS)
 Datum
 json_out(PG_FUNCTION_ARGS)
 {
-	Datum	txt = PG_GETARG_DATUM(0);
+	Datum		txt = PG_GETARG_DATUM(0);
 
 	PG_RETURN_CSTRING(TextDatumGetCString(txt));
 }
@@ -120,7 +120,7 @@ Datum
 json_send(PG_FUNCTION_ARGS)
 {
 	StringInfoData buf;
-	text   *t = PG_GETARG_TEXT_PP(0);
+	text	   *t = PG_GETARG_TEXT_PP(0);
 
 	pq_begintypsend(&buf);
 	pq_sendtext(&buf, VARDATA_ANY(t), VARSIZE_ANY_EXHDR(t));
@@ -163,10 +163,10 @@ json_recv(PG_FUNCTION_ARGS)
 static void
 json_validate_cstring(char *input)
 {
-	JsonLexContext	lex;
+	JsonLexContext lex;
 	JsonParseStack *stack,
-				   *stacktop;
-	int				stacksize;
+			   *stacktop;
+	int			stacksize;
 
 	/* Set up lexing context. */
 	lex.input = input;
@@ -183,7 +183,7 @@ json_validate_cstring(char *input)
 	/* Main parsing loop. */
 	for (;;)
 	{
-		JsonStackOp	op;
+		JsonStackOp op;
 
 		/* Fetch next token. */
 		json_lex(&lex);
@@ -213,7 +213,7 @@ redo:
 				else if (lex.token_start[0] == ']')
 					op = JSON_STACKOP_POP;
 				else if (lex.token_start[0] == '['
-					|| lex.token_start[0] == '{')
+						 || lex.token_start[0] == '{')
 				{
 					stack->state = JSON_PARSE_ARRAY_NEXT;
 					op = JSON_STACKOP_PUSH_WITH_PUSHBACK;
@@ -235,7 +235,7 @@ redo:
 				if (lex.token_type == JSON_VALUE_STRING)
 					stack->state = JSON_PARSE_OBJECT_LABEL;
 				else if (lex.token_type == JSON_VALUE_INVALID
-					&& lex.token_start[0] == '}')
+						 && lex.token_start[0] == '}')
 					op = JSON_STACKOP_POP;
 				else
 					report_parse_error(stack, &lex);
@@ -268,7 +268,7 @@ redo:
 				break;
 			default:
 				elog(ERROR, "unexpected json parse state: %d",
-						(int) stack->state);
+					 (int) stack->state);
 		}
 
 		/* Push or pop the stack, if needed. */
@@ -279,7 +279,8 @@ redo:
 				++stack;
 				if (stack >= &stacktop[stacksize])
 				{
-					int		stackoffset = stack - stacktop;
+					int			stackoffset = stack - stacktop;
+
 					stacksize = stacksize + 32;
 					stacktop = repalloc(stacktop,
 										sizeof(JsonParseStack) * stacksize);
@@ -362,19 +363,19 @@ json_lex(JsonLexContext *lex)
 	}
 	else
 	{
-		char   *p;
+		char	   *p;
 
 		/*
-		 * We're not dealing with a string, number, legal punctuation mark,
-		 * or end of string.  The only legal tokens we might find here are
-		 * true, false, and null, but for error reporting purposes we scan
-		 * until we see a non-alphanumeric character.  That way, we can report
-		 * the whole word as an unexpected token, rather than just some
+		 * We're not dealing with a string, number, legal punctuation mark, or
+		 * end of string.  The only legal tokens we might find here are true,
+		 * false, and null, but for error reporting purposes we scan until we
+		 * see a non-alphanumeric character.  That way, we can report the
+		 * whole word as an unexpected token, rather than just some
 		 * unintuitive prefix thereof.
 		 */
- 		for (p = s; (*p >= 'a' && *p <= 'z') || (*p >= 'A' && *p <= 'Z')
-			|| (*p >= '0' && *p <= '9') || *p == '_' || IS_HIGHBIT_SET(*p);
-			++p)
+		for (p = s; (*p >= 'a' && *p <= 'z') || (*p >= 'A' && *p <= 'Z')
+			 || (*p >= '0' && *p <= '9') || *p == '_' || IS_HIGHBIT_SET(*p);
+			 ++p)
 			;
 
 		/*
@@ -431,7 +432,7 @@ json_lex_string(JsonLexContext *lex)
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("invalid input syntax for type json"),
 					 errdetail_internal("line %d: Character with value \"0x%02x\" must be escaped.",
-						lex->line_number, (unsigned char) *s)));
+									 lex->line_number, (unsigned char) *s)));
 		}
 		else if (*s == '\\')
 		{
@@ -444,8 +445,8 @@ json_lex_string(JsonLexContext *lex)
 			}
 			else if (*s == 'u')
 			{
-				int		i;
-				int		ch = 0;
+				int			i;
+				int			ch = 0;
 
 				for (i = 1; i <= 4; ++i)
 				{
@@ -466,7 +467,7 @@ json_lex_string(JsonLexContext *lex)
 								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 								 errmsg("invalid input syntax for type json"),
 								 errdetail_internal("line %d: \"\\u\" must be followed by four hexadecimal digits.",
-									lex->line_number)));
+													lex->line_number)));
 					}
 				}
 
@@ -479,8 +480,8 @@ json_lex_string(JsonLexContext *lex)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						 errmsg("invalid input syntax for type json"),
-						 errdetail_internal("line %d: Invalid escape \"\\%s\".",
-							lex->line_number, extract_mb_char(s))));
+					  errdetail_internal("line %d: Invalid escape \"\\%s\".",
+									 lex->line_number, extract_mb_char(s))));
 			}
 		}
 	}
@@ -497,17 +498,17 @@ json_lex_string(JsonLexContext *lex)
  * (1) An optional minus sign ('-').
  *
  * (2) Either a single '0', or a string of one or more digits that does not
- *     begin with a '0'.
+ *	   begin with a '0'.
  *
  * (3) An optional decimal part, consisting of a period ('.') followed by
- *     one or more digits.  (Note: While this part can be omitted
- *     completely, it's not OK to have only the decimal point without
- *     any digits afterwards.)
+ *	   one or more digits.	(Note: While this part can be omitted
+ *	   completely, it's not OK to have only the decimal point without
+ *	   any digits afterwards.)
  *
  * (4) An optional exponent part, consisting of 'e' or 'E', optionally
- *     followed by '+' or '-', followed by one or more digits.  (Note:
- *     As with the decimal part, if 'e' or 'E' is present, it must be
- *     followed by at least one digit.)
+ *	   followed by '+' or '-', followed by one or more digits.	(Note:
+ *	   As with the decimal part, if 'e' or 'E' is present, it must be
+ *	   followed by at least one digit.)
  *
  * The 's' argument to this function points to the ostensible beginning
  * of part 2 - i.e. the character after any optional minus sign, and the
@@ -518,8 +519,8 @@ json_lex_string(JsonLexContext *lex)
 static void
 json_lex_number(JsonLexContext *lex, char *s)
 {
-	bool	error = false;
-	char   *p;
+	bool		error = false;
+	char	   *p;
 
 	/* Part (1): leading sign indicator. */
 	/* Caller already did this for us; so do nothing. */
@@ -571,7 +572,7 @@ json_lex_number(JsonLexContext *lex, char *s)
 
 	/* Check for trailing garbage. */
 	for (p = s; (*p >= 'a' && *p <= 'z') || (*p >= 'A' && *p <= 'Z')
-		|| (*p >= '0' && *p <= '9') || *p == '_' || IS_HIGHBIT_SET(*p); ++p)
+		 || (*p >= '0' && *p <= '9') || *p == '_' || IS_HIGHBIT_SET(*p); ++p)
 		;
 	lex->token_terminator = p;
 	if (p > s || error)
@@ -584,17 +585,17 @@ json_lex_number(JsonLexContext *lex, char *s)
 static void
 report_parse_error(JsonParseStack *stack, JsonLexContext *lex)
 {
-	char   *detail = NULL;
-	char   *token = NULL;
-	int		toklen;
+	char	   *detail = NULL;
+	char	   *token = NULL;
+	int			toklen;
 
 	/* Handle case where the input ended prematurely. */
 	if (lex->token_start == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type json: \"%s\"",
-					lex->input),
-	 			 errdetail_internal("The input string ended unexpectedly.")));
+						lex->input),
+				 errdetail_internal("The input string ended unexpectedly.")));
 
 	/* Work out the offending token. */
 	toklen = lex->token_terminator - lex->token_start;
@@ -636,8 +637,8 @@ report_parse_error(JsonParseStack *stack, JsonLexContext *lex)
 	ereport(ERROR,
 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 			 errmsg("invalid input syntax for type json: \"%s\"",
-				lex->input),
-			 detail ? errdetail_internal(detail, lex->line_number, token) : 0));
+					lex->input),
+		  detail ? errdetail_internal(detail, lex->line_number, token) : 0));
 }
 
 /*
@@ -646,8 +647,8 @@ report_parse_error(JsonParseStack *stack, JsonLexContext *lex)
 static void
 report_invalid_token(JsonLexContext *lex)
 {
-	char   *token;
-	int		toklen;
+	char	   *token;
+	int			toklen;
 
 	toklen = lex->token_terminator - lex->token_start;
 	token = palloc(toklen + 1);
@@ -658,7 +659,7 @@ report_invalid_token(JsonLexContext *lex)
 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 			 errmsg("invalid input syntax for type json"),
 			 errdetail_internal("line %d: Token \"%s\" is invalid.",
-				lex->line_number, token)));
+								lex->line_number, token)));
 }
 
 /*
@@ -667,8 +668,8 @@ report_invalid_token(JsonLexContext *lex)
 static char *
 extract_mb_char(char *s)
 {
-	char   *res;
-	int		len;
+	char	   *res;
+	int			len;
 
 	len = pg_mblen(s);
 	res = palloc(len + 1);
@@ -687,11 +688,11 @@ datum_to_json(Datum val, bool is_null, StringInfo result, TYPCATEGORY tcategory,
 			  Oid typoutputfunc)
 {
 
-	char *outputstr;
+	char	   *outputstr;
 
 	if (is_null)
 	{
-		appendStringInfoString(result,"null");
+		appendStringInfoString(result, "null");
 		return;
 	}
 
@@ -705,19 +706,20 @@ datum_to_json(Datum val, bool is_null, StringInfo result, TYPCATEGORY tcategory,
 			break;
 		case TYPCATEGORY_BOOLEAN:
 			if (DatumGetBool(val))
-				appendStringInfoString(result,"true");
+				appendStringInfoString(result, "true");
 			else
-				appendStringInfoString(result,"false");
+				appendStringInfoString(result, "false");
 			break;
 		case TYPCATEGORY_NUMERIC:
 			outputstr = OidOutputFunctionCall(typoutputfunc, val);
+
 			/*
-			 * Don't call escape_json here if it's a valid JSON
-			 * number. Numeric output should usually be a valid 
-			 * JSON number and JSON numbers shouldn't be quoted. 
-			 * Quote cases like "Nan" and "Infinity", however.
+			 * Don't call escape_json here if it's a valid JSON number.
+			 * Numeric output should usually be a valid JSON number and JSON
+			 * numbers shouldn't be quoted. Quote cases like "Nan" and
+			 * "Infinity", however.
 			 */
-			if (strpbrk(outputstr,NON_NUMERIC_LETTER) == NULL)
+			if (strpbrk(outputstr, NON_NUMERIC_LETTER) == NULL)
 				appendStringInfoString(result, outputstr);
 			else
 				escape_json(result, outputstr);
@@ -742,13 +744,13 @@ datum_to_json(Datum val, bool is_null, StringInfo result, TYPCATEGORY tcategory,
  * ourselves recursively to process the next dimension.
  */
 static void
-array_dim_to_json(StringInfo result, int dim, int ndims,int * dims, Datum *vals,
-				  bool *nulls, int * valcount, TYPCATEGORY tcategory, 
+array_dim_to_json(StringInfo result, int dim, int ndims, int *dims, Datum *vals,
+				  bool *nulls, int *valcount, TYPCATEGORY tcategory,
 				  Oid typoutputfunc, bool use_line_feeds)
 {
 
-	int i;
-	char *sep;
+	int			i;
+	char	   *sep;
 
 	Assert(dim < ndims);
 
@@ -759,7 +761,7 @@ array_dim_to_json(StringInfo result, int dim, int ndims,int * dims, Datum *vals,
 	for (i = 1; i <= dims[dim]; i++)
 	{
 		if (i > 1)
-			appendStringInfoString(result,sep);
+			appendStringInfoString(result, sep);
 
 		if (dim + 1 == ndims)
 		{
@@ -770,10 +772,10 @@ array_dim_to_json(StringInfo result, int dim, int ndims,int * dims, Datum *vals,
 		else
 		{
 			/*
-			 * Do we want line feeds on inner dimensions of arrays?
-			 * For now we'll say no.
+			 * Do we want line feeds on inner dimensions of arrays? For now
+			 * we'll say no.
 			 */
-			array_dim_to_json(result, dim+1, ndims, dims, vals, nulls,
+			array_dim_to_json(result, dim + 1, ndims, dims, vals, nulls,
 							  valcount, tcategory, typoutputfunc, false);
 		}
 	}
@@ -792,9 +794,9 @@ array_to_json_internal(Datum array, StringInfo result, bool use_line_feeds)
 	int		   *dim;
 	int			ndim;
 	int			nitems;
-	int         count = 0;
+	int			count = 0;
 	Datum	   *elements;
-	bool       *nulls;
+	bool	   *nulls;
 
 	int16		typlen;
 	bool		typbyval;
@@ -810,7 +812,7 @@ array_to_json_internal(Datum array, StringInfo result, bool use_line_feeds)
 
 	if (nitems <= 0)
 	{
-		appendStringInfoString(result,"[]");
+		appendStringInfoString(result, "[]");
 		return;
 	}
 
@@ -842,52 +844,54 @@ array_to_json_internal(Datum array, StringInfo result, bool use_line_feeds)
 static void
 composite_to_json(Datum composite, StringInfo result, bool use_line_feeds)
 {
-    HeapTupleHeader td;
-    Oid         tupType;
-    int32       tupTypmod;
-    TupleDesc   tupdesc;
-    HeapTupleData tmptup, *tuple;
-	int         i;
-	bool        needsep = false;
-	char       *sep;
+	HeapTupleHeader td;
+	Oid			tupType;
+	int32		tupTypmod;
+	TupleDesc	tupdesc;
+	HeapTupleData tmptup,
+			   *tuple;
+	int			i;
+	bool		needsep = false;
+	char	   *sep;
 
 	sep = use_line_feeds ? ",\n " : ",";
 
-    td = DatumGetHeapTupleHeader(composite);
+	td = DatumGetHeapTupleHeader(composite);
 
-    /* Extract rowtype info and find a tupdesc */
-    tupType = HeapTupleHeaderGetTypeId(td);
-    tupTypmod = HeapTupleHeaderGetTypMod(td);
-    tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+	/* Extract rowtype info and find a tupdesc */
+	tupType = HeapTupleHeaderGetTypeId(td);
+	tupTypmod = HeapTupleHeaderGetTypMod(td);
+	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
 
-    /* Build a temporary HeapTuple control structure */
-    tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
-    tmptup.t_data = td;
+	/* Build a temporary HeapTuple control structure */
+	tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
+	tmptup.t_data = td;
 	tuple = &tmptup;
 
-	appendStringInfoChar(result,'{');
+	appendStringInfoChar(result, '{');
 
-    for (i = 0; i < tupdesc->natts; i++)
-    {
-        Datum       val, origval;
-        bool        isnull;
-        char       *attname;
+	for (i = 0; i < tupdesc->natts; i++)
+	{
+		Datum		val,
+					origval;
+		bool		isnull;
+		char	   *attname;
 		TYPCATEGORY tcategory;
 		Oid			typoutput;
 		bool		typisvarlena;
 
 		if (tupdesc->attrs[i]->attisdropped)
-            continue;
+			continue;
 
 		if (needsep)
-			appendStringInfoString(result,sep);
+			appendStringInfoString(result, sep);
 		needsep = true;
 
-        attname = NameStr(tupdesc->attrs[i]->attname);
-		escape_json(result,attname);
-		appendStringInfoChar(result,':');
+		attname = NameStr(tupdesc->attrs[i]->attname);
+		escape_json(result, attname);
+		appendStringInfoChar(result, ':');
 
-        origval = heap_getattr(tuple, i + 1, tupdesc, &isnull);
+		origval = heap_getattr(tuple, i + 1, tupdesc, &isnull);
 
 		if (tupdesc->attrs[i]->atttypid == RECORDARRAYOID)
 			tcategory = TYPCATEGORY_ARRAY;
@@ -902,10 +906,10 @@ composite_to_json(Datum composite, StringInfo result, bool use_line_feeds)
 						  &typoutput, &typisvarlena);
 
 		/*
-		 * If we have a toasted datum, forcibly detoast it here to avoid memory
-		 * leakage inside the type's output routine.
+		 * If we have a toasted datum, forcibly detoast it here to avoid
+		 * memory leakage inside the type's output routine.
 		 */
-		if (typisvarlena && ! isnull)
+		if (typisvarlena && !isnull)
 			val = PointerGetDatum(PG_DETOAST_DATUM(origval));
 		else
 			val = origval;
@@ -917,8 +921,8 @@ composite_to_json(Datum composite, StringInfo result, bool use_line_feeds)
 			pfree(DatumGetPointer(val));
 	}
 
-	appendStringInfoChar(result,'}');
-    ReleaseTupleDesc(tupdesc);
+	appendStringInfoChar(result, '}');
+	ReleaseTupleDesc(tupdesc);
 }
 
 /*
@@ -927,7 +931,7 @@ composite_to_json(Datum composite, StringInfo result, bool use_line_feeds)
 extern Datum
 array_to_json(PG_FUNCTION_ARGS)
 {
-	Datum    array = PG_GETARG_DATUM(0);
+	Datum		array = PG_GETARG_DATUM(0);
 	StringInfo	result;
 
 	result = makeStringInfo();
@@ -943,8 +947,8 @@ array_to_json(PG_FUNCTION_ARGS)
 extern Datum
 array_to_json_pretty(PG_FUNCTION_ARGS)
 {
-	Datum    array = PG_GETARG_DATUM(0);
-	bool     use_line_feeds = PG_GETARG_BOOL(1);
+	Datum		array = PG_GETARG_DATUM(0);
+	bool		use_line_feeds = PG_GETARG_BOOL(1);
 	StringInfo	result;
 
 	result = makeStringInfo();
@@ -960,7 +964,7 @@ array_to_json_pretty(PG_FUNCTION_ARGS)
 extern Datum
 row_to_json(PG_FUNCTION_ARGS)
 {
-	Datum    array = PG_GETARG_DATUM(0);
+	Datum		array = PG_GETARG_DATUM(0);
 	StringInfo	result;
 
 	result = makeStringInfo();
@@ -976,8 +980,8 @@ row_to_json(PG_FUNCTION_ARGS)
 extern Datum
 row_to_json_pretty(PG_FUNCTION_ARGS)
 {
-	Datum    array = PG_GETARG_DATUM(0);
-	bool     use_line_feeds = PG_GETARG_BOOL(1);
+	Datum		array = PG_GETARG_DATUM(0);
+	bool		use_line_feeds = PG_GETARG_BOOL(1);
 	StringInfo	result;
 
 	result = makeStringInfo();
@@ -1031,4 +1035,3 @@ escape_json(StringInfo buf, const char *str)
 	}
 	appendStringInfoCharMacro(buf, '\"');
 }
-

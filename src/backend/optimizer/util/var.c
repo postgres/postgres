@@ -218,7 +218,7 @@ pull_varattnos_walker(Node *node, pull_varattnos_context *context)
 		if (var->varno == context->varno && var->varlevelsup == 0)
 			context->varattnos =
 				bms_add_member(context->varattnos,
-							   var->varattno - FirstLowInvalidHeapAttributeNumber);
+						 var->varattno - FirstLowInvalidHeapAttributeNumber);
 		return false;
 	}
 

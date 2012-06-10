@@ -66,32 +66,32 @@ extern const char *select_default_timezone(const char *share_path);
 
 static const char *auth_methods_host[] = {"trust", "reject", "md5", "password", "ident", "radius",
 #ifdef ENABLE_GSS
-								   "gss",
+	"gss",
 #endif
 #ifdef ENABLE_SSPI
-								   "sspi",
+	"sspi",
 #endif
 #ifdef KRB5
-								   "krb5",
+	"krb5",
 #endif
 #ifdef USE_PAM
-								   "pam", "pam ",
+	"pam", "pam ",
 #endif
 #ifdef USE_LDAP
-								   "ldap",
+	"ldap",
 #endif
 #ifdef USE_SSL
-								   "cert",
+	"cert",
 #endif
-								   NULL};
+NULL};
 static const char *auth_methods_local[] = {"trust", "reject", "md5", "password", "peer", "radius",
 #ifdef USE_PAM
-								   "pam", "pam ",
+	"pam", "pam ",
 #endif
 #ifdef USE_LDAP
-								   "ldap",
+	"ldap",
 #endif
-									NULL};
+NULL};
 
 /*
  * these values are passed in by makefile defines
@@ -214,7 +214,7 @@ static void check_ok(void);
 static char *escape_quotes(const char *src);
 static int	locale_date_order(const char *locale);
 static bool check_locale_name(int category, const char *locale,
-							  char **canonname);
+				  char **canonname);
 static bool check_locale_encoding(const char *locale, int encoding);
 static void setlocales(void);
 static void usage(const char *progname);
@@ -2244,7 +2244,7 @@ locale_date_order(const char *locale)
  * Is the locale name valid for the locale category?
  *
  * If successful, and canonname isn't NULL, a malloc'd copy of the locale's
- * canonical name is stored there.  This is especially useful for figuring out
+ * canonical name is stored there.	This is especially useful for figuring out
  * what locale name "" means (ie, the environment value).  (Actually,
  * it seems that on most implementations that's the only thing it's good for;
  * we could wish that setlocale gave back a canonically spelled version of
@@ -2548,7 +2548,7 @@ check_authmethod_unspecified(const char **authmethod)
 	{
 		authwarning = _("\nWARNING: enabling \"trust\" authentication for local connections\n"
 						"You can change this by editing pg_hba.conf or using the option -A, or\n"
-						"--auth-local and --auth-host, the next time you run initdb.\n");
+			"--auth-local and --auth-host, the next time you run initdb.\n");
 		*authmethod = "trust";
 	}
 }
@@ -2676,6 +2676,7 @@ main(int argc, char *argv[])
 		{
 			case 'A':
 				authmethodlocal = authmethodhost = xstrdup(optarg);
+
 				/*
 				 * When ident is specified, use peer for local connections.
 				 * Mirrored, when peer is specified, use ident for TCP/IP
@@ -2760,9 +2761,9 @@ main(int argc, char *argv[])
 	}
 
 
-	/* 
-	 * Non-option argument specifies data directory
-	 * as long as it wasn't already specified with -D / --pgdata
+	/*
+	 * Non-option argument specifies data directory as long as it wasn't
+	 * already specified with -D / --pgdata
 	 */
 	if (optind < argc && strlen(pg_data) == 0)
 	{
@@ -3017,18 +3018,18 @@ main(int argc, char *argv[])
 			 */
 #ifdef WIN32
 			printf(_("Encoding \"%s\" implied by locale is not allowed as a server-side encoding.\n"
-			   "The default database encoding will be set to \"%s\" instead.\n"),
+			"The default database encoding will be set to \"%s\" instead.\n"),
 				   pg_encoding_to_char(ctype_enc),
 				   pg_encoding_to_char(PG_UTF8));
 			ctype_enc = PG_UTF8;
 			encodingid = encodingid_to_string(ctype_enc);
 #else
 			fprintf(stderr,
-					_("%s: locale \"%s\" requires unsupported encoding \"%s\"\n"),
+			   _("%s: locale \"%s\" requires unsupported encoding \"%s\"\n"),
 					progname, lc_ctype, pg_encoding_to_char(ctype_enc));
 			fprintf(stderr,
-				  _("Encoding \"%s\" is not allowed as a server-side encoding.\n"
-					"Rerun %s with a different locale selection.\n"),
+			  _("Encoding \"%s\" is not allowed as a server-side encoding.\n"
+				"Rerun %s with a different locale selection.\n"),
 					pg_encoding_to_char(ctype_enc), progname);
 			exit(1);
 #endif

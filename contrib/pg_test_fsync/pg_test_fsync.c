@@ -29,7 +29,7 @@
 
 /* These are macros to avoid timing the function call overhead. */
 #ifndef WIN32
-#define START_TIMER	\
+#define START_TIMER \
 do { \
 	alarm_triggered = false; \
 	alarm(secs_per_test); \
@@ -37,7 +37,7 @@ do { \
 } while (0)
 #else
 /* WIN32 doesn't support alarm, so we create a thread and sleep there */
-#define START_TIMER	\
+#define START_TIMER \
 do { \
 	alarm_triggered = false; \
 	if (CreateThread(NULL, 0, process_alarm, NULL, 0, NULL) == \
@@ -55,7 +55,7 @@ do { \
 	gettimeofday(&stop_t, NULL); \
 	print_elapse(start_t, stop_t, ops); \
 } while (0)
-		
+
 
 static const char *progname;
 
@@ -77,6 +77,7 @@ static void test_sync(int writes_per_op);
 static void test_open_syncs(void);
 static void test_open_sync(const char *msg, int writes_size);
 static void test_file_descriptor_sync(void);
+
 #ifndef WIN32
 static void process_alarm(int sig);
 #else

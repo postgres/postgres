@@ -52,8 +52,8 @@ static void doShellQuoting(PQExpBuffer buf, const char *str);
 
 static int	runPgDump(const char *dbname);
 static void buildShSecLabels(PGconn *conn, const char *catalog_name,
-							 uint32 objectId, PQExpBuffer buffer,
-							 const char *target, const char *objname);
+				 uint32 objectId, PQExpBuffer buffer,
+				 const char *target, const char *objname);
 static PGconn *connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 	  const char *pguser, enum trivalue prompt_password, bool fail_on_error);
 static PGresult *executeQuery(PGconn *conn, const char *query);
@@ -1663,7 +1663,7 @@ static void
 buildShSecLabels(PGconn *conn, const char *catalog_name, uint32 objectId,
 				 PQExpBuffer buffer, const char *target, const char *objname)
 {
-	PQExpBuffer	sql = createPQExpBuffer();
+	PQExpBuffer sql = createPQExpBuffer();
 	PGresult   *res;
 
 	buildShSecLabelQuery(conn, catalog_name, objectId, sql);

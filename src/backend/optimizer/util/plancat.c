@@ -341,7 +341,7 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			}
 			else
 			{
-				double		allvisfrac;				/* dummy */
+				double		allvisfrac; /* dummy */
 
 				estimate_rel_size(indexRelation, NULL,
 								  &info->pages, &info->tuples, &allvisfrac);
@@ -403,12 +403,12 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 			 * minimum size estimate of 10 pages.  The idea here is to avoid
 			 * assuming a newly-created table is really small, even if it
 			 * currently is, because that may not be true once some data gets
-			 * loaded into it.  Once a vacuum or analyze cycle has been done
+			 * loaded into it.	Once a vacuum or analyze cycle has been done
 			 * on it, it's more reasonable to believe the size is somewhat
 			 * stable.
 			 *
 			 * (Note that this is only an issue if the plan gets cached and
-			 * used again after the table has been filled.  What we're trying
+			 * used again after the table has been filled.	What we're trying
 			 * to avoid is using a nestloop-type plan on a table that has
 			 * grown substantially since the plan was made.  Normally,
 			 * autovacuum/autoanalyze will occur once enough inserts have
@@ -965,7 +965,7 @@ build_index_tlist(PlannerInfo *root, IndexOptInfo *index,
 
 			if (indexkey < 0)
 				att_tup = SystemAttributeDefinition(indexkey,
-											heapRelation->rd_rel->relhasoids);
+										   heapRelation->rd_rel->relhasoids);
 			else
 				att_tup = heapRelation->rd_att->attrs[indexkey - 1];
 

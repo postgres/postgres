@@ -325,7 +325,7 @@ mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
  *
  * All the above applies only to the relation's main fork; other forks can
  * just be removed immediately, since they are not needed to prevent the
- * relfilenode number from being recycled.  Also, we do not carefully
+ * relfilenode number from being recycled.	Also, we do not carefully
  * track whether other forks have been created or not, but just attempt to
  * unlink them unconditionally; so we should never complain about ENOENT.
  *
@@ -767,9 +767,10 @@ mdnblocks(SMgrRelation reln, ForkNumber forknum)
 	 * NOTE: this assumption could only be wrong if another backend has
 	 * truncated the relation.	We rely on higher code levels to handle that
 	 * scenario by closing and re-opening the md fd, which is handled via
-	 * relcache flush.	(Since the checkpointer doesn't participate in relcache
-	 * flush, it could have segment chain entries for inactive segments;
-	 * that's OK because the checkpointer never needs to compute relation size.)
+	 * relcache flush.	(Since the checkpointer doesn't participate in
+	 * relcache flush, it could have segment chain entries for inactive
+	 * segments; that's OK because the checkpointer never needs to compute
+	 * relation size.)
 	 */
 	while (v->mdfd_chain != NULL)
 	{
@@ -1072,12 +1073,13 @@ mdsync(void)
 				 * say "but an unreferenced SMgrRelation is still a leak!" Not
 				 * really, because the only case in which a checkpoint is done
 				 * by a process that isn't about to shut down is in the
-				 * checkpointer, and it will periodically do smgrcloseall(). This
-				 * fact justifies our not closing the reln in the success path
-				 * either, which is a good thing since in non-checkpointer cases
-				 * we couldn't safely do that.)  Furthermore, in many cases
-				 * the relation will have been dirtied through this same smgr
-				 * relation, and so we can save a file open/close cycle.
+				 * checkpointer, and it will periodically do smgrcloseall().
+				 * This fact justifies our not closing the reln in the success
+				 * path either, which is a good thing since in
+				 * non-checkpointer cases we couldn't safely do that.)
+				 * Furthermore, in many cases the relation will have been
+				 * dirtied through this same smgr relation, and so we can save
+				 * a file open/close cycle.
 				 */
 				reln = smgropen(entry->tag.rnode.node,
 								entry->tag.rnode.backend);
@@ -1470,8 +1472,8 @@ ForgetRelationFsyncRequests(RelFileNodeBackend rnode, ForkNumber forknum)
 			pg_usleep(10000L);	/* 10 msec seems a good number */
 
 		/*
-		 * Note we don't wait for the checkpointer to actually absorb the revoke
-		 * message; see mdsync() for the implications.
+		 * Note we don't wait for the checkpointer to actually absorb the
+		 * revoke message; see mdsync() for the implications.
 		 */
 	}
 }

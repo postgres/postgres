@@ -39,6 +39,7 @@ CATALOG(pg_rewrite,2618)
 	char		ev_type;
 	char		ev_enabled;
 	bool		is_instead;
+
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	pg_node_tree ev_qual;
 	pg_node_tree ev_action;

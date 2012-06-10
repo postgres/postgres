@@ -244,11 +244,11 @@ WalWriterMain(void)
 	 */
 	for (;;)
 	{
-		long	cur_timeout;
-		int		rc;
+		long		cur_timeout;
+		int			rc;
 
 		/*
-		 * Advertise whether we might hibernate in this cycle.  We do this
+		 * Advertise whether we might hibernate in this cycle.	We do this
 		 * before resetting the latch to ensure that any async commits will
 		 * see the flag set if they might possibly need to wake us up, and
 		 * that we won't miss any signal they send us.  (If we discover work
@@ -294,7 +294,7 @@ WalWriterMain(void)
 		 * sleep time so as to reduce the server's idle power consumption.
 		 */
 		if (left_till_hibernate > 0)
-			cur_timeout = WalWriterDelay; /* in ms */
+			cur_timeout = WalWriterDelay;		/* in ms */
 		else
 			cur_timeout = WalWriterDelay * HIBERNATE_FACTOR;
 

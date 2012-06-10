@@ -123,7 +123,7 @@ spgbuild(PG_FUNCTION_ARGS)
 	buildstate.spgstate.isBuild = true;
 
 	buildstate.tmpCtx = AllocSetContextCreate(CurrentMemoryContext,
-											"SP-GiST build temporary context",
+										   "SP-GiST build temporary context",
 											  ALLOCSET_DEFAULT_MINSIZE,
 											  ALLOCSET_DEFAULT_INITSIZE,
 											  ALLOCSET_DEFAULT_MAXSIZE);

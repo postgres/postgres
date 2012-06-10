@@ -435,7 +435,7 @@ index_restrpos(IndexScanDesc scan)
 ItemPointer
 index_getnext_tid(IndexScanDesc scan, ScanDirection direction)
 {
-	FmgrInfo   	*procedure;
+	FmgrInfo   *procedure;
 	bool		found;
 
 	SCAN_CHECKS;
@@ -495,7 +495,7 @@ index_getnext_tid(IndexScanDesc scan, ScanDirection direction)
 HeapTuple
 index_fetch_heap(IndexScanDesc scan)
 {
-	ItemPointer	tid = &scan->xs_ctup.t_self;
+	ItemPointer tid = &scan->xs_ctup.t_self;
 	bool		all_dead = false;
 	bool		got_heap_tuple;
 
@@ -530,8 +530,8 @@ index_fetch_heap(IndexScanDesc scan)
 	if (got_heap_tuple)
 	{
 		/*
-		 * Only in a non-MVCC snapshot can more than one member of the
-		 * HOT chain be visible.
+		 * Only in a non-MVCC snapshot can more than one member of the HOT
+		 * chain be visible.
 		 */
 		scan->xs_continue_hot = !IsMVCCSnapshot(scan->xs_snapshot);
 		pgstat_count_heap_fetch(scan->indexRelation);
@@ -544,7 +544,7 @@ index_fetch_heap(IndexScanDesc scan)
 	/*
 	 * If we scanned a whole HOT chain and found only dead tuples, tell index
 	 * AM to kill its entry for that TID (this will take effect in the next
-	 * amgettuple call, in index_getnext_tid).  We do not do this when in
+	 * amgettuple call, in index_getnext_tid).	We do not do this when in
 	 * recovery because it may violate MVCC to do so.  See comments in
 	 * RelationGetIndexScan().
 	 */

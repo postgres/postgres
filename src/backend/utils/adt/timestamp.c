@@ -757,7 +757,7 @@ interval_send(PG_FUNCTION_ARGS)
 
 /*
  * The interval typmod stores a "range" in its high 16 bits and a "precision"
- * in its low 16 bits.  Both contribute to defining the resolution of the
+ * in its low 16 bits.	Both contribute to defining the resolution of the
  * type.  Range addresses resolution granules larger than one second, and
  * precision specifies resolution below one second.  This representation can
  * express all SQL standard resolutions, but we implement them all in terms of
@@ -940,7 +940,7 @@ interval_transform(PG_FUNCTION_ARGS)
 
 	typmod = (Node *) lsecond(expr->args);
 
-	if (IsA(typmod, Const) && !((Const *) typmod)->constisnull)
+	if (IsA(typmod, Const) &&!((Const *) typmod)->constisnull)
 	{
 		Node	   *source = (Node *) linitial(expr->args);
 		int32		old_typmod = exprTypmod(source);
@@ -965,7 +965,7 @@ interval_transform(PG_FUNCTION_ARGS)
 
 		/*
 		 * Temporally-smaller fields occupy higher positions in the range
-		 * bitmap.  Since only the temporally-smallest bit matters for length
+		 * bitmap.	Since only the temporally-smallest bit matters for length
 		 * coercion purposes, we compare the last-set bits in the ranges.
 		 * Precision, which is to say, sub-second precision, only affects
 		 * ranges that include SECOND.
@@ -974,8 +974,8 @@ interval_transform(PG_FUNCTION_ARGS)
 		old_range_fls = fls(old_range);
 		if (new_typmod < 0 ||
 			((new_range_fls >= SECOND || new_range_fls >= old_range_fls) &&
-			 (old_range_fls < SECOND || new_precis >= MAX_INTERVAL_PRECISION ||
-			  new_precis >= old_precis)))
+		   (old_range_fls < SECOND || new_precis >= MAX_INTERVAL_PRECISION ||
+			new_precis >= old_precis)))
 			ret = relabel_to_typmod(source, new_typmod);
 	}
 
@@ -1925,7 +1925,7 @@ timestamp_fastcmp(Datum x, Datum y, SortSupport ssup)
 Datum
 timestamp_sortsupport(PG_FUNCTION_ARGS)
 {
-	SortSupport	ssup = (SortSupport) PG_GETARG_POINTER(0);
+	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
 
 	ssup->comparator = timestamp_fastcmp;
 	PG_RETURN_VOID();
@@ -4067,11 +4067,11 @@ timestamp_part(PG_FUNCTION_ARGS)
 		{
 			case DTK_EPOCH:
 #ifdef HAVE_INT64_TIMESTAMP
-					result = (timestamp - SetEpochTimestamp()) / 1000000.0;
+				result = (timestamp - SetEpochTimestamp()) / 1000000.0;
 #else
-					result = timestamp - SetEpochTimestamp();
+				result = timestamp - SetEpochTimestamp();
 #endif
-					break;
+				break;
 
 			case DTK_DOW:
 			case DTK_ISODOW:

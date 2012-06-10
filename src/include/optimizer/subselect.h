@@ -31,7 +31,7 @@ extern Param *SS_make_initplan_from_plan(PlannerInfo *root, Plan *plan,
 					Oid resulttype, int32 resulttypmod, Oid resultcollation);
 extern Param *assign_nestloop_param_var(PlannerInfo *root, Var *var);
 extern Param *assign_nestloop_param_placeholdervar(PlannerInfo *root,
-												   PlaceHolderVar *phv);
+									 PlaceHolderVar *phv);
 extern int	SS_assign_special_param(PlannerInfo *root);
 
 #endif   /* SUBSELECT_H */

@@ -52,7 +52,7 @@ pg_TZDIR(void)
  * This is simpler than the backend function of the same name because
  * we assume that the input string has the correct case already, so there
  * is no need for case-folding.  (This is obviously true if we got the file
- * name from the filesystem to start with.  The only other place it can come
+ * name from the filesystem to start with.	The only other place it can come
  * from is the environment variable TZ, and there seems no need to allow
  * case variation in that; other programs aren't likely to.)
  *
@@ -571,7 +571,6 @@ scan_available_timezones(char *tzdir, char *tzdirsub, struct tztry * tt,
 
 	pgfnames_cleanup(names);
 }
-
 #else							/* WIN32 */
 
 static const struct

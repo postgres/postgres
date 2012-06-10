@@ -134,8 +134,8 @@ static int
 compareQueryOperand(const void *a, const void *b, void *arg)
 {
 	char	   *operand = (char *) arg;
-	QueryOperand *qa = (*(QueryOperand * const *) a);
-	QueryOperand *qb = (*(QueryOperand * const *) b);
+	QueryOperand *qa = (*(QueryOperand *const *) a);
+	QueryOperand *qb = (*(QueryOperand *const *) b);
 
 	return tsCompareString(operand + qa->distance, qa->length,
 						   operand + qb->distance, qb->length,

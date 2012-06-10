@@ -1522,7 +1522,7 @@ pgstat_end_function_usage(PgStat_FunctionCallUsage *fcu, bool finalize)
 
 	/*
 	 * Compute the new f_total_time as the total elapsed time added to the
-	 * pre-call value of f_total_time.  This is necessary to avoid
+	 * pre-call value of f_total_time.	This is necessary to avoid
 	 * double-counting any time taken by recursive calls of myself.  (We do
 	 * not need any similar kluge for self time, since that already excludes
 	 * any recursive calls.)
@@ -2836,7 +2836,7 @@ pgstat_get_backend_current_activity(int pid, bool checkUser)
  * pgstat_get_crashed_backend_activity() -
  *
  *	Return a string representing the current activity of the backend with
- *	the specified PID.  Like the function above, but reads shared memory with
+ *	the specified PID.	Like the function above, but reads shared memory with
  *	the expectation that it may be corrupt.  On success, copy the string
  *	into the "buffer" argument and return that pointer.  On failure,
  *	return NULL.
@@ -2845,7 +2845,7 @@ pgstat_get_backend_current_activity(int pid, bool checkUser)
  *	query that crashed a backend.  In particular, no attempt is made to
  *	follow the correct concurrency protocol when accessing the
  *	BackendStatusArray.  But that's OK, in the worst case we'll return a
- *	corrupted message.  We also must take care not to trip on ereport(ERROR).
+ *	corrupted message.	We also must take care not to trip on ereport(ERROR).
  * ----------
  */
 const char *
@@ -2890,8 +2890,8 @@ pgstat_get_crashed_backend_activity(int pid, char *buffer, int buflen)
 
 			/*
 			 * Copy only ASCII-safe characters so we don't run into encoding
-			 * problems when reporting the message; and be sure not to run
-			 * off the end of memory.
+			 * problems when reporting the message; and be sure not to run off
+			 * the end of memory.
 			 */
 			ascii_safe_strlcpy(buffer, activity,
 							   Min(buflen, pgstat_track_activity_query_size));
@@ -3070,7 +3070,7 @@ PgstatCollectorMain(int argc, char *argv[])
 	 * every message; instead, do that only after a recv() fails to obtain a
 	 * message.  (This effectively means that if backends are sending us stuff
 	 * like mad, we won't notice postmaster death until things slack off a
-	 * bit; which seems fine.)  To do that, we have an inner loop that
+	 * bit; which seems fine.)	To do that, we have an inner loop that
 	 * iterates as long as recv() succeeds.  We do recognize got_SIGHUP inside
 	 * the inner loop, which means that such interrupts will get serviced but
 	 * the latch won't get cleared until next time there is a break in the
@@ -3234,13 +3234,14 @@ PgstatCollectorMain(int argc, char *argv[])
 		/* Sleep until there's something to do */
 #ifndef WIN32
 		wr = WaitLatchOrSocket(&pgStatLatch,
-							   WL_LATCH_SET | WL_POSTMASTER_DEATH | WL_SOCKET_READABLE,
+					 WL_LATCH_SET | WL_POSTMASTER_DEATH | WL_SOCKET_READABLE,
 							   pgStatSock,
 							   -1L);
 #else
+
 		/*
 		 * Windows, at least in its Windows Server 2003 R2 incarnation,
-		 * sometimes loses FD_READ events.  Waking up and retrying the recv()
+		 * sometimes loses FD_READ events.	Waking up and retrying the recv()
 		 * fixes that, so don't sleep indefinitely.  This is a crock of the
 		 * first water, but until somebody wants to debug exactly what's
 		 * happening there, this is the best we can do.  The two-second
@@ -3249,9 +3250,9 @@ PgstatCollectorMain(int argc, char *argv[])
 		 * backend_read_statsfile.
 		 */
 		wr = WaitLatchOrSocket(&pgStatLatch,
-							   WL_LATCH_SET | WL_POSTMASTER_DEATH | WL_SOCKET_READABLE | WL_TIMEOUT,
+		WL_LATCH_SET | WL_POSTMASTER_DEATH | WL_SOCKET_READABLE | WL_TIMEOUT,
 							   pgStatSock,
-							   2 * 1000L /* msec */);
+							   2 * 1000L /* msec */ );
 #endif
 
 		/*

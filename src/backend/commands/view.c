@@ -204,8 +204,8 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 		checkViewTupleDesc(descriptor, rel->rd_att);
 
 		/*
-		 * The new options list replaces the existing options list, even
-		 * if it's empty.
+		 * The new options list replaces the existing options list, even if
+		 * it's empty.
 		 */
 		atcmd = makeNode(AlterTableCmd);
 		atcmd->subtype = AT_ReplaceRelOptions;
@@ -504,7 +504,7 @@ DefineView(ViewStmt *stmt, const char *queryString)
 	 * long as the CREATE command is consistent with that --- no explicit
 	 * schema name.
 	 */
-	view = copyObject(stmt->view);  /* don't corrupt original command */
+	view = copyObject(stmt->view);		/* don't corrupt original command */
 	if (view->relpersistence == RELPERSISTENCE_PERMANENT
 		&& isViewOnTempTable(viewParse))
 	{

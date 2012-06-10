@@ -110,7 +110,7 @@ typedef struct _restoreOptions
 	const char *filename;
 	int			dataOnly;
 	int			schemaOnly;
-	int         dumpSections;
+	int			dumpSections;
 	int			verbose;
 	int			aclsSkip;
 	int			tocSummary;

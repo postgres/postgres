@@ -50,8 +50,8 @@ extern bool relation_has_unique_index_for(PlannerInfo *root, RelOptInfo *rel,
 							  List *restrictlist,
 							  List *exprlist, List *oprlist);
 extern bool eclass_member_matches_indexcol(EquivalenceClass *ec,
-										   EquivalenceMember *em,
-										   IndexOptInfo *index, int indexcol);
+							   EquivalenceMember *em,
+							   IndexOptInfo *index, int indexcol);
 extern bool match_index_to_operand(Node *operand, int indexcol,
 					   IndexOptInfo *index);
 extern void expand_indexqual_conditions(IndexOptInfo *index,

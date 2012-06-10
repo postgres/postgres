@@ -61,8 +61,8 @@ typedef struct check_network_data
  */
 typedef struct HbaToken
 {
-	char   *string;
-	bool	quoted;
+	char	   *string;
+	bool		quoted;
 } HbaToken;
 
 /*
@@ -76,9 +76,9 @@ static MemoryContext parsed_hba_context = NULL;
  * These variables hold the pre-parsed contents of the ident usermap
  * configuration file.	ident_lines is a triple-nested list of lines, fields
  * and tokens, as returned by tokenize_file.  There will be one line in
- * ident_lines for each (non-empty, non-comment) line of the file.  Note there
+ * ident_lines for each (non-empty, non-comment) line of the file.	Note there
  * will always be at least one field, since blank lines are not entered in the
- * data structure.  ident_line_nums is an integer list containing the actual
+ * data structure.	ident_line_nums is an integer list containing the actual
  * line number for each line represented in ident_lines.  ident_context is
  * the memory context holding all this.
  */
@@ -246,7 +246,7 @@ make_hba_token(char *token, bool quoted)
 static HbaToken *
 copy_hba_token(HbaToken *in)
 {
-	HbaToken *out = make_hba_token(in->string, in->quoted);
+	HbaToken   *out = make_hba_token(in->string, in->quoted);
 
 	return out;
 }
@@ -283,12 +283,12 @@ next_field_expand(const char *filename, FILE *file)
 
 /*
  * tokenize_inc_file
- * 		Expand a file included from another file into an hba "field"
+ *		Expand a file included from another file into an hba "field"
  *
  * Opens and tokenises a file included from another HBA config file with @,
  * and returns all values found therein as a flat list of HbaTokens.  If a
  * @-token is found, recursively expand it.  The given token list is used as
- * initial contents of list (so foo,bar,@baz does what you expect).  
+ * initial contents of list (so foo,bar,@baz does what you expect).
  */
 static List *
 tokenize_inc_file(List *tokens,
@@ -377,8 +377,8 @@ tokenize_file(const char *filename, FILE *file,
 	List	   *current_line = NIL;
 	List	   *current_field = NIL;
 	int			line_number = 1;
-	MemoryContext	linecxt;
-	MemoryContext	oldcxt;
+	MemoryContext linecxt;
+	MemoryContext oldcxt;
 
 	linecxt = AllocSetContextCreate(TopMemoryContext,
 									"tokenize file cxt",
@@ -442,11 +442,10 @@ is_member(Oid userid, const char *role)
 	if (!OidIsValid(roleid))
 		return false;			/* if target role not exist, say "no" */
 
-	/* 
-	 * See if user is directly or indirectly a member of role.
-	 * For this purpose, a superuser is not considered to be automatically
-	 * a member of the role, so group auth only applies to explicit
-	 * membership.
+	/*
+	 * See if user is directly or indirectly a member of role. For this
+	 * purpose, a superuser is not considered to be automatically a member of
+	 * the role, so group auth only applies to explicit membership.
 	 */
 	return is_member_of_role_nosuper(userid, roleid);
 }
@@ -457,8 +456,8 @@ is_member(Oid userid, const char *role)
 static bool
 check_role(const char *role, Oid roleid, List *tokens)
 {
-	ListCell	   *cell;
-	HbaToken	   *tok;
+	ListCell   *cell;
+	HbaToken   *tok;
 
 	foreach(cell, tokens)
 	{
@@ -481,8 +480,8 @@ check_role(const char *role, Oid roleid, List *tokens)
 static bool
 check_db(const char *dbname, const char *role, Oid roleid, List *tokens)
 {
-	ListCell	   *cell;
-	HbaToken	   *tok;
+	ListCell   *cell;
+	HbaToken   *tok;
 
 	foreach(cell, tokens)
 	{
@@ -825,7 +824,7 @@ parse_hba_line(List *line, int line_num)
 	List	   *tokens;
 	ListCell   *tokencell;
 	HbaToken   *token;
-	HbaLine	   *parsedline;
+	HbaLine    *parsedline;
 
 	parsedline = palloc0(sizeof(HbaLine));
 	parsedline->linenumber = line_num;
@@ -1042,8 +1041,8 @@ parse_hba_line(List *line, int line_num)
 							(errcode(ERRCODE_CONFIG_FILE_ERROR),
 							 errmsg("specifying both host name and CIDR mask is invalid: \"%s\"",
 									token->string),
-							 errcontext("line %d of configuration file \"%s\"",
-										line_num, HbaFileName)));
+						   errcontext("line %d of configuration file \"%s\"",
+									  line_num, HbaFileName)));
 					return NULL;
 				}
 
@@ -1080,9 +1079,9 @@ parse_hba_line(List *line, int line_num)
 				{
 					ereport(LOG,
 							(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						     errmsg("multiple values specified for netmask"),
-							 errcontext("line %d of configuration file \"%s\"",
-										line_num, HbaFileName)));
+							 errmsg("multiple values specified for netmask"),
+						   errcontext("line %d of configuration file \"%s\"",
+									  line_num, HbaFileName)));
 					return NULL;
 				}
 				token = linitial(tokens);
@@ -1293,6 +1292,7 @@ parse_hba_line(List *line, int line_num)
 		foreach(tokencell, tokens)
 		{
 			char	   *val;
+
 			token = lfirst(tokencell);
 
 			str = pstrdup(token->string);
@@ -1310,7 +1310,7 @@ parse_hba_line(List *line, int line_num)
 				return NULL;
 			}
 
-			*val++ = '\0';	/* str now holds "name", val holds "value" */
+			*val++ = '\0';		/* str now holds "name", val holds "value" */
 			if (!parse_hba_auth_opt(str, val, parsedline, line_num))
 				/* parse_hba_auth_opt already logged the error message */
 				return NULL;
@@ -1397,17 +1397,16 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline, int line_num)
 	else if (strcmp(name, "clientcert") == 0)
 	{
 		/*
-		 * Since we require ctHostSSL, this really can never happen
-		 * on non-SSL-enabled builds, so don't bother checking for
-		 * USE_SSL.
+		 * Since we require ctHostSSL, this really can never happen on
+		 * non-SSL-enabled builds, so don't bother checking for USE_SSL.
 		 */
 		if (hbaline->conntype != ctHostSSL)
 		{
 			ereport(LOG,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					 errmsg("clientcert can only be configured for \"hostssl\" rows"),
-				   errcontext("line %d of configuration file \"%s\"",
-							  line_num, HbaFileName)));
+			errmsg("clientcert can only be configured for \"hostssl\" rows"),
+					 errcontext("line %d of configuration file \"%s\"",
+								line_num, HbaFileName)));
 			return false;
 		}
 		if (strcmp(val, "1") == 0)
@@ -1418,8 +1417,8 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline, int line_num)
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
 						 errmsg("client certificates can only be checked if a root certificate store is available"),
 						 errhint("Make sure the configuration parameter \"ssl_ca_file\" is set."),
-				   errcontext("line %d of configuration file \"%s\"",
-							  line_num, HbaFileName)));
+						 errcontext("line %d of configuration file \"%s\"",
+									line_num, HbaFileName)));
 				return false;
 			}
 			hbaline->clientcert = true;
@@ -1431,8 +1430,8 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline, int line_num)
 				ereport(LOG,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
 						 errmsg("clientcert can not be set to 0 when using \"cert\" authentication"),
-				   errcontext("line %d of configuration file \"%s\"",
-							  line_num, HbaFileName)));
+						 errcontext("line %d of configuration file \"%s\"",
+									line_num, HbaFileName)));
 				return false;
 			}
 			hbaline->clientcert = false;
@@ -1465,8 +1464,8 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline, int line_num)
 			ereport(LOG,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("invalid LDAP port number: \"%s\"", val),
-				   errcontext("line %d of configuration file \"%s\"",
-							  line_num, HbaFileName)));
+					 errcontext("line %d of configuration file \"%s\"",
+								line_num, HbaFileName)));
 			return false;
 		}
 	}
@@ -1528,7 +1527,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline, int line_num)
 	{
 		struct addrinfo *gai_result;
 		struct addrinfo hints;
-		int ret;
+		int			ret;
 
 		REQUIRE_AUTH_OPTION(uaRADIUS, "radiusserver", "radius");
 
@@ -1543,8 +1542,8 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline, int line_num)
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("could not translate RADIUS server name \"%s\" to address: %s",
 							val, gai_strerror(ret)),
-				   errcontext("line %d of configuration file \"%s\"",
-							  line_num, HbaFileName)));
+					 errcontext("line %d of configuration file \"%s\"",
+								line_num, HbaFileName)));
 			if (gai_result)
 				pg_freeaddrinfo_all(hints.ai_family, gai_result);
 			return false;
@@ -1561,8 +1560,8 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline, int line_num)
 			ereport(LOG,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("invalid RADIUS port number: \"%s\"", val),
-				   errcontext("line %d of configuration file \"%s\"",
-							  line_num, HbaFileName)));
+					 errcontext("line %d of configuration file \"%s\"",
+								line_num, HbaFileName)));
 			return false;
 		}
 	}
@@ -1580,8 +1579,8 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline, int line_num)
 	{
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-			errmsg("unrecognized authentication option name: \"%s\"",
-				   name),
+				 errmsg("unrecognized authentication option name: \"%s\"",
+						name),
 				 errcontext("line %d of configuration file \"%s\"",
 							line_num, HbaFileName)));
 		return false;
@@ -1693,7 +1692,7 @@ check_hba(hbaPort *port)
  * Read the config file and create a List of HbaLine records for the contents.
  *
  * The configuration is read into a temporary list, and if any parse error
- * occurs the old list is kept in place and false is returned.  Only if the
+ * occurs the old list is kept in place and false is returned.	Only if the
  * whole file parses OK is the list replaced, and the function returns true.
  *
  * On a false result, caller will take care of reporting a FATAL error in case
@@ -1710,9 +1709,9 @@ load_hba(void)
 			   *line_num;
 	List	   *new_parsed_lines = NIL;
 	bool		ok = true;
-	MemoryContext	linecxt;
-	MemoryContext	oldcxt;
-	MemoryContext	hbacxt;
+	MemoryContext linecxt;
+	MemoryContext oldcxt;
+	MemoryContext hbacxt;
 
 	file = AllocateFile(HbaFileName, "r");
 	if (file == NULL)
@@ -1742,8 +1741,8 @@ load_hba(void)
 		{
 			/*
 			 * Parse error in the file, so indicate there's a problem.  NB: a
-			 * problem in a line will free the memory for all previous lines as
-			 * well!
+			 * problem in a line will free the memory for all previous lines
+			 * as well!
 			 */
 			MemoryContextReset(hbacxt);
 			new_parsed_lines = NIL;
@@ -1761,9 +1760,9 @@ load_hba(void)
 	}
 
 	/*
-	 * A valid HBA file must have at least one entry; else there's no way
-	 * to connect to the postmaster.  But only complain about this if we
-	 * didn't already have parsing errors.
+	 * A valid HBA file must have at least one entry; else there's no way to
+	 * connect to the postmaster.  But only complain about this if we didn't
+	 * already have parsing errors.
 	 */
 	if (ok && new_parsed_lines == NIL)
 	{

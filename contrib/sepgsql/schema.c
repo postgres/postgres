@@ -35,22 +35,22 @@ void
 sepgsql_schema_post_create(Oid namespaceId)
 {
 	Relation	rel;
-	ScanKeyData	skey;
-	SysScanDesc	sscan;
+	ScanKeyData skey;
+	SysScanDesc sscan;
 	HeapTuple	tuple;
 	char	   *tcontext;
 	char	   *ncontext;
 	char		audit_name[NAMEDATALEN + 20];
-	ObjectAddress		object;
-	Form_pg_namespace	nspForm;
+	ObjectAddress object;
+	Form_pg_namespace nspForm;
 
 	/*
 	 * Compute a default security label when we create a new schema object
 	 * under the working database.
 	 *
-	 * XXX - uncoming version of libselinux supports to take object
-	 * name to handle special treatment on default security label;
-	 * such as special label on "pg_temp" schema.
+	 * XXX - uncoming version of libselinux supports to take object name to
+	 * handle special treatment on default security label; such as special
+	 * label on "pg_temp" schema.
 	 */
 	rel = heap_open(NamespaceRelationId, AccessShareLock);
 
@@ -71,6 +71,7 @@ sepgsql_schema_post_create(Oid namespaceId)
 	ncontext = sepgsql_compute_create(sepgsql_get_client_label(),
 									  tcontext,
 									  SEPG_CLASS_DB_SCHEMA);
+
 	/*
 	 * check db_schema:{create}
 	 */
@@ -104,8 +105,8 @@ sepgsql_schema_post_create(Oid namespaceId)
 void
 sepgsql_schema_drop(Oid namespaceId)
 {
-	ObjectAddress	object;
-	char		   *audit_name;
+	ObjectAddress object;
+	char	   *audit_name;
 
 	/*
 	 * check db_schema:{drop} permission
@@ -116,7 +117,7 @@ sepgsql_schema_drop(Oid namespaceId)
 	audit_name = getObjectDescription(&object);
 
 	sepgsql_avc_check_perms(&object,
-                            SEPG_CLASS_DB_SCHEMA,
+							SEPG_CLASS_DB_SCHEMA,
 							SEPG_DB_SCHEMA__DROP,
 							audit_name,
 							true);
@@ -132,8 +133,8 @@ sepgsql_schema_drop(Oid namespaceId)
 void
 sepgsql_schema_relabel(Oid namespaceId, const char *seclabel)
 {
-	ObjectAddress	object;
-	char		   *audit_name;
+	ObjectAddress object;
+	char	   *audit_name;
 
 	object.classId = NamespaceRelationId;
 	object.objectId = namespaceId;
@@ -149,6 +150,7 @@ sepgsql_schema_relabel(Oid namespaceId, const char *seclabel)
 							SEPG_DB_SCHEMA__RELABELFROM,
 							audit_name,
 							true);
+
 	/*
 	 * check db_schema:{relabelto} permission
 	 */

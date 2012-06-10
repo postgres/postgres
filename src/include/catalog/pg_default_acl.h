@@ -32,6 +32,7 @@ CATALOG(pg_default_acl,826)
 	Oid			defaclrole;		/* OID of role owning this ACL */
 	Oid			defaclnamespace;	/* OID of namespace, or 0 for all */
 	char		defaclobjtype;	/* see DEFACLOBJ_xxx constants below */
+
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	aclitem		defaclacl[1];	/* permissions to add at CREATE time */
 #endif

@@ -466,7 +466,7 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 		else if (!ctx->hasSeek)
 			exit_horribly(modulename, "could not find block ID %d in archive -- "
 						  "possibly due to out-of-order restore request, "
-						  "which cannot be handled due to non-seekable input file\n",
+				  "which cannot be handled due to non-seekable input file\n",
 						  te->dumpId);
 		else	/* huh, the dataPos led us to EOF? */
 			exit_horribly(modulename, "could not find block ID %d in archive -- "
@@ -572,10 +572,10 @@ _skipData(ArchiveHandle *AH)
 		{
 			if (feof(AH->FH))
 				exit_horribly(modulename,
-							  "could not read from input file: end of file\n");
+							"could not read from input file: end of file\n");
 			else
 				exit_horribly(modulename,
-							  "could not read from input file: %s\n", strerror(errno));
+					"could not read from input file: %s\n", strerror(errno));
 		}
 
 		ctx->filePos += blkLen;
@@ -646,7 +646,7 @@ _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len)
 
 	if (res != len)
 		exit_horribly(modulename,
-					 "could not write to output file: %s\n", strerror(errno));
+					"could not write to output file: %s\n", strerror(errno));
 
 	ctx->filePos += res;
 	return res;

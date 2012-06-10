@@ -212,7 +212,7 @@ join_path_components(char *ret_path,
 	}
 	if (*tail)
 		snprintf(ret_path + strlen(ret_path), MAXPGPATH - strlen(ret_path),
-				/* only add slash if there is something already in head */
+		/* only add slash if there is something already in head */
 				 "%s%s", head[0] ? "/" : "", tail);
 }
 

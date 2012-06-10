@@ -1341,7 +1341,7 @@ pg_utf8_islegal(const unsigned char *source, int length)
  *
  * Not knowing anything about the properties of the encoding in use, we just
  * keep incrementing the last byte until we get a validly-encoded result,
- * or we run out of values to try.  We don't bother to try incrementing
+ * or we run out of values to try.	We don't bother to try incrementing
  * higher-order bytes, so there's no growth in runtime for wider characters.
  * (If we did try to do that, we'd need to consider the likelihood that 255
  * is not a valid final byte in the encoding.)
@@ -1371,7 +1371,7 @@ pg_generic_charinc(unsigned char *charptr, int len)
  * For a one-byte character less than 0x7F, we just increment the byte.
  *
  * For a multibyte character, every byte but the first must fall between 0x80
- * and 0xBF; and the first byte must be between 0xC0 and 0xF4.  We increment
+ * and 0xBF; and the first byte must be between 0xC0 and 0xF4.	We increment
  * the last byte that's not already at its maximum value.  If we can't find a
  * byte that's less than the maximum allowable value, we simply fail.  We also
  * need some special-case logic to skip regions used for surrogate pair
@@ -1530,7 +1530,7 @@ pg_eucjp_increment(unsigned char *charptr, int length)
 				return false;
 			}
 			else
-			{	/* ASCII, single byte */
+			{					/* ASCII, single byte */
 				if (c1 > 0x7e)
 					return false;
 				(*charptr)++;
@@ -1540,8 +1540,7 @@ pg_eucjp_increment(unsigned char *charptr, int length)
 
 	return true;
 }
-
-#endif /* !FRONTEND */
+#endif   /* !FRONTEND */
 
 
 /*
@@ -1675,8 +1674,8 @@ mbcharacter_incrementer
 pg_database_encoding_character_incrementer(void)
 {
 	/*
-	 * Eventually it might be best to add a field to pg_wchar_table[],
-	 * but for now we just use a switch.
+	 * Eventually it might be best to add a field to pg_wchar_table[], but for
+	 * now we just use a switch.
 	 */
 	switch (GetDatabaseEncoding())
 	{
@@ -1878,10 +1877,10 @@ report_untranslatable_char(int src_encoding, int dest_encoding,
 
 	ereport(ERROR,
 			(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
-	  errmsg("character with byte sequence %s in encoding \"%s\" has no equivalent in encoding \"%s\"",
-			 buf,
-			 pg_enc2name_tbl[src_encoding].name,
-			 pg_enc2name_tbl[dest_encoding].name)));
+			 errmsg("character with byte sequence %s in encoding \"%s\" has no equivalent in encoding \"%s\"",
+					buf,
+					pg_enc2name_tbl[src_encoding].name,
+					pg_enc2name_tbl[dest_encoding].name)));
 }
 
-#endif /* !FRONTEND */
+#endif   /* !FRONTEND */

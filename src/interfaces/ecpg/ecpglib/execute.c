@@ -1441,7 +1441,7 @@ ecpg_execute(struct statement * stmt)
 	ecpg_log("ecpg_execute on line %d: query: %s; with %d parameter(s) on connection %s\n", stmt->lineno, stmt->command, nParams, stmt->connection->name);
 	if (stmt->statement_type == ECPGst_execute)
 	{
-		results = PQexecPrepared(stmt->connection->connection, stmt->name, nParams, (const char *const*) paramValues, NULL, NULL, 0);
+		results = PQexecPrepared(stmt->connection->connection, stmt->name, nParams, (const char *const *) paramValues, NULL, NULL, 0);
 		ecpg_log("ecpg_execute on line %d: using PQexecPrepared for \"%s\"\n", stmt->lineno, stmt->command);
 	}
 	else
@@ -1453,7 +1453,7 @@ ecpg_execute(struct statement * stmt)
 		}
 		else
 		{
-			results = PQexecParams(stmt->connection->connection, stmt->command, nParams, NULL, (const char *const*) paramValues, NULL, NULL, 0);
+			results = PQexecParams(stmt->connection->connection, stmt->command, nParams, NULL, (const char *const *) paramValues, NULL, NULL, 0);
 			ecpg_log("ecpg_execute on line %d: using PQexecParams\n", stmt->lineno);
 		}
 	}

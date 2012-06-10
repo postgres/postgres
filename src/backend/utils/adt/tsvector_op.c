@@ -373,9 +373,9 @@ tsvector_concat(PG_FUNCTION_ARGS)
 	i2 = in2->size;
 
 	/*
-	 * Conservative estimate of space needed.  We might need all the data
-	 * in both inputs, and conceivably add a pad byte before position data
-	 * for each item where there was none before.
+	 * Conservative estimate of space needed.  We might need all the data in
+	 * both inputs, and conceivably add a pad byte before position data for
+	 * each item where there was none before.
 	 */
 	output_bytes = VARSIZE(in1) + VARSIZE(in2) + i1 + i2;
 

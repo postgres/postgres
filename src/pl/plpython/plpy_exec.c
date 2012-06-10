@@ -30,9 +30,9 @@ static void PLy_function_delete_args(PLyProcedure *proc);
 static void plpython_return_error_callback(void *arg);
 
 static PyObject *PLy_trigger_build_args(FunctionCallInfo fcinfo, PLyProcedure *proc,
-										HeapTuple *rv);
+					   HeapTuple *rv);
 static HeapTuple PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd,
-								  TriggerData *tdata, HeapTuple otup);
+				 TriggerData *tdata, HeapTuple otup);
 static void plpython_trigger_error_callback(void *arg);
 
 static PyObject *PLy_procedure_call(PLyProcedure *proc, char *kargs, PyObject *vargs);
@@ -180,7 +180,7 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 		}
 		else if (proc->result.is_rowtype >= 1)
 		{
-			TupleDesc desc;
+			TupleDesc	desc;
 
 			/* make sure it's not an unnamed record */
 			Assert((proc->result.out.d.typoid == RECORDOID &&

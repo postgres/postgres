@@ -332,6 +332,7 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 				j->rarg = pull_up_sublinks_jointree_recurse(root,
 															j->rarg,
 															&child_rels);
+
 				/*
 				 * Now recursively process the pulled-up quals.  Any inserted
 				 * joins can get stacked onto either j->larg or j->rarg,
@@ -357,6 +358,7 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 				j->rarg = pull_up_sublinks_jointree_recurse(root,
 															j->rarg,
 															&child_rels);
+
 				/*
 				 * Now recursively process the pulled-up quals.  Any inserted
 				 * joins can get stacked onto either j->larg or j->rarg,
@@ -384,6 +386,7 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 				j->rarg = pull_up_sublinks_jointree_recurse(root,
 															j->rarg,
 															&child_rels);
+
 				/*
 				 * Now recursively process the pulled-up quals.  Any inserted
 				 * joins can get stacked onto either j->larg or j->rarg,
@@ -409,6 +412,7 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 				j->rarg = pull_up_sublinks_jointree_recurse(root,
 															j->rarg,
 															&child_rels);
+
 				/*
 				 * Now recursively process the pulled-up quals.  Any inserted
 				 * joins can get stacked onto either j->larg or j->rarg,
@@ -439,7 +443,7 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 			if (sublink->subLinkType == EXISTS_SUBLINK)
 			{
 				if ((j = convert_EXISTS_sublink_to_join(root, sublink, true,
-														available_rels1)) != NULL)
+												   available_rels1)) != NULL)
 				{
 					/* Yes; insert the new join node into the join tree */
 					j->larg = *jtlink1;
@@ -448,11 +452,12 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 					j->rarg = pull_up_sublinks_jointree_recurse(root,
 																j->rarg,
 																&child_rels);
+
 					/*
 					 * Now recursively process the pulled-up quals.  Because
-					 * we are underneath a NOT, we can't pull up sublinks
-					 * that reference the left-hand stuff, but it's still
-					 * okay to pull up sublinks referencing j->rarg.
+					 * we are underneath a NOT, we can't pull up sublinks that
+					 * reference the left-hand stuff, but it's still okay to
+					 * pull up sublinks referencing j->rarg.
 					 */
 					j->quals = pull_up_sublinks_qual_recurse(root,
 															 j->quals,
@@ -464,7 +469,7 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 				}
 				if (available_rels2 != NULL &&
 					(j = convert_EXISTS_sublink_to_join(root, sublink, true,
-														available_rels2)) != NULL)
+												   available_rels2)) != NULL)
 				{
 					/* Yes; insert the new join node into the join tree */
 					j->larg = *jtlink2;
@@ -473,11 +478,12 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 					j->rarg = pull_up_sublinks_jointree_recurse(root,
 																j->rarg,
 																&child_rels);
+
 					/*
 					 * Now recursively process the pulled-up quals.  Because
-					 * we are underneath a NOT, we can't pull up sublinks
-					 * that reference the left-hand stuff, but it's still
-					 * okay to pull up sublinks referencing j->rarg.
+					 * we are underneath a NOT, we can't pull up sublinks that
+					 * reference the left-hand stuff, but it's still okay to
+					 * pull up sublinks referencing j->rarg.
 					 */
 					j->quals = pull_up_sublinks_qual_recurse(root,
 															 j->quals,

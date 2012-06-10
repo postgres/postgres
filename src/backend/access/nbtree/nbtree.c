@@ -433,7 +433,7 @@ btbeginscan(PG_FUNCTION_ARGS)
 
 	/*
 	 * We don't know yet whether the scan will be index-only, so we do not
-	 * allocate the tuple workspace arrays until btrescan.  However, we set up
+	 * allocate the tuple workspace arrays until btrescan.	However, we set up
 	 * scan->xs_itupdesc whether we'll need it or not, since that's so cheap.
 	 */
 	so->currTuples = so->markTuples = NULL;
@@ -478,7 +478,7 @@ btrescan(PG_FUNCTION_ARGS)
 
 	/*
 	 * Allocate tuple workspace arrays, if needed for an index-only scan and
-	 * not already done in a previous rescan call.  To save on palloc
+	 * not already done in a previous rescan call.	To save on palloc
 	 * overhead, both workspaces are allocated as one palloc block; only this
 	 * function and btendscan know that.
 	 *

@@ -121,7 +121,7 @@ BackgroundWriterMain(void)
 	 */
 	pqsignal(SIGHUP, BgSigHupHandler);	/* set flag to read config file */
 	pqsignal(SIGINT, SIG_IGN);
-	pqsignal(SIGTERM, ReqShutdownHandler); 	/* shutdown */
+	pqsignal(SIGTERM, ReqShutdownHandler);		/* shutdown */
 	pqsignal(SIGQUIT, bg_quickdie);		/* hard crash time */
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
@@ -244,8 +244,8 @@ BackgroundWriterMain(void)
 	 */
 	for (;;)
 	{
-		bool	can_hibernate;
-		int		rc;
+		bool		can_hibernate;
+		int			rc;
 
 		/* Clear any already-pending wakeups */
 		ResetLatch(&MyProc->procLatch);
@@ -297,7 +297,7 @@ BackgroundWriterMain(void)
 		 */
 		rc = WaitLatch(&MyProc->procLatch,
 					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-					   BgWriterDelay /* ms */);
+					   BgWriterDelay /* ms */ );
 
 		/*
 		 * If no latch event and BgBufferSync says nothing's happening, extend
@@ -314,7 +314,7 @@ BackgroundWriterMain(void)
 		 * and the time we call StrategyNotifyBgWriter.  While it's not
 		 * critical that we not hibernate anyway, we try to reduce the odds of
 		 * that by only hibernating when BgBufferSync says nothing's happening
-		 * for two consecutive cycles.  Also, we mitigate any possible
+		 * for two consecutive cycles.	Also, we mitigate any possible
 		 * consequences of a missed wakeup by not hibernating forever.
 		 */
 		if (rc == WL_TIMEOUT && can_hibernate && prev_hibernate)

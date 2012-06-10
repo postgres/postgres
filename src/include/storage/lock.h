@@ -428,7 +428,7 @@ typedef struct LockInstanceData
 	LOCKMASK	holdMask;		/* locks held by this PGPROC */
 	LOCKMODE	waitLockMode;	/* lock awaited by this PGPROC, if any */
 	BackendId	backend;		/* backend ID of this PGPROC */
-	LocalTransactionId	lxid;	/* local transaction ID of this PGPROC */
+	LocalTransactionId lxid;	/* local transaction ID of this PGPROC */
 	int			pid;			/* pid of this PGPROC */
 	bool		fastpath;		/* taken via fastpath? */
 } LockInstanceData;
@@ -436,7 +436,7 @@ typedef struct LockInstanceData
 typedef struct LockData
 {
 	int			nelements;		/* The length of the array */
-	LockInstanceData   *locks;
+	LockInstanceData *locks;
 } LockData;
 
 

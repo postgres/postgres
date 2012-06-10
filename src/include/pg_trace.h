@@ -12,6 +12,6 @@
 #ifndef PG_TRACE_H
 #define PG_TRACE_H
 
-#include "utils/probes.h"	/* pgrminclude ignore */
+#include "utils/probes.h"		/* pgrminclude ignore */
 
 #endif   /* PG_TRACE_H */

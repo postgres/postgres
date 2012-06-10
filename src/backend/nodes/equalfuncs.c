@@ -2360,8 +2360,8 @@ _equalXmlSerialize(const XmlSerialize *a, const XmlSerialize *b)
 static bool
 _equalList(const List *a, const List *b)
 {
-	const ListCell   *item_a;
-	const ListCell   *item_b;
+	const ListCell *item_a;
+	const ListCell *item_b;
 
 	/*
 	 * Try to reject by simple scalar checks before grovelling through all the

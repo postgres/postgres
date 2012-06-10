@@ -26,7 +26,7 @@
  * In the worst case, a inner tuple in a text suffix tree could have as many
  * as 256 nodes (one for each possible byte value).  Each node can take 16
  * bytes on MAXALIGN=8 machines.  The inner tuple must fit on an index page
- * of size BLCKSZ.  Rather than assuming we know the exact amount of overhead
+ * of size BLCKSZ.	Rather than assuming we know the exact amount of overhead
  * imposed by page headers, tuple headers, etc, we leave 100 bytes for that
  * (the actual overhead should be no more than 56 bytes at this writing, so
  * there is slop in this number).  The upshot is that the maximum safe prefix
@@ -209,9 +209,9 @@ spg_text_choose(PG_FUNCTION_ARGS)
 	{
 		/*
 		 * Descend to existing node.  (If in->allTheSame, the core code will
-		 * ignore our nodeN specification here, but that's OK.  We still
-		 * have to provide the correct levelAdd and restDatum values, and
-		 * those are the same regardless of which node gets chosen by core.)
+		 * ignore our nodeN specification here, but that's OK.  We still have
+		 * to provide the correct levelAdd and restDatum values, and those are
+		 * the same regardless of which node gets chosen by core.)
 		 */
 		out->resultType = spgMatchNode;
 		out->result.matchNode.nodeN = i;
@@ -227,10 +227,10 @@ spg_text_choose(PG_FUNCTION_ARGS)
 	else if (in->allTheSame)
 	{
 		/*
-		 * Can't use AddNode action, so split the tuple.  The upper tuple
-		 * has the same prefix as before and uses an empty node label for
-		 * the lower tuple.  The lower tuple has no prefix and the same
-		 * node labels as the original tuple.
+		 * Can't use AddNode action, so split the tuple.  The upper tuple has
+		 * the same prefix as before and uses an empty node label for the
+		 * lower tuple.  The lower tuple has no prefix and the same node
+		 * labels as the original tuple.
 		 */
 		out->resultType = spgSplitTuple;
 		out->result.splitTuple.prefixHasPrefix = in->hasPrefix;
@@ -315,13 +315,13 @@ spg_text_picksplit(PG_FUNCTION_ARGS)
 		if (commonLen < VARSIZE_ANY_EXHDR(texti))
 			nodes[i].c = *(uint8 *) (VARDATA_ANY(texti) + commonLen);
 		else
-			nodes[i].c = '\0';			/* use \0 if string is all common */
+			nodes[i].c = '\0';	/* use \0 if string is all common */
 		nodes[i].i = i;
 		nodes[i].d = in->datums[i];
 	}
 
 	/*
-	 * Sort by label bytes so that we can group the values into nodes.  This
+	 * Sort by label bytes so that we can group the values into nodes.	This
 	 * also ensures that the nodes are ordered by label value, allowing the
 	 * use of binary search in searchChar.
 	 */
@@ -371,7 +371,7 @@ spg_text_inner_consistent(PG_FUNCTION_ARGS)
 
 	/*
 	 * Reconstruct values represented at this tuple, including parent data,
-	 * prefix of this tuple if any, and the node label if any.  in->level
+	 * prefix of this tuple if any, and the node label if any.	in->level
 	 * should be the length of the previously reconstructed value, and the
 	 * number of bytes added here is prefixSize or prefixSize + 1.
 	 *
@@ -381,7 +381,7 @@ spg_text_inner_consistent(PG_FUNCTION_ARGS)
 	 * long-format reconstructed values.
 	 */
 	Assert(in->level == 0 ? DatumGetPointer(in->reconstructedValue) == NULL :
-		   VARSIZE_ANY_EXHDR(DatumGetPointer(in->reconstructedValue)) == in->level);
+	VARSIZE_ANY_EXHDR(DatumGetPointer(in->reconstructedValue)) == in->level);
 
 	maxReconstrLen = in->level + 1;
 	if (in->hasPrefix)
@@ -530,7 +530,7 @@ spg_text_leaf_consistent(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		text   *fullText = palloc(VARHDRSZ + fullLen);
+		text	   *fullText = palloc(VARHDRSZ + fullLen);
 
 		SET_VARSIZE(fullText, VARHDRSZ + fullLen);
 		fullValue = VARDATA(fullText);

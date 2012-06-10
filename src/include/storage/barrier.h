@@ -15,7 +15,7 @@
 
 #include "storage/s_lock.h"
 
-extern slock_t	dummy_spinlock;
+extern slock_t dummy_spinlock;
 
 /*
  * A compiler barrier need not (and preferably should not) emit any actual
@@ -30,10 +30,10 @@ extern slock_t	dummy_spinlock;
  * loads and stores are totally ordered (which is not the case on most
  * architectures) this requires issuing some sort of memory fencing
  * instruction.
- * 
+ *
  * A read barrier must act as a compiler barrier, and in addition must
  * guarantee that any loads issued prior to the barrier are completed before
- * any loads issued after the barrier.  Similarly, a write barrier acts
+ * any loads issued after the barrier.	Similarly, a write barrier acts
  * as a compiler barrier, and also orders stores.  Read and write barriers
  * are thus weaker than a full memory barrier, but stronger than a compiler
  * barrier.  In practice, on machines with strong memory ordering, read and
@@ -48,7 +48,6 @@ extern slock_t	dummy_spinlock;
 /*
  * Fall through to the spinlock-based implementation.
  */
-
 #elif defined(__INTEL_COMPILER)
 
 /*
@@ -56,7 +55,6 @@ extern slock_t	dummy_spinlock;
  */
 #define pg_memory_barrier()		_mm_mfence()
 #define pg_compiler_barrier()	__memory_barrier()
-
 #elif defined(__GNUC__)
 
 /* This works on any architecture, since it's only talking to GCC itself. */
@@ -75,7 +73,6 @@ extern slock_t	dummy_spinlock;
 	__asm__ __volatile__ ("lock; addl $0,0(%%esp)" : : : "memory")
 #define pg_read_barrier()		pg_compiler_barrier()
 #define pg_write_barrier()		pg_compiler_barrier()
-
 #elif defined(__x86_64__)		/* 64 bit x86 */
 
 /*
@@ -90,7 +87,6 @@ extern slock_t	dummy_spinlock;
 	__asm__ __volatile__ ("lock; addl $0,0(%%rsp)" : : : "memory")
 #define pg_read_barrier()		pg_compiler_barrier()
 #define pg_write_barrier()		pg_compiler_barrier()
-
 #elif defined(__ia64__) || defined(__ia64)
 
 /*
@@ -98,7 +94,6 @@ extern slock_t	dummy_spinlock;
  * fence.
  */
 #define pg_memory_barrier()		__asm__ __volatile__ ("mf" : : : "memory")
-
 #elif defined(__ppc__) || defined(__powerpc__) || defined(__ppc64__) || defined(__powerpc64__)
 
 /*
@@ -109,8 +104,7 @@ extern slock_t	dummy_spinlock;
 #define pg_memory_barrier()		__asm__ __volatile__ ("sync" : : : "memory")
 #define pg_read_barrier()		__asm__ __volatile__ ("lwsync" : : : "memory")
 #define pg_write_barrier()		__asm__ __volatile__ ("lwsync" : : : "memory")
-
-#elif defined(__alpha) || defined(__alpha__)      /* Alpha */
+#elif defined(__alpha) || defined(__alpha__)	/* Alpha */
 
 /*
  * Unlike all other known architectures, Alpha allows dependent reads to be
@@ -120,7 +114,6 @@ extern slock_t	dummy_spinlock;
 #define pg_memory_barrier()		__asm__ __volatile__ ("mb" : : : "memory")
 #define pg_read_barrier()		__asm__ __volatile__ ("rmb" : : : "memory")
 #define pg_write_barrier()		__asm__ __volatile__ ("wmb" : : : "memory")
-
 #elif __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1)
 
 /*
@@ -129,14 +122,11 @@ extern slock_t	dummy_spinlock;
  * own definitions where possible, and use this only as a fallback.
  */
 #define pg_memory_barrier()		__sync_synchronize()
-
 #endif
-
 #elif defined(__ia64__) || defined(__ia64)
 
 #define pg_compiler_barrier()	_Asm_sched_fence()
 #define pg_memory_barrier()		_Asm_mf()
-
 #elif defined(WIN32_ONLY_COMPILER)
 
 /* Should work on both MSVC and Borland. */
@@ -144,7 +134,6 @@ extern slock_t	dummy_spinlock;
 #pragma intrinsic(_ReadWriteBarrier)
 #define pg_compiler_barrier()	_ReadWriteBarrier()
 #define pg_memory_barrier()		MemoryBarrier()
-
 #endif
 
 /*

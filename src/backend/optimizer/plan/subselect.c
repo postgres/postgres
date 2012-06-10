@@ -1822,8 +1822,8 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
 	}
 
 	/*
-	 * Don't recurse into the arguments of an outer PHV or aggregate here.
-	 * Any SubLinks in the arguments have to be dealt with at the outer query
+	 * Don't recurse into the arguments of an outer PHV or aggregate here. Any
+	 * SubLinks in the arguments have to be dealt with at the outer query
 	 * level; they'll be handled when build_subplan collects the PHV or Aggref
 	 * into the arguments to be passed down to the current subplan.
 	 */

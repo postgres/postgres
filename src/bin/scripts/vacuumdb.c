@@ -135,10 +135,10 @@ main(int argc, char *argv[])
 		}
 	}
 
-	
-	/* 
-	 * Non-option argument specifies database name
-	 * as long as it wasn't already specified with -d / --dbname
+
+	/*
+	 * Non-option argument specifies database name as long as it wasn't
+	 * already specified with -d / --dbname
 	 */
 	if (optind < argc && dbname == NULL)
 	{
@@ -312,7 +312,7 @@ vacuum_all_databases(bool full, bool verbose, bool and_analyze, bool analyze_onl
 	int			i;
 
 	conn = connectMaintenanceDatabase(maintenance_db, host, port,
-						   username, prompt_password, progname);
+									  username, prompt_password, progname);
 	result = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;", progname, echo);
 	PQfinish(conn);
 

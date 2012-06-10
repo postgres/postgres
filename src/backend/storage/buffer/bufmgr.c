@@ -1325,7 +1325,7 @@ BufferSync(int flags)
  * This is called periodically by the background writer process.
  *
  * Returns true if it's appropriate for the bgwriter process to go into
- * low-power hibernation mode.  (This happens if the strategy clock sweep
+ * low-power hibernation mode.	(This happens if the strategy clock sweep
  * has been "lapped" and no buffer allocations have occurred recently,
  * or if the bgwriter has been effectively disabled by setting
  * bgwriter_lru_maxpages to 0.)
@@ -1510,8 +1510,8 @@ BgBufferSync(void)
 	/*
 	 * If recent_alloc remains at zero for many cycles, smoothed_alloc will
 	 * eventually underflow to zero, and the underflows produce annoying
-	 * kernel warnings on some platforms.  Once upcoming_alloc_est has gone
-	 * to zero, there's no point in tracking smaller and smaller values of
+	 * kernel warnings on some platforms.  Once upcoming_alloc_est has gone to
+	 * zero, there's no point in tracking smaller and smaller values of
 	 * smoothed_alloc, so just reset it to exactly zero to avoid this
 	 * syndrome.  It will pop back up as soon as recent_alloc increases.
 	 */
@@ -2006,11 +2006,11 @@ BufferIsPermanent(Buffer buffer)
 	Assert(BufferIsPinned(buffer));
 
 	/*
-	 * BM_PERMANENT can't be changed while we hold a pin on the buffer, so
-	 * we need not bother with the buffer header spinlock.  Even if someone
-	 * else changes the buffer header flags while we're doing this, we assume
-	 * that changing an aligned 2-byte BufFlags value is atomic, so we'll read
-	 * the old value or the new value, but not random garbage.
+	 * BM_PERMANENT can't be changed while we hold a pin on the buffer, so we
+	 * need not bother with the buffer header spinlock.  Even if someone else
+	 * changes the buffer header flags while we're doing this, we assume that
+	 * changing an aligned 2-byte BufFlags value is atomic, so we'll read the
+	 * old value or the new value, but not random garbage.
 	 */
 	bufHdr = &BufferDescriptors[buffer - 1];
 	return (bufHdr->flags & BM_PERMANENT) != 0;
@@ -2461,10 +2461,10 @@ SetBufferCommitInfoNeedsSave(Buffer buffer)
 	 * tuples.	So, be as quick as we can if the buffer is already dirty.  We
 	 * do this by not acquiring spinlock if it looks like the status bits are
 	 * already.  Since we make this test unlocked, there's a chance we might
-	 * fail to notice that the flags have just been cleared, and failed to reset
-	 * them, due to memory-ordering issues.  But since this function is only
-	 * intended to be used in cases where failing to write out the data would
-	 * be harmless anyway, it doesn't really matter.
+	 * fail to notice that the flags have just been cleared, and failed to
+	 * reset them, due to memory-ordering issues.  But since this function is
+	 * only intended to be used in cases where failing to write out the data
+	 * would be harmless anyway, it doesn't really matter.
 	 */
 	if ((bufHdr->flags & (BM_DIRTY | BM_JUST_DIRTIED)) !=
 		(BM_DIRTY | BM_JUST_DIRTIED))

@@ -591,7 +591,7 @@ process_psqlrc(char *argv0)
 	char		rc_file[MAXPGPATH];
 	char		my_exec_path[MAXPGPATH];
 	char		etc_path[MAXPGPATH];
-	char       *envrc;
+	char	   *envrc;
 
 	find_my_exec(argv0, my_exec_path);
 	get_etc_path(my_exec_path, etc_path);
@@ -600,7 +600,7 @@ process_psqlrc(char *argv0)
 	process_psqlrc_file(rc_file);
 
 	envrc = getenv("PSQLRC");
-	
+
 	if (envrc != NULL && strlen(envrc) > 0)
 	{
 		expand_tilde(&envrc);
@@ -618,7 +618,8 @@ process_psqlrc(char *argv0)
 static void
 process_psqlrc_file(char *filename)
 {
-	char	   *psqlrc_minor, *psqlrc_major;
+	char	   *psqlrc_minor,
+			   *psqlrc_major;
 
 #if defined(WIN32) && (!defined(__MINGW32__))
 #define R_OK 4

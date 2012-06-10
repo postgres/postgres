@@ -903,12 +903,12 @@ SlruSelectLRUPage(SlruCtl ctl, int pageno)
 	{
 		int			slotno;
 		int			cur_count;
-		int			bestvalidslot = 0;				/* keep compiler quiet */
+		int			bestvalidslot = 0;	/* keep compiler quiet */
 		int			best_valid_delta = -1;
-		int			best_valid_page_number = 0;		/* keep compiler quiet */
-		int			bestinvalidslot = 0;			/* keep compiler quiet */
+		int			best_valid_page_number = 0; /* keep compiler quiet */
+		int			bestinvalidslot = 0;		/* keep compiler quiet */
 		int			best_invalid_delta = -1;
-		int			best_invalid_page_number = 0;	/* keep compiler quiet */
+		int			best_invalid_page_number = 0;		/* keep compiler quiet */
 
 		/* See if page already has a buffer assigned */
 		for (slotno = 0; slotno < shared->num_slots; slotno++)
@@ -920,15 +920,15 @@ SlruSelectLRUPage(SlruCtl ctl, int pageno)
 
 		/*
 		 * If we find any EMPTY slot, just select that one. Else choose a
-		 * victim page to replace.  We normally take the least recently used
+		 * victim page to replace.	We normally take the least recently used
 		 * valid page, but we will never take the slot containing
-		 * latest_page_number, even if it appears least recently used.  We
+		 * latest_page_number, even if it appears least recently used.	We
 		 * will select a slot that is already I/O busy only if there is no
 		 * other choice: a read-busy slot will not be least recently used once
 		 * the read finishes, and waiting for an I/O on a write-busy slot is
 		 * inferior to just picking some other slot.  Testing shows the slot
-		 * we pick instead will often be clean, allowing us to begin a read
-		 * at once.
+		 * we pick instead will often be clean, allowing us to begin a read at
+		 * once.
 		 *
 		 * Normally the page_lru_count values will all be different and so
 		 * there will be a well-defined LRU page.  But since we allow
@@ -997,10 +997,10 @@ SlruSelectLRUPage(SlruCtl ctl, int pageno)
 
 		/*
 		 * If all pages (except possibly the latest one) are I/O busy, we'll
-		 * have to wait for an I/O to complete and then retry.  In that unhappy
-		 * case, we choose to wait for the I/O on the least recently used slot,
-		 * on the assumption that it was likely initiated first of all the I/Os
-		 * in progress and may therefore finish first.
+		 * have to wait for an I/O to complete and then retry.	In that
+		 * unhappy case, we choose to wait for the I/O on the least recently
+		 * used slot, on the assumption that it was likely initiated first of
+		 * all the I/Os in progress and may therefore finish first.
 		 */
 		if (best_valid_delta < 0)
 		{
@@ -1168,20 +1168,20 @@ restart:;
 
 /*
  * SlruScanDirectory callback
- * 		This callback reports true if there's any segment prior to the one
- * 		containing the page passed as "data".
+ *		This callback reports true if there's any segment prior to the one
+ *		containing the page passed as "data".
  */
 bool
 SlruScanDirCbReportPresence(SlruCtl ctl, char *filename, int segpage, void *data)
 {
-	int		cutoffPage = *(int *) data;
+	int			cutoffPage = *(int *) data;
 
 	cutoffPage -= cutoffPage % SLRU_PAGES_PER_SEGMENT;
 
 	if (ctl->PagePrecedes(segpage, cutoffPage))
-		return true;	/* found one; don't iterate any more */
+		return true;			/* found one; don't iterate any more */
 
-	return false;	/* keep going */
+	return false;				/* keep going */
 }
 
 /*
@@ -1191,8 +1191,8 @@ SlruScanDirCbReportPresence(SlruCtl ctl, char *filename, int segpage, void *data
 static bool
 SlruScanDirCbDeleteCutoff(SlruCtl ctl, char *filename, int segpage, void *data)
 {
-	char	path[MAXPGPATH];
-	int		cutoffPage = *(int *) data;
+	char		path[MAXPGPATH];
+	int			cutoffPage = *(int *) data;
 
 	if (ctl->PagePrecedes(segpage, cutoffPage))
 	{
@@ -1202,7 +1202,7 @@ SlruScanDirCbDeleteCutoff(SlruCtl ctl, char *filename, int segpage, void *data)
 		unlink(path);
 	}
 
-	return false;	/* keep going */
+	return false;				/* keep going */
 }
 
 /*
@@ -1212,14 +1212,14 @@ SlruScanDirCbDeleteCutoff(SlruCtl ctl, char *filename, int segpage, void *data)
 bool
 SlruScanDirCbDeleteAll(SlruCtl ctl, char *filename, int segpage, void *data)
 {
-	char	path[MAXPGPATH];
+	char		path[MAXPGPATH];
 
 	snprintf(path, MAXPGPATH, "%s/%s", ctl->Dir, filename);
 	ereport(DEBUG2,
 			(errmsg("removing file \"%s\"", path)));
 	unlink(path);
 
-	return false;	/* keep going */
+	return false;				/* keep going */
 }
 
 /*

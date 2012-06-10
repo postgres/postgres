@@ -1,7 +1,7 @@
 /* -------------------------------------------------------------------------
  *
  * pg_shseclabel.h
- *    definition of the system "security label" relation (pg_shseclabel)
+ *	  definition of the system "security label" relation (pg_shseclabel)
  *
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -22,11 +22,12 @@
 
 CATALOG(pg_shseclabel,3592) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
 {
-	Oid			objoid;		/* OID of the shared object itself */
-	Oid			classoid;	/* OID of table containing the shared object */
-#ifdef CATALOG_VARLEN		/* variable-length fields start here */
-	text		provider;	/* name of label provider */
-	text		label;		/* security label of the object */
+	Oid			objoid;			/* OID of the shared object itself */
+	Oid			classoid;		/* OID of table containing the shared object */
+
+#ifdef CATALOG_VARLEN			/* variable-length fields start here */
+	text		provider;		/* name of label provider */
+	text		label;			/* security label of the object */
 #endif
 } FormData_pg_shseclabel;
 
@@ -40,4 +41,4 @@ CATALOG(pg_shseclabel,3592) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
 #define Anum_pg_shseclabel_provider		3
 #define Anum_pg_shseclabel_label		4
 
-#endif	/* PG_SHSECLABEL_H */
+#endif   /* PG_SHSECLABEL_H */

@@ -19,7 +19,7 @@
 #include <link.h>
 #include <dlfcn.h>
 
-#include "utils/dynamic_loader.h"	/* pgrminclude ignore */
+#include "utils/dynamic_loader.h"		/* pgrminclude ignore */
 
 /*
  * Dynamic Loader on NetBSD 1.0.

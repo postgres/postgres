@@ -82,8 +82,8 @@ CheckRelationOwnership(RangeVar *rel, bool noCatalogs)
 	 * XXX: This is unsafe in the presence of concurrent DDL, since it is
 	 * called before acquiring any lock on the target relation.  However,
 	 * locking the target relation (especially using something like
-	 * AccessExclusiveLock) before verifying that the user has permissions
-	 * is not appealing either.
+	 * AccessExclusiveLock) before verifying that the user has permissions is
+	 * not appealing either.
 	 */
 	relOid = RangeVarGetRelid(rel, NoLock, false);
 
@@ -634,7 +634,7 @@ standard_ProcessUtility(Node *parsetree,
 				case OBJECT_INDEX:
 					if (((DropStmt *) parsetree)->concurrent)
 						PreventTransactionChain(isTopLevel,
-											"DROP INDEX CONCURRENTLY");
+												"DROP INDEX CONCURRENTLY");
 					/* fall through */
 
 				case OBJECT_TABLE:
@@ -712,7 +712,7 @@ standard_ProcessUtility(Node *parsetree,
 				LOCKMODE	lockmode;
 
 				/*
-				 * Figure out lock mode, and acquire lock.  This also does
+				 * Figure out lock mode, and acquire lock.	This also does
 				 * basic permissions checks, so that we won't wait for a lock
 				 * on (for example) a relation on which we have no
 				 * permissions.
@@ -753,8 +753,8 @@ standard_ProcessUtility(Node *parsetree,
 				}
 				else
 					ereport(NOTICE,
-						(errmsg("relation \"%s\" does not exist, skipping",
-							atstmt->relation->relname)));
+						  (errmsg("relation \"%s\" does not exist, skipping",
+								  atstmt->relation->relname)));
 			}
 			break;
 

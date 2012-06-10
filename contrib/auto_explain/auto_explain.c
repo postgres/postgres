@@ -23,7 +23,7 @@ static int	auto_explain_log_min_duration = -1; /* msec or -1 */
 static bool auto_explain_log_analyze = false;
 static bool auto_explain_log_verbose = false;
 static bool auto_explain_log_buffers = false;
-static bool auto_explain_log_timing  = false;
+static bool auto_explain_log_timing = false;
 static int	auto_explain_log_format = EXPLAIN_FORMAT_TEXT;
 static bool auto_explain_log_nested_statements = false;
 

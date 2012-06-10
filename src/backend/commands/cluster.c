@@ -594,10 +594,10 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace)
 	OldHeapDesc = RelationGetDescr(OldHeap);
 
 	/*
-	 * Note that the NewHeap will not
-	 * receive any of the defaults or constraints associated with the OldHeap;
-	 * we don't need 'em, and there's no reason to spend cycles inserting them
-	 * into the catalogs only to delete them.
+	 * Note that the NewHeap will not receive any of the defaults or
+	 * constraints associated with the OldHeap; we don't need 'em, and there's
+	 * no reason to spend cycles inserting them into the catalogs only to
+	 * delete them.
 	 */
 
 	/*

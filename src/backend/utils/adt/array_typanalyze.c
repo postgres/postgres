@@ -42,9 +42,9 @@ typedef struct
 	char		typalign;
 
 	/*
-	 * Lookup data for element type's comparison and hash functions (these
-	 * are in the type's typcache entry, which we expect to remain valid
-	 * over the lifespan of the ANALYZE run)
+	 * Lookup data for element type's comparison and hash functions (these are
+	 * in the type's typcache entry, which we expect to remain valid over the
+	 * lifespan of the ANALYZE run)
 	 */
 	FmgrInfo   *cmp;
 	FmgrInfo   *hash;
@@ -149,8 +149,8 @@ array_typanalyze(PG_FUNCTION_ARGS)
 	stats->extra_data = extra_data;
 
 	/*
-	 * Note we leave stats->minrows set as std_typanalyze set it.  Should
-	 * it be increased for array analysis purposes?
+	 * Note we leave stats->minrows set as std_typanalyze set it.  Should it
+	 * be increased for array analysis purposes?
 	 */
 
 	PG_RETURN_BOOL(true);
@@ -160,13 +160,13 @@ array_typanalyze(PG_FUNCTION_ARGS)
  * compute_array_stats() -- compute statistics for a array column
  *
  * This function computes statistics useful for determining selectivity of
- * the array operators <@, &&, and @>.  It is invoked by ANALYZE via the
+ * the array operators <@, &&, and @>.	It is invoked by ANALYZE via the
  * compute_stats hook after sample rows have been collected.
  *
  * We also invoke the standard compute_stats function, which will compute
  * "scalar" statistics relevant to the btree-style array comparison operators.
  * However, exact duplicates of an entire array may be rare despite many
- * arrays sharing individual elements.  This especially afflicts long arrays,
+ * arrays sharing individual elements.	This especially afflicts long arrays,
  * which are also liable to lack all scalar statistics due to the low
  * WIDTH_THRESHOLD used in analyze.c.  So, in addition to the standard stats,
  * we find the most common array elements and compute a histogram of distinct
@@ -201,7 +201,7 @@ array_typanalyze(PG_FUNCTION_ARGS)
  * In the absence of a principled basis for other particular values, we
  * follow ts_typanalyze() and use parameters s = 0.07/K, epsilon = s/10.
  * But we leave out the correction for stopwords, which do not apply to
- * arrays.  These parameters give bucket width w = K/0.007 and maximum
+ * arrays.	These parameters give bucket width w = K/0.007 and maximum
  * expected hashtable size of about 1000 * K.
  *
  * Elements may repeat within an array.  Since duplicates do not change the
@@ -242,8 +242,8 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 
 	/*
 	 * Invoke analyze.c's standard analysis function to create scalar-style
-	 * stats for the column.  It will expect its own extra_data pointer,
-	 * so temporarily install that.
+	 * stats for the column.  It will expect its own extra_data pointer, so
+	 * temporarily install that.
 	 */
 	stats->extra_data = extra_data->std_extra_data;
 	(*extra_data->std_compute_stats) (stats, fetchfunc, samplerows, totalrows);
@@ -373,8 +373,8 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 				/* The element value is already on the tracking list */
 
 				/*
-				 * The operators we assist ignore duplicate array elements,
-				 * so count a given distinct element only once per array.
+				 * The operators we assist ignore duplicate array elements, so
+				 * count a given distinct element only once per array.
 				 */
 				if (item->last_container == array_no)
 					continue;
@@ -387,11 +387,11 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 				/* Initialize new tracking list element */
 
 				/*
-				 * If element type is pass-by-reference, we must copy it
-				 * into palloc'd space, so that we can release the array
-				 * below.  (We do this so that the space needed for element
-				 * values is limited by the size of the hashtable; if we
-				 * kept all the array values around, it could be much more.)
+				 * If element type is pass-by-reference, we must copy it into
+				 * palloc'd space, so that we can release the array below.
+				 * (We do this so that the space needed for element values is
+				 * limited by the size of the hashtable; if we kept all the
+				 * array values around, it could be much more.)
 				 */
 				item->key = datumCopy(elem_value,
 									  extra_data->typbyval,
@@ -623,7 +623,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 			 * (compare the histogram-making loop in compute_scalar_stats()).
 			 * But instead of that we have the sorted_count_items[] array,
 			 * which holds unique DEC values with their frequencies (that is,
-			 * a run-length-compressed version of the full array).  So we
+			 * a run-length-compressed version of the full array).	So we
 			 * control advancing through sorted_count_items[] with the
 			 * variable "frac", which is defined as (x - y) * (num_hist - 1),
 			 * where x is the index in the notional DECs array corresponding
@@ -655,7 +655,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 					frac += (int64) sorted_count_items[j]->frequency * (num_hist - 1);
 				}
 				hist[i] = sorted_count_items[j]->count;
-				frac -= delta;		/* update y for upcoming i increment */
+				frac -= delta;	/* update y for upcoming i increment */
 			}
 			Assert(j == count_items_count - 1);
 
@@ -775,8 +775,8 @@ trackitem_compare_element(const void *e1, const void *e2)
 static int
 countitem_compare_count(const void *e1, const void *e2)
 {
-	const DECountItem * const *t1 = (const DECountItem * const *) e1;
-	const DECountItem * const *t2 = (const DECountItem * const *) e2;
+	const DECountItem *const * t1 = (const DECountItem *const *) e1;
+	const DECountItem *const * t2 = (const DECountItem *const *) e2;
 
 	if ((*t1)->count < (*t2)->count)
 		return -1;

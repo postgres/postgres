@@ -21,7 +21,7 @@ static void help(const char *progname);
 int
 main(int argc, char *argv[])
 {
-	static int		if_exists = 0;
+	static int	if_exists = 0;
 
 	static struct option long_options[] = {
 		{"host", required_argument, NULL, 'h'},
@@ -129,7 +129,7 @@ main(int argc, char *argv[])
 		maintenance_db = "template1";
 
 	conn = connectMaintenanceDatabase(maintenance_db,
-						   host, port, username, prompt_password, progname);
+							host, port, username, prompt_password, progname);
 
 	if (echo)
 		printf("%s", sql.data);

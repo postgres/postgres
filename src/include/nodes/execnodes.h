@@ -1100,7 +1100,7 @@ typedef struct MergeAppendState
 	PlanState **mergeplans;		/* array of PlanStates for my inputs */
 	int			ms_nplans;
 	int			ms_nkeys;
-	SortSupport	ms_sortkeys;	/* array of length ms_nkeys */
+	SortSupport ms_sortkeys;	/* array of length ms_nkeys */
 	TupleTableSlot **ms_slots;	/* array of length ms_nplans */
 	int		   *ms_heap;		/* array of length ms_nplans */
 	int			ms_heap_size;	/* current active length of ms_heap[] */

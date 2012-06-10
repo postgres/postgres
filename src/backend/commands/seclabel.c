@@ -237,7 +237,7 @@ GetSecurityLabel(const ObjectAddress *object, const char *provider)
 	return seclabel;
 }
 
-/* 
+/*
  * SetSharedSecurityLabel is a helper function of SetSecurityLabel to
  * handle shared database objects.
  */
@@ -246,8 +246,8 @@ SetSharedSecurityLabel(const ObjectAddress *object,
 					   const char *provider, const char *label)
 {
 	Relation	pg_shseclabel;
-	ScanKeyData	keys[4];
-	SysScanDesc	scan;
+	ScanKeyData keys[4];
+	SysScanDesc scan;
 	HeapTuple	oldtup;
 	HeapTuple	newtup = NULL;
 	Datum		values[Natts_pg_shseclabel];
@@ -414,8 +414,8 @@ void
 DeleteSharedSecurityLabel(Oid objectId, Oid classId)
 {
 	Relation	pg_shseclabel;
-	ScanKeyData	skey[2];
-	SysScanDesc	scan;
+	ScanKeyData skey[2];
+	SysScanDesc scan;
 	HeapTuple	oldtup;
 
 	ScanKeyInit(&skey[0],

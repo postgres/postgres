@@ -44,8 +44,8 @@ static char *decimal_point;
 static char *grouping;
 static char *thousands_sep;
 
-static char	default_footer[100];
-static printTableFooter default_footer_cell = { default_footer, NULL };
+static char default_footer[100];
+static printTableFooter default_footer_cell = {default_footer, NULL};
 
 /* Line style control structures */
 const printTextFormat pg_asciiformat =
@@ -283,7 +283,7 @@ print_separator(struct separator sep, FILE *fout)
 
 /*
  * Return the list of explicitly-requested footers or, when applicable, the
- * default "(xx rows)" footer.  Always omit the default footer when given
+ * default "(xx rows)" footer.	Always omit the default footer when given
  * non-default footers, "\pset footer off", or a specific instruction to that
  * effect from a calling backslash command.  Vertical formats number each row,
  * making the default footer redundant; they do not call this function.
@@ -388,6 +388,7 @@ print_unaligned_text(const printTableContent *cont, FILE *fout)
 				need_recordsep = true;
 			}
 		}
+
 		/*
 		 * The last record is terminated by a newline, independent of the set
 		 * record separator.  But when the record separator is a zero byte, we

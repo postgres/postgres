@@ -93,7 +93,7 @@ RelationGetIndexScan(Relation indexRelation, int nkeys, int norderbys)
 	else
 		scan->orderByData = NULL;
 
-	scan->xs_want_itup = false;			/* may be set later */
+	scan->xs_want_itup = false; /* may be set later */
 
 	/*
 	 * During recovery we ignore killed tuples and don't bother to kill them

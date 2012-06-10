@@ -126,8 +126,8 @@ static bool print_xml_decl(StringInfo buf, const xmlChar *version,
 static xmlDocPtr xml_parse(text *data, XmlOptionType xmloption_arg,
 		  bool preserve_whitespace, int encoding);
 static text *xml_xmlnodetoxmltype(xmlNodePtr cur);
-static int	xml_xpathobjtoxmlarray(xmlXPathObjectPtr xpathobj,
-								   ArrayBuildState **astate);
+static int xml_xpathobjtoxmlarray(xmlXPathObjectPtr xpathobj,
+					   ArrayBuildState **astate);
 #endif   /* USE_LIBXML */
 
 static StringInfo query_to_xml_internal(const char *query, char *tablename,
@@ -913,7 +913,7 @@ pg_xml_init_library(void)
  * pg_xml_init --- set up for use of libxml and register an error handler
  *
  * This should be called by each function that is about to use libxml
- * facilities and requires error handling.  It initializes libxml with
+ * facilities and requires error handling.	It initializes libxml with
  * pg_xml_init_library() and establishes our libxml error handler.
  *
  * strictness determines which errors are reported and which are ignored.
@@ -943,9 +943,9 @@ pg_xml_init(PgXmlStrictness strictness)
 	/*
 	 * Save original error handler and install ours. libxml originally didn't
 	 * distinguish between the contexts for generic and for structured error
-	 * handlers.  If we're using an old libxml version, we must thus save
-	 * the generic error context, even though we're using a structured
-	 * error handler.
+	 * handlers.  If we're using an old libxml version, we must thus save the
+	 * generic error context, even though we're using a structured error
+	 * handler.
 	 */
 	errcxt->saved_errfunc = xmlStructuredError;
 
@@ -959,7 +959,7 @@ pg_xml_init(PgXmlStrictness strictness)
 
 	/*
 	 * Verify that xmlSetStructuredErrorFunc set the context variable we
-	 * expected it to.  If not, the error context pointer we just saved is not
+	 * expected it to.	If not, the error context pointer we just saved is not
 	 * the correct thing to restore, and since that leaves us without a way to
 	 * restore the context in pg_xml_done, we must fail.
 	 *
@@ -1014,9 +1014,9 @@ pg_xml_done(PgXmlErrorContext *errcxt, bool isError)
 	Assert(!errcxt->err_occurred || isError);
 
 	/*
-	 * Check that libxml's global state is correct, warn if not.  This is
-	 * a real test and not an Assert because it has a higher probability
-	 * of happening.
+	 * Check that libxml's global state is correct, warn if not.  This is a
+	 * real test and not an Assert because it has a higher probability of
+	 * happening.
 	 */
 #ifdef HAVE_XMLSTRUCTUREDERRORCONTEXT
 	cur_errcxt = xmlStructuredErrorContext;
@@ -1108,7 +1108,7 @@ parse_xml_decl(const xmlChar *str, size_t *lenp,
 	int			utf8len;
 
 	/*
-	 * Only initialize libxml.  We don't need error handling here, but we do
+	 * Only initialize libxml.	We don't need error handling here, but we do
 	 * need to make sure libxml is initialized before calling any of its
 	 * functions.  Note that this is safe (and a no-op) if caller has already
 	 * done pg_xml_init().
@@ -1516,9 +1516,9 @@ xml_errorHandler(void *data, xmlErrorPtr error)
 	PgXmlErrorContext *xmlerrcxt = (PgXmlErrorContext *) data;
 	xmlParserCtxtPtr ctxt = (xmlParserCtxtPtr) error->ctxt;
 	xmlParserInputPtr input = (ctxt != NULL) ? ctxt->input : NULL;
-	xmlNodePtr node = error->node;
+	xmlNodePtr	node = error->node;
 	const xmlChar *name = (node != NULL &&
-						   node->type == XML_ELEMENT_NODE) ? node->name : NULL;
+						 node->type == XML_ELEMENT_NODE) ? node->name : NULL;
 	int			domain = error->domain;
 	int			level = error->level;
 	StringInfo	errorBuf;
@@ -1599,7 +1599,7 @@ xml_errorHandler(void *data, xmlErrorPtr error)
 	if (input != NULL)
 	{
 		xmlGenericErrorFunc errFuncSaved = xmlGenericError;
-		void   *errCtxSaved = xmlGenericErrorContext;
+		void	   *errCtxSaved = xmlGenericErrorContext;
 
 		xmlSetGenericErrorFunc((void *) errorBuf,
 							   (xmlGenericErrorFunc) appendStringInfo);
@@ -1617,8 +1617,8 @@ xml_errorHandler(void *data, xmlErrorPtr error)
 	chopStringInfoNewlines(errorBuf);
 
 	/*
-	 * Legacy error handling mode.  err_occurred is never set, we just add the
-	 * message to err_buf.  This mode exists because the xml2 contrib module
+	 * Legacy error handling mode.	err_occurred is never set, we just add the
+	 * message to err_buf.	This mode exists because the xml2 contrib module
 	 * uses our error-handling infrastructure, but we don't want to change its
 	 * behaviour since it's deprecated anyway.  This is also why we don't
 	 * distinguish between notices, warnings and errors here --- the old-style
@@ -3574,7 +3574,7 @@ xml_xmlnodetoxmltype(xmlNodePtr cur)
 		PG_TRY();
 		{
 			/* Here we rely on XML having the same representation as TEXT */
-			char   *escaped = escape_xml((char *) str);
+			char	   *escaped = escape_xml((char *) str);
 
 			result = (xmltype *) cstring_to_text(escaped);
 			pfree(escaped);
@@ -3623,7 +3623,7 @@ xml_xpathobjtoxmlarray(xmlXPathObjectPtr xpathobj,
 				result = xpathobj->nodesetval->nodeNr;
 				if (astate != NULL)
 				{
-					int		i;
+					int			i;
 
 					for (i = 0; i < result; i++)
 					{

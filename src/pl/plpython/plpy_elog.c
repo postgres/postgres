@@ -16,15 +16,15 @@
 #include "plpy_procedure.h"
 
 
-PyObject *PLy_exc_error = NULL;
-PyObject *PLy_exc_fatal = NULL;
-PyObject *PLy_exc_spi_error = NULL;
+PyObject   *PLy_exc_error = NULL;
+PyObject   *PLy_exc_fatal = NULL;
+PyObject   *PLy_exc_spi_error = NULL;
 
 
 static void PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth);
 static void PLy_get_spi_error_data(PyObject *exc, int *sqlerrcode, char **detail,
-								   char **hint, char **query, int *position);
-static char * get_source_line(const char *src, int lineno);
+					   char **hint, char **query, int *position);
+static char *get_source_line(const char *src, int lineno);
 
 
 /*
@@ -46,7 +46,7 @@ PLy_elog(int elevel, const char *fmt,...)
 			   *val,
 			   *tb;
 	const char *primary = NULL;
-	int		   sqlerrcode = 0;
+	int			sqlerrcode = 0;
 	char	   *detail = NULL;
 	char	   *hint = NULL;
 	char	   *query = NULL;
@@ -98,7 +98,7 @@ PLy_elog(int elevel, const char *fmt,...)
 	{
 		ereport(elevel,
 				(errcode(sqlerrcode ? sqlerrcode : ERRCODE_INTERNAL_ERROR),
-				 errmsg_internal("%s", primary ? primary : "no exception data"),
+			  errmsg_internal("%s", primary ? primary : "no exception data"),
 				 (detail) ? errdetail_internal("%s", detail) : 0,
 				 (tb_depth > 0 && tbmsg) ? errcontext("%s", tbmsg) : 0,
 				 (hint) ? errhint("%s", hint) : 0,
@@ -256,7 +256,7 @@ PLy_traceback(char **xmsg, char **tbmsg, int *tb_depth)
 		/* The first frame always points at <module>, skip it. */
 		if (*tb_depth > 0)
 		{
-			PLyExecutionContext	*exec_ctx = PLy_current_execution_context();
+			PLyExecutionContext *exec_ctx = PLy_current_execution_context();
 			char	   *proname;
 			char	   *fname;
 			char	   *line;

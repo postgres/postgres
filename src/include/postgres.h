@@ -685,6 +685,6 @@ extern PGDLLIMPORT bool assert_enabled;
 
 extern void ExceptionalCondition(const char *conditionName,
 					 const char *errorType,
-					 const char *fileName, int lineNumber) __attribute__((noreturn));
+			 const char *fileName, int lineNumber) __attribute__((noreturn));
 
 #endif   /* POSTGRES_H */

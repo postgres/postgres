@@ -30,7 +30,7 @@
 #include "utils/syscache.h"
 
 static void does_not_exist_skipping(ObjectType objtype,
-									List *objname, List *objargs);
+						List *objname, List *objargs);
 
 /*
  * Drop one or more objects.
@@ -54,7 +54,7 @@ RemoveObjects(DropStmt *stmt)
 
 	foreach(cell1, stmt->objects)
 	{
-		ObjectAddress	address;
+		ObjectAddress address;
 		List	   *objname = lfirst(cell1);
 		List	   *objargs = NIL;
 		Relation	relation = NULL;
@@ -97,8 +97,8 @@ RemoveObjects(DropStmt *stmt)
 			if (((Form_pg_proc) GETSTRUCT(tup))->proisagg)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-								 errmsg("\"%s\" is an aggregate function",
-									NameListToString(objname)),
+						 errmsg("\"%s\" is an aggregate function",
+								NameListToString(objname)),
 				errhint("Use DROP AGGREGATE to drop aggregate functions.")));
 
 			ReleaseSysCache(tup);
@@ -149,7 +149,7 @@ does_not_exist_skipping(ObjectType objtype, List *objname, List *objargs)
 			break;
 		case OBJECT_CONVERSION:
 			msg = gettext_noop("conversion \"%s\" does not exist, skipping");
-			name =  NameListToString(objname);
+			name = NameListToString(objname);
 			break;
 		case OBJECT_SCHEMA:
 			msg = gettext_noop("schema \"%s\" does not exist, skipping");
@@ -196,9 +196,9 @@ does_not_exist_skipping(ObjectType objtype, List *objname, List *objargs)
 		case OBJECT_CAST:
 			msg = gettext_noop("cast from type %s to type %s does not exist, skipping");
 			name = format_type_be(typenameTypeId(NULL,
-								  (TypeName *) linitial(objname)));
+											(TypeName *) linitial(objname)));
 			args = format_type_be(typenameTypeId(NULL,
-								  (TypeName *) linitial(objargs)));
+											(TypeName *) linitial(objargs)));
 			break;
 		case OBJECT_TRIGGER:
 			msg = gettext_noop("trigger \"%s\" for table \"%s\" does not exist, skipping");
@@ -231,7 +231,7 @@ does_not_exist_skipping(ObjectType objtype, List *objname, List *objargs)
 			args = strVal(linitial(objargs));
 			break;
 		default:
-			elog(ERROR, "unexpected object type (%d)", (int)objtype);
+			elog(ERROR, "unexpected object type (%d)", (int) objtype);
 			break;
 	}
 

@@ -114,8 +114,10 @@ static bool platform_is_threadsafe = true;
 int
 main(int argc, char *argv[])
 {
-	pthread_t	thread1, thread2;
+	pthread_t	thread1,
+				thread2;
 	int			rc;
+
 #ifdef WIN32
 	WSADATA		wsaData;
 	int			err;
@@ -199,7 +201,7 @@ main(int argc, char *argv[])
 #endif
 
 	/* close down threads */
-	
+
 	pthread_mutex_unlock(&init_mutex);	/* let children exit  */
 
 	pthread_join(thread1, NULL);	/* clean up children */
@@ -277,7 +279,7 @@ func_call_1(void)
 #ifdef WIN32
 	HANDLE		h1;
 #else
-	int fd;
+	int			fd;
 #endif
 
 	unlink(TEMP_FILENAME_1);
@@ -285,10 +287,11 @@ func_call_1(void)
 	/* Set errno = EEXIST */
 
 	/* create, then try to fail on exclusive create open */
+
 	/*
 	 * It would be great to check errno here but if errno is not thread-safe
-	 * we might get a value from the other thread and mis-report the cause
-	 * of the failure.
+	 * we might get a value from the other thread and mis-report the cause of
+	 * the failure.
 	 */
 #ifdef WIN32
 	if ((h1 = CreateFile(TEMP_FILENAME_1, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, 0, NULL)) ==
@@ -301,7 +304,7 @@ func_call_1(void)
 				TEMP_FILENAME_1);
 		exit(1);
 	}
-	
+
 #ifdef WIN32
 	if (CreateFile(TEMP_FILENAME_1, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL)
 		!= INVALID_HANDLE_VALUE)
@@ -346,6 +349,7 @@ func_call_1(void)
 	unlink(TEMP_FILENAME_1);
 
 #ifndef HAVE_STRERROR_R
+
 	/*
 	 * If strerror() uses sys_errlist, the pointer might change for different
 	 * errno values, so we don't check to see if it varies within the thread.
@@ -428,6 +432,7 @@ func_call_2(void)
 	}
 
 #ifndef HAVE_STRERROR_R
+
 	/*
 	 * If strerror() uses sys_errlist, the pointer might change for different
 	 * errno values, so we don't check to see if it varies within the thread.

@@ -199,8 +199,8 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 		/*
 		 * We must take a lock on the target relation to protect against
 		 * concurrent drop.  It's not clear that AccessShareLock is strong
-		 * enough, but we certainly need at least that much... otherwise,
-		 * we might end up creating a pg_constraint entry referencing a
+		 * enough, but we certainly need at least that much... otherwise, we
+		 * might end up creating a pg_constraint entry referencing a
 		 * nonexistent table.
 		 */
 		constrrelid = RangeVarGetRelid(stmt->constrrel, AccessShareLock, false);
@@ -494,8 +494,8 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	 * can skip this for internally generated triggers, since the name
 	 * modification above should be sufficient.
 	 *
-	 * NOTE that this is cool only because we have AccessExclusiveLock on
-	 * the relation, so the trigger set won't be changing underneath us.
+	 * NOTE that this is cool only because we have AccessExclusiveLock on the
+	 * relation, so the trigger set won't be changing underneath us.
 	 */
 	if (!isInternal)
 	{
@@ -1168,27 +1168,27 @@ static void
 RangeVarCallbackForRenameTrigger(const RangeVar *rv, Oid relid, Oid oldrelid,
 								 void *arg)
 {
-    HeapTuple       tuple;
-    Form_pg_class   form;
+	HeapTuple	tuple;
+	Form_pg_class form;
 
 	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
 	if (!HeapTupleIsValid(tuple))
-		return;                         /* concurrently dropped */
+		return;					/* concurrently dropped */
 	form = (Form_pg_class) GETSTRUCT(tuple);
 
 	/* only tables and views can have triggers */
-    if (form->relkind != RELKIND_RELATION && form->relkind != RELKIND_VIEW)
-        ereport(ERROR,
-                (errcode(ERRCODE_WRONG_OBJECT_TYPE),
-                 errmsg("\"%s\" is not a table or view", rv->relname)));
+	if (form->relkind != RELKIND_RELATION && form->relkind != RELKIND_VIEW)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a table or view", rv->relname)));
 
 	/* you must own the table to rename one of its triggers */
-    if (!pg_class_ownercheck(relid, GetUserId()))
-        aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS, rv->relname);
-    if (!allowSystemTableMods && IsSystemClass(form))
-        ereport(ERROR,
-                (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-                 errmsg("permission denied: \"%s\" is a system catalog",
+	if (!pg_class_ownercheck(relid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS, rv->relname);
+	if (!allowSystemTableMods && IsSystemClass(form))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied: \"%s\" is a system catalog",
 						rv->relname)));
 
 	ReleaseSysCache(tuple);

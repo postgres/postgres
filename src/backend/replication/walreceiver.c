@@ -752,8 +752,8 @@ ProcessWalSndrMessage(XLogRecPtr walEnd, TimestampTz sendTime)
 
 	if (log_min_messages <= DEBUG2)
 		elog(DEBUG2, "sendtime %s receipttime %s replication apply delay %d ms transfer latency %d ms",
-					timestamptz_to_str(sendTime),
-					timestamptz_to_str(lastMsgReceiptTime),
-					GetReplicationApplyDelay(),
-					GetReplicationTransferLatency());
+			 timestamptz_to_str(sendTime),
+			 timestamptz_to_str(lastMsgReceiptTime),
+			 GetReplicationApplyDelay(),
+			 GetReplicationTransferLatency());
 }

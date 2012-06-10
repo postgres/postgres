@@ -57,12 +57,12 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 				   old_db->db_name, old_rel->reloid, new_rel->reloid);
 
 		/*
-		 * TOAST table names initially match the heap pg_class oid.
-		 * In pre-8.4, TOAST table names change during CLUSTER; in pre-9.0,
-		 * TOAST table names change during ALTER TABLE ALTER COLUMN SET TYPE.
-		 * In >= 9.0, TOAST relation names always use heap table oids, hence
-		 * we cannot check relation names when upgrading from pre-9.0.
-		 * Clusters upgraded to 9.0 will get matching TOAST names.
+		 * TOAST table names initially match the heap pg_class oid. In
+		 * pre-8.4, TOAST table names change during CLUSTER; in pre-9.0, TOAST
+		 * table names change during ALTER TABLE ALTER COLUMN SET TYPE. In >=
+		 * 9.0, TOAST relation names always use heap table oids, hence we
+		 * cannot check relation names when upgrading from pre-9.0. Clusters
+		 * upgraded to 9.0 will get matching TOAST names.
 		 */
 		if (strcmp(old_rel->nspname, new_rel->nspname) != 0 ||
 			((GET_MAJOR_VERSION(old_cluster.major_version) >= 900 ||
@@ -194,16 +194,16 @@ get_db_infos(ClusterInfo *cluster)
 	char		query[QUERY_ALLOC];
 
 	snprintf(query, sizeof(query),
-			"SELECT d.oid, d.datname, %s "
-			"FROM pg_catalog.pg_database d "
-			" LEFT OUTER JOIN pg_catalog.pg_tablespace t "
-			" ON d.dattablespace = t.oid "
-			"WHERE d.datallowconn = true "
+			 "SELECT d.oid, d.datname, %s "
+			 "FROM pg_catalog.pg_database d "
+			 " LEFT OUTER JOIN pg_catalog.pg_tablespace t "
+			 " ON d.dattablespace = t.oid "
+			 "WHERE d.datallowconn = true "
 	/* we don't preserve pg_database.oid so we sort by name */
-			"ORDER BY 2",
+			 "ORDER BY 2",
 	/* 9.2 removed the spclocation column */
-			(GET_MAJOR_VERSION(cluster->major_version) <= 901) ?
-			"t.spclocation" : "pg_catalog.pg_tablespace_location(t.oid) AS spclocation");
+			 (GET_MAJOR_VERSION(cluster->major_version) <= 901) ?
+			 "t.spclocation" : "pg_catalog.pg_tablespace_location(t.oid) AS spclocation");
 
 	res = executeQueryOrDie(conn, "%s", query);
 
@@ -276,7 +276,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "  LEFT OUTER JOIN pg_catalog.pg_tablespace t "
 			 "	   ON c.reltablespace = t.oid "
 			 "WHERE relkind IN ('r','t', 'i'%s) AND "
-			 /* exclude possible orphaned temp tables */
+	/* exclude possible orphaned temp tables */
 			 "  ((n.nspname !~ '^pg_temp_' AND "
 			 "    n.nspname !~ '^pg_toast_temp_' AND "
 			 "    n.nspname NOT IN ('pg_catalog', 'information_schema', 'binary_upgrade') AND "

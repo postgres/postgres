@@ -27,12 +27,11 @@
 
 struct locale_map
 {
-	const char *locale_name_part;	/* string in locale name to replace */
-	const char *replacement;		/* string to replace it with */
+	const char *locale_name_part;		/* string in locale name to replace */
+	const char *replacement;	/* string to replace it with */
 };
 
 static const struct locale_map locale_map_list[] = {
-
 	/*
 	 * "HKG" is listed here:
 	 * http://msdn.microsoft.com/en-us/library/cdax410z%28v=vs.71%29.aspx
@@ -41,26 +40,26 @@ static const struct locale_map locale_map_list[] = {
 	 * "ARE" is the ISO-3166 three-letter code for U.A.E. It is not on the
 	 * above list, but seems to work anyway.
 	 */
-	{ "Hong Kong S.A.R.",						"HKG" },
-	{ "U.A.E.",									"ARE" },
+	{"Hong Kong S.A.R.", "HKG"},
+	{"U.A.E.", "ARE"},
 
 	/*
 	 * The ISO-3166 country code for Macau S.A.R. is MAC, but Windows doesn't
-	 * seem to recognize that. And Macau isn't listed in the table of
-	 * accepted abbreviations linked above. Fortunately, "ZHM" seems to be
-	 * accepted as an alias for "Chinese (Traditional)_Macau S.A.R..950". I'm
-	 * not sure where "ZHM" comes from, must be some legacy naming scheme. But
-	 * hey, it works.
+	 * seem to recognize that. And Macau isn't listed in the table of accepted
+	 * abbreviations linked above. Fortunately, "ZHM" seems to be accepted as
+	 * an alias for "Chinese (Traditional)_Macau S.A.R..950". I'm not sure
+	 * where "ZHM" comes from, must be some legacy naming scheme. But hey, it
+	 * works.
 	 *
 	 * Note that unlike HKG and ARE, ZHM is an alias for the *whole* locale
 	 * name, not just the country part.
 	 *
 	 * Some versions of Windows spell it "Macau", others "Macao".
 	 */
-	{ "Chinese (Traditional)_Macau S.A.R..950",	"ZHM" },
-	{ "Chinese_Macau S.A.R..950",				"ZHM" },
-	{ "Chinese (Traditional)_Macao S.A.R..950",	"ZHM" },
-	{ "Chinese_Macao S.A.R..950",				"ZHM" }
+	{"Chinese (Traditional)_Macau S.A.R..950", "ZHM"},
+	{"Chinese_Macau S.A.R..950", "ZHM"},
+	{"Chinese (Traditional)_Macao S.A.R..950", "ZHM"},
+	{"Chinese_Macao S.A.R..950", "ZHM"}
 };
 
 char *
@@ -85,10 +84,10 @@ pgwin32_setlocale(int category, const char *locale)
 		if (match != NULL)
 		{
 			/* Found a match. Replace the matched string. */
-			int		matchpos = match - locale;
-			int		replacementlen = strlen(replacement);
-			char   *rest = match + strlen(needle);
-			int		restlen = strlen(rest);
+			int			matchpos = match - locale;
+			int			replacementlen = strlen(replacement);
+			char	   *rest = match + strlen(needle);
+			int			restlen = strlen(rest);
 
 			alias = malloc(matchpos + replacementlen + restlen + 1);
 			if (!alias)
@@ -96,7 +95,8 @@ pgwin32_setlocale(int category, const char *locale)
 
 			memcpy(&alias[0], &locale[0], matchpos);
 			memcpy(&alias[matchpos], replacement, replacementlen);
-			memcpy(&alias[matchpos + replacementlen], rest, restlen + 1); /* includes null terminator */
+			memcpy(&alias[matchpos + replacementlen], rest, restlen + 1);		/* includes null
+																				 * terminator */
 
 			break;
 		}

@@ -109,17 +109,17 @@ PG_FUNCTION_INFO_V1(file_fdw_validator);
  * FDW callback routines
  */
 static void fileGetForeignRelSize(PlannerInfo *root,
-								  RelOptInfo *baserel,
-								  Oid foreigntableid);
+					  RelOptInfo *baserel,
+					  Oid foreigntableid);
 static void fileGetForeignPaths(PlannerInfo *root,
-								RelOptInfo *baserel,
-								Oid foreigntableid);
+					RelOptInfo *baserel,
+					Oid foreigntableid);
 static ForeignScan *fileGetForeignPlan(PlannerInfo *root,
-									   RelOptInfo *baserel,
-									   Oid foreigntableid,
-									   ForeignPath *best_path,
-									   List *tlist,
-									   List *scan_clauses);
+				   RelOptInfo *baserel,
+				   Oid foreigntableid,
+				   ForeignPath *best_path,
+				   List *tlist,
+				   List *scan_clauses);
 static void fileExplainForeignScan(ForeignScanState *node, ExplainState *es);
 static void fileBeginForeignScan(ForeignScanState *node, int eflags);
 static TupleTableSlot *fileIterateForeignScan(ForeignScanState *node);
@@ -141,7 +141,7 @@ static void estimate_size(PlannerInfo *root, RelOptInfo *baserel,
 static void estimate_costs(PlannerInfo *root, RelOptInfo *baserel,
 			   FileFdwPlanState *fdw_private,
 			   Cost *startup_cost, Cost *total_cost);
-static int	file_acquire_sample_rows(Relation onerel, int elevel,
+static int file_acquire_sample_rows(Relation onerel, int elevel,
 						 HeapTuple *rows, int targrows,
 						 double *totalrows, double *totaldeadrows);
 
@@ -180,7 +180,7 @@ file_fdw_validator(PG_FUNCTION_ARGS)
 	List	   *options_list = untransformRelOptions(PG_GETARG_DATUM(0));
 	Oid			catalog = PG_GETARG_OID(1);
 	char	   *filename = NULL;
-	DefElem	   *force_not_null = NULL;
+	DefElem    *force_not_null = NULL;
 	List	   *other_options = NIL;
 	ListCell   *cell;
 
@@ -233,7 +233,7 @@ file_fdw_validator(PG_FUNCTION_ARGS)
 					 buf.len > 0
 					 ? errhint("Valid options in this context are: %s",
 							   buf.data)
-					 : errhint("There are no valid options in this context.")));
+				  : errhint("There are no valid options in this context.")));
 		}
 
 		/*
@@ -393,13 +393,13 @@ get_file_fdw_attribute_options(Oid relid)
 		options = GetForeignColumnOptions(relid, attnum);
 		foreach(lc, options)
 		{
-			DefElem	   *def = (DefElem *) lfirst(lc);
+			DefElem    *def = (DefElem *) lfirst(lc);
 
 			if (strcmp(def->defname, "force_not_null") == 0)
 			{
 				if (defGetBoolean(def))
 				{
-					char   *attname = pstrdup(NameStr(attr->attname));
+					char	   *attname = pstrdup(NameStr(attr->attname));
 
 					fnncolumns = lappend(fnncolumns, makeString(attname));
 				}
@@ -429,8 +429,8 @@ fileGetForeignRelSize(PlannerInfo *root,
 	FileFdwPlanState *fdw_private;
 
 	/*
-	 * Fetch options.  We only need filename at this point, but we might
-	 * as well get everything and not need to re-fetch it later in planning.
+	 * Fetch options.  We only need filename at this point, but we might as
+	 * well get everything and not need to re-fetch it later in planning.
 	 */
 	fdw_private = (FileFdwPlanState *) palloc(sizeof(FileFdwPlanState));
 	fileGetOptions(foreigntableid,
@@ -468,13 +468,14 @@ fileGetForeignPaths(PlannerInfo *root,
 									 baserel->rows,
 									 startup_cost,
 									 total_cost,
-									 NIL, /* no pathkeys */
-									 NULL, /* no outer rel either */
-									 NIL)); /* no fdw_private data */
+									 NIL,		/* no pathkeys */
+									 NULL,		/* no outer rel either */
+									 NIL));		/* no fdw_private data */
 
 	/*
 	 * If data file was sorted, and we knew it somehow, we could insert
-	 * appropriate pathkeys into the ForeignPath node to tell the planner that.
+	 * appropriate pathkeys into the ForeignPath node to tell the planner
+	 * that.
 	 */
 }
 
@@ -505,8 +506,8 @@ fileGetForeignPlan(PlannerInfo *root,
 	return make_foreignscan(tlist,
 							scan_clauses,
 							scan_relid,
-							NIL, /* no expressions to evaluate */
-							NIL); /* no private state either */
+							NIL,	/* no expressions to evaluate */
+							NIL);		/* no private state either */
 }
 
 /*
@@ -665,14 +666,14 @@ fileAnalyzeForeignTable(Relation relation,
 {
 	char	   *filename;
 	List	   *options;
-	struct stat	stat_buf;
+	struct stat stat_buf;
 
 	/* Fetch options of foreign table */
 	fileGetOptions(RelationGetRelid(relation), &filename, &options);
 
 	/*
-	 * Get size of the file.  (XXX if we fail here, would it be better to
-	 * just return false to skip analyzing the table?)
+	 * Get size of the file.  (XXX if we fail here, would it be better to just
+	 * return false to skip analyzing the table?)
 	 */
 	if (stat(filename, &stat_buf) < 0)
 		ereport(ERROR,
@@ -746,7 +747,7 @@ estimate_size(PlannerInfo *root, RelOptInfo *baserel,
 		 * planner's idea of the relation width; which is bogus if not all
 		 * columns are being read, not to mention that the text representation
 		 * of a row probably isn't the same size as its internal
-		 * representation.  Possibly we could do something better, but the
+		 * representation.	Possibly we could do something better, but the
 		 * real answer to anyone who complains is "ANALYZE" ...
 		 */
 		int			tuple_width;
@@ -811,7 +812,7 @@ estimate_costs(PlannerInfo *root, RelOptInfo *baserel,
  * which must have at least targrows entries.
  * The actual number of rows selected is returned as the function result.
  * We also count the total number of rows in the file and return it into
- * *totalrows.  Note that *totaldeadrows is always set to 0.
+ * *totalrows.	Note that *totaldeadrows is always set to 0.
  *
  * Note that the returned list of rows is not always in order by physical
  * position in the file.  Therefore, correlation estimates derived later
@@ -824,7 +825,7 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 						 double *totalrows, double *totaldeadrows)
 {
 	int			numrows = 0;
-	double		rowstoskip = -1; /* -1 means not set yet */
+	double		rowstoskip = -1;	/* -1 means not set yet */
 	double		rstate;
 	TupleDesc	tupDesc;
 	Datum	   *values;
@@ -853,8 +854,8 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 	cstate = BeginCopyFrom(onerel, filename, NIL, options);
 
 	/*
-	 * Use per-tuple memory context to prevent leak of memory used to read rows
-	 * from the file with Copy routines.
+	 * Use per-tuple memory context to prevent leak of memory used to read
+	 * rows from the file with Copy routines.
 	 */
 	tupcontext = AllocSetContextCreate(CurrentMemoryContext,
 									   "file_fdw temporary context",
@@ -912,10 +913,10 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 			if (rowstoskip <= 0)
 			{
 				/*
-				 * Found a suitable tuple, so save it, replacing one
-				 * old tuple at random
+				 * Found a suitable tuple, so save it, replacing one old tuple
+				 * at random
 				 */
-				int		k = (int) (targrows * anl_random_fract());
+				int			k = (int) (targrows * anl_random_fract());
 
 				Assert(k >= 0 && k < targrows);
 				heap_freetuple(rows[k]);

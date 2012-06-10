@@ -174,8 +174,8 @@ GetNewTransactionId(bool isSubXact)
 	 * latestCompletedXid is present in the ProcArray, which is essential for
 	 * correct OldestXmin tracking; see src/backend/access/transam/README.
 	 *
-	 * XXX by storing xid into MyPgXact without acquiring ProcArrayLock, we are
-	 * relying on fetch/store of an xid to be atomic, else other backends
+	 * XXX by storing xid into MyPgXact without acquiring ProcArrayLock, we
+	 * are relying on fetch/store of an xid to be atomic, else other backends
 	 * might see a partially-set xid here.	But holding both locks at once
 	 * would be a nasty concurrency hit.  So for now, assume atomicity.
 	 *

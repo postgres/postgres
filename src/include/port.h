@@ -244,7 +244,6 @@ __attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
 extern char *pgwin32_setlocale(int category, const char *locale);
 
 #define setlocale(a,b) pgwin32_setlocale(a,b)
-
 #endif   /* WIN32 */
 
 /* Portable prompt handling */
@@ -378,7 +377,7 @@ extern long pg_lrand48(void);
 extern void pg_srand48(long seed);
 
 #ifndef HAVE_FLS
-extern int fls(int mask);
+extern int	fls(int mask);
 #endif
 
 #ifndef HAVE_FSEEKO

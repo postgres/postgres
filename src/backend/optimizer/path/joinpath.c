@@ -103,7 +103,7 @@ add_paths_to_joinrel(PlannerInfo *root,
 
 	/*
 	 * If it's SEMI or ANTI join, compute correction factors for cost
-	 * estimation.  These will be the same for all paths.
+	 * estimation.	These will be the same for all paths.
 	 */
 	if (jointype == JOIN_SEMI || jointype == JOIN_ANTI)
 		compute_semi_anti_join_factors(root, outerrel, innerrel,
@@ -118,7 +118,7 @@ add_paths_to_joinrel(PlannerInfo *root,
 	 * to the parameter source rel instead of joining to the other input rel.
 	 * This restriction reduces the number of parameterized paths we have to
 	 * deal with at higher join levels, without compromising the quality of
-	 * the resulting plan.  We express the restriction as a Relids set that
+	 * the resulting plan.	We express the restriction as a Relids set that
 	 * must overlap the parameterization of any proposed join path.
 	 */
 	foreach(lc, root->join_info_list)
@@ -136,7 +136,7 @@ add_paths_to_joinrel(PlannerInfo *root,
 			!bms_overlap(joinrel->relids, sjinfo->min_lefthand))
 			param_source_rels = bms_join(param_source_rels,
 										 bms_difference(root->all_baserels,
-													sjinfo->min_righthand));
+													 sjinfo->min_righthand));
 
 		/* full joins constrain both sides symmetrically */
 		if (sjinfo->jointype == JOIN_FULL &&
@@ -144,7 +144,7 @@ add_paths_to_joinrel(PlannerInfo *root,
 			!bms_overlap(joinrel->relids, sjinfo->min_righthand))
 			param_source_rels = bms_join(param_source_rels,
 										 bms_difference(root->all_baserels,
-													sjinfo->min_lefthand));
+													  sjinfo->min_lefthand));
 	}
 
 	/*
@@ -216,11 +216,11 @@ try_nestloop_path(PlannerInfo *root,
 				  List *pathkeys)
 {
 	Relids		required_outer;
-	JoinCostWorkspace	workspace;
+	JoinCostWorkspace workspace;
 
 	/*
-	 * Check to see if proposed path is still parameterized, and reject if
-	 * the parameterization wouldn't be sensible.
+	 * Check to see if proposed path is still parameterized, and reject if the
+	 * parameterization wouldn't be sensible.
 	 */
 	required_outer = calc_nestloop_required_outer(outer_path,
 												  inner_path);
@@ -289,14 +289,14 @@ try_mergejoin_path(PlannerInfo *root,
 				   List *innersortkeys)
 {
 	Relids		required_outer;
-	JoinCostWorkspace	workspace;
+	JoinCostWorkspace workspace;
 
 	/*
-	 * Check to see if proposed path is still parameterized, and reject if
-	 * the parameterization wouldn't be sensible.
+	 * Check to see if proposed path is still parameterized, and reject if the
+	 * parameterization wouldn't be sensible.
 	 */
 	required_outer = calc_non_nestloop_required_outer(outer_path,
-																 inner_path);
+													  inner_path);
 	if (required_outer &&
 		!bms_overlap(required_outer, param_source_rels))
 	{
@@ -368,14 +368,14 @@ try_hashjoin_path(PlannerInfo *root,
 				  List *hashclauses)
 {
 	Relids		required_outer;
-	JoinCostWorkspace	workspace;
+	JoinCostWorkspace workspace;
 
 	/*
-	 * Check to see if proposed path is still parameterized, and reject if
-	 * the parameterization wouldn't be sensible.
+	 * Check to see if proposed path is still parameterized, and reject if the
+	 * parameterization wouldn't be sensible.
 	 */
 	required_outer = calc_non_nestloop_required_outer(outer_path,
-																 inner_path);
+													  inner_path);
 	if (required_outer &&
 		!bms_overlap(required_outer, param_source_rels))
 	{
@@ -487,7 +487,7 @@ sort_inner_and_outer(PlannerInfo *root,
 	 *
 	 * This function intentionally does not consider parameterized input paths
 	 * (implicit in the fact that it only looks at cheapest_total_path, which
-	 * is always unparameterized).  If we did so, we'd have a combinatorial
+	 * is always unparameterized).	If we did so, we'd have a combinatorial
 	 * explosion of mergejoin paths of dubious value.  This interacts with
 	 * decisions elsewhere that also discriminate against mergejoins with
 	 * parameterized inputs; see comments in src/backend/optimizer/README.
@@ -582,8 +582,8 @@ sort_inner_and_outer(PlannerInfo *root,
 		 * And now we can make the path.
 		 *
 		 * Note: it's possible that the cheapest paths will already be sorted
-		 * properly.  try_mergejoin_path will detect that case and suppress
-		 * an explicit sort step, so we needn't do so here.
+		 * properly.  try_mergejoin_path will detect that case and suppress an
+		 * explicit sort step, so we needn't do so here.
 		 */
 		try_mergejoin_path(root,
 						   joinrel,
@@ -733,8 +733,8 @@ match_unsorted_outer(PlannerInfo *root,
 
 		/*
 		 * If we need to unique-ify the outer path, it's pointless to consider
-		 * any but the cheapest outer.  (XXX we don't consider parameterized
-		 * outers, nor inners, for unique-ified cases.  Should we?)
+		 * any but the cheapest outer.	(XXX we don't consider parameterized
+		 * outers, nor inners, for unique-ified cases.	Should we?)
 		 */
 		if (save_jointype == JOIN_UNIQUE_OUTER)
 		{
@@ -774,9 +774,9 @@ match_unsorted_outer(PlannerInfo *root,
 		{
 			/*
 			 * Consider nestloop joins using this outer path and various
-			 * available paths for the inner relation.  We consider the
-			 * cheapest-total paths for each available parameterization of
-			 * the inner relation, including the unparameterized case.
+			 * available paths for the inner relation.	We consider the
+			 * cheapest-total paths for each available parameterization of the
+			 * inner relation, including the unparameterized case.
 			 */
 			ListCell   *lc2;
 
@@ -847,8 +847,8 @@ match_unsorted_outer(PlannerInfo *root,
 		/*
 		 * Generate a mergejoin on the basis of sorting the cheapest inner.
 		 * Since a sort will be needed, only cheapest total cost matters. (But
-		 * try_mergejoin_path will do the right thing if
-		 * inner_cheapest_total is already correctly sorted.)
+		 * try_mergejoin_path will do the right thing if inner_cheapest_total
+		 * is already correctly sorted.)
 		 */
 		try_mergejoin_path(root,
 						   joinrel,
@@ -873,9 +873,9 @@ match_unsorted_outer(PlannerInfo *root,
 		 * mergejoin using a subset of the merge clauses.  Here, we consider
 		 * both cheap startup cost and cheap total cost.
 		 *
-		 * Currently we do not consider parameterized inner paths here.
-		 * This interacts with decisions elsewhere that also discriminate
-		 * against mergejoins with parameterized inputs; see comments in
+		 * Currently we do not consider parameterized inner paths here. This
+		 * interacts with decisions elsewhere that also discriminate against
+		 * mergejoins with parameterized inputs; see comments in
 		 * src/backend/optimizer/README.
 		 *
 		 * As we shorten the sortkey list, we should consider only paths that
@@ -1189,7 +1189,7 @@ hash_inner_and_outer(PlannerInfo *root,
 
 					if (outerpath == cheapest_startup_outer &&
 						innerpath == cheapest_total_inner)
-						continue;				/* already tried it */
+						continue;		/* already tried it */
 
 					try_hashjoin_path(root,
 									  joinrel,

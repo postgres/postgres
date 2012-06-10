@@ -168,7 +168,7 @@ issue_warnings(char *sequence_script_file_name)
 					  SYSTEMQUOTE "\"%s/psql\" --echo-queries "
 					  "--set ON_ERROR_STOP=on "
 					  "--no-psqlrc --port %d --username \"%s\" "
-					  "-f \"%s\" --dbname template1 >> \"%s\" 2>&1" SYSTEMQUOTE,
+				   "-f \"%s\" --dbname template1 >> \"%s\" 2>&1" SYSTEMQUOTE,
 					  new_cluster.bindir, new_cluster.port, os_info.user,
 					  sequence_script_file_name, UTILITY_LOG_FILE);
 			unlink(sequence_script_file_name);
@@ -204,7 +204,7 @@ output_completion_banner(char *analyze_script_file_name,
 	else
 		pg_log(PG_REPORT,
 			   "Optimizer statistics and free space information are not transferred\n"
-			   "by pg_upgrade so, once you start the new server, consider running:\n"
+		"by pg_upgrade so, once you start the new server, consider running:\n"
 			   "    %s\n\n", analyze_script_file_name);
 
 	pg_log(PG_REPORT,
@@ -238,7 +238,8 @@ check_cluster_versions(void)
 
 	/*
 	 * We can't allow downgrading because we use the target pg_dumpall, and
-	 * pg_dumpall cannot operate on new database versions, only older versions.
+	 * pg_dumpall cannot operate on new database versions, only older
+	 * versions.
 	 */
 	if (old_cluster.major_version > new_cluster.major_version)
 		pg_log(PG_FATAL, "This utility cannot be used to downgrade to older major PostgreSQL versions.\n");
@@ -402,31 +403,31 @@ create_script_for_cluster_analyze(char **analyze_script_file_name)
 #endif
 
 	fprintf(script, "echo %sThis script will generate minimal optimizer statistics rapidly%s\n",
-					ECHO_QUOTE, ECHO_QUOTE);
+			ECHO_QUOTE, ECHO_QUOTE);
 	fprintf(script, "echo %sso your system is usable, and then gather statistics twice more%s\n",
-					ECHO_QUOTE, ECHO_QUOTE);
+			ECHO_QUOTE, ECHO_QUOTE);
 	fprintf(script, "echo %swith increasing accuracy.  When it is done, your system will%s\n",
-					ECHO_QUOTE, ECHO_QUOTE);
+			ECHO_QUOTE, ECHO_QUOTE);
 	fprintf(script, "echo %shave the default level of optimizer statistics.%s\n",
-					ECHO_QUOTE, ECHO_QUOTE);
+			ECHO_QUOTE, ECHO_QUOTE);
 	fprintf(script, "echo\n\n");
 
 	fprintf(script, "echo %sIf you have used ALTER TABLE to modify the statistics target for%s\n",
-					ECHO_QUOTE, ECHO_QUOTE);
+			ECHO_QUOTE, ECHO_QUOTE);
 	fprintf(script, "echo %sany tables, you might want to remove them and restore them after%s\n",
-					ECHO_QUOTE, ECHO_QUOTE);
+			ECHO_QUOTE, ECHO_QUOTE);
 	fprintf(script, "echo %srunning this script because they will delay fast statistics generation.%s\n",
-					ECHO_QUOTE, ECHO_QUOTE);
+			ECHO_QUOTE, ECHO_QUOTE);
 	fprintf(script, "echo\n\n");
 
 	fprintf(script, "echo %sIf you would like default statistics as quickly as possible, cancel%s\n",
-					ECHO_QUOTE, ECHO_QUOTE);
+			ECHO_QUOTE, ECHO_QUOTE);
 	fprintf(script, "echo %sthis script and run:%s\n",
-					ECHO_QUOTE, ECHO_QUOTE);
+			ECHO_QUOTE, ECHO_QUOTE);
 	fprintf(script, "echo %s    vacuumdb --all %s%s\n", ECHO_QUOTE,
-		/* Did we copy the free space files? */
-		(GET_MAJOR_VERSION(old_cluster.major_version) >= 804) ?
-		"--analyze-only" : "--analyze", ECHO_QUOTE);
+	/* Did we copy the free space files? */
+			(GET_MAJOR_VERSION(old_cluster.major_version) >= 804) ?
+			"--analyze-only" : "--analyze", ECHO_QUOTE);
 	fprintf(script, "echo\n\n");
 
 #ifndef WIN32
@@ -441,15 +442,15 @@ create_script_for_cluster_analyze(char **analyze_script_file_name)
 #endif
 
 	fprintf(script, "echo %sGenerating minimal optimizer statistics (1 target)%s\n",
-					ECHO_QUOTE, ECHO_QUOTE);
+			ECHO_QUOTE, ECHO_QUOTE);
 	fprintf(script, "echo %s--------------------------------------------------%s\n",
-					ECHO_QUOTE, ECHO_QUOTE);
+			ECHO_QUOTE, ECHO_QUOTE);
 	fprintf(script, "vacuumdb --all --analyze-only\n");
 	fprintf(script, "echo\n");
 	fprintf(script, "echo %sThe server is now available with minimal optimizer statistics.%s\n",
-					ECHO_QUOTE, ECHO_QUOTE);
+			ECHO_QUOTE, ECHO_QUOTE);
 	fprintf(script, "echo %sQuery performance will be optimal once this script completes.%s\n",
-					ECHO_QUOTE, ECHO_QUOTE);
+			ECHO_QUOTE, ECHO_QUOTE);
 	fprintf(script, "echo\n\n");
 
 #ifndef WIN32
@@ -462,9 +463,9 @@ create_script_for_cluster_analyze(char **analyze_script_file_name)
 #endif
 
 	fprintf(script, "echo %sGenerating medium optimizer statistics (10 targets)%s\n",
-					ECHO_QUOTE, ECHO_QUOTE);
+			ECHO_QUOTE, ECHO_QUOTE);
 	fprintf(script, "echo %s---------------------------------------------------%s\n",
-					ECHO_QUOTE, ECHO_QUOTE);
+			ECHO_QUOTE, ECHO_QUOTE);
 	fprintf(script, "vacuumdb --all --analyze-only\n");
 	fprintf(script, "echo\n\n");
 
@@ -475,17 +476,17 @@ create_script_for_cluster_analyze(char **analyze_script_file_name)
 #endif
 
 	fprintf(script, "echo %sGenerating default (full) optimizer statistics (100 targets?)%s\n",
-					ECHO_QUOTE, ECHO_QUOTE);
+			ECHO_QUOTE, ECHO_QUOTE);
 	fprintf(script, "echo %s-------------------------------------------------------------%s\n",
-					ECHO_QUOTE, ECHO_QUOTE);
+			ECHO_QUOTE, ECHO_QUOTE);
 	fprintf(script, "vacuumdb --all %s\n",
-		/* Did we copy the free space files? */
-		(GET_MAJOR_VERSION(old_cluster.major_version) >= 804) ?
-		"--analyze-only" : "--analyze");
+	/* Did we copy the free space files? */
+			(GET_MAJOR_VERSION(old_cluster.major_version) >= 804) ?
+			"--analyze-only" : "--analyze");
 
 	fprintf(script, "echo\n\n");
 	fprintf(script, "echo %sDone%s\n",
-					ECHO_QUOTE, ECHO_QUOTE);
+			ECHO_QUOTE, ECHO_QUOTE);
 
 	fclose(script);
 
@@ -716,8 +717,8 @@ check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster)
 		pg_log(PG_REPORT, "fatal\n");
 		pg_log(PG_FATAL,
 			   "Your installation contains \"contrib/isn\" functions which rely on the\n"
-			   "bigint data type.  Your old and new clusters pass bigint values\n"
-			   "differently so this cluster cannot currently be upgraded.  You can\n"
+		  "bigint data type.  Your old and new clusters pass bigint values\n"
+		"differently so this cluster cannot currently be upgraded.  You can\n"
 			   "manually upgrade databases that use \"contrib/isn\" facilities and remove\n"
 			   "\"contrib/isn\" from the old cluster and restart the upgrade.  A list of\n"
 			   "the problem functions is in the file:\n"
@@ -764,9 +765,9 @@ check_for_reg_data_type_usage(ClusterInfo *cluster)
 		PGconn	   *conn = connectToServer(cluster, active_db->db_name);
 
 		/*
-		 *	While several relkinds don't store any data, e.g. views, they
-		 *	can be used to define data types of other columns, so we
-		 *	check all relkinds.
+		 * While several relkinds don't store any data, e.g. views, they can
+		 * be used to define data types of other columns, so we check all
+		 * relkinds.
 		 */
 		res = executeQueryOrDie(conn,
 								"SELECT n.nspname, c.relname, a.attname "
@@ -777,16 +778,16 @@ check_for_reg_data_type_usage(ClusterInfo *cluster)
 								"		NOT a.attisdropped AND "
 								"		a.atttypid IN ( "
 		  "			'pg_catalog.regproc'::pg_catalog.regtype, "
-		  "			'pg_catalog.regprocedure'::pg_catalog.regtype, "
+								"			'pg_catalog.regprocedure'::pg_catalog.regtype, "
 		  "			'pg_catalog.regoper'::pg_catalog.regtype, "
-		  "			'pg_catalog.regoperator'::pg_catalog.regtype, "
+								"			'pg_catalog.regoperator'::pg_catalog.regtype, "
 		/* regclass.oid is preserved, so 'regclass' is OK */
 		/* regtype.oid is preserved, so 'regtype' is OK */
-		  "			'pg_catalog.regconfig'::pg_catalog.regtype, "
-		  "			'pg_catalog.regdictionary'::pg_catalog.regtype) AND "
-		  "		c.relnamespace = n.oid AND "
-		  "		n.nspname != 'pg_catalog' AND "
-		  "		n.nspname != 'information_schema'");
+		"			'pg_catalog.regconfig'::pg_catalog.regtype, "
+								"			'pg_catalog.regdictionary'::pg_catalog.regtype) AND "
+								"		c.relnamespace = n.oid AND "
+							  "		n.nspname != 'pg_catalog' AND "
+						 "		n.nspname != 'information_schema'");
 
 		ntups = PQntuples(res);
 		i_nspname = PQfnumber(res, "nspname");
@@ -822,8 +823,8 @@ check_for_reg_data_type_usage(ClusterInfo *cluster)
 		pg_log(PG_REPORT, "fatal\n");
 		pg_log(PG_FATAL,
 			   "Your installation contains one of the reg* data types in user tables.\n"
-			   "These data types reference system OIDs that are not preserved by\n"
-			   "pg_upgrade, so this cluster cannot currently be upgraded.  You can\n"
+		 "These data types reference system OIDs that are not preserved by\n"
+		"pg_upgrade, so this cluster cannot currently be upgraded.  You can\n"
 			   "remove the problem tables and restart the upgrade.  A list of the problem\n"
 			   "columns is in the file:\n"
 			   "    %s\n\n", output_path);
@@ -836,9 +837,11 @@ check_for_reg_data_type_usage(ClusterInfo *cluster)
 static void
 get_bin_version(ClusterInfo *cluster)
 {
-	char		cmd[MAXPGPATH], cmd_output[MAX_STRING];
+	char		cmd[MAXPGPATH],
+				cmd_output[MAX_STRING];
 	FILE	   *output;
-	int			pre_dot, post_dot;
+	int			pre_dot,
+				post_dot;
 
 	snprintf(cmd, sizeof(cmd), "\"%s/pg_ctl\" --version", cluster->bindir);
 
@@ -858,4 +861,3 @@ get_bin_version(ClusterInfo *cluster)
 
 	cluster->bin_version = (pre_dot * 100 + post_dot) * 100;
 }
-

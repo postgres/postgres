@@ -664,7 +664,7 @@ varbit_transform(PG_FUNCTION_ARGS)
 
 	typmod = (Node *) lsecond(expr->args);
 
-	if (IsA(typmod, Const) && !((Const *) typmod)->constisnull)
+	if (IsA(typmod, Const) &&!((Const *) typmod)->constisnull)
 	{
 		Node	   *source = (Node *) linitial(expr->args);
 		int32		new_typmod = DatumGetInt32(((Const *) typmod)->constvalue);

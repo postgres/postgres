@@ -80,10 +80,10 @@ log_invalid_page(RelFileNode node, ForkNumber forkno, BlockNumber blkno,
 	/*
 	 * Once recovery has reached a consistent state, the invalid-page table
 	 * should be empty and remain so. If a reference to an invalid page is
-	 * found after consistency is reached, PANIC immediately. This might
-	 * seem aggressive, but it's better than letting the invalid reference
-	 * linger in the hash table until the end of recovery and PANIC there,
-	 * which might come only much later if this is a standby server.
+	 * found after consistency is reached, PANIC immediately. This might seem
+	 * aggressive, but it's better than letting the invalid reference linger
+	 * in the hash table until the end of recovery and PANIC there, which
+	 * might come only much later if this is a standby server.
 	 */
 	if (reachedConsistency)
 	{

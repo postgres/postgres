@@ -15,7 +15,7 @@
 #define PORT_PROTOS_H
 
 #include <dlfcn.h>
-#include "utils/dynamic_loader.h"	/* pgrminclude ignore */
+#include "utils/dynamic_loader.h"		/* pgrminclude ignore */
 
 /*
  * In some older systems, the RTLD_NOW flag isn't defined and the mode

@@ -174,7 +174,7 @@ PrepareQuery(PrepareStmt *stmt, const char *queryString)
  * ExecuteQuery --- implement the 'EXECUTE' utility statement.
  *
  * This code also supports CREATE TABLE ... AS EXECUTE.  That case is
- * indicated by passing a non-null intoClause.  The DestReceiver is already
+ * indicated by passing a non-null intoClause.	The DestReceiver is already
  * set up correctly for CREATE TABLE AS, but we still have to make a few
  * other adjustments here.
  *
@@ -211,7 +211,7 @@ ExecuteQuery(ExecuteStmt *stmt, IntoClause *intoClause,
 	{
 		/*
 		 * Need an EState to evaluate parameters; must not delete it till end
-		 * of query, in case parameters are pass-by-reference.  Note that the
+		 * of query, in case parameters are pass-by-reference.	Note that the
 		 * passed-in "params" could possibly be referenced in the parameter
 		 * expressions.
 		 */
@@ -237,15 +237,15 @@ ExecuteQuery(ExecuteStmt *stmt, IntoClause *intoClause,
 	/*
 	 * For CREATE TABLE ... AS EXECUTE, we must verify that the prepared
 	 * statement is one that produces tuples.  Currently we insist that it be
-	 * a plain old SELECT.  In future we might consider supporting other
+	 * a plain old SELECT.	In future we might consider supporting other
 	 * things such as INSERT ... RETURNING, but there are a couple of issues
 	 * to be settled first, notably how WITH NO DATA should be handled in such
 	 * a case (do we really want to suppress execution?) and how to pass down
 	 * the OID-determining eflags (PortalStart won't handle them in such a
 	 * case, and for that matter it's not clear the executor will either).
 	 *
-	 * For CREATE TABLE ... AS EXECUTE, we also have to ensure that the
-	 * proper eflags and fetch count are passed to PortalStart/PortalRun.
+	 * For CREATE TABLE ... AS EXECUTE, we also have to ensure that the proper
+	 * eflags and fetch count are passed to PortalStart/PortalRun.
 	 */
 	if (intoClause)
 	{
@@ -658,7 +658,7 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, IntoClause *into, ExplainState *es,
 	{
 		/*
 		 * Need an EState to evaluate parameters; must not delete it till end
-		 * of query, in case parameters are pass-by-reference.  Note that the
+		 * of query, in case parameters are pass-by-reference.	Note that the
 		 * passed-in "params" could possibly be referenced in the parameter
 		 * expressions.
 		 */

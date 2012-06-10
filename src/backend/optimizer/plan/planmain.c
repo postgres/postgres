@@ -146,8 +146,8 @@ query_planner(PlannerInfo *root, List *tlist,
 
 	/*
 	 * Make a flattened version of the rangetable for faster access (this is
-	 * OK because the rangetable won't change any more), and set up an
-	 * empty array for indexing base relations.
+	 * OK because the rangetable won't change any more), and set up an empty
+	 * array for indexing base relations.
 	 */
 	setup_simple_rel_arrays(root);
 

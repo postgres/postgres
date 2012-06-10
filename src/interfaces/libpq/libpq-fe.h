@@ -163,7 +163,7 @@ typedef struct pgNotify
 
 /* Function type for row-processor callback */
 typedef int (*PQrowProcessor) (PGresult *res, const PGdataValue *columns,
-							   const char **errmsgp, void *param);
+										   const char **errmsgp, void *param);
 
 /* Function types for notice-handling callbacks */
 typedef void (*PQnoticeReceiver) (void *arg, const PGresult *res);

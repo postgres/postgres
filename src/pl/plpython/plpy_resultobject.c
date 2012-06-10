@@ -24,7 +24,7 @@ static PyObject *PLy_result_slice(PyObject *arg, Py_ssize_t lidx, Py_ssize_t hid
 static int	PLy_result_ass_item(PyObject *arg, Py_ssize_t idx, PyObject *item);
 static int	PLy_result_ass_slice(PyObject *rg, Py_ssize_t lidx, Py_ssize_t hidx, PyObject *slice);
 static PyObject *PLy_result_subscript(PyObject *arg, PyObject *item);
-static int PLy_result_ass_subscript(PyObject* self, PyObject* item, PyObject* value);
+static int	PLy_result_ass_subscript(PyObject *self, PyObject *item, PyObject *value);
 
 static char PLy_result_doc[] = {
 	"Results of a PostgreSQL query"
@@ -263,7 +263,7 @@ PLy_result_ass_slice(PyObject *arg, Py_ssize_t lidx, Py_ssize_t hidx, PyObject *
 static PyObject *
 PLy_result_subscript(PyObject *arg, PyObject *item)
 {
-	PLyResultObject	*ob = (PLyResultObject *) arg;
+	PLyResultObject *ob = (PLyResultObject *) arg;
 
 	return PyObject_GetItem(ob->rows, item);
 }
@@ -271,7 +271,7 @@ PLy_result_subscript(PyObject *arg, PyObject *item)
 static int
 PLy_result_ass_subscript(PyObject *arg, PyObject *item, PyObject *value)
 {
-	PLyResultObject	*ob = (PLyResultObject *) arg;
+	PLyResultObject *ob = (PLyResultObject *) arg;
 
 	return PyObject_SetItem(ob->rows, item, value);
 }

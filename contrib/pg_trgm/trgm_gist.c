@@ -199,9 +199,9 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 	 * trigram extraction is relatively CPU-expensive.	We must include
 	 * strategy number because trigram extraction depends on strategy.
 	 *
-	 * The cached structure contains the strategy number, then the input
-	 * query (starting at a MAXALIGN boundary), then the TRGM value (also
-	 * starting at a MAXALIGN boundary).
+	 * The cached structure contains the strategy number, then the input query
+	 * (starting at a MAXALIGN boundary), then the TRGM value (also starting
+	 * at a MAXALIGN boundary).
 	 */
 	if (cache == NULL ||
 		strategy != *((StrategyNumber *) cache) ||
@@ -341,8 +341,7 @@ gtrgm_distance(PG_FUNCTION_ARGS)
 	char	   *cache = (char *) fcinfo->flinfo->fn_extra;
 
 	/*
-	 * Cache the generated trigrams across multiple calls with the same
-	 * query.
+	 * Cache the generated trigrams across multiple calls with the same query.
 	 */
 	if (cache == NULL ||
 		VARSIZE(cache) != querysize ||

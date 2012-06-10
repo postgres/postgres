@@ -258,7 +258,7 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 
 	/*
 	 * If we matched the var to a unique index or DISTINCT clause, assume
-	 * there is exactly one match regardless of anything else.  (This is
+	 * there is exactly one match regardless of anything else.	(This is
 	 * slightly bogus, since the index or clause's equality operator might be
 	 * different from ours, but it's much more likely to be right than
 	 * ignoring the information.)
@@ -393,7 +393,7 @@ var_eq_non_const(VariableStatData *vardata, Oid operator,
 
 	/*
 	 * If we matched the var to a unique index or DISTINCT clause, assume
-	 * there is exactly one match regardless of anything else.  (This is
+	 * there is exactly one match regardless of anything else.	(This is
 	 * slightly bogus, since the index or clause's equality operator might be
 	 * different from ours, but it's much more likely to be right than
 	 * ignoring the information.)
@@ -1743,8 +1743,8 @@ scalararraysel(PlannerInfo *root,
 	}
 
 	/*
-	 * If it is equality or inequality, we might be able to estimate this as
-	 * a form of array containment; for instance "const = ANY(column)" can be
+	 * If it is equality or inequality, we might be able to estimate this as a
+	 * form of array containment; for instance "const = ANY(column)" can be
 	 * treated as "ARRAY[const] <@ column".  scalararraysel_containment tries
 	 * that, and returns the selectivity estimate if successful, or -1 if not.
 	 */
@@ -1819,7 +1819,7 @@ scalararraysel(PlannerInfo *root,
 
 		/*
 		 * For generic operators, we assume the probability of success is
-		 * independent for each array element.  But for "= ANY" or "<> ALL",
+		 * independent for each array element.	But for "= ANY" or "<> ALL",
 		 * if the array elements are distinct (which'd typically be the case)
 		 * then the probabilities are disjoint, and we should just sum them.
 		 *
@@ -2132,6 +2132,7 @@ eqjoinsel(PG_FUNCTION_ARGS)
 			break;
 		case JOIN_SEMI:
 		case JOIN_ANTI:
+
 			/*
 			 * Look up the join's inner relation.  min_righthand is sufficient
 			 * information because neither SEMI nor ANTI joins permit any
@@ -2423,7 +2424,7 @@ eqjoinsel_semi(Oid operator,
 
 	/*
 	 * We clamp nd2 to be not more than what we estimate the inner relation's
-	 * size to be.  This is intuitively somewhat reasonable since obviously
+	 * size to be.	This is intuitively somewhat reasonable since obviously
 	 * there can't be more than that many distinct values coming from the
 	 * inner rel.  The reason for the asymmetry (ie, that we don't clamp nd1
 	 * likewise) is that this is the only pathway by which restriction clauses
@@ -3879,7 +3880,7 @@ convert_string_datum(Datum value, Oid typid)
 	{
 		char	   *xfrmstr;
 		size_t		xfrmlen;
-		size_t		xfrmlen2 PG_USED_FOR_ASSERTS_ONLY;
+		size_t xfrmlen2 PG_USED_FOR_ASSERTS_ONLY;
 
 		/*
 		 * Note: originally we guessed at a suitable output buffer size, and
@@ -4475,7 +4476,7 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 		 * Punt if subquery uses set operations or GROUP BY, as these will
 		 * mash underlying columns' stats beyond recognition.  (Set ops are
 		 * particularly nasty; if we forged ahead, we would return stats
-		 * relevant to only the leftmost subselect...)  DISTINCT is also
+		 * relevant to only the leftmost subselect...)	DISTINCT is also
 		 * problematic, but we check that later because there is a possibility
 		 * of learning something even with it.
 		 */
@@ -4496,12 +4497,12 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 		Assert(rel->subroot && IsA(rel->subroot, PlannerInfo));
 
 		/*
-		 * Switch our attention to the subquery as mangled by the planner.
-		 * It was okay to look at the pre-planning version for the tests
-		 * above, but now we need a Var that will refer to the subroot's
-		 * live RelOptInfos.  For instance, if any subquery pullup happened
-		 * during planning, Vars in the targetlist might have gotten replaced,
-		 * and we need to see the replacement expressions.
+		 * Switch our attention to the subquery as mangled by the planner. It
+		 * was okay to look at the pre-planning version for the tests above,
+		 * but now we need a Var that will refer to the subroot's live
+		 * RelOptInfos.  For instance, if any subquery pullup happened during
+		 * planning, Vars in the targetlist might have gotten replaced, and we
+		 * need to see the replacement expressions.
 		 */
 		subquery = rel->subroot->parse;
 		Assert(IsA(subquery, Query));
@@ -4530,13 +4531,13 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 
 		/*
 		 * If the sub-query originated from a view with the security_barrier
-		 * attribute, we must not look at the variable's statistics, though
-		 * it seems all right to notice the existence of a DISTINCT clause.
-		 * So stop here.
+		 * attribute, we must not look at the variable's statistics, though it
+		 * seems all right to notice the existence of a DISTINCT clause. So
+		 * stop here.
 		 *
 		 * This is probably a harsher restriction than necessary; it's
 		 * certainly OK for the selectivity estimator (which is a C function,
-		 * and therefore omnipotent anyway) to look at the statistics.  But
+		 * and therefore omnipotent anyway) to look at the statistics.	But
 		 * many selectivity estimators will happily *invoke the operator
 		 * function* to try to work out a good estimate - and that's not OK.
 		 * So for now, don't dig down for stats.
@@ -4563,7 +4564,7 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 		/*
 		 * Otherwise, the Var comes from a FUNCTION, VALUES, or CTE RTE.  (We
 		 * won't see RTE_JOIN here because join alias Vars have already been
-		 * flattened.)  There's not much we can do with function outputs, but
+		 * flattened.)	There's not much we can do with function outputs, but
 		 * maybe someday try to be smarter about VALUES and/or CTEs.
 		 */
 	}
@@ -4679,8 +4680,8 @@ get_variable_numdistinct(VariableStatData *vardata, bool *isdefault)
 
 	/*
 	 * With no data, estimate ndistinct = ntuples if the table is small, else
-	 * use default.  We use DEFAULT_NUM_DISTINCT as the cutoff for "small"
-	 * so that the behavior isn't discontinuous.
+	 * use default.  We use DEFAULT_NUM_DISTINCT as the cutoff for "small" so
+	 * that the behavior isn't discontinuous.
 	 */
 	if (ntuples < DEFAULT_NUM_DISTINCT)
 		return ntuples;
@@ -6094,16 +6095,16 @@ string_to_bytea_const(const char *str, size_t str_len)
  * ANDing the index predicate with the explicitly given indexquals produces
  * a more accurate idea of the index's selectivity.  However, we need to be
  * careful not to insert redundant clauses, because clauselist_selectivity()
- * is easily fooled into computing a too-low selectivity estimate.  Our
+ * is easily fooled into computing a too-low selectivity estimate.	Our
  * approach is to add only the predicate clause(s) that cannot be proven to
- * be implied by the given indexquals.  This successfully handles cases such
+ * be implied by the given indexquals.	This successfully handles cases such
  * as a qual "x = 42" used with a partial index "WHERE x >= 40 AND x < 50".
  * There are many other cases where we won't detect redundancy, leading to a
  * too-low selectivity estimate, which will bias the system in favor of using
- * partial indexes where possible.  That is not necessarily bad though.
+ * partial indexes where possible.	That is not necessarily bad though.
  *
  * Note that indexQuals contains RestrictInfo nodes while the indpred
- * does not, so the output list will be mixed.  This is OK for both
+ * does not, so the output list will be mixed.	This is OK for both
  * predicate_implied_by() and clauselist_selectivity(), but might be
  * problematic if the result were passed to other things.
  */
@@ -6392,7 +6393,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 	 * the index scan).  Additional quals can suppress visits to the heap, so
 	 * it's OK to count them in indexSelectivity, but they should not count
 	 * for estimating numIndexTuples.  So we must examine the given indexquals
-	 * to find out which ones count as boundary quals.  We rely on the
+	 * to find out which ones count as boundary quals.	We rely on the
 	 * knowledge that they are given in index column order.
 	 *
 	 * For a RowCompareExpr, we consider only the first column, just as
@@ -6531,8 +6532,8 @@ btcostestimate(PG_FUNCTION_ARGS)
 
 		/*
 		 * If the index is partial, AND the index predicate with the
-		 * index-bound quals to produce a more accurate idea of the number
-		 * of rows covered by the bound conditions.
+		 * index-bound quals to produce a more accurate idea of the number of
+		 * rows covered by the bound conditions.
 		 */
 		selectivityQuals = add_predicate_to_quals(index, indexBoundQuals);
 
@@ -6767,17 +6768,17 @@ gincost_pattern(IndexOptInfo *index, int indexcol,
 	int32		i;
 
 	/*
-	 * Get the operator's strategy number and declared input data types
-	 * within the index opfamily.  (We don't need the latter, but we use
-	 * get_op_opfamily_properties because it will throw error if it fails
-	 * to find a matching pg_amop entry.)
+	 * Get the operator's strategy number and declared input data types within
+	 * the index opfamily.	(We don't need the latter, but we use
+	 * get_op_opfamily_properties because it will throw error if it fails to
+	 * find a matching pg_amop entry.)
 	 */
 	get_op_opfamily_properties(clause_op, index->opfamily[indexcol], false,
 							   &strategy_op, &lefttype, &righttype);
 
 	/*
-	 * GIN always uses the "default" support functions, which are those
-	 * with lefttype == righttype == the opclass' opcintype (see
+	 * GIN always uses the "default" support functions, which are those with
+	 * lefttype == righttype == the opclass' opcintype (see
 	 * IndexSupportInitialize in relcache.c).
 	 */
 	extractProcOid = get_opfamily_proc(index->opfamily[indexcol],
@@ -6864,7 +6865,7 @@ gincost_opexpr(IndexOptInfo *index, OpExpr *clause, GinQualCounts *counts)
 	else
 	{
 		elog(ERROR, "could not match index to operand");
-		operand = NULL;		/* keep compiler quiet */
+		operand = NULL;			/* keep compiler quiet */
 	}
 
 	if (IsA(operand, RelabelType))
@@ -6872,8 +6873,8 @@ gincost_opexpr(IndexOptInfo *index, OpExpr *clause, GinQualCounts *counts)
 
 	/*
 	 * It's impossible to call extractQuery method for unknown operand. So
-	 * unless operand is a Const we can't do much; just assume there will
-	 * be one ordinary search entry from the operand at runtime.
+	 * unless operand is a Const we can't do much; just assume there will be
+	 * one ordinary search entry from the operand at runtime.
 	 */
 	if (!IsA(operand, Const))
 	{
@@ -6901,7 +6902,7 @@ gincost_opexpr(IndexOptInfo *index, OpExpr *clause, GinQualCounts *counts)
  * each of which involves one value from the RHS array, plus all the
  * non-array quals (if any).  To model this, we average the counts across
  * the RHS elements, and add the averages to the counts in *counts (which
- * correspond to per-indexscan costs).  We also multiply counts->arrayScans
+ * correspond to per-indexscan costs).	We also multiply counts->arrayScans
  * by N, causing gincostestimate to scale up its estimates accordingly.
  */
 static bool
@@ -6935,9 +6936,9 @@ gincost_scalararrayopexpr(IndexOptInfo *index, ScalarArrayOpExpr *clause,
 
 	/*
 	 * It's impossible to call extractQuery method for unknown operand. So
-	 * unless operand is a Const we can't do much; just assume there will
-	 * be one ordinary search entry from each array entry at runtime, and
-	 * fall back on a probably-bad estimate of the number of array entries.
+	 * unless operand is a Const we can't do much; just assume there will be
+	 * one ordinary search entry from each array entry at runtime, and fall
+	 * back on a probably-bad estimate of the number of array entries.
 	 */
 	if (!IsA(rightop, Const))
 	{
@@ -7156,7 +7157,7 @@ gincostestimate(PG_FUNCTION_ARGS)
 		else if (IsA(clause, ScalarArrayOpExpr))
 		{
 			matchPossible = gincost_scalararrayopexpr(index,
-													  (ScalarArrayOpExpr *) clause,
+												(ScalarArrayOpExpr *) clause,
 													  numEntries,
 													  &counts);
 			if (!matchPossible)
@@ -7194,7 +7195,8 @@ gincostestimate(PG_FUNCTION_ARGS)
 	outer_scans = loop_count;
 
 	/*
-	 * Compute cost to begin scan, first of all, pay attention to pending list.
+	 * Compute cost to begin scan, first of all, pay attention to pending
+	 * list.
 	 */
 	entryPagesFetched = numPendingPages;
 
@@ -7247,7 +7249,8 @@ gincostestimate(PG_FUNCTION_ARGS)
 	*indexStartupCost = (entryPagesFetched + dataPagesFetched) * spc_random_page_cost;
 
 	/*
-	 * Now we compute the number of data pages fetched while the scan proceeds.
+	 * Now we compute the number of data pages fetched while the scan
+	 * proceeds.
 	 */
 
 	/* data pages scanned for each exact (non-partial) matched entry */

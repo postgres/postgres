@@ -114,7 +114,7 @@ int			Log_destination = LOG_DESTINATION_STDERR;
 /*
  * Max string length to send to syslog().  Note that this doesn't count the
  * sequence-number prefix we add, and of course it doesn't count the prefix
- * added by syslog itself.  Solaris and sysklogd truncate the final message
+ * added by syslog itself.	Solaris and sysklogd truncate the final message
  * at 1024 bytes, so this value leaves 124 bytes for those prefixes.  (Most
  * other syslog implementations seem to have limits of 2KB or so.)
  */
@@ -1857,8 +1857,8 @@ setup_formatted_log_time(void)
 	stamp_time = (pg_time_t) tv.tv_sec;
 
 	/*
-	 * Note: we expect that guc.c will ensure that log_timezone is set up
-	 * (at least with a minimal GMT value) before Log_line_prefix can become
+	 * Note: we expect that guc.c will ensure that log_timezone is set up (at
+	 * least with a minimal GMT value) before Log_line_prefix can become
 	 * nonempty or CSV mode can be selected.
 	 */
 	pg_strftime(formatted_log_time, FORMATTED_TS_LEN,
@@ -1880,8 +1880,8 @@ setup_formatted_start_time(void)
 	pg_time_t	stamp_time = (pg_time_t) MyStartTime;
 
 	/*
-	 * Note: we expect that guc.c will ensure that log_timezone is set up
-	 * (at least with a minimal GMT value) before Log_line_prefix can become
+	 * Note: we expect that guc.c will ensure that log_timezone is set up (at
+	 * least with a minimal GMT value) before Log_line_prefix can become
 	 * nonempty or CSV mode can be selected.
 	 */
 	pg_strftime(formatted_start_time, FORMATTED_TS_LEN,
@@ -2506,7 +2506,7 @@ send_message_to_server_log(ErrorData *edata)
  *
  * Note: when there are multiple backends writing into the syslogger pipe,
  * it's critical that each write go into the pipe indivisibly, and not
- * get interleaved with data from other processes.  Fortunately, the POSIX
+ * get interleaved with data from other processes.	Fortunately, the POSIX
  * spec requires that writes to pipes be atomic so long as they are not
  * more than PIPE_BUF bytes long.  So we divide long messages into chunks
  * that are no more than that length, and send one chunk per write() call.

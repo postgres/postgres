@@ -51,7 +51,7 @@
  * is responsible for there being a trigger context for them to be queued in.
  *
  * WITH/WITHOUT_OIDS tell the executor to emit tuples with or without space
- * for OIDs, respectively.  These are currently used only for CREATE TABLE AS.
+ * for OIDs, respectively.	These are currently used only for CREATE TABLE AS.
  * If neither is set, the plan may or may not produce tuples including OIDs.
  */
 #define EXEC_FLAG_EXPLAIN_ONLY	0x0001	/* EXPLAIN, no ANALYZE */

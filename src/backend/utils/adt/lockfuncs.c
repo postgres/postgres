@@ -160,7 +160,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		bool		nulls[NUM_LOCK_STATUS_COLUMNS];
 		HeapTuple	tuple;
 		Datum		result;
-		LockInstanceData   *instance;
+		LockInstanceData *instance;
 
 		instance = &(lockData->locks[mystatus->currIdx]);
 
@@ -375,8 +375,8 @@ pg_lock_status(PG_FUNCTION_ARGS)
 			nulls[11] = true;
 
 		/*
-		 * Lock mode. Currently all predicate locks are SIReadLocks, which
-		 * are always held (never waiting) and have no fast path
+		 * Lock mode. Currently all predicate locks are SIReadLocks, which are
+		 * always held (never waiting) and have no fast path
 		 */
 		values[12] = CStringGetTextDatum("SIReadLock");
 		values[13] = BoolGetDatum(true);

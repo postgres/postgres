@@ -105,7 +105,8 @@ __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
  * without modifying str.  Typically the caller would enlarge str and retry
  * on false return --- see appendStringInfo for standard usage pattern.
  */
-extern bool appendStringInfoVA(StringInfo str, const char *fmt, va_list args)
+extern bool
+appendStringInfoVA(StringInfo str, const char *fmt, va_list args)
 __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 0)));
 
 /*------------------------

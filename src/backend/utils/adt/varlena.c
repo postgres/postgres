@@ -1353,6 +1353,7 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2, Oid collid)
 		char		a2buf[STACKBUFLEN];
 		char	   *a1p,
 				   *a2p;
+
 #ifdef HAVE_LOCALE_T
 		pg_locale_t mylocale = 0;
 #endif
@@ -1413,8 +1414,8 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2, Oid collid)
 										(LPWSTR) a1p, a1len / 2);
 				if (!r)
 					ereport(ERROR,
-					 (errmsg("could not convert string to UTF-16: error code %lu",
-							 GetLastError())));
+							(errmsg("could not convert string to UTF-16: error code %lu",
+									GetLastError())));
 			}
 			((LPWSTR) a1p)[r] = 0;
 
@@ -1426,8 +1427,8 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2, Oid collid)
 										(LPWSTR) a2p, a2len / 2);
 				if (!r)
 					ereport(ERROR,
-					 (errmsg("could not convert string to UTF-16: error code %lu",
-							 GetLastError())));
+							(errmsg("could not convert string to UTF-16: error code %lu",
+									GetLastError())));
 			}
 			((LPWSTR) a2p)[r] = 0;
 
@@ -4001,7 +4002,7 @@ text_format_string_conversion(StringInfo buf, char conversion,
 		else if (conversion == 'I')
 			ereport(ERROR,
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-					 errmsg("null values cannot be formatted as an SQL identifier")));
+			errmsg("null values cannot be formatted as an SQL identifier")));
 		return;
 	}
 

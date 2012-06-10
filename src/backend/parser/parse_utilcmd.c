@@ -103,7 +103,7 @@ static void transformColumnDefinition(CreateStmtContext *cxt,
 static void transformTableConstraint(CreateStmtContext *cxt,
 						 Constraint *constraint);
 static void transformTableLikeClause(CreateStmtContext *cxt,
-					 TableLikeClause *table_like_clause);
+						 TableLikeClause *table_like_clause);
 static void transformOfType(CreateStmtContext *cxt,
 				TypeName *ofTypename);
 static char *chooseIndexName(const RangeVar *relation, IndexStmt *index_stmt);
@@ -309,7 +309,7 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 			column->typeName->typeOid = INT2OID;
 		}
 		else if (strcmp(typname, "serial") == 0 ||
-			strcmp(typname, "serial4") == 0)
+				 strcmp(typname, "serial4") == 0)
 		{
 			is_serial = true;
 			column->typeName->names = NIL;
@@ -554,13 +554,13 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 	}
 
 	/*
-	 * Generate ALTER FOREIGN TABLE ALTER COLUMN statement which adds 
+	 * Generate ALTER FOREIGN TABLE ALTER COLUMN statement which adds
 	 * per-column foreign data wrapper options for this column.
 	 */
 	if (column->fdwoptions != NIL)
 	{
 		AlterTableStmt *stmt;
-		AlterTableCmd  *cmd;
+		AlterTableCmd *cmd;
 
 		cmd = makeNode(AlterTableCmd);
 		cmd->subtype = AT_AlterColumnGenericOptions;
@@ -667,7 +667,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 	else
 	{
 		aclresult = pg_class_aclcheck(RelationGetRelid(relation), GetUserId(),
-								  ACL_SELECT);
+									  ACL_SELECT);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, ACL_KIND_CLASS,
 						   RelationGetRelationName(relation));
@@ -803,7 +803,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 			/* Copy comment on constraint */
 			if ((table_like_clause->options & CREATE_TABLE_LIKE_COMMENTS) &&
 				(comment = GetComment(get_relation_constraint_oid(RelationGetRelid(relation),
-														 n->conname, false),
+														  n->conname, false),
 									  ConstraintRelationId,
 									  0)) != NULL)
 			{
@@ -2305,7 +2305,7 @@ transformAlterTableStmt(AlterTableStmt *stmt, const char *queryString)
 		/* this message is consistent with relation_openrv */
 		ereport(NOTICE,
 				(errmsg("relation \"%s\" does not exist, skipping",
-							stmt->relation->relname)));
+						stmt->relation->relname)));
 		return NIL;
 	}
 

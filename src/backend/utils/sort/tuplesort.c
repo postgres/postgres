@@ -195,8 +195,8 @@ typedef enum
 #define TAPE_BUFFER_OVERHEAD		(BLCKSZ * 3)
 #define MERGE_BUFFER_SIZE			(BLCKSZ * 32)
 
-typedef int	(*SortTupleComparator) (const SortTuple *a, const SortTuple *b,
-	Tuplesortstate *state);
+typedef int (*SortTupleComparator) (const SortTuple *a, const SortTuple *b,
+												Tuplesortstate *state);
 
 /*
  * Private state of a Tuplesort operation.
@@ -226,7 +226,7 @@ struct Tuplesortstate
 	 * <0, 0, >0 according as a<b, a=b, a>b.  The API must match
 	 * qsort_arg_comparator.
 	 */
-	SortTupleComparator	comparetup;
+	SortTupleComparator comparetup;
 
 	/*
 	 * Function to copy a supplied input tuple into palloc'd space and set up
@@ -342,13 +342,13 @@ struct Tuplesortstate
 	 * tuplesort_begin_heap and used only by the MinimalTuple routines.
 	 */
 	TupleDesc	tupDesc;
-	SortSupport	sortKeys;		/* array of length nKeys */
+	SortSupport sortKeys;		/* array of length nKeys */
 
 	/*
 	 * This variable is shared by the single-key MinimalTuple case and the
 	 * Datum case (which both use qsort_ssup()).  Otherwise it's NULL.
 	 */
-	SortSupport	onlyKey;
+	SortSupport onlyKey;
 
 	/*
 	 * These variables are specific to the CLUSTER case; they are set by
@@ -634,7 +634,7 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 
 	for (i = 0; i < nkeys; i++)
 	{
-		SortSupport	sortKey = state->sortKeys + i;
+		SortSupport sortKey = state->sortKeys + i;
 
 		AssertArg(attNums[i] != 0);
 		AssertArg(sortOperators[i] != 0);
@@ -2685,7 +2685,7 @@ inlineApplySortFunction(FmgrInfo *sortFunction, int sk_flags, Oid collation,
 static int
 comparetup_heap(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 {
-	SortSupport	sortKey = state->sortKeys;
+	SortSupport sortKey = state->sortKeys;
 	HeapTupleData ltup;
 	HeapTupleData rtup;
 	TupleDesc	tupDesc;
@@ -2806,7 +2806,7 @@ readtup_heap(Tuplesortstate *state, SortTuple *stup,
 static void
 reversedirection_heap(Tuplesortstate *state)
 {
-	SortSupport	sortKey = state->sortKeys;
+	SortSupport sortKey = state->sortKeys;
 	int			nkey;
 
 	for (nkey = 0; nkey < state->nKeys; nkey++, sortKey++)
@@ -3076,9 +3076,10 @@ comparetup_index_btree(const SortTuple *a, const SortTuple *b,
 		bool		isnull[INDEX_MAX_KEYS];
 
 		/*
-		 * Some rather brain-dead implementations of qsort (such as the one in QNX 4)
-		 * will sometimes call the comparison routine to compare a value to itself,
-		 * but we always use our own implementation, which does not.
+		 * Some rather brain-dead implementations of qsort (such as the one in
+		 * QNX 4) will sometimes call the comparison routine to compare a
+		 * value to itself, but we always use our own implementation, which
+		 * does not.
 		 */
 		Assert(tuple1 != tuple2);
 
@@ -3094,8 +3095,8 @@ comparetup_index_btree(const SortTuple *a, const SortTuple *b,
 
 	/*
 	 * If key values are equal, we sort on ItemPointer.  This does not affect
-	 * validity of the finished index, but it may be useful to have index scans
-	 * in physical order.
+	 * validity of the finished index, but it may be useful to have index
+	 * scans in physical order.
 	 */
 	{
 		BlockNumber blk1 = ItemPointerGetBlockNumber(&tuple1->t_tid);
@@ -3140,8 +3141,8 @@ comparetup_index_hash(const SortTuple *a, const SortTuple *b,
 
 	/*
 	 * If hash values are equal, we sort on ItemPointer.  This does not affect
-	 * validity of the finished index, but it may be useful to have index scans
-	 * in physical order.
+	 * validity of the finished index, but it may be useful to have index
+	 * scans in physical order.
 	 */
 	tuple1 = (IndexTuple) a->tuple;
 	tuple2 = (IndexTuple) b->tuple;

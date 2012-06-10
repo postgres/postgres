@@ -103,12 +103,12 @@ static List *build_paths_for_OR(PlannerInfo *root, RelOptInfo *rel,
 				   List *clauses, List *other_clauses);
 static List *drop_indexable_join_clauses(RelOptInfo *rel, List *clauses);
 static Path *choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
-							   List *paths);
+				  List *paths);
 static int	path_usage_comparator(const void *a, const void *b);
 static Cost bitmap_scan_cost_est(PlannerInfo *root, RelOptInfo *rel,
-								 Path *ipath);
+					 Path *ipath);
 static Cost bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel,
-								List *paths);
+					List *paths);
 static PathClauseUsage *classify_index_clause_usage(Path *path,
 							List **clauselist);
 static Relids get_bitmap_tree_required_outer(Path *bitmapqual);
@@ -117,15 +117,15 @@ static int	find_list_position(Node *node, List **nodelist);
 static bool check_index_only(RelOptInfo *rel, IndexOptInfo *index);
 static double get_loop_count(PlannerInfo *root, Relids outer_relids);
 static void match_restriction_clauses_to_index(RelOptInfo *rel,
-											   IndexOptInfo *index,
-											   IndexClauseSet *clauseset);
+								   IndexOptInfo *index,
+								   IndexClauseSet *clauseset);
 static void match_join_clauses_to_index(PlannerInfo *root,
 							RelOptInfo *rel, IndexOptInfo *index,
 							IndexClauseSet *clauseset,
 							List **joinorclauses);
 static void match_eclass_clauses_to_index(PlannerInfo *root,
-										  IndexOptInfo *index,
-										  IndexClauseSet *clauseset);
+							  IndexOptInfo *index,
+							  IndexClauseSet *clauseset);
 static void match_clauses_to_index(IndexOptInfo *index,
 					   List *clauses,
 					   IndexClauseSet *clauseset);
@@ -237,7 +237,7 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 		match_restriction_clauses_to_index(rel, index, &rclauseset);
 
 		/*
-		 * Build index paths from the restriction clauses.  These will be
+		 * Build index paths from the restriction clauses.	These will be
 		 * non-parameterized paths.  Plain paths go directly to add_path(),
 		 * bitmap paths are added to bitindexpaths to be handled below.
 		 */
@@ -245,25 +245,25 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 						&bitindexpaths);
 
 		/*
-		 * Identify the join clauses that can match the index.  For the moment
-		 * we keep them separate from the restriction clauses.  Note that
-		 * this finds only "loose" join clauses that have not been merged
-		 * into EquivalenceClasses.  Also, collect join OR clauses for later.
+		 * Identify the join clauses that can match the index.	For the moment
+		 * we keep them separate from the restriction clauses.	Note that this
+		 * finds only "loose" join clauses that have not been merged into
+		 * EquivalenceClasses.	Also, collect join OR clauses for later.
 		 */
 		MemSet(&jclauseset, 0, sizeof(jclauseset));
 		match_join_clauses_to_index(root, rel, index,
 									&jclauseset, &joinorclauses);
 
 		/*
-		 * Look for EquivalenceClasses that can generate joinclauses
-		 * matching the index.
+		 * Look for EquivalenceClasses that can generate joinclauses matching
+		 * the index.
 		 */
 		MemSet(&eclauseset, 0, sizeof(eclauseset));
 		match_eclass_clauses_to_index(root, index, &eclauseset);
 
 		/*
-		 * If we found any plain or eclass join clauses, decide what to
-		 * do with 'em.
+		 * If we found any plain or eclass join clauses, decide what to do
+		 * with 'em.
 		 */
 		if (jclauseset.nonempty || eclauseset.nonempty)
 			consider_index_join_clauses(root, rel, index,
@@ -287,7 +287,7 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 	 * the joinclause list.  Add these to bitjoinpaths.
 	 */
 	indexpaths = generate_bitmap_or_paths(root, rel,
-										  joinorclauses, rel->baserestrictinfo,
+										joinorclauses, rel->baserestrictinfo,
 										  false);
 	bitjoinpaths = list_concat(bitjoinpaths, indexpaths);
 
@@ -313,7 +313,7 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 	 * the most promising combination of join bitmap index paths.  Note there
 	 * will be only one such path no matter how many join clauses are
 	 * available.  (XXX is that good enough, or do we need to consider even
-	 * more paths for different subsets of possible join partners?  Also,
+	 * more paths for different subsets of possible join partners?	Also,
 	 * should we add in restriction bitmap paths as well?)
 	 */
 	if (bitjoinpaths != NIL)
@@ -366,19 +366,19 @@ consider_index_join_clauses(PlannerInfo *root, RelOptInfo *rel,
 	 * We can always include any restriction clauses in the index clauses.
 	 * However, it's not obvious which subsets of the join clauses are worth
 	 * generating paths from, and it's unlikely that considering every
-	 * possible subset is worth the cycles.  Our current heuristic is based
-	 * on the index columns, with the idea that later index columns are less
+	 * possible subset is worth the cycles.  Our current heuristic is based on
+	 * the index columns, with the idea that later index columns are less
 	 * useful than earlier ones; therefore it's unlikely to be worth trying
 	 * combinations that would remove a clause from an earlier index column
-	 * while adding one to a later column.  Also, we know that all the
-	 * eclass clauses for a particular column are redundant, so we should
-	 * use only one of them.  However, eclass clauses will always represent
-	 * equality which is the strongest type of index constraint, so those
-	 * are high-value and we should try every available combination when we
-	 * have eclass clauses for more than one column.  Furthermore, it's
-	 * unlikely to be useful to combine an eclass clause with non-eclass
-	 * clauses for the same index column.  These considerations lead to the
-	 * following heuristics:
+	 * while adding one to a later column.	Also, we know that all the eclass
+	 * clauses for a particular column are redundant, so we should use only
+	 * one of them.  However, eclass clauses will always represent equality
+	 * which is the strongest type of index constraint, so those are
+	 * high-value and we should try every available combination when we have
+	 * eclass clauses for more than one column.  Furthermore, it's unlikely to
+	 * be useful to combine an eclass clause with non-eclass clauses for the
+	 * same index column.  These considerations lead to the following
+	 * heuristics:
 	 *
 	 * First, start with the restriction clauses, and add on all simple join
 	 * clauses for column 1.  If there are any such join clauses, generate
@@ -387,7 +387,7 @@ consider_index_join_clauses(PlannerInfo *root, RelOptInfo *rel,
 	 * any other clauses we have for column 1.
 	 *
 	 * Next, add on all simple join clauses for column 2.  If there are any
-	 * such join clauses, generate paths with this collection.  If there are
+	 * such join clauses, generate paths with this collection.	If there are
 	 * eclass clauses for columns 1 or 2, generate paths with each such clause
 	 * replacing other clauses for its index column, including cases where we
 	 * use restriction or simple join clauses for one column and an eclass
@@ -519,7 +519,7 @@ expand_eclass_clause_combinations(PlannerInfo *root, RelOptInfo *rel,
  * bitmap indexpaths are added to *bitindexpaths for later processing.
  *
  * This is a fairly simple frontend to build_index_paths().  Its reason for
- * existence is mainly to handle ScalarArrayOpExpr quals properly.  If the
+ * existence is mainly to handle ScalarArrayOpExpr quals properly.	If the
  * index AM supports them natively, we should just include them in simple
  * index paths.  If not, we should exclude them while building simple index
  * paths, and then make a separate attempt to include them in bitmap paths.
@@ -533,7 +533,7 @@ get_index_paths(PlannerInfo *root, RelOptInfo *rel,
 	ListCell   *lc;
 
 	/*
-	 * Build simple index paths using the clauses.  Allow ScalarArrayOpExpr
+	 * Build simple index paths using the clauses.	Allow ScalarArrayOpExpr
 	 * clauses only if the index AM supports them natively.
 	 */
 	indexpaths = build_index_paths(root, rel,
@@ -542,17 +542,16 @@ get_index_paths(PlannerInfo *root, RelOptInfo *rel,
 								   SAOP_PER_AM, ST_ANYSCAN);
 
 	/*
-	 * Submit all the ones that can form plain IndexScan plans to add_path.
-	 * (A plain IndexPath can represent either a plain IndexScan or an
+	 * Submit all the ones that can form plain IndexScan plans to add_path. (A
+	 * plain IndexPath can represent either a plain IndexScan or an
 	 * IndexOnlyScan, but for our purposes here that distinction does not
-	 * matter.  However, some of the indexes might support only bitmap scans,
+	 * matter.	However, some of the indexes might support only bitmap scans,
 	 * and those we mustn't submit to add_path here.)
 	 *
-	 * Also, pick out the ones that are usable as bitmap scans.  For that,
-	 * we must discard indexes that don't support bitmap scans, and we
-	 * also are only interested in paths that have some selectivity; we
-	 * should discard anything that was generated solely for ordering
-	 * purposes.
+	 * Also, pick out the ones that are usable as bitmap scans.  For that, we
+	 * must discard indexes that don't support bitmap scans, and we also are
+	 * only interested in paths that have some selectivity; we should discard
+	 * anything that was generated solely for ordering purposes.
 	 */
 	foreach(lc, indexpaths)
 	{
@@ -568,9 +567,9 @@ get_index_paths(PlannerInfo *root, RelOptInfo *rel,
 	}
 
 	/*
-	 * If the index doesn't handle ScalarArrayOpExpr clauses natively,
-	 * check to see if there are any such clauses, and if so generate
-	 * bitmap scan paths relying on executor-managed ScalarArrayOpExpr.
+	 * If the index doesn't handle ScalarArrayOpExpr clauses natively, check
+	 * to see if there are any such clauses, and if so generate bitmap scan
+	 * paths relying on executor-managed ScalarArrayOpExpr.
 	 */
 	if (!index->amsearcharray)
 	{
@@ -590,7 +589,7 @@ get_index_paths(PlannerInfo *root, RelOptInfo *rel,
  * We return a list of paths because (1) this routine checks some cases
  * that should cause us to not generate any IndexPath, and (2) in some
  * cases we want to consider both a forward and a backward scan, so as
- * to obtain both sort orders.  Note that the paths are just returned
+ * to obtain both sort orders.	Note that the paths are just returned
  * to the caller and not immediately fed to add_path().
  *
  * At top level, useful_predicate should be exactly the index's predOK flag
@@ -658,19 +657,19 @@ build_index_paths(PlannerInfo *root, RelOptInfo *rel,
 	/*
 	 * 1. Collect the index clauses into a single list.
 	 *
-	 * We build a list of RestrictInfo nodes for clauses to be used with
-	 * this index, along with an integer list of the index column numbers
-	 * (zero based) that each clause should be used with.  The clauses are
-	 * ordered by index key, so that the column numbers form a nondecreasing
-	 * sequence.  (This order is depended on by btree and possibly other
-	 * places.)  The lists can be empty, if the index AM allows that.
+	 * We build a list of RestrictInfo nodes for clauses to be used with this
+	 * index, along with an integer list of the index column numbers (zero
+	 * based) that each clause should be used with.  The clauses are ordered
+	 * by index key, so that the column numbers form a nondecreasing sequence.
+	 * (This order is depended on by btree and possibly other places.)	The
+	 * lists can be empty, if the index AM allows that.
 	 *
-	 * found_clause is set true only if there's at least one index clause;
-	 * and if saop_control is SAOP_REQUIRE, it has to be a ScalarArrayOpExpr
+	 * found_clause is set true only if there's at least one index clause; and
+	 * if saop_control is SAOP_REQUIRE, it has to be a ScalarArrayOpExpr
 	 * clause.
 	 *
-	 * We also build a Relids set showing which outer rels are required
-	 * by the selected clauses.
+	 * We also build a Relids set showing which outer rels are required by the
+	 * selected clauses.
 	 */
 	index_clauses = NIL;
 	clause_columns = NIL;
@@ -706,8 +705,8 @@ build_index_paths(PlannerInfo *root, RelOptInfo *rel,
 		 * If no clauses match the first index column, check for amoptionalkey
 		 * restriction.  We can't generate a scan over an index with
 		 * amoptionalkey = false unless there's at least one index clause.
-		 * (When working on columns after the first, this test cannot fail.
-		 * It is always okay for columns after the first to not have any
+		 * (When working on columns after the first, this test cannot fail. It
+		 * is always okay for columns after the first to not have any
 		 * clauses.)
 		 */
 		if (index_clauses == NIL && !index->amoptionalkey)
@@ -759,7 +758,7 @@ build_index_paths(PlannerInfo *root, RelOptInfo *rel,
 	}
 
 	/*
-	 * 3. Check if an index-only scan is possible.  If we're not building
+	 * 3. Check if an index-only scan is possible.	If we're not building
 	 * plain indexscans, this isn't relevant since bitmap scans don't support
 	 * index data retrieval anyway.
 	 */
@@ -865,8 +864,8 @@ build_paths_for_OR(PlannerInfo *root, RelOptInfo *rel,
 
 		/*
 		 * Ignore partial indexes that do not match the query.	If a partial
-		 * index is marked predOK then we know it's OK.  Otherwise, we have
-		 * to test whether the added clauses are sufficient to imply the
+		 * index is marked predOK then we know it's OK.  Otherwise, we have to
+		 * test whether the added clauses are sufficient to imply the
 		 * predicate. If so, we can use the index in the current context.
 		 *
 		 * We set useful_predicate to true iff the predicate was proven using
@@ -904,8 +903,8 @@ build_paths_for_OR(PlannerInfo *root, RelOptInfo *rel,
 		match_clauses_to_index(index, clauses, &clauseset);
 
 		/*
-		 * If no matches so far, and the index predicate isn't useful,
-		 * we don't want it.
+		 * If no matches so far, and the index predicate isn't useful, we
+		 * don't want it.
 		 */
 		if (!clauseset.nonempty && !useful_predicate)
 			continue;
@@ -997,7 +996,7 @@ generate_bitmap_or_paths(PlannerInfo *root, RelOptInfo *rel,
 									  generate_bitmap_or_paths(root, rel,
 															   andargs,
 															   all_clauses,
-															   restriction_only));
+														  restriction_only));
 			}
 			else
 			{
@@ -1053,7 +1052,7 @@ generate_bitmap_or_paths(PlannerInfo *root, RelOptInfo *rel,
  *
  * This is a helper for generate_bitmap_or_paths().  We leave OR clauses
  * in the list whether they are joins or not, since we might be able to
- * extract a restriction item from an OR list.  It's safe to leave such
+ * extract a restriction item from an OR list.	It's safe to leave such
  * clauses in the list because match_clauses_to_index() will ignore them,
  * so there's no harm in passing such clauses to build_paths_for_OR().
  */
@@ -1361,7 +1360,7 @@ bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel, List *paths)
 	apath.path.type = T_BitmapAndPath;
 	apath.path.pathtype = T_BitmapAnd;
 	apath.path.parent = rel;
-	apath.path.param_info = NULL;	/* not used in bitmap trees */
+	apath.path.param_info = NULL;		/* not used in bitmap trees */
 	apath.path.pathkeys = NIL;
 	apath.bitmapquals = paths;
 	cost_bitmap_and_node(&apath, root);
@@ -1464,7 +1463,7 @@ get_bitmap_tree_required_outer(Path *bitmapqual)
 		foreach(lc, ((BitmapAndPath *) bitmapqual)->bitmapquals)
 		{
 			result = bms_join(result,
-						  get_bitmap_tree_required_outer((Path *) lfirst(lc)));
+						get_bitmap_tree_required_outer((Path *) lfirst(lc)));
 		}
 	}
 	else if (IsA(bitmapqual, BitmapOrPath))
@@ -1472,7 +1471,7 @@ get_bitmap_tree_required_outer(Path *bitmapqual)
 		foreach(lc, ((BitmapOrPath *) bitmapqual)->bitmapquals)
 		{
 			result = bms_join(result,
-						  get_bitmap_tree_required_outer((Path *) lfirst(lc)));
+						get_bitmap_tree_required_outer((Path *) lfirst(lc)));
 		}
 	}
 	else
@@ -1581,16 +1580,16 @@ check_index_only(RelOptInfo *rel, IndexOptInfo *index)
 		return false;
 
 	/*
-	 * Check that all needed attributes of the relation are available from
-	 * the index.
+	 * Check that all needed attributes of the relation are available from the
+	 * index.
 	 *
 	 * XXX this is overly conservative for partial indexes, since we will
 	 * consider attributes involved in the index predicate as required even
-	 * though the predicate won't need to be checked at runtime.  (The same
-	 * is true for attributes used only in index quals, if we are certain
-	 * that the index is not lossy.)  However, it would be quite expensive
-	 * to determine that accurately at this point, so for now we take the
-	 * easy way out.
+	 * though the predicate won't need to be checked at runtime.  (The same is
+	 * true for attributes used only in index quals, if we are certain that
+	 * the index is not lossy.)  However, it would be quite expensive to
+	 * determine that accurately at this point, so for now we take the easy
+	 * way out.
 	 */
 
 	/*
@@ -1603,7 +1602,7 @@ check_index_only(RelOptInfo *rel, IndexOptInfo *index)
 	/* Add all the attributes used by restriction clauses. */
 	foreach(lc, rel->baserestrictinfo)
 	{
-		RestrictInfo   *rinfo = (RestrictInfo *) lfirst(lc);
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
 
 		pull_varattnos((Node *) rinfo->clause, rel->relid, &attrs_used);
 	}
@@ -1611,7 +1610,7 @@ check_index_only(RelOptInfo *rel, IndexOptInfo *index)
 	/* Construct a bitmapset of columns stored in the index. */
 	for (i = 0; i < index->ncolumns; i++)
 	{
-		int		attno = index->indexkeys[i];
+		int			attno = index->indexkeys[i];
 
 		/*
 		 * For the moment, we just ignore index expressions.  It might be nice
@@ -1642,7 +1641,7 @@ check_index_only(RelOptInfo *rel, IndexOptInfo *index)
  * Since we produce parameterized paths before we've begun to generate join
  * relations, it's impossible to predict exactly how many times a parameterized
  * path will be iterated; we don't know the size of the relation that will be
- * on the outside of the nestloop.  However, we should try to account for
+ * on the outside of the nestloop.	However, we should try to account for
  * multiple iterations somehow in costing the path.  The heuristic embodied
  * here is to use the rowcount of the smallest other base relation needed in
  * the join clauses used by the path.  (We could alternatively consider the
@@ -1676,7 +1675,7 @@ get_loop_count(PlannerInfo *root, Relids outer_relids)
 			outer_rel = root->simple_rel_array[relid];
 			if (outer_rel == NULL)
 				continue;
-			Assert(outer_rel->relid == relid); /* sanity check on array */
+			Assert(outer_rel->relid == relid);	/* sanity check on array */
 
 			/* Other relation could be proven empty, if so ignore */
 			if (IS_DUMMY_REL(outer_rel))
@@ -1851,7 +1850,7 @@ match_clause_to_index(IndexOptInfo *index,
  *	  doesn't involve a volatile function or a Var of the index's relation.
  *	  In particular, Vars belonging to other relations of the query are
  *	  accepted here, since a clause of that form can be used in a
- *	  parameterized indexscan.  It's the responsibility of higher code levels
+ *	  parameterized indexscan.	It's the responsibility of higher code levels
  *	  to manage restriction and join clauses appropriately.
  *
  *	  Note: we do need to check for Vars of the index's relation on the
@@ -2149,7 +2148,7 @@ match_pathkeys_to_index(IndexOptInfo *index, List *pathkeys,
 	List	   *clause_columns = NIL;
 	ListCell   *lc1;
 
-	*orderby_clauses_p = NIL;		/* set default results */
+	*orderby_clauses_p = NIL;	/* set default results */
 	*clause_columns_p = NIL;
 
 	/* Only indexes with the amcanorderbyop property are interesting here */
@@ -2195,9 +2194,9 @@ match_pathkeys_to_index(IndexOptInfo *index, List *pathkeys,
 
 			/*
 			 * We allow any column of the index to match each pathkey; they
-			 * don't have to match left-to-right as you might expect.  This
-			 * is correct for GiST, which is the sole existing AM supporting
-			 * amcanorderbyop.  We might need different logic in future for
+			 * don't have to match left-to-right as you might expect.  This is
+			 * correct for GiST, which is the sole existing AM supporting
+			 * amcanorderbyop.	We might need different logic in future for
 			 * other implementations.
 			 */
 			for (indexcol = 0; indexcol < index->ncolumns; indexcol++)
@@ -2393,8 +2392,8 @@ eclass_member_matches_indexcol(EquivalenceClass *ec, EquivalenceMember *em,
 	 * If it's a btree index, we can reject it if its opfamily isn't
 	 * compatible with the EC, since no clause generated from the EC could be
 	 * used with the index.  For non-btree indexes, we can't easily tell
-	 * whether clauses generated from the EC could be used with the index,
-	 * so don't check the opfamily.  This might mean we return "true" for a
+	 * whether clauses generated from the EC could be used with the index, so
+	 * don't check the opfamily.  This might mean we return "true" for a
 	 * useless EC, so we have to recheck the results of
 	 * generate_implied_equalities_for_indexcol; see
 	 * match_eclass_clauses_to_index.
@@ -2425,7 +2424,7 @@ eclass_member_matches_indexcol(EquivalenceClass *ec, EquivalenceMember *em,
  * if it is true.
  * 2. A list of expressions in this relation, and a corresponding list of
  * equality operators. The caller must have already checked that the operators
- * represent equality.  (Note: the operators could be cross-type; the
+ * represent equality.	(Note: the operators could be cross-type; the
  * expressions should correspond to their RHS inputs.)
  *
  * The caller need only supply equality conditions arising from joins;
@@ -2571,7 +2570,7 @@ relation_has_unique_index_for(PlannerInfo *root, RelOptInfo *rel,
 				 * notion of equality.
 				 */
 
-				matched = true;		/* column is unique */
+				matched = true; /* column is unique */
 				break;
 			}
 
@@ -3300,9 +3299,9 @@ adjust_rowcompare_for_index(RowCompareExpr *clause,
 
 	/*
 	 * See how many of the remaining columns match some index column in the
-	 * same way.  As in match_clause_to_indexcol(), the "other" side of
-	 * any potential index condition is OK as long as it doesn't use Vars from
-	 * the indexed relation.
+	 * same way.  As in match_clause_to_indexcol(), the "other" side of any
+	 * potential index condition is OK as long as it doesn't use Vars from the
+	 * indexed relation.
 	 */
 	matching_cols = 1;
 	largs_cell = lnext(list_head(clause->largs));

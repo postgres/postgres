@@ -18,8 +18,9 @@
 static void check_data_dir(const char *pg_data);
 static void check_bin_dir(ClusterInfo *cluster);
 static void validate_exec(const char *dir, const char *cmdName);
+
 #ifdef WIN32
-static int win32_check_directory_write_permissions(void);
+static int	win32_check_directory_write_permissions(void);
 #endif
 
 
@@ -64,7 +65,7 @@ exec_prog(bool throw_error, bool is_priv,
 		pg_log(throw_error ? PG_FATAL : PG_REPORT,
 			   "Consult the last few lines of \"%s\" for\n"
 			   "the probable cause of the failure.\n",
-				log_file);
+			   log_file);
 		return 1;
 	}
 
@@ -142,12 +143,12 @@ verify_directories(void)
 static int
 win32_check_directory_write_permissions(void)
 {
-	int fd;
+	int			fd;
 
 	/*
-	 *	We open a file we would normally create anyway.  We do this even in
-	 *	'check' mode, which isn't ideal, but this is the best we can do.
-	 */	
+	 * We open a file we would normally create anyway.	We do this even in
+	 * 'check' mode, which isn't ideal, but this is the best we can do.
+	 */
 	if ((fd = open(GLOBALS_DUMP_FILE, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR)) < 0)
 		return -1;
 	close(fd);
@@ -184,7 +185,7 @@ check_data_dir(const char *pg_data)
 		struct stat statBuf;
 
 		snprintf(subDirName, sizeof(subDirName), "%s%s%s", pg_data,
-			/* Win32 can't stat() a directory with a trailing slash. */
+		/* Win32 can't stat() a directory with a trailing slash. */
 				 *requiredSubdirs[subdirnum] ? "/" : "",
 				 requiredSubdirs[subdirnum]);
 

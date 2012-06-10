@@ -147,8 +147,8 @@ typedef struct PlannerInfo
 
 	/*
 	 * all_baserels is a Relids set of all base relids (but not "other"
-	 * relids) in the query; that is, the Relids identifier of the final
-	 * join we need to form.
+	 * relids) in the query; that is, the Relids identifier of the final join
+	 * we need to form.
 	 */
 	Relids		all_baserels;
 
@@ -423,7 +423,7 @@ typedef struct RelOptInfo
 	struct Plan *subplan;		/* if subquery */
 	PlannerInfo *subroot;		/* if subquery */
 	/* use "struct FdwRoutine" to avoid including fdwapi.h here */
-	struct FdwRoutine *fdwroutine;	/* if foreign table */
+	struct FdwRoutine *fdwroutine;		/* if foreign table */
 	void	   *fdw_private;	/* if foreign table */
 
 	/* used by various scans and joins: */
@@ -575,7 +575,7 @@ typedef struct EquivalenceClass
  *
  * em_is_child signifies that this element was built by transposing a member
  * for an appendrel parent relation to represent the corresponding expression
- * for an appendrel child.  These members are used for determining the
+ * for an appendrel child.	These members are used for determining the
  * pathkeys of scans on the child relation and for explicitly sorting the
  * child when necessary to build a MergeAppend path for the whole appendrel
  * tree.  An em_is_child member has no impact on the properties of the EC as a
@@ -668,7 +668,7 @@ typedef struct ParamPathInfo
  * "param_info", if not NULL, links to a ParamPathInfo that identifies outer
  * relation(s) that provide parameter values to each scan of this path.
  * That means this path can only be joined to those rels by means of nestloop
- * joins with this path on the inside.  Also note that a parameterized path
+ * joins with this path on the inside.	Also note that a parameterized path
  * is responsible for testing all "movable" joinclauses involving this rel
  * and the specified outer rel(s).
  *
@@ -832,7 +832,7 @@ typedef struct TidPath
 /*
  * ForeignPath represents a potential scan of a foreign table
  *
- * fdw_private stores FDW private data about the scan.  While fdw_private is
+ * fdw_private stores FDW private data about the scan.	While fdw_private is
  * not actually touched by the core code during normal operations, it's
  * generally a good idea to use a representation that can be dumped by
  * nodeToString(), so that you can examine the structure during debugging
@@ -1483,7 +1483,7 @@ typedef struct MinMaxAggInfo
  * value in the Var will always be zero.
  *
  * A PlaceHolderVar: this works much like the Var case, except that the
- * entry is a PlaceHolderVar node with a contained expression.  The PHV
+ * entry is a PlaceHolderVar node with a contained expression.	The PHV
  * will have phlevelsup = 0, and the contained expression is adjusted
  * to match in level.
  *

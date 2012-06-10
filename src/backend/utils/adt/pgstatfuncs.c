@@ -1225,8 +1225,8 @@ pg_stat_get_db_stat_reset_time(PG_FUNCTION_ARGS)
 Datum
 pg_stat_get_db_temp_files(PG_FUNCTION_ARGS)
 {
-	Oid		dbid = PG_GETARG_OID(0);
-	int64	result;
+	Oid			dbid = PG_GETARG_OID(0);
+	int64		result;
 	PgStat_StatDBEntry *dbentry;
 
 	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
@@ -1241,8 +1241,8 @@ pg_stat_get_db_temp_files(PG_FUNCTION_ARGS)
 Datum
 pg_stat_get_db_temp_bytes(PG_FUNCTION_ARGS)
 {
-	Oid		dbid = PG_GETARG_OID(0);
-	int64	result;
+	Oid			dbid = PG_GETARG_OID(0);
+	int64		result;
 	PgStat_StatDBEntry *dbentry;
 
 	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)

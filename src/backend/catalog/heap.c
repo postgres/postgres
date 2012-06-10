@@ -1957,7 +1957,7 @@ StoreRelCheck(Relation rel, char *ccname, Node *expr,
 						  ccsrc,	/* Source form of check constraint */
 						  is_local,		/* conislocal */
 						  inhcount,		/* coninhcount */
-						  is_no_inherit);	/* connoinherit */
+						  is_no_inherit);		/* connoinherit */
 
 	pfree(ccbin);
 	pfree(ccsrc);
@@ -1998,7 +1998,7 @@ StoreConstraints(Relation rel, List *cooked_constraints)
 				break;
 			case CONSTR_CHECK:
 				StoreRelCheck(rel, con->name, con->expr, !con->skip_validation,
-							  con->is_local, con->inhcount, con->is_no_inherit);
+						   con->is_local, con->inhcount, con->is_no_inherit);
 				numchecks++;
 				break;
 			default:
@@ -2345,8 +2345,8 @@ MergeWithExistingConstraint(Relation rel, char *ccname, Node *expr,
 			}
 			/* OK to update the tuple */
 			ereport(NOTICE,
-					(errmsg("merging constraint \"%s\" with inherited definition",
-							ccname)));
+			   (errmsg("merging constraint \"%s\" with inherited definition",
+					   ccname)));
 			simple_heap_update(conDesc, &tup->t_self, tup);
 			CatalogUpdateIndexes(conDesc, tup);
 			break;

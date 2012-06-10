@@ -401,7 +401,7 @@ SysLoggerMain(int argc, char *argv[])
 
 		/*
 		 * Calculate time till next time-based rotation, so that we don't
-		 * sleep longer than that.  We assume the value of "now" obtained
+		 * sleep longer than that.	We assume the value of "now" obtained
 		 * above is still close enough.  Note we can't make this calculation
 		 * until after calling logfile_rotate(), since it will advance
 		 * next_rotation_time.
@@ -409,7 +409,7 @@ SysLoggerMain(int argc, char *argv[])
 		if (Log_RotationAge > 0 && !rotation_disabled)
 		{
 			if (now < next_rotation_time)
-				cur_timeout = (next_rotation_time - now) * 1000L; /* msec */
+				cur_timeout = (next_rotation_time - now) * 1000L;		/* msec */
 			else
 				cur_timeout = 0;
 			cur_flags = WL_TIMEOUT;
@@ -632,6 +632,7 @@ SysLogger_Start(void)
 							 errmsg("could not redirect stderr: %m")));
 				close(fd);
 				_setmode(_fileno(stderr), _O_BINARY);
+
 				/*
 				 * Now we are done with the write end of the pipe.
 				 * CloseHandle() must not be called because the preceding

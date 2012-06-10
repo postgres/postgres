@@ -147,7 +147,7 @@ extern void SimpleLruFlush(SlruCtl ctl, bool checkpoint);
 extern void SimpleLruTruncate(SlruCtl ctl, int cutoffPage);
 
 typedef bool (*SlruScanCallback) (SlruCtl ctl, char *filename, int segpage,
-					 void *data);
+											  void *data);
 extern bool SlruScanDirectory(SlruCtl ctl, SlruScanCallback callback, void *data);
 
 /* SlruScanDirectory public callbacks */

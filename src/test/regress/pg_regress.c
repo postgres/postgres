@@ -475,7 +475,7 @@ convert_sourcefiles_in(char *source_subdir, char *dest_dir, char *dest_subdir, c
 		/* build the full actual paths to open */
 		snprintf(prefix, strlen(*name) - 6, "%s", *name);
 		snprintf(srcfile, MAXPGPATH, "%s/%s", indir, *name);
-		snprintf(destfile, MAXPGPATH, "%s/%s/%s.%s", dest_dir, dest_subdir, 
+		snprintf(destfile, MAXPGPATH, "%s/%s/%s.%s", dest_dir, dest_subdir,
 				 prefix, suffix);
 
 		infile = fopen(srcfile, "r");

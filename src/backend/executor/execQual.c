@@ -578,15 +578,15 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 	/* Get the input slot and attribute number we want */
 	switch (variable->varno)
 	{
-		case INNER_VAR:			/* get the tuple from the inner node */
+		case INNER_VAR: /* get the tuple from the inner node */
 			slot = econtext->ecxt_innertuple;
 			break;
 
-		case OUTER_VAR:			/* get the tuple from the outer node */
+		case OUTER_VAR: /* get the tuple from the outer node */
 			slot = econtext->ecxt_outertuple;
 			break;
 
-		/* INDEX_VAR is handled by default case */
+			/* INDEX_VAR is handled by default case */
 
 		default:				/* get the tuple from the relation being
 								 * scanned */
@@ -763,15 +763,15 @@ ExecEvalScalarVar(ExprState *exprstate, ExprContext *econtext,
 	/* Get the input slot and attribute number we want */
 	switch (variable->varno)
 	{
-		case INNER_VAR:			/* get the tuple from the inner node */
+		case INNER_VAR: /* get the tuple from the inner node */
 			slot = econtext->ecxt_innertuple;
 			break;
 
-		case OUTER_VAR:			/* get the tuple from the outer node */
+		case OUTER_VAR: /* get the tuple from the outer node */
 			slot = econtext->ecxt_outertuple;
 			break;
 
-		/* INDEX_VAR is handled by default case */
+			/* INDEX_VAR is handled by default case */
 
 		default:				/* get the tuple from the relation being
 								 * scanned */
@@ -808,15 +808,15 @@ ExecEvalWholeRowVar(ExprState *exprstate, ExprContext *econtext,
 	/* Get the input slot we want */
 	switch (variable->varno)
 	{
-		case INNER_VAR:			/* get the tuple from the inner node */
+		case INNER_VAR: /* get the tuple from the inner node */
 			slot = econtext->ecxt_innertuple;
 			break;
 
-		case OUTER_VAR:			/* get the tuple from the outer node */
+		case OUTER_VAR: /* get the tuple from the outer node */
 			slot = econtext->ecxt_outertuple;
 			break;
 
-		/* INDEX_VAR is handled by default case */
+			/* INDEX_VAR is handled by default case */
 
 		default:				/* get the tuple from the relation being
 								 * scanned */
@@ -879,15 +879,15 @@ ExecEvalWholeRowSlow(ExprState *exprstate, ExprContext *econtext,
 	/* Get the input slot we want */
 	switch (variable->varno)
 	{
-		case INNER_VAR:			/* get the tuple from the inner node */
+		case INNER_VAR: /* get the tuple from the inner node */
 			slot = econtext->ecxt_innertuple;
 			break;
 
-		case OUTER_VAR:			/* get the tuple from the outer node */
+		case OUTER_VAR: /* get the tuple from the outer node */
 			slot = econtext->ecxt_outertuple;
 			break;
 
-		/* INDEX_VAR is handled by default case */
+			/* INDEX_VAR is handled by default case */
 
 		default:				/* get the tuple from the relation being
 								 * scanned */

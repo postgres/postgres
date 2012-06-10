@@ -172,7 +172,7 @@ scalararraysel_containment(PlannerInfo *root,
 				selec = mcelem_array_contain_overlap_selec(values, nvalues,
 														   numbers, nnumbers,
 														   &constval, 1,
-														   OID_ARRAY_CONTAINS_OP,
+													   OID_ARRAY_CONTAINS_OP,
 														   cmpfunc);
 			else
 				selec = mcelem_array_contained_selec(values, nvalues,
@@ -193,7 +193,7 @@ scalararraysel_containment(PlannerInfo *root,
 				selec = mcelem_array_contain_overlap_selec(NULL, 0,
 														   NULL, 0,
 														   &constval, 1,
-														   OID_ARRAY_CONTAINS_OP,
+													   OID_ARRAY_CONTAINS_OP,
 														   cmpfunc);
 			else
 				selec = mcelem_array_contained_selec(NULL, 0,
@@ -285,8 +285,8 @@ arraycontsel(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * If var is on the right, commute the operator, so that we can assume
-	 * the var is on the left in what follows.
+	 * If var is on the right, commute the operator, so that we can assume the
+	 * var is on the left in what follows.
 	 */
 	if (!varonleft)
 	{
@@ -451,7 +451,7 @@ mcelem_array_selec(ArrayType *array, TypeCacheEntry *typentry,
 				   float4 *hist, int nhist,
 				   Oid operator, FmgrInfo *cmpfunc)
 {
-	Selectivity	selec;
+	Selectivity selec;
 	int			num_elems;
 	Datum	   *elem_values;
 	bool	   *elem_nulls;
@@ -500,7 +500,7 @@ mcelem_array_selec(ArrayType *array, TypeCacheEntry *typentry,
 	if (operator == OID_ARRAY_CONTAINS_OP || operator == OID_ARRAY_OVERLAP_OP)
 		selec = mcelem_array_contain_overlap_selec(mcelem, nmcelem,
 												   numbers, nnumbers,
-												   elem_values, nonnull_nitems,
+												 elem_values, nonnull_nitems,
 												   operator, cmpfunc);
 	else if (operator == OID_ARRAY_CONTAINED_OP)
 		selec = mcelem_array_contained_selec(mcelem, nmcelem,
@@ -626,7 +626,7 @@ mcelem_array_contain_overlap_selec(Datum *mcelem, int nmcelem,
 				else
 				{
 					if (cmp == 0)
-						match = true; /* mcelem is found */
+						match = true;	/* mcelem is found */
 					break;
 				}
 			}
@@ -687,7 +687,7 @@ mcelem_array_contain_overlap_selec(Datum *mcelem, int nmcelem,
  * In the "column @> const" and "column && const" cases, we usually have a
  * "const" with low number of elements (otherwise we have selectivity close
  * to 0 or 1 respectively).  That's why the effect of dependence related
- * to distinct element count distribution is negligible there.  In the
+ * to distinct element count distribution is negligible there.	In the
  * "column <@ const" case, number of elements is usually high (otherwise we
  * have selectivity close to 0).  That's why we should do a correction with
  * the array distinct element count distribution here.
@@ -806,7 +806,7 @@ mcelem_array_contained_selec(Datum *mcelem, int nmcelem,
 			else
 			{
 				if (cmp == 0)
-					match = true; /* mcelem is found */
+					match = true;		/* mcelem is found */
 				break;
 			}
 		}
@@ -854,7 +854,7 @@ mcelem_array_contained_selec(Datum *mcelem, int nmcelem,
 	/*----------
 	 * Using the distinct element count histogram requires
 	 *		O(unique_nitems * (nmcelem + unique_nitems))
-	 * operations.  Beyond a certain computational cost threshold, it's
+	 * operations.	Beyond a certain computational cost threshold, it's
 	 * reasonable to sacrifice accuracy for decreased planning time.  We limit
 	 * the number of operations to EFFORT * nmcelem; since nmcelem is limited
 	 * by the column's statistics target, the work done is user-controllable.
@@ -866,7 +866,7 @@ mcelem_array_contained_selec(Datum *mcelem, int nmcelem,
 	 * elements to start with, we'd have to remove any discarded elements'
 	 * frequencies from "mult", but since this is only an approximation
 	 * anyway, we don't bother with that.  Therefore it's sufficient to qsort
-	 * elem_selec[] and take the largest elements.  (They will no longer match
+	 * elem_selec[] and take the largest elements.	(They will no longer match
 	 * up with the elements of array_data[], but we don't care.)
 	 *----------
 	 */
@@ -876,11 +876,11 @@ mcelem_array_contained_selec(Datum *mcelem, int nmcelem,
 		unique_nitems > EFFORT * nmcelem / (nmcelem + unique_nitems))
 	{
 		/*
-		 * Use the quadratic formula to solve for largest allowable N.  We
+		 * Use the quadratic formula to solve for largest allowable N.	We
 		 * have A = 1, B = nmcelem, C = - EFFORT * nmcelem.
 		 */
-		double	b = (double) nmcelem;
-		int		n;
+		double		b = (double) nmcelem;
+		int			n;
 
 		n = (int) ((sqrt(b * b + 4 * EFFORT * b) - b) / 2);
 
@@ -891,9 +891,9 @@ mcelem_array_contained_selec(Datum *mcelem, int nmcelem,
 	}
 
 	/*
-	 * Calculate probabilities of each distinct element count for both
-	 * mcelems and constant elements.  At this point, assume independent
-	 * element occurrence.
+	 * Calculate probabilities of each distinct element count for both mcelems
+	 * and constant elements.  At this point, assume independent element
+	 * occurrence.
 	 */
 	dist = calc_distr(elem_selec, unique_nitems, unique_nitems, 0.0f);
 	mcelem_dist = calc_distr(numbers, nmcelem, unique_nitems, rest);
@@ -906,8 +906,8 @@ mcelem_array_contained_selec(Datum *mcelem, int nmcelem,
 	{
 		/*
 		 * mult * dist[i] / mcelem_dist[i] gives us probability of qual
-		 * matching from assumption of independent element occurrence with
-		 * the condition that distinct element count = i.
+		 * matching from assumption of independent element occurrence with the
+		 * condition that distinct element count = i.
 		 */
 		if (mcelem_dist[i] > 0)
 			selec += hist_part[i] * mult * dist[i] / mcelem_dist[i];
@@ -951,7 +951,7 @@ calc_hist(const float4 *hist, int nhist, int n)
 
 	/*
 	 * frac is a probability contribution for each interval between histogram
-	 * values.  We have nhist - 1 intervals, so contribution of each one will
+	 * values.	We have nhist - 1 intervals, so contribution of each one will
 	 * be 1 / (nhist - 1).
 	 */
 	frac = 1.0f / ((float) (nhist - 1));
@@ -1018,7 +1018,7 @@ calc_hist(const float4 *hist, int nhist, int n)
  * "rest" is the sum of the probabilities of all low-probability events not
  * included in p.
  *
- * Imagine matrix M of size (n + 1) x (m + 1).  Element M[i,j] denotes the
+ * Imagine matrix M of size (n + 1) x (m + 1).	Element M[i,j] denotes the
  * probability that exactly j of first i events occur.	Obviously M[0,0] = 1.
  * For any constant j, each increment of i increases the probability iff the
  * event occurs.  So, by the law of total probability:

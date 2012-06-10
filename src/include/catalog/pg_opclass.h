@@ -134,7 +134,7 @@ DATA(insert (	405		macaddr_ops			PGNSP PGUID 1985  829 t 0 ));
  */
 DATA(insert (	403		name_ops			PGNSP PGUID 1986   19 t 2275 ));
 DATA(insert (	405		name_ops			PGNSP PGUID 1987   19 t 0 ));
-DATA(insert OID = 3125 ( 403	numeric_ops	PGNSP PGUID 1988 1700 t 0 ));
+DATA(insert OID = 3125 ( 403	numeric_ops PGNSP PGUID 1988 1700 t 0 ));
 #define NUMERIC_BTREE_OPS_OID 3125
 DATA(insert (	405		numeric_ops			PGNSP PGUID 1998 1700 t 0 ));
 DATA(insert OID = 1981 ( 403	oid_ops		PGNSP PGUID 1989   26 t 0 ));
@@ -148,7 +148,7 @@ DATA(insert OID = 3126 ( 403	text_ops	PGNSP PGUID 1994   25 t 0 ));
 DATA(insert (	405		text_ops			PGNSP PGUID 1995   25 t 0 ));
 DATA(insert (	403		time_ops			PGNSP PGUID 1996 1083 t 0 ));
 DATA(insert (	405		time_ops			PGNSP PGUID 1997 1083 t 0 ));
-DATA(insert OID = 3127 ( 403	timestamptz_ops	PGNSP PGUID  434 1184 t 0 ));
+DATA(insert OID = 3127 ( 403	timestamptz_ops PGNSP PGUID  434 1184 t 0 ));
 #define TIMESTAMPTZ_BTREE_OPS_OID 3127
 DATA(insert (	405		timestamptz_ops		PGNSP PGUID 1999 1184 t 0 ));
 DATA(insert (	403		timetz_ops			PGNSP PGUID 2000 1266 t 0 ));

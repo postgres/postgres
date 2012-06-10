@@ -430,7 +430,7 @@ AlterSequence(AlterSeqStmt *stmt)
 	{
 		ereport(NOTICE,
 				(errmsg("relation \"%s\" does not exist, skipping",
-							stmt->sequence->relname)));
+						stmt->sequence->relname)));
 		return;
 	}
 
@@ -514,12 +514,12 @@ nextval(PG_FUNCTION_ARGS)
 	sequence = makeRangeVarFromNameList(textToQualifiedNameList(seqin));
 
 	/*
-	 * XXX: This is not safe in the presence of concurrent DDL, but
-	 * acquiring a lock here is more expensive than letting nextval_internal
-	 * do it, since the latter maintains a cache that keeps us from hitting
-	 * the lock manager more than once per transaction.  It's not clear
-	 * whether the performance penalty is material in practice, but for now,
-	 * we do it this way.
+	 * XXX: This is not safe in the presence of concurrent DDL, but acquiring
+	 * a lock here is more expensive than letting nextval_internal do it,
+	 * since the latter maintains a cache that keeps us from hitting the lock
+	 * manager more than once per transaction.	It's not clear whether the
+	 * performance penalty is material in practice, but for now, we do it this
+	 * way.
 	 */
 	relid = RangeVarGetRelid(sequence, NoLock, false);
 
@@ -1543,9 +1543,9 @@ seq_redo(XLogRecPtr lsn, XLogRecord *record)
 	 * is also used for updating sequences, it's possible that a hot-standby
 	 * backend is examining the page concurrently; so we mustn't transiently
 	 * trash the buffer.  The solution is to build the correct new page
-	 * contents in local workspace and then memcpy into the buffer.  Then
-	 * only bytes that are supposed to change will change, even transiently.
-	 * We must palloc the local page for alignment reasons.
+	 * contents in local workspace and then memcpy into the buffer.  Then only
+	 * bytes that are supposed to change will change, even transiently. We
+	 * must palloc the local page for alignment reasons.
 	 */
 	localpage = (Page) palloc(BufferGetPageSize(buffer));
 

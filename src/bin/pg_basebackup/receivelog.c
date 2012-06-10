@@ -52,7 +52,7 @@ open_walfile(XLogRecPtr startpoint, uint32 timeline, char *basedir, char *namebu
 {
 	int			f;
 	char		fn[MAXPGPATH];
-	struct stat	statbuf;
+	struct stat statbuf;
 	char	   *zerobuf;
 	int			bytes;
 
@@ -80,7 +80,7 @@ open_walfile(XLogRecPtr startpoint, uint32 timeline, char *basedir, char *namebu
 		return -1;
 	}
 	if (statbuf.st_size == XLogSegSize)
-		return f; /* File is open and ready to use */
+		return f;				/* File is open and ready to use */
 	if (statbuf.st_size != 0)
 	{
 		fprintf(stderr, _("%s: WAL segment %s is %d bytes, should be 0 or %d\n"),
@@ -147,8 +147,8 @@ close_walfile(int walfile, char *basedir, char *walname, bool segment_complete)
 	}
 
 	/*
-	 * Rename the .partial file only if we've completed writing the
-	 * whole segment or segment_complete is true.
+	 * Rename the .partial file only if we've completed writing the whole
+	 * segment or segment_complete is true.
 	 */
 	if (currpos == XLOG_SEG_SIZE || segment_complete)
 	{
@@ -202,7 +202,7 @@ localGetCurrentTimestamp(void)
  */
 static void
 localTimestampDifference(TimestampTz start_time, TimestampTz stop_time,
-					long *secs, int *microsecs)
+						 long *secs, int *microsecs)
 {
 	TimestampTz diff = stop_time - start_time;
 
@@ -229,8 +229,8 @@ localTimestampDifference(TimestampTz start_time, TimestampTz stop_time,
  */
 static bool
 localTimestampDifferenceExceeds(TimestampTz start_time,
-						   TimestampTz stop_time,
-						   int msec)
+								TimestampTz stop_time,
+								int msec)
 {
 	TimestampTz diff = stop_time - start_time;
 
@@ -392,14 +392,14 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysi
 			FD_SET(PQsocket(conn), &input_mask);
 			if (standby_message_timeout)
 			{
-				TimestampTz	targettime;
+				TimestampTz targettime;
 
 				targettime = TimestampTzPlusMilliseconds(last_status,
-														  standby_message_timeout - 1);
+												standby_message_timeout - 1);
 				localTimestampDifference(now,
 										 targettime,
 										 &timeout.tv_sec,
-										 (int *)&timeout.tv_usec);
+										 (int *) &timeout.tv_usec);
 				if (timeout.tv_sec <= 0)
 					timeout.tv_sec = 1; /* Always sleep at least 1 sec */
 				timeoutptr = &timeout;
@@ -444,9 +444,8 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysi
 		if (copybuf[0] == 'k')
 		{
 			/*
-			 * keepalive message, sent in 9.2 and newer. We just ignore
-			 * this message completely, but need to skip past it in the
-			 * stream.
+			 * keepalive message, sent in 9.2 and newer. We just ignore this
+			 * message completely, but need to skip past it in the stream.
 			 */
 			if (r != STREAMING_KEEPALIVE_SIZE)
 			{

@@ -150,7 +150,7 @@ recordDependencyOnCurrentExtension(const ObjectAddress *object,
 		/* Only need to check for existing membership if isReplace */
 		if (isReplace)
 		{
-			Oid		oldext;
+			Oid			oldext;
 
 			oldext = getExtensionOfObject(object->classId, object->objectId);
 			if (OidIsValid(oldext))

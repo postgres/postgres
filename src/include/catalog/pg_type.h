@@ -61,9 +61,8 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71) BKI_SCHEMA_MACRO
 
 	/*
 	 * typtype is 'b' for a base type, 'c' for a composite type (e.g., a
-	 * table's rowtype), 'd' for a domain, 'e' for an enum type,
-	 * 'p' for a pseudo-type, or 'r' for a range type.
-	 * (Use the TYPTYPE macros below.)
+	 * table's rowtype), 'd' for a domain, 'e' for an enum type, 'p' for a
+	 * pseudo-type, or 'r' for a range type. (Use the TYPTYPE macros below.)
 	 *
 	 * If typtype is 'c', typrelid is the OID of the class' entry in pg_class.
 	 */
@@ -201,6 +200,7 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71) BKI_SCHEMA_MACRO
 	Oid			typcollation;
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
+
 	/*
 	 * If typdefaultbin is not NULL, it is the nodeToString representation of
 	 * a default expression for the type.  Currently this is only used for

@@ -24,19 +24,19 @@ struct ExplainState;
  */
 
 typedef void (*GetForeignRelSize_function) (PlannerInfo *root,
-											RelOptInfo *baserel,
-											Oid foreigntableid);
+														RelOptInfo *baserel,
+														Oid foreigntableid);
 
 typedef void (*GetForeignPaths_function) (PlannerInfo *root,
-										  RelOptInfo *baserel,
-										  Oid foreigntableid);
+													  RelOptInfo *baserel,
+													  Oid foreigntableid);
 
 typedef ForeignScan *(*GetForeignPlan_function) (PlannerInfo *root,
-												 RelOptInfo *baserel,
-												 Oid foreigntableid,
-												 ForeignPath *best_path,
-												 List *tlist,
-												 List *scan_clauses);
+														 RelOptInfo *baserel,
+														  Oid foreigntableid,
+													  ForeignPath *best_path,
+															 List *tlist,
+														 List *scan_clauses);
 
 typedef void (*ExplainForeignScan_function) (ForeignScanState *node,
 													struct ExplainState *es);
@@ -51,13 +51,13 @@ typedef void (*ReScanForeignScan_function) (ForeignScanState *node);
 typedef void (*EndForeignScan_function) (ForeignScanState *node);
 
 typedef int (*AcquireSampleRowsFunc) (Relation relation, int elevel,
-									  HeapTuple *rows, int targrows,
-									  double *totalrows,
-									  double *totaldeadrows);
+											   HeapTuple *rows, int targrows,
+												  double *totalrows,
+												  double *totaldeadrows);
 
 typedef bool (*AnalyzeForeignTable_function) (Relation relation,
-											  AcquireSampleRowsFunc *func,
-											  BlockNumber *totalpages);
+												 AcquireSampleRowsFunc *func,
+													BlockNumber *totalpages);
 
 /*
  * FdwRoutine is the struct returned by a foreign-data wrapper's handler
@@ -86,8 +86,8 @@ typedef struct FdwRoutine
 	EndForeignScan_function EndForeignScan;
 
 	/*
-	 * These functions are optional.  Set the pointer to NULL for any
-	 * that are not provided.
+	 * These functions are optional.  Set the pointer to NULL for any that are
+	 * not provided.
 	 */
 	AnalyzeForeignTable_function AnalyzeForeignTable;
 } FdwRoutine;

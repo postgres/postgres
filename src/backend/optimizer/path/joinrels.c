@@ -90,7 +90,7 @@ join_search_one_level(PlannerInfo *root, int level)
 
 			if (level == 2)		/* consider remaining initial rels */
 				other_rels = lnext(r);
-			else				/* consider all initial rels */
+			else	/* consider all initial rels */
 				other_rels = list_head(joinrels[1]);
 
 			make_rels_by_clause_joins(root,
@@ -180,7 +180,7 @@ join_search_one_level(PlannerInfo *root, int level)
 	/*----------
 	 * Normally, we should always have made at least one join of the current
 	 * level.  However, when special joins are involved, there may be no legal
-	 * way to make an N-way join for some values of N.  For example consider
+	 * way to make an N-way join for some values of N.	For example consider
 	 *
 	 * SELECT ... FROM t1 WHERE
 	 *	 x IN (SELECT ... FROM t2,t3 WHERE ...) AND

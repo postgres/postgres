@@ -91,10 +91,9 @@ main(int argc, char *argv[])
 	}
 
 	/*
-	 * We set dbname from positional arguments if it is not
-	 * already set by option arguments -d. If not doing
-	 * listlangs, positional dbname must follow positional
-	 * langname.
+	 * We set dbname from positional arguments if it is not already set by
+	 * option arguments -d. If not doing listlangs, positional dbname must
+	 * follow positional langname.
 	 */
 
 	if (argc - optind > 0)

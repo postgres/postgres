@@ -60,10 +60,10 @@ old_8_3_check_for_name_data_type_usage(ClusterInfo *cluster)
 								"		NOT a.attisdropped AND "
 								"		a.atttypid = 'pg_catalog.name'::pg_catalog.regtype AND "
 								"		c.relnamespace = n.oid AND "
-								 /* exclude possible orphaned temp tables */
+		/* exclude possible orphaned temp tables */
 								"  		n.nspname !~ '^pg_temp_' AND "
-								"		n.nspname !~ '^pg_toast_temp_' AND "
-						 		"		n.nspname NOT IN ('pg_catalog', 'information_schema')");
+						 "		n.nspname !~ '^pg_toast_temp_' AND "
+								"		n.nspname NOT IN ('pg_catalog', 'information_schema')");
 
 		ntups = PQntuples(res);
 		i_nspname = PQfnumber(res, "nspname");
@@ -98,9 +98,9 @@ old_8_3_check_for_name_data_type_usage(ClusterInfo *cluster)
 		pg_log(PG_REPORT, "fatal\n");
 		pg_log(PG_FATAL,
 			   "Your installation contains the \"name\" data type in user tables.  This\n"
-			   "data type changed its internal alignment between your old and new\n"
+		"data type changed its internal alignment between your old and new\n"
 			   "clusters so this cluster cannot currently be upgraded.  You can remove\n"
-			   "the problem tables and restart the upgrade.  A list of the problem\n"
+		"the problem tables and restart the upgrade.  A list of the problem\n"
 			   "columns is in the file:\n"
 			   "    %s\n\n", output_path);
 	}
@@ -150,10 +150,10 @@ old_8_3_check_for_tsquery_usage(ClusterInfo *cluster)
 								"		NOT a.attisdropped AND "
 								"		a.atttypid = 'pg_catalog.tsquery'::pg_catalog.regtype AND "
 								"		c.relnamespace = n.oid AND "
-								 /* exclude possible orphaned temp tables */
+		/* exclude possible orphaned temp tables */
 								"  		n.nspname !~ '^pg_temp_' AND "
-								"		n.nspname !~ '^pg_toast_temp_' AND "
-						 		"		n.nspname NOT IN ('pg_catalog', 'information_schema')");
+						 "		n.nspname !~ '^pg_toast_temp_' AND "
+								"		n.nspname NOT IN ('pg_catalog', 'information_schema')");
 
 		ntups = PQntuples(res);
 		i_nspname = PQfnumber(res, "nspname");
@@ -189,7 +189,7 @@ old_8_3_check_for_tsquery_usage(ClusterInfo *cluster)
 		pg_log(PG_FATAL,
 			   "Your installation contains the \"tsquery\" data type.    This data type\n"
 			   "added a new internal field between your old and new clusters so this\n"
-			   "cluster cannot currently be upgraded.  You can remove the problem\n"
+		"cluster cannot currently be upgraded.  You can remove the problem\n"
 			   "columns and restart the upgrade.  A list of the problem columns is in the\n"
 			   "file:\n"
 			   "    %s\n\n", output_path);
@@ -328,10 +328,10 @@ old_8_3_rebuild_tsvector_tables(ClusterInfo *cluster, bool check_mode)
 								"		NOT a.attisdropped AND "
 								"		a.atttypid = 'pg_catalog.tsvector'::pg_catalog.regtype AND "
 								"		c.relnamespace = n.oid AND "
-								 /* exclude possible orphaned temp tables */
+		/* exclude possible orphaned temp tables */
 								"  		n.nspname !~ '^pg_temp_' AND "
-								"		n.nspname !~ '^pg_toast_temp_' AND "
-						 		"		n.nspname NOT IN ('pg_catalog', 'information_schema')");
+						 "		n.nspname !~ '^pg_toast_temp_' AND "
+								"		n.nspname NOT IN ('pg_catalog', 'information_schema')");
 
 /*
  *	This macro is used below to avoid reindexing indexes already rebuilt
@@ -527,7 +527,7 @@ old_8_3_invalidate_hash_gin_indexes(ClusterInfo *cluster, bool check_mode)
 				   "must be reindexed with the REINDEX command.  The file:\n"
 				   "    %s\n"
 				   "when executed by psql by the database superuser will recreate all invalid\n"
-				   "indexes; until then, none of these indexes will be used.\n\n",
+			  "indexes; until then, none of these indexes will be used.\n\n",
 				   output_path);
 	}
 	else
@@ -648,10 +648,10 @@ old_8_3_invalidate_bpchar_pattern_ops_indexes(ClusterInfo *cluster,
 			pg_log(PG_WARNING, "\n"
 				   "Your installation contains indexes using \"bpchar_pattern_ops\".  These\n"
 				   "indexes have different internal formats between your old and new clusters\n"
-				   "so they must be reindexed with the REINDEX command.  The file:\n"
+			"so they must be reindexed with the REINDEX command.  The file:\n"
 				   "    %s\n"
 				   "when executed by psql by the database superuser will recreate all invalid\n"
-				   "indexes; until then, none of these indexes will be used.\n\n",
+			  "indexes; until then, none of these indexes will be used.\n\n",
 				   output_path);
 	}
 	else
@@ -699,10 +699,10 @@ old_8_3_create_sequence_script(ClusterInfo *cluster)
 								"		pg_catalog.pg_namespace n "
 								"WHERE	c.relkind = 'S' AND "
 								"		c.relnamespace = n.oid AND "
-								 /* exclude possible orphaned temp tables */
+		/* exclude possible orphaned temp tables */
 								"  		n.nspname !~ '^pg_temp_' AND "
-								"		n.nspname !~ '^pg_toast_temp_' AND "
-						 		"		n.nspname NOT IN ('pg_catalog', 'information_schema')");
+						 "		n.nspname !~ '^pg_toast_temp_' AND "
+								"		n.nspname NOT IN ('pg_catalog', 'information_schema')");
 
 		ntups = PQntuples(res);
 		i_nspname = PQfnumber(res, "nspname");

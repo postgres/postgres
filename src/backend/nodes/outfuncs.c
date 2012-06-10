@@ -141,7 +141,7 @@ _outToken(StringInfo str, const char *s)
 static void
 _outList(StringInfo str, const List *node)
 {
-	const ListCell   *lc;
+	const ListCell *lc;
 
 	appendStringInfoChar(str, '(');
 

@@ -223,7 +223,7 @@ canonicalize_pathkeys(PlannerInfo *root, List *pathkeys)
  *
  * If rel is not NULL, it identifies a specific relation we're considering
  * a path for, and indicates that child EC members for that relation can be
- * considered.  Otherwise child members are ignored.  (See the comments for
+ * considered.	Otherwise child members are ignored.  (See the comments for
  * get_eclass_for_sort_expr.)
  *
  * create_it is TRUE if we should create any missing EquivalenceClass

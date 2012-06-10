@@ -113,7 +113,7 @@ DllRegisterServer(void)
 					  "TypesSupported",
 					  0,
 					  REG_DWORD,
-					  (LPBYTE) & data,
+					  (LPBYTE) &data,
 					  sizeof(DWORD)))
 	{
 		MessageBox(NULL, "Could not set the supported types.", "PostgreSQL error", MB_OK | MB_ICONSTOP);

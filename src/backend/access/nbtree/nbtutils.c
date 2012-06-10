@@ -37,10 +37,10 @@ typedef struct BTSortArrayContext
 static Datum _bt_find_extreme_element(IndexScanDesc scan, ScanKey skey,
 						 StrategyNumber strat,
 						 Datum *elems, int nelems);
-static int	_bt_sort_array_elements(IndexScanDesc scan, ScanKey skey,
+static int _bt_sort_array_elements(IndexScanDesc scan, ScanKey skey,
 						bool reverse,
 						Datum *elems, int nelems);
-static int _bt_compare_array_elements(const void *a, const void *b, void *arg);
+static int	_bt_compare_array_elements(const void *a, const void *b, void *arg);
 static bool _bt_compare_scankey_args(IndexScanDesc scan, ScanKey op,
 						 ScanKey leftarg, ScanKey rightarg,
 						 bool *result);
@@ -227,8 +227,8 @@ _bt_preprocess_array_keys(IndexScanDesc scan)
 	}
 
 	/*
-	 * Make a scan-lifespan context to hold array-associated data, or reset
-	 * it if we already have one from a previous rescan cycle.
+	 * Make a scan-lifespan context to hold array-associated data, or reset it
+	 * if we already have one from a previous rescan cycle.
 	 */
 	if (so->arrayContext == NULL)
 		so->arrayContext = AllocSetContextCreate(CurrentMemoryContext,
@@ -269,7 +269,7 @@ _bt_preprocess_array_keys(IndexScanDesc scan)
 			continue;
 
 		/*
-		 * First, deconstruct the array into elements.  Anything allocated
+		 * First, deconstruct the array into elements.	Anything allocated
 		 * here (including a possibly detoasted array value) is in the
 		 * workspace context.
 		 */
@@ -283,7 +283,7 @@ _bt_preprocess_array_keys(IndexScanDesc scan)
 						  &elem_values, &elem_nulls, &num_elems);
 
 		/*
-		 * Compress out any null elements.  We can ignore them since we assume
+		 * Compress out any null elements.	We can ignore them since we assume
 		 * all btree operators are strict.
 		 */
 		num_nonnulls = 0;
@@ -338,7 +338,7 @@ _bt_preprocess_array_keys(IndexScanDesc scan)
 		 * successive primitive indexscans produce data in index order.
 		 */
 		num_elems = _bt_sort_array_elements(scan, cur,
-											(indoption[cur->sk_attno - 1] & INDOPTION_DESC) != 0,
+						(indoption[cur->sk_attno - 1] & INDOPTION_DESC) != 0,
 											elem_values, num_nonnulls);
 
 		/*
@@ -387,9 +387,10 @@ _bt_find_extreme_element(IndexScanDesc scan, ScanKey skey,
 	/*
 	 * Look up the appropriate comparison operator in the opfamily.
 	 *
-	 * Note: it's possible that this would fail, if the opfamily is incomplete,
-	 * but it seems quite unlikely that an opfamily would omit non-cross-type
-	 * comparison operators for any datatype that it supports at all.
+	 * Note: it's possible that this would fail, if the opfamily is
+	 * incomplete, but it seems quite unlikely that an opfamily would omit
+	 * non-cross-type comparison operators for any datatype that it supports
+	 * at all.
 	 */
 	cmp_op = get_opfamily_member(rel->rd_opfamily[skey->sk_attno - 1],
 								 elemtype,
@@ -455,9 +456,10 @@ _bt_sort_array_elements(IndexScanDesc scan, ScanKey skey,
 	/*
 	 * Look up the appropriate comparison function in the opfamily.
 	 *
-	 * Note: it's possible that this would fail, if the opfamily is incomplete,
-	 * but it seems quite unlikely that an opfamily would omit non-cross-type
-	 * support functions for any datatype that it supports at all.
+	 * Note: it's possible that this would fail, if the opfamily is
+	 * incomplete, but it seems quite unlikely that an opfamily would omit
+	 * non-cross-type support functions for any datatype that it supports at
+	 * all.
 	 */
 	cmp_proc = get_opfamily_proc(rel->rd_opfamily[skey->sk_attno - 1],
 								 elemtype,
@@ -515,7 +517,7 @@ _bt_compare_array_elements(const void *a, const void *b, void *arg)
  * _bt_start_array_keys() -- Initialize array keys at start of a scan
  *
  * Set up the cur_elem counters and fill in the first sk_argument value for
- * each array scankey.  We can't do this until we know the scan direction.
+ * each array scankey.	We can't do this until we know the scan direction.
  */
 void
 _bt_start_array_keys(IndexScanDesc scan, ScanDirection dir)
@@ -609,8 +611,8 @@ _bt_advance_array_keys(IndexScanDesc scan, ScanDirection dir)
  * so that the index sorts in the desired direction.
  *
  * One key purpose of this routine is to discover which scan keys must be
- * satisfied to continue the scan.  It also attempts to eliminate redundant
- * keys and detect contradictory keys.  (If the index opfamily provides
+ * satisfied to continue the scan.	It also attempts to eliminate redundant
+ * keys and detect contradictory keys.	(If the index opfamily provides
  * incomplete sets of cross-type operators, we may fail to detect redundant
  * or contradictory keys, but we can survive that.)
  *
@@ -676,7 +678,7 @@ _bt_advance_array_keys(IndexScanDesc scan, ScanDirection dir)
  * Note: the reason we have to copy the preprocessed scan keys into private
  * storage is that we are modifying the array based on comparisons of the
  * key argument values, which could change on a rescan or after moving to
- * new elements of array keys.  Therefore we can't overwrite the source data.
+ * new elements of array keys.	Therefore we can't overwrite the source data.
  */
 void
 _bt_preprocess_keys(IndexScanDesc scan)
@@ -781,8 +783,8 @@ _bt_preprocess_keys(IndexScanDesc scan)
 			 * set qual_ok to false and abandon further processing.
 			 *
 			 * We also have to deal with the case of "key IS NULL", which is
-			 * unsatisfiable in combination with any other index condition.
-			 * By the time we get here, that's been classified as an equality
+			 * unsatisfiable in combination with any other index condition. By
+			 * the time we get here, that's been classified as an equality
 			 * check, and we've rejected any combination of it with a regular
 			 * equality condition; but not with other types of conditions.
 			 */
@@ -1421,12 +1423,12 @@ _bt_checkkeys(IndexScanDesc scan,
 				/*
 				 * Since NULLs are sorted before non-NULLs, we know we have
 				 * reached the lower limit of the range of values for this
-				 * index attr.  On a backward scan, we can stop if this qual
+				 * index attr.	On a backward scan, we can stop if this qual
 				 * is one of the "must match" subset.  We can stop regardless
 				 * of whether the qual is > or <, so long as it's required,
-				 * because it's not possible for any future tuples to pass.
-				 * On a forward scan, however, we must keep going, because we
-				 * may have initially positioned to the start of the index.
+				 * because it's not possible for any future tuples to pass. On
+				 * a forward scan, however, we must keep going, because we may
+				 * have initially positioned to the start of the index.
 				 */
 				if ((key->sk_flags & (SK_BT_REQFWD | SK_BT_REQBKWD)) &&
 					ScanDirectionIsBackward(dir))
@@ -1437,11 +1439,11 @@ _bt_checkkeys(IndexScanDesc scan,
 				/*
 				 * Since NULLs are sorted after non-NULLs, we know we have
 				 * reached the upper limit of the range of values for this
-				 * index attr.  On a forward scan, we can stop if this qual is
-				 * one of the "must match" subset.  We can stop regardless of
+				 * index attr.	On a forward scan, we can stop if this qual is
+				 * one of the "must match" subset.	We can stop regardless of
 				 * whether the qual is > or <, so long as it's required,
-				 * because it's not possible for any future tuples to pass.
-				 * On a backward scan, however, we must keep going, because we
+				 * because it's not possible for any future tuples to pass. On
+				 * a backward scan, however, we must keep going, because we
 				 * may have initially positioned to the end of the index.
 				 */
 				if ((key->sk_flags & (SK_BT_REQFWD | SK_BT_REQBKWD)) &&
@@ -1532,12 +1534,12 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, TupleDesc tupdesc,
 				/*
 				 * Since NULLs are sorted before non-NULLs, we know we have
 				 * reached the lower limit of the range of values for this
-				 * index attr.  On a backward scan, we can stop if this qual
+				 * index attr.	On a backward scan, we can stop if this qual
 				 * is one of the "must match" subset.  We can stop regardless
 				 * of whether the qual is > or <, so long as it's required,
-				 * because it's not possible for any future tuples to pass.
-				 * On a forward scan, however, we must keep going, because we
-				 * may have initially positioned to the start of the index.
+				 * because it's not possible for any future tuples to pass. On
+				 * a forward scan, however, we must keep going, because we may
+				 * have initially positioned to the start of the index.
 				 */
 				if ((subkey->sk_flags & (SK_BT_REQFWD | SK_BT_REQBKWD)) &&
 					ScanDirectionIsBackward(dir))
@@ -1548,11 +1550,11 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, TupleDesc tupdesc,
 				/*
 				 * Since NULLs are sorted after non-NULLs, we know we have
 				 * reached the upper limit of the range of values for this
-				 * index attr.  On a forward scan, we can stop if this qual is
-				 * one of the "must match" subset.  We can stop regardless of
+				 * index attr.	On a forward scan, we can stop if this qual is
+				 * one of the "must match" subset.	We can stop regardless of
 				 * whether the qual is > or <, so long as it's required,
-				 * because it's not possible for any future tuples to pass.
-				 * On a backward scan, however, we must keep going, because we
+				 * because it's not possible for any future tuples to pass. On
+				 * a backward scan, however, we must keep going, because we
 				 * may have initially positioned to the end of the index.
 				 */
 				if ((subkey->sk_flags & (SK_BT_REQFWD | SK_BT_REQBKWD)) &&

@@ -24,7 +24,7 @@
 typedef struct
 {
 	FunctionCallInfoData fcinfo;	/* reusable callinfo structure */
-	FmgrInfo	flinfo;				/* lookup data for comparison function */
+	FmgrInfo	flinfo;			/* lookup data for comparison function */
 } SortShimExtra;
 
 
@@ -70,7 +70,6 @@ ApplySortComparator(Datum datum1, bool isNull1,
 
 	return compare;
 }
-
 #endif   /* ! USE_INLINE */
 
 /*
@@ -108,7 +107,7 @@ comparison_shim(Datum x, Datum y, SortSupport ssup)
 void
 PrepareSortSupportComparisonShim(Oid cmpFunc, SortSupport ssup)
 {
-	SortShimExtra   *extra;
+	SortShimExtra *extra;
 
 	extra = (SortShimExtra *) MemoryContextAlloc(ssup->ssup_cxt,
 												 sizeof(SortShimExtra));

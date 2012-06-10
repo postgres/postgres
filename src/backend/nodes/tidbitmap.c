@@ -956,7 +956,7 @@ tbm_lossify(TIDBitmap *tbm)
 	 *
 	 * Since we are called as soon as nentries exceeds maxentries, we should
 	 * push nentries down to significantly less than maxentries, or else we'll
-	 * just end up doing this again very soon.  We shoot for maxentries/2.
+	 * just end up doing this again very soon.	We shoot for maxentries/2.
 	 */
 	Assert(!tbm->iterating);
 	Assert(tbm->status == TBM_HASH);
@@ -992,14 +992,14 @@ tbm_lossify(TIDBitmap *tbm)
 	}
 
 	/*
-	 * With a big bitmap and small work_mem, it's possible that we cannot
-	 * get under maxentries.  Again, if that happens, we'd end up uselessly
+	 * With a big bitmap and small work_mem, it's possible that we cannot get
+	 * under maxentries.  Again, if that happens, we'd end up uselessly
 	 * calling tbm_lossify over and over.  To prevent this from becoming a
 	 * performance sink, force maxentries up to at least double the current
 	 * number of entries.  (In essence, we're admitting inability to fit
-	 * within work_mem when we do this.)  Note that this test will not fire
-	 * if we broke out of the loop early; and if we didn't, the current
-	 * number of entries is simply not reducible any further.
+	 * within work_mem when we do this.)  Note that this test will not fire if
+	 * we broke out of the loop early; and if we didn't, the current number of
+	 * entries is simply not reducible any further.
 	 */
 	if (tbm->nentries > tbm->maxentries / 2)
 		tbm->maxentries = Min(tbm->nentries, (INT_MAX - 1) / 2) * 2;
@@ -1011,8 +1011,8 @@ tbm_lossify(TIDBitmap *tbm)
 static int
 tbm_comparator(const void *left, const void *right)
 {
-	BlockNumber l = (*((PagetableEntry * const *) left))->blockno;
-	BlockNumber r = (*((PagetableEntry * const *) right))->blockno;
+	BlockNumber l = (*((PagetableEntry *const *) left))->blockno;
+	BlockNumber r = (*((PagetableEntry *const *) right))->blockno;
 
 	if (l < r)
 		return -1;

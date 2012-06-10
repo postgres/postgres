@@ -773,10 +773,11 @@ getRowDescriptions(PGconn *conn)
 	goto set_error_result;
 
 advance_and_error:
+
 	/*
-	 * Discard the failed message.  Unfortunately we don't know for sure
-	 * where the end is, so just throw away everything in the input buffer.
-	 * This is not very desirable but it's the best we can do in protocol v2.
+	 * Discard the failed message.	Unfortunately we don't know for sure where
+	 * the end is, so just throw away everything in the input buffer. This is
+	 * not very desirable but it's the best we can do in protocol v2.
 	 */
 	conn->inStart = conn->inEnd;
 
@@ -829,6 +830,7 @@ getAnotherTuple(PGconn *conn, bool binary)
 	int			nfields = result->numAttributes;
 	const char *errmsg;
 	PGdataValue *rowbuf;
+
 	/* the backend sends us a bitmap of which attributes are null */
 	char		std_bitmap[64]; /* used unless it doesn't fit */
 	char	   *bitmap = std_bitmap;
@@ -962,10 +964,11 @@ getAnotherTuple(PGconn *conn, bool binary)
 	goto set_error_result;
 
 advance_and_error:
+
 	/*
-	 * Discard the failed message.  Unfortunately we don't know for sure
-	 * where the end is, so just throw away everything in the input buffer.
-	 * This is not very desirable but it's the best we can do in protocol v2.
+	 * Discard the failed message.	Unfortunately we don't know for sure where
+	 * the end is, so just throw away everything in the input buffer. This is
+	 * not very desirable but it's the best we can do in protocol v2.
 	 */
 	conn->inStart = conn->inEnd;
 

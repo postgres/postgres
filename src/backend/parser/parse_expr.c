@@ -844,7 +844,7 @@ transformAExprOp(ParseState *pstate, A_Expr *a)
 		list_length(a->name) == 1 &&
 		strcmp(strVal(linitial(a->name)), "=") == 0 &&
 		(exprIsNullConstant(lexpr) || exprIsNullConstant(rexpr)) &&
-		(!IsA(lexpr, CaseTestExpr) && !IsA(rexpr, CaseTestExpr)))
+		(!IsA(lexpr, CaseTestExpr) &&!IsA(rexpr, CaseTestExpr)))
 	{
 		NullTest   *n = makeNode(NullTest);
 
@@ -2066,9 +2066,9 @@ transformWholeRowRef(ParseState *pstate, RangeTblEntry *rte, int location)
 	vnum = RTERangeTablePosn(pstate, rte, &sublevels_up);
 
 	/*
-	 * Build the appropriate referencing node.  Note that if the RTE is a
+	 * Build the appropriate referencing node.	Note that if the RTE is a
 	 * function returning scalar, we create just a plain reference to the
-	 * function value, not a composite containing a single column.  This is
+	 * function value, not a composite containing a single column.	This is
 	 * pretty inconsistent at first sight, but it's what we've done
 	 * historically.  One argument for it is that "rel" and "rel.*" mean the
 	 * same thing for composite relations, so why not for scalar functions...
@@ -2268,8 +2268,8 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 		opinfo_lists[i] = get_op_btree_interpretation(opno);
 
 		/*
-		 * convert strategy numbers into a Bitmapset to make the
-		 * intersection calculation easy.
+		 * convert strategy numbers into a Bitmapset to make the intersection
+		 * calculation easy.
 		 */
 		this_strats = NULL;
 		foreach(j, opinfo_lists[i])

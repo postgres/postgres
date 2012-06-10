@@ -105,7 +105,7 @@ CATALOG(pg_statistic,2619) BKI_WITHOUT_OIDS
 
 	/*
 	 * Values in these arrays are values of the column's data type, or of some
-	 * related type such as an array element type.  We presently have to cheat
+	 * related type such as an array element type.	We presently have to cheat
 	 * quite a bit to allow polymorphic arrays of this kind, but perhaps
 	 * someday it'll be a less bogus facility.
 	 */
@@ -258,7 +258,7 @@ typedef FormData_pg_statistic *Form_pg_statistic;
 /*
  * A "distinct elements count histogram" slot describes the distribution of
  * the number of distinct element values present in each row of an array-type
- * column.  Only non-null rows are considered, and only non-null elements.
+ * column.	Only non-null rows are considered, and only non-null elements.
  * staop contains the equality operator appropriate to the element type.
  * stavalues is not used and should be NULL.  The last member of stanumbers is
  * the average count of distinct element values over all non-null rows.  The
@@ -266,6 +266,6 @@ typedef FormData_pg_statistic *Form_pg_statistic;
  * distinct-elements counts into M-1 bins of approximately equal population.
  * The first of these is the minimum observed count, and the last the maximum.
  */
-#define STATISTIC_KIND_DECHIST  5
+#define STATISTIC_KIND_DECHIST	5
 
 #endif   /* PG_STATISTIC_H */

@@ -45,4 +45,4 @@ extern PLyProcedure *PLy_procedure_get(Oid fn_oid, bool is_trigger);
 extern void PLy_procedure_compile(PLyProcedure *proc, const char *src);
 extern void PLy_procedure_delete(PLyProcedure *proc);
 
-#endif	/* PLPY_PROCEDURE_H */
+#endif   /* PLPY_PROCEDURE_H */

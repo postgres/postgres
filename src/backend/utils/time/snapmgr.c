@@ -11,7 +11,7 @@
  * regd_count and count it in RegisteredSnapshots, but this reference is not
  * tracked by a resource owner. We used to use the TopTransactionResourceOwner
  * to track this snapshot reference, but that introduces logical circularity
- * and thus makes it impossible to clean up in a sane fashion.  It's better to
+ * and thus makes it impossible to clean up in a sane fashion.	It's better to
  * handle this reference as an internally-tracked registration, so that this
  * module is entirely lower-level than ResourceOwners.
  *
@@ -113,7 +113,7 @@ static int	RegisteredSnapshots = 0;
 bool		FirstSnapshotSet = false;
 
 /*
- * Remember the serializable transaction snapshot, if any.  We cannot trust
+ * Remember the serializable transaction snapshot, if any.	We cannot trust
  * FirstSnapshotSet in combination with IsolationUsesXactSnapshot(), because
  * GUC may be reset before us, changing the value of IsolationUsesXactSnapshot.
  */
@@ -269,23 +269,23 @@ SetTransactionSnapshot(Snapshot sourcesnap, TransactionId sourcexid)
 	 * Now we have to fix what GetSnapshotData did with MyPgXact->xmin and
 	 * TransactionXmin.  There is a race condition: to make sure we are not
 	 * causing the global xmin to go backwards, we have to test that the
-	 * source transaction is still running, and that has to be done atomically.
-	 * So let procarray.c do it.
+	 * source transaction is still running, and that has to be done
+	 * atomically. So let procarray.c do it.
 	 *
-	 * Note: in serializable mode, predicate.c will do this a second time.
-	 * It doesn't seem worth contorting the logic here to avoid two calls,
+	 * Note: in serializable mode, predicate.c will do this a second time. It
+	 * doesn't seem worth contorting the logic here to avoid two calls,
 	 * especially since it's not clear that predicate.c *must* do this.
 	 */
 	if (!ProcArrayInstallImportedXmin(CurrentSnapshot->xmin, sourcexid))
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("could not import the requested snapshot"),
-				 errdetail("The source transaction %u is not running anymore.",
-						   sourcexid)));
+			   errdetail("The source transaction %u is not running anymore.",
+						 sourcexid)));
 
 	/*
 	 * In transaction-snapshot mode, the first snapshot must live until end of
-	 * xact, so we must make a copy of it.  Furthermore, if we're running in
+	 * xact, so we must make a copy of it.	Furthermore, if we're running in
 	 * serializable mode, predicate.c needs to do its own processing.
 	 */
 	if (IsolationUsesXactSnapshot())
@@ -647,8 +647,8 @@ AtEOXact_Snapshot(bool isCommit)
 	 * RegisteredSnapshots to keep the check below happy.  But we don't bother
 	 * to do FreeSnapshot, for two reasons: the memory will go away with
 	 * TopTransactionContext anyway, and if someone has left the snapshot
-	 * stacked as active, we don't want the code below to be chasing through
-	 * a dangling pointer.
+	 * stacked as active, we don't want the code below to be chasing through a
+	 * dangling pointer.
 	 */
 	if (FirstXactSnapshot != NULL)
 	{
@@ -668,9 +668,9 @@ AtEOXact_Snapshot(bool isCommit)
 		char		buf[MAXPGPATH];
 
 		/*
-		 * Get rid of the files.  Unlink failure is only a WARNING because
-		 * (1) it's too late to abort the transaction, and (2) leaving a
-		 * leaked file around has little real consequence anyway.
+		 * Get rid of the files.  Unlink failure is only a WARNING because (1)
+		 * it's too late to abort the transaction, and (2) leaving a leaked
+		 * file around has little real consequence anyway.
 		 */
 		for (i = 1; i <= list_length(exportedSnapshots); i++)
 		{
@@ -745,17 +745,17 @@ ExportSnapshot(Snapshot snapshot)
 	char		pathtmp[MAXPGPATH];
 
 	/*
-	 * It's tempting to call RequireTransactionChain here, since it's not
-	 * very useful to export a snapshot that will disappear immediately
-	 * afterwards.  However, we haven't got enough information to do that,
-	 * since we don't know if we're at top level or not.  For example, we
-	 * could be inside a plpgsql function that is going to fire off other
-	 * transactions via dblink.  Rather than disallow perfectly legitimate
-	 * usages, don't make a check.
+	 * It's tempting to call RequireTransactionChain here, since it's not very
+	 * useful to export a snapshot that will disappear immediately afterwards.
+	 * However, we haven't got enough information to do that, since we don't
+	 * know if we're at top level or not.  For example, we could be inside a
+	 * plpgsql function that is going to fire off other transactions via
+	 * dblink.	Rather than disallow perfectly legitimate usages, don't make a
+	 * check.
 	 *
 	 * Also note that we don't make any restriction on the transaction's
-	 * isolation level; however, importers must check the level if they
-	 * are serializable.
+	 * isolation level; however, importers must check the level if they are
+	 * serializable.
 	 */
 
 	/*
@@ -798,8 +798,8 @@ ExportSnapshot(Snapshot snapshot)
 
 	/*
 	 * Fill buf with a text serialization of the snapshot, plus identification
-	 * data about this transaction.  The format expected by ImportSnapshot
-	 * is pretty rigid: each line must be fieldname:value.
+	 * data about this transaction.  The format expected by ImportSnapshot is
+	 * pretty rigid: each line must be fieldname:value.
 	 */
 	initStringInfo(&buf);
 
@@ -830,8 +830,8 @@ ExportSnapshot(Snapshot snapshot)
 		appendStringInfo(&buf, "xip:%u\n", topXid);
 
 	/*
-	 * Similarly, we add our subcommitted child XIDs to the subxid data.
-	 * Here, we have to cope with possible overflow.
+	 * Similarly, we add our subcommitted child XIDs to the subxid data. Here,
+	 * we have to cope with possible overflow.
 	 */
 	if (snapshot->suboverflowed ||
 		snapshot->subxcnt + nchildren > GetMaxSnapshotSubxidCount())
@@ -963,16 +963,16 @@ parseXidFromText(const char *prefix, char **s, const char *filename)
 
 /*
  * ImportSnapshot
- *      Import a previously exported snapshot.  The argument should be a
- *      filename in SNAPSHOT_EXPORT_DIR.  Load the snapshot from that file.
- *      This is called by "SET TRANSACTION SNAPSHOT 'foo'".
+ *		Import a previously exported snapshot.	The argument should be a
+ *		filename in SNAPSHOT_EXPORT_DIR.  Load the snapshot from that file.
+ *		This is called by "SET TRANSACTION SNAPSHOT 'foo'".
  */
 void
 ImportSnapshot(const char *idstr)
 {
 	char		path[MAXPGPATH];
 	FILE	   *f;
-	struct stat	stat_buf;
+	struct stat stat_buf;
 	char	   *filebuf;
 	int			xcnt;
 	int			i;
@@ -985,19 +985,19 @@ ImportSnapshot(const char *idstr)
 	/*
 	 * Must be at top level of a fresh transaction.  Note in particular that
 	 * we check we haven't acquired an XID --- if we have, it's conceivable
-	 * that the snapshot would show it as not running, making for very
-	 * screwy behavior.
+	 * that the snapshot would show it as not running, making for very screwy
+	 * behavior.
 	 */
 	if (FirstSnapshotSet ||
 		GetTopTransactionIdIfAny() != InvalidTransactionId ||
 		IsSubTransaction())
 		ereport(ERROR,
 				(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
-				 errmsg("SET TRANSACTION SNAPSHOT must be called before any query")));
+		errmsg("SET TRANSACTION SNAPSHOT must be called before any query")));
 
 	/*
-	 * If we are in read committed mode then the next query would execute
-	 * with a new snapshot thus making this function call quite useless.
+	 * If we are in read committed mode then the next query would execute with
+	 * a new snapshot thus making this function call quite useless.
 	 */
 	if (!IsolationUsesXactSnapshot())
 		ereport(ERROR,
@@ -1100,8 +1100,8 @@ ImportSnapshot(const char *idstr)
 
 	/*
 	 * If we're serializable, the source transaction must be too, otherwise
-	 * predicate.c has problems (SxactGlobalXmin could go backwards).  Also,
-	 * a non-read-only transaction can't adopt a snapshot from a read-only
+	 * predicate.c has problems (SxactGlobalXmin could go backwards).  Also, a
+	 * non-read-only transaction can't adopt a snapshot from a read-only
 	 * transaction, as predicate.c handles the cases very differently.
 	 */
 	if (IsolationIsSerializable())
@@ -1120,15 +1120,15 @@ ImportSnapshot(const char *idstr)
 	 * We cannot import a snapshot that was taken in a different database,
 	 * because vacuum calculates OldestXmin on a per-database basis; so the
 	 * source transaction's xmin doesn't protect us from data loss.  This
-	 * restriction could be removed if the source transaction were to mark
-	 * its xmin as being globally applicable.  But that would require some
+	 * restriction could be removed if the source transaction were to mark its
+	 * xmin as being globally applicable.  But that would require some
 	 * additional syntax, since that has to be known when the snapshot is
 	 * initially taken.  (See pgsql-hackers discussion of 2011-10-21.)
 	 */
 	if (src_dbid != MyDatabaseId)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot import a snapshot from a different database")));
+			  errmsg("cannot import a snapshot from a different database")));
 
 	/* OK, install the snapshot */
 	SetTransactionSnapshot(&snapshot, src_xid);

@@ -54,19 +54,19 @@ typedef struct RangeIOData
 
 
 static RangeIOData *get_range_io_data(FunctionCallInfo fcinfo, Oid rngtypid,
-									  IOFuncSelector func);
+				  IOFuncSelector func);
 static char range_parse_flags(const char *flags_str);
 static void range_parse(const char *input_str, char *flags, char **lbound_str,
 			char **ubound_str);
 static const char *range_parse_bound(const char *string, const char *ptr,
 				  char **bound_str, bool *infinite);
 static char *range_deparse(char flags, const char *lbound_str,
-						   const char *ubound_str);
+			  const char *ubound_str);
 static char *range_bound_escape(const char *value);
 static bool range_contains_internal(TypeCacheEntry *typcache,
-									RangeType *r1, RangeType *r2);
+						RangeType *r1, RangeType *r2);
 static bool range_contains_elem_internal(TypeCacheEntry *typcache,
-										 RangeType *r, Datum val);
+							 RangeType *r, Datum val);
 static Size datum_compute_size(Size sz, Datum datum, bool typbyval,
 				   char typalign, int16 typlen, char typstorage);
 static Pointer datum_write(Pointer ptr, Datum datum, bool typbyval,
@@ -299,10 +299,10 @@ get_range_io_data(FunctionCallInfo fcinfo, Oid rngtypid, IOFuncSelector func)
 
 	if (cache == NULL || cache->typcache->type_id != rngtypid)
 	{
-		int16	typlen;
-		bool	typbyval;
-		char	typalign;
-		char	typdelim;
+		int16		typlen;
+		bool		typbyval;
+		char		typalign;
+		char		typdelim;
 
 		cache = (RangeIOData *) MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
 												   sizeof(RangeIOData));
@@ -326,13 +326,13 @@ get_range_io_data(FunctionCallInfo fcinfo, Oid rngtypid, IOFuncSelector func)
 			if (func == IOFunc_receive)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_FUNCTION),
-						 errmsg("no binary input function available for type %s",
-								format_type_be(cache->typcache->rngelemtype->type_id))));
+					 errmsg("no binary input function available for type %s",
+					format_type_be(cache->typcache->rngelemtype->type_id))));
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_FUNCTION),
-						 errmsg("no binary output function available for type %s",
-								format_type_be(cache->typcache->rngelemtype->type_id))));
+					errmsg("no binary output function available for type %s",
+					format_type_be(cache->typcache->rngelemtype->type_id))));
 		}
 		fmgr_info_cxt(cache->typiofunc, &cache->proc,
 					  fcinfo->flinfo->fn_mcxt);
@@ -397,7 +397,7 @@ range_constructor3(PG_FUNCTION_ARGS)
 	if (PG_ARGISNULL(2))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_EXCEPTION),
-				 errmsg("range constructor flags argument must not be NULL")));
+			   errmsg("range constructor flags argument must not be NULL")));
 
 	flags = range_parse_flags(text_to_cstring(PG_GETARG_TEXT_P(2)));
 
@@ -716,9 +716,9 @@ range_adjacent(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(false);
 
 	/*
-	 * Given two ranges A..B and C..D, where B < C, the ranges are adjacent
-	 * if and only if the range B..C is empty, where inclusivity of these two
-	 * bounds is inverted compared to the original bounds.  For discrete
+	 * Given two ranges A..B and C..D, where B < C, the ranges are adjacent if
+	 * and only if the range B..C is empty, where inclusivity of these two
+	 * bounds is inverted compared to the original bounds.	For discrete
 	 * ranges, we have to rely on the canonicalization function to normalize
 	 * B..C to empty if it contains no elements of the subtype.  (If there is
 	 * no canonicalization function, it's impossible for such a range to
@@ -920,7 +920,7 @@ range_minus(PG_FUNCTION_ARGS)
 	if (cmp_l1l2 < 0 && cmp_u1u2 > 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_EXCEPTION),
-				 errmsg("result of range difference would not be contiguous")));
+			  errmsg("result of range difference would not be contiguous")));
 
 	if (cmp_l1u2 > 0 || cmp_u1l2 < 0)
 		PG_RETURN_RANGE(r1);
@@ -1180,11 +1180,11 @@ Datum
 range_typanalyze(PG_FUNCTION_ARGS)
 {
 	/*
-	 * For the moment, just punt and don't analyze range columns.  If we
-	 * get close to release without having a better answer, we could
-	 * consider letting std_typanalyze do what it can ... but those stats
-	 * are probably next door to useless for most activity with range
-	 * columns, so it's not clear it's worth gathering them.
+	 * For the moment, just punt and don't analyze range columns.  If we get
+	 * close to release without having a better answer, we could consider
+	 * letting std_typanalyze do what it can ... but those stats are probably
+	 * next door to useless for most activity with range columns, so it's not
+	 * clear it's worth gathering them.
 	 */
 	PG_RETURN_BOOL(false);
 }
@@ -1392,7 +1392,7 @@ tstzrange_subdiff(PG_FUNCTION_ARGS)
  *
  * This is for use by range-related functions that follow the convention
  * of using the fn_extra field as a pointer to the type cache entry for
- * the range type.  Functions that need to cache more information than
+ * the range type.	Functions that need to cache more information than
  * that must fend for themselves.
  */
 TypeCacheEntry *
@@ -1416,7 +1416,7 @@ range_get_typcache(FunctionCallInfo fcinfo, Oid rngtypid)
  * range_serialize: construct a range value from bounds and empty-flag
  *
  * This does not force canonicalization of the range value.  In most cases,
- * external callers should only be canonicalization functions.  Note that
+ * external callers should only be canonicalization functions.	Note that
  * we perform some datatype-independent canonicalization checks anyway.
  */
 RangeType *
@@ -1753,7 +1753,7 @@ range_cmp_bounds(TypeCacheEntry *typcache, RangeBound *b1, RangeBound *b2)
  * Compare two range boundary point values, returning <0, 0, or >0 according
  * to whether b1 is less than, equal to, or greater than b2.
  *
- * This is similar to but simpler than range_cmp_bounds().  We just compare
+ * This is similar to but simpler than range_cmp_bounds().	We just compare
  * the values held in b1 and b2, ignoring inclusive/exclusive flags.  The
  * lower/upper flags only matter for infinities, where they tell us if the
  * infinity is plus or minus.
@@ -1971,7 +1971,7 @@ range_parse(const char *string, char *flags, char **lbound_str,
 	}
 	else if (*ptr == ')')
 		ptr++;
-	else						/* must be a comma */
+	else	/* must be a comma */
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("malformed range literal: \"%s\"",
@@ -2224,7 +2224,7 @@ range_contains_elem_internal(TypeCacheEntry *typcache, RangeType *r, Datum val)
 
 /*
  * datum_compute_size() and datum_write() are used to insert the bound
- * values into a range object.  They are modeled after heaptuple.c's
+ * values into a range object.	They are modeled after heaptuple.c's
  * heap_compute_data_size() and heap_fill_tuple(), but we need not handle
  * null values here.  TYPE_IS_PACKABLE must test the same conditions as
  * heaptuple.c's ATT_IS_PACKABLE macro.

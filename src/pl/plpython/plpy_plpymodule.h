@@ -16,4 +16,4 @@ PyMODINIT_FUNC PyInit_plpy(void);
 #endif
 extern void PLy_init_plpy(void);
 
-#endif	/* PLPY_PLPYMODULE_H */
+#endif   /* PLPY_PLPYMODULE_H */

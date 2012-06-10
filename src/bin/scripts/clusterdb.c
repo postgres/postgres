@@ -112,9 +112,9 @@ main(int argc, char *argv[])
 		}
 	}
 
-	/* 
-	 * Non-option argument specifies database name
-	 * as long as it wasn't already specified with -d / --dbname
+	/*
+	 * Non-option argument specifies database name as long as it wasn't
+	 * already specified with -d / --dbname
 	 */
 	if (optind < argc && dbname == NULL)
 	{

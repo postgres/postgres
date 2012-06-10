@@ -130,7 +130,7 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 
 	for (i = 0; i < node->numCols; i++)
 	{
-		SortSupport	sortKey = mergestate->ms_sortkeys + i;
+		SortSupport sortKey = mergestate->ms_sortkeys + i;
 
 		sortKey->ssup_cxt = CurrentMemoryContext;
 		sortKey->ssup_collation = node->collations[i];
@@ -276,7 +276,7 @@ heap_compare_slots(MergeAppendState *node, SlotNumber slot1, SlotNumber slot2)
 
 	for (nkey = 0; nkey < node->ms_nkeys; nkey++)
 	{
-		SortSupport	sortKey = node->ms_sortkeys + nkey;
+		SortSupport sortKey = node->ms_sortkeys + nkey;
 		AttrNumber	attno = sortKey->ssup_attno;
 		Datum		datum1,
 					datum2;

@@ -134,7 +134,7 @@ QTNodeCompare(QTNode *an, QTNode *bn)
 static int
 cmpQTN(const void *a, const void *b)
 {
-	return QTNodeCompare(*(QTNode * const *) a, *(QTNode * const *) b);
+	return QTNodeCompare(*(QTNode *const *) a, *(QTNode *const *) b);
 }
 
 void

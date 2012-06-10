@@ -593,8 +593,8 @@ typedef struct
 static int
 comparecost(const void *va, const void *vb)
 {
-	const SPLITCOST  *a = (const SPLITCOST *) va;
-	const SPLITCOST  *b = (const SPLITCOST *) vb;
+	const SPLITCOST *a = (const SPLITCOST *) va;
+	const SPLITCOST *b = (const SPLITCOST *) vb;
 
 	if (a->cost == b->cost)
 		return 0;

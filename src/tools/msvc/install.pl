@@ -13,6 +13,6 @@ Install($target);
 
 sub Usage
 {
-    print "Usage: install.pl <targetdir>\n";
-    exit(1);
+	print "Usage: install.pl <targetdir>\n";
+	exit(1);
 }

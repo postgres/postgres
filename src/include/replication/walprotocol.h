@@ -59,7 +59,7 @@ typedef struct
  *
  * Note that the data length is not specified here.
  */
-typedef WalSndrMessage	PrimaryKeepaliveMessage;
+typedef WalSndrMessage PrimaryKeepaliveMessage;
 
 /*
  * Reply message from standby (message type 'r').  This is wrapped within

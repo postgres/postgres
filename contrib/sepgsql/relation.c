@@ -44,9 +44,9 @@ sepgsql_attribute_post_create(Oid relOid, AttrNumber attnum)
 	char	   *scontext;
 	char	   *tcontext;
 	char	   *ncontext;
-	char		audit_name[2*NAMEDATALEN + 20];
+	char		audit_name[2 * NAMEDATALEN + 20];
 	ObjectAddress object;
-	Form_pg_attribute	attForm;
+	Form_pg_attribute attForm;
 
 	/*
 	 * Only attributes within regular relation have individual security
@@ -84,6 +84,7 @@ sepgsql_attribute_post_create(Oid relOid, AttrNumber attnum)
 	tcontext = sepgsql_get_label(RelationRelationId, relOid, 0);
 	ncontext = sepgsql_compute_create(scontext, tcontext,
 									  SEPG_CLASS_DB_COLUMN);
+
 	/*
 	 * check db_column:{create} permission
 	 */
@@ -118,8 +119,8 @@ sepgsql_attribute_post_create(Oid relOid, AttrNumber attnum)
 void
 sepgsql_attribute_drop(Oid relOid, AttrNumber attnum)
 {
-	ObjectAddress	object;
-	char		   *audit_name;
+	ObjectAddress object;
+	char	   *audit_name;
 
 	if (get_rel_relkind(relOid) != RELKIND_RELATION)
 		return;
@@ -151,7 +152,7 @@ sepgsql_attribute_relabel(Oid relOid, AttrNumber attnum,
 						  const char *seclabel)
 {
 	ObjectAddress object;
-	char		 *audit_name;
+	char	   *audit_name;
 
 	if (get_rel_relkind(relOid) != RELKIND_RELATION)
 		ereport(ERROR,
@@ -172,6 +173,7 @@ sepgsql_attribute_relabel(Oid relOid, AttrNumber attnum,
 							SEPG_DB_COLUMN__RELABELFROM,
 							audit_name,
 							true);
+
 	/*
 	 * check db_column:{relabelto} permission
 	 */
@@ -203,7 +205,7 @@ sepgsql_relation_post_create(Oid relOid)
 	char	   *tcontext;		/* schema */
 	char	   *rcontext;		/* relation */
 	char	   *ccontext;		/* column */
-	char		audit_name[2*NAMEDATALEN + 20];
+	char		audit_name[2 * NAMEDATALEN + 20];
 
 	/*
 	 * Fetch catalog record of the new relation. Because pg_class entry is not
@@ -254,6 +256,7 @@ sepgsql_relation_post_create(Oid relOid)
 							SEPG_DB_SCHEMA__ADD_NAME,
 							getObjectDescription(&object),
 							true);
+
 	/*
 	 * Compute a default security label when we create a new relation object
 	 * under the specified namespace.
@@ -273,6 +276,7 @@ sepgsql_relation_post_create(Oid relOid)
 								  SEPG_DB_DATABASE__CREATE,
 								  audit_name,
 								  true);
+
 	/*
 	 * Assign the default security label on the new relation
 	 */
@@ -288,10 +292,10 @@ sepgsql_relation_post_create(Oid relOid)
 	if (classForm->relkind == RELKIND_RELATION)
 	{
 		Relation	arel;
-		ScanKeyData	akey;
-		SysScanDesc	ascan;
+		ScanKeyData akey;
+		SysScanDesc ascan;
 		HeapTuple	atup;
-		Form_pg_attribute	attForm;
+		Form_pg_attribute attForm;
 
 		arel = heap_open(AttributeRelationId, AccessShareLock);
 
@@ -315,6 +319,7 @@ sepgsql_relation_post_create(Oid relOid)
 			ccontext = sepgsql_compute_create(scontext,
 											  rcontext,
 											  SEPG_CLASS_DB_COLUMN);
+
 			/*
 			 * check db_column:{create} permission
 			 */
@@ -348,10 +353,10 @@ out:
 void
 sepgsql_relation_drop(Oid relOid)
 {
-	ObjectAddress	object;
-	char		   *audit_name;
-	uint16_t		tclass = 0;
-	char			relkind;
+	ObjectAddress object;
+	char	   *audit_name;
+	uint16_t	tclass = 0;
+	char		relkind;
 
 	relkind = get_rel_relkind(relOid);
 	if (relkind == RELKIND_RELATION)
@@ -398,13 +403,13 @@ sepgsql_relation_drop(Oid relOid)
 	 */
 	if (relkind == RELKIND_RELATION)
 	{
-		Form_pg_attribute	attForm;
+		Form_pg_attribute attForm;
 		CatCList   *attrList;
 		HeapTuple	atttup;
 		int			i;
 
 		attrList = SearchSysCacheList1(ATTNUM, ObjectIdGetDatum(relOid));
-		for (i=0; i < attrList->n_members; i++)
+		for (i = 0; i < attrList->n_members; i++)
 		{
 			atttup = &attrList->members[i]->tuple;
 			attForm = (Form_pg_attribute) GETSTRUCT(atttup);
@@ -436,7 +441,7 @@ sepgsql_relation_drop(Oid relOid)
 void
 sepgsql_relation_relabel(Oid relOid, const char *seclabel)
 {
-	ObjectAddress	object;
+	ObjectAddress object;
 	char	   *audit_name;
 	char		relkind;
 	uint16_t	tclass = 0;
@@ -468,6 +473,7 @@ sepgsql_relation_relabel(Oid relOid, const char *seclabel)
 							SEPG_DB_TABLE__RELABELFROM,
 							audit_name,
 							true);
+
 	/*
 	 * check db_xxx:{relabelto} permission
 	 */

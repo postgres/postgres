@@ -494,11 +494,11 @@ add_eq_member(EquivalenceClass *ec, Expr *expr, Relids relids,
  *
  * If rel is not NULL, it identifies a specific relation we're considering
  * a path for, and indicates that child EC members for that relation can be
- * considered.  Otherwise child members are ignored.  (Note: since child EC
+ * considered.	Otherwise child members are ignored.  (Note: since child EC
  * members aren't guaranteed unique, a non-NULL value means that there could
  * be more than one EC that matches the expression; if so it's order-dependent
  * which one you get.  This is annoying but it only happens in corner cases,
- * so for now we live with just reporting the first match.  See also
+ * so for now we live with just reporting the first match.	See also
  * generate_implied_equalities_for_indexcol and match_pathkeys_to_index.)
  *
  * If create_it is TRUE, we'll build a new EquivalenceClass when there is no
@@ -922,8 +922,8 @@ generate_base_implied_equalities_broken(PlannerInfo *root,
  * built any join RelOptInfos.
  *
  * An annoying special case for parameterized scans is that the inner rel can
- * be an appendrel child (an "other rel").  In this case we must generate
- * appropriate clauses using child EC members.  add_child_rel_equivalences
+ * be an appendrel child (an "other rel").	In this case we must generate
+ * appropriate clauses using child EC members.	add_child_rel_equivalences
  * must already have been done for the child rel.
  *
  * The results are sufficient for use in merge, hash, and plain nestloop join
@@ -1002,9 +1002,9 @@ generate_join_implied_equalities(PlannerInfo *root,
 		if (ec->ec_broken)
 			sublist = generate_join_implied_equalities_broken(root,
 															  ec,
-															  nominal_join_relids,
+														 nominal_join_relids,
 															  outer_relids,
-															  nominal_inner_relids,
+														nominal_inner_relids,
 															  inner_appinfo);
 
 		result = list_concat(result, sublist);
@@ -1217,9 +1217,9 @@ generate_join_implied_equalities_broken(PlannerInfo *root,
 	/*
 	 * If we have to translate, just brute-force apply adjust_appendrel_attrs
 	 * to all the RestrictInfos at once.  This will result in returning
-	 * RestrictInfos that are not listed in ec_derives, but there shouldn't
-	 * be any duplication, and it's a sufficiently narrow corner case that
-	 * we shouldn't sweat too much over it anyway.
+	 * RestrictInfos that are not listed in ec_derives, but there shouldn't be
+	 * any duplication, and it's a sufficiently narrow corner case that we
+	 * shouldn't sweat too much over it anyway.
 	 */
 	if (inner_appinfo)
 		result = (List *) adjust_appendrel_attrs(root, (Node *) result,
@@ -1966,7 +1966,7 @@ mutate_eclass_expressions(PlannerInfo *root,
  * is a redundant list of clauses equating the index column to each of
  * the other-relation values it is known to be equal to.  Any one of
  * these clauses can be used to create a parameterized indexscan, and there
- * is no value in using more than one.  (But it *is* worthwhile to create
+ * is no value in using more than one.	(But it *is* worthwhile to create
  * a separate parameterized path for each one, since that leads to different
  * join orders.)
  */
@@ -2014,7 +2014,7 @@ generate_implied_equalities_for_indexcol(PlannerInfo *root,
 		 * the target relation.  (Unlike regular members, the same expression
 		 * could be a child member of more than one EC.  Therefore, it's
 		 * potentially order-dependent which EC a child relation's index
-		 * column gets matched to.  This is annoying but it only happens in
+		 * column gets matched to.	This is annoying but it only happens in
 		 * corner cases, so for now we live with just reporting the first
 		 * match.  See also get_eclass_for_sort_expr.)
 		 */

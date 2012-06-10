@@ -99,6 +99,6 @@ extern bool reindex_relation(Oid relid, int flags);
 
 extern bool ReindexIsProcessingHeap(Oid heapOid);
 extern bool ReindexIsProcessingIndex(Oid indexOid);
-extern Oid IndexGetRelation(Oid indexId, bool missing_ok);
+extern Oid	IndexGetRelation(Oid indexId, bool missing_ok);
 
 #endif   /* INDEX_H */

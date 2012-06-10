@@ -18,7 +18,6 @@
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #endif
-
 #else
 int			getopt(int argc, char *const argv[], const char *optstring);
 #endif   /* ! WIN32 */
@@ -47,16 +46,16 @@ static int	nconns = 0;
 /* In dry run only output permutations to be run by the tester. */
 static int	dry_run = false;
 
-static void run_testspec(TestSpec *testspec);
+static void run_testspec(TestSpec * testspec);
 static void run_all_permutations(TestSpec * testspec);
 static void run_all_permutations_recurse(TestSpec * testspec, int nsteps,
 							 Step ** steps);
 static void run_named_permutations(TestSpec * testspec);
 static void run_permutation(TestSpec * testspec, int nsteps, Step ** steps);
 
-#define STEP_NONBLOCK	0x1 /* return 0 as soon as cmd waits for a lock */
-#define STEP_RETRY		0x2 /* this is a retry of a previously-waiting cmd */
-static bool try_complete_step(Step *step, int flags);
+#define STEP_NONBLOCK	0x1		/* return 0 as soon as cmd waits for a lock */
+#define STEP_RETRY		0x2		/* this is a retry of a previously-waiting cmd */
+static bool try_complete_step(Step * step, int flags);
 
 static int	step_qsort_cmp(const void *a, const void *b);
 static int	step_bsearch_cmp(const void *a, const void *b);
@@ -82,7 +81,7 @@ main(int argc, char **argv)
 	int			i;
 	PGresult   *res;
 	PQExpBufferData wait_query;
-	int opt;
+	int			opt;
 
 	while ((opt = getopt(argc, argv, "n")) != -1)
 	{
@@ -99,8 +98,8 @@ main(int argc, char **argv)
 
 	/*
 	 * If the user supplies a non-option parameter on the command line, use it
-	 * as the conninfo string; otherwise default to setting dbname=postgres and
-	 * using environment variables or defaults for all other connection
+	 * as the conninfo string; otherwise default to setting dbname=postgres
+	 * and using environment variables or defaults for all other connection
 	 * parameters.
 	 */
 	if (argc > optind)
@@ -125,8 +124,8 @@ main(int argc, char **argv)
 	printf("Parsed test spec with %d sessions\n", testspec->nsessions);
 
 	/*
-	 * Establish connections to the database, one for each session and an extra
-	 * for lock wait detection and global work.
+	 * Establish connections to the database, one for each session and an
+	 * extra for lock wait detection and global work.
 	 */
 	nconns = 1 + testspec->nsessions;
 	conns = calloc(nconns, sizeof(PGconn *));
@@ -187,7 +186,7 @@ main(int argc, char **argv)
 
 	/*
 	 * Build the query we'll use to detect lock contention among sessions in
-	 * the test specification.  Most of the time, we could get away with
+	 * the test specification.	Most of the time, we could get away with
 	 * simply checking whether a session is waiting for *any* lock: we don't
 	 * exactly expect concurrent use of test tables.  However, autovacuum will
 	 * occasionally take AccessExclusiveLock to truncate a table, and we must
@@ -254,16 +253,16 @@ main(int argc, char **argv)
 						 "'ExclusiveLock',"
 						 "'AccessExclusiveLock'] END) "
 
-						 "AND holder.locktype IS NOT DISTINCT FROM waiter.locktype "
-						 "AND holder.database IS NOT DISTINCT FROM waiter.database "
-						 "AND holder.relation IS NOT DISTINCT FROM waiter.relation "
+				  "AND holder.locktype IS NOT DISTINCT FROM waiter.locktype "
+				  "AND holder.database IS NOT DISTINCT FROM waiter.database "
+				  "AND holder.relation IS NOT DISTINCT FROM waiter.relation "
 						 "AND holder.page IS NOT DISTINCT FROM waiter.page "
 						 "AND holder.tuple IS NOT DISTINCT FROM waiter.tuple "
-						 "AND holder.virtualxid IS NOT DISTINCT FROM waiter.virtualxid "
-						 "AND holder.transactionid IS NOT DISTINCT FROM waiter.transactionid "
-						 "AND holder.classid IS NOT DISTINCT FROM waiter.classid "
+			  "AND holder.virtualxid IS NOT DISTINCT FROM waiter.virtualxid "
+		"AND holder.transactionid IS NOT DISTINCT FROM waiter.transactionid "
+					"AND holder.classid IS NOT DISTINCT FROM waiter.classid "
 						 "AND holder.objid IS NOT DISTINCT FROM waiter.objid "
-						 "AND holder.objsubid IS NOT DISTINCT FROM waiter.objsubid ");
+				"AND holder.objsubid IS NOT DISTINCT FROM waiter.objsubid ");
 
 	res = PQprepare(conns[0], PREP_WAITING, wait_query.data, 0, NULL);
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
@@ -294,7 +293,7 @@ static int *piles;
  * explicitly specified.
  */
 static void
-run_testspec(TestSpec *testspec)
+run_testspec(TestSpec * testspec)
 {
 	if (testspec->permutations)
 		run_named_permutations(testspec);
@@ -400,9 +399,10 @@ run_named_permutations(TestSpec * testspec)
 		/* Find all the named steps using the lookup table */
 		for (j = 0; j < p->nsteps; j++)
 		{
-			Step	**this = (Step **) bsearch(p->stepnames[j], allsteps,
-											   nallsteps, sizeof(Step *),
-											   &step_bsearch_cmp);
+			Step	  **this = (Step **) bsearch(p->stepnames[j], allsteps,
+												 nallsteps, sizeof(Step *),
+												 &step_bsearch_cmp);
+
 			if (this == NULL)
 			{
 				fprintf(stderr, "undefined step \"%s\" specified in permutation\n",
@@ -441,7 +441,7 @@ step_bsearch_cmp(const void *a, const void *b)
  * If a step caused an error to be reported, print it out and clear it.
  */
 static void
-report_error_message(Step *step)
+report_error_message(Step * step)
 {
 	if (step->errormsg)
 	{
@@ -458,9 +458,9 @@ report_error_message(Step *step)
  * one fails due to a timeout such as deadlock timeout.
  */
 static void
-report_two_error_messages(Step *step1, Step *step2)
+report_two_error_messages(Step * step1, Step * step2)
 {
-	char *prefix;
+	char	   *prefix;
 
 	prefix = malloc(strlen(step1->name) + strlen(step2->name) + 2);
 	sprintf(prefix, "%s %s", step1->name, step2->name);
@@ -494,8 +494,8 @@ run_permutation(TestSpec * testspec, int nsteps, Step ** steps)
 	Step	   *waiting = NULL;
 
 	/*
-	 * In dry run mode, just display the permutation in the same format used by
-	 * spec files, and return.
+	 * In dry run mode, just display the permutation in the same format used
+	 * by spec files, and return.
 	 */
 	if (dry_run)
 	{
@@ -547,21 +547,22 @@ run_permutation(TestSpec * testspec, int nsteps, Step ** steps)
 	/* Perform steps */
 	for (i = 0; i < nsteps; i++)
 	{
-		Step *step = steps[i];
-		PGconn *conn = conns[1 + step->session];
+		Step	   *step = steps[i];
+		PGconn	   *conn = conns[1 + step->session];
 
 		if (waiting != NULL && step->session == waiting->session)
 		{
-			PGcancel *cancel;
-			PGresult *res;
-			int j;
+			PGcancel   *cancel;
+			PGresult   *res;
+			int			j;
 
 			/*
 			 * This permutation is invalid: it can never happen in real life.
 			 *
-			 * A session is blocked on an earlier step (waiting) and no further
-			 * steps from this session can run until it is unblocked, but it
-			 * can only be unblocked by running steps from other sessions.
+			 * A session is blocked on an earlier step (waiting) and no
+			 * further steps from this session can run until it is unblocked,
+			 * but it can only be unblocked by running steps from other
+			 * sessions.
 			 */
 			fprintf(stderr, "invalid permutation detected\n");
 
@@ -569,7 +570,7 @@ run_permutation(TestSpec * testspec, int nsteps, Step ** steps)
 			cancel = PQgetCancel(conn);
 			if (cancel != NULL)
 			{
-				char buf[256];
+				char		buf[256];
 
 				PQcancel(cancel, buf, sizeof(buf));
 
@@ -673,11 +674,11 @@ teardown:
 /*
  * Our caller already sent the query associated with this step.  Wait for it
  * to either complete or (if given the STEP_NONBLOCK flag) to block while
- * waiting for a lock.  We assume that any lock wait will persist until we
+ * waiting for a lock.	We assume that any lock wait will persist until we
  * have executed additional steps in the permutation.
  *
  * When calling this function on behalf of a given step for a second or later
- * time, pass the STEP_RETRY flag.  This only affects the messages printed.
+ * time, pass the STEP_RETRY flag.	This only affects the messages printed.
  *
  * If the connection returns an error, the message is saved in step->errormsg.
  * Caller should call report_error_message shortly after this, to have it
@@ -687,7 +688,7 @@ teardown:
  * a lock, returns true.  Otherwise, returns false.
  */
 static bool
-try_complete_step(Step *step, int flags)
+try_complete_step(Step * step, int flags)
 {
 	PGconn	   *conn = conns[1 + step->session];
 	fd_set		read_set;
@@ -705,12 +706,12 @@ try_complete_step(Step *step, int flags)
 		timeout.tv_usec = 10000;	/* Check for lock waits every 10ms. */
 
 		ret = select(sock + 1, &read_set, NULL, NULL, &timeout);
-		if (ret < 0)	/* error in select() */
+		if (ret < 0)			/* error in select() */
 		{
 			fprintf(stderr, "select failed: %s\n", strerror(errno));
 			exit_nicely();
 		}
-		else if (ret == 0)	/* select() timeout: check for lock wait */
+		else if (ret == 0)		/* select() timeout: check for lock wait */
 		{
 			int			ntuples;
 
@@ -765,9 +766,9 @@ try_complete_step(Step *step, int flags)
 				}
 				/* Detail may contain xid values, so just show primary. */
 				step->errormsg = malloc(5 +
-										strlen(PQresultErrorField(res, PG_DIAG_SEVERITY)) +
+						  strlen(PQresultErrorField(res, PG_DIAG_SEVERITY)) +
 										strlen(PQresultErrorField(res,
-																  PG_DIAG_MESSAGE_PRIMARY)));
+												  PG_DIAG_MESSAGE_PRIMARY)));
 				sprintf(step->errormsg, "%s:  %s",
 						PQresultErrorField(res, PG_DIAG_SEVERITY),
 						PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY));

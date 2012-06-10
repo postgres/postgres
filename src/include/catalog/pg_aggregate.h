@@ -44,6 +44,7 @@ CATALOG(pg_aggregate,2600) BKI_WITHOUT_OIDS
 	regproc		aggfinalfn;
 	Oid			aggsortop;
 	Oid			aggtranstype;
+
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	text		agginitval;
 #endif

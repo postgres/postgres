@@ -133,7 +133,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 										 false, /* isAgg */
 										 false, /* isWindowFunc */
 										 false, /* security_definer */
-										 false,	/* isLeakProof */
+										 false, /* isLeakProof */
 										 false, /* isStrict */
 										 PROVOLATILE_VOLATILE,
 										 buildoidvector(funcargtypes, 0),
@@ -210,7 +210,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 										 false, /* isAgg */
 										 false, /* isWindowFunc */
 										 false, /* security_definer */
-										 false,	/* isLeakProof */
+										 false, /* isLeakProof */
 										 true,	/* isStrict */
 										 PROVOLATILE_VOLATILE,
 										 buildoidvector(funcargtypes, 1),

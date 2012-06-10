@@ -831,8 +831,8 @@ get_domain_constraint_oid(Oid typid, const char *conname, bool missing_ok)
 			if (OidIsValid(conOid))
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("domain \"%s\" has multiple constraints named \"%s\"",
-						format_type_be(typid), conname)));
+				errmsg("domain \"%s\" has multiple constraints named \"%s\"",
+					   format_type_be(typid), conname)));
 			conOid = HeapTupleGetOid(tuple);
 		}
 	}

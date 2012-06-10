@@ -30,7 +30,7 @@
  * the analyzed-and-rewritten query tree, and rebuild it when next needed.
  *
  * An actual execution plan, represented by CachedPlan, is derived from the
- * CachedPlanSource when we need to execute the query.  The plan could be
+ * CachedPlanSource when we need to execute the query.	The plan could be
  * either generic (usable with any set of plan parameters) or custom (for a
  * specific set of parameters).  plancache.c contains the logic that decides
  * which way to do it for any particular execution.  If we are using a generic
@@ -84,7 +84,7 @@ typedef struct CachedPlanSource
 	List	   *query_list;		/* list of Query nodes, or NIL if not valid */
 	List	   *relationOids;	/* OIDs of relations the queries depend on */
 	List	   *invalItems;		/* other dependencies, as PlanInvalItems */
-	MemoryContext query_context; /* context holding the above, or NULL */
+	MemoryContext query_context;	/* context holding the above, or NULL */
 	/* If we have a generic plan, this is a reference-counted link to it: */
 	struct CachedPlan *gplan;	/* generic plan, or NULL if not valid */
 	/* Some state flags: */
@@ -93,26 +93,26 @@ typedef struct CachedPlanSource
 	bool		is_valid;		/* is the query_list currently valid? */
 	int			generation;		/* increments each time we create a plan */
 	/* If CachedPlanSource has been saved, it is a member of a global list */
-	struct CachedPlanSource *next_saved;	/* list link, if so */
+	struct CachedPlanSource *next_saved;		/* list link, if so */
 	/* State kept to help decide whether to use custom or generic plans: */
 	double		generic_cost;	/* cost of generic plan, or -1 if not known */
-	double		total_custom_cost;	/* total cost of custom plans so far */
-	int			num_custom_plans;	/* number of plans included in total */
+	double		total_custom_cost;		/* total cost of custom plans so far */
+	int			num_custom_plans;		/* number of plans included in total */
 } CachedPlanSource;
 
 /*
  * CachedPlan represents an execution plan derived from a CachedPlanSource.
  * The reference count includes both the link from the parent CachedPlanSource
  * (if any), and any active plan executions, so the plan can be discarded
- * exactly when refcount goes to zero.  Both the struct itself and the
+ * exactly when refcount goes to zero.	Both the struct itself and the
  * subsidiary data live in the context denoted by the context field.
  * This makes it easy to free a no-longer-needed cached plan.
  */
 typedef struct CachedPlan
 {
 	int			magic;			/* should equal CACHEDPLAN_MAGIC */
-	List	   *stmt_list;		/* list of statement nodes (PlannedStmts
-								 * and bare utility statements) */
+	List	   *stmt_list;		/* list of statement nodes (PlannedStmts and
+								 * bare utility statements) */
 	bool		is_saved;		/* is CachedPlan in a long-lived context? */
 	bool		is_valid;		/* is the stmt_list currently valid? */
 	TransactionId saved_xmin;	/* if valid, replan when TransactionXmin
@@ -130,20 +130,20 @@ extern CachedPlanSource *CreateCachedPlan(Node *raw_parse_tree,
 				 const char *query_string,
 				 const char *commandTag);
 extern void CompleteCachedPlan(CachedPlanSource *plansource,
-						List *querytree_list,
-						MemoryContext querytree_context,
-						Oid *param_types,
-						int num_params,
-						ParserSetupHook parserSetup,
-						void *parserSetupArg,
-						int cursor_options,
-						bool fixed_result);
+				   List *querytree_list,
+				   MemoryContext querytree_context,
+				   Oid *param_types,
+				   int num_params,
+				   ParserSetupHook parserSetup,
+				   void *parserSetupArg,
+				   int cursor_options,
+				   bool fixed_result);
 
 extern void SaveCachedPlan(CachedPlanSource *plansource);
 extern void DropCachedPlan(CachedPlanSource *plansource);
 
 extern void CachedPlanSetParentContext(CachedPlanSource *plansource,
-									   MemoryContext newcontext);
+						   MemoryContext newcontext);
 
 extern CachedPlanSource *CopyCachedPlan(CachedPlanSource *plansource);
 

@@ -881,8 +881,8 @@ copy_plpgsql_datum(PLpgSQL_datum *datum)
 
 			/*
 			 * These datum records are read-only at runtime, so no need to
-			 * copy them (well, ARRAYELEM contains some cached type data,
-			 * but we'd just as soon centralize the caching anyway)
+			 * copy them (well, ARRAYELEM contains some cached type data, but
+			 * we'd just as soon centralize the caching anyway)
 			 */
 			result = datum;
 			break;
@@ -1441,8 +1441,8 @@ exec_stmt_getdiag(PLpgSQL_execstate *estate, PLpgSQL_stmt_getdiag *stmt)
 	 */
 	if (stmt->is_stacked && estate->cur_error == NULL)
 		ereport(ERROR,
-				(errcode(ERRCODE_STACKED_DIAGNOSTICS_ACCESSED_WITHOUT_ACTIVE_HANDLER),
-				 errmsg("GET STACKED DIAGNOSTICS cannot be used outside an exception handler")));
+		(errcode(ERRCODE_STACKED_DIAGNOSTICS_ACCESSED_WITHOUT_ACTIVE_HANDLER),
+		 errmsg("GET STACKED DIAGNOSTICS cannot be used outside an exception handler")));
 
 	foreach(lc, stmt->diag_items)
 	{
@@ -1481,7 +1481,7 @@ exec_stmt_getdiag(PLpgSQL_execstate *estate, PLpgSQL_stmt_getdiag *stmt)
 
 			case PLPGSQL_GETDIAG_RETURNED_SQLSTATE:
 				exec_assign_c_string(estate, var,
-									 unpack_sql_state(estate->cur_error->sqlerrcode));
+							unpack_sql_state(estate->cur_error->sqlerrcode));
 				break;
 
 			case PLPGSQL_GETDIAG_MESSAGE_TEXT:
@@ -2676,8 +2676,8 @@ exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 			ReThrowError(estate->cur_error);
 		/* oops, we're not inside a handler */
 		ereport(ERROR,
-				(errcode(ERRCODE_STACKED_DIAGNOSTICS_ACCESSED_WITHOUT_ACTIVE_HANDLER),
-				 errmsg("RAISE without parameters cannot be used outside an exception handler")));
+		(errcode(ERRCODE_STACKED_DIAGNOSTICS_ACCESSED_WITHOUT_ACTIVE_HANDLER),
+		 errmsg("RAISE without parameters cannot be used outside an exception handler")));
 	}
 
 	if (stmt->condname)
@@ -3036,7 +3036,7 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 
 			foreach(l2, plansource->query_list)
 			{
-				Query  *q = (Query *) lfirst(l2);
+				Query	   *q = (Query *) lfirst(l2);
 
 				Assert(IsA(q, Query));
 				if (q->canSetTag)
@@ -3288,9 +3288,9 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 			 * a functional limitation because CREATE TABLE AS is allowed.
 			 */
 			ereport(ERROR,
-			        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			         errmsg("EXECUTE of SELECT ... INTO is not implemented"),
-			         errhint("You might want to use EXECUTE ... INTO or EXECUTE CREATE TABLE ... AS instead.")));
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("EXECUTE of SELECT ... INTO is not implemented"),
+					 errhint("You might want to use EXECUTE ... INTO or EXECUTE CREATE TABLE ... AS instead.")));
 			break;
 
 			/* Some SPI errors deserve specific error messages */
@@ -3771,8 +3771,8 @@ exec_assign_value(PLpgSQL_execstate *estate,
 
 				/*
 				 * If type is by-reference, copy the new value (which is
-				 * probably in the eval_econtext) into the procedure's
-				 * memory context.
+				 * probably in the eval_econtext) into the procedure's memory
+				 * context.
 				 */
 				if (!var->datatype->typbyval && !*isNull)
 					newvalue = datumCopy(newvalue,
@@ -4051,7 +4051,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 					if (!OidIsValid(elemtypoid))
 						ereport(ERROR,
 								(errcode(ERRCODE_DATATYPE_MISMATCH),
-								 errmsg("subscripted object is not an array")));
+							  errmsg("subscripted object is not an array")));
 
 					/* Collect needed data about the types */
 					arraytyplen = get_typlen(arraytypoid);
@@ -4124,7 +4124,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				 * array, either, so that's a no-op too.  This is all ugly but
 				 * corresponds to the current behavior of ExecEvalArrayRef().
 				 */
-				if (arrayelem->arraytyplen > 0 &&	/* fixed-length array? */
+				if (arrayelem->arraytyplen > 0 &&		/* fixed-length array? */
 					(oldarrayisnull || *isNull))
 					return;
 
@@ -5358,7 +5358,7 @@ convert_value_to_string(PLpgSQL_execstate *estate, Datum value, Oid valtype)
  *
  * Note: the estate's eval_econtext is used for temporary storage, and may
  * also contain the result Datum if we have to do a conversion to a pass-
- * by-reference data type.  Be sure to do an exec_eval_cleanup() call when
+ * by-reference data type.	Be sure to do an exec_eval_cleanup() call when
  * done with the result.
  * ----------
  */
@@ -5708,8 +5708,8 @@ exec_simple_check_plan(PLpgSQL_expr *expr)
 
 	/*
 	 * Initialize to "not simple", and remember the plan generation number we
-	 * last checked.  (If we don't get as far as obtaining a plan to check,
-	 * we just leave expr_simple_generation set to 0.)
+	 * last checked.  (If we don't get as far as obtaining a plan to check, we
+	 * just leave expr_simple_generation set to 0.)
 	 */
 	expr->expr_simple_expr = NULL;
 	expr->expr_simple_generation = 0;
@@ -5722,12 +5722,12 @@ exec_simple_check_plan(PLpgSQL_expr *expr)
 	plansource = (CachedPlanSource *) linitial(expr->plan->plancache_list);
 
 	/*
-	 * Do some checking on the analyzed-and-rewritten form of the query.
-	 * These checks are basically redundant with the tests in
+	 * Do some checking on the analyzed-and-rewritten form of the query. These
+	 * checks are basically redundant with the tests in
 	 * exec_simple_recheck_plan, but the point is to avoid building a plan if
-	 * possible.  Since this function is only
-	 * called immediately after creating the CachedPlanSource, we need not
-	 * worry about the query being stale.
+	 * possible.  Since this function is only called immediately after
+	 * creating the CachedPlanSource, we need not worry about the query being
+	 * stale.
 	 */
 
 	/*

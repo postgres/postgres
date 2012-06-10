@@ -125,9 +125,9 @@ typedef struct Expr
  * The code doesn't really need varnoold/varoattno, but they are very useful
  * for debugging and interpreting completed plans, so we keep them around.
  */
-#define    INNER_VAR		65000			/* reference to inner subplan */
-#define    OUTER_VAR		65001			/* reference to outer subplan */
-#define    INDEX_VAR		65002			/* reference to index column */
+#define    INNER_VAR		65000		/* reference to inner subplan */
+#define    OUTER_VAR		65001		/* reference to outer subplan */
+#define    INDEX_VAR		65002		/* reference to index column */
 
 #define IS_SPECIAL_VARNO(varno)		((varno) >= INNER_VAR)
 
@@ -847,13 +847,13 @@ typedef struct ArrayExpr
  * the same as the number of columns logically present in the rowtype.
  *
  * colnames provides field names in cases where the names can't easily be
- * obtained otherwise.  Names *must* be provided if row_typeid is RECORDOID.
+ * obtained otherwise.	Names *must* be provided if row_typeid is RECORDOID.
  * If row_typeid identifies a known composite type, colnames can be NIL to
  * indicate the type's cataloged field names apply.  Note that colnames can
  * be non-NIL even for a composite type, and typically is when the RowExpr
  * was created by expanding a whole-row Var.  This is so that we can retain
  * the column alias names of the RTE that the Var referenced (which would
- * otherwise be very difficult to extract from the parsetree).  Like the
+ * otherwise be very difficult to extract from the parsetree).	Like the
  * args list, colnames is one-for-one with physical fields of the rowtype.
  */
 typedef struct RowExpr

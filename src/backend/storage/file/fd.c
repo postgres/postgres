@@ -164,7 +164,7 @@ static bool have_pending_fd_cleanup = false;
 /*
  * Tracks the total size of all temporary files.  Note: when temp_file_limit
  * is being enforced, this cannot overflow since the limit cannot be more
- * than INT_MAX kilobytes.  When not enforcing, it could theoretically
+ * than INT_MAX kilobytes.	When not enforcing, it could theoretically
  * overflow, but we don't care.
  */
 static uint64 temporary_files_size = 0;
@@ -685,7 +685,7 @@ LruInsert(File file)
 		/* seek to the right position */
 		if (vfdP->seekPos != (off_t) 0)
 		{
-			off_t		returnValue PG_USED_FOR_ASSERTS_ONLY;
+			off_t returnValue PG_USED_FOR_ASSERTS_ONLY;
 
 			returnValue = lseek(vfdP->fd, vfdP->seekPos, SEEK_SET);
 			Assert(returnValue != (off_t) -1);
@@ -1046,7 +1046,7 @@ OpenTemporaryFileInTablespace(Oid tblspcOid, bool rejectError)
 void
 FileSetTransient(File file)
 {
-	Vfd		  *vfdP;
+	Vfd		   *vfdP;
 
 	Assert(FileIsValid(file));
 
@@ -1255,7 +1255,7 @@ FileWrite(File file, char *buffer, int amount)
 
 	/*
 	 * If enforcing temp_file_limit and it's a temp file, check to see if the
-	 * write would overrun temp_file_limit, and throw error if so.  Note: it's
+	 * write would overrun temp_file_limit, and throw error if so.	Note: it's
 	 * really a modularity violation to throw error here; we should set errno
 	 * and return -1.  However, there's no way to report a suitable error
 	 * message if we do that.  All current callers would just throw error
@@ -1263,18 +1263,18 @@ FileWrite(File file, char *buffer, int amount)
 	 */
 	if (temp_file_limit >= 0 && (VfdCache[file].fdstate & FD_TEMPORARY))
 	{
-		off_t	newPos = VfdCache[file].seekPos + amount;
+		off_t		newPos = VfdCache[file].seekPos + amount;
 
 		if (newPos > VfdCache[file].fileSize)
 		{
-			uint64	newTotal = temporary_files_size;
+			uint64		newTotal = temporary_files_size;
 
 			newTotal += newPos - VfdCache[file].fileSize;
 			if (newTotal > (uint64) temp_file_limit * (uint64) 1024)
 				ereport(ERROR,
 						(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
-						 errmsg("temporary file size exceeds temp_file_limit (%dkB)",
-								temp_file_limit)));
+				 errmsg("temporary file size exceeds temp_file_limit (%dkB)",
+						temp_file_limit)));
 		}
 	}
 
@@ -1293,7 +1293,7 @@ retry:
 		/* maintain fileSize and temporary_files_size if it's a temp file */
 		if (VfdCache[file].fdstate & FD_TEMPORARY)
 		{
-			off_t	newPos = VfdCache[file].seekPos;
+			off_t		newPos = VfdCache[file].seekPos;
 
 			if (newPos > VfdCache[file].fileSize)
 			{
@@ -1915,8 +1915,8 @@ CleanupTempFiles(bool isProcExit)
 					/*
 					 * If we're in the process of exiting a backend process,
 					 * close all temporary files. Otherwise, only close
-					 * temporary files local to the current transaction.
-					 * They should be closed by the ResourceOwner mechanism
+					 * temporary files local to the current transaction. They
+					 * should be closed by the ResourceOwner mechanism
 					 * already, so this is just a debugging cross-check.
 					 */
 					if (isProcExit)
@@ -1924,7 +1924,7 @@ CleanupTempFiles(bool isProcExit)
 					else if (fdstate & FD_XACT_TEMPORARY)
 					{
 						elog(WARNING,
-							 "temporary file %s not closed at end-of-transaction",
+						"temporary file %s not closed at end-of-transaction",
 							 VfdCache[i].fileName);
 						FileClose(i);
 					}

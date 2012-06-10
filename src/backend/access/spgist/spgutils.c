@@ -235,7 +235,7 @@ SpGistUpdateMetaPage(Relation index)
  *
  * When requesting an inner page, if we get one with the wrong parity,
  * we just release the buffer and try again.  We will get a different page
- * because GetFreeIndexPage will have marked the page used in FSM.  The page
+ * because GetFreeIndexPage will have marked the page used in FSM.	The page
  * is entered in our local lastUsedPages cache, so there's some hope of
  * making use of it later in this session, but otherwise we rely on VACUUM
  * to eventually re-enter the page in FSM, making it available for recycling.
@@ -245,7 +245,7 @@ SpGistUpdateMetaPage(Relation index)
  *
  * When we return a buffer to the caller, the page is *not* entered into
  * the lastUsedPages cache; we expect the caller will do so after it's taken
- * whatever space it will use.  This is because after the caller has used up
+ * whatever space it will use.	This is because after the caller has used up
  * some space, the page might have less space than whatever was cached already
  * so we'd rather not trash the old cache entry.
  */
@@ -275,7 +275,7 @@ allocNewBuffer(Relation index, int flags)
 		else
 		{
 			BlockNumber blkno = BufferGetBlockNumber(buffer);
-			int		blkFlags = GBUF_INNER_PARITY(blkno);
+			int			blkFlags = GBUF_INNER_PARITY(blkno);
 
 			if ((flags & GBUF_PARITY_MASK) == blkFlags)
 			{
@@ -317,7 +317,7 @@ SpGistGetBuffer(Relation index, int flags, int needSpace, bool *isNew)
 
 	/*
 	 * If possible, increase the space request to include relation's
-	 * fillfactor.  This ensures that when we add unrelated tuples to a page,
+	 * fillfactor.	This ensures that when we add unrelated tuples to a page,
 	 * we try to keep 100-fillfactor% available for adding tuples that are
 	 * related to the ones already on it.  But fillfactor mustn't cause an
 	 * error for requests that would otherwise be legal.
@@ -664,7 +664,7 @@ spgFormInnerTuple(SpGistState *state, bool hasPrefix, Datum prefix,
 				 errmsg("SPGiST inner tuple size %lu exceeds maximum %lu",
 						(unsigned long) size,
 				(unsigned long) (SPGIST_PAGE_CAPACITY - sizeof(ItemIdData))),
-				 errhint("Values larger than a buffer page cannot be indexed.")));
+			errhint("Values larger than a buffer page cannot be indexed.")));
 
 	/*
 	 * Check for overflow of header fields --- probably can't fail if the
@@ -801,7 +801,7 @@ SpGistPageAddNewItem(SpGistState *state, Page page, Item item, Size size,
 			for (; i <= maxoff; i++)
 			{
 				SpGistDeadTuple it = (SpGistDeadTuple) PageGetItem(page,
-													PageGetItemId(page, i));
+													 PageGetItemId(page, i));
 
 				if (it->tupstate == SPGIST_PLACEHOLDER)
 				{

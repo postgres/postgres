@@ -95,7 +95,7 @@ typedef struct _parallel_slot
 typedef struct ShutdownInformation
 {
 	ParallelState *pstate;
-	Archive       *AHX;
+	Archive    *AHX;
 } ShutdownInformation;
 
 static ShutdownInformation shutdown_info;
@@ -529,8 +529,8 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te,
 
 	/*
 	 * Ignore DATABASE entry unless we should create it.  We must check this
-	 * here, not in _tocEntryRequired, because the createDB option should
-	 * not affect emitting a DATABASE entry to an archive file.
+	 * here, not in _tocEntryRequired, because the createDB option should not
+	 * affect emitting a DATABASE entry to an archive file.
 	 */
 	if (!ropt->createDB && strcmp(te->desc, "DATABASE") == 0)
 		reqs = 0;
@@ -1296,7 +1296,7 @@ RestoreOutput(ArchiveHandle *AH, OutputContext savedContext)
 
 	if (res != 0)
 		exit_horribly(modulename, "could not close output file: %s\n",
-					 strerror(errno));
+					  strerror(errno));
 
 	AH->gzOut = savedContext.gzOut;
 	AH->OF = savedContext.OF;
@@ -1317,8 +1317,8 @@ ahprintf(ArchiveHandle *AH, const char *fmt,...)
 
 	/*
 	 * This is paranoid: deal with the possibility that vsnprintf is willing
-	 * to ignore trailing null or returns > 0 even if string does not fit.
-	 * It may be the case that it returns cnt = bufsize.
+	 * to ignore trailing null or returns > 0 even if string does not fit. It
+	 * may be the case that it returns cnt = bufsize.
 	 */
 	while (cnt < 0 || cnt >= (bSize - 1))
 	{
@@ -1456,7 +1456,7 @@ ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 			res = fwrite(ptr, size, nmemb, AH->OF);
 			if (res != nmemb)
 				exit_horribly(modulename, "could not write to output file: %s\n",
-							 strerror(errno));
+							  strerror(errno));
 			return res;
 		}
 	}
@@ -1465,7 +1465,7 @@ ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 /* on some error, we may decide to go on... */
 void
 warn_or_exit_horribly(ArchiveHandle *AH,
- 					  const char *modulename, const char *fmt,...)
+					  const char *modulename, const char *fmt,...)
 {
 	va_list		ap;
 
@@ -1549,7 +1549,7 @@ _moveBefore(ArchiveHandle *AH, TocEntry *pos, TocEntry *te)
  * items.
  *
  * The arrays are indexed by dump ID (so entry zero is unused).  Note that the
- * array entries run only up to maxDumpId.  We might see dependency dump IDs
+ * array entries run only up to maxDumpId.	We might see dependency dump IDs
  * beyond that (if the dump was partial); so always check the array bound
  * before trying to touch an array entry.
  */
@@ -1573,7 +1573,7 @@ buildTocEntryArrays(ArchiveHandle *AH)
 
 		/*
 		 * tableDataId provides the TABLE DATA item's dump ID for each TABLE
-		 * TOC entry that has a DATA item.  We compute this by reversing the
+		 * TOC entry that has a DATA item.	We compute this by reversing the
 		 * TABLE DATA item's dependency, knowing that a TABLE DATA item has
 		 * just one dependency and it is the TABLE item.
 		 */
@@ -1925,8 +1925,8 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 	else
 	{
 		/*
-		 * *Maybe* we have a tar archive format file or a text dump ... 
-		 * So, read first 512 byte header...
+		 * *Maybe* we have a tar archive format file or a text dump ... So,
+		 * read first 512 byte header...
 		 */
 		cnt = fread(&AH->lookahead[AH->lookaheadLen], 1, 512 - AH->lookaheadLen, fh);
 		AH->lookaheadLen += cnt;
@@ -1935,7 +1935,10 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 			(strncmp(AH->lookahead, TEXT_DUMP_HEADER, strlen(TEXT_DUMP_HEADER)) == 0 ||
 			 strncmp(AH->lookahead, TEXT_DUMPALL_HEADER, strlen(TEXT_DUMPALL_HEADER)) == 0))
 		{
-			/* looks like it's probably a text format dump. so suggest they try psql */
+			/*
+			 * looks like it's probably a text format dump. so suggest they
+			 * try psql
+			 */
 			exit_horribly(modulename, "input file appears to be a text format dump. Please use psql.\n");
 		}
 
@@ -2217,7 +2220,7 @@ ReadToc(ArchiveHandle *AH)
 		/* Sanity check */
 		if (te->dumpId <= 0)
 			exit_horribly(modulename,
-						  "entry ID %d out of range -- perhaps a corrupt TOC\n",
+					   "entry ID %d out of range -- perhaps a corrupt TOC\n",
 						  te->dumpId);
 
 		te->hadDumper = ReadInt(AH);
@@ -2835,8 +2838,8 @@ _selectTablespace(ArchiveHandle *AH, const char *tablespace)
 
 		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
 			warn_or_exit_horribly(AH, modulename,
-								  "could not set default_tablespace to %s: %s",
-								  fmtId(want), PQerrorMessage(AH->connection));
+								"could not set default_tablespace to %s: %s",
+								fmtId(want), PQerrorMessage(AH->connection));
 
 		PQclear(res);
 	}
@@ -3043,7 +3046,7 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 
 		if (te->tablespace && !ropt->noTablespace)
 		{
-			char   *sanitized_tablespace;
+			char	   *sanitized_tablespace;
 
 			sanitized_tablespace = replace_line_endings(te->tablespace);
 			ahprintf(AH, "; Tablespace: %s", sanitized_tablespace);
@@ -3150,8 +3153,8 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 static char *
 replace_line_endings(const char *str)
 {
-	char   *result;
-	char   *s;
+	char	   *result;
+	char	   *s;
 
 	result = pg_strdup(str);
 
@@ -3381,7 +3384,7 @@ unsetProcessIdentifier(ParallelStateEntry *pse)
 static ParallelStateEntry *
 GetMyPSEntry(ParallelState *pstate)
 {
-	int i;
+	int			i;
 
 	for (i = 0; i < pstate->numWorkers; i++)
 #ifdef WIN32
@@ -3509,8 +3512,8 @@ restore_toc_entries_parallel(ArchiveHandle *AH)
 	DisconnectDatabase(&AH->public);
 
 	/*
-	 * Set the pstate in the shutdown_info. The exit handler uses pstate if set
-	 * and falls back to AHX otherwise.
+	 * Set the pstate in the shutdown_info. The exit handler uses pstate if
+	 * set and falls back to AHX otherwise.
 	 */
 	shutdown_info.pstate = pstate;
 

@@ -182,7 +182,7 @@
  * which should be safe in nearly all cases.  You might want to override
  * this if you are building 32-bit code for a known-recent PPC machine.
  */
-#ifdef HAVE_PPC_LWARX_MUTEX_HINT /* must have assembler support in any case */
+#ifdef HAVE_PPC_LWARX_MUTEX_HINT	/* must have assembler support in any case */
 #if defined(__ppc64__) || defined(__powerpc64__)
 #define USE_PPC_LWARX_MUTEX_HINT
 #endif
@@ -190,7 +190,7 @@
 
 /*
  * On PPC machines, decide whether to use LWSYNC instructions in place of
- * ISYNC and SYNC.  This provides slightly better performance, but will
+ * ISYNC and SYNC.	This provides slightly better performance, but will
  * result in illegal-instruction failures on some pre-POWER4 machines.
  * By default we use LWSYNC when building for 64-bit PPC, which should be
  * safe in nearly all cases.

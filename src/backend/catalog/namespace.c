@@ -226,7 +226,7 @@ Datum		pg_is_other_temp_schema(PG_FUNCTION_ARGS);
 Oid
 RangeVarGetRelidExtended(const RangeVar *relation, LOCKMODE lockmode,
 						 bool missing_ok, bool nowait,
-						 RangeVarGetRelidCallback callback, void *callback_arg)
+					   RangeVarGetRelidCallback callback, void *callback_arg)
 {
 	uint64		inval_count;
 	Oid			relId;
@@ -247,20 +247,20 @@ RangeVarGetRelidExtended(const RangeVar *relation, LOCKMODE lockmode,
 	}
 
 	/*
-	 * DDL operations can change the results of a name lookup.  Since all
-	 * such operations will generate invalidation messages, we keep track
-	 * of whether any such messages show up while we're performing the
-	 * operation, and retry until either (1) no more invalidation messages
-	 * show up or (2) the answer doesn't change.
+	 * DDL operations can change the results of a name lookup.	Since all such
+	 * operations will generate invalidation messages, we keep track of
+	 * whether any such messages show up while we're performing the operation,
+	 * and retry until either (1) no more invalidation messages show up or (2)
+	 * the answer doesn't change.
 	 *
 	 * But if lockmode = NoLock, then we assume that either the caller is OK
 	 * with the answer changing under them, or that they already hold some
 	 * appropriate lock, and therefore return the first answer we get without
-	 * checking for invalidation messages.  Also, if the requested lock is
+	 * checking for invalidation messages.	Also, if the requested lock is
 	 * already held, no LockRelationOid will not AcceptInvalidationMessages,
 	 * so we may fail to notice a change.  We could protect against that case
-	 * by calling AcceptInvalidationMessages() before beginning this loop,
-	 * but that would add a significant amount overhead, so for now we don't.
+	 * by calling AcceptInvalidationMessages() before beginning this loop, but
+	 * that would add a significant amount overhead, so for now we don't.
 	 */
 	for (;;)
 	{
@@ -282,17 +282,18 @@ RangeVarGetRelidExtended(const RangeVar *relation, LOCKMODE lockmode,
 		if (relation->relpersistence == RELPERSISTENCE_TEMP)
 		{
 			if (!OidIsValid(myTempNamespace))
-				relId = InvalidOid;	/* this probably can't happen? */
+				relId = InvalidOid;		/* this probably can't happen? */
 			else
 			{
 				if (relation->schemaname)
 				{
-					Oid		namespaceId;
+					Oid			namespaceId;
+
 					namespaceId = LookupExplicitNamespace(relation->schemaname);
 					if (namespaceId != myTempNamespace)
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-							   errmsg("temporary tables cannot specify a schema name")));
+								 errmsg("temporary tables cannot specify a schema name")));
 				}
 
 				relId = get_relname_relid(relation->relname, myTempNamespace);
@@ -315,12 +316,12 @@ RangeVarGetRelidExtended(const RangeVar *relation, LOCKMODE lockmode,
 		/*
 		 * Invoke caller-supplied callback, if any.
 		 *
-		 * This callback is a good place to check permissions: we haven't taken
-		 * the table lock yet (and it's really best to check permissions before
-		 * locking anything!), but we've gotten far enough to know what OID we
-		 * think we should lock.  Of course, concurrent DDL might change things
-		 * while we're waiting for the lock, but in that case the callback will
-		 * be invoked again for the new OID.
+		 * This callback is a good place to check permissions: we haven't
+		 * taken the table lock yet (and it's really best to check permissions
+		 * before locking anything!), but we've gotten far enough to know what
+		 * OID we think we should lock.  Of course, concurrent DDL might
+		 * change things while we're waiting for the lock, but in that case
+		 * the callback will be invoked again for the new OID.
 		 */
 		if (callback)
 			callback(relation, relId, oldRelId, callback_arg);
@@ -328,21 +329,21 @@ RangeVarGetRelidExtended(const RangeVar *relation, LOCKMODE lockmode,
 		/*
 		 * If no lock requested, we assume the caller knows what they're
 		 * doing.  They should have already acquired a heavyweight lock on
-		 * this relation earlier in the processing of this same statement,
-		 * so it wouldn't be appropriate to AcceptInvalidationMessages()
-		 * here, as that might pull the rug out from under them.
+		 * this relation earlier in the processing of this same statement, so
+		 * it wouldn't be appropriate to AcceptInvalidationMessages() here, as
+		 * that might pull the rug out from under them.
 		 */
 		if (lockmode == NoLock)
 			break;
 
 		/*
-		 * If, upon retry, we get back the same OID we did last time, then
-		 * the invalidation messages we processed did not change the final
-		 * answer.  So we're done.
+		 * If, upon retry, we get back the same OID we did last time, then the
+		 * invalidation messages we processed did not change the final answer.
+		 * So we're done.
 		 *
 		 * If we got a different OID, we've locked the relation that used to
-		 * have this name rather than the one that does now.  So release
-		 * the lock.
+		 * have this name rather than the one that does now.  So release the
+		 * lock.
 		 */
 		if (retry)
 		{
@@ -384,8 +385,8 @@ RangeVarGetRelidExtended(const RangeVar *relation, LOCKMODE lockmode,
 			break;
 
 		/*
-		 * Something may have changed.  Let's repeat the name lookup, to
-		 * make sure this name still references the same relation it did
+		 * Something may have changed.	Let's repeat the name lookup, to make
+		 * sure this name still references the same relation it did
 		 * previously.
 		 */
 		retry = true;
@@ -550,8 +551,8 @@ RangeVarGetAndCheckCreationNamespace(RangeVar *relation,
 			relid = InvalidOid;
 
 		/*
-		 * In bootstrap processing mode, we don't bother with permissions
-		 * or locking.  Permissions might not be working yet, and locking is
+		 * In bootstrap processing mode, we don't bother with permissions or
+		 * locking.  Permissions might not be working yet, and locking is
 		 * unnecessary.
 		 */
 		if (IsBootstrapProcessingMode())

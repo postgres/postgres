@@ -164,8 +164,8 @@ GetConnection(void)
 		free(keywords);
 
 		/*
-		 * Ensure we have the same value of integer timestamps as the
-		 * server we are connecting to.
+		 * Ensure we have the same value of integer timestamps as the server
+		 * we are connecting to.
 		 */
 		tmpparam = PQparameterStatus(tmpconn, "integer_datetimes");
 		if (!tmpparam)

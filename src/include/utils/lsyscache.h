@@ -18,10 +18,10 @@
 /* Result list element for get_op_btree_interpretation */
 typedef struct OpBtreeInterpretation
 {
-	Oid			opfamily_id;		/* btree opfamily containing operator */
-	int			strategy;			/* its strategy number */
-	Oid			oplefttype;			/* declared left input datatype */
-	Oid			oprighttype;		/* declared right input datatype */
+	Oid			opfamily_id;	/* btree opfamily containing operator */
+	int			strategy;		/* its strategy number */
+	Oid			oplefttype;		/* declared left input datatype */
+	Oid			oprighttype;	/* declared right input datatype */
 } OpBtreeInterpretation;
 
 /* I/O function selector for get_type_io_data */
@@ -149,7 +149,7 @@ extern void free_attstatsslot(Oid atttype,
 				  Datum *values, int nvalues,
 				  float4 *numbers, int nnumbers);
 extern char *get_namespace_name(Oid nspid);
-extern Oid get_range_subtype(Oid rangeOid);
+extern Oid	get_range_subtype(Oid rangeOid);
 
 #define type_is_array(typid)  (get_element_type(typid) != InvalidOid)
 /* type_is_array_domain accepts both plain arrays and domains over arrays */

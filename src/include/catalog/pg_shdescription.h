@@ -42,6 +42,7 @@ CATALOG(pg_shdescription,2396) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
 {
 	Oid			objoid;			/* OID of object itself */
 	Oid			classoid;		/* OID of table containing object */
+
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	text		description;	/* description of object */
 #endif

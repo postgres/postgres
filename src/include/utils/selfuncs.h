@@ -121,7 +121,7 @@ extern void get_join_variables(PlannerInfo *root, List *args,
 				   VariableStatData *vardata2,
 				   bool *join_is_reversed);
 extern double get_variable_numdistinct(VariableStatData *vardata,
-									   bool *isdefault);
+						 bool *isdefault);
 extern double mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 				Datum constval, bool varonleft,
 				double *sumcommonp);

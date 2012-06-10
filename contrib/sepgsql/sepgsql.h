@@ -248,20 +248,21 @@ extern bool sepgsql_check_perms(const char *scontext,
 					uint32 required,
 					const char *audit_name,
 					bool abort);
+
 /*
  * uavc.c
  */
 #define SEPGSQL_AVC_NOAUDIT			((void *)(-1))
 extern bool sepgsql_avc_check_perms_label(const char *tcontext,
-										  uint16 tclass,
-										  uint32 required,
-										  const char *audit_name,
-										  bool abort);
+							  uint16 tclass,
+							  uint32 required,
+							  const char *audit_name,
+							  bool abort);
 extern bool sepgsql_avc_check_perms(const ObjectAddress *tobject,
-									uint16 tclass,
-									uint32 required,
-									const char *audit_name,
-									bool abort);
+						uint16 tclass,
+						uint32 required,
+						const char *audit_name,
+						bool abort);
 extern char *sepgsql_avc_trusted_proc(Oid functionId);
 extern void sepgsql_avc_init(void);
 
@@ -269,7 +270,7 @@ extern void sepgsql_avc_init(void);
  * label.c
  */
 extern char *sepgsql_get_client_label(void);
-extern void  sepgsql_init_client_label(void);
+extern void sepgsql_init_client_label(void);
 extern char *sepgsql_get_label(Oid relOid, Oid objOid, int32 subId);
 
 extern void sepgsql_object_relabel(const ObjectAddress *object,
@@ -290,7 +291,7 @@ extern bool sepgsql_dml_privileges(List *rangeTabls, bool abort);
  * database.c
  */
 extern void sepgsql_database_post_create(Oid databaseId,
-										 const char *dtemplate);
+							 const char *dtemplate);
 extern void sepgsql_database_drop(Oid databaseId);
 extern void sepgsql_database_relabel(Oid databaseId, const char *seclabel);
 

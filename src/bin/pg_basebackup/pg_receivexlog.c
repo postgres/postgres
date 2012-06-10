@@ -92,7 +92,7 @@ stop_streaming(XLogRecPtr segendpos, uint32 timeline, bool segment_finished)
 /*
  * Determine starting location for streaming, based on:
  * 1. If there are existing xlog segments, start at the end of the last one
- *    that is complete (size matches XLogSegSize)
+ *	  that is complete (size matches XLogSegSize)
  * 2. If no valid xlog exists, start from the beginning of the current
  *	  WAL segment.
  */
@@ -190,9 +190,10 @@ FindStreamingStart(XLogRecPtr currentpos, uint32 currenttimeline)
 	if (high_log > 0 || high_seg > 0)
 	{
 		XLogRecPtr	high_ptr;
+
 		/*
-		 * Move the starting pointer to the start of the next segment,
-		 * since the highest one we've seen was completed.
+		 * Move the starting pointer to the start of the next segment, since
+		 * the highest one we've seen was completed.
 		 */
 		NextLogSeg(high_log, high_seg);
 
@@ -284,7 +285,6 @@ sigint_handler(int signum)
 {
 	time_to_abort = true;
 }
-
 #endif
 
 int
@@ -413,9 +413,10 @@ main(int argc, char **argv)
 	{
 		StreamLog();
 		if (time_to_abort)
+
 			/*
-			 * We've been Ctrl-C'ed. That's not an error, so exit without
-			 * an errorcode.
+			 * We've been Ctrl-C'ed. That's not an error, so exit without an
+			 * errorcode.
 			 */
 			exit(0);
 		else if (noloop)

@@ -33,7 +33,7 @@
  *
  * Note: since pg_amproc functions are indexed by (lefttype, righttype)
  * it is possible to associate a BTSORTSUPPORT function with a cross-type
- * comparison.  This could sensibly be used to provide a fast comparator
+ * comparison.	This could sensibly be used to provide a fast comparator
  * function for such cases, but probably not any other acceleration method.
  *
  *
@@ -57,28 +57,28 @@ typedef struct SortSupportData
 	 * These fields are initialized before calling the BTSORTSUPPORT function
 	 * and should not be changed later.
 	 */
-	MemoryContext ssup_cxt;				/* Context containing sort info */
-	Oid			ssup_collation;			/* Collation to use, or InvalidOid */
+	MemoryContext ssup_cxt;		/* Context containing sort info */
+	Oid			ssup_collation; /* Collation to use, or InvalidOid */
 
 	/*
-	 * Additional sorting parameters; but unlike ssup_collation, these can
-	 * be changed after BTSORTSUPPORT is called, so don't use them in
-	 * selecting sort support functions.
+	 * Additional sorting parameters; but unlike ssup_collation, these can be
+	 * changed after BTSORTSUPPORT is called, so don't use them in selecting
+	 * sort support functions.
 	 */
-	bool		ssup_reverse;			/* descending-order sort? */
+	bool		ssup_reverse;	/* descending-order sort? */
 	bool		ssup_nulls_first;		/* sort nulls first? */
 
 	/*
 	 * These fields are workspace for callers, and should not be touched by
 	 * opclass-specific functions.
 	 */
-	AttrNumber	ssup_attno;				/* column number to sort */
+	AttrNumber	ssup_attno;		/* column number to sort */
 
 	/*
-	 * ssup_extra is zeroed before calling the BTSORTSUPPORT function, and
-	 * is not touched subsequently by callers.
+	 * ssup_extra is zeroed before calling the BTSORTSUPPORT function, and is
+	 * not touched subsequently by callers.
 	 */
-	void	   *ssup_extra;				/* Workspace for opclass functions */
+	void	   *ssup_extra;		/* Workspace for opclass functions */
 
 	/*
 	 * Function pointers are zeroed before calling the BTSORTSUPPORT function,
@@ -140,13 +140,11 @@ ApplySortComparator(Datum datum1, bool isNull1,
 
 	return compare;
 }
-
 #else
 
-extern int	ApplySortComparator(Datum datum1, bool isNull1,
+extern int ApplySortComparator(Datum datum1, bool isNull1,
 					Datum datum2, bool isNull2,
 					SortSupport ssup);
-
 #endif   /* USE_INLINE */
 
 /* Other functions in utils/sort/sortsupport.c */

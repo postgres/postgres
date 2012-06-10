@@ -1052,7 +1052,7 @@ pqStdRowProcessor(PGresult *res, const PGdataValue *columns,
 	 * copy the data over.
 	 *
 	 * Note: on malloc failure, we return -1 leaving *errmsgp still NULL,
-	 * which caller will take to mean "out of memory".  This is preferable to
+	 * which caller will take to mean "out of memory".	This is preferable to
 	 * trying to set up such a message here, because evidently there's not
 	 * enough memory for gettext() to do anything.
 	 */
@@ -1063,7 +1063,7 @@ pqStdRowProcessor(PGresult *res, const PGdataValue *columns,
 
 	for (i = 0; i < nfields; i++)
 	{
-		int		clen = columns[i].len;
+		int			clen = columns[i].len;
 
 		if (clen < 0)
 		{
@@ -1743,7 +1743,7 @@ PQgetResult(PGconn *conn)
  *
  * This is mainly useful for cleaning up after a longjmp out of a row
  * processor, when resuming processing of the current query result isn't
- * wanted.  Note that this is of little value in an async-style application,
+ * wanted.	Note that this is of little value in an async-style application,
  * since any preceding calls to PQisBusy would have already called the regular
  * row processor.
  */

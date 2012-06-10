@@ -1702,7 +1702,7 @@ DATA(insert OID = 3895 (  "&<"	   PGNSP PGUID b f f 3831 3831 16 0 0 range_overl
 DESCR("overlaps or is left of");
 DATA(insert OID = 3896 (  "&>"	   PGNSP PGUID b f f 3831 3831 16 0 0 range_overright scalargtsel scalargtjoinsel ));
 DESCR("overlaps or is right of");
-DATA(insert OID = 3897 (  "-|-"	   PGNSP PGUID b f f 3831 3831 16 3897 0 range_adjacent contsel contjoinsel ));
+DATA(insert OID = 3897 (  "-|-"    PGNSP PGUID b f f 3831 3831 16 3897 0 range_adjacent contsel contjoinsel ));
 DESCR("is adjacent to");
 DATA(insert OID = 3898 (  "+"	   PGNSP PGUID b f f 3831 3831 3831 3898 0 range_union - - ));
 DESCR("range union");

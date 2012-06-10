@@ -62,7 +62,7 @@ typedef struct pgstattuple_type
 } pgstattuple_type;
 
 typedef void (*pgstat_page) (pgstattuple_type *, Relation, BlockNumber,
-							 BufferAccessStrategy);
+										 BufferAccessStrategy);
 
 static Datum build_pgstattuple_type(pgstattuple_type *stat,
 					   FunctionCallInfo fcinfo);

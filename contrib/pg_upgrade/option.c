@@ -56,10 +56,10 @@ parseCommandLine(int argc, char *argv[])
 	int			option;			/* Command line option */
 	int			optindex = 0;	/* used by getopt_long */
 	int			os_user_effective_id;
-	FILE		*fp;
-	char		**filename;
+	FILE	   *fp;
+	char	  **filename;
 	time_t		run_time = time(NULL);
-	
+
 	user_opts.transfer_mode = TRANSFER_MODE_COPY;
 
 	os_info.progname = get_progname(argv[0]);
@@ -138,11 +138,11 @@ parseCommandLine(int argc, char *argv[])
 				new_cluster.pgopts = pg_strdup(optarg);
 				break;
 
-			/*
-			 * Someday, the port number option could be removed and
-			 * passed using -o/-O, but that requires postmaster -C
-			 * to be supported on all old/new versions.
-			 */
+				/*
+				 * Someday, the port number option could be removed and passed
+				 * using -o/-O, but that requires postmaster -C to be
+				 * supported on all old/new versions.
+				 */
 			case 'p':
 				if ((old_cluster.port = atoi(optarg)) <= 0)
 				{
@@ -196,21 +196,21 @@ parseCommandLine(int argc, char *argv[])
 		/* Start with newline because we might be appending to a file. */
 		fprintf(fp, "\n"
 		"-----------------------------------------------------------------\n"
-		"  pg_upgrade run on %s"
-		"-----------------------------------------------------------------\n\n",
-		ctime(&run_time));
+				"  pg_upgrade run on %s"
+				"-----------------------------------------------------------------\n\n",
+				ctime(&run_time));
 		fclose(fp);
 	}
 
 	/* Get values from env if not already set */
 	check_required_directory(&old_cluster.bindir, "PGBINOLD", "-b",
-							"old cluster binaries reside");
+							 "old cluster binaries reside");
 	check_required_directory(&new_cluster.bindir, "PGBINNEW", "-B",
-							"new cluster binaries reside");
+							 "new cluster binaries reside");
 	check_required_directory(&old_cluster.pgdata, "PGDATAOLD", "-d",
-							"old cluster data resides");
+							 "old cluster data resides");
 	check_required_directory(&new_cluster.pgdata, "PGDATANEW", "-D",
-							"new cluster data resides");
+							 "new cluster data resides");
 }
 
 
@@ -285,7 +285,7 @@ or\n"), old_cluster.port, new_cluster.port, os_info.user);
  */
 static void
 check_required_directory(char **dirpath, char *envVarName,
-						char *cmdLineOption, char *description)
+						 char *cmdLineOption, char *description)
 {
 	if (*dirpath == NULL || strlen(*dirpath) == 0)
 	{
@@ -322,8 +322,10 @@ void
 adjust_data_dir(ClusterInfo *cluster)
 {
 	char		filename[MAXPGPATH];
-	char		cmd[MAXPGPATH], cmd_output[MAX_STRING];
-	FILE	   *fp, *output;
+	char		cmd[MAXPGPATH],
+				cmd_output[MAX_STRING];
+	FILE	   *fp,
+			   *output;
 
 	/* If there is no postgresql.conf, it can't be a config-only dir */
 	snprintf(filename, sizeof(filename), "%s/postgresql.conf", cluster->pgconfig);
@@ -345,10 +347,9 @@ adjust_data_dir(ClusterInfo *cluster)
 				CLUSTER_NAME(cluster));
 
 	/*
-	 * We don't have a data directory yet, so we can't check the PG
-	 * version, so this might fail --- only works for PG 9.2+.   If this
-	 * fails, pg_upgrade will fail anyway because the data files will not
-	 * be found.
+	 * We don't have a data directory yet, so we can't check the PG version,
+	 * so this might fail --- only works for PG 9.2+.	If this fails,
+	 * pg_upgrade will fail anyway because the data files will not be found.
 	 */
 	snprintf(cmd, sizeof(cmd), "\"%s/postmaster\" -D \"%s\" -C data_directory",
 			 cluster->bindir, cluster->pgconfig);
@@ -356,7 +357,7 @@ adjust_data_dir(ClusterInfo *cluster)
 	if ((output = popen(cmd, "r")) == NULL ||
 		fgets(cmd_output, sizeof(cmd_output), output) == NULL)
 		pg_log(PG_FATAL, "Could not get data directory using %s: %s\n",
-		cmd, getErrorText(errno));
+			   cmd, getErrorText(errno));
 
 	pclose(output);
 

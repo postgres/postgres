@@ -132,7 +132,7 @@ static const char *const * completion_charpp;	/* to pass a list of strings */
 static const char *completion_info_charp;		/* to pass a second string */
 static const char *completion_info_charp2;		/* to pass a third string */
 static const SchemaQuery *completion_squery;	/* to pass a SchemaQuery */
-static bool completion_case_sensitive;			/* completion is case sensitive */
+static bool completion_case_sensitive;	/* completion is case sensitive */
 
 /*
  * A few macros to ease typing. You can use these to complete the given
@@ -790,9 +790,9 @@ psql_completion(char *text, int start, int end)
 	completion_info_charp2 = NULL;
 
 	/*
-	 * Scan the input line before our current position for the last few
-	 * words. According to those we'll make some smart decisions on what the
-	 * user is probably intending to type.
+	 * Scan the input line before our current position for the last few words.
+	 * According to those we'll make some smart decisions on what the user is
+	 * probably intending to type.
 	 */
 	get_previous_words(start, previous_words, lengthof(previous_words));
 
@@ -1041,7 +1041,7 @@ psql_completion(char *text, int start, int end)
 			"ENCRYPTED", "INHERIT", "LOGIN", "NOCREATEDB", "NOCREATEROLE",
 			"NOCREATEUSER", "NOINHERIT", "NOLOGIN", "NOREPLICATION",
 			"NOSUPERUSER", "RENAME TO", "REPLICATION", "RESET", "SET",
-		 "SUPERUSER", "UNENCRYPTED", "VALID UNTIL", NULL};
+		"SUPERUSER", "UNENCRYPTED", "VALID UNTIL", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTERUSER_WITH);
 	}
@@ -2017,7 +2017,7 @@ psql_completion(char *text, int start, int end)
 			"ENCRYPTED", "IN", "INHERIT", "LOGIN", "NOCREATEDB",
 			"NOCREATEROLE", "NOCREATEUSER", "NOINHERIT", "NOLOGIN",
 			"NOREPLICATION", "NOSUPERUSER", "REPLICATION", "ROLE",
-		 "SUPERUSER", "SYSID", "UNENCRYPTED", "VALID UNTIL", NULL};
+		"SUPERUSER", "SYSID", "UNENCRYPTED", "VALID UNTIL", NULL};
 
 		COMPLETE_WITH_LIST(list_CREATEROLE_WITH);
 	}
@@ -2317,7 +2317,11 @@ psql_completion(char *text, int start, int end)
 							" UNION SELECT 'USAGE'"
 							" UNION SELECT 'ALL'");
 	}
-	/* Complete GRANT/REVOKE <privilege> with "ON", GRANT/REVOKE <role> with TO/FROM */
+
+	/*
+	 * Complete GRANT/REVOKE <privilege> with "ON", GRANT/REVOKE <role> with
+	 * TO/FROM
+	 */
 	else if (pg_strcasecmp(prev2_wd, "GRANT") == 0 ||
 			 pg_strcasecmp(prev2_wd, "REVOKE") == 0)
 	{
@@ -2901,8 +2905,11 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
 
 /* WITH [RECURSIVE] */
-	/* Only match when WITH is the first word, as WITH may appear in many other
-	   contexts. */
+
+	/*
+	 * Only match when WITH is the first word, as WITH may appear in many
+	 * other contexts.
+	 */
 	else if (pg_strcasecmp(prev_wd, "WITH") == 0 &&
 			 prev2_wd[0] == '\0')
 		COMPLETE_WITH_CONST("RECURSIVE");
@@ -3029,7 +3036,7 @@ psql_completion(char *text, int start, int end)
 			 strcmp(prev_wd, "\\e") == 0 || strcmp(prev_wd, "\\edit") == 0 ||
 			 strcmp(prev_wd, "\\g") == 0 ||
 		  strcmp(prev_wd, "\\i") == 0 || strcmp(prev_wd, "\\include") == 0 ||
-		  strcmp(prev_wd, "\\ir") == 0 || strcmp(prev_wd, "\\include_relative") == 0 ||
+			 strcmp(prev_wd, "\\ir") == 0 || strcmp(prev_wd, "\\include_relative") == 0 ||
 			 strcmp(prev_wd, "\\o") == 0 || strcmp(prev_wd, "\\out") == 0 ||
 			 strcmp(prev_wd, "\\s") == 0 ||
 			 strcmp(prev_wd, "\\w") == 0 || strcmp(prev_wd, "\\write") == 0
@@ -3412,8 +3419,11 @@ complete_from_list(const char *text, int state)
 			if (completion_case_sensitive)
 				return pg_strdup(item);
 			else
-				/* If case insensitive matching was requested initially, adjust
-				 * the case according to setting. */
+
+				/*
+				 * If case insensitive matching was requested initially,
+				 * adjust the case according to setting.
+				 */
 				return pg_strdup_keyword_case(item, text);
 		}
 	}
@@ -3451,8 +3461,11 @@ complete_from_const(const char *text, int state)
 		if (completion_case_sensitive)
 			return pg_strdup(completion_charp);
 		else
-			/* If case insensitive matching was requested initially, adjust the
-			 * case according to setting. */
+
+			/*
+			 * If case insensitive matching was requested initially, adjust
+			 * the case according to setting.
+			 */
 			return pg_strdup_keyword_case(completion_charp, text);
 	}
 	else
@@ -3500,7 +3513,7 @@ complete_from_variables(char *text, const char *prefix, const char *suffix)
 	}
 
 	varnames[nvars] = NULL;
-	COMPLETE_WITH_LIST_CS((const char * const *) varnames);
+	COMPLETE_WITH_LIST_CS((const char *const *) varnames);
 
 	for (i = 0; i < nvars; i++)
 		free(varnames[i]);
@@ -3567,9 +3580,10 @@ complete_from_files(const char *text, int state)
 static char *
 pg_strdup_keyword_case(const char *s, const char *ref)
 {
-	char *ret, *p;
+	char	   *ret,
+			   *p;
 	unsigned char first = ref[0];
-	int		tocase;
+	int			tocase;
 	const char *varval;
 
 	varval = GetVariable(pset.vars, "COMP_KEYWORD_CASE");
@@ -3635,7 +3649,7 @@ exec_query(const char *query)
 
 
 /*
- * Return the nwords word(s) before point.  Words are returned right to left,
+ * Return the nwords word(s) before point.	Words are returned right to left,
  * that is, previous_words[0] gets the last word before point.
  * If we run out of words, remaining array elements are set to empty strings.
  * Each array element is filled with a malloc'd string.

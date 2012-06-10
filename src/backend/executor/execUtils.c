@@ -578,7 +578,7 @@ ExecBuildProjectionInfo(List *targetList,
 						projInfo->pi_lastOuterVar = attnum;
 					break;
 
-				/* INDEX_VAR is handled by default case */
+					/* INDEX_VAR is handled by default case */
 
 				default:
 					varSlotOffsets[numSimpleVars] = offsetof(ExprContext,
@@ -638,7 +638,7 @@ get_last_attnums(Node *node, ProjectionInfo *projInfo)
 					projInfo->pi_lastOuterVar = attnum;
 				break;
 
-			/* INDEX_VAR is handled by default case */
+				/* INDEX_VAR is handled by default case */
 
 			default:
 				if (projInfo->pi_lastScanVar < attnum)

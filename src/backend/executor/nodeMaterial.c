@@ -66,7 +66,7 @@ ExecMaterial(MaterialState *node)
 			 * Allocate a second read pointer to serve as the mark. We know it
 			 * must have index 1, so needn't store that.
 			 */
-			int			ptrno PG_USED_FOR_ASSERTS_ONLY;
+			int ptrno	PG_USED_FOR_ASSERTS_ONLY;
 
 			ptrno = tuplestore_alloc_read_pointer(tuplestorestate,
 												  node->eflags);

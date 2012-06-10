@@ -40,9 +40,9 @@ LockTableCommand(LockStmt *lockstmt)
 
 	/*
 	 * During recovery we only accept these variations: LOCK TABLE foo IN
-	 * ACCESS SHARE MODE LOCK TABLE foo IN ROW SHARE MODE LOCK TABLE foo
-	 * IN ROW EXCLUSIVE MODE This test must match the restrictions defined
-	 * in LockAcquire()
+	 * ACCESS SHARE MODE LOCK TABLE foo IN ROW SHARE MODE LOCK TABLE foo IN
+	 * ROW EXCLUSIVE MODE This test must match the restrictions defined in
+	 * LockAcquire()
 	 */
 	if (lockstmt->mode > RowExclusiveLock)
 		PreventCommandDuringRecovery("LOCK TABLE");
@@ -74,15 +74,16 @@ static void
 RangeVarCallbackForLockTable(const RangeVar *rv, Oid relid, Oid oldrelid,
 							 void *arg)
 {
-	LOCKMODE	lockmode = * (LOCKMODE *) arg;
+	LOCKMODE	lockmode = *(LOCKMODE *) arg;
 	char		relkind;
 	AclResult	aclresult;
 
 	if (!OidIsValid(relid))
-		return;			/* doesn't exist, so no permissions check */
+		return;					/* doesn't exist, so no permissions check */
 	relkind = get_rel_relkind(relid);
 	if (!relkind)
-		return;			/* woops, concurrently dropped; no permissions check */
+		return;					/* woops, concurrently dropped; no permissions
+								 * check */
 
 	/* Currently, we only allow plain tables to be locked */
 	if (relkind != RELKIND_RELATION)
@@ -122,9 +123,10 @@ LockTableRecurse(Oid reloid, LOCKMODE lockmode, bool nowait)
 		if (aclresult != ACLCHECK_OK)
 		{
 			char	   *relname = get_rel_name(childreloid);
+
 			if (!relname)
-				continue;	/* child concurrently dropped, just skip it */
-			aclcheck_error(aclresult, ACL_KIND_CLASS, relname);	
+				continue;		/* child concurrently dropped, just skip it */
+			aclcheck_error(aclresult, ACL_KIND_CLASS, relname);
 		}
 
 		/* We have enough rights to lock the relation; do so. */
@@ -134,17 +136,18 @@ LockTableRecurse(Oid reloid, LOCKMODE lockmode, bool nowait)
 		{
 			/* try to throw error by name; relation could be deleted... */
 			char	   *relname = get_rel_name(childreloid);
+
 			if (!relname)
-				continue;	/* child concurrently dropped, just skip it */
+				continue;		/* child concurrently dropped, just skip it */
 			ereport(ERROR,
 					(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
 					 errmsg("could not obtain lock on relation \"%s\"",
-						relname)));
+							relname)));
 		}
 
 		/*
-		 * Even if we got the lock, child might have been concurrently dropped.
-		 * If so, we can skip it.
+		 * Even if we got the lock, child might have been concurrently
+		 * dropped. If so, we can skip it.
 		 */
 		if (!SearchSysCacheExists1(RELOID, ObjectIdGetDatum(childreloid)))
 		{

@@ -183,6 +183,7 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 {
 	int			result = 0;
 	int			rc;
+
 #ifdef HAVE_POLL
 	struct pollfd pfds[3];
 	int			nfds;
@@ -235,14 +236,15 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 		 *
 		 * Note: we assume that the kernel calls involved in drainSelfPipe()
 		 * and SetLatch() will provide adequate synchronization on machines
-		 * with weak memory ordering, so that we cannot miss seeing is_set
-		 * if the signal byte is already in the pipe when we drain it.
+		 * with weak memory ordering, so that we cannot miss seeing is_set if
+		 * the signal byte is already in the pipe when we drain it.
 		 */
 		drainSelfPipe();
 
 		if ((wakeEvents & WL_LATCH_SET) && latch->is_set)
 		{
 			result |= WL_LATCH_SET;
+
 			/*
 			 * Leave loop immediately, avoid blocking again. We don't attempt
 			 * to report any other events that might also be satisfied.
@@ -309,13 +311,14 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 		{
 			result |= WL_SOCKET_WRITEABLE;
 		}
+
 		/*
 		 * We expect a POLLHUP when the remote end is closed, but because we
 		 * don't expect the pipe to become readable or to have any errors
 		 * either, treat those as postmaster death, too.
 		 */
 		if ((wakeEvents & WL_POSTMASTER_DEATH) &&
-			(pfds[nfds - 1].revents & (POLLHUP | POLLIN | POLLERR | POLLNVAL)))
+		  (pfds[nfds - 1].revents & (POLLHUP | POLLIN | POLLERR | POLLNVAL)))
 		{
 			/*
 			 * According to the select(2) man page on Linux, select(2) may
@@ -329,8 +332,7 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 			if (!PostmasterIsAlive())
 				result |= WL_POSTMASTER_DEATH;
 		}
-
-#else /* !HAVE_POLL */
+#else							/* !HAVE_POLL */
 
 		FD_ZERO(&input_mask);
 		FD_ZERO(&output_mask);
@@ -387,7 +389,7 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 			result |= WL_SOCKET_WRITEABLE;
 		}
 		if ((wakeEvents & WL_POSTMASTER_DEATH) &&
-			 FD_ISSET(postmaster_alive_fds[POSTMASTER_FD_WATCH], &input_mask))
+			FD_ISSET(postmaster_alive_fds[POSTMASTER_FD_WATCH], &input_mask))
 		{
 			/*
 			 * According to the select(2) man page on Linux, select(2) may
@@ -401,7 +403,7 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 			if (!PostmasterIsAlive())
 				result |= WL_POSTMASTER_DEATH;
 		}
-#endif /* HAVE_POLL */
+#endif   /* HAVE_POLL */
 	} while (result == 0);
 	waiting = false;
 
@@ -423,9 +425,9 @@ SetLatch(volatile Latch *latch)
 	pid_t		owner_pid;
 
 	/*
-	 * XXX there really ought to be a memory barrier operation right here,
-	 * to ensure that any flag variables we might have changed get flushed
-	 * to main memory before we check/set is_set.  Without that, we have to
+	 * XXX there really ought to be a memory barrier operation right here, to
+	 * ensure that any flag variables we might have changed get flushed to
+	 * main memory before we check/set is_set.	Without that, we have to
 	 * require that callers provide their own synchronization for machines
 	 * with weak memory ordering (see latch.h).
 	 */
@@ -450,12 +452,12 @@ SetLatch(volatile Latch *latch)
 	 * Postgres; and PG database processes should handle excess SIGUSR1
 	 * interrupts without a problem anyhow.
 	 *
-	 * Another sort of race condition that's possible here is for a new process
-	 * to own the latch immediately after we look, so we don't signal it.
-	 * This is okay so long as all callers of ResetLatch/WaitLatch follow the
-	 * standard coding convention of waiting at the bottom of their loops,
-	 * not the top, so that they'll correctly process latch-setting events that
-	 * happen before they enter the loop.
+	 * Another sort of race condition that's possible here is for a new
+	 * process to own the latch immediately after we look, so we don't signal
+	 * it. This is okay so long as all callers of ResetLatch/WaitLatch follow
+	 * the standard coding convention of waiting at the bottom of their loops,
+	 * not the top, so that they'll correctly process latch-setting events
+	 * that happen before they enter the loop.
 	 */
 	owner_pid = latch->owner_pid;
 	if (owner_pid == 0)
@@ -484,7 +486,7 @@ ResetLatch(volatile Latch *latch)
 	/*
 	 * XXX there really ought to be a memory barrier operation right here, to
 	 * ensure that the write to is_set gets flushed to main memory before we
-	 * examine any flag variables.  Otherwise a concurrent SetLatch might
+	 * examine any flag variables.	Otherwise a concurrent SetLatch might
 	 * falsely conclude that it needn't signal us, even though we have missed
 	 * seeing some flag updates that SetLatch was supposed to inform us of.
 	 * For the moment, callers must supply their own synchronization of flag

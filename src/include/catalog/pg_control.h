@@ -33,7 +33,7 @@ typedef struct CheckPoint
 	XLogRecPtr	redo;			/* next RecPtr available when we began to
 								 * create CheckPoint (i.e. REDO start point) */
 	TimeLineID	ThisTimeLineID; /* current TLI */
-	bool			fullPageWrites;	/* current full_page_writes */
+	bool		fullPageWrites; /* current full_page_writes */
 	uint32		nextXidEpoch;	/* higher-order bits of nextXid */
 	TransactionId nextXid;		/* next free XID */
 	Oid			nextOid;		/* next free OID */
@@ -140,11 +140,11 @@ typedef struct ControlFileData
 	 * record, to make sure the end-of-backup record corresponds the base
 	 * backup we're recovering from.
 	 *
-	 * backupEndPoint is the backup end location, if we are recovering from
-	 * an online backup which was taken from the standby and haven't reached
-	 * the end of backup yet. It is initialized to the minimum recovery point
-	 * in pg_control which was backed up last. It is reset to zero when
-	 * the end of backup is reached, and we mustn't start up before that.
+	 * backupEndPoint is the backup end location, if we are recovering from an
+	 * online backup which was taken from the standby and haven't reached the
+	 * end of backup yet. It is initialized to the minimum recovery point in
+	 * pg_control which was backed up last. It is reset to zero when the end
+	 * of backup is reached, and we mustn't start up before that.
 	 *
 	 * If backupEndRequired is true, we know for sure that we're restoring
 	 * from a backup, and must see a backup-end record before we can safely

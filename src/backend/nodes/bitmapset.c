@@ -362,8 +362,8 @@ bms_subset_compare(const Bitmapset *a, const Bitmapset *b)
 	shortlen = Min(a->nwords, b->nwords);
 	for (i = 0; i < shortlen; i++)
 	{
-		bitmapword aword = a->words[i];
-		bitmapword bword = b->words[i];
+		bitmapword	aword = a->words[i];
+		bitmapword	bword = b->words[i];
 
 		if ((aword & ~bword) != 0)
 		{

@@ -555,6 +555,7 @@ static char *
 numeric_to_cstring(Numeric n)
 {
 	Datum		d = NumericGetDatum(n);
+
 	return DatumGetCString(DirectFunctionCall1(numeric_out, d));
 }
 
@@ -562,6 +563,7 @@ static Numeric
 int64_to_numeric(int64 v)
 {
 	Datum		d = Int64GetDatum(v);
+
 	return DatumGetNumeric(DirectFunctionCall1(int8_numeric, d));
 }
 

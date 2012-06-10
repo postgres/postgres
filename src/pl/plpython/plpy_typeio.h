@@ -104,4 +104,4 @@ extern Datum PLyObject_ToCompositeDatum(PLyTypeInfo *info, TupleDesc desc, PyObj
 /* conversion from heap tuples to Python dictionaries */
 extern PyObject *PLyDict_FromTuple(PLyTypeInfo *info, HeapTuple tuple, TupleDesc desc);
 
-#endif	/* PLPY_TYPEIO_H */
+#endif   /* PLPY_TYPEIO_H */

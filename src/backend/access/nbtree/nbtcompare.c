@@ -82,7 +82,7 @@ btint2fastcmp(Datum x, Datum y, SortSupport ssup)
 Datum
 btint2sortsupport(PG_FUNCTION_ARGS)
 {
-	SortSupport	ssup = (SortSupport) PG_GETARG_POINTER(0);
+	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
 
 	ssup->comparator = btint2fastcmp;
 	PG_RETURN_VOID();
@@ -119,7 +119,7 @@ btint4fastcmp(Datum x, Datum y, SortSupport ssup)
 Datum
 btint4sortsupport(PG_FUNCTION_ARGS)
 {
-	SortSupport	ssup = (SortSupport) PG_GETARG_POINTER(0);
+	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
 
 	ssup->comparator = btint4fastcmp;
 	PG_RETURN_VOID();
@@ -156,7 +156,7 @@ btint8fastcmp(Datum x, Datum y, SortSupport ssup)
 Datum
 btint8sortsupport(PG_FUNCTION_ARGS)
 {
-	SortSupport	ssup = (SortSupport) PG_GETARG_POINTER(0);
+	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
 
 	ssup->comparator = btint8fastcmp;
 	PG_RETURN_VOID();
@@ -277,7 +277,7 @@ btoidfastcmp(Datum x, Datum y, SortSupport ssup)
 Datum
 btoidsortsupport(PG_FUNCTION_ARGS)
 {
-	SortSupport	ssup = (SortSupport) PG_GETARG_POINTER(0);
+	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
 
 	ssup->comparator = btoidfastcmp;
 	PG_RETURN_VOID();
@@ -338,7 +338,7 @@ btnamefastcmp(Datum x, Datum y, SortSupport ssup)
 Datum
 btnamesortsupport(PG_FUNCTION_ARGS)
 {
-	SortSupport	ssup = (SortSupport) PG_GETARG_POINTER(0);
+	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
 
 	ssup->comparator = btnamefastcmp;
 	PG_RETURN_VOID();

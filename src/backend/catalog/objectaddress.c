@@ -75,10 +75,10 @@
  */
 typedef struct
 {
-	Oid			class_oid;			/* oid of catalog */
-	Oid			oid_index_oid; 		/* oid of index on system oid column */
-	int			oid_catcache_id;	/* id of catcache on system oid column  */
-	AttrNumber	attnum_namespace;	/* attnum of namespace field */
+	Oid			class_oid;		/* oid of catalog */
+	Oid			oid_index_oid;	/* oid of index on system oid column */
+	int			oid_catcache_id;	/* id of catcache on system oid column	*/
+	AttrNumber	attnum_namespace;		/* attnum of namespace field */
 } ObjectPropertyType;
 
 static ObjectPropertyType ObjectProperty[] =
@@ -286,13 +286,13 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 	for (;;)
 	{
 		/*
-		 * Remember this value, so that, after looking up the object name
-		 * and locking it, we can check whether any invalidation messages
-		 * have been processed that might require a do-over.
+		 * Remember this value, so that, after looking up the object name and
+		 * locking it, we can check whether any invalidation messages have
+		 * been processed that might require a do-over.
 		 */
 		inval_count = SharedInvalidMessageCounter;
 
-		/* Look up object address. */	
+		/* Look up object address. */
 		switch (objtype)
 		{
 			case OBJECT_INDEX:
@@ -367,7 +367,7 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 			case OBJECT_OPCLASS:
 			case OBJECT_OPFAMILY:
 				address = get_object_address_opcf(objtype,
-												  objname, objargs, missing_ok);
+											   objname, objargs, missing_ok);
 				break;
 			case OBJECT_LARGEOBJECT:
 				Assert(list_length(objname) == 1);
@@ -377,10 +377,10 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 				if (!LargeObjectExists(address.objectId))
 				{
 					if (!missing_ok)
-					ereport(ERROR,
-							(errcode(ERRCODE_UNDEFINED_OBJECT),
-							 errmsg("large object %u does not exist",
-									address.objectId)));
+						ereport(ERROR,
+								(errcode(ERRCODE_UNDEFINED_OBJECT),
+								 errmsg("large object %u does not exist",
+										address.objectId)));
 				}
 				break;
 			case OBJECT_CAST:
@@ -475,8 +475,8 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 		 * At this point, we've resolved the name to an OID and locked the
 		 * corresponding database object.  However, it's possible that by the
 		 * time we acquire the lock on the object, concurrent DDL has modified
-		 * the database in such a way that the name we originally looked up
-		 * no longer resolves to that OID.
+		 * the database in such a way that the name we originally looked up no
+		 * longer resolves to that OID.
 		 *
 		 * We can be certain that this isn't an issue if (a) no shared
 		 * invalidation messages have been processed or (b) we've locked a
@@ -488,12 +488,12 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 		 * the relation, which is enough to freeze out any concurrent DDL.
 		 *
 		 * In all other cases, however, it's possible that the name we looked
-		 * up no longer refers to the object we locked, so we retry the
-		 * lookup and see whether we get the same answer.
+		 * up no longer refers to the object we locked, so we retry the lookup
+		 * and see whether we get the same answer.
 		 */
-        if (inval_count == SharedInvalidMessageCounter || relation != NULL)
-            break;
-        old_address = address;
+		if (inval_count == SharedInvalidMessageCounter || relation != NULL)
+			break;
+		old_address = address;
 	}
 
 	/* Return the object address and the relation. */
@@ -621,7 +621,7 @@ get_relation_by_qualified_name(ObjectType objtype, List *objname,
 							   bool missing_ok)
 {
 	Relation	relation;
-	ObjectAddress	address;
+	ObjectAddress address;
 
 	address.classId = RelationRelationId;
 	address.objectId = InvalidOid;
@@ -721,8 +721,8 @@ get_object_address_relobject(ObjectType objtype, List *objname,
 		address.objectSubId = 0;
 
 		/*
-		 * Caller is expecting to get back the relation, even though we
-		 * didn't end up using it to find the rule.
+		 * Caller is expecting to get back the relation, even though we didn't
+		 * end up using it to find the rule.
 		 */
 		if (OidIsValid(address.objectId))
 			relation = heap_open(reloid, AccessShareLock);
@@ -768,7 +768,7 @@ get_object_address_relobject(ObjectType objtype, List *objname,
 		if (!OidIsValid(address.objectId))
 		{
 			heap_close(relation, AccessShareLock);
-			relation = NULL;		/* department of accident prevention */
+			relation = NULL;	/* department of accident prevention */
 			return address;
 		}
 	}
@@ -834,9 +834,10 @@ static ObjectAddress
 get_object_address_type(ObjectType objtype,
 						List *objname, bool missing_ok)
 {
-	ObjectAddress   address;
+	ObjectAddress address;
 	TypeName   *typename;
-	Type        tup;
+	Type		tup;
+
 	typename = makeTypeNameFromNameList(objname);
 
 	address.classId = TypeRelationId;
@@ -1083,7 +1084,7 @@ get_object_namespace(const ObjectAddress *address)
 	HeapTuple	tuple;
 	bool		isnull;
 	Oid			oid;
-	ObjectPropertyType	   *property;
+	ObjectPropertyType *property;
 
 	/* If not owned by a namespace, just return InvalidOid. */
 	property = get_object_property_data(address->classId);
@@ -1122,5 +1123,5 @@ get_object_property_data(Oid class_id)
 			return &ObjectProperty[index];
 
 	elog(ERROR, "unrecognized class id: %u", class_id);
-	return NULL;		/* not reached */
+	return NULL;				/* not reached */
 }

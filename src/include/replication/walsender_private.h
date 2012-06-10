@@ -35,7 +35,8 @@ typedef struct WalSnd
 	pid_t		pid;			/* this walsender's process id, or 0 */
 	WalSndState state;			/* this walsender's state */
 	XLogRecPtr	sentPtr;		/* WAL has been sent up to this point */
-	bool		needreload;		/* does currently-open file need to be reloaded? */
+	bool		needreload;		/* does currently-open file need to be
+								 * reloaded? */
 
 	/*
 	 * The xlog locations that have been written, flushed, and applied by

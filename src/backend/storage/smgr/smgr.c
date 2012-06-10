@@ -405,8 +405,8 @@ smgrdounlinkfork(SMgrRelation reln, ForkNumber forknum, bool isRedo)
 	(*(smgrsw[which].smgr_close)) (reln, forknum);
 
 	/*
-	 * Get rid of any remaining buffers for the fork.  bufmgr will just
-	 * drop them without bothering to write the contents.
+	 * Get rid of any remaining buffers for the fork.  bufmgr will just drop
+	 * them without bothering to write the contents.
 	 */
 	DropRelFileNodeBuffers(rnode, forknum, 0);
 

@@ -31,6 +31,7 @@ CATALOG(pg_foreign_server,1417)
 	NameData	srvname;		/* foreign server name */
 	Oid			srvowner;		/* server owner */
 	Oid			srvfdw;			/* server FDW */
+
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	text		srvtype;
 	text		srvversion;

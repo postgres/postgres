@@ -47,18 +47,18 @@ typedef struct OverrideSearchPath
 	bool		addTemp;		/* implicitly prepend temp schema? */
 } OverrideSearchPath;
 
-typedef void (*RangeVarGetRelidCallback)(const RangeVar *relation, Oid relId,
-	Oid oldRelId, void *callback_arg);
+typedef void (*RangeVarGetRelidCallback) (const RangeVar *relation, Oid relId,
+										   Oid oldRelId, void *callback_arg);
 
 #define RangeVarGetRelid(relation, lockmode, missing_ok) \
 	RangeVarGetRelidExtended(relation, lockmode, missing_ok, false, NULL, NULL)
 
-extern Oid	RangeVarGetRelidExtended(const RangeVar *relation,
+extern Oid RangeVarGetRelidExtended(const RangeVar *relation,
 						 LOCKMODE lockmode, bool missing_ok, bool nowait,
 						 RangeVarGetRelidCallback callback,
 						 void *callback_arg);
 extern Oid	RangeVarGetCreationNamespace(const RangeVar *newRelation);
-extern Oid	RangeVarGetAndCheckCreationNamespace(RangeVar *newRelation,
+extern Oid RangeVarGetAndCheckCreationNamespace(RangeVar *newRelation,
 									 LOCKMODE lockmode,
 									 Oid *existing_relation_id);
 extern void RangeVarAdjustRelationPersistence(RangeVar *newRelation, Oid nspid);

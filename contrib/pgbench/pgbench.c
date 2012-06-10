@@ -66,7 +66,7 @@
 typedef struct win32_pthread *pthread_t;
 typedef int pthread_attr_t;
 
-static int	pthread_create(pthread_t *thread, pthread_attr_t * attr, void *(*start_routine) (void *), void *arg);
+static int	pthread_create(pthread_t *thread, pthread_attr_t *attr, void *(*start_routine) (void *), void *arg);
 static int	pthread_join(pthread_t th, void **thread_return);
 #elif defined(ENABLE_THREAD_SAFETY)
 /* Use platform-dependent pthread capability */
@@ -84,7 +84,7 @@ static int	pthread_join(pthread_t th, void **thread_return);
 typedef struct fork_pthread *pthread_t;
 typedef int pthread_attr_t;
 
-static int	pthread_create(pthread_t *thread, pthread_attr_t * attr, void *(*start_routine) (void *), void *arg);
+static int	pthread_create(pthread_t *thread, pthread_attr_t *attr, void *(*start_routine) (void *), void *arg);
 static int	pthread_join(pthread_t th, void **thread_return);
 #endif
 
@@ -198,7 +198,7 @@ typedef struct
 	instr_time	start_time;		/* thread start time */
 	instr_time *exec_elapsed;	/* time spent executing cmds (per Command) */
 	int		   *exec_count;		/* number of cmd executions (per Command) */
-	unsigned short random_state[3]; /* separate randomness for each thread */
+	unsigned short random_state[3];		/* separate randomness for each thread */
 } TState;
 
 #define INVALID_THREAD		((pthread_t) 0)
@@ -1075,7 +1075,7 @@ top:
 
 			/*
 			 * getrand() neeeds to be able to subtract max from min and add
-			 * one the result without overflowing.  Since we know max > min,
+			 * one the result without overflowing.	Since we know max > min,
 			 * we can detect overflow just by checking for a negative result.
 			 * But we must check both that the subtraction doesn't overflow,
 			 * and that adding one to the result doesn't overflow either.
@@ -1267,10 +1267,11 @@ init(void)
 	 * versions.  Since pgbench has never pretended to be fully TPC-B
 	 * compliant anyway, we stick with the historical behavior.
 	 */
-	struct ddlinfo {
-		char *table;
-		char *cols;
-		int declare_fillfactor;
+	struct ddlinfo
+	{
+		char	   *table;
+		char	   *cols;
+		int			declare_fillfactor;
 	};
 	struct ddlinfo DDLs[] = {
 		{
@@ -1321,15 +1322,16 @@ init(void)
 		/* Construct new create table statement. */
 		opts[0] = '\0';
 		if (ddl->declare_fillfactor)
-			snprintf(opts+strlen(opts), 256-strlen(opts),
-				" with (fillfactor=%d)", fillfactor);
+			snprintf(opts + strlen(opts), 256 - strlen(opts),
+					 " with (fillfactor=%d)", fillfactor);
 		if (tablespace != NULL)
 		{
-			char *escape_tablespace;
+			char	   *escape_tablespace;
+
 			escape_tablespace = PQescapeIdentifier(con, tablespace,
 												   strlen(tablespace));
-			snprintf(opts+strlen(opts), 256-strlen(opts),
-				" tablespace %s", escape_tablespace);
+			snprintf(opts + strlen(opts), 256 - strlen(opts),
+					 " tablespace %s", escape_tablespace);
 			PQfreemem(escape_tablespace);
 		}
 		snprintf(buffer, 256, "create%s table %s(%s)%s",
@@ -1404,17 +1406,18 @@ init(void)
 	fprintf(stderr, "set primary key...\n");
 	for (i = 0; i < lengthof(DDLAFTERs); i++)
 	{
-		char	buffer[256];
+		char		buffer[256];
 
 		strncpy(buffer, DDLAFTERs[i], 256);
 
 		if (index_tablespace != NULL)
 		{
-			char *escape_tablespace;
+			char	   *escape_tablespace;
+
 			escape_tablespace = PQescapeIdentifier(con, index_tablespace,
 												   strlen(index_tablespace));
-			snprintf(buffer+strlen(buffer), 256-strlen(buffer),
-				" using index tablespace %s", escape_tablespace);
+			snprintf(buffer + strlen(buffer), 256 - strlen(buffer),
+					 " using index tablespace %s", escape_tablespace);
 			PQfreemem(escape_tablespace);
 		}
 
@@ -1861,10 +1864,10 @@ main(int argc, char **argv)
 	int			i;
 
 	static struct option long_options[] = {
-			{"index-tablespace", required_argument, NULL, 3},
-			{"tablespace", required_argument, NULL, 2},
-			{"unlogged-tables", no_argument, &unlogged_tables, 1},
-			{NULL, 0, NULL, 0}
+		{"index-tablespace", required_argument, NULL, 3},
+		{"tablespace", required_argument, NULL, 2},
+		{"unlogged-tables", no_argument, &unlogged_tables, 1},
+		{NULL, 0, NULL, 0}
 	};
 
 #ifdef HAVE_GETRLIMIT
@@ -2065,10 +2068,10 @@ main(int argc, char **argv)
 			case 0:
 				/* This covers long options which take no argument. */
 				break;
-			case 2:							/* tablespace */
+			case 2:				/* tablespace */
 				tablespace = optarg;
 				break;
-			case 3:							/* index-tablespace */
+			case 3:				/* index-tablespace */
 				index_tablespace = optarg;
 				break;
 			default:
@@ -2571,7 +2574,7 @@ typedef struct fork_pthread
 
 static int
 pthread_create(pthread_t *thread,
-			   pthread_attr_t * attr,
+			   pthread_attr_t *attr,
 			   void *(*start_routine) (void *),
 			   void *arg)
 {
@@ -2687,7 +2690,7 @@ win32_pthread_run(void *arg)
 
 static int
 pthread_create(pthread_t *thread,
-			   pthread_attr_t * attr,
+			   pthread_attr_t *attr,
 			   void *(*start_routine) (void *),
 			   void *arg)
 {

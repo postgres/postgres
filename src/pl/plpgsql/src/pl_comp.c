@@ -77,7 +77,7 @@ typedef struct
 } ExceptionLabelMap;
 
 static const ExceptionLabelMap exception_label_map[] = {
-#include "plerrcodes.h"	/* pgrminclude ignore */
+#include "plerrcodes.h"			/* pgrminclude ignore */
 	{NULL, 0}
 };
 

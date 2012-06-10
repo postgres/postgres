@@ -182,7 +182,7 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 		{
 			if (!PQconnectionNeedsPassword(newConn))
 				exit_horribly(modulename, "could not reconnect to database: %s",
-							 PQerrorMessage(newConn));
+							  PQerrorMessage(newConn));
 			PQfinish(newConn);
 
 			if (password)
@@ -300,7 +300,7 @@ ConnectDatabase(Archive *AHX,
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus(AH->connection) == CONNECTION_BAD)
 		exit_horribly(modulename, "connection to database \"%s\" failed: %s",
-					 PQdb(AH->connection), PQerrorMessage(AH->connection));
+					  PQdb(AH->connection), PQerrorMessage(AH->connection));
 
 	/* check for version mismatch */
 	_check_database_version(AH);
@@ -313,7 +313,7 @@ DisconnectDatabase(Archive *AHX)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 
-	PQfinish(AH->connection);		/* noop if AH->connection is NULL */
+	PQfinish(AH->connection);	/* noop if AH->connection is NULL */
 	AH->connection = NULL;
 }
 
@@ -343,7 +343,7 @@ die_on_query_failure(ArchiveHandle *AH, const char *modulename, const char *quer
 void
 ExecuteSqlStatement(Archive *AHX, const char *query)
 {
-	ArchiveHandle	   *AH = (ArchiveHandle *) AHX;
+	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 	PGresult   *res;
 
 	res = PQexec(AH->connection, query);
@@ -355,7 +355,7 @@ ExecuteSqlStatement(Archive *AHX, const char *query)
 PGresult *
 ExecuteSqlQuery(Archive *AHX, const char *query, ExecStatusType status)
 {
-	ArchiveHandle	   *AH = (ArchiveHandle *) AHX;
+	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 	PGresult   *res;
 
 	res = PQexec(AH->connection, query);
@@ -436,7 +436,7 @@ ExecuteInsertCommands(ArchiveHandle *AH, const char *buf, size_t bufLen)
 
 	for (; qry < eos; qry++)
 	{
-		char	ch = *qry;
+		char		ch = *qry;
 
 		/* For neatness, we skip any newlines between commands */
 		if (!(ch == '\n' && AH->sqlparse.curCmd->len == 0))
@@ -526,7 +526,7 @@ ExecuteSqlCommandBuf(ArchiveHandle *AH, const char *buf, size_t bufLen)
 			ExecuteSqlCommand(AH, buf, "could not execute query");
 		else
 		{
-			char   *str = (char *) pg_malloc(bufLen + 1);
+			char	   *str = (char *) pg_malloc(bufLen + 1);
 
 			memcpy(str, buf, bufLen);
 			str[bufLen] = '\0';

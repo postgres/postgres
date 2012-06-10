@@ -707,7 +707,7 @@ ProcessResult(PGresult **results)
 
 			/*
 			 * Call PQgetResult() once more.  In the typical case of a
-			 * single-command string, it will return NULL.  Otherwise, we'll
+			 * single-command string, it will return NULL.	Otherwise, we'll
 			 * have other results to process that may include other COPYs.
 			 */
 			PQclear(*results);
@@ -982,11 +982,12 @@ SendQuery(const char *query)
 				break;
 
 			case PQTRANS_INTRANS:
+
 				/*
 				 * Do nothing if they are messing with savepoints themselves:
-				 * If the user did RELEASE or ROLLBACK, our savepoint is
-				 * gone. If they issued a SAVEPOINT, releasing ours would
-				 * remove theirs.
+				 * If the user did RELEASE or ROLLBACK, our savepoint is gone.
+				 * If they issued a SAVEPOINT, releasing ours would remove
+				 * theirs.
 				 */
 				if (results &&
 					(strcmp(PQcmdStatus(results), "SAVEPOINT") == 0 ||

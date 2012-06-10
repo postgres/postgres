@@ -233,7 +233,7 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
  * large number of times.
  */
 int
-load_directory(const char *dirname, struct dirent ***namelist)
+load_directory(const char *dirname, struct dirent *** namelist)
 {
 	DIR		   *dirdesc;
 	struct dirent *direntry;
@@ -251,7 +251,7 @@ load_directory(const char *dirname, struct dirent ***namelist)
 		count++;
 
 		*namelist = (struct dirent **) realloc((void *) (*namelist),
-					(size_t) ((name_num + 1) * sizeof(struct dirent *)));
+						(size_t) ((name_num + 1) * sizeof(struct dirent *)));
 
 		if (*namelist == NULL)
 		{
@@ -314,7 +314,6 @@ win32_pghardlink(const char *src, const char *dst)
 	else
 		return 0;
 }
-
 #endif
 
 
@@ -322,13 +321,11 @@ win32_pghardlink(const char *src, const char *dst)
 FILE *
 fopen_priv(const char *path, const char *mode)
 {
-	mode_t old_umask = umask(S_IRWXG | S_IRWXO);
-	FILE	*fp;
+	mode_t		old_umask = umask(S_IRWXG | S_IRWXO);
+	FILE	   *fp;
 
 	fp = fopen(path, mode);
 	umask(old_umask);
 
 	return fp;
 }
-	
-

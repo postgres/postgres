@@ -74,7 +74,8 @@ WalSnd	   *MyWalSnd = NULL;
 
 /* Global state */
 bool		am_walsender = false;		/* Am I a walsender process ? */
-bool		am_cascading_walsender = false;	/* Am I cascading WAL to another standby ? */
+bool		am_cascading_walsender = false;		/* Am I cascading WAL to
+												 * another standby ? */
 
 /* User-settable parameters for walsender */
 int			max_wal_senders = 0;	/* the maximum number of concurrent walsenders */
@@ -372,31 +373,31 @@ StartReplication(StartReplicationCmd *cmd)
 	SendPostmasterSignal(PMSIGNAL_ADVANCE_STATE_MACHINE);
 
 	/*
-	 * When promoting a cascading standby, postmaster sends SIGUSR2 to
-	 * any cascading walsenders to kill them. But there is a corner-case where
-	 * such walsender fails to receive SIGUSR2 and survives a standby promotion
-	 * unexpectedly. This happens when postmaster sends SIGUSR2 before
-	 * the walsender marks itself as a WAL sender, because postmaster sends
-	 * SIGUSR2 to only the processes marked as a WAL sender.
+	 * When promoting a cascading standby, postmaster sends SIGUSR2 to any
+	 * cascading walsenders to kill them. But there is a corner-case where
+	 * such walsender fails to receive SIGUSR2 and survives a standby
+	 * promotion unexpectedly. This happens when postmaster sends SIGUSR2
+	 * before the walsender marks itself as a WAL sender, because postmaster
+	 * sends SIGUSR2 to only the processes marked as a WAL sender.
 	 *
 	 * To avoid this corner-case, if recovery is NOT in progress even though
 	 * the walsender is cascading one, we do the same thing as SIGUSR2 signal
 	 * handler does, i.e., set walsender_ready_to_stop to true. Which causes
 	 * the walsender to end later.
 	 *
-	 * When terminating cascading walsenders, usually postmaster writes
-	 * the log message announcing the terminations. But there is a race condition
-	 * here. If there is no walsender except this process before reaching here,
-	 * postmaster thinks that there is no walsender and suppresses that
+	 * When terminating cascading walsenders, usually postmaster writes the
+	 * log message announcing the terminations. But there is a race condition
+	 * here. If there is no walsender except this process before reaching
+	 * here, postmaster thinks that there is no walsender and suppresses that
 	 * log message. To handle this case, we always emit that log message here.
-	 * This might cause duplicate log messages, but which is less likely to happen,
-	 * so it's not worth writing some code to suppress them.
+	 * This might cause duplicate log messages, but which is less likely to
+	 * happen, so it's not worth writing some code to suppress them.
 	 */
 	if (am_cascading_walsender && !RecoveryInProgress())
 	{
 		ereport(LOG,
-				(errmsg("terminating walsender process to force cascaded standby "
-						"to update timeline and reconnect")));
+		   (errmsg("terminating walsender process to force cascaded standby "
+				   "to update timeline and reconnect")));
 		walsender_ready_to_stop = true;
 	}
 
@@ -405,8 +406,8 @@ StartReplication(StartReplicationCmd *cmd)
 	 * log-shipping, since this is checked in PostmasterMain().
 	 *
 	 * NOTE: wal_level can only change at shutdown, so in most cases it is
-	 * difficult for there to be WAL data that we can still see that was written
-	 * at wal_level='minimal'.
+	 * difficult for there to be WAL data that we can still see that was
+	 * written at wal_level='minimal'.
 	 */
 
 	/*
@@ -693,7 +694,7 @@ ProcessStandbyHSFeedbackMessage(void)
 	 * far enough to make reply.xmin wrap around.  In that case the xmin we
 	 * set here would be "in the future" and have no effect.  No point in
 	 * worrying about this since it's too late to save the desired data
-	 * anyway.  Assuming that the standby sends us an increasing sequence of
+	 * anyway.	Assuming that the standby sends us an increasing sequence of
 	 * xmins, this could only happen during the first reply cycle, else our
 	 * own xmin would prevent nextXid from advancing so far.
 	 *
@@ -792,8 +793,8 @@ WalSndLoop(void)
 			if (MyWalSnd->state == WALSNDSTATE_CATCHUP)
 			{
 				ereport(DEBUG1,
-						(errmsg("standby \"%s\" has now caught up with primary",
-								application_name)));
+					 (errmsg("standby \"%s\" has now caught up with primary",
+							 application_name)));
 				WalSndSetState(WALSNDSTATE_STREAMING);
 			}
 
@@ -810,7 +811,7 @@ WalSndLoop(void)
 				if (caughtup && !pq_is_send_pending())
 				{
 					walsender_shutdown_requested = true;
-					continue;		/* don't want to wait more */
+					continue;	/* don't want to wait more */
 				}
 			}
 		}
@@ -825,7 +826,7 @@ WalSndLoop(void)
 		if (caughtup || pq_is_send_pending())
 		{
 			TimestampTz timeout = 0;
-			long		sleeptime = 10000; /* 10 s */
+			long		sleeptime = 10000;		/* 10 s */
 			int			wakeEvents;
 
 			wakeEvents = WL_LATCH_SET | WL_POSTMASTER_DEATH |
@@ -845,7 +846,7 @@ WalSndLoop(void)
 			if (replication_timeout > 0)
 			{
 				timeout = TimestampTzPlusMilliseconds(last_reply_timestamp,
-														  replication_timeout);
+													  replication_timeout);
 				sleeptime = 1 + (replication_timeout / 10);
 			}
 
@@ -973,9 +974,9 @@ WalSndKill(int code, Datum arg)
 void
 XLogRead(char *buf, XLogRecPtr startptr, Size count)
 {
-	char		   *p;
+	char	   *p;
 	XLogRecPtr	recptr;
-	Size			nbytes;
+	Size		nbytes;
 	uint32		lastRemovedLog;
 	uint32		lastRemovedSeg;
 	uint32		log;
@@ -1087,9 +1088,9 @@ retry:
 	}
 
 	/*
-	 * During recovery, the currently-open WAL file might be replaced with
-	 * the file of the same name retrieved from archive. So we always need
-	 * to check what we read was valid after reading into the buffer. If it's
+	 * During recovery, the currently-open WAL file might be replaced with the
+	 * file of the same name retrieved from archive. So we always need to
+	 * check what we read was valid after reading into the buffer. If it's
 	 * invalid, we try to open and read the file again.
 	 */
 	if (am_cascading_walsender)
@@ -1294,8 +1295,8 @@ WalSndShutdownHandler(SIGNAL_ARGS)
 		SetLatch(&MyWalSnd->latch);
 
 	/*
-	 * Set the standard (non-walsender) state as well, so that we can
-	 * abort things like do_pg_stop_backup().
+	 * Set the standard (non-walsender) state as well, so that we can abort
+	 * things like do_pg_stop_backup().
 	 */
 	InterruptPending = true;
 	ProcDiePending = true;

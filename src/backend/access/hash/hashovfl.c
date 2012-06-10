@@ -391,7 +391,7 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf,
 	uint32		ovflbitno;
 	int32		bitmappage,
 				bitmapbit;
-	Bucket		bucket PG_USED_FOR_ASSERTS_ONLY;
+	Bucket bucket PG_USED_FOR_ASSERTS_ONLY;
 
 	/* Get information from the doomed page */
 	_hash_checkpage(rel, ovflbuf, LH_OVERFLOW_PAGE);

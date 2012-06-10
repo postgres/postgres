@@ -631,7 +631,7 @@ GetUserNameFromId(Oid roleid)
  * ($DATADIR/postmaster.pid) and a Unix-socket-file lockfile ($SOCKFILE.lock).
  * Both kinds of files contain the same info initially, although we can add
  * more information to a data-directory lockfile after it's created, using
- * AddToDataDirLockFile().  See miscadmin.h for documentation of the contents
+ * AddToDataDirLockFile().	See miscadmin.h for documentation of the contents
  * of these lockfiles.
  *
  * On successful lockfile creation, a proc_exit callback to remove the

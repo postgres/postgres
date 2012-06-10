@@ -1622,7 +1622,7 @@ FigureColnameInternal(Node *node, char **name)
 				case EXPR_SUBLINK:
 					{
 						/* Get column name of the subquery's single target */
-						SubLink	   *sublink = (SubLink *) node;
+						SubLink    *sublink = (SubLink *) node;
 						Query	   *query = (Query *) sublink->subselect;
 
 						/*
@@ -1644,7 +1644,7 @@ FigureColnameInternal(Node *node, char **name)
 						}
 					}
 					break;
-				/* As with other operator-like nodes, these have no names */
+					/* As with other operator-like nodes, these have no names */
 				case ALL_SUBLINK:
 				case ANY_SUBLINK:
 				case ROWCOMPARE_SUBLINK:

@@ -31,7 +31,7 @@ extern bool add_path_precheck(RelOptInfo *parent_rel,
 				  List *pathkeys, Relids required_outer);
 
 extern Path *create_seqscan_path(PlannerInfo *root, RelOptInfo *rel,
-								 Relids required_outer);
+					Relids required_outer);
 extern IndexPath *create_index_path(PlannerInfo *root,
 				  IndexOptInfo *index,
 				  List *indexclauses,
@@ -57,7 +57,7 @@ extern BitmapOrPath *create_bitmap_or_path(PlannerInfo *root,
 extern TidPath *create_tidscan_path(PlannerInfo *root, RelOptInfo *rel,
 					List *tidquals);
 extern AppendPath *create_append_path(RelOptInfo *rel, List *subpaths,
-									  Relids required_outer);
+				   Relids required_outer);
 extern MergeAppendPath *create_merge_append_path(PlannerInfo *root,
 						 RelOptInfo *rel,
 						 List *subpaths,
@@ -68,7 +68,7 @@ extern MaterialPath *create_material_path(RelOptInfo *rel, Path *subpath);
 extern UniquePath *create_unique_path(PlannerInfo *root, RelOptInfo *rel,
 				   Path *subpath, SpecialJoinInfo *sjinfo);
 extern Path *create_subqueryscan_path(PlannerInfo *root, RelOptInfo *rel,
-									  List *pathkeys, Relids required_outer);
+						 List *pathkeys, Relids required_outer);
 extern Path *create_functionscan_path(PlannerInfo *root, RelOptInfo *rel);
 extern Path *create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel);
 extern Path *create_ctescan_path(PlannerInfo *root, RelOptInfo *rel);
@@ -139,18 +139,18 @@ extern RelOptInfo *build_join_rel(PlannerInfo *root,
 			   SpecialJoinInfo *sjinfo,
 			   List **restrictlist_ptr);
 extern AppendRelInfo *find_childrel_appendrelinfo(PlannerInfo *root,
-												  RelOptInfo *rel);
+							RelOptInfo *rel);
 extern ParamPathInfo *get_baserel_parampathinfo(PlannerInfo *root,
-												RelOptInfo *baserel,
-												Relids required_outer);
+						  RelOptInfo *baserel,
+						  Relids required_outer);
 extern ParamPathInfo *get_joinrel_parampathinfo(PlannerInfo *root,
-												RelOptInfo *joinrel,
-												Path *outer_path,
-												Path *inner_path,
-												SpecialJoinInfo *sjinfo,
-												Relids required_outer,
-												List **restrict_clauses);
+						  RelOptInfo *joinrel,
+						  Path *outer_path,
+						  Path *inner_path,
+						  SpecialJoinInfo *sjinfo,
+						  Relids required_outer,
+						  List **restrict_clauses);
 extern ParamPathInfo *get_appendrel_parampathinfo(RelOptInfo *appendrel,
-												  Relids required_outer);
+							Relids required_outer);
 
 #endif   /* PATHNODE_H */

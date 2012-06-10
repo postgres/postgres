@@ -30,22 +30,22 @@
  */
 typedef struct
 {
-	uint32		hash;		/* hash value of this cache entry */
-	char	   *scontext;	/* security context of the subject */
-	char	   *tcontext;	/* security context of the target */
-	uint16		tclass;		/* object class of the target */
+	uint32		hash;			/* hash value of this cache entry */
+	char	   *scontext;		/* security context of the subject */
+	char	   *tcontext;		/* security context of the target */
+	uint16		tclass;			/* object class of the target */
 
-	uint32		allowed;	/* permissions to be allowed */
-	uint32		auditallow;	/* permissions to be audited on allowed */
-	uint32		auditdeny;	/* permissions to be audited on denied */
+	uint32		allowed;		/* permissions to be allowed */
+	uint32		auditallow;		/* permissions to be audited on allowed */
+	uint32		auditdeny;		/* permissions to be audited on denied */
 
-	bool		permissive;	/* true, if permissive rule */
-	bool		hot_cache;	/* true, if recently referenced */
+	bool		permissive;		/* true, if permissive rule */
+	bool		hot_cache;		/* true, if recently referenced */
 	bool		tcontext_is_valid;
-							/* true, if tcontext is valid */
-	char	   *ncontext;	/* temporary scontext on execution of trusted
-							 * procedure, or NULL elsewhere */
-} avc_cache;
+	/* true, if tcontext is valid */
+	char	   *ncontext;		/* temporary scontext on execution of trusted
+								 * procedure, or NULL elsewhere */
+}	avc_cache;
 
 /*
  * Declaration of static variables
@@ -54,12 +54,12 @@ typedef struct
 #define AVC_NUM_RECLAIM		16
 #define AVC_DEF_THRESHOLD	384
 
-static MemoryContext	avc_mem_cxt;
-static List	   *avc_slots[AVC_NUM_SLOTS];	/* avc's hash buckets */
-static int		avc_num_caches;	/* number of caches currently used */
-static int		avc_lru_hint;	/* index of the buckets to be reclaimed next */
-static int		avc_threshold;	/* threshold to launch cache-reclaiming  */
-static char	   *avc_unlabeled;	/* system 'unlabeled' label */
+static MemoryContext avc_mem_cxt;
+static List *avc_slots[AVC_NUM_SLOTS];	/* avc's hash buckets */
+static int	avc_num_caches;		/* number of caches currently used */
+static int	avc_lru_hint;		/* index of the buckets to be reclaimed next */
+static int	avc_threshold;		/* threshold to launch cache-reclaiming  */
+static char *avc_unlabeled;		/* system 'unlabeled' label */
 
 /*
  * Hash function
@@ -67,8 +67,8 @@ static char	   *avc_unlabeled;	/* system 'unlabeled' label */
 static uint32
 sepgsql_avc_hash(const char *scontext, const char *tcontext, uint16 tclass)
 {
-	return hash_any((const unsigned char *)scontext, strlen(scontext))
-		^ hash_any((const unsigned char *)tcontext, strlen(tcontext))
+	return hash_any((const unsigned char *) scontext, strlen(scontext))
+		^ hash_any((const unsigned char *) tcontext, strlen(tcontext))
 		^ tclass;
 }
 
@@ -88,7 +88,7 @@ sepgsql_avc_reset(void)
 
 /*
  * Reclaim caches recently unreferenced
- */	
+ */
 static void
 sepgsql_avc_reclaim(void)
 {
@@ -142,15 +142,15 @@ sepgsql_avc_reclaim(void)
  * Access control decisions must be atomic, but multiple system calls may
  * be required to make a decision; thus, when referencing the access vector
  * cache, we must loop until we complete without an intervening cache flush
- * event.  In practice, looping even once should be very rare.  Callers should
+ * event.  In practice, looping even once should be very rare.	Callers should
  * do something like this:
  *
- *   sepgsql_avc_check_valid();
- *   do {
- *           :
- *       <reference to uavc>
- *           :
- *   } while (!sepgsql_avc_check_valid())
+ *	 sepgsql_avc_check_valid();
+ *	 do {
+ *			 :
+ *		 <reference to uavc>
+ *			 :
+ *	 } while (!sepgsql_avc_check_valid())
  *
  * -------------------------------------------------------------------------
  */
@@ -169,7 +169,7 @@ sepgsql_avc_check_valid(void)
 /*
  * sepgsql_avc_unlabeled
  *
- * Returns an alternative label to be applied when no label or an invalid 
+ * Returns an alternative label to be applied when no label or an invalid
  * label would otherwise be assigned.
  */
 static char *
@@ -177,12 +177,12 @@ sepgsql_avc_unlabeled(void)
 {
 	if (!avc_unlabeled)
 	{
-		security_context_t	unlabeled;
+		security_context_t unlabeled;
 
 		if (security_get_initial_context_raw("unlabeled", &unlabeled) < 0)
 			ereport(ERROR,
-                    (errcode(ERRCODE_INTERNAL_ERROR),
-                     errmsg("SELinux: failed to get initial security label: %m")));
+					(errcode(ERRCODE_INTERNAL_ERROR),
+			   errmsg("SELinux: failed to get initial security label: %m")));
 		PG_TRY();
 		{
 			avc_unlabeled = MemoryContextStrdup(avc_mem_cxt, unlabeled);
@@ -200,7 +200,7 @@ sepgsql_avc_unlabeled(void)
 }
 
 /*
- * sepgsql_avc_compute 
+ * sepgsql_avc_compute
  *
  * A fallback path, when cache mishit. It asks SELinux its access control
  * decision for the supplied pair of security context and object class.
@@ -208,24 +208,24 @@ sepgsql_avc_unlabeled(void)
 static avc_cache *
 sepgsql_avc_compute(const char *scontext, const char *tcontext, uint16 tclass)
 {
-	char		   *ucontext = NULL;
-	char		   *ncontext = NULL;
-	MemoryContext	oldctx;
-	avc_cache	   *cache;
-	uint32			hash;
-	int				index;
-	struct av_decision	avd;
+	char	   *ucontext = NULL;
+	char	   *ncontext = NULL;
+	MemoryContext oldctx;
+	avc_cache  *cache;
+	uint32		hash;
+	int			index;
+	struct av_decision avd;
 
 	hash = sepgsql_avc_hash(scontext, tcontext, tclass);
 	index = hash % AVC_NUM_SLOTS;
 
 	/*
-	 * Validation check of the supplied security context.
-	 * Because it always invoke system-call, frequent check should be avoided.
-	 * Unless security policy is reloaded, validation status shall be kept, so
-	 * we also cache whether the supplied security context was valid, or not.
+	 * Validation check of the supplied security context. Because it always
+	 * invoke system-call, frequent check should be avoided. Unless security
+	 * policy is reloaded, validation status shall be kept, so we also cache
+	 * whether the supplied security context was valid, or not.
 	 */
-	if (security_check_context_raw((security_context_t)tcontext) != 0)
+	if (security_check_context_raw((security_context_t) tcontext) != 0)
 		ucontext = sepgsql_avc_unlabeled();
 
 	/*
@@ -237,15 +237,14 @@ sepgsql_avc_compute(const char *scontext, const char *tcontext, uint16 tclass)
 		sepgsql_compute_avd(scontext, ucontext, tclass, &avd);
 
 	/*
-	 * It also caches a security label to be switched when a client
-	 * labeled as 'scontext' executes a procedure labeled as 'tcontext',
-	 * not only access control decision on the procedure.
-	 * The security label to be switched shall be computed uniquely on
-	 * a pair of 'scontext' and 'tcontext', thus, it is reasonable to
-	 * cache the new label on avc, and enables to reduce unnecessary
-	 * system calls.
-	 * It shall be referenced at sepgsql_needs_fmgr_hook to check whether
-	 * the supplied function is a trusted procedure, or not.
+	 * It also caches a security label to be switched when a client labeled as
+	 * 'scontext' executes a procedure labeled as 'tcontext', not only access
+	 * control decision on the procedure. The security label to be switched
+	 * shall be computed uniquely on a pair of 'scontext' and 'tcontext',
+	 * thus, it is reasonable to cache the new label on avc, and enables to
+	 * reduce unnecessary system calls. It shall be referenced at
+	 * sepgsql_needs_fmgr_hook to check whether the supplied function is a
+	 * trusted procedure, or not.
 	 */
 	if (tclass == SEPG_CLASS_DB_PROCEDURE)
 	{
@@ -269,7 +268,7 @@ sepgsql_avc_compute(const char *scontext, const char *tcontext, uint16 tclass)
 
 	cache = palloc0(sizeof(avc_cache));
 
-	cache->hash	= hash;
+	cache->hash = hash;
 	cache->scontext = pstrdup(scontext);
 	cache->tcontext = pstrdup(tcontext);
 	cache->tclass = tclass;
@@ -314,7 +313,7 @@ sepgsql_avc_lookup(const char *scontext, const char *tcontext, uint16 tclass)
 	hash = sepgsql_avc_hash(scontext, tcontext, tclass);
 	index = hash % AVC_NUM_SLOTS;
 
-	foreach (cell, avc_slots[index])
+	foreach(cell, avc_slots[index])
 	{
 		cache = lfirst(cell);
 
@@ -348,14 +347,15 @@ sepgsql_avc_check_perms_label(const char *tcontext,
 							  uint16 tclass, uint32 required,
 							  const char *audit_name, bool abort)
 {
-	char *scontext = sepgsql_get_client_label();
+	char	   *scontext = sepgsql_get_client_label();
 	avc_cache  *cache;
 	uint32		denied;
 	uint32		audited;
 	bool		result;
 
 	sepgsql_avc_check_valid();
-	do {
+	do
+	{
 		result = true;
 
 		/*
@@ -377,16 +377,16 @@ sepgsql_avc_check_perms_label(const char *tcontext,
 			audited = (denied ? (denied & ~0) : (required & ~0));
 		else
 			audited = denied ? (denied & cache->auditdeny)
-							 : (required & cache->auditallow);
+				: (required & cache->auditallow);
 
 		if (denied)
 		{
 			/*
 			 * In permissive mode or permissive domain, violated permissions
 			 * shall be audited to the log files at once, and then implicitly
-			 * allowed to avoid a flood of access denied logs, because
-			 * the purpose of permissive mode/domain is to collect a violation
-			 * log that will make it possible to fix up the security policy.
+			 * allowed to avoid a flood of access denied logs, because the
+			 * purpose of permissive mode/domain is to collect a violation log
+			 * that will make it possible to fix up the security policy.
 			 */
 			if (!sepgsql_getenforce() || cache->permissive)
 				cache->allowed |= required;
@@ -397,10 +397,10 @@ sepgsql_avc_check_perms_label(const char *tcontext,
 
 	/*
 	 * In the case when we have something auditable actions here,
-	 * sepgsql_audit_log shall be called with text representation of
-	 * security labels for both of subject and object.
-	 * It records this access violation, so DBA will be able to find
-	 * out unexpected security problems later.
+	 * sepgsql_audit_log shall be called with text representation of security
+	 * labels for both of subject and object. It records this access
+	 * violation, so DBA will be able to find out unexpected security problems
+	 * later.
 	 */
 	if (audited != 0 &&
 		audit_name != SEPGSQL_AVC_NOAUDIT &&
@@ -428,8 +428,8 @@ sepgsql_avc_check_perms(const ObjectAddress *tobject,
 						uint16 tclass, uint32 required,
 						const char *audit_name, bool abort)
 {
-	char   *tcontext = GetSecurityLabel(tobject, SEPGSQL_LABEL_TAG);
-	bool	rc;
+	char	   *tcontext = GetSecurityLabel(tobject, SEPGSQL_LABEL_TAG);
+	bool		rc;
 
 	rc = sepgsql_avc_check_perms_label(tcontext,
 									   tclass, required,
@@ -450,10 +450,10 @@ sepgsql_avc_check_perms(const ObjectAddress *tobject,
 char *
 sepgsql_avc_trusted_proc(Oid functionId)
 {
-	char		   *scontext = sepgsql_get_client_label();
-	char		   *tcontext;
-	ObjectAddress	tobject;
-	avc_cache	   *cache;
+	char	   *scontext = sepgsql_get_client_label();
+	char	   *tcontext;
+	ObjectAddress tobject;
+	avc_cache  *cache;
 
 	tobject.classId = ProcedureRelationId;
 	tobject.objectId = functionId;
@@ -461,7 +461,8 @@ sepgsql_avc_trusted_proc(Oid functionId)
 	tcontext = GetSecurityLabel(&tobject, SEPGSQL_LABEL_TAG);
 
 	sepgsql_avc_check_valid();
-	do {
+	do
+	{
 		if (tcontext)
 			cache = sepgsql_avc_lookup(scontext, tcontext,
 									   SEPG_CLASS_DB_PROCEDURE);
@@ -492,7 +493,7 @@ sepgsql_avc_exit(int code, Datum arg)
 void
 sepgsql_avc_init(void)
 {
-	int	rc;
+	int			rc;
 
 	/*
 	 * All the avc stuff shall be allocated on avc_mem_cxt
@@ -508,12 +509,11 @@ sepgsql_avc_init(void)
 	avc_threshold = AVC_DEF_THRESHOLD;
 
 	/*
-	 * SELinux allows to mmap(2) its kernel status page in read-only mode
-	 * to inform userspace applications its status updating (such as
-	 * policy reloading) without system-call invocations.
-	 * This feature is only supported in Linux-2.6.38 or later, however,
-	 * libselinux provides a fallback mode to know its status using
-	 * netlink sockets.
+	 * SELinux allows to mmap(2) its kernel status page in read-only mode to
+	 * inform userspace applications its status updating (such as policy
+	 * reloading) without system-call invocations. This feature is only
+	 * supported in Linux-2.6.38 or later, however, libselinux provides a
+	 * fallback mode to know its status using netlink sockets.
 	 */
 	rc = selinux_status_open(1);
 	if (rc < 0)

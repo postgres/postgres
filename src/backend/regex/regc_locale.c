@@ -513,7 +513,7 @@ cclass(struct vars * v,			/* context */
 {
 	size_t		len;
 	struct cvec *cv = NULL;
-	const char * const *namePtr;
+	const char *const * namePtr;
 	int			i,
 				index;
 
@@ -521,7 +521,7 @@ cclass(struct vars * v,			/* context */
 	 * The following arrays define the valid character class names.
 	 */
 
-	static const char * const classNames[] = {
+	static const char *const classNames[] = {
 		"alnum", "alpha", "ascii", "blank", "cntrl", "digit", "graph",
 		"lower", "print", "punct", "space", "upper", "xdigit", NULL
 	};
@@ -562,8 +562,8 @@ cclass(struct vars * v,			/* context */
 		index = (int) CC_ALPHA;
 
 	/*
-	 * Now compute the character class contents.  For classes that are
-	 * based on the behavior of a <wctype.h> or <ctype.h> function, we use
+	 * Now compute the character class contents.  For classes that are based
+	 * on the behavior of a <wctype.h> or <ctype.h> function, we use
 	 * pg_ctype_get_cache so that we can cache the results.  Other classes
 	 * have definitions that are hard-wired here, and for those we just
 	 * construct a transient cvec on the fly.
@@ -605,10 +605,11 @@ cclass(struct vars * v,			/* context */
 			cv = pg_ctype_get_cache(pg_wc_ispunct);
 			break;
 		case CC_XDIGIT:
+
 			/*
 			 * It's not clear how to define this in non-western locales, and
-			 * even less clear that there's any particular use in trying.
-			 * So just hard-wire the meaning.
+			 * even less clear that there's any particular use in trying. So
+			 * just hard-wire the meaning.
 			 */
 			cv = getcvec(v, 0, 3);
 			if (cv)

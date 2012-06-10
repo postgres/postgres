@@ -319,7 +319,7 @@ typedef int pid_t;
 #define ECONNREFUSED WSAECONNREFUSED
 #define EOPNOTSUPP WSAEOPNOTSUPP
 #pragma warning(default:4005)
-#endif 
+#endif
 
 /*
  * Extended locale functions with gratuitous underscore prefixes.

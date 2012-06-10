@@ -680,9 +680,9 @@ typedef int (*pg_wc_probefunc) (pg_wchar c);
 
 typedef struct pg_ctype_cache
 {
-	pg_wc_probefunc probefunc;		/* pg_wc_isalpha or a sibling */
-	Oid			collation;			/* collation this entry is for */
-	struct cvec cv;					/* cache entry contents */
+	pg_wc_probefunc probefunc;	/* pg_wc_isalpha or a sibling */
+	Oid			collation;		/* collation this entry is for */
+	struct cvec cv;				/* cache entry contents */
 	struct pg_ctype_cache *next;	/* chain link */
 } pg_ctype_cache;
 
@@ -730,7 +730,7 @@ store_match(pg_ctype_cache *pcc, pg_wchar chr1, int nchrs)
 
 /*
  * Given a probe function (e.g., pg_wc_isalpha) get a struct cvec for all
- * chrs satisfying the probe function.  The active collation is the one
+ * chrs satisfying the probe function.	The active collation is the one
  * previously set by pg_set_regex_collation.  Return NULL if out of memory.
  *
  * Note that the result must not be freed or modified by caller.
@@ -777,7 +777,7 @@ pg_ctype_get_cache(pg_wc_probefunc probefunc)
 	 * UTF8 go up to 0x7FF, which is a pretty arbitrary cutoff but we cannot
 	 * extend it as far as we'd like (say, 0xFFFF, the end of the Basic
 	 * Multilingual Plane) without creating significant performance issues due
-	 * to too many characters being fed through the colormap code.  This will
+	 * to too many characters being fed through the colormap code.	This will
 	 * need redesign to fix reasonably, but at least for the moment we have
 	 * all common European languages covered.  Otherwise (not C, not UTF8) go
 	 * up to 255.  These limits are interrelated with restrictions discussed

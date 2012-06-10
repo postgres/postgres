@@ -124,7 +124,7 @@ gistbeginscan(PG_FUNCTION_ARGS)
 	so->giststate = giststate;
 	giststate->tempCxt = createTempGistContext();
 	so->queue = NULL;
-	so->queueCxt = giststate->scanCxt;			/* see gistrescan */
+	so->queueCxt = giststate->scanCxt;	/* see gistrescan */
 
 	/* workspaces with size dependent on numberOfOrderBys: */
 	so->tmpTreeItem = palloc(GSTIHDRSZ + sizeof(double) * scan->numberOfOrderBys);

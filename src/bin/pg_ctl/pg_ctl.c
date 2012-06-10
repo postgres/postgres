@@ -1170,7 +1170,7 @@ do_status(void)
 			}
 		}
 		else
-		/* must be a postmaster */
+			/* must be a postmaster */
 		{
 			if (postmaster_is_alive((pid_t) pid))
 			{
@@ -1188,9 +1188,12 @@ do_status(void)
 		}
 	}
 	printf(_("%s: no server running\n"), progname);
+
 	/*
-	 * The Linux Standard Base Core Specification 3.1 says this should return '3'
-	 * http://refspecs.freestandards.org/LSB_3.1.1/LSB-Core-generic/LSB-Core-generic/iniscrptact.html
+	 * The Linux Standard Base Core Specification 3.1 says this should return
+	 * '3'
+	 * http://refspecs.freestandards.org/LSB_3.1.1/LSB-Core-generic/LSB-Core-ge
+	 * neric/iniscrptact.html
 	 */
 	exit(3);
 }
@@ -1851,7 +1854,7 @@ set_sig(char *signame)
 		sig = SIGABRT;
 #if 0
 	/* probably should NOT provide SIGKILL */
-	else if (strcmp(signame,"KILL") == 0)
+	else if (strcmp(signame, "KILL") == 0)
 		sig = SIGKILL;
 #endif
 	else if (strcmp(signame, "TERM") == 0)
@@ -1894,7 +1897,9 @@ set_starttype(char *starttypeopt)
 static void
 adjust_data_dir(void)
 {
-	char		cmd[MAXPGPATH], filename[MAXPGPATH], *my_exec_path;
+	char		cmd[MAXPGPATH],
+				filename[MAXPGPATH],
+			   *my_exec_path;
 	FILE	   *fd;
 
 	/* If there is no postgresql.conf, it can't be a config-only dir */
@@ -2184,7 +2189,7 @@ main(int argc, char **argv)
 	}
 
 	adjust_data_dir();
-	
+
 	if (pg_config == NULL &&
 		ctl_command != KILL_COMMAND && ctl_command != UNREGISTER_COMMAND)
 	{

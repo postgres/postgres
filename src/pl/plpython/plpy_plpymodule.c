@@ -21,7 +21,7 @@
 #include "plpy_subxactobject.h"
 
 
-HTAB *PLy_spi_exceptions = NULL;
+HTAB	   *PLy_spi_exceptions = NULL;
 
 
 static void PLy_add_exceptions(PyObject *plpy);
@@ -137,7 +137,7 @@ PyInit_plpy(void)
 
 	return m;
 }
-#endif /* PY_MAJOR_VERSION >= 3 */
+#endif   /* PY_MAJOR_VERSION >= 3 */
 
 void
 PLy_init_plpy(void)
@@ -145,6 +145,7 @@ PLy_init_plpy(void)
 	PyObject   *main_mod,
 			   *main_dict,
 			   *plpy_mod;
+
 #if PY_MAJOR_VERSION < 3
 	PyObject   *plpy;
 #endif

@@ -1140,7 +1140,7 @@ storeHandler(PGresult *res, const PGdataValue *columns,
 	 * strings and add null termination.  As a micro-optimization, allocate
 	 * all the strings with one palloc.
 	 */
-	pbuflen = nfields;		/* count the null terminators themselves */
+	pbuflen = nfields;			/* count the null terminators themselves */
 	for (i = 0; i < nfields; i++)
 	{
 		int			len = columns[i].len;

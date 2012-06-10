@@ -50,19 +50,19 @@ join_search_hook_type join_search_hook = NULL;
 static void set_base_rel_sizes(PlannerInfo *root);
 static void set_base_rel_pathlists(PlannerInfo *root);
 static void set_rel_size(PlannerInfo *root, RelOptInfo *rel,
-				 Index rti, RangeTblEntry *rte);
+			 Index rti, RangeTblEntry *rte);
 static void set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 				 Index rti, RangeTblEntry *rte);
 static void set_plain_rel_size(PlannerInfo *root, RelOptInfo *rel,
-					   RangeTblEntry *rte);
+				   RangeTblEntry *rte);
 static void set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					   RangeTblEntry *rte);
 static void set_foreign_size(PlannerInfo *root, RelOptInfo *rel,
-					 RangeTblEntry *rte);
+				 RangeTblEntry *rte);
 static void set_foreign_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					 RangeTblEntry *rte);
 static void set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
-						Index rti, RangeTblEntry *rte);
+					Index rti, RangeTblEntry *rte);
 static void set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 						Index rti, RangeTblEntry *rte);
 static void generate_mergeappend_paths(PlannerInfo *root, RelOptInfo *rel,
@@ -118,7 +118,7 @@ make_one_rel(PlannerInfo *root, List *joinlist)
 		if (brel == NULL)
 			continue;
 
-		Assert(brel->relid == rti); /* sanity check on array */
+		Assert(brel->relid == rti);		/* sanity check on array */
 
 		/* ignore RTEs that are "other rels" */
 		if (brel->reloptkind != RELOPT_BASEREL)
@@ -211,7 +211,7 @@ set_base_rel_pathlists(PlannerInfo *root)
  */
 static void
 set_rel_size(PlannerInfo *root, RelOptInfo *rel,
-				 Index rti, RangeTblEntry *rte)
+			 Index rti, RangeTblEntry *rte)
 {
 	if (rel->reloptkind == RELOPT_BASEREL &&
 		relation_excluded_by_constraints(root, rel, rte))
@@ -251,6 +251,7 @@ set_rel_size(PlannerInfo *root, RelOptInfo *rel,
 				}
 				break;
 			case RTE_SUBQUERY:
+
 				/*
 				 * Subqueries don't support parameterized paths, so just go
 				 * ahead and build their paths immediately.
@@ -264,6 +265,7 @@ set_rel_size(PlannerInfo *root, RelOptInfo *rel,
 				set_values_size_estimates(root, rel);
 				break;
 			case RTE_CTE:
+
 				/*
 				 * CTEs don't support parameterized paths, so just go ahead
 				 * and build their paths immediately.
@@ -574,8 +576,8 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 
 		/*
 		 * It is possible that constraint exclusion detected a contradiction
-		 * within a child subquery, even though we didn't prove one above.
-		 * If so, we can skip this child.
+		 * within a child subquery, even though we didn't prove one above. If
+		 * so, we can skip this child.
 		 */
 		if (IS_DUMMY_REL(childrel))
 			continue;
@@ -590,7 +592,7 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 
 			/*
 			 * Accumulate per-column estimates too.  We need not do anything
-			 * for PlaceHolderVars in the parent list.  If child expression
+			 * for PlaceHolderVars in the parent list.	If child expression
 			 * isn't a Var, or we didn't record a width estimate for it, we
 			 * have to fall back on a datatype-based estimate.
 			 *
@@ -609,7 +611,7 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 
 					if (IsA(childvar, Var))
 					{
-						int		cndx = ((Var *) childvar)->varattno - childrel->min_attr;
+						int			cndx = ((Var *) childvar)->varattno - childrel->min_attr;
 
 						child_width = childrel->attr_widths[cndx];
 					}
@@ -664,7 +666,7 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 
 	/*
 	 * Generate access paths for each member relation, and remember the
-	 * cheapest path for each one.  Also, identify all pathkeys (orderings)
+	 * cheapest path for each one.	Also, identify all pathkeys (orderings)
 	 * and parameterizations (required_outer sets) available for the member
 	 * relations.
 	 */
@@ -708,7 +710,7 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 
 		/*
 		 * Collect lists of all the available path orderings and
-		 * parameterizations for all the children.  We use these as a
+		 * parameterizations for all the children.	We use these as a
 		 * heuristic to indicate which sort orderings and parameterizations we
 		 * should build Append and MergeAppend paths for.
 		 */
@@ -753,7 +755,7 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 				/* Have we already seen this param set? */
 				foreach(lco, all_child_outers)
 				{
-					Relids	existing_outers = (Relids) lfirst(lco);
+					Relids		existing_outers = (Relids) lfirst(lco);
 
 					if (bms_equal(existing_outers, childouter))
 					{
@@ -791,7 +793,7 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	 * so that not that many cases actually get considered here.)
 	 *
 	 * The Append node itself cannot enforce quals, so all qual checking must
-	 * be done in the child paths.  This means that to have a parameterized
+	 * be done in the child paths.	This means that to have a parameterized
 	 * Append path, we must have the exact same parameterization for each
 	 * child path; otherwise some children might be failing to check the
 	 * moved-down quals.  To make them match up, we can try to increase the
@@ -799,7 +801,7 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	 */
 	foreach(l, all_child_outers)
 	{
-		Relids	required_outer = (Relids) lfirst(l);
+		Relids		required_outer = (Relids) lfirst(l);
 		bool		ok = true;
 		ListCell   *lcr;
 
@@ -1115,9 +1117,9 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	rel->subroot = subroot;
 
 	/*
-	 * It's possible that constraint exclusion proved the subquery empty.
-	 * If so, it's convenient to turn it back into a dummy path so that we
-	 * will recognize appropriate optimizations at this level.
+	 * It's possible that constraint exclusion proved the subquery empty. If
+	 * so, it's convenient to turn it back into a dummy path so that we will
+	 * recognize appropriate optimizations at this level.
 	 */
 	if (is_dummy_plan(rel->subplan))
 	{
@@ -1639,7 +1641,7 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
 
 	/*
 	 * It would be unsafe to push down window function calls, but at least for
-	 * the moment we could never see any in a qual anyhow.  (The same applies
+	 * the moment we could never see any in a qual anyhow.	(The same applies
 	 * to aggregates, which we check for in pull_var_clause below.)
 	 */
 	Assert(!contain_window_function(qual));

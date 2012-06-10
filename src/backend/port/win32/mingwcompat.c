@@ -42,8 +42,8 @@ LoadKernel32()
 	kernel32 = LoadLibraryEx("kernel32.dll", NULL, 0);
 	if (kernel32 == NULL)
 		ereport(FATAL,
-				(errmsg_internal("could not load kernel32.dll: error code %lu",
-								 GetLastError())));
+			  (errmsg_internal("could not load kernel32.dll: error code %lu",
+							   GetLastError())));
 }
 
 

@@ -43,7 +43,7 @@ extern int	GetMaxSnapshotSubxidCount(void);
 extern Snapshot GetSnapshotData(Snapshot snapshot);
 
 extern bool ProcArrayInstallImportedXmin(TransactionId xmin,
-										 TransactionId sourcexid);
+							 TransactionId sourcexid);
 
 extern RunningTransactions GetRunningTransactionData(void);
 

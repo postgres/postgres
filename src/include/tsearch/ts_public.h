@@ -91,11 +91,11 @@ typedef struct
 	 * and ( fot, ball, klubb ). So, dictionary should return:
 	 *
 	 * nvariant    lexeme
-	 *     1       fotball
-	 *     1       klubb
-	 *     2       fot
-	 *     2       ball
-	 *     2       klubb
+	 *	   1	   fotball
+	 *	   1	   klubb
+	 *	   2	   fot
+	 *	   2	   ball
+	 *	   2	   klubb
 	 *
 	 * In general, a TSLexeme will be considered to belong to the same split
 	 * variant as the previous one if they have the same nvariant value.

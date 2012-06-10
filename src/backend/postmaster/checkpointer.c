@@ -2,7 +2,7 @@
  *
  * checkpointer.c
  *
- * The checkpointer is new as of Postgres 9.2.  It handles all checkpoints.
+ * The checkpointer is new as of Postgres 9.2.	It handles all checkpoints.
  * Checkpoints are automatically dispatched after a certain amount of time has
  * elapsed since the last one, and it can be signaled to perform requested
  * checkpoints as well.  (The GUC parameter that mandates a checkpoint every
@@ -14,7 +14,7 @@
  * subprocess finishes, or as soon as recovery begins if we are doing archive
  * recovery.  It remains alive until the postmaster commands it to terminate.
  * Normal termination is by SIGUSR2, which instructs the checkpointer to
- * execute a shutdown checkpoint and then exit(0).  (All backends must be
+ * execute a shutdown checkpoint and then exit(0).	(All backends must be
  * stopped before SIGUSR2 is issued!)  Emergency termination is by SIGQUIT;
  * like any backend, the checkpointer will simply abort and exit on SIGQUIT.
  *
@@ -113,7 +113,7 @@ typedef struct
 
 typedef struct
 {
-	pid_t		checkpointer_pid;	/* PID (0 if not started) */
+	pid_t		checkpointer_pid;		/* PID (0 if not started) */
 
 	slock_t		ckpt_lck;		/* protects all the ckpt_* fields */
 
@@ -199,7 +199,7 @@ CheckpointerMain(void)
 
 	/*
 	 * If possible, make this process a group leader, so that the postmaster
-	 * can signal any child processes too.  (checkpointer probably never has
+	 * can signal any child processes too.	(checkpointer probably never has
 	 * any child processes, but for consistency we make all postmaster child
 	 * processes do this.)
 	 */
@@ -216,10 +216,11 @@ CheckpointerMain(void)
 	 * want to wait for the backends to exit, whereupon the postmaster will
 	 * tell us it's okay to shut down (via SIGUSR2).
 	 */
-	pqsignal(SIGHUP, ChkptSigHupHandler);	/* set flag to read config file */
-	pqsignal(SIGINT, ReqCheckpointHandler);	/* request checkpoint */
-	pqsignal(SIGTERM, SIG_IGN);				/* ignore SIGTERM */
-	pqsignal(SIGQUIT, chkpt_quickdie);		/* hard crash time */
+	pqsignal(SIGHUP, ChkptSigHupHandler);		/* set flag to read config
+												 * file */
+	pqsignal(SIGINT, ReqCheckpointHandler);		/* request checkpoint */
+	pqsignal(SIGTERM, SIG_IGN); /* ignore SIGTERM */
+	pqsignal(SIGQUIT, chkpt_quickdie);	/* hard crash time */
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, chkpt_sigusr1_handler);
@@ -255,10 +256,10 @@ CheckpointerMain(void)
 	 * TopMemoryContext, but resetting that would be a really bad idea.
 	 */
 	checkpointer_context = AllocSetContextCreate(TopMemoryContext,
-											 "Checkpointer",
-											 ALLOCSET_DEFAULT_MINSIZE,
-											 ALLOCSET_DEFAULT_INITSIZE,
-											 ALLOCSET_DEFAULT_MAXSIZE);
+												 "Checkpointer",
+												 ALLOCSET_DEFAULT_MINSIZE,
+												 ALLOCSET_DEFAULT_INITSIZE,
+												 ALLOCSET_DEFAULT_MAXSIZE);
 	MemoryContextSwitchTo(checkpointer_context);
 
 	/*
@@ -280,7 +281,8 @@ CheckpointerMain(void)
 		/*
 		 * These operations are really just a minimal subset of
 		 * AbortTransaction().	We don't have very many resources to worry
-		 * about in checkpointer, but we do have LWLocks, buffers, and temp files.
+		 * about in checkpointer, but we do have LWLocks, buffers, and temp
+		 * files.
 		 */
 		LWLockReleaseAll();
 		AbortBufferIO();
@@ -351,9 +353,8 @@ CheckpointerMain(void)
 		ThisTimeLineID = GetRecoveryTargetTLI();
 
 	/*
-	 * Ensure all shared memory values are set correctly for the config.
-	 * Doing this here ensures no race conditions from other concurrent
-	 * updaters.
+	 * Ensure all shared memory values are set correctly for the config. Doing
+	 * this here ensures no race conditions from other concurrent updaters.
 	 */
 	UpdateSharedMemoryConfig();
 
@@ -389,9 +390,9 @@ CheckpointerMain(void)
 			ProcessConfigFile(PGC_SIGHUP);
 
 			/*
-			 * Checkpointer is the last process to shut down, so we ask
-			 * it to hold the keys for a range of other tasks required
-			 * most of which have nothing to do with checkpointing at all.
+			 * Checkpointer is the last process to shut down, so we ask it to
+			 * hold the keys for a range of other tasks required most of which
+			 * have nothing to do with checkpointing at all.
 			 *
 			 * For various reasons, some config values can change dynamically
 			 * so the primary copy of them is held in shared memory to make
@@ -490,7 +491,8 @@ CheckpointerMain(void)
 						 errhint("Consider increasing the configuration parameter \"checkpoint_segments\".")));
 
 			/*
-			 * Initialize checkpointer-private variables used during checkpoint
+			 * Initialize checkpointer-private variables used during
+			 * checkpoint
 			 */
 			ckpt_active = true;
 			if (!do_restartpoint)
@@ -558,8 +560,8 @@ CheckpointerMain(void)
 		pgstat_send_bgwriter();
 
 		/*
-		 * Sleep until we are signaled or it's time for another checkpoint
-		 * or xlog file switch.
+		 * Sleep until we are signaled or it's time for another checkpoint or
+		 * xlog file switch.
 		 */
 		now = (pg_time_t) time(NULL);
 		elapsed_secs = now - last_checkpoint_time;
@@ -576,7 +578,7 @@ CheckpointerMain(void)
 
 		rc = WaitLatch(&MyProc->procLatch,
 					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-					   cur_timeout * 1000L /* convert to ms */);
+					   cur_timeout * 1000L /* convert to ms */ );
 
 		/*
 		 * Emergency bailout if postmaster has died.  This is to avoid the
@@ -687,8 +689,8 @@ CheckpointWriteDelay(int flags, double progress)
 		return;
 
 	/*
-	 * Perform the usual duties and take a nap, unless we're behind
-	 * schedule, in which case we just try to catch up as quickly as possible.
+	 * Perform the usual duties and take a nap, unless we're behind schedule,
+	 * in which case we just try to catch up as quickly as possible.
 	 */
 	if (!(flags & CHECKPOINT_IMMEDIATE) &&
 		!shutdown_requested &&
@@ -716,7 +718,8 @@ CheckpointWriteDelay(int flags, double progress)
 		/*
 		 * This sleep used to be connected to bgwriter_delay, typically 200ms.
 		 * That resulted in more frequent wakeups if not much work to do.
-		 * Checkpointer and bgwriter are no longer related so take the Big Sleep.
+		 * Checkpointer and bgwriter are no longer related so take the Big
+		 * Sleep.
 		 */
 		pg_usleep(100000L);
 	}
@@ -1017,7 +1020,7 @@ RequestCheckpoint(int flags)
 			if (ntries >= 20)	/* max wait 2.0 sec */
 			{
 				elog((flags & CHECKPOINT_WAIT) ? ERROR : LOG,
-				"could not request checkpoint because checkpointer not running");
+					 "could not request checkpoint because checkpointer not running");
 				break;
 			}
 		}
@@ -1130,9 +1133,9 @@ ForwardFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
 	CheckpointerShmem->num_backend_writes++;
 
 	/*
-	 * If the checkpointer isn't running or the request queue is full,
-	 * the backend will have to perform its own fsync request.	But before
-	 * forcing that to happen, we can try to compact the request queue.
+	 * If the checkpointer isn't running or the request queue is full, the
+	 * backend will have to perform its own fsync request.	But before forcing
+	 * that to happen, we can try to compact the request queue.
 	 */
 	if (CheckpointerShmem->checkpointer_pid == 0 ||
 		(CheckpointerShmem->num_requests >= CheckpointerShmem->max_requests &&
@@ -1339,8 +1342,8 @@ UpdateSharedMemoryConfig(void)
 	SyncRepUpdateSyncStandbysDefined();
 
 	/*
-	 * If full_page_writes has been changed by SIGHUP, we update it
-	 * in shared memory and write an XLOG_FPW_CHANGE record.
+	 * If full_page_writes has been changed by SIGHUP, we update it in shared
+	 * memory and write an XLOG_FPW_CHANGE record.
 	 */
 	UpdateFullPageWrites();
 
@@ -1356,9 +1359,9 @@ FirstCallSinceLastCheckpoint(void)
 {
 	/* use volatile pointer to prevent code rearrangement */
 	volatile CheckpointerShmemStruct *cps = CheckpointerShmem;
-	static int 	ckpt_done = 0;
-	int 		new_done;
-	bool 		FirstCall = false;
+	static int	ckpt_done = 0;
+	int			new_done;
+	bool		FirstCall = false;
 
 	SpinLockAcquire(&cps->ckpt_lck);
 	new_done = cps->ckpt_done;
