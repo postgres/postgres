@@ -14,6 +14,7 @@
 #ifndef HIO_H
 #define HIO_H
 
+#include "access/heapam.h"
 #include "access/htup.h"
 #include "utils/relcache.h"
 #include "storage/buf.h"

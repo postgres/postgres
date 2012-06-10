@@ -15,6 +15,7 @@
 #define JSON_H
 
 #include "fmgr.h"
+#include "lib/stringinfo.h"
 
 extern Datum json_in(PG_FUNCTION_ARGS);
 extern Datum json_out(PG_FUNCTION_ARGS);
