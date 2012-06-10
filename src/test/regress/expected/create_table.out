@@ -220,19 +220,3 @@ NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "doubly_temp_pkey
 CREATE TEMP TABLE public.temp_to_perm (a int primary key);		-- not OK
 ERROR:  cannot create temporary relation in non-temporary schema
 DROP TABLE unlogged1, public.unlogged2;
-CREATE GLOBAL TEMPORARY TABLE global_temp1 (a int, b text);		-- not yet OK
-ERROR:  GLOBAL TEMPORARY not yet implemented
-LINE 1: CREATE GLOBAL TEMPORARY TABLE global_temp1 (a int, b text);
-               ^
-CREATE GLOBAL TEMP TABLE global_temp2 (a int, b text);			-- not yet OK
-ERROR:  GLOBAL TEMPORARY not yet implemented
-LINE 1: CREATE GLOBAL TEMP TABLE global_temp2 (a int, b text);
-               ^
-CREATE LOCAL TEMP TABLE local_temp (a int, b text);				-- not yet OK
-ERROR:  LOCAL TEMPORARY not yet implemented
-LINE 1: CREATE LOCAL TEMP TABLE local_temp (a int, b text);
-               ^
-CREATE LOCAL TEMP TABLE local_temp (a int, b text);				-- not yet OK
-ERROR:  LOCAL TEMPORARY not yet implemented
-LINE 1: CREATE LOCAL TEMP TABLE local_temp (a int, b text);
-               ^
