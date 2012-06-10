@@ -186,8 +186,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-x <replaceable class="parameter">method</replaceable></option></term>
-      <term><option>--xlog=<replaceable class="parameter">method</replaceable></option></term>
+      <term><option>-X <replaceable class="parameter">method</replaceable></option></term>
+      <term><option>--xlog-method=<replaceable class="parameter">method</replaceable></option></term>
       <listitem>
        <para>
         Includes the required transaction log files (WAL files) in the
@@ -233,6 +233,17 @@ PostgreSQL documentation
           </listitem>
          </varlistentry>
         </variablelist>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-x</option></term>
+      <term><option>--xlog</option></term>
+      <listitem>
+       <para>
+        Using this option is equivalent of using <literal>-X</literal> with
+        method <literal>fetch</literal>.
        </para>
       </listitem>
      </varlistentry>

@@ -107,7 +107,9 @@ usage(void)
 	printf(_("\nOptions controlling the output:\n"));
 	printf(_("  -D, --pgdata=DIRECTORY   receive base backup into directory\n"));
 	printf(_("  -F, --format=p|t         output format (plain (default), tar)\n"));
-	printf(_("  -x, --xlog=fetch|stream  include required WAL files in backup\n"));
+	printf(_("  -x, --xlog               include required WAL files in backup (fetch mode)\n"));
+	printf(_("  -X, --xlog-method=fetch|stream\n"
+		   "                           include required WAL files with specified method\n"));
 	printf(_("  -z, --gzip               compress tar output\n"));
 	printf(_("  -Z, --compress=0-9       compress tar output with given compression level\n"));
 	printf(_("\nGeneral options:\n"));
@@ -1194,7 +1196,8 @@ main(int argc, char **argv)
 		{"pgdata", required_argument, NULL, 'D'},
 		{"format", required_argument, NULL, 'F'},
 		{"checkpoint", required_argument, NULL, 'c'},
-		{"xlog", required_argument, NULL, 'x'},
+		{"xlog", no_argument, NULL, 'x'},
+		{"xlog-method", required_argument, NULL, 'X'},
 		{"gzip", no_argument, NULL, 'z'},
 		{"compress", required_argument, NULL, 'Z'},
 		{"label", required_argument, NULL, 'l'},
@@ -1230,7 +1233,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "D:F:x:l:zZ:c:h:p:U:s:wWvP",
+	while ((c = getopt_long(argc, argv, "D:F:xX:l:zZ:c:h:p:U:s:wWvP",
 							long_options, &option_index)) != -1)
 	{
 		switch (c)
@@ -1251,6 +1254,24 @@ main(int argc, char **argv)
 				}
 				break;
 			case 'x':
+				if (includewal)
+				{
+					fprintf(stderr, _("%s: cannot specify both --xlog and --xlog-method\n"),
+							progname);
+					exit(1);
+				}
+
+				includewal = true;
+				streamwal = false;
+				break;
+			case 'X':
+				if (includewal)
+				{
+					fprintf(stderr, _("%s: cannot specify both --xlog and --xlog-method\n"),
+							progname);
+					exit(1);
+				}
+
 				includewal = true;
 				if (strcmp(optarg, "f") == 0 ||
 					strcmp(optarg, "fetch") == 0)
@@ -1260,7 +1281,7 @@ main(int argc, char **argv)
 					streamwal = true;
 				else
 				{
-					fprintf(stderr, _("%s: invalid xlog option \"%s\", must be empty, \"fetch\", or \"stream\"\n"),
+					fprintf(stderr, _("%s: invalid xlog-method option \"%s\", must be empty, \"fetch\", or \"stream\"\n"),
 							progname, optarg);
 					exit(1);
 				}
