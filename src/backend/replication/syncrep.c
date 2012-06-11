@@ -397,6 +397,7 @@ SyncRepReleaseWaiters(void)
 		volatile WalSnd *walsnd = &walsndctl->walsnds[i];
 
 		if (walsnd->pid != 0 &&
+			walsnd->state == WALSNDSTATE_STREAMING &&
 			walsnd->sync_standby_priority > 0 &&
 			(priority == 0 ||
 			 priority > walsnd->sync_standby_priority))
