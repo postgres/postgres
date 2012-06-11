@@ -78,7 +78,7 @@ PostgreSQL documentation
     <variablelist>
      <varlistentry>
       <term><option>-D <replaceable class="parameter">directory</replaceable></option></term>
-      <term><option>--dir=<replaceable class="parameter">directory</replaceable></option></term>
+      <term><option>--directory=<replaceable class="parameter">directory</replaceable></option></term>
       <listitem>
        <para>
         Directory to write the output to.

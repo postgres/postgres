@@ -52,17 +52,16 @@ static bool stop_streaming(XLogRecPtr segendpos, uint32 timeline, bool segment_f
 static void
 usage(void)
 {
-	printf(_("%s receives PostgreSQL streaming transaction logs\n\n"),
+	printf(_("%s receives PostgreSQL streaming transaction logs.\n\n"),
 		   progname);
 	printf(_("Usage:\n"));
 	printf(_("  %s [OPTION]...\n"), progname);
-	printf(_("\nOptions controlling the output:\n"));
-	printf(_("  -D, --dir=directory       receive xlog files into this directory\n"));
-	printf(_("\nGeneral options:\n"));
-	printf(_("  -n, --noloop              do not loop on connection lost\n"));
-	printf(_("  -v, --verbose             output verbose messages\n"));
-	printf(_("  -?, --help                show this help, then exit\n"));
-	printf(_("  -V, --version             output version information, then exit\n"));
+	printf(_("\nOptions:\n"));
+	printf(_("  -D, --directory=DIR      receive transaction log files into this directory\n"));
+	printf(_("  -n, --noloop             do not loop on connection lost\n"));
+	printf(_("  -v, --verbose            output verbose messages\n"));
+	printf(_("  -?, --help               show this help, then exit\n"));
+	printf(_("  -V, --version            output version information, then exit\n"));
 	printf(_("\nConnection options:\n"));
 	printf(_("  -s, --statusint=INTERVAL time between status packets sent to server (in seconds)\n"));
 	printf(_("  -h, --host=HOSTNAME      database server host or socket directory\n"));
@@ -293,7 +292,7 @@ main(int argc, char **argv)
 	static struct option long_options[] = {
 		{"help", no_argument, NULL, '?'},
 		{"version", no_argument, NULL, 'V'},
-		{"dir", required_argument, NULL, 'D'},
+		{"directory", required_argument, NULL, 'D'},
 		{"host", required_argument, NULL, 'h'},
 		{"port", required_argument, NULL, 'p'},
 		{"username", required_argument, NULL, 'U'},
