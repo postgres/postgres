@@ -1902,6 +1902,10 @@ adjust_data_dir(void)
 			   *my_exec_path;
 	FILE	   *fd;
 
+	/* do nothing if we're working without knowledge of data dir */
+	if (pg_config == NULL)
+		return;
+
 	/* If there is no postgresql.conf, it can't be a config-only dir */
 	snprintf(filename, sizeof(filename), "%s/postgresql.conf", pg_config);
 	if ((fd = fopen(filename, "r")) == NULL)
@@ -2188,8 +2192,10 @@ main(int argc, char **argv)
 		pg_data = xstrdup(pg_config);
 	}
 
+	/* -D might point at config-only directory; if so find the real PGDATA */
 	adjust_data_dir();
 
+	/* Complain if -D needed and not provided */
 	if (pg_config == NULL &&
 		ctl_command != KILL_COMMAND && ctl_command != UNREGISTER_COMMAND)
 	{
