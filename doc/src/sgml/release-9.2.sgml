@@ -436,7 +436,7 @@
       <listitem>
        <para>
         Allow frequently uncontended locks to be recorded using a new
-        lightweight lock mechanism (Robert Haas)
+        fast-path lock mechanism (Robert Haas)
        </para>
       </listitem>
 
@@ -502,7 +502,7 @@
        <para>
         Add the <link linkend="SPGiST">SP-GiST</link> (Space-Partitioned
         GiST) index access method (Teodor Sigaev, Oleg Bartunov, Tom
-        Lane, Robert Haas)
+        Lane)
        </para>
 
        <para>
@@ -544,7 +544,7 @@
       <listitem>
        <para>
         Allow group commit to work effectively under heavy load (Peter
-        Geoghegan, Simon Riggs)
+        Geoghegan, Simon Riggs, Heikki Linnakangas)
        </para>
 
        <para>
@@ -870,8 +870,8 @@
 
       <listitem>
        <para>
-        Change "unexpected EOF" message to <literal>DEBUG1</> level
-        (Magnus Hagander)
+        Change "unexpected EOF" message to <literal>DEBUG1</> level,
+        except when there is an open transaction (Magnus Hagander)
        </para>
       </listitem>
 
@@ -911,7 +911,7 @@
        <para>
         Report checkpoint timing information in <link
         linkend="pg-stat-bgwriter-view"><structname>pg_stat_bgwriter</></link>
-        (Greg Smith, Peter Geoghegan, Robert Haas)
+        (Greg Smith, Peter Geoghegan)
        </para>
       </listitem>
 
@@ -1088,8 +1088,8 @@
        </para>
 
        <para>
-        This only writes data to the socket, but does not wait a write
-        to the remote disk.
+        This waits for the remote server to acknowledge that it has received
+        the data, but does not wait for it to be written to the remote disk.
        </para>
       </listitem>
 
@@ -1224,6 +1224,13 @@
         Provide more reliable operation during concurrent
         <acronym>DDL</acronym> (Robert Haas, Noah Misch)
        </para>
+
+       <para>
+        This eliminates "cache lookup failed" errors in many scenarios.
+        Also, it is no longer possible to add relations to a schema which
+        is being concurrently dropped, a scenario that formerly led to
+        inconsistent system catalog contents.
+       </para>
       </listitem>
 
       <listitem>
@@ -1286,19 +1293,6 @@
         constraints (Peter Eisentraut)
        </para>
       </listitem>
-
-      <listitem>
-       <para>
-        Disallow merging of <literal>ONLY</> and non-<literal>ONLY</>
-        constraints in child tables (Nikhil Sontakke)
-       </para>
-
-       <para>
-        Such merging would cause unpredictable behavior in grandchild
-        tables.
-       </para>
-      </listitem>
-
      </itemizedlist>
 
     </sect4>
@@ -1312,13 +1306,32 @@
        <para>
         Reduce need to rebuild tables and indexes for various <link
         linkend="SQL-ALTERTABLE"><command>ALTER TABLE</command></link>
-        operations (Noah Misch) DUPLICATE?
+        operations (Noah Misch)
+       </para>
+
+       <para>
+        Increasing the length constraint on a <type>varchar</> or
+        <type>varbit</> column, or removing it altogether, no longer
+        requires a table rewrite.  Increasing the allowable precision of
+        a <type>numeric</> constraint, or changing a column from constrained
+        <type>numeric</> to unconstrained numeric, no longer requires a
+        table rewrite.  Table rewrites are also avoided in similar cases
+        involving the <type>interval</>, <type>timestamp</>, and
+        <type>timestamptz</> types.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add <literal>IF EXIST</> clause to <command>ALTER</command>
+        Avoid having <link linkend="SQL-ALTERTABLE"><command>ALTER
+        TABLE</command></link> revalidate foreign key constraints in some
+        cases where it is not necessary (Noah Misch)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add <literal>IF EXISTS</> clause to <command>ALTER</command>
         commands (Pavel Stehule)
        </para>
 
@@ -1396,20 +1409,6 @@
         This also allows a table to be created whose schema matches a view.
        </para>
       </listitem>
-
-      <listitem>
-       <para>
-        Tighten creation of tables in temporary schemas (Robert Haas,
-        Amit Khandekar)
-       </para>
-
-       <para>
-        Previously, it was possible to create unlogged tables in temporary
-        schemas, and temporary tables in the temporary schemas of other
-        sessions.
-       </para>
-      </listitem>
-
      </itemizedlist>
 
     </sect4>
@@ -1423,7 +1422,7 @@
        <para>
         Add a <link
         linkend="SQL-CREATEVIEW"><literal>security_barrier</></link>
-        option for views (KaiGai Kohei)
+        option for views (KaiGai Kohei, Robert Haas)
        </para>
 
        <para>
@@ -1540,7 +1539,7 @@
       <listitem>
        <para>
         Add a <link linkend="datatype-json"><type>JSON</type></link>
-        data type (Robert Haas)  AUTHOR?
+        data type (Robert Haas)
        </para>
 
        <para>
