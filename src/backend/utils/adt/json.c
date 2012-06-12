@@ -431,7 +431,7 @@ json_lex_string(JsonLexContext *lex)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("invalid input syntax for type json"),
-					 errdetail_internal("line %d: Character with value \"0x%02x\" must be escaped.",
+					 errdetail("line %d: Character with value \"0x%02x\" must be escaped.",
 									 lex->line_number, (unsigned char) *s)));
 		}
 		else if (*s == '\\')
@@ -466,7 +466,7 @@ json_lex_string(JsonLexContext *lex)
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 								 errmsg("invalid input syntax for type json"),
-								 errdetail_internal("line %d: \"\\u\" must be followed by four hexadecimal digits.",
+								 errdetail("line %d: \"\\u\" must be followed by four hexadecimal digits.",
 													lex->line_number)));
 					}
 				}
@@ -480,7 +480,7 @@ json_lex_string(JsonLexContext *lex)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						 errmsg("invalid input syntax for type json"),
-					  errdetail_internal("line %d: Invalid escape \"\\%s\".",
+						 errdetail("line %d: Invalid escape \"\\%s\".",
 									 lex->line_number, extract_mb_char(s))));
 			}
 		}
@@ -595,7 +595,7 @@ report_parse_error(JsonParseStack *stack, JsonLexContext *lex)
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type json: \"%s\"",
 						lex->input),
-				 errdetail_internal("The input string ended unexpectedly.")));
+				 errdetail("The input string ended unexpectedly.")));
 
 	/* Work out the offending token. */
 	toklen = lex->token_terminator - lex->token_start;
@@ -638,7 +638,7 @@ report_parse_error(JsonParseStack *stack, JsonLexContext *lex)
 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 			 errmsg("invalid input syntax for type json: \"%s\"",
 					lex->input),
-		  detail ? errdetail_internal(detail, lex->line_number, token) : 0));
+		  detail ? errdetail(detail, lex->line_number, token) : 0));
 }
 
 /*
@@ -658,7 +658,7 @@ report_invalid_token(JsonLexContext *lex)
 	ereport(ERROR,
 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 			 errmsg("invalid input syntax for type json"),
-			 errdetail_internal("line %d: Token \"%s\" is invalid.",
+			 errdetail("line %d: Token \"%s\" is invalid.",
 								lex->line_number, token)));
 }
 
