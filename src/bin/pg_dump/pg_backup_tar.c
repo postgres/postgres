@@ -862,6 +862,7 @@ _CloseArchive(ArchiveHandle *AH)
 
 		ropt = NewRestoreOptions();
 		memcpy(ropt, AH->ropt, sizeof(RestoreOptions));
+		ropt->filename = NULL;
 		ropt->dropSchema = 1;
 		ropt->compression = 0;
 		ropt->superuser = NULL;
