@@ -42,10 +42,14 @@ PGLOG="$PGDATA/serverlog"
 
 # It's often a good idea to protect the postmaster from being killed by the
 # OOM killer (which will tend to preferentially kill the postmaster because
-# of the way it accounts for shared memory).  Setting the OOM_ADJ value to
-# -17 will disable OOM kill altogether.  If you enable this, you probably want
-# to compile PostgreSQL with "-DLINUX_OOM_ADJ=0", so that individual backends
-# can still be killed by the OOM killer.
+# of the way it accounts for shared memory).  Setting the OOM_SCORE_ADJ value
+# to -1000 will disable OOM kill altogether.  If you enable this, you probably
+# want to compile PostgreSQL with "-DLINUX_OOM_SCORE_ADJ=0", so that
+# individual backends can still be killed by the OOM killer.
+#OOM_SCORE_ADJ=-1000
+# Older Linux kernels may not have /proc/self/oom_score_adj, but instead
+# /proc/self/oom_adj, which works similarly except the disable value is -17.
+# For such a system, enable this and compile with "-DLINUX_OOM_ADJ=0".
 #OOM_ADJ=-17
 
 ## STOP EDITING HERE
@@ -78,6 +82,7 @@ test -x $DAEMON ||
 case $1 in
   start)
 	echo -n "Starting PostgreSQL: "
+	test x"$OOM_SCORE_ADJ" != x && echo "$OOM_SCORE_ADJ" > /proc/self/oom_score_adj
 	test x"$OOM_ADJ" != x && echo "$OOM_ADJ" > /proc/self/oom_adj
 	su - $PGUSER -c "$DAEMON -D '$PGDATA' &" >>$PGLOG 2>&1
 	echo "ok"
@@ -90,6 +95,7 @@ case $1 in
   restart)
 	echo -n "Restarting PostgreSQL: "
 	su - $PGUSER -c "$PGCTL stop -D '$PGDATA' -s -m fast -w"
+	test x"$OOM_SCORE_ADJ" != x && echo "$OOM_SCORE_ADJ" > /proc/self/oom_score_adj
 	test x"$OOM_ADJ" != x && echo "$OOM_ADJ" > /proc/self/oom_adj
 	su - $PGUSER -c "$DAEMON -D '$PGDATA' &" >>$PGLOG 2>&1
 	echo "ok"

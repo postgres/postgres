@@ -1268,7 +1268,7 @@ default:\
     In Linux 2.4 and later, the default virtual memory behavior is not
     optimal for <productname>PostgreSQL</productname>. Because of the
     way that the kernel implements memory overcommit, the kernel might
-    terminate the <productname>PostgreSQL</productname> server (the
+    terminate the <productname>PostgreSQL</productname> postmaster (the
     master server process) if the memory demands of
     another process cause the system to run out of virtual memory.
    </para>
@@ -1317,20 +1317,29 @@ sysctl -w vm.overcommit_memory=2
    <para>
     Another approach, which can be used with or without altering
     <varname>vm.overcommit_memory</>, is to set the process-specific
-    <varname>oom_adj</> value for the postmaster process to <literal>-17</>,
-    thereby guaranteeing it will not be targeted by the OOM killer.  The
-    simplest way to do this is to execute
+    <varname>oom_score_adj</> value for the postmaster process to
+    <literal>-1000</>, thereby guaranteeing it will not be targeted by the OOM
+    killer.  The simplest way to do this is to execute
 <programlisting>
-echo -17 > /proc/self/oom_adj
+echo -1000 > /proc/self/oom_score_adj
 </programlisting>
     in the postmaster's startup script just before invoking the postmaster.
     Note that this action must be done as root, or it will have no effect;
     so a root-owned startup script is the easiest place to do it.  If you
     do this, you may also wish to build <productname>PostgreSQL</>
-    with <literal>-DLINUX_OOM_ADJ=0</> added to <varname>CPPFLAGS</>.
+    with <literal>-DLINUX_OOM_SCORE_ADJ=0</> added to <varname>CPPFLAGS</>.
     That will cause postmaster child processes to run with the normal
-    <varname>oom_adj</> value of zero, so that the OOM killer can still
+    <varname>oom_score_adj</> value of zero, so that the OOM killer can still
     target them at need.
+   </para>
+
+   <para>
+    Older Linux kernels do not offer <filename>/proc/self/oom_score_adj</>,
+    but may have a previous version of the same functionality called
+    <filename>/proc/self/oom_adj</>.  This works the same except the disable
+    value is <literal>-17</> not <literal>-1000</>.  The corresponding
+    build flag for <productname>PostgreSQL</> is
+    <literal>-DLINUX_OOM_ADJ=0</>.
    </para>
 
    <note>
