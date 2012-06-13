@@ -29,7 +29,7 @@
  *	We control all assignments of pg_enum.oid because these oids are stored
  *	in user tables as enum values.
  *
- *	We control all assignments of pg_auth.oid because these oids are stored
+ *	We control all assignments of pg_authid.oid because these oids are stored
  *	in pg_largeobject_metadata.
  */
 
