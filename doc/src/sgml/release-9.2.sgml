@@ -485,13 +485,6 @@
 
       <listitem>
        <para>
-        Reduce checkpoints and <acronym>WAL</acronym> traffic on low
-        activity servers (Simon Riggs)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Allow sorting to be performed by inlined and faster,
         non-<acronym>SQL</acronym>-callable comparison functions (Peter
         Geoghegan, Robert Haas, Tom Lane)
