@@ -144,12 +144,19 @@ PostgreSQL documentation
       <term><option>-C <replaceable>name</replaceable></option></term>
       <listitem>
        <para>
-        Returns the value of a named run-time parameter, and exits.
+        Prints the value of the named run-time parameter, and exits.
         (See the <option>-c</> option above for details.)  This can
         be used on a running server, and returns values from
         <filename>postgresql.conf</>, modified by any parameters
         supplied in this invocation.  It does not reflect parameters
         supplied when the cluster was started.
+       </para>
+
+       <para>
+        This option is meant for other programs that interact with a server
+        instance, such as <xref linkend="app-pg-ctl">, to query configuration
+        parameter values.  User-facing applications should instead use <xref
+        linkend="sql-show"> or the <structname>pg_settings</structname> view.
        </para>
       </listitem>
      </varlistentry>
