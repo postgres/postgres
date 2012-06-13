@@ -62,9 +62,8 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE <replaceable
     <term><literal>GLOBAL</literal> or <literal>LOCAL</literal></term>
     <listitem>
      <para>
-      Ignored for compatibility. Refer to <xref
-      linkend="sql-createtable"> for
-      details.
+      Ignored for compatibility.  Use of these keywords is deprecated;
+      refer to <xref linkend="sql-createtable"> for details.
      </para>
     </listitem>
    </varlistentry>
