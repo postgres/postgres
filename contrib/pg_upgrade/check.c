@@ -121,17 +121,36 @@ check_new_cluster(void)
 {
 	set_locale_and_encoding(&new_cluster);
 
+	check_locale_and_encoding(&old_cluster.controldata, &new_cluster.controldata);
+
 	get_db_and_rel_infos(&new_cluster);
 
 	check_new_cluster_is_empty();
-	check_for_prepared_transactions(&new_cluster);
 
 	check_loadable_libraries();
 
-	check_locale_and_encoding(&old_cluster.controldata, &new_cluster.controldata);
-
 	if (user_opts.transfer_mode == TRANSFER_MODE_LINK)
 		check_hard_link();
+
+	check_is_super_user(&new_cluster);
+
+	/*
+	 *	We don't restore our own user, so both clusters must match have
+	 *	matching install-user oids.
+	 */
+	if (old_cluster.install_role_oid != new_cluster.install_role_oid)
+		pg_log(PG_FATAL,
+		"Old and new cluster install users have different values for pg_authid.oid.\n");
+
+	/*
+	 *	We only allow the install user in the new cluster because other
+	 *	defined users might match users defined in the old cluster and
+	 *	generate an error during pg_dump restore.
+	 */
+	if (new_cluster.role_count != 1)
+		pg_log(PG_FATAL, "Only the install user can be defined in the new cluster.\n");
+    
+	check_for_prepared_transactions(&new_cluster);
 }
 
 
@@ -580,7 +599,7 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 /*
  *	check_is_super_user()
  *
- *	Make sure we are the super-user.
+ *	Check we are superuser, and out user id and user count
  */
 static void
 check_is_super_user(ClusterInfo *cluster)
@@ -592,13 +611,26 @@ check_is_super_user(ClusterInfo *cluster)
 
 	/* Can't use pg_authid because only superusers can view it. */
 	res = executeQueryOrDie(conn,
-							"SELECT rolsuper "
+							"SELECT rolsuper, oid "
 							"FROM pg_catalog.pg_roles "
 							"WHERE rolname = current_user");
 
 	if (PQntuples(res) != 1 || strcmp(PQgetvalue(res, 0, 0), "t") != 0)
 		pg_log(PG_FATAL, "database user \"%s\" is not a superuser\n",
 			   os_info.user);
+
+	cluster->install_role_oid = atooid(PQgetvalue(res, 0, 1));
+
+	PQclear(res);
+
+	res = executeQueryOrDie(conn,
+							"SELECT COUNT(*) "
+							"FROM pg_catalog.pg_roles ");
+
+	if (PQntuples(res) != 1)
+		pg_log(PG_FATAL, "could not determine the number of users\n");
+
+	cluster->role_count = atoi(PQgetvalue(res, 0, 0));
 
 	PQclear(res);
 
