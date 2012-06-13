@@ -1306,10 +1306,11 @@ CREATE TABLE employees OF employee_type (
 
    <para>
     The SQL standard also distinguishes between global and local temporary
-    tables, where a local temporary table is only visible within a specific
-    SQL module, though its definition is still shared across sessions.  Since
-    <productname>PostgreSQL</productname> does not support SQL modules, this
-    distinction is not relevant in <productname>PostgreSQL</productname>.
+    tables, where a local temporary table has a separate set of contents for
+    each SQL module within each session, though its definition is still shared
+    across sessions.  Since <productname>PostgreSQL</productname> does not
+    support SQL modules, this distinction is not relevant in
+    <productname>PostgreSQL</productname>.
    </para>
 
    <para>
