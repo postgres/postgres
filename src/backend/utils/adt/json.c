@@ -43,8 +43,6 @@ typedef struct					/* state of JSON lexer */
 	char	   *token_start;	/* start of current token within input */
 	char	   *token_terminator; /* end of previous or current token */
 	JsonValueType token_type;	/* type of current token, once it's known */
-	int			line_number;	/* current line number (counting from 1) */
-	char	   *line_start;		/* start of current line within input (BROKEN!!) */
 } JsonLexContext;
 
 typedef enum					/* states of JSON parser */
@@ -78,6 +76,7 @@ static void json_lex_string(JsonLexContext *lex);
 static void json_lex_number(JsonLexContext *lex, char *s);
 static void report_parse_error(JsonParseStack *stack, JsonLexContext *lex);
 static void report_invalid_token(JsonLexContext *lex);
+static int report_json_context(JsonLexContext *lex);
 static char *extract_mb_char(char *s);
 static void composite_to_json(Datum composite, StringInfo result,
 							  bool use_line_feeds);
@@ -185,8 +184,6 @@ json_validate_cstring(char *input)
 	/* Set up lexing context. */
 	lex.input = input;
 	lex.token_terminator = lex.input;
-	lex.line_number = 1;
-	lex.line_start = input;
 
 	/* Set up parse stack. */
 	stacksize = 32;
@@ -335,11 +332,7 @@ json_lex(JsonLexContext *lex)
 	/* Skip leading whitespace. */
 	s = lex->token_terminator;
 	while (*s == ' ' || *s == '\t' || *s == '\n' || *s == '\r')
-	{
-		if (*s == '\n')
-			lex->line_number++;
 		s++;
-	}
 	lex->token_start = s;
 
 	/* Determine token type. */
@@ -350,7 +343,7 @@ json_lex(JsonLexContext *lex)
 		{
 			/* End of string. */
 			lex->token_start = NULL;
-			lex->token_terminator = NULL;
+			lex->token_terminator = s;
 		}
 		else
 		{
@@ -397,7 +390,8 @@ json_lex(JsonLexContext *lex)
 			/*
 			 * We got some sort of unexpected punctuation or an otherwise
 			 * unexpected character, so just complain about that one
-			 * character.
+			 * character.  (It can't be multibyte because the above loop
+			 * will advance over any multibyte characters.)
 			 */
 			lex->token_terminator = s + 1;
 			report_invalid_token(lex);
@@ -443,11 +437,14 @@ json_lex_string(JsonLexContext *lex)
 				lex->token_terminator = s;
 				report_invalid_token(lex);
 			}
+			/* Since *s isn't printable, exclude it from the context string */
+			lex->token_terminator = s;
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("invalid input syntax for type json"),
-					 errdetail("line %d: Character with value \"0x%02x\" must be escaped.",
-									 lex->line_number, (unsigned char) *s)));
+					 errdetail("Character with value 0x%02x must be escaped.",
+							   (unsigned char) *s),
+					 report_json_context(lex)));
 		}
 		else if (*s == '\\')
 		{
@@ -465,38 +462,39 @@ json_lex_string(JsonLexContext *lex)
 
 				for (i = 1; i <= 4; i++)
 				{
-					if (s[i] == '\0')
+					s++;
+					if (*s == '\0')
 					{
-						lex->token_terminator = s + i;
+						lex->token_terminator = s;
 						report_invalid_token(lex);
 					}
-					else if (s[i] >= '0' && s[i] <= '9')
-						ch = (ch * 16) + (s[i] - '0');
-					else if (s[i] >= 'a' && s[i] <= 'f')
-						ch = (ch * 16) + (s[i] - 'a') + 10;
-					else if (s[i] >= 'A' && s[i] <= 'F')
-						ch = (ch * 16) + (s[i] - 'A') + 10;
+					else if (*s >= '0' && *s <= '9')
+						ch = (ch * 16) + (*s - '0');
+					else if (*s >= 'a' && *s <= 'f')
+						ch = (ch * 16) + (*s - 'a') + 10;
+					else if (*s >= 'A' && *s <= 'F')
+						ch = (ch * 16) + (*s - 'A') + 10;
 					else
 					{
+						lex->token_terminator = s + pg_mblen(s);
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 								 errmsg("invalid input syntax for type json"),
-								 errdetail("line %d: \"\\u\" must be followed by four hexadecimal digits.",
-													lex->line_number)));
+								 errdetail("\"\\u\" must be followed by four hexadecimal digits."),
+								 report_json_context(lex)));
 					}
 				}
-
-				/* Account for the four additional bytes we just parsed. */
-				s += 4;
 			}
 			else if (strchr("\"\\/bfnrt", *s) == NULL)
 			{
 				/* Not a valid string escape, so error out. */
+				lex->token_terminator = s + pg_mblen(s);
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						 errmsg("invalid input syntax for type json"),
-						 errdetail("line %d: Invalid escape \"\\%s\".",
-									 lex->line_number, extract_mb_char(s))));
+						 errdetail("Escape sequence \"\\%s\" is invalid.",
+								   extract_mb_char(s)),
+						 report_json_context(lex)));
 			}
 		}
 	}
@@ -599,68 +597,108 @@ json_lex_number(JsonLexContext *lex, char *s)
 
 /*
  * Report a parse error.
+ *
+ * lex->token_start and lex->token_terminator must identify the current token.
  */
 static void
 report_parse_error(JsonParseStack *stack, JsonLexContext *lex)
 {
-	char	   *detail = NULL;
-	char	   *token = NULL;
+	char	   *token;
 	int			toklen;
 
 	/* Handle case where the input ended prematurely. */
 	if (lex->token_start == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for type json: \"%s\"",
-						lex->input),
-				 errdetail("The input string ended unexpectedly.")));
+				 errmsg("invalid input syntax for type json"),
+				 errdetail("The input string ended unexpectedly."),
+				 report_json_context(lex)));
 
-	/* Separate out the offending token. */
+	/* Separate out the current token. */
 	toklen = lex->token_terminator - lex->token_start;
 	token = palloc(toklen + 1);
 	memcpy(token, lex->token_start, toklen);
 	token[toklen] = '\0';
 
-	/* Select correct detail message. */
+	/* Complain, with the appropriate detail message. */
 	if (stack == NULL)
-		detail = "line %d: Expected end of input, but found \"%s\".";
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for type json"),
+				 errdetail("Expected end of input, but found \"%s\".",
+						   token),
+				 report_json_context(lex)));
 	else
 	{
 		switch (stack->state)
 		{
 			case JSON_PARSE_VALUE:
-				detail = "line %d: Expected string, number, object, array, true, false, or null, but found \"%s\".";
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						 errmsg("invalid input syntax for type json"),
+						 errdetail("Expected JSON value, but found \"%s\".",
+								   token),
+						 report_json_context(lex)));
 				break;
 			case JSON_PARSE_ARRAY_START:
-				detail = "line %d: Expected array element or \"]\", but found \"%s\".";
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						 errmsg("invalid input syntax for type json"),
+						 errdetail("Expected array element or \"]\", but found \"%s\".",
+								   token),
+						 report_json_context(lex)));
 				break;
 			case JSON_PARSE_ARRAY_NEXT:
-				detail = "line %d: Expected \",\" or \"]\", but found \"%s\".";
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						 errmsg("invalid input syntax for type json"),
+						 errdetail("Expected \",\" or \"]\", but found \"%s\".",
+								   token),
+						 report_json_context(lex)));
 				break;
 			case JSON_PARSE_OBJECT_START:
-				detail = "line %d: Expected string or \"}\", but found \"%s\".";
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						 errmsg("invalid input syntax for type json"),
+						 errdetail("Expected string or \"}\", but found \"%s\".",
+								   token),
+						 report_json_context(lex)));
 				break;
 			case JSON_PARSE_OBJECT_LABEL:
-				detail = "line %d: Expected \":\", but found \"%s\".";
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						 errmsg("invalid input syntax for type json"),
+						 errdetail("Expected \":\", but found \"%s\".",
+								   token),
+						 report_json_context(lex)));
 				break;
 			case JSON_PARSE_OBJECT_NEXT:
-				detail = "line %d: Expected \",\" or \"}\", but found \"%s\".";
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						 errmsg("invalid input syntax for type json"),
+						 errdetail("Expected \",\" or \"}\", but found \"%s\".",
+								   token),
+						 report_json_context(lex)));
 				break;
 			case JSON_PARSE_OBJECT_COMMA:
-				detail = "line %d: Expected string, but found \"%s\".";
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						 errmsg("invalid input syntax for type json"),
+						 errdetail("Expected string, but found \"%s\".",
+								   token),
+						 report_json_context(lex)));
 				break;
+			default:
+				elog(ERROR, "unexpected json parse state: %d",
+					 (int) stack->state);
 		}
 	}
-
-	ereport(ERROR,
-			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			 errmsg("invalid input syntax for type json: \"%s\"",
-					lex->input),
-		  detail ? errdetail(detail, lex->line_number, token) : 0));
 }
 
 /*
  * Report an invalid input token.
+ *
+ * lex->token_start and lex->token_terminator must identify the token.
  */
 static void
 report_invalid_token(JsonLexContext *lex)
@@ -668,6 +706,7 @@ report_invalid_token(JsonLexContext *lex)
 	char	   *token;
 	int			toklen;
 
+	/* Separate out the offending token. */
 	toklen = lex->token_terminator - lex->token_start;
 	token = palloc(toklen + 1);
 	memcpy(token, lex->token_start, toklen);
@@ -676,8 +715,80 @@ report_invalid_token(JsonLexContext *lex)
 	ereport(ERROR,
 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 			 errmsg("invalid input syntax for type json"),
-			 errdetail("line %d: Token \"%s\" is invalid.",
-								lex->line_number, token)));
+			 errdetail("Token \"%s\" is invalid.", token),
+			 report_json_context(lex)));
+}
+
+/*
+ * Report a CONTEXT line for bogus JSON input.
+ *
+ * lex->token_terminator must be set to identify the spot where we detected
+ * the error.  Note that lex->token_start might be NULL, in case we recognized
+ * error at EOF.
+ *
+ * The return value isn't meaningful, but we make it non-void so that this
+ * can be invoked inside ereport().
+ */
+static int
+report_json_context(JsonLexContext *lex)
+{
+	const char *context_start;
+	const char *context_end;
+	const char *line_start;
+	int			line_number;
+	char	   *ctxt;
+	int			ctxtlen;
+	const char *prefix;
+	const char *suffix;
+
+	/* Choose boundaries for the part of the input we will display */
+	context_start = lex->input;
+	context_end = lex->token_terminator;
+	line_start = context_start;
+	line_number = 1;
+	for (;;)
+	{
+		/* Always advance over newlines (context_end test is just paranoia) */
+		if (*context_start == '\n' && context_start < context_end)
+		{
+			context_start++;
+			line_start = context_start;
+			line_number++;
+			continue;
+		}
+		/* Otherwise, done as soon as we are close enough to context_end */
+		if (context_end - context_start < 50)
+			break;
+		/* Advance to next multibyte character */
+		if (IS_HIGHBIT_SET(*context_start))
+			context_start += pg_mblen(context_start);
+		else
+			context_start++;
+	}
+
+	/*
+	 * We add "..." to indicate that the excerpt doesn't start at the
+	 * beginning of the line ... but if we're within 3 characters of the
+	 * beginning of the line, we might as well just show the whole line.
+	 */
+	if (context_start - line_start <= 3)
+		context_start = line_start;
+
+	/* Get a null-terminated copy of the data to present */
+	ctxtlen = context_end - context_start;
+	ctxt = palloc(ctxtlen + 1);
+	memcpy(ctxt, context_start, ctxtlen);
+	ctxt[ctxtlen] = '\0';
+
+	/*
+	 * Show the context, prefixing "..." if not starting at start of line, and
+	 * suffixing "..." if not ending at end of line.
+	 */
+	prefix = (context_start > line_start) ? "..." : "";
+	suffix = (*context_end != '\0' && *context_end != '\n' && *context_end != '\r') ? "..." : "";
+
+	return errcontext("JSON data, line %d: %s%s%s",
+					  line_number, prefix, ctxt, suffix);
 }
 
 /*
