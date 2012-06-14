@@ -1804,20 +1804,21 @@ check_db_file_conflict(Oid db_id)
 static int
 errdetail_busy_db(int notherbackends, int npreparedxacts)
 {
-	/*
-	 * We don't worry about singular versus plural here, since the English
-	 * rules for that don't translate very well.  But we can at least avoid
-	 * the case of zero items.
-	 */
 	if (notherbackends > 0 && npreparedxacts > 0)
+		/* We don't deal with singular versus plural here, since gettext
+		 * doesn't support multiple plurals in one string. */
 		errdetail("There are %d other session(s) and %d prepared transaction(s) using the database.",
 				  notherbackends, npreparedxacts);
 	else if (notherbackends > 0)
-		errdetail("There are %d other session(s) using the database.",
-				  notherbackends);
+		errdetail_plural("There is %d other session using the database.",
+						 "There are %d other sessions using the database.",
+						 notherbackends,
+						 notherbackends);
 	else
-		errdetail("There are %d prepared transaction(s) using the database.",
-				  npreparedxacts);
+		errdetail_plural("There is %d prepared transaction using the database.",
+						 "There are %d prepared transactions using the database.",
+						 npreparedxacts,
+						 npreparedxacts);
 	return 0;					/* just to keep ereport macro happy */
 }
 
