@@ -14456,6 +14456,12 @@ SELECT set_config('log_statement_stats', 'off', false);
     <primary>pg_stop_backup</primary>
    </indexterm>
    <indexterm>
+    <primary>pg_is_in_backup</primary>
+   </indexterm>
+   <indexterm>
+    <primary>pg_backup_start_time</primary>
+   </indexterm>
+   <indexterm>
     <primary>pg_switch_xlog</primary>
    </indexterm>
    <indexterm>
@@ -14518,6 +14524,20 @@ SELECT set_config('log_statement_stats', 'off', false);
         </entry>
        <entry><type>text</type></entry>
        <entry>Finish performing on-line backup (restricted to superusers or replication roles)</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_is_in_backup()</function></literal>
+        </entry>
+       <entry><type>bool</type></entry>
+       <entry>True if an on-line exclusive backup is still in progress.</entry>
+      </row>
+      <row>
+       <entry>
+        <literal><function>pg_backup_start_time()</function></literal>
+        </entry>
+       <entry><type>timestamp with time zone</type></entry>
+       <entry>Get start time of an online exclusive backup in progress.</entry>
       </row>
       <row>
        <entry>

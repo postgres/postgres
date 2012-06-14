@@ -29,7 +29,7 @@
 #include "utils/numeric.h"
 #include "utils/guc.h"
 #include "utils/timestamp.h"
-
+#include "storage/fd.h"
 
 static void validate_xlog_location(char *str);
 
@@ -562,4 +562,75 @@ pg_xlog_location_diff(PG_FUNCTION_ARGS)
 	DirectFunctionCall1(int8_numeric, Int64GetDatum((int64) loc2.xrecoff))));
 
 	PG_RETURN_NUMERIC(result);
+}
+
+/*
+ * Returns bool with current on-line backup mode, a global state.
+ */
+Datum
+pg_is_in_backup(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BOOL(BackupInProgress());
+}
+
+/*
+ * Returns start time of an online exclusive backup.
+ *
+ * When there's no exclusive backup in progress, the function
+ * returns NULL.
+ */
+Datum
+pg_backup_start_time(PG_FUNCTION_ARGS)
+{
+	Datum		xtime;
+	FILE	   *lfp;
+	char		fline[MAXPGPATH];
+	char		backup_start_time[30];
+
+	/*
+	 * See if label file is present
+	 */
+	lfp = AllocateFile(BACKUP_LABEL_FILE, "r");
+	if (lfp == NULL)
+	{
+		if (errno != ENOENT)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not read file \"%s\": %m",
+						BACKUP_LABEL_FILE)));
+		PG_RETURN_NULL();
+	}
+
+	/*
+	 * Parse the file to find the the START TIME line.
+	 */
+	backup_start_time[0] = '\0';
+	while (fgets(fline, sizeof(fline), lfp) != NULL)
+	{
+		if (sscanf(fline, "START TIME: %25[^\n]\n", backup_start_time) == 1)
+			break;
+	}
+
+	/*
+	 * Close the backup label file.
+	 */
+	if (ferror(lfp) || FreeFile(lfp))
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not read file \"%s\": %m", BACKUP_LABEL_FILE)));
+
+	if (strlen(backup_start_time) == 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("invalid data in file \"%s\"", BACKUP_LABEL_FILE)));
+
+	/*
+	 * Convert the time string read from file to TimestampTz form.
+	 */
+	xtime = DirectFunctionCall3(timestamptz_in,
+								CStringGetDatum(backup_start_time),
+								ObjectIdGetDatum(InvalidOid),
+								Int32GetDatum(-1));
+
+	PG_RETURN_DATUM(xtime);
 }
