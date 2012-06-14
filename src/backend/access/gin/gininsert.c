@@ -520,20 +520,14 @@ ginbuildempty(PG_FUNCTION_ARGS)
 		ReadBufferExtended(index, INIT_FORKNUM, P_NEW, RBM_NORMAL, NULL);
 	LockBuffer(RootBuffer, BUFFER_LOCK_EXCLUSIVE);
 
-	/* Initialize both pages, mark them dirty, unlock and release buffer. */
+	/* Initialize and xlog metabuffer and root buffer. */
 	START_CRIT_SECTION();
 	GinInitMetabuffer(MetaBuffer);
 	MarkBufferDirty(MetaBuffer);
+	log_newpage_buffer(MetaBuffer);
 	GinInitBuffer(RootBuffer, GIN_LEAF);
 	MarkBufferDirty(RootBuffer);
-
-	/* XLOG the new pages */
-	log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
-				BufferGetBlockNumber(MetaBuffer),
-				BufferGetPage(MetaBuffer));
-	log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
-				BufferGetBlockNumber(RootBuffer),
-				BufferGetPage(RootBuffer));
+	log_newpage_buffer(RootBuffer);
 	END_CRIT_SECTION();
 
 	/* Unlock and release the buffers. */

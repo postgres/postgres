@@ -144,6 +144,7 @@ extern XLogRecPtr log_heap_visible(RelFileNode rnode, BlockNumber block,
 				 Buffer vm_buffer, TransactionId cutoff_xid);
 extern XLogRecPtr log_newpage(RelFileNode *rnode, ForkNumber forkNum,
 			BlockNumber blk, Page page);
+extern XLogRecPtr log_newpage_buffer(Buffer buffer);
 
 /* in heap/pruneheap.c */
 extern void heap_page_prune_opt(Relation relation, Buffer buffer,
