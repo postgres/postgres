@@ -62,6 +62,11 @@ Starting a New Development Cycle
 ================================
 
 * Create a branch in git for maintenance of the previous release
+	o on master branch, do:
+		git pull           # be sure you have the latest "master"
+		git push origin master:refs/heads/"new-branch-name"
+	  for example,
+		git push origin master:refs/heads/REL9_2_STABLE
 
 * Increment the major version number in src/tools/version_stamp.pl
 
