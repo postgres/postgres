@@ -314,6 +314,7 @@ exec_command(const char *cmd,
 			else
 				printf(_("You are connected to database \"%s\" as user \"%s\" on host \"%s\" at port \"%s\".\n"),
 					   db, PQuser(pset.db), host, PQport(pset.db));
+			printSSLInfo();
 		}
 	}
 
