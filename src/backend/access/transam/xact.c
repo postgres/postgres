@@ -1944,14 +1944,6 @@ CommitTransaction(void)
 	 */
 	AtEOXact_Inval(true);
 
-	/*
-	 * Likewise, dropping of files deleted during the transaction is best done
-	 * after releasing relcache and buffer pins.  (This is not strictly
-	 * necessary during commit, since such pins should have been released
-	 * already, but this ordering is definitely critical during abort.)
-	 */
-	smgrDoPendingDeletes(true);
-
 	AtEOXact_MultiXact();
 
 	ResourceOwnerRelease(TopTransactionResourceOwner,
@@ -1960,6 +1952,17 @@ CommitTransaction(void)
 	ResourceOwnerRelease(TopTransactionResourceOwner,
 						 RESOURCE_RELEASE_AFTER_LOCKS,
 						 true, true);
+
+	/*
+	 * Likewise, dropping of files deleted during the transaction is best done
+	 * after releasing relcache and buffer pins.  (This is not strictly
+	 * necessary during commit, since such pins should have been released
+	 * already, but this ordering is definitely critical during abort.)  Since
+	 * this may take many seconds, also delay until after releasing locks.
+	 * Other backends will observe the attendant catalog changes and not
+	 * attempt to access affected files.
+	 */
+	smgrDoPendingDeletes(true);
 
 	/* Check we've released all catcache entries */
 	AtEOXact_CatCache(true);
@@ -2354,7 +2357,6 @@ AbortTransaction(void)
 		AtEOXact_Buffers(false);
 		AtEOXact_RelationCache(false);
 		AtEOXact_Inval(false);
-		smgrDoPendingDeletes(false);
 		AtEOXact_MultiXact();
 		ResourceOwnerRelease(TopTransactionResourceOwner,
 							 RESOURCE_RELEASE_LOCKS,
@@ -2362,6 +2364,7 @@ AbortTransaction(void)
 		ResourceOwnerRelease(TopTransactionResourceOwner,
 							 RESOURCE_RELEASE_AFTER_LOCKS,
 							 false, true);
+		smgrDoPendingDeletes(false);
 		AtEOXact_CatCache(false);
 
 		AtEOXact_GUC(false, 1);
@@ -4238,13 +4241,13 @@ AbortSubTransaction(void)
 		AtEOSubXact_RelationCache(false, s->subTransactionId,
 								  s->parent->subTransactionId);
 		AtEOSubXact_Inval(false);
-		AtSubAbort_smgr();
 		ResourceOwnerRelease(s->curTransactionOwner,
 							 RESOURCE_RELEASE_LOCKS,
 							 false, false);
 		ResourceOwnerRelease(s->curTransactionOwner,
 							 RESOURCE_RELEASE_AFTER_LOCKS,
 							 false, false);
+		AtSubAbort_smgr();
 
 		AtEOXact_GUC(false, s->gucNestLevel);
 		AtEOSubXact_SPI(false, s->subTransactionId);
