@@ -14478,7 +14478,8 @@ SELECT set_config('log_statement_stats', 'off', false);
     The functions shown in <xref
     linkend="functions-admin-backup-table"> assist in making on-line backups.
     These functions cannot be executed during recovery (except
-    <function>pg_xlog_location_diff</function>).
+    <function>pg_is_in_backup</function>, <function>pg_backup_start_time</function>
+    and <function>pg_xlog_location_diff</function>).
    </para>
 
    <table id="functions-admin-backup-table">
@@ -14537,7 +14538,7 @@ SELECT set_config('log_statement_stats', 'off', false);
         <literal><function>pg_backup_start_time()</function></literal>
         </entry>
        <entry><type>timestamp with time zone</type></entry>
-       <entry>Get start time of an online exclusive backup in progress.</entry>
+       <entry>Get start time of an on-line exclusive backup in progress.</entry>
       </row>
       <row>
        <entry>
