@@ -611,13 +611,17 @@ pg_backup_start_time(PG_FUNCTION_ARGS)
 			break;
 	}
 
-	/*
-	 * Close the backup label file.
-	 */
-	if (ferror(lfp) || FreeFile(lfp))
+	/* Check for a read error. */
+	if (ferror(lfp))
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not read file \"%s\": %m", BACKUP_LABEL_FILE)));
+
+	/* Close the backup label file. */
+	if (FreeFile(lfp))
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not close file \"%s\": %m", BACKUP_LABEL_FILE)));
 
 	if (strlen(backup_start_time) == 0)
 		ereport(ERROR,
