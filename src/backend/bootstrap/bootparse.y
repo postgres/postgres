@@ -222,8 +222,7 @@ Boot_CreateStmt:
 												   RELKIND_RELATION,
 												   RELPERSISTENCE_PERMANENT,
 												   shared_relation,
-												   mapped_relation,
-												   true);
+												   mapped_relation);
 						elog(DEBUG4, "bootstrap relation created");
 					}
 					else

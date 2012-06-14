@@ -46,8 +46,7 @@ extern Relation heap_create(const char *relname,
 			char relkind,
 			char relpersistence,
 			bool shared_relation,
-			bool mapped_relation,
-			bool allow_system_table_mods);
+			bool mapped_relation);
 
 extern Oid heap_create_with_catalog(const char *relname,
 						 Oid relnamespace,
