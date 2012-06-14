@@ -2409,7 +2409,8 @@ RelationBuildLocalRelation(const char *relname,
 						   Oid reltablespace,
 						   bool shared_relation,
 						   bool mapped_relation,
-						   char relpersistence)
+						   char relpersistence,
+						   char relkind)
 {
 	Relation	rel;
 	MemoryContext oldcxt;
@@ -2515,7 +2516,7 @@ RelationBuildLocalRelation(const char *relname,
 	namestrcpy(&rel->rd_rel->relname, relname);
 	rel->rd_rel->relnamespace = relnamespace;
 
-	rel->rd_rel->relkind = RELKIND_UNCATALOGED;
+	rel->rd_rel->relkind = relkind;
 	rel->rd_rel->relhasoids = rel->rd_att->tdhasoid;
 	rel->rd_rel->relnatts = natts;
 	rel->rd_rel->reltype = InvalidOid;

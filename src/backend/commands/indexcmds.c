@@ -378,9 +378,7 @@ DefineIndex(RangeVar *heapRelation,
 	relationId = RelationGetRelid(rel);
 	namespaceId = RelationGetNamespace(rel);
 
-	/* Note: during bootstrap may see uncataloged relation */
-	if (rel->rd_rel->relkind != RELKIND_RELATION &&
-		rel->rd_rel->relkind != RELKIND_UNCATALOGED)
+	if (rel->rd_rel->relkind != RELKIND_RELATION)
 	{
 		if (rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
 

@@ -836,7 +836,6 @@ index_create(Relation heapRelation,
 	 */
 	indexRelation->rd_rel->relowner = heapRelation->rd_rel->relowner;
 	indexRelation->rd_rel->relam = accessMethodObjectId;
-	indexRelation->rd_rel->relkind = RELKIND_INDEX;
 	indexRelation->rd_rel->relhasoids = false;
 
 	/*

@@ -84,9 +84,7 @@ BootstrapToastTable(char *relName, Oid toastOid, Oid toastIndexOid)
 
 	rel = heap_openrv(makeRangeVar(NULL, relName, -1), AccessExclusiveLock);
 
-	/* Note: during bootstrap may see uncataloged relation */
-	if (rel->rd_rel->relkind != RELKIND_RELATION &&
-		rel->rd_rel->relkind != RELKIND_UNCATALOGED)
+	if (rel->rd_rel->relkind != RELKIND_RELATION)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is not a table",

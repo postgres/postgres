@@ -790,7 +790,6 @@ extractRelOptions(HeapTuple tuple, TupleDesc tupdesc, Oid amoptions)
 		case RELKIND_RELATION:
 		case RELKIND_TOASTVALUE:
 		case RELKIND_VIEW:
-		case RELKIND_UNCATALOGED:
 			options = heap_reloptions(classForm->relkind, datum, false);
 			break;
 		case RELKIND_INDEX:

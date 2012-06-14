@@ -2968,10 +2968,6 @@ getRelationDescription(StringInfo buffer, Oid relid)
 			appendStringInfo(buffer, _("sequence %s"),
 							 relname);
 			break;
-		case RELKIND_UNCATALOGED:
-			appendStringInfo(buffer, _("uncataloged table %s"),
-							 relname);
-			break;
 		case RELKIND_TOASTVALUE:
 			appendStringInfo(buffer, _("toast table %s"),
 							 relname);

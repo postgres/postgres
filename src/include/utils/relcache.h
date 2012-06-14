@@ -70,7 +70,8 @@ extern Relation RelationBuildLocalRelation(const char *relname,
 						   Oid reltablespace,
 						   bool shared_relation,
 						   bool mapped_relation,
-						   char relpersistence);
+						   char relpersistence,
+						   char relkind);
 
 /*
  * Routine to manage assignment of new relfilenode to a relation

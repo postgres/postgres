@@ -327,7 +327,8 @@ heap_create(const char *relname,
 									 reltablespace,
 									 shared_relation,
 									 mapped_relation,
-									 relpersistence);
+									 relpersistence,
+									 relkind);
 
 	/*
 	 * Have the storage manager create the relation's disk file, if needed.
@@ -889,7 +890,6 @@ AddNewRelationTuple(Relation pg_class_desc,
 	new_rel_reltup->relowner = relowner;
 	new_rel_reltup->reltype = new_type_oid;
 	new_rel_reltup->reloftype = reloftype;
-	new_rel_reltup->relkind = relkind;
 
 	new_rel_desc->rd_att->tdtypeid = new_type_oid;
 
