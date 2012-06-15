@@ -193,7 +193,7 @@ start_postmaster(ClusterInfo *cluster)
 
 	/* If the connection didn't fail, fail now */
 	if (pg_ctl_return != 0)
-		pg_log(PG_FATAL, "pg_ctl failed to start the %s server\n",
+		pg_log(PG_FATAL, "pg_ctl failed to start the %s server, or connection failed\n",
 			   CLUSTER_NAME(cluster));
 
 	os_info.running_cluster = cluster;
