@@ -154,8 +154,7 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 
 	aclresult = pg_type_aclcheck(rettype, GetUserId(), ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_TYPE,
-					   format_type_be(rettype));
+		aclcheck_error_type(aclresult, rettype);
 
 	*prorettype_p = rettype;
 	*returnsSet_p = returnType->setof;
@@ -247,8 +246,7 @@ examine_parameter_list(List *parameters, Oid languageOid,
 
 		aclresult = pg_type_aclcheck(toid, GetUserId(), ACL_USAGE);
 		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_TYPE,
-						   format_type_be(toid));
+			aclcheck_error_type(aclresult, toid);
 
 		if (t->setof)
 			ereport(ERROR,
@@ -1510,13 +1508,11 @@ CreateCast(CreateCastStmt *stmt)
 
 	aclresult = pg_type_aclcheck(sourcetypeid, GetUserId(), ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_TYPE,
-					   format_type_be(sourcetypeid));
+		aclcheck_error_type(aclresult, sourcetypeid);
 
 	aclresult = pg_type_aclcheck(targettypeid, GetUserId(), ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_TYPE,
-					   format_type_be(targettypeid));
+		aclcheck_error_type(aclresult, targettypeid);
 
 	/* Domains are allowed for historical reasons, but we warn */
 	if (sourcetyptype == TYPTYPE_DOMAIN)

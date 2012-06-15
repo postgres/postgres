@@ -302,6 +302,8 @@ extern void aclcheck_error(AclResult aclerr, AclObjectKind objectkind,
 extern void aclcheck_error_col(AclResult aclerr, AclObjectKind objectkind,
 				   const char *objectname, const char *colname);
 
+extern void aclcheck_error_type(AclResult aclerr, Oid typeOid);
+
 /* ownercheck routines just return true (owner) or false (not) */
 extern bool pg_class_ownercheck(Oid class_oid, Oid roleid);
 extern bool pg_type_ownercheck(Oid type_oid, Oid roleid);

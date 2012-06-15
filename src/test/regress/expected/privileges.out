@@ -547,7 +547,7 @@ ERROR:  permission denied for type testdomain1
 CREATE TABLE test6a OF testtype1;
 ERROR:  permission denied for type testtype1
 CREATE TABLE test10a (a int[], b testtype1[]);
-ERROR:  permission denied for type testtype1[]
+ERROR:  permission denied for type testtype1
 CREATE TABLE test9a (a int, b int);
 ALTER TABLE test9a ADD COLUMN c testdomain1;
 ERROR:  permission denied for type testdomain1

@@ -758,8 +758,7 @@ DefineDomain(CreateDomainStmt *stmt)
 
 	aclresult = pg_type_aclcheck(basetypeoid, GetUserId(), ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_TYPE,
-					   format_type_be(basetypeoid));
+		aclcheck_error_type(aclresult, basetypeoid);
 
 	/*
 	 * Identify the collation if any
@@ -1208,8 +1207,7 @@ checkEnumOwner(HeapTuple tup)
 
 	/* Permission check: must own type */
 	if (!pg_type_ownercheck(HeapTupleGetOid(tup), GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
-					   format_type_be(HeapTupleGetOid(tup)));
+		aclcheck_error_type(ACLCHECK_NOT_OWNER, HeapTupleGetOid(tup));
 }
 
 
@@ -2809,8 +2807,7 @@ checkDomainOwner(HeapTuple tup)
 
 	/* Permission check: must own type */
 	if (!pg_type_ownercheck(HeapTupleGetOid(tup), GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
-					   format_type_be(HeapTupleGetOid(tup)));
+		aclcheck_error_type(ACLCHECK_NOT_OWNER, HeapTupleGetOid(tup));
 }
 
 /*
@@ -3116,8 +3113,7 @@ RenameType(RenameStmt *stmt)
 
 	/* check permissions on type */
 	if (!pg_type_ownercheck(typeOid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
-					   format_type_be(typeOid));
+		aclcheck_error_type(ACLCHECK_NOT_OWNER, typeOid);
 
 	/* ALTER DOMAIN used on a non-domain? */
 	if (stmt->renameType == OBJECT_DOMAIN && typTup->typtype != TYPTYPE_DOMAIN)
@@ -3238,8 +3234,7 @@ AlterTypeOwner(List *names, Oid newOwnerId, ObjectType objecttype)
 		{
 			/* Otherwise, must be owner of the existing object */
 			if (!pg_type_ownercheck(HeapTupleGetOid(tup), GetUserId()))
-				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
-							   format_type_be(HeapTupleGetOid(tup)));
+				aclcheck_error_type(ACLCHECK_NOT_OWNER, HeapTupleGetOid(tup));
 
 			/* Must be able to become new owner */
 			check_is_member_of_role(GetUserId(), newOwnerId);
@@ -3367,8 +3362,7 @@ AlterTypeNamespace_oid(Oid typeOid, Oid nspOid)
 
 	/* check permissions on type */
 	if (!pg_type_ownercheck(typeOid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
-					   format_type_be(typeOid));
+		aclcheck_error_type(ACLCHECK_NOT_OWNER, typeOid);
 
 	/* don't allow direct alteration of array types */
 	elemOid = get_element_type(typeOid);

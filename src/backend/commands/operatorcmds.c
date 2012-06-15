@@ -181,16 +181,14 @@ DefineOperator(List *names, List *parameters)
 	{
 		aclresult = pg_type_aclcheck(typeId1, GetUserId(), ACL_USAGE);
 		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_TYPE,
-						   format_type_be(typeId1));
+			aclcheck_error_type(aclresult, typeId1);
 	}
 
 	if (typeName2)
 	{
 		aclresult = pg_type_aclcheck(typeId2, GetUserId(), ACL_USAGE);
 		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_TYPE,
-						   format_type_be(typeId2));
+			aclcheck_error_type(aclresult, typeId2);
 	}
 
 	/*
@@ -227,8 +225,7 @@ DefineOperator(List *names, List *parameters)
 	rettype = get_func_rettype(functionOid);
 	aclresult = pg_type_aclcheck(rettype, GetUserId(), ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_TYPE,
-					   format_type_be(rettype));
+		aclcheck_error_type(aclresult, rettype);
 
 	/*
 	 * Look up restriction estimator if specified
