@@ -414,8 +414,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	/* XXX this is unnecessary given the superuser check above */
 	/* Check we have ownership of the datatype */
 	if (!pg_type_ownercheck(typeoid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
-					   format_type_be(typeoid));
+		aclcheck_error_type(ACLCHECK_NOT_OWNER, typeoid);
 #endif
 
 	/*
@@ -565,8 +564,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 				/* XXX this is unnecessary given the superuser check above */
 				/* Check we have ownership of the datatype */
 				if (!pg_type_ownercheck(storageoid, GetUserId()))
-					aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
-								   format_type_be(storageoid));
+					aclcheck_error_type(ACLCHECK_NOT_OWNER, storageoid);
 #endif
 				break;
 			default:

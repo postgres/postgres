@@ -573,8 +573,7 @@ BuildDescForRelation(List *schema)
 
 		aclresult = pg_type_aclcheck(atttypid, GetUserId(), ACL_USAGE);
 		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_TYPE,
-						   format_type_be(atttypid));
+			aclcheck_error_type(aclresult, atttypid);
 
 		attcollation = GetColumnDefCollation(NULL, entry, atttypid);
 		attdim = list_length(entry->typeName->arrayBounds);

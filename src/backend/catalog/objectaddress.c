@@ -937,8 +937,7 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 		case OBJECT_DOMAIN:
 		case OBJECT_ATTRIBUTE:
 			if (!pg_type_ownercheck(address.objectId, roleid))
-				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE,
-							   format_type_be(address.objectId));
+				aclcheck_error_type(ACLCHECK_NOT_OWNER, address.objectId);
 			break;
 		case OBJECT_AGGREGATE:
 		case OBJECT_FUNCTION:

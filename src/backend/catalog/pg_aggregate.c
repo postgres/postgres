@@ -208,19 +208,16 @@ AggregateCreate(const char *aggName,
 	{
 		aclresult = pg_type_aclcheck(aggArgTypes[i], GetUserId(), ACL_USAGE);
 		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_TYPE,
-						   format_type_be(aggArgTypes[i]));
+			aclcheck_error_type(aclresult, aggArgTypes[i]);
 	}
 
 	aclresult = pg_type_aclcheck(aggTransType, GetUserId(), ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_TYPE,
-					   format_type_be(aggTransType));
+		aclcheck_error_type(aclresult, aggTransType);
 
 	aclresult = pg_type_aclcheck(finaltype, GetUserId(), ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_TYPE,
-					   format_type_be(finaltype));
+		aclcheck_error_type(aclresult, finaltype);
 
 
 	/*

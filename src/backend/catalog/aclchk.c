@@ -3389,6 +3389,19 @@ aclcheck_error_col(AclResult aclerr, AclObjectKind objectkind,
 }
 
 
+/*
+ * Special common handling for types: use element type instead of array type,
+ * and format nicely
+ */
+void
+aclcheck_error_type(AclResult aclerr, Oid typeOid)
+{
+	Oid element_type = get_element_type(typeOid);
+
+	aclcheck_error(aclerr, ACL_KIND_TYPE, format_type_be(element_type ? element_type : typeOid));
+}
+
+
 /* Check if given user has rolcatupdate privilege according to pg_authid */
 static bool
 has_rolcatupdate(Oid roleid)
