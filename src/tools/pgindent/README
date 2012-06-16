@@ -46,7 +46,7 @@ This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
 
 9) Indent the Perl code:
 
-	find . -name \*.pl -o -name \*.pm | xargs perltidy \
+	find . -name \*.pl -o -name \*.pm | xargs perltidy --noprofile \
 	--backup-and-modify-in-place --opening-brace-on-new-line \
 	--vertical-tightness=2 --vertical-tightness-closing=2 \
 	--nospace-after-keyword=for --nospace-for-semicolon \
