@@ -1,0 +1,12 @@
+--add-whitespace 
+--backup-and-modify-in-place 
+--delete-old-whitespace
+--entab-leading-whitespace=4 
+--keep-old-blank-lines=2 
+--maximum-line-length=78
+--nospace-for-semicolon 
+--opening-brace-on-new-line
+--output-line-ending=unix
+--paren-tightness=2 
+--vertical-tightness=2 
+--vertical-tightness-closing=2
