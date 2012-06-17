@@ -118,8 +118,8 @@ usage(void)
 	printf(_("  -l, --label=LABEL        set backup label\n"));
 	printf(_("  -P, --progress           show progress information\n"));
 	printf(_("  -v, --verbose            output verbose messages\n"));
-	printf(_("  --help                   show this help, then exit\n"));
-	printf(_("  --version                output version information, then exit\n"));
+	printf(_("  -V, --version            output version information, then exit\n"));
+	printf(_("  -?, --help               show this help, then exit\n"));
 	printf(_("\nConnection options:\n"));
 	printf(_("  -s, --statusint=INTERVAL time between status packets sent to server (in seconds)\n"));
 	printf(_("  -h, --host=HOSTNAME      database server host or socket directory\n"));

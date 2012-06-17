@@ -236,7 +236,7 @@ Options:\n\
   -u, --user=NAME               cluster superuser (default \"%s\")\n\
   -v, --verbose                 enable verbose internal logging\n\
   -V, --version                 display version information, then exit\n\
-  -h, --help                    show this help, then exit\n\
+  -?, -h, --help                show this help, then exit\n\
 \n\
 Before running pg_upgrade you must:\n\
   create a new database cluster (using the new version of initdb)\n\

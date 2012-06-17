@@ -384,16 +384,17 @@ usage(const char *progname)
 	printf("%s removes unreferenced large objects from databases.\n\n", progname);
 	printf("Usage:\n  %s [OPTION]... DBNAME...\n\n", progname);
 	printf("Options:\n");
-	printf("  -h HOSTNAME  database server host or socket directory\n");
-	printf("  -l LIMIT     commit after removing each LIMIT large objects\n");
-	printf("  -n           don't remove large objects, just show what would be done\n");
-	printf("  -p PORT      database server port\n");
-	printf("  -U USERNAME  user name to connect as\n");
-	printf("  -w           never prompt for password\n");
-	printf("  -W           force password prompt\n");
-	printf("  -v           write a lot of progress messages\n");
-	printf("  --help       show this help, then exit\n");
-	printf("  --version    output version information, then exit\n");
+	printf("  -l LIMIT       commit after removing each LIMIT large objects\n");
+	printf("  -n             don't remove large objects, just show what would be done\n");
+	printf("  -v             write a lot of progress messages\n");
+	printf("  -V, --version  output version information, then exit\n");
+	printf("  -?, --help     show this help, then exit\n");
+	printf("\nConnection options:\n");
+	printf("  -h HOSTNAME    database server host or socket directory\n");
+	printf("  -p PORT        database server port\n");
+	printf("  -U USERNAME    user name to connect as\n");
+	printf("  -w             never prompt for password\n");
+	printf("  -W             force password prompt\n");
 	printf("\n");
 	printf("Report bugs to <pgsql-bugs@postgresql.org>.\n");
 }

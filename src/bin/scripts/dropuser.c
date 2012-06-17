@@ -159,9 +159,9 @@ help(const char *progname)
 	printf(_("  -e, --echo                show the commands being sent to the server\n"));
 	printf(_("  -i, --interactive         prompt before deleting anything, and prompt for\n"
 			 "                            role name if not specified\n"));
+	printf(_("  -V, --version             output version information, then exit\n"));
 	printf(_("  --if-exists               don't report error if user doesn't exist\n"));
-	printf(_("  --help                    show this help, then exit\n"));
-	printf(_("  --version                 output version information, then exit\n"));
+	printf(_("  -?, --help                show this help, then exit\n"));
 	printf(_("\nConnection options:\n"));
 	printf(_("  -h, --host=HOSTNAME       database server host or socket directory\n"));
 	printf(_("  -p, --port=PORT           database server port\n"));

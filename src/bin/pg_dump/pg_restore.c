@@ -407,8 +407,8 @@ usage(const char *progname)
 	printf(_("  -F, --format=c|d|t       backup file format (should be automatic)\n"));
 	printf(_("  -l, --list               print summarized TOC of the archive\n"));
 	printf(_("  -v, --verbose            verbose mode\n"));
-	printf(_("  --help                   show this help, then exit\n"));
-	printf(_("  --version                output version information, then exit\n"));
+	printf(_("  -V, --version            output version information, then exit\n"));
+	printf(_("  -?, --help               show this help, then exit\n"));
 
 	printf(_("\nOptions controlling the restore:\n"));
 	printf(_("  -a, --data-only              restore only the data, no schema\n"));

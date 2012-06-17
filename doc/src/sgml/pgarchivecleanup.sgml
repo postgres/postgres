@@ -107,6 +107,16 @@ pg_archivecleanup:  removing file "archive/00000001000000370000000E"
      </varlistentry>
 
      <varlistentry>
+      <term><option>-V</></term>
+      <term><option>--version</></term>
+      <listitem>
+       <para>
+        Print the <application>pg_archivecleanup</application> version and exit.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-x</option> <replaceable>extension</></term>
       <listitem>
        <para>
@@ -126,6 +136,16 @@ pg_archivecleanup:  removing file "archive/00000001000000370000000E"
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term><option>-?</></term>
+      <term><option>--help</></term>
+      <listitem>
+       <para>
+        Show help about <application>pg_archivecleanup</application> command line
+        arguments, and exit.
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
    </para>
  </refsect1>

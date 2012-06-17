@@ -50,14 +50,10 @@
  <refsect1>
   <title>Options</title>
 
-  <variablelist>
-   <varlistentry>
-    <term><option>-h</option> <replaceable>hostname</></term>
-    <listitem>
-     <para>Database server's host.</para>
-    </listitem>
-   </varlistentry>
+  <para>
+   <application>vacuumlo</application> accepts the following command-line arguments:
 
+  <variablelist>
    <varlistentry>
     <term><option>-l</option> <replaceable>limit</></term>
     <listitem>
@@ -79,6 +75,48 @@
    </varlistentry>
 
    <varlistentry>
+    <term><option>-v</option></term>
+    <listitem>
+     <para>Write a lot of progress messages.</para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><option>-V</></term>
+    <term><option>--version</></term>
+    <listitem>
+     <para>
+      Print the <application>vacuumlo</application> version and exit.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><option>-?</></term>
+    <term><option>--help</></term>
+    <listitem>
+     <para>
+      Show help about <application>vacuumlo</application> command line
+      arguments, and exit.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+  </para>
+
+  <para>
+   <application>vacuumlo</application> also accepts the following command-line
+   arguments for connection parameters:
+
+  <variablelist>
+   <varlistentry>
+    <term><option>-h</option> <replaceable>hostname</></term>
+    <listitem>
+     <para>Database server's host.</para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><option>-p</option> <replaceable>port</></term>
     <listitem>
      <para>Database server's port.</para>
@@ -89,13 +127,6 @@
     <term><option>-U</option> <replaceable>username</></term>
     <listitem>
      <para>User name to connect as.</para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><option>-v</option></term>
-    <listitem>
-     <para>Write a lot of progress messages.</para>
     </listitem>
    </varlistentry>
 
@@ -133,6 +164,7 @@
     </listitem>
    </varlistentry>
   </variablelist>
+  </para>
  </refsect1>
 
  <refsect1>

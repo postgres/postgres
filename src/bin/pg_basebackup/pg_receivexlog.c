@@ -60,8 +60,8 @@ usage(void)
 	printf(_("  -D, --directory=DIR      receive transaction log files into this directory\n"));
 	printf(_("  -n, --noloop             do not loop on connection lost\n"));
 	printf(_("  -v, --verbose            output verbose messages\n"));
-	printf(_("  -?, --help               show this help, then exit\n"));
 	printf(_("  -V, --version            output version information, then exit\n"));
+	printf(_("  -?, --help               show this help, then exit\n"));
 	printf(_("\nConnection options:\n"));
 	printf(_("  -s, --statusint=INTERVAL time between status packets sent to server (in seconds)\n"));
 	printf(_("  -h, --host=HOSTNAME      database server host or socket directory\n"));

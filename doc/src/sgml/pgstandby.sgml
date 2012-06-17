@@ -199,6 +199,16 @@ restore_command = 'pg_standby <replaceable>archiveDir</> %f %p %r'
      </varlistentry>
 
      <varlistentry>
+      <term><option>-V</></term>
+      <term><option>--version</></term>
+      <listitem>
+       <para>
+        Print the <application>pg_standby</application> version and exit.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-w</option> <replaceable>maxwaittime</></term>
       <listitem>
        <para>
@@ -211,6 +221,16 @@ restore_command = 'pg_standby <replaceable>archiveDir</> %f %p %r'
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term><option>-?</></term>
+      <term><option>--help</></term>
+      <listitem>
+       <para>
+        Show help about <application>pg_standby</application> command line
+        arguments, and exit.
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
    </para>
 

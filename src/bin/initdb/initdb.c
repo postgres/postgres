@@ -2534,8 +2534,8 @@ usage(const char *progname)
 	printf(_("  -n, --noclean             do not clean up after errors\n"));
 	printf(_("  -s, --show                show internal settings\n"));
 	printf(_("\nOther options:\n"));
-	printf(_("  -?, --help                show this help, then exit\n"));
 	printf(_("  -V, --version             output version information, then exit\n"));
+	printf(_("  -?, --help                show this help, then exit\n"));
 	printf(_("\nIf the data directory is not specified, the environment variable PGDATA\n"
 			 "is used.\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));

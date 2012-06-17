@@ -346,6 +346,16 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-V</></term>
+      <term><option>--version</></term>
+      <listitem>
+       <para>
+        Print the <application>postgres</application> version and exit.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--<replaceable>name</replaceable>=<replaceable>value</replaceable></option></term>
       <listitem>
        <para>
@@ -362,6 +372,17 @@ PostgreSQL documentation
         This option dumps out the server's internal configuration variables,
         descriptions, and defaults in tab-delimited <command>COPY</> format.
         It is designed primarily for use by administration tools.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-?</></term>
+      <term><option>--help</></term>
+      <listitem>
+       <para>
+        Show help about <application>postgres</application> command line
+        arguments, and exit.
        </para>
       </listitem>
      </varlistentry>
