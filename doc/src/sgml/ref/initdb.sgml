@@ -326,7 +326,13 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
+    </variablelist>
+   </para>
 
+   <para>
+    Other options:
+
+    <variablelist>
      <varlistentry>
        <term><option>-V</></term>
        <term><option>--version</></term>

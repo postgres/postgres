@@ -273,6 +273,17 @@
       </para>
      </listitem>
     </varlistentry>
+
+    <varlistentry>
+     <term><option>-?</></term>
+     <term><option>--help</></term>
+      <listitem>
+       <para>
+        Show help about <application>pg_config</application> command line
+        arguments, and exit.
+       </para>
+      </listitem>
+     </varlistentry>
    </variablelist>
 
    If more than one option is given, the information is printed in that order,

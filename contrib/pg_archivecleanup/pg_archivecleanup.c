@@ -249,11 +249,11 @@ usage(void)
 	printf("Usage:\n");
 	printf("  %s [OPTION]... ARCHIVELOCATION OLDESTKEPTWALFILE\n", progname);
 	printf("\nOptions:\n");
-	printf("  -d         generate debug output (verbose mode)\n");
-	printf("  -n         dry run, show the names of the files that would be removed\n");
-	printf("  -x EXT     clean up files if they have this extension\n");
-	printf("  --help     show this help, then exit\n");
-	printf("  --version  output version information, then exit\n");
+	printf("  -d             generate debug output (verbose mode)\n");
+	printf("  -n             dry run, show the names of the files that would be removed\n");
+	printf("  -V, --version  output version information, then exit\n");
+	printf("  -x EXT         clean up files if they have this extension\n");
+	printf("  -?, --help     show this help, then exit\n");
 	printf("\n"
 		   "For use as archive_cleanup_command in recovery.conf when standby_mode = on:\n"
 		   "  archive_cleanup_command = 'pg_archivecleanup [OPTION]... ARCHIVELOCATION %%r'\n"

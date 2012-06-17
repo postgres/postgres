@@ -31,17 +31,11 @@ static void
 usage(const char *progname)
 {
 	printf(_("%s displays control information of a PostgreSQL database cluster.\n\n"), progname);
-	printf
-		(
-		 _(
-		   "Usage:\n"
-		   "  %s [OPTION] [DATADIR]\n\n"
-		   "Options:\n"
-		   "  --help         show this help, then exit\n"
-		   "  --version      output version information, then exit\n"
-		   ),
-		 progname
-		);
+	printf(_("Usage:\n"));
+	printf(_("  %s [OPTION] [DATADIR]\n"), progname);
+	printf(_("\nOptions:\n"));
+	printf(_("  -V, --version  output version information, then exit\n"));
+	printf(_("  -?, --help     show this help, then exit\n"));
 	printf(_("\nIf no data directory (DATADIR) is specified, "
 			 "the environment variable PGDATA\nis used.\n\n"));
 	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));

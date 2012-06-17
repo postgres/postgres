@@ -94,11 +94,11 @@ usage(void)
 	printf(_("  -l, --list               list available databases, then exit\n"));
 	printf(_("  -v, --set=, --variable=NAME=VALUE\n"
 			 "                           set psql variable NAME to VALUE\n"));
+	printf(_("  -V, --version            output version information, then exit\n"));
 	printf(_("  -X, --no-psqlrc          do not read startup file (~/.psqlrc)\n"));
 	printf(_("  -1 (\"one\"), --single-transaction\n"
 			 "                           execute command file as a single transaction\n"));
-	printf(_("  --help                   show this help, then exit\n"));
-	printf(_("  --version                output version information, then exit\n"));
+	printf(_("  -?, --help               show this help, then exit\n"));
 
 	printf(_("\nInput and output options:\n"));
 	printf(_("  -a, --echo-all           echo all input from script\n"));

@@ -56,6 +56,27 @@
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term><option>-V</></term>
+      <term><option>--version</></term>
+      <listitem>
+       <para>
+        Print the <application>pg_test_timing</application> version and exit.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-?</></term>
+      <term><option>--help</></term>
+      <listitem>
+       <para>
+        Show help about <application>pg_test_timing</application> command line
+        arguments, and exit.
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
    </para>
 

@@ -98,10 +98,31 @@
     </varlistentry>
 
     <varlistentry>
+     <term><option>-V</></term>
+     <term><option>--version</></term>
+     <listitem>
+      <para>
+       Print the <application>oid2name</application> version and exit.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><option>-x</option></term>
      <listitem><para>display more information about each object shown: tablespace name,
       schema name, and OID
      </para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>-?</></term>
+     <term><option>--help</></term>
+     <listitem>
+      <para>
+       Show help about <application>oid2name</application> command line
+       arguments, and exit.
+      </para>
+     </listitem>
     </varlistentry>
    </variablelist>
   </para>

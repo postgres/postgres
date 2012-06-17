@@ -257,12 +257,22 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+       <term><option>-V</></term>
+       <term><option>--version</></term>
+       <listitem>
+       <para>
+       Print the <application>createuser</application> version and exit.
+       </para>
+       </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--replication</></term>
       <listitem>
        <para>
-        The new user will have the REPLICATION privilege, which is
-        described more fully in the documentation for 
-        <xref linkend="sql-createrole">.
+        The new user will have the <literal>REPLICATION</literal> privilege,
+        which is described more fully in the documentation for <xref
+        linkend="sql-createrole">.
        </para>
       </listitem>
      </varlistentry>
@@ -271,21 +281,11 @@ PostgreSQL documentation
       <term><option>--no-replication</></term>
       <listitem>
        <para>
-        The new user will not have the REPLICATION privilege, which is
-        described more fully in the documentation for 
-        <xref linkend="sql-createrole">.
+        The new user will not have the <literal>REPLICATION</literal>
+        privilege, which is described more fully in the documentation for <xref
+        linkend="sql-createrole">.
        </para>
       </listitem>
-     </varlistentry>
-
-     <varlistentry>
-       <term><option>-V</></term>
-       <term><option>--version</></term>
-       <listitem>
-       <para>
-       Print the <application>createuser</application> version and exit.
-       </para>
-       </listitem>
      </varlistentry>
 
      <varlistentry>

@@ -92,16 +92,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--if-exists</></term>
-      <listitem>
-       <para>
-        Do not throw an error if the user does not exist. A notice is
-        issued in this case.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
        <term><option>-V</></term>
        <term><option>--version</></term>
        <listitem>
@@ -109,6 +99,16 @@ PostgreSQL documentation
        Print the <application>dropuser</application> version and exit.
        </para>
        </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--if-exists</></term>
+      <listitem>
+       <para>
+        Do not throw an error if the user does not exist. A notice is
+        issued in this case.
+       </para>
+      </listitem>
      </varlistentry>
 
      <varlistentry>
