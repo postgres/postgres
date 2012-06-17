@@ -1244,6 +1244,11 @@ tar -rf /var/lib/pgsql/backup.tar /var/lib/pgsql/archive/
       Please remember to add error handling to your backup scripts.
      </para>
 
+     </sect3>
+
+     <sect3 id="compressed-archive-logs">
+      <title>Compressed Archive Logs</title>
+
      <para>
       If archive storage size is a concern, use <application>pg_compresslog</>,
       <ulink url="http://pglesslog.projects.postgresql.org"></ulink>, to
