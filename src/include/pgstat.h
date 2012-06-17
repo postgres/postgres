@@ -203,7 +203,8 @@ typedef struct PgStat_MsgDummy
 typedef struct PgStat_MsgInquiry
 {
 	PgStat_MsgHdr m_hdr;
-	TimestampTz inquiry_time;	/* minimum acceptable file timestamp */
+	TimestampTz clock_time;		/* observed local clock time */
+	TimestampTz cutoff_time;	/* minimum acceptable file timestamp */
 } PgStat_MsgInquiry;
 
 
