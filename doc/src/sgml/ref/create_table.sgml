@@ -585,8 +585,8 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       These clauses specify a foreign key constraint, which requires
       that a group of one or more columns of the new table must only
       contain values that match values in the referenced
-      column(s) of some row of the referenced table.  If <replaceable
-      class="parameter">refcolumn</replaceable> is omitted, the
+      column(s) of some row of the referenced table.  If the <replaceable
+      class="parameter">refcolumn</replaceable> list is omitted, the
       primary key of the <replaceable class="parameter">reftable</replaceable>
       is used.  The referenced columns must be the columns of a non-deferrable
       unique or primary key constraint in the referenced table.  Note that
@@ -599,12 +599,16 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       values of the referenced table and referenced columns using the
       given match type.  There are three match types: <literal>MATCH
       FULL</>, <literal>MATCH PARTIAL</>, and <literal>MATCH
-      SIMPLE</literal>, which is also the default.  <literal>MATCH
+      SIMPLE</literal> (which is the default).  <literal>MATCH
       FULL</> will not allow one column of a multicolumn foreign key
-      to be null unless all foreign key columns are null.
-      <literal>MATCH SIMPLE</literal> allows some foreign key columns
-      to be null while other parts of the foreign key are not
-      null. <literal>MATCH PARTIAL</> is not yet implemented.
+      to be null unless all foreign key columns are null; if they are all
+      null, the row is not required to have a match in the referenced table.
+      <literal>MATCH SIMPLE</literal> allows any of the foreign key columns
+      to be null; if any of them are null, the row is not required to have a
+      match in the referenced table.
+      <literal>MATCH PARTIAL</> is not yet implemented.
+      (Of course, <literal>NOT NULL</> constraints can be applied to the
+      referencing column(s) to prevent these cases from arising.)
      </para>
 
      <para>
@@ -652,8 +656,8 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
         <listitem>
          <para>
           Delete any rows referencing the deleted row, or update the
-          value of the referencing column to the new value of the
-          referenced column, respectively.
+          values of the referencing column(s) to the new values of the
+          referenced columns, respectively.
          </para>
         </listitem>
        </varlistentry>
@@ -672,6 +676,8 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
         <listitem>
          <para>
           Set the referencing column(s) to their default values.
+          (There must be a row in the referenced table matching the default
+          values, if they are not null, or the operation will fail.)
          </para>
         </listitem>
        </varlistentry>
@@ -680,8 +686,8 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
 
      <para>
       If the referenced column(s) are changed frequently, it might be wise to
-      add an index to the foreign key column so that referential actions
-      associated with the foreign key column can be performed more
+      add an index to the referencing column(s) so that referential actions
+      associated with the foreign key constraint can be performed more
       efficiently.
      </para>
     </listitem>

@@ -735,7 +735,7 @@ CREATE TABLE t1 (
    </para>
 
    <para>
-    A table can contain more than one foreign key constraint.  This is
+    A table can have more than one foreign key constraint.  This is
     used to implement many-to-many relationships between tables.  Say
     you have tables about products and orders, but now you want to
     allow one order to contain possibly many products (which the
@@ -827,11 +827,12 @@ CREATE TABLE order_items (
     row(s) referencing it should be automatically deleted as well.
     There are two other options:
     <literal>SET NULL</literal> and <literal>SET DEFAULT</literal>.
-    These cause the referencing columns to be set to nulls or default
+    These cause the referencing column(s) in the referencing row(s)
+    to be set to nulls or their default
     values, respectively, when the referenced row is deleted.
     Note that these do not excuse you from observing any constraints.
     For example, if an action specifies <literal>SET DEFAULT</literal>
-    but the default value would not satisfy the foreign key, the
+    but the default value would not satisfy the foreign key constraint, the
     operation will fail.
    </para>
 
@@ -839,13 +840,30 @@ CREATE TABLE order_items (
     Analogous to <literal>ON DELETE</literal> there is also
     <literal>ON UPDATE</literal> which is invoked when a referenced
     column is changed (updated).  The possible actions are the same.
+    In this case, <literal>CASCADE</> means that the updated values of the
+    referenced column(s) should be copied into the referencing row(s).
    </para>
 
    <para>
+    Normally, a referencing row need not satisfy the foreign key constraint
+    if any of its referencing columns are null.  If <literal>MATCH FULL</>
+    is added to the foreign key declaration, a referencing row escapes
+    satisfying the constraint only if all its referencing columns are null
+    (so a mix of null and non-null values is guaranteed to fail a
+    <literal>MATCH FULL</> constraint).  If you don't want referencing rows
+    to be able to avoid satisfying the foreign key constraint, declare the
+    referencing column(s) as <literal>NOT NULL</>.
+   </para>
+
+   <para>
+    A foreign key must reference columns that either are a primary key or
+    form a unique constraint.  This means that the referenced columns always
+    have an index (the one underlying the primary key or unique constraint);
+    so checks on whether a referencing row has a match will be efficient.
     Since a <command>DELETE</command> of a row from the referenced table
     or an <command>UPDATE</command> of a referenced column will require
     a scan of the referencing table for rows matching the old value, it
-    is often a good idea to index the referencing columns.  Because this
+    is often a good idea to index the referencing columns too.  Because this
     is not always needed, and there are many choices available on how
     to index, declaration of a foreign key constraint does not
     automatically create an index on the referencing columns.
@@ -853,15 +871,8 @@ CREATE TABLE order_items (
 
    <para>
     More information about updating and deleting data is in <xref
-    linkend="dml">.
-   </para>
-
-   <para>
-    Finally, we should mention that a foreign key must reference
-    columns that either are a primary key or form a unique constraint.
-    If the foreign key references a unique constraint, there are some
-    additional possibilities regarding how null values are matched.
-    These are explained in the reference documentation for
+    linkend="dml">.  Also see the description of foreign key constraint
+    syntax in the reference documentation for
     <xref linkend="sql-createtable">.
    </para>
   </sect2>

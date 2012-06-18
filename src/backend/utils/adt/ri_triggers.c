@@ -207,11 +207,6 @@ static void ri_BuildQueryKeyPkCheck(RI_QueryKey *key,
 						int32 constr_queryno);
 static bool ri_KeysEqual(Relation rel, HeapTuple oldtup, HeapTuple newtup,
 			 const RI_ConstraintInfo *riinfo, bool rel_is_pk);
-static bool ri_AllKeysUnequal(Relation rel, HeapTuple oldtup, HeapTuple newtup,
-				  const RI_ConstraintInfo *riinfo, bool rel_is_pk);
-static bool ri_OneKeyEqual(Relation rel, int column,
-			   HeapTuple oldtup, HeapTuple newtup,
-			   const RI_ConstraintInfo *riinfo, bool rel_is_pk);
 static bool ri_AttributesEqual(Oid eq_opr, Oid typeid,
 				   Datum oldvalue, Datum newvalue);
 static bool ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
@@ -1950,7 +1945,6 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 	RI_QueryKey qkey;
 	SPIPlanPtr	qplan;
 	int			i;
-	bool		use_cached_query;
 
 	/*
 	 * Check that this is a valid trigger call on the right time and event.
@@ -1985,7 +1979,7 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 			/* ----------
 			 * SQL3 11.9 <referential constraint definition>
 			 *	General rules 7) a) ii) 2):
-			 *		MATCH FULL
+			 *		MATCH SIMPLE/FULL
 			 *			... ON UPDATE SET NULL
 			 * ----------
 			 */
@@ -2027,28 +2021,9 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 				elog(ERROR, "SPI_connect failed");
 
 			/*
-			 * "MATCH SIMPLE" only changes columns corresponding to the
-			 * referenced columns that have changed in pk_rel.	This means the
-			 * "SET attrn=NULL [, attrn=NULL]" string will be change as well.
-			 * In this case, we need to build a temporary plan rather than use
-			 * our cached plan, unless the update happens to change all
-			 * columns in the key.	Fortunately, for the most common case of a
-			 * single-column foreign key, this will be true.
-			 *
-			 * In case you're wondering, the inequality check works because we
-			 * know that the old key value has no NULLs (see above).
-			 */
-
-			use_cached_query = (riinfo.confmatchtype == FKCONSTR_MATCH_FULL) ||
-				ri_AllKeysUnequal(pk_rel, old_row, new_row,
-								  &riinfo, true);
-
-			/*
 			 * Fetch or prepare a saved plan for the set null update operation
-			 * if possible, or build a temporary plan if not.
 			 */
-			if (!use_cached_query ||
-				(qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
+			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 			{
 				StringInfoData querybuf;
 				StringInfoData qualbuf;
@@ -2080,37 +2055,23 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 
 					quoteOneName(attname,
 								 RIAttName(fk_rel, riinfo.fk_attnums[i]));
-
-					/*
-					 * MATCH SIMPLE - only change columns corresponding
-					 * to changed columns in pk_rel's key
-					 */
-					if (riinfo.confmatchtype == FKCONSTR_MATCH_FULL ||
-						!ri_OneKeyEqual(pk_rel, i, old_row, new_row,
-										&riinfo, true))
-					{
-						appendStringInfo(&querybuf,
-										 "%s %s = NULL",
-										 querysep, attname);
-						querysep = ",";
-					}
+					appendStringInfo(&querybuf,
+									 "%s %s = NULL",
+									 querysep, attname);
 					sprintf(paramname, "$%d", i + 1);
 					ri_GenerateQual(&qualbuf, qualsep,
 									paramname, pk_type,
 									riinfo.pf_eq_oprs[i],
 									attname, fk_type);
+					querysep = ",";
 					qualsep = "AND";
 					queryoids[i] = pk_type;
 				}
 				appendStringInfoString(&querybuf, qualbuf.data);
 
-				/*
-				 * Prepare the plan.  Save it only if we're building the
-				 * "standard" plan.
-				 */
+				/* Prepare and save the plan */
 				qplan = ri_PlanCheck(querybuf.data, riinfo.nkeys, queryoids,
-									 &qkey, fk_rel, pk_rel,
-									 use_cached_query);
+									 &qkey, fk_rel, pk_rel, true);
 			}
 
 			/*
@@ -2463,25 +2424,15 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 
 					quoteOneName(attname,
 								 RIAttName(fk_rel, riinfo.fk_attnums[i]));
-
-					/*
-					 * MATCH SIMPLE - only change columns corresponding
-					 * to changed columns in pk_rel's key
-					 */
-					if (riinfo.confmatchtype == FKCONSTR_MATCH_FULL ||
-						!ri_OneKeyEqual(pk_rel, i, old_row, new_row,
-										&riinfo, true))
-					{
-						appendStringInfo(&querybuf,
-										 "%s %s = DEFAULT",
-										 querysep, attname);
-						querysep = ",";
-					}
+					appendStringInfo(&querybuf,
+									 "%s %s = DEFAULT",
+									 querysep, attname);
 					sprintf(paramname, "$%d", i + 1);
 					ri_GenerateQual(&qualbuf, qualsep,
 									paramname, pk_type,
 									riinfo.pf_eq_oprs[i],
 									attname, fk_type);
+					querysep = ",";
 					qualsep = "AND";
 					queryoids[i] = pk_type;
 				}
@@ -3856,120 +3807,6 @@ ri_KeysEqual(Relation rel, HeapTuple oldtup, HeapTuple newtup,
 	return true;
 }
 
-
-/* ----------
- * ri_AllKeysUnequal -
- *
- *	Check if all key values in OLD and NEW are not equal.
- * ----------
- */
-static bool
-ri_AllKeysUnequal(Relation rel, HeapTuple oldtup, HeapTuple newtup,
-				  const RI_ConstraintInfo *riinfo, bool rel_is_pk)
-{
-	TupleDesc	tupdesc = RelationGetDescr(rel);
-	const int16 *attnums;
-	const Oid  *eq_oprs;
-	int			i;
-
-	if (rel_is_pk)
-	{
-		attnums = riinfo->pk_attnums;
-		eq_oprs = riinfo->pp_eq_oprs;
-	}
-	else
-	{
-		attnums = riinfo->fk_attnums;
-		eq_oprs = riinfo->ff_eq_oprs;
-	}
-
-	for (i = 0; i < riinfo->nkeys; i++)
-	{
-		Datum		oldvalue;
-		Datum		newvalue;
-		bool		isnull;
-
-		/*
-		 * Get one attribute's oldvalue. If it is NULL - they're not equal.
-		 */
-		oldvalue = SPI_getbinval(oldtup, tupdesc, attnums[i], &isnull);
-		if (isnull)
-			continue;
-
-		/*
-		 * Get one attribute's newvalue. If it is NULL - they're not equal.
-		 */
-		newvalue = SPI_getbinval(newtup, tupdesc, attnums[i], &isnull);
-		if (isnull)
-			continue;
-
-		/*
-		 * Compare them with the appropriate equality operator.
-		 */
-		if (ri_AttributesEqual(eq_oprs[i], RIAttType(rel, attnums[i]),
-							   oldvalue, newvalue))
-			return false;		/* found two equal items */
-	}
-
-	return true;
-}
-
-
-/* ----------
- * ri_OneKeyEqual -
- *
- *	Check if one key value in OLD and NEW is equal.  Note column is indexed
- *	from zero.
- *
- *	ri_KeysEqual could call this but would run a bit slower.  For
- *	now, let's duplicate the code.
- * ----------
- */
-static bool
-ri_OneKeyEqual(Relation rel, int column, HeapTuple oldtup, HeapTuple newtup,
-			   const RI_ConstraintInfo *riinfo, bool rel_is_pk)
-{
-	TupleDesc	tupdesc = RelationGetDescr(rel);
-	const int16 *attnums;
-	const Oid  *eq_oprs;
-	Datum		oldvalue;
-	Datum		newvalue;
-	bool		isnull;
-
-	if (rel_is_pk)
-	{
-		attnums = riinfo->pk_attnums;
-		eq_oprs = riinfo->pp_eq_oprs;
-	}
-	else
-	{
-		attnums = riinfo->fk_attnums;
-		eq_oprs = riinfo->ff_eq_oprs;
-	}
-
-	/*
-	 * Get one attribute's oldvalue. If it is NULL - they're not equal.
-	 */
-	oldvalue = SPI_getbinval(oldtup, tupdesc, attnums[column], &isnull);
-	if (isnull)
-		return false;
-
-	/*
-	 * Get one attribute's newvalue. If it is NULL - they're not equal.
-	 */
-	newvalue = SPI_getbinval(newtup, tupdesc, attnums[column], &isnull);
-	if (isnull)
-		return false;
-
-	/*
-	 * Compare them with the appropriate equality operator.
-	 */
-	if (!ri_AttributesEqual(eq_oprs[column], RIAttType(rel, attnums[column]),
-							oldvalue, newvalue))
-		return false;
-
-	return true;
-}
 
 /* ----------
  * ri_AttributesEqual -

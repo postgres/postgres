@@ -367,7 +367,7 @@ DROP TABLE PKTABLE;
 
 -- set default update / set null delete
 CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 int, ptest4 text, PRIMARY KEY(ptest1, ptest2, ptest3) );
-CREATE TABLE FKTABLE ( ftest1 int DEFAULT 0, ftest2 int DEFAULT -1, ftest3 int, ftest4 int,  CONSTRAINT constrname3
+CREATE TABLE FKTABLE ( ftest1 int DEFAULT 0, ftest2 int DEFAULT -1, ftest3 int DEFAULT -2, ftest4 int, CONSTRAINT constrname3
 			FOREIGN KEY(ftest1, ftest2, ftest3) REFERENCES PKTABLE
 			ON DELETE SET NULL ON UPDATE SET DEFAULT);
 
@@ -397,7 +397,7 @@ SELECT * from FKTABLE;
 UPDATE PKTABLE set ptest2=5 where ptest2=2;
 
 -- Try to update something that will set default
-UPDATE PKTABLE set ptest1=0, ptest2=5, ptest3=10 where ptest2=2;
+UPDATE PKTABLE set ptest1=0, ptest2=-1, ptest3=-2 where ptest2=2;
 UPDATE PKTABLE set ptest2=10 where ptest2=4;
 
 -- Try to update something that should not set default
@@ -415,7 +415,7 @@ SELECT * from PKTABLE;
 SELECT * from FKTABLE;
 
 -- Try to delete something that should not set null
-DELETE FROM PKTABLE where ptest2=5;
+DELETE FROM PKTABLE where ptest2=-1 and ptest3=5;
 
 -- Show PKTABLE and FKTABLE
 SELECT * from PKTABLE;
