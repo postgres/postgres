@@ -309,14 +309,13 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	pk_rel = heap_open(riinfo.pk_relid, RowShareLock);
 
 	/* ----------
-	 * SQL3 11.9 <referential constraint definition>
-	 *	General rules 2) a):
+	 * SQL:2008 4.17.3 <Table constraints>
 	 *		If Rf and Rt are empty (no columns to compare given)
 	 *		constraint is true if 0 < (SELECT COUNT(*) FROM T)
 	 *
 	 *	Note: The special case that no columns are given cannot
-	 *		occur up to now in Postgres, it's just there for
-	 *		future enhancements.
+	 *		occur at present in Postgres (and is disallowed by the
+	 *		standard too); it's just there for future enhancements.
 	 * ----------
 	 */
 	if (riinfo.nkeys == 0)
@@ -376,10 +375,8 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 		case RI_KEYS_ALL_NULL:
 
 			/*
-			 * No check - if NULLs are allowed at all is already checked by
-			 * NOT NULL constraint.
-			 *
-			 * This is true for MATCH FULL, MATCH PARTIAL, and MATCH SIMPLE.
+			 * No further check needed - an all-NULL key passes every type of
+			 * foreign key constraint.
 			 */
 			heap_close(pk_rel, RowShareLock);
 			return PointerGetDatum(NULL);
@@ -410,7 +407,8 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 				case FKCONSTR_MATCH_SIMPLE:
 
 					/*
-					 * MATCH SIMPLE - if ANY column is null, we have a match.
+					 * MATCH SIMPLE - if ANY column is null, the key passes
+					 * the constraint.
 					 */
 					heap_close(pk_rel, RowShareLock);
 					return PointerGetDatum(NULL);
@@ -578,8 +576,8 @@ ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
 				case FKCONSTR_MATCH_SIMPLE:
 
 					/*
-					 * MATCH SIMPLE/FULL  - if ANY column is null, we
-					 * can't be matching to this row already.
+					 * MATCH SIMPLE/FULL - if ANY column is null, nothing
+					 * could have been referencing this row.
 					 */
 					return true;
 
@@ -734,10 +732,10 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 	switch (riinfo.confmatchtype)
 	{
 			/* ----------
-			 * SQL3 11.9 <referential constraint definition>
-			 *	General rules 6) a) iv):
+			 * SQL:2008 15.17 <Execution of referential actions>
+			 *	General rules 9) a) iv):
 			 *		MATCH SIMPLE/FULL
-			 *			... ON DELETE CASCADE
+			 *			... ON DELETE NO ACTION
 			 * ----------
 			 */
 		case FKCONSTR_MATCH_SIMPLE:
@@ -751,8 +749,8 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 				case RI_KEYS_SOME_NULL:
 
 					/*
-					 * No check - MATCH FULL means there cannot be any
-					 * reference to old key if it contains NULL
+					 * No check needed - there cannot be any reference to old
+					 * key if it contains a NULL
 					 */
 					heap_close(fk_rel, RowShareLock);
 					return PointerGetDatum(NULL);
@@ -905,10 +903,10 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 	switch (riinfo.confmatchtype)
 	{
 			/* ----------
-			 * SQL3 11.9 <referential constraint definition>
-			 *	General rules 6) a) iv):
+			 * SQL:2008 15.17 <Execution of referential actions>
+			 *	General rules 10) a) iv):
 			 *		MATCH SIMPLE/FULL
-			 *			... ON DELETE CASCADE
+			 *			... ON UPDATE NO ACTION
 			 * ----------
 			 */
 		case FKCONSTR_MATCH_SIMPLE:
@@ -922,8 +920,8 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 				case RI_KEYS_SOME_NULL:
 
 					/*
-					 * No check - MATCH FULL means there cannot be any
-					 * reference to old key if it contains NULL
+					 * No check needed - there cannot be any reference to old
+					 * key if it contains a NULL
 					 */
 					heap_close(fk_rel, RowShareLock);
 					return PointerGetDatum(NULL);
@@ -1090,8 +1088,8 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 	switch (riinfo.confmatchtype)
 	{
 			/* ----------
-			 * SQL3 11.9 <referential constraint definition>
-			 *	General rules 6) a) i):
+			 * SQL:2008 15.17 <Execution of referential actions>
+			 *	General rules 9) a) i):
 			 *		MATCH SIMPLE/FULL
 			 *			... ON DELETE CASCADE
 			 * ----------
@@ -1107,8 +1105,8 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 				case RI_KEYS_SOME_NULL:
 
 					/*
-					 * No check - MATCH FULL means there cannot be any
-					 * reference to old key if it contains NULL
+					 * No check needed - there cannot be any reference to old
+					 * key if it contains a NULL
 					 */
 					heap_close(fk_rel, RowExclusiveLock);
 					return PointerGetDatum(NULL);
@@ -1209,7 +1207,7 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 /* ----------
  * RI_FKey_cascade_upd -
  *
- *	Cascaded update/delete foreign key references at update event on PK table.
+ *	Cascaded update foreign key references at update event on PK table.
  * ----------
  */
 Datum
@@ -1258,8 +1256,8 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 	switch (riinfo.confmatchtype)
 	{
 			/* ----------
-			 * SQL3 11.9 <referential constraint definition>
-			 *	General rules 7) a) i):
+			 * SQL:2008 15.17 <Execution of referential actions>
+			 *	General rules 10) a) i):
 			 *		MATCH SIMPLE/FULL
 			 *			... ON UPDATE CASCADE
 			 * ----------
@@ -1275,8 +1273,8 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 				case RI_KEYS_SOME_NULL:
 
 					/*
-					 * No update - MATCH FULL means there cannot be any
-					 * reference to old key if it contains NULL
+					 * No check needed - there cannot be any reference to old
+					 * key if it contains a NULL
 					 */
 					heap_close(fk_rel, RowExclusiveLock);
 					return PointerGetDatum(NULL);
@@ -1401,12 +1399,10 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
  *
  *	Restrict delete from PK table to rows unreferenced by foreign key.
  *
- *	SQL3 intends that this referential action occur BEFORE the
- *	update is performed, rather than after.  This appears to be
- *	the only difference between "NO ACTION" and "RESTRICT".
- *
- *	For now, however, we treat "RESTRICT" and "NO ACTION" as
- *	equivalent.
+ *	The SQL standard intends that this referential action occur BEFORE
+ *	the delete is performed, rather than after.  This appears to be
+ *	the only difference between "NO ACTION" and "RESTRICT".  In Postgres
+ *	we still implement this as an AFTER trigger, but it's non-deferrable.
  * ----------
  */
 Datum
@@ -1451,10 +1447,10 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 	switch (riinfo.confmatchtype)
 	{
 			/* ----------
-			 * SQL3 11.9 <referential constraint definition>
-			 *	General rules 6) a) iv):
+			 * SQL:2008 15.17 <Execution of referential actions>
+			 *	General rules 9) a) iv):
 			 *		MATCH SIMPLE/FULL
-			 *			... ON DELETE CASCADE
+			 *			... ON DELETE RESTRICT
 			 * ----------
 			 */
 		case FKCONSTR_MATCH_SIMPLE:
@@ -1468,8 +1464,8 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 				case RI_KEYS_SOME_NULL:
 
 					/*
-					 * No check - MATCH FULL means there cannot be any
-					 * reference to old key if it contains NULL
+					 * No check needed - there cannot be any reference to old
+					 * key if it contains a NULL
 					 */
 					heap_close(fk_rel, RowShareLock);
 					return PointerGetDatum(NULL);
@@ -1574,12 +1570,10 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
  *
  *	Restrict update of PK to rows unreferenced by foreign key.
  *
- *	SQL3 intends that this referential action occur BEFORE the
- *	update is performed, rather than after.  This appears to be
- *	the only difference between "NO ACTION" and "RESTRICT".
- *
- *	For now, however, we treat "RESTRICT" and "NO ACTION" as
- *	equivalent.
+ *	The SQL standard intends that this referential action occur BEFORE
+ *	the update is performed, rather than after.  This appears to be
+ *	the only difference between "NO ACTION" and "RESTRICT".  In Postgres
+ *	we still implement this as an AFTER trigger, but it's non-deferrable.
  * ----------
  */
 Datum
@@ -1627,10 +1621,10 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 	switch (riinfo.confmatchtype)
 	{
 			/* ----------
-			 * SQL3 11.9 <referential constraint definition>
-			 *	General rules 6) a) iv):
+			 * SQL:2008 15.17 <Execution of referential actions>
+			 *	General rules 10) a) iv):
 			 *		MATCH SIMPLE/FULL
-			 *			... ON DELETE CASCADE
+			 *			... ON UPDATE RESTRICT
 			 * ----------
 			 */
 		case FKCONSTR_MATCH_SIMPLE:
@@ -1644,8 +1638,8 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 				case RI_KEYS_SOME_NULL:
 
 					/*
-					 * No check - MATCH FULL means there cannot be any
-					 * reference to old key if it contains NULL
+					 * No check needed - there cannot be any reference to old
+					 * key if it contains a NULL
 					 */
 					heap_close(fk_rel, RowShareLock);
 					return PointerGetDatum(NULL);
@@ -1802,8 +1796,8 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 	switch (riinfo.confmatchtype)
 	{
 			/* ----------
-			 * SQL3 11.9 <referential constraint definition>
-			 *	General rules 6) a) ii):
+			 * SQL:2008 15.17 <Execution of referential actions>
+			 *	General rules 9) a) ii):
 			 *		MATCH SIMPLE/FULL
 			 *			... ON DELETE SET NULL
 			 * ----------
@@ -1819,8 +1813,8 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 				case RI_KEYS_SOME_NULL:
 
 					/*
-					 * No update - MATCH FULL means there cannot be any
-					 * reference to old key if it contains NULL
+					 * No check needed - there cannot be any reference to old
+					 * key if it contains a NULL
 					 */
 					heap_close(fk_rel, RowExclusiveLock);
 					return PointerGetDatum(NULL);
@@ -1977,8 +1971,8 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 	switch (riinfo.confmatchtype)
 	{
 			/* ----------
-			 * SQL3 11.9 <referential constraint definition>
-			 *	General rules 7) a) ii) 2):
+			 * SQL:2008 15.17 <Execution of referential actions>
+			 *	General rules 10) a) ii):
 			 *		MATCH SIMPLE/FULL
 			 *			... ON UPDATE SET NULL
 			 * ----------
@@ -1994,8 +1988,8 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 				case RI_KEYS_SOME_NULL:
 
 					/*
-					 * No update - MATCH FULL means there cannot be any
-					 * reference to old key if it contains NULL
+					 * No check needed - there cannot be any reference to old
+					 * key if it contains a NULL
 					 */
 					heap_close(fk_rel, RowExclusiveLock);
 					return PointerGetDatum(NULL);
@@ -2158,8 +2152,8 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 	switch (riinfo.confmatchtype)
 	{
 			/* ----------
-			 * SQL3 11.9 <referential constraint definition>
-			 *	General rules 6) a) iii):
+			 * SQL:2008 15.17 <Execution of referential actions>
+			 *	General rules 9) a) iii):
 			 *		MATCH SIMPLE/FULL
 			 *			... ON DELETE SET DEFAULT
 			 * ----------
@@ -2175,8 +2169,8 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 				case RI_KEYS_SOME_NULL:
 
 					/*
-					 * No update - MATCH FULL means there cannot be any
-					 * reference to old key if it contains NULL
+					 * No check needed - there cannot be any reference to old
+					 * key if it contains a NULL
 					 */
 					heap_close(fk_rel, RowExclusiveLock);
 					return PointerGetDatum(NULL);
@@ -2344,8 +2338,8 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 	switch (riinfo.confmatchtype)
 	{
 			/* ----------
-			 * SQL3 11.9 <referential constraint definition>
-			 *	General rules 7) a) iii):
+			 * SQL:2008 15.17 <Execution of referential actions>
+			 *	General rules 10) a) iii):
 			 *		MATCH SIMPLE/FULL
 			 *			... ON UPDATE SET DEFAULT
 			 * ----------
@@ -2361,8 +2355,8 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 				case RI_KEYS_SOME_NULL:
 
 					/*
-					 * No update - MATCH FULL means there cannot be any
-					 * reference to old key if it contains NULL
+					 * No check needed - there cannot be any reference to old
+					 * key if it contains a NULL
 					 */
 					heap_close(fk_rel, RowExclusiveLock);
 					return PointerGetDatum(NULL);
