@@ -652,7 +652,7 @@ createDirectory(const char *dir)
 	 * between our two calls.
 	 */
 	if (mkdir(dir, 0700) < 0)
-		exit_horribly(modulename, "could not create directory %s: %s",
+		exit_horribly(modulename, "could not create directory %s: %s\n",
 					  dir, strerror(errno));
 }
 
@@ -667,7 +667,7 @@ prependDirectory(ArchiveHandle *AH, const char *relativeFilename)
 	dname = ctx->directory;
 
 	if (strlen(dname) + 1 + strlen(relativeFilename) + 1 > MAXPGPATH)
-		exit_horribly(modulename, "file name too long: \"%s\"", dname);
+		exit_horribly(modulename, "file name too long: \"%s\"\n", dname);
 
 	strcpy(buf, dname);
 	strcat(buf, "/");

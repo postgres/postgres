@@ -1323,7 +1323,7 @@ void
 on_exit_nicely(on_exit_nicely_callback function, void *arg)
 {
 	if (on_exit_nicely_index >= MAX_ON_EXIT_NICELY)
-		exit_horribly(NULL, "out of on_exit_nicely slots");
+		exit_horribly(NULL, "out of on_exit_nicely slots\n");
 	on_exit_nicely_list[on_exit_nicely_index].function = function;
 	on_exit_nicely_list[on_exit_nicely_index].arg = arg;
 	on_exit_nicely_index++;
