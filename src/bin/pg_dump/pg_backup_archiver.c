@@ -1018,7 +1018,7 @@ StartRestoreBlob(ArchiveHandle *AH, Oid oid, bool drop)
 	/* Initialize the LO Buffer */
 	AH->lo_buf_used = 0;
 
-	ahlog(AH, 2, "restoring large object with OID %u\n", oid);
+	ahlog(AH, 1, "restoring large object with OID %u\n", oid);
 
 	/* With an old archive we must do drop and create logic here */
 	if (old_blob_style && drop)

@@ -728,7 +728,7 @@ _LoadBlobs(ArchiveHandle *AH, RestoreOptions *ropt)
 			oid = atooid(&th->targetFile[5]);
 			if (oid != 0)
 			{
-				ahlog(AH, 1, "restoring large object OID %u\n", oid);
+				ahlog(AH, 1, "restoring large object with OID %u\n", oid);
 
 				StartRestoreBlob(AH, oid, ropt->dropSchema);
 
