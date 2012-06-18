@@ -931,7 +931,7 @@ StartRestoreBlob(ArchiveHandle *AH, Oid oid)
 	/* Initialize the LO Buffer */
 	AH->lo_buf_used = 0;
 
-	ahlog(AH, 2, "restoring large object with OID %u\n", oid);
+	ahlog(AH, 1, "restoring large object with OID %u\n", oid);
 
 	if (AH->connection)
 	{
