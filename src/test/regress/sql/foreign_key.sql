@@ -943,3 +943,20 @@ begin;
     update selfref set a = 456 where a = 123;
     select a, b from selfref;
 commit;
+
+--
+-- Test that SET DEFAULT actions recognize updates to default values
+--
+create temp table defp (f1 int primary key);
+create temp table defc (f1 int default 0
+                        references defp on delete set default);
+insert into defp values (0), (1), (2);
+insert into defc values (2);
+select * from defc;
+delete from defp where f1 = 2;
+select * from defc;
+delete from defp where f1 = 0; -- fail
+alter table defc alter column f1 set default 1;
+delete from defp where f1 = 0;
+select * from defc;
+delete from defp where f1 = 1; -- fail

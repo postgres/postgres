@@ -2155,12 +2155,12 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 				elog(ERROR, "SPI_connect failed");
 
 			/*
-			 * Prepare a plan for the set default delete operation.
-			 * Unfortunately we need to do it on every invocation because the
-			 * default value could potentially change between calls.
+			 * Fetch or prepare a saved plan for the set default delete
+			 * operation
 			 */
 			ri_BuildQueryKey(&qkey, &riinfo, RI_PLAN_SETDEFAULT_DEL_DOUPDATE);
 
+			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 			{
 				StringInfoData querybuf;
 				StringInfoData qualbuf;
@@ -2207,9 +2207,9 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 				}
 				appendStringInfoString(&querybuf, qualbuf.data);
 
-				/* Prepare the plan, don't save it */
+				/* Prepare and save the plan */
 				qplan = ri_PlanCheck(querybuf.data, riinfo.nkeys, queryoids,
-									 &qkey, fk_rel, pk_rel, false);
+									 &qkey, fk_rel, pk_rel, true);
 			}
 
 			/*
@@ -2239,7 +2239,7 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 			return PointerGetDatum(NULL);
 
 			/*
-			 * Handle MATCH PARTIAL set null delete.
+			 * Handle MATCH PARTIAL set default delete.
 			 */
 		case FKCONSTR_MATCH_PARTIAL:
 			ereport(ERROR,
@@ -2348,12 +2348,12 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 				elog(ERROR, "SPI_connect failed");
 
 			/*
-			 * Prepare a plan for the set default delete operation.
-			 * Unfortunately we need to do it on every invocation because the
-			 * default value could potentially change between calls.
+			 * Fetch or prepare a saved plan for the set default update
+			 * operation
 			 */
 			ri_BuildQueryKey(&qkey, &riinfo, RI_PLAN_SETDEFAULT_UPD_DOUPDATE);
 
+			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 			{
 				StringInfoData querybuf;
 				StringInfoData qualbuf;
@@ -2400,9 +2400,9 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 				}
 				appendStringInfoString(&querybuf, qualbuf.data);
 
-				/* Prepare the plan, don't save it */
+				/* Prepare and save the plan */
 				qplan = ri_PlanCheck(querybuf.data, riinfo.nkeys, queryoids,
-									 &qkey, fk_rel, pk_rel, false);
+									 &qkey, fk_rel, pk_rel, true);
 			}
 
 			/*
@@ -2432,7 +2432,7 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 			return PointerGetDatum(NULL);
 
 			/*
-			 * Handle MATCH PARTIAL set null delete.
+			 * Handle MATCH PARTIAL set default update.
 			 */
 		case FKCONSTR_MATCH_PARTIAL:
 			ereport(ERROR,

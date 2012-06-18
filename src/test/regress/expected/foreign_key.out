@@ -1319,3 +1319,39 @@ begin;
 (2 rows)
 
 commit;
+--
+-- Test that SET DEFAULT actions recognize updates to default values
+--
+create temp table defp (f1 int primary key);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "defp_pkey" for table "defp"
+create temp table defc (f1 int default 0
+                        references defp on delete set default);
+insert into defp values (0), (1), (2);
+insert into defc values (2);
+select * from defc;
+ f1 
+----
+  2
+(1 row)
+
+delete from defp where f1 = 2;
+select * from defc;
+ f1 
+----
+  0
+(1 row)
+
+delete from defp where f1 = 0; -- fail
+ERROR:  update or delete on table "defp" violates foreign key constraint "defc_f1_fkey" on table "defc"
+DETAIL:  Key (f1)=(0) is still referenced from table "defc".
+alter table defc alter column f1 set default 1;
+delete from defp where f1 = 0;
+select * from defc;
+ f1 
+----
+  1
+(1 row)
+
+delete from defp where f1 = 1; -- fail
+ERROR:  update or delete on table "defp" violates foreign key constraint "defc_f1_fkey" on table "defc"
+DETAIL:  Key (f1)=(1) is still referenced from table "defc".
