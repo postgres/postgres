@@ -1514,7 +1514,7 @@ typedef enum ConstrType			/* types of constraints */
 /* Foreign key matchtype codes */
 #define FKCONSTR_MATCH_FULL			'f'
 #define FKCONSTR_MATCH_PARTIAL		'p'
-#define FKCONSTR_MATCH_UNSPECIFIED	'u'
+#define FKCONSTR_MATCH_SIMPLE		's'
 
 typedef struct Constraint
 {
@@ -1550,7 +1550,7 @@ typedef struct Constraint
 	RangeVar   *pktable;		/* Primary key table */
 	List	   *fk_attrs;		/* Attributes of foreign key */
 	List	   *pk_attrs;		/* Corresponding attrs in PK table */
-	char		fk_matchtype;	/* FULL, PARTIAL, UNSPECIFIED */
+	char		fk_matchtype;	/* FULL, PARTIAL, SIMPLE */
 	char		fk_upd_action;	/* ON UPDATE action */
 	char		fk_del_action;	/* ON DELETE action */
 	List	   *old_conpfeqop;	/* pg_constraint.conpfeqop of my former self */

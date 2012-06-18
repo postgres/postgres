@@ -1160,7 +1160,7 @@ CREATE VIEW referential_constraints AS
            CAST(
              CASE con.confmatchtype WHEN 'f' THEN 'FULL'
                                     WHEN 'p' THEN 'PARTIAL'
-                                    WHEN 'u' THEN 'NONE' END
+                                    WHEN 's' THEN 'NONE' END
              AS character_data) AS match_option,
 
            CAST(

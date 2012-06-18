@@ -384,8 +384,7 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 			 * No check - if NULLs are allowed at all is already checked by
 			 * NOT NULL constraint.
 			 *
-			 * This is true for MATCH FULL, MATCH PARTIAL, and MATCH
-			 * <unspecified>
+			 * This is true for MATCH FULL, MATCH PARTIAL, and MATCH SIMPLE.
 			 */
 			heap_close(pk_rel, RowShareLock);
 			return PointerGetDatum(NULL);
@@ -413,11 +412,10 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 					heap_close(pk_rel, RowShareLock);
 					return PointerGetDatum(NULL);
 
-				case FKCONSTR_MATCH_UNSPECIFIED:
+				case FKCONSTR_MATCH_SIMPLE:
 
 					/*
-					 * MATCH <unspecified> - if ANY column is null, we have a
-					 * match.
+					 * MATCH SIMPLE - if ANY column is null, we have a match.
 					 */
 					heap_close(pk_rel, RowShareLock);
 					return PointerGetDatum(NULL);
@@ -435,6 +433,11 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 							 errmsg("MATCH PARTIAL not yet implemented")));
 					heap_close(pk_rel, RowShareLock);
 					return PointerGetDatum(NULL);
+
+				default:
+					elog(ERROR, "unrecognized confmatchtype: %d",
+						 riinfo.confmatchtype);
+					break;
 			}
 
 		case RI_KEYS_NONE_NULL:
@@ -577,10 +580,10 @@ ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
 			switch (riinfo->confmatchtype)
 			{
 				case FKCONSTR_MATCH_FULL:
-				case FKCONSTR_MATCH_UNSPECIFIED:
+				case FKCONSTR_MATCH_SIMPLE:
 
 					/*
-					 * MATCH <unspecified>/FULL  - if ANY column is null, we
+					 * MATCH SIMPLE/FULL  - if ANY column is null, we
 					 * can't be matching to this row already.
 					 */
 					return true;
@@ -596,6 +599,11 @@ ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("MATCH PARTIAL not yet implemented")));
+					break;
+
+				default:
+					elog(ERROR, "unrecognized confmatchtype: %d",
+						 riinfo->confmatchtype);
 					break;
 			}
 
@@ -732,12 +740,12 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 	{
 			/* ----------
 			 * SQL3 11.9 <referential constraint definition>
-			 *	Gereral rules 6) a) iv):
-			 *		MATCH <unspecified> or MATCH FULL
+			 *	General rules 6) a) iv):
+			 *		MATCH SIMPLE/FULL
 			 *			... ON DELETE CASCADE
 			 * ----------
 			 */
-		case FKCONSTR_MATCH_UNSPECIFIED:
+		case FKCONSTR_MATCH_SIMPLE:
 		case FKCONSTR_MATCH_FULL:
 			ri_BuildQueryKeyFull(&qkey, &riinfo,
 								 RI_PLAN_NOACTION_DEL_CHECKREF);
@@ -837,12 +845,14 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("MATCH PARTIAL not yet implemented")));
 			return PointerGetDatum(NULL);
+
+		default:
+			elog(ERROR, "unrecognized confmatchtype: %d",
+				 riinfo.confmatchtype);
+			break;
 	}
 
-	/*
-	 * Never reached
-	 */
-	elog(ERROR, "invalid confmatchtype");
+	/* Never reached */
 	return PointerGetDatum(NULL);
 }
 
@@ -901,12 +911,12 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 	{
 			/* ----------
 			 * SQL3 11.9 <referential constraint definition>
-			 *	Gereral rules 6) a) iv):
-			 *		MATCH <unspecified> or MATCH FULL
+			 *	General rules 6) a) iv):
+			 *		MATCH SIMPLE/FULL
 			 *			... ON DELETE CASCADE
 			 * ----------
 			 */
-		case FKCONSTR_MATCH_UNSPECIFIED:
+		case FKCONSTR_MATCH_SIMPLE:
 		case FKCONSTR_MATCH_FULL:
 			ri_BuildQueryKeyFull(&qkey, &riinfo,
 								 RI_PLAN_NOACTION_UPD_CHECKREF);
@@ -1025,12 +1035,14 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("MATCH PARTIAL not yet implemented")));
 			return PointerGetDatum(NULL);
+
+		default:
+			elog(ERROR, "unrecognized confmatchtype: %d",
+				 riinfo.confmatchtype);
+			break;
 	}
 
-	/*
-	 * Never reached
-	 */
-	elog(ERROR, "invalid confmatchtype");
+	/* Never reached */
 	return PointerGetDatum(NULL);
 }
 
@@ -1084,12 +1096,12 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 	{
 			/* ----------
 			 * SQL3 11.9 <referential constraint definition>
-			 *	Gereral rules 6) a) i):
-			 *		MATCH <unspecified> or MATCH FULL
+			 *	General rules 6) a) i):
+			 *		MATCH SIMPLE/FULL
 			 *			... ON DELETE CASCADE
 			 * ----------
 			 */
-		case FKCONSTR_MATCH_UNSPECIFIED:
+		case FKCONSTR_MATCH_SIMPLE:
 		case FKCONSTR_MATCH_FULL:
 			ri_BuildQueryKeyFull(&qkey, &riinfo,
 								 RI_PLAN_CASCADE_DEL_DODELETE);
@@ -1187,12 +1199,14 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("MATCH PARTIAL not yet implemented")));
 			return PointerGetDatum(NULL);
+
+		default:
+			elog(ERROR, "unrecognized confmatchtype: %d",
+				 riinfo.confmatchtype);
+			break;
 	}
 
-	/*
-	 * Never reached
-	 */
-	elog(ERROR, "invalid confmatchtype");
+	/* Never reached */
 	return PointerGetDatum(NULL);
 }
 
@@ -1250,12 +1264,12 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 	{
 			/* ----------
 			 * SQL3 11.9 <referential constraint definition>
-			 *	Gereral rules 7) a) i):
-			 *		MATCH <unspecified> or MATCH FULL
+			 *	General rules 7) a) i):
+			 *		MATCH SIMPLE/FULL
 			 *			... ON UPDATE CASCADE
 			 * ----------
 			 */
-		case FKCONSTR_MATCH_UNSPECIFIED:
+		case FKCONSTR_MATCH_SIMPLE:
 		case FKCONSTR_MATCH_FULL:
 			ri_BuildQueryKeyFull(&qkey, &riinfo,
 								 RI_PLAN_CASCADE_UPD_DOUPDATE);
@@ -1375,12 +1389,14 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("MATCH PARTIAL not yet implemented")));
 			return PointerGetDatum(NULL);
+
+		default:
+			elog(ERROR, "unrecognized confmatchtype: %d",
+				 riinfo.confmatchtype);
+			break;
 	}
 
-	/*
-	 * Never reached
-	 */
-	elog(ERROR, "invalid confmatchtype");
+	/* Never reached */
 	return PointerGetDatum(NULL);
 }
 
@@ -1441,12 +1457,12 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 	{
 			/* ----------
 			 * SQL3 11.9 <referential constraint definition>
-			 *	Gereral rules 6) a) iv):
-			 *		MATCH <unspecified> or MATCH FULL
+			 *	General rules 6) a) iv):
+			 *		MATCH SIMPLE/FULL
 			 *			... ON DELETE CASCADE
 			 * ----------
 			 */
-		case FKCONSTR_MATCH_UNSPECIFIED:
+		case FKCONSTR_MATCH_SIMPLE:
 		case FKCONSTR_MATCH_FULL:
 			ri_BuildQueryKeyFull(&qkey, &riinfo,
 								 RI_PLAN_RESTRICT_DEL_CHECKREF);
@@ -1546,12 +1562,14 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("MATCH PARTIAL not yet implemented")));
 			return PointerGetDatum(NULL);
+
+		default:
+			elog(ERROR, "unrecognized confmatchtype: %d",
+				 riinfo.confmatchtype);
+			break;
 	}
 
-	/*
-	 * Never reached
-	 */
-	elog(ERROR, "invalid confmatchtype");
+	/* Never reached */
 	return PointerGetDatum(NULL);
 }
 
@@ -1615,12 +1633,12 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 	{
 			/* ----------
 			 * SQL3 11.9 <referential constraint definition>
-			 *	Gereral rules 6) a) iv):
-			 *		MATCH <unspecified> or MATCH FULL
+			 *	General rules 6) a) iv):
+			 *		MATCH SIMPLE/FULL
 			 *			... ON DELETE CASCADE
 			 * ----------
 			 */
-		case FKCONSTR_MATCH_UNSPECIFIED:
+		case FKCONSTR_MATCH_SIMPLE:
 		case FKCONSTR_MATCH_FULL:
 			ri_BuildQueryKeyFull(&qkey, &riinfo,
 								 RI_PLAN_RESTRICT_UPD_CHECKREF);
@@ -1729,12 +1747,14 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("MATCH PARTIAL not yet implemented")));
 			return PointerGetDatum(NULL);
+
+		default:
+			elog(ERROR, "unrecognized confmatchtype: %d",
+				 riinfo.confmatchtype);
+			break;
 	}
 
-	/*
-	 * Never reached
-	 */
-	elog(ERROR, "invalid confmatchtype");
+	/* Never reached */
 	return PointerGetDatum(NULL);
 }
 
@@ -1788,12 +1808,12 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 	{
 			/* ----------
 			 * SQL3 11.9 <referential constraint definition>
-			 *	Gereral rules 6) a) ii):
-			 *		MATCH <UNSPECIFIED> or MATCH FULL
+			 *	General rules 6) a) ii):
+			 *		MATCH SIMPLE/FULL
 			 *			... ON DELETE SET NULL
 			 * ----------
 			 */
-		case FKCONSTR_MATCH_UNSPECIFIED:
+		case FKCONSTR_MATCH_SIMPLE:
 		case FKCONSTR_MATCH_FULL:
 			ri_BuildQueryKeyFull(&qkey, &riinfo,
 								 RI_PLAN_SETNULL_DEL_DOUPDATE);
@@ -1900,12 +1920,14 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("MATCH PARTIAL not yet implemented")));
 			return PointerGetDatum(NULL);
+
+		default:
+			elog(ERROR, "unrecognized confmatchtype: %d",
+				 riinfo.confmatchtype);
+			break;
 	}
 
-	/*
-	 * Never reached
-	 */
-	elog(ERROR, "invalid confmatchtype");
+	/* Never reached */
 	return PointerGetDatum(NULL);
 }
 
@@ -1962,12 +1984,12 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 	{
 			/* ----------
 			 * SQL3 11.9 <referential constraint definition>
-			 *	Gereral rules 7) a) ii) 2):
+			 *	General rules 7) a) ii) 2):
 			 *		MATCH FULL
 			 *			... ON UPDATE SET NULL
 			 * ----------
 			 */
-		case FKCONSTR_MATCH_UNSPECIFIED:
+		case FKCONSTR_MATCH_SIMPLE:
 		case FKCONSTR_MATCH_FULL:
 			ri_BuildQueryKeyFull(&qkey, &riinfo,
 								 RI_PLAN_SETNULL_UPD_DOUPDATE);
@@ -2005,7 +2027,7 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 				elog(ERROR, "SPI_connect failed");
 
 			/*
-			 * "MATCH <unspecified>" only changes columns corresponding to the
+			 * "MATCH SIMPLE" only changes columns corresponding to the
 			 * referenced columns that have changed in pk_rel.	This means the
 			 * "SET attrn=NULL [, attrn=NULL]" string will be change as well.
 			 * In this case, we need to build a temporary plan rather than use
@@ -2060,7 +2082,7 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 								 RIAttName(fk_rel, riinfo.fk_attnums[i]));
 
 					/*
-					 * MATCH <unspecified> - only change columns corresponding
+					 * MATCH SIMPLE - only change columns corresponding
 					 * to changed columns in pk_rel's key
 					 */
 					if (riinfo.confmatchtype == FKCONSTR_MATCH_FULL ||
@@ -2116,12 +2138,14 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("MATCH PARTIAL not yet implemented")));
 			return PointerGetDatum(NULL);
+
+		default:
+			elog(ERROR, "unrecognized confmatchtype: %d",
+				 riinfo.confmatchtype);
+			break;
 	}
 
-	/*
-	 * Never reached
-	 */
-	elog(ERROR, "invalid confmatchtype");
+	/* Never reached */
 	return PointerGetDatum(NULL);
 }
 
@@ -2174,12 +2198,12 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 	{
 			/* ----------
 			 * SQL3 11.9 <referential constraint definition>
-			 *	Gereral rules 6) a) iii):
-			 *		MATCH <UNSPECIFIED> or MATCH FULL
+			 *	General rules 6) a) iii):
+			 *		MATCH SIMPLE/FULL
 			 *			... ON DELETE SET DEFAULT
 			 * ----------
 			 */
-		case FKCONSTR_MATCH_UNSPECIFIED:
+		case FKCONSTR_MATCH_SIMPLE:
 		case FKCONSTR_MATCH_FULL:
 			ri_BuildQueryKeyFull(&qkey, &riinfo,
 								 RI_PLAN_SETNULL_DEL_DOUPDATE);
@@ -2298,12 +2322,14 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("MATCH PARTIAL not yet implemented")));
 			return PointerGetDatum(NULL);
+
+		default:
+			elog(ERROR, "unrecognized confmatchtype: %d",
+				 riinfo.confmatchtype);
+			break;
 	}
 
-	/*
-	 * Never reached
-	 */
-	elog(ERROR, "invalid confmatchtype");
+	/* Never reached */
 	return PointerGetDatum(NULL);
 }
 
@@ -2358,12 +2384,12 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 	{
 			/* ----------
 			 * SQL3 11.9 <referential constraint definition>
-			 *	Gereral rules 7) a) iii):
-			 *		MATCH <UNSPECIFIED> or MATCH FULL
+			 *	General rules 7) a) iii):
+			 *		MATCH SIMPLE/FULL
 			 *			... ON UPDATE SET DEFAULT
 			 * ----------
 			 */
-		case FKCONSTR_MATCH_UNSPECIFIED:
+		case FKCONSTR_MATCH_SIMPLE:
 		case FKCONSTR_MATCH_FULL:
 			ri_BuildQueryKeyFull(&qkey, &riinfo,
 								 RI_PLAN_SETNULL_DEL_DOUPDATE);
@@ -2439,7 +2465,7 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 								 RIAttName(fk_rel, riinfo.fk_attnums[i]));
 
 					/*
-					 * MATCH <unspecified> - only change columns corresponding
+					 * MATCH SIMPLE - only change columns corresponding
 					 * to changed columns in pk_rel's key
 					 */
 					if (riinfo.confmatchtype == FKCONSTR_MATCH_FULL ||
@@ -2501,12 +2527,14 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("MATCH PARTIAL not yet implemented")));
 			return PointerGetDatum(NULL);
+
+		default:
+			elog(ERROR, "unrecognized confmatchtype: %d",
+				 riinfo.confmatchtype);
+			break;
 	}
 
-	/*
-	 * Never reached
-	 */
-	elog(ERROR, "invalid confmatchtype");
+	/* Never reached */
 	return PointerGetDatum(NULL);
 }
 
@@ -2538,7 +2566,7 @@ RI_FKey_keyequal_upd_pk(Trigger *trigger, Relation pk_rel,
 
 	switch (riinfo.confmatchtype)
 	{
-		case FKCONSTR_MATCH_UNSPECIFIED:
+		case FKCONSTR_MATCH_SIMPLE:
 		case FKCONSTR_MATCH_FULL:
 			/* Return true if keys are equal */
 			return ri_KeysEqual(pk_rel, old_row, new_row, &riinfo, true);
@@ -2549,10 +2577,14 @@ RI_FKey_keyequal_upd_pk(Trigger *trigger, Relation pk_rel,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("MATCH PARTIAL not yet implemented")));
 			break;
+
+		default:
+			elog(ERROR, "unrecognized confmatchtype: %d",
+				 riinfo.confmatchtype);
+			break;
 	}
 
 	/* Never reached */
-	elog(ERROR, "invalid confmatchtype");
 	return false;
 }
 
@@ -2583,7 +2615,7 @@ RI_FKey_keyequal_upd_fk(Trigger *trigger, Relation fk_rel,
 
 	switch (riinfo.confmatchtype)
 	{
-		case FKCONSTR_MATCH_UNSPECIFIED:
+		case FKCONSTR_MATCH_SIMPLE:
 		case FKCONSTR_MATCH_FULL:
 			/* Return true if keys are equal */
 			return ri_KeysEqual(fk_rel, old_row, new_row, &riinfo, false);
@@ -2594,10 +2626,14 @@ RI_FKey_keyequal_upd_fk(Trigger *trigger, Relation fk_rel,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("MATCH PARTIAL not yet implemented")));
 			break;
+
+		default:
+			elog(ERROR, "unrecognized confmatchtype: %d",
+				 riinfo.confmatchtype);
+			break;
 	}
 
 	/* Never reached */
-	elog(ERROR, "invalid confmatchtype");
 	return false;
 }
 
@@ -2680,7 +2716,7 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	 *	 LEFT OUTER JOIN ONLY pkrelname pk
 	 *	 ON (pk.pkkeycol1=fk.keycol1 [AND ...])
 	 *	 WHERE pk.pkkeycol1 IS NULL AND
-	 * For MATCH unspecified:
+	 * For MATCH SIMPLE:
 	 *	 (fk.keycol1 IS NOT NULL [AND ...])
 	 * For MATCH FULL:
 	 *	 (fk.keycol1 IS NOT NULL [OR ...])
@@ -2745,7 +2781,7 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 						 sep, fkattname);
 		switch (riinfo.confmatchtype)
 		{
-			case FKCONSTR_MATCH_UNSPECIFIED:
+			case FKCONSTR_MATCH_SIMPLE:
 				sep = " AND ";
 				break;
 			case FKCONSTR_MATCH_FULL:
@@ -2757,7 +2793,7 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 						 errmsg("MATCH PARTIAL not yet implemented")));
 				break;
 			default:
-				elog(ERROR, "unrecognized match type: %d",
+				elog(ERROR, "unrecognized confmatchtype: %d",
 					 riinfo.confmatchtype);
 				break;
 		}

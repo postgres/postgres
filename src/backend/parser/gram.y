@@ -2972,11 +2972,11 @@ key_match:  MATCH FULL
 			}
 		| MATCH SIMPLE
 			{
-				$$ = FKCONSTR_MATCH_UNSPECIFIED;
+				$$ = FKCONSTR_MATCH_SIMPLE;
 			}
 		| /*EMPTY*/
 			{
-				$$ = FKCONSTR_MATCH_UNSPECIFIED;
+				$$ = FKCONSTR_MATCH_SIMPLE;
 			}
 		;
 

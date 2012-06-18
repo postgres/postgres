@@ -805,7 +805,7 @@ ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid)
 	char	   *constr_name;
 	char	   *fk_table_name;
 	char	   *pk_table_name;
-	char		fk_matchtype = FKCONSTR_MATCH_UNSPECIFIED;
+	char		fk_matchtype = FKCONSTR_MATCH_SIMPLE;
 	List	   *fk_attrs = NIL;
 	List	   *pk_attrs = NIL;
 	StringInfoData buf;
@@ -831,7 +831,7 @@ ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid)
 			if (strcmp(strVal(arg), "FULL") == 0)
 				fk_matchtype = FKCONSTR_MATCH_FULL;
 			else
-				fk_matchtype = FKCONSTR_MATCH_UNSPECIFIED;
+				fk_matchtype = FKCONSTR_MATCH_SIMPLE;
 			continue;
 		}
 		if (i % 2)

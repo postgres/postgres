@@ -214,7 +214,7 @@ DROP TABLE FKTABLE;
 DROP TABLE PKTABLE;
 
 
--- MATCH unspecified
+-- MATCH SIMPLE
 
 -- Base test restricting update/delete
 CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 int, ptest4 text, PRIMARY KEY(ptest1, ptest2, ptest3) );

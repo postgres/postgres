@@ -2010,7 +2010,7 @@
       <entry>Foreign key match type:
             <literal>f</> = full,
             <literal>p</> = partial,
-            <literal>u</> = simple (unspecified)
+            <literal>s</> = simple
           </entry>
      </row>
 

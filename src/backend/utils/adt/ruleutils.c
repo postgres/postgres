@@ -1184,7 +1184,7 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 					case FKCONSTR_MATCH_PARTIAL:
 						string = " MATCH PARTIAL";
 						break;
-					case FKCONSTR_MATCH_UNSPECIFIED:
+					case FKCONSTR_MATCH_SIMPLE:
 						string = "";
 						break;
 					default:
