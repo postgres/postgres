@@ -1566,7 +1566,7 @@ buildTocEntryArrays(ArchiveHandle *AH)
 	{
 		/* this check is purely paranoia, maxDumpId should be correct */
 		if (te->dumpId <= 0 || te->dumpId > maxDumpId)
-			exit_horribly(modulename, "bad dumpId");
+			exit_horribly(modulename, "bad dumpId\n");
 
 		/* tocsByDumpId indexes all TOCs by their dump ID */
 		AH->tocsByDumpId[te->dumpId] = te;
@@ -1587,7 +1587,7 @@ buildTocEntryArrays(ArchiveHandle *AH)
 			 * item's dump ID, so there should be a place for it in the array.
 			 */
 			if (tableId <= 0 || tableId > maxDumpId)
-				exit_horribly(modulename, "bad table dumpId for TABLE DATA item");
+				exit_horribly(modulename, "bad table dumpId for TABLE DATA item\n");
 
 			AH->tableDataId[tableId] = te->dumpId;
 		}
