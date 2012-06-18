@@ -66,9 +66,12 @@
 #define RI_KEYS_SOME_NULL				1
 #define RI_KEYS_NONE_NULL				2
 
-/* queryno values must be distinct for the convenience of ri_PerformCheck */
-#define RI_PLAN_CHECK_LOOKUPPK_NOCOLS	1
-#define RI_PLAN_CHECK_LOOKUPPK			2
+/* RI query type codes */
+/* these queries are executed against the PK (referenced) table: */
+#define RI_PLAN_CHECK_LOOKUPPK			1
+#define RI_PLAN_CHECK_LOOKUPPK_FROM_PK	2
+#define RI_PLAN_LAST_ON_PK				RI_PLAN_CHECK_LOOKUPPK_FROM_PK
+/* these queries are executed against the FK (referencing) table: */
 #define RI_PLAN_CASCADE_DEL_DODELETE	3
 #define RI_PLAN_CASCADE_UPD_DOUPDATE	4
 #define RI_PLAN_NOACTION_DEL_CHECKREF	5
@@ -77,6 +80,8 @@
 #define RI_PLAN_RESTRICT_UPD_CHECKREF	8
 #define RI_PLAN_SETNULL_DEL_DOUPDATE	9
 #define RI_PLAN_SETNULL_UPD_DOUPDATE	10
+#define RI_PLAN_SETDEFAULT_DEL_DOUPDATE	11
+#define RI_PLAN_SETDEFAULT_UPD_DOUPDATE	12
 
 #define MAX_QUOTED_NAME_LEN  (NAMEDATALEN*2+3)
 #define MAX_QUOTED_REL_NAME_LEN  (MAX_QUOTED_NAME_LEN*2)
@@ -89,9 +94,6 @@
 #define RI_TRIGTYPE_UPDATE 2
 #define RI_TRIGTYPE_INUP   3
 #define RI_TRIGTYPE_DELETE 4
-
-#define RI_KEYPAIR_FK_IDX	0
-#define RI_KEYPAIR_PK_IDX	1
 
 
 /* ----------
@@ -129,13 +131,8 @@ typedef struct RI_ConstraintInfo
  */
 typedef struct RI_QueryKey
 {
-	char		constr_type;
-	Oid			constr_id;
-	int32		constr_queryno;
-	Oid			fk_relid;
-	Oid			pk_relid;
-	int32		nkeypairs;
-	int16		keypair[RI_MAX_NUMKEYS][2];
+	Oid			constr_id;		/* OID of pg_constraint entry */
+	int32		constr_queryno;	/* query type ID, see RI_PLAN_XXX above */
 } RI_QueryKey;
 
 
@@ -197,14 +194,11 @@ static void ri_GenerateQual(StringInfo buf,
 				const char *rightop, Oid rightoptype);
 static void ri_add_cast_to(StringInfo buf, Oid typid);
 static void ri_GenerateQualCollation(StringInfo buf, Oid collation);
-static int ri_NullCheck(Relation rel, HeapTuple tup,
-			 RI_QueryKey *key, int pairidx);
-static void ri_BuildQueryKeyFull(RI_QueryKey *key,
-					 const RI_ConstraintInfo *riinfo,
-					 int32 constr_queryno);
-static void ri_BuildQueryKeyPkCheck(RI_QueryKey *key,
-						const RI_ConstraintInfo *riinfo,
-						int32 constr_queryno);
+static int ri_NullCheck(HeapTuple tup,
+			 const RI_ConstraintInfo *riinfo, bool rel_is_pk);
+static void ri_BuildQueryKey(RI_QueryKey *key,
+				 const RI_ConstraintInfo *riinfo,
+				 int32 constr_queryno);
 static bool ri_KeysEqual(Relation rel, HeapTuple oldtup, HeapTuple newtup,
 			 const RI_ConstraintInfo *riinfo, bool rel_is_pk);
 static bool ri_AttributesEqual(Oid eq_opr, Oid typeid,
@@ -225,18 +219,18 @@ static void ri_FetchConstraintInfo(RI_ConstraintInfo *riinfo,
 static SPIPlanPtr ri_PlanCheck(const char *querystr, int nargs, Oid *argtypes,
 			 RI_QueryKey *qkey, Relation fk_rel, Relation pk_rel,
 			 bool cache_plan);
-static bool ri_PerformCheck(RI_QueryKey *qkey, SPIPlanPtr qplan,
+static bool ri_PerformCheck(const RI_ConstraintInfo *riinfo,
+				RI_QueryKey *qkey, SPIPlanPtr qplan,
 				Relation fk_rel, Relation pk_rel,
 				HeapTuple old_tuple, HeapTuple new_tuple,
-				bool detectNewRows,
-				int expect_OK, const char *constrname);
-static void ri_ExtractValues(RI_QueryKey *qkey, int key_idx,
-				 Relation rel, HeapTuple tuple,
+				bool detectNewRows, int expect_OK);
+static void ri_ExtractValues(Relation rel, HeapTuple tup,
+				 const RI_ConstraintInfo *riinfo, bool rel_is_pk,
 				 Datum *vals, char *nulls);
-static void ri_ReportViolation(RI_QueryKey *qkey, const char *constrname,
+static void ri_ReportViolation(const RI_ConstraintInfo *riinfo,
 				   Relation pk_rel, Relation fk_rel,
 				   HeapTuple violator, TupleDesc tupdesc,
-				   bool spi_err);
+				   int queryno, bool spi_err);
 
 
 /* ----------
@@ -320,10 +314,10 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	 */
 	if (riinfo.nkeys == 0)
 	{
-		ri_BuildQueryKeyFull(&qkey, &riinfo, RI_PLAN_CHECK_LOOKUPPK_NOCOLS);
-
 		if (SPI_connect() != SPI_OK_CONNECT)
 			elog(ERROR, "SPI_connect failed");
+
+		ri_BuildQueryKey(&qkey, &riinfo, RI_PLAN_CHECK_LOOKUPPK);
 
 		if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 		{
@@ -348,12 +342,11 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 		/*
 		 * Execute the plan
 		 */
-		ri_PerformCheck(&qkey, qplan,
+		ri_PerformCheck(&riinfo, &qkey, qplan,
 						fk_rel, pk_rel,
 						NULL, NULL,
 						false,
-						SPI_OK_SELECT,
-						NameStr(riinfo.conname));
+						SPI_OK_SELECT);
 
 		if (SPI_finish() != SPI_OK_FINISH)
 			elog(ERROR, "SPI_finish failed");
@@ -368,9 +361,7 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("MATCH PARTIAL not yet implemented")));
 
-	ri_BuildQueryKeyFull(&qkey, &riinfo, RI_PLAN_CHECK_LOOKUPPK);
-
-	switch (ri_NullCheck(fk_rel, new_row, &qkey, RI_KEYPAIR_FK_IDX))
+	switch (ri_NullCheck(new_row, &riinfo, false))
 	{
 		case RI_KEYS_ALL_NULL:
 
@@ -448,6 +439,8 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	/*
 	 * Fetch or prepare a saved plan for the real check
 	 */
+	ri_BuildQueryKey(&qkey, &riinfo, RI_PLAN_CHECK_LOOKUPPK);
+
 	if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 	{
 		StringInfoData querybuf;
@@ -493,12 +486,11 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	/*
 	 * Now check that foreign key exists in PK table
 	 */
-	ri_PerformCheck(&qkey, qplan,
+	ri_PerformCheck(&riinfo, &qkey, qplan,
 					fk_rel, pk_rel,
 					NULL, new_row,
 					false,
-					SPI_OK_SELECT,
-					NameStr(riinfo.conname));
+					SPI_OK_SELECT);
 
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish failed");
@@ -553,9 +545,7 @@ ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
 	int			i;
 	bool		result;
 
-	ri_BuildQueryKeyPkCheck(&qkey, riinfo, RI_PLAN_CHECK_LOOKUPPK);
-
-	switch (ri_NullCheck(pk_rel, old_row, &qkey, RI_KEYPAIR_PK_IDX))
+	switch (ri_NullCheck(old_row, riinfo, true))
 	{
 		case RI_KEYS_ALL_NULL:
 
@@ -615,6 +605,8 @@ ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
 	/*
 	 * Fetch or prepare a saved plan for the real check
 	 */
+	ri_BuildQueryKey(&qkey, riinfo, RI_PLAN_CHECK_LOOKUPPK_FROM_PK);
+
 	if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 	{
 		StringInfoData querybuf;
@@ -659,11 +651,11 @@ ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
 	/*
 	 * We have a plan now. Run it.
 	 */
-	result = ri_PerformCheck(&qkey, qplan,
+	result = ri_PerformCheck(riinfo, &qkey, qplan,
 							 fk_rel, pk_rel,
 							 old_row, NULL,
 							 true,		/* treat like update */
-							 SPI_OK_SELECT, NULL);
+							 SPI_OK_SELECT);
 
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish failed");
@@ -740,10 +732,7 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 			 */
 		case FKCONSTR_MATCH_SIMPLE:
 		case FKCONSTR_MATCH_FULL:
-			ri_BuildQueryKeyFull(&qkey, &riinfo,
-								 RI_PLAN_NOACTION_DEL_CHECKREF);
-
-			switch (ri_NullCheck(pk_rel, old_row, &qkey, RI_KEYPAIR_PK_IDX))
+			switch (ri_NullCheck(old_row, &riinfo, true))
 			{
 				case RI_KEYS_ALL_NULL:
 				case RI_KEYS_SOME_NULL:
@@ -767,9 +756,10 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 				elog(ERROR, "SPI_connect failed");
 
 			/*
-			 * Fetch or prepare a saved plan for the restrict delete lookup if
-			 * foreign references exist
+			 * Fetch or prepare a saved plan for the restrict delete lookup
 			 */
+			ri_BuildQueryKey(&qkey, &riinfo, RI_PLAN_NOACTION_DEL_CHECKREF);
+
 			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 			{
 				StringInfoData querybuf;
@@ -816,12 +806,11 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 			/*
 			 * We have a plan now. Run it to check for existing references.
 			 */
-			ri_PerformCheck(&qkey, qplan,
+			ri_PerformCheck(&riinfo, &qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
 							true,		/* must detect new rows */
-							SPI_OK_SELECT,
-							NameStr(riinfo.conname));
+							SPI_OK_SELECT);
 
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(ERROR, "SPI_finish failed");
@@ -911,10 +900,7 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 			 */
 		case FKCONSTR_MATCH_SIMPLE:
 		case FKCONSTR_MATCH_FULL:
-			ri_BuildQueryKeyFull(&qkey, &riinfo,
-								 RI_PLAN_NOACTION_UPD_CHECKREF);
-
-			switch (ri_NullCheck(pk_rel, old_row, &qkey, RI_KEYPAIR_PK_IDX))
+			switch (ri_NullCheck(old_row, &riinfo, true))
 			{
 				case RI_KEYS_ALL_NULL:
 				case RI_KEYS_SOME_NULL:
@@ -957,9 +943,10 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 				elog(ERROR, "SPI_connect failed");
 
 			/*
-			 * Fetch or prepare a saved plan for the noaction update lookup if
-			 * foreign references exist
+			 * Fetch or prepare a saved plan for the noaction update lookup
 			 */
+			ri_BuildQueryKey(&qkey, &riinfo, RI_PLAN_NOACTION_UPD_CHECKREF);
+
 			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 			{
 				StringInfoData querybuf;
@@ -1006,12 +993,11 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 			/*
 			 * We have a plan now. Run it to check for existing references.
 			 */
-			ri_PerformCheck(&qkey, qplan,
+			ri_PerformCheck(&riinfo, &qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
 							true,		/* must detect new rows */
-							SPI_OK_SELECT,
-							NameStr(riinfo.conname));
+							SPI_OK_SELECT);
 
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(ERROR, "SPI_finish failed");
@@ -1096,10 +1082,7 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 			 */
 		case FKCONSTR_MATCH_SIMPLE:
 		case FKCONSTR_MATCH_FULL:
-			ri_BuildQueryKeyFull(&qkey, &riinfo,
-								 RI_PLAN_CASCADE_DEL_DODELETE);
-
-			switch (ri_NullCheck(pk_rel, old_row, &qkey, RI_KEYPAIR_PK_IDX))
+			switch (ri_NullCheck(old_row, &riinfo, true))
 			{
 				case RI_KEYS_ALL_NULL:
 				case RI_KEYS_SOME_NULL:
@@ -1125,6 +1108,8 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 			/*
 			 * Fetch or prepare a saved plan for the cascaded delete
 			 */
+			ri_BuildQueryKey(&qkey, &riinfo, RI_PLAN_CASCADE_DEL_DODELETE);
+
 			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 			{
 				StringInfoData querybuf;
@@ -1170,12 +1155,11 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 			 * We have a plan now. Build up the arguments from the key values
 			 * in the deleted PK tuple and delete the referencing rows
 			 */
-			ri_PerformCheck(&qkey, qplan,
+			ri_PerformCheck(&riinfo, &qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
 							true,		/* must detect new rows */
-							SPI_OK_DELETE,
-							NameStr(riinfo.conname));
+							SPI_OK_DELETE);
 
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(ERROR, "SPI_finish failed");
@@ -1264,10 +1248,7 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 			 */
 		case FKCONSTR_MATCH_SIMPLE:
 		case FKCONSTR_MATCH_FULL:
-			ri_BuildQueryKeyFull(&qkey, &riinfo,
-								 RI_PLAN_CASCADE_UPD_DOUPDATE);
-
-			switch (ri_NullCheck(pk_rel, old_row, &qkey, RI_KEYPAIR_PK_IDX))
+			switch (ri_NullCheck(old_row, &riinfo, true))
 			{
 				case RI_KEYS_ALL_NULL:
 				case RI_KEYS_SOME_NULL:
@@ -1300,9 +1281,10 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 				elog(ERROR, "SPI_connect failed");
 
 			/*
-			 * Fetch or prepare a saved plan for the cascaded update of
-			 * foreign references
+			 * Fetch or prepare a saved plan for the cascaded update
 			 */
+			ri_BuildQueryKey(&qkey, &riinfo, RI_PLAN_CASCADE_UPD_DOUPDATE);
+
 			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 			{
 				StringInfoData querybuf;
@@ -1360,12 +1342,11 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 			/*
 			 * We have a plan now. Run it to update the existing references.
 			 */
-			ri_PerformCheck(&qkey, qplan,
+			ri_PerformCheck(&riinfo, &qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, new_row,
 							true,		/* must detect new rows */
-							SPI_OK_UPDATE,
-							NameStr(riinfo.conname));
+							SPI_OK_UPDATE);
 
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(ERROR, "SPI_finish failed");
@@ -1455,10 +1436,7 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 			 */
 		case FKCONSTR_MATCH_SIMPLE:
 		case FKCONSTR_MATCH_FULL:
-			ri_BuildQueryKeyFull(&qkey, &riinfo,
-								 RI_PLAN_RESTRICT_DEL_CHECKREF);
-
-			switch (ri_NullCheck(pk_rel, old_row, &qkey, RI_KEYPAIR_PK_IDX))
+			switch (ri_NullCheck(old_row, &riinfo, true))
 			{
 				case RI_KEYS_ALL_NULL:
 				case RI_KEYS_SOME_NULL:
@@ -1482,9 +1460,10 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 				elog(ERROR, "SPI_connect failed");
 
 			/*
-			 * Fetch or prepare a saved plan for the restrict delete lookup if
-			 * foreign references exist
+			 * Fetch or prepare a saved plan for the restrict delete lookup
 			 */
+			ri_BuildQueryKey(&qkey, &riinfo, RI_PLAN_RESTRICT_DEL_CHECKREF);
+
 			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 			{
 				StringInfoData querybuf;
@@ -1531,12 +1510,11 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 			/*
 			 * We have a plan now. Run it to check for existing references.
 			 */
-			ri_PerformCheck(&qkey, qplan,
+			ri_PerformCheck(&riinfo, &qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
 							true,		/* must detect new rows */
-							SPI_OK_SELECT,
-							NameStr(riinfo.conname));
+							SPI_OK_SELECT);
 
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(ERROR, "SPI_finish failed");
@@ -1629,10 +1607,7 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 			 */
 		case FKCONSTR_MATCH_SIMPLE:
 		case FKCONSTR_MATCH_FULL:
-			ri_BuildQueryKeyFull(&qkey, &riinfo,
-								 RI_PLAN_RESTRICT_UPD_CHECKREF);
-
-			switch (ri_NullCheck(pk_rel, old_row, &qkey, RI_KEYPAIR_PK_IDX))
+			switch (ri_NullCheck(old_row, &riinfo, true))
 			{
 				case RI_KEYS_ALL_NULL:
 				case RI_KEYS_SOME_NULL:
@@ -1665,9 +1640,10 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 				elog(ERROR, "SPI_connect failed");
 
 			/*
-			 * Fetch or prepare a saved plan for the restrict update lookup if
-			 * foreign references exist
+			 * Fetch or prepare a saved plan for the restrict update lookup
 			 */
+			ri_BuildQueryKey(&qkey, &riinfo, RI_PLAN_RESTRICT_UPD_CHECKREF);
+
 			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 			{
 				StringInfoData querybuf;
@@ -1714,12 +1690,11 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 			/*
 			 * We have a plan now. Run it to check for existing references.
 			 */
-			ri_PerformCheck(&qkey, qplan,
+			ri_PerformCheck(&riinfo, &qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
 							true,		/* must detect new rows */
-							SPI_OK_SELECT,
-							NameStr(riinfo.conname));
+							SPI_OK_SELECT);
 
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(ERROR, "SPI_finish failed");
@@ -1804,10 +1779,7 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 			 */
 		case FKCONSTR_MATCH_SIMPLE:
 		case FKCONSTR_MATCH_FULL:
-			ri_BuildQueryKeyFull(&qkey, &riinfo,
-								 RI_PLAN_SETNULL_DEL_DOUPDATE);
-
-			switch (ri_NullCheck(pk_rel, old_row, &qkey, RI_KEYPAIR_PK_IDX))
+			switch (ri_NullCheck(old_row, &riinfo, true))
 			{
 				case RI_KEYS_ALL_NULL:
 				case RI_KEYS_SOME_NULL:
@@ -1833,6 +1805,8 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 			/*
 			 * Fetch or prepare a saved plan for the set null delete operation
 			 */
+			ri_BuildQueryKey(&qkey, &riinfo, RI_PLAN_SETNULL_DEL_DOUPDATE);
+
 			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 			{
 				StringInfoData querybuf;
@@ -1887,12 +1861,11 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 			/*
 			 * We have a plan now. Run it to check for existing references.
 			 */
-			ri_PerformCheck(&qkey, qplan,
+			ri_PerformCheck(&riinfo, &qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
 							true,		/* must detect new rows */
-							SPI_OK_UPDATE,
-							NameStr(riinfo.conname));
+							SPI_OK_UPDATE);
 
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(ERROR, "SPI_finish failed");
@@ -1979,10 +1952,7 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 			 */
 		case FKCONSTR_MATCH_SIMPLE:
 		case FKCONSTR_MATCH_FULL:
-			ri_BuildQueryKeyFull(&qkey, &riinfo,
-								 RI_PLAN_SETNULL_UPD_DOUPDATE);
-
-			switch (ri_NullCheck(pk_rel, old_row, &qkey, RI_KEYPAIR_PK_IDX))
+			switch (ri_NullCheck(old_row, &riinfo, true))
 			{
 				case RI_KEYS_ALL_NULL:
 				case RI_KEYS_SOME_NULL:
@@ -2017,6 +1987,8 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 			/*
 			 * Fetch or prepare a saved plan for the set null update operation
 			 */
+			ri_BuildQueryKey(&qkey, &riinfo, RI_PLAN_SETNULL_UPD_DOUPDATE);
+
 			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 			{
 				StringInfoData querybuf;
@@ -2071,12 +2043,11 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 			/*
 			 * We have a plan now. Run it to update the existing references.
 			 */
-			ri_PerformCheck(&qkey, qplan,
+			ri_PerformCheck(&riinfo, &qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
 							true,		/* must detect new rows */
-							SPI_OK_UPDATE,
-							NameStr(riinfo.conname));
+							SPI_OK_UPDATE);
 
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(ERROR, "SPI_finish failed");
@@ -2160,10 +2131,7 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 			 */
 		case FKCONSTR_MATCH_SIMPLE:
 		case FKCONSTR_MATCH_FULL:
-			ri_BuildQueryKeyFull(&qkey, &riinfo,
-								 RI_PLAN_SETNULL_DEL_DOUPDATE);
-
-			switch (ri_NullCheck(pk_rel, old_row, &qkey, RI_KEYPAIR_PK_IDX))
+			switch (ri_NullCheck(old_row, &riinfo, true))
 			{
 				case RI_KEYS_ALL_NULL:
 				case RI_KEYS_SOME_NULL:
@@ -2191,6 +2159,8 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 			 * Unfortunately we need to do it on every invocation because the
 			 * default value could potentially change between calls.
 			 */
+			ri_BuildQueryKey(&qkey, &riinfo, RI_PLAN_SETDEFAULT_DEL_DOUPDATE);
+
 			{
 				StringInfoData querybuf;
 				StringInfoData qualbuf;
@@ -2245,12 +2215,11 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 			/*
 			 * We have a plan now. Run it to update the existing references.
 			 */
-			ri_PerformCheck(&qkey, qplan,
+			ri_PerformCheck(&riinfo, &qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
 							true,		/* must detect new rows */
-							SPI_OK_UPDATE,
-							NameStr(riinfo.conname));
+							SPI_OK_UPDATE);
 
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(ERROR, "SPI_finish failed");
@@ -2346,10 +2315,7 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 			 */
 		case FKCONSTR_MATCH_SIMPLE:
 		case FKCONSTR_MATCH_FULL:
-			ri_BuildQueryKeyFull(&qkey, &riinfo,
-								 RI_PLAN_SETNULL_DEL_DOUPDATE);
-
-			switch (ri_NullCheck(pk_rel, old_row, &qkey, RI_KEYPAIR_PK_IDX))
+			switch (ri_NullCheck(old_row, &riinfo, true))
 			{
 				case RI_KEYS_ALL_NULL:
 				case RI_KEYS_SOME_NULL:
@@ -2386,6 +2352,8 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 			 * Unfortunately we need to do it on every invocation because the
 			 * default value could potentially change between calls.
 			 */
+			ri_BuildQueryKey(&qkey, &riinfo, RI_PLAN_SETDEFAULT_UPD_DOUPDATE);
+
 			{
 				StringInfoData querybuf;
 				StringInfoData qualbuf;
@@ -2440,12 +2408,11 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 			/*
 			 * We have a plan now. Run it to update the existing references.
 			 */
-			ri_PerformCheck(&qkey, qplan,
+			ri_PerformCheck(&riinfo, &qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
 							true,		/* must detect new rows */
-							SPI_OK_UPDATE,
-							NameStr(riinfo.conname));
+							SPI_OK_UPDATE);
 
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(ERROR, "SPI_finish failed");
@@ -2604,7 +2571,6 @@ bool
 RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 {
 	RI_ConstraintInfo riinfo;
-	const char *constrname = trigger->tgname;
 	StringInfoData querybuf;
 	char		pkrelname[MAX_QUOTED_REL_NAME_LEN];
 	char		fkrelname[MAX_QUOTED_REL_NAME_LEN];
@@ -2799,46 +2765,42 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	{
 		HeapTuple	tuple = SPI_tuptable->vals[0];
 		TupleDesc	tupdesc = SPI_tuptable->tupdesc;
-		RI_QueryKey qkey;
+
+		/*
+		 * The columns to look at in the result tuple are 1..N, not whatever
+		 * they are in the fk_rel.  Hack up riinfo so that the subroutines
+		 * called here will behave properly.
+		 *
+		 * In addition to this, we have to pass the correct tupdesc to
+		 * ri_ReportViolation, overriding its normal habit of using the pk_rel
+		 * or fk_rel's tupdesc.
+		 */
+		for (i = 0; i < riinfo.nkeys; i++)
+			riinfo.fk_attnums[i] = i + 1;
 
 		/*
 		 * If it's MATCH FULL, and there are any nulls in the FK keys,
 		 * complain about that rather than the lack of a match.  MATCH FULL
 		 * disallows partially-null FK rows.
 		 */
-		if (riinfo.confmatchtype == FKCONSTR_MATCH_FULL)
-		{
-			bool		isnull = false;
-
-			for (i = 1; i <= riinfo.nkeys; i++)
-			{
-				(void) SPI_getbinval(tuple, tupdesc, i, &isnull);
-				if (isnull)
-					break;
-			}
-			if (isnull)
-				ereport(ERROR,
-						(errcode(ERRCODE_FOREIGN_KEY_VIOLATION),
-						 errmsg("insert or update on table \"%s\" violates foreign key constraint \"%s\"",
-								RelationGetRelationName(fk_rel),
-								constrname),
-						 errdetail("MATCH FULL does not allow mixing of null and nonnull key values.")));
-		}
+		if (riinfo.confmatchtype == FKCONSTR_MATCH_FULL &&
+			ri_NullCheck(tuple, &riinfo, false) != RI_KEYS_NONE_NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_FOREIGN_KEY_VIOLATION),
+					 errmsg("insert or update on table \"%s\" violates foreign key constraint \"%s\"",
+							RelationGetRelationName(fk_rel),
+							NameStr(riinfo.conname)),
+					 errdetail("MATCH FULL does not allow mixing of null and nonnull key values.")));
 
 		/*
-		 * Although we didn't cache the query, we need to set up a fake query
-		 * key to pass to ri_ReportViolation.
+		 * We tell ri_ReportViolation we were doing the RI_PLAN_CHECK_LOOKUPPK
+		 * query, which isn't true, but will cause it to use riinfo.fk_attnums
+		 * as we need.
 		 */
-		MemSet(&qkey, 0, sizeof(qkey));
-		qkey.constr_queryno = RI_PLAN_CHECK_LOOKUPPK;
-		qkey.nkeypairs = riinfo.nkeys;
-		for (i = 0; i < riinfo.nkeys; i++)
-			qkey.keypair[i][RI_KEYPAIR_FK_IDX] = i + 1;
-
-		ri_ReportViolation(&qkey, constrname,
+		ri_ReportViolation(&riinfo,
 						   pk_rel, fk_rel,
 						   tuple, tupdesc,
-						   false);
+						   RI_PLAN_CHECK_LOOKUPPK, false);
 	}
 
 	if (SPI_finish() != SPI_OK_FINISH)
@@ -3015,36 +2977,26 @@ ri_GenerateQualCollation(StringInfo buf, Oid collation)
 }
 
 /* ----------
- * ri_BuildQueryKeyFull -
+ * ri_BuildQueryKey -
  *
- *	Build up a new hashtable key for a prepared SPI plan of a
- *	constraint trigger of MATCH FULL.
+ *	Construct a hashtable key for a prepared SPI plan of an FK constraint.
  *
  *		key: output argument, *key is filled in based on the other arguments
  *		riinfo: info from pg_constraint entry
- *		constr_queryno: an internal number of the query inside the proc
- *
- *	At least for MATCH FULL this builds a unique key per plan.
+ *		constr_queryno: an internal number identifying the query type
+ *			(see RI_PLAN_XXX constants at head of file)
  * ----------
  */
 static void
-ri_BuildQueryKeyFull(RI_QueryKey *key, const RI_ConstraintInfo *riinfo,
-					 int32 constr_queryno)
+ri_BuildQueryKey(RI_QueryKey *key, const RI_ConstraintInfo *riinfo,
+				 int32 constr_queryno)
 {
-	int			i;
-
-	MemSet(key, 0, sizeof(RI_QueryKey));
-	key->constr_type = FKCONSTR_MATCH_FULL;
+	/*
+	 * We assume struct RI_QueryKey contains no padding bytes, else we'd
+	 * need to use memset to clear them.
+	 */
 	key->constr_id = riinfo->constraint_id;
 	key->constr_queryno = constr_queryno;
-	key->fk_relid = riinfo->fk_relid;
-	key->pk_relid = riinfo->pk_relid;
-	key->nkeypairs = riinfo->nkeys;
-	for (i = 0; i < riinfo->nkeys; i++)
-	{
-		key->keypair[i][RI_KEYPAIR_FK_IDX] = riinfo->fk_attnums[i];
-		key->keypair[i][RI_KEYPAIR_PK_IDX] = riinfo->pk_attnums[i];
-	}
 }
 
 /*
@@ -3269,12 +3221,10 @@ ri_PlanCheck(const char *querystr, int nargs, Oid *argtypes,
 	int			save_sec_context;
 
 	/*
-	 * The query is always run against the FK table except when this is an
-	 * update/insert trigger on the FK table itself - either
-	 * RI_PLAN_CHECK_LOOKUPPK or RI_PLAN_CHECK_LOOKUPPK_NOCOLS
+	 * Use the query type code to determine whether the query is run against
+	 * the PK or FK table; we'll do the check as that table's owner
 	 */
-	if (qkey->constr_queryno == RI_PLAN_CHECK_LOOKUPPK ||
-		qkey->constr_queryno == RI_PLAN_CHECK_LOOKUPPK_NOCOLS)
+	if (qkey->constr_queryno <= RI_PLAN_LAST_ON_PK)
 		query_rel = pk_rel;
 	else
 		query_rel = fk_rel;
@@ -3307,15 +3257,15 @@ ri_PlanCheck(const char *querystr, int nargs, Oid *argtypes,
  * Perform a query to enforce an RI restriction
  */
 static bool
-ri_PerformCheck(RI_QueryKey *qkey, SPIPlanPtr qplan,
+ri_PerformCheck(const RI_ConstraintInfo *riinfo,
+				RI_QueryKey *qkey, SPIPlanPtr qplan,
 				Relation fk_rel, Relation pk_rel,
 				HeapTuple old_tuple, HeapTuple new_tuple,
-				bool detectNewRows,
-				int expect_OK, const char *constrname)
+				bool detectNewRows, int expect_OK)
 {
 	Relation	query_rel,
 				source_rel;
-	int			key_idx;
+	bool		source_is_pk;
 	Snapshot	test_snapshot;
 	Snapshot	crosscheck_snapshot;
 	int			limit;
@@ -3326,45 +3276,44 @@ ri_PerformCheck(RI_QueryKey *qkey, SPIPlanPtr qplan,
 	char		nulls[RI_MAX_NUMKEYS * 2];
 
 	/*
-	 * The query is always run against the FK table except when this is an
-	 * update/insert trigger on the FK table itself - either
-	 * RI_PLAN_CHECK_LOOKUPPK or RI_PLAN_CHECK_LOOKUPPK_NOCOLS
+	 * Use the query type code to determine whether the query is run against
+	 * the PK or FK table; we'll do the check as that table's owner
 	 */
-	if (qkey->constr_queryno == RI_PLAN_CHECK_LOOKUPPK ||
-		qkey->constr_queryno == RI_PLAN_CHECK_LOOKUPPK_NOCOLS)
+	if (qkey->constr_queryno <= RI_PLAN_LAST_ON_PK)
 		query_rel = pk_rel;
 	else
 		query_rel = fk_rel;
 
 	/*
 	 * The values for the query are taken from the table on which the trigger
-	 * is called - it is normally the other one with respect to query_rel. An
-	 * exception is ri_Check_Pk_Match(), which uses the PK table for both (the
-	 * case when constrname == NULL)
+	 * is called - it is normally the other one with respect to query_rel.
+	 * An exception is ri_Check_Pk_Match(), which uses the PK table for both
+	 * (and sets queryno to RI_PLAN_CHECK_LOOKUPPK_FROM_PK).  We might
+	 * eventually need some less klugy way to determine this.
 	 */
-	if (qkey->constr_queryno == RI_PLAN_CHECK_LOOKUPPK && constrname != NULL)
+	if (qkey->constr_queryno == RI_PLAN_CHECK_LOOKUPPK)
 	{
 		source_rel = fk_rel;
-		key_idx = RI_KEYPAIR_FK_IDX;
+		source_is_pk = false;
 	}
 	else
 	{
 		source_rel = pk_rel;
-		key_idx = RI_KEYPAIR_PK_IDX;
+		source_is_pk = true;
 	}
 
 	/* Extract the parameters to be passed into the query */
 	if (new_tuple)
 	{
-		ri_ExtractValues(qkey, key_idx, source_rel, new_tuple,
+		ri_ExtractValues(source_rel, new_tuple, riinfo, source_is_pk,
 						 vals, nulls);
 		if (old_tuple)
-			ri_ExtractValues(qkey, key_idx, source_rel, old_tuple,
-							 vals + qkey->nkeypairs, nulls + qkey->nkeypairs);
+			ri_ExtractValues(source_rel, old_tuple, riinfo, source_is_pk,
+							 vals + riinfo->nkeys, nulls + riinfo->nkeys);
 	}
 	else
 	{
-		ri_ExtractValues(qkey, key_idx, source_rel, old_tuple,
+		ri_ExtractValues(source_rel, old_tuple, riinfo, source_is_pk,
 						 vals, nulls);
 	}
 
@@ -3419,20 +3368,21 @@ ri_PerformCheck(RI_QueryKey *qkey, SPIPlanPtr qplan,
 		elog(ERROR, "SPI_execute_snapshot returned %d", spi_result);
 
 	if (expect_OK >= 0 && spi_result != expect_OK)
-		ri_ReportViolation(qkey, constrname ? constrname : "",
+		ri_ReportViolation(riinfo,
 						   pk_rel, fk_rel,
 						   new_tuple ? new_tuple : old_tuple,
 						   NULL,
-						   true);
+						   qkey->constr_queryno, true);
 
 	/* XXX wouldn't it be clearer to do this part at the caller? */
-	if (constrname && expect_OK == SPI_OK_SELECT &&
+	if (qkey->constr_queryno != RI_PLAN_CHECK_LOOKUPPK_FROM_PK &&
+		expect_OK == SPI_OK_SELECT &&
 	(SPI_processed == 0) == (qkey->constr_queryno == RI_PLAN_CHECK_LOOKUPPK))
-		ri_ReportViolation(qkey, constrname,
+		ri_ReportViolation(riinfo,
 						   pk_rel, fk_rel,
 						   new_tuple ? new_tuple : old_tuple,
 						   NULL,
-						   false);
+						   qkey->constr_queryno, false);
 
 	return SPI_processed != 0;
 }
@@ -3441,18 +3391,24 @@ ri_PerformCheck(RI_QueryKey *qkey, SPIPlanPtr qplan,
  * Extract fields from a tuple into Datum/nulls arrays
  */
 static void
-ri_ExtractValues(RI_QueryKey *qkey, int key_idx,
-				 Relation rel, HeapTuple tuple,
+ri_ExtractValues(Relation rel, HeapTuple tup,
+				 const RI_ConstraintInfo *riinfo, bool rel_is_pk,
 				 Datum *vals, char *nulls)
 {
+	TupleDesc	tupdesc = rel->rd_att;
+	const int16 *attnums;
 	int			i;
 	bool		isnull;
 
-	for (i = 0; i < qkey->nkeypairs; i++)
+	if (rel_is_pk)
+		attnums = riinfo->pk_attnums;
+	else
+		attnums = riinfo->fk_attnums;
+
+	for (i = 0; i < riinfo->nkeys; i++)
 	{
-		vals[i] = SPI_getbinval(tuple, rel->rd_att,
-								qkey->keypair[i][key_idx],
-								&isnull);
+		vals[i] = heap_getattr(tup, attnums[i], tupdesc,
+							   &isnull);
 		nulls[i] = isnull ? 'n' : ' ';
 	}
 }
@@ -3467,23 +3423,23 @@ ri_ExtractValues(RI_QueryKey *qkey, int key_idx,
  * message looks like 'key blah is still referenced from FK'.
  */
 static void
-ri_ReportViolation(RI_QueryKey *qkey, const char *constrname,
+ri_ReportViolation(const RI_ConstraintInfo *riinfo,
 				   Relation pk_rel, Relation fk_rel,
 				   HeapTuple violator, TupleDesc tupdesc,
-				   bool spi_err)
+				   int queryno, bool spi_err)
 {
 	StringInfoData key_names;
 	StringInfoData key_values;
 	bool		onfk;
-	int			idx,
-				key_idx;
+	const int16 *attnums;
+	int			idx;
 
 	if (spi_err)
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("referential integrity query on \"%s\" from constraint \"%s\" on \"%s\" gave unexpected result",
 						RelationGetRelationName(pk_rel),
-						constrname,
+						NameStr(riinfo->conname),
 						RelationGetRelationName(fk_rel)),
 				 errhint("This is most likely due to a rule having rewritten the query.")));
 
@@ -3491,16 +3447,16 @@ ri_ReportViolation(RI_QueryKey *qkey, const char *constrname,
 	 * Determine which relation to complain about.	If tupdesc wasn't passed
 	 * by caller, assume the violator tuple came from there.
 	 */
-	onfk = (qkey->constr_queryno == RI_PLAN_CHECK_LOOKUPPK);
+	onfk = (queryno == RI_PLAN_CHECK_LOOKUPPK);
 	if (onfk)
 	{
-		key_idx = RI_KEYPAIR_FK_IDX;
+		attnums = riinfo->fk_attnums;
 		if (tupdesc == NULL)
 			tupdesc = fk_rel->rd_att;
 	}
 	else
 	{
-		key_idx = RI_KEYPAIR_PK_IDX;
+		attnums = riinfo->pk_attnums;
 		if (tupdesc == NULL)
 			tupdesc = pk_rel->rd_att;
 	}
@@ -3510,12 +3466,13 @@ ri_ReportViolation(RI_QueryKey *qkey, const char *constrname,
 	 * constraint - no need to try to extract the values, and the message in
 	 * this case looks different.
 	 */
-	if (qkey->nkeypairs == 0)
+	if (riinfo->nkeys == 0)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_FOREIGN_KEY_VIOLATION),
 				 errmsg("insert or update on table \"%s\" violates foreign key constraint \"%s\"",
-						RelationGetRelationName(fk_rel), constrname),
+						RelationGetRelationName(fk_rel),
+						NameStr(riinfo->conname)),
 				 errdetail("No rows were found in \"%s\".",
 						   RelationGetRelationName(pk_rel))));
 	}
@@ -3523,9 +3480,9 @@ ri_ReportViolation(RI_QueryKey *qkey, const char *constrname,
 	/* Get printable versions of the keys involved */
 	initStringInfo(&key_names);
 	initStringInfo(&key_values);
-	for (idx = 0; idx < qkey->nkeypairs; idx++)
+	for (idx = 0; idx < riinfo->nkeys; idx++)
 	{
-		int			fnum = qkey->keypair[idx][key_idx];
+		int			fnum = attnums[idx];
 		char	   *name,
 				   *val;
 
@@ -3547,7 +3504,8 @@ ri_ReportViolation(RI_QueryKey *qkey, const char *constrname,
 		ereport(ERROR,
 				(errcode(ERRCODE_FOREIGN_KEY_VIOLATION),
 				 errmsg("insert or update on table \"%s\" violates foreign key constraint \"%s\"",
-						RelationGetRelationName(fk_rel), constrname),
+						RelationGetRelationName(fk_rel),
+						NameStr(riinfo->conname)),
 				 errdetail("Key (%s)=(%s) is not present in table \"%s\".",
 						   key_names.data, key_values.data,
 						   RelationGetRelationName(pk_rel))));
@@ -3556,43 +3514,11 @@ ri_ReportViolation(RI_QueryKey *qkey, const char *constrname,
 				(errcode(ERRCODE_FOREIGN_KEY_VIOLATION),
 				 errmsg("update or delete on table \"%s\" violates foreign key constraint \"%s\" on table \"%s\"",
 						RelationGetRelationName(pk_rel),
-						constrname, RelationGetRelationName(fk_rel)),
+						NameStr(riinfo->conname),
+						RelationGetRelationName(fk_rel)),
 			errdetail("Key (%s)=(%s) is still referenced from table \"%s\".",
 					  key_names.data, key_values.data,
 					  RelationGetRelationName(fk_rel))));
-}
-
-/* ----------
- * ri_BuildQueryKeyPkCheck -
- *
- *	Build up a new hashtable key for a prepared SPI plan of a
- *	check for PK rows in noaction triggers.
- *
- *		key: output argument, *key is filled in based on the other arguments
- *		riinfo: info from pg_constraint entry
- *		constr_queryno: an internal number of the query inside the proc
- *
- *	At least for MATCH FULL this builds a unique key per plan.
- * ----------
- */
-static void
-ri_BuildQueryKeyPkCheck(RI_QueryKey *key, const RI_ConstraintInfo *riinfo,
-						int32 constr_queryno)
-{
-	int			i;
-
-	MemSet(key, 0, sizeof(RI_QueryKey));
-	key->constr_type = FKCONSTR_MATCH_FULL;
-	key->constr_id = riinfo->constraint_id;
-	key->constr_queryno = constr_queryno;
-	key->fk_relid = InvalidOid;
-	key->pk_relid = riinfo->pk_relid;
-	key->nkeypairs = riinfo->nkeys;
-	for (i = 0; i < riinfo->nkeys; i++)
-	{
-		key->keypair[i][RI_KEYPAIR_FK_IDX] = 0;
-		key->keypair[i][RI_KEYPAIR_PK_IDX] = riinfo->pk_attnums[i];
-	}
 }
 
 
@@ -3605,18 +3531,22 @@ ri_BuildQueryKeyPkCheck(RI_QueryKey *key, const RI_ConstraintInfo *riinfo,
  * ----------
  */
 static int
-ri_NullCheck(Relation rel, HeapTuple tup, RI_QueryKey *key, int pairidx)
+ri_NullCheck(HeapTuple tup,
+			 const RI_ConstraintInfo *riinfo, bool rel_is_pk)
 {
+	const int16 *attnums;
 	int			i;
-	bool		isnull;
 	bool		allnull = true;
 	bool		nonenull = true;
 
-	for (i = 0; i < key->nkeypairs; i++)
+	if (rel_is_pk)
+		attnums = riinfo->pk_attnums;
+	else
+		attnums = riinfo->fk_attnums;
+
+	for (i = 0; i < riinfo->nkeys; i++)
 	{
-		isnull = false;
-		SPI_getbinval(tup, rel->rd_att, key->keypair[i][pairidx], &isnull);
-		if (isnull)
+		if (heap_attisnull(tup, attnums[i]))
 			nonenull = false;
 		else
 			allnull = false;
@@ -3779,14 +3709,14 @@ ri_KeysEqual(Relation rel, HeapTuple oldtup, HeapTuple newtup,
 		/*
 		 * Get one attribute's oldvalue. If it is NULL - they're not equal.
 		 */
-		oldvalue = SPI_getbinval(oldtup, tupdesc, attnums[i], &isnull);
+		oldvalue = heap_getattr(oldtup, attnums[i], tupdesc, &isnull);
 		if (isnull)
 			return false;
 
 		/*
 		 * Get one attribute's newvalue. If it is NULL - they're not equal.
 		 */
-		newvalue = SPI_getbinval(newtup, tupdesc, attnums[i], &isnull);
+		newvalue = heap_getattr(newtup, attnums[i], tupdesc, &isnull);
 		if (isnull)
 			return false;
 
