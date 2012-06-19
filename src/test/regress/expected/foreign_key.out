@@ -1355,3 +1355,29 @@ select * from defc;
 delete from defp where f1 = 1; -- fail
 ERROR:  update or delete on table "defp" violates foreign key constraint "defc_f1_fkey" on table "defc"
 DETAIL:  Key (f1)=(1) is still referenced from table "defc".
+--
+-- Test the difference between NO ACTION and RESTRICT
+--
+create temp table pp (f1 int primary key);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pp_pkey" for table "pp"
+create temp table cc (f1 int references pp on update no action);
+insert into pp values(12);
+insert into pp values(11);
+update pp set f1=f1+1;
+insert into cc values(13);
+update pp set f1=f1+1;
+update pp set f1=f1+1; -- fail
+ERROR:  update or delete on table "pp" violates foreign key constraint "cc_f1_fkey" on table "cc"
+DETAIL:  Key (f1)=(13) is still referenced from table "cc".
+drop table pp, cc;
+create temp table pp (f1 int primary key);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pp_pkey" for table "pp"
+create temp table cc (f1 int references pp on update restrict);
+insert into pp values(12);
+insert into pp values(11);
+update pp set f1=f1+1;
+insert into cc values(13);
+update pp set f1=f1+1; -- fail
+ERROR:  update or delete on table "pp" violates foreign key constraint "cc_f1_fkey" on table "cc"
+DETAIL:  Key (f1)=(13) is still referenced from table "cc".
+drop table pp, cc;

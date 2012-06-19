@@ -74,14 +74,12 @@
 /* these queries are executed against the FK (referencing) table: */
 #define RI_PLAN_CASCADE_DEL_DODELETE	3
 #define RI_PLAN_CASCADE_UPD_DOUPDATE	4
-#define RI_PLAN_NOACTION_DEL_CHECKREF	5
-#define RI_PLAN_NOACTION_UPD_CHECKREF	6
-#define RI_PLAN_RESTRICT_DEL_CHECKREF	7
-#define RI_PLAN_RESTRICT_UPD_CHECKREF	8
-#define RI_PLAN_SETNULL_DEL_DOUPDATE	9
-#define RI_PLAN_SETNULL_UPD_DOUPDATE	10
-#define RI_PLAN_SETDEFAULT_DEL_DOUPDATE	11
-#define RI_PLAN_SETDEFAULT_UPD_DOUPDATE	12
+#define RI_PLAN_RESTRICT_DEL_CHECKREF	5
+#define RI_PLAN_RESTRICT_UPD_CHECKREF	6
+#define RI_PLAN_SETNULL_DEL_DOUPDATE	7
+#define RI_PLAN_SETNULL_UPD_DOUPDATE	8
+#define RI_PLAN_SETDEFAULT_DEL_DOUPDATE	9
+#define RI_PLAN_SETDEFAULT_UPD_DOUPDATE	10
 
 #define MAX_QUOTED_NAME_LEN  (NAMEDATALEN*2+3)
 #define MAX_QUOTED_REL_NAME_LEN  (MAX_QUOTED_NAME_LEN*2)
@@ -92,8 +90,7 @@
 
 #define RI_TRIGTYPE_INSERT 1
 #define RI_TRIGTYPE_UPDATE 2
-#define RI_TRIGTYPE_INUP   3
-#define RI_TRIGTYPE_DELETE 4
+#define RI_TRIGTYPE_DELETE 3
 
 
 /* ----------
@@ -185,6 +182,11 @@ static HTAB *ri_compare_cache = NULL;
  * Local function prototypes
  * ----------
  */
+static bool ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
+				  HeapTuple old_row,
+				  const RI_ConstraintInfo *riinfo);
+static Datum ri_restrict_del(TriggerData *trigdata, bool is_no_action);
+static Datum ri_restrict_upd(TriggerData *trigdata, bool is_no_action);
 static void quoteOneName(char *buffer, const char *name);
 static void quoteRelationName(char *buffer, Relation rel);
 static void ri_GenerateQual(StringInfo buf,
@@ -203,9 +205,6 @@ static bool ri_KeysEqual(Relation rel, HeapTuple oldtup, HeapTuple newtup,
 			 const RI_ConstraintInfo *riinfo, bool rel_is_pk);
 static bool ri_AttributesEqual(Oid eq_opr, Oid typeid,
 				   Datum oldvalue, Datum newvalue);
-static bool ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
-				  HeapTuple old_row,
-				  const RI_ConstraintInfo *riinfo);
 
 static void ri_InitHashTables(void);
 static SPIPlanPtr ri_FetchPreparedPlan(RI_QueryKey *key);
@@ -240,9 +239,8 @@ static void ri_ReportViolation(const RI_ConstraintInfo *riinfo,
  * ----------
  */
 static Datum
-RI_FKey_check(PG_FUNCTION_ARGS)
+RI_FKey_check(TriggerData *trigdata)
 {
-	TriggerData *trigdata = (TriggerData *) fcinfo->context;
 	RI_ConstraintInfo riinfo;
 	Relation	fk_rel;
 	Relation	pk_rel;
@@ -251,11 +249,6 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	RI_QueryKey qkey;
 	SPIPlanPtr	qplan;
 	int			i;
-
-	/*
-	 * Check that this is a valid trigger call on the right time and event.
-	 */
-	ri_CheckTrigger(fcinfo, "RI_FKey_check", RI_TRIGTYPE_INUP);
 
 	/*
 	 * Get arguments.
@@ -510,7 +503,15 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 Datum
 RI_FKey_check_ins(PG_FUNCTION_ARGS)
 {
-	return RI_FKey_check(fcinfo);
+	/*
+	 * Check that this is a valid trigger call on the right time and event.
+	 */
+	ri_CheckTrigger(fcinfo, "RI_FKey_check_ins", RI_TRIGTYPE_INSERT);
+
+	/*
+	 * Share code with UPDATE case.
+	 */
+	return RI_FKey_check((TriggerData *) fcinfo->context);
 }
 
 
@@ -523,16 +524,27 @@ RI_FKey_check_ins(PG_FUNCTION_ARGS)
 Datum
 RI_FKey_check_upd(PG_FUNCTION_ARGS)
 {
-	return RI_FKey_check(fcinfo);
+	/*
+	 * Check that this is a valid trigger call on the right time and event.
+	 */
+	ri_CheckTrigger(fcinfo, "RI_FKey_check_upd", RI_TRIGTYPE_UPDATE);
+
+	/*
+	 * Share code with INSERT case.
+	 */
+	return RI_FKey_check((TriggerData *) fcinfo->context);
 }
 
 
 /* ----------
  * ri_Check_Pk_Match
  *
- * Check for matching value of old pk row in current state for
- * noaction triggers. Returns false if no row was found and a fk row
- * could potentially be referencing this row, true otherwise.
+ * Check to see if another PK row has been created that provides the same
+ * key values as the "old_row" that's been modified or deleted in our trigger
+ * event.  Returns true if a match is found in the PK table.
+ *
+ * We assume the caller checked that the old_row contains no NULL key values,
+ * since otherwise a match is impossible.
  * ----------
  */
 static bool
@@ -545,65 +557,15 @@ ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
 	int			i;
 	bool		result;
 
-	switch (ri_NullCheck(old_row, riinfo, true))
-	{
-		case RI_KEYS_ALL_NULL:
-
-			/*
-			 * No check - nothing could have been referencing this row anyway.
-			 */
-			return true;
-
-		case RI_KEYS_SOME_NULL:
-
-			/*
-			 * This is the only case that differs between the three kinds of
-			 * MATCH.
-			 */
-			switch (riinfo->confmatchtype)
-			{
-				case FKCONSTR_MATCH_FULL:
-				case FKCONSTR_MATCH_SIMPLE:
-
-					/*
-					 * MATCH SIMPLE/FULL - if ANY column is null, nothing
-					 * could have been referencing this row.
-					 */
-					return true;
-
-				case FKCONSTR_MATCH_PARTIAL:
-
-					/*
-					 * MATCH PARTIAL - all non-null columns must match. (not
-					 * implemented, can be done by modifying the query below
-					 * to only include non-null columns, or by writing a
-					 * special version here)
-					 */
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("MATCH PARTIAL not yet implemented")));
-					break;
-
-				default:
-					elog(ERROR, "unrecognized confmatchtype: %d",
-						 riinfo->confmatchtype);
-					break;
-			}
-
-		case RI_KEYS_NONE_NULL:
-
-			/*
-			 * Have a full qualified key - continue below for all three kinds
-			 * of MATCH.
-			 */
-			break;
-	}
+	/* Only called for non-null rows */
+	Assert(ri_NullCheck(old_row, riinfo, true) == RI_KEYS_NONE_NULL);
 
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed");
 
 	/*
-	 * Fetch or prepare a saved plan for the real check
+	 * Fetch or prepare a saved plan for checking PK table with values coming
+	 * from a PK row
 	 */
 	ri_BuildQueryKey(&qkey, riinfo, RI_PLAN_CHECK_LOOKUPPK_FROM_PK);
 
@@ -675,7 +637,51 @@ ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
 Datum
 RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 {
-	TriggerData *trigdata = (TriggerData *) fcinfo->context;
+	/*
+	 * Check that this is a valid trigger call on the right time and event.
+	 */
+	ri_CheckTrigger(fcinfo, "RI_FKey_noaction_del", RI_TRIGTYPE_DELETE);
+
+	/*
+	 * Share code with RESTRICT case.
+	 */
+	return ri_restrict_del((TriggerData *) fcinfo->context, true);
+}
+
+/* ----------
+ * RI_FKey_restrict_del -
+ *
+ *	Restrict delete from PK table to rows unreferenced by foreign key.
+ *
+ *	The SQL standard intends that this referential action occur exactly when
+ *	the delete is performed, rather than after.  This appears to be
+ *	the only difference between "NO ACTION" and "RESTRICT".  In Postgres
+ *	we still implement this as an AFTER trigger, but it's non-deferrable.
+ * ----------
+ */
+Datum
+RI_FKey_restrict_del(PG_FUNCTION_ARGS)
+{
+	/*
+	 * Check that this is a valid trigger call on the right time and event.
+	 */
+	ri_CheckTrigger(fcinfo, "RI_FKey_restrict_del", RI_TRIGTYPE_DELETE);
+
+	/*
+	 * Share code with NO ACTION case.
+	 */
+	return ri_restrict_del((TriggerData *) fcinfo->context, false);
+}
+
+/* ----------
+ * ri_restrict_del -
+ *
+ *	Common code for ON DELETE RESTRICT and ON DELETE NO ACTION.
+ * ----------
+ */
+static Datum
+ri_restrict_del(TriggerData *trigdata, bool is_no_action)
+{
 	RI_ConstraintInfo riinfo;
 	Relation	fk_rel;
 	Relation	pk_rel;
@@ -683,11 +689,6 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 	RI_QueryKey qkey;
 	SPIPlanPtr	qplan;
 	int			i;
-
-	/*
-	 * Check that this is a valid trigger call on the right time and event.
-	 */
-	ri_CheckTrigger(fcinfo, "RI_FKey_noaction_del", RI_TRIGTYPE_DELETE);
 
 	/*
 	 * Get arguments.
@@ -711,23 +712,13 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
 
-	if (ri_Check_Pk_Match(pk_rel, fk_rel, old_row, &riinfo))
-	{
-		/*
-		 * There's either another row, or no row could match this one.  In
-		 * either case, we don't need to do the check.
-		 */
-		heap_close(fk_rel, RowShareLock);
-		return PointerGetDatum(NULL);
-	}
-
 	switch (riinfo.confmatchtype)
 	{
 			/* ----------
 			 * SQL:2008 15.17 <Execution of referential actions>
 			 *	General rules 9) a) iv):
 			 *		MATCH SIMPLE/FULL
-			 *			... ON DELETE NO ACTION
+			 *			... ON DELETE RESTRICT
 			 * ----------
 			 */
 		case FKCONSTR_MATCH_SIMPLE:
@@ -752,13 +743,26 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 					break;
 			}
 
+			/*
+			 * If another PK row now exists providing the old key values,
+			 * we should not do anything.  However, this check should only be
+			 * made in the NO ACTION case; in RESTRICT cases we don't wish to
+			 * allow another row to be substituted.
+			 */
+			if (is_no_action &&
+				ri_Check_Pk_Match(pk_rel, fk_rel, old_row, &riinfo))
+			{
+				heap_close(fk_rel, RowShareLock);
+				return PointerGetDatum(NULL);
+			}
+
 			if (SPI_connect() != SPI_OK_CONNECT)
 				elog(ERROR, "SPI_connect failed");
 
 			/*
 			 * Fetch or prepare a saved plan for the restrict delete lookup
 			 */
-			ri_BuildQueryKey(&qkey, &riinfo, RI_PLAN_NOACTION_DEL_CHECKREF);
+			ri_BuildQueryKey(&qkey, &riinfo, RI_PLAN_RESTRICT_DEL_CHECKREF);
 
 			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 			{
@@ -850,7 +854,51 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 Datum
 RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 {
-	TriggerData *trigdata = (TriggerData *) fcinfo->context;
+	/*
+	 * Check that this is a valid trigger call on the right time and event.
+	 */
+	ri_CheckTrigger(fcinfo, "RI_FKey_noaction_upd", RI_TRIGTYPE_UPDATE);
+
+	/*
+	 * Share code with RESTRICT case.
+	 */
+	return ri_restrict_upd((TriggerData *) fcinfo->context, true);
+}
+
+/* ----------
+ * RI_FKey_restrict_upd -
+ *
+ *	Restrict update of PK to rows unreferenced by foreign key.
+ *
+ *	The SQL standard intends that this referential action occur exactly when
+ *	the update is performed, rather than after.  This appears to be
+ *	the only difference between "NO ACTION" and "RESTRICT".  In Postgres
+ *	we still implement this as an AFTER trigger, but it's non-deferrable.
+ * ----------
+ */
+Datum
+RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
+{
+	/*
+	 * Check that this is a valid trigger call on the right time and event.
+	 */
+	ri_CheckTrigger(fcinfo, "RI_FKey_restrict_upd", RI_TRIGTYPE_UPDATE);
+
+	/*
+	 * Share code with NO ACTION case.
+	 */
+	return ri_restrict_upd((TriggerData *) fcinfo->context, false);
+}
+
+/* ----------
+ * ri_restrict_upd -
+ *
+ *	Common code for ON UPDATE RESTRICT and ON UPDATE NO ACTION.
+ * ----------
+ */
+static Datum
+ri_restrict_upd(TriggerData *trigdata, bool is_no_action)
+{
 	RI_ConstraintInfo riinfo;
 	Relation	fk_rel;
 	Relation	pk_rel;
@@ -859,11 +907,6 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 	RI_QueryKey qkey;
 	SPIPlanPtr	qplan;
 	int			i;
-
-	/*
-	 * Check that this is a valid trigger call on the right time and event.
-	 */
-	ri_CheckTrigger(fcinfo, "RI_FKey_noaction_upd", RI_TRIGTYPE_UPDATE);
 
 	/*
 	 * Get arguments.
@@ -895,7 +938,7 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 			 * SQL:2008 15.17 <Execution of referential actions>
 			 *	General rules 10) a) iv):
 			 *		MATCH SIMPLE/FULL
-			 *			... ON UPDATE NO ACTION
+			 *			... ON UPDATE RESTRICT
 			 * ----------
 			 */
 		case FKCONSTR_MATCH_SIMPLE:
@@ -929,12 +972,15 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 				return PointerGetDatum(NULL);
 			}
 
-			if (ri_Check_Pk_Match(pk_rel, fk_rel, old_row, &riinfo))
+			/*
+			 * If another PK row now exists providing the old key values,
+			 * we should not do anything.  However, this check should only be
+			 * made in the NO ACTION case; in RESTRICT cases we don't wish to
+			 * allow another row to be substituted.
+			 */
+			if (is_no_action &&
+				ri_Check_Pk_Match(pk_rel, fk_rel, old_row, &riinfo))
 			{
-				/*
-				 * There's either another row, or no row could match this one.
-				 * In either case, we don't need to do the check.
-				 */
 				heap_close(fk_rel, RowShareLock);
 				return PointerGetDatum(NULL);
 			}
@@ -943,9 +989,9 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 				elog(ERROR, "SPI_connect failed");
 
 			/*
-			 * Fetch or prepare a saved plan for the noaction update lookup
+			 * Fetch or prepare a saved plan for the restrict update lookup
 			 */
-			ri_BuildQueryKey(&qkey, &riinfo, RI_PLAN_NOACTION_UPD_CHECKREF);
+			ri_BuildQueryKey(&qkey, &riinfo, RI_PLAN_RESTRICT_UPD_CHECKREF);
 
 			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 			{
@@ -1007,7 +1053,7 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 			return PointerGetDatum(NULL);
 
 			/*
-			 * Handle MATCH PARTIAL noaction update.
+			 * Handle MATCH PARTIAL restrict update.
 			 */
 		case FKCONSTR_MATCH_PARTIAL:
 			ereport(ERROR,
@@ -1357,354 +1403,6 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 
 			/*
 			 * Handle MATCH PARTIAL cascade update.
-			 */
-		case FKCONSTR_MATCH_PARTIAL:
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("MATCH PARTIAL not yet implemented")));
-			return PointerGetDatum(NULL);
-
-		default:
-			elog(ERROR, "unrecognized confmatchtype: %d",
-				 riinfo.confmatchtype);
-			break;
-	}
-
-	/* Never reached */
-	return PointerGetDatum(NULL);
-}
-
-
-/* ----------
- * RI_FKey_restrict_del -
- *
- *	Restrict delete from PK table to rows unreferenced by foreign key.
- *
- *	The SQL standard intends that this referential action occur BEFORE
- *	the delete is performed, rather than after.  This appears to be
- *	the only difference between "NO ACTION" and "RESTRICT".  In Postgres
- *	we still implement this as an AFTER trigger, but it's non-deferrable.
- * ----------
- */
-Datum
-RI_FKey_restrict_del(PG_FUNCTION_ARGS)
-{
-	TriggerData *trigdata = (TriggerData *) fcinfo->context;
-	RI_ConstraintInfo riinfo;
-	Relation	fk_rel;
-	Relation	pk_rel;
-	HeapTuple	old_row;
-	RI_QueryKey qkey;
-	SPIPlanPtr	qplan;
-	int			i;
-
-	/*
-	 * Check that this is a valid trigger call on the right time and event.
-	 */
-	ri_CheckTrigger(fcinfo, "RI_FKey_restrict_del", RI_TRIGTYPE_DELETE);
-
-	/*
-	 * Get arguments.
-	 */
-	ri_FetchConstraintInfo(&riinfo,
-						   trigdata->tg_trigger, trigdata->tg_relation, true);
-
-	/*
-	 * Nothing to do if no column names to compare given
-	 */
-	if (riinfo.nkeys == 0)
-		return PointerGetDatum(NULL);
-
-	/*
-	 * Get the relation descriptors of the FK and PK tables and the old tuple.
-	 *
-	 * fk_rel is opened in RowShareLock mode since that's what our eventual
-	 * SELECT FOR SHARE will get on it.
-	 */
-	fk_rel = heap_open(riinfo.fk_relid, RowShareLock);
-	pk_rel = trigdata->tg_relation;
-	old_row = trigdata->tg_trigtuple;
-
-	switch (riinfo.confmatchtype)
-	{
-			/* ----------
-			 * SQL:2008 15.17 <Execution of referential actions>
-			 *	General rules 9) a) iv):
-			 *		MATCH SIMPLE/FULL
-			 *			... ON DELETE RESTRICT
-			 * ----------
-			 */
-		case FKCONSTR_MATCH_SIMPLE:
-		case FKCONSTR_MATCH_FULL:
-			switch (ri_NullCheck(old_row, &riinfo, true))
-			{
-				case RI_KEYS_ALL_NULL:
-				case RI_KEYS_SOME_NULL:
-
-					/*
-					 * No check needed - there cannot be any reference to old
-					 * key if it contains a NULL
-					 */
-					heap_close(fk_rel, RowShareLock);
-					return PointerGetDatum(NULL);
-
-				case RI_KEYS_NONE_NULL:
-
-					/*
-					 * Have a full qualified key - continue below
-					 */
-					break;
-			}
-
-			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(ERROR, "SPI_connect failed");
-
-			/*
-			 * Fetch or prepare a saved plan for the restrict delete lookup
-			 */
-			ri_BuildQueryKey(&qkey, &riinfo, RI_PLAN_RESTRICT_DEL_CHECKREF);
-
-			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
-			{
-				StringInfoData querybuf;
-				char		fkrelname[MAX_QUOTED_REL_NAME_LEN];
-				char		attname[MAX_QUOTED_NAME_LEN];
-				char		paramname[16];
-				const char *querysep;
-				Oid			queryoids[RI_MAX_NUMKEYS];
-
-				/* ----------
-				 * The query string built is
-				 *	SELECT 1 FROM ONLY <fktable> WHERE $1 = fkatt1 [AND ...]
-				 * The type id's for the $ parameters are those of the
-				 * corresponding PK attributes.
-				 * ----------
-				 */
-				initStringInfo(&querybuf);
-				quoteRelationName(fkrelname, fk_rel);
-				appendStringInfo(&querybuf, "SELECT 1 FROM ONLY %s x",
-								 fkrelname);
-				querysep = "WHERE";
-				for (i = 0; i < riinfo.nkeys; i++)
-				{
-					Oid			pk_type = RIAttType(pk_rel, riinfo.pk_attnums[i]);
-					Oid			fk_type = RIAttType(fk_rel, riinfo.fk_attnums[i]);
-
-					quoteOneName(attname,
-								 RIAttName(fk_rel, riinfo.fk_attnums[i]));
-					sprintf(paramname, "$%d", i + 1);
-					ri_GenerateQual(&querybuf, querysep,
-									paramname, pk_type,
-									riinfo.pf_eq_oprs[i],
-									attname, fk_type);
-					querysep = "AND";
-					queryoids[i] = pk_type;
-				}
-				appendStringInfo(&querybuf, " FOR SHARE OF x");
-
-				/* Prepare and save the plan */
-				qplan = ri_PlanCheck(querybuf.data, riinfo.nkeys, queryoids,
-									 &qkey, fk_rel, pk_rel, true);
-			}
-
-			/*
-			 * We have a plan now. Run it to check for existing references.
-			 */
-			ri_PerformCheck(&riinfo, &qkey, qplan,
-							fk_rel, pk_rel,
-							old_row, NULL,
-							true,		/* must detect new rows */
-							SPI_OK_SELECT);
-
-			if (SPI_finish() != SPI_OK_FINISH)
-				elog(ERROR, "SPI_finish failed");
-
-			heap_close(fk_rel, RowShareLock);
-
-			return PointerGetDatum(NULL);
-
-			/*
-			 * Handle MATCH PARTIAL restrict delete.
-			 */
-		case FKCONSTR_MATCH_PARTIAL:
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("MATCH PARTIAL not yet implemented")));
-			return PointerGetDatum(NULL);
-
-		default:
-			elog(ERROR, "unrecognized confmatchtype: %d",
-				 riinfo.confmatchtype);
-			break;
-	}
-
-	/* Never reached */
-	return PointerGetDatum(NULL);
-}
-
-
-/* ----------
- * RI_FKey_restrict_upd -
- *
- *	Restrict update of PK to rows unreferenced by foreign key.
- *
- *	The SQL standard intends that this referential action occur BEFORE
- *	the update is performed, rather than after.  This appears to be
- *	the only difference between "NO ACTION" and "RESTRICT".  In Postgres
- *	we still implement this as an AFTER trigger, but it's non-deferrable.
- * ----------
- */
-Datum
-RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
-{
-	TriggerData *trigdata = (TriggerData *) fcinfo->context;
-	RI_ConstraintInfo riinfo;
-	Relation	fk_rel;
-	Relation	pk_rel;
-	HeapTuple	new_row;
-	HeapTuple	old_row;
-	RI_QueryKey qkey;
-	SPIPlanPtr	qplan;
-	int			i;
-
-	/*
-	 * Check that this is a valid trigger call on the right time and event.
-	 */
-	ri_CheckTrigger(fcinfo, "RI_FKey_restrict_upd", RI_TRIGTYPE_UPDATE);
-
-	/*
-	 * Get arguments.
-	 */
-	ri_FetchConstraintInfo(&riinfo,
-						   trigdata->tg_trigger, trigdata->tg_relation, true);
-
-	/*
-	 * Nothing to do if no column names to compare given
-	 */
-	if (riinfo.nkeys == 0)
-		return PointerGetDatum(NULL);
-
-	/*
-	 * Get the relation descriptors of the FK and PK tables and the new and
-	 * old tuple.
-	 *
-	 * fk_rel is opened in RowShareLock mode since that's what our eventual
-	 * SELECT FOR SHARE will get on it.
-	 */
-	fk_rel = heap_open(riinfo.fk_relid, RowShareLock);
-	pk_rel = trigdata->tg_relation;
-	new_row = trigdata->tg_newtuple;
-	old_row = trigdata->tg_trigtuple;
-
-	switch (riinfo.confmatchtype)
-	{
-			/* ----------
-			 * SQL:2008 15.17 <Execution of referential actions>
-			 *	General rules 10) a) iv):
-			 *		MATCH SIMPLE/FULL
-			 *			... ON UPDATE RESTRICT
-			 * ----------
-			 */
-		case FKCONSTR_MATCH_SIMPLE:
-		case FKCONSTR_MATCH_FULL:
-			switch (ri_NullCheck(old_row, &riinfo, true))
-			{
-				case RI_KEYS_ALL_NULL:
-				case RI_KEYS_SOME_NULL:
-
-					/*
-					 * No check needed - there cannot be any reference to old
-					 * key if it contains a NULL
-					 */
-					heap_close(fk_rel, RowShareLock);
-					return PointerGetDatum(NULL);
-
-				case RI_KEYS_NONE_NULL:
-
-					/*
-					 * Have a full qualified key - continue below
-					 */
-					break;
-			}
-
-			/*
-			 * No need to check anything if old and new keys are equal
-			 */
-			if (ri_KeysEqual(pk_rel, old_row, new_row, &riinfo, true))
-			{
-				heap_close(fk_rel, RowShareLock);
-				return PointerGetDatum(NULL);
-			}
-
-			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(ERROR, "SPI_connect failed");
-
-			/*
-			 * Fetch or prepare a saved plan for the restrict update lookup
-			 */
-			ri_BuildQueryKey(&qkey, &riinfo, RI_PLAN_RESTRICT_UPD_CHECKREF);
-
-			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
-			{
-				StringInfoData querybuf;
-				char		fkrelname[MAX_QUOTED_REL_NAME_LEN];
-				char		attname[MAX_QUOTED_NAME_LEN];
-				char		paramname[16];
-				const char *querysep;
-				Oid			queryoids[RI_MAX_NUMKEYS];
-
-				/* ----------
-				 * The query string built is
-				 *	SELECT 1 FROM ONLY <fktable> WHERE $1 = fkatt1 [AND ...]
-				 * The type id's for the $ parameters are those of the
-				 * corresponding PK attributes.
-				 * ----------
-				 */
-				initStringInfo(&querybuf);
-				quoteRelationName(fkrelname, fk_rel);
-				appendStringInfo(&querybuf, "SELECT 1 FROM ONLY %s x",
-								 fkrelname);
-				querysep = "WHERE";
-				for (i = 0; i < riinfo.nkeys; i++)
-				{
-					Oid			pk_type = RIAttType(pk_rel, riinfo.pk_attnums[i]);
-					Oid			fk_type = RIAttType(fk_rel, riinfo.fk_attnums[i]);
-
-					quoteOneName(attname,
-								 RIAttName(fk_rel, riinfo.fk_attnums[i]));
-					sprintf(paramname, "$%d", i + 1);
-					ri_GenerateQual(&querybuf, querysep,
-									paramname, pk_type,
-									riinfo.pf_eq_oprs[i],
-									attname, fk_type);
-					querysep = "AND";
-					queryoids[i] = pk_type;
-				}
-				appendStringInfo(&querybuf, " FOR SHARE OF x");
-
-				/* Prepare and save the plan */
-				qplan = ri_PlanCheck(querybuf.data, riinfo.nkeys, queryoids,
-									 &qkey, fk_rel, pk_rel, true);
-			}
-
-			/*
-			 * We have a plan now. Run it to check for existing references.
-			 */
-			ri_PerformCheck(&riinfo, &qkey, qplan,
-							fk_rel, pk_rel,
-							old_row, NULL,
-							true,		/* must detect new rows */
-							SPI_OK_SELECT);
-
-			if (SPI_finish() != SPI_OK_FINISH)
-				elog(ERROR, "SPI_finish failed");
-
-			heap_close(fk_rel, RowShareLock);
-
-			return PointerGetDatum(NULL);
-
-			/*
-			 * Handle MATCH PARTIAL restrict update.
 			 */
 		case FKCONSTR_MATCH_PARTIAL:
 			ereport(ERROR,
@@ -3042,14 +2740,6 @@ ri_CheckTrigger(FunctionCallInfo fcinfo, const char *funcname, int tgkind)
 				ereport(ERROR,
 						(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
 						 errmsg("function \"%s\" must be fired for UPDATE", funcname)));
-			break;
-		case RI_TRIGTYPE_INUP:
-			if (!TRIGGER_FIRED_BY_INSERT(trigdata->tg_event) &&
-				!TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
-				ereport(ERROR,
-						(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-				 errmsg("function \"%s\" must be fired for INSERT or UPDATE",
-						funcname)));
 			break;
 		case RI_TRIGTYPE_DELETE:
 			if (!TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
