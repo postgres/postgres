@@ -120,6 +120,11 @@ int			scale = 1;
 int			fillfactor = 100;
 
 /*
+ * create foreign key constraints on the tables?
+ */
+int			foreign_keys = 0;
+
+/*
  * use unlogged tables?
  */
 int			unlogged_tables = 0;
@@ -343,6 +348,8 @@ usage(const char *progname)
 		   "  -i           invokes initialization mode\n"
 		   "  -F NUM       fill factor\n"
 		   "  -s NUM       scaling factor\n"
+		   "  --foreign-keys\n"
+		   "               create foreign key constraints between tables\n"
 		   "  --index-tablespace=TABLESPACE\n"
 		   "               create indexes in the specified tablespace\n"
 		   "  --tablespace=TABLESPACE\n"
@@ -1275,9 +1282,9 @@ init(void)
 	};
 	struct ddlinfo DDLs[] = {
 		{
-			"pgbench_branches",
-			"bid int not null,bbalance int,filler char(88)",
-			1
+			"pgbench_history",
+			"tid int,bid int,aid int,delta int,mtime timestamp,filler char(22)",
+			0
 		},
 		{
 			"pgbench_tellers",
@@ -1290,15 +1297,22 @@ init(void)
 			1
 		},
 		{
-			"pgbench_history",
-			"tid int,bid int,aid int,delta int,mtime timestamp,filler char(22)",
-			0
+			"pgbench_branches",
+			"bid int not null,bbalance int,filler char(88)",
+			1
 		}
 	};
 	static char *DDLAFTERs[] = {
 		"alter table pgbench_branches add primary key (bid)",
 		"alter table pgbench_tellers add primary key (tid)",
 		"alter table pgbench_accounts add primary key (aid)"
+	};
+	static char *DDLKEYs[] = {
+		"alter table pgbench_tellers add foreign key (bid) references pgbench_branches",
+		"alter table pgbench_accounts add foreign key (bid) references pgbench_branches",
+		"alter table pgbench_history add foreign key (bid) references pgbench_branches",
+		"alter table pgbench_history add foreign key (tid) references pgbench_tellers",
+		"alter table pgbench_history add foreign key (aid) references pgbench_accounts"
 	};
 
 	PGconn	   *con;
@@ -1403,7 +1417,7 @@ init(void)
 	/*
 	 * create indexes
 	 */
-	fprintf(stderr, "set primary key...\n");
+	fprintf(stderr, "set primary keys...\n");
 	for (i = 0; i < lengthof(DDLAFTERs); i++)
 	{
 		char		buffer[256];
@@ -1422,6 +1436,18 @@ init(void)
 		}
 
 		executeStatement(con, buffer);
+	}
+
+	/*
+	 * create foreign keys
+	 */
+	if (foreign_keys)
+	{
+		fprintf(stderr, "set foreign keys...\n");
+		for (i = 0; i < lengthof(DDLKEYs); i++)
+		{
+			executeStatement(con, DDLKEYs[i]);
+		}
 	}
 
 	/* vacuum */
@@ -1864,6 +1890,7 @@ main(int argc, char **argv)
 	int			i;
 
 	static struct option long_options[] = {
+		{"foreign-keys", no_argument, &foreign_keys, 1},
 		{"index-tablespace", required_argument, NULL, 3},
 		{"tablespace", required_argument, NULL, 2},
 		{"unlogged-tables", no_argument, &unlogged_tables, 1},

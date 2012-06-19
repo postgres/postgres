@@ -181,6 +181,15 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
+      <term><option>--foreign-keys</option></term>
+      <listitem>
+       <para>
+        Create foreign key constraints between the standard tables.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--index-tablespace=<replaceable>index_tablespace</replaceable></option></term>
       <listitem>
        <para>
