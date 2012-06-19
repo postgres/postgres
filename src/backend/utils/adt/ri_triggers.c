@@ -2227,12 +2227,16 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 			heap_close(fk_rel, RowExclusiveLock);
 
 			/*
-			 * In the case we delete the row who's key is equal to the default
-			 * values AND a referencing row in the foreign key table exists,
-			 * we would just have updated it to the same values. We need to do
-			 * another lookup now and in case a reference exists, abort the
-			 * operation. That is already implemented in the NO ACTION
-			 * trigger.
+			 * If we just deleted the PK row whose key was equal to the FK
+			 * columns' default values, and a referencing row exists in the FK
+			 * table, we would have updated that row to the same values it
+			 * already had --- and RI_FKey_keyequal_upd_fk would therefore
+			 * believe no check is necessary.  So we need to do another lookup
+			 * now and in case a reference still exists, abort the operation.
+			 * That is already implemented in the NO ACTION trigger, so just
+			 * run it.  (This recheck is only needed in the SET DEFAULT case,
+			 * since CASCADE would remove such rows, while SET NULL is certain
+			 * to result in rows that satisfy the FK constraint.)
 			 */
 			RI_FKey_noaction_del(fcinfo);
 
@@ -2420,12 +2424,16 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 			heap_close(fk_rel, RowExclusiveLock);
 
 			/*
-			 * In the case we updated the row who's key was equal to the
-			 * default values AND a referencing row in the foreign key table
-			 * exists, we would just have updated it to the same values. We
-			 * need to do another lookup now and in case a reference exists,
-			 * abort the operation. That is already implemented in the NO
-			 * ACTION trigger.
+			 * If we just updated the PK row whose key was equal to the FK
+			 * columns' default values, and a referencing row exists in the FK
+			 * table, we would have updated that row to the same values it
+			 * already had --- and RI_FKey_keyequal_upd_fk would therefore
+			 * believe no check is necessary.  So we need to do another lookup
+			 * now and in case a reference still exists, abort the operation.
+			 * That is already implemented in the NO ACTION trigger, so just
+			 * run it.  (This recheck is only needed in the SET DEFAULT case,
+			 * since CASCADE must change the FK key values, while SET NULL is
+			 * certain to result in rows that satisfy the FK constraint.)
 			 */
 			RI_FKey_noaction_upd(fcinfo);
 
