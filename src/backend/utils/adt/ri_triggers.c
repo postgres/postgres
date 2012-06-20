@@ -1928,7 +1928,7 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 			 * If we just deleted the PK row whose key was equal to the FK
 			 * columns' default values, and a referencing row exists in the FK
 			 * table, we would have updated that row to the same values it
-			 * already had --- and RI_FKey_keyequal_upd_fk would therefore
+			 * already had --- and RI_FKey_fk_upd_check_required would hence
 			 * believe no check is necessary.  So we need to do another lookup
 			 * now and in case a reference still exists, abort the operation.
 			 * That is already implemented in the NO ACTION trigger, so just
@@ -2125,7 +2125,7 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 			 * If we just updated the PK row whose key was equal to the FK
 			 * columns' default values, and a referencing row exists in the FK
 			 * table, we would have updated that row to the same values it
-			 * already had --- and RI_FKey_keyequal_upd_fk would therefore
+			 * already had --- and RI_FKey_fk_upd_check_required would hence
 			 * believe no check is necessary.  So we need to do another lookup
 			 * now and in case a reference still exists, abort the operation.
 			 * That is already implemented in the NO ACTION trigger, so just
@@ -2158,16 +2158,18 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 
 
 /* ----------
- * RI_FKey_keyequal_upd_pk -
+ * RI_FKey_pk_upd_check_required -
  *
- *	Check if we have a key change on an update to a PK relation. This is
- *	used by the AFTER trigger queue manager to see if it can skip queuing
- *	an instance of an RI trigger.
+ *	Check if we really need to fire the RI trigger for an update to a PK
+ *	relation.  This is called by the AFTER trigger queue manager to see if
+ *	it can skip queuing an instance of an RI trigger.  Returns TRUE if the
+ *	trigger must be fired, FALSE if we can prove the constraint will still
+ *	be satisfied.
  * ----------
  */
 bool
-RI_FKey_keyequal_upd_pk(Trigger *trigger, Relation pk_rel,
-						HeapTuple old_row, HeapTuple new_row)
+RI_FKey_pk_upd_check_required(Trigger *trigger, Relation pk_rel,
+							  HeapTuple old_row, HeapTuple new_row)
 {
 	RI_ConstraintInfo riinfo;
 
@@ -2177,19 +2179,32 @@ RI_FKey_keyequal_upd_pk(Trigger *trigger, Relation pk_rel,
 	ri_FetchConstraintInfo(&riinfo, trigger, pk_rel, true);
 
 	/*
-	 * Nothing to do if no column names to compare given
+	 * Nothing to do if no columns (satisfaction of such a constraint only
+	 * requires existence of a PK row, and this update won't change that).
 	 */
 	if (riinfo.nkeys == 0)
-		return true;
+		return false;
 
 	switch (riinfo.confmatchtype)
 	{
 		case FKCONSTR_MATCH_SIMPLE:
 		case FKCONSTR_MATCH_FULL:
-			/* Return true if keys are equal */
-			return ri_KeysEqual(pk_rel, old_row, new_row, &riinfo, true);
 
-			/* Handle MATCH PARTIAL set null delete. */
+			/*
+			 * If any old key value is NULL, the row could not have been
+			 * referenced by an FK row, so no check is needed.
+			 */
+			if (ri_NullCheck(old_row, &riinfo, true) != RI_KEYS_NONE_NULL)
+				return false;
+
+			/* If all old and new key values are equal, no check is needed */
+			if (ri_KeysEqual(pk_rel, old_row, new_row, &riinfo, true))
+				return false;
+
+			/* Else we need to fire the trigger. */
+			return true;
+
+			/* Handle MATCH PARTIAL check. */
 		case FKCONSTR_MATCH_PARTIAL:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -2207,16 +2222,18 @@ RI_FKey_keyequal_upd_pk(Trigger *trigger, Relation pk_rel,
 }
 
 /* ----------
- * RI_FKey_keyequal_upd_fk -
+ * RI_FKey_fk_upd_check_required -
  *
- *	Check if we have a key change on an update to an FK relation. This is
- *	used by the AFTER trigger queue manager to see if it can skip queuing
- *	an instance of an RI trigger.
+ *	Check if we really need to fire the RI trigger for an update to an FK
+ *	relation.  This is called by the AFTER trigger queue manager to see if
+ *	it can skip queuing an instance of an RI trigger.  Returns TRUE if the
+ *	trigger must be fired, FALSE if we can prove the constraint will still
+ *	be satisfied.
  * ----------
  */
 bool
-RI_FKey_keyequal_upd_fk(Trigger *trigger, Relation fk_rel,
-						HeapTuple old_row, HeapTuple new_row)
+RI_FKey_fk_upd_check_required(Trigger *trigger, Relation fk_rel,
+							  HeapTuple old_row, HeapTuple new_row)
 {
 	RI_ConstraintInfo riinfo;
 
@@ -2226,19 +2243,78 @@ RI_FKey_keyequal_upd_fk(Trigger *trigger, Relation fk_rel,
 	ri_FetchConstraintInfo(&riinfo, trigger, fk_rel, false);
 
 	/*
-	 * Nothing to do if no column names to compare given
+	 * Nothing to do if no columns (satisfaction of such a constraint only
+	 * requires existence of a PK row, and this update won't change that).
 	 */
 	if (riinfo.nkeys == 0)
-		return true;
+		return false;
 
 	switch (riinfo.confmatchtype)
 	{
 		case FKCONSTR_MATCH_SIMPLE:
-		case FKCONSTR_MATCH_FULL:
-			/* Return true if keys are equal */
-			return ri_KeysEqual(fk_rel, old_row, new_row, &riinfo, false);
+			/*
+			 * If any new key value is NULL, the row must satisfy the
+			 * constraint, so no check is needed.
+			 */
+			if (ri_NullCheck(new_row, &riinfo, false) != RI_KEYS_NONE_NULL)
+				return false;
 
-			/* Handle MATCH PARTIAL set null delete. */
+			/*
+			 * If the original row was inserted by our own transaction, we
+			 * must fire the trigger whether or not the keys are equal.  This
+			 * is because our UPDATE will invalidate the INSERT so that the
+			 * INSERT RI trigger will not do anything; so we had better do the
+			 * UPDATE check.  (We could skip this if we knew the INSERT
+			 * trigger already fired, but there is no easy way to know that.)
+			 */
+			if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmin(old_row->t_data)))
+				return true;
+
+			/* If all old and new key values are equal, no check is needed */
+			if (ri_KeysEqual(fk_rel, old_row, new_row, &riinfo, false))
+				return false;
+
+			/* Else we need to fire the trigger. */
+			return true;
+
+		case FKCONSTR_MATCH_FULL:
+			/*
+			 * If all new key values are NULL, the row must satisfy the
+			 * constraint, so no check is needed.  On the other hand, if only
+			 * some of them are NULL, the row must fail the constraint.  We
+			 * must not throw error here, because the row might get
+			 * invalidated before the constraint is to be checked, but we
+			 * should queue the event to apply the check later.
+			 */
+			switch (ri_NullCheck(new_row, &riinfo, false))
+			{
+				case RI_KEYS_ALL_NULL:
+					return false;
+				case RI_KEYS_SOME_NULL:
+					return true;
+				case RI_KEYS_NONE_NULL:
+					break;		/* continue with the check */
+			}
+
+			/*
+			 * If the original row was inserted by our own transaction, we
+			 * must fire the trigger whether or not the keys are equal.  This
+			 * is because our UPDATE will invalidate the INSERT so that the
+			 * INSERT RI trigger will not do anything; so we had better do the
+			 * UPDATE check.  (We could skip this if we knew the INSERT
+			 * trigger already fired, but there is no easy way to know that.)
+			 */
+			if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmin(old_row->t_data)))
+				return true;
+
+			/* If all old and new key values are equal, no check is needed */
+			if (ri_KeysEqual(fk_rel, old_row, new_row, &riinfo, false))
+				return false;
+
+			/* Else we need to fire the trigger. */
+			return true;
+
+			/* Handle MATCH PARTIAL check. */
 		case FKCONSTR_MATCH_PARTIAL:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -3376,6 +3452,11 @@ ri_HashPreparedPlan(RI_QueryKey *key, SPIPlanPtr plan)
  * ri_KeysEqual -
  *
  *	Check if all key values in OLD and NEW are equal.
+ *
+ *	Note: at some point we might wish to redefine this as checking for
+ *	"IS NOT DISTINCT" rather than "=", that is, allow two nulls to be
+ *	considered equal.  Currently there is no need since all callers have
+ *	previously found at least one of the rows to contain no nulls.
  * ----------
  */
 static bool
