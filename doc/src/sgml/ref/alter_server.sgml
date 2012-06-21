@@ -21,10 +21,10 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER SERVER <replaceable class="parameter">server_name</replaceable> [ VERSION '<replaceable class="parameter">new_version</replaceable>' ]
+ALTER SERVER <replaceable class="parameter">name</replaceable> [ VERSION '<replaceable class="parameter">new_version</replaceable>' ]
     [ OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ] ) ]
-ALTER SERVER <replaceable class="PARAMETER">server_name</replaceable> OWNER TO <replaceable>new_owner</replaceable>
-ALTER SERVER <replaceable class="PARAMETER">server_name</replaceable> RENAME TO <replaceable>new_name</replaceable>
+ALTER SERVER <replaceable class="PARAMETER">name</replaceable> OWNER TO <replaceable>new_owner</replaceable>
+ALTER SERVER <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -53,7 +53,7 @@ ALTER SERVER <replaceable class="PARAMETER">server_name</replaceable> RENAME TO 
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="parameter">server_name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name of an existing server.

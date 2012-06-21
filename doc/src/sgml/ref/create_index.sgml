@@ -21,10 +21,10 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ <replaceable class="parameter">name</replaceable> ] ON <replaceable class="parameter">table</replaceable> [ USING <replaceable class="parameter">method</replaceable> ]
-    ( { <replaceable class="parameter">column</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ COLLATE <replaceable class="parameter">collation</replaceable> ] [ <replaceable class="parameter">opclass</replaceable> ] [ ASC | DESC ] [ NULLS { FIRST | LAST } ] [, ...] )
+CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ <replaceable class="parameter">name</replaceable> ] ON <replaceable class="parameter">table_name</replaceable> [ USING <replaceable class="parameter">method</replaceable> ]
+    ( { <replaceable class="parameter">column_name</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ COLLATE <replaceable class="parameter">collation</replaceable> ] [ <replaceable class="parameter">opclass</replaceable> ] [ ASC | DESC ] [ NULLS { FIRST | LAST } ] [, ...] )
     [ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] ) ]
-    [ TABLESPACE <replaceable class="parameter">tablespace</replaceable> ]
+    [ TABLESPACE <replaceable class="parameter">tablespace_name</replaceable> ]
     [ WHERE <replaceable class="parameter">predicate</replaceable> ]
 </synopsis>
  </refsynopsisdiv>
@@ -140,7 +140,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ <replaceable class="parameter">name</
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="parameter">table</replaceable></term>
+      <term><replaceable class="parameter">table_name</replaceable></term>
       <listitem>
        <para>
         The name (possibly schema-qualified) of the table to be indexed.
@@ -161,7 +161,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ <replaceable class="parameter">name</
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="parameter">column</replaceable></term>
+      <term><replaceable class="parameter">column_name</replaceable></term>
       <listitem>
        <para>
         The name of a column of the table.
@@ -253,7 +253,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ <replaceable class="parameter">name</
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="parameter">tablespace</replaceable></term>
+      <term><replaceable class="parameter">tablespace_name</replaceable></term>
       <listitem>
        <para>
         The tablespace in which to create the index.  If not specified,

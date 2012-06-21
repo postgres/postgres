@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) ] ]
+ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table_name</replaceable> [ ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) ] ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -59,7 +59,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ ( <re
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">table</replaceable></term>
+    <term><replaceable class="PARAMETER">table_name</replaceable></term>
     <listitem>
      <para>
       The name (possibly schema-qualified) of a specific table to
@@ -70,7 +70,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ ( <re
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">column</replaceable></term>
+    <term><replaceable class="PARAMETER">column_name</replaceable></term>
     <listitem>
      <para>
       The name of a specific column to analyze. Defaults to all columns.

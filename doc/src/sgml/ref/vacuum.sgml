@@ -21,9 +21,9 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-VACUUM [ ( { FULL | FREEZE | VERBOSE | ANALYZE } [, ...] ) ] [ <replaceable class="PARAMETER">table</replaceable> [ (<replaceable class="PARAMETER">column</replaceable> [, ...] ) ] ]
-VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> ]
-VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">table</replaceable> [ (<replaceable class="PARAMETER">column</replaceable> [, ...] ) ] ]
+VACUUM [ ( { FULL | FREEZE | VERBOSE | ANALYZE } [, ...] ) ] [ <replaceable class="PARAMETER">table_name</replaceable> [ (<replaceable class="PARAMETER">column_name</replaceable> [, ...] ) ] ]
+VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ <replaceable class="PARAMETER">table_name</replaceable> ]
+VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">table_name</replaceable> [ (<replaceable class="PARAMETER">column_name</replaceable> [, ...] ) ] ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -127,7 +127,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">table</replaceable></term>
+    <term><replaceable class="PARAMETER">table_name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of a specific table to
@@ -137,7 +137,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">column</replaceable></term>
+    <term><replaceable class="PARAMETER">column_name</replaceable></term>
     <listitem>
      <para>
       The name of a specific column to analyze. Defaults to all columns.

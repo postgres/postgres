@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name</replaceable>
-    [ WITH ] [ SCHEMA <replaceable class="parameter">schema</replaceable> ]
+    [ WITH ] [ SCHEMA <replaceable class="parameter">schema_name</replaceable> ]
              [ VERSION <replaceable class="parameter">version</replaceable> ]
              [ FROM <replaceable class="parameter">old_version</replaceable> ]
 </synopsis>
@@ -85,7 +85,7 @@ CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="parameter">schema</replaceable></term>
+      <term><replaceable class="parameter">schema_name</replaceable></term>
       <listitem>
        <para>
         The name of the schema in which to install the extension's

@@ -28,7 +28,7 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [
     [ START [ WITH ] <replaceable class="parameter">start</replaceable> ]
     [ RESTART [ [ WITH ] <replaceable class="parameter">restart</replaceable> ] ]
     [ CACHE <replaceable class="parameter">cache</replaceable> ] [ [ NO ] CYCLE ]
-    [ OWNED BY { <replaceable class="parameter">table</replaceable>.<replaceable class="parameter">column</replaceable> | NONE } ]
+    [ OWNED BY { <replaceable class="parameter">table_name</replaceable>.<replaceable class="parameter">column_name</replaceable> | NONE } ]
 ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
 ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> RENAME TO <replaceable class="parameter">new_name</replaceable>
 ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> SET SCHEMA <replaceable class="parameter">new_schema</replaceable>
@@ -203,7 +203,7 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
      </varlistentry>
 
    <varlistentry>
-    <term><literal>OWNED BY</literal> <replaceable class="parameter">table</replaceable>.<replaceable class="parameter">column</replaceable></term>
+    <term><literal>OWNED BY</literal> <replaceable class="parameter">table_name</replaceable>.<replaceable class="parameter">column_name</replaceable></term>
     <term><literal>OWNED BY NONE</literal></term>
     <listitem>
      <para>

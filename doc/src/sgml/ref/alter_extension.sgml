@@ -23,10 +23,10 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER EXTENSION <replaceable class="PARAMETER">extension_name</replaceable> UPDATE [ TO <replaceable class="PARAMETER">new_version</replaceable> ]
-ALTER EXTENSION <replaceable class="PARAMETER">extension_name</replaceable> SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable>
-ALTER EXTENSION <replaceable class="PARAMETER">extension_name</replaceable> ADD <replaceable class="PARAMETER">member_object</replaceable>
-ALTER EXTENSION <replaceable class="PARAMETER">extension_name</replaceable> DROP <replaceable class="PARAMETER">member_object</replaceable>
+ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> UPDATE [ TO <replaceable class="PARAMETER">new_version</replaceable> ]
+ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable>
+ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> ADD <replaceable class="PARAMETER">member_object</replaceable>
+ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> DROP <replaceable class="PARAMETER">member_object</replaceable>
 
 <phrase>where <replaceable class="PARAMETER">member_object</replaceable> is:</phrase>
 
@@ -126,7 +126,7 @@ ALTER EXTENSION <replaceable class="PARAMETER">extension_name</replaceable> DROP
   <para>
    <variablelist>
     <varlistentry>
-     <term><replaceable class="PARAMETER">extension_name</replaceable></term>
+     <term><replaceable class="PARAMETER">name</replaceable></term>
      <listitem>
       <para>
        The name of an installed extension.

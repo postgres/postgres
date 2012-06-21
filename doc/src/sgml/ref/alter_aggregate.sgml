@@ -21,9 +21,9 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable> [ , ... ] ) RENAME TO <replaceable>new_name</replaceable>
-ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable> [ , ... ] ) OWNER TO <replaceable>new_owner</replaceable>
-ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable> [ , ... ] ) SET SCHEMA <replaceable>new_schema</replaceable>
+ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>argtype</replaceable> [ , ... ] ) RENAME TO <replaceable>new_name</replaceable>
+ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>argtype</replaceable> [ , ... ] ) OWNER TO <replaceable>new_owner</replaceable>
+ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>argtype</replaceable> [ , ... ] ) SET SCHEMA <replaceable>new_schema</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -62,7 +62,7 @@ ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>type</replaceable
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">type</replaceable></term>
+    <term><replaceable class="parameter">argtype</replaceable></term>
     <listitem>
      <para>
       An input data type on which the aggregate function operates.

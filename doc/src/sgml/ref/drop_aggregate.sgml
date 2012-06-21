@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP AGGREGATE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> ( <replaceable class="PARAMETER">type</replaceable> [ , ... ] ) [ CASCADE | RESTRICT ]
+DROP AGGREGATE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> ( <replaceable class="PARAMETER">argtype</replaceable> [ , ... ] ) [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -60,7 +60,7 @@ DROP AGGREGATE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> (
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">type</replaceable></term>
+    <term><replaceable class="parameter">argtype</replaceable></term>
     <listitem>
      <para>
       An input data type on which the aggregate function operates.

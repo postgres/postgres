@@ -30,8 +30,8 @@ REVOKE [ GRANT OPTION FOR ]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
-    { { SELECT | INSERT | UPDATE | REFERENCES } ( <replaceable class="PARAMETER">column</replaceable> [, ...] )
-    [, ...] | ALL [ PRIVILEGES ] ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) }
+    { { SELECT | INSERT | UPDATE | REFERENCES } ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] )
+    [, ...] | ALL [ PRIVILEGES ] ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) }
     ON [ TABLE ] <replaceable class="PARAMETER">table_name</replaceable> [, ...]
     FROM { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...]
     [ CASCADE | RESTRICT ]

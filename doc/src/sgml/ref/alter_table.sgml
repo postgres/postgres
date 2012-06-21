@@ -24,7 +24,7 @@ PostgreSQL documentation
 ALTER TABLE [ IF EXISTS ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
     <replaceable class="PARAMETER">action</replaceable> [, ... ]
 ALTER TABLE [ IF EXISTS ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
-    RENAME [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> TO <replaceable class="PARAMETER">new_column</replaceable>
+    RENAME [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> TO <replaceable class="PARAMETER">new_column_name</replaceable>
 ALTER TABLE [ IF EXISTS ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
     RENAME CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> TO <replaceable class="PARAMETER">new_constraint_name</replaceable>
 ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
@@ -34,16 +34,16 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
 
 <phrase>where <replaceable class="PARAMETER">action</replaceable> is one of:</phrase>
 
-    ADD [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ COLLATE <replaceable class="PARAMETER">collation</replaceable> ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
-    DROP [ COLUMN ] [ IF EXISTS ] <replaceable class="PARAMETER">column</replaceable> [ RESTRICT | CASCADE ]
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> [ SET DATA ] TYPE <replaceable class="PARAMETER">data_type</replaceable> [ COLLATE <replaceable class="PARAMETER">collation</replaceable> ] [ USING <replaceable class="PARAMETER">expression</replaceable> ]
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET DEFAULT <replaceable class="PARAMETER">expression</replaceable>
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> DROP DEFAULT
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> { SET | DROP } NOT NULL
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STATISTICS <replaceable class="PARAMETER">integer</replaceable>
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET ( <replaceable class="PARAMETER">attribute_option</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> RESET ( <replaceable class="PARAMETER">attribute_option</replaceable> [, ... ] )
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }
+    ADD [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ COLLATE <replaceable class="PARAMETER">collation</replaceable> ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
+    DROP [ COLUMN ] [ IF EXISTS ] <replaceable class="PARAMETER">column_name</replaceable> [ RESTRICT | CASCADE ]
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> [ SET DATA ] TYPE <replaceable class="PARAMETER">data_type</replaceable> [ COLLATE <replaceable class="PARAMETER">collation</replaceable> ] [ USING <replaceable class="PARAMETER">expression</replaceable> ]
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET DEFAULT <replaceable class="PARAMETER">expression</replaceable>
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> DROP DEFAULT
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> { SET | DROP } NOT NULL
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET STATISTICS <replaceable class="PARAMETER">integer</replaceable>
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET ( <replaceable class="PARAMETER">attribute_option</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> RESET ( <replaceable class="PARAMETER">attribute_option</replaceable> [, ... ] )
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }
     ADD <replaceable class="PARAMETER">table_constraint</replaceable> [ NOT VALID ]
     ADD <replaceable class="PARAMETER">table_constraint_using_index</replaceable>
     VALIDATE CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable>
@@ -634,7 +634,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">column</replaceable></term>
+      <term><replaceable class="PARAMETER">column_name</replaceable></term>
       <listitem>
        <para>
         Name of a new or existing column.
@@ -643,7 +643,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">new_column</replaceable></term>
+      <term><replaceable class="PARAMETER">new_column_name</replaceable></term>
       <listitem>
        <para>
         New name for an existing column.

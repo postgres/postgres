@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 [ WITH [ RECURSIVE ] <replaceable class="parameter">with_query</replaceable> [, ...] ]
-INSERT INTO <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) ]
+INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) ]
     { DEFAULT VALUES | VALUES ( { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...] ) [, ...] | <replaceable class="PARAMETER">query</replaceable> }
     [ RETURNING * | <replaceable class="parameter">output_expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] [, ...] ]
 </synopsis>
@@ -106,7 +106,7 @@ INSERT INTO <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable 
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">table</replaceable></term>
+    <term><replaceable class="PARAMETER">table_name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of an existing table.
@@ -115,10 +115,10 @@ INSERT INTO <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable 
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">column</replaceable></term>
+    <term><replaceable class="PARAMETER">column_name</replaceable></term>
     <listitem>
      <para>
-      The name of a column in <replaceable class="PARAMETER">table</replaceable>.
+      The name of a column in the table named by <replaceable class="PARAMETER">table_name</replaceable>.
       The column name can be qualified with a subfield name or array
       subscript, if needed.  (Inserting into only some fields of a
       composite column leaves the other fields null.)
@@ -139,8 +139,7 @@ INSERT INTO <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable 
     <term><replaceable class="PARAMETER">expression</replaceable></term>
     <listitem>
      <para>
-      An expression or value to assign to the corresponding <replaceable
-      class="PARAMETER">column</replaceable>.
+      An expression or value to assign to the corresponding column.
      </para>
     </listitem>
    </varlistentry>
@@ -149,7 +148,7 @@ INSERT INTO <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable 
     <term><literal>DEFAULT</literal></term>
     <listitem>
      <para>
-      The corresponding <replaceable>column</replaceable> will be filled with
+      The corresponding column will be filled with
       its default value.
      </para>
     </listitem>
@@ -173,7 +172,7 @@ INSERT INTO <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable 
      <para>
       An expression to be computed and returned by the <command>INSERT</>
       command after each row is inserted.  The expression can use any
-      column names of the <replaceable class="PARAMETER">table</replaceable>.
+      column names of the table named by <replaceable class="PARAMETER">table_name</replaceable>.
       Write <literal>*</> to return all columns of the inserted row(s).
      </para>
     </listitem>

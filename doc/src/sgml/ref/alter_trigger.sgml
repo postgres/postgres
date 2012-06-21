@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER TRIGGER <replaceable class="PARAMETER">name</replaceable> ON <replaceable class="PARAMETER">table</replaceable> RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
+ALTER TRIGGER <replaceable class="PARAMETER">name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable> RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -54,7 +54,7 @@ ALTER TRIGGER <replaceable class="PARAMETER">name</replaceable> ON <replaceable 
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">table</replaceable></term>
+    <term><replaceable class="PARAMETER">table_name</replaceable></term>
     <listitem>
      <para>
       The name of the table on which this trigger acts.

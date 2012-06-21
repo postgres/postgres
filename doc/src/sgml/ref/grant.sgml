@@ -27,8 +27,8 @@ GRANT { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }
          | ALL TABLES IN SCHEMA <replaceable class="PARAMETER">schema_name</replaceable> [, ...] }
     TO { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
-GRANT { { SELECT | INSERT | UPDATE | REFERENCES } ( <replaceable class="PARAMETER">column</replaceable> [, ...] )
-    [, ...] | ALL [ PRIVILEGES ] ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) }
+GRANT { { SELECT | INSERT | UPDATE | REFERENCES } ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] )
+    [, ...] | ALL [ PRIVILEGES ] ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) }
     ON [ TABLE ] <replaceable class="PARAMETER">table_name</replaceable> [, ...]
     TO { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 

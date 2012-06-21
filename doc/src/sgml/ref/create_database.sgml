@@ -27,7 +27,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
            [ ENCODING [=] <replaceable class="parameter">encoding</replaceable> ]
            [ LC_COLLATE [=] <replaceable class="parameter">lc_collate</replaceable> ]
            [ LC_CTYPE [=] <replaceable class="parameter">lc_ctype</replaceable> ]
-           [ TABLESPACE [=] <replaceable class="parameter">tablespace</replaceable> ]
+           [ TABLESPACE [=] <replaceable class="parameter">tablespace_name</replaceable> ]
            [ CONNECTION LIMIT [=] <replaceable class="parameter">connlimit</replaceable> ] ]
 </synopsis>
  </refsynopsisdiv>
@@ -139,7 +139,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
       </listitem>
      </varlistentry>
      <varlistentry>
-      <term><replaceable class="parameter">tablespace</replaceable></term>
+      <term><replaceable class="parameter">tablespace_name</replaceable></term>
       <listitem>
        <para>
         The name of the tablespace that will be associated with the

@@ -22,9 +22,9 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 [ WITH [ RECURSIVE ] <replaceable class="parameter">with_query</replaceable> [, ...] ]
-UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ] <replaceable class="parameter">alias</replaceable> ]
-    SET { <replaceable class="PARAMETER">column</replaceable> = { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } |
-          ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) = ( { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...] ) } [, ...]
+UPDATE [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ [ AS ] <replaceable class="parameter">alias</replaceable> ]
+    SET { <replaceable class="PARAMETER">column_name</replaceable> = { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } |
+          ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) = ( { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...] ) } [, ...]
     [ FROM <replaceable class="PARAMETER">from_list</replaceable> ]
     [ WHERE <replaceable class="PARAMETER">condition</replaceable> | WHERE CURRENT OF <replaceable class="PARAMETER">cursor_name</replaceable> ]
     [ RETURNING * | <replaceable class="parameter">output_expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] [, ...] ]
@@ -93,7 +93,7 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ] <rep
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">table</replaceable></term>
+    <term><replaceable class="PARAMETER">table_name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of the table to update.
@@ -115,11 +115,11 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ] <rep
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">column</replaceable></term>
+    <term><replaceable class="PARAMETER">column_name</replaceable></term>
     <listitem>
      <para>
-      The name of a column in <replaceable
-      class="PARAMETER">table</replaceable>.
+      The name of a column in the table named by <replaceable
+      class="PARAMETER">table_name</replaceable>.
       The column name can be qualified with a subfield name or array
       subscript, if needed.  Do not include the table's name in the
       specification of a target column &mdash; for example,
@@ -198,7 +198,7 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ] <rep
      <para>
       An expression to be computed and returned by the <command>UPDATE</>
       command after each row is updated.  The expression can use any
-      column names of the <replaceable class="PARAMETER">table</replaceable>
+      column names of the table named by <replaceable class="PARAMETER">table_name</replaceable>
       or table(s) listed in <literal>FROM</>.
       Write <literal>*</> to return all columns.
      </para>
