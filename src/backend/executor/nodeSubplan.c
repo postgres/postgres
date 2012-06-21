@@ -668,6 +668,7 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 	 * initialize my state
 	 */
 	sstate->curTuple = NULL;
+	sstate->curArray = PointerGetDatum(NULL);
 	sstate->projLeft = NULL;
 	sstate->projRight = NULL;
 	sstate->hashtable = NULL;
@@ -994,16 +995,23 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 		int			paramid = linitial_int(subplan->setParam);
 		ParamExecData *prm = &(econtext->ecxt_param_exec_vals[paramid]);
 
-		prm->execPlan = NULL;
-		/* We build the result in query context so it won't disappear */
+		/*
+		 * We build the result array in query context so it won't disappear;
+		 * to avoid leaking memory across repeated calls, we have to remember
+		 * the latest value, much as for curTuple above.
+		 */
+		if (node->curArray != PointerGetDatum(NULL))
+			pfree(DatumGetPointer(node->curArray));
 		if (astate != NULL)
-			prm->value = makeArrayResult(astate,
-										 econtext->ecxt_per_query_memory);
+			node->curArray = makeArrayResult(astate,
+											 econtext->ecxt_per_query_memory);
 		else
 		{
 			MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
-			prm->value = PointerGetDatum(construct_empty_array(subplan->firstColType));
+			node->curArray = PointerGetDatum(construct_empty_array(subplan->firstColType));
 		}
+		prm->execPlan = NULL;
+		prm->value = node->curArray;
 		prm->isnull = false;
 	}
 	else if (!found)
