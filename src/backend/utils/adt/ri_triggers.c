@@ -303,60 +303,6 @@ RI_FKey_check(TriggerData *trigdata)
 	fk_rel = trigdata->tg_relation;
 	pk_rel = heap_open(riinfo->pk_relid, RowShareLock);
 
-	/* ----------
-	 * SQL:2008 4.17.3 <Table constraints>
-	 *		If Rf and Rt are empty (no columns to compare given)
-	 *		constraint is true if 0 < (SELECT COUNT(*) FROM T)
-	 *
-	 *	Note: The special case that no columns are given cannot
-	 *		occur at present in Postgres (and is disallowed by the
-	 *		standard too); it's just there for future enhancements.
-	 * ----------
-	 */
-	if (riinfo->nkeys == 0)
-	{
-		if (SPI_connect() != SPI_OK_CONNECT)
-			elog(ERROR, "SPI_connect failed");
-
-		ri_BuildQueryKey(&qkey, riinfo, RI_PLAN_CHECK_LOOKUPPK);
-
-		if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
-		{
-			char		querystr[MAX_QUOTED_REL_NAME_LEN + 100];
-			char		pkrelname[MAX_QUOTED_REL_NAME_LEN];
-
-			/* ---------
-			 * The query string built is
-			 *	SELECT 1 FROM ONLY <pktable>
-			 * ----------
-			 */
-			quoteRelationName(pkrelname, pk_rel);
-			snprintf(querystr, sizeof(querystr),
-					 "SELECT 1 FROM ONLY %s x FOR SHARE OF x",
-					 pkrelname);
-
-			/* Prepare and save the plan */
-			qplan = ri_PlanCheck(querystr, 0, NULL,
-								 &qkey, fk_rel, pk_rel, true);
-		}
-
-		/*
-		 * Execute the plan
-		 */
-		ri_PerformCheck(riinfo, &qkey, qplan,
-						fk_rel, pk_rel,
-						NULL, NULL,
-						false,
-						SPI_OK_SELECT);
-
-		if (SPI_finish() != SPI_OK_FINISH)
-			elog(ERROR, "SPI_finish failed");
-
-		heap_close(pk_rel, RowShareLock);
-
-		return PointerGetDatum(NULL);
-	}
-
 	if (riinfo->confmatchtype == FKCONSTR_MATCH_PARTIAL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -705,12 +651,6 @@ ri_restrict_del(TriggerData *trigdata, bool is_no_action)
 									trigdata->tg_relation, true);
 
 	/*
-	 * Nothing to do if no column names to compare given
-	 */
-	if (riinfo->nkeys == 0)
-		return PointerGetDatum(NULL);
-
-	/*
 	 * Get the relation descriptors of the FK and PK tables and the old tuple.
 	 *
 	 * fk_rel is opened in RowShareLock mode since that's what our eventual
@@ -923,12 +863,6 @@ ri_restrict_upd(TriggerData *trigdata, bool is_no_action)
 									trigdata->tg_relation, true);
 
 	/*
-	 * Nothing to do if no column names to compare given
-	 */
-	if (riinfo->nkeys == 0)
-		return PointerGetDatum(NULL);
-
-	/*
 	 * Get the relation descriptors of the FK and PK tables and the new and
 	 * old tuple.
 	 *
@@ -1110,12 +1044,6 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 									trigdata->tg_relation, true);
 
 	/*
-	 * Nothing to do if no column names to compare given
-	 */
-	if (riinfo->nkeys == 0)
-		return PointerGetDatum(NULL);
-
-	/*
 	 * Get the relation descriptors of the FK and PK tables and the old tuple.
 	 *
 	 * fk_rel is opened in RowExclusiveLock mode since that's what our
@@ -1272,12 +1200,6 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 	 */
 	riinfo = ri_FetchConstraintInfo(trigdata->tg_trigger,
 									trigdata->tg_relation, true);
-
-	/*
-	 * Nothing to do if no column names to compare given
-	 */
-	if (riinfo->nkeys == 0)
-		return PointerGetDatum(NULL);
 
 	/*
 	 * Get the relation descriptors of the FK and PK tables and the new and
@@ -1459,12 +1381,6 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 									trigdata->tg_relation, true);
 
 	/*
-	 * Nothing to do if no column names to compare given
-	 */
-	if (riinfo->nkeys == 0)
-		return PointerGetDatum(NULL);
-
-	/*
 	 * Get the relation descriptors of the FK and PK tables and the old tuple.
 	 *
 	 * fk_rel is opened in RowExclusiveLock mode since that's what our
@@ -1629,12 +1545,6 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 	 */
 	riinfo = ri_FetchConstraintInfo(trigdata->tg_trigger,
 									trigdata->tg_relation, true);
-
-	/*
-	 * Nothing to do if no column names to compare given
-	 */
-	if (riinfo->nkeys == 0)
-		return PointerGetDatum(NULL);
 
 	/*
 	 * Get the relation descriptors of the FK and PK tables and the old tuple.
@@ -1809,12 +1719,6 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 	 */
 	riinfo = ri_FetchConstraintInfo(trigdata->tg_trigger,
 									trigdata->tg_relation, true);
-
-	/*
-	 * Nothing to do if no column names to compare given
-	 */
-	if (riinfo->nkeys == 0)
-		return PointerGetDatum(NULL);
 
 	/*
 	 * Get the relation descriptors of the FK and PK tables and the old tuple.
@@ -1996,12 +1900,6 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 	 */
 	riinfo = ri_FetchConstraintInfo(trigdata->tg_trigger,
 									trigdata->tg_relation, true);
-
-	/*
-	 * Nothing to do if no column names to compare given
-	 */
-	if (riinfo->nkeys == 0)
-		return PointerGetDatum(NULL);
 
 	/*
 	 * Get the relation descriptors of the FK and PK tables and the old tuple.
@@ -2186,13 +2084,6 @@ RI_FKey_pk_upd_check_required(Trigger *trigger, Relation pk_rel,
 	 */
 	riinfo = ri_FetchConstraintInfo(trigger, pk_rel, true);
 
-	/*
-	 * Nothing to do if no columns (satisfaction of such a constraint only
-	 * requires existence of a PK row, and this update won't change that).
-	 */
-	if (riinfo->nkeys == 0)
-		return false;
-
 	switch (riinfo->confmatchtype)
 	{
 		case FKCONSTR_MATCH_SIMPLE:
@@ -2249,13 +2140,6 @@ RI_FKey_fk_upd_check_required(Trigger *trigger, Relation fk_rel,
 	 * Get arguments.
 	 */
 	riinfo = ri_FetchConstraintInfo(trigger, fk_rel, false);
-
-	/*
-	 * Nothing to do if no columns (satisfaction of such a constraint only
-	 * requires existence of a PK row, and this update won't change that).
-	 */
-	if (riinfo->nkeys == 0)
-		return false;
 
 	switch (riinfo->confmatchtype)
 	{
@@ -2945,13 +2829,13 @@ ri_LoadConstraintInfo(Oid constraintOid)
 	if (isNull)
 		elog(ERROR, "null conkey for constraint %u", constraintOid);
 	arr = DatumGetArrayTypeP(adatum);	/* ensure not toasted */
-	numkeys = ARR_DIMS(arr)[0];
 	if (ARR_NDIM(arr) != 1 ||
-		numkeys < 0 ||
-		numkeys > RI_MAX_NUMKEYS ||
 		ARR_HASNULL(arr) ||
 		ARR_ELEMTYPE(arr) != INT2OID)
 		elog(ERROR, "conkey is not a 1-D smallint array");
+	numkeys = ARR_DIMS(arr)[0];
+	if (numkeys <= 0 || numkeys > RI_MAX_NUMKEYS)
+		elog(ERROR, "foreign key constraint cannot have %d columns", numkeys);
 	riinfo->nkeys = numkeys;
 	memcpy(riinfo->fk_attnums, ARR_DATA_PTR(arr), numkeys * sizeof(int16));
 	if ((Pointer) arr != DatumGetPointer(adatum))
@@ -2962,10 +2846,8 @@ ri_LoadConstraintInfo(Oid constraintOid)
 	if (isNull)
 		elog(ERROR, "null confkey for constraint %u", constraintOid);
 	arr = DatumGetArrayTypeP(adatum);	/* ensure not toasted */
-	numkeys = ARR_DIMS(arr)[0];
 	if (ARR_NDIM(arr) != 1 ||
-		numkeys != riinfo->nkeys ||
-		numkeys > RI_MAX_NUMKEYS ||
+		ARR_DIMS(arr)[0] != numkeys ||
 		ARR_HASNULL(arr) ||
 		ARR_ELEMTYPE(arr) != INT2OID)
 		elog(ERROR, "confkey is not a 1-D smallint array");
@@ -2978,11 +2860,9 @@ ri_LoadConstraintInfo(Oid constraintOid)
 	if (isNull)
 		elog(ERROR, "null conpfeqop for constraint %u", constraintOid);
 	arr = DatumGetArrayTypeP(adatum);	/* ensure not toasted */
-	numkeys = ARR_DIMS(arr)[0];
 	/* see TryReuseForeignKey if you change the test below */
 	if (ARR_NDIM(arr) != 1 ||
-		numkeys != riinfo->nkeys ||
-		numkeys > RI_MAX_NUMKEYS ||
+		ARR_DIMS(arr)[0] != numkeys ||
 		ARR_HASNULL(arr) ||
 		ARR_ELEMTYPE(arr) != OIDOID)
 		elog(ERROR, "conpfeqop is not a 1-D Oid array");
@@ -2995,10 +2875,8 @@ ri_LoadConstraintInfo(Oid constraintOid)
 	if (isNull)
 		elog(ERROR, "null conppeqop for constraint %u", constraintOid);
 	arr = DatumGetArrayTypeP(adatum);	/* ensure not toasted */
-	numkeys = ARR_DIMS(arr)[0];
 	if (ARR_NDIM(arr) != 1 ||
-		numkeys != riinfo->nkeys ||
-		numkeys > RI_MAX_NUMKEYS ||
+		ARR_DIMS(arr)[0] != numkeys ||
 		ARR_HASNULL(arr) ||
 		ARR_ELEMTYPE(arr) != OIDOID)
 		elog(ERROR, "conppeqop is not a 1-D Oid array");
@@ -3011,10 +2889,8 @@ ri_LoadConstraintInfo(Oid constraintOid)
 	if (isNull)
 		elog(ERROR, "null conffeqop for constraint %u", constraintOid);
 	arr = DatumGetArrayTypeP(adatum);	/* ensure not toasted */
-	numkeys = ARR_DIMS(arr)[0];
 	if (ARR_NDIM(arr) != 1 ||
-		numkeys != riinfo->nkeys ||
-		numkeys > RI_MAX_NUMKEYS ||
+		ARR_DIMS(arr)[0] != numkeys ||
 		ARR_HASNULL(arr) ||
 		ARR_ELEMTYPE(arr) != OIDOID)
 		elog(ERROR, "conffeqop is not a 1-D Oid array");
@@ -3309,22 +3185,6 @@ ri_ReportViolation(const RI_ConstraintInfo *riinfo,
 		attnums = riinfo->pk_attnums;
 		if (tupdesc == NULL)
 			tupdesc = pk_rel->rd_att;
-	}
-
-	/*
-	 * Special case - if there are no keys at all, this is a 'no column'
-	 * constraint - no need to try to extract the values, and the message in
-	 * this case looks different.
-	 */
-	if (riinfo->nkeys == 0)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_FOREIGN_KEY_VIOLATION),
-				 errmsg("insert or update on table \"%s\" violates foreign key constraint \"%s\"",
-						RelationGetRelationName(fk_rel),
-						NameStr(riinfo->conname)),
-				 errdetail("No rows were found in \"%s\".",
-						   RelationGetRelationName(pk_rel))));
 	}
 
 	/* Get printable versions of the keys involved */
