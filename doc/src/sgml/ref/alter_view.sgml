@@ -21,8 +21,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER VIEW [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET DEFAULT <replaceable class="PARAMETER">expression</replaceable>
-ALTER VIEW [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> DROP DEFAULT
+ALTER VIEW [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET DEFAULT <replaceable class="PARAMETER">expression</replaceable>
+ALTER VIEW [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> DROP DEFAULT
 ALTER VIEW [ IF EXISTS ] <replaceable class="parameter">name</replaceable> OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
 ALTER VIEW [ IF EXISTS ] <replaceable class="parameter">name</replaceable> RENAME TO <replaceable class="parameter">new_name</replaceable>
 ALTER VIEW [ IF EXISTS ] <replaceable class="parameter">name</replaceable> SET SCHEMA <replaceable class="parameter">new_schema</replaceable>

@@ -22,11 +22,11 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-COPY <replaceable class="parameter">table_name</replaceable> [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ]
+COPY <replaceable class="parameter">table_name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ]
     FROM { '<replaceable class="parameter">filename</replaceable>' | STDIN }
     [ [ WITH ] ( <replaceable class="parameter">option</replaceable> [, ...] ) ]
 
-COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ] | ( <replaceable class="parameter">query</replaceable> ) }
+COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ] | ( <replaceable class="parameter">query</replaceable> ) }
     TO { '<replaceable class="parameter">filename</replaceable>' | STDOUT }
     [ [ WITH ] ( <replaceable class="parameter">option</replaceable> [, ...] ) ]
 
@@ -39,8 +39,8 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     HEADER [ <replaceable class="parameter">boolean</replaceable> ]
     QUOTE '<replaceable class="parameter">quote_character</replaceable>'
     ESCAPE '<replaceable class="parameter">escape_character</replaceable>'
-    FORCE_QUOTE { ( <replaceable class="parameter">column</replaceable> [, ...] ) | * }
-    FORCE_NOT_NULL ( <replaceable class="parameter">column</replaceable> [, ...] ) |
+    FORCE_QUOTE { ( <replaceable class="parameter">column_name</replaceable> [, ...] ) | * }
+    FORCE_NOT_NULL ( <replaceable class="parameter">column_name</replaceable> [, ...] ) |
     ENCODING '<replaceable class="parameter">encoding_name</replaceable>'
 </synopsis>
  </refsynopsisdiv>
@@ -91,7 +91,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">column</replaceable></term>
+    <term><replaceable class="parameter">column_name</replaceable></term>
      <listitem>
      <para>
       An optional list of columns to be copied.  If no column list is
@@ -864,7 +864,7 @@ ZW      ZIMBABWE
    version 9.0 and is still supported:
 
 <synopsis>
-COPY <replaceable class="parameter">table_name</replaceable> [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ]
+COPY <replaceable class="parameter">table_name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ]
     FROM { '<replaceable class="parameter">filename</replaceable>' | STDIN }
     [ [ WITH ]
           [ BINARY ]
@@ -874,9 +874,9 @@ COPY <replaceable class="parameter">table_name</replaceable> [ ( <replaceable cl
           [ CSV [ HEADER ]
                 [ QUOTE [ AS ] '<replaceable class="parameter">quote</replaceable>' ]
                 [ ESCAPE [ AS ] '<replaceable class="parameter">escape</replaceable>' ]
-                [ FORCE NOT NULL <replaceable class="parameter">column</replaceable> [, ...] ] ] ]
+                [ FORCE NOT NULL <replaceable class="parameter">column_name</replaceable> [, ...] ] ] ]
 
-COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ] | ( <replaceable class="parameter">query</replaceable> ) }
+COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ] | ( <replaceable class="parameter">query</replaceable> ) }
     TO { '<replaceable class="parameter">filename</replaceable>' | STDOUT }
     [ [ WITH ]
           [ BINARY ]
@@ -886,7 +886,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
           [ CSV [ HEADER ]
                 [ QUOTE [ AS ] '<replaceable class="parameter">quote</replaceable>' ]
                 [ ESCAPE [ AS ] '<replaceable class="parameter">escape</replaceable>' ]
-                [ FORCE QUOTE { <replaceable class="parameter">column</replaceable> [, ...] | * } ] ] ]
+                [ FORCE QUOTE { <replaceable class="parameter">column_name</replaceable> [, ...] | * } ] ] ]
 </synopsis>
 
    Note that in this syntax, <literal>BINARY</> and <literal>CSV</> are

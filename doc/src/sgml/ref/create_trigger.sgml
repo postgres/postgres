@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE [ CONSTRAINT ] TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTER | INSTEAD OF } { <replaceable class="PARAMETER">event</replaceable> [ OR ... ] }
-    ON <replaceable class="PARAMETER">table</replaceable>
+    ON <replaceable class="PARAMETER">table_name</replaceable>
     [ FROM <replaceable class="parameter">referenced_table_name</replaceable> ]
     { NOT DEFERRABLE | [ DEFERRABLE ] { INITIALLY IMMEDIATE | INITIALLY DEFERRED } }
     [ FOR [ EACH ] { ROW | STATEMENT } ]
@@ -241,7 +241,7 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">table</replaceable></term>
+    <term><replaceable class="parameter">table_name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of the table or view the trigger

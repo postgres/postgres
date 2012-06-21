@@ -24,7 +24,7 @@ PostgreSQL documentation
 ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
     <replaceable class="PARAMETER">action</replaceable> [, ... ]
 ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
-    RENAME [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> TO <replaceable class="PARAMETER">new_column</replaceable>
+    RENAME [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> TO <replaceable class="PARAMETER">new_column_name</replaceable>
 ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
     RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
 ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
@@ -32,14 +32,14 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
 
 <phrase>where <replaceable class="PARAMETER">action</replaceable> is one of:</phrase>
 
-    ADD [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> <replaceable class="PARAMETER">type</replaceable> [ NULL | NOT NULL ]
-    DROP [ COLUMN ] [ IF EXISTS ] <replaceable class="PARAMETER">column</replaceable> [ RESTRICT | CASCADE ]
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> [ SET DATA ] TYPE <replaceable class="PARAMETER">type</replaceable>
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> { SET | DROP } NOT NULL
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STATISTICS <replaceable class="PARAMETER">integer</replaceable>
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET ( <replaceable class="PARAMETER">attribute_option</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> RESET ( <replaceable class="PARAMETER">attribute_option</replaceable> [, ... ] )
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ])
+    ADD [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ NULL | NOT NULL ]
+    DROP [ COLUMN ] [ IF EXISTS ] <replaceable class="PARAMETER">column_name</replaceable> [ RESTRICT | CASCADE ]
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> [ SET DATA ] TYPE <replaceable class="PARAMETER">data_type</replaceable>
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> { SET | DROP } NOT NULL
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET STATISTICS <replaceable class="PARAMETER">integer</replaceable>
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET ( <replaceable class="PARAMETER">attribute_option</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> RESET ( <replaceable class="PARAMETER">attribute_option</replaceable> [, ... ] )
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ])
     OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
     OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ])
 </synopsis>
@@ -216,7 +216,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">column</replaceable></term>
+      <term><replaceable class="PARAMETER">column_name</replaceable></term>
       <listitem>
        <para>
         Name of a new or existing column.
@@ -225,7 +225,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">new_column</replaceable></term>
+      <term><replaceable class="PARAMETER">new_column_name</replaceable></term>
       <listitem>
        <para>
         New name for an existing column.
@@ -243,7 +243,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">type</replaceable></term>
+      <term><replaceable class="PARAMETER">data_type</replaceable></term>
       <listitem>
        <para>
         Data type of the new column, or new data type for an existing

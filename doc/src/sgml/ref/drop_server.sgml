@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP SERVER [ IF EXISTS ] <replaceable class="parameter">server_name</replaceable> [ CASCADE | RESTRICT ]
+DROP SERVER [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -50,7 +50,7 @@ DROP SERVER [ IF EXISTS ] <replaceable class="parameter">server_name</replaceabl
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">server_name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name of an existing server.

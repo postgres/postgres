@@ -25,7 +25,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE <replaceable
     [ (<replaceable>column_name</replaceable> [, ...] ) ]
     [ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]
     [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
-    [ TABLESPACE <replaceable class="PARAMETER">tablespace</replaceable> ]
+    [ TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable> ]
     AS <replaceable>query</replaceable>
     [ WITH [ NO ] DATA ]
 </synopsis>
@@ -184,10 +184,10 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE <replaceable
    </varlistentry>
 
    <varlistentry>
-    <term><literal>TABLESPACE <replaceable class="PARAMETER">tablespace</replaceable></literal></term>
+    <term><literal>TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable></literal></term>
     <listitem>
      <para>
-      The <replaceable class="PARAMETER">tablespace</replaceable> is the name
+      The <replaceable class="PARAMETER">tablespace_name</replaceable> is the name
       of the tablespace in which the new table is to be created.
       If not specified,
       <xref linkend="guc-default-tablespace"> is consulted, or

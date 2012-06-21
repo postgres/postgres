@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS ON <replaceable class="parameter">event</replaceable>
-    TO <replaceable class="parameter">table</replaceable> [ WHERE <replaceable class="parameter">condition</replaceable> ]
+    TO <replaceable class="parameter">table_name</replaceable> [ WHERE <replaceable class="parameter">condition</replaceable> ]
     DO [ ALSO | INSTEAD ] { NOTHING | <replaceable class="parameter">command</replaceable> | ( <replaceable class="parameter">command</replaceable> ; <replaceable class="parameter">command</replaceable> ... ) }
 </synopsis>
  </refsynopsisdiv>
@@ -125,7 +125,7 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">table</replaceable></term>
+    <term><replaceable class="parameter">table_name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of the table or view the
