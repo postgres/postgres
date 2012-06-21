@@ -492,8 +492,8 @@ extern bool LockRelease(const LOCKTAG *locktag,
 			LOCKMODE lockmode, bool sessionLock);
 extern void LockReleaseAll(LOCKMETHODID lockmethodid, bool allLocks);
 extern void LockReleaseSession(LOCKMETHODID lockmethodid);
-extern void LockReleaseCurrentOwner(void);
-extern void LockReassignCurrentOwner(void);
+extern void LockReleaseCurrentOwner(LOCALLOCK **locallocks, int nlocks);
+extern void LockReassignCurrentOwner(LOCALLOCK **locallocks, int nlocks);
 extern VirtualTransactionId *GetLockConflicts(const LOCKTAG *locktag,
 				 LOCKMODE lockmode);
 extern void AtPrepare_Locks(void);

@@ -27,6 +27,23 @@
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
 
+/*
+ * To speed up bulk releasing or reassigning locks from a resource owner to
+ * its parent, each resource owner has a small cache of locks it owns. The
+ * lock manager has the same information in its local lock hash table, and
+ * we fall back on that if cache overflows, but traversing the hash table
+ * is slower when there are a lot of locks belonging to other resource owners.
+ *
+ * MAX_RESOWNER_LOCKS is the size of the per-resource owner cache. It's
+ * chosen based on some testing with pg_dump with a large schema. When the
+ * tests were done (on 9.2), resource owners in a pg_dump run contained up
+ * to 9 locks, regardless of the schema size, except for the top resource
+ * owner which contained much more (overflowing the cache). 15 seems like a
+ * nice round number that's somewhat higher than what pg_dump needs. Note that
+ * making this number larger is not free - the bigger the cache, the slower
+ * it is to release locks (in retail), when a resource owner holds many locks.
+ */
+#define MAX_RESOWNER_LOCKS 15
 
 /*
  * ResourceOwner objects look like this
@@ -42,6 +59,10 @@ typedef struct ResourceOwnerData
 	int			nbuffers;		/* number of owned buffer pins */
 	Buffer	   *buffers;		/* dynamically allocated array */
 	int			maxbuffers;		/* currently allocated array size */
+
+	/* We can remember up to MAX_RESOWNER_LOCKS references to local locks. */
+	int			nlocks;		/* number of owned locks */
+	LOCALLOCK  *locks[MAX_RESOWNER_LOCKS];	/* list of owned locks */
 
 	/* We have built-in support for remembering catcache references */
 	int			ncatrefs;		/* number of owned catcache pins */
@@ -272,11 +293,30 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 			 * subtransaction, we do NOT release its locks yet, but transfer
 			 * them to the parent.
 			 */
+			LOCALLOCK **locks;
+			int			nlocks;
+
 			Assert(owner->parent != NULL);
-			if (isCommit)
-				LockReassignCurrentOwner();
+
+			/*
+			 * Pass the list of locks owned by this resource owner to the lock
+			 * manager, unless it has overflowed.
+			 */
+			if (owner->nlocks > MAX_RESOWNER_LOCKS)
+			{
+				locks = NULL;
+				nlocks = 0;
+			}
 			else
-				LockReleaseCurrentOwner();
+			{
+				locks = owner->locks;
+				nlocks = owner->nlocks;
+			}
+
+			if (isCommit)
+				LockReassignCurrentOwner(locks, nlocks);
+			else
+				LockReleaseCurrentOwner(locks, nlocks);
 		}
 	}
 	else if (phase == RESOURCE_RELEASE_AFTER_LOCKS)
@@ -357,6 +397,7 @@ ResourceOwnerDelete(ResourceOwner owner)
 
 	/* And it better not own any resources, either */
 	Assert(owner->nbuffers == 0);
+	Assert(owner->nlocks == 0 || owner->nlocks == MAX_RESOWNER_LOCKS + 1);
 	Assert(owner->ncatrefs == 0);
 	Assert(owner->ncatlistrefs == 0);
 	Assert(owner->nrelrefs == 0);
@@ -586,6 +627,56 @@ ResourceOwnerForgetBuffer(ResourceOwner owner, Buffer buffer)
 		elog(ERROR, "buffer %d is not owned by resource owner %s",
 			 buffer, owner->name);
 	}
+}
+
+/*
+ * Remember that a Local Lock is owned by a ResourceOwner
+ *
+ * This is different from the other Remember functions in that the list of
+ * locks is only a lossy cache. It can hold up to MAX_RESOWNER_LOCKS entries,
+ * and when it overflows, we stop tracking locks. The point of only remembering
+ * only up to MAX_RESOWNER_LOCKS entries is that if a lot of locks are held,
+ * ResourceOwnerForgetLock doesn't need to scan through a large array to find
+ * the entry.
+ */
+void
+ResourceOwnerRememberLock(ResourceOwner owner, LOCALLOCK * locallock)
+{
+	if (owner->nlocks > MAX_RESOWNER_LOCKS)
+		return;		/* we have already overflowed */
+
+	if (owner->nlocks < MAX_RESOWNER_LOCKS)
+		owner->locks[owner->nlocks] = locallock;
+	else
+	{
+		/* overflowed */
+	}
+	owner->nlocks++;
+}
+
+/*
+ * Forget that a Local Lock is owned by a ResourceOwner
+ */
+void
+ResourceOwnerForgetLock(ResourceOwner owner, LOCALLOCK *locallock)
+{
+	int			i;
+
+	if (owner->nlocks > MAX_RESOWNER_LOCKS)
+		return;		/* we have overflowed */
+
+	Assert(owner->nlocks > 0);
+	for (i = owner->nlocks - 1; i >= 0; i--)
+	{
+		if (locallock == owner->locks[i])
+		{
+			owner->locks[i] = owner->locks[owner->nlocks - 1];
+			owner->nlocks--;
+			return;
+		}
+	}
+	elog(ERROR, "lock reference %p is not owned by resource owner %s",
+		 locallock, owner->name);
 }
 
 /*
