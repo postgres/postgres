@@ -1399,7 +1399,7 @@ init(void)
 			exit(1);
 		}
 
-		if (j % 10000 == 0)
+		if (j % 100000 == 0)
 			fprintf(stderr, "%d tuples done.\n", j);
 	}
 	if (PQputline(con, "\\.\n"))
