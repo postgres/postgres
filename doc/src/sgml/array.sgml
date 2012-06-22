@@ -573,6 +573,20 @@ SELECT * FROM
   This function is described in <xref linkend="functions-srf-subscripts">.
  </para>
 
+ <para>
+  You can also search an array using the <literal>&amp;&amp;</> operator,
+  which checks whether the left operand overlaps with the right operand.
+  For instance:
+
+<programlisting>
+SELECT * FROM sal_emp WHERE pay_by_quarter && ARRAY[10000];
+</programlisting>
+
+  This and other array operators are further described in
+  <xref linkend="functions-array">.  It can be accelerated by an appropriate
+  index, as described in <xref linkend="indexes-types">.
+ </para>
+
  <tip>
   <para>
    Arrays are not sets; searching for specific array elements

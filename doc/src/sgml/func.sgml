@@ -10282,7 +10282,8 @@ SELECT NULLIF(value, '(none)') ...
 
   <para>
    See <xref linkend="arrays"> for more details about array operator
-   behavior.
+   behavior.  See <xref linkend="indexes-types"> for more details about
+   which operators support indexed operations.
   </para>
 
   <para>
