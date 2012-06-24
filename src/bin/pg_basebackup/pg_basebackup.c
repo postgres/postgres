@@ -1100,6 +1100,8 @@ BaseBackup(void)
 		int			r;
 #else
 		DWORD		status;
+		uint32		hi,
+					lo;
 #endif
 
 		if (verbose)
@@ -1147,12 +1149,13 @@ BaseBackup(void)
 		 * value directly in the variable, and then set the flag that says
 		 * it's there.
 		 */
-		if (sscanf(xlogend, "%X/%X", &xlogendptr.xlogid, &xlogendptr.xrecoff) != 2)
+		if (sscanf(xlogend, "%X/%X", &hi, &lo) != 2)
 		{
 			fprintf(stderr, _("%s: could not parse xlog end position \"%s\"\n"),
 					progname, xlogend);
 			disconnect_and_exit(1);
 		}
+		xlogendptr = ((uint64) hi) << 32 | lo;
 		InterlockedIncrement(&has_xlogendptr);
 
 		/* First wait for the thread to exit */
