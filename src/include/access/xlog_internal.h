@@ -110,7 +110,7 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
  * by XLOG_SEG_SIZE.
  */
 #define XLogSegSize		((uint32) XLOG_SEG_SIZE)
-#define XLogSegmentsPerXLogId	(0x100000000L / XLOG_SEG_SIZE)
+#define XLogSegmentsPerXLogId	(0x100000000LL / XLOG_SEG_SIZE)
 
 #define XLogSegNoOffsetToRecPtr(segno, offset, dest) \
 		(dest) = (segno) * XLOG_SEG_SIZE + (offset)
