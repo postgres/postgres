@@ -40,15 +40,16 @@
  */
 typedef struct XLogRecord
 {
-	pg_crc32	xl_crc;			/* CRC for this record */
-	XLogRecPtr	xl_prev;		/* ptr to previous record in log */
-	TransactionId xl_xid;		/* xact id */
 	uint32		xl_tot_len;		/* total len of entire record */
+	TransactionId xl_xid;		/* xact id */
 	uint32		xl_len;			/* total len of rmgr data */
 	uint8		xl_info;		/* flag bits, see below */
 	RmgrId		xl_rmid;		/* resource manager for this record */
+	/* 2 bytes of padding here, initialize to zero */
+	XLogRecPtr	xl_prev;		/* ptr to previous record in log */
+	pg_crc32	xl_crc;			/* CRC for this record */
 
-	/* Depending on MAXALIGN, there are either 2 or 6 wasted bytes here */
+	/* If MAXALIGN==8, there are 4 wasted bytes here */
 
 	/* ACTUAL LOG DATA FOLLOWS AT END OF STRUCT */
 

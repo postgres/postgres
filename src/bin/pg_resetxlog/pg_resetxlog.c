@@ -942,8 +942,7 @@ WriteEmptyXLOG(void)
 
 	INIT_CRC32(crc);
 	COMP_CRC32(crc, &ControlFile.checkPointCopy, sizeof(CheckPoint));
-	COMP_CRC32(crc, (char *) record + sizeof(pg_crc32),
-			   SizeOfXLogRecord - sizeof(pg_crc32));
+	COMP_CRC32(crc, (char *) record, offsetof(XLogRecord, xl_crc));
 	FIN_CRC32(crc);
 	record->xl_crc = crc;
 

@@ -51,7 +51,7 @@ typedef struct BkpBlock
 /*
  * Each page of XLOG file has a header like this:
  */
-#define XLOG_PAGE_MAGIC 0xD073	/* can be used as WAL version indicator */
+#define XLOG_PAGE_MAGIC 0xD074	/* can be used as WAL version indicator */
 
 typedef struct XLogPageHeaderData
 {
@@ -63,9 +63,7 @@ typedef struct XLogPageHeaderData
 	/*
 	 * When there is not enough space on current page for whole record, we
 	 * continue on the next page.  xlp_rem_len is the number of bytes
-	 * remaining from a previous page. (However, the XLogRecord header will
-	 * never be split across pages; if there's less than SizeOfXLogRecord
-	 * space left at the end of a page, we just waste it.)
+	 * remaining from a previous page.
 	 *
 	 * Note that xl_rem_len includes backup-block data; that is, it tracks
 	 * xl_tot_len not xl_len in the initial header.  Also note that the
