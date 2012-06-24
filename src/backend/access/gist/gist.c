@@ -197,7 +197,7 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 		SplitedPageLayout *dist = NULL,
 				   *ptr;
 		BlockNumber oldrlink = InvalidBlockNumber;
-		GistNSN		oldnsn = {0, 0};
+		GistNSN		oldnsn = 0;
 		SplitedPageLayout rootpg;
 		BlockNumber blkno = BufferGetBlockNumber(buffer);
 		bool		is_rootsplit;
@@ -488,7 +488,7 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace, GISTSTATE *giststate)
 
 	/* Start from the root */
 	firststack.blkno = GIST_ROOT_BLKNO;
-	firststack.lsn.xrecoff = 0;
+	firststack.lsn = 0;
 	firststack.parent = NULL;
 	firststack.downlinkoffnum = InvalidOffsetNumber;
 	state.stack = stack = &firststack;

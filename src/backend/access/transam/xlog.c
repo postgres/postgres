@@ -252,9 +252,9 @@ static TimeLineID curFileTLI;
  * or start a new one; so it can be used to tell if the current transaction has
  * created any XLOG records.
  */
-static XLogRecPtr ProcLastRecPtr = {0, 0};
+static XLogRecPtr ProcLastRecPtr = InvalidXLogRecPtr;
 
-XLogRecPtr	XactLastRecEnd = {0, 0};
+XLogRecPtr	XactLastRecEnd = InvalidXLogRecPtr;
 
 /*
  * RedoRecPtr is this backend's local copy of the REDO record pointer
@@ -278,7 +278,7 @@ static XLogRecPtr RedoRecPtr;
  * backwards to the REDO location after reading the checkpoint record,
  * because the REDO record can precede the checkpoint record.
  */
-static XLogRecPtr RedoStartLSN = {0, 0};
+static XLogRecPtr RedoStartLSN = InvalidXLogRecPtr;
 
 /*----------
  * Shared-memory data structures for XLOG control
@@ -493,13 +493,7 @@ static ControlFileData *ControlFile = NULL;
 
 /* Construct XLogRecPtr value for current insertion point */
 #define INSERT_RECPTR(recptr,Insert,curridx)  \
-	do {																\
-		(recptr).xlogid = XLogCtl->xlblocks[curridx].xlogid;			\
-		(recptr).xrecoff =												\
-			XLogCtl->xlblocks[curridx].xrecoff - INSERT_FREESPACE(Insert); \
-		if (XLogCtl->xlblocks[curridx].xrecoff == 0)					\
-			(recptr).xlogid = XLogCtl->xlblocks[curridx].xlogid - 1;	\
-	} while(0)
+		(recptr) = XLogCtl->xlblocks[curridx] - INSERT_FREESPACE(Insert)
 
 #define PrevBufIdx(idx)		\
 		(((idx) == 0) ? XLogCtl->XLogCacheBlck : ((idx) - 1))
@@ -511,7 +505,7 @@ static ControlFileData *ControlFile = NULL;
  * Private, possibly out-of-date copy of shared LogwrtResult.
  * See discussion above.
  */
-static XLogwrtResult LogwrtResult = {{0, 0}, {0, 0}};
+static XLogwrtResult LogwrtResult = {0, 0};
 
 /*
  * Codes indicating where we got a WAL file from during recovery, or where
@@ -745,8 +739,7 @@ XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata)
 	 */
 	if (IsBootstrapProcessingMode() && rmid != RM_XLOG_ID)
 	{
-		RecPtr.xlogid = 0;
-		RecPtr.xrecoff = SizeOfXLogLongPHD;		/* start of 1st chkpt record */
+		RecPtr = SizeOfXLogLongPHD;		/* start of 1st chkpt record */
 		return RecPtr;
 	}
 
@@ -1011,13 +1004,12 @@ begin:;
 	 * everything is written and flushed through the end of the prior segment,
 	 * and return the prior segment's end address.
 	 */
-	if (isLogSwitch &&
-		(RecPtr.xrecoff % XLogSegSize) == SizeOfXLogLongPHD)
+	if (isLogSwitch && (RecPtr % XLogSegSize) == SizeOfXLogLongPHD)
 	{
 		/* We can release insert lock immediately */
 		LWLockRelease(WALInsertLock);
 
-		RecPtr.xrecoff -= SizeOfXLogLongPHD;
+		RecPtr -= SizeOfXLogLongPHD;
 
 		LWLockAcquire(WALWriteLock, LW_EXCLUSIVE);
 		LogwrtResult = XLogCtl->LogwrtResult;
@@ -1051,7 +1043,7 @@ begin:;
 
 		initStringInfo(&buf);
 		appendStringInfo(&buf, "INSERT @ %X/%X: ",
-						 RecPtr.xlogid, RecPtr.xrecoff);
+						 (uint32) (RecPtr >> 32), (uint32) RecPtr);
 		xlog_outrec(&buf, rechdr);
 		if (rdata->data != NULL)
 		{
@@ -1152,12 +1144,7 @@ begin:;
 
 		/* Compute end address of old segment */
 		OldSegEnd = XLogCtl->xlblocks[curridx];
-		if (OldSegEnd.xrecoff == 0)
-		{
-			/* crossing a logid boundary */
-			OldSegEnd.xlogid -= 1;
-		}
-		OldSegEnd.xrecoff -= XLOG_BLCKSZ;
+		OldSegEnd -= XLOG_BLCKSZ;
 
 		/* Make it look like we've written and synced all of old segment */
 		LogwrtResult.Write = OldSegEnd;
@@ -1523,8 +1510,7 @@ AdvanceXLInsertBuffer(bool new_segment)
 				 */
 				TRACE_POSTGRESQL_WAL_BUFFER_WRITE_DIRTY_START();
 				WriteRqst.Write = OldPageRqstPtr;
-				WriteRqst.Flush.xlogid = 0;
-				WriteRqst.Flush.xrecoff = 0;
+				WriteRqst.Flush = 0;
 				XLogWrite(WriteRqst, false, false);
 				LWLockRelease(WALWriteLock);
 				TRACE_POSTGRESQL_WAL_BUFFER_WRITE_DIRTY_DONE();
@@ -1541,9 +1527,9 @@ AdvanceXLInsertBuffer(bool new_segment)
 	if (new_segment)
 	{
 		/* force it to a segment start point */
-		if (NewPageBeginPtr.xrecoff % XLogSegSize != 0)
+		if (NewPageBeginPtr % XLogSegSize != 0)
 			XLByteAdvance(NewPageBeginPtr,
-						  XLogSegSize - NewPageBeginPtr.xrecoff % XLogSegSize);
+						  XLogSegSize - NewPageBeginPtr % XLogSegSize);
 	}
 
 	NewPageEndPtr = NewPageBeginPtr;
@@ -1589,7 +1575,7 @@ AdvanceXLInsertBuffer(bool new_segment)
 	/*
 	 * If first page of an XLOG segment file, make it a long header.
 	 */
-	if ((NewPage->xlp_pageaddr.xrecoff % XLogSegSize) == 0)
+	if ((NewPage->xlp_pageaddr % XLogSegSize) == 0)
 	{
 		XLogLongPageHeader NewLongPage = (XLogLongPageHeader) NewPage;
 
@@ -1693,9 +1679,9 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch)
 		 */
 		if (!XLByteLT(LogwrtResult.Write, XLogCtl->xlblocks[curridx]))
 			elog(PANIC, "xlog write request %X/%X is past end of log %X/%X",
-				 LogwrtResult.Write.xlogid, LogwrtResult.Write.xrecoff,
-				 XLogCtl->xlblocks[curridx].xlogid,
-				 XLogCtl->xlblocks[curridx].xrecoff);
+				 (uint32) (LogwrtResult.Write >> 32), (uint32) LogwrtResult.Write,
+				 (uint32) (XLogCtl->xlblocks[curridx] >> 32),
+				 (uint32) XLogCtl->xlblocks[curridx]);
 
 		/* Advance LogwrtResult.Write to end of current buffer page */
 		LogwrtResult.Write = XLogCtl->xlblocks[curridx];
@@ -1731,7 +1717,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch)
 		{
 			/* first of group */
 			startidx = curridx;
-			startoffset = (LogwrtResult.Write.xrecoff - XLOG_BLCKSZ) % XLogSegSize;
+			startoffset = (LogwrtResult.Write - XLOG_BLCKSZ) % XLogSegSize;
 		}
 		npages++;
 
@@ -1923,7 +1909,7 @@ XLogSetAsyncXactLSN(XLogRecPtr asyncXactLSN)
 	if (!sleeping)
 	{
 		/* back off to last completed page boundary */
-		WriteRqstPtr.xrecoff -= WriteRqstPtr.xrecoff % XLOG_BLCKSZ;
+		WriteRqstPtr -= WriteRqstPtr % XLOG_BLCKSZ;
 
 		/* if we have already flushed that far, we're done */
 		if (XLByteLE(WriteRqstPtr, LogwrtResult.Flush))
@@ -1965,7 +1951,7 @@ UpdateMinRecoveryPoint(XLogRecPtr lsn, bool force)
 	 * i.e., we're doing crash recovery.  We never modify the control file's
 	 * value in that case, so we can short-circuit future checks here too.
 	 */
-	if (minRecoveryPoint.xlogid == 0 && minRecoveryPoint.xrecoff == 0)
+	if (minRecoveryPoint == 0)
 		updateMinRecoveryPoint = false;
 	else if (force || XLByteLT(minRecoveryPoint, lsn))
 	{
@@ -1993,8 +1979,9 @@ UpdateMinRecoveryPoint(XLogRecPtr lsn, bool force)
 		if (!force && XLByteLT(newMinRecoveryPoint, lsn))
 			elog(WARNING,
 			   "xlog min recovery request %X/%X is past current point %X/%X",
-				 lsn.xlogid, lsn.xrecoff,
-				 newMinRecoveryPoint.xlogid, newMinRecoveryPoint.xrecoff);
+				 (uint32) (lsn >> 32) , (uint32) lsn,
+				 (uint32) (newMinRecoveryPoint >> 32),
+				 (uint32) newMinRecoveryPoint);
 
 		/* update control file */
 		if (XLByteLT(ControlFile->minRecoveryPoint, newMinRecoveryPoint))
@@ -2005,7 +1992,8 @@ UpdateMinRecoveryPoint(XLogRecPtr lsn, bool force)
 
 			ereport(DEBUG2,
 					(errmsg("updated min recovery point to %X/%X",
-						minRecoveryPoint.xlogid, minRecoveryPoint.xrecoff)));
+							(uint32) (minRecoveryPoint >> 32),
+							(uint32) minRecoveryPoint)));
 		}
 	}
 	LWLockRelease(ControlFileLock);
@@ -2043,9 +2031,9 @@ XLogFlush(XLogRecPtr record)
 #ifdef WAL_DEBUG
 	if (XLOG_DEBUG)
 		elog(LOG, "xlog flush request %X/%X; write %X/%X; flush %X/%X",
-			 record.xlogid, record.xrecoff,
-			 LogwrtResult.Write.xlogid, LogwrtResult.Write.xrecoff,
-			 LogwrtResult.Flush.xlogid, LogwrtResult.Flush.xrecoff);
+			 (uint32) (record >> 32), (uint32) record,
+			 (uint32) (LogwrtResult.Write >> 32), (uint32) LogwrtResult.Write,
+			 (uint32) (LogwrtResult.Flush >> 32), (uint32) LogwrtResult.Flush);
 #endif
 
 	START_CRIT_SECTION();
@@ -2112,9 +2100,7 @@ XLogFlush(XLogRecPtr record)
 				else
 				{
 					WriteRqstPtr = XLogCtl->xlblocks[Insert->curridx];
-					if (WriteRqstPtr.xrecoff == 0)
-						WriteRqstPtr.xlogid--;
-					WriteRqstPtr.xrecoff -= freespace;
+					WriteRqstPtr -= freespace;
 				}
 				LWLockRelease(WALInsertLock);
 				WriteRqst.Write = WriteRqstPtr;
@@ -2158,8 +2144,8 @@ XLogFlush(XLogRecPtr record)
 	if (XLByteLT(LogwrtResult.Flush, record))
 		elog(ERROR,
 		"xlog flush request %X/%X is not satisfied --- flushed only to %X/%X",
-			 record.xlogid, record.xrecoff,
-			 LogwrtResult.Flush.xlogid, LogwrtResult.Flush.xrecoff);
+			 (uint32) (record >> 32), (uint32) record,
+			 (uint32) (LogwrtResult.Flush >> 32), (uint32) LogwrtResult.Flush);
 }
 
 /*
@@ -2202,7 +2188,7 @@ XLogBackgroundFlush(void)
 	}
 
 	/* back off to last completed page boundary */
-	WriteRqstPtr.xrecoff -= WriteRqstPtr.xrecoff % XLOG_BLCKSZ;
+	WriteRqstPtr -= WriteRqstPtr % XLOG_BLCKSZ;
 
 	/* if we have already flushed that far, consider async commit records */
 	if (XLByteLE(WriteRqstPtr, LogwrtResult.Flush))
@@ -2236,9 +2222,9 @@ XLogBackgroundFlush(void)
 #ifdef WAL_DEBUG
 	if (XLOG_DEBUG)
 		elog(LOG, "xlog bg flush request %X/%X; write %X/%X; flush %X/%X",
-			 WriteRqstPtr.xlogid, WriteRqstPtr.xrecoff,
-			 LogwrtResult.Write.xlogid, LogwrtResult.Write.xrecoff,
-			 LogwrtResult.Flush.xlogid, LogwrtResult.Flush.xrecoff);
+			 (uint32) (WriteRqstPtr >> 32), (uint32) WriteRqstPtr,
+			 (uint32) (LogwrtResult.Write >> 32), (uint32) LogwrtResult.Write,
+			 (uint32) (LogwrtResult.Flush >> 32), (uint32) LogwrtResult.Flush);
 #endif
 
 	START_CRIT_SECTION();
@@ -2305,7 +2291,7 @@ XLogNeedsFlush(XLogRecPtr record)
 		 * file's value in that case, so we can short-circuit future checks
 		 * here too.
 		 */
-		if (minRecoveryPoint.xlogid == 0 && minRecoveryPoint.xrecoff == 0)
+		if (minRecoveryPoint == 0)
 			updateMinRecoveryPoint = false;
 
 		/* check again */
@@ -3319,8 +3305,7 @@ PreallocXlogFiles(XLogRecPtr endptr)
 	bool		use_existent;
 
 	XLByteToPrevSeg(endptr, _logSegNo);
-	if ((endptr.xrecoff - 1) % XLogSegSize >=
-		(uint32) (0.75 * XLogSegSize))
+	if ((endptr - 1) % XLogSegSize >= (uint32) (0.75 * XLogSegSize))
 	{
 		_logSegNo++;
 		use_existent = true;
@@ -3704,7 +3689,7 @@ RecordIsValid(XLogRecord *record, XLogRecPtr recptr, int emode)
 		{
 			ereport(emode_for_corrupt_record(emode, recptr),
 					(errmsg("incorrect hole size in record at %X/%X",
-							recptr.xlogid, recptr.xrecoff)));
+							(uint32) (recptr >> 32), (uint32) recptr)));
 			return false;
 		}
 		blen = sizeof(BkpBlock) + BLCKSZ - bkpb.hole_length;
@@ -3717,7 +3702,7 @@ RecordIsValid(XLogRecord *record, XLogRecPtr recptr, int emode)
 	{
 		ereport(emode_for_corrupt_record(emode, recptr),
 				(errmsg("incorrect total length in record at %X/%X",
-						recptr.xlogid, recptr.xrecoff)));
+						(uint32) (recptr >> 32), (uint32) recptr)));
 		return false;
 	}
 
@@ -3729,7 +3714,7 @@ RecordIsValid(XLogRecord *record, XLogRecPtr recptr, int emode)
 	{
 		ereport(emode_for_corrupt_record(emode, recptr),
 		(errmsg("incorrect resource manager data checksum in record at %X/%X",
-				recptr.xlogid, recptr.xrecoff)));
+				(uint32) (recptr >> 32), (uint32) recptr)));
 		return false;
 	}
 
@@ -3790,10 +3775,10 @@ ReadRecord(XLogRecPtr *RecPtr, int emode, bool fetching_ckpt)
 		 * In this case, the passed-in record pointer should already be
 		 * pointing to a valid record starting position.
 		 */
-		if (!XRecOffIsValid(RecPtr->xrecoff))
+		if (!XRecOffIsValid(*RecPtr))
 			ereport(PANIC,
 					(errmsg("invalid record offset at %X/%X",
-							RecPtr->xlogid, RecPtr->xrecoff)));
+							(uint32) (*RecPtr >> 32), (uint32) *RecPtr)));
 
 		/*
 		 * Since we are going to a random position in WAL, forget any prior
@@ -3814,7 +3799,7 @@ retry:
 		return NULL;
 
 	pageHeaderSize = XLogPageHeaderSize((XLogPageHeader) readBuf);
-	targetRecOff = RecPtr->xrecoff % XLOG_BLCKSZ;
+	targetRecOff = (*RecPtr) % XLOG_BLCKSZ;
 	if (targetRecOff == 0)
 	{
 		/*
@@ -3824,14 +3809,14 @@ retry:
 		 * XRecOffIsValid rejected the zero-page-offset case otherwise.
 		 */
 		Assert(RecPtr == &tmpRecPtr);
-		RecPtr->xrecoff += pageHeaderSize;
+		(*RecPtr) += pageHeaderSize;
 		targetRecOff = pageHeaderSize;
 	}
 	else if (targetRecOff < pageHeaderSize)
 	{
 		ereport(emode_for_corrupt_record(emode, *RecPtr),
 				(errmsg("invalid record offset at %X/%X",
-						RecPtr->xlogid, RecPtr->xrecoff)));
+						(uint32) ((*RecPtr) >> 32), (uint32) *RecPtr)));
 		goto next_record_is_invalid;
 	}
 	if ((((XLogPageHeader) readBuf)->xlp_info & XLP_FIRST_IS_CONTRECORD) &&
@@ -3839,7 +3824,7 @@ retry:
 	{
 		ereport(emode_for_corrupt_record(emode, *RecPtr),
 				(errmsg("contrecord is requested by %X/%X",
-						RecPtr->xlogid, RecPtr->xrecoff)));
+						(uint32) ((*RecPtr) >> 32), (uint32) *RecPtr)));
 		goto next_record_is_invalid;
 	}
 
@@ -3849,7 +3834,7 @@ retry:
 	 * struct, so it must be on this page, but we cannot safely access any
 	 * other fields yet.
 	 */
-	record = (XLogRecord *) (readBuf + RecPtr->xrecoff % XLOG_BLCKSZ);
+	record = (XLogRecord *) (readBuf + (*RecPtr) % XLOG_BLCKSZ);
 	total_len = record->xl_tot_len;
 
 	/*
@@ -3874,7 +3859,7 @@ retry:
 			/* We treat this as a "bogus data" condition */
 			ereport(emode_for_corrupt_record(emode, *RecPtr),
 					(errmsg("record length %u at %X/%X too long",
-							total_len, RecPtr->xlogid, RecPtr->xrecoff)));
+							total_len, (uint32) ((*RecPtr) >> 32), (uint32) *RecPtr)));
 			goto next_record_is_invalid;
 		}
 		readRecordBufSize = newSize;
@@ -3893,7 +3878,7 @@ retry:
 	else
 		gotheader = false;
 
-	len = XLOG_BLCKSZ - RecPtr->xrecoff % XLOG_BLCKSZ;
+	len = XLOG_BLCKSZ - (*RecPtr) % XLOG_BLCKSZ;
 	if (total_len > len)
 	{
 		/* Need to reassemble record */
@@ -3904,11 +3889,10 @@ retry:
 		uint32		gotlen;
 
 		/* Initialize pagelsn to the beginning of the page this record is on */
-		pagelsn = *RecPtr;
-		pagelsn.xrecoff = (pagelsn.xrecoff / XLOG_BLCKSZ) * XLOG_BLCKSZ;
+		pagelsn = ((*RecPtr) / XLOG_BLCKSZ) * XLOG_BLCKSZ;
 
 		/* Copy the first fragment of the record from the first page. */
-		memcpy(readRecordBuf, readBuf + RecPtr->xrecoff % XLOG_BLCKSZ, len);
+		memcpy(readRecordBuf, readBuf + (*RecPtr) % XLOG_BLCKSZ, len);
 		buffer = readRecordBuf + len;
 		gotlen = len;
 
@@ -3980,8 +3964,7 @@ retry:
 		/* Record does not cross a page boundary */
 		if (!RecordIsValid(record, *RecPtr, emode))
 			goto next_record_is_invalid;
-		EndRecPtr.xlogid = RecPtr->xlogid;
-		EndRecPtr.xrecoff = RecPtr->xrecoff + MAXALIGN(total_len);
+		EndRecPtr = *RecPtr + MAXALIGN(total_len);
 
 		ReadRecPtr = *RecPtr;
 		memcpy(readRecordBuf, record, total_len);
@@ -3993,8 +3976,8 @@ retry:
 	if (record->xl_rmid == RM_XLOG_ID && record->xl_info == XLOG_SWITCH)
 	{
 		/* Pretend it extends to end of segment */
-		EndRecPtr.xrecoff += XLogSegSize - 1;
-		EndRecPtr.xrecoff -= EndRecPtr.xrecoff % XLogSegSize;
+		EndRecPtr += XLogSegSize - 1;
+		EndRecPtr -= EndRecPtr % XLogSegSize;
 
 		/*
 		 * Pretend that readBuf contains the last page of the segment. This is
@@ -4105,7 +4088,7 @@ ValidXLogPageHeader(XLogPageHeader hdr, int emode)
 	{
 		ereport(emode_for_corrupt_record(emode, recaddr),
 				(errmsg("unexpected pageaddr %X/%X in log segment %s, offset %u",
-						hdr->xlp_pageaddr.xlogid, hdr->xlp_pageaddr.xrecoff,
+						(uint32) (hdr->xlp_pageaddr >> 32), (uint32) hdr->xlp_pageaddr,
 						XLogFileNameP(curFileTLI, readSegNo),
 						readOff)));
 		return false;
@@ -4166,7 +4149,7 @@ ValidXLogRecordHeader(XLogRecPtr *RecPtr, XLogRecord *record, int emode,
 		{
 			ereport(emode_for_corrupt_record(emode, *RecPtr),
 					(errmsg("invalid xlog switch record at %X/%X",
-							RecPtr->xlogid, RecPtr->xrecoff)));
+							(uint32) ((*RecPtr) >> 32), (uint32) *RecPtr)));
 			return false;
 		}
 	}
@@ -4174,7 +4157,7 @@ ValidXLogRecordHeader(XLogRecPtr *RecPtr, XLogRecord *record, int emode,
 	{
 		ereport(emode_for_corrupt_record(emode, *RecPtr),
 				(errmsg("record with zero length at %X/%X",
-						RecPtr->xlogid, RecPtr->xrecoff)));
+						(uint32) ((*RecPtr) >> 32), (uint32) *RecPtr)));
 		return false;
 	}
 	if (record->xl_tot_len < SizeOfXLogRecord + record->xl_len ||
@@ -4183,14 +4166,14 @@ ValidXLogRecordHeader(XLogRecPtr *RecPtr, XLogRecord *record, int emode,
 	{
 		ereport(emode_for_corrupt_record(emode, *RecPtr),
 				(errmsg("invalid record length at %X/%X",
-						RecPtr->xlogid, RecPtr->xrecoff)));
+						(uint32) ((*RecPtr) >> 32), (uint32) *RecPtr)));
 		return false;
 	}
 	if (record->xl_rmid > RM_MAX_ID)
 	{
 		ereport(emode_for_corrupt_record(emode, *RecPtr),
 				(errmsg("invalid resource manager ID %u at %X/%X",
-						record->xl_rmid, RecPtr->xlogid, RecPtr->xrecoff)));
+						record->xl_rmid, (uint32) ((*RecPtr) >> 32), (uint32) *RecPtr)));
 		return false;
 	}
 	if (randAccess)
@@ -4203,8 +4186,8 @@ ValidXLogRecordHeader(XLogRecPtr *RecPtr, XLogRecord *record, int emode,
 		{
 			ereport(emode_for_corrupt_record(emode, *RecPtr),
 					(errmsg("record with incorrect prev-link %X/%X at %X/%X",
-							record->xl_prev.xlogid, record->xl_prev.xrecoff,
-							RecPtr->xlogid, RecPtr->xrecoff)));
+							(uint32) (record->xl_prev >> 32), (uint32) record->xl_prev,
+							(uint32) ((*RecPtr) >> 32), (uint32) *RecPtr)));
 			return false;
 		}
 	}
@@ -4219,8 +4202,8 @@ ValidXLogRecordHeader(XLogRecPtr *RecPtr, XLogRecord *record, int emode,
 		{
 			ereport(emode_for_corrupt_record(emode, *RecPtr),
 					(errmsg("record with incorrect prev-link %X/%X at %X/%X",
-							record->xl_prev.xlogid, record->xl_prev.xrecoff,
-							RecPtr->xlogid, RecPtr->xrecoff)));
+							(uint32) (record->xl_prev >> 32), (uint32) record->xl_prev,
+							(uint32) ((*RecPtr) >> 32), (uint32) *RecPtr)));
 			return false;
 		}
 	}
@@ -5193,8 +5176,7 @@ BootStrapXLOG(void)
 	 * segment with logid=0 logseg=1. The very first WAL segment, 0/0, is not
 	 * used, so that we can use 0/0 to mean "before any valid WAL segment".
 	 */
-	checkPoint.redo.xlogid = 0;
-	checkPoint.redo.xrecoff = XLogSegSize + SizeOfXLogLongPHD;
+	checkPoint.redo = XLogSegSize + SizeOfXLogLongPHD;
 	checkPoint.ThisTimeLineID = ThisTimeLineID;
 	checkPoint.fullPageWrites = fullPageWrites;
 	checkPoint.nextXidEpoch = 0;
@@ -5217,8 +5199,7 @@ BootStrapXLOG(void)
 	page->xlp_magic = XLOG_PAGE_MAGIC;
 	page->xlp_info = XLP_LONG_HEADER;
 	page->xlp_tli = ThisTimeLineID;
-	page->xlp_pageaddr.xlogid = 0;
-	page->xlp_pageaddr.xrecoff = XLogSegSize;
+	page->xlp_pageaddr = XLogSegSize;
 	longpage = (XLogLongPageHeader) page;
 	longpage->xlp_sysid = sysidentifier;
 	longpage->xlp_seg_size = XLogSegSize;
@@ -5226,8 +5207,7 @@ BootStrapXLOG(void)
 
 	/* Insert the initial checkpoint record */
 	record = (XLogRecord *) ((char *) page + SizeOfXLogLongPHD);
-	record->xl_prev.xlogid = 0;
-	record->xl_prev.xrecoff = 0;
+	record->xl_prev = 0;
 	record->xl_xid = InvalidTransactionId;
 	record->xl_tot_len = SizeOfXLogRecord + sizeof(checkPoint);
 	record->xl_len = sizeof(checkPoint);
@@ -6021,7 +6001,7 @@ StartupXLOG(void)
 
 	if (ControlFile->state < DB_SHUTDOWNED ||
 		ControlFile->state > DB_IN_PRODUCTION ||
-		!XRecOffIsValid(ControlFile->checkPoint.xrecoff))
+		!XRecOffIsValid(ControlFile->checkPoint))
 		ereport(FATAL,
 				(errmsg("control file contains invalid data")));
 
@@ -6157,7 +6137,7 @@ StartupXLOG(void)
 			wasShutdown = (record->xl_info == XLOG_CHECKPOINT_SHUTDOWN);
 			ereport(DEBUG1,
 					(errmsg("checkpoint record is at %X/%X",
-							checkPointLoc.xlogid, checkPointLoc.xrecoff)));
+							(uint32) (checkPointLoc >> 32), (uint32) checkPointLoc)));
 			InRecovery = true;	/* force recovery even if SHUTDOWNED */
 
 			/*
@@ -6197,7 +6177,7 @@ StartupXLOG(void)
 		{
 			ereport(DEBUG1,
 					(errmsg("checkpoint record is at %X/%X",
-							checkPointLoc.xlogid, checkPointLoc.xrecoff)));
+							(uint32) (checkPointLoc >> 32), (uint32) checkPointLoc)));
 		}
 		else if (StandbyMode)
 		{
@@ -6216,7 +6196,7 @@ StartupXLOG(void)
 			{
 				ereport(LOG,
 						(errmsg("using previous checkpoint record at %X/%X",
-							  checkPointLoc.xlogid, checkPointLoc.xrecoff)));
+								(uint32) (checkPointLoc >> 32), (uint32) checkPointLoc)));
 				InRecovery = true;		/* force recovery even if SHUTDOWNED */
 			}
 			else
@@ -6231,7 +6211,7 @@ StartupXLOG(void)
 
 	ereport(DEBUG1,
 			(errmsg("redo record is at %X/%X; shutdown %s",
-					checkPoint.redo.xlogid, checkPoint.redo.xrecoff,
+					(uint32) (checkPoint.redo >> 32), (uint32) checkPoint.redo,
 					wasShutdown ? "TRUE" : "FALSE")));
 	ereport(DEBUG1,
 			(errmsg("next transaction ID: %u/%u; next OID: %u",
@@ -6542,7 +6522,7 @@ StartupXLOG(void)
 
 			ereport(LOG,
 					(errmsg("redo starts at %X/%X",
-							ReadRecPtr.xlogid, ReadRecPtr.xrecoff)));
+							(uint32) (ReadRecPtr >> 32), (uint32) ReadRecPtr)));
 
 			/*
 			 * main redo apply loop
@@ -6558,8 +6538,8 @@ StartupXLOG(void)
 
 					initStringInfo(&buf);
 					appendStringInfo(&buf, "REDO @ %X/%X; LSN %X/%X: ",
-									 ReadRecPtr.xlogid, ReadRecPtr.xrecoff,
-									 EndRecPtr.xlogid, EndRecPtr.xrecoff);
+									 (uint32) (ReadRecPtr >> 32), (uint32) ReadRecPtr,
+									 (uint32) (EndRecPtr >> 32), (uint32) EndRecPtr);
 					xlog_outrec(&buf, record);
 					appendStringInfo(&buf, " - ");
 					RmgrTable[record->xl_rmid].rm_desc(&buf,
@@ -6687,7 +6667,7 @@ StartupXLOG(void)
 
 			ereport(LOG,
 					(errmsg("redo done at %X/%X",
-							ReadRecPtr.xlogid, ReadRecPtr.xrecoff)));
+							(uint32) (ReadRecPtr >> 32), (uint32) ReadRecPtr)));
 			xtime = GetLatestXTime();
 			if (xtime)
 				ereport(LOG,
@@ -6820,19 +6800,17 @@ StartupXLOG(void)
 	openLogOff = 0;
 	Insert = &XLogCtl->Insert;
 	Insert->PrevRecord = LastRec;
-	XLogCtl->xlblocks[0].xlogid = (openLogSegNo * XLOG_SEG_SIZE) >> 32;
-	XLogCtl->xlblocks[0].xrecoff =
-		((EndOfLog.xrecoff - 1) / XLOG_BLCKSZ + 1) * XLOG_BLCKSZ;
+	XLogCtl->xlblocks[0] = ((EndOfLog - 1) / XLOG_BLCKSZ + 1) * XLOG_BLCKSZ;
 
 	/*
 	 * Tricky point here: readBuf contains the *last* block that the LastRec
 	 * record spans, not the one it starts in.	The last block is indeed the
 	 * one we want to use.
 	 */
-	Assert(readOff == (XLogCtl->xlblocks[0].xrecoff - XLOG_BLCKSZ) % XLogSegSize);
+	Assert(readOff == (XLogCtl->xlblocks[0] - XLOG_BLCKSZ) % XLogSegSize);
 	memcpy((char *) Insert->currpage, readBuf, XLOG_BLCKSZ);
 	Insert->currpos = (char *) Insert->currpage +
-		(EndOfLog.xrecoff + XLOG_BLCKSZ - XLogCtl->xlblocks[0].xrecoff);
+		(EndOfLog + XLOG_BLCKSZ - XLogCtl->xlblocks[0]);
 
 	LogwrtResult.Write = LogwrtResult.Flush = EndOfLog;
 
@@ -7053,7 +7031,7 @@ CheckRecoveryConsistency(void)
 		reachedConsistency = true;
 		ereport(LOG,
 				(errmsg("consistent recovery state reached at %X/%X",
-						EndRecPtr.xlogid, EndRecPtr.xrecoff)));
+						(uint32) (EndRecPtr >> 32), (uint32) EndRecPtr)));
 	}
 
 	/*
@@ -7212,7 +7190,7 @@ ReadCheckpointRecord(XLogRecPtr RecPtr, int whichChkpt)
 {
 	XLogRecord *record;
 
-	if (!XRecOffIsValid(RecPtr.xrecoff))
+	if (!XRecOffIsValid(RecPtr))
 	{
 		switch (whichChkpt)
 		{
@@ -7738,13 +7716,9 @@ CreateCheckPoint(int flags)
 		XLogRecPtr	curInsert;
 
 		INSERT_RECPTR(curInsert, Insert, Insert->curridx);
-		if (curInsert.xlogid == ControlFile->checkPoint.xlogid &&
-			curInsert.xrecoff == ControlFile->checkPoint.xrecoff +
+		if (curInsert == ControlFile->checkPoint + 
 			MAXALIGN(SizeOfXLogRecord + sizeof(CheckPoint)) &&
-			ControlFile->checkPoint.xlogid ==
-			ControlFile->checkPointCopy.redo.xlogid &&
-			ControlFile->checkPoint.xrecoff ==
-			ControlFile->checkPointCopy.redo.xrecoff)
+			ControlFile->checkPoint == ControlFile->checkPointCopy.redo)
 		{
 			LWLockRelease(WALInsertLock);
 			LWLockRelease(CheckpointLock);
@@ -8074,8 +8048,8 @@ RecoveryRestartPoint(const CheckPoint *checkPoint)
 				elog(trace_recovery(DEBUG2),
 					 "RM %d not safe to record restart point at %X/%X",
 					 rmid,
-					 checkPoint->redo.xlogid,
-					 checkPoint->redo.xrecoff);
+					 (uint32) (checkPoint->redo >> 32),
+					 (uint32) checkPoint->redo);
 				return;
 			}
 	}
@@ -8092,8 +8066,8 @@ RecoveryRestartPoint(const CheckPoint *checkPoint)
 		elog(trace_recovery(DEBUG2),
 			 "could not record restart point at %X/%X because there "
 			 "are unresolved references to invalid pages",
-			 checkPoint->redo.xlogid,
-			 checkPoint->redo.xrecoff);
+			 (uint32) (checkPoint->redo >> 32),
+			 (uint32) checkPoint->redo);
 		return;
 	}
 
@@ -8172,7 +8146,7 @@ CreateRestartPoint(int flags)
 	{
 		ereport(DEBUG2,
 				(errmsg("skipping restartpoint, already performed at %X/%X",
-				  lastCheckPoint.redo.xlogid, lastCheckPoint.redo.xrecoff)));
+						(uint32) (lastCheckPoint.redo >> 32), (uint32) lastCheckPoint.redo)));
 
 		UpdateMinRecoveryPoint(InvalidXLogRecPtr, true);
 		if (flags & CHECKPOINT_IS_SHUTDOWN)
@@ -8282,7 +8256,7 @@ CreateRestartPoint(int flags)
 	xtime = GetLatestXTime();
 	ereport((log_checkpoints ? LOG : DEBUG2),
 			(errmsg("recovery restart point at %X/%X",
-					lastCheckPoint.redo.xlogid, lastCheckPoint.redo.xrecoff),
+					(uint32) (lastCheckPoint.redo >> 32), (uint32) lastCheckPoint.redo),
 		   xtime ? errdetail("last completed transaction was at log time %s",
 							 timestamptz_to_str(xtime)) : 0));
 
@@ -8408,7 +8382,7 @@ XLogRestorePoint(const char *rpName)
 
 	ereport(LOG,
 			(errmsg("restore point \"%s\" created at %X/%X",
-					rpName, RecPtr.xlogid, RecPtr.xrecoff)));
+					rpName, (uint32) (RecPtr >> 32), (uint32) RecPtr)));
 
 	return RecPtr;
 }
@@ -8757,8 +8731,7 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 		 * decreasing max_* settings.
 		 */
 		minRecoveryPoint = ControlFile->minRecoveryPoint;
-		if ((minRecoveryPoint.xlogid != 0 || minRecoveryPoint.xrecoff != 0)
-			&& XLByteLT(minRecoveryPoint, lsn))
+		if (minRecoveryPoint != 0 && XLByteLT(minRecoveryPoint, lsn))
 		{
 			ControlFile->minRecoveryPoint = lsn;
 		}
@@ -8808,7 +8781,7 @@ xlog_desc(StringInfo buf, uint8 xl_info, char *rec)
 		appendStringInfo(buf, "checkpoint: redo %X/%X; "
 				   "tli %u; fpw %s; xid %u/%u; oid %u; multi %u; offset %u; "
 						 "oldest xid %u in DB %u; oldest running xid %u; %s",
-						 checkpoint->redo.xlogid, checkpoint->redo.xrecoff,
+						 (uint32) (checkpoint->redo >> 32), (uint32) checkpoint->redo,
 						 checkpoint->ThisTimeLineID,
 						 checkpoint->fullPageWrites ? "true" : "false",
 						 checkpoint->nextXidEpoch, checkpoint->nextXid,
@@ -8848,7 +8821,7 @@ xlog_desc(StringInfo buf, uint8 xl_info, char *rec)
 
 		memcpy(&startpoint, rec, sizeof(XLogRecPtr));
 		appendStringInfo(buf, "backup end: %X/%X",
-						 startpoint.xlogid, startpoint.xrecoff);
+						 (uint32) (startpoint >> 32), (uint32) startpoint);
 	}
 	else if (info == XLOG_PARAMETER_CHANGE)
 	{
@@ -8894,7 +8867,7 @@ xlog_outrec(StringInfo buf, XLogRecord *record)
 	int			i;
 
 	appendStringInfo(buf, "prev %X/%X; xid %u",
-					 record->xl_prev.xlogid, record->xl_prev.xrecoff,
+					 (uint32) (record->xl_prev >> 32), (uint32) record->xl_prev,
 					 record->xl_xid);
 
 	appendStringInfo(buf, "; len %u",
@@ -9294,9 +9267,9 @@ do_pg_start_backup(const char *backupidstr, bool fast, char **labelfile)
 					"%Y-%m-%d %H:%M:%S %Z",
 					pg_localtime(&stamp_time, log_timezone));
 		appendStringInfo(&labelfbuf, "START WAL LOCATION: %X/%X (file %s)\n",
-						 startpoint.xlogid, startpoint.xrecoff, xlogfilename);
+						 (uint32) (startpoint >> 32), (uint32) startpoint, xlogfilename);
 		appendStringInfo(&labelfbuf, "CHECKPOINT LOCATION: %X/%X\n",
-						 checkpointloc.xlogid, checkpointloc.xrecoff);
+						 (uint32) (checkpointloc >> 32), (uint32) checkpointloc);
 		appendStringInfo(&labelfbuf, "BACKUP METHOD: %s\n",
 						 exclusive ? "pg_start_backup" : "streamed");
 		appendStringInfo(&labelfbuf, "BACKUP FROM: %s\n",
@@ -9416,6 +9389,8 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive)
 	bool		reported_waiting = false;
 	char	   *remaining;
 	char	   *ptr;
+	uint32		hi,
+				lo;
 
 	backup_started_in_recovery = RecoveryInProgress();
 
@@ -9520,11 +9495,12 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive)
 	 * but we are not expecting any variability in the file format).
 	 */
 	if (sscanf(labelfile, "START WAL LOCATION: %X/%X (file %24s)%c",
-			   &startpoint.xlogid, &startpoint.xrecoff, startxlogfilename,
+			   &hi, &lo, startxlogfilename,
 			   &ch) != 4 || ch != '\n')
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("invalid data in file \"%s\"", BACKUP_LABEL_FILE)));
+	startpoint = ((uint64) hi) << 32 | lo;
 	remaining = strchr(labelfile, '\n') + 1;	/* %n is not portable enough */
 
 	/*
@@ -9632,7 +9608,7 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive)
 	 */
 	XLByteToSeg(startpoint, _logSegNo);
 	BackupHistoryFilePath(histfilepath, ThisTimeLineID, _logSegNo,
-						  startpoint.xrecoff % XLogSegSize);
+						  (uint32) (startpoint % XLogSegSize));
 	fp = AllocateFile(histfilepath, "w");
 	if (!fp)
 		ereport(ERROR,
@@ -9640,9 +9616,9 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive)
 				 errmsg("could not create file \"%s\": %m",
 						histfilepath)));
 	fprintf(fp, "START WAL LOCATION: %X/%X (file %s)\n",
-			startpoint.xlogid, startpoint.xrecoff, startxlogfilename);
+			(uint32) (startpoint >> 32), (uint32) startpoint, startxlogfilename);
 	fprintf(fp, "STOP WAL LOCATION: %X/%X (file %s)\n",
-			stoppoint.xlogid, stoppoint.xrecoff, stopxlogfilename);
+			(uint32) (stoppoint >> 32), (uint32) stoppoint, stopxlogfilename);
 	/* transfer remaining lines from label to history file */
 	fprintf(fp, "%s", remaining);
 	fprintf(fp, "STOP TIME: %s\n", strfbuf);
@@ -9685,7 +9661,7 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive)
 
 		XLByteToSeg(startpoint, _logSegNo);
 		BackupHistoryFileName(histfilename, ThisTimeLineID, _logSegNo,
-							  startpoint.xrecoff % XLogSegSize);
+							  (uint32) (startpoint % XLogSegSize));
 
 		seconds_before_warning = 60;
 		waits = 0;
@@ -9861,6 +9837,8 @@ read_backup_label(XLogRecPtr *checkPointLoc, bool *backupEndRequired,
 	char		ch;
 	char		backuptype[20];
 	char		backupfrom[20];
+	uint32		hi,
+				lo;
 
 	*backupEndRequired = false;
 	*backupFromStandby = false;
@@ -9885,17 +9863,17 @@ read_backup_label(XLogRecPtr *checkPointLoc, bool *backupEndRequired,
 	 * format).
 	 */
 	if (fscanf(lfp, "START WAL LOCATION: %X/%X (file %08X%16s)%c",
-			   &RedoStartLSN.xlogid, &RedoStartLSN.xrecoff, &tli,
-			   startxlogfilename, &ch) != 5 || ch != '\n')
+			   &hi, &lo, &tli, startxlogfilename, &ch) != 5 || ch != '\n')
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("invalid data in file \"%s\"", BACKUP_LABEL_FILE)));
+	RedoStartLSN = ((uint64) hi) << 32 | lo;
 	if (fscanf(lfp, "CHECKPOINT LOCATION: %X/%X%c",
-			   &checkPointLoc->xlogid, &checkPointLoc->xrecoff,
-			   &ch) != 3 || ch != '\n')
+			   &hi, &lo, &ch) != 3 || ch != '\n')
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("invalid data in file \"%s\"", BACKUP_LABEL_FILE)));
+	*checkPointLoc = ((uint64) hi) << 32 | lo;
 
 	/*
 	 * BACKUP METHOD and BACKUP FROM lines are new in 9.2. We can't restore
@@ -10018,7 +9996,7 @@ static bool
 XLogPageRead(XLogRecPtr *RecPtr, int emode, bool fetching_ckpt,
 			 bool randAccess)
 {
-	static XLogRecPtr receivedUpto = {0, 0};
+	static XLogRecPtr receivedUpto = 0;
 	bool		switched_segment = false;
 	uint32		targetPageOff;
 	uint32		targetRecOff;
@@ -10026,8 +10004,8 @@ XLogPageRead(XLogRecPtr *RecPtr, int emode, bool fetching_ckpt,
 	static pg_time_t last_fail_time = 0;
 
 	XLByteToSeg(*RecPtr, targetSegNo);
-	targetPageOff = ((RecPtr->xrecoff % XLogSegSize) / XLOG_BLCKSZ) * XLOG_BLCKSZ;
-	targetRecOff = RecPtr->xrecoff % XLOG_BLCKSZ;
+	targetPageOff = (((*RecPtr) % XLogSegSize) / XLOG_BLCKSZ) * XLOG_BLCKSZ;
+	targetRecOff = (*RecPtr) % XLOG_BLCKSZ;
 
 	/* Fast exit if we have read the record in the current buffer already */
 	if (failedSources == 0 && targetSegNo == readSegNo &&
@@ -10308,13 +10286,12 @@ retry:
 	 */
 	if (readSource == XLOG_FROM_STREAM)
 	{
-		if (RecPtr->xlogid != receivedUpto.xlogid ||
-			(RecPtr->xrecoff / XLOG_BLCKSZ) != (receivedUpto.xrecoff / XLOG_BLCKSZ))
+		if (((*RecPtr) / XLOG_BLCKSZ) != (receivedUpto / XLOG_BLCKSZ))
 		{
 			readLen = XLOG_BLCKSZ;
 		}
 		else
-			readLen = receivedUpto.xrecoff % XLogSegSize - targetPageOff;
+			readLen = receivedUpto % XLogSegSize - targetPageOff;
 	}
 	else
 		readLen = XLOG_BLCKSZ;
@@ -10420,7 +10397,7 @@ triggered:
 static int
 emode_for_corrupt_record(int emode, XLogRecPtr RecPtr)
 {
-	static XLogRecPtr lastComplaint = {0, 0};
+	static XLogRecPtr lastComplaint = 0;
 
 	if (readSource == XLOG_FROM_PG_XLOG && emode == LOG)
 	{

@@ -162,6 +162,8 @@ reached_end_position(XLogRecPtr segendpos, uint32 timeline, bool segment_finishe
 		if (r == 1)
 		{
 			char		xlogend[64];
+			uint32		hi,
+						lo;
 
 			MemSet(xlogend, 0, sizeof(xlogend));
 			r = read(bgpipe[0], xlogend, sizeof(xlogend));
@@ -172,12 +174,13 @@ reached_end_position(XLogRecPtr segendpos, uint32 timeline, bool segment_finishe
 				exit(1);
 			}
 
-			if (sscanf(xlogend, "%X/%X", &xlogendptr.xlogid, &xlogendptr.xrecoff) != 2)
+			if (sscanf(xlogend, "%X/%X", &hi, &lo) != 2)
 			{
 				fprintf(stderr, _("%s: could not parse xlog end position \"%s\"\n"),
 						progname, xlogend);
 				exit(1);
 			}
+			xlogendptr = ((uint64) hi) << 32 | lo;
 			has_xlogendptr = 1;
 
 			/*
@@ -207,9 +210,7 @@ reached_end_position(XLogRecPtr segendpos, uint32 timeline, bool segment_finishe
 	 * At this point we have an end pointer, so compare it to the current
 	 * position to figure out if it's time to stop.
 	 */
-	if (segendpos.xlogid > xlogendptr.xlogid ||
-		(segendpos.xlogid == xlogendptr.xlogid &&
-		 segendpos.xrecoff >= xlogendptr.xrecoff))
+	if (segendpos >= xlogendptr)
 		return true;
 
 	/*
@@ -255,20 +256,23 @@ static void
 StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier)
 {
 	logstreamer_param *param;
+	uint32		hi,
+				lo;
 
 	param = xmalloc0(sizeof(logstreamer_param));
 	param->timeline = timeline;
 	param->sysidentifier = sysidentifier;
 
 	/* Convert the starting position */
-	if (sscanf(startpos, "%X/%X", &param->startptr.xlogid, &param->startptr.xrecoff) != 2)
+	if (sscanf(startpos, "%X/%X", &hi, &lo) != 2)
 	{
 		fprintf(stderr, _("%s: invalid format of xlog location: %s\n"),
 				progname, startpos);
 		disconnect_and_exit(1);
 	}
+	param->startptr = ((uint64) hi) << 32 | lo;
 	/* Round off to even segment position */
-	param->startptr.xrecoff -= param->startptr.xrecoff % XLOG_SEG_SIZE;
+	param->startptr -= param->startptr % XLOG_SEG_SIZE;
 
 #ifndef WIN32
 	/* Create our background pipe */

@@ -156,7 +156,7 @@ libpqrcv_connect(char *conninfo, XLogRecPtr startpoint)
 
 	/* Start streaming from the point requested by startup process */
 	snprintf(cmd, sizeof(cmd), "START_REPLICATION %X/%X",
-			 startpoint.xlogid, startpoint.xrecoff);
+			 (uint32) (startpoint >> 32), (uint32) startpoint);
 	res = libpqrcv_PQexec(cmd);
 	if (PQresultStatus(res) != PGRES_COPY_BOTH)
 	{

@@ -631,7 +631,7 @@ CheckArchiveTimeout(void)
 		 * If the returned pointer points exactly to a segment boundary,
 		 * assume nothing happened.
 		 */
-		if ((switchpoint.xrecoff % XLogSegSize) != 0)
+		if ((switchpoint % XLogSegSize) != 0)
 			ereport(DEBUG1,
 				(errmsg("transaction log switch forced (archive_timeout=%d)",
 						XLogArchiveTimeout)));
@@ -778,10 +778,7 @@ IsCheckpointOnSchedule(double progress)
 	if (!RecoveryInProgress())
 	{
 		recptr = GetInsertRecPtr();
-		elapsed_xlogs =
-			(((double) ((uint64) (recptr.xlogid - ckpt_start_recptr.xlogid) << 32L)) +
-			 ((double) recptr.xrecoff - (double) ckpt_start_recptr.xrecoff) / XLogSegSize) /
-			CheckPointSegments;
+		elapsed_xlogs = (((double) (recptr - ckpt_start_recptr)) / XLogSegSize) / CheckPointSegments;
 
 		if (progress < elapsed_xlogs)
 		{

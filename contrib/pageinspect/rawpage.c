@@ -206,7 +206,8 @@ page_header(PG_FUNCTION_ARGS)
 	/* Extract information from the page header */
 
 	lsn = PageGetLSN(page);
-	snprintf(lsnchar, sizeof(lsnchar), "%X/%X", lsn.xlogid, lsn.xrecoff);
+	snprintf(lsnchar, sizeof(lsnchar), "%X/%X",
+			 (uint32) (lsn >> 32), (uint32) lsn);
 
 	values[0] = CStringGetTextDatum(lsnchar);
 	values[1] = UInt16GetDatum(PageGetTLI(page));

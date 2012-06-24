@@ -51,7 +51,7 @@ typedef struct BkpBlock
 /*
  * Each page of XLOG file has a header like this:
  */
-#define XLOG_PAGE_MAGIC 0xD074	/* can be used as WAL version indicator */
+#define XLOG_PAGE_MAGIC 0xD075	/* can be used as WAL version indicator */
 
 typedef struct XLogPageHeaderData
 {
@@ -113,10 +113,7 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 #define XLogSegmentsPerXLogId	(0x100000000L / XLOG_SEG_SIZE)
 
 #define XLogSegNoOffsetToRecPtr(segno, offset, dest) \
-	do {	\
-		(dest).xlogid = (segno) / XLogSegmentsPerXLogId;				\
-		(dest).xrecoff = ((segno) % XLogSegmentsPerXLogId) * XLOG_SEG_SIZE + (offset); \
-	} while (0)
+		(dest) = (segno) * XLOG_SEG_SIZE + (offset)
 
 /*
  * Macros for manipulating XLOG pointers
@@ -125,8 +122,8 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 /* Align a record pointer to next page */
 #define NextLogPage(recptr) \
 	do {	\
-		if ((recptr).xrecoff % XLOG_BLCKSZ != 0)	\
-			XLByteAdvance(recptr, (XLOG_BLCKSZ - (recptr).xrecoff % XLOG_BLCKSZ)); \
+		if ((recptr) % XLOG_BLCKSZ != 0)	\
+			XLByteAdvance(recptr, (XLOG_BLCKSZ - (recptr) % XLOG_BLCKSZ)); \
 	} while (0)
 
 /*
@@ -135,14 +132,13 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
  * For XLByteToSeg, do the computation at face value.  For XLByteToPrevSeg,
  * a boundary byte is taken to be in the previous segment.	This is suitable
  * for deciding which segment to write given a pointer to a record end,
- * for example.  (We can assume xrecoff is not zero, since no valid recptr
- * can have that.)
+ * for example.
  */
 #define XLByteToSeg(xlrp, logSegNo)	\
-	logSegNo = ((uint64) (xlrp).xlogid * XLogSegmentsPerXLogId) + (xlrp).xrecoff / XLogSegSize
+	logSegNo = (xlrp) / XLogSegSize
 
 #define XLByteToPrevSeg(xlrp, logSegNo)	\
-	logSegNo = ((uint64) (xlrp).xlogid * XLogSegmentsPerXLogId) + ((xlrp).xrecoff - 1) / XLogSegSize
+	logSegNo = ((xlrp) - 1) / XLogSegSize
 
 /*
  * Is an XLogRecPtr within a particular XLOG segment?
@@ -151,20 +147,15 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
  * a boundary byte is taken to be in the previous segment.
  */
 #define XLByteInSeg(xlrp, logSegNo)	\
-	(((xlrp).xlogid) == (logSegNo) / XLogSegmentsPerXLogId &&			\
-	 ((xlrp).xrecoff / XLogSegSize) == (logSegNo) % XLogSegmentsPerXLogId)
+	(((xlrp) / XLogSegSize) == (logSegNo))
 
 #define XLByteInPrevSeg(xlrp, logSegNo)	\
-	(((xlrp).xrecoff == 0) ?											\
-		(((xlrp).xlogid - 1) == (logSegNo) / XLogSegmentsPerXLogId && \
-		 ((uint32) 0xffffffff) / XLogSegSize == (logSegNo) % XLogSegmentsPerXLogId) : \
-		((xlrp).xlogid) == (logSegNo) / XLogSegmentsPerXLogId &&	\
-		 (((xlrp).xrecoff - 1) / XLogSegSize) == (logSegNo) % XLogSegmentsPerXLogId)
+	((((xlrp) - 1) / XLogSegSize) == (logSegNo))
 
-/* Check if an xrecoff value is in a plausible range */
-#define XRecOffIsValid(xrecoff) \
-		((xrecoff) % XLOG_BLCKSZ >= SizeOfXLogShortPHD && \
-		(XLOG_BLCKSZ - (xrecoff) % XLOG_BLCKSZ) >= SizeOfXLogRecord)
+/* Check if an XLogRecPtr value is in a plausible range */
+#define XRecOffIsValid(xlrp) \
+		((xlrp) % XLOG_BLCKSZ >= SizeOfXLogShortPHD && \
+		 (XLOG_BLCKSZ - (xlrp) % XLOG_BLCKSZ) >= SizeOfXLogRecord)
 
 /*
  * The XLog directory and control file (relative to $PGDATA)

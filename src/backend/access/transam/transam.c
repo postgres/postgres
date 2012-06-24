@@ -24,9 +24,6 @@
 #include "access/transam.h"
 #include "utils/snapmgr.h"
 
-/* Handy constant for an invalid xlog recptr */
-const XLogRecPtr InvalidXLogRecPtr = {0, 0};
-
 /*
  * Single-item cache for results of TransactionLogFetch.  It's worth having
  * such a cache because we frequently find ourselves repeatedly checking the

@@ -516,7 +516,7 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 		}
 
 		/* Calculate the start offset of the received logs */
-		startoff = recptr.xrecoff % XLogSegSize;
+		startoff = recptr % XLogSegSize;
 
 		if (startoff + nbytes > XLogSegSize)
 			segbytes = XLogSegSize - startoff;
@@ -601,8 +601,8 @@ XLogWalRcvFlush(bool dying)
 			char		activitymsg[50];
 
 			snprintf(activitymsg, sizeof(activitymsg), "streaming %X/%X",
-					 LogstreamResult.Write.xlogid,
-					 LogstreamResult.Write.xrecoff);
+					 (uint32) (LogstreamResult.Write >> 32),
+					 (uint32) LogstreamResult.Write);
 			set_ps_display(activitymsg, false);
 		}
 
@@ -657,9 +657,9 @@ XLogWalRcvSendReply(void)
 	reply_message.sendTime = now;
 
 	elog(DEBUG2, "sending write %X/%X flush %X/%X apply %X/%X",
-		 reply_message.write.xlogid, reply_message.write.xrecoff,
-		 reply_message.flush.xlogid, reply_message.flush.xrecoff,
-		 reply_message.apply.xlogid, reply_message.apply.xrecoff);
+		 (uint32) (reply_message.write >> 32), (uint32) reply_message.write,
+		 (uint32) (reply_message.flush >> 32), (uint32) reply_message.flush,
+		 (uint32) (reply_message.apply >> 32), (uint32) reply_message.apply);
 
 	/* Prepend with the message type and send it. */
 	buf[0] = 'r';

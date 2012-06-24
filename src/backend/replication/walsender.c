@@ -94,7 +94,7 @@ static uint32 sendOff = 0;
  * How far have we sent WAL already? This is also advertised in
  * MyWalSnd->sentPtr.  (Actually, this is the next WAL location to send.)
  */
-static XLogRecPtr sentPtr = {0, 0};
+static XLogRecPtr sentPtr = 0;
 
 /*
  * Buffer for processing reply messages.
@@ -300,8 +300,7 @@ IdentifySystem(void)
 
 	logptr = am_cascading_walsender ? GetStandbyFlushRecPtr() : GetInsertRecPtr();
 
-	snprintf(xpos, sizeof(xpos), "%X/%X",
-			 logptr.xlogid, logptr.xrecoff);
+	snprintf(xpos, sizeof(xpos), "%X/%X", (uint32) (logptr >> 32), (uint32) logptr);
 
 	/* Send a RowDescription message */
 	pq_beginmessage(&buf, 'T');
@@ -613,9 +612,9 @@ ProcessStandbyReplyMessage(void)
 	pq_copymsgbytes(&reply_message, (char *) &reply, sizeof(StandbyReplyMessage));
 
 	elog(DEBUG2, "write %X/%X flush %X/%X apply %X/%X",
-		 reply.write.xlogid, reply.write.xrecoff,
-		 reply.flush.xlogid, reply.flush.xrecoff,
-		 reply.apply.xlogid, reply.apply.xrecoff);
+		 (uint32) (reply.write << 32), (uint32) reply.write,
+		 (uint32) (reply.flush << 32), (uint32) reply.flush,
+		 (uint32) (reply.apply << 32), (uint32) reply.apply);
 
 	/*
 	 * Update shared state for this WalSender process based on reply data from
@@ -990,7 +989,7 @@ retry:
 		int			segbytes;
 		int			readbytes;
 
-		startoff = recptr.xrecoff % XLogSegSize;
+		startoff = recptr % XLogSegSize;
 
 		if (sendFile < 0 || !XLByteInSeg(recptr, sendSegNo))
 		{
@@ -1156,12 +1155,6 @@ XLogSend(char *msgbuf, bool *caughtup)
 	startptr = sentPtr;
 	endptr = startptr;
 	XLByteAdvance(endptr, MAX_SEND_SIZE);
-	if (endptr.xlogid != startptr.xlogid)
-	{
-		/* Don't cross a logfile boundary within one message */
-		Assert(endptr.xlogid == startptr.xlogid + 1);
-		endptr.xrecoff = 0;
-	}
 
 	/* if we went beyond SendRqstPtr, back off */
 	if (XLByteLE(SendRqstPtr, endptr))
@@ -1172,14 +1165,11 @@ XLogSend(char *msgbuf, bool *caughtup)
 	else
 	{
 		/* round down to page boundary. */
-		endptr.xrecoff -= (endptr.xrecoff % XLOG_BLCKSZ);
+		endptr -= (endptr % XLOG_BLCKSZ);
 		*caughtup = false;
 	}
 
-	if (endptr.xrecoff == 0)
-		nbytes = 0x100000000L - (uint64) startptr.xrecoff;
-	else
-		nbytes = endptr.xrecoff - startptr.xrecoff;
+	nbytes = endptr - startptr;
 	Assert(nbytes <= MAX_SEND_SIZE);
 
 	/*
@@ -1223,7 +1213,7 @@ XLogSend(char *msgbuf, bool *caughtup)
 		char		activitymsg[50];
 
 		snprintf(activitymsg, sizeof(activitymsg), "streaming %X/%X",
-				 sentPtr.xlogid, sentPtr.xrecoff);
+				 (uint32) (sentPtr >> 32), (uint32) sentPtr);
 		set_ps_display(activitymsg, false);
 	}
 
@@ -1565,25 +1555,25 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 			values[1] = CStringGetTextDatum(WalSndGetStateString(state));
 
 			snprintf(location, sizeof(location), "%X/%X",
-					 sentPtr.xlogid, sentPtr.xrecoff);
+					 (uint32) (sentPtr >> 32), (uint32) sentPtr);
 			values[2] = CStringGetTextDatum(location);
 
-			if (write.xlogid == 0 && write.xrecoff == 0)
+			if (write == 0)
 				nulls[3] = true;
 			snprintf(location, sizeof(location), "%X/%X",
-					 write.xlogid, write.xrecoff);
+					 (uint32) (write >> 32), (uint32) write);
 			values[3] = CStringGetTextDatum(location);
 
-			if (flush.xlogid == 0 && flush.xrecoff == 0)
+			if (flush == 0)
 				nulls[4] = true;
 			snprintf(location, sizeof(location), "%X/%X",
-					 flush.xlogid, flush.xrecoff);
+					 (uint32) (flush >> 32), (uint32) flush);
 			values[4] = CStringGetTextDatum(location);
 
-			if (apply.xlogid == 0 && apply.xrecoff == 0)
+			if (apply == 0)
 				nulls[5] = true;
 			snprintf(location, sizeof(location), "%X/%X",
-					 apply.xlogid, apply.xrecoff);
+					 (uint32) (apply >> 32), (uint32) apply);
 			values[5] = CStringGetTextDatum(location);
 
 			values[6] = Int32GetDatum(sync_priority[i]);

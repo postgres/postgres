@@ -38,8 +38,6 @@
 #define STREAMING_HEADER_SIZE (1+sizeof(WalDataMessageHeader))
 #define STREAMING_KEEPALIVE_SIZE (1+sizeof(PrimaryKeepaliveMessage))
 
-const XLogRecPtr InvalidXLogRecPtr = {0, 0};
-
 /*
  * Open a new WAL file in the specified directory. Store the name
  * (not including the full directory) in namebuf. Assumes there is
@@ -310,7 +308,8 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysi
 	}
 
 	/* Initiate the replication stream at specified location */
-	snprintf(query, sizeof(query), "START_REPLICATION %X/%X", startpos.xlogid, startpos.xrecoff);
+	snprintf(query, sizeof(query), "START_REPLICATION %X/%X",
+			 (uint32) (startpos >> 32), (uint32) startpos);
 	res = PQexec(conn, query);
 	if (PQresultStatus(res) != PGRES_COPY_BOTH)
 	{
@@ -471,7 +470,7 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysi
 
 		/* Extract WAL location for this block */
 		memcpy(&blockpos, copybuf + 1, 8);
-		xlogoff = blockpos.xrecoff % XLOG_SEG_SIZE;
+		xlogoff = blockpos % XLOG_SEG_SIZE;
 
 		/*
 		 * Verify that the initial location in the stream matches where we
@@ -543,7 +542,7 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysi
 			xlogoff += bytes_to_write;
 
 			/* Did we reach the end of a WAL segment? */
-			if (blockpos.xrecoff % XLOG_SEG_SIZE == 0)
+			if (blockpos % XLOG_SEG_SIZE == 0)
 			{
 				if (!close_walfile(walfile, basedir, current_walfile_name, false))
 					/* Error message written in close_walfile() */

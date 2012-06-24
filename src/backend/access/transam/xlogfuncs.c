@@ -57,7 +57,7 @@ pg_start_backup(PG_FUNCTION_ARGS)
 	startpoint = do_pg_start_backup(backupidstr, fast, NULL);
 
 	snprintf(startxlogstr, sizeof(startxlogstr), "%X/%X",
-			 startpoint.xlogid, startpoint.xrecoff);
+			 (uint32) (startpoint >> 32), (uint32) startpoint);
 	PG_RETURN_TEXT_P(cstring_to_text(startxlogstr));
 }
 
@@ -83,7 +83,7 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	stoppoint = do_pg_stop_backup(NULL, true);
 
 	snprintf(stopxlogstr, sizeof(stopxlogstr), "%X/%X",
-			 stoppoint.xlogid, stoppoint.xrecoff);
+			 (uint32) (stoppoint >> 32), (uint32) stoppoint);
 	PG_RETURN_TEXT_P(cstring_to_text(stopxlogstr));
 }
 
@@ -113,7 +113,7 @@ pg_switch_xlog(PG_FUNCTION_ARGS)
 	 * As a convenience, return the WAL location of the switch record
 	 */
 	snprintf(location, sizeof(location), "%X/%X",
-			 switchpoint.xlogid, switchpoint.xrecoff);
+			 (uint32) (switchpoint >> 32), (uint32) switchpoint);
 	PG_RETURN_TEXT_P(cstring_to_text(location));
 }
 
@@ -158,7 +158,7 @@ pg_create_restore_point(PG_FUNCTION_ARGS)
 	 * As a convenience, return the WAL location of the restore point record
 	 */
 	snprintf(location, sizeof(location), "%X/%X",
-			 restorepoint.xlogid, restorepoint.xrecoff);
+			 (uint32) (restorepoint >> 32), (uint32) restorepoint);
 	PG_RETURN_TEXT_P(cstring_to_text(location));
 }
 
@@ -184,7 +184,7 @@ pg_current_xlog_location(PG_FUNCTION_ARGS)
 	current_recptr = GetXLogWriteRecPtr();
 
 	snprintf(location, sizeof(location), "%X/%X",
-			 current_recptr.xlogid, current_recptr.xrecoff);
+			 (uint32) (current_recptr >> 32), (uint32) current_recptr);
 	PG_RETURN_TEXT_P(cstring_to_text(location));
 }
 
@@ -208,7 +208,7 @@ pg_current_xlog_insert_location(PG_FUNCTION_ARGS)
 	current_recptr = GetXLogInsertRecPtr();
 
 	snprintf(location, sizeof(location), "%X/%X",
-			 current_recptr.xlogid, current_recptr.xrecoff);
+			 (uint32) (current_recptr >> 32), (uint32) current_recptr);
 	PG_RETURN_TEXT_P(cstring_to_text(location));
 }
 
@@ -226,11 +226,11 @@ pg_last_xlog_receive_location(PG_FUNCTION_ARGS)
 
 	recptr = GetWalRcvWriteRecPtr(NULL);
 
-	if (recptr.xlogid == 0 && recptr.xrecoff == 0)
+	if (recptr == 0)
 		PG_RETURN_NULL();
 
 	snprintf(location, sizeof(location), "%X/%X",
-			 recptr.xlogid, recptr.xrecoff);
+			 (uint32) (recptr >> 32), (uint32) recptr);
 	PG_RETURN_TEXT_P(cstring_to_text(location));
 }
 
@@ -248,11 +248,11 @@ pg_last_xlog_replay_location(PG_FUNCTION_ARGS)
 
 	recptr = GetXLogReplayRecPtr(NULL);
 
-	if (recptr.xlogid == 0 && recptr.xrecoff == 0)
+	if (recptr == 0)
 		PG_RETURN_NULL();
 
 	snprintf(location, sizeof(location), "%X/%X",
-			 recptr.xlogid, recptr.xrecoff);
+			 (uint32) (recptr >> 32), (uint32) recptr);
 	PG_RETURN_TEXT_P(cstring_to_text(location));
 }
 
@@ -269,8 +269,8 @@ pg_xlogfile_name_offset(PG_FUNCTION_ARGS)
 {
 	text	   *location = PG_GETARG_TEXT_P(0);
 	char	   *locationstr;
-	unsigned int uxlogid;
-	unsigned int uxrecoff;
+	uint32		hi,
+				lo;
 	XLogSegNo	xlogsegno;
 	uint32		xrecoff;
 	XLogRecPtr	locationpoint;
@@ -294,14 +294,12 @@ pg_xlogfile_name_offset(PG_FUNCTION_ARGS)
 
 	validate_xlog_location(locationstr);
 
-	if (sscanf(locationstr, "%X/%X", &uxlogid, &uxrecoff) != 2)
+	if (sscanf(locationstr, "%X/%X", &hi, &lo) != 2)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("could not parse transaction log location \"%s\"",
 						locationstr)));
-
-	locationpoint.xlogid = uxlogid;
-	locationpoint.xrecoff = uxrecoff;
+	locationpoint = ((uint64) hi) << 32 | lo;
 
 	/*
 	 * Construct a tuple descriptor for the result row.  This must match this
@@ -327,7 +325,7 @@ pg_xlogfile_name_offset(PG_FUNCTION_ARGS)
 	/*
 	 * offset
 	 */
-	xrecoff = locationpoint.xrecoff % XLogSegSize;
+	xrecoff = locationpoint % XLogSegSize;
 
 	values[1] = UInt32GetDatum(xrecoff);
 	isnull[1] = false;
@@ -351,8 +349,8 @@ pg_xlogfile_name(PG_FUNCTION_ARGS)
 {
 	text	   *location = PG_GETARG_TEXT_P(0);
 	char	   *locationstr;
-	unsigned int uxlogid;
-	unsigned int uxrecoff;
+	uint32		hi,
+				lo;
 	XLogSegNo	xlogsegno;
 	XLogRecPtr	locationpoint;
 	char		xlogfilename[MAXFNAMELEN];
@@ -367,14 +365,12 @@ pg_xlogfile_name(PG_FUNCTION_ARGS)
 
 	validate_xlog_location(locationstr);
 
-	if (sscanf(locationstr, "%X/%X", &uxlogid, &uxrecoff) != 2)
+	if (sscanf(locationstr, "%X/%X", &hi, &lo) != 2)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("could not parse transaction log location \"%s\"",
 						locationstr)));
-
-	locationpoint.xlogid = uxlogid;
-	locationpoint.xrecoff = uxrecoff;
+	locationpoint = ((uint64) hi) << 32 | lo;
 
 	XLByteToPrevSeg(locationpoint, xlogsegno);
 	XLogFileName(xlogfilename, ThisTimeLineID, xlogsegno);
@@ -514,6 +510,8 @@ pg_xlog_location_diff(PG_FUNCTION_ARGS)
 	Numeric		result;
 	uint64		bytes1,
 				bytes2;
+	uint32		hi,
+				lo;
 
 	/*
 	 * Read and parse input
@@ -524,17 +522,20 @@ pg_xlog_location_diff(PG_FUNCTION_ARGS)
 	validate_xlog_location(str1);
 	validate_xlog_location(str2);
 
-	if (sscanf(str1, "%X/%X", &loc1.xlogid, &loc1.xrecoff) != 2)
+	if (sscanf(str1, "%X/%X", &hi, &lo) != 2)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 		   errmsg("could not parse transaction log location \"%s\"", str1)));
-	if (sscanf(str2, "%X/%X", &loc2.xlogid, &loc2.xrecoff) != 2)
+	loc1 = ((uint64) hi) << 32 | lo;
+
+	if (sscanf(str2, "%X/%X", &hi, &lo) != 2)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 		   errmsg("could not parse transaction log location \"%s\"", str2)));
+	loc2 = ((uint64) hi) << 32 | lo;
 
-	bytes1 = (((uint64)loc1.xlogid) << 32L) + loc1.xrecoff;
-	bytes2 = (((uint64)loc2.xlogid) << 32L) + loc2.xrecoff;
+	bytes1 = (uint64) loc1;
+	bytes2 = (uint64) loc2;
 
 	/*
 	 * result = bytes1 - bytes2.

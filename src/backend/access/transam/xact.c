@@ -951,7 +951,7 @@ RecordTransactionCommit(void)
 	if (XLogStandbyInfoActive())
 		nmsgs = xactGetCommittedInvalidationMessages(&invalMessages,
 													 &RelcacheInitFileInval);
-	wrote_xlog = (XactLastRecEnd.xrecoff != 0);
+	wrote_xlog = (XactLastRecEnd != 0);
 
 	/*
 	 * If we haven't been assigned an XID yet, we neither can, nor do we want
@@ -1200,7 +1200,7 @@ RecordTransactionCommit(void)
 		SyncRepWaitForLSN(XactLastRecEnd);
 
 	/* Reset XactLastRecEnd until the next transaction writes something */
-	XactLastRecEnd.xrecoff = 0;
+	XactLastRecEnd = 0;
 
 cleanup:
 	/* Clean up local data */
@@ -1402,7 +1402,7 @@ RecordTransactionAbort(bool isSubXact)
 	{
 		/* Reset XactLastRecEnd until the next transaction writes something */
 		if (!isSubXact)
-			XactLastRecEnd.xrecoff = 0;
+			XactLastRecEnd = 0;
 		return InvalidTransactionId;
 	}
 
@@ -1501,7 +1501,7 @@ RecordTransactionAbort(bool isSubXact)
 
 	/* Reset XactLastRecEnd until the next transaction writes something */
 	if (!isSubXact)
-		XactLastRecEnd.xrecoff = 0;
+		XactLastRecEnd = 0;
 
 	/* And clean up local data */
 	if (rels)
@@ -2170,7 +2170,7 @@ PrepareTransaction(void)
 	 */
 
 	/* Reset XactLastRecEnd until the next transaction writes something */
-	XactLastRecEnd.xrecoff = 0;
+	XactLastRecEnd = 0;
 
 	/*
 	 * Let others know about no transaction in progress by me.	This has to be

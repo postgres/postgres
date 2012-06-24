@@ -497,7 +497,7 @@ SendXlogRecPtrResult(XLogRecPtr ptr)
 	StringInfoData buf;
 	char		str[MAXFNAMELEN];
 
-	snprintf(str, sizeof(str), "%X/%X", ptr.xlogid, ptr.xrecoff);
+	snprintf(str, sizeof(str), "%X/%X", (uint32) (ptr >> 32), (uint32) ptr);
 
 	pq_beginmessage(&buf, 'T'); /* RowDescription */
 	pq_sendint(&buf, 1, 2);		/* 1 field */

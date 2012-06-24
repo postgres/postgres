@@ -119,10 +119,18 @@ typedef uint16 LocationIndex;
  * On the high end, we can only support pages up to 32KB because lp_off/lp_len
  * are 15 bits.
  */
+
+/* for historical reasons, the LSN is stored as two 32-bit values. */
+typedef struct
+{
+	uint32		xlogid;			/* high bits */
+	uint32		xrecoff;		/* low bits */
+} PageXLogRecPtr;
+
 typedef struct PageHeaderData
 {
 	/* XXX LSN is member of *any* block, not only page-organized ones */
-	XLogRecPtr	pd_lsn;			/* LSN: next byte after last byte of xlog
+	PageXLogRecPtr	pd_lsn;			/* LSN: next byte after last byte of xlog
 								 * record for last change to this page */
 	uint16		pd_tli;			/* least significant bits of the TimeLineID
 								 * containing the LSN */
@@ -314,9 +322,10 @@ typedef PageHeaderData *PageHeader;
  * Additional macros for access to page headers
  */
 #define PageGetLSN(page) \
-	(((PageHeader) (page))->pd_lsn)
+	((uint64) ((PageHeader) (page))->pd_lsn.xlogid << 32 | ((PageHeader) (page))->pd_lsn.xrecoff)
 #define PageSetLSN(page, lsn) \
-	(((PageHeader) (page))->pd_lsn = (lsn))
+	(((PageHeader) (page))->pd_lsn.xlogid = (uint32) ((lsn) >> 32),	\
+	 ((PageHeader) (page))->pd_lsn.xrecoff = (uint32) (lsn))
 
 /* NOTE: only the 16 least significant bits are stored */
 #define PageGetTLI(page) \

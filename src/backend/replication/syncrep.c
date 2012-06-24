@@ -145,7 +145,7 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 		new_status = (char *) palloc(len + 32 + 1);
 		memcpy(new_status, old_status, len);
 		sprintf(new_status + len, " waiting for %X/%X",
-				XactCommitLSN.xlogid, XactCommitLSN.xrecoff);
+				(uint32) (XactCommitLSN >> 32), (uint32) XactCommitLSN);
 		set_ps_display(new_status, false);
 		new_status[len] = '\0'; /* truncate off " waiting ..." */
 	}
@@ -255,8 +255,7 @@ SyncRepWaitForLSN(XLogRecPtr XactCommitLSN)
 	 */
 	Assert(SHMQueueIsDetached(&(MyProc->syncRepLinks)));
 	MyProc->syncRepState = SYNC_REP_NOT_WAITING;
-	MyProc->waitLSN.xlogid = 0;
-	MyProc->waitLSN.xrecoff = 0;
+	MyProc->waitLSN = 0;
 
 	if (new_status)
 	{
@@ -440,12 +439,8 @@ SyncRepReleaseWaiters(void)
 	LWLockRelease(SyncRepLock);
 
 	elog(DEBUG3, "released %d procs up to write %X/%X, %d procs up to flush %X/%X",
-		 numwrite,
-		 MyWalSnd->write.xlogid,
-		 MyWalSnd->write.xrecoff,
-		 numflush,
-		 MyWalSnd->flush.xlogid,
-		 MyWalSnd->flush.xrecoff);
+		 numwrite, (uint32) (MyWalSnd->write >> 32), (uint32) MyWalSnd->write,
+		 numflush, (uint32) (MyWalSnd->flush >> 32), (uint32) MyWalSnd->flush);
 
 	/*
 	 * If we are managing the highest priority standby, though we weren't
@@ -630,8 +625,7 @@ SyncRepQueueIsOrderedByLSN(int mode)
 
 	Assert(mode >= 0 && mode < NUM_SYNC_REP_WAIT_MODE);
 
-	lastLSN.xlogid = 0;
-	lastLSN.xrecoff = 0;
+	lastLSN = 0;
 
 	proc = (PGPROC *) SHMQueueNext(&(WalSndCtl->SyncRepQueue[mode]),
 								   &(WalSndCtl->SyncRepQueue[mode]),

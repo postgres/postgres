@@ -706,13 +706,7 @@ gistoptions(PG_FUNCTION_ARGS)
 XLogRecPtr
 GetXLogRecPtrForTemp(void)
 {
-	static XLogRecPtr counter = {0, 1};
-
-	counter.xrecoff++;
-	if (counter.xrecoff == 0)
-	{
-		counter.xlogid++;
-		counter.xrecoff++;
-	}
+	static XLogRecPtr counter = 1;
+	counter++;
 	return counter;
 }

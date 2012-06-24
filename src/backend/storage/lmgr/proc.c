@@ -376,8 +376,7 @@ InitProcess(void)
 	MyProc->recoveryConflictPending = false;
 
 	/* Initialize fields for sync rep */
-	MyProc->waitLSN.xlogid = 0;
-	MyProc->waitLSN.xrecoff = 0;
+	MyProc->waitLSN = 0;
 	MyProc->syncRepState = SYNC_REP_NOT_WAITING;
 	SHMQueueElemInit(&(MyProc->syncRepLinks));
 

@@ -77,7 +77,9 @@ stop_streaming(XLogRecPtr segendpos, uint32 timeline, bool segment_finished)
 {
 	if (verbose && segment_finished)
 		fprintf(stderr, _("%s: finished segment at %X/%X (timeline %u)\n"),
-				progname, segendpos.xlogid, segendpos.xrecoff, timeline);
+				progname,
+				(uint32) (segendpos >> 32), (uint32) segendpos,
+				timeline);
 
 	if (time_to_abort)
 	{
@@ -212,6 +214,8 @@ StreamLog(void)
 	PGresult   *res;
 	uint32		timeline;
 	XLogRecPtr	startpos;
+	uint32		hi,
+				lo;
 
 	/*
 	 * Connect in replication mode to the server
@@ -239,12 +243,13 @@ StreamLog(void)
 		disconnect_and_exit(1);
 	}
 	timeline = atoi(PQgetvalue(res, 0, 1));
-	if (sscanf(PQgetvalue(res, 0, 2), "%X/%X", &startpos.xlogid, &startpos.xrecoff) != 2)
+	if (sscanf(PQgetvalue(res, 0, 2), "%X/%X", &hi, &lo) != 2)
 	{
 		fprintf(stderr, _("%s: could not parse log start position from value \"%s\"\n"),
 				progname, PQgetvalue(res, 0, 2));
 		disconnect_and_exit(1);
 	}
+	startpos = ((uint64) hi) << 32 | lo;
 	PQclear(res);
 
 	/*
@@ -255,14 +260,16 @@ StreamLog(void)
 	/*
 	 * Always start streaming at the beginning of a segment
 	 */
-	startpos.xrecoff -= startpos.xrecoff % XLOG_SEG_SIZE;
+	startpos -= startpos % XLOG_SEG_SIZE;
 
 	/*
 	 * Start the replication
 	 */
 	if (verbose)
 		fprintf(stderr, _("%s: starting log streaming at %X/%X (timeline %u)\n"),
-				progname, startpos.xlogid, startpos.xrecoff, timeline);
+				progname,
+				(uint32) (startpos >> 32), (uint32) startpos,
+				timeline);
 
 	ReceiveXlogStream(conn, startpos, timeline, NULL, basedir,
 					  stop_streaming,

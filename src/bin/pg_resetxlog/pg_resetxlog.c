@@ -463,8 +463,7 @@ GuessControlValues(void)
 
 	ControlFile.system_identifier = sysidentifier;
 
-	ControlFile.checkPointCopy.redo.xlogid = 0;
-	ControlFile.checkPointCopy.redo.xrecoff = SizeOfXLogLongPHD;
+	ControlFile.checkPointCopy.redo = SizeOfXLogLongPHD;
 	ControlFile.checkPointCopy.ThisTimeLineID = 1;
 	ControlFile.checkPointCopy.fullPageWrites = false;
 	ControlFile.checkPointCopy.nextXidEpoch = 0;
@@ -611,14 +610,10 @@ RewriteControlFile(void)
 	ControlFile.state = DB_SHUTDOWNED;
 	ControlFile.time = (pg_time_t) time(NULL);
 	ControlFile.checkPoint = ControlFile.checkPointCopy.redo;
-	ControlFile.prevCheckPoint.xlogid = 0;
-	ControlFile.prevCheckPoint.xrecoff = 0;
-	ControlFile.minRecoveryPoint.xlogid = 0;
-	ControlFile.minRecoveryPoint.xrecoff = 0;
-	ControlFile.backupStartPoint.xlogid = 0;
-	ControlFile.backupStartPoint.xrecoff = 0;
-	ControlFile.backupEndPoint.xlogid = 0;
-	ControlFile.backupEndPoint.xrecoff = 0;
+	ControlFile.prevCheckPoint = 0;
+	ControlFile.minRecoveryPoint = 0;
+	ControlFile.backupStartPoint = 0;
+	ControlFile.backupEndPoint = 0;
 	ControlFile.backupEndRequired = false;
 
 	/*
@@ -714,8 +709,7 @@ FindEndOfXLOG(void)
 	 * numbering according to the old xlog seg size.
 	 */
 	segs_per_xlogid = (0x100000000L / ControlFile.xlog_seg_size);
-	newXlogSegNo = ((uint64) ControlFile.checkPointCopy.redo.xlogid) * segs_per_xlogid
-		+ (ControlFile.checkPointCopy.redo.xrecoff / ControlFile.xlog_seg_size);
+	newXlogSegNo = ControlFile.checkPointCopy.redo / ControlFile.xlog_seg_size;
 
 	/*
 	 * Scan the pg_xlog directory to find existing WAL segment files. We
@@ -919,10 +913,7 @@ WriteEmptyXLOG(void)
 	page->xlp_magic = XLOG_PAGE_MAGIC;
 	page->xlp_info = XLP_LONG_HEADER;
 	page->xlp_tli = ControlFile.checkPointCopy.ThisTimeLineID;
-	page->xlp_pageaddr.xlogid =
-		ControlFile.checkPointCopy.redo.xlogid;
-	page->xlp_pageaddr.xrecoff =
-		ControlFile.checkPointCopy.redo.xrecoff - SizeOfXLogLongPHD;
+	page->xlp_pageaddr = ControlFile.checkPointCopy.redo - SizeOfXLogLongPHD;
 	longpage = (XLogLongPageHeader) page;
 	longpage->xlp_sysid = ControlFile.system_identifier;
 	longpage->xlp_seg_size = XLogSegSize;
@@ -930,8 +921,7 @@ WriteEmptyXLOG(void)
 
 	/* Insert the initial checkpoint record */
 	record = (XLogRecord *) ((char *) page + SizeOfXLogLongPHD);
-	record->xl_prev.xlogid = 0;
-	record->xl_prev.xrecoff = 0;
+	record->xl_prev = 0;
 	record->xl_xid = InvalidTransactionId;
 	record->xl_tot_len = SizeOfXLogRecord + sizeof(CheckPoint);
 	record->xl_len = sizeof(CheckPoint);
