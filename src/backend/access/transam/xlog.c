@@ -8993,7 +8993,7 @@ issue_xlog_fsync(int fd, XLogSegNo segno)
 				ereport(PANIC,
 						(errcode_for_file_access(),
 						 errmsg("could not fsync write-through log file %s: %m",
-								XLogFileNameP(ThisTimeLineID, openLogSegNo)))));
+								XLogFileNameP(ThisTimeLineID, openLogSegNo))));
 			break;
 #endif
 #ifdef HAVE_FDATASYNC
