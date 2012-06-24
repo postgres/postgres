@@ -696,7 +696,6 @@ XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata)
 {
 	XLogCtlInsert *Insert = &XLogCtl->Insert;
 	XLogRecord *record;
-	XLogContRecord *contrecord;
 	XLogRecPtr	RecPtr;
 	XLogRecPtr	WriteRqst;
 	uint32		freespace;
@@ -1085,9 +1084,7 @@ begin:;
 		curridx = Insert->curridx;
 		/* Insert cont-record header */
 		Insert->currpage->xlp_info |= XLP_FIRST_IS_CONTRECORD;
-		contrecord = (XLogContRecord *) Insert->currpos;
-		contrecord->xl_rem_len = write_len;
-		Insert->currpos += SizeOfXLogContRecord;
+		Insert->currpage->xlp_rem_len = write_len;
 		freespace = INSERT_FREESPACE(Insert);
 	}
 
@@ -3941,7 +3938,8 @@ retry:
 	if (total_len > len)
 	{
 		/* Need to reassemble record */
-		XLogContRecord *contrecord;
+		char	   *contrecord;
+		XLogPageHeader pageHeader;
 		XLogRecPtr	pagelsn;
 		uint32		gotlen = len;
 
@@ -3969,30 +3967,30 @@ retry:
 								readOff)));
 				goto next_record_is_invalid;
 			}
-			pageHeaderSize = XLogPageHeaderSize((XLogPageHeader) readBuf);
-			contrecord = (XLogContRecord *) ((char *) readBuf + pageHeaderSize);
-			if (contrecord->xl_rem_len == 0 ||
-				total_len != (contrecord->xl_rem_len + gotlen))
+			pageHeader = (XLogPageHeader) readBuf;
+			pageHeaderSize = XLogPageHeaderSize(pageHeader);
+			contrecord = (char *) readBuf + pageHeaderSize;
+			if (pageHeader->xlp_rem_len == 0 ||
+				total_len != (pageHeader->xlp_rem_len + gotlen))
 			{
 				char fname[MAXFNAMELEN];
 				XLogFileName(fname, curFileTLI, readSegNo);
 				ereport(emode_for_corrupt_record(emode, *RecPtr),
 						(errmsg("invalid contrecord length %u in log segment %s, offset %u",
-								contrecord->xl_rem_len,
+								pageHeader->xlp_rem_len,
 								XLogFileNameP(curFileTLI, readSegNo),
 								readOff)));
 				goto next_record_is_invalid;
 			}
-			len = XLOG_BLCKSZ - pageHeaderSize - SizeOfXLogContRecord;
-			if (contrecord->xl_rem_len > len)
+			len = XLOG_BLCKSZ - pageHeaderSize;
+			if (pageHeader->xlp_rem_len > len)
 			{
-				memcpy(buffer, (char *) contrecord + SizeOfXLogContRecord, len);
+				memcpy(buffer, (char *) contrecord, len);
 				gotlen += len;
 				buffer += len;
 				continue;
 			}
-			memcpy(buffer, (char *) contrecord + SizeOfXLogContRecord,
-				   contrecord->xl_rem_len);
+			memcpy(buffer, (char *) contrecord, pageHeader->xlp_rem_len);
 			break;
 		}
 		if (!RecordIsValid(record, *RecPtr, emode))
@@ -4000,8 +3998,7 @@ retry:
 		pageHeaderSize = XLogPageHeaderSize((XLogPageHeader) readBuf);
 		XLogSegNoOffsetToRecPtr(
 			readSegNo,
-			readOff + pageHeaderSize +
-				MAXALIGN(SizeOfXLogContRecord + contrecord->xl_rem_len),
+			readOff + pageHeaderSize + MAXALIGN(pageHeader->xlp_rem_len),
 			EndRecPtr);
 		ReadRecPtr = *RecPtr;
 		/* needn't worry about XLOG SWITCH, it can't cross page boundaries */

@@ -49,29 +49,9 @@ typedef struct BkpBlock
 } BkpBlock;
 
 /*
- * When there is not enough space on current page for whole record, we
- * continue on the next page with continuation record.	(However, the
- * XLogRecord header will never be split across pages; if there's less than
- * SizeOfXLogRecord space left at the end of a page, we just waste it.)
- *
- * Note that xl_rem_len includes backup-block data; that is, it tracks
- * xl_tot_len not xl_len in the initial header.  Also note that the
- * continuation data isn't necessarily aligned.
- */
-typedef struct XLogContRecord
-{
-	uint32		xl_rem_len;		/* total len of remaining data for record */
-
-	/* ACTUAL LOG DATA FOLLOWS AT END OF STRUCT */
-
-} XLogContRecord;
-
-#define SizeOfXLogContRecord	sizeof(XLogContRecord)
-
-/*
  * Each page of XLOG file has a header like this:
  */
-#define XLOG_PAGE_MAGIC 0xD072	/* can be used as WAL version indicator */
+#define XLOG_PAGE_MAGIC 0xD073	/* can be used as WAL version indicator */
 
 typedef struct XLogPageHeaderData
 {
@@ -79,6 +59,19 @@ typedef struct XLogPageHeaderData
 	uint16		xlp_info;		/* flag bits, see below */
 	TimeLineID	xlp_tli;		/* TimeLineID of first record on page */
 	XLogRecPtr	xlp_pageaddr;	/* XLOG address of this page */
+
+	/*
+	 * When there is not enough space on current page for whole record, we
+	 * continue on the next page.  xlp_rem_len is the number of bytes
+	 * remaining from a previous page. (However, the XLogRecord header will
+	 * never be split across pages; if there's less than SizeOfXLogRecord
+	 * space left at the end of a page, we just waste it.)
+	 *
+	 * Note that xl_rem_len includes backup-block data; that is, it tracks
+	 * xl_tot_len not xl_len in the initial header.  Also note that the
+	 * continuation data isn't necessarily aligned.
+	 */
+	uint32		xlp_rem_len;	/* total len of remaining data for record */
 } XLogPageHeaderData;
 
 #define SizeOfXLogShortPHD	MAXALIGN(sizeof(XLogPageHeaderData))
