@@ -69,11 +69,12 @@ walrcv_disconnect_type walrcv_disconnect = NULL;
 
 /*
  * These variables are used similarly to openLogFile/Id/Seg/Off,
- * but for walreceiver to write the XLOG.
+ * but for walreceiver to write the XLOG. recvFileTLI is the TimeLineID
+ * corresponding the filename of recvFile, used for error messages.
  */
 static int	recvFile = -1;
-static uint32 recvId = 0;
-static uint32 recvSeg = 0;
+static TimeLineID	recvFileTLI = -1;
+static XLogSegNo recvSegNo = 0;
 static uint32 recvOff = 0;
 
 /*
@@ -481,7 +482,7 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 	{
 		int			segbytes;
 
-		if (recvFile < 0 || !XLByteInSeg(recptr, recvId, recvSeg))
+		if (recvFile < 0 || !XLByteInSeg(recptr, recvSegNo))
 		{
 			bool		use_existent;
 
@@ -501,15 +502,16 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 				if (close(recvFile) != 0)
 					ereport(PANIC,
 							(errcode_for_file_access(),
-						errmsg("could not close log file %u, segment %u: %m",
-							   recvId, recvSeg)));
+							 errmsg("could not close log segment %s: %m",
+									XLogFileNameP(recvFileTLI, recvSegNo))));
 			}
 			recvFile = -1;
 
 			/* Create/use new log file */
-			XLByteToSeg(recptr, recvId, recvSeg);
+			XLByteToSeg(recptr, recvSegNo);
 			use_existent = true;
-			recvFile = XLogFileInit(recvId, recvSeg, &use_existent, true);
+			recvFile = XLogFileInit(recvSegNo, &use_existent, true);
+			recvFileTLI = ThisTimeLineID;
 			recvOff = 0;
 		}
 
@@ -527,9 +529,9 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 			if (lseek(recvFile, (off_t) startoff, SEEK_SET) < 0)
 				ereport(PANIC,
 						(errcode_for_file_access(),
-						 errmsg("could not seek in log file %u, "
-								"segment %u to offset %u: %m",
-								recvId, recvSeg, startoff)));
+						 errmsg("could not seek in log segment %s, to offset %u: %m",
+								XLogFileNameP(recvFileTLI, recvSegNo),
+								startoff)));
 			recvOff = startoff;
 		}
 
@@ -544,9 +546,9 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 				errno = ENOSPC;
 			ereport(PANIC,
 					(errcode_for_file_access(),
-					 errmsg("could not write to log file %u, segment %u "
+					 errmsg("could not write to log segment %s "
 							"at offset %u, length %lu: %m",
-							recvId, recvSeg,
+							XLogFileNameP(recvFileTLI, recvSegNo),
 							recvOff, (unsigned long) segbytes)));
 		}
 
@@ -575,7 +577,7 @@ XLogWalRcvFlush(bool dying)
 		/* use volatile pointer to prevent code rearrangement */
 		volatile WalRcvData *walrcv = WalRcv;
 
-		issue_xlog_fsync(recvFile, recvId, recvSeg);
+		issue_xlog_fsync(recvFile, recvSegNo);
 
 		LogstreamResult.Flush = LogstreamResult.Write;
 

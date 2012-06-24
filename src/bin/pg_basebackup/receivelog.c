@@ -55,9 +55,10 @@ open_walfile(XLogRecPtr startpoint, uint32 timeline, char *basedir, char *namebu
 	struct stat statbuf;
 	char	   *zerobuf;
 	int			bytes;
+	XLogSegNo	segno;
 
-	XLogFileName(namebuf, timeline, startpoint.xlogid,
-				 startpoint.xrecoff / XLOG_SEG_SIZE);
+	XLByteToSeg(startpoint, segno);
+	XLogFileName(namebuf, timeline, segno);
 
 	snprintf(fn, sizeof(fn), "%s/%s.partial", basedir, namebuf);
 	f = open(fn, O_WRONLY | O_CREAT | PG_BINARY, S_IRUSR | S_IWUSR);

@@ -61,16 +61,16 @@ typedef struct XLogRecPtr
  */
 #define XLByteAdvance(recptr, nbytes)						\
 	do {													\
-		if (recptr.xrecoff + nbytes >= XLogFileSize)		\
-		{													\
-			recptr.xlogid += 1;								\
-			recptr.xrecoff									\
-				= recptr.xrecoff + nbytes - XLogFileSize;	\
-		}													\
-		else												\
-			recptr.xrecoff += nbytes;						\
+		uint32 oldxrecoff = (recptr).xrecoff;				\
+		(recptr).xrecoff += nbytes;							\
+		if ((recptr).xrecoff < oldxrecoff)					\
+			(recptr).xlogid += 1;		/* xrecoff wrapped around */	\
 	} while (0)
 
+/*
+ * XLogSegNo - physical log file sequence number.
+ */
+typedef uint64 XLogSegNo;
 
 /*
  * TimeLineID (TLI) - identifies different database histories to prevent

@@ -271,8 +271,7 @@ pg_xlogfile_name_offset(PG_FUNCTION_ARGS)
 	char	   *locationstr;
 	unsigned int uxlogid;
 	unsigned int uxrecoff;
-	uint32		xlogid;
-	uint32		xlogseg;
+	XLogSegNo	xlogsegno;
 	uint32		xrecoff;
 	XLogRecPtr	locationpoint;
 	char		xlogfilename[MAXFNAMELEN];
@@ -319,8 +318,8 @@ pg_xlogfile_name_offset(PG_FUNCTION_ARGS)
 	/*
 	 * xlogfilename
 	 */
-	XLByteToPrevSeg(locationpoint, xlogid, xlogseg);
-	XLogFileName(xlogfilename, ThisTimeLineID, xlogid, xlogseg);
+	XLByteToPrevSeg(locationpoint, xlogsegno);
+	XLogFileName(xlogfilename, ThisTimeLineID, xlogsegno);
 
 	values[0] = CStringGetTextDatum(xlogfilename);
 	isnull[0] = false;
@@ -328,7 +327,7 @@ pg_xlogfile_name_offset(PG_FUNCTION_ARGS)
 	/*
 	 * offset
 	 */
-	xrecoff = locationpoint.xrecoff - xlogseg * XLogSegSize;
+	xrecoff = locationpoint.xrecoff % XLogSegSize;
 
 	values[1] = UInt32GetDatum(xrecoff);
 	isnull[1] = false;
@@ -354,8 +353,7 @@ pg_xlogfile_name(PG_FUNCTION_ARGS)
 	char	   *locationstr;
 	unsigned int uxlogid;
 	unsigned int uxrecoff;
-	uint32		xlogid;
-	uint32		xlogseg;
+	XLogSegNo	xlogsegno;
 	XLogRecPtr	locationpoint;
 	char		xlogfilename[MAXFNAMELEN];
 
@@ -378,8 +376,8 @@ pg_xlogfile_name(PG_FUNCTION_ARGS)
 	locationpoint.xlogid = uxlogid;
 	locationpoint.xrecoff = uxrecoff;
 
-	XLByteToPrevSeg(locationpoint, xlogid, xlogseg);
-	XLogFileName(xlogfilename, ThisTimeLineID, xlogid, xlogseg);
+	XLByteToPrevSeg(locationpoint, xlogsegno);
+	XLogFileName(xlogfilename, ThisTimeLineID, xlogsegno);
 
 	PG_RETURN_TEXT_P(cstring_to_text(xlogfilename));
 }
@@ -514,6 +512,8 @@ pg_xlog_location_diff(PG_FUNCTION_ARGS)
 	XLogRecPtr	loc1,
 				loc2;
 	Numeric		result;
+	uint64		bytes1,
+				bytes2;
 
 	/*
 	 * Read and parse input
@@ -533,33 +533,17 @@ pg_xlog_location_diff(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 		   errmsg("could not parse transaction log location \"%s\"", str2)));
 
-	/*
-	 * Sanity check
-	 */
-	if (loc1.xrecoff > XLogFileSize)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("xrecoff \"%X\" is out of valid range, 0..%X", loc1.xrecoff, XLogFileSize)));
-	if (loc2.xrecoff > XLogFileSize)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("xrecoff \"%X\" is out of valid range, 0..%X", loc2.xrecoff, XLogFileSize)));
+	bytes1 = (((uint64)loc1.xlogid) << 32L) + loc1.xrecoff;
+	bytes2 = (((uint64)loc2.xlogid) << 32L) + loc2.xrecoff;
 
 	/*
-	 * result = XLogFileSize * (xlogid1 - xlogid2) + xrecoff1 - xrecoff2
+	 * result = bytes1 - bytes2.
+	 *
+	 * XXX: this won't handle values higher than 2^63 correctly.
 	 */
 	result = DatumGetNumeric(DirectFunctionCall2(numeric_sub,
-	   DirectFunctionCall1(int8_numeric, Int64GetDatum((int64) loc1.xlogid)),
-	 DirectFunctionCall1(int8_numeric, Int64GetDatum((int64) loc2.xlogid))));
-	result = DatumGetNumeric(DirectFunctionCall2(numeric_mul,
-	  DirectFunctionCall1(int8_numeric, Int64GetDatum((int64) XLogFileSize)),
-												 NumericGetDatum(result)));
-	result = DatumGetNumeric(DirectFunctionCall2(numeric_add,
-												 NumericGetDatum(result),
-	DirectFunctionCall1(int8_numeric, Int64GetDatum((int64) loc1.xrecoff))));
-	result = DatumGetNumeric(DirectFunctionCall2(numeric_sub,
-												 NumericGetDatum(result),
-	DirectFunctionCall1(int8_numeric, Int64GetDatum((int64) loc2.xrecoff))));
+	   DirectFunctionCall1(int8_numeric, Int64GetDatum((int64) bytes1)),
+	   DirectFunctionCall1(int8_numeric, Int64GetDatum((int64) bytes2))));
 
 	PG_RETURN_NUMERIC(result);
 }

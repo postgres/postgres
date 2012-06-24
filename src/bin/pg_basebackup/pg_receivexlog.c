@@ -102,8 +102,7 @@ FindStreamingStart(XLogRecPtr currentpos, uint32 currenttimeline)
 	struct dirent *dirent;
 	int			i;
 	bool		b;
-	uint32		high_log = 0;
-	uint32		high_seg = 0;
+	XLogSegNo	high_segno = 0;
 
 	dir = opendir(basedir);
 	if (dir == NULL)
@@ -117,9 +116,10 @@ FindStreamingStart(XLogRecPtr currentpos, uint32 currenttimeline)
 	{
 		char		fullpath[MAXPGPATH];
 		struct stat statbuf;
-		uint32		tli,
-					log,
+		uint32		tli;
+		unsigned int log,
 					seg;
+		XLogSegNo	segno;
 
 		if (strcmp(dirent->d_name, ".") == 0 || strcmp(dirent->d_name, "..") == 0)
 			continue;
@@ -151,6 +151,7 @@ FindStreamingStart(XLogRecPtr currentpos, uint32 currenttimeline)
 					progname, dirent->d_name);
 			disconnect_and_exit(1);
 		}
+		segno = ((uint64) log) << 32 | seg;
 
 		/* Ignore any files that are for another timeline */
 		if (tli != currenttimeline)
@@ -168,11 +169,9 @@ FindStreamingStart(XLogRecPtr currentpos, uint32 currenttimeline)
 		if (statbuf.st_size == XLOG_SEG_SIZE)
 		{
 			/* Completed segment */
-			if (log > high_log ||
-				(log == high_log && seg > high_seg))
+			if (segno > high_segno)
 			{
-				high_log = log;
-				high_seg = seg;
+				high_segno = segno;
 				continue;
 			}
 		}
@@ -186,7 +185,7 @@ FindStreamingStart(XLogRecPtr currentpos, uint32 currenttimeline)
 
 	closedir(dir);
 
-	if (high_log > 0 || high_seg > 0)
+	if (high_segno > 0)
 	{
 		XLogRecPtr	high_ptr;
 
@@ -194,10 +193,9 @@ FindStreamingStart(XLogRecPtr currentpos, uint32 currenttimeline)
 		 * Move the starting pointer to the start of the next segment, since
 		 * the highest one we've seen was completed.
 		 */
-		NextLogSeg(high_log, high_seg);
+		high_segno++;
 
-		high_ptr.xlogid = high_log;
-		high_ptr.xrecoff = high_seg * XLOG_SEG_SIZE;
+		XLogSegNoOffsetToRecPtr(high_segno, 0, high_ptr);
 
 		return high_ptr;
 	}

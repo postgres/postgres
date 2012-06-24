@@ -71,7 +71,7 @@ typedef struct XLogContRecord
 /*
  * Each page of XLOG file has a header like this:
  */
-#define XLOG_PAGE_MAGIC 0xD071	/* can be used as WAL version indicator */
+#define XLOG_PAGE_MAGIC 0xD072	/* can be used as WAL version indicator */
 
 typedef struct XLogPageHeaderData
 {
@@ -115,55 +115,27 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 	(((hdr)->xlp_info & XLP_LONG_HEADER) ? SizeOfXLogLongPHD : SizeOfXLogShortPHD)
 
 /*
- * We break each logical log file (xlogid value) into segment files of the
- * size indicated by XLOG_SEG_SIZE.  One possible segment at the end of each
- * log file is wasted, to ensure that we don't have problems representing
- * last-byte-position-plus-1.
+ * The XLOG is split into WAL segments (physical files) of the size indicated
+ * by XLOG_SEG_SIZE.
  */
 #define XLogSegSize		((uint32) XLOG_SEG_SIZE)
-#define XLogSegsPerFile (((uint32) 0xffffffff) / XLogSegSize)
-#define XLogFileSize	(XLogSegsPerFile * XLogSegSize)
+#define XLogSegmentsPerXLogId	(0x100000000L / XLOG_SEG_SIZE)
 
+#define XLogSegNoOffsetToRecPtr(segno, offset, dest) \
+	do {	\
+		(dest).xlogid = (segno) / XLogSegmentsPerXLogId;				\
+		(dest).xrecoff = ((segno) % XLogSegmentsPerXLogId) * XLOG_SEG_SIZE + (offset); \
+	} while (0)
 
 /*
  * Macros for manipulating XLOG pointers
  */
 
-/* Increment an xlogid/segment pair */
-#define NextLogSeg(logId, logSeg)	\
-	do { \
-		if ((logSeg) >= XLogSegsPerFile-1) \
-		{ \
-			(logId)++; \
-			(logSeg) = 0; \
-		} \
-		else \
-			(logSeg)++; \
-	} while (0)
-
-/* Decrement an xlogid/segment pair (assume it's not 0,0) */
-#define PrevLogSeg(logId, logSeg)	\
-	do { \
-		if (logSeg) \
-			(logSeg)--; \
-		else \
-		{ \
-			(logId)--; \
-			(logSeg) = XLogSegsPerFile-1; \
-		} \
-	} while (0)
-
 /* Align a record pointer to next page */
 #define NextLogPage(recptr) \
 	do {	\
 		if ((recptr).xrecoff % XLOG_BLCKSZ != 0)	\
-			(recptr).xrecoff += \
-				(XLOG_BLCKSZ - (recptr).xrecoff % XLOG_BLCKSZ); \
-		if ((recptr).xrecoff >= XLogFileSize) \
-		{	\
-			((recptr).xlogid)++;	\
-			(recptr).xrecoff = 0; \
-		}	\
+			XLByteAdvance(recptr, (XLOG_BLCKSZ - (recptr).xrecoff % XLOG_BLCKSZ)); \
 	} while (0)
 
 /*
@@ -175,14 +147,11 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
  * for example.  (We can assume xrecoff is not zero, since no valid recptr
  * can have that.)
  */
-#define XLByteToSeg(xlrp, logId, logSeg)	\
-	( logId = (xlrp).xlogid, \
-	  logSeg = (xlrp).xrecoff / XLogSegSize \
-	)
-#define XLByteToPrevSeg(xlrp, logId, logSeg)	\
-	( logId = (xlrp).xlogid, \
-	  logSeg = ((xlrp).xrecoff - 1) / XLogSegSize \
-	)
+#define XLByteToSeg(xlrp, logSegNo)	\
+	logSegNo = ((uint64) (xlrp).xlogid * XLogSegmentsPerXLogId) + (xlrp).xrecoff / XLogSegSize
+
+#define XLByteToPrevSeg(xlrp, logSegNo)	\
+	logSegNo = ((uint64) (xlrp).xlogid * XLogSegmentsPerXLogId) + ((xlrp).xrecoff - 1) / XLogSegSize
 
 /*
  * Is an XLogRecPtr within a particular XLOG segment?
@@ -190,13 +159,16 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
  * For XLByteInSeg, do the computation at face value.  For XLByteInPrevSeg,
  * a boundary byte is taken to be in the previous segment.
  */
-#define XLByteInSeg(xlrp, logId, logSeg)	\
-	((xlrp).xlogid == (logId) && \
-	 (xlrp).xrecoff / XLogSegSize == (logSeg))
+#define XLByteInSeg(xlrp, logSegNo)	\
+	(((xlrp).xlogid) == (logSegNo) / XLogSegmentsPerXLogId &&			\
+	 ((xlrp).xrecoff / XLogSegSize) == (logSegNo) % XLogSegmentsPerXLogId)
 
-#define XLByteInPrevSeg(xlrp, logId, logSeg)	\
-	((xlrp).xlogid == (logId) && \
-	 ((xlrp).xrecoff - 1) / XLogSegSize == (logSeg))
+#define XLByteInPrevSeg(xlrp, logSegNo)	\
+	(((xlrp).xrecoff == 0) ?											\
+		(((xlrp).xlogid - 1) == (logSegNo) / XLogSegmentsPerXLogId && \
+		 ((uint32) 0xffffffff) / XLogSegSize == (logSegNo) % XLogSegmentsPerXLogId) : \
+		((xlrp).xlogid) == (logSegNo) / XLogSegmentsPerXLogId &&	\
+		 (((xlrp).xrecoff - 1) / XLogSegSize) == (logSegNo) % XLogSegmentsPerXLogId)
 
 /* Check if an xrecoff value is in a plausible range */
 #define XRecOffIsValid(xrecoff) \
@@ -215,14 +187,23 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
  */
 #define MAXFNAMELEN		64
 
-#define XLogFileName(fname, tli, log, seg)	\
-	snprintf(fname, MAXFNAMELEN, "%08X%08X%08X", tli, log, seg)
+#define XLogFileName(fname, tli, logSegNo)	\
+	snprintf(fname, MAXFNAMELEN, "%08X%08X%08X", tli,		\
+			 (uint32) ((logSegNo) / XLogSegmentsPerXLogId), \
+			 (uint32) ((logSegNo) % XLogSegmentsPerXLogId))
 
-#define XLogFromFileName(fname, tli, log, seg)	\
-	sscanf(fname, "%08X%08X%08X", tli, log, seg)
+#define XLogFromFileName(fname, tli, logSegNo)	\
+	do {												\
+		uint32 log;										\
+		uint32 seg;										\
+		sscanf(fname, "%08X%08X%08X", tli, &log, &seg);	\
+		*logSegNo = (uint64) log * XLogSegmentsPerXLogId + seg;	\
+	} while (0)
 
-#define XLogFilePath(path, tli, log, seg)	\
-	snprintf(path, MAXPGPATH, XLOGDIR "/%08X%08X%08X", tli, log, seg)
+#define XLogFilePath(path, tli, logSegNo)	\
+	snprintf(path, MAXPGPATH, XLOGDIR "/%08X%08X%08X", tli,				\
+			 (uint32) ((logSegNo) / XLogSegmentsPerXLogId),				\
+			 (uint32) ((logSegNo) % XLogSegmentsPerXLogId))
 
 #define TLHistoryFileName(fname, tli)	\
 	snprintf(fname, MAXFNAMELEN, "%08X.history", tli)
@@ -233,11 +214,15 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 #define StatusFilePath(path, xlog, suffix)	\
 	snprintf(path, MAXPGPATH, XLOGDIR "/archive_status/%s%s", xlog, suffix)
 
-#define BackupHistoryFileName(fname, tli, log, seg, offset) \
-	snprintf(fname, MAXFNAMELEN, "%08X%08X%08X.%08X.backup", tli, log, seg, offset)
+#define BackupHistoryFileName(fname, tli, logSegNo, offset) \
+	snprintf(fname, MAXFNAMELEN, "%08X%08X%08X.%08X.backup", tli, \
+			 (uint32) ((logSegNo) / XLogSegmentsPerXLogId),		  \
+			 (uint32) ((logSegNo) % XLogSegmentsPerXLogId), offset)
 
-#define BackupHistoryFilePath(path, tli, log, seg, offset)	\
-	snprintf(path, MAXPGPATH, XLOGDIR "/%08X%08X%08X.%08X.backup", tli, log, seg, offset)
+#define BackupHistoryFilePath(path, tli, logSegNo, offset)	\
+	snprintf(path, MAXPGPATH, XLOGDIR "/%08X%08X%08X.%08X.backup", tli, \
+			 (uint32) ((logSegNo) / XLogSegmentsPerXLogId), \
+			 (uint32) ((logSegNo) % XLogSegmentsPerXLogId), offset)
 
 
 /*

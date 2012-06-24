@@ -221,10 +221,8 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 		 * We've left the last tar file "open", so we can now append the
 		 * required WAL files to it.
 		 */
-		uint32		logid,
-					logseg;
-		uint32		endlogid,
-					endlogseg;
+		XLogSegNo	logsegno;
+		XLogSegNo	endlogsegno;
 		struct stat statbuf;
 
 		MemSet(&statbuf, 0, sizeof(statbuf));
@@ -236,8 +234,8 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 		statbuf.st_size = XLogSegSize;
 		statbuf.st_mtime = time(NULL);
 
-		XLByteToSeg(startptr, logid, logseg);
-		XLByteToPrevSeg(endptr, endlogid, endlogseg);
+		XLByteToSeg(startptr, logsegno);
+		XLByteToPrevSeg(endptr, endlogsegno);
 
 		while (true)
 		{
@@ -245,7 +243,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			char		fn[MAXPGPATH];
 			int			i;
 
-			XLogFilePath(fn, ThisTimeLineID, logid, logseg);
+			XLogFilePath(fn, ThisTimeLineID, logsegno);
 			_tarWriteHeader(fn, NULL, &statbuf);
 
 			/* Send the actual WAL file contents, block-by-block */
@@ -254,8 +252,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 				char		buf[TAR_SEND_SIZE];
 				XLogRecPtr	ptr;
 
-				ptr.xlogid = logid;
-				ptr.xrecoff = logseg * XLogSegSize + TAR_SEND_SIZE * i;
+				XLogSegNoOffsetToRecPtr(logsegno, TAR_SEND_SIZE * i, ptr);
 
 				/*
 				 * Some old compilers, e.g. gcc 2.95.3/x86, think that passing
@@ -277,11 +274,10 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 
 
 			/* Advance to the next WAL file */
-			NextLogSeg(logid, logseg);
+			logsegno++;
 
 			/* Have we reached our stop position yet? */
-			if (logid > endlogid ||
-				(logid == endlogid && logseg > endlogseg))
+			if (logsegno > endlogsegno)
 				break;
 		}
 
