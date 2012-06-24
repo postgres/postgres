@@ -1578,7 +1578,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 
 		for (i = 0; i < index_form->indnatts; i++)
 		{
-			int2		attnum = index_form->indkey.values[i];
+			int16		attnum = index_form->indkey.values[i];
 			Form_pg_attribute attform;
 			char	   *attname;
 			Oid			defopclass;

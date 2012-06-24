@@ -150,7 +150,7 @@ gtsquery_penalty(PG_FUNCTION_ARGS)
 typedef struct
 {
 	OffsetNumber pos;
-	int4		cost;
+	int32		cost;
 } SPLITCOST;
 
 static int
@@ -174,11 +174,11 @@ gtsquery_picksplit(PG_FUNCTION_ARGS)
 				j;
 	TSQuerySign datum_l,
 				datum_r;
-	int4		size_alpha,
+	int32		size_alpha,
 				size_beta;
-	int4		size_waste,
+	int32		size_waste,
 				waste = -1;
-	int4		nbytes;
+	int32		nbytes;
 	OffsetNumber seed_1 = 0,
 				seed_2 = 0;
 	OffsetNumber *left,

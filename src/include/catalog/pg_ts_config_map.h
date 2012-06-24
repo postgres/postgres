@@ -33,8 +33,8 @@
 CATALOG(pg_ts_config_map,3603) BKI_WITHOUT_OIDS
 {
 	Oid			mapcfg;			/* OID of configuration owning this entry */
-	int4		maptokentype;	/* token type from parser */
-	int4		mapseqno;		/* order in which to consult dictionaries */
+	int32		maptokentype;	/* token type from parser */
+	int32		mapseqno;		/* order in which to consult dictionaries */
 	Oid			mapdict;		/* dictionary to consult */
 } FormData_pg_ts_config_map;
 

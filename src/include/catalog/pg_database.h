@@ -33,12 +33,12 @@ CATALOG(pg_database,1262) BKI_SHARED_RELATION BKI_ROWTYPE_OID(1248) BKI_SCHEMA_M
 {
 	NameData	datname;		/* database name */
 	Oid			datdba;			/* owner of database */
-	int4		encoding;		/* character encoding */
+	int32		encoding;		/* character encoding */
 	NameData	datcollate;		/* LC_COLLATE setting */
 	NameData	datctype;		/* LC_CTYPE setting */
 	bool		datistemplate;	/* allowed as CREATE DATABASE template? */
 	bool		datallowconn;	/* new connections allowed? */
-	int4		datconnlimit;	/* max connections allowed (-1=no limit) */
+	int32		datconnlimit;	/* max connections allowed (-1=no limit) */
 	Oid			datlastsysoid;	/* highest OID to consider a system OID */
 	TransactionId datfrozenxid; /* all Xids < this are frozen in this DB */
 	Oid			dattablespace;	/* default table space for this DB */

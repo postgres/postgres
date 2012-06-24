@@ -50,8 +50,8 @@ CATALOG(pg_proc,1255) BKI_BOOTSTRAP BKI_ROWTYPE_OID(81) BKI_SCHEMA_MACRO
 	bool		proisstrict;	/* strict with respect to NULLs? */
 	bool		proretset;		/* returns a set? */
 	char		provolatile;	/* see PROVOLATILE_ categories below */
-	int2		pronargs;		/* number of arguments */
-	int2		pronargdefaults;	/* number of arguments with defaults */
+	int16		pronargs;		/* number of arguments */
+	int16		pronargdefaults;	/* number of arguments with defaults */
 	Oid			prorettype;		/* OID of result type */
 
 	/*

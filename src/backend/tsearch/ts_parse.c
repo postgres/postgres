@@ -592,7 +592,7 @@ generateHeadline(HeadlineParsedText *prs)
 	char	   *ptr;
 	int			len = 128;
 	int			numfragments = 0;
-	int2		infrag = 0;
+	int16		infrag = 0;
 
 	HeadlineWordEntry *wrd = prs->words;
 

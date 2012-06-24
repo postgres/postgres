@@ -40,7 +40,7 @@ static float calc_rank_and(float *w, TSVector t, TSQuery q);
  * Returns a weight of a word collocation
  */
 static float4
-word_distance(int4 w)
+word_distance(int32 w)
 {
 	if (w > 100)
 		return 1e-30f;
@@ -213,7 +213,7 @@ calc_rank_and(float *w, TSVector t, TSQuery q)
 			   *firstentry;
 	WordEntryPos *post,
 			   *ct;
-	int4		dimt,
+	int32		dimt,
 				lenct,
 				dist,
 				nitem;
@@ -283,7 +283,7 @@ calc_rank_or(float *w, TSVector t, TSQuery q)
 	WordEntry  *entry,
 			   *firstentry;
 	WordEntryPos *post;
-	int4		dimt,
+	int32		dimt,
 				j,
 				i,
 				nitem;
@@ -297,7 +297,7 @@ calc_rank_or(float *w, TSVector t, TSQuery q)
 	{
 		float		resj,
 					wjm;
-		int4		jm;
+		int32		jm;
 
 		firstentry = entry = find_wordentry(t, q, item[i], &nitem);
 		if (!entry)
@@ -347,7 +347,7 @@ calc_rank_or(float *w, TSVector t, TSQuery q)
 }
 
 static float
-calc_rank(float *w, TSVector t, TSQuery q, int4 method)
+calc_rank(float *w, TSVector t, TSQuery q, int32 method)
 {
 	QueryItem  *item = GETQUERY(q);
 	float		res = 0.0;
@@ -621,7 +621,7 @@ get_docrep(TSVector txt, QueryRepresentation *qr, int *doclen)
 	WordEntry  *entry,
 			   *firstentry;
 	WordEntryPos *post;
-	int4		dimt,
+	int32		dimt,
 				j,
 				i,
 				nitem;

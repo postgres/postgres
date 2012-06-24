@@ -65,7 +65,7 @@ ginint4_queryextract(PG_FUNCTION_ARGS)
 		*nentries = ARRNELEMS(query);
 		if (*nentries > 0)
 		{
-			int4	   *arr;
+			int32	   *arr;
 			int32		i;
 
 			res = (Datum *) palloc(sizeof(Datum) * (*nentries));

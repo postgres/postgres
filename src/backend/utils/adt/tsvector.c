@@ -309,7 +309,7 @@ tsvectorout(PG_FUNCTION_ARGS)
 {
 	TSVector	out = PG_GETARG_TSVECTOR(0);
 	char	   *outbuf;
-	int4		i,
+	int32		i,
 				lenbuf = 0,
 				pp;
 	WordEntry  *ptr = ARRPTR(out);

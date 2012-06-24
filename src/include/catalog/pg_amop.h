@@ -58,7 +58,7 @@ CATALOG(pg_amop,2602)
 	Oid			amopfamily;		/* the index opfamily this entry is for */
 	Oid			amoplefttype;	/* operator's left input data type */
 	Oid			amoprighttype;	/* operator's right input data type */
-	int2		amopstrategy;	/* operator strategy number */
+	int16		amopstrategy;	/* operator strategy number */
 	char		amoppurpose;	/* is operator for 's'earch or 'o'rdering? */
 	Oid			amopopr;		/* the operator's pg_operator OID */
 	Oid			amopmethod;		/* the index access method this entry is for */

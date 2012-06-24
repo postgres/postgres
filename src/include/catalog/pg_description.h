@@ -49,7 +49,7 @@ CATALOG(pg_description,2609) BKI_WITHOUT_OIDS
 {
 	Oid			objoid;			/* OID of object itself */
 	Oid			classoid;		/* OID of table containing object */
-	int4		objsubid;		/* column number, or 0 if not used */
+	int32		objsubid;		/* column number, or 0 if not used */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	text		description;	/* description of object */

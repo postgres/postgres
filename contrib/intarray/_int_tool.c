@@ -186,11 +186,11 @@ rt__int_size(ArrayType *a, float *size)
 
 /* Sort the given data (len >= 2).	Return true if any duplicates found */
 bool
-isort(int4 *a, int len)
+isort(int32 *a, int len)
 {
-	int4		cur,
+	int32		cur,
 				prev;
-	int4	   *pcur,
+	int32	   *pcur,
 			   *pprev,
 			   *end;
 	bool		r = FALSE;
@@ -268,7 +268,7 @@ copy_intArrayType(ArrayType *a)
 	int			n = ARRNELEMS(a);
 
 	r = new_intArrayType(n);
-	memcpy(ARRPTR(r), ARRPTR(a), n * sizeof(int4));
+	memcpy(ARRPTR(r), ARRPTR(a), n * sizeof(int32));
 	return r;
 }
 
@@ -389,15 +389,15 @@ int_to_intset(int32 n)
 int
 compASC(const void *a, const void *b)
 {
-	if (*(const int4 *) a == *(const int4 *) b)
+	if (*(const int32 *) a == *(const int32 *) b)
 		return 0;
-	return (*(const int4 *) a > *(const int4 *) b) ? 1 : -1;
+	return (*(const int32 *) a > *(const int32 *) b) ? 1 : -1;
 }
 
 int
 compDESC(const void *a, const void *b)
 {
-	if (*(const int4 *) a == *(const int4 *) b)
+	if (*(const int32 *) a == *(const int32 *) b)
 		return 0;
-	return (*(const int4 *) a < *(const int4 *) b) ? 1 : -1;
+	return (*(const int32 *) a < *(const int32 *) b) ? 1 : -1;
 }

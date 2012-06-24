@@ -36,7 +36,7 @@ typedef struct
 do { \
 		if ( state->cur - state->word + 1 >= state->wordlen ) \
 		{ \
-				int4 clen = state->cur - state->word; \
+				int32 clen = state->cur - state->word; \
 				state->wordlen *= 2; \
 				state->word = (char*)repalloc( (void*)state->word, state->wordlen ); \
 				state->cur = state->word + clen; \
@@ -74,7 +74,7 @@ get_val(HSParser *state, bool ignoreeq, bool *escaped)
 			}
 			else if (*(state->ptr) == '=' && !ignoreeq)
 			{
-				elog(ERROR, "Syntax error near '%c' at position %d", *(state->ptr), (int4) (state->ptr - state->begin));
+				elog(ERROR, "Syntax error near '%c' at position %d", *(state->ptr), (int32) (state->ptr - state->begin));
 			}
 			else if (*(state->ptr) == '\\')
 			{
@@ -215,7 +215,7 @@ parse_hstore(HSParser *state)
 			}
 			else if (!isspace((unsigned char) *(state->ptr)))
 			{
-				elog(ERROR, "Syntax error near '%c' at position %d", *(state->ptr), (int4) (state->ptr - state->begin));
+				elog(ERROR, "Syntax error near '%c' at position %d", *(state->ptr), (int32) (state->ptr - state->begin));
 			}
 		}
 		else if (st == WGT)
@@ -230,7 +230,7 @@ parse_hstore(HSParser *state)
 			}
 			else
 			{
-				elog(ERROR, "Syntax error near '%c' at position %d", *(state->ptr), (int4) (state->ptr - state->begin));
+				elog(ERROR, "Syntax error near '%c' at position %d", *(state->ptr), (int32) (state->ptr - state->begin));
 			}
 		}
 		else if (st == WVAL)
@@ -263,7 +263,7 @@ parse_hstore(HSParser *state)
 			}
 			else if (!isspace((unsigned char) *(state->ptr)))
 			{
-				elog(ERROR, "Syntax error near '%c' at position %d", *(state->ptr), (int4) (state->ptr - state->begin));
+				elog(ERROR, "Syntax error near '%c' at position %d", *(state->ptr), (int32) (state->ptr - state->begin));
 			}
 		}
 		else
@@ -304,7 +304,7 @@ comparePairs(const void *a, const void *b)
  * and (b) who knows whether they might be needed by some caller.
  */
 int
-hstoreUniquePairs(Pairs *a, int4 l, int4 *buflen)
+hstoreUniquePairs(Pairs *a, int32 l, int32 *buflen)
 {
 	Pairs	   *ptr,
 			   *res;
@@ -367,14 +367,14 @@ hstoreCheckValLen(size_t len)
 
 
 HStore *
-hstorePairs(Pairs *pairs, int4 pcount, int4 buflen)
+hstorePairs(Pairs *pairs, int32 pcount, int32 buflen)
 {
 	HStore	   *out;
 	HEntry	   *entry;
 	char	   *ptr;
 	char	   *buf;
-	int4		len;
-	int4		i;
+	int32		len;
+	int32		i;
 
 	len = CALCDATASIZE(pcount, buflen);
 	out = palloc(len);
@@ -402,7 +402,7 @@ Datum
 hstore_in(PG_FUNCTION_ARGS)
 {
 	HSParser	state;
-	int4		buflen;
+	int32		buflen;
 	HStore	   *out;
 
 	state.begin = PG_GETARG_CSTRING(0);
@@ -422,11 +422,11 @@ Datum		hstore_recv(PG_FUNCTION_ARGS);
 Datum
 hstore_recv(PG_FUNCTION_ARGS)
 {
-	int4		buflen;
+	int32		buflen;
 	HStore	   *out;
 	Pairs	   *pairs;
-	int4		i;
-	int4		pcount;
+	int32		i;
+	int32		pcount;
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 
 	pcount = pq_getmsgint(buf, 4);
@@ -518,7 +518,7 @@ Datum		hstore_from_arrays(PG_FUNCTION_ARGS);
 Datum
 hstore_from_arrays(PG_FUNCTION_ARGS)
 {
-	int4		buflen;
+	int32		buflen;
 	HStore	   *out;
 	Pairs	   *pairs;
 	Datum	   *key_datums;
@@ -632,7 +632,7 @@ hstore_from_array(PG_FUNCTION_ARGS)
 	ArrayType  *in_array = PG_GETARG_ARRAYTYPE_P(0);
 	int			ndims = ARR_NDIM(in_array);
 	int			count;
-	int4		buflen;
+	int32		buflen;
 	HStore	   *out;
 	Pairs	   *pairs;
 	Datum	   *in_datums;
@@ -737,7 +737,7 @@ Datum
 hstore_from_record(PG_FUNCTION_ARGS)
 {
 	HeapTupleHeader rec;
-	int4		buflen;
+	int32		buflen;
 	HStore	   *out;
 	Pairs	   *pairs;
 	Oid			tupType;

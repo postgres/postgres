@@ -271,7 +271,7 @@ pushValue_internal(TSQueryParserState state, pg_crc32 valcrc, int distance, int 
  * of the string.
  */
 void
-pushValue(TSQueryParserState state, char *strval, int lenval, int2 weight, bool prefix)
+pushValue(TSQueryParserState state, char *strval, int lenval, int16 weight, bool prefix)
 {
 	pg_crc32	valcrc;
 

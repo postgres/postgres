@@ -32,7 +32,7 @@ CATALOG(pg_statistic,2619) BKI_WITHOUT_OIDS
 {
 	/* These fields form the unique key for the entry: */
 	Oid			starelid;		/* relation containing attribute */
-	int2		staattnum;		/* attribute (column) stats are for */
+	int16		staattnum;		/* attribute (column) stats are for */
 	bool		stainherit;		/* true if inheritance children are included */
 
 	/* the fraction of the column's entries that are NULL: */
@@ -48,7 +48,7 @@ CATALOG(pg_statistic,2619) BKI_WITHOUT_OIDS
 	 * the statistic, which is to estimate sizes of in-memory hash tables of
 	 * tuples.
 	 */
-	int4		stawidth;
+	int32		stawidth;
 
 	/* ----------------
 	 * stadistinct indicates the (approximate) number of distinct non-null
@@ -84,11 +84,11 @@ CATALOG(pg_statistic,2619) BKI_WITHOUT_OIDS
 	 * ----------------
 	 */
 
-	int2		stakind1;
-	int2		stakind2;
-	int2		stakind3;
-	int2		stakind4;
-	int2		stakind5;
+	int16		stakind1;
+	int16		stakind2;
+	int16		stakind3;
+	int16		stakind4;
+	int16		stakind5;
 
 	Oid			staop1;
 	Oid			staop2;

@@ -91,7 +91,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 	values[Anum_pg_type_typname - 1] = NameGetDatum(&name);
 	values[Anum_pg_type_typnamespace - 1] = ObjectIdGetDatum(typeNamespace);
 	values[Anum_pg_type_typowner - 1] = ObjectIdGetDatum(ownerId);
-	values[Anum_pg_type_typlen - 1] = Int16GetDatum(sizeof(int4));
+	values[Anum_pg_type_typlen - 1] = Int16GetDatum(sizeof(int32));
 	values[Anum_pg_type_typbyval - 1] = BoolGetDatum(true);
 	values[Anum_pg_type_typtype - 1] = CharGetDatum(TYPTYPE_PSEUDO);
 	values[Anum_pg_type_typcategory - 1] = CharGetDatum(TYPCATEGORY_PSEUDOTYPE);

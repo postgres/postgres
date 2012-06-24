@@ -195,7 +195,7 @@ typedef signed char GinNullCategory;
  */
 #define GinCategoryOffset(itup,ginstate) \
 	(IndexInfoFindDataOffset((itup)->t_info) + \
-	 ((ginstate)->oneCol ? 0 : sizeof(int2)))
+	 ((ginstate)->oneCol ? 0 : sizeof(int16)))
 #define GinGetNullCategory(itup,ginstate) \
 	(*((GinNullCategory *) ((char*)(itup) + GinCategoryOffset(itup,ginstate))))
 #define GinSetNullCategory(itup,ginstate,c) \

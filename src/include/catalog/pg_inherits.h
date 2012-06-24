@@ -32,7 +32,7 @@ CATALOG(pg_inherits,2611) BKI_WITHOUT_OIDS
 {
 	Oid			inhrelid;
 	Oid			inhparent;
-	int4		inhseqno;
+	int32		inhseqno;
 } FormData_pg_inherits;
 
 /* ----------------

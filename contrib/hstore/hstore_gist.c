@@ -40,7 +40,7 @@ typedef char *BITVECP;
 typedef struct
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
-	int4		flag;
+	int32		flag;
 	char		data[1];
 } GISTTYPE;
 
@@ -48,7 +48,7 @@ typedef struct
 
 #define ISALLTRUE(x)	( ((GISTTYPE*)x)->flag & ALLISTRUE )
 
-#define GTHDRSIZE		(VARHDRSZ + sizeof(int4))
+#define GTHDRSIZE		(VARHDRSZ + sizeof(int32))
 #define CALCGTSIZE(flag) ( GTHDRSIZE+(((flag) & ALLISTRUE) ? 0 : SIGLEN) )
 
 #define GETSIGN(x)		( (BITVECP)( (char*)x+GTHDRSIZE ) )
@@ -143,7 +143,7 @@ ghstore_compress(PG_FUNCTION_ARGS)
 	}
 	else if (!ISALLTRUE(DatumGetPointer(entry->key)))
 	{
-		int4		i;
+		int32		i;
 		GISTTYPE   *res;
 		BITVECP		sign = GETSIGN(DatumGetPointer(entry->key));
 
@@ -192,7 +192,7 @@ ghstore_same(PG_FUNCTION_ARGS)
 		*result = false;
 	else
 	{
-		int4		i;
+		int32		i;
 		BITVECP		sa = GETSIGN(a),
 					sb = GETSIGN(b);
 
@@ -209,10 +209,10 @@ ghstore_same(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(result);
 }
 
-static int4
+static int32
 sizebitvec(BITVECP sign)
 {
-	int4		size = 0,
+	int32		size = 0,
 				i;
 
 	LOOPBYTE
@@ -253,10 +253,10 @@ hemdist(GISTTYPE *a, GISTTYPE *b)
 	return hemdistsign(GETSIGN(a), GETSIGN(b));
 }
 
-static int4
+static int32
 unionkey(BITVECP sbase, GISTTYPE *add)
 {
-	int4		i;
+	int32		i;
 	BITVECP		sadd = GETSIGN(add);
 
 	if (ISALLTRUE(add))
@@ -270,12 +270,12 @@ Datum
 ghstore_union(PG_FUNCTION_ARGS)
 {
 	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
-	int4		len = entryvec->n;
+	int32		len = entryvec->n;
 
 	int		   *size = (int *) PG_GETARG_POINTER(1);
 	BITVEC		base;
-	int4		i;
-	int4		flag = 0;
+	int32		i;
+	int32		flag = 0;
 	GISTTYPE   *result;
 
 	MemSet((void *) base, 0, sizeof(BITVEC));
@@ -316,7 +316,7 @@ ghstore_penalty(PG_FUNCTION_ARGS)
 typedef struct
 {
 	OffsetNumber pos;
-	int4		cost;
+	int32		cost;
 } SPLITCOST;
 
 static int
@@ -339,11 +339,11 @@ ghstore_picksplit(PG_FUNCTION_ARGS)
 			   *datum_r;
 	BITVECP		union_l,
 				union_r;
-	int4		size_alpha,
+	int32		size_alpha,
 				size_beta;
-	int4		size_waste,
+	int32		size_waste,
 				waste = -1;
-	int4		nbytes;
+	int32		nbytes;
 	OffsetNumber seed_1 = 0,
 				seed_2 = 0;
 	OffsetNumber *left,

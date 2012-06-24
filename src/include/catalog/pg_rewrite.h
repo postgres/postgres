@@ -35,7 +35,7 @@ CATALOG(pg_rewrite,2618)
 {
 	NameData	rulename;
 	Oid			ev_class;
-	int2		ev_attr;
+	int16		ev_attr;
 	char		ev_type;
 	char		ev_enabled;
 	bool		is_instead;

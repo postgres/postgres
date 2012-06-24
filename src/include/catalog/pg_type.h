@@ -47,7 +47,7 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71) BKI_SCHEMA_MACRO
 	 * "varlena" type (one that has a length word), -2 to indicate a
 	 * null-terminated C string.
 	 */
-	int2		typlen;
+	int16		typlen;
 
 	/*
 	 * typbyval determines whether internal Postgres routines pass a value of
@@ -185,13 +185,13 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71) BKI_SCHEMA_MACRO
 	 * type (-1 if base type does not use a typmod).  -1 if this type is not a
 	 * domain.
 	 */
-	int4		typtypmod;
+	int32		typtypmod;
 
 	/*
 	 * typndims is the declared number of dimensions for an array domain type
 	 * (i.e., typbasetype is an array type).  Otherwise zero.
 	 */
-	int4		typndims;
+	int32		typndims;
 
 	/*
 	 * Collation: 0 if type cannot use collations, DEFAULT_COLLATION_OID for

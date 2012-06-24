@@ -86,7 +86,7 @@ CATALOG(pg_constraint,2606)
 	bool		conislocal;
 
 	/* Number of times inherited from direct parent relation(s) */
-	int4		coninhcount;
+	int32		coninhcount;
 
 	/* Has a local definition and cannot be inherited */
 	bool		connoinherit;
@@ -97,12 +97,12 @@ CATALOG(pg_constraint,2606)
 	 * Columns of conrelid that the constraint applies to, if known (this is
 	 * NULL for trigger constraints)
 	 */
-	int2		conkey[1];
+	int16		conkey[1];
 
 	/*
 	 * If a foreign key, the referenced columns of confrelid
 	 */
-	int2		confkey[1];
+	int16		confkey[1];
 
 	/*
 	 * If a foreign key, the OIDs of the PK = FK equality operators for each

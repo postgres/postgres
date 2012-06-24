@@ -47,7 +47,7 @@ CATALOG(pg_amproc,2603)
 	Oid			amprocfamily;	/* the index opfamily this entry is for */
 	Oid			amproclefttype; /* procedure's left input data type */
 	Oid			amprocrighttype;	/* procedure's right input data type */
-	int2		amprocnum;		/* support procedure index */
+	int16		amprocnum;		/* support procedure index */
 	regproc		amproc;			/* OID of the proc */
 } FormData_pg_amproc;
 

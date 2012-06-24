@@ -42,8 +42,8 @@ CATALOG(pg_conversion,2607)
 	NameData	conname;
 	Oid			connamespace;
 	Oid			conowner;
-	int4		conforencoding;
-	int4		contoencoding;
+	int32		conforencoding;
+	int32		contoencoding;
 	regproc		conproc;
 	bool		condefault;
 } FormData_pg_conversion;

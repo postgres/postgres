@@ -256,7 +256,7 @@ extern Datum int2shl(PG_FUNCTION_ARGS);
 extern Datum int2shr(PG_FUNCTION_ARGS);
 extern Datum generate_series_int4(PG_FUNCTION_ARGS);
 extern Datum generate_series_step_int4(PG_FUNCTION_ARGS);
-extern int2vector *buildint2vector(const int2 *int2s, int n);
+extern int2vector *buildint2vector(const int16 *int2s, int n);
 
 /* name.c */
 extern Datum namein(PG_FUNCTION_ARGS);

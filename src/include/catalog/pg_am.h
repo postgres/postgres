@@ -34,11 +34,11 @@
 CATALOG(pg_am,2601)
 {
 	NameData	amname;			/* access method name */
-	int2		amstrategies;	/* total number of strategies (operators) by
+	int16		amstrategies;	/* total number of strategies (operators) by
 								 * which we can traverse/search this AM. Zero
 								 * if AM does not have a fixed set of strategy
 								 * assignments. */
-	int2		amsupport;		/* total number of support functions that this
+	int16		amsupport;		/* total number of support functions that this
 								 * AM uses */
 	bool		amcanorder;		/* does AM support order by column value? */
 	bool		amcanorderbyop; /* does AM support order by operator result? */

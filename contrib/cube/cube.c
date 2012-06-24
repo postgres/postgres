@@ -266,7 +266,7 @@ cube_subset(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_ARRAY_ELEMENT_ERROR),
 				 errmsg("cannot work with arrays containing NULLs")));
 
-	dx = (int4 *) ARR_DATA_PTR(idx);
+	dx = (int32 *) ARR_DATA_PTR(idx);
 
 	dim = ARRNELEMS(idx);
 	size = offsetof(NDBOX, x[0]) +sizeof(double) * 2 * dim;
@@ -1360,7 +1360,7 @@ cube_enlarge(PG_FUNCTION_ARGS)
 {
 	NDBOX	   *a = PG_GETARG_NDBOX(0);
 	double		r = PG_GETARG_FLOAT8(1);
-	int4		n = PG_GETARG_INT32(2);
+	int32		n = PG_GETARG_INT32(2);
 	NDBOX	   *result;
 	int			dim = 0;
 	int			size;

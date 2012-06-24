@@ -39,7 +39,7 @@ CATALOG(pg_shdepend,1214) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
 	Oid			dbid;			/* OID of database containing object */
 	Oid			classid;		/* OID of table containing object */
 	Oid			objid;			/* OID of object itself */
-	int4		objsubid;		/* column number, or 0 if not used */
+	int32		objsubid;		/* column number, or 0 if not used */
 
 	/*
 	 * Identification of the independent (referenced) object.  This is always

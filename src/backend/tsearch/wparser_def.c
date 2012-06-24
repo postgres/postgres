@@ -2133,12 +2133,12 @@ mark_fragment(HeadlineParsedText *prs, int highlight, int startpos, int endpos)
 
 typedef struct
 {
-	int4		startpos;
-	int4		endpos;
-	int4		poslen;
-	int4		curlen;
-	int2		in;
-	int2		excluded;
+	int32		startpos;
+	int32		endpos;
+	int32		poslen;
+	int32		curlen;
+	int16		in;
+	int16		excluded;
 } CoverPos;
 
 static void
@@ -2191,24 +2191,24 @@ mark_hl_fragments(HeadlineParsedText *prs, TSQuery query, int highlight,
 				  int shortword, int min_words,
 				  int max_words, int max_fragments)
 {
-	int4		poslen,
+	int32		poslen,
 				curlen,
 				i,
 				f,
 				num_f = 0;
-	int4		stretch,
+	int32		stretch,
 				maxstretch,
 				posmarker;
 
-	int4		startpos = 0,
+	int32		startpos = 0,
 				endpos = 0,
 				p = 0,
 				q = 0;
 
-	int4		numcovers = 0,
+	int32		numcovers = 0,
 				maxcovers = 32;
 
-	int4		minI,
+	int32		minI,
 				minwords,
 				maxitems;
 	CoverPos   *covers;

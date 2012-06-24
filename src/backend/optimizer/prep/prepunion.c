@@ -987,7 +987,7 @@ generate_setop_tlist(List *colTypes, List *colCollations,
 		expr = (Node *) makeConst(INT4OID,
 								  -1,
 								  InvalidOid,
-								  sizeof(int4),
+								  sizeof(int32),
 								  Int32GetDatum(flag),
 								  false,
 								  true);

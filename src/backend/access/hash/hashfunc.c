@@ -135,7 +135,7 @@ hashint2vector(PG_FUNCTION_ARGS)
 {
 	int2vector *key = (int2vector *) PG_GETARG_POINTER(0);
 
-	return hash_any((unsigned char *) key->values, key->dim1 * sizeof(int2));
+	return hash_any((unsigned char *) key->values, key->dim1 * sizeof(int16));
 }
 
 Datum

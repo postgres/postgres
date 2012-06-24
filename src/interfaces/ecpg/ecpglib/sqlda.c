@@ -245,8 +245,8 @@ ecpg_build_compat_sqlda(int line, PGresult *res, int row, enum COMPAT_MODE compa
 /*
  * Sets values from PGresult.
  */
-static int2 value_is_null = -1;
-static int2 value_is_not_null = 0;
+static int16 value_is_null = -1;
+static int16 value_is_not_null = 0;
 
 void
 ecpg_set_compat_sqlda(int lineno, struct sqlda_compat ** _sqlda, const PGresult *res, int row, enum COMPAT_MODE compat)

@@ -38,7 +38,7 @@ CATALOG(pg_trigger,2620)
 	Oid			tgrelid;		/* relation trigger is attached to */
 	NameData	tgname;			/* trigger's name */
 	Oid			tgfoid;			/* OID of function to be called */
-	int2		tgtype;			/* BEFORE/AFTER/INSTEAD, UPDATE/DELETE/INSERT,
+	int16		tgtype;			/* BEFORE/AFTER/INSTEAD, UPDATE/DELETE/INSERT,
 								 * ROW/STATEMENT; see below */
 	char		tgenabled;		/* trigger's firing configuration WRT
 								 * session_replication_role */
@@ -48,7 +48,7 @@ CATALOG(pg_trigger,2620)
 	Oid			tgconstraint;	/* associated pg_constraint entry, if any */
 	bool		tgdeferrable;	/* constraint trigger is deferrable */
 	bool		tginitdeferred; /* constraint trigger is deferred initially */
-	int2		tgnargs;		/* # of extra arguments in tgargs */
+	int16		tgnargs;		/* # of extra arguments in tgargs */
 
 	/*
 	 * Variable-length fields start here, but we allow direct access to

@@ -78,7 +78,7 @@ gbt_int4key_cmp(const void *a, const void *b)
 static float8
 gbt_int4_dist(const void *a, const void *b)
 {
-	return GET_FLOAT_DISTANCE(int4, a, b);
+	return GET_FLOAT_DISTANCE(int32, a, b);
 }
 
 
@@ -101,10 +101,10 @@ Datum		int4_dist(PG_FUNCTION_ARGS);
 Datum
 int4_dist(PG_FUNCTION_ARGS)
 {
-	int4		a = PG_GETARG_INT32(0);
-	int4		b = PG_GETARG_INT32(1);
-	int4		r;
-	int4		ra;
+	int32		a = PG_GETARG_INT32(0);
+	int32		b = PG_GETARG_INT32(1);
+	int32		r;
+	int32		ra;
 
 	r = a - b;
 	ra = Abs(r);

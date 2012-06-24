@@ -329,8 +329,6 @@ typedef signed int Offset;
 /*
  * Common Postgres datatype names (as used in the catalogs)
  */
-typedef int16 int2;
-typedef int32 int4;
 typedef float float4;
 typedef double float8;
 
@@ -424,7 +422,7 @@ typedef struct
 	Oid			elemtype;
 	int			dim1;
 	int			lbound1;
-	int2		values[1];		/* VARIABLE LENGTH ARRAY */
+	int16		values[1];		/* VARIABLE LENGTH ARRAY */
 } int2vector;					/* VARIABLE LENGTH STRUCT */
 
 typedef struct

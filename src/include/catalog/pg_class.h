@@ -43,9 +43,9 @@ CATALOG(pg_class,1259) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83) BKI_SCHEMA_MACRO
 
 	/* relfilenode == 0 means it is a "mapped" relation, see relmapper.c */
 	Oid			reltablespace;	/* identifier of table space for relation */
-	int4		relpages;		/* # of blocks (not always up-to-date) */
+	int32		relpages;		/* # of blocks (not always up-to-date) */
 	float4		reltuples;		/* # of tuples (not always up-to-date) */
-	int4		relallvisible;	/* # of all-visible blocks (not always
+	int32		relallvisible;	/* # of all-visible blocks (not always
 								 * up-to-date) */
 	Oid			reltoastrelid;	/* OID of toast table; 0 if none */
 	Oid			reltoastidxid;	/* if toast table, OID of chunk_id index */
@@ -53,14 +53,14 @@ CATALOG(pg_class,1259) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83) BKI_SCHEMA_MACRO
 	bool		relisshared;	/* T if shared across databases */
 	char		relpersistence; /* see RELPERSISTENCE_xxx constants below */
 	char		relkind;		/* see RELKIND_xxx constants below */
-	int2		relnatts;		/* number of user attributes */
+	int16		relnatts;		/* number of user attributes */
 
 	/*
 	 * Class pg_attribute must contain exactly "relnatts" user attributes
 	 * (with attnums ranging from 1 to relnatts) for this class.  It may also
 	 * contain entries with negative attnums for system attributes.
 	 */
-	int2		relchecks;		/* # of CHECK constraints for class */
+	int16		relchecks;		/* # of CHECK constraints for class */
 	bool		relhasoids;		/* T if we generate OIDs for rows of rel */
 	bool		relhaspkey;		/* has (or has had) PRIMARY KEY index */
 	bool		relhasrules;	/* has (or has had) any rules */

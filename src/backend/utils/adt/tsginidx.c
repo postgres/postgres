@@ -109,7 +109,7 @@ gin_extract_tsquery(PG_FUNCTION_ARGS)
 	if (query->size > 0)
 	{
 		QueryItem  *item = GETQUERY(query);
-		int4		i,
+		int32		i,
 					j;
 		bool	   *partialmatch;
 		int		   *map_item_operand;

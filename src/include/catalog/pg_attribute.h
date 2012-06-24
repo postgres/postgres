@@ -54,13 +54,13 @@ CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS BKI_ROWTYPE_OID(75) BK
 	 * that no value has been explicitly set for this column, so ANALYZE
 	 * should use the default setting.
 	 */
-	int4		attstattarget;
+	int32		attstattarget;
 
 	/*
 	 * attlen is a copy of the typlen field from pg_type for this attribute.
 	 * See atttypid comments above.
 	 */
-	int2		attlen;
+	int16		attlen;
 
 	/*
 	 * attnum is the "attribute number" for the attribute:	A value that
@@ -75,13 +75,13 @@ CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS BKI_ROWTYPE_OID(75) BK
 	 *
 	 * Note that (attnum - 1) is often used as the index to an array.
 	 */
-	int2		attnum;
+	int16		attnum;
 
 	/*
 	 * attndims is the declared number of dimensions, if an array type,
 	 * otherwise zero.
 	 */
-	int4		attndims;
+	int32		attndims;
 
 	/*
 	 * fastgetattr() uses attcacheoff to cache byte offsets of attributes in
@@ -90,7 +90,7 @@ CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS BKI_ROWTYPE_OID(75) BK
 	 * descriptor, we may then update attcacheoff in the copies. This speeds
 	 * up the attribute walking process.
 	 */
-	int4		attcacheoff;
+	int32		attcacheoff;
 
 	/*
 	 * atttypmod records type-specific data supplied at table creation time
@@ -98,7 +98,7 @@ CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS BKI_ROWTYPE_OID(75) BK
 	 * type-specific input and output functions as the third argument. The
 	 * value will generally be -1 for types that do not need typmod.
 	 */
-	int4		atttypmod;
+	int32		atttypmod;
 
 	/*
 	 * attbyval is a copy of the typbyval field from pg_type for this
@@ -140,7 +140,7 @@ CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS BKI_ROWTYPE_OID(75) BK
 	bool		attislocal;
 
 	/* Number of times inherited from direct parent relation(s) */
-	int4		attinhcount;
+	int32		attinhcount;
 
 	/* attribute's collation */
 	Oid			attcollation;

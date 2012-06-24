@@ -34,27 +34,27 @@ Datum		querytree(PG_FUNCTION_ARGS);
  */
 typedef struct NODE
 {
-	int4		type;
-	int4		val;
+	int32		type;
+	int32		val;
 	struct NODE *next;
 } NODE;
 
 typedef struct
 {
 	char	   *buf;
-	int4		state;
-	int4		count;
+	int32		state;
+	int32		count;
 	/* reverse polish notation in list (for temporary usage) */
 	NODE	   *str;
 	/* number in str */
-	int4		num;
+	int32		num;
 } WORKSTATE;
 
 /*
  * get token from query string
  */
-static int4
-gettoken(WORKSTATE *state, int4 *val)
+static int32
+gettoken(WORKSTATE *state, int32 *val)
 {
 	char		nnn[16];
 	int			innn;
@@ -79,7 +79,7 @@ gettoken(WORKSTATE *state, int4 *val)
 				else if (*(state->buf) == '!')
 				{
 					(state->buf)++;
-					*val = (int4) '!';
+					*val = (int32) '!';
 					return OPR;
 				}
 				else if (*(state->buf) == '(')
@@ -103,7 +103,7 @@ gettoken(WORKSTATE *state, int4 *val)
 					nnn[innn] = '\0';
 					errno = 0;
 					lval = strtol(nnn, NULL, 0);
-					*val = (int4) lval;
+					*val = (int32) lval;
 					if (errno != 0 || (long) *val != lval)
 						return ERR;
 					state->state = WAITOPERATOR;
@@ -115,7 +115,7 @@ gettoken(WORKSTATE *state, int4 *val)
 				if (*(state->buf) == '&' || *(state->buf) == '|')
 				{
 					state->state = WAITOPERAND;
-					*val = (int4) *(state->buf);
+					*val = (int32) *(state->buf);
 					(state->buf)++;
 					return OPR;
 				}
@@ -143,7 +143,7 @@ gettoken(WORKSTATE *state, int4 *val)
  * push new one in polish notation reverse view
  */
 static void
-pushquery(WORKSTATE *state, int4 type, int4 val)
+pushquery(WORKSTATE *state, int32 type, int32 val)
 {
 	NODE	   *tmp = (NODE *) palloc(sizeof(NODE));
 
@@ -159,13 +159,13 @@ pushquery(WORKSTATE *state, int4 type, int4 val)
 /*
  * make polish notation of query
  */
-static int4
+static int32
 makepol(WORKSTATE *state)
 {
-	int4		val,
+	int32		val,
 				type;
-	int4		stack[STACKDEPTH];
-	int4		lenstack = 0;
+	int32		stack[STACKDEPTH];
+	int32		lenstack = 0;
 
 	/* since this function recurses, it could be driven to stack overflow */
 	check_stack_depth();
@@ -176,15 +176,15 @@ makepol(WORKSTATE *state)
 		{
 			case VAL:
 				pushquery(state, type, val);
-				while (lenstack && (stack[lenstack - 1] == (int4) '&' ||
-									stack[lenstack - 1] == (int4) '!'))
+				while (lenstack && (stack[lenstack - 1] == (int32) '&' ||
+									stack[lenstack - 1] == (int32) '!'))
 				{
 					lenstack--;
 					pushquery(state, OPR, stack[lenstack]);
 				}
 				break;
 			case OPR:
-				if (lenstack && val == (int4) '|')
+				if (lenstack && val == (int32) '|')
 					pushquery(state, OPR, val);
 				else
 				{
@@ -199,8 +199,8 @@ makepol(WORKSTATE *state)
 			case OPEN:
 				if (makepol(state) == ERR)
 					return ERR;
-				while (lenstack && (stack[lenstack - 1] == (int4) '&' ||
-									stack[lenstack - 1] == (int4) '!'))
+				while (lenstack && (stack[lenstack - 1] == (int32) '&' ||
+									stack[lenstack - 1] == (int32) '!'))
 				{
 					lenstack--;
 					pushquery(state, OPR, stack[lenstack]);
@@ -234,8 +234,8 @@ makepol(WORKSTATE *state)
 
 typedef struct
 {
-	int4	   *arrb;
-	int4	   *arre;
+	int32	   *arrb;
+	int32	   *arre;
 } CHKVAL;
 
 /*
@@ -244,9 +244,9 @@ typedef struct
 static bool
 checkcondition_arr(void *checkval, ITEM *item)
 {
-	int4	   *StopLow = ((CHKVAL *) checkval)->arrb;
-	int4	   *StopHigh = ((CHKVAL *) checkval)->arre;
-	int4	   *StopMiddle;
+	int32	   *StopLow = ((CHKVAL *) checkval)->arrb;
+	int32	   *StopHigh = ((CHKVAL *) checkval)->arre;
+	int32	   *StopMiddle;
 
 	/* Loop invariant: StopLow <= val < StopHigh */
 
@@ -281,13 +281,13 @@ execute(ITEM *curitem, void *checkval, bool calcnot,
 
 	if (curitem->type == VAL)
 		return (*chkcond) (checkval, curitem);
-	else if (curitem->val == (int4) '!')
+	else if (curitem->val == (int32) '!')
 	{
 		return (calcnot) ?
 			((execute(curitem - 1, checkval, calcnot, chkcond)) ? false : true)
 			: true;
 	}
-	else if (curitem->val == (int4) '&')
+	else if (curitem->val == (int32) '&')
 	{
 		if (execute(curitem + curitem->left, checkval, calcnot, chkcond))
 			return execute(curitem - 1, checkval, calcnot, chkcond);
@@ -379,7 +379,7 @@ contains_required_value(ITEM *curitem)
 
 	if (curitem->type == VAL)
 		return true;
-	else if (curitem->val == (int4) '!')
+	else if (curitem->val == (int32) '!')
 	{
 		/*
 		 * Assume anything under a NOT is non-required.  For some cases with
@@ -388,7 +388,7 @@ contains_required_value(ITEM *curitem)
 		 */
 		return false;
 	}
-	else if (curitem->val == (int4) '&')
+	else if (curitem->val == (int32) '&')
 	{
 		/* If either side has a required value, we're good */
 		if (contains_required_value(curitem + curitem->left))
@@ -449,7 +449,7 @@ boolop(PG_FUNCTION_ARGS)
 }
 
 static void
-findoprnd(ITEM *ptr, int4 *pos)
+findoprnd(ITEM *ptr, int32 *pos)
 {
 #ifdef BS_DEBUG
 	elog(DEBUG3, (ptr[*pos].type == OPR) ?
@@ -460,7 +460,7 @@ findoprnd(ITEM *ptr, int4 *pos)
 		ptr[*pos].left = 0;
 		(*pos)--;
 	}
-	else if (ptr[*pos].val == (int4) '!')
+	else if (ptr[*pos].val == (int32) '!')
 	{
 		ptr[*pos].left = -1;
 		(*pos)--;
@@ -469,7 +469,7 @@ findoprnd(ITEM *ptr, int4 *pos)
 	else
 	{
 		ITEM	   *curitem = &ptr[*pos];
-		int4		tmp = *pos;
+		int32		tmp = *pos;
 
 		(*pos)--;
 		findoprnd(ptr, pos);
@@ -487,12 +487,12 @@ bqarr_in(PG_FUNCTION_ARGS)
 {
 	char	   *buf = (char *) PG_GETARG_POINTER(0);
 	WORKSTATE	state;
-	int4		i;
+	int32		i;
 	QUERYTYPE  *query;
-	int4		commonlen;
+	int32		commonlen;
 	ITEM	   *ptr;
 	NODE	   *tmp;
-	int4		pos = 0;
+	int32		pos = 0;
 
 #ifdef BS_DEBUG
 	StringInfoData pbuf;
@@ -553,11 +553,11 @@ typedef struct
 	ITEM	   *curpol;
 	char	   *buf;
 	char	   *cur;
-	int4		buflen;
+	int32		buflen;
 } INFIX;
 
 #define RESIZEBUF(inf,addsize) while( ( (inf)->cur - (inf)->buf ) + (addsize) + 1 >= (inf)->buflen ) { \
-	int4 len = inf->cur - inf->buf; \
+	int32 len = inf->cur - inf->buf; \
 	inf->buflen *= 2; \
 	inf->buf = (char*) repalloc( (void*)inf->buf, inf->buflen ); \
 	inf->cur = inf->buf + len; \
@@ -573,7 +573,7 @@ infix(INFIX *in, bool first)
 		in->cur = strchr(in->cur, '\0');
 		in->curpol--;
 	}
-	else if (in->curpol->val == (int4) '!')
+	else if (in->curpol->val == (int32) '!')
 	{
 		bool		isopr = false;
 
@@ -599,11 +599,11 @@ infix(INFIX *in, bool first)
 	}
 	else
 	{
-		int4		op = in->curpol->val;
+		int32		op = in->curpol->val;
 		INFIX		nrm;
 
 		in->curpol--;
-		if (op == (int4) '|' && !first)
+		if (op == (int32) '|' && !first)
 		{
 			RESIZEBUF(in, 2);
 			sprintf(in->cur, "( ");
@@ -627,7 +627,7 @@ infix(INFIX *in, bool first)
 		in->cur = strchr(in->cur, '\0');
 		pfree(nrm.buf);
 
-		if (op == (int4) '|' && !first)
+		if (op == (int32) '|' && !first)
 		{
 			RESIZEBUF(in, 2);
 			sprintf(in->cur, " )");

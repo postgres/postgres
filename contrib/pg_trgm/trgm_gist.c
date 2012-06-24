@@ -78,10 +78,10 @@ gtrgm_out(PG_FUNCTION_ARGS)
 static void
 makesign(BITVECP sign, TRGM *a)
 {
-	int4		k,
+	int32		k,
 				len = ARRNELEM(a);
 	trgm	   *ptr = GETARR(a);
-	int4		tmp = 0;
+	int32		tmp = 0;
 
 	MemSet((void *) sign, 0, sizeof(BITVEC));
 	SETBIT(sign, SIGLENBIT);	/* set last unused bit */
@@ -112,7 +112,7 @@ gtrgm_compress(PG_FUNCTION_ARGS)
 	else if (ISSIGNKEY(DatumGetPointer(entry->key)) &&
 			 !ISALLTRUE(DatumGetPointer(entry->key)))
 	{
-		int4		i,
+		int32		i,
 					len;
 		TRGM	   *res;
 		BITVECP		sign = GETSIGN(DatumGetPointer(entry->key));
@@ -160,14 +160,14 @@ gtrgm_decompress(PG_FUNCTION_ARGS)
 	}
 }
 
-static int4
+static int32
 cnt_sml_sign_common(TRGM *qtrg, BITVECP sign)
 {
-	int4		count = 0;
-	int4		k,
+	int32		count = 0;
+	int32		k,
 				len = ARRNELEM(qtrg);
 	trgm	   *ptr = GETARR(qtrg);
-	int4		tmp = 0;
+	int32		tmp = 0;
 
 	for (k = 0; k < len; k++)
 	{
@@ -267,8 +267,8 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 			}
 			else
 			{					/* non-leaf contains signature */
-				int4		count = cnt_sml_sign_common(qtrg, GETSIGN(key));
-				int4		len = ARRNELEM(qtrg);
+				int32		count = cnt_sml_sign_common(qtrg, GETSIGN(key));
+				int32		len = ARRNELEM(qtrg);
 
 				if (len == 0)
 					res = false;
@@ -379,8 +379,8 @@ gtrgm_distance(PG_FUNCTION_ARGS)
 			}
 			else
 			{					/* non-leaf contains signature */
-				int4		count = cnt_sml_sign_common(qtrg, GETSIGN(key));
-				int4		len = ARRNELEM(qtrg);
+				int32		count = cnt_sml_sign_common(qtrg, GETSIGN(key));
+				int32		len = ARRNELEM(qtrg);
 
 				res = (len == 0) ? -1.0 : 1.0 - ((float8) count) / ((float8) len);
 			}
@@ -394,10 +394,10 @@ gtrgm_distance(PG_FUNCTION_ARGS)
 	PG_RETURN_FLOAT8(res);
 }
 
-static int4
+static int32
 unionkey(BITVECP sbase, TRGM *add)
 {
-	int4		i;
+	int32		i;
 
 	if (ISSIGNKEY(add))
 	{
@@ -412,7 +412,7 @@ unionkey(BITVECP sbase, TRGM *add)
 	else
 	{
 		trgm	   *ptr = GETARR(add);
-		int4		tmp = 0;
+		int32		tmp = 0;
 
 		for (i = 0; i < ARRNELEM(add); i++)
 		{
@@ -428,11 +428,11 @@ Datum
 gtrgm_union(PG_FUNCTION_ARGS)
 {
 	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
-	int4		len = entryvec->n;
+	int32		len = entryvec->n;
 	int		   *size = (int *) PG_GETARG_POINTER(1);
 	BITVEC		base;
-	int4		i;
-	int4		flag = 0;
+	int32		i;
+	int32		flag = 0;
 	TRGM	   *result;
 
 	MemSet((void *) base, 0, sizeof(BITVEC));
@@ -474,7 +474,7 @@ gtrgm_same(PG_FUNCTION_ARGS)
 			*result = false;
 		else
 		{
-			int4		i;
+			int32		i;
 			BITVECP		sa = GETSIGN(a),
 						sb = GETSIGN(b);
 
@@ -491,7 +491,7 @@ gtrgm_same(PG_FUNCTION_ARGS)
 	}
 	else
 	{							/* a and b ISARRKEY */
-		int4		lena = ARRNELEM(a),
+		int32		lena = ARRNELEM(a),
 					lenb = ARRNELEM(b);
 
 		if (lena != lenb)
@@ -500,7 +500,7 @@ gtrgm_same(PG_FUNCTION_ARGS)
 		{
 			trgm	   *ptra = GETARR(a),
 					   *ptrb = GETARR(b);
-			int4		i;
+			int32		i;
 
 			*result = true;
 			for (i = 0; i < lena; i++)
@@ -515,10 +515,10 @@ gtrgm_same(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(result);
 }
 
-static int4
+static int32
 sizebitvec(BITVECP sign)
 {
-	int4		size = 0,
+	int32		size = 0,
 				i;
 
 	LOOPBYTE
@@ -634,7 +634,7 @@ fillcache(CACHESIGN *item, TRGM *key)
 typedef struct
 {
 	OffsetNumber pos;
-	int4		cost;
+	int32		cost;
 } SPLITCOST;
 
 static int
@@ -675,11 +675,11 @@ gtrgm_picksplit(PG_FUNCTION_ARGS)
 			   *datum_r;
 	BITVECP		union_l,
 				union_r;
-	int4		size_alpha,
+	int32		size_alpha,
 				size_beta;
-	int4		size_waste,
+	int32		size_waste,
 				waste = -1;
-	int4		nbytes;
+	int32		nbytes;
 	OffsetNumber seed_1 = 0,
 				seed_2 = 0;
 	OffsetNumber *left,

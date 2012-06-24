@@ -4713,8 +4713,8 @@ array_smaller(PG_FUNCTION_ARGS)
 
 typedef struct generate_subscripts_fctx
 {
-	int4		lower;
-	int4		upper;
+	int32		lower;
+	int32		upper;
 	bool		reverse;
 } generate_subscripts_fctx;
 

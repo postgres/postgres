@@ -83,7 +83,7 @@ _ltree_compress(PG_FUNCTION_ARGS)
 	{							/* ltree */
 		ltree_gist *key;
 		ArrayType  *val = DatumGetArrayTypeP(entry->key);
-		int4		len = LTG_HDRSIZE + ASIGLEN;
+		int32		len = LTG_HDRSIZE + ASIGLEN;
 		int			num = ArrayGetNItems(ARR_NDIM(val), ARR_DIMS(val));
 		ltree	   *item = (ltree *) ARR_DATA_PTR(val);
 
@@ -115,7 +115,7 @@ _ltree_compress(PG_FUNCTION_ARGS)
 	}
 	else if (!LTG_ISALLTRUE(entry->key))
 	{
-		int4		i,
+		int32		i,
 					len;
 		ltree_gist *key;
 
@@ -154,7 +154,7 @@ _ltree_same(PG_FUNCTION_ARGS)
 		*result = false;
 	else
 	{
-		int4		i;
+		int32		i;
 		BITVECP		sa = LTG_SIGN(a),
 					sb = LTG_SIGN(b);
 
@@ -171,10 +171,10 @@ _ltree_same(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(result);
 }
 
-static int4
+static int32
 unionkey(BITVECP sbase, ltree_gist *add)
 {
-	int4		i;
+	int32		i;
 	BITVECP		sadd = LTG_SIGN(add);
 
 	if (LTG_ISALLTRUE(add))
@@ -191,9 +191,9 @@ _ltree_union(PG_FUNCTION_ARGS)
 	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	int		   *size = (int *) PG_GETARG_POINTER(1);
 	ABITVEC		base;
-	int4		i,
+	int32		i,
 				len;
-	int4		flag = 0;
+	int32		flag = 0;
 	ltree_gist *result;
 
 	MemSet((void *) base, 0, sizeof(ABITVEC));
@@ -217,10 +217,10 @@ _ltree_union(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(result);
 }
 
-static int4
+static int32
 sizebitvec(BITVECP sign)
 {
-	int4		size = 0,
+	int32		size = 0,
 				i;
 
 	ALOOPBYTE
@@ -274,7 +274,7 @@ _ltree_penalty(PG_FUNCTION_ARGS)
 typedef struct
 {
 	OffsetNumber pos;
-	int4		cost;
+	int32		cost;
 } SPLITCOST;
 
 static int
@@ -294,11 +294,11 @@ _ltree_picksplit(PG_FUNCTION_ARGS)
 			   *datum_r;
 	BITVECP		union_l,
 				union_r;
-	int4		size_alpha,
+	int32		size_alpha,
 				size_beta;
-	int4		size_waste,
+	int32		size_waste,
 				waste = -1;
-	int4		nbytes;
+	int32		nbytes;
 	OffsetNumber seed_1 = 0,
 				seed_2 = 0;
 	OffsetNumber *left,

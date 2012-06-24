@@ -31,6 +31,8 @@ sub Catalogs
     # There are a few types which are given one name in the C source, but a
     # different name at the SQL level.  These are enumerated here.
     my %RENAME_ATTTYPE = (
+        'int16'		=> 'int2',
+        'int32'		=> 'int4',
         'Oid'           => 'oid',
         'NameData'      => 'name',
         'TransactionId' => 'xid'

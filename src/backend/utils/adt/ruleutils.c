@@ -2394,7 +2394,7 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 	char	   *rulename;
 	char		ev_type;
 	Oid			ev_class;
-	int2		ev_attr;
+	int16		ev_attr;
 	bool		is_instead;
 	char	   *ev_qual;
 	char	   *ev_action;
@@ -2584,7 +2584,7 @@ make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 	Query	   *query;
 	char		ev_type;
 	Oid			ev_class;
-	int2		ev_attr;
+	int16		ev_attr;
 	bool		is_instead;
 	char	   *ev_qual;
 	char	   *ev_action;
@@ -2603,7 +2603,7 @@ make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 	ev_class = (Oid) SPI_getbinval(ruletup, rulettc, fno, &isnull);
 
 	fno = SPI_fnumber(rulettc, "ev_attr");
-	ev_attr = (int2) SPI_getbinval(ruletup, rulettc, fno, &isnull);
+	ev_attr = (int16) SPI_getbinval(ruletup, rulettc, fno, &isnull);
 
 	fno = SPI_fnumber(rulettc, "is_instead");
 	is_instead = (bool) SPI_getbinval(ruletup, rulettc, fno, &isnull);

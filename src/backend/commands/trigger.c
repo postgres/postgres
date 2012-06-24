@@ -121,7 +121,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 {
 	int16		tgtype;
 	int			ncolumns;
-	int2	   *columns;
+	int16	   *columns;
 	int2vector *tgattr;
 	Node	   *whenClause;
 	List	   *whenRtable;
@@ -589,11 +589,11 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 		ListCell   *cell;
 		int			i = 0;
 
-		columns = (int2 *) palloc(ncolumns * sizeof(int2));
+		columns = (int16 *) palloc(ncolumns * sizeof(int16));
 		foreach(cell, stmt->columns)
 		{
 			char	   *name = strVal(lfirst(cell));
-			int2		attnum;
+			int16		attnum;
 			int			j;
 
 			/* Lookup column name.	System columns are not allowed */
@@ -1501,9 +1501,9 @@ RelationBuildTriggers(Relation relation)
 		build->tgnattr = pg_trigger->tgattr.dim1;
 		if (build->tgnattr > 0)
 		{
-			build->tgattr = (int2 *) palloc(build->tgnattr * sizeof(int2));
+			build->tgattr = (int16 *) palloc(build->tgnattr * sizeof(int16));
 			memcpy(build->tgattr, &(pg_trigger->tgattr.values),
-				   build->tgnattr * sizeof(int2));
+				   build->tgnattr * sizeof(int16));
 		}
 		else
 			build->tgattr = NULL;
@@ -1654,11 +1654,11 @@ CopyTriggerDesc(TriggerDesc *trigdesc)
 		trigger->tgname = pstrdup(trigger->tgname);
 		if (trigger->tgnattr > 0)
 		{
-			int2	   *newattr;
+			int16	   *newattr;
 
-			newattr = (int2 *) palloc(trigger->tgnattr * sizeof(int2));
+			newattr = (int16 *) palloc(trigger->tgnattr * sizeof(int16));
 			memcpy(newattr, trigger->tgattr,
-				   trigger->tgnattr * sizeof(int2));
+				   trigger->tgnattr * sizeof(int16));
 			trigger->tgattr = newattr;
 		}
 		if (trigger->tgnargs > 0)
@@ -1772,7 +1772,7 @@ equalTriggerDescs(TriggerDesc *trigdesc1, TriggerDesc *trigdesc2)
 				return false;
 			if (trig1->tgnattr > 0 &&
 				memcmp(trig1->tgattr, trig2->tgattr,
-					   trig1->tgnattr * sizeof(int2)) != 0)
+					   trig1->tgnattr * sizeof(int16)) != 0)
 				return false;
 			for (j = 0; j < trig1->tgnargs; j++)
 				if (strcmp(trig1->tgargs[j], trig2->tgargs[j]) != 0)

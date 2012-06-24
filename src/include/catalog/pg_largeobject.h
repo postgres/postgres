@@ -31,7 +31,7 @@
 CATALOG(pg_largeobject,2613) BKI_WITHOUT_OIDS
 {
 	Oid			loid;			/* Identifier of large object */
-	int4		pageno;			/* Page number (starting from 0) */
+	int32		pageno;			/* Page number (starting from 0) */
 
 	/* data has variable length, but we allow direct access; see inv_api.c */
 	bytea		data;			/* Data for page (may be zero-length) */

@@ -98,9 +98,9 @@ typedef struct VacAttrStats
 	 */
 	bool		stats_valid;
 	float4		stanullfrac;	/* fraction of entries that are NULL */
-	int4		stawidth;		/* average width of column values */
+	int32		stawidth;		/* average width of column values */
 	float4		stadistinct;	/* # distinct values */
-	int2		stakind[STATISTIC_NUM_SLOTS];
+	int16		stakind[STATISTIC_NUM_SLOTS];
 	Oid			staop[STATISTIC_NUM_SLOTS];
 	int			numnumbers[STATISTIC_NUM_SLOTS];
 	float4	   *stanumbers[STATISTIC_NUM_SLOTS];
@@ -114,7 +114,7 @@ typedef struct VacAttrStats
 	 * elements. It should then overwrite these fields.
 	 */
 	Oid			statypid[STATISTIC_NUM_SLOTS];
-	int2		statyplen[STATISTIC_NUM_SLOTS];
+	int16		statyplen[STATISTIC_NUM_SLOTS];
 	bool		statypbyval[STATISTIC_NUM_SLOTS];
 	char		statypalign[STATISTIC_NUM_SLOTS];
 

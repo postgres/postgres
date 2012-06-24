@@ -81,7 +81,7 @@ static bool
 _intbig_overlap(GISTTYPE *a, ArrayType *b)
 {
 	int			num = ARRNELEMS(b);
-	int4	   *ptr = ARRPTR(b);
+	int32	   *ptr = ARRPTR(b);
 
 	CHECKARRVALID(b);
 
@@ -99,7 +99,7 @@ static bool
 _intbig_contains(GISTTYPE *a, ArrayType *b)
 {
 	int			num = ARRNELEMS(b);
-	int4	   *ptr = ARRPTR(b);
+	int32	   *ptr = ARRPTR(b);
 
 	CHECKARRVALID(b);
 
@@ -128,7 +128,7 @@ g_intbig_same(PG_FUNCTION_ARGS)
 		*result = false;
 	else
 	{
-		int4		i;
+		int32		i;
 		BITVECP		sa = GETSIGN(a),
 					sb = GETSIGN(b);
 
@@ -154,7 +154,7 @@ g_intbig_compress(PG_FUNCTION_ARGS)
 	{
 		GISTENTRY  *retval;
 		ArrayType  *in = DatumGetArrayTypeP(entry->key);
-		int4	   *ptr;
+		int32	   *ptr;
 		int			num;
 		GISTTYPE   *res = (GISTTYPE *) palloc0(CALCGTSIZE(0));
 
@@ -216,10 +216,10 @@ g_intbig_compress(PG_FUNCTION_ARGS)
 }
 
 
-static int4
+static int32
 sizebitvec(BITVECP sign)
 {
-	int4		size = 0,
+	int32		size = 0,
 				i;
 
 	LOOPBYTE
@@ -264,10 +264,10 @@ g_intbig_decompress(PG_FUNCTION_ARGS)
 	PG_RETURN_DATUM(PG_GETARG_DATUM(0));
 }
 
-static int4
+static int32
 unionkey(BITVECP sbase, GISTTYPE *add)
 {
-	int4		i;
+	int32		i;
 	BITVECP		sadd = GETSIGN(add);
 
 	if (ISALLTRUE(add))
@@ -283,9 +283,9 @@ g_intbig_union(PG_FUNCTION_ARGS)
 	GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
 	int		   *size = (int *) PG_GETARG_POINTER(1);
 	BITVEC		base;
-	int4		i,
+	int32		i,
 				len;
-	int4		flag = 0;
+	int32		flag = 0;
 	GISTTYPE   *result;
 
 	MemSet((void *) base, 0, sizeof(BITVEC));
@@ -326,7 +326,7 @@ g_intbig_penalty(PG_FUNCTION_ARGS)
 typedef struct
 {
 	OffsetNumber pos;
-	int4		cost;
+	int32		cost;
 } SPLITCOST;
 
 static int
@@ -347,11 +347,11 @@ g_intbig_picksplit(PG_FUNCTION_ARGS)
 			   *datum_r;
 	BITVECP		union_l,
 				union_r;
-	int4		size_alpha,
+	int32		size_alpha,
 				size_beta;
-	int4		size_waste,
+	int32		size_waste,
 				waste = -1;
-	int4		nbytes;
+	int32		nbytes;
 	OffsetNumber seed_1 = 0,
 				seed_2 = 0;
 	OffsetNumber *left,
@@ -538,7 +538,7 @@ g_intbig_consistent(PG_FUNCTION_ARGS)
 			{
 				int			i,
 							num = ARRNELEMS(query);
-				int4	   *ptr = ARRPTR(query);
+				int32	   *ptr = ARRPTR(query);
 				BITVEC		qp;
 				BITVECP		dq,
 							de;
@@ -577,7 +577,7 @@ g_intbig_consistent(PG_FUNCTION_ARGS)
 			{
 				int			i,
 							num = ARRNELEMS(query);
-				int4	   *ptr = ARRPTR(query);
+				int32	   *ptr = ARRPTR(query);
 				BITVEC		qp;
 				BITVECP		dq,
 							de;
