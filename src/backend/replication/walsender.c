@@ -612,9 +612,9 @@ ProcessStandbyReplyMessage(void)
 	pq_copymsgbytes(&reply_message, (char *) &reply, sizeof(StandbyReplyMessage));
 
 	elog(DEBUG2, "write %X/%X flush %X/%X apply %X/%X",
-		 (uint32) (reply.write << 32), (uint32) reply.write,
-		 (uint32) (reply.flush << 32), (uint32) reply.flush,
-		 (uint32) (reply.apply << 32), (uint32) reply.apply);
+		 (uint32) (reply.write >> 32), (uint32) reply.write,
+		 (uint32) (reply.flush >> 32), (uint32) reply.flush,
+		 (uint32) (reply.apply >> 32), (uint32) reply.apply);
 
 	/*
 	 * Update shared state for this WalSender process based on reply data from
