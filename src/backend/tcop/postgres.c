@@ -3507,7 +3507,7 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx)
  * for the session.
  * ----------------------------------------------------------------
  */
-int
+void
 PostgresMain(int argc, char *argv[], const char *username)
 {
 	const char *dbname;
@@ -3721,7 +3721,10 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 	/* If this is a WAL sender process, we're done with initialization. */
 	if (am_walsender)
-		proc_exit(WalSenderMain());
+	{
+		WalSenderMain();		/* does not return */
+		abort();
+	}
 
 	/*
 	 * process any libraries that should be preloaded at backend start (this
@@ -4199,7 +4202,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	/* can't get here because the above loop never exits */
 	Assert(false);
 
-	return 1;					/* keep compiler quiet */
+	abort();					/* keep compiler quiet */
 }
 
 

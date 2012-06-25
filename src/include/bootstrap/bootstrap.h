@@ -40,7 +40,7 @@ extern Form_pg_attribute attrtypes[MAXATTR];
 extern int	numattr;
 
 
-extern void AuxiliaryProcessMain(int argc, char *argv[]);
+extern void AuxiliaryProcessMain(int argc, char *argv[]) __attribute__((noreturn));
 
 extern void err_out(void);
 

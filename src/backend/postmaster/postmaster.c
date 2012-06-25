@@ -343,8 +343,8 @@ static void LogChildExit(int lev, const char *procname,
 			 int pid, int exitstatus);
 static void PostmasterStateMachine(void);
 static void BackendInitialize(Port *port);
-static int	BackendRun(Port *port);
-static void ExitPostmaster(int status);
+static void BackendRun(Port *port) __attribute__((noreturn));
+static void ExitPostmaster(int status) __attribute__((noreturn));
 static int	ServerLoop(void);
 static int	BackendStartup(Port *port);
 static int	ProcessStartupPacket(Port *port, bool SSLdone);
@@ -491,7 +491,7 @@ HANDLE		PostmasterHandle;
 /*
  * Postmaster main entry point
  */
-int
+void
 PostmasterMain(int argc, char *argv[])
 {
 	int			opt;
@@ -1125,7 +1125,7 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	ExitPostmaster(status != STATUS_OK);
 
-	return 0;					/* not reached */
+	abort();					/* not reached */
 }
 
 
@@ -3295,7 +3295,7 @@ BackendStartup(Port *port)
 		BackendInitialize(port);
 
 		/* And run the backend */
-		proc_exit(BackendRun(port));
+		BackendRun(port);
 	}
 #endif   /* EXEC_BACKEND */
 
@@ -3539,7 +3539,7 @@ BackendInitialize(Port *port)
  *		Shouldn't return at all.
  *		If PostgresMain() fails, return status.
  */
-static int
+static void
 BackendRun(Port *port)
 {
 	char	  **av;
@@ -3610,7 +3610,7 @@ BackendRun(Port *port)
 	 */
 	MemoryContextSwitchTo(TopMemoryContext);
 
-	return (PostgresMain(ac, av, port->user_name));
+	PostgresMain(ac, av, port->user_name);
 }
 
 
@@ -3960,7 +3960,7 @@ internal_forkexec(int argc, char *argv[], Port *port)
  * have been inherited by fork() on Unix.  Remaining arguments go to the
  * subprocess FooMain() routine.
  */
-int
+void
 SubPostmasterMain(int argc, char *argv[])
 {
 	Port		port;
@@ -4111,7 +4111,7 @@ SubPostmasterMain(int argc, char *argv[])
 		CreateSharedMemoryAndSemaphores(false, 0);
 
 		/* And run the backend */
-		proc_exit(BackendRun(&port));
+		BackendRun(&port);		/* does not return */
 	}
 	if (strcmp(argv[1], "--forkboot") == 0)
 	{
@@ -4127,8 +4127,7 @@ SubPostmasterMain(int argc, char *argv[])
 		/* Attach process to shared data structures */
 		CreateSharedMemoryAndSemaphores(false, 0);
 
-		AuxiliaryProcessMain(argc - 2, argv + 2);
-		proc_exit(0);
+		AuxiliaryProcessMain(argc - 2, argv + 2); /* does not return */
 	}
 	if (strcmp(argv[1], "--forkavlauncher") == 0)
 	{
@@ -4144,8 +4143,7 @@ SubPostmasterMain(int argc, char *argv[])
 		/* Attach process to shared data structures */
 		CreateSharedMemoryAndSemaphores(false, 0);
 
-		AutoVacLauncherMain(argc - 2, argv + 2);
-		proc_exit(0);
+		AutoVacLauncherMain(argc - 2, argv + 2); /* does not return */
 	}
 	if (strcmp(argv[1], "--forkavworker") == 0)
 	{
@@ -4161,8 +4159,7 @@ SubPostmasterMain(int argc, char *argv[])
 		/* Attach process to shared data structures */
 		CreateSharedMemoryAndSemaphores(false, 0);
 
-		AutoVacWorkerMain(argc - 2, argv + 2);
-		proc_exit(0);
+		AutoVacWorkerMain(argc - 2, argv + 2); /* does not return */
 	}
 	if (strcmp(argv[1], "--forkarch") == 0)
 	{
@@ -4171,8 +4168,7 @@ SubPostmasterMain(int argc, char *argv[])
 
 		/* Do not want to attach to shared memory */
 
-		PgArchiverMain(argc, argv);
-		proc_exit(0);
+		PgArchiverMain(argc, argv); /* does not return */
 	}
 	if (strcmp(argv[1], "--forkcol") == 0)
 	{
@@ -4181,8 +4177,7 @@ SubPostmasterMain(int argc, char *argv[])
 
 		/* Do not want to attach to shared memory */
 
-		PgstatCollectorMain(argc, argv);
-		proc_exit(0);
+		PgstatCollectorMain(argc, argv); /* does not return */
 	}
 	if (strcmp(argv[1], "--forklog") == 0)
 	{
@@ -4191,11 +4186,10 @@ SubPostmasterMain(int argc, char *argv[])
 
 		/* Do not want to attach to shared memory */
 
-		SysLoggerMain(argc, argv);
-		proc_exit(0);
+		SysLoggerMain(argc, argv); /* does not return */
 	}
 
-	return 1;					/* shouldn't get here */
+	abort();					/* shouldn't get here */
 }
 #endif   /* EXEC_BACKEND */
 

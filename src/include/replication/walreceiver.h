@@ -109,7 +109,7 @@ typedef void (*walrcv_disconnect_type) (void);
 extern PGDLLIMPORT walrcv_disconnect_type walrcv_disconnect;
 
 /* prototypes for functions in walreceiver.c */
-extern void WalReceiverMain(void);
+extern void WalReceiverMain(void) __attribute__((noreturn));
 
 /* prototypes for functions in walreceiverfuncs.c */
 extern Size WalRcvShmemSize(void);

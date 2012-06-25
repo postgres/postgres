@@ -26,7 +26,7 @@ extern volatile sig_atomic_t walsender_ready_to_stop;
 extern int	max_wal_senders;
 extern int	replication_timeout;
 
-extern int	WalSenderMain(void);
+extern void WalSenderMain(void) __attribute__((noreturn));
 extern void WalSndSignals(void);
 extern Size WalSndShmemSize(void);
 extern void WalSndShmemInit(void);

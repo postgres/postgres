@@ -43,7 +43,7 @@ static void printMixedStruct(mixedStruct *structToPrint);
 static bool displayStruct(mixedStruct *structToDisplay);
 
 
-int
+void
 GucInfoMain(void)
 {
 	struct config_generic **guc_vars;
@@ -64,7 +64,7 @@ GucInfoMain(void)
 			printMixedStruct(var);
 	}
 
-	return 0;
+	exit(0);
 }
 
 

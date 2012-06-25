@@ -20,7 +20,7 @@
 extern int	pgarch_start(void);
 
 #ifdef EXEC_BACKEND
-extern void PgArchiverMain(int argc, char *argv[]);
+extern void PgArchiverMain(int argc, char *argv[]) __attribute__((noreturn));
 #endif
 
 #endif   /* _PGARCH_H */
