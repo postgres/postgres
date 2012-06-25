@@ -58,6 +58,7 @@
 #include "replication/syncrep.h"
 #include "storage/fd.h"
 #include "storage/predicate.h"
+#include "storage/proc.h"
 #include "storage/procarray.h"
 #include "storage/sinvaladt.h"
 #include "storage/smgr.h"

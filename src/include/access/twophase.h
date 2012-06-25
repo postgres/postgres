@@ -14,7 +14,9 @@
 #ifndef TWOPHASE_H
 #define TWOPHASE_H
 
-#include "storage/proc.h"
+#include "access/xlogdefs.h"
+#include "datatype/timestamp.h"
+#include "storage/lock.h"
 
 /*
  * GlobalTransactionData is defined in twophase.c; other places have no

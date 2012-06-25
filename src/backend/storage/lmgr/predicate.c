@@ -193,6 +193,7 @@
 #include "storage/bufmgr.h"
 #include "storage/predicate.h"
 #include "storage/predicate_internals.h"
+#include "storage/proc.h"
 #include "storage/procarray.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"

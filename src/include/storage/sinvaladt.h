@@ -22,7 +22,7 @@
 #ifndef SINVALADT_H
 #define SINVALADT_H
 
-#include "storage/proc.h"
+#include "storage/lock.h"
 #include "storage/sinval.h"
 
 /*

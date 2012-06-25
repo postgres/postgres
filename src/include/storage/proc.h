@@ -14,7 +14,7 @@
 #ifndef _PROC_H_
 #define _PROC_H_
 
-#include "access/xlog.h"
+#include "access/xlogdefs.h"
 #include "datatype/timestamp.h"
 #include "storage/latch.h"
 #include "storage/lock.h"
