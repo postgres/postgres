@@ -708,7 +708,7 @@ FindEndOfXLOG(void)
 	 * old pg_control.	Note that for the moment we are working with segment
 	 * numbering according to the old xlog seg size.
 	 */
-	segs_per_xlogid = (0x100000000L / ControlFile.xlog_seg_size);
+	segs_per_xlogid = (UINT64CONST(0x0000000100000000) / ControlFile.xlog_seg_size);
 	newXlogSegNo = ControlFile.checkPointCopy.redo / ControlFile.xlog_seg_size;
 
 	/*
