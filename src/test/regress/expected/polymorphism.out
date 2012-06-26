@@ -1026,7 +1026,7 @@ select dfunc(10,20);
 create or replace function dfunc(a variadic int[]) returns int as
 $$ select array_upper($1, 1) $$ language sql;
 ERROR:  cannot remove parameter defaults from existing function
-HINT:  Use DROP FUNCTION first.
+HINT:  Use DROP FUNCTION dfunc(integer[]) first.
 \df dfunc
                                       List of functions
  Schema | Name  | Result data type |               Argument data types               |  Type  
@@ -1239,13 +1239,13 @@ returns record as $$
   select $1, $2;
 $$ language sql;
 ERROR:  cannot change name of input parameter "c"
-HINT:  Use DROP FUNCTION first.
+HINT:  Use DROP FUNCTION dfunc(character varying,numeric) first.
 create or replace function dfunc(a varchar = 'def a', out _a varchar, numeric = NULL, out _c numeric)
 returns record as $$
   select $1, $2;
 $$ language sql;
 ERROR:  cannot change name of input parameter "c"
-HINT:  Use DROP FUNCTION first.
+HINT:  Use DROP FUNCTION dfunc(character varying,numeric) first.
 drop function dfunc(varchar, numeric);
 --fail, named parameters are not unique
 create function testfoo(a int, a int) returns int as $$ select 1;$$ language sql;
