@@ -210,6 +210,11 @@ static void dumpACL(Archive *fout, CatalogId objCatId, DumpId objDumpId,
 		const char *acls);
 
 static void getDependencies(Archive *fout);
+
+static DumpableObject *createBoundaryObjects(void);
+static void addBoundaryDependencies(DumpableObject **dobjs, int numObjs,
+						DumpableObject *boundaryObjs);
+
 static void getDomainConstraints(Archive *fout, TypeInfo *tyinfo);
 static void getTableData(TableInfo *tblinfo, int numTables, bool oids);
 static void makeTableDataInfo(TableInfo *tbinfo, bool oids);
@@ -270,6 +275,7 @@ main(int argc, char **argv)
 	int			numTables;
 	DumpableObject **dobjs;
 	int			numObjs;
+	DumpableObject *boundaryObjs;
 	int			i;
 	enum trivalue prompt_password = TRI_DEFAULT;
 	int			compressLevel = -1;
@@ -691,6 +697,17 @@ main(int argc, char **argv)
 	 */
 	getDependencies(fout);
 
+	/* Lastly, create dummy objects to represent the section boundaries */
+	boundaryObjs = createBoundaryObjects();
+
+	/* Get pointers to all the known DumpableObjects */
+	getDumpableObjects(&dobjs, &numObjs);
+
+	/*
+	 * Add dummy dependencies to enforce the dump section ordering.
+	 */
+	addBoundaryDependencies(dobjs, numObjs, boundaryObjs);
+
 	/*
 	 * Sort the objects into a safe dump order (no forward references).
 	 *
@@ -700,14 +717,13 @@ main(int argc, char **argv)
 	 * will dump identically.  Before 7.3 we don't have dependencies and we
 	 * use OID ordering as an (unreliable) guide to creation order.
 	 */
-	getDumpableObjects(&dobjs, &numObjs);
-
 	if (fout->remoteVersion >= 70300)
 		sortDumpableObjectsByTypeName(dobjs, numObjs);
 	else
 		sortDumpableObjectsByTypeOid(dobjs, numObjs);
 
-	sortDumpableObjects(dobjs, numObjs);
+	sortDumpableObjects(dobjs, numObjs,
+						boundaryObjs[0].dumpId, boundaryObjs[1].dumpId);
 
 	/*
 	 * Create archive TOC entries for all the objects to be dumped, in a safe
@@ -7184,6 +7200,10 @@ dumpDumpableObject(Archive *fout, DumpableObject *dobj)
 						 dobj->dependencies, dobj->nDeps,
 						 dumpBlobs, NULL);
 			break;
+		case DO_PRE_DATA_BOUNDARY:
+		case DO_POST_DATA_BOUNDARY:
+			/* never dumped, nothing to do */
+			break;
 	}
 }
 
@@ -11672,7 +11692,7 @@ dumpDefaultACL(Archive *fout, DefaultACLInfo *daclinfo)
 	   daclinfo->dobj.namespace ? daclinfo->dobj.namespace->dobj.name : NULL,
 				 NULL,
 				 daclinfo->defaclrole,
-				 false, "DEFAULT ACL", SECTION_NONE,
+				 false, "DEFAULT ACL", SECTION_POST_DATA,
 				 q->data, "", NULL,
 				 daclinfo->dobj.dependencies, daclinfo->dobj.nDeps,
 				 NULL, NULL);
@@ -14024,6 +14044,113 @@ getDependencies(Archive *fout)
 	PQclear(res);
 
 	destroyPQExpBuffer(query);
+}
+
+
+/*
+ * createBoundaryObjects - create dummy DumpableObjects to represent
+ * dump section boundaries.
+ */
+static DumpableObject *
+createBoundaryObjects(void)
+{
+	DumpableObject *dobjs;
+
+	dobjs = (DumpableObject *) pg_malloc(2 * sizeof(DumpableObject));
+
+	dobjs[0].objType = DO_PRE_DATA_BOUNDARY;
+	dobjs[0].catId = nilCatalogId;
+	AssignDumpId(dobjs + 0);
+	dobjs[0].name = pg_strdup("PRE-DATA BOUNDARY");
+
+	dobjs[1].objType = DO_POST_DATA_BOUNDARY;
+	dobjs[1].catId = nilCatalogId;
+	AssignDumpId(dobjs + 1);
+	dobjs[1].name = pg_strdup("POST-DATA BOUNDARY");
+
+	return dobjs;
+}
+
+/*
+ * addBoundaryDependencies - add dependencies as needed to enforce the dump
+ * section boundaries.
+ */
+static void
+addBoundaryDependencies(DumpableObject **dobjs, int numObjs,
+						DumpableObject *boundaryObjs)
+{
+	DumpableObject *preDataBound = boundaryObjs + 0;
+	DumpableObject *postDataBound = boundaryObjs + 1;
+	int			i;
+
+	for (i = 0; i < numObjs; i++)
+	{
+		DumpableObject *dobj = dobjs[i];
+
+		/*
+		 * The classification of object types here must match the SECTION_xxx
+		 * values assigned during subsequent ArchiveEntry calls!
+		 */
+		switch (dobj->objType)
+		{
+			case DO_NAMESPACE:
+			case DO_EXTENSION:
+			case DO_TYPE:
+			case DO_SHELL_TYPE:
+			case DO_FUNC:
+			case DO_AGG:
+			case DO_OPERATOR:
+			case DO_OPCLASS:
+			case DO_OPFAMILY:
+			case DO_COLLATION:
+			case DO_CONVERSION:
+			case DO_TABLE:
+			case DO_ATTRDEF:
+			case DO_PROCLANG:
+			case DO_CAST:
+			case DO_DUMMY_TYPE:
+			case DO_TSPARSER:
+			case DO_TSDICT:
+			case DO_TSTEMPLATE:
+			case DO_TSCONFIG:
+			case DO_FDW:
+			case DO_FOREIGN_SERVER:
+			case DO_BLOB:
+				/* Pre-data objects: must come before the pre-data boundary */
+				addObjectDependency(preDataBound, dobj->dumpId);
+				break;
+			case DO_TABLE_DATA:
+			case DO_BLOB_DATA:
+				/* Data objects: must come between the boundaries */
+				addObjectDependency(dobj, preDataBound->dumpId);
+				addObjectDependency(postDataBound, dobj->dumpId);
+				break;
+			case DO_INDEX:
+			case DO_TRIGGER:
+			case DO_DEFAULT_ACL:
+				/* Post-data objects: must come after the post-data boundary */
+				addObjectDependency(dobj, postDataBound->dumpId);
+				break;
+			case DO_RULE:
+				/* Rules are post-data, but only if dumped separately */
+				if (((RuleInfo *) dobj)->separate)
+					addObjectDependency(dobj, postDataBound->dumpId);
+				break;
+			case DO_CONSTRAINT:
+			case DO_FK_CONSTRAINT:
+				/* Constraints are post-data, but only if dumped separately */
+				if (((ConstraintInfo *) dobj)->separate)
+					addObjectDependency(dobj, postDataBound->dumpId);
+				break;
+			case DO_PRE_DATA_BOUNDARY:
+				/* nothing to do */
+				break;
+			case DO_POST_DATA_BOUNDARY:
+				/* must come after the pre-data boundary */
+				addObjectDependency(dobj, preDataBound->dumpId);
+				break;
+		}
+	}
 }
 
 

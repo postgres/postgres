@@ -247,8 +247,42 @@ SetArchiveRestoreOptions(Archive *AHX, RestoreOptions *ropt)
 	curSection = SECTION_PRE_DATA;
 	for (te = AH->toc->next; te != AH->toc; te = te->next)
 	{
+		/*
+		 * When writing an archive, we also take this opportunity to check
+		 * that we have generated the entries in a sane order that respects
+		 * the section divisions.  When reading, don't complain, since buggy
+		 * old versions of pg_dump might generate out-of-order archives.
+		 */
+		if (AH->mode != archModeRead)
+		{
+			switch (te->section)
+			{
+				case SECTION_NONE:
+					/* ok to be anywhere */
+					break;
+				case SECTION_PRE_DATA:
+					if (curSection != SECTION_PRE_DATA)
+						write_msg(modulename,
+								  "WARNING: archive items not in correct section order\n");
+					break;
+				case SECTION_DATA:
+					if (curSection == SECTION_POST_DATA)
+						write_msg(modulename,
+								  "WARNING: archive items not in correct section order\n");
+					break;
+				case SECTION_POST_DATA:
+					/* ok no matter which section we were in */
+					break;
+				default:
+					exit_horribly(modulename, "unexpected section code %d\n",
+								  (int) te->section);
+					break;
+			}
+		}
+
 		if (te->section != SECTION_NONE)
 			curSection = te->section;
+
 		te->reqs = _tocEntryRequired(te, curSection, ropt);
 	}
 }
