@@ -162,18 +162,20 @@ pg_cancel_backend(PG_FUNCTION_ARGS)
 }
 
 /*
- * Signal to terminate a backend process.  Only allowed by superuser.
+ * Signal to terminate a backend process.  This is allowed if you are superuser
+ * or have the same role as the process being terminated.
  */
 Datum
 pg_terminate_backend(PG_FUNCTION_ARGS)
 {
-	if (!superuser())
+	int			r = pg_signal_backend(PG_GETARG_INT32(0), SIGTERM);
+
+	if (r == SIGNAL_BACKEND_NOPERMISSION)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			 errmsg("must be superuser to terminate other server processes"),
-				 errhint("You can cancel your own processes with pg_cancel_backend().")));
+				 (errmsg("must be superuser or have the same role to terminate backends running in other server processes"))));
 
-	PG_RETURN_BOOL(pg_signal_backend(PG_GETARG_INT32(0), SIGTERM) == SIGNAL_BACKEND_SUCCESS);
+	PG_RETURN_BOOL(r == SIGNAL_BACKEND_SUCCESS);
 }
 
 /*
