@@ -26,6 +26,11 @@ static const char *modulename = gettext_noop("sorter");
  * behavior for old databases without full dependency info.)  Note: collations,
  * extensions, text search, foreign-data, and default ACL objects can't really
  * happen here, so the rather bogus priorities for them don't matter.
+ *
+ * NOTE: object-type priorities must match the section assignments made in
+ * pg_dump.c; that is, PRE_DATA objects must sort before DO_PRE_DATA_BOUNDARY,
+ * POST_DATA objects must sort after DO_POST_DATA_BOUNDARY, and DATA objects
+ * must sort between them.
  */
 static const int oldObjectTypePriority[] =
 {
@@ -38,33 +43,40 @@ static const int oldObjectTypePriority[] =
 	3,							/* DO_OPERATOR */
 	4,							/* DO_OPCLASS */
 	4,							/* DO_OPFAMILY */
+	4,							/* DO_COLLATION */
 	5,							/* DO_CONVERSION */
 	6,							/* DO_TABLE */
 	8,							/* DO_ATTRDEF */
-	13,							/* DO_INDEX */
-	14,							/* DO_RULE */
-	15,							/* DO_TRIGGER */
-	12,							/* DO_CONSTRAINT */
-	16,							/* DO_FK_CONSTRAINT */
+	15,							/* DO_INDEX */
+	16,							/* DO_RULE */
+	17,							/* DO_TRIGGER */
+	14,							/* DO_CONSTRAINT */
+	18,							/* DO_FK_CONSTRAINT */
 	2,							/* DO_PROCLANG */
 	2,							/* DO_CAST */
-	10,							/* DO_TABLE_DATA */
+	11,							/* DO_TABLE_DATA */
 	7,							/* DO_DUMMY_TYPE */
-	3,							/* DO_TSPARSER */
+	4,							/* DO_TSPARSER */
 	4,							/* DO_TSDICT */
-	3,							/* DO_TSTEMPLATE */
-	5,							/* DO_TSCONFIG */
-	3,							/* DO_FDW */
+	4,							/* DO_TSTEMPLATE */
+	4,							/* DO_TSCONFIG */
+	4,							/* DO_FDW */
 	4,							/* DO_FOREIGN_SERVER */
-	17,							/* DO_DEFAULT_ACL */
+	19,							/* DO_DEFAULT_ACL */
 	9,							/* DO_BLOB */
-	11,							/* DO_BLOB_DATA */
-	2							/* DO_COLLATION */
+	12,							/* DO_BLOB_DATA */
+	10,							/* DO_PRE_DATA_BOUNDARY */
+	13							/* DO_POST_DATA_BOUNDARY */
 };
 
 /*
  * Sort priority for object types when dumping newer databases.
  * Objects are sorted by type, and within a type by name.
+ *
+ * NOTE: object-type priorities must match the section assignments made in
+ * pg_dump.c; that is, PRE_DATA objects must sort before DO_PRE_DATA_BOUNDARY,
+ * POST_DATA objects must sort after DO_POST_DATA_BOUNDARY, and DATA objects
+ * must sort between them.
  */
 static const int newObjectTypePriority[] =
 {
@@ -77,17 +89,18 @@ static const int newObjectTypePriority[] =
 	8,							/* DO_OPERATOR */
 	9,							/* DO_OPCLASS */
 	9,							/* DO_OPFAMILY */
+	3,							/* DO_COLLATION */
 	11,							/* DO_CONVERSION */
 	18,							/* DO_TABLE */
 	20,							/* DO_ATTRDEF */
-	25,							/* DO_INDEX */
-	26,							/* DO_RULE */
-	27,							/* DO_TRIGGER */
-	24,							/* DO_CONSTRAINT */
-	28,							/* DO_FK_CONSTRAINT */
+	27,							/* DO_INDEX */
+	28,							/* DO_RULE */
+	29,							/* DO_TRIGGER */
+	26,							/* DO_CONSTRAINT */
+	30,							/* DO_FK_CONSTRAINT */
 	2,							/* DO_PROCLANG */
 	10,							/* DO_CAST */
-	22,							/* DO_TABLE_DATA */
+	23,							/* DO_TABLE_DATA */
 	19,							/* DO_DUMMY_TYPE */
 	12,							/* DO_TSPARSER */
 	14,							/* DO_TSDICT */
@@ -95,11 +108,15 @@ static const int newObjectTypePriority[] =
 	15,							/* DO_TSCONFIG */
 	16,							/* DO_FDW */
 	17,							/* DO_FOREIGN_SERVER */
-	29,							/* DO_DEFAULT_ACL */
+	31,							/* DO_DEFAULT_ACL */
 	21,							/* DO_BLOB */
-	23,							/* DO_BLOB_DATA */
-	3							/* DO_COLLATION */
+	24,							/* DO_BLOB_DATA */
+	22,							/* DO_PRE_DATA_BOUNDARY */
+	25							/* DO_POST_DATA_BOUNDARY */
 };
+
+static DumpId preDataBoundId;
+static DumpId postDataBoundId;
 
 
 static int	DOTypeNameCompare(const void *p1, const void *p2);
@@ -237,15 +254,26 @@ DOTypeOidCompare(const void *p1, const void *p2)
 /*
  * Sort the given objects into a safe dump order using dependency
  * information (to the extent we have it available).
+ *
+ * The DumpIds of the PRE_DATA_BOUNDARY and POST_DATA_BOUNDARY objects are
+ * passed in separately, in case we need them during dependency loop repair.
  */
 void
-sortDumpableObjects(DumpableObject **objs, int numObjs)
+sortDumpableObjects(DumpableObject **objs, int numObjs,
+					DumpId preBoundaryId, DumpId postBoundaryId)
 {
 	DumpableObject **ordering;
 	int			nOrdering;
 
-	if (numObjs <= 0)
+	if (numObjs <= 0)			/* can't happen anymore ... */
 		return;
+
+	/*
+	 * Saving the boundary IDs in static variables is a bit grotty, but seems
+	 * better than adding them to parameter lists of subsidiary functions.
+	 */
+	preDataBoundId = preBoundaryId;
+	postDataBoundId = postBoundaryId;
 
 	ordering = (DumpableObject **) pg_malloc(numObjs * sizeof(DumpableObject *));
 	while (!TopoSort(objs, numObjs, ordering, &nOrdering))
@@ -701,6 +729,8 @@ repairViewRuleMultiLoop(DumpableObject *viewobj,
 	((RuleInfo *) ruleobj)->separate = true;
 	/* put back rule's dependency on view */
 	addObjectDependency(ruleobj, viewobj->dumpId);
+	/* now that rule is separate, it must be post-data */
+	addObjectDependency(ruleobj, postDataBoundId);
 }
 
 /*
@@ -736,6 +766,8 @@ repairTableConstraintMultiLoop(DumpableObject *tableobj,
 	((ConstraintInfo *) constraintobj)->separate = true;
 	/* put back constraint's dependency on table */
 	addObjectDependency(constraintobj, tableobj->dumpId);
+	/* now that constraint is separate, it must be post-data */
+	addObjectDependency(constraintobj, postDataBoundId);
 }
 
 /*
@@ -782,6 +814,8 @@ repairDomainConstraintMultiLoop(DumpableObject *domainobj,
 	((ConstraintInfo *) constraintobj)->separate = true;
 	/* put back constraint's dependency on domain */
 	addObjectDependency(constraintobj, domainobj->dumpId);
+	/* now that constraint is separate, it must be post-data */
+	addObjectDependency(constraintobj, postDataBoundId);
 }
 
 /*
@@ -1188,6 +1222,16 @@ describeDumpableObject(DumpableObject *obj, char *buf, int bufsize)
 		case DO_BLOB_DATA:
 			snprintf(buf, bufsize,
 					 "BLOB DATA  (ID %d)",
+					 obj->dumpId);
+			return;
+		case DO_PRE_DATA_BOUNDARY:
+			snprintf(buf, bufsize,
+					 "PRE-DATA BOUNDARY  (ID %d)",
+					 obj->dumpId);
+			return;
+		case DO_POST_DATA_BOUNDARY:
+			snprintf(buf, bufsize,
+					 "POST-DATA BOUNDARY  (ID %d)",
 					 obj->dumpId);
 			return;
 	}
