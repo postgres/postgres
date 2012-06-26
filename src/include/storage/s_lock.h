@@ -12,10 +12,11 @@
  *	void S_INIT_LOCK(slock_t *lock)
  *		Initialize a spinlock (to the unlocked state).
  *
- *	void S_LOCK(slock_t *lock)
+ *	int S_LOCK(slock_t *lock)
  *		Acquire a spinlock, waiting if necessary.
  *		Time out and abort() if unable to acquire the lock in a
  *		"reasonable" amount of time --- typically ~ 1 minute.
+ *		Should return number of "delays"; see s_lock.c
  *
  *	void S_UNLOCK(slock_t *lock)
  *		Unlock a previously acquired lock.
@@ -978,10 +979,7 @@ extern int	tas_sema(volatile slock_t *lock);
 
 #if !defined(S_LOCK)
 #define S_LOCK(lock) \
-	do { \
-		if (TAS(lock)) \
-			s_lock((lock), __FILE__, __LINE__); \
-	} while (0)
+	(TAS(lock) ? s_lock((lock), __FILE__, __LINE__) : 0)
 #endif	 /* S_LOCK */
 
 #if !defined(S_LOCK_FREE)
@@ -1015,7 +1013,7 @@ extern int	tas(volatile slock_t *lock);		/* in port/.../tas.s, or
 /*
  * Platform-independent out-of-line support routines
  */
-extern void s_lock(volatile slock_t *lock, const char *file, int line);
+extern int s_lock(volatile slock_t *lock, const char *file, int line);
 
 /* Support for dynamic adjustment of spins_per_delay */
 #define DEFAULT_SPINS_PER_DELAY  100

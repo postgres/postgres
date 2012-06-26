@@ -46,7 +46,7 @@ s_lock_stuck(volatile slock_t *lock, const char *file, int line)
 /*
  * s_lock(lock) - platform-independent portion of waiting for a spinlock.
  */
-void
+int
 s_lock(volatile slock_t *lock, const char *file, int line)
 {
 	/*
@@ -155,6 +155,7 @@ s_lock(volatile slock_t *lock, const char *file, int line)
 		if (spins_per_delay > MIN_SPINS_PER_DELAY)
 			spins_per_delay = Max(spins_per_delay - 1, MIN_SPINS_PER_DELAY);
 	}
+	return delays;
 }
 
 
