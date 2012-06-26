@@ -125,6 +125,8 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	uint32		hashkey;
 	Bucket		bucket;
 	BlockNumber blkno;
+	BlockNumber oldblkno = InvalidBuffer;
+	bool		retry = false;
 	Buffer		buf;
 	Buffer		metabuf;
 	Page		page;
@@ -184,35 +186,52 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 
 	so->hashso_sk_hash = hashkey;
 
-	/*
-	 * Acquire shared split lock so we can compute the target bucket safely
-	 * (see README).
-	 */
-	_hash_getlock(rel, 0, HASH_SHARE);
-
 	/* Read the metapage */
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
 	metap = HashPageGetMeta(BufferGetPage(metabuf));
 
 	/*
-	 * Compute the target bucket number, and convert to block number.
+	 * Loop until we get a lock on the correct target bucket.
 	 */
-	bucket = _hash_hashkey2bucket(hashkey,
-								  metap->hashm_maxbucket,
-								  metap->hashm_highmask,
-								  metap->hashm_lowmask);
+	for (;;)
+	{
+		/*
+		 * Compute the target bucket number, and convert to block number.
+		 */
+		bucket = _hash_hashkey2bucket(hashkey,
+									  metap->hashm_maxbucket,
+									  metap->hashm_highmask,
+									  metap->hashm_lowmask);
 
-	blkno = BUCKET_TO_BLKNO(metap, bucket);
+		blkno = BUCKET_TO_BLKNO(metap, bucket);
+
+		/* Release metapage lock, but keep pin. */
+		_hash_chgbufaccess(rel, metabuf, HASH_READ, HASH_NOLOCK);
+
+		/*
+		 * If the previous iteration of this loop locked what is still the
+		 * correct target bucket, we are done.  Otherwise, drop any old lock
+		 * and lock what now appears to be the correct bucket.
+		 */
+		if (retry)
+		{
+			if (oldblkno == blkno)
+				break;
+			_hash_droplock(rel, oldblkno, HASH_SHARE);
+		}
+		_hash_getlock(rel, blkno, HASH_SHARE);
+
+		/*
+		 * Reacquire metapage lock and check that no bucket split has taken
+		 * place while we were awaiting the bucket lock.
+		 */
+		_hash_chgbufaccess(rel, metabuf, HASH_NOLOCK, HASH_READ);
+		oldblkno = blkno;
+		retry = true;
+	}
 
 	/* done with the metapage */
-	_hash_relbuf(rel, metabuf);
-
-	/*
-	 * Acquire share lock on target bucket; then we can release split lock.
-	 */
-	_hash_getlock(rel, blkno, HASH_SHARE);
-
-	_hash_droplock(rel, 0, HASH_SHARE);
+	_hash_dropbuf(rel, metabuf);
 
 	/* Update scan opaque state to show we have lock on the bucket */
 	so->hashso_bucket = bucket;

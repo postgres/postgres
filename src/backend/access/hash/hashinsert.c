@@ -32,6 +32,8 @@ _hash_doinsert(Relation rel, IndexTuple itup)
 	Buffer		metabuf;
 	HashMetaPage metap;
 	BlockNumber blkno;
+	BlockNumber oldblkno = InvalidBlockNumber;
+	bool		retry = false;
 	Page		page;
 	HashPageOpaque pageopaque;
 	Size		itemsz;
@@ -48,12 +50,6 @@ _hash_doinsert(Relation rel, IndexTuple itup)
 	itemsz = IndexTupleDSize(*itup);
 	itemsz = MAXALIGN(itemsz);	/* be safe, PageAddItem will do this but we
 								 * need to be consistent */
-
-	/*
-	 * Acquire shared split lock so we can compute the target bucket safely
-	 * (see README).
-	 */
-	_hash_getlock(rel, 0, HASH_SHARE);
 
 	/* Read the metapage */
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
@@ -75,24 +71,44 @@ _hash_doinsert(Relation rel, IndexTuple itup)
 			errhint("Values larger than a buffer page cannot be indexed.")));
 
 	/*
-	 * Compute the target bucket number, and convert to block number.
+	 * Loop until we get a lock on the correct target bucket.
 	 */
-	bucket = _hash_hashkey2bucket(hashkey,
-								  metap->hashm_maxbucket,
-								  metap->hashm_highmask,
-								  metap->hashm_lowmask);
+	for (;;)
+	{
+		/*
+		 * Compute the target bucket number, and convert to block number.
+		 */
+		bucket = _hash_hashkey2bucket(hashkey,
+									  metap->hashm_maxbucket,
+									  metap->hashm_highmask,
+									  metap->hashm_lowmask);
 
-	blkno = BUCKET_TO_BLKNO(metap, bucket);
+		blkno = BUCKET_TO_BLKNO(metap, bucket);
 
-	/* release lock on metapage, but keep pin since we'll need it again */
-	_hash_chgbufaccess(rel, metabuf, HASH_READ, HASH_NOLOCK);
+		/* Release metapage lock, but keep pin. */
+		_hash_chgbufaccess(rel, metabuf, HASH_READ, HASH_NOLOCK);
 
-	/*
-	 * Acquire share lock on target bucket; then we can release split lock.
-	 */
-	_hash_getlock(rel, blkno, HASH_SHARE);
+		/*
+		 * If the previous iteration of this loop locked what is still the
+		 * correct target bucket, we are done.  Otherwise, drop any old lock
+		 * and lock what now appears to be the correct bucket.
+		 */
+		if (retry)
+		{
+			if (oldblkno == blkno)
+				break;
+			_hash_droplock(rel, oldblkno, HASH_SHARE);
+		}
+		_hash_getlock(rel, blkno, HASH_SHARE);
 
-	_hash_droplock(rel, 0, HASH_SHARE);
+		/*
+		 * Reacquire metapage lock and check that no bucket split has taken
+		 * place while we were awaiting the bucket lock.
+		 */
+		_hash_chgbufaccess(rel, metabuf, HASH_NOLOCK, HASH_READ);
+		oldblkno = blkno;
+		retry = true;
+	}
 
 	/* Fetch the primary bucket page for the bucket */
 	buf = _hash_getbuf(rel, blkno, HASH_WRITE, LH_BUCKET_PAGE);

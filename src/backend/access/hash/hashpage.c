@@ -57,9 +57,9 @@ static void _hash_splitbucket(Relation rel, Buffer metabuf,
 /*
  * _hash_getlock() -- Acquire an lmgr lock.
  *
- * 'whichlock' should be zero to acquire the split-control lock, or the
- * block number of a bucket's primary bucket page to acquire the per-bucket
- * lock.  (See README for details of the use of these locks.)
+ * 'whichlock' should the block number of a bucket's primary bucket page to
+ * acquire the per-bucket lock.  (See README for details of the use of these
+ * locks.)
  *
  * 'access' must be HASH_SHARE or HASH_EXCLUSIVE.
  */
@@ -507,21 +507,9 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	uint32		lowmask;
 
 	/*
-	 * Obtain the page-zero lock to assert the right to begin a split (see
-	 * README).
-	 *
-	 * Note: deadlock should be impossible here. Our own backend could only be
-	 * holding bucket sharelocks due to stopped indexscans; those will not
-	 * block other holders of the page-zero lock, who are only interested in
-	 * acquiring bucket sharelocks themselves.	Exclusive bucket locks are
-	 * only taken here and in hashbulkdelete, and neither of these operations
-	 * needs any additional locks to complete.	(If, due to some flaw in this
-	 * reasoning, we manage to deadlock anyway, it's okay to error out; the
-	 * index will be left in a consistent state.)
+	 * Write-lock the meta page.  It used to be necessary to acquire a
+	 * heavyweight lock to begin a split, but that is no longer required.
 	 */
-	_hash_getlock(rel, 0, HASH_EXCLUSIVE);
-
-	/* Write-lock the meta page */
 	_hash_chgbufaccess(rel, metabuf, HASH_NOLOCK, HASH_WRITE);
 
 	_hash_checkpage(rel, metabuf, LH_META_PAGE);
@@ -663,9 +651,6 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	/* Write out the metapage and drop lock, but keep pin */
 	_hash_chgbufaccess(rel, metabuf, HASH_WRITE, HASH_NOLOCK);
 
-	/* Release split lock; okay for other splits to occur now */
-	_hash_droplock(rel, 0, HASH_EXCLUSIVE);
-
 	/* Relocate records to the new bucket */
 	_hash_splitbucket(rel, metabuf, old_bucket, new_bucket,
 					  start_oblkno, start_nblkno,
@@ -682,9 +667,6 @@ fail:
 
 	/* We didn't write the metapage, so just drop lock */
 	_hash_chgbufaccess(rel, metabuf, HASH_READ, HASH_NOLOCK);
-
-	/* Release split lock */
-	_hash_droplock(rel, 0, HASH_EXCLUSIVE);
 }
 
 
