@@ -131,13 +131,8 @@ PostgreSQL documentation
       the directory <filename>pg_xlog</> under the data directory.
       These names are also in hexadecimal and have three parts.  The first
       part is the <quote>timeline ID</> and should usually be kept the same.
-      Do not choose a value larger than 255 (<literal>0xFF</>) for the third
-      part; instead increment the second part and reset the third part to 0.
       For example, if <filename>00000001000000320000004A</> is the
-      largest entry in <filename>pg_xlog</>, <literal>-l 0x1,0x32,0x4B</> will
-      work; but if the largest entry is
-      <filename>000000010000003A000000FF</>, choose <literal>-l 0x1,0x3B,0x0</>
-      or more.
+      largest entry in <filename>pg_xlog</>, use <literal>-l 00000001000000320000004B</> or higher.
      </para>
 
      <note>

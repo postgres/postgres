@@ -86,13 +86,9 @@ main(int argc, char *argv[])
 	Oid			set_oid = 0;
 	MultiXactId set_mxid = 0;
 	MultiXactOffset set_mxoff = (MultiXactOffset) -1;
-	uint32		minXlogTli = 0,
-				minXlogId = 0,
-				minXlogSeg = 0;
+	uint32		minXlogTli = 0;
 	XLogSegNo	minXlogSegNo = 0;
 	char	   *endptr;
-	char	   *endptr2;
-	char	   *endptr3;
 	char	   *DataDir;
 	int			fd;
 	char		path[MAXPGPATH];
@@ -204,28 +200,13 @@ main(int argc, char *argv[])
 				break;
 
 			case 'l':
-				minXlogTli = strtoul(optarg, &endptr, 0);
-				if (endptr == optarg || *endptr != ',')
+				if (strspn(optarg, "01234567890ABCDEFabcdef") != 24)
 				{
 					fprintf(stderr, _("%s: invalid argument for option -l\n"), progname);
 					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 					exit(1);
 				}
-				minXlogId = strtoul(endptr + 1, &endptr2, 0);
-				if (endptr2 == endptr + 1 || *endptr2 != ',')
-				{
-					fprintf(stderr, _("%s: invalid argument for option -l\n"), progname);
-					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
-					exit(1);
-				}
-				minXlogSeg = strtoul(endptr2 + 1, &endptr3, 0);
-				if (endptr3 == endptr2 + 1 || *endptr3 != '\0')
-				{
-					fprintf(stderr, _("%s: invalid argument for option -l\n"), progname);
-					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
-					exit(1);
-				}
-				minXlogSegNo = (uint64) minXlogId * XLogSegmentsPerXLogId + minXlogSeg;
+				XLogFromFileName(optarg, &minXlogTli, &minXlogSegNo);
 				break;
 
 			default:
@@ -1013,7 +994,7 @@ usage(void)
 	printf(_("Options:\n"));
 	printf(_("  -e XIDEPOCH      set next transaction ID epoch\n"));
 	printf(_("  -f               force update to be done\n"));
-	printf(_("  -l TLI,FILE,SEG  force minimum WAL starting location for new transaction log\n"));
+	printf(_("  -l xlogfile      force minimum WAL starting location for new transaction log\n"));
 	printf(_("  -m XID           set next multitransaction ID\n"));
 	printf(_("  -n               no update, just show extracted control values (for testing)\n"));
 	printf(_("  -o OID           set next OID\n"));

@@ -168,8 +168,7 @@ typedef struct
 {
 	uint32		ctrl_ver;
 	uint32		cat_ver;
-	uint32		logid;
-	uint32		nxtlogseg;
+	char		nextxlogfile[25];
 	uint32		chkpnt_tli;
 	uint32		chkpnt_nxtxid;
 	uint32		chkpnt_nxtoid;

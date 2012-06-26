@@ -39,6 +39,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	char	   *p;
 	bool		got_xid = false;
 	bool		got_oid = false;
+	bool		got_nextxlogfile = false;
 	bool		got_log_id = false;
 	bool		got_log_seg = false;
 	bool		got_tli = false;
@@ -61,6 +62,10 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	char	   *language = NULL;
 	char	   *lc_all = NULL;
 	char	   *lc_messages = NULL;
+	uint32		logid = 0;
+	uint32		segno = 0;
+	uint32		tli = 0;
+
 
 	/*
 	 * Because we test the pg_resetxlog output as strings, it has to be in
@@ -166,6 +171,23 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p++;				/* removing ':' char */
 			cluster->controldata.cat_ver = str2uint(p);
 		}
+		else if ((p = strstr(bufin, "First log segment after reset:")) != NULL)
+		{
+			/* Skip the colon and any whitespace after it */
+			p = strchr(p, ':');
+			if (p == NULL || strlen(p) <= 1)
+				pg_log(PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
+			p = strpbrk(p, "01234567890ABCDEF");
+			if (p == NULL || strlen(p) <= 1)
+				pg_log(PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
+
+			/* Make sure it looks like a valid WAL file name */
+			if (strspn(p, "0123456789ABCDEF") != 24)
+				pg_log(PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
+
+			strlcpy(cluster->controldata.nextxlogfile, p, 25);
+			got_nextxlogfile = true;
+		}
 		else if ((p = strstr(bufin, "First log file ID after reset:")) != NULL)
 		{
 			p = strchr(p, ':');
@@ -174,7 +196,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 				pg_log(PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
-			cluster->controldata.logid = str2uint(p);
+			logid = str2uint(p);
 			got_log_id = true;
 		}
 		else if ((p = strstr(bufin, "First log file segment after reset:")) != NULL)
@@ -185,7 +207,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 				pg_log(PG_FATAL, "%d: controldata retrieval problem\n", __LINE__);
 
 			p++;				/* removing ':' char */
-			cluster->controldata.nxtlogseg = str2uint(p);
+			segno = str2uint(p);
 			got_log_seg = true;
 		}
 		else if ((p = strstr(bufin, "Latest checkpoint's TimeLineID:")) != NULL)
@@ -393,10 +415,25 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	pg_free(lc_all);
 	pg_free(lc_messages);
 
+	/*
+	 * Before 9.3, pg_resetxlog reported the xlogid and segno of the first
+	 * log file after reset as separate lines. Starting with 9.3, it reports
+	 * the WAL file name. If the old cluster is older than 9.3, we construct
+	 * the WAL file name from the xlogid and segno.
+	 */
+	if (GET_MAJOR_VERSION(cluster->major_version) <= 902)
+	{
+		if (got_log_id && got_log_seg)
+		{
+			snprintf(cluster->controldata.nextxlogfile, 24, "%08X%08X%08X",
+					 tli, logid, segno);
+			got_nextxlogfile = true;
+		}
+	}
+
 	/* verify that we got all the mandatory pg_control data */
 	if (!got_xid || !got_oid ||
-		(!live_check && !got_log_id) ||
-		(!live_check && !got_log_seg) ||
+		(!live_check && !got_nextxlogfile) ||
 		!got_tli ||
 		!got_align || !got_blocksz || !got_largesz || !got_walsz ||
 		!got_walseg || !got_ident || !got_index || !got_toast ||
@@ -411,11 +448,8 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		if (!got_oid)
 			pg_log(PG_REPORT, "  latest checkpoint next OID\n");
 
-		if (!live_check && !got_log_id)
-			pg_log(PG_REPORT, "  first log file ID after reset\n");
-
-		if (!live_check && !got_log_seg)
-			pg_log(PG_REPORT, "  first log file segment after reset\n");
+		if (!live_check && !got_nextxlogfile)
+			pg_log(PG_REPORT, "  first WAL segment after reset\n");
 
 		if (!got_tli)
 			pg_log(PG_REPORT, "  latest checkpoint timeline ID\n");
