@@ -290,7 +290,7 @@ BZIP2	= bzip2
 # Installation.
 
 install_sh = $(SHELL) $(top_srcdir)/config/install-sh -c
-INSTALL = $(if $(use_install_sh),$(install_sh),$(or @INSTALL@,$(install_sh)))
+INSTALL = $(if $(use_install_sh),$(install_sh),$(or @INSTALL_@,$(install_sh)))
 
 INSTALL_SCRIPT_MODE	= 755
 INSTALL_DATA_MODE	= 644

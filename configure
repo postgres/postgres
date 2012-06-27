@@ -693,6 +693,7 @@ MKDIR_P
 AWK
 LN_S
 TAR
+INSTALL_
 INSTALL_DATA
 INSTALL_SCRIPT
 INSTALL_PROGRAM
@@ -6955,8 +6956,10 @@ test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 # a relative path to it in each makefile where it subsitutes it. This clashes
 # with our Makefile.global concept. This workaround helps.
 case $INSTALL in
-  *install-sh*) INSTALL='';;
+  *install-sh*) INSTALL_='';;
+  *) INSTALL_=$INSTALL;;
 esac
+
 
 # Extract the first word of "tar", so it can be a program name with args.
 set dummy tar; ac_word=$2
