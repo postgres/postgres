@@ -289,7 +289,8 @@ BZIP2	= bzip2
 
 # Installation.
 
-INSTALL	= $(SHELL) $(top_srcdir)/config/install-sh -c
+install_sh = $(SHELL) $(top_srcdir)/config/install-sh -c
+INSTALL = $(if $(use_install_sh),$(install_sh),$(or @INSTALL@,$(install_sh)))
 
 INSTALL_SCRIPT_MODE	= 755
 INSTALL_DATA_MODE	= 644
@@ -561,7 +562,10 @@ endif # not PGXS
 
 
 install-strip:
-	@$(MAKE) INSTALL_PROGRAM_ENV="STRIPPROG='$(STRIP)'" \
+# install-strip always uses install-sh, so that strip options can be
+# passed.
+	$(MAKE) use_install_sh=yes \
+	    INSTALL_PROGRAM_ENV="STRIPPROG='$(STRIP)'" \
 	    INSTALL_STLIB_ENV="STRIPPROG='$(STRIP_STATIC_LIB)'" \
 	    INSTALL_SHLIB_ENV="STRIPPROG='$(STRIP_SHARED_LIB)'" \
 	    INSTALL_STRIP_FLAG=-s \
