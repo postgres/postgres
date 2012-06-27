@@ -1648,13 +1648,16 @@
 
       <listitem>
        <para>
-        Allow users to cancel queries in user-matching sessions using <link
+        Allow non-superusers to use <link
         linkend="functions-admin-signal"><function>pg_cancel_backend()</></link>
-        (Magnus Hagander, Josh Kupershmidt)
+        and <link
+        linkend="functions-admin-signal"><function>pg_terminate_backend()()</></link>
+        on other sessions for the same user
+        (Magnus Hagander, Josh Kupershmidt, Dan Farina)
        </para>
 
        <para>
-        Previously only the superuser could cancel queries.
+        Previously only the superuser could use these functions.
        </para>
       </listitem>
 
