@@ -2588,11 +2588,11 @@ XLogFileCopy(XLogSegNo destsegno, TimeLineID srcTLI, XLogSegNo srcsegno)
  *
  * tmppath: initial name of file to install.  It will be renamed into place.
  *
- * find_free: if TRUE, install the new segment at the first empty log/seg
+ * find_free: if TRUE, install the new segment at the first empty segno
  * number at or after the passed numbers.  If FALSE, install the new segment
  * exactly where specified, deleting any existing segment file there.
  *
- * *max_advance: maximum number of log/seg slots to advance past the starting
+ * *max_advance: maximum number of segno slots to advance past the starting
  * point.  Fail if no free slot is found in this range.  On return, reduced
  * by the number of slots skipped over.  (Irrelevant, and may be NULL,
  * when find_free is FALSE.)
