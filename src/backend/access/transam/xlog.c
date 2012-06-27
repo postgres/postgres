@@ -2479,7 +2479,7 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
 /*
  * Create a new XLOG file segment by copying a pre-existing one.
  *
- * log, seg: identify segment to be created.
+ * destsegno: identify segment to be created.
  *
  * srcTLI, srclog, srcseg: identify segment to be copied (could be from
  *		a different timeline)
@@ -2582,8 +2582,8 @@ XLogFileCopy(XLogSegNo destsegno, TimeLineID srcTLI, XLogSegNo srcsegno)
  * This is used both to install a newly-created segment (which has a temp
  * filename while it's being created) and to recycle an old segment.
  *
- * *log, *seg: identify segment to install as (or first possible target).
- * When find_free is TRUE, these are modified on return to indicate the
+ * *segno: identify segment to install as (or first possible target).
+ * When find_free is TRUE, this is modified on return to indicate the
  * actual installation location or last segment searched.
  *
  * tmppath: initial name of file to install.  It will be renamed into place.
@@ -3317,7 +3317,7 @@ PreallocXlogFiles(XLogRecPtr endptr)
 }
 
 /*
- * Get the log/seg of the latest removed or recycled WAL segment.
+ * Get the segno of the latest removed or recycled WAL segment.
  * Returns 0/0 if no WAL segments have been removed since startup.
  */
 void
@@ -3332,7 +3332,7 @@ XLogGetLastRemoved(XLogSegNo *segno)
 }
 
 /*
- * Update the last removed log/seg pointer in shared memory, to reflect
+ * Update the last removed segno pointer in shared memory, to reflect
  * that the given XLOG file has been removed.
  */
 static void
@@ -3352,7 +3352,7 @@ UpdateLastRemovedPtr(char *filename)
 }
 
 /*
- * Recycle or remove all log files older or equal to passed log/seg#
+ * Recycle or remove all log files older or equal to passed segno
  *
  * endptr is current (or recent) end of xlog; this is used to determine
  * whether we want to recycle rather than delete no-longer-wanted log files.

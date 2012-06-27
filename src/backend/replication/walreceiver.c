@@ -68,7 +68,7 @@ walrcv_disconnect_type walrcv_disconnect = NULL;
 #define NAPTIME_PER_CYCLE 100	/* max sleep time between cycles (100ms) */
 
 /*
- * These variables are used similarly to openLogFile/Id/Seg/Off,
+ * These variables are used similarly to openLogFile/SegNo/Off,
  * but for walreceiver to write the XLOG. recvFileTLI is the TimeLineID
  * corresponding the filename of recvFile, used for error messages.
  */
