@@ -56,6 +56,12 @@ typedef int IpcMemoryId;		/* shared memory ID returned by shmget(2) */
 
 #define	PG_MMAP_FLAGS			(MAP_SHARED|MAP_ANONYMOUS|MAP_HASSEMAPHORE)
 
+/* Some really old systems don't define MAP_FAILED. */
+#ifndef MAP_FAILED
+#define MAP_FAILED ((void *) -1)
+#endif
+
+
 unsigned long UsedShmemSegID = 0;
 void	   *UsedShmemSegAddr = NULL;
 static Size AnonymousShmemSize;
