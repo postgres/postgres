@@ -19,6 +19,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sys/file.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
 #ifdef HAVE_SYS_IPC_H
 #include <sys/ipc.h>
@@ -43,9 +44,22 @@ typedef int IpcMemoryId;		/* shared memory ID returned by shmget(2) */
 #define PG_SHMAT_FLAGS			0
 #endif
 
+/* Linux prefers MAP_ANONYMOUS, but the flag is called MAP_ANON on other systems. */
+#ifndef MAP_ANONYMOUS
+#define MAP_ANONYMOUS			MAP_ANON
+#endif
+
+/* BSD-derived systems have MAP_HASSEMAPHORE, but it's not present (or needed) on Linux. */
+#ifndef MAP_HASSEMAPHORE
+#define MAP_HASSEMAPHORE		0
+#endif
+
+#define	PG_MMAP_FLAGS			(MAP_SHARED|MAP_ANONYMOUS|MAP_HASSEMAPHORE)
 
 unsigned long UsedShmemSegID = 0;
 void	   *UsedShmemSegAddr = NULL;
+static Size AnonymousShmemSize;
+static PGShmemHeader *AnonymousShmem;
 
 static void *InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size);
 static void IpcMemoryDetach(int status, Datum shmaddr);
@@ -218,8 +232,13 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 static void
 IpcMemoryDetach(int status, Datum shmaddr)
 {
+	/* Detach System V shared memory block. */
 	if (shmdt(DatumGetPointer(shmaddr)) < 0)
 		elog(LOG, "shmdt(%p) failed: %m", DatumGetPointer(shmaddr));
+	/* Release anonymous shared memory block, if any. */
+	if (AnonymousShmem != NULL
+		&& munmap(AnonymousShmem, AnonymousShmemSize) < 0)
+		elog(LOG, "munmap(%p) failed: %m", AnonymousShmem);
 }
 
 /****************************************************************************/
@@ -357,9 +376,58 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 	PGShmemHeader *hdr;
 	IpcMemoryId shmid;
 	struct stat statbuf;
+	Size		allocsize = size;
 
 	/* Room for a header? */
 	Assert(size > MAXALIGN(sizeof(PGShmemHeader)));
+
+	/*
+	 * As of PostgreSQL 9.3, we normally allocate only a very small amount of
+	 * System V shared memory, and only for the purposes of providing an
+	 * interlock to protect the data directory.  The real shared memory block
+	 * is allocated using mmap().  This works around the problem that many
+	 * systems have very low limits on the amount of System V shared memory
+	 * that can be allocated.  Even a limit of a few megabytes will be enough
+	 * to run many copies of PostgreSQL without needing to adjust system
+	 * settings.
+	 *
+	 * However, we disable this logic in the EXEC_BACKEND case, and fall back
+	 * to the old method of allocating the entire segment using System V shared
+	 * memory, because there's no way to attach an mmap'd segment to a process
+	 * after exec().  Since EXEC_BACKEND is intended only for developer use,
+	 * this shouldn't be a big problem.
+	 */
+#ifndef EXEC_BACKEND
+	{
+		long	pagesize = sysconf(_SC_PAGE_SIZE);
+
+		/*
+		 * pagesize will, for practical purposes, always be a power of two.
+		 * But just in case it isn't, we do it this way instead of using
+		 * TYPEALIGN().
+		 */
+		AnonymousShmemSize = size;
+		if (size % pagesize != 0)
+			AnonymousShmemSize += pagesize - (size % pagesize);
+
+		/*
+		 * We assume that no one will attempt to run PostgreSQL 9.3 or later
+		 * on systems that are ancient enough that anonymous shared memory is
+		 * not supported, such as pre-2.4 versions of Linux.  If that turns out
+		 * to be false, we might need to add a run-time test here and do this
+		 * only if the running kernel supports it.
+		 */
+		AnonymousShmem = mmap(NULL, size, PROT_READ|PROT_WRITE, PG_MMAP_FLAGS,
+							  -1, 0);
+		if (AnonymousShmem == NULL)
+			ereport(FATAL,
+			 (errmsg("could not map %lu bytes of anonymous shared memory: %m",
+				(unsigned long) AnonymousShmemSize)));
+
+		/* Now we can allocate a minimal SHM block. */
+		allocsize = sizeof(PGShmemHeader);
+	}
+#endif
 
 	/* Make sure PGSharedMemoryAttach doesn't fail without need */
 	UsedShmemSegAddr = NULL;
@@ -370,7 +438,7 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 	for (NextShmemSegID++;; NextShmemSegID++)
 	{
 		/* Try to create new segment */
-		memAddress = InternalIpcMemoryCreate(NextShmemSegID, size);
+		memAddress = InternalIpcMemoryCreate(NextShmemSegID, allocsize);
 		if (memAddress)
 			break;				/* successful create and attach */
 
@@ -409,7 +477,7 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 		/*
 		 * Now try again to create the segment.
 		 */
-		memAddress = InternalIpcMemoryCreate(NextShmemSegID, size);
+		memAddress = InternalIpcMemoryCreate(NextShmemSegID, allocsize);
 		if (memAddress)
 			break;				/* successful create and attach */
 
@@ -448,7 +516,17 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 	UsedShmemSegAddr = memAddress;
 	UsedShmemSegID = (unsigned long) NextShmemSegID;
 
-	return hdr;
+	/*
+	 * If AnonymousShmem is NULL here, then we're not using anonymous shared
+	 * memory, and should return a pointer to the System V shared memory block.
+	 * Otherwise, the System V shared memory block is only a shim, and we must
+	 * return a pointer to the real block.
+	 */
+	if (AnonymousShmem == NULL)
+		return hdr;
+	memcpy(AnonymousShmem, hdr, sizeof(PGShmemHeader));
+	return AnonymousShmem;
+
 }
 
 #ifdef EXEC_BACKEND
@@ -516,6 +594,11 @@ PGSharedMemoryDetach(void)
 			elog(LOG, "shmdt(%p) failed: %m", UsedShmemSegAddr);
 		UsedShmemSegAddr = NULL;
 	}
+
+	/* Release anonymous shared memory block, if any. */
+	if (AnonymousShmem != NULL
+		&& munmap(AnonymousShmem, AnonymousShmemSize) < 0)
+		elog(LOG, "munmap(%p) failed: %m", AnonymousShmem);
 }
 
 
