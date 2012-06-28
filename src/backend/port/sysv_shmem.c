@@ -419,10 +419,17 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 		 */
 		AnonymousShmem = mmap(NULL, size, PROT_READ|PROT_WRITE, PG_MMAP_FLAGS,
 							  -1, 0);
-		if (AnonymousShmem == NULL)
+		if (AnonymousShmem == MAP_FAILED)
 			ereport(FATAL,
-			 (errmsg("could not map %lu bytes of anonymous shared memory: %m",
-				(unsigned long) AnonymousShmemSize)));
+			 (errmsg("could not map anonymous shared memory: %m"),
+			  (errno == ENOMEM) ?
+			   errhint("This error usually means that PostgreSQL's request "
+					   "for a shared memory segment exceeded available memory "
+					   "or swap space. To reduce the request size (currently "
+					   "%lu bytes), reduce PostgreSQL's shared memory usage, "
+					   "perhaps by reducing shared_buffers or "
+					   "max_connections.",
+					(unsigned long) AnonymousShmemSize) : 0));
 
 		/* Now we can allocate a minimal SHM block. */
 		allocsize = sizeof(PGShmemHeader);
