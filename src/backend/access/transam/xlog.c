@@ -1091,7 +1091,7 @@ begin:;
 		/* Use next buffer */
 		updrqst = AdvanceXLInsertBuffer(false);
 		curridx = Insert->curridx;
-		/* Insert cont-record header */
+		/* Mark page header to indicate this record continues on the page */
 		Insert->currpage->xlp_info |= XLP_FIRST_IS_CONTRECORD;
 		Insert->currpage->xlp_rem_len = write_len;
 		freespace = INSERT_FREESPACE(Insert);
