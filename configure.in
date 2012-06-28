@@ -814,10 +814,10 @@ AC_PROG_INSTALL
 # a relative path to it in each makefile where it subsitutes it. This clashes
 # with our Makefile.global concept. This workaround helps.
 case $INSTALL in
-  *install-sh*) INSTALL_='';;
-  *) INSTALL_=$INSTALL;;
+  *install-sh*) install_bin='';;
+  *) install_bin=$INSTALL;;
 esac
-AC_SUBST(INSTALL_)
+AC_SUBST(install_bin)
 
 AC_PATH_PROG(TAR, tar)
 AC_PROG_LN_S
