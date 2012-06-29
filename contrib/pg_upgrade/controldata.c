@@ -425,7 +425,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	{
 		if (got_log_id && got_log_seg)
 		{
-			snprintf(cluster->controldata.nextxlogfile, 24, "%08X%08X%08X",
+			snprintf(cluster->controldata.nextxlogfile, 25, "%08X%08X%08X",
 					 tli, logid, segno);
 			got_nextxlogfile = true;
 		}
