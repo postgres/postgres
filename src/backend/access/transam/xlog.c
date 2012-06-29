@@ -6227,11 +6227,14 @@ StartupXLOG(void)
 		ereport(PANIC,
 				(errmsg("invalid next transaction ID")));
 
+	/* initialize shared memory variables from the checkpoint record */
 	ShmemVariableCache->nextXid = checkPoint.nextXid;
 	ShmemVariableCache->nextOid = checkPoint.nextOid;
 	ShmemVariableCache->oidCount = 0;
 	MultiXactSetNextMXact(checkPoint.nextMulti, checkPoint.nextMultiOffset);
 	SetTransactionIdLimit(checkPoint.oldestXid, checkPoint.oldestXidDB);
+	XLogCtl->ckptXidEpoch = checkPoint.nextXidEpoch;
+	XLogCtl->ckptXid = checkPoint.nextXid;
 
 	/*
 	 * We must replay WAL entries using the same TimeLineID they were created
@@ -6329,10 +6332,6 @@ StartupXLOG(void)
 		ControlFile->time = (pg_time_t) time(NULL);
 		/* No need to hold ControlFileLock yet, we aren't up far enough */
 		UpdateControlFile();
-
-		/* initialize shared-memory copy of latest checkpoint XID/epoch */
-		XLogCtl->ckptXidEpoch = ControlFile->checkPointCopy.nextXidEpoch;
-		XLogCtl->ckptXid = ControlFile->checkPointCopy.nextXid;
 
 		/* initialize our local copy of minRecoveryPoint */
 		minRecoveryPoint = ControlFile->minRecoveryPoint;
