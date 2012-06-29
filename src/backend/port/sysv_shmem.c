@@ -408,13 +408,14 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 		long	pagesize = sysconf(_SC_PAGE_SIZE);
 
 		/*
+		 * Ensure request size is a multiple of pagesize.
+		 *
 		 * pagesize will, for practical purposes, always be a power of two.
 		 * But just in case it isn't, we do it this way instead of using
 		 * TYPEALIGN().
 		 */
-		AnonymousShmemSize = size;
-		if (size % pagesize != 0)
-			AnonymousShmemSize += pagesize - (size % pagesize);
+		if (pagesize > 0 && size % pagesize != 0)
+			size += pagesize - (size % pagesize);
 
 		/*
 		 * We assume that no one will attempt to run PostgreSQL 9.3 or later
@@ -435,9 +436,10 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 					   "%lu bytes), reduce PostgreSQL's shared memory usage, "
 					   "perhaps by reducing shared_buffers or "
 					   "max_connections.",
-					(unsigned long) AnonymousShmemSize) : 0));
+					   (unsigned long) size) : 0));
+		AnonymousShmemSize = size;
 
-		/* Now we can allocate a minimal SHM block. */
+		/* Now we need only allocate a minimal-sized SysV shmem block. */
 		allocsize = sizeof(PGShmemHeader);
 	}
 #endif
