@@ -29,7 +29,8 @@ static int	win32_check_directory_write_permissions(void);
  *
  *	Formats a command from the given argument list and executes that
  *	command.  If the command executes, exec_prog() returns 1 otherwise
- *	exec_prog() logs an error message and returns 0.
+ *	exec_prog() logs an error message and returns 0.  Either way, the command
+ *	line to be executed is saved to the specified log file.
  *
  *	If throw_error is TRUE, this function will throw a PG_FATAL error
  *	instead of returning should an error occur.
@@ -40,8 +41,10 @@ exec_prog(bool throw_error, bool is_priv,
 {
 	va_list		args;
 	int			result;
+	int			retval;
 	char		cmd[MAXPGPATH];
 	mode_t		old_umask = 0;
+	FILE	   *log = fopen(log_file, "a+");
 
 	if (is_priv)
 		old_umask = umask(S_IRWXG | S_IRWXO);
@@ -51,6 +54,8 @@ exec_prog(bool throw_error, bool is_priv,
 	va_end(args);
 
 	pg_log(PG_VERBOSE, "%s\n", cmd);
+	fprintf(log, "command: %s\n", cmd);
+	fflush(log);
 
 	result = system(cmd);
 
@@ -66,10 +71,15 @@ exec_prog(bool throw_error, bool is_priv,
 			   "Consult the last few lines of \"%s\" for\n"
 			   "the probable cause of the failure.\n",
 			   log_file);
-		return 1;
+		retval = 1;
 	}
+	else
+		retval = 0;
 
-	return 0;
+	fprintf(log, "\n\n");
+	fclose(log);
+
+	return retval;
 }
 
 
