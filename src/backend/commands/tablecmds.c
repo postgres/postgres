@@ -57,6 +57,7 @@
 #include "parser/parser.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteHandler.h"
+#include "rewrite/rewriteManip.h"
 #include "storage/smgr.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -170,7 +171,6 @@ static void MergeConstraintsIntoExisting(Relation child_rel, Relation parent_rel
 static void MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel);
 static void add_nonduplicate_constraint(Constraint *cdef,
 							ConstrCheck *check, int *ncheck);
-static bool change_varattnos_walker(Node *node, const AttrNumber *newattno);
 static void StoreCatalogInheritance(Oid relationId, List *supers);
 static void StoreCatalogInheritance1(Oid relationId, Oid parentOid,
 						 int16 seqNumber, Relation inhRelation);
@@ -868,7 +868,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 		 * parents after the first one, nor if we have dropped columns.)
 		 */
 		newattno = (AttrNumber *)
-			palloc(tupleDesc->natts * sizeof(AttrNumber));
+			palloc0(tupleDesc->natts * sizeof(AttrNumber));
 
 		for (parent_attno = 1; parent_attno <= tupleDesc->natts;
 			 parent_attno++)
@@ -882,15 +882,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 			 * Ignore dropped columns in the parent.
 			 */
 			if (attribute->attisdropped)
-			{
-				/*
-				 * change_varattnos_of_a_node asserts that this is greater
-				 * than zero, so if anything tries to use it, we should find
-				 * out.
-				 */
-				newattno[parent_attno - 1] = 0;
-				continue;
-			}
+				continue;		/* leave newattno entry as zero */
 
 			/*
 			 * Does it conflict with some previously inherited column?
@@ -1000,13 +992,31 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 			{
 				Constraint *cdef = makeNode(Constraint);
 				Node	   *expr;
+				bool		found_whole_row;
+
+				/* Adjust Vars to match new table's column numbering */
+				expr = map_variable_attnos(stringToNode(check[i].ccbin),
+										   1, 0,
+										   newattno, tupleDesc->natts,
+										   &found_whole_row);
+
+				/*
+				 * For the moment we have to reject whole-row variables.
+				 * We could convert them, if we knew the new table's rowtype
+				 * OID, but that hasn't been assigned yet.
+				 */
+				if (found_whole_row)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cannot convert whole-row table reference"),
+							 errdetail("Constraint \"%s\" contains a whole-row reference to table \"%s\".",
+									   check[i].ccname,
+									   RelationGetRelationName(relation))));
 
 				cdef->contype = CONSTR_CHECK;
 				cdef->name = pstrdup(check[i].ccname);
 				cdef->raw_expr = NULL;
-				/* adjust varattnos of ccbin here */
-				expr = stringToNode(check[i].ccbin);
-				change_varattnos_of_a_node(expr, newattno);
+
 				cdef->cooked_expr = nodeToString(expr);
 				constraints = lappend(constraints, cdef);
 			}
@@ -1157,101 +1167,6 @@ add_nonduplicate_constraint(Constraint *cdef, ConstrCheck *check, int *ncheck)
 	check[*ncheck].ccname = cdef->name;
 	check[*ncheck].ccbin = pstrdup(cdef->cooked_expr);
 	(*ncheck)++;
-}
-
-
-/*
- * Replace varattno values in an expression tree according to the given
- * map array, that is, varattno N is replaced by newattno[N-1].  It is
- * caller's responsibility to ensure that the array is long enough to
- * define values for all user varattnos present in the tree.  System column
- * attnos remain unchanged.
- *
- * Note that the passed node tree is modified in-place!
- */
-void
-change_varattnos_of_a_node(Node *node, const AttrNumber *newattno)
-{
-	/* no setup needed, so away we go */
-	(void) change_varattnos_walker(node, newattno);
-}
-
-static bool
-change_varattnos_walker(Node *node, const AttrNumber *newattno)
-{
-	if (node == NULL)
-		return false;
-	if (IsA(node, Var))
-	{
-		Var		   *var = (Var *) node;
-
-		if (var->varlevelsup == 0 && var->varno == 1 &&
-			var->varattno > 0)
-		{
-			/*
-			 * ??? the following may be a problem when the node is multiply
-			 * referenced though stringToNode() doesn't create such a node
-			 * currently.
-			 */
-			Assert(newattno[var->varattno - 1] > 0);
-			var->varattno = var->varoattno = newattno[var->varattno - 1];
-		}
-		return false;
-	}
-	return expression_tree_walker(node, change_varattnos_walker,
-								  (void *) newattno);
-}
-
-/*
- * Generate a map for change_varattnos_of_a_node from old and new TupleDesc's,
- * matching according to column name.
- */
-AttrNumber *
-varattnos_map(TupleDesc old, TupleDesc new)
-{
-	AttrNumber *attmap;
-	int			i,
-				j;
-
-	attmap = (AttrNumber *) palloc0(sizeof(AttrNumber) * old->natts);
-	for (i = 1; i <= old->natts; i++)
-	{
-		if (old->attrs[i - 1]->attisdropped)
-			continue;			/* leave the entry as zero */
-
-		for (j = 1; j <= new->natts; j++)
-		{
-			if (strcmp(NameStr(old->attrs[i - 1]->attname),
-					   NameStr(new->attrs[j - 1]->attname)) == 0)
-			{
-				attmap[i - 1] = j;
-				break;
-			}
-		}
-	}
-	return attmap;
-}
-
-/*
- * Generate a map for change_varattnos_of_a_node from a TupleDesc and a list
- * of ColumnDefs
- */
-AttrNumber *
-varattnos_map_schema(TupleDesc old, List *schema)
-{
-	AttrNumber *attmap;
-	int			i;
-
-	attmap = (AttrNumber *) palloc0(sizeof(AttrNumber) * old->natts);
-	for (i = 1; i <= old->natts; i++)
-	{
-		if (old->attrs[i - 1]->attisdropped)
-			continue;			/* leave the entry as zero */
-
-		attmap[i - 1] = findAttrByName(NameStr(old->attrs[i - 1]->attname),
-									   schema);
-	}
-	return attmap;
 }
 
 

@@ -38,6 +38,11 @@ extern void AddInvertedQual(Query *parsetree, Node *qual);
 extern bool checkExprHasAggs(Node *node);
 extern bool checkExprHasSubLink(Node *node);
 
+extern Node *map_variable_attnos(Node *node,
+					int target_varno, int sublevels_up,
+					const AttrNumber *attno_map, int map_length,
+					bool *found_whole_row);
+
 extern Node *ResolveNew(Node *node, int target_varno, int sublevels_up,
 		   RangeTblEntry *target_rte,
 		   List *targetlist, int event, int update_varno);
