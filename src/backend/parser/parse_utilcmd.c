@@ -101,7 +101,8 @@ static void transformTableConstraint(ParseState *pstate,
 static void transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 					 InhRelation *inhrelation);
 static IndexStmt *generateClonedIndexStmt(CreateStmtContext *cxt,
-						Relation parent_index, AttrNumber *attmap);
+						Relation source_idx,
+						const AttrNumber *attmap, int attmap_length);
 static List *get_opclass(Oid opclass, Oid actual_datatype);
 static void transformIndexConstraints(ParseState *pstate,
 						  CreateStmtContext *cxt);
@@ -543,6 +544,7 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 	Relation	relation;
 	TupleDesc	tupleDesc;
 	TupleConstr *constr;
+	AttrNumber *attmap;
 	AclResult	aclresult;
 	bool		including_defaults = false;
 	bool		including_constraints = false;
@@ -600,6 +602,13 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 	}
 
 	/*
+	 * Initialize column number map for map_variable_attnos().  We need this
+	 * since dropped columns in the source table aren't copied, so the new
+	 * table can have different column numbers.
+	 */
+	attmap = (AttrNumber *) palloc0(sizeof(AttrNumber) * tupleDesc->natts);
+
+	/*
 	 * Insert the copied attributes into the cxt for the new table definition.
 	 */
 	for (parent_attno = 1; parent_attno <= tupleDesc->natts;
@@ -610,7 +619,7 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 		ColumnDef  *def;
 
 		/*
-		 * Ignore dropped columns in the parent.
+		 * Ignore dropped columns in the parent.  attmap entry is left zero.
 		 */
 		if (attribute->attisdropped)
 			continue;
@@ -636,6 +645,8 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 		 * Add to column list
 		 */
 		cxt->columns = lappend(cxt->columns, def);
+
+		attmap[parent_attno - 1] = list_length(cxt->columns);
 
 		/*
 		 * Copy default, if present and the default has been requested
@@ -670,21 +681,38 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 
 	/*
 	 * Copy CHECK constraints if requested, being careful to adjust attribute
-	 * numbers
+	 * numbers so they match the child.
 	 */
 	if (including_constraints && tupleDesc->constr)
 	{
-		AttrNumber *attmap = varattnos_map_schema(tupleDesc, cxt->columns);
 		int			ccnum;
 
 		for (ccnum = 0; ccnum < tupleDesc->constr->num_check; ccnum++)
 		{
 			char	   *ccname = tupleDesc->constr->check[ccnum].ccname;
 			char	   *ccbin = tupleDesc->constr->check[ccnum].ccbin;
-			Node	   *ccbin_node = stringToNode(ccbin);
 			Constraint *n = makeNode(Constraint);
+			Node	   *ccbin_node;
+			bool		found_whole_row;
 
-			change_varattnos_of_a_node(ccbin_node, attmap);
+			ccbin_node = map_variable_attnos(stringToNode(ccbin),
+											 1, 0,
+											 attmap, tupleDesc->natts,
+											 &found_whole_row);
+
+			/*
+			 * We reject whole-row variables because the whole point of LIKE
+			 * is that the new table's rowtype might later diverge from the
+			 * parent's.  So, while translation might be possible right now,
+			 * it wouldn't be possible to guarantee it would work in future.
+			 */
+			if (found_whole_row)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot convert whole-row table reference"),
+						 errdetail("Constraint \"%s\" contains a whole-row reference to table \"%s\".",
+								   ccname,
+								   RelationGetRelationName(relation))));
 
 			n->contype = CONSTR_CHECK;
 			n->name = pstrdup(ccname);
@@ -700,7 +728,6 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 	 */
 	if (including_indexes && relation->rd_rel->relhasindex)
 	{
-		AttrNumber *attmap = varattnos_map_schema(tupleDesc, cxt->columns);
 		List	   *parent_indexes;
 		ListCell   *l;
 
@@ -715,7 +742,8 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 			parent_index = index_open(parent_index_oid, AccessShareLock);
 
 			/* Build CREATE INDEX statement to recreate the parent_index */
-			index_stmt = generateClonedIndexStmt(cxt, parent_index, attmap);
+			index_stmt = generateClonedIndexStmt(cxt, parent_index,
+												 attmap, tupleDesc->natts);
 
 			/* Save it in the inh_indexes list for the time being */
 			cxt->inh_indexes = lappend(cxt->inh_indexes, index_stmt);
@@ -738,7 +766,7 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
  */
 static IndexStmt *
 generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
-						AttrNumber *attmap)
+						const AttrNumber *attmap, int attmap_length)
 {
 	Oid			source_relid = RelationGetRelid(source_idx);
 	HeapTuple	ht_idxrel;
@@ -851,14 +879,26 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 		{
 			/* Expressional index */
 			Node	   *indexkey;
+			bool		found_whole_row;
 
 			if (indexpr_item == NULL)
 				elog(ERROR, "too few entries in indexprs list");
 			indexkey = (Node *) lfirst(indexpr_item);
 			indexpr_item = lnext(indexpr_item);
 
-			/* OK to modify indexkey since we are working on a private copy */
-			change_varattnos_of_a_node(indexkey, attmap);
+			/* Adjust Vars to match new table's column numbering */
+			indexkey = map_variable_attnos(indexkey,
+										   1, 0,
+										   attmap, attmap_length,
+										   &found_whole_row);
+
+			/* As in transformTableLikeClause, reject whole-row variables */
+			if (found_whole_row)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot convert whole-row table reference"),
+						 errdetail("Index \"%s\" contains a whole-row table reference.",
+								   RelationGetRelationName(source_idx))));
 
 			iparam->name = NULL;
 			iparam->expr = indexkey;
@@ -909,12 +949,28 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 	if (!isnull)
 	{
 		char	   *pred_str;
+		Node	   *pred_tree;
+		bool		found_whole_row;
 
 		/* Convert text string to node tree */
 		pred_str = TextDatumGetCString(datum);
-		index->whereClause = (Node *) stringToNode(pred_str);
-		/* Adjust attribute numbers */
-		change_varattnos_of_a_node(index->whereClause, attmap);
+		pred_tree = (Node *) stringToNode(pred_str);
+
+		/* Adjust Vars to match new table's column numbering */
+		pred_tree = map_variable_attnos(pred_tree,
+										1, 0,
+										attmap, attmap_length,
+										&found_whole_row);
+
+		/* As in transformTableLikeClause, reject whole-row variables */
+		if (found_whole_row)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot convert whole-row table reference"),
+					 errdetail("Index \"%s\" contains a whole-row table reference.",
+							   RelationGetRelationName(source_idx))));
+
+		index->whereClause = pred_tree;
 	}
 
 	/* Clean up */
