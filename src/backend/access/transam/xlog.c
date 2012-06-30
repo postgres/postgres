@@ -3829,13 +3829,30 @@ retry:
 	}
 
 	/*
+	 * Read the record length.
+	 *
 	 * NB: Even though we use an XLogRecord pointer here, the whole record
-	 * header might not fit on this page. xl_tot_len is the first field in
-	 * struct, so it must be on this page, but we cannot safely access any
-	 * other fields yet.
+	 * header might not fit on this page. xl_tot_len is the first field of
+	 * the struct, so it must be on this page (the records are MAXALIGNed),
+	 * but we cannot access any other fields until we've verified that we
+	 * got the whole header.
 	 */
 	record = (XLogRecord *) (readBuf + (*RecPtr) % XLOG_BLCKSZ);
 	total_len = record->xl_tot_len;
+
+	/*
+	 * If the whole record header is on this page, validate it immediately.
+	 * Otherwise validate it after reading the rest of the header from next
+	 * page.
+	 */
+	if (targetRecOff <= XLOG_BLCKSZ - SizeOfXLogRecord)
+	{
+		if (!ValidXLogRecordHeader(RecPtr, record, emode, randAccess))
+			goto next_record_is_invalid;
+		gotheader = true;
+	}
+	else
+		gotheader = false;
 
 	/*
 	 * Allocate or enlarge readRecordBuf as needed.  To avoid useless small
@@ -3864,19 +3881,6 @@ retry:
 		}
 		readRecordBufSize = newSize;
 	}
-
-	/*
-	 * If we got the whole header already, validate it immediately. Otherwise
-	 * we validate it after reading the rest of the header from the next page.
-	 */
-	if (targetRecOff <= XLOG_BLCKSZ - SizeOfXLogRecord)
-	{
-		if (!ValidXLogRecordHeader(RecPtr, record, emode, randAccess))
-			goto next_record_is_invalid;
-		gotheader = true;
-	}
-	else
-		gotheader = false;
 
 	len = XLOG_BLCKSZ - (*RecPtr) % XLOG_BLCKSZ;
 	if (total_len > len)
