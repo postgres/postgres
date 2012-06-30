@@ -65,6 +65,11 @@ extern Node *replace_rte_variables(Node *node,
 extern Node *replace_rte_variables_mutator(Node *node,
 							  replace_rte_variables_context *context);
 
+extern Node *map_variable_attnos(Node *node,
+					int target_varno, int sublevels_up,
+					const AttrNumber *attno_map, int map_length,
+					bool *found_whole_row);
+
 extern Node *ResolveNew(Node *node, int target_varno, int sublevels_up,
 		   RangeTblEntry *target_rte,
 		   List *targetlist, int event, int update_varno,
