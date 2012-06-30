@@ -61,10 +61,6 @@ extern void find_composite_type_dependencies(Oid typeOid,
 
 extern void check_of_type(HeapTuple typetuple);
 
-extern AttrNumber *varattnos_map(TupleDesc olddesc, TupleDesc newdesc);
-extern AttrNumber *varattnos_map_schema(TupleDesc old, List *schema);
-extern void change_varattnos_of_a_node(Node *node, const AttrNumber *newattno);
-
 extern void register_on_commit_action(Oid relid, OnCommitAction action);
 extern void remove_on_commit_action(Oid relid);
 
