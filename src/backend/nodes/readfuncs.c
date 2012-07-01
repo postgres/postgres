@@ -48,8 +48,7 @@
 /* And a few guys need only the pg_strtok support fields */
 #define READ_TEMP_LOCALS()	\
 	char	   *token;		\
-	int			length;		\
-	(void) token				/* possibly unused */
+	int			length
 
 /* ... but most need both */
 #define READ_LOCALS(nodeTypeName)			\
@@ -113,6 +112,7 @@
 /* Read a Node field */
 #define READ_NODE_FIELD(fldname) \
 	token = pg_strtok(&length);		/* skip :fldname */ \
+	(void) token;				/* in case not used elsewhere */ \
 	local_node->fldname = nodeRead(NULL, 0)
 
 /* Read a bitmapset field */
