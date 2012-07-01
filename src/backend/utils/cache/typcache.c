@@ -1089,7 +1089,7 @@ load_enum_cache_data(TypeCacheEntry *tcache)
 	enum_rel = heap_open(EnumRelationId, AccessShareLock);
 	enum_scan = systable_beginscan(enum_rel,
 								   EnumTypIdLabelIndexId,
-								   true, GetTransactionSnapshot(),
+								   true, GetLatestSnapshot(),
 								   1, &skey);
 
 	while (HeapTupleIsValid(enum_tuple = systable_getnext(enum_scan)))
