@@ -196,9 +196,9 @@ GetTransactionSnapshot(void)
 Snapshot
 GetLatestSnapshot(void)
 {
-	/* Should not be first call in transaction */
+	/* If first call in transaction, go ahead and set the xact snapshot */
 	if (!FirstSnapshotSet)
-		elog(ERROR, "no snapshot has been set");
+		return GetTransactionSnapshot();
 
 	SecondarySnapshot = GetSnapshotData(&SecondarySnapshotData);
 
