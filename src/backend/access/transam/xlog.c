@@ -1025,6 +1025,8 @@ begin:;
 
 		END_CRIT_SECTION();
 
+		/* wakeup the WalSnd now that we released the WALWriteLock */
+		WalSndWakeupProcessRequests();
 		return RecPtr;
 	}
 
@@ -1207,6 +1209,9 @@ begin:;
 	XactLastRecEnd = RecPtr;
 
 	END_CRIT_SECTION();
+
+	/* wakeup the WalSnd now that we outside contented locks */
+	WalSndWakeupProcessRequests();
 
 	return RecPtr;
 }
@@ -1792,6 +1797,10 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch)
 			if (finishing_seg || (xlog_switch && last_iteration))
 			{
 				issue_xlog_fsync(openLogFile, openLogSegNo);
+
+				/* signal that we need to wakeup WalSnd later */
+				WalSndWakeupRequest();
+
 				LogwrtResult.Flush = LogwrtResult.Write;		/* end of page */
 
 				if (XLogArchivingActive())
@@ -1854,7 +1863,11 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch)
 				openLogFile = XLogFileOpen(openLogSegNo);
 				openLogOff = 0;
 			}
+
 			issue_xlog_fsync(openLogFile, openLogSegNo);
+
+			/* signal that we need to wakeup WalSnd later */
+			WalSndWakeupRequest();
 		}
 		LogwrtResult.Flush = LogwrtResult.Write;
 	}
@@ -2120,6 +2133,9 @@ XLogFlush(XLogRecPtr record)
 
 	END_CRIT_SECTION();
 
+	/* wakeup the WalSnd now that we released the WALWriteLock */
+	WalSndWakeupProcessRequests();
+
 	/*
 	 * If we still haven't flushed to the request point then we have a
 	 * problem; most likely, the requested flush point is past end of XLOG.
@@ -2245,13 +2261,8 @@ XLogBackgroundFlush(void)
 
 	END_CRIT_SECTION();
 
-	/*
-	 * If we wrote something then we have something to send to standbys also,
-	 * otherwise the replication delay become around 7s with just async
-	 * commit.
-	 */
-	if (wrote_something)
-		WalSndWakeup();
+	/* wakeup the WalSnd now that we released the WALWriteLock */
+	WalSndWakeupProcessRequests();
 
 	return wrote_something;
 }
