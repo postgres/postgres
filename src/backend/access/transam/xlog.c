@@ -6355,7 +6355,7 @@ StartupXLOG(void)
 			{
 				if (dbstate_at_startup != DB_IN_ARCHIVE_RECOVERY)
 					ereport(FATAL,
-							(errmsg("backup_label contains inconsistent data with control file"),
+							(errmsg("backup_label contains data inconsistent with control file"),
 							 errhint("This means that the backup is corrupted and you will "
 							   "have to use another backup for recovery.")));
 				ControlFile->backupEndPoint = ControlFile->minRecoveryPoint;

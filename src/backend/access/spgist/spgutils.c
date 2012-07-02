@@ -661,7 +661,7 @@ spgFormInnerTuple(SpGistState *state, bool hasPrefix, Datum prefix,
 	if (size > SPGIST_PAGE_CAPACITY - sizeof(ItemIdData))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("SPGiST inner tuple size %lu exceeds maximum %lu",
+				 errmsg("SP-GiST inner tuple size %lu exceeds maximum %lu",
 						(unsigned long) size,
 				(unsigned long) (SPGIST_PAGE_CAPACITY - sizeof(ItemIdData))),
 			errhint("Values larger than a buffer page cannot be indexed.")));

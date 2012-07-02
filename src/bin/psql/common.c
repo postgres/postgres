@@ -462,7 +462,7 @@ AcceptResult(const PGresult *result)
 
 			default:
 				OK = false;
-				psql_error("unexpected PQresultStatus (%d)",
+				psql_error("unexpected PQresultStatus: %d\n",
 						   PQresultStatus(result));
 				break;
 		}
@@ -686,7 +686,7 @@ ProcessResult(PGresult **results)
 			default:
 				/* AcceptResult() should have caught anything else. */
 				is_copy = false;
-				psql_error("unexpected PQresultStatus (%d)", result_status);
+				psql_error("unexpected PQresultStatus: %d\n", result_status);
 				break;
 		}
 
@@ -816,7 +816,7 @@ PrintQueryResults(PGresult *results)
 
 		default:
 			success = false;
-			psql_error("unexpected PQresultStatus (%d)",
+			psql_error("unexpected PQresultStatus: %d\n",
 					   PQresultStatus(results));
 			break;
 	}
