@@ -1027,7 +1027,7 @@ begin:;
 
 		END_CRIT_SECTION();
 
-		/* wakeup the WalSnd now that we released the WALWriteLock */
+		/* wake up walsenders now that we've released heavily contended locks */
 		WalSndWakeupProcessRequests();
 		return RecPtr;
 	}
@@ -1212,7 +1212,7 @@ begin:;
 
 	END_CRIT_SECTION();
 
-	/* wakeup the WalSnd now that we outside contented locks */
+	/* wake up walsenders now that we've released heavily contended locks */
 	WalSndWakeupProcessRequests();
 
 	return RecPtr;
@@ -1800,7 +1800,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch)
 			{
 				issue_xlog_fsync(openLogFile, openLogSegNo);
 
-				/* signal that we need to wakeup WalSnd later */
+				/* signal that we need to wakeup walsenders later */
 				WalSndWakeupRequest();
 
 				LogwrtResult.Flush = LogwrtResult.Write;		/* end of page */
@@ -1868,7 +1868,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch)
 
 			issue_xlog_fsync(openLogFile, openLogSegNo);
 
-			/* signal that we need to wakeup WalSnd later */
+			/* signal that we need to wakeup walsenders later */
 			WalSndWakeupRequest();
 		}
 		LogwrtResult.Flush = LogwrtResult.Write;
@@ -2150,7 +2150,7 @@ XLogFlush(XLogRecPtr record)
 
 	END_CRIT_SECTION();
 
-	/* wakeup the WalSnd now that we released the WALWriteLock */
+	/* wake up walsenders now that we've released heavily contended locks */
 	WalSndWakeupProcessRequests();
 
 	/*
@@ -2278,7 +2278,7 @@ XLogBackgroundFlush(void)
 
 	END_CRIT_SECTION();
 
-	/* wakeup the WalSnd now that we released the WALWriteLock */
+	/* wake up walsenders now that we've released heavily contended locks */
 	WalSndWakeupProcessRequests();
 
 	return wrote_something;
