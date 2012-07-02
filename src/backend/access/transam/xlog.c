@@ -1867,10 +1867,11 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch)
 			}
 
 			issue_xlog_fsync(openLogFile, openLogSegNo);
-
-			/* signal that we need to wakeup walsenders later */
-			WalSndWakeupRequest();
 		}
+
+		/* signal that we need to wakeup walsenders later */
+		WalSndWakeupRequest();
+
 		LogwrtResult.Flush = LogwrtResult.Write;
 	}
 
