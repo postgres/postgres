@@ -1866,23 +1866,26 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-        When the commit data for a transaction is flushed to disk, any
-        additional commits ready at that time are also flushed out.
         <varname>commit_delay</varname> adds a time delay, set in
-        microseconds, before a transaction attempts to
-        flush the WAL buffer out to disk.  A nonzero delay can allow more
-        transactions to be committed with only one flush operation, if
-        system load is high enough that additional transactions become
-        ready to commit within the given interval. But the delay is
-        just wasted if no other transactions become ready to
-        commit. Therefore, the delay is only performed if at least
-        <varname>commit_siblings</varname> other transactions are
-        active at the instant that a server process has written its
-        commit record.
-        The default <varname>commit_delay</> is zero (no delay).
-        Since all pending commit data will be written at every flush
-        regardless of this setting, it is rare that adding delay
-        by increasing this parameter will actually improve performance.
+        microseconds, before a WAL flush is initiated.  This can improve
+        group commit throughput by allowing a larger number of transactions
+        to commit via a single WAL flush, if system load is high enough
+        that additional transactions become ready to commit within the
+        given interval.  However, it also increases latency by up to
+        <varname>commit_delay</varname> microseconds for each WAL
+        flush.  Because the delay is just wasted if no other transactions
+        become ready to commit, it is only performed if at least
+        <varname>commit_siblings</varname> other transactions are active
+        immediately before a flush would otherwise have been initiated.
+        In <productname>PostgreSQL</> releases prior to 9.3,
+        <varname>commit_delay</varname> behaved differently and was much
+        less effective: it affected only commits, rather than all WAL flushes,
+        and waited for the entire configured delay even if the WAL flush
+        was completed sooner.  Beginning in <productname>PostgreSQL</> 9.3, 
+        the first process that becomes ready to flush waits for the configured
+        interval, while subsequent processes wait only until the leader
+        completes the flush.  The default <varname>commit_delay</> is zero
+        (no delay).
        </para>
       </listitem>
      </varlistentry>

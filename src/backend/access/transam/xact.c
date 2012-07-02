@@ -68,9 +68,6 @@ bool		XactDeferrable;
 
 int			synchronous_commit = SYNCHRONOUS_COMMIT_ON;
 
-int			CommitDelay = 0;	/* precommit delay in microseconds */
-int			CommitSiblings = 5; /* # concurrent xacts needed to sleep */
-
 /*
  * MyXactAccessedTempRel is set when a temporary relation is accessed.
  * We don't allow PREPARE TRANSACTION in that case.  (This is global
@@ -1123,22 +1120,6 @@ RecordTransactionCommit(void)
 	if ((wrote_xlog && synchronous_commit > SYNCHRONOUS_COMMIT_OFF) ||
 		forceSyncCommit || nrels > 0)
 	{
-		/*
-		 * Synchronous commit case:
-		 *
-		 * Sleep before flush! So we can flush more than one commit records
-		 * per single fsync.  (The idea is some other backend may do the
-		 * XLogFlush while we're sleeping.  This needs work still, because on
-		 * most Unixen, the minimum select() delay is 10msec or more, which is
-		 * way too long.)
-		 *
-		 * We do not sleep if enableFsync is not turned on, nor if there are
-		 * fewer than CommitSiblings other backends with active transactions.
-		 */
-		if (CommitDelay > 0 && enableFsync &&
-			MinimumActiveBackends(CommitSiblings))
-			pg_usleep(CommitDelay);
-
 		XLogFlush(XactLastRecEnd);
 
 		/*

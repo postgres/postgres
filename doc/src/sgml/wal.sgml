@@ -376,9 +376,7 @@
    <acronym>WAL</acronym> to disk, in the hope that a single flush
    executed by one such transaction can also serve other transactions
    committing at about the same time.  Setting <varname>commit_delay</varname>
-   can only help when there are many concurrently committing transactions,
-   and it is difficult to tune it to a value that actually helps rather
-   than hurt throughput.
+   can only help when there are many concurrently committing transactions.
   </para>
 
  </sect1>
