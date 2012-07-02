@@ -112,7 +112,7 @@ ParseVariableBool(const char *value)
 	else
 	{
 		/* NULL is treated as false, so a non-matching value is 'true' */
-		psql_error("unrecognized boolean value; assuming \"on\".\n");
+		psql_error("unrecognized Boolean value; assuming \"on\"\n");
 		return true;
 	}
 	/* suppress compiler warning */

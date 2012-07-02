@@ -2347,7 +2347,7 @@ begin
     open c1(param2 := 20, 21);
 end
 $$ language plpgsql;
-ERROR:  duplicate value for cursor "c1" parameter "param2"
+ERROR:  value for parameter "param2" of cursor "c1" specified more than once
 LINE 5:     open c1(param2 := 20, 21);
                                   ^
 -- mixing named and positional: same as previous test, but param1 is duplicated
@@ -2358,7 +2358,7 @@ begin
     open c1(20, param1 := 21);
 end
 $$ language plpgsql;
-ERROR:  duplicate value for cursor "c1" parameter "param1"
+ERROR:  value for parameter "param1" of cursor "c1" specified more than once
 LINE 5:     open c1(20, param1 := 21);
                         ^
 -- duplicate named parameter, should throw an error at parse time
@@ -2370,7 +2370,7 @@ begin
   open c1 (p2 := 77, p2 := 42);
 end
 $$ language plpgsql;
-ERROR:  duplicate value for cursor "c1" parameter "p2"
+ERROR:  value for parameter "p2" of cursor "c1" specified more than once
 LINE 6:   open c1 (p2 := 77, p2 := 42);
                              ^
 -- not enough parameters, should throw an error at parse time

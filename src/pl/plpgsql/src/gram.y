@@ -3483,8 +3483,8 @@ read_cursor_args(PLpgSQL_var *cursor, int until, const char *expected)
 		if (argv[argpos] != NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("duplicate value for cursor \"%s\" parameter \"%s\"",
-							cursor->refname, row->fieldnames[argpos]),
+					 errmsg("value for parameter \"%s\" of cursor \"%s\" specified more than once",
+							row->fieldnames[argpos], cursor->refname),
 					 parser_errposition(arglocation)));
 
 		/*
