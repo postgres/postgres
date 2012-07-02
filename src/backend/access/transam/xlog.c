@@ -2105,7 +2105,10 @@ XLogFlush(XLogRecPtr record)
 		/* Got the lock; recheck whether request is satisfied */
 		LogwrtResult = XLogCtl->LogwrtResult;
 		if (XLByteLE(record, LogwrtResult.Flush))
+		{
+			LWLockRelease(WALWriteLock);
 			break;
+		}
 
 		/*
 		 * Sleep before flush! By adding a delay here, we may give further
