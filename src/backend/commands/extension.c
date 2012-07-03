@@ -2724,3 +2724,95 @@ ExecAlterExtensionContentsStmt(AlterExtensionContentsStmt *stmt)
 	if (relation != NULL)
 		relation_close(relation, NoLock);
 }
+
+/*
+ * AlterExtensionOwner_internal
+ *
+ * Internal routine for changing the owner of an extension.  rel must be
+ * pg_extension, already open and suitably locked; it will not be closed.
+ *
+ * Note that this only changes ownership of the extension itself; it doesn't
+ * change the ownership of objects it contains.  Since this function is
+ * currently only called from REASSIGN OWNED, this restriction is okay because
+ * said objects would also be affected by our caller.  But it's not enough for
+ * a full-fledged ALTER OWNER implementation, so beware.
+ */
+static void
+AlterExtensionOwner_internal(Relation rel, Oid extensionOid, Oid newOwnerId)
+{
+	Form_pg_extension extForm;
+	HeapTuple	tup;
+	SysScanDesc	scandesc;
+	ScanKeyData	entry[1];
+
+	Assert(RelationGetRelid(rel) == ExtensionRelationId);
+
+	ScanKeyInit(&entry[0],
+				ObjectIdAttributeNumber,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(extensionOid));
+
+	scandesc = systable_beginscan(rel, ExtensionOidIndexId, true,
+								  SnapshotNow, 1, entry);
+
+	/* We assume that there can be at most one matching tuple */
+	tup = systable_getnext(scandesc);
+	if (!HeapTupleIsValid(tup)) /* should not happen */
+		elog(ERROR, "cache lookup failed for extension %u", extensionOid);
+
+	tup = heap_copytuple(tup);
+	systable_endscan(scandesc);
+
+	extForm = (Form_pg_extension) GETSTRUCT(tup);
+
+	/*
+	 * If the new owner is the same as the existing owner, consider the
+	 * command to have succeeded.  This is for dump restoration purposes.
+	 */
+	if (extForm->extowner != newOwnerId)
+	{
+		/* Superusers can always do it */
+		if (!superuser())
+		{
+			/* Otherwise, must be owner of the existing object */
+			if (!pg_extension_ownercheck(HeapTupleGetOid(tup), GetUserId()))
+				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_EXTENSION,
+							   NameStr(extForm->extname));
+
+			/* Must be able to become new owner */
+			check_is_member_of_role(GetUserId(), newOwnerId);
+
+			/* no privilege checks on namespace are required */
+		}
+
+		/*
+		 * Modify the owner --- okay to scribble on tup because it's a copy
+		 */
+		extForm->extowner = newOwnerId;
+
+		simple_heap_update(rel, &tup->t_self, tup);
+
+		CatalogUpdateIndexes(rel, tup);
+
+		/* Update owner dependency reference */
+		changeDependencyOnOwner(ExtensionRelationId, extensionOid,
+								newOwnerId);
+	}
+
+	heap_freetuple(tup);
+}
+
+/*
+ * Change extension owner, by OID
+ */
+void
+AlterExtensionOwner_oid(Oid extensionOid, Oid newOwnerId)
+{
+	Relation	rel;
+
+	rel = heap_open(ExtensionRelationId, RowExclusiveLock);
+	
+	AlterExtensionOwner_internal(rel, extensionOid, newOwnerId);
+
+	heap_close(rel, NoLock);
+}
