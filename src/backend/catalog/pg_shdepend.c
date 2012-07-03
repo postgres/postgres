@@ -42,6 +42,7 @@
 #include "commands/collationcmds.h"
 #include "commands/conversioncmds.h"
 #include "commands/defrem.h"
+#include "commands/extension.h"
 #include "commands/proclang.h"
 #include "commands/schemacmds.h"
 #include "commands/tablecmds.h"
