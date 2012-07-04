@@ -1098,8 +1098,6 @@ pg_GSS_recvauth(Port *port)
 			/*
 			 * Negotiation generated data to be sent to the client.
 			 */
-			OM_uint32	lmin_s;
-
 			elog(DEBUG4, "sending GSS response token of length %u",
 				 (unsigned int) port->gss->outbuf.length);
 
@@ -1110,8 +1108,6 @@ pg_GSS_recvauth(Port *port)
 
 		if (maj_stat != GSS_S_COMPLETE && maj_stat != GSS_S_CONTINUE_NEEDED)
 		{
-			OM_uint32	lmin_s;
-
 			gss_delete_sec_context(&lmin_s, &port->gss->ctx, GSS_C_NO_BUFFER);
 			pg_GSS_error(ERROR,
 					   gettext_noop("accepting GSS security context failed"),
