@@ -410,14 +410,6 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
 
        <para>
-        Increasing this parameter might cause <productname>PostgreSQL</>
-        to request more <systemitem class="osname">System V</> shared
-        memory or semaphores than your operating system's default configuration
-        allows. See <xref linkend="sysvipc"> for information on how to
-        adjust those parameters, if necessary.
-       </para>
-
-       <para>
         When running a standby server, you must set this parameter to the
         same or higher value than on the master server. Otherwise, queries
         will not be allowed in the standby server.
@@ -962,13 +954,6 @@ SET ENABLE_SEQSCAN TO OFF;
         is generally from 64MB to 512MB.
        </para>
 
-       <para>
-        Increasing this parameter might cause <productname>PostgreSQL</>
-        to request more <systemitem class="osname">System V</> shared
-        memory than your operating system's default configuration
-        allows. See <xref linkend="sysvipc"> for information on how to
-        adjust those parameters, if necessary.
-       </para>
       </listitem>
      </varlistentry>
 
@@ -1022,14 +1007,6 @@ SET ENABLE_SEQSCAN TO OFF;
         probably want <varname>max_prepared_transactions</varname> to be at
         least as large as <xref linkend="guc-max-connections">, so that every
         session can have a prepared transaction pending.
-       </para>
-
-       <para>
-        Increasing this parameter might cause <productname>PostgreSQL</>
-        to request more <systemitem class="osname">System V</> shared
-        memory than your operating system's default configuration
-        allows. See <xref linkend="sysvipc"> for information on how to
-        adjust those parameters, if necessary.
        </para>
 
        <para>
@@ -1829,13 +1806,6 @@ SET ENABLE_SEQSCAN TO OFF;
         results in most cases.
        </para>
 
-       <para>
-        Increasing this parameter might cause <productname>PostgreSQL</>
-        to request more <systemitem class="osname">System V</> shared
-        memory than your operating system's default configuration
-        allows. See <xref linkend="sysvipc"> for information on how to
-        adjust those parameters, if necessary.
-       </para>
       </listitem>
      </varlistentry>
 
@@ -5565,14 +5535,6 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
        </para>
 
        <para>
-        Increasing this parameter might cause <productname>PostgreSQL</>
-        to request more <systemitem class="osname">System V</> shared
-        memory than your operating system's default configuration
-        allows. See <xref linkend="sysvipc"> for information on how to
-        adjust those parameters, if necessary.
-       </para>
-
-       <para>
         When running a standby server, you must set this parameter to the
         same or higher value than on the master server. Otherwise, queries
         will not be allowed in the standby server.
@@ -5603,13 +5565,6 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         only be set at server start.
        </para>
 
-       <para>
-        Increasing this parameter might cause <productname>PostgreSQL</>
-        to request more <systemitem class="osname">System V</> shared
-        memory than your operating system's default configuration
-        allows. See <xref linkend="sysvipc"> for information on how to
-        adjust those parameters, if necessary.
-       </para>
       </listitem>
      </varlistentry>
 
