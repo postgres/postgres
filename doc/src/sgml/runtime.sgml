@@ -507,11 +507,11 @@ psql: could not connect to server: No such file or directory
   <title>Managing Kernel Resources</title>
 
   <para>
-   A large <productname>PostgreSQL</> installation can quickly exhaust
-   various operating system resource limits. (On some systems, the
-   factory defaults are so low that you don't even need a really
-   <quote>large</> installation.) If you have encountered this kind of
-   problem, keep reading.
+   <productname>PostgreSQL</> can sometimes exhaust various operating system
+   resource limits, especially when multiple copies of the server are running
+   on the same system, or in very large installations.  This section explains
+   the kernel resources used by <productname>PostgreSQL</> and the steps you
+   can take to resolve problems related to kernel resource consumption.
   </para>
 
   <sect2 id="sysvipc">
@@ -529,14 +529,11 @@ psql: could not connect to server: No such file or directory
     Shared memory and semaphores are collectively referred to as
     <quote><systemitem class="osname">System V</>
     <acronym>IPC</></quote> (together with message queues, which are not
-    relevant for <productname>PostgreSQL</>). Almost all modern
-    operating systems provide these features, but many of them don't have
-    them turned on or sufficiently sized by default, especially as
-    available RAM and the demands of database applications grow.
-    (On <systemitem class="osname">Windows</>,
-    <productname>PostgreSQL</> provides its own replacement
-    implementation of these facilities, so most of this section
-    can be disregarded.)
+    relevant for <productname>PostgreSQL</>).  Except on
+    <systemitem class="osname">Windows</>, where <productname>PostgreSQL</>
+    provides its own replacement implementation of these facilities, these
+    facilities are required in order to run
+    <productname>PostgreSQL</>.
    </para>
 
    <para>
@@ -558,6 +555,14 @@ psql: could not connect to server: No such file or directory
     them, however, vary. Suggestions for some platforms are given below.
    </para>
 
+   <note>
+     <para>
+       Prior to <productname>PostgreSQL</> 9.3, the amount of System V shared
+       memory required to start the server was much larger.  If you are running
+       an older version of the server, please consult the documentation for
+       your server version.
+     </para>
+   </note>
 
    <table id="sysvipc-parameters">
     <title><systemitem class="osname">System V</> <acronym>IPC</> Parameters</title>
@@ -575,7 +580,7 @@ psql: could not connect to server: No such file or directory
       <row>
        <entry><varname>SHMMAX</></>
        <entry>Maximum size of shared memory segment (bytes)</>
-       <entry>at least several megabytes (see text)</entry>
+       <entry>at least 1kB (more if running many copies of the server)</entry>
       </row>
 
       <row>
@@ -636,36 +641,22 @@ psql: could not connect to server: No such file or directory
     </tgroup>
    </table>
 
-
    <para>
-    <indexterm><primary>SHMMAX</primary></indexterm> The most important
-    shared memory parameter is <varname>SHMMAX</>, the maximum size, in
-    bytes, of a shared memory segment. If you get an error message from
-    <function>shmget</> like <quote>Invalid argument</>, it is
-    likely that this limit has been exceeded.  The size of the required
-    shared memory segment varies depending on several
-    <productname>PostgreSQL</> configuration parameters, as shown in
-    <xref linkend="shared-memory-parameters">.  (Any error message you might
-    get will include the exact size of the failed allocation request.)
-    You can, as a temporary solution, lower some of those settings to
-    avoid the failure.  While it is possible to get
-    <productname>PostgreSQL</> to run with <varname>SHMMAX</> as small as
-    2 MB, you need considerably more for acceptable performance.  Desirable
-    settings are in the hundreds of megabytes to a few gigabytes.
-   </para>
-
-   <para>
-    Some systems also have a limit on the total amount of shared memory in
-    the system (<varname>SHMALL</>).  Make sure this is large enough
-    for <productname>PostgreSQL</> plus any other applications that
-    are using shared memory segments.  Note that <varname>SHMALL</>
-    is measured in pages rather than bytes on many systems.
+    <productname>PostgreSQL</> requires a few bytes of System V shared memory
+    (typically 48 bytes, on 64-bit platforms) for each copy of the server.
+    On most modern operating systems, this amount can easily be allocated.
+    However, if you are running many copies of the server, or if other
+    applications are also using System V shared memory, it may be necessary
+    to increase <varname>SHMMAX</>, the maximum size in bytes of a shared
+    memory segment, or <varname>SHMALL</>, the total amount of System V shared
+    memory system-wide.  Note that <varname>SHMALL</> is measured in pages
+    rather than bytes on many systems.
    </para>
 
    <para>
     Less likely to cause problems is the minimum size for shared
     memory segments (<varname>SHMMIN</>), which should be at most
-    approximately 500 kB for <productname>PostgreSQL</> (it is
+    approximately 32 bytes for <productname>PostgreSQL</> (it is
     usually just 1). The maximum number of segments system-wide
     (<varname>SHMMNI</>) or per-process (<varname>SHMSEG</>) are unlikely
     to cause a problem unless your system has them set to zero.
@@ -747,9 +738,8 @@ psql: could not connect to server: No such file or directory
       <indexterm><primary>FreeBSD</><secondary>IPC configuration</></>
       <listitem>
        <para>
-        The default settings are only suitable for small installations
-        (for example, default <varname>SHMMAX</varname> is 32
-        MB). Changes can be made via the <command>sysctl</command> or
+        The default settings can be changed using 
+        the <command>sysctl</command> or
         <command>loader</command> interfaces.  The following
         parameters can be set using <command>sysctl</command>:
 <screen>
@@ -889,14 +879,11 @@ option        SEMMAP=256
       <indexterm><primary>Linux</><secondary>IPC configuration</></>
       <listitem>
        <para>
-        The default maximum segment size is 32 MB, which is only adequate
-        for very small <productname>PostgreSQL</productname>
-        installations.  The default maximum total size is 2097152
+        The default maximum segment size is 32 MB, and the
+        default maximum total size is 2097152
         pages.  A page is almost always 4096 bytes except in unusual
         kernel configurations with <quote>huge pages</quote>
-        (use <literal>getconf PAGE_SIZE</literal> to verify).  That
-        makes a default limit of 8 GB, which is often enough, but not
-        always.
+        (use <literal>getconf PAGE_SIZE</literal> to verify).
        </para>
 
        <para>
@@ -1025,8 +1012,7 @@ sysctl -w kern.sysv.shmall
       <indexterm><primary>Solaris</><secondary>IPC configuration</></>
       <listitem>
        <para>
-        The default maximum size of a shared memory segment is too low for
-        <productname>PostgreSQL</>. The relevant settings can be changed in
+        The relevant settings can be changed in
         <filename>/etc/system</>, for example:
 <programlisting>
 set shmsys:shminfo_shmmax=0x2000000
@@ -1055,9 +1041,8 @@ set semsys:seminfo_semmsl=32
         In Solaris 10 and OpenSolaris, the default shared memory and
         semaphore settings are good enough for most
         <productname>PostgreSQL</> applications.  Solaris now defaults
-        to a <varname>SHMMAX</> of one-quarter of system <acronym>RAM</>.  If
-        you need to increase this in order to set shared memory settings
-        slightly higher, you should use a project setting associated
+        to a <varname>SHMMAX</> of one-quarter of system <acronym>RAM</>.
+        To further adjust this setting, use a project setting associated
         with the <literal>postgres</> user.  For example, run the
         following as <literal>root</>:
 <programlisting>
@@ -1067,7 +1052,7 @@ projadd -c "PostgreSQL DB User" -K "project.max-shm-memory=(privileged,8GB,deny)
 
        <para>
         This command adds the <literal>user.postgres</> project and
-        raises the shared memory maximum for the <literal>postgres</>
+        sets the shared memory maximum for the <literal>postgres</>
         user to 8GB, and takes effect the next time that user logs
         in, or when you restart <productname>PostgreSQL</> (not reload).
         The above assumes that <productname>PostgreSQL</> is run by
@@ -1102,7 +1087,7 @@ project.max-msg-ids=(priv,4096,deny)
       <listitem>
        <para>
         On <productname>UnixWare</> 7, the maximum size for shared
-        memory segments is only 512 kB in the default configuration.
+        memory segments is 512 kB in the default configuration.
         To display the current value of <varname>SHMMAX</>, run:
 <programlisting>
 /etc/conf/bin/idtune -g SHMMAX
@@ -1125,57 +1110,6 @@ project.max-msg-ids=(priv,4096,deny)
      </varlistentry>
 
     </variablelist>
-
-
-   <table id="shared-memory-parameters">
-    <title><productname>PostgreSQL</productname> Shared Memory Usage</>
-
-    <tgroup cols="2">
-     <thead>
-      <row>
-       <entry>Usage</>
-       <entry>Approximate shared memory bytes required (as of 8.3)</>
-      </row>
-     </thead>
-
-     <tbody>
-      <row>
-       <entry>Connections</>
-       <entry>(1800 + 270 * <xref
-       linkend="guc-max-locks-per-transaction">) * <xref
-       linkend="guc-max-connections"></entry>
-      </row>
-
-      <row>
-       <entry>Autovacuum workers</>
-       <entry>(1800 + 270 * <xref
-       linkend="guc-max-locks-per-transaction">) * <xref
-       linkend="guc-autovacuum-max-workers"></entry>
-      </row>
-
-      <row>
-       <entry>Prepared transactions</>
-       <entry>(770 + 270 * <xref
-       linkend="guc-max-locks-per-transaction">) * <xref linkend="guc-max-prepared-transactions"></entry>
-      </row>
-
-      <row>
-       <entry>Shared disk buffers</>
-       <entry>(<xref linkend="guc-block-size"> + 208) * <xref linkend="guc-shared-buffers"></entry>
-      </row>
-
-      <row>
-       <entry>WAL buffers</>
-       <entry>(<xref linkend="guc-wal-block-size"> + 8) * <xref linkend="guc-wal-buffers"></entry>
-      </row>
-
-      <row>
-       <entry>Fixed space requirements</>
-       <entry>770 kB</entry>
-      </row>
-     </tbody>
-    </tgroup>
-   </table>
 
   </sect2>
 
