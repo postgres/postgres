@@ -2810,15 +2810,6 @@ MANPATH=/usr/lib/scohelp/%L/man:/usr/dt/man:/usr/man:/usr/share/man:scohelp:/usr
     below.
    </para>
 
-   <para>
-    Note that PostgreSQL is bundled with Solaris 10 (from update 2).
-    Official packages are also available on
-    <ulink url="http://pgfoundry.org/projects/solarispackages/"></ulink>.
-    Packages for older Solaris versions (8, 9) you can be obtained
-    from <ulink url="http://www.sunfreeware.com/"></ulink> or
-    <ulink url="http://www.blastwave.org/"></ulink>.
-   </para>
-
    <sect3>
     <title>Required Tools</title>
 
