@@ -151,10 +151,9 @@ int			main_pid;			/* main process id used in log filename */
 
 char	   *pghost = "";
 char	   *pgport = "";
-char	   *pgoptions = NULL;
-char	   *pgtty = NULL;
 char	   *login = NULL;
 char	   *dbName;
+const char *progname;
 
 volatile bool timer_exceeded = false;	/* flag from signal handler */
 
@@ -339,7 +338,7 @@ xstrdup(const char *s)
 
 
 static void
-usage(const char *progname)
+usage(void)
 {
 	printf("%s is a benchmarking tool for PostgreSQL.\n\n"
 		   "Usage:\n"
@@ -431,10 +430,30 @@ doConnect(void)
 	 */
 	do
 	{
+#define PARAMS_ARRAY_SIZE	7
+
+		const char *keywords[PARAMS_ARRAY_SIZE];
+		const char *values[PARAMS_ARRAY_SIZE];
+
+		keywords[0] = "host";
+		values[0] = pghost;
+		keywords[1] = "port";
+		values[1] = pgport;
+		keywords[2] = "user";
+		values[2] = login;
+		keywords[3] = "password";
+		values[3] = password;
+		keywords[4] = "dbname";
+		values[4] = dbName;
+		keywords[5] = "fallback_application_name";
+		values[5] = progname;
+		keywords[6] = NULL;
+		values[6] = NULL;
+
 		new_pass = false;
 
-		conn = PQsetdbLogin(pghost, pgport, pgoptions, pgtty, dbName,
-							login, password);
+		conn = PQconnectdbParams(keywords, values, true);
+
 		if (!conn)
 		{
 			fprintf(stderr, "Connection to database \"%s\" failed\n",
@@ -1907,15 +1926,13 @@ main(int argc, char **argv)
 
 	char		val[64];
 
-	const char *progname;
-
 	progname = get_progname(argv[0]);
 
 	if (argc > 1)
 	{
 		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
 		{
-			usage(progname);
+			usage();
 			exit(0);
 		}
 		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)

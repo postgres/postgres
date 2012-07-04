@@ -44,6 +44,7 @@ struct _param
 	enum trivalue pg_prompt;
 	char	   *pg_port;
 	char	   *pg_host;
+	const char *progname;
 	int			verbose;
 	int			dry_run;
 	long		transaction_limit;
@@ -81,15 +82,28 @@ vacuumlo(const char *database, const struct _param * param)
 	 */
 	do
 	{
-		new_pass = false;
+#define PARAMS_ARRAY_SIZE      7
 
-		conn = PQsetdbLogin(param->pg_host,
-							param->pg_port,
-							NULL,
-							NULL,
-							database,
-							param->pg_user,
-							password);
+		const char *keywords[PARAMS_ARRAY_SIZE];
+		const char *values[PARAMS_ARRAY_SIZE];
+
+		keywords[0] = "host";
+		values[0] = param->pg_host;
+		keywords[1] = "port";
+		values[1] = param->pg_port;
+		keywords[2] = "user";
+		values[2] = param->pg_user;
+		keywords[3] = "password";
+		values[3] = password;
+		keywords[4] = "dbname";
+		values[4] = database;
+		keywords[5] = "fallback_application_name";
+		values[5] = param->progname;
+		keywords[6] = NULL;
+		values[6] = NULL;
+
+		new_pass = false;
+		conn = PQconnectdbParams(keywords, values, true);
 		if (!conn)
 		{
 			fprintf(stderr, "Connection to database \"%s\" failed\n",
@@ -416,6 +430,7 @@ main(int argc, char **argv)
 	param.pg_prompt = TRI_DEFAULT;
 	param.pg_host = NULL;
 	param.pg_port = NULL;
+	param.progname = progname;
 	param.verbose = 0;
 	param.dry_run = 0;
 	param.transaction_limit = 1000;
