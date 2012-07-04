@@ -10,19 +10,6 @@
    efficiently developed separately from the core project.
   </para>
 
-  <para>
-   To help our community with the development of their external projects, we
-   have created <ulink url="http://www.pgfoundry.org/">PgFoundry</ulink>, a
-   website that provides hosting for <productname>PostgreSQL</>-related
-   projects that are maintained outside the core <productname>PostgreSQL</>
-   distribution. PgFoundry is built using the GForge software project and is
-   similar to <ulink url="http://sourceforge.net">SourceForge.net</> in its
-   feature set, providing mailing lists, forums, bug tracking, SCM, and web
-   hosting. If you have a <productname>PostgreSQL</>-related open source
-   project that you would like to have hosted at PgFoundry, please feel free
-   to create a new project there.
-  </para>
-
  <sect1 id="external-interfaces">
   <title>Client Interfaces</title>
 
