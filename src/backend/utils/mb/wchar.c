@@ -742,6 +742,12 @@ pg_mule_dsplen(const unsigned char *s)
 {
 	int			len;
 
+	/*
+	 * Note: it's not really appropriate to assume that all multibyte charsets
+	 * are double-wide on screen.  But this seems an okay approximation for
+	 * the MULE charsets we currently support.
+	 */
+
 	if (IS_LC1(*s))
 		len = 1;
 	else if (IS_LCPRV1(*s))
