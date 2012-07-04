@@ -281,6 +281,11 @@ WalReceiverMain(void)
 	walrcv_connect(conninfo, startpoint);
 	DisableWalRcvImmediateExit();
 
+	/* Initialize LogstreamResult, reply_message and feedback_message */
+	LogstreamResult.Write = LogstreamResult.Flush = GetXLogReplayRecPtr(NULL);
+	MemSet(&reply_message, 0, sizeof(reply_message));
+	MemSet(&feedback_message, 0, sizeof(feedback_message));
+
 	/* Loop until end-of-streaming or error */
 	for (;;)
 	{
