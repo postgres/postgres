@@ -359,7 +359,7 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysi
 			char		replybuf[sizeof(StandbyReplyMessage) + 1];
 			StandbyReplyMessage *replymsg = (StandbyReplyMessage *) (replybuf + 1);
 
-			replymsg->write = InvalidXLogRecPtr;
+			replymsg->write = blockpos;
 			replymsg->flush = InvalidXLogRecPtr;
 			replymsg->apply = InvalidXLogRecPtr;
 			replymsg->sendTime = now;
