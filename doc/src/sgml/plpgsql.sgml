@@ -5115,7 +5115,7 @@ BEGIN
         ELSE
             RETURN pos + beg_index - 1;
         END IF;
-    ELSE
+    ELSIF beg_index &lt; 0 THEN
         ss_length := char_length(string_to_search);
         length := char_length(string);
         beg := length + beg_index - ss_length + 2;
@@ -5131,6 +5131,8 @@ BEGIN
             beg := beg - 1;
         END LOOP;
 
+        RETURN 0;
+    ELSE
         RETURN 0;
     END IF;
 END;
@@ -5170,7 +5172,7 @@ BEGIN
         ELSE
             RETURN beg;
         END IF;
-    ELSE
+    ELSIF beg_index &lt; 0 THEN
         ss_length := char_length(string_to_search);
         length := char_length(string);
         beg := length + beg_index - ss_length + 2;
@@ -5190,6 +5192,8 @@ BEGIN
             beg := beg - 1;
         END LOOP;
 
+        RETURN 0;
+    ELSE
         RETURN 0;
     END IF;
 END;
