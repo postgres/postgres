@@ -7331,6 +7331,16 @@ dumpExtension(Archive *fout, ExtensionInfo *extinfo)
 		int			n;
 
 		appendPQExpBuffer(q, "-- For binary upgrade, create an empty extension and insert objects into it\n");
+
+		/*
+		 *	We unconditionally create the extension, so we must drop it if it
+		 *	exists.  This could happen if the user deleted 'plpgsql' and then
+		 *	readded it, causing its oid to be greater than FirstNormalObjectId.
+		 *	The FirstNormalObjectId test was kept to avoid repeatedly dropping
+		 *	and recreating extensions like 'plpgsql'.
+		 */
+		appendPQExpBuffer(q, "DROP EXTENSION IF EXISTS %s;\n", qextname);
+
 		appendPQExpBuffer(q,
 						  "SELECT binary_upgrade.create_empty_extension(");
 		appendStringLiteralAH(q, extinfo->dobj.name, fout);
