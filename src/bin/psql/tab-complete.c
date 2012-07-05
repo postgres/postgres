@@ -142,6 +142,7 @@ static bool completion_case_sensitive;	/* completion is case sensitive */
  * 3) The items from a null-pointer-terminated list.
  * 4) A string constant.
  * 5) The list of attributes of the given table (possibly schema-qualified).
+ * 6/ The list of arguments to the given function (possibly schema-qualified).
  */
 #define COMPLETE_WITH_QUERY(query) \
 do { \
@@ -197,6 +198,31 @@ do { \
 	{ \
 		completion_charp = Query_for_list_of_attributes_with_schema  addon; \
 		completion_info_charp = _completion_table; \
+		completion_info_charp2 = _completion_schema; \
+	} \
+	matches = completion_matches(text, complete_from_query); \
+} while (0)
+
+#define COMPLETE_WITH_FUNCTION_ARG(function) \
+do { \
+	char   *_completion_schema; \
+	char   *_completion_function; \
+\
+	_completion_schema = strtokx(function, " \t\n\r", ".", "\"", 0, \
+								 false, false, pset.encoding); \
+	(void) strtokx(NULL, " \t\n\r", ".", "\"", 0, \
+				   false, false, pset.encoding); \
+	_completion_function = strtokx(NULL, " \t\n\r", ".", "\"", 0, \
+								   false, false, pset.encoding); \
+	if (_completion_function == NULL) \
+	{ \
+		completion_charp = Query_for_list_of_arguments; \
+		completion_info_charp = function; \
+	} \
+	else \
+	{ \
+		completion_charp = Query_for_list_of_arguments_with_schema; \
+		completion_info_charp = _completion_function; \
 		completion_info_charp2 = _completion_schema; \
 	} \
 	matches = completion_matches(text, complete_from_query); \
@@ -598,10 +624,25 @@ static const SchemaQuery Query_for_list_of_views = {
 "   FROM pg_catalog.pg_am "\
 "  WHERE substring(pg_catalog.quote_ident(amname),1,%d)='%s'"
 
+/* the silly-looking length condition is just to eat up the current word */
 #define Query_for_list_of_arguments \
-" SELECT pg_catalog.oidvectortypes(proargtypes)||')' "\
-"   FROM pg_catalog.pg_proc "\
-"  WHERE proname='%s'"
+"SELECT pg_catalog.oidvectortypes(proargtypes)||')' "\
+"  FROM pg_catalog.pg_proc "\
+" WHERE (%d = pg_catalog.length('%s'))"\
+"   AND (pg_catalog.quote_ident(proname)='%s'"\
+"        OR '\"' || proname || '\"'='%s') "\
+"   AND (pg_catalog.pg_function_is_visible(pg_proc.oid))"
+
+/* the silly-looking length condition is just to eat up the current word */
+#define Query_for_list_of_arguments_with_schema \
+"SELECT pg_catalog.oidvectortypes(proargtypes)||')' "\
+"  FROM pg_catalog.pg_proc p, pg_catalog.pg_namespace n "\
+" WHERE (%d = pg_catalog.length('%s'))"\
+"   AND n.oid = p.pronamespace "\
+"   AND (pg_catalog.quote_ident(proname)='%s' "\
+"        OR '\"' || proname || '\"' ='%s') "\
+"   AND (pg_catalog.quote_ident(nspname)='%s' "\
+"        OR '\"' || nspname || '\"' ='%s') "
 
 #define Query_for_list_of_extensions \
 " SELECT pg_catalog.quote_ident(extname) "\
@@ -863,13 +904,7 @@ psql_completion(char *text, int start, int end)
 			COMPLETE_WITH_LIST(list_ALTERAGG);
 		}
 		else
-		{
-			char	   *tmp_buf = malloc(strlen(Query_for_list_of_arguments) + strlen(prev2_wd));
-
-			sprintf(tmp_buf, Query_for_list_of_arguments, prev2_wd);
-			COMPLETE_WITH_QUERY(tmp_buf);
-			free(tmp_buf);
-		}
+			COMPLETE_WITH_FUNCTION_ARG(prev2_wd);
 	}
 
 	/* ALTER SCHEMA <name> */
@@ -2186,13 +2221,7 @@ psql_completion(char *text, int start, int end)
 			 (pg_strcasecmp(prev3_wd, "AGGREGATE") == 0 ||
 			  pg_strcasecmp(prev3_wd, "FUNCTION") == 0) &&
 			 pg_strcasecmp(prev_wd, "(") == 0)
-	{
-		char	   *tmp_buf = malloc(strlen(Query_for_list_of_arguments) + strlen(prev2_wd));
-
-		sprintf(tmp_buf, Query_for_list_of_arguments, prev2_wd);
-		COMPLETE_WITH_QUERY(tmp_buf);
-		free(tmp_buf);
-	}
+		COMPLETE_WITH_FUNCTION_ARG(prev2_wd);
 	/* DROP OWNED BY */
 	else if (pg_strcasecmp(prev2_wd, "DROP") == 0 &&
 			 pg_strcasecmp(prev_wd, "OWNED") == 0)
