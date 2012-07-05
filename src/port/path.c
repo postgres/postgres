@@ -170,6 +170,8 @@ make_native_path(char *filename)
 /*
  * join_path_components - join two path components, inserting a slash
  *
+ * We omit the slash if either given component is empty.
+ *
  * ret_path is the output area (must be of size MAXPGPATH)
  *
  * ret_path can be the same as head, but not the same as tail.
@@ -182,38 +184,22 @@ join_path_components(char *ret_path,
 		strlcpy(ret_path, head, MAXPGPATH);
 
 	/*
-	 * Remove any leading "." and ".." in the tail component, adjusting head
-	 * as needed.
+	 * Remove any leading "." in the tail component.
+	 *
+	 * Note: we used to try to remove ".." as well, but that's tricky to get
+	 * right; now we just leave it to be done by canonicalize_path() later.
 	 */
-	for (;;)
-	{
-		if (tail[0] == '.' && IS_DIR_SEP(tail[1]))
-		{
-			tail += 2;
-		}
-		else if (tail[0] == '.' && tail[1] == '\0')
-		{
-			tail += 1;
-			break;
-		}
-		else if (tail[0] == '.' && tail[1] == '.' && IS_DIR_SEP(tail[2]))
-		{
-			trim_directory(ret_path);
-			tail += 3;
-		}
-		else if (tail[0] == '.' && tail[1] == '.' && tail[2] == '\0')
-		{
-			trim_directory(ret_path);
-			tail += 2;
-			break;
-		}
-		else
-			break;
-	}
+	while (tail[0] == '.' && IS_DIR_SEP(tail[1]))
+		tail += 2;
+
 	if (*tail)
+	{
+		/* only separate with slash if head wasn't empty */
 		snprintf(ret_path + strlen(ret_path), MAXPGPATH - strlen(ret_path),
-		/* only add slash if there is something already in head */
-				 "%s%s", head[0] ? "/" : "", tail);
+				 "%s%s",
+				 (*(skip_drive(head)) != '\0') ? "/" : "",
+				 tail);
+	}
 }
 
 
@@ -705,6 +691,15 @@ get_home_path(char *ret_path)
  *
  * Modify the given string in-place to name the parent directory of the
  * named file.
+ *
+ * If the input is just a file name with no directory part, the result is
+ * an empty string, not ".".  This is appropriate when the next step is
+ * join_path_components(), but might need special handling otherwise.
+ *
+ * Caution: this will not produce desirable results if the string ends
+ * with "..".  For most callers this is not a problem since the string
+ * is already known to name a regular file.  If in doubt, apply
+ * canonicalize_path() first.
  */
 void
 get_parent_directory(char *path)
