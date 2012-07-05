@@ -29,31 +29,45 @@ $major2 = 3;
 $minor = shift;
 defined($minor) || die "$0: missing required argument: minor-version\n";
 
-if ($minor =~ m/^\d+$/) {
-    $dotneeded = 1;
-    $numericminor = $minor;
-} elsif ($minor eq "devel") {
-    $dotneeded = 0;
-    $numericminor = 0;
-} elsif ($minor =~ m/^alpha\d+$/) {
-    $dotneeded = 0;
-    $numericminor = 0;
-} elsif ($minor =~ m/^beta\d+$/) {
-    $dotneeded = 0;
-    $numericminor = 0;
-} elsif ($minor =~ m/^rc\d+$/) {
-    $dotneeded = 0;
-    $numericminor = 0;
-} else {
-    die "$0: minor-version must be N, devel, alphaN, betaN, or rcN\n";
+if ($minor =~ m/^\d+$/)
+{
+	$dotneeded    = 1;
+	$numericminor = $minor;
+}
+elsif ($minor eq "devel")
+{
+	$dotneeded    = 0;
+	$numericminor = 0;
+}
+elsif ($minor =~ m/^alpha\d+$/)
+{
+	$dotneeded    = 0;
+	$numericminor = 0;
+}
+elsif ($minor =~ m/^beta\d+$/)
+{
+	$dotneeded    = 0;
+	$numericminor = 0;
+}
+elsif ($minor =~ m/^rc\d+$/)
+{
+	$dotneeded    = 0;
+	$numericminor = 0;
+}
+else
+{
+	die "$0: minor-version must be N, devel, alphaN, betaN, or rcN\n";
 }
 
 # Create various required forms of the version number
 $majorversion = $major1 . "." . $major2;
-if ($dotneeded) {
-    $fullversion = $majorversion . "." . $minor;
-} else {
-    $fullversion = $majorversion . $minor;
+if ($dotneeded)
+{
+	$fullversion = $majorversion . "." . $minor;
+}
+else
+{
+	$fullversion = $majorversion . $minor;
 }
 $numericversion = $majorversion . "." . $numericminor;
 $padnumericversion = sprintf("%d%02d%02d", $major1, $major2, $numericminor);
@@ -63,54 +77,64 @@ $padnumericversion = sprintf("%d%02d%02d", $major1, $major2, $numericminor);
 
 $aconfver = "";
 open(FILE, "configure.in") || die "could not read configure.in: $!\n";
-while (<FILE>) {
-    if (m/^m4_if\(m4_defn\(\[m4_PACKAGE_VERSION\]\), \[(.*)\], \[\], \[m4_fatal/) {
-        $aconfver = $1;
-	last;
-    }
+while (<FILE>)
+{
+	if (
+m/^m4_if\(m4_defn\(\[m4_PACKAGE_VERSION\]\), \[(.*)\], \[\], \[m4_fatal/)
+	{
+		$aconfver = $1;
+		last;
+	}
 }
 close(FILE);
-$aconfver ne "" || die "could not find autoconf version number in configure.in\n";
+$aconfver ne ""
+  || die "could not find autoconf version number in configure.in\n";
 
 # Update configure.in and other files that contain version numbers
 
 $fixedfiles = "";
 
 sed_file("configure.in",
-	 "-e 's/AC_INIT(\\[PostgreSQL\\], \\[[0-9a-z.]*\\]/AC_INIT([PostgreSQL], [$fullversion]/'");
+"-e 's/AC_INIT(\\[PostgreSQL\\], \\[[0-9a-z.]*\\]/AC_INIT([PostgreSQL], [$fullversion]/'"
+);
 
 sed_file("doc/bug.template",
-	 "-e 's/PostgreSQL version (example: PostgreSQL .*) *:  PostgreSQL .*/PostgreSQL version (example: PostgreSQL $fullversion):  PostgreSQL $fullversion/'");
+"-e 's/PostgreSQL version (example: PostgreSQL .*) *:  PostgreSQL .*/PostgreSQL version (example: PostgreSQL $fullversion):  PostgreSQL $fullversion/'"
+);
 
 sed_file("src/include/pg_config.h.win32",
-	"-e 's/#define PACKAGE_STRING \"PostgreSQL .*\"/#define PACKAGE_STRING \"PostgreSQL $fullversion\"/' " .
-	"-e 's/#define PACKAGE_VERSION \".*\"/#define PACKAGE_VERSION \"$fullversion\"/' " .
-	 "-e 's/#define PG_VERSION \".*\"/#define PG_VERSION \"$fullversion\"/' " .
-	 "-e 's/#define PG_VERSION_NUM .*/#define PG_VERSION_NUM $padnumericversion/'");
+"-e 's/#define PACKAGE_STRING \"PostgreSQL .*\"/#define PACKAGE_STRING \"PostgreSQL $fullversion\"/' "
+	  . "-e 's/#define PACKAGE_VERSION \".*\"/#define PACKAGE_VERSION \"$fullversion\"/' "
+	  . "-e 's/#define PG_VERSION \".*\"/#define PG_VERSION \"$fullversion\"/' "
+	  . "-e 's/#define PG_VERSION_NUM .*/#define PG_VERSION_NUM $padnumericversion/'"
+);
 
 sed_file("src/interfaces/libpq/libpq.rc.in",
-	 "-e 's/FILEVERSION [0-9]*,[0-9]*,[0-9]*,0/FILEVERSION $major1,$major2,$numericminor,0/' " .
-	 "-e 's/PRODUCTVERSION [0-9]*,[0-9]*,[0-9]*,0/PRODUCTVERSION $major1,$major2,$numericminor,0/' " .
-	 "-e 's/VALUE \"FileVersion\", \"[0-9.]*/VALUE \"FileVersion\", \"$numericversion/' " .
-	 "-e 's/VALUE \"ProductVersion\", \"[0-9.]*/VALUE \"ProductVersion\", \"$numericversion/'");
+"-e 's/FILEVERSION [0-9]*,[0-9]*,[0-9]*,0/FILEVERSION $major1,$major2,$numericminor,0/' "
+	  . "-e 's/PRODUCTVERSION [0-9]*,[0-9]*,[0-9]*,0/PRODUCTVERSION $major1,$major2,$numericminor,0/' "
+	  . "-e 's/VALUE \"FileVersion\", \"[0-9.]*/VALUE \"FileVersion\", \"$numericversion/' "
+	  . "-e 's/VALUE \"ProductVersion\", \"[0-9.]*/VALUE \"ProductVersion\", \"$numericversion/'"
+);
 
 sed_file("src/port/win32ver.rc",
-	 "-e 's/FILEVERSION    [0-9]*,[0-9]*,[0-9]*,0/FILEVERSION    $major1,$major2,$numericminor,0/' " .
-	 "-e 's/PRODUCTVERSION [0-9]*,[0-9]*,[0-9]*,0/PRODUCTVERSION $major1,$major2,$numericminor,0/'");
+"-e 's/FILEVERSION    [0-9]*,[0-9]*,[0-9]*,0/FILEVERSION    $major1,$major2,$numericminor,0/' "
+	  . "-e 's/PRODUCTVERSION [0-9]*,[0-9]*,[0-9]*,0/PRODUCTVERSION $major1,$major2,$numericminor,0/'"
+);
 
 print "Stamped these files with version number $fullversion:\n$fixedfiles";
 print "Don't forget to run autoconf $aconfver before committing.\n";
 
 exit 0;
 
-sub sed_file {
-    my($filename, $sedargs) = @_;
-    my($tmpfilename) = $filename . ".tmp";
+sub sed_file
+{
+	my ($filename, $sedargs) = @_;
+	my ($tmpfilename) = $filename . ".tmp";
 
-    system("sed $sedargs $filename >$tmpfilename") == 0
-      or die "sed failed: $?";
-    system("mv $tmpfilename $filename") == 0
-      or die "mv failed: $?";
+	system("sed $sedargs $filename >$tmpfilename") == 0
+	  or die "sed failed: $?";
+	system("mv $tmpfilename $filename") == 0
+	  or die "mv failed: $?";
 
-    $fixedfiles .= "\t$filename\n";
+	$fixedfiles .= "\t$filename\n";
 }

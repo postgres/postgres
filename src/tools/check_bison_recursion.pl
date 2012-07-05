@@ -32,43 +32,59 @@ my $cur_nonterminal;
 # We parse the input and emit warnings on the fly.
 my $in_grammar = 0;
 
-while (<>) {
-    my $rule_number;
-    my $rhs;
+while (<>)
+{
+	my $rule_number;
+	my $rhs;
 
-    # We only care about the "Grammar" part of the input.
-    if (m/^Grammar$/) {
-	$in_grammar = 1;
-    } elsif (m/^Terminal/) {
-	$in_grammar = 0;
-    } elsif ($in_grammar) {
-	if (m/^\s*(\d+)\s+(\S+):\s+(.*)$/) {
-	    # first rule for nonterminal
-	    $rule_number = $1;
-	    $cur_nonterminal = $2;
-	    $rhs = $3;
-	} elsif (m/^\s*(\d+)\s+\|\s+(.*)$/) {
-	    # additional rule for nonterminal
-	    $rule_number = $1;
-	    $rhs = $2;
+	# We only care about the "Grammar" part of the input.
+	if (m/^Grammar$/)
+	{
+		$in_grammar = 1;
 	}
-    }
+	elsif (m/^Terminal/)
+	{
+		$in_grammar = 0;
+	}
+	elsif ($in_grammar)
+	{
+		if (m/^\s*(\d+)\s+(\S+):\s+(.*)$/)
+		{
 
-    # Process rule if we found one
-    if (defined $rule_number) {
-	# deconstruct the RHS
-	$rhs =~ s|^/\* empty \*/$||;
-	my @rhs = split '\s', $rhs;
-	print "Rule $rule_number: $cur_nonterminal := @rhs\n" if $debug;
-	# We complain if the nonterminal appears as the last RHS element
-	# but not elsewhere, since "expr := expr + expr" is reasonable
-	my $lastrhs = pop @rhs;
-	if (defined $lastrhs &&
-	    $cur_nonterminal eq $lastrhs &&
-	    !grep { $cur_nonterminal eq $_ } @rhs) {
-	    print "Right recursion in rule $rule_number: $cur_nonterminal := $rhs\n";
+			# first rule for nonterminal
+			$rule_number     = $1;
+			$cur_nonterminal = $2;
+			$rhs             = $3;
+		}
+		elsif (m/^\s*(\d+)\s+\|\s+(.*)$/)
+		{
+
+			# additional rule for nonterminal
+			$rule_number = $1;
+			$rhs         = $2;
+		}
 	}
-    }
+
+	# Process rule if we found one
+	if (defined $rule_number)
+	{
+
+		# deconstruct the RHS
+		$rhs =~ s|^/\* empty \*/$||;
+		my @rhs = split '\s', $rhs;
+		print "Rule $rule_number: $cur_nonterminal := @rhs\n" if $debug;
+
+		# We complain if the nonterminal appears as the last RHS element
+		# but not elsewhere, since "expr := expr + expr" is reasonable
+		my $lastrhs = pop @rhs;
+		if (   defined $lastrhs
+			&& $cur_nonterminal eq $lastrhs
+			&& !grep { $cur_nonterminal eq $_ } @rhs)
+		{
+			print
+"Right recursion in rule $rule_number: $cur_nonterminal := $rhs\n";
+		}
+	}
 }
 
 exit 0;

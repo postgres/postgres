@@ -14,7 +14,7 @@ use base qw(Project);
 sub _new
 {
 	my $classname = shift;
-	my $self = $classname->SUPER::_new(@_);
+	my $self      = $classname->SUPER::_new(@_);
 	bless($self, $classname);
 
 	$self->{filenameExtension} = '.vcxproj';
@@ -40,8 +40,10 @@ EOF
   </PropertyGroup>
   <Import Project="\$(VCTargetsPath)\\Microsoft.Cpp.Default.props" />
 EOF
-	$self->WriteConfigurationPropertyGroup($f, 'Release',{wholeopt=>'false'});
-	$self->WriteConfigurationPropertyGroup($f, 'Debug',{wholeopt=>'false'});
+	$self->WriteConfigurationPropertyGroup($f, 'Release',
+		{ wholeopt => 'false' });
+	$self->WriteConfigurationPropertyGroup($f, 'Debug',
+		{ wholeopt => 'false' });
 	print $f <<EOF;
   <Import Project="\$(VCTargetsPath)\\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -61,15 +63,17 @@ EOF
 EOF
 	$self->WriteItemDefinitionGroup(
 		$f, 'Debug',
-		{
-			defs=>'_DEBUG;DEBUG=1;',
-			opt=>'Disabled',
-			strpool=>'false',
-			runtime=>'MultiThreadedDebugDLL'
-		}
-	);
-	$self->WriteItemDefinitionGroup($f, 'Release',
-		{defs=>'', opt=>'Full', strpool=>'true', runtime=>'MultiThreadedDLL'});
+		{   defs    => '_DEBUG;DEBUG=1;',
+			opt     => 'Disabled',
+			strpool => 'false',
+			runtime => 'MultiThreadedDebugDLL' });
+	$self->WriteItemDefinitionGroup(
+		$f,
+		'Release',
+		{   defs    => '',
+			opt     => 'Full',
+			strpool => 'true',
+			runtime => 'MultiThreadedDLL' });
 }
 
 sub AddDefine
@@ -83,7 +87,7 @@ sub WriteReferences
 {
 	my ($self, $f) = @_;
 
-	my @references = @{$self->{references}};
+	my @references = @{ $self->{references} };
 
 	if (scalar(@references))
 	{
@@ -110,14 +114,14 @@ sub WriteFiles
 	print $f <<EOF;
   <ItemGroup>
 EOF
-	my @grammarFiles = ();
+	my @grammarFiles  = ();
 	my @resourceFiles = ();
 	my %uniquefiles;
-	foreach my $fileNameWithPath (sort keys %{$self->{files}})
+	foreach my $fileNameWithPath (sort keys %{ $self->{files} })
 	{
 		confess "Bad format filename '$fileNameWithPath'\n"
 		  unless ($fileNameWithPath =~ /^(.*)\\([^\\]+)\.[r]?[cyl]$/);
-		my $dir = $1;
+		my $dir      = $1;
 		my $fileName = $2;
 		if ($fileNameWithPath =~ /\.y$/ or $fileNameWithPath =~ /\.l$/)
 		{
@@ -178,7 +182,7 @@ s{^src\\pl\\plpgsql\\src\\gram.c$}{src\\pl\\plpgsql\\src\\pl_gram.c};
     </CustomBuild>
 EOF
 			}
-			else #if ($grammarFile =~ /\.l$/)
+			else    #if ($grammarFile =~ /\.l$/)
 			{
 				print $f <<EOF;
     <CustomBuild Include="$grammarFile">
@@ -231,8 +235,8 @@ sub WriteConfigurationPropertyGroup
 	my ($self, $f, $cfgname, $p) = @_;
 	my $cfgtype =
 	  ($self->{type} eq "exe")
-	  ?'Application'
-	  :($self->{type} eq "dll"?'DynamicLibrary':'StaticLibrary');
+	  ? 'Application'
+	  : ($self->{type} eq "dll" ? 'DynamicLibrary' : 'StaticLibrary');
 
 	print $f <<EOF;
   <PropertyGroup Condition="'\$(Configuration)|\$(Platform)'=='$cfgname|$self->{platform}'" Label="Configuration">
@@ -269,11 +273,12 @@ sub WriteItemDefinitionGroup
 	my ($self, $f, $cfgname, $p) = @_;
 	my $cfgtype =
 	  ($self->{type} eq "exe")
-	  ?'Application'
-	  :($self->{type} eq "dll"?'DynamicLibrary':'StaticLibrary');
+	  ? 'Application'
+	  : ($self->{type} eq "dll" ? 'DynamicLibrary' : 'StaticLibrary');
 	my $libs = $self->GetAdditionalLinkerDependencies($cfgname, ';');
 
-	my $targetmachine = $self->{platform} eq 'Win32' ? 'MachineX86' : 'MachineX64';
+	my $targetmachine =
+	  $self->{platform} eq 'Win32' ? 'MachineX86' : 'MachineX64';
 
 	my $includes = $self->{includes};
 	unless ($includes eq '' or $includes =~ /;$/)
@@ -378,7 +383,7 @@ use base qw(MSBuildProject);
 sub new
 {
 	my $classname = shift;
-	my $self = $classname->SUPER::_new(@_);
+	my $self      = $classname->SUPER::_new(@_);
 	bless($self, $classname);
 
 	$self->{vcver} = '10.00';

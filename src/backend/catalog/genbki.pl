@@ -27,44 +27,44 @@ my $major_version;
 # Process command line switches.
 while (@ARGV)
 {
-    my $arg = shift @ARGV;
-    if ($arg !~ /^-/)
-    {
-        push @input_files, $arg;
-    }
-    elsif ($arg =~ /^-o/)
-    {
-        $output_path = length($arg) > 2 ? substr($arg, 2) : shift @ARGV;
-    }
-    elsif ($arg =~ /^-I/)
-    {
-        push @include_path, length($arg) > 2 ? substr($arg, 2) : shift @ARGV;
-    }
-    elsif ($arg =~ /^--set-version=(.*)$/)
-    {
-        $major_version = $1;
-	die "Version must be in format nn.nn.\n"
-	    if !($major_version =~ /^\d+\.\d+$/);
-    }
-    else
-    {
-        usage();
-    }
+	my $arg = shift @ARGV;
+	if ($arg !~ /^-/)
+	{
+		push @input_files, $arg;
+	}
+	elsif ($arg =~ /^-o/)
+	{
+		$output_path = length($arg) > 2 ? substr($arg, 2) : shift @ARGV;
+	}
+	elsif ($arg =~ /^-I/)
+	{
+		push @include_path, length($arg) > 2 ? substr($arg, 2) : shift @ARGV;
+	}
+	elsif ($arg =~ /^--set-version=(.*)$/)
+	{
+		$major_version = $1;
+		die "Version must be in format nn.nn.\n"
+		  if !($major_version =~ /^\d+\.\d+$/);
+	}
+	else
+	{
+		usage();
+	}
 }
 
 # Sanity check arguments.
-die "No input files.\n" if !@input_files;
+die "No input files.\n"                                     if !@input_files;
 die "No include path; you must specify -I at least once.\n" if !@include_path;
 die "--set-version must be specified.\n" if !defined $major_version;
 
 # Make sure output_path ends in a slash.
 if ($output_path ne '' && substr($output_path, -1) ne '/')
 {
-    $output_path .= '/';
+	$output_path .= '/';
 }
 
 # Open temp files
-my $tmpext = ".tmp$$";
+my $tmpext  = ".tmp$$";
 my $bkifile = $output_path . 'postgres.bki';
 open BKI, '>', $bkifile . $tmpext
   or die "can't open $bkifile$tmpext: $!";
@@ -86,8 +86,10 @@ open SHDESCR, '>', $shdescrfile . $tmpext
 # to handle those sorts of things is in initdb.c's bootstrap_template1().)
 # NB: make sure that the files used here are known to be part of the .bki
 # file's dependencies by src/backend/catalog/Makefile.
-my $BOOTSTRAP_SUPERUSERID = find_defined_symbol('pg_authid.h', 'BOOTSTRAP_SUPERUSERID');
-my $PG_CATALOG_NAMESPACE  = find_defined_symbol('pg_namespace.h', 'PG_CATALOG_NAMESPACE');
+my $BOOTSTRAP_SUPERUSERID =
+  find_defined_symbol('pg_authid.h', 'BOOTSTRAP_SUPERUSERID');
+my $PG_CATALOG_NAMESPACE =
+  find_defined_symbol('pg_namespace.h', 'PG_CATALOG_NAMESPACE');
 
 # Read all the input header files into internal data structures
 my $catalogs = Catalog::Catalogs(@input_files);
@@ -103,155 +105,164 @@ my @tables_needing_macros;
 our @types;
 
 # produce output, one catalog at a time
-foreach my $catname ( @{ $catalogs->{names} } )
+foreach my $catname (@{ $catalogs->{names} })
 {
-    # .bki CREATE command for this catalog
-    my $catalog = $catalogs->{$catname};
-    print BKI "create $catname $catalog->{relation_oid}"
-      . $catalog->{shared_relation}
-      . $catalog->{bootstrap}
-      . $catalog->{without_oids}
-      . $catalog->{rowtype_oid}. "\n";
 
-    my %bki_attr;
-    my @attnames;
-    foreach my $column ( @{ $catalog->{columns} } )
-    {
-        my ($attname, $atttype) = %$column;
-        $bki_attr{$attname} = $atttype;
-        push @attnames, $attname;
-    }
-    print BKI " (\n";
-    print BKI join " ,\n", map(" $_ = $bki_attr{$_}", @attnames);
-    print BKI "\n )\n";
+	# .bki CREATE command for this catalog
+	my $catalog = $catalogs->{$catname};
+	print BKI "create $catname $catalog->{relation_oid}"
+	  . $catalog->{shared_relation}
+	  . $catalog->{bootstrap}
+	  . $catalog->{without_oids}
+	  . $catalog->{rowtype_oid} . "\n";
 
-    # open it, unless bootstrap case (create bootstrap does this automatically)
-    if ($catalog->{bootstrap} eq '')
-    {
-        print BKI "open $catname\n";
-    }
+	my %bki_attr;
+	my @attnames;
+	foreach my $column (@{ $catalog->{columns} })
+	{
+		my ($attname, $atttype) = %$column;
+		$bki_attr{$attname} = $atttype;
+		push @attnames, $attname;
+	}
+	print BKI " (\n";
+	print BKI join " ,\n", map(" $_ = $bki_attr{$_}", @attnames);
+	print BKI "\n )\n";
 
-    if (defined $catalog->{data})
-    {
-        # Ordinary catalog with DATA line(s)
-        foreach my $row ( @{ $catalog->{data} } )
-        {
-            # substitute constant values we acquired above
-            $row->{bki_values} =~ s/\bPGUID\b/$BOOTSTRAP_SUPERUSERID/g;
-            $row->{bki_values} =~ s/\bPGNSP\b/$PG_CATALOG_NAMESPACE/g;
+   # open it, unless bootstrap case (create bootstrap does this automatically)
+	if ($catalog->{bootstrap} eq '')
+	{
+		print BKI "open $catname\n";
+	}
 
-            # Save pg_type info for pg_attribute processing below
-            if ($catname eq 'pg_type')
-            {
-                my %type;
-                $type{oid} = $row->{oid};
-                @type{@attnames} = split /\s+/, $row->{bki_values};
-                push @types, \%type;
-            }
+	if (defined $catalog->{data})
+	{
 
-            # Write to postgres.bki
-            my $oid = $row->{oid} ? "OID = $row->{oid} " : '';
-            printf BKI "insert %s( %s)\n", $oid, $row->{bki_values};
+		# Ordinary catalog with DATA line(s)
+		foreach my $row (@{ $catalog->{data} })
+		{
 
-            # Write comments to postgres.description and postgres.shdescription
-            if (defined $row->{descr})
-            {
-                printf DESCR "%s\t%s\t0\t%s\n", $row->{oid}, $catname, $row->{descr};
-            }
-            if (defined $row->{shdescr})
-            {
-                printf SHDESCR  "%s\t%s\t%s\n", $row->{oid}, $catname, $row->{shdescr};
-            }
-        }
-    }
-    if ($catname eq 'pg_attribute')
-    {
-        # For pg_attribute.h, we generate DATA entries ourselves.
-        # NB: pg_type.h must come before pg_attribute.h in the input list
-        # of catalog names, since we use info from pg_type.h here.
-        foreach my $table_name ( @{ $catalogs->{names} } )
-        {
-            my $table = $catalogs->{$table_name};
+			# substitute constant values we acquired above
+			$row->{bki_values} =~ s/\bPGUID\b/$BOOTSTRAP_SUPERUSERID/g;
+			$row->{bki_values} =~ s/\bPGNSP\b/$PG_CATALOG_NAMESPACE/g;
 
-            # Currently, all bootstrapped relations also need schemapg.h
-            # entries, so skip if the relation isn't to be in schemapg.h.
-            next if $table->{schema_macro} ne 'True';
+			# Save pg_type info for pg_attribute processing below
+			if ($catname eq 'pg_type')
+			{
+				my %type;
+				$type{oid} = $row->{oid};
+				@type{@attnames} = split /\s+/, $row->{bki_values};
+				push @types, \%type;
+			}
 
-            $schemapg_entries{$table_name} = [];
-            push @tables_needing_macros, $table_name;
-            my $is_bootstrap = $table->{bootstrap};
+			# Write to postgres.bki
+			my $oid = $row->{oid} ? "OID = $row->{oid} " : '';
+			printf BKI "insert %s( %s)\n", $oid, $row->{bki_values};
 
-            # Generate entries for user attributes.
-            my $attnum = 0;
-            my $priornotnull = 1;
-            my @user_attrs = @{ $table->{columns} };
-            foreach my $attr (@user_attrs)
-            {
-                $attnum++;
-                my $row = emit_pgattr_row($table_name, $attr, $priornotnull);
-                $row->{attnum} = $attnum;
-                $row->{attstattarget} = '-1';
-                $priornotnull &= ($row->{attnotnull} eq 't');
+		   # Write comments to postgres.description and postgres.shdescription
+			if (defined $row->{descr})
+			{
+				printf DESCR "%s\t%s\t0\t%s\n", $row->{oid}, $catname,
+				  $row->{descr};
+			}
+			if (defined $row->{shdescr})
+			{
+				printf SHDESCR "%s\t%s\t%s\n", $row->{oid}, $catname,
+				  $row->{shdescr};
+			}
+		}
+	}
+	if ($catname eq 'pg_attribute')
+	{
 
-                # If it's bootstrapped, put an entry in postgres.bki.
-                if ($is_bootstrap eq ' bootstrap')
-                {
-                    bki_insert($row, @attnames);
-                }
+		# For pg_attribute.h, we generate DATA entries ourselves.
+		# NB: pg_type.h must come before pg_attribute.h in the input list
+		# of catalog names, since we use info from pg_type.h here.
+		foreach my $table_name (@{ $catalogs->{names} })
+		{
+			my $table = $catalogs->{$table_name};
 
-                # Store schemapg entries for later.
-                $row = emit_schemapg_row($row, grep { $bki_attr{$_} eq 'bool' } @attnames);
-                push @{ $schemapg_entries{$table_name} },
-					'{ ' . join(', ', grep { defined $_ }
-					map $row->{$_}, @attnames) . ' }';
-            }
+			# Currently, all bootstrapped relations also need schemapg.h
+			# entries, so skip if the relation isn't to be in schemapg.h.
+			next if $table->{schema_macro} ne 'True';
 
-            # Generate entries for system attributes.
-            # We only need postgres.bki entries, not schemapg.h entries.
-            if ($is_bootstrap eq ' bootstrap')
-            {
-                $attnum = 0;
-                my @SYS_ATTRS = (
-                    {ctid      => 'tid'},
-                    {oid       => 'oid'},
-                    {xmin      => 'xid'},
-                    {cmin      => 'cid'},
-                    {xmax      => 'xid'},
-                    {cmax      => 'cid'},
-                    {tableoid  => 'oid'}
-                );
-                foreach my $attr (@SYS_ATTRS)
-                {
-                    $attnum--;
-                    my $row = emit_pgattr_row($table_name, $attr, 1);
-                    $row->{attnum} = $attnum;
-                    $row->{attstattarget} = '0';
+			$schemapg_entries{$table_name} = [];
+			push @tables_needing_macros, $table_name;
+			my $is_bootstrap = $table->{bootstrap};
 
-                    # some catalogs don't have oids
-                    next if $table->{without_oids} eq ' without_oids' &&
-                      $row->{attname} eq 'oid';
+			# Generate entries for user attributes.
+			my $attnum       = 0;
+			my $priornotnull = 1;
+			my @user_attrs   = @{ $table->{columns} };
+			foreach my $attr (@user_attrs)
+			{
+				$attnum++;
+				my $row = emit_pgattr_row($table_name, $attr, $priornotnull);
+				$row->{attnum}        = $attnum;
+				$row->{attstattarget} = '-1';
+				$priornotnull &= ($row->{attnotnull} eq 't');
 
-                    bki_insert($row, @attnames);
-                }
-            }
-        }
-    }
+				# If it's bootstrapped, put an entry in postgres.bki.
+				if ($is_bootstrap eq ' bootstrap')
+				{
+					bki_insert($row, @attnames);
+				}
 
-    print BKI "close $catname\n";
+				# Store schemapg entries for later.
+				$row =
+				  emit_schemapg_row($row,
+					grep { $bki_attr{$_} eq 'bool' } @attnames);
+				push @{ $schemapg_entries{$table_name} }, '{ '
+				  . join(
+					', ',             grep { defined $_ }
+					  map $row->{$_}, @attnames) . ' }';
+			}
+
+			# Generate entries for system attributes.
+			# We only need postgres.bki entries, not schemapg.h entries.
+			if ($is_bootstrap eq ' bootstrap')
+			{
+				$attnum = 0;
+				my @SYS_ATTRS = (
+					{ ctid     => 'tid' },
+					{ oid      => 'oid' },
+					{ xmin     => 'xid' },
+					{ cmin     => 'cid' },
+					{ xmax     => 'xid' },
+					{ cmax     => 'cid' },
+					{ tableoid => 'oid' });
+				foreach my $attr (@SYS_ATTRS)
+				{
+					$attnum--;
+					my $row = emit_pgattr_row($table_name, $attr, 1);
+					$row->{attnum}        = $attnum;
+					$row->{attstattarget} = '0';
+
+					# some catalogs don't have oids
+					next
+					  if $table->{without_oids} eq ' without_oids'
+						  && $row->{attname} eq 'oid';
+
+					bki_insert($row, @attnames);
+				}
+			}
+		}
+	}
+
+	print BKI "close $catname\n";
 }
 
 # Any information needed for the BKI that is not contained in a pg_*.h header
 # (i.e., not contained in a header with a CATALOG() statement) comes here
 
 # Write out declare toast/index statements
-foreach my $declaration ( @{ $catalogs->{toasting}->{data} } )
+foreach my $declaration (@{ $catalogs->{toasting}->{data} })
 {
-    print BKI $declaration;
+	print BKI $declaration;
 }
 
-foreach my $declaration ( @{ $catalogs->{indexing}->{data} } )
+foreach my $declaration (@{ $catalogs->{indexing}->{data} })
 {
-    print BKI $declaration;
+	print BKI $declaration;
 }
 
 
@@ -283,9 +294,9 @@ EOM
 # Emit schemapg declarations
 foreach my $table_name (@tables_needing_macros)
 {
-    print SCHEMAPG "\n#define Schema_$table_name \\\n";
-    print SCHEMAPG join ", \\\n", @{ $schemapg_entries{$table_name} };
-    print SCHEMAPG "\n";
+	print SCHEMAPG "\n#define Schema_$table_name \\\n";
+	print SCHEMAPG join ", \\\n", @{ $schemapg_entries{$table_name} };
+	print SCHEMAPG "\n";
 }
 
 # Closing boilerplate for schemapg.h
@@ -298,9 +309,9 @@ close DESCR;
 close SHDESCR;
 
 # Finally, rename the completed files into place.
-Catalog::RenameTempFile($bkifile, $tmpext);
-Catalog::RenameTempFile($schemafile, $tmpext);
-Catalog::RenameTempFile($descrfile, $tmpext);
+Catalog::RenameTempFile($bkifile,     $tmpext);
+Catalog::RenameTempFile($schemafile,  $tmpext);
+Catalog::RenameTempFile($descrfile,   $tmpext);
 Catalog::RenameTempFile($shdescrfile, $tmpext);
 
 exit 0;
@@ -314,137 +325,140 @@ exit 0;
 # columns were all not-null.
 sub emit_pgattr_row
 {
-    my ($table_name, $attr, $priornotnull) = @_;
-    my ($attname, $atttype) = %$attr;
-    my %row;
+	my ($table_name, $attr, $priornotnull) = @_;
+	my ($attname, $atttype) = %$attr;
+	my %row;
 
-    $row{attrelid} = $catalogs->{$table_name}->{relation_oid};
-    $row{attname} = $attname;
+	$row{attrelid} = $catalogs->{$table_name}->{relation_oid};
+	$row{attname}  = $attname;
 
-    # Adjust type name for arrays: foo[] becomes _foo
-    # so we can look it up in pg_type
-    if ($atttype =~ /(.+)\[\]$/)
-    {
-        $atttype = '_' . $1;
-    }
+	# Adjust type name for arrays: foo[] becomes _foo
+	# so we can look it up in pg_type
+	if ($atttype =~ /(.+)\[\]$/)
+	{
+		$atttype = '_' . $1;
+	}
 
-    # Copy the type data from pg_type, and add some type-dependent items
-    foreach my $type (@types)
-    {
-        if ( defined $type->{typname} && $type->{typname} eq $atttype )
-        {
-            $row{atttypid}    = $type->{oid};
-            $row{attlen}      = $type->{typlen};
-            $row{attbyval}    = $type->{typbyval};
-            $row{attstorage}  = $type->{typstorage};
-            $row{attalign}    = $type->{typalign};
-            # set attndims if it's an array type
-            $row{attndims}    = $type->{typcategory} eq 'A' ? '1' : '0';
-            $row{attcollation} = $type->{typcollation};
-            # attnotnull must be set true if the type is fixed-width and
-            # prior columns are too --- compare DefineAttr in bootstrap.c.
-            # oidvector and int2vector are also treated as not-nullable.
-            if ($priornotnull)
-            {
-                $row{attnotnull} =
-                    $type->{typname} eq 'oidvector' ? 't'
-                    : $type->{typname} eq 'int2vector' ? 't'
-                    : $type->{typlen} eq 'NAMEDATALEN' ? 't'
-                    : $type->{typlen} > 0 ? 't' : 'f';
-            }
-            else
-            {
-                $row{attnotnull} = 'f';
-            }
-            last;
-        }
-    }
+	# Copy the type data from pg_type, and add some type-dependent items
+	foreach my $type (@types)
+	{
+		if (defined $type->{typname} && $type->{typname} eq $atttype)
+		{
+			$row{atttypid}   = $type->{oid};
+			$row{attlen}     = $type->{typlen};
+			$row{attbyval}   = $type->{typbyval};
+			$row{attstorage} = $type->{typstorage};
+			$row{attalign}   = $type->{typalign};
 
-    # Add in default values for pg_attribute
-    my %PGATTR_DEFAULTS = (
-        attcacheoff   => '-1',
-        atttypmod     => '-1',
-        atthasdef     => 'f',
-        attisdropped  => 'f',
-        attislocal    => 't',
-        attinhcount   => '0',
-        attacl        => '_null_',
-        attoptions    => '_null_',
-        attfdwoptions => '_null_'
-    );
-    return {%PGATTR_DEFAULTS, %row};
+			# set attndims if it's an array type
+			$row{attndims} = $type->{typcategory} eq 'A' ? '1' : '0';
+			$row{attcollation} = $type->{typcollation};
+
+			# attnotnull must be set true if the type is fixed-width and
+			# prior columns are too --- compare DefineAttr in bootstrap.c.
+			# oidvector and int2vector are also treated as not-nullable.
+			if ($priornotnull)
+			{
+				$row{attnotnull} =
+				    $type->{typname} eq 'oidvector'   ? 't'
+				  : $type->{typname} eq 'int2vector'  ? 't'
+				  : $type->{typlen}  eq 'NAMEDATALEN' ? 't'
+				  : $type->{typlen} > 0 ? 't'
+				  :                       'f';
+			}
+			else
+			{
+				$row{attnotnull} = 'f';
+			}
+			last;
+		}
+	}
+
+	# Add in default values for pg_attribute
+	my %PGATTR_DEFAULTS = (
+		attcacheoff   => '-1',
+		atttypmod     => '-1',
+		atthasdef     => 'f',
+		attisdropped  => 'f',
+		attislocal    => 't',
+		attinhcount   => '0',
+		attacl        => '_null_',
+		attoptions    => '_null_',
+		attfdwoptions => '_null_');
+	return { %PGATTR_DEFAULTS, %row };
 }
 
 # Write a pg_attribute entry to postgres.bki
 sub bki_insert
 {
-    my $row = shift;
-    my @attnames = @_;
-    my $oid = $row->{oid} ? "OID = $row->{oid} " : '';
-    my $bki_values = join ' ', map $row->{$_}, @attnames;
-    printf BKI "insert %s( %s)\n", $oid, $bki_values;
+	my $row        = shift;
+	my @attnames   = @_;
+	my $oid        = $row->{oid} ? "OID = $row->{oid} " : '';
+	my $bki_values = join ' ', map $row->{$_}, @attnames;
+	printf BKI "insert %s( %s)\n", $oid, $bki_values;
 }
 
 # The field values of a Schema_pg_xxx declaration are similar, but not
 # quite identical, to the corresponding values in postgres.bki.
 sub emit_schemapg_row
 {
-    my $row = shift;
-    my @bool_attrs = @_;
+	my $row        = shift;
+	my @bool_attrs = @_;
 
-    # Supply appropriate quoting for these fields.
-    $row->{attname}     = q|{"| . $row->{attname}    . q|"}|;
-    $row->{attstorage}  = q|'|  . $row->{attstorage} . q|'|;
-    $row->{attalign}    = q|'|  . $row->{attalign}   . q|'|;
+	# Supply appropriate quoting for these fields.
+	$row->{attname}    = q|{"| . $row->{attname} . q|"}|;
+	$row->{attstorage} = q|'| . $row->{attstorage} . q|'|;
+	$row->{attalign}   = q|'| . $row->{attalign} . q|'|;
 
-    # We don't emit initializers for the variable length fields at all.
-    # Only the fixed-size portions of the descriptors are ever used.
-    delete $row->{attacl};
-    delete $row->{attoptions};
-    delete $row->{attfdwoptions};
+	# We don't emit initializers for the variable length fields at all.
+	# Only the fixed-size portions of the descriptors are ever used.
+	delete $row->{attacl};
+	delete $row->{attoptions};
+	delete $row->{attfdwoptions};
 
-    # Expand booleans from 'f'/'t' to 'false'/'true'.
-    # Some values might be other macros (eg FLOAT4PASSBYVAL), don't change.
-    foreach my $attr (@bool_attrs)
-    {
-        $row->{$attr} =
-            $row->{$attr} eq 't' ? 'true'
-          : $row->{$attr} eq 'f' ? 'false'
-          :                        $row->{$attr};
-    }
-    return $row;
+	# Expand booleans from 'f'/'t' to 'false'/'true'.
+	# Some values might be other macros (eg FLOAT4PASSBYVAL), don't change.
+	foreach my $attr (@bool_attrs)
+	{
+		$row->{$attr} =
+		    $row->{$attr} eq 't' ? 'true'
+		  : $row->{$attr} eq 'f' ? 'false'
+		  :                        $row->{$attr};
+	}
+	return $row;
 }
 
 # Find a symbol defined in a particular header file and extract the value.
 sub find_defined_symbol
 {
-    my ($catalog_header, $symbol) = @_;
-    for my $path (@include_path)
-    {
-        # Make sure include path ends in a slash.
-        if (substr($path, -1) ne '/')
-        {
-            $path .= '/';
-        }
-        my $file = $path . $catalog_header;
-        next if !-f $file;
-        open(FIND_DEFINED_SYMBOL, '<', $file) || die "$file: $!";
-        while (<FIND_DEFINED_SYMBOL>)
-        {
-            if (/^#define\s+\Q$symbol\E\s+(\S+)/)
-            {
-                return $1;
-            }
-        }
-        close FIND_DEFINED_SYMBOL;
-        die "$file: no definition found for $symbol\n";
-    }
-    die "$catalog_header: not found in any include directory\n";
+	my ($catalog_header, $symbol) = @_;
+	for my $path (@include_path)
+	{
+
+		# Make sure include path ends in a slash.
+		if (substr($path, -1) ne '/')
+		{
+			$path .= '/';
+		}
+		my $file = $path . $catalog_header;
+		next if !-f $file;
+		open(FIND_DEFINED_SYMBOL, '<', $file) || die "$file: $!";
+		while (<FIND_DEFINED_SYMBOL>)
+		{
+			if (/^#define\s+\Q$symbol\E\s+(\S+)/)
+			{
+				return $1;
+			}
+		}
+		close FIND_DEFINED_SYMBOL;
+		die "$file: no definition found for $symbol\n";
+	}
+	die "$catalog_header: not found in any include directory\n";
 }
 
 sub usage
 {
-    die <<EOM;
+	die <<EOM;
 Usage: genbki.pl [options] header...
 
 Options:

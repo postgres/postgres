@@ -25,34 +25,41 @@ process_file($infile);
 
 exit 0;
 
-sub process_file {
-    my $filename = shift;
+sub process_file
+{
+	my $filename = shift;
 
-    local *FILE;		# need a local filehandle so we can recurse
+	local *FILE;    # need a local filehandle so we can recurse
 
-    my $f = $srcdir . '/' . $filename;
-    open(FILE, $f) || die "could not read $f: $!\n";
+	my $f = $srcdir . '/' . $filename;
+	open(FILE, $f) || die "could not read $f: $!\n";
 
-    while (<FILE>) {
-	# Recursively expand sub-files of the release notes
-	if (m/^&(release-.*);$/) {
-	    process_file($1 . ".sgml");
-	    next;
+	while (<FILE>)
+	{
+
+		# Recursively expand sub-files of the release notes
+		if (m/^&(release-.*);$/)
+		{
+			process_file($1 . ".sgml");
+			next;
+		}
+
+		# Remove <link ...> tags, which might span multiple lines
+		while (m/<link/)
+		{
+			if (s/<link\s+linkend[^>]*>//)
+			{
+				next;
+			}
+
+			# incomplete tag, so slurp another line
+			$_ .= <FILE>;
+		}
+
+		# Remove </link> too
+		s|</link>||g;
+
+		print;
 	}
-
-	# Remove <link ...> tags, which might span multiple lines
-	while (m/<link/) {
-	    if (s/<link\s+linkend[^>]*>//) {
-		next;
-	    }
-	    # incomplete tag, so slurp another line
-	    $_ .= <FILE>;
-	}
-
-	# Remove </link> too
-	s|</link>||g;
-
-	print;
-    }
-    close(FILE);
+	close(FILE);
 }

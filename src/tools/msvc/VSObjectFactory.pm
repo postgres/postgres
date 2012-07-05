@@ -17,7 +17,7 @@ use VCBuildProject;
 use MSBuildProject;
 
 our (@ISA, @EXPORT);
-@ISA = qw(Exporter);
+@ISA    = qw(Exporter);
 @EXPORT = qw(CreateSolution CreateProject DetermineVisualStudioVersion);
 
 sub CreateSolution
@@ -81,12 +81,12 @@ sub DetermineVisualStudioVersion
 	if (!defined($nmakeVersion))
 	{
 
-	     # Determine version of nmake command, to set proper version of visual studio
-	     # we use nmake as it has existed for a long time and still exists in visual studio 2010
-		open(P,"nmake /? 2>&1 |")
+# Determine version of nmake command, to set proper version of visual studio
+# we use nmake as it has existed for a long time and still exists in visual studio 2010
+		open(P, "nmake /? 2>&1 |")
 		  || croak
-		  "Unable to determine Visual Studio version: The nmake command wasn't found.";
-		while(<P>)
+"Unable to determine Visual Studio version: The nmake command wasn't found.";
+		while (<P>)
 		{
 			chomp;
 			if (/(\d+)\.(\d+)\.\d+(\.\d+)?$/)
@@ -96,17 +96,17 @@ sub DetermineVisualStudioVersion
 		}
 		close(P);
 	}
-	elsif($nmakeVersion =~ /(\d+)\.(\d+)\.\d+(\.\d+)?$/)
+	elsif ($nmakeVersion =~ /(\d+)\.(\d+)\.\d+(\.\d+)?$/)
 	{
 		return _GetVisualStudioVersion($1, $2);
 	}
 	croak
-	  "Unable to determine Visual Studio version: The nmake version could not be determined.";
+"Unable to determine Visual Studio version: The nmake version could not be determined.";
 }
 
 sub _GetVisualStudioVersion
 {
-	my($major, $minor) = @_;
+	my ($major, $minor) = @_;
 	if ($major > 10)
 	{
 		carp

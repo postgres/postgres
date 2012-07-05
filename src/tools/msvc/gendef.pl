@@ -7,8 +7,9 @@ my @def;
 #
 
 die "Usage: gendef.pl <modulepath> <platform>\n"
-  unless(($ARGV[0] =~ /\\([^\\]+$)/) && ($ARGV[1] == 'Win32' || $ARGV[1] == 'x64'));
-my $defname = uc $1;
+  unless (($ARGV[0] =~ /\\([^\\]+$)/)
+	&& ($ARGV[1] == 'Win32' || $ARGV[1] == 'x64'));
+my $defname  = uc $1;
 my $platform = $ARGV[1];
 
 if (-f "$ARGV[0]/$defname.def")
@@ -22,9 +23,10 @@ print "Generating $defname.DEF from directory $ARGV[0], platform $platform\n";
 while (<$ARGV[0]/*.obj>)
 {
 	my $symfile = $_;
-	$symfile=~ s/\.obj$/.sym/i;
+	$symfile =~ s/\.obj$/.sym/i;
 	print ".";
-	system("dumpbin /symbols /out:symbols.out $_ >NUL") && die "Could not call dumpbin";
+	system("dumpbin /symbols /out:symbols.out $_ >NUL")
+	  && die "Could not call dumpbin";
 	open(F, "<symbols.out") || die "Could not open symbols.out for $_\n";
 	while (<F>)
 	{
@@ -46,19 +48,20 @@ while (<$ARGV[0]/*.obj>)
 		push @def, $pieces[6];
 	}
 	close(F);
-	rename("symbols.out",$symfile);
+	rename("symbols.out", $symfile);
 }
 print "\n";
 
-open(DEF,">$ARGV[0]/$defname.def") || die "Could not write to $defname\n";
+open(DEF, ">$ARGV[0]/$defname.def") || die "Could not write to $defname\n";
 print DEF "EXPORTS\n";
-my $i = 0;
+my $i    = 0;
 my $last = "";
 foreach my $f (sort @def)
 {
 	next if ($f eq $last);
 	$last = $f;
-	$f =~ s/^_// unless ($platform eq "x64"); # win64 has new format of exports
+	$f =~ s/^_//
+	  unless ($platform eq "x64");    # win64 has new format of exports
 	$i++;
 
 	#   print DEF "  $f \@ $i\n";  # ordinaled exports?

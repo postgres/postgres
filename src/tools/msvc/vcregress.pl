@@ -26,7 +26,8 @@ if (-e "src/tools/msvc/buildenv.pl")
 }
 
 my $what = shift || "";
-if ($what =~ /^(check|installcheck|plcheck|contribcheck|ecpgcheck|isolationcheck)$/i)
+if ($what =~
+	/^(check|installcheck|plcheck|contribcheck|ecpgcheck|isolationcheck)$/i)
 {
 	$what = uc $what;
 }
@@ -38,10 +39,10 @@ else
 # use a capital C here because config.pl has $config
 my $Config = -e "release/postgres/postgres.exe" ? "Release" : "Debug";
 
-copy("$Config/refint/refint.dll","src/test/regress");
-copy("$Config/autoinc/autoinc.dll","src/test/regress");
-copy("$Config/regress/regress.dll","src/test/regress");
-copy("$Config/dummy_seclabel/dummy_seclabel.dll","src/test/regress");
+copy("$Config/refint/refint.dll",                 "src/test/regress");
+copy("$Config/autoinc/autoinc.dll",               "src/test/regress");
+copy("$Config/regress/regress.dll",               "src/test/regress");
+copy("$Config/dummy_seclabel/dummy_seclabel.dll", "src/test/regress");
 
 $ENV{PATH} = "../../../$Config/libpq;../../$Config/libpq;$ENV{PATH}";
 
@@ -67,13 +68,12 @@ $temp_config = "--temp-config=\"$ENV{TEMP_CONFIG}\""
 chdir "src/test/regress";
 
 my %command = (
-	CHECK => \&check,
-	PLCHECK => \&plcheck,
-	INSTALLCHECK => \&installcheck,
-	ECPGCHECK => \&ecpgcheck,
-	CONTRIBCHECK => \&contribcheck,
-	ISOLATIONCHECK => \&isolationcheck,
-);
+	CHECK          => \&check,
+	PLCHECK        => \&plcheck,
+	INSTALLCHECK   => \&installcheck,
+	ECPGCHECK      => \&ecpgcheck,
+	CONTRIBCHECK   => \&contribcheck,
+	ISOLATIONCHECK => \&isolationcheck,);
 
 my $proc = $command{$what};
 
@@ -88,28 +88,33 @@ exit 0;
 sub installcheck
 {
 	my @args = (
-		"../../../$Config/pg_regress/pg_regress","--dlpath=.",
-		"--psqldir=../../../$Config/psql","--schedule=${schedule}_schedule",
-		"--encoding=SQL_ASCII","--no-locale"
-	);
-	push(@args,$maxconn) if $maxconn;
+		"../../../$Config/pg_regress/pg_regress",
+		"--dlpath=.",
+		"--psqldir=../../../$Config/psql",
+		"--schedule=${schedule}_schedule",
+		"--encoding=SQL_ASCII",
+		"--no-locale");
+	push(@args, $maxconn) if $maxconn;
 	system(@args);
-	my $status = $? >>8;
+	my $status = $? >> 8;
 	exit $status if $status;
 }
 
 sub check
 {
 	my @args = (
-		"../../../$Config/pg_regress/pg_regress","--dlpath=.",
-		"--psqldir=../../../$Config/psql","--schedule=${schedule}_schedule",
-		"--encoding=SQL_ASCII","--no-locale",
-		"--temp-install=./tmp_check","--top-builddir=\"$topdir\""
-	);
-	push(@args,$maxconn) if $maxconn;
-	push(@args,$temp_config) if $temp_config;
+		"../../../$Config/pg_regress/pg_regress",
+		"--dlpath=.",
+		"--psqldir=../../../$Config/psql",
+		"--schedule=${schedule}_schedule",
+		"--encoding=SQL_ASCII",
+		"--no-locale",
+		"--temp-install=./tmp_check",
+		"--top-builddir=\"$topdir\"");
+	push(@args, $maxconn)     if $maxconn;
+	push(@args, $temp_config) if $temp_config;
 	system(@args);
-	my $status = $? >>8;
+	my $status = $? >> 8;
 	exit $status if $status;
 }
 
@@ -117,10 +122,10 @@ sub ecpgcheck
 {
 	chdir $startdir;
 	system("msbuild ecpg_regression.proj /p:config=$Config");
-	my $status = $? >>8;
+	my $status = $? >> 8;
 	exit $status if $status;
 	chdir "$topdir/src/interfaces/ecpg/test";
-	$schedule="ecpg";
+	$schedule = "ecpg";
 	my @args = (
 		"../../../../$Config/pg_regress_ecpg/pg_regress_ecpg",
 		"--psqldir=../../../$Config/psql",
@@ -130,26 +135,25 @@ sub ecpgcheck
 		"--encoding=SQL_ASCII",
 		"--no-locale",
 		"--temp-install=./tmp_chk",
-		"--top-builddir=\"$topdir\""
-	);
-	push(@args,$maxconn) if $maxconn;
+		"--top-builddir=\"$topdir\"");
+	push(@args, $maxconn) if $maxconn;
 	system(@args);
-	$status = $? >>8;
+	$status = $? >> 8;
 	exit $status if $status;
 }
 
 sub isolationcheck
 {
 	chdir "../isolation";
-	copy("../../../$Config/isolationtester/isolationtester.exe",".");
+	copy("../../../$Config/isolationtester/isolationtester.exe", ".");
 	my @args = (
 		"../../../$Config/pg_isolation_regress/pg_isolation_regress",
 		"--psqldir=../../../$Config/psql",
-		"--inputdir=.","--schedule=./isolation_schedule"
-	);
-	push(@args,$maxconn) if $maxconn;
+		"--inputdir=.",
+		"--schedule=./isolation_schedule");
+	push(@args, $maxconn) if $maxconn;
 	system(@args);
-	my $status = $? >>8;
+	my $status = $? >> 8;
 	exit $status if $status;
 }
 
@@ -178,16 +182,16 @@ sub plcheck
 			use Config;
 			if ($Config{usemultiplicity} eq 'define')
 			{
-				push(@tests,'plperl_plperlu');
+				push(@tests, 'plperl_plperlu');
 			}
 		}
-		print "============================================================\n";
+		print
+		  "============================================================\n";
 		print "Checking $lang\n";
 		my @args = (
 			"../../../$Config/pg_regress/pg_regress",
 			"--psqldir=../../../$Config/psql",
-			"--dbname=pl_regression",@lang_args,@tests
-		);
+			"--dbname=pl_regression", @lang_args, @tests);
 		system(@args);
 		my $status = $? >> 8;
 		exit $status if $status;
@@ -207,18 +211,18 @@ sub contribcheck
 		next if ($module eq 'xml2' && !$config->{xml});
 		next
 		  unless -d "$module/sql"
-			  &&-d "$module/expected"
-			  &&(-f "$module/GNUmakefile" || -f "$module/Makefile");
+			  && -d "$module/expected"
+			  && (-f "$module/GNUmakefile" || -f "$module/Makefile");
 		chdir $module;
-		print "============================================================\n";
+		print
+		  "============================================================\n";
 		print "Checking $module\n";
 		my @tests = fetchTests();
-		my @opts = fetchRegressOpts();
-		my @args = (
+		my @opts  = fetchRegressOpts();
+		my @args  = (
 			"../../$Config/pg_regress/pg_regress",
 			"--psqldir=../../$Config/psql",
-			"--dbname=contrib_regression",@opts,@tests
-		);
+			"--dbname=contrib_regression", @opts, @tests);
 		system(@args);
 		my $status = $? >> 8;
 		$mstat ||= $status;
@@ -230,10 +234,10 @@ sub contribcheck
 sub fetchRegressOpts
 {
 	my $handle;
-	open($handle,"<GNUmakefile")
-	  || open($handle,"<Makefile")
+	open($handle, "<GNUmakefile")
+	  || open($handle, "<Makefile")
 	  || die "Could not open Makefile";
-	local($/) = undef;
+	local ($/) = undef;
 	my $m = <$handle>;
 	close($handle);
 	my @opts;
@@ -242,7 +246,7 @@ sub fetchRegressOpts
 
 		# ignore options that use makefile variables - can't handle those
 		# ignore anything that isn't an option staring with --
-		@opts = grep { $_ !~ /\$\(/ && $_ =~ /^--/ } split(/\s+/,$1);
+		@opts = grep { $_ !~ /\$\(/ && $_ =~ /^--/ } split(/\s+/, $1);
 	}
 	if ($m =~ /^\s*ENCODING\s*=\s*(\S+)/m)
 	{
@@ -259,10 +263,10 @@ sub fetchTests
 {
 
 	my $handle;
-	open($handle,"<GNUmakefile")
-	  || open($handle,"<Makefile")
+	open($handle, "<GNUmakefile")
+	  || open($handle, "<Makefile")
 	  || die "Could not open Makefile";
-	local($/) = undef;
+	local ($/) = undef;
 	my $m = <$handle>;
 	close($handle);
 	my $t = "";
@@ -281,24 +285,24 @@ sub fetchTests
 
 			my $cftests =
 			  $config->{openssl}
-			  ?GetTests("OSSL_TESTS",$m)
-			  : GetTests("INT_TESTS",$m);
+			  ? GetTests("OSSL_TESTS", $m)
+			  : GetTests("INT_TESTS",  $m);
 			my $pgptests =
 			  $config->{zlib}
-			  ?GetTests("ZLIB_TST",$m)
-			  : GetTests("ZLIB_OFF_TST",$m);
+			  ? GetTests("ZLIB_TST",     $m)
+			  : GetTests("ZLIB_OFF_TST", $m);
 			$t =~ s/\$\(CF_TESTS\)/$cftests/;
 			$t =~ s/\$\(CF_PGP_TESTS\)/$pgptests/;
 		}
 	}
 
-	return split(/\s+/,$t);
+	return split(/\s+/, $t);
 }
 
 sub GetTests
 {
 	my $testname = shift;
-	my $m = shift;
+	my $m        = shift;
 	if ($m =~ /^$testname\s*=\s*(.*)$/gm)
 	{
 		return $1;
