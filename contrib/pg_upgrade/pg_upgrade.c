@@ -311,23 +311,26 @@ create_new_objects(void)
 	uninstall_support_functions_from_new_cluster();
 }
 
-
+/*
+ * Delete the given subdirectory contents from the new cluster, and copy the
+ * files from the old cluster into it.
+ */
 static void
-copy_clog_xlog_xid(void)
+copy_subdir_files(char *subdir)
 {
-	char		old_clog_path[MAXPGPATH];
-	char		new_clog_path[MAXPGPATH];
+	char		old_path[MAXPGPATH];
+	char		new_path[MAXPGPATH];
 
-	/* copy old commit logs to new data dir */
-	prep_status("Deleting new commit clogs");
+	prep_status("Deleting files from new %s", subdir);
 
-	snprintf(old_clog_path, sizeof(old_clog_path), "%s/pg_clog", old_cluster.pgdata);
-	snprintf(new_clog_path, sizeof(new_clog_path), "%s/pg_clog", new_cluster.pgdata);
-	if (!rmtree(new_clog_path, true))
-		pg_log(PG_FATAL, "could not delete directory \"%s\"\n", new_clog_path);
+	snprintf(old_path, sizeof(old_path), "%s/%s", old_cluster.pgdata, subdir);
+	snprintf(new_path, sizeof(new_path), "%s/%s", new_cluster.pgdata, subdir);
+	if (!rmtree(new_path, true))
+		pg_log(PG_FATAL, "could not delete directory \"%s\"\n", new_path);
 	check_ok();
 
-	prep_status("Copying old commit clogs to new server");
+	prep_status("Copying old %s to new server", subdir);
+
 	exec_prog(true, false, UTILITY_LOG_FILE,
 #ifndef WIN32
 			  SYSTEMQUOTE "%s \"%s\" \"%s\" >> \"%s\" 2>&1" SYSTEMQUOTE,
@@ -337,8 +340,16 @@ copy_clog_xlog_xid(void)
 			  SYSTEMQUOTE "%s \"%s\" \"%s\\\" >> \"%s\" 2>&1" SYSTEMQUOTE,
 			  "xcopy /e /y /q /r",
 #endif
-			  old_clog_path, new_clog_path, UTILITY_LOG_FILE);
+			  old_path, new_path, UTILITY_LOG_FILE);
+
 	check_ok();
+}
+
+static void
+copy_clog_xlog_xid(void)
+{
+	/* copy old commit logs to new data dir */
+	copy_subdir_files("pg_clog");
 
 	/* set the next transaction id of the new cluster */
 	prep_status("Setting next transaction ID for new cluster");
