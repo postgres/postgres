@@ -36,102 +36,118 @@ require "ucs2utf.pl";
 #
 $in_file = "JIS0201.TXT";
 
-open( FILE, $in_file ) || die( "cannot open $in_file" );
+open(FILE, $in_file) || die("cannot open $in_file");
 
 reset 'array';
 
-while( <FILE> ){
+while (<FILE>)
+{
 	chop;
-	if( /^#/ ){
+	if (/^#/)
+	{
 		next;
 	}
-	( $c, $u, $rest ) = split;
-	$ucs = hex($u);
+	($c, $u, $rest) = split;
+	$ucs  = hex($u);
 	$code = hex($c);
-	if( $code >= 0x80 && $ucs >= 0x0080 ){
+	if ($code >= 0x80 && $ucs >= 0x0080)
+	{
 		$utf = &ucs2utf($ucs);
-		if( $array{ $utf } ne "" ){
-			printf STDERR "Warning: duplicate UTF8: %04x\n",$ucs;
+		if ($array{$utf} ne "")
+		{
+			printf STDERR "Warning: duplicate UTF8: %04x\n", $ucs;
 			next;
 		}
 		$count++;
 
 		# add single shift 2
-		$array{ $utf } = ($code | 0x8e00);
+		$array{$utf} = ($code | 0x8e00);
 	}
 }
-close( FILE );
+close(FILE);
 
 #
 # JIS0208
 #
 $in_file = "JIS0208.TXT";
 
-open( FILE, $in_file ) || die( "cannot open $in_file" );
+open(FILE, $in_file) || die("cannot open $in_file");
 
-while( <FILE> ){
+while (<FILE>)
+{
 	chop;
-	if( /^#/ ){
+	if (/^#/)
+	{
 		next;
 	}
-	( $s, $c, $u, $rest ) = split;
-	$ucs = hex($u);
+	($s, $c, $u, $rest) = split;
+	$ucs  = hex($u);
 	$code = hex($c);
-	if( $code >= 0x80 && $ucs >= 0x0080 ){
+	if ($code >= 0x80 && $ucs >= 0x0080)
+	{
 		$utf = &ucs2utf($ucs);
-		if( $array{ $utf } ne "" ){
-			printf STDERR "Warning: duplicate UTF8: %04x\n",$ucs;
+		if ($array{$utf} ne "")
+		{
+			printf STDERR "Warning: duplicate UTF8: %04x\n", $ucs;
 			next;
 		}
 		$count++;
 
-		$array{ $utf } = ($code | 0x8080);
+		$array{$utf} = ($code | 0x8080);
 	}
 }
-close( FILE );
+close(FILE);
 
 #
 # JIS0212
 #
 $in_file = "JIS0212.TXT";
 
-open( FILE, $in_file ) || die( "cannot open $in_file" );
+open(FILE, $in_file) || die("cannot open $in_file");
 
-while( <FILE> ){
+while (<FILE>)
+{
 	chop;
-	if( /^#/ ){
+	if (/^#/)
+	{
 		next;
 	}
-	( $c, $u, $rest ) = split;
-	$ucs = hex($u);
+	($c, $u, $rest) = split;
+	$ucs  = hex($u);
 	$code = hex($c);
-	if( $code >= 0x80 && $ucs >= 0x0080 ){
+	if ($code >= 0x80 && $ucs >= 0x0080)
+	{
 		$utf = &ucs2utf($ucs);
-		if( $array{ $utf } ne "" ){
-			printf STDERR "Warning: duplicate UTF8: %04x\n",$ucs;
+		if ($array{$utf} ne "")
+		{
+			printf STDERR "Warning: duplicate UTF8: %04x\n", $ucs;
 			next;
 		}
 		$count++;
 
-		$array{ $utf } = ($code | 0x8f8080);
+		$array{$utf} = ($code | 0x8f8080);
 	}
 }
-close( FILE );
+close(FILE);
 
 #
 # first, generate UTF8 --> EUC_JP table
 #
 
 $file = "utf8_to_euc_jp.map";
-open( FILE, "> $file" ) || die( "cannot open $file" );
+open(FILE, "> $file") || die("cannot open $file");
 print FILE "static pg_utf_to_local ULmapEUC_JP[ $count ] = {\n";
 
-for $index ( sort {$a <=> $b} keys( %array ) ){
-	$code = $array{ $index };
+for $index (sort { $a <=> $b } keys(%array))
+{
+	$code = $array{$index};
 	$count--;
-	if( $count == 0 ){
+	if ($count == 0)
+	{
 		printf FILE "  {0x%04x, 0x%04x}\n", $index, $code;
-	} else {
+	}
+	else
+	{
 		printf FILE "  {0x%04x, 0x%04x},\n", $index, $code;
 	}
 }
@@ -148,100 +164,116 @@ close(FILE);
 #
 $in_file = "JIS0201.TXT";
 
-open( FILE, $in_file ) || die( "cannot open $in_file" );
+open(FILE, $in_file) || die("cannot open $in_file");
 
 reset 'array';
 
-while( <FILE> ){
+while (<FILE>)
+{
 	chop;
-	if( /^#/ ){
+	if (/^#/)
+	{
 		next;
 	}
-	( $c, $u, $rest ) = split;
-	$ucs = hex($u);
+	($c, $u, $rest) = split;
+	$ucs  = hex($u);
 	$code = hex($c);
-	if( $code >= 0x80 && $ucs >= 0x0080 ){
+	if ($code >= 0x80 && $ucs >= 0x0080)
+	{
 		$utf = &ucs2utf($ucs);
-		if( $array{ $code } ne "" ){
-			printf STDERR "Warning: duplicate code: %04x\n",$ucs;
+		if ($array{$code} ne "")
+		{
+			printf STDERR "Warning: duplicate code: %04x\n", $ucs;
 			next;
 		}
 		$count++;
 
 		# add single shift 2
 		$code |= 0x8e00;
-		$array{ $code } = $utf;
+		$array{$code} = $utf;
 	}
 }
-close( FILE );
+close(FILE);
 
 #
 # JIS0208
 #
 $in_file = "JIS0208.TXT";
 
-open( FILE, $in_file ) || die( "cannot open $in_file" );
+open(FILE, $in_file) || die("cannot open $in_file");
 
-while( <FILE> ){
+while (<FILE>)
+{
 	chop;
-	if( /^#/ ){
+	if (/^#/)
+	{
 		next;
 	}
-	( $s, $c, $u, $rest ) = split;
-	$ucs = hex($u);
+	($s, $c, $u, $rest) = split;
+	$ucs  = hex($u);
 	$code = hex($c);
-	if( $code >= 0x80 && $ucs >= 0x0080 ){
+	if ($code >= 0x80 && $ucs >= 0x0080)
+	{
 		$utf = &ucs2utf($ucs);
-		if( $array{ $code } ne "" ){
-			printf STDERR "Warning: duplicate code: %04x\n",$ucs;
+		if ($array{$code} ne "")
+		{
+			printf STDERR "Warning: duplicate code: %04x\n", $ucs;
 			next;
 		}
 		$count++;
 
 		$code |= 0x8080;
-		$array{ $code } = $utf;
+		$array{$code} = $utf;
 	}
 }
-close( FILE );
+close(FILE);
 
 #
 # JIS0212
 #
 $in_file = "JIS0212.TXT";
 
-open( FILE, $in_file ) || die( "cannot open $in_file" );
+open(FILE, $in_file) || die("cannot open $in_file");
 
-while( <FILE> ){
+while (<FILE>)
+{
 	chop;
-	if( /^#/ ){
+	if (/^#/)
+	{
 		next;
 	}
-	( $c, $u, $rest ) = split;
-	$ucs = hex($u);
+	($c, $u, $rest) = split;
+	$ucs  = hex($u);
 	$code = hex($c);
-	if( $code >= 0x80 && $ucs >= 0x0080 ){
+	if ($code >= 0x80 && $ucs >= 0x0080)
+	{
 		$utf = &ucs2utf($ucs);
-		if( $array{ $code } ne "" ){
-			printf STDERR "Warning: duplicate code: %04x\n",$ucs;
+		if ($array{$code} ne "")
+		{
+			printf STDERR "Warning: duplicate code: %04x\n", $ucs;
 			next;
 		}
 		$count++;
 
 		$code |= 0x8f8080;
-		$array{ $code } = $utf;
+		$array{$code} = $utf;
 	}
 }
-close( FILE );
+close(FILE);
 
 $file = "euc_jp_to_utf8.map";
-open( FILE, "> $file" ) || die( "cannot open $file" );
+open(FILE, "> $file") || die("cannot open $file");
 print FILE "static pg_local_to_utf LUmapEUC_JP[ $count ] = {\n";
-for $index ( sort {$a <=> $b} keys( %array ) ){
-	$utf = $array{ $index };
+for $index (sort { $a <=> $b } keys(%array))
+{
+	$utf = $array{$index};
 	$count--;
-	if( $count == 0 ){
+	if ($count == 0)
+	{
 		printf FILE "  {0x%04x, 0x%04x}\n", $index, $utf;
-	} else {
+	}
+	else
+	{
 		printf FILE "  {0x%04x, 0x%04x},\n", $index, $utf;
 	}
 }

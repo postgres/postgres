@@ -10,10 +10,13 @@ use warnings;
 use Mkvcbuild;
 
 chdir('..\..\..') if (-d '..\msvc' && -d '..\..\..\src');
-die 'Must run from root or msvc directory' unless (-d 'src\tools\msvc' && -d 'src');
+die 'Must run from root or msvc directory'
+  unless (-d 'src\tools\msvc' && -d 'src');
 
-die 'Could not find config_default.pl' unless (-f 'src/tools/msvc/config_default.pl');
-print "Warning: no config.pl found, using default.\n" unless (-f 'src/tools/msvc/config.pl');
+die 'Could not find config_default.pl'
+  unless (-f 'src/tools/msvc/config_default.pl');
+print "Warning: no config.pl found, using default.\n"
+  unless (-f 'src/tools/msvc/config.pl');
 
 our $config;
 require 'src/tools/msvc/config_default.pl';

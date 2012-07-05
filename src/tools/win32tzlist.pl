@@ -26,7 +26,8 @@ my $tzfile = 'src/bin/initdb/findtimezone.c';
 # Fetch all timezones in the registry
 #
 my $basekey;
-$HKEY_LOCAL_MACHINE->Open("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones", $basekey)
+$HKEY_LOCAL_MACHINE->Open(
+	"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones", $basekey)
   or die $!;
 
 my @subkeys;
@@ -36,21 +37,19 @@ my @system_zones;
 
 foreach my $keyname (@subkeys)
 {
-    my $subkey;
-    my %vals;
+	my $subkey;
+	my %vals;
 
-    $basekey->Open($keyname, $subkey) or die $!;
-    $subkey->GetValues(\%vals) or die $!;
-    $subkey->Close();
+	$basekey->Open($keyname, $subkey) or die $!;
+	$subkey->GetValues(\%vals) or die $!;
+	$subkey->Close();
 
-    die "Incomplete timezone data for $keyname!\n"
-      unless ($vals{Std} && $vals{Dlt} && $vals{Display});
-    push @system_zones,
-      {
-        'std'=>$vals{Std}->[2],
-        'dlt'=>$vals{Dlt}->[2],
-        'display'=>clean_displayname($vals{Display}->[2]),
-      };
+	die "Incomplete timezone data for $keyname!\n"
+	  unless ($vals{Std} && $vals{Dlt} && $vals{Display});
+	push @system_zones,
+	  { 'std'     => $vals{Std}->[2],
+		'dlt'     => $vals{Dlt}->[2],
+		'display' => clean_displayname($vals{Display}->[2]), };
 }
 
 $basekey->Close();
@@ -59,7 +58,7 @@ $basekey->Close();
 # Fetch all timezones currently in the file
 #
 my @file_zones;
-open(TZFILE,"<$tzfile") or die "Could not open $tzfile!\n";
+open(TZFILE, "<$tzfile") or die "Could not open $tzfile!\n";
 my $t = $/;
 undef $/;
 my $pgtz = <TZFILE>;
@@ -72,15 +71,14 @@ $pgtz =~ /win32_tzmap\[\] =\s+{\s+\/\*[^\/]+\*\/\s+(.+?)};/gs
 $pgtz = $1;
 
 # Extract each individual record from the struct
-while ($pgtz =~ m/{\s+"([^"]+)",\s+"([^"]+)",\s+"([^"]+)",?\s+},\s+\/\*(.+?)\*\//gs)
+while ($pgtz =~
+	m/{\s+"([^"]+)",\s+"([^"]+)",\s+"([^"]+)",?\s+},\s+\/\*(.+?)\*\//gs)
 {
-    push @file_zones,
-      {
-        'std'=>$1,
-        'dlt'=>$2,
-        'match'=>$3,
-        'display'=>clean_displayname($4),
-      };
+	push @file_zones,
+	  { 'std'     => $1,
+		'dlt'     => $2,
+		'match'   => $3,
+		'display' => clean_displayname($4), };
 }
 
 #
@@ -90,47 +88,48 @@ my @add;
 
 for my $sys (@system_zones)
 {
-    my $match = 0;
-    for my $file (@file_zones)
-    {
-        if ($sys->{std} eq $file->{std})
-        {
-            $match=1;
-            if ($sys->{dlt} ne $file->{dlt})
-            {
-                print "Timezone $sys->{std}, changed name of daylight zone!\n";
-            }
-            if ($sys->{display} ne $file->{display})
-            {
-                print
+	my $match = 0;
+	for my $file (@file_zones)
+	{
+		if ($sys->{std} eq $file->{std})
+		{
+			$match = 1;
+			if ($sys->{dlt} ne $file->{dlt})
+			{
+				print
+				  "Timezone $sys->{std}, changed name of daylight zone!\n";
+			}
+			if ($sys->{display} ne $file->{display})
+			{
+				print
 "Timezone $sys->{std} changed displayname ('$sys->{display}' from '$file->{display}')!\n";
-            }
-            last;
-        }
-    }
-    unless ($match)
-    {
-        push @add, $sys;
-    }
+			}
+			last;
+		}
+	}
+	unless ($match)
+	{
+		push @add, $sys;
+	}
 }
 
 if (@add)
 {
-    print "\n\nOther than that, add the following timezones:\n";
-    for my $z (@add)
-    {
-        print
+	print "\n\nOther than that, add the following timezones:\n";
+	for my $z (@add)
+	{
+		print
 "\t{\n\t\t\"$z->{std}\", \"$z->{dlt}\",\n\t\t\"FIXME\"\n\t},\t\t\t\t\t\t\t/* $z->{display} */\n";
-    }
+	}
 }
 
 sub clean_displayname
 {
-    my $dn = shift;
+	my $dn = shift;
 
-    $dn =~ s/\s+/ /gs;
-    $dn =~ s/\*//gs;
-    $dn =~ s/^\s+//gs;
-    $dn =~ s/\s+$//gs;
-    return $dn;
+	$dn =~ s/\s+/ /gs;
+	$dn =~ s/\*//gs;
+	$dn =~ s/^\s+//gs;
+	$dn =~ s/\s+$//gs;
+	return $dn;
 }

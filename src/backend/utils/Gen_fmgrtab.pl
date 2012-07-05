@@ -19,29 +19,29 @@ use strict;
 use warnings;
 
 # Collect arguments
-my $infile;        # pg_proc.h
+my $infile;    # pg_proc.h
 my $output_path = '';
 while (@ARGV)
 {
-    my $arg = shift @ARGV;
-    if ($arg !~ /^-/)
-    {
-        $infile = $arg;
-    }
-    elsif ($arg =~ /^-o/)
-    {
-        $output_path = length($arg) > 2 ? substr($arg, 2) : shift @ARGV;
-    }
-    else
-    {
-        usage();
-    }
+	my $arg = shift @ARGV;
+	if ($arg !~ /^-/)
+	{
+		$infile = $arg;
+	}
+	elsif ($arg =~ /^-o/)
+	{
+		$output_path = length($arg) > 2 ? substr($arg, 2) : shift @ARGV;
+	}
+	else
+	{
+		usage();
+	}
 }
 
 # Make sure output_path ends in a slash.
 if ($output_path ne '' && substr($output_path, -1) ne '/')
 {
-    $output_path .= '/';
+	$output_path .= '/';
 }
 
 # Read all the data from the include/catalog files.
@@ -50,48 +50,47 @@ my $catalogs = Catalog::Catalogs($infile);
 # Collect the raw data from pg_proc.h.
 my @fmgr = ();
 my @attnames;
-foreach my $column ( @{ $catalogs->{pg_proc}->{columns} } )
+foreach my $column (@{ $catalogs->{pg_proc}->{columns} })
 {
-    push @attnames, keys %$column;
+	push @attnames, keys %$column;
 }
 
 my $data = $catalogs->{pg_proc}->{data};
 foreach my $row (@$data)
 {
-    # To construct fmgroids.h and fmgrtab.c, we need to inspect some
-    # of the individual data fields.  Just splitting on whitespace
-    # won't work, because some quoted fields might contain internal
-    # whitespace.  We handle this by folding them all to a simple
-    # "xxx". Fortunately, this script doesn't need to look at any
-    # fields that might need quoting, so this simple hack is
-    # sufficient.
-    $row->{bki_values} =~ s/"[^"]*"/"xxx"/g;
-    @{$row}{@attnames} = split /\s+/, $row->{bki_values};
 
-    # Select out just the rows for internal-language procedures.
-    # Note assumption here that INTERNALlanguageId is 12.
-    next if $row->{prolang} ne '12';
+	# To construct fmgroids.h and fmgrtab.c, we need to inspect some
+	# of the individual data fields.  Just splitting on whitespace
+	# won't work, because some quoted fields might contain internal
+	# whitespace.  We handle this by folding them all to a simple
+	# "xxx". Fortunately, this script doesn't need to look at any
+	# fields that might need quoting, so this simple hack is
+	# sufficient.
+	$row->{bki_values} =~ s/"[^"]*"/"xxx"/g;
+	@{$row}{@attnames} = split /\s+/, $row->{bki_values};
 
-    push @fmgr,
-      {
-        oid    => $row->{oid},
-        strict => $row->{proisstrict},
-        retset => $row->{proretset},
-        nargs  => $row->{pronargs},
-        prosrc => $row->{prosrc},
-      };
+	# Select out just the rows for internal-language procedures.
+	# Note assumption here that INTERNALlanguageId is 12.
+	next if $row->{prolang} ne '12';
 
-    # Hack to work around memory leak in some versions of Perl
-    $row = undef;
+	push @fmgr,
+	  { oid    => $row->{oid},
+		strict => $row->{proisstrict},
+		retset => $row->{proretset},
+		nargs  => $row->{pronargs},
+		prosrc => $row->{prosrc}, };
+
+	# Hack to work around memory leak in some versions of Perl
+	$row = undef;
 }
 
 # Emit headers for both files
-my $tmpext = ".tmp$$";
+my $tmpext   = ".tmp$$";
 my $oidsfile = $output_path . 'fmgroids.h';
-my $tabfile = $output_path . 'fmgrtab.c';
+my $tabfile  = $output_path . 'fmgrtab.c';
 
 open H, '>', $oidsfile . $tmpext or die "Could not open $oidsfile$tmpext: $!";
-open T, '>', $tabfile . $tmpext or die "Could not open $tabfile$tmpext: $!";
+open T, '>', $tabfile . $tmpext  or die "Could not open $tabfile$tmpext: $!";
 
 print H
 qq|/*-------------------------------------------------------------------------
@@ -160,12 +159,12 @@ qq|/*-------------------------------------------------------------------------
 
 # Emit #define's and extern's -- only one per prosrc value
 my %seenit;
-foreach my $s (sort {$a->{oid} <=> $b->{oid}} @fmgr)
+foreach my $s (sort { $a->{oid} <=> $b->{oid} } @fmgr)
 {
-    next if $seenit{$s->{prosrc}};
-    $seenit{$s->{prosrc}} = 1;
-    print H "#define F_" . uc $s->{prosrc} . " $s->{oid}\n";
-    print T "extern Datum $s->{prosrc} (PG_FUNCTION_ARGS);\n";
+	next if $seenit{ $s->{prosrc} };
+	$seenit{ $s->{prosrc} } = 1;
+	print H "#define F_" . uc $s->{prosrc} . " $s->{oid}\n";
+	print T "extern Datum $s->{prosrc} (PG_FUNCTION_ARGS);\n";
 }
 
 # Create the fmgr_builtins table
@@ -173,10 +172,10 @@ print T "\nconst FmgrBuiltin fmgr_builtins[] = {\n";
 my %bmap;
 $bmap{'t'} = 'true';
 $bmap{'f'} = 'false';
-foreach my $s (sort {$a->{oid} <=> $b->{oid}} @fmgr)
+foreach my $s (sort { $a->{oid} <=> $b->{oid} } @fmgr)
 {
-    print T
-	"  { $s->{oid}, \"$s->{prosrc}\", $s->{nargs}, $bmap{$s->{strict}}, $bmap{$s->{retset}}, $s->{prosrc} },\n";
+	print T
+"  { $s->{oid}, \"$s->{prosrc}\", $s->{nargs}, $bmap{$s->{strict}}, $bmap{$s->{retset}}, $s->{prosrc} },\n";
 }
 
 # And add the file footers.
@@ -198,11 +197,11 @@ close(T);
 
 # Finally, rename the completed files into place.
 Catalog::RenameTempFile($oidsfile, $tmpext);
-Catalog::RenameTempFile($tabfile, $tmpext);
+Catalog::RenameTempFile($tabfile,  $tmpext);
 
 sub usage
 {
-    die <<EOM;
+	die <<EOM;
 Usage: perl -I [directory of Catalog.pm] Gen_fmgrtab.pl [path to pg_proc.h]
 
 Gen_fmgrtab.pl generates fmgroids.h and fmgrtab.c from pg_proc.h

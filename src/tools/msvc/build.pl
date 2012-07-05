@@ -5,7 +5,7 @@
 BEGIN
 {
 
-	chdir("../../..") if  (-d "../msvc" && -d "../../../src");
+	chdir("../../..") if (-d "../msvc" && -d "../../../src");
 
 }
 
@@ -37,8 +37,8 @@ my $vcver = Mkvcbuild::mkvcbuild($config);
 
 # check what sort of build we are doing
 
-my $bconf = $ENV{CONFIG} || "Release";
-my $buildwhat = $ARGV[1] || "";
+my $bconf     = $ENV{CONFIG} || "Release";
+my $buildwhat = $ARGV[1]     || "";
 if ($ARGV[0] eq 'DEBUG')
 {
 	$bconf = "Debug";
@@ -52,7 +52,8 @@ elsif ($ARGV[0] ne "RELEASE")
 
 if ($buildwhat and $vcver eq '10.00')
 {
-	system("msbuild $buildwhat.vcxproj /verbosity:detailed /p:Configuration=$bconf");
+	system(
+"msbuild $buildwhat.vcxproj /verbosity:detailed /p:Configuration=$bconf");
 }
 elsif ($buildwhat)
 {

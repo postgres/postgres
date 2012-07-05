@@ -32,11 +32,10 @@ GetOptions(
 	'prefix=s'  => \my $opt_prefix,
 	'name=s'    => \my $opt_name,
 	'strip=s'   => \my $opt_strip,
-	'selftest!' => sub { exit selftest() },
-) or exit 1;
+	'selftest!' => sub { exit selftest() },) or exit 1;
 
 die "No text files specified"
-	unless @ARGV;
+  unless @ARGV;
 
 print qq{
 /*
@@ -45,17 +44,19 @@ print qq{
  */
 };
 
-for my $src_file (@ARGV) {
+for my $src_file (@ARGV)
+{
 
 	(my $macro = $src_file) =~ s/ .*? (\w+) (?:\.\w+) $/$1/x;
 
-	open my $src_fh, $src_file # not 3-arg form
-		or die "Can't open $src_file: $!";
+	open my $src_fh, $src_file    # not 3-arg form
+	  or die "Can't open $src_file: $!";
 
 	printf qq{#define %s%s \\\n},
-		$opt_prefix || '',
-		($opt_name) ? $opt_name : uc $macro;
-	while (<$src_fh>) {
+	  $opt_prefix || '',
+	  ($opt_name) ? $opt_name : uc $macro;
+	while (<$src_fh>)
+	{
 		chomp;
 
 		next if $opt_strip and m/$opt_strip/o;
@@ -74,8 +75,9 @@ print "/* end */\n";
 exit 0;
 
 
-sub selftest {
-	my $tmp = "text2macro_tmp";
+sub selftest
+{
+	my $tmp    = "text2macro_tmp";
 	my $string = q{a '' '\\'' "" "\\"" "\\\\" "\\\\n" b};
 
 	open my $fh, ">$tmp.pl" or die;

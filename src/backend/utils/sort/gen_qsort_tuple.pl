@@ -32,16 +32,16 @@ my $CMPPARAMS;
 
 emit_qsort_boilerplate();
 
-$SUFFIX = 'tuple';
-$EXTRAARGS = ', SortTupleComparator cmp_tuple, Tuplesortstate *state';
+$SUFFIX      = 'tuple';
+$EXTRAARGS   = ', SortTupleComparator cmp_tuple, Tuplesortstate *state';
 $EXTRAPARAMS = ', cmp_tuple, state';
-$CMPPARAMS = ', state';
+$CMPPARAMS   = ', state';
 emit_qsort_implementation();
 
-$SUFFIX = 'ssup';
-$EXTRAARGS = ', SortSupport ssup';
+$SUFFIX      = 'ssup';
+$EXTRAARGS   = ', SortSupport ssup';
 $EXTRAPARAMS = ', ssup';
-$CMPPARAMS = ', ssup';
+$CMPPARAMS   = ', ssup';
 print <<'EOM';
 #define cmp_ssup(a, b, ssup) \
 	ApplySortComparator((a)->datum1, (a)->isnull1, \

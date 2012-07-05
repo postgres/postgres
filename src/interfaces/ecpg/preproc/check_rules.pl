@@ -6,7 +6,7 @@
 # Copyright (c) 2009-2012, PostgreSQL Global Development Group
 #
 # Written by Michael Meskes <meskes@postgresql.org>
-#            Andy Colson <andy@squeakycode.net>   
+#            Andy Colson <andy@squeakycode.net>
 #
 # Placed under the same license as PostgreSQL.
 #
@@ -25,7 +25,7 @@ if ($ARGV[0] eq '-v')
 {
 	$verbose = shift;
 }
-my $path = shift || '.';
+my $path   = shift || '.';
 my $parser = shift || '../../../backend/parser/gram.y';
 
 my $filename = $path . "/ecpg.addons";
@@ -37,32 +37,31 @@ if ($verbose)
 
 my %replace_line = (
 	'ExecuteStmtEXECUTEnameexecute_param_clause' =>
-		'EXECUTE prepared_name execute_param_clause execute_rest',
+	  'EXECUTE prepared_name execute_param_clause execute_rest',
 
-	'ExecuteStmtCREATEOptTempTABLEcreate_as_targetASEXECUTEnameexecute_param_clause' =>
-		'CREATE OptTemp TABLE create_as_target AS EXECUTE prepared_name execute_param_clause',
+'ExecuteStmtCREATEOptTempTABLEcreate_as_targetASEXECUTEnameexecute_param_clause'
+	  => 'CREATE OptTemp TABLE create_as_target AS EXECUTE prepared_name execute_param_clause',
 
 	'PrepareStmtPREPAREnameprep_type_clauseASPreparableStmt' =>
-		'PREPARE prepared_name prep_type_clause AS PreparableStmt'
-);
+	  'PREPARE prepared_name prep_type_clause AS PreparableStmt');
 
 my $block        = '';
 my $yaccmode     = 0;
 my $brace_indent = 0;
 my (@arr, %found);
-my $comment = 0;
+my $comment     = 0;
 my $non_term_id = '';
-my $cc = 0;
+my $cc          = 0;
 
 open GRAM, $parser or die $!;
-while (<GRAM>) 
+while (<GRAM>)
 {
-	if (/^%%/) 
+	if (/^%%/)
 	{
 		$yaccmode++;
 	}
 
-	if ( $yaccmode != 1 ) 
+	if ($yaccmode != 1)
 	{
 		next;
 	}
@@ -80,50 +79,51 @@ while (<GRAM>)
 	s|\*\/| */ |g;
 
 	# Now split the line into individual fields
-	my $n = ( @arr = split( ' ' ) );
+	my $n = (@arr = split(' '));
 
 	# Go through each field in turn
-	for ( my $fieldIndexer = 0 ; $fieldIndexer < $n ; $fieldIndexer++ ) 
+	for (my $fieldIndexer = 0; $fieldIndexer < $n; $fieldIndexer++)
 	{
-		if ( $arr[$fieldIndexer] eq '*/' && $comment ) 
+		if ($arr[$fieldIndexer] eq '*/' && $comment)
 		{
 			$comment = 0;
 			next;
 		}
-		elsif ($comment) 
+		elsif ($comment)
 		{
 			next;
 		}
-		elsif ( $arr[$fieldIndexer] eq '/*' ) 
+		elsif ($arr[$fieldIndexer] eq '/*')
 		{
+
 			# start of a multiline comment
 			$comment = 1;
 			next;
 		}
-		elsif ( $arr[$fieldIndexer] eq '//' ) 
+		elsif ($arr[$fieldIndexer] eq '//')
 		{
 			next;
 		}
-		elsif ( $arr[$fieldIndexer] eq '}' ) 
+		elsif ($arr[$fieldIndexer] eq '}')
 		{
 			$brace_indent--;
 			next;
 		}
-		elsif ( $arr[$fieldIndexer] eq '{' ) 
+		elsif ($arr[$fieldIndexer] eq '{')
 		{
 			$brace_indent++;
 			next;
 		}
 
-		if ( $brace_indent > 0 ) 
+		if ($brace_indent > 0)
 		{
 			next;
 		}
 
-		if ( $arr[$fieldIndexer] eq ';' || $arr[$fieldIndexer] eq '|' ) 
+		if ($arr[$fieldIndexer] eq ';' || $arr[$fieldIndexer] eq '|')
 		{
 			$block = $non_term_id . $block;
-			if ( $replace_line{$block} ) 
+			if ($replace_line{$block})
 			{
 				$block = $non_term_id . $replace_line{$block};
 				$block =~ tr/ |//d;
@@ -132,13 +132,13 @@ while (<GRAM>)
 			$cc++;
 			$block = '';
 		}
-		elsif ( ( $arr[$fieldIndexer] =~ '[A-Za-z0-9]+:' )
-			|| $arr[ $fieldIndexer + 1 ] eq ':' )
+		elsif (($arr[$fieldIndexer] =~ '[A-Za-z0-9]+:')
+			|| $arr[ $fieldIndexer + 1 ] eq ':')
 		{
 			$non_term_id = $arr[$fieldIndexer];
 			$non_term_id =~ tr/://d;
 		}
-		else 
+		else
 		{
 			$block = $block . $arr[$fieldIndexer];
 		}
@@ -155,16 +155,16 @@ my $ret = 0;
 $cc = 0;
 
 open ECPG, $filename or die $!;
-while (<ECPG>) 
+while (<ECPG>)
 {
-	if ( !/^ECPG:/ ) 
+	if (!/^ECPG:/)
 	{
 		next;
 	}
 
-	my @Fld = split( ' ', $_, 3 );
+	my @Fld = split(' ', $_, 3);
 	$cc++;
-	if ( not exists $found{ $Fld[1] } ) 
+	if (not exists $found{ $Fld[1] })
 	{
 		print $Fld[1], " is not used for building parser!\n";
 		$ret = 1;
