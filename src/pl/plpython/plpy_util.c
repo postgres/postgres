@@ -120,16 +120,7 @@ PLyUnicode_Bytes(PyObject *unicode)
 
 	rv = PyUnicode_AsEncodedString(unicode, serverenc, "strict");
 	if (rv == NULL)
-	{
-		/*
-		 * Use a plain ereport instead of PLy_elog to avoid recursion, if
-		 * the traceback formatting functions try to do unicode to bytes
-		 * conversion again.
-		 */
-		ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("could not convert Python Unicode object to PostgreSQL server encoding")));
-	}
+		PLy_elog(ERROR, "could not convert Python Unicode object to PostgreSQL server encoding");
 	return rv;
 }
 
