@@ -37,16 +37,16 @@ sub wanted
 
 	# skip file names with binary extensions
 	# How are these updated?  bjm 2012-01-02
-	return
-	  if (
-		$_ =~ m/\.(ico|bin)$);
+	return if ($_ =~ m/\.(ico|bin)$/);
 
-    my @lines;
-    tie @lines, "Tie::File", $File::Find::name;
+	my @lines;
+	tie @lines, "Tie::File", $File::Find::name;
 
-    foreach my $line (@lines) {
-        # We only care about lines with a copyright notice.
-        next unless $line =~ m/$cc . *$pgdg /;
+	foreach my $line (@lines)
+	{
+
+		# We only care about lines with a copyright notice.
+		next unless $line =~ m/$cc . *$pgdg /;
 
 		# We stop when we've done one substitution.  This is both for
 		# efficiency and, at least in the case of this program, for
