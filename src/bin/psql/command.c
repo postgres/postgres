@@ -2052,10 +2052,10 @@ process_file(char *filename, bool single_txn, bool use_relative_path)
 		 * relative pathname, then prepend all but the last pathname component
 		 * of the current script to this pathname.
 		 */
-		if (use_relative_path && pset.inputfile && !is_absolute_path(filename)
-			&& !has_drive_prefix(filename))
+		if (use_relative_path && pset.inputfile &&
+			!is_absolute_path(filename) && !has_drive_prefix(filename))
 		{
-			snprintf(relpath, MAXPGPATH, "%s", pset.inputfile);
+			strlcpy(relpath, pset.inputfile, sizeof(relpath));
 			get_parent_directory(relpath);
 			join_path_components(relpath, relpath, filename);
 			canonicalize_path(relpath);
