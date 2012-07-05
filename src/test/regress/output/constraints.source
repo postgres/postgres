@@ -343,7 +343,6 @@ SELECT * FROM COPY_TBL;
 -- Primary keys
 --
 CREATE TABLE PRIMARY_TBL (i int PRIMARY KEY, t text);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "primary_tbl_pkey" for table "primary_tbl"
 INSERT INTO PRIMARY_TBL VALUES (1, 'one');
 INSERT INTO PRIMARY_TBL VALUES (2, 'two');
 INSERT INTO PRIMARY_TBL VALUES (1, 'three');
@@ -366,7 +365,6 @@ SELECT '' AS four, * FROM PRIMARY_TBL;
 DROP TABLE PRIMARY_TBL;
 CREATE TABLE PRIMARY_TBL (i int, t text,
 	PRIMARY KEY(i,t));
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "primary_tbl_pkey" for table "primary_tbl"
 INSERT INTO PRIMARY_TBL VALUES (1, 'one');
 INSERT INTO PRIMARY_TBL VALUES (2, 'two');
 INSERT INTO PRIMARY_TBL VALUES (1, 'three');
@@ -390,7 +388,6 @@ DROP TABLE PRIMARY_TBL;
 -- Unique keys
 --
 CREATE TABLE UNIQUE_TBL (i int UNIQUE, t text);
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "unique_tbl_i_key" for table "unique_tbl"
 INSERT INTO UNIQUE_TBL VALUES (1, 'one');
 INSERT INTO UNIQUE_TBL VALUES (2, 'two');
 INSERT INTO UNIQUE_TBL VALUES (1, 'three');
@@ -414,7 +411,6 @@ SELECT '' AS five, * FROM UNIQUE_TBL;
 DROP TABLE UNIQUE_TBL;
 CREATE TABLE UNIQUE_TBL (i int, t text,
 	UNIQUE(i,t));
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "unique_tbl_i_t_key" for table "unique_tbl"
 INSERT INTO UNIQUE_TBL VALUES (1, 'one');
 INSERT INTO UNIQUE_TBL VALUES (2, 'two');
 INSERT INTO UNIQUE_TBL VALUES (1, 'three');
@@ -438,7 +434,6 @@ DROP TABLE UNIQUE_TBL;
 -- Deferrable unique constraints
 --
 CREATE TABLE unique_tbl (i int UNIQUE DEFERRABLE, t text);
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "unique_tbl_i_key" for table "unique_tbl"
 INSERT INTO unique_tbl VALUES (0, 'one');
 INSERT INTO unique_tbl VALUES (1, 'two');
 INSERT INTO unique_tbl VALUES (2, 'tree');
@@ -482,7 +477,6 @@ SELECT * FROM unique_tbl;
 ALTER TABLE unique_tbl DROP CONSTRAINT unique_tbl_i_key;
 ALTER TABLE unique_tbl ADD CONSTRAINT unique_tbl_i_key
 	UNIQUE (i) DEFERRABLE INITIALLY DEFERRED;
-NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "unique_tbl_i_key" for table "unique_tbl"
 BEGIN;
 INSERT INTO unique_tbl VALUES (1, 'five');
 INSERT INTO unique_tbl VALUES (5, 'one');
@@ -578,7 +572,6 @@ CREATE TABLE circles (
     (c1 WITH &&, (c2::circle) WITH &&)
     WHERE (circle_center(c1) <> '(0,0)')
 );
-NOTICE:  CREATE TABLE / EXCLUDE will create implicit index "circles_c1_c2_excl" for table "circles"
 -- these should succeed because they don't match the index predicate
 INSERT INTO circles VALUES('<(0,0), 5>', '<(0,0), 5>');
 INSERT INTO circles VALUES('<(0,0), 5>', '<(0,0), 4>');
@@ -595,7 +588,6 @@ INSERT INTO circles VALUES('<(20,20), 10>', '<(10,10), 5>');
 -- should fail on existing data without the WHERE clause
 ALTER TABLE circles ADD EXCLUDE USING gist
   (c1 WITH &&, (c2::circle) WITH &&);
-NOTICE:  ALTER TABLE / ADD EXCLUDE will create implicit index "circles_c1_c2_excl1" for table "circles"
 ERROR:  could not create exclusion constraint "circles_c1_c2_excl1"
 DETAIL:  Key (c1, (c2::circle))=(<(0,0),5>, <(0,0),5>) conflicts with key (c1, (c2::circle))=(<(0,0),5>, <(0,0),4>).
 -- try reindexing an existing constraint
@@ -606,7 +598,6 @@ CREATE TABLE deferred_excl (
   f1 int,
   CONSTRAINT deferred_excl_con EXCLUDE (f1 WITH =) INITIALLY DEFERRED
 );
-NOTICE:  CREATE TABLE / EXCLUDE will create implicit index "deferred_excl_con" for table "deferred_excl"
 INSERT INTO deferred_excl VALUES(1);
 INSERT INTO deferred_excl VALUES(2);
 INSERT INTO deferred_excl VALUES(1); -- fail
@@ -627,7 +618,6 @@ ALTER TABLE deferred_excl DROP CONSTRAINT deferred_excl_con;
 -- This should fail, but worth testing because of HOT updates
 UPDATE deferred_excl SET f1 = 3;
 ALTER TABLE deferred_excl ADD EXCLUDE (f1 WITH =);
-NOTICE:  ALTER TABLE / ADD EXCLUDE will create implicit index "deferred_excl_f1_excl" for table "deferred_excl"
 ERROR:  could not create exclusion constraint "deferred_excl_f1_excl"
 DETAIL:  Key (f1)=(3) conflicts with key (f1)=(3).
 DROP TABLE deferred_excl;

@@ -529,8 +529,6 @@ ALTER TABLE main_table DROP COLUMN b;
 rollback;
 -- Test enable/disable triggers
 create table trigtest (i serial primary key);
-NOTICE:  CREATE TABLE will create implicit sequence "trigtest_i_seq" for serial column "trigtest.i"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "trigtest_pkey" for table "trigtest"
 -- test that disabling RI triggers works
 create table trigtest2 (i int references trigtest(i) on delete cascade);
 create function trigtest() returns trigger as $$
@@ -1155,9 +1153,6 @@ CREATE TABLE country_table (
     country_name    text unique not null,
     continent        text not null
 );
-NOTICE:  CREATE TABLE will create implicit sequence "country_table_country_id_seq" for serial column "country_table.country_id"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "country_table_pkey" for table "country_table"
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "country_table_country_name_key" for table "country_table"
 INSERT INTO country_table (country_name, continent)
     VALUES ('Japan', 'Asia'),
            ('UK', 'Europe'),
@@ -1176,8 +1171,6 @@ CREATE TABLE city_table (
     population    bigint,
     country_id    int references country_table
 );
-NOTICE:  CREATE TABLE will create implicit sequence "city_table_city_id_seq" for serial column "city_table.city_id"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "city_table_pkey" for table "city_table"
 CREATE VIEW city_view AS
     SELECT city_id, city_name, population, country_name, continent
     FROM city_table ci
@@ -1445,11 +1438,8 @@ drop cascades to view european_city_view
 DROP TABLE country_table;
 -- Test pg_trigger_depth()
 create table depth_a (id int not null primary key);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "depth_a_pkey" for table "depth_a"
 create table depth_b (id int not null primary key);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "depth_b_pkey" for table "depth_b"
 create table depth_c (id int not null primary key);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "depth_c_pkey" for table "depth_c"
 create function depth_a_tf() returns trigger
   language plpgsql as $$
 begin

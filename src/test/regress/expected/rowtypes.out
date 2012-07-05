@@ -305,8 +305,6 @@ CREATE TABLE price (
     active BOOLEAN NOT NULL,
     price NUMERIC
 );
-NOTICE:  CREATE TABLE will create implicit sequence "price_id_seq" for serial column "price.id"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "price_pkey" for table "price"
 CREATE TYPE price_input AS (
     id INTEGER,
     price NUMERIC

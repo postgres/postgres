@@ -1260,7 +1260,6 @@ CREATE TABLE customer (
        tel      text,
        passwd	text
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "customer_pkey" for table "customer"
 CREATE TABLE credit_card (
        cid      int references customer(cid),
        cnum     text,

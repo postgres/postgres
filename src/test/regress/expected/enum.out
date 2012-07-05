@@ -516,7 +516,6 @@ DROP FUNCTION echo_me(rainbow);
 -- RI triggers on enum types
 --
 CREATE TABLE enumtest_parent (id rainbow PRIMARY KEY);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "enumtest_parent_pkey" for table "enumtest_parent"
 CREATE TABLE enumtest_child (parent rainbow REFERENCES enumtest_parent);
 INSERT INTO enumtest_parent VALUES ('red');
 INSERT INTO enumtest_child VALUES ('red');

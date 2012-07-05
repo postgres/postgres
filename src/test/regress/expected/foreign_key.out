@@ -6,7 +6,6 @@
 -- First test, check and cascade
 --
 CREATE TABLE PKTABLE ( ptest1 int PRIMARY KEY, ptest2 text );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE FKTABLE ( ftest1 int REFERENCES PKTABLE MATCH FULL ON DELETE CASCADE ON UPDATE CASCADE, ftest2 int );
 -- Insert test data into PKTABLE
 INSERT INTO PKTABLE VALUES (1, 'Test1');
@@ -61,7 +60,6 @@ DROP TABLE PKTABLE;
 -- check set NULL and table constraint on multiple columns
 --
 CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 text, PRIMARY KEY(ptest1, ptest2) );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE FKTABLE ( ftest1 int, ftest2 int, ftest3 int, CONSTRAINT constrname FOREIGN KEY(ftest1, ftest2)
                        REFERENCES PKTABLE MATCH FULL ON DELETE SET NULL ON UPDATE SET NULL);
 -- Test comments
@@ -174,7 +172,6 @@ DROP TABLE FKTABLE;
 -- check set default and table constraint on multiple columns
 --
 CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 text, PRIMARY KEY(ptest1, ptest2) );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE FKTABLE ( ftest1 int DEFAULT -1, ftest2 int DEFAULT -2, ftest3 int, CONSTRAINT constrname2 FOREIGN KEY(ftest1, ftest2)
                        REFERENCES PKTABLE MATCH FULL ON DELETE SET DEFAULT ON UPDATE SET DEFAULT);
 -- Insert a value in PKTABLE for default
@@ -267,7 +264,6 @@ DROP TABLE FKTABLE;
 -- First test, check with no on delete or on update
 --
 CREATE TABLE PKTABLE ( ptest1 int PRIMARY KEY, ptest2 text );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE FKTABLE ( ftest1 int REFERENCES PKTABLE MATCH FULL, ftest2 int );
 -- Insert test data into PKTABLE
 INSERT INTO PKTABLE VALUES (1, 'Test1');
@@ -342,7 +338,6 @@ DROP TABLE PKTABLE;
 -- MATCH SIMPLE
 -- Base test restricting update/delete
 CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 int, ptest4 text, PRIMARY KEY(ptest1, ptest2, ptest3) );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE FKTABLE ( ftest1 int, ftest2 int, ftest3 int, ftest4 int,  CONSTRAINT constrname3
 			FOREIGN KEY(ftest1, ftest2, ftest3) REFERENCES PKTABLE);
 -- Insert Primary Key values
@@ -406,7 +401,6 @@ DROP TABLE FKTABLE;
 DROP TABLE PKTABLE;
 -- cascade update/delete
 CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 int, ptest4 text, PRIMARY KEY(ptest1, ptest2, ptest3) );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE FKTABLE ( ftest1 int, ftest2 int, ftest3 int, ftest4 int,  CONSTRAINT constrname3
 			FOREIGN KEY(ftest1, ftest2, ftest3) REFERENCES PKTABLE
 			ON DELETE CASCADE ON UPDATE CASCADE);
@@ -503,7 +497,6 @@ DROP TABLE FKTABLE;
 DROP TABLE PKTABLE;
 -- set null update / set default delete
 CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 int, ptest4 text, PRIMARY KEY(ptest1, ptest2, ptest3) );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE FKTABLE ( ftest1 int DEFAULT 0, ftest2 int, ftest3 int, ftest4 int,  CONSTRAINT constrname3
 			FOREIGN KEY(ftest1, ftest2, ftest3) REFERENCES PKTABLE
 			ON DELETE SET DEFAULT ON UPDATE SET NULL);
@@ -607,7 +600,6 @@ DROP TABLE FKTABLE;
 DROP TABLE PKTABLE;
 -- set default update / set null delete
 CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 int, ptest4 text, PRIMARY KEY(ptest1, ptest2, ptest3) );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE FKTABLE ( ftest1 int DEFAULT 0, ftest2 int DEFAULT -1, ftest3 int DEFAULT -2, ftest4 int, CONSTRAINT constrname3
 			FOREIGN KEY(ftest1, ftest2, ftest3) REFERENCES PKTABLE
 			ON DELETE SET NULL ON UPDATE SET DEFAULT);
@@ -724,7 +716,6 @@ SELECT * from FKTABLE;
 DROP TABLE FKTABLE;
 DROP TABLE PKTABLE;
 CREATE TABLE PKTABLE (ptest1 int PRIMARY KEY);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE FKTABLE_FAIL1 ( ftest1 int, CONSTRAINT fkfail1 FOREIGN KEY (ftest2) REFERENCES PKTABLE);
 ERROR:  column "ftest2" referenced in foreign key constraint does not exist
 CREATE TABLE FKTABLE_FAIL2 ( ftest1 int, CONSTRAINT fkfail1 FOREIGN KEY (ftest1) REFERENCES PKTABLE(ptest2));
@@ -736,7 +727,6 @@ ERROR:  table "fktable_fail2" does not exist
 DROP TABLE PKTABLE;
 -- Test for referencing column number smaller than referenced constraint
 CREATE TABLE PKTABLE (ptest1 int, ptest2 int, UNIQUE(ptest1, ptest2));
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "pktable_ptest1_ptest2_key" for table "pktable"
 CREATE TABLE FKTABLE_FAIL1 (ftest1 int REFERENCES pktable(ptest1));
 ERROR:  there is no unique constraint matching given keys for referenced table "pktable"
 DROP TABLE FKTABLE_FAIL1;
@@ -747,7 +737,6 @@ DROP TABLE PKTABLE;
 --
 -- Basic one column, two table setup
 CREATE TABLE PKTABLE (ptest1 int PRIMARY KEY);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 INSERT INTO PKTABLE VALUES(42);
 -- This next should fail, because int=inet does not exist
 CREATE TABLE FKTABLE (ftest1 inet REFERENCES pktable);
@@ -781,7 +770,6 @@ DROP TABLE PKTABLE;
 -- On the other hand, this should work because int implicitly promotes to
 -- numeric, and we allow promotion on the FK side
 CREATE TABLE PKTABLE (ptest1 numeric PRIMARY KEY);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 INSERT INTO PKTABLE VALUES(42);
 CREATE TABLE FKTABLE (ftest1 int REFERENCES pktable);
 -- Check it actually works
@@ -797,7 +785,6 @@ DROP TABLE FKTABLE;
 DROP TABLE PKTABLE;
 -- Two columns, two tables
 CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, PRIMARY KEY(ptest1, ptest2));
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 -- This should fail, because we just chose really odd types
 CREATE TABLE FKTABLE (ftest1 cidr, ftest2 timestamp, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable);
 ERROR:  foreign key constraint "fktable_ftest1_fkey" cannot be implemented
@@ -829,29 +816,24 @@ DROP TABLE PKTABLE;
 -- Make sure this still works...
 CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, ptest3 int, ptest4 inet, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest3,
 ptest4) REFERENCES pktable(ptest1, ptest2));
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 DROP TABLE PKTABLE;
 -- And this,
 CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, ptest3 int, ptest4 inet, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest3,
 ptest4) REFERENCES pktable);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 DROP TABLE PKTABLE;
 -- This shouldn't (mixed up columns)
 CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, ptest3 int, ptest4 inet, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest3,
 ptest4) REFERENCES pktable(ptest2, ptest1));
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 ERROR:  foreign key constraint "pktable_ptest3_fkey" cannot be implemented
 DETAIL:  Key columns "ptest3" and "ptest2" are of incompatible types: integer and inet.
 -- Nor should this... (same reason, we have 4,3 referencing 1,2 which mismatches types
 CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, ptest3 int, ptest4 inet, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest4,
 ptest3) REFERENCES pktable(ptest1, ptest2));
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 ERROR:  foreign key constraint "pktable_ptest4_fkey" cannot be implemented
 DETAIL:  Key columns "ptest4" and "ptest1" are of incompatible types: inet and integer.
 -- Not this one either... Same as the last one except we didn't defined the columns being referenced.
 CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, ptest3 int, ptest4 inet, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest4,
 ptest3) REFERENCES pktable);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 ERROR:  foreign key constraint "pktable_ptest4_fkey" cannot be implemented
 DETAIL:  Key columns "ptest4" and "ptest1" are of incompatible types: inet and integer.
 --
@@ -859,8 +841,6 @@ DETAIL:  Key columns "ptest4" and "ptest1" are of incompatible types: inet and i
 -- Basic 2 table case: 1 column of matching types.
 create table pktable_base (base1 int not null);
 create table pktable (ptest1 int, primary key(base1), unique(base1, ptest1)) inherits (pktable_base);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "pktable_base1_ptest1_key" for table "pktable"
 create table fktable (ftest1 int references pktable(base1));
 -- now some ins, upd, del
 insert into pktable(base1) values (1);
@@ -921,7 +901,6 @@ drop table pktable_base;
 create table pktable_base(base1 int not null, base2 int);
 create table pktable(ptest1 int, ptest2 int, primary key(base1, ptest1), foreign key(base2, ptest2) references
                                              pktable(base1, ptest1)) inherits (pktable_base);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 insert into pktable (base1, ptest1, base2, ptest2) values (1, 1, 1, 1);
 insert into pktable (base1, ptest1, base2, ptest2) values (2, 1, 1, 1);
 insert into pktable (base1, ptest1, base2, ptest2) values (2, 2, 2, 1);
@@ -946,7 +925,6 @@ drop table pktable_base;
 -- 2 columns (2 tables), mismatched types
 create table pktable_base(base1 int not null);
 create table pktable(ptest1 inet, primary key(base1, ptest1)) inherits (pktable_base);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 -- just generally bad types (with and without column references on the referenced table)
 create table fktable(ftest1 cidr, ftest2 int[], foreign key (ftest1, ftest2) references pktable);
 ERROR:  foreign key constraint "fktable_ftest1_fkey" cannot be implemented
@@ -970,22 +948,18 @@ drop table pktable_base;
 create table pktable_base(base1 int not null, base2 int);
 create table pktable(ptest1 inet, ptest2 inet[], primary key(base1, ptest1), foreign key(base2, ptest2) references
                                              pktable(base1, ptest1)) inherits (pktable_base);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 ERROR:  foreign key constraint "pktable_base2_fkey" cannot be implemented
 DETAIL:  Key columns "ptest2" and "ptest1" are of incompatible types: inet[] and inet.
 create table pktable(ptest1 inet, ptest2 inet, primary key(base1, ptest1), foreign key(base2, ptest2) references
                                              pktable(ptest1, base1)) inherits (pktable_base);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 ERROR:  foreign key constraint "pktable_base2_fkey" cannot be implemented
 DETAIL:  Key columns "base2" and "ptest1" are of incompatible types: integer and inet.
 create table pktable(ptest1 inet, ptest2 inet, primary key(base1, ptest1), foreign key(ptest2, base2) references
                                              pktable(base1, ptest1)) inherits (pktable_base);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 ERROR:  foreign key constraint "pktable_ptest2_fkey" cannot be implemented
 DETAIL:  Key columns "ptest2" and "base1" are of incompatible types: inet and integer.
 create table pktable(ptest1 inet, ptest2 inet, primary key(base1, ptest1), foreign key(ptest2, base2) references
                                              pktable(base1, ptest1)) inherits (pktable_base);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 ERROR:  foreign key constraint "pktable_ptest2_fkey" cannot be implemented
 DETAIL:  Key columns "ptest2" and "base1" are of incompatible types: inet and integer.
 drop table pktable;
@@ -1000,12 +974,10 @@ CREATE TABLE pktable (
 	id		INT4 PRIMARY KEY,
 	other	INT4
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE fktable (
 	id		INT4 PRIMARY KEY,
 	fk		INT4 REFERENCES pktable DEFERRABLE
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "fktable_pkey" for table "fktable"
 -- default to immediate: should fail
 INSERT INTO fktable VALUES (5, 10);
 ERROR:  insert or update on table "fktable" violates foreign key constraint "fktable_fk_fkey"
@@ -1022,12 +994,10 @@ CREATE TABLE pktable (
 	id		INT4 PRIMARY KEY,
 	other	INT4
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE fktable (
 	id		INT4 PRIMARY KEY,
 	fk		INT4 REFERENCES pktable DEFERRABLE INITIALLY DEFERRED
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "fktable_pkey" for table "fktable"
 -- default to deferred, should succeed
 BEGIN;
 INSERT INTO fktable VALUES (100, 200);
@@ -1050,12 +1020,10 @@ CREATE TABLE pktable (
 	id		INT4 PRIMARY KEY,
 	other	INT4
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE fktable (
 	id		INT4 PRIMARY KEY,
 	fk		INT4 REFERENCES pktable DEFERRABLE
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "fktable_pkey" for table "fktable"
 BEGIN;
 SET CONSTRAINTS ALL DEFERRED;
 -- should succeed, for now
@@ -1073,12 +1041,10 @@ CREATE TABLE pktable (
 	id		INT4 PRIMARY KEY,
 	other	INT4
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE fktable (
 	id		INT4 PRIMARY KEY,
 	fk		INT4 REFERENCES pktable DEFERRABLE INITIALLY DEFERRED
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "fktable_pkey" for table "fktable"
 BEGIN;
 -- no error here
 INSERT INTO fktable VALUES (100, 200);
@@ -1095,10 +1061,6 @@ CREATE TEMP TABLE pktable (
         id3     REAL UNIQUE,
         UNIQUE(id1, id2, id3)
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "pktable_id2_key" for table "pktable"
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "pktable_id3_key" for table "pktable"
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "pktable_id1_id2_id3_key" for table "pktable"
 CREATE TEMP TABLE fktable (
         x1      INT4 REFERENCES pktable(id1),
         x2      VARCHAR(4) REFERENCES pktable(id2),
@@ -1166,12 +1128,10 @@ CREATE TEMP TABLE pktable (
     id int primary key,
     other int
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TEMP TABLE fktable (
     id int primary key,
     fk int references pktable deferrable initially deferred
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "fktable_pkey" for table "fktable"
 INSERT INTO pktable VALUES (5, 10);
 BEGIN;
 -- doesn't match PK, but no error yet
@@ -1226,7 +1186,6 @@ CREATE TEMP TABLE users (
   id INT PRIMARY KEY,
   name VARCHAR NOT NULL
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "users_pkey" for table "users"
 INSERT INTO users VALUES (1, 'Jozko');
 INSERT INTO users VALUES (2, 'Ferko');
 INSERT INTO users VALUES (3, 'Samko');
@@ -1236,7 +1195,6 @@ CREATE TEMP TABLE tasks (
   worker INT REFERENCES users ON UPDATE CASCADE ON DELETE SET NULL,
   checked_by INT REFERENCES users ON UPDATE CASCADE ON DELETE SET NULL
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "tasks_pkey" for table "tasks"
 INSERT INTO tasks VALUES (1,1,NULL,NULL);
 INSERT INTO tasks VALUES (2,2,2,NULL);
 INSERT INTO tasks VALUES (3,3,3,3);
@@ -1296,7 +1254,6 @@ create temp table selfref (
     foreign key (b) references selfref (a)
         on update cascade on delete cascade
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "selfref_pkey" for table "selfref"
 insert into selfref (a, b)
 values
     (0, 0),
@@ -1323,7 +1280,6 @@ commit;
 -- Test that SET DEFAULT actions recognize updates to default values
 --
 create temp table defp (f1 int primary key);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "defp_pkey" for table "defp"
 create temp table defc (f1 int default 0
                         references defp on delete set default);
 insert into defp values (0), (1), (2);
@@ -1359,7 +1315,6 @@ DETAIL:  Key (f1)=(1) is still referenced from table "defc".
 -- Test the difference between NO ACTION and RESTRICT
 --
 create temp table pp (f1 int primary key);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pp_pkey" for table "pp"
 create temp table cc (f1 int references pp on update no action);
 insert into pp values(12);
 insert into pp values(11);
@@ -1371,7 +1326,6 @@ ERROR:  update or delete on table "pp" violates foreign key constraint "cc_f1_fk
 DETAIL:  Key (f1)=(13) is still referenced from table "cc".
 drop table pp, cc;
 create temp table pp (f1 int primary key);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pp_pkey" for table "pp"
 create temp table cc (f1 int references pp on update restrict);
 insert into pp values(12);
 insert into pp values(11);

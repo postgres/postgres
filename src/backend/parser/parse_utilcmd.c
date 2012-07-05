@@ -379,7 +379,7 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 								   "seq",
 								   snamespaceid);
 
-		ereport(NOTICE,
+		ereport(DEBUG1,
 				(errmsg("%s will create implicit sequence \"%s\" for serial column \"%s.%s\"",
 						cxt->stmtType, sname,
 						cxt->relation->relname, column->colname)));

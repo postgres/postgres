@@ -557,7 +557,6 @@ SET enable_seqscan TO 0;
 SET enable_hashjoin TO 0;
 SET enable_nestloop TO 0;
 CREATE TABLE collate_test20 (f1 text COLLATE "C" PRIMARY KEY);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "collate_test20_pkey" for table "collate_test20"
 INSERT INTO collate_test20 VALUES ('foo'), ('bar');
 CREATE TABLE collate_test21 (f2 text COLLATE "POSIX" REFERENCES collate_test20);
 INSERT INTO collate_test21 VALUES ('foo'), ('bar');

@@ -384,7 +384,6 @@ SELECT * FROM subtransaction_tbl;
 
 TRUNCATE subtransaction_tbl;
 ALTER TABLE subtransaction_tbl ADD PRIMARY KEY (i);
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "subtransaction_tbl_pkey" for table "subtransaction_tbl"
 CREATE FUNCTION pk_violation_inside_subtransaction() RETURNS void
 AS $$
 with plpy.subtransaction():

@@ -58,7 +58,6 @@ select foot.fooid, foot.f2 from foot(sin(pi()/2)::int) ORDER BY 1,2;
 (2 rows)
 
 CREATE TABLE foo (fooid int, foosubid int, fooname text, primary key(fooid,foosubid));
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "foo_pkey" for table "foo"
 INSERT INTO foo VALUES(1,1,'Joe');
 INSERT INTO foo VALUES(1,2,'Ed');
 INSERT INTO foo VALUES(2,1,'Mary');
@@ -230,7 +229,6 @@ DROP TABLE foo2;
 DROP TABLE foo;
 -- Rescan tests --
 CREATE TABLE foorescan (fooid int, foosubid int, fooname text, primary key(fooid,foosubid));
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "foorescan_pkey" for table "foorescan"
 INSERT INTO foorescan values(5000,1,'abc.5000.1');
 INSERT INTO foorescan values(5001,1,'abc.5001.1');
 INSERT INTO foorescan values(5002,1,'abc.5002.1');
@@ -316,7 +314,6 @@ SELECT * FROM foorescan f WHERE f.fooid IN (SELECT fooid FROM vw_foorescan) ORDE
 (10 rows)
 
 CREATE TABLE barrescan (fooid int primary key);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "barrescan_pkey" for table "barrescan"
 INSERT INTO barrescan values(5003);
 INSERT INTO barrescan values(5004);
 INSERT INTO barrescan values(5005);
@@ -579,7 +576,6 @@ DROP FUNCTION foo(int);
 -- some tests on SQL functions with RETURNING
 --
 create temp table tt(f1 serial, data text);
-NOTICE:  CREATE TABLE will create implicit sequence "tt_f1_seq" for serial column "tt.f1"
 create function insert_tt(text) returns int as
 $$ insert into tt(data) values($1) returning f1 $$
 language sql;

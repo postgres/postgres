@@ -44,7 +44,6 @@ test(#     b date not null,
 test(#     c text,
 test(#     primary key (a, b)
 test(#   );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "tcndata_pkey" for table "tcndata"
 CREATE TABLE
 test=# create trigger tcndata_tcn_trigger
 test-#   after insert or update or delete on tcndata

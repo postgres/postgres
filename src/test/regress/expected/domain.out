@@ -263,7 +263,6 @@ create table defaulttest
             , col7 ddef4 DEFAULT 8000
             , col8 ddef5
             );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "defaulttest_pkey" for table "defaulttest"
 insert into defaulttest(col4) values(0); -- fails, col5 defaults to null
 ERROR:  null value in column "col5" violates not-null constraint
 DETAIL:  Failing row contains (3, 12, 5, 0, null, 88, 8000, 12.12).

@@ -2,14 +2,12 @@
 -- Test cases for COPY (select) TO
 --
 create table test1 (id serial, t text);
-NOTICE:  CREATE TABLE will create implicit sequence "test1_id_seq" for serial column "test1.id"
 insert into test1 (t) values ('a');
 insert into test1 (t) values ('b');
 insert into test1 (t) values ('c');
 insert into test1 (t) values ('d');
 insert into test1 (t) values ('e');
 create table test2 (id serial, t text);
-NOTICE:  CREATE TABLE will create implicit sequence "test2_id_seq" for serial column "test2.id"
 insert into test2 (t) values ('A');
 insert into test2 (t) values ('B');
 insert into test2 (t) values ('C');

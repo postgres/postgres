@@ -49,7 +49,6 @@ SELECT * FROM inhf; /* Single entry with value 'text' */
 
 ALTER TABLE inhx add constraint foo CHECK (xx = 'text');
 ALTER TABLE inhx ADD PRIMARY KEY (xx);
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "inhx_pkey" for table "inhx"
 CREATE TABLE inhg (LIKE inhx); /* Doesn't copy constraint */
 INSERT INTO inhg VALUES ('foo');
 DROP TABLE inhg;
@@ -68,7 +67,6 @@ SELECT * FROM inhg; /* Two records with three columns in order x=x, xx=text, y=y
 
 DROP TABLE inhg;
 CREATE TABLE inhg (x text, LIKE inhx INCLUDING INDEXES, y text); /* copies indexes */
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "inhg_pkey" for table "inhg"
 INSERT INTO inhg VALUES (5, 10);
 INSERT INTO inhg VALUES (20, 10); -- should fail
 ERROR:  duplicate key value violates unique constraint "inhg_pkey"
@@ -78,12 +76,9 @@ DROP TABLE inhg;
 CREATE TABLE inhg (x text, LIKE inhx INCLUDING INDEXES, PRIMARY KEY(x)); /* fails */
 ERROR:  multiple primary keys for table "inhg" are not allowed
 CREATE TABLE inhz (xx text DEFAULT 'text', yy int UNIQUE);
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "inhz_yy_key" for table "inhz"
 CREATE UNIQUE INDEX inhz_xx_idx on inhz (xx) WHERE xx <> 'test';
 /* Ok to create multiple unique indexes */
 CREATE TABLE inhg (x text UNIQUE, LIKE inhz INCLUDING INDEXES);
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "inhg_x_key" for table "inhg"
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "inhg_yy_key" for table "inhg"
 INSERT INTO inhg (xx, yy, x) VALUES ('test', 5, 10);
 INSERT INTO inhg (xx, yy, x) VALUES ('test', 10, 15);
 INSERT INTO inhg (xx, yy, x) VALUES ('foo', 10, 15); -- should fail
@@ -93,7 +88,6 @@ DROP TABLE inhg;
 DROP TABLE inhz;
 -- including storage and comments
 CREATE TABLE ctlt1 (a text CHECK (length(a) > 2) PRIMARY KEY, b text);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "ctlt1_pkey" for table "ctlt1"
 CREATE INDEX ctlt1_b_key ON ctlt1 (b);
 CREATE INDEX ctlt1_fnidx ON ctlt1 ((a || b));
 COMMENT ON COLUMN ctlt1.a IS 'A';
@@ -192,7 +186,6 @@ SELECT description FROM pg_description, pg_constraint c WHERE classoid = 'pg_con
 (1 row)
 
 CREATE TABLE ctlt_all (LIKE ctlt1 INCLUDING ALL);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "ctlt_all_pkey" for table "ctlt_all"
 \d+ ctlt_all
                       Table "public.ctlt_all"
  Column | Type | Modifiers | Storage  | Stats target | Description 

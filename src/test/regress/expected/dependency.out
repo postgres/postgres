@@ -6,8 +6,6 @@ CREATE USER regression_user2;
 CREATE USER regression_user3;
 CREATE GROUP regression_group;
 CREATE TABLE deptest (f1 serial primary key, f2 text);
-NOTICE:  CREATE TABLE will create implicit sequence "deptest_f1_seq" for serial column "deptest.f1"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "deptest_pkey" for table "deptest"
 GRANT SELECT ON TABLE deptest TO GROUP regression_group;
 GRANT ALL ON TABLE deptest TO regression_user, regression_user2;
 -- can't drop neither because they have privileges somewhere
@@ -59,12 +57,9 @@ ERROR:  permission denied to reassign objects
 -- this one is allowed
 DROP OWNED BY regression_user0;
 CREATE TABLE deptest1 (f1 int unique);
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "deptest1_f1_key" for table "deptest1"
 GRANT ALL ON deptest1 TO regression_user1 WITH GRANT OPTION;
 SET SESSION AUTHORIZATION regression_user1;
 CREATE TABLE deptest (a serial primary key, b text);
-NOTICE:  CREATE TABLE will create implicit sequence "deptest_a_seq" for serial column "deptest.a"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "deptest_pkey" for table "deptest"
 GRANT ALL ON deptest1 TO regression_user2;
 RESET SESSION AUTHORIZATION;
 \z deptest1
@@ -91,8 +86,6 @@ DROP OWNED BY regression_user1;
 GRANT ALL ON deptest1 TO regression_user1;
 SET SESSION AUTHORIZATION regression_user1;
 CREATE TABLE deptest (a serial primary key, b text);
-NOTICE:  CREATE TABLE will create implicit sequence "deptest_a_seq" for serial column "deptest.a"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "deptest_pkey" for table "deptest"
 CREATE TABLE deptest2 (f1 int);
 -- make a serial column the hard way
 CREATE SEQUENCE ss1;

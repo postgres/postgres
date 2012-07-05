@@ -3,15 +3,11 @@
 --
 CREATE TABLE clstr_tst_s (rf_a SERIAL PRIMARY KEY,
 	b INT);
-NOTICE:  CREATE TABLE will create implicit sequence "clstr_tst_s_rf_a_seq" for serial column "clstr_tst_s.rf_a"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "clstr_tst_s_pkey" for table "clstr_tst_s"
 CREATE TABLE clstr_tst (a SERIAL PRIMARY KEY,
 	b INT,
 	c TEXT,
 	d TEXT,
 	CONSTRAINT clstr_tst_con FOREIGN KEY (b) REFERENCES clstr_tst_s);
-NOTICE:  CREATE TABLE will create implicit sequence "clstr_tst_a_seq" for serial column "clstr_tst.a"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "clstr_tst_pkey" for table "clstr_tst"
 CREATE INDEX clstr_tst_b ON clstr_tst (b);
 CREATE INDEX clstr_tst_c ON clstr_tst (c);
 CREATE INDEX clstr_tst_c_b ON clstr_tst (c,b);
@@ -312,11 +308,8 @@ WHERE pg_class.oid=indexrelid
 -- Verify that clustering all tables does in fact cluster the right ones
 CREATE USER clstr_user;
 CREATE TABLE clstr_1 (a INT PRIMARY KEY);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "clstr_1_pkey" for table "clstr_1"
 CREATE TABLE clstr_2 (a INT PRIMARY KEY);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "clstr_2_pkey" for table "clstr_2"
 CREATE TABLE clstr_3 (a INT PRIMARY KEY);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "clstr_3_pkey" for table "clstr_3"
 ALTER TABLE clstr_1 OWNER TO clstr_user;
 ALTER TABLE clstr_3 OWNER TO clstr_user;
 GRANT SELECT ON clstr_2 TO clstr_user;
@@ -386,7 +379,6 @@ SELECT * FROM clstr_1;
 -- Test MVCC-safety of cluster. There isn't much we can do to verify the
 -- results with a single backend...
 CREATE TABLE clustertest (key int PRIMARY KEY);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "clustertest_pkey" for table "clustertest"
 INSERT INTO clustertest VALUES (10);
 INSERT INTO clustertest VALUES (20);
 INSERT INTO clustertest VALUES (30);
@@ -436,7 +428,6 @@ SELECT * FROM clustertest;
 
 -- check that temp tables can be clustered
 create temp table clstr_temp (col1 int primary key, col2 text);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "clstr_temp_pkey" for table "clstr_temp"
 insert into clstr_temp values (2, 'two'), (1, 'one');
 cluster clstr_temp using clstr_temp_pkey;
 select * from clstr_temp;

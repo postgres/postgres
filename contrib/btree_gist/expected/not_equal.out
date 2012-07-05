@@ -31,7 +31,6 @@ CREATE TABLE zoo (
    animal TEXT,
    EXCLUDE USING gist (cage WITH =, animal WITH <>)
 );
-NOTICE:  CREATE TABLE / EXCLUDE will create implicit index "zoo_cage_animal_excl" for table "zoo"
 INSERT INTO zoo VALUES(123, 'zebra');
 INSERT INTO zoo VALUES(123, 'zebra');
 INSERT INTO zoo VALUES(123, 'lion');

@@ -59,7 +59,6 @@ SELECT * FROM vactst;
 VACUUM (FULL, FREEZE) vactst;
 VACUUM (ANALYZE, FULL) vactst;
 CREATE TABLE vaccluster (i INT PRIMARY KEY);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "vaccluster_pkey" for table "vaccluster"
 ALTER TABLE vaccluster CLUSTER ON vaccluster_pkey;
 INSERT INTO vaccluster SELECT * FROM vactst;
 CLUSTER vaccluster;

@@ -318,7 +318,6 @@ PL/Python function "sql_from_python_error"
 CREATE TABLE specific (
     i integer PRIMARY KEY
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "specific_pkey" for table "specific"
 CREATE FUNCTION specific_exception(i integer) RETURNS void AS
 $$
 from plpy import spiexceptions

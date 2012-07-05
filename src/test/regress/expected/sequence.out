@@ -2,7 +2,6 @@
 --- test creation of SERIAL column
 ---
 CREATE TABLE serialTest (f1 text, f2 serial);
-NOTICE:  CREATE TABLE will create implicit sequence "serialtest_f2_seq" for serial column "serialtest.f2"
 INSERT INTO serialTest VALUES ('foo');
 INSERT INTO serialTest VALUES ('bar');
 INSERT INTO serialTest VALUES ('force', 100);
@@ -20,11 +19,6 @@ SELECT * FROM serialTest;
 -- test smallserial / bigserial
 CREATE TABLE serialTest2 (f1 text, f2 serial, f3 smallserial, f4 serial2,
   f5 bigserial, f6 serial8);
-NOTICE:  CREATE TABLE will create implicit sequence "serialtest2_f2_seq" for serial column "serialtest2.f2"
-NOTICE:  CREATE TABLE will create implicit sequence "serialtest2_f3_seq" for serial column "serialtest2.f3"
-NOTICE:  CREATE TABLE will create implicit sequence "serialtest2_f4_seq" for serial column "serialtest2.f4"
-NOTICE:  CREATE TABLE will create implicit sequence "serialtest2_f5_seq" for serial column "serialtest2.f5"
-NOTICE:  CREATE TABLE will create implicit sequence "serialtest2_f6_seq" for serial column "serialtest2.f6"
 INSERT INTO serialTest2 (f1)
   VALUES ('test_defaults');
 INSERT INTO serialTest2 (f1, f2, f3, f4, f5, f6)
@@ -220,7 +214,6 @@ CREATE TEMP TABLE t1 (
   f2 int DEFAULT nextval('myseq2'),
   f3 int DEFAULT nextval('myseq3'::text)
 );
-NOTICE:  CREATE TABLE will create implicit sequence "t1_f1_seq" for serial column "t1.f1"
 -- Both drops should fail, but with different error messages:
 DROP SEQUENCE t1_f1_seq;
 ERROR:  cannot drop sequence t1_f1_seq because other objects depend on it

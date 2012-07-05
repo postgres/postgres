@@ -5,7 +5,6 @@ CREATE EXTENSION pgstattuple;
 -- indexes should be that.
 --
 create table test (a int primary key);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "test_pkey" for table "test"
 select * from pgstattuple('test'::text);
  table_len | tuple_count | tuple_len | tuple_percent | dead_tuple_count | dead_tuple_len | dead_tuple_percent | free_space | free_percent 
 -----------+-------------+-----------+---------------+------------------+----------------+--------------------+------------+--------------

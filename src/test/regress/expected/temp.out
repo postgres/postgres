@@ -119,7 +119,6 @@ ERROR:  ON COMMIT can only be used on temporary tables
 -- Test foreign keys
 BEGIN;
 CREATE TEMP TABLE temptest1(col int PRIMARY KEY);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "temptest1_pkey" for table "temptest1"
 CREATE TEMP TABLE temptest2(col int REFERENCES temptest1)
   ON COMMIT DELETE ROWS;
 INSERT INTO temptest1 VALUES (1);
@@ -138,7 +137,6 @@ SELECT * FROM temptest2;
 
 BEGIN;
 CREATE TEMP TABLE temptest3(col int PRIMARY KEY) ON COMMIT DELETE ROWS;
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "temptest3_pkey" for table "temptest3"
 CREATE TEMP TABLE temptest4(col int REFERENCES temptest3);
 COMMIT;
 ERROR:  unsupported ON COMMIT and foreign key combination

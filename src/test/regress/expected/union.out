@@ -462,7 +462,6 @@ LINE 1: SELECT '3.4'::numeric UNION SELECT 'foo';
 CREATE TEMP TABLE t1 (a text, b text);
 CREATE INDEX t1_ab_idx on t1 ((a || b));
 CREATE TEMP TABLE t2 (ab text primary key);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "t2_pkey" for table "t2"
 INSERT INTO t1 VALUES ('a', 'b'), ('x', 'y');
 INSERT INTO t2 VALUES ('ab'), ('xy');
 set enable_seqscan = off;

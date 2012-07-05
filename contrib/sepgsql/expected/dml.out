@@ -22,7 +22,6 @@ SECURITY LABEL ON COLUMN t5.e IS 'system_u:object_r:sepgsql_table_t:s0';
 SECURITY LABEL ON COLUMN t5.f IS 'system_u:object_r:sepgsql_ro_table_t:s0';
 SECURITY LABEL ON COLUMN t5.g IS 'system_u:object_r:sepgsql_secret_table_t:s0';
 CREATE TABLE customer (cid int primary key, cname text, ccredit text);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "customer_pkey" for table "customer"
 SECURITY LABEL ON COLUMN customer.ccredit IS 'system_u:object_r:sepgsql_secret_table_t:s0';
 INSERT INTO customer VALUES (1, 'Taro',   '1111-2222-3333-4444'),
                             (2, 'Hanako', '5555-6666-7777-8888');

@@ -536,7 +536,6 @@ SELECT relname, d.* FROM ONLY d, pg_class where d.tableoid = pg_class.oid;
 
 -- Confirm PRIMARY KEY adds NOT NULL constraint to child table
 CREATE TEMP TABLE z (b TEXT, PRIMARY KEY(aa, b)) inherits (a);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "z_pkey" for table "z"
 INSERT INTO z VALUES (NULL, 'text'); -- should fail
 ERROR:  null value in column "aa" violates not-null constraint
 DETAIL:  Failing row contains (null, text).
@@ -1044,17 +1043,12 @@ drop cascades to table patest2
 -- Test merge-append plans for inheritance trees
 --
 create table matest0 (id serial primary key, name text);
-NOTICE:  CREATE TABLE will create implicit sequence "matest0_id_seq" for serial column "matest0.id"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "matest0_pkey" for table "matest0"
 create table matest1 (id integer primary key) inherits (matest0);
 NOTICE:  merging column "id" with inherited definition
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "matest1_pkey" for table "matest1"
 create table matest2 (id integer primary key) inherits (matest0);
 NOTICE:  merging column "id" with inherited definition
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "matest2_pkey" for table "matest2"
 create table matest3 (id integer primary key) inherits (matest0);
 NOTICE:  merging column "id" with inherited definition
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "matest3_pkey" for table "matest3"
 create index matest0i on matest0 ((1-id));
 create index matest1i on matest1 ((1-id));
 -- create index matest2i on matest2 ((1-id));  -- intentionally missing

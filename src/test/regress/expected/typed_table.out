@@ -45,8 +45,6 @@ CREATE TABLE persons2 OF person_type (
     id WITH OPTIONS PRIMARY KEY,
     UNIQUE (name)
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "persons2_pkey" for table "persons2"
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "persons2_name_key" for table "persons2"
 \d persons2
    Table "public.persons2"
  Column |  Type   | Modifiers 
@@ -62,7 +60,6 @@ CREATE TABLE persons3 OF person_type (
     PRIMARY KEY (id),
     name WITH OPTIONS DEFAULT ''
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "persons3_pkey" for table "persons3"
 \d persons3
        Table "public.persons3"
  Column |  Type   |    Modifiers     

@@ -6,16 +6,12 @@ CREATE TEMP TABLE articles (
     body text UNIQUE,
     created date
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "articles_pkey" for table "articles"
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "articles_title_key" for table "articles"
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "articles_body_key" for table "articles"
 CREATE TEMP TABLE articles_in_category (
     article_id int,
     category_id int,
     changed date,
     PRIMARY KEY (article_id, category_id)
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "articles_in_category_pkey" for table "articles_in_category"
 -- test functional dependencies based on primary keys/unique constraints
 -- base tables
 -- group by primary key (OK)
@@ -119,7 +115,6 @@ ERROR:  column "p.name" must appear in the GROUP BY clause or be used in an aggr
 LINE 1: SELECT product_id, p.name, (sum(s.units) * p.price) AS sales
                            ^
 ALTER TABLE products ADD PRIMARY KEY (product_id);
-NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "products_pkey" for table "products"
 -- OK now
 SELECT product_id, p.name, (sum(s.units) * p.price) AS sales
     FROM products p LEFT JOIN sales s USING (product_id)
@@ -140,8 +135,6 @@ CREATE TEMP TABLE node (
     -- snip
     PRIMARY KEY (nid, vid)
 );
-NOTICE:  CREATE TABLE will create implicit sequence "node_nid_seq" for serial column "node.nid"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "node_pkey" for table "node"
 CREATE TEMP TABLE users (
     uid integer NOT NULL default '0',
     name varchar(60) NOT NULL default '',
@@ -150,8 +143,6 @@ CREATE TEMP TABLE users (
     PRIMARY KEY (uid),
     UNIQUE (name)
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "users_pkey" for table "users"
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "users_name_key" for table "users"
 -- OK
 SELECT u.uid, u.name FROM node n
 INNER JOIN users u ON u.uid = n.uid

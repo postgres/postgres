@@ -205,18 +205,13 @@ CREATE TABLE IF NOT EXISTS test_tsvector(
 );
 NOTICE:  relation "test_tsvector" already exists, skipping
 CREATE UNLOGGED TABLE unlogged1 (a int primary key);			-- OK
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "unlogged1_pkey" for table "unlogged1"
 INSERT INTO unlogged1 VALUES (42);
 CREATE UNLOGGED TABLE public.unlogged2 (a int primary key);		-- also OK
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "unlogged2_pkey" for table "unlogged2"
 CREATE UNLOGGED TABLE pg_temp.unlogged3 (a int primary key);	-- not OK
 ERROR:  only temporary relations may be created in temporary schemas
 CREATE TABLE pg_temp.implicitly_temp (a int primary key);		-- OK
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "implicitly_temp_pkey" for table "implicitly_temp"
 CREATE TEMP TABLE explicitly_temp (a int primary key);			-- also OK
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "explicitly_temp_pkey" for table "explicitly_temp"
 CREATE TEMP TABLE pg_temp.doubly_temp (a int primary key);		-- also OK
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "doubly_temp_pkey" for table "doubly_temp"
 CREATE TEMP TABLE public.temp_to_perm (a int primary key);		-- not OK
 ERROR:  cannot create temporary relation in non-temporary schema
 DROP TABLE unlogged1, public.unlogged2;

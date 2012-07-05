@@ -1,6 +1,5 @@
 CREATE EXTENSION dblink;
 CREATE TABLE foo(f1 int, f2 text, f3 text[], primary key (f1,f2));
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "foo_pkey" for table "foo"
 INSERT INTO foo VALUES (0,'a','{"a0","b0","c0"}');
 INSERT INTO foo VALUES (1,'b','{"a1","b1","c1"}');
 INSERT INTO foo VALUES (2,'c','{"a2","b2","c2"}');
@@ -56,7 +55,6 @@ ERROR:  invalid attribute number 4
 -- retest using a quoted and schema qualified table
 CREATE SCHEMA "MySchema";
 CREATE TABLE "MySchema"."Foo"(f1 int, f2 text, f3 text[], primary key (f1,f2));
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "Foo_pkey" for table "Foo"
 INSERT INTO "MySchema"."Foo" VALUES (0,'a','{"a0","b0","c0"}');
 -- list the primary key fields
 SELECT *
@@ -885,8 +883,6 @@ CREATE TEMP TABLE test_dropped
 	col2 INT NOT NULL DEFAULT 112,
 	col2b INT NOT NULL DEFAULT 113
 );
-NOTICE:  CREATE TABLE will create implicit sequence "test_dropped_id_seq" for serial column "test_dropped.id"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "test_dropped_pkey" for table "test_dropped"
 INSERT INTO test_dropped VALUES(default);
 ALTER TABLE test_dropped
 	DROP COLUMN col1,

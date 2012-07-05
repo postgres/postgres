@@ -218,7 +218,6 @@ SELECT citext_cmp('B'::citext, 'a'::citext) > 0 AS true;
 CREATE TEMP TABLE try (
    name citext PRIMARY KEY
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "try_pkey" for table "try"
 INSERT INTO try (name)
 VALUES ('a'), ('ab'), ('â'), ('aba'), ('b'), ('ba'), ('bab'), ('AZ');
 SELECT name, 'a' = name AS eq_a   FROM try WHERE name <> 'â';

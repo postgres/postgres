@@ -593,7 +593,7 @@ DefineIndex(RangeVar *heapRelation,
 			constraint_type = NULL;		/* keep compiler quiet */
 		}
 
-		ereport(NOTICE,
+		ereport(DEBUG1,
 		  (errmsg("%s %s will create implicit index \"%s\" for table \"%s\"",
 				  is_alter_table ? "ALTER TABLE / ADD" : "CREATE TABLE /",
 				  constraint_type,

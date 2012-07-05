@@ -1400,13 +1400,11 @@ create table rule_and_refint_t1 (
 	id1b integer,
 	primary key (id1a, id1b)
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "rule_and_refint_t1_pkey" for table "rule_and_refint_t1"
 create table rule_and_refint_t2 (
 	id2a integer,
 	id2c integer,
 	primary key (id2a, id2c)
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "rule_and_refint_t2_pkey" for table "rule_and_refint_t2"
 create table rule_and_refint_t3 (
 	id3a integer,
 	id3b integer,
@@ -1416,7 +1414,6 @@ create table rule_and_refint_t3 (
 	foreign key (id3a, id3b) references rule_and_refint_t1 (id1a, id1b),
 	foreign key (id3a, id3c) references rule_and_refint_t2 (id2a, id2c)
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "rule_and_refint_t3_pkey" for table "rule_and_refint_t3"
 insert into rule_and_refint_t1 values (1, 11);
 insert into rule_and_refint_t1 values (1, 12);
 insert into rule_and_refint_t1 values (2, 21);
@@ -1462,18 +1459,13 @@ drop view fooview;
 -- check for planner problems with complex inherited UPDATES
 --
 create table id (id serial primary key, name text);
-NOTICE:  CREATE TABLE will create implicit sequence "id_id_seq" for serial column "id.id"
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "id_pkey" for table "id"
 -- currently, must respecify PKEY for each inherited subtable
 create table test_1 (id integer primary key) inherits (id);
 NOTICE:  merging column "id" with inherited definition
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "test_1_pkey" for table "test_1"
 create table test_2 (id integer primary key) inherits (id);
 NOTICE:  merging column "id" with inherited definition
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "test_2_pkey" for table "test_2"
 create table test_3 (id integer primary key) inherits (id);
 NOTICE:  merging column "id" with inherited definition
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "test_3_pkey" for table "test_3"
 insert into test_1 (name) values ('Test 1');
 insert into test_1 (name) values ('Test 2');
 insert into test_2 (name) values ('Test 3');
@@ -1516,7 +1508,6 @@ reset client_min_messages;
 -- constraint exclusion
 --
 create temp table t1 (a integer primary key);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "t1_pkey" for table "t1"
 create temp table t1_1 (check (a >= 0 and a < 10)) inherits (t1);
 create temp table t1_2 (check (a >= 10 and a < 20)) inherits (t1);
 create rule t1_ins_1 as on insert to t1

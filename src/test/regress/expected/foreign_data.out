@@ -665,7 +665,6 @@ LINE 1: CREATE FOREIGN TABLE ft1 ();
 CREATE FOREIGN TABLE ft1 () SERVER no_server;                   -- ERROR
 ERROR:  server "no_server" does not exist
 CREATE FOREIGN TABLE ft1 (c1 serial) SERVER sc;                 -- ERROR
-NOTICE:  CREATE FOREIGN TABLE will create implicit sequence "ft1_c1_seq" for serial column "ft1.c1"
 ERROR:  default values on foreign tables are not supported
 CREATE FOREIGN TABLE ft1 () SERVER s0 WITH OIDS;                -- ERROR
 ERROR:  syntax error at or near "WITH OIDS"

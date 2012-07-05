@@ -2323,11 +2323,8 @@ from yy
 -- (as seen in early 8.2.x releases)
 --
 create temp table zt1 (f1 int primary key);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "zt1_pkey" for table "zt1"
 create temp table zt2 (f2 int primary key);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "zt2_pkey" for table "zt2"
 create temp table zt3 (f3 int primary key);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "zt3_pkey" for table "zt3"
 insert into zt1 values(53);
 insert into zt2 values(53);
 select * from
@@ -2452,19 +2449,16 @@ create temp table a (
      code char not null,
      constraint a_pk primary key (code)
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "a_pk" for table "a"
 create temp table b (
      a char not null,
      num integer not null,
      constraint b_pk primary key (a, num)
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "b_pk" for table "b"
 create temp table c (
      name char not null,
      a char,
      constraint c_pk primary key (name)
 );
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "c_pk" for table "c"
 insert into a (code) values ('p');
 insert into a (code) values ('q');
 insert into b (a, num) values ('p', 1);
@@ -2831,11 +2825,8 @@ select b.unique1 from
 --
 begin;
 CREATE TEMP TABLE a (id int PRIMARY KEY, b_id int);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "a_pkey" for table "a"
 CREATE TEMP TABLE b (id int PRIMARY KEY, c_id int);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "b_pkey" for table "b"
 CREATE TEMP TABLE c (id int PRIMARY KEY);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "c_pkey" for table "c"
 INSERT INTO a VALUES (0, 0), (1, NULL);
 INSERT INTO b VALUES (0, 0), (1, NULL);
 INSERT INTO c VALUES (0), (1);
@@ -2876,9 +2867,7 @@ select id from a where id in (
 
 rollback;
 create temp table parent (k int primary key, pd int);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "parent_pkey" for table "parent"
 create temp table child (k int unique, cd int);
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index "child_k_key" for table "child"
 insert into parent values (1, 10), (2, 20), (3, 30);
 insert into child values (1, 100), (4, 400);
 -- this case is optimizable
@@ -2961,9 +2950,7 @@ select p.* from
 -- bug 5255: this is not optimizable by join removal
 begin;
 CREATE TEMP TABLE a (id int PRIMARY KEY);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "a_pkey" for table "a"
 CREATE TEMP TABLE b (id int PRIMARY KEY, a_id int);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "b_pkey" for table "b"
 INSERT INTO a VALUES (0), (1);
 INSERT INTO b VALUES (0, 0), (1, NULL);
 SELECT * FROM b LEFT JOIN a ON (b.a_id = a.id) WHERE (a.id IS NULL OR a.id > 0);
@@ -2982,7 +2969,6 @@ rollback;
 -- another join removal bug: this is not optimizable, either
 begin;
 create temp table innertab (id int8 primary key, dat1 int8);
-NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "innertab_pkey" for table "innertab"
 insert into innertab values(123, 42);
 SELECT * FROM
     (SELECT 1 AS x) ss1
