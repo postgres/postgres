@@ -65,16 +65,71 @@ PLyUnicode_Bytes(PyObject *unicode)
 	const char *serverenc;
 
 	/*
-	 * Python understands almost all PostgreSQL encoding names, but it doesn't
-	 * know SQL_ASCII.
+	 * Map PostgreSQL encoding to a Python encoding name.
 	 */
-	if (GetDatabaseEncoding() == PG_SQL_ASCII)
-		serverenc = "ascii";
-	else
-		serverenc = GetDatabaseEncodingName();
+	switch (GetDatabaseEncoding())
+	{
+		case PG_SQL_ASCII:
+			/*
+			 * Mapping SQL_ASCII to Python's 'ascii' is a bit bogus. Python's
+			 * 'ascii' means true 7-bit only ASCII, while PostgreSQL's
+			 * SQL_ASCII means that anything is allowed, and the system doesn't
+			 * try to interpret the bytes in any way. But not sure what else
+			 * to do, and we haven't heard any complaints...
+			 */
+			serverenc = "ascii";
+			break;
+		case PG_WIN1250:
+			serverenc = "cp1250";
+			break;
+		case PG_WIN1251:
+			serverenc = "cp1251";
+			break;
+		case PG_WIN1252:
+			serverenc = "cp1252";
+			break;
+		case PG_WIN1253:
+			serverenc = "cp1253";
+			break;
+		case PG_WIN1254:
+			serverenc = "cp1254";
+			break;
+		case PG_WIN1255:
+			serverenc = "cp1255";
+			break;
+		case PG_WIN1256:
+			serverenc = "cp1256";
+			break;
+		case PG_WIN1257:
+			serverenc = "cp1257";
+			break;
+		case PG_WIN1258:
+			serverenc = "cp1258";
+			break;
+		case PG_WIN866:
+			serverenc = "cp866";
+			break;
+		case PG_WIN874:
+			serverenc = "cp874";
+			break;
+		default:
+			/* Other encodings have the same name in Python. */
+			serverenc = GetDatabaseEncodingName();
+			break;
+	}
+
 	rv = PyUnicode_AsEncodedString(unicode, serverenc, "strict");
 	if (rv == NULL)
-		PLy_elog(ERROR, "could not convert Python Unicode object to PostgreSQL server encoding");
+	{
+		/*
+		 * Use a plain ereport instead of PLy_elog to avoid recursion, if
+		 * the traceback formatting functions try to do unicode to bytes
+		 * conversion again.
+		 */
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("could not convert Python Unicode object to PostgreSQL server encoding")));
+	}
 	return rv;
 }
 
