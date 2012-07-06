@@ -48,12 +48,10 @@ sub wanted
 		# We only care about lines with a copyright notice.
 		next unless $line =~ m/$cc.*$pgdg/;
 
-		# We stop when we've done one substitution.  This is both for
-		# efficiency and, at least in the case of this program, for
-		# correctness.
-		last if $line =~ m/$cc.*$year.*$pgdg/;
-		last if $line =~ s/($cc\d{4})(, $pgdg)/$1-$year$2/;
-		last if $line =~ s/($cc\d{4})-\d{4}(, $pgdg)/$1-$year$2/;
+		# We process all lines because some files have copyright
+		# strings embedded in them, e.g. src/bin/psql/help.c
+		$line =~ s/($cc\d{4})(, $pgdg)/$1-$year$2/;
+		$line =~ s/($cc\d{4})-\d{4}(, $pgdg)/$1-$year$2/;
 	}
 	untie @lines;
 }
