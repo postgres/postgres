@@ -380,6 +380,7 @@ pg_wchar2euc_with_len(const pg_wchar *from, unsigned char *to, int len)
 			*to++ = *from;
 			cnt++;
 		}		
+		from++;
 		len--;
 	}
 	*to = 0;
@@ -518,9 +519,10 @@ pg_wchar2utf_with_len(const pg_wchar *from, unsigned char *to, int len)
 		
 		unicode_to_utf8(*from, to);
 		char_len = pg_utf_mblen(to);
-		len--;
 		cnt += char_len;
 		to += char_len;
+		from++;
+		len--;
 	}
 	*to = 0;
 	return cnt;
@@ -854,6 +856,7 @@ pg_wchar2mule_with_len(const pg_wchar *from, unsigned char *to, int len)
 			*to++ = lb;
 			cnt += 1;
 		}
+		from++;
 		len--;
 	}
 	*to = 0;
