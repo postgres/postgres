@@ -11,6 +11,7 @@ use strict;
 use warnings;
 
 use File::Find;
+use File::Basename;
 use Tie::File;
 
 my $pgdg = 'PostgreSQL Global Development Group';
@@ -25,15 +26,14 @@ find({ wanted => \&wanted, no_chdir => 1 }, '.');
 
 sub wanted
 {
-
 	# prevent corruption of git indexes by ignoring any .git/
-	if ($_ eq '.git')
+	if (basename($_) eq '.git')
 	{
 		$File::Find::prune = 1;
 		return;
 	}
 
-	return if !-f $File::Find::name || -l $File::Find::name;
+	return if ! -f $File::Find::name || -l $File::Find::name;
 
 	# skip file names with binary extensions
 	# How are these updated?  bjm 2012-01-02
