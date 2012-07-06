@@ -46,7 +46,7 @@ sub wanted
 	{
 
 		# We only care about lines with a copyright notice.
-		next unless $line =~ m/$cc . *$pgdg /;
+		next unless $line =~ m/$cc.*$pgdg/;
 
 		# We stop when we've done one substitution.  This is both for
 		# efficiency and, at least in the case of this program, for
