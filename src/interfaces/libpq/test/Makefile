@@ -15,7 +15,7 @@ all: $(PROGS)
 
 installcheck: all
 	SRCDIR='$(top_srcdir)' SUBDIR='$(subdir)' \
-		   $(SHELL) $(top_srcdir)/$(subdir)/regress.sh
+		   $(PERL) $(top_srcdir)/$(subdir)/regress.pl
 
 clean distclean maintainer-clean:
 	rm -f $(PROGS)
