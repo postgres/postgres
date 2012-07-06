@@ -276,6 +276,7 @@ or\n"), old_cluster.port, new_cluster.port, os_info.user);
  *
  * Checks a directory option.
  *	dirpath		  - the directory name supplied on the command line
+ *	configpath	  - optional configuration directory
  *	envVarName	  - the name of an environment variable to get if dirpath is NULL
  *	cmdLineOption - the command line option corresponds to this directory (-o, -O, -n, -N)
  *	description   - a description of this directory option
@@ -305,7 +306,8 @@ check_required_directory(char **dirpath, char **configpath,
 	}
 
 	/*
-	 * Trim off any trailing path separators
+	 * Trim off any trailing path separators because we construct paths
+	 * by appending to this path.
 	 */
 #ifndef WIN32
 	if ((*dirpath)[strlen(*dirpath) - 1] == '/')
