@@ -48,6 +48,10 @@ sub wanted
 		# We only care about lines with a copyright notice.
 		next unless $line =~ m/$cc.*$pgdg/;
 
+		# Skip line if already matches the current year; if not
+		# we get $year-$year, e.g. 2012-2012
+		next if $line =~ m/$cc$year, $pgdg/;
+
 		# We process all lines because some files have copyright
 		# strings embedded in them, e.g. src/bin/psql/help.c
 		$line =~ s/($cc\d{4})(, $pgdg)/$1-$year$2/;
