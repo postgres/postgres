@@ -21,7 +21,7 @@
 
 
 static void usage(void);
-static void check_required_directory(char **dirpath,
+static void check_required_directory(char **dirpath, char **configpath,
 				   char *envVarName, char *cmdLineOption, char *description);
 
 
@@ -203,14 +203,14 @@ parseCommandLine(int argc, char *argv[])
 	}
 
 	/* Get values from env if not already set */
-	check_required_directory(&old_cluster.bindir, "PGBINOLD", "-b",
+	check_required_directory(&old_cluster.bindir, NULL, "PGBINOLD", "-b",
 							 "old cluster binaries reside");
-	check_required_directory(&new_cluster.bindir, "PGBINNEW", "-B",
+	check_required_directory(&new_cluster.bindir, NULL, "PGBINNEW", "-B",
 							 "new cluster binaries reside");
-	check_required_directory(&old_cluster.pgdata, "PGDATAOLD", "-d",
-							 "old cluster data resides");
-	check_required_directory(&new_cluster.pgdata, "PGDATANEW", "-D",
-							 "new cluster data resides");
+	check_required_directory(&old_cluster.pgdata, &old_cluster.pgconfig,
+							 "PGDATAOLD", "-d", "old cluster data resides");
+	check_required_directory(&new_cluster.pgdata, &new_cluster.pgconfig,
+							 "PGDATANEW", "-D", "new cluster data resides");
 }
 
 
@@ -284,15 +284,20 @@ or\n"), old_cluster.port, new_cluster.port, os_info.user);
  * user hasn't provided the required directory name.
  */
 static void
-check_required_directory(char **dirpath, char *envVarName,
-						 char *cmdLineOption, char *description)
+check_required_directory(char **dirpath, char **configpath,
+						 char *envVarName, char *cmdLineOption,
+						 char *description)
 {
 	if (*dirpath == NULL || strlen(*dirpath) == 0)
 	{
 		const char *envVar;
 
 		if ((envVar = getenv(envVarName)) && strlen(envVar))
+		{
 			*dirpath = pg_strdup(envVar);
+			if (configpath)
+				*configpath = pg_strdup(envVar);
+		}
 		else
 			pg_log(PG_FATAL, "You must identify the directory where the %s.\n"
 				   "Please use the %s command-line option or the %s environment variable.\n",
