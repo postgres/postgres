@@ -27,36 +27,35 @@ open(STDERR, ">&", \*STDOUT) or die "can't dup STDOUT: $!";
 
 # read lines from regress.in and run uri-regress on them
 while (<REGRESS_IN>)
-  {
-	  chomp;
-	  print "trying $_\n";
-	  system("./uri-regress \"$_\"");
-	  print "\n";
+{
+	chomp;
+	print "trying $_\n";
+	system("./uri-regress \"$_\"");
+	print "\n";
 }
 
 # restore STDOUT/ERR so we can print the outcome to the user
 open(STDERR, ">&", \*OLDERR) or die; # can't complain as STDERR is still duped
-open(STDOUT, ">&", \*OLDOUT) or die "Can't restore STDOUT: $!";
+open(STDOUT, ">&", \*OLDOUT) or die "can't restore STDOUT: $!";
 
 # just in case
 close REGRESS_IN;
 
 my $diff_status = system(
-	  "diff -c \"$srcdir/$subdir/expected.out\" regress.out >regress.diff");
+	"diff -c \"$srcdir/$subdir/expected.out\" regress.out >regress.diff");
+
+print "=" x 70, "\n";
 if ($diff_status == 0)
-  {
-	  print "=" x 70, "\n";
-	  print "All tests passed\n";
-	  exit 0;
+{
+	print "All tests passed\n";
+	exit 0;
 }
 else
-  {
-	  print "=" x 70, "\n";
-	  print <<EOF;
+{
+	print <<EOF;
 FAILED: the test result differs from the expected output
 
 Review the difference in "$subdir/regress.diff"
 EOF
-	  print "=" x 70, "\n";
-	  exit 1;
+	exit 1;
 }
