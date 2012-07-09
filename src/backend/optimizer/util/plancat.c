@@ -907,6 +907,7 @@ Selectivity
 restriction_selectivity(PlannerInfo *root,
 						Oid operatorid,
 						List *args,
+						Oid inputcollid,
 						int varRelid)
 {
 	RegProcedure oprrest = get_oprrest(operatorid);
@@ -919,11 +920,12 @@ restriction_selectivity(PlannerInfo *root,
 	if (!oprrest)
 		return (Selectivity) 0.5;
 
-	result = DatumGetFloat8(OidFunctionCall4(oprrest,
-											 PointerGetDatum(root),
-											 ObjectIdGetDatum(operatorid),
-											 PointerGetDatum(args),
-											 Int32GetDatum(varRelid)));
+	result = DatumGetFloat8(OidFunctionCall4Coll(oprrest,
+												 inputcollid,
+												 PointerGetDatum(root),
+												 ObjectIdGetDatum(operatorid),
+												 PointerGetDatum(args),
+												 Int32GetDatum(varRelid)));
 
 	if (result < 0.0 || result > 1.0)
 		elog(ERROR, "invalid restriction selectivity: %f", result);
@@ -942,6 +944,7 @@ Selectivity
 join_selectivity(PlannerInfo *root,
 				 Oid operatorid,
 				 List *args,
+				 Oid inputcollid,
 				 JoinType jointype,
 				 SpecialJoinInfo *sjinfo)
 {
@@ -955,12 +958,13 @@ join_selectivity(PlannerInfo *root,
 	if (!oprjoin)
 		return (Selectivity) 0.5;
 
-	result = DatumGetFloat8(OidFunctionCall5(oprjoin,
-											 PointerGetDatum(root),
-											 ObjectIdGetDatum(operatorid),
-											 PointerGetDatum(args),
-											 Int16GetDatum(jointype),
-											 PointerGetDatum(sjinfo)));
+	result = DatumGetFloat8(OidFunctionCall5Coll(oprjoin,
+												 inputcollid,
+												 PointerGetDatum(root),
+												 ObjectIdGetDatum(operatorid),
+												 PointerGetDatum(args),
+												 Int16GetDatum(jointype),
+												 PointerGetDatum(sjinfo)));
 
 	if (result < 0.0 || result > 1.0)
 		elog(ERROR, "invalid join selectivity: %f", result);
