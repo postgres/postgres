@@ -650,16 +650,6 @@ CONTEXT:  PL/Perl anonymous code block
 DO $do$ use warnings FATAL => qw(void) ; my @y; my $x = sort @y; 1; $do$ LANGUAGE plperl;
 ERROR:  Useless use of sort in scalar context at line 1.
 CONTEXT:  PL/Perl anonymous code block
---
--- Make sure strings are validated
--- Should fail for all encodings, as nul bytes are never permitted.
---
-CREATE OR REPLACE FUNCTION perl_zerob() RETURNS TEXT AS $$
-  return "abcd\0efg";
-$$ LANGUAGE plperl;
-SELECT perl_zerob();
-ERROR:  invalid byte sequence for encoding "UTF8": 0x00
-CONTEXT:  PL/Perl function "perl_zerob"
 -- make sure functions marked as VOID without an explicit return work
 CREATE OR REPLACE FUNCTION myfuncs() RETURNS void AS $$
    $_SHARED{myquote} = sub {
