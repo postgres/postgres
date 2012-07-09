@@ -67,8 +67,11 @@ static text *
 sv2text(SV *sv)
 {
 	char	   *str = sv2cstr(sv);
+	text	   *text;
 
-	return cstring_to_text(str);
+	text = cstring_to_text(str);
+	pfree(str);
+	return text;
 }
 
 MODULE = PostgreSQL::InServer::Util PREFIX = util_
@@ -113,8 +116,11 @@ util_quote_literal(sv)
     }
     else {
         text *arg = sv2text(sv);
-        text *ret = DatumGetTextP(DirectFunctionCall1(quote_literal, PointerGetDatum(arg)));
-		char *str = text_to_cstring(ret);
+		text *quoted = DatumGetTextP(DirectFunctionCall1(quote_literal, PointerGetDatum(arg)));
+		char *str;
+
+		pfree(arg);
+		str = text_to_cstring(quoted);
 		RETVAL = cstr2sv(str);
 		pfree(str);
     }
@@ -132,8 +138,11 @@ util_quote_nullable(sv)
     else
 	{
         text *arg = sv2text(sv);
-        text *ret = DatumGetTextP(DirectFunctionCall1(quote_nullable, PointerGetDatum(arg)));
-		char *str = text_to_cstring(ret);
+		text *quoted = DatumGetTextP(DirectFunctionCall1(quote_nullable, PointerGetDatum(arg)));
+		char *str;
+
+		pfree(arg);
+		str = text_to_cstring(quoted);
 		RETVAL = cstr2sv(str);
 		pfree(str);
     }
@@ -145,12 +154,14 @@ util_quote_ident(sv)
     SV *sv
     PREINIT:
         text *arg;
-        text *ret;
+		text *quoted;
 		char *str;
     CODE:
         arg = sv2text(sv);
-        ret = DatumGetTextP(DirectFunctionCall1(quote_ident, PointerGetDatum(arg)));
-		str = text_to_cstring(ret);
+		quoted = DatumGetTextP(DirectFunctionCall1(quote_ident, PointerGetDatum(arg)));
+
+		pfree(arg);
+		str = text_to_cstring(quoted);
 		RETVAL = cstr2sv(str);
 		pfree(str);
     OUTPUT:

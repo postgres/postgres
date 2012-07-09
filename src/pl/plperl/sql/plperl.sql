@@ -423,15 +423,6 @@ DO $do$ use strict; my $name = "foo"; my $ref = $$name; $do$ LANGUAGE plperl;
 -- yields "ERROR:  Useless use of sort in scalar context."
 DO $do$ use warnings FATAL => qw(void) ; my @y; my $x = sort @y; 1; $do$ LANGUAGE plperl;
 
---
--- Make sure strings are validated
--- Should fail for all encodings, as nul bytes are never permitted.
---
-CREATE OR REPLACE FUNCTION perl_zerob() RETURNS TEXT AS $$
-  return "abcd\0efg";
-$$ LANGUAGE plperl;
-SELECT perl_zerob();
-
 -- make sure functions marked as VOID without an explicit return work
 CREATE OR REPLACE FUNCTION myfuncs() RETURNS void AS $$
    $_SHARED{myquote} = sub {
