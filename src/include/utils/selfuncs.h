@@ -134,7 +134,7 @@ extern Pattern_Prefix_Status pattern_fixed_prefix(Const *patt,
 					 Pattern_Type ptype,
 					 Oid collation,
 					 Const **prefix,
-					 Const **rest);
+					 Selectivity *rest_selec);
 extern Const *make_greater_string(const Const *str_const, FmgrInfo *ltproc,
 					Oid collation);
 
