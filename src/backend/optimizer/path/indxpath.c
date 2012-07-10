@@ -2785,7 +2785,6 @@ match_special_index_operator(Expr *clause, Oid opfamily, Oid idxcollation,
 	Oid			expr_coll;
 	Const	   *patt;
 	Const	   *prefix = NULL;
-	Const	   *rest = NULL;
 	Pattern_Prefix_Status pstatus = Pattern_Prefix_None;
 
 	/*
@@ -2814,13 +2813,13 @@ match_special_index_operator(Expr *clause, Oid opfamily, Oid idxcollation,
 		case OID_NAME_LIKE_OP:
 			/* the right-hand const is type text for all of these */
 			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like, expr_coll,
-										   &prefix, &rest);
+										   &prefix, NULL);
 			isIndexable = (pstatus != Pattern_Prefix_None);
 			break;
 
 		case OID_BYTEA_LIKE_OP:
 			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like, expr_coll,
-										   &prefix, &rest);
+										   &prefix, NULL);
 			isIndexable = (pstatus != Pattern_Prefix_None);
 			break;
 
@@ -2829,7 +2828,7 @@ match_special_index_operator(Expr *clause, Oid opfamily, Oid idxcollation,
 		case OID_NAME_ICLIKE_OP:
 			/* the right-hand const is type text for all of these */
 			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like_IC, expr_coll,
-										   &prefix, &rest);
+										   &prefix, NULL);
 			isIndexable = (pstatus != Pattern_Prefix_None);
 			break;
 
@@ -2838,7 +2837,7 @@ match_special_index_operator(Expr *clause, Oid opfamily, Oid idxcollation,
 		case OID_NAME_REGEXEQ_OP:
 			/* the right-hand const is type text for all of these */
 			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex, expr_coll,
-										   &prefix, &rest);
+										   &prefix, NULL);
 			isIndexable = (pstatus != Pattern_Prefix_None);
 			break;
 
@@ -2847,7 +2846,7 @@ match_special_index_operator(Expr *clause, Oid opfamily, Oid idxcollation,
 		case OID_NAME_ICREGEXEQ_OP:
 			/* the right-hand const is type text for all of these */
 			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC, expr_coll,
-										   &prefix, &rest);
+										   &prefix, NULL);
 			isIndexable = (pstatus != Pattern_Prefix_None);
 			break;
 
@@ -3115,7 +3114,6 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily, Oid idxcollation)
 	Oid			expr_coll = ((OpExpr *) clause)->inputcollid;
 	Const	   *patt = (Const *) rightop;
 	Const	   *prefix = NULL;
-	Const	   *rest = NULL;
 	Pattern_Prefix_Status pstatus;
 
 	/*
@@ -3135,7 +3133,7 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily, Oid idxcollation)
 			if (!op_in_opfamily(expr_op, opfamily))
 			{
 				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like, expr_coll,
-											   &prefix, &rest);
+											   &prefix, NULL);
 				return prefix_quals(leftop, opfamily, idxcollation, prefix, pstatus);
 			}
 			break;
@@ -3147,7 +3145,7 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily, Oid idxcollation)
 			{
 				/* the right-hand const is type text for all of these */
 				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like_IC, expr_coll,
-											   &prefix, &rest);
+											   &prefix, NULL);
 				return prefix_quals(leftop, opfamily, idxcollation, prefix, pstatus);
 			}
 			break;
@@ -3159,7 +3157,7 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily, Oid idxcollation)
 			{
 				/* the right-hand const is type text for all of these */
 				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex, expr_coll,
-											   &prefix, &rest);
+											   &prefix, NULL);
 				return prefix_quals(leftop, opfamily, idxcollation, prefix, pstatus);
 			}
 			break;
@@ -3171,7 +3169,7 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily, Oid idxcollation)
 			{
 				/* the right-hand const is type text for all of these */
 				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC, expr_coll,
-											   &prefix, &rest);
+											   &prefix, NULL);
 				return prefix_quals(leftop, opfamily, idxcollation, prefix, pstatus);
 			}
 			break;
