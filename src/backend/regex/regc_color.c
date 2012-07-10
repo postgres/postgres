@@ -66,8 +66,9 @@ initcm(struct vars * v,
 	cd = cm->cd;				/* cm->cd[WHITE] */
 	cd->sub = NOSUB;
 	cd->arcs = NULL;
-	cd->flags = 0;
+	cd->firstchr = CHR_MIN;
 	cd->nchrs = CHR_MAX - CHR_MIN + 1;
+	cd->flags = 0;
 
 	/* upper levels of tree */
 	for (t = &cm->tree[0], j = NBYTS - 1; j > 0; t = nextt, j--)
@@ -272,6 +273,7 @@ newcolor(struct colormap * cm)
 	cd->nchrs = 0;
 	cd->sub = NOSUB;
 	cd->arcs = NULL;
+	cd->firstchr = CHR_MIN;		/* in case never set otherwise */
 	cd->flags = 0;
 	cd->block = NULL;
 
@@ -371,6 +373,8 @@ subcolor(struct colormap * cm, chr c)
 	if (co == sco)				/* already in an open subcolor */
 		return co;				/* rest is redundant */
 	cm->cd[co].nchrs--;
+	if (cm->cd[sco].nchrs == 0)
+		cm->cd[sco].firstchr = c;
 	cm->cd[sco].nchrs++;
 	setcolor(cm, c, sco);
 	return sco;
@@ -438,6 +442,11 @@ subrange(struct vars * v,
 
 /*
  * subblock - allocate new subcolors for one tree block of chrs, fill in arcs
+ *
+ * Note: subcolors that are created during execution of this function
+ * will not be given a useful value of firstchr; it'll be left as CHR_MIN.
+ * For the current usage of firstchr in pg_regprefix, this does not matter
+ * because such subcolors won't occur in the common prefix of a regex.
  */
 static void
 subblock(struct vars * v,

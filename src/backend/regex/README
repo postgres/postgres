@@ -7,12 +7,13 @@ So this file is an attempt to reverse-engineer some docs.
 General source-file layout
 --------------------------
 
-There are four separately-compilable source files, each exposing exactly
+There are five separately-compilable source files, each exposing exactly
 one exported function:
 	regcomp.c: pg_regcomp
 	regexec.c: pg_regexec
 	regerror.c: pg_regerror
 	regfree.c: pg_regfree
+	regprefix.c: pg_regprefix
 (The pg_ prefixes were added by the Postgres project to distinguish this
 library version from any similar one that might be present on a particular
 system.  They'd need to be removed or replaced in any standalone version
@@ -44,6 +45,7 @@ regexec.c		Top-level regex execution code
 rege_dfa.c		DFA creation and execution
 regerror.c		pg_regerror: generate text for a regex error code
 regfree.c		pg_regfree: API to free a no-longer-needed regex_t
+regprefix.c		Code for extracting a common prefix from a regex_t
 
 The locale-specific code is concerned primarily with case-folding and with
 expanding locale-specific character classes, such as [[:alnum:]].  It

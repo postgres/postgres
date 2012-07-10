@@ -12,7 +12,7 @@ subdir = src/backend/regex
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = regcomp.o regerror.o regexec.o regfree.o
+OBJS = regcomp.o regerror.o regexec.o regfree.o regprefix.o
 
 include $(top_srcdir)/src/backend/common.mk
 
