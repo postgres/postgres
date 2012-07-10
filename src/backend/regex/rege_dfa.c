@@ -458,14 +458,14 @@ miss(struct vars * v,			/* used only for debug flags */
 	gotstate = 0;
 	for (i = 0; i < d->nstates; i++)
 		if (ISBSET(css->states, i))
-			for (ca = cnfa->states[i] + 1; ca->co != COLORLESS; ca++)
+			for (ca = cnfa->states[i]; ca->co != COLORLESS; ca++)
 				if (ca->co == co)
 				{
 					BSET(d->work, ca->to);
 					gotstate = 1;
 					if (ca->to == cnfa->post)
 						ispost = 1;
-					if (!cnfa->states[ca->to]->co)
+					if (!(cnfa->stflags[ca->to] & CNFA_NOPROGRESS))
 						noprogress = 0;
 					FDEBUG(("%d -> %d\n", i, ca->to));
 				}
@@ -476,10 +476,9 @@ miss(struct vars * v,			/* used only for debug flags */
 		dolacons = 0;
 		for (i = 0; i < d->nstates; i++)
 			if (ISBSET(d->work, i))
-				for (ca = cnfa->states[i] + 1; ca->co != COLORLESS;
-					 ca++)
+				for (ca = cnfa->states[i]; ca->co != COLORLESS; ca++)
 				{
-					if (ca->co <= cnfa->ncolors)
+					if (ca->co < cnfa->ncolors)
 						continue;		/* NOTE CONTINUE */
 					sawlacons = 1;
 					if (ISBSET(d->work, ca->to))
@@ -490,7 +489,7 @@ miss(struct vars * v,			/* used only for debug flags */
 					dolacons = 1;
 					if (ca->to == cnfa->post)
 						ispost = 1;
-					if (!cnfa->states[ca->to]->co)
+					if (!(cnfa->stflags[ca->to] & CNFA_NOPROGRESS))
 						noprogress = 0;
 					FDEBUG(("%d :> %d\n", i, ca->to));
 				}

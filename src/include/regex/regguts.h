@@ -188,6 +188,7 @@ struct colordesc
 	color		sub;			/* open subcolor (if any); free chain ptr */
 #define  NOSUB	 COLORLESS
 	struct arc *arcs;			/* color chain */
+	chr			firstchr;		/* char first assigned to this color */
 	int			flags;
 #define  FREECOL 01				/* currently free */
 #define  PSEUDO  02				/* pseudocolor, no real chars */
@@ -255,15 +256,14 @@ struct state;
 
 struct arc
 {
-	int			type;
-#define  ARCFREE '\0'
+	int			type;			/* 0 if free, else an NFA arc type code */
 	color		co;
 	struct state *from;			/* where it's from (and contained within) */
 	struct state *to;			/* where it's to */
-	struct arc *outchain;		/* *from's outs chain or free chain */
+	struct arc *outchain;		/* link in *from's outs chain or free chain */
 #define  freechain	 outchain
-	struct arc *inchain;		/* *to's ins chain */
-	struct arc *colorchain;		/* color's arc chain */
+	struct arc *inchain;		/* link in *to's ins chain */
+	struct arc *colorchain;		/* link in color's arc chain */
 	struct arc *colorchainRev;	/* back-link in color's arc chain */
 };
 
@@ -315,24 +315,38 @@ struct nfa
 
 /*
  * definitions for compacted NFA
+ *
+ * The main space savings in a compacted NFA is from making the arcs as small
+ * as possible.  We store only the transition color and next-state number for
+ * each arc.  The list of out arcs for each state is an array beginning at
+ * cnfa.states[statenumber], and terminated by a dummy carc struct with
+ * co == COLORLESS.
+ *
+ * The non-dummy carc structs are of two types: plain arcs and LACON arcs.
+ * Plain arcs just store the transition color number as "co".  LACON arcs
+ * store the lookahead constraint number plus cnfa.ncolors as "co".  LACON
+ * arcs can be distinguished from plain by testing for co >= cnfa.ncolors.
  */
 struct carc
 {
 	color		co;				/* COLORLESS is list terminator */
-	int			to;				/* state number */
+	int			to;				/* next-state number */
 };
 
 struct cnfa
 {
 	int			nstates;		/* number of states */
-	int			ncolors;		/* number of colors */
+	int			ncolors;		/* number of colors (max color in use + 1) */
 	int			flags;
-#define  HASLACONS	 01			/* uses lookahead constraints */
+#define  HASLACONS	01			/* uses lookahead constraints */
 	int			pre;			/* setup state number */
 	int			post;			/* teardown state number */
 	color		bos[2];			/* colors, if any, assigned to BOS and BOL */
 	color		eos[2];			/* colors, if any, assigned to EOS and EOL */
+	char	   *stflags;		/* vector of per-state flags bytes */
+#define  CNFA_NOPROGRESS	01	/* flag bit for a no-progress state */
 	struct carc **states;		/* vector of pointers to outarc lists */
+	/* states[n] are pointers into a single malloc'd array of arcs */
 	struct carc *arcs;			/* the area for the lists */
 };
 
