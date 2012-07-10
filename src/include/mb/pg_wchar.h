@@ -49,7 +49,13 @@ typedef unsigned int pg_wchar;
 /*
  * Is a prefix byte for "private" single byte encodings?
  */
-#define IS_LCPRV1(c)	((unsigned char)(c) == 0x9a || (unsigned char)(c) == 0x9b)
+#define LCPRV1_A		0x9a
+#define LCPRV1_B		0x9b
+#define IS_LCPRV1(c)	((unsigned char)(c) == LCPRV1_A || (unsigned char)(c) == LCPRV1_B)
+#define IS_LCPRV1_A_RANGE(c)	\
+	((unsigned char)(c) >= 0xa0 && (unsigned char)(c) <= 0xdf)
+#define IS_LCPRV1_B_RANGE(c)	\
+	((unsigned char)(c) >= 0xe0 && (unsigned char)(c) <= 0xef)
 /*
  * Is a leading byte for "official" multibyte encodings?
  */
@@ -57,7 +63,13 @@ typedef unsigned int pg_wchar;
 /*
  * Is a prefix byte for "private" multibyte encodings?
  */
-#define IS_LCPRV2(c)	((unsigned char)(c) == 0x9c || (unsigned char)(c) == 0x9d)
+#define LCPRV2_A		0x9c
+#define LCPRV2_B		0x9d
+#define IS_LCPRV2(c)	((unsigned char)(c) == LCPRV2_A || (unsigned char)(c) == LCPRV2_B)
+#define IS_LCPRV2_A_RANGE(c)	\
+	((unsigned char)(c) >= 0xf0 && (unsigned char)(c) <= 0xf4)
+#define IS_LCPRV2_B_RANGE(c)	\
+	((unsigned char)(c) >= 0xf5 && (unsigned char)(c) <= 0xfe)
 
 /*----------------------------------------------------
  * leading characters
@@ -277,7 +289,11 @@ extern pg_enc2gettext pg_enc2gettext_tbl[];
  * pg_wchar stuff
  */
 typedef int (*mb2wchar_with_len_converter) (const unsigned char *from,
-														pg_wchar *to,
+													pg_wchar *to,
+													int len);
+
+typedef int (*wchar2mb_with_len_converter) (const pg_wchar *from,
+														unsigned char *to,
 														int len);
 
 typedef int (*mblen_converter) (const unsigned char *mbstr);
@@ -288,8 +304,10 @@ typedef int (*mbverifier) (const unsigned char *mbstr, int len);
 
 typedef struct
 {
-	mb2wchar_with_len_converter mb2wchar_with_len;		/* convert a multibyte
-														 * string to a wchar */
+	mb2wchar_with_len_converter mb2wchar_with_len;	/* convert a multibyte
+													 * string to a wchar */
+	wchar2mb_with_len_converter wchar2mb_with_len;	/* convert a wchar
+													 * string to a multibyte */
 	mblen_converter mblen;		/* get byte length of a char */
 	mbdisplaylen_converter dsplen;		/* get display width of a char */
 	mbverifier	mbverify;		/* verify multibyte sequence */
@@ -370,6 +388,10 @@ extern int	pg_mb2wchar(const char *from, pg_wchar *to);
 extern int	pg_mb2wchar_with_len(const char *from, pg_wchar *to, int len);
 extern int pg_encoding_mb2wchar_with_len(int encoding,
 							  const char *from, pg_wchar *to, int len);
+extern int	pg_wchar2mb(const pg_wchar *from, char *to);
+extern int	pg_wchar2mb_with_len(const pg_wchar *from, char *to, int len);
+extern int pg_encoding_wchar2mb_with_len(int encoding,
+							  const pg_wchar *from, char *to, int len);
 extern int	pg_char_and_wchar_strcmp(const char *s1, const pg_wchar *s2);
 extern int	pg_wchar_strncmp(const pg_wchar *s1, const pg_wchar *s2, size_t n);
 extern int	pg_char_and_wchar_strncmp(const char *s1, const pg_wchar *s2, size_t n);
