@@ -81,6 +81,9 @@ typedef unsigned int pg_wchar;
  * private-charset flag values do not match what XEmacs says they should be,
  * so this isn't really exactly MULE (not that private charsets would be
  * interoperable anyway).
+ *
+ * Note that XEmacs's implementation is different from what emacs does.
+ * We follow emacs's implementaion, rathter than XEmacs's.
  *----------------------------------------------------
  */
 
@@ -108,7 +111,7 @@ typedef unsigned int pg_wchar;
 #define LC_KOI8_R			0x8b	/* Cyrillic KOI8-R */
 #define LC_ISO8859_5		0x8c	/* ISO8859 Cyrillic */
 #define LC_ISO8859_9		0x8d	/* ISO8859 Latin 5 (not supported yet) */
-/* #define FREE				0x8e	free (unused) */
+#define LC_ISO8859_15		0x8e	/* ISO8859 Latin 15 (not supported yet) */
 /* #define CONTROL_1		0x8f	control characters (unused) */
 
 /* Is a leading byte for "official" single byte encodings? */
@@ -119,14 +122,13 @@ typedef unsigned int pg_wchar;
  * 0x9a-0x9d are free. 0x9e and 0x9f are reserved.
  */
 #define LC_JISX0208_1978	0x90	/* Japanese Kanji, old JIS (not supported) */
-/* #define FREE				0x90	free (unused) */
 #define LC_GB2312_80		0x91	/* Chinese */
 #define LC_JISX0208			0x92	/* Japanese Kanji (JIS X 0208) */
 #define LC_KS5601			0x93	/* Korean */
 #define LC_JISX0212			0x94	/* Japanese Kanji (JIS X 0212) */
 #define LC_CNS11643_1		0x95	/* CNS 11643-1992 Plane 1 */
 #define LC_CNS11643_2		0x96	/* CNS 11643-1992 Plane 2 */
-/* #define FREE				0x97	free (unused) */
+#define LC_JISX0213-1		0x97	/* Japanese Kanji (JIS X 0213 Plane 1) (not supported) */
 #define LC_BIG5_1			0x98	/* Plane 1 Chinese traditional (not supported) */
 #define LC_BIG5_2			0x99	/* Plane 1 Chinese traditional (not supported) */
 
@@ -184,6 +186,12 @@ typedef unsigned int pg_wchar;
 									 * (not supported) */
 #define LC_TIBETAN_1_COLUMN 0xf1	/* Tibetan 1-column width glyphs
 									 * (not supported) */
+#define LC_UNICODE_SUBSET_2	0xf2	/* Unicode characters of the range U+2500..U+33FF.
+									 * (not supported) */  
+#define LC_UNICODE_SUBSET_3	0xf3	/* Unicode characters of the range U+E000..U+FFFF.
+									 * (not supported) */  
+#define LC_UNICODE_SUBSET	0xf4	/* Unicode characters of the range U+0100..U+24FF.
+									 * (not supported) */  
 #define LC_ETHIOPIC			0xf5	/* Ethiopic characters (not supported) */
 #define LC_CNS11643_3		0xf6	/* CNS 11643-1992 Plane 3 */
 #define LC_CNS11643_4		0xf7	/* CNS 11643-1992 Plane 4 */
