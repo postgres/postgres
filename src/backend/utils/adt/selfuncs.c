@@ -175,7 +175,10 @@ static RelOptInfo *find_join_input_rel(PlannerInfo *root, Relids relids);
 static Selectivity prefix_selectivity(PlannerInfo *root,
 				   VariableStatData *vardata,
 				   Oid vartype, Oid opfamily, Const *prefixcon);
-static Selectivity pattern_selectivity(Const *patt, Pattern_Type ptype);
+static Selectivity like_selectivity(const char *patt, int pattlen,
+									bool case_insensitive);
+static Selectivity regex_selectivity(const char *patt, int pattlen,
+									 bool case_insensitive);
 static Datum string_to_datum(const char *str, Oid datatype);
 static Const *string_to_const(const char *str, Oid datatype);
 static Const *string_to_bytea_const(const char *str, size_t str_len);
@@ -1087,9 +1090,9 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 	Oid			vartype;
 	Oid			opfamily;
 	Pattern_Prefix_Status pstatus;
-	Const	   *patt = NULL;
+	Const	   *patt;
 	Const	   *prefix = NULL;
-	Const	   *rest = NULL;
+	Selectivity	rest_selec = 0;
 	double		result;
 
 	/*
@@ -1179,13 +1182,15 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 			return result;
 	}
 
-	/* divide pattern into fixed prefix and remainder */
+	/*
+	 * Pull out any fixed prefix implied by the pattern, and estimate the
+	 * fractional selectivity of the remainder of the pattern.
+	 */
 	patt = (Const *) other;
-	pstatus = pattern_fixed_prefix(patt, ptype, &prefix, &rest);
+	pstatus = pattern_fixed_prefix(patt, ptype, &prefix, &rest_selec);
 
 	/*
-	 * If necessary, coerce the prefix constant to the right type. (The "rest"
-	 * constant need not be changed.)
+	 * If necessary, coerce the prefix constant to the right type.
 	 */
 	if (prefix && prefix->consttype != vartype)
 	{
@@ -1259,15 +1264,13 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype, bool negate)
 		{
 			Selectivity heursel;
 			Selectivity prefixsel;
-			Selectivity restsel;
 
 			if (pstatus == Pattern_Prefix_Partial)
 				prefixsel = prefix_selectivity(root, &vardata, vartype,
 											   opfamily, prefix);
 			else
 				prefixsel = 1.0;
-			restsel = pattern_selectivity(rest, ptype);
-			heursel = prefixsel * restsel;
+			heursel = prefixsel * rest_selec;
 
 			if (selec < 0)		/* fewer than 10 histogram entries? */
 				selec = heursel;
@@ -4810,9 +4813,9 @@ find_join_input_rel(PlannerInfo *root, Relids relids)
  *
  * *prefix is set to a palloc'd prefix string (in the form of a Const node),
  *	or to NULL if no fixed prefix exists for the pattern.
- * *rest is set to a palloc'd Const representing the remainder of the pattern
- *	after the portion describing the fixed prefix.
- * Each of these has the same type (TEXT or BYTEA) as the given pattern Const.
+ * If rest_selec is not NULL, *rest_selec is set to an estimate of the
+ *	selectivity of the remainder of the pattern (without any fixed prefix).
+ * The prefix Const has the same type (TEXT or BYTEA) as the input pattern.
  *
  * The return value distinguishes no fixed prefix, a partial prefix,
  * or an exact-match-only pattern.
@@ -4820,12 +4823,11 @@ find_join_input_rel(PlannerInfo *root, Relids relids)
 
 static Pattern_Prefix_Status
 like_fixed_prefix(Const *patt_const, bool case_insensitive,
-				  Const **prefix_const, Const **rest_const)
+				  Const **prefix_const, Selectivity *rest_selec)
 {
 	char	   *match;
 	char	   *patt;
 	int			pattlen;
-	char	   *rest;
 	Oid			typeid = patt_const->consttype;
 	int			pos,
 				match_pos;
@@ -4893,18 +4895,15 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive,
 	}
 
 	match[match_pos] = '\0';
-	rest = &patt[pos];
 
 	if (typeid != BYTEAOID)
-	{
 		*prefix_const = string_to_const(match, typeid);
-		*rest_const = string_to_const(rest, typeid);
-	}
 	else
-	{
 		*prefix_const = string_to_bytea_const(match, match_pos);
-		*rest_const = string_to_bytea_const(rest, pattlen - pos);
-	}
+
+	if (rest_selec != NULL)
+		*rest_selec = like_selectivity(&patt[pos], pattlen - pos,
+									   case_insensitive);
 
 	pfree(patt);
 	pfree(match);
@@ -4921,7 +4920,7 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive,
 
 static Pattern_Prefix_Status
 regex_fixed_prefix(Const *patt_const, bool case_insensitive,
-				   Const **prefix_const, Const **rest_const)
+				   Const **prefix_const, Selectivity *rest_selec)
 {
 	char	   *match;
 	int			pos,
@@ -4959,10 +4958,11 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 	/* Pattern must be anchored left */
 	if (patt[pos] != '^')
 	{
-		rest = patt;
-
 		*prefix_const = NULL;
-		*rest_const = string_to_const(rest, typeid);
+
+		if (rest_selec != NULL)
+			*rest_selec = regex_selectivity(patt, strlen(patt),
+											case_insensitive);
 
 		return Pattern_Prefix_None;
 	}
@@ -4976,10 +4976,11 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 	 */
 	if (strchr(patt + pos, '|') != NULL)
 	{
-		rest = patt;
-
 		*prefix_const = NULL;
-		*rest_const = string_to_const(rest, typeid);
+
+		if (rest_selec != NULL)
+			*rest_selec = regex_selectivity(patt, strlen(patt),
+											case_insensitive);
 
 		return Pattern_Prefix_None;
 	}
@@ -5082,10 +5083,10 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 
 	if (patt[pos] == '$' && patt[pos + 1] == '\0')
 	{
-		rest = &patt[pos + 1];
-
 		*prefix_const = string_to_const(match, typeid);
-		*rest_const = string_to_const(rest, typeid);
+
+		if (rest_selec != NULL)
+			*rest_selec = 1.0;
 
 		pfree(patt);
 		pfree(match);
@@ -5094,7 +5095,10 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 	}
 
 	*prefix_const = string_to_const(match, typeid);
-	*rest_const = string_to_const(rest, typeid);
+
+	if (rest_selec != NULL)
+		*rest_selec = regex_selectivity(rest, strlen(rest),
+										case_insensitive);
 
 	pfree(patt);
 	pfree(match);
@@ -5107,23 +5111,23 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 
 Pattern_Prefix_Status
 pattern_fixed_prefix(Const *patt, Pattern_Type ptype,
-					 Const **prefix, Const **rest)
+					 Const **prefix, Selectivity *rest_selec)
 {
 	Pattern_Prefix_Status result;
 
 	switch (ptype)
 	{
 		case Pattern_Type_Like:
-			result = like_fixed_prefix(patt, false, prefix, rest);
+			result = like_fixed_prefix(patt, false, prefix, rest_selec);
 			break;
 		case Pattern_Type_Like_IC:
-			result = like_fixed_prefix(patt, true, prefix, rest);
+			result = like_fixed_prefix(patt, true, prefix, rest_selec);
 			break;
 		case Pattern_Type_Regex:
-			result = regex_fixed_prefix(patt, false, prefix, rest);
+			result = regex_fixed_prefix(patt, false, prefix, rest_selec);
 			break;
 		case Pattern_Type_Regex_IC:
-			result = regex_fixed_prefix(patt, true, prefix, rest);
+			result = regex_fixed_prefix(patt, true, prefix, rest_selec);
 			break;
 		default:
 			elog(ERROR, "unrecognized ptype: %d", (int) ptype);
@@ -5238,7 +5242,8 @@ prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
 
 /*
  * Estimate the selectivity of a pattern of the specified type.
- * Note that any fixed prefix of the pattern will have been removed already.
+ * Note that any fixed prefix of the pattern will have been removed already,
+ * so actually we may be looking at just a fragment of the pattern.
  *
  * For now, we use a very simplistic approach: fixed characters reduce the
  * selectivity a good deal, character ranges reduce it a little,
@@ -5252,37 +5257,10 @@ prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
 #define PARTIAL_WILDCARD_SEL 2.0
 
 static Selectivity
-like_selectivity(Const *patt_const, bool case_insensitive)
+like_selectivity(const char *patt, int pattlen, bool case_insensitive)
 {
 	Selectivity sel = 1.0;
 	int			pos;
-	Oid			typeid = patt_const->consttype;
-	char	   *patt;
-	int			pattlen;
-
-	/* the right-hand const is type text or bytea */
-	Assert(typeid == BYTEAOID || typeid == TEXTOID);
-
-	if (typeid == BYTEAOID && case_insensitive)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		   errmsg("case insensitive matching not supported on type bytea")));
-
-	if (typeid != BYTEAOID)
-	{
-		patt = TextDatumGetCString(patt_const->constvalue);
-		pattlen = strlen(patt);
-	}
-	else
-	{
-		bytea	   *bstr = DatumGetByteaP(patt_const->constvalue);
-
-		pattlen = VARSIZE(bstr) - VARHDRSZ;
-		patt = (char *) palloc(pattlen);
-		memcpy(patt, VARDATA(bstr), pattlen);
-		if ((Pointer) bstr != DatumGetPointer(patt_const->constvalue))
-			pfree(bstr);
-	}
 
 	/* Skip any leading wildcard; it's already factored into initial sel */
 	for (pos = 0; pos < pattlen; pos++)
@@ -5312,13 +5290,11 @@ like_selectivity(Const *patt_const, bool case_insensitive)
 	/* Could get sel > 1 if multiple wildcards */
 	if (sel > 1.0)
 		sel = 1.0;
-
-	pfree(patt);
 	return sel;
 }
 
 static Selectivity
-regex_selectivity_sub(char *patt, int pattlen, bool case_insensitive)
+regex_selectivity_sub(const char *patt, int pattlen, bool case_insensitive)
 {
 	Selectivity sel = 1.0;
 	int			paren_depth = 0;
@@ -5411,26 +5387,9 @@ regex_selectivity_sub(char *patt, int pattlen, bool case_insensitive)
 }
 
 static Selectivity
-regex_selectivity(Const *patt_const, bool case_insensitive)
+regex_selectivity(const char *patt, int pattlen, bool case_insensitive)
 {
 	Selectivity sel;
-	char	   *patt;
-	int			pattlen;
-	Oid			typeid = patt_const->consttype;
-
-	/*
-	 * Should be unnecessary, there are no bytea regex operators defined. As
-	 * such, it should be noted that the rest of this function has *not* been
-	 * made safe for binary (possibly NULL containing) strings.
-	 */
-	if (typeid == BYTEAOID)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		 errmsg("regular-expression matching not supported on type bytea")));
-
-	/* the right-hand const is type text for all of these */
-	patt = TextDatumGetCString(patt_const->constvalue);
-	pattlen = strlen(patt);
 
 	/* If patt doesn't end with $, consider it to have a trailing wildcard */
 	if (pattlen > 0 && patt[pattlen - 1] == '$' &&
@@ -5448,33 +5407,6 @@ regex_selectivity(Const *patt_const, bool case_insensitive)
 			sel = 1.0;
 	}
 	return sel;
-}
-
-static Selectivity
-pattern_selectivity(Const *patt, Pattern_Type ptype)
-{
-	Selectivity result;
-
-	switch (ptype)
-	{
-		case Pattern_Type_Like:
-			result = like_selectivity(patt, false);
-			break;
-		case Pattern_Type_Like_IC:
-			result = like_selectivity(patt, true);
-			break;
-		case Pattern_Type_Regex:
-			result = regex_selectivity(patt, false);
-			break;
-		case Pattern_Type_Regex_IC:
-			result = regex_selectivity(patt, true);
-			break;
-		default:
-			elog(ERROR, "unrecognized ptype: %d", (int) ptype);
-			result = 1.0;		/* keep compiler quiet */
-			break;
-	}
-	return result;
 }
 
 

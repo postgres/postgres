@@ -133,7 +133,7 @@ extern double histogram_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 extern Pattern_Prefix_Status pattern_fixed_prefix(Const *patt,
 					 Pattern_Type ptype,
 					 Const **prefix,
-					 Const **rest);
+					 Selectivity *rest_selec);
 extern Const *make_greater_string(const Const *str_const, FmgrInfo *ltproc);
 
 extern Datum eqsel(PG_FUNCTION_ARGS);
