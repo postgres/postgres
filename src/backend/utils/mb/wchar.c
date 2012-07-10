@@ -99,8 +99,7 @@ pg_euc2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 			*to |= *from++;
 			len -= 2;
 		}
-		else
-			/* must be ASCII */
+		else							/* must be ASCII */
 		{
 			*to = *from++;
 			len--;
@@ -340,7 +339,7 @@ pg_euctw_dsplen(const unsigned char *s)
 }
 
 /*
- * Convert pg_wchar to EUC_* encoding. 
+ * Convert pg_wchar to EUC_* encoding.
  * caller must allocate enough space for "to", including a trailing zero!
  * len: length of from.
  * "from" not necessarily null terminated.
@@ -353,8 +352,8 @@ pg_wchar2euc_with_len(const pg_wchar *from, unsigned char *to, int len)
 	while (len > 0 && *from)
 	{
 		unsigned char c;
-		
-		if ((c = *from >> 24))
+
+		if ((c = (*from >> 24)))
 		{
 			*to++ = c;
 			*to++ = (*from >> 16) & 0xff;
@@ -362,14 +361,14 @@ pg_wchar2euc_with_len(const pg_wchar *from, unsigned char *to, int len)
 			*to++ = *from & 0xff;
 			cnt += 4;
 		}
-		else if ((c = *from >> 16))
+		else if ((c = (*from >> 16)))
 		{
 			*to++ = c;
 			*to++ = (*from >> 8) & 0xff;
 			*to++ = *from & 0xff;
 			cnt += 3;
 		}
-		else if ((c = *from >> 8))
+		else if ((c = (*from >> 8)))
 		{
 			*to++ = c;
 			*to++ = *from & 0xff;
@@ -379,7 +378,7 @@ pg_wchar2euc_with_len(const pg_wchar *from, unsigned char *to, int len)
 		{
 			*to++ = *from;
 			cnt++;
-		}		
+		}
 		from++;
 		len--;
 	}
@@ -516,7 +515,7 @@ pg_wchar2utf_with_len(const pg_wchar *from, unsigned char *to, int len)
 	while (len > 0 && *from)
 	{
 		int char_len;
-		
+
 		unicode_to_utf8(*from, to);
 		char_len = pg_utf_mblen(to);
 		cnt += char_len;
@@ -803,10 +802,11 @@ static int
 pg_wchar2mule_with_len(const pg_wchar *from, unsigned char *to, int len)
 {
 	int			cnt = 0;
-	unsigned char lb;
 
 	while (len > 0 && *from)
 	{
+		unsigned char lb;
+
 		lb = (*from >> 16) & 0xff;
 		if (IS_LC1(lb))
 		{
@@ -853,7 +853,7 @@ pg_wchar2mule_with_len(const pg_wchar *from, unsigned char *to, int len)
 		}
 		else
 		{
-			*to++ = lb;
+			*to++ = *from & 0xff;
 			cnt += 1;
 		}
 		from++;
