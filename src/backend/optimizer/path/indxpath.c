@@ -2081,7 +2081,6 @@ match_special_index_operator(Expr *clause, Oid opfamily,
 	Oid			expr_op;
 	Const	   *patt;
 	Const	   *prefix = NULL;
-	Const	   *rest = NULL;
 
 	/*
 	 * Currently, all known special operators require the indexkey on the
@@ -2108,12 +2107,12 @@ match_special_index_operator(Expr *clause, Oid opfamily,
 		case OID_NAME_LIKE_OP:
 			/* the right-hand const is type text for all of these */
 			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like,
-									  &prefix, &rest) != Pattern_Prefix_None;
+									  &prefix, NULL) != Pattern_Prefix_None;
 			break;
 
 		case OID_BYTEA_LIKE_OP:
 			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like,
-									  &prefix, &rest) != Pattern_Prefix_None;
+									  &prefix, NULL) != Pattern_Prefix_None;
 			break;
 
 		case OID_TEXT_ICLIKE_OP:
@@ -2121,7 +2120,7 @@ match_special_index_operator(Expr *clause, Oid opfamily,
 		case OID_NAME_ICLIKE_OP:
 			/* the right-hand const is type text for all of these */
 			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like_IC,
-									  &prefix, &rest) != Pattern_Prefix_None;
+									  &prefix, NULL) != Pattern_Prefix_None;
 			break;
 
 		case OID_TEXT_REGEXEQ_OP:
@@ -2129,7 +2128,7 @@ match_special_index_operator(Expr *clause, Oid opfamily,
 		case OID_NAME_REGEXEQ_OP:
 			/* the right-hand const is type text for all of these */
 			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Regex,
-									  &prefix, &rest) != Pattern_Prefix_None;
+									  &prefix, NULL) != Pattern_Prefix_None;
 			break;
 
 		case OID_TEXT_ICREGEXEQ_OP:
@@ -2137,7 +2136,7 @@ match_special_index_operator(Expr *clause, Oid opfamily,
 		case OID_NAME_ICREGEXEQ_OP:
 			/* the right-hand const is type text for all of these */
 			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC,
-									  &prefix, &rest) != Pattern_Prefix_None;
+									  &prefix, NULL) != Pattern_Prefix_None;
 			break;
 
 		case OID_INET_SUB_OP:
@@ -2380,7 +2379,6 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily)
 	Oid			expr_op = ((OpExpr *) clause)->opno;
 	Const	   *patt = (Const *) rightop;
 	Const	   *prefix = NULL;
-	Const	   *rest = NULL;
 	Pattern_Prefix_Status pstatus;
 	List	   *result;
 
@@ -2396,7 +2394,7 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily)
 		case OID_NAME_LIKE_OP:
 		case OID_BYTEA_LIKE_OP:
 			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like,
-										   &prefix, &rest);
+										   &prefix, NULL);
 			result = prefix_quals(leftop, opfamily, prefix, pstatus);
 			break;
 
@@ -2405,7 +2403,7 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily)
 		case OID_NAME_ICLIKE_OP:
 			/* the right-hand const is type text for all of these */
 			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like_IC,
-										   &prefix, &rest);
+										   &prefix, NULL);
 			result = prefix_quals(leftop, opfamily, prefix, pstatus);
 			break;
 
@@ -2414,7 +2412,7 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily)
 		case OID_NAME_REGEXEQ_OP:
 			/* the right-hand const is type text for all of these */
 			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex,
-										   &prefix, &rest);
+										   &prefix, NULL);
 			result = prefix_quals(leftop, opfamily, prefix, pstatus);
 			break;
 
@@ -2423,7 +2421,7 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily)
 		case OID_NAME_ICREGEXEQ_OP:
 			/* the right-hand const is type text for all of these */
 			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC,
-										   &prefix, &rest);
+										   &prefix, NULL);
 			result = prefix_quals(leftop, opfamily, prefix, pstatus);
 			break;
 
