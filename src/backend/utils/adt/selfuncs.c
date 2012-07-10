@@ -195,7 +195,8 @@ static Selectivity prefix_selectivity(PlannerInfo *root,
 static Selectivity like_selectivity(const char *patt, int pattlen,
 									bool case_insensitive);
 static Selectivity regex_selectivity(const char *patt, int pattlen,
-									 bool case_insensitive);
+									 bool case_insensitive,
+									 int fixed_prefix_len);
 static Datum string_to_datum(const char *str, Oid datatype);
 static Const *string_to_const(const char *str, Oid datatype);
 static Const *string_to_bytea_const(const char *str, size_t str_len);
@@ -5255,18 +5256,9 @@ static Pattern_Prefix_Status
 regex_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 				   Const **prefix_const, Selectivity *rest_selec)
 {
-	char	   *match;
-	int			pos,
-				match_pos,
-				prev_pos,
-				prev_match_pos;
-	bool		have_leading_paren;
-	char	   *patt;
-	char	   *rest;
 	Oid			typeid = patt_const->consttype;
-	bool		is_multibyte = (pg_database_encoding_max_length() > 1);
-	pg_locale_t locale = 0;
-	bool		locale_is_c = false;
+	char	   *prefix;
+	bool		exact;
 
 	/*
 	 * Should be unnecessary, there are no bytea regex operators defined. As
@@ -5278,185 +5270,54 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 		 errmsg("regular-expression matching not supported on type bytea")));
 
-	if (case_insensitive)
-	{
-		/* If case-insensitive, we need locale info */
-		if (lc_ctype_is_c(collation))
-			locale_is_c = true;
-		else if (collation != DEFAULT_COLLATION_OID)
-		{
-			if (!OidIsValid(collation))
-			{
-				/*
-				 * This typically means that the parser could not resolve a
-				 * conflict of implicit collations, so report it that way.
-				 */
-				ereport(ERROR,
-						(errcode(ERRCODE_INDETERMINATE_COLLATION),
-						 errmsg("could not determine which collation to use for regular expression"),
-						 errhint("Use the COLLATE clause to set the collation explicitly.")));
-			}
-			locale = pg_newlocale_from_collation(collation);
-		}
-	}
+	/* Use the regexp machinery to extract the prefix, if any */
+	prefix = regexp_fixed_prefix(DatumGetTextPP(patt_const->constvalue),
+								 case_insensitive, collation,
+								 &exact);
 
-	/* the right-hand const is type text for all of these */
-	patt = TextDatumGetCString(patt_const->constvalue);
-
-	/*
-	 * Check for ARE director prefix.  It's worth our trouble to recognize
-	 * this because similar_escape() used to use it, and some other code might
-	 * still use it, to force ARE mode.
-	 */
-	pos = 0;
-	if (strncmp(patt, "***:", 4) == 0)
-		pos = 4;
-
-	/* Pattern must be anchored left */
-	if (patt[pos] != '^')
+	if (prefix == NULL)
 	{
 		*prefix_const = NULL;
 
 		if (rest_selec != NULL)
+		{
+			char   *patt = TextDatumGetCString(patt_const->constvalue);
+
 			*rest_selec = regex_selectivity(patt, strlen(patt),
-											case_insensitive);
-
-		return Pattern_Prefix_None;
-	}
-	pos++;
-
-	/*
-	 * If '|' is present in pattern, then there may be multiple alternatives
-	 * for the start of the string.  (There are cases where this isn't so, for
-	 * instance if the '|' is inside parens, but detecting that reliably is
-	 * too hard.)
-	 */
-	if (strchr(patt + pos, '|') != NULL)
-	{
-		*prefix_const = NULL;
-
-		if (rest_selec != NULL)
-			*rest_selec = regex_selectivity(patt, strlen(patt),
-											case_insensitive);
+											case_insensitive,
+											0);
+			pfree(patt);
+		}
 
 		return Pattern_Prefix_None;
 	}
 
-	/* OK, allocate space for pattern */
-	match = palloc(strlen(patt) + 1);
-	prev_match_pos = match_pos = 0;
-
-	/*
-	 * We special-case the syntax '^(...)$' because psql uses it.  But beware:
-	 * sequences beginning "(?" are not what they seem, unless they're "(?:".
-	 * (We must recognize that because of similar_escape().)
-	 */
-	have_leading_paren = false;
-	if (patt[pos] == '(' &&
-		(patt[pos + 1] != '?' || patt[pos + 2] == ':'))
-	{
-		have_leading_paren = true;
-		pos += (patt[pos + 1] != '?' ? 1 : 3);
-	}
-
-	/* Scan remainder of pattern */
-	prev_pos = pos;
-	while (patt[pos])
-	{
-		int			len;
-
-		/*
-		 * Check for characters that indicate multiple possible matches here.
-		 * Also, drop out at ')' or '$' so the termination test works right.
-		 */
-		if (patt[pos] == '.' ||
-			patt[pos] == '(' ||
-			patt[pos] == ')' ||
-			patt[pos] == '[' ||
-			patt[pos] == '^' ||
-			patt[pos] == '$')
-			break;
-
-		/* Stop if case-varying character (it's sort of a wildcard) */
-		if (case_insensitive &&
-		  pattern_char_isalpha(patt[pos], is_multibyte, locale, locale_is_c))
-			break;
-
-		/*
-		 * Check for quantifiers.  Except for +, this means the preceding
-		 * character is optional, so we must remove it from the prefix too!
-		 */
-		if (patt[pos] == '*' ||
-			patt[pos] == '?' ||
-			patt[pos] == '{')
-		{
-			match_pos = prev_match_pos;
-			pos = prev_pos;
-			break;
-		}
-		if (patt[pos] == '+')
-		{
-			pos = prev_pos;
-			break;
-		}
-
-		/*
-		 * Normally, backslash quotes the next character.  But in AREs,
-		 * backslash followed by alphanumeric is an escape, not a quoted
-		 * character.  Must treat it as having multiple possible matches.
-		 * Note: since only ASCII alphanumerics are escapes, we don't have to
-		 * be paranoid about multibyte or collations here.
-		 */
-		if (patt[pos] == '\\')
-		{
-			if (isalnum((unsigned char) patt[pos + 1]))
-				break;
-			pos++;
-			if (patt[pos] == '\0')
-				break;
-		}
-		/* save position in case we need to back up on next loop cycle */
-		prev_match_pos = match_pos;
-		prev_pos = pos;
-		/* must use encoding-aware processing here */
-		len = pg_mblen(&patt[pos]);
-		memcpy(&match[match_pos], &patt[pos], len);
-		match_pos += len;
-		pos += len;
-	}
-
-	match[match_pos] = '\0';
-	rest = &patt[pos];
-
-	if (have_leading_paren && patt[pos] == ')')
-		pos++;
-
-	if (patt[pos] == '$' && patt[pos + 1] == '\0')
-	{
-		*prefix_const = string_to_const(match, typeid);
-
-		if (rest_selec != NULL)
-			*rest_selec = 1.0;
-
-		pfree(patt);
-		pfree(match);
-
-		return Pattern_Prefix_Exact;	/* pattern specifies exact match */
-	}
-
-	*prefix_const = string_to_const(match, typeid);
+	*prefix_const = string_to_const(prefix, typeid);
 
 	if (rest_selec != NULL)
-		*rest_selec = regex_selectivity(rest, strlen(rest),
-										case_insensitive);
+	{
+		if (exact)
+		{
+			/* Exact match, so there's no additional selectivity */
+			*rest_selec = 1.0;
+		}
+		else
+		{
+			char   *patt = TextDatumGetCString(patt_const->constvalue);
 
-	pfree(patt);
-	pfree(match);
+			*rest_selec = regex_selectivity(patt, strlen(patt),
+											case_insensitive,
+											strlen(prefix));
+			pfree(patt);
+		}
+	}
 
-	if (match_pos > 0)
+	pfree(prefix);
+
+	if (exact)
+		return Pattern_Prefix_Exact;	/* pattern specifies exact match */
+	else
 		return Pattern_Prefix_Partial;
-
-	return Pattern_Prefix_None;
 }
 
 Pattern_Prefix_Status
@@ -5741,7 +5602,8 @@ regex_selectivity_sub(const char *patt, int pattlen, bool case_insensitive)
 }
 
 static Selectivity
-regex_selectivity(const char *patt, int pattlen, bool case_insensitive)
+regex_selectivity(const char *patt, int pattlen, bool case_insensitive,
+				  int fixed_prefix_len)
 {
 	Selectivity sel;
 
@@ -5757,9 +5619,14 @@ regex_selectivity(const char *patt, int pattlen, bool case_insensitive)
 		/* no trailing $ */
 		sel = regex_selectivity_sub(patt, pattlen, case_insensitive);
 		sel *= FULL_WILDCARD_SEL;
-		if (sel > 1.0)
-			sel = 1.0;
 	}
+
+	/* If there's a fixed prefix, discount its selectivity */
+	if (fixed_prefix_len > 0)
+		sel /= pow(FIXED_CHAR_SEL, fixed_prefix_len);
+
+	/* Make sure result stays in range */
+	CLAMP_PROBABILITY(sel);
 	return sel;
 }
 

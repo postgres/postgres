@@ -90,3 +90,66 @@ select substring('a' from '((a)+)');
  a
 (1 row)
 
+-- Test conversion of regex patterns to indexable conditions
+explain (costs off) select * from pg_proc where proname ~ 'abc';
+            QUERY PLAN             
+-----------------------------------
+ Seq Scan on pg_proc
+   Filter: (proname ~ 'abc'::text)
+(2 rows)
+
+explain (costs off) select * from pg_proc where proname ~ '^abc';
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ Index Scan using pg_proc_proname_args_nsp_index on pg_proc
+   Index Cond: ((proname >= 'abc'::name) AND (proname < 'abd'::name))
+   Filter: (proname ~ '^abc'::text)
+(3 rows)
+
+explain (costs off) select * from pg_proc where proname ~ '^abc$';
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Index Scan using pg_proc_proname_args_nsp_index on pg_proc
+   Index Cond: (proname = 'abc'::name)
+   Filter: (proname ~ '^abc$'::text)
+(3 rows)
+
+explain (costs off) select * from pg_proc where proname ~ '^abcd*e';
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ Index Scan using pg_proc_proname_args_nsp_index on pg_proc
+   Index Cond: ((proname >= 'abc'::name) AND (proname < 'abd'::name))
+   Filter: (proname ~ '^abcd*e'::text)
+(3 rows)
+
+explain (costs off) select * from pg_proc where proname ~ '^abc+d';
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ Index Scan using pg_proc_proname_args_nsp_index on pg_proc
+   Index Cond: ((proname >= 'abc'::name) AND (proname < 'abd'::name))
+   Filter: (proname ~ '^abc+d'::text)
+(3 rows)
+
+explain (costs off) select * from pg_proc where proname ~ '^(abc)(def)';
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
+ Index Scan using pg_proc_proname_args_nsp_index on pg_proc
+   Index Cond: ((proname >= 'abcdef'::name) AND (proname < 'abcdeg'::name))
+   Filter: (proname ~ '^(abc)(def)'::text)
+(3 rows)
+
+explain (costs off) select * from pg_proc where proname ~ '^(abc)$';
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Index Scan using pg_proc_proname_args_nsp_index on pg_proc
+   Index Cond: (proname = 'abc'::name)
+   Filter: (proname ~ '^(abc)$'::text)
+(3 rows)
+
+explain (costs off) select * from pg_proc where proname ~ '^(abc)?d';
+               QUERY PLAN               
+----------------------------------------
+ Seq Scan on pg_proc
+   Filter: (proname ~ '^(abc)?d'::text)
+(2 rows)
+
