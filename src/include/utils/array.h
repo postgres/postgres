@@ -211,6 +211,8 @@ extern Datum generate_subscripts_nodir(PG_FUNCTION_ARGS);
 extern Datum array_fill(PG_FUNCTION_ARGS);
 extern Datum array_fill_with_lower_bounds(PG_FUNCTION_ARGS);
 extern Datum array_unnest(PG_FUNCTION_ARGS);
+extern Datum array_remove(PG_FUNCTION_ARGS);
+extern Datum array_replace(PG_FUNCTION_ARGS);
 
 extern Datum array_ref(ArrayType *array, int nSubscripts, int *indx,
 		  int arraytyplen, int elmlen, bool elmbyval, char elmalign,

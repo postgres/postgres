@@ -10317,6 +10317,12 @@ SELECT NULLIF(value, '(none)') ...
     <primary>array_prepend</primary>
   </indexterm>
   <indexterm>
+    <primary>array_remove</primary>
+  </indexterm>
+  <indexterm>
+    <primary>array_replace</primary>
+  </indexterm>
+  <indexterm>
     <primary>array_to_string</primary>
   </indexterm>
  <indexterm>
@@ -10431,6 +10437,29 @@ SELECT NULLIF(value, '(none)') ...
         <entry>append an element to the beginning of an array</entry>
         <entry><literal>array_prepend(1, ARRAY[2,3])</literal></entry>
         <entry><literal>{1,2,3}</literal></entry>
+       </row>
+       <row>
+        <entry>
+         <literal>
+          <function>array_remove</function>(<type>anyarray</type>, <type>anyelement</type>)
+         </literal>
+        </entry>
+        <entry><type>anyarray</type></entry>
+        <entry>remove all elements equal to the given value from the array
+         (array must be one-dimensional)</entry>
+        <entry><literal>array_remove(ARRAY[1,2,3,2], 2)</literal></entry>
+        <entry><literal>{1,3}</literal></entry>
+       </row>
+       <row>
+        <entry>
+         <literal>
+          <function>array_replace</function>(<type>anyarray</type>, <type>anyelement</type>, <type>anyelement</type>)
+         </literal>
+        </entry>
+        <entry><type>anyarray</type></entry>
+        <entry>replace each array element equal to the given value with a new value</entry>
+        <entry><literal>array_replace(ARRAY[1,2,5,4], 5, 3)</literal></entry>
+        <entry><literal>{1,2,3,4}</literal></entry>
        </row>
        <row>
         <entry>
