@@ -128,7 +128,7 @@ typedef unsigned int pg_wchar;
 #define LC_JISX0212			0x94	/* Japanese Kanji (JIS X 0212) */
 #define LC_CNS11643_1		0x95	/* CNS 11643-1992 Plane 1 */
 #define LC_CNS11643_2		0x96	/* CNS 11643-1992 Plane 2 */
-#define LC_JISX0213-1		0x97	/* Japanese Kanji (JIS X 0213 Plane 1) (not supported) */
+#define LC_JISX0213_1		0x97	/* Japanese Kanji (JIS X 0213 Plane 1) (not supported) */
 #define LC_BIG5_1			0x98	/* Plane 1 Chinese traditional (not supported) */
 #define LC_BIG5_2			0x99	/* Plane 1 Chinese traditional (not supported) */
 
