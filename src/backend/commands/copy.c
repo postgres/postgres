@@ -121,6 +121,9 @@ typedef struct CopyStateData
 	bool	   *force_quote_flags;		/* per-column CSV FQ flags */
 	List	   *force_notnull;	/* list of column names */
 	bool	   *force_notnull_flags;	/* per-column CSV FNN flags */
+	bool		convert_selectively;	/* do selective binary conversion? */
+	List	   *convert_select;	/* list of column names (can be NIL) */
+	bool	   *convert_select_flags;	/* per-column CSV/TEXT CS flags */
 
 	/* these are just for error messages, see CopyFromErrorCallback */
 	const char *cur_relname;	/* table name for error messages */
@@ -961,6 +964,26 @@ ProcessCopyOptions(CopyState cstate,
 						 errmsg("argument to option \"%s\" must be a list of column names",
 								defel->defname)));
 		}
+		else if (strcmp(defel->defname, "convert_selectively") == 0)
+		{
+			/*
+			 * Undocumented, not-accessible-from-SQL option: convert only
+			 * the named columns to binary form, storing the rest as NULLs.
+			 * It's allowed for the column list to be NIL.
+			 */
+			if (cstate->convert_selectively)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			cstate->convert_selectively = true;
+			if (defel->arg == NULL || IsA(defel->arg, List))
+				cstate->convert_select = (List *) defel->arg;
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("argument to option \"%s\" must be a list of column names",
+								defel->defname)));
+		}
 		else if (strcmp(defel->defname, "encoding") == 0)
 		{
 			if (cstate->file_encoding >= 0)
@@ -1304,6 +1327,29 @@ BeginCopy(bool is_from,
 				errmsg("FORCE NOT NULL column \"%s\" not referenced by COPY",
 					   NameStr(tupDesc->attrs[attnum - 1]->attname))));
 			cstate->force_notnull_flags[attnum - 1] = true;
+		}
+	}
+
+	/* Convert convert_selectively name list to per-column flags */
+	if (cstate->convert_selectively)
+	{
+		List	   *attnums;
+		ListCell   *cur;
+
+		cstate->convert_select_flags = (bool *) palloc0(num_phys_attrs * sizeof(bool));
+
+		attnums = CopyGetAttnums(tupDesc, cstate->rel, cstate->convert_select);
+
+		foreach(cur, attnums)
+		{
+			int			attnum = lfirst_int(cur);
+
+			if (!list_member_int(cstate->attnumlist, attnum))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+						 errmsg_internal("selected column \"%s\" not referenced by COPY",
+										 NameStr(tupDesc->attrs[attnum - 1]->attname))));
+			cstate->convert_select_flags[attnum - 1] = true;
 		}
 	}
 
@@ -2564,6 +2610,13 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
 						 errmsg("missing data for column \"%s\"",
 								NameStr(attr[m]->attname))));
 			string = field_strings[fieldno++];
+
+			if (cstate->convert_select_flags &&
+				!cstate->convert_select_flags[m])
+			{
+				/* ignore input field, leaving column as NULL */
+				continue;
+			}
 
 			if (cstate->csv_mode && string == NULL &&
 				cstate->force_notnull_flags[m])
