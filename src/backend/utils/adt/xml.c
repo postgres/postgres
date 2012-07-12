@@ -2383,7 +2383,7 @@ xmldata_root_element_start(StringInfo result, const char *eltname,
 		else
 			appendStringInfo(result, " xsi:noNamespaceSchemaLocation=\"#\"");
 	}
-	appendStringInfo(result, ">\n\n");
+	appendStringInfo(result, ">\n");
 }
 
 
@@ -2417,8 +2417,11 @@ query_to_xml_internal(const char *query, char *tablename,
 				 errmsg("invalid query")));
 
 	if (!tableforest)
+	{
 		xmldata_root_element_start(result, xmltn, xmlschema,
 								   targetns, top_level);
+		appendStringInfoString(result, "\n");
+	}
 
 	if (xmlschema)
 		appendStringInfo(result, "%s\n\n", xmlschema);
@@ -2581,6 +2584,7 @@ schema_to_xml_internal(Oid nspid, const char *xmlschema, bool nulls,
 	result = makeStringInfo();
 
 	xmldata_root_element_start(result, xmlsn, xmlschema, targetns, top_level);
+	appendStringInfoString(result, "\n");
 
 	if (xmlschema)
 		appendStringInfo(result, "%s\n\n", xmlschema);
@@ -2758,6 +2762,7 @@ database_to_xml_internal(const char *xmlschema, bool nulls,
 	result = makeStringInfo();
 
 	xmldata_root_element_start(result, xmlcn, xmlschema, targetns, true);
+	appendStringInfoString(result, "\n");
 
 	if (xmlschema)
 		appendStringInfo(result, "%s\n\n", xmlschema);
