@@ -60,9 +60,6 @@ do
 # Convert // comments to /* */
 	sed 's;^\([ 	]*\)//\(.*\)$;\1/* \2 */;g' |
 
-# Avoid bug that converts 'x =- 1' to 'x = -1'
-	sed 's;=- ;-= ;g' |
-
 # Mark some comments for special treatment later
 	sed 's;/\*  *---;/*---X_X;g' |
 
