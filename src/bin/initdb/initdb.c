@@ -49,6 +49,7 @@
 #include "postgres_fe.h"
 
 #include <dirent.h>
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <locale.h>
@@ -116,6 +117,7 @@ static const char *authmethodhost = "";
 static const char *authmethodlocal = "";
 static bool debug = false;
 static bool noclean = false;
+static bool do_sync = true;
 static bool show_setting = false;
 static char *xlog_dir = "";
 
@@ -160,6 +162,9 @@ static char *authwarning = NULL;
 /*
  * Centralized knowledge of switches to pass to backend
  *
+ * Note: we run the backend with -F (fsync disabled) and then do a single
+ * pass of fsync'ing at the end.  This is faster than fsync'ing each step.
+ *
  * Note: in the shell-script version, we also passed PGDATA as a -D switch,
  * but here it is more convenient to pass it as an environment variable
  * (no quoting to worry about).
@@ -182,6 +187,9 @@ static char **filter_lines_with_token(char **lines, const char *token);
 #endif
 static char **readfile(const char *path);
 static void writefile(char *path, char **lines);
+static void walkdir(char *path, void (*action)(char *fname, bool isdir));
+static void pre_sync_fname(char *fname, bool isdir);
+static void fsync_fname(char *fname, bool isdir);
 static FILE *popen_check(const char *command, const char *mode);
 static void exit_nicely(void);
 static char *get_id(void);
@@ -209,6 +217,7 @@ static void load_plpgsql(void);
 static void vacuum_db(void);
 static void make_template0(void);
 static void make_postgres(void);
+static void perform_fsync(void);
 static void trapsig(int signum);
 static void check_ok(void);
 static char *escape_quotes(const char *src);
@@ -487,6 +496,174 @@ writefile(char *path, char **lines)
 				progname, path, strerror(errno));
 		exit_nicely();
 	}
+}
+
+/*
+ * walkdir: recursively walk a directory, applying the action to each
+ * regular file and directory (including the named directory itself).
+ *
+ * Adapted from copydir() in copydir.c.
+ */
+static void
+walkdir(char *path, void (*action) (char *fname, bool isdir))
+{
+	DIR		   *dir;
+	struct dirent *direntry;
+	char		subpath[MAXPGPATH];
+
+	dir = opendir(path);
+	if (dir == NULL)
+	{
+		fprintf(stderr, _("%s: could not open directory \"%s\": %s\n"),
+				progname, path, strerror(errno));
+		exit_nicely();
+	}
+
+	while (errno = 0, (direntry = readdir(dir)) != NULL)
+	{
+		struct stat fst;
+
+		if (strcmp(direntry->d_name, ".") == 0 ||
+			strcmp(direntry->d_name, "..") == 0)
+			continue;
+
+		snprintf(subpath, MAXPGPATH, "%s/%s", path, direntry->d_name);
+
+		if (lstat(subpath, &fst) < 0)
+		{
+			fprintf(stderr, _("%s: could not stat file \"%s\": %s\n"),
+					progname, subpath, strerror(errno));
+			exit_nicely();
+		}
+
+		if (S_ISDIR(fst.st_mode))
+			walkdir(subpath, action);
+		else if (S_ISREG(fst.st_mode))
+			(*action) (subpath, false);
+	}
+
+#ifdef WIN32
+	/*
+	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but not in
+	 * released version
+	 */
+	if (GetLastError() == ERROR_NO_MORE_FILES)
+		errno = 0;
+#endif
+
+	if (errno)
+	{
+		fprintf(stderr, _("%s: could not read directory \"%s\": %s\n"),
+				progname, path, strerror(errno));
+		exit_nicely();
+	}
+
+	closedir(dir);
+
+	/*
+	 * It's important to fsync the destination directory itself as individual
+	 * file fsyncs don't guarantee that the directory entry for the file is
+	 * synced.  Recent versions of ext4 have made the window much wider but
+	 * it's been an issue for ext3 and other filesystems in the past.
+	 */
+	(*action) (path, true);
+}
+
+/*
+ * Hint to the OS that it should get ready to fsync() this file.
+ */
+static void
+pre_sync_fname(char *fname, bool isdir)
+{
+#if defined(HAVE_SYNC_FILE_RANGE) || \
+	(defined(USE_POSIX_FADVISE) && defined(POSIX_FADV_DONTNEED))
+	int fd;
+
+	fd = open(fname, O_RDONLY | PG_BINARY);
+
+	/*
+	 * Some OSs don't allow us to open directories at all (Windows returns
+	 * EACCES)
+	 */
+	if (fd < 0 && isdir && (errno == EISDIR || errno == EACCES))
+		return;
+
+	if (fd < 0)
+	{
+		fprintf(stderr, _("%s: could not open file \"%s\": %s\n"),
+				progname, fname, strerror(errno));
+		exit_nicely();
+	}
+
+	/*
+	 * Prefer sync_file_range, else use posix_fadvise.  We ignore any error
+	 * here since this operation is only a hint anyway.
+	 */
+#if defined(HAVE_SYNC_FILE_RANGE)
+	sync_file_range(fd, 0, 0, SYNC_FILE_RANGE_WRITE);
+#elif defined(USE_POSIX_FADVISE) && defined(POSIX_FADV_DONTNEED)
+	posix_fadvise(fd, 0, 0, POSIX_FADV_DONTNEED);
+#endif
+
+	close(fd);
+#endif
+}
+
+/*
+ * fsync a file or directory
+ *
+ * Try to fsync directories but ignore errors that indicate the OS
+ * just doesn't allow/require fsyncing directories.
+ *
+ * Adapted from fsync_fname() in copydir.c.
+ */
+static void
+fsync_fname(char *fname, bool isdir)
+{
+	int			fd;
+	int			returncode;
+
+	/*
+	 * Some OSs require directories to be opened read-only whereas other
+	 * systems don't allow us to fsync files opened read-only; so we need both
+	 * cases here
+	 */
+	if (!isdir)
+		fd = open(fname, O_RDWR | PG_BINARY);
+	else
+		fd = open(fname, O_RDONLY | PG_BINARY);
+
+	/*
+	 * Some OSs don't allow us to open directories at all (Windows returns
+	 * EACCES)
+	 */
+	if (fd < 0 && isdir && (errno == EISDIR || errno == EACCES))
+		return;
+
+	else if (fd < 0)
+	{
+		fprintf(stderr, _("%s: could not open file \"%s\": %s\n"),
+				progname, fname, strerror(errno));
+		exit_nicely();
+	}
+
+	returncode = fsync(fd);
+
+	/* Some OSs don't allow us to fsync directories at all */
+	if (returncode != 0 && isdir && errno == EBADF)
+	{
+		close(fd);
+		return;
+	}
+
+	if (returncode != 0)
+	{
+		fprintf(stderr, _("%s: could not fsync file \"%s\": %s\n"),
+				progname, fname, strerror(errno));
+		exit_nicely();
+	}
+
+	close(fd);
 }
 
 /*
@@ -2092,6 +2269,47 @@ make_postgres(void)
 	check_ok();
 }
 
+/*
+ * fsync everything down to disk
+ */
+static void
+perform_fsync(void)
+{
+	char		pdir[MAXPGPATH];
+
+	fputs(_("syncing data to disk ... "), stdout);
+	fflush(stdout);
+
+	/*
+	 * We need to name the parent of PGDATA.  get_parent_directory() isn't
+	 * enough here, because it can result in an empty string.
+	 */
+	snprintf(pdir, MAXPGPATH, "%s/..", pg_data);
+	canonicalize_path(pdir);
+
+	/*
+	 * Hint to the OS so that we're going to fsync each of these files soon.
+	 */
+
+	/* first the parent of the PGDATA directory */
+	pre_sync_fname(pdir, true);
+
+	/* then recursively through the directory */
+	walkdir(pg_data, pre_sync_fname);
+
+	/*
+	 * Now, do the fsync()s in the same order.
+	 */
+
+	/* first the parent of the PGDATA directory */
+	fsync_fname(pdir, true);
+
+	/* then recursively through the directory */
+	walkdir(pg_data, fsync_fname);
+
+	check_ok();
+}
+
 
 /*
  * signal handler in case we are interrupted.
@@ -2532,6 +2750,7 @@ usage(const char *progname)
 	printf(_("  -d, --debug               generate lots of debugging output\n"));
 	printf(_("  -L DIRECTORY              where to find the input files\n"));
 	printf(_("  -n, --noclean             do not clean up after errors\n"));
+	printf(_("  -N, --nosync              do not wait for changes to be written safely to disk\n"));
 	printf(_("  -s, --show                show internal settings\n"));
 	printf(_("\nOther options:\n"));
 	printf(_("  -V, --version             output version information, then exit\n"));
@@ -2621,6 +2840,7 @@ main(int argc, char *argv[])
 		{"debug", no_argument, NULL, 'd'},
 		{"show", no_argument, NULL, 's'},
 		{"noclean", no_argument, NULL, 'n'},
+		{"nosync", no_argument, NULL, 'N'},
 		{"xlogdir", required_argument, NULL, 'X'},
 		{NULL, 0, NULL, 0}
 	};
@@ -2676,7 +2896,7 @@ main(int argc, char *argv[])
 
 	/* process command-line options */
 
-	while ((c = getopt_long(argc, argv, "dD:E:L:nU:WA:sT:X:", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "dD:E:L:nNU:WA:sT:X:", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -2718,6 +2938,9 @@ main(int argc, char *argv[])
 			case 'n':
 				noclean = true;
 				printf(_("Running in noclean mode.  Mistakes will not be cleaned up.\n"));
+				break;
+			case 'N':
+				do_sync = false;
 				break;
 			case 'L':
 				share_path = xstrdup(optarg);
@@ -3309,6 +3532,11 @@ main(int argc, char *argv[])
 	make_template0();
 
 	make_postgres();
+
+	if (do_sync)
+		perform_fsync();
+	else
+		printf(_("\nSync to disk skipped.\nThe data directory might become corrupt if the operating system crashes.\n"));
 
 	if (authwarning != NULL)
 		fprintf(stderr, "%s", authwarning);

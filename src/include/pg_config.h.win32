@@ -420,6 +420,9 @@
 /* Define to 1 if you have the `symlink' function. */
 #define HAVE_SYMLINK 1
 
+/* Define to 1 if you have the `sync_file_range' function. */
+/* #undef HAVE_SYNC_FILE_RANGE */
+
 /* Define to 1 if you have the `sysconf' function. */
 /* #undef HAVE_SYSCONF */
 
