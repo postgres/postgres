@@ -275,20 +275,22 @@ ginFindParents(GinBtree btree, GinBtreeStack *stack,
 void
 ginInsertValue(GinBtree btree, GinBtreeStack *stack, GinStatsData *buildStats)
 {
-	GinBtreeStack *parent = stack;
-	BlockNumber rootBlkno = InvalidBuffer;
+	GinBtreeStack *parent;
+	BlockNumber rootBlkno;
 	Page		page,
 				rpage,
 				lpage;
 
-	/* remember root BlockNumber */
-	while (parent)
-	{
-		rootBlkno = parent->blkno;
+	/* extract root BlockNumber from stack */
+	Assert(stack != NULL);
+	parent = stack;
+	while (parent->parent)
 		parent = parent->parent;
-	}
+	rootBlkno = parent->blkno;
+	Assert(BlockNumberIsValid(rootBlkno));
 
-	while (stack)
+	/* this loop crawls up the stack until the insertion is complete */
+	for (;;)
 	{
 		XLogRecData *rdata;
 		BlockNumber savedRightLink;
@@ -457,7 +459,7 @@ ginInsertValue(GinBtree btree, GinBtreeStack *stack, GinStatsData *buildStats)
 				 */
 				ginFindParents(btree, stack, rootBlkno);
 				parent = stack->parent;
-				page = BufferGetPage(parent->buffer);
+				Assert(parent != NULL);
 				break;
 			}
 
