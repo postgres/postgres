@@ -73,7 +73,7 @@ walrcv_disconnect_type walrcv_disconnect = NULL;
  * corresponding the filename of recvFile, used for error messages.
  */
 static int	recvFile = -1;
-static TimeLineID	recvFileTLI = -1;
+static TimeLineID	recvFileTLI = 0;
 static XLogSegNo recvSegNo = 0;
 static uint32 recvOff = 0;
 
