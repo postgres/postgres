@@ -24,6 +24,7 @@
 #include <fcntl.h>
 
 #include "access/xlog.h"
+#include "access/xlog_internal.h"
 #include "catalog/pg_control.h"
 
 
@@ -95,6 +96,8 @@ main(int argc, char *argv[])
 	char		sysident_str[32];
 	const char *strftime_fmt = "%c";
 	const char *progname;
+	XLogSegNo	segno;
+	char		xlogfilename[MAXFNAMELEN];
 
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_controldata"));
 
@@ -171,6 +174,13 @@ main(int argc, char *argv[])
 			 localtime(&time_tmp));
 
 	/*
+	 * Calculate name of the WAL file containing the latest checkpoint's REDO
+	 * start point.
+	 */
+	XLByteToSeg(ControlFile.checkPointCopy.redo, segno);
+	XLogFileName(xlogfilename, ControlFile.checkPointCopy.ThisTimeLineID, segno);
+
+	/*
 	 * Format system_identifier separately to keep platform-dependent format
 	 * code out of the translatable message string.
 	 */
@@ -201,6 +211,8 @@ main(int argc, char *argv[])
 	printf(_("Latest checkpoint's REDO location:    %X/%X\n"),
 		   (uint32) (ControlFile.checkPointCopy.redo >> 32),
 		   (uint32) ControlFile.checkPointCopy.redo);
+	printf(_("Latest checkpoint's REDO WAL file:    %s\n"),
+		   xlogfilename);
 	printf(_("Latest checkpoint's TimeLineID:       %u\n"),
 		   ControlFile.checkPointCopy.ThisTimeLineID);
 	printf(_("Latest checkpoint's full_page_writes: %s\n"),
