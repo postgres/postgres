@@ -90,6 +90,12 @@
     </listitem>
    </itemizedlist>
 
+   This scheme is analogous to the recommendations in <ulink
+   url="http://www.python.org/dev/peps/pep-0394/">PEP 394</ulink> regarding the
+   naming and transitioning of the <command>python</command> command.
+  </para>
+
+  <para>
    It depends on the build configuration or the installed packages
    whether PL/Python for Python 2 or Python 3 or both are available.
   </para>
