@@ -187,9 +187,8 @@ RE_compile_and_cache(text *text_re, int cflags, Oid collation)
 
 	if (regcomp_result != REG_OKAY)
 	{
-		/* re didn't compile */
+		/* re didn't compile (no need for pg_regfree, if so) */
 		pg_regerror(regcomp_result, &re_temp.cre_re, errMsg, sizeof(errMsg));
-		/* XXX should we pg_regfree here? */
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
 				 errmsg("invalid regular expression: %s", errMsg)));
