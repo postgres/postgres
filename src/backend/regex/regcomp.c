@@ -278,6 +278,9 @@ static struct fns functions = {
 
 /*
  * pg_regcomp - compile regular expression
+ *
+ * Note: on failure, no resources remain allocated, so pg_regfree()
+ * need not be applied to re.
  */
 int
 pg_regcomp(regex_t *re,
@@ -1870,15 +1873,18 @@ rfree(regex_t *re)
 	g = (struct guts *) re->re_guts;
 	re->re_guts = NULL;
 	re->re_fns = NULL;
-	g->magic = 0;
-	freecm(&g->cmap);
-	if (g->tree != NULL)
-		freesubre((struct vars *) NULL, g->tree);
-	if (g->lacons != NULL)
-		freelacons(g->lacons, g->nlacons);
-	if (!NULLCNFA(g->search))
-		freecnfa(&g->search);
-	FREE(g);
+	if (g != NULL)
+	{
+		g->magic = 0;
+		freecm(&g->cmap);
+		if (g->tree != NULL)
+			freesubre((struct vars *) NULL, g->tree);
+		if (g->lacons != NULL)
+			freelacons(g->lacons, g->nlacons);
+		if (!NULLCNFA(g->search))
+			freecnfa(&g->search);
+		FREE(g);
+	}
 }
 
 #ifdef REG_DEBUG
