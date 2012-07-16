@@ -362,6 +362,4 @@ gettoken_tsvector(TSVectorParseState state,
 		/* get next char */
 		state->prsbuf += pg_mblen(state->prsbuf);
 	}
-
-	return false;
 }

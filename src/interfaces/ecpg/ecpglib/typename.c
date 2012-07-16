@@ -65,7 +65,6 @@ ecpg_type_name(enum ECPGttype typ)
 		default:
 			abort();
 	}
-	return NULL;
 }
 
 int

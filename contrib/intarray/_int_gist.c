@@ -217,8 +217,6 @@ g_int_compress(PG_FUNCTION_ARGS)
 	}
 	else
 		PG_RETURN_POINTER(entry);
-
-	PG_RETURN_POINTER(entry);
 }
 
 Datum

@@ -40,7 +40,6 @@ ltree_execute(ITEM *curitem, void *checkval, bool calcnot, bool (*chkcond) (void
 		else
 			return ltree_execute(curitem + 1, checkval, calcnot, chkcond);
 	}
-	return false;
 }
 
 typedef struct

@@ -4198,11 +4198,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 								firstchar)));
 		}
 	}							/* end of input-reading loop */
-
-	/* can't get here because the above loop never exits */
-	Assert(false);
-
-	abort();					/* keep compiler quiet */
 }
 
 

@@ -233,9 +233,6 @@ StrategyGetBuffer(BufferAccessStrategy strategy, bool *lock_held)
 		}
 		UnlockBufHdr(buf);
 	}
-
-	/* not reached */
-	return NULL;
 }
 
 /*

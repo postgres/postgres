@@ -1663,8 +1663,6 @@ exec_stmt_loop(PLpgSQL_execstate *estate, PLpgSQL_stmt_loop *stmt)
 				elog(ERROR, "unrecognized rc: %d", rc);
 		}
 	}
-
-	return PLPGSQL_RC_OK;
 }
 
 

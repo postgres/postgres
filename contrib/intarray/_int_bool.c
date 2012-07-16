@@ -136,7 +136,6 @@ gettoken(WORKSTATE *state, int32 *val)
 		}
 		(state->buf)++;
 	}
-	return END;
 }
 
 /*
@@ -301,7 +300,6 @@ execute(ITEM *curitem, void *checkval, bool calcnot,
 		else
 			return execute(curitem - 1, checkval, calcnot, chkcond);
 	}
-	return false;
 }
 
 /*
@@ -404,7 +402,6 @@ contains_required_value(ITEM *curitem)
 		else
 			return false;
 	}
-	return false;
 }
 
 bool

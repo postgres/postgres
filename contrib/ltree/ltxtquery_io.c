@@ -139,7 +139,6 @@ gettoken_query(QPRS_STATE *state, int32 *val, int32 *lenval, char **strval, uint
 
 		state->buf += charlen;
 	}
-	return END;
 }
 
 /*

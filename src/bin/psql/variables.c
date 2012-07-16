@@ -115,8 +115,6 @@ ParseVariableBool(const char *value)
 		psql_error("unrecognized Boolean value; assuming \"on\"\n");
 		return true;
 	}
-	/* suppress compiler warning */
-	return true;
 }
 
 

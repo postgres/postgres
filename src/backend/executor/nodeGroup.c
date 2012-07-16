@@ -184,9 +184,6 @@ ExecGroup(GroupState *node)
 		else
 			InstrCountFiltered1(node, 1);
 	}
-
-	/* NOTREACHED */
-	return NULL;
 }
 
 /* -----------------

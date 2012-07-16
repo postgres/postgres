@@ -744,8 +744,6 @@ findVariant(LexemeInfo *in, LexemeInfo *stored, uint16 curpos, LexemeInfo **newi
 		for (i = 0; i < newn; i++)
 			newin[i] = newin[i]->nextentry;
 	}
-
-	return NULL;
 }
 
 static TSLexeme *

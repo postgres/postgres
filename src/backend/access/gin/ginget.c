@@ -354,8 +354,6 @@ collectMatchBitmap(GinBtreeData *btree, GinBtreeStack *stack,
 		 */
 		stack->off++;
 	}
-
-	return true;
 }
 
 /*

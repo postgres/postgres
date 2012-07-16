@@ -146,9 +146,6 @@ ginFindLeafPage(GinBtree btree, GinBtreeStack *stack)
 			stack->predictNumber = 1;
 		}
 	}
-
-	/* keep compiler happy */
-	return NULL;
 }
 
 void

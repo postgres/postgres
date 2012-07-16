@@ -163,8 +163,6 @@ get_val(HSParser *state, bool ignoreeq, bool *escaped)
 
 		state->ptr++;
 	}
-
-	return false;
 }
 
 #define WKEY	0

@@ -216,7 +216,6 @@ gettoken_query(TSQueryParserState state,
 		}
 		state->buf += pg_mblen(state->buf);
 	}
-	return PT_END;
 }
 
 /*

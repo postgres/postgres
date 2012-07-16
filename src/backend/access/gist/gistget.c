@@ -535,8 +535,6 @@ gistgettuple(PG_FUNCTION_ARGS)
 			} while (so->nPageData == 0);
 		}
 	}
-
-	PG_RETURN_BOOL(false);		/* keep compiler quiet */
 }
 
 /*

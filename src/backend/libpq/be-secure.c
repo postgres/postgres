@@ -201,9 +201,9 @@ secure_loaded_verify_locations(void)
 {
 #ifdef USE_SSL
 	return ssl_loaded_verify_locations;
-#endif
-
+#else
 	return false;
+#endif
 }
 
 /*

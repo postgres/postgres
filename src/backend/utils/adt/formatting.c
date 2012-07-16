@@ -1439,7 +1439,6 @@ get_th(char *num, int type)
 				return numTH[3];
 			return numth[3];
 	}
-	return NULL;
 }
 
 /* ----------

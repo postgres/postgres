@@ -435,7 +435,4 @@ main(int argc, char **argv)
 			pg_usleep(RECONNECT_SLEEP_TIME * 1000000);
 		}
 	}
-
-	/* Never get here */
-	exit(2);
 }
