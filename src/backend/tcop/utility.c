@@ -921,26 +921,12 @@ standard_ProcessUtility(Node *parsetree,
 				stmt = transformIndexStmt(stmt, queryString);
 
 				/* ... and do it */
-				DefineIndex(stmt->relation,		/* relation */
-							stmt->idxname,		/* index name */
+				DefineIndex(stmt,
 							InvalidOid, /* no predefined OID */
-							InvalidOid, /* no previous storage */
-							stmt->accessMethod, /* am name */
-							stmt->tableSpace,
-							stmt->indexParams,	/* parameters */
-							(Expr *) stmt->whereClause,
-							stmt->options,
-							stmt->excludeOpNames,
-							stmt->unique,
-							stmt->primary,
-							stmt->isconstraint,
-							stmt->deferrable,
-							stmt->initdeferred,
 							false,		/* is_alter_table */
 							true,		/* check_rights */
 							false,		/* skip_build */
-							false,		/* quiet */
-							stmt->concurrent);	/* concurrent */
+							false);		/* quiet */
 			}
 			break;
 

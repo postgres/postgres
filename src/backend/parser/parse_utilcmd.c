@@ -106,7 +106,6 @@ static void transformTableLikeClause(CreateStmtContext *cxt,
 						 TableLikeClause *table_like_clause);
 static void transformOfType(CreateStmtContext *cxt,
 				TypeName *ofTypename);
-static char *chooseIndexName(const RangeVar *relation, IndexStmt *index_stmt);
 static IndexStmt *generateClonedIndexStmt(CreateStmtContext *cxt,
 						Relation source_idx,
 						const AttrNumber *attmap, int attmap_length);
@@ -872,33 +871,16 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 			index_stmt = generateClonedIndexStmt(cxt, parent_index,
 												 attmap, tupleDesc->natts);
 
-			/* Copy comment on index */
+			/* Copy comment on index, if requested */
 			if (table_like_clause->options & CREATE_TABLE_LIKE_COMMENTS)
 			{
 				comment = GetComment(parent_index_oid, RelationRelationId, 0);
 
-				if (comment != NULL)
-				{
-					CommentStmt *stmt;
-
-					/*
-					 * We have to assign the index a name now, so that we can
-					 * reference it in CommentStmt.
-					 */
-					if (index_stmt->idxname == NULL)
-						index_stmt->idxname = chooseIndexName(cxt->relation,
-															  index_stmt);
-
-					stmt = makeNode(CommentStmt);
-					stmt->objtype = OBJECT_INDEX;
-					stmt->objname =
-						list_make2(makeString(cxt->relation->schemaname),
-								   makeString(index_stmt->idxname));
-					stmt->objargs = NIL;
-					stmt->comment = comment;
-
-					cxt->alist = lappend(cxt->alist, stmt);
-				}
+				/*
+				 * We make use of IndexStmt's idxcomment option, so as not to
+				 * need to know now what name the index will have.
+				 */
+				index_stmt->idxcomment = comment;
 			}
 
 			/* Save it in the inh_indexes list for the time being */
@@ -958,29 +940,6 @@ transformOfType(CreateStmtContext *cxt, TypeName *ofTypename)
 	DecrTupleDescRefCount(tupdesc);
 
 	ReleaseSysCache(tuple);
-}
-
-/*
- * chooseIndexName
- *
- * Compute name for an index.  This must match code in indexcmds.c.
- *
- * XXX this is inherently broken because the indexes aren't created
- * immediately, so we fail to resolve conflicts when the same name is
- * derived for multiple indexes.  However, that's a reasonably uncommon
- * situation, so we'll live with it for now.
- */
-static char *
-chooseIndexName(const RangeVar *relation, IndexStmt *index_stmt)
-{
-	Oid			namespaceId;
-	List	   *colnames;
-
-	namespaceId = RangeVarGetCreationNamespace(relation);
-	colnames = ChooseIndexColumnNames(index_stmt->indexParams);
-	return ChooseIndexName(relation->relname, namespaceId,
-						   colnames, index_stmt->excludeOpNames,
-						   index_stmt->primary, index_stmt->isconstraint);
 }
 
 /*
@@ -1046,7 +1005,10 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 		index->tableSpace = get_tablespace_name(idxrelrec->reltablespace);
 	else
 		index->tableSpace = NULL;
+	index->excludeOpNames = NIL;
+	index->idxcomment = NULL;
 	index->indexOid = InvalidOid;
+	index->oldNode = InvalidOid;
 	index->unique = idxrec->indisunique;
 	index->primary = idxrec->indisprimary;
 	index->concurrent = false;
@@ -1504,7 +1466,9 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 	index->whereClause = constraint->where_clause;
 	index->indexParams = NIL;
 	index->excludeOpNames = NIL;
+	index->idxcomment = NULL;
 	index->indexOid = InvalidOid;
+	index->oldNode = InvalidOid;
 	index->concurrent = false;
 
 	/*

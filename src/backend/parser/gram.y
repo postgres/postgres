@@ -5837,7 +5837,14 @@ IndexStmt:	CREATE opt_unique INDEX opt_concurrently opt_index_name
 					n->options = $12;
 					n->tableSpace = $13;
 					n->whereClause = $14;
+					n->excludeOpNames = NIL;
+					n->idxcomment = NULL;
 					n->indexOid = InvalidOid;
+					n->oldNode = InvalidOid;
+					n->primary = false;
+					n->isconstraint = false;
+					n->deferrable = false;
+					n->initdeferred = false;
 					$$ = (Node *)n;
 				}
 		;

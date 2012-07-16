@@ -2018,10 +2018,11 @@ typedef struct FetchStmt
  *		Create Index Statement
  *
  * This represents creation of an index and/or an associated constraint.
- * If indexOid isn't InvalidOid, we are not creating an index, just a
- * UNIQUE/PKEY constraint using an existing index.	isconstraint must always
- * be true in this case, and the fields describing the index properties are
- * empty.
+ * If isconstraint is true, we should create a pg_constraint entry along
+ * with the index.  But if indexOid isn't InvalidOid, we are not creating an
+ * index, just a UNIQUE/PKEY constraint using an existing index.  isconstraint
+ * must always be true in this case, and the fields describing the index
+ * properties are empty.
  * ----------------------
  */
 typedef struct IndexStmt
@@ -2031,15 +2032,16 @@ typedef struct IndexStmt
 	RangeVar   *relation;		/* relation to build index on */
 	char	   *accessMethod;	/* name of access method (eg. btree) */
 	char	   *tableSpace;		/* tablespace, or NULL for default */
-	List	   *indexParams;	/* a list of IndexElem */
-	List	   *options;		/* options from WITH clause */
+	List	   *indexParams;	/* columns to index: a list of IndexElem */
+	List	   *options;		/* WITH clause options: a list of DefElem */
 	Node	   *whereClause;	/* qualification (partial-index predicate) */
 	List	   *excludeOpNames; /* exclusion operator names, or NIL if none */
+	char	   *idxcomment;		/* comment to apply to index, or NULL */
 	Oid			indexOid;		/* OID of an existing index, if any */
-	Oid			oldNode;		/* relfilenode of my former self */
+	Oid			oldNode;		/* relfilenode of existing storage, if any */
 	bool		unique;			/* is index unique? */
-	bool		primary;		/* is index on primary key? */
-	bool		isconstraint;	/* is it from a CONSTRAINT clause? */
+	bool		primary;		/* is index a primary key? */
+	bool		isconstraint;	/* is it for a pkey/unique constraint? */
 	bool		deferrable;		/* is the constraint DEFERRABLE? */
 	bool		initdeferred;	/* is the constraint INITIALLY DEFERRED? */
 	bool		concurrent;		/* should this be a concurrent index build? */

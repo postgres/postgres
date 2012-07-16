@@ -2826,6 +2826,7 @@ _copyIndexStmt(const IndexStmt *from)
 	COPY_NODE_FIELD(options);
 	COPY_NODE_FIELD(whereClause);
 	COPY_NODE_FIELD(excludeOpNames);
+	COPY_STRING_FIELD(idxcomment);
 	COPY_SCALAR_FIELD(indexOid);
 	COPY_SCALAR_FIELD(oldNode);
 	COPY_SCALAR_FIELD(unique);
