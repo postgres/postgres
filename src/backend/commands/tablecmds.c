@@ -5389,6 +5389,7 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 	Oid			new_index;
 
 	Assert(IsA(stmt, IndexStmt));
+	Assert(!stmt->concurrent);
 
 	/* suppress schema rights check when rebuilding existing index */
 	check_rights = !is_rebuild;
@@ -5399,26 +5400,12 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 
 	/* The IndexStmt has already been through transformIndexStmt */
 
-	new_index = DefineIndex(stmt->relation,		/* relation */
-							stmt->idxname,		/* index name */
+	new_index = DefineIndex(stmt,
 							InvalidOid, /* no predefined OID */
-							stmt->oldNode,
-							stmt->accessMethod, /* am name */
-							stmt->tableSpace,
-							stmt->indexParams,	/* parameters */
-							(Expr *) stmt->whereClause,
-							stmt->options,
-							stmt->excludeOpNames,
-							stmt->unique,
-							stmt->primary,
-							stmt->isconstraint,
-							stmt->deferrable,
-							stmt->initdeferred,
 							true,		/* is_alter_table */
 							check_rights,
 							skip_build,
-							quiet,
-							false);
+							quiet);
 
 	/*
 	 * If TryReuseIndex() stashed a relfilenode for us, we used it for the new
@@ -7968,7 +7955,6 @@ ATPostAlterTypeParse(Oid oldId, char *cmd,
 static void
 TryReuseIndex(Oid oldId, IndexStmt *stmt)
 {
-
 	if (CheckIndexCompatible(oldId,
 							 stmt->relation,
 							 stmt->accessMethod,

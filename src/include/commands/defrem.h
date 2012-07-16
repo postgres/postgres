@@ -20,26 +20,12 @@
 extern void RemoveObjects(DropStmt *stmt);
 
 /* commands/indexcmds.c */
-extern Oid DefineIndex(RangeVar *heapRelation,
-			char *indexRelationName,
+extern Oid DefineIndex(IndexStmt *stmt,
 			Oid indexRelationId,
-			Oid relFileNode,
-			char *accessMethodName,
-			char *tableSpaceName,
-			List *attributeList,
-			Expr *predicate,
-			List *options,
-			List *exclusionOpNames,
-			bool unique,
-			bool primary,
-			bool isconstraint,
-			bool deferrable,
-			bool initdeferred,
 			bool is_alter_table,
 			bool check_rights,
 			bool skip_build,
-			bool quiet,
-			bool concurrent);
+			bool quiet);
 extern void ReindexIndex(RangeVar *indexRelation);
 extern void ReindexTable(RangeVar *relation);
 extern void ReindexDatabase(const char *databaseName,
@@ -48,10 +34,6 @@ extern char *makeObjectName(const char *name1, const char *name2,
 			   const char *label);
 extern char *ChooseRelationName(const char *name1, const char *name2,
 				   const char *label, Oid namespaceid);
-extern char *ChooseIndexName(const char *tabname, Oid namespaceId,
-				List *colnames, List *exclusionOpNames,
-				bool primary, bool isconstraint);
-extern List *ChooseIndexColumnNames(List *indexElems);
 extern bool CheckIndexCompatible(Oid oldId,
 					 RangeVar *heapRelation,
 					 char *accessMethodName,

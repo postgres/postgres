@@ -1250,6 +1250,7 @@ _equalIndexStmt(const IndexStmt *a, const IndexStmt *b)
 	COMPARE_NODE_FIELD(options);
 	COMPARE_NODE_FIELD(whereClause);
 	COMPARE_NODE_FIELD(excludeOpNames);
+	COMPARE_STRING_FIELD(idxcomment);
 	COMPARE_SCALAR_FIELD(indexOid);
 	COMPARE_SCALAR_FIELD(oldNode);
 	COMPARE_SCALAR_FIELD(unique);
