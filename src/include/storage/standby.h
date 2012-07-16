@@ -33,8 +33,9 @@ extern void ResolveRecoveryConflictWithTablespace(Oid tsid);
 extern void ResolveRecoveryConflictWithDatabase(Oid dbid);
 
 extern void ResolveRecoveryConflictWithBufferPin(void);
-extern void SendRecoveryConflictWithBufferPin(ProcSignalReason reason);
 extern void CheckRecoveryConflictDeadlock(void);
+extern void StandbyDeadLockHandler(void);
+extern void StandbyTimeoutHandler(void);
 
 /*
  * Standby Rmgr (RM_STANDBY_ID)

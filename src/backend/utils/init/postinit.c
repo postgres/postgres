@@ -41,7 +41,6 @@
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/lmgr.h"
-#include "storage/proc.h"
 #include "storage/procarray.h"
 #include "storage/procsignal.h"
 #include "storage/proc.h"
@@ -56,6 +55,7 @@
 #include "utils/ps_status.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
+#include "utils/timeout.h"
 #include "utils/tqual.h"
 
 
@@ -65,6 +65,7 @@ static void PerformAuthentication(Port *port);
 static void CheckMyDatabase(const char *name, bool am_superuser);
 static void InitCommunication(void);
 static void ShutdownPostgres(int code, Datum arg);
+static void StatementTimeoutHandler(void);
 static bool ThereIsAtLeastOneRole(void);
 static void process_startup_options(Port *port, bool am_superuser);
 static void process_settings(Oid databaseid, Oid roleid);
@@ -205,8 +206,7 @@ PerformAuthentication(Port *port)
 	 * during authentication.  Since we're inside a transaction and might do
 	 * database access, we have to use the statement_timeout infrastructure.
 	 */
-	if (!enable_sig_alarm(AuthenticationTimeout * 1000, true))
-		elog(FATAL, "could not set timer for authorization timeout");
+	enable_timeout_after(STATEMENT_TIMEOUT, AuthenticationTimeout * 1000);
 
 	/*
 	 * Now perform authentication exchange.
@@ -216,8 +216,7 @@ PerformAuthentication(Port *port)
 	/*
 	 * Done with authentication.  Disable the timeout, and log if needed.
 	 */
-	if (!disable_sig_alarm(true))
-		elog(FATAL, "could not disable timer for authorization timeout");
+	disable_timeout(STATEMENT_TIMEOUT, false);
 
 	if (Log_connections)
 	{
@@ -494,6 +493,16 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 
 	/* Now that we have a BackendId, we can participate in ProcSignal */
 	ProcSignalInit(MyBackendId);
+
+	/*
+	 * Also set up timeout handlers needed for backend operation.  We need
+	 * these in every case except bootstrap.
+	 */
+	if (!bootstrap)
+	{
+		RegisterTimeout(DEADLOCK_TIMEOUT, CheckDeadLock);
+		RegisterTimeout(STATEMENT_TIMEOUT, StatementTimeoutHandler);
+	}
 
 	/*
 	 * bufmgr needs another initialization call too
@@ -971,6 +980,20 @@ ShutdownPostgres(int code, Datum arg)
 	 * them explicitly.
 	 */
 	LockReleaseAll(USER_LOCKMETHOD, true);
+}
+
+
+/*
+ * STATEMENT_TIMEOUT handler: trigger a query-cancel interrupt.
+ */
+static void
+StatementTimeoutHandler(void)
+{
+#ifdef HAVE_SETSID
+	/* try to signal whole process group */
+	kill(-MyProcPid, SIGINT);
+#endif
+	kill(MyProcPid, SIGINT);
 }
 
 

@@ -63,6 +63,7 @@
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
 #include "utils/resowner.h"
+#include "utils/timeout.h"
 #include "utils/timestamp.h"
 
 
@@ -1345,7 +1346,7 @@ WalSndSignals(void)
 	pqsignal(SIGINT, SIG_IGN);	/* not used */
 	pqsignal(SIGTERM, WalSndShutdownHandler);	/* request shutdown */
 	pqsignal(SIGQUIT, WalSndQuickDieHandler);	/* hard crash time */
-	pqsignal(SIGALRM, SIG_IGN);
+	InitializeTimeouts();		/* establishes SIGALRM handler */
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, WalSndXLogSendHandler);	/* request WAL sending */
 	pqsignal(SIGUSR2, WalSndLastCycleHandler);	/* request a last cycle and

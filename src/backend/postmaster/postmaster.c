@@ -112,12 +112,12 @@
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
 #include "storage/pmsignal.h"
-#include "storage/proc.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/datetime.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
+#include "utils/timeout.h"
 
 #ifdef EXEC_BACKEND
 #include "storage/spin.h"
@@ -337,6 +337,7 @@ static void reaper(SIGNAL_ARGS);
 static void sigusr1_handler(SIGNAL_ARGS);
 static void startup_die(SIGNAL_ARGS);
 static void dummy_handler(SIGNAL_ARGS);
+static void StartupPacketTimeoutHandler(void);
 static void CleanupBackend(int pid, int exitstatus);
 static void HandleChildCrash(int pid, int exitstatus, const char *procname);
 static void LogChildExit(int lev, const char *procname,
@@ -3415,7 +3416,7 @@ BackendInitialize(Port *port)
 	 */
 	pqsignal(SIGTERM, startup_die);
 	pqsignal(SIGQUIT, startup_die);
-	pqsignal(SIGALRM, startup_die);
+	InitializeTimeouts();		/* establishes SIGALRM handler */
 	PG_SETMASK(&StartupBlockSig);
 
 	/*
@@ -3469,9 +3470,18 @@ BackendInitialize(Port *port)
 	 * time delay, so that a broken client can't hog a connection
 	 * indefinitely.  PreAuthDelay and any DNS interactions above don't count
 	 * against the time limit.
+	 *
+	 * Note: AuthenticationTimeout is applied here while waiting for the
+	 * startup packet, and then again in InitPostgres for the duration of any
+	 * authentication operations.  So a hostile client could tie up the
+	 * process for nearly twice AuthenticationTimeout before we kick him off.
+	 *
+	 * Note: because PostgresMain will call InitializeTimeouts again, the
+	 * registration of STARTUP_PACKET_TIMEOUT will be lost.  This is okay
+	 * since we never use it again after this function.
 	 */
-	if (!enable_sig_alarm(AuthenticationTimeout * 1000, false))
-		elog(FATAL, "could not set timer for startup packet timeout");
+	RegisterTimeout(STARTUP_PACKET_TIMEOUT, StartupPacketTimeoutHandler);
+	enable_timeout_after(STARTUP_PACKET_TIMEOUT, AuthenticationTimeout * 1000);
 
 	/*
 	 * Receive the startup packet (which might turn out to be a cancel request
@@ -3508,8 +3518,7 @@ BackendInitialize(Port *port)
 	/*
 	 * Disable the timeout, and prevent SIGTERM/SIGQUIT again.
 	 */
-	if (!disable_sig_alarm(false))
-		elog(FATAL, "could not disable timer for startup packet timeout");
+	disable_timeout(STARTUP_PACKET_TIMEOUT, false);
 	PG_SETMASK(&BlockSig);
 }
 
@@ -4311,8 +4320,8 @@ sigusr1_handler(SIGNAL_ARGS)
 }
 
 /*
- * Timeout or shutdown signal from postmaster while processing startup packet.
- * Cleanup and exit(1).
+ * SIGTERM or SIGQUIT while processing startup packet.
+ * Clean up and exit(1).
  *
  * XXX: possible future improvement: try to send a message indicating
  * why we are disconnecting.  Problem is to be sure we don't block while
@@ -4338,6 +4347,17 @@ static void
 dummy_handler(SIGNAL_ARGS)
 {
 }
+
+/*
+ * Timeout while processing startup packet.
+ * As for startup_die(), we clean up and exit(1).
+ */
+static void
+StartupPacketTimeoutHandler(void)
+{
+	proc_exit(1);
+}
+
 
 /*
  * RandomSalt

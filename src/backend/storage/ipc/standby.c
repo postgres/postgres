@@ -28,6 +28,7 @@
 #include "storage/sinvaladt.h"
 #include "storage/standby.h"
 #include "utils/ps_status.h"
+#include "utils/timeout.h"
 #include "utils/timestamp.h"
 
 /* User-settable GUC parameters */
@@ -40,6 +41,7 @@ static List *RecoveryLockList;
 static void ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 									   ProcSignalReason reason);
 static void ResolveRecoveryConflictWithLock(Oid dbOid, Oid relOid);
+static void SendRecoveryConflictWithBufferPin(ProcSignalReason reason);
 static void LogCurrentRunningXacts(RunningTransactions CurrRunningXacts);
 static void LogAccessExclusiveLocks(int nlocks, xl_standby_lock *locks);
 
@@ -370,13 +372,15 @@ ResolveRecoveryConflictWithLock(Oid dbOid, Oid relOid)
  * ResolveRecoveryConflictWithBufferPin is called from LockBufferForCleanup()
  * to resolve conflicts with other backends holding buffer pins.
  *
- * We either resolve conflicts immediately or set a SIGALRM to wake us at
- * the limit of our patience. The sleep in LockBufferForCleanup() is
- * performed here, for code clarity.
+ * The ProcWaitForSignal() sleep normally done in LockBufferForCleanup()
+ * (when not InHotStandby) is performed here, for code clarity.
+ *
+ * We either resolve conflicts immediately or set a timeout to wake us at
+ * the limit of our patience.
  *
  * Resolve conflicts by sending a PROCSIG signal to all backends to check if
  * they hold one of the buffer pins that is blocking Startup process. If so,
- * backends will take an appropriate error action, ERROR or FATAL.
+ * those backends will take an appropriate error action, ERROR or FATAL.
  *
  * We also must check for deadlocks.  Deadlocks occur because if queries
  * wait on a lock, that must be behind an AccessExclusiveLock, which can only
@@ -389,32 +393,26 @@ ResolveRecoveryConflictWithLock(Oid dbOid, Oid relOid)
  *
  * Deadlocks are extremely rare, and relatively expensive to check for,
  * so we don't do a deadlock check right away ... only if we have had to wait
- * at least deadlock_timeout.  Most of the logic about that is in proc.c.
+ * at least deadlock_timeout.
  */
 void
 ResolveRecoveryConflictWithBufferPin(void)
 {
-	bool		sig_alarm_enabled = false;
 	TimestampTz ltime;
-	TimestampTz now;
 
 	Assert(InHotStandby);
 
 	ltime = GetStandbyLimitTime();
-	now = GetCurrentTimestamp();
 
-	if (!ltime)
+	if (ltime == 0)
 	{
 		/*
 		 * We're willing to wait forever for conflicts, so set timeout for
-		 * deadlock check (only)
+		 * deadlock check only
 		 */
-		if (enable_standby_sig_alarm(now, now, true))
-			sig_alarm_enabled = true;
-		else
-			elog(FATAL, "could not set timer for process wakeup");
+		enable_timeout_after(STANDBY_DEADLOCK_TIMEOUT, DeadlockTimeout);
 	}
-	else if (now >= ltime)
+	else if (GetCurrentTimestamp() >= ltime)
 	{
 		/*
 		 * We're already behind, so clear a path as quickly as possible.
@@ -427,23 +425,23 @@ ResolveRecoveryConflictWithBufferPin(void)
 		 * Wake up at ltime, and check for deadlocks as well if we will be
 		 * waiting longer than deadlock_timeout
 		 */
-		if (enable_standby_sig_alarm(now, ltime, false))
-			sig_alarm_enabled = true;
-		else
-			elog(FATAL, "could not set timer for process wakeup");
+		enable_timeout_after(STANDBY_DEADLOCK_TIMEOUT, DeadlockTimeout);
+		enable_timeout_at(STANDBY_TIMEOUT, ltime);
 	}
 
 	/* Wait to be signaled by UnpinBuffer() */
 	ProcWaitForSignal();
 
-	if (sig_alarm_enabled)
-	{
-		if (!disable_standby_sig_alarm())
-			elog(FATAL, "could not disable timer for process wakeup");
-	}
+	/*
+	 * Clear any timeout requests established above.  We assume here that
+	 * the Startup process doesn't have any other timeouts than what this
+	 * function uses.  If that stops being true, we could cancel the
+	 * timeouts individually, but that'd be slower.
+	 */
+	disable_all_timeouts(false);
 }
 
-void
+static void
 SendRecoveryConflictWithBufferPin(ProcSignalReason reason)
 {
 	Assert(reason == PROCSIG_RECOVERY_CONFLICT_BUFFERPIN ||
@@ -491,6 +489,38 @@ CheckRecoveryConflictDeadlock(void)
 			 errmsg("canceling statement due to conflict with recovery"),
 	   errdetail("User transaction caused buffer deadlock with recovery.")));
 }
+
+
+/* --------------------------------
+ *		timeout handler routines
+ * --------------------------------
+ */
+
+/*
+ * StandbyDeadLockHandler() will be called if STANDBY_DEADLOCK_TIMEOUT
+ * occurs before STANDBY_TIMEOUT.  Send out a request for hot-standby
+ * backends to check themselves for deadlocks.
+ */
+void
+StandbyDeadLockHandler(void)
+{
+	SendRecoveryConflictWithBufferPin(PROCSIG_RECOVERY_CONFLICT_STARTUP_DEADLOCK);
+}
+
+/*
+ * StandbyTimeoutHandler() will be called if STANDBY_TIMEOUT is exceeded.
+ * Send out a request to release conflicting buffer pins unconditionally,
+ * so we can press ahead with applying changes in recovery.
+ */
+void
+StandbyTimeoutHandler(void)
+{
+	/* forget any pending STANDBY_DEADLOCK_TIMEOUT request */
+	disable_timeout(STANDBY_DEADLOCK_TIMEOUT, false);
+
+	SendRecoveryConflictWithBufferPin(PROCSIG_RECOVERY_CONFLICT_BUFFERPIN);
+}
+
 
 /*
  * -----------------------------------------------------
