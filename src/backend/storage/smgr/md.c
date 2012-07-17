@@ -126,7 +126,7 @@ static MemoryContext MdCxt;		/* context for all md.c allocations */
 typedef struct
 {
 	RelFileNode rnode;			/* the targeted relation */
-	ForkNumber	forknum;
+	ForkNumber	forknum;		/* which fork */
 	BlockNumber segno;			/* which segment */
 } PendingOperationTag;
 
@@ -1212,7 +1212,7 @@ mdpostckpt(void)
  * If there is a local pending-ops table, just make an entry in it for
  * mdsync to process later.  Otherwise, try to pass off the fsync request
  * to the background writer process.  If that fails, just do the fsync
- * locally before returning (we expect this will not happen often enough
+ * locally before returning (we hope this will not happen often enough
  * to be a performance problem).
  */
 static void
@@ -1238,6 +1238,9 @@ register_dirty_segment(SMgrRelation reln, ForkNumber forknum, MdfdVec *seg)
 
 /*
  * register_unlink() -- Schedule a file to be deleted after next checkpoint
+ *
+ * We don't bother passing in the fork number, because this is only used
+ * with main forks.
  *
  * As with register_dirty_segment, this could involve either a local or
  * a remote pending-ops table.
@@ -1349,6 +1352,9 @@ RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
 		MemoryContext oldcxt = MemoryContextSwitchTo(MdCxt);
 		PendingUnlinkEntry *entry;
 
+		/* PendingUnlinkEntry doesn't store forknum, since it's always MAIN */
+		Assert(forknum == MAIN_FORKNUM);
+
 		entry = palloc(sizeof(PendingUnlinkEntry));
 		entry->rnode = rnode;
 		entry->cycle_ctr = mdckpt_cycle_ctr;
@@ -1398,7 +1404,7 @@ RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
 }
 
 /*
- * ForgetRelationFsyncRequests -- forget any fsyncs for a rel
+ * ForgetRelationFsyncRequests -- forget any fsyncs for a relation fork
  */
 void
 ForgetRelationFsyncRequests(RelFileNode rnode, ForkNumber forknum)

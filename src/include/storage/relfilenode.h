@@ -65,6 +65,10 @@ typedef enum ForkNumber
  * Note: in pg_class, relfilenode can be zero to denote that the relation
  * is a "mapped" relation, whose current true filenode number is available
  * from relmapper.c.  Again, this case is NOT allowed in RelFileNodes.
+ *
+ * Note: various places use RelFileNode in hashtable keys.  Therefore,
+ * there *must not* be any unused padding bytes in this struct.  That
+ * should be safe as long as all the fields are of type Oid.
  */
 typedef struct RelFileNode
 {
