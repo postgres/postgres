@@ -21,7 +21,6 @@ static PyObject *PLy_result_status(PyObject *self, PyObject *args);
 static Py_ssize_t PLy_result_length(PyObject *arg);
 static PyObject *PLy_result_item(PyObject *arg, Py_ssize_t idx);
 static PyObject *PLy_result_slice(PyObject *arg, Py_ssize_t lidx, Py_ssize_t hidx);
-static int	PLy_result_ass_item(PyObject *arg, Py_ssize_t idx, PyObject *item);
 static int	PLy_result_ass_slice(PyObject *rg, Py_ssize_t lidx, Py_ssize_t hidx, PyObject *slice);
 static PyObject *PLy_result_subscript(PyObject *arg, PyObject *item);
 static int	PLy_result_ass_subscript(PyObject *self, PyObject *item, PyObject *value);
@@ -36,7 +35,7 @@ static PySequenceMethods PLy_result_as_sequence = {
 	NULL,						/* sq_repeat */
 	PLy_result_item,			/* sq_item */
 	PLy_result_slice,			/* sq_slice */
-	PLy_result_ass_item,		/* sq_ass_item */
+	NULL,						/* sq_ass_item */
 	PLy_result_ass_slice,		/* sq_ass_slice */
 };
 
@@ -228,17 +227,6 @@ PLy_result_item(PyObject *arg, Py_ssize_t idx)
 	rv = PyList_GetItem(ob->rows, idx);
 	if (rv != NULL)
 		Py_INCREF(rv);
-	return rv;
-}
-
-static int
-PLy_result_ass_item(PyObject *arg, Py_ssize_t idx, PyObject *item)
-{
-	int			rv;
-	PLyResultObject *ob = (PLyResultObject *) arg;
-
-	Py_INCREF(item);
-	rv = PyList_SetItem(ob->rows, idx, item);
 	return rv;
 }
 
