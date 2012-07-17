@@ -69,6 +69,10 @@ typedef enum ForkNumber
  * Note: in pg_class, relfilenode can be zero to denote that the relation
  * is a "mapped" relation, whose current true filenode number is available
  * from relmapper.c.  Again, this case is NOT allowed in RelFileNodes.
+ *
+ * Note: various places use RelFileNode in hashtable keys.  Therefore,
+ * there *must not* be any unused padding bytes in this struct.  That
+ * should be safe as long as all the fields are of type Oid.
  */
 typedef struct RelFileNode
 {
@@ -79,7 +83,11 @@ typedef struct RelFileNode
 
 /*
  * Augmenting a relfilenode with the backend ID provides all the information
- * we need to locate the physical storage.
+ * we need to locate the physical storage.  The backend ID is InvalidBackendId
+ * for regular relations (those accessible to more than one backend), or the
+ * owning backend's ID for backend-local relations.  Backend-local relations
+ * are always transient and removed in case of a database crash; they are
+ * never WAL-logged or fsync'd.
  */
 typedef struct RelFileNodeBackend
 {
@@ -87,11 +95,15 @@ typedef struct RelFileNodeBackend
 	BackendId	backend;
 } RelFileNodeBackend;
 
+#define RelFileNodeBackendIsTemp(rnode) \
+	((rnode).backend != InvalidBackendId)
+
 /*
  * Note: RelFileNodeEquals and RelFileNodeBackendEquals compare relNode first
  * since that is most likely to be different in two unequal RelFileNodes.  It
  * is probably redundant to compare spcNode if the other fields are found equal,
- * but do it anyway to be sure.
+ * but do it anyway to be sure.  Likewise for checking the backend ID in
+ * RelFileNodeBackendEquals.
  */
 #define RelFileNodeEquals(node1, node2) \
 	((node1).relNode == (node2).relNode && \

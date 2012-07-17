@@ -38,7 +38,7 @@
 /*
  * Special values for the segno arg to RememberFsyncRequest.
  *
- * Note that CompactcheckpointerRequestQueue assumes that it's OK to remove an
+ * Note that CompactCheckpointerRequestQueue assumes that it's OK to remove an
  * fsync request from the queue if an identical, subsequent request is found.
  * See comments there before making changes here.
  */
@@ -122,13 +122,17 @@ static MemoryContext MdCxt;		/* context for all md.c allocations */
  * be deleted after the next checkpoint, but we use a linked list instead of
  * a hash table, because we don't expect there to be any duplicate requests.
  *
+ * These mechanisms are only used for non-temp relations; we never fsync
+ * temp rels, nor do we need to postpone their deletion (see comments in
+ * mdunlink).
+ *
  * (Regular backends do not track pending operations locally, but forward
  * them to the checkpointer.)
  */
 typedef struct
 {
-	RelFileNodeBackend rnode;	/* the targeted relation */
-	ForkNumber	forknum;
+	RelFileNode	rnode;			/* the targeted relation */
+	ForkNumber	forknum;		/* which fork */
 	BlockNumber segno;			/* which segment */
 } PendingOperationTag;
 
@@ -143,7 +147,7 @@ typedef struct
 
 typedef struct
 {
-	RelFileNodeBackend rnode;	/* the dead relation to delete */
+	RelFileNode	rnode;			/* the dead relation to delete */
 	CycleCtr	cycle_ctr;		/* mdckpt_cycle_ctr when request was made */
 } PendingUnlinkEntry;
 
@@ -302,11 +306,11 @@ mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
 /*
  *	mdunlink() -- Unlink a relation.
  *
- * Note that we're passed a RelFileNode --- by the time this is called,
+ * Note that we're passed a RelFileNodeBackend --- by the time this is called,
  * there won't be an SMgrRelation hashtable entry anymore.
  *
- * Actually, we don't unlink the first segment file of the relation, but
- * just truncate it to zero length, and record a request to unlink it after
+ * For regular relations, we don't unlink the first segment file of the rel,
+ * but just truncate it to zero length, and record a request to unlink it after
  * the next checkpoint.  Additional segments can be unlinked immediately,
  * however.  Leaving the empty file in place prevents that relfilenode
  * number from being reused.  The scenario this protects us from is:
@@ -322,6 +326,12 @@ mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
  * until after the next checkpoint, we prevent reassignment of the relfilenode
  * number until it's safe, because relfilenode assignment skips over any
  * existing file.
+ *
+ * We do not need to go through this dance for temp relations, though, because
+ * we never make WAL entries for temp rels, and so a temp rel poses no threat
+ * to the health of a regular rel that has taken over its relfilenode number.
+ * The fact that temp rels and regular rels have different file naming
+ * patterns provides additional safety.
  *
  * All the above applies only to the relation's main fork; other forks can
  * just be removed immediately, since they are not needed to prevent the
@@ -345,16 +355,18 @@ mdunlink(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo)
 
 	/*
 	 * We have to clean out any pending fsync requests for the doomed
-	 * relation, else the next mdsync() will fail.
+	 * relation, else the next mdsync() will fail.  There can't be any such
+	 * requests for a temp relation, though.
 	 */
-	ForgetRelationFsyncRequests(rnode, forkNum);
+	if (!RelFileNodeBackendIsTemp(rnode))
+		ForgetRelationFsyncRequests(rnode.node, forkNum);
 
 	path = relpath(rnode, forkNum);
 
 	/*
 	 * Delete or truncate the first segment.
 	 */
-	if (isRedo || forkNum != MAIN_FORKNUM)
+	if (isRedo || forkNum != MAIN_FORKNUM || RelFileNodeBackendIsTemp(rnode))
 	{
 		ret = unlink(path);
 		if (ret < 0 && errno != ENOENT)
@@ -1077,12 +1089,8 @@ mdsync(void)
 				 * This fact justifies our not closing the reln in the success
 				 * path either, which is a good thing since in
 				 * non-checkpointer cases we couldn't safely do that.)
-				 * Furthermore, in many cases the relation will have been
-				 * dirtied through this same smgr relation, and so we can save
-				 * a file open/close cycle.
 				 */
-				reln = smgropen(entry->tag.rnode.node,
-								entry->tag.rnode.backend);
+				reln = smgropen(entry->tag.rnode, InvalidBackendId);
 
 				/*
 				 * It is possible that the relation has been dropped or
@@ -1228,7 +1236,7 @@ mdpostckpt(void)
 		Assert((CycleCtr) (entry->cycle_ctr + 1) == mdckpt_cycle_ctr);
 
 		/* Unlink the file */
-		path = relpath(entry->rnode, MAIN_FORKNUM);
+		path = relpathperm(entry->rnode, MAIN_FORKNUM);
 		if (unlink(path) < 0)
 		{
 			/*
@@ -1255,21 +1263,24 @@ mdpostckpt(void)
  *
  * If there is a local pending-ops table, just make an entry in it for
  * mdsync to process later.  Otherwise, try to pass off the fsync request
- * to the background writer process.  If that fails, just do the fsync
- * locally before returning (we expect this will not happen often enough
+ * to the checkpointer process.  If that fails, just do the fsync
+ * locally before returning (we hope this will not happen often enough
  * to be a performance problem).
  */
 static void
 register_dirty_segment(SMgrRelation reln, ForkNumber forknum, MdfdVec *seg)
 {
+	/* Temp relations should never be fsync'd */
+	Assert(!SmgrIsTemp(reln));
+
 	if (pendingOpsTable)
 	{
 		/* push it into local pending-ops table */
-		RememberFsyncRequest(reln->smgr_rnode, forknum, seg->mdfd_segno);
+		RememberFsyncRequest(reln->smgr_rnode.node, forknum, seg->mdfd_segno);
 	}
 	else
 	{
-		if (ForwardFsyncRequest(reln->smgr_rnode, forknum, seg->mdfd_segno))
+		if (ForwardFsyncRequest(reln->smgr_rnode.node, forknum, seg->mdfd_segno))
 			return;				/* passed it off successfully */
 
 		ereport(DEBUG1,
@@ -1286,16 +1297,23 @@ register_dirty_segment(SMgrRelation reln, ForkNumber forknum, MdfdVec *seg)
 /*
  * register_unlink() -- Schedule a file to be deleted after next checkpoint
  *
+ * We don't bother passing in the fork number, because this is only used
+ * with main forks.
+ *
  * As with register_dirty_segment, this could involve either a local or
  * a remote pending-ops table.
  */
 static void
 register_unlink(RelFileNodeBackend rnode)
 {
+	/* Should never be used with temp relations */
+	Assert(!RelFileNodeBackendIsTemp(rnode));
+
 	if (pendingOpsTable)
 	{
 		/* push it into local pending-ops table */
-		RememberFsyncRequest(rnode, MAIN_FORKNUM, UNLINK_RELATION_REQUEST);
+		RememberFsyncRequest(rnode.node, MAIN_FORKNUM,
+							 UNLINK_RELATION_REQUEST);
 	}
 	else
 	{
@@ -1307,7 +1325,7 @@ register_unlink(RelFileNodeBackend rnode)
 		 * XXX should we just leave the file orphaned instead?
 		 */
 		Assert(IsUnderPostmaster);
-		while (!ForwardFsyncRequest(rnode, MAIN_FORKNUM,
+		while (!ForwardFsyncRequest(rnode.node, MAIN_FORKNUM,
 									UNLINK_RELATION_REQUEST))
 			pg_usleep(10000L);	/* 10 msec seems a good number */
 	}
@@ -1333,8 +1351,7 @@ register_unlink(RelFileNodeBackend rnode)
  * structure for them.)
  */
 void
-RememberFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
-					 BlockNumber segno)
+RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
 {
 	Assert(pendingOpsTable);
 
@@ -1347,7 +1364,7 @@ RememberFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
 		hash_seq_init(&hstat, pendingOpsTable);
 		while ((entry = (PendingOperationEntry *) hash_seq_search(&hstat)) != NULL)
 		{
-			if (RelFileNodeBackendEquals(entry->tag.rnode, rnode) &&
+			if (RelFileNodeEquals(entry->tag.rnode, rnode) &&
 				entry->tag.forknum == forknum)
 			{
 				/* Okay, cancel this entry */
@@ -1368,7 +1385,7 @@ RememberFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
 		hash_seq_init(&hstat, pendingOpsTable);
 		while ((entry = (PendingOperationEntry *) hash_seq_search(&hstat)) != NULL)
 		{
-			if (entry->tag.rnode.node.dbNode == rnode.node.dbNode)
+			if (entry->tag.rnode.dbNode == rnode.dbNode)
 			{
 				/* Okay, cancel this entry */
 				entry->canceled = true;
@@ -1382,7 +1399,7 @@ RememberFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
 			PendingUnlinkEntry *entry = (PendingUnlinkEntry *) lfirst(cell);
 
 			next = lnext(cell);
-			if (entry->rnode.node.dbNode == rnode.node.dbNode)
+			if (entry->rnode.dbNode == rnode.dbNode)
 			{
 				pendingUnlinks = list_delete_cell(pendingUnlinks, cell, prev);
 				pfree(entry);
@@ -1396,6 +1413,9 @@ RememberFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
 		/* Unlink request: put it in the linked list */
 		MemoryContext oldcxt = MemoryContextSwitchTo(MdCxt);
 		PendingUnlinkEntry *entry;
+
+		/* PendingUnlinkEntry doesn't store forknum, since it's always MAIN */
+		Assert(forknum == MAIN_FORKNUM);
 
 		entry = palloc(sizeof(PendingUnlinkEntry));
 		entry->rnode = rnode;
@@ -1446,10 +1466,10 @@ RememberFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
 }
 
 /*
- * ForgetRelationFsyncRequests -- forget any fsyncs for a rel
+ * ForgetRelationFsyncRequests -- forget any fsyncs for a relation fork
  */
 void
-ForgetRelationFsyncRequests(RelFileNodeBackend rnode, ForkNumber forknum)
+ForgetRelationFsyncRequests(RelFileNode rnode, ForkNumber forknum)
 {
 	if (pendingOpsTable)
 	{
@@ -1484,12 +1504,11 @@ ForgetRelationFsyncRequests(RelFileNodeBackend rnode, ForkNumber forknum)
 void
 ForgetDatabaseFsyncRequests(Oid dbid)
 {
-	RelFileNodeBackend rnode;
+	RelFileNode rnode;
 
-	rnode.node.dbNode = dbid;
-	rnode.node.spcNode = 0;
-	rnode.node.relNode = 0;
-	rnode.backend = InvalidBackendId;
+	rnode.dbNode = dbid;
+	rnode.spcNode = 0;
+	rnode.relNode = 0;
 
 	if (pendingOpsTable)
 	{
