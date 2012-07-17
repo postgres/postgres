@@ -827,22 +827,29 @@ BgWriterShmemSize(void)
 void
 BgWriterShmemInit(void)
 {
+	Size		size = BgWriterShmemSize();
 	bool		found;
 
 	BgWriterShmem = (BgWriterShmemStruct *)
 		ShmemInitStruct("Background Writer Data",
-						BgWriterShmemSize(),
+						size,
 						&found);
 	if (BgWriterShmem == NULL)
 		ereport(FATAL,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("not enough shared memory for background writer")));
-	if (found)
-		return;					/* already initialized */
 
-	MemSet(BgWriterShmem, 0, sizeof(BgWriterShmemStruct));
-	SpinLockInit(&BgWriterShmem->ckpt_lck);
-	BgWriterShmem->max_requests = NBuffers;
+	if (!found)
+	{
+		/*
+		 * First time through, so initialize.  Note that we zero the whole
+		 * requests array; this is so that CompactBgwriterRequestQueue
+		 * can assume that any pad bytes in the request structs are zeroes.
+		 */
+		MemSet(BgWriterShmem, 0, size);
+		SpinLockInit(&BgWriterShmem->ckpt_lck);
+		BgWriterShmem->max_requests = NBuffers;
+	}
 }
 
 /*
@@ -1028,25 +1035,27 @@ ForwardFsyncRequest(RelFileNode rnode, BlockNumber segno)
 
 /*
  * CompactBgwriterRequestQueue
- * 		Remove duplicates from the request queue to avoid backend fsyncs.
+ *		Remove duplicates from the request queue to avoid backend fsyncs.
+ *		Returns "true" if any entries were removed.
  *
  * Although a full fsync request queue is not common, it can lead to severe
  * performance problems when it does happen.  So far, this situation has
  * only been observed to occur when the system is under heavy write load,
- * and especially during the "sync" phase of a checkpoint.  Without this
+ * and especially during the "sync" phase of a checkpoint.	Without this
  * logic, each backend begins doing an fsync for every block written, which
  * gets very expensive and can slow down the whole system.
  *
  * Trying to do this every time the queue is full could lose if there
- * aren't any removable entries.  But should be vanishingly rare in
+ * aren't any removable entries.  But that should be vanishingly rare in
  * practice: there's one queue entry per shared buffer.
  */
 static bool
-CompactBgwriterRequestQueue()
+CompactBgwriterRequestQueue(void)
 {
-	struct BgWriterSlotMapping {
-		BgWriterRequest	request;
-		int		slot;
+	struct BgWriterSlotMapping
+	{
+		BgWriterRequest request;
+		int			slot;
 	};
 
 	int			n,
@@ -1059,20 +1068,22 @@ CompactBgwriterRequestQueue()
 	/* must hold BgWriterCommLock in exclusive mode */
 	Assert(LWLockHeldByMe(BgWriterCommLock));
 
+	/* Initialize skip_slot array */
+	skip_slot = palloc0(sizeof(bool) * BgWriterShmem->num_requests);
+
 	/* Initialize temporary hash table */
 	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(BgWriterRequest);
 	ctl.entrysize = sizeof(struct BgWriterSlotMapping);
 	ctl.hash = tag_hash;
+	ctl.hcxt = CurrentMemoryContext;
+
 	htab = hash_create("CompactBgwriterRequestQueue",
 					   BgWriterShmem->num_requests,
 					   &ctl,
-					   HASH_ELEM | HASH_FUNCTION);
+					   HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
 
-	/* Initialize skip_slot array */
-	skip_slot = palloc0(sizeof(bool) * BgWriterShmem->num_requests);
-
-	/* 
+	/*
 	 * The basic idea here is that a request can be skipped if it's followed
 	 * by a later, identical request.  It might seem more sensible to work
 	 * backwards from the end of the queue and check whether a request is
@@ -1081,23 +1092,32 @@ CompactBgwriterRequestQueue()
 	 * intervening FORGET_RELATION_FSYNC or FORGET_DATABASE_FSYNC request, so
 	 * we do it this way.  It would be possible to be even smarter if we made
 	 * the code below understand the specific semantics of such requests (it
-	 * could blow away preceding entries that would end up being cancelled
+	 * could blow away preceding entries that would end up being canceled
 	 * anyhow), but it's not clear that the extra complexity would buy us
 	 * anything.
 	 */
-	for (n = 0; n < BgWriterShmem->num_requests; ++n)
+	for (n = 0; n < BgWriterShmem->num_requests; n++)
 	{
 		BgWriterRequest *request;
 		struct BgWriterSlotMapping *slotmap;
-		bool	found;
+		bool		found;
 
+		/*
+		 * We use the request struct directly as a hashtable key.  This
+		 * assumes that any padding bytes in the structs are consistently the
+		 * same, which should be okay because we zeroed them in
+		 * BgWriterShmemInit.  Note also that RelFileNode had better
+		 * contain no pad bytes.
+		 */
 		request = &BgWriterShmem->requests[n];
 		slotmap = hash_search(htab, request, HASH_ENTER, &found);
 		if (found)
 		{
+			/* Duplicate, so mark the previous occurrence as skippable */
 			skip_slot[slotmap->slot] = true;
-			++num_skipped;
+			num_skipped++;
 		}
+		/* Remember slot containing latest occurrence of this request value */
 		slotmap->slot = n;
 	}
 
@@ -1112,15 +1132,16 @@ CompactBgwriterRequestQueue()
 	}
 
 	/* We found some duplicates; remove them. */
-	for (n = 0, preserve_count = 0; n < BgWriterShmem->num_requests; ++n)
+	preserve_count = 0;
+	for (n = 0; n < BgWriterShmem->num_requests; n++)
 	{
 		if (skip_slot[n])
 			continue;
 		BgWriterShmem->requests[preserve_count++] = BgWriterShmem->requests[n];
 	}
 	ereport(DEBUG1,
-			(errmsg("compacted fsync request queue from %d entries to %d entries",
-				BgWriterShmem->num_requests, preserve_count)));
+	   (errmsg("compacted fsync request queue from %d entries to %d entries",
+			   BgWriterShmem->num_requests, preserve_count)));
 	BgWriterShmem->num_requests = preserve_count;
 
 	/* Cleanup. */
