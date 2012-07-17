@@ -61,6 +61,10 @@ typedef enum ForkNumber
  * identified by pg_database.dattablespace).  However this shorthand
  * is NOT allowed in RelFileNode structs --- the real tablespace ID
  * must be supplied when setting spcNode.
+ *
+ * Note: various places use RelFileNode in hashtable keys.  Therefore,
+ * there *must not* be any unused padding bytes in this struct.  That
+ * should be safe as long as all the fields are of type Oid.
  */
 typedef struct RelFileNode
 {
