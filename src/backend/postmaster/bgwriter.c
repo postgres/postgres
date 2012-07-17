@@ -116,7 +116,7 @@
  */
 typedef struct
 {
-	RelFileNodeBackend rnode;
+	RelFileNode	rnode;
 	ForkNumber	forknum;
 	BlockNumber segno;			/* see md.c for special values */
 	/* might add a real request-type field later; not needed yet */
@@ -896,17 +896,22 @@ BgWriterShmemSize(void)
 void
 BgWriterShmemInit(void)
 {
+	Size		size = BgWriterShmemSize();
 	bool		found;
 
 	BgWriterShmem = (BgWriterShmemStruct *)
 		ShmemInitStruct("Background Writer Data",
-						BgWriterShmemSize(),
+						size,
 						&found);
 
 	if (!found)
 	{
-		/* First time through, so initialize */
-		MemSet(BgWriterShmem, 0, sizeof(BgWriterShmemStruct));
+		/*
+		 * First time through, so initialize.  Note that we zero the whole
+		 * requests array; this is so that CompactBgwriterRequestQueue
+		 * can assume that any pad bytes in the request structs are zeroes.
+		 */
+		MemSet(BgWriterShmem, 0, size);
 		SpinLockInit(&BgWriterShmem->ckpt_lck);
 		BgWriterShmem->max_requests = NBuffers;
 	}
@@ -1068,6 +1073,10 @@ RequestCheckpoint(int flags)
  * is dirty and must be fsync'd before next checkpoint.  We also use this
  * opportunity to count such writes for statistical purposes.
  *
+ * This functionality is only supported for regular (not backend-local)
+ * relations, so the rnode argument is intentionally RelFileNode not
+ * RelFileNodeBackend.
+ *
  * segno specifies which segment (not block!) of the relation needs to be
  * fsync'd.  (Since the valid range is much less than BlockNumber, we can
  * use high values for special flags; that's all internal to md.c, which
@@ -1084,8 +1093,7 @@ RequestCheckpoint(int flags)
  * let the backend know by returning false.
  */
 bool
-ForwardFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
-					BlockNumber segno)
+ForwardFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
 {
 	BgWriterRequest *request;
 
@@ -1129,6 +1137,7 @@ ForwardFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
 /*
  * CompactBgwriterRequestQueue
  *		Remove duplicates from the request queue to avoid backend fsyncs.
+ *		Returns "true" if any entries were removed.
  *
  * Although a full fsync request queue is not common, it can lead to severe
  * performance problems when it does happen.  So far, this situation has
@@ -1138,11 +1147,11 @@ ForwardFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
  * gets very expensive and can slow down the whole system.
  *
  * Trying to do this every time the queue is full could lose if there
- * aren't any removable entries.  But should be vanishingly rare in
+ * aren't any removable entries.  But that should be vanishingly rare in
  * practice: there's one queue entry per shared buffer.
  */
 static bool
-CompactBgwriterRequestQueue()
+CompactBgwriterRequestQueue(void)
 {
 	struct BgWriterSlotMapping
 	{
@@ -1160,18 +1169,20 @@ CompactBgwriterRequestQueue()
 	/* must hold BgWriterCommLock in exclusive mode */
 	Assert(LWLockHeldByMe(BgWriterCommLock));
 
+	/* Initialize skip_slot array */
+	skip_slot = palloc0(sizeof(bool) * BgWriterShmem->num_requests);
+
 	/* Initialize temporary hash table */
 	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(BgWriterRequest);
 	ctl.entrysize = sizeof(struct BgWriterSlotMapping);
 	ctl.hash = tag_hash;
+	ctl.hcxt = CurrentMemoryContext;
+
 	htab = hash_create("CompactBgwriterRequestQueue",
 					   BgWriterShmem->num_requests,
 					   &ctl,
-					   HASH_ELEM | HASH_FUNCTION);
-
-	/* Initialize skip_slot array */
-	skip_slot = palloc0(sizeof(bool) * BgWriterShmem->num_requests);
+					   HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
 
 	/*
 	 * The basic idea here is that a request can be skipped if it's followed
@@ -1186,19 +1197,28 @@ CompactBgwriterRequestQueue()
 	 * anyhow), but it's not clear that the extra complexity would buy us
 	 * anything.
 	 */
-	for (n = 0; n < BgWriterShmem->num_requests; ++n)
+	for (n = 0; n < BgWriterShmem->num_requests; n++)
 	{
 		BgWriterRequest *request;
 		struct BgWriterSlotMapping *slotmap;
 		bool		found;
 
+		/*
+		 * We use the request struct directly as a hashtable key.  This
+		 * assumes that any padding bytes in the structs are consistently the
+		 * same, which should be okay because we zeroed them in
+		 * BgWriterShmemInit.  Note also that RelFileNode had better
+		 * contain no pad bytes.
+		 */
 		request = &BgWriterShmem->requests[n];
 		slotmap = hash_search(htab, request, HASH_ENTER, &found);
 		if (found)
 		{
+			/* Duplicate, so mark the previous occurrence as skippable */
 			skip_slot[slotmap->slot] = true;
-			++num_skipped;
+			num_skipped++;
 		}
+		/* Remember slot containing latest occurrence of this request value */
 		slotmap->slot = n;
 	}
 
@@ -1213,7 +1233,8 @@ CompactBgwriterRequestQueue()
 	}
 
 	/* We found some duplicates; remove them. */
-	for (n = 0, preserve_count = 0; n < BgWriterShmem->num_requests; ++n)
+	preserve_count = 0;
+	for (n = 0; n < BgWriterShmem->num_requests; n++)
 	{
 		if (skip_slot[n])
 			continue;

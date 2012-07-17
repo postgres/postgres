@@ -71,7 +71,7 @@ typedef struct SMgrRelationData
 typedef SMgrRelationData *SMgrRelation;
 
 #define SmgrIsTemp(smgr) \
-	((smgr)->smgr_rnode.backend != InvalidBackendId)
+	RelFileNodeBackendIsTemp((smgr)->smgr_rnode)
 
 extern void smgrinit(void);
 extern SMgrRelation smgropen(RelFileNode rnode, BackendId backend);
@@ -126,10 +126,9 @@ extern void mdsync(void);
 extern void mdpostckpt(void);
 
 extern void SetForwardFsyncRequests(void);
-extern void RememberFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
+extern void RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum,
 					 BlockNumber segno);
-extern void ForgetRelationFsyncRequests(RelFileNodeBackend rnode,
-							ForkNumber forknum);
+extern void ForgetRelationFsyncRequests(RelFileNode rnode, ForkNumber forknum);
 extern void ForgetDatabaseFsyncRequests(Oid dbid);
 
 /* smgrtype.c */

@@ -1971,7 +1971,8 @@ DropRelFileNodeBuffers(RelFileNodeBackend rnode, ForkNumber forkNum,
 {
 	int			i;
 
-	if (rnode.backend != InvalidBackendId)
+	/* If it's a local relation, it's localbuf.c's problem. */
+	if (RelFileNodeBackendIsTemp(rnode))
 	{
 		if (rnode.backend == MyBackendId)
 			DropRelFileNodeLocalBuffers(rnode.node, forkNum, firstDelBlock);
