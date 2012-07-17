@@ -31,7 +31,7 @@ extern void CheckpointerMain(void);
 extern void RequestCheckpoint(int flags);
 extern void CheckpointWriteDelay(int flags, double progress);
 
-extern bool ForwardFsyncRequest(RelFileNodeBackend rnode, ForkNumber forknum,
+extern bool ForwardFsyncRequest(RelFileNode rnode, ForkNumber forknum,
 					BlockNumber segno);
 extern void AbsorbFsyncRequests(void);
 
