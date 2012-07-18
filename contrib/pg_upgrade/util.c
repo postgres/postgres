@@ -183,9 +183,20 @@ get_user_info(char **user_name)
 
 
 void *
-pg_malloc(int n)
+pg_malloc(size_t n)
 {
 	void	   *p = malloc(n);
+
+	if (p == NULL)
+		pg_log(PG_FATAL, "%s: out of memory\n", os_info.progname);
+
+	return p;
+}
+
+void *
+pg_realloc(void *ptr, size_t n)
+{
+	void	   *p = realloc(ptr, n);
 
 	if (p == NULL)
 		pg_log(PG_FATAL, "%s: out of memory\n", os_info.progname);
