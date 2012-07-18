@@ -17,7 +17,6 @@
 #include "storage/spin.h"
 #include "pgtime.h"
 
-extern bool am_walreceiver;
 extern int	wal_receiver_status_interval;
 extern bool hot_standby_feedback;
 

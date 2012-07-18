@@ -196,11 +196,10 @@ mdinit(void)
 
 	/*
 	 * Create pending-operations hashtable if we need it.  Currently, we need
-	 * it if we are standalone (not under a postmaster) OR if we are a
-	 * bootstrap-mode subprocess of a postmaster (that is, a startup or
-	 * checkpointer process).
+	 * it if we are standalone (not under a postmaster) or if we are a startup
+	 * or checkpointer auxiliary process.
 	 */
-	if (!IsUnderPostmaster || IsBootstrapProcessingMode())
+	if (!IsUnderPostmaster || AmStartupProcess() || AmCheckpointerProcess())
 	{
 		HASHCTL		hash_ctl;
 

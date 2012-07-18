@@ -74,11 +74,6 @@ int			BgWriterDelay = 200;
 static volatile sig_atomic_t got_SIGHUP = false;
 static volatile sig_atomic_t shutdown_requested = false;
 
-/*
- * Private state
- */
-static bool am_bg_writer = false;
-
 /* Signal handlers */
 
 static void bg_quickdie(SIGNAL_ARGS);
@@ -90,8 +85,8 @@ static void bgwriter_sigusr1_handler(SIGNAL_ARGS);
 /*
  * Main entry point for bgwriter process
  *
- * This is invoked from BootstrapMain, which has already created the basic
- * execution environment, but not enabled signals yet.
+ * This is invoked from AuxiliaryProcessMain, which has already created the
+ * basic execution environment, but not enabled signals yet.
  */
 void
 BackgroundWriterMain(void)
@@ -99,8 +94,6 @@ BackgroundWriterMain(void)
 	sigjmp_buf	local_sigjmp_buf;
 	MemoryContext bgwriter_context;
 	bool		prev_hibernate;
-
-	am_bg_writer = true;
 
 	/*
 	 * If possible, make this process a group leader, so that the postmaster

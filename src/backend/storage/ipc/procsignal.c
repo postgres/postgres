@@ -17,7 +17,6 @@
 #include <signal.h>
 #include <unistd.h>
 
-#include "bootstrap/bootstrap.h"
 #include "commands/async.h"
 #include "miscadmin.h"
 #include "storage/latch.h"
