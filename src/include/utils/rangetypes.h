@@ -104,6 +104,8 @@ extern Datum range_upper_inf(PG_FUNCTION_ARGS);
 extern Datum range_contains_elem(PG_FUNCTION_ARGS);
 extern Datum elem_contained_by_range(PG_FUNCTION_ARGS);
 
+extern bool range_contains_elem_internal(TypeCacheEntry *typcache, RangeType *r, Datum val);
+
 /* range, range -> bool */
 extern Datum range_eq(PG_FUNCTION_ARGS);
 extern Datum range_ne(PG_FUNCTION_ARGS);
@@ -115,6 +117,28 @@ extern Datum range_adjacent(PG_FUNCTION_ARGS);
 extern Datum range_overlaps(PG_FUNCTION_ARGS);
 extern Datum range_overleft(PG_FUNCTION_ARGS);
 extern Datum range_overright(PG_FUNCTION_ARGS);
+
+/* internal versions of the above */
+extern bool range_eq_internal(TypeCacheEntry *typcache, RangeType *r1,
+				  RangeType *r2);
+extern bool range_ne_internal(TypeCacheEntry *typcache, RangeType *r1,
+				  RangeType *r2);
+extern bool range_contains_internal(TypeCacheEntry *typcache, RangeType *r1,
+						RangeType *r2);
+extern bool range_contained_by_internal(TypeCacheEntry *typcache, RangeType *r1,
+							RangeType *r2);
+extern bool range_before_internal(TypeCacheEntry *typcache, RangeType *r1,
+					  RangeType *r2);
+extern bool range_after_internal(TypeCacheEntry *typcache, RangeType *r1,
+					 RangeType *r2);
+extern bool range_adjacent_internal(TypeCacheEntry *typcache, RangeType *r1,
+						RangeType *r2);
+extern bool range_overlaps_internal(TypeCacheEntry *typcache, RangeType *r1,
+						RangeType *r2);
+extern bool range_overleft_internal(TypeCacheEntry *typcache, RangeType *r1,
+						RangeType *r2);
+extern bool range_overright_internal(TypeCacheEntry *typcache, RangeType *r1,
+						 RangeType *r2);
 
 /* range, range -> range */
 extern Datum range_minus(PG_FUNCTION_ARGS);
