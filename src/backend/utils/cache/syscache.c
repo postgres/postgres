@@ -34,6 +34,7 @@
 #include "catalog/pg_database.h"
 #include "catalog/pg_default_acl.h"
 #include "catalog/pg_enum.h"
+#include "catalog/pg_event_trigger.h"
 #include "catalog/pg_foreign_data_wrapper.h"
 #include "catalog/pg_foreign_server.h"
 #include "catalog/pg_foreign_table.h"
@@ -378,6 +379,28 @@ static const struct cachedesc cacheinfo[] = {
 			0
 		},
 		256
+	},
+	{EventTriggerRelationId,			/* EVENTTRIGGERNAME */
+		EventTriggerNameIndexId,
+		1,
+		{
+			Anum_pg_event_trigger_evtname,
+			0,
+			0,
+			0
+		},
+		8
+	},
+	{EventTriggerRelationId,			/* EVENTTRIGGEROID */
+		EventTriggerOidIndexId,
+		1,
+		{
+			ObjectIdAttributeNumber,
+			0,
+			0,
+			0
+		},
+		8
 	},
 	{ForeignDataWrapperRelationId,		/* FOREIGNDATAWRAPPERNAME */
 		ForeignDataWrapperNameIndexId,

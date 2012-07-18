@@ -1,0 +1,162 @@
+<!--
+doc/src/sgml/ref/create_event_trigger.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-CREATEEVENTTRIGGER">
+ <refmeta>
+  <refentrytitle>CREATE EVENT TRIGGER</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>CREATE EVENT TRIGGER</refname>
+  <refpurpose>define a new event trigger</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-createeventtrigger">
+  <primary>CREATE EVENT TRIGGER</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+CREATE EVENT TRIGGER <replaceable class="PARAMETER">name</replaceable>
+  ON <replaceable class="PARAMETER">event</replaceable>
+  [ WHEN <replaceable class="PARAMETER">filter_variable</replaceable> IN (filter_value [ AND ... ] ) ]
+  EXECUTE PROCEDURE <replaceable class="PARAMETER">function_name</replaceable>()
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>CREATE EVENT TRIGGER</command> creates a new event trigger.
+   Whenever the designated event occurs and the <literal>WHEN</> condition
+   associated with the trigger, if any, is satisfied, the trigger function
+   will be executed.  For a general introduction to event triggers, see
+   <xref linkend="event-triggers">.  The user who creates an event trigger
+   becomes its owner.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name to give the new trigger.  This name must be unique within
+      the database.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">event</replaceable></term>
+    <listitem>
+     <para>
+      The name of the event that triggers a call to the given function.
+      See <xref linkend="event-trigger-definition"> for more information
+      on event names.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">filter_variable</replaceable></term>
+    <listitem>
+     <para>
+      The name of a variable used to filter events.  This makes it possible
+      to restrict the firing of the trigger to a subset of the cases in which
+      it is supported.  Currently the only supported
+      <replaceable class="parameter">filter_variable</replaceable>
+      is <literal>TAG</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">filter_value</replaceable></term>
+    <listitem>
+     <para>
+      A list of values for the
+      associated <replaceable class="parameter">filter_variable</replaceable>
+      for which the trigger should fire.  For <literal>TAG</>, this means a
+      list of command tags (e.g. <literal>'DROP FUNCTION'</>).
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">function_name</replaceable></term>
+    <listitem>
+     <para>
+      A user-supplied function that is declared as taking no argument and
+      returning type <literal>event_trigger</literal>.
+     </para>
+     <para>
+      If your event trigger is implemented in <literal>C</literal> then it
+      will be called with an argument, of
+      type <literal>internal</literal>, which is a pointer to
+      the <literal>Node *</literal> parse tree.
+     </para>
+    </listitem>
+   </varlistentry>
+
+  </variablelist>
+ </refsect1>
+
+ <refsect1 id="sql-createeventtrigger-notes">
+  <title>Notes</title>
+
+  <para>
+   To create a trigger on a event, the user must be superuser.
+  </para>
+ </refsect1>
+
+ <refsect1 id="sql-createeventtrigger-examples">
+  <title>Examples</title>
+
+  <para>
+   Forbid the execution of any <link linkend="ddl">ddl</link> command:
+
+<programlisting>
+CREATE OR REPLACE FUNCTION abort_any_command()
+  RETURNS event_trigger
+ LANGUAGE plpgsql
+  AS $$
+BEGIN
+  RAISE EXCEPTION 'command % is disabled', tg_tag;
+END;
+$$;
+
+CREATE EVENT TRIGGER abort_ddl ON ddl_command_start
+   EXECUTE PROCEDURE abort_any_command();
+</programlisting>
+  </para>
+ </refsect1>
+
+ <refsect1 id="sql-createeventtrigger-compatibility">
+  <title>Compatibility</title>
+
+  <para>
+   There is no <command>CREATE EVENT TRIGGER</command> statement in the
+   SQL standard.
+  </para>
+
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createfunction"></member>
+   <member><xref linkend="sql-altereventtrigger"></member>
+   <member><xref linkend="sql-dropeventtrigger"></member>
+  </simplelist>
+ </refsect1>
+</refentry>

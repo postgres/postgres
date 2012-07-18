@@ -120,7 +120,8 @@ typedef enum
 	DO_BLOB,
 	DO_BLOB_DATA,
 	DO_PRE_DATA_BOUNDARY,
-	DO_POST_DATA_BOUNDARY
+	DO_POST_DATA_BOUNDARY,
+	DO_EVENT_TRIGGER
 } DumpableObjectType;
 
 typedef struct _dumpableObject
@@ -352,6 +353,18 @@ typedef struct _triggerInfo
 	char	   *tgdef;
 } TriggerInfo;
 
+typedef struct _evttriggerInfo
+{
+	DumpableObject dobj;
+	char	   *evtname;
+	char	   *evtevent;
+	char	   *evtowner;
+	char	   *evttags;
+	char	   *evtfname;
+	char		evttype;
+	char		evtenabled;
+} EventTriggerInfo;
+
 /*
  * struct ConstraintInfo is used for all constraint types.	However we
  * use a different objType for foreign key constraints, to make it easier
@@ -562,5 +575,6 @@ extern ForeignServerInfo *getForeignServers(Archive *fout,
 extern DefaultACLInfo *getDefaultACLs(Archive *fout, int *numDefaultACLs);
 extern void getExtensionMembership(Archive *fout, ExtensionInfo extinfo[],
 					   int numExtensions);
+extern EventTriggerInfo *getEventTriggers(Archive *fout, int *numEventTriggers);
 
 #endif   /* PG_DUMP_H */

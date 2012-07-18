@@ -29,6 +29,7 @@
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_default_acl.h"
+#include "catalog/pg_event_trigger.h"
 #include "catalog/pg_extension.h"
 #include "catalog/pg_foreign_data_wrapper.h"
 #include "catalog/pg_foreign_server.h"
@@ -277,6 +278,10 @@ restrict_and_check_grant(bool is_grant, AclMode avail_goptions, bool all_privs,
 		case ACL_KIND_FOREIGN_SERVER:
 			whole_mask = ACL_ALL_RIGHTS_FOREIGN_SERVER;
 			break;
+		case ACL_KIND_EVENT_TRIGGER:
+			elog(ERROR, "grantable rights not supported for event triggers");
+			/* not reached, but keep compiler quiet */
+			return ACL_NO_RIGHTS;
 		case ACL_KIND_TYPE:
 			whole_mask = ACL_ALL_RIGHTS_TYPE;
 			break;
@@ -3286,6 +3291,8 @@ static const char *const no_priv_msg[MAX_ACL_KIND] =
 	gettext_noop("permission denied for foreign-data wrapper %s"),
 	/* ACL_KIND_FOREIGN_SERVER */
 	gettext_noop("permission denied for foreign server %s"),
+	/* ACL_KIND_EVENT_TRIGGER */
+	gettext_noop("permission denied for event trigger %s"),
 	/* ACL_KIND_EXTENSION */
 	gettext_noop("permission denied for extension %s"),
 };
@@ -3330,6 +3337,8 @@ static const char *const not_owner_msg[MAX_ACL_KIND] =
 	gettext_noop("must be owner of foreign-data wrapper %s"),
 	/* ACL_KIND_FOREIGN_SERVER */
 	gettext_noop("must be owner of foreign server %s"),
+	/* ACL_KIND_EVENT_TRIGGER */
+	gettext_noop("must be owner of event trigger %s"),
 	/* ACL_KIND_EXTENSION */
 	gettext_noop("must be owner of extension %s"),
 };
@@ -3455,6 +3464,10 @@ pg_aclmask(AclObjectKind objkind, Oid table_oid, AttrNumber attnum, Oid roleid,
 			return pg_foreign_data_wrapper_aclmask(table_oid, roleid, mask, how);
 		case ACL_KIND_FOREIGN_SERVER:
 			return pg_foreign_server_aclmask(table_oid, roleid, mask, how);
+		case ACL_KIND_EVENT_TRIGGER:
+			elog(ERROR, "grantable rights not supported for event triggers");
+			/* not reached, but keep compiler quiet */
+			return ACL_NO_RIGHTS;
 		case ACL_KIND_TYPE:
 			return pg_type_aclmask(table_oid, roleid, mask, how);
 		default:
@@ -4869,6 +4882,33 @@ pg_foreign_server_ownercheck(Oid srv_oid, Oid roleid)
 						srv_oid)));
 
 	ownerId = ((Form_pg_foreign_server) GETSTRUCT(tuple))->srvowner;
+
+	ReleaseSysCache(tuple);
+
+	return has_privs_of_role(roleid, ownerId);
+}
+
+/*
+ * Ownership check for an event trigger (specified by OID).
+ */
+bool
+pg_event_trigger_ownercheck(Oid et_oid, Oid roleid)
+{
+	HeapTuple	tuple;
+	Oid			ownerId;
+
+	/* Superusers bypass all permission checking. */
+	if (superuser_arg(roleid))
+		return true;
+
+	tuple = SearchSysCache1(EVENTTRIGGEROID, ObjectIdGetDatum(et_oid));
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("event trigger with OID %u does not exist",
+						et_oid)));
+
+	ownerId = ((Form_pg_event_trigger) GETSTRUCT(tuple))->evtowner;
 
 	ReleaseSysCache(tuple);
 

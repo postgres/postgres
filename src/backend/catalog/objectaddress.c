@@ -21,6 +21,7 @@
 #include "catalog/objectaddress.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_cast.h"
+#include "catalog/pg_event_trigger.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_conversion.h"
@@ -46,6 +47,7 @@
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
+#include "commands/event_trigger.h"
 #include "commands/extension.h"
 #include "commands/proclang.h"
 #include "commands/tablespace.h"
@@ -204,6 +206,12 @@ static ObjectPropertyType ObjectProperty[] =
 		InvalidAttrNumber
 	},
 	{
+		EventTriggerRelationId,
+		EventTriggerOidIndexId,
+		-1,
+		InvalidAttrNumber
+	},
+	{
 		TSConfigRelationId,
 		TSConfigOidIndexId,
 		TSCONFIGOID,
@@ -325,6 +333,7 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 			case OBJECT_LANGUAGE:
 			case OBJECT_FDW:
 			case OBJECT_FOREIGN_SERVER:
+			case OBJECT_EVENT_TRIGGER:
 				address = get_object_address_unqualified(objtype,
 														 objname, missing_ok);
 				break;
@@ -546,6 +555,9 @@ get_object_address_unqualified(ObjectType objtype,
 			case OBJECT_FOREIGN_SERVER:
 				msg = gettext_noop("server name cannot be qualified");
 				break;
+			case OBJECT_EVENT_TRIGGER:
+				msg = gettext_noop("event trigger name cannot be qualified");
+				break;
 			default:
 				elog(ERROR, "unrecognized objtype: %d", (int) objtype);
 				msg = NULL;		/* placate compiler */
@@ -599,6 +611,11 @@ get_object_address_unqualified(ObjectType objtype,
 		case OBJECT_FOREIGN_SERVER:
 			address.classId = ForeignServerRelationId;
 			address.objectId = get_foreign_server_oid(name, missing_ok);
+			address.objectSubId = 0;
+			break;
+		case OBJECT_EVENT_TRIGGER:
+			address.classId = EventTriggerRelationId;
+			address.objectId = get_event_trigger_oid(name, missing_ok);
 			address.objectSubId = 0;
 			break;
 		default:
@@ -978,6 +995,11 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 		case OBJECT_FOREIGN_SERVER:
 			if (!pg_foreign_server_ownercheck(address.objectId, roleid))
 				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_FOREIGN_SERVER,
+							   NameListToString(objname));
+			break;
+		case OBJECT_EVENT_TRIGGER:
+			if (!pg_event_trigger_ownercheck(address.objectId, roleid))
+				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_EVENT_TRIGGER,
 							   NameListToString(objname));
 			break;
 		case OBJECT_LANGUAGE:

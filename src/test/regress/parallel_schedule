@@ -88,6 +88,8 @@ test: privileges security_label collate
 test: misc
 # rules cannot run concurrently with any test that creates a view
 test: rules
+# event triggers cannot run concurrently with any test that runs DDL
+test: event_trigger
 
 # ----------
 # Another group of parallel tests

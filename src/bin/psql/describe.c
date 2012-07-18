@@ -2953,6 +2953,67 @@ listConversions(const char *pattern, bool verbose, bool showSystem)
 }
 
 /*
+ * \dy
+ *
+ * Describes Event Triggers.
+ */
+bool
+listEventTriggers(const char *pattern, bool verbose)
+{
+	PQExpBufferData buf;
+	PGresult   *res;
+	printQueryOpt myopt = pset.popt;
+	static const bool translate_columns[] =
+		{false, false, false, true, false, false, false};
+
+	initPQExpBuffer(&buf);
+
+	printfPQExpBuffer(&buf,
+					  "select evtname as \"%s\", "
+					  "evtevent as  \"%s\", "
+					  "pg_catalog.pg_get_userbyid(e.evtowner) AS \"%s\", "
+					  "case evtenabled when 'O' then 'enabled' "
+					  "  when 'R' then 'replica' "
+					  "  when 'A' then 'always' "
+					  "  when 'D' then 'disabled' end as  \"%s\", "
+					  "e.evtfoid::regproc as \"%s\", "
+					  "array_to_string(array(select x "
+					  "      from unnest(evttags) as t(x)), ', ') as  \"%s\" ",
+					  gettext_noop("Name"),
+					  gettext_noop("Event"),
+					  gettext_noop("Owner"),
+					  gettext_noop("Enabled"),
+					  gettext_noop("Procedure"),
+					  gettext_noop("Tags"));
+	if (verbose)
+		appendPQExpBuffer(&buf,
+						  ",\npg_catalog.obj_description(e.oid, 'pg_event_trigger') as \"%s\"",
+						  gettext_noop("Description"));
+	appendPQExpBuffer(&buf,
+					  "\nFROM pg_event_trigger e ");
+
+	processSQLNamePattern(pset.db, &buf, pattern, false, false,
+						  NULL, "evtname", NULL, NULL);
+
+	appendPQExpBuffer(&buf, "ORDER BY 1");
+
+	res = PSQLexec(buf.data, false);
+	termPQExpBuffer(&buf);
+	if (!res)
+		return false;
+
+	myopt.nullPrint = NULL;
+	myopt.title = _("List of event triggers");
+	myopt.translate_header = true;
+	myopt.translate_columns = translate_columns;
+
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
+
+	PQclear(res);
+	return true;
+}
+
+/*
  * \dC
  *
  * Describes casts.

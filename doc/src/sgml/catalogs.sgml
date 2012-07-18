@@ -144,6 +144,11 @@
      </row>
 
      <row>
+      <entry><link linkend="catalog-pg-event-trigger"><structname>pg_event_trigger</structname></link></entry>
+      <entry>event triggers</entry>
+     </row>
+
+     <row>
       <entry><link linkend="catalog-pg-extension"><structname>pg_extension</structname></link></entry>
       <entry>installed extensions</entry>
      </row>
@@ -1855,6 +1860,88 @@
    <structfield>relhasindex</> if it finds the table has no indexes.  This
    arrangement avoids race conditions and improves concurrency.
   </para>
+ </sect1>
+
+ <sect1 id="catalog-pg-event-trigger">
+  <title><structname>pg_event_trigger</structname></title>
+
+  <indexterm zone="catalog-pg-event-trigger">
+   <primary>pg_event_trigger</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_event_trigger</structname> stores event triggers.
+   See <xref linkend="event-triggers"> for more information.
+  </para>
+
+  <table>
+   <title><structname>pg_event_trigger</> Columns</title>
+
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>evtname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Trigger name (must be unique)</entry>
+     </row>
+
+     <row>
+      <entry><structfield>evtevent</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Identifies the event for which this trigger fires</entry>
+     </row>
+
+     <row>
+      <entry><structfield>evtowner</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>Owner of the event trigger</entry>
+     </row>
+
+     <row>
+      <entry><structfield>evtfoid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
+      <entry>The function to be called</entry>
+     </row>
+
+     <row>
+      <entry><structfield>evtenabled</structfield></entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>
+       Controls in which <xref linkend="guc-session-replication-role"> modes
+       the event trigger fires.
+       <literal>O</> = trigger fires in <quote>origin</> and <quote>local</> modes,
+       <literal>D</> = trigger is disabled,
+       <literal>R</> = trigger fires in <quote>replica</> mode,
+       <literal>A</> = trigger fires always.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>evttags</structfield></entry>
+      <entry><type>text[]</type></entry>
+      <entry></entry>
+      <entry>
+        Command tags for which this trigger will fire.  If NULL, the firing
+        of this trigger is not restricted on the basis of the command tag.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
  </sect1>
 
  <sect1 id="catalog-pg-constraint">

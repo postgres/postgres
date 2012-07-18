@@ -24,6 +24,7 @@
 #include "commands/conversioncmds.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
+#include "commands/event_trigger.h"
 #include "commands/extension.h"
 #include "commands/proclang.h"
 #include "commands/schemacmds.h"
@@ -75,6 +76,10 @@ ExecRenameStmt(RenameStmt *stmt)
 
 		case OBJECT_FOREIGN_SERVER:
 			RenameForeignServer(stmt->subname, stmt->newname);
+			break;
+
+		case OBJECT_EVENT_TRIGGER:
+			RenameEventTrigger(stmt->subname, stmt->newname);
 			break;
 
 		case OBJECT_FUNCTION:
@@ -532,6 +537,10 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 
 		case OBJECT_FOREIGN_SERVER:
 			AlterForeignServerOwner(strVal(linitial(stmt->object)), newowner);
+			break;
+
+		case OBJECT_EVENT_TRIGGER:
+			AlterEventTriggerOwner(strVal(linitial(stmt->object)), newowner);
 			break;
 
 		default:

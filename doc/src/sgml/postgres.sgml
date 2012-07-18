@@ -208,6 +208,7 @@
 
   &extend;
   &trigger;
+  &event-trigger;
   &rules;
 
   &xplang;

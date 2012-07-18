@@ -293,6 +293,33 @@ trigger_out(PG_FUNCTION_ARGS)
 
 
 /*
+ * event_trigger_in	- input routine for pseudo-type event_trigger.
+ */
+Datum
+event_trigger_in(PG_FUNCTION_ARGS)
+{
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot accept a value of type event_trigger")));
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+/*
+ * event_trigger_out - output routine for pseudo-type event_trigger.
+ */
+Datum
+event_trigger_out(PG_FUNCTION_ARGS)
+{
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot display a value of type event_trigger")));
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+
+/*
  * language_handler_in		- input routine for pseudo-type LANGUAGE_HANDLER.
  */
 Datum

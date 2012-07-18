@@ -1,0 +1,113 @@
+<!--
+doc/src/sgml/ref/drop_event_trigger.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-DROPEVENTTRIGGER">
+ <refmeta>
+  <refentrytitle>DROP EVENT TRIGGER</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>DROP EVENT TRIGGER</refname>
+  <refpurpose>remove an event trigger</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-dropeventtrigger">
+  <primary>DROP EVENT TRIGGER</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+DROP EVENT TRIGGER [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [ CASCADE | RESTRICT ]
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>DROP EVENT TRIGGER</command> removes an existing event trigger.
+   To execute this command, the current user must be the owner of the event
+   trigger.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+
+   <varlistentry>
+    <term><literal>IF EXISTS</literal></term>
+    <listitem>
+     <para>
+      Do not throw an error if the event trigger does not exist. A notice
+      is issued in this case.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <listitem>
+     <para>
+      The name of the event trigger to remove.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CASCADE</literal></term>
+    <listitem>
+     <para>
+      Automatically drop objects that depend on the trigger.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RESTRICT</literal></term>
+    <listitem>
+     <para>
+      Refuse to drop the trigger if any objects depend on it.  This is
+      the default.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1 id="sql-dropeventtrigger-examples">
+  <title>Examples</title>
+
+  <para>
+   Destroy the trigger <literal>snitch</literal>:
+
+<programlisting>
+DROP EVENT TRIGGER snitch;
+</programlisting></para>
+ </refsect1>
+
+ <refsect1 id="sql-dropeventtrigger-compatibility">
+  <title>Compatibility</title>
+
+  <para>
+   There is no <command>DROP EVENT TRIGGER</command> statement in the
+   SQL standard.
+  </para>
+
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createeventtrigger"></member>
+   <member><xref linkend="sql-altereventtrigger"></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

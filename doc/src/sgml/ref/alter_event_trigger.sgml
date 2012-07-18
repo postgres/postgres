@@ -1,0 +1,105 @@
+<!--
+doc/src/sgml/ref/alter_event_trigger.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-ALTEREVENTTRIGGER">
+ <refmeta>
+  <refentrytitle>ALTER EVENT TRIGGER</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>ALTER EVENT TRIGGER</refname>
+  <refpurpose>change the definition of an event trigger</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-altereventtrigger">
+  <primary>ALTER EVENT TRIGGER</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+ALTER EVENT TRIGGER <replaceable class="PARAMETER">name</replaceable> DISABLE
+ALTER EVENT TRIGGER <replaceable class="PARAMETER">name</replaceable> ENABLE [ REPLICA | ALWAYS ]
+ALTER EVENT TRIGGER <replaceable class="PARAMETER">name</replaceable> OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
+ALTER EVENT TRIGGER <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>ALTER EVENT TRIGGER</command> changes properties of an
+   existing event trigger.
+  </para>
+
+  <para>
+   You must be superuser to alter an event trigger.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <listitem>
+     <para>
+      The name of an existing trigger to alter.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">new_owner</replaceable></term>
+    <listitem>
+     <para>
+      The user name of the new owner of the event trigger.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">new_name</replaceable></term>
+    <listitem>
+     <para>
+      The new name of the event trigger.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>DISABLE</literal>/<literal>ENABLE [ REPLICA | ALWAYS ] TRIGGER</literal></term>
+    <listitem>
+     <para>
+      These forms configure the firing of event triggers.  A disabled trigger
+      is still known to the system, but is not executed when its triggering
+      event occurs.  See also <xref linkend="guc-session-replication-role">.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1 id="sql-alterventtrigger-compatibility">
+  <title>Compatibility</title>
+
+  <para>
+   There is no <command>ALTER EVENT TRIGGER</command> statement in the
+   SQL standard.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createeventtrigger"></member>
+   <member><xref linkend="sql-dropeventtrigger"></member>
+  </simplelist>
+ </refsect1>
+</refentry>

@@ -33,6 +33,7 @@
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
 #include "commands/discard.h"
+#include "commands/event_trigger.h"
 #include "commands/explain.h"
 #include "commands/extension.h"
 #include "commands/lockcmds.h"
@@ -183,6 +184,8 @@ check_xact_readonly(Node *parsetree)
 		case T_CommentStmt:
 		case T_DefineStmt:
 		case T_CreateCastStmt:
+		case T_CreateEventTrigStmt:
+		case T_AlterEventTrigStmt:
 		case T_CreateConversionStmt:
 		case T_CreatedbStmt:
 		case T_CreateDomainStmt:
@@ -1056,6 +1059,14 @@ standard_ProcessUtility(Node *parsetree,
 								 InvalidOid, InvalidOid, false);
 			break;
 
+		case T_CreateEventTrigStmt:
+			CreateEventTrigger((CreateEventTrigStmt *) parsetree);
+			break;
+
+		case T_AlterEventTrigStmt:
+			AlterEventTrigger((AlterEventTrigStmt *) parsetree);
+			break;
+
 		case T_CreatePLangStmt:
 			CreateProceduralLanguage((CreatePLangStmt *) parsetree);
 			break;
@@ -1472,6 +1483,9 @@ AlterObjectTypeCommandTag(ObjectType objtype)
 		case OBJECT_TRIGGER:
 			tag = "ALTER TRIGGER";
 			break;
+		case OBJECT_EVENT_TRIGGER:
+			tag = "ALTER EVENT TRIGGER";
+			break;
 		case OBJECT_TSCONFIGURATION:
 			tag = "ALTER TEXT SEARCH CONFIGURATION";
 			break;
@@ -1741,6 +1755,9 @@ CreateCommandTag(Node *parsetree)
 				case OBJECT_TRIGGER:
 					tag = "DROP TRIGGER";
 					break;
+				case OBJECT_EVENT_TRIGGER:
+					tag = "DROP EVENT TRIGGER";
+					break;
 				case OBJECT_RULE:
 					tag = "DROP RULE";
 					break;
@@ -1992,6 +2009,14 @@ CreateCommandTag(Node *parsetree)
 
 		case T_CreateTrigStmt:
 			tag = "CREATE TRIGGER";
+			break;
+
+		case T_CreateEventTrigStmt:
+			tag = "CREATE EVENT TRIGGER";
+			break;
+
+		case T_AlterEventTrigStmt:
+			tag = "ALTER EVENT TRIGGER";
 			break;
 
 		case T_CreatePLangStmt:
@@ -2486,6 +2511,14 @@ GetCommandLogLevel(Node *parsetree)
 			break;
 
 		case T_CreateTrigStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_CreateEventTrigStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_AlterEventTrigStmt:
 			lev = LOGSTMT_DDL;
 			break;
 

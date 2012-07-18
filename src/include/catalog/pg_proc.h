@@ -3460,6 +3460,10 @@ DATA(insert OID = 2300 (  trigger_in		PGNSP PGUID 12 1 0 0 0 f f f f f f i 1 0 2
 DESCR("I/O");
 DATA(insert OID = 2301 (  trigger_out		PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 2275 "2279" _null_ _null_ _null_ _null_ trigger_out _null_ _null_ _null_ ));
 DESCR("I/O");
+DATA(insert OID = 3594 (  event_trigger_in	PGNSP PGUID 12 1 0 0 0 f f f f f f i 1 0 3838 "2275" _null_ _null_ _null_ _null_ event_trigger_in _null_ _null_ _null_ ));
+DESCR("I/O");
+DATA(insert OID = 3595 (  event_trigger_out	PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 2275 "3838" _null_ _null_ _null_ _null_ event_trigger_out _null_ _null_ _null_ ));
+DESCR("I/O");
 DATA(insert OID = 2302 (  language_handler_in	PGNSP PGUID 12 1 0 0 0 f f f f f f i 1 0 2280 "2275" _null_ _null_ _null_ _null_ language_handler_in _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 2303 (  language_handler_out	PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 2275 "2280" _null_ _null_ _null_ _null_ language_handler_out _null_ _null_ _null_ ));

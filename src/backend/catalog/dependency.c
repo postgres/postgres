@@ -34,6 +34,7 @@
 #include "catalog/pg_database.h"
 #include "catalog/pg_default_acl.h"
 #include "catalog/pg_depend.h"
+#include "catalog/pg_event_trigger.h"
 #include "catalog/pg_extension.h"
 #include "catalog/pg_foreign_data_wrapper.h"
 #include "catalog/pg_foreign_server.h"
@@ -56,6 +57,7 @@
 #include "commands/comment.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
+#include "commands/event_trigger.h"
 #include "commands/extension.h"
 #include "commands/proclang.h"
 #include "commands/schemacmds.h"
@@ -158,7 +160,8 @@ static const Oid object_classes[MAX_OCLASS] = {
 	ForeignServerRelationId,	/* OCLASS_FOREIGN_SERVER */
 	UserMappingRelationId,		/* OCLASS_USER_MAPPING */
 	DefaultAclRelationId,		/* OCLASS_DEFACL */
-	ExtensionRelationId			/* OCLASS_EXTENSION */
+	ExtensionRelationId,		/* OCLASS_EXTENSION */
+	EventTriggerRelationId		/* OCLASS_EVENT_TRIGGER */
 };
 
 
@@ -1111,6 +1114,10 @@ doDeletion(const ObjectAddress *object, int flags)
 				}
 				break;
 			}
+
+		case OCLASS_EVENT_TRIGGER:
+			RemoveEventTriggerById(object->objectId);
+			break;
 
 		case OCLASS_PROC:
 			RemoveFunctionById(object->objectId);
@@ -2269,6 +2276,9 @@ getObjectClass(const ObjectAddress *object)
 
 		case ExtensionRelationId:
 			return OCLASS_EXTENSION;
+
+		case EventTriggerRelationId:
+			return OCLASS_EVENT_TRIGGER;
 	}
 
 	/* shouldn't get here */
@@ -2900,6 +2910,21 @@ getObjectDescription(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for extension %u",
 						 object->objectId);
 				appendStringInfo(&buffer, _("extension %s"), extname);
+				break;
+			}
+
+        case OCLASS_EVENT_TRIGGER:
+			{
+				HeapTuple	tup;
+
+				tup = SearchSysCache1(EVENTTRIGGEROID,
+									  ObjectIdGetDatum(object->objectId));
+				if (!HeapTupleIsValid(tup))
+					elog(ERROR, "cache lookup failed for event trigger %u",
+						 object->objectId);
+				appendStringInfo(&buffer, _("event trigger %s"),
+					 NameStr(((Form_pg_event_trigger) GETSTRUCT(tup))->evtname));
+				ReleaseSysCache(tup);
 				break;
 			}
 

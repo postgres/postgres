@@ -1,0 +1,90 @@
+-- should fail, return type mismatch
+create event trigger regress_event_trigger
+   on ddl_command_start
+   execute procedure pg_backend_pid();
+ERROR:  function "pg_backend_pid" must return type "event_trigger"
+-- cheesy hack for testing purposes
+create function fake_event_trigger()
+   returns event_trigger
+   language internal
+   as 'pg_backend_pid';
+-- should fail, no elephant_bootstrap entry point
+create event trigger regress_event_trigger on elephant_bootstrap
+   execute procedure fake_event_trigger();
+ERROR:  unrecognized event name "elephant_bootstrap"
+-- OK
+create event trigger regress_event_trigger on ddl_command_start
+   execute procedure fake_event_trigger();
+-- should fail, food is not a valid filter variable
+create event trigger regress_event_trigger2 on ddl_command_start
+   when food in ('sandwhich')
+   execute procedure fake_event_trigger();
+ERROR:  unrecognized filter variable "food"
+-- should fail, sandwhich is not a valid command tag
+create event trigger regress_event_trigger2 on ddl_command_start
+   when tag in ('sandwhich')
+   execute procedure fake_event_trigger();
+ERROR:  filter value "sandwhich" not recognized for filter variable "tag"
+-- should fail, create skunkcabbage is not a valid comand tag
+create event trigger regress_event_trigger2 on ddl_command_start
+   when tag in ('create table', 'create skunkcabbage')
+   execute procedure fake_event_trigger();
+ERROR:  filter value "create skunkcabbage" not recognized for filter variable "tag"
+-- should fail, can't have event triggers on event triggers
+create event trigger regress_event_trigger2 on ddl_command_start
+   when tag in ('DROP EVENT TRIGGER')
+   execute procedure fake_event_trigger();
+ERROR:  event triggers are not supported for "DROP EVENT TRIGGER"
+-- should fail, can't have same filter variable twice
+create event trigger regress_event_trigger2 on ddl_command_start
+   when tag in ('create table') and tag in ('CREATE FUNCTION')
+   execute procedure fake_event_trigger();
+ERROR:  filter variable "tag" specified more than once
+-- OK
+create event trigger regress_event_trigger2 on ddl_command_start
+   when tag in ('create table', 'CREATE FUNCTION')
+   execute procedure fake_event_trigger();
+-- OK
+comment on event trigger regress_event_trigger is 'test comment';
+-- should fail, event triggers are not schema objects
+comment on event trigger wrong.regress_event_trigger is 'test comment';
+ERROR:  event trigger name cannot be qualified
+-- drop as non-superuser should fail
+create role regression_bob;
+set role regression_bob;
+create event trigger regress_event_trigger_noperms on ddl_command_start
+   execute procedure fake_event_trigger();
+ERROR:  permission denied to create event trigger "regress_event_trigger_noperms"
+HINT:  Must be superuser to create an event trigger.
+reset role;
+-- all OK
+alter event trigger regress_event_trigger disable;
+alter event trigger regress_event_trigger enable replica;
+alter event trigger regress_event_trigger enable always;
+alter event trigger regress_event_trigger enable;
+-- alter owner to non-superuser should fail
+alter event trigger regress_event_trigger owner to regression_bob;
+ERROR:  permission denied to change owner of event trigger "regress_event_trigger"
+HINT:  The owner of an event trigger must be a superuser.
+-- alter owner to superuser should work
+alter role regression_bob superuser;
+alter event trigger regress_event_trigger owner to regression_bob;
+-- should fail, name collision
+alter event trigger regress_event_trigger rename to regress_event_trigger2;
+ERROR:  event trigger "regress_event_trigger2" already exists
+-- OK
+alter event trigger regress_event_trigger rename to regress_event_trigger3;
+-- should fail, doesn't exist any more
+drop event trigger regress_event_trigger;
+ERROR:  event trigger "regress_event_trigger" does not exist
+-- should fail, regression_bob owns regress_event_trigger2/3
+drop role regression_bob;
+ERROR:  role "regression_bob" cannot be dropped because some objects depend on it
+DETAIL:  owner of event trigger regress_event_trigger3
+-- these are all OK; the second one should emit a NOTICE
+drop event trigger if exists regress_event_trigger2;
+drop event trigger if exists regress_event_trigger2;
+NOTICE:  event trigger "regress_event_trigger2" does not exist, skipping
+drop event trigger regress_event_trigger3;
+drop function fake_event_trigger();
+drop role regression_bob;

@@ -311,6 +311,19 @@ WHERE
 	l.objsubid = 0
 UNION ALL
 SELECT
+	l.objoid, l.classoid, l.objsubid,
+	'event trigger'::text AS objtype,
+	NULL::oid AS objnamespace,
+	quote_ident(evt.evtname) AS objname,
+	l.provider, l.label
+FROM
+	pg_seclabel l
+	JOIN pg_event_trigger evt ON l.classoid = evt.tableoid
+		AND l.objoid = evt.oid
+WHERE
+	l.objsubid = 0
+UNION ALL
+SELECT
 	l.objoid, l.classoid, 0::int4 AS objsubid,
 	'database'::text AS objtype,
 	NULL::oid AS objnamespace,
