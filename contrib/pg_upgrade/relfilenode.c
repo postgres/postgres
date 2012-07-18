@@ -21,8 +21,6 @@ static void transfer_relfile(pageCnvCtx *pageConverter,
 				 const char *fromfile, const char *tofile,
 				 const char *nspname, const char *relname);
 
-/* used by scandir(), must be global */
-char		scandir_file_pattern[MAXPGPATH];
 
 /*
  * transfer_all_new_dbs()
@@ -134,6 +132,7 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 					   FileNameMap *maps, int size)
 {
 	char		old_dir[MAXPGPATH];
+	char		file_pattern[MAXPGPATH];
 	struct dirent **namelist = NULL;
 	int			numFiles = 0;
 	int			mapnum;
@@ -175,7 +174,8 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 		pg_log(PG_REPORT, OVERWRITE_MESSAGE, old_file);
 
 		/*
-		 * Copy/link the relation file to the new cluster
+		 * Copy/link the relation's primary file (segment 0 of main fork)
+		 * to the new cluster
 		 */
 		unlink(new_file);
 		transfer_relfile(pageConverter, old_file, new_file,
@@ -187,7 +187,7 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 			/*
 			 * Copy/link any fsm and vm files, if they exist
 			 */
-			snprintf(scandir_file_pattern, sizeof(scandir_file_pattern), "%u_",
+			snprintf(file_pattern, sizeof(file_pattern), "%u_",
 					 maps[mapnum].old_relfilenode);
 
 			for (fileno = 0; fileno < numFiles; fileno++)
@@ -199,8 +199,8 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 				if (vm_offset && strlen(vm_offset) == strlen("_vm"))
 					is_vm_file = true;
 
-				if (strncmp(namelist[fileno]->d_name, scandir_file_pattern,
-							strlen(scandir_file_pattern)) == 0 &&
+				if (strncmp(namelist[fileno]->d_name, file_pattern,
+							strlen(file_pattern)) == 0 &&
 					(!is_vm_file || !vm_crashsafe_change))
 				{
 					snprintf(old_file, sizeof(old_file), "%s/%s", maps[mapnum].old_dir,
@@ -222,13 +222,13 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 		 * relfilenode.3, ...  'fsm' and 'vm' files use underscores so are not
 		 * copied.
 		 */
-		snprintf(scandir_file_pattern, sizeof(scandir_file_pattern), "%u.",
+		snprintf(file_pattern, sizeof(file_pattern), "%u.",
 				 maps[mapnum].old_relfilenode);
 
 		for (fileno = 0; fileno < numFiles; fileno++)
 		{
-			if (strncmp(namelist[fileno]->d_name, scandir_file_pattern,
-						strlen(scandir_file_pattern)) == 0)
+			if (strncmp(namelist[fileno]->d_name, file_pattern,
+						strlen(file_pattern)) == 0)
 			{
 				snprintf(old_file, sizeof(old_file), "%s/%s", maps[mapnum].old_dir,
 						 namelist[fileno]->d_name);
@@ -241,7 +241,6 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 			}
 		}
 	}
-
 
 	if (numFiles > 0)
 	{
