@@ -1132,7 +1132,8 @@ ForwardFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
 	LWLockAcquire(CheckpointerCommLock, LW_EXCLUSIVE);
 
 	/* Count all backend writes regardless of if they fit in the queue */
-	CheckpointerShmem->num_backend_writes++;
+	if (!AmBackgroundWriterProcess())
+		CheckpointerShmem->num_backend_writes++;
 
 	/*
 	 * If the checkpointer isn't running or the request queue is full, the
@@ -1147,7 +1148,8 @@ ForwardFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
 		 * Count the subset of writes where backends have to do their own
 		 * fsync
 		 */
-		CheckpointerShmem->num_backend_fsync++;
+		if (!AmBackgroundWriterProcess())
+			CheckpointerShmem->num_backend_fsync++;
 		LWLockRelease(CheckpointerCommLock);
 		return false;
 	}
