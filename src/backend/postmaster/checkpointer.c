@@ -153,8 +153,6 @@ static volatile sig_atomic_t shutdown_requested = false;
 /*
  * Private state
  */
-static bool am_checkpointer = false;
-
 static bool ckpt_active = false;
 
 /* these values are valid when ckpt_active is true: */
@@ -185,8 +183,8 @@ static void ReqShutdownHandler(SIGNAL_ARGS);
 /*
  * Main entry point for checkpointer process
  *
- * This is invoked from BootstrapMain, which has already created the basic
- * execution environment, but not enabled signals yet.
+ * This is invoked from AuxiliaryProcessMain, which has already created the
+ * basic execution environment, but not enabled signals yet.
  */
 void
 CheckpointerMain(void)
@@ -195,7 +193,6 @@ CheckpointerMain(void)
 	MemoryContext checkpointer_context;
 
 	CheckpointerShmem->checkpointer_pid = MyProcPid;
-	am_checkpointer = true;
 
 	/*
 	 * If possible, make this process a group leader, so that the postmaster
@@ -685,7 +682,7 @@ CheckpointWriteDelay(int flags, double progress)
 	static int	absorb_counter = WRITES_PER_ABSORB;
 
 	/* Do nothing if checkpoint is being executed by non-checkpointer process */
-	if (!am_checkpointer)
+	if (!AmCheckpointerProcess())
 		return;
 
 	/*
@@ -1129,7 +1126,7 @@ ForwardFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
 	if (!IsUnderPostmaster)
 		return false;			/* probably shouldn't even get here */
 
-	if (am_checkpointer)
+	if (AmCheckpointerProcess())
 		elog(ERROR, "ForwardFsyncRequest must not be called in checkpointer");
 
 	LWLockAcquire(CheckpointerCommLock, LW_EXCLUSIVE);
@@ -1306,7 +1303,7 @@ AbsorbFsyncRequests(void)
 	CheckpointerRequest *request;
 	int			n;
 
-	if (!am_checkpointer)
+	if (!AmCheckpointerProcess())
 		return;
 
 	/*

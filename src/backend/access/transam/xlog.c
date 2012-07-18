@@ -8946,7 +8946,7 @@ get_sync_bit(int method)
 	 * after its written. Also, walreceiver performs unaligned writes, which
 	 * don't work with O_DIRECT, so it is required for correctness too.
 	 */
-	if (!XLogIsNeeded() && !am_walreceiver)
+	if (!XLogIsNeeded() && !AmWalReceiverProcess())
 		o_direct_flag = PG_O_DIRECT;
 
 	switch (method)

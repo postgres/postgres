@@ -52,10 +52,8 @@
 #include "utils/resowner.h"
 #include "utils/timestamp.h"
 
-/* Global variable to indicate if this process is a walreceiver process */
-bool		am_walreceiver;
 
-/* GUC variable */
+/* GUC variables */
 int			wal_receiver_status_interval;
 bool		hot_standby_feedback;
 
@@ -175,8 +173,6 @@ WalReceiverMain(void)
 
 	/* use volatile pointer to prevent code rearrangement */
 	volatile WalRcvData *walrcv = WalRcv;
-
-	am_walreceiver = true;
 
 	/*
 	 * WalRcv should be set up already (if we are a backend, we inherit this
