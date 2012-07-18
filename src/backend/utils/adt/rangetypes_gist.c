@@ -148,10 +148,10 @@ typedef struct
 
 static RangeType *range_super_union(TypeCacheEntry *typcache, RangeType *r1,
 				  RangeType *r2);
-static bool range_gist_consistent_int(FmgrInfo *flinfo,
+static bool range_gist_consistent_int(TypeCacheEntry *typcache,
 						  StrategyNumber strategy, RangeType *key,
 						  Datum query);
-static bool range_gist_consistent_leaf(FmgrInfo *flinfo,
+static bool range_gist_consistent_leaf(TypeCacheEntry *typcache,
 						   StrategyNumber strategy, RangeType *key,
 						   Datum query);
 static void range_gist_fallback_split(TypeCacheEntry *typcache,
@@ -191,15 +191,18 @@ range_gist_consistent(PG_FUNCTION_ARGS)
 	/* Oid subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
 	RangeType  *key = DatumGetRangeType(entry->key);
+	TypeCacheEntry *typcache;
 
 	/* All operators served by this function are exact */
 	*recheck = false;
 
+	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(key));
+
 	if (GIST_LEAF(entry))
-		PG_RETURN_BOOL(range_gist_consistent_leaf(fcinfo->flinfo, strategy,
+		PG_RETURN_BOOL(range_gist_consistent_leaf(typcache, strategy,
 												  key, query));
 	else
-		PG_RETURN_BOOL(range_gist_consistent_int(fcinfo->flinfo, strategy,
+		PG_RETURN_BOOL(range_gist_consistent_int(typcache, strategy,
 												 key, query));
 }
 
@@ -686,12 +689,10 @@ range_gist_same(PG_FUNCTION_ARGS)
 		*result = false;
 	else
 	{
-		/*
-		 * We can safely call range_eq using our fcinfo directly; it won't
-		 * notice the third argument.  This allows it to use fn_extra for
-		 * caching.
-		 */
-		*result = DatumGetBool(range_eq(fcinfo));
+		TypeCacheEntry *typcache;
+		typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r1));
+
+		*result = range_eq_internal(typcache, r1, r2);
 	}
 
 	PG_RETURN_POINTER(result);
@@ -781,90 +782,48 @@ range_super_union(TypeCacheEntry *typcache, RangeType *r1, RangeType *r2)
 }
 
 /*
- * trick function call: call the given function with given FmgrInfo
- *
- * To allow the various functions called here to cache lookups of range
- * datatype information, we use a trick: we pass them the FmgrInfo struct
- * for the GiST consistent function.  This relies on the knowledge that
- * none of them consult FmgrInfo for anything but fn_extra, and that they
- * all use fn_extra the same way, i.e. as a pointer to the typcache entry
- * for the range data type.  Since the FmgrInfo is long-lived (it's actually
- * part of the relcache entry for the index, typically) this essentially
- * eliminates lookup overhead during operations on a GiST range index.
- */
-static Datum
-TrickFunctionCall2(PGFunction proc, FmgrInfo *flinfo, Datum arg1, Datum arg2)
-{
-	FunctionCallInfoData fcinfo;
-	Datum		result;
-
-	InitFunctionCallInfoData(fcinfo, flinfo, 2, InvalidOid, NULL, NULL);
-
-	fcinfo.arg[0] = arg1;
-	fcinfo.arg[1] = arg2;
-	fcinfo.argnull[0] = false;
-	fcinfo.argnull[1] = false;
-
-	result = (*proc) (&fcinfo);
-
-	if (fcinfo.isnull)
-		elog(ERROR, "function %p returned NULL", proc);
-
-	return result;
-}
-
-/*
  * GiST consistent test on an index internal page
  */
 static bool
-range_gist_consistent_int(FmgrInfo *flinfo, StrategyNumber strategy,
+range_gist_consistent_int(TypeCacheEntry *typcache, StrategyNumber strategy,
 						  RangeType *key, Datum query)
 {
-	PGFunction	proc;
-	bool		negate = false;
-	bool		retval;
-
 	switch (strategy)
 	{
 		case RANGESTRAT_BEFORE:
 			if (RangeIsEmpty(key) || RangeIsEmpty(DatumGetRangeType(query)))
 				return false;
-			proc = range_overright;
-			negate = true;
-			break;
+			return (!range_overright_internal(typcache, key,
+													DatumGetRangeType(query)));
 		case RANGESTRAT_OVERLEFT:
 			if (RangeIsEmpty(key) || RangeIsEmpty(DatumGetRangeType(query)))
 				return false;
-			proc = range_after;
-			negate = true;
-			break;
+			return (!range_after_internal(typcache, key,
+													DatumGetRangeType(query)));
 		case RANGESTRAT_OVERLAPS:
-			proc = range_overlaps;
-			break;
+			return range_overlaps_internal(typcache, key,
+													DatumGetRangeType(query));
 		case RANGESTRAT_OVERRIGHT:
 			if (RangeIsEmpty(key) || RangeIsEmpty(DatumGetRangeType(query)))
 				return false;
-			proc = range_before;
-			negate = true;
-			break;
+			return (!range_before_internal(typcache, key,
+													DatumGetRangeType(query)));
 		case RANGESTRAT_AFTER:
 			if (RangeIsEmpty(key) || RangeIsEmpty(DatumGetRangeType(query)))
 				return false;
-			proc = range_overleft;
-			negate = true;
-			break;
+			return (!range_overleft_internal(typcache, key,
+													DatumGetRangeType(query)));
 		case RANGESTRAT_ADJACENT:
 			if (RangeIsEmpty(key) || RangeIsEmpty(DatumGetRangeType(query)))
 				return false;
-			if (DatumGetBool(TrickFunctionCall2(range_adjacent, flinfo,
-												RangeTypeGetDatum(key),
-												query)))
+			if (range_adjacent_internal(typcache, key,
+													DatumGetRangeType(query)))
 				return true;
-			proc = range_overlaps;
-			break;
+			return range_overlaps_internal(typcache, key,
+													DatumGetRangeType(query));
 		case RANGESTRAT_CONTAINS:
-			proc = range_contains;
-			break;
+			return range_contains_internal(typcache, key,
+													DatumGetRangeType(query));
 		case RANGESTRAT_CONTAINED_BY:
 
 			/*
@@ -874,11 +833,10 @@ range_gist_consistent_int(FmgrInfo *flinfo, StrategyNumber strategy,
 			 */
 			if (RangeIsOrContainsEmpty(key))
 				return true;
-			proc = range_overlaps;
-			break;
+			return range_overlaps_internal(typcache, key,
+													DatumGetRangeType(query));
 		case RANGESTRAT_CONTAINS_ELEM:
-			proc = range_contains_elem;
-			break;
+			return range_contains_elem_internal(typcache, key, query);
 		case RANGESTRAT_EQ:
 
 			/*
@@ -887,73 +845,55 @@ range_gist_consistent_int(FmgrInfo *flinfo, StrategyNumber strategy,
 			 */
 			if (RangeIsEmpty(DatumGetRangeType(query)))
 				return RangeIsOrContainsEmpty(key);
-			proc = range_contains;
-			break;
+			return range_contains_internal(typcache, key,
+													DatumGetRangeType(query));
 		default:
 			elog(ERROR, "unrecognized range strategy: %d", strategy);
-			proc = NULL;		/* keep compiler quiet */
-			break;
+			return false;			/* keep compiler quiet */
 	}
-
-	retval = DatumGetBool(TrickFunctionCall2(proc, flinfo,
-											 RangeTypeGetDatum(key),
-											 query));
-	if (negate)
-		retval = !retval;
-
-	return retval;
 }
 
 /*
  * GiST consistent test on an index leaf page
  */
 static bool
-range_gist_consistent_leaf(FmgrInfo *flinfo, StrategyNumber strategy,
+range_gist_consistent_leaf(TypeCacheEntry *typcache, StrategyNumber strategy,
 						   RangeType *key, Datum query)
 {
-	PGFunction	proc;
-
 	switch (strategy)
 	{
 		case RANGESTRAT_BEFORE:
-			proc = range_before;
-			break;
+			return range_before_internal(typcache, key,
+													DatumGetRangeType(query));
 		case RANGESTRAT_OVERLEFT:
-			proc = range_overleft;
-			break;
+			return range_overleft_internal(typcache, key,
+													DatumGetRangeType(query));
 		case RANGESTRAT_OVERLAPS:
-			proc = range_overlaps;
-			break;
+			return range_overlaps_internal(typcache, key,
+													DatumGetRangeType(query));
 		case RANGESTRAT_OVERRIGHT:
-			proc = range_overright;
-			break;
+			return range_overright_internal(typcache, key,
+													DatumGetRangeType(query));
 		case RANGESTRAT_AFTER:
-			proc = range_after;
-			break;
+			return range_after_internal(typcache, key,
+													DatumGetRangeType(query));
 		case RANGESTRAT_ADJACENT:
-			proc = range_adjacent;
-			break;
+			return range_adjacent_internal(typcache, key,
+													DatumGetRangeType(query));
 		case RANGESTRAT_CONTAINS:
-			proc = range_contains;
-			break;
+			return range_contains_internal(typcache, key,
+													DatumGetRangeType(query));
 		case RANGESTRAT_CONTAINED_BY:
-			proc = range_contained_by;
-			break;
+			return range_contained_by_internal(typcache, key,
+													DatumGetRangeType(query));
 		case RANGESTRAT_CONTAINS_ELEM:
-			proc = range_contains_elem;
-			break;
+			return range_contains_elem_internal(typcache, key, query);
 		case RANGESTRAT_EQ:
-			proc = range_eq;
-			break;
+			return range_eq_internal(typcache, key, DatumGetRangeType(query));
 		default:
 			elog(ERROR, "unrecognized range strategy: %d", strategy);
-			proc = NULL;		/* keep compiler quiet */
-			break;
+			return false;			/* keep compiler quiet */
 	}
-
-	return DatumGetBool(TrickFunctionCall2(proc, flinfo,
-										   RangeTypeGetDatum(key),
-										   query));
 }
 
 /*
