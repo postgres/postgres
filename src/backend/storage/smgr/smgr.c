@@ -381,8 +381,7 @@ smgrdounlink(SMgrRelation reln, bool isRedo)
 	 * ERROR, because we've already decided to commit or abort the current
 	 * xact.
 	 */
-	for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
-		(*(smgrsw[which].smgr_unlink)) (rnode, forknum, isRedo);
+	(*(smgrsw[which].smgr_unlink)) (rnode, InvalidForkNumber, isRedo);
 }
 
 /*

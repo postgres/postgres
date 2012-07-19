@@ -166,6 +166,8 @@ typedef enum					/* behavior for mdopen & _mdfd_getseg */
 } ExtensionBehavior;
 
 /* local routines */
+static void mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum,
+						 bool isRedo);
 static MdfdVec *mdopen(SMgrRelation reln, ForkNumber forknum,
 	   ExtensionBehavior behavior);
 static void register_dirty_segment(SMgrRelation reln, ForkNumber forknum,
@@ -308,6 +310,9 @@ mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
  * Note that we're passed a RelFileNodeBackend --- by the time this is called,
  * there won't be an SMgrRelation hashtable entry anymore.
  *
+ * forkNum can be a fork number to delete a specific fork, or InvalidForkNumber
+ * to delete all forks.
+ *
  * For regular relations, we don't unlink the first segment file of the rel,
  * but just truncate it to zero length, and record a request to unlink it after
  * the next checkpoint.  Additional segments can be unlinked immediately,
@@ -349,16 +354,31 @@ mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
 void
 mdunlink(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo)
 {
-	char	   *path;
-	int			ret;
-
 	/*
 	 * We have to clean out any pending fsync requests for the doomed
 	 * relation, else the next mdsync() will fail.  There can't be any such
-	 * requests for a temp relation, though.
+	 * requests for a temp relation, though.  We can send just one request
+	 * even when deleting multiple forks, since the fsync queuing code accepts
+	 * the "InvalidForkNumber = all forks" convention.
 	 */
 	if (!RelFileNodeBackendIsTemp(rnode))
 		ForgetRelationFsyncRequests(rnode.node, forkNum);
+
+	/* Now do the per-fork work */
+	if (forkNum == InvalidForkNumber)
+	{
+		for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
+			mdunlinkfork(rnode, forkNum, isRedo);
+	}
+	else
+		mdunlinkfork(rnode, forkNum, isRedo);
+}
+
+static void
+mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo)
+{
+	char	   *path;
+	int			ret;
 
 	path = relpath(rnode, forkNum);
 
@@ -1340,7 +1360,8 @@ register_unlink(RelFileNodeBackend rnode)
  * The range of possible segment numbers is way less than the range of
  * BlockNumber, so we can reserve high values of segno for special purposes.
  * We define three:
- * - FORGET_RELATION_FSYNC means to cancel pending fsyncs for a relation
+ * - FORGET_RELATION_FSYNC means to cancel pending fsyncs for a relation,
+ *   either for one fork, or all forks if forknum is InvalidForkNumber
  * - FORGET_DATABASE_FSYNC means to cancel pending fsyncs for a whole database
  * - UNLINK_RELATION_REQUEST is a request to delete the file after the next
  *	 checkpoint.
@@ -1356,7 +1377,7 @@ RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
 
 	if (segno == FORGET_RELATION_FSYNC)
 	{
-		/* Remove any pending requests for the entire relation */
+		/* Remove any pending requests for the relation (one or all forks) */
 		HASH_SEQ_STATUS hstat;
 		PendingOperationEntry *entry;
 
@@ -1364,7 +1385,8 @@ RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
 		while ((entry = (PendingOperationEntry *) hash_seq_search(&hstat)) != NULL)
 		{
 			if (RelFileNodeEquals(entry->tag.rnode, rnode) &&
-				entry->tag.forknum == forknum)
+				(entry->tag.forknum == forknum ||
+				 forknum == InvalidForkNumber))
 			{
 				/* Okay, cancel this entry */
 				entry->canceled = true;
@@ -1466,6 +1488,9 @@ RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
 
 /*
  * ForgetRelationFsyncRequests -- forget any fsyncs for a relation fork
+ *
+ * forknum == InvalidForkNumber means all forks, although this code doesn't
+ * actually know that, since it's just forwarding the request elsewhere.
  */
 void
 ForgetRelationFsyncRequests(RelFileNode rnode, ForkNumber forknum)
