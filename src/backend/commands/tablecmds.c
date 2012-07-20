@@ -6039,7 +6039,7 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 									  NULL,
 									  true,		/* islocal */
 									  0,		/* inhcount */
-									  false);	/* isnoinherit */
+									  true);	/* isnoinherit */
 
 	/*
 	 * Create the triggers that will enforce the constraint.
@@ -6946,6 +6946,16 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 							constrName, RelationGetRelationName(rel))));
 
 		is_no_inherit_constraint = con->connoinherit;
+
+		/*
+		 * XXX as a special hack, we turn on no-inherit here unconditionally
+		 * except for CHECK constraints.  This is because 9.2 until beta2
+		 * contained a bug that marked it false for all constraints, even
+		 * though it was only supported false for CHECK constraints.
+		 * See bug #6712.
+		 */
+		if (con->contype != CONSTRAINT_CHECK)
+			is_no_inherit_constraint = true;
 
 		/*
 		 * Perform the actual constraint deletion
