@@ -285,6 +285,7 @@ do_compile(FunctionCallInfo fcinfo,
 	int		   *in_arg_varnos = NULL;
 	PLpgSQL_variable **out_arg_variables;
 	MemoryContext func_cxt;
+	PLpgSQL_trigtype fn_is_trigger;
 
 	/*
 	 * Setup the scanner input and error info.	We assume that this function
@@ -352,11 +353,12 @@ do_compile(FunctionCallInfo fcinfo,
 	function->resolve_option = plpgsql_variable_conflict;
 
 	if (is_dml_trigger)
-		function->fn_is_trigger = PLPGSQL_DML_TRIGGER;
+		fn_is_trigger = PLPGSQL_DML_TRIGGER;
 	else if (is_event_trigger)
-		function->fn_is_trigger = PLPGSQL_EVENT_TRIGGER;
+		fn_is_trigger = PLPGSQL_EVENT_TRIGGER;
 	else
-		function->fn_is_trigger = PLPGSQL_NOT_TRIGGER;
+		fn_is_trigger = PLPGSQL_NOT_TRIGGER;
+	function->fn_is_trigger = fn_is_trigger;
 
 	/*
 	 * Initialize the compiler, particularly the namespace stack.  The
@@ -374,6 +376,7 @@ do_compile(FunctionCallInfo fcinfo,
 									 sizeof(PLpgSQL_datum *) * datums_alloc);
 	datums_last = 0;
 
+	Assert(fn_is_trigger == function->fn_is_trigger);
 	switch (function->fn_is_trigger)
 	{
 		case PLPGSQL_NOT_TRIGGER:
@@ -537,9 +540,13 @@ do_compile(FunctionCallInfo fcinfo,
 					rettypeid == RECORDOID)
 					 /* okay */ ;
 				else if (rettypeid == TRIGGEROID || rettypeid == EVTTRIGGEROID)
+				{
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("trigger functions can only be called as triggers")));
+							 errmsg("trigger functions can only be called as triggers"),
+							 errhint("CALLED_AS_TRIGGER=%d CALLED_AS_EVENT_TRIGGER=%d",
+							CALLED_AS_TRIGGER(fcinfo), CALLED_AS_EVENT_TRIGGER(fcinfo))));
+				}
 				else
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
