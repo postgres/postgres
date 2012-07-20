@@ -91,7 +91,7 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 {
 	PLpgSQL_function *func;
 	PLpgSQL_execstate *save_cur_estate;
-	Datum		retval;
+	Datum		retval = 0;		/* make compiler happy */
 	int			rc;
 
 	/*
@@ -118,6 +118,9 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 		if (CALLED_AS_TRIGGER(fcinfo))
 			retval = PointerGetDatum(plpgsql_exec_trigger(func,
 										   (TriggerData *) fcinfo->context));
+		else if (CALLED_AS_EVENT_TRIGGER(fcinfo))
+			plpgsql_exec_event_trigger(func,
+									   (EventTriggerData *) fcinfo->context);
 		else
 			retval = plpgsql_exec_function(func, fcinfo);
 	}
@@ -224,7 +227,8 @@ plpgsql_validator(PG_FUNCTION_ARGS)
 	Oid		   *argtypes;
 	char	  **argnames;
 	char	   *argmodes;
-	bool		istrigger = false;
+	bool		is_dml_trigger = false;
+	bool		is_event_trigger = false;
 	int			i;
 
 	/* Get the new function's pg_proc entry */
@@ -242,7 +246,9 @@ plpgsql_validator(PG_FUNCTION_ARGS)
 		/* we assume OPAQUE with no arguments means a trigger */
 		if (proc->prorettype == TRIGGEROID ||
 			(proc->prorettype == OPAQUEOID && proc->pronargs == 0))
-			istrigger = true;
+			is_dml_trigger = true;
+		else if (proc->prorettype == EVTTRIGGEROID)
+			is_event_trigger = true;
 		else if (proc->prorettype != RECORDOID &&
 				 proc->prorettype != VOIDOID &&
 				 !IsPolymorphicType(proc->prorettype))
@@ -273,7 +279,6 @@ plpgsql_validator(PG_FUNCTION_ARGS)
 	{
 		FunctionCallInfoData fake_fcinfo;
 		FmgrInfo	flinfo;
-		TriggerData trigdata;
 		int			rc;
 
 		/*
@@ -291,10 +296,18 @@ plpgsql_validator(PG_FUNCTION_ARGS)
 		fake_fcinfo.flinfo = &flinfo;
 		flinfo.fn_oid = funcoid;
 		flinfo.fn_mcxt = CurrentMemoryContext;
-		if (istrigger)
+		if (is_dml_trigger)
 		{
+			TriggerData trigdata;
 			MemSet(&trigdata, 0, sizeof(trigdata));
 			trigdata.type = T_TriggerData;
+			fake_fcinfo.context = (Node *) &trigdata;
+		}
+		else if (is_event_trigger)
+		{
+			EventTriggerData trigdata;
+			MemSet(&trigdata, 0, sizeof(trigdata));
+			trigdata.type = T_EventTriggerData;
 			fake_fcinfo.context = (Node *) &trigdata;
 		}
 

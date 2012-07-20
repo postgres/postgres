@@ -98,12 +98,6 @@ CREATE EVENT TRIGGER <replaceable class="PARAMETER">name</replaceable>
       A user-supplied function that is declared as taking no argument and
       returning type <literal>event_trigger</literal>.
      </para>
-     <para>
-      If your event trigger is implemented in <literal>C</literal> then it
-      will be called with an argument, of
-      type <literal>internal</literal>, which is a pointer to
-      the <literal>Node *</literal> parse tree.
-     </para>
     </listitem>
    </varlistentry>
 

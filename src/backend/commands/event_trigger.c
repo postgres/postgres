@@ -13,6 +13,7 @@
  */
 #include "postgres.h"
 
+#include "access/xact.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/objectaccess.h"
@@ -28,6 +29,7 @@
 #include "miscadmin.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/evtcache.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -39,54 +41,62 @@
 typedef struct
 {
 	const char	   *obtypename;
-	ObjectType		obtype;
 	bool			supported;
 } event_trigger_support_data;
 
+typedef enum
+{
+	EVENT_TRIGGER_COMMAND_TAG_OK,
+	EVENT_TRIGGER_COMMAND_TAG_NOT_SUPPORTED,
+	EVENT_TRIGGER_COMMAND_TAG_NOT_RECOGNIZED
+} event_trigger_command_tag_check_result;
+
 static event_trigger_support_data event_trigger_support[] = {
-	{ "AGGREGATE", OBJECT_AGGREGATE, true },
-	{ "CAST", OBJECT_CAST, true },
-	{ "CONSTRAINT", OBJECT_CONSTRAINT, true },
-	{ "COLLATION", OBJECT_COLLATION, true },
-	{ "CONVERSION", OBJECT_CONVERSION, true },
-	{ "DATABASE", OBJECT_DATABASE, false },
-	{ "DOMAIN", OBJECT_DOMAIN, true },
-	{ "EXTENSION", OBJECT_EXTENSION, true },
-	{ "EVENT TRIGGER", OBJECT_EVENT_TRIGGER, false },
-	{ "FOREIGN DATA WRAPPER", OBJECT_FDW, true },
-	{ "FOREIGN SERVER", OBJECT_FOREIGN_SERVER, true },
-	{ "FOREIGN TABLE", OBJECT_FOREIGN_TABLE, true },
-	{ "FUNCTION", OBJECT_FUNCTION, true },
-	{ "INDEX", OBJECT_INDEX, true },
-	{ "LANGUAGE", OBJECT_LANGUAGE, true },
-	{ "OPERATOR", OBJECT_OPERATOR, true },
-	{ "OPERATOR CLASS", OBJECT_OPCLASS, true },
-	{ "OPERATOR FAMILY", OBJECT_OPFAMILY, true },
-	{ "ROLE", OBJECT_ROLE, false },
-	{ "RULE", OBJECT_RULE, true },
-	{ "SCHEMA", OBJECT_SCHEMA, true },
-	{ "SEQUENCE", OBJECT_SEQUENCE, true },
-	{ "TABLE", OBJECT_TABLE, true },
-	{ "TABLESPACE", OBJECT_TABLESPACE, false},
-	{ "TRIGGER", OBJECT_TRIGGER, true },
-	{ "TEXT SEARCH CONFIGURATION", OBJECT_TSCONFIGURATION, true },
-	{ "TEXT SEARCH DICTIONARY", OBJECT_TSDICTIONARY, true },
-	{ "TEXT SEARCH PARSER", OBJECT_TSPARSER, true },
-	{ "TEXT SEARCH TEMPLATE", OBJECT_TSTEMPLATE, true },
-	{ "TYPE", OBJECT_TYPE, true },
-	{ "VIEW", OBJECT_VIEW, true },
-	{ NULL, (ObjectType) 0, false }
+	{ "AGGREGATE", true },
+	{ "CAST", true },
+	{ "CONSTRAINT", true },
+	{ "COLLATION", true },
+	{ "CONVERSION", true },
+	{ "DATABASE", false },
+	{ "DOMAIN", true },
+	{ "EXTENSION", true },
+	{ "EVENT TRIGGER", false },
+	{ "FOREIGN DATA WRAPPER", true },
+	{ "FOREIGN TABLE", true },
+	{ "FUNCTION", true },
+	{ "INDEX", true },
+	{ "LANGUAGE", true },
+	{ "OPERATOR", true },
+	{ "OPERATOR CLASS", true },
+	{ "OPERATOR FAMILY", true },
+	{ "ROLE", false },
+	{ "RULE", true },
+	{ "SCHEMA", true },
+	{ "SEQUENCE", true },
+	{ "SERVER", true },
+	{ "TABLE", true },
+	{ "TABLESPACE", false},
+	{ "TRIGGER", true },
+	{ "TEXT SEARCH CONFIGURATION", true },
+	{ "TEXT SEARCH DICTIONARY", true },
+	{ "TEXT SEARCH PARSER", true },
+	{ "TEXT SEARCH TEMPLATE", true },
+	{ "TYPE", true },
+	{ "USER MAPPING", true },
+	{ "VIEW", true },
+	{ NULL, false }
 };
 
 static void AlterEventTriggerOwner_internal(Relation rel,
 											HeapTuple tup,
 											Oid newOwnerId);
+static event_trigger_command_tag_check_result check_ddl_tag(const char *tag);
 static void error_duplicate_filter_variable(const char *defname);
-static void error_unrecognized_filter_value(const char *var, const char *val);
 static Datum filter_list_to_array(List *filterlist);
 static void insert_event_trigger_tuple(char *trigname, char *eventname,
 						Oid evtOwner, Oid funcoid, List *tags);
 static void validate_ddl_tags(const char *filtervar, List *taglist);
+static void EventTriggerInvoke(List *fn_oid_list, EventTriggerData *trigdata);
 
 /*
  * Create an event trigger.
@@ -177,44 +187,61 @@ validate_ddl_tags(const char *filtervar, List *taglist)
 	foreach (lc, taglist)
 	{
 		const char *tag = strVal(lfirst(lc));
-		const char *obtypename = NULL;
-		event_trigger_support_data	   *etsd;
+		event_trigger_command_tag_check_result result;
 
-		/*
-		 * As a special case, SELECT INTO is considered DDL, since it creates
-		 * a table.
-		 */
-		if (strcmp(tag, "SELECT INTO") == 0)
-			continue;
-
-
-		/*
-		 * Otherwise, it should be CREATE, ALTER, or DROP.
-		 */
-		if (pg_strncasecmp(tag, "CREATE ", 7) == 0)
-			obtypename = tag + 7;
-		else if (pg_strncasecmp(tag, "ALTER ", 6) == 0)
-			obtypename = tag + 6;
-		else if (pg_strncasecmp(tag, "DROP ", 5) == 0)
-			obtypename = tag + 5;
-		if (obtypename == NULL)
-			error_unrecognized_filter_value(filtervar, tag);
-
-		/*
-		 * ...and the object type should be something recognizable.
-		 */
-		for (etsd = event_trigger_support; etsd->obtypename != NULL; etsd++)
-			if (pg_strcasecmp(etsd->obtypename, obtypename) == 0)
-				break;
-		if (etsd->obtypename == NULL)
-			error_unrecognized_filter_value(filtervar, tag);
-		if (!etsd->supported)
+		result = check_ddl_tag(tag);
+		if (result == EVENT_TRIGGER_COMMAND_TAG_NOT_RECOGNIZED)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("filter value \"%s\" not recognized for filter variable \"%s\"",
+						tag, filtervar)));
+		if (result == EVENT_TRIGGER_COMMAND_TAG_NOT_SUPPORTED)
 			ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 /* translator: %s represents an SQL statement name */
 				 errmsg("event triggers are not supported for \"%s\"",
 					tag)));
 	}
+}
+
+static event_trigger_command_tag_check_result
+check_ddl_tag(const char *tag)
+{
+	const char *obtypename;
+	event_trigger_support_data	   *etsd;
+
+	/*
+	 * Handle some idiosyncratic special cases.
+	 */
+	if (pg_strcasecmp(tag, "CREATE TABLE AS") == 0 ||
+		pg_strcasecmp(tag, "SELECT INTO") == 0 ||
+		pg_strcasecmp(tag, "ALTER DEFAULT PRIVILEGES") == 0 ||
+		pg_strcasecmp(tag, "ALTER LARGE OBJECT") == 0)
+		return EVENT_TRIGGER_COMMAND_TAG_OK;
+
+	/*
+	 * Otherwise, command should be CREATE, ALTER, or DROP.
+	 */
+	if (pg_strncasecmp(tag, "CREATE ", 7) == 0)
+		obtypename = tag + 7;
+	else if (pg_strncasecmp(tag, "ALTER ", 6) == 0)
+		obtypename = tag + 6;
+	else if (pg_strncasecmp(tag, "DROP ", 5) == 0)
+		obtypename = tag + 5;
+	else
+		return EVENT_TRIGGER_COMMAND_TAG_NOT_RECOGNIZED;
+
+	/*
+	 * ...and the object type should be something recognizable.
+	 */
+	for (etsd = event_trigger_support; etsd->obtypename != NULL; etsd++)
+		if (pg_strcasecmp(etsd->obtypename, obtypename) == 0)
+			break;
+	if (etsd->obtypename == NULL)
+		return EVENT_TRIGGER_COMMAND_TAG_NOT_RECOGNIZED;
+	if (!etsd->supported)
+		return EVENT_TRIGGER_COMMAND_TAG_NOT_SUPPORTED;
+	return EVENT_TRIGGER_COMMAND_TAG_OK;
 }
 
 /*
@@ -227,18 +254,6 @@ error_duplicate_filter_variable(const char *defname)
 			(errcode(ERRCODE_SYNTAX_ERROR),
 			 errmsg("filter variable \"%s\" specified more than once",
 				defname)));
-}
-
-/*
- * Complain about an invalid filter value.
- */
-static void
-error_unrecognized_filter_value(const char *var, const char *val)
-{
-	ereport(ERROR,
-			(errcode(ERRCODE_SYNTAX_ERROR),
-			 errmsg("filter value \"%s\" not recognized for filter variable \"%s\"",
-				val, var)));
 }
 
 /*
@@ -536,4 +551,172 @@ get_event_trigger_oid(const char *trigname, bool missing_ok)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("event trigger \"%s\" does not exist", trigname)));
 	return oid;
+}
+
+/*
+ * Fire ddl_command_start triggers.
+ */
+void
+EventTriggerDDLCommandStart(Node *parsetree)
+{
+	List	   *cachelist;
+	List	   *runlist = NIL;
+	ListCell   *lc;
+	const char *tag;
+	EventTriggerData	trigdata;
+
+	/*
+	 * We want the list of command tags for which this procedure is actually
+	 * invoked to match up exactly with the list that CREATE EVENT TRIGGER
+	 * accepts.  This debugging cross-check will throw an error if this
+	 * function is invoked for a command tag that CREATE EVENT TRIGGER won't
+	 * accept.  (Unfortunately, there doesn't seem to be any simple, automated
+	 * way to verify that CREATE EVENT TRIGGER doesn't accept extra stuff that
+	 * never reaches this control point.)
+	 *
+	 * If this cross-check fails for you, you probably need to either adjust
+	 * standard_ProcessUtility() not to invoke event triggers for the command
+	 * type in question, or you need to adjust check_ddl_tag to accept the
+	 * relevant command tag.
+	 */
+#ifdef USE_ASSERT_CHECKING
+	if (assert_enabled)
+	{
+		const char *dbgtag;
+
+		dbgtag = CreateCommandTag(parsetree);
+		if (check_ddl_tag(dbgtag) != EVENT_TRIGGER_COMMAND_TAG_OK)
+			elog(ERROR, "unexpected command tag \"%s\"", dbgtag);
+	}
+#endif
+
+	/* Use cache to find triggers for this event; fast exit if none. */
+	cachelist = EventCacheLookup(EVT_DDLCommandStart);
+	if (cachelist == NULL)
+		return;
+
+	/* Get the command tag. */
+	tag = CreateCommandTag(parsetree);
+
+	/*
+	 * Filter list of event triggers by command tag, and copy them into
+	 * our memory context.  Once we start running the command trigers, or
+	 * indeed once we do anything at all that touches the catalogs, an
+	 * invalidation might leave cachelist pointing at garbage, so we must
+	 * do this before we can do much else.
+	 */
+	foreach (lc, cachelist)
+	{
+		EventTriggerCacheItem  *item = lfirst(lc);
+
+		/* Filter by session replication role. */
+		if (SessionReplicationRole == SESSION_REPLICATION_ROLE_REPLICA)
+		{
+			if (item->enabled == TRIGGER_FIRES_ON_ORIGIN)
+				continue;
+		}
+		else
+		{
+			if (item->enabled == TRIGGER_FIRES_ON_REPLICA)
+				continue;
+		}
+
+		/* Filter by tags, if any were specified. */
+		if (item->ntags != 0 && bsearch(&tag, item->tag,
+										item->ntags, sizeof(char *),
+										pg_qsort_strcmp) == NULL)
+				continue;
+
+		/* We must plan to fire this trigger. */
+		runlist = lappend_oid(runlist, item->fnoid);
+	}
+
+	/* Construct event trigger data. */
+	trigdata.type = T_EventTriggerData;
+	trigdata.event = "ddl_command_start";
+	trigdata.parsetree = parsetree;
+	trigdata.tag = tag;
+
+	/* Run the triggers. */
+	EventTriggerInvoke(runlist, &trigdata);
+
+	/* Cleanup. */
+	list_free(runlist);
+}
+
+/*
+ * Invoke each event trigger in a list of event triggers.
+ */
+static void
+EventTriggerInvoke(List *fn_oid_list, EventTriggerData *trigdata)
+{
+	MemoryContext	context;
+	MemoryContext	oldcontext;
+	ListCell	   *lc;
+
+	/*
+	 * Let's evaluate event triggers in their own memory context, so
+	 * that any leaks get cleaned up promptly.
+	 */
+	context = AllocSetContextCreate(CurrentMemoryContext,
+									"event trigger context",
+									ALLOCSET_DEFAULT_MINSIZE,
+									ALLOCSET_DEFAULT_INITSIZE,
+									ALLOCSET_DEFAULT_MAXSIZE);
+	oldcontext = MemoryContextSwitchTo(context);
+
+	/* Call each event trigger. */
+	foreach (lc, fn_oid_list)
+	{
+		Oid		fnoid = lfirst_oid(lc);
+		FmgrInfo        flinfo;
+		FunctionCallInfoData fcinfo;
+		PgStat_FunctionCallUsage fcusage;
+
+		/* Look up the function */
+		fmgr_info(fnoid, &flinfo);
+
+		/* Call the function, passing no arguments but setting a context. */
+		InitFunctionCallInfoData(fcinfo, &flinfo, 0,
+								 InvalidOid, (Node *) trigdata, NULL);
+		pgstat_init_function_usage(&fcinfo, &fcusage);
+		FunctionCallInvoke(&fcinfo);
+		pgstat_end_function_usage(&fcusage, true);
+
+		/* Reclaim memory. */
+		MemoryContextReset(context);
+
+		/*
+		 * We want each event trigger to be able to see the results of
+		 * the previous event trigger's action, and we want the main
+		 * command to be able to see the results of all event triggers.
+		 */
+		CommandCounterIncrement();
+	}
+
+	/* Restore old memory context and delete the temporary one. */
+	MemoryContextSwitchTo(oldcontext);
+	MemoryContextDelete(context);
+}
+
+/*
+ * Do event triggers support this object type?
+ */
+bool
+EventTriggerSupportsObjectType(ObjectType obtype)
+{
+	switch (obtype)
+	{
+		case OBJECT_DATABASE:
+		case OBJECT_TABLESPACE:
+		case OBJECT_ROLE:
+			/* no support for global objects */
+			return false;
+		case OBJECT_EVENT_TRIGGER:
+			/* no support for event triggers on event triggers */
+			return false;
+		default:
+			break;
+	}
+	return true;
 }

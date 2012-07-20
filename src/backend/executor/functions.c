@@ -783,9 +783,9 @@ postquel_getnext(execution_state *es, SQLFunctionCachePtr fcache)
 						es->qd->utilitystmt),
 					   fcache->src,
 					   es->qd->params,
-					   false,	/* not top level */
 					   es->qd->dest,
-					   NULL);
+					   NULL,
+					   PROCESS_UTILITY_QUERY);
 		result = true;			/* never stops early */
 	}
 	else

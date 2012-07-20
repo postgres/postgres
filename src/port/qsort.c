@@ -193,3 +193,12 @@ loop:SWAPINIT(a, es);
 	}
 /*		qsort(pn - r, r / es, es, cmp);*/
 }
+
+/*
+ * qsort wrapper for strcmp.
+ */
+int
+pg_qsort_strcmp(const void *a, const void *b)
+{
+	return strcmp(*(char *const *) a, *(char *const *) b);
+}

@@ -59,12 +59,6 @@ get_tsearch_config_filename(const char *basename,
 	return result;
 }
 
-static int
-comparestr(const void *a, const void *b)
-{
-	return strcmp(*(char *const *) a, *(char *const *) b);
-}
-
 /*
  * Reads a stop-word file. Each word is run through 'wordop'
  * function, if given.	wordop may either modify the input in-place,
@@ -140,7 +134,7 @@ readstoplist(const char *fname, StopList *s, char *(*wordop) (const char *))
 
 	/* Sort to allow binary searching */
 	if (s->stop && s->len > 0)
-		qsort(s->stop, s->len, sizeof(char *), comparestr);
+		qsort(s->stop, s->len, sizeof(char *), pg_qsort_strcmp);
 }
 
 bool
@@ -148,5 +142,5 @@ searchstoplist(StopList *s, char *key)
 {
 	return (s->stop && s->len > 0 &&
 			bsearch(&key, s->stop, s->len,
-					sizeof(char *), comparestr)) ? true : false;
+					sizeof(char *), pg_qsort_strcmp)) ? true : false;
 }

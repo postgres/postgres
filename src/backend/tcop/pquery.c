@@ -1186,9 +1186,10 @@ PortalRunUtility(Portal portal, Node *utilityStmt, bool isTopLevel,
 	ProcessUtility(utilityStmt,
 				   portal->sourceText,
 				   portal->portalParams,
-				   isTopLevel,
 				   dest,
-				   completionTag);
+				   completionTag,
+				   isTopLevel ?
+					PROCESS_UTILITY_TOPLEVEL : PROCESS_UTILITY_QUERY);
 
 	/* Some utility statements may change context on us */
 	MemoryContextSwitchTo(PortalGetHeapMemory(portal));

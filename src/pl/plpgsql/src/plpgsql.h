@@ -19,6 +19,7 @@
 #include "postgres.h"
 
 #include "access/xact.h"
+#include "commands/event_trigger.h"
 #include "commands/trigger.h"
 #include "executor/spi.h"
 
@@ -675,6 +676,12 @@ typedef struct PLpgSQL_func_hashkey
 	Oid			argtypes[FUNC_MAX_ARGS];
 } PLpgSQL_func_hashkey;
 
+typedef enum PLpgSQL_trigtype
+{
+	PLPGSQL_DML_TRIGGER,
+	PLPGSQL_EVENT_TRIGGER,
+	PLPGSQL_NOT_TRIGGER
+} PLpgSQL_trigtype;
 
 typedef struct PLpgSQL_function
 {								/* Complete compiled function	  */
@@ -682,7 +689,7 @@ typedef struct PLpgSQL_function
 	Oid			fn_oid;
 	TransactionId fn_xmin;
 	ItemPointerData fn_tid;
-	bool		fn_is_trigger;
+	PLpgSQL_trigtype fn_is_trigger;
 	Oid			fn_input_collation;
 	PLpgSQL_func_hashkey *fn_hashkey;	/* back-link to hashtable key */
 	MemoryContext fn_cxt;
@@ -712,6 +719,10 @@ typedef struct PLpgSQL_function
 	int			tg_table_schema_varno;
 	int			tg_nargs_varno;
 	int			tg_argv_varno;
+
+	/* for event triggers */
+	int			tg_event_varno;
+	int			tg_tag_varno;
 
 	PLpgSQL_resolve_option resolve_option;
 
@@ -920,6 +931,8 @@ extern Datum plpgsql_exec_function(PLpgSQL_function *func,
 					  FunctionCallInfo fcinfo);
 extern HeapTuple plpgsql_exec_trigger(PLpgSQL_function *func,
 					 TriggerData *trigdata);
+extern void plpgsql_exec_event_trigger(PLpgSQL_function *func,
+					 EventTriggerData *trigdata);
 extern void plpgsql_xact_cb(XactEvent event, void *arg);
 extern void plpgsql_subxact_cb(SubXactEvent event, SubTransactionId mySubid,
 				   SubTransactionId parentSubid, void *arg);

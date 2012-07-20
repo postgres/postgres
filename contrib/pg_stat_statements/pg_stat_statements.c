@@ -240,8 +240,9 @@ static void pgss_ExecutorRun(QueryDesc *queryDesc,
 static void pgss_ExecutorFinish(QueryDesc *queryDesc);
 static void pgss_ExecutorEnd(QueryDesc *queryDesc);
 static void pgss_ProcessUtility(Node *parsetree,
-			  const char *queryString, ParamListInfo params, bool isTopLevel,
-					DestReceiver *dest, char *completionTag);
+			  const char *queryString, ParamListInfo params,
+					DestReceiver *dest, char *completionTag,
+					ProcessUtilityContext context);
 static uint32 pgss_hash_fn(const void *key, Size keysize);
 static int	pgss_match_fn(const void *key1, const void *key2, Size keysize);
 static uint32 pgss_hash_string(const char *str);
@@ -785,8 +786,8 @@ pgss_ExecutorEnd(QueryDesc *queryDesc)
  */
 static void
 pgss_ProcessUtility(Node *parsetree, const char *queryString,
-					ParamListInfo params, bool isTopLevel,
-					DestReceiver *dest, char *completionTag)
+					ParamListInfo params, DestReceiver *dest,
+					char *completionTag, ProcessUtilityContext context)
 {
 	/*
 	 * If it's an EXECUTE statement, we don't track it and don't increment the
@@ -819,10 +820,10 @@ pgss_ProcessUtility(Node *parsetree, const char *queryString,
 		{
 			if (prev_ProcessUtility)
 				prev_ProcessUtility(parsetree, queryString, params,
-									isTopLevel, dest, completionTag);
+									dest, completionTag, context);
 			else
 				standard_ProcessUtility(parsetree, queryString, params,
-										isTopLevel, dest, completionTag);
+										dest, completionTag, context);
 			nested_level--;
 		}
 		PG_CATCH();
@@ -880,10 +881,10 @@ pgss_ProcessUtility(Node *parsetree, const char *queryString,
 	{
 		if (prev_ProcessUtility)
 			prev_ProcessUtility(parsetree, queryString, params,
-								isTopLevel, dest, completionTag);
+								dest, completionTag, context);
 		else
 			standard_ProcessUtility(parsetree, queryString, params,
-									isTopLevel, dest, completionTag);
+									dest, completionTag, context);
 	}
 }
 

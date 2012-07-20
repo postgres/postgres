@@ -3377,7 +3377,10 @@ RAISE unique_violation USING MESSAGE = 'Duplicate user ID: ' || user_id;
    <secondary>in PL/pgSQL</secondary>
   </indexterm>
 
-  <para>
+  <sect2 id="plpgsql-dml-trigger">
+   <title>Triggers on data changes</title>
+
+   <para>
     <application>PL/pgSQL</application> can be used to define trigger
     procedures. A trigger procedure is created with the
     <command>CREATE FUNCTION</> command, declaring it as a function with
@@ -3924,6 +3927,70 @@ UPDATE sales_fact SET units_sold = units_sold * 2;
 SELECT * FROM sales_summary_bytime;
 </programlisting>
    </example>
+</sect2>
+
+  <sect2 id="plpgsql-event-trigger">
+   <title>Triggers on events</title>
+
+   <para>
+    <application>PL/pgSQL</application> can be used to define event
+    triggers.  <productname>PostgreSQL</> requires that a procedure that
+    is to be called as an event trigger must be declared as a function with
+    no arguments and a return type of <literal>event_trigger</>.
+   </para>
+
+   <para>
+    When a <application>PL/pgSQL</application> function is called as a
+    event trigger, several special variables are created automatically
+    in the top-level block. They are:
+
+   <variablelist>
+    <varlistentry>
+     <term><varname>TG_EVENT</varname></term>
+     <listitem>
+      <para>
+       Data type <type>text</type>; a string representing the event the
+       trigger is fired for.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><varname>TG_TAG</varname></term>
+     <listitem>
+      <para>
+       Data type <type>text</type>; variable that contains the command tag
+       for which the trigger is fired.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+
+   <para>
+    <xref linkend="plpgsql-event-trigger-example"> shows an example of a
+    event trigger procedure in <application>PL/pgSQL</application>.
+   </para>
+
+   <example id="plpgsql-event-trigger-example">
+    <title>A <application>PL/pgSQL</application> Event Trigger Procedure</title>
+
+    <para>
+     This example trigger simply raises a <literal>NOTICE</literal> message
+     each time a supported command is executed.
+    </para>
+
+<programlisting>
+CREATE OR REPLACE FUNCTION snitch() RETURNS event_trigger AS $$
+BEGIN
+    RAISE NOTICE 'snitch: % %', tg_event, tg_tag;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE EVENT TRIGGER snitch ON ddl_command_start EXECUTE PROCEDURE snitch();
+</programlisting>
+   </example>
+  </sect2>
 
   </sect1>
 

@@ -749,9 +749,9 @@ execute_sql_string(const char *sql, const char *filename)
 				ProcessUtility(stmt,
 							   sql,
 							   NULL,
-							   false,	/* not top level */
 							   dest,
-							   NULL);
+							   NULL,
+							   PROCESS_UTILITY_QUERY);
 			}
 
 			PopActiveSnapshot();

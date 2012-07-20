@@ -773,6 +773,99 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 	return rettup;
 }
 
+void
+plpgsql_exec_event_trigger(PLpgSQL_function *func, EventTriggerData *trigdata)
+{
+	PLpgSQL_execstate estate;
+	ErrorContextCallback plerrcontext;
+	int			i;
+	int			rc;
+	PLpgSQL_var *var;
+
+	/*
+	 * Setup the execution state
+	 */
+	plpgsql_estate_setup(&estate, func, NULL);
+
+	/*
+	 * Setup error traceback support for ereport()
+	 */
+	plerrcontext.callback = plpgsql_exec_error_callback;
+	plerrcontext.arg = &estate;
+	plerrcontext.previous = error_context_stack;
+	error_context_stack = &plerrcontext;
+
+	/*
+	 * Make local execution copies of all the datums
+	 */
+	estate.err_text = gettext_noop("during initialization of execution state");
+	for (i = 0; i < estate.ndatums; i++)
+		estate.datums[i] = copy_plpgsql_datum(func->datums[i]);
+
+	/*
+	 * Assign the special tg_ variables
+	 */
+	var = (PLpgSQL_var *) (estate.datums[func->tg_event_varno]);
+	var->value = CStringGetTextDatum(trigdata->event);
+	var->isnull = false;
+	var->freeval = true;
+
+	var = (PLpgSQL_var *) (estate.datums[func->tg_tag_varno]);
+	var->value = CStringGetTextDatum(trigdata->tag);
+	var->isnull = false;
+	var->freeval = true;
+
+	/*
+	 * Let the instrumentation plugin peek at this function
+	 */
+	if (*plugin_ptr && (*plugin_ptr)->func_beg)
+		((*plugin_ptr)->func_beg) (&estate, func);
+
+	/*
+	 * Now call the toplevel block of statements
+	 */
+	estate.err_text = NULL;
+	estate.err_stmt = (PLpgSQL_stmt *) (func->action);
+	rc = exec_stmt_block(&estate, func->action);
+	if (rc != PLPGSQL_RC_RETURN)
+	{
+		estate.err_stmt = NULL;
+		estate.err_text = NULL;
+
+		/*
+		 * Provide a more helpful message if a CONTINUE or RAISE has been used
+		 * outside the context it can work in.
+		 */
+		if (rc == PLPGSQL_RC_CONTINUE)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("CONTINUE cannot be used outside a loop")));
+		else
+			ereport(ERROR,
+			   (errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
+				errmsg("control reached end of trigger procedure without RETURN")));
+	}
+
+	estate.err_stmt = NULL;
+	estate.err_text = gettext_noop("during function exit");
+
+	/*
+	 * Let the instrumentation plugin peek at this function
+	 */
+	if (*plugin_ptr && (*plugin_ptr)->func_end)
+		((*plugin_ptr)->func_end) (&estate, func);
+
+	/* Clean up any leftover temporary memory */
+	plpgsql_destroy_econtext(&estate);
+	exec_eval_cleanup(&estate);
+
+	/*
+	 * Pop the error context stack
+	 */
+	error_context_stack = plerrcontext.previous;
+
+	return;
+}
 
 /*
  * error context callback to let us supply a call-stack traceback

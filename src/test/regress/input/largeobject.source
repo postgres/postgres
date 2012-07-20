@@ -12,6 +12,21 @@ CREATE TABLE lotest_stash_values (loid oid, fd integer);
 -- returns the large object id
 INSERT INTO lotest_stash_values (loid) SELECT lo_creat(42);
 
+-- Test ALTER LARGE OBJECT
+CREATE ROLE regresslo;
+DO $$
+  BEGIN
+    EXECUTE 'ALTER LARGE OBJECT ' || (select loid from lotest_stash_values)
+		|| ' OWNER TO regresslo';
+  END
+$$;
+SELECT
+	rol.rolname
+FROM
+	lotest_stash_values s
+	JOIN pg_largeobject_metadata lo ON s.loid = lo.oid
+	JOIN pg_authid rol ON lo.lomowner = rol.oid;
+
 -- NOTE: large objects require transactions
 BEGIN;
 
@@ -163,3 +178,4 @@ SELECT lo_unlink(loid) FROM lotest_stash_values;
 \lo_unlink :newloid
 
 TRUNCATE lotest_stash_values;
+DROP ROLE regresslo;

@@ -1026,7 +1026,7 @@ ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid)
 		/* ... and execute it */
 		ProcessUtility((Node *) atstmt,
 					   "(generated ALTER TABLE ADD FOREIGN KEY command)",
-					   NULL, false, None_Receiver, NULL);
+					   NULL, None_Receiver, NULL, PROCESS_UTILITY_GENERATED);
 
 		/* Remove the matched item from the list */
 		info_list = list_delete_ptr(info_list, info);
