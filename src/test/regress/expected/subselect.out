@@ -505,6 +505,31 @@ select (select (a.*)::text) from view_a a;
 (1 row)
 
 --
+-- Check that whole-row Vars reading the result of a subselect don't include
+-- any junk columns therein
+--
+select q from (select max(f1) from int4_tbl group by f1 order by f1) q;
+       q       
+---------------
+ (-2147483647)
+ (-123456)
+ (0)
+ (123456)
+ (2147483647)
+(5 rows)
+
+with q as (select max(f1) from int4_tbl group by f1 order by f1)
+  select q from q;
+       q       
+---------------
+ (-2147483647)
+ (-123456)
+ (0)
+ (123456)
+ (2147483647)
+(5 rows)
+
+--
 -- Test case for sublinks pushed down into subselects via join alias expansion
 --
 select

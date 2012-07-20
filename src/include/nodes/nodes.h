@@ -180,6 +180,7 @@ typedef enum NodeTag
 	 */
 	T_ExprState = 400,
 	T_GenericExprState,
+	T_WholeRowVarExprState,
 	T_AggrefExprState,
 	T_WindowFuncExprState,
 	T_ArrayRefExprState,
