@@ -1154,7 +1154,7 @@ index_constraint_create(Relation heapRelation,
 								   NULL,
 								   true,		/* islocal */
 								   0,	/* inhcount */
-								   false);		/* noinherit */
+								   true);		/* noinherit */
 
 	/*
 	 * Register the index as internally dependent on the constraint.

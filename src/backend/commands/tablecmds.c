@@ -6039,7 +6039,7 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 									  NULL,
 									  true,		/* islocal */
 									  0,		/* inhcount */
-									  false);	/* isnoinherit */
+									  true);	/* isnoinherit */
 
 	/*
 	 * Create the triggers that will enforce the constraint.

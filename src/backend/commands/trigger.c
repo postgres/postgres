@@ -459,7 +459,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 											  NULL,
 											  true,		/* islocal */
 											  0,		/* inhcount */
-											  false);	/* isnoinherit */
+											  true);	/* isnoinherit */
 	}
 
 	/*
