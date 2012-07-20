@@ -75,6 +75,13 @@ maintainer-clean: distclean
 installcheck: all
 	./pg_isolation_regress --psqldir='$(PSQLDIR)' --inputdir=$(srcdir) --schedule=$(srcdir)/isolation_schedule
 
+# Version of the install check test that includes the prepared_transactions test
+# It only makes sense to run this if set up to use prepared transactions,
+# via the postgresql.conf.
+installcheck-prepared-txns: all
+	./pg_isolation_regress --psqldir='$(PSQLDIR)' --inputdir=$(srcdir) --schedule=$(srcdir)/isolation_schedule prepared-transactions
+
+
 # We can't support "make check" because isolationtester requires libpq, and
 # in fact (on typical platforms using shared libraries) requires libpq to
 # already be installed.  You could run "make install" and then run a check
