@@ -325,6 +325,15 @@ select (select (select view_a)) from view_a;
 select (select (a.*)::text) from view_a a;
 
 --
+-- Check that whole-row Vars reading the result of a subselect don't include
+-- any junk columns therein
+--
+
+select q from (select max(f1) from int4_tbl group by f1 order by f1) q;
+with q as (select max(f1) from int4_tbl group by f1 order by f1)
+  select q from q;
+
+--
 -- Test case for sublinks pushed down into subselects via join alias expansion
 --
 
