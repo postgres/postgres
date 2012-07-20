@@ -203,6 +203,7 @@ typedef enum NodeTag
 	T_NullTestState,
 	T_CoerceToDomainState,
 	T_DomainConstraintState,
+	T_WholeRowVarExprState,		/* will be in a more natural position in 9.3 */
 
 	/*
 	 * TAGS FOR PLANNER NODES (relation.h)
