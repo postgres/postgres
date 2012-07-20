@@ -575,7 +575,7 @@ ExecBuildProjectionInfo(List *targetList,
 	 * Determine whether the target list consists entirely of simple Var
 	 * references (ie, references to non-system attributes) that match the
 	 * input.  If so, we can use the simpler ExecVariableList instead of
-	 * ExecTargetList.	(Note: if there is a type mismatch then ExecEvalVar
+	 * ExecTargetList.	(Note: if there is a type mismatch then ExecEvalScalarVar
 	 * will probably throw an error at runtime, but we leave that to it.)
 	 */
 	isVarList = true;
