@@ -280,6 +280,8 @@ plpgsql_validator(PG_FUNCTION_ARGS)
 		FunctionCallInfoData fake_fcinfo;
 		FmgrInfo	flinfo;
 		int			rc;
+		TriggerData trigdata;
+		EventTriggerData etrigdata;
 
 		/*
 		 * Connect to SPI manager (is this needed for compilation?)
@@ -298,17 +300,15 @@ plpgsql_validator(PG_FUNCTION_ARGS)
 		flinfo.fn_mcxt = CurrentMemoryContext;
 		if (is_dml_trigger)
 		{
-			TriggerData trigdata;
 			MemSet(&trigdata, 0, sizeof(trigdata));
 			trigdata.type = T_TriggerData;
 			fake_fcinfo.context = (Node *) &trigdata;
 		}
 		else if (is_event_trigger)
 		{
-			EventTriggerData trigdata;
-			MemSet(&trigdata, 0, sizeof(trigdata));
-			trigdata.type = T_EventTriggerData;
-			fake_fcinfo.context = (Node *) &trigdata;
+			MemSet(&etrigdata, 0, sizeof(etrigdata));
+			etrigdata.type = T_EventTriggerData;
+			fake_fcinfo.context = (Node *) &etrigdata;
 		}
 
 		/* Test-compile the function */
