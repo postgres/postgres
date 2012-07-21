@@ -30,6 +30,7 @@
 #include "optimizer/placeholder.h"
 #include "optimizer/plancat.h"
 #include "optimizer/planmain.h"
+#include "optimizer/planner.h"
 #include "optimizer/predtest.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/subselect.h"
@@ -4126,8 +4127,8 @@ make_agg(PlannerInfo *root, List *tlist, List *qual,
 	 * anything for Aggref nodes; this is okay since they are really
 	 * comparable to Vars.
 	 *
-	 * See notes in grouping_planner about why only make_agg, make_windowagg
-	 * and make_group worry about tlist eval cost.
+	 * See notes in add_tlist_costs_to_plan about why only make_agg,
+	 * make_windowagg and make_group worry about tlist eval cost.
 	 */
 	if (qual)
 	{
@@ -4136,10 +4137,7 @@ make_agg(PlannerInfo *root, List *tlist, List *qual,
 		plan->total_cost += qual_cost.startup;
 		plan->total_cost += qual_cost.per_tuple * plan->plan_rows;
 	}
-	cost_qual_eval(&qual_cost, tlist, root);
-	plan->startup_cost += qual_cost.startup;
-	plan->total_cost += qual_cost.startup;
-	plan->total_cost += qual_cost.per_tuple * plan->plan_rows;
+	add_tlist_costs_to_plan(root, plan, tlist);
 
 	plan->qual = qual;
 	plan->targetlist = tlist;
@@ -4160,7 +4158,6 @@ make_windowagg(PlannerInfo *root, List *tlist,
 	WindowAgg  *node = makeNode(WindowAgg);
 	Plan	   *plan = &node->plan;
 	Path		windowagg_path; /* dummy for result of cost_windowagg */
-	QualCost	qual_cost;
 
 	node->winref = winref;
 	node->partNumCols = partNumCols;
@@ -4185,13 +4182,10 @@ make_windowagg(PlannerInfo *root, List *tlist,
 	/*
 	 * We also need to account for the cost of evaluation of the tlist.
 	 *
-	 * See notes in grouping_planner about why only make_agg, make_windowagg
-	 * and make_group worry about tlist eval cost.
+	 * See notes in add_tlist_costs_to_plan about why only make_agg,
+	 * make_windowagg and make_group worry about tlist eval cost.
 	 */
-	cost_qual_eval(&qual_cost, tlist, root);
-	plan->startup_cost += qual_cost.startup;
-	plan->total_cost += qual_cost.startup;
-	plan->total_cost += qual_cost.per_tuple * plan->plan_rows;
+	add_tlist_costs_to_plan(root, plan, tlist);
 
 	plan->targetlist = tlist;
 	plan->lefttree = lefttree;
@@ -4242,8 +4236,8 @@ make_group(PlannerInfo *root,
 	 * lower plan level and will only be copied by the Group node. Worth
 	 * fixing?
 	 *
-	 * See notes in grouping_planner about why only make_agg, make_windowagg
-	 * and make_group worry about tlist eval cost.
+	 * See notes in add_tlist_costs_to_plan about why only make_agg,
+	 * make_windowagg and make_group worry about tlist eval cost.
 	 */
 	if (qual)
 	{
@@ -4252,10 +4246,7 @@ make_group(PlannerInfo *root,
 		plan->total_cost += qual_cost.startup;
 		plan->total_cost += qual_cost.per_tuple * plan->plan_rows;
 	}
-	cost_qual_eval(&qual_cost, tlist, root);
-	plan->startup_cost += qual_cost.startup;
-	plan->total_cost += qual_cost.startup;
-	plan->total_cost += qual_cost.per_tuple * plan->plan_rows;
+	add_tlist_costs_to_plan(root, plan, tlist);
 
 	plan->qual = qual;
 	plan->targetlist = tlist;

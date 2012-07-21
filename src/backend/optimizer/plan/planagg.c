@@ -36,6 +36,7 @@
 #include "optimizer/cost.h"
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
+#include "optimizer/planner.h"
 #include "optimizer/subselect.h"
 #include "parser/parsetree.h"
 #include "parser/parse_clause.h"
@@ -205,7 +206,6 @@ optimize_minmax_aggregates(PlannerInfo *root, List *tlist,
 	Path		agg_p;
 	Plan	   *plan;
 	Node	   *hqual;
-	QualCost	tlist_cost;
 	ListCell   *lc;
 
 	/* Nothing to do if preprocess_minmax_aggs rejected the query */
@@ -272,9 +272,7 @@ optimize_minmax_aggregates(PlannerInfo *root, List *tlist,
 	plan = (Plan *) make_result(root, tlist, hqual, NULL);
 
 	/* Account for evaluation cost of the tlist (make_result did the rest) */
-	cost_qual_eval(&tlist_cost, tlist, root);
-	plan->startup_cost += tlist_cost.startup;
-	plan->total_cost += tlist_cost.startup + tlist_cost.per_tuple;
+	add_tlist_costs_to_plan(root, plan, tlist);
 
 	return plan;
 }
