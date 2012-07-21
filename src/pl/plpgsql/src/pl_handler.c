@@ -91,7 +91,7 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 {
 	PLpgSQL_function *func;
 	PLpgSQL_execstate *save_cur_estate;
-	Datum		retval = 0;		/* make compiler happy */
+	Datum		retval;
 	int			rc;
 
 	/*
@@ -119,8 +119,11 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 			retval = PointerGetDatum(plpgsql_exec_trigger(func,
 										   (TriggerData *) fcinfo->context));
 		else if (CALLED_AS_EVENT_TRIGGER(fcinfo))
+		{
 			plpgsql_exec_event_trigger(func,
 									   (EventTriggerData *) fcinfo->context);
+			retval = (Datum) 0;
+		}
 		else
 			retval = plpgsql_exec_function(func, fcinfo);
 	}
