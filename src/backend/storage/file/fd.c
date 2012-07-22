@@ -337,18 +337,22 @@ pg_fdatasync(int fd)
  * pg_flush_data --- advise OS that the data described won't be needed soon
  *
  * Not all platforms have sync_file_range or posix_fadvise; treat as no-op
- * if not available.
+ * if not available.  Also, treat as no-op if enableFsync is off; this is
+ * because the call isn't free, and some platforms such as Linux will actually
+ * block the requestor until the write is scheduled.
  */
 int
 pg_flush_data(int fd, off_t offset, off_t amount)
 {
+	if (enableFsync)
+	{
 #if defined(HAVE_SYNC_FILE_RANGE)
-	return sync_file_range(fd, offset, amount, SYNC_FILE_RANGE_WRITE);
+		return sync_file_range(fd, offset, amount, SYNC_FILE_RANGE_WRITE);
 #elif defined(USE_POSIX_FADVISE) && defined(POSIX_FADV_DONTNEED)
-	return posix_fadvise(fd, offset, amount, POSIX_FADV_DONTNEED);
-#else
-	return 0;
+		return posix_fadvise(fd, offset, amount, POSIX_FADV_DONTNEED);
 #endif
+	}
+	return 0;
 }
 
 

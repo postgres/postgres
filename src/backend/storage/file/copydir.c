@@ -98,7 +98,11 @@ copydir(char *fromdir, char *todir, bool recurse)
 
 	/*
 	 * Be paranoid here and fsync all files to ensure the copy is really done.
+	 * But if fsync is disabled, we're done.
 	 */
+	if (!enableFsync)
+		return;
+
 	xldir = AllocateDir(todir);
 	if (xldir == NULL)
 		ereport(ERROR,
@@ -200,9 +204,9 @@ copy_file(char *fromfile, char *tofile)
 		/*
 		 * We fsync the files later but first flush them to avoid spamming the
 		 * cache and hopefully get the kernel to start writing them out before
-		 * the fsync comes.
+		 * the fsync comes.  Ignore any error, since it's only a hint.
 		 */
-		pg_flush_data(dstfd, offset, nbytes);
+		(void) pg_flush_data(dstfd, offset, nbytes);
 	}
 
 	if (close(dstfd))
