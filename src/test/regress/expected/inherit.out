@@ -1007,40 +1007,40 @@ Has OIDs: no
 
 DROP TABLE test_constraints_inh;
 DROP TABLE test_constraints;
-CREATE TABLE circles (
+CREATE TABLE test_ex_constraints (
     c circle,
     EXCLUDE USING gist (c WITH &&)
 );
-CREATE TABLE circles_inh () INHERITS (circles);
-\d+ circles
-                       Table "public.circles"
+CREATE TABLE test_ex_constraints_inh () INHERITS (test_ex_constraints);
+\d+ test_ex_constraints
+                 Table "public.test_ex_constraints"
  Column |  Type  | Modifiers | Storage | Stats target | Description 
 --------+--------+-----------+---------+--------------+-------------
  c      | circle |           | plain   |              | 
 Indexes:
-    "circles_c_excl" EXCLUDE USING gist (c WITH &&)
-Child tables: circles_inh
+    "test_ex_constraints_c_excl" EXCLUDE USING gist (c WITH &&)
+Child tables: test_ex_constraints_inh
 Has OIDs: no
 
-ALTER TABLE circles DROP CONSTRAINT circles_c_excl;
-\d+ circles
-                       Table "public.circles"
+ALTER TABLE test_ex_constraints DROP CONSTRAINT test_ex_constraints_c_excl;
+\d+ test_ex_constraints
+                 Table "public.test_ex_constraints"
  Column |  Type  | Modifiers | Storage | Stats target | Description 
 --------+--------+-----------+---------+--------------+-------------
  c      | circle |           | plain   |              | 
-Child tables: circles_inh
+Child tables: test_ex_constraints_inh
 Has OIDs: no
 
-\d+ circles_inh
-                     Table "public.circles_inh"
+\d+ test_ex_constraints_inh
+               Table "public.test_ex_constraints_inh"
  Column |  Type  | Modifiers | Storage | Stats target | Description 
 --------+--------+-----------+---------+--------------+-------------
  c      | circle |           | plain   |              | 
-Inherits: circles
+Inherits: test_ex_constraints
 Has OIDs: no
 
-DROP TABLE circles_inh;
-DROP TABLE circles;
+DROP TABLE test_ex_constraints_inh;
+DROP TABLE test_ex_constraints;
 -- Test non-inheritable foreign key contraints
 CREATE TABLE test_primary_constraints(id int PRIMARY KEY);
 CREATE TABLE test_foreign_constraints(id1 int REFERENCES test_primary_constraints(id));

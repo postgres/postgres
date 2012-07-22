@@ -302,17 +302,17 @@ ALTER TABLE ONLY test_constraints DROP CONSTRAINT test_constraints_val1_val2_key
 DROP TABLE test_constraints_inh;
 DROP TABLE test_constraints;
 
-CREATE TABLE circles (
+CREATE TABLE test_ex_constraints (
     c circle,
     EXCLUDE USING gist (c WITH &&)
 );
-CREATE TABLE circles_inh () INHERITS (circles);
-\d+ circles
-ALTER TABLE circles DROP CONSTRAINT circles_c_excl;
-\d+ circles
-\d+ circles_inh
-DROP TABLE circles_inh;
-DROP TABLE circles;
+CREATE TABLE test_ex_constraints_inh () INHERITS (test_ex_constraints);
+\d+ test_ex_constraints
+ALTER TABLE test_ex_constraints DROP CONSTRAINT test_ex_constraints_c_excl;
+\d+ test_ex_constraints
+\d+ test_ex_constraints_inh
+DROP TABLE test_ex_constraints_inh;
+DROP TABLE test_ex_constraints;
 
 -- Test non-inheritable foreign key contraints
 CREATE TABLE test_primary_constraints(id int PRIMARY KEY);
