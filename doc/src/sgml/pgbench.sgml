@@ -158,6 +158,15 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
+      <term><option>-n</option></term>
+      <listitem>
+       <para>
+        Perform no vacuuming after initialization.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-F</option> <replaceable>fillfactor</></term>
       <listitem>
        <para>

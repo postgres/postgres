@@ -345,6 +345,7 @@ usage(void)
 		   "  %s [OPTION]... [DBNAME]\n"
 		   "\nInitialization options:\n"
 		   "  -i           invokes initialization mode\n"
+		   "  -n           do not run VACUUM after initialization\n"
 		   "  -F NUM       fill factor\n"
 		   "  -s NUM       scaling factor\n"
 		   "  --foreign-keys\n"
@@ -1282,7 +1283,7 @@ disconnect_all(CState *state, int length)
 
 /* create tables and setup data */
 static void
-init(void)
+init(bool is_no_vacuum)
 {
 	/*
 	 * Note: TPC-B requires at least 100 bytes per row, and the "filler"
@@ -1433,6 +1434,16 @@ init(void)
 	}
 	executeStatement(con, "commit");
 
+	/* vacuum */
+	if (!is_no_vacuum)
+	{
+		fprintf(stderr, "vacuum...\n");
+		executeStatement(con, "vacuum analyze pgbench_branches");
+		executeStatement(con, "vacuum analyze pgbench_tellers");
+		executeStatement(con, "vacuum analyze pgbench_accounts");
+		executeStatement(con, "vacuum analyze pgbench_history");
+	}
+
 	/*
 	 * create indexes
 	 */
@@ -1469,12 +1480,6 @@ init(void)
 		}
 	}
 
-	/* vacuum */
-	fprintf(stderr, "vacuum...");
-	executeStatement(con, "vacuum analyze pgbench_branches");
-	executeStatement(con, "vacuum analyze pgbench_tellers");
-	executeStatement(con, "vacuum analyze pgbench_accounts");
-	executeStatement(con, "vacuum analyze pgbench_history");
 
 	fprintf(stderr, "done.\n");
 	PQfinish(con);
@@ -2139,7 +2144,7 @@ main(int argc, char **argv)
 
 	if (is_init_mode)
 	{
-		init();
+		init(is_no_vacuum);
 		exit(0);
 	}
 
