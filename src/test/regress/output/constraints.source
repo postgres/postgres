@@ -231,7 +231,7 @@ DROP TABLE INSERT_CHILD;
 -- Check NO INHERIT type of constraints and inheritance
 --
 CREATE TABLE ATACC1 (TEST INT
-	CHECK NO INHERIT (TEST > 0));
+	CHECK (TEST > 0) NO INHERIT);
 CREATE TABLE ATACC2 (TEST2 INT) INHERITS (ATACC1);
 -- check constraint is not there on child
 INSERT INTO ATACC2 (TEST) VALUES (-3);
@@ -242,7 +242,7 @@ DETAIL:  Failing row contains (-3).
 DROP TABLE ATACC1 CASCADE;
 NOTICE:  drop cascades to table atacc2
 CREATE TABLE ATACC1 (TEST INT, TEST2 INT
-	CHECK (TEST > 0), CHECK NO INHERIT (TEST2 > 10));
+	CHECK (TEST > 0), CHECK (TEST2 > 10) NO INHERIT);
 CREATE TABLE ATACC2 () INHERITS (ATACC1);
 -- check constraint is there on child
 INSERT INTO ATACC2 (TEST) VALUES (-3);

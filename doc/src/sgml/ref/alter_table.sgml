@@ -495,7 +495,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
      <para>
       There must also be matching child-table constraints for all
       <literal>CHECK</literal> constraints of the parent, except those
-      marked non-inheritable (that is, created with <literal>ALTER TABLE ONLY</literal>)
+      marked non-inheritable (that is, created with <literal>ALTER TABLE ... ADD CONSTRAINT ... NO INHERIT</literal>)
       in the parent, which are ignored; all child-table constraints matched
       must not be marked non-inheritable.
       Currently
@@ -1013,7 +1013,7 @@ ALTER TABLE distributors ADD CONSTRAINT zipchk CHECK (char_length(zipcode) = 5);
   <para>
    To add a check constraint only to a table and not to its children:
 <programlisting>
-ALTER TABLE distributors ADD CONSTRAINT zipchk CHECK NO INHERIT (char_length(zipcode) = 5);
+ALTER TABLE distributors ADD CONSTRAINT zipchk CHECK (char_length(zipcode) = 5) NO INHERIT;
 </programlisting>
    (The check constraint will not be inherited by future children, either.)
   </para>
