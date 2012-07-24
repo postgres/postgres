@@ -1271,7 +1271,7 @@
       <listitem>
        <para>
         Allow <literal>CHECK</> constraints to be declared <literal>NO
-        INHERIT</> (Nikhil Sontakke, Alex Hunsaker)
+        INHERIT</> (Nikhil Sontakke, Alex Hunsaker, &Aacute;lvaro Herrera)
        </para>
 
        <para>

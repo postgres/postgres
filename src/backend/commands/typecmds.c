@@ -921,8 +921,14 @@ DefineDomain(CreateDomainStmt *stmt)
 
 				/*
 				 * Check constraints are handled after domain creation, as
-				 * they require the Oid of the domain
+				 * they require the Oid of the domain; at this point we can
+				 * only check that they're not marked NO INHERIT, because
+				 * that would be bogus.
 				 */
+				if (constr->is_no_inherit)
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+							 errmsg("CHECK constraints for domains cannot be marked NO INHERIT")));
 				break;
 
 				/*

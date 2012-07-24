@@ -233,7 +233,7 @@ Check constraints:
     "con1foo" CHECK (a > 0)
 Inherits: constraint_rename_test
 
-ALTER TABLE constraint_rename_test ADD CONSTRAINT con2 CHECK NO INHERIT (b > 0);
+ALTER TABLE constraint_rename_test ADD CONSTRAINT con2 CHECK (b > 0) NO INHERIT;
 ALTER TABLE ONLY constraint_rename_test RENAME CONSTRAINT con2 TO con2foo; -- ok
 ALTER TABLE constraint_rename_test RENAME CONSTRAINT con2foo TO con2bar; -- ok
 \d constraint_rename_test
@@ -245,7 +245,7 @@ Table "public.constraint_rename_test"
  c      | integer | 
 Check constraints:
     "con1foo" CHECK (a > 0)
-    "con2bar" CHECK NO INHERIT (b > 0)
+    "con2bar" CHECK (b > 0) NO INHERIT
 Number of child tables: 1 (Use \d+ to list them.)
 
 \d constraint_rename_test2
@@ -273,7 +273,7 @@ Indexes:
     "con3foo" PRIMARY KEY, btree (a)
 Check constraints:
     "con1foo" CHECK (a > 0)
-    "con2bar" CHECK NO INHERIT (b > 0)
+    "con2bar" CHECK (b > 0) NO INHERIT
 Number of child tables: 1 (Use \d+ to list them.)
 
 \d constraint_rename_test2
@@ -635,7 +635,7 @@ drop table atacc1;
 create table atacc1 (test int);
 create table atacc2 (test2 int) inherits (atacc1);
 -- ok:
-alter table atacc1 add constraint foo check no inherit (test>0);
+alter table atacc1 add constraint foo check (test>0) no inherit;
 -- check constraint is not there on child
 insert into atacc2 (test) values (-3);
 -- check constraint is there on parent
@@ -644,7 +644,7 @@ ERROR:  new row for relation "atacc1" violates check constraint "foo"
 DETAIL:  Failing row contains (-3).
 insert into atacc1 (test) values (3);
 -- fail, violating row:
-alter table atacc2 add constraint foo check no inherit (test>0);
+alter table atacc2 add constraint foo check (test>0) no inherit;
 ERROR:  check constraint "foo" is violated by some row
 drop table atacc2;
 drop table atacc1;

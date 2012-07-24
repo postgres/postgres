@@ -1343,10 +1343,9 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 				 * Note that simply checking for leading '(' and trailing ')'
 				 * would NOT be good enough, consider "(x > 0) AND (y > 0)".
 				 */
-				appendStringInfo(&buf, "CHECK %s(%s)",
-								 conForm->connoinherit ? "NO INHERIT " : "",
-								 consrc);
-
+				appendStringInfo(&buf, "CHECK (%s)%s",
+								 consrc,
+								 conForm->connoinherit ? " NO INHERIT" : "");
 				break;
 			}
 		case CONSTRAINT_TRIGGER:
