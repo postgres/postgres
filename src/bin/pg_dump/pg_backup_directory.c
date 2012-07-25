@@ -58,6 +58,7 @@ typedef struct
 	char	   *filename;		/* filename excluding the directory (basename) */
 } lclTocEntry;
 
+/* translator: this is a module name */
 static const char *modulename = gettext_noop("directory archiver");
 
 /* prototypes for private functions */

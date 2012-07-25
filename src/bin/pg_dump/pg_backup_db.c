@@ -23,6 +23,7 @@
 
 #define DB_MAX_ERR_STMT 128
 
+/* translator: this is a module name */
 static const char *modulename = gettext_noop("archiver (db)");
 
 static void _check_database_version(ArchiveHandle *AH);
