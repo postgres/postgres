@@ -74,6 +74,7 @@ struct CompressorState
 #endif
 };
 
+/* translator: this is a module name */
 static const char *modulename = gettext_noop("compress_io");
 
 static void ParseCompressionOption(int compression, CompressionAlgorithm *alg,

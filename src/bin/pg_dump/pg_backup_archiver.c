@@ -112,6 +112,7 @@ typedef struct _outputContext
 	int			gzOut;
 } OutputContext;
 
+/* translator: this is a module name */
 static const char *modulename = gettext_noop("archiver");
 
 

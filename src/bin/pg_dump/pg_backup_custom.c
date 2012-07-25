@@ -85,6 +85,7 @@ static pgoff_t _getFilePos(ArchiveHandle *AH, lclContext *ctx);
 static size_t _CustomWriteFunc(ArchiveHandle *AH, const char *buf, size_t len);
 static size_t _CustomReadFunc(ArchiveHandle *AH, char **buf, size_t *buflen);
 
+/* translator: this is a module name */
 static const char *modulename = gettext_noop("custom archiver");
 
 
