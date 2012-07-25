@@ -170,7 +170,7 @@ ALTER TABLE foo_seq RENAME TO foo_seq_new;
 SELECT * FROM foo_seq_new;
  sequence_name | last_value | start_value | increment_by |      max_value      | min_value | cache_value | log_cnt | is_cycled | is_called 
 ---------------+------------+-------------+--------------+---------------------+-----------+-------------+---------+-----------+-----------
- foo_seq       |          1 |           1 |            1 | 9223372036854775807 |         1 |           1 |       1 | f         | f
+ foo_seq       |          1 |           1 |            1 | 9223372036854775807 |         1 |           1 |       0 | f         | f
 (1 row)
 
 SELECT nextval('foo_seq_new');
@@ -188,7 +188,7 @@ SELECT nextval('foo_seq_new');
 SELECT * FROM foo_seq_new;
  sequence_name | last_value | start_value | increment_by |      max_value      | min_value | cache_value | log_cnt | is_cycled | is_called 
 ---------------+------------+-------------+--------------+---------------------+-----------+-------------+---------+-----------+-----------
- foo_seq       |          2 |           1 |            1 | 9223372036854775807 |         1 |           1 |      31 | f         | t
+ foo_seq       |          2 |           1 |            1 | 9223372036854775807 |         1 |           1 |      32 | f         | t
 (1 row)
 
 DROP SEQUENCE foo_seq_new;
@@ -234,6 +234,9 @@ DROP SEQUENCE myseq2;
 --
 -- Alter sequence
 --
+ALTER SEQUENCE IF EXISTS sequence_test2 RESTART WITH 24
+	 INCREMENT BY 4 MAXVALUE 36 MINVALUE 5 CYCLE;
+NOTICE:  relation "sequence_test2" does not exist, skipping
 CREATE SEQUENCE sequence_test2 START WITH 32;
 SELECT nextval('sequence_test2');
  nextval 
