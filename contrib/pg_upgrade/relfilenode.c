@@ -133,7 +133,7 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 {
 	char		old_dir[MAXPGPATH];
 	char		file_pattern[MAXPGPATH];
-	struct dirent **namelist = NULL;
+	char		**namelist = NULL;
 	int			numFiles = 0;
 	int			mapnum;
 	int			fileno;
@@ -192,21 +192,21 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 
 			for (fileno = 0; fileno < numFiles; fileno++)
 			{
-				char	   *vm_offset = strstr(namelist[fileno]->d_name, "_vm");
+				char	   *vm_offset = strstr(namelist[fileno], "_vm");
 				bool		is_vm_file = false;
 
 				/* Is a visibility map file? (name ends with _vm) */
 				if (vm_offset && strlen(vm_offset) == strlen("_vm"))
 					is_vm_file = true;
 
-				if (strncmp(namelist[fileno]->d_name, file_pattern,
+				if (strncmp(namelist[fileno], file_pattern,
 							strlen(file_pattern)) == 0 &&
 					(!is_vm_file || !vm_crashsafe_change))
 				{
 					snprintf(old_file, sizeof(old_file), "%s/%s", maps[mapnum].old_dir,
-							 namelist[fileno]->d_name);
+							 namelist[fileno]);
 					snprintf(new_file, sizeof(new_file), "%s/%u%s", maps[mapnum].new_dir,
-							 maps[mapnum].new_relfilenode, strchr(namelist[fileno]->d_name, '_'));
+							 maps[mapnum].new_relfilenode, strchr(namelist[fileno], '_'));
 
 					unlink(new_file);
 					transfer_relfile(pageConverter, old_file, new_file,
@@ -227,13 +227,13 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 
 		for (fileno = 0; fileno < numFiles; fileno++)
 		{
-			if (strncmp(namelist[fileno]->d_name, file_pattern,
+			if (strncmp(namelist[fileno], file_pattern,
 						strlen(file_pattern)) == 0)
 			{
 				snprintf(old_file, sizeof(old_file), "%s/%s", maps[mapnum].old_dir,
-						 namelist[fileno]->d_name);
+						 namelist[fileno]);
 				snprintf(new_file, sizeof(new_file), "%s/%u%s", maps[mapnum].new_dir,
-						 maps[mapnum].new_relfilenode, strchr(namelist[fileno]->d_name, '.'));
+						 maps[mapnum].new_relfilenode, strchr(namelist[fileno], '.'));
 
 				unlink(new_file);
 				transfer_relfile(pageConverter, old_file, new_file,
