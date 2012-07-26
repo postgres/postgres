@@ -905,12 +905,29 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 				!(autovac->vacuumFlags & PROC_VACUUM_FOR_WRAPAROUND))
 			{
 				int			pid = autovac->pid;
+				StringInfoData locktagbuf;
+				StringInfoData logbuf;		/* errdetail for server log */
 
-				elog(DEBUG2, "sending cancel to blocking autovacuum pid = %d",
-					 pid);
+				initStringInfo(&locktagbuf);
+				initStringInfo(&logbuf);
+				DescribeLockTag(&locktagbuf, &lock->tag);
+				appendStringInfo(&logbuf,
+					  _("Process %d waits for %s on %s"),
+						 MyProcPid,
+						 GetLockmodeName(lock->tag.locktag_lockmethodid,
+										 lockmode),
+						 locktagbuf.data);
 
-				/* don't hold the lock across the kill() syscall */
+				/* release lock as quickly as possible */
 				LWLockRelease(ProcArrayLock);
+
+				ereport(LOG,
+						(errmsg("sending cancel to blocking autovacuum PID %d",
+							pid),
+						 errdetail_log("%s", logbuf.data)));
+
+				pfree(logbuf.data);
+				pfree(locktagbuf.data);
 
 				/* send the autovacuum worker Back to Old Kent Road */
 				if (kill(pid, SIGINT) < 0)
