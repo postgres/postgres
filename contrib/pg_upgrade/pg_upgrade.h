@@ -356,7 +356,7 @@ const char *setupPageConverter(pageCnvCtx **result);
 typedef void *pageCnvCtx;
 #endif
 
-int			load_directory(const char *dirname, struct dirent *** namelist);
+int			load_directory(const char *dirname, char ***namelist);
 const char *copyAndUpdateFile(pageCnvCtx *pageConverter, const char *src,
 				  const char *dst, bool force);
 const char *linkAndUpdateFile(pageCnvCtx *pageConverter, const char *src,

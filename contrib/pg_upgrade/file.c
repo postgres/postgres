@@ -225,23 +225,21 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
  * load_directory()
  *
  * Read all the file names in the specified directory, and return them as
- * an array of "struct dirent" pointers.  The array address is returned in
+ * an array of "char *" pointers.  The array address is returned in
  * *namelist, and the function result is the count of file names.
  *
- * To free the result data, free each namelist array member, then free the
+ * To free the result data, free each (char *) array member, then free the
  * namelist array itself.
  */
 int
-load_directory(const char *dirname, struct dirent *** namelist)
+load_directory(const char *dirname, char ***namelist)
 {
 	DIR		   *dirdesc;
 	struct dirent *direntry;
 	int			count = 0;
-	int			allocsize = 64;
-	size_t		entrysize;
+	int			allocsize = 64;		/* initial array size */
 
-	*namelist = (struct dirent **)
-		pg_malloc(allocsize * sizeof(struct dirent *));
+	*namelist = (char **) pg_malloc(allocsize * sizeof(char *));
 
 	if ((dirdesc = opendir(dirname)) == NULL)
 		pg_log(PG_FATAL, "could not open directory \"%s\": %s\n",
@@ -252,18 +250,11 @@ load_directory(const char *dirname, struct dirent *** namelist)
 		if (count >= allocsize)
 		{
 			allocsize *= 2;
-			*namelist = (struct dirent **)
-				pg_realloc(*namelist, allocsize * sizeof(struct dirent *));
+			*namelist = (char **)
+						pg_realloc(*namelist, allocsize * sizeof(char *));
 		}
 
-		entrysize = offsetof(struct dirent, d_name) +
-			strlen(direntry->d_name) + 1;
-
-		(*namelist)[count] = (struct dirent *) pg_malloc(entrysize);
-
-		memcpy((*namelist)[count], direntry, entrysize);
-
-		count++;
+		(*namelist)[count++] = pg_strdup(direntry->d_name);
 	}
 
 #ifdef WIN32
