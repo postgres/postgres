@@ -924,7 +924,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 				ereport(LOG,
 						(errmsg("sending cancel to blocking autovacuum PID %d",
 							pid),
-						 errdetail_log("%s", logbuf.data)));
+						 errdetail("%s", logbuf.data)));
 
 				pfree(logbuf.data);
 				pfree(locktagbuf.data);
