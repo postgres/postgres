@@ -322,7 +322,7 @@ find_other_exec(const char *argv0, const char *target,
 	if (validate_exec(retpath) != 0)
 		return -1;
 
-	snprintf(cmd, sizeof(cmd), "\"%s\" -V 2>%s", retpath, DEVNULL);
+	snprintf(cmd, sizeof(cmd), "\"%s\" -V", retpath);
 
 	if (!pipe_read_line(cmd, line, sizeof(line)))
 		return -1;
@@ -352,12 +352,20 @@ pipe_read_line(char *cmd, char *line, int maxsize)
 	fflush(stdout);
 	fflush(stderr);
 
+	errno = 0;
 	if ((pgver = popen(cmd, "r")) == NULL)
+	{
+		perror("popen failure");
 		return NULL;
+	}
 
+	errno = 0;
 	if (fgets(line, maxsize, pgver) == NULL)
 	{
-		perror("fgets failure");
+		if (feof(pgver))
+			fprintf(stderr, "no data was returned by command \"%s\"\n", cmd);
+		else
+			perror("fgets failure");
 		pclose(pgver);			/* no error checking */
 		return NULL;
 	}
