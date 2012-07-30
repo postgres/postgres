@@ -153,10 +153,8 @@
    drive cannot guarantee the data will be written before shutdown.
    If you use SSDs, be aware that many of these do not honor cache flush
    commands by default.
-   You can test for reliable I/O subsystem behavior using
-   <application>diskchecker.pl</> (<ulink
-   url="http://brad.livejournal.com/2116715.html">description</ulink>, <ulink
-   url="https://gist.github.com/3172656">script</ulink>).
+   You can test for reliable I/O subsystem behavior using <ulink
+   url="http://brad.livejournal.com/2116715.html"><filename>diskchecker.pl</filename></ulink>.
   </para>
 
   <para>
