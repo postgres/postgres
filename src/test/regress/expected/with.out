@@ -1159,6 +1159,57 @@ SELECT * FROM t;
 (55 rows)
 
 --
+-- test WITH attached to intermediate-level set operation
+--
+WITH outermost(x) AS (
+  SELECT 1
+  UNION (WITH innermost as (SELECT 2)
+         SELECT * FROM innermost
+         UNION SELECT 3)
+)
+SELECT * FROM outermost;
+ x 
+---
+ 1
+ 2
+ 3
+(3 rows)
+
+WITH outermost(x) AS (
+  SELECT 1
+  UNION (WITH innermost as (SELECT 2)
+         SELECT * FROM outermost  -- fail
+         UNION SELECT * FROM innermost)
+)
+SELECT * FROM outermost;
+ERROR:  relation "outermost" does not exist
+LINE 4:          SELECT * FROM outermost  
+                               ^
+DETAIL:  There is a WITH item named "outermost", but it cannot be referenced from this part of the query.
+HINT:  Use WITH RECURSIVE, or re-order the WITH items to remove forward references.
+WITH RECURSIVE outermost(x) AS (
+  SELECT 1
+  UNION (WITH innermost as (SELECT 2)
+         SELECT * FROM outermost
+         UNION SELECT * FROM innermost)
+)
+SELECT * FROM outermost;
+ x 
+---
+ 1
+ 2
+(2 rows)
+
+WITH RECURSIVE outermost(x) AS (
+  WITH innermost as (SELECT 2 FROM outermost) -- fail
+    SELECT * FROM innermost
+    UNION SELECT * from outermost
+)
+SELECT * FROM outermost;
+ERROR:  recursive reference to query "outermost" must not appear within a subquery
+LINE 2:   WITH innermost as (SELECT 2 FROM outermost) 
+                                           ^
+--
 -- Data-modifying statements in WITH
 --
 -- INSERT ... RETURNING

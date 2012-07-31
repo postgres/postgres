@@ -705,12 +705,12 @@ parseTypeString(const char *str, Oid *typeid_p, int32 *typmod_p)
 		stmt->groupClause != NIL ||
 		stmt->havingClause != NULL ||
 		stmt->windowClause != NIL ||
-		stmt->withClause != NULL ||
 		stmt->valuesLists != NIL ||
 		stmt->sortClause != NIL ||
 		stmt->limitOffset != NULL ||
 		stmt->limitCount != NULL ||
 		stmt->lockingClause != NIL ||
+		stmt->withClause != NULL ||
 		stmt->op != SETOP_NONE)
 		goto fail;
 	if (list_length(stmt->targetList) != 1)

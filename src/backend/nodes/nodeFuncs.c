@@ -2909,8 +2909,6 @@ raw_expression_tree_walker(Node *node,
 					return true;
 				if (walker(stmt->windowClause, context))
 					return true;
-				if (walker(stmt->withClause, context))
-					return true;
 				if (walker(stmt->valuesLists, context))
 					return true;
 				if (walker(stmt->sortClause, context))
@@ -2920,6 +2918,8 @@ raw_expression_tree_walker(Node *node,
 				if (walker(stmt->limitCount, context))
 					return true;
 				if (walker(stmt->lockingClause, context))
+					return true;
+				if (walker(stmt->withClause, context))
 					return true;
 				if (walker(stmt->larg, context))
 					return true;
