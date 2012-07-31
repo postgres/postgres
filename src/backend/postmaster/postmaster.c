@@ -391,6 +391,7 @@ typedef struct
 	InheritableSocket pgStatSock;
 	pid_t		PostmasterPid;
 	TimestampTz PgStartTime;
+	pg_time_t	first_syslogger_file_time;
 	bool		redirection_done;
 #ifdef WIN32
 	HANDLE		PostmasterHandle;
@@ -4241,7 +4242,7 @@ CreateOptsFile(int argc, char *argv[], char *fullprogname)
 
 /*
  * The following need to be available to the save/restore_backend_variables
- * functions
+ * functions.  They are marked NON_EXEC_STATIC in their home modules.
  */
 extern slock_t *ShmemLock;
 extern LWLock *LWLockArray;
@@ -4249,6 +4250,7 @@ extern slock_t *ProcStructLock;
 extern PROC_HDR *ProcGlobal;
 extern PGPROC *AuxiliaryProcs;
 extern int	pgStatSock;
+extern pg_time_t first_syslogger_file_time;
 
 #ifndef WIN32
 #define write_inheritable_socket(dest, src, childpid) (*(dest) = (src))
@@ -4295,6 +4297,7 @@ save_backend_variables(BackendParameters * param, Port *port,
 
 	param->PostmasterPid = PostmasterPid;
 	param->PgStartTime = PgStartTime;
+	param->first_syslogger_file_time = first_syslogger_file_time;
 
 	param->redirection_done = redirection_done;
 
@@ -4500,6 +4503,7 @@ restore_backend_variables(BackendParameters * param, Port *port)
 
 	PostmasterPid = param->PostmasterPid;
 	PgStartTime = param->PgStartTime;
+	first_syslogger_file_time = param->first_syslogger_file_time;
 
 	redirection_done = param->redirection_done;
 
