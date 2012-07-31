@@ -540,6 +540,41 @@ WITH RECURSIVE t(j) AS (
 SELECT * FROM t;
 
 --
+-- test WITH attached to intermediate-level set operation
+--
+
+WITH outermost(x) AS (
+  SELECT 1
+  UNION (WITH innermost as (SELECT 2)
+         SELECT * FROM innermost
+         UNION SELECT 3)
+)
+SELECT * FROM outermost;
+
+WITH outermost(x) AS (
+  SELECT 1
+  UNION (WITH innermost as (SELECT 2)
+         SELECT * FROM outermost  -- fail
+         UNION SELECT * FROM innermost)
+)
+SELECT * FROM outermost;
+
+WITH RECURSIVE outermost(x) AS (
+  SELECT 1
+  UNION (WITH innermost as (SELECT 2)
+         SELECT * FROM outermost
+         UNION SELECT * FROM innermost)
+)
+SELECT * FROM outermost;
+
+WITH RECURSIVE outermost(x) AS (
+  WITH innermost as (SELECT 2 FROM outermost) -- fail
+    SELECT * FROM innermost
+    UNION SELECT * from outermost
+)
+SELECT * FROM outermost;
+
+--
 -- Data-modifying statements in WITH
 --
 
