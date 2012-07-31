@@ -39,7 +39,7 @@
 #define STREAMING_KEEPALIVE_SIZE (1+sizeof(PrimaryKeepaliveMessage))
 
 /* fd for currently open WAL file */
-static int		walfile = -1;
+static int	walfile = -1;
 
 
 /*
@@ -50,7 +50,8 @@ static int		walfile = -1;
  * The file will be padded to 16Mb with zeroes.
  */
 static int
-open_walfile(XLogRecPtr startpoint, uint32 timeline, char *basedir, char *namebuf)
+open_walfile(XLogRecPtr startpoint, uint32 timeline, char *basedir,
+			 char *namebuf)
 {
 	int			f;
 	char		fn[MAXPGPATH];
@@ -66,7 +67,8 @@ open_walfile(XLogRecPtr startpoint, uint32 timeline, char *basedir, char *namebu
 	f = open(fn, O_WRONLY | O_CREAT | PG_BINARY, S_IRUSR | S_IWUSR);
 	if (f == -1)
 	{
-		fprintf(stderr, _("%s: could not open WAL segment %s: %s\n"),
+		fprintf(stderr,
+				_("%s: could not open transaction log file \"%s\": %s\n"),
 				progname, fn, strerror(errno));
 		return -1;
 	}
@@ -77,7 +79,8 @@ open_walfile(XLogRecPtr startpoint, uint32 timeline, char *basedir, char *namebu
 	 */
 	if (fstat(f, &statbuf) != 0)
 	{
-		fprintf(stderr, _("%s: could not stat WAL segment %s: %s\n"),
+		fprintf(stderr,
+				_("%s: could not stat transaction log file \"%s\": %s\n"),
 				progname, fn, strerror(errno));
 		close(f);
 		return -1;
@@ -86,7 +89,8 @@ open_walfile(XLogRecPtr startpoint, uint32 timeline, char *basedir, char *namebu
 		return f;				/* File is open and ready to use */
 	if (statbuf.st_size != 0)
 	{
-		fprintf(stderr, _("%s: WAL segment %s is %d bytes, should be 0 or %d\n"),
+		fprintf(stderr,
+				_("%s: transaction log file \"%s\" has %d bytes, should be 0 or %d\n"),
 				progname, fn, (int) statbuf.st_size, XLogSegSize);
 		close(f);
 		return -1;
@@ -98,7 +102,8 @@ open_walfile(XLogRecPtr startpoint, uint32 timeline, char *basedir, char *namebu
 	{
 		if (write(f, zerobuf, XLOG_BLCKSZ) != XLOG_BLCKSZ)
 		{
-			fprintf(stderr, _("%s: could not pad WAL segment %s: %s\n"),
+			fprintf(stderr,
+					_("%s: could not pad transaction log file \"%s\": %s\n"),
 					progname, fn, strerror(errno));
 			free(zerobuf);
 			close(f);
@@ -110,7 +115,8 @@ open_walfile(XLogRecPtr startpoint, uint32 timeline, char *basedir, char *namebu
 
 	if (lseek(f, SEEK_SET, 0) != 0)
 	{
-		fprintf(stderr, _("%s: could not seek back to beginning of WAL segment %s: %s\n"),
+		fprintf(stderr,
+				_("%s: could not seek to beginning of transaction log file \"%s\": %s\n"),
 				progname, fn, strerror(errno));
 		close(f);
 		return -1;
@@ -119,7 +125,8 @@ open_walfile(XLogRecPtr startpoint, uint32 timeline, char *basedir, char *namebu
 }
 
 /*
- * Close the current WAL file, and rename it to the correct filename if it's complete.
+ * Close the current WAL file, and rename it to the correct filename if it's
+ * complete.
  *
  * If segment_complete is true, rename the current WAL file even if we've not
  * completed writing the whole segment.
@@ -131,21 +138,22 @@ close_walfile(char *basedir, char *walname, bool segment_complete)
 
 	if (currpos == -1)
 	{
-		fprintf(stderr, _("%s: could not get current position in file %s: %s\n"),
+		fprintf(stderr,
+			 _("%s: could not determine seek position in file \"%s\": %s\n"),
 				progname, walname, strerror(errno));
 		return false;
 	}
 
 	if (fsync(walfile) != 0)
 	{
-		fprintf(stderr, _("%s: could not fsync file %s: %s\n"),
+		fprintf(stderr, _("%s: could not fsync file \"%s\": %s\n"),
 				progname, walname, strerror(errno));
 		return false;
 	}
 
 	if (close(walfile) != 0)
 	{
-		fprintf(stderr, _("%s: could not close file %s: %s\n"),
+		fprintf(stderr, _("%s: could not close file \"%s\": %s\n"),
 				progname, walname, strerror(errno));
 		walfile = -1;
 		return false;
@@ -165,13 +173,14 @@ close_walfile(char *basedir, char *walname, bool segment_complete)
 		snprintf(newfn, sizeof(newfn), "%s/%s", basedir, walname);
 		if (rename(oldfn, newfn) != 0)
 		{
-			fprintf(stderr, _("%s: could not rename file %s: %s\n"),
+			fprintf(stderr, _("%s: could not rename file \"%s\": %s\n"),
 					progname, walname, strerror(errno));
 			return false;
 		}
 	}
 	else
-		fprintf(stderr, _("%s: not renaming %s, segment is not complete.\n"),
+		fprintf(stderr,
+				_("%s: not renaming \"%s\", segment is not complete.\n"),
 				progname, walname);
 
 	return true;
@@ -271,7 +280,10 @@ localTimestampDifferenceExceeds(TimestampTz start_time,
  * Note: The log position *must* be at a log segment start!
  */
 bool
-ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysidentifier, char *basedir, stream_stop_callback stream_stop, int standby_message_timeout, bool rename_partial)
+ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
+				  char *sysidentifier, char *basedir,
+				  stream_stop_callback stream_stop,
+				  int standby_message_timeout, bool rename_partial)
 {
 	char		query[128];
 	char		current_walfile_name[MAXPGPATH];
@@ -286,27 +298,33 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysi
 		res = PQexec(conn, "IDENTIFY_SYSTEM");
 		if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		{
-			fprintf(stderr, _("%s: could not identify system: %s\n"),
-					progname, PQerrorMessage(conn));
+			fprintf(stderr,
+					_("%s: could not send replication command \"%s\": %s"),
+					progname, "IDENTIFY_SYSTEM", PQerrorMessage(conn));
 			PQclear(res);
 			return false;
 		}
 		if (PQnfields(res) != 3 || PQntuples(res) != 1)
 		{
-			fprintf(stderr, _("%s: could not identify system, got %d rows and %d fields\n"),
-					progname, PQntuples(res), PQnfields(res));
+			fprintf(stderr,
+					_("%s: could not identify system: got %d rows and %d fields, expected %d rows and %d fields\n"),
+					progname, PQntuples(res), PQnfields(res), 1, 3);
 			PQclear(res);
 			return false;
 		}
 		if (strcmp(sysidentifier, PQgetvalue(res, 0, 0)) != 0)
 		{
-			fprintf(stderr, _("%s: system identifier does not match between base backup and streaming connection\n"), progname);
+			fprintf(stderr,
+					_("%s: system identifier does not match between base backup and streaming connection\n"),
+					progname);
 			PQclear(res);
 			return false;
 		}
 		if (timeline != atoi(PQgetvalue(res, 0, 1)))
 		{
-			fprintf(stderr, _("%s: timeline does not match between base backup and streaming connection\n"), progname);
+			fprintf(stderr,
+					_("%s: timeline does not match between base backup and streaming connection\n"),
+					progname);
 			PQclear(res);
 			return false;
 		}
@@ -319,8 +337,8 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysi
 	res = PQexec(conn, query);
 	if (PQresultStatus(res) != PGRES_COPY_BOTH)
 	{
-		fprintf(stderr, _("%s: could not start replication: %s\n"),
-				progname, PQresultErrorMessage(res));
+		fprintf(stderr, _("%s: could not send replication command \"%s\": %s"),
+				progname, "START_REPLICATION", PQresultErrorMessage(res));
 		PQclear(res);
 		return false;
 	}
@@ -348,7 +366,8 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysi
 		 */
 		if (stream_stop && stream_stop(blockpos, timeline, false))
 		{
-			if (walfile != -1 && !close_walfile(basedir, current_walfile_name, rename_partial))
+			if (walfile != -1 && !close_walfile(basedir, current_walfile_name,
+												rename_partial))
 				/* Potential error message is written by close_walfile */
 				goto error;
 			return true;
@@ -364,8 +383,9 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysi
 		{
 			/* Time to send feedback! */
 			char		replybuf[sizeof(StandbyReplyMessage) + 1];
-			StandbyReplyMessage *replymsg = (StandbyReplyMessage *) (replybuf + 1);
+			StandbyReplyMessage *replymsg;
 
+			replymsg = (StandbyReplyMessage *) (replybuf + 1);
 			replymsg->write = blockpos;
 			replymsg->flush = InvalidXLogRecPtr;
 			replymsg->apply = InvalidXLogRecPtr;
@@ -433,7 +453,8 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysi
 			/* Else there is actually data on the socket */
 			if (PQconsumeInput(conn) == 0)
 			{
-				fprintf(stderr, _("%s: could not receive data from WAL stream: %s\n"),
+				fprintf(stderr,
+						_("%s: could not receive data from WAL stream: %s"),
 						progname, PQerrorMessage(conn));
 				goto error;
 			}
@@ -444,7 +465,7 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysi
 			break;
 		if (r == -2)
 		{
-			fprintf(stderr, _("%s: could not read copy data: %s\n"),
+			fprintf(stderr, _("%s: could not read COPY data: %s"),
 					progname, PQerrorMessage(conn));
 			goto error;
 		}
@@ -456,7 +477,8 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysi
 			 */
 			if (r != STREAMING_KEEPALIVE_SIZE)
 			{
-				fprintf(stderr, _("%s: keepalive message is incorrect size: %d\n"),
+				fprintf(stderr,
+						_("%s: keepalive message has incorrect size %d\n"),
 						progname, r);
 				goto error;
 			}
@@ -488,7 +510,8 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysi
 			/* No file open yet */
 			if (xlogoff != 0)
 			{
-				fprintf(stderr, _("%s: received xlog record for offset %u with no file open\n"),
+				fprintf(stderr,
+						_("%s: received transaction log record for offset %u with no file open\n"),
 						progname, xlogoff);
 				goto error;
 			}
@@ -499,7 +522,8 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysi
 			/* XXX: store seek value don't reseek all the time */
 			if (lseek(walfile, 0, SEEK_CUR) != xlogoff)
 			{
-				fprintf(stderr, _("%s: got WAL data offset %08x, expected %08x\n"),
+				fprintf(stderr,
+						_("%s: got WAL data offset %08x, expected %08x\n"),
 						progname, xlogoff, (int) lseek(walfile, 0, SEEK_CUR));
 				goto error;
 			}
@@ -534,10 +558,9 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysi
 					  copybuf + STREAMING_HEADER_SIZE + bytes_written,
 					  bytes_to_write) != bytes_to_write)
 			{
-				fprintf(stderr, _("%s: could not write %u bytes to WAL file %s: %s\n"),
-						progname,
-						bytes_to_write,
-						current_walfile_name,
+				fprintf(stderr,
+				  _("%s: could not write %u bytes to WAL file \"%s\": %s\n"),
+						progname, bytes_to_write, current_walfile_name,
 						strerror(errno));
 				goto error;
 			}
@@ -581,7 +604,8 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline, char *sysi
 	res = PQgetResult(conn);
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		fprintf(stderr, _("%s: unexpected termination of replication stream: %s\n"),
+		fprintf(stderr,
+				_("%s: unexpected termination of replication stream: %s"),
 				progname, PQresultErrorMessage(res));
 		goto error;
 	}
