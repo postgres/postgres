@@ -96,7 +96,7 @@ PostgreSQL documentation
     <variablelist>
      <varlistentry>
       <term><option>-n</option></term>
-      <term><option>--noloop</option></term>
+      <term><option>--no-loop</option></term>
       <listitem>
        <para>
         Don't loop on connection errors. Instead, exit right away with
@@ -124,7 +124,7 @@ PostgreSQL documentation
     <variablelist>
      <varlistentry>
       <term><option>-s <replaceable class="parameter">interval</replaceable></option></term>
-      <term><option>--statusint=<replaceable class="parameter">interval</replaceable></option></term>
+      <term><option>--status-interval=<replaceable class="parameter">interval</replaceable></option></term>
       <listitem>
        <para>
         Specifies the number of seconds between status packets sent back to the

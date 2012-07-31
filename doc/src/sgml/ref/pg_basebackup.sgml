@@ -346,7 +346,7 @@ PostgreSQL documentation
     <variablelist>
      <varlistentry>
       <term><option>-s <replaceable class="parameter">interval</replaceable></option></term>
-      <term><option>--statusint=<replaceable class="parameter">interval</replaceable></option></term>
+      <term><option>--status-interval=<replaceable class="parameter">interval</replaceable></option></term>
       <listitem>
        <para>
         Specifies the number of seconds between status packets sent back to the
