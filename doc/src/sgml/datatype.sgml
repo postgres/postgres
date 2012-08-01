@@ -4185,7 +4185,8 @@ SET xmloption TO { DOCUMENT | CONTENT };
     The <type>json</type> data type can be used to store JSON data.  Such
     data can also be stored as <type>text</type>, but the
     <type>json</type> data type has the advantage of checking that each
-    stored value is a valid JSON value.
+    stored value is a valid JSON value.  There are also related support
+    functions available; see <xref linkend="functions-json">.
    </para>
 
    <para>
