@@ -15,8 +15,9 @@
 #include "postgres.h"
 
 #include "access/spgist_private.h"
+#include "access/transam.h"
 #include "access/xlogutils.h"
-#include "storage/bufmgr.h"
+#include "storage/standby.h"
 #include "utils/memutils.h"
 
 
@@ -888,6 +889,15 @@ spgRedoVacuumRedirect(XLogRecPtr lsn, XLogRecord *record)
 	ptr += sizeof(spgxlogVacuumRedirect);
 	itemToPlaceholder = (OffsetNumber *) ptr;
 
+	/*
+	 * If any redirection tuples are being removed, make sure there are no
+	 * live Hot Standby transactions that might need to see them.  This code
+	 * behaves similarly to btree's XLOG_BTREE_REUSE_PAGE case.
+	 */
+	if (InHotStandby && TransactionIdIsValid(xldata->newestRedirectXid))
+		ResolveRecoveryConflictWithSnapshot(xldata->newestRedirectXid,
+											xldata->node);
+
 	if (!(record->xl_info & XLR_BKP_BLOCK_1))
 	{
 		buffer = XLogReadBuffer(xldata->node, xldata->blkno, false);
@@ -1060,8 +1070,9 @@ spg_desc(StringInfo buf, uint8 xl_info, char *rec)
 			break;
 		case XLOG_SPGIST_VACUUM_REDIRECT:
 			out_target(buf, ((spgxlogVacuumRedirect *) rec)->node);
-			appendStringInfo(buf, "vacuum redirect tuples on page %u",
-							 ((spgxlogVacuumRedirect *) rec)->blkno);
+			appendStringInfo(buf, "vacuum redirect tuples on page %u, newest XID %u",
+							 ((spgxlogVacuumRedirect *) rec)->blkno,
+							 ((spgxlogVacuumRedirect *) rec)->newestRedirectXid);
 			break;
 		default:
 			appendStringInfo(buf, "unknown spgist op code %u", info);
