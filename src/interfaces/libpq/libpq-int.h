@@ -277,6 +277,17 @@ typedef struct pgLobjfuncs
 	Oid			fn_lo_write;	/* OID of backend function LOwrite		*/
 } PGlobjfuncs;
 
+/* PGdataValue represents a data field value being passed to a row processor.
+ * It could be either text or binary data; text data is not zero-terminated.
+ * A SQL NULL is represented by len < 0; then value is still valid but there
+ * are no data bytes there.
+ */
+typedef struct pgDataValue
+{
+	int			len;			/* data length in bytes, or <0 if NULL */
+	const char *value;			/* data value, without zero-termination */
+} PGdataValue;
+
 /*
  * PGconn stores all the state data associated with a single connection
  * to a backend.
@@ -324,10 +335,6 @@ struct pg_conn
 	/* Optional file to write trace info to */
 	FILE	   *Pfdebug;
 
-	/* Callback procedure for per-row processing */
-	PQrowProcessor rowProcessor;	/* function pointer */
-	void	   *rowProcessorParam;		/* passthrough argument */
-
 	/* Callback procedures for notice message processing */
 	PGNoticeHooks noticeHooks;
 
@@ -346,6 +353,7 @@ struct pg_conn
 	bool		options_valid;	/* true if OK to attempt connection */
 	bool		nonblocking;	/* whether this connection is using nonblock
 								 * sending semantics */
+	bool		singleRowMode;	/* return current query result row-by-row? */
 	char		copy_is_binary; /* 1 = copy binary, 0 = copy text */
 	int			copy_already_done;		/* # bytes already returned in COPY
 										 * OUT */
@@ -406,6 +414,7 @@ struct pg_conn
 
 	/* Status for asynchronous result construction */
 	PGresult   *result;			/* result being constructed */
+	PGresult   *next_result;	/* next result (used in single-row mode) */
 
 	/* Assorted state for SSL, GSS, etc */
 
@@ -517,6 +526,7 @@ extern void pqSaveMessageField(PGresult *res, char code,
 				   const char *value);
 extern void pqSaveParameterStatus(PGconn *conn, const char *name,
 					  const char *value);
+extern int	pqRowProcessor(PGconn *conn, const char **errmsgp);
 extern void pqHandleSendFailure(PGconn *conn);
 
 /* === in fe-protocol2.c === */

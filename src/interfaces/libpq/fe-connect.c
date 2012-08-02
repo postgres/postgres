@@ -2709,8 +2709,7 @@ makeEmptyPGconn(void)
 	/* Zero all pointers and booleans */
 	MemSet(conn, 0, sizeof(PGconn));
 
-	/* install default row processor and notice hooks */
-	PQsetRowProcessor(conn, NULL, NULL);
+	/* install default notice hooks */
 	conn->noticeHooks.noticeRec = defaultNoticeReceiver;
 	conn->noticeHooks.noticeProc = defaultNoticeProcessor;
 
@@ -4658,7 +4657,7 @@ conninfo_uri_parse_options(PQconninfoOption *options, const char *uri,
 		if (p == host)
 		{
 			printfPQExpBuffer(errorMessage,
-			libpq_gettext("IPv6 host address may not be empty in URI: \"%s\"\n"),
+							  libpq_gettext("IPv6 host address may not be empty in URI: \"%s\"\n"),
 							  uri);
 			goto cleanup;
 		}
@@ -4878,7 +4877,7 @@ conninfo_uri_parse_params(char *params,
 
 			printfPQExpBuffer(errorMessage,
 							  libpq_gettext(
-									 "invalid URI query parameter: \"%s\"\n"),
+									"invalid URI query parameter: \"%s\"\n"),
 							  keyword);
 			return false;
 		}
@@ -4943,7 +4942,7 @@ conninfo_uri_decode(const char *str, PQExpBuffer errorMessage)
 			if (!(get_hexdigit(*q++, &hi) && get_hexdigit(*q++, &lo)))
 			{
 				printfPQExpBuffer(errorMessage,
-						libpq_gettext("invalid percent-encoded token: \"%s\"\n"),
+					libpq_gettext("invalid percent-encoded token: \"%s\"\n"),
 								  str);
 				free(buf);
 				return NULL;
@@ -5594,8 +5593,8 @@ static void
 dot_pg_pass_warning(PGconn *conn)
 {
 	/* If it was 'invalid authorization', add .pgpass mention */
-	if (conn->dot_pgpass_used && conn->password_needed && conn->result &&
 	/* only works with >= 9.0 servers */
+	if (conn->dot_pgpass_used && conn->password_needed && conn->result &&
 		strcmp(PQresultErrorField(conn->result, PG_DIAG_SQLSTATE),
 			   ERRCODE_INVALID_PASSWORD) == 0)
 	{

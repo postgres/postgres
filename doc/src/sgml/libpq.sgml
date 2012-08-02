@@ -2418,14 +2418,28 @@ ExecStatusType PQresultStatus(const PGresult *res);
           <term><literal>PGRES_COPY_BOTH</literal></term>
           <listitem>
            <para>
-            Copy In/Out (to and from server) data transfer started.  This is
-            currently used only for streaming replication.
+            Copy In/Out (to and from server) data transfer started.  This
+            feature is currently used only for streaming replication,
+            so this status should not occur in ordinary applications.
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry id="libpq-pgres-single-tuple">
+          <term><literal>PGRES_SINGLE_TUPLE</literal></term>
+          <listitem>
+           <para>
+            The <structname>PGresult</> contains a single result tuple
+            from the current command.  This status occurs only when
+            single-row mode has been selected for the query
+            (see <xref linkend="libpq-single-row-mode">).
            </para>
           </listitem>
          </varlistentry>
         </variablelist>
 
-        If the result status is <literal>PGRES_TUPLES_OK</literal>, then
+        If the result status is <literal>PGRES_TUPLES_OK</literal> or
+        <literal>PGRES_SINGLE_TUPLE</literal>, then
         the functions described below can be used to retrieve the rows
         returned by the query.  Note that a <command>SELECT</command>
         command that happens to retrieve zero rows still shows
@@ -2726,7 +2740,8 @@ void PQclear(PGresult *res);
     These functions are used to extract information from a
     <structname>PGresult</structname> object that represents a successful
     query result (that is, one that has status
-    <literal>PGRES_TUPLES_OK</literal>).  They can also be used to extract
+    <literal>PGRES_TUPLES_OK</literal> or <literal>PGRES_SINGLE_TUPLE</>).
+    They can also be used to extract
     information from a successful Describe operation: a Describe's result
     has all the same column information that actual execution of the query
     would provide, but it has zero rows.  For objects with other status values,
@@ -3738,7 +3753,7 @@ unsigned char *PQunescapeBytea(const unsigned char *from, size_t *to_length);
 
   <para>
    The <function>PQexec</function> function is adequate for submitting
-   commands in normal, synchronous applications.  It has a couple of
+   commands in normal, synchronous applications.  It has a few
    deficiencies, however, that can be of importance to some users:
 
    <itemizedlist>
@@ -3767,6 +3782,15 @@ unsigned char *PQunescapeBytea(const unsigned char *from, size_t *to_length);
       string contains multiple <acronym>SQL</acronym> commands, all but
       the last <structname>PGresult</structname> are discarded by
       <function>PQexec</function>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <function>PQexec</function> always collects the command's entire result,
+      buffering it in a single <structname>PGresult</structname>.  While
+      this simplifies error-handling logic for the application, it can be
+      impractical for results containing many rows.
      </para>
     </listitem>
    </itemizedlist>
@@ -3984,8 +4008,11 @@ int PQsendDescribePortal(PGconn *conn, const char *portalName);
        Waits for the next result from a prior
        <function>PQsendQuery</function>,
        <function>PQsendQueryParams</function>,
-       <function>PQsendPrepare</function>, or
-       <function>PQsendQueryPrepared</function> call, and returns it.
+       <function>PQsendPrepare</function>,
+       <function>PQsendQueryPrepared</function>,
+       <function>PQsendDescribePrepared</function>, or
+       <function>PQsendDescribePortal</function>
+       call, and returns it.
        A null pointer is returned when the command is complete and there
        will be no more results.
 <synopsis>
@@ -4012,7 +4039,7 @@ PGresult *PQgetResult(PGconn *conn);
        <para>
         Even when <function>PQresultStatus</function> indicates a fatal
         error, <function>PQgetResult</function> should be called until it
-        returns a null pointer to allow <application>libpq</> to
+        returns a null pointer, to allow <application>libpq</> to
         process the error information completely.
        </para>
       </note>
@@ -4029,7 +4056,18 @@ PGresult *PQgetResult(PGconn *conn);
    can be obtained individually.  (This allows a simple form of overlapped
    processing, by the way: the client can be handling the results of one
    command while the server is still working on later queries in the same
-   command string.)  However, calling <function>PQgetResult</function>
+   command string.)
+  </para>
+
+  <para>
+   Another frequently-desired feature that can be obtained with
+   <function>PQsendQuery</function> and <function>PQgetResult</function>
+   is retrieving large query results a row at a time.  This is discussed
+   in <xref linkend="libpq-single-row-mode">.
+  </para>
+
+  <para>
+   By itself, calling <function>PQgetResult</function>
    will still cause the client to block until the server completes the
    next <acronym>SQL</acronym> command.  This can be avoided by proper
    use of two more functions:
@@ -4235,6 +4273,98 @@ int PQflush(PGconn *conn);
    <function>PQflush</function> returns 0, wait for the socket to be
    read-ready and then read the response as described above.
   </para>
+
+ </sect1>
+
+ <sect1 id="libpq-single-row-mode">
+  <title>Retrieving Query Results Row-By-Row</title>
+
+  <indexterm zone="libpq-single-row-mode">
+   <primary>libpq</primary>
+   <secondary>single-row mode</secondary>
+  </indexterm>
+
+  <para>
+   Ordinarily, <application>libpq</> collects a SQL command's
+   entire result and returns it to the application as a single
+   <structname>PGresult</structname>.  This can be unworkable for commands
+   that return a large number of rows.  For such cases, applications can use
+   <function>PQsendQuery</function> and <function>PQgetResult</function> in
+   <firstterm>single-row mode</>.  In this mode, the result row(s) are
+   returned to the application one at a time, as they are received from the
+   server.
+  </para>
+
+  <para>
+   To enter single-row mode, call <function>PQsetSingleRowMode</function>
+   immediately after a successful call of <function>PQsendQuery</function>
+   (or a sibling function).  This mode selection is effective only for the
+   currently executing query.  Then call <function>PQgetResult</function>
+   repeatedly, until it returns null, as documented in <xref
+   linkend="libpq-async">.  If the query returns any rows, they are returned
+   as individual <structname>PGresult</structname> objects, which look like
+   normal query results except for having status code
+   <literal>PGRES_SINGLE_TUPLE</literal> instead of
+   <literal>PGRES_TUPLES_OK</literal>.  After the last row, or immediately if
+   the query returns zero rows, a zero-row object with status
+   <literal>PGRES_TUPLES_OK</literal> is returned; this is the signal that no
+   more rows will arrive.  (But note that it is still necessary to continue
+   calling <function>PQgetResult</function> until it returns null.)  All of
+   these <structname>PGresult</structname> objects will contain the same row
+   description data (column names, types, etc) that an ordinary
+   <structname>PGresult</structname> object for the query would have.
+   Each object should be freed with <function>PQclear</function> as usual.
+  </para>
+
+  <para>
+   <variablelist>
+    <varlistentry id="libpq-pqsetsinglerowmode">
+     <term>
+      <function>PQsetSingleRowMode</function>
+      <indexterm>
+       <primary>PQsetSingleRowMode</primary>
+      </indexterm>
+     </term>
+
+     <listitem>
+      <para>
+       Select single-row mode for the currently-executing query.
+
+<synopsis>
+int PQsetSingleRowMode(PGconn *conn);
+</synopsis>
+      </para>
+
+      <para>
+       This function can only be called immediately after
+       <function>PQsendQuery</function> or one of its sibling functions,
+       before any other operation on the connection such as
+       <function>PQconsumeInput</function> or
+       <function>PQgetResult</function>.  If called at the correct time,
+       the function activates single-row mode for the current query and
+       returns 1.  Otherwise the mode stays unchanged and the function
+       returns 0.  In any case, the mode reverts to normal after
+       completion of the current query.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+
+  <caution>
+   <para>
+    While processing a query, the server may return some rows and then
+    encounter an error, causing the query to be aborted.  Ordinarily,
+    <application>libpq</> discards any such rows and reports only the
+    error.  But in single-row mode, those rows will have already been
+    returned to the application.  Hence, the application will see some
+    <literal>PGRES_SINGLE_TUPLE</literal> <structname>PGresult</structname>
+    objects followed by a <literal>PGRES_FATAL_ERROR</literal> object.  For
+    proper transactional behavior, the application must be designed to
+    discard or undo whatever has been done with the previously-processed
+    rows, if the query ultimately fails.
+   </para>
+  </caution>
 
  </sect1>
 
@@ -5696,274 +5826,6 @@ defaultNoticeProcessor(void *arg, const char *message)
    <structname>PGconn</>'s current notice handling pointers are copied
    into the <structname>PGresult</> for possible use by functions like
    <function>PQgetvalue</function>.
-  </para>
-
- </sect1>
-
- <sect1 id="libpq-row-processor">
-  <title>Custom Row Processing</title>
-
-  <indexterm zone="libpq-row-processor">
-   <primary>PQrowProcessor</primary>
-  </indexterm>
-
-  <indexterm zone="libpq-row-processor">
-   <primary>row processor</primary>
-   <secondary>in libpq</secondary>
-  </indexterm>
-
-  <para>
-   Ordinarily, when receiving a query result from the server,
-   <application>libpq</> adds each row value to the current
-   <type>PGresult</type> until the entire result set is received; then
-   the <type>PGresult</type> is returned to the application as a unit.
-   This approach is simple to work with, but becomes inefficient for large
-   result sets.  To improve performance, an application can register a
-   custom <firstterm>row processor</> function that processes each row
-   as the data is received from the network.  The custom row processor could
-   process the data fully, or store it into some application-specific data
-   structure for later processing.
-  </para>
-
-  <caution>
-   <para>
-    The row processor function sees the rows before it is known whether the
-    query will succeed overall, since the server might return some rows before
-    encountering an error.  For proper transactional behavior, it must be
-    possible to discard or undo whatever the row processor has done, if the
-    query ultimately fails.
-   </para>
-  </caution>
-
-  <para>
-   When using a custom row processor, row data is not accumulated into the
-   <type>PGresult</type>, so the <type>PGresult</type> ultimately delivered to
-   the application will contain no rows (<function>PQntuples</> =
-   <literal>0</>).  However, it still has <function>PQresultStatus</> =
-   <literal>PGRES_TUPLES_OK</>, and it contains correct information about the
-   set of columns in the query result.  On the other hand, if the query fails
-   partway through, the returned <type>PGresult</type> has
-   <function>PQresultStatus</> = <literal>PGRES_FATAL_ERROR</>.  The
-   application must be prepared to undo any actions of the row processor
-   whenever it gets a <literal>PGRES_FATAL_ERROR</> result.
-  </para>
-
-  <para>
-   A custom row processor is registered for a particular connection by
-   calling <function>PQsetRowProcessor</function>, described below.
-   This row processor will be used for all subsequent query results on that
-   connection until changed again.  A row processor function must have a
-   signature matching
-
-<synopsis>
-typedef int (*PQrowProcessor) (PGresult *res, const PGdataValue *columns,
-                               const char **errmsgp, void *param);
-</synopsis>
-   where <type>PGdataValue</> is described by
-<synopsis>
-typedef struct pgDataValue
-{
-    int         len;            /* data length in bytes, or <0 if NULL */
-    const char *value;          /* data value, without zero-termination */
-} PGdataValue;
-</synopsis>
-  </para>
-
-  <para>
-   The <parameter>res</> parameter is the <literal>PGRES_TUPLES_OK</>
-   <type>PGresult</type> that will eventually be delivered to the calling
-   application (if no error intervenes).  It contains information about
-   the set of columns in the query result, but no row data.  In particular the
-   row processor must fetch <literal>PQnfields(res)</> to know the number of
-   data columns.
-  </para>
-
-  <para>
-   Immediately after <application>libpq</> has determined the result set's
-   column information, it will make a call to the row processor with
-   <parameter>columns</parameter> set to NULL, but the other parameters as
-   usual.  The row processor can use this call to initialize for a new result
-   set; if it has nothing to do, it can just return <literal>1</>.  In
-   subsequent calls, one per received row, <parameter>columns</parameter>
-   is non-NULL and points to an array of <type>PGdataValue</> structs, one per
-   data column.
-  </para>
-
-  <para>
-   <parameter>errmsgp</parameter> is an output parameter used only for error
-   reporting.  If the row processor needs to report an error, it can set
-   <literal>*</><parameter>errmsgp</parameter> to point to a suitable message
-   string (and then return <literal>-1</>).  As a special case, returning
-   <literal>-1</> without changing <literal>*</><parameter>errmsgp</parameter>
-   from its initial value of NULL is taken to mean <quote>out of memory</>.
-  </para>
-
-  <para>
-   The last parameter, <parameter>param</parameter>, is just a void pointer
-   passed through from <function>PQsetRowProcessor</function>.  This can be
-   used for communication between the row processor function and the
-   surrounding application.
-  </para>
-
-  <para>
-   In the <type>PGdataValue</> array passed to a row processor, data values
-   cannot be assumed to be zero-terminated, whether the data format is text
-   or binary.  A SQL NULL value is indicated by a negative length field.
-  </para>
-
-  <para>
-   The row processor <emphasis>must</> process the row data values
-   immediately, or else copy them into application-controlled storage.
-   The value pointers passed to the row processor point into
-   <application>libpq</>'s internal data input buffer, which will be
-   overwritten by the next packet fetch.
-  </para>
-
-  <para>
-   The row processor function must return either <literal>1</> or
-   <literal>-1</>.
-   <literal>1</> is the normal, successful result value; <application>libpq</>
-   will continue with receiving row values from the server and passing them to
-   the row processor.  <literal>-1</> indicates that the row processor has
-   encountered an error.  In that case,
-   <application>libpq</> will discard all remaining rows in the result set
-   and then return a <literal>PGRES_FATAL_ERROR</> <type>PGresult</type> to
-   the application (containing the specified error message, or <quote>out of
-   memory for query result</> if <literal>*</><parameter>errmsgp</parameter>
-   was left as NULL).
-  </para>
-
-  <para>
-   Another option for exiting a row processor is to throw an exception using
-   C's <function>longjmp()</> or C++'s <literal>throw</>.  If this is done,
-   processing of the incoming data can be resumed later by calling
-   <function>PQgetResult</>; the row processor will be invoked as normal for
-   any remaining rows in the current result.
-   As with any usage of <function>PQgetResult</>, the application
-   should continue calling <function>PQgetResult</> until it gets a NULL
-   result before issuing any new query.
-  </para>
-
-  <para>
-   In some cases, an exception may mean that the remainder of the
-   query result is not interesting.  In such cases the application can discard
-   the remaining rows with <function>PQskipResult</>, described below.
-   Another possible recovery option is to close the connection altogether with
-   <function>PQfinish</>.
-  </para>
-
-  <para>
-   <variablelist>
-    <varlistentry id="libpq-pqsetrowprocessor">
-     <term>
-      <function>PQsetRowProcessor</function>
-      <indexterm>
-       <primary>PQsetRowProcessor</primary>
-      </indexterm>
-     </term>
-
-     <listitem>
-      <para>
-       Sets a callback function to process each row.
-
-<synopsis>
-void PQsetRowProcessor(PGconn *conn, PQrowProcessor func, void *param);
-</synopsis>
-      </para>
-
-      <para>
-       The specified row processor function <parameter>func</> is installed as
-       the active row processor for the given connection <parameter>conn</>.
-       Also, <parameter>param</> is installed as the passthrough pointer to
-       pass to it.  Alternatively, if <parameter>func</> is NULL, the standard
-       row processor is reinstalled on the given connection (and
-       <parameter>param</> is ignored).
-      </para>
-
-      <para>
-       Although the row processor can be changed at any time in the life of a
-       connection, it's generally unwise to do so while a query is active.
-       In particular, when using asynchronous mode, be aware that both
-       <function>PQisBusy</> and <function>PQgetResult</> can call the current
-       row processor.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry id="libpq-pqgetrowprocessor">
-     <term>
-      <function>PQgetRowProcessor</function>
-      <indexterm>
-       <primary>PQgetRowProcessor</primary>
-      </indexterm>
-     </term>
-
-     <listitem>
-      <para>
-       Fetches the current row processor for the specified connection.
-
-<synopsis>
-PQrowProcessor PQgetRowProcessor(const PGconn *conn, void **param);
-</synopsis>
-      </para>
-
-      <para>
-       In addition to returning the row processor function pointer, the
-       current passthrough pointer will be returned at
-       <literal>*</><parameter>param</>, if <parameter>param</> is not NULL.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry id="libpq-pqskipresult">
-     <term>
-      <function>PQskipResult</function>
-      <indexterm>
-       <primary>PQskipResult</primary>
-      </indexterm>
-     </term>
-
-     <listitem>
-      <para>
-       Discard all the remaining rows in the incoming result set.
-
-<synopsis>
-PGresult *PQskipResult(PGconn *conn);
-</synopsis>
-      </para>
-
-      <para>
-       This is a simple convenience function to discard incoming data after a
-       row processor has failed or it's determined that the rest of the result
-       set is not interesting.  <function>PQskipResult</> is exactly
-       equivalent to <function>PQgetResult</> except that it transiently
-       installs a dummy row processor function that just discards data.
-       The returned <type>PGresult</> can be discarded without further ado
-       if it has status <literal>PGRES_TUPLES_OK</>; but other status values
-       should be handled normally.  (In particular,
-       <literal>PGRES_FATAL_ERROR</> indicates a server-reported error that
-       will still need to be dealt with.)
-       As when using <function>PQgetResult</>, one should usually repeat the
-       call until NULL is returned to ensure the connection has reached an
-       idle state.  Another possible usage is to call
-       <function>PQskipResult</> just once, and then resume using
-       <function>PQgetResult</> to process subsequent result sets normally.
-      </para>
-
-      <para>
-       Because <function>PQskipResult</> will wait for server input, it is not
-       very useful in asynchronous applications.  In particular you should not
-       code a loop of <function>PQisBusy</> and <function>PQskipResult</>,
-       because that will result in the installed row processor being called
-       within <function>PQisBusy</>.  To get the proper behavior in an
-       asynchronous application, you'll need to install a dummy row processor
-       (or set a flag to make your normal row processor do nothing) and leave
-       it that way until you have discarded all incoming data via your normal
-       <function>PQisBusy</> and <function>PQgetResult</> loop.
-      </para>
-     </listitem>
-    </varlistentry>
-   </variablelist>
   </para>
 
  </sect1>

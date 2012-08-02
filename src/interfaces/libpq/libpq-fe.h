@@ -90,7 +90,8 @@ typedef enum
 								 * backend */
 	PGRES_NONFATAL_ERROR,		/* notice or warning message */
 	PGRES_FATAL_ERROR,			/* query failed */
-	PGRES_COPY_BOTH				/* Copy In/Out data transfer in progress */
+	PGRES_COPY_BOTH,			/* Copy In/Out data transfer in progress */
+	PGRES_SINGLE_TUPLE			/* single tuple from larger resultset */
 } ExecStatusType;
 
 typedef enum
@@ -129,17 +130,6 @@ typedef struct pg_conn PGconn;
  */
 typedef struct pg_result PGresult;
 
-/* PGdataValue represents a data field value being passed to a row processor.
- * It could be either text or binary data; text data is not zero-terminated.
- * A SQL NULL is represented by len < 0; then value is still valid but there
- * are no data bytes there.
- */
-typedef struct pgDataValue
-{
-	int			len;			/* data length in bytes, or <0 if NULL */
-	const char *value;			/* data value, without zero-termination */
-} PGdataValue;
-
 /* PGcancel encapsulates the information needed to cancel a running
  * query on an existing connection.
  * The contents of this struct are not supposed to be known to applications.
@@ -160,10 +150,6 @@ typedef struct pgNotify
 	/* Fields below here are private to libpq; apps should not use 'em */
 	struct pgNotify *next;		/* list link */
 } PGnotify;
-
-/* Function type for row-processor callback */
-typedef int (*PQrowProcessor) (PGresult *res, const PGdataValue *columns,
-										   const char **errmsgp, void *param);
 
 /* Function types for notice-handling callbacks */
 typedef void (*PQnoticeReceiver) (void *arg, const PGresult *res);
@@ -403,16 +389,12 @@ extern int PQsendQueryPrepared(PGconn *conn,
 					const int *paramLengths,
 					const int *paramFormats,
 					int resultFormat);
+extern int	PQsetSingleRowMode(PGconn *conn);
 extern PGresult *PQgetResult(PGconn *conn);
-extern PGresult *PQskipResult(PGconn *conn);
 
 /* Routines for managing an asynchronous query */
 extern int	PQisBusy(PGconn *conn);
 extern int	PQconsumeInput(PGconn *conn);
-
-/* Override default per-row processing */
-extern void PQsetRowProcessor(PGconn *conn, PQrowProcessor func, void *param);
-extern PQrowProcessor PQgetRowProcessor(const PGconn *conn, void **param);
 
 /* LISTEN/NOTIFY support */
 extern PGnotify *PQnotifies(PGconn *conn);
