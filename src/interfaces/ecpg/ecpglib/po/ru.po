@@ -1,0 +1,181 @@
+# Russian message translation file for ecpglib
+# Copyright (C) 2012 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Alexander Lakhin <exclusion@gmail.com>, 2012.
+#
+# ChangeLog:
+#   - February 14, 2012: Complete translation for 9.1, Alexander Lakhin <exclusion@gmail.com>.
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 9.2\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2012-07-11 03:40+0000\n"
+"PO-Revision-Date: 2012-02-14 21:39+0400\n"
+"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
+"Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Russian\n"
+"X-Poedit-Country: RUSSIAN FEDERATION\n"
+"X-Generator: Lokalize 1.4\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: connect.c:231
+msgid "empty message text"
+msgstr "пустое сообщение"
+
+#: connect.c:384 connect.c:413 connect.c:618
+msgid "<DEFAULT>"
+msgstr "<ПО_УМОЛЧАНИЮ>"
+
+#: descriptor.c:807 misc.c:113
+msgid "NULL"
+msgstr "NULL"
+
+#: error.c:29
+#, c-format
+msgid "no data found on line %d"
+msgstr "нет данных (строка %d)"
+
+#: error.c:39
+#, c-format
+msgid "out of memory on line %d"
+msgstr "нехватка памяти (строка %d)"
+
+#: error.c:49
+#, c-format
+msgid "unsupported type \"%s\" on line %d"
+msgstr "неподдерживаемый тип \"%s\" в строке %d"
+
+#: error.c:59
+#, c-format
+msgid "too many arguments on line %d"
+msgstr "слишком много аргументов в строке %d"
+
+#: error.c:69
+#, c-format
+msgid "too few arguments on line %d"
+msgstr "недостаточно аргументов в строке %d"
+
+#: error.c:79
+#, c-format
+msgid "invalid input syntax for type int: \"%s\", on line %d"
+msgstr "неверный синтаксис для целого числа: \"%s\" (строка %d)"
+
+#: error.c:89
+#, c-format
+msgid "invalid input syntax for type unsigned int: \"%s\", on line %d"
+msgstr "неверный синтаксис для беззнакового целого: \"%s\" (строка %d)"
+
+#: error.c:99
+#, c-format
+msgid "invalid input syntax for floating-point type: \"%s\", on line %d"
+msgstr "неверный синтаксис для числа с плавающей точкой: \"%s\" (строка %d)"
+
+#: error.c:110
+#, c-format
+msgid "invalid syntax for type boolean: \"%s\", on line %d"
+msgstr "неверный синтаксис для логического значения: \"%s\" (строка %d)"
+
+#: error.c:118
+#, c-format
+msgid "could not convert boolean value: size mismatch, on line %d"
+msgstr ""
+"не удалось преобразовать логическое значение: несовпадение размера (строка "
+"%d)"
+
+#: error.c:128
+#, c-format
+msgid "empty query on line %d"
+msgstr "пустой запрос в строке %d"
+
+#: error.c:138
+#, c-format
+msgid "null value without indicator on line %d"
+msgstr "значение NULL без индикатора в строке %d"
+
+#: error.c:148
+#, c-format
+msgid "variable does not have an array type on line %d"
+msgstr "переменная должна иметь тип массива (строка %d)"
+
+#: error.c:158
+#, c-format
+msgid "data read from server is not an array on line %d"
+msgstr "полученные с сервера данные - не массив (%d)"
+
+#: error.c:168
+#, c-format
+msgid "inserting an array of variables is not supported on line %d"
+msgstr "добавление массива переменных не поддерживается (строка %d)"
+
+#: error.c:178
+#, c-format
+msgid "connection \"%s\" does not exist on line %d"
+msgstr "подключение \"%s\" не существует (строка %d)"
+
+#: error.c:188
+#, c-format
+msgid "not connected to connection \"%s\" on line %d"
+msgstr "подключение \"%s\" не установлено (строка %d)"
+
+#: error.c:198
+#, c-format
+msgid "invalid statement name \"%s\" on line %d"
+msgstr "неверный оператор \"%s\" в строке %d"
+
+#: error.c:208
+#, c-format
+msgid "descriptor \"%s\" not found on line %d"
+msgstr "дескриптор \"%s\" не найден (строка %d)"
+
+#: error.c:218
+#, c-format
+msgid "descriptor index out of range on line %d"
+msgstr "индекс дескриптора вне диапазона (строка %d)"
+
+#: error.c:228
+#, c-format
+msgid "unrecognized descriptor item \"%s\" on line %d"
+msgstr "нераспознанный элемент дескриптора \"%s\" (строка %d)"
+
+#: error.c:238
+#, c-format
+msgid "variable does not have a numeric type on line %d"
+msgstr "переменная должна быть числовой (строка %d)"
+
+#: error.c:248
+#, c-format
+msgid "variable does not have a character type on line %d"
+msgstr "переменная должна быть символьной (строка %d)"
+
+#: error.c:258
+#, c-format
+msgid "error in transaction processing on line %d"
+msgstr "ошибка при обработке транзакции в строке %d"
+
+#: error.c:268
+#, c-format
+msgid "could not connect to database \"%s\" on line %d"
+msgstr "ошибка подключения к базе данных \"%s\" (строка %d)"
+
+#: error.c:278
+#, c-format
+msgid "SQL error %d on line %d"
+msgstr "SQL-ошибка %d в строке %d"
+
+#: error.c:318
+msgid "the connection to the server was lost"
+msgstr "подключение к серверу потеряно"
+
+#: error.c:405
+#, c-format
+msgid "SQL error: %s\n"
+msgstr "ошибка SQL: %s\n"
+
+#: execute.c:1921
+msgid "<empty>"
+msgstr "<>"

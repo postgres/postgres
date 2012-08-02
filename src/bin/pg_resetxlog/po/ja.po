@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.0 beta 3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2010-07-20 12:56+0900\n"
-"PO-Revision-Date: 2010-07-17 18:07+0900\n"
+"PO-Revision-Date: 2011-08-30 21:34+0900\n"
 "Last-Translator: HOTTA Michihide <hotta@net-newbie.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "MIME-Version: 1.0\n"
@@ -295,7 +295,7 @@ msgstr "日付/時刻型の格納方式                     %s\n"
 
 #: pg_resetxlog.c:605
 msgid "64-bit integers"
-msgstr "64ビット整数\""
+msgstr "64ビット整数"
 
 #: pg_resetxlog.c:605
 msgid "floating-point numbers"
@@ -351,7 +351,7 @@ msgstr "%s: ディレクトリ\"%s\"をオープンできませんでした: %s\
 #: pg_resetxlog.c:786 pg_resetxlog.c:850 pg_resetxlog.c:907
 #, c-format
 msgid "%s: could not read from directory \"%s\": %s\n"
-msgstr "%s: ディレクトリ%s\"から読み込めませんでした: %s\n"
+msgstr "%s: ディレクトリ\"%s\"から読み込めませんでした: %s\n"
 
 #: pg_resetxlog.c:831 pg_resetxlog.c:888
 #, c-format

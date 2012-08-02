@@ -16910,7 +16910,6 @@ msgid "time zone displacement out of range: \"%s\""
 msgstr "時區位移超出範圍:\"%s\""
 
 #  translator: first %s is inet or cidr
-#  translator: first %s is inet or cidr
 # utils/adt/datetime.c:3342 utils/adt/network.c:93
 #. translator: first %s is inet or cidr
 #: utils/adt/datetime.c:3559

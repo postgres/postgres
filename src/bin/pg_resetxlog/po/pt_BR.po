@@ -3,11 +3,11 @@
 # This file is distributed under the same license as the PostgreSQL package.
 # Cesar Suga <sartre@linuxbr.com>, 2002.
 # Roberto Mello <rmello@fslc.usu.edu>, 2002.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2010.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2011.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.0\n"
+"Project-Id-Version: PostgreSQL 9.1\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2010-07-08 21:12-0300\n"
 "PO-Revision-Date: 2005-10-04 22:55-0300\n"

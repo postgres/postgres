@@ -1,8 +1,6 @@
 # German message translation file for PL/Tcl
 # Peter Eisentraut <peter_e@gmx.net>, 2009.
 #
-# pgtranslation Id: pltcl.po,v 1.1 2009/01/14 22:07:09 petere Exp $
-#
 # Use these quotes: »%s«
 #
 msgid ""

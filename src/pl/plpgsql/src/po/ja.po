@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.0 beta 3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2011-06-15 16:28+0900\n"
-"PO-Revision-Date: 2011-06-15 16:40+0900\n"
+"PO-Revision-Date: 2011-08-30 21:37+0900\n"
 "Last-Translator: HOTTA Michihde <hotta@net-newbie.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "MIME-Version: 1.0\n"
@@ -443,7 +443,7 @@ msgstr "%s型では照合順序はサポートされません"
 
 #: gram.y:465
 msgid "row or record variable cannot be CONSTANT"
-msgstr "行またはレコード変数を CONSTRAINT にはできません"
+msgstr "行またはレコード変数を CONSTANT にはできません"
 
 #: gram.y:475
 msgid "row or record variable cannot be NOT NULL"

@@ -5,100 +5,102 @@ msgid ""
 msgstr ""
 "Project-Id-Version: initdb-ro\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-09-02 17:59+0000\n"
-"PO-Revision-Date: 2010-09-27 22:01-0000\n"
-"Last-Translator: Max <max@oceanline.co.uk>\n"
-"Language-Team: Română <max@oceanline.ro>\n"
+"POT-Creation-Date: 2011-11-09 20:41+0000\n"
+"PO-Revision-Date: 2011-11-22 11:44-0000\n"
+"Last-Translator: Gheorge Rosca Codreanu <max@oceanline.co.uk>\n"
+"Language-Team: Română <xsoftware.consultancy@gmail.com>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: KBabel 1.11.2\n"
 "X-Poedit-Language: Romanian\n"
 "X-Poedit-Country: ROMANIA\n"
+"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n != 0 ? 1 : 2;\n"
 
-#: initdb.c:254
-#: initdb.c:268
+#: initdb.c:259
+#: initdb.c:273
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: memorie insuficientă\n"
 
-#: initdb.c:377
-#: initdb.c:1432
+#: initdb.c:382
+#: initdb.c:1288
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s: imposibil de deschis fişierul \"%s\" pentru citire: %s\n"
 
-#: initdb.c:433
-#: initdb.c:956
-#: initdb.c:985
+#: initdb.c:438
+#: initdb.c:804
+#: initdb.c:833
 #, c-format
 msgid "%s: could not open file \"%s\" for writing: %s\n"
 msgstr "%s: imposibil de deschis fişierul \"%s\" pentru scriere: %s\n"
 
-#: initdb.c:441
-#: initdb.c:449
-#: initdb.c:963
-#: initdb.c:991
+#: initdb.c:446
+#: initdb.c:454
+#: initdb.c:811
+#: initdb.c:839
 #, c-format
 msgid "%s: could not write file \"%s\": %s\n"
 msgstr "%s: imposibil de scris fişierul \"%s\": %s\n"
 
-#: initdb.c:468
+#: initdb.c:473
 #, c-format
 msgid "%s: could not execute command \"%s\": %s\n"
 msgstr "%s: imposibil de executat comanda\"%s\": %s\n"
 
-#: initdb.c:588
+#: initdb.c:489
 #, c-format
 msgid "%s: removing data directory \"%s\"\n"
 msgstr "%s: eliminare director de date \"%s\"\n"
 
-#: initdb.c:591
+#: initdb.c:492
 #, c-format
 msgid "%s: failed to remove data directory\n"
 msgstr "%s: eliminare director de date eşuată\n"
 
-#: initdb.c:597
+#: initdb.c:498
 #, c-format
 msgid "%s: removing contents of data directory \"%s\"\n"
 msgstr "%s: eliminare conţinut al directorului de date \"%s\"\n"
 
-#: initdb.c:600
+#: initdb.c:501
 #, c-format
 msgid "%s: failed to remove contents of data directory\n"
 msgstr "%s: eliminare conţinut al directorului de date eşuată\n"
 
-#: initdb.c:606
+#: initdb.c:507
 #, c-format
 msgid "%s: removing transaction log directory \"%s\"\n"
 msgstr "%s: eliminare directorul jurnal de tranzacţii \"%s\"\n"
 
-#: initdb.c:609
+#: initdb.c:510
 #, c-format
 msgid "%s: failed to remove transaction log directory\n"
 msgstr "%s: eliminarea directorului fișierului jurnal de tranzacții  a eșuat\n"
 
-#: initdb.c:615
+#: initdb.c:516
 #, c-format
 msgid "%s: removing contents of transaction log directory \"%s\"\n"
 msgstr "%s: eliminare conţinut al directorului jurnal de tranzacții \"%s\"\n"
 
-#: initdb.c:618
+#: initdb.c:519
 #, c-format
 msgid "%s: failed to remove contents of transaction log directory\n"
 msgstr "%s: eliminarea conţinutului directorului jurnal de tranzacți a eşuat\n"
 
-#: initdb.c:627
+#: initdb.c:528
 #, c-format
 msgid "%s: data directory \"%s\" not removed at user's request\n"
 msgstr "%s: directorul de date \"%s\" nu a fost eliminat la solicitarea utilizatorului\n"
 
-#: initdb.c:632
+#: initdb.c:533
 #, c-format
 msgid "%s: transaction log directory \"%s\" not removed at user's request\n"
 msgstr "%s: directorul jurnal de tranzacții \"%s\" nu a fost eliminat la solicitarea utilizatorului\n"
 
-#: initdb.c:654
+#: initdb.c:555
 #, c-format
 msgid ""
 "%s: cannot be run as root\n"
@@ -109,35 +111,35 @@ msgstr ""
 "Autentificaţi-vă (folosind, de exempu, \"su\") ca utilizatorul (neprivilegiat)\n"
 "care va deţine procesul server.\n"
 
-#: initdb.c:666
+#: initdb.c:567
 #, c-format
 msgid "%s: could not obtain information about current user: %s\n"
 msgstr "%s: imposibil de obţinut informaţii despre utilizatorul curent: %s\n"
 
-#: initdb.c:683
+#: initdb.c:584
 #, c-format
 msgid "%s: could not get current user name: %s\n"
 msgstr "%s: imposibil de obţinut numele utilizatorului curent: %s\n"
 
-#: initdb.c:714
+#: initdb.c:615
 #, c-format
 msgid "%s: \"%s\" is not a valid server encoding name\n"
 msgstr "%s: \"%s\" nu este un nume valid de codificare pentru server\n"
 
-#: initdb.c:876
-#: initdb.c:3009
+#: initdb.c:724
+#: initdb.c:3117
 #, c-format
 msgid "%s: could not create directory \"%s\": %s\n"
 msgstr "%s: imposibil de creat directorul \"%s\": %s\n"
 
-#: initdb.c:906
+#: initdb.c:754
 #, c-format
 msgid "%s: file \"%s\" does not exist\n"
 msgstr "%s: fişierul \"%s\" nu există\n"
 
-#: initdb.c:908
-#: initdb.c:917
-#: initdb.c:927
+#: initdb.c:756
+#: initdb.c:765
+#: initdb.c:775
 #, c-format
 msgid ""
 "This might mean you have a corrupted installation or identified\n"
@@ -146,36 +148,36 @@ msgstr ""
 "Acest lucru înseamnă că aveţi o instalare coruptă sau că aţi specificat\n"
 "un director greşit pentru opţiunea -L.\n"
 
-#: initdb.c:914
+#: initdb.c:762
 #, c-format
 msgid "%s: could not access file \"%s\": %s\n"
 msgstr "%s: imposibil de accesat fişierul \"%s\": %s\n"
 
-#: initdb.c:925
+#: initdb.c:773
 #, c-format
 msgid "%s: file \"%s\" is not a regular file\n"
 msgstr "%s: fişierul \"%s\" nu este un fișier obișnuit\n"
 
-#: initdb.c:1033
+#: initdb.c:881
 #, c-format
 msgid "selecting default max_connections ... "
 msgstr "selectare valoare implicită pentru max_connections ... "
 
-#: initdb.c:1062
+#: initdb.c:910
 #, c-format
 msgid "selecting default shared_buffers ... "
 msgstr "selectare valoare implicită pentru shared_buffers ... "
 
-#: initdb.c:1105
+#: initdb.c:953
 msgid "creating configuration files ... "
 msgstr "creare fişiere de configurare ... "
 
-#: initdb.c:1272
+#: initdb.c:1128
 #, c-format
 msgid "creating template1 database in %s/base/1 ... "
 msgstr "creare bază de date template1 în %s/base/1 ... "
 
-#: initdb.c:1288
+#: initdb.c:1144
 #, c-format
 msgid ""
 "%s: input file \"%s\" does not belong to PostgreSQL %s\n"
@@ -184,103 +186,132 @@ msgstr ""
 "%s: fişierul de intrare \"%s\" nu aparţine de PostgreSQL %s\n"
 "Verificaţi instalarea sau specificaţi calea corectă folosind opţiunea -L.\n"
 
-#: initdb.c:1373
+#: initdb.c:1229
 msgid "initializing pg_authid ... "
 msgstr "iniţializare pg_authid ... "
 
-#: initdb.c:1407
+#: initdb.c:1263
 msgid "Enter new superuser password: "
 msgstr "Introduceţi noua parolă pentru utilizatorul privilegiat: "
 
-#: initdb.c:1408
+#: initdb.c:1264
 msgid "Enter it again: "
 msgstr "Introduceţi din nou: "
 
-#: initdb.c:1411
+#: initdb.c:1267
 #, c-format
 msgid "Passwords didn't match.\n"
 msgstr "Parola nu se verifică\n"
 
-#: initdb.c:1438
+#: initdb.c:1294
 #, c-format
 msgid "%s: could not read password from file \"%s\": %s\n"
 msgstr "%s: imposibil de citit parola din fişierul \"%s\": %s\n"
 
-#: initdb.c:1451
+#: initdb.c:1307
 #, c-format
 msgid "setting password ... "
 msgstr "setare parolă ... "
 
-#: initdb.c:1549
+#: initdb.c:1407
 msgid "initializing dependencies ... "
 msgstr "iniţializare dependinţe ... "
 
-#: initdb.c:1577
+#: initdb.c:1435
 msgid "creating system views ... "
 msgstr "creare vizualizări sistem ... "
 
-#: initdb.c:1613
+#: initdb.c:1471
 msgid "loading system objects' descriptions ... "
 msgstr "încărcare descrieri obiecte sistem ... "
 
-#: initdb.c:1665
+#: initdb.c:1577
+msgid "creating collations ... "
+msgstr "creare colaţionări ... "
+
+#: initdb.c:1610
+#, c-format
+msgid "%s: locale name too long, skipped: %s\n"
+msgstr "%s: numele localizării e prea lung, omis: %s\n"
+
+#: initdb.c:1635
+#, c-format
+msgid "%s: locale name has non-ASCII characters, skipped: %s\n"
+msgstr "%s: numele localizării are caractere non-ASCII, sunt omise: %s\n"
+
+#: initdb.c:1698
+#, c-format
+msgid "No usable system locales were found.\n"
+msgstr "Nu au fost găsite localizări sistem care să poată fi folosite.\n"
+
+#: initdb.c:1699
+#, c-format
+msgid "Use the option \"--debug\" to see details.\n"
+msgstr "Folosiţi opţiunea  \"--debug\" pentru a vedea detalii.\n"
+
+#: initdb.c:1702
+#, c-format
+msgid "not supported on this platform\n"
+msgstr "nu este suportat pe această platformă\n"
+
+#: initdb.c:1717
 msgid "creating conversions ... "
 msgstr "creare conversii ... "
 
-#: initdb.c:1700
+#: initdb.c:1752
 msgid "creating dictionaries ... "
 msgstr "creare dicționare ... "
 
-#: initdb.c:1754
+#: initdb.c:1806
 msgid "setting privileges on built-in objects ... "
 msgstr "setare privilegii pentru obiectele predefinite ... "
 
-#: initdb.c:1812
+#: initdb.c:1864
 msgid "creating information schema ... "
 msgstr "creare schemă de informaţii ... "
 
-#: initdb.c:1868
+#: initdb.c:1920
 msgid "loading PL/pgSQL server-side language ... "
 msgstr "încărcând limbajul server PL/pgSQL ... "
 
-#: initdb.c:1893
+#: initdb.c:1945
 msgid "vacuuming database template1 ... "
 msgstr "vidare bază de date template1 ... "
 
-#: initdb.c:1947
+#: initdb.c:2001
 msgid "copying template1 to template0 ... "
 msgstr "copiere template1 în template0 ... "
 
-#: initdb.c:1978
+#: initdb.c:2033
 msgid "copying template1 to postgres ... "
 msgstr "copiere template1 în postgres ... "
 
-#: initdb.c:2035
+#: initdb.c:2090
 #, c-format
 msgid "caught signal\n"
 msgstr "interceptare semnal\n"
 
-#: initdb.c:2041
+#: initdb.c:2096
 #, c-format
 msgid "could not write to child process: %s\n"
 msgstr "imposibil de scris în procesul fiu: %s\n"
 
-#: initdb.c:2049
+#: initdb.c:2104
 #, c-format
 msgid "ok\n"
 msgstr "ok\n"
 
-#: initdb.c:2169
+#: initdb.c:2224
 #, c-format
 msgid "%s: invalid locale name \"%s\"\n"
 msgstr "%s: nume de localizare incorect \"%s\"\n"
 
-#: initdb.c:2195
+#: initdb.c:2250
 #, c-format
 msgid "%s: encoding mismatch\n"
 msgstr "%s: nepotrivire de codificare\n"
 
-#: initdb.c:2197
+#: initdb.c:2252
 #, c-format
 msgid ""
 "The encoding you selected (%s) and the encoding that the\n"
@@ -295,7 +326,7 @@ msgstr ""
 "rulaţi %s din nou şi fie nu specificaţi nici o codificare, fie selectaţi\n"
 "o combinaţie potrivită.\n"
 
-#: initdb.c:2378
+#: initdb.c:2458
 #, c-format
 msgid ""
 "%s initializes a PostgreSQL database cluster.\n"
@@ -304,17 +335,17 @@ msgstr ""
 "%s iniţializează un grup de baze de date PostgreSQL.\n"
 "\n"
 
-#: initdb.c:2379
+#: initdb.c:2459
 #, c-format
 msgid "Usage:\n"
 msgstr "Utilizare:\n"
 
-#: initdb.c:2380
+#: initdb.c:2460
 #, c-format
 msgid "  %s [OPTION]... [DATADIR]\n"
 msgstr "  %s [OPŢIUNE]... [DIRDATE]\n"
 
-#: initdb.c:2381
+#: initdb.c:2461
 #, c-format
 msgid ""
 "\n"
@@ -323,27 +354,27 @@ msgstr ""
 "\n"
 "Opţiuni:\n"
 
-#: initdb.c:2382
+#: initdb.c:2462
 #, c-format
 msgid "  -A, --auth=METHOD         default authentication method for local connections\n"
 msgstr "  -A, --auth=METODĂ         metoda de autentificare implicită pentru conexiunile locale\n"
 
-#: initdb.c:2383
+#: initdb.c:2463
 #, c-format
 msgid " [-D, --pgdata=]DATADIR     location for this database cluster\n"
 msgstr " [-D, --pgdata=]DIRDATE     locaţia pentru acest grup de baze de date\n"
 
-#: initdb.c:2384
+#: initdb.c:2464
 #, c-format
 msgid "  -E, --encoding=ENCODING   set default encoding for new databases\n"
 msgstr "  -E, --encoding=CODIFICARE setează codificarea implicită pentru bazele de date noi\n"
 
-#: initdb.c:2385
+#: initdb.c:2465
 #, c-format
 msgid "      --locale=LOCALE       set default locale for new databases\n"
 msgstr "    --locale=CODIFICARE setează codificarea implicită pentru bazele de date noi\n"
 
-#: initdb.c:2386
+#: initdb.c:2466
 #, c-format
 msgid ""
 "      --lc-collate=, --lc-ctype=, --lc-messages=LOCALE\n"
@@ -356,17 +387,17 @@ msgstr ""
 "                            setează localizarea pentru bazele de date noi\n"
 "                            în categoria predefinită (implicit, luată din mediu)\n"
 
-#: initdb.c:2390
+#: initdb.c:2470
 #, c-format
 msgid "      --no-locale           equivalent to --locale=C\n"
 msgstr "      --no-locale          echivalent cu --locale=C\n"
 
-#: initdb.c:2391
+#: initdb.c:2471
 #, c-format
 msgid "      --pwfile=FILE         read password for the new superuser from file\n"
 msgstr "      --pwfile=FIȘIER         citire parolă pentru noul utilizator privilegiat din fişier\n"
 
-#: initdb.c:2392
+#: initdb.c:2472
 #, c-format
 msgid ""
 "  -T, --text-search-config=CFG\n"
@@ -375,22 +406,22 @@ msgstr ""
 "  -T, --text-search-config=CFG\n"
 "                           configurarea prestabilită pentru căutare text\n"
 
-#: initdb.c:2394
+#: initdb.c:2474
 #, c-format
 msgid "  -U, --username=NAME       database superuser name\n"
 msgstr "  -U, --username=NUME       nume utilizator privilegiat pentru baza de date\n"
 
-#: initdb.c:2395
+#: initdb.c:2475
 #, c-format
 msgid "  -W, --pwprompt            prompt for a password for the new superuser\n"
 msgstr "  -W, --pwprompt            solicitare parolă pentru noul utilizator privilegiat\n"
 
-#: initdb.c:2396
+#: initdb.c:2476
 #, c-format
 msgid "  -X, --xlogdir=XLOGDIR     location for the transaction log directory\n"
 msgstr "  -X, --xlogdir=XLOGDIR     locația directorului jurnal de tranzacții\n"
 
-#: initdb.c:2397
+#: initdb.c:2477
 #, c-format
 msgid ""
 "\n"
@@ -399,27 +430,27 @@ msgstr ""
 "\n"
 "Opţiuni mai puţin folosite:\n"
 
-#: initdb.c:2398
+#: initdb.c:2478
 #, c-format
 msgid "  -d, --debug               generate lots of debugging output\n"
 msgstr "  -d, --debug               generează mesaje pentru depanare\n"
 
-#: initdb.c:2399
+#: initdb.c:2479
 #, c-format
 msgid "  -L DIRECTORY              where to find the input files\n"
 msgstr "  -L DIRECTOR               locaţia fişierele de intrare\n"
 
-#: initdb.c:2400
+#: initdb.c:2480
 #, c-format
 msgid "  -n, --noclean             do not clean up after errors\n"
 msgstr "  -n, --noclean             nu se face curat după erori\n"
 
-#: initdb.c:2401
+#: initdb.c:2481
 #, c-format
 msgid "  -s, --show                show internal settings\n"
 msgstr "  -s, --show                afişează setările interne\n"
 
-#: initdb.c:2402
+#: initdb.c:2482
 #, c-format
 msgid ""
 "\n"
@@ -428,17 +459,17 @@ msgstr ""
 "\n"
 "Alte opţiuni:\n"
 
-#: initdb.c:2403
+#: initdb.c:2483
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                afişează acest mesaj de ajutor, apoi iese\n"
 
-#: initdb.c:2404
+#: initdb.c:2484
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version             afişează informaţiile despre versiune, apoi iese\n"
 
-#: initdb.c:2405
+#: initdb.c:2485
 #, c-format
 msgid ""
 "\n"
@@ -448,7 +479,7 @@ msgstr ""
 "\n"
 "Dacă nu este specificat directorul de date, este folosită variabila de mediu PGDATA.\n"
 
-#: initdb.c:2407
+#: initdb.c:2487
 #, c-format
 msgid ""
 "\n"
@@ -457,34 +488,34 @@ msgstr ""
 "\n"
 "Raportaţi erorile la <pgsql-bugs@postgresql.org>.\n"
 
-#: initdb.c:2512
+#: initdb.c:2593
 #, c-format
 msgid "Running in debug mode.\n"
 msgstr "Rulare în mod depanare.\n"
 
-#: initdb.c:2516
+#: initdb.c:2597
 #, c-format
 msgid "Running in noclean mode.  Mistakes will not be cleaned up.\n"
 msgstr "Rulare în mod \"noclean\".  Greşelile nu vor fi corectate.\n"
 
-#: initdb.c:2559
-#: initdb.c:2577
-#: initdb.c:2845
+#: initdb.c:2640
+#: initdb.c:2658
+#: initdb.c:2940
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Încercaţi \"%s --help\" pentru mai multe informaţii.\n"
 
-#: initdb.c:2575
+#: initdb.c:2656
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: prea multe argumente în linia de comandă (primul este \"%s\")\n"
 
-#: initdb.c:2584
+#: initdb.c:2665
 #, c-format
 msgid "%s: password prompt and password file cannot be specified together\n"
 msgstr "%s: solicitarea parolei şi fişierul de parole nu pot fi specificate împreună\n"
 
-#: initdb.c:2590
+#: initdb.c:2671
 msgid ""
 "\n"
 "WARNING: enabling \"trust\" authentication for local connections\n"
@@ -496,17 +527,17 @@ msgstr ""
 "Puteţi modifica acest lucru editând pg_hba.conf sau folosind opţiunea -A\n"
 "la următoarea rulare a initdb.\n"
 
-#: initdb.c:2613
+#: initdb.c:2694
 #, c-format
 msgid "%s: unrecognized authentication method \"%s\"\n"
 msgstr "%s: metodă de autentificare nerecunoscută \"%s\"\n"
 
-#: initdb.c:2623
+#: initdb.c:2704
 #, c-format
 msgid "%s: must specify a password for the superuser to enable %s authentication\n"
 msgstr "%s: trebuie să specificaţi o parolă pentru utilizatorul privilegiat pentru a activa autentificarea %s\n"
 
-#: initdb.c:2638
+#: initdb.c:2733
 #, c-format
 msgid ""
 "%s: no data directory specified\n"
@@ -519,7 +550,7 @@ msgstr ""
 "de baze de date.  Puteţi face acest lucru folosind opţiunea -D sau\n"
 "variabila de mediu PGDATA.\n"
 
-#: initdb.c:2722
+#: initdb.c:2817
 #, c-format
 msgid ""
 "The program \"postgres\" is needed by %s but was not found in the\n"
@@ -530,7 +561,7 @@ msgstr ""
 "în acelaşi director cu \"%s\".\n"
 "Verificaţi instalarea.\n"
 
-#: initdb.c:2729
+#: initdb.c:2824
 #, c-format
 msgid ""
 "The program \"postgres\" was found by \"%s\"\n"
@@ -541,12 +572,12 @@ msgstr ""
 "dar nu are aceeaşi versiune ca %s.\n"
 "Verificaţi instalarea.\n"
 
-#: initdb.c:2748
+#: initdb.c:2843
 #, c-format
 msgid "%s: input file location must be an absolute path\n"
 msgstr "%s: locaţia fişierului de intrare trebuie să fie o cale absolută\n"
 
-#: initdb.c:2805
+#: initdb.c:2900
 #, c-format
 msgid ""
 "The files belonging to this database system will be owned by user \"%s\".\n"
@@ -557,12 +588,12 @@ msgstr ""
 "Acest utilizator trebuie să deţină şi procesul serverului.\n"
 "\n"
 
-#: initdb.c:2815
+#: initdb.c:2910
 #, c-format
 msgid "The database cluster will be initialized with locale %s.\n"
 msgstr "Grupul de baze de date va fi iniţializat cu localizarea %s.\n"
 
-#: initdb.c:2818
+#: initdb.c:2913
 #, c-format
 msgid ""
 "The database cluster will be initialized with locales\n"
@@ -581,22 +612,31 @@ msgstr ""
 "  NUMERIC:  %s\n"
 "  TIME:     %s\n"
 
-#: initdb.c:2842
+#: initdb.c:2937
 #, c-format
 msgid "%s: could not find suitable encoding for locale %s\n"
 msgstr "%s: imposibil de găsit o codificare potrivită pentru localizarea %s\n"
 
-#: initdb.c:2844
+#: initdb.c:2939
 #, c-format
 msgid "Rerun %s with the -E option.\n"
 msgstr "Re-rulaţi %s cu opţiunea -E.\n"
 
-#: initdb.c:2853
+#: initdb.c:2952
+#, c-format
+msgid ""
+"Encoding %s implied by locale is not allowed as a server-side encoding.\n"
+"The default database encoding will be set to %s instead.\n"
+msgstr ""
+"Codificarea %s nu este permisă ca și codificare server.\n"
+"În locul acesteia baza de date va avea codificarea prestabilită %s.\n"
+
+#: initdb.c:2960
 #, c-format
 msgid "%s: locale %s requires unsupported encoding %s\n"
 msgstr "%s: localizarea %s necesită codificarea nesuportată %s\n"
 
-#: initdb.c:2856
+#: initdb.c:2963
 #, c-format
 msgid ""
 "Encoding %s is not allowed as a server-side encoding.\n"
@@ -605,56 +645,56 @@ msgstr ""
 "Codificarea %s nu este permisă ca și codificare server.\n"
 "Rulați din nou %s după ce selectați o localizare diferită.\n"
 
-#: initdb.c:2864
+#: initdb.c:2972
 #, c-format
 msgid "The default database encoding has accordingly been set to %s.\n"
 msgstr "Codificarea implicită a bazei de date a fost setată în mod corespunzător la %s.\n"
 
-#: initdb.c:2881
+#: initdb.c:2989
 #, c-format
 msgid "%s: could not find suitable text search configuration for locale %s\n"
 msgstr "%s: imposibil de găsit configurarea potrivită pentru căutare text pentru localizarea %s\n"
 
-#: initdb.c:2892
+#: initdb.c:3000
 #, c-format
 msgid "%s: warning: suitable text search configuration for locale %s is unknown\n"
 msgstr "%s: atenție: configurarea potrivită pentru căutare text pentru localizarea %s nu este cunoscută\n"
 
-#: initdb.c:2897
+#: initdb.c:3005
 #, c-format
 msgid "%s: warning: specified text search configuration \"%s\" might not match locale %s\n"
 msgstr "%s: atenție: configurarea specificată pentru căutare text \"%s\" posibil să nu se potrivească cu localizarea %s\n"
 
-#: initdb.c:2902
+#: initdb.c:3010
 #, c-format
 msgid "The default text search configuration will be set to \"%s\".\n"
 msgstr "Configurarrea implicită pentru căutare text va fi stabilită la \"%s\".\n"
 
-#: initdb.c:2936
-#: initdb.c:3003
+#: initdb.c:3044
+#: initdb.c:3111
 #, c-format
 msgid "creating directory %s ... "
 msgstr "creare director %s ... "
 
-#: initdb.c:2950
-#: initdb.c:3020
+#: initdb.c:3058
+#: initdb.c:3129
 #, c-format
 msgid "fixing permissions on existing directory %s ... "
 msgstr "stabilire permisiuni pentru directorul existent %s ... "
 
-#: initdb.c:2956
-#: initdb.c:3026
+#: initdb.c:3064
+#: initdb.c:3135
 #, c-format
 msgid "%s: could not change permissions of directory \"%s\": %s\n"
 msgstr "%s: imposibil de schimbat drepturile de acces pentru directorul \"%s\": %s\n"
 
-#: initdb.c:2969
-#: initdb.c:3038
+#: initdb.c:3077
+#: initdb.c:3148
 #, c-format
 msgid "%s: directory \"%s\" exists but is not empty\n"
 msgstr "%s: directorul \"%s\" există dar nu este gol\n"
 
-#: initdb.c:2972
+#: initdb.c:3080
 #, c-format
 msgid ""
 "If you want to create a new database system, either remove or empty\n"
@@ -665,18 +705,18 @@ msgstr ""
 "directorul \"%s\" sau rulaţi %s\n"
 "cu alt argument decât \"%s\".\n"
 
-#: initdb.c:2980
-#: initdb.c:3048
+#: initdb.c:3088
+#: initdb.c:3158
 #, c-format
 msgid "%s: could not access directory \"%s\": %s\n"
 msgstr "%s: imposibil de accesat directorul \"%s\": %s\n"
 
-#: initdb.c:2994
+#: initdb.c:3102
 #, c-format
 msgid "%s: transaction log directory location must be an absolute path\n"
 msgstr "%s: locaţia fişierului log de tranzacții trebuie să fie o cale absolută\n"
 
-#: initdb.c:3041
+#: initdb.c:3151
 #, c-format
 msgid ""
 "If you want to store the transaction log there, either\n"
@@ -685,22 +725,22 @@ msgstr ""
 "Dacă doriți să stocați fișierul jurnal de tranzacții aici, fie\n"
 "ștergeți sau goliți directorul \"%s\".\n"
 
-#: initdb.c:3060
+#: initdb.c:3170
 #, c-format
 msgid "%s: could not create symbolic link \"%s\": %s\n"
 msgstr "%s: nu poate crea legătura simbolică \"%s\": %s\n"
 
-#: initdb.c:3065
+#: initdb.c:3175
 #, c-format
 msgid "%s: symlinks are not supported on this platform"
 msgstr "%s: symlink nu sunt suportate pe această platformă"
 
-#: initdb.c:3071
+#: initdb.c:3181
 #, c-format
 msgid "creating subdirectories ... "
 msgstr "creare subdirectoare ..."
 
-#: initdb.c:3135
+#: initdb.c:3247
 #, c-format
 msgid ""
 "\n"
@@ -731,23 +771,28 @@ msgstr "memorie insuficientă\n"
 msgid "could not set junction for \"%s\": %s\n"
 msgstr "imposibil de stabilit joncțiunea pentru \"%s\": %s\n"
 
-#: ../../port/dirmod.c:325
+#: ../../port/dirmod.c:361
+#, c-format
+msgid "could not get junction for \"%s\": %s\n"
+msgstr "imposibil de obţinut joncțiunea pentru \"%s\": %s\n"
+
+#: ../../port/dirmod.c:443
 #, c-format
 msgid "could not open directory \"%s\": %s\n"
 msgstr "imposibil de deschis directorul \"%s\": %s\n"
 
-#: ../../port/dirmod.c:362
+#: ../../port/dirmod.c:480
 #, c-format
 msgid "could not read directory \"%s\": %s\n"
 msgstr "imposibil de citit directorul \"%s\": %s\n"
 
-#: ../../port/dirmod.c:445
+#: ../../port/dirmod.c:563
 #, c-format
 msgid "could not stat file or directory \"%s\": %s\n"
 msgstr "imposibil de stabilit directorul \"%s\": %s\n"
 
-#: ../../port/dirmod.c:472
-#: ../../port/dirmod.c:489
+#: ../../port/dirmod.c:590
+#: ../../port/dirmod.c:607
 #, c-format
 msgid "could not remove file or directory \"%s\": %s\n"
 msgstr "imposibil de eliminat directorul \"%s\": %s\n"
@@ -785,27 +830,27 @@ msgstr "imposibil de schimbat directorul în \"%s\""
 msgid "could not read symbolic link \"%s\""
 msgstr "imposibil de citit legătura simbolică \"%s\""
 
-#: ../../port/exec.c:516
+#: ../../port/exec.c:517
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "procesul fiu a ieşit cu codul %d"
 
-#: ../../port/exec.c:520
+#: ../../port/exec.c:521
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "procesul fiu a fost terminat cu excepția 0x%X"
 
-#: ../../port/exec.c:529
+#: ../../port/exec.c:530
 #, c-format
 msgid "child process was terminated by signal %s"
 msgstr "procesul fiu a fost terminat cu semnalul %s"
 
-#: ../../port/exec.c:532
+#: ../../port/exec.c:533
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "procesul fiu a fost terminat cu semnalul %d"
 
-#: ../../port/exec.c:536
+#: ../../port/exec.c:537
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "procesul fiu a ieşit cu starea nerecunoscută %d"

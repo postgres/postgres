@@ -1,0 +1,624 @@
+# LANGUAGE message translation file for ecpg
+# Copyright (C) 2011 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+#
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 9.0\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2011-09-04 02:55+0000\n"
+"PO-Revision-Date: 2011-09-04 23:19+0200\n"
+"Last-Translator: \n"
+"Language-Team: Czech <kde-i18n-doc@kde.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+"X-Generator: Lokalize 1.2\n"
+
+#: descriptor.c:64
+#, c-format
+msgid "variable \"%s\" must have a numeric type"
+msgstr "proměnná \"%s\" musí mít číselný typ"
+
+#: descriptor.c:124 descriptor.c:146
+#, c-format
+msgid "descriptor \"%s\" does not exist"
+msgstr ""
+
+#: descriptor.c:161 descriptor.c:210
+#, c-format
+msgid "descriptor header item \"%d\" does not exist"
+msgstr ""
+
+#: descriptor.c:182
+msgid "nullable is always 1"
+msgstr "nullable je vždy 1"
+
+#: descriptor.c:185
+msgid "key_member is always 0"
+msgstr "key_member je vždy 0"
+
+#: descriptor.c:277
+#, c-format
+msgid "descriptor item \"%s\" is not implemented"
+msgstr ""
+
+#: descriptor.c:287
+#, c-format
+msgid "descriptor item \"%s\" cannot be set"
+msgstr ""
+
+#: ecpg.c:35
+#, c-format
+msgid ""
+"%s is the PostgreSQL embedded SQL preprocessor for C programs.\n"
+"\n"
+msgstr ""
+"%s je PostgreSQL preprocesor vloženého SQL pro C programy.\n"
+"\n"
+
+#: ecpg.c:37
+#, c-format
+msgid ""
+"Usage:\n"
+"  %s [OPTION]... FILE...\n"
+"\n"
+msgstr ""
+"Použití:\n"
+"  %s [VOLBA]... SOUBOR...\n"
+"\n"
+
+#: ecpg.c:40
+#, c-format
+msgid "Options:\n"
+msgstr "Volby:\n"
+
+#: ecpg.c:41
+#, c-format
+msgid ""
+"  -c             automatically generate C code from embedded SQL code;\n"
+"                 this affects EXEC SQL TYPE\n"
+msgstr ""
+"  -c             automaticky generuje C kód z vložných SQL příkazů;\n"
+"                 toto ovlivňuje EXEC SQL TYPE\n"
+
+#: ecpg.c:43
+#, c-format
+msgid ""
+"  -C MODE        set compatibility mode; MODE can be one of\n"
+"                 \"INFORMIX\", \"INFORMIX_SE\"\n"
+msgstr ""
+"  -C MÓD         nastaví mód kompatibility; MÓD může být jedno z \n"
+"                 \"INFORMIX\", \"INFORMIX_SE\"\n"
+
+#: ecpg.c:46
+#, c-format
+msgid "  -d             generate parser debug output\n"
+msgstr "  -d             zapne generování ladicích informací parseru\n"
+
+#: ecpg.c:48
+#, c-format
+msgid "  -D SYMBOL      define SYMBOL\n"
+msgstr "  -D SYMBOL      definuje SYMBOL\n"
+
+#: ecpg.c:49
+#, c-format
+msgid ""
+"  -h             parse a header file, this option includes option \"-c\"\n"
+msgstr ""
+"  -h             naparsuje hlavičkový soubor, tato volba zahrnuje volbu \"-c"
+"\"\n"
+
+#: ecpg.c:50
+#, c-format
+msgid "  -i             parse system include files as well\n"
+msgstr "  -i             naparsuje také systémové hlavičkové soubory\n"
+
+#: ecpg.c:51
+#, c-format
+msgid "  -I DIRECTORY   search DIRECTORY for include files\n"
+msgstr "  -I ADRESÁŘ     vyhledá include soubory v ADRESÁŘi\n"
+
+#: ecpg.c:52
+#, c-format
+msgid "  -o OUTFILE     write result to OUTFILE\n"
+msgstr "  -o SOUBOR     zapíše výsledek do SOUBORu\n"
+
+#: ecpg.c:53
+#, c-format
+msgid ""
+"  -r OPTION      specify run-time behavior; OPTION can be:\n"
+"                 \"no_indicator\", \"prepare\", \"questionmarks\"\n"
+msgstr ""
+"  -r VOLBA      určuje run-time chování; VOLBA může být:\n"
+"                 \"no_indicator\", \"prepare\", \"questionmarks\"\n"
+
+#: ecpg.c:55
+#, c-format
+msgid "  --regression   run in regression testing mode\n"
+msgstr "  --regression   běh v módu regresních testů\n"
+
+#: ecpg.c:56
+#, c-format
+msgid "  -t             turn on autocommit of transactions\n"
+msgstr "  -t             zapne autocommit transakcí\n"
+
+#: ecpg.c:57
+#, c-format
+msgid "  --help         show this help, then exit\n"
+msgstr "  --help         zobrazí tuto nápovědu; poté skončí\n"
+
+#: ecpg.c:58
+#, c-format
+msgid "  --version      output version information, then exit\n"
+msgstr "  --version      vypíše informaci o verzi, poté skončí\n"
+
+#: ecpg.c:59
+#, c-format
+msgid ""
+"\n"
+"If no output file is specified, the name is formed by adding .c to the\n"
+"input file name, after stripping off .pgc if present.\n"
+msgstr ""
+"\n"
+"Pokud není zadán žádný výstupní soubor, je jméno získáno přidáním .c\n"
+"na konec jména vstupního souboru, po odstranění koncovky .pgc pokud\n"
+"je přítomna.\n"
+
+#: ecpg.c:61
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"Chyby hlaste na adresu <pgsql-bugs@postgresql.org>.\n"
+
+#: ecpg.c:182 ecpg.c:333 ecpg.c:343
+#, c-format
+msgid "%s: could not open file \"%s\": %s\n"
+msgstr "%s: nelze otevřít soubor \"%s\": %s\n"
+
+#: ecpg.c:221 ecpg.c:234 ecpg.c:250 ecpg.c:275
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Zkuste \"%s --help\" pro více informací.\n"
+
+#: ecpg.c:245
+#, c-format
+msgid "%s: parser debug support (-d) not available\n"
+msgstr "%s: podpora pro ladicí informace parseru (-d) není dostupná\n"
+
+#: ecpg.c:263
+#, c-format
+msgid "%s, the PostgreSQL embedded C preprocessor, version %d.%d.%d\n"
+msgstr ""
+
+#: ecpg.c:265
+#, c-format
+msgid "EXEC SQL INCLUDE ... search starts here:\n"
+msgstr "EXEC SQL INCLUDE ... hledání začíná zde:\n"
+
+#: ecpg.c:268
+#, c-format
+msgid "end of search list\n"
+msgstr "konec vyhledávacího seznamu\n"
+
+#: ecpg.c:274
+#, c-format
+msgid "%s: no input files specified\n"
+msgstr "%s: nebyl zadán žádný vstupní soubor\n"
+
+#: ecpg.c:466
+#, c-format
+msgid "cursor \"%s\" has been declared but not opened"
+msgstr "kurzor \"%s\" byl deklarován ale nebyl otevřen"
+
+#: ecpg.c:479 preproc.y:109
+#, c-format
+msgid "could not remove output file \"%s\"\n"
+msgstr "nelze odstranit výstupní soubor \"%s\"\n"
+
+#: pgc.l:402
+msgid "unterminated /* comment"
+msgstr "neukončený /* komentář"
+
+#: pgc.l:415
+msgid "invalid bit string literal"
+msgstr "neplatný bit string literál"
+
+#: pgc.l:424
+msgid "unterminated bit string literal"
+msgstr "neukončený literál - bitový řetězec"
+
+#: pgc.l:440
+msgid "unterminated hexadecimal string literal"
+msgstr "neukončený literál - hexadecimální řetězec"
+
+#: pgc.l:518
+msgid "unterminated quoted string"
+msgstr "neukončený řetězec v uvozovkách"
+
+#: pgc.l:573 pgc.l:586
+msgid "zero-length delimited identifier"
+msgstr ""
+
+#: pgc.l:594
+msgid "unterminated quoted identifier"
+msgstr "neukončený identifikátor v uvozovkách"
+
+#: pgc.l:940
+msgid "missing identifier in EXEC SQL UNDEF command"
+msgstr "chybějící identifikátor v příkazu EXEC SQL UNDEF"
+
+#: pgc.l:986 pgc.l:1000
+msgid "missing matching \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\""
+msgstr "chybějící odpovídající \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\""
+
+#: pgc.l:989 pgc.l:1002 pgc.l:1178
+msgid "missing \"EXEC SQL ENDIF;\""
+msgstr "chybějící \"EXEC SQL ENDIF;\""
+
+#: pgc.l:1018 pgc.l:1037
+msgid "more than one EXEC SQL ELSE"
+msgstr "více než jedna větev EXEC SQL ELSE"
+
+#: pgc.l:1059 pgc.l:1073
+msgid "unmatched EXEC SQL ENDIF"
+msgstr "neodpovídající EXEC SQL ENDIF"
+
+#: pgc.l:1093
+msgid "too many nested EXEC SQL IFDEF conditions"
+msgstr "příliš mnoho zanořených EXEC SQL IFDEF podmínek"
+
+#: pgc.l:1126
+msgid "missing identifier in EXEC SQL IFDEF command"
+msgstr "chybějící identifikátor v příkazu EXEC SQL IFDEF"
+
+#: pgc.l:1135
+msgid "missing identifier in EXEC SQL DEFINE command"
+msgstr "chybějící identifikátor v příkazu EXEC SQL DEFINE"
+
+#: pgc.l:1168
+msgid "syntax error in EXEC SQL INCLUDE command"
+msgstr "syntaktická chyba v příkazu EXEC SQL INCLUDE"
+
+#: pgc.l:1217
+msgid ""
+"internal error: unreachable state; please report this to <pgsql-"
+"bugs@postgresql.org>"
+msgstr ""
+"interní chyba: nedosažitelný stav; oznamte toto prosím na <pgsql-"
+"bugs@postgresql.org>"
+
+#: pgc.l:1342
+#, c-format
+msgid "Error: include path \"%s/%s\" is too long on line %d, skipping\n"
+msgstr ""
+"Chyba: include path \"%s/%s\" na řádku %d je příliš dlouhá, přeskakuji\n"
+
+#: pgc.l:1364
+#, c-format
+msgid "could not open include file \"%s\" on line %d"
+msgstr "nelze otevřít soubor \"%s\" na řádku %d"
+
+#: preproc.y:31
+msgid "syntax error"
+msgstr "syntaktická chyba"
+
+#: preproc.y:81
+#, c-format
+msgid "WARNING: "
+msgstr "VAROVÁNÍ: "
+
+#: preproc.y:85
+#, c-format
+msgid "ERROR: "
+msgstr "CHYBA: "
+
+#: preproc.y:391
+#, c-format
+msgid "cursor \"%s\" does not exist"
+msgstr "kurzor \"%s\" neexistuje"
+
+#: preproc.y:419
+msgid "initializer not allowed in type definition"
+msgstr "inicializátor (initializer) není v definici typu povolen"
+
+#: preproc.y:421
+msgid "type name \"string\" is reserved in Informix mode"
+msgstr "název typu \"string\" je vyhrazen pro mód Informix"
+
+#: preproc.y:428 preproc.y:13011
+#, c-format
+msgid "type \"%s\" is already defined"
+msgstr "typ \"%s\" je již definován"
+
+#: preproc.y:452 preproc.y:13651 preproc.y:13972 variable.c:610
+msgid "multidimensional arrays for simple data types are not supported"
+msgstr "vícerozměrná pole pro jednoduché datové typy nejsou podporována"
+
+#: preproc.y:1425
+msgid "AT option not allowed in CLOSE DATABASE statement"
+msgstr "AT volba není v příkazu CLOSE DATABASE povolena"
+
+#: preproc.y:1495 preproc.y:1639
+msgid "AT option not allowed in DEALLOCATE statement"
+msgstr "AT volba není v příkazu DEALLOCATE povolena"
+
+#: preproc.y:1625
+msgid "AT option not allowed in CONNECT statement"
+msgstr "AT volba není v příkazu CONNECT povolena"
+
+#: preproc.y:1661
+msgid "AT option not allowed in DISCONNECT statement"
+msgstr "AT volba není v příkazu DISCONNECT povolena"
+
+#: preproc.y:1716
+msgid "AT option not allowed in SET CONNECTION statement"
+msgstr "AT volba není v příkazu SET CONNECTION povolena"
+
+#: preproc.y:1738
+msgid "AT option not allowed in TYPE statement"
+msgstr "AT volba není v příkazu TYPE povolena"
+
+#: preproc.y:1747
+msgid "AT option not allowed in VAR statement"
+msgstr "AT volba není v příkazu VAR povolena"
+
+#: preproc.y:1754
+msgid "AT option not allowed in WHENEVER statement"
+msgstr "AT volba není v příkazu WHENEVER povolena"
+
+#: preproc.y:2100 preproc.y:3338 preproc.y:4526 preproc.y:4535 preproc.y:4816
+#: preproc.y:7103 preproc.y:7108 preproc.y:7113 preproc.y:9447 preproc.y:9990
+msgid "unsupported feature will be passed to server"
+msgstr "nepodporovaná vlastnost bude předána serveru"
+
+#: preproc.y:2326
+msgid "SHOW ALL is not implemented"
+msgstr "příkaz SHOW ALL není implementován"
+
+#: preproc.y:2749 preproc.y:2760
+msgid "COPY TO STDIN is not possible"
+msgstr "příkaz COPY TO STDIN nelze použít"
+
+#: preproc.y:2751
+msgid "COPY FROM STDOUT is not possible"
+msgstr "příkaz COPY FROM STDOUT nelze použít"
+
+#: preproc.y:2753
+msgid "COPY FROM STDIN is not implemented"
+msgstr "příkaz COPY FROM STDIN není implementován"
+
+#: preproc.y:7909 preproc.y:12600
+#, c-format
+msgid "using variable \"%s\" in different declare statements is not supported"
+msgstr "použití proměnné \"%s\" v dalších deklaracích není podporováno"
+
+#: preproc.y:7911 preproc.y:12602
+#, c-format
+msgid "cursor \"%s\" is already defined"
+msgstr "kurzor \"%s\" je již definován"
+
+#: preproc.y:8329
+msgid "no longer supported LIMIT #,# syntax passed to server"
+msgstr "již neopdporovaná syntaxe LIMIT #,# předána serveru"
+
+#: preproc.y:8564
+msgid "subquery in FROM must have an alias"
+msgstr "poddotaz ve FROM musí mít alias"
+
+#: preproc.y:12332
+msgid "CREATE TABLE AS cannot specify INTO"
+msgstr "CREATE TABLE AS nemůže specifikovat INTO"
+
+#: preproc.y:12369
+#, c-format
+msgid "expected \"@\", found \"%s\""
+msgstr "očekáváno \"@\", nalezeno \"%s\""
+
+#: preproc.y:12381
+msgid ""
+"only protocols \"tcp\" and \"unix\" and database type \"postgresql\" are "
+"supported"
+msgstr ""
+"podporovány jsou pouze protokoly \"tcp\" a \"unix\" a typ databáze "
+"\"postgresql\""
+
+#: preproc.y:12384
+#, c-format
+msgid "expected \"://\", found \"%s\""
+msgstr "očekáváno \"://\", nalezeno \"%s\""
+
+#: preproc.y:12389
+#, c-format
+msgid "Unix-domain sockets only work on \"localhost\" but not on \"%s\""
+msgstr "Unixové sockety fungují pouze na \"localhost\" ale ne na \"%s\""
+
+#: preproc.y:12415
+#, c-format
+msgid "expected \"postgresql\", found \"%s\""
+msgstr "očekáváno \"postgresql\", nalezeno \"%s\""
+
+#: preproc.y:12418
+#, c-format
+msgid "invalid connection type: %s"
+msgstr "chybný typ spojení: %s"
+
+#: preproc.y:12427
+#, c-format
+msgid "expected \"@\" or \"://\", found \"%s\""
+msgstr "očekáváno \"@\" nebo \"://\", nalezeno \"%s\""
+
+#: preproc.y:12502 preproc.y:12520
+msgid "invalid data type"
+msgstr "chybný datový typ"
+
+#: preproc.y:12531 preproc.y:12546
+msgid "incomplete statement"
+msgstr "neúplný příkaz"
+
+#: preproc.y:12534 preproc.y:12549
+#, c-format
+msgid "unrecognized token \"%s\""
+msgstr "nerozpoznaný token \"%s\""
+
+#: preproc.y:12822
+msgid "only data types numeric and decimal have precision/scale argument"
+msgstr "pouze datové typy numeric a decimal mají argumenty přesnost/velikost"
+
+#: preproc.y:12834
+msgid "interval specification not allowed here"
+msgstr "specifikace intervalu zde není povolena"
+
+#: preproc.y:12986 preproc.y:13038
+msgid "too many levels in nested structure/union definition"
+msgstr "příliš mnoho úrovní v definici vnořené struktury/union"
+
+#: preproc.y:13169
+msgid "pointers to varchar are not implemented"
+msgstr "ukazatele na varchar nejsou implementovány"
+
+#: preproc.y:13356 preproc.y:13381
+msgid "using unsupported DESCRIBE statement"
+msgstr "použití nepodporovaného příkazu DESCRIBE"
+
+#: preproc.y:13618
+msgid "initializer not allowed in EXEC SQL VAR command"
+msgstr "inicializátor není v příkazu EXEC SQL VAR podporován"
+
+#: preproc.y:13930
+msgid "arrays of indicators are not allowed on input"
+msgstr "pole identifikátorů nejsou na vstupu povolena"
+
+#. translator: %s is typically the translation of "syntax error"
+#: preproc.y:14184
+#, c-format
+msgid "%s at or near \"%s\""
+msgstr "%s na nebo blízko \"%s\""
+
+#: type.c:18 type.c:30
+msgid "out of memory"
+msgstr "nedostatek paměti"
+
+#: type.c:212 type.c:594
+#, c-format
+msgid "unrecognized variable type code %d"
+msgstr "nerozpoznaný kód typu proměnné %d"
+
+#: type.c:261
+#, c-format
+msgid "variable \"%s\" is hidden by a local variable of a different type"
+msgstr "proměnná \"%s\" je překryta lokální proměnnou s jiným datovým typem"
+
+#: type.c:263
+#, c-format
+msgid "variable \"%s\" is hidden by a local variable"
+msgstr "proměnná \"%s\" je překryta lokální proměnnou"
+
+#: type.c:275
+#, c-format
+msgid ""
+"indicator variable \"%s\" is hidden by a local variable of a different type"
+msgstr ""
+"indicator variable \"%s\" je překryta lokální proměnnou s jiným datovým typem"
+
+#: type.c:277
+#, c-format
+msgid "indicator variable \"%s\" is hidden by a local variable"
+msgstr "indicator variable \"%s\" je překryta lokální proměnnou"
+
+#: type.c:285
+msgid "indicator for array/pointer has to be array/pointer"
+msgstr "indicator variable pro pole/ukaztel musí být pole/ukazatel"
+
+#: type.c:289
+msgid "nested arrays are not supported (except strings)"
+msgstr "vnořená pole nejsou podporována (kromě řetězců)"
+
+#: type.c:322
+msgid "indicator for struct has to be a struct"
+msgstr "indikátor pro strukturu musí být struktura"
+
+#: type.c:331 type.c:339 type.c:347
+msgid "indicator for simple data type has to be simple"
+msgstr "indikátor pro jednoduché datové typy musí být jednoduchý"
+
+#: type.c:653
+#, c-format
+msgid "unrecognized descriptor item code %d"
+msgstr "nerozpoznaný kód deskriptoru položky %d"
+
+#: variable.c:89 variable.c:112
+#, c-format
+msgid "incorrectly formed variable \"%s\""
+msgstr "nesprávně vytvořený název proměnné \"%s\""
+
+#: variable.c:135
+#, c-format
+msgid "variable \"%s\" is not a pointer"
+msgstr "proměnná \"%s\" není ukazatel"
+
+#: variable.c:138 variable.c:163
+#, c-format
+msgid "variable \"%s\" is not a pointer to a structure or a union"
+msgstr "proměnná \"%s\" není ukazatel na strukturu nebo sjednocení"
+
+#: variable.c:150
+#, c-format
+msgid "variable \"%s\" is neither a structure nor a union"
+msgstr "proměnná \"%s\" není ani struktura ani sjednocení"
+
+#: variable.c:160
+#, c-format
+msgid "variable \"%s\" is not an array"
+msgstr "proměnná \"%s\" není pole"
+
+#: variable.c:229 variable.c:251
+#, c-format
+msgid "variable \"%s\" is not declared"
+msgstr "proměnná \"%s\" není deklarována"
+
+#: variable.c:484
+msgid "indicator variable must have an integer type"
+msgstr "indicator variable musí mít celočíselný typ"
+
+#: variable.c:496
+#, c-format
+msgid "unrecognized data type name \"%s\""
+msgstr "nerozpoznaný název datového typu \"%s\""
+
+#: variable.c:507 variable.c:515 variable.c:532 variable.c:535
+msgid "multidimensional arrays are not supported"
+msgstr "vícerozměrná pole nejsou podporována"
+
+#: variable.c:524
+#, c-format
+msgid ""
+"multilevel pointers (more than 2 levels) are not supported; found %d level"
+msgid_plural ""
+"multilevel pointers (more than 2 levels) are not supported; found %d levels"
+msgstr[0] ""
+"víceúrovňové ukazatele (více než 2 úrovně) nejsou podporovány; nalezena %d "
+"úroveň"
+msgstr[1] ""
+"víceúrovňové ukazatele (více než 2 úrovně) nejsou podporovány; nalezeny %d "
+"úrovně"
+msgstr[2] ""
+"víceúrovňové ukazatele (více než 2 úrovně) nejsou podporovány; nalezeno %d "
+"úrovní"
+
+#: variable.c:529
+msgid "pointer to pointer is not supported for this data type"
+msgstr "ukazatel na ukazatel není pro tento datový typ podporován"
+
+#: variable.c:549
+msgid "multidimensional arrays for structures are not supported"
+msgstr "vícerozměrná pole pro struktury nejsou podporována"
+
+#~ msgid "constraint declared INITIALLY DEFERRED must be DEFERRABLE"
+#~ msgstr "omezení definované jako INITIALLY DEFERRED musí být DEFERRABLE"

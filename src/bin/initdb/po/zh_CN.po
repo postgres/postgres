@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: initdb (PostgreSQL 9.0)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2010-10-01 14:40+0000\n"
-"PO-Revision-Date: 2010-09-26 09:05+0800\n"
+"PO-Revision-Date: 2012-03-11 23:02+0200\n"
 "Last-Translator: Weibin <ssmei_2000@yahoo.com>\n"
 "Language-Team: Chinese (Simplified)\n"
 "MIME-Version: 1.0\n"
@@ -606,7 +606,7 @@ msgstr "默认的数据库编码已经相应的设置为 %s.\n"
 #: initdb.c:2881
 #, c-format
 msgid "%s: could not find suitable text search configuration for locale %s\n"
-msgstr "%s: 无法为语言环境\"%s\" 找到合适的编码配置\n"
+msgstr "%s: 无法为语言环境\"%s\" 找到合适的文本搜索配置\n"
 
 #: initdb.c:2892
 #, c-format

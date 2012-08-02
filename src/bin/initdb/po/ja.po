@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.0.0rc1\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2011-06-14 21:24+0900\n"
-"PO-Revision-Date: 2011-06-14 21:32+0900\n"
+"PO-Revision-Date: 2011-08-30 21:25+0900\n"
 "Last-Translator: HOTTA Michihide <hotta@net-newbie.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "MIME-Version: 1.0\n"
@@ -39,7 +39,7 @@ msgstr "%s: コマンド\"%s\"の実効に失敗しました: %s\n"
 #: initdb.c:490
 #, c-format
 msgid "%s: removing data directory \"%s\"\n"
-msgstr "%s: データディレクトリ\"%s\"の削除を削除しています\n"
+msgstr "%s: データディレクトリ\"%s\"を削除しています\n"
 
 #: initdb.c:493
 #, c-format
@@ -228,7 +228,7 @@ msgstr "%s: ロケール名に非ASCII文字がありますので飛ばします
 #: initdb.c:1699
 #, c-format
 msgid "No usable system locales were found.\n"
-msgstr "使用できるシステムロケールがが見つかりません\n"
+msgstr "使用できるシステムロケールが見つかりません\n"
 
 #: initdb.c:1700
 #, c-format
@@ -290,7 +290,7 @@ msgstr "ok\n"
 #: initdb.c:2225
 #, c-format
 msgid "%s: invalid locale name \"%s\"\n"
-msgstr "\"%s: ロケール名\"%s\"は無効です。\n"
+msgstr "%s: ロケール名\"%s\"は無効です。\n"
 
 #: initdb.c:2251
 #, c-format
@@ -307,7 +307,7 @@ msgid ""
 "or choose a matching combination.\n"
 msgstr ""
 "選択した符号化方式(%s)と選択したロケールが使用する符号化方式(%s)が\n"
-"が合いません。これにより各種の文字列処理関数が不正な動作をする可能性が\n"
+"合いません。これにより各種の文字列処理関数が不正な動作をする可能性が\n"
 "あります。明示的な符号化方式の指定を止めるか合致する組み合わせを\n"
 "選択して%sを再実行してください\n"
 
@@ -533,8 +533,7 @@ msgstr "%s: \"%s\"は未知の認証方式です\n"
 #, c-format
 msgid ""
 "%s: must specify a password for the superuser to enable %s authentication\n"
-msgstr ""
-"\"%s: %s認証を有効にするためにスーパーユーザのパスワードを指定してください\n"
+msgstr "%s: %s認証を有効にするためにスーパーユーザのパスワードを指定してください\n"
 
 #: initdb.c:2789
 #, c-format
