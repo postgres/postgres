@@ -8,7 +8,6 @@
    <title>Release Date</title>
    <simpara>2012-??-??</simpara>
    <simpara>CURRENT AS OF 2012-05-09</simpara>
-
   </note>
 
   <sect2>
@@ -2355,12 +2354,13 @@
 
       <listitem>
        <para>
-        Add a row processor <acronym>API</acronym> to libpq for better
-        handling of large result sets (Kyotaro Horiguchi)
+        Add a <link linkend="libpq-single-row-mode">single-row processing
+        mode</link> to libpq for better handling of large result sets
+        (Kyotaro Horiguchi, Marko Kreen)
        </para>
 
        <para>
-        Previously, libpq collected the entire query result into memory
+        Previously, libpq always collected the entire query result in memory
         before passing it back to the application.
        </para>
       </listitem>
@@ -2540,13 +2540,13 @@
 
       <listitem>
        <para>
-        Improve efficiency of <link linkend="dblink">dblink</link> by
-        using libpq's new row processor <acronym>API</acronym> (Kyotaro
-        Horiguchi)
+        Improve efficiency of <link linkend="dblink">dblink</link> by using
+        libpq's new single-row processing mode (Kyotaro Horiguchi, Marko
+        Kreen)
        </para>
 
        <para>
-        This cannot be used by
+        This improvement does not apply to
         <function>dblink_send_query()</>/<function>dblink_get_result()</>.
        </para>
       </listitem>
