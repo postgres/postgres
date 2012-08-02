@@ -722,6 +722,7 @@ spgFormDeadTuple(SpGistState *state, int tupstate,
 	if (tupstate == SPGIST_REDIRECT)
 	{
 		ItemPointerSet(&tuple->pointer, blkno, offnum);
+		Assert(TransactionIdIsValid(state->myXid));
 		tuple->xid = state->myXid;
 	}
 	else

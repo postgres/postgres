@@ -591,6 +591,7 @@ typedef struct spgxlogVacuumRedirect
 	BlockNumber blkno;			/* block number to clean */
 	uint16		nToPlaceholder; /* number of redirects to make placeholders */
 	OffsetNumber firstPlaceholder;		/* first placeholder tuple to remove */
+	TransactionId newestRedirectXid;	/* newest XID of removed redirects */
 
 	/* offsets of redirect tuples to make placeholders follow */
 } spgxlogVacuumRedirect;
