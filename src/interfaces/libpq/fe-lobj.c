@@ -682,8 +682,6 @@ lo_initialize(PGconn *conn)
 	int			n;
 	const char *query;
 	const char *fname;
-	PQrowProcessor savedRowProcessor;
-	void	   *savedRowProcessorParam;
 	Oid			foid;
 
 	if (!conn)
@@ -732,16 +730,7 @@ lo_initialize(PGconn *conn)
 			"or proname = 'loread' "
 			"or proname = 'lowrite'";
 
-	/* Ensure the standard row processor is used to collect the result */
-	savedRowProcessor = conn->rowProcessor;
-	savedRowProcessorParam = conn->rowProcessorParam;
-	PQsetRowProcessor(conn, NULL, NULL);
-
 	res = PQexec(conn, query);
-
-	conn->rowProcessor = savedRowProcessor;
-	conn->rowProcessorParam = savedRowProcessorParam;
-
 	if (res == NULL)
 	{
 		free(lobjfuncs);
