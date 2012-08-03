@@ -1115,7 +1115,8 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Specifies the maximum amount of disk space that a session can use
         for temporary files, such as sort and hash temporary files, or the
-        storage file for a held cursor.
+        storage file for a held cursor.  A transaction attempting to exceed
+        this limit will be cancelled.
         The value is specified in kilobytes, and <literal>-1</> (the
         default) means no limit.
         Only superusers can change this setting.
