@@ -99,7 +99,8 @@ PostgreSQL documentation
        <command>BEGIN</>/<command>COMMIT</> commands included in the
        string to divide it into multiple transactions.  This is
        different from the behavior when the same string is fed to
-       <application>psql</application>'s standard input.
+       <application>psql</application>'s standard input.  Also, only
+       the result of the last SQL command is returned.
       </para>
       </listitem>
     </varlistentry>
