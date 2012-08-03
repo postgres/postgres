@@ -545,6 +545,30 @@ SELECT interval '1 2:03:04' minute to second;
  1 day 02:03:04
 (1 row)
 
+SELECT interval '1 +2:03' minute to second;
+    interval    
+----------------
+ 1 day 00:02:03
+(1 row)
+
+SELECT interval '1 +2:03:04' minute to second;
+    interval    
+----------------
+ 1 day 02:03:04
+(1 row)
+
+SELECT interval '1 -2:03' minute to second;
+    interval     
+-----------------
+ 1 day -00:02:03
+(1 row)
+
+SELECT interval '1 -2:03:04' minute to second;
+    interval     
+-----------------
+ 1 day -02:03:04
+(1 row)
+
 SELECT interval '123 11' day to hour; -- ok
      interval      
 -------------------
@@ -558,6 +582,10 @@ LINE 1: SELECT interval '123 11' day;
 SELECT interval '123 11'; -- not ok, too ambiguous
 ERROR:  invalid input syntax for type interval: "123 11"
 LINE 1: SELECT interval '123 11';
+                        ^
+SELECT interval '123 2:03 -2:04'; -- not ok, redundant hh:mm fields
+ERROR:  invalid input syntax for type interval: "123 2:03 -2:04"
+LINE 1: SELECT interval '123 2:03 -2:04';
                         ^
 -- test syntaxes for restricted precision
 SELECT interval(0) '1 day 01:23:45.6789';
