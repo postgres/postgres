@@ -985,7 +985,9 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     <xref linkend="guc-synchronous-standby-names"> must be set to
     a non-empty value.  <varname>synchronous_commit</> must also be set to
     <literal>on</>, but since this is the default value, typically no change is
-    required.  This configuration will cause each commit to wait for
+    required.  (See <xref linkend="runtime-config-wal-settings"> and
+    <xref linkend="runtime-config-replication-master">.)
+    This configuration will cause each commit to wait for
     confirmation that the standby has written the commit record to durable
     storage, even if that takes a very long time.
     <varname>synchronous_commit</> can be set by individual
