@@ -581,15 +581,33 @@ btree_xlog_delete_get_latestRemovedXid(XLogRecord *record)
 
 	/*
 	 * If there's nothing running on the standby we don't need to derive a
-	 * full latestRemovedXid value, so use a fast path out of here. That
-	 * returns InvalidTransactionId, and so will conflict with users, but
-	 * since we just worked out that's zero people, its OK.
+	 * full latestRemovedXid value, so use a fast path out of here.  This
+	 * returns InvalidTransactionId, and so will conflict with all HS
+	 * transactions; but since we just worked out that that's zero people,
+	 * it's OK.
+	 *
+	 * XXX There is a race condition here, which is that a new backend might
+	 * start just after we look.  If so, it cannot need to conflict, but this
+	 * coding will result in throwing a conflict anyway.
 	 */
 	if (CountDBBackends(InvalidOid) == 0)
 		return latestRemovedXid;
 
 	/*
-	 * Get index page
+	 * In what follows, we have to examine the previous state of the index
+	 * page, as well as the heap page(s) it points to.  This is only valid if
+	 * WAL replay has reached a consistent database state; which means that
+	 * the preceding check is not just an optimization, but is *necessary*.
+	 * We won't have let in any user sessions before we reach consistency.
+	 */
+	if (!reachedConsistency)
+		elog(PANIC, "btree_xlog_delete_get_latestRemovedXid: cannot operate with inconsistent data");
+
+	/*
+	 * Get index page.  If the DB is consistent, this should not fail, nor
+	 * should any of the heap page fetches below.  If one does, we return
+	 * InvalidTransactionId to cancel all HS transactions.  That's probably
+	 * overkill, but it's safe, and certainly better than panicking here.
 	 */
 	ibuffer = XLogReadBuffer(xlrec->node, xlrec->block, false);
 	if (!BufferIsValid(ibuffer))
@@ -671,12 +689,11 @@ btree_xlog_delete_get_latestRemovedXid(XLogRecord *record)
 	UnlockReleaseBuffer(ibuffer);
 
 	/*
-	 * Note that if all heap tuples were LP_DEAD then we will be returning
-	 * InvalidTransactionId here. That can happen if we are re-replaying this
-	 * record type, though that will be before the consistency point and will
-	 * not cause problems. It should happen very rarely after the consistency
-	 * point, though note that we can't tell the difference between this and
-	 * the fast path exit above. May need to change that in future.
+	 * XXX If all heap tuples were LP_DEAD then we will be returning
+	 * InvalidTransactionId here, causing conflict for all HS
+	 * transactions. That should happen very rarely (reasoning please?). Also
+	 * note that caller can't tell the difference between this case and the
+	 * fast path exit above. May need to change that in future.
 	 */
 	return latestRemovedXid;
 }
@@ -940,6 +957,10 @@ btree_redo(XLogRecPtr lsn, XLogRecord *record)
 {
 	uint8		info = record->xl_info & ~XLR_INFO_MASK;
 
+	/*
+	 * If we have any conflict processing to do, it must happen before we
+	 * update the page.
+	 */
 	if (InHotStandby)
 	{
 		switch (info)
