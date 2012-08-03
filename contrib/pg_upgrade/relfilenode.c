@@ -36,7 +36,7 @@ transfer_all_new_dbs(DbInfoArr *old_db_arr,
 				new_dbnum;
 	const char *msg = NULL;
 
-	prep_status("%s user relation files\n",
+	pg_log(PG_REPORT, "%s user relation files\n",
 	  user_opts.transfer_mode == TRANSFER_MODE_LINK ? "Linking" : "Copying");
 
 	/* Scan the old cluster databases and transfer their files */
