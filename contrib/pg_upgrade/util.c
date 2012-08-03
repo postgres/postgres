@@ -81,7 +81,7 @@ pg_log(eLogType type, char *fmt,...)
 	if (type != PG_VERBOSE || log_opts.verbose)
 	{
 		fwrite(message, strlen(message), 1, log_opts.internal);
-		/* if we are using OVERWRITE_MESSAGE, add newline */
+		/* if we are using OVERWRITE_MESSAGE, add newline to log file */
 		if (strchr(message, '\r') != NULL)
 			fwrite("\n", 1, 1, log_opts.internal);
 		fflush(log_opts.internal);
