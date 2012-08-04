@@ -1,0 +1,45 @@
+pgindent will indent .c and .h files according to the coding standards of
+the PostgreSQL project. It needs several things to run, and tries to locate
+or build them if possible. They can also be specified via command line switches
+or the environment.
+
+In its simplest form, if all the required objects are installed, simply run
+it without any parameters at the top of the source tree you want to process.
+
+	pgindent 
+
+If you don't have all the requirements installed, pgindent will fetch and build 
+them for you, if you're in a PostgreSQL source tree:
+
+
+	pgindent --build
+
+If your indent program is not installed in your path, you can specify it
+by setting the environment variable INDENT, or PGINDENT, or by giving the
+command line option --indent:
+
+	pgindent --indent=/opt/extras/bsdindent
+
+Similarly, the entab program can be specified using the PGENTAB environment
+variable, or using the --entab command line option.
+
+pgindent also needs a file containing a list of typedefs. This can be 
+specified using the PGTYPEDEFS environment variable, or via the command line
+--typedefs option. If neither is used, it will look for it within the
+current source tree, or in /usr/local/etc/typedefs.list.
+
+If you want to indent a source tree other than the current working directory,
+you can specify it via the --code-base command line option.
+
+We don't want to indent certain files in the PostgreSQL source. pgindent
+will honor a file containing a list of patterns of files to avoid. This
+file can be specified using the --excludes command line option. If indenting
+a PostgreSQL source tree, this option isn't necessary, as it will find the file
+src/tools/pgindent/exclude_file_patterns.
+
+Any non-option arguments are taken as the names of files to be indented. In this
+case only these files will be changed, and nothing else will be touched. If the
+first non-option argument is not a .c or .h file, it is treated as the name
+of a typedefs file for legacy reasons, but this use is deprecated - use the 
+--typedefs option instead.
+

@@ -1,5 +1,3 @@
-src/tools/pgindent/README
-
 pgindent
 ========
 
@@ -26,9 +24,7 @@ This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
 
 6) Run pgindent:
 
-	find . -name '*.[ch]' -type f -print | \
-	egrep -v -f src/tools/pgindent/exclude_file_patterns | \
-	xargs -n100 src/tools/pgindent/pgindent src/tools/pgindent/typedefs.list
+	pgindent
 
 7) Remove any files that generate errors and restore their original
    versions.
@@ -46,7 +42,14 @@ This can format all PostgreSQL *.c and *.h files, but excludes *.y, and
 
 9) Indent the Perl code:
 
-	find . -name \*.pl -o -name \*.pm | 
+	(
+		find . -name \*.pl -o -name \*.pm
+
+		find . -type f -exec file {} \; |
+		egrep -i ':.*perl[0-9]*\>' |
+		cut -d: -f1
+	) |
+	sort -u |
 	xargs perltidy --profile=src/tools/pgindent/perltidyrc
 
 ---------------------------------------------------------------------------
