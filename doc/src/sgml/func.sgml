@@ -9820,6 +9820,27 @@ nextval('foo'::text)      <lineannotation><literal>foo</literal> is looked up at
         execute <function>nextval</function> concurrently, each will safely receive
         a distinct sequence value.
        </para>
+
+       <para>
+        If a sequence object has been created with default parameters,
+        successive <function>nextval</function> calls will return successive
+        values beginning with 1.  Other behaviors can be obtained by using
+        special parameters in the <xref linkend="sql-createsequence"> command;
+        see its command reference page for more information.
+       </para>
+
+       <important>
+        <para>
+         To avoid blocking concurrent transactions that obtain numbers from the
+         same sequence, a <function>nextval</function> operation is never
+         rolled back; that is, once a value has been fetched it is considered
+         used, even if the transaction that did the
+         <function>nextval</function> later aborts.  This means that aborted
+         transactions might leave unused <quote>holes</quote> in the sequence
+         of assigned values.
+        </para>
+       </important>
+
       </listitem>
      </varlistentry>
 
@@ -9883,30 +9904,17 @@ SELECT setval('foo', 42, false);    <lineannotation>Next <function>nextval</> wi
         The result returned by <function>setval</function> is just the value of its
         second argument.
        </para>
+       <important>
+        <para>
+         Because sequences are non-transactional, changes made by
+         <function>setval</function> are not undone if the transaction rolls
+         back.
+        </para>
+       </important>
       </listitem>
      </varlistentry>
     </variablelist>
   </para>
-
-  <para>
-   If a sequence object has been created with default parameters,
-   successive <function>nextval</function> calls will return successive values
-   beginning with 1.  Other behaviors can be obtained by using
-   special parameters in the <xref linkend="sql-createsequence"> command;
-   see its command reference page for more information.
-  </para>
-
-  <important>
-   <para>
-    To avoid blocking concurrent transactions that obtain numbers from the
-    same sequence, a <function>nextval</function> operation is never rolled back;
-    that is, once a value has been fetched it is considered used, even if the
-    transaction that did the <function>nextval</function> later aborts.  This means
-    that aborted transactions might leave unused <quote>holes</quote> in the
-    sequence of assigned values.  <function>setval</function> operations are never
-    rolled back, either.
-   </para>
-  </important>
 
  </sect1>
 
