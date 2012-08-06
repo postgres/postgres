@@ -830,6 +830,20 @@ ALTER SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceab
     </para>
 
     <note>
+      <para>
+        Because <type>smallserial</type>, <type>serial</type> and
+        <type>bigserial</type> are implemented usings sequences, there may
+        be "holes" or gaps in the sequence of values which appears in the
+        column, even if no rows are ever deleted.  This is a value allocated
+        from the sequence is still "used up" even if a row containing that
+        value is never successfully inserted into the table column.  This
+        may happen, for example, if the inserting transaction rolls back.
+        See <literal>nextval()</literal> in <xref linkend="functions-sequence">
+        for details.
+      </para>
+    </note>
+
+    <note>
      <para>
       Prior to <productname>PostgreSQL</productname> 7.3, <type>serial</type>
       implied <literal>UNIQUE</literal>.  This is no longer automatic.  If
