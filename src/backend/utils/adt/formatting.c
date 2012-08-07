@@ -2640,8 +2640,15 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 			case DCH_CC:
 				if (is_interval)	/* straight calculation */
 					i = tm->tm_year / 100;
-				else	/* century 21 starts in 2001 */
-					i = (tm->tm_year - 1) / 100 + 1;
+				else
+				{
+					if (tm->tm_year > 0)
+						/* Century 20 == 1901 - 2000 */
+						i = (tm->tm_year - 1) / 100 + 1;
+					else
+						/* Century 6BC == 600BC - 501BC */
+						i = tm->tm_year / 100 - 1;
+				}
 				if (i <= 99 && i >= -99)
 					sprintf(s, "%0*d", S_FM(n->suffix) ? 0 : 2, i);
 				else
@@ -3465,33 +3472,41 @@ do_to_timestamp(text *date_txt, text *fmt,
 		/*
 		 * If CC and YY (or Y) are provided, use YY as 2 low-order digits for
 		 * the year in the given century.  Keep in mind that the 21st century
-		 * runs from 2001-2100, not 2000-2099.
-		 *
-		 * If a 4-digit year is provided, we use that and ignore CC.
+		 * AD runs from 2001-2100, not 2000-2099; 6th century BC runs from
+		 * 600BC to 501BC.
 		 */
 		if (tmfc.cc && tmfc.yysz <= 2)
 		{
+			if (tmfc.bc)
+				tmfc.cc = -tmfc.cc;
 			tm->tm_year = tmfc.year % 100;
 			if (tm->tm_year)
-				tm->tm_year += (tmfc.cc - 1) * 100;
+			{
+				if (tmfc.cc >= 0)
+					tm->tm_year += (tmfc.cc - 1) * 100;
+				else
+					tm->tm_year = (tmfc.cc + 1) * 100 - tm->tm_year + 1;
+			}
 			else
-				tm->tm_year = tmfc.cc * 100;
+				/* find century year for dates ending in "00" */
+				tm->tm_year = tmfc.cc * 100 + ((tmfc.cc >= 0) ? 0 : 1);			
 		}
 		else
+		/* If a 4-digit year is provided, we use that and ignore CC. */
+		{
 			tm->tm_year = tmfc.year;
+			if (tmfc.bc && tm->tm_year > 0)
+				tm->tm_year = -(tm->tm_year - 1);
+		}
 	}
-	else if (tmfc.cc)			/* use first year of century */
-		tm->tm_year = (tmfc.cc - 1) * 100 + 1;
-
-	if (tmfc.bc)
+	else if (tmfc.cc)	/* use first year of century */
 	{
-		if (tm->tm_year > 0)
-			tm->tm_year = -(tm->tm_year - 1);
+		if (tmfc.bc)
+			tmfc.cc = -tmfc.cc;
+		if (tmfc.cc >= 0)
+			tm->tm_year = (tmfc.cc - 1) * 100 + 1;
 		else
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-					 errmsg("inconsistent use of year %04d and \"BC\"",
-							tm->tm_year)));
+			tm->tm_year = tmfc.cc * 100 + 1;
 	}
 
 	if (tmfc.j)
