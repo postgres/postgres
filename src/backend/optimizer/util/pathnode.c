@@ -193,7 +193,7 @@ compare_path_costs_fuzzily(Path *path1, Path *path2, double fuzz_factor)
  * and cheapest_total.	The cheapest_parameterized_paths list collects paths
  * that are cheapest-total for their parameterization (i.e., there is no
  * cheaper path with the same or weaker parameterization).	This list always
- * includes the unparameterized cheapest-total path, too.
+ * includes the unparameterized cheapest-total path, too, if there is one.
  *
  * This is normally called only after we've finished constructing the path
  * list for the rel node.
@@ -250,15 +250,18 @@ set_cheapest(RelOptInfo *parent_rel)
 			cheapest_total_path = path;
 	}
 
-	if (cheapest_total_path == NULL)
+	if (cheapest_total_path == NULL && !have_parameterized_paths)
 		elog(ERROR, "could not devise a query plan for the given query");
 
 	parent_rel->cheapest_startup_path = cheapest_startup_path;
 	parent_rel->cheapest_total_path = cheapest_total_path;
 	parent_rel->cheapest_unique_path = NULL;	/* computed only if needed */
 
-	/* Seed the parameterized-paths list with the cheapest total */
-	parent_rel->cheapest_parameterized_paths = list_make1(cheapest_total_path);
+	/* Seed the parameterized-paths list with the cheapest total, if any */
+	if (cheapest_total_path)
+		parent_rel->cheapest_parameterized_paths = list_make1(cheapest_total_path);
+	else
+		parent_rel->cheapest_parameterized_paths = NIL;
 
 	/* And, if there are any parameterized paths, add them in one at a time */
 	if (have_parameterized_paths)
@@ -1131,6 +1134,13 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	int			numCols;
 	ListCell   *lc;
 
+	/* XXX temporary band-aid to not crash on LATERAL queries */
+	if (subpath == NULL)
+	{
+		Assert(subpath == rel->cheapest_total_path);
+		return NULL;
+	}
+
 	/* Caller made a mistake if subpath isn't cheapest_total ... */
 	Assert(subpath == rel->cheapest_total_path);
 	Assert(subpath->parent == rel);
@@ -1657,16 +1667,18 @@ create_subqueryscan_path(PlannerInfo *root, RelOptInfo *rel,
  *	  returning the pathnode.
  */
 Path *
-create_functionscan_path(PlannerInfo *root, RelOptInfo *rel)
+create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
+						 Relids required_outer)
 {
 	Path	   *pathnode = makeNode(Path);
 
 	pathnode->pathtype = T_FunctionScan;
 	pathnode->parent = rel;
-	pathnode->param_info = NULL;	/* never parameterized at present */
+	pathnode->param_info = get_baserel_parampathinfo(root, rel,
+													 required_outer);
 	pathnode->pathkeys = NIL;	/* for now, assume unordered result */
 
-	cost_functionscan(pathnode, root, rel);
+	cost_functionscan(pathnode, root, rel, pathnode->param_info);
 
 	return pathnode;
 }

@@ -54,22 +54,25 @@ typedef Node *(*CoerceParamHook) (ParseState *pstate, Param *param,
  * p_joinlist: list of join items (RangeTblRef and JoinExpr nodes) that
  * will become the fromlist of the query's top-level FromExpr node.
  *
- * p_relnamespace: list of RTEs that represents the current namespace for
- * table lookup, ie, those RTEs that are accessible by qualified names.
- * This may be just a subset of the rtable + joinlist, and/or may contain
- * entries that are not yet added to the main joinlist.
+ * p_relnamespace: list of ParseNamespaceItems that represents the current
+ * namespace for table lookup, ie, those RTEs that are accessible by
+ * qualified names.  (This may be just a subset of the whole rtable.)
  *
- * p_varnamespace: list of RTEs that represents the current namespace for
- * column lookup, ie, those RTEs that are accessible by unqualified names.
- * This is different from p_relnamespace because a JOIN without an alias does
- * not hide the contained tables (so they must still be in p_relnamespace)
- * but it does hide their columns (unqualified references to the columns must
- * refer to the JOIN, not the member tables).  Other special RTEs such as
- * NEW/OLD for rules may also appear in just one of these lists.
+ * p_varnamespace: list of ParseNamespaceItems that represents the current
+ * namespace for column lookup, ie, those RTEs that are accessible by
+ * unqualified names.  This is different from p_relnamespace because a JOIN
+ * without an alias does not hide the contained tables (so they must be in
+ * p_relnamespace) but it does hide their columns (unqualified references to
+ * the columns must refer to the JOIN, not the member tables).	Other special
+ * RTEs such as NEW/OLD for rules may also appear in just one of these lists.
+ *
+ * p_lateral_active: TRUE if we are currently parsing a LATERAL subexpression
+ * of this parse level.  This makes p_lateral_only namespace items visible,
+ * whereas they are not visible when p_lateral_active is FALSE.
  *
  * p_ctenamespace: list of CommonTableExprs (WITH items) that are visible
- * at the moment.  This is different from p_relnamespace because you have
- * to make an RTE before you can access a CTE.
+ * at the moment.  This is entirely different from p_relnamespace because
+ * a CTE is not an RTE, rather "visibility" means you could make an RTE.
  *
  * p_future_ctes: list of CommonTableExprs (WITH items) that are not yet
  * visible due to scope rules.	This is used to help improve error messages.
@@ -93,6 +96,7 @@ struct ParseState
 								 * node's fromlist) */
 	List	   *p_relnamespace; /* current namespace for relations */
 	List	   *p_varnamespace; /* current namespace for columns */
+	bool		p_lateral_active;		/* p_lateral_only items visible? */
 	List	   *p_ctenamespace; /* current namespace for common table exprs */
 	List	   *p_future_ctes;	/* common table exprs not yet in namespace */
 	CommonTableExpr *p_parent_cte;		/* this query's containing CTE */
@@ -120,6 +124,14 @@ struct ParseState
 	CoerceParamHook p_coerce_param_hook;
 	void	   *p_ref_hook_state;		/* common passthrough link for above */
 };
+
+/* An element of p_relnamespace or p_varnamespace */
+typedef struct ParseNamespaceItem
+{
+	RangeTblEntry *p_rte;		/* The relation's rangetable entry */
+	bool		p_lateral_only; /* Is only visible to LATERAL expressions? */
+	bool		p_lateral_ok;	/* If so, does join type allow use? */
+} ParseNamespaceItem;
 
 /* Support for parser_errposition_callback function */
 typedef struct ParseCallbackState

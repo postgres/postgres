@@ -21,9 +21,10 @@ INSERT INTO foo2 VALUES(1, 111);
 CREATE FUNCTION foot(int) returns setof foo2 as 'SELECT * FROM foo2 WHERE fooid = $1;' LANGUAGE SQL;
 -- supposed to fail with ERROR
 select * from foo2, foot(foo2.fooid) z where foo2.f2 = z.f2;
-ERROR:  function expression in FROM cannot refer to other relations of same query level
+ERROR:  invalid reference to FROM-clause entry for table "foo2"
 LINE 1: select * from foo2, foot(foo2.fooid) z where foo2.f2 = z.f2;
                                  ^
+HINT:  There is an entry for table "foo2", but it cannot be referenced from this part of the query.
 -- function in subselect
 select * from foo2 where f2 in (select f2 from foot(foo2.fooid) z where z.fooid = foo2.fooid) ORDER BY 1,2;
  fooid | f2  

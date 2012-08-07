@@ -84,6 +84,7 @@ static HashJoin *create_hashjoin_plan(PlannerInfo *root, HashPath *best_path,
 					 Plan *outer_plan, Plan *inner_plan);
 static Node *replace_nestloop_params(PlannerInfo *root, Node *expr);
 static Node *replace_nestloop_params_mutator(Node *node, PlannerInfo *root);
+static void identify_nestloop_extparams(PlannerInfo *root, Plan *subplan);
 static List *fix_indexqual_references(PlannerInfo *root, IndexPath *index_path);
 static List *fix_indexorderby_references(PlannerInfo *root, IndexPath *index_path);
 static Node *fix_indexqual_operand(Node *node, IndexOptInfo *index, int indexcol);
@@ -1640,6 +1641,7 @@ create_subqueryscan_plan(PlannerInfo *root, Path *best_path,
 	{
 		scan_clauses = (List *)
 			replace_nestloop_params(root, (Node *) scan_clauses);
+		identify_nestloop_extparams(root, best_path->parent->subplan);
 	}
 
 	scan_plan = make_subqueryscan(tlist,
@@ -1664,11 +1666,13 @@ create_functionscan_plan(PlannerInfo *root, Path *best_path,
 	FunctionScan *scan_plan;
 	Index		scan_relid = best_path->parent->relid;
 	RangeTblEntry *rte;
+	Node	   *funcexpr;
 
 	/* it should be a function base rel... */
 	Assert(scan_relid > 0);
 	rte = planner_rt_fetch(scan_relid, root);
 	Assert(rte->rtekind == RTE_FUNCTION);
+	funcexpr = rte->funcexpr;
 
 	/* Sort clauses into best execution order */
 	scan_clauses = order_qual_clauses(root, scan_clauses);
@@ -1676,8 +1680,17 @@ create_functionscan_plan(PlannerInfo *root, Path *best_path,
 	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
 
+	/* Replace any outer-relation variables with nestloop params */
+	if (best_path->param_info)
+	{
+		scan_clauses = (List *)
+			replace_nestloop_params(root, (Node *) scan_clauses);
+		/* The func expression itself could contain nestloop params, too */
+		funcexpr = replace_nestloop_params(root, funcexpr);
+	}
+
 	scan_plan = make_functionscan(tlist, scan_clauses, scan_relid,
-								  rte->funcexpr,
+								  funcexpr,
 								  rte->eref->colnames,
 								  rte->funccoltypes,
 								  rte->funccoltypmods,
@@ -2557,6 +2570,102 @@ replace_nestloop_params_mutator(Node *node, PlannerInfo *root)
 	return expression_tree_mutator(node,
 								   replace_nestloop_params_mutator,
 								   (void *) root);
+}
+
+/*
+ * identify_nestloop_extparams
+ *	  Identify extParams of a parameterized subquery that need to be fed
+ *	  from an outer nestloop.
+ *
+ * The subplan's references to the outer variables are already represented
+ * as PARAM_EXEC Params, so we need not modify the subplan here.  What we
+ * do need to do is add entries to root->curOuterParams to signal the parent
+ * nestloop plan node that it must provide these values.
+ */
+static void
+identify_nestloop_extparams(PlannerInfo *root, Plan *subplan)
+{
+	Bitmapset  *tmpset;
+	int			paramid;
+
+	/* Examine each extParam of the subquery's plan */
+	tmpset = bms_copy(subplan->extParam);
+	while ((paramid = bms_first_member(tmpset)) >= 0)
+	{
+		PlannerParamItem *pitem = list_nth(root->glob->paramlist, paramid);
+
+		/* Ignore anything coming from an upper query level */
+		if (pitem->abslevel != root->query_level)
+			continue;
+
+		if (IsA(pitem->item, Var))
+		{
+			Var		   *var = (Var *) pitem->item;
+			NestLoopParam *nlp;
+			ListCell   *lc;
+
+			/* If not from a nestloop outer rel, nothing to do */
+			if (!bms_is_member(var->varno, root->curOuterRels))
+				continue;
+			/* Is this param already listed in root->curOuterParams? */
+			foreach(lc, root->curOuterParams)
+			{
+				nlp = (NestLoopParam *) lfirst(lc);
+				if (nlp->paramno == paramid)
+				{
+					Assert(equal(var, nlp->paramval));
+					/* Present, so nothing to do */
+					break;
+				}
+			}
+			if (lc == NULL)
+			{
+				/* No, so add it */
+				nlp = makeNode(NestLoopParam);
+				nlp->paramno = paramid;
+				nlp->paramval = copyObject(var);
+				root->curOuterParams = lappend(root->curOuterParams, nlp);
+			}
+		}
+		else if (IsA(pitem->item, PlaceHolderVar))
+		{
+			PlaceHolderVar *phv = (PlaceHolderVar *) pitem->item;
+			NestLoopParam *nlp;
+			ListCell   *lc;
+
+			/*
+			 * If not from a nestloop outer rel, nothing to do.  We use
+			 * bms_overlap as a cheap/quick test to see if the PHV might be
+			 * evaluated in the outer rels, and then grab its PlaceHolderInfo
+			 * to tell for sure.
+			 */
+			if (!bms_overlap(phv->phrels, root->curOuterRels))
+				continue;
+			if (!bms_is_subset(find_placeholder_info(root, phv, false)->ph_eval_at,
+							   root->curOuterRels))
+				continue;
+			/* Is this param already listed in root->curOuterParams? */
+			foreach(lc, root->curOuterParams)
+			{
+				nlp = (NestLoopParam *) lfirst(lc);
+				if (nlp->paramno == paramid)
+				{
+					Assert(equal(phv, nlp->paramval));
+					/* Present, so nothing to do */
+					break;
+				}
+			}
+			if (lc == NULL)
+			{
+				/* No, so add it */
+				nlp = makeNode(NestLoopParam);
+				nlp->paramno = paramid;
+				nlp->paramval = copyObject(phv);
+				root->curOuterParams = lappend(root->curOuterParams, nlp);
+			}
+		}
+	}
+	bms_free(tmpset);
 }
 
 /*

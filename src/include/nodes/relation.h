@@ -307,15 +307,17 @@ typedef struct PlannerInfo
  *		ppilist - ParamPathInfo nodes for parameterized Paths, if any
  *		cheapest_startup_path - the pathlist member with lowest startup cost
  *								(regardless of its ordering; but must be
- *								 unparameterized)
+ *								 unparameterized; hence will be NULL for
+ *								 a LATERAL subquery)
  *		cheapest_total_path - the pathlist member with lowest total cost
  *							  (regardless of its ordering; but must be
- *							   unparameterized)
+ *							   unparameterized; hence will be NULL for
+ *							   a LATERAL subquery)
  *		cheapest_unique_path - for caching cheapest path to produce unique
  *							   (no duplicates) output from relation
  *		cheapest_parameterized_paths - paths with cheapest total costs for
  *								 their parameterizations; always includes
- *								 cheapest_total_path
+ *								 cheapest_total_path, if that exists
  *
  * If the relation is a base relation it will have these fields set:
  *

@@ -396,7 +396,8 @@ static void processCASbits(int cas_bits, int location, const char *constrType,
 %type <node>	ctext_expr
 %type <value>	NumericOnly
 %type <list>	NumericOnly_list
-%type <alias>	alias_clause
+%type <alias>	alias_clause opt_alias_clause
+%type <list>	func_alias_clause
 %type <sortby>	sortby
 %type <ielem>	index_elem
 %type <node>	table_ref
@@ -532,9 +533,9 @@ static void processCASbits(int cas_bits, int location, const char *constrType,
 
 	KEY
 
-	LABEL LANGUAGE LARGE_P LAST_P LC_COLLATE_P LC_CTYPE_P LEADING LEAKPROOF
-	LEAST LEFT LEVEL LIKE LIMIT LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP
-	LOCATION LOCK_P
+	LABEL LANGUAGE LARGE_P LAST_P LATERAL_P LC_COLLATE_P LC_CTYPE_P
+	LEADING LEAKPROOF LEAST LEFT LEVEL LIKE LIMIT LISTEN LOAD LOCAL
+	LOCALTIME LOCALTIMESTAMP LOCATION LOCK_P
 
 	MAPPING MATCH MAXVALUE MINUTE_P MINVALUE MODE MONTH_P MOVE
 
@@ -9309,65 +9310,37 @@ from_list:
 		;
 
 /*
- * table_ref is where an alias clause can be attached.	Note we cannot make
- * alias_clause have an empty production because that causes parse conflicts
- * between table_ref := '(' joined_table ')' alias_clause
- * and joined_table := '(' joined_table ')'.  So, we must have the
- * redundant-looking productions here instead.
+ * table_ref is where an alias clause can be attached.
  */
-table_ref:	relation_expr
-				{
-					$$ = (Node *) $1;
-				}
-			| relation_expr alias_clause
+table_ref:	relation_expr opt_alias_clause
 				{
 					$1->alias = $2;
 					$$ = (Node *) $1;
 				}
-			| func_table
+			| func_table func_alias_clause
 				{
 					RangeFunction *n = makeNode(RangeFunction);
+					n->lateral = false;
 					n->funccallnode = $1;
-					n->coldeflist = NIL;
+					n->alias = linitial($2);
+					n->coldeflist = lsecond($2);
 					$$ = (Node *) n;
 				}
-			| func_table alias_clause
+			| LATERAL_P func_table func_alias_clause
 				{
 					RangeFunction *n = makeNode(RangeFunction);
-					n->funccallnode = $1;
+					n->lateral = true;
+					n->funccallnode = $2;
+					n->alias = linitial($3);
+					n->coldeflist = lsecond($3);
+					$$ = (Node *) n;
+				}
+			| select_with_parens opt_alias_clause
+				{
+					RangeSubselect *n = makeNode(RangeSubselect);
+					n->lateral = false;
+					n->subquery = $1;
 					n->alias = $2;
-					n->coldeflist = NIL;
-					$$ = (Node *) n;
-				}
-			| func_table AS '(' TableFuncElementList ')'
-				{
-					RangeFunction *n = makeNode(RangeFunction);
-					n->funccallnode = $1;
-					n->coldeflist = $4;
-					$$ = (Node *) n;
-				}
-			| func_table AS ColId '(' TableFuncElementList ')'
-				{
-					RangeFunction *n = makeNode(RangeFunction);
-					Alias *a = makeNode(Alias);
-					n->funccallnode = $1;
-					a->aliasname = $3;
-					n->alias = a;
-					n->coldeflist = $5;
-					$$ = (Node *) n;
-				}
-			| func_table ColId '(' TableFuncElementList ')'
-				{
-					RangeFunction *n = makeNode(RangeFunction);
-					Alias *a = makeNode(Alias);
-					n->funccallnode = $1;
-					a->aliasname = $2;
-					n->alias = a;
-					n->coldeflist = $4;
-					$$ = (Node *) n;
-				}
-			| select_with_parens
-				{
 					/*
 					 * The SQL spec does not permit a subselect
 					 * (<derived_table>) without an alias clause,
@@ -9379,26 +9352,47 @@ table_ref:	relation_expr
 					 * However, it does seem like a good idea to emit
 					 * an error message that's better than "syntax error".
 					 */
-					if (IsA($1, SelectStmt) &&
-						((SelectStmt *) $1)->valuesLists)
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("VALUES in FROM must have an alias"),
-								 errhint("For example, FROM (VALUES ...) [AS] foo."),
-								 parser_errposition(@1)));
-					else
-						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("subquery in FROM must have an alias"),
-								 errhint("For example, FROM (SELECT ...) [AS] foo."),
-								 parser_errposition(@1)));
-					$$ = NULL;
+					if ($2 == NULL)
+					{
+						if (IsA($1, SelectStmt) &&
+							((SelectStmt *) $1)->valuesLists)
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("VALUES in FROM must have an alias"),
+									 errhint("For example, FROM (VALUES ...) [AS] foo."),
+									 parser_errposition(@1)));
+						else
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("subquery in FROM must have an alias"),
+									 errhint("For example, FROM (SELECT ...) [AS] foo."),
+									 parser_errposition(@1)));
+					}
+					$$ = (Node *) n;
 				}
-			| select_with_parens alias_clause
+			| LATERAL_P select_with_parens opt_alias_clause
 				{
 					RangeSubselect *n = makeNode(RangeSubselect);
-					n->subquery = $1;
-					n->alias = $2;
+					n->lateral = true;
+					n->subquery = $2;
+					n->alias = $3;
+					/* same coment as above */
+					if ($3 == NULL)
+					{
+						if (IsA($2, SelectStmt) &&
+							((SelectStmt *) $2)->valuesLists)
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("VALUES in FROM must have an alias"),
+									 errhint("For example, FROM (VALUES ...) [AS] foo."),
+									 parser_errposition(@2)));
+						else
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("subquery in FROM must have an alias"),
+									 errhint("For example, FROM (SELECT ...) [AS] foo."),
+									 parser_errposition(@2)));
+					}
 					$$ = (Node *) n;
 				}
 			| joined_table
@@ -9521,6 +9515,41 @@ alias_clause:
 				{
 					$$ = makeNode(Alias);
 					$$->aliasname = $1;
+				}
+		;
+
+opt_alias_clause: alias_clause						{ $$ = $1; }
+			| /*EMPTY*/								{ $$ = NULL; }
+		;
+
+/*
+ * func_alias_clause can include both an Alias and a coldeflist, so we make it
+ * return a 2-element list that gets disassembled by calling production.
+ */
+func_alias_clause:
+			alias_clause
+				{
+					$$ = list_make2($1, NIL);
+				}
+			| AS '(' TableFuncElementList ')'
+				{
+					$$ = list_make2(NULL, $3);
+				}
+			| AS ColId '(' TableFuncElementList ')'
+				{
+					Alias *a = makeNode(Alias);
+					a->aliasname = $2;
+					$$ = list_make2(a, $4);
+				}
+			| ColId '(' TableFuncElementList ')'
+				{
+					Alias *a = makeNode(Alias);
+					a->aliasname = $1;
+					$$ = list_make2(a, $3);
+				}
+			| /*EMPTY*/
+				{
+					$$ = list_make2(NULL, NIL);
 				}
 		;
 
@@ -12736,6 +12765,7 @@ reserved_keyword:
 			| INITIALLY
 			| INTERSECT
 			| INTO
+			| LATERAL_P
 			| LEADING
 			| LIMIT
 			| LOCALTIME

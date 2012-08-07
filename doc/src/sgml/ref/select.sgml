@@ -50,10 +50,10 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
 <phrase>where <replaceable class="parameter">from_item</replaceable> can be one of:</phrase>
 
     [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] ) ] ]
-    ( <replaceable class="parameter">select</replaceable> ) [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] ) ]
+    [ LATERAL ] ( <replaceable class="parameter">select</replaceable> ) [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] ) ]
     <replaceable class="parameter">with_query_name</replaceable> [ [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] ) ] ]
-    <replaceable class="parameter">function_name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> [, ...] ] ) [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] | <replaceable class="parameter">column_definition</replaceable> [, ...] ) ]
-    <replaceable class="parameter">function_name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> [, ...] ] ) AS ( <replaceable class="parameter">column_definition</replaceable> [, ...] )
+    [ LATERAL ] <replaceable class="parameter">function_name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> [, ...] ] ) [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] | <replaceable class="parameter">column_definition</replaceable> [, ...] ) ]
+    [ LATERAL ] <replaceable class="parameter">function_name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> [, ...] ] ) AS ( <replaceable class="parameter">column_definition</replaceable> [, ...] )
     <replaceable class="parameter">from_item</replaceable> [ NATURAL ] <replaceable class="parameter">join_type</replaceable> <replaceable class="parameter">from_item</replaceable> [ ON <replaceable class="parameter">join_condition</replaceable> | USING ( <replaceable class="parameter">join_column</replaceable> [, ...] ) ]
 
 <phrase>and <replaceable class="parameter">with_query</replaceable> is:</phrase>
@@ -284,8 +284,8 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
     The <literal>FROM</literal> clause specifies one or more source
     tables for the <command>SELECT</command>.  If multiple sources are
     specified, the result is the Cartesian product (cross join) of all
-    the sources.  But usually qualification conditions
-    are added to restrict the returned rows to a small subset of the
+    the sources.  But usually qualification conditions are added (via
+    <literal>WHERE</>) to restrict the returned rows to a small subset of the
     Cartesian product.
    </para>
 
@@ -414,17 +414,18 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
        </para>
 
        <para>
-        A <literal>JOIN</literal> clause combines two
-        <literal>FROM</> items.  Use parentheses if necessary to
-        determine the order of nesting.  In the absence of parentheses,
-        <literal>JOIN</literal>s nest left-to-right.  In any case
-        <literal>JOIN</literal> binds more tightly than the commas
-        separating <literal>FROM</> items.
+        A <literal>JOIN</literal> clause combines two <literal>FROM</>
+        items, which for convenience we will refer to as <quote>tables</>,
+        though in reality they can be any type of <literal>FROM</> item.
+        Use parentheses if necessary to determine the order of nesting.
+        In the absence of parentheses, <literal>JOIN</literal>s nest
+        left-to-right.  In any case <literal>JOIN</literal> binds more
+        tightly than the commas separating <literal>FROM</>-list items.
        </para>
 
        <para><literal>CROSS JOIN</> and <literal>INNER JOIN</literal>
         produce a simple Cartesian product, the same result as you get from
-        listing the two items at the top level of <literal>FROM</>,
+        listing the two tables at the top level of <literal>FROM</>,
         but restricted by the join condition (if any).
         <literal>CROSS JOIN</> is equivalent to <literal>INNER JOIN ON
         (TRUE)</>, that is, no rows are removed by qualification.
@@ -449,7 +450,7 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
         joined rows, plus one row for each unmatched right-hand row
         (extended with nulls on the left).  This is just a notational
         convenience, since you could convert it to a <literal>LEFT
-        OUTER JOIN</> by switching the left and right inputs.
+        OUTER JOIN</> by switching the left and right tables.
        </para>
 
        <para><literal>FULL OUTER JOIN</> returns all the joined rows, plus
@@ -492,6 +493,47 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
        <para><literal>NATURAL</literal> is shorthand for a
         <literal>USING</> list that mentions all columns in the two
         tables that have the same names.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>LATERAL</literal></term>
+      <listitem>
+       <para>The <literal>LATERAL</literal> key word can precede a
+        sub-<command>SELECT</command> or function-call <literal>FROM</>
+        item.  This allows the sub-<command>SELECT</command> or function
+        expression to refer to columns of <literal>FROM</> items that appear
+        before it in the <literal>FROM</> list.  (Without
+        <literal>LATERAL</literal>, each <literal>FROM</> item is evaluated
+        independently and so cannot cross-reference any other
+        <literal>FROM</> item.)  A <literal>LATERAL</literal> item can
+        appear at top level in the <literal>FROM</> list, or within a
+        <literal>JOIN</> tree; in the latter case it can also refer to any
+        items that are on the left-hand side of a <literal>JOIN</> that it is
+        on the right-hand side of.
+       </para>
+
+       <para>
+        When a <literal>FROM</> item contains <literal>LATERAL</literal>
+        cross-references, evaluation proceeds as follows: for each row of the
+        <literal>FROM</> item providing the cross-referenced column(s), or
+        set of rows of multiple <literal>FROM</> items providing the
+        columns, the <literal>LATERAL</literal> item is evaluated using that
+        row or row set's values of the columns.  The resulting row(s) are
+        joined as usual with the rows they were computed from.  This is
+        repeated for each row or set of rows from the column source table(s).
+       </para>
+
+       <para>
+        The column source table(s) must be <literal>INNER</> or
+        <literal>LEFT</> joined to the <literal>LATERAL</literal> item, else
+        there would not be a well-defined set of rows from which to compute
+        each set of rows for the <literal>LATERAL</literal> item.  Thus,
+        although a construct such as <literal><replaceable>X</> RIGHT JOIN
+        LATERAL <replaceable>Y</></literal> is syntactically valid, it is
+        not actually allowed for <replaceable>Y</> to reference
+        <replaceable>X</>.
        </para>
       </listitem>
      </varlistentry>
@@ -1532,6 +1574,26 @@ SELECT distance, employee_name FROM employee_recursive;
    else the query will loop indefinitely.  (See <xref linkend="queries-with">
    for more examples.)
   </para>
+
+  <para>
+   This example uses <literal>LATERAL</> to apply a set-returning function
+   <function>get_product_names()</> for each row of the
+   <structname>manufacturers</> table:
+
+<programlisting>
+SELECT m.name AS mname, pname
+FROM manufacturers m, LATERAL get_product_names(m.id) pname;
+</programlisting>
+
+    Manufacturers not currently having any products would not appear in the
+    result, since it is an inner join.  If we wished to include the names of
+    such manufacturers in the result, we could do:
+
+<programlisting>
+SELECT m.name AS mname, pname
+FROM manufacturers m LEFT JOIN LATERAL get_product_names(m.id) pname ON true;
+</programlisting>
+  </para>
  </refsect1>
 
  <refsect1>
@@ -1608,6 +1670,20 @@ SELECT distributors.* WHERE distributors.name = 'Westward';
     as well, but the parentheses are optional.  (This point applies
     equally to all SQL commands supporting the <literal>ONLY</literal>
     option.)
+   </para>
+  </refsect2>
+
+  <refsect2>
+   <title>Function Calls in <literal>FROM</literal></title>
+
+   <para>
+    <productname>PostgreSQL</productname> allows a function call to be
+    written directly as a member of the <literal>FROM</> list.  In the SQL
+    standard it would be necessary to wrap such a function call in a
+    sub-<command>SELECT</command>; that is, the syntax
+    <literal>FROM <replaceable>func</>(...) <replaceable>alias</></literal>
+    is approximately equivalent to
+    <literal>FROM (SELECT <replaceable>func</>(...)) <replaceable>alias</></literal>.
    </para>
   </refsect2>
 

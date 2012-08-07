@@ -1817,7 +1817,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
  *
  * Once grouping_planner() has applied a general tlist to the topmost
  * scan/join plan node, any tlist eval cost for added-on nodes should be
- * accounted for as we create those nodes.  Presently, of the node types we
+ * accounted for as we create those nodes.	Presently, of the node types we
  * can add on later, only Agg, WindowAgg, and Group project new tlists (the
  * rest just copy their input tuples) --- so make_agg(), make_windowagg() and
  * make_group() are responsible for calling this function to account for their
@@ -3257,6 +3257,7 @@ plan_cluster_use_sort(Oid tableOid, Oid indexOid)
 	rte->rtekind = RTE_RELATION;
 	rte->relid = tableOid;
 	rte->relkind = RELKIND_RELATION;
+	rte->lateral = false;
 	rte->inh = false;
 	rte->inFromCl = true;
 	query->rtable = list_make1(rte);

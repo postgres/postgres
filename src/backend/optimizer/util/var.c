@@ -42,16 +42,15 @@ typedef struct
 
 typedef struct
 {
-	int			var_location;
+	List	   *vars;
 	int			sublevels_up;
-} locate_var_of_level_context;
+} pull_vars_context;
 
 typedef struct
 {
 	int			var_location;
-	int			relid;
 	int			sublevels_up;
-} locate_var_of_relation_context;
+} locate_var_of_level_context;
 
 typedef struct
 {
@@ -77,12 +76,11 @@ typedef struct
 static bool pull_varnos_walker(Node *node,
 				   pull_varnos_context *context);
 static bool pull_varattnos_walker(Node *node, pull_varattnos_context *context);
+static bool pull_vars_walker(Node *node, pull_vars_context *context);
 static bool contain_var_clause_walker(Node *node, void *context);
 static bool contain_vars_of_level_walker(Node *node, int *sublevels_up);
 static bool locate_var_of_level_walker(Node *node,
 						   locate_var_of_level_context *context);
-static bool locate_var_of_relation_walker(Node *node,
-							  locate_var_of_relation_context *context);
 static bool find_minimum_var_level_walker(Node *node,
 							  find_minimum_var_level_context *context);
 static bool pull_var_clause_walker(Node *node,
@@ -109,6 +107,31 @@ pull_varnos(Node *node)
 
 	context.varnos = NULL;
 	context.sublevels_up = 0;
+
+	/*
+	 * Must be prepared to start with a Query or a bare expression tree; if
+	 * it's a Query, we don't want to increment sublevels_up.
+	 */
+	query_or_expression_tree_walker(node,
+									pull_varnos_walker,
+									(void *) &context,
+									0);
+
+	return context.varnos;
+}
+
+/*
+ * pull_varnos_of_level
+ *		Create a set of all the distinct varnos present in a parsetree.
+ *		Only Vars of the specified level are considered.
+ */
+Relids
+pull_varnos_of_level(Node *node, int levelsup)
+{
+	pull_varnos_context context;
+
+	context.varnos = NULL;
+	context.sublevels_up = levelsup;
 
 	/*
 	 * Must be prepared to start with a Query or a bare expression tree; if
@@ -226,6 +249,66 @@ pull_varattnos_walker(Node *node, pull_varattnos_context *context)
 	Assert(!IsA(node, Query));
 
 	return expression_tree_walker(node, pull_varattnos_walker,
+								  (void *) context);
+}
+
+
+/*
+ * pull_vars_of_level
+ *		Create a list of all Vars referencing the specified query level
+ *		in the given parsetree.
+ *
+ * This is used on unplanned parsetrees, so we don't expect to see any
+ * PlaceHolderVars.
+ *
+ * Caution: the Vars are not copied, only linked into the list.
+ */
+List *
+pull_vars_of_level(Node *node, int levelsup)
+{
+	pull_vars_context context;
+
+	context.vars = NIL;
+	context.sublevels_up = levelsup;
+
+	/*
+	 * Must be prepared to start with a Query or a bare expression tree; if
+	 * it's a Query, we don't want to increment sublevels_up.
+	 */
+	query_or_expression_tree_walker(node,
+									pull_vars_walker,
+									(void *) &context,
+									0);
+
+	return context.vars;
+}
+
+static bool
+pull_vars_walker(Node *node, pull_vars_context *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Var))
+	{
+		Var		   *var = (Var *) node;
+
+		if (var->varlevelsup == context->sublevels_up)
+			context->vars = lappend(context->vars, var);
+		return false;
+	}
+	Assert(!IsA(node, PlaceHolderVar));
+	if (IsA(node, Query))
+	{
+		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
+		bool		result;
+
+		context->sublevels_up++;
+		result = query_tree_walker((Query *) node, pull_vars_walker,
+								   (void *) context, 0);
+		context->sublevels_up--;
+		return result;
+	}
+	return expression_tree_walker(node, pull_vars_walker,
 								  (void *) context);
 }
 
@@ -401,76 +484,6 @@ locate_var_of_level_walker(Node *node,
 	}
 	return expression_tree_walker(node,
 								  locate_var_of_level_walker,
-								  (void *) context);
-}
-
-
-/*
- * locate_var_of_relation
- *	  Find the parse location of any Var of the specified relation.
- *
- * Returns -1 if no such Var is in the querytree, or if they all have
- * unknown parse location.
- *
- * Will recurse into sublinks.	Also, may be invoked directly on a Query.
- */
-int
-locate_var_of_relation(Node *node, int relid, int levelsup)
-{
-	locate_var_of_relation_context context;
-
-	context.var_location = -1;	/* in case we find nothing */
-	context.relid = relid;
-	context.sublevels_up = levelsup;
-
-	(void) query_or_expression_tree_walker(node,
-										   locate_var_of_relation_walker,
-										   (void *) &context,
-										   0);
-
-	return context.var_location;
-}
-
-static bool
-locate_var_of_relation_walker(Node *node,
-							  locate_var_of_relation_context *context)
-{
-	if (node == NULL)
-		return false;
-	if (IsA(node, Var))
-	{
-		Var		   *var = (Var *) node;
-
-		if (var->varno == context->relid &&
-			var->varlevelsup == context->sublevels_up &&
-			var->location >= 0)
-		{
-			context->var_location = var->location;
-			return true;		/* abort tree traversal and return true */
-		}
-		return false;
-	}
-	if (IsA(node, CurrentOfExpr))
-	{
-		/* since CurrentOfExpr doesn't carry location, nothing we can do */
-		return false;
-	}
-	/* No extra code needed for PlaceHolderVar; just look in contained expr */
-	if (IsA(node, Query))
-	{
-		/* Recurse into subselects */
-		bool		result;
-
-		context->sublevels_up++;
-		result = query_tree_walker((Query *) node,
-								   locate_var_of_relation_walker,
-								   (void *) context,
-								   0);
-		context->sublevels_up--;
-		return result;
-	}
-	return expression_tree_walker(node,
-								  locate_var_of_relation_walker,
 								  (void *) context);
 }
 

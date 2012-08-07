@@ -491,12 +491,18 @@ sort_inner_and_outer(PlannerInfo *root,
 	 * explosion of mergejoin paths of dubious value.  This interacts with
 	 * decisions elsewhere that also discriminate against mergejoins with
 	 * parameterized inputs; see comments in src/backend/optimizer/README.
-	 *
-	 * If unique-ification is requested, do it and then handle as a plain
-	 * inner join.
 	 */
 	outer_path = outerrel->cheapest_total_path;
 	inner_path = innerrel->cheapest_total_path;
+
+	/* Punt if either rel has only parameterized paths */
+	if (!outer_path || !inner_path)
+		return;
+
+	/*
+	 * If unique-ification is requested, do it and then handle as a plain
+	 * inner join.
+	 */
 	if (jointype == JOIN_UNIQUE_OUTER)
 	{
 		outer_path = (Path *) create_unique_path(root, outerrel,
@@ -696,6 +702,10 @@ match_unsorted_outer(PlannerInfo *root,
 	 */
 	if (save_jointype == JOIN_UNIQUE_INNER)
 	{
+		/* XXX for the moment, don't crash on LATERAL --- rethink this */
+		if (inner_cheapest_total == NULL)
+			return;
+
 		inner_cheapest_total = (Path *)
 			create_unique_path(root, innerrel, inner_cheapest_total, sjinfo);
 		Assert(inner_cheapest_total);
@@ -707,7 +717,7 @@ match_unsorted_outer(PlannerInfo *root,
 		 * enable_material is off or the path in question materializes its
 		 * output anyway.
 		 */
-		if (enable_material &&
+		if (enable_material && inner_cheapest_total != NULL &&
 			!ExecMaterializesOutput(inner_cheapest_total->pathtype))
 			matpath = (Path *)
 				create_material_path(innerrel, inner_cheapest_total);
@@ -735,6 +745,8 @@ match_unsorted_outer(PlannerInfo *root,
 		 * If we need to unique-ify the outer path, it's pointless to consider
 		 * any but the cheapest outer.	(XXX we don't consider parameterized
 		 * outers, nor inners, for unique-ified cases.	Should we?)
+		 *
+		 * XXX does nothing for LATERAL, rethink
 		 */
 		if (save_jointype == JOIN_UNIQUE_OUTER)
 		{
@@ -812,6 +824,10 @@ match_unsorted_outer(PlannerInfo *root,
 
 		/* Can't do anything else if outer path needs to be unique'd */
 		if (save_jointype == JOIN_UNIQUE_OUTER)
+			continue;
+
+		/* Can't do anything else if inner has no unparameterized paths */
+		if (!inner_cheapest_total)
 			continue;
 
 		/* Look for useful mergeclauses (if any) */
@@ -1091,6 +1107,12 @@ hash_inner_and_outer(PlannerInfo *root,
 		Path	   *cheapest_startup_outer = outerrel->cheapest_startup_path;
 		Path	   *cheapest_total_outer = outerrel->cheapest_total_path;
 		Path	   *cheapest_total_inner = innerrel->cheapest_total_path;
+
+		/* Punt if either rel has only parameterized paths */
+		if (!cheapest_startup_outer ||
+			!cheapest_total_outer ||
+			!cheapest_total_inner)
+			return;
 
 		/* Unique-ify if need be; we ignore parameterized possibilities */
 		if (jointype == JOIN_UNIQUE_OUTER)

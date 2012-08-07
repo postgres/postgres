@@ -181,6 +181,16 @@ transformAggregateCall(ParseState *pstate, Aggref *agg,
 	while (min_varlevel-- > 0)
 		pstate = pstate->parentParseState;
 	pstate->p_hasAggs = true;
+
+	/*
+	 * Complain if we are inside a LATERAL subquery of the aggregation query.
+	 * We must be in its FROM clause, so the aggregate is misplaced.
+	 */
+	if (pstate->p_lateral_active)
+		ereport(ERROR,
+				(errcode(ERRCODE_GROUPING_ERROR),
+				 errmsg("aggregates not allowed in FROM clause"),
+				 parser_errposition(pstate, agg->location)));
 }
 
 /*

@@ -2986,3 +2986,163 @@ SELECT * FROM
 (5 rows)
 
 rollback;
+--
+-- Test LATERAL
+--
+select unique2, x.*
+from tenk1 a, lateral (select * from int4_tbl b where f1 = a.unique1) x;
+ unique2 | f1 
+---------+----
+    9998 |  0
+(1 row)
+
+explain (costs off)
+  select unique2, x.*
+  from tenk1 a, lateral (select * from int4_tbl b where f1 = a.unique1) x;
+            QUERY PLAN            
+----------------------------------
+ Nested Loop
+   ->  Seq Scan on tenk1 a
+   ->  Seq Scan on int4_tbl b
+         Filter: (f1 = a.unique1)
+(4 rows)
+
+select unique2, x.*
+from int4_tbl x, lateral (select unique2 from tenk1 where f1 = unique1) ss;
+ unique2 | f1 
+---------+----
+    9998 |  0
+(1 row)
+
+explain (costs off)
+  select unique2, x.*
+  from int4_tbl x, lateral (select unique2 from tenk1 where f1 = unique1) ss;
+                  QUERY PLAN                   
+-----------------------------------------------
+ Nested Loop
+   ->  Seq Scan on int4_tbl x
+   ->  Index Scan using tenk1_unique1 on tenk1
+         Index Cond: (x.f1 = unique1)
+(4 rows)
+
+explain (costs off)
+  select unique2, x.*
+  from int4_tbl x cross join lateral (select unique2 from tenk1 where f1 = unique1) ss;
+                  QUERY PLAN                   
+-----------------------------------------------
+ Nested Loop
+   ->  Seq Scan on int4_tbl x
+   ->  Index Scan using tenk1_unique1 on tenk1
+         Index Cond: (x.f1 = unique1)
+(4 rows)
+
+select unique2, x.*
+from int4_tbl x left join lateral (select unique1, unique2 from tenk1 where f1 = unique1) ss on f1 = unique1;
+ unique2 |     f1      
+---------+-------------
+    9998 |           0
+         |      123456
+         |     -123456
+         |  2147483647
+         | -2147483647
+(5 rows)
+
+explain (costs off)
+  select unique2, x.*
+  from int4_tbl x left join lateral (select unique1, unique2 from tenk1 where f1 = unique1) ss on f1 = unique1;
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Nested Loop Left Join
+   ->  Seq Scan on int4_tbl x
+   ->  Subquery Scan on ss
+         Filter: (x.f1 = ss.unique1)
+         ->  Index Scan using tenk1_unique1 on tenk1
+               Index Cond: (x.f1 = unique1)
+(6 rows)
+
+-- check scoping of lateral versus parent references
+-- the first of these should return int8_tbl.q2, the second int8_tbl.q1
+select *, (select r from (select q1 as q2) x, (select q2 as r) y) from int8_tbl;
+        q1        |        q2         |         r         
+------------------+-------------------+-------------------
+              123 |               456 |               456
+              123 |  4567890123456789 |  4567890123456789
+ 4567890123456789 |               123 |               123
+ 4567890123456789 |  4567890123456789 |  4567890123456789
+ 4567890123456789 | -4567890123456789 | -4567890123456789
+(5 rows)
+
+select *, (select r from (select q1 as q2) x, lateral (select q2 as r) y) from int8_tbl;
+        q1        |        q2         |        r         
+------------------+-------------------+------------------
+              123 |               456 |              123
+              123 |  4567890123456789 |              123
+ 4567890123456789 |               123 | 4567890123456789
+ 4567890123456789 |  4567890123456789 | 4567890123456789
+ 4567890123456789 | -4567890123456789 | 4567890123456789
+(5 rows)
+
+-- lateral SRF
+select count(*) from tenk1 a, lateral generate_series(1,two) g;
+ count 
+-------
+  5000
+(1 row)
+
+explain (costs off)
+  select count(*) from tenk1 a, lateral generate_series(1,two) g;
+                   QUERY PLAN                   
+------------------------------------------------
+ Aggregate
+   ->  Nested Loop
+         ->  Seq Scan on tenk1 a
+         ->  Function Scan on generate_series g
+(4 rows)
+
+explain (costs off)
+  select count(*) from tenk1 a cross join lateral generate_series(1,two) g;
+                   QUERY PLAN                   
+------------------------------------------------
+ Aggregate
+   ->  Nested Loop
+         ->  Seq Scan on tenk1 a
+         ->  Function Scan on generate_series g
+(4 rows)
+
+-- test some error cases where LATERAL should have been used but wasn't
+select f1,g from int4_tbl a, generate_series(0, f1) g;
+ERROR:  column "f1" does not exist
+LINE 1: select f1,g from int4_tbl a, generate_series(0, f1) g;
+                                                        ^
+HINT:  There is a column named "f1" in table "a", but it cannot be referenced from this part of the query.
+select f1,g from int4_tbl a, generate_series(0, a.f1) g;
+ERROR:  invalid reference to FROM-clause entry for table "a"
+LINE 1: select f1,g from int4_tbl a, generate_series(0, a.f1) g;
+                                                        ^
+HINT:  There is an entry for table "a", but it cannot be referenced from this part of the query.
+select f1,g from int4_tbl a cross join generate_series(0, f1) g;
+ERROR:  column "f1" does not exist
+LINE 1: ...ct f1,g from int4_tbl a cross join generate_series(0, f1) g;
+                                                                 ^
+HINT:  There is a column named "f1" in table "a", but it cannot be referenced from this part of the query.
+select f1,g from int4_tbl a cross join generate_series(0, a.f1) g;
+ERROR:  invalid reference to FROM-clause entry for table "a"
+LINE 1: ... f1,g from int4_tbl a cross join generate_series(0, a.f1) g;
+                                                               ^
+HINT:  There is an entry for table "a", but it cannot be referenced from this part of the query.
+-- SQL:2008 says the left table is in scope but illegal to access here
+select f1,g from int4_tbl a right join lateral generate_series(0, a.f1) g on true;
+ERROR:  invalid reference to FROM-clause entry for table "a"
+LINE 1: ... int4_tbl a right join lateral generate_series(0, a.f1) g on...
+                                                             ^
+DETAIL:  The combining JOIN type must be INNER or LEFT for a LATERAL reference.
+select f1,g from int4_tbl a full join lateral generate_series(0, a.f1) g on true;
+ERROR:  invalid reference to FROM-clause entry for table "a"
+LINE 1: ...m int4_tbl a full join lateral generate_series(0, a.f1) g on...
+                                                             ^
+DETAIL:  The combining JOIN type must be INNER or LEFT for a LATERAL reference.
+-- LATERAL can be used to put an aggregate into the FROM clause of its query
+select 1 from tenk1 a, lateral (select max(a.unique1) from int4_tbl b) ss;
+ERROR:  aggregates not allowed in FROM clause
+LINE 1: select 1 from tenk1 a, lateral (select max(a.unique1) from i...
+                                               ^

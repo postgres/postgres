@@ -2362,6 +2362,7 @@ _outRangeTblEntry(StringInfo str, const RangeTblEntry *node)
 			break;
 	}
 
+	WRITE_BOOL_FIELD(lateral);
 	WRITE_BOOL_FIELD(inh);
 	WRITE_BOOL_FIELD(inFromCl);
 	WRITE_UINT_FIELD(requiredPerms);
@@ -2565,6 +2566,7 @@ _outRangeSubselect(StringInfo str, const RangeSubselect *node)
 {
 	WRITE_NODE_TYPE("RANGESUBSELECT");
 
+	WRITE_BOOL_FIELD(lateral);
 	WRITE_NODE_FIELD(subquery);
 	WRITE_NODE_FIELD(alias);
 }
@@ -2574,6 +2576,7 @@ _outRangeFunction(StringInfo str, const RangeFunction *node)
 {
 	WRITE_NODE_TYPE("RANGEFUNCTION");
 
+	WRITE_BOOL_FIELD(lateral);
 	WRITE_NODE_FIELD(funccallnode);
 	WRITE_NODE_FIELD(alias);
 	WRITE_NODE_FIELD(coldeflist);

@@ -676,6 +676,7 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 		oldrte->relid = trigrec->tgrelid;
 		oldrte->relkind = relkind;
 		oldrte->eref = makeAlias("old", NIL);
+		oldrte->lateral = false;
 		oldrte->inh = false;
 		oldrte->inFromCl = true;
 
@@ -684,6 +685,7 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 		newrte->relid = trigrec->tgrelid;
 		newrte->relkind = relkind;
 		newrte->eref = makeAlias("new", NIL);
+		newrte->lateral = false;
 		newrte->inh = false;
 		newrte->inFromCl = true;
 
@@ -2174,6 +2176,7 @@ deparse_context_for(const char *aliasname, Oid relid)
 	rte->relid = relid;
 	rte->relkind = RELKIND_RELATION;	/* no need for exactness here */
 	rte->eref = makeAlias(aliasname, NIL);
+	rte->lateral = false;
 	rte->inh = false;
 	rte->inFromCl = true;
 
@@ -6617,6 +6620,9 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 		int			varno = ((RangeTblRef *) jtnode)->rtindex;
 		RangeTblEntry *rte = rt_fetch(varno, query->rtable);
 		bool		gavealias = false;
+
+		if (rte->lateral)
+			appendStringInfoString(buf, "LATERAL ");
 
 		switch (rte->rtekind)
 		{

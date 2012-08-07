@@ -451,6 +451,7 @@ typedef struct WindowDef
 typedef struct RangeSubselect
 {
 	NodeTag		type;
+	bool		lateral;		/* does it have LATERAL prefix? */
 	Node	   *subquery;		/* the untransformed sub-select clause */
 	Alias	   *alias;			/* table alias & optional column aliases */
 } RangeSubselect;
@@ -461,6 +462,7 @@ typedef struct RangeSubselect
 typedef struct RangeFunction
 {
 	NodeTag		type;
+	bool		lateral;		/* does it have LATERAL prefix? */
 	Node	   *funccallnode;	/* untransformed function call tree */
 	Alias	   *alias;			/* table alias & optional column aliases */
 	List	   *coldeflist;		/* list of ColumnDef nodes to describe result
@@ -706,7 +708,7 @@ typedef struct RangeTblEntry
 	 * Fields valid for a subquery RTE (else NULL):
 	 */
 	Query	   *subquery;		/* the sub-query */
-	bool		security_barrier;		/* subquery from security_barrier view */
+	bool		security_barrier;		/* is from security_barrier view? */
 
 	/*
 	 * Fields valid for a join RTE (else NULL/zero):
@@ -756,6 +758,7 @@ typedef struct RangeTblEntry
 	 */
 	Alias	   *alias;			/* user-written alias clause, if any */
 	Alias	   *eref;			/* expanded reference names */
+	bool		lateral;		/* subquery or function is marked LATERAL? */
 	bool		inh;			/* inheritance requested? */
 	bool		inFromCl;		/* present in FROM clause? */
 	AclMode		requiredPerms;	/* bitmask of required access permissions */
@@ -1752,7 +1755,7 @@ typedef struct AlterEventTrigStmt
 {
 	NodeTag		type;
 	char	   *trigname;		/* TRIGGER's name */
-	char        tgenabled;		/* trigger's firing configuration WRT
+	char		tgenabled;		/* trigger's firing configuration WRT
 								 * session_replication_role */
 } AlterEventTrigStmt;
 
@@ -2046,7 +2049,7 @@ typedef struct FetchStmt
  *
  * This represents creation of an index and/or an associated constraint.
  * If isconstraint is true, we should create a pg_constraint entry along
- * with the index.  But if indexOid isn't InvalidOid, we are not creating an
+ * with the index.	But if indexOid isn't InvalidOid, we are not creating an
  * index, just a UNIQUE/PKEY constraint using an existing index.  isconstraint
  * must always be true in this case, and the fields describing the index
  * properties are empty.

@@ -1129,8 +1129,12 @@ ExpandAllTables(ParseState *pstate, int location)
 
 	foreach(l, pstate->p_varnamespace)
 	{
-		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
+		ParseNamespaceItem *nsitem = (ParseNamespaceItem *) lfirst(l);
+		RangeTblEntry *rte = nsitem->p_rte;
 		int			rtindex = RTERangeTablePosn(pstate, rte, NULL);
+
+		/* Should not have any lateral-only items when parsing targetlist */
+		Assert(!nsitem->p_lateral_only);
 
 		target = list_concat(target,
 							 expandRelAttrs(pstate, rte, rtindex, 0,

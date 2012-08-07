@@ -1222,6 +1222,7 @@ _readRangeTblEntry(void)
 			break;
 	}
 
+	READ_BOOL_FIELD(lateral);
 	READ_BOOL_FIELD(inh);
 	READ_BOOL_FIELD(inFromCl);
 	READ_UINT_FIELD(requiredPerms);

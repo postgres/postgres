@@ -1176,6 +1176,13 @@ is_simple_subquery(Query *subquery)
 		return false;
 
 	/*
+	 * Don't pull up a LATERAL subquery (hopefully, this is just a temporary
+	 * implementation restriction).
+	 */
+	if (contain_vars_of_level((Node *) subquery, 1))
+		return false;
+
+	/*
 	 * Don't pull up a subquery that has any set-returning functions in its
 	 * targetlist.	Otherwise we might well wind up inserting set-returning
 	 * functions into places where they mustn't go, such as quals of higher

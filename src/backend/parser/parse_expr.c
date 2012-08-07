@@ -751,19 +751,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 		switch (crerr)
 		{
 			case CRERR_NO_COLUMN:
-				if (relname)
-					ereport(ERROR,
-							(errcode(ERRCODE_UNDEFINED_COLUMN),
-							 errmsg("column %s.%s does not exist",
-									relname, colname),
-							 parser_errposition(pstate, cref->location)));
-
-				else
-					ereport(ERROR,
-							(errcode(ERRCODE_UNDEFINED_COLUMN),
-							 errmsg("column \"%s\" does not exist",
-									colname),
-							 parser_errposition(pstate, cref->location)));
+				errorMissingColumn(pstate, relname, colname, cref->location);
 				break;
 			case CRERR_NO_RTE:
 				errorMissingRTE(pstate, makeRangeVar(nspname, relname,

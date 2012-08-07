@@ -2444,7 +2444,7 @@
    </row>
    <row>
     <entry><token>LATERAL</token></entry>
-    <entry></entry>
+    <entry>reserved</entry>
     <entry>reserved</entry>
     <entry>reserved</entry>
     <entry></entry>

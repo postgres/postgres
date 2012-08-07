@@ -253,8 +253,9 @@ set_rel_size(PlannerInfo *root, RelOptInfo *rel,
 			case RTE_SUBQUERY:
 
 				/*
-				 * Subqueries don't support parameterized paths, so just go
-				 * ahead and build their paths immediately.
+				 * Subqueries don't support making a choice between
+				 * parameterized and unparameterized paths, so just go ahead
+				 * and build their paths immediately.
 				 */
 				set_subquery_pathlist(root, rel, rti, rte);
 				break;
@@ -698,6 +699,10 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		if (IS_DUMMY_REL(childrel))
 			continue;
 
+		/* XXX need to figure out what to do for LATERAL */
+		if (childrel->cheapest_total_path == NULL)
+			elog(ERROR, "LATERAL within an append relation is not supported yet");
+
 		/*
 		 * Child is live, so add its cheapest access path to the Append path
 		 * we are constructing for the parent.
@@ -906,6 +911,10 @@ generate_mergeappend_paths(PlannerInfo *root, RelOptInfo *rel,
 			 */
 			if (cheapest_startup == NULL || cheapest_total == NULL)
 			{
+				/* XXX need to figure out what to do for LATERAL */
+				if (childrel->cheapest_total_path == NULL)
+					elog(ERROR, "LATERAL within an append relation is not supported yet");
+
 				cheapest_startup = cheapest_total =
 					childrel->cheapest_total_path;
 				Assert(cheapest_total != NULL);
@@ -1012,8 +1021,13 @@ has_multiple_baserels(PlannerInfo *root)
  * set_subquery_pathlist
  *		Build the (single) access path for a subquery RTE
  *
- * There's no need for a separate set_subquery_size phase, since we don't
- * support parameterized paths for subqueries.
+ * We don't currently support generating parameterized paths for subqueries
+ * by pushing join clauses down into them; it seems too expensive to re-plan
+ * the subquery multiple times to consider different alternatives.	So the
+ * subquery will have exactly one path.  (The path will be parameterized
+ * if the subquery contains LATERAL references, otherwise not.)  Since there's
+ * no freedom of action here, there's no need for a separate set_subquery_size
+ * phase: we just make the path right away.
  */
 static void
 set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
@@ -1021,6 +1035,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 {
 	Query	   *parse = root->parse;
 	Query	   *subquery = rte->subquery;
+	Relids		required_outer;
 	bool	   *differentTypes;
 	double		tuple_fraction;
 	PlannerInfo *subroot;
@@ -1032,6 +1047,20 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	 * someday).
 	 */
 	subquery = copyObject(subquery);
+
+	/*
+	 * If it's a LATERAL subquery, it might contain some Vars of the current
+	 * query level, requiring it to be treated as parameterized.
+	 */
+	if (rte->lateral)
+	{
+		required_outer = pull_varnos_of_level((Node *) subquery, 1);
+		/* Enforce convention that empty required_outer is exactly NULL */
+		if (bms_is_empty(required_outer))
+			required_outer = NULL;
+	}
+	else
+		required_outer = NULL;
 
 	/* We need a workspace for keeping track of set-op type coercions */
 	differentTypes = (bool *)
@@ -1051,10 +1080,9 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	 * pseudoconstant clauses; better to have the gating node above the
 	 * subquery.
 	 *
-	 * Also, if the sub-query has "security_barrier" flag, it means the
+	 * Also, if the sub-query has the "security_barrier" flag, it means the
 	 * sub-query originated from a view that must enforce row-level security.
-	 * We must not push down quals in order to avoid information leaks, either
-	 * via side-effects or error output.
+	 * Then we must not push down quals that contain leaky functions.
 	 *
 	 * Non-pushed-down clauses will get evaluated as qpquals of the
 	 * SubqueryScan node.
@@ -1134,7 +1162,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	pathkeys = convert_subquery_pathkeys(root, rel, subroot->query_pathkeys);
 
 	/* Generate appropriate path */
-	add_path(rel, create_subqueryscan_path(root, rel, pathkeys, NULL));
+	add_path(rel, create_subqueryscan_path(root, rel, pathkeys, required_outer));
 
 	/* Select cheapest path (pretty easy in this case...) */
 	set_cheapest(rel);
@@ -1143,12 +1171,32 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 /*
  * set_function_pathlist
  *		Build the (single) access path for a function RTE
+ *
+ * As with subqueries, a function RTE's path might be parameterized due to
+ * LATERAL references, but that's inherent in the function expression and
+ * not a result of pushing down join quals.
  */
 static void
 set_function_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 {
+	Relids		required_outer;
+
+	/*
+	 * If it's a LATERAL function, it might contain some Vars of the current
+	 * query level, requiring it to be treated as parameterized.
+	 */
+	if (rte->lateral)
+	{
+		required_outer = pull_varnos_of_level(rte->funcexpr, 0);
+		/* Enforce convention that empty required_outer is exactly NULL */
+		if (bms_is_empty(required_outer))
+			required_outer = NULL;
+	}
+	else
+		required_outer = NULL;
+
 	/* Generate appropriate path */
-	add_path(rel, create_functionscan_path(root, rel));
+	add_path(rel, create_functionscan_path(root, rel, required_outer));
 
 	/* Select cheapest path (pretty easy in this case...) */
 	set_cheapest(rel);
@@ -1157,6 +1205,10 @@ set_function_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 /*
  * set_values_pathlist
  *		Build the (single) access path for a VALUES RTE
+ *
+ * There can be no need for a parameterized path here.	(Although the SQL
+ * spec does allow LATERAL (VALUES (x)), the parser will transform that
+ * into a subquery, so it doesn't end up here.)
  */
 static void
 set_values_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
@@ -1988,10 +2040,16 @@ debug_print_rel(PlannerInfo *root, RelOptInfo *rel)
 	printf("\tpath list:\n");
 	foreach(l, rel->pathlist)
 		print_path(root, lfirst(l), 1);
-	printf("\n\tcheapest startup path:\n");
-	print_path(root, rel->cheapest_startup_path, 1);
-	printf("\n\tcheapest total path:\n");
-	print_path(root, rel->cheapest_total_path, 1);
+	if (rel->cheapest_startup_path)
+	{
+		printf("\n\tcheapest startup path:\n");
+		print_path(root, rel->cheapest_startup_path, 1);
+	}
+	if (rel->cheapest_total_path)
+	{
+		printf("\n\tcheapest total path:\n");
+		print_path(root, rel->cheapest_total_path, 1);
+	}
 	printf("\n");
 	fflush(stdout);
 }

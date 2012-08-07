@@ -56,6 +56,7 @@ geqo_eval(PlannerInfo *root, Gene *tour, int num_gene)
 	MemoryContext mycontext;
 	MemoryContext oldcxt;
 	RelOptInfo *joinrel;
+	Path	   *best_path;
 	Cost		fitness;
 	int			savelength;
 	struct HTAB *savehash;
@@ -99,6 +100,14 @@ geqo_eval(PlannerInfo *root, Gene *tour, int num_gene)
 
 	/* construct the best path for the given combination of relations */
 	joinrel = gimme_tree(root, tour, num_gene);
+	best_path = joinrel->cheapest_total_path;
+
+	/*
+	 * If no unparameterized path, use the cheapest parameterized path for
+	 * costing purposes.  XXX revisit this after LATERAL dust settles
+	 */
+	if (!best_path)
+		best_path = linitial(joinrel->cheapest_parameterized_paths);
 
 	/*
 	 * compute fitness
@@ -106,7 +115,7 @@ geqo_eval(PlannerInfo *root, Gene *tour, int num_gene)
 	 * XXX geqo does not currently support optimization for partial result
 	 * retrieval --- how to fix?
 	 */
-	fitness = joinrel->cheapest_total_path->total_cost;
+	fitness = best_path->total_cost;
 
 	/*
 	 * Restore join_rel_list to its former state, and put back original

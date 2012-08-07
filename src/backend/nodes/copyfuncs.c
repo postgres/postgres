@@ -1973,6 +1973,7 @@ _copyRangeTblEntry(const RangeTblEntry *from)
 	COPY_NODE_FIELD(ctecolcollations);
 	COPY_NODE_FIELD(alias);
 	COPY_NODE_FIELD(eref);
+	COPY_SCALAR_FIELD(lateral);
 	COPY_SCALAR_FIELD(inh);
 	COPY_SCALAR_FIELD(inFromCl);
 	COPY_SCALAR_FIELD(requiredPerms);
@@ -2250,6 +2251,7 @@ _copyRangeSubselect(const RangeSubselect *from)
 {
 	RangeSubselect *newnode = makeNode(RangeSubselect);
 
+	COPY_SCALAR_FIELD(lateral);
 	COPY_NODE_FIELD(subquery);
 	COPY_NODE_FIELD(alias);
 
@@ -2261,6 +2263,7 @@ _copyRangeFunction(const RangeFunction *from)
 {
 	RangeFunction *newnode = makeNode(RangeFunction);
 
+	COPY_SCALAR_FIELD(lateral);
 	COPY_NODE_FIELD(funccallnode);
 	COPY_NODE_FIELD(alias);
 	COPY_NODE_FIELD(coldeflist);

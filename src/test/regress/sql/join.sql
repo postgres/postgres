@@ -840,3 +840,49 @@ SELECT * FROM
   ON true;
 
 rollback;
+
+--
+-- Test LATERAL
+--
+
+select unique2, x.*
+from tenk1 a, lateral (select * from int4_tbl b where f1 = a.unique1) x;
+explain (costs off)
+  select unique2, x.*
+  from tenk1 a, lateral (select * from int4_tbl b where f1 = a.unique1) x;
+select unique2, x.*
+from int4_tbl x, lateral (select unique2 from tenk1 where f1 = unique1) ss;
+explain (costs off)
+  select unique2, x.*
+  from int4_tbl x, lateral (select unique2 from tenk1 where f1 = unique1) ss;
+explain (costs off)
+  select unique2, x.*
+  from int4_tbl x cross join lateral (select unique2 from tenk1 where f1 = unique1) ss;
+select unique2, x.*
+from int4_tbl x left join lateral (select unique1, unique2 from tenk1 where f1 = unique1) ss on f1 = unique1;
+explain (costs off)
+  select unique2, x.*
+  from int4_tbl x left join lateral (select unique1, unique2 from tenk1 where f1 = unique1) ss on f1 = unique1;
+
+-- check scoping of lateral versus parent references
+-- the first of these should return int8_tbl.q2, the second int8_tbl.q1
+select *, (select r from (select q1 as q2) x, (select q2 as r) y) from int8_tbl;
+select *, (select r from (select q1 as q2) x, lateral (select q2 as r) y) from int8_tbl;
+
+-- lateral SRF
+select count(*) from tenk1 a, lateral generate_series(1,two) g;
+explain (costs off)
+  select count(*) from tenk1 a, lateral generate_series(1,two) g;
+explain (costs off)
+  select count(*) from tenk1 a cross join lateral generate_series(1,two) g;
+
+-- test some error cases where LATERAL should have been used but wasn't
+select f1,g from int4_tbl a, generate_series(0, f1) g;
+select f1,g from int4_tbl a, generate_series(0, a.f1) g;
+select f1,g from int4_tbl a cross join generate_series(0, f1) g;
+select f1,g from int4_tbl a cross join generate_series(0, a.f1) g;
+-- SQL:2008 says the left table is in scope but illegal to access here
+select f1,g from int4_tbl a right join lateral generate_series(0, a.f1) g on true;
+select f1,g from int4_tbl a full join lateral generate_series(0, a.f1) g on true;
+-- LATERAL can be used to put an aggregate into the FROM clause of its query
+select 1 from tenk1 a, lateral (select max(a.unique1) from int4_tbl b) ss;

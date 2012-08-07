@@ -137,7 +137,12 @@ scanNameSpaceForRefname(ParseState *pstate, const char *refname, int location)
 
 	foreach(l, pstate->p_relnamespace)
 	{
-		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
+		ParseNamespaceItem *nsitem = (ParseNamespaceItem *) lfirst(l);
+		RangeTblEntry *rte = nsitem->p_rte;
+
+		/* If not inside LATERAL, ignore lateral-only items */
+		if (nsitem->p_lateral_only && !pstate->p_lateral_active)
+			continue;
 
 		if (strcmp(rte->eref->aliasname, refname) == 0)
 		{
@@ -146,6 +151,14 @@ scanNameSpaceForRefname(ParseState *pstate, const char *refname, int location)
 						(errcode(ERRCODE_AMBIGUOUS_ALIAS),
 						 errmsg("table reference \"%s\" is ambiguous",
 								refname),
+						 parser_errposition(pstate, location)));
+			/* SQL:2008 demands this be an error, not an invisible item */
+			if (nsitem->p_lateral_only && !nsitem->p_lateral_ok)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+						 errmsg("invalid reference to FROM-clause entry for table \"%s\"",
+								refname),
+						 errdetail("The combining JOIN type must be INNER or LEFT for a LATERAL reference."),
 						 parser_errposition(pstate, location)));
 			result = rte;
 		}
@@ -170,7 +183,12 @@ scanNameSpaceForRelid(ParseState *pstate, Oid relid, int location)
 
 	foreach(l, pstate->p_relnamespace)
 	{
-		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
+		ParseNamespaceItem *nsitem = (ParseNamespaceItem *) lfirst(l);
+		RangeTblEntry *rte = nsitem->p_rte;
+
+		/* If not inside LATERAL, ignore lateral-only items */
+		if (nsitem->p_lateral_only && !pstate->p_lateral_active)
+			continue;
 
 		/* yes, the test for alias == NULL should be there... */
 		if (rte->rtekind == RTE_RELATION &&
@@ -182,6 +200,14 @@ scanNameSpaceForRelid(ParseState *pstate, Oid relid, int location)
 						(errcode(ERRCODE_AMBIGUOUS_ALIAS),
 						 errmsg("table reference %u is ambiguous",
 								relid),
+						 parser_errposition(pstate, location)));
+			/* SQL:2008 demands this be an error, not an invisible item */
+			if (nsitem->p_lateral_only && !nsitem->p_lateral_ok)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+						 errmsg("invalid reference to FROM-clause entry for table \"%s\"",
+								rte->eref->aliasname),
+						 errdetail("The combining JOIN type must be INNER or LEFT for a LATERAL reference."),
 						 parser_errposition(pstate, location)));
 			result = rte;
 		}
@@ -245,7 +271,7 @@ isFutureCTE(ParseState *pstate, const char *refname)
 }
 
 /*
- * searchRangeTable
+ * searchRangeTableForRel
  *	  See if any RangeTblEntry could possibly match the RangeVar.
  *	  If so, return a pointer to the RangeTblEntry; else return NULL.
  *
@@ -260,7 +286,7 @@ isFutureCTE(ParseState *pstate, const char *refname)
  * and matches on alias.
  */
 static RangeTblEntry *
-searchRangeTable(ParseState *pstate, RangeVar *relation)
+searchRangeTableForRel(ParseState *pstate, RangeVar *relation)
 {
 	const char *refname = relation->relname;
 	Oid			relId = InvalidOid;
@@ -322,6 +348,9 @@ searchRangeTable(ParseState *pstate, RangeVar *relation)
  * Per SQL92, two alias-less plain relation RTEs do not conflict even if
  * they have the same eref->aliasname (ie, same relation name), if they
  * are for different relation OIDs (implying they are in different schemas).
+ *
+ * We ignore the lateral-only flags in the namespace items: the lists must
+ * not conflict, even when all items are considered visible.
  */
 void
 checkNameSpaceConflicts(ParseState *pstate, List *namespace1,
@@ -331,13 +360,15 @@ checkNameSpaceConflicts(ParseState *pstate, List *namespace1,
 
 	foreach(l1, namespace1)
 	{
-		RangeTblEntry *rte1 = (RangeTblEntry *) lfirst(l1);
+		ParseNamespaceItem *nsitem1 = (ParseNamespaceItem *) lfirst(l1);
+		RangeTblEntry *rte1 = nsitem1->p_rte;
 		const char *aliasname1 = rte1->eref->aliasname;
 		ListCell   *l2;
 
 		foreach(l2, namespace2)
 		{
-			RangeTblEntry *rte2 = (RangeTblEntry *) lfirst(l2);
+			ParseNamespaceItem *nsitem2 = (ParseNamespaceItem *) lfirst(l2);
+			RangeTblEntry *rte2 = nsitem2->p_rte;
 
 			if (strcmp(rte2->eref->aliasname, aliasname1) != 0)
 				continue;		/* definitely no conflict */
@@ -544,8 +575,13 @@ colNameToVar(ParseState *pstate, char *colname, bool localonly,
 
 		foreach(l, pstate->p_varnamespace)
 		{
-			RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
+			ParseNamespaceItem *nsitem = (ParseNamespaceItem *) lfirst(l);
+			RangeTblEntry *rte = nsitem->p_rte;
 			Node	   *newresult;
+
+			/* If not inside LATERAL, ignore lateral-only items */
+			if (nsitem->p_lateral_only && !pstate->p_lateral_active)
+				continue;
 
 			/* use orig_pstate here to get the right sublevels_up */
 			newresult = scanRTEForColumn(orig_pstate, rte, colname, location);
@@ -558,6 +594,14 @@ colNameToVar(ParseState *pstate, char *colname, bool localonly,
 							 errmsg("column reference \"%s\" is ambiguous",
 									colname),
 							 parser_errposition(orig_pstate, location)));
+				/* SQL:2008 demands this be an error, not an invisible item */
+				if (nsitem->p_lateral_only && !nsitem->p_lateral_ok)
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+							 errmsg("invalid reference to FROM-clause entry for table \"%s\"",
+									rte->eref->aliasname),
+							 errdetail("The combining JOIN type must be INNER or LEFT for a LATERAL reference."),
+							 parser_errposition(orig_pstate, location)));
 				result = newresult;
 			}
 		}
@@ -569,6 +613,40 @@ colNameToVar(ParseState *pstate, char *colname, bool localonly,
 	}
 
 	return result;
+}
+
+/*
+ * searchRangeTableForCol
+ *	  See if any RangeTblEntry could possibly provide the given column name.
+ *	  If so, return a pointer to the RangeTblEntry; else return NULL.
+ *
+ * This is different from colNameToVar in that it considers every entry in
+ * the ParseState's rangetable(s), not only those that are currently visible
+ * in the p_varnamespace lists.  This behavior is invalid per the SQL spec,
+ * and it may give ambiguous results (there might be multiple equally valid
+ * matches, but only one will be returned).  This must be used ONLY as a
+ * heuristic in giving suitable error messages.  See errorMissingColumn.
+ */
+static RangeTblEntry *
+searchRangeTableForCol(ParseState *pstate, char *colname, int location)
+{
+	ParseState *orig_pstate = pstate;
+
+	while (pstate != NULL)
+	{
+		ListCell   *l;
+
+		foreach(l, pstate->p_rtable)
+		{
+			RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
+
+			if (scanRTEForColumn(orig_pstate, rte, colname, location))
+				return rte;
+		}
+
+		pstate = pstate->parentParseState;
+	}
+	return NULL;
 }
 
 /*
@@ -917,16 +995,13 @@ addRangeTableEntry(ParseState *pstate,
 	 */
 	heap_close(rel, NoLock);
 
-	/*----------
-	 * Flags:
-	 * - this RTE should be expanded to include descendant tables,
-	 * - this RTE is in the FROM clause,
-	 * - this RTE should be checked for appropriate access rights.
+	/*
+	 * Set flags and access permissions.
 	 *
 	 * The initial default on access checks is always check-for-READ-access,
 	 * which is the right thing for all except target tables.
-	 *----------
 	 */
+	rte->lateral = false;
 	rte->inh = inh;
 	rte->inFromCl = inFromCl;
 
@@ -973,16 +1048,13 @@ addRangeTableEntryForRelation(ParseState *pstate,
 	rte->eref = makeAlias(refname, NIL);
 	buildRelationAliases(rel->rd_att, alias, rte->eref);
 
-	/*----------
-	 * Flags:
-	 * - this RTE should be expanded to include descendant tables,
-	 * - this RTE is in the FROM clause,
-	 * - this RTE should be checked for appropriate access rights.
+	/*
+	 * Set flags and access permissions.
 	 *
 	 * The initial default on access checks is always check-for-READ-access,
 	 * which is the right thing for all except target tables.
-	 *----------
 	 */
+	rte->lateral = false;
 	rte->inh = inh;
 	rte->inFromCl = inFromCl;
 
@@ -1011,6 +1083,7 @@ RangeTblEntry *
 addRangeTableEntryForSubquery(ParseState *pstate,
 							  Query *subquery,
 							  Alias *alias,
+							  bool lateral,
 							  bool inFromCl)
 {
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
@@ -1054,15 +1127,12 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 
 	rte->eref = eref;
 
-	/*----------
-	 * Flags:
-	 * - this RTE should be expanded to include descendant tables,
-	 * - this RTE is in the FROM clause,
-	 * - this RTE should be checked for appropriate access rights.
+	/*
+	 * Set flags and access permissions.
 	 *
 	 * Subqueries are never checked for access rights.
-	 *----------
 	 */
+	rte->lateral = lateral;
 	rte->inh = false;			/* never true for subqueries */
 	rte->inFromCl = inFromCl;
 
@@ -1091,6 +1161,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 							  char *funcname,
 							  Node *funcexpr,
 							  RangeFunction *rangefunc,
+							  bool lateral,
 							  bool inFromCl)
 {
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
@@ -1192,16 +1263,13 @@ addRangeTableEntryForFunction(ParseState *pstate,
 					funcname, format_type_be(funcrettype)),
 				 parser_errposition(pstate, exprLocation(funcexpr))));
 
-	/*----------
-	 * Flags:
-	 * - this RTE should be expanded to include descendant tables,
-	 * - this RTE is in the FROM clause,
-	 * - this RTE should be checked for appropriate access rights.
+	/*
+	 * Set flags and access permissions.
 	 *
-	 * Functions are never checked for access rights (at least, not by
-	 * the RTE permissions mechanism).
-	 *----------
+	 * Functions are never checked for access rights (at least, not by the RTE
+	 * permissions mechanism).
 	 */
+	rte->lateral = lateral;
 	rte->inh = false;			/* never true for functions */
 	rte->inFromCl = inFromCl;
 
@@ -1267,15 +1335,12 @@ addRangeTableEntryForValues(ParseState *pstate,
 
 	rte->eref = eref;
 
-	/*----------
-	 * Flags:
-	 * - this RTE should be expanded to include descendant tables,
-	 * - this RTE is in the FROM clause,
-	 * - this RTE should be checked for appropriate access rights.
+	/*
+	 * Set flags and access permissions.
 	 *
 	 * Subqueries are never checked for access rights.
-	 *----------
 	 */
+	rte->lateral = false;
 	rte->inh = false;			/* never true for values RTEs */
 	rte->inFromCl = inFromCl;
 
@@ -1338,15 +1403,12 @@ addRangeTableEntryForJoin(ParseState *pstate,
 
 	rte->eref = eref;
 
-	/*----------
-	 * Flags:
-	 * - this RTE should be expanded to include descendant tables,
-	 * - this RTE is in the FROM clause,
-	 * - this RTE should be checked for appropriate access rights.
+	/*
+	 * Set flags and access permissions.
 	 *
 	 * Joins are never checked for access rights.
-	 *----------
 	 */
+	rte->lateral = false;
 	rte->inh = false;			/* never true for joins */
 	rte->inFromCl = inFromCl;
 
@@ -1441,15 +1503,12 @@ addRangeTableEntryForCTE(ParseState *pstate,
 
 	rte->eref = eref;
 
-	/*----------
-	 * Flags:
-	 * - this RTE should be expanded to include descendant tables,
-	 * - this RTE is in the FROM clause,
-	 * - this RTE should be checked for appropriate access rights.
+	/*
+	 * Set flags and access permissions.
 	 *
 	 * Subqueries are never checked for access rights.
-	 *----------
 	 */
+	rte->lateral = false;
 	rte->inh = false;			/* never true for subqueries */
 	rte->inFromCl = inFromCl;
 
@@ -1519,7 +1578,8 @@ isLockedRefname(ParseState *pstate, const char *refname)
 /*
  * Add the given RTE as a top-level entry in the pstate's join list
  * and/or name space lists.  (We assume caller has checked for any
- * namespace conflicts.)
+ * namespace conflicts.)  The RTE is always marked as unconditionally
+ * visible, that is, not LATERAL-only.
  */
 void
 addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,
@@ -1534,10 +1594,19 @@ addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,
 		rtr->rtindex = rtindex;
 		pstate->p_joinlist = lappend(pstate->p_joinlist, rtr);
 	}
-	if (addToRelNameSpace)
-		pstate->p_relnamespace = lappend(pstate->p_relnamespace, rte);
-	if (addToVarNameSpace)
-		pstate->p_varnamespace = lappend(pstate->p_varnamespace, rte);
+	if (addToRelNameSpace || addToVarNameSpace)
+	{
+		ParseNamespaceItem *nsitem;
+
+		nsitem = (ParseNamespaceItem *) palloc(sizeof(ParseNamespaceItem));
+		nsitem->p_rte = rte;
+		nsitem->p_lateral_only = false;
+		nsitem->p_lateral_ok = true;
+		if (addToRelNameSpace)
+			pstate->p_relnamespace = lappend(pstate->p_relnamespace, nsitem);
+		if (addToVarNameSpace)
+			pstate->p_varnamespace = lappend(pstate->p_varnamespace, nsitem);
+	}
 }
 
 /*
@@ -2453,7 +2522,7 @@ errorMissingRTE(ParseState *pstate, RangeVar *relation)
 	 * rangetable.	(Note: cases involving a bad schema name in the RangeVar
 	 * will throw error immediately here.  That seems OK.)
 	 */
-	rte = searchRangeTable(pstate, relation);
+	rte = searchRangeTableForRel(pstate, relation);
 
 	/*
 	 * If we found a match that has an alias and the alias is visible in the
@@ -2489,4 +2558,44 @@ errorMissingRTE(ParseState *pstate, RangeVar *relation)
 				 errmsg("missing FROM-clause entry for table \"%s\"",
 						relation->relname),
 				 parser_errposition(pstate, relation->location)));
+}
+
+/*
+ * Generate a suitable error about a missing column.
+ *
+ * Since this is a very common type of error, we work rather hard to
+ * produce a helpful message.
+ */
+void
+errorMissingColumn(ParseState *pstate,
+				   char *relname, char *colname, int location)
+{
+	RangeTblEntry *rte;
+
+	/*
+	 * If relname was given, just play dumb and report it.	(In practice, a
+	 * bad qualification name should end up at errorMissingRTE, not here, so
+	 * no need to work hard on this case.)
+	 */
+	if (relname)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("column %s.%s does not exist", relname, colname),
+				 parser_errposition(pstate, location)));
+
+	/*
+	 * Otherwise, search the entire rtable looking for possible matches.  If
+	 * we find one, emit a hint about it.
+	 *
+	 * TODO: improve this code (and also errorMissingRTE) to mention using
+	 * LATERAL if appropriate.
+	 */
+	rte = searchRangeTableForCol(pstate, colname, location);
+
+	ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_COLUMN),
+			 errmsg("column \"%s\" does not exist", colname),
+			 rte ? errhint("There is a column named \"%s\" in table \"%s\", but it cannot be referenced from this part of the query.",
+						   colname, rte->eref->aliasname) : 0,
+			 parser_errposition(pstate, location)));
 }

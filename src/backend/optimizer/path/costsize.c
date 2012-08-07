@@ -989,12 +989,17 @@ cost_subqueryscan(Path *path, PlannerInfo *root,
 /*
  * cost_functionscan
  *	  Determines and returns the cost of scanning a function RTE.
+ *
+ * 'baserel' is the relation to be scanned
+ * 'param_info' is the ParamPathInfo if this is a parameterized path, else NULL
  */
 void
-cost_functionscan(Path *path, PlannerInfo *root, RelOptInfo *baserel)
+cost_functionscan(Path *path, PlannerInfo *root,
+				  RelOptInfo *baserel, ParamPathInfo *param_info)
 {
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
+	QualCost	qpqual_cost;
 	Cost		cpu_per_tuple;
 	RangeTblEntry *rte;
 	QualCost	exprcost;
@@ -1004,8 +1009,11 @@ cost_functionscan(Path *path, PlannerInfo *root, RelOptInfo *baserel)
 	rte = planner_rt_fetch(baserel->relid, root);
 	Assert(rte->rtekind == RTE_FUNCTION);
 
-	/* functionscans are never parameterized */
-	path->rows = baserel->rows;
+	/* Mark the path with the correct row estimate */
+	if (param_info)
+		path->rows = param_info->ppi_rows;
+	else
+		path->rows = baserel->rows;
 
 	/*
 	 * Estimate costs of executing the function expression.
@@ -1025,8 +1033,10 @@ cost_functionscan(Path *path, PlannerInfo *root, RelOptInfo *baserel)
 	startup_cost += exprcost.startup + exprcost.per_tuple;
 
 	/* Add scanning CPU costs */
-	startup_cost += baserel->baserestrictcost.startup;
-	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost.per_tuple;
+	get_restriction_qual_cost(root, baserel, param_info, &qpqual_cost);
+
+	startup_cost += qpqual_cost.startup;
+	cpu_per_tuple = cpu_tuple_cost + qpqual_cost.per_tuple;
 	run_cost += cpu_per_tuple * baserel->tuples;
 
 	path->startup_cost = startup_cost;

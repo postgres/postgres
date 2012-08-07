@@ -1231,6 +1231,7 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	rte = addRangeTableEntryForSubquery(NULL,
 										subselect,
 										makeAlias("ANY_subquery", NIL),
+										false,
 										false);
 	parse->rtable = lappend(parse->rtable, rte);
 	rtindex = list_length(parse->rtable);

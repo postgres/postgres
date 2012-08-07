@@ -204,6 +204,64 @@ add_vars_to_targetlist(PlannerInfo *root, List *vars,
 	}
 }
 
+/*
+ * extract_lateral_references
+ *	  If the specified RTE is a LATERAL subquery, extract all its references
+ *	  to Vars of the current query level, and make sure those Vars will be
+ *	  available for evaluation of the RTE.
+ *
+ * XXX this is rather duplicative of processing that has to happen elsewhere.
+ * Maybe it'd be a good idea to do this type of extraction further upstream
+ * and save the results?
+ */
+static void
+extract_lateral_references(PlannerInfo *root, int rtindex)
+{
+	RangeTblEntry *rte = root->simple_rte_array[rtindex];
+	List	   *vars;
+	List	   *newvars;
+	Relids		where_needed;
+	ListCell   *lc;
+
+	/* No cross-references are possible if it's not LATERAL */
+	if (!rte->lateral)
+		return;
+
+	/* Fetch the appropriate variables */
+	if (rte->rtekind == RTE_SUBQUERY)
+		vars = pull_vars_of_level((Node *) rte->subquery, 1);
+	else if (rte->rtekind == RTE_FUNCTION)
+		vars = pull_vars_of_level(rte->funcexpr, 0);
+	else
+		return;
+
+	/* Copy each Var and adjust it to match our level */
+	newvars = NIL;
+	foreach(lc, vars)
+	{
+		Var		   *var = (Var *) lfirst(lc);
+
+		var = copyObject(var);
+		var->varlevelsup = 0;
+		newvars = lappend(newvars, var);
+	}
+
+	/*
+	 * We mark the Vars as being "needed" at the LATERAL RTE.  This is a bit
+	 * of a cheat: a more formal approach would be to mark each one as needed
+	 * at the join of the LATERAL RTE with its source RTE.	But it will work,
+	 * and it's much less tedious than computing a separate where_needed for
+	 * each Var.
+	 */
+	where_needed = bms_make_singleton(rtindex);
+
+	/* Push the Vars into their source relations' targetlists */
+	add_vars_to_targetlist(root, newvars, where_needed, false);
+
+	list_free(newvars);
+	list_free(vars);
+}
+
 
 /*****************************************************************************
  *
@@ -286,7 +344,9 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 	{
 		int			varno = ((RangeTblRef *) jtnode)->rtindex;
 
-		/* No quals to deal with, just return correct result */
+		/* No quals to deal with, but do check for LATERAL subqueries */
+		extract_lateral_references(root, varno);
+		/* Result qualscope is just the one Relid */
 		*qualscope = bms_make_singleton(varno);
 		/* A single baserel does not create an inner join */
 		*inner_join_rels = NULL;

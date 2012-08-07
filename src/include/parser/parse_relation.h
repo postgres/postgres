@@ -55,11 +55,13 @@ extern RangeTblEntry *addRangeTableEntryForRelation(ParseState *pstate,
 extern RangeTblEntry *addRangeTableEntryForSubquery(ParseState *pstate,
 							  Query *subquery,
 							  Alias *alias,
+							  bool lateral,
 							  bool inFromCl);
 extern RangeTblEntry *addRangeTableEntryForFunction(ParseState *pstate,
 							  char *funcname,
 							  Node *funcexpr,
 							  RangeFunction *rangefunc,
+							  bool lateral,
 							  bool inFromCl);
 extern RangeTblEntry *addRangeTableEntryForValues(ParseState *pstate,
 							List *exprs,
@@ -82,6 +84,8 @@ extern void addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,
 			  bool addToJoinList,
 			  bool addToRelNameSpace, bool addToVarNameSpace);
 extern void errorMissingRTE(ParseState *pstate, RangeVar *relation);
+extern void errorMissingColumn(ParseState *pstate,
+				   char *relname, char *colname, int location);
 extern void expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 		  int location, bool include_dropped,
 		  List **colnames, List **colvars);

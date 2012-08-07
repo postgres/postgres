@@ -590,7 +590,7 @@ SELECT a.* FROM (my_table AS a JOIN your_table AS b ON ...) AS c
     <para>
      Subqueries specifying a derived table must be enclosed in
      parentheses and <emphasis>must</emphasis> be assigned a table
-     alias name.  (See <xref linkend="queries-table-aliases">.)  For
+     alias name (as in <xref linkend="queries-table-aliases">).  For
      example:
 <programlisting>
 FROM (SELECT * FROM table1) AS alias_name
@@ -695,6 +695,87 @@ SELECT *
      The actual column set must be specified in the calling query so
      that the parser knows, for example, what <literal>*</> should
      expand to.
+    </para>
+   </sect3>
+
+   <sect3 id="queries-lateral">
+    <title><literal>LATERAL</> Subqueries</title>
+
+    <indexterm zone="queries-lateral">
+     <primary>LATERAL</>
+     <secondary>in the FROM clause</>
+    </indexterm>
+
+    <para>
+     Subqueries and table functions appearing in <literal>FROM</> can be
+     preceded by the key word <literal>LATERAL</>.  This allows them to
+     reference columns provided by preceding <literal>FROM</> items.
+     (Without <literal>LATERAL</literal>, each <literal>FROM</> item is
+     evaluated independently and so cannot cross-reference any other
+     <literal>FROM</> item.)
+     A <literal>LATERAL</literal> item can appear at top level in the
+     <literal>FROM</> list, or within a <literal>JOIN</> tree; in the latter
+     case it can also refer to any items that are on the left-hand side of a
+     <literal>JOIN</> that it is on the right-hand side of.
+    </para>
+
+    <para>
+     When a <literal>FROM</> item contains <literal>LATERAL</literal>
+     cross-references, evaluation proceeds as follows: for each row of the
+     <literal>FROM</> item providing the cross-referenced column(s), or
+     set of rows of multiple <literal>FROM</> items providing the
+     columns, the <literal>LATERAL</literal> item is evaluated using that
+     row or row set's values of the columns.  The resulting row(s) are
+     joined as usual with the rows they were computed from.  This is
+     repeated for each row or set of rows from the column source table(s).
+    </para>
+
+    <para>
+     A trivial example of <literal>LATERAL</literal> is
+<programlisting>
+SELECT * FROM foo, LATERAL (SELECT * FROM bar WHERE bar.id = foo.bar_id) ss;
+</programlisting>
+     This is not especially useful since it has exactly the same result as
+     the more conventional
+<programlisting>
+SELECT * FROM foo, bar WHERE bar.id = foo.bar_id;
+</programlisting>
+     <literal>LATERAL</literal> is primarily useful when the cross-referenced
+     column is necessary for computing the row(s) to be joined.  A common
+     application is providing an argument value for a set-returning function.
+     For example, supposing that <function>vertices(polygon)</> returns the
+     set of vertices of a polygon, we could identify close-together vertices
+     of polygons stored in a table with:
+<programlisting>
+SELECT p1.id, p2.id, v1, v2
+FROM polygons p1, polygons p2,
+     LATERAL vertices(p1.poly) v1,
+     LATERAL vertices(p2.poly) v2
+WHERE (v1 &lt;-&gt; v2) &lt; 10 AND p1.id != p2.id;
+</programlisting>
+     This query could also be written
+<programlisting>
+SELECT p1.id, p2.id, v1, v2
+FROM polygons p1 CROSS JOIN LATERAL vertices(p1.poly) v1,
+     polygons p2 CROSS JOIN LATERAL vertices(p2.poly) v2
+WHERE (v1 &lt;-&gt; v2) &lt; 10 AND p1.id != p2.id;
+</programlisting>
+     or in several other equivalent formulations.
+    </para>
+
+    <para>
+     It is often particularly handy to <literal>LEFT JOIN</> to a
+     <literal>LATERAL</literal> subquery, so that source rows will appear in
+     the result even if the <literal>LATERAL</literal> subquery produces no
+     rows for them.  For example, if <function>get_product_names()</> returns
+     the names of products made by a manufacturer, but some manufacturers in
+     our table currently produce no products, we could find out which ones
+     those are like this:
+<programlisting>
+SELECT m.name
+FROM manufacturers m LEFT JOIN LATERAL get_product_names(m.id) pname ON true
+WHERE pname IS NULL;
+</programlisting>
     </para>
    </sect3>
   </sect2>
