@@ -140,7 +140,7 @@ main(int argc, char **argv)
 	 * because there is no need to have the schema load use new oids.
 	 */
 	prep_status("Setting next OID for new cluster");
-	exec_prog(true, true, UTILITY_LOG_FILE,
+	exec_prog(true, true, UTILITY_LOG_FILE, NULL,
 			  SYSTEMQUOTE "\"%s/pg_resetxlog\" -o %u \"%s\" >> \"%s\" 2>&1"
 			  SYSTEMQUOTE,
 			  new_cluster.bindir, old_cluster.controldata.chkpnt_nxtoid,
@@ -211,7 +211,7 @@ prepare_new_cluster(void)
 	 * --analyze so autovacuum doesn't update statistics later
 	 */
 	prep_status("Analyzing all rows in the new cluster");
-	exec_prog(true, true, UTILITY_LOG_FILE,
+	exec_prog(true, true, UTILITY_LOG_FILE, NULL,
 			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --username \"%s\" "
 			  "--all --analyze %s >> \"%s\" 2>&1" SYSTEMQUOTE,
 			  new_cluster.bindir, new_cluster.port, os_info.user,
@@ -225,7 +225,7 @@ prepare_new_cluster(void)
 	 * later.
 	 */
 	prep_status("Freezing all rows on the new cluster");
-	exec_prog(true, true, UTILITY_LOG_FILE,
+	exec_prog(true, true, UTILITY_LOG_FILE, NULL,
 			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --username \"%s\" "
 			  "--all --freeze %s >> \"%s\" 2>&1" SYSTEMQUOTE,
 			  new_cluster.bindir, new_cluster.port, os_info.user,
@@ -263,7 +263,7 @@ prepare_new_databases(void)
 	 * support functions in template1 but pg_dumpall creates database using
 	 * the template0 template.
 	 */
-	exec_prog(true, true, RESTORE_LOG_FILE,
+	exec_prog(true, true, RESTORE_LOG_FILE, NULL,
 			  SYSTEMQUOTE "\"%s/psql\" --echo-queries "
 			  "--set ON_ERROR_STOP=on "
 	/* --no-psqlrc prevents AUTOCOMMIT=off */
@@ -296,7 +296,7 @@ create_new_objects(void)
 	check_ok();
 
 	prep_status("Restoring database schema to new cluster");
-	exec_prog(true, true, RESTORE_LOG_FILE,
+	exec_prog(true, true, RESTORE_LOG_FILE, NULL,
 			  SYSTEMQUOTE "\"%s/psql\" --echo-queries "
 			  "--set ON_ERROR_STOP=on "
 			  "--no-psqlrc --port %d --username \"%s\" "
@@ -331,7 +331,7 @@ copy_subdir_files(char *subdir)
 
 	prep_status("Copying old %s to new server", subdir);
 
-	exec_prog(true, false, UTILITY_LOG_FILE,
+	exec_prog(true, false, UTILITY_LOG_FILE, NULL,
 #ifndef WIN32
 			  SYSTEMQUOTE "%s \"%s\" \"%s\" >> \"%s\" 2>&1" SYSTEMQUOTE,
 			  "cp -Rf",
@@ -353,7 +353,7 @@ copy_clog_xlog_xid(void)
 
 	/* set the next transaction id of the new cluster */
 	prep_status("Setting next transaction ID for new cluster");
-	exec_prog(true, true, UTILITY_LOG_FILE,
+	exec_prog(true, true, UTILITY_LOG_FILE, NULL,
 			  SYSTEMQUOTE
 			  "\"%s/pg_resetxlog\" -f -x %u \"%s\" >> \"%s\" 2>&1"
 			  SYSTEMQUOTE, new_cluster.bindir,
@@ -363,7 +363,7 @@ copy_clog_xlog_xid(void)
 
 	/* now reset the wal archives in the new cluster */
 	prep_status("Resetting WAL archives");
-	exec_prog(true, true, UTILITY_LOG_FILE,
+	exec_prog(true, true, UTILITY_LOG_FILE, NULL,
 			  SYSTEMQUOTE
 			  "\"%s/pg_resetxlog\" -l %s \"%s\" >> \"%s\" 2>&1"
 			  SYSTEMQUOTE, new_cluster.bindir,

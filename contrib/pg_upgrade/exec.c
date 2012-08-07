@@ -33,18 +33,19 @@ static int	win32_check_directory_write_permissions(void);
  *	line to be executed is saved to the specified log file.
  *
  *	If throw_error is TRUE, this function will throw a PG_FATAL error
- *	instead of returning should an error occur.
+ *	instead of returning should an error occur.  The command it appended
+ *	to log_file;  opt_log_file is used in error messages.
  */
 int
-exec_prog(bool throw_error, bool is_priv,
-		  const char *log_file, const char *fmt,...)
+exec_prog(bool throw_error, bool is_priv, const char *log_file,
+		  const char *opt_log_file, const char *fmt,...)
 {
 	va_list		args;
 	int			result;
 	int			retval;
 	char		cmd[MAXPGPATH];
 	mode_t		old_umask = 0;
-	FILE	   *log = fopen(log_file, "a+");
+	FILE	   *log;
 
 	if (is_priv)
 		old_umask = umask(S_IRWXG | S_IRWXO);
@@ -53,9 +54,15 @@ exec_prog(bool throw_error, bool is_priv,
 	vsnprintf(cmd, MAXPGPATH, fmt, args);
 	va_end(args);
 
+	if ((log = fopen_priv(log_file, "a+")) == NULL)
+		pg_log(PG_FATAL, "cannot write to log file %s\n", log_file);
 	pg_log(PG_VERBOSE, "%s\n", cmd);
 	fprintf(log, "command: %s\n", cmd);
-	fflush(log);
+	/*
+	 *	In Windows, we must close then reopen the log file so the file is
+	 *	not open while the command is running, or we get a share violation.
+	 */
+	fclose(log);
 
 	result = system(cmd);
 
@@ -64,18 +71,28 @@ exec_prog(bool throw_error, bool is_priv,
 
 	if (result != 0)
 	{
+		char opt_string[MAXPGPATH];
+
+		/* Create string for optional second log file */
+		if (opt_log_file)
+			snprintf(opt_string, sizeof(opt_string), " or \"%s\"", opt_log_file);
+		else
+			opt_string[0] = '\0';
+
 		report_status(PG_REPORT, "*failure*");
 		fflush(stdout);
 		pg_log(PG_VERBOSE, "There were problems executing \"%s\"\n", cmd);
 		pg_log(throw_error ? PG_FATAL : PG_REPORT,
-			   "Consult the last few lines of \"%s\" for\n"
+			   "Consult the last few lines of \"%s\"%s for\n"
 			   "the probable cause of the failure.\n",
-			   log_file);
+			   log_file, opt_string);
 		retval = 1;
 	}
 	else
 		retval = 0;
 
+	if ((log = fopen_priv(log_file, "a+")) == NULL)
+		pg_log(PG_FATAL, "cannot write to log file %s\n", log_file);
 	fprintf(log, "\n\n");
 	fclose(log);
 

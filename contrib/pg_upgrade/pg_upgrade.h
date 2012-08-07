@@ -317,9 +317,9 @@ void		split_old_dump(void);
 /* exec.c */
 
 int
-exec_prog(bool throw_error, bool is_priv,
-		  const char *log_file, const char *cmd,...)
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 4, 5)));
+exec_prog(bool throw_error, bool is_priv, const char *log_file,
+		  const char *opt_log_file, const char *cmd,...)
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 5, 6)));
 void		verify_directories(void);
 bool		is_server_running(const char *datadir);
 

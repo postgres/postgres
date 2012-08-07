@@ -171,11 +171,10 @@ start_postmaster(ClusterInfo *cluster)
 	 * Don't throw an error right away, let connecting throw the error because
 	 * it might supply a reason for the failure.
 	 */
-	pg_ctl_return = exec_prog(false, true,
+	pg_ctl_return = exec_prog(false, true, SERVER_START_LOG_FILE,
 	/* pass both file names if the differ */
-					  (strcmp(SERVER_LOG_FILE, SERVER_START_LOG_FILE) == 0) ?
-							  SERVER_LOG_FILE :
-							  SERVER_LOG_FILE " or " SERVER_START_LOG_FILE,
+					  (strcmp(SERVER_LOG_FILE, SERVER_START_LOG_FILE) != 0) ?
+							  SERVER_LOG_FILE : NULL,
 							  "%s", cmd);
 
 	/* Check to see if we can connect to the server; if not, report it. */
@@ -220,7 +219,7 @@ stop_postmaster(bool fast)
 			 cluster->pgopts ? cluster->pgopts : "",
 			 fast ? "-m fast" : "", SERVER_STOP_LOG_FILE);
 
-	exec_prog(fast ? false : true, true, SERVER_STOP_LOG_FILE, "%s", cmd);
+	exec_prog(fast ? false : true, true, SERVER_STOP_LOG_FILE, NULL, "%s", cmd);
 
 	os_info.running_cluster = NULL;
 }
