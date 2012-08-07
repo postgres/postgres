@@ -183,7 +183,7 @@ issue_warnings(char *sequence_script_file_name)
 		if (sequence_script_file_name)
 		{
 			prep_status("Adjusting sequences");
-			exec_prog(true, true, UTILITY_LOG_FILE,
+			exec_prog(true, true, UTILITY_LOG_FILE, NULL,
 					  SYSTEMQUOTE "\"%s/psql\" --echo-queries "
 					  "--set ON_ERROR_STOP=on "
 					  "--no-psqlrc --port %d --username \"%s\" "
