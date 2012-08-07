@@ -2,6 +2,7 @@
 
 use strict;
 use warnings;
+use 5.008001;
 
 use Cwd qw(abs_path getcwd);
 use File::Find;
@@ -9,11 +10,10 @@ use File::Spec qw(devnull);
 use File::Temp;
 use IO::Handle;
 use Getopt::Long;
-use Readonly;
 
 # Update for pg_bsd_indent version
-Readonly my $INDENT_VERSION => "1.1";
-Readonly my $devnull        => File::Spec->devnull;
+my $INDENT_VERSION = "1.1";
+my $devnull        = File::Spec->devnull;
 
 # Common indent settings
 my $indent_opts =
@@ -188,12 +188,12 @@ sub pre_indent
 	my $source = shift;
 
 	# remove trailing whitespace
-	$source =~ s/\h+$//gm;
+	$source =~ s/[ \t]+$//gm;
 
 	## Comments
 
 	# Convert // comments to /* */
-	$source =~ s!^(\h*)//(.*)$!$1/* $2 */!gm;
+	$source =~ s!^([ \t]*)//(.*)$!$1/* $2 */!gm;
 
 	# 'else' followed by a single-line comment, followed by
 	# a brace on the next line confuses BSD indent, so we push
@@ -204,13 +204,13 @@ sub pre_indent
 	# FILE: ../../../src/backend/rewrite/rewriteHandler.c
 	# Error@2259:
 	# Stuff missing from end of file
-	$source =~ s!(\}|\h)else\h*(/\*)(.*\*/)\h*$!$1else\n    $2 _PGMV$3!gm;
+	$source =~ s!(\}|[ \t])else[ \t]*(/\*)(.*\*/)[ \t]*$!$1else\n    $2 _PGMV$3!gm;
 
 	# Indent multi-line after-'else' comment so BSD indent will move it
 	# properly. We already moved down single-line comments above.
 	# Check for '*' to make sure we are not in a single-line comment that
 	# has other text on the line.
-	$source =~ s!(\}|\h)else\h*(/\*[^*]*)\h*$!$1else\n    $2!gm;
+	$source =~ s!(\}|[ \t])else[ \t]*(/\*[^*]*)[ \t]*$!$1else\n    $2!gm;
 
 	# Mark some comments for special treatment later
 	$source =~ s!/\* +---!/*---X_X!g;
@@ -226,7 +226,7 @@ sub pre_indent
 		my $l2 = $srclines[$lno];
 
 		# Line is only a single open brace in column 0
-		next unless $l2 =~ /^\{\h*$/;
+		next unless $l2 =~ /^\{[ \t]*$/;
 
 		# previous line has a closing paren
 		next unless $srclines[ $lno - 1 ] =~ /\)/;
@@ -234,7 +234,7 @@ sub pre_indent
 		# previous line was struct, etc.
 		next
 		  if $srclines[ $lno - 1 ] =~
-			  m!=|^(struct|enum|\h*typedef|extern\h+"C")!;
+			  m!=|^(struct|enum|[ \t]*typedef|extern[ \t]+"C")!;
 
 		$srclines[$lno] = "$l2\nint pgindent_func_no_var_fix;";
 	}
@@ -245,8 +245,8 @@ sub pre_indent
 	my $extern_c_start = '/* Open extern "C" */';
 	my $extern_c_stop  = '/* Close extern "C" */';
 	$source =~
-s!(^#ifdef\h+__cplusplus.*\nextern\h+"C"\h*\n)\{\h*$!$1$extern_c_start!gm;
-	$source =~ s!(^#ifdef\h+__cplusplus.*\n)\}\h*$!$1$extern_c_stop!gm;
+s!(^#ifdef[ \t]+__cplusplus.*\nextern[ \t]+"C"[ \t]*\n)\{[ \t]*$!$1$extern_c_start!gm;
+	$source =~ s!(^#ifdef[ \t]+__cplusplus.*\n)\}[ \t]*$!$1$extern_c_stop!gm;
 
 	return $source;
 }
@@ -267,21 +267,21 @@ sub post_indent
 	$source =~ s!/\*---X_X!/* ---!g;
 
 	# Pull up single-line comment after 'else' that was pulled down above
-	$source =~ s!else\n\h+/\* _PGMV!else\t/*!g;
+	$source =~ s!else\n[ \t]+/\* _PGMV!else\t/*!g;
 
 	# Indent single-line after-'else' comment by only one tab.
-	$source =~ s!(\}|\h)else\h+(/\*.*\*/)\h*$!$1else\t$2!gm;
+	$source =~ s!(\}|[ \t])else[ \t]+(/\*.*\*/)[ \t]*$!$1else\t$2!gm;
 
 	# Add tab before comments with no whitespace before them (on a tab stop)
 	$source =~ s!(\S)(/\*.*\*/)$!$1\t$2!gm;
 
 	# Remove blank line between opening brace and block comment.
-	$source =~ s!(\t*\{\n)\n(\h+/\*)$!$1$2!gm;
+	$source =~ s!(\t*\{\n)\n([ \t]+/\*)$!$1$2!gm;
 
 	# cpp conditionals
 
 	# Reduce whitespace between #endif and comments to one tab
-	$source =~ s!^\#endif\h+/\*!#endif   /*!gm;
+	$source =~ s!^\#endif[ \t]+/\*!#endif   /*!gm;
 
 	# Remove blank line(s) before #else, #elif, and #endif
 	$source =~ s!\n\n+(\#else|\#elif|\#endif)!\n$1!g;
@@ -292,10 +292,10 @@ sub post_indent
 	## Functions
 
 	# Work around misindenting of function with no variables defined.
-	$source =~ s!^\h*int\h+pgindent_func_no_var_fix;\h*\n{1,2}!!gm;
+	$source =~ s!^[ \t]*int[ \t]+pgindent_func_no_var_fix;[ \t]*\n{1,2}!!gm;
 
 	# Use a single space before '*' in function return types
-	$source =~ s!^([A-Za-z_]\S*)\h+\*$!$1 *!gm;
+	$source =~ s!^([A-Za-z_]\S*)[ \t]+\*$!$1 *!gm;
 
 	#  Move prototype names to the same line as return type.  Useful
 	# for ctags.  Indent should do this, but it does not.  It formats
@@ -308,21 +308,21 @@ sub post_indent
 			(\n$ident[^(\n]*)\n                  # e.g. static void
 			(
 				$ident\(\n?                      # func_name( 
-				(.*,(\h*$comment)?\n)*           # args b4 final ln
-				.*\);(\h*$comment)?$             # final line
+				(.*,([ \t]*$comment)?\n)*        # args b4 final ln
+				.*\);([ \t]*$comment)?$          # final line
 			)
 		!$1 . (substr($1,-1,1) eq '*' ? '' : ' ') . $2!gmxe;
 
 	## Other
 
 	# Remove too much indenting after closing brace.
-	$source =~ s!^\}\t\h+!}\t!gm;
+	$source =~ s!^\}\t[ \t]+!}\t!gm;
 
 	# Workaround indent bug that places excessive space before 'static'.
-	$source =~ s!^static\h+!static !gm;
+	$source =~ s!^static[ \t]+!static !gm;
 
 	# Remove leading whitespace from typedefs
-	$source =~ s!^\h+typedef enum!typedef enum!gm
+	$source =~ s!^[ \t]+typedef enum!typedef enum!gm
 	  if $source_filename =~ 'libpq-(fe|events).h$';
 
 	# Remove trailing blank lines
