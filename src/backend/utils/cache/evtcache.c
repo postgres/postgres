@@ -84,7 +84,7 @@ BuildEventTriggerCache(void)
 		 * the cache failed, then there might be some junk lying around
 		 * that we want to reclaim.
 		 */
-		MemoryContextReset(EventTriggerCacheContext);
+		MemoryContextResetAndDeleteChildren(EventTriggerCacheContext);
 	}
 	else
 	{
@@ -119,8 +119,9 @@ BuildEventTriggerCache(void)
 	ctl.keysize = sizeof(EventTriggerEvent);
 	ctl.entrysize = sizeof(EventTriggerCacheEntry);
 	ctl.hash = tag_hash;
+	ctl.hcxt = EventTriggerCacheContext;
 	cache = hash_create("Event Trigger Cache", 32, &ctl,
-						HASH_ELEM | HASH_FUNCTION);
+						HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
 
 	/*
 	 * Prepare to scan pg_event_trigger in name order.  We use an MVCC
@@ -237,6 +238,6 @@ DecodeTextArrayToCString(Datum array, char ***cstringp)
 static void
 InvalidateEventCacheCallback(Datum arg, int cacheid, uint32 hashvalue)
 {
-	MemoryContextReset(EventTriggerCacheContext);
+	MemoryContextResetAndDeleteChildren(EventTriggerCacheContext);
 	EventTriggerCache = NULL;
 }
