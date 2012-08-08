@@ -10155,7 +10155,7 @@ AtEOSubXact_on_commit_actions(bool isCommit, SubTransactionId mySubid,
  * This is intended as a callback for RangeVarGetRelidExtended().  It allows
  * the table to be locked only if (1) it's a plain table or TOAST table and
  * (2) the current user is the owner (or the superuser).  This meets the
- * permission-checking needs of both CLUTER and REINDEX TABLE; we expose it
+ * permission-checking needs of both CLUSTER and REINDEX TABLE; we expose it
  * here so that it can be used by both.
  */
 void
