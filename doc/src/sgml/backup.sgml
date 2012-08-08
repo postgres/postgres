@@ -1071,9 +1071,7 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
     WAL segments that cannot be found in the archive will be sought in
     <filename>pg_xlog/</>; this allows use of recent un-archived segments.
     However, segments that are available from the archive will be used in
-    preference to files in <filename>pg_xlog/</>.  The system will not
-    overwrite the existing contents of <filename>pg_xlog/</> when retrieving
-    archived files.
+    preference to files in <filename>pg_xlog/</>.
    </para>
 
    <para>
