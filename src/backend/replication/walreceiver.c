@@ -83,7 +83,7 @@ walrcv_disconnect_type walrcv_disconnect = NULL;
 /*
  * These variables are used similarly to openLogFile/SegNo/Off,
  * but for walreceiver to write the XLOG. recvFileTLI is the TimeLineID
- * corresponding the filename of recvFile, used for error messages.
+ * corresponding the filename of recvFile.
  */
 static int	recvFile = -1;
 static TimeLineID	recvFileTLI = 0;
@@ -528,12 +528,21 @@ WalReceiverMain(void)
 		 */
 		if (recvFile >= 0)
 		{
+			char		xlogfname[MAXFNAMELEN];
+
 			XLogWalRcvFlush(false);
 			if (close(recvFile) != 0)
 				ereport(PANIC,
 						(errcode_for_file_access(),
 						 errmsg("could not close log segment %s: %m",
 								XLogFileNameP(recvFileTLI, recvSegNo))));
+
+			/*
+			 * Create .done file forcibly to prevent the streamed segment from
+			 * being archived later.
+			 */
+			XLogFileName(xlogfname, recvFileTLI, recvSegNo);
+			XLogArchiveForceDone(xlogfname);
 		}
 		recvFile = -1;
 
@@ -865,6 +874,8 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 			 */
 			if (recvFile >= 0)
 			{
+				char		xlogfname[MAXFNAMELEN];
+
 				XLogWalRcvFlush(false);
 
 				/*
@@ -877,6 +888,13 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 							(errcode_for_file_access(),
 							 errmsg("could not close log segment %s: %m",
 									XLogFileNameP(recvFileTLI, recvSegNo))));
+
+				/*
+				 * Create .done file forcibly to prevent the streamed segment from
+				 * being archived later.
+				 */
+				XLogFileName(xlogfname, recvFileTLI, recvSegNo);
+				XLogArchiveForceDone(xlogfname);
 			}
 			recvFile = -1;
 

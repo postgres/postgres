@@ -278,6 +278,7 @@ extern void ExecuteRecoveryCommand(char *command, char *commandName,
 extern void KeepFileRestoredFromArchive(char  *path, char *xlogfname);
 extern void XLogArchiveNotify(const char *xlog);
 extern void XLogArchiveNotifySeg(XLogSegNo segno);
+extern void XLogArchiveForceDone(const char *xlog);
 extern bool XLogArchiveCheckDone(const char *xlog);
 extern bool XLogArchiveIsBusy(const char *xlog);
 extern void XLogArchiveCleanup(const char *xlog);

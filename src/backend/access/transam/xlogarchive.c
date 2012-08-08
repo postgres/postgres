@@ -474,6 +474,12 @@ KeepFileRestoredFromArchive(char *path, char *xlogfname)
 						path, xlogfpath)));
 
 	/*
+	 * Create .done file forcibly to prevent the restored segment from
+	 * being archived again later.
+	 */
+	XLogArchiveForceDone(xlogfname);
+
+	/*
 	 * If the existing file was replaced, since walsenders might have it
 	 * open, request them to reload a currently-open segment. This is only
 	 * required for WAL segments, walsenders don't hold other files open, but
@@ -542,6 +548,59 @@ XLogArchiveNotifySeg(XLogSegNo segno)
 
 	XLogFileName(xlog, ThisTimeLineID, segno);
 	XLogArchiveNotify(xlog);
+}
+
+/*
+ * XLogArchiveForceDone
+ *
+ * Emit notification forcibly that an XLOG segment file has been successfully
+ * archived, by creating <XLOG>.done regardless of whether <XLOG>.ready
+ * exists or not.
+ */
+void
+XLogArchiveForceDone(const char *xlog)
+{
+	char		archiveReady[MAXPGPATH];
+	char		archiveDone[MAXPGPATH];
+	struct stat stat_buf;
+	FILE	   *fd;
+
+	/* Exit if already known done */
+	StatusFilePath(archiveDone, xlog, ".done");
+	if (stat(archiveDone, &stat_buf) == 0)
+		return;
+
+	/* If .ready exists, rename it to .done */
+	StatusFilePath(archiveReady, xlog, ".ready");
+	if (stat(archiveReady, &stat_buf) == 0)
+	{
+		if (rename(archiveReady, archiveDone) < 0)
+			ereport(WARNING,
+					(errcode_for_file_access(),
+					 errmsg("could not rename file \"%s\" to \"%s\": %m",
+							archiveReady, archiveDone)));
+
+		return;
+	}
+
+	/* insert an otherwise empty file called <XLOG>.done */
+	fd = AllocateFile(archiveDone, "w");
+	if (fd == NULL)
+	{
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not create archive status file \"%s\": %m",
+						archiveDone)));
+		return;
+	}
+	if (FreeFile(fd))
+	{
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not write archive status file \"%s\": %m",
+						archiveDone)));
+		return;
+	}
 }
 
 /*
