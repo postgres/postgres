@@ -1336,6 +1336,59 @@ XLogArchiveNotifySeg(uint32 log, uint32 seg)
 }
 
 /*
+ * XLogArchiveForceDone
+ *
+ * Emit notification forcibly that an XLOG segment file has been successfully
+ * archived, by creating <XLOG>.done regardless of whether <XLOG>.ready
+ * exists or not.
+ */
+void
+XLogArchiveForceDone(const char *xlog)
+{
+	char		archiveReady[MAXPGPATH];
+	char		archiveDone[MAXPGPATH];
+	struct stat stat_buf;
+	FILE	   *fd;
+
+	/* Exit if already known done */
+	StatusFilePath(archiveDone, xlog, ".done");
+	if (stat(archiveDone, &stat_buf) == 0)
+		return;
+
+	/* If .ready exists, rename it to .done */
+	StatusFilePath(archiveReady, xlog, ".ready");
+	if (stat(archiveReady, &stat_buf) == 0)
+	{
+		if (rename(archiveReady, archiveDone) < 0)
+			ereport(WARNING,
+					(errcode_for_file_access(),
+					 errmsg("could not rename file \"%s\" to \"%s\": %m",
+							archiveReady, archiveDone)));
+
+		return;
+	}
+
+	/* insert an otherwise empty file called <XLOG>.done */
+	fd = AllocateFile(archiveDone, "w");
+	if (fd == NULL)
+	{
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not create archive status file \"%s\": %m",
+						archiveDone)));
+		return;
+	}
+	if (FreeFile(fd))
+	{
+		ereport(LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not write archive status file \"%s\": %m",
+						archiveDone)));
+		return;
+	}
+}
+
+/*
  * XLogArchiveCheckDone
  *
  * This is called when we are ready to delete or recycle an old XLOG segment
@@ -2813,6 +2866,12 @@ XLogFileRead(uint32 log, uint32 seg, int emode, TimeLineID tli,
 		 * Set path to point at the new file in pg_xlog.
 		 */
 		strncpy(path, xlogfpath, MAXPGPATH);
+
+		/*
+		 * Create .done file forcibly to prevent the restored segment from
+		 * being archived again later.
+		 */
+		XLogArchiveForceDone(xlogfname);
 
 		/*
 		 * If the existing segment was replaced, since walsenders might have

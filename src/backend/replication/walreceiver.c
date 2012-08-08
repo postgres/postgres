@@ -66,10 +66,12 @@ walrcv_disconnect_type walrcv_disconnect = NULL;
 #define NAPTIME_PER_CYCLE 100	/* max sleep time between cycles (100ms) */
 
 /*
- * These variables are used similarly to openLogFile/Id/Seg/Off,
- * but for walreceiver to write the XLOG.
+ * These variables are used similarly to openLogFile/SegNo/Off,
+ * but for walreceiver to write the XLOG. recvFileTLI is the TimeLineID
+ * corresponding the filename of recvFile.
  */
 static int	recvFile = -1;
+static TimeLineID	recvFileTLI = 0;
 static uint32 recvId = 0;
 static uint32 recvSeg = 0;
 static uint32 recvOff = 0;
@@ -492,6 +494,8 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 			 */
 			if (recvFile >= 0)
 			{
+				char		xlogfname[MAXFNAMELEN];
+
 				XLogWalRcvFlush(false);
 
 				/*
@@ -504,6 +508,13 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 							(errcode_for_file_access(),
 						errmsg("could not close log file %u, segment %u: %m",
 							   recvId, recvSeg)));
+
+				/*
+				 * Create .done file forcibly to prevent the restored segment from
+				 * being archived again later.
+				 */
+				XLogFileName(xlogfname, recvFileTLI, recvId, recvSeg);
+				XLogArchiveForceDone(xlogfname);
 			}
 			recvFile = -1;
 
@@ -511,6 +522,7 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 			XLByteToSeg(recptr, recvId, recvSeg);
 			use_existent = true;
 			recvFile = XLogFileInit(recvId, recvSeg, &use_existent, true);
+			recvFileTLI = ThisTimeLineID;
 			recvOff = 0;
 		}
 

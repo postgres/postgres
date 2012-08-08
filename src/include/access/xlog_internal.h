@@ -264,6 +264,11 @@ extern pg_time_t GetLastSegSwitchTime(void);
 extern XLogRecPtr RequestXLogSwitch(void);
 
 /*
+ * Exported to support xlog archive status setting from WALReceiver
+ */
+extern void XLogArchiveForceDone(const char *xlog);
+
+/*
  * These aren't in xlog.h because I'd rather not include fmgr.h there.
  */
 extern Datum pg_start_backup(PG_FUNCTION_ARGS);
