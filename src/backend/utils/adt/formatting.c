@@ -3504,8 +3504,10 @@ do_to_timestamp(text *date_txt, text *fmt,
 		if (tmfc.bc)
 			tmfc.cc = -tmfc.cc;
 		if (tmfc.cc >= 0)
+			/* +1 becuase 21st century started in 2001 */
 			tm->tm_year = (tmfc.cc - 1) * 100 + 1;
 		else
+			/* +1 because year == 599 is 600 BC */
 			tm->tm_year = tmfc.cc * 100 + 1;
 	}
 
