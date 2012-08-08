@@ -19,11 +19,10 @@ To run just specific test(s), you can do something like
     ./pg_isolation_regress fk-contention fk-deadlock
 (look into the specs/ subdirectory to see the available tests).
 
-Note that the prepared-transactions test requires the server's
-max_prepared_transactions parameter to be set to at least 3.  We have
-provided a variant expected-output file that allows the test to "pass"
-when max_prepared_transactions has its default value of zero, but of
-course that is not really exercising the feature.
+The prepared-transactions test requires the server's
+max_prepared_transactions parameter to be set to at least 3; therefore it
+is not run by default.  To include it in the test run, use
+    gmake installcheck-prepared-txns
 
 To define tests with overlapping transactions, we use test specification
 files with a custom syntax, which is described in the next section.  To add
