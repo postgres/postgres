@@ -38,6 +38,9 @@
 #include "utils/rel.h"
 
 
+/* Convenience macro for the most common makeNamespaceItem() case */
+#define makeDefaultNSItem(rte)	makeNamespaceItem(rte, true, true, false, true)
+
 /* clause types for findTargetlistEntrySQL92 */
 #define ORDER_CLAUSE 0
 #define GROUP_CLAUSE 1
@@ -56,9 +59,7 @@ static Node *transformJoinUsingClause(ParseState *pstate,
 						 RangeTblEntry *leftRTE, RangeTblEntry *rightRTE,
 						 List *leftVars, List *rightVars);
 static Node *transformJoinOnClause(ParseState *pstate, JoinExpr *j,
-					  RangeTblEntry *l_rte,
-					  RangeTblEntry *r_rte,
-					  List *relnamespace);
+					  List *namespace);
 static RangeTblEntry *transformTableEntry(ParseState *pstate, RangeVar *r);
 static RangeTblEntry *transformCTEReference(ParseState *pstate, RangeVar *r,
 					  CommonTableExpr *cte, Index levelsup);
@@ -68,11 +69,13 @@ static RangeTblEntry *transformRangeFunction(ParseState *pstate,
 					   RangeFunction *r);
 static Node *transformFromClauseItem(ParseState *pstate, Node *n,
 						RangeTblEntry **top_rte, int *top_rti,
-						List **relnamespace);
+						List **namespace);
 static Node *buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 				   Var *l_colvar, Var *r_colvar);
 static ParseNamespaceItem *makeNamespaceItem(RangeTblEntry *rte,
+				  bool rel_visible, bool cols_visible,
 				  bool lateral_only, bool lateral_ok);
+static void setNamespaceColumnVisibility(List *namespace, bool cols_visible);
 static void setNamespaceLateralState(List *namespace,
 						 bool lateral_only, bool lateral_ok);
 static void checkExprIsVarFree(ParseState *pstate, Node *n,
@@ -97,10 +100,10 @@ static Node *transformFrameOffset(ParseState *pstate, int frameOptions,
 /*
  * transformFromClause -
  *	  Process the FROM clause and add items to the query's range table,
- *	  joinlist, and namespaces.
+ *	  joinlist, and namespace.
  *
- * Note: we assume that pstate's p_rtable, p_joinlist, p_relnamespace, and
- * p_varnamespace lists were initialized to NIL when the pstate was created.
+ * Note: we assume that the pstate's p_rtable, p_joinlist, and p_namespace
+ * lists were initialized to NIL when the pstate was created.
  * We will add onto any entries already present --- this is needed for rule
  * processing, as well as for UPDATE and DELETE.
  */
@@ -113,7 +116,7 @@ transformFromClause(ParseState *pstate, List *frmList)
 	 * The grammar will have produced a list of RangeVars, RangeSubselects,
 	 * RangeFunctions, and/or JoinExprs. Transform each one (possibly adding
 	 * entries to the rtable), check for duplicate refnames, and then add it
-	 * to the joinlist and namespaces.
+	 * to the joinlist and namespace.
 	 *
 	 * Note we must process the items left-to-right for proper handling of
 	 * LATERAL references.
@@ -123,22 +126,20 @@ transformFromClause(ParseState *pstate, List *frmList)
 		Node	   *n = lfirst(fl);
 		RangeTblEntry *rte;
 		int			rtindex;
-		List	   *relnamespace;
+		List	   *namespace;
 
 		n = transformFromClauseItem(pstate, n,
 									&rte,
 									&rtindex,
-									&relnamespace);
-		/* Mark the new relnamespace items as visible to LATERAL */
-		setNamespaceLateralState(relnamespace, true, true);
+									&namespace);
 
-		checkNameSpaceConflicts(pstate, pstate->p_relnamespace, relnamespace);
+		checkNameSpaceConflicts(pstate, pstate->p_namespace, namespace);
+
+		/* Mark the new namespace items as visible only to LATERAL */
+		setNamespaceLateralState(namespace, true, true);
 
 		pstate->p_joinlist = lappend(pstate->p_joinlist, n);
-		pstate->p_relnamespace = list_concat(pstate->p_relnamespace,
-											 relnamespace);
-		pstate->p_varnamespace = lappend(pstate->p_varnamespace,
-										 makeNamespaceItem(rte, true, true));
+		pstate->p_namespace = list_concat(pstate->p_namespace, namespace);
 	}
 
 	/*
@@ -147,8 +148,7 @@ transformFromClause(ParseState *pstate, List *frmList)
 	 * for any namespace items that were already present when we were called;
 	 * but those should have been that way already.
 	 */
-	setNamespaceLateralState(pstate->p_relnamespace, false, true);
-	setNamespaceLateralState(pstate->p_varnamespace, false, true);
+	setNamespaceLateralState(pstate->p_namespace, false, true);
 }
 
 /*
@@ -217,7 +217,7 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 	rte->requiredPerms = requiredPerms;
 
 	/*
-	 * If UPDATE/DELETE, add table to joinlist and namespaces.
+	 * If UPDATE/DELETE, add table to joinlist and namespace.
 	 */
 	if (alsoSource)
 		addRTEtoQuery(pstate, rte, true, true, true);
@@ -383,14 +383,10 @@ transformJoinUsingClause(ParseState *pstate,
  *	  Result is a transformed qualification expression.
  */
 static Node *
-transformJoinOnClause(ParseState *pstate, JoinExpr *j,
-					  RangeTblEntry *l_rte,
-					  RangeTblEntry *r_rte,
-					  List *relnamespace)
+transformJoinOnClause(ParseState *pstate, JoinExpr *j, List *namespace)
 {
 	Node	   *result;
-	List	   *save_relnamespace;
-	List	   *save_varnamespace;
+	List	   *save_namespace;
 
 	/*
 	 * The namespace that the join expression should see is just the two
@@ -400,19 +396,14 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 	 * already did.)  All namespace items are marked visible regardless of
 	 * LATERAL state.
 	 */
-	save_relnamespace = pstate->p_relnamespace;
-	save_varnamespace = pstate->p_varnamespace;
+	setNamespaceLateralState(namespace, false, true);
 
-	setNamespaceLateralState(relnamespace, false, true);
-	pstate->p_relnamespace = relnamespace;
-
-	pstate->p_varnamespace = list_make2(makeNamespaceItem(l_rte, false, true),
-									  makeNamespaceItem(r_rte, false, true));
+	save_namespace = pstate->p_namespace;
+	pstate->p_namespace = namespace;
 
 	result = transformWhereClause(pstate, j->quals, "JOIN/ON");
 
-	pstate->p_relnamespace = save_relnamespace;
-	pstate->p_varnamespace = save_varnamespace;
+	pstate->p_namespace = save_namespace;
 
 	return result;
 }
@@ -592,7 +583,8 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
  * transformFromClauseItem -
  *	  Transform a FROM-clause item, adding any required entries to the
  *	  range table list being built in the ParseState, and return the
- *	  transformed item ready to include in the joinlist and namespaces.
+ *	  transformed item ready to include in the joinlist.  Also build a
+ *	  ParseNamespaceItem list describing the names exposed by this item.
  *	  This routine can recurse to handle SQL92 JOIN expressions.
  *
  * The function return value is the node to add to the jointree (a
@@ -604,17 +596,14 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
  *
  * *top_rti: receives the rangetable index of top_rte.	(Ditto.)
  *
- * *relnamespace: receives a List of ParseNamespaceItems for the RTEs exposed
- * as relation names by this item.	(The lateral_only flags in these items
+ * *namespace: receives a List of ParseNamespaceItems for the RTEs exposed
+ * as table/column names by this item.  (The lateral_only flags in these items
  * are indeterminate and should be explicitly set by the caller before use.)
- *
- * We do not need to pass back an explicit varnamespace value, because
- * in all cases the varnamespace contribution is exactly top_rte.
  */
 static Node *
 transformFromClauseItem(ParseState *pstate, Node *n,
 						RangeTblEntry **top_rte, int *top_rti,
-						List **relnamespace)
+						List **namespace)
 {
 	if (IsA(n, RangeVar))
 	{
@@ -644,7 +633,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		Assert(rte == rt_fetch(rtindex, pstate->p_rtable));
 		*top_rte = rte;
 		*top_rti = rtindex;
-		*relnamespace = list_make1(makeNamespaceItem(rte, false, true));
+		*namespace = list_make1(makeDefaultNSItem(rte));
 		rtr = makeNode(RangeTblRef);
 		rtr->rtindex = rtindex;
 		return (Node *) rtr;
@@ -662,7 +651,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		Assert(rte == rt_fetch(rtindex, pstate->p_rtable));
 		*top_rte = rte;
 		*top_rti = rtindex;
-		*relnamespace = list_make1(makeNamespaceItem(rte, false, true));
+		*namespace = list_make1(makeDefaultNSItem(rte));
 		rtr = makeNode(RangeTblRef);
 		rtr->rtindex = rtindex;
 		return (Node *) rtr;
@@ -680,7 +669,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		Assert(rte == rt_fetch(rtindex, pstate->p_rtable));
 		*top_rte = rte;
 		*top_rti = rtindex;
-		*relnamespace = list_make1(makeNamespaceItem(rte, false, true));
+		*namespace = list_make1(makeDefaultNSItem(rte));
 		rtr = makeNode(RangeTblRef);
 		rtr->rtindex = rtindex;
 		return (Node *) rtr;
@@ -693,9 +682,9 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		RangeTblEntry *r_rte;
 		int			l_rtindex;
 		int			r_rtindex;
-		List	   *l_relnamespace,
-				   *r_relnamespace,
-				   *my_relnamespace,
+		List	   *l_namespace,
+				   *r_namespace,
+				   *my_namespace,
 				   *l_colnames,
 				   *r_colnames,
 				   *res_colnames,
@@ -703,8 +692,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 				   *r_colvars,
 				   *res_colvars;
 		bool		lateral_ok;
-		int			sv_relnamespace_length,
-					sv_varnamespace_length;
+		int			sv_namespace_length;
 		RangeTblEntry *rte;
 		int			k;
 
@@ -715,53 +703,49 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		j->larg = transformFromClauseItem(pstate, j->larg,
 										  &l_rte,
 										  &l_rtindex,
-										  &l_relnamespace);
+										  &l_namespace);
 
 		/*
 		 * Make the left-side RTEs available for LATERAL access within the
 		 * right side, by temporarily adding them to the pstate's namespace
-		 * lists.  Per SQL:2008, if the join type is not INNER or LEFT then
+		 * list.  Per SQL:2008, if the join type is not INNER or LEFT then
 		 * the left-side names must still be exposed, but it's an error to
 		 * reference them.	(Stupid design, but that's what it says.)  Hence,
-		 * we always push them into the namespaces, but mark them as not
+		 * we always push them into the namespace, but mark them as not
 		 * lateral_ok if the jointype is wrong.
 		 *
 		 * NB: this coding relies on the fact that list_concat is not
 		 * destructive to its second argument.
 		 */
 		lateral_ok = (j->jointype == JOIN_INNER || j->jointype == JOIN_LEFT);
-		setNamespaceLateralState(l_relnamespace, true, lateral_ok);
-		checkNameSpaceConflicts(pstate, pstate->p_relnamespace, l_relnamespace);
-		sv_relnamespace_length = list_length(pstate->p_relnamespace);
-		pstate->p_relnamespace = list_concat(pstate->p_relnamespace,
-											 l_relnamespace);
-		sv_varnamespace_length = list_length(pstate->p_varnamespace);
-		pstate->p_varnamespace = lappend(pstate->p_varnamespace,
-								 makeNamespaceItem(l_rte, true, lateral_ok));
+		setNamespaceLateralState(l_namespace, true, lateral_ok);
+
+		checkNameSpaceConflicts(pstate, pstate->p_namespace, l_namespace);
+
+		sv_namespace_length = list_length(pstate->p_namespace);
+		pstate->p_namespace = list_concat(pstate->p_namespace, l_namespace);
 
 		/* And now we can process the RHS */
 		j->rarg = transformFromClauseItem(pstate, j->rarg,
 										  &r_rte,
 										  &r_rtindex,
-										  &r_relnamespace);
+										  &r_namespace);
 
-		/* Remove the left-side RTEs from the namespace lists again */
-		pstate->p_relnamespace = list_truncate(pstate->p_relnamespace,
-											   sv_relnamespace_length);
-		pstate->p_varnamespace = list_truncate(pstate->p_varnamespace,
-											   sv_varnamespace_length);
+		/* Remove the left-side RTEs from the namespace list again */
+		pstate->p_namespace = list_truncate(pstate->p_namespace,
+											sv_namespace_length);
 
 		/*
 		 * Check for conflicting refnames in left and right subtrees. Must do
 		 * this because higher levels will assume I hand back a self-
 		 * consistent namespace list.
 		 */
-		checkNameSpaceConflicts(pstate, l_relnamespace, r_relnamespace);
+		checkNameSpaceConflicts(pstate, l_namespace, r_namespace);
 
 		/*
-		 * Generate combined relnamespace info for possible use below.
+		 * Generate combined namespace info for possible use below.
 		 */
-		my_relnamespace = list_concat(l_relnamespace, r_relnamespace);
+		my_namespace = list_concat(l_namespace, r_namespace);
 
 		/*
 		 * Extract column name and var lists from both subtrees
@@ -924,9 +908,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		else if (j->quals)
 		{
 			/* User-written ON-condition; transform it */
-			j->quals = transformJoinOnClause(pstate, j,
-											 l_rte, r_rte,
-											 my_relnamespace);
+			j->quals = transformJoinOnClause(pstate, j, my_namespace);
 		}
 		else
 		{
@@ -985,14 +967,30 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 
 		/*
 		 * Prepare returned namespace list.  If the JOIN has an alias then it
-		 * hides the contained RTEs as far as the relnamespace goes;
-		 * otherwise, put the contained RTEs and *not* the JOIN into
-		 * relnamespace.
+		 * hides the contained RTEs completely; otherwise, the contained RTEs
+		 * are still visible as table names, but are not visible for
+		 * unqualified column-name access.
+		 *
+		 * Note: if there are nested alias-less JOINs, the lower-level ones
+		 * will remain in the list although they have neither p_rel_visible
+		 * nor p_cols_visible set.  We could delete such list items, but it's
+		 * unclear that it's worth expending cycles to do so.
 		 */
-		if (j->alias)
-			*relnamespace = list_make1(makeNamespaceItem(rte, false, true));
+		if (j->alias != NULL)
+			my_namespace = NIL;
 		else
-			*relnamespace = my_relnamespace;
+			setNamespaceColumnVisibility(my_namespace, false);
+
+		/*
+		 * The join RTE itself is always made visible for unqualified column
+		 * names.  It's visible as a relation name only if it has an alias.
+		 */
+		*namespace = lappend(my_namespace,
+							 makeNamespaceItem(rte,
+											   (j->alias != NULL),
+											   true,
+											   false,
+											   true));
 
 		return (Node *) j;
 	}
@@ -1125,15 +1123,35 @@ buildMergedJoinVar(ParseState *pstate, JoinType jointype,
  *	  Convenience subroutine to construct a ParseNamespaceItem.
  */
 static ParseNamespaceItem *
-makeNamespaceItem(RangeTblEntry *rte, bool lateral_only, bool lateral_ok)
+makeNamespaceItem(RangeTblEntry *rte, bool rel_visible, bool cols_visible,
+				  bool lateral_only, bool lateral_ok)
 {
 	ParseNamespaceItem *nsitem;
 
 	nsitem = (ParseNamespaceItem *) palloc(sizeof(ParseNamespaceItem));
 	nsitem->p_rte = rte;
+	nsitem->p_rel_visible = rel_visible;
+	nsitem->p_cols_visible = cols_visible;
 	nsitem->p_lateral_only = lateral_only;
 	nsitem->p_lateral_ok = lateral_ok;
 	return nsitem;
+}
+
+/*
+ * setNamespaceColumnVisibility -
+ *	  Convenience subroutine to update cols_visible flags in a namespace list.
+ */
+static void
+setNamespaceColumnVisibility(List *namespace, bool cols_visible)
+{
+	ListCell   *lc;
+
+	foreach(lc, namespace)
+	{
+		ParseNamespaceItem *nsitem = (ParseNamespaceItem *) lfirst(lc);
+
+		nsitem->p_cols_visible = cols_visible;
+	}
 }
 
 /*

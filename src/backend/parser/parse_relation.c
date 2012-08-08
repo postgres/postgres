@@ -135,11 +135,14 @@ scanNameSpaceForRefname(ParseState *pstate, const char *refname, int location)
 	RangeTblEntry *result = NULL;
 	ListCell   *l;
 
-	foreach(l, pstate->p_relnamespace)
+	foreach(l, pstate->p_namespace)
 	{
 		ParseNamespaceItem *nsitem = (ParseNamespaceItem *) lfirst(l);
 		RangeTblEntry *rte = nsitem->p_rte;
 
+		/* Ignore columns-only items */
+		if (!nsitem->p_rel_visible)
+			continue;
 		/* If not inside LATERAL, ignore lateral-only items */
 		if (nsitem->p_lateral_only && !pstate->p_lateral_active)
 			continue;
@@ -181,11 +184,14 @@ scanNameSpaceForRelid(ParseState *pstate, Oid relid, int location)
 	RangeTblEntry *result = NULL;
 	ListCell   *l;
 
-	foreach(l, pstate->p_relnamespace)
+	foreach(l, pstate->p_namespace)
 	{
 		ParseNamespaceItem *nsitem = (ParseNamespaceItem *) lfirst(l);
 		RangeTblEntry *rte = nsitem->p_rte;
 
+		/* Ignore columns-only items */
+		if (!nsitem->p_rel_visible)
+			continue;
 		/* If not inside LATERAL, ignore lateral-only items */
 		if (nsitem->p_lateral_only && !pstate->p_lateral_active)
 			continue;
@@ -277,7 +283,7 @@ isFutureCTE(ParseState *pstate, const char *refname)
  *
  * This is different from refnameRangeTblEntry in that it considers every
  * entry in the ParseState's rangetable(s), not only those that are currently
- * visible in the p_relnamespace lists.  This behavior is invalid per the SQL
+ * visible in the p_namespace list(s).  This behavior is invalid per the SQL
  * spec, and it may give ambiguous results (there might be multiple equally
  * valid matches, but only one will be returned).  This must be used ONLY
  * as a heuristic in giving suitable error messages.  See errorMissingRTE.
@@ -339,7 +345,7 @@ searchRangeTableForRel(ParseState *pstate, RangeVar *relation)
 }
 
 /*
- * Check for relation-name conflicts between two relnamespace lists.
+ * Check for relation-name conflicts between two namespace lists.
  * Raise an error if any is found.
  *
  * Note: we assume that each given argument does not contain conflicts
@@ -350,7 +356,8 @@ searchRangeTableForRel(ParseState *pstate, RangeVar *relation)
  * are for different relation OIDs (implying they are in different schemas).
  *
  * We ignore the lateral-only flags in the namespace items: the lists must
- * not conflict, even when all items are considered visible.
+ * not conflict, even when all items are considered visible.  However,
+ * columns-only items should be ignored.
  */
 void
 checkNameSpaceConflicts(ParseState *pstate, List *namespace1,
@@ -365,11 +372,16 @@ checkNameSpaceConflicts(ParseState *pstate, List *namespace1,
 		const char *aliasname1 = rte1->eref->aliasname;
 		ListCell   *l2;
 
+		if (!nsitem1->p_rel_visible)
+			continue;
+
 		foreach(l2, namespace2)
 		{
 			ParseNamespaceItem *nsitem2 = (ParseNamespaceItem *) lfirst(l2);
 			RangeTblEntry *rte2 = nsitem2->p_rte;
 
+			if (!nsitem2->p_rel_visible)
+				continue;
 			if (strcmp(rte2->eref->aliasname, aliasname1) != 0)
 				continue;		/* definitely no conflict */
 			if (rte1->rtekind == RTE_RELATION && rte1->alias == NULL &&
@@ -573,12 +585,15 @@ colNameToVar(ParseState *pstate, char *colname, bool localonly,
 	{
 		ListCell   *l;
 
-		foreach(l, pstate->p_varnamespace)
+		foreach(l, pstate->p_namespace)
 		{
 			ParseNamespaceItem *nsitem = (ParseNamespaceItem *) lfirst(l);
 			RangeTblEntry *rte = nsitem->p_rte;
 			Node	   *newresult;
 
+			/* Ignore table-only items */
+			if (!nsitem->p_cols_visible)
+				continue;
 			/* If not inside LATERAL, ignore lateral-only items */
 			if (nsitem->p_lateral_only && !pstate->p_lateral_active)
 				continue;
@@ -622,7 +637,7 @@ colNameToVar(ParseState *pstate, char *colname, bool localonly,
  *
  * This is different from colNameToVar in that it considers every entry in
  * the ParseState's rangetable(s), not only those that are currently visible
- * in the p_varnamespace lists.  This behavior is invalid per the SQL spec,
+ * in the p_namespace list(s).  This behavior is invalid per the SQL spec,
  * and it may give ambiguous results (there might be multiple equally valid
  * matches, but only one will be returned).  This must be used ONLY as a
  * heuristic in giving suitable error messages.  See errorMissingColumn.
@@ -1577,7 +1592,7 @@ isLockedRefname(ParseState *pstate, const char *refname)
 
 /*
  * Add the given RTE as a top-level entry in the pstate's join list
- * and/or name space lists.  (We assume caller has checked for any
+ * and/or namespace list.  (We assume caller has checked for any
  * namespace conflicts.)  The RTE is always marked as unconditionally
  * visible, that is, not LATERAL-only.
  */
@@ -1600,12 +1615,11 @@ addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,
 
 		nsitem = (ParseNamespaceItem *) palloc(sizeof(ParseNamespaceItem));
 		nsitem->p_rte = rte;
+		nsitem->p_rel_visible = addToRelNameSpace;
+		nsitem->p_cols_visible = addToVarNameSpace;
 		nsitem->p_lateral_only = false;
 		nsitem->p_lateral_ok = true;
-		if (addToRelNameSpace)
-			pstate->p_relnamespace = lappend(pstate->p_relnamespace, nsitem);
-		if (addToVarNameSpace)
-			pstate->p_varnamespace = lappend(pstate->p_varnamespace, nsitem);
+		pstate->p_namespace = lappend(pstate->p_namespace, nsitem);
 	}
 }
 

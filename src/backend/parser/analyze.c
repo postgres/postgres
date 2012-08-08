@@ -401,8 +401,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	List	   *exprList = NIL;
 	bool		isGeneralSelect;
 	List	   *sub_rtable;
-	List	   *sub_relnamespace;
-	List	   *sub_varnamespace;
+	List	   *sub_namespace;
 	List	   *icolumns;
 	List	   *attrnos;
 	RangeTblEntry *rte;
@@ -454,16 +453,13 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	{
 		sub_rtable = pstate->p_rtable;
 		pstate->p_rtable = NIL;
-		sub_relnamespace = pstate->p_relnamespace;
-		pstate->p_relnamespace = NIL;
-		sub_varnamespace = pstate->p_varnamespace;
-		pstate->p_varnamespace = NIL;
+		sub_namespace = pstate->p_namespace;
+		pstate->p_namespace = NIL;
 	}
 	else
 	{
 		sub_rtable = NIL;		/* not used, but keep compiler quiet */
-		sub_relnamespace = NIL;
-		sub_varnamespace = NIL;
+		sub_namespace = NIL;
 	}
 
 	/*
@@ -513,8 +509,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		 */
 		sub_pstate->p_rtable = sub_rtable;
 		sub_pstate->p_joinexprs = NIL;	/* sub_rtable has no joins */
-		sub_pstate->p_relnamespace = sub_relnamespace;
-		sub_pstate->p_varnamespace = sub_varnamespace;
+		sub_pstate->p_namespace = sub_namespace;
 
 		selectQuery = transformStmt(sub_pstate, stmt->selectStmt);
 
@@ -751,8 +746,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	 */
 	if (stmt->returningList)
 	{
-		pstate->p_relnamespace = NIL;
-		pstate->p_varnamespace = NIL;
+		pstate->p_namespace = NIL;
 		addRTEtoQuery(pstate, pstate->p_target_rangetblentry,
 					  false, true, true);
 		qry->returningList = transformReturningList(pstate,
@@ -1305,8 +1299,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 			   *l;
 	List	   *targetvars,
 			   *targetnames,
-			   *sv_relnamespace,
-			   *sv_varnamespace;
+			   *sv_namespace;
 	int			sv_rtable_length;
 	RangeTblEntry *jrte;
 	int			tllen;
@@ -1433,7 +1426,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 
 	/*
 	 * As a first step towards supporting sort clauses that are expressions
-	 * using the output columns, generate a varnamespace entry that makes the
+	 * using the output columns, generate a namespace entry that makes the
 	 * output columns visible.	A Join RTE node is handy for this, since we
 	 * can easily control the Vars generated upon matches.
 	 *
@@ -1450,12 +1443,10 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 									 NULL,
 									 false);
 
-	sv_relnamespace = pstate->p_relnamespace;
-	sv_varnamespace = pstate->p_varnamespace;
-	pstate->p_relnamespace = NIL;
-	pstate->p_varnamespace = NIL;
+	sv_namespace = pstate->p_namespace;
+	pstate->p_namespace = NIL;
 
-	/* add jrte to varnamespace only */
+	/* add jrte to column namespace only */
 	addRTEtoQuery(pstate, jrte, false, false, true);
 
 	/*
@@ -1472,9 +1463,9 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 										  false /* no unknowns expected */ ,
 										  false /* allow SQL92 rules */ );
 
+	/* restore namespace, remove jrte from rtable */
+	pstate->p_namespace = sv_namespace;
 	pstate->p_rtable = list_truncate(pstate->p_rtable, sv_rtable_length);
-	pstate->p_relnamespace = sv_relnamespace;
-	pstate->p_varnamespace = sv_varnamespace;
 
 	if (tllen != list_length(qry->targetList))
 		ereport(ERROR,
@@ -1595,7 +1586,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 		 * because the namespace will be empty, but it could happen if we are
 		 * inside a rule.
 		 */
-		if (pstate->p_relnamespace || pstate->p_varnamespace)
+		if (pstate->p_namespace)
 		{
 			if (contain_vars_of_level((Node *) selectQuery, 1))
 				ereport(ERROR,

@@ -1108,9 +1108,10 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
  * ExpandAllTables()
  *		Transforms '*' (in the target list) into a list of targetlist entries.
  *
- * tlist entries are generated for each relation appearing in the query's
- * varnamespace.  We do not consider relnamespace because that would include
- * input tables of aliasless JOINs, NEW/OLD pseudo-entries, etc.
+ * tlist entries are generated for each relation visible for unqualified
+ * column name access.  We do not consider qualified-name-only entries because
+ * that would include input tables of aliasless JOINs, NEW/OLD pseudo-entries,
+ * etc.
  *
  * The referenced relations/columns are marked as requiring SELECT access.
  */
@@ -1118,28 +1119,41 @@ static List *
 ExpandAllTables(ParseState *pstate, int location)
 {
 	List	   *target = NIL;
+	bool		found_table = false;
 	ListCell   *l;
 
-	/* Check for SELECT *; */
-	if (!pstate->p_varnamespace)
+	foreach(l, pstate->p_namespace)
+	{
+		ParseNamespaceItem *nsitem = (ParseNamespaceItem *) lfirst(l);
+		RangeTblEntry *rte = nsitem->p_rte;
+
+		/* Ignore table-only items */
+		if (!nsitem->p_cols_visible)
+			continue;
+		/* Should not have any lateral-only items when parsing targetlist */
+		Assert(!nsitem->p_lateral_only);
+		/* Remember we found a p_cols_visible item */
+		found_table = true;
+
+		target = list_concat(target,
+							 expandRelAttrs(pstate,
+											rte,
+											RTERangeTablePosn(pstate, rte,
+															  NULL),
+											0,
+											location));
+	}
+
+	/*
+	 * Check for "SELECT *;".  We do it this way, rather than checking for
+	 * target == NIL, because we want to allow SELECT * FROM a zero_column
+	 * table.
+	 */
+	if (!found_table)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("SELECT * with no tables specified is not valid"),
 				 parser_errposition(pstate, location)));
-
-	foreach(l, pstate->p_varnamespace)
-	{
-		ParseNamespaceItem *nsitem = (ParseNamespaceItem *) lfirst(l);
-		RangeTblEntry *rte = nsitem->p_rte;
-		int			rtindex = RTERangeTablePosn(pstate, rte, NULL);
-
-		/* Should not have any lateral-only items when parsing targetlist */
-		Assert(!nsitem->p_lateral_only);
-
-		target = list_concat(target,
-							 expandRelAttrs(pstate, rte, rtindex, 0,
-											location));
-	}
 
 	return target;
 }
