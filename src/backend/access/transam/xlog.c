@@ -2810,6 +2810,11 @@ XLogFileRead(uint32 log, uint32 seg, int emode, TimeLineID tli,
 							path, xlogfpath)));
 
 		/*
+		 * Set path to point at the new file in pg_xlog.
+		 */
+		strncpy(path, xlogfpath, MAXPGPATH);
+
+		/*
 		 * If the existing segment was replaced, since walsenders might have
 		 * it open, request them to reload a currently-open segment.
 		 */
