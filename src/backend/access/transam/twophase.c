@@ -108,8 +108,8 @@ int			max_prepared_xacts = 0;
 
 typedef struct GlobalTransactionData
 {
-	GlobalTransaction next;
-	int			pgprocno;		/* dummy proc */
+	GlobalTransaction next;		/* list link for free list */
+	int			pgprocno;		/* ID of associated dummy PGPROC */
 	BackendId	dummyBackendId; /* similar to backend id for backends */
 	TimestampTz prepared_at;	/* time of preparation */
 	XLogRecPtr	prepare_lsn;	/* XLOG offset of prepare record */
@@ -203,9 +203,12 @@ TwoPhaseShmemInit(void)
 					  sizeof(GlobalTransaction) * max_prepared_xacts));
 		for (i = 0; i < max_prepared_xacts; i++)
 		{
-			gxacts[i].pgprocno = PreparedXactProcs[i].pgprocno;
+			/* insert into linked list */
 			gxacts[i].next = TwoPhaseState->freeGXacts;
 			TwoPhaseState->freeGXacts = &gxacts[i];
+
+			/* associate it with a PGPROC assigned by InitProcGlobal */
+			gxacts[i].pgprocno = PreparedXactProcs[i].pgprocno;
 
 			/*
 			 * Assign a unique ID for each dummy proc, so that the range of
@@ -301,7 +304,7 @@ MarkAsPreparing(TransactionId xid, const char *gid,
 				 errhint("Increase max_prepared_transactions (currently %d).",
 						 max_prepared_xacts)));
 	gxact = TwoPhaseState->freeGXacts;
-	TwoPhaseState->freeGXacts = (GlobalTransaction) gxact->next;
+	TwoPhaseState->freeGXacts = gxact->next;
 
 	proc = &ProcGlobal->allProcs[gxact->pgprocno];
 	pgxact = &ProcGlobal->allPgXact[gxact->pgprocno];
@@ -680,40 +683,25 @@ pg_prepared_xact(PG_FUNCTION_ARGS)
 }
 
 /*
- * TwoPhaseGetDummyProc
- *		Get the dummy backend ID for prepared transaction specified by XID
- *
- * Dummy backend IDs are similar to real backend IDs of real backends.
- * They start at MaxBackends + 1, and are unique across all currently active
- * real backends and prepared transactions.
+ * TwoPhaseGetGXact
+ *		Get the GlobalTransaction struct for a prepared transaction
+ *		specified by XID
  */
-BackendId
-TwoPhaseGetDummyBackendId(TransactionId xid)
+static GlobalTransaction
+TwoPhaseGetGXact(TransactionId xid)
 {
-	PGPROC	   *proc = TwoPhaseGetDummyProc(xid);
-
-	return ((GlobalTransaction) proc)->dummyBackendId;
-}
-
-/*
- * TwoPhaseGetDummyProc
- *		Get the PGPROC that represents a prepared transaction specified by XID
- */
-PGPROC *
-TwoPhaseGetDummyProc(TransactionId xid)
-{
-	PGPROC	   *result = NULL;
+	GlobalTransaction result = NULL;
 	int			i;
 
 	static TransactionId cached_xid = InvalidTransactionId;
-	static PGPROC *cached_proc = NULL;
+	static GlobalTransaction cached_gxact = NULL;
 
 	/*
 	 * During a recovery, COMMIT PREPARED, or ABORT PREPARED, we'll be called
 	 * repeatedly for the same XID.  We can save work with a simple cache.
 	 */
 	if (xid == cached_xid)
-		return cached_proc;
+		return cached_gxact;
 
 	LWLockAcquire(TwoPhaseStateLock, LW_SHARED);
 
@@ -724,7 +712,7 @@ TwoPhaseGetDummyProc(TransactionId xid)
 
 		if (pgxact->xid == xid)
 		{
-			result = &ProcGlobal->allProcs[gxact->pgprocno];
+			result = gxact;
 			break;
 		}
 	}
@@ -732,12 +720,40 @@ TwoPhaseGetDummyProc(TransactionId xid)
 	LWLockRelease(TwoPhaseStateLock);
 
 	if (result == NULL)			/* should not happen */
-		elog(ERROR, "failed to find dummy PGPROC for xid %u", xid);
+		elog(ERROR, "failed to find GlobalTransaction for xid %u", xid);
 
 	cached_xid = xid;
-	cached_proc = result;
+	cached_gxact = result;
 
 	return result;
+}
+
+/*
+ * TwoPhaseGetDummyProc
+ *		Get the dummy backend ID for prepared transaction specified by XID
+ *
+ * Dummy backend IDs are similar to real backend IDs of real backends.
+ * They start at MaxBackends + 1, and are unique across all currently active
+ * real backends and prepared transactions.
+ */
+BackendId
+TwoPhaseGetDummyBackendId(TransactionId xid)
+{
+	GlobalTransaction gxact = TwoPhaseGetGXact(xid);
+
+	return gxact->dummyBackendId;
+}
+
+/*
+ * TwoPhaseGetDummyProc
+ *		Get the PGPROC that represents a prepared transaction specified by XID
+ */
+PGPROC *
+TwoPhaseGetDummyProc(TransactionId xid)
+{
+	GlobalTransaction gxact = TwoPhaseGetGXact(xid);
+
+	return &ProcGlobal->allProcs[gxact->pgprocno];
 }
 
 /************************************************************************/
