@@ -6634,7 +6634,7 @@ pg_start_backup(PG_FUNCTION_ARGS)
 				checkpointloc.xlogid, checkpointloc.xrecoff);
 		fprintf(fp, "START TIME: %s\n", strfbuf);
 		fprintf(fp, "LABEL: %s\n", backupidstr);
-		if (fflush(fp) || ferror(fp) || FreeFile(fp))
+		if (fflush(fp) || ferror(fp) || pg_fsync(fileno(fp)) != 0 || FreeFile(fp))
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not write file \"%s\": %m",
