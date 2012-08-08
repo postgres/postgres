@@ -29,6 +29,13 @@
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 
+typedef enum
+{
+	ETCS_NEEDS_REBUILD,
+	ETCS_REBUILD_STARTED,
+	ETCS_VALID
+} EventTriggerCacheStateType;
+
 typedef struct
 {
 	EventTriggerEvent	event;
@@ -37,6 +44,7 @@ typedef struct
 
 static HTAB *EventTriggerCache;
 static MemoryContext EventTriggerCacheContext;
+static EventTriggerCacheStateType EventTriggerCacheState = ETCS_NEEDS_REBUILD;
 
 static void BuildEventTriggerCache(void);
 static void InvalidateEventCacheCallback(Datum arg,
@@ -55,7 +63,7 @@ EventCacheLookup(EventTriggerEvent event)
 {
 	EventTriggerCacheEntry *entry;
 
-	if (EventTriggerCache == NULL)
+	if (EventTriggerCacheState != ETCS_VALID)
 		BuildEventTriggerCache();
 	entry = hash_search(EventTriggerCache, &event, HASH_FIND, NULL);
 	return entry != NULL ? entry->triggerlist : NULL;
@@ -77,12 +85,9 @@ BuildEventTriggerCache(void)
 	if (EventTriggerCacheContext != NULL)
 	{
 		/*
-		 * The cache has been previously built, and subsequently invalidated,
-		 * and now we're trying to rebuild it.  Normally, there won't be
-		 * anything in the context at this point, because the invalidation
-		 * will have already reset it.  But if the previous attempt to rebuild
-		 * the cache failed, then there might be some junk lying around
-		 * that we want to reclaim.
+		 * Free up any memory already allocated in EventTriggerCacheContext.
+		 * This can happen either because a previous rebuild failed, or
+		 * because an invalidation happened before the rebuild was complete.
 		 */
 		MemoryContextResetAndDeleteChildren(EventTriggerCacheContext);
 	}
@@ -109,12 +114,10 @@ BuildEventTriggerCache(void)
 	/* Switch to correct memory context. */
 	oldcontext = MemoryContextSwitchTo(EventTriggerCacheContext);
 
-	/*
-	 * Create a new hash table, but don't assign it to the global variable
-	 * until it accurately represents the state of the catalogs, so that
-	 * if we fail midway through this we won't end up with incorrect cache
-	 * contents.
-	 */
+	/* Prevent the memory context from being nuked while we're rebuilding. */
+	EventTriggerCacheState = ETCS_REBUILD_STARTED;
+
+	/* Create new hash table. */
 	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(EventTriggerEvent);
 	ctl.entrysize = sizeof(EventTriggerCacheEntry);
@@ -195,8 +198,17 @@ BuildEventTriggerCache(void)
 	/* Restore previous memory context. */
 	MemoryContextSwitchTo(oldcontext);
 
-	/* Cache is now valid. */
+	/* Install new cache. */
 	EventTriggerCache = cache;
+
+	/*
+	 * If the cache has been invalidated since we entered this routine, we
+	 * still use and return the cache we just finished constructing, to avoid
+	 * infinite loops, but we leave the cache marked stale so that we'll
+	 * rebuild it again on next access.  Otherwise, we mark the cache valid.
+	 */
+	if (EventTriggerCacheState == ETCS_REBUILD_STARTED)
+		EventTriggerCacheState = ETCS_VALID;
 }
 
 /*
@@ -238,6 +250,17 @@ DecodeTextArrayToCString(Datum array, char ***cstringp)
 static void
 InvalidateEventCacheCallback(Datum arg, int cacheid, uint32 hashvalue)
 {
-	MemoryContextResetAndDeleteChildren(EventTriggerCacheContext);
-	EventTriggerCache = NULL;
+	/*
+	 * If the cache isn't valid, then there might be a rebuild in progress,
+	 * so we can't immediately blow it away.  But it's advantageous to do
+	 * this when possible, so as to immediately free memory.
+	 */
+	if (EventTriggerCacheState == ETCS_VALID)
+	{
+		MemoryContextResetAndDeleteChildren(EventTriggerCacheContext);
+		EventTriggerCache = NULL;
+	}
+
+	/* Mark cache for rebuild. */
+	EventTriggerCacheState = ETCS_NEEDS_REBUILD;
 }
