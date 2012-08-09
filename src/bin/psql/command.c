@@ -2043,9 +2043,11 @@ process_file(char *filename, bool single_txn, bool use_relative_path)
 	PGresult   *res;
 
 	if (!filename)
-		return EXIT_FAILURE;
-
-	if (strcmp(filename, "-") != 0)
+	{
+		fd = stdin;
+		filename = NULL;
+	}
+	else if (strcmp(filename, "-") != 0)
 	{
 		canonicalize_path(filename);
 

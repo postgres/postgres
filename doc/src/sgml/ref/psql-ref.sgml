@@ -512,11 +512,11 @@ PostgreSQL documentation
       <term><option>--single-transaction</option></term>
       <listitem>
        <para>
-        When <application>psql</application> executes a script with the
-        <option>-f</> option, adding this option wraps
-        <command>BEGIN</>/<command>COMMIT</> around the script to execute it
-        as a single transaction.  This ensures that either all the commands
-        complete successfully, or no changes are applied.
+        When <application>psql</application> executes a script, adding
+        this option wraps <command>BEGIN</>/<command>COMMIT</> around the
+        script to execute it as a single transaction.  This ensures that
+        either all the commands complete successfully, or no changes are
+        applied.
        </para>
 
        <para>

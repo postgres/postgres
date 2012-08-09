@@ -97,7 +97,7 @@ usage(void)
 	printf(_("  -V, --version            output version information, then exit\n"));
 	printf(_("  -X, --no-psqlrc          do not read startup file (~/.psqlrc)\n"));
 	printf(_("  -1 (\"one\"), --single-transaction\n"
-			 "                           execute command file as a single transaction\n"));
+			 "                           execute as a single transaction (if non-interactive)\n"));
 	printf(_("  -?, --help               show this help, then exit\n"));
 
 	printf(_("\nInput and output options:\n"));
