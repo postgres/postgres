@@ -84,6 +84,12 @@ typedef struct
 	TimestampTz lastMsgReceiptTime;
 
 	/*
+	 * Latest reported end of WAL on the sender
+	 */
+	XLogRecPtr	latestWalEnd;
+	TimestampTz latestWalEndTime;
+
+	/*
 	 * connection string; is used for walreceiver to connect with the primary.
 	 */
 	char		conninfo[MAXCONNINFO];
