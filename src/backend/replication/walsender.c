@@ -837,7 +837,7 @@ WalSndLoop(void)
 
 			if (pq_is_send_pending())
 				wakeEvents |= WL_SOCKET_WRITEABLE;
-			else
+			else if (MyWalSnd->sendKeepalive)
 			{
 				WalSndKeepalive(output_message);
 				/* Try to flush pending output to the client */
