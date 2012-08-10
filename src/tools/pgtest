@@ -20,6 +20,10 @@ TMP="/tmp/$$"
 
 [ "X$1" != "X-n" ] && PGCLEAN=clean
 
+# run make check, capture return code in $TMP/ret, then display
+# that but capture it in $TMP/0 too, and return original make
+# error code.  If that succeded, display captured warnings
+
 ($MAKE $PGCLEAN check 2>&1; echo "$?" > $TMP/ret) |
 	(tee  $TMP/0; exit `cat $TMP/ret`) &&
 cat $TMP/0 |
@@ -29,3 +33,6 @@ grep -i warning |
 grep -v setproctitle |
 grep -v find_rule |
 grep -v yy_flex_realloc
+
+# return original make error code
+exit `cat $TMP/ret`
