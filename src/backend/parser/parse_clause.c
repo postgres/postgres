@@ -41,17 +41,6 @@
 /* Convenience macro for the most common makeNamespaceItem() case */
 #define makeDefaultNSItem(rte)	makeNamespaceItem(rte, true, true, false, true)
 
-/* clause types for findTargetlistEntrySQL92 */
-#define ORDER_CLAUSE 0
-#define GROUP_CLAUSE 1
-#define DISTINCT_ON_CLAUSE 2
-
-static const char *const clauseText[] = {
-	"ORDER BY",
-	"GROUP BY",
-	"DISTINCT ON"
-};
-
 static void extractRemainingColumns(List *common_colnames,
 						List *src_colnames, List *src_colvars,
 						List **res_colnames, List **res_colvars);
@@ -81,9 +70,9 @@ static void setNamespaceLateralState(List *namespace,
 static void checkExprIsVarFree(ParseState *pstate, Node *n,
 				   const char *constructName);
 static TargetEntry *findTargetlistEntrySQL92(ParseState *pstate, Node *node,
-						 List **tlist, int clause);
+						 List **tlist, ParseExprKind exprKind);
 static TargetEntry *findTargetlistEntrySQL99(ParseState *pstate, Node *node,
-						 List **tlist);
+						 List **tlist, ParseExprKind exprKind);
 static int get_matching_location(int sortgroupref,
 					  List *sortgrouprefs, List *exprs);
 static List *addTargetToSortList(ParseState *pstate, TargetEntry *tle,
@@ -371,7 +360,7 @@ transformJoinUsingClause(ParseState *pstate,
 	 * transformJoinOnClause() does.  Just invoke transformExpr() to fix up
 	 * the operators, and we're done.
 	 */
-	result = transformExpr(pstate, result);
+	result = transformExpr(pstate, result, EXPR_KIND_JOIN_USING);
 
 	result = coerce_to_boolean(pstate, result, "JOIN/USING");
 
@@ -401,7 +390,8 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j, List *namespace)
 	save_namespace = pstate->p_namespace;
 	pstate->p_namespace = namespace;
 
-	result = transformWhereClause(pstate, j->quals, "JOIN/ON");
+	result = transformWhereClause(pstate, j->quals,
+								  EXPR_KIND_JOIN_ON, "JOIN/ON");
 
 	pstate->p_namespace = save_namespace;
 
@@ -458,6 +448,14 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 		elog(ERROR, "subquery in FROM must have an alias");
 
 	/*
+	 * Set p_expr_kind to show this parse level is recursing to a subselect.
+	 * We can't be nested within any expression, so don't need save-restore
+	 * logic here.
+	 */
+	Assert(pstate->p_expr_kind == EXPR_KIND_NONE);
+	pstate->p_expr_kind = EXPR_KIND_FROM_SUBSELECT;
+
+	/*
 	 * If the subselect is LATERAL, make lateral_only names of this level
 	 * visible to it.  (LATERAL can't nest within a single pstate level, so we
 	 * don't need save/restore logic here.)
@@ -471,7 +469,9 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	query = parse_sub_analyze(r->subquery, pstate, NULL,
 							  isLockedRefname(pstate, r->alias->aliasname));
 
+	/* Restore state */
 	pstate->p_lateral_active = false;
+	pstate->p_expr_kind = EXPR_KIND_NONE;
 
 	/*
 	 * Check that we got something reasonable.	Many of these conditions are
@@ -524,7 +524,7 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 	/*
 	 * Transform the raw expression.
 	 */
-	funcexpr = transformExpr(pstate, r->funccallnode);
+	funcexpr = transformExpr(pstate, r->funccallnode, EXPR_KIND_FROM_FUNCTION);
 
 	pstate->p_lateral_active = false;
 
@@ -532,25 +532,6 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 	 * We must assign collations now so that we can fill funccolcollations.
 	 */
 	assign_expr_collations(pstate, funcexpr);
-
-	/*
-	 * Disallow aggregate functions in the expression.	(No reason to postpone
-	 * this check until parseCheckAggregates.)
-	 */
-	if (pstate->p_hasAggs &&
-		checkExprHasAggs(funcexpr))
-		ereport(ERROR,
-				(errcode(ERRCODE_GROUPING_ERROR),
-				 errmsg("cannot use aggregate function in function expression in FROM"),
-				 parser_errposition(pstate,
-									locate_agg_of_level(funcexpr, 0))));
-	if (pstate->p_hasWindowFuncs &&
-		checkExprHasWindowFuncs(funcexpr))
-		ereport(ERROR,
-				(errcode(ERRCODE_WINDOWING_ERROR),
-		 errmsg("cannot use window function in function expression in FROM"),
-				 parser_errposition(pstate,
-									locate_windowfunc(funcexpr))));
 
 	/*
 	 * OK, build an RTE for the function.
@@ -1182,14 +1163,14 @@ setNamespaceLateralState(List *namespace, bool lateral_only, bool lateral_ok)
  */
 Node *
 transformWhereClause(ParseState *pstate, Node *clause,
-					 const char *constructName)
+					 ParseExprKind exprKind, const char *constructName)
 {
 	Node	   *qual;
 
 	if (clause == NULL)
 		return NULL;
 
-	qual = transformExpr(pstate, clause);
+	qual = transformExpr(pstate, clause, exprKind);
 
 	qual = coerce_to_boolean(pstate, qual, constructName);
 
@@ -1209,18 +1190,18 @@ transformWhereClause(ParseState *pstate, Node *clause,
  */
 Node *
 transformLimitClause(ParseState *pstate, Node *clause,
-					 const char *constructName)
+					 ParseExprKind exprKind, const char *constructName)
 {
 	Node	   *qual;
 
 	if (clause == NULL)
 		return NULL;
 
-	qual = transformExpr(pstate, clause);
+	qual = transformExpr(pstate, clause, exprKind);
 
 	qual = coerce_to_specific_type(pstate, qual, INT8OID, constructName);
 
-	/* LIMIT can't refer to any vars or aggregates of the current query */
+	/* LIMIT can't refer to any variables of the current query */
 	checkExprIsVarFree(pstate, qual, constructName);
 
 	return qual;
@@ -1229,7 +1210,7 @@ transformLimitClause(ParseState *pstate, Node *clause,
 /*
  * checkExprIsVarFree
  *		Check that given expr has no Vars of the current query level
- *		(and no aggregates or window functions, either).
+ *		(aggregates and window functions should have been rejected already).
  *
  * This is used to check expressions that have to have a consistent value
  * across all rows of the query, such as a LIMIT.  Arguably it should reject
@@ -1251,30 +1232,56 @@ checkExprIsVarFree(ParseState *pstate, Node *n, const char *constructName)
 				 parser_errposition(pstate,
 									locate_var_of_level(n, 0))));
 	}
-	if (pstate->p_hasAggs &&
-		checkExprHasAggs(n))
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_GROUPING_ERROR),
-		/* translator: %s is name of a SQL construct, eg LIMIT */
-				 errmsg("argument of %s must not contain aggregate functions",
-						constructName),
-				 parser_errposition(pstate,
-									locate_agg_of_level(n, 0))));
-	}
-	if (pstate->p_hasWindowFuncs &&
-		checkExprHasWindowFuncs(n))
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_WINDOWING_ERROR),
-		/* translator: %s is name of a SQL construct, eg LIMIT */
-				 errmsg("argument of %s must not contain window functions",
-						constructName),
-				 parser_errposition(pstate,
-									locate_windowfunc(n))));
-	}
 }
 
+
+/*
+ * checkTargetlistEntrySQL92 -
+ *	  Validate a targetlist entry found by findTargetlistEntrySQL92
+ *
+ * When we select a pre-existing tlist entry as a result of syntax such
+ * as "GROUP BY 1", we have to make sure it is acceptable for use in the
+ * indicated clause type; transformExpr() will have treated it as a regular
+ * targetlist item.
+ */
+static void
+checkTargetlistEntrySQL92(ParseState *pstate, TargetEntry *tle,
+						  ParseExprKind exprKind)
+{
+	switch (exprKind)
+	{
+		case EXPR_KIND_GROUP_BY:
+			/* reject aggregates and window functions */
+			if (pstate->p_hasAggs &&
+				contain_aggs_of_level((Node *) tle->expr, 0))
+				ereport(ERROR,
+						(errcode(ERRCODE_GROUPING_ERROR),
+						 /* translator: %s is name of a SQL construct, eg GROUP BY */
+						 errmsg("aggregate functions are not allowed in %s",
+								ParseExprKindName(exprKind)),
+						 parser_errposition(pstate,
+											locate_agg_of_level((Node *) tle->expr, 0))));
+			if (pstate->p_hasWindowFuncs &&
+				contain_windowfuncs((Node *) tle->expr))
+				ereport(ERROR,
+						(errcode(ERRCODE_WINDOWING_ERROR),
+						 /* translator: %s is name of a SQL construct, eg GROUP BY */
+						 errmsg("window functions are not allowed in %s",
+								ParseExprKindName(exprKind)),
+						 parser_errposition(pstate,
+											locate_windowfunc((Node *) tle->expr))));
+			break;
+		case EXPR_KIND_ORDER_BY:
+			/* no extra checks needed */
+			break;
+		case EXPR_KIND_DISTINCT_ON:
+			/* no extra checks needed */
+			break;
+		default:
+			elog(ERROR, "unexpected exprKind in checkTargetlistEntrySQL92");
+			break;
+	}
+}
 
 /*
  *	findTargetlistEntrySQL92 -
@@ -1291,11 +1298,11 @@ checkExprIsVarFree(ParseState *pstate, Node *n, const char *constructName)
  *
  * node		the ORDER BY, GROUP BY, or DISTINCT ON expression to be matched
  * tlist	the target list (passed by reference so we can append to it)
- * clause	identifies clause type being processed
+ * exprKind	identifies clause type being processed
  */
 static TargetEntry *
 findTargetlistEntrySQL92(ParseState *pstate, Node *node, List **tlist,
-						 int clause)
+						 ParseExprKind exprKind)
 {
 	ListCell   *tl;
 
@@ -1344,7 +1351,7 @@ findTargetlistEntrySQL92(ParseState *pstate, Node *node, List **tlist,
 		char	   *name = strVal(linitial(((ColumnRef *) node)->fields));
 		int			location = ((ColumnRef *) node)->location;
 
-		if (clause == GROUP_CLAUSE)
+		if (exprKind == EXPR_KIND_GROUP_BY)
 		{
 			/*
 			 * In GROUP BY, we must prefer a match against a FROM-clause
@@ -1386,7 +1393,8 @@ findTargetlistEntrySQL92(ParseState *pstate, Node *node, List **tlist,
 							/*------
 							  translator: first %s is name of a SQL construct, eg ORDER BY */
 									 errmsg("%s \"%s\" is ambiguous",
-											clauseText[clause], name),
+											ParseExprKindName(exprKind),
+											name),
 									 parser_errposition(pstate, location)));
 					}
 					else
@@ -1395,7 +1403,11 @@ findTargetlistEntrySQL92(ParseState *pstate, Node *node, List **tlist,
 				}
 			}
 			if (target_result != NULL)
-				return target_result;	/* return the first match */
+			{
+				/* return the first match, after suitable validation */
+				checkTargetlistEntrySQL92(pstate, target_result, exprKind);
+				return target_result;
+			}
 		}
 	}
 	if (IsA(node, A_Const))
@@ -1410,7 +1422,7 @@ findTargetlistEntrySQL92(ParseState *pstate, Node *node, List **tlist,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 			/* translator: %s is name of a SQL construct, eg ORDER BY */
 					 errmsg("non-integer constant in %s",
-							clauseText[clause]),
+							ParseExprKindName(exprKind)),
 					 parser_errposition(pstate, location)));
 
 		target_pos = intVal(val);
@@ -1421,21 +1433,25 @@ findTargetlistEntrySQL92(ParseState *pstate, Node *node, List **tlist,
 			if (!tle->resjunk)
 			{
 				if (++targetlist_pos == target_pos)
-					return tle; /* return the unique match */
+				{
+					/* return the unique match, after suitable validation */
+					checkTargetlistEntrySQL92(pstate, tle, exprKind);
+					return tle;
+				}
 			}
 		}
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 		/* translator: %s is name of a SQL construct, eg ORDER BY */
 				 errmsg("%s position %d is not in select list",
-						clauseText[clause], target_pos),
+						ParseExprKindName(exprKind), target_pos),
 				 parser_errposition(pstate, location)));
 	}
 
 	/*
 	 * Otherwise, we have an expression, so process it per SQL99 rules.
 	 */
-	return findTargetlistEntrySQL99(pstate, node, tlist);
+	return findTargetlistEntrySQL99(pstate, node, tlist, exprKind);
 }
 
 /*
@@ -1449,9 +1465,11 @@ findTargetlistEntrySQL92(ParseState *pstate, Node *node, List **tlist,
  *
  * node		the ORDER BY, GROUP BY, etc expression to be matched
  * tlist	the target list (passed by reference so we can append to it)
+ * exprKind	identifies clause type being processed
  */
 static TargetEntry *
-findTargetlistEntrySQL99(ParseState *pstate, Node *node, List **tlist)
+findTargetlistEntrySQL99(ParseState *pstate, Node *node, List **tlist,
+						 ParseExprKind exprKind)
 {
 	TargetEntry *target_result;
 	ListCell   *tl;
@@ -1464,7 +1482,7 @@ findTargetlistEntrySQL99(ParseState *pstate, Node *node, List **tlist)
 	 * resjunk target here, though the SQL92 cases above must ignore resjunk
 	 * targets.
 	 */
-	expr = transformExpr(pstate, node);
+	expr = transformExpr(pstate, node, exprKind);
 
 	foreach(tl, *tlist)
 	{
@@ -1491,7 +1509,8 @@ findTargetlistEntrySQL99(ParseState *pstate, Node *node, List **tlist)
 	 * end of the target list.	This target is given resjunk = TRUE so that it
 	 * will not be projected into the final tuple.
 	 */
-	target_result = transformTargetEntry(pstate, node, expr, NULL, true);
+	target_result = transformTargetEntry(pstate, node, expr, exprKind,
+										 NULL, true);
 
 	*tlist = lappend(*tlist, target_result);
 
@@ -1511,7 +1530,7 @@ findTargetlistEntrySQL99(ParseState *pstate, Node *node, List **tlist)
 List *
 transformGroupClause(ParseState *pstate, List *grouplist,
 					 List **targetlist, List *sortClause,
-					 bool useSQL99)
+					 ParseExprKind exprKind, bool useSQL99)
 {
 	List	   *result = NIL;
 	ListCell   *gl;
@@ -1523,10 +1542,11 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 		bool		found = false;
 
 		if (useSQL99)
-			tle = findTargetlistEntrySQL99(pstate, gexpr, targetlist);
+			tle = findTargetlistEntrySQL99(pstate, gexpr,
+										   targetlist, exprKind);
 		else
-			tle = findTargetlistEntrySQL92(pstate, gexpr, targetlist,
-										   GROUP_CLAUSE);
+			tle = findTargetlistEntrySQL92(pstate, gexpr,
+										   targetlist, exprKind);
 
 		/* Eliminate duplicates (GROUP BY x, x) */
 		if (targetIsInSortList(tle, InvalidOid, result))
@@ -1588,6 +1608,7 @@ List *
 transformSortClause(ParseState *pstate,
 					List *orderlist,
 					List **targetlist,
+					ParseExprKind exprKind,
 					bool resolveUnknown,
 					bool useSQL99)
 {
@@ -1600,10 +1621,11 @@ transformSortClause(ParseState *pstate,
 		TargetEntry *tle;
 
 		if (useSQL99)
-			tle = findTargetlistEntrySQL99(pstate, sortby->node, targetlist);
+			tle = findTargetlistEntrySQL99(pstate, sortby->node,
+										   targetlist, exprKind);
 		else
-			tle = findTargetlistEntrySQL92(pstate, sortby->node, targetlist,
-										   ORDER_CLAUSE);
+			tle = findTargetlistEntrySQL92(pstate, sortby->node,
+										   targetlist, exprKind);
 
 		sortlist = addTargetToSortList(pstate, tle,
 									   sortlist, *targetlist, sortby,
@@ -1668,12 +1690,14 @@ transformWindowDefinitions(ParseState *pstate,
 		orderClause = transformSortClause(pstate,
 										  windef->orderClause,
 										  targetlist,
+										  EXPR_KIND_WINDOW_ORDER,
 										  true /* fix unknowns */ ,
 										  true /* force SQL99 rules */ );
 		partitionClause = transformGroupClause(pstate,
 											   windef->partitionClause,
 											   targetlist,
 											   orderClause,
+											   EXPR_KIND_WINDOW_PARTITION,
 											   true /* force SQL99 rules */ );
 
 		/*
@@ -1861,7 +1885,7 @@ transformDistinctOnClause(ParseState *pstate, List *distinctlist,
 		TargetEntry *tle;
 
 		tle = findTargetlistEntrySQL92(pstate, dexpr, targetlist,
-									   DISTINCT_ON_CLAUSE);
+									   EXPR_KIND_DISTINCT_ON);
 		sortgroupref = assignSortGroupRef(tle, *targetlist);
 		sortgrouprefs = lappend_int(sortgrouprefs, sortgroupref);
 	}
@@ -2270,11 +2294,11 @@ transformFrameOffset(ParseState *pstate, int frameOptions, Node *clause)
 	if (clause == NULL)
 		return NULL;
 
-	/* Transform the raw expression tree */
-	node = transformExpr(pstate, clause);
-
 	if (frameOptions & FRAMEOPTION_ROWS)
 	{
+		/* Transform the raw expression tree */
+		node = transformExpr(pstate, clause, EXPR_KIND_WINDOW_FRAME_ROWS);
+
 		/*
 		 * Like LIMIT clause, simply coerce to int8
 		 */
@@ -2283,6 +2307,9 @@ transformFrameOffset(ParseState *pstate, int frameOptions, Node *clause)
 	}
 	else if (frameOptions & FRAMEOPTION_RANGE)
 	{
+		/* Transform the raw expression tree */
+		node = transformExpr(pstate, clause, EXPR_KIND_WINDOW_FRAME_RANGE);
+
 		/*
 		 * this needs a lot of thought to decide how to support in the context
 		 * of Postgres' extensible datatype framework
@@ -2292,9 +2319,12 @@ transformFrameOffset(ParseState *pstate, int frameOptions, Node *clause)
 		elog(ERROR, "window frame with value offset is not implemented");
 	}
 	else
+	{
 		Assert(false);
+		node = NULL;
+	}
 
-	/* Disallow variables and aggregates in frame offsets */
+	/* Disallow variables in frame offsets */
 	checkExprIsVarFree(pstate, node, constructName);
 
 	return node;

@@ -18,6 +18,8 @@
 /* GUC parameters */
 extern bool Transform_null_equals;
 
-extern Node *transformExpr(ParseState *pstate, Node *expr);
+extern Node *transformExpr(ParseState *pstate, Node *expr, ParseExprKind exprKind);
+
+extern const char *ParseExprKindName(ParseExprKind exprKind);
 
 #endif   /* PARSE_EXPR_H */

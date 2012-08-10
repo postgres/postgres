@@ -280,6 +280,10 @@ select min(f1), max(f1) from minmaxtest;
 
 drop table minmaxtest cascade;
 
+-- check for correct detection of nested-aggregate errors
+select max(min(unique1)) from tenk1;
+select (select max(min(unique1)) from int8_tbl) from tenk1;
+
 --
 -- Test combinations of DISTINCT and/or ORDER BY
 --

@@ -57,14 +57,14 @@ static Node *transformAssignmentSubscripts(ParseState *pstate,
 							  Node *rhs,
 							  int location);
 static List *ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
-					bool targetlist);
+					bool make_target_entry);
 static List *ExpandAllTables(ParseState *pstate, int location);
 static List *ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind,
-					  bool targetlist);
+					  bool make_target_entry, ParseExprKind exprKind);
 static List *ExpandSingleTable(ParseState *pstate, RangeTblEntry *rte,
-				  int location, bool targetlist);
+				  int location, bool make_target_entry);
 static List *ExpandRowReference(ParseState *pstate, Node *expr,
-				   bool targetlist);
+				   bool make_target_entry);
 static int	FigureColnameInternal(Node *node, char **name);
 
 
@@ -76,6 +76,7 @@ static int	FigureColnameInternal(Node *node, char **name);
  *
  * node		the (untransformed) parse tree for the value expression.
  * expr		the transformed expression, or NULL if caller didn't do it yet.
+ * exprKind	expression kind (EXPR_KIND_SELECT_TARGET, etc)
  * colname	the column name to be assigned, or NULL if none yet set.
  * resjunk	true if the target should be marked resjunk, ie, it is not
  *			wanted in the final projected tuple.
@@ -84,12 +85,13 @@ TargetEntry *
 transformTargetEntry(ParseState *pstate,
 					 Node *node,
 					 Node *expr,
+					 ParseExprKind exprKind,
 					 char *colname,
 					 bool resjunk)
 {
 	/* Transform the node if caller didn't do it already */
 	if (expr == NULL)
-		expr = transformExpr(pstate, node);
+		expr = transformExpr(pstate, node, exprKind);
 
 	if (colname == NULL && !resjunk)
 	{
@@ -111,11 +113,13 @@ transformTargetEntry(ParseState *pstate,
  * transformTargetList()
  * Turns a list of ResTarget's into a list of TargetEntry's.
  *
- * At this point, we don't care whether we are doing SELECT, INSERT,
- * or UPDATE; we just transform the given expressions (the "val" fields).
+ * At this point, we don't care whether we are doing SELECT, UPDATE,
+ * or RETURNING; we just transform the given expressions (the "val" fields).
+ * However, our subroutines care, so we need the exprKind parameter.
  */
 List *
-transformTargetList(ParseState *pstate, List *targetlist)
+transformTargetList(ParseState *pstate, List *targetlist,
+					ParseExprKind exprKind)
 {
 	List	   *p_target = NIL;
 	ListCell   *o_target;
@@ -151,7 +155,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 				/* It is something.*, expand into multiple items */
 				p_target = list_concat(p_target,
 									   ExpandIndirectionStar(pstate, ind,
-															 true));
+															 true, exprKind));
 				continue;
 			}
 		}
@@ -163,6 +167,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 						   transformTargetEntry(pstate,
 												res->val,
 												NULL,
+												exprKind,
 												res->name,
 												false));
 	}
@@ -180,7 +185,8 @@ transformTargetList(ParseState *pstate, List *targetlist)
  * decoration.	We use this for ROW() and VALUES() constructs.
  */
 List *
-transformExpressionList(ParseState *pstate, List *exprlist)
+transformExpressionList(ParseState *pstate, List *exprlist,
+						ParseExprKind exprKind)
 {
 	List	   *result = NIL;
 	ListCell   *lc;
@@ -216,7 +222,7 @@ transformExpressionList(ParseState *pstate, List *exprlist)
 				/* It is something.*, expand into multiple items */
 				result = list_concat(result,
 									 ExpandIndirectionStar(pstate, ind,
-														   false));
+														   false, exprKind));
 				continue;
 			}
 		}
@@ -225,7 +231,7 @@ transformExpressionList(ParseState *pstate, List *exprlist)
 		 * Not "something.*", so transform as a single expression
 		 */
 		result = lappend(result,
-						 transformExpr(pstate, e));
+						 transformExpr(pstate, e, exprKind));
 	}
 
 	return result;
@@ -350,6 +356,7 @@ markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
  *
  * pstate		parse state
  * expr			expression to be modified
+ * exprKind		indicates which type of statement we're dealing with
  * colname		target column name (ie, name of attribute to be assigned to)
  * attrno		target attribute number
  * indirection	subscripts/field names for target column, if any
@@ -365,16 +372,27 @@ markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
 Expr *
 transformAssignedExpr(ParseState *pstate,
 					  Expr *expr,
+					  ParseExprKind exprKind,
 					  char *colname,
 					  int attrno,
 					  List *indirection,
 					  int location)
 {
+	Relation	rd = pstate->p_target_relation;
 	Oid			type_id;		/* type of value provided */
 	Oid			attrtype;		/* type of target column */
 	int32		attrtypmod;
 	Oid			attrcollation;	/* collation of target column */
-	Relation	rd = pstate->p_target_relation;
+	ParseExprKind sv_expr_kind;
+
+	/*
+	 * Save and restore identity of expression type we're parsing.  We must
+	 * set p_expr_kind here because we can parse subscripts without going
+	 * through transformExpr().
+	 */
+	Assert(exprKind != EXPR_KIND_NONE);
+	sv_expr_kind = pstate->p_expr_kind;
+	pstate->p_expr_kind = exprKind;
 
 	Assert(rd != NULL);
 	if (attrno <= 0)
@@ -491,6 +509,8 @@ transformAssignedExpr(ParseState *pstate,
 					 parser_errposition(pstate, exprLocation(orig_expr))));
 	}
 
+	pstate->p_expr_kind = sv_expr_kind;
+
 	return expr;
 }
 
@@ -521,6 +541,7 @@ updateTargetListEntry(ParseState *pstate,
 	/* Fix up expression as needed */
 	tle->expr = transformAssignedExpr(pstate,
 									  tle->expr,
+									  EXPR_KIND_UPDATE_TARGET,
 									  colname,
 									  attrno,
 									  indirection,
@@ -947,7 +968,7 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
  */
 static List *
 ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
-					bool targetlist)
+					bool make_target_entry)
 {
 	List	   *fields = cref->fields;
 	int			numnames = list_length(fields);
@@ -960,9 +981,9 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 		 * (e.g., SELECT * FROM emp, dept)
 		 *
 		 * Since the grammar only accepts bare '*' at top level of SELECT, we
-		 * need not handle the targetlist==false case here.
+		 * need not handle the make_target_entry==false case here.
 		 */
-		Assert(targetlist);
+		Assert(make_target_entry);
 		return ExpandAllTables(pstate, cref->location);
 	}
 	else
@@ -1002,7 +1023,7 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 
 			node = (*pstate->p_pre_columnref_hook) (pstate, cref);
 			if (node != NULL)
-				return ExpandRowReference(pstate, node, targetlist);
+				return ExpandRowReference(pstate, node, make_target_entry);
 		}
 
 		switch (numnames)
@@ -1065,7 +1086,7 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 							 errmsg("column reference \"%s\" is ambiguous",
 									NameListToString(cref->fields)),
 							 parser_errposition(pstate, cref->location)));
-				return ExpandRowReference(pstate, node, targetlist);
+				return ExpandRowReference(pstate, node, make_target_entry);
 			}
 		}
 
@@ -1100,7 +1121,7 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 		/*
 		 * OK, expand the RTE into fields.
 		 */
-		return ExpandSingleTable(pstate, rte, cref->location, targetlist);
+		return ExpandSingleTable(pstate, rte, cref->location, make_target_entry);
 	}
 }
 
@@ -1166,10 +1187,12 @@ ExpandAllTables(ParseState *pstate, int location)
  * The code is shared between the case of foo.* at the top level in a SELECT
  * target list (where we want TargetEntry nodes in the result) and foo.* in
  * a ROW() or VALUES() construct (where we want just bare expressions).
+ * For robustness, we use a separate "make_target_entry" flag to control
+ * this rather than relying on exprKind.
  */
 static List *
 ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind,
-					  bool targetlist)
+					  bool make_target_entry, ParseExprKind exprKind)
 {
 	Node	   *expr;
 
@@ -1179,10 +1202,10 @@ ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind,
 									 list_length(ind->indirection) - 1);
 
 	/* And transform that */
-	expr = transformExpr(pstate, (Node *) ind);
+	expr = transformExpr(pstate, (Node *) ind, exprKind);
 
 	/* Expand the rowtype expression into individual fields */
-	return ExpandRowReference(pstate, expr, targetlist);
+	return ExpandRowReference(pstate, expr, make_target_entry);
 }
 
 /*
@@ -1196,14 +1219,14 @@ ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind,
  */
 static List *
 ExpandSingleTable(ParseState *pstate, RangeTblEntry *rte,
-				  int location, bool targetlist)
+				  int location, bool make_target_entry)
 {
 	int			sublevels_up;
 	int			rtindex;
 
 	rtindex = RTERangeTablePosn(pstate, rte, &sublevels_up);
 
-	if (targetlist)
+	if (make_target_entry)
 	{
 		/* expandRelAttrs handles permissions marking */
 		return expandRelAttrs(pstate, rte, rtindex, sublevels_up,
@@ -1245,7 +1268,7 @@ ExpandSingleTable(ParseState *pstate, RangeTblEntry *rte,
  */
 static List *
 ExpandRowReference(ParseState *pstate, Node *expr,
-				   bool targetlist)
+				   bool make_target_entry)
 {
 	List	   *result = NIL;
 	TupleDesc	tupleDesc;
@@ -1268,7 +1291,7 @@ ExpandRowReference(ParseState *pstate, Node *expr,
 		RangeTblEntry *rte;
 
 		rte = GetRTEByRangeTablePosn(pstate, var->varno, var->varlevelsup);
-		return ExpandSingleTable(pstate, rte, var->location, targetlist);
+		return ExpandSingleTable(pstate, rte, var->location, make_target_entry);
 	}
 
 	/*
@@ -1313,7 +1336,7 @@ ExpandRowReference(ParseState *pstate, Node *expr,
 		/* save attribute's collation for parse_collate.c */
 		fselect->resultcollid = att->attcollation;
 
-		if (targetlist)
+		if (make_target_entry)
 		{
 			/* add TargetEntry decoration */
 			TargetEntry *te;

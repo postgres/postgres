@@ -958,32 +958,32 @@ SELECT rank() OVER (ORDER BY length('abc'));
 
 -- can't order by another window function
 SELECT rank() OVER (ORDER BY rank() OVER (ORDER BY random()));
-ERROR:  window functions not allowed in window definition
+ERROR:  window functions are not allowed in window definitions
 LINE 1: SELECT rank() OVER (ORDER BY rank() OVER (ORDER BY random())...
                                      ^
 -- some other errors
 SELECT * FROM empsalary WHERE row_number() OVER (ORDER BY salary) < 10;
-ERROR:  window functions not allowed in WHERE clause
+ERROR:  window functions are not allowed in WHERE
 LINE 1: SELECT * FROM empsalary WHERE row_number() OVER (ORDER BY sa...
                                       ^
 SELECT * FROM empsalary INNER JOIN tenk1 ON row_number() OVER (ORDER BY salary) < 10;
-ERROR:  window functions not allowed in JOIN conditions
+ERROR:  window functions are not allowed in JOIN conditions
 LINE 1: SELECT * FROM empsalary INNER JOIN tenk1 ON row_number() OVE...
                                                     ^
 SELECT rank() OVER (ORDER BY 1), count(*) FROM empsalary GROUP BY 1;
-ERROR:  window functions not allowed in GROUP BY clause
+ERROR:  window functions are not allowed in GROUP BY
 LINE 1: SELECT rank() OVER (ORDER BY 1), count(*) FROM empsalary GRO...
                ^
 SELECT * FROM rank() OVER (ORDER BY random());
-ERROR:  cannot use window function in function expression in FROM
+ERROR:  window functions are not allowed in functions in FROM
 LINE 1: SELECT * FROM rank() OVER (ORDER BY random());
                       ^
 DELETE FROM empsalary WHERE (rank() OVER (ORDER BY random())) > 10;
-ERROR:  window functions not allowed in WHERE clause
+ERROR:  window functions are not allowed in WHERE
 LINE 1: DELETE FROM empsalary WHERE (rank() OVER (ORDER BY random())...
                                      ^
 DELETE FROM empsalary RETURNING rank() OVER (ORDER BY random());
-ERROR:  cannot use window function in RETURNING
+ERROR:  window functions are not allowed in RETURNING
 LINE 1: DELETE FROM empsalary RETURNING rank() OVER (ORDER BY random...
                                         ^
 SELECT count(*) OVER w FROM tenk1 WINDOW w AS (ORDER BY unique1), w AS (ORDER BY unique1);

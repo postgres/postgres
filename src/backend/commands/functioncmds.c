@@ -344,12 +344,14 @@ examine_parameter_list(List *parameters, Oid languageOid,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 				   errmsg("only input parameters can have default values")));
 
-			def = transformExpr(pstate, fp->defexpr);
+			def = transformExpr(pstate, fp->defexpr,
+								EXPR_KIND_FUNCTION_DEFAULT);
 			def = coerce_to_specific_type(pstate, def, toid, "DEFAULT");
 			assign_expr_collations(pstate, def);
 
 			/*
-			 * Make sure no variables are referred to.
+			 * Make sure no variables are referred to (this is probably dead
+			 * code now that add_missing_from is history).
 			 */
 			if (list_length(pstate->p_rtable) != 0 ||
 				contain_var_clause(def))
@@ -358,28 +360,18 @@ examine_parameter_list(List *parameters, Oid languageOid,
 						 errmsg("cannot use table references in parameter default value")));
 
 			/*
+			 * transformExpr() should have already rejected subqueries,
+			 * aggregates, and window functions, based on the EXPR_KIND_ for a
+			 * default expression.
+			 *
 			 * It can't return a set either --- but coerce_to_specific_type
 			 * already checked that for us.
-			 *
-			 * No subplans or aggregates, either...
 			 *
 			 * Note: the point of these restrictions is to ensure that an
 			 * expression that, on its face, hasn't got subplans, aggregates,
 			 * etc cannot suddenly have them after function default arguments
 			 * are inserted.
 			 */
-			if (pstate->p_hasSubLinks)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				  errmsg("cannot use subquery in parameter default value")));
-			if (pstate->p_hasAggs)
-				ereport(ERROR,
-						(errcode(ERRCODE_GROUPING_ERROR),
-						 errmsg("cannot use aggregate function in parameter default value")));
-			if (pstate->p_hasWindowFuncs)
-				ereport(ERROR,
-						(errcode(ERRCODE_WINDOWING_ERROR),
-						 errmsg("cannot use window function in parameter default value")));
 
 			*parameterDefaults = lappend(*parameterDefaults, def);
 			have_defaults = true;

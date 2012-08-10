@@ -1917,6 +1917,7 @@ transformIndexStmt(IndexStmt *stmt, const char *queryString)
 	{
 		stmt->whereClause = transformWhereClause(pstate,
 												 stmt->whereClause,
+												 EXPR_KIND_INDEX_PREDICATE,
 												 "WHERE");
 		/* we have to fix its collations too */
 		assign_expr_collations(pstate, stmt->whereClause);
@@ -1934,15 +1935,20 @@ transformIndexStmt(IndexStmt *stmt, const char *queryString)
 				ielem->indexcolname = FigureIndexColname(ielem->expr);
 
 			/* Now do parse transformation of the expression */
-			ielem->expr = transformExpr(pstate, ielem->expr);
+			ielem->expr = transformExpr(pstate, ielem->expr,
+										EXPR_KIND_INDEX_EXPRESSION);
 
 			/* We have to fix its collations too */
 			assign_expr_collations(pstate, ielem->expr);
 
 			/*
-			 * We check only that the result type is legitimate; this is for
-			 * consistency with what transformWhereClause() checks for the
-			 * predicate.  DefineIndex() will make more checks.
+			 * transformExpr() should have already rejected subqueries,
+			 * aggregates, and window functions, based on the EXPR_KIND_ for
+			 * an index expression.
+			 *
+			 * Also reject expressions returning sets; this is for consistency
+			 * with what transformWhereClause() checks for the predicate.
+			 * DefineIndex() will make more checks.
 			 */
 			if (expression_returns_set(ielem->expr))
 				ereport(ERROR,
@@ -1952,7 +1958,8 @@ transformIndexStmt(IndexStmt *stmt, const char *queryString)
 	}
 
 	/*
-	 * Check that only the base rel is mentioned.
+	 * Check that only the base rel is mentioned.  (This should be dead code
+	 * now that add_missing_from is history.)
 	 */
 	if (list_length(pstate->p_rtable) != 1)
 		ereport(ERROR,
@@ -2047,24 +2054,16 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 	/* take care of the where clause */
 	*whereClause = transformWhereClause(pstate,
 									  (Node *) copyObject(stmt->whereClause),
+										EXPR_KIND_WHERE,
 										"WHERE");
 	/* we have to fix its collations too */
 	assign_expr_collations(pstate, *whereClause);
 
+	/* this is probably dead code without add_missing_from: */
 	if (list_length(pstate->p_rtable) != 2)		/* naughty, naughty... */
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("rule WHERE condition cannot contain references to other relations")));
-
-	/* aggregates not allowed (but subselects are okay) */
-	if (pstate->p_hasAggs)
-		ereport(ERROR,
-				(errcode(ERRCODE_GROUPING_ERROR),
-		   errmsg("cannot use aggregate function in rule WHERE condition")));
-	if (pstate->p_hasWindowFuncs)
-		ereport(ERROR,
-				(errcode(ERRCODE_WINDOWING_ERROR),
-			  errmsg("cannot use window function in rule WHERE condition")));
 
 	/*
 	 * 'instead nothing' rules with a qualification need a query rangetable so

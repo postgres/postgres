@@ -354,21 +354,7 @@ EvaluateParams(PreparedStatement *pstmt, List *params,
 		Oid			expected_type_id = param_types[i];
 		Oid			given_type_id;
 
-		expr = transformExpr(pstate, expr);
-
-		/* Cannot contain subselects or aggregates */
-		if (pstate->p_hasSubLinks)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot use subquery in EXECUTE parameter")));
-		if (pstate->p_hasAggs)
-			ereport(ERROR,
-					(errcode(ERRCODE_GROUPING_ERROR),
-			  errmsg("cannot use aggregate function in EXECUTE parameter")));
-		if (pstate->p_hasWindowFuncs)
-			ereport(ERROR,
-					(errcode(ERRCODE_WINDOWING_ERROR),
-				 errmsg("cannot use window function in EXECUTE parameter")));
+		expr = transformExpr(pstate, expr, EXPR_KIND_EXECUTE_PARAMETER);
 
 		given_type_id = exprType(expr);
 

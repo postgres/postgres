@@ -292,7 +292,7 @@ select ten, sum(distinct four) from onek a
 group by ten
 having exists (select 1 from onek b
                where sum(distinct a.four + b.four) = b.four);
-ERROR:  aggregates not allowed in WHERE clause
+ERROR:  aggregate functions are not allowed in WHERE
 LINE 4:                where sum(distinct a.four + b.four) = b.four)...
                              ^
 -- Test handling of sublinks within outer-level aggregates.
@@ -745,6 +745,15 @@ NOTICE:  drop cascades to 3 other objects
 DETAIL:  drop cascades to table minmaxtest1
 drop cascades to table minmaxtest2
 drop cascades to table minmaxtest3
+-- check for correct detection of nested-aggregate errors
+select max(min(unique1)) from tenk1;
+ERROR:  aggregate function calls cannot be nested
+LINE 1: select max(min(unique1)) from tenk1;
+                   ^
+select (select max(min(unique1)) from int8_tbl) from tenk1;
+ERROR:  aggregate function calls cannot be nested
+LINE 1: select (select max(min(unique1)) from int8_tbl) from tenk1;
+                           ^
 --
 -- Test combinations of DISTINCT and/or ORDER BY
 --

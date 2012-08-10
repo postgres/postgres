@@ -37,7 +37,6 @@ extern List *pull_vars_of_level(Node *node, int levelsup);
 extern bool contain_var_clause(Node *node);
 extern bool contain_vars_of_level(Node *node, int levelsup);
 extern int	locate_var_of_level(Node *node, int levelsup);
-extern int	find_minimum_var_level(Node *node);
 extern List *pull_var_clause(Node *node, PVCAggregateBehavior aggbehavior,
 				PVCPlaceHolderBehavior phbehavior);
 extern Node *flatten_join_alias_vars(PlannerInfo *root, Node *node);

@@ -22,7 +22,6 @@ extern void transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 						WindowDef *windef);
 
 extern void parseCheckAggregates(ParseState *pstate, Query *qry);
-extern void parseCheckWindowFuncs(ParseState *pstate, Query *qry);
 
 extern void build_aggregate_fnexprs(Oid *agg_input_types,
 						int agg_num_inputs,

@@ -53,17 +53,6 @@ static Relids adjust_relid_set(Relids relids, int oldrelid, int newrelid);
 
 
 /*
- * checkExprHasAggs -
- *	Check if an expression contains an aggregate function call of the
- *	current query level.
- */
-bool
-checkExprHasAggs(Node *node)
-{
-	return contain_aggs_of_level(node, 0);
-}
-
-/*
  * contain_aggs_of_level -
  *	Check if an expression contains an aggregate function call of a
  *	specified query level.
@@ -185,12 +174,12 @@ locate_agg_of_level_walker(Node *node,
 }
 
 /*
- * checkExprHasWindowFuncs -
+ * contain_windowfuncs -
  *	Check if an expression contains a window function call of the
  *	current query level.
  */
 bool
-checkExprHasWindowFuncs(Node *node)
+contain_windowfuncs(Node *node)
 {
 	/*
 	 * Must be prepared to start with a Query or a bare expression tree; if
@@ -1049,7 +1038,7 @@ AddQual(Query *parsetree, Node *qual)
 	/*
 	 * We had better not have stuck an aggregate into the WHERE clause.
 	 */
-	Assert(!checkExprHasAggs(copy));
+	Assert(!contain_aggs_of_level(copy, 0));
 
 	/*
 	 * Make sure query is marked correctly if added qual has sublinks. Need
