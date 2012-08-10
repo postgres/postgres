@@ -3344,7 +3344,7 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx)
 				break;
 
 			case 'k':
-				SetConfigOption("unix_socket_directory", optarg, ctx, gucsource);
+				SetConfigOption("unix_socket_directories", optarg, ctx, gucsource);
 				break;
 
 			case 'l':

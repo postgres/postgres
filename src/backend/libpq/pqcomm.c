@@ -42,7 +42,7 @@
  *		StreamServerPort	- Open postmaster's server port
  *		StreamConnection	- Create new connection with client
  *		StreamClose			- Close a client/backend connection
- *		TouchSocketFile		- Protect socket file against /tmp cleaners
+ *		TouchSocketFiles	- Protect socket files against /tmp cleaners
  *		pq_init			- initialize libpq at backend startup
  *		pq_comm_reset	- reset libpq during error recovery
  *		pq_close		- shutdown libpq at backend exit
@@ -103,8 +103,8 @@ int			Unix_socket_permissions;
 char	   *Unix_socket_group;
 
 
-/* Where the Unix socket file is */
-static char sock_path[MAXPGPATH];
+/* Where the Unix socket files are (list of palloc'd strings) */
+static List *sock_paths = NIL;
 
 
 /*
@@ -140,8 +140,8 @@ static int	internal_flush(void);
 static void pq_set_nonblocking(bool nonblocking);
 
 #ifdef HAVE_UNIX_SOCKETS
-static int	Lock_AF_UNIX(unsigned short portNumber, char *unixSocketName);
-static int	Setup_AF_UNIX(void);
+static int	Lock_AF_UNIX(char *unixSocketDir, char *unixSocketPath);
+static int	Setup_AF_UNIX(char *sock_path);
 #endif   /* HAVE_UNIX_SOCKETS */
 
 
@@ -234,29 +234,43 @@ pq_close(int code, Datum arg)
 
 /* StreamDoUnlink()
  * Shutdown routine for backend connection
- * If a Unix socket is used for communication, explicitly close it.
+ * If any Unix sockets are used for communication, explicitly close them.
  */
 #ifdef HAVE_UNIX_SOCKETS
 static void
 StreamDoUnlink(int code, Datum arg)
 {
-	Assert(sock_path[0]);
-	unlink(sock_path);
+	ListCell   *l;
+
+	/* Loop through all created sockets... */
+	foreach(l, sock_paths)
+	{
+		char	   *sock_path = (char *) lfirst(l);
+
+		unlink(sock_path);
+	}
+	/* Since we're about to exit, no need to reclaim storage */
+	sock_paths = NIL;
 }
 #endif   /* HAVE_UNIX_SOCKETS */
 
 /*
  * StreamServerPort -- open a "listening" port to accept connections.
  *
- * Successfully opened sockets are added to the ListenSocket[] array,
- * at the first position that isn't PGINVALID_SOCKET.
+ * family should be AF_UNIX or AF_UNSPEC; portNumber is the port number.
+ * For AF_UNIX ports, hostName should be NULL and unixSocketDir must be
+ * specified.  For TCP ports, hostName is either NULL for all interfaces or
+ * the interface to listen on, and unixSocketDir is ignored (can be NULL).
+ *
+ * Successfully opened sockets are added to the ListenSocket[] array (of
+ * length MaxListen), at the first position that isn't PGINVALID_SOCKET.
  *
  * RETURNS: STATUS_OK or STATUS_ERROR
  */
 
 int
 StreamServerPort(int family, char *hostName, unsigned short portNumber,
-				 char *unixSocketName,
+				 char *unixSocketDir,
 				 pgsocket ListenSocket[], int MaxListen)
 {
 	pgsocket	fd;
@@ -273,6 +287,9 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 	int			listen_index = 0;
 	int			added = 0;
 
+#ifdef HAVE_UNIX_SOCKETS
+	char		unixSocketPath[MAXPGPATH];
+#endif
 #if !defined(WIN32) || defined(IPV6_V6ONLY)
 	int			one = 1;
 #endif
@@ -286,10 +303,14 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 #ifdef HAVE_UNIX_SOCKETS
 	if (family == AF_UNIX)
 	{
-		/* Lock_AF_UNIX will also fill in sock_path. */
-		if (Lock_AF_UNIX(portNumber, unixSocketName) != STATUS_OK)
+		/*
+		 * Create unixSocketPath from portNumber and unixSocketDir and lock
+		 * that file path
+		 */
+		UNIXSOCK_PATH(unixSocketPath, portNumber, unixSocketDir);
+		if (Lock_AF_UNIX(unixSocketDir, unixSocketPath) != STATUS_OK)
 			return STATUS_ERROR;
-		service = sock_path;
+		service = unixSocketPath;
 	}
 	else
 #endif   /* HAVE_UNIX_SOCKETS */
@@ -432,7 +453,7 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 					 (IS_AF_UNIX(addr->ai_family)) ?
 				  errhint("Is another postmaster already running on port %d?"
 						  " If not, remove socket file \"%s\" and retry.",
-						  (int) portNumber, sock_path) :
+						  (int) portNumber, service) :
 				  errhint("Is another postmaster already running on port %d?"
 						  " If not, wait a few seconds and retry.",
 						  (int) portNumber)));
@@ -443,7 +464,7 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 #ifdef HAVE_UNIX_SOCKETS
 		if (addr->ai_family == AF_UNIX)
 		{
-			if (Setup_AF_UNIX() != STATUS_OK)
+			if (Setup_AF_UNIX(service) != STATUS_OK)
 			{
 				closesocket(fd);
 				break;
@@ -490,10 +511,8 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
  * Lock_AF_UNIX -- configure unix socket file path
  */
 static int
-Lock_AF_UNIX(unsigned short portNumber, char *unixSocketName)
+Lock_AF_UNIX(char *unixSocketDir, char *unixSocketPath)
 {
-	UNIXSOCK_PATH(sock_path, portNumber, unixSocketName);
-
 	/*
 	 * Grab an interlock file associated with the socket file.
 	 *
@@ -502,13 +521,23 @@ Lock_AF_UNIX(unsigned short portNumber, char *unixSocketName)
 	 * more portable, and second, it lets us remove any pre-existing socket
 	 * file without race conditions.
 	 */
-	CreateSocketLockFile(sock_path, true);
+	CreateSocketLockFile(unixSocketPath, true, unixSocketDir);
 
 	/*
 	 * Once we have the interlock, we can safely delete any pre-existing
 	 * socket file to avoid failure at bind() time.
 	 */
-	unlink(sock_path);
+	unlink(unixSocketPath);
+
+	/*
+	 * Arrange to unlink the socket file(s) at proc_exit.  If this is the
+	 * first one, set up the on_proc_exit function to do it; then add this
+	 * socket file to the list of files to unlink.
+	 */
+	if (sock_paths == NIL)
+		on_proc_exit(StreamDoUnlink, 0);
+
+	sock_paths = lappend(sock_paths, pstrdup(unixSocketPath));
 
 	return STATUS_OK;
 }
@@ -518,11 +547,8 @@ Lock_AF_UNIX(unsigned short portNumber, char *unixSocketName)
  * Setup_AF_UNIX -- configure unix socket permissions
  */
 static int
-Setup_AF_UNIX(void)
+Setup_AF_UNIX(char *sock_path)
 {
-	/* Arrange to unlink the socket file at exit */
-	on_proc_exit(StreamDoUnlink, 0);
-
 	/*
 	 * Fix socket ownership/permission if requested.  Note we must do this
 	 * before we listen() to avoid a window where unwanted connections could
@@ -704,20 +730,24 @@ StreamClose(pgsocket sock)
 }
 
 /*
- * TouchSocketFile -- mark socket file as recently accessed
+ * TouchSocketFiles -- mark socket files as recently accessed
  *
  * This routine should be called every so often to ensure that the socket
- * file has a recent mod date (ordinary operations on sockets usually won't
- * change the mod date).  That saves it from being removed by
+ * files have a recent mod date (ordinary operations on sockets usually won't
+ * change the mod date).  That saves them from being removed by
  * overenthusiastic /tmp-directory-cleaner daemons.  (Another reason we should
  * never have put the socket file in /tmp...)
  */
 void
-TouchSocketFile(void)
+TouchSocketFiles(void)
 {
-	/* Do nothing if we did not create a socket... */
-	if (sock_path[0] != '\0')
+	ListCell   *l;
+
+	/* Loop through all created sockets... */
+	foreach(l, sock_paths)
 	{
+		char	   *sock_path = (char *) lfirst(l);
+
 		/*
 		 * utime() is POSIX standard, utimes() is a common alternative. If we
 		 * have neither, there's no way to affect the mod or access time of

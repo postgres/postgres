@@ -838,7 +838,7 @@ omicron         bryanh                  guest1
     <varname>unix_socket_permissions</varname> (and possibly
     <varname>unix_socket_group</varname>) configuration parameters as
     described in <xref linkend="runtime-config-connection">.  Or you
-    could set the <varname>unix_socket_directory</varname>
+    could set the <varname>unix_socket_directories</varname>
     configuration parameter to place the socket file in a suitably
     restricted directory.
    </para>

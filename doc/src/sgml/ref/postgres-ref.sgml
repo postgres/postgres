@@ -254,8 +254,14 @@ PostgreSQL documentation
        <para>
         Specifies the directory of the Unix-domain socket on which
         <command>postgres</command> is to listen for
-        connections from client applications.  The default is normally
-        <filename>/tmp</filename>, but can be changed at build time.
+        connections from client applications.  The value can also be a
+        comma-separated list of directories.  An empty value
+        specifies not listening on any Unix-domain sockets, in which case
+        only TCP/IP sockets can be used to connect to the server.
+        The default value is normally
+        <filename>/tmp</filename>, but that can be changed at build time.
+        Specifying this option is equivalent to setting the <xref
+        linkend="guc-unix-socket-directories"> configuration parameter.
        </para>
       </listitem>
      </varlistentry>

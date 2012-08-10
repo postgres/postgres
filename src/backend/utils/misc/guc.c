@@ -2895,14 +2895,18 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"unix_socket_directory", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
-			gettext_noop("Sets the directory where the Unix-domain socket will be created."),
+		{"unix_socket_directories", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
+			gettext_noop("Sets the directories where Unix-domain sockets will be created."),
 			NULL,
 			GUC_SUPERUSER_ONLY
 		},
-		&UnixSocketDir,
+		&Unix_socket_directories,
+#ifdef HAVE_UNIX_SOCKETS
+		DEFAULT_PGSOCKET_DIR,
+#else
 		"",
-		check_canonical_path, NULL, NULL
+#endif
+		NULL, NULL, NULL
 	},
 
 	{

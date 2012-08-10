@@ -1156,7 +1156,7 @@ static void
 setup_config(void)
 {
 	char	  **conflines;
-	char		repltok[TZ_STRLEN_MAX + 100];
+	char		repltok[MAXPGPATH];
 	char		path[MAXPGPATH];
 	const char *default_timezone;
 
@@ -1177,6 +1177,15 @@ setup_config(void)
 		snprintf(repltok, sizeof(repltok), "shared_buffers = %dkB",
 				 n_buffers * (BLCKSZ / 1024));
 	conflines = replace_token(conflines, "#shared_buffers = 32MB", repltok);
+
+#ifdef HAVE_UNIX_SOCKETS
+	snprintf(repltok, sizeof(repltok), "#unix_socket_directories = '%s'",
+			 DEFAULT_PGSOCKET_DIR);
+#else
+	snprintf(repltok, sizeof(repltok), "#unix_socket_directories = ''");
+#endif
+	conflines = replace_token(conflines, "#unix_socket_directories = '/tmp'",
+							  repltok);
 
 #if DEF_PGPORT != 5432
 	snprintf(repltok, sizeof(repltok), "#port = %d", DEF_PGPORT);

@@ -49,8 +49,8 @@
 
 ProcessingMode Mode = InitProcessing;
 
-/* Note: we rely on this to initialize as zeroes */
-static char socketLockFile[MAXPGPATH];
+/* List of lock files to be removed at proc exit */
+static List *lock_files = NIL;
 
 
 /* ----------------------------------------------------------------
@@ -628,7 +628,7 @@ GetUserNameFromId(Oid roleid)
  *				Interlock-file support
  *
  * These routines are used to create both a data-directory lockfile
- * ($DATADIR/postmaster.pid) and a Unix-socket-file lockfile ($SOCKFILE.lock).
+ * ($DATADIR/postmaster.pid) and Unix-socket-file lockfiles ($SOCKFILE.lock).
  * Both kinds of files contain the same info initially, although we can add
  * more information to a data-directory lockfile after it's created, using
  * AddToDataDirLockFile().	See miscadmin.h for documentation of the contents
@@ -640,32 +640,35 @@ GetUserNameFromId(Oid roleid)
  */
 
 /*
- * proc_exit callback to remove a lockfile.
+ * proc_exit callback to remove lockfiles.
  */
 static void
-UnlinkLockFile(int status, Datum filename)
+UnlinkLockFiles(int status, Datum arg)
 {
-	char	   *fname = (char *) DatumGetPointer(filename);
+	ListCell   *l;
 
-	if (fname != NULL)
+	foreach(l, lock_files)
 	{
-		if (unlink(fname) != 0)
-		{
-			/* Should we complain if the unlink fails? */
-		}
-		free(fname);
+		char	   *curfile = (char *) lfirst(l);
+
+		unlink(curfile);
+		/* Should we complain if the unlink fails? */
 	}
+	/* Since we're about to exit, no need to reclaim storage */
+	lock_files = NIL;
 }
 
 /*
  * Create a lockfile.
  *
- * filename is the name of the lockfile to create.
+ * filename is the path name of the lockfile to create.
  * amPostmaster is used to determine how to encode the output PID.
+ * socketDir is the Unix socket directory path to include (possibly empty).
  * isDDLock and refName are used to determine what error message to produce.
  */
 static void
 CreateLockFile(const char *filename, bool amPostmaster,
+			   const char *socketDir,
 			   bool isDDLock, const char *refName)
 {
 	int			fd;
@@ -891,12 +894,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 			 DataDir,
 			 (long) MyStartTime,
 			 PostPortNumber,
-#ifdef HAVE_UNIX_SOCKETS
-			 (*UnixSocketDir != '\0') ? UnixSocketDir : DEFAULT_PGSOCKET_DIR
-#else
-			 ""
-#endif
-		);
+			 socketDir);
 
 	errno = 0;
 	if (write(fd, buffer, strlen(buffer)) != strlen(buffer))
@@ -934,9 +932,14 @@ CreateLockFile(const char *filename, bool amPostmaster,
 	}
 
 	/*
-	 * Arrange for automatic removal of lockfile at proc_exit.
+	 * Arrange to unlink the lock file(s) at proc_exit.  If this is the
+	 * first one, set up the on_proc_exit function to do it; then add this
+	 * lock file to the list of files to unlink.
 	 */
-	on_proc_exit(UnlinkLockFile, PointerGetDatum(strdup(filename)));
+	if (lock_files == NIL)
+		on_proc_exit(UnlinkLockFiles, 0);
+
+	lock_files = lappend(lock_files, pstrdup(filename));
 }
 
 /*
@@ -945,41 +948,50 @@ CreateLockFile(const char *filename, bool amPostmaster,
  * When this is called, we must have already switched the working
  * directory to DataDir, so we can just use a relative path.  This
  * helps ensure that we are locking the directory we should be.
+ *
+ * Note that the socket directory path line is initially written as empty.
+ * postmaster.c will rewrite it upon creating the first Unix socket.
  */
 void
 CreateDataDirLockFile(bool amPostmaster)
 {
-	CreateLockFile(DIRECTORY_LOCK_FILE, amPostmaster, true, DataDir);
+	CreateLockFile(DIRECTORY_LOCK_FILE, amPostmaster, "", true, DataDir);
 }
 
 /*
  * Create a lockfile for the specified Unix socket file.
  */
 void
-CreateSocketLockFile(const char *socketfile, bool amPostmaster)
+CreateSocketLockFile(const char *socketfile, bool amPostmaster,
+					 const char *socketDir)
 {
 	char		lockfile[MAXPGPATH];
 
 	snprintf(lockfile, sizeof(lockfile), "%s.lock", socketfile);
-	CreateLockFile(lockfile, amPostmaster, false, socketfile);
-	/* Save name of lockfile for TouchSocketLockFile */
-	strcpy(socketLockFile, lockfile);
+	CreateLockFile(lockfile, amPostmaster, socketDir, false, socketfile);
 }
 
 /*
- * TouchSocketLockFile -- mark socket lock file as recently accessed
+ * TouchSocketLockFiles -- mark socket lock files as recently accessed
  *
- * This routine should be called every so often to ensure that the lock file
- * has a recent mod or access date.  That saves it
+ * This routine should be called every so often to ensure that the socket
+ * lock files have a recent mod or access date.  That saves them
  * from being removed by overenthusiastic /tmp-directory-cleaner daemons.
  * (Another reason we should never have put the socket file in /tmp...)
  */
 void
-TouchSocketLockFile(void)
+TouchSocketLockFiles(void)
 {
-	/* Do nothing if we did not create a socket... */
-	if (socketLockFile[0] != '\0')
+	ListCell   *l;
+
+	foreach(l, lock_files)
 	{
+		char	   *socketLockFile = (char *) lfirst(l);
+
+		/* No need to touch the data directory lock file, we trust */
+		if (strcmp(socketLockFile, DIRECTORY_LOCK_FILE) == 0)
+			continue;
+
 		/*
 		 * utime() is POSIX standard, utimes() is a common alternative; if we
 		 * have neither, fall back to actually reading the file (which only
@@ -1011,8 +1023,10 @@ TouchSocketLockFile(void)
  * Add (or replace) a line in the data directory lock file.
  * The given string should not include a trailing newline.
  *
- * Caution: this erases all following lines.  In current usage that is OK
- * because lines are added in order.  We could improve it if needed.
+ * Note: because we don't truncate the file, if we were to rewrite a line
+ * with less data than it had before, there would be garbage after the last
+ * line.  We don't ever actually do that, so not worth adding another kernel
+ * call to cover the possibility.
  */
 void
 AddToDataDirLockFile(int target_line, const char *str)
@@ -1020,8 +1034,10 @@ AddToDataDirLockFile(int target_line, const char *str)
 	int			fd;
 	int			len;
 	int			lineno;
-	char	   *ptr;
-	char		buffer[BLCKSZ];
+	char	   *srcptr;
+	char	   *destptr;
+	char		srcbuffer[BLCKSZ];
+	char		destbuffer[BLCKSZ];
 
 	fd = open(DIRECTORY_LOCK_FILE, O_RDWR | PG_BINARY, 0);
 	if (fd < 0)
@@ -1032,7 +1048,7 @@ AddToDataDirLockFile(int target_line, const char *str)
 						DIRECTORY_LOCK_FILE)));
 		return;
 	}
-	len = read(fd, buffer, sizeof(buffer) - 1);
+	len = read(fd, srcbuffer, sizeof(srcbuffer) - 1);
 	if (len < 0)
 	{
 		ereport(LOG,
@@ -1042,36 +1058,50 @@ AddToDataDirLockFile(int target_line, const char *str)
 		close(fd);
 		return;
 	}
-	buffer[len] = '\0';
+	srcbuffer[len] = '\0';
 
 	/*
-	 * Skip over lines we are not supposed to rewrite.
+	 * Advance over lines we are not supposed to rewrite, then copy them
+	 * to destbuffer.
 	 */
-	ptr = buffer;
+	srcptr = srcbuffer;
 	for (lineno = 1; lineno < target_line; lineno++)
 	{
-		if ((ptr = strchr(ptr, '\n')) == NULL)
+		if ((srcptr = strchr(srcptr, '\n')) == NULL)
 		{
 			elog(LOG, "bogus data in \"%s\"", DIRECTORY_LOCK_FILE);
 			close(fd);
 			return;
 		}
-		ptr++;
+		srcptr++;
 	}
+	memcpy(destbuffer, srcbuffer, srcptr - srcbuffer);
+	destptr = destbuffer + (srcptr - srcbuffer);
 
 	/*
 	 * Write or rewrite the target line.
 	 */
-	snprintf(ptr, buffer + sizeof(buffer) - ptr, "%s\n", str);
+	snprintf(destptr, destbuffer + sizeof(destbuffer) - destptr, "%s\n", str);
+	destptr += strlen(destptr);
+
+	/*
+	 * If there are more lines in the old file, append them to destbuffer.
+	 */
+	if ((srcptr = strchr(srcptr, '\n')) != NULL)
+	{
+		srcptr++;
+		snprintf(destptr, destbuffer + sizeof(destbuffer) - destptr, "%s",
+				 srcptr);
+	}
 
 	/*
 	 * And rewrite the data.  Since we write in a single kernel call, this
 	 * update should appear atomic to onlookers.
 	 */
-	len = strlen(buffer);
+	len = strlen(destbuffer);
 	errno = 0;
 	if (lseek(fd, (off_t) 0, SEEK_SET) != 0 ||
-		(int) write(fd, buffer, len) != len)
+		(int) write(fd, destbuffer, len) != len)
 	{
 		/* if write didn't set errno, assume problem is no disk space */
 		if (errno == 0)

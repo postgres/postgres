@@ -65,7 +65,8 @@
 # Note:  Increasing max_connections costs ~400 bytes of shared memory per
 # connection slot, plus lock space (see max_locks_per_transaction).
 #superuser_reserved_connections = 3	# (change requires restart)
-#unix_socket_directory = ''		# (change requires restart)
+#unix_socket_directories = '/tmp'	# comma-separated list of directories
+					# (change requires restart)
 #unix_socket_group = ''			# (change requires restart)
 #unix_socket_permissions = 0777		# begin with 0 to use octal notation
 					# (change requires restart)

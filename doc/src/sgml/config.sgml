@@ -445,17 +445,24 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-unix-socket-directory" xreflabel="unix_socket_directory">
-      <term><varname>unix_socket_directory</varname> (<type>string</type>)</term>
+     <varlistentry id="guc-unix-socket-directories" xreflabel="unix_socket_directories">
+      <term><varname>unix_socket_directories</varname> (<type>string</type>)</term>
       <indexterm>
-       <primary><varname>unix_socket_directory</> configuration parameter</primary>
+       <primary><varname>unix_socket_directories</> configuration parameter</primary>
       </indexterm>
       <listitem>
        <para>
-        Specifies the directory of the Unix-domain socket on which the
-        server is to listen for
-        connections from client applications.  The default is normally
-        <filename>/tmp</filename>, but can be changed at build time.
+        Specifies the directory of the Unix-domain socket(s) on which the
+        server is to listen for connections from client applications.
+        Multiple sockets can be created by listing multiple directories
+        separated by commas.  Whitespace between entries is
+        ignored; surround a directory name with double quotes if you need
+        to include whitespace or commas in the name.
+        An empty value
+        specifies not listening on any Unix-domain sockets, in which case
+        only TCP/IP sockets can be used to connect to the server.
+        The default value is normally
+        <filename>/tmp</filename>, but that can be changed at build time.
         This parameter can only be set at server start.
        </para>
 
@@ -464,8 +471,8 @@ SET ENABLE_SEQSCAN TO OFF;
         <literal>.s.PGSQL.<replaceable>nnnn</></literal> where
         <replaceable>nnnn</> is the server's port number, an ordinary file
         named <literal>.s.PGSQL.<replaceable>nnnn</>.lock</literal> will be
-        created in the <varname>unix_socket_directory</> directory.  Neither
-        file should ever be removed manually.
+        created in each of the <varname>unix_socket_directories</> directories.
+        Neither file should ever be removed manually.
        </para>
 
        <para>
@@ -482,8 +489,8 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-        Sets the owning group of the Unix-domain socket.  (The owning
-        user of the socket is always the user that starts the
+        Sets the owning group of the Unix-domain socket(s).  (The owning
+        user of the sockets is always the user that starts the
         server.)  In combination with the parameter
         <varname>unix_socket_permissions</varname> this can be used as
         an additional access control mechanism for Unix-domain connections.
@@ -506,7 +513,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-        Sets the access permissions of the Unix-domain socket.  Unix-domain
+        Sets the access permissions of the Unix-domain socket(s).  Unix-domain
         sockets use the usual Unix file system permission set.
         The parameter value is expected to be a numeric mode
         specified in the format accepted by the
@@ -1852,7 +1859,7 @@ SET ENABLE_SEQSCAN TO OFF;
         <varname>commit_delay</varname> behaved differently and was much
         less effective: it affected only commits, rather than all WAL flushes,
         and waited for the entire configured delay even if the WAL flush
-        was completed sooner.  Beginning in <productname>PostgreSQL</> 9.3, 
+        was completed sooner.  Beginning in <productname>PostgreSQL</> 9.3,
         the first process that becomes ready to flush waits for the configured
         interval, while subsequent processes wait only until the leader
         completes the flush.  The default <varname>commit_delay</> is zero
@@ -6556,7 +6563,7 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
        </row>
        <row>
         <entry><option>-k <replaceable>x</replaceable></option></entry>
-        <entry><literal>unix_socket_directory = <replaceable>x</replaceable></></entry>
+        <entry><literal>unix_socket_directories = <replaceable>x</replaceable></></entry>
        </row>
        <row>
         <entry><option>-l</option></entry>

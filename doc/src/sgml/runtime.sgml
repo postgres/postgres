@@ -1718,7 +1718,7 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
   <para>
    The simplest way to prevent spoofing for <literal>local</>
    connections is to use a Unix domain socket directory (<xref
-   linkend="guc-unix-socket-directory">) that has write permission only
+   linkend="guc-unix-socket-directories">) that has write permission only
    for a trusted local user.  This prevents a malicious user from creating
    their own socket file in that directory.  If you are concerned that
    some applications might still reference <filename>/tmp</> for the

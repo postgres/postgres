@@ -521,7 +521,7 @@ test_postmaster_connection(bool do_checkpoint)
 						hostaddr = optlines[LOCK_FILE_LINE_LISTEN_ADDR - 1];
 
 						/*
-						 * While unix_socket_directory can accept relative
+						 * While unix_socket_directories can accept relative
 						 * directories, libpq's host parameter must have a
 						 * leading slash to indicate a socket directory.  So,
 						 * ignore sockdir if it's relative, and try to use TCP

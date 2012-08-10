@@ -157,7 +157,9 @@ static Backend *ShmemBackendArray;
 
 /* The socket number we are listening for connections on */
 int			PostPortNumber;
-char	   *UnixSocketDir;
+/* The directory names for Unix socket(s) */
+char	   *Unix_socket_directories;
+/* The TCP listen address(es) */
 char	   *ListenAddresses;
 
 /*
@@ -612,7 +614,7 @@ PostmasterMain(int argc, char *argv[])
 				break;
 
 			case 'k':
-				SetConfigOption("unix_socket_directory", optarg, PGC_POSTMASTER, PGC_S_ARGV);
+				SetConfigOption("unix_socket_directories", optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
 
 			case 'l':
@@ -856,7 +858,7 @@ PostmasterMain(int argc, char *argv[])
 		/* Need a modifiable copy of ListenAddresses */
 		rawstring = pstrdup(ListenAddresses);
 
-		/* Parse string into list of identifiers */
+		/* Parse string into list of hostnames */
 		if (!SplitIdentifierString(rawstring, ',', &elemlist))
 		{
 			/* syntax error in list */
@@ -872,12 +874,12 @@ PostmasterMain(int argc, char *argv[])
 			if (strcmp(curhost, "*") == 0)
 				status = StreamServerPort(AF_UNSPEC, NULL,
 										  (unsigned short) PostPortNumber,
-										  UnixSocketDir,
+										  NULL,
 										  ListenSocket, MAXLISTEN);
 			else
 				status = StreamServerPort(AF_UNSPEC, curhost,
 										  (unsigned short) PostPortNumber,
-										  UnixSocketDir,
+										  NULL,
 										  ListenSocket, MAXLISTEN);
 
 			if (status == STATUS_OK)
@@ -896,7 +898,7 @@ PostmasterMain(int argc, char *argv[])
 								curhost)));
 		}
 
-		if (!success && list_length(elemlist))
+		if (!success && elemlist != NIL)
 			ereport(FATAL,
 					(errmsg("could not create any TCP/IP sockets")));
 
@@ -943,13 +945,54 @@ PostmasterMain(int argc, char *argv[])
 #endif
 
 #ifdef HAVE_UNIX_SOCKETS
-	status = StreamServerPort(AF_UNIX, NULL,
-							  (unsigned short) PostPortNumber,
-							  UnixSocketDir,
-							  ListenSocket, MAXLISTEN);
-	if (status != STATUS_OK)
-		ereport(WARNING,
-				(errmsg("could not create Unix-domain socket")));
+	if (Unix_socket_directories)
+	{
+		char	   *rawstring;
+		List	   *elemlist;
+		ListCell   *l;
+		int			success = 0;
+
+		/* Need a modifiable copy of Unix_socket_directories */
+		rawstring = pstrdup(Unix_socket_directories);
+
+		/* Parse string into list of directories */
+		if (!SplitDirectoriesString(rawstring, ',', &elemlist))
+		{
+			/* syntax error in list */
+			ereport(FATAL,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid list syntax for \"unix_socket_directories\"")));
+		}
+
+		foreach(l, elemlist)
+		{
+			char	   *socketdir = (char *) lfirst(l);
+
+			status = StreamServerPort(AF_UNIX, NULL,
+									  (unsigned short) PostPortNumber,
+									  socketdir,
+									  ListenSocket, MAXLISTEN);
+
+			if (status == STATUS_OK)
+			{
+				success++;
+				/* record the first successful Unix socket in lockfile */
+				if (success == 1)
+					AddToDataDirLockFile(LOCK_FILE_LINE_SOCKET_DIR, socketdir);
+			}
+			else
+				ereport(WARNING,
+						(errmsg("could not create Unix-domain socket in directory \"%s\"",
+								socketdir)));
+		}
+
+		if (!success && elemlist != NIL)
+			ereport(FATAL,
+					(errmsg("could not create any Unix-domain sockets")));
+
+		list_free_deep(elemlist);
+		pfree(rawstring);
+	}
 #endif
 
 	/*
@@ -1439,15 +1482,15 @@ ServerLoop(void)
 		}
 
 		/*
-		 * Touch the socket and lock file every 58 minutes, to ensure that
+		 * Touch Unix socket and lock files every 58 minutes, to ensure that
 		 * they are not removed by overzealous /tmp-cleaning tasks.  We assume
 		 * no one runs cleaners with cutoff times of less than an hour ...
 		 */
 		now = time(NULL);
 		if (now - last_touch_time >= 58 * SECS_PER_MINUTE)
 		{
-			TouchSocketFile();
-			TouchSocketLockFile();
+			TouchSocketFiles();
+			TouchSocketLockFiles();
 			last_touch_time = now;
 		}
 	}
