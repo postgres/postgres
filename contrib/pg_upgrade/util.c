@@ -78,7 +78,8 @@ pg_log(eLogType type, char *fmt,...)
 	va_end(args);
 
 	/* PG_VERBOSE is only output in verbose mode */
-	if (type != PG_VERBOSE || log_opts.verbose)
+	/* fopen() on log_opts.internal might have failed, so check it */
+	if ((type != PG_VERBOSE || log_opts.verbose) && log_opts.internal != NULL)
 	{
 		fwrite(message, strlen(message), 1, log_opts.internal);
 		/* if we are using OVERWRITE_MESSAGE, add newline to log file */
