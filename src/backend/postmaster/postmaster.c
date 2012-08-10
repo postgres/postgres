@@ -763,9 +763,14 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * Check for invalid combinations of GUC settings.
 	 */
-	if (ReservedBackends >= MaxBackends)
+	if (ReservedBackends >= MaxConnections)
 	{
 		write_stderr("%s: superuser_reserved_connections must be less than max_connections\n", progname);
+		ExitPostmaster(1);
+	}
+	if (max_wal_senders >= MaxConnections)
+	{
+		write_stderr("%s: max_wal_senders must be less than max_connections\n", progname);
 		ExitPostmaster(1);
 	}
 	if (XLogArchiveMode && wal_level == WAL_LEVEL_MINIMAL)

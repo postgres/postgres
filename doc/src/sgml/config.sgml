@@ -2087,12 +2087,16 @@ SET ENABLE_SEQSCAN TO OFF;
        </indexterm>
        <listitem>
        <para>
-        Specifies the maximum number of concurrent connections from standby
-        servers or streaming base backup clients (i.e., the maximum number of
-        simultaneously running WAL sender
-        processes). The default is zero. This parameter can only be set at
-        server start. <varname>wal_level</> must be set to <literal>archive</>
-        or <literal>hot_standby</> to allow connections from standby servers.
+        Specifies the maximum number of concurrent connections from
+        standby servers or streaming base backup clients (i.e., the
+        maximum number of simultaneously running WAL sender
+        processes). The default is zero, meaning replication is
+        disabled. WAL sender processes count towards the total number
+        of connections, so the parameter cannot be set higher than
+        <xref linkend="guc-max-connections">.  This parameter can only
+        be set at server start. <varname>wal_level</> must be set
+        to <literal>archive</> or <literal>hot_standby</> to allow
+        connections from standby servers.
        </para>
        </listitem>
       </varlistentry>
