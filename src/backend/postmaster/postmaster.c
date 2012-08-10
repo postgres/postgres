@@ -825,7 +825,7 @@ PostmasterMain(int argc, char *argv[])
 	 * data directory interlock is more reliable than the socket-file
 	 * interlock (thanks to whoever decided to put socket files in /tmp :-().
 	 * For the same reason, it's best to grab the TCP socket(s) before the
-	 * Unix socket.
+	 * Unix socket(s).
 	 */
 	CreateDataDirLockFile(true);
 
