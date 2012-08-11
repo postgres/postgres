@@ -995,20 +995,45 @@ pull_up_simple_union_all(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte)
 {
 	int			varno = ((RangeTblRef *) jtnode)->rtindex;
 	Query	   *subquery = rte->subquery;
-	int			rtoffset;
+	int			rtoffset = list_length(root->parse->rtable);
 	List	   *rtable;
 
 	/*
-	 * Append child RTEs to parent rtable.
-	 *
+	 * Make a modifiable copy of the subquery's rtable, so we can adjust
+	 * upper-level Vars in it.  There are no such Vars in the setOperations
+	 * tree proper, so fixing the rtable should be sufficient.
+	 */
+	rtable = copyObject(subquery->rtable);
+
+	/*
 	 * Upper-level vars in subquery are now one level closer to their parent
 	 * than before.  We don't have to worry about offsetting varnos, though,
-	 * because any such vars must refer to stuff above the level of the query
-	 * we are pulling into.
+	 * because the UNION leaf queries can't cross-reference each other.
 	 */
-	rtoffset = list_length(root->parse->rtable);
-	rtable = copyObject(subquery->rtable);
 	IncrementVarSublevelsUp_rtable(rtable, -1, 1);
+
+	/*
+	 * If the UNION ALL subquery had a LATERAL marker, propagate that to all
+	 * its children.  The individual children might or might not contain any
+	 * actual lateral cross-references, but we have to mark the pulled-up
+	 * child RTEs so that later planner stages will check for such.
+	 */
+	if (rte->lateral)
+	{
+		ListCell   *rt;
+
+		foreach(rt, rtable)
+		{
+			RangeTblEntry *child_rte = (RangeTblEntry *) lfirst(rt);
+
+			Assert(child_rte->rtekind == RTE_SUBQUERY);
+			child_rte->lateral = true;
+		}
+	}
+
+	/*
+	 * Append child RTEs to parent rtable.
+	 */
 	root->parse->rtable = list_concat(root->parse->rtable, rtable);
 
 	/*

@@ -876,6 +876,15 @@ explain (costs off)
 explain (costs off)
   select count(*) from tenk1 a cross join lateral generate_series(1,two) g;
 
+-- lateral with UNION ALL subselect
+explain (costs off)
+  select * from generate_series(100,200) g,
+    lateral (select * from int8_tbl a where g = q1 union all
+             select * from int8_tbl b where g = q2) ss;
+select * from generate_series(100,200) g,
+  lateral (select * from int8_tbl a where g = q1 union all
+           select * from int8_tbl b where g = q2) ss;
+
 -- test some error cases where LATERAL should have been used but wasn't
 select f1,g from int4_tbl a, generate_series(0, f1) g;
 select f1,g from int4_tbl a, generate_series(0, a.f1) g;
