@@ -826,7 +826,7 @@ testdb=&gt;
         </listitem>
       </varlistentry>
 
-      <varlistentry>
+      <varlistentry id="APP-PSQL-meta-commands-copy">
         <term><literal>\copy { <replaceable class="parameter">table</replaceable> [ ( <replaceable class="parameter">column_list</replaceable> ) ] | ( <replaceable class="parameter">query</replaceable> ) }
         { <literal>from</literal> | <literal>to</literal> }
         { <replaceable class="parameter">filename</replaceable> | stdin | stdout | pstdin | pstdout }
