@@ -5487,7 +5487,8 @@ ATExecAddIndexConstraint(AlteredTableInfo *tab, Relation rel,
 							stmt->deferrable,
 							stmt->initdeferred,
 							stmt->primary,
-							true,
+							true, /* update pg_index */
+							true, /* remove old dependencies */
 							allowSystemTableMods);
 
 	index_close(indexRel, NoLock);

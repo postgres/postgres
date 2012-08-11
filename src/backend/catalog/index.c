@@ -925,6 +925,7 @@ index_create(Relation heapRelation,
 									initdeferred,
 									false,		/* already marked primary */
 									false,		/* pg_index entry is OK */
+									false,		/* no old dependencies */
 									allow_system_table_mods);
 		}
 		else
@@ -1092,6 +1093,8 @@ index_create(Relation heapRelation,
  * initdeferred: constraint is INITIALLY DEFERRED
  * mark_as_primary: if true, set flags to mark index as primary key
  * update_pgindex: if true, update pg_index row (else caller's done that)
+ * remove_old_dependencies: if true, remove existing dependencies of index
+ *		on table's columns
  * allow_system_table_mods: allow table to be a system catalog
  */
 void
@@ -1104,6 +1107,7 @@ index_constraint_create(Relation heapRelation,
 						bool initdeferred,
 						bool mark_as_primary,
 						bool update_pgindex,
+						bool remove_old_dependencies,
 						bool allow_system_table_mods)
 {
 	Oid			namespaceId = RelationGetNamespace(heapRelation);
@@ -1126,6 +1130,19 @@ index_constraint_create(Relation heapRelation,
 	if (indexInfo->ii_Expressions &&
 		constraintType != CONSTRAINT_EXCLUSION)
 		elog(ERROR, "constraints cannot have index expressions");
+
+	/*
+	 * If we're manufacturing a constraint for a pre-existing index, we need
+	 * to get rid of the existing auto dependencies for the index (the ones
+	 * that index_create() would have made instead of calling this function).
+	 *
+	 * Note: this code would not necessarily do the right thing if the index
+	 * has any expressions or predicate, but we'd never be turning such an
+	 * index into a UNIQUE or PRIMARY KEY constraint.
+	 */
+	if (remove_old_dependencies)
+		deleteDependencyRecordsForClass(RelationRelationId, indexRelationId,
+										RelationRelationId, DEPENDENCY_AUTO);
 
 	/*
 	 * Construct a pg_constraint entry.
@@ -1161,12 +1178,8 @@ index_constraint_create(Relation heapRelation,
 	/*
 	 * Register the index as internally dependent on the constraint.
 	 *
-	 * Note that the constraint has a dependency on the table, so when this
-	 * path is taken we do not need any direct dependency from the index to
-	 * the table.  (But if one exists, no great harm is done, either.  So in
-	 * the case where we're manufacturing a constraint for a pre-existing
-	 * index, we don't bother to try to get rid of the existing index->table
-	 * dependency.)
+	 * Note that the constraint has a dependency on the table, so we don't
+	 * need (or want) any direct dependency from the index to the table.
 	 */
 	myself.classId = RelationRelationId;
 	myself.objectId = indexRelationId;
