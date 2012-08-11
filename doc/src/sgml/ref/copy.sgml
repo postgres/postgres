@@ -353,7 +353,7 @@ COPY <replaceable class="parameter">count</replaceable>
    <para>
     Do not confuse <command>COPY</command> with the
     <application>psql</application> instruction
-    <command>\copy</command>. <command>\copy</command> invokes
+    <command><link linkend="APP-PSQL-meta-commands-copy">\copy</link></command>. <command>\copy</command> invokes
     <command>COPY FROM STDIN</command> or <command>COPY TO
     STDOUT</command>, and then fetches/stores the data in a file
     accessible to the <application>psql</application> client. Thus,
