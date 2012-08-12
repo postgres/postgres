@@ -334,7 +334,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	 * query.
 	 */
 	parse->jointree = (FromExpr *)
-		pull_up_subqueries(root, (Node *) parse->jointree, NULL, NULL);
+		pull_up_subqueries(root, (Node *) parse->jointree);
 
 	/*
 	 * If this is a simple UNION ALL query, flatten it into an appendrel. We

@@ -148,6 +148,32 @@ add_paths_to_joinrel(PlannerInfo *root,
 	}
 
 	/*
+	 * However, when a LATERAL subquery is involved, we have to be a bit
+	 * laxer, because there may simply not be any paths for the joinrel that
+	 * aren't parameterized by whatever the subquery is parameterized by.
+	 * Hence, add to param_source_rels anything that is in the minimum
+	 * parameterization of either input (and not in the other input).
+	 *
+	 * XXX need a more principled way of determining minimum parameterization.
+	 */
+	if (outerrel->cheapest_total_path == NULL)
+	{
+		Path	   *cheapest = (Path *) linitial(outerrel->cheapest_parameterized_paths);
+
+		param_source_rels = bms_join(param_source_rels,
+									 bms_difference(PATH_REQ_OUTER(cheapest),
+													innerrel->relids));
+	}
+	if (innerrel->cheapest_total_path == NULL)
+	{
+		Path	   *cheapest = (Path *) linitial(innerrel->cheapest_parameterized_paths);
+
+		param_source_rels = bms_join(param_source_rels,
+									 bms_difference(PATH_REQ_OUTER(cheapest),
+													outerrel->relids));
+	}
+
+	/*
 	 * 1. Consider mergejoin paths where both relations must be explicitly
 	 * sorted.	Skip this if we can't mergejoin.
 	 */

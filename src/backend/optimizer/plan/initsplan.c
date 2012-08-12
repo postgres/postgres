@@ -232,6 +232,8 @@ extract_lateral_references(PlannerInfo *root, int rtindex)
 		vars = pull_vars_of_level((Node *) rte->subquery, 1);
 	else if (rte->rtekind == RTE_FUNCTION)
 		vars = pull_vars_of_level(rte->funcexpr, 0);
+	else if (rte->rtekind == RTE_VALUES)
+		vars = pull_vars_of_level((Node *) rte->values_lists, 0);
 	else
 		return;
 
@@ -874,9 +876,19 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	/*
 	 * Cross-check: clause should contain no relids not within its scope.
 	 * Otherwise the parser messed up.
+	 *
+	 * XXX temporarily disable the qualscope cross-check, which tends to
+	 * reject quals pulled up from LATERAL subqueries.  This is only in the
+	 * nature of a debugging crosscheck anyway.  I'm loath to remove it
+	 * permanently, but need to think a bit harder about how to replace it.
+	 * See also disabled Assert below.  (The ojscope test is still okay
+	 * because we prevent pullup of LATERAL subqueries that might cause it to
+	 * be violated.)
 	 */
+#ifdef NOT_USED
 	if (!bms_is_subset(relids, qualscope))
 		elog(ERROR, "JOIN qualification cannot refer to other relations");
+#endif
 	if (ojscope && !bms_is_subset(relids, ojscope))
 		elog(ERROR, "JOIN qualification cannot refer to other relations");
 
@@ -1031,7 +1043,9 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		if (outerjoin_delayed)
 		{
 			/* Should still be a subset of current scope ... */
+#ifdef NOT_USED					/* XXX temporarily disabled for LATERAL */
 			Assert(bms_is_subset(relids, qualscope));
+#endif
 
 			/*
 			 * Because application of the qual will be delayed by outer join,

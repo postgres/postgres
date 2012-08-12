@@ -1689,16 +1689,18 @@ create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
  *	  returning the pathnode.
  */
 Path *
-create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel)
+create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel,
+					   Relids required_outer)
 {
 	Path	   *pathnode = makeNode(Path);
 
 	pathnode->pathtype = T_ValuesScan;
 	pathnode->parent = rel;
-	pathnode->param_info = NULL;	/* never parameterized at present */
+	pathnode->param_info = get_baserel_parampathinfo(root, rel,
+													 required_outer);
 	pathnode->pathkeys = NIL;	/* result is always unordered */
 
-	cost_valuesscan(pathnode, root, rel);
+	cost_valuesscan(pathnode, root, rel, pathnode->param_info);
 
 	return pathnode;
 }

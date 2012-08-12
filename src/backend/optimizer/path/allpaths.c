@@ -1210,15 +1210,33 @@ set_function_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
  * set_values_pathlist
  *		Build the (single) access path for a VALUES RTE
  *
- * There can be no need for a parameterized path here.	(Although the SQL
- * spec does allow LATERAL (VALUES (x)), the parser will transform that
- * into a subquery, so it doesn't end up here.)
+ * As with subqueries, a VALUES RTE's path might be parameterized due to
+ * LATERAL references, but that's inherent in the values expressions and
+ * not a result of pushing down join quals.
  */
 static void
 set_values_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 {
+	Relids		required_outer;
+
+	/*
+	 * If it's a LATERAL RTE, it might contain some Vars of the current query
+	 * level, requiring it to be treated as parameterized.  (NB: even though
+	 * the parser never marks VALUES RTEs as LATERAL, they could be so marked
+	 * by now, as a result of subquery pullup.)
+	 */
+	if (rte->lateral)
+	{
+		required_outer = pull_varnos_of_level((Node *) rte->values_lists, 0);
+		/* Enforce convention that empty required_outer is exactly NULL */
+		if (bms_is_empty(required_outer))
+			required_outer = NULL;
+	}
+	else
+		required_outer = NULL;
+
 	/* Generate appropriate path */
-	add_path(rel, create_valuesscan_path(root, rel));
+	add_path(rel, create_valuesscan_path(root, rel, required_outer));
 
 	/* Select cheapest path (pretty easy in this case...) */
 	set_cheapest(rel);

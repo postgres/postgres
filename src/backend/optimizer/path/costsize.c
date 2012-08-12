@@ -1046,20 +1046,28 @@ cost_functionscan(Path *path, PlannerInfo *root,
 /*
  * cost_valuesscan
  *	  Determines and returns the cost of scanning a VALUES RTE.
+ *
+ * 'baserel' is the relation to be scanned
+ * 'param_info' is the ParamPathInfo if this is a parameterized path, else NULL
  */
 void
-cost_valuesscan(Path *path, PlannerInfo *root, RelOptInfo *baserel)
+cost_valuesscan(Path *path, PlannerInfo *root,
+				RelOptInfo *baserel, ParamPathInfo *param_info)
 {
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
+	QualCost	qpqual_cost;
 	Cost		cpu_per_tuple;
 
 	/* Should only be applied to base relations that are values lists */
 	Assert(baserel->relid > 0);
 	Assert(baserel->rtekind == RTE_VALUES);
 
-	/* valuesscans are never parameterized */
-	path->rows = baserel->rows;
+	/* Mark the path with the correct row estimate */
+	if (param_info)
+		path->rows = param_info->ppi_rows;
+	else
+		path->rows = baserel->rows;
 
 	/*
 	 * For now, estimate list evaluation cost at one operator eval per list
@@ -1068,8 +1076,10 @@ cost_valuesscan(Path *path, PlannerInfo *root, RelOptInfo *baserel)
 	cpu_per_tuple = cpu_operator_cost;
 
 	/* Add scanning CPU costs */
-	startup_cost += baserel->baserestrictcost.startup;
-	cpu_per_tuple += cpu_tuple_cost + baserel->baserestrictcost.per_tuple;
+	get_restriction_qual_cost(root, baserel, param_info, &qpqual_cost);
+
+	startup_cost += qpqual_cost.startup;
+	cpu_per_tuple += cpu_tuple_cost + qpqual_cost.per_tuple;
 	run_cost += cpu_per_tuple * baserel->tuples;
 
 	path->startup_cost = startup_cost;
