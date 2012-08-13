@@ -1113,6 +1113,7 @@ PQsendQuery(PGconn *conn, const char *query)
 	if (!PQsendQueryStart(conn))
 		return 0;
 
+	/* check the argument */
 	if (!query)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
@@ -1170,10 +1171,17 @@ PQsendQueryParams(PGconn *conn,
 	if (!PQsendQueryStart(conn))
 		return 0;
 
+	/* check the arguments */
 	if (!command)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 						libpq_gettext("command string is a null pointer\n"));
+		return 0;
+	}
+	if (nParams < 0 || nParams > 65535)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						libpq_gettext("number of parameters must be between 0 and 65535\n"));
 		return 0;
 	}
 
@@ -1203,17 +1211,23 @@ PQsendPrepare(PGconn *conn,
 	if (!PQsendQueryStart(conn))
 		return 0;
 
+	/* check the arguments */
 	if (!stmtName)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 						libpq_gettext("statement name is a null pointer\n"));
 		return 0;
 	}
-
 	if (!query)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 						libpq_gettext("command string is a null pointer\n"));
+		return 0;
+	}
+	if (nParams < 0 || nParams > 65535)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						libpq_gettext("number of parameters must be between 0 and 65535\n"));
 		return 0;
 	}
 
@@ -1298,10 +1312,17 @@ PQsendQueryPrepared(PGconn *conn,
 	if (!PQsendQueryStart(conn))
 		return 0;
 
+	/* check the arguments */
 	if (!stmtName)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 						libpq_gettext("statement name is a null pointer\n"));
+		return 0;
+	}
+	if (nParams < 0 || nParams > 65535)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						libpq_gettext("number of parameters must be between 0 and 65535\n"));
 		return 0;
 	}
 
