@@ -1099,7 +1099,7 @@ SELECT product_id, p.name, (sum(s.units) * (p.price - p.cost)) AS profit
     Currently, window functions always require presorted data, and so the
     query output will be ordered according to one or another of the window
     functions' <literal>PARTITION BY</>/<literal>ORDER BY</> clauses.
-    It is not recommendable to rely on this, however.  Use an explicit
+    It is not recommended to rely on this, however.  Use an explicit
     top-level <literal>ORDER BY</> clause if you want to be sure the
     results are sorted in a particular way.
    </para>

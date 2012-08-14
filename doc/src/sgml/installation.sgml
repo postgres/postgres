@@ -92,7 +92,7 @@ su - postgres
      <para>
       You need an <acronym>ISO</>/<acronym>ANSI</> C compiler (at least
       C89-compliant). Recent
-      versions of <productname>GCC</> are recommendable, but
+      versions of <productname>GCC</> are recommended, but
       <productname>PostgreSQL</> is known to build using a wide variety
       of compilers from different vendors.
      </para>

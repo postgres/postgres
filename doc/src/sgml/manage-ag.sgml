@@ -44,7 +44,7 @@
    connection level.  If one <productname>PostgreSQL</> server
    instance is to house projects or users that should be separate and
    for the most part unaware of each other, it is therefore
-   recommendable to put them into separate databases.  If the projects
+   recommended to put them into separate databases.  If the projects
    or users are interrelated and should be able to use each other's
    resources, they should be put in the same database but possibly
    into separate schemas.  Schemas are a purely logical structure and who can
