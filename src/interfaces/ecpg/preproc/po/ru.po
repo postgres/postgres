@@ -4,13 +4,14 @@
 # Alexander Lakhin <exclusion@gmail.com>, 2012.
 #
 # ChangeLog:
+#   - April 2, 2012: Bug fixes. Alexander Lakhin <exclusion@gmail.com>.
 #   - February 22, 2012: Complete translation for 9.0, Alexander Lakhin <exclusion@gmail.com>.
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-02-22 14:51+0000\n"
-"PO-Revision-Date: 2012-02-22 20:47+0400\n"
+"POT-Creation-Date: 2012-07-10 22:32+0000\n"
+"PO-Revision-Date: 2012-04-02 19:17+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -221,7 +222,7 @@ msgstr "курсор \"%s\" был объявлен, но не открыт"
 #: ecpg.c:479 preproc.y:109
 #, c-format
 msgid "could not remove output file \"%s\"\n"
-msgstr "ошибка удаления выходного файла \"%s\"\n"
+msgstr "ошибка при удалении выходного файла \"%s\"\n"
 
 #: pgc.l:401
 msgid "unterminated /* comment"
@@ -416,7 +417,7 @@ msgstr "не поддерживаемое более предложение LIMI
 
 #: preproc.y:7978
 msgid "subquery in FROM must have an alias"
-msgstr "у подзапроса во FROM должен быть псевдоним"
+msgstr "подзапрос во FROM должен иметь псевдоним"
 
 #: preproc.y:11714
 msgid "CREATE TABLE AS cannot specify INTO"

@@ -5,13 +5,14 @@
 #
 # ChangeLog:
 #
+#   - April 3, 2012: Bug fixes. Alexander Lakhin <exclusion@gmail.com>.
 #   - February 18, 2012: Complete translation for 9.1. Alexander Lakhin <exclusion@gmail.com>.
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-02-22 14:50+0000\n"
-"PO-Revision-Date: 2012-02-22 21:17+0400\n"
+"POT-Creation-Date: 2012-08-06 12:01+0000\n"
+"PO-Revision-Date: 2012-08-06 17:20+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -82,7 +83,7 @@ msgstr ""
 
 #: plpython.c:816
 msgid "could not create new dictionary while building trigger arguments"
-msgstr "не удалось создать новый словарь для передачи аргументов триггера"
+msgstr "не удалось создать словарь для передачи аргументов триггера"
 
 #: plpython.c:1022
 msgid "unsupported set function return mode"
@@ -162,7 +163,7 @@ msgstr "PL/Python поддерживает только одномерные м�
 
 #: plpython.c:2067
 msgid "could not create new dictionary"
-msgstr "не удалось создать новый словарь"
+msgstr "не удалось создать словарь"
 
 #: plpython.c:2139
 msgid "could not create bytes representation of Python object"
@@ -340,33 +341,10 @@ msgstr "%s"
 msgid "out of memory"
 msgstr "нехватка памяти"
 
-#: plpython.c:3702
-msgid "could not convert Python Unicode object to PostgreSQL server encoding"
-msgstr ""
-"преобразовать объект Python Unicode в серверную кодировку PostgreSQL нельзя"
+#: plpython.c:3695
+msgid "could not convert Python Unicode object to bytes"
+msgstr "не удалось преобразовать объект Python Unicode в байты"
 
-#~ msgid "forcibly aborting a subtransaction that has not been exited"
-#~ msgstr "принудительное прерывание незавершённой подтранзакции"
-
-#~ msgid ""
-#~ "function returning record called in context that cannot accept type record"
-#~ msgstr ""
-#~ "функция, возвращающая запись, вызвана в контексте, не допускающем этот тип"
-
-#~ msgid "could not compile anonymous PL/Python code block"
-#~ msgstr "не удалось скомпилировать анонимный блок кода PL/Python"
-
-#~ msgid "this subtransaction has already been entered"
-#~ msgstr "эта подтранзакция уже начата"
-
-#~ msgid "this subtransaction has already been exited"
-#~ msgstr "эта подтранзакция уже закончена"
-
-#~ msgid "this subtransaction has not been entered"
-#~ msgstr "эта подтранзакция ещё не начата"
-
-#~ msgid "there is no subtransaction to exit from"
-#~ msgstr "нет подтранзакции, которую нужно закончить"
-
-#~ msgid "could not add the spiexceptions module"
-#~ msgstr "не удалось добавить модуль spiexceptions"
+#: plpython.c:3700
+msgid "could not extract bytes from encoded string"
+msgstr "не удалось извлечь байты из кодированной строки"

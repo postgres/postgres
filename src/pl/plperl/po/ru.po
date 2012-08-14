@@ -2,15 +2,17 @@
 # Copyright (C) 2012 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 # Alexander Lakhin <exclusion@gmail.com>, 2012.
+#
 # ChangeLog:
 #
+#   - April 2, 2012: Bug fixes. Alexander Lakhin <exclusion@gmail.com>.
 #   - February 18, 2012: Complete translation for 9.1. Alexander Lakhin <exclusion@gmail.com>.
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-02-22 14:50+0000\n"
-"PO-Revision-Date: 2012-02-22 21:13+0400\n"
+"POT-Creation-Date: 2012-07-10 22:32+0000\n"
+"PO-Revision-Date: 2012-04-02 19:17+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -112,7 +114,7 @@ msgstr "не удалось получить ссылку на код после
 #: plperl.c:1665
 msgid "set-valued function called in context that cannot accept a set"
 msgstr ""
-"функция, возвращающая множество, вызвана в контексте, не допускающем этот тип"
+"функция, возвращающая множество, вызвана в контексте, где ему нет места"
 
 #: plperl.c:1708
 msgid ""
@@ -179,22 +181,3 @@ msgstr "компиляция функции PL/Perl \"%s\""
 #: plperl.c:3203
 msgid "PL/Perl anonymous code block"
 msgstr "анонимный блок кода PL/Perl"
-
-#~ msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
-#~ msgstr "число размерностей массива (%d) превышает предел (%d)"
-
-#~ msgid ""
-#~ "multidimensional arrays must have array expressions with matching "
-#~ "dimensions"
-#~ msgstr ""
-#~ "для многомерных массивов должны задаваться выражения с соответствующими "
-#~ "размерностями"
-
-#~ msgid "cannot convert Perl array to non-array type %s"
-#~ msgstr "Perl-массив нельзя преобразовать в тип не массива %s"
-
-#~ msgid "cannot convert Perl hash to non-composite type %s"
-#~ msgstr "Perl-хэш нельзя преобразовать в не составной тип %s"
-
-#~ msgid "PL/Perl function must return reference to hash or array"
-#~ msgstr "функция PL/Perl должна возвращать ссылку на хэш или массив"

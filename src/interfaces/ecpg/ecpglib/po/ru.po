@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-02-22 14:50+0000\n"
+"POT-Creation-Date: 2012-07-10 22:32+0000\n"
 "PO-Revision-Date: 2012-02-22 20:55+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
@@ -172,7 +172,7 @@ msgstr "подключение к серверу потеряно"
 msgid "SQL error: %s\n"
 msgstr "ошибка SQL: %s\n"
 
-#: execute.c:1920
+#: execute.c:1922
 msgid "<empty>"
 msgstr "<>"
 

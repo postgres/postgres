@@ -1,8 +1,11 @@
 # ru.po
 # PG_CONTROLDATA Translated Messages into the Russian Language (UTF-8)
 #
+# pgtranslation Id: pg_controldata.po,v 1.3 2011/05/14 01:57:42 alvherre Exp $
+#
 # ChangeLog:
 #
+#   - April 2, 2012: Bug fixes. Alexander Lakhin <exclusion@gmail.com>.
 #   - February 17, 2012: Minor fixes. Alexander Lakhin <exclusion@gmail.com>.
 #   - January 27, 2011: improvments by Andrey Sudnik for 9.x <sudnikand@gmail.com>.
 #   - December, 2004: Corrections and improvements by Oleg Bartunov <oleg@sai.msu.su>.
@@ -14,8 +17,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-02-22 14:56+0000\n"
-"PO-Revision-Date: 2012-02-22 21:03+0400\n"
+"POT-Creation-Date: 2012-07-10 22:37+0000\n"
+"PO-Revision-Date: 2012-04-02 19:17+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -236,7 +239,7 @@ msgstr "БД с oldestXID последней конт. точки: %u\n"
 #: pg_controldata.c:225
 #, c-format
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
-msgstr "oldestActiveXID последней конт.точки: %u\n"
+msgstr "oldestActiveXID последней конт. точки:%u\n"
 
 #: pg_controldata.c:227
 #, c-format
@@ -343,21 +346,3 @@ msgstr "по ссылке"
 #, c-format
 msgid "Float8 argument passing:              %s\n"
 msgstr "передача аргумента Float8:            %s\n"
-
-#~ msgid "Next log file segment:                %u\n"
-#~ msgstr "Следующий сегмент файла журнала:      %u\n"
-
-#~ msgid "Latest checkpoint's UNDO location:    %X/%X\n"
-#~ msgstr "Положение UNDO последней checkpoint:            %X/%X\n"
-
-#~ msgid "Maximum number of function arguments: %u\n"
-#~ msgstr "Максимальное число аргументов функции: %u\n"
-
-#~ msgid "Maximum length of locale name:        %u\n"
-#~ msgstr "Максимальная длина имени локали:      %u\n"
-
-#~ msgid "LC_COLLATE:                           %s\n"
-#~ msgstr "LC_COLLATE:                           %s\n"
-
-#~ msgid "LC_CTYPE:                             %s\n"
-#~ msgstr "LC_CTYPE:                             %s\n"

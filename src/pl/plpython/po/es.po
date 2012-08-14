@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL 9.0)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-02-22 14:50+0000\n"
-"PO-Revision-Date: 2010-08-31 14:19-0400\n"
+"POT-Creation-Date: 2012-08-14 15:31+0000\n"
+"PO-Revision-Date: 2012-08-14 15:25-0400\n"
 "Last-Translator: Alvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
 "Language: \n"
@@ -342,8 +342,10 @@ msgstr "%s"
 msgid "out of memory"
 msgstr "memoria agotada"
 
-#: plpython.c:3702
-msgid "could not convert Python Unicode object to PostgreSQL server encoding"
-msgstr ""
-"no se pudo convertir el objeto Unicode de Python a la codificación de "
-"servidor de PostgreSQL"
+#: plpython.c:3695
+msgid "could not convert Python Unicode object to bytes"
+msgstr "no se pudo convertir el objeto Unicode de Python a bytes"
+
+#: plpython.c:3700
+msgid "could not extract bytes from encoded string"
+msgstr "no se pudo extraer bytes desde la cadena codificada"
