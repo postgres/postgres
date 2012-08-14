@@ -1,334 +1,356 @@
 # ru.po
-# PG_DUMP Translated Messages into the Russian Language (KOI8-R)
+# PG_DUMP Translated Messages into the Russian Language (UTF-8)
 #
 # Copyright (c) 2001-2005 Serguei A. Mokhov, mokhov@cs.concordia.ca
+# Copyright (c) 2012 Alexander Lakhin, exclusion@gmail.com
 # Distributed under the same licensing terms as PostgreSQL itself.
 #
-# $PostgreSQL: pgsql/src/bin/pg_dump/po/ru.po,v 1.20 2005/01/17 21:21:12 petere Exp $
+# pgtranslation Id: pg_dump.po,v 1.2 2009/10/14 21:08:40 petere Exp $
 #
 # ChangeLog:
-#   - Jnauary 17, 2005: Complete translation for 8.0, Serguei A. Mokhov <mokhov@cs.concordia.ca>
-#   - December, 2004: New translation by Oleg Bartunov <oleg@sai.msu.su>
-#   - April 6 - December 10, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>
-#   - July 24 - October 5, 2003: Updates for 7.4.x; <mokhov@cs.concordia.ca>
-#   - October 12, 2002: Post-7.3 beta 2, Fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
-#   - September 14, 2002: Post-7.3 beta 1, Take II, Serguei A. Mokhov <mokhov@cs.concordia.ca>
-#   - September 7, 2002: Post-7.3 beta 1 fuzzy message fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
-#   - September 2001 - August 2002: Initial translation and maintenance, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #
+#   - April 3, 2012: Bug fixes. Alexander Lakhin <exclusion@gmail.com>.
+#   - March 1, 2012: Backporting to 8.3. Alexander Lakhin <exclusion@gmail.com>.
+#   - February 21, 2012: Minor fixes. Alexander Lakhin <exclusion@gmail.com>.
+#     - With corrections from Sergey Burladyan <eshkinkot@gmail.com>
+#   - February 18, 2012: Complete translation for 9.1. Alexander Lakhin <exclusion@gmail.com>.
+#   - January 17, 2005: Complete translation for 8.0, Serguei A. Mokhov <mokhov@cs.concordia.ca>.
+#   - December, 2004: New translation by Oleg Bartunov <oleg@sai.msu.su>.
+#   - April 6 - December 10, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>.
+#   - July 24 - October 5, 2003: Updates for 7.4.x; <mokhov@cs.concordia.ca>.
+#   - October 12, 2002: Post-7.3 beta 2, Fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>.
+#   - September 14, 2002: Post-7.3 beta 1, Take II, Serguei A. Mokhov <mokhov@cs.concordia.ca>.
+#   - September 7, 2002: Post-7.3 beta 1 fuzzy message fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>.
+#   - September 2001 - August 2002: Initial translation and maintenance, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2005-01-17 19:05+0000\n"
-"PO-Revision-Date: 2005-01-17 15:56-0500\n"
-"Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
-"Language-Team: pgsql-ru-general <pgsql-ru-general@postgresql.org>\n"
+"Project-Id-Version: PostgreSQL 8.3\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2012-07-05 21:49+0000\n"
+"PO-Revision-Date: 2012-04-03 08:49+0400\n"
+"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
+"Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
+"Language: ru\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=koi8-r\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-Language: Russian\n"
 "X-Poedit-Country: RUSSIAN FEDERATION\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Generator: Lokalize 1.4\n"
 
-#: pg_dump.c:364
-#: pg_restore.c:229
-msgid "User name: "
-msgstr "Имя пользователя: "
-
-#: pg_dump.c:400
-#: pg_dumpall.c:264
-#: pg_restore.c:256
+#: pg_dump.c:421 pg_restore.c:251 pg_dumpall.c:296
 #, c-format
 msgid "%s: invalid -X option -- %s\n"
-msgstr "%s: неверная опция -X -- %s\n"
+msgstr "%s: п╫п╣п╡п╣я─п╫я▀п╧ п╟я─пЁя┐п╪п╣п╫я┌ -X -- %s\n"
 
-#: pg_dump.c:402
-#: pg_dump.c:416
-#: pg_dump.c:425
-#: pg_dumpall.c:266
-#: pg_dumpall.c:275
-#: pg_dumpall.c:292
-#: pg_restore.c:258
-#: pg_restore.c:268
-#: pg_restore.c:285
+#: pg_dump.c:423 pg_dump.c:437 pg_dump.c:446 pg_restore.c:253 pg_restore.c:268
+#: pg_restore.c:285 pg_dumpall.c:298 pg_dumpall.c:307 pg_dumpall.c:324
+#: pg_dumpall.c:334 pg_dumpall.c:343 pg_dumpall.c:352 pg_dumpall.c:388
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Попробуйте \"%s --help\" для более подробной информации.\n"
+msgstr "п■п╩я▐ п╢п╬п©п╬п╩п╫п╦я┌п╣п╩я▄п╫п╬п╧ п╦п╫я└п╬я─п╪п╟я├п╦п╦ п©п╬п©я─п╬п╠я┐п╧я┌п╣ \"%s --help\".\n"
 
-#: pg_dump.c:423
-#: pg_dumpall.c:290
+#: pg_dump.c:444 pg_dumpall.c:322
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: слишком много аргументов командной строки (первый \"%s\")\n"
+msgstr "%s: я│п╩п╦я┬п╨п╬п╪ п╪п╫п╬пЁп╬ п╟я─пЁя┐п╪п╣п╫я┌п╬п╡ п╨п╬п╪п╟п╫п╢п╫п╬п╧ я│я┌я─п╬п╨п╦ (п©п╣я─п╡я▀п╧: \"%s\")\n"
 
-#: pg_dump.c:436
-msgid "options \"schema only\" (-s) and \"data only\" (-a) cannot be used together\n"
-msgstr "опции \"schema only\" (-s) и \"data only\" (-a) не могут использоваться вместе\n"
-
-# TO REVEIW
-#: pg_dump.c:442
-msgid "options \"clean\" (-c) and \"data only\" (-a) cannot be used together\n"
-msgstr "опции \"clean\" (-c) и \"data only\" (-a) не могут использоваться вместе\n"
-
-#: pg_dump.c:448
-msgid "large-object output not supported for a single table\n"
-msgstr "вывод больших объектов не поддерживается для отдельной таблицы\n"
-
-#: pg_dump.c:449
-#: pg_dump.c:456
-msgid "use a full dump instead\n"
-msgstr "вместо этого используйте полный дамп\n"
-
-#: pg_dump.c:455
-msgid "large-object output not supported for a single schema\n"
-msgstr "вывод больших объектов не поддерживается для отдельной схемы\n"
-
-#: pg_dump.c:462
-msgid "INSERT (-d, -D) and OID (-o) options cannot be used together\n"
-msgstr "опции INSERT (-d, -D) и OID (-o) не могут использоваться вместе\n"
+#: pg_dump.c:457
+msgid "options -s/--schema-only and -a/--data-only cannot be used together\n"
+msgstr "п©п╟я─п╟п╪п╣я┌я─я▀ -s/--schema-only п╦ -a/--data-only п╦я│п╨п╩я▌я┤п╟я▌я┌ п╢я─я┐пЁ п╢я─я┐пЁп╟\n"
 
 #: pg_dump.c:463
-msgid "(The INSERT command cannot set OIDs.)\n"
-msgstr "(Команда INSERT не может задавать OID.)\n"
+msgid "options -c/--clean and -a/--data-only cannot be used together\n"
+msgstr "п©п╟я─п╟п╪п╣я┌я─я▀ -c/--clean п╦ -a/--data-only п╦я│п╨п╩я▌я┤п╟я▌я┌ п╢я─я┐пЁ п╢я─я┐пЁп╟\n"
 
 #: pg_dump.c:469
-msgid "large-object output is not supported for plain-text dump files\n"
-msgstr "вывод больших объектов не поддерживается для дампа в текстовые файлы\n"
+msgid ""
+"options -d/-D/--inserts/--column-inserts and -o/--oids cannot be used "
+"together\n"
+msgstr ""
+"п©п╟я─п╟п╪п╣я┌я─я▀ -d/-D/--inserts/--column-inserts п╦ -o/--oids п╦я│п╨п╩я▌я┤п╟я▌я┌ п╢я─я┐пЁ п╢я─я┐пЁп╟\n"
 
 #: pg_dump.c:470
-msgid "(Use a different output format.)\n"
-msgstr "(Используйте другой формат для вывода.)\n"
+msgid "(The INSERT command cannot set OIDs.)\n"
+msgstr "(п▓ INSERT п╫п╣п╩я▄п╥я▐ п╬п©я─п╣п╢п╣п╩я▐я┌я▄ OID.)\n"
 
-#: pg_dump.c:499
+#: pg_dump.c:500
 #, c-format
 msgid "invalid output format \"%s\" specified\n"
-msgstr "указан неверный формат вывода: \"%s\"\n"
+msgstr "я┐п╨п╟п╥п╟п╫ п╫п╣п╡п╣я─п╫я▀п╧ я└п╬я─п╪п╟я┌ п╡я▀п╡п╬п╢п╟: \"%s\"\n"
 
-#: pg_dump.c:505
+#: pg_dump.c:506
 #, c-format
 msgid "could not open output file \"%s\" for writing\n"
-msgstr "не удалось открыть файл вывода \"%s\"  для записи\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╬я┌п╨я─я▀я┌я▄ п╡я▀я┘п╬п╢п╫п╬п╧ я└п╟п╧п╩ \"%s\"  п╢п╩я▐ п╥п╟п©п╦я│п╦\n"
 
-#: pg_backup_db.c:52
-#: pg_dump.c:516
+#: pg_dump.c:517 pg_backup_db.c:38
 #, c-format
 msgid "could not parse version string \"%s\"\n"
-msgstr "не удалось проанализировать строку с номером версии \"%s\"\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ я─п╟п╥п╬п╠я─п╟я┌я▄ я│я┌я─п╬п╨я┐ п╡п╣я─я│п╦п╦ \"%s\"\n"
 
-#: pg_dump.c:552
+#: pg_dump.c:533
+#, c-format
+msgid "invalid client encoding \"%s\" specified\n"
+msgstr "я┐п╨п╟п╥п╟п╫п╟ п╫п╣п╡п╣я─п╫п╟я▐ п╨п╩п╦п╣п╫я┌я│п╨п╟я▐ п╨п╬п╢п╦я─п╬п╡п╨п╟ \"%s\"\n"
+
+#: pg_dump.c:588
 #, c-format
 msgid "last built-in OID is %u\n"
-msgstr "последний предопределённый OID: %u\n"
+msgstr "п©п╬я│п╩п╣п╢п╫п╦п╧ я│п╦я│я┌п╣п╪п╫я▀п╧ OID: %u\n"
 
-#: pg_dump.c:663
+#: pg_dump.c:598
+msgid "No matching schemas were found\n"
+msgstr "п║п╬п╬я┌п╡п╣я┌я│я┌п╡я┐я▌я┴п╦п╣ я│я┘п╣п╪я▀ п╫п╣ п╫п╟п╧п╢п╣п╫я▀\n"
+
+#: pg_dump.c:613
+msgid "No matching tables were found\n"
+msgstr "п║п╬п╬я┌п╡п╣я┌я│я┌п╡я┐я▌я┴п╦п╣ я┌п╟п╠п╩п╦я├я▀ п╫п╣ п╫п╟п╧п╢п╣п╫я▀\n"
+
+#: pg_dump.c:732
 #, c-format
 msgid ""
 "%s dumps a database as a text file or to other formats.\n"
 "\n"
 msgstr ""
-"%s создает резервную копию базы данных в виде файла в текстовом или других форматах.\n"
+"%s я│п╬я┘я─п╟п╫я▐п╣я┌ я─п╣п╥п╣я─п╡п╫я┐я▌ п╨п╬п©п╦я▌ п▒п■ п╡ я┌п╣п╨я│я┌п╬п╡п╬п╪ я└п╟п╧п╩п╣ п╦п╩п╦ п╢я─я┐пЁп╬п╪ п╡п╦п╢п╣.\n"
 "\n"
 
-#: pg_dump.c:664
-#: pg_dumpall.c:337
-#: pg_restore.c:359
+#: pg_dump.c:733 pg_restore.c:367 pg_dumpall.c:480
+#, c-format
 msgid "Usage:\n"
-msgstr "Использование:\n"
+msgstr "п≤я│п©п╬п╩я▄п╥п╬п╡п╟п╫п╦п╣:\n"
 
-#: pg_dump.c:665
+#: pg_dump.c:734
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
-msgstr "  %s [OPTION]... [DBNAME]\n"
+msgstr "  %s [п÷п░п═п░п°п∙п╒п═]... [п≤п°п╞_п▒п■]\n"
 
-#: pg_dump.c:667
-#: pg_dumpall.c:340
-#: pg_restore.c:362
+#: pg_dump.c:736 pg_restore.c:370 pg_dumpall.c:483
+#, c-format
 msgid ""
 "\n"
 "General options:\n"
 msgstr ""
 "\n"
-"Опции общего характера:\n"
+"п·п╠я┴п╦п╣ п©п╟я─п╟п╪п╣я┌я─я▀:\n"
 
-#: pg_dump.c:668
-#: pg_restore.c:364
+#: pg_dump.c:737 pg_restore.c:372 pg_dumpall.c:484
+#, c-format
 msgid "  -f, --file=FILENAME      output file name\n"
-msgstr "  -f, --file=FILENAME      имя выходного файла\n"
+msgstr "  -f, --file=п≤п°п╞_п╓п░п≥п⌡п░     п╦п╪я▐ п╡я▀я┘п╬п╢п╫п╬пЁп╬ я└п╟п╧п╩п╟\n"
 
-#: pg_dump.c:669
-msgid "  -F, --format=c|t|p       output file format (custom, tar, plain text)\n"
-msgstr "  -F, --format=c|t|p       формат выходного файла (пользовательский, tar, текстовый)\n"
+#: pg_dump.c:738
+#, c-format
+msgid ""
+"  -F, --format=c|t|p       output file format (custom, tar, plain text)\n"
+msgstr ""
+"  -F, --format=c|t|p       я└п╬я─п╪п╟я┌ п╡я▀п╡п╬п╢п╦п╪я▀я┘ п╢п╟п╫п╫я▀я┘\n"
+"                           (п©п╬п╩я▄п╥п╬п╡п╟я┌п╣п╩я▄я│п╨п╦п╧ | tar | я┌п╣п╨я│я┌п╬п╡я▀п╧)\n"
 
-#: pg_dump.c:670
+#: pg_dump.c:739
+#, c-format
 msgid ""
 "  -i, --ignore-version     proceed even when server version mismatches\n"
 "                           pg_dump version\n"
 msgstr ""
-"  -i, --ignore-version     продолжить даже если версия сервера не совпадает с\n"
-"                           версией pg_dump\n"
+"  -i, --ignore-version     п©я─п╬п╢п╬п╩п╤п╦я┌я▄, п╢п╟п╤п╣ п╣я│п╩п╦ п╡п╣я─я│п╦я▐ я│п╣я─п╡п╣я─п╟ п╫п╣ я│п╬п╡п©п╟п╢п╟п╣я┌ "
+"я│\n"
+"                           п╡п╣я─я│п╦п╣п╧ pg_dump\n"
 
-#: pg_dump.c:672
-#: pg_restore.c:368
+#: pg_dump.c:741 pg_restore.c:376
+#, c-format
 msgid "  -v, --verbose            verbose mode\n"
-msgstr "  -v, --verbose            режим вывода всех сообщений\n"
+msgstr "  -v, --verbose            п╡я▀п╡п╬п╢п╦я┌я▄ п©п╬п╢я─п╬п╠п╫я▀п╣ я│п╬п╬п╠я┴п╣п╫п╦я▐\n"
 
-#: pg_dump.c:673
+#: pg_dump.c:742
+#, c-format
 msgid "  -Z, --compress=0-9       compression level for compressed formats\n"
-msgstr "  -Z, --compress=0-9       уровень сжатия для компрессированных форматов\n"
+msgstr "  -Z, --compress=0-9       я┐я─п╬п╡п╣п╫я▄ я│п╤п╟я┌п╦я▐ п©я─п╦ п╟я─я┘п╦п╡п╟я├п╦п╦\n"
 
-#: pg_dump.c:674
-#: pg_dumpall.c:343
-#: pg_restore.c:369
+#: pg_dump.c:743 pg_restore.c:377 pg_dumpall.c:487
+#, c-format
 msgid "  --help                   show this help, then exit\n"
-msgstr "  --help                   показать эту подсказку и выйти\n"
+msgstr "  --help                   п©п╬п╨п╟п╥п╟я┌я▄ я█я┌я┐ я│п©я─п╟п╡п╨я┐ п╦ п╡я▀п╧я┌п╦\n"
 
-#: pg_dump.c:675
-#: pg_dumpall.c:344
-#: pg_restore.c:370
+#: pg_dump.c:744 pg_restore.c:378 pg_dumpall.c:488
+#, c-format
 msgid "  --version                output version information, then exit\n"
-msgstr "  --version                показать версию и выйти\n"
+msgstr "  --version                п©п╬п╨п╟п╥п╟я┌я▄ п╡п╣я─я│п╦я▌ п╦ п╡я▀п╧я┌п╦\n"
 
-#: pg_dump.c:677
-#: pg_dumpall.c:345
+#: pg_dump.c:746 pg_dumpall.c:489
+#, c-format
 msgid ""
 "\n"
 "Options controlling the output content:\n"
 msgstr ""
 "\n"
-"Опции, управляющие выводом содержимого:\n"
+"п÷п╟я─п╟п╪п╣я┌я─я▀, я┐п©я─п╟п╡п╩я▐я▌я┴п╦п╣ п╡я▀п╡п╬п╢п╬п╪:\n"
 
-#: pg_dump.c:678
-#: pg_dumpall.c:346
-msgid "  -a, --data-only          dump only the data, not the schema\n"
-msgstr "  -a, --data-only          выгрузить только данные, без схемы\n"
+#: pg_dump.c:747
+#, c-format
+msgid "  -a, --data-only             dump only the data, not the schema\n"
+msgstr "  -a, --data-only             п╡я▀пЁя─я┐п╥п╦я┌я▄ я┌п╬п╩я▄п╨п╬ п╢п╟п╫п╫я▀п╣, п╠п╣п╥ я│я┘п╣п╪я▀\n"
 
-#: pg_dump.c:679
-msgid "  -b, --blobs              include large objects in dump\n"
-msgstr "  -b, --blobs              включить большие объекты в выгрузку\n"
+#: pg_dump.c:748
+#, c-format
+msgid "  -b, --blobs                 include large objects in dump\n"
+msgstr "  -b, --blobs                 п╡я▀пЁя─я┐п╥п╦я┌я▄ я┌п╟п╨п╤п╣ п╠п╬п╩я▄я┬п╦п╣ п╬п╠я┼п╣п╨я┌я▀\n"
 
-#: pg_dump.c:680
-#: pg_restore.c:374
-msgid "  -c, --clean              clean (drop) schema prior to create\n"
-msgstr "  -c, --clean              очистить (сбросить) схему перед созданием\n"
-
-#: pg_dump.c:681
-msgid "  -C, --create             include commands to create database in dump\n"
-msgstr "  -C, --create             включить в выгрузку команды создания базы данных\n"
-
-#: pg_dump.c:682
-#: pg_dumpall.c:348
-msgid "  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"
-msgstr "  -d, --inserts            выгрузить данные как набор команд INSERT вместо COPY\n"
-
-#: pg_dump.c:683
-#: pg_dumpall.c:349
-msgid "  -D, --column-inserts     dump data as INSERT commands with column names\n"
-msgstr "  -D, --column-inserts     выгрузить данные как набор команд INSERT с заданием названий полей\n"
-
-#: pg_dump.c:684
-msgid "  -n, --schema=SCHEMA      dump the named schema only\n"
-msgstr "  -n, --schema=SCHEMA      выгрузить только указанную схему\n"
-
-#: pg_dump.c:685
-#: pg_dumpall.c:351
-msgid "  -o, --oids               include OIDs in dump\n"
-msgstr "  -o, --oids               включить OID-ы в выгрузку\n"
-
-#: pg_dump.c:686
-msgid ""
-"  -O, --no-owner           skip restoration of object ownership\n"
-"                           in plain text format\n"
+#: pg_dump.c:749
+#, c-format
+msgid "  -c, --clean                 clean (drop) schema prior to create\n"
 msgstr ""
-"  -O, --no-owner           пропустить восстановление объектных привилегий\n"
-"                           в формате \"просто текст\"\n"
+"  -c, --clean                 п╬я┤п╦я│я┌п╦я┌я▄ (я│п╠я─п╬я│п╦я┌я▄) я│я┘п╣п╪я┐ п©п╣я─п╣п╢ я│п╬п╥п╢п╟п╫п╦п╣п╪\n"
 
-#: pg_dump.c:688
-#: pg_dumpall.c:353
-msgid "  -s, --schema-only        dump only the schema, no data\n"
-msgstr "  -s, --schema-only        выгрузить только схему без данных\n"
-
-#: pg_dump.c:689
+#: pg_dump.c:750
+#, c-format
 msgid ""
-"  -S, --superuser=NAME     specify the superuser user name to use in\n"
-"                           plain text format\n"
+"  -C, --create                include commands to create database in dump\n"
 msgstr ""
-"  -S, --superuser=ИМЯ      указать имя супер-пользователя для\n"
-"                           формата \"только текст\"\n"
+"  -C, --create                п╢п╬п╠п╟п╡п╦я┌я▄ п╡ п╨п╬п©п╦я▌ п╨п╬п╪п╟п╫п╢я▀ я│п╬п╥п╢п╟п╫п╦я▐ п╠п╟п╥я▀ п╢п╟п╫п╫я▀я┘\n"
 
-#: pg_dump.c:691
-msgid "  -t, --table=TABLE        dump the named table only\n"
-msgstr "  -t, --table=ТАБЛИЦА      выгрузить только указанную таблицу\n"
-
-#: pg_dump.c:692
-#: pg_dumpall.c:355
-msgid "  -x, --no-privileges      do not dump privileges (grant/revoke)\n"
-msgstr "  -x, --no-privileges      не выгружать привилегии (grant/revoke)\n"
-
-#: pg_dump.c:693
-#: pg_dumpall.c:356
+#: pg_dump.c:751
+#, c-format
 msgid ""
-"  -X disable-dollar-quoting, --disable-dollar-quoting\n"
-"                           disable dollar quoting, use SQL standard quoting\n"
+"  -d, --inserts               dump data as INSERT commands, rather than "
+"COPY\n"
 msgstr ""
-"  -X disable-dollar-quoting, --disable-dollar-quoting\n"
-"                           отключить долларовое квотирование, использовать квотирование как в стандарте SQL\n"
+"  -d, --inserts               п╡я▀пЁя─я┐п╥п╦я┌я▄ п╢п╟п╫п╫я▀п╣ п╡ п╡п╦п╢п╣ п╨п╬п╪п╟п╫п╢ INSERT, п╡п╪п╣я│я┌п╬ "
+"COPY\n"
 
-#: pg_dump.c:695
-#: pg_dumpall.c:358
-#: pg_restore.c:388
+#: pg_dump.c:752
+#, c-format
 msgid ""
-"  -X disable-triggers, --disable-triggers\n"
-"                           disable triggers during data-only restore\n"
+"  -D, --column-inserts        dump data as INSERT commands with column "
+"names\n"
 msgstr ""
-"  -X disable-triggers, --disable-triggers\n"
-"                           отключить триггеры для режима восстановления только данных\n"
+"  -D, --column-inserts        п╡я▀пЁя─я┐п╤п╟я┌я▄ п╢п╟п╫п╫я▀п╣ п╡ п╡п╦п╢п╣ INSERT я│ п╦п╪п╣п╫п╟п╪п╦ "
+"п╨п╬п╩п╬п╫п╬п╨\n"
 
-#: pg_dump.c:697
-#: pg_dumpall.c:360
-#: pg_restore.c:390
+#: pg_dump.c:753
+#, c-format
+msgid "  -E, --encoding=ENCODING     dump the data in encoding ENCODING\n"
+msgstr "  -E, --encoding=п п·п■п≤п═п·п▓п п░    п╡я▀пЁя─я┐п╤п╟я┌я▄ п╢п╟п╫п╫я▀п╣ п╡ п╥п╟п╢п╟п╫п╫п╬п╧ п╨п╬п╢п╦я─п╬п╡п╨п╣\n"
+
+#: pg_dump.c:754
+#, c-format
+msgid "  -n, --schema=SCHEMA         dump the named schema(s) only\n"
+msgstr "  -n, --schema=п║п╔п∙п°п░          п╡я▀пЁя─я┐п╥п╦я┌я▄ я┌п╬п╩я▄п╨п╬ я┐п╨п╟п╥п╟п╫п╫я┐я▌ я│я┘п╣п╪я┐(я▀)\n"
+
+#: pg_dump.c:755
+#, c-format
+msgid "  -N, --exclude-schema=SCHEMA do NOT dump the named schema(s)\n"
+msgstr "  -N, --exclude-schema=п║п╔п∙п°п░  п²п∙ п╡я▀пЁя─я┐п╤п╟я┌я▄ я┐п╨п╟п╥п╟п╫п╫я┐я▌ я│я┘п╣п╪я┐(я▀)\n"
+
+#: pg_dump.c:756
+#, c-format
+msgid "  -o, --oids                  include OIDs in dump\n"
+msgstr "  -o, --oids                  п╡я▀пЁя─я┐п╤п╟я┌я▄ п╢п╟п╫п╫я▀п╣ я│ OID\n"
+
+#: pg_dump.c:757
+#, c-format
 msgid ""
-"  -X use-set-session-authorization, --use-set-session-authorization\n"
-"                           use SESSION AUTHORIZATION commands instead of\n"
-"                           OWNER TO commands\n"
+"  -O, --no-owner              skip restoration of object ownership\n"
+"                              in plain text format\n"
 msgstr ""
-"  -X use-set-session-authorization, --use-set-session-authorization\n"
-"                           использовать команды SESSION AUTHORIZATION вместо\n"
-"                           команд OWNER TO\n"
+"  -O, --no-owner              п╫п╣ п╡п╬я│я│я┌п╟п╫п╟п╡п╩п╦п╡п╟я┌я▄ п╡п╩п╟п╢п╣п╫п╦п╣ п╬п╠я┼п╣п╨я┌п╟п╪п╦\n"
+"                              п©я─п╦ п╦я│п©п╬п╩я▄п╥п╬п╡п╟п╫п╦п╦ я┌п╣п╨я│я┌п╬п╡п╬пЁп╬ я└п╬я─п╪п╟я┌п╟\n"
 
-#: pg_dump.c:701
-#: pg_dumpall.c:364
-#: pg_restore.c:394
+#: pg_dump.c:759
+#, c-format
+msgid "  -s, --schema-only           dump only the schema, no data\n"
+msgstr "  -s, --schema-only           п╡я▀пЁя─я┐п╥п╦я┌я▄ я┌п╬п╩я▄п╨п╬ я│я┘п╣п╪я┐, п╠п╣п╥ п╢п╟п╫п╫я▀я┘\n"
+
+#: pg_dump.c:760
+#, c-format
+msgid ""
+"  -S, --superuser=NAME        specify the superuser user name to use in\n"
+"                              plain text format\n"
+msgstr ""
+"  -S, --superuser=п≤п°п╞         п╦п╪я▐ п©п╬п╩я▄п╥п╬п╡п╟я┌п╣п╩я▐, п╨п╬я┌п╬я─я▀п╧ п╠я┐п╢п╣я┌ п╥п╟п╢п╣п╧я│я┌п╡п╬п╡п╟п╫\n"
+"                              п©я─п╦ п╡п╬я│я│я┌п╟п╫п╬п╡п╩п╣п╫п╦п╦ п╦п╥ я┌п╣п╨я│я┌п╬п╡п╬пЁп╬ я└п╬я─п╪п╟я┌п╟\n"
+
+#: pg_dump.c:762
+#, c-format
+msgid "  -t, --table=TABLE           dump the named table(s) only\n"
+msgstr "  -t, --table=п╒п░п▒п⌡п≤п╕п░         п╡я▀пЁя─я┐п╥п╦я┌я▄ я┌п╬п╩я▄п╨п╬ я┐п╨п╟п╥п╟п╫п╫я┐я▌ я┌п╟п╠п╩п╦я├я┐(я▀)\n"
+
+#: pg_dump.c:763
+#, c-format
+msgid "  -T, --exclude-table=TABLE   do NOT dump the named table(s)\n"
+msgstr "  -T, --exclude-table=п╒п░п▒п⌡п≤п╕п░ п²п∙ п╡я▀пЁя─я┐п╤п╟я┌я▄ я┐п╨п╟п╥п╟п╫п╫я┐я▌ я┌п╟п╠п╩п╦я├я┐(я▀)\n"
+
+#: pg_dump.c:764
+#, c-format
+msgid "  -x, --no-privileges         do not dump privileges (grant/revoke)\n"
+msgstr "  -x, --no-privileges         п╫п╣ п╡я▀пЁя─я┐п╤п╟я┌я▄ п©я─п╟п╡п╟ (п╫п╟п╥п╫п╟я┤п╣п╫п╦п╣/п╬я┌п╥я▀п╡)\n"
+
+#: pg_dump.c:765
+#, c-format
+msgid ""
+"  --disable-dollar-quoting    disable dollar quoting, use SQL standard "
+"quoting\n"
+msgstr ""
+"  --disable-dollar-quoting    п╬я┌п╨п╩я▌я┤п╦я┌я▄ я│п©п╣я├я│я┌я─п╬п╨п╦ я│ $, п╡я▀п╡п╬п╢п╦я┌я▄ я│я┌я─п╬п╨п╦\n"
+"                              п©п╬ я│я┌п╟п╫п╢п╟я─я┌я┐ SQL\n"
+
+#: pg_dump.c:766
+#, c-format
+msgid ""
+"  --disable-triggers          disable triggers during data-only restore\n"
+msgstr ""
+"  --disable-triggers          п╬я┌п╨п╩я▌я┤п╦я┌я▄ я┌я─п╦пЁпЁп╣я─я▀ п©я─п╦ п╡п╬я│я│я┌п╟п╫п╬п╡п╩п╣п╫п╦п╦ п╬п╢п╫п╦я┘ "
+"п╢п╟п╫п╫я▀я┘\n"
+
+#: pg_dump.c:767
+#, c-format
+msgid ""
+"  --use-set-session-authorization\n"
+"                              use SESSION AUTHORIZATION commands instead of\n"
+"                              ALTER OWNER commands to set ownership\n"
+msgstr ""
+"  --use-set-session-authorization\n"
+"                              я┐я│я┌п╟п╫п╟п╡п╩п╦п╡п╟я┌я▄ п╡п╩п╟п╢п╣п╩я▄я├п╟, п╦я│п©п╬п╩я▄п╥я┐я▐ п╨п╬п╪п╟п╫п╢я▀\n"
+"                              SESSION AUTHORIZATION п╡п╪п╣я│я┌п╬ ALTER OWNER\n"
+
+#: pg_dump.c:771 pg_restore.c:407 pg_dumpall.c:509
+#, c-format
 msgid ""
 "\n"
 "Connection options:\n"
 msgstr ""
 "\n"
-"Опции соединения:\n"
+"п÷п╟я─п╟п╪п╣я┌я─я▀ п©п╬п╢п╨п╩я▌я┤п╣п╫п╦я▐:\n"
 
-#: pg_dump.c:702
-#: pg_dumpall.c:365
-#: pg_restore.c:395
+#: pg_dump.c:772 pg_restore.c:408 pg_dumpall.c:510
+#, c-format
 msgid "  -h, --host=HOSTNAME      database server host or socket directory\n"
-msgstr "  -h, --host=HOSTNAME     имя сервера баз данных или директория сокетов\n"
+msgstr ""
+"  -h, --host=п≤п°п╞           п╦п╪я▐ я│п╣я─п╡п╣я─п╟ п╠п╟п╥ п╢п╟п╫п╫я▀я┘ п╦п╩п╦ п╨п╟я┌п╟п╩п╬пЁ я│п╬п╨п╣я┌п╬п╡\n"
 
-#: pg_dump.c:703
-#: pg_dumpall.c:366
-#: pg_restore.c:396
+#: pg_dump.c:773 pg_restore.c:409 pg_dumpall.c:512
+#, c-format
 msgid "  -p, --port=PORT          database server port number\n"
-msgstr "  -p, --port=PORT          номер порта сервера баз данных\n"
+msgstr "  -p, --port=п÷п·п═п╒          п╫п╬п╪п╣я─ п©п╬я─я┌п╟ я│п╣я─п╡п╣я─п╟ п▒п■\n"
 
-#: pg_dump.c:704
-#: pg_dumpall.c:367
-#: pg_restore.c:397
+#: pg_dump.c:774 pg_restore.c:410 pg_dumpall.c:513
+#, c-format
 msgid "  -U, --username=NAME      connect as specified database user\n"
-msgstr "  -U, --username=NAME       соединиться как указанный пользователь\n"
+msgstr "  -U, --username=п≤п°п╞       п╦п╪я▐ п©п╬п╩я▄п╥п╬п╡п╟я┌п╣п╩я▐ п╠п╟п╥ п╢п╟п╫п╫я▀я┘\n"
 
-#: pg_dump.c:705
-#: pg_dumpall.c:368
-#: pg_restore.c:398
-msgid "  -W, --password           force password prompt (should happen automatically)\n"
-msgstr "  -W, --password           принудительный запрос пароля (должен происходить автоматически)\n"
+#: pg_dump.c:775 pg_restore.c:411 pg_dumpall.c:514
+#, c-format
+msgid ""
+"  -W, --password           force password prompt (should happen "
+"automatically)\n"
+msgstr ""
+"  -W, --password           п╥п╟п©я─п╟я┬п╦п╡п╟я┌я▄ п©п╟я─п╬п╩я▄ п╡я│п╣пЁп╢п╟ (п╬п╠я▀я┤п╫п╬ п╫п╣ я┌я─п╣п╠я┐п╣я┌я│я▐)\n"
 
-#: pg_dump.c:707
+#: pg_dump.c:777
+#, c-format
 msgid ""
 "\n"
 "If no database name is supplied, then the PGDATABASE environment\n"
@@ -336,1494 +358,1710 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Если имя базы данных не указано, то будет использовано  значение переменной\n"
-"окружения PGDATABASE.\n"
+"п∙я│п╩п╦ п╦п╪я▐ п╠п╟п╥я▀ п╢п╟п╫п╫я▀я┘ п╫п╣ я┐п╨п╟п╥п╟п╫п╬, п╦я│п©п╬п╩я▄п╥я┐п╣я┌я│я▐ п©п╣я─п╣п╪п╣п╫п╫п╟я▐ п╬п╨я─я┐п╤п╣п╫п╦я▐ "
+"PGDATABASE.\n"
 "\n"
 
-#: pg_dump.c:709
-#: pg_dumpall.c:371
-#: pg_restore.c:402
+#: pg_dump.c:779 pg_restore.c:415 pg_dumpall.c:517
+#, c-format
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
-msgstr "Сообщать об ошибках: <pgsql-bugs@postgresql.org>.\n"
+msgstr "п·п╠ п╬я┬п╦п╠п╨п╟я┘ я│п╬п╬п╠я┴п╟п╧я┌п╣ п©п╬ п╟п╢я─п╣я│я┐ <pgsql-bugs@postgresql.org>.\n"
 
-#: pg_backup_archiver.c:1219
-#: pg_dump.c:717
+#: pg_dump.c:787 pg_backup_archiver.c:1224
 msgid "*** aborted because of error\n"
-msgstr "*** аварийное завершение из-за ошибки\n"
+msgstr "*** п╟п╡п╟я─п╦п╧п╫п╬п╣ п╥п╟п╡п╣я─я┬п╣п╫п╦п╣ п╦п╥-п╥п╟ п╬я┬п╦п╠п╨п╦\n"
 
-#: pg_dump.c:799
+#: pg_dump.c:808
+msgid "server version must be at least 7.3 to use schema selection switches\n"
+msgstr ""
+"п╢п╩я▐ п╦я│п©п╬п╩я▄п╥п╬п╡п╟п╫п╦я▐ п©п╟я─п╟п╪п╣я┌я─п╬п╡ п╡я▀п╠п╬я─п╟ я│я┘п╣п╪я▀ п╫я┐п╤п╣п╫ я│п╣я─п╡п╣я─ п╡п╣я─я│п╦п╦ 7.3 п╦п╩п╦ п╫п╬п╡п╣п╣\n"
+
+#: pg_dump.c:1043
 #, c-format
 msgid "dumping contents of table %s\n"
-msgstr "выгрузка содержимого таблицы %s\n"
+msgstr "п╡я▀пЁя─я┐п╥п╨п╟ я│п╬п╢п╣я─п╤п╦п╪п╬пЁп╬ я┌п╟п╠п╩п╦я├я▀ %s\n"
 
-#: pg_dump.c:911
+#: pg_dump.c:1146
 #, c-format
-msgid "SQL command to dump the contents of table \"%s\" failed: PQendcopy() failed.\n"
-msgstr "SQL-команда по выгрузке содержимого таблицы \"%s\" не удалась: PQendcopy() выполнилась ненормально.\n"
+msgid "Dumping the contents of table \"%s\" failed: PQgetCopyData() failed.\n"
+msgstr "п·я┬п╦п╠п╨п╟ п╡я▀пЁя─я┐п╥п╨п╦ я┌п╟п╠п╩п╦я├я▀ \"%s\": я│п╠п╬п╧ п╡ PQendcopy().\n"
 
-#: pg_dump.c:912
-#: pg_dump.c:8116
+#: pg_dump.c:1147 pg_dump.c:10381
 #, c-format
 msgid "Error message from server: %s"
-msgstr "Сообщение об ошибке с сервера: %s"
+msgstr "п║п╬п╬п╠я┴п╣п╫п╦п╣ п╬п╠ п╬я┬п╦п╠п╨п╣ я│ я│п╣я─п╡п╣я─п╟: %s"
 
-#: pg_dump.c:913
-#: pg_dump.c:8117
+#: pg_dump.c:1148 pg_dump.c:10382
 #, c-format
 msgid "The command was: %s\n"
-msgstr "Команда была: %s\n"
+msgstr "п▓я▀п©п╬п╩п╫я▐п╩п╟я│я▄ п╨п╬п╪п╟п╫п╢п╟: %s\n"
 
-#: pg_dump.c:1184
+#: pg_dump.c:1432
 msgid "saving database definition\n"
-msgstr "сохраняется определение базы данных\n"
+msgstr "я│п╬я┘я─п╟п╫п╣п╫п╦п╣ п╬п©я─п╣п╢п╣п╩п╣п╫п╦я▐ п╠п╟п╥я▀ п╢п╟п╫п╫я▀я┘\n"
 
-#: pg_dump.c:1230
+#: pg_dump.c:1494
 #, c-format
 msgid "missing pg_database entry for database \"%s\"\n"
-msgstr "отсутствует запись в pg_database для базы данных \"%s\"\n"
+msgstr "п╢п╩я▐ п╠п╟п╥я▀ п╢п╟п╫п╫я▀я┘ \"%s\" п╬я┌я│я┐я┌я│я┌п╡я┐п╣я┌ п╥п╟п©п╦я│я▄ п╡ pg_database\n"
 
-#: pg_dump.c:1237
+#: pg_dump.c:1501
 #, c-format
-msgid "query returned more than one (%d) pg_database entry for database \"%s\"\n"
-msgstr "запрос вернул более чем одну (%d) запись из pg_database для базы данных \"%s\"\n"
+msgid ""
+"query returned more than one (%d) pg_database entry for database \"%s\"\n"
+msgstr "п╡ pg_database п╫п╟я┬п╩п╬я│я▄ п╫п╣я│п╨п╬п╩я▄п╨п╬ п╥п╟п©п╦я│п╣п╧ (%d) п╢п╩я▐ п╠п╟п╥я▀ п╢п╟п╫п╫я▀я┘ \"%s\"\n"
 
-#: pg_dump.c:1345
-msgid "saving encoding\n"
-msgstr "сохранение кодировки\n"
+#: pg_dump.c:1600
+#, c-format
+msgid "saving encoding = %s\n"
+msgstr "я│п╬я┘я─п╟п╫п╣п╫п╦п╣ п╨п╬п╢п╦я─п╬п╡п╨п╦ (%s)\n"
 
-#: pg_dump.c:1395
+#: pg_dump.c:1626
+#, c-format
+msgid "saving standard_conforming_strings = %s\n"
+msgstr "я│п╬я┘я─п╟п╫п╣п╫п╦п╣ standard_conforming_strings (%s)\n"
+
+#: pg_dump.c:1687
 msgid "saving large objects\n"
-msgstr "сохранение больших объектов\n"
+msgstr "я│п╬я┘я─п╟п╫п╣п╫п╦п╣ п╠п╬п╩я▄я┬п╦я┘ п╬п╠я┼п╣п╨я┌п╬п╡\n"
 
-#: pg_dump.c:1428
+#: pg_dump.c:1723
 #, c-format
 msgid "dumpBlobs(): could not open large object: %s"
-msgstr "dumpBlobs(): не удалось открыть большой объект: %s"
+msgstr "dumpBlobs(): п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╬я┌п╨я─я▀я┌я▄ п╠п╬п╩я▄я┬п╬п╧ п╬п╠я┼п╣п╨я┌: %s"
 
-#: pg_dump.c:1441
+#: pg_dump.c:1736
 #, c-format
 msgid "dumpBlobs(): error reading large object: %s"
-msgstr "dumpBlobs(): ошибка при чтении большого объекта: %s"
+msgstr "dumpBlobs(): п╬я┬п╦п╠п╨п╟ я┤я┌п╣п╫п╦я▐ п╠п╬п╩я▄я┬п╬пЁп╬ п╬п╠я┼п╣п╨я┌п╟: %s"
+
+#: pg_dump.c:1773
+msgid "saving large object comments\n"
+msgstr "я│п╬я┘я─п╟п╫п╣п╫п╦п╣ п╨п╬п╪п╪п╣п╫я┌п╟я─п╦п╣п╡ п╠п╬п╩я▄я┬п╦я┘ п╬п╠я┼п╣п╨я┌п╬п╡\n"
 
 # TO REVIEW
-#: pg_dump.c:1558
+#: pg_dump.c:1932
 #, c-format
 msgid "WARNING: owner of schema \"%s\" appears to be invalid\n"
-msgstr "ВНИМАНИЕ: владелец схемы \"%s\" ,по-видимому, не верен\n"
+msgstr "п▓п²п≤п°п░п²п≤п∙: я┐ я│я┘п╣п╪я▀ \"%s\" п©п╬-п╡п╦п╢п╦п╪п╬п╪я┐ п╫п╣п©я─п╟п╡п╦п╩я▄п╫я▀п╧ п╡п╩п╟п╢п╣п╩п╣я├\n"
 
-#: pg_dump.c:1575
-#, c-format
-msgid "specified schema \"%s\" does not exist\n"
-msgstr "указанная схема \"%s\" не существует\n"
-
-#: pg_dump.c:1612
+#: pg_dump.c:1976
 #, c-format
 msgid "schema with OID %u does not exist\n"
-msgstr "схема с OID %u не существует\n"
+msgstr "я│я┘п╣п╪п╟ я│ OID %u п╫п╣ я│я┐я┴п╣я│я┌п╡я┐п╣я┌\n"
 
-#: pg_dump.c:1797
+#: pg_dump.c:2224
 #, c-format
 msgid "WARNING: owner of data type \"%s\" appears to be invalid\n"
-msgstr "ВНИМАНИЕ: владелец типа данных \"%s\", возможно, не верен\n"
+msgstr "п▓п²п≤п°п░п²п≤п∙: я┐ я┌п╦п©п╟ п╢п╟п╫п╫я▀я┘ \"%s\" п©п╬-п╡п╦п╢п╦п╪п╬п╪я┐ п╫п╣п©я─п╟п╡п╦п╩я▄п╫я▀п╧ п╡п╩п╟п╢п╣п╩п╣я├\n"
 
-#: pg_dump.c:1895
+#: pg_dump.c:2328
 #, c-format
 msgid "WARNING: owner of operator \"%s\" appears to be invalid\n"
-msgstr "ВНИМАНИЕ: владелец оператора \"%s\", возможно, не верен\n"
+msgstr "п▓п²п≤п°п░п²п≤п∙: я┐ п╬п©п╣я─п╟я┌п╬я─п╟ \"%s\" п©п╬-п╡п╦п╢п╦п╪п╬п╪я┐ п╫п╣п©я─п╟п╡п╦п╩я▄п╫я▀п╧ п╡п╩п╟п╢п╣п╩п╣я├\n"
 
-#: pg_dump.c:2061
+#: pg_dump.c:2502
 #, c-format
 msgid "WARNING: owner of operator class \"%s\" appears to be invalid\n"
-msgstr "ВНИМАНИЕ: владелец класса оператора \"%s\", возможно, не верен\n"
+msgstr ""
+"п▓п²п≤п°п░п²п≤п∙: я┐ п╨п╩п╟я│я│п╟ п╬п©п╣я─п╟я┌п╬я─п╬п╡ \"%s\" п©п╬-п╡п╦п╢п╦п╪п╬п╪я┐ п╫п╣п©я─п╟п╡п╦п╩я▄п╫я▀п╧ п╡п╩п╟п╢п╣п╩п╣я├\n"
 
-#: pg_dump.c:2165
+#: pg_dump.c:2589
+#, c-format
+msgid "WARNING: owner of operator family \"%s\" appears to be invalid\n"
+msgstr ""
+"п▓п²п≤п°п░п²п≤п∙: я┐ я│п╣п╪п╣п╧я│я┌п╡п╟ п╬п©п╣я─п╟я┌п╬я─п╬п╡ \"%s\" п©п╬-п╡п╦п╢п╦п╪п╬п╪я┐ п╫п╣п©я─п╟п╡п╦п╩я▄п╫я▀п╧ п╡п╩п╟п╢п╣п╩п╣я├\n"
+
+#: pg_dump.c:2714
 #, c-format
 msgid "WARNING: owner of aggregate function \"%s\" appears to be invalid\n"
-msgstr "ВНИМАНИЕ: владелец агрегатной функции \"%s\", возможно, не верен\n"
+msgstr ""
+"п▓п²п≤п°п░п²п≤п∙: я┐ п╟пЁя─п╣пЁп╟я┌п╫п╬п╧ я└я┐п╫п╨я├п╦п╦ \"%s\" п©п╬-п╡п╦п╢п╦п╪п╬п╪я┐ п╫п╣п©я─п╟п╡п╦п╩я▄п╫я▀п╧ п╡п╩п╟п╢п╣п╩п╣я├\n"
 
-#: pg_dump.c:2299
+#: pg_dump.c:2869
 #, c-format
 msgid "WARNING: owner of function \"%s\" appears to be invalid\n"
-msgstr "ВНИМАНИЕ: владелец функции \"%s\", возможно, не верен\n"
+msgstr "п▓п²п≤п°п░п²п≤п∙: я┐ я└я┐п╫п╨я├п╦п╦ \"%s\" п©п╬-п╡п╦п╢п╦п╪п╬п╪я┐ п╫п╣п©я─п╟п╡п╦п╩я▄п╫я▀п╧ п╡п╩п╟п╢п╣п╩п╣я├\n"
 
-#: pg_dump.c:2586
+#: pg_dump.c:3193
 #, c-format
 msgid "WARNING: owner of table \"%s\" appears to be invalid\n"
-msgstr "ВНИМАНИЕ: владелец таблицы \"%s\", возможно, не верен\n"
+msgstr "п▓п²п≤п°п░п²п≤п∙: я┐ я┌п╟п╠п╩п╦я├я▀ \"%s\" п©п╬-п╡п╦п╢п╦п╪п╬п╪я┐ п╫п╣п©я─п╟п╡п╦п╩я▄п╫я▀п╧ п╡п╩п╟п╢п╣п╩п╣я├\n"
 
-#: pg_dump.c:2605
-#, c-format
-msgid "specified table \"%s\" does not exist\n"
-msgstr "указанная таблица \"%s\" не существует\n"
-
-#: pg_dump.c:2712
+#: pg_dump.c:3335
 #, c-format
 msgid "reading indexes for table \"%s\"\n"
-msgstr "чтение индексов для таблицы \"%s\"\n"
+msgstr "я┤я┌п╣п╫п╦п╣ п╦п╫п╢п╣п╨я│п╬п╡ я┌п╟п╠п╩п╦я├я▀ \"%s\"\n"
 
-#: pg_dump.c:2949
+#: pg_dump.c:3603
 #, c-format
 msgid "reading foreign key constraints for table \"%s\"\n"
-msgstr "чтение ограничений на внешние ключи для таблицы \"%s\"\n"
+msgstr "я┤я┌п╣п╫п╦п╣ п╬пЁя─п╟п╫п╦я┤п╣п╫п╦п╧ п╡п╫п╣я┬п╫п╦я┘ п╨п╩я▌я┤п╣п╧ я┌п╟п╠п╩п╦я├я▀ \"%s\"\n"
 
-#: pg_dump.c:3234
+#: pg_dump.c:3828
+#, c-format
+msgid ""
+"failed sanity check, parent table OID %u of pg_rewrite entry OID %u not "
+"found\n"
+msgstr ""
+"п©п╬ OID %u п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╫п╟п╧я┌п╦ я─п╬п╢п╦я┌п╣п╩я▄я│п╨я┐я▌ я┌п╟п╠п╩п╦я├я┐ п╢п╩я▐ п╥п╟п©п╦я│п╦ pg_rewrite я│ OID "
+"%u\n"
+
+#: pg_dump.c:3911
 #, c-format
 msgid "reading triggers for table \"%s\"\n"
-msgstr "чтение триггеров для таблицы \"%s\"\n"
+msgstr "я┤я┌п╣п╫п╦п╣ я┌я─п╦пЁпЁп╣я─п╬п╡ я┌п╟п╠п╩п╦я├я▀ \"%s\"\n"
 
-#: pg_dump.c:3306
+#: pg_dump.c:4000
 #, c-format
 msgid "expected %d triggers on table \"%s\" but found %d\n"
-msgstr "ожидалось %d триггеров для таблицы \"%s\", но было найдено %d\n"
+msgstr "п╬п╤п╦п╢п╟п╩п╬я│я▄ я┌я─п╦пЁпЁп╣я─п╬п╡: %d (п╢п╩я▐ я┌п╟п╠п╩п╦я├я▀ \"%s\"), п╫п╬ п╠я▀п╩п╬ п╫п╟п╧п╢п╣п╫п╬ %d\n"
 
-#: pg_dump.c:3351
+#: pg_dump.c:4047
 #, c-format
-msgid "query produced null referenced table name for foreign key trigger \"%s\" on table \"%s\" (OID of table: %u)\n"
-msgstr "в результате запроса получилась нулевая ссылка на имя таблицы для триггера по внешнему ключу \"%s\" для таблицы \"%s\" (OID таблицы: %u)\n"
+msgid ""
+"query produced null referenced table name for foreign key trigger \"%s\" on "
+"table \"%s\" (OID of table: %u)\n"
+msgstr ""
+"п╥п╟п©я─п╬я│ п╫п╣ п╡п╣я─п╫я┐п╩ п╦п╪я▐ я├п╣п╩п╣п╡п╬п╧ я┌п╟п╠п╩п╦я├я▀ п╢п╩я▐ я┌я─п╦пЁпЁп╣я─п╟ п╡п╫п╣я┬п╫п╣пЁп╬ п╨п╩я▌я┤п╟ \"%s\" п╡ "
+"я┌п╟п╠п╩п╦я├п╣ \"%s\" (OID я├п╣п╩п╣п╡п╬п╧ я┌п╟п╠п╩п╦я├я▀: %u)\n"
 
-#: pg_dump.c:3652
+#: pg_dump.c:4383
 #, c-format
 msgid "finding the columns and types of table \"%s\"\n"
-msgstr "поиск колонок и типов для таблицы \"%s\"\n"
+msgstr "п©п╬п╦я│п╨ п╨п╬п╩п╬п╫п╬п╨ п╦ я┌п╦п©п╬п╡ я┌п╟п╠п╩п╦я├я▀ \"%s\"\n"
 
-#: pg_dump.c:3738
+#: pg_dump.c:4469
 #, c-format
 msgid "invalid column numbering in table \"%s\"\n"
-msgstr "неверная нумерация колонок в таблице \"%s\"\n"
+msgstr "п╫п╣п╡п╣я─п╫п╟я▐ п╫я┐п╪п╣я─п╟я├п╦я▐ п╨п╬п╩п╬п╫п╬п╨ п╡ я┌п╟п╠п╩п╦я├п╣ \"%s\"\n"
 
-#: pg_dump.c:3772
+#: pg_dump.c:4500
 #, c-format
 msgid "finding default expressions of table \"%s\"\n"
-msgstr "поиск выражений по-умолчанию для таблицы \"%s\"\n"
+msgstr "п©п╬п╦я│п╨ п╡я▀я─п╟п╤п╣п╫п╦п╧ п©п╬ я┐п╪п╬п╩я┤п╟п╫п╦я▌ п╢п╩я▐ я┌п╟п╠п╩п╦я├я▀ \"%s\"\n"
 
-#: pg_dump.c:3855
+#: pg_dump.c:4553
 #, c-format
 msgid "invalid adnum value %d for table \"%s\"\n"
-msgstr "неверное значение adnum  %d  для таблицы \"%s\"\n"
+msgstr "п╫п╣п╡п╣я─п╫п╬п╣ п╥п╫п╟я┤п╣п╫п╦п╣ adnum (%d) п╡ я┌п╟п╠п╩п╦я├п╣ \"%s\"\n"
 
-#: pg_dump.c:3873
+#: pg_dump.c:4626
 #, c-format
 msgid "finding check constraints for table \"%s\"\n"
-msgstr "производится поиск проверок  целостности для таблицы \"%s\"\n"
+msgstr "п©п╬п╦я│п╨ п╬пЁя─п╟п╫п╦я┤п╣п╫п╦п╧-п©я─п╬п╡п╣я─п╬п╨ п╢п╩я▐ я┌п╟п╠п╩п╦я├я▀ \"%s\"\n"
 
-#: pg_dump.c:3937
+#: pg_dump.c:4690
 #, c-format
 msgid "expected %d check constraints on table \"%s\" but found %d\n"
-msgstr "ожидалось %d проверок целостности для таблицы \"%s\", но было найдено: %d\n"
+msgstr ""
+"п╬п╤п╦п╢п╟п╩п╬я│я▄ п╬пЁя─п╟п╫п╦я┤п╣п╫п╦п╧-п©я─п╬п╡п╣я─п╬п╨: %d (п╢п╩я▐ я┌п╟п╠п╩п╦я├я▀ \"%s\"), п╫п╬ п╫п╟п╧п╢п╣п╫п╬: %d\n"
 
-#: pg_dump.c:3939
+#: pg_dump.c:4692
 msgid "(The system catalogs might be corrupted.)\n"
-msgstr "(Системные каталоги могут быть повреждены.)\n"
+msgstr "(п▓п╬п╥п╪п╬п╤п╫п╬ п©п╬п╡я─п╣п╤п╢п╣п╫я▀ я│п╦я│я┌п╣п╪п╫я▀п╣ п╨п╟я┌п╟п╩п╬пЁп╦.)\n"
 
-#: pg_dump.c:4628
-#: pg_dump.c:4794
-#: pg_dump.c:5195
-#: pg_dump.c:5581
-#: pg_dump.c:5880
-#: pg_dump.c:6082
-#: pg_dump.c:6267
+#: pg_dump.c:5601
 #, c-format
-msgid "Got %d rows instead of one from: %s"
-msgstr "Получено строк: %d, тогда как ожидалась всего одна из: %s"
+msgid "no label definitions found for enum ID %u\n"
+msgstr "п╢п╩я▐ п©п╣я─п╣я┤п╦я│п╩п╣п╫п╦я▐ я│ ID %u п╫п╣ п╫п╟п╧п╢п╣п╫я▀ п╬п©я─п╣п╢п╣п╩п╣п╫п╦я▐ п╪п╣я┌п╬п╨\n"
 
-#: pg_dump.c:4903
+#: pg_dump.c:5830 pg_dump.c:6015 pg_dump.c:6614 pg_dump.c:7107 pg_dump.c:7354
+#: pg_dump.c:7458 pg_dump.c:7796 pg_dump.c:7969 pg_dump.c:8163 pg_dump.c:8386
+#: pg_dump.c:8537 pg_dump.c:10189
 #, c-format
-msgid "query yielded no rows: %s\n"
-msgstr "запрос вернул ноль строк: %s\n"
+msgid "query returned %d rows instead of one: %s\n"
+msgstr "п╥п╟п©я─п╬я│ п╡п╣я─п╫я┐п╩ я│я┌я─п╬п╨: %d (п╬п╤п╦п╢п╟п╩п╟я│я▄ 1): %s\n"
 
-#: pg_dump.c:5251
+#: pg_dump.c:6134
+#, c-format
+msgid "query returned no rows: %s\n"
+msgstr "п╥п╟п©я─п╬я│ п╫п╣ п╡п╣я─п╫я┐п╩ я│я┌я─п╬п╨: %s\n"
+
+#: pg_dump.c:6411
+msgid "WARNING: bogus value in proargmodes array\n"
+msgstr "п▓п²п≤п°п░п²п≤п∙: п╫п╣п©я─п╦п╣п╪п╩п╣п╪п╬п╣ п╥п╫п╟я┤п╣п╫п╦п╣ п╡ п╪п╟я│я│п╦п╡п╣ proargmodes\n"
+
+#: pg_dump.c:6678
+msgid "WARNING: could not parse proallargtypes array\n"
+msgstr "п▓п²п≤п°п░п²п≤п∙: п╫п╣ я┐п╢п╟п╩п╬я│я▄ я─п╟п╥п╬п╠я─п╟я┌я▄ п╪п╟я│я│п╦п╡ proallargtypes\n"
+
+#: pg_dump.c:6694
+msgid "WARNING: could not parse proargmodes array\n"
+msgstr "п▓п²п≤п°п░п²п≤п∙: п╫п╣ я┐п╢п╟п╩п╬я│я▄ я─п╟п╥п╬п╠я─п╟я┌я▄ п╪п╟я│я│п╦п╡ proargmodes\n"
+
+#: pg_dump.c:6708
 msgid "WARNING: could not parse proargnames array\n"
-msgstr "ВНИМАНИЕ: не удалось проанализировать массив proargnames\n"
+msgstr "п▓п²п≤п°п░п²п≤п∙: п╫п╣ я┐п╢п╟п╩п╬я│я▄ я─п╟п╥п╬п╠я─п╟я┌я▄ п╪п╟я│я│п╦п╡ proargnames\n"
 
-# TO REVEIW
-#: pg_dump.c:5288
+#: pg_dump.c:6719
+msgid "WARNING: could not parse proconfig array\n"
+msgstr "п▓п²п≤п°п░п²п≤п∙: п╫п╣ я┐п╢п╟п╩п╬я│я▄ я─п╟п╥п╬п╠я─п╟я┌я▄ п╪п╟я│я│п╦п╡ proconfig\n"
+
+#: pg_dump.c:6757
 #, c-format
 msgid "unrecognized provolatile value for function \"%s\"\n"
-msgstr "недопустимое значение provolatile для функции \"%s\"\n"
+msgstr "п╫п╣п╢п╬п©я┐я│я┌п╦п╪п╬п╣ п╥п╫п╟я┤п╣п╫п╦п╣ provolatile п╢п╩я▐ я└я┐п╫п╨я├п╦п╦ \"%s\"\n"
 
-#: pg_dump.c:5805
+#: pg_dump.c:7323
 #, c-format
 msgid "WARNING: could not find operator with OID %s\n"
-msgstr "ВНИМАНИЕ: оператор с OID %s не найден\n"
+msgstr "п▓п²п≤п°п░п²п≤п∙: п╬п©п╣я─п╟я┌п╬я─ я│ OID %s п╫п╣ п╫п╟п╧п╢п╣п╫\n"
 
-#: pg_dump.c:6295
+#: pg_dump.c:8187
 #, c-format
-msgid "WARNING: aggregate function %s could not be dumped correctly for this database version; ignored\n"
-msgstr "ВНИМАНИЕ: агрегатная функция %s не может быть правильно выгружена для этой версии базы данных; функция проигнорирована\n"
+msgid ""
+"WARNING: aggregate function %s could not be dumped correctly for this "
+"database version; ignored\n"
+msgstr ""
+"п▓п²п≤п°п░п²п≤п∙: п╟пЁя─п╣пЁп╟я┌п╫п╟я▐ я└я┐п╫п╨я├п╦я▐ %s п╫п╣ п╪п╬п╤п╣я┌ п╠я▀я┌я▄ п©я─п╟п╡п╦п╩я▄п╫п╬ п╡я▀пЁя─я┐п╤п╣п╫п╟ п╢п╩я▐ я█я┌п╬п╧ "
+"п╡п╣я─я│п╦п╦ п╠п╟п╥я▀ п╢п╟п╫п╫я▀я┘; я└я┐п╫п╨я├п╦я▐ п©я─п╬п╦пЁп╫п╬я─п╦я─п╬п╡п╟п╫п╟\n"
 
-#: pg_dump.c:6429
+#: pg_dump.c:8662
 #, c-format
 msgid "could not parse ACL list (%s) for object \"%s\" (%s)\n"
-msgstr "не удалось проанализировать ACL-список (%s) для объекта \"%s\" (%s)\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ я─п╟п╥п╬п╠я─п╟я┌я▄ я│п©п╦я│п╬п╨ п©я─п╟п╡ (%s) п╢п╩я▐ п╬п╠я┼п╣п╨я┌п╟ \"%s\" (%s)\n"
 
-#: pg_dump.c:6523
+#: pg_dump.c:8757
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned no data\n"
-msgstr "запрос на получение определения представления \"%s\" не возвратил данных\n"
+msgstr ""
+"п╥п╟п©я─п╬я│ п╫п╟ п©п╬п╩я┐я┤п╣п╫п╦п╣ п╬п©я─п╣п╢п╣п╩п╣п╫п╦я▐ п©я─п╣п╢я│я┌п╟п╡п╩п╣п╫п╦я▐ \"%s\" п╫п╣ п╡п╬п╥п╡я─п╟я┌п╦п╩ п╢п╟п╫п╫я▀п╣\n"
 
-#: pg_dump.c:6526
+#: pg_dump.c:8760
 #, c-format
-msgid "query to obtain definition of view \"%s\" returned more than one definition\n"
-msgstr "запрос на получения определения представления \"%s\" возвратил более чем одно определение\n"
+msgid ""
+"query to obtain definition of view \"%s\" returned more than one definition\n"
+msgstr ""
+"п╥п╟п©я─п╬я│ п╫п╟ п©п╬п╩я┐я┤п╣п╫п╦я▐ п╬п©я─п╣п╢п╣п╩п╣п╫п╦я▐ п©я─п╣п╢я│я┌п╟п╡п╩п╣п╫п╦я▐ \"%s\" п╡п╬п╥п╡я─п╟я┌п╦п╩ п╫п╣я│п╨п╬п╩я▄п╨п╬ "
+"п╬п©я─п╣п╢п╣п╩п╣п╫п╦п╧\n"
 
-#: pg_dump.c:6535
+#: pg_dump.c:8769
 #, c-format
 msgid "definition of view \"%s\" appears to be empty (length zero)\n"
-msgstr "определение представления \"%s\" выглядит пустым (длина равна нулю)\n"
+msgstr "п╬п©я─п╣п╢п╣п╩п╣п╫п╦п╣ п©я─п╣п╢я│я┌п╟п╡п╩п╣п╫п╦я▐ \"%s\" п©я┐я│я┌п╬п╣ (п╢п╩п╦п╫п╟ я─п╟п╡п╫п╟ п╫я┐п╩я▌)\n"
 
-#: pg_dump.c:6848
+#: pg_dump.c:9085
 #, c-format
 msgid "invalid column number %d for table \"%s\"\n"
-msgstr "неверный номер колонки %d для таблицы \"%s\"\n"
+msgstr "п╫п╣п╡п╣я─п╫я▀п╧ п╫п╬п╪п╣я─ п╨п╬п╩п╬п╫п╨п╦ %d п╢п╩я▐ я┌п╟п╠п╩п╦я├я▀ \"%s\"\n"
 
-#: pg_dump.c:6951
+#: pg_dump.c:9187
 #, c-format
 msgid "missing index for constraint \"%s\"\n"
-msgstr "отсутствует индекс для ограничения \"%s\"\n"
+msgstr "п╬я┌я│я┐я┌я│я┌п╡я┐п╣я┌ п╦п╫п╢п╣п╨я│ п╢п╩я▐ п╬пЁя─п╟п╫п╦я┤п╣п╫п╦я▐ \"%s\"\n"
 
-#: pg_dump.c:7111
+#: pg_dump.c:9352
 #, c-format
 msgid "unrecognized constraint type: %c\n"
-msgstr "нераспознанный тип ограничения: %c\n"
+msgstr "п╫п╣я─п╟я│п©п╬п╥п╫п╟п╫п╫я▀п╧ я┌п╦п© п╬пЁя─п╟п╫п╦я┤п╣п╫п╦я▐: %c\n"
 
-#: pg_dump.c:7172
-msgid "inserted invalid OID\n"
-msgstr "вставлен неверный OID\n"
-
-#: pg_dump.c:7178
-#, c-format
-msgid "maximum system OID is %u\n"
-msgstr "максимальный системный OID: %u\n"
-
-#: pg_dump.c:7219
+#: pg_dump.c:9415
 msgid "missing pg_database entry for this database\n"
-msgstr "отсутствует запись в pg_database для этой базы данных\n"
+msgstr "п╢п╩я▐ я█я┌п╬п╧ п╠п╟п╥я▀ п╢п╟п╫п╫я▀я┘ п╬я┌я│я┐я┌я│я┌п╡я┐п╣я┌ п╥п╟п©п╦я│я▄ п╡ pg_database\n"
 
-#: pg_dump.c:7224
+#: pg_dump.c:9420
 msgid "found more than one pg_database entry for this database\n"
-msgstr "найдено более одной записи в pg_database для этой базы данных\n"
+msgstr "п╢п╩я▐ я█я┌п╬п╧ п╠п╟п╥я▀ п╢п╟п╫п╫я▀я┘ п╫п╟п╧п╢п╣п╫п╬ п╫п╣я│п╨п╬п╩я▄п╨п╬ п╥п╟п©п╦я│п╣п╧ п╡ pg_database\n"
 
-#: pg_dump.c:7256
+#: pg_dump.c:9452
 msgid "could not find entry for pg_indexes in pg_class\n"
-msgstr "не найдена запись для pg_indexes в pg_class\n"
+msgstr "п╢п╩я▐ pg_indexes п╫п╣ п╫п╟п╧п╢п╣п╫п╟ п╥п╟п©п╦я│я▄ п╡ pg_class\n"
 
-#: pg_dump.c:7261
+#: pg_dump.c:9457
 msgid "found more than one entry for pg_indexes in pg_class\n"
-msgstr "найдено более одной записи для pg_indexes в pg_class\n"
+msgstr "п╢п╩я▐ pg_indexes п╫п╟п╧п╢п╣п╫п╬ п╫п╣я│п╨п╬п╩я▄п╨п╬ п╥п╟п©п╦я│п╣п╧ п╡ pg_class\n"
 
-#: pg_dump.c:7310
+#: pg_dump.c:9506
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d rows (expected 1)\n"
-msgstr "запрос на получение данных последовательности \"%s\" вернул число строк > 1 (%d)\n"
+msgstr ""
+"п╥п╟п©я─п╬я│ п╫п╟ п©п╬п╩я┐я┤п╣п╫п╦п╣ п╢п╟п╫п╫я▀я┘ п©п╬я│п╩п╣п╢п╬п╡п╟я┌п╣п╩я▄п╫п╬я│я┌п╦ \"%s\" п╡п╣я─п╫я┐п╩ я│я┌я─п╬п╨: %d "
+"(п╬п╤п╦п╢п╟п╩п╟я│я▄ 1)\n"
 
-#: pg_dump.c:7319
+#: pg_dump.c:9515
 #, c-format
 msgid "query to get data of sequence \"%s\" returned name \"%s\"\n"
-msgstr "запрос на получение данных последовательности \"%s\" вернул имя \"%s\"\n"
+msgstr ""
+"п╥п╟п©я─п╬я│ п╫п╟ п©п╬п╩я┐я┤п╣п╫п╦п╣ п╢п╟п╫п╫я▀я┘ п©п╬я│п╩п╣п╢п╬п╡п╟я┌п╣п╩я▄п╫п╬я│я┌п╦ \"%s\" п╡п╣я─п╫я┐п╩ п╦п╪я▐ \"%s\"\n"
 
-#: pg_dump.c:7560
+#: pg_dump.c:9769
 #, c-format
 msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\"\n"
-msgstr "неверная строка аргументов (%s) для триггера \"%s\"  таблицы \"%s\"\n"
+msgstr "п╫п╣п╡п╣я─п╫п╟я▐ я│я┌я─п╬п╨п╟ п╟я─пЁя┐п╪п╣п╫я┌п╬п╡ (%s) п╢п╩я▐ я┌я─п╦пЁпЁп╣я─п╟ \"%s\" я┌п╟п╠п╩п╦я├я▀ \"%s\"\n"
 
-#: pg_dump.c:7667
+#: pg_dump.c:9906
 #, c-format
-msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned"
-msgstr "запрос на получение правила \"%s\" для таблицы \"%s\" не удался: получено неверное число строк"
+msgid ""
+"query to get rule \"%s\" for table \"%s\" failed: wrong number of rows "
+"returned\n"
+msgstr ""
+"п╥п╟п©я─п╬я│ п╫п╟ п©п╬п╩я┐я┤п╣п╫п╦п╣ п©я─п╟п╡п╦п╩п╟ \"%s\" п╢п╩я▐ я┌п╟п╠п╩п╦я├я▀ \"%s\" п╡п╬п╥п╡я─п╟я┌п╦п╩ п╫п╣п╡п╣я─п╫п╬п╣ "
+"я┤п╦я│п╩п╬ я│я┌я─п╬п╨\n"
 
-#: pg_dump.c:7735
+#: pg_dump.c:10000
 msgid "reading dependency data\n"
-msgstr "чтение данных о зависимостях\n"
+msgstr "я┤я┌п╣п╫п╦п╣ п╢п╟п╫п╫я▀я┘ п╬ п╥п╟п╡п╦я│п╦п╪п╬я│я┌я▐я┘\n"
 
-#: pg_dump.c:7924
-#, c-format
-msgid "query yielded %d rows instead of one: %s\n"
-msgstr "запрос вернул %d строк вместо одной: %s\n"
-
-#: pg_dump.c:8111
+#: pg_dump.c:10376
 msgid "SQL command failed\n"
-msgstr "SQL-команда не удалась\n"
+msgstr "п╬я┬п╦п╠п╨п╟ SQL-п╨п╬п╪п╟п╫п╢я▀\n"
 
-#: common.c:99
+#: common.c:112
 msgid "reading schemas\n"
-msgstr "чтение схем\n"
+msgstr "я┤я┌п╣п╫п╦п╣ я│я┘п╣п╪\n"
 
-#: common.c:103
-msgid "reading user-defined functions\n"
-msgstr "чтение пользовательских функций\n"
-
-#: common.c:108
-msgid "reading user-defined types\n"
-msgstr "чтение пользовательских типов\n"
-
-#: common.c:113
-msgid "reading procedural languages\n"
-msgstr "чтение процедурных языков\n"
-
-#: common.c:117
-msgid "reading user-defined aggregate functions\n"
-msgstr "чтение пользовательских агрегатных функций\n"
-
-#: common.c:121
-msgid "reading user-defined operators\n"
-msgstr "чтение пользовательских операторов\n"
-
-#: common.c:125
-msgid "reading user-defined operator classes\n"
-msgstr "чтение пользовательских классов операторов\n"
-
-#: common.c:129
-msgid "reading user-defined conversions\n"
-msgstr "чтение пользовательских преобразований\n"
-
-#: common.c:133
+#: common.c:123
 msgid "reading user-defined tables\n"
-msgstr "чтение пользовательских таблиц\n"
+msgstr "я┤я┌п╣п╫п╦п╣ п©п╬п╩я▄п╥п╬п╡п╟я┌п╣п╩я▄я│п╨п╦я┘ я┌п╟п╠п╩п╦я├\n"
+
+#: common.c:131
+msgid "reading user-defined functions\n"
+msgstr "я┤я┌п╣п╫п╦п╣ п©п╬п╩я▄п╥п╬п╡п╟я┌п╣п╩я▄я│п╨п╦я┘ я└я┐п╫п╨я├п╦п╧\n"
 
 #: common.c:137
+msgid "reading user-defined types\n"
+msgstr "я┤я┌п╣п╫п╦п╣ п©п╬п╩я▄п╥п╬п╡п╟я┌п╣п╩я▄я│п╨п╦я┘ я┌п╦п©п╬п╡\n"
+
+#: common.c:143
+msgid "reading procedural languages\n"
+msgstr "я┤я┌п╣п╫п╦п╣ п©я─п╬я├п╣п╢я┐я─п╫я▀я┘ я▐п╥я▀п╨п╬п╡\n"
+
+#: common.c:147
+msgid "reading user-defined aggregate functions\n"
+msgstr "я┤я┌п╣п╫п╦п╣ п©п╬п╩я▄п╥п╬п╡п╟я┌п╣п╩я▄я│п╨п╦я┘ п╟пЁя─п╣пЁп╟я┌п╫я▀я┘ я└я┐п╫п╨я├п╦п╧\n"
+
+#: common.c:151
+msgid "reading user-defined operators\n"
+msgstr "я┤я┌п╣п╫п╦п╣ п©п╬п╩я▄п╥п╬п╡п╟я┌п╣п╩я▄я│п╨п╦я┘ п╬п©п╣я─п╟я┌п╬я─п╬п╡\n"
+
+#: common.c:156
+msgid "reading user-defined operator classes\n"
+msgstr "я┤я┌п╣п╫п╦п╣ п©п╬п╩я▄п╥п╬п╡п╟я┌п╣п╩я▄я│п╨п╦я┘ п╨п╩п╟я│я│п╬п╡ п╬п©п╣я─п╟я┌п╬я─п╬п╡\n"
+
+#: common.c:160
+msgid "reading user-defined text search parsers\n"
+msgstr "я┤я┌п╣п╫п╦п╣ п©п╬п╩я▄п╥п╬п╡п╟я┌п╣п╩я▄я│п╨п╦я┘ п╟п╫п╟п╩п╦п╥п╟я┌п╬я─п╬п╡ я┌п╣п╨я│я┌п╬п╡п╬пЁп╬ п©п╬п╦я│п╨п╟\n"
+
+#: common.c:164
+msgid "reading user-defined text search templates\n"
+msgstr "я┤я┌п╣п╫п╦п╣ п©п╬п╩я▄п╥п╬п╡п╟я┌п╣п╩я▄я│п╨п╦я┘ я┬п╟п╠п╩п╬п╫п╬п╡ я┌п╣п╨я│я┌п╬п╡п╬пЁп╬ п©п╬п╦я│п╨п╟\n"
+
+#: common.c:168
+msgid "reading user-defined text search dictionaries\n"
+msgstr "я┤я┌п╣п╫п╦п╣ п©п╬п╩я▄п╥п╬п╡п╟я┌п╣п╩я▄я│п╨п╦я┘ я│п╩п╬п╡п╟я─п╣п╧ я┌п╣п╨я│я┌п╬п╡п╬пЁп╬ п©п╬п╦я│п╨п╟\n"
+
+#: common.c:172
+msgid "reading user-defined text search configurations\n"
+msgstr "я┤я┌п╣п╫п╦п╣ п©п╬п╩я▄п╥п╬п╡п╟я┌п╣п╩я▄я│п╨п╦я┘ п╨п╬п╫я└п╦пЁя┐я─п╟я├п╦п╧ я┌п╣п╨я│я┌п╬п╡п╬пЁп╬ п©п╬п╦я│п╨п╟\n"
+
+#: common.c:176
+msgid "reading user-defined operator families\n"
+msgstr "я┤я┌п╣п╫п╦п╣ п©п╬п╩я▄п╥п╬п╡п╟я┌п╣п╩я▄я│п╨п╦я┘ я│п╣п╪п╣п╧я│я┌п╡ п╬п©п╣я─п╟я┌п╬я─п╬п╡\n"
+
+#: common.c:180
+msgid "reading user-defined conversions\n"
+msgstr "я┤я┌п╣п╫п╦п╣ п©п╬п╩я▄п╥п╬п╡п╟я┌п╣п╩я▄я│п╨п╦я┘ п©я─п╣п╬п╠я─п╟п╥п╬п╡п╟п╫п╦п╧\n"
+
+#: common.c:184
 msgid "reading table inheritance information\n"
-msgstr "чтение информации о наследовании таблиц\n"
+msgstr "я┤я┌п╣п╫п╦п╣ п╦п╫я└п╬я─п╪п╟я├п╦п╦ п╬ п╫п╟я│п╩п╣п╢п╬п╡п╟п╫п╦п╦ я┌п╟п╠п╩п╦я├\n"
 
-#: common.c:141
+#: common.c:188
 msgid "reading rewrite rules\n"
-msgstr "чтение правил\n"
+msgstr "я┤я┌п╣п╫п╦п╣ п©я─п╟п╡п╦п╩ п©п╣я─п╣п╥п╟п©п╦я│п╦\n"
 
-#: common.c:145
+#: common.c:192
 msgid "reading type casts\n"
-msgstr "чтение приведения типов\n"
+msgstr "я┤я┌п╣п╫п╦п╣ п©я─п╦п╡п╣п╢п╣п╫п╦п╧ я┌п╦п©п╬п╡\n"
 
-#: common.c:150
+#: common.c:197
 msgid "finding inheritance relationships\n"
-msgstr "поиск информации о наследовании отношений\n"
+msgstr "п©п╬п╦я│п╨ я│п╡я▐п╥п╣п╧ п╫п╟я│п╩п╣п╢п╬п╡п╟п╫п╦я▐\n"
 
-#: common.c:154
+#: common.c:201
 msgid "reading column info for interesting tables\n"
-msgstr "чтение информации о колонках интересующих таблиц\n"
+msgstr "я┤я┌п╣п╫п╦п╣ п╦п╫я└п╬я─п╪п╟я├п╦п╦ п╬ п╨п╬п╩п╬п╫п╨п╟я┘ п╦п╫я┌п╣я─п╣я│я┐я▌я┴п╦я┘ я┌п╟п╠п╩п╦я├\n"
 
-#: common.c:158
+#: common.c:205
 msgid "flagging inherited columns in subtables\n"
-msgstr "пометка наследованных колонок в под-таблицах\n"
+msgstr "п©п╬п╪п╣я┌п╨п╟ п╫п╟я│п╩п╣п╢п╬п╡п╟п╫п╫я▀я┘ п╨п╬п╩п╬п╫п╬п╨ п╡ п©п╬п╢я┌п╟п╠п╩п╦я├п╟я┘\n"
 
-#: common.c:162
+#: common.c:209
 msgid "reading indexes\n"
-msgstr "чтение индексов\n"
+msgstr "я┤я┌п╣п╫п╦п╣ п╦п╫п╢п╣п╨я│п╬п╡\n"
 
-#: common.c:166
+#: common.c:213
 msgid "reading constraints\n"
-msgstr "чтение ограничений\n"
+msgstr "я┤я┌п╣п╫п╦п╣ п╬пЁя─п╟п╫п╦я┤п╣п╫п╦п╧\n"
 
-#: common.c:170
+#: common.c:217
 msgid "reading triggers\n"
-msgstr "чтение триггеров\n"
+msgstr "я┤я┌п╣п╫п╦п╣ я┌я─п╦пЁпЁп╣я─п╬п╡\n"
 
-#: common.c:421
-#: common.c:553
-#: common.c:587
-#: pg_backup_archiver.c:619
-#: pg_backup_archiver.c:970
-#: pg_backup_archiver.c:1084
-#: pg_backup_archiver.c:1522
-#: pg_backup_archiver.c:1672
-#: pg_backup_archiver.c:1705
-#: pg_backup_custom.c:141
-#: pg_backup_custom.c:146
-#: pg_backup_custom.c:152
-#: pg_backup_custom.c:167
-#: pg_backup_custom.c:544
-#: pg_backup_db.c:157
-#: pg_backup_db.c:233
-#: pg_backup_files.c:112
-#: pg_backup_tar.c:168
-#: pg_backup_tar.c:960
-msgid "out of memory\n"
-msgstr "не хватает памяти\n"
-
-#: common.c:728
+#: common.c:789
 #, c-format
 msgid "failed sanity check, parent OID %u of table \"%s\" (OID %u) not found\n"
-msgstr "проверка на разумность: OID родителя %u таблицы \"%s\" (OID %u) не найден\n"
+msgstr "я─п╬п╢п╦я┌п╣п╩я▄я│п╨п╟я▐ я┌п╟п╠п╩п╦я├п╟ я│ OID %u п╢п╩я▐ я┌п╟п╠п╩п╦я├я▀ \"%s\" (OID %u) п╫п╣ п╫п╟п╧п╢п╣п╫п╟\n"
 
-#: common.c:770
-msgid "could not parse numeric array: too many numbers\n"
-msgstr "не удалось проанализировать числовой массив: слишком много чисел\n"
+#: common.c:831
+#, c-format
+msgid "could not parse numeric array \"%s\": too many numbers\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ я─п╟п╥п╬п╠я─п╟я┌я▄ я┤п╦я│п╩п╬п╡п╬п╧ п╪п╟я│я│п╦п╡ \"%s\": я│п╩п╦я┬п╨п╬п╪ п╪п╫п╬пЁп╬ я┤п╦я│п╣п╩\n"
 
-#: common.c:785
-msgid "could not parse numeric array: invalid character in number\n"
-msgstr "не удалось проанализировать числовой массив: неверный символ в числе\n"
+#: common.c:846
+#, c-format
+msgid "could not parse numeric array \"%s\": invalid character in number\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ я─п╟п╥п╬п╠я─п╟я┌я▄ я┤п╦я│п╩п╬п╡п╬п╧ п╪п╟я│я│п╦п╡ \"%s\": п╫п╣п╡п╣я─п╫я▀п╧ я│п╦п╪п╡п╬п╩ п╡ я┤п╦я│п╩п╣\n"
 
-#: pg_backup_archiver.c:45
+#: common.c:959
+msgid "cannot duplicate null pointer\n"
+msgstr "п©п╬п©я▀я┌п╨п╟ я│п╢п╣п╩п╟я┌я▄ п╨п╬п©п╦я▌ п╫я┐п╩п╣п╡п╬пЁп╬ я┐п╨п╟п╥п╟я┌п╣п╩я▐\n"
+
+#: common.c:962 common.c:973 common.c:984 common.c:995
+#: pg_backup_archiver.c:572 pg_backup_archiver.c:932 pg_backup_archiver.c:1059
+#: pg_backup_archiver.c:1526 pg_backup_archiver.c:1683
+#: pg_backup_archiver.c:1724 pg_backup_custom.c:138 pg_backup_custom.c:143
+#: pg_backup_custom.c:149 pg_backup_custom.c:164 pg_backup_custom.c:549
+#: pg_backup_db.c:141 pg_backup_db.c:210 pg_backup_db.c:429
+#: pg_backup_files.c:111 pg_backup_null.c:69 pg_backup_tar.c:168
+#: pg_backup_tar.c:1014
+msgid "out of memory\n"
+msgstr "п╫п╣я┘п╡п╟я┌п╨п╟ п©п╟п╪я▐я┌п╦\n"
+
+#: pg_backup_archiver.c:39
 msgid "archiver"
-msgstr "архиватор"
+msgstr "п╟я─я┘п╦п╡п╟я┌п╬я─"
 
-#: pg_backup_archiver.c:126
-msgid "could not close output archive file\n"
-msgstr "не удалось закрыть архивный файл вывода\n"
-
-#: pg_backup_archiver.c:153
-msgid "-C and -c are incompatible options\n"
-msgstr "Опции -C и -c не совместимы\n"
-
-#: pg_backup_archiver.c:160
-msgid "connecting to database for restore\n"
-msgstr "соединение к базе данных для восстановления\n"
-
-#: pg_backup_archiver.c:162
-msgid "direct database connections are not supported in pre-1.3 archives\n"
-msgstr "прямые соединения к базе данных не поддерживаются в архивах до версии 1.3\n"
-
-#: pg_backup_archiver.c:205
-msgid "implied data-only restore\n"
-msgstr "подразумевается восстановление только данных\n"
-
-#: pg_backup_archiver.c:238
-#, c-format
-msgid "dropping %s %s\n"
-msgstr "сброс %s %s\n"
-
-#: pg_backup_archiver.c:264
-#: pg_backup_archiver.c:266
-#, c-format
-msgid "warning from original dump file: %s\n"
-msgstr "предупреждение из исходного файла выгрузки: %s\n"
-
-#: pg_backup_archiver.c:273
-#, c-format
-msgid "creating %s %s\n"
-msgstr "создание %s %s\n"
-
-#: pg_backup_archiver.c:281
-#, c-format
-msgid "connecting to new database \"%s\"\n"
-msgstr "соединение с новой базой \"%s\"\n"
-
-#: pg_backup_archiver.c:306
-msgid "cannot restore from compressed archive (not configured for compression support)\n"
-msgstr "не восстановить из сжатого архива (поддержка компрессии не была сконфигурирована)\n"
-
-#: pg_backup_archiver.c:326
-msgid "WARNING: skipping large-object restoration\n"
-msgstr "ВНИМАНИЕ: пропускается восстановление больших объектов\n"
-
-#: pg_backup_archiver.c:336
-#, c-format
-msgid "restoring data for table \"%s\"\n"
-msgstr "восстанавливаются данные таблицы \"%s\"\n"
-
-#: pg_backup_archiver.c:368
-#: pg_backup_archiver.c:454
-#, c-format
-msgid "fixing up large-object cross-reference for \"%s\"\n"
-msgstr "восстанавливаются кросс-ссылки среди больших объектов для \"%s\"\n"
-
-#: pg_backup_archiver.c:379
-#, c-format
-msgid "executing %s %s\n"
-msgstr "выполнение %s %s\n"
-
-#: pg_backup_archiver.c:399
-#, c-format
-msgid "setting owner and privileges for %s %s\n"
-msgstr "установка владельца и привилегий для %s %s\n"
-
-#: pg_backup_archiver.c:517
-msgid "disabling triggers\n"
-msgstr "отключение триггеров\n"
-
-#: pg_backup_archiver.c:556
-msgid "enabling triggers\n"
-msgstr "подключение триггеров\n"
-
-#: pg_backup_archiver.c:591
-msgid "internal error -- WriteData cannot be called outside the context of a DataDumper routine\n"
-msgstr "внутренняя ошибка -- нельзя вызывать WriteData вне контекста процедуры DataDumper\n"
-
-#: pg_backup_archiver.c:734
-msgid "large-object output not supported in chosen format\n"
-msgstr "выгрузка больших объектов не поддерживается для выбранного формата\n"
-
-#: pg_backup_archiver.c:774
-#: pg_backup_archiver.c:862
-msgid "committing large-object transactions\n"
-msgstr "подтверждение транзакций для больших объектов (COMMIT)\n"
-
-#: pg_backup_archiver.c:784
-#, c-format
-msgid "restored %d large objects\n"
-msgstr "число восстановленных больших объектов: %d\n"
-
-#: pg_backup_archiver.c:801
-msgid "cannot restore large objects without a database connection\n"
-msgstr "восстановление больших объектов невозможно без подсоединения к базе данных\n"
-
-#: pg_backup_archiver.c:815
-msgid "starting large-object transactions\n"
-msgstr "начало транзакций для больших объектов\n"
-
-#: pg_backup_archiver.c:823
-msgid "could not create large object\n"
-msgstr "не удалось создать большой объект\n"
-
-#: pg_backup_archiver.c:825
-#, c-format
-msgid "restoring large object with OID %u as %u\n"
-msgstr "восстанавливается большой объект с OID %u как %u\n"
-
-#: pg_backup_archiver.c:831
-msgid "could not open large object\n"
-msgstr "не удалось открыть большой объект\n"
-
-#: pg_backup_archiver.c:846
-#, c-format
-msgid "wrote remaining %lu bytes of large-object data (result = %lu)\n"
-msgstr "число записанных байт большого объекта: %lu (результат = %lu)\n"
-
-#: pg_backup_archiver.c:849
-#: pg_backup_archiver.c:1141
-#, c-format
-msgid "could not write to large object (result: %lu, expected: %lu)\n"
-msgstr "не удалось записать большой объект (результат: %lu, ожидалось: %lu)\n"
-
-#: pg_backup_archiver.c:895
-msgid "could not open TOC file\n"
-msgstr "не удалось открыть файл оглавления\n"
-
-#: pg_backup_archiver.c:916
-#, c-format
-msgid "WARNING: line ignored: %s\n"
-msgstr "ВНИМАНИЕ: строка проигнорирована: %s\n"
-
-#: pg_backup_archiver.c:923
-#, c-format
-msgid "could not find entry for ID %d\n"
-msgstr "не найдена запись для ID %d\n"
-
-#: pg_backup_archiver.c:933
-#: pg_backup_files.c:156
-#: pg_backup_files.c:439
-#, c-format
-msgid "could not close TOC file: %s\n"
-msgstr "не удалось закрыть файл оглавления: %s\n"
-
-#: pg_backup_archiver.c:1032
-#: pg_backup_files.c:130
-#, c-format
-msgid "could not open output file: %s\n"
-msgstr "не удалось открыть файл вывода: %s\n"
-
-#: pg_backup_archiver.c:1048
+#: pg_backup_archiver.c:124 pg_backup_archiver.c:1027
 #, c-format
 msgid "could not close output file: %s\n"
-msgstr "не удалось закрыть файл вывода: %s\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╥п╟п╨я─я▀я┌я▄ п╡я▀я┘п╬п╢п╫п╬п╧ я└п╟п╧п╩: %s\n"
 
-#: pg_backup_archiver.c:1137
+#: pg_backup_archiver.c:150
+msgid "-C and -c are incompatible options\n"
+msgstr "п÷п╟я─п╟п╪п╣я┌я─я▀ -C п╦ -c п╫п╣я│п╬п╡п╪п╣я│я┌п╦п╪я▀\n"
+
+#: pg_backup_archiver.c:156
+msgid "-C and -1 are incompatible options\n"
+msgstr "п÷п╟я─п╟п╪п╣я┌я─я▀ -C п╦ -1 п╫п╣я│п╬п╡п╪п╣я│я┌п╦п╪я▀\n"
+
+#: pg_backup_archiver.c:163
+msgid "connecting to database for restore\n"
+msgstr "п©п╬п╢п╨п╩я▌я┤п╣п╫п╦п╣ п╨ п╠п╟п╥п╣ п╢п╟п╫п╫я▀я┘ п╢п╩я▐ п╡п╬я│я│я┌п╟п╫п╬п╡п╩п╣п╫п╦я▐\n"
+
+#: pg_backup_archiver.c:165
+msgid "direct database connections are not supported in pre-1.3 archives\n"
+msgstr ""
+"п©я─я▐п╪я▀п╣ п©п╬п╢п╨п╩я▌я┤п╣п╫п╦я▐ п╨ п╠п╟п╥п╣ п╢п╟п╫п╫я▀я┘ п╫п╣ п©п╬п╢п╢п╣я─п╤п╦п╡п╟я▌я┌я│я▐ п╡ п╟я─я┘п╦п╡п╟я┘ п╢п╬ п╡п╣я─я│п╦п╦ 1.3\n"
+
+#: pg_backup_archiver.c:207
+msgid "implied data-only restore\n"
+msgstr "п©п╬п╢я─п╟п╥я┐п╪п╣п╡п╟п╣я┌я│я▐ п╡п╬я│я│я┌п╟п╫п╬п╡п╩п╣п╫п╦п╣ я┌п╬п╩я▄п╨п╬ п╢п╟п╫п╫я▀я┘\n"
+
+#: pg_backup_archiver.c:250
+#, c-format
+msgid "dropping %s %s\n"
+msgstr "я┐п╢п╟п╩я▐п╣я┌я│я▐ %s %s\n"
+
+#: pg_backup_archiver.c:290 pg_backup_archiver.c:292
+#, c-format
+msgid "warning from original dump file: %s\n"
+msgstr "п©я─п╣п╢я┐п©я─п╣п╤п╢п╣п╫п╦п╣ п╦п╥ п╦я│я┘п╬п╢п╫п╬пЁп╬ я└п╟п╧п╩п╟: %s\n"
+
+#: pg_backup_archiver.c:299
+#, c-format
+msgid "creating %s %s\n"
+msgstr "я│п╬п╥п╢п╟я▒я┌я│я▐ %s %s\n"
+
+#: pg_backup_archiver.c:314
+#, c-format
+msgid "table \"%s\" could not be created, will not restore its data\n"
+msgstr "я│п╬п╥п╢п╟я┌я▄ я┌п╟п╠п╩п╦я├я┐ \"%s\" п╫п╣ я┐п╢п╟п╩п╬я│я▄, п╣я▒ п╢п╟п╫п╫я▀п╣ п╫п╣ п╠я┐п╢я┐я┌ п╡п╬я│я│я┌п╟п╫п╬п╡п╩п╣п╫я▀\n"
+
+#: pg_backup_archiver.c:334
+#, c-format
+msgid "connecting to new database \"%s\"\n"
+msgstr "п©п╬п╢п╨п╩я▌я┤п╣п╫п╦п╣ п╨ п╫п╬п╡п╬п╧ п╠п╟п╥п╣ п╢п╟п╫п╫я▀я┘ \"%s\"\n"
+
+#: pg_backup_archiver.c:358
+msgid ""
+"cannot restore from compressed archive (compression not supported in this "
+"installation)\n"
+msgstr ""
+"п╡п╬я│я│я┌п╟п╫п╬п╡п╦я┌я▄ п╢п╟п╫п╫я▀п╣ п╦п╥ я│п╤п╟я┌п╬пЁп╬ п╟я─я┘п╦п╡п╟ п╫п╣п╩я▄п╥я▐ (я┐я│я┌п╟п╫п╬п╡п╩п╣п╫п╫п╟я▐ п╡п╣я─я│п╦я▐ п╫п╣ "
+"п©п╬п╢п╢п╣я─п╤п╦п╡п╟п╣я┌ я│п╤п╟я┌п╦п╣)\n"
+
+#: pg_backup_archiver.c:366
+#, c-format
+msgid "restoring %s\n"
+msgstr "п╡п╬я│я│я┌п╟п╫п╟п╡п╩п╦п╡п╟п╣я┌я│я▐ %s\n"
+
+#: pg_backup_archiver.c:380
+#, c-format
+msgid "restoring data for table \"%s\"\n"
+msgstr "п╡п╬я│я│я┌п╟п╫п╟п╡п╩п╦п╡п╟я▌я┌я│я▐ п╢п╟п╫п╫я▀п╣ я┌п╟п╠п╩п╦я├я▀ \"%s\"\n"
+
+#: pg_backup_archiver.c:411
+#, c-format
+msgid "executing %s %s\n"
+msgstr "п╡я▀п©п╬п╩п╫я▐п╣я┌я│я▐ %s %s\n"
+
+#: pg_backup_archiver.c:429
+#, c-format
+msgid "setting owner and privileges for %s %s\n"
+msgstr "я┐я│я┌п╟п╫п╬п╡п╨п╟ п╡п╩п╟п╢п╣п╩я▄я├п╟ п╦ п©я─п╟п╡: %s %s\n"
+
+#: pg_backup_archiver.c:488
+#, c-format
+msgid "disabling triggers for %s\n"
+msgstr "п╬я┌п╨п╩я▌я┤п╟я▌я┌я│я▐ я┌я─п╦пЁпЁп╣я─я▀ я┌п╟п╠п╩п╦я├я▀ %s\n"
+
+#: pg_backup_archiver.c:514
+#, c-format
+msgid "enabling triggers for %s\n"
+msgstr "п╡п╨п╩я▌я┤п╟я▌я┌я│я▐ я┌я─п╦пЁпЁп╣я─я▀ я┌п╟п╠п╩п╦я├я▀ %s\n"
+
+#: pg_backup_archiver.c:544
+msgid ""
+"internal error -- WriteData cannot be called outside the context of a "
+"DataDumper routine\n"
+msgstr ""
+"п╡п╫я┐я┌я─п╣п╫п╫я▐я▐ п╬я┬п╦п╠п╨п╟ -- WriteData п╫п╣п╩я▄п╥я▐ п╡я▀п╥я▀п╡п╟я┌я▄ п╡п╫п╣ п╨п╬п╫я┌п╣п╨я│я┌п╟ п©я─п╬я├п╣п╢я┐я─я▀ "
+"DataDumper\n"
+
+#: pg_backup_archiver.c:687
+msgid "large-object output not supported in chosen format\n"
+msgstr "п╡я▀п╠я─п╟п╫п╫я▀п╧ я└п╬я─п╪п╟я┌ п╫п╣ п©п╬п╢п╢п╣я─п╤п╦п╡п╟п╣я┌ п╡я▀пЁя─я┐п╥п╨я┐ п╠п╬п╩я▄я┬п╦я┘ п╬п╠я┼п╣п╨я┌п╬п╡\n"
+
+#: pg_backup_archiver.c:741
+#, c-format
+msgid "restored %d large objects\n"
+msgstr "п╡п╬я│я│я┌п╟п╫п╬п╡п╩п╣п╫п╬ п╠п╬п╩я▄я┬п╦я┘ п╬п╠я┼п╣п╨я┌п╬п╡: %d\n"
+
+#: pg_backup_archiver.c:758 pg_backup_tar.c:732
+#, c-format
+msgid "restoring large object with OID %u\n"
+msgstr "п╡п╬я│я│я┌п╟п╫п╬п╡п╩п╣п╫п╦п╣ п╠п╬п╩я▄я┬п╬пЁп╬ п╬п╠я┼п╣п╨я┌п╟ я│ OID %u\n"
+
+#: pg_backup_archiver.c:764
+#, c-format
+msgid "could not create large object %u\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ я│п╬п╥п╢п╟я┌я▄ п╠п╬п╩я▄я┬п╬п╧ п╬п╠я┼п╣п╨я┌ %u\n"
+
+#: pg_backup_archiver.c:769
+msgid "could not open large object\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╬я┌п╨я─я▀я┌я▄ п╠п╬п╩я▄я┬п╬п╧ п╬п╠я┼п╣п╨я┌\n"
+
+#: pg_backup_archiver.c:824
+#, c-format
+msgid "could not open TOC file \"%s\": %s\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╬я┌п╨я─я▀я┌я▄ я└п╟п╧п╩ п╬пЁп╩п╟п╡п╩п╣п╫п╦я▐ \"%s\": %s\n"
+
+#: pg_backup_archiver.c:865
+#, c-format
+msgid "WARNING: line ignored: %s\n"
+msgstr "п▓п²п≤п°п░п²п≤п∙: я│я┌я─п╬п╨п╟ п©я─п╬п╦пЁп╫п╬я─п╦я─п╬п╡п╟п╫п╟: %s\n"
+
+#: pg_backup_archiver.c:872
+#, c-format
+msgid "could not find entry for ID %d\n"
+msgstr "п╫п╣ п╫п╟п╧п╢п╣п╫п╟ п╥п╟п©п╦я│я▄ п╢п╩я▐ ID %d\n"
+
+#: pg_backup_archiver.c:882 pg_backup_files.c:169 pg_backup_files.c:454
+#, c-format
+msgid "could not close TOC file: %s\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╥п╟п╨я─я▀я┌я▄ я└п╟п╧п╩ п╬пЁп╩п╟п╡п╩п╣п╫п╦я▐: %s\n"
+
+#: pg_backup_archiver.c:1006 pg_backup_custom.c:175 pg_backup_files.c:127
+#: pg_backup_files.c:259
+#, c-format
+msgid "could not open output file \"%s\": %s\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╬я┌п╨я─я▀я┌я▄ п╡я▀я┘п╬п╢п╫п╬п╧ я└п╟п╧п╩ \"%s\": %s\n"
+
+#: pg_backup_archiver.c:1009 pg_backup_custom.c:182 pg_backup_files.c:134
+#, c-format
+msgid "could not open output file: %s\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╬я┌п╨я─я▀я┌я▄ п╡я▀я┘п╬п╢п╫п╬п╧ я└п╟п╧п╩: %s\n"
+
+#: pg_backup_archiver.c:1102
 #, c-format
 msgid "wrote %lu bytes of large object data (result = %lu)\n"
-msgstr "число записанных данных большого объекта (в байтах): %lu (результат = %lu)\n"
+msgstr "п╥п╟п©п╦я│п╟п╫п╬ %lu п╠п╟п╧я┌ п╢п╟п╫п╫я▀я┘ п╠п╬п╩я▄я┬п╬пЁп╬ п╬п╠я┼п╣п╨я┌п╟ (я─п╣п╥я┐п╩я▄я┌п╟я┌ = %lu)\n"
 
-#: pg_backup_archiver.c:1159
-msgid "could not write to compressed archive\n"
-msgstr "не получилось записать в компрессированный архив\n"
-
-#: pg_backup_archiver.c:1167
-msgid "could not write to custom output routine\n"
-msgstr "не получилось записать в пользовательскую процедуру вывода\n"
-
-#: pg_backup_archiver.c:1182
+#: pg_backup_archiver.c:1106
 #, c-format
-msgid "could not write to output file (%lu != %lu)\n"
-msgstr "не получилось записать в выходной файл (%lu != %lu)\n"
+msgid "could not write to large object (result: %lu, expected: %lu)\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╥п╟п©п╦я│п╟я┌я▄ п╠п╬п╩я▄я┬п╬п╧ п╬п╠я┼п╣п╨я┌ (я─п╣п╥я┐п╩я▄я┌п╟я┌: %lu, п╬п╤п╦п╢п╟п╩п╬я│я▄: %lu)\n"
 
-#: pg_backup_archiver.c:1267
+#: pg_backup_archiver.c:1164 pg_backup_archiver.c:1187 pg_backup_custom.c:764
+#: pg_backup_custom.c:956 pg_backup_custom.c:970 pg_backup_files.c:429
+#: pg_backup_tar.c:589 pg_backup_tar.c:1092 pg_backup_tar.c:1385
+#, c-format
+msgid "could not write to output file: %s\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╥п╟п©п╦я│п╟я┌я▄ п╡ п╡я▀я┘п╬п╢п╫п╬п╧ я└п╟п╧п╩: %s\n"
+
+#: pg_backup_archiver.c:1172
+msgid "could not write to custom output routine\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╡я▀п╡п╣я│я┌п╦ п╢п╟п╫п╫я┐я▌ п╡ п©п╬п╩я▄п╥п╬п╡п╟я┌п╣п╩я▄я│п╨я┐я▌ п©я─п╬я├п╣п╢я┐я─я┐\n"
+
+#: pg_backup_archiver.c:1270
 msgid "Error while INITIALIZING:\n"
-msgstr "Ошибка при ИНИЦИАЛИЗАЦИИ:\n"
+msgstr "п·я┬п╦п╠п╨п╟ п©я─п╦ п╦п╫п╦я├п╦п╟п╩п╦п╥п╟я├п╦п╦:\n"
 
-#: pg_backup_archiver.c:1272
+#: pg_backup_archiver.c:1275
 msgid "Error while PROCESSING TOC:\n"
-msgstr "Ошибка при ОБРАБОТКЕ ОГЛАВЛЕНИЯ:\n"
+msgstr "п·я┬п╦п╠п╨п╟ п©я─п╦ п╬п╠я─п╟п╠п╬я┌п╨п╣ п╬пЁп╩п╟п╡п╩п╣п╫п╦я▐:\n"
 
-#: pg_backup_archiver.c:1277
+#: pg_backup_archiver.c:1280
 msgid "Error while FINALIZING:\n"
-msgstr "Ошибка при ЗАВЕРШЕНИИ:\n"
+msgstr "п·я┬п╦п╠п╨п╟ п©я─п╦ п╥п╟п╡п╣я─я┬п╣п╫п╦п╦:\n"
 
-#: pg_backup_archiver.c:1282
+#: pg_backup_archiver.c:1285
 #, c-format
 msgid "Error from TOC entry %d; %u %u %s %s %s\n"
-msgstr "Ошибка из записи оглавления %d; %u %u %s %s %s\n"
+msgstr "п·я┬п╦п╠п╨п╟ п╦п╥ п╥п╟п©п╦я│п╦ п╬пЁп╩п╟п╡п╩п╣п╫п╦я▐ %d; %u %u %s %s %s\n"
 
-#: pg_backup_archiver.c:1415
+#: pg_backup_archiver.c:1419
 #, c-format
-msgid "Unexpected data offset flag %d\n"
-msgstr "Неожиданный флаг смещения данных: %d\n"
+msgid "unexpected data offset flag %d\n"
+msgstr "п╫п╣п╬п╤п╦п╢п╟п╫п╫я▀п╧ я└п╩п╟пЁ я│п╪п╣я┴п╣п╫п╦я▐ п╢п╟п╫п╫я▀я┘: %d\n"
 
-#: pg_backup_archiver.c:1428
+#: pg_backup_archiver.c:1432
 msgid "file offset in dump file is too large\n"
-msgstr "смещение в файле вывода слишком большое\n"
+msgstr "я│п╩п╦я┬п╨п╬п╪ п╠п╬п╩я▄я┬п╬п╣ я│п╪п╣я┴п╣п╫п╦п╣ п╡ я└п╟п╧п╩п╣ п╡я▀п╡п╬п╢п╟\n"
 
-#: pg_backup_archiver.c:1540
+#: pg_backup_archiver.c:1529 pg_backup_archiver.c:2791 pg_backup_custom.c:740
+#: pg_backup_files.c:416 pg_backup_tar.c:788
+msgid "unexpected end of file\n"
+msgstr "п╫п╣п╬п╤п╦п╢п╟п╫п╫я▀п╧ п╨п╬п╫п╣я├ я└п╟п╧п╩п╟\n"
+
+#: pg_backup_archiver.c:1546
 msgid "attempting to ascertain archive format\n"
-msgstr "попытка выяснить формат архива\n"
+msgstr "п©п╬п©я▀я┌п╨п╟ п╡я▀я▐я│п╫п╦я┌я▄ я└п╬я─п╪п╟я┌ п╟я─я┘п╦п╡п╟\n"
 
-#: pg_backup_archiver.c:1560
-#: pg_backup_files.c:148
+#: pg_backup_archiver.c:1562 pg_backup_custom.c:194 pg_backup_files.c:152
+#: pg_backup_files.c:304
+#, c-format
+msgid "could not open input file \"%s\": %s\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╬я┌п╨я─я▀я┌я▄ п╡я┘п╬п╢п╫п╬п╧ я└п╟п╧п╩ \"%s\": %s\n"
+
+#: pg_backup_archiver.c:1569 pg_backup_custom.c:201 pg_backup_files.c:159
 #, c-format
 msgid "could not open input file: %s\n"
-msgstr "не удалось открыть входной файл: %s\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╬я┌п╨я─я▀я┌я▄ п╡я┘п╬п╢п╫п╬п╧ я└п╟п╧п╩: %s\n"
 
-#: pg_backup_archiver.c:1567
+#: pg_backup_archiver.c:1578
 #, c-format
 msgid "could not read input file: %s\n"
-msgstr "не удалось считать из входного файла: %s\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п©я─п╬я┤п╦я┌п╟я┌я▄ п╡я┘п╬п╢п╫п╬п╧ я└п╟п╧п╩: %s\n"
 
-#: pg_backup_archiver.c:1569
+#: pg_backup_archiver.c:1580
 #, c-format
 msgid "input file is too short (read %lu, expected 5)\n"
-msgstr "входной файл слишком короткий (считано: %lu, ожидалось: 5)\n"
+msgstr "п╡я┘п╬п╢п╫п╬п╧ я└п╟п╧п╩ я│п╩п╦я┬п╨п╬п╪ п╨п╬я─п╬я┌п╨п╦п╧ (п©я─п╬я┤п╦я┌п╟п╫п╬ п╠п╟п╧я┌: %lu, п╬п╤п╦п╢п╟п╩п╬я│я▄: 5)\n"
 
-#: pg_backup_archiver.c:1622
+#: pg_backup_archiver.c:1633
 msgid "input file does not appear to be a valid archive (too short?)\n"
-msgstr "входной файл не выглядит корректным архивом ( возможно, слишком мал?)\n"
+msgstr "п╡я┘п╬п╢п╫п╬п╧ я└п╟п╧п╩ п╫п╣ п©п╬я┘п╬п╤ п╫п╟ п╟я─я┘п╦п╡ (п╡п╬п╥п╪п╬п╤п╫п╬, я│п╩п╦я┬п╨п╬п╪ п╪п╟п╩?)\n"
 
-#: pg_backup_archiver.c:1625
+#: pg_backup_archiver.c:1636
 msgid "input file does not appear to be a valid archive\n"
-msgstr "входной файл не выглядит корректным архивом\n"
+msgstr "п╡я┘п╬п╢п╫п╬п╧ я└п╟п╧п╩ п╫п╣ п©п╬я┘п╬п╤ п╫п╟ п╟я─я┘п╦п╡\n"
 
-#: pg_backup_archiver.c:1643
+#: pg_backup_archiver.c:1654
 #, c-format
 msgid "read %lu bytes into lookahead buffer\n"
-msgstr "прочитано байт: %lu в буфер предварительного просмотра\n"
+msgstr "п╡ п╠я┐я└п╣я─ п©я─п╣п╢п╡п╟я─п╦я┌п╣п╩я▄п╫п╬пЁп╬ п©я─п╬я│п╪п╬я┌я─п╟ п©я─п╬я┤п╦я┌п╟п╫п╬ п╠п╟п╧я┌: %lu\n"
 
-#: pg_backup_archiver.c:1650
+#: pg_backup_archiver.c:1661
 #, c-format
-msgid "could not close the input file after reading header: %s\n"
-msgstr "не удалось закрыть входной файл после прочтения заголовка: %s\n"
+msgid "could not close input file: %s\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╥п╟п╨я─я▀я┌я▄ п╡я┘п╬п╢п╫п╬п╧ я└п╟п╧п╩: %s\n"
 
-#: pg_backup_archiver.c:1667
+#: pg_backup_archiver.c:1678
 #, c-format
 msgid "allocating AH for %s, format %d\n"
-msgstr "выделяется AH для %s, формат %d\n"
+msgstr "п╡я▀п╢п╣п╩п╣п╫п╦п╣ я│я┌я─я┐п╨я┌я┐я─я▀ AH п╢п╩я▐ %s, я└п╬я─п╪п╟я┌ %d\n"
 
-#: pg_backup_archiver.c:1721
+#: pg_backup_archiver.c:1755
 #, c-format
 msgid "archive format is %d\n"
-msgstr "формат архива: %d\n"
+msgstr "я└п╬я─п╪п╟я┌ п╟я─я┘п╦п╡п╟: %d\n"
 
-#: pg_backup_archiver.c:1749
+#: pg_backup_archiver.c:1782
 #, c-format
 msgid "unrecognized file format \"%d\"\n"
-msgstr "неопознанный формат файла: \"%d\"\n"
+msgstr "п╫п╣п╬п©п╬п╥п╫п╟п╫п╫я▀п╧ я└п╬я─п╪п╟я┌ я└п╟п╧п╩п╟: \"%d\"\n"
 
-#: pg_backup_archiver.c:1877
+#: pg_backup_archiver.c:1905
 #, c-format
 msgid "entry ID %d out of range -- perhaps a corrupt TOC\n"
-msgstr "ID записи %d вне диапазона -- возможно повреждено оглавление\n"
+msgstr "ID п╥п╟п©п╦я│п╦ %d п╡п╫п╣ п╢п╦п╟п©п╟п╥п╬п╫п╟ - п╡п╬п╥п╪п╬п╤п╫п╬ п©п╬п╡я─п╣п╤п╢п╣п╫п╬ п╬пЁп╩п╟п╡п╩п╣п╫п╦п╣\n"
 
-#: pg_backup_archiver.c:1962
+#: pg_backup_archiver.c:1990
 #, c-format
 msgid "read TOC entry %d (ID %d) for %s %s\n"
-msgstr "прочитана запись оглавления: %d (ID %d) для %s %s\n"
+msgstr "п©я─п╬я┤п╦я┌п╟п╫п╟ п╥п╟п©п╦я│я▄ п╬пЁп╩п╟п╡п╩п╣п╫п╦я▐ %d (ID %d): %s %s\n"
 
-#: pg_backup_archiver.c:2124
+#: pg_backup_archiver.c:2024
+#, c-format
+msgid "unrecognized encoding \"%s\"\n"
+msgstr "п╫п╣я─п╟я│п©п╬п╥п╫п╟п╫п╫п╟я▐ п╨п╬п╢п╦я─п╬п╡п╨п╟ \"%s\"\n"
+
+#: pg_backup_archiver.c:2029
+#, c-format
+msgid "invalid ENCODING item: %s\n"
+msgstr "п╫п╣п╡п╣я─п╫я▀п╧ я█п╩п╣п╪п╣п╫я┌ ENCODING: %s\n"
+
+#: pg_backup_archiver.c:2047
+#, c-format
+msgid "invalid STDSTRINGS item: %s\n"
+msgstr "п╫п╣п╡п╣я─п╫я▀п╧ я█п╩п╣п╪п╣п╫я┌ STDSTRINGS: %s\n"
+
+#: pg_backup_archiver.c:2208
 #, c-format
 msgid "could not set session user to \"%s\": %s"
-msgstr "не удалось установить пользователя сессии в \"%s\": %s"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п©п╣я─п╣п╨п╩я▌я┤п╦я┌я▄ п©п╬п╩я▄п╥п╬п╡п╟я┌п╣п╩я▐ я│п╣я│я│п╦п╦ п╫п╟ \"%s\": %s"
 
-#: pg_backup_archiver.c:2436
-#: pg_backup_archiver.c:2573
+#: pg_backup_archiver.c:2531 pg_backup_archiver.c:2706
 #, c-format
 msgid "WARNING: don't know how to set owner for object type %s\n"
-msgstr "ВНИМАНИЕ: не знаю как установить владельца для объекта типа %s\n"
+msgstr "п▓п²п≤п°п░п²п≤п∙: п╫п╣п╦п╥п╡п╣я│я┌п╫п╬, п╨п╟п╨ п╫п╟п╥п╫п╟я┤п╦я┌я▄ п╡п╩п╟п╢п╣п╩я▄я├п╟ п╢п╩я▐ п╬п╠я┼п╣п╨я┌п╟ я┌п╦п©п╟ %s\n"
 
-#: pg_backup_archiver.c:2606
-msgid "WARNING: requested compression not available in this installation -- archive will be uncompressed\n"
-msgstr "ВНИМАНИЕ: запрошенное сжатие не доступно в этой установке -- архив будет некомпрессирован\n"
+#: pg_backup_archiver.c:2759
+msgid ""
+"WARNING: requested compression not available in this installation -- archive "
+"will be uncompressed\n"
+msgstr ""
+"п▓п²п≤п°п░п²п≤п∙: я┐я│я┌п╟п╫п╬п╡п╩п╣п╫п╫п╟я▐ п╡п╣я─я│п╦я▐ п©я─п╬пЁя─п╟п╪п╪я▀ п╫п╣ п©п╬п╢п╢п╣я─п╤п╦п╡п╟п╣я┌ я│п╤п╟я┌п╦п╣ -- п╟я─я┘п╦п╡ п╫п╣ "
+"п╠я┐п╢п╣я┌ я│п╤п╦п╪п╟я┌я▄я│я▐\n"
 
-#: pg_backup_archiver.c:2641
+#: pg_backup_archiver.c:2794
 msgid "did not find magic string in file header\n"
-msgstr "не найдена магическая строка в файле заголовка\n"
+msgstr "п╡ я└п╟п╧п╩п╣ п╥п╟пЁп╬п╩п╬п╡п╨п╟ п╫п╣ п╫п╟п╧п╢п╣п╫п╟ п╪п╟пЁп╦я┤п╣я│п╨п╟я▐ я│я┌я─п╬п╨п╟\n"
 
-#: pg_backup_archiver.c:2655
+#: pg_backup_archiver.c:2808
 #, c-format
 msgid "unsupported version (%d.%d) in file header\n"
-msgstr "неподдерживаемая версия (%d.%d) в заголовке файла\n"
+msgstr "п╫п╣п©п╬п╢п╢п╣я─п╤п╦п╡п╟п╣п╪п╟я▐ п╡п╣я─я│п╦я▐ (%d.%d) п╡ п╥п╟пЁп╬п╩п╬п╡п╨п╣ я└п╟п╧п╩п╟\n"
 
-#: pg_backup_archiver.c:2660
+#: pg_backup_archiver.c:2813
 #, c-format
 msgid "sanity check on integer size (%lu) failed\n"
-msgstr "проверка на размер integer (%lu) не прошла\n"
+msgstr "п╫п╣я│п╬п╬я┌п╡п╣я┌я│я┌п╡п╦п╣ я─п╟п╥п╪п╣я─п╟ integer (%lu)\n"
 
-#: pg_backup_archiver.c:2664
-msgid "WARNING: archive was made on a machine with larger integers, some operations may fail\n"
-msgstr "ВНИМАНИЕ: архив был сделан на машине с большими целыми, поэтому некоторые операции могут не пройти\n"
+#: pg_backup_archiver.c:2817
+msgid ""
+"WARNING: archive was made on a machine with larger integers, some operations "
+"might fail\n"
+msgstr ""
+"п▓п²п≤п°п░п²п≤п∙: п╟я─я┘п╦п╡ п╠я▀п╩ я│п╢п╣п╩п╟п╫ п╫п╟ п╨п╬п╪п©я▄я▌я┌п╣я─п╣ п╠п╬п╩я▄я┬п╣п╧ я─п╟п╥я─я▐п╢п╫п╬я│я┌п╦ -- п╡п╬п╥п╪п╬п╤п╣п╫ "
+"я│п╠п╬п╧ п╫п╣п╨п╬я┌п╬я─я▀я┘ п╬п©п╣я─п╟я├п╦п╧\n"
 
-#: pg_backup_archiver.c:2674
+#: pg_backup_archiver.c:2827
 #, c-format
 msgid "expected format (%d) differs from format found in file (%d)\n"
-msgstr "ожидаемый формат (%d) отличается от формата указанного в файле (%d)\n"
+msgstr "п╬п╤п╦п╢п╟п╣п╪я▀п╧ я└п╬я─п╪п╟я┌ (%d) п╬я┌п╩п╦я┤п╟п╣я┌я│я▐ п╬я┌ я└п╬я─п╪п╟я┌п╟, я┐п╨п╟п╥п╟п╫п╫п╬пЁп╬ п╡ я└п╟п╧п╩п╣ (%d)\n"
 
-#: pg_backup_archiver.c:2690
-msgid "WARNING: archive is compressed, but this installation does not support compression -- no data will be available\n"
-msgstr "ВНИМАНИЕ: архив сжат, но текущая установка не поддерживает компрессию -- данные будут недоступны\n"
+#: pg_backup_archiver.c:2843
+msgid ""
+"WARNING: archive is compressed, but this installation does not support "
+"compression -- no data will be available\n"
+msgstr ""
+"п▓п²п≤п°п░п²п≤п∙: п╟я─я┘п╦п╡ я│п╤п╟я┌, п╫п╬ я┐я│я┌п╟п╫п╬п╡п╩п╣п╫п╫п╟я▐ п╡п╣я─я│п╦я▐ п╫п╣ п©п╬п╢п╢п╣я─п╤п╦п╡п╟п╣я┌ я│п╤п╟я┌п╦п╣ -- "
+"п╢п╟п╫п╫я▀п╣ п╫п╣п╢п╬я│я┌я┐п©п╫я▀\n"
 
-#: pg_backup_archiver.c:2708
+#: pg_backup_archiver.c:2861
 msgid "WARNING: invalid creation date in header\n"
-msgstr "ВНИМАНИЕ: неверная дата создания в заголовке\n"
+msgstr "п▓п²п≤п°п░п²п≤п∙: п╫п╣п╡п╣я─п╫п╟я▐ п╢п╟я┌п╟ я│п╬п╥п╢п╟п╫п╦я▐ п╡ п╥п╟пЁп╬п╩п╬п╡п╨п╣\n"
 
-#: pg_backup_custom.c:97
+#: pg_backup_custom.c:94
 msgid "custom archiver"
-msgstr "пользовательский архиватор"
+msgstr "п╡п╫п╣я┬п╫п╦п╧ п╟я─я┘п╦п╡п╟я┌п╬я─"
 
-#: pg_backup_custom.c:180
-#: pg_backup_custom.c:191
-#, c-format
-msgid "could not open archive file \"%s\": %s\n"
-msgstr "не удалось открыть файл архива \"%s\": %s\n"
-
-#: pg_backup_custom.c:389
+#: pg_backup_custom.c:399 pg_backup_null.c:148
 msgid "invalid OID for large object\n"
-msgstr "неверный OID для большого объекта\n"
+msgstr "п╫п╣п╡п╣я─п╫я▀п╧ OID п╠п╬п╩я▄я┬п╬пЁп╬ п╬п╠я┼п╣п╨я┌п╟\n"
 
-#: pg_backup_custom.c:447
-msgid "Dumping a specific TOC data block out of order is not supported without ID on this input stream (fseek required)\n"
-msgstr "Выгрузка конкретного блока данных оглавления не по порядку не поддерживается без указания ID в данном входном потоке (необходим fseek)\n"
+#: pg_backup_custom.c:455
+msgid ""
+"dumping a specific TOC data block out of order is not supported without ID "
+"on this input stream (fseek required)\n"
+msgstr ""
+"п╫п╣п©п╬я│п╩п╣п╢п╬п╡п╟я┌п╣п╩я▄п╫п╟я▐ п╡я▀пЁя─я┐п╥п╨п╟ п╬п©я─п╣п╢п╣п╩я▒п╫п╫п╬пЁп╬ п╠п╩п╬п╨п╟ п╬пЁп╩п╟п╡п╩п╣п╫п╦я▐ п╫п╣ п©п╬п╢п╢п╣я─п╤п╦п╡п╟п╣я┌я│я▐ "
+"п╠п╣п╥ ID п╡п╬ п╡я┘п╬п╢п╫п╬п╪ п©п╬я┌п╬п╨п╣ (я┌я─п╣п╠я┐п╣я┌я│я▐ fseek)\n"
 
-#: pg_backup_custom.c:462
+#: pg_backup_custom.c:470
 #, c-format
 msgid "unrecognized data block type (%d) while searching archive\n"
-msgstr "нераспознанный тип блока данных (%d) при поиске архива\n"
+msgstr "п╫п╣я─п╟я│п©п╬п╥п╫п╟п╫п╫я▀п╧ я┌п╦п© п╠п╩п╬п╨п╟ п╢п╟п╫п╫я▀я┘ (%d) п©я─п╦ п©п╬п╦я│п╨п╣ п╟я─я┘п╦п╡п╟\n"
 
-#: pg_backup_custom.c:473
+#: pg_backup_custom.c:481
 #, c-format
 msgid "error during file seek: %s\n"
-msgstr "ошибка при поиске в файле (seek): %s\n"
+msgstr "п╬я┬п╦п╠п╨п╟ п©я─п╦ п©п╣я─п╣п╪п╣я┴п╣п╫п╦п╦ п╡ я└п╟п╧п╩п╣: %s\n"
 
-#: pg_backup_custom.c:480
+#: pg_backup_custom.c:488
 #, c-format
 msgid "found unexpected block ID (%d) when reading data -- expected %d\n"
-msgstr "найден неожиданый ID блока (%d) при чтении данных -- ожидался: %d\n"
+msgstr "п©я─п╦ я┤я┌п╣п╫п╦п╦ п╢п╟п╫п╫я▀я┘ п©п╬п╩я┐я┤п╣п╫ п╫п╣п╬п╤п╦п╢п╟п╫п╫я▀п╧ ID п╠п╩п╬п╨п╟ (%d) -- п╬п╤п╦п╢п╟п╩я│я▐: %d\n"
 
-#: pg_backup_custom.c:491
-msgid "large objects cannot be loaded without a database connection\n"
-msgstr "нельзя загрузить большие объекты без подсоединения к базе\n"
-
-#: pg_backup_custom.c:497
+#: pg_backup_custom.c:502
 #, c-format
 msgid "unrecognized data block type %d while restoring archive\n"
-msgstr "нераспознанный тип блока данных %d при восстановлении архива\n"
+msgstr "п╫п╣я─п╟я│п©п╬п╥п╫п╟п╫п╫я▀п╧ я┌п╦п© п╠п╩п╬п╨п╟ п╢п╟п╫п╫я▀я┘ %d п©я─п╦ п╡п╬я│я│я┌п╟п╫п╬п╡п╩п╣п╫п╦п╦ п╟я─я┘п╦п╡п╟\n"
 
-#: pg_backup_custom.c:531
-#: pg_backup_custom.c:893
+#: pg_backup_custom.c:536 pg_backup_custom.c:906
 #, c-format
 msgid "could not initialize compression library: %s\n"
-msgstr "не удалось проинициализировать библиотеку компрессии: %s\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╦п╫п╦я├п╦п╟п╩п╦п╥п╦я─п╬п╡п╟я┌я▄ п╠п╦п╠п╩п╦п╬я┌п╣п╨я┐ я│п╤п╟я┌п╦я▐: %s\n"
 
-#: pg_backup_custom.c:553
-#: pg_backup_custom.c:676
+#: pg_backup_custom.c:560 pg_backup_custom.c:688
+msgid "could not read from input file: end of file\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п©я─п╬я┤п╦я┌п╟я┌я▄ п╡я┘п╬п╢п╫п╬п╧ я└п╟п╧п╩: п╨п╬п╫п╣я├ я└п╟п╧п╩п╟\n"
+
+#: pg_backup_custom.c:563 pg_backup_custom.c:691
 #, c-format
-msgid "could not read data block -- expected %lu, got %lu\n"
-msgstr "не удалось прочитать блок данный -- ожидалось %lu, получено %lu\n"
+msgid "could not read from input file: %s\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п©я─п╬я┤п╦я┌п╟я┌я▄ п╡я┘п╬п╢п╫п╬п╧ я└п╟п╧п╩: %s\n"
 
-#: pg_backup_custom.c:571
-#: pg_backup_custom.c:601
+#: pg_backup_custom.c:581 pg_backup_custom.c:611
 #, c-format
 msgid "could not uncompress data: %s\n"
-msgstr "не получилось раскомпрессировать данные: %s\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ я─п╟я│п©п╟п╨п╬п╡п╟я┌я▄ п╢п╟п╫п╫я▀п╣: %s\n"
 
-#: pg_backup_custom.c:607
+#: pg_backup_custom.c:617
 #, c-format
 msgid "could not close compression library: %s\n"
-msgstr "не удалось закрыть библиотеку компрессии: %s\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╥п╟п╨я─я▀я┌я▄ п╠п╦п╠п╩п╦п╬я┌п╣п╨я┐ я│п╤п╟я┌п╦я▐: %s\n"
 
-#: pg_backup_custom.c:704
+#: pg_backup_custom.c:719
 #, c-format
 msgid "could not write byte: %s\n"
-msgstr "не получилось записать байт: %s\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╥п╟п©п╦я│п╟я┌я▄ п╠п╟п╧я┌: %s\n"
 
-#: pg_backup_custom.c:748
-#: pg_backup_files.c:414
-#, c-format
-msgid "write error in _WriteBuf (%lu != %lu)\n"
-msgstr "ошибка записи в _WriteBuf (%lu != %lu)\n"
-
-#: pg_backup_custom.c:819
+#: pg_backup_custom.c:833
 #, c-format
 msgid "could not close archive file: %s\n"
-msgstr "не удалось закрыть файл архива: %s\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╥п╟п╨я─я▀я┌я▄ я└п╟п╧п╩ п╟я─я┘п╦п╡п╟: %s\n"
 
-#: pg_backup_custom.c:842
+#: pg_backup_custom.c:856
 msgid "WARNING: ftell mismatch with expected position -- ftell used\n"
-msgstr "ВНИМАНИЕ: ftell не соответствует ожидаемому положению -- ftell используется\n"
+msgstr ""
+"п▓п²п≤п°п░п²п≤п∙: п©п╬п╥п╦я├п╦я▐ ftell п╫п╣ я│п╬п╬я┌п╡п╣я┌я│я┌п╡я┐п╣я┌ п╬п╤п╦п╢п╟п╣п╪п╬п╧ -- п╦я│п©п╬п╩я▄п╥я┐п╣я┌я│я▐ ftell\n"
 
-#: pg_backup_custom.c:925
+#: pg_backup_custom.c:937
 #, c-format
 msgid "could not compress data: %s\n"
-msgstr "не удалось сжать данные: %s\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ я│п╤п╟я┌я▄ п╢п╟п╫п╫я▀п╣: %s\n"
 
-#: pg_backup_custom.c:945
-msgid "could not write compressed chunk\n"
-msgstr "не получилось записать компрессированный блок\n"
-
-#: pg_backup_custom.c:959
-msgid "could not write uncompressed chunk\n"
-msgstr "не получилось записать несжатый блок\n"
-
-#: pg_backup_custom.c:1005
+#: pg_backup_custom.c:1016
 #, c-format
 msgid "could not close compression stream: %s\n"
-msgstr "не удалось закрыть компрессированный поток: %s\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╥п╟п╨я─я▀я┌я▄ п©п╬я┌п╬п╨ я│п╤п╟я┌я▀я┘ п╢п╟п╫п╫я▀я┘: %s\n"
 
-#: pg_backup_db.c:31
+#: pg_backup_db.c:25
 msgid "archiver (db)"
-msgstr "архиватор (db)"
+msgstr "п╟я─я┘п╦п╡п╟я┌п╬я─ (п▒п■)"
 
-#: pg_backup_db.c:68
+#: pg_backup_db.c:54
 msgid "could not get server_version from libpq\n"
-msgstr "%s: не удалось получить версию сервера (server_version) из libpq\n"
+msgstr "%s: п╫п╣ я┐п╢п╟п╩п╬я│я▄ п©п╬п╩я┐я┤п╦я┌я▄ п╡п╣я─я│п╦я▌ я│п╣я─п╡п╣я─п╟ п╦п╥ libpq\n"
 
-#: pg_backup_db.c:79
+#: pg_backup_db.c:65 pg_dumpall.c:1392
 #, c-format
 msgid "server version: %s; %s version: %s\n"
-msgstr "версия сервера: %s; версия %s: %s\n"
+msgstr "п╡п╣я─я│п╦я▐ я│п╣я─п╡п╣я─п╟: %s; п╡п╣я─я│п╦я▐ %s: %s\n"
 
-#: pg_backup_db.c:82
+#: pg_backup_db.c:68 pg_dumpall.c:1395
+#, c-format
 msgid "proceeding despite version mismatch\n"
-msgstr "продолжаем не смотря на несоответствие версий\n"
+msgstr "я─п╟п╠п╬я┌п╟ п©я─п╬п╢п╬п╩п╤п╟п╣я┌я│я▐, п╫п╣я│п╪п╬я┌я─я▐ п╫п╟ п╫п╣я│п╬п╡п©п╟п╢п╣п╫п╦п╣ п╡п╣я─я│п╦п╦\n"
 
-#: pg_backup_db.c:84
-msgid "aborting because of version mismatch  (Use the -i option to proceed anyway.)\n"
-msgstr "остановка из-за несовпадения версий  (Используйте опцию -i для игнорирования.)\n"
+#: pg_backup_db.c:70 pg_dumpall.c:1398
+#, c-format
+msgid ""
+"aborting because of version mismatch  (Use the -i option to proceed "
+"anyway.)\n"
+msgstr ""
+"п╬я│я┌п╟п╫п╬п╡п╨п╟ п╦п╥-п╥п╟ п╫п╣я│п╬п╡п©п╟п╢п╣п╫п╦я▐ п╡п╣я─я│п╦п╧  (п╢п╬п╠п╟п╡я▄я┌п╣ -i, я┤я┌п╬п╠я▀ п©я─п╬п╢п╬п╩п╤п╦я┌я▄, "
+"п╫п╣я│п╪п╬я┌я─я▐ п╫п╟ я█я┌п╬.)\n"
 
-#: pg_backup_db.c:151
+#: pg_backup_db.c:135
 #, c-format
 msgid "connecting to database \"%s\" as user \"%s\"\n"
-msgstr "подсоединение к базе \"%s\" как пользователь \"%s\"\n"
+msgstr "п©п╬п╢п╨п╩я▌я┤п╣п╫п╦п╣ п╨ п╠п╟п╥п╣ \"%s\" я│ п╦п╪п╣п╫п╣п╪ п©п╬п╩я▄п╥п╬п╡п╟я┌п╣п╩я▐ \"%s\"\n"
 
-#: pg_backup_db.c:155
-#: pg_backup_db.c:187
-#: pg_backup_db.c:231
-#: pg_backup_db.c:260
-#: pg_dumpall.c:941
-#: pg_dumpall.c:967
+#: pg_backup_db.c:139 pg_backup_db.c:168 pg_backup_db.c:208 pg_backup_db.c:235
+#: pg_dumpall.c:1320 pg_dumpall.c:1344
 msgid "Password: "
-msgstr "Пароль: "
+msgstr "п÷п╟я─п╬п╩я▄: "
 
-#: pg_backup_db.c:167
+#: pg_backup_db.c:151
 msgid "failed to reconnect to database\n"
-msgstr "не удалось переподсоединиться к базе данных\n"
+msgstr "п╬я┬п╦п╠п╨п╟ п©п╣я─п╣п©п╬п╢п╨п╩я▌я┤п╣п╫п╦я▐ п╨ п╠п╟п╥п╣ п╢п╟п╫п╫я▀я┘\n"
 
-#: pg_backup_db.c:190
+#: pg_backup_db.c:156
 #, c-format
 msgid "could not reconnect to database: %s"
-msgstr "не удалось переподсоединиться к базе: %s"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п©п╣я─п╣п©п╬п╢п╨п╩я▌я┤п╦я┌я▄я│я▐ п╨ п╠п╟п╥п╣: %s"
+
+#: pg_backup_db.c:204
+msgid "already connected to a database\n"
+msgstr "п©п╬п╢п╨п╩я▌я┤п╣п╫п╦п╣ п╨ п╠п╟п╥п╣ п╢п╟п╫п╫я▀я┘ я┐п╤п╣ я┐я│я┌п╟п╫п╬п╡п╩п╣п╫п╬\n"
 
 #: pg_backup_db.c:227
-msgid "already connected to a database\n"
-msgstr "соединение к базе данных уже установлено\n"
-
-#: pg_backup_db.c:250
 msgid "failed to connect to database\n"
-msgstr "не удалось подсоединиться к базе данных\n"
+msgstr "п╬я┬п╦п╠п╨п╟ п©п╬п╢п╨п╩я▌я┤п╣п╫п╦я▐ п╨ п╠п╟п╥п╣ п╢п╟п╫п╫я▀я┘\n"
 
-#: pg_backup_db.c:269
+#: pg_backup_db.c:245
 #, c-format
 msgid "connection to database \"%s\" failed: %s"
-msgstr "не удалось переподсоединиться к базе \"%s\": %s"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п©п╬п╢п╨п╩я▌я┤п╦я┌я▄я│я▐ п╨ п╠п╟п╥п╣ \"%s\": %s"
 
-#: pg_backup_db.c:284
+#: pg_backup_db.c:260
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pg_backup_db.c:313
-#, c-format
-msgid "%s: no result from server\n"
-msgstr "%s: нет результата с сервера\n"
-
-#: pg_backup_db.c:320
-msgid "COPY command executed in non-primary connection\n"
-msgstr "Команда COPY выполнилась вне исходного соединения\n"
-
-#: pg_backup_db.c:410
-msgid "error returned by PQputline\n"
-msgstr "PQputline вернула ошибку\n"
-
-#: pg_backup_db.c:421
-msgid "error returned by PQendcopy\n"
-msgstr "PQendcopy вернула ошибку\n"
-
-#: pg_backup_db.c:481
+#: pg_backup_db.c:352 pg_backup_db.c:423 pg_backup_db.c:432
 msgid "could not execute query"
-msgstr "не удалось выполнить запрос"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╡я▀п©п╬п╩п╫п╦я┌я▄ п╥п╟п©я─п╬я│"
 
-#: pg_backup_db.c:701
+#: pg_backup_db.c:403
 #, c-format
-msgid "could not find OID columns of table \"%s\": %s"
-msgstr "OID-колонки не найдены для таблицы \"%s\": %s"
+msgid "error returned by PQputCopyData: %s"
+msgstr "п╬я┬п╦п╠п╨п╟ п╡ PQputCopyData: %s"
 
-#: pg_backup_db.c:707
+#: pg_backup_db.c:451
 #, c-format
-msgid "no OID type columns in table %s\n"
-msgstr "нет колонок типа OID в таблице %s\n"
+msgid "error returned by PQputCopyEnd: %s"
+msgstr "п╬я┬п╦п╠п╨п╟ п╡ PQputCopyEnd: %s"
 
-#: pg_backup_db.c:721
-#, c-format
-msgid "fixing large object cross-references for %s.%s\n"
-msgstr "восстановление перекрёстных ссылок среди больших объектов для %s.%s\n"
-
-#: pg_backup_db.c:760
-#, c-format
-msgid "SQL: %s\n"
-msgstr "SQL: %s\n"
-
-#: pg_backup_db.c:765
-#, c-format
-msgid "could not update column \"%s\" of table \"%s\": %s"
-msgstr "не получилось обновить колонку \"%s\" таблицы \"%s\": %s"
-
-#: pg_backup_db.c:770
-#, c-format
-msgid "error while updating column \"%s\" of table \"%s\": %s"
-msgstr "ошибка при обновлении колонки \"%s\" таблицы \"%s\": %s"
-
-#: pg_backup_db.c:793
-msgid "creating table for large object cross-references\n"
-msgstr "создание таблицы для перекрёстных ссылок больших объектов\n"
-
-#: pg_backup_db.c:796
-msgid "could not create large object cross-reference table"
-msgstr "не удалось создать таблицу для перекрёстных ссылок больших объектов"
-
-#: pg_backup_db.c:806
-msgid "creating index for large object cross-references\n"
-msgstr "создание индекса для перекрёстных ссылок больших объектов\n"
-
-#: pg_backup_db.c:810
-msgid "could not create index on large object cross-reference table"
-msgstr "не удалось создать индекс на таблицу перекрёстных ссылок больших объектов"
-
-#: pg_backup_db.c:823
-msgid "could not create large object cross-reference entry"
-msgstr "не удалось создать запись для перекрёстных ссылок больших объектов"
-
-#: pg_backup_db.c:835
+#: pg_backup_db.c:468
 msgid "could not start database transaction"
-msgstr "не удаётся начать транзакцию для базы"
+msgstr "п╫п╣ я┐п╢п╟я▒я┌я│я▐ п╫п╟я┤п╟я┌я▄ я┌я─п╟п╫п╥п╟п╨я├п╦я▌"
 
-#: pg_backup_db.c:849
-msgid "could not start transaction for large object cross-references"
-msgstr "не удаётся начать транзакцию для перекрёстных ссылок больших объектов"
-
-#: pg_backup_db.c:862
+#: pg_backup_db.c:474
 msgid "could not commit database transaction"
-msgstr "не удалось завершить транзакцию для базы"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╥п╟я└п╦п╨я│п╦я─п╬п╡п╟я┌я▄ я┌я─п╟п╫п╥п╟п╨я├п╦я▌"
 
-#: pg_backup_db.c:875
-msgid "could not commit transaction for large object cross-references"
-msgstr "не удалось завершить транзакцию для перекрёстных ссылок больших объектов"
-
-#: pg_backup_files.c:69
+#: pg_backup_files.c:68
 msgid "file archiver"
-msgstr "архиватор файлов"
+msgstr "я└п╟п╧п╩п╬п╡я▀п╧ п╟я─я┘п╦п╡п╟я┌п╬я─"
 
-#: pg_backup_files.c:120
+#: pg_backup_files.c:119
 msgid ""
 "WARNING:\n"
 "  This format is for demonstration purposes; it is not intended for\n"
 "  normal use. Files will be written in the current working directory.\n"
 msgstr ""
-"ВНИМАНИЕ:\n"
-"  Этот формат поддерживается только для демонстрационных целей и не предполагатся\n"
-"  для повседневного использования. Файлы будут записаны в текущую директорию.\n"
+"п÷п═п∙п■пёп÷п═п√п■п∙п²п≤п∙:\n"
+"  п╜я┌п╬я┌ я└п╬я─п╪п╟я┌ п©я─п╣п╢п╫п╟п╥п╫п╟я┤п╣п╫ я┌п╬п╩я▄п╨п╬ п╢п╩я▐ я├п╣п╩п╣п╧ п╢п╣п╪п╬п╫я│я┌я─п╟я├п╦п╦, п╫п╬ п╫п╣ п╢п╩я▐\n"
+"  п©п╬п╡я│п╣п╢п╫п╣п╡п╫п╬пЁп╬ п╦я│п©п╬п╩я▄п╥п╬п╡п╟п╫п╦я▐. п╓п╟п╧п╩я▀ я│п╬я┘я─п╟п╫я▐я▌я┌я│я▐ п╡ я┌п╣п╨я┐я┴п╦п╧ я─п╟п╠п╬я┤п╦п╧ п╨п╟я┌п╟п╩п╬пЁ.\n"
 
-#: pg_backup_files.c:246
-msgid "could not open data file for output\n"
-msgstr "не удалось открыть файл данных для записи\n"
-
-#: pg_backup_files.c:266
+#: pg_backup_files.c:280
 msgid "could not close data file\n"
-msgstr "не удалось закрыть файл данных\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╥п╟п╨я─я▀я┌я▄ я└п╟п╧п╩ п╢п╟п╫п╫я▀я┘\n"
 
-#: pg_backup_files.c:290
-msgid "could not open data file for input\n"
-msgstr "не удалось открыть файл данных для чтения\n"
-
-#: pg_backup_files.c:299
+#: pg_backup_files.c:314
 msgid "could not close data file after reading\n"
-msgstr "не удалось закрыть файл данных после чтения\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╥п╟п╨я─я▀я┌я▄ я└п╟п╧п╩ п╢п╟п╫п╫я▀я┘ п©п╬я│п╩п╣ я┤я┌п╣п╫п╦я▐\n"
 
-#: pg_backup_files.c:362
+#: pg_backup_files.c:376
 #, c-format
 msgid "could not open large object TOC for input: %s\n"
-msgstr "не удалось открыть на чтение оглавление больших объектов: %s\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╬я┌п╨я─я▀я┌я▄ п╢п╩я▐ я┤я┌п╣п╫п╦я▐ я└п╟п╧п╩ п╬пЁп╩п╟п╡п╩п╣п╫п╦я▐ п╠п╬п╩я▄я┬п╦я┘ п╬п╠я┼п╣п╨я┌п╬п╡: %s\n"
 
-#: pg_backup_files.c:375
-#: pg_backup_files.c:545
+#: pg_backup_files.c:389 pg_backup_files.c:558
 #, c-format
 msgid "could not close large object TOC file: %s\n"
-msgstr "не удалось закрыть файл оглавления больших объектов: %s\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╥п╟п╨я─я▀я┌я▄ я└п╟п╧п╩ п╬пЁп╩п╟п╡п╩п╣п╫п╦я▐ п╠п╬п╩я▄я┬п╦я┘ п╬п╠я┼п╣п╨я┌п╬п╡: %s\n"
 
-#: pg_backup_files.c:387
+#: pg_backup_files.c:401
 msgid "could not write byte\n"
-msgstr "не получилось записать байт\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╥п╟п©п╦я│п╟я┌я▄ п╠п╟п╧я┌\n"
 
-#: pg_backup_files.c:473
+#: pg_backup_files.c:487
 #, c-format
 msgid "could not open large object TOC for output: %s\n"
-msgstr "не удалось открыть на запись оглавление больших объектов: %s\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╬я┌п╨я─я▀я┌я▄ п╢п╩я▐ п╥п╟п©п╦я│п╦ я└п╟п╧п╩ п╬пЁп╩п╟п╡п╩п╣п╫п╦я▐ п╠п╬п╩я▄я┬п╦я┘ п╬п╠я┼п╣п╨я┌п╬п╡: %s\n"
 
-#: pg_backup_files.c:493
-#: pg_backup_tar.c:884
+#: pg_backup_files.c:507 pg_backup_tar.c:938
 #, c-format
 msgid "invalid OID for large object (%u)\n"
-msgstr "неверный OID для большого объекта (%u)\n"
+msgstr "п╫п╣п╡п╣я─п╫я▀п╧ OID п╢п╩я▐ п╠п╬п╩я▄я┬п╬пЁп╬ п╬п╠я┼п╣п╨я┌п╟ (%u)\n"
 
-#: pg_backup_files.c:512
-msgid "could not open large object file\n"
-msgstr "не удалось открыть файл с большим объектом\n"
+#: pg_backup_files.c:526
+#, c-format
+msgid "could not open large object file \"%s\" for input: %s\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╬я┌п╨я─я▀я┌я▄ п╢п╩я▐ я┤я┌п╣п╫п╦я▐ я└п╟п╧п╩ п╠п╬п╩я▄я┬п╬пЁп╬ п╬п╠я┼п╣п╨я┌п╟ \"%s\": %s\n"
 
-#: pg_backup_files.c:527
+#: pg_backup_files.c:541
 msgid "could not close large object file\n"
-msgstr "не удалось закрыть файл с большим объектом\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╥п╟п╨я─я▀я┌я▄ я└п╟п╧п╩ п╠п╬п╩я▄я┬п╬пЁп╬ п╬п╠я┼п╣п╨я┌п╟\n"
 
-#: pg_backup_null.c:55
+#: pg_backup_null.c:75
 msgid "this format cannot be read\n"
-msgstr "этот формат не может быть прочитан\n"
+msgstr "я█я┌п╬я┌ я└п╬я─п╪п╟я┌ п╫п╣п╩я▄п╥я▐ п©я─п╬я┤п╦я┌п╟я┌я▄\n"
 
 #: pg_backup_tar.c:105
 msgid "tar archiver"
-msgstr "tar-архиватор"
+msgstr "п╟я─я┘п╦п╡п╟я┌п╬я─ tar"
 
-#: pg_backup_tar.c:183
+#: pg_backup_tar.c:180
+#, c-format
+msgid "could not open TOC file \"%s\" for output: %s\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╬я┌п╨я─я▀я┌я▄ п╢п╩я▐ п╥п╟п©п╦я│п╦ я└п╟п╧п╩ п╬пЁп╩п╟п╡п╩п╣п╫п╦я▐ \"%s\": %s\n"
+
+#: pg_backup_tar.c:188
 #, c-format
 msgid "could not open TOC file for output: %s\n"
-msgstr "не удалось открыть файл оглавления для записи: %s\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╬я┌п╨я─я▀я┌я▄ п╢п╩я▐ п╥п╟п©п╦я│п╦ я└п╟п╧п╩ п╬пЁп╩п╟п╡п╩п╣п╫п╦я▐: %s\n"
 
-#: pg_backup_tar.c:208
+#: pg_backup_tar.c:215
 msgid "compression not supported by tar output format\n"
-msgstr "компрессия не поддерживается форматом вывода \"tar\"\n"
+msgstr "я└п╬я─п╪п╟я┌ п╟я─я┘п╦п╡п╟ tar п╫п╣ п©п╬п╢п╢п╣я─п╤п╦п╡п╟п╣я┌ я│п╤п╟я┌п╦п╣\n"
 
-#: pg_backup_tar.c:220
+#: pg_backup_tar.c:224
+#, c-format
+msgid "could not open TOC file \"%s\" for input: %s\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╬я┌п╨я─я▀я┌я▄ п╢п╩я▐ я┤я┌п╣п╫п╦я▐ я└п╟п╧п╩ п╬пЁп╩п╟п╡п╩п╣п╫п╦я▐ \"%s\": %s\n"
+
+#: pg_backup_tar.c:231
 #, c-format
 msgid "could not open TOC file for input: %s\n"
-msgstr "не удалось открыть файл оглавления для загрузки: %s\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╬я┌п╨я─я▀я┌я▄ п╢п╩я▐ я┤я┌п╣п╫п╦я▐ я└п╟п╧п╩ п╬пЁп╩п╟п╡п╩п╣п╫п╦я▐: %s\n"
 
-#: pg_backup_tar.c:341
+#: pg_backup_tar.c:354
 #, c-format
 msgid "could not find file %s in archive\n"
-msgstr "не найден файл %s в архиве\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╫п╟п╧я┌п╦ я└п╟п╧п╩ %s п╡ п╟я─я┘п╦п╡п╣\n"
 
-#: pg_backup_tar.c:352
+#: pg_backup_tar.c:365
 msgid "compression support is disabled in this format\n"
-msgstr "поддержка компрессии отключена для этого формата\n"
+msgstr "п╢п╩я▐ я█я┌п╬пЁп╬ я└п╬я─п╪п╟я┌п╟ я│п╤п╟я┌п╦п╣ п╫п╣ п©п╬п╢п╢п╣я─п╤п╦п╡п╟п╣я┌я│я▐\n"
 
-#: pg_backup_tar.c:367
+#: pg_backup_tar.c:408
 #, c-format
 msgid "could not generate temporary file name: %s\n"
-msgstr "не удалось создать временный файл: %s\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ я│п╬п╥п╢п╟я┌я▄ п╡я─п╣п╪п╣п╫п╫я▀п╧ я└п╟п╧п╩: %s\n"
 
-#: pg_backup_tar.c:376
+#: pg_backup_tar.c:417
 msgid "could not open temporary file\n"
-msgstr "не удалось открыть временный файл\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╬я┌п╨я─я▀я┌я▄ п╡я─п╣п╪п╣п╫п╫я▀п╧ я└п╟п╧п╩\n"
 
-#: pg_backup_tar.c:406
+#: pg_backup_tar.c:446
 msgid "could not close tar member\n"
-msgstr "не удалось закрыть компонент tar-архива\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╥п╟п╨я─я▀я┌я▄ п╨п╬п╪п©п╬п╫п╣п╫я┌ tar-п╟я─я┘п╦п╡п╟\n"
 
-#: pg_backup_tar.c:506
+#: pg_backup_tar.c:546
 msgid "internal error -- neither th nor fh specified in tarReadRaw()\n"
-msgstr "внутренняя ошибка -- ни th, ни fh не были указаны в tarReadRaw()\n"
+msgstr "п╡п╫я┐я┌я─п╣п╫п╫я▐я▐ п╬я┬п╦п╠п╨п╟ -- п╡ tarReadRaw() п╫п╣ я┐п╨п╟п╥п╟п╫ п╫п╦ th, п╫п╦ fh\n"
 
-#: pg_backup_tar.c:510
+#: pg_backup_tar.c:550
 #, c-format
 msgid "requested %d bytes, got %d from lookahead and %d from file\n"
-msgstr "запрошено байт: %d, получено %d из буфера предв. просмотра и %d из файла\n"
+msgstr ""
+"п╥п╟п©я─п╬я┬п╣п╫п╬ п╠п╟п╧я┌: %d, п©п╬п╩я┐я┤п╣п╫п╬ %d п╦п╥ п╠я┐я└п╣я─п╟ п©я─п╣п╢п╡. п©я─п╬я│п╪п╬я┌я─п╟ п╦ %d п╦п╥ я└п╟п╧п╩п╟\n"
 
-#: pg_backup_tar.c:549
-#, c-format
-msgid "could not write to tar member (wrote %lu, attempted %lu)\n"
-msgstr "не удалось записать в tar-компонент (записано: %lu, надо: %lu)\n"
-
-#: pg_backup_tar.c:638
+#: pg_backup_tar.c:677
 #, c-format
 msgid "invalid COPY statement -- could not find \"copy\" in string \"%s\"\n"
-msgstr "неверная команда COPY -- не найдено \"copy\" в строке \"%s\"\n"
+msgstr "п╫п╣п╡п╣я─п╫я▀п╧ п╬п©п╣я─п╟я┌п╬я─ COPY -- я│п╩п╬п╡п╬ \"copy\" п╫п╣ п╫п╟п╧п╢п╣п╫п╬ п╡ я│я┌я─п╬п╨п╣ \"%s\"\n"
 
-#: pg_backup_tar.c:656
+#: pg_backup_tar.c:695
 #, c-format
-msgid "invalid COPY statement -- could not find \"from stdin\" in string \"%s\" starting at position %lu\n"
-msgstr "неверная команда COPY -- не найдено \"from stdin\" в строке \"%s\", начиная с позиции %lu\n"
+msgid ""
+"invalid COPY statement -- could not find \"from stdin\" in string \"%s\" "
+"starting at position %lu\n"
+msgstr ""
+"п╫п╣п╡п╣я─п╫я▀п╧ п╬п©п╣я─п╟я┌п╬я─ COPY -- я┐п╨п╟п╥п╟п╫п╦п╣ \"from stdin\" п╫п╣ п╫п╟п╧п╢п╣п╫п╬ п╡ я│я┌я─п╬п╨п╣ \"%s"
+"\", п╫п╟я┤п╦п╫п╟я▐ я│ п©п╬п╥п╦я├п╦п╦ %lu\n"
 
-#: pg_backup_tar.c:692
-#, c-format
-msgid "restoring large object OID %u\n"
-msgstr "восстановление большого объекта с OID %u\n"
-
-#: pg_backup_tar.c:829
+#: pg_backup_tar.c:883
 msgid "could not write null block at end of tar archive\n"
-msgstr "не удалось записать нулевой блок в конец tar-архива\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╥п╟п©п╦я│п╟я┌я▄ п╫я┐п╩п╣п╡п╬п╧ п╠п╩п╬п╨ п╡ п╨п╬п╫п╣я├ tar-п╟я─я┘п╦п╡п╟\n"
 
-#: pg_backup_tar.c:1027
+#: pg_backup_tar.c:1083
 msgid "archive member too large for tar format\n"
-msgstr "компонент архива слишком велик для формата tar\n"
+msgstr "п╨п╬п╪п©п╬п╫п╣п╫я┌ п╟я─я┘п╦п╡п╟ я│п╩п╦я┬п╨п╬п╪ п╡п╣п╩п╦п╨ п╢п╩я▐ я└п╬я─п╪п╟я┌п╟ tar\n"
 
-#: pg_backup_tar.c:1037
+#: pg_backup_tar.c:1098
 #, c-format
-msgid "write error appending to tar archive (wrote %lu, attempted %lu)\n"
-msgstr "ошибка записи при добавлении к tar-архиву (записано: %lu, надо: %lu)\n"
+msgid "could not close temporary file: %s\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╥п╟п╨я─я▀я┌я▄ п╡я─п╣п╪п╣п╫п╫я▀п╧ я└п╟п╧п╩: %s\n"
 
-#: pg_backup_tar.c:1043
-#, c-format
-msgid "could not close tar member: %s\n"
-msgstr "не удалось закрыть компонент tar-архива: %s\n"
-
-#: pg_backup_tar.c:1052
+#: pg_backup_tar.c:1108
 #, c-format
 msgid "actual file length (%s) does not match expected (%s)\n"
-msgstr "настоящая длина файла (%s) не соответствует ожидавшейся (%s)\n"
+msgstr "п╢п╣п╧я│я┌п╡п╦я┌п╣п╩я▄п╫п╟я▐ п╢п╩п╦п╫п╟ я└п╟п╧п╩п╟ (%s) п╫п╣ я─п╟п╡п╫п╟ п╬п╤п╦п╢п╟п╣п╪п╬п╧ (%s)\n"
 
-#: pg_backup_tar.c:1060
+#: pg_backup_tar.c:1116
 msgid "could not output padding at end of tar member\n"
-msgstr "не удалось выровнить компоненту tar-архива\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╥п╟п©п╦я│п╟я┌я▄ п╡я▀я─п╟п╡п╫п╦п╡п╟п╫п╦п╣ п╢п╩я▐ п╨п╬п╪п©п╬п╫п╣п╫я┌п╟ tar\n"
 
-#: pg_backup_tar.c:1089
+#: pg_backup_tar.c:1145
 #, c-format
 msgid "moving from position %s to next member at file position %s\n"
-msgstr "переход от позиции %s к следующему элементу в позиции файла %s\n"
+msgstr "п©п╣я─п╣я┘п╬п╢ п╬я┌ п©п╬п╥п╦я├п╦п╦ %s п╨ я│п╩п╣п╢я┐я▌я┴п╣п╪я┐ п╨п╬п╪п©п╬п╫п╣п╫я┌я┐ п╡ п©п╬п╥п╦я├п╦п╦ %s\n"
 
-#: pg_backup_tar.c:1100
+#: pg_backup_tar.c:1156
 #, c-format
 msgid "now at file position %s\n"
-msgstr "теперь в позиции файла %s\n"
+msgstr "я┌п╣п╨я┐я┴п╟я▐ п©п╬п╥п╦я├п╦я▐ п╡ я└п╟п╧п╩п╣ %s\n"
 
-#: pg_backup_tar.c:1109
-#: pg_backup_tar.c:1136
+#: pg_backup_tar.c:1165 pg_backup_tar.c:1196
 #, c-format
 msgid "could not find header for file %s in tar archive\n"
-msgstr "не найден заголовок для файла %s в tar-архиве\n"
+msgstr "п╡ п╟я─я┘п╦п╡п╣ tar п╫п╣ п╫п╟п╧п╢п╣п╫ п╥п╟пЁп╬п╩п╬п╡п╬п╨ п╢п╩я▐ я└п╟п╧п╩п╟ %s\n"
 
-#: pg_backup_tar.c:1120
+#: pg_backup_tar.c:1180
 #, c-format
 msgid "skipping tar member %s\n"
-msgstr "пропускается tar-компонент %s\n"
+msgstr "п©я─п╬п©я┐я│п╨п╟п╣я┌я│я▐ п╨п╬п╪п©п╬п╫п╣п╫я┌ tar %s\n"
 
-#: pg_backup_tar.c:1124
+#: pg_backup_tar.c:1184
 #, c-format
-msgid "dumping data out of order is not supported in this archive format: %s is required, but comes before %s in the archive file.\n"
-msgstr "выгрузка данных в произвольном порядке не поддерживается для данного формата архива: %s необходим, но идёт до %s в файле архива.\n"
+msgid ""
+"dumping data out of order is not supported in this archive format: %s is "
+"required, but comes before %s in the archive file.\n"
+msgstr ""
+"п╫п╣п©п╬я│п╩п╣п╢п╬п╡п╟я┌п╣п╩я▄п╫п╟я▐ п╬п╠я─п╟п╠п╬я┌п╨п╟ п╢п╟п╫п╫я▀я┘ п╢п╩я▐ п╢п╟п╫п╫п╬пЁп╬ я└п╬я─п╪п╟я┌п╟ п╟я─я┘п╦п╡п╟ п╫п╣ "
+"п©п╬п╢п╢п╣я─п╤п╦п╡п╟п╣я┌я│я▐: я┌я─п╣п╠я┐п╣я┌я│я▐ п╨п╬п╪п©п╬п╫п╣п╫я┌ %s, п╫п╬ п╡ я└п╟п╧п╩п╣ п╟я─я┘п╦п╡п╟ п©я─п╣п╤п╢п╣ п╦п╢я▒я┌ %s.\n"
 
-#: pg_backup_tar.c:1172
+#: pg_backup_tar.c:1231
 #, c-format
 msgid "mismatch in actual vs. predicted file position (%s vs. %s)\n"
-msgstr "несовпадение реальной и предсказанной позиций в файле (%s vs. %s)\n"
+msgstr "я─п╣п╟п╩я▄п╫п╟я▐ п©п╬п╥п╦я├п╦я▐ п╡ я└п╟п╧п╩п╣ п╬я┌п╩п╦я┤п╟п╣я┌я│я▐ п╬я┌ п©я─п╣п╢я│п╨п╟п╥п╟п╫п╫п╬п╧ (%s п╦ %s)\n"
 
-#: pg_backup_tar.c:1187
+#: pg_backup_tar.c:1246
 #, c-format
 msgid "incomplete tar header found (%lu bytes)\n"
-msgstr "найден неполный tar-заголовок (размер, байт: %lu)\n"
+msgstr "п╫п╟п╧п╢п╣п╫ п╫п╣п©п╬п╩п╫я▀п╧ tar-п╥п╟пЁп╬п╩п╬п╡п╬п╨ (я─п╟п╥п╪п╣я─ %lu п╠п╟п╧я┌)\n"
 
-#: pg_backup_tar.c:1222
+#: pg_backup_tar.c:1282
 #, c-format
 msgid "TOC Entry %s at %s (length %lu, checksum %d)\n"
-msgstr "Запись оглавления %s в %s (длина: %lu, checksum: %d)\n"
+msgstr "п≈п╟п©п╦я│я▄ п╬пЁп╩п╟п╡п╩п╣п╫п╦я▐ %s п╡ %s (п╢п╩п╦п╫п╟: %lu, п╨п╬п╫я┌я─. я│я┐п╪п╪п╟: %d)\n"
 
-#: pg_backup_tar.c:1232
+#: pg_backup_tar.c:1292
 #, c-format
-msgid "corrupt tar header found in %s (expected %d, computed %d) file position %s\n"
-msgstr "найден повреждённый tar-заголовок в %s (ожидалось: %d, сосчитано: %d), позиция в файле: %s\n"
-
-#: pg_backup_tar.c:1325
-msgid "could not write tar header\n"
-msgstr "не удалось записать заголовок tar-архива\n"
+msgid ""
+"corrupt tar header found in %s (expected %d, computed %d) file position %s\n"
+msgstr ""
+"tar-п╥п╟пЁп╬п╩п╬п╡п╬п╨ п╡ %s п©п╬п╡я─п╣п╤п╢я▒п╫ (п╬п╤п╦п╢п╟п╩п╬я│я▄: %d, п©п╬п╩я┐я┤п╣п╫п╬: %d), п©п╬п╥п╦я├п╦я▐ п╡ я└п╟п╧п╩п╣: "
+"%s\n"
 
 #: pg_restore.c:283
 #, c-format
 msgid "%s: cannot specify both -d and -f output\n"
-msgstr "%s: нельзя указывать одновременно оба типа вывода -d и  -f\n"
+msgstr "%s: я┐п╨п╟п╥п╟я┌я▄ п╦ -d, п╦ -f п╬п╢п╫п╬п╡я─п╣п╪п╣п╫п╫п╬ п╫п╣п╩я▄п╥я▐\n"
 
-#: pg_restore.c:344
+#: pg_restore.c:318
+#, c-format
+msgid "unrecognized archive format \"%s\"; please specify \"c\" or \"t\"\n"
+msgstr "п╫п╣я─п╟я│п©п╬п╥п╫п╟п╫п╫я▀п╧ я└п╬я─п╪п╟я┌ п╟я─я┘п╦п╡п╟ \"%s\"; я┐п╨п╟п╤п╦я┌п╣ \"c\" п╦п╩п╦ \"t\"\n"
+
+#: pg_restore.c:352
 #, c-format
 msgid "WARNING: errors ignored on restore: %d\n"
-msgstr "ВНИМАНИЕ: ошибок проигнорированных при восстановлении: %d\n"
+msgstr "п÷п═п∙п■пёп÷п═п∙п√п■п∙п²п≤п∙: п©я─п╦ п╡п╬я│я│я┌п╟п╫п╬п╡п╩п╣п╫п╦п╣ п©я─п╬п╦пЁп╫п╬я─п╦я─п╬п╡п╟п╫п╬ п╬я┬п╦п╠п╬п╨: %d\n"
 
-#: pg_restore.c:358
+#: pg_restore.c:366
 #, c-format
 msgid ""
 "%s restores a PostgreSQL database from an archive created by pg_dump.\n"
 "\n"
 msgstr ""
-"%s восстанавливает базу данных PostgreSQL из архива созданного с помощью pg_dump.\n"
+"%s п╡п╬я│я│я┌п╟п╫п╟п╡п╩п╦п╡п╟п╣я┌ п╠п╟п╥я┐ п╢п╟п╫п╫я▀я┘ PostgreSQL п╦п╥ п╟я─я┘п╦п╡п╟, я│п╬п╥п╢п╟п╫п╫п╬пЁп╬ п╨п╬п╪п╟п╫п╢п╬п╧ "
+"pg_dump.\n"
 "\n"
 
-#: pg_restore.c:360
+#: pg_restore.c:368
 #, c-format
 msgid "  %s [OPTION]... [FILE]\n"
-msgstr "  %s [ОПЦИЯ]... [ФАЙЛ]\n"
+msgstr "  %s [п÷п░п═п░п°п∙п╒п═]... [п╓п░п≥п⌡]\n"
 
-#: pg_restore.c:363
+#: pg_restore.c:371
+#, c-format
 msgid "  -d, --dbname=NAME        connect to database name\n"
-msgstr "  -d, --dbname=ИМЯ         подсоединиться к указаной базе\n"
+msgstr "  -d, --dbname=п▒п■          п©п╬п╢п╨п╩я▌я┤п╦я┌я▄я│я▐ п╨ я┐п╨п╟п╥п╟п╫п╫п╬п╧ п╠п╟п╥п╣ п╢п╟п╫п╫я▀я┘\n"
 
-#: pg_restore.c:365
+#: pg_restore.c:373
+#, c-format
 msgid "  -F, --format=c|t         specify backup file format\n"
-msgstr "  -F, --format=c|t         указать формат файла резервной копии\n"
+msgstr "  -F, --format=c|t         я└п╬я─п╪п╟я┌ я└п╟п╧п╩п╟\n"
 
-#: pg_restore.c:366
-msgid "  -i, --ignore-version     proceed even when server version mismatches\n"
-msgstr "  -i, --ignore-version     продолжить, даже если версия сервера не совпадает\n"
+#: pg_restore.c:374
+#, c-format
+msgid ""
+"  -i, --ignore-version     proceed even when server version mismatches\n"
+msgstr ""
+"  -i, --ignore-version     п©я─п╬п╢п╬п╩п╤п╦я┌я▄, п╢п╟п╤п╣ п╣я│п╩п╦ п╡п╣я─я│п╦я▐ я│п╣я─п╡п╣я─п╟ п╫п╣ "
+"я│п╬п╡п©п╟п╢п╟п╣я┌\n"
 
-#: pg_restore.c:367
+#: pg_restore.c:375
+#, c-format
 msgid "  -l, --list               print summarized TOC of the archive\n"
-msgstr "  -l, --list               напечатать итоговое оглавление архива\n"
+msgstr "  -l, --list               п╡я▀п╡п╣я│я┌п╦ п╨я─п╟я┌п╨п╬п╣ п╬пЁп╩п╟п╡п╩п╣п╫п╦п╣ п╟я─я┘п╦п╡п╟\n"
 
-#: pg_restore.c:372
+#: pg_restore.c:380
+#, c-format
 msgid ""
 "\n"
 "Options controlling the restore:\n"
 msgstr ""
 "\n"
-"Опции для восстановления:\n"
+"п÷п╟я─п╟п╪п╣я┌я─я▀, я┐п©я─п╟п╡п╩я▐я▌я┴п╦п╣ п╡п╬я│я│я┌п╟п╫п╬п╡п╩п╣п╫п╦п╣п╪:\n"
 
-#: pg_restore.c:373
+#: pg_restore.c:381
+#, c-format
 msgid "  -a, --data-only          restore only the data, no schema\n"
-msgstr "  -a, --data-only          восстановить только данные, без схемы\n"
+msgstr "  -a, --data-only          п╡п╬я│я│я┌п╟п╫п╬п╡п╦я┌я▄ я┌п╬п╩я▄п╨п╬ п╢п╟п╫п╫я▀п╣, п╠п╣п╥ я│я┘п╣п╪я▀\n"
 
-#: pg_restore.c:375
+#: pg_restore.c:382
+#, c-format
+msgid "  -c, --clean              clean (drop) schema prior to create\n"
+msgstr "  -c, --clean              п╬я┤п╦я│я┌п╦я┌я▄ (я│п╠я─п╬я│п╦я┌я▄) я│я┘п╣п╪я┐ п©п╣я─п╣п╢ я│п╬п╥п╢п╟п╫п╦п╣п╪\n"
+
+#: pg_restore.c:383
+#, c-format
 msgid "  -C, --create             create the target database\n"
-msgstr "  -C, --create             создать базу\n"
+msgstr "  -C, --create             я│п╬п╥п╢п╟я┌я▄ я├п╣п╩п╣п╡я┐я▌ п╠п╟п╥я┐ п╢п╟п╫п╫я▀я┘\n"
 
-#: pg_restore.c:376
+#: pg_restore.c:384
+#, c-format
 msgid "  -I, --index=NAME         restore named index\n"
-msgstr "  -I, --index=ТФЬУ          восстановить именованный индекс\n"
+msgstr "  -I, --index=п≤п°п╞          п╡п╬я│я│я┌п╟п╫п╬п╡п╦я┌я▄ я┐п╨п╟п╥п╟п╫п╫я▀п╧ п╦п╫п╢п╣п╨я│\n"
 
-#: pg_restore.c:377
+#: pg_restore.c:385
+#, c-format
 msgid ""
 "  -L, --use-list=FILENAME  use specified table of contents for ordering\n"
 "                           output from this file\n"
 msgstr ""
-"  -L, --use-list=FILENAME  использовать указанное оглавление для упорядочивания\n"
-"                           вывод из этого файла\n"
+"  -L, --use-list=п≤п°п╞_п╓п░п≥п⌡п░ п╦я│п©п╬п╩я▄п╥п╬п╡п╟я┌я▄ п╬пЁп╩п╟п╡п╩п╣п╫п╦п╣ п╦п╥ я█я┌п╬пЁп╬ я└п╟п╧п╩п╟ п╢п╩я▐\n"
+"                           я┐п©п╬я─я▐п╢п╬я┤п╦п╡п╟п╫п╦я▐ п╡я▀п╡п╬п╢п╦п╪я▀я┘ п╢п╟п╫п╫я▀я┘\n"
 
-#: pg_dumpall.c:352
-#: pg_restore.c:379
+#: pg_restore.c:387
+#, c-format
+msgid "  -n, --schema=NAME        restore only objects in this schema\n"
+msgstr "  -n, --schema=п≤п°п╞         п╡п╬я│я│я┌п╟п╫п╬п╡п╦я┌я▄ п╬п╠я┼п╣п╨я┌я▀ я┌п╬п╩я▄п╨п╬ п╡ я█я┌п╬п╧ я│я┘п╣п╪п╣\n"
+
+#: pg_restore.c:388 pg_dumpall.c:496
+#, c-format
 msgid "  -O, --no-owner           skip restoration of object ownership\n"
-msgstr "  -O, --no-owner           пропустить восстановление объектных привилегий\n"
+msgstr "  -O, --no-owner           п╫п╣ п╡п╬я│я│я┌п╟п╫п╟п╡п╩п╦п╡п╟я┌я▄ п╡п╩п╟п╢п╣п╫п╦п╣ п╬п╠я┼п╣п╨я┌п╟п╪п╦\n"
 
-#: pg_restore.c:380
+#: pg_restore.c:389
+#, c-format
 msgid ""
 "  -P, --function=NAME(args)\n"
 "                           restore named function\n"
 msgstr ""
-"  -P, --function=NAME(args)\n"
-"                           восстановить именованную функцию\n"
+"  -P, --function=п≤п°п╞(п╟я─пЁя┐п╪п╣п╫я┌я▀)\n"
+"                           п╡п╬я│я│я┌п╟п╫п╬п╡п╦я┌я▄ п╥п╟п╢п╟п╫п╫я┐я▌ я└я┐п╫п╨я├п╦я▌\n"
 
-#: pg_restore.c:382
+#: pg_restore.c:391
+#, c-format
 msgid "  -s, --schema-only        restore only the schema, no data\n"
-msgstr "  -s, --schema-only        восстановить только схему, без данных\n"
+msgstr "  -s, --schema-only        п╡п╬я│я│я┌п╟п╫п╬п╡п╦я┌я▄ я┌п╬п╩я▄п╨п╬ я│я┘п╣п╪я┐, п╠п╣п╥ п╢п╟п╫п╫я▀я┘\n"
 
-#: pg_restore.c:383
+#: pg_restore.c:392
+#, c-format
 msgid ""
 "  -S, --superuser=NAME     specify the superuser user name to use for\n"
 "                           disabling triggers\n"
 msgstr ""
-"  -S, --superuser=NAME      указать имя суперпользователя для\n"
-"                           отключения триггеров\n"
+"  -S, --superuser=п≤п°п╞      п╦п╪я▐ я│я┐п©п╣я─п©п╬п╩я▄п╥п╬п╡п╟я┌п╣п╩я▐ п╢п╩я▐ п╬я┌п╨п╩я▌я┤п╣п╫п╦я▐ я┌я─п╦пЁпЁп╣я─п╬п╡\n"
 
-#: pg_restore.c:385
+#: pg_restore.c:394
+#, c-format
 msgid "  -t, --table=NAME         restore named table\n"
-msgstr "  -t, --table=NAME          восстановить таблицу с указанным именем\n"
+msgstr "  -t, --table=п≤п°п╞          п╡п╬я│я│я┌п╟п╫п╬п╡п╦я┌я▄ п╥п╟п╢п╟п╫п╫я┐я▌ я┌п╟п╠п╩п╦я├я┐\n"
 
-#: pg_restore.c:386
+#: pg_restore.c:395
+#, c-format
 msgid "  -T, --trigger=NAME       restore named trigger\n"
-msgstr "  -T, --trigger=NAME        восстановить триггер с указанным именем\n"
+msgstr "  -T, --trigger=п≤п°п╞        п╡п╬я│я│я┌п╟п╫п╬п╡п╦я┌я▄ п╥п╟п╢п╟п╫п╫я▀п╧ я┌я─п╦пЁпЁп╣я─\n"
 
-#: pg_restore.c:387
-msgid "  -x, --no-privileges      skip restoration of access privileges (grant/revoke)\n"
-msgstr "  -x, --no-privileges      пропустить восстановление привилегий доступа (grant/revoke)\n"
+#: pg_restore.c:396
+#, c-format
+msgid ""
+"  -x, --no-privileges      skip restoration of access privileges (grant/"
+"revoke)\n"
+msgstr ""
+"  -x, --no-privileges      п╫п╣ п╡п╬я│я│я┌п╟п╫п╟п╡п╩п╦п╡п╟я┌я▄ п©я─п╟п╡п╟ п╢п╬я│я┌я┐п©п╟ (п╫п╟п╥п╫п╟я┤п╣п╫п╦п╣/"
+"п╬я┌п╥я▀п╡)\n"
 
-#: pg_restore.c:399
-msgid "  -e, --exit-on-error      exit on error, default is to continue\n"
-msgstr "  -e, --exit-on-error      выйти при ошибке (по-умолчанию -- продолжать)\n"
+#: pg_restore.c:397 pg_dumpall.c:504
+#, c-format
+msgid "  --disable-triggers       disable triggers during data-only restore\n"
+msgstr ""
+"  --disable-triggers       п╬я┌п╨п╩я▌я┤п╦я┌я▄ я┌я─п╦пЁпЁп╣я─я▀ п©я─п╦ п╡п╬я│я│я┌п╟п╫п╬п╡п╩п╣п╫п╦п╦ я┌п╬п╩я▄п╨п╬ "
+"п╢п╟п╫п╫я▀я┘\n"
+
+#: pg_restore.c:398 pg_dumpall.c:505
+#, c-format
+msgid ""
+"  --use-set-session-authorization\n"
+"                           use SESSION AUTHORIZATION commands instead of\n"
+"                           OWNER TO commands\n"
+msgstr ""
+"  --use-set-session-authorization\n"
+"                           п╦я│п©п╬п╩я▄п╥п╬п╡п╟я┌я▄ п╨п╬п╪п╟п╫п╢я▀ SESSION AUTHORIZATION "
+"п╡п╪п╣я│я┌п╬\n"
+"                           OWNER TO\n"
 
 #: pg_restore.c:401
+#, c-format
+msgid ""
+"  --no-data-for-failed-tables\n"
+"                           do not restore data of tables that could not be\n"
+"                           created\n"
+msgstr ""
+"  --no-data-for-failed-tables\n"
+"                           п╫п╣ п╡п╬я│я│я┌п╟п╫п╟п╡п╩п╦п╡п╟я┌я▄ п╢п╟п╫п╫я▀п╣ я┌п╟п╠п╩п╦я├, п╨п╬я┌п╬я─я▀п╣\n"
+"                           п╫п╣ я┐п╢п╟п╩п╬я│я▄ я│п╬п╥п╢п╟я┌я▄\n"
+
+#: pg_restore.c:404
+#, c-format
+msgid ""
+"  -1, --single-transaction\n"
+"                           restore as a single transaction\n"
+msgstr ""
+"  -1, --single-transaction\n"
+"                           п╡я▀п©п╬п╩п╫п╦я┌я▄ п╡п╬я│я│я┌п╟п╫п╬п╡п╩п╣п╫п╦п╣ п╡ я─п╟п╪п╨п╟я┘ п╬п╢п╫п╬п╧ "
+"я┌я─п╟п╫п╥п╟п╨я├п╦п╦\n"
+
+#: pg_restore.c:412
+#, c-format
+msgid "  -e, --exit-on-error      exit on error, default is to continue\n"
+msgstr ""
+"  -e, --exit-on-error      п╡я▀п╧я┌п╦ п©я─п╦ п╬я┬п╦п╠п╨п╣ (п©п╬ я┐п╪п╬п╩я┤п╟п╫п╦я▌ - п©я─п╬п╢п╬п╩п╤п╟я┌я▄)\n"
+
+#: pg_restore.c:414
+#, c-format
 msgid ""
 "\n"
 "If no input file name is supplied, then standard input is used.\n"
 "\n"
 msgstr ""
 "\n"
-"Если имя входного файла не указано, то будет использоваться стандартный ввод.\n"
+"п∙я│п╩п╦ п╦п╪я▐ п╡я┘п╬п╢п╫п╬пЁп╬ я└п╟п╧п╩п╟ п╫п╣ я┐п╨п╟п╥п╟п╫п╬, п╦я│п©п╬п╩я▄п╥я┐п╣я┌я│я▐ я│я┌п╟п╫п╢п╟я─я┌п╫п╬п╣ я┐я│я┌я─п╬п╧я│я┌п╡п╬ "
+"п╡п╡п╬п╢п╟.\n"
 "\n"
 
-#: pg_dumpall.c:149
+#: pg_dumpall.c:156
 #, c-format
 msgid ""
 "The program \"pg_dump\" is needed by %s but was not found in the\n"
 "same directory as \"%s\".\n"
 "Check your installation.\n"
 msgstr ""
-"Для %s  необходима программа \"pg_dump\", но она не найдена\n"
-"в той же директории, что и \"%s\".\n"
-"Проверьте вашу установку.\n"
+"п■п╩я▐ %s п╫п╣п╬п╠я┘п╬п╢п╦п╪п╟ п©я─п╬пЁя─п╟п╪п╪п╟ \"pg_dump\", п╫п╬ п╬п╫п╟ п╫п╣ п╫п╟п╧п╢п╣п╫п╟\n"
+"п╡ п╨п╟я┌п╟п╩п╬пЁп╣ \"%s\".\n"
+"п÷я─п╬п╡п╣я─я▄я┌п╣ п╡п╟я┬я┐ я┐я│я┌п╟п╫п╬п╡п╨я┐ PostgreSQL.\n"
 
-#: pg_dumpall.c:156
+#: pg_dumpall.c:163
 #, c-format
 msgid ""
 "The program \"pg_dump\" was found by \"%s\"\n"
 "but was not the same version as %s.\n"
 "Check your installation.\n"
 msgstr ""
-"Программа \"pg_dump\" была найдена рядом с \"%s\",\n"
-"но её версия не совпадает с %s.\n"
-"Проверьте вашу установку.\n"
+"п÷я─п╬пЁя─п╟п╪п╪п╟ \"pg_dump\" п╫п╟п╧п╢п╣п╫п╟ п╡ \"%s\",\n"
+"п╫п╬ п╣я▒ п╡п╣я─я│п╦я▐ п╬я┌п╩п╦я┤п╟п╣я┌я│я▐ п╬я┌ п╡п╣я─я│п╦п╦ %s.\n"
+"п÷я─п╬п╡п╣я─я▄я┌п╣ п╡п╟я┬я┐ я┐я│я┌п╟п╫п╬п╡п╨я┐ PostgreSQL.\n"
 
-#: pg_dumpall.c:336
+#: pg_dumpall.c:332
+#, c-format
+msgid ""
+"%s: options -g/--globals-only and -r/--roles-only cannot be used together\n"
+msgstr ""
+"%s: п©п╟я─п╟п╪п╣я┌я─я▀ -g/--globals-only п╦ -r/--roles-only п╦я│п╨п╩я▌я┤п╟я▌я┌ п╢я─я┐пЁ п╢я─я┐пЁп╟\n"
+
+#: pg_dumpall.c:341
+#, c-format
+msgid ""
+"%s: options -g/--globals-only and -t/--tablespaces-only cannot be used "
+"together\n"
+msgstr ""
+"%s: п©п╟я─п╟п╪п╣я┌я─я▀ -g/--globals-only п╦ -t/--tablespaces-only п╦я│п╨п╩я▌я┤п╟я▌я┌ п╢я─я┐пЁ "
+"п╢я─я┐пЁп╟\n"
+
+#: pg_dumpall.c:350
+#, c-format
+msgid ""
+"%s: options -r/--roles-only and -t/--tablespaces-only cannot be used "
+"together\n"
+msgstr ""
+"%s: п©п╟я─п╟п╪п╣я┌я─я▀ -r/--roles-only п╦ -t/--tablespaces-only п╦я│п╨п╩я▌я┤п╟я▌я┌ п╢я─я┐пЁ п╢я─я┐пЁп╟\n"
+
+#: pg_dumpall.c:370 pg_dumpall.c:1333
+#, c-format
+msgid "%s: could not connect to database \"%s\"\n"
+msgstr "%s: п╫п╣ я┐п╢п╟п╩п╬я│я▄ п©п╬п╢п╨п╩я▌я┤п╦я┌я▄я│я▐ п╨ п╠п╟п╥п╣ п╢п╟п╫п╫я▀я┘: \"%s\"\n"
+
+#: pg_dumpall.c:385
+#, c-format
+msgid ""
+"%s: could not connect to databases \"postgres\" or \"template1\"\n"
+"Please specify an alternative database.\n"
+msgstr ""
+"%s: п╫п╣ я┐п╢п╟п╩п╬я│я▄ п©п╬п╢п╨п╩я▌я┤п╦я┌я▄я│я▐ п╨ п╠п╟п╥п╣ п╢п╟п╫п╫я▀я┘ \"postgres\" п╦п╩п╦ \"template1\"\n"
+"пёп╨п╟п╤п╦я┌п╣ п╢я─я┐пЁя┐я▌ п╠п╟п╥я┐ п╢п╟п╫п╫я▀я┘.\n"
+
+#: pg_dumpall.c:402
+#, c-format
+msgid "%s: could not open the output file \"%s\": %s\n"
+msgstr "%s: п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╬я┌п╨я─я▀я┌я▄ п╡я▀я┘п╬п╢п╫п╬п╧ я└п╟п╧п╩ \"%s\": %s\n"
+
+#: pg_dumpall.c:479
 #, c-format
 msgid ""
 "%s extracts a PostgreSQL database cluster into an SQL script file.\n"
 "\n"
 msgstr ""
-"%s извлекает кластер баз данных PostgreSQL в SQL-скрипт.\n"
+"%s я█п╨я│п©п╬я─я┌п╦я─я┐п╣я┌ п╡я│я▒ я│п╬п╢п╣я─п╤п╦п╪п╬п╣ п╨п╩п╟я│я┌п╣я─п╟ п╠п╟п╥ п╢п╟п╫п╫я▀я┘ PostgreSQL п╡ SQL-я│п╨я─п╦п©я┌.\n"
 "\n"
 
-#: pg_dumpall.c:338
+#: pg_dumpall.c:481
 #, c-format
 msgid "  %s [OPTION]...\n"
-msgstr "  %s [OPTION]...\n"
+msgstr "  %s [п÷п░п═п░п°п∙п╒п═]...\n"
 
-#: pg_dumpall.c:341
+#: pg_dumpall.c:485
+#, c-format
 msgid ""
 "  -i, --ignore-version     proceed even when server version mismatches\n"
 "                           pg_dumpall version\n"
 msgstr ""
-"  -i, --ignore-version     продолжить, даже если версия сервера не совпадает\n"
-"                           с версией pg_dumpall\n"
+"  -i, --ignore-version     п©я─п╬п╢п╬п╩п╤п╦я┌я▄, п╢п╟п╤п╣ п╣я│п╩п╦ п╡п╣я─я│п╦я▐ я│п╣я─п╡п╣я─п╟ п╫п╣ "
+"я│п╬п╡п©п╟п╢п╟п╣я┌\n"
+"                           я│ п╡п╣я─я│п╦п╣п╧ pg_dumpall\n"
 
-#: pg_dumpall.c:347
+#: pg_dumpall.c:490
+#, c-format
+msgid "  -a, --data-only          dump only the data, not the schema\n"
+msgstr "  -a, --data-only          п╡я▀пЁя─я┐п╥п╦я┌я▄ я┌п╬п╩я▄п╨п╬ п╢п╟п╫п╫я▀п╣, п╠п╣п╥ я│я┘п╣п╪я▀\n"
+
+#: pg_dumpall.c:491
+#, c-format
 msgid "  -c, --clean              clean (drop) databases prior to create\n"
-msgstr "  -c, --clean              очистить (сбросить) базы данных перед созданием\n"
+msgstr ""
+"  -c, --clean              п╬я┤п╦я│я┌п╦я┌я▄ (я┐п╢п╟п╩п╦я┌я▄) п╠п╟п╥я▀ п╢п╟п╫п╫я▀я┘ п©п╣я─п╣п╢ я│п╬п╥п╢п╟п╫п╦п╣п╪\n"
 
-#: pg_dumpall.c:350
+#: pg_dumpall.c:492
+#, c-format
+msgid ""
+"  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"
+msgstr ""
+"  -d, --inserts            п╡я▀пЁя─я┐п╥п╦я┌я▄ п╢п╟п╫п╫я▀п╣ п╡ п╡п╦п╢п╣ п╨п╬п╪п╟п╫п╢ INSERT, п╡п╪п╣я│я┌п╬ "
+"COPY\n"
+
+#: pg_dumpall.c:493
+#, c-format
+msgid ""
+"  -D, --column-inserts     dump data as INSERT commands with column names\n"
+msgstr ""
+"  -D, --column-inserts     п╡я▀пЁя─я┐п╤п╟я┌я▄ п╢п╟п╫п╫я▀п╣ п╡ п╡п╦п╢п╣ INSERT я│ п╦п╪п╣п╫п╟п╪п╦ п╨п╬п╩п╬п╫п╬п╨\n"
+
+#: pg_dumpall.c:494
+#, c-format
 msgid "  -g, --globals-only       dump only global objects, no databases\n"
-msgstr "  -g, --globals-only       выгрузить только глобальные объекты, без баз данных\n"
+msgstr ""
+"  -g, --globals-only       п╡я▀пЁя─я┐п╥п╦я┌я▄ я┌п╬п╩я▄п╨п╬ пЁп╩п╬п╠п╟п╩я▄п╫я▀п╣ п╬п╠я┼п╣п╨я┌я▀, п╠п╣п╥ п╠п╟п╥\n"
 
-#: pg_dumpall.c:354
-msgid "  -S, --superuser=NAME     specify the superuser user name to use in the dump\n"
-msgstr "  -S, --superuser=ИМЯ      указать имя супер-пользователя для использовании при выгрузке\n"
+#: pg_dumpall.c:495
+#, c-format
+msgid "  -o, --oids               include OIDs in dump\n"
+msgstr "  -o, --oids               п╡я▀пЁя─я┐п╤п╟я┌я▄ п╢п╟п╫п╫я▀п╣ я│ OID\n"
 
-#: pg_dumpall.c:370
+#: pg_dumpall.c:497
+#, c-format
+msgid ""
+"  -r, --roles-only         dump only roles, no databases or tablespaces\n"
+msgstr ""
+"  -r, --roles-only         п╡я▀пЁя─я┐п╥п╦я┌я▄ я┌п╬п╩я▄п╨п╬ я─п╬п╩п╦, п╠п╣п╥ п╠п╟п╥ п╢п╟п╫п╫я▀я┘\n"
+"                           п╦ я┌п╟п╠п╩п╦я┤п╫я▀я┘ п©я─п╬я│я┌я─п╟п╫я│я┌п╡\n"
+
+#: pg_dumpall.c:498
+#, c-format
+msgid "  -s, --schema-only        dump only the schema, no data\n"
+msgstr "  -s, --schema-only        п╡я▀пЁя─я┐п╥п╦я┌я▄ я┌п╬п╩я▄п╨п╬ я│я┘п╣п╪я┐, п╠п╣п╥ п╢п╟п╫п╫я▀я┘\n"
+
+#: pg_dumpall.c:499
+#, c-format
+msgid ""
+"  -S, --superuser=NAME     specify the superuser user name to use in the "
+"dump\n"
+msgstr "  -S, --superuser=п≤п°п╞      п╦п╪я▐ п©п╬п╩я▄п╥п╬п╡п╟я┌п╣п╩я▐ п╢п╩я▐ п╡я▀п©п╬п╩п╫п╣п╫п╦я▐ п╡я▀пЁя─я┐п╥п╨п╦\n"
+
+#: pg_dumpall.c:500
+#, c-format
+msgid ""
+"  -t, --tablespaces-only   dump only tablespaces, no databases or roles\n"
+msgstr ""
+"  -t, --tablespaces-only   п╡я▀пЁя─я┐п╤п╟я┌я▄ я┌п╬п╩я▄п╨п╬ я┌п╟п╠п╩п╦я┤п╫я▀п╣ п©я─п╬я│я┌я─п╟п╫я│я┌п╡п╟,\n"
+"                           п╠п╣п╥ п╠п╟п╥ п╢п╟п╫п╫я▀я┘ п╦ я─п╬п╩п╣п╧\n"
+
+#: pg_dumpall.c:501
+#, c-format
+msgid "  -x, --no-privileges      do not dump privileges (grant/revoke)\n"
+msgstr "  -x, --no-privileges      п╫п╣ п╡я▀пЁя─я┐п╤п╟я┌я▄ п©я─п╟п╡п╟ (п╫п╟п╥п╫п╟я┤п╣п╫п╦п╣/п╬я┌п╥я▀п╡)\n"
+
+#: pg_dumpall.c:502
+#, c-format
+msgid ""
+"  --disable-dollar-quoting\n"
+"                           disable dollar quoting, use SQL standard quoting\n"
+msgstr ""
+"  --disable-dollar-quoting\n"
+"                           п╬я┌п╨п╩я▌я┤п╦я┌я▄ я│п©п╣я├я│я┌я─п╬п╨п╦ я│ $, п╡я▀п╡п╬п╢п╦я┌я▄ я│я┌я─п╬п╨п╦\n"
+"                           п©п╬ я│я┌п╟п╫п╢п╟я─я┌я┐ SQL\n"
+
+#: pg_dumpall.c:511
+#, c-format
+msgid "  -l, --database=DBNAME    specify an alternative default database\n"
+msgstr "  -l, --database=п≤п°п╞_п▒п■    п╡я▀п╠п╬я─ п╢я─я┐пЁп╬п╧ п╠п╟п╥я▀ п╢п╟п╫п╫я▀я┘ п©п╬ я┐п╪п╬п╩я┤п╟п╫п╦я▌\n"
+
+#: pg_dumpall.c:516
+#, c-format
 msgid ""
 "\n"
 "The SQL script will be written to the standard output.\n"
 "\n"
 msgstr ""
 "\n"
-"SQL скрипт будет направлен в стандартный вывод.\n"
+"SQL-я│п╨я─п╦п©я┌ п╥п╟п©п╦я│я▀п╡п╟п╣я┌я│я▐ п╡ я│я┌п╟п╫п╢п╟я─я┌п╫я▀п╧ п╡я▀п╡п╬п╢.\n"
 "\n"
 
-#: pg_dumpall.c:570
+#: pg_dumpall.c:874
 #, c-format
 msgid "%s: could not parse ACL list (%s) for tablespace \"%s\"\n"
-msgstr "%s: не удалось проанализировать ACL-список (%s) для tablespace \"%s\"\n"
+msgstr ""
+"%s: п╫п╣ я┐п╢п╟п╩п╬я│я▄ я─п╟п╥п╬п╠я─п╟я┌я▄ я│п©п╦я│п╬п╨ я┐п©я─п╟п╡п╩п╣п╫п╦я▐ п╢п╬я│я┌я┐п©п╬п╪ (%s) п╢п╩я▐ я┌п╟п╠п╩. "
+"п©я─п╬я│я┌я─п╟п╫я│я┌п╡п╟ \"%s\"\n"
 
-#: pg_dumpall.c:702
+#: pg_dumpall.c:1038
 #, c-format
 msgid "%s: could not parse ACL list (%s) for database \"%s\"\n"
-msgstr "%s: не удалось проанализировать ACL-список (%s) для базы \"%s\"\n"
+msgstr ""
+"%s: п╫п╣ я┐п╢п╟п╩п╬я│я▄ я─п╟п╥п╬п╠я─п╟я┌я▄ я│п©п╦я│п╬п╨ я┐п©я─п╟п╡п╩п╣п╫п╦я▐ п╢п╬я│я┌я┐п©п╬п╪ (%s) п╢п╩я▐ п╠п╟п╥я▀ п╢п╟п╫п╫я▀я┘ \"%s"
+"\"\n"
 
-#: pg_dumpall.c:852
+#: pg_dumpall.c:1195
 #, c-format
 msgid "%s: dumping database \"%s\"...\n"
-msgstr "%s: выгрузка базы данных \"%s\"...\n"
+msgstr "%s: п╡я▀пЁя─я┐п╥п╨п╟ п╠п╟п╥я▀ п╢п╟п╫п╫я▀я┘ \"%s\"...\n"
 
-#: pg_dumpall.c:858
+#: pg_dumpall.c:1205
 #, c-format
 msgid "%s: pg_dump failed on database \"%s\", exiting\n"
-msgstr "%s: pg_dump допустил ошибку для базы \"%s\", выход...\n"
+msgstr "%s: п╬я┬п╦п╠п╨п╟ pg_dump п╢п╩я▐ п╠п╟п╥я▀ п╢п╟п╫п╫я▀я┘ \"%s\", п╡я▀я┘п╬п╢...\n"
 
-#: pg_dumpall.c:913
+#: pg_dumpall.c:1214
+#, c-format
+msgid "%s: could not re-open the output file \"%s\": %s\n"
+msgstr "%s: п╫п╣ я┐п╢п╟п╩п╬я│я▄ п©п╬п╡я┌п╬я─п╫п╬ п╬я┌п╨я─я▀я┌я▄ п╡я▀я┘п╬п╢п╫п╬п╧ я└п╟п╧п╩ \"%s\": %s\n"
+
+#: pg_dumpall.c:1288
 #, c-format
 msgid "%s: running \"%s\"\n"
-msgstr "%s: выполняется \"%s\"\n"
+msgstr "%s: п╡я▀п©п╬п╩п╫я▐п╣я┌я│я▐ \"%s\"\n"
 
-#: pg_dumpall.c:954
-#, c-format
-msgid "%s: could not connect to database \"%s\"\n"
-msgstr "%s: не удалось подсоединиться к базе: \"%s\"\n"
-
-#: pg_dumpall.c:977
+#: pg_dumpall.c:1355
 #, c-format
 msgid "%s: could not connect to database \"%s\": %s\n"
-msgstr "%s: не удалось подсоединиться к базе \"%s\": %s\n"
+msgstr "%s: п╫п╣ я┐п╢п╟п╩п╬я│я▄ п©п╬п╢п╨п╩я▌я┤п╦я┌я▄я│я▐ п╨ п╠п╟п╥п╣ \"%s\": %s\n"
 
-#: pg_dumpall.c:985
+#: pg_dumpall.c:1369
 #, c-format
 msgid "%s: could not get server version\n"
-msgstr "%s: не удалось получить версию сервера\n"
+msgstr "%s: п╫п╣ я┐п╢п╟п╩п╬я│я▄ я┐п╥п╫п╟я┌я▄ п╡п╣я─я│п╦я▌ я│п╣я─п╡п╣я─п╟\n"
 
-#: pg_dumpall.c:991
+#: pg_dumpall.c:1375
 #, c-format
 msgid "%s: could not parse server version \"%s\"\n"
-msgstr "%s: не удалось проанализировать строку с номером версии сервера \"%s\"\n"
+msgstr "%s: п╫п╣ я┐п╢п╟п╩п╬я│я▄ я─п╟п╥п╬п╠я─п╟я┌я▄ я│я┌я─п╬п╨я┐ п╡п╣я─я│п╦п╦ я│п╣я─п╡п╣я─п╟ \"%s\"\n"
 
-#: pg_dumpall.c:1010
+#: pg_dumpall.c:1383
+#, c-format
+msgid "%s: could not parse version \"%s\"\n"
+msgstr "%s: п╫п╣ я┐п╢п╟п╩п╬я│я▄ я─п╟п╥п╬п╠я─п╟я┌я▄ я│я┌я─п╬п╨я┐ п╡п╣я─я│п╦п╦ \"%s\"\n"
+
+#: pg_dumpall.c:1423 pg_dumpall.c:1449
 #, c-format
 msgid "%s: executing %s\n"
-msgstr "%s: выполнение %s\n"
+msgstr "%s: п╡я▀п©п╬п╩п╫я▐п╣я┌я│я▐ %s\n"
 
-#: pg_dumpall.c:1016
+#: pg_dumpall.c:1429 pg_dumpall.c:1455
 #, c-format
 msgid "%s: query failed: %s"
-msgstr "%s: запрос не удался: %s"
+msgstr "%s: п╬я┬п╦п╠п╨п╟ п©я─п╦ п╡я▀п©п╬п╩п╫п╣п╫п╦п╦ п╥п╟п©я─п╬я│п╟: %s"
 
-#: pg_dumpall.c:1017
+#: pg_dumpall.c:1431 pg_dumpall.c:1457
 #, c-format
 msgid "%s: query was: %s\n"
-msgstr "%s: запрос был: %s\n"
+msgstr "%s: п╥п╟п©я─п╬я│: %s\n"
 
-#: ../../port/exec.c:194
-#: ../../port/exec.c:308
-#: ../../port/exec.c:351
+#: ../../port/exec.c:195 ../../port/exec.c:309 ../../port/exec.c:352
 #, c-format
 msgid "could not identify current directory: %s"
-msgstr "не удалось идентифицировать текущую директорию: %s"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╬п©я─п╣п╢п╣п╩п╦я┌я▄ я┌п╣п╨я┐я┴п╦п╧ п╨п╟я┌п╟п╩п╬пЁ: %s"
 
-#: ../../port/exec.c:213
+#: ../../port/exec.c:214
 #, c-format
 msgid "invalid binary \"%s\""
-msgstr "неверный бинарный \"%s\""
+msgstr "п╫п╣п╡п╣я─п╫я▀п╧ п╦я│п©п╬п╩п╫я▐п╣п╪я▀п╧ я└п╟п╧п╩ \"%s\""
 
-#: ../../port/exec.c:262
+#: ../../port/exec.c:263
 #, c-format
 msgid "could not read binary \"%s\""
-msgstr "не удалось считать бинарный \"%s\""
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п©я─п╬я┤п╦я┌п╟я┌я▄ п╦я│п©п╬п╩п╫я▐п╣п╪я▀п╧ я└п╟п╧п╩ \"%s\""
 
-#: ../../port/exec.c:269
+#: ../../port/exec.c:270
 #, c-format
 msgid "could not find a \"%s\" to execute"
-msgstr "\"%s\" не найден для выполнения"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╫п╟п╧я┌п╦ п╥п╟п©я┐я│п╨п╟п╣п╪я▀п╧ я└п╟п╧п╩ \"%s\""
 
-#: ../../port/exec.c:324
-#: ../../port/exec.c:360
+#: ../../port/exec.c:325 ../../port/exec.c:361
 #, c-format
 msgid "could not change directory to \"%s\""
-msgstr "не удалось поменять директорию на \"%s\""
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п©п╣я─п╣п╧я┌п╦ п╡ п╨п╟я┌п╟п╩п╬пЁ \"%s\""
 
-#: ../../port/exec.c:339
+#: ../../port/exec.c:340
 #, c-format
 msgid "could not read symbolic link \"%s\""
-msgstr "не получилось считать символическую ссылку \"%s\""
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п©я─п╬я┤п╦я┌п╟я┌я▄ я│п╦п╪п╡п╬п╩п╦я┤п╣я│п╨я┐я▌ я│я│я▀п╩п╨я┐ \"%s\""
 
-#: ../../port/exec.c:587
+#: ../../port/exec.c:586
 #, c-format
 msgid "child process exited with exit code %d"
-msgstr "дочерний процесс завершился с кодом возрата %d"
+msgstr "п╢п╬я┤п╣я─п╫п╦п╧ п©я─п╬я├п╣я│я│ п╥п╟п╡п╣я─я┬п╦п╩я│я▐ я│ п╨п╬п╢п╬п╪ п╡п╬п╥п╡я─п╟я┌п╟ %d"
 
 #: ../../port/exec.c:590
 #, c-format
-msgid "child process was terminated by signal %d"
-msgstr "дочерний процесс завершён сигналом %d"
+msgid "child process was terminated by exception 0x%X"
+msgstr "п╢п╬я┤п╣я─п╫п╦п╧ п©я─п╬я├п╣я│я│ п©я─п╣я─п╡п╟п╫ п╦я│п╨п╩я▌я┤п╣п╫п╦п╣п╪ 0x%X"
 
-#: ../../port/exec.c:593
+#: ../../port/exec.c:599
+#, c-format
+msgid "child process was terminated by signal %s"
+msgstr "п╢п╬я┤п╣я─п╫п╦п╧ п©я─п╬я├п╣я│я│ п╥п╟п╡п╣я─я┬я▒п╫ п©п╬ я│п╦пЁп╫п╟п╩я┐ %s"
+
+#: ../../port/exec.c:602
+#, c-format
+msgid "child process was terminated by signal %d"
+msgstr "п╢п╬я┤п╣я─п╫п╦п╧ п©я─п╬я├п╣я│я│ п╥п╟п╡п╣я─я┬я▒п╫ п©п╬ я│п╦пЁп╫п╟п╩я┐ %d"
+
+#: ../../port/exec.c:606
 #, c-format
 msgid "child process exited with unrecognized status %d"
-msgstr "дочерний процесс завершился с нераспознанным статусом %d"
+msgstr "п╢п╬я┤п╣я─п╫п╦п╧ п©я─п╬я├п╣я│я│ п╥п╟п╡п╣я─я┬п╦п╩я│я▐ я│ п╫п╣я─п╟я│п©п╬п╥п╫п╟п╫п╫я▀п╪ я│п╬я│я┌п╬я▐п╫п╦п╣п╪ %d"
 
+#~ msgid "restoring large object OID %u\n"
+#~ msgstr "п╡п╬я│я│я┌п╟п╫п╬п╡п╩п╣п╫п╦п╣ п╠п╬п╩я▄я┬п╬пЁп╬ п╬п╠я┼п╣п╨я┌п╟ я│ OID %u\n"
