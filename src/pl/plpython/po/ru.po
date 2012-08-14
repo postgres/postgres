@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-07-11 03:39+0000\n"
-"PO-Revision-Date: 2012-06-25 14:28+0400\n"
+"POT-Creation-Date: 2012-08-06 12:39+0000\n"
+"PO-Revision-Date: 2012-08-06 18:19+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -449,11 +449,15 @@ msgstr ""
 "Чтобы присвоить колонке NULL, присвойте возвращаемому значению атрибут с "
 "именем колонки и значением None."
 
-#: plpy_util.c:123
+#: plpy_util.c:70
 #, c-format
-msgid "could not convert Python Unicode object to PostgreSQL server encoding"
-msgstr ""
-"преобразовать объект Python Unicode в серверную кодировку PostgreSQL нельзя"
+msgid "could not convert Python Unicode object to bytes"
+msgstr "не удалось преобразовать объект Python Unicode в байты"
+
+#: plpy_util.c:75
+#, c-format
+msgid "could not extract bytes from encoded string"
+msgstr "не удалось извлечь байты из кодированной строки"
 
 #~ msgid "could not initialize plpy"
 #~ msgstr "не удалось инициализировать plpy"
