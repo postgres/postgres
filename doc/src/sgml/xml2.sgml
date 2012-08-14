@@ -437,14 +437,6 @@ xslt_process(text document, text stylesheet, text paramlist) returns text
    </para>
 
    <para>
-    Also note that if either the document or stylesheet values do not
-    begin with a &lt; then they will be treated as URLs and libxslt will
-    fetch them. It follows that you can use <function>xslt_process</> as a
-    means to fetch the contents of URLs &mdash; you should be aware of the
-    security implications of this.
-   </para>
-
-   <para>
     There is also a two-parameter version of <function>xslt_process</> which
     does not pass any parameters to the transformation.
    </para>
