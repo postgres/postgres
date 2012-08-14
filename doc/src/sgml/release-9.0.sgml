@@ -1,6 +1,312 @@
 <!-- doc/src/sgml/release-9.0.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-0-9">
+  <title>Release 9.0.9</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2012-08-17</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 9.0.8.
+   For information about new features in the 9.0 major release, see
+   <xref linkend="release-9-0">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.0.9</title>
+
+   <para>
+    A dump/restore is not required for those running 9.0.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 9.0.6,
+    see the release notes for 9.0.6.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Prevent access to external files/URLs via XML entity references
+      (Noah Misch, Tom Lane)
+     </para>
+
+     <para>
+      <function>xml_parse()</> would attempt to fetch external files or
+      URLs as needed to resolve DTD and entity references in an XML value,
+      thus allowing unprivileged database users to attempt to fetch data
+      with the privileges of the database server.  While the external data
+      wouldn't get returned directly to the user, portions of it could be
+      exposed in error messages if the data didn't parse as valid XML; and
+      in any case the mere ability to check existence of a file might be
+      useful to an attacker.  (CVE-2012-3489)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent access to external files/URLs via <filename>contrib/xml2</>'s
+      <function>xslt_process()</> (Peter Eisentraut)
+     </para>
+
+     <para>
+      <application>libxslt</> offers the ability to read and write both
+      files and URLs through stylesheet commands, thus allowing
+      unprivileged database users to both read and write data with the
+      privileges of the database server.  Disable that through proper use
+      of <application>libxslt</>'s security options.  (CVE-2012-3488)
+     </para>
+
+     <para>
+      Also, remove <function>xslt_process()</>'s ability to fetch documents
+      and stylesheets from external files/URLs.  While this was a
+      documented <quote>feature</>, it was long regarded as a bad idea.
+      The fix for CVE-2012-3489 broke that capability, and rather than
+      expend effort on trying to fix it, we're just going to summarily
+      remove it.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent too-early recycling of btree index pages (Noah Misch)
+     </para>
+
+     <para>
+      When we allowed read-only transactions to skip assigning XIDs, we
+      introduced the possibility that a deleted btree page could be
+      recycled while a read-only transaction was still in flight to it.
+      This would result in incorrect index search results.  The probability
+      of such an error occurring in the field seems very low because of the
+      timing requirements, but nonetheless it should be fixed.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix crash-safety bug with newly-created-or-reset sequences (Tom Lane)
+     </para>
+
+     <para>
+      If <command>ALTER SEQUENCE</> was executed on a freshly created or
+      reset sequence, and then precisely one <function>nextval()</> call
+      was made on it, and then the server crashed, WAL replay would restore
+      the sequence to a state in which it appeared that no
+      <function>nextval()</> had been done, thus allowing the first
+      sequence value to be returned again by the next
+      <function>nextval()</> call.  In particular this could manifest for
+      <type>serial</> columns, since creation of a serial column's sequence
+      includes an <command>ALTER SEQUENCE OWNED BY</> step.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <function>txid_current()</> to report the correct epoch when not
+      in hot standby (Heikki Linnakangas)
+     </para>
+
+     <para>
+      This fixes a regression introduced in the previous minor release.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix bug in startup of Hot Standby when a master transaction has many
+      subtransactions (Andres Freund)
+     </para>
+
+     <para>
+      This mistake led to failures reported as <quote>out-of-order XID
+      insertion in KnownAssignedXids</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure the <filename>backup_label</> file is fsync'd after
+      <function>pg_start_backup()</> (Dave Kerr)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix timeout handling in walsender processes (Tom Lane)
+     </para>
+
+     <para>
+      WAL sender background processes neglected to establish a
+      <systemitem>SIGALRM</> handler, meaning they would wait forever in
+      some corner cases where a timeout ought to happen.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Back-patch 9.1 improvement to compress the fsync request queue
+      (Robert Haas)
+     </para>
+
+     <para>
+      This improves performance during checkpoints.  The 9.1 change
+      has now seen enough field testing to seem safe to back-patch.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <literal>LISTEN</>/<literal>NOTIFY</> to cope better with I/O
+      problems, such as out of disk space (Tom Lane)
+     </para>
+
+     <para>
+      After a write failure, all subsequent attempts to send more
+      <literal>NOTIFY</> messages would fail with messages like
+      <quote>Could not read from file "pg_notify/<replaceable>nnnn</>" at
+      offset <replaceable>nnnnn</>: Success</quote>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Only allow autovacuum to be auto-canceled by a directly blocked
+      process (Tom Lane)
+     </para>
+
+     <para>
+      The original coding could allow inconsistent behavior in some cases;
+      in particular, an autovacuum could get canceled after less than
+      <literal>deadlock_timeout</> grace period.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve logging of autovacuum cancels (Robert Haas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix log collector so that <literal>log_truncate_on_rotation</> works
+      during the very first log rotation after server start (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <literal>WITH</> attached to a nested set operation
+      (<literal>UNION</>/<literal>INTERSECT</>/<literal>EXCEPT</>)
+      (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that a whole-row reference to a subquery doesn't include any
+      extra <literal>GROUP BY</> or <literal>ORDER BY</> columns (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Disallow copying whole-row references in <literal>CHECK</>
+      constraints and index definitions during <command>CREATE TABLE</>
+      (Tom Lane)
+     </para>
+
+     <para>
+      This situation can arise in <command>CREATE TABLE</> with
+      <literal>LIKE</> or <literal>INHERITS</>.  The copied whole-row
+      variable was incorrectly labeled with the row type of the original
+      table not the new one.  Rejecting the case seems reasonable for
+      <literal>LIKE</>, since the row types might well diverge later.  For
+      <literal>INHERITS</> we should ideally allow it, with an implicit
+      coercion to the parent table's row type; but that will require more
+      work than seems safe to back-patch.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix memory leak in <literal>ARRAY(SELECT ...)</> subqueries (Heikki
+      Linnakangas, Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix extraction of common prefixes from regular expressions (Tom Lane)
+     </para>
+
+     <para>
+      The code could get confused by quantified parenthesized
+      subexpressions, such as <literal>^(foo)?bar</>.  This would lead to
+      incorrect index optimization of searches for such patterns.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix bugs with parsing signed
+      <replaceable>hh</><literal>:</><replaceable>mm</> and
+      <replaceable>hh</><literal>:</><replaceable>mm</><literal>:</><replaceable>ss</>
+      fields in <type>interval</> constants (Amit Kapila, Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Use Postgres' encoding conversion functions, not Python's, when
+      converting a Python Unicode string to the server encoding in
+      PL/Python (Jan Urbanski)
+     </para>
+
+     <para>
+      This avoids some corner-case problems, notably that Python doesn't
+      support all the encodings Postgres does.  A notable functional change
+      is that if the server encoding is SQL_ASCII, you will get the UTF-8
+      representation of the string; formerly, any non-ASCII characters in
+      the string would result in an error.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix mapping of PostgreSQL encodings to Python encodings in PL/Python
+      (Jan Urbanski)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Report errors properly in <filename>contrib/xml2</>'s
+      <function>xslt_process()</> (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2012e
+      for DST law changes in Morocco and Tokelau
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-0-8">
   <title>Release 9.0.8</title>
 
