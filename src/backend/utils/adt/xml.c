@@ -48,6 +48,7 @@
 #ifdef USE_LIBXML
 #include <libxml/chvalid.h>
 #include <libxml/parser.h>
+#include <libxml/parserInternals.h>
 #include <libxml/tree.h>
 #include <libxml/uri.h>
 #include <libxml/xmlerror.h>
@@ -86,6 +87,8 @@ int			xmloption;
 
 static StringInfo xml_err_buf = NULL;
 
+static xmlParserInputPtr xmlPgEntityLoader(const char *URL, const char *ID,
+				  xmlParserCtxtPtr ctxt);
 static void xml_errorHandler(void *ctxt, const char *msg,...);
 static void xml_ereport_by_code(int level, int sqlcode,
 					const char *msg, int errcode);
@@ -886,6 +889,9 @@ pg_xml_init(void)
 		/* Now that xml_err_buf exists, safe to call xml_errorHandler */
 		xmlSetGenericErrorFunc(NULL, xml_errorHandler);
 
+		/* set up our entity loader, too */
+		xmlSetExternalEntityLoader(xmlPgEntityLoader);
+
 #ifdef USE_LIBXMLCONTEXT
 		/* Set up memory allocation our way, too */
 		xml_memory_init();
@@ -910,6 +916,9 @@ pg_xml_init(void)
 		 * about, anyway.
 		 */
 		xmlSetGenericErrorFunc(NULL, xml_errorHandler);
+
+		/* set up our entity loader, too */
+		xmlSetExternalEntityLoader(xmlPgEntityLoader);
 	}
 }
 
@@ -1320,6 +1329,25 @@ xml_pstrdup(const char *string)
 	return MemoryContextStrdup(LibxmlContext, string);
 }
 #endif   /* USE_LIBXMLCONTEXT */
+
+
+/*
+ * xmlPgEntityLoader --- entity loader callback function
+ *
+ * Silently prevent any external entity URL from being loaded.  We don't want
+ * to throw an error, so instead make the entity appear to expand to an empty
+ * string.
+ *
+ * We would prefer to allow loading entities that exist in the system's
+ * global XML catalog; but the available libxml2 APIs make that a complex
+ * and fragile task.  For now, just shut down all external access.
+ */
+static xmlParserInputPtr
+xmlPgEntityLoader(const char *URL, const char *ID,
+				  xmlParserCtxtPtr ctxt)
+{
+	return xmlNewStringInputStream(ctxt, (const xmlChar *) "");
+}
 
 
 /*
