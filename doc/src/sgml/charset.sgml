@@ -563,7 +563,7 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
     <literal>pg_collation</literal> are ignored.  Thus, a stripped collation
     name such as <literal>de_DE</literal> can be considered unique
     within a given database even though it would not be unique globally.
-    Use of the stripped collation names is recommendable, since it will
+    Use of the stripped collation names is recommended, since it will
     make one less thing you need to change if you decide to change to
     another database encoding.  Note however that the <literal>default</>,
     <literal>C</>, and <literal>POSIX</> collations can be used
