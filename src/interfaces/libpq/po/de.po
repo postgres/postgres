@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2012-04-18 15:30+0000\n"
-"PO-Revision-Date: 2012-04-25 20:22+0300\n"
+"PO-Revision-Date: 2012-07-13 23:34+0300\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -279,9 +279,7 @@ msgstr "ungültige Verbindungsoption »%s«\n"
 
 #: fe-connect.c:2986 fe-connect.c:3316
 msgid "unterminated quoted string in connection info string\n"
-msgstr ""
-"fehlendes schließendes Anführungszeichen (\") in der Zeichenkette der "
-"Verbindugsdaten\n"
+msgstr "fehlendes schließendes Anführungszeichen (\") in der Zeichenkette der Verbindungsdaten\n"
 
 #: fe-connect.c:3029
 #, c-format

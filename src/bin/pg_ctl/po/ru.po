@@ -1,643 +1,672 @@
 # ru.po
-# PG_CTL Translated Messages into the Russian Language (KOI8-R)
+# PG_CTL Translated Messages into the Russian Language (UTF-8)
 #
 # Copyright (c) 2004-2005 Serguei A. Mokhov, mokhov@cs.concordia.ca
+# Copyright (c) 2012 Alexander Lakhin, exclusion@gmail.com
 # Distributed under the same licensing terms as PostgreSQL itself.
 #
+# pgtranslation Id: pg_ctl.po,v 1.4 2010/12/07 21:22:21 petere Exp $
+#
 # translation of subject-specific terminology, see:
-# перевод некоторых специфичных терминов:
+# п©п╣я─п╣п╡п╬п╢ п╫п╣п╨п╬я┌п╬я─я▀я┘ я│п©п╣я├п╦я└п╦я┤п╫я▀я┘ я┌п╣я─п╪п╦п╫п╬п╡:
 # http://wiki.postgresql.org/wiki/NLS/ru/dict
 #
 # ChangeLog:
-#   - March 26, 2009: complete translation for 8.3, Sergey Burladyan <eshkinkot@gmail.com>
-#   - January 17, 2005: Complete translation for 8.0, Serguei A. Mokhov <mokhov@cs.concordia.ca>
-#   - December, 2004: New version of translation by Oleg Bartunov <oleg@sai.msu.su>
-#   - May 29 - November 24, 2004: Initial translation for 8.0; Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #
+#   - April 2, 2012: Bug fixes. Alexander Lakhin <exclusion@gmail.com>.
+#   - February 25, 2012: Backporting to 8.4. Alexander Lakhin <exclusion@gmail.com>.
+#   - February 21, 2012: Minor fixes. Alexander Lakhin <exclusion@gmail.com>.
+#     - With corrections from Sergey Burladyan <eshkinkot@gmail.com>
+#   - February 17, 2012: Minor fixes. Alexander Lakhin <exclusion@gmail.com>.
+#   - December 1, 2010: Complete translation for 9.1, Andrey Sudnik <sudnikand@gmail.com>.
+#   - March 26, 2009: complete translation for 8.3, Sergey Burladyan <eshkinkot@gmail.com>.
+#   - January 17, 2005: Complete translation for 8.0, Serguei A. Mokhov <mokhov@cs.concordia.ca>.
+#   - December, 2004: New version of translation by Oleg Bartunov <oleg@sai.msu.su>.
+#   - May 29 - November 24, 2004: Initial translation for 8.0; Serguei A. Mokhov <mokhov@cs.concordia.ca>.
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 8.0\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-01-16 09:17+0000\n"
-"PO-Revision-Date: 2009-03-29 10:29+0400\n"
-"Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
-"Language-Team: pgsql-ru-general <pgsql-ru-general@postgresql.org>\n"
+"Project-Id-Version: PostgreSQL 8.4\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2012-07-10 22:45+0000\n"
+"PO-Revision-Date: 2012-04-02 22:12+0400\n"
+"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
+"Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
+"Language: ru\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=koi8-r\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-Language: Russian\n"
 "X-Poedit-Country: RUSSIAN FEDERATION\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Generator: Lokalize 1.4\n"
 
-#: pg_ctl.c:230 pg_ctl.c:245 pg_ctl.c:1765
+#: pg_ctl.c:226 pg_ctl.c:241 pg_ctl.c:1784
 #, c-format
 msgid "%s: out of memory\n"
-msgstr "%s: не хватает памяти\n"
+msgstr "%s: п╫п╣я┘п╡п╟я┌п╨п╟ п©п╟п╪я▐я┌п╦\n"
 
-#: pg_ctl.c:279
+#: pg_ctl.c:275
 #, c-format
 msgid "%s: could not open PID file \"%s\": %s\n"
-msgstr "%s: не удалось открыть PID-файл \"%s\": %s\n"
+msgstr "%s: п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╬я┌п╨я─я▀я┌я▄ я└п╟п╧п╩ PID \"%s\": %s\n"
 
-#: pg_ctl.c:286
+#: pg_ctl.c:282
 #, c-format
 msgid "%s: invalid data in PID file \"%s\"\n"
-msgstr "%s: неверные данные в PID-файле \"%s\"\n"
+msgstr "%s: п╫п╣п╡п╣я─п╫я▀п╣ п╢п╟п╫п╫я▀п╣ п╡ я└п╟п╧п╩п╣ PID \"%s\"\n"
 
-#: pg_ctl.c:565
+#: pg_ctl.c:558
 #, c-format
 msgid "%s: cannot set core file size limit; disallowed by hard limit\n"
-msgstr "%s: не удалось установить ограничение на размер core-файла; отвергнуто жёстким ограничением\n"
+msgstr ""
+"%s: п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╬пЁя─п╟п╫п╦я┤п╦я┌я▄ я─п╟п╥п╪п╣я─ п╢п╟п╪п©п╟ п©п╟п╪я▐я┌п╦; п╥п╟п©я─п╣я┴п╣п╫п╬ п╤я▒я│я┌п╨п╦п╪ "
+"п╬пЁя─п╟п╫п╦я┤п╣п╫п╦п╣п╪\n"
 
-#: pg_ctl.c:595
+#: pg_ctl.c:583
 #, c-format
 msgid "%s: could not read file \"%s\"\n"
-msgstr "%s: не удалось прочитать файл \"%s\"\n"
+msgstr "%s: п╫п╣ я┐п╢п╟п╩п╬я│я▄ п©я─п╬я┤п╦я┌п╟я┌я▄ я└п╟п╧п╩ \"%s\"\n"
 
-#: pg_ctl.c:601
+#: pg_ctl.c:588
 #, c-format
 msgid "%s: option file \"%s\" must have exactly one line\n"
-msgstr "%s: файл опций \"%s\" должен иметь ровно одну строку\n"
+msgstr "%s: п╡ я└п╟п╧п╩п╣ п©п╟я─п╟п╪п╣я┌я─п╬п╡ \"%s\" п╢п╬п╩п╤п╫п╟ п╠я▀я┌я▄ я─п╬п╡п╫п╬ п╬п╢п╫п╟ я│я┌я─п╬п╨п╟\n"
 
-#: pg_ctl.c:649
+#: pg_ctl.c:631
 #, c-format
 msgid "%s: another server might be running; trying to start server anyway\n"
-msgstr "%s: возможно, другой сервер уже запущен, пробуем запустить сервер всё равно\n"
+msgstr ""
+"%s: п╡п╬п╥п╪п╬п╤п╫п╬, я┐п╤п╣ я─п╟п╠п╬я┌п╟п╣я┌ п╢я─я┐пЁп╬п╧ я│п╣я─п╡п╣я─, п╡я│я▒ п╤п╣ п©я─п╬п╠я┐п╣п╪ п╥п╟п©я┐я│я┌п╦я┌я▄ я█я┌п╬я┌ "
+"я│п╣я─п╡п╣я─\n"
 
-#: pg_ctl.c:676
+#: pg_ctl.c:658
 #, c-format
 msgid ""
 "The program \"postgres\" is needed by %s but was not found in the\n"
 "same directory as \"%s\".\n"
 "Check your installation.\n"
 msgstr ""
-"Программа \"postgres\" нужна для %s, но не найдена\n"
-"в той же директории, что и \"%s\".\n"
-"Проверьте вашу установку.\n"
+"п÷я─п╬пЁя─п╟п╪п╪п╟ \"postgres\" п╫я┐п╤п╫п╟ п╢п╩я▐ %s, п╫п╬ п╬п╫п╟ п╫п╣ п╫п╟п╧п╢п╣п╫п╟\n"
+"п╡ п╨п╟я┌п╟п╩п╬пЁп╣ \"%s\".\n"
+"п÷я─п╬п╡п╣я─я▄я┌п╣ п╡п╟я┬я┐ я┐я│я┌п╟п╫п╬п╡п╨я┐ PostgreSQL.\n"
 
-#: pg_ctl.c:682
+#: pg_ctl.c:664
 #, c-format
 msgid ""
 "The program \"postgres\" was found by \"%s\"\n"
 "but was not the same version as %s.\n"
 "Check your installation.\n"
 msgstr ""
-"Программа \"postgres\" найдена рядом с \"%s\",\n"
-"но не той же версии, что и %s.\n"
-"Проверьте вашу установку.\n"
+"п÷я─п╬пЁя─п╟п╪п╪п╟ \"postgres\" п╫п╟п╧п╢п╣п╫п╟ п╡ \"%s\",\n"
+"п╫п╬ п╣я▒ п╡п╣я─я│п╦я▐ п╬я┌п╩п╦я┤п╟п╣я┌я│я▐ п╬я┌ п╡п╣я─я│п╦п╦ %s.\n"
+"п÷я─п╬п╡п╣я─я▄я┌п╣ п╡п╟я┬я┐ я┐я│я┌п╟п╫п╬п╡п╨я┐ PostgreSQL.\n"
 
-#: pg_ctl.c:699
+#: pg_ctl.c:681
 #, c-format
 msgid "%s: could not start server: exit code was %d\n"
-msgstr "%s: не удалось запустить сервер, код возврата: %d\n"
+msgstr "%s: п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╥п╟п©я┐я│я┌п╦я┌я▄ я│п╣я─п╡п╣я─, п╨п╬п╢ п╡п╬п╥п╡я─п╟я┌п╟: %d\n"
 
-#: pg_ctl.c:710
+#: pg_ctl.c:692
 #, c-format
 msgid ""
 "%s: could not start server\n"
 "Examine the log output.\n"
 msgstr ""
-"%s: не удалось запустить сервер\n"
-"Проверьте вывод в протоколе выполнения.\n"
+"%s: п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╥п╟п©я┐я│я┌п╦я┌я▄ я│п╣я─п╡п╣я─\n"
+"п≤п╥я┐я┤п╦я┌п╣ п©я─п╬я┌п╬п╨п╬п╩ п╡я▀п©п╬п╩п╫п╣п╫п╦я▐.\n"
 
-#: pg_ctl.c:719
+#: pg_ctl.c:701
 msgid "waiting for server to start..."
-msgstr "ожидание запуска сервера..."
+msgstr "п╬п╤п╦п╢п╟п╫п╦п╣ п╥п╟п©я┐я│п╨п╟ я│п╣я─п╡п╣я─п╟..."
 
-#: pg_ctl.c:723
+#: pg_ctl.c:705
 #, c-format
 msgid "could not start server\n"
-msgstr "не удалось запустить сервер\n"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╥п╟п©я┐я│я┌п╦я┌я▄ я│п╣я─п╡п╣я─\n"
 
-#: pg_ctl.c:728 pg_ctl.c:794 pg_ctl.c:867
+#: pg_ctl.c:710 pg_ctl.c:783 pg_ctl.c:863
 msgid " done\n"
-msgstr " готово\n"
+msgstr " пЁп╬я┌п╬п╡п╬\n"
 
-#: pg_ctl.c:729
+#: pg_ctl.c:711
 msgid "server started\n"
-msgstr "сервер запущен\n"
+msgstr "я│п╣я─п╡п╣я─ п╥п╟п©я┐я┴п╣п╫\n"
 
-#: pg_ctl.c:733
+#: pg_ctl.c:715
 msgid "server starting\n"
-msgstr "сервер запускается\n"
+msgstr "я│п╣я─п╡п╣я─ п╥п╟п©я┐я│п╨п╟п╣я┌я│я▐\n"
 
-#: pg_ctl.c:747 pg_ctl.c:815 pg_ctl.c:889
+#: pg_ctl.c:730 pg_ctl.c:805 pg_ctl.c:885
 #, c-format
 msgid "%s: PID file \"%s\" does not exist\n"
-msgstr "%s: PID-файл \"%s\" не существует\n"
+msgstr "%s: я└п╟п╧п╩ PID \"%s\" п╫п╣ я│я┐я┴п╣я│я┌п╡я┐п╣я┌\n"
 
-#: pg_ctl.c:748 pg_ctl.c:817 pg_ctl.c:890
+#: pg_ctl.c:731 pg_ctl.c:807 pg_ctl.c:886
 msgid "Is server running?\n"
-msgstr "Запущен ли сервер?\n"
+msgstr "п≈п╟п©я┐я┴п╣п╫ п╩п╦ я│п╣я─п╡п╣я─?\n"
 
-#: pg_ctl.c:754
+#: pg_ctl.c:737
 #, c-format
 msgid "%s: cannot stop server; single-user server is running (PID: %ld)\n"
-msgstr "%s: не удалось остановить сервер; выполняется однопользовательский сервер (PID: %ld)\n"
+msgstr ""
+"%s: п╬я│я┌п╟п╫п╬п╡п╦я┌я▄ я│п╣я─п╡п╣я─ я│ PID %ld п╫п╣п╩я▄п╥я▐ - п╬п╫ п╥п╟п©я┐я┴п╣п╫ п╡ п╪п╬п╫п╬п©п╬п╩я▄п╫п╬п╪ я─п╣п╤п╦п╪п╣\n"
 
-#: pg_ctl.c:762 pg_ctl.c:839
+#: pg_ctl.c:745 pg_ctl.c:829
 #, c-format
 msgid "%s: could not send stop signal (PID: %ld): %s\n"
-msgstr "%s: не удалось отправить сигнал остановки (PID: %ld): %s\n"
+msgstr "%s: п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╬я┌п©я─п╟п╡п╦я┌я▄ я│п╦пЁп╫п╟п╩ п╬я│я┌п╟п╫п╬п╡п╨п╦ (PID: %ld): %s\n"
 
-#: pg_ctl.c:769
+#: pg_ctl.c:752
 msgid "server shutting down\n"
-msgstr "сервер завершает работу\n"
+msgstr "я│п╣я─п╡п╣я─ п╥п╟п╡п╣я─я┬п╟п╣я┌ я─п╟п╠п╬я┌я┐\n"
 
-#: pg_ctl.c:774 pg_ctl.c:844
+#: pg_ctl.c:759 pg_ctl.c:836
+msgid ""
+"WARNING: online backup mode is active\n"
+"Shutdown will not complete until pg_stop_backup() is called.\n"
+"\n"
+msgstr ""
+"п▓п²п≤п°п░п²п≤п∙: п╟п╨я┌п╦п╡п╣п╫ я─п╣п╤п╦п╪ п╨п╬п©п╦я─п╬п╡п╟п╫п╦я▐ \"п╫п╟ я┘п╬п╢я┐\"\n"
+"п▓я▀п╨п╩я▌я┤п╣п╫п╦п╣ п©я─п╬п╦п╥п╬п╧п╢я▒я┌ я┌п╬п╩я▄п╨п╬ п©я─п╦ п╡я▀п╥п╬п╡п╣ pg_stop_backup().\n"
+"\n"
+
+#: pg_ctl.c:763 pg_ctl.c:840
 msgid "waiting for server to shut down..."
-msgstr "ожидание завершения работы сервера..."
+msgstr "п╬п╤п╦п╢п╟п╫п╦п╣ п╥п╟п╡п╣я─я┬п╣п╫п╦я▐ я─п╟п╠п╬я┌я▀ я│п╣я─п╡п╣я─п╟..."
 
-#: pg_ctl.c:789 pg_ctl.c:861
+#: pg_ctl.c:778 pg_ctl.c:857
 msgid " failed\n"
-msgstr " ошибка\n"
+msgstr " п╬я┬п╦п╠п╨п╟\n"
 
-#: pg_ctl.c:791 pg_ctl.c:863
+#: pg_ctl.c:780 pg_ctl.c:859
 #, c-format
 msgid "%s: server does not shut down\n"
-msgstr "%s: сервер не останавливается\n"
+msgstr "%s: я│п╣я─п╡п╣я─ п╫п╣ п╬я│я┌п╟п╫п╟п╡п╩п╦п╡п╟п╣я┌я│я▐\n"
 
-#: pg_ctl.c:796 pg_ctl.c:868
+#: pg_ctl.c:785 pg_ctl.c:864
 #, c-format
 msgid "server stopped\n"
-msgstr "сервер остановлен\n"
+msgstr "я│п╣я─п╡п╣я─ п╬я│я┌п╟п╫п╬п╡п╩п╣п╫\n"
 
-#: pg_ctl.c:818 pg_ctl.c:874
+#: pg_ctl.c:808 pg_ctl.c:870
 msgid "starting server anyway\n"
-msgstr "сервер запускается, несмотря ни на что\n"
+msgstr "я│п╣я─п╡п╣я─ п╥п╟п©я┐я│п╨п╟п╣я┌я│я▐, п╫п╣я│п╪п╬я┌я─я▐ п╫п╟ я█я┌п╬\n"
 
-#: pg_ctl.c:827
+#: pg_ctl.c:817
 #, c-format
 msgid "%s: cannot restart server; single-user server is running (PID: %ld)\n"
-msgstr "%s: невозможно перезапустить сервер; выполняется однопользовательский сервер (PID: %ld)\n"
+msgstr ""
+"%s: п©п╣я─п╣п╥п╟п©я┐я│я┌п╦я┌я▄ я│п╣я─п╡п╣я─ я│ PID %ld п╫п╣п╩я▄п╥я▐ - п╬п╫ п╥п╟п©я┐я┴п╣п╫ п╡ п╪п╬п╫п╬п©п╬п╩я▄п╫п╬п╪ я─п╣п╤п╦п╪п╣\n"
 
-#: pg_ctl.c:830 pg_ctl.c:899
+#: pg_ctl.c:820 pg_ctl.c:895
 msgid "Please terminate the single-user server and try again.\n"
-msgstr "Пожалуйста, остановите однопользовательский сервер и попытайтесь снова.\n"
+msgstr "п÷п╬п╤п╟п╩я┐п╧я│я┌п╟, п╬я│я┌п╟п╫п╬п╡п╦я┌п╣ п╣пЁп╬ п╦ п©п╬п╡я┌п╬я─п╦я┌п╣ п©п╬п©я▀я┌п╨я┐.\n"
 
-#: pg_ctl.c:872
+#: pg_ctl.c:868
 #, c-format
 msgid "%s: old server process (PID: %ld) seems to be gone\n"
-msgstr "%s: похоже что старый процесс сервера (PID: %ld) завершился\n"
+msgstr "%s: п©п╬я┘п╬п╤п╣, я┤я┌п╬ я│я┌п╟я─я▀п╧ я│п╣я─п╡п╣я─п╫я▀п╧ п©я─п╬я├п╣я│я│ (PID: %ld) п╦я│я┤п╣п╥\n"
 
-#: pg_ctl.c:896
+#: pg_ctl.c:892
 #, c-format
 msgid "%s: cannot reload server; single-user server is running (PID: %ld)\n"
-msgstr "%s: невозможно перезагрузить сервер; выполняется однопользовательский сервер (PID: %ld)\n"
+msgstr ""
+"%s: п©п╣я─п╣п╥п╟пЁя─я┐п╥п╦я┌я▄ я│п╣я─п╡п╣я─ я│ PID %ld п╫п╣п╩я▄п╥я▐ - п╬п╫ п╥п╟п©я┐я┴п╣п╫ п╡ п╪п╬п╫п╬п©п╬п╩я▄п╫п╬п╪ я─п╣п╤п╦п╪п╣\n"
 
-#: pg_ctl.c:905
+#: pg_ctl.c:901
 #, c-format
 msgid "%s: could not send reload signal (PID: %ld): %s\n"
-msgstr "%s: не удалось отправить сигнал перезагрузки (PID: %ld): %s\n"
+msgstr "%s: п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╬я┌п©я─п╟п╡п╦я┌я▄ я│п╦пЁп╫п╟п╩ п©п╣я─п╣п╥п╟пЁя─я┐п╥п╨п╦ (PID: %ld): %s\n"
 
-#: pg_ctl.c:910
+#: pg_ctl.c:906
 msgid "server signaled\n"
-msgstr "отправлен сигнал серверу\n"
+msgstr "я│п╦пЁп╫п╟п╩ п╬я┌п©я─п╟п╡п╩п╣п╫ я│п╣я─п╡п╣я─я┐\n"
 
-#: pg_ctl.c:954
+#: pg_ctl.c:950
 #, c-format
 msgid "%s: single-user server is running (PID: %ld)\n"
-msgstr "%s: выполняется однопользовательский сервер (PID: %ld)\n"
+msgstr "%s: я│п╣я─п╡п╣я─ я─п╟п╠п╬я┌п╟п╣я┌ п╡ п╪п╬п╫п╬п©п╬п╩я▄п╫п╬п╪ я─п╣п╤п╦п╪п╣ (PID: %ld)\n"
 
-#: pg_ctl.c:966
+#: pg_ctl.c:962
 #, c-format
 msgid "%s: server is running (PID: %ld)\n"
-msgstr "%s: выполняется сервер (PID: %ld)\n"
+msgstr "%s: я│п╣я─п╡п╣я─ я─п╟п╠п╬я┌п╟п╣я┌ (PID: %ld)\n"
 
-#: pg_ctl.c:977
+#: pg_ctl.c:973
 #, c-format
 msgid "%s: no server running\n"
-msgstr "%s: нет запущенного сервера\n"
+msgstr "%s: я│п╣я─п╡п╣я─ п╫п╣ я─п╟п╠п╬я┌п╟п╣я┌\n"
 
-#: pg_ctl.c:988
+#: pg_ctl.c:984
 #, c-format
 msgid "%s: could not send signal %d (PID: %ld): %s\n"
-msgstr "%s: не удалось отправить сигнал %d (PID: %ld): %s\n"
+msgstr "%s: п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╬я┌п©я─п╟п╡п╦я┌я▄ я│п╦пЁп╫п╟п╩ %d (PID: %ld): %s\n"
 
-#: pg_ctl.c:1022
+#: pg_ctl.c:1018
 #, c-format
 msgid "%s: could not find own program executable\n"
-msgstr "%s: не удалось найти свой исполняемый файл\n"
+msgstr "%s: п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╫п╟п╧я┌п╦ я│п╡п╬п╧ п╦я│п©п╬п╩п╫я▐п╣п╪я▀п╧ я└п╟п╧п╩\n"
 
-#: pg_ctl.c:1031
+#: pg_ctl.c:1028
 #, c-format
 msgid "%s: could not find postgres program executable\n"
-msgstr "%s: не удалось найти исполняемый файл postgres'а\n"
+msgstr "%s: п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╫п╟п╧я┌п╦ п╦я│п©п╬п╩п╫я▐п╣п╪я▀п╧ я└п╟п╧п╩ postgres\n"
 
 #: pg_ctl.c:1089 pg_ctl.c:1121
 #, c-format
 msgid "%s: could not open service manager\n"
-msgstr "%s: невозможно открыть менеджер служб\n"
+msgstr "%s: п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╬я┌п╨я─я▀я┌я▄ п╪п╣п╫п╣п╢п╤п╣я─ я│п╩я┐п╤п╠\n"
 
 #: pg_ctl.c:1095
 #, c-format
 msgid "%s: service \"%s\" already registered\n"
-msgstr "%s: служба \"%s\" уже зарегистрирована\n"
+msgstr "%s: я│п╩я┐п╤п╠п╟ \"%s\" я┐п╤п╣ п╥п╟я─п╣пЁп╦я│я┌я─п╦я─п╬п╡п╟п╫п╟\n"
 
 #: pg_ctl.c:1106
 #, c-format
 msgid "%s: could not register service \"%s\": error code %d\n"
-msgstr "%s: не удалось зарегистрировать службу \"%s\": код ошибки %d\n"
+msgstr "%s: п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╥п╟я─п╣пЁп╦я│я┌я─п╦я─п╬п╡п╟я┌я▄ я│п╩я┐п╤п╠я┐ \"%s\": п╨п╬п╢ п╬я┬п╦п╠п╨п╦ %d\n"
 
 #: pg_ctl.c:1127
 #, c-format
 msgid "%s: service \"%s\" not registered\n"
-msgstr "%s: служба \"%s\" не зарегистрирована\n"
+msgstr "%s: я│п╩я┐п╤п╠п╟ \"%s\" п╫п╣ п╥п╟я─п╣пЁп╦я│я┌я─п╦я─п╬п╡п╟п╫п╟\n"
 
 #: pg_ctl.c:1134
 #, c-format
 msgid "%s: could not open service \"%s\": error code %d\n"
-msgstr "%s: не удалось открыть службу \"%s\": код ошибки %d\n"
+msgstr "%s: п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╬я┌п╨я─я▀я┌я▄ я│п╩я┐п╤п╠я┐ \"%s\": п╨п╬п╢ п╬я┬п╦п╠п╨п╦ %d\n"
 
 #: pg_ctl.c:1141
 #, c-format
 msgid "%s: could not unregister service \"%s\": error code %d\n"
-msgstr "%s: невозможно удалить службу \"%s\": код ошибки %d\n\n"
+msgstr ""
+"%s: п╬я┬п╦п╠п╨п╟ п©я─п╦ я┐п╢п╟п╩п╣п╫п╦п╦ я│п╩я┐п╤п╠я▀ \"%s\": п╨п╬п╢ п╬я┬п╦п╠п╨п╦ %d\n"
+"\n"
 
 #: pg_ctl.c:1227
 msgid "Waiting for server startup...\n"
-msgstr "Ожидание запуска сервера...\n"
+msgstr "п·п╤п╦п╢п╟п╫п╦п╣ п╥п╟п©я┐я│п╨п╟ я│п╣я─п╡п╣я─п╟...\n"
 
 #: pg_ctl.c:1230
 msgid "Timed out waiting for server startup\n"
-msgstr "Превышено время ожидания запуска сервера\n"
+msgstr "п÷я─п╣п╡я▀я┬п╣п╫п╬ п╡я─п╣п╪я▐ п╬п╤п╦п╢п╟п╫п╦я▐ п╥п╟п©я┐я│п╨п╟ я│п╣я─п╡п╣я─п╟\n"
 
 #: pg_ctl.c:1234
 msgid "Server started and accepting connections\n"
-msgstr "Сервер запущен и принимает подключения\n"
+msgstr "п║п╣я─п╡п╣я─ п╥п╟п©я┐я┴п╣п╫ п╦ п©я─п╦п╫п╦п╪п╟п╣я┌ п©п╬п╢п╨п╩я▌я┤п╣п╫п╦я▐\n"
 
 #: pg_ctl.c:1284
 #, c-format
 msgid "%s: could not start service \"%s\": error code %d\n"
-msgstr "%s: не удалось запустить службу \"%s\": код ошибки %d\n"
+msgstr "%s: п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╥п╟п©я┐я│я┌п╦я┌я▄ я│п╩я┐п╤п╠я┐ \"%s\": п╨п╬п╢ п╬я┬п╦п╠п╨п╦ %d\n"
 
-#: pg_ctl.c:1500
+#: pg_ctl.c:1519
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Наберите \"%s --help\" для более подробной информации.\n"
+msgstr "п■п╩я▐ п╢п╬п©п╬п╩п╫п╦я┌п╣п╩я▄п╫п╬п╧ п╦п╫я└п╬я─п╪п╟я├п╦п╦ п©п╬п©я─п╬п╠я┐п╧я┌п╣ \"%s --help\".\n"
 
-#: pg_ctl.c:1508
+#: pg_ctl.c:1527
 #, c-format
 msgid ""
 "%s is a utility to start, stop, restart, reload configuration files,\n"
 "report the status of a PostgreSQL server, or signal a PostgreSQL process.\n"
 "\n"
 msgstr ""
-"%s является утилитой для запуска, остановки, перезапуска,\n"
-"перезагрузки конфигурационных файлов, информирования о состоянии сервера\n"
-"PostgreSQL, или отправки сигналов PostgreSQL-процессу.\n"
+"%s - я┐я┌п╦п╩п╦я┌п╟, п©п╬п╥п╡п╬п╩я▐я▌я┴п╟я▐ п╥п╟п©я┐я│п╨п╟я┌я▄, п╬я│я┌п╟п╫п╟п╡п╩п╦п╡п╟я┌я▄, п©п╣я─п╣п╥п╟п©я┐я│п╨п╟я┌я▄ я│п╣я─п╡п╣я─\n"
+"PostgreSQL, я┐п╥п╫п╟я┌я▄ п╣пЁп╬ я│п╬я│я┌п╬я▐п╫п╦п╣, п©п╣я─п╣п╥п╟пЁя─я┐п╥п╦я┌я▄ п╨п╬п╫я└п╦пЁя┐я─п╟я├п╦п╬п╫п╫я▀п╣ я└п╟п╧п╩я▀\n"
+"п╦п╩п╦ п╬я┌п©я─п╟п╡п╦я┌я▄ я│п╦пЁп╫п╟п╩я▀ п©я─п╬я├п╣я│я│я┐ PostgreSQL.\n"
 "\n"
 
-#: pg_ctl.c:1510
+#: pg_ctl.c:1529
 #, c-format
 msgid "Usage:\n"
-msgstr "Использование:\n"
+msgstr "п≤я│п©п╬п╩я▄п╥п╬п╡п╟п╫п╦п╣:\n"
 
-#: pg_ctl.c:1511
+#: pg_ctl.c:1530
 #, c-format
 msgid ""
 "  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS"
 "\"]\n"
-msgstr "  %s start   [-w] [-t СЕКУНДЫ] [-D ДИРЕКТОРИЯ-ДАННЫХ] [-s] [-l ИМЯ-ФАЙЛА] [-o \"ОПЦИИ\"]\n"
+msgstr ""
+"  %s start   [-w] [-t п║п∙п ] [-D п п░п╒п░п⌡п·п⌠-п■п░п²п²п╚п╔] [-s] [-l п≤п°п╞-п╓п░п≥п⌡п░]\n"
+"                 [-o \"п÷п░п═п░п°п∙п╒п═п╚\"]\n"
 
-#: pg_ctl.c:1512
+#: pg_ctl.c:1531
 #, c-format
 msgid "  %s stop    [-W] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
-msgstr "  %s stop    [-W] [-t СЕКУНДЫ] [-D ДИРЕКТОРИЯ-ДАННЫХ] [-s] [-m РЕЖИМ-ОСТАНОВКИ]\n"
+msgstr ""
+"  %s stop    [-W] [-t п║п∙п ] [-D п п░п╒п░п⌡п·п⌠-п■п░п²п²п╚п╔] [-s] [-m п═п∙п√п≤п°-п·п║п╒п░п²п·п▓п п≤]\n"
 
-#: pg_ctl.c:1513
+#: pg_ctl.c:1532
 #, c-format
 msgid ""
 "  %s restart [-w] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
 "                 [-o \"OPTIONS\"]\n"
 msgstr ""
-"  %s restart [-w] [-t СЕКУНДЫ] [-D ДИРЕКТОРИЯ-ДАННЫХ] [-s] [-m РЕЖИМ-ОСТАНОВКИ]\n"
-"                 [-o \"ОПЦИИ\"]\n"
+"  %s restart [-w] [-t п║п∙п ] [-D п п░п╒п░п⌡п·п⌠-п■п░п²п²п╚п╔] [-s] [-m п═п∙п√п≤п°-п·п║п╒п░п²п·п▓п п≤]\n"
+"                 [-o \"п÷п░п═п░п°п∙п╒п═п╚\"]\n"
 
-#: pg_ctl.c:1515
+#: pg_ctl.c:1534
 #, c-format
 msgid "  %s reload  [-D DATADIR] [-s]\n"
-msgstr "  %s reload  [-D ДИРЕКТОРИЯ-ДАННЫХ] [-s]\n"
+msgstr "  %s reload  [-D п п░п╒п░п⌡п·п⌠-п■п░п²п²п╚п╔] [-s]\n"
 
-#: pg_ctl.c:1516
+#: pg_ctl.c:1535
 #, c-format
 msgid "  %s status  [-D DATADIR]\n"
-msgstr "  %s status  [-D ДИРЕКТОРИЯ-ДАННЫХ]\n"
+msgstr "  %s status  [-D п п░п╒п░п⌡п·п⌠-п■п░п²п²п╚п╔]\n"
 
-#: pg_ctl.c:1517
+#: pg_ctl.c:1536
 #, c-format
 msgid "  %s kill    SIGNALNAME PID\n"
-msgstr "  %s kill   ИМЯ-СИГНАЛА PID\n"
+msgstr "  %s kill    п║п≤п⌠п²п░п⌡ PID\n"
 
-#: pg_ctl.c:1519
+#: pg_ctl.c:1538
 #, c-format
 msgid ""
 "  %s register   [-N SERVICENAME] [-U USERNAME] [-P PASSWORD] [-D DATADIR]\n"
 "                    [-w] [-t SECS] [-o \"OPTIONS\"]\n"
 msgstr ""
-"  %s register   [-N ИМЯ-СЛУЖБЫ] [-U ИМЯ-ПОЛЬЗОВАТЕЛЯ] [-P ПАРОЛЬ] [-D ДИРЕКТОРИЯ-ДАННЫХ]\n"
-"                    [-w] [-t СЕКУНДЫ] [-o \"ОПЦИИ\"]\n"
+"  %s register   [-N п≤п°п╞-п║п⌡пёп√п▒п╚] [-U п÷п·п⌡п╛п≈п·п▓п░п╒п∙п⌡п╛] [-P п÷п░п═п·п⌡п╛]\n"
+"                  [-D п п░п╒п░п⌡п·п⌠-п■п░п²п²п╚п╔] [-w] [-t п║п∙п ] [-o \"п÷п░п═п░п°п∙п╒п═п╚\"]\n"
 
-#: pg_ctl.c:1521
+#: pg_ctl.c:1540
 #, c-format
 msgid "  %s unregister [-N SERVICENAME]\n"
-msgstr "  %s unregister [-N ИМЯ-СЛУЖБЫ]\n"
+msgstr "  %s unregister [-N п≤п°п╞-п║п⌡пёп√п▒п╚]\n"
 
-#: pg_ctl.c:1524
+#: pg_ctl.c:1543
 #, c-format
 msgid ""
 "\n"
 "Common options:\n"
 msgstr ""
 "\n"
-"Опции общего характера:\n"
+"п·п╠я┴п╦п╣ п©п╟я─п╟п╪п╣я┌я─я▀:\n"
 
-#: pg_ctl.c:1525
+#: pg_ctl.c:1544
 #, c-format
 msgid "  -D, --pgdata DATADIR   location of the database storage area\n"
-msgstr "  -D, --pgdata ДИРЕКТОРИЯ-ДАННЫХ  местонахождение хранилища баз данных\n"
+msgstr "  -D, --pgdata п п░п╒п░п⌡п·п⌠   я─п╟я│п©п╬п╩п╬п╤п╣п╫п╦п╣ я┘я─п╟п╫п╦п╩п╦я┴п╟ п╠п╟п╥ п╢п╟п╫п╫я▀я┘\n"
 
-#: pg_ctl.c:1526
+#: pg_ctl.c:1545
 #, c-format
 msgid "  -s, --silent           only print errors, no informational messages\n"
 msgstr ""
-"  -s, --silent           сообщать только ошибки, исключая информационные "
-"сообщения\n"
+"  -s, --silent           п╡я▀п╡п╬п╢п╦я┌я▄ я┌п╬п╩я▄п╨п╬ п╬я┬п╦п╠п╨п╦, п╠п╣п╥ п╦п╫я└п╬я─п╪п╟я├п╦п╬п╫п╫я▀я┘ "
+"я│п╬п╬п╠я┴п╣п╫п╦п╧\n"
 
-#: pg_ctl.c:1527
+#: pg_ctl.c:1546
 #, c-format
 msgid "  -t SECS                seconds to wait when using -w option\n"
-msgstr "  -t СЕКУНДЫ             сколько секунд ждать при использовании опции -w\n"
+msgstr ""
+"  -t п║п∙п                  п╡я─п╣п╪я▐ п╬п╤п╦п╢п╟п╫п╦я▐ п©я─п╦ п╦я│п©п╬п╩я▄п╥п╬п╡п╟п╫п╦п╦ п©п╟я─п╟п╪п╣я┌я─п╟ -w\n"
 
-#: pg_ctl.c:1528
+#: pg_ctl.c:1547
 #, c-format
 msgid "  -w                     wait until operation completes\n"
-msgstr "  -w                     ждать до завершения операции\n"
+msgstr "  -w                     п╤п╢п╟я┌я▄ п╥п╟п╡п╣я─я┬п╣п╫п╦я▐ п╬п©п╣я─п╟я├п╦п╦\n"
 
-#: pg_ctl.c:1529
+#: pg_ctl.c:1548
 #, c-format
 msgid "  -W                     do not wait until operation completes\n"
-msgstr "  -W                     не ждать завершения операции\n"
+msgstr "  -W                     п╫п╣ п╤п╢п╟я┌я▄ п╥п╟п╡п╣я─я┬п╣п╫п╦я▐ п╬п©п╣я─п╟я├п╦п╦\n"
 
-#: pg_ctl.c:1530
+#: pg_ctl.c:1549
 #, c-format
 msgid "  --help                 show this help, then exit\n"
-msgstr "  --help                 показать эту подсказку и выйти\n"
+msgstr "  --help                 п©п╬п╨п╟п╥п╟я┌я▄ я█я┌я┐ я│п©я─п╟п╡п╨я┐ п╦ п╡я▀п╧я┌п╦\n"
 
-#: pg_ctl.c:1531
+#: pg_ctl.c:1550
 #, c-format
 msgid "  --version              output version information, then exit\n"
-msgstr "  --version              показать версию и выйти\n"
+msgstr "  --version              п©п╬п╨п╟п╥п╟я┌я▄ п╡п╣я─я│п╦я▌ п╦ п╡я▀п╧я┌п╦\n"
 
-#: pg_ctl.c:1532
+#: pg_ctl.c:1551
 #, c-format
 msgid ""
 "(The default is to wait for shutdown, but not for start or restart.)\n"
 "\n"
 msgstr ""
-"(По умолчанию, ждать завершения остановки, но не в случае запуска или "
-"перезапуска\n"
+"(п÷п╬ я┐п╪п╬п╩я┤п╟п╫п╦я▌ п╬п╤п╦п╢п╟п╫п╦п╣ п╦п╪п╣п╣я┌ п╪п╣я│я┌п╬ п©я─п╦ п╬я│я┌п╟п╫п╬п╡п╨п╣, п╫п╬ п╫п╣ п©я─п╦ (п©п╣я─п╣)п╥п╟п©я┐я│п╨п╣.)\n"
 "\n"
 
-#: pg_ctl.c:1533
+#: pg_ctl.c:1552
 #, c-format
 msgid "If the -D option is omitted, the environment variable PGDATA is used.\n"
-msgstr ""
-"Если опция -D не задана,то будет использоваться переменная окружения "
-"PGDATA.\n"
+msgstr "п∙я│п╩п╦ п©п╟я─п╟п╪п╣я┌я─ -D п╬п©я┐я┴п╣п╫, п╦я│п©п╬п╩я▄п╥я┐п╣я┌я│я▐ п©п╣я─п╣п╪п╣п╫п╫п╟я▐ п╬п╨я─я┐п╤п╣п╫п╦я▐ PGDATA.\n"
 
-#: pg_ctl.c:1535
+#: pg_ctl.c:1554
 #, c-format
 msgid ""
 "\n"
 "Options for start or restart:\n"
 msgstr ""
 "\n"
-"Опции запуска или перезапуска:\n"
+"п÷п╟я─п╟п╪п╣я┌я─я▀ п╥п╟п©я┐я│п╨п╟ п╦ п©п╣я─п╣п╥п╟п©я┐я│п╨п╟:\n"
 
-#: pg_ctl.c:1536
+#: pg_ctl.c:1556
+#, c-format
+msgid "  -c, --core-files       allow postgres to produce core files\n"
+msgstr "  -c, --core-files       я┐п╨п╟п╥п╟я┌я▄ postgres я│п╬п╥п╢п╟п╡п╟я┌я▄ п╢п╟п╪п©я▀ п©п╟п╪я▐я┌п╦\n"
+
+#: pg_ctl.c:1558
+#, c-format
+msgid "  -c, --core-files       not applicable on this platform\n"
+msgstr "  -c, --core-files       п╫п╣п©я─п╦п╪п╣п╫п╦п╪п╬ п╫п╟ я█я┌п╬п╧ п©п╩п╟я┌я└п╬я─п╪п╣\n"
+
+#: pg_ctl.c:1560
 #, c-format
 msgid "  -l, --log FILENAME     write (or append) server log to FILENAME\n"
-msgstr "  -l, --log ИМЯ-ФАЙЛА    записывать (или добавлять) протокол выполнения сервера в ИМЯ-ФАЙЛА.\n"
+msgstr ""
+"  -l, --log п╓п░п≥п⌡         п╥п╟п©п╦я│я▀п╡п╟я┌я▄ (п╦п╩п╦ п╢п╬п╠п╟п╡п╩я▐я┌я▄) п©я─п╬я┌п╬п╨п╬п╩ я│п╣я─п╡п╣я─п╟ п╡ "
+"п╓п░п≥п⌡.\n"
 
-#: pg_ctl.c:1537
+#: pg_ctl.c:1561
 #, c-format
 msgid ""
 "  -o OPTIONS             command line options to pass to postgres\n"
 "                         (PostgreSQL server executable)\n"
 msgstr ""
-"  -o ОПЦИИ               опции команднoй строки для передачи postgres'у\n"
-"                         (исполняемому файлу сервера PostgreSQL)\n"
+"  -o п÷п░п═п░п°п∙п╒п═п╚           п©п╟я─п╟п╪п╣я┌я─я▀ п╨п╬п╪п╟п╫п╢п╫п╬п╧ я│я┌я─п╬п╨п╦ п╢п╩я▐ postgres\n"
+"                         (п╦я│п©п╬п╩п╫я▐п╣п╪п╬пЁп╬ я└п╟п╧п╩п╟ я│п╣я─п╡п╣я─п╟ PostgreSQL)\n"
 
-#: pg_ctl.c:1539
+#: pg_ctl.c:1563
 #, c-format
 msgid "  -p PATH-TO-POSTGRES    normally not necessary\n"
-msgstr "  -p ПУТЬ-К-POSTGRES     обычно не требуется\n"
+msgstr "  -p п÷пёп╒п╛-п -POSTGRES     п╬п╠я▀я┤п╫п╬ п╫п╣ я┌я─п╣п╠я┐п╣я┌я│я▐\n"
 
-#: pg_ctl.c:1541
-#, c-format
-msgid "  -c, --core-files       allow postgres to produce core files\n"
-msgstr "  -c, --core-files       разрешить postgres'у генерировать core-файлы\n"
-
-#: pg_ctl.c:1543
-#, c-format
-msgid "  -c, --core-files       not applicable on this platform\n"
-msgstr "  -c, --core-files       неприменимо на этой платформе\n"
-
-#: pg_ctl.c:1545
+#: pg_ctl.c:1564
 #, c-format
 msgid ""
 "\n"
 "Options for stop or restart:\n"
 msgstr ""
 "\n"
-"Опции для остановки или перезапуска:\n"
+"п÷п╟я─п╟п╪п╣я┌я─я▀ п╬я│я┌п╟п╫п╬п╡п╨п╦ п╦ п©п╣я─п╣п╥п╟п©я┐я│п╨п╟:\n"
 
-#: pg_ctl.c:1546
+#: pg_ctl.c:1565
 #, c-format
 msgid "  -m SHUTDOWN-MODE   can be \"smart\", \"fast\", or \"immediate\"\n"
-msgstr "  -m РЕЖИМ-ОСТАНОВКИ   может быть \"smart\", \"fast\" или \"immediate\"\n"
+msgstr ""
+"  -m п═п∙п√п≤п°-п·п║п╒п░п²п·п▓п п≤     п╪п╬п╤п╣я┌ п╠я▀я┌я▄ \"smart\", \"fast\" п╦п╩п╦ \"immediate\"\n"
 
-#: pg_ctl.c:1548
+#: pg_ctl.c:1567
 #, c-format
 msgid ""
 "\n"
 "Shutdown modes are:\n"
 msgstr ""
 "\n"
-"Режимы остановки:\n"
+"п═п╣п╤п╦п╪я▀ п╬я│я┌п╟п╫п╬п╡п╨п╦:\n"
 
-#: pg_ctl.c:1549
+#: pg_ctl.c:1568
 #, c-format
 msgid "  smart       quit after all clients have disconnected\n"
-msgstr "  smart       закончить работу после отключения всех клиентов\n"
+msgstr "  smart       п╥п╟п╨п╬п╫я┤п╦я┌я▄ я─п╟п╠п╬я┌я┐ п©п╬я│п╩п╣ п╬я┌п╨п╩я▌я┤п╣п╫п╦я▐ п╡я│п╣я┘ п╨п╩п╦п╣п╫я┌п╬п╡\n"
 
-#: pg_ctl.c:1550
+#: pg_ctl.c:1569
 #, c-format
 msgid "  fast        quit directly, with proper shutdown\n"
-msgstr "  fast        закончить быстро,но с полноценной остановкой\n"
+msgstr "  fast        п╥п╟п╨п╬п╫я┤п╦я┌я▄ я│я─п╟п╥я┐, п╡ я┬я┌п╟я┌п╫п╬п╪ я─п╣п╤п╦п╪п╣\n"
 
-#: pg_ctl.c:1551
+#: pg_ctl.c:1570
 #, c-format
 msgid ""
 "  immediate   quit without complete shutdown; will lead to recovery on "
 "restart\n"
 msgstr ""
-"  immediate   выйти немедленно без полноценной остановки; приведёт к\n"
-"              восстановлению при перезапуске\n"
+"  immediate   п╥п╟п╨п╬п╫я┤п╦я┌я▄ п╫п╣п╪п╣п╢п╩п╣п╫п╫п╬, п╡ я█п╨я│я┌я─п╣п╫п╫п╬п╪ я─п╣п╤п╦п╪п╣; п╡п╩п╣я┤я▒я┌ п╥п╟ я│п╬п╠п╬п╧\n"
+"              п╡п╬я│я│я┌п╟п╫п╬п╡п╩п╣п╫п╦п╣ п©я─п╦ п©п╣я─п╣п╥п╟п©я┐я│п╨п╣\n"
 
-#: pg_ctl.c:1553
+#: pg_ctl.c:1572
 #, c-format
 msgid ""
 "\n"
 "Allowed signal names for kill:\n"
 msgstr ""
 "\n"
-"Разрешённые названия сигналов для команды kill:\n"
+"п═п╟п╥я─п╣я┬я▒п╫п╫я▀п╣ я│п╦пЁп╫п╟п╩я▀ п╢п╩я▐ п╨п╬п╪п╟п╫п╢я▀ kill:\n"
 
-#: pg_ctl.c:1557
+#: pg_ctl.c:1576
 #, c-format
 msgid ""
 "\n"
 "Options for register and unregister:\n"
 msgstr ""
 "\n"
-"Опции для регистрации и снятия с регистрации:\n"
+"п÷п╟я─п╟п╪п╣я┌я─я▀ п╢п╩я▐ я─п╣пЁп╦я│я┌я─п╟я├п╦п╦ п╦ я┐п╢п╟п╩п╣п╫п╦я▐:\n"
 
-#: pg_ctl.c:1558
+#: pg_ctl.c:1577
 #, c-format
 msgid ""
 "  -N SERVICENAME  service name with which to register PostgreSQL server\n"
-msgstr "  -N ИМЯ-СЛУЖБЫ   имя службы для регистрации сервера PostgreSQL\n"
+msgstr "  -N п≤п°п╞-п║п⌡пёп√п▒п╚   п╦п╪я▐ я│п╩я┐п╤п╠я▀ п╢п╩я▐ я─п╣пЁп╦я│я┌я─п╟я├п╦п╦ я│п╣я─п╡п╣я─п╟ PostgreSQL\n"
 
-#: pg_ctl.c:1559
+#: pg_ctl.c:1578
 #, c-format
 msgid "  -P PASSWORD     password of account to register PostgreSQL server\n"
-msgstr "  -P ПАРОЛЬ    пароль аккаунта для регистрации сервера PostgreSQL\n"
+msgstr ""
+"  -P п÷п░п═п·п⌡п╛       п©п╟я─п╬п╩я▄ я┐я┤я▒я┌п╫п╬п╧ п╥п╟п©п╦я│п╦ п╢п╩я▐ я─п╣пЁп╦я│я┌я─п╟я├п╦п╦ я│п╣я─п╡п╣я─п╟ PostgreSQL\n"
 
-#: pg_ctl.c:1560
+#: pg_ctl.c:1579
 #, c-format
 msgid "  -U USERNAME     user name of account to register PostgreSQL server\n"
-msgstr "  -U ИМЯ-ПОЛЬЗОВАТЕЛЯ    имя пользователя для регистрации сервера PostgreSQL\n"
+msgstr ""
+"  -U п÷п·п⌡п╛п≈п·п▓п░п╒п∙п⌡п╛ п╦п╪я▐ п©п╬п╩я▄п╥п╬п╡п╟я┌п╣п╩я▐ п╢п╩я▐ я─п╣пЁп╦я│я┌я─п╟я├п╦п╦ я│п╣я─п╡п╣я─п╟ PostgreSQL\n"
 
-#: pg_ctl.c:1563
+#: pg_ctl.c:1582
 #, c-format
 msgid ""
 "\n"
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr ""
 "\n"
-"Посылать сообщения об ошибках на адрес  <pgsql-bugs@postgresql.org>.\n"
+"п·п╠ п╬я┬п╦п╠п╨п╟я┘ я│п╬п╬п╠я┴п╟п╧я┌п╣ п©п╬ п╟п╢я─п╣я│я┐ <pgsql-bugs@postgresql.org>.\n"
 
-#: pg_ctl.c:1588
+#: pg_ctl.c:1607
 #, c-format
 msgid "%s: unrecognized shutdown mode \"%s\"\n"
-msgstr "%s: неизвестный режим остановки \"%s\"\n"
+msgstr "%s: п╫п╣п╦п╥п╡п╣я│я┌п╫я▀п╧ я─п╣п╤п╦п╪ п╬я│я┌п╟п╫п╬п╡п╨п╦ \"%s\"\n"
 
-#: pg_ctl.c:1621
+#: pg_ctl.c:1640
 #, c-format
 msgid "%s: unrecognized signal name \"%s\"\n"
-msgstr "%s: нераспознанное имя сигнала \"%s\"\n"
+msgstr "%s: п╫п╣я─п╟я│п©п╬п╥п╫п╟п╫п╫п╬п╣ п╦п╪я▐ я│п╦пЁп╫п╟п╩п╟ \"%s\"\n"
 
-#: pg_ctl.c:1686
+#: pg_ctl.c:1705
 #, c-format
 msgid ""
 "%s: cannot be run as root\n"
 "Please log in (using, e.g., \"su\") as the (unprivileged) user that will\n"
 "own the server process.\n"
 msgstr ""
-"%s: нельзя выполнять под пользователем root\n"
-"Пожалуйста, войдите в систему как непривилегированный пользователь  "
-"(например, используя \"su\"),\n"
-"под которым будет выполняться серверный процесс.\n"
-
-#: pg_ctl.c:1795
-#, c-format
-msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: слишком много аргументов командной строки (первый: \"%s\")\n"
+"п≈п╟п©я┐я│п╨п╟я┌я▄ %s п╬я┌ п╦п╪п╣п╫п╦ root п╫п╣п╩я▄п╥я▐.\n"
+"п÷п╬п╤п╟п╩я┐п╧я│я┌п╟, п©п╣я─п╣п╨п╩я▌я┤п╦я┌п╣я│я▄ п╫п╟ п╬п╠я▀я┤п╫п╬пЁп╬ п©п╬п╩я▄п╥п╬п╡п╟я┌п╣п╩я▐ (п╫п╟п©я─п╦п╪п╣я─,\n"
+"п╦я│п©п╬п╩я▄п╥я┐я▐ \"su\"), п╨п╬я┌п╬я─я▀п╧ п╠я┐п╢п╣я┌ п╥п╟п©я┐я│п╨п╟я┌я▄ я│п╣я─п╡п╣я─п╫я▀п╧ п©я─п╬я├п╣я│я│.\n"
 
 #: pg_ctl.c:1814
 #, c-format
-msgid "%s: missing arguments for kill mode\n"
-msgstr "%s: отсутствуют аргументы для режима kill\n"
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: я│п╩п╦я┬п╨п╬п╪ п╪п╫п╬пЁп╬ п╟я─пЁя┐п╪п╣п╫я┌п╬п╡ п╨п╬п╪п╟п╫п╢п╫п╬п╧ я│я┌я─п╬п╨п╦ (п©п╣я─п╡я▀п╧: \"%s\")\n"
 
-#: pg_ctl.c:1832
+#: pg_ctl.c:1833
+#, c-format
+msgid "%s: missing arguments for kill mode\n"
+msgstr "%s: п╬я┌я│я┐я┌я│я┌п╡я┐я▌я┌ п╟я─пЁя┐п╪п╣п╫я┌я▀ п╢п╩я▐ я─п╣п╤п╦п╪п╟ kill\n"
+
+#: pg_ctl.c:1851
 #, c-format
 msgid "%s: unrecognized operation mode \"%s\"\n"
-msgstr "%s: нераспознанный режим работы \"%s\"\n"
+msgstr "%s: п╫п╣я─п╟я│п©п╬п╥п╫п╟п╫п╫я▀п╧ я─п╣п╤п╦п╪ я─п╟п╠п╬я┌я▀ \"%s\"\n"
 
-#: pg_ctl.c:1842
+#: pg_ctl.c:1861
 #, c-format
 msgid "%s: no operation specified\n"
-msgstr "%s: команда не указана\n"
+msgstr "%s: п╨п╬п╪п╟п╫п╢п╟ п╫п╣ я┐п╨п╟п╥п╟п╫п╟\n"
 
-#: pg_ctl.c:1858
+#: pg_ctl.c:1877
 #, c-format
 msgid ""
 "%s: no database directory specified and environment variable PGDATA unset\n"
 msgstr ""
-"%s: директория баз данных не указана и переменная окружения PGDATA не "
-"установлена\n"
+"%s: п╨п╟я┌п╟п╩п╬пЁ п╠п╟п╥ п╢п╟п╫п╫я▀я┘ п╫п╣ я┐п╨п╟п╥п╟п╫ п╦ п©п╣я─п╣п╪п╣п╫п╫п╟я▐ п╬п╨я─я┐п╤п╣п╫п╦я▐ PGDATA п╫п╣ "
+"я┐я│я┌п╟п╫п╬п╡п╩п╣п╫п╟\n"
 
 #: ../../port/exec.c:195 ../../port/exec.c:309 ../../port/exec.c:352
 #, c-format
 msgid "could not identify current directory: %s"
-msgstr "не удалось определить текущую директорию: %s"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╬п©я─п╣п╢п╣п╩п╦я┌я▄ я┌п╣п╨я┐я┴п╦п╧ п╨п╟я┌п╟п╩п╬пЁ: %s"
 
 #: ../../port/exec.c:214
 #, c-format
 msgid "invalid binary \"%s\""
-msgstr "неверный бинарный \"%s\""
+msgstr "п╫п╣п╡п╣я─п╫я▀п╧ п╦я│п©п╬п╩п╫я▐п╣п╪я▀п╧ я└п╟п╧п╩ \"%s\""
 
 #: ../../port/exec.c:263
 #, c-format
 msgid "could not read binary \"%s\""
-msgstr "не удалось считать бинарный \"%s\""
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п©я─п╬я┤п╦я┌п╟я┌я▄ п╦я│п©п╬п╩п╫я▐п╣п╪я▀п╧ я└п╟п╧п╩ \"%s\""
 
 #: ../../port/exec.c:270
 #, c-format
 msgid "could not find a \"%s\" to execute"
-msgstr "\"%s\" не найден для выполнения"
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п╫п╟п╧я┌п╦ п╥п╟п©я┐я│п╨п╟п╣п╪я▀п╧ я└п╟п╧п╩ \"%s\""
 
 #: ../../port/exec.c:325 ../../port/exec.c:361
 #, c-format
 msgid "could not change directory to \"%s\""
-msgstr "не удалось поменять директорию на \"%s\""
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п©п╣я─п╣п╧я┌п╦ п╡ п╨п╟я┌п╟п╩п╬пЁ \"%s\""
 
 #: ../../port/exec.c:340
 #, c-format
 msgid "could not read symbolic link \"%s\""
-msgstr "не получилось считать ссылку \"%s\""
+msgstr "п╫п╣ я┐п╢п╟п╩п╬я│я▄ п©я─п╬я┤п╦я┌п╟я┌я▄ я│п╦п╪п╡п╬п╩п╦я┤п╣я│п╨я┐я▌ я│я│я▀п╩п╨я┐ \"%s\""
 
 #: ../../port/exec.c:586
 #, c-format
 msgid "child process exited with exit code %d"
-msgstr "дочерний процесс завершился с кодом возврата %d"
+msgstr "п╢п╬я┤п╣я─п╫п╦п╧ п©я─п╬я├п╣я│я│ п╥п╟п╡п╣я─я┬п╦п╩я│я▐ я│ п╨п╬п╢п╬п╪ п╡п╬п╥п╡я─п╟я┌п╟ %d"
 
 #: ../../port/exec.c:590
 #, c-format
 msgid "child process was terminated by exception 0x%X"
-msgstr "дочерний процесс завершён исключением 0x%X"
+msgstr "п╢п╬я┤п╣я─п╫п╦п╧ п©я─п╬я├п╣я│я│ п©я─п╣я─п╡п╟п╫ п╦я│п╨п╩я▌я┤п╣п╫п╦п╣п╪ 0x%X"
 
 #: ../../port/exec.c:599
 #, c-format
 msgid "child process was terminated by signal %s"
-msgstr "дочерний процесс завершён сигналом %s"
+msgstr "п╢п╬я┤п╣я─п╫п╦п╧ п©я─п╬я├п╣я│я│ п╥п╟п╡п╣я─я┬я▒п╫ п©п╬ я│п╦пЁп╫п╟п╩я┐ %s"
 
 #: ../../port/exec.c:602
 #, c-format
 msgid "child process was terminated by signal %d"
-msgstr "дочерний процесс был завершен сигналом %d"
+msgstr "п╢п╬я┤п╣я─п╫п╦п╧ п©я─п╬я├п╣я│я│ п╥п╟п╡п╣я─я┬я▒п╫ п©п╬ я│п╦пЁп╫п╟п╩я┐ %d"
 
 #: ../../port/exec.c:606
 #, c-format
 msgid "child process exited with unrecognized status %d"
-msgstr "дочерний процесс завершился с нераспознанным статусом %d"
-
-#~ msgid "%s: neither postmaster nor postgres running\n"
-#~ msgstr "%s: не выполняются ни postmaster, ни postgres\n"
-
-#~ msgid "%s: a standalone backend \"postgres\" is running (PID: %ld)\n"
-#~ msgstr "%s: выполняется независимый процесс \"postgres\" (PID: %ld)\n"
-
-#~ msgid "%s: invalid option %s\n"
-#~ msgstr "%s: неверная опция %s\n"
+msgstr "п╢п╬я┤п╣я─п╫п╦п╧ п©я─п╬я├п╣я│я│ п╥п╟п╡п╣я─я┬п╦п╩я│я▐ я│ п╫п╣я─п╟я│п©п╬п╥п╫п╟п╫п╫я▀п╪ я│п╬я│я┌п╬я▐п╫п╦п╣п╪ %d"

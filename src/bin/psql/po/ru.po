@@ -1,126 +1,150 @@
-# German message translation file for psql
-# Peter Eisentraut <peter_e@gmx.net>, 2001 - 2009.
+# ru.po
+# PSQL Translated Messages into the Russian Language (UTF-8)
 #
-# Use these quotes: �%s�
+# Copyright (c) 2001-2005 Serguei A. Mokhov, mokhov@cs.concordia.ca
+# Copyright (c) 2012 Alexander Lakhin, exclusion@gmail.com
+# Distributed under the same licensing terms as PostgreSQL itself.
 #
+# pgtranslation Id: psql.po,v 1.2 2009/10/14 21:08:40 petere Exp $
+#
+# ChangeLog:
+#   - April 2, 2012: Bug fixes. Alexander Lakhin <exclusion@gmail.com>.
+#   - February 26, 2012: Backporting to 8.4. Alexander Lakhin <exclusion@gmail.com>.
+#   - February 22, 2012: Minor fixes, and completion for 9.0: Alexander Lakhin <exclusion@gmail.com>
+#     - With corrections from Sergey Burladyan <eshkinkot@gmail.com>
+#   - January 29 - February 13, 2012: Fixes, completion, and updates for 9.1: Alexander Lakhin <exclusion@gmail.com>
+#   - January 17, 2005: Complete translation for 8.0, Serguei A. Mokhov <mokhov@cs.concordia.ca>.
+#   - December, 2004 - January, 2005: New translation by Oleg Bartunov <oleg@sai.msu.su>.
+#   - March 27 - December 10, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>.
+#   - July 26 - October 12, 2003: Updates for 7.4.x; <mokhov@cs.concordia.ca>.
+#   - October 12, 2002: Complete post-7.3beta2 Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>.
+#   - September 7, 2002: Complete post-7.3beta1 Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>.
+#   - August 2001 - August 2002: Initial translation and maintenance, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-11-29 11:11+0000\n"
-"PO-Revision-Date: 2012-06-08 15:09+0300\n"
-"Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
-"Language-Team: German <peter_e@gmx.net>\n"
-"Language: de\n"
+"POT-Creation-Date: 2012-07-10 22:44+0000\n"
+"PO-Revision-Date: 2012-04-02 22:12+0400\n"
+"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
+"Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
+"Language: ru\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ISO-8859-1\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Poedit-Language: Russian\n"
+"X-Poedit-Country: RUSSIAN FEDERATION\n"
+"X-Generator: Lokalize 1.4\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: command.c:112
 #, c-format
 msgid "Invalid command \\%s. Try \\? for help.\n"
-msgstr "Ung�ltige Anweisung \\%s.  Versuchen Sie \\? f�r Hilfe.\n"
+msgstr "Неверная команда \\%s. Справка по командам: \\?\n"
 
 #: command.c:114
 #, c-format
 msgid "invalid command \\%s\n"
-msgstr "ung�ltige Anweisung \\%s\n"
+msgstr "неверная команда \\%s\n"
 
 #: command.c:125
 #, c-format
 msgid "\\%s: extra argument \"%s\" ignored\n"
-msgstr "\\%s: �berfl�ssiges Argument �%s� ignoriert\n"
+msgstr "\\%s: лишний аргумент \"%s\" пропущен\n"
 
 #: command.c:267
 #, c-format
 msgid "could not get home directory: %s\n"
-msgstr "konnte Home-Verzeichnis nicht ermitteln: %s\n"
+msgstr "не удалось получить путь к домашнему каталогу: %s\n"
 
 #: command.c:283
 #, c-format
 msgid "\\%s: could not change directory to \"%s\": %s\n"
-msgstr "\\%s: konnte nicht in das Verzeichnis �%s� wechseln: %s\n"
+msgstr "\\%s: не удалось перейти в каталог \"%s\": %s\n"
 
 #: command.c:316 common.c:935
 #, c-format
 msgid "Time: %.3f ms\n"
-msgstr "Zeit: %.3f ms\n"
+msgstr "Время: %.3f мс\n"
 
 #: command.c:469 command.c:503 command.c:1043
 msgid "no query buffer\n"
-msgstr "kein Anfragepuffer\n"
+msgstr "нет буфера запросов\n"
 
 #: command.c:497
 #, c-format
 msgid "The server (version %d.%d) does not support editing function source.\n"
-msgstr "Der Server (Version %d.%d) unterst�tzt das Bearbeiten des Funktionsquelltextes nicht.\n"
+msgstr ""
+"Сервер (версия %d.%d) не поддерживает редактирование исходного кода "
+"функции.\n"
 
 #: command.c:545
 msgid "No changes"
-msgstr "keine �nderungen"
+msgstr "Изменений нет"
 
 #: command.c:599
 #, c-format
 msgid "%s: invalid encoding name or conversion procedure not found\n"
 msgstr ""
-"%s: ung�ltiger Kodierungsname oder Umwandlungsprozedur nicht gefunden\n"
+"%s: неверное название кодировки символов или не найдена процедура "
+"перекодировки\n"
 
 #: command.c:667 command.c:701 command.c:715 command.c:732 command.c:836
 #: command.c:886 command.c:1023 command.c:1054
 #, c-format
 msgid "\\%s: missing required argument\n"
-msgstr "\\%s: notwendiges Argument fehlt\n"
+msgstr "отсутствует необходимый аргумент \\%s\n"
 
 #: command.c:764
 msgid "Query buffer is empty."
-msgstr "Anfragepuffer ist leer."
+msgstr "Буфер запроса пуст."
 
 #: command.c:774
 msgid "Enter new password: "
-msgstr "Neues Passwort eingeben: "
+msgstr "Введите новый пароль: "
 
 #: command.c:775
 msgid "Enter it again: "
-msgstr "Geben Sie es noch einmal ein: "
+msgstr "Повторите его: "
 
 #: command.c:779
 #, c-format
 msgid "Passwords didn't match.\n"
-msgstr "Passw�rter stimmten nicht �berein.\n"
+msgstr "Пароли не совпадают.\n"
 
 #: command.c:797
 #, c-format
 msgid "Password encryption failed.\n"
-msgstr "Passwortverschl�sselung ist fehlgeschlagen.\n"
+msgstr "Ошибка при шифровании пароля.\n"
 
 #: command.c:865 command.c:966 command.c:1028
 #, c-format
 msgid "\\%s: error\n"
-msgstr "\\%s: Fehler\n"
+msgstr "ошибка \\%s\n"
 
 #: command.c:906
 msgid "Query buffer reset (cleared)."
-msgstr "Anfragepuffer wurde gel�scht."
+msgstr "Буфер запроса сброшен (очищен)."
 
 #: command.c:919
 #, c-format
 msgid "Wrote history to file \"%s/%s\".\n"
-msgstr "Befehlsgeschichte in Datei �%s/%s� geschrieben.\n"
+msgstr "История записана в файл \"%s/%s\".\n"
 
 #: command.c:957 common.c:52 common.c:66 common.c:90 input.c:198 mainloop.c:70
 #: mainloop.c:228 print.c:61 print.c:75
 #, c-format
 msgid "out of memory\n"
-msgstr "Speicher aufgebraucht\n"
+msgstr "нехватка памяти\n"
 
 #: command.c:1008
 msgid "Timing is on."
-msgstr "Zeitmessung ist an."
+msgstr "Секундомер включен."
 
 #: command.c:1010
 msgid "Timing is off."
-msgstr "Zeitmessung ist aus."
+msgstr "Секундомер выключен."
 
 #: command.c:1071 command.c:1091 command.c:1590 command.c:1597 command.c:1606
 #: command.c:1616 command.c:1625 command.c:1639 command.c:1656 command.c:1689
@@ -131,12 +155,12 @@ msgstr "%s: %s\n"
 
 #: command.c:1173 startup.c:159
 msgid "Password: "
-msgstr "Passwort: "
+msgstr "Пароль: "
 
 #: command.c:1180 startup.c:162 startup.c:164
 #, c-format
 msgid "Password for user %s: "
-msgstr "Passwort f�r Benutzer %s: "
+msgstr "Пароль пользователя %s: "
 
 #: command.c:1276 command.c:2137 common.c:183 common.c:460 common.c:525
 #: common.c:811 common.c:836 common.c:920 copy.c:655 copy.c:700 copy.c:830
@@ -146,7 +170,7 @@ msgstr "%s"
 
 #: command.c:1280
 msgid "Previous connection kept\n"
-msgstr "Vorherige Verbindung wurde behalten\n"
+msgstr "Сохранено предыдущее подключение\n"
 
 #: command.c:1284
 #, c-format
@@ -156,27 +180,27 @@ msgstr "\\connect: %s"
 #: command.c:1308
 #, c-format
 msgid "You are now connected to database \"%s\""
-msgstr "Sie sind jetzt verbunden mit der Datenbank �%s�"
+msgstr "Вы подключены к базе данных \"%s\"."
 
 #: command.c:1311
 #, c-format
 msgid " on host \"%s\""
-msgstr " auf Host �%s�"
+msgstr ", компьютер \"%s\""
 
 #: command.c:1314
 #, c-format
 msgid " at port \"%s\""
-msgstr " auf Port �%s�"
+msgstr ", порт \"%s\""
 
 #: command.c:1317
 #, c-format
 msgid " as user \"%s\""
-msgstr " als Benutzer �%s�"
+msgstr ", пользователь \"%s\""
 
 #: command.c:1352
 #, c-format
 msgid "%s (%s, server %s)\n"
-msgstr "%s (%s, Server %s)\n"
+msgstr "%s (%s, сервер %s)\n"
 
 #: command.c:1359
 #, c-format
@@ -184,18 +208,18 @@ msgid ""
 "WARNING: %s version %d.%d, server version %d.%d.\n"
 "         Some psql features might not work.\n"
 msgstr ""
-"WARNUNG: %s-Version %d.%d, Serverversion %d.%d.\n"
-"         Einige Features von psql werden eventuell nicht funktionieren.\n"
+"ПРЕДУПРЕЖДЕНИЕ: %s имеет версию %d.%d, а сервер - %d.%d.\n"
+"                Часть функций psql может не работать.\n"
 
 #: command.c:1389
 #, c-format
 msgid "SSL connection (cipher: %s, bits: %i)\n"
-msgstr "SSL-Verbindung (Verschl�sselungsmethode: %s, Bits: %i)\n"
+msgstr "SSL-соединение (шифр: %s, бит: %i)\n"
 
 #: command.c:1399
 #, c-format
 msgid "SSL connection (unknown cipher)\n"
-msgstr "SSL-Verbindung (unbekannte Verschl�sselungsmethode)\n"
+msgstr "SSL-соединение (шифр неизвестен)\n"
 
 #: command.c:1420
 #, c-format
@@ -204,172 +228,174 @@ msgid ""
 "         8-bit characters might not work correctly. See psql reference\n"
 "         page \"Notes for Windows users\" for details.\n"
 msgstr ""
-"Warnung: Konsolencodeseite (%u) unterscheidet sich von der Windows-\n"
-"         Codeseite (%u). 8-Bit-Zeichen funktionieren m�glicherweise nicht\n"
-"         richtig. Einzelheiten finden Sie auf der psql-Handbuchseite unter\n"
-"         �Notes for Windows users�.\n"
+"ПРЕДУПРЕЖДЕНИЕ: Кодовая страница консоли (%u) отличается от основной\n"
+"                страницы Windows (%u).\n"
+"                8-битовые (русские) символы могут отображаться некорректно.\n"
+"                Подробнее об этом смотрите документацию psql, раздел\n"
+"                \"Notes for Windows users\".\n"
 
 #: command.c:1509
 #, c-format
 msgid "could not start editor \"%s\"\n"
-msgstr "konnte Editor �%s� nicht starten\n"
+msgstr "не удалось запустить редактор \"%s\"\n"
 
 #: command.c:1511
 msgid "could not start /bin/sh\n"
-msgstr "konnte /bin/sh nicht starten\n"
+msgstr "не удалось запустить /bin/sh\n"
 
 #: command.c:1548
 #, c-format
 msgid "cannot locate temporary directory: %s\n"
-msgstr "konnte tempor�res Verzeichnis nicht finden: %s\n"
+msgstr "не удалось найти временный каталог: %s\n"
 
 #: command.c:1575
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
-msgstr "konnte tempor�re Datei �%s� nicht �ffnen: %s\n"
+msgstr "не удалось открыть временный файл \"%s\": %s\n"
 
 #: command.c:1791
 msgid ""
 "\\pset: allowed formats are unaligned, aligned, wrapped, html, latex, troff-"
 "ms\n"
 msgstr ""
-"\\pset: zul�ssige Formate sind unaligned, aligned, wrapped, html, latex, "
-"troff-ms\n"
+"допустимые форматы \\pset: unaligned, aligned, wrapped, html, latex, troff-"
+"ms\n"
 
 #: command.c:1796
 #, c-format
 msgid "Output format is %s.\n"
-msgstr "Ausgabeformat ist �%s�.\n"
+msgstr "Формат вывода: %s.\n"
 
 #: command.c:1806
 #, c-format
 msgid "Border style is %d.\n"
-msgstr "Rahmenstil ist %d.\n"
+msgstr "Установлен стиль границ: %d.\n"
 
 #: command.c:1818
 #, c-format
 msgid "Expanded display is on.\n"
-msgstr "Erweiterte Anzeige ist an.\n"
+msgstr "Расширенный вывод включен.\n"
 
 #: command.c:1819
 #, c-format
 msgid "Expanded display is off.\n"
-msgstr "Erweiterte Anzeige ist aus.\n"
+msgstr "Расширенный вывод выключен.\n"
 
 #: command.c:1832
 msgid "Showing locale-adjusted numeric output."
-msgstr "Zeige numerische Daten in lokalisiertem Format."
+msgstr "Числа выводятся в локализованном формате."
 
 #: command.c:1834
 msgid "Locale-adjusted numeric output is off."
-msgstr "Lokalisiertes Format f�r numerische Daten ist aus."
+msgstr "Локализованный вывод чисел выключен."
 
 #: command.c:1847
 #, c-format
 msgid "Null display is \"%s\".\n"
-msgstr "Null-Anzeige ist �%s�.\n"
+msgstr "Null выводится как: \"%s\".\n"
 
 #: command.c:1859
 #, c-format
 msgid "Field separator is \"%s\".\n"
-msgstr "Feldtrennzeichen ist �%s�.\n"
+msgstr "Разделитель полей: \"%s\".\n"
 
 #: command.c:1873
 #, c-format
 msgid "Record separator is <newline>."
-msgstr "Satztrennzeichen ist <newline>."
+msgstr "Разделитель записей: <новая строка>."
 
 #: command.c:1875
 #, c-format
 msgid "Record separator is \"%s\".\n"
-msgstr "Satztrennzeichen ist �%s�.\n"
+msgstr "Разделитель записей: \"%s\".\n"
 
 #: command.c:1889
 msgid "Showing only tuples."
-msgstr "Zeige nur Datenzeilen."
+msgstr "Выводятся только кортежи."
 
 #: command.c:1891
 msgid "Tuples only is off."
-msgstr "Nur Datenzeilen ist aus."
+msgstr "Режим вывода только кортежей выключен."
 
 #: command.c:1907
 #, c-format
 msgid "Title is \"%s\".\n"
-msgstr "Titel ist �%s�.\n"
+msgstr "Заголовок: \"%s\".\n"
 
 #: command.c:1909
 #, c-format
 msgid "Title is unset.\n"
-msgstr "Titel ist nicht gesetzt.\n"
+msgstr "Заголовок не задан.\n"
 
 #: command.c:1925
 #, c-format
 msgid "Table attribute is \"%s\".\n"
-msgstr "Tabellenattribut ist �%s�.\n"
+msgstr "Атрибут HTML-таблицы: \"%s\".\n"
 
 #: command.c:1927
 #, c-format
 msgid "Table attributes unset.\n"
-msgstr "Tabellenattribute sind nicht gesetzt.\n"
+msgstr "Атрибуты HTML-таблицы не заданы.\n"
 
 #: command.c:1948
 msgid "Pager is used for long output."
-msgstr "Pager wird f�r lange Ausgaben verwendet."
+msgstr "Вывод длинного текста через постраничник."
 
 #: command.c:1950
 msgid "Pager is always used."
-msgstr "Pager wird immer verwendet."
+msgstr "Вывод всего текста через постраничник."
 
 #: command.c:1952
 msgid "Pager usage is off."
-msgstr "Pager-Verwendung ist aus."
+msgstr "Вывод без постраничника."
 
 #: command.c:1966
 msgid "Default footer is on."
-msgstr "Standardfu�zeile ist an."
+msgstr "Строка итогов включена."
 
 #: command.c:1968
 msgid "Default footer is off."
-msgstr "Standardfu�zeile ist aus."
+msgstr "Строка итогов выключена."
 
 #: command.c:1979
 #, c-format
 msgid "Target width for \"wrapped\" format is %d.\n"
-msgstr "Zielbreite f�r Format �wrapped� ist %d.\n"
+msgstr "Ширина вывода для формата \"wrapped\": %d.\n"
 
 #: command.c:1984
 #, c-format
 msgid "\\pset: unknown option: %s\n"
-msgstr "\\pset: unbekannte Option: %s\n"
+msgstr "неизвестный параметр \\pset: %s\n"
 
 #: command.c:2038
 msgid "\\!: failed\n"
-msgstr "\\!: fehlgeschlagen\n"
+msgstr "\\!: ошибка\n"
 
 #: common.c:45
 #, c-format
 msgid "%s: pg_strdup: cannot duplicate null pointer (internal error)\n"
-msgstr "%s: pg_strdup: kann NULL-Zeiger nicht kopieren (interner Fehler)\n"
+msgstr ""
+"%s: pg_strdup: попытка сделать копию нулевого указателя (внутренняя ошибка)\n"
 
 #: common.c:343
 msgid "connection to server was lost\n"
-msgstr "Verbindung zum Server wurde verloren\n"
+msgstr "подключение к серверу было потеряно\n"
 
 #: common.c:347
 msgid "The connection to the server was lost. Attempting reset: "
-msgstr "Die Verbindung zum Server wurde verloren.  Versuche Reset: "
+msgstr "Подключение к серверу потеряно. Попытка восстановления "
 
 #: common.c:352
 msgid "Failed.\n"
-msgstr "Fehlgeschlagen.\n"
+msgstr "неудачна.\n"
 
 #: common.c:359
 msgid "Succeeded.\n"
-msgstr "Erfolgreich.\n"
+msgstr "удачна.\n"
 
 #: common.c:493 common.c:768
 msgid "You are currently not connected to a database.\n"
-msgstr "Sie sind gegenw�rtig nicht mit einer Datenbank verbunden.\n"
+msgstr "В данный момент вы не подключены к базе данных.\n"
 
 #: common.c:499 common.c:506 common.c:794
 #, c-format
@@ -379,7 +405,7 @@ msgid ""
 "**************************\n"
 "\n"
 msgstr ""
-"******** ANFRAGE *********\n"
+"********* ЗАПРОС *********\n"
 "%s\n"
 "**************************\n"
 "\n"
@@ -389,7 +415,7 @@ msgstr ""
 msgid ""
 "Asynchronous notification \"%s\" received from server process with PID %d.\n"
 msgstr ""
-"Asynchrone Benachrichtigung �%s� vom Serverprozess mit PID %d empfangen.\n"
+"Получено асинхронное уведомление \"%s\" от серверного процесса с PID %d.\n"
 
 #: common.c:776
 #, c-format
@@ -400,11 +426,10 @@ msgid ""
 "***(press return to proceed or enter x and return to cancel)"
 "********************\n"
 msgstr ""
-"***(Einzelschrittmodus: Anfrage best�tigen)"
-"*************************************\n"
+"***(Пошаговый режим: проверка команды)"
+"******************************************\n"
 "%s\n"
-"***(Dr�cken Sie die Eingabetaste um fortzufahren oder �x� um abzubrechen)"
-"*******\n"
+"***(Enter - выполнение; x и Enter - отмена)**************\n"
 
 #: common.c:827
 #, c-format
@@ -412,26 +437,25 @@ msgid ""
 "The server (version %d.%d) does not support savepoints for "
 "ON_ERROR_ROLLBACK.\n"
 msgstr ""
-"Der Server (Version %d.%d) unterst�tzt keine Sicherungspunkte f�r "
-"ON_ERROR_ROLLBACK.\n"
+"Сервер (версия %d.%d) не поддерживает точки останова для ON_ERROR_ROLLBACK.\n"
 
 #: copy.c:120
 msgid "\\copy: arguments required\n"
-msgstr "\\copy: ben�tigt Argumente\n"
+msgstr "укажите аргументы \\copy\n"
 
 #: copy.c:399
 #, c-format
 msgid "\\copy: parse error at \"%s\"\n"
-msgstr "\\copy: Parse-Fehler bei �%s�\n"
+msgstr "\\copy: ошибка разбора аргумента \"%s\"\n"
 
 #: copy.c:401
 msgid "\\copy: parse error at end of line\n"
-msgstr "\\copy: Parse-Fehler am Zeilenende\n"
+msgstr "\\copy: ошибка разбора в конце строки\n"
 
 #: copy.c:528
 #, c-format
 msgid "%s: cannot copy from/to a directory\n"
-msgstr "%s: ein Verzeichnis kann nicht kopiert werden\n"
+msgstr "COPY FROM/TO не может работать с каталогом (%s)\n"
 
 #: copy.c:554
 #, c-format
@@ -441,50 +465,50 @@ msgstr "\\copy: %s"
 #: copy.c:558 copy.c:572
 #, c-format
 msgid "\\copy: unexpected response (%d)\n"
-msgstr "\\copy: unerwartete Antwort (%d)\n"
+msgstr "неожиданный ответ \\copy: (%d)\n"
 
 #: copy.c:576
 msgid "trying to exit copy mode"
-msgstr "versuche, den COPY-Modus zu verlassen"
+msgstr "попытка выйти из режима копирования"
 
 #: copy.c:630 copy.c:640
 #, c-format
 msgid "could not write COPY data: %s\n"
-msgstr "konnte COPY-Daten nicht schreiben: %s\n"
+msgstr "не удалось записать данные COPY: %s\n"
 
 #: copy.c:647
 #, c-format
 msgid "COPY data transfer failed: %s"
-msgstr "Datentransfer mit COPY fehlgeschlagen: %s"
+msgstr "ошибка передачи данных COPY: %s"
 
 #: copy.c:695
 msgid "canceled by user"
-msgstr "vom Benutzer abgebrochen"
+msgstr "отменено пользователем"
 
 #: copy.c:710
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
 msgstr ""
-"Geben Sie die zu kopierenden Daten ein, gefolgt von einem Zeilenende.\n"
-"Beenden Sie mit einem Backslash und einem Punkt alleine auf einer Zeile."
+"Вводите данные для копирования, разделяя строки переводом строки.\n"
+"Закончите ввод строкой '\\.'."
 
 #: copy.c:823
 msgid "aborted because of read failure"
-msgstr "abgebrochen wegen Lesenfehlers"
+msgstr "прерывание из-за ошибки чтения"
 
 #: help.c:52
 msgid "on"
-msgstr "an"
+msgstr "вкл."
 
 #: help.c:52
 msgid "off"
-msgstr "aus"
+msgstr "выкл."
 
 #: help.c:74
 #, c-format
 msgid "could not get current user name: %s\n"
-msgstr "konnte aktuellen Benutzernamen nicht ermitteln: %s\n"
+msgstr "не удалось узнать имя текущего пользователя: %s\n"
 
 #: help.c:86
 #, c-format
@@ -492,55 +516,52 @@ msgid ""
 "psql is the PostgreSQL interactive terminal.\n"
 "\n"
 msgstr ""
-"psql ist  das interaktive PostgreSQL-Terminal.\n"
+"psql - это интерактивный терминал PostgreSQL.\n"
 "\n"
 
 #: help.c:87
 #, c-format
 msgid "Usage:\n"
-msgstr "Aufruf:\n"
+msgstr "Использование:\n"
 
 #: help.c:88
 #, c-format
 msgid ""
 "  psql [OPTION]... [DBNAME [USERNAME]]\n"
 "\n"
-msgstr ""
-"  psql [OPTION]... [DBNAME [BENUTZERNAME]]\n"
-"\n"
+msgstr "  psql [ПАРАМЕТР]... [БД [ПОЛЬЗОВАТЕЛЬ]]\n"
 
 #: help.c:90
 #, c-format
 msgid "General options:\n"
-msgstr "Allgemeine Optionen:\n"
+msgstr "Общие параметры:\n"
 
 #: help.c:95
 #, c-format
 msgid ""
 "  -c, --command=COMMAND    run only single command (SQL or internal) and "
 "exit\n"
-msgstr "  -c, --command=ANWEISUNG   einzelne Anweisung ausf�hren und beenden\n"
+msgstr ""
+"  -c, --command=КОМАНДА    выполнить одну команду (SQL или внутреннюю) и "
+"выйти\n"
 
 #: help.c:96
 #, c-format
 msgid ""
 "  -d, --dbname=DBNAME      database name to connect to (default: \"%s\")\n"
 msgstr ""
-"  -d, --dbname=DBNAME      Datenbank, zu der verbunden werden soll\n"
-"                           (Standard: �%s�)\n"
+"  -d, --dbname=БД          имя подключаемой базы данных (по умолчанию \"%s"
+"\")\n"
 
 #: help.c:97
 #, c-format
 msgid "  -f, --file=FILENAME      execute commands from file, then exit\n"
-msgstr ""
-"  -f, --file=DATEINAME     Anweisungen aus Datei ausf�hren und danach "
-"beenden\n"
+msgstr "  -f, --file=ИМЯ_ФАЙЛА     выполнить команды из файла и выйти\n"
 
 #: help.c:98
 #, c-format
 msgid "  -l, --list               list available databases, then exit\n"
-msgstr ""
-"  -l, --list               verf�gbare Datenbanken auflisten und beenden\n"
+msgstr "  -l, --list               вывести список баз данных и выйти\n"
 
 #: help.c:99
 #, c-format
@@ -548,13 +569,15 @@ msgid ""
 "  -v, --set=, --variable=NAME=VALUE\n"
 "                           set psql variable NAME to VALUE\n"
 msgstr ""
-"  -v, --set=, --variable=NAME=WERT\n"
-"                           psql-Variable NAME auf WERT setzen\n"
+"  -v, --set=, --variable=ИМЯ=ЗНАЧЕНИЕ\n"
+"                           присвоить переменной psql 'ИМЯ' заданное "
+"ЗНАЧЕНИЕ\n"
 
 #: help.c:101
 #, c-format
 msgid "  -X, --no-psqlrc          do not read startup file (~/.psqlrc)\n"
-msgstr "  -X, --no-psqlrc          Startdatei (~/.psqlrc) nicht lesen\n"
+msgstr ""
+"  -X, --no-psqlrc          игнорировать файл параметров запуска (~/.psqlrc)\n"
 
 #: help.c:102
 #, c-format
@@ -562,20 +585,18 @@ msgid ""
 "  -1 (\"one\"), --single-transaction\n"
 "                           execute command file as a single transaction\n"
 msgstr ""
-"  -1 (�eins�), --single-transaction\n"
-"                           Befehlsdatei als eine einzige Transaktion "
-"ausf�hren\n"
+"  -1 (\"один\"), --single-transaction\n"
+"                           выполнить команды из файла как одну транзакцию\n"
 
 #: help.c:104
 #, c-format
 msgid "  --help                   show this help, then exit\n"
-msgstr "  --help                   diese Hilfe anzeigen, dann beenden\n"
+msgstr "  --help                   показать эту справку и выйти\n"
 
 #: help.c:105
 #, c-format
 msgid "  --version                output version information, then exit\n"
-msgstr ""
-"  --version                Versionsinformationen anzeigen, dann beenden\n"
+msgstr "  --version                показать версию и выйти\n"
 
 #: help.c:107
 #, c-format
@@ -584,61 +605,58 @@ msgid ""
 "Input and output options:\n"
 msgstr ""
 "\n"
-"Eingabe- und Ausgabeoptionen:\n"
+"Параметры ввода/вывода:\n"
 
 #: help.c:108
 #, c-format
 msgid "  -a, --echo-all           echo all input from script\n"
-msgstr "  -a, --echo-all           Skript-Inhalt wiedergeben\n"
+msgstr "  -a, --echo-all           отображать все команды из скрипта\n"
 
 #: help.c:109
 #, c-format
 msgid "  -e, --echo-queries       echo commands sent to server\n"
-msgstr ""
-"  -e, --echo-queries       an den Server geschickte Anweisungen zeigen\n"
+msgstr "  -e, --echo-queries       отображать команды, отправляемые серверу\n"
 
 #: help.c:110
 #, c-format
 msgid ""
 "  -E, --echo-hidden        display queries that internal commands generate\n"
 msgstr ""
-"  -E, --echo-hidden        von internen Anweisungen erzeugte Anfragen "
-"zeigen\n"
+"  -E, --echo-hidden        выводить запросы, порождённые внутренними "
+"командами\n"
 
 #: help.c:111
 #, c-format
 msgid "  -L, --log-file=FILENAME  send session log to file\n"
-msgstr ""
-"  -L, --log-file=DATEINAME\n"
-"                           Sitzungslog in Datei senden\n"
+msgstr "  -L, --log-file=ИМЯ_ФАЙЛА сохранять протокол работы в файл\n"
 
 #: help.c:112
 #, c-format
 msgid ""
 "  -n, --no-readline        disable enhanced command line editing (readline)\n"
 msgstr ""
-"  -n, --no-readline        erweiterte Zeilenbearbeitung (Readline) "
-"ausschalten\n"
+"  -n, --no-readline        отключить редактор командной строки readline\n"
 
 #: help.c:113
 #, c-format
 msgid "  -o, --output=FILENAME    send query results to file (or |pipe)\n"
 msgstr ""
-"  -o, --output=DATEINAME   Anfrageergebnisse in Datei (oder |Pipe) senden\n"
+"  -o, --output=ИМЯ_ФАЙЛА   направить результаты запроса в файл (или канал "
+"|)\n"
 
 #: help.c:114
 #, c-format
 msgid ""
 "  -q, --quiet              run quietly (no messages, only query output)\n"
 msgstr ""
-"  -q, --quiet              stille Ausf�hrung (keine Mitteilungen, nur\n"
-"                           Anfrageergebnisse)\n"
+"  -q, --quiet              показывать только результаты запросов, без "
+"сообщений\n"
 
 #: help.c:115
 #, c-format
 msgid "  -s, --single-step        single-step mode (confirm each query)\n"
 msgstr ""
-"  -s, --single-step        Einzelschrittmodus (jede Anfrage best�tigen)\n"
+"  -s, --single-step        пошаговый режим (подтверждение каждого запроса)\n"
 
 #: help.c:116
 #, c-format
@@ -646,8 +664,8 @@ msgid ""
 "  -S, --single-line        single-line mode (end of line terminates SQL "
 "command)\n"
 msgstr ""
-"  -S, --single-line        Einzelzeilenmodus (Zeilenende beendet SQL-"
-"Anweisung)\n"
+"  -S, --single-line        однострочный режим (конец строки завершает "
+"команду)\n"
 
 #: help.c:118
 #, c-format
@@ -656,12 +674,12 @@ msgid ""
 "Output format options:\n"
 msgstr ""
 "\n"
-"Ausgabeformatoptionen:\n"
+"Параметры вывода:\n"
 
 #: help.c:119
 #, c-format
 msgid "  -A, --no-align           unaligned table output mode\n"
-msgstr "  -A, --no-align           unausgerichteter Tabellenausgabemodus\n"
+msgstr "  -A, --no-align           режим вывода невыравненной таблицы\n"
 
 #: help.c:120
 #, c-format
@@ -669,13 +687,13 @@ msgid ""
 "  -F, --field-separator=STRING\n"
 "                           set field separator (default: \"%s\")\n"
 msgstr ""
-"  -F, --field-separator=ZEICHEN\n"
-"                           Feldtrennzeichen setzen (Standard: �%s�)\n"
+"  -F, --field-separator=СТРОКА\n"
+"                           задать разделитель полей (по умолчанию: \"%s\")\n"
 
 #: help.c:123
 #, c-format
 msgid "  -H, --html               HTML table output mode\n"
-msgstr "  -H, --html               HTML-Tabellenausgabemodus\n"
+msgstr "  -H, --html               вывод таблицы в формате HTML\n"
 
 #: help.c:124
 #, c-format
@@ -683,8 +701,9 @@ msgid ""
 "  -P, --pset=VAR[=ARG]     set printing option VAR to ARG (see \\pset "
 "command)\n"
 msgstr ""
-"  -P, --pset=VAR[=ARG]     Ausgabeoption VAR auf ARG setzen (siehe\n"
-"                           \\pset-Anweisung)\n"
+"  -P, --pset=ПАР[=ЗНАЧ]    определить параметр печати ПАР (с заданным "
+"ЗНАЧЕНИЕМ)\n"
+"                           (см. описание \\pset)\n"
 
 #: help.c:125
 #, c-format
@@ -692,13 +711,14 @@ msgid ""
 "  -R, --record-separator=STRING\n"
 "                           set record separator (default: newline)\n"
 msgstr ""
-"  -R, --record-separator=ZEICHEN\n"
-"                           Satztrennzeichen setzen (Standard: Newline)\n"
+"  -R, --record-separator=СТРОКА\n"
+"                           задать разделитель записей\n"
+"                           (по умолчанию: новая строка)\n"
 
 #: help.c:127
 #, c-format
 msgid "  -t, --tuples-only        print rows only\n"
-msgstr "  -t, --tuples-only        nur Datenzeilen ausgeben\n"
+msgstr "  -t, --tuples-only        выводить только кортежи\n"
 
 #: help.c:128
 #, c-format
@@ -706,12 +726,12 @@ msgid ""
 "  -T, --table-attr=TEXT    set HTML table tag attributes (e.g., width, "
 "border)\n"
 msgstr ""
-"  -T, --table-attr=TEXT    HTML �table�-Tag-Attribute setzen (z.B. width)\n"
+"  -T, --table-attr=ТЕКСТ   установить атрибуты HTML-таблицы (width, border)\n"
 
 #: help.c:129
 #, c-format
 msgid "  -x, --expanded           turn on expanded table output\n"
-msgstr "  -x, --expanded           erweiterte Tabellenausgabe einschalten\n"
+msgstr "  -x, --expanded           включить развёрнутый вывод таблицы\n"
 
 #: help.c:131
 #, c-format
@@ -720,7 +740,7 @@ msgid ""
 "Connection options:\n"
 msgstr ""
 "\n"
-"Verbindungsoptionen:\n"
+"Параметры подключения:\n"
 
 #: help.c:134
 #, c-format
@@ -728,28 +748,28 @@ msgid ""
 "  -h, --host=HOSTNAME      database server host or socket directory "
 "(default: \"%s\")\n"
 msgstr ""
-"  -h, --host=HOSTNAME      Hostname des Datenbankservers oder\n"
-"                           Socket-Verzeichnis (Standard: �%s�)\n"
+"  -h, --host=ИМЯ           имя сервера баз данных или каталог сокетов\n"
+"                           (по умолчанию: \"%s\")\n"
 
 #: help.c:135
 msgid "local socket"
-msgstr "lokales Socket"
+msgstr "локальный сокет"
 
 #: help.c:138
 #, c-format
 msgid "  -p, --port=PORT          database server port (default: \"%s\")\n"
 msgstr ""
-"  -p, --port=PORT          Port des Datenbankservers (Standard: �%s�)\n"
+"  -p, --port=ПОРТ          порт сервера баз данных (по умолчанию: \"%s\")\n"
 
 #: help.c:144
 #, c-format
 msgid "  -U, --username=USERNAME  database user name (default: \"%s\")\n"
-msgstr "  -U, --username=NAME      Datenbank-Benutzername (Standard: �%s�)\n"
+msgstr "  -U, --username=ИМЯ       имя пользователя (по умолчанию: \"%s\")\n"
 
 #: help.c:145
 #, c-format
 msgid "  -w, --no-password        never prompt for password\n"
-msgstr "  -w, --no-password        niemals nach Passwort fragen\n"
+msgstr "  -w, --no-password        не запрашивать пароль\n"
 
 #: help.c:146
 #, c-format
@@ -757,8 +777,7 @@ msgid ""
 "  -W, --password           force password prompt (should happen "
 "automatically)\n"
 msgstr ""
-"  -W, --password           nach Passwort fragen (sollte automatisch "
-"geschehen)\n"
+"  -W, --password           запрашивать пароль всегда (обычно не требуется)\n"
 
 #: help.c:148
 #, c-format
@@ -771,36 +790,37 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"F�r mehr Informationen, geben Sie �\\?� (f�r interne Anweisungen) oder\n"
-"�\\help� (f�r SQL-Anweisungen) in psql ein oder schauen Sie in den psql-\n"
-"Abschnitt der PostgreSQL-Dokumentation.\n"
+"Чтобы узнать больше, введите \"\\?\" (список внутренних команд) или \"\\help"
+"\"\n"
+"(справка по операторам SQL) в psql, либо обратитесь к разделу psql в\n"
+"документации PostgreSQL.\n"
 "\n"
 
 #: help.c:151
 #, c-format
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
-msgstr "Berichten Sie Fehler an <pgsql-bugs@postgresql.org>.\n"
+msgstr "Об ошибках сообщайте по адресу <pgsql-bugs@postgresql.org>.\n"
 
 #: help.c:169
 #, c-format
 msgid "General\n"
-msgstr "Allgemein\n"
+msgstr "Общие\n"
 
 #: help.c:170
 #, c-format
 msgid ""
 "  \\copyright             show PostgreSQL usage and distribution terms\n"
 msgstr ""
-"  \\copyright             PostgreSQL-Urheberrechtsinformationen zeigen\n"
+"  \\copyright             условия использования и распространения "
+"PostgreSQL\n"
 
 #: help.c:171
 #, c-format
 msgid ""
 "  \\g [FILE] or ;         execute query (and send results to file or |pipe)\n"
 msgstr ""
-"  \\g [DATEI] oder ;      SQL-Anweisung ausf�hren (und Ergebnis in Datei "
-"oder\n"
-"                         |Pipe schreiben)\n"
+"  \\g [ФАЙЛ] или ;        выполнить запрос\n"
+"                         (и направить результаты в файл или канал |)\n"
 
 #: help.c:172
 #, c-format
@@ -808,18 +828,17 @@ msgid ""
 "  \\h [NAME]              help on syntax of SQL commands, * for all "
 "commands\n"
 msgstr ""
-"  \\h [NAME]              Syntaxhilfe �ber SQL-Anweisung, * f�r alle "
-"Anweisungen\n"
+"  \\h [ИМЯ]               справка по заданному SQL-оператору; * - по всем\n"
 
 #: help.c:173
 #, c-format
 msgid "  \\q                     quit psql\n"
-msgstr "  \\q                     psql beenden\n"
+msgstr "  \\q                     выйти из psql\n"
 
 #: help.c:176
 #, c-format
 msgid "Query Buffer\n"
-msgstr "Anfragepuffer\n"
+msgstr "Буфер запроса\n"
 
 #: help.c:177
 #, c-format
@@ -827,270 +846,275 @@ msgid ""
 "  \\e [FILE]              edit the query buffer (or file) with external "
 "editor\n"
 msgstr ""
-"  \\e [DATEI]             Anfragepuffer (oder Datei) mit externem Editor "
-"bearbeiten\n"
+"  \\e [ФАЙЛ]              править буфер запроса (или файл) во внешнем "
+"редакторе\n"
 
 #: help.c:178
 #, c-format
 msgid ""
 "  \\ef [FUNCNAME]         edit function definition with external editor\n"
 msgstr ""
-"  \\ef [FUNKNAME]         Funktionsdefinition mit externem Editor "
-"bearbeiten\n"
+"  \\ef [ФУНКЦИЯ]          править определение функции во внешнем редакторе\n"
 
 #: help.c:179
 #, c-format
 msgid "  \\p                     show the contents of the query buffer\n"
-msgstr "  \\p                     aktuellen Inhalt der Anfragepuffers zeigen\n"
+msgstr "  \\p                     вывести содержимое буфера запросов\n"
 
 #: help.c:180
 #, c-format
 msgid "  \\r                     reset (clear) the query buffer\n"
-msgstr "  \\r                     Anfragepuffer l�schen\n"
+msgstr "  \\r                     очистить буфер запроса\n"
 
 #: help.c:182
 #, c-format
 msgid "  \\s [FILE]              display history or save it to file\n"
-msgstr ""
-"  \\s [DATEI]             Befehlsgeschichte ausgeben oder in Datei "
-"schreiben\n"
+msgstr "  \\s [ФАЙЛ]              вывести историю или сохранить её в файл\n"
 
 #: help.c:184
 #, c-format
 msgid "  \\w FILE                write query buffer to file\n"
-msgstr "  \\w DATEI               Anfragepuffer in Datei schreiben\n"
+msgstr "  \\w ФАЙЛ                записать буфер запроса в файл\n"
 
 #: help.c:187
 #, c-format
 msgid "Input/Output\n"
-msgstr "Eingabe/Ausgabe\n"
+msgstr "Ввод/Вывод\n"
 
 #: help.c:188
 #, c-format
 msgid ""
 "  \\copy ...              perform SQL COPY with data stream to the client "
 "host\n"
-msgstr ""
-"  \\copy ...              SQL COPY mit Datenstrom auf Client-Host ausf�hren\n"
+msgstr "  \\copy ...              выполнить SQL COPY на стороне клиента\n"
 
 #: help.c:189
 #, c-format
 msgid "  \\echo [STRING]         write string to standard output\n"
-msgstr "  \\echo [TEXT]           Text auf Standardausgabe schreiben\n"
+msgstr "  \\echo [СТРОКА]         записать строку в стандартный вывод\n"
 
 #: help.c:190
 #, c-format
 msgid "  \\i FILE                execute commands from file\n"
-msgstr "  \\i DATEI               Befehle aus Datei ausf�hren\n"
+msgstr "  \\i ФАЙЛ                выполнить команды из файла\n"
 
 #: help.c:191
 #, c-format
 msgid "  \\o [FILE]              send all query results to file or |pipe\n"
-msgstr "  \\o [DATEI]             alle Anfrageergebnisse in Datei oder |Pipe schreiben\n"
+msgstr ""
+"  \\o [ФАЙЛ]              выводить все результаты запросов в файл или канал "
+"|\n"
 
 #: help.c:192
 #, c-format
 msgid ""
 "  \\qecho [STRING]        write string to query output stream (see \\o)\n"
 msgstr ""
-"  \\qecho [TEXT]          Text auf Ausgabestrom f�r Anfrageergebnisse "
-"schreiben\n"
-"                         (siehe \\o)\n"
+"  \\qecho [СТРОКА]        записать строку в поток результатов запроса (см. "
+"\\o)\n"
 
 #: help.c:195
 #, c-format
 msgid "Informational\n"
-msgstr "Informationen\n"
+msgstr "Информационные\n"
 
 #: help.c:196
 #, c-format
 msgid "  (options: S = show system objects, + = additional detail)\n"
 msgstr ""
-"  (Optionen: S = Systemobjekte zeigen, + = zus�tzliche Details zeigen)\n"
+"  (опции: S = показывать системные объекты, + = дополнительные подробности)\n"
 
 #: help.c:197
 #, c-format
 msgid "  \\d[S+]                 list tables, views, and sequences\n"
-msgstr "  \\d[S+]                 Tabellen, Sichten und Sequenzen auflisten\n"
+msgstr ""
+"  \\d[S+]                 список таблиц, представлений и "
+"последовательностей\n"
 
 #: help.c:198
 #, c-format
 msgid "  \\d[S+]  NAME           describe table, view, sequence, or index\n"
 msgstr ""
-"  \\d[S+]  NAME           Tabelle, Sicht, Sequenz oder Index beschreiben\n"
+"  \\d[S+]  ИМЯ            описание таблицы, представления, "
+"последовательности\n"
+"                         или индекса\n"
 
 #: help.c:199
 #, c-format
 msgid "  \\da[+]  [PATTERN]      list aggregates\n"
-msgstr "  \\da[+]  [MUSTER]       Aggregatfunktionen auflisten\n"
+msgstr "  \\da[+]  [МАСКА]        список агрегатных функций\n"
 
 #: help.c:200
 #, c-format
 msgid "  \\db[+]  [PATTERN]      list tablespaces\n"
-msgstr "  \\db[+]  [MUSTER]       Tablespaces auflisten\n"
+msgstr "  \\db[+]  [МАСКА]        список табличных пространств\n"
 
 #: help.c:201
 #, c-format
 msgid "  \\dc[S]  [PATTERN]      list conversions\n"
-msgstr "  \\dc[S]  [MUSTER]       Konversionen auflisten\n"
+msgstr "  \\dc[S]  [МАСКА]        список преобразований\n"
 
 #: help.c:202
 #, c-format
 msgid "  \\dC     [PATTERN]      list casts\n"
-msgstr "  \\dC     [MUSTER]       Typumwandlungen (Casts) auflisten\n"
+msgstr "  \\dC     [МАСКА]        список приведений типов\n"
 
 #: help.c:203
 #, c-format
 msgid "  \\dd[S]  [PATTERN]      show comments on objects\n"
-msgstr "  \\dd[S]  [MUSTER]       Kommentar f�r Objekt zeigen\n"
+msgstr "  \\dd[S]  [МАСКА]        комментарии к объектам\n"
 
 #: help.c:204
 #, c-format
 msgid "  \\dD[S]  [PATTERN]      list domains\n"
-msgstr "  \\dD[S]  [MUSTER]       Dom�nen auflisten\n"
+msgstr "  \\dD[S]  [МАСКА]        список доменов\n"
 
 #: help.c:205
 #, c-format
 msgid "  \\des[+] [PATTERN]      list foreign servers\n"
-msgstr "  \\des[+] [MUSTER]       Fremdserver auflisten\n"
+msgstr "  \\des[+] [МАСКА]        список сторонних серверов\n"
 
 #: help.c:206
 #, c-format
 msgid "  \\deu[+] [PATTERN]      list user mappings\n"
-msgstr "  \\deu[+] [MUSTER]       Benutzerabbildungen auflisten\n"
+msgstr "  \\deu[+] [МАСКА]        список сопоставлений пользователей\n"
 
 #: help.c:207
 #, c-format
 msgid "  \\dew[+] [PATTERN]      list foreign-data wrappers\n"
-msgstr "  \\dew[+] [MUSTER]       Fremddaten-Wrapper auflisten\n"
+msgstr "  \\dew[+] [МАСКА]        список обёрток сторонних данных\n"
 
 #: help.c:208
 #, c-format
 msgid ""
 "  \\df[antw][S+] [PATRN]  list [only agg/normal/trigger/window] functions\n"
 msgstr ""
-"  \\df[antw][S+] [MUSTR]  Funktionen [nur Agg/normale/Trigger/Fenster] "
-"auflisten\n"
+"  \\df[antw][S+] [МАСКА]  список [агрегатных/нормальных/триггерных/оконных]\n"
+"                         функций соответственно\n"
 
 #: help.c:209
 #, c-format
 msgid "  \\dF[+]  [PATTERN]      list text search configurations\n"
-msgstr "  \\dF[+]  [MUSTER]       Textsuchekonfigurationen auflisten\n"
+msgstr "  \\dF[+]  [МАСКА]        список конфигураций текстового поиска\n"
 
 #: help.c:210
 #, c-format
 msgid "  \\dFd[+] [PATTERN]      list text search dictionaries\n"
-msgstr "  \\dFd[+] [MUSTER]       Textsuchew�rterb�cher auflisten\n"
+msgstr "  \\dFd[+] [МАСКА]        список словарей текстового поиска\n"
 
 #: help.c:211
 #, c-format
 msgid "  \\dFp[+] [PATTERN]      list text search parsers\n"
-msgstr "  \\dFp[+] [MUSTER]       Textsucheparser auflisten\n"
+msgstr "  \\dFp[+] [МАСКА]        список анализаторов текстового поиска\n"
 
 #: help.c:212
 #, c-format
 msgid "  \\dFt[+] [PATTERN]      list text search templates\n"
-msgstr "  \\dFt[+] [MUSTER]       Textsuchevorlagen auflisten\n"
+msgstr "  \\dFt[+] [МАСКА]        список шаблонов текстового поиска\n"
 
 #: help.c:213
 #, c-format
 msgid "  \\dg[+]  [PATTERN]      list roles (groups)\n"
-msgstr "  \\dg[+]  [MUSTER]       Rollen (Gruppen) auflisten\n"
+msgstr "  \\dg[+]  [МАСКА]        список ролей (групп)\n"
 
 #: help.c:214
 #, c-format
 msgid "  \\di[S+] [PATTERN]      list indexes\n"
-msgstr "  \\di[S+] [MUSTER]       Indexe auflisten\n"
+msgstr "  \\di[S+] [МАСКА]        список индексов\n"
 
 #: help.c:215
 #, c-format
 msgid "  \\dl                    list large objects, same as \\lo_list\n"
-msgstr "  \\dl                    Large Objects auflisten, wie \\lo_list\n"
+msgstr ""
+"  \\dl                    список больших объектов (то же, что и \\lo_list)\n"
 
 #: help.c:216
 #, c-format
 msgid "  \\dn[+]  [PATTERN]      list schemas\n"
-msgstr "  \\dn[+]  [MUSTER]       Schemas auflisten\n"
+msgstr "  \\dn[+] [МАСКА]         список схем\n"
 
 #: help.c:217
 #, c-format
 msgid "  \\do[S]  [PATTERN]      list operators\n"
-msgstr "  \\do[S]  [MUSTER]       Operatoren auflisten\n"
+msgstr "  \\do[S]  [МАСКА]        список операторов\n"
 
 #: help.c:218
 #, c-format
 msgid ""
 "  \\dp     [PATTERN]      list table, view, and sequence access privileges\n"
 msgstr ""
-"  \\dp     [MUSTER]       Zugriffsprivilegien f�r Tabellen, Sichten und\n"
-"                         Sequenzen auflisten\n"
+"  \\dp     [МАСКА]        список прав доступа к таблицам, представлениям и\n"
+"                         последовательностям\n"
 
 #: help.c:219
 #, c-format
 msgid "  \\ds[S+] [PATTERN]      list sequences\n"
-msgstr "  \\ds[S+] [MUSTER]       Sequenzen auflisten\n"
+msgstr "  \\ds[S+] [МАСКА]        список последовательностей\n"
 
 #: help.c:220
 #, c-format
 msgid "  \\dt[S+] [PATTERN]      list tables\n"
-msgstr "  \\dt[S+] [MUSTER]       Tabellen auflisten\n"
+msgstr "  \\dt[S+] [МАСКА]        список таблиц\n"
 
 #: help.c:221
 #, c-format
 msgid "  \\dT[S+] [PATTERN]      list data types\n"
-msgstr "  \\dT[S+] [MUSTER]       Datentypen auflisten\n"
+msgstr "  \\dT[S+] [МАСКА]        список типов данных\n"
 
 #: help.c:222
 #, c-format
 msgid "  \\du[+]  [PATTERN]      list roles (users)\n"
-msgstr "  \\du[+]  [MUSTER]       Rollen (Benutzer) auflisten\n"
+msgstr "  \\du[+]  [МАСКА]        список ролей (пользователей)\n"
 
 #: help.c:223
 #, c-format
 msgid "  \\dv[S+] [PATTERN]      list views\n"
-msgstr "  \\dv[S+] [MUSTER]       Sichten auflisten\n"
+msgstr "  \\dv[S+] [МАСКА]        список представлений\n"
 
 #: help.c:224
 #, c-format
 msgid "  \\l[+]                  list all databases\n"
-msgstr "  \\l[+]                  alle Datenbanken auflisten\n"
+msgstr "  \\l[+]                  список всех баз данных\n"
 
 #: help.c:225
 #, c-format
 msgid "  \\z      [PATTERN]      same as \\dp\n"
-msgstr "  \\z      [MUSTER]       �quivalent zu \\dp\n"
+msgstr "  \\z      [МАСКА]        то же, что и \\dp\n"
 
 #: help.c:228
 #, c-format
 msgid "Formatting\n"
-msgstr "Formatierung\n"
+msgstr "Форматирование\n"
 
 #: help.c:229
 #, c-format
 msgid ""
 "  \\a                     toggle between unaligned and aligned output mode\n"
 msgstr ""
-"  \\a                     zwischen unausgerichtetem und ausgerichtetem "
-"Ausgabemodus\n"
-"                         umschalten\n"
+"  \\a                     переключение режимов вывода:\n"
+"                         неформатированный/выравненный\n"
 
 #: help.c:230
 #, c-format
 msgid "  \\C [STRING]            set table title, or unset if none\n"
-msgstr "  \\C [TEXT]              Tabellentitel setzen oder l�schen\n"
+msgstr ""
+"  \\C [СТРОКА]            задать заголовок таблицы или убрать, если не "
+"задан\n"
 
 #: help.c:231
 #, c-format
 msgid ""
 "  \\f [STRING]            show or set field separator for unaligned query "
 "output\n"
-msgstr "  \\f [ZEICHEN]           Feldtrennzeichen zeigen oder setzen\n"
+msgstr ""
+"  \\f [СТРОКА]            показать или установить разделитель полей для\n"
+"                         неформатированного вывода\n"
 
 #: help.c:232
 #, c-format
 msgid "  \\H                     toggle HTML output mode (currently %s)\n"
 msgstr ""
-"  \\H                     HTML-Ausgabemodus umschalten (gegenw�rtig %s)\n"
+"  \\H                     переключить режим вывода в HTML (текущий: %s)\n"
 
 #: help.c:234
 #, c-format
@@ -1101,34 +1125,37 @@ msgid ""
 "                         numericlocale|recordsep|tuples_only|title|tableattr|"
 "pager})\n"
 msgstr ""
-"  \\pset NAME [WERT]      Tabellenausgabeoption setzen\n"
-"                         (NAME := {format|border|expanded|fieldsep|footer|"
+"  \\pset ИМЯ [ЗНАЧЕНИЕ]   установить параметр вывода таблицы, где \n"
+"                         ИМЯ := {format|border|expanded|fieldsep|footer|"
 "null|\n"
-"                         numericlocale|recordsep|tuples_only|title|tableattr|"
-"pager})\n"
+"                         numericlocale|recordsep|tuples_only|title|"
+"tableattr|\n"
+"                         pager}\n"
 
 #: help.c:237
 #, c-format
 msgid "  \\t [on|off]            show only rows (currently %s)\n"
-msgstr "  \\t [on|off]            nur Datenzeilen zeigen (gegenw�rtig %s)\n"
+msgstr "  \\t [on|off]            режим вывода только строк (сейчас: %s)\n"
 
 #: help.c:239
 #, c-format
 msgid ""
 "  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n"
 msgstr ""
-"  \\T [TEXT]              HTML <table>-Tag-Attribute setzen oder l�schen\n"
+"  \\T [СТРОКА]            задать атрибуты для <table> или убрать, если не "
+"заданы\n"
 
 #: help.c:240
 #, c-format
 msgid "  \\x [on|off]            toggle expanded output (currently %s)\n"
 msgstr ""
-"  \\x [on|off]            erweiterte Ausgabe umschalten (gegenw�rtig %s)\n"
+"  \\x [on|off]            переключить режим расширенного вывода (сейчас: "
+"%s)\n"
 
 #: help.c:244
 #, c-format
 msgid "Connection\n"
-msgstr "Verbindung\n"
+msgstr "Соединение\n"
 
 #: help.c:245
 #, c-format
@@ -1136,35 +1163,34 @@ msgid ""
 "  \\c[onnect] [DBNAME|- USER|- HOST|- PORT|-]\n"
 "                         connect to new database (currently \"%s\")\n"
 msgstr ""
-"  \\c[onnect] [DBNAME|- BENUTZER|- HOST|- PORT|-]\n"
-"                         mit neuer Datenbank verbinden (aktuell �%s�)\n"
+"  \\c[onnect] [БД|- ПОЛЬЗОВАТЕЛЬ|- СЕРВЕР|- ПОРТ|-]\n"
+"                         подключиться к другой базе данных (текущая: \"%s"
+"\")\n"
 
 #: help.c:248
 #, c-format
 msgid "  \\encoding [ENCODING]   show or set client encoding\n"
-msgstr "  \\encoding [KODIERUNG]  Client-Kodierung zeigen oder setzen\n"
+msgstr "  \\encoding [КОДИРОВКА]  показать/установить клиентскую кодировку\n"
 
 #: help.c:249
 #, c-format
 msgid "  \\password [USERNAME]   securely change the password for a user\n"
-msgstr ""
-"  \\password [BENUTZERNAME]\n"
-"                         sicheres �ndern eines Benutzerpasswortes\n"
+msgstr "  \\password [ИМЯ]        безопасно сменить пароль пользователя\n"
 
 #: help.c:252
 #, c-format
 msgid "Operating System\n"
-msgstr "Betriebssystem\n"
+msgstr "Операционная система\n"
 
 #: help.c:253
 #, c-format
 msgid "  \\cd [DIR]              change the current working directory\n"
-msgstr "  \\cd [VERZ]             Arbeitsverzeichnis wechseln\n"
+msgstr "  \\cd [ПУТЬ]             сменить текущий каталог\n"
 
 #: help.c:254
 #, c-format
 msgid "  \\timing [on|off]       toggle timing of commands (currently %s)\n"
-msgstr "  \\timing [on|off]       Zeitmessung umschalten (gegenw�rtig %s)\n"
+msgstr "  \\timing [on|off]       включить/выключить секундомер (сейчас: %s)\n"
 
 #: help.c:256
 #, c-format
@@ -1172,18 +1198,20 @@ msgid ""
 "  \\! [COMMAND]           execute command in shell or start interactive "
 "shell\n"
 msgstr ""
-"  \\! [BEFEHL]            Befehl in Shell ausf�hren oder interaktive Shell "
-"starten\n"
+"  \\! [КОМАНДА]           выполнить команду в командной оболочке\n"
+"                         или запустить интерактивную оболочку\n"
 
 #: help.c:259
 #, c-format
 msgid "Variables\n"
-msgstr "Variablen\n"
+msgstr "Переменные\n"
 
 #: help.c:260
 #, c-format
 msgid "  \\prompt [TEXT] NAME    prompt user to set internal variable\n"
-msgstr "  \\prompt [TEXT] NAME    interne Variable vom Benutzer abfragen\n"
+msgstr ""
+"  \\prompt [ТЕКСТ] ИМЯ    предложить пользователю задать внутреннюю "
+"переменную\n"
 
 #: help.c:261
 #, c-format
@@ -1191,17 +1219,18 @@ msgid ""
 "  \\set [NAME [VALUE]]    set internal variable, or list all if no "
 "parameters\n"
 msgstr ""
-"  \\set [NAME [WERT]]     interne Variable setzen, oder alle anzeigen\n"
+"  \\set [ИМЯ [ЗНАЧЕНИЕ]]  установить внутреннюю переменную или вывести все,\n"
+"                         если имя не задано\n"
 
 #: help.c:262
 #, c-format
 msgid "  \\unset NAME            unset (delete) internal variable\n"
-msgstr "  \\unset NAME            interne Variable l�schen\n"
+msgstr "  \\unset ИМЯ             сбросить (удалить) внутреннюю переменную\n"
 
 #: help.c:265
 #, c-format
 msgid "Large Objects\n"
-msgstr "Large Objects\n"
+msgstr "Большие объекты\n"
 
 #: help.c:266
 #, c-format
@@ -1211,14 +1240,14 @@ msgid ""
 "  \\lo_list\n"
 "  \\lo_unlink LOBOID      large object operations\n"
 msgstr ""
-"  \\lo_export LOBOID DATEI\n"
-"  \\lo_import DATEI [KOMMENTAR]\n"
+"  \\lo_export LOBOID ФАЙЛ\n"
+"  \\lo_import ФАЙЛ [КОММЕНТАРИЙ]\n"
 "  \\lo_list\n"
-"  \\lo_unlink LOBOID      Large-Object-Operationen\n"
+"  \\lo_unlink LOBOID      операции с большими объектами\n"
 
 #: help.c:318
 msgid "Available help:\n"
-msgstr "Verf�gbare Hilfe:\n"
+msgstr "Имеющаяся справка:\n"
 
 #: help.c:407
 #, c-format
@@ -1229,9 +1258,9 @@ msgid ""
 "%s\n"
 "\n"
 msgstr ""
-"Anweisung:    %s\n"
-"Beschreibung: %s\n"
-"Syntax:\n"
+"Команда:     %s\n"
+"Описание:    %s\n"
+"Синтаксис:\n"
 "%s\n"
 "\n"
 
@@ -1241,37 +1270,37 @@ msgid ""
 "No help available for \"%-.*s\".\n"
 "Try \\h with no arguments to see available help.\n"
 msgstr ""
-"Keine Hilfe verf�gbar f�r �%-.*s�.\n"
-"Versuchen Sie \\h ohne Argumente, um die verf�gbare Hilfe zu sehen.\n"
+"Нет справки по команде \"%-.*s\".\n"
+"Попробуйте \\h без аргументов и посмотрите, что есть.\n"
 
 #: input.c:187
 #, c-format
 msgid "could not read from input file: %s\n"
-msgstr "konnte nicht aus Eingabedatei lesen: %s\n"
+msgstr "не удалось прочитать входной файл: %s\n"
 
 #: input.c:347
 #, c-format
 msgid "could not save history to file \"%s\": %s\n"
-msgstr "konnte Befehlsgeschichte nicht in �%s� speichern: %s\n"
+msgstr "не удалось сохранить историю в файле \"%s\": %s\n"
 
 #: input.c:352
 msgid "history is not supported by this installation\n"
-msgstr "Befehlsgeschichte wird von dieser Installation nicht unterst�tzt\n"
+msgstr "в данной среде история не поддерживается\n"
 
 #: large_obj.c:66
 #, c-format
 msgid "%s: not connected to a database\n"
-msgstr "%s: nicht mit einer Datenbank verbunden\n"
+msgstr "%s: нет соединения с базой данных\n"
 
 #: large_obj.c:85
 #, c-format
 msgid "%s: current transaction is aborted\n"
-msgstr "%s: aktuelle Transaktion is abgebrochen\n"
+msgstr "%s: текущая транзакция прервана\n"
 
 #: large_obj.c:88
 #, c-format
 msgid "%s: unknown transaction status\n"
-msgstr "%s: unbekannter Transaktionsstatus\n"
+msgstr "%s: неизвестное состояние транзакции\n"
 
 #: large_obj.c:286
 msgid "ID"
@@ -1283,20 +1312,20 @@ msgstr "ID"
 #: describe.c:2629 describe.c:2668 describe.c:2735 describe.c:2794
 #: describe.c:2803 describe.c:2862
 msgid "Description"
-msgstr "Beschreibung"
+msgstr "Описание"
 
 #: large_obj.c:295
 msgid "Large objects"
-msgstr "Large Objects"
+msgstr "Большие объекты"
 
 #: mainloop.c:157
 #, c-format
 msgid "Use \"\\q\" to leave %s.\n"
-msgstr "Verwenden Sie �\\q�, um %s zu verlassen.\n"
+msgstr "Чтобы выйти из %s, введите \"\\q\".\n"
 
 #: mainloop.c:183
 msgid "You are using psql, the command-line interface to PostgreSQL."
-msgstr "Dies ist psql, die Kommandozeilenschnittstelle f�r PostgreSQL."
+msgstr "Вы используете psql - интерфейс командной строки к PostgreSQL."
 
 #: mainloop.c:184
 #, c-format
@@ -1307,52 +1336,51 @@ msgid ""
 "       \\g or terminate with semicolon to execute query\n"
 "       \\q to quit\n"
 msgstr ""
-"Geben Sie ein:  \\copyright f�r Urheberrechtsinformationen\n"
-"                \\h f�r Hilfe �ber SQL-Anweisungen\n"
-"                \\? f�r Hilfe �ber interne Anweisungen\n"
-"                \\g oder Semikolon, um eine Anfrage auszuf�hren\n"
-"                \\q um zu beenden\n"
+"Азы:   \\copyright - условия распространения\n"
+"       \\h - справка по операторам SQL\n"
+"       \\? - справка по командам psql\n"
+"       \\g или ; в конце строки - выполнение запроса\n"
+"       \\q - выход\n"
 
 #: print.c:955
 #, c-format
 msgid "(No rows)\n"
-msgstr "(keine Zeilen)\n"
+msgstr "(Нет записей)\n"
 
 #: print.c:1872
 #, c-format
 msgid "Interrupted\n"
-msgstr "Unterbrochen\n"
+msgstr "Прервано\n"
 
 #: print.c:1941
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
 msgstr ""
-"Kann keinen weiteren Spaltenkopf zur Tabelle hinzuf�gen: Spaltenzahl %d "
-"�berschritten.\n"
+"Ошибка добавления заголовка таблицы: превышен предел числа колонок (%d).\n"
 
 #: print.c:1981
 #, c-format
 msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
 msgstr ""
-"Cann keine weitere Zelle zur Tabelle hinzuf�gen: Zellengesamtzahl %d "
-"�berschritten.\n"
+"Ошибка добавления ячейки в таблицу: превышен предел числа ячеек (%d).\n"
 
 #: print.c:2201
 #, c-format
 msgid "invalid output format (internal error): %d"
-msgstr "ung�ltiges Ausgabeformat (interner Fehler): %d"
+msgstr "неверный формат вывода (внутренняя ошибка): %d"
 
 #: print.c:2298
 #, c-format
 msgid "(%lu row)"
 msgid_plural "(%lu rows)"
-msgstr[0] "(%lu Zeile)"
-msgstr[1] "(%lu Zeilen)"
+msgstr[0] "(%lu строка)"
+msgstr[1] "(%lu строки)"
+msgstr[2] "(%lu строк)"
 
 #: startup.c:217
 #, c-format
 msgid "%s: could not open log file \"%s\": %s\n"
-msgstr "%s: konnte Logdatei �%s� nicht �ffnen: %s\n"
+msgstr "%s: не удалось открыть файл протокола \"%s\": %s\n"
 
 #: startup.c:279
 #, c-format
@@ -1360,44 +1388,44 @@ msgid ""
 "Type \"help\" for help.\n"
 "\n"
 msgstr ""
-"Geben Sie �help� f�r Hilfe ein.\n"
+"Введите \"help\", чтобы получить справку.\n"
 "\n"
 
 #: startup.c:425
 #, c-format
 msgid "%s: could not set printing parameter \"%s\"\n"
-msgstr "%s: konnte Ausgabeparameter �%s� nicht setzen\n"
+msgstr "%s: не удалось установить параметр печати \"%s\"\n"
 
 #: startup.c:464
 #, c-format
 msgid "%s: could not delete variable \"%s\"\n"
-msgstr "%s: konnte Variable �%s� nicht l�schen\n"
+msgstr "%s: удалить переменную \"%s\" нельзя\n"
 
 #: startup.c:474
 #, c-format
 msgid "%s: could not set variable \"%s\"\n"
-msgstr "%s: konnte Variable �%s� nicht setzen\n"
+msgstr "%s: не удалось установить переменную \"%s\"\n"
 
 #: startup.c:511 startup.c:517
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Versuchen Sie �%s --help� f�r weitere Informationen.\n"
+msgstr "Для дополнительной информации попробуйте \"%s --help\".\n"
 
 #: startup.c:534
 #, c-format
 msgid "%s: warning: extra command-line argument \"%s\" ignored\n"
-msgstr "%s: Warnung: �berfl�ssiges Kommandozeilenargument �%s� ignoriert\n"
+msgstr "%s: предупреждение: лишний аргумент \"%s\" проигнорирован\n"
 
 #: startup.c:599
 msgid "contains support for command-line editing"
-msgstr "enth�lt Unterst�tzung f�r Kommandozeilenbearbeitung"
+msgstr "включает поддержку редактирования командной строки"
 
 #: describe.c:68 describe.c:235 describe.c:462 describe.c:561 describe.c:682
 #: describe.c:757 describe.c:2115 describe.c:2236 describe.c:2291
 #: describe.c:2491 describe.c:2718 describe.c:2790 describe.c:2801
 #: describe.c:2860
 msgid "Schema"
-msgstr "Schema"
+msgstr "Схема"
 
 #: describe.c:69 describe.c:145 describe.c:236 describe.c:463 describe.c:562
 #: describe.c:612 describe.c:683 describe.c:758 describe.c:2116
@@ -1405,618 +1433,620 @@ msgstr "Schema"
 #: describe.c:2719 describe.c:2791 describe.c:2802 describe.c:2861
 #: describe.c:3051 describe.c:3110
 msgid "Name"
-msgstr "Name"
+msgstr "Имя"
 
 #: describe.c:70 describe.c:248 describe.c:294 describe.c:311
 msgid "Result data type"
-msgstr "Ergebnisdatentyp"
+msgstr "Тип данных результата"
 
 #: describe.c:84 describe.c:88 describe.c:249 describe.c:295 describe.c:312
 msgid "Argument data types"
-msgstr "Argumentdatentypen"
+msgstr "Типы данных аргументов"
 
 #: describe.c:113
 msgid "List of aggregate functions"
-msgstr "Liste der Aggregatfunktionen"
+msgstr "Список агрегатных функций"
 
 #: describe.c:134
 #, c-format
 msgid "The server (version %d.%d) does not support tablespaces.\n"
-msgstr "Der Server (Version %d.%d) unterst�tzt keine Tablespaces.\n"
+msgstr "Сервер (версия %d.%d) не поддерживает табличные пространства.\n"
 
 #: describe.c:146 describe.c:334 describe.c:613 describe.c:2123
 #: describe.c:2423 describe.c:3052 describe.c:3111
 msgid "Owner"
-msgstr "Eigent�mer"
+msgstr "Владелец"
 
 #: describe.c:147
 msgid "Location"
-msgstr "Pfad"
+msgstr "Расположение"
 
 #: describe.c:175
 msgid "List of tablespaces"
-msgstr "Liste der Tablespaces"
+msgstr "Список табличных пространств"
 
 #: describe.c:212
 #, c-format
 msgid "\\df only takes [antwS+] as options\n"
-msgstr "\\df akzeptiert nur [antwS+] als Optionen\n"
+msgstr "\\df принимает в качестве параметров только [antwS+]\n"
 
 #: describe.c:218
 #, c-format
 msgid "\\df does not take a \"w\" option with server version %d.%d\n"
-msgstr "\\df akzeptiert die Option �w� nicht mit Serverversion %d.%d\n"
+msgstr "\\df не поддерживает параметр \"w\" с сервером версии %d.%d\n"
 
 #. translator: "agg" is short for "aggregate"
 #: describe.c:251 describe.c:297 describe.c:314
 msgid "agg"
-msgstr "Agg"
+msgstr "агр."
 
 #: describe.c:252
 msgid "window"
-msgstr "Fenster"
+msgstr "оконная"
 
 #: describe.c:253 describe.c:298 describe.c:315 describe.c:897
 msgid "trigger"
-msgstr "Trigger"
+msgstr "триггерная"
 
 #: describe.c:254 describe.c:299 describe.c:316
 msgid "normal"
-msgstr "normal"
+msgstr "обычная"
 
 #: describe.c:255 describe.c:300 describe.c:317 describe.c:685 describe.c:1216
 #: describe.c:2122 describe.c:2238 describe.c:3123
 msgid "Type"
-msgstr "Typ"
+msgstr "Тип"
 
 #: describe.c:330
 msgid "immutable"
-msgstr "unver�nderlich"
+msgstr "постоянная "
 
 #: describe.c:331
 msgid "stable"
-msgstr "stabil"
+msgstr "стабильная"
 
 #: describe.c:332
 msgid "volatile"
-msgstr "volatil"
+msgstr "изменчивая"
 
 #: describe.c:333
 msgid "Volatility"
-msgstr "Volatilit�t"
+msgstr "Изменчивость"
 
 #: describe.c:335
 msgid "Language"
-msgstr "Sprache"
+msgstr "Язык"
 
 #: describe.c:336
 msgid "Source code"
-msgstr "Quelltext"
+msgstr "Исходный код"
 
 #: describe.c:434
 msgid "List of functions"
-msgstr "Liste der Funktionen"
+msgstr "Список функций"
 
 #: describe.c:473
 msgid "Internal name"
-msgstr "Interner Name"
+msgstr "Внутреннее имя"
 
 #: describe.c:474 describe.c:629 describe.c:2133
 msgid "Size"
-msgstr "Gr��e"
+msgstr "Размер"
 
 #: describe.c:486
 msgid "Elements"
-msgstr "Elemente"
+msgstr "Элементы"
 
 #: describe.c:530
 msgid "List of data types"
-msgstr "Liste der Datentypen"
+msgstr "Список типов данных"
 
 #: describe.c:563
 msgid "Left arg type"
-msgstr "Linker Typ"
+msgstr "Тип левого аргумента"
 
 #: describe.c:564
 msgid "Right arg type"
-msgstr "Rechter Typ"
+msgstr "Тип правого аргумента"
 
 #: describe.c:565
 msgid "Result type"
-msgstr "Ergebnistyp"
+msgstr "Результирующий тип"
 
 #: describe.c:584
 msgid "List of operators"
-msgstr "Liste der Operatoren"
+msgstr "Список операторов"
 
 #: describe.c:614
 msgid "Encoding"
-msgstr "Kodierung"
+msgstr "Кодировка"
 
 #: describe.c:619
 msgid "Collation"
-msgstr "Sortierfolge"
+msgstr "Правило сортировки"
 
 #: describe.c:620
 msgid "Ctype"
-msgstr "Zeichentyp"
+msgstr "LC_CTYPE"
 
 #: describe.c:633
 msgid "Tablespace"
-msgstr "Tablespace"
+msgstr "Табл. пространство"
 
 #: describe.c:650
 msgid "List of databases"
-msgstr "Liste der Datenbanken"
+msgstr "Список баз данных"
 
 #: describe.c:684 describe.c:852 describe.c:2117
 msgid "table"
-msgstr "Tabelle"
+msgstr "таблица"
 
 #: describe.c:684 describe.c:853 describe.c:2118
 msgid "view"
-msgstr "Sicht"
+msgstr "представление"
 
 #: describe.c:684 describe.c:855 describe.c:2120
 msgid "sequence"
-msgstr "Sequenz"
+msgstr "последовательность"
 
 #: describe.c:696
 msgid "Column access privileges"
-msgstr "Spalten-Zugriffsprivilegien"
+msgstr "Права доступа к колонкам"
 
 #: describe.c:722 describe.c:3218 describe.c:3222
 msgid "Access privileges"
-msgstr "Zugriffsprivilegien"
+msgstr "Права доступа"
 
 #: describe.c:759
 msgid "Object"
-msgstr "Objekt"
+msgstr "Объект"
 
 #: describe.c:771
 msgid "aggregate"
-msgstr "Aggregat"
+msgstr "агр. функция"
 
 #: describe.c:791
 msgid "function"
-msgstr "Funktion"
+msgstr "функция"
 
 #: describe.c:810
 msgid "operator"
-msgstr "Operator"
+msgstr "оператор"
 
 #: describe.c:829
 msgid "data type"
-msgstr "Datentyp"
+msgstr "тип данных"
 
 #: describe.c:854 describe.c:2119
 msgid "index"
-msgstr "Index"
+msgstr "индекс"
 
 #: describe.c:876
 msgid "rule"
-msgstr "Rule"
+msgstr "правило"
 
 #: describe.c:920
 msgid "Object descriptions"
-msgstr "Objektbeschreibungen"
+msgstr "Описание объекта"
 
 #: describe.c:973
 #, c-format
 msgid "Did not find any relation named \"%s\".\n"
-msgstr "Keine Relationen namens �%s� gefunden\n"
+msgstr "Отношение \"%s\" не найдено.\n"
 
 #: describe.c:1110
 #, c-format
 msgid "Did not find any relation with OID %s.\n"
-msgstr "Keine Relation mit OID %s gefunden.\n"
+msgstr "Отношение с OID %s не найдено.\n"
 
 #: describe.c:1178
 #, c-format
 msgid "Table \"%s.%s\""
-msgstr "Tabelle �%s.%s�"
+msgstr "Таблица \"%s.%s\""
 
 #: describe.c:1182
 #, c-format
 msgid "View \"%s.%s\""
-msgstr "Sicht �%s.%s�"
+msgstr "Представление \"%s.%s\""
 
 #: describe.c:1186
 #, c-format
 msgid "Sequence \"%s.%s\""
-msgstr "Sequenz �%s.%s�"
+msgstr "Последовательность \"%s.%s\""
 
 #: describe.c:1190
 #, c-format
 msgid "Index \"%s.%s\""
-msgstr "Index �%s.%s�"
+msgstr "Индекс \"%s.%s\""
 
 #: describe.c:1195
 #, c-format
 msgid "Special relation \"%s.%s\""
-msgstr "Spezielle Relation �%s.%s�"
+msgstr "Специальное отношение \"%s.%s\""
 
 #: describe.c:1199
 #, c-format
 msgid "TOAST table \"%s.%s\""
-msgstr "TOAST-Tabelle �%s.%s�"
+msgstr "TOAST-таблица \"%s.%s\""
 
 #: describe.c:1203
 #, c-format
 msgid "Composite type \"%s.%s\""
-msgstr "Zusammengesetzter Typ �%s.%s�"
+msgstr "Составной тип \"%s.%s\""
 
 #: describe.c:1215
 msgid "Column"
-msgstr "Spalte"
+msgstr "Колонка"
 
 #: describe.c:1221
 msgid "Modifiers"
-msgstr "Attribute"
+msgstr "Модификаторы"
 
 #: describe.c:1226
 msgid "Value"
-msgstr "Wert"
+msgstr "Значение"
 
 #: describe.c:1230
 msgid "Storage"
-msgstr "Speicherung"
+msgstr "Хранилище"
 
 #: describe.c:1272
 msgid "not null"
-msgstr "not null"
+msgstr "NOT NULL"
 
 #. translator: default values of column definitions
 #: describe.c:1281
 #, c-format
 msgid "default %s"
-msgstr "Vorgabewert %s"
+msgstr "DEFAULT %s"
 
 #: describe.c:1347
 msgid "primary key, "
-msgstr "Prim�rschl�ssel, "
+msgstr "первичный ключ, "
 
 #: describe.c:1349
 msgid "unique, "
-msgstr "eindeutig, "
+msgstr "уникальный, "
 
 #: describe.c:1355
 #, c-format
 msgid "for table \"%s.%s\""
-msgstr "f�r Tabelle �%s.%s�"
+msgstr "для таблицы \"%s.%s\""
 
 #: describe.c:1359
 #, c-format
 msgid ", predicate (%s)"
-msgstr ", Pr�dikat (%s)"
+msgstr ", предикат (%s)"
 
 #: describe.c:1362
 msgid ", clustered"
-msgstr ", geclustert"
+msgstr ", кластеризованный"
 
 #: describe.c:1365
 msgid ", invalid"
-msgstr ", ung�ltig"
+msgstr ", не рабочий"
 
 #: describe.c:1379
 msgid "View definition:"
-msgstr "Sichtdefinition:"
+msgstr "Определение представления:"
 
 #: describe.c:1396 describe.c:1647
 msgid "Rules:"
-msgstr "Regeln:"
+msgstr "Правила:"
 
 #: describe.c:1443
 msgid "Indexes:"
-msgstr "Indexe:"
+msgstr "Индексы:"
 
 #: describe.c:1503
 msgid "Check constraints:"
-msgstr "Check-Constraints:"
+msgstr "Ограничения-проверки:"
 
+# TO REWVIEW
 #: describe.c:1534
 msgid "Foreign-key constraints:"
-msgstr "Fremdschl�ssel-Constraints:"
+msgstr "Ограничения внешнего ключа:"
 
 #: describe.c:1565
 msgid "Referenced by:"
-msgstr "Fremdschl�sselverweise von:"
+msgstr "Ссылки извне:"
 
 #: describe.c:1650
 msgid "Disabled rules:"
-msgstr "Abgeschaltete Regeln:"
+msgstr "Отключенные правила:"
 
 #: describe.c:1653
 msgid "Rules firing always:"
-msgstr "Regeln, die immer aktiv werden:"
+msgstr "Правила, срабатывающие всегда:"
 
 #: describe.c:1656
 msgid "Rules firing on replica only:"
-msgstr "Regeln, die nur im Replikat aktiv werden:"
+msgstr "Правила, срабатывающие только в реплике:"
 
 #: describe.c:1755
 msgid "Triggers:"
-msgstr "Trigger:"
+msgstr "Триггеры:"
 
 #: describe.c:1758
 msgid "Disabled triggers:"
-msgstr "Abgeschaltete Trigger:"
+msgstr "Отключенные триггеры:"
 
 #: describe.c:1761
 msgid "Triggers firing always:"
-msgstr "Trigger, die immer aktiv werden:"
+msgstr "Триггеры, срабатывающие всегда:"
 
 #: describe.c:1764
 msgid "Triggers firing on replica only:"
-msgstr "Trigger, die nur im Replikat aktiv werden:"
+msgstr "Триггеры, срабатывающие только в реплике:"
 
 #: describe.c:1797
 msgid "Inherits"
-msgstr "Erbt von"
+msgstr "Наследует"
 
 #: describe.c:1812
 msgid "Has OIDs"
-msgstr "Hat OIDs"
+msgstr "Содержит OID"
 
 #: describe.c:1815 describe.c:2295 describe.c:2369
 msgid "yes"
-msgstr "ja"
+msgstr "да"
 
 #: describe.c:1815 describe.c:2295 describe.c:2369
 msgid "no"
-msgstr "nein"
+msgstr "нет"
 
 #: describe.c:1823 describe.c:3061 describe.c:3125 describe.c:3181
 msgid "Options"
-msgstr "Optionen"
+msgstr "Параметры"
 
 #: describe.c:1908
 #, c-format
 msgid "Tablespace: \"%s\""
-msgstr "Tablespace: �%s�"
+msgstr "Табличное пространство: \"%s\""
 
 #: describe.c:1921
 #, c-format
 msgid ", tablespace \"%s\""
-msgstr ", Tablespace �%s�"
+msgstr ", табл. пространство \"%s\""
 
 #: describe.c:1999
 msgid "List of roles"
-msgstr "Liste der Rollen"
+msgstr "Список ролей"
 
 #: describe.c:2001
 msgid "Role name"
-msgstr "Rollenname"
+msgstr "Имя роли"
 
 #: describe.c:2002
 msgid "Attributes"
-msgstr "Attribute"
+msgstr "Атрибуты"
 
 #: describe.c:2003
 msgid "Member of"
-msgstr "Mitglied von"
+msgstr "Член ролей"
 
 #: describe.c:2014
 msgid "Superuser"
-msgstr "Superuser"
+msgstr "Суперпользователь"
 
 #: describe.c:2017
 msgid "No inheritance"
-msgstr "keine Vererbung"
+msgstr "Не наследуется"
 
 #: describe.c:2020
 msgid "Create role"
-msgstr "Rolle erzeugen"
+msgstr "Создаёт роли"
 
 #: describe.c:2023
 msgid "Create DB"
-msgstr "DB erzeugen"
+msgstr "Создаёт БД"
 
 #: describe.c:2026
 msgid "Cannot login"
-msgstr "kann nicht einloggen"
+msgstr "Вход запрещён"
 
 #: describe.c:2035
 msgid "No connections"
-msgstr "keine Verbindungen"
+msgstr "Нет подключений"
 
 #: describe.c:2037
 #, c-format
 msgid "%d connection"
 msgid_plural "%d connections"
-msgstr[0] "%d Verbindung"
-msgstr[1] "%d Verbindungen"
+msgstr[0] "%d подключение"
+msgstr[1] "%d подключения"
+msgstr[2] "%d подключений"
 
 #: describe.c:2121
 msgid "special"
-msgstr "speziell"
+msgstr "спец. отношение"
 
 #: describe.c:2128
 msgid "Table"
-msgstr "Tabelle"
+msgstr "Таблица"
 
 #: describe.c:2188
 #, c-format
 msgid "No matching relations found.\n"
-msgstr "Keine passenden Relationen gefunden\n"
+msgstr "Соответствующие отношения не найдены.\n"
 
 #: describe.c:2190
 #, c-format
 msgid "No relations found.\n"
-msgstr "Keine Relationen gefunden\n"
+msgstr "Отношения не найдены.\n"
 
 #: describe.c:2195
 msgid "List of relations"
-msgstr "Liste der Relationen"
+msgstr "Список отношений"
 
 #: describe.c:2239
 msgid "Modifier"
-msgstr "Attribut"
+msgstr "Модификатор"
 
 #: describe.c:2240
 msgid "Check"
-msgstr "Check"
+msgstr "Проверка"
 
 #: describe.c:2258
 msgid "List of domains"
-msgstr "Liste der Dom�nen"
+msgstr "Список доменов"
 
 #: describe.c:2293
 msgid "Source"
-msgstr "Quelle"
+msgstr "Источник"
 
 #: describe.c:2294
 msgid "Destination"
-msgstr "Ziel"
+msgstr "Назначение"
 
 #: describe.c:2296
 msgid "Default?"
-msgstr "Standard?"
+msgstr "По умолчанию?"
 
 #: describe.c:2314
 msgid "List of conversions"
-msgstr "Liste der Konversionen"
+msgstr "Список преобразований"
 
 #: describe.c:2366
 msgid "Source type"
-msgstr "Quelltyp"
+msgstr "Исходный тип"
 
 #: describe.c:2367
 msgid "Target type"
-msgstr "Zieltyp"
+msgstr "Целевой тип"
 
 #: describe.c:2368 describe.c:2628
 msgid "Function"
-msgstr "Funktion"
+msgstr "Функция"
 
 #: describe.c:2369
 msgid "in assignment"
-msgstr "in Zuweisung"
+msgstr "в присваивании"
 
 #: describe.c:2370
 msgid "Implicit?"
-msgstr "Implizit?"
+msgstr "Неявное?"
 
 #: describe.c:2396
 msgid "List of casts"
-msgstr "Liste der Typumwandlungen"
+msgstr "Список преобразований типов"
 
 #: describe.c:2451
 msgid "List of schemas"
-msgstr "Liste der Schemas"
+msgstr "Список схем"
 
 #: describe.c:2474 describe.c:2707 describe.c:2775 describe.c:2843
 #, c-format
 msgid "The server (version %d.%d) does not support full text search.\n"
-msgstr "Der Server (Version %d.%d) unterst�tzt keine Volltextsuche.\n"
+msgstr "Сервер (версия %d.%d) не поддерживает полнотекстовый поиск.\n"
 
 #: describe.c:2508
 msgid "List of text search parsers"
-msgstr "Liste der Textsucheparser"
+msgstr "Список анализаторов текстового поиска"
 
 #: describe.c:2551
 #, c-format
 msgid "Did not find any text search parser named \"%s\".\n"
-msgstr "Kein Textsucheparser namens �%s� gefunden\n"
+msgstr "Анализатор текстового поиска \"%s\" не найден.\n"
 
 #: describe.c:2626
 msgid "Start parse"
-msgstr "Parsen starten"
+msgstr "Начало разбора"
 
 #: describe.c:2627
 msgid "Method"
-msgstr "Methode"
+msgstr "Метод"
 
 #: describe.c:2631
 msgid "Get next token"
-msgstr "N�chstes Token lesen"
+msgstr "Получение следующего фрагмента"
 
 #: describe.c:2633
 msgid "End parse"
-msgstr "Parsen beenden"
+msgstr "Окончание разбора"
 
 #: describe.c:2635
 msgid "Get headline"
-msgstr "�berschrift ermitteln"
+msgstr "Получение выдержки"
 
 #: describe.c:2637
 msgid "Get token types"
-msgstr "Tokentypen ermitteln"
+msgstr "Получение типов фрагментов"
 
 #: describe.c:2647
 #, c-format
 msgid "Text search parser \"%s.%s\""
-msgstr "Textsucheparser �%s.%s�"
+msgstr "Анализатор текстового поиска \"%s.%s\""
 
 #: describe.c:2649
 #, c-format
 msgid "Text search parser \"%s\""
-msgstr "Textsucheparser �%s�"
+msgstr "Анализатор текстового поиска \"%s\""
 
 #: describe.c:2667
 msgid "Token name"
-msgstr "Tokenname"
+msgstr "Имя фрагмента"
 
 #: describe.c:2678
 #, c-format
 msgid "Token types for parser \"%s.%s\""
-msgstr "Tokentypen f�r Parser �%s.%s�"
+msgstr "Типы фрагментов для анализатора \"%s.%s\""
 
 #: describe.c:2680
 #, c-format
 msgid "Token types for parser \"%s\""
-msgstr "Tokentypen f�r Parser �%s�"
+msgstr "Типы фрагментов для анализатора \"%s\""
 
 #: describe.c:2729
 msgid "Template"
-msgstr "Vorlage"
+msgstr "Шаблон"
 
 #: describe.c:2730
 msgid "Init options"
-msgstr "Initialisierungsoptionen"
+msgstr "Параметры инициализации"
 
 #: describe.c:2752
 msgid "List of text search dictionaries"
-msgstr "Liste der Textsuchew�rterb�cher"
+msgstr "Список словарей текстового поиска"
 
 #: describe.c:2792
 msgid "Init"
-msgstr "Init"
+msgstr "Инициализация"
 
 #: describe.c:2793
 msgid "Lexize"
-msgstr "Lexize"
+msgstr "Выделение лексем"
 
 #: describe.c:2820
 msgid "List of text search templates"
-msgstr "Liste der Textsuchevorlagen"
+msgstr "Список шаблонов текстового поиска"
 
 #: describe.c:2877
 msgid "List of text search configurations"
-msgstr "Liste der Textsuchekonfigurationen"
+msgstr "Список конфигураций текстового поиска"
 
 #: describe.c:2921
 #, c-format
 msgid "Did not find any text search configuration named \"%s\".\n"
-msgstr "Keine Textsuchekonfiguration namens �%s� gefunden\n"
+msgstr "Конфигурация текстового поиска \"%s\" не найдена.\n"
 
 #: describe.c:2987
 msgid "Token"
-msgstr "Token"
+msgstr "Фрагмент"
 
 #: describe.c:2988
 msgid "Dictionaries"
-msgstr "W�rterb�cher"
+msgstr "Словари"
 
 #: describe.c:2999
 #, c-format
 msgid "Text search configuration \"%s.%s\""
-msgstr "Textsuchekonfiguration �%s.%s�"
+msgstr "Конфигурация текстового поиска \"%s.%s\""
 
 #: describe.c:3002
 #, c-format
 msgid "Text search configuration \"%s\""
-msgstr "Textsuchekonfiguration �%s�"
+msgstr "Конфигурация текстового поиска \"%s\""
 
 #: describe.c:3006
 #, c-format
@@ -2025,7 +2055,7 @@ msgid ""
 "Parser: \"%s.%s\""
 msgstr ""
 "\n"
-"Parser: �%s.%s�"
+"Анализатор: \"%s.%s\""
 
 #: describe.c:3009
 #, c-format
@@ -2034,58 +2064,58 @@ msgid ""
 "Parser: \"%s\""
 msgstr ""
 "\n"
-"Parser: �%s�"
+"Анализатор: \"%s\""
 
 #: describe.c:3041
 #, c-format
 msgid "The server (version %d.%d) does not support foreign-data wrappers.\n"
-msgstr "Der Server (Version %d.%d) unterst�tzt keine Fremddaten-Wrapper.\n"
+msgstr "Сервер (версия %d.%d) не поддерживает обёртки сторонних данных.\n"
 
 #: describe.c:3053
 msgid "Validator"
-msgstr "Validator"
+msgstr "Функция проверки"
 
 #: describe.c:3077
 msgid "List of foreign-data wrappers"
-msgstr "Liste der Fremddaten-Wrapper"
+msgstr "Список обёрток сторонних данных"
 
 #: describe.c:3100
 #, c-format
 msgid "The server (version %d.%d) does not support foreign servers.\n"
-msgstr "Der Server (Version %d.%d) unterst�tzt keine Fremdserver.\n"
+msgstr "Сервер (версия %d.%d) не поддерживает сторонние серверы.\n"
 
 #: describe.c:3112
 msgid "Foreign-data wrapper"
-msgstr "Fremddaten-Wrapper"
+msgstr "Обёртка сторонних данных"
 
 #: describe.c:3124
 msgid "Version"
-msgstr "Version"
+msgstr "Версия"
 
 #: describe.c:3143
 msgid "List of foreign servers"
-msgstr "Liste der Fremdserver"
+msgstr "Список сторонних серверов"
 
 #: describe.c:3166
 #, c-format
 msgid "The server (version %d.%d) does not support user mappings.\n"
-msgstr "Der Server (Version %d.%d) unterst�tzt keine Benutzerabbildungen.\n"
+msgstr "Сервер (версия %d.%d) не поддерживает сопоставления пользователей.\n"
 
 #: describe.c:3175
 msgid "Server"
-msgstr "Server"
+msgstr "Сервер"
 
 #: describe.c:3176
 msgid "User name"
-msgstr "Benutzername"
+msgstr "Имя пользователя"
 
 #: describe.c:3196
 msgid "List of user mappings"
-msgstr "Liste der Benutzerabbildungen"
+msgstr "Список сопоставлений пользователей"
 
 #: sql_help.h:25 sql_help.h:505
 msgid "abort the current transaction"
-msgstr "bricht die aktuelle Transaktion ab"
+msgstr "прервать текущую транзакцию"
 
 #: sql_help.h:26
 msgid "ABORT [ WORK | TRANSACTION ]"
@@ -2093,7 +2123,7 @@ msgstr "ABORT [ WORK | TRANSACTION ]"
 
 #: sql_help.h:29
 msgid "change the definition of an aggregate function"
-msgstr "�ndert die Definition einer Aggregatfunktion"
+msgstr "изменить определение агрегатной функции"
 
 #: sql_help.h:30
 msgid ""
@@ -2101,25 +2131,25 @@ msgid ""
 "ALTER AGGREGATE name ( type [ , ... ] ) OWNER TO new_owner\n"
 "ALTER AGGREGATE name ( type [ , ... ] ) SET SCHEMA new_schema"
 msgstr ""
-"ALTER AGGREGATE name ( typ [ , ... ] ) RENAME TO neuer_name\n"
-"ALTER AGGREGATE name ( typ [ , ... ] ) OWNER TO neuer_eigent�mer\n"
-"ALTER AGGREGATE name ( typ [ , ... ] ) SET SCHEMA neues_schema"
+"ALTER AGGREGATE имя ( тип [ , ... ] ) RENAME TO новое_имя\n"
+"ALTER AGGREGATE имя ( тип [ , ... ] ) OWNER TO новый_владелец\n"
+"ALTER AGGREGATE имя ( тип [ , ... ] ) SET SCHEMA новая_схема"
 
 #: sql_help.h:33
 msgid "change the definition of a conversion"
-msgstr "�ndert die Definition einer Zeichensatzkonversion"
+msgstr "изменить определение преобразования"
 
 #: sql_help.h:34
 msgid ""
 "ALTER CONVERSION name RENAME TO newname\n"
 "ALTER CONVERSION name OWNER TO newowner"
 msgstr ""
-"ALTER CONVERSION name RENAME TO neuer_name\n"
-"ALTER CONVERSION name OWNER TO neuer_eigent�mer"
+"ALTER CONVERSION имя RENAME TO новое_имя\n"
+"ALTER CONVERSION имя OWNER TO новый_владелец"
 
 #: sql_help.h:37
 msgid "change a database"
-msgstr "�ndert eine Datenbank"
+msgstr "изменить атрибуты базы данных"
 
 #: sql_help.h:38
 msgid ""
@@ -2141,27 +2171,27 @@ msgid ""
 "ALTER DATABASE name RESET configuration_parameter\n"
 "ALTER DATABASE name RESET ALL"
 msgstr ""
-"ALTER DATABASE name [ [ WITH ] option [ ... ] ]\n"
+"ALTER DATABASE имя [ [ WITH ] параметр [ ... ] ]\n"
 "\n"
-"wobei option Folgendes sein kann:\n"
+"где допустимый параметр:\n"
 "\n"
-"    CONNECTION LIMIT verbindungslimit\n"
+"    CONNECTION LIMIT предел_подключений\n"
 "\n"
-"ALTER DATABASE name RENAME TO neuer_name\n"
+"ALTER DATABASE имя RENAME TO новое_имя\n"
 "\n"
-"ALTER DATABASE name OWNER TO neuer_eigent�mer\n"
+"ALTER DATABASE имя OWNER TO новый_владелец\n"
 "\n"
-"ALTER DATABASE name SET TABLESPACE neuer_tablespace\n"
+"ALTER DATABASE имя SET TABLESPACE новое_табл_пространство\n"
 "\n"
-"ALTER DATABASE name SET konfigurationsparameter { TO | = } { wert | "
+"ALTER DATABASE имя SET параметр_конфигурации { TO | = } { значение | "
 "DEFAULT }\n"
-"ALTER DATABASE name SET konfigurationsparameter FROM CURRENT\n"
-"ALTER DATABASE name RESET konfigurationsparameter\n"
-"ALTER DATABASE name RESET ALL"
+"ALTER DATABASE имя SET параметр_конфигурации FROM CURRENT\n"
+"ALTER DATABASE имя RESET параметр_конфигурации\n"
+"ALTER DATABASE имя RESET ALL"
 
 #: sql_help.h:41
 msgid "change the definition of a domain"
-msgstr "�ndert die Definition einer Dom�ne"
+msgstr "изменить определение домена"
 
 #: sql_help.h:42
 msgid ""
@@ -2178,22 +2208,22 @@ msgid ""
 "ALTER DOMAIN name\n"
 "    SET SCHEMA new_schema"
 msgstr ""
-"ALTER DOMAIN name\n"
-"    { SET DEFAULT ausdruck | DROP DEFAULT }\n"
-"ALTER DOMAIN name\n"
+"ALTER DOMAIN имя\n"
+"    { SET DEFAULT выражение | DROP DEFAULT }\n"
+"ALTER DOMAIN имя\n"
 "    { SET | DROP } NOT NULL\n"
-"ALTER DOMAIN name\n"
-"    ADD dom�nen_constraint\n"
-"ALTER DOMAIN name\n"
-"    DROP CONSTRAINT constraint_name [ RESTRICT | CASCADE ]\n"
-"ALTER DOMAIN name\n"
-"    OWNER TO neuer_eigent�mer \n"
-"ALTER DOMAIN name\n"
-"    SET SCHEMA neues_schema"
+"ALTER DOMAIN имя\n"
+"    ADD ограничение_домена\n"
+"ALTER DOMAIN имя\n"
+"    DROP CONSTRAINT имя_ограничения [ RESTRICT | CASCADE ]\n"
+"ALTER DOMAIN имя\n"
+"    OWNER TO новый_владелец\n"
+"ALTER DOMAIN имя\n"
+"    SET SCHEMA новая_схема"
 
 #: sql_help.h:45
 msgid "change the definition of a foreign-data wrapper"
-msgstr "�ndert die Definition eines Fremddaten-Wrappers"
+msgstr "изменить определение обёртки сторонних данных"
 
 #: sql_help.h:46
 msgid ""
@@ -2202,14 +2232,14 @@ msgid ""
 "    [ OPTIONS ( [ ADD | SET | DROP ] option ['value'] [, ... ]) ]\n"
 "ALTER FOREIGN DATA WRAPPER name OWNER TO new_owner"
 msgstr ""
-"ALTER FOREIGN DATA WRAPPER name\n"
-"    [ VALIDATOR valfunktion | NO VALIDATOR ]\n"
-"    [ OPTIONS ( [ ADD | SET | DROP ] option ['wert'] [, ... ]) ]\n"
-"ALTER FOREIGN DATA WRAPPER name OWNER TO neuer_eigent�mer"
+"ALTER FOREIGN DATA WRAPPER имя\n"
+"    [ VALIDATOR функция_проверки | NO VALIDATOR ]\n"
+"    [ OPTIONS ( [ ADD | SET | DROP ] параметр ['значение'] [, ... ]) ]\n"
+"ALTER FOREIGN DATA WRAPPER имя OWNER TO новый_владелец"
 
 #: sql_help.h:49
 msgid "change the definition of a function"
-msgstr "�ndert die Definition einer Funktion"
+msgstr "изменить определение функции"
 
 #: sql_help.h:50
 msgid ""
@@ -2234,30 +2264,34 @@ msgid ""
 "    RESET configuration_parameter\n"
 "    RESET ALL"
 msgstr ""
-"ALTER FUNCTION name ( [ [ argmodus ] [ argname ] argtyp [, ...] ] )\n"
-"    aktion [, ... ] [ RESTRICT ]\n"
-"ALTER FUNCTION name ( [ [ argmodus ] [ argname ] argtyp [, ...] ] )\n"
-"    RENAME TO neuer_name\n"
-"ALTER FUNCTION name ( [ [ argmodus ] [ argname ] argtyp [, ...] ] )\n"
-"    OWNER TO neuer_eigent�mer\n"
-"ALTER FUNCTION name ( [ [ argmodus ] [ argname ] argtyp [, ...] ] )\n"
-"    SET SCHEMA neues_schema\n"
+"ALTER FUNCTION имя ( [ [ режим_аргумента ] [ имя_аргумента ] тип "
+"[, ...] ] )\n"
+"    действие [ ... ] [ RESTRICT ]\n"
+"ALTER FUNCTION имя ( [ [ режим_аргумента ] [ имя_аргумента ] тип "
+"[, ...] ] )\n"
+"    RENAME TO новое_имя\n"
+"ALTER FUNCTION имя ( [ [ режим_аргумента ] [ имя_аргумента ] тип "
+"[, ...] ] )\n"
+"    OWNER TO новый_владелец\n"
+"ALTER FUNCTION имя ( [ [ режим_аргумента ] [ имя_аргумента ] тип "
+"[, ...] ] )\n"
+"    SET SCHEMA новая_схема\n"
 "\n"
-"wobei aktion Folgendes sein kann:\n"
+"где допустимые действия:\n"
 "\n"
 "    CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT\n"
 "    IMMUTABLE | STABLE | VOLATILE\n"
 "    [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER\n"
-"    COST ausf�hrungskosten\n"
-"    ROWS ergebniszeilen\n"
-"    SET konfigurationsparameter { TO | = } { wert | DEFAULT }\n"
-"    SET konfigurationsparameter FROM CURRENT\n"
-"    RESET konfigurationsparameter\n"
+"    COST стоимость_выполнения\n"
+"    ROWS строк_в_результате\n"
+"    SET параметр_конфигурации { TO | = } { значение | DEFAULT }\n"
+"    SET параметр_конфигурации FROM CURRENT\n"
+"    RESET параметр_конфигурации\n"
 "    RESET ALL"
 
 #: sql_help.h:53
 msgid "change role name or membership"
-msgstr "�ndert Rollenname oder -mitglieder"
+msgstr "изменить имя роли или членство"
 
 #: sql_help.h:54
 msgid ""
@@ -2266,14 +2300,14 @@ msgid ""
 "\n"
 "ALTER GROUP groupname RENAME TO newname"
 msgstr ""
-"ALTER GROUP gruppenname ADD USER benutzername [, ... ]\n"
-"ALTER GROUP gruppenname DROP USER benutzername [, ... ]\n"
+"ALTER GROUP имя_группы ADD USER имя_пользователя [, ... ]\n"
+"ALTER GROUP имя_группы DROP USER имя_пользователя [, ... ]\n"
 "\n"
-"ALTER GROUP gruppenname RENAME TO neuer_name"
+"ALTER GROUP имя_группы RENAME TO новое_имя"
 
 #: sql_help.h:57
 msgid "change the definition of an index"
-msgstr "�ndert die Definition eines Index"
+msgstr "изменить определение индекса"
 
 #: sql_help.h:58
 msgid ""
@@ -2282,50 +2316,50 @@ msgid ""
 "ALTER INDEX name SET ( storage_parameter = value [, ... ] )\n"
 "ALTER INDEX name RESET ( storage_parameter [, ... ] )"
 msgstr ""
-"ALTER INDEX name RENAME TO neuer_name\n"
-"ALTER INDEX name SET TABLESPACE tablespace_name\n"
-"ALTER INDEX name SET ( storage_parameter = wert [, ... ] )\n"
-"ALTER INDEX name RESET ( storage_parameter [, ... ] )"
+"ALTER INDEX имя RENAME TO новое_имя\n"
+"ALTER INDEX имя SET TABLESPACE имя_табл_пространства\n"
+"ALTER INDEX имя SET ( параметр_хранения = значение [, ... ] )\n"
+"ALTER INDEX имя RESET ( параметр_хранения [, ... ] )"
 
 #: sql_help.h:61
 msgid "change the definition of a procedural language"
-msgstr "�ndert die Definition einer prozeduralen Sprache"
+msgstr "изменить определение процедурного языка"
 
 #: sql_help.h:62
 msgid ""
 "ALTER [ PROCEDURAL ] LANGUAGE name RENAME TO newname\n"
 "ALTER [ PROCEDURAL ] LANGUAGE name OWNER TO new_owner"
 msgstr ""
-"ALTER [ PROCEDURAL ] LANGUAGE name RENAME TO neuer_name\n"
-"ALTER [ PROCEDURAL ] LANGUAGE name OWNER TO neuer_eigent�mer"
+"ALTER [ PROCEDURAL ] LANGUAGE имя RENAME TO новое_имя\n"
+"ALTER [ PROCEDURAL ] LANGUAGE имя OWNER TO новый_владелец"
 
 #: sql_help.h:65
 msgid "change the definition of an operator"
-msgstr "�ndert die Definition eines Operators"
+msgstr "изменить определение оператора"
 
 #: sql_help.h:66
 msgid ""
 "ALTER OPERATOR name ( { lefttype | NONE } , { righttype | NONE } ) OWNER TO "
 "newowner"
 msgstr ""
-"ALTER OPERATOR name ( { linker_typ | NONE } , { rechter_typ | NONE } ) OWNER "
-"TO neuer_eigent�mer"
+"ALTER OPERATOR имя ( { тип_слева | NONE } , { тип_справа | NONE } )\n"
+"  OWNER TO новый_владелец"
 
 #: sql_help.h:69
 msgid "change the definition of an operator class"
-msgstr "�ndert die Definition einer Operatorklasse"
+msgstr "изменить определение класса операторов"
 
 #: sql_help.h:70
 msgid ""
 "ALTER OPERATOR CLASS name USING index_method RENAME TO newname\n"
 "ALTER OPERATOR CLASS name USING index_method OWNER TO newowner"
 msgstr ""
-"ALTER OPERATOR CLASS name USING indexmethode RENAME TO neuer_name\n"
-"ALTER OPERATOR CLASS name USING indexmethode OWNER TO neuer_eigent�mer"
+"ALTER OPERATOR CLASS имя USING метод_индекса RENAME TO новое_имя\n"
+"ALTER OPERATOR CLASS имя USING метод_индекса OWNER TO новый_владелец"
 
 #: sql_help.h:73
 msgid "change the definition of an operator family"
-msgstr "�ndert die Definition einer Operatorfamilie"
+msgstr "изменить определение семейства операторов"
 
 #: sql_help.h:74
 msgid ""
@@ -2341,21 +2375,22 @@ msgid ""
 "ALTER OPERATOR FAMILY name USING index_method RENAME TO newname\n"
 "ALTER OPERATOR FAMILY name USING index_method OWNER TO newowner"
 msgstr ""
-"ALTER OPERATOR FAMILY name USING indexmethode ADD\n"
-"  {  OPERATOR strategienummer operatorname ( optyp, optyp )\n"
-"   | FUNCTION supportnummer [ ( optyp [ , optyp ] ) ] funkname ( argumenttyp "
-"[, ...] )\n"
+"ALTER OPERATOR FAMILY имя USING метод_индекса ADD\n"
+"  {  OPERATOR номер_стратегии имя_оператора ( тип_операции, тип_операции )\n"
+"   | FUNCTION номер_опорной_процедуры [ ( тип_операции [ , "
+"тип_операции ] ) ]\n"
+"     имя_функции ( тип_аргумента [, ...] )\n"
 "  } [, ... ]\n"
-"ALTER OPERATOR FAMILY name USING indexmethode DROP\n"
-"  {  OPERATOR strategienummer ( optyp [ , optyp ] )\n"
-"   | FUNCTION supportnummer ( optyp [ , optyp ] )\n"
+"ALTER OPERATOR FAMILY имя USING метод_индекса DROP\n"
+"  {  OPERATOR номер_стратегии ( тип_операции [ , тип_операции ] )\n"
+"   | FUNCTION номер_опорной_процедуры ( тип_операции [ , тип_операции ] )\n"
 "  } [, ... ]\n"
-"ALTER OPERATOR FAMILY name USING indexmethode RENAME TO neuer_name\n"
-"ALTER OPERATOR FAMILY name USING indexmethode OWNER TO neuer_eigent�mer"
+"ALTER OPERATOR FAMILY имя USING метод_индекса RENAME TO новое_имя\n"
+"ALTER OPERATOR FAMILY имя USING метод_индекса OWNER TO новый_владелец"
 
 #: sql_help.h:77 sql_help.h:125
 msgid "change a database role"
-msgstr "�ndert eine Datenbankrolle"
+msgstr "изменить роль пользователя БД"
 
 #: sql_help.h:78
 msgid ""
@@ -2380,9 +2415,9 @@ msgid ""
 "ALTER ROLE name RESET configuration_parameter\n"
 "ALTER ROLE name RESET ALL"
 msgstr ""
-"ALTER ROLE name [ [ WITH ] option [ ... ] ]\n"
+"ALTER ROLE имя [ [ WITH ] параметр [ ... ] ]\n"
 "\n"
-"wobei option Folgendes sein kann:\n"
+"где допустимые параметры:\n"
 "    \n"
 "      SUPERUSER | NOSUPERUSER\n"
 "    | CREATEDB | NOCREATEDB\n"
@@ -2390,32 +2425,32 @@ msgstr ""
 "    | CREATEUSER | NOCREATEUSER\n"
 "    | INHERIT | NOINHERIT\n"
 "    | LOGIN | NOLOGIN\n"
-"    | CONNECTION LIMIT verbindungslimit\n"
-"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'passwort'\n"
-"    | VALID UNTIL 'zeit' \n"
+"    | CONNECTION LIMIT предел_подключений\n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'пароль'\n"
+"    | VALID UNTIL 'дата_время' \n"
 "\n"
-"ALTER ROLE name RENAME TO neuer_name\n"
+"ALTER ROLE имя RENAME TO новое_имя\n"
 "\n"
-"ALTER ROLE name SET konfigurationsparameter { TO | = } { wert | DEFAULT }\n"
-"ALTER ROLE name SET konfigurationsparameter FROM CURRENT\n"
-"ALTER ROLE name RESET konfigurationsparameter\n"
-"ALTER ROLE name RESET ALL"
+"ALTER ROLE имя SET параметр_конфигурации { TO | = } { значение | DEFAULT }\n"
+"ALTER ROLE имя SET параметр_конфигурации FROM CURRENT\n"
+"ALTER ROLE имя RESET параметр_конфигурации\n"
+"ALTER ROLE имя RESET ALL"
 
 #: sql_help.h:81
 msgid "change the definition of a schema"
-msgstr "�ndert die Definition eines Schemas"
+msgstr "изменить определение схемы"
 
 #: sql_help.h:82
 msgid ""
 "ALTER SCHEMA name RENAME TO newname\n"
 "ALTER SCHEMA name OWNER TO newowner"
 msgstr ""
-"ALTER SCHEMA name RENAME TO neuer_name\n"
-"ALTER SCHEMA name OWNER TO neuer_eigent�mer"
+"ALTER SCHEMA имя RENAME TO новое_имя\n"
+"ALTER SCHEMA имя OWNER TO новый_владелец"
 
 #: sql_help.h:85
 msgid "change the definition of a sequence generator"
-msgstr "�ndert die Definition eines Sequenzgenerators"
+msgstr "изменить определение генератора последовательности"
 
 #: sql_help.h:86
 msgid ""
@@ -2429,19 +2464,20 @@ msgid ""
 "ALTER SEQUENCE name RENAME TO new_name\n"
 "ALTER SEQUENCE name SET SCHEMA new_schema"
 msgstr ""
-"ALTER SEQUENCE name [ INCREMENT [ BY ] inkrement ]\n"
-"    [ MINVALUE minwert | NO MINVALUE ] [ MAXVALUE maxwert | NO MAXVALUE ]\n"
-"    [ START [ WITH ] start ]\n"
-"    [ RESTART [ WITH ] start ]\n"
-"    [ CACHE cache ] [ [ NO ] CYCLE ]\n"
-"    [ OWNED BY { tabelle.spalte | NONE } ]\n"
-"ALTER SEQUENCE name OWNER TO neuer_eigent�mer\n"
-"ALTER SEQUENCE name RENAME TO neuer_name\n"
-"ALTER SEQUENCE name SET SCHEMA neues_schema"
+"ALTER SEQUENCE имя [ INCREMENT [ BY ] шаг ]\n"
+"    [ MINVALUE мин_значение | NO MINVALUE ]\n"
+"    [ MAXVALUE макс_значение | NO MAXVALUE ]\n"
+"    [ START [ WITH ] начальное_значение ]\n"
+"    [ RESTART [ [ WITH ] значение_перезапуска ] ]\n"
+"    [ CACHE кэш ] [ [ NO ] CYCLE ]\n"
+"    [ OWNED BY { таблица.колонка | NONE } ]\n"
+"ALTER SEQUENCE имя OWNER TO новый_владелец\n"
+"ALTER SEQUENCE имя RENAME TO новое_имя\n"
+"ALTER SEQUENCE имя SET SCHEMA новая_схема"
 
 #: sql_help.h:89
 msgid "change the definition of a foreign server"
-msgstr "�ndert die Definition eines Fremdservers"
+msgstr "изменить определение стороннего сервера"
 
 #: sql_help.h:90
 msgid ""
@@ -2449,13 +2485,13 @@ msgid ""
 "    [ OPTIONS ( [ ADD | SET | DROP ] option ['value'] [, ... ] ) ]\n"
 "ALTER SERVER servername OWNER TO new_owner"
 msgstr ""
-"ALTER SERVER servername [ VERSION 'neue_version' ]\n"
-"    [ OPTIONS ( [ ADD | SET | DROP ] option ['wert'] [, ... ] ) ]\n"
-"ALTER SERVER servername OWNER TO neuer_eigent�mer"
+"ALTER SERVER имя_сервера [ VERSION 'новая_версия' ]\n"
+"    [ OPTIONS ( [ ADD | SET | DROP ] параметр ['значение'] [, ... ] ) ]\n"
+"ALTER SERVER имя_сервера OWNER TO новый_владелец"
 
 #: sql_help.h:93
 msgid "change the definition of a table"
-msgstr "�ndert die Definition einer Tabelle"
+msgstr "изменить определение таблицы"
 
 #: sql_help.h:94
 msgid ""
@@ -2500,61 +2536,62 @@ msgid ""
 "    OWNER TO new_owner\n"
 "    SET TABLESPACE new_tablespace"
 msgstr ""
-"ALTER TABLE [ ONLY ] name [ * ]\n"
-"    aktion [, ... ]\n"
-"ALTER TABLE [ ONLY ] name [ * ]\n"
-"    RENAME [ COLUMN ] spalte TO neue_spalte\n"
-"ALTER TABLE name\n"
-"    RENAME TO neuer_name\n"
-"ALTER TABLE name\n"
-"    SET SCHEMA neues_schema\n"
+"ALTER TABLE [ ONLY ] имя [ * ]\n"
+"    действие [, ... ]\n"
+"ALTER TABLE [ ONLY ] имя [ * ]\n"
+"    RENAME [ COLUMN ] колонка TO новое_имя\n"
+"ALTER TABLE имя\n"
+"    RENAME TO новое_имя\n"
+"ALTER TABLE имя\n"
+"    SET SCHEMA новая_схема\n"
 "\n"
-"wobei aktion Folgendes sein kann:\n"
+"где допустимые действия:\n"
 "\n"
-"    ADD [ COLUMN ] spalte typ [ spalten_constraint [ ... ] ]\n"
-"    DROP [ COLUMN ] spalte [ RESTRICT | CASCADE ]\n"
-"    ALTER [ COLUMN ] spalte [ SET DATA ] TYPE typ [ USING ausdruck ]\n"
-"    ALTER [ COLUMN ] spalte SET DEFAULT ausdruck\n"
-"    ALTER [ COLUMN ] spalte DROP DEFAULT\n"
-"    ALTER [ COLUMN ] spalte { SET | DROP } NOT NULL\n"
-"    ALTER [ COLUMN ] spalte SET STATISTICS integer\n"
-"    ALTER [ COLUMN ] spalte SET STORAGE { PLAIN | EXTERNAL | EXTENDED | "
+"    ADD [ COLUMN ] колонка тип [ ограничение_колонки [ ... ] ]\n"
+"    DROP [ COLUMN ] колонка [ RESTRICT | CASCADE ]\n"
+"    ALTER [ COLUMN ] колонка [ SET DATA ] TYPE тип [ USING выражение ]\n"
+"    ALTER [ COLUMN ] колонка SET DEFAULT выражение\n"
+"    ALTER [ COLUMN ] колонка DROP DEFAULT\n"
+"    ALTER [ COLUMN ] колонка { SET | DROP } NOT NULL\n"
+"    ALTER [ COLUMN ] колонка SET STATISTICS целое\n"
+"    ALTER [ COLUMN ] колонка SET STORAGE { PLAIN | EXTERNAL | EXTENDED | "
 "MAIN }\n"
-"    ADD tabellen_constraint\n"
-"    DROP CONSTRAINT constraint_name [ RESTRICT | CASCADE ]\n"
-"    DISABLE TRIGGER [ trigger_name | ALL | USER ]\n"
-"    ENABLE TRIGGER [ trigger_name | ALL | USER ]\n"
-"    ENABLE REPLICA TRIGGER triggername\n"
-"    ENABLE ALWAYS TRIGGER triggername\n"
-"    DISABLE RULE regelname\n"
-"    ENABLE RULE regelname\n"
-"    ENABLE REPLICA RULE regelname\n"
-"    ENABLE ALWAYS RULE regelname\n"
-"    CLUSTER ON index_name\n"
+"    ADD ограничение_таблицы\n"
+"    DROP CONSTRAINT имя_ограничения [ RESTRICT | CASCADE ]\n"
+"    DISABLE TRIGGER [ имя_триггера | ALL | USER ]\n"
+"    ENABLE TRIGGER [ имя_триггера | ALL | USER ]\n"
+"    ENABLE REPLICA TRIGGER имя_триггера\n"
+"    ENABLE ALWAYS TRIGGER имя_триггера\n"
+"    DISABLE RULE имя_правила_перезаписи\n"
+"    ENABLE RULE имя_правила_перезаписи\n"
+"    ENABLE REPLICA RULE имя_правила_перезаписи\n"
+"    ENABLE ALWAYS RULE имя_правила_перезаписи\n"
+"    CLUSTER ON имя_индекса\n"
 "    SET WITHOUT CLUSTER\n"
+"    SET WITH OIDS\n"
 "    SET WITHOUT OIDS\n"
-"    SET ( storage_parameter = wert [, ... ] )\n"
-"    RESET ( storage_parameter [, ... ] )\n"
-"    INHERIT vatertabelle\n"
-"    NO INHERIT vatertabelle\n"
-"    OWNER TO neuer_eigent�mer\n"
-"    SET TABLESPACE tablespace_name"
+"    SET ( параметр_хранения = значение [, ... ] )\n"
+"    RESET ( параметр_хранения [, ... ] )\n"
+"    INHERIT таблица_родитель\n"
+"    NO INHERIT таблица_родитель\n"
+"    OWNER TO новый_владелец\n"
+"    SET TABLESPACE новое_табл_пространство"
 
 #: sql_help.h:97
 msgid "change the definition of a tablespace"
-msgstr "�ndert die Definition eines Tablespace"
+msgstr "изменить определение табличного пространства"
 
 #: sql_help.h:98
 msgid ""
 "ALTER TABLESPACE name RENAME TO newname\n"
 "ALTER TABLESPACE name OWNER TO newowner"
 msgstr ""
-"ALTER TABLESPACE name RENAME TO neuer_name\n"
-"ALTER TABLESPACE name OWNER TO neuer_eigent�mer"
+"ALTER TABLESPACE имя RENAME TO новое_имя\n"
+"ALTER TABLESPACE имя OWNER TO новый_владелец"
 
 #: sql_help.h:101
 msgid "change the definition of a text search configuration"
-msgstr "�ndert die Definition einer Textsuchekonfiguration"
+msgstr "изменить определение конфигурации текстового поиска"
 
 #: sql_help.h:102
 msgid ""
@@ -2572,23 +2609,23 @@ msgid ""
 "ALTER TEXT SEARCH CONFIGURATION name RENAME TO newname\n"
 "ALTER TEXT SEARCH CONFIGURATION name OWNER TO newowner"
 msgstr ""
-"ALTER TEXT SEARCH CONFIGURATION name\n"
-"    ADD MAPPING FOR tokentyp [, ... ] WITH w�rterbuchname [, ... ]\n"
-"ALTER TEXT SEARCH CONFIGURATION name\n"
-"    ALTER MAPPING FOR tokentyp [, ... ] WITH w�rterbuchname [, ... ]\n"
-"ALTER TEXT SEARCH CONFIGURATION name\n"
-"    ALTER MAPPING REPLACE altes_w�rterbuch WITH neues_w�rterbuch\n"
-"ALTER TEXT SEARCH CONFIGURATION name\n"
-"    ALTER MAPPING FOR tokentyp [, ... ] REPLACE altes_w�rterbuch WITH "
-"neues_w�rterbuch\n"
-"ALTER TEXT SEARCH CONFIGURATION name\n"
-"    DROP MAPPING [ IF EXISTS ] FOR tokentyp [, ... ]\n"
-"ALTER TEXT SEARCH CONFIGURATION name RENAME TO neuer_name\n"
-"ALTER TEXT SEARCH CONFIGURATION name OWNER TO neuer_eigent�mer"
+"ALTER TEXT SEARCH CONFIGURATION имя\n"
+"    ADD MAPPING FOR тип_фрагмента [, ... ] WITH имя_словаря [, ... ]\n"
+"ALTER TEXT SEARCH CONFIGURATION имя\n"
+"    ALTER MAPPING FOR тип_фрагмента [, ... ] WITH имя_словаря [, ... ]\n"
+"ALTER TEXT SEARCH CONFIGURATION имя\n"
+"    ALTER MAPPING REPLACE старый_словарь WITH новый_словарь\n"
+"ALTER TEXT SEARCH CONFIGURATION имя\n"
+"    ALTER MAPPING FOR тип_фрагмента [, ... ] REPLACE старый_словарь\n"
+"    WITH новый_словарь\n"
+"ALTER TEXT SEARCH CONFIGURATION имя\n"
+"    DROP MAPPING [ IF EXISTS ] FOR тип_фрагмента [, ... ]\n"
+"ALTER TEXT SEARCH CONFIGURATION имя RENAME TO новое_имя\n"
+"ALTER TEXT SEARCH CONFIGURATION имя OWNER TO новый_владелец"
 
 #: sql_help.h:105
 msgid "change the definition of a text search dictionary"
-msgstr "�ndert die Definition eines Textsuchew�rterbuchs"
+msgstr "изменить определение словаря текстового поиска"
 
 #: sql_help.h:106
 msgid ""
@@ -2598,39 +2635,39 @@ msgid ""
 "ALTER TEXT SEARCH DICTIONARY name RENAME TO newname\n"
 "ALTER TEXT SEARCH DICTIONARY name OWNER TO newowner"
 msgstr ""
-"ALTER TEXT SEARCH DICTIONARY name (\n"
-"    option [ = wert ] [, ... ]\n"
+"ALTER TEXT SEARCH DICTIONARY имя (\n"
+"    параметр [ = значение ] [, ... ]\n"
 ")\n"
-"ALTER TEXT SEARCH DICTIONARY name RENAME TO neuer_name\n"
-"ALTER TEXT SEARCH DICTIONARY name OWNER TO neuer_eigent�mer"
+"ALTER TEXT SEARCH DICTIONARY имя RENAME TO новое_имя\n"
+"ALTER TEXT SEARCH DICTIONARY имя OWNER TO новый_владелец"
 
 #: sql_help.h:109
 msgid "change the definition of a text search parser"
-msgstr "�ndert die Definition eines Textsucheparsers"
+msgstr "изменить определение анализатора текстового поиска"
 
 #: sql_help.h:110
 msgid "ALTER TEXT SEARCH PARSER name RENAME TO newname"
-msgstr "ALTER TEXT SEARCH PARSER name RENAME TO neuer_name"
+msgstr "ALTER TEXT SEARCH PARSER имя RENAME TO новое_имя"
 
 #: sql_help.h:113
 msgid "change the definition of a text search template"
-msgstr "�ndert die Definition einer Textsuchevorlage"
+msgstr "изменить определение шаблона текстового поиска"
 
 #: sql_help.h:114
 msgid "ALTER TEXT SEARCH TEMPLATE name RENAME TO newname"
-msgstr "ALTER TEXT SEARCH TEMPLATE name RENAME TO neuer_name"
+msgstr "ALTER TEXT SEARCH TEMPLATE имя RENAME TO новое_имя"
 
 #: sql_help.h:117
 msgid "change the definition of a trigger"
-msgstr "�ndert die Definition eines Triggers"
+msgstr "изменить определение триггера"
 
 #: sql_help.h:118
 msgid "ALTER TRIGGER name ON table RENAME TO newname"
-msgstr "ALTER TRIGGER name ON tabelle RENAME TO neuer_name"
+msgstr "ALTER TRIGGER имя ON таблица RENAME TO новое_имя"
 
 #: sql_help.h:121
 msgid "change the definition of a type"
-msgstr "�ndert die Definition eines Typs"
+msgstr "изменить определение типа"
 
 #: sql_help.h:122
 msgid ""
@@ -2638,9 +2675,9 @@ msgid ""
 "ALTER TYPE name OWNER TO new_owner \n"
 "ALTER TYPE name SET SCHEMA new_schema"
 msgstr ""
-"ALTER TYPE name RENAME TO neuer_name\n"
-"ALTER TYPE name OWNER TO neuer_eigent�mer\n"
-"ALTER TYPE name SET SCHEMA neues_schema"
+"ALTER TYPE имя RENAME TO новое_имя\n"
+"ALTER TYPE имя OWNER TO новый_владелец\n"
+"ALTER TYPE имя SET SCHEMA новая_схема"
 
 #: sql_help.h:126
 msgid ""
@@ -2665,9 +2702,9 @@ msgid ""
 "ALTER USER name RESET configuration_parameter\n"
 "ALTER USER name RESET ALL"
 msgstr ""
-"ALTER USER name [ [ WITH ] option [ ... ] ]\n"
+"ALTER USER имя [ [ WITH ] параметр [ ... ] ]\n"
 "\n"
-"wobei option Folgendes sein kann:\n"
+"где допустимые параметры:\n"
 "    \n"
 "      SUPERUSER | NOSUPERUSER\n"
 "    | CREATEDB | NOCREATEDB\n"
@@ -2675,20 +2712,20 @@ msgstr ""
 "    | CREATEUSER | NOCREATEUSER\n"
 "    | INHERIT | NOINHERIT\n"
 "    | LOGIN | NOLOGIN\n"
-"    | CONNECTION LIMIT verbindungslimit\n"
-"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'passwort'\n"
-"    | VALID UNTIL 'zeit' \n"
+"    | CONNECTION LIMIT предел_подключений\n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'пароль'\n"
+"    | VALID UNTIL 'дата_время' \n"
 "\n"
-"ALTER USER name RENAME TO neuer_name\n"
+"ALTER USER имя RENAME TO новое_имя\n"
 "\n"
-"ALTER USER name SET konfigurationsparameter { TO | = } { wert | DEFAULT }\n"
-"ALTER USER name SET konfigurationsparameter FROM CURRENT\n"
-"ALTER USER name RESET konfigurationsparameter\n"
-"ALTER USER name RESET ALL"
+"ALTER USER имя SET параметр_конфигурации { TO | = } { значение | DEFAULT }\n"
+"ALTER USER имя SET параметр_конфигурации FROM CURRENT\n"
+"ALTER USER имя RESET параметр_конфигурации\n"
+"ALTER USER имя RESET ALL"
 
 #: sql_help.h:129
 msgid "change the definition of a user mapping"
-msgstr "�ndert die Definition einer Benutzerabbildung"
+msgstr "изменить сопоставление пользователей"
 
 #: sql_help.h:130
 msgid ""
@@ -2696,13 +2733,13 @@ msgid ""
 "    SERVER servername\n"
 "    OPTIONS ( [ ADD | SET | DROP ] option ['value'] [, ... ] )"
 msgstr ""
-"ALTER USER MAPPING FOR { benutzername | USER | CURRENT_USER | PUBLIC }\n"
-"    SERVER servername\n"
-"    OPTIONS ( [ ADD | SET | DROP ] option ['wert'] [, ... ] )"
+"ALTER USER MAPPING FOR { имя_пользователя | USER | CURRENT_USER | PUBLIC }\n"
+"    SERVER имя_сервера\n"
+"    OPTIONS ( [ ADD | SET | DROP ] параметр ['значение'] [, ... ] )"
 
 #: sql_help.h:133
 msgid "change the definition of a view"
-msgstr "�ndert die Definition einer Sicht"
+msgstr "изменить определение представления"
 
 #: sql_help.h:134
 msgid ""
@@ -2712,23 +2749,23 @@ msgid ""
 "ALTER VIEW name RENAME TO new_name\n"
 "ALTER VIEW name SET SCHEMA new_schema"
 msgstr ""
-"ALTER VIEW name ALTER [ COLUMN ] spalte SET DEFAULT ausdruck\n"
-"ALTER VIEW name ALTER [ COLUMN ] spalte DROP DEFAULT\n"
-"ALTER VIEW name OWNER TO neuer_eigent�mer\n"
-"ALTER VIEW name RENAME TO neuer_name\n"
-"ALTER VIEW name SET SCHEMA neues_schema"
+"ALTER VIEW имя ALTER [ COLUMN ] колонка SET DEFAULT выражение\n"
+"ALTER VIEW имя ALTER [ COLUMN ] колонка DROP DEFAULT\n"
+"ALTER VIEW имя OWNER TO новый_владелец\n"
+"ALTER VIEW имя RENAME TO новое_имя\n"
+"ALTER VIEW имя SET SCHEMA новая_схема"
 
 #: sql_help.h:137
 msgid "collect statistics about a database"
-msgstr "sammelt Statistiken �ber eine Datenbank"
+msgstr "собрать статистику о базе данных"
 
 #: sql_help.h:138
 msgid "ANALYZE [ VERBOSE ] [ table [ ( column [, ...] ) ] ]"
-msgstr "ANALYZE [ VERBOSE ] [ tabelle [ ( spalte [, ...] ) ] ]"
+msgstr "ANALYZE [ VERBOSE ] [ таблица [ ( колонка [, ...] ) ] ]"
 
 #: sql_help.h:141 sql_help.h:553
 msgid "start a transaction block"
-msgstr "startet einen Transaktionsblock"
+msgstr "начать транзакцию"
 
 #: sql_help.h:142
 msgid ""
@@ -2740,9 +2777,9 @@ msgid ""
 "UNCOMMITTED }\n"
 "    READ WRITE | READ ONLY"
 msgstr ""
-"BEGIN [ WORK | TRANSACTION ] [ transaktionsmodus [, ...] ]\n"
+"BEGIN [ WORK | TRANSACTION ] [ режим_транзакции [, ...] ]\n"
 "\n"
-"wobei Transaktionsmodus Folgendes sein kann:\n"
+"где допустимый режим_транзакции:\n"
 "\n"
 "    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ "
 "UNCOMMITTED }\n"
@@ -2750,7 +2787,7 @@ msgstr ""
 
 #: sql_help.h:145
 msgid "force a transaction log checkpoint"
-msgstr "erzwingt einen Checkpoint im Transaktionslog"
+msgstr "отметить контрольную точку в журнале транзакций"
 
 #: sql_help.h:146
 msgid "CHECKPOINT"
@@ -2758,27 +2795,27 @@ msgstr "CHECKPOINT"
 
 #: sql_help.h:149
 msgid "close a cursor"
-msgstr "schlie�t einen Cursor"
+msgstr "закрыть курсор"
 
 #: sql_help.h:150
 msgid "CLOSE { name | ALL }"
-msgstr "CLOSE { name | ALL }"
+msgstr "CLOSE { имя | ALL }"
 
 #: sql_help.h:153
 msgid "cluster a table according to an index"
-msgstr "clustert eine Tabelle nach einem Index"
+msgstr "перегруппировать таблицу по индексу"
 
 #: sql_help.h:154
 msgid ""
 "CLUSTER [VERBOSE] tablename [ USING indexname ]\n"
 "CLUSTER [VERBOSE]"
 msgstr ""
-"CLUSTER [VERBOSE] tabellenname [ USING indexname ]\n"
+"CLUSTER [VERBOSE] имя_таблицы [ USING имя_индекса ]\n"
 "CLUSTER [VERBOSE]"
 
 #: sql_help.h:157
 msgid "define or change the comment of an object"
-msgstr "definiert oder �ndert den Kommentar von einem Objekt"
+msgstr "задать или изменить комментарий объекта"
 
 #: sql_help.h:158
 msgid ""
@@ -2815,38 +2852,38 @@ msgid ""
 msgstr ""
 "COMMENT ON\n"
 "{\n"
-"  TABLE objektname |\n"
-"  COLUMN tabellenname.spaltenname |\n"
-"  AGGREGATE aggname (aggtyp [, ...] ) |\n"
-"  CAST (quelltyp AS zieltyp) |\n"
-"  CONSTRAINT constraintname ON tabellenname |\n"
-"  CONVERSION objektname |\n"
-"  DATABASE objektname |\n"
-"  DOMAIN objektname |\n"
-"  FUNCTION funkname ( [ [ argmodus ] [ argname ]  argtyp [, ...] ] ) |\n"
-"  INDEX objektname |\n"
-"  LARGE OBJECT large_object_oid |\n"
-"  OPERATOR op (linker_op_typ, rechter_op_typ) |\n"
-"  OPERATOR CLASS objektname USING indexmethode |\n"
-"  OPERATOR FAMILY objektname USING indexmethode |\n"
-"  [ PROCEDURAL ] LANGUAGE objektname |\n"
-"  ROLE objektname |\n"
-"  RULE regelname ON tabellenname |\n"
-"  SCHEMA objektname |\n"
-"  SEQUENCE objektname |\n"
-"  TABLESPACE objektname |\n"
-"  TEXT SEARCH CONFIGURATION objektname |\n"
-"  TEXT SEARCH DICTIONARY objektname |\n"
-"  TEXT SEARCH PARSER objektname |\n"
-"  TEXT SEARCH TEMPLATE objektname |\n"
-"  TRIGGER triggername ON tabellenname |\n"
-"  TYPE objektname |\n"
-"  VIEW objektname\n"
-"} IS 'text'"
+"  TABLE имя_объекта |\n"
+"  COLUMN имя_таблицы.имя_колонки |\n"
+"  AGGREGATE агрегатная_функция (агрегатный_тип [, ...] ) |\n"
+"  CAST (исходный_тип AS целевой_тип) |\n"
+"  CONSTRAINT имя_ограничения ON имя_таблицы |\n"
+"  CONVERSION имя_объекта |\n"
+"  DATABASE имя_объекта |\n"
+"  DOMAIN имя_объекта |\n"
+"  FUNCTION имя_функции ( [ [ режим ] [ имя_аргумента ] тип [, ...] ] ) |\n"
+"  INDEX имя_объекта |\n"
+"  LARGE OBJECT oid_большого объекта |\n"
+"  OPERATOR оператор (тип_левого_операнда, тип_правого_операнда) |\n"
+"  OPERATOR CLASS имя_объекта USING метод_индекса |\n"
+"  OPERATOR FAMILY имя_объекта USING метод_индекса |\n"
+"  [ PROCEDURAL ] LANGUAGE имя_объекта |\n"
+"  ROLE имя_объекта |\n"
+"  RULE имя_правила ON имя_таблицы |\n"
+"  SCHEMA имя_объекта |\n"
+"  SEQUENCE имя_объекта |\n"
+"  TABLESPACE имя_объекта |\n"
+"  TEXT SEARCH CONFIGURATION имя_объекта |\n"
+"  TEXT SEARCH DICTIONARY имя_объекта |\n"
+"  TEXT SEARCH PARSER имя_объекта |\n"
+"  TEXT SEARCH TEMPLATE имя_объекта |\n"
+"  TRIGGER имя_триггера ON имя_таблицы |\n"
+"  TYPE имя_объекта |\n"
+"  VIEW имя_объекта\n"
+"} IS 'текст'"
 
 #: sql_help.h:161 sql_help.h:433
 msgid "commit the current transaction"
-msgstr "schlie�t die aktuelle Transaktion ab"
+msgstr "зафиксировать текущую транзакцию"
 
 #: sql_help.h:162
 msgid "COMMIT [ WORK | TRANSACTION ]"
@@ -2854,17 +2891,15 @@ msgstr "COMMIT [ WORK | TRANSACTION ]"
 
 #: sql_help.h:165
 msgid "commit a transaction that was earlier prepared for two-phase commit"
-msgstr ""
-"schlie�t eine Transaktion ab, die vorher f�r Two-Phase-Commit vorbereitet "
-"worden war"
+msgstr "зафиксировать транзакцию, ранее подготовленную для двухфазной фиксации"
 
 #: sql_help.h:166
 msgid "COMMIT PREPARED transaction_id"
-msgstr "COMMIT PREPARED transaktions_id"
+msgstr "COMMIT PREPARED код_транзакции"
 
 #: sql_help.h:169
 msgid "copy data between a file and a table"
-msgstr "kopiert Daten zwischen einer Datei und einer Tabelle"
+msgstr "импорт/экспорт данных в файл"
 
 #: sql_help.h:170
 msgid ""
@@ -2892,33 +2927,33 @@ msgid ""
 "                [ ESCAPE [ AS ] 'escape' ]\n"
 "                [ FORCE QUOTE column [, ...] ]"
 msgstr ""
-"COPY tabellenname [ ( spalte [, ...] ) ]\n"
-"    FROM { 'dateiname' | STDIN }\n"
+"COPY имя_таблицы [ ( колонка [, ...] ) ]\n"
+"    FROM { 'имя_файла' | STDIN }\n"
 "    [ [ WITH ] \n"
 "          [ BINARY ]\n"
 "          [ OIDS ]\n"
-"          [ DELIMITER [ AS ] 'trennzeichen' ]\n"
-"          [ NULL [ AS ] 'null-zeichenkette' ]\n"
+"          [ DELIMITER [ AS ] 'разделитель' ]\n"
+"          [ NULL [ AS ] 'представление_NULL' ]\n"
 "          [ CSV [ HEADER ]\n"
-"                [ QUOTE [ AS ] 'quote' ] \n"
-"                [ ESCAPE [ AS ] 'escape' ]\n"
-"                [ FORCE NOT NULL spalte [, ...] ]\n"
+"                [ QUOTE [ AS ] 'символ_кавычек' ] \n"
+"                [ ESCAPE [ AS ] 'спецсимвол' ]\n"
+"                [ FORCE NOT NULL колонка [, ...] ]\n"
 "\n"
-"COPY { tabellenname [ ( spalte [, ...] ) ] | ( anfrage ) }\n"
-"    TO { 'dateiname' | STDOUT }\n"
+"COPY { имя_таблицы [ ( колонка [, ...] ) ] | ( запрос ) }\n"
+"    TO { 'имя_файла' | STDOUT }\n"
 "    [ [ WITH ] \n"
 "          [ BINARY ]\n"
 "          [ OIDS ]\n"
-"          [ DELIMITER [ AS ] 'trennzeichen' ]\n"
-"          [ NULL [ AS ] 'null-zeichenkette' ]\n"
+"          [ DELIMITER [ AS ] 'разделитель' ]\n"
+"          [ NULL [ AS ] 'представление_NULL' ]\n"
 "          [ CSV [ HEADER ]\n"
-"                [ QUOTE [ AS ] 'quote' ] \n"
-"                [ ESCAPE [ AS ] 'escape' ]\n"
-"                [ FORCE QUOTE spalte [, ...] ]"
+"                [ QUOTE [ AS ] 'символ_кавычек' ] \n"
+"                [ ESCAPE [ AS ] 'спецсимвол' ]\n"
+"                [ FORCE QUOTE колонка [, ...] ]"
 
 #: sql_help.h:173
 msgid "define a new aggregate function"
-msgstr "definiert eine neue Aggregatfunktion"
+msgstr "создать агрегатную функцию"
 
 #: sql_help.h:174
 msgid ""
@@ -2941,28 +2976,28 @@ msgid ""
 "    [ , SORTOP = sort_operator ]\n"
 ")"
 msgstr ""
-"CREATE AGGREGATE name ( eingabedatentyp [ , ... ] ) (\n"
-"    SFUNC = �bergangsfunktion,\n"
-"    STYPE = zustandsdatentyp\n"
-"    [ , FINALFUNC = abschlussfunktion ]\n"
-"    [ , INITCOND = anfangswert ]\n"
-"    [ , SORTOP = sortieroperator ]\n"
+"CREATE AGGREGATE имя ( тип_входных_данных [ , ... ] ) (\n"
+"    SFUNC = функция_состояния,\n"
+"    STYPE = тип_данных_состояния\n"
+"    [ , FINALFUNC = функция_завершения ]\n"
+"    [ , INITCOND = начальное_условие ]\n"
+"    [ , SORTOP = оператор_сортировки ]\n"
 ")\n"
 "\n"
-"oder die alte Syntax\n"
+"или старый синтаксис:\n"
 "\n"
-"CREATE AGGREGATE name (\n"
-"    BASETYPE = eingabedatentyp,\n"
-"    SFUNC = �bergangsfunktion,\n"
-"    STYPE = zustandsdatentyp\n"
-"    [ , FINALFUNC = abschlussfunktion ]\n"
-"    [ , INITCOND = anfangswert ]\n"
-"    [ , SORTOP = sortieroperator ]\n"
+"CREATE AGGREGATE имя (\n"
+"    BASETYPE = базовый_тип,\n"
+"    SFUNC = функция_состояния,\n"
+"    STYPE = тип_данных_состояния\n"
+"    [ , FINALFUNC = функция_завершения ]\n"
+"    [ , INITCOND = начальное_условие ]\n"
+"    [ , SORTOP = оператор_сортировки ]\n"
 ")"
 
 #: sql_help.h:177
 msgid "define a new cast"
-msgstr "definiert eine neue Typumwandlung"
+msgstr "создать приведение типов"
 
 #: sql_help.h:178
 msgid ""
@@ -2978,21 +3013,21 @@ msgid ""
 "    WITH INOUT\n"
 "    [ AS ASSIGNMENT | AS IMPLICIT ]"
 msgstr ""
-"CREATE CAST (quelltyp AS zieltyp)\n"
-"    WITH FUNCTION funktionsname (argumenttypen)\n"
+"CREATE CAST (исходный_тип AS целевой_тип)\n"
+"    WITH FUNCTION имя_функции (типы_аргументов)\n"
 "    [ AS ASSIGNMENT | AS IMPLICIT ]\n"
 "\n"
-"CREATE CAST (quelltyp AS zieltyp)\n"
+"CREATE CAST (исходный_тип AS целевой_тип)\n"
 "    WITHOUT FUNCTION\n"
 "    [ AS ASSIGNMENT | AS IMPLICIT ]\n"
 "\n"
-"CREATE CAST (quelltyp AS zieltyp)\n"
+"CREATE CAST (исходный_тип AS целевой_тип)\n"
 "    WITH INOUT\n"
 "    [ AS ASSIGNMENT | AS IMPLICIT ]"
 
 #: sql_help.h:181
 msgid "define a new constraint trigger"
-msgstr "definiert einen neuen Constraint-Trigger"
+msgstr "создать новый триггер для проверки целостности"
 
 #: sql_help.h:182
 msgid ""
@@ -3005,30 +3040,30 @@ msgid ""
 "    FOR EACH ROW\n"
 "    EXECUTE PROCEDURE funcname ( arguments )"
 msgstr ""
-"CREATE CONSTRAINT TRIGGER name\n"
-"    AFTER ereignis [ OR ... ]\n"
-"    ON tabellenname\n"
-"    [ FROM verwiesener_tabellenname ]\n"
-"    { NOT DEFERRABLE | [ DEFERRABLE ] { INITIALLY IMMEDIATE | INITIALLY "
-"DEFERRED } }\n"
+"CREATE CONSTRAINT TRIGGER имя\n"
+"    AFTER событие [ OR ... ]\n"
+"    ON имя_таблицы\n"
+"    [ FROM ссылающаяся_таблица ]\n"
+"    { NOT DEFERRABLE | [ DEFERRABLE ]\n"
+"      { INITIALLY IMMEDIATE | INITIALLY DEFERRED } }\n"
 "    FOR EACH ROW\n"
-"    EXECUTE PROCEDURE funktionsname ( argumente )"
+"    EXECUTE PROCEDURE имя_функции ( аргументы )"
 
 #: sql_help.h:185
 msgid "define a new encoding conversion"
-msgstr "definiert eine neue Kodierungskonversion"
+msgstr "создать преобразование кодировки"
 
 #: sql_help.h:186
 msgid ""
 "CREATE [ DEFAULT ] CONVERSION name\n"
 "    FOR source_encoding TO dest_encoding FROM funcname"
 msgstr ""
-"CREATE [ DEFAULT ] CONVERSION name\n"
-"    FOR quellkodierung TO zielkodierung FROM funktionsname"
+"CREATE [ DEFAULT ] CONVERSION имя\n"
+"    FOR исходная_кодировка TO целевая_кодировка FROM имя_функции"
 
 #: sql_help.h:189
 msgid "create a new database"
-msgstr "erzeugt eine neue Datenbank"
+msgstr "создать базу данных"
 
 #: sql_help.h:190
 msgid ""
@@ -3041,18 +3076,18 @@ msgid ""
 "           [ TABLESPACE [=] tablespace ]\n"
 "           [ CONNECTION LIMIT [=] connlimit ] ]"
 msgstr ""
-"CREATE DATABASE name\n"
-"    [ [ WITH ] [ OWNER [=] eigent�mer ]\n"
-"           [ TEMPLATE [=] template ]\n"
-"           [ ENCODING [=] kodierung ]\n"
-"           [ LC_COLLATE [=] lc_collate ]\n"
-"           [ LC_CTYPE [=] lc_ctype ]\n"
-"           [ TABLESPACE [=] tablespace ]\n"
-"           [ CONNECTION LIMIT [=] verbindungslimit ] ]"
+"CREATE DATABASE имя\n"
+"    [ [ WITH ] [ OWNER [=] владелец_БД ]\n"
+"           [ TEMPLATE [=] шаблон ]\n"
+"           [ ENCODING [=] кодировка ]\n"
+"           [ LC_COLLATE [=] код_правила_сортировки ]\n"
+"           [ LC_CTYPE [=] код_классификации_символов ]\n"
+"           [ TABLESPACE [=] табл_пространство ]\n"
+"           [ CONNECTION LIMIT [=] предел_подключений ] ]"
 
 #: sql_help.h:193
 msgid "define a new domain"
-msgstr "definiert eine neue Dom�ne"
+msgstr "создать домен"
 
 #: sql_help.h:194
 msgid ""
@@ -3065,18 +3100,18 @@ msgid ""
 "[ CONSTRAINT constraint_name ]\n"
 "{ NOT NULL | NULL | CHECK (expression) }"
 msgstr ""
-"CREATE DOMAIN name [ AS ] datentyp\n"
-"    [ DEFAULT ausdruck ]\n"
-"    [ constraint [ ... ] ]\n"
+"CREATE DOMAIN имя [ AS ] тип_данных\n"
+"    [ DEFAULT выражение ]\n"
+"    [ ограничение [ ... ] ]\n"
 "\n"
-"wobei constraint Folgendes ist:\n"
+"где ограничение:\n"
 "\n"
-"[ CONSTRAINT constraint_name ]\n"
-"{ NOT NULL | NULL | CHECK (ausdruck) }"
+"[ CONSTRAINT имя_ограничения ]\n"
+"{ NOT NULL | NULL | CHECK (проверка) }"
 
 #: sql_help.h:197
 msgid "define a new foreign-data wrapper"
-msgstr "definiert einen neuen Fremddaten-Wrapper"
+msgstr "создать обёртку сторонних данных"
 
 #: sql_help.h:198
 msgid ""
@@ -3084,13 +3119,13 @@ msgid ""
 "    [ VALIDATOR valfunction | NO VALIDATOR ]\n"
 "    [ OPTIONS ( option 'value' [, ... ] ) ]"
 msgstr ""
-"CREATE FOREIGN DATA WRAPPER name\n"
-"    [ VALIDATOR valfunktion | NO VALIDATOR ]\n"
-"    [ OPTIONS ( option 'wert' [, ... ] ) ]"
+"CREATE FOREIGN DATA WRAPPER имя\n"
+"    [ VALIDATOR функция_проверки | NO VALIDATOR ]\n"
+"    [ OPTIONS ( параметр 'значение' [, ... ] ) ]"
 
 #: sql_help.h:201
 msgid "define a new function"
-msgstr "definiert eine neue Funktion"
+msgstr "создать функцию"
 
 #: sql_help.h:202
 msgid ""
@@ -3113,26 +3148,26 @@ msgid ""
 "    [ WITH ( attribute [, ...] ) ]"
 msgstr ""
 "CREATE [ OR REPLACE ] FUNCTION\n"
-"    name ( [ [ argmode ] [ argname ] argtyp [ { DEFAULT | = } def_ausdruck] "
-"[, ...] ] )\n"
-"    [ RETURNS r�ckgabetyp\n"
-"      | RETURNS TABLE ( spaltenname spaltentyp [, ...] ) ]\n"
-"  { LANGUAGE sprachname\n"
+"    имя ( [ [ режим_аргумента ] [ имя_аргумента ] тип\n"
+"      [ { DEFAULT | = } выражение_по_умолчанию ] [, ...] ] )\n"
+"    [ RETURNS тип_возврата\n"
+"      | RETURNS TABLE ( имя_колонки тип_колонки [, ...] ) ]\n"
+"  { LANGUAGE имя_языка\n"
 "    | WINDOW\n"
 "    | IMMUTABLE | STABLE | VOLATILE\n"
 "    | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT\n"
 "    | [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER\n"
-"    | COST ausf�hrungskosten\n"
-"    | ROWS ergebniszeilen\n"
-"    | SET konfigurationsparameter { TO wert | = wert | FROM CURRENT }\n"
-"    | AS 'definition'\n"
-"    | AS 'objektdatei', 'linksymbol'\n"
+"    | COST стоимость_выполнения\n"
+"    | ROWS строк_в_результате\n"
+"    | SET параметр_конфигурации { TO значение | = значение | FROM CURRENT }\n"
+"    | AS 'определение'\n"
+"    | AS 'объектный_файл', 'символ_в_экспорте'\n"
 "  } ...\n"
-"    [ WITH ( attribut [, ...] ) ]"
+"    [ WITH ( атрибут [, ...] ) ]"
 
 #: sql_help.h:205 sql_help.h:229 sql_help.h:285
 msgid "define a new database role"
-msgstr "definiert eine neue Datenbankrolle"
+msgstr "создать роль пользователя БД"
 
 #: sql_help.h:206
 msgid ""
@@ -3155,9 +3190,9 @@ msgid ""
 "    | USER rolename [, ...]\n"
 "    | SYSID uid"
 msgstr ""
-"CREATE GROUP name [ [ WITH ] option [ ... ] ]\n"
+"CREATE GROUP имя [ [ WITH ] параметр [ ... ] ]\n"
 "\n"
-"wobei option Folgendes sein kann:\n"
+"где допустимые параметры:\n"
 "    \n"
 "      SUPERUSER | NOSUPERUSER\n"
 "    | CREATEDB | NOCREATEDB\n"
@@ -3165,18 +3200,18 @@ msgstr ""
 "    | CREATEUSER | NOCREATEUSER\n"
 "    | INHERIT | NOINHERIT\n"
 "    | LOGIN | NOLOGIN\n"
-"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'passwort'\n"
-"    | VALID UNTIL 'zeit' \n"
-"    | IN ROLE rollenname [, ...]\n"
-"    | IN GROUP rollenname [, ...]\n"
-"    | ROLE rollenname [, ...]\n"
-"    | ADMIN rollenname [, ...]\n"
-"    | USER rollenname [, ...]\n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'пароль'\n"
+"    | VALID UNTIL 'дата_время' \n"
+"    | IN ROLE имя_роли [, ...]\n"
+"    | IN GROUP имя_роли [, ...]\n"
+"    | ROLE имя_роли [, ...]\n"
+"    | ADMIN имя_роли [, ...]\n"
+"    | USER имя_роли [, ...]\n"
 "    | SYSID uid"
 
 #: sql_help.h:209
 msgid "define a new index"
-msgstr "definiert einen neuen Index"
+msgstr "создать индекс"
 
 #: sql_help.h:210
 msgid ""
@@ -3187,16 +3222,16 @@ msgid ""
 "    [ TABLESPACE tablespace ]\n"
 "    [ WHERE predicate ]"
 msgstr ""
-"CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] name ON tabelle [ USING methode ]\n"
-"    ( { spalte | ( ausdruck ) } [ opklasse ] [ ASC | DESC ] [ NULLS { FRIST "
-"| LAST } ] [, ...] )\n"
-"    [ WITH ( storage_parameter = wert [, ... ] ) ]\n"
-"    [ TABLESPACE tablespace ]\n"
-"    [ WHERE pr�dikat ]"
+"CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] имя ON таблица [ USING метод ]\n"
+"    ( { колонка | ( выражение ) } [ класс_оператора ] [ ASC | DESC ]\n"
+"      [ NULLS { FIRST | LAST } ] [, ...] )\n"
+"    [ WITH ( параметр_хранения = значение [, ... ] ) ]\n"
+"    [ TABLESPACE табл_пространство ]\n"
+"    [ WHERE предикат ]"
 
 #: sql_help.h:213
 msgid "define a new procedural language"
-msgstr "definiert eine neue prozedurale Sprache"
+msgstr "создать процедурный язык"
 
 #: sql_help.h:214
 msgid ""
@@ -3204,13 +3239,13 @@ msgid ""
 "CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE name\n"
 "    HANDLER call_handler [ VALIDATOR valfunction ]"
 msgstr ""
-"CREATE [ PROCEDURAL ] LANGUAGE name\n"
-"CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE name\n"
-"    HANDLER handler [ VALIDATOR valfunktion ]"
+"CREATE [ PROCEDURAL ] LANGUAGE имя\n"
+"CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE имя\n"
+"    HANDLER обработчик_вызова [ VALIDATOR функция_проверки ]"
 
 #: sql_help.h:217
 msgid "define a new operator"
-msgstr "definiert einen neuen Operator"
+msgstr "создать оператор"
 
 #: sql_help.h:218
 msgid ""
@@ -3222,17 +3257,17 @@ msgid ""
 "    [, HASHES ] [, MERGES ]\n"
 ")"
 msgstr ""
-"CREATE OPERATOR name (\n"
-"    PROCEDURE = funktionsname\n"
-"    [, LEFTARG = linker_typ ] [, RIGHTARG = rechter_typ ]\n"
-"    [, COMMUTATOR = kommutator_op ] [, NEGATOR = umkehrungs_op ]\n"
-"    [, RESTRICT = res_funktion ] [, JOIN = join_funktion ]\n"
+"CREATE OPERATOR имя (\n"
+"    PROCEDURE = имя_функции\n"
+"    [, LEFTARG = тип_слева ] [, RIGHTARG = тип_справа ]\n"
+"    [, COMMUTATOR = коммут_оператор ] [, NEGATOR = обратный_оператор ]\n"
+"    [, RESTRICT = процедура_ограничения ] [, JOIN = процедура_соединения ]\n"
 "    [, HASHES ] [, MERGES ]\n"
 ")"
 
 #: sql_help.h:221
 msgid "define a new operator class"
-msgstr "definiert eine neue Operatorklasse"
+msgstr "создать класс операторов"
 
 #: sql_help.h:222
 msgid ""
@@ -3244,21 +3279,23 @@ msgid ""
 "   | STORAGE storage_type\n"
 "  } [, ... ]"
 msgstr ""
-"CREATE OPERATOR CLASS name [ DEFAULT ] FOR TYPE datentyp\n"
-"  USING indexmethode [ FAMILY familienname ] AS\n"
-"  {  OPERATOR strategienummer operatorname [ ( optyp, optyp ) ]\n"
-"   | FUNCTION unterst_nummer [ ( optyp [, optyp ] ) ] funcname ( argumenttyp "
-"[, ...] )\n"
-"   | STORAGE storage_typ\n"
+"CREATE OPERATOR CLASS имя [ DEFAULT ] FOR TYPE тип_данных\n"
+"  USING метод_индекса [ FAMILY имя_семейства ] AS\n"
+"  {  OPERATOR номер_стратегии имя_оператора [ ( тип_оператора, "
+"тип_оператора ) ]\n"
+"   | FUNCTION номер_опорной_процедуры [ ( тип_операции [ , "
+"тип_операции ] ) ]\n"
+"    имя_функции ( тип_аргумента [, ...] )\n"
+"   | STORAGE тип_хранения\n"
 "  } [, ... ]"
 
 #: sql_help.h:225
 msgid "define a new operator family"
-msgstr "definiert eine neue Operatorfamilie"
+msgstr "создать семейство операторов"
 
 #: sql_help.h:226
 msgid "CREATE OPERATOR FAMILY name USING index_method"
-msgstr "CREATE OPERATOR FAMILY name USING indexmethode"
+msgstr "CREATE OPERATOR FAMILY имя USING метод_индекса"
 
 #: sql_help.h:230
 msgid ""
@@ -3282,9 +3319,9 @@ msgid ""
 "    | USER rolename [, ...]\n"
 "    | SYSID uid"
 msgstr ""
-"CREATE ROLE name [ [ WITH ] option [ ... ] ]\n"
+"CREATE ROLE имя [ [ WITH ] параметр [ ... ] ]\n"
 "\n"
-"wobei option Folgendes sein kann:\n"
+"где допустимые параметры:\n"
 "    \n"
 "      SUPERUSER | NOSUPERUSER\n"
 "    | CREATEDB | NOCREATEDB\n"
@@ -3292,19 +3329,19 @@ msgstr ""
 "    | CREATEUSER | NOCREATEUSER\n"
 "    | INHERIT | NOINHERIT\n"
 "    | LOGIN | NOLOGIN\n"
-"    | CONNECTION LIMIT verbindungslimit\n"
-"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'passwort'\n"
-"    | VALID UNTIL 'zeit' \n"
-"    | IN ROLE rollenname [, ...]\n"
-"    | IN GROUP rollenname [, ...]\n"
-"    | ROLE rollenname [, ...]\n"
-"    | ADMIN rollenname [, ...]\n"
-"    | USER rollenname [, ...]\n"
+"    | CONNECTION LIMIT предел_подключений\n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'пароль'\n"
+"    | VALID UNTIL 'дата_время' \n"
+"    | IN ROLE имя_роли [, ...]\n"
+"    | IN GROUP имя_роли [, ...]\n"
+"    | ROLE имя_роли [, ...]\n"
+"    | ADMIN имя_роли [, ...]\n"
+"    | USER имя_роли [, ...]\n"
 "    | SYSID uid"
 
 #: sql_help.h:233
 msgid "define a new rewrite rule"
-msgstr "definiert eine neue Umschreiberegel"
+msgstr "создать правило перезаписи"
 
 #: sql_help.h:234
 msgid ""
@@ -3312,13 +3349,13 @@ msgid ""
 "    TO table [ WHERE condition ]\n"
 "    DO [ ALSO | INSTEAD ] { NOTHING | command | ( command ; command ... ) }"
 msgstr ""
-"CREATE [ OR REPLACE ] RULE name AS ON ereignis\n"
-"    TO tabelle [ WHERE bedingung ]\n"
-"    DO [ ALSO | INSTEAD ] { NOTHING | befehl | ( befehl ; befehl ... ) }"
+"CREATE [ OR REPLACE ] RULE имя AS ON событие\n"
+"    TO таблица [ WHERE условие ]\n"
+"    DO [ ALSO | INSTEAD ] { NOTHING | команда | ( команда ; команда ... ) }"
 
 #: sql_help.h:237
 msgid "define a new schema"
-msgstr "definiert ein neues Schema"
+msgstr "создать схему"
 
 #: sql_help.h:238
 msgid ""
@@ -3326,13 +3363,13 @@ msgid ""
 "[ ... ] ]\n"
 "CREATE SCHEMA AUTHORIZATION username [ schema_element [ ... ] ]"
 msgstr ""
-"CREATE SCHEMA schemaname [ AUTHORIZATION benutzername ] [ schemaelement "
-"[ ... ] ]\n"
-"CREATE SCHEMA AUTHORIZATION benutzername [ schemaelement [ ... ] ]"
+"CREATE SCHEMA имя_схемы [ AUTHORIZATION имя_пользователя ]\n"
+"  [ элемент_схемы [ ... ] ]\n"
+"CREATE SCHEMA AUTHORIZATION имя_пользователя [ элемент_схемы [ ... ] ]"
 
 #: sql_help.h:241
 msgid "define a new sequence generator"
-msgstr "definiert einen neuen Sequenzgenerator"
+msgstr "создать генератор последовательностей"
 
 #: sql_help.h:242
 msgid ""
@@ -3341,14 +3378,15 @@ msgid ""
 "    [ START [ WITH ] start ] [ CACHE cache ] [ [ NO ] CYCLE ]\n"
 "    [ OWNED BY { table.column | NONE } ]"
 msgstr ""
-"CREATE [ TEMPORARY | TEMP ] SEQUENCE name [ INCREMENT [ BY ] inkrement ]\n"
-"    [ MINVALUE minwert | NO MINVALUE ] [ MAXVALUE maxwert | NO MAXVALUE ]\n"
-"    [ START [ WITH ] start ] [ CACHE cache ] [ [ NO ] CYCLE ]\n"
-"    [ OWNED BY { tabelle.spalte | NONE } ]"
+"CREATE [ TEMPORARY | TEMP ] SEQUENCE имя [ INCREMENT [ BY ] шаг ]\n"
+"    [ MINVALUE мин_значение | NO MINVALUE ]\n"
+"    [ MAXVALUE макс_значение | NO MAXVALUE ]\n"
+"    [ START [ WITH ] начальное_значение ] [ CACHE кэш ] [ [ NO ] CYCLE ]\n"
+"    [ OWNED BY { таблица.колонка | NONE } ]"
 
 #: sql_help.h:245
 msgid "define a new foreign server"
-msgstr "definiert einen neuen Fremdserver"
+msgstr "создать сторонний сервер"
 
 #: sql_help.h:246
 msgid ""
@@ -3356,13 +3394,14 @@ msgid ""
 "    FOREIGN DATA WRAPPER fdwname\n"
 "    [ OPTIONS ( option 'value' [, ... ] ) ]"
 msgstr ""
-"CREATE SERVER servername [ TYPE 'servertyp' ] [ VERSION 'serverversion' ]\n"
-"    FOREIGN DATA WRAPPER fdwname\n"
-"    [ OPTIONS ( option 'wert' [, ... ] ) ]"
+"CREATE SERVER имя_сервера [ TYPE 'тип_сервера' ] [ VERSION "
+"'версия_сервера' ]\n"
+"    FOREIGN DATA WRAPPER имя_обёртки_сторонних_данных\n"
+"    [ OPTIONS ( параметр 'значение' [, ... ] ) ]"
 
 #: sql_help.h:249
 msgid "define a new table"
-msgstr "definiert eine neue Tabelle"
+msgstr "создать таблицу"
 
 #: sql_help.h:250
 msgid ""
@@ -3412,54 +3451,55 @@ msgid ""
 "[ WITH ( storage_parameter [= value] [, ... ] ) ]\n"
 "[ USING INDEX TABLESPACE tablespace ]"
 msgstr ""
-"CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE tabellenname ( [\n"
-"  { spaltenname datentyp [ DEFAULT default_ausdruck ] [ spalten_constraint "
+"CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE имя_таблицы ( [\n"
+"  { имя_колонки тип_данных [ DEFAULT выражение ] [ ограничение_колонки "
 "[ ... ] ]\n"
-"    | tabellen_constraint\n"
-"    | LIKE vatertabelle [ { INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS "
-"| INDEXES } ] ... }\n"
+"    | ограничение_таблицы\n"
+"    | LIKE таблица_родитель [ { INCLUDING | EXCLUDING } { DEFAULTS | "
+"CONSTRAINTS | INDEXES } ] ... }\n"
 "    [, ... ]\n"
 "] )\n"
-"[ INHERITS ( vatertabelle [, ... ] ) ]\n"
-"[ WITH ( storage_parameter [= wert] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]\n"
+"[ INHERITS ( таблица_родитель [, ... ] ) ]\n"
+"[ WITH ( параметр_хранения [= значение] [, ... ] ) | WITH OIDS | WITHOUT "
+"OIDS ]\n"
 "[ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]\n"
-"[ TABLESPACE tablespace ]\n"
+"[ TABLESPACE табл_пространство ]\n"
 "\n"
-"wobei spalten_constraint Folgendes ist:\n"
+"где ограничение_колонки:\n"
 "\n"
-"[ CONSTRAINT constraint_name ]\n"
+"[ CONSTRAINT имя_ограничения ]\n"
 "{ NOT NULL | \n"
 "  NULL | \n"
-"  UNIQUE indexparameter |\n"
-"  PRIMARY KEY indexparameter |\n"
-"  CHECK ( ausdruck ) |\n"
-"  REFERENCES reftabelle [ ( refspalte ) ] [ MATCH FULL | MATCH PARTIAL | "
-"MATCH SIMPLE ]\n"
-"    [ ON DELETE action ] [ ON UPDATE aktion ] }\n"
+"  UNIQUE параметры_индекса |\n"
+"  PRIMARY KEY параметры_индекса |\n"
+"  CHECK ( выражение ) |\n"
+"  REFERENCES целевая_таблица [ ( целевая_колонка ) ]\n"
+"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]\n"
+"    [ ON DELETE действие ] [ ON UPDATE действие ] }\n"
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY "
 "IMMEDIATE ]\n"
 "\n"
-"und tabellen_constraint Folgendes ist:\n"
+"и ограничение_таблицы:\n"
 "\n"
-"[ CONSTRAINT constraint_name ]\n"
-"{ UNIQUE ( spaltenname [, ... ] ) indexparameter |\n"
-"  PRIMARY KEY ( spaltenname [, ... ] ) indexparameter |\n"
-"  CHECK ( ausdruck ) |\n"
-"  FOREIGN KEY ( spaltenname [, ... ] ) REFERENCES reftabelle [ ( refspalte "
-"[, ... ] ) ]\n"
-"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE aktion ] [ ON "
-"UPDATE aktion ] }\n"
+"[ CONSTRAINT имя_ограничения ]\n"
+"{ UNIQUE ( имя_колонки [, ... ] ) параметры_индекса |\n"
+"  PRIMARY KEY ( имя_колонки [, ... ] ) параметры_индекса |\n"
+"  CHECK ( выражение ) |\n"
+"  FOREIGN KEY ( имя_колонки [, ... ] )\n"
+"  REFERENCES целевая_таблица [ ( целевая_колонка [, ... ] ) ]\n"
+"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]\n"
+"    [ ON DELETE действие ] [ ON UPDATE действие ] }\n"
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY "
 "IMMEDIATE ]\n"
 "\n"
-"indexparameter bei UNIQUE und PRIMARY KEY Constraints sind:\n"
+"параметры_индекса в ограничениях UNIQUE и PRIMARY KEY:\n"
 "\n"
-"[ WITH ( storage_parameter [= wert] [, ... ] ) ]\n"
-"[ USING INDEX TABLESPACE tablespace ]"
+"[ WITH ( параметр_хранения [= значение] [, ... ] ) ]\n"
+"[ USING INDEX TABLESPACE табл_пространство ]"
 
 #: sql_help.h:253 sql_help.h:525
 msgid "define a new table from the results of a query"
-msgstr "definiert eine neue Tabelle aus den Ergebnissen einer Anfrage"
+msgstr "создать таблицу из результатов запроса"
 
 #: sql_help.h:254
 msgid ""
@@ -3472,29 +3512,29 @@ msgid ""
 "    AS query\n"
 "    [ WITH [ NO ] DATA ]"
 msgstr ""
-"CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE tabellenname\n"
-"    [ (spaltenname [, ...] ) ]\n"
-"    [ WITH ( storage_parameter [= wert] [, ... ] ) | WITH OIDS | WITHOUT "
-"OIDS ]\n"
+"CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE имя_таблицы\n"
+"    [ (имя_колонки [, ...] ) ]\n"
+"    [ WITH ( параметр_хранения [= значение] [, ... ] )\n"
+"      | WITH OIDS | WITHOUT OIDS ]\n"
 "    [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]\n"
-"    [ TABLESPACE tablespace ]\n"
-"    AS anfrage\n"
+"    [ TABLESPACE табл_пространство ]\n"
+"    AS запрос\n"
 "    [ WITH [ NO ] DATA ]"
 
 #: sql_help.h:257
 msgid "define a new tablespace"
-msgstr "definiert einen neuen Tablespace"
+msgstr "создать табличное пространство"
 
 #: sql_help.h:258
 msgid ""
 "CREATE TABLESPACE tablespacename [ OWNER username ] LOCATION 'directory'"
 msgstr ""
-"CREATE TABLESPACE tablespacename [ OWNER benutzername ] LOCATION "
-"'verzeichnis'"
+"CREATE TABLESPACE имя_табл_пространства [ OWNER имя_пользователя ]\n"
+"LOCATION 'каталог'"
 
 #: sql_help.h:261
 msgid "define a new text search configuration"
-msgstr "definiert eine neue Textsuchekonfiguration"
+msgstr "создать конфигурацию текстового поиска"
 
 #: sql_help.h:262
 msgid ""
@@ -3503,14 +3543,14 @@ msgid ""
 "    COPY = source_config\n"
 ")"
 msgstr ""
-"CREATE TEXT SEARCH CONFIGURATION name (\n"
-"    PARSER = parsername |\n"
-"    COPY = quellkonfig\n"
+"CREATE TEXT SEARCH CONFIGURATION имя (\n"
+"    PARSER = имя_анализатора |\n"
+"    COPY = исходная_конфигурация\n"
 ")"
 
 #: sql_help.h:265
 msgid "define a new text search dictionary"
-msgstr "definiert ein neues Textsuchew�rterbuch"
+msgstr "создать словарь текстового поиска"
 
 #: sql_help.h:266
 msgid ""
@@ -3519,14 +3559,14 @@ msgid ""
 "    [, option = value [, ... ]]\n"
 ")"
 msgstr ""
-"CREATE TEXT SEARCH DICTIONARY name (\n"
-"    TEMPLATE = vorlage\n"
-"    [, option = wert [, ... ]]\n"
+"CREATE TEXT SEARCH DICTIONARY имя (\n"
+"    TEMPLATE = шаблон\n"
+"    [, параметр = значение [, ... ]]\n"
 ")"
 
 #: sql_help.h:269
 msgid "define a new text search parser"
-msgstr "definiert einen neuen Textsucheparser"
+msgstr "создать анализатор текстового поиска"
 
 #: sql_help.h:270
 msgid ""
@@ -3538,17 +3578,17 @@ msgid ""
 "    [, HEADLINE = headline_function ]\n"
 ")"
 msgstr ""
-"CREATE TEXT SEARCH PARSER name (\n"
-"    START = startfunktion ,\n"
-"    GETTOKEN = gettoken_funktion ,\n"
-"    END = endefunktion ,\n"
-"    LEXTYPES = lextypenfunktion\n"
-"    [, HEADLINE = headline_funktion ]\n"
+"CREATE TEXT SEARCH PARSER имя (\n"
+"    START = функция_начала ,\n"
+"    GETTOKEN = функция_выдачи_фрагмента ,\n"
+"    END = функция_окончания ,\n"
+"    LEXTYPES = функция_лекс_типов\n"
+"    [, HEADLINE = функция_создания_выдержек ]\n"
 ")"
 
 #: sql_help.h:273
 msgid "define a new text search template"
-msgstr "definiert eine neue Textsuchevorlage"
+msgstr "создать шаблон текстового поиска"
 
 #: sql_help.h:274
 msgid ""
@@ -3557,14 +3597,14 @@ msgid ""
 "    LEXIZE = lexize_function\n"
 ")"
 msgstr ""
-"CREATE TEXT SEARCH TEMPLATE name (\n"
-"    [ INIT = init_funktion , ]\n"
-"    LEXIZE = lexize_funktion\n"
+"CREATE TEXT SEARCH TEMPLATE имя (\n"
+"    [ INIT = функция_инициализации , ]\n"
+"    LEXIZE = функция_выделения_лексем\n"
 ")"
 
 #: sql_help.h:277
 msgid "define a new trigger"
-msgstr "definiert einen neuen Trigger"
+msgstr "создать триггер"
 
 #: sql_help.h:278
 msgid ""
@@ -3572,13 +3612,13 @@ msgid ""
 "    ON table [ FOR [ EACH ] { ROW | STATEMENT } ]\n"
 "    EXECUTE PROCEDURE funcname ( arguments )"
 msgstr ""
-"CREATE TRIGGER name { BEFORE | AFTER } { ereignis [ OR ... ] }\n"
-"    ON tabelle [ FOR [ EACH ] { ROW | STATEMENT } ]\n"
-"    EXECUTE PROCEDURE funktionsname ( argumente )"
+"CREATE TRIGGER имя { BEFORE | AFTER } { событие [ OR ... ] }\n"
+"    ON таблица [ FOR [ EACH ] { ROW | STATEMENT } ]\n"
+"    EXECUTE PROCEDURE имя_функции ( аргументы )"
 
 #: sql_help.h:281
 msgid "define a new data type"
-msgstr "definiert einen neuen Datentyp"
+msgstr "создать тип данных"
 
 #: sql_help.h:282
 msgid ""
@@ -3610,33 +3650,33 @@ msgid ""
 "\n"
 "CREATE TYPE name"
 msgstr ""
-"CREATE TYPE name AS\n"
-"    ( attributname datentyp [, ... ] )\n"
+"CREATE TYPE имя AS\n"
+"    ( имя_атрибута тип_данных [, ... ] )\n"
 "\n"
-"CREATE TYPE name AS ENUM\n"
-"    ( 'label' [, ... ] )\n"
+"CREATE TYPE имя AS ENUM\n"
+"    ( 'метка' [, ... ] )\n"
 "\n"
-"CREATE TYPE name (\n"
-"    INPUT = eingabefunktion,\n"
-"    OUTPUT = ausgabefunktion\n"
-"    [ , RECEIVE = empfangsfunktion ]\n"
-"    [ , SEND = sendefunktion ]\n"
-"    [ , TYPMOD_IN = typmod_eingabefunktion ]\n"
-"    [ , TYPMOD_OUT = typmod_ausgabefunktion ]\n"
-"    [ , ANALYZE = analyze_funktion ]\n"
-"    [ , INTERNALLENGTH = { interne_l�nge | VARIABLE } ]\n"
+"CREATE TYPE имя (\n"
+"    INPUT = функция_ввода,\n"
+"    OUTPUT = функция_вывода\n"
+"    [ , RECEIVE = функция_получения ]\n"
+"    [ , SEND = функция_отправки ]\n"
+"    [ , TYPMOD_IN = функция_ввода_модификатора_типа ]\n"
+"    [ , TYPMOD_OUT = функция_вывода_модификатора_типа ]\n"
+"    [ , ANALYZE = функция_анализа ]\n"
+"    [ , INTERNALLENGTH = { внутр_длина | VARIABLE } ]\n"
 "    [ , PASSEDBYVALUE ]\n"
-"    [ , ALIGNMENT = ausrichtung ]\n"
-"    [ , STORAGE = speicherung ]\n"
-"    [ , LIKE = wie_typ ]\n"
-"    [ , CATEGORY = kategorie ]\n"
-"    [ , PREFERRED = bevorzugt ]\n"
-"    [ , DEFAULT = vorgabewert ]\n"
-"    [ , ELEMENT = element ]\n"
-"    [ , DELIMITER = trennzeichen ]\n"
+"    [ , ALIGNMENT = выравнивание ]\n"
+"    [ , STORAGE = хранение ]\n"
+"    [ , LIKE = тип_образец ]\n"
+"    [ , CATEGORY = категория ]\n"
+"    [ , PREFERRED = предпочитаемый ]\n"
+"    [ , DEFAULT = по_умолчанию ]\n"
+"    [ , ELEMENT = элемент ]\n"
+"    [ , DELIMITER = разделитель ]\n"
 ")\n"
 "\n"
-"CREATE TYPE name"
+"CREATE TYPE имя"
 
 #: sql_help.h:286
 msgid ""
@@ -3660,9 +3700,9 @@ msgid ""
 "    | USER rolename [, ...]\n"
 "    | SYSID uid"
 msgstr ""
-"CREATE USER name [ [ WITH ] option [ ... ] ]\n"
+"CREATE USER имя [ [ WITH ] параметр [ ... ] ]\n"
 "\n"
-"wobei option Folgendes sein kann:\n"
+"где допустимые параметры:\n"
 "    \n"
 "      SUPERUSER | NOSUPERUSER\n"
 "    | CREATEDB | NOCREATEDB\n"
@@ -3670,19 +3710,19 @@ msgstr ""
 "    | CREATEUSER | NOCREATEUSER\n"
 "    | INHERIT | NOINHERIT\n"
 "    | LOGIN | NOLOGIN\n"
-"    | CONNECTION LIMIT verbindungslimit\n"
-"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'passwort'\n"
-"    | VALID UNTIL 'zeit' \n"
-"    | IN ROLE rollenname [, ...]\n"
-"    | IN GROUP rollenname [, ...]\n"
-"    | ROLE rollenname [, ...]\n"
-"    | ADMIN rollenname [, ...]\n"
-"    | USER rollenname [, ...]\n"
+"    | CONNECTION LIMIT предел_подключений\n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'пароль'\n"
+"    | VALID UNTIL 'дата_время' \n"
+"    | IN ROLE имя_роли [, ...]\n"
+"    | IN GROUP имя_роли [, ...]\n"
+"    | ROLE имя_роли [, ...]\n"
+"    | ADMIN имя_роли [, ...]\n"
+"    | USER имя_роли [, ...]\n"
 "    | SYSID uid"
 
 #: sql_help.h:289
 msgid "define a new mapping of a user to a foreign server"
-msgstr "definiert eine neue Abbildung eines Benutzers auf einen Fremdserver"
+msgstr "создать сопоставление пользователя для стороннего сервера"
 
 #: sql_help.h:290
 msgid ""
@@ -3690,13 +3730,13 @@ msgid ""
 "    SERVER servername\n"
 "    [ OPTIONS ( option 'value' [ , ... ] ) ]"
 msgstr ""
-"CREATE USER MAPPING FOR { benutzername | USER | CURRENT_USER | PUBLIC }\n"
-"    SERVER servername\n"
-"    [ OPTIONS ( option 'wert' [ , ... ] ) ]"
+"CREATE USER MAPPING FOR { имя_пользователя | USER | CURRENT_USER | PUBLIC }\n"
+"    SERVER имя_сервера\n"
+"    [ OPTIONS ( параметр 'значение' [ , ... ] ) ]"
 
 #: sql_help.h:293
 msgid "define a new view"
-msgstr "definiert eine neue Sicht"
+msgstr "создать представление"
 
 #: sql_help.h:294
 msgid ""
@@ -3704,33 +3744,33 @@ msgid ""
 "[, ...] ) ]\n"
 "    AS query"
 msgstr ""
-"CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] VIEW name [ ( spaltenname "
+"CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] VIEW имя [ ( имя_колонки "
 "[, ...] ) ]\n"
-"    AS anfrage"
+"    AS запрос"
 
 #: sql_help.h:297
 msgid "deallocate a prepared statement"
-msgstr "gibt einen vorbereiteten Befehl frei"
+msgstr "освободить подготовленный оператор"
 
 #: sql_help.h:298
 msgid "DEALLOCATE [ PREPARE ] { name | ALL }"
-msgstr "DEALLOCATE [ PREPARE ] { name | ALL }"
+msgstr "DEALLOCATE [ PREPARE ] { имя | ALL }"
 
 #: sql_help.h:301
 msgid "define a cursor"
-msgstr "definiert einen Cursor"
+msgstr "создать курсор"
 
 #: sql_help.h:302
 msgid ""
 "DECLARE name [ BINARY ] [ INSENSITIVE ] [ [ NO ] SCROLL ]\n"
 "    CURSOR [ { WITH | WITHOUT } HOLD ] FOR query"
 msgstr ""
-"DECLARE name [ BINARY ] [ INSENSITIVE ] [ [ NO ] SCROLL ]\n"
-"    CURSOR [ { WITH | WITHOUT } HOLD ] FOR anfrage"
+"DECLARE имя [ BINARY ] [ INSENSITIVE ] [ [ NO ] SCROLL ]\n"
+"    CURSOR [ { WITH | WITHOUT } HOLD ] FOR запрос"
 
 #: sql_help.h:305
 msgid "delete rows of a table"
-msgstr "l�scht Zeilen einer Tabelle"
+msgstr "удалить записи таблицы"
 
 #: sql_help.h:306
 msgid ""
@@ -3739,14 +3779,14 @@ msgid ""
 "    [ WHERE condition | WHERE CURRENT OF cursor_name ]\n"
 "    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
 msgstr ""
-"DELETE FROM [ ONLY ] tabelle [ [ AS ] alias ]\n"
-"    [ USING using-liste ]\n"
-"    [ WHERE bedingung | WHERE CURRENT OF cursorname ]\n"
-"    [ RETURNING * | ausgabeausdruck [ [ AS ] ausgabename ] [, ...] ]"
+"DELETE FROM [ ONLY ] таблица [ [ AS ] псевдоним ]\n"
+"    [ USING список_USING ]\n"
+"    [ WHERE условие | WHERE CURRENT OF имя_курсора ]\n"
+"    [ RETURNING * | выражение_результата [ [ AS ] имя_результата ] [, ...] ]"
 
 #: sql_help.h:309
 msgid "discard session state"
-msgstr "verwirft den Sitzungszustand"
+msgstr "очистить состояние сеанса"
 
 #: sql_help.h:310
 msgid "DISCARD { ALL | PLANS | TEMPORARY | TEMP }"
@@ -3754,58 +3794,59 @@ msgstr "DISCARD { ALL | PLANS | TEMPORARY | TEMP }"
 
 #: sql_help.h:313
 msgid "remove an aggregate function"
-msgstr "entfernt eine Aggregatfunktion"
+msgstr "удалить агрегатную функцию"
 
 #: sql_help.h:314
 msgid ""
 "DROP AGGREGATE [ IF EXISTS ] name ( type [ , ... ] ) [ CASCADE | RESTRICT ]"
 msgstr ""
-"DROP AGGREGATE [ IF EXISTS ] name ( typ [ , ... ] ) [ CASCADE | RESTRICT ]"
+"DROP AGGREGATE [ IF EXISTS ] имя ( тип [ , ... ] ) [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:317
 msgid "remove a cast"
-msgstr "entfernt eine Typumwandlung"
+msgstr "удалить приведение типа"
 
 #: sql_help.h:318
 msgid ""
 "DROP CAST [ IF EXISTS ] (sourcetype AS targettype) [ CASCADE | RESTRICT ]"
-msgstr "DROP CAST [ IF EXISTS ] (quelltyp AS zieltyp) [ CASCADE | RESTRICT ]"
+msgstr ""
+"DROP CAST [ IF EXISTS ] (исходный_тип AS целевой_тип) [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:321
 msgid "remove a conversion"
-msgstr "entfernt eine Zeichensatzkonversion"
+msgstr "удалить преобразование"
 
 #: sql_help.h:322
 msgid "DROP CONVERSION [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
-msgstr "DROP CONVERSION [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
+msgstr "DROP CONVERSION [ IF EXISTS ] имя [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:325
 msgid "remove a database"
-msgstr "entfernt eine Datenbank"
+msgstr "удалить базу данных"
 
 #: sql_help.h:326
 msgid "DROP DATABASE [ IF EXISTS ] name"
-msgstr "DROP DATABASE [ IF EXISTS ] name"
+msgstr "DROP DATABASE [ IF EXISTS ] имя"
 
 #: sql_help.h:329
 msgid "remove a domain"
-msgstr "entfernt eine Dom�ne"
+msgstr "удалить домен"
 
 #: sql_help.h:330
 msgid "DROP DOMAIN [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
-msgstr "DROP DOMAIN [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
+msgstr "DROP DOMAIN [ IF EXISTS ] имя [, ...] [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:333
 msgid "remove a foreign-data wrapper"
-msgstr "entfernt einen Fremddaten-Wrapper"
+msgstr "удалить обёртку сторонних данных"
 
 #: sql_help.h:334
 msgid "DROP FOREIGN DATA WRAPPER [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
-msgstr "DROP FOREIGN DATA WRAPPER [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
+msgstr "DROP FOREIGN DATA WRAPPER [ IF EXISTS ] имя [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:337
 msgid "remove a function"
-msgstr "entfernt eine Funktion"
+msgstr "удалить функцию"
 
 #: sql_help.h:338
 msgid ""
@@ -3813,203 +3854,204 @@ msgid ""
 "[, ...] ] )\n"
 "    [ CASCADE | RESTRICT ]"
 msgstr ""
-"DROP FUNCTION [ IF EXISTS ] name ( [ [ argmodus ] [ argname ] argtyp "
-"[, ...] ] )\n"
+"DROP FUNCTION [ IF EXISTS ] имя\n"
+"  ( [ [ режим_аргумента ] [ имя_аргумента ] тип [, ...] ] )\n"
 "    [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:341 sql_help.h:369 sql_help.h:421
 msgid "remove a database role"
-msgstr "entfernt eine Datenbankrolle"
+msgstr "удалить роль пользователя БД"
 
 #: sql_help.h:342
 msgid "DROP GROUP [ IF EXISTS ] name [, ...]"
-msgstr "DROP GROUP [ IF EXISTS ] name [, ...]"
+msgstr "DROP GROUP [ IF EXISTS ] имя [, ...]"
 
 #: sql_help.h:345
 msgid "remove an index"
-msgstr "entfernt einen Index"
+msgstr "удалить индекс"
 
 #: sql_help.h:346
 msgid "DROP INDEX [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
-msgstr "DROP INDEX [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
+msgstr "DROP INDEX [ IF EXISTS ] имя [, ...] [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:349
 msgid "remove a procedural language"
-msgstr "entfernt eine prozedurale Sprache"
+msgstr "удалить процедурный язык"
 
 #: sql_help.h:350
 msgid "DROP [ PROCEDURAL ] LANGUAGE [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
-msgstr "DROP [ PROCEDURAL ] LANGUAGE [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
+msgstr "DROP [ PROCEDURAL ] LANGUAGE [ IF EXISTS ] имя [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:353
 msgid "remove an operator"
-msgstr "entfernt einen Operator"
+msgstr "удалить оператор"
 
 #: sql_help.h:354
 msgid ""
 "DROP OPERATOR [ IF EXISTS ] name ( { lefttype | NONE } , { righttype | "
 "NONE } ) [ CASCADE | RESTRICT ]"
 msgstr ""
-"DROP OPERATOR [ IF EXISTS ] name ( { linker_typ | NONE } , { rechter_typ | "
-"NONE } ) [ CASCADE | RESTRICT ]"
+"DROP OPERATOR [ IF EXISTS ] имя\n"
+"  ( { тип_слева | NONE } , { тип_справа | NONE } )\n"
+"  [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:357
 msgid "remove an operator class"
-msgstr "entfernt eine Operatorklasse"
+msgstr "удалить класс операторов"
 
 #: sql_help.h:358
 msgid ""
 "DROP OPERATOR CLASS [ IF EXISTS ] name USING index_method [ CASCADE | "
 "RESTRICT ]"
 msgstr ""
-"DROP OPERATOR CLASS [ IF EXISTS ] name USING indexmethode [ CASCADE | "
+"DROP OPERATOR CLASS [ IF EXISTS ] имя USING метод_индекса [ CASCADE | "
 "RESTRICT ]"
 
 #: sql_help.h:361
 msgid "remove an operator family"
-msgstr "entfernt eine Operatorfamilie"
+msgstr "удалить семейство операторов"
 
 #: sql_help.h:362
 msgid ""
 "DROP OPERATOR FAMILY [ IF EXISTS ] name USING index_method [ CASCADE | "
 "RESTRICT ]"
 msgstr ""
-"DROP OPERATOR FAMILY [ IF EXISTS ] name USING indexmethode [ CASCADE | "
-"RESTRICT ]"
+"DROP OPERATOR FAMILY [ IF EXISTS ] имя USING метод_индекса\n"
+" [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:365
 msgid "remove database objects owned by a database role"
-msgstr "entfernt die einer Datenbankrolle geh�renden Datenbankobjekte"
+msgstr "удалить объекты базы данных, принадлежащие роли"
 
 #: sql_help.h:366
 msgid "DROP OWNED BY name [, ...] [ CASCADE | RESTRICT ]"
-msgstr "DROP OWNED BY name [, ...] [ CASCADE | RESTRICT ]"
+msgstr "DROP OWNED BY имя [, ...] [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:370
 msgid "DROP ROLE [ IF EXISTS ] name [, ...]"
-msgstr "DROP ROLE [ IF EXISTS ] name [, ...]"
+msgstr "DROP ROLE [ IF EXISTS ] имя [, ...]"
 
 #: sql_help.h:373
 msgid "remove a rewrite rule"
-msgstr "entfernt eine Umschreiberegel"
+msgstr "удалить правило перезаписи"
 
 #: sql_help.h:374
 msgid "DROP RULE [ IF EXISTS ] name ON relation [ CASCADE | RESTRICT ]"
-msgstr "DROP RULE [ IF EXISTS ] name ON relation [ CASCADE | RESTRICT ]"
+msgstr "DROP RULE [ IF EXISTS ] имя ON отношение [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:377
 msgid "remove a schema"
-msgstr "entfernt ein Schema"
+msgstr "удалить схему"
 
 #: sql_help.h:378
 msgid "DROP SCHEMA [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
-msgstr "DROP SCHEMA [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
+msgstr "DROP SCHEMA [ IF EXISTS ] имя [, ...] [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:381
 msgid "remove a sequence"
-msgstr "entfernt eine Sequenz"
+msgstr "удалить последовательность"
 
 #: sql_help.h:382
 msgid "DROP SEQUENCE [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
-msgstr "DROP SEQUENCE [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
+msgstr "DROP SEQUENCE [ IF EXISTS ] имя [, ...] [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:385
 msgid "remove a foreign server descriptor"
-msgstr "entfernt einen Fremdserverdeskriptor"
+msgstr "удалить описание стороннего сервера"
 
 #: sql_help.h:386
 msgid "DROP SERVER [ IF EXISTS ] servername [ CASCADE | RESTRICT ]"
-msgstr "DROP SERVER [ IF EXISTS ] servername [ CASCADE | RESTRICT ]"
+msgstr "DROP SERVER [ IF EXISTS ] имя_сервера [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:389
 msgid "remove a table"
-msgstr "entfernt eine Tabelle"
+msgstr "удалить таблицу"
 
 #: sql_help.h:390
 msgid "DROP TABLE [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
-msgstr "DROP TABLE [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
+msgstr "DROP TABLE [ IF EXISTS ] имя [, ...] [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:393
 msgid "remove a tablespace"
-msgstr "entfernt einen Tablespace"
+msgstr "удалить табличное пространство"
 
 #: sql_help.h:394
 msgid "DROP TABLESPACE [ IF EXISTS ] tablespacename"
-msgstr "DROP TABLESPACE [ IF EXISTS ] tablespacename"
+msgstr "DROP TABLESPACE [ IF EXISTS ] имя_табл_пространства"
 
 #: sql_help.h:397
 msgid "remove a text search configuration"
-msgstr "entfernt eine Textsuchekonfiguration"
+msgstr "удалить конфигурацию текстового поиска"
 
 #: sql_help.h:398
 msgid ""
 "DROP TEXT SEARCH CONFIGURATION [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
 msgstr ""
-"DROP TEXT SEARCH CONFIGURATION [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
+"DROP TEXT SEARCH CONFIGURATION [ IF EXISTS ] имя [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:401
 msgid "remove a text search dictionary"
-msgstr "entfernt ein Textsuchew�rterbuch"
+msgstr "удалить словарь текстового поиска"
 
 #: sql_help.h:402
 msgid "DROP TEXT SEARCH DICTIONARY [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
-msgstr "DROP TEXT SEARCH DICTIONARY [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
+msgstr "DROP TEXT SEARCH DICTIONARY [ IF EXISTS ] имя [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:405
 msgid "remove a text search parser"
-msgstr "entfernt einen Textsucheparser"
+msgstr "удалить анализатор текстового поиска"
 
 #: sql_help.h:406
 msgid "DROP TEXT SEARCH PARSER [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
-msgstr "DROP TEXT SEARCH PARSER [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
+msgstr "DROP TEXT SEARCH PARSER [ IF EXISTS ] имя [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:409
 msgid "remove a text search template"
-msgstr "entfernt eine Textsuchevorlage"
+msgstr "удалить шаблон текстового поиска"
 
 #: sql_help.h:410
 msgid "DROP TEXT SEARCH TEMPLATE [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
-msgstr "DROP TEXT SEARCH TEMPLATE [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
+msgstr "DROP TEXT SEARCH TEMPLATE [ IF EXISTS ] имя [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:413
 msgid "remove a trigger"
-msgstr "entfernt einen Trigger"
+msgstr "удалить триггер"
 
 #: sql_help.h:414
 msgid "DROP TRIGGER [ IF EXISTS ] name ON table [ CASCADE | RESTRICT ]"
-msgstr "DROP TRIGGER [ IF EXISTS ] name ON tabelle [ CASCADE | RESTRICT ]"
+msgstr "DROP TRIGGER [ IF EXISTS ] имя ON таблица [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:417
 msgid "remove a data type"
-msgstr "entfernt einen Datentyp"
+msgstr "удалить тип данных"
 
 #: sql_help.h:418
 msgid "DROP TYPE [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
-msgstr "DROP TYPE [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
+msgstr "DROP TYPE [ IF EXISTS ] имя [, ...] [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:422
 msgid "DROP USER [ IF EXISTS ] name [, ...]"
-msgstr "DROP USER [ IF EXISTS ] name [, ...]"
+msgstr "DROP USER [ IF EXISTS ] имя [, ...]"
 
 #: sql_help.h:425
 msgid "remove a user mapping for a foreign server"
-msgstr "entfernt eine Benutzerabbildung f�r einen Fremdserver"
+msgstr "удалить сопоставление пользователя для стороннего сервера"
 
 #: sql_help.h:426
 msgid ""
 "DROP USER MAPPING [ IF EXISTS ] FOR { username | USER | CURRENT_USER | "
 "PUBLIC } SERVER servername"
 msgstr ""
-"DROP USER MAPPING [ IF EXISTS ] FOR { benutzername | USER | CURRENT_USER | "
-"PUBLIC } SERVER servername"
+"DROP USER MAPPING [ IF EXISTS ] FOR\n"
+" { имя_пользователя | USER | CURRENT_USER | PUBLIC } SERVER имя_сервера"
 
 #: sql_help.h:429
 msgid "remove a view"
-msgstr "entfernt eine Sicht"
+msgstr "удалить представление"
 
 #: sql_help.h:430
 msgid "DROP VIEW [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
-msgstr "DROP VIEW [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
+msgstr "DROP VIEW [ IF EXISTS ] имя [, ...] [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:434
 msgid "END [ WORK | TRANSACTION ]"
@@ -4017,23 +4059,23 @@ msgstr "END [ WORK | TRANSACTION ]"
 
 #: sql_help.h:437
 msgid "execute a prepared statement"
-msgstr "f�hrt einen vorbereiteten Befehl aus"
+msgstr "выполнить подготовленный оператор"
 
 #: sql_help.h:438
 msgid "EXECUTE name [ ( parameter [, ...] ) ]"
-msgstr "EXECUTE name [ ( parameter [, ...] ) ]"
+msgstr "EXECUTE имя [ ( параметр [, ...] ) ]"
 
 #: sql_help.h:441
 msgid "show the execution plan of a statement"
-msgstr "zeigt den Ausf�hrungsplan eines Befehls"
+msgstr "показать план выполнения оператора"
 
 #: sql_help.h:442
 msgid "EXPLAIN [ ANALYZE ] [ VERBOSE ] statement"
-msgstr "EXPLAIN [ ANALYZE ] [ VERBOSE ] befehl"
+msgstr "EXPLAIN [ ANALYZE ] [ VERBOSE ] оператор"
 
 #: sql_help.h:445
 msgid "retrieve rows from a query using a cursor"
-msgstr "liest Zeilen aus einer Anfrage mit einem Cursor"
+msgstr "получить результат запроса через курсор"
 
 #: sql_help.h:446
 msgid ""
@@ -4056,28 +4098,28 @@ msgid ""
 "    BACKWARD count\n"
 "    BACKWARD ALL"
 msgstr ""
-"FETCH [ richtung { FROM | IN } ] cursorname\n"
+"FETCH [ направление { FROM | IN } ] имя_курсора\n"
 "\n"
-"wobei richtung leer sein kann oder Folgendes:\n"
+"где направление может быть пустым или:\n"
 "\n"
 "    NEXT\n"
 "    PRIOR\n"
 "    FIRST\n"
 "    LAST\n"
-"    ABSOLUTE anzahl\n"
-"    RELATIVE anzahl\n"
-"    anzahl\n"
+"    ABSOLUTE число\n"
+"    RELATIVE число\n"
+"    число\n"
 "    ALL\n"
 "    FORWARD\n"
-"    FORWARD anzahl\n"
+"    FORWARD число\n"
 "    FORWARD ALL\n"
 "    BACKWARD\n"
-"    BACKWARD anzahl\n"
+"    BACKWARD число\n"
 "    BACKWARD ALL"
 
 #: sql_help.h:449
 msgid "define access privileges"
-msgstr "definiert Zugriffsprivilegien"
+msgstr "определить права доступа"
 
 #: sql_help.h:450
 msgid ""
@@ -4132,54 +4174,54 @@ msgstr ""
 "GRANT { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | "
 "TRIGGER }\n"
 "    [,...] | ALL [ PRIVILEGES ] }\n"
-"    ON [ TABLE ] tabellenname [, ...]\n"
-"    TO { [ GROUP ] rollenname | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"    ON [ TABLE ] имя_таблицы [, ...]\n"
+"    TO { [ GROUP ] имя_роли | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
 "\n"
-"GRANT { { SELECT | INSERT | UPDATE | REFERENCES } ( spalte [, ...] )\n"
-"    [,...] | ALL [ PRIVILEGES ] ( spalte [, ...] ) }\n"
-"    ON [ TABLE ] tabellenname [, ...]\n"
-"    TO { [ GROUP ] rollenname | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"GRANT { { SELECT | INSERT | UPDATE | REFERENCES } ( колонка [, ...] )\n"
+"    [,...] | ALL [ PRIVILEGES ] ( колонка [, ...] ) }\n"
+"    ON [ TABLE ] имя_таблицы [, ...]\n"
+"    TO { [ GROUP ] имя_роли | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
 "\n"
 "GRANT { { USAGE | SELECT | UPDATE }\n"
 "    [,...] | ALL [ PRIVILEGES ] }\n"
-"    ON SEQUENCE sequenzname [, ...]\n"
-"    TO { [ GROUP ] rollenname | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"    ON SEQUENCE имя_последовательности [, ...]\n"
+"    TO { [ GROUP ] имя_роли | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
 "\n"
 "GRANT { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL "
 "[ PRIVILEGES ] }\n"
-"    ON DATABASE datenbankname [, ...]\n"
-"    TO { [ GROUP ] rollenname | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"    ON DATABASE имя_БД [, ...]\n"
+"    TO { [ GROUP ] имя_роли | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
 "\n"
 "GRANT { USAGE | ALL [ PRIVILEGES ] }\n"
-"    ON FOREIGN DATA WRAPPER fdwname [, ...]\n"
-"    TO { [ GROUP ] rollenname | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"    ON FOREIGN DATA WRAPPER имя_обёртки_сторонних_данных [, ...]\n"
+"    TO { [ GROUP ] имя_роли | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
 "\n"
 "GRANT { USAGE | ALL [ PRIVILEGES ] }\n"
-"    ON FOREIGN SERVER servername [, ...]\n"
-"    TO { [ GROUP ] rollenname | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"    ON FOREIGN SERVER имя_сервера [, ...]\n"
+"    TO { [ GROUP ] имя_роли | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
 "\n"
 "GRANT { EXECUTE | ALL [ PRIVILEGES ] }\n"
-"    ON FUNCTION funktionsname ( [ [ argmodus ] [ argname ] argtyp "
-"[, ...] ] ) [, ...]\n"
-"    TO { [ GROUP ] rollenname | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"    ON FUNCTION имя_функции ( [ [ режим_аргумента ] [ имя_аргумента ]\n"
+"      тип [, ...] ] ) [, ...]\n"
+"    TO { [ GROUP ] имя_роли | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
 "\n"
 "GRANT { USAGE | ALL [ PRIVILEGES ] }\n"
-"    ON LANGUAGE sprachname [, ...]\n"
-"    TO { [ GROUP ] rollenname | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"    ON LANGUAGE имя_языка [, ...]\n"
+"    TO { [ GROUP ] имя_роли | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
 "\n"
 "GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }\n"
-"    ON SCHEMA schemaname [, ...]\n"
-"    TO { [ GROUP ] rollenname | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"    ON SCHEMA имя_схемы [, ...]\n"
+"    TO { [ GROUP ] имя_роли | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
 "\n"
 "GRANT { CREATE | ALL [ PRIVILEGES ] }\n"
-"    ON TABLESPACE tablespacename [, ...]\n"
-"    TO { [ GROUP ] rollenname | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"    ON TABLESPACE имя_табл_пространства [, ...]\n"
+"    TO { [ GROUP ] имя_роли | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
 "\n"
-"GRANT rolle [, ...] TO rollenname [, ...] [ WITH ADMIN OPTION ]"
+"GRANT роль [, ...] TO имя_роли [, ...] [ WITH ADMIN OPTION ]"
 
 #: sql_help.h:453
 msgid "create new rows in a table"
-msgstr "erzeugt neue Zeilen in einer Tabelle"
+msgstr "добавить строки в таблицу"
 
 #: sql_help.h:454
 msgid ""
@@ -4188,30 +4230,30 @@ msgid ""
 "query }\n"
 "    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
 msgstr ""
-"INSERT INTO tabelle [ ( spalte [, ...] ) ]\n"
-"    { DEFAULT VALUES | VALUES ( { ausdruck | DEFAULT } [, ...] ) [, ...] | "
-"anfrage }\n"
-"    [ RETURNING * | ausgabeausdruck [ [ AS ] ausgabename ] [, ...] ]"
+"INSERT INTO таблица [ ( колонка [, ...] ) ]\n"
+"    { DEFAULT VALUES | VALUES ( { выражение | DEFAULT } [, ...] ) [, ...]\n"
+"      | запрос }\n"
+"    [ RETURNING * | выражение_результата [ [ AS ] имя_результата ] [, ...] ]"
 
 #: sql_help.h:457
 msgid "listen for a notification"
-msgstr "h�rt auf eine Benachrichtigung"
+msgstr "ожидать уведомления"
 
 #: sql_help.h:458
 msgid "LISTEN name"
-msgstr "LISTEN name"
+msgstr "LISTEN имя"
 
 #: sql_help.h:461
 msgid "load a shared library file"
-msgstr "l�dt eine dynamische Bibliotheksdatei"
+msgstr "загрузить файл разделяемой библиотеки"
 
 #: sql_help.h:462
 msgid "LOAD 'filename'"
-msgstr "LOAD 'dateiname'"
+msgstr "LOAD 'имя_файла'"
 
 #: sql_help.h:465
 msgid "lock a table"
-msgstr "sperrt eine Tabelle"
+msgstr "заблокировать таблицу"
 
 #: sql_help.h:466
 msgid ""
@@ -4222,84 +4264,84 @@ msgid ""
 "    ACCESS SHARE | ROW SHARE | ROW EXCLUSIVE | SHARE UPDATE EXCLUSIVE\n"
 "    | SHARE | SHARE ROW EXCLUSIVE | EXCLUSIVE | ACCESS EXCLUSIVE"
 msgstr ""
-"LOCK [ TABLE ] [ ONLY ] name [, ...] [ IN sperrmodus MODE ] [ NOWAIT ]\n"
+"LOCK [ TABLE ] [ ONLY ] имя [, ...] [ IN режим_блокировки MODE ] [ NOWAIT ]\n"
 "\n"
-"wobei sperrmodus Folgendes sein kann:\n"
+"где допустимый режим_блокировки:\n"
 "\n"
 "    ACCESS SHARE | ROW SHARE | ROW EXCLUSIVE | SHARE UPDATE EXCLUSIVE\n"
 "    | SHARE | SHARE ROW EXCLUSIVE | EXCLUSIVE | ACCESS EXCLUSIVE"
 
 #: sql_help.h:469
 msgid "position a cursor"
-msgstr "positioniert einen Cursor"
+msgstr "установить курсор"
 
 #: sql_help.h:470
 msgid "MOVE [ direction { FROM | IN } ] cursorname"
-msgstr "MOVE [ richtung { FROM | IN } ] cursorname"
+msgstr "MOVE [ направление { FROM | IN } ] имя_курсора"
 
 #: sql_help.h:473
 msgid "generate a notification"
-msgstr "erzeugt eine Benachrichtigung"
+msgstr "сгенерировать уведомление"
 
 #: sql_help.h:474
 msgid "NOTIFY name"
-msgstr "NOTIFY name"
+msgstr "NOTIFY имя"
 
 #: sql_help.h:477
 msgid "prepare a statement for execution"
-msgstr "bereitet einen Befehl zur Ausf�hrung vor"
+msgstr "подготовить оператор для выполнения"
 
 #: sql_help.h:478
 msgid "PREPARE name [ ( datatype [, ...] ) ] AS statement"
-msgstr "PREPARE name [ ( datentyp [, ...] ) ] AS befehl"
+msgstr "PREPARE имя [ ( тип_данных [, ...] ) ] AS оператор"
 
 #: sql_help.h:481
 msgid "prepare the current transaction for two-phase commit"
-msgstr "bereitet die aktuelle Transaktion f�r Two-Phase-Commit vor"
+msgstr "подготовить текущую транзакцию для двухфазной фиксации"
 
 #: sql_help.h:482
 msgid "PREPARE TRANSACTION transaction_id"
-msgstr "PREPARE TRANSACTION transaktions_id"
+msgstr "PREPARE TRANSACTION код_транзакции"
 
 #: sql_help.h:485
 msgid "change the ownership of database objects owned by a database role"
-msgstr "�ndert den Eigent�mer der der Rolle geh�renden Datenbankobjekte"
+msgstr "изменить владельца объектов БД, принадлежащих заданной роли"
 
 #: sql_help.h:486
 msgid "REASSIGN OWNED BY old_role [, ...] TO new_role"
-msgstr "REASSIGN OWNED BY alte_rolle [, ...] TO neue_rolle"
+msgstr "REASSIGN OWNED BY старая_роль [, ...] TO новая_роль"
 
 #: sql_help.h:489
 msgid "rebuild indexes"
-msgstr "baut Indexe neu"
+msgstr "перестроить индексы"
 
 #: sql_help.h:490
 msgid "REINDEX { INDEX | TABLE | DATABASE | SYSTEM } name [ FORCE ]"
-msgstr "REINDEX { INDEX | TABLE | DATABASE | SYSTEM } name [ FORCE ]"
+msgstr "REINDEX { INDEX | TABLE | DATABASE | SYSTEM } имя [ FORCE ]"
 
 #: sql_help.h:493
 msgid "destroy a previously defined savepoint"
-msgstr "gibt einen zuvor definierten Savepoint frei"
+msgstr "удалить ранее определённую точку сохранения"
 
 #: sql_help.h:494
 msgid "RELEASE [ SAVEPOINT ] savepoint_name"
-msgstr "RELEASE [ SAVEPOINT ] savepoint_name"
+msgstr "RELEASE [ SAVEPOINT ] имя_точки_сохранения"
 
 #: sql_help.h:497
 msgid "restore the value of a run-time parameter to the default value"
-msgstr "setzt einen Konfigurationsparameter auf die Voreinstellung zur�ck"
+msgstr "восстановить исходное значение параметра выполнения"
 
 #: sql_help.h:498
 msgid ""
 "RESET configuration_parameter\n"
 "RESET ALL"
 msgstr ""
-"RESET konfigurationsparameter\n"
+"RESET параметр_конфигурации\n"
 "RESET ALL"
 
 #: sql_help.h:501
 msgid "remove access privileges"
-msgstr "entfernt Zugriffsprivilegien"
+msgstr "удалить права доступа"
 
 #: sql_help.h:502
 msgid ""
@@ -4376,69 +4418,69 @@ msgstr ""
 "    { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | "
 "TRIGGER }\n"
 "    [,...] | ALL [ PRIVILEGES ] }\n"
-"    ON [ TABLE ] tabellenname [, ...]\n"
-"    FROM { [ GROUP ] rollenname | PUBLIC } [, ...]\n"
+"    ON [ TABLE ] имя_таблицы [, ...]\n"
+"    FROM { [ GROUP ] имя_роли | PUBLIC } [, ...]\n"
 "    [ CASCADE | RESTRICT ]\n"
 "\n"
 "REVOKE [ GRANT OPTION FOR ]\n"
-"    { { SELECT | INSERT | UPDATE | REFERENCES } ( spalte [, ...] )\n"
-"    [,...] | ALL [ PRIVILEGES ] ( spalte [, ...] ) }\n"
-"    ON [ TABLE ] tabellenname [, ...]\n"
-"    FROM { [ GROUP ] rollenname | PUBLIC } [, ...]\n"
+"    { { SELECT | INSERT | UPDATE | REFERENCES } ( колонка [, ...] )\n"
+"    [,...] | ALL [ PRIVILEGES ] ( колонка [, ...] ) }\n"
+"    ON [ TABLE ] имя_таблицы [, ...]\n"
+"    FROM { [ GROUP ] имя_роли | PUBLIC } [, ...]\n"
 "    [ CASCADE | RESTRICT ]\n"
 "\n"
 "REVOKE [ GRANT OPTION FOR ]\n"
 "    { { USAGE | SELECT | UPDATE }\n"
 "    [,...] | ALL [ PRIVILEGES ] }\n"
-"    ON SEQUENCE sequenzname [, ...]\n"
-"    FROM { [ GROUP ] rollenname | PUBLIC } [, ...]\n"
+"    ON SEQUENCE имя_последовательности [, ...]\n"
+"    FROM { [ GROUP ] имя_роли | PUBLIC } [, ...]\n"
 "    [ CASCADE | RESTRICT ]\n"
 "\n"
 "REVOKE [ GRANT OPTION FOR ]\n"
 "    { { CREATE | CONNECT | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }\n"
-"    ON DATABASE datenbankname [, ...]\n"
-"    FROM { [ GROUP ] rollenname | PUBLIC } [, ...]\n"
+"    ON DATABASE имя_БД [, ...]\n"
+"    FROM { [ GROUP ] имя_роли | PUBLIC } [, ...]\n"
 "    [ CASCADE | RESTRICT ]\n"
 "\n"
 "REVOKE [ GRANT OPTION FOR ]\n"
 "    { USAGE | ALL [ PRIVILEGES ] }\n"
-"    ON FOREIGN DATA WRAPPER fdwname [, ...]\n"
-"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
+"    ON FOREIGN DATA WRAPPER имя_обёртки_сторонних_данных [, ...]\n"
+"    FROM { [ GROUP ] имя_роли | PUBLIC } [, ...]\n"
 "    [ CASCADE | RESTRICT ]\n"
 "\n"
 "REVOKE [ GRANT OPTION FOR ]\n"
 "    { USAGE | ALL [ PRIVILEGES ] }\n"
-"    ON FOREIGN SERVER servername [, ...]\n"
-"    FROM { [ GROUP ] rolename | PUBLIC } [, ...]\n"
+"    ON FOREIGN SERVER имя_сервера [, ...]\n"
+"    FROM { [ GROUP ] имя_роли | PUBLIC } [, ...]\n"
 "    [ CASCADE | RESTRICT ]\n"
 "\n"
 "REVOKE [ GRANT OPTION FOR ]\n"
 "    { EXECUTE | ALL [ PRIVILEGES ] }\n"
-"    ON FUNCTION funktionsname ( [ [ argmodus ] [ argname ] argtyp "
-"[, ...] ] ) [, ...]\n"
-"    FROM { [ GROUP ] rollenname | PUBLIC } [, ...]\n"
+"    ON FUNCTION имя_функции ( [ [ режим_аргумента ] [ имя_аргумента ]\n"
+"      тип [, ...] ] ) [, ...]\n"
+"    FROM { [ GROUP ] имя_роли | PUBLIC } [, ...]\n"
 "    [ CASCADE | RESTRICT ]\n"
 "\n"
 "REVOKE [ GRANT OPTION FOR ]\n"
 "    { USAGE | ALL [ PRIVILEGES ] }\n"
-"    ON LANGUAGE sprachname [, ...]\n"
-"    FROM { [ GROUP ] rollenname | PUBLIC } [, ...]\n"
+"    ON LANGUAGE имя_языка [, ...]\n"
+"    FROM { [ GROUP ] имя_роли | PUBLIC } [, ...]\n"
 "    [ CASCADE | RESTRICT ]\n"
 "\n"
 "REVOKE [ GRANT OPTION FOR ]\n"
 "    { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }\n"
-"    ON SCHEMA schemaname [, ...]\n"
-"    FROM { [ GROUP ] rollenname | PUBLIC } [, ...]\n"
+"    ON SCHEMA имя_схемы [, ...]\n"
+"    FROM { [ GROUP ] имя_роли | PUBLIC } [, ...]\n"
 "    [ CASCADE | RESTRICT ]\n"
 "\n"
 "REVOKE [ GRANT OPTION FOR ]\n"
 "    { CREATE | ALL [ PRIVILEGES ] }\n"
-"    ON TABLESPACE tablespacename [, ...]\n"
-"    FROM { [ GROUP ] rollenname | PUBLIC } [, ...]\n"
+"    ON TABLESPACE имя_табл_пространства [, ...]\n"
+"    FROM { [ GROUP ] имя_роли | PUBLIC } [, ...]\n"
 "    [ CASCADE | RESTRICT ]\n"
 "\n"
 "REVOKE [ ADMIN OPTION FOR ]\n"
-"    rolle [, ...] FROM rollenname [, ...]\n"
+"    имя [, ...] FROM имя_роли [, ...]\n"
 "    [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:506
@@ -4447,33 +4489,31 @@ msgstr "ROLLBACK [ WORK | TRANSACTION ]"
 
 #: sql_help.h:509
 msgid "cancel a transaction that was earlier prepared for two-phase commit"
-msgstr ""
-"storniert eine Transaktion, die vorher f�r Two-Phase-Commit vorbereitet "
-"worden war"
+msgstr "отменить транзакцию, подготовленную ранее для двухфазной фиксации"
 
 #: sql_help.h:510
 msgid "ROLLBACK PREPARED transaction_id"
-msgstr "ROLLBACK PREPARED transaktions_id"
+msgstr "ROLLBACK PREPARED код_транзакции"
 
 #: sql_help.h:513
 msgid "roll back to a savepoint"
-msgstr "rollt eine Transaktion bis zu einem Savepoint zur�ck"
+msgstr "откатиться к точке сохранения"
 
 #: sql_help.h:514
 msgid "ROLLBACK [ WORK | TRANSACTION ] TO [ SAVEPOINT ] savepoint_name"
-msgstr "ROLLBACK [ WORK | TRANSACTION ] TO [ SAVEPOINT ] savepoint_name"
+msgstr "ROLLBACK [ WORK | TRANSACTION ] TO [ SAVEPOINT ] имя_точки_сохранения"
 
 #: sql_help.h:517
 msgid "define a new savepoint within the current transaction"
-msgstr "definiert einen neuen Savepoint in der aktuellen Transaktion"
+msgstr "определить новую точку сохранения в текущей транзакции"
 
 #: sql_help.h:518
 msgid "SAVEPOINT savepoint_name"
-msgstr "SAVEPOINT savepoint_name"
+msgstr "SAVEPOINT имя_точки_сохранения"
 
 #: sql_help.h:521 sql_help.h:557 sql_help.h:581
 msgid "retrieve rows from a table or view"
-msgstr "liest Zeilen aus einer Tabelle oder Sicht"
+msgstr "выбрать строки из таблицы или представления"
 
 #: sql_help.h:522 sql_help.h:558 sql_help.h:582
 msgid ""
@@ -4510,39 +4550,39 @@ msgid ""
 "\n"
 "TABLE { [ ONLY ] table_name [ * ] | with_query_name }"
 msgstr ""
-"[ WITH [ RECURSIVE ] with_anfrage [, ...] ]\n"
-"SELECT [ ALL | DISTINCT [ ON ( ausdruck [, ...] ) ] ]\n"
-"    * | ausdruck [ AS ausgabename ] [, ...]\n"
-"    [ FROM from_element [, ...] ]\n"
-"    [ WHERE bedingung ]\n"
-"    [ GROUP BY ausdruck [, ...] ]\n"
-"    [ HAVING bedingung [, ...] ]\n"
-"    [ WINDOW window_name AS ( window_definition ) [, ...] ]\n"
+"[ WITH [ RECURSIVE ] запрос_WITH [, ...] ]\n"
+"SELECT [ ALL | DISTINCT [ ON ( выражение [, ...] ) ] ]\n"
+"    * | выражение [ [ AS ] имя_результата ] [, ...]\n"
+"    [ FROM источник_данных [, ...] ]\n"
+"    [ WHERE условие ]\n"
+"    [ GROUP BY выражение [, ...] ]\n"
+"    [ HAVING условие [, ...] ]\n"
+"    [ WINDOW имя_окна AS ( определение_окна ) [, ...] ]\n"
 "    [ { UNION | INTERSECT | EXCEPT } [ ALL ] select ]\n"
-"    [ ORDER BY ausdruck [ ASC | DESC | USING operator ] [ NULLS { FIRST | "
-"LAST } ] [, ...] ]\n"
-"    [ LIMIT { anzahl | ALL } ]\n"
-"    [ OFFSET start [ ROW | ROWS ] ]\n"
-"    [ FETCH { FIRST | NEXT } [ count ] { ROW | ROWS } ONLY ]\n"
-"    [ FOR { UPDATE | SHARE } [ OF tabellenname [, ...] ] [ NOWAIT ] [...] ]\n"
+"    [ ORDER BY выражение [ ASC | DESC | USING оператор ]\n"
+"    [ NULLS { FIRST | LAST } ] [, ...] ]\n"
+"    [ LIMIT { кол_во | ALL } ]\n"
+"    [ OFFSET начало [ ROW | ROWS ] ]\n"
+"    [ FETCH { FIRST | NEXT } [ кол_во ] { ROW | ROWS } ONLY ]\n"
+"    [ FOR { UPDATE | SHARE } [ OF имя_таблицы [, ...] ] [ NOWAIT ] [...] ]\n"
 "\n"
-"wobei from_element Folgendes sein kann:\n"
+"где допустимый_источник_данных:\n"
 "\n"
-"    [ ONLY ] tabellenname [ * ] [ [ AS ] alias [ ( spaltenalias "
-"[, ...] ) ] ]\n"
-"    ( select ) [ AS ] alias [ ( spaltenalias [, ...] ) ]\n"
-"    with_anfragenname [ [ AS ] alias [ ( spaltenalias [, ...] ) ] ]\n"
-"    funktionsname ( [ argument [, ...] ] ) [ AS ] alias [ ( spaltenalias "
-"[, ...] | spaltendefinition [, ...] ) ]\n"
-"    funktionsname ( [ argument [, ...] ] ) AS ( spaltendefinition [, ...] )\n"
-"    from_element [ NATURAL ] verbundtyp from_element [ ON verbundbedingung | "
-"USING ( verbundspalte [, ...] ) ]\n"
+"    [ ONLY ] имя_таблицы [ * ] [ [ AS ] псевдоним\n"
+"      [ ( псевдоним_колонки [, ...] ) ] ]\n"
+"    ( select ) [ AS ] псевдоним [ ( псевдоним_колонки [, ...] ) ]\n"
+"    имя_запроса_WITH [ [ AS ] псевдоним [ ( псевдоним_колонки [, ...] ) ] ]\n"
+"    имя_функции ( [ аргумент [, ...] ] ) [ AS ] псевдоним\n"
+"      [ ( псевдоним_колонки [, ...] | определение_колонки [, ...] ) ]\n"
+"    имя_функции ( [ аргумент [, ...] ] ) AS ( определение_колонки [, ...] )\n"
+"    источник_данных [ NATURAL ] тип_соединения источник_данных\n"
+"      [ ON условие_соединения | USING ( колонка_соединения [, ...] ) ]\n"
 "\n"
-"und with_anfrage ist:\n"
+"и запрос_WITH:\n"
 "\n"
-"    with_anfragenname [ ( spaltenname [, ...] ) ] AS ( select )\n"
+"    имя_запроса_WITH [ ( имя_колонки [, ...] ) ] AS ( select )\n"
 "\n"
-"TABLE { [ ONLY ] tabellenname [ * ] | with_anfragenname }"
+"TABLE { [ ONLY ] имя_таблицы [ * ] | имя_запроса_WITH }"
 
 #: sql_help.h:526
 msgid ""
@@ -4563,26 +4603,26 @@ msgid ""
 "    [ FETCH { FIRST | NEXT } [ count ] { ROW | ROWS } ONLY ]\n"
 "    [ FOR { UPDATE | SHARE } [ OF table_name [, ...] ] [ NOWAIT ] [...] ]"
 msgstr ""
-"[ WITH [ RECURSIVE ] with_anfrage [, ...] ]\n"
-"SELECT [ ALL | DISTINCT [ ON ( ausdruck [, ...] ) ] ]\n"
-"    * | ausdruck [ AS ausgabename ] [, ...]\n"
-"    INTO [ TEMPORARY | TEMP ] [ TABLE ] neue_tabelle\n"
-"    [ FROM from_element [, ...] ]\n"
-"    [ WHERE bedingung ]\n"
-"    [ GROUP BY ausdruck [, ...] ]\n"
-"    [ HAVING bedingung [, ...] ]\n"
-"    [ WINDOW window_name AS ( window_definition ) [, ...] ]\n"
+"[ WITH [ RECURSIVE ] запрос_WITH [, ...] ]\n"
+"SELECT [ ALL | DISTINCT [ ON ( выражение [, ...] ) ] ]\n"
+"    * | выражение [ [ AS ] имя_результата ] [, ...]\n"
+"    INTO [ TEMPORARY | TEMP ] [ TABLE ] новая_таблица\n"
+"    [ FROM источник_данных [, ...] ]\n"
+"    [ WHERE условие ]\n"
+"    [ GROUP BY выражение [, ...] ]\n"
+"    [ HAVING условие [, ...] ]\n"
+"    [ WINDOW имя_окна AS ( определение_окна ) [, ...] ]\n"
 "    [ { UNION | INTERSECT | EXCEPT } [ ALL ] select ]\n"
-"    [ ORDER BY ausdruck [ ASC | DESC | USING operator ] [ NULLS { FIRST | "
-"LAST } ] [, ...] ]\n"
-"    [ LIMIT { anzahl | ALL } ]\n"
-"    [ OFFSET start [ ROW | ROWS ] ]\n"
-"    [ FETCH { FIRST | NEXT } [ count ] { ROW | ROWS } ONLY ]\n"
-"    [ FOR { UPDATE | SHARE } [ OF tabellenname [, ...] ] [ NOWAIT ] [...] ]"
+"    [ ORDER BY выражение [ ASC | DESC | USING оператор ]\n"
+"    [ NULLS { FIRST | LAST } ] [, ...] ]\n"
+"    [ LIMIT { кол_во | ALL } ]\n"
+"    [ OFFSET начало [ ROW | ROWS ] ]\n"
+"    [ FETCH { FIRST | NEXT } [ кол_во ] { ROW | ROWS } ONLY ]\n"
+"    [ FOR { UPDATE | SHARE } [ OF имя_таблицы [, ...] ] [ NOWAIT ] [...] ]"
 
 #: sql_help.h:529
 msgid "change a run-time parameter"
-msgstr "�ndert einen Konfigurationsparameter"
+msgstr "изменить параметр выполнения"
 
 #: sql_help.h:530
 msgid ""
@@ -4590,21 +4630,21 @@ msgid ""
 "| DEFAULT }\n"
 "SET [ SESSION | LOCAL ] TIME ZONE { timezone | LOCAL | DEFAULT }"
 msgstr ""
-"SET [ SESSION | LOCAL ] konfigurationsparameter { TO | = } { wert | 'wert' | "
-"DEFAULT }\n"
-"SET [ SESSION | LOCAL ] TIME ZONE { zeitzone | LOCAL | DEFAULT }"
+"SET [ SESSION | LOCAL ] параметр_конфигурации { TO | = } \n"
+"  { значение | 'значение' | DEFAULT }\n"
+"SET [ SESSION | LOCAL ] TIME ZONE { часовой_пояс | LOCAL | DEFAULT }"
 
 #: sql_help.h:533
 msgid "set constraint checking modes for the current transaction"
-msgstr "setzt die Constraint-Modi der aktuellen Transaktion"
+msgstr "установить режим проверки ограничений для текущей транзакции"
 
 #: sql_help.h:534
 msgid "SET CONSTRAINTS { ALL | name [, ...] } { DEFERRED | IMMEDIATE }"
-msgstr "SET CONSTRAINTS { ALL | name [, ...] } { DEFERRED | IMMEDIATE }"
+msgstr "SET CONSTRAINTS { ALL | имя [, ...] } { DEFERRED | IMMEDIATE }"
 
 #: sql_help.h:537
 msgid "set the current user identifier of the current session"
-msgstr "setzt den aktuellen Benutzernamen der aktuellen Sitzung"
+msgstr "задать идентификатор текущего пользователя в текущем сеансе"
 
 #: sql_help.h:538
 msgid ""
@@ -4612,7 +4652,7 @@ msgid ""
 "SET [ SESSION | LOCAL ] ROLE NONE\n"
 "RESET ROLE"
 msgstr ""
-"SET [ SESSION | LOCAL ] ROLE rollenname\n"
+"SET [ SESSION | LOCAL ] ROLE имя_роли\n"
 "SET [ SESSION | LOCAL ] ROLE NONE\n"
 "RESET ROLE"
 
@@ -4621,8 +4661,8 @@ msgid ""
 "set the session user identifier and the current user identifier of the "
 "current session"
 msgstr ""
-"setzt den Sitzungsbenutzernamen und den aktuellen Benutzernamen der "
-"aktuellen Sitzung"
+"задать идентификатор пользователя сеанса и идентификатор текущего "
+"пользователя в текущем сеансе"
 
 #: sql_help.h:542
 msgid ""
@@ -4630,13 +4670,13 @@ msgid ""
 "SET [ SESSION | LOCAL ] SESSION AUTHORIZATION DEFAULT\n"
 "RESET SESSION AUTHORIZATION"
 msgstr ""
-"SET [ SESSION | LOCAL ] SESSION AUTHORIZATION benutzername\n"
+"SET [ SESSION | LOCAL ] SESSION AUTHORIZATION имя_пользователя\n"
 "SET [ SESSION | LOCAL ] SESSION AUTHORIZATION DEFAULT\n"
 "RESET SESSION AUTHORIZATION"
 
 #: sql_help.h:545
 msgid "set the characteristics of the current transaction"
-msgstr "setzt die Charakteristika der aktuellen Transaktion"
+msgstr "задать свойства текущей транзакции"
 
 #: sql_help.h:546
 msgid ""
@@ -4649,25 +4689,25 @@ msgid ""
 "UNCOMMITTED }\n"
 "    READ WRITE | READ ONLY"
 msgstr ""
-"SET TRANSACTION transaktionsmodus [, ...]\n"
-"SET SESSION CHARACTERISTICS AS TRANSACTION transaktionsmodus [, ...]\n"
+"SET TRANSACTION режим_транзакции [, ...]\n"
+"SET SESSION CHARACTERISTICS AS TRANSACTION режим_транзакции [, ...]\n"
 "\n"
-"wobei transaktionsmodus Folgendes sein kann:\n"
+"где допустимый режим_транзакции:\n"
 "\n"
-"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ "
-"UNCOMMITTED }\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ |\n"
+"      READ COMMITTED | READ UNCOMMITTED }\n"
 "    READ WRITE | READ ONLY"
 
 #: sql_help.h:549
 msgid "show the value of a run-time parameter"
-msgstr "zeigt den Wert eines Konfigurationsparameters"
+msgstr "показать значение параметра выполнения"
 
 #: sql_help.h:550
 msgid ""
 "SHOW name\n"
 "SHOW ALL"
 msgstr ""
-"SHOW name\n"
+"SHOW имя\n"
 "SHOW ALL"
 
 #: sql_help.h:554
@@ -4680,37 +4720,37 @@ msgid ""
 "UNCOMMITTED }\n"
 "    READ WRITE | READ ONLY"
 msgstr ""
-"START TRANSACTION [ transaktionsmodus [, ...] ]\n"
+"START TRANSACTION [ режим_транзакции [, ...] ]\n"
 "\n"
-"wobei transaktionsmodus Folgendes sein kann:\n"
+"где допустимый режим_транзакции:\n"
 "\n"
-"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ "
-"UNCOMMITTED }\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED\n"
+"      | READ UNCOMMITTED }\n"
 "    READ WRITE | READ ONLY"
 
 #: sql_help.h:561
 msgid "empty a table or set of tables"
-msgstr "leert eine oder mehrere Tabellen"
+msgstr "опустошить таблицу или набор таблиц"
 
 #: sql_help.h:562
 msgid ""
 "TRUNCATE [ TABLE ] [ ONLY ] name [, ... ]\n"
 "    [ RESTART IDENTITY | CONTINUE IDENTITY ] [ CASCADE | RESTRICT ]"
 msgstr ""
-"TRUNCATE [ TABLE ] [ ONLY ] name [, ... ]\n"
+"TRUNCATE [ TABLE ] [ ONLY ] имя [, ... ]\n"
 "    [ RESTART IDENTITY | CONTINUE IDENTITY ] [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:565
 msgid "stop listening for a notification"
-msgstr "beendet das H�ren auf eine Benachrichtigung"
+msgstr "прекратить ожидание уведомлений"
 
 #: sql_help.h:566
 msgid "UNLISTEN { name | * }"
-msgstr "UNLISTEN { name | * }"
+msgstr "UNLISTEN { имя | * }"
 
 #: sql_help.h:569
 msgid "update rows of a table"
-msgstr "aktualisiert Zeilen einer Tabelle"
+msgstr "изменить строки таблицы"
 
 #: sql_help.h:570
 msgid ""
@@ -4722,16 +4762,17 @@ msgid ""
 "    [ WHERE condition | WHERE CURRENT OF cursor_name ]\n"
 "    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
 msgstr ""
-"UPDATE [ ONLY ] tabelle [ [ AS ] alias ]\n"
-"    SET { spalte = { ausdruck | DEFAULT } |\n"
-"          ( spalte [, ...] ) = ( { ausdruck | DEFAULT } [, ...] ) } [, ...]\n"
-"    [ FROM from-liste ]\n"
-"    [ WHERE bedingung | WHERE CURRENT OF cursorname ]\n"
-"    [ RETURNING * | ausgabeausdruck [ [ AS ] ausgabename ] [, ...] ]"
+"UPDATE [ ONLY ] таблица [ [ AS ] псевдоним ]\n"
+"    SET { колонка = { выражение | DEFAULT } |\n"
+"          ( колонка [, ...] ) = ( { выражение | DEFAULT } [, ...] ) } "
+"[, ...]\n"
+"    [ FROM список_источников_данных ]\n"
+"    [ WHERE условие | WHERE CURRENT OF имя_курсора ]\n"
+"    [ RETURNING * | выражение_результата [ [ AS ] имя_результата ] [, ...] ]"
 
 #: sql_help.h:573
 msgid "garbage-collect and optionally analyze a database"
-msgstr "s�ubert und analysiert eine Datenbank"
+msgstr "произвести сборку мусора и проанализировать базу данных"
 
 #: sql_help.h:574
 msgid ""
@@ -4739,13 +4780,13 @@ msgid ""
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column "
 "[, ...] ) ] ]"
 msgstr ""
-"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ tabelle ]\n"
-"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ tabelle [ (spalte "
-"[, ...] ) ] ]"
+"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ таблица ]\n"
+"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE\n"
+"  [ таблица [ (колонка [, ...] ) ] ]"
 
 #: sql_help.h:577
 msgid "compute a set of rows"
-msgstr "berechnet eine Zeilenmenge"
+msgstr "получить набор строк"
 
 #: sql_help.h:578
 msgid ""
@@ -4755,63 +4796,64 @@ msgid ""
 "    [ OFFSET start [ ROW | ROWS ] ]\n"
 "    [ FETCH { FIRST | NEXT } [ count ] { ROW | ROWS } ONLY ]"
 msgstr ""
-"VALUES ( ausdruck [, ...] ) [, ...]\n"
-"    [ ORDER BY sortierausdruck [ ASC | DESC | USING operator ] [, ...] ]\n"
-"    [ LIMIT { anzahl | ALL } ]\n"
-"    [ OFFSET start [ ROW | ROWS ] ]\n"
-"    [ FETCH { FIRST | NEXT } [ anzahl ] { ROW | ROWS } ONLY ]"
+"VALUES ( выражение [, ...] ) [, ...]\n"
+"    [ ORDER BY выражение_сортировки [ ASC | DESC | USING оператор ] "
+"[, ...] ]\n"
+"    [ LIMIT { кол_во | ALL } ]\n"
+"    [ OFFSET начало [ ROW | ROWS ] ]\n"
+"    [ FETCH { FIRST | NEXT } [ кол_во ] { ROW | ROWS } ONLY ]"
 
 #: ../../port/exec.c:195 ../../port/exec.c:309 ../../port/exec.c:352
 #, c-format
 msgid "could not identify current directory: %s"
-msgstr "konnte aktuelles Verzeichnis nicht ermitteln: %s"
+msgstr "не удалось определить текущий каталог: %s"
 
 #: ../../port/exec.c:214
 #, c-format
 msgid "invalid binary \"%s\""
-msgstr "ung�ltige Programmdatei �%s�"
+msgstr "неверный исполняемый файл \"%s\""
 
 #: ../../port/exec.c:263
 #, c-format
 msgid "could not read binary \"%s\""
-msgstr "konnte Programmdatei �%s� nicht lesen"
+msgstr "не удалось прочитать исполняемый файл \"%s\""
 
 #: ../../port/exec.c:270
 #, c-format
 msgid "could not find a \"%s\" to execute"
-msgstr "konnte kein �%s� zum Ausf�hren finden"
+msgstr "не удалось найти запускаемый файл \"%s\""
 
 #: ../../port/exec.c:325 ../../port/exec.c:361
 #, c-format
 msgid "could not change directory to \"%s\""
-msgstr "konnte nicht in Verzeichnis �%s� wechseln"
+msgstr "не удалось перейти в каталог \"%s\""
 
 #: ../../port/exec.c:340
 #, c-format
 msgid "could not read symbolic link \"%s\""
-msgstr "konnte symbolische Verkn�pfung �%s� nicht lesen"
+msgstr "не удалось прочитать символическую ссылку \"%s\""
 
 #: ../../port/exec.c:586
 #, c-format
 msgid "child process exited with exit code %d"
-msgstr "Kindprozess hat mit Code %d beendet"
+msgstr "дочерний процесс завершился с кодом возврата %d"
 
 #: ../../port/exec.c:590
 #, c-format
 msgid "child process was terminated by exception 0x%X"
-msgstr "Kindprozess wurde durch Ausnahme 0x%X beendet"
+msgstr "дочерний процесс прерван исключением 0x%X"
 
 #: ../../port/exec.c:599
 #, c-format
 msgid "child process was terminated by signal %s"
-msgstr "Kindprozess wurde von Signal %s beendet"
+msgstr "дочерний процесс завершён по сигналу %s"
 
 #: ../../port/exec.c:602
 #, c-format
 msgid "child process was terminated by signal %d"
-msgstr "Kindprozess wurde von Signal %d beendet"
+msgstr "дочерний процесс завершён по сигналу %d"
 
 #: ../../port/exec.c:606
 #, c-format
 msgid "child process exited with unrecognized status %d"
-msgstr "Kindprozess hat mit unbekanntem Status %d beendet"
+msgstr "дочерний процесс завершился с нераспознанным состоянием %d"
