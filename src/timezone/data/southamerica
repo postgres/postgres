@@ -1,5 +1,4 @@
 # <pre>
-# @(#)southamerica	8.53
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -232,7 +231,7 @@ Rule	Arg	2000	only	-	Mar	3	0:00	0	-
 Rule	Arg	2007	only	-	Dec	30	0:00	1:00	S
 Rule	Arg	2008	2009	-	Mar	Sun>=15	0:00	0	-
 Rule	Arg	2008	only	-	Oct	Sun>=15	0:00	1:00	S
- 
+
 # From Mariano Absatz (2004-05-21):
 # Today it was officially published that the Province of Mendoza is changing
 # its timezone this winter... starting tomorrow night....
@@ -322,9 +321,9 @@ Rule	Arg	2008	only	-	Oct	Sun>=15	0:00	1:00	S
 # confirms what Alex Krivenyshev has earlier sent to the tz
 # emailing list about that San Luis plans to return to standard
 # time much earlier than the rest of the country. It also
-# confirms that upon request the provinces San Juan and Mendoza 
-# refused to follow San Luis in this change. 
-# 
+# confirms that upon request the provinces San Juan and Mendoza
+# refused to follow San Luis in this change.
+#
 # The change is supposed to take place Monday the 21.st at 0:00
 # hours. As far as I understand it if this goes ahead, we need
 # a new timezone for San Luis (although there are also documented
@@ -386,7 +385,7 @@ Rule	Arg	2008	only	-	Oct	Sun>=15	0:00	1:00	S
 # <a href="http://www.lanacion.com.ar/nota.asp?nota_id=1107912">
 # http://www.lanacion.com.ar/nota.asp?nota_id=1107912
 # </a>
-# 
+#
 # The press release says:
 #  (...) anunció que el próximo domingo a las 00:00 los puntanos deberán
 # atrasar una hora sus relojes.
@@ -800,8 +799,8 @@ Zone	America/La_Paz	-4:32:36 -	LMT	1890
 #
 # From Alexander Krivenyshev (2011-10-04):
 # State Bahia will return to Daylight savings time this year after 8 years off.
-# The announcement was made by Governor Jaques Wagner in an interview to a 
-# television station in Salvador. 
+# The announcement was made by Governor Jaques Wagner in an interview to a
+# television station in Salvador.
 
 # In Portuguese:
 # <a href="http://g1.globo.com/bahia/noticia/2011/10/governador-jaques-wagner-confirma-horario-de-verao-na-bahia.html">
@@ -1160,7 +1159,7 @@ Zone America/Rio_Branco	-4:31:12 -	LMT	1914
 # Due to drought, Chile extends Daylight Time in three weeks.  This
 # is one-time change (Saturday 3/29 at 24:00 for America/Santiago
 # and Saturday 3/29 at 22:00 for Pacific/Easter)
-# The Supreme Decree is located at 
+# The Supreme Decree is located at
 # <a href="http://www.shoa.cl/servicios/supremo316.pdf">
 # http://www.shoa.cl/servicios/supremo316.pdf
 # </a>
@@ -1171,7 +1170,7 @@ Zone America/Rio_Branco	-4:31:12 -	LMT	1914
 
 # From Jose Miguel Garrido (2008-03-05):
 # ...
-# You could see the announces of the change on 
+# You could see the announces of the change on
 # <a href="http://www.shoa.cl/noticias/2008/04hora/hora.htm">
 # http://www.shoa.cl/noticias/2008/04hora/hora.htm
 # </a>.
