@@ -5,12 +5,15 @@
 # Copyright (c) 2012 Alexander Lakhin, exclusion@gmail.com
 # Distributed under the same licensing terms as PostgreSQL itself.
 #
+# pgtranslation Id: pg_ctl.po,v 1.4 2010/12/07 21:22:21 petere Exp $
+#
 # translation of subject-specific terminology, see:
 # перевод некоторых специфичных терминов:
 # http://wiki.postgresql.org/wiki/NLS/ru/dict
 #
 # ChangeLog:
 #
+#   - April 2, 2012: Bug fixes. Alexander Lakhin <exclusion@gmail.com>.
 #   - February 21, 2012: Minor fixes. Alexander Lakhin <exclusion@gmail.com>.
 #     - With corrections from Sergey Burladyan <eshkinkot@gmail.com>
 #   - February 17, 2012: Minor fixes. Alexander Lakhin <exclusion@gmail.com>.
@@ -23,8 +26,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.1\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-02-20 06:45+0000\n"
-"PO-Revision-Date: 2012-02-21 07:13+0400\n"
+"POT-Creation-Date: 2012-07-10 22:27+0000\n"
+"PO-Revision-Date: 2012-04-02 19:16+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -297,7 +300,7 @@ msgstr "%s: не удалось отправить сигнал к повыше�
 #: pg_ctl.c:1113
 #, c-format
 msgid "%s: could not remove promote signal file \"%s\": %s\n"
-msgstr "%s: не удалось удалить файл \"%s\" с сигналом к повышению: %s\n"
+msgstr "%s: ошибка при удалении файла \"%s\" с сигналом к повышению: %s\n"
 
 #: pg_ctl.c:1118
 msgid "server promoting\n"
@@ -362,7 +365,7 @@ msgstr "%s: не удалось открыть службу \"%s\": код ош�
 #, c-format
 msgid "%s: could not unregister service \"%s\": error code %d\n"
 msgstr ""
-"%s: не удалось удалить службу \"%s\": код ошибки %d\n"
+"%s: ошибка при удалении службы \"%s\": код ошибки %d\n"
 "\n"
 
 #: pg_ctl.c:1444
@@ -772,17 +775,17 @@ msgstr ""
 #: ../../port/exec.c:125 ../../port/exec.c:239 ../../port/exec.c:282
 #, c-format
 msgid "could not identify current directory: %s"
-msgstr "не удалось получить текущий каталог: %s"
+msgstr "не удалось определить текущий каталог: %s"
 
 #: ../../port/exec.c:144
 #, c-format
 msgid "invalid binary \"%s\""
-msgstr "неверный двоичный файл \"%s\""
+msgstr "неверный исполняемый файл \"%s\""
 
 #: ../../port/exec.c:193
 #, c-format
 msgid "could not read binary \"%s\""
-msgstr "не удалось прочитать двоичный файл \"%s\""
+msgstr "не удалось прочитать исполняемый файл \"%s\""
 
 #: ../../port/exec.c:200
 #, c-format
@@ -823,26 +826,3 @@ msgstr "дочерний процесс завершён по сигналу %d"
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "дочерний процесс завершился с нераспознанным состоянием %d"
-
-#~ msgid ""
-#~ "%s is a utility to start, stop, restart, reload configuration files,\n"
-#~ "report the status of a PostgreSQL server, or signal a PostgreSQL "
-#~ "process.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "%s является утилитой для запуска, остановки, перезапуска,\n"
-#~ "перезагрузки конфигурационных файлов, информирования о состоянии сервера\n"
-#~ "PostgreSQL, или отправки сигналов PostgreSQL-процессу.\n"
-#~ "\n"
-
-#~ msgid "could not start server\n"
-#~ msgstr "не удалось запустить сервер\n"
-
-#~ msgid "%s: neither postmaster nor postgres running\n"
-#~ msgstr "%s: не выполняются ни postmaster, ни postgres\n"
-
-#~ msgid "%s: a standalone backend \"postgres\" is running (PID: %ld)\n"
-#~ msgstr "%s: выполняется независимый процесс \"postgres\" (PID: %ld)\n"
-
-#~ msgid "%s: invalid option %s\n"
-#~ msgstr "%s: неверная опция %s\n"

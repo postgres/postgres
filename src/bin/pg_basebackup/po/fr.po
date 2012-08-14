@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-05-29 10:46+0000\n"
-"PO-Revision-Date: 2012-05-29 20:04+0100\n"
+"POT-Creation-Date: 2012-07-20 20:57+0000\n"
+"PO-Revision-Date: 2012-07-22 18:08+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -341,10 +341,10 @@ msgstr "%s : peut seulement écrire un tablespace sur la sortie standard, la base
 
 #: pg_basebackup.c:934
 #, c-format
-msgid "%s: could not get WAL end position from server\n"
+msgid "%s: could not get WAL end position from server: %s"
 msgstr ""
 "%s : n'a pas pu obtenir la position finale des journaux de transactions à\n"
-"partir du serveur\n"
+"partir du serveur : %s"
 
 #: pg_basebackup.c:940
 #, c-format

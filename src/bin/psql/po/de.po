@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.1\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2012-05-29 04:15+0000\n"
-"PO-Revision-Date: 2012-05-29 13:16+0300\n"
+"PO-Revision-Date: 2012-06-17 21:27+0300\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -952,9 +952,7 @@ msgstr "  \\i DATEI               Befehle aus Datei ausführen\n"
 #: help.c:187
 #, c-format
 msgid "  \\o [FILE]              send all query results to file or |pipe\n"
-msgstr ""
-"  \\o DATEI               alle Anfrageergebnisse in Datei oder |Pipe "
-"schreiben\n"
+msgstr "  \\o [DATEI]             alle Anfrageergebnisse in Datei oder |Pipe schreiben\n"
 
 #: help.c:188
 #, c-format
@@ -3092,7 +3090,7 @@ msgstr "Ausdruck"
 
 #: sql_help.c:183
 msgid "domain_constraint"
-msgstr "Domanen-Constraint"
+msgstr "Domänen-Constraint"
 
 #: sql_help.c:185 sql_help.c:708 sql_help.c:709 sql_help.c:728 sql_help.c:1059
 #: sql_help.c:1296 sql_help.c:1697 sql_help.c:1707

@@ -1,7 +1,7 @@
 # German message translation file for pg_basebackup
-# Copyright (C) 2011 PostgreSQL Global Development Group
+# Copyright (C) 2011 - 2012 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Peter Eisentraut <peter_e@gmx.net>, 2011.
+# Peter Eisentraut <peter_e@gmx.net>, 2011 - 2012.
 #
 # Use these quotes: »%s«
 #
@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.1\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-04-18 15:16+0000\n"
-"PO-Revision-Date: 2012-04-25 20:30+0300\n"
+"POT-Creation-Date: 2012-08-13 22:16+0000\n"
+"PO-Revision-Date: 2012-08-14 01:37-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -61,7 +61,7 @@ msgstr ""
 #: pg_basebackup.c:127
 #, c-format
 msgid "  -F, --format=p|t         output format (plain, tar)\n"
-msgstr "  -F, --format=c|t|p       Ausgabeformat (plain, tar)\n"
+msgstr "  -F, --format=p|t         Ausgabeformat (plain, tar)\n"
 
 #: pg_basebackup.c:128
 #, c-format
@@ -340,8 +340,8 @@ msgstr ""
 
 #: pg_basebackup.c:934
 #, c-format
-msgid "%s: could not get WAL end position from server\n"
-msgstr "%s: konnte WAL-Endposition nicht vom Server empfangen\n"
+msgid "%s: could not get WAL end position from server: %s"
+msgstr "%s: konnte WAL-Endposition nicht vom Server empfangen: %s"
 
 #: pg_basebackup.c:940
 #, c-format

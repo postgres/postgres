@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL 9.1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-05-29 18:39+0000\n"
+"POT-Creation-Date: 2012-08-14 15:21+0000\n"
 "PO-Revision-Date: 2012-02-21 22:54-0300\n"
 "Last-Translator: Alvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
@@ -361,8 +361,10 @@ msgstr "no se pudo analizar el mensaje de error de plpy.elog"
 msgid "%s"
 msgstr "%s"
 
-#: plpython.c:4885
-msgid "could not convert Python Unicode object to PostgreSQL server encoding"
-msgstr ""
-"no se pudo convertir el objeto Unicode de Python a la codificación de "
-"servidor de PostgreSQL"
+#: plpython.c:4878
+msgid "could not convert Python Unicode object to bytes"
+msgstr "no se pudo convertir el objeto Unicode de Python a bytes"
+
+#: plpython.c:4883
+msgid "could not extract bytes from encoded string"
+msgstr "no se pudo extraer bytes desde la cadena codificada"

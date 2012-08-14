@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL 9.1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-05-29 18:46+0000\n"
-"PO-Revision-Date: 2012-02-21 22:39-0300\n"
+"POT-Creation-Date: 2012-08-14 15:27+0000\n"
+"PO-Revision-Date: 2012-08-14 15:44-0400\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: Spanish <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -338,8 +338,10 @@ msgstr ""
 
 #: pg_basebackup.c:934
 #, c-format
-msgid "%s: could not get WAL end position from server\n"
-msgstr "%s: no se pudo obtener la posición de fin de WAL del servidor\n"
+msgid "%s: could not get WAL end position from server: %s"
+msgstr ""
+"%s: no se pudo obtener la posición del final del registro de transacciones "
+"del servidor: %s"
 
 #: pg_basebackup.c:940
 #, c-format

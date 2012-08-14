@@ -4,12 +4,15 @@
 # Copyright (c) 2004-2005 Serguei A. Mokhov, mokhov@cs.concordia.ca
 # Distributed under the same licensing terms as PostgreSQL itself.
 #
+# pgtranslation Id: pg_config.po,v 1.4 2010/12/07 21:22:21 petere Exp $
+#
 # translation of subject-specific terminology, see:
 # перевод некоторых специфичных терминов:
 # http://wiki.postgresql.org/wiki/NLS/ru/dict
 #
 # ChangeLog:
 #
+#   - April 2, 2012: Bug fixes. Alexander Lakhin <exclusion@gmail.com>.
 #   - February 17, 2012: Minor fixes. Alexander Lakhin <exclusion@gmail.com>.
 #   - December 1, 2010: translation for 9.1, Andrey Sudnik <sudnikand@gmail.com>.
 #   - March 26, 2009: complete translation for 8.3, Sergey Burladyan <eshkinkot@gmail.com>.
@@ -20,8 +23,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.1\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-02-21 16:45+0000\n"
-"PO-Revision-Date: 2012-02-17 11:24+0400\n"
+"POT-Creation-Date: 2012-07-10 22:27+0000\n"
+"PO-Revision-Date: 2012-04-02 19:16+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -128,8 +131,7 @@ msgstr ""
 #, c-format
 msgid "  --localedir           show location of locale support files\n"
 msgstr ""
-"  --localedir           показать расположение файлов описания локальных "
-"настроек\n"
+"  --localedir           показать расположение файлов описания локалей\n"
 
 #: pg_config.c:442
 #, c-format
@@ -275,17 +277,17 @@ msgstr "%s: неверный аргумент: %s\n"
 #: ../../port/exec.c:125 ../../port/exec.c:239 ../../port/exec.c:282
 #, c-format
 msgid "could not identify current directory: %s"
-msgstr "не удалось получить текущий каталог: %s"
+msgstr "не удалось определить текущий каталог: %s"
 
 #: ../../port/exec.c:144
 #, c-format
 msgid "invalid binary \"%s\""
-msgstr "неверный двоичный файл \"%s\""
+msgstr "неверный исполняемый файл \"%s\""
 
 #: ../../port/exec.c:193
 #, c-format
 msgid "could not read binary \"%s\""
-msgstr "не удалось прочитать двоичный файл \"%s\""
+msgstr "не удалось прочитать исполняемый файл \"%s\""
 
 #: ../../port/exec.c:200
 #, c-format
@@ -326,13 +328,3 @@ msgstr "дочерний процесс завершён по сигналу %d"
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "дочерний процесс завершился с нераспознанным состоянием %d"
-
-#~ msgid ""
-#~ "  %s [ OPTION ... ]\n"
-#~ "\n"
-#~ msgstr ""
-#~ "  %s [ ОПЦИЯ ... ]\n"
-#~ "\n"
-
-#~ msgid "%s: argument required\n"
-#~ msgstr "%s: требуется аргумент\n"

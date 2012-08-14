@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-05-29 10:39+0000\n"
-"PO-Revision-Date: 2012-05-29 20:06+0100\n"
+"POT-Creation-Date: 2012-08-10 13:21+0000\n"
+"PO-Revision-Date: 2012-08-10 23:40+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -347,9 +347,13 @@ msgstr "n'a pas pu analyser le message d'erreur dans plpy.elog"
 msgid "%s"
 msgstr "%s"
 
-#: plpython.c:4885
-msgid "could not convert Python Unicode object to PostgreSQL server encoding"
-msgstr "n'a pas pu convertir l'objet Unicode Python en encodage serveur PostgreSQL"
+#: plpython.c:4878
+msgid "could not convert Python Unicode object to bytes"
+msgstr "n'a pas pu convertir l'objet Unicode Python en octets"
+
+#: plpython.c:4883
+msgid "could not extract bytes from encoded string"
+msgstr "n'a pas pu extraire les octets de la chaîne encodée"
 
 #~ msgid "PyCObject_AsVoidPtr() failed"
 #~ msgstr "échec de PyCObject_AsVoidPtr()"

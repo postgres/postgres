@@ -5,12 +5,15 @@
 # Copyright (c) 2012 Alexander Lakhin, exclusion@gmail.com
 # Distributed under the same licensing terms as PostgreSQL itself.
 #
+# pgtranslation Id: pg_resetxlog.po,v 1.3 2009/10/14 21:08:40 petere Exp $
+#
 # translation of subject-specific terminology, see:
 # перевод некоторых специфичных терминов:
 # http://wiki.postgresql.org/wiki/NLS/ru/dict
 #
 # ChangeLog:
 #
+#   - April 2, 2012: Bug fixes. Alexander Lakhin <exclusion@gmail.com>.
 #   - February 18, 2012: Complete translation for 9.1. Alexander Lakhin <exclusion@gmail.com>.
 #   - March 27, 2009: complete translation for 8.3, Sergey Burladyan <eshkinkot@gmail.com>.
 #   - January 17, 2005: Complete translation for 8.0, Serguei A. Mokhov <mokhov@cs.concordia.ca>.
@@ -24,8 +27,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.1\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-02-21 16:45+0000\n"
-"PO-Revision-Date: 2012-02-18 13:11+0400\n"
+"POT-Creation-Date: 2012-07-10 22:27+0000\n"
+"PO-Revision-Date: 2012-04-02 19:16+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -101,7 +104,7 @@ msgstr "%s: недопустимый аргумента параметра -l\n"
 #: pg_resetxlog.c:238
 #, c-format
 msgid "%s: no data directory specified\n"
-msgstr "%s: не указан каталог данных\n"
+msgstr "%s: каталог данных не указан\n"
 
 #: pg_resetxlog.c:252
 #, c-format
@@ -248,12 +251,12 @@ msgstr "NextOID последней конт. точки:        %u\n"
 #: pg_resetxlog.c:577
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
-msgstr "NextMultiXactId последней конт. точки:%u\n"
+msgstr "NextMultiXactId послед. конт. точки:  %u\n"
 
 #: pg_resetxlog.c:579
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
-msgstr "NextMultiOffset последней конт. точки:%u\n"
+msgstr "NextMultiOffset послед. конт. точки:  %u\n"
 
 #: pg_resetxlog.c:581
 #, c-format
@@ -378,7 +381,7 @@ msgstr "%s: не удалось прочитать каталог \"%s\": %s\n"
 #: pg_resetxlog.c:831 pg_resetxlog.c:888
 #, c-format
 msgid "%s: could not delete file \"%s\": %s\n"
-msgstr "%s: ошибка удаления файла \"%s\": %s\n"
+msgstr "%s: ошибка при удалении файла \"%s\": %s\n"
 
 #: pg_resetxlog.c:978
 #, c-format
@@ -482,21 +485,3 @@ msgid ""
 msgstr ""
 "\n"
 "Об ошибках сообщайте по адресу <pgsql-bugs@postgresql.org>.\n"
-
-#~ msgid "%s: invalid LC_COLLATE setting\n"
-#~ msgstr "%s: ошибочное значение LC_COLLATE\n"
-
-#~ msgid "%s: invalid LC_CTYPE setting\n"
-#~ msgstr "%s: ошибочное значение LC_CTYPE\n"
-
-#~ msgid "Maximum length of locale name:        %u\n"
-#~ msgstr "Максимальная длина имени локали:      %u\n"
-
-#~ msgid "LC_COLLATE:                           %s\n"
-#~ msgstr "LC_COLLATE:                           %s\n"
-
-#~ msgid "LC_CTYPE:                             %s\n"
-#~ msgstr "LC_CTYPE:                             %s\n"
-
-#~ msgid "Maximum number of function arguments: %u\n"
-#~ msgstr "Максимальное число аргументов функции:       %u\n"
