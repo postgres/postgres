@@ -48,6 +48,7 @@
 #ifdef USE_LIBXML
 #include <libxml/chvalid.h>
 #include <libxml/parser.h>
+#include <libxml/parserInternals.h>
 #include <libxml/tree.h>
 #include <libxml/uri.h>
 #include <libxml/xmlerror.h>
@@ -99,8 +100,12 @@ struct PgXmlErrorContext
 	/* previous libxml error handling state (saved by pg_xml_init) */
 	xmlStructuredErrorFunc saved_errfunc;
 	void	   *saved_errcxt;
+	/* previous libxml entity handler (saved by pg_xml_init) */
+	xmlExternalEntityLoader saved_entityfunc;
 };
 
+static xmlParserInputPtr xmlPgEntityLoader(const char *URL, const char *ID,
+				  xmlParserCtxtPtr ctxt);
 static void xml_errorHandler(void *data, xmlErrorPtr error);
 static void xml_ereport_by_code(int level, int sqlcode,
 					const char *msg, int errcode);
@@ -985,6 +990,13 @@ pg_xml_init(PgXmlStrictness strictness)
 						 " being used is not compatible with the libxml2"
 						 " header files that PostgreSQL was built with.")));
 
+	/*
+	 * Also, install an entity loader to prevent unwanted fetches of external
+	 * files and URLs.
+	 */
+	errcxt->saved_entityfunc = xmlGetExternalEntityLoader();
+	xmlSetExternalEntityLoader(xmlPgEntityLoader);
+
 	return errcxt;
 }
 
@@ -1027,8 +1039,9 @@ pg_xml_done(PgXmlErrorContext *errcxt, bool isError)
 	if (cur_errcxt != (void *) errcxt)
 		elog(WARNING, "libxml error handling state is out of sync with xml.c");
 
-	/* Restore the saved handler */
+	/* Restore the saved handlers */
 	xmlSetStructuredErrorFunc(errcxt->saved_errcxt, errcxt->saved_errfunc);
+	xmlSetExternalEntityLoader(errcxt->saved_entityfunc);
 
 	/*
 	 * Mark the struct as invalid, just in case somebody somehow manages to
@@ -1473,6 +1486,25 @@ xml_pstrdup(const char *string)
 
 
 /*
+ * xmlPgEntityLoader --- entity loader callback function
+ *
+ * Silently prevent any external entity URL from being loaded.  We don't want
+ * to throw an error, so instead make the entity appear to expand to an empty
+ * string.
+ *
+ * We would prefer to allow loading entities that exist in the system's
+ * global XML catalog; but the available libxml2 APIs make that a complex
+ * and fragile task.  For now, just shut down all external access.
+ */
+static xmlParserInputPtr
+xmlPgEntityLoader(const char *URL, const char *ID,
+				  xmlParserCtxtPtr ctxt)
+{
+	return xmlNewStringInputStream(ctxt, (const xmlChar *) "");
+}
+
+
+/*
  * xml_ereport --- report an XML-related error
  *
  * The "msg" is the SQL-level message; some can be adopted from the SQL/XML
@@ -1566,7 +1598,14 @@ xml_errorHandler(void *data, xmlErrorPtr error)
 		case XML_FROM_NONE:
 		case XML_FROM_MEMORY:
 		case XML_FROM_IO:
-			/* Accept error regardless of the parsing purpose */
+			/*
+			 * Suppress warnings about undeclared entities.  We need to do
+			 * this to avoid problems due to not loading DTD definitions.
+			 */
+			if (error->code == XML_WAR_UNDECLARED_ENTITY)
+				return;
+
+			/* Otherwise, accept error regardless of the parsing purpose */
 			break;
 
 		default:
