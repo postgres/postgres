@@ -1,5 +1,4 @@
 # <pre>
-# @(#)asia	8.73
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
@@ -102,7 +101,7 @@ Zone	Asia/Kabul	4:36:48 -	LMT	1890
 # From Alexander Krivenyshev (2012-02-10):
 # According to News Armenia, on Feb 9, 2012,
 # http://newsarmenia.ru/society/20120209/42609695.html
-# 
+#
 # The Armenia National Assembly adopted final reading of Amendments to the
 # Law "On procedure of calculation time on the territory of the Republic of
 # Armenia" according to which Armenia [is] abolishing Daylight Saving Time.
@@ -182,15 +181,15 @@ Zone	Asia/Bahrain	3:22:20 -	LMT	1920		# Al Manamah
 # </a>
 
 # From A. N. M. Kamrus Saadat (2009-06-15):
-# Finally we've got the official mail regarding DST start time where DST start 
-# time is mentioned as Jun 19 2009, 23:00 from BTRC (Bangladesh 
-# Telecommunication Regulatory Commission). 
+# Finally we've got the official mail regarding DST start time where DST start
+# time is mentioned as Jun 19 2009, 23:00 from BTRC (Bangladesh
+# Telecommunication Regulatory Commission).
 #
 # No DST end date has been announced yet.
 
 # From Alexander Krivenyshev (2009-09-25):
-# Bangladesh won't go back to Standard Time from October 1, 2009, 
-# instead it will continue DST measure till the cabinet makes a fresh decision. 
+# Bangladesh won't go back to Standard Time from October 1, 2009,
+# instead it will continue DST measure till the cabinet makes a fresh decision.
 #
 # Following report by same newspaper-"The Daily Star Friday":
 # "DST change awaits cabinet decision-Clock won't go back by 1-hr from Oct 1"
@@ -204,8 +203,8 @@ Zone	Asia/Bahrain	3:22:20 -	LMT	1920		# Al Manamah
 
 # From Steffen Thorsen (2009-10-13):
 # IANS (Indo-Asian News Service) now reports:
-# Bangladesh has decided that the clock advanced by an hour to make 
-# maximum use of daylight hours as an energy saving measure would 
+# Bangladesh has decided that the clock advanced by an hour to make
+# maximum use of daylight hours as an energy saving measure would
 # "continue for an indefinite period."
 #
 # One of many places where it is published:
@@ -233,7 +232,7 @@ Zone	Asia/Bahrain	3:22:20 -	LMT	1920		# Al Manamah
 
 # From Alexander Krivenyshev (2010-03-22):
 # According to Bangladesh newspaper "The Daily Star,"
-# Cabinet cancels Daylight Saving Time 
+# Cabinet cancels Daylight Saving Time
 # <a href="http://www.thedailystar.net/newDesign/latest_news.php?nid=22817">
 # http://www.thedailystar.net/newDesign/latest_news.php?nid=22817
 # </a>
@@ -361,11 +360,11 @@ Rule	PRC	1987	1991	-	Apr	Sun>=10	0:00	1:00	D
 # observing daylight saving time in 1986.
 #
 # From Thomas S. Mullaney (2008-02-11):
-# I think you're combining two subjects that need to treated 
-# separately: daylight savings (which, you're correct, wasn't 
-# implemented until the 1980s) and the unified time zone centered near 
-# Beijing (which was implemented in 1949). Briefly, there was also a 
-# "Lhasa Time" in Tibet and "Urumqi Time" in Xinjiang. The first was 
+# I think you're combining two subjects that need to treated
+# separately: daylight savings (which, you're correct, wasn't
+# implemented until the 1980s) and the unified time zone centered near
+# Beijing (which was implemented in 1949). Briefly, there was also a
+# "Lhasa Time" in Tibet and "Urumqi Time" in Xinjiang. The first was
 # ceased, and the second eventually recognized (again, in the 1980s).
 #
 # From Paul Eggert (2008-06-30):
@@ -502,7 +501,7 @@ Zone	Asia/Kashgar	5:03:56	-	LMT	1928 # or Kashi or Kaxgar
 # as of 2009-10-28:
 # Year        Period
 # 1941        1 Apr to 30 Sep
-# 1942        Whole year 
+# 1942        Whole year
 # 1943        Whole year
 # 1944        Whole year
 # 1945        Whole year
@@ -593,16 +592,16 @@ Zone	Asia/Hong_Kong	7:36:36 -	LMT	1904 Oct 30
 # From Arthur David Olson (2010-04-07):
 # Here's Google's translation of the table at the bottom of the "summert.htm" page:
 # Decade 	                                                    Name                      Start and end date
-# Republic of China 34 years to 40 years (AD 1945-1951 years) Summer Time               May 1 to September 30 
-# 41 years of the Republic of China (AD 1952)                 Daylight Saving Time      March 1 to October 31 
-# Republic of China 42 years to 43 years (AD 1953-1954 years) Daylight Saving Time      April 1 to October 31 
-# In the 44 years to 45 years (AD 1955-1956 years)            Daylight Saving Time      April 1 to September 30 
-# Republic of China 46 years to 48 years (AD 1957-1959)       Summer Time               April 1 to September 30 
-# Republic of China 49 years to 50 years (AD 1960-1961)       Summer Time               June 1 to September 30 
-# Republic of China 51 years to 62 years (AD 1962-1973 years) Stop Summer Time 
-# Republic of China 63 years to 64 years (1974-1975 AD)       Daylight Saving Time      April 1 to September 30 
-# Republic of China 65 years to 67 years (1976-1978 AD)       Stop Daylight Saving Time 
-# Republic of China 68 years (AD 1979)                        Daylight Saving Time      July 1 to September 30 
+# Republic of China 34 years to 40 years (AD 1945-1951 years) Summer Time               May 1 to September 30
+# 41 years of the Republic of China (AD 1952)                 Daylight Saving Time      March 1 to October 31
+# Republic of China 42 years to 43 years (AD 1953-1954 years) Daylight Saving Time      April 1 to October 31
+# In the 44 years to 45 years (AD 1955-1956 years)            Daylight Saving Time      April 1 to September 30
+# Republic of China 46 years to 48 years (AD 1957-1959)       Summer Time               April 1 to September 30
+# Republic of China 49 years to 50 years (AD 1960-1961)       Summer Time               June 1 to September 30
+# Republic of China 51 years to 62 years (AD 1962-1973 years) Stop Summer Time
+# Republic of China 63 years to 64 years (1974-1975 AD)       Daylight Saving Time      April 1 to September 30
+# Republic of China 65 years to 67 years (1976-1978 AD)       Stop Daylight Saving Time
+# Republic of China 68 years (AD 1979)                        Daylight Saving Time      July 1 to September 30
 # Republic of China since 69 years (AD 1980)                  Stop Daylight Saving Time
 
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
@@ -1836,15 +1835,15 @@ Zone	Asia/Muscat	3:54:20 -	LMT	1920
 # shown 8 per cent higher consumption of electricity.
 
 # From Alex Krivenyshev (2008-05-15):
-# 
-# Here is an article that Pakistan plan to introduce Daylight Saving Time 
+#
+# Here is an article that Pakistan plan to introduce Daylight Saving Time
 # on June 1, 2008 for 3 months.
-# 
-# "... The federal cabinet on Wednesday announced a new conservation plan to help 
-# reduce load shedding by approving the closure of commercial centres at 9pm and 
-# moving clocks forward by one hour for the next three months. 
+#
+# "... The federal cabinet on Wednesday announced a new conservation plan to help
+# reduce load shedding by approving the closure of commercial centres at 9pm and
+# moving clocks forward by one hour for the next three months.
 # ...."
-# 
+#
 # <a href="http://www.worldtimezone.net/dst_news/dst_news_pakistan01.html">
 # http://www.worldtimezone.net/dst_news/dst_news_pakistan01.html
 # </a>
@@ -1904,7 +1903,7 @@ Zone	Asia/Muscat	3:54:20 -	LMT	1920
 # Government has decided to restore the previous time by moving the
 # clocks backward by one hour from October 1. A formal announcement to
 # this effect will be made after the Prime Minister grants approval in
-# this regard." 
+# this regard."
 # <a href="http://www.thenews.com.pk/updates.asp?id=87168">
 # http://www.thenews.com.pk/updates.asp?id=87168
 # </a>
@@ -2200,7 +2199,7 @@ Zone	Asia/Karachi	4:28:12 -	LMT	1907
 # <a href="http://www.maannews.net/eng/ViewDetails.aspx?ID=306795">
 # http://www.maannews.net/eng/ViewDetails.aspx?ID=306795
 # </a>
-# the clocks were set back one hour at 2010-08-11 00:00:00 local time in 
+# the clocks were set back one hour at 2010-08-11 00:00:00 local time in
 # Gaza and the West Bank.
 # Some more background info:
 # <a href="http://www.timeanddate.com/news/time/westbank-gaza-end-dst-2010.html">
@@ -2239,7 +2238,7 @@ Zone	Asia/Karachi	4:28:12 -	LMT	1907
 # The rules for Egypt are stolen from the `africa' file.
 
 # From Steffen Thorsen (2011-09-30):
-# West Bank did end Daylight Saving Time this morning/midnight (2011-09-30 
+# West Bank did end Daylight Saving Time this morning/midnight (2011-09-30
 # 00:00).
 # So West Bank and Gaza now have the same time again.
 #
@@ -2513,19 +2512,19 @@ Rule	Syria	2007	only	-	Mar	lastFri	0:00	1:00	S
 # having it between Wednesday and Thursday (two workdays in Syria) since the
 # weekend in Syria is not Saturday and Sunday, but Friday and Saturday. So now
 # it is implemented at midnight of the last workday before weekend...
-# 
+#
 # From Steffen Thorsen (2007-10-27):
 # Jesper Norgaard Welen wrote:
-# 
+#
 # > "Winter local time in Syria will be observed at midnight of Thursday 1
 # > November 2007, and the clock will be put back 1 hour."
-# 
+#
 # I found confirmation on this in this gov.sy-article (Arabic):
 # http://wehda.alwehda.gov.sy/_print_veiw.asp?FileName=12521710520070926111247
-# 
+#
 # which using Google's translate tools says:
-# Council of Ministers also approved the commencement of work on 
-# identifying the winter time as of Friday, 2/11/2007 where the 60th 
+# Council of Ministers also approved the commencement of work on
+# identifying the winter time as of Friday, 2/11/2007 where the 60th
 # minute delay at midnight Thursday 1/11/2007.
 Rule	Syria	2007	only	-	Nov	 Fri>=1	0:00	0	-
 
@@ -2591,8 +2590,8 @@ Rule	Syria	2007	only	-	Nov	 Fri>=1	0:00	0	-
 # </a>
 
 # From Steffen Thorsen (2009-10-27):
-# The Syrian Arab News Network on 2009-09-29 reported that Syria will 
-# revert back to winter (standard) time on midnight between Thursday 
+# The Syrian Arab News Network on 2009-09-29 reported that Syria will
+# revert back to winter (standard) time on midnight between Thursday
 # 2009-10-29 and Friday 2009-10-30:
 # <a href="http://www.sana.sy/ara/2/2009/09/29/247012.htm">
 # http://www.sana.sy/ara/2/2009/09/29/247012.htm (Arabic)
