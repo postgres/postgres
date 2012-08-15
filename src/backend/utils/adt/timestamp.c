@@ -3710,10 +3710,17 @@ interval_trunc(PG_FUNCTION_ARGS)
 					break;
 
 				default:
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("interval units \"%s\" not supported",
-									lowunits)));
+					if (val == DTK_WEEK)
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("interval units \"%s\" not supported "
+									"because months usually have fractional weeks",
+										lowunits)));
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("interval units \"%s\" not supported",
+										lowunits)));
 			}
 
 			if (tm2interval(tm, fsec, result) != 0)

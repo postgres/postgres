@@ -7051,11 +7051,6 @@ date_trunc('<replaceable>field</replaceable>', <replaceable>source</replaceable>
    </para>
 
    <para>
-    <literal>week</literal> is not supported for <type>interval</>
-    values because months usually have fractional weeks.
-   </para>
-
-   <para>
     Examples:
 <screen>
 SELECT date_trunc('hour', TIMESTAMP '2001-02-16 20:38:40');
