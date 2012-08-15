@@ -1514,6 +1514,11 @@ do_connect(char *dbname, char *user, char *host, char *port)
 
 	if (!o_conn && (!dbname || !user || !host || !port))
 	{
+		/*
+		 *	We don't know the supplied connection parameters and don't want
+		 *	to connect to the wrong database by using defaults, so require
+		 *	all parameters to be specified.
+		 */
 		fputs(_("All connection parameters must be supplied because no database connection exists\n"), stderr);
 		return false;
 	}
