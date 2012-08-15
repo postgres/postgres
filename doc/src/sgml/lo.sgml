@@ -76,7 +76,15 @@ CREATE TRIGGER t_raster BEFORE UPDATE OR DELETE ON image
   <para>
    For each column that will contain unique references to large objects,
    create a <literal>BEFORE UPDATE OR DELETE</> trigger, and give the column
-   name as the sole trigger argument.  If you need multiple <type>lo</>
+   name as the sole trigger argument.  You can also restrict the trigger
+   to only execute on updates to the column with:
+
+<programlisting>
+CREATE TRIGGER t_raster BEFORE UPDATE OF raster OR DELETE ON image
+    FOR EACH ROW EXECUTE PROCEDURE lo_manage(raster);
+</programlisting>
+
+   If you need multiple <type>lo</>
    columns in the same table, create a separate trigger for each one,
    remembering to give a different name to each trigger on the same table.
   </para>
