@@ -3397,7 +3397,7 @@ UserAbortTransactionBlock(void)
 
 			/*
 			 * The user issued ABORT when not inside a transaction. Issue a
-			 * WARNING and go to abort state.  The upcoming call to
+			 * NOTICE and go to abort state.  The upcoming call to
 			 * CommitTransactionCommand() will then put us back into the
 			 * default state.
 			 */
