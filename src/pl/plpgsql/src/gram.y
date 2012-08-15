@@ -746,7 +746,7 @@ decl_defkey		: assign_operator
 				| K_DEFAULT
 				;
 
-assign_operator	: '='
+assign_operator	: '='	/* not documented because it might be removed someday */
 				| COLON_EQUALS
 				;
 
