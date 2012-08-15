@@ -178,25 +178,59 @@ join_search_one_level(PlannerInfo *root, int level)
 	}
 
 	/*----------
-	 * Normally, we should always have made at least one join of the current
-	 * level.  However, when special joins are involved, there may be no legal
-	 * way to make an N-way join for some values of N.	For example consider
+	 * Last-ditch effort: if we failed to find any usable joins so far, force
+	 * a set of cartesian-product joins to be generated.  This handles the
+	 * special case where all the available rels have join clauses but we
+	 * cannot use any of those clauses yet.  This can only happen when we are
+	 * considering a join sub-problem (a sub-joinlist) and all the rels in the
+	 * sub-problem have only join clauses with rels outside the sub-problem.
+	 * An example is
 	 *
-	 * SELECT ... FROM t1 WHERE
-	 *	 x IN (SELECT ... FROM t2,t3 WHERE ...) AND
-	 *	 y IN (SELECT ... FROM t4,t5 WHERE ...)
+	 *		SELECT ... FROM a INNER JOIN b ON TRUE, c, d, ...
+	 *		WHERE a.w = c.x and b.y = d.z;
 	 *
-	 * We will flatten this query to a 5-way join problem, but there are
-	 * no 4-way joins that join_is_legal() will consider legal.  We have
-	 * to accept failure at level 4 and go on to discover a workable
-	 * bushy plan at level 5.
-	 *
-	 * However, if there are no special joins then join_is_legal() should
-	 * never fail, and so the following sanity check is useful.
+	 * If the "a INNER JOIN b" sub-problem does not get flattened into the
+	 * upper level, we must be willing to make a cartesian join of a and b;
+	 * but the code above will not have done so, because it thought that both
+	 * a and b have joinclauses.  We consider only left-sided and right-sided
+	 * cartesian joins in this case (no bushy).
 	 *----------
 	 */
-	if (joinrels[level] == NIL && root->join_info_list == NIL)
-		elog(ERROR, "failed to build any %d-way joins", level);
+	if (joinrels[level] == NIL)
+	{
+		/*
+		 * This loop is just like the first one, except we always call
+		 * make_rels_by_clauseless_joins().
+		 */
+		foreach(r, joinrels[level - 1])
+		{
+			RelOptInfo *old_rel = (RelOptInfo *) lfirst(r);
+
+			make_rels_by_clauseless_joins(root,
+										  old_rel,
+										  list_head(joinrels[1]));
+		}
+
+		/*----------
+		 * When special joins are involved, there may be no legal way
+		 * to make an N-way join for some values of N.	For example consider
+		 *
+		 * SELECT ... FROM t1 WHERE
+		 *	 x IN (SELECT ... FROM t2,t3 WHERE ...) AND
+		 *	 y IN (SELECT ... FROM t4,t5 WHERE ...)
+		 *
+		 * We will flatten this query to a 5-way join problem, but there are
+		 * no 4-way joins that join_is_legal() will consider legal.  We have
+		 * to accept failure at level 4 and go on to discover a workable
+		 * bushy plan at level 5.
+		 *
+		 * However, if there are no special joins then join_is_legal() should
+		 * never fail, and so the following sanity check is useful.
+		 *----------
+		 */
+		if (joinrels[level] == NIL && root->join_info_list == NIL)
+			elog(ERROR, "failed to build any %d-way joins", level);
+	}
 }
 
 /*
@@ -724,6 +758,13 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
  * could be merged with that function, but it seems clearer to separate the
  * two concerns.  We need this test because there are degenerate cases where
  * a clauseless join must be performed to satisfy join-order restrictions.
+ *
+ * Note: this is only a problem if one side of a degenerate outer join
+ * contains multiple rels, or a clauseless join is required within an
+ * IN/EXISTS RHS; else we will find a join path via the "last ditch" case in
+ * join_search_one_level().  We could dispense with this test if we were
+ * willing to try bushy plans in the "last ditch" case, but that seems much
+ * less efficient.
  */
 bool
 have_join_order_restriction(PlannerInfo *root,
