@@ -205,7 +205,7 @@ ExecInitCteScan(CteScan *node, EState *estate, int eflags)
 	 * The Param slot associated with the CTE query is used to hold a pointer
 	 * to the CteState of the first CteScan node that initializes for this
 	 * CTE.  This node will be the one that holds the shared state for all the
-	 * CTEs.
+	 * CTEs, particularly the shared tuplestore.
 	 */
 	prmdata = &(estate->es_param_exec_vals[node->cteParam]);
 	Assert(prmdata->execPlan == NULL);
@@ -294,7 +294,10 @@ ExecEndCteScan(CteScanState *node)
 	 * If I am the leader, free the tuplestore.
 	 */
 	if (node->leader == node)
+	{
 		tuplestore_end(node->cte_table);
+		node->cte_table = NULL;
+	}
 }
 
 /* ----------------------------------------------------------------
@@ -312,26 +315,26 @@ ExecReScanCteScan(CteScanState *node)
 
 	ExecScanReScan(&node->ss);
 
-	if (node->leader == node)
+	/*
+	 * Clear the tuplestore if a new scan of the underlying CTE is required.
+	 * This implicitly resets all the tuplestore's read pointers.  Note that
+	 * multiple CTE nodes might redundantly clear the tuplestore; that's OK,
+	 * and not unduly expensive.  We'll stop taking this path as soon as
+	 * somebody has attempted to read something from the underlying CTE
+	 * (thereby causing its chgParam to be cleared).
+	 */
+	if (node->leader->cteplanstate->chgParam != NULL)
 	{
-		/*
-		 * The leader is responsible for clearing the tuplestore if a new scan
-		 * of the underlying CTE is required.
-		 */
-		if (node->cteplanstate->chgParam != NULL)
-		{
-			tuplestore_clear(tuplestorestate);
-			node->eof_cte = false;
-		}
-		else
-		{
-			tuplestore_select_read_pointer(tuplestorestate, node->readptr);
-			tuplestore_rescan(tuplestorestate);
-		}
+		tuplestore_clear(tuplestorestate);
+		node->leader->eof_cte = false;
 	}
 	else
 	{
-		/* Not leader, so just rewind my own pointer */
+		/*
+		 * Else, just rewind my own pointer.  Either the underlying CTE
+		 * doesn't need a rescan (and we can re-read what's in the tuplestore
+		 * now), or somebody else already took care of it.
+		 */
 		tuplestore_select_read_pointer(tuplestorestate, node->readptr);
 		tuplestore_rescan(tuplestorestate);
 	}
