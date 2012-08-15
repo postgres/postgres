@@ -2225,6 +2225,17 @@ AlterExtensionNamespace(List *names, const char *newschema)
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, ACL_KIND_NAMESPACE, newschema);
 
+	/*
+	 * If the schema is currently a member of the extension, disallow moving
+	 * the extension into the schema.  That would create a dependency loop.
+	 */
+	if (getExtensionOfObject(NamespaceRelationId, nspOid) == extensionOid)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("cannot move extension \"%s\" into schema \"%s\" "
+						"because the extension contains the schema",
+						extensionName, newschema)));
+
 	/* Locate the pg_extension tuple */
 	extRel = heap_open(ExtensionRelationId, RowExclusiveLock);
 
@@ -2690,6 +2701,19 @@ ExecAlterExtensionContentsStmt(AlterExtensionContentsStmt *stmt)
 							get_extension_name(oldExtension))));
 
 		/*
+		 * Prevent a schema from being added to an extension if the schema
+		 * contains the extension.	That would create a dependency loop.
+		 */
+		if (object.classId == NamespaceRelationId &&
+			object.objectId == get_extension_schema(extension.objectId))
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("cannot add schema \"%s\" to extension \"%s\" "
+							"because the schema contains the extension",
+							get_namespace_name(object.objectId),
+							stmt->extname)));
+
+		/*
 		 * OK, add the dependency.
 		 */
 		recordDependencyOn(&object, &extension, DEPENDENCY_EXTENSION);
@@ -2742,8 +2766,8 @@ AlterExtensionOwner_internal(Relation rel, Oid extensionOid, Oid newOwnerId)
 {
 	Form_pg_extension extForm;
 	HeapTuple	tup;
-	SysScanDesc	scandesc;
-	ScanKeyData	entry[1];
+	SysScanDesc scandesc;
+	ScanKeyData entry[1];
 
 	Assert(RelationGetRelid(rel) == ExtensionRelationId);
 
@@ -2811,7 +2835,7 @@ AlterExtensionOwner_oid(Oid extensionOid, Oid newOwnerId)
 	Relation	rel;
 
 	rel = heap_open(ExtensionRelationId, RowExclusiveLock);
-	
+
 	AlterExtensionOwner_internal(rel, extensionOid, newOwnerId);
 
 	heap_close(rel, NoLock);
