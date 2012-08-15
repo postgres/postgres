@@ -56,6 +56,8 @@ scanstr(const char *s)
 			 * appear in pairs, so there should be another character.
 			 */
 			i++;
+			/* The bootstrap parser is not as smart, so check here. */
+			Assert(s[i] == '\'');
 			newStr[j] = s[i];
 		}
 		else if (s[i] == '\\')

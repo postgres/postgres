@@ -80,7 +80,7 @@
    Records cannot be continued across lines.
    A record is made
    up of a number of fields which are separated by spaces and/or tabs.
-   Fields can contain white space if the field value is quoted.
+   Fields can contain white space if the field value is double-quoted.
    Quoting one of the keywords in a database, user, or address field (e.g.,
    <literal>all</> or <literal>replication</>) makes the word lose its special
    character, and just match a database, user, or host with that name.

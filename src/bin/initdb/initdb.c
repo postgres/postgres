@@ -1395,7 +1395,7 @@ bootstrap_template1(void)
 	bki_lines = replace_token(bki_lines, "FLOAT8PASSBYVAL",
 							  FLOAT8PASSBYVAL ? "true" : "false");
 
-	bki_lines = replace_token(bki_lines, "POSTGRES", username);
+	bki_lines = replace_token(bki_lines, "POSTGRES", escape_quotes(username));
 
 	bki_lines = replace_token(bki_lines, "ENCODING", encodingid);
 
@@ -2043,8 +2043,8 @@ setup_privileges(void)
 
 	PG_CMD_OPEN;
 
-	priv_lines = replace_token(privileges_setup,
-							   "$POSTGRES_SUPERUSERNAME", username);
+	priv_lines = replace_token(privileges_setup, "$POSTGRES_SUPERUSERNAME",
+							   escape_quotes(username));
 	for (line = priv_lines; *line != NULL; line++)
 		PG_CMD_PUTS(*line);
 
@@ -3056,7 +3056,6 @@ main(int argc, char *argv[])
 	canonicalize_path(pg_data);
 
 #ifdef WIN32
-
 	/*
 	 * Before we execute another program, make sure that we are running with a
 	 * restricted token. If not, re-execute ourselves with one.
