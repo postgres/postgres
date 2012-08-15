@@ -69,7 +69,7 @@ CREATE SERVER <replaceable class="parameter">server_name</replaceable> [ TYPE '<
     <term><replaceable class="parameter">server_type</replaceable></term>
     <listitem>
      <para>
-      Optional server type.
+      Optional server type, potentially useful to foreign-data wrappers.
      </para>
     </listitem>
    </varlistentry>
@@ -78,7 +78,7 @@ CREATE SERVER <replaceable class="parameter">server_name</replaceable> [ TYPE '<
     <term><replaceable class="parameter">server_version</replaceable></term>
     <listitem>
      <para>
-      Optional server version.
+      Optional server version, potentially useful to foreign-data wrappers.
      </para>
     </listitem>
    </varlistentry>
