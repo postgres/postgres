@@ -2375,7 +2375,7 @@ LANGUAGE SQL IMMUTABLE STRICT;
     <literal>b</literal> inputs will be concatenated, and forced to either
     upper or lower case depending on the <literal>uppercase</literal>
     parameter.  The remaining details of this function
-    definition are unimportant here (see <xref linkend="extend"> for
+    definition are not important here (see <xref linkend="extend"> for
     more information).
    </para>
 

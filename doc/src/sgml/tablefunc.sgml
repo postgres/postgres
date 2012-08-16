@@ -516,7 +516,7 @@ row_name   extra   cat1   cat2   cat3   cat4
     In practice the <parameter>source_sql</parameter> query should always
     specify <literal>ORDER BY 1</> to ensure that values with the same
     <structfield>row_name</structfield> are brought together.  However,
-    ordering of the categories within a group is unimportant.
+    ordering of the categories within a group is not important.
     Also, it is essential to be sure that the order of the
     <parameter>category_sql</parameter> query's output matches the specified
     output column order.

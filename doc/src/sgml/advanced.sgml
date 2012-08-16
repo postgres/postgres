@@ -173,7 +173,7 @@ UPDATE branches SET balance = balance + 100.00
    </para>
 
    <para>
-    The details of these commands are unimportant here; the important
+    The details of these commands are not important here; the important
     point is that there are several separate updates involved to accomplish
     this rather simple operation.  Our bank's officers will want to be
     assured that either all these updates happen, or none of them happen.
@@ -428,7 +428,7 @@ SELECT depname, empno, salary, rank() OVER (PARTITION BY depname ORDER BY salary
 
    <para>
     We already saw that <literal>ORDER BY</> can be omitted if the ordering
-    of rows is unimportant.  It is also possible to omit <literal>PARTITION
+    of rows is not important.  It is also possible to omit <literal>PARTITION
     BY</>, in which case there is just one partition containing all the rows.
    </para>
 
