@@ -135,7 +135,8 @@ CREATE FOREIGN TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name
     <listitem>
      <para>
       The name of an existing server for the foreign table.
-     </para>
+      For details on defining a server, see <xref
+      linkend="SQL-CREATESERVER">.
     </listitem>
    </varlistentry>
 
