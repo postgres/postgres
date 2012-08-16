@@ -160,7 +160,7 @@ Europe &amp; Russia*@ &amp; !Transportation
      This will match paths that contain the label <literal>Europe</literal> and
      any label beginning with <literal>Russia</literal> (case-insensitive),
      but not paths containing the label <literal>Transportation</literal>.
-     The location of these words within the path is not important.
+     The location of these words within the path is unimportant.
      Also, when <literal>%</> is used, the word can be matched to any
      underscore-separated word within a label, regardless of position.
     </para>
