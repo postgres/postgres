@@ -426,8 +426,7 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 			RangeBound	lower,
 						upper;
 			bool		empty;
-			RangeType  *range;
-
+			RangeType  *range = NULL;
 			/* Restrictions on range bounds according to scan strategy */
 			RangeBound *minLower = NULL,
 					   *maxLower = NULL,
