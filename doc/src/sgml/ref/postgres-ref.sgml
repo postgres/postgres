@@ -179,8 +179,8 @@ PostgreSQL documentation
       <term><option>-D <replaceable class="parameter">datadir</replaceable></option></term>
       <listitem>
        <para>
-        Specifies the file system location of the data directory or
-        configuration file(s).  See
+        Specifies the file system location of the database
+        configuration files.  See
         <xref linkend="runtime-config-file-locations"> for details.
        </para>
       </listitem>

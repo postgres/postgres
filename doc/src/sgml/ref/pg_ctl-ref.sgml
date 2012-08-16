@@ -261,7 +261,7 @@ PostgreSQL documentation
       <term><option>--pgdata <replaceable class="parameter">datadir</replaceable></option></term>
       <listitem>
        <para>
-        Specifies the file system location of the database files.  If
+        Specifies the file system location of the database configuration files.  If
         this is omitted, the environment variable
         <envar>PGDATA</envar> is used.
        </para>

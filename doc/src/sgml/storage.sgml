@@ -19,7 +19,8 @@ directories.
 </para>
 
 <para>
-All the data needed for a database cluster is stored within the cluster's data
+Traditionally, the configuration and data files used by a database
+cluster are stored together within the cluster's data
 directory, commonly referred to as <varname>PGDATA</> (after the name of the
 environment variable that can be used to define it).  A common location for
 <varname>PGDATA</> is <filename>/var/lib/pgsql/data</>.  Multiple clusters,
@@ -33,7 +34,7 @@ these required items, the cluster configuration files
 <filename>postgresql.conf</filename>, <filename>pg_hba.conf</filename>, and
 <filename>pg_ident.conf</filename> are traditionally stored in
 <varname>PGDATA</> (although in <productname>PostgreSQL</productname> 8.0 and
-later, it is possible to keep them elsewhere).
+later, it is possible to place them elsewhere).
 </para>
 
 <table tocentry="1" id="pgdata-contents-table">
