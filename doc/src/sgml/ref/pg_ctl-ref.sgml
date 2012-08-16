@@ -188,7 +188,9 @@ PostgreSQL documentation
   <para>
    <option>restart</option> mode effectively executes a stop followed
    by a start.  This allows changing the <command>postgres</command>
-   command-line options.
+   command-line options.  <option>restart</option> might fail if
+   relative paths specified were specified on the command-line during
+   server start.
   </para>
 
   <para>
