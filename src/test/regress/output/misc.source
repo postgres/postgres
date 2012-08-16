@@ -675,6 +675,7 @@ SELECT user_relns() AS user_relns
  tenk2
  test_range_excl
  test_range_gist
+ test_range_spgist
  test_tsvector
  text_tbl
  time_tbl
@@ -685,7 +686,7 @@ SELECT user_relns() AS user_relns
  toyemp
  varchar_tbl
  xacttest
-(107 rows)
+(108 rows)
 
 SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer')));
  name 

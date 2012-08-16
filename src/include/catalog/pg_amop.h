@@ -767,4 +767,17 @@ DATA(insert (	4017   25 25 12 s	665 4000 0 ));
 DATA(insert (	4017   25 25 14 s	667 4000 0 ));
 DATA(insert (	4017   25 25 15 s	666 4000 0 ));
 
+/*
+ * SP-GiST range_ops
+ */
+DATA(insert (	3474   3831 3831 1 s	3893 4000 0 ));
+DATA(insert (	3474   3831 3831 2 s	3895 4000 0 ));
+DATA(insert (	3474   3831 3831 3 s	3888 4000 0 ));
+DATA(insert (	3474   3831 3831 4 s	3896 4000 0 ));
+DATA(insert (	3474   3831 3831 5 s	3894 4000 0 ));
+DATA(insert (	3474   3831 3831 7 s	3890 4000 0 ));
+DATA(insert (	3474   3831 3831 8 s	3892 4000 0 ));
+DATA(insert (	3474   3831 2283 16 s	3889 4000 0 ));
+DATA(insert (	3474   3831 3831 18 s	3882 4000 0 ));
+
 #endif   /* PG_AMOP_H */

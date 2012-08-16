@@ -821,6 +821,225 @@ select count(*) from test_range_gist where ir -|- int4range(100,500);
      5
 (1 row)
 
+-- test SP-GiST index that's been built incrementally
+create table test_range_spgist(ir int4range);
+create index test_range_spgist_idx on test_range_spgist using spgist (ir);
+insert into test_range_spgist select int4range(g, g+10) from generate_series(1,2000) g;
+insert into test_range_spgist select 'empty'::int4range from generate_series(1,500) g;
+insert into test_range_spgist select int4range(g, g+10000) from generate_series(1,1000) g;
+insert into test_range_spgist select 'empty'::int4range from generate_series(1,500) g;
+insert into test_range_spgist select int4range(NULL,g*10,'(]') from generate_series(1,100) g;
+insert into test_range_spgist select int4range(g*10,NULL,'(]') from generate_series(1,100) g;
+insert into test_range_spgist select int4range(g, g+10) from generate_series(1,2000) g;
+-- first, verify non-indexed results
+SET enable_seqscan    = t;
+SET enable_indexscan  = f;
+SET enable_bitmapscan = f;
+select count(*) from test_range_spgist where ir @> 'empty'::int4range;
+ count 
+-------
+  6200
+(1 row)
+
+select count(*) from test_range_spgist where ir = int4range(10,20);
+ count 
+-------
+     2
+(1 row)
+
+select count(*) from test_range_spgist where ir @> 10;
+ count 
+-------
+   130
+(1 row)
+
+select count(*) from test_range_spgist where ir @> int4range(10,20);
+ count 
+-------
+   111
+(1 row)
+
+select count(*) from test_range_spgist where ir && int4range(10,20);
+ count 
+-------
+   158
+(1 row)
+
+select count(*) from test_range_spgist where ir <@ int4range(10,50);
+ count 
+-------
+  1062
+(1 row)
+
+select count(*) from test_range_spgist where ir << int4range(100,500);
+ count 
+-------
+   189
+(1 row)
+
+select count(*) from test_range_spgist where ir >> int4range(100,500);
+ count 
+-------
+  3554
+(1 row)
+
+select count(*) from test_range_spgist where ir &< int4range(100,500);
+ count 
+-------
+  1029
+(1 row)
+
+select count(*) from test_range_spgist where ir &> int4range(100,500);
+ count 
+-------
+  4794
+(1 row)
+
+select count(*) from test_range_spgist where ir -|- int4range(100,500);
+ count 
+-------
+     5
+(1 row)
+
+-- now check same queries using index
+SET enable_seqscan    = f;
+SET enable_indexscan  = t;
+SET enable_bitmapscan = f;
+select count(*) from test_range_spgist where ir @> 'empty'::int4range;
+ count 
+-------
+  6200
+(1 row)
+
+select count(*) from test_range_spgist where ir = int4range(10,20);
+ count 
+-------
+     2
+(1 row)
+
+select count(*) from test_range_spgist where ir @> 10;
+ count 
+-------
+   130
+(1 row)
+
+select count(*) from test_range_spgist where ir @> int4range(10,20);
+ count 
+-------
+   111
+(1 row)
+
+select count(*) from test_range_spgist where ir && int4range(10,20);
+ count 
+-------
+   158
+(1 row)
+
+select count(*) from test_range_spgist where ir <@ int4range(10,50);
+ count 
+-------
+  1062
+(1 row)
+
+select count(*) from test_range_spgist where ir << int4range(100,500);
+ count 
+-------
+   189
+(1 row)
+
+select count(*) from test_range_spgist where ir >> int4range(100,500);
+ count 
+-------
+  3554
+(1 row)
+
+select count(*) from test_range_spgist where ir &< int4range(100,500);
+ count 
+-------
+  1029
+(1 row)
+
+select count(*) from test_range_spgist where ir &> int4range(100,500);
+ count 
+-------
+  4794
+(1 row)
+
+select count(*) from test_range_spgist where ir -|- int4range(100,500);
+ count 
+-------
+     5
+(1 row)
+
+-- now check same queries using a bulk-loaded index
+drop index test_range_spgist_idx;
+create index test_range_spgist_idx on test_range_spgist using spgist (ir);
+select count(*) from test_range_spgist where ir @> 'empty'::int4range;
+ count 
+-------
+  6200
+(1 row)
+
+select count(*) from test_range_spgist where ir = int4range(10,20);
+ count 
+-------
+     2
+(1 row)
+
+select count(*) from test_range_spgist where ir @> 10;
+ count 
+-------
+   130
+(1 row)
+
+select count(*) from test_range_spgist where ir @> int4range(10,20);
+ count 
+-------
+   111
+(1 row)
+
+select count(*) from test_range_spgist where ir && int4range(10,20);
+ count 
+-------
+   158
+(1 row)
+
+select count(*) from test_range_spgist where ir <@ int4range(10,50);
+ count 
+-------
+  1062
+(1 row)
+
+select count(*) from test_range_spgist where ir << int4range(100,500);
+ count 
+-------
+   189
+(1 row)
+
+select count(*) from test_range_spgist where ir >> int4range(100,500);
+ count 
+-------
+  3554
+(1 row)
+
+select count(*) from test_range_spgist where ir &< int4range(100,500);
+ count 
+-------
+  1029
+(1 row)
+
+select count(*) from test_range_spgist where ir &> int4range(100,500);
+ count 
+-------
+  4794
+(1 row)
+
+select count(*) from test_range_spgist where ir -|- int4range(100,500);
+ count 
+-------
+     5
+(1 row)
+
 RESET enable_seqscan;
 RESET enable_indexscan;
 RESET enable_bitmapscan;

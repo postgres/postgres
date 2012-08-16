@@ -373,5 +373,10 @@ DATA(insert (	4017   25 25 2 4028 ));
 DATA(insert (	4017   25 25 3 4029 ));
 DATA(insert (	4017   25 25 4 4030 ));
 DATA(insert (	4017   25 25 5 4031 ));
+DATA(insert (	3474   3831 3831 1 3469 ));
+DATA(insert (	3474   3831 3831 2 3470 ));
+DATA(insert (	3474   3831 3831 3 3471 ));
+DATA(insert (	3474   3831 3831 4 3472 ));
+DATA(insert (	3474   3831 3831 5 3473 ));
 
 #endif   /* PG_AMPROC_H */

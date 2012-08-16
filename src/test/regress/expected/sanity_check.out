@@ -157,6 +157,7 @@ SELECT relname, relhasindex
  tenk2                   | t
  test_range_excl         | t
  test_range_gist         | t
+ test_range_spgist       | t
  test_tsvector           | f
  text_tbl                | f
  time_tbl                | f
@@ -165,7 +166,7 @@ SELECT relname, relhasindex
  timetz_tbl              | f
  tinterval_tbl           | f
  varchar_tbl             | f
-(154 rows)
+(155 rows)
 
 --
 -- another sanity check: every system catalog that has OIDs should have

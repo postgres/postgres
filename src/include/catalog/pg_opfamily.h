@@ -142,6 +142,7 @@ DATA(insert OID = 3702 (	783		tsquery_ops		PGNSP PGUID ));
 DATA(insert OID = 3901 (	403		range_ops		PGNSP PGUID ));
 DATA(insert OID = 3903 (	405		range_ops		PGNSP PGUID ));
 DATA(insert OID = 3919 (	783		range_ops		PGNSP PGUID ));
+DATA(insert OID = 3474 (	4000	range_ops		PGNSP PGUID ));
 DATA(insert OID = 4015 (	4000	quad_point_ops	PGNSP PGUID ));
 DATA(insert OID = 4016 (	4000	kd_point_ops	PGNSP PGUID ));
 DATA(insert OID = 4017 (	4000	text_ops		PGNSP PGUID ));

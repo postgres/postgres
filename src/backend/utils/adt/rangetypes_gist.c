@@ -21,19 +21,6 @@
 #include "utils/rangetypes.h"
 
 
-/* Operator strategy numbers used in the GiST range opclass */
-/* Numbers are chosen to match up operator names with existing usages */
-#define RANGESTRAT_BEFORE				1
-#define RANGESTRAT_OVERLEFT				2
-#define RANGESTRAT_OVERLAPS				3
-#define RANGESTRAT_OVERRIGHT			4
-#define RANGESTRAT_AFTER				5
-#define RANGESTRAT_ADJACENT				6
-#define RANGESTRAT_CONTAINS				7
-#define RANGESTRAT_CONTAINED_BY			8
-#define RANGESTRAT_CONTAINS_ELEM		16
-#define RANGESTRAT_EQ					18
-
 /*
  * Range class properties used to segregate different classes of ranges in
  * GiST.  Each unique combination of properties is a class.  CLS_EMPTY cannot
