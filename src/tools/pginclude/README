@@ -49,3 +49,7 @@ and EXEC_BACKEND on and off.  It is also wise to test a WIN32 compile.
 Another tools that does a similar task is at:
 
 	http://code.google.com/p/include-what-you-use/
+
+An include file visualizer script is available at:
+
+	http://archives.postgresql.org/pgsql-hackers/2011-09/msg00311.php
