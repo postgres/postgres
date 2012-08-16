@@ -291,9 +291,6 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 	 *
 	 * One possibility is to leave "fillfactor" worth of space in this page
 	 * and update FSM with the remaining space.
-	 *
-	 * In any case, the current FSM implementation doesn't accept
-	 * one-page-at-a-time updates, so this is all academic for now.
 	 */
 
 	return ndeleted;
