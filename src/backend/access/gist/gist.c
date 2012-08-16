@@ -148,16 +148,22 @@ gistinsert(PG_FUNCTION_ARGS)
  * pages are released; note that new tuple(s) are *not* on the root page
  * but in one of the new child pages.
  *
+ * If 'newblkno' is not NULL, returns the block number of page the first
+ * new/updated tuple was inserted to. Usually it's the given page, but could
+ * be its right sibling if the page was split.
+ *
  * Returns 'true' if the page was split, 'false' otherwise.
  */
 bool
 gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 				Buffer buffer,
 				IndexTuple *itup, int ntup, OffsetNumber oldoffnum,
+				BlockNumber *newblkno,
 				Buffer leftchildbuf,
 				List **splitinfo,
 				bool markfollowright)
 {
+	BlockNumber blkno = BufferGetBlockNumber(buffer);
 	Page		page = BufferGetPage(buffer);
 	bool		is_leaf = (GistPageIsLeaf(page)) ? true : false;
 	XLogRecPtr	recptr;
@@ -199,7 +205,6 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 		BlockNumber oldrlink = InvalidBlockNumber;
 		GistNSN		oldnsn = 0;
 		SplitedPageLayout rootpg;
-		BlockNumber blkno = BufferGetBlockNumber(buffer);
 		bool		is_rootsplit;
 
 		is_rootsplit = (blkno == GIST_ROOT_BLKNO);
@@ -319,9 +324,19 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 
 			for (i = 0; i < ptr->block.num; i++)
 			{
-				if (PageAddItem(ptr->page, (Item) data, IndexTupleSize((IndexTuple) data), i + FirstOffsetNumber, false, false) == InvalidOffsetNumber)
+				IndexTuple	thistup = (IndexTuple) data;
+
+				if (PageAddItem(ptr->page, (Item) data, IndexTupleSize(thistup), i + FirstOffsetNumber, false, false) == InvalidOffsetNumber)
 					elog(ERROR, "failed to add item to index page in \"%s\"", RelationGetRelationName(rel));
-				data += IndexTupleSize((IndexTuple) data);
+
+				/*
+				 * If this is the first inserted/updated tuple, let the caller
+				 * know which page it landed on.
+				 */
+				if (newblkno && ItemPointerEquals(&thistup->t_tid, &(*itup)->t_tid))
+					*newblkno = ptr->block.blkno;
+
+				data += IndexTupleSize(thistup);
 			}
 
 			/* Set up rightlinks */
@@ -436,6 +451,9 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 			recptr = GetXLogRecPtrForTemp();
 			PageSetLSN(page, recptr);
 		}
+
+		if (newblkno)
+			*newblkno = blkno;
 	}
 
 	/*
@@ -1074,9 +1092,9 @@ gistinserttuple(GISTInsertState *state, GISTInsertStack *stack,
  *	  is kept pinned.
  *	- Lock and pin on 'rightchild' are always released.
  *
- * Returns 'true' if the page had to be split. Note that if the page had
- * be split, the inserted/updated might've been inserted to a right sibling
- * of stack->buffer instead of stack->buffer itself.
+ * Returns 'true' if the page had to be split. Note that if the page was
+ * split, the inserted/updated tuples might've been inserted to a right
+ * sibling of stack->buffer instead of stack->buffer itself.
  */
 static bool
 gistinserttuples(GISTInsertState *state, GISTInsertStack *stack,
@@ -1091,7 +1109,8 @@ gistinserttuples(GISTInsertState *state, GISTInsertStack *stack,
 	/* Insert the tuple(s) to the page, splitting the page if necessary */
 	is_split = gistplacetopage(state->r, state->freespace, giststate,
 							   stack->buffer,
-							   tuples, ntup, oldoffnum,
+							   tuples, ntup,
+							   oldoffnum, NULL,
 							   leftchild,
 							   &splitinfo,
 							   true);
