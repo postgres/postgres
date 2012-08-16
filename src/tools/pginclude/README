@@ -45,3 +45,7 @@ times until all includes compile cleanly.
 
 Also, tests should be done with configure settings of --enable-cassert
 and EXEC_BACKEND on and off.  It is also wise to test a WIN32 compile.
+
+Another tools that does a similar task is at:
+
+	http://code.google.com/p/include-what-you-use/
