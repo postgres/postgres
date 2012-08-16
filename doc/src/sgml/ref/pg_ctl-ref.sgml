@@ -383,6 +383,7 @@ PostgreSQL documentation
         attempts to connect to the server.
         When waiting for shutdown, <command>pg_ctl</command> waits for
         the server to remove its <acronym>PID</acronym> file.
+        This option allows the entry of an <acronym>SSL</> passphrase on startup.
         <command>pg_ctl</command> returns an exit code based on the
         success of the startup or shutdown.
        </para>
