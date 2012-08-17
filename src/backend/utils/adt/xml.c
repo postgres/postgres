@@ -52,9 +52,19 @@
 #include <libxml/tree.h>
 #include <libxml/uri.h>
 #include <libxml/xmlerror.h>
+#include <libxml/xmlversion.h>
 #include <libxml/xmlwriter.h>
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
+
+/*
+ * We used to check for xmlStructuredErrorContext via a configure test; but
+ * that doesn't work on Windows, so instead use this grottier method of
+ * testing the library version number.
+ */
+#if LIBXML_VERSION >= 20704
+#define HAVE_XMLSTRUCTUREDERRORCONTEXT 1
+#endif
 #endif   /* USE_LIBXML */
 
 #include "catalog/namespace.h"
@@ -970,7 +980,7 @@ pg_xml_init(PgXmlStrictness strictness)
 	 *
 	 * The only known situation in which this test fails is if we compile with
 	 * headers from a libxml2 that doesn't track the structured error context
-	 * separately (<= 2.7.3), but at runtime use a version that does, or vice
+	 * separately (< 2.7.4), but at runtime use a version that does, or vice
 	 * versa.  The libxml2 authors did not treat that change as constituting
 	 * an ABI break, so the LIBXML_TEST_VERSION test in pg_xml_init_library
 	 * fails to protect us from this.
