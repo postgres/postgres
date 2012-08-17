@@ -1742,13 +1742,6 @@ UNBOUNDED FOLLOWING
    <para>
     Here, <replaceable>expression</replaceable> represents any value
     expression that does not itself contain window function calls.
-    <literal>PARTITION BY</> behaves like a <literal>GROUP
-    BY</> clause by grouping rows into partitions, except its
-    expressions are always just expressions and cannot be output-column
-    names or numbers.   <literal>ORDER BY</> behaves similar to a
-    query-level <literal>ORDER BY</> clause, except it controls the
-    order rows are supplied to the aggregate function within the window
-    frame, and with the same expression restrictions.
    </para>
 
    <para>
@@ -1766,18 +1759,49 @@ UNBOUNDED FOLLOWING
    </para>
 
    <para>
-    In <literal>RANGE</> mode, <literal>CURRENT ROW</> starts with
-    the current row's first peer that <literal>ORDER BY</>
-    considers equivalent, and ends with its last equivalent peer.  In 
-    <literal>ROWS</> mode, <literal>CURRENT ROW</> simply starts and ends
-    with the current row.
+    The <literal>PARTITION BY</> option groups the rows of the query into
+    <firstterm>partitions</>, which are processed separately by the window
+    function.  <literal>PARTITION BY</> works similarly to a query-level
+    <literal>GROUP BY</> clause, except that its expressions are always just
+    expressions and cannot be output-column names or numbers.
+    Without <literal>PARTITION BY</>, all rows produced by the query are
+    treated as a single partition.
+    The <literal>ORDER BY</> option determines the order in which the rows
+    of a partition are processed by the window function.  It works similarly
+    to a query-level <literal>ORDER BY</> clause, but likewise cannot use
+    output-column names or numbers.  Without <literal>ORDER BY</>, rows are
+    processed in an unspecified order.
    </para>
 
    <para>
-    <literal>UNBOUNDED PRECEDING</> means that the frame
-    starts with the first row of the partition, and similarly
-    <literal>UNBOUNDED FOLLOWING</> means that the frame ends with the last
-    row of the partition.
+    The <replaceable class="parameter">frame_clause</replaceable> specifies
+    the set of rows constituting the <firstterm>window frame</>, which is a
+    subset of the current partition, for those window functions that act on
+    the frame instead of the whole partition.  The frame can be specified in
+    either <literal>RANGE</> or <literal>ROWS</> mode; in either case, it
+    runs from the <replaceable>frame_start</> to the
+    <replaceable>frame_end</>.  If <replaceable>frame_end</> is omitted,
+    it defaults to <literal>CURRENT ROW</>.
+   </para>
+
+   <para>
+    A <replaceable>frame_start</> of <literal>UNBOUNDED PRECEDING</> means
+    that the frame starts with the first row of the partition, and similarly
+    a <replaceable>frame_end</> of <literal>UNBOUNDED FOLLOWING</> means
+    that the frame ends with the last row of the partition.
+   </para>
+
+   <para>
+    In <literal>RANGE</> mode, a <replaceable>frame_start</> of
+    <literal>CURRENT ROW</> means the frame starts with the current row's
+    first <firstterm>peer</> row (a row that <literal>ORDER BY</> considers
+    equivalent to the current row), while a <replaceable>frame_end</> of
+    <literal>CURRENT ROW</> means the frame ends with the last equivalent
+    peer.  In <literal>ROWS</> mode, <literal>CURRENT ROW</> simply means
+    the current row.
+   </para>
+
+   <para>
     The <replaceable>value</> <literal>PRECEDING</> and
     <replaceable>value</> <literal>FOLLOWING</> cases are currently only
     allowed in <literal>ROWS</> mode.  They indicate that the frame starts
@@ -1789,15 +1813,13 @@ UNBOUNDED FOLLOWING
    </para>
 
    <para>
-    The <replaceable class="parameter">frame_clause</replaceable> specifies
-    the set of rows constituting the <firstterm>window frame</>, for those
-    window functions that act on the frame instead of the whole partition.
     The default framing option is <literal>RANGE UNBOUNDED PRECEDING</>,
     which is the same as <literal>RANGE BETWEEN UNBOUNDED PRECEDING AND
-    CURRENT ROW</>.  With <literal>ORDER BY</>, this sets the frame to
-    be all rows from partition start up through the current row's
-    last peer.  Without <literal>ORDER BY</>, all partition rows are
-    included in the window frame.
+    CURRENT ROW</>.  With <literal>ORDER BY</>, this sets the frame to be
+    all rows from the partition start up through the current row's last
+    peer.  Without <literal>ORDER BY</>, all rows of the partition are
+    included in the window frame, since all rows become peers of the current
+    row.
    </para>
 
    <para>
