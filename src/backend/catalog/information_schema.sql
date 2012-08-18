@@ -1521,13 +1521,12 @@ CREATE VIEW sequences AS
            CAST(64 AS cardinal_number) AS numeric_precision,
            CAST(2 AS cardinal_number) AS numeric_precision_radix,
            CAST(0 AS cardinal_number) AS numeric_scale,
-           -- XXX: The following could be improved if we had LATERAL.
-           CAST((pg_sequence_parameters(c.oid)).start_value AS character_data) AS start_value,
-           CAST((pg_sequence_parameters(c.oid)).minimum_value AS character_data) AS minimum_value,
-           CAST((pg_sequence_parameters(c.oid)).maximum_value AS character_data) AS maximum_value,
-           CAST((pg_sequence_parameters(c.oid)).increment AS character_data) AS increment,
-           CAST(CASE WHEN (pg_sequence_parameters(c.oid)).cycle_option THEN 'YES' ELSE 'NO' END AS yes_or_no) AS cycle_option
-    FROM pg_namespace nc, pg_class c
+           CAST(p.start_value AS character_data) AS start_value,
+           CAST(p.minimum_value AS character_data) AS minimum_value,
+           CAST(p.maximum_value AS character_data) AS maximum_value,
+           CAST(p.increment AS character_data) AS increment,
+           CAST(CASE WHEN p.cycle_option THEN 'YES' ELSE 'NO' END AS yes_or_no) AS cycle_option
+    FROM pg_namespace nc, pg_class c, LATERAL pg_sequence_parameters(c.oid) p
     WHERE c.relnamespace = nc.oid
           AND c.relkind = 'S'
           AND (NOT pg_is_other_temp_schema(nc.oid))
