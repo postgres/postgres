@@ -247,11 +247,8 @@ pull_varattnos_walker(Node *node, pull_varattnos_context *context)
 
 /*
  * pull_vars_of_level
- *		Create a list of all Vars referencing the specified query level
- *		in the given parsetree.
- *
- * This is used on unplanned parsetrees, so we don't expect to see any
- * PlaceHolderVars.
+ *		Create a list of all Vars (and PlaceHolderVars) referencing the
+ *		specified query level in the given parsetree.
  *
  * Caution: the Vars are not copied, only linked into the list.
  */
@@ -288,7 +285,15 @@ pull_vars_walker(Node *node, pull_vars_context *context)
 			context->vars = lappend(context->vars, var);
 		return false;
 	}
-	Assert(!IsA(node, PlaceHolderVar));
+	if (IsA(node, PlaceHolderVar))
+	{
+		PlaceHolderVar *phv = (PlaceHolderVar *) node;
+
+		if (phv->phlevelsup == context->sublevels_up)
+			context->vars = lappend(context->vars, phv);
+		/* we don't want to look into the contained expression */
+		return false;
+	}
 	if (IsA(node, Query))
 	{
 		/* Recurse into RTE subquery or not-yet-planned sublink subquery */

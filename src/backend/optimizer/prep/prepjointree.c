@@ -89,6 +89,8 @@ static Node *pullup_replace_vars(Node *expr,
 					pullup_replace_vars_context *context);
 static Node *pullup_replace_vars_callback(Var *var,
 							 replace_rte_variables_context *context);
+static Query *pullup_replace_vars_subquery(Query *query,
+							 pullup_replace_vars_context *context);
 static reduce_outer_joins_state *reduce_outer_joins_pass1(Node *jtnode);
 static void reduce_outer_joins_pass2(Node *jtnode,
 						 reduce_outer_joins_state *state,
@@ -1472,7 +1474,50 @@ replace_vars_in_jointree(Node *jtnode,
 		return;
 	if (IsA(jtnode, RangeTblRef))
 	{
-		/* nothing to do here */
+		/*
+		 * If the RangeTblRef refers to a LATERAL subquery (that isn't the
+		 * same subquery we're pulling up), it might contain references to the
+		 * target subquery, which we must replace.  We drive this from the
+		 * jointree scan, rather than a scan of the rtable, for a couple of
+		 * reasons: we can avoid processing no-longer-referenced RTEs, and we
+		 * can use the appropriate setting of need_phvs depending on whether
+		 * the RTE is above possibly-nulling outer joins or not.
+		 */
+		int			varno = ((RangeTblRef *) jtnode)->rtindex;
+
+		if (varno != context->varno)	/* ignore target subquery itself */
+		{
+			RangeTblEntry *rte = rt_fetch(varno, context->root->parse->rtable);
+
+			Assert(rte != context->target_rte);
+			if (rte->lateral)
+			{
+				switch (rte->rtekind)
+				{
+					case RTE_SUBQUERY:
+						rte->subquery =
+							pullup_replace_vars_subquery(rte->subquery,
+														 context);
+						break;
+					case RTE_FUNCTION:
+						rte->funcexpr =
+							pullup_replace_vars(rte->funcexpr,
+												context);
+						break;
+					case RTE_VALUES:
+						rte->values_lists = (List *)
+							pullup_replace_vars((Node *) rte->values_lists,
+												context);
+						break;
+					case RTE_RELATION:
+					case RTE_JOIN:
+					case RTE_CTE:
+						/* these shouldn't be marked LATERAL */
+						Assert(false);
+						break;
+				}
+			}
+		}
 	}
 	else if (IsA(jtnode, FromExpr))
 	{
@@ -1693,6 +1738,25 @@ pullup_replace_vars_callback(Var *var,
 		IncrementVarSublevelsUp(newnode, var->varlevelsup, 0);
 
 	return newnode;
+}
+
+/*
+ * Apply pullup variable replacement to a subquery
+ *
+ * This needs to be different from pullup_replace_vars() because
+ * replace_rte_variables will think that it shouldn't increment sublevels_up
+ * before entering the Query; so we need to call it with sublevels_up == 1.
+ */
+static Query *
+pullup_replace_vars_subquery(Query *query,
+							 pullup_replace_vars_context *context)
+{
+	Assert(IsA(query, Query));
+	return (Query *) replace_rte_variables((Node *) query,
+										   context->varno, 1,
+										   pullup_replace_vars_callback,
+										   (void *) context,
+										   NULL);
 }
 
 

@@ -237,14 +237,30 @@ extract_lateral_references(PlannerInfo *root, int rtindex)
 	else
 		return;
 
-	/* Copy each Var and adjust it to match our level */
+	/* Copy each Var (or PlaceHolderVar) and adjust it to match our level */
 	newvars = NIL;
 	foreach(lc, vars)
 	{
-		Var		   *var = (Var *) lfirst(lc);
+		Node   *var = (Node *) lfirst(lc);
 
 		var = copyObject(var);
-		var->varlevelsup = 0;
+		if (IsA(var, Var))
+		{
+			((Var *) var)->varlevelsup = 0;
+		}
+		else if (IsA(var, PlaceHolderVar))
+		{
+			/*
+			 * It's sufficient to set phlevelsup = 0, because we call
+			 * add_vars_to_targetlist with create_new_ph = false (as we must,
+			 * because deconstruct_jointree has already started); therefore
+			 * nobody is going to look at the contained expression to notice
+			 * whether its Vars have the right level.
+			 */
+			((PlaceHolderVar *) var)->phlevelsup = 0;
+		}
+		else
+			Assert(false);
 		newvars = lappend(newvars, var);
 	}
 
