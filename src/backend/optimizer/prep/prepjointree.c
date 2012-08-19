@@ -962,9 +962,6 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 * The children might or might not contain any actual lateral
 	 * cross-references, but we have to mark the pulled-up child RTEs so that
 	 * later planner stages will check for such.
-	 *
-	 * NB: although the parser only sets the lateral flag in subquery and
-	 * function RTEs, after this step it can also be set in VALUES RTEs.
 	 */
 	if (rte->lateral)
 	{
