@@ -1221,9 +1221,7 @@ set_values_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 
 	/*
 	 * If it's a LATERAL RTE, it might contain some Vars of the current query
-	 * level, requiring it to be treated as parameterized.  (NB: even though
-	 * the parser never marks VALUES RTEs as LATERAL, they could be so marked
-	 * by now, as a result of subquery pullup.)
+	 * level, requiring it to be treated as parameterized.
 	 */
 	if (rte->lateral)
 	{

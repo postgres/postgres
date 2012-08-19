@@ -933,3 +933,23 @@ select * from only t1_2;
 select pg_get_viewdef('shoe'::regclass) as unpretty;
 select pg_get_viewdef('shoe'::regclass,true) as pretty;
 select pg_get_viewdef('shoe'::regclass,0) as prettier;
+
+--
+-- check multi-rule VALUES in rules
+--
+
+create table rules_src(f1 int, f2 int);
+create table rules_log(f1 int, f2 int, tag text);
+insert into rules_src values(1,2), (11,12);
+create rule r1 as on update to rules_src do also
+  insert into rules_log values(old.*, 'old'), (new.*, 'new');
+update rules_src set f2 = f2 + 1;
+update rules_src set f2 = f2 * 10;
+select * from rules_src;
+select * from rules_log;
+create rule r2 as on update to rules_src do also
+  values(old.*, 'old'), (new.*, 'new');
+update rules_src set f2 = f2 / 10;
+select * from rules_src;
+select * from rules_log;
+\d+ rules_src

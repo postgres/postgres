@@ -1313,6 +1313,7 @@ addRangeTableEntryForValues(ParseState *pstate,
 							List *exprs,
 							List *collations,
 							Alias *alias,
+							bool lateral,
 							bool inFromCl)
 {
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
@@ -1355,7 +1356,7 @@ addRangeTableEntryForValues(ParseState *pstate,
 	 *
 	 * Subqueries are never checked for access rights.
 	 */
-	rte->lateral = false;
+	rte->lateral = lateral;
 	rte->inh = false;			/* never true for values RTEs */
 	rte->inFromCl = inFromCl;
 

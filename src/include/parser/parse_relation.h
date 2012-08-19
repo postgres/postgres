@@ -67,6 +67,7 @@ extern RangeTblEntry *addRangeTableEntryForValues(ParseState *pstate,
 							List *exprs,
 							List *collations,
 							Alias *alias,
+							bool lateral,
 							bool inFromCl);
 extern RangeTblEntry *addRangeTableEntryForJoin(ParseState *pstate,
 						  List *colnames,

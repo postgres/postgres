@@ -2919,11 +2919,48 @@ get_select_query_def(Query *query, deparse_context *context,
 	context->windowTList = save_windowtlist;
 }
 
+/*
+ * Detect whether query looks like SELECT ... FROM VALUES();
+ * if so, return the VALUES RTE.  Otherwise return NULL.
+ */
+static RangeTblEntry *
+get_simple_values_rte(Query *query)
+{
+	RangeTblEntry *result = NULL;
+	ListCell   *lc;
+
+	/*
+	 * We want to return TRUE even if the Query also contains OLD or NEW rule
+	 * RTEs.  So the idea is to scan the rtable and see if there is only one
+	 * inFromCl RTE that is a VALUES RTE.  We don't look at the targetlist at
+	 * all.  This is okay because parser/analyze.c will never generate a
+	 * "bare" VALUES RTE --- they only appear inside auto-generated
+	 * sub-queries with very restricted structure.
+	 */
+	foreach(lc, query->rtable)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
+
+		if (rte->rtekind == RTE_VALUES && rte->inFromCl)
+		{
+			if (result)
+				return NULL;	/* multiple VALUES (probably not possible) */
+			result = rte;
+		}
+		else if (rte->rtekind == RTE_RELATION && !rte->inFromCl)
+			continue;			/* ignore rule entries */
+		else
+			return NULL;		/* something else -> not simple VALUES */
+	}
+	return result;
+}
+
 static void
 get_basic_select_query(Query *query, deparse_context *context,
 					   TupleDesc resultDesc)
 {
 	StringInfo	buf = context->buf;
+	RangeTblEntry *values_rte;
 	char	   *sep;
 	ListCell   *l;
 
@@ -2936,23 +2973,13 @@ get_basic_select_query(Query *query, deparse_context *context,
 	/*
 	 * If the query looks like SELECT * FROM (VALUES ...), then print just the
 	 * VALUES part.  This reverses what transformValuesClause() did at parse
-	 * time.  If the jointree contains just a single VALUES RTE, we assume
-	 * this case applies (without looking at the targetlist...)
+	 * time.
 	 */
-	if (list_length(query->jointree->fromlist) == 1)
+	values_rte = get_simple_values_rte(query);
+	if (values_rte)
 	{
-		RangeTblRef *rtr = (RangeTblRef *) linitial(query->jointree->fromlist);
-
-		if (IsA(rtr, RangeTblRef))
-		{
-			RangeTblEntry *rte = rt_fetch(rtr->rtindex, query->rtable);
-
-			if (rte->rtekind == RTE_VALUES)
-			{
-				get_values_def(rte->values_lists, context);
-				return;
-			}
-		}
+		get_values_def(values_rte->values_lists, context);
+		return;
 	}
 
 	/*

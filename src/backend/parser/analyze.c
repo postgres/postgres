@@ -587,6 +587,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		List	   *exprsLists = NIL;
 		List	   *collations = NIL;
 		int			sublist_length = -1;
+		bool		lateral = false;
 		int			i;
 
 		Assert(selectStmt->intoClause == NULL);
@@ -647,25 +648,20 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 			collations = lappend_oid(collations, InvalidOid);
 
 		/*
-		 * Another thing we can't currently support is NEW/OLD references in
-		 * rules --- seems we'd need something like SQL99's LATERAL construct
-		 * to ensure that the values would be available while evaluating the
-		 * VALUES RTE.	This is a shame.  FIXME
+		 * Ordinarily there can't be any current-level Vars in the expression
+		 * lists, because the namespace was empty ... but if we're inside
+		 * CREATE RULE, then NEW/OLD references might appear.  In that case we
+		 * have to mark the VALUES RTE as LATERAL.
 		 */
 		if (list_length(pstate->p_rtable) != 1 &&
 			contain_vars_of_level((Node *) exprsLists, 0))
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("VALUES must not contain OLD or NEW references"),
-					 errhint("Use SELECT ... UNION ALL ... instead."),
-					 parser_errposition(pstate,
-							  locate_var_of_level((Node *) exprsLists, 0))));
+			lateral = true;
 
 		/*
 		 * Generate the VALUES RTE
 		 */
 		rte = addRangeTableEntryForValues(pstate, exprsLists, collations,
-										  NULL, true);
+										  NULL, lateral, true);
 		rtr = makeNode(RangeTblRef);
 		/* assume new rte is at end */
 		rtr->rtindex = list_length(pstate->p_rtable);
@@ -1032,6 +1028,7 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	List	   *collations;
 	List	  **colexprs = NULL;
 	int			sublist_length = -1;
+	bool		lateral = false;
 	RangeTblEntry *rte;
 	int			rtindex;
 	ListCell   *lc;
@@ -1177,10 +1174,20 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	}
 
 	/*
+	 * Ordinarily there can't be any current-level Vars in the expression
+	 * lists, because the namespace was empty ... but if we're inside CREATE
+	 * RULE, then NEW/OLD references might appear.  In that case we have to
+	 * mark the VALUES RTE as LATERAL.
+	 */
+	if (pstate->p_rtable != NIL &&
+		contain_vars_of_level((Node *) exprsLists, 0))
+		lateral = true;
+
+	/*
 	 * Generate the VALUES RTE
 	 */
 	rte = addRangeTableEntryForValues(pstate, exprsLists, collations,
-									  NULL, true);
+									  NULL, lateral, true);
 	addRTEtoQuery(pstate, rte, true, true, true);
 
 	/* assume new rte is at end */
@@ -1213,21 +1220,6 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("SELECT FOR UPDATE/SHARE cannot be applied to VALUES")));
-
-	/*
-	 * Another thing we can't currently support is NEW/OLD references in rules
-	 * --- seems we'd need something like SQL99's LATERAL construct to ensure
-	 * that the values would be available while evaluating the VALUES RTE.
-	 * This is a shame.  FIXME
-	 */
-	if (list_length(pstate->p_rtable) != 1 &&
-		contain_vars_of_level((Node *) exprsLists, 0))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("VALUES must not contain OLD or NEW references"),
-				 errhint("Use SELECT ... UNION ALL ... instead."),
-				 parser_errposition(pstate,
-							  locate_var_of_level((Node *) exprsLists, 0))));
 
 	qry->rtable = pstate->p_rtable;
 	qry->jointree = makeFromExpr(pstate->p_joinlist, NULL);
