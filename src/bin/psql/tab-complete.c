@@ -580,6 +580,14 @@ static const SchemaQuery Query_for_list_of_views = {
 "       and pg_catalog.pg_table_is_visible(c2.oid)"
 
 /* the silly-looking length condition is just to eat up the current word */
+#define Query_for_constraint_of_table \
+"SELECT pg_catalog.quote_ident(conname) "\
+"  FROM pg_catalog.pg_class c1, pg_catalog.pg_constraint con "\
+" WHERE c1.oid=conrelid and (%d = pg_catalog.length('%s'))"\
+"       and pg_catalog.quote_ident(c1.relname)='%s'"\
+"       and pg_catalog.pg_table_is_visible(c1.oid)"
+
+/* the silly-looking length condition is just to eat up the current word */
 #define Query_for_list_of_tables_for_trigger \
 "SELECT pg_catalog.quote_ident(relname) "\
 "  FROM pg_catalog.pg_class"\
@@ -1337,6 +1345,14 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev2_wd, "DROP") == 0 &&
 			 pg_strcasecmp(prev_wd, "COLUMN") == 0)
 		COMPLETE_WITH_ATTR(prev3_wd, "");
+	/* If we have TABLE <sth> DROP CONSTRAINT, provide list of constraints */
+	else if (pg_strcasecmp(prev4_wd, "TABLE") == 0 &&
+			 pg_strcasecmp(prev2_wd, "DROP") == 0 &&
+			 pg_strcasecmp(prev_wd, "CONSTRAINT") == 0)
+	{
+		completion_info_charp = prev3_wd;
+		COMPLETE_WITH_QUERY(Query_for_constraint_of_table);
+	}
 	/* ALTER TABLE ALTER [COLUMN] <foo> */
 	else if ((pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
 			  pg_strcasecmp(prev2_wd, "COLUMN") == 0) ||
