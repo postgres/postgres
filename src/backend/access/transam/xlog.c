@@ -3707,8 +3707,17 @@ RecordIsValid(XLogRecord *record, XLogRecPtr recptr, int emode)
 	uint32		len = record->xl_len;
 	BkpBlock	bkpb;
 	char	   *blk;
+	char	   *recend = (char *) record + record->xl_tot_len;
 
 	/* First the rmgr data */
+	if (XLogRecGetData(record) + len > recend)
+	{
+		/* ValidXLogRecordHeader() should've caught this already... */
+		ereport(emode_for_corrupt_record(emode, recptr),
+				(errmsg("invalid record length at %X/%X",
+						(uint32) (recptr >> 32), (uint32) recptr)));
+		return false;
+	}
 	INIT_CRC32(crc);
 	COMP_CRC32(crc, XLogRecGetData(record), len);
 
@@ -3721,7 +3730,15 @@ RecordIsValid(XLogRecord *record, XLogRecPtr recptr, int emode)
 		if (!(record->xl_info & XLR_SET_BKP_BLOCK(i)))
 			continue;
 
+		if (blk + sizeof(BkpBlock) > recend)
+		{
+			ereport(emode_for_corrupt_record(emode, recptr),
+					(errmsg("incorrect backup block size in record at %X/%X",
+							(uint32) (recptr >> 32), (uint32) recptr)));
+			return false;
+		}
 		memcpy(&bkpb, blk, sizeof(BkpBlock));
+
 		if (bkpb.hole_offset + bkpb.hole_length > BLCKSZ)
 		{
 			ereport(emode_for_corrupt_record(emode, recptr),
@@ -3730,6 +3747,14 @@ RecordIsValid(XLogRecord *record, XLogRecPtr recptr, int emode)
 			return false;
 		}
 		blen = sizeof(BkpBlock) + BLCKSZ - bkpb.hole_length;
+
+		if (blk + blen > recend)
+		{
+			ereport(emode_for_corrupt_record(emode, recptr),
+					(errmsg("invalid backup block size in record at %X/%X",
+							(uint32) (recptr >> 32), (uint32) recptr)));
+			return false;
+		}
 		COMP_CRC32(crc, blk, blen);
 		blk += blen;
 	}
@@ -3879,8 +3904,8 @@ retry:
 
 	/*
 	 * If the whole record header is on this page, validate it immediately.
-	 * Otherwise validate it after reading the rest of the header from next
-	 * page.
+	 * Otherwise only do a basic sanity check on xl_tot_len, and validate the
+	 * rest of the header after reading it from the next page.
 	 */
 	if (targetRecOff <= XLOG_BLCKSZ - SizeOfXLogRecord)
 	{
@@ -3889,7 +3914,16 @@ retry:
 		gotheader = true;
 	}
 	else
+	{
+		if (total_len < SizeOfXLogRecord)
+		{
+			ereport(emode_for_corrupt_record(emode, *RecPtr),
+					(errmsg("invalid record length at %X/%X",
+							(uint32) ((*RecPtr) >> 32), (uint32) *RecPtr)));
+			goto next_record_is_invalid;
+		}
 		gotheader = false;
+	}
 
 	/*
 	 * Allocate or enlarge readRecordBuf as needed.  To avoid useless small
