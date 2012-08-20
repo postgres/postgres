@@ -49,6 +49,7 @@ explain (costs off)
   select * from test2 where t ilike '%BCD%';
 select * from test2 where t like '%BCD%';
 select * from test2 where t like '%bcd%';
+select * from test2 where t like E'%\\bcd%';
 select * from test2 where t ilike '%BCD%';
 select * from test2 where t ilike 'qua%';
 drop index test2_idx_gin;
@@ -60,5 +61,6 @@ explain (costs off)
   select * from test2 where t ilike '%BCD%';
 select * from test2 where t like '%BCD%';
 select * from test2 where t like '%bcd%';
+select * from test2 where t like E'%\\bcd%';
 select * from test2 where t ilike '%BCD%';
 select * from test2 where t ilike 'qua%';
