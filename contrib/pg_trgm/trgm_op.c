@@ -273,33 +273,36 @@ get_wildcard_part(const char *str, int lenstr,
 	const char *beginword = str;
 	const char *endword;
 	char	   *s = buf;
-	bool		in_wildcard_meta = false;
+	bool		in_leading_wildcard_meta = false;
+	bool		in_trailing_wildcard_meta = false;
 	bool		in_escape = false;
 	int			clen;
 
 	/*
-	 * Find the first word character remembering whether last character was
-	 * wildcard meta-character.
+	 * Find the first word character, remembering whether preceding character
+	 * was wildcard meta-character.  Note that the in_escape state persists
+	 * from this loop to the next one, since we may exit at a word character
+	 * that is in_escape.
 	 */
 	while (beginword - str < lenstr)
 	{
 		if (in_escape)
 		{
-			in_escape = false;
-			in_wildcard_meta = false;
 			if (iswordchr(beginword))
 				break;
+			in_escape = false;
+			in_leading_wildcard_meta = false;
 		}
 		else
 		{
 			if (ISESCAPECHAR(beginword))
 				in_escape = true;
 			else if (ISWILDCARDCHAR(beginword))
-				in_wildcard_meta = true;
+				in_leading_wildcard_meta = true;
 			else if (iswordchr(beginword))
 				break;
 			else
-				in_wildcard_meta = false;
+				in_leading_wildcard_meta = false;
 		}
 		beginword += pg_mblen(beginword);
 	}
@@ -311,11 +314,11 @@ get_wildcard_part(const char *str, int lenstr,
 		return NULL;
 
 	/*
-	 * Add left padding spaces if last character wasn't wildcard
+	 * Add left padding spaces if preceding character wasn't wildcard
 	 * meta-character.
 	 */
 	*charlen = 0;
-	if (!in_wildcard_meta)
+	if (!in_leading_wildcard_meta)
 	{
 		if (LPADDING > 0)
 		{
@@ -334,15 +337,11 @@ get_wildcard_part(const char *str, int lenstr,
 	 * string boundary.  Strip escapes during copy.
 	 */
 	endword = beginword;
-	in_wildcard_meta = false;
-	in_escape = false;
 	while (endword - str < lenstr)
 	{
 		clen = pg_mblen(endword);
 		if (in_escape)
 		{
-			in_escape = false;
-			in_wildcard_meta = false;
 			if (iswordchr(endword))
 			{
 				memcpy(s, endword, clen);
@@ -350,7 +349,17 @@ get_wildcard_part(const char *str, int lenstr,
 				s += clen;
 			}
 			else
+			{
+				/*
+				 * Back up endword to the escape character when stopping at
+				 * an escaped char, so that subsequent get_wildcard_part will
+				 * restart from the escape character.  We assume here that
+				 * escape chars are single-byte.
+				 */
+				endword--;
 				break;
+			}
+			in_escape = false;
 		}
 		else
 		{
@@ -358,7 +367,7 @@ get_wildcard_part(const char *str, int lenstr,
 				in_escape = true;
 			else if (ISWILDCARDCHAR(endword))
 			{
-				in_wildcard_meta = true;
+				in_trailing_wildcard_meta = true;
 				break;
 			}
 			else if (iswordchr(endword))
@@ -368,19 +377,16 @@ get_wildcard_part(const char *str, int lenstr,
 				s += clen;
 			}
 			else
-			{
-				in_wildcard_meta = false;
 				break;
-			}
 		}
 		endword += clen;
 	}
 
 	/*
-	 * Add right padding spaces if last character wasn't wildcard
+	 * Add right padding spaces if next character isn't wildcard
 	 * meta-character.
 	 */
-	if (!in_wildcard_meta)
+	if (!in_trailing_wildcard_meta)
 	{
 		if (RPADDING > 0)
 		{
