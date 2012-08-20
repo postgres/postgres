@@ -935,7 +935,7 @@ select pg_get_viewdef('shoe'::regclass,true) as pretty;
 select pg_get_viewdef('shoe'::regclass,0) as prettier;
 
 --
--- check multi-rule VALUES in rules
+-- check multi-row VALUES in rules
 --
 
 create table rules_src(f1 int, f2 int);

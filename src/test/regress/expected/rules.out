@@ -1594,7 +1594,7 @@ select pg_get_viewdef('shoe'::regclass,0) as prettier;
 (1 row)
 
 --
--- check multi-rule VALUES in rules
+-- check multi-row VALUES in rules
 --
 create table rules_src(f1 int, f2 int);
 create table rules_log(f1 int, f2 int, tag text);
