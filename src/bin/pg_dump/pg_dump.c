@@ -5064,6 +5064,16 @@ getRules(Archive *fout, int *numRules)
 		}
 		else
 			ruleinfo[i].separate = true;
+
+		/*
+		 * If we're forced to break a dependency loop by dumping a view as a
+		 * table and separate _RETURN rule, we'll move the view's reloptions
+		 * to the rule.  (This is necessary because tables and views have
+		 * different valid reloptions, so we can't apply the options until the
+		 * backend knows it's a view.)  Otherwise the rule's reloptions stay
+		 * NULL.
+		 */
+		ruleinfo[i].reloptions = NULL;
 	}
 
 	PQclear(res);
@@ -13873,10 +13883,7 @@ dumpRule(Archive *fout, RuleInfo *rinfo)
 	 */
 	if (rinfo->ev_enabled != 'O')
 	{
-		appendPQExpBuffer(cmd, "ALTER TABLE %s.",
-						  fmtId(tbinfo->dobj.namespace->dobj.name));
-		appendPQExpBuffer(cmd, "%s ",
-						  fmtId(tbinfo->dobj.name));
+		appendPQExpBuffer(cmd, "ALTER TABLE %s ", fmtId(tbinfo->dobj.name));
 		switch (rinfo->ev_enabled)
 		{
 			case 'A':
@@ -13892,6 +13899,16 @@ dumpRule(Archive *fout, RuleInfo *rinfo)
 								  fmtId(rinfo->dobj.name));
 				break;
 		}
+	}
+
+	/*
+	 * Apply view's reloptions when its ON SELECT rule is separate.
+	 */
+	if (rinfo->reloptions)
+	{
+		appendPQExpBuffer(cmd, "ALTER VIEW %s SET (%s);\n",
+						  fmtId(tbinfo->dobj.name),
+						  rinfo->reloptions);
 	}
 
 	/*
