@@ -1307,14 +1307,6 @@ GetSnapshotData(Snapshot snapshot)
 	/* initialize xmin calculation with xmax */
 	globalxmin = xmin = xmax;
 
-	/*
-	 * If we're in recovery then snapshot data comes from a different place,
-	 * so decide which route we take before grab the lock. It is possible for
-	 * recovery to end before we finish taking snapshot, and for newly
-	 * assigned transaction ids to be added to the procarray. Xmax cannot
-	 * change while we hold ProcArrayLock, so those newly added transaction
-	 * ids would be filtered away, so we need not be concerned about them.
-	 */
 	snapshot->takenDuringRecovery = RecoveryInProgress();
 
 	if (!snapshot->takenDuringRecovery)
@@ -1429,6 +1421,12 @@ GetSnapshotData(Snapshot snapshot)
 		 * Either way we need to change the way XidInMVCCSnapshot() works
 		 * depending upon when the snapshot was taken, or change normal
 		 * snapshot processing so it matches.
+		 *
+		 * Note: It is possible for recovery to end before we finish taking the
+		 * snapshot, and for newly assigned transaction ids to be added to the
+		 * ProcArray.  xmax cannot change while we hold ProcArrayLock, so those
+		 * newly added transaction ids would be filtered away, so we need not
+		 * be concerned about them.
 		 */
 		subcount = KnownAssignedXidsGetAndSetXmin(snapshot->subxip, &xmin,
 												  xmax);
