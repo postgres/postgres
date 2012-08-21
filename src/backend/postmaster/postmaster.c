@@ -329,6 +329,7 @@ static DNSServiceRef bonjour_sdref = NULL;
 /*
  * postmaster.c - function prototypes
  */
+static void unlink_external_pid_file(int status, Datum arg);
 static void getInstallationPaths(const char *argv0);
 static void checkDataDir(void);
 static Port *ConnCreate(int serverFd);
@@ -1071,7 +1072,6 @@ PostmasterMain(int argc, char *argv[])
 		{
 			fprintf(fpidfile, "%d\n", MyProcPid);
 			fclose(fpidfile);
-			/* Should we remove the pid file on postmaster exit? */
 
 			/* Make PID file world readable */
 			if (chmod(external_pid_file, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) != 0)
@@ -1081,6 +1081,8 @@ PostmasterMain(int argc, char *argv[])
 		else
 			write_stderr("%s: could not write external PID file \"%s\": %s\n",
 						 progname, external_pid_file, strerror(errno));
+
+		on_proc_exit(unlink_external_pid_file, 0);
 	}
 
 	/*
@@ -1179,6 +1181,17 @@ PostmasterMain(int argc, char *argv[])
 	ExitPostmaster(status != STATUS_OK);
 
 	abort();					/* not reached */
+}
+
+
+/*
+ * on_proc_exit callback to delete external_pid_file
+ */
+static void
+unlink_external_pid_file(int status, Datum arg)
+{
+	if (external_pid_file)
+		unlink(external_pid_file);
 }
 
 
