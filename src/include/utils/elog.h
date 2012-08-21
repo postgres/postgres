@@ -100,11 +100,16 @@
  * and have errstart insert the default text domain.  Modules can either use
  * ereport_domain() directly, or preferably they can override the TEXTDOMAIN
  * macro.
+ *
+ * When elevel >= ERROR, we add an abort() call to give the compiler a hint
+ * that the ereport() expansion will not return, but the abort() isn't actually
+ * reached because the longjmp happens in errfinish().
  *----------
  */
 #define ereport_domain(elevel, domain, rest)	\
 	(errstart(elevel, __FILE__, __LINE__, PG_FUNCNAME_MACRO, domain) ? \
-	 (errfinish rest) : (void) 0)
+	 (errfinish rest) : (void) 0),									   \
+		((elevel) >= ERROR ? abort() : (void) 0)
 
 #define ereport(elevel, rest)	\
 	ereport_domain(elevel, TEXTDOMAIN, rest)
