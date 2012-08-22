@@ -989,9 +989,9 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     <xref linkend="runtime-config-replication-master">.)
     This configuration will cause each commit to wait for
     confirmation that the standby has written the commit record to durable
-    storage, even if that takes a very long time.
+    storage.
     <varname>synchronous_commit</> can be set by individual
-    users, so can be configured in the configuration file, for particular
+    users, so it can be configured in the configuration file, for particular
     users or databases, or dynamically by applications, in order to control
     the durability guarantee on a per-transaction basis.
    </para>
@@ -1015,10 +1015,14 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
    <para>
     Setting <varname>synchronous_commit</> to <literal>remote_write</> will
     cause each commit to wait for confirmation that the standby has received
-    the commit record to memory. This provides a lower level of durability
-    than <literal>on</> does. However, it's a practically useful setting
-    because it can decrease the response time for the transaction, and causes
-    no data loss unless both the primary and the standby crashes and
+    the commit record and written it out to its own operating system, but not
+    for the data to be flushed to disk on the standby.  This
+    setting provides a weaker guarantee of durability than <literal>on</>
+    does: the standby could lose the data in the event of an operating system
+    crash, though not a <productname>PostgreSQL</> crash.
+    However, it's a useful setting in practice
+    because it can decrease the response time for the transaction.
+    Data loss could only occur if both the primary and the standby crash and
     the database of the primary gets corrupted at the same time.
    </para>
 
