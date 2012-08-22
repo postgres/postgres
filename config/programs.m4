@@ -218,9 +218,19 @@ AC_DEFUN([PGAC_CHECK_STRIP],
     STRIP_SHARED_LIB="$STRIP --strip-unneeded"
     AC_MSG_RESULT(yes)
   else
-    STRIP_STATIC_LIB=:
-    STRIP_SHARED_LIB=:
-    AC_MSG_RESULT(no)
+    case $host_os in
+      darwin*)
+        STRIP="$STRIP -x"
+        STRIP_STATIC_LIB=$STRIP
+        STRIP_SHARED_LIB=$STRIP
+        AC_MSG_RESULT(yes)
+        ;;
+      *)
+        STRIP_STATIC_LIB=:
+        STRIP_SHARED_LIB=:
+        AC_MSG_RESULT(no)
+        ;;
+    esac
   fi
   AC_SUBST(STRIP_STATIC_LIB)
   AC_SUBST(STRIP_SHARED_LIB)

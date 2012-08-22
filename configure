@@ -6480,10 +6480,21 @@ $as_echo_n "checking whether it is possible to strip libraries... " >&6; }
     { $as_echo "$as_me:$LINENO: result: yes" >&5
 $as_echo "yes" >&6; }
   else
-    STRIP_STATIC_LIB=:
-    STRIP_SHARED_LIB=:
-    { $as_echo "$as_me:$LINENO: result: no" >&5
+    case $host_os in
+      darwin*)
+        STRIP="$STRIP -x"
+        STRIP_STATIC_LIB=$STRIP
+        STRIP_SHARED_LIB=$STRIP
+        { $as_echo "$as_me:$LINENO: result: yes" >&5
+$as_echo "yes" >&6; }
+        ;;
+      *)
+        STRIP_STATIC_LIB=:
+        STRIP_SHARED_LIB=:
+        { $as_echo "$as_me:$LINENO: result: no" >&5
 $as_echo "no" >&6; }
+        ;;
+    esac
   fi
 
 
