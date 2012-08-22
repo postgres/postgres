@@ -9620,7 +9620,7 @@ table2-mapping
  <sect1 id="functions-json">
   <title>JSON Functions</title>
 
-  <indexterm zone="datatype-json">
+  <indexterm zone="functions-json">
     <primary>JSON</primary>
     <secondary>Functions and operators</secondary>
   </indexterm>

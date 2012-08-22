@@ -4196,7 +4196,9 @@ SET xmloption TO { DOCUMENT | CONTENT };
    </indexterm>
 
    <para>
-    The <type>json</type> data type can be used to store JSON data.  Such
+    The <type>json</type> data type can be used to store JSON (JavaScript
+    Object Notation) data, as specified in <ulink
+    url="http://www.ietf.org/rfc/rfc4627.txt">RFC 4627</ulink>.  Such
     data can also be stored as <type>text</type>, but the
     <type>json</type> data type has the advantage of checking that each
     stored value is a valid JSON value.  There are also related support
