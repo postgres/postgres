@@ -14,12 +14,94 @@
    <title>Overview</title>
 
    <para>
-    NARRATIVE HERE. Major enhancements include:
+    This release has been largely focused on performance improvements, though
+    new SQL features are not lacking.  Work also continues in the area of
+    replication support.  Major enhancements include:
    </para>
 
    <itemizedlist>
-    <listitem><para>MAJOR LIST HERE</para></listitem>
+
     <!-- This list duplicates items below, but without authors or details-->
+
+      <listitem>
+       <para>
+        Allow queries to retrieve data only from indexes, avoiding heap
+        access (<firstterm>index-only scans</>)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow the planner to generate custom plans for specific parameter
+        values even when using prepared statements
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve the planner's ability to use nested loops with inner
+        index scans
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow streaming replication slaves to forward data to other slaves
+        (<link linkend="cascading-replication"><firstterm>cascading
+        replication</></link>)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add a <link
+        linkend="app-pgreceivexlog"><application>pg_receivexlog</></link>
+        tool to archive WAL file changes as they are written
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add the <link linkend="SPGiST">SP-GiST</link> (Space-Partitioned
+        GiST) index access method
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add support for <link linkend="rangetypes">range data types</link>
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add a <link linkend="datatype-json"><type>JSON</type></link>
+        data type
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add a <link
+        linkend="SQL-CREATEVIEW"><literal>security_barrier</></link>
+        option for views
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow <application>libpq</> connection strings to have the format of a
+        <link linkend="libpq-connstring"><acronym>URI</acronym></link>
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add a <link linkend="libpq-single-row-mode">single-row processing
+        mode</link> to <application>libpq</> for better handling of large
+        result sets
+       </para>
+      </listitem>
 
    </itemizedlist>
 
@@ -2318,9 +2400,9 @@
 
       <listitem>
        <para>
-        Allow connection strings to have the format of a <link
-        linkend="libpq-connstring"><acronym>URI</acronym></link> (Alexander
-        Shulgin)
+        Allow <application>libpq</> connection strings to have the format of a
+        <link linkend="libpq-connstring"><acronym>URI</acronym></link>
+        (Alexander Shulgin)
        </para>
 
        <para>
