@@ -118,7 +118,7 @@ include 'filename'
      The configuration file is reread whenever the main server process
      receives a <systemitem>SIGHUP</> signal;  this is most easily done by
      running <literal>pg_ctl reload</> from the command-line or by calling
-     the SQL function <function>pg_reload_conf()</function>). The main
+     the SQL function <function>pg_reload_conf()</function>. The main
      server process
      also propagates this signal to all currently running server
      processes so that existing sessions also get the new
