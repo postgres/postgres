@@ -7,7 +7,7 @@
   <note>
    <title>Release Date</title>
    <simpara>2012-??-??</simpara>
-   <simpara>CURRENT AS OF 2012-05-09</simpara>
+   <simpara>CURRENT AS OF 2012-08-21</simpara>
   </note>
 
   <sect2>
@@ -303,10 +303,6 @@
         Remove <acronym>GUC</acronym> <varname>wal_sender_delay</>,
         as it is no longer needed (Tom Lane)
        </para>
-
-       <para>
-        The new "latch" capability made this setting unnecessary.
-       </para>
       </listitem>
 
       <listitem>
@@ -552,6 +548,20 @@
        </para>
       </listitem>
 
+      <listitem>
+       <para>
+        Improve performance of buffer pool scans that occur when tables or
+        databases are dropped (Jeff Janes, Simon Riggs)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve performance of checkpoint process's fsync-request queue
+        when many tables are being dropped or truncated (Tom Lane)
+       </para>
+      </listitem>
+
      </itemizedlist>
 
     </sect4>
@@ -590,27 +600,16 @@
 
       <listitem>
        <para>
-        Allow backends to detect postmaster death via a pipe read failure,
-        rather than polling (Peter Geoghegan, Heikki Linnakangas, Tom Lane)
+        Allow the bgwriter, walwriter, checkpointer, <link
+        linkend="monitoring-stats">statistics collector</link>, log
+        collector, and archiver background processes to sleep more
+        efficiently during periods of inactivity (Peter Geoghegan, Tom Lane)
        </para>
 
        <para>
-        The wait events are internally called "latches".
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow the <link linkend="pg-stat-bgwriter-view">bgwriter</link>,
-        <link linkend="guc-wal-writer-delay">walwriter</link>, <link
-        linkend="monitoring-stats">statistics collector</link>, archiver,
-        and checkpointer to sleep more efficiently during periods of
-        inactivity (Peter Geoghegan, Tom Lane)
-       </para>
-
-       <para>
-        This reduces <acronym>CPU</acronym> wake-ups, which dramatically
-        reduces power consumption on idle servers.
+        This series of changes reduces the frequency of process wake-ups when
+        there is nothing to do, dramatically reducing power consumption on
+        idle servers.
        </para>
       </listitem>
 
@@ -694,6 +693,13 @@
        <para>
         Support <function>MIN</>/<function>MAX</> index optimizations on
         boolean columns (Marti Raudsepp)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Account for set-returning functions in <command>SELECT</> target
+        lists when setting rowcount estimates (Tom Lane)
        </para>
       </listitem>
 
@@ -1401,6 +1407,13 @@
         This also allows a table to be created whose schema matches a view.
        </para>
       </listitem>
+
+      <listitem>
+       <para>
+        Fix <command>CREATE TABLE (LIKE ...)</command> to avoid index name
+        conflicts when copying index comments (Tom Lane)
+       </para>
+      </listitem>
      </itemizedlist>
 
     </sect4>
@@ -1435,14 +1448,14 @@
 
       <listitem>
        <para>
-        Add support for privileges on date types (Peter Eisentraut)
+        Add support for privileges on data types (Peter Eisentraut)
        </para>
 
        <para>
         This adds support for the <acronym>SQL</>-conforming
         <literal>USAGE</> privilege on types and domains.  The intent is
-        to be able restrict which users can create dependencies on types,
-        which restricts the way in which owners can alter types.
+        to be able to restrict which users can create dependencies on types,
+        since such dependencies limit the owner's ability to alter the type.
        </para>
       </listitem>
 
@@ -1656,7 +1669,7 @@
        </para>
 
        <para>
-        Previously only the superuser could use these functions.
+        Previously only superusers could use these functions.
        </para>
       </listitem>
 
@@ -1924,6 +1937,12 @@
        <para>
         Specifically, this adds result object functions .colnames,
         .coltypes, and .coltypmods.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Remove support for Python 2.2 (Peter Eisentraut)
        </para>
       </listitem>
 
@@ -2317,6 +2336,27 @@
        </para>
       </listitem>
 
+      <listitem>
+       <para>
+        Make <application>pg_dump</> emit more useful dependency
+        information (Tom Lane)
+       </para>
+
+       <para>
+        The dependency links included in archive-format dumps were formerly
+        of very limited use, because they frequently referenced objects that
+        appeared nowhere in the dump.  Now they represent actual dependencies
+        (possibly indirect) among the dumped objects.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve <application>pg_dump</>'s performance when dumping many
+        database objects (Tom Lane)
+       </para>
+      </listitem>
+
      </itemizedlist>
 
     </sect4>
@@ -2410,6 +2450,17 @@
 
       <listitem>
        <para>
+        Remove dead ports (Peter Eisentraut)
+       </para>
+
+       <para>
+        The following platforms are no longer considered supported: dgux,
+        nextstep, sunos4, svr4, ultrix4, univel, bsdi.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Add support for building with <link linkend="install-windows">MS
         Visual Studio 2010</link> (Brar Piening)
        </para>
@@ -2425,6 +2476,18 @@
        <para>
         Install <filename>plpgsql.h</> into <filename>include/server</> during installation
         (Heikki Linnakangas)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve the latch facility to include detection of postmaster death
+        (Peter Geoghegan, Heikki Linnakangas, Tom Lane)
+       </para>
+
+       <para>
+        This eliminates one of the main reasons that background processes
+        formerly had to wake up to poll for events.
        </para>
       </listitem>
 
@@ -2520,12 +2583,7 @@
 
       <listitem>
        <para>
-        Remove dead ports (Peter Eisentraut)
-       </para>
-
-       <para>
-        The removed ports are: dgux, nextstep, sunos4, svr4, ultrix4,
-        univel, bsdi.
+        Support Linux's <filename>/proc/self/oom_score_adj</> API (Tom Lane)
        </para>
       </listitem>
 
@@ -2534,7 +2592,7 @@
    </sect3>
 
    <sect3>
-    <title>Modules</title>
+    <title>Additional Modules</title>
 
     <itemizedlist>
 
@@ -2848,6 +2906,19 @@
        <para>
         Document the actual string returned by the client for MD5
         authentication (Cyan Ogilvie)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Deprecate use of <literal>GLOBAL</> and <literal>LOCAL</> in
+        <command>CREATE TEMP TABLE</> (Noah Misch)
+       </para>
+
+       <para>
+        <productname>PostgreSQL</> has long treated these keyword as no-ops,
+        and continues to do so; but in future they might mean what the SQL
+        standard says they mean, so applications should avoid using them.
        </para>
       </listitem>
 
