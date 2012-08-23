@@ -14,6 +14,7 @@ DROP ROLE IF EXISTS regressuser1;
 DROP ROLE IF EXISTS regressuser2;
 DROP ROLE IF EXISTS regressuser3;
 DROP ROLE IF EXISTS regressuser4;
+DROP ROLE IF EXISTS regressuser5;
 
 RESET client_min_messages;
 
@@ -23,7 +24,8 @@ CREATE USER regressuser1;
 CREATE USER regressuser2;
 CREATE USER regressuser3;
 CREATE USER regressuser4;
-CREATE USER regressuser4;	-- duplicate
+CREATE USER regressuser5;
+CREATE USER regressuser5;	-- duplicate
 
 CREATE GROUP regressgroup1;
 CREATE GROUP regressgroup2 WITH USER regressuser1, regressuser2;
@@ -332,6 +334,30 @@ SELECT has_table_privilege('regressuser3', 'atest4', 'SELECT'); -- false
 SELECT has_table_privilege('regressuser1', 'atest4', 'SELECT WITH GRANT OPTION'); -- true
 
 
+-- test that dependent privileges are revoked (or not) properly
+\c -
+
+set session role regressuser1;
+create table dep_priv_test (a int);
+grant select on dep_priv_test to regressuser2 with grant option;
+grant select on dep_priv_test to regressuser3 with grant option;
+set session role regressuser2;
+grant select on dep_priv_test to regressuser4 with grant option;
+set session role regressuser3;
+grant select on dep_priv_test to regressuser4 with grant option;
+set session role regressuser4;
+grant select on dep_priv_test to regressuser5;
+\dp dep_priv_test
+set session role regressuser2;
+revoke select on dep_priv_test from regressuser4 cascade;
+\dp dep_priv_test
+set session role regressuser3;
+revoke select on dep_priv_test from regressuser4 cascade;
+\dp dep_priv_test
+set session role regressuser1;
+drop table dep_priv_test;
+
+
 -- clean up
 
 \c regression
@@ -359,3 +385,4 @@ DROP USER regressuser1;
 DROP USER regressuser2;
 DROP USER regressuser3;
 DROP USER regressuser4;
+DROP USER regressuser5;
