@@ -2975,11 +2975,11 @@ ANALYZE measurement;
     <listitem>
      <para>
       Constraint exclusion only works when the query's <literal>WHERE</>
-      clause contains constants.  A parameterized query will not be
-      optimized, since the planner cannot know which partitions the
-      parameter value might select at run time.  For the same reason,
-      <quote>stable</> functions such as <function>CURRENT_DATE</function>
-      must be avoided.
+      clause contains constants (or externally supplied parameters).
+      For example, a comparison against a non-immutable function such as
+      <function>CURRENT_TIMESTAMP</function> cannot be optimized, since the
+      planner cannot know which partition the function value might fall
+      into at run time.
      </para>
     </listitem>
 
