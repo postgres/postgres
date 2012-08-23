@@ -1331,6 +1331,56 @@ SELECT has_function_privilege('regressuser1', 'testns.testfunc(int)', 'EXECUTE')
 SET client_min_messages TO 'warning';
 DROP SCHEMA testns CASCADE;
 RESET client_min_messages;
+-- test that dependent privileges are revoked (or not) properly
+\c -
+set session role regressuser1;
+create table dep_priv_test (a int);
+grant select on dep_priv_test to regressuser2 with grant option;
+grant select on dep_priv_test to regressuser3 with grant option;
+set session role regressuser2;
+grant select on dep_priv_test to regressuser4 with grant option;
+set session role regressuser3;
+grant select on dep_priv_test to regressuser4 with grant option;
+set session role regressuser4;
+grant select on dep_priv_test to regressuser5;
+\dp dep_priv_test
+                                       Access privileges
+ Schema |     Name      | Type  |         Access privileges         | Column access privileges 
+--------+---------------+-------+-----------------------------------+--------------------------
+ public | dep_priv_test | table | regressuser1=arwdDxt/regressuser1+| 
+        |               |       | regressuser2=r*/regressuser1     +| 
+        |               |       | regressuser3=r*/regressuser1     +| 
+        |               |       | regressuser4=r*/regressuser2     +| 
+        |               |       | regressuser4=r*/regressuser3     +| 
+        |               |       | regressuser5=r/regressuser4       | 
+(1 row)
+
+set session role regressuser2;
+revoke select on dep_priv_test from regressuser4 cascade;
+\dp dep_priv_test
+                                       Access privileges
+ Schema |     Name      | Type  |         Access privileges         | Column access privileges 
+--------+---------------+-------+-----------------------------------+--------------------------
+ public | dep_priv_test | table | regressuser1=arwdDxt/regressuser1+| 
+        |               |       | regressuser2=r*/regressuser1     +| 
+        |               |       | regressuser3=r*/regressuser1     +| 
+        |               |       | regressuser4=r*/regressuser3     +| 
+        |               |       | regressuser5=r/regressuser4       | 
+(1 row)
+
+set session role regressuser3;
+revoke select on dep_priv_test from regressuser4 cascade;
+\dp dep_priv_test
+                                       Access privileges
+ Schema |     Name      | Type  |         Access privileges         | Column access privileges 
+--------+---------------+-------+-----------------------------------+--------------------------
+ public | dep_priv_test | table | regressuser1=arwdDxt/regressuser1+| 
+        |               |       | regressuser2=r*/regressuser1     +| 
+        |               |       | regressuser3=r*/regressuser1      | 
+(1 row)
+
+set session role regressuser1;
+drop table dep_priv_test;
 -- clean up
 \c
 drop sequence x_seq;

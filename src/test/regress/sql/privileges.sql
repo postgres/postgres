@@ -795,6 +795,30 @@ DROP SCHEMA testns CASCADE;
 RESET client_min_messages;
 
 
+-- test that dependent privileges are revoked (or not) properly
+\c -
+
+set session role regressuser1;
+create table dep_priv_test (a int);
+grant select on dep_priv_test to regressuser2 with grant option;
+grant select on dep_priv_test to regressuser3 with grant option;
+set session role regressuser2;
+grant select on dep_priv_test to regressuser4 with grant option;
+set session role regressuser3;
+grant select on dep_priv_test to regressuser4 with grant option;
+set session role regressuser4;
+grant select on dep_priv_test to regressuser5;
+\dp dep_priv_test
+set session role regressuser2;
+revoke select on dep_priv_test from regressuser4 cascade;
+\dp dep_priv_test
+set session role regressuser3;
+revoke select on dep_priv_test from regressuser4 cascade;
+\dp dep_priv_test
+set session role regressuser1;
+drop table dep_priv_test;
+
+
 -- clean up
 
 \c
