@@ -1230,11 +1230,11 @@ recursive_revoke(Acl *acl,
 	if (grantee == ownerId)
 		return acl;
 
-	/* The grantee might still have the privileges via another grantor */
+	/* The grantee might still have some grant options via another grantor */
 	still_has = aclmask(acl, grantee, ownerId,
 						ACL_GRANT_OPTION_FOR(revoke_privs),
 						ACLMASK_ALL);
-	revoke_privs &= ~still_has;
+	revoke_privs &= ~ACL_OPTION_TO_PRIVS(still_has);
 	if (revoke_privs == ACL_NO_RIGHTS)
 		return acl;
 
