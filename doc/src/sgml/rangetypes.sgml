@@ -90,7 +90,7 @@ SELECT upper(int8range(15, 25));
 -- Compute the intersection
 SELECT int4range(10, 20) * int4range(15, 25);
 
--- Is the range non-empty?
+-- Is the range empty?
 SELECT isempty(numrange(1, 5));
 </programlisting>
 
