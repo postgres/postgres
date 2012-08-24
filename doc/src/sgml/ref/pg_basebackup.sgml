@@ -189,6 +189,17 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-x</option></term>
+      <term><option>--xlog</option></term>
+      <listitem>
+       <para>
+        Using this option is equivalent of using <literal>-X</literal> with
+        method <literal>fetch</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-X <replaceable class="parameter">method</replaceable></option></term>
       <term><option>--xlog-method=<replaceable class="parameter">method</replaceable></option></term>
       <listitem>
@@ -236,17 +247,6 @@ PostgreSQL documentation
           </listitem>
          </varlistentry>
         </variablelist>
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-x</option></term>
-      <term><option>--xlog</option></term>
-      <listitem>
-       <para>
-        Using this option is equivalent of using <literal>-X</literal> with
-        method <literal>fetch</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -345,20 +345,6 @@ PostgreSQL documentation
 
     <variablelist>
      <varlistentry>
-      <term><option>-s <replaceable class="parameter">interval</replaceable></option></term>
-      <term><option>--status-interval=<replaceable class="parameter">interval</replaceable></option></term>
-      <listitem>
-       <para>
-        Specifies the number of seconds between status packets sent back to the
-        server. This is required when streaming the transaction log (using
-        <literal>--xlog=stream</literal>) if replication timeout is configured
-        on the server, and allows for easier monitoring. A value of zero disables
-        the status updates completely. The default value is 10 seconds.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-h <replaceable class="parameter">host</replaceable></option></term>
       <term><option>--host=<replaceable class="parameter">host</replaceable></option></term>
       <listitem>
@@ -381,6 +367,20 @@ PostgreSQL documentation
         extension on which the server is listening for connections.
         Defaults to the <envar>PGPORT</envar> environment variable, if
         set, or a compiled-in default.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-s <replaceable class="parameter">interval</replaceable></option></term>
+      <term><option>--status-interval=<replaceable class="parameter">interval</replaceable></option></term>
+      <listitem>
+       <para>
+        Specifies the number of seconds between status packets sent back to the
+        server. This is required when streaming the transaction log (using
+        <literal>--xlog=stream</literal>) if replication timeout is configured
+        on the server, and allows for easier monitoring. A value of zero disables
+        the status updates completely. The default value is 10 seconds.
        </para>
       </listitem>
      </varlistentry>
