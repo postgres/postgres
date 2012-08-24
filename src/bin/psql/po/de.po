@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-07-03 19:46+0000\n"
-"PO-Revision-Date: 2012-07-03 23:16+0300\n"
+"POT-Creation-Date: 2012-08-22 22:15+0000\n"
+"PO-Revision-Date: 2012-08-23 00:28-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -47,27 +47,27 @@ msgstr "konnte nicht in Verzeichnis »%s« wechseln"
 msgid "could not read symbolic link \"%s\""
 msgstr "konnte symbolische Verknüpfung »%s« nicht lesen"
 
-#: ../../port/exec.c:518
+#: ../../port/exec.c:526
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "Kindprozess hat mit Code %d beendet"
 
-#: ../../port/exec.c:522
+#: ../../port/exec.c:530
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "Kindprozess wurde durch Ausnahme 0x%X beendet"
 
-#: ../../port/exec.c:531
+#: ../../port/exec.c:539
 #, c-format
 msgid "child process was terminated by signal %s"
 msgstr "Kindprozess wurde von Signal %s beendet"
 
-#: ../../port/exec.c:534
+#: ../../port/exec.c:542
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "Kindprozess wurde von Signal %d beendet"
 
-#: ../../port/exec.c:538
+#: ../../port/exec.c:546
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "Kindprozess hat mit unbekanntem Status %d beendet"
@@ -3220,11 +3220,11 @@ msgstr "Untertyp-Operatorklasse"
 
 #: sql_help.c:1960
 msgid "canonical_function"
-msgstr ""
+msgstr "Canonical-Funktion"
 
 #: sql_help.c:1961
 msgid "subtype_diff_function"
-msgstr ""
+msgstr "Untertyp-Diff-Funktion"
 
 #: sql_help.c:1963
 msgid "input_function"

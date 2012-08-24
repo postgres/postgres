@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-06-05 21:39+0000\n"
-"PO-Revision-Date: 2012-06-06 21:05+0300\n"
+"POT-Creation-Date: 2012-08-22 22:09+0000\n"
+"PO-Revision-Date: 2012-08-23 00:30-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -56,12 +56,12 @@ msgstr "Iteration mit einem Cursor in einer abgebrochenen Transaktionen"
 msgid "fetch from a closed cursor"
 msgstr "Lesen aus einem geschlossenen Cursor"
 
-#: plpy_cursorobject.c:485
+#: plpy_cursorobject.c:486
 #, c-format
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "Schließen eines Cursors in einer abgebrochenen Subtransaktion"
 
-#: plpy_elog.c:103 plpy_elog.c:104 plpy_plpymodule.c:419
+#: plpy_elog.c:103 plpy_elog.c:104 plpy_plpymodule.c:420
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -206,12 +206,12 @@ msgstr "konnte globale Objekte nicht erzeugen"
 msgid "could not initialize globals"
 msgstr "konnte globale Objekte nicht initialisieren"
 
-#: plpy_main.c:346
+#: plpy_main.c:347
 #, c-format
 msgid "PL/Python function \"%s\""
 msgstr "PL/Python-Funktion »%s«"
 
-#: plpy_main.c:353
+#: plpy_main.c:354
 #, c-format
 msgid "PL/Python anonymous code block"
 msgstr "anonymer PL/Python-Codeblock"
@@ -221,32 +221,32 @@ msgstr "anonymer PL/Python-Codeblock"
 msgid "plan.status takes no arguments"
 msgstr "plan.status nimmt keine Argumente"
 
-#: plpy_plpymodule.c:177 plpy_plpymodule.c:180
+#: plpy_plpymodule.c:178 plpy_plpymodule.c:181
 #, c-format
 msgid "could not import \"plpy\" module"
 msgstr "konnte Modul »plpy« nicht importieren"
 
-#: plpy_plpymodule.c:195
+#: plpy_plpymodule.c:196
 #, c-format
 msgid "could not add the spiexceptions module"
 msgstr "konnte das Modul »spiexceptions« nicht hinzufügen"
 
-#: plpy_plpymodule.c:216
+#: plpy_plpymodule.c:217
 #, c-format
 msgid "could not create the base SPI exceptions"
 msgstr "konnte die SPI-Basisausnahmen nicht erzeugen"
 
-#: plpy_plpymodule.c:252 plpy_plpymodule.c:256
+#: plpy_plpymodule.c:253 plpy_plpymodule.c:257
 #, c-format
 msgid "could not generate SPI exceptions"
 msgstr "konnte SPI-Ausnahmen nicht erzeugen"
 
-#: plpy_plpymodule.c:387
+#: plpy_plpymodule.c:388
 #, c-format
 msgid "could not unpack arguments in plpy.elog"
 msgstr "konnte Argumente in plpy.elog nicht entpacken"
 
-#: plpy_plpymodule.c:395
+#: plpy_plpymodule.c:396
 msgid "could not parse error message in plpy.elog"
 msgstr "konnte Fehlermeldung in plpy.elog nicht parsen"
 
@@ -410,7 +410,12 @@ msgstr "Attribut »%s« existiert nicht in Python-Objekt"
 msgid "To return null in a column, let the returned object have an attribute named after column with value None."
 msgstr "Um einen NULL-Wert in einer Spalte zurückzugeben, muss das zurückzugebende Objekt ein nach der Spalte benanntes Attribut mit dem Wert None haben."
 
-#: plpy_util.c:77
+#: plpy_util.c:70
 #, c-format
-msgid "could not convert Python Unicode object to PostgreSQL server encoding"
-msgstr "konnte Python-Unicode-Objekt nicht in PostgreSQL-Serverkodierung umwandeln"
+msgid "could not convert Python Unicode object to bytes"
+msgstr "konnte Python-Unicode-Objekt nicht in Bytes umwandeln"
+
+#: plpy_util.c:75
+#, c-format
+msgid "could not extract bytes from encoded string"
+msgstr "konnte kodierte Zeichenkette nicht in Bytes umwandeln"
