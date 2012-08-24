@@ -533,11 +533,16 @@ show_log_timezone(void)
  * read-only may be changed to read-write only when in a top-level transaction
  * that has not yet taken an initial snapshot.	Can't do it in a hot standby
  * slave, either.
+ *
+ * If we are not in a transaction at all, just allow the change; it means
+ * nothing since XactReadOnly will be reset by the next StartTransaction().
+ * The IsTransactionState() test protects us against trying to check
+ * RecoveryInProgress() in contexts where shared memory is not accessible.
  */
 bool
 check_transaction_read_only(bool *newval, void **extra, GucSource source)
 {
-	if (*newval == false && XactReadOnly)
+	if (*newval == false && XactReadOnly && IsTransactionState())
 	{
 		/* Can't go to r/w mode inside a r/o transaction */
 		if (IsSubTransaction())
@@ -556,6 +561,7 @@ check_transaction_read_only(bool *newval, void **extra, GucSource source)
 		/* Can't go to r/w mode while recovery is still active */
 		if (RecoveryInProgress())
 		{
+			GUC_check_errcode(ERRCODE_FEATURE_NOT_SUPPORTED);
 			GUC_check_errmsg("cannot set transaction read-write mode during recovery");
 			return false;
 		}
@@ -569,6 +575,8 @@ check_transaction_read_only(bool *newval, void **extra, GucSource source)
  *
  * We allow idempotent changes at any time, but otherwise this can only be
  * changed in a toplevel transaction that has not yet taken a snapshot.
+ *
+ * As in check_transaction_read_only, allow it if not inside a transaction.
  */
 bool
 check_XactIsoLevel(char **newval, void **extra, GucSource source)
@@ -598,7 +606,7 @@ check_XactIsoLevel(char **newval, void **extra, GucSource source)
 	else
 		return false;
 
-	if (newXactIsoLevel != XactIsoLevel)
+	if (newXactIsoLevel != XactIsoLevel && IsTransactionState())
 	{
 		if (FirstSnapshotSet)
 		{
@@ -616,6 +624,7 @@ check_XactIsoLevel(char **newval, void **extra, GucSource source)
 		/* Can't go to serializable mode while recovery is still active */
 		if (newXactIsoLevel == XACT_SERIALIZABLE && RecoveryInProgress())
 		{
+			GUC_check_errcode(ERRCODE_FEATURE_NOT_SUPPORTED);
 			GUC_check_errmsg("cannot use serializable mode in a hot standby");
 			GUC_check_errhint("You can use REPEATABLE READ instead.");
 			return false;

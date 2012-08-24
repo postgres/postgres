@@ -1571,6 +1571,19 @@ GetSerializableTransactionSnapshot(Snapshot snapshot)
 	Assert(IsolationIsSerializable());
 
 	/*
+	 * Can't use serializable mode while recovery is still active, as it is,
+	 * for example, on a hot standby.  We could get here despite the check
+	 * in check_XactIsoLevel() if default_transaction_isolation is set to
+	 * serializable, so phrase the hint accordingly.
+	 */
+	if (RecoveryInProgress())
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot use serializable mode in a hot standby"),
+				 errdetail("\"default_transaction_isolation\" is set to \"serializable\"."),
+				 errhint("You can use \"SET default_transaction_isolation = 'repeatable read'\" to change the default.")));
+
+	/*
 	 * A special optimization is available for SERIALIZABLE READ ONLY
 	 * DEFERRABLE transactions -- we can wait for a suitable snapshot and
 	 * thereby avoid all SSI overhead once it's running.
