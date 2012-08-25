@@ -881,7 +881,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     The cascading replication feature allows a standby server to accept replication
     connections and stream WAL records to other standbys, acting as a relay.
     This can be used to reduce the number of direct connections to the master
-    and also to minimise inter-site bandwidth overheads.
+    and also to minimize inter-site bandwidth overheads.
    </para>
 
    <para>
@@ -1041,7 +1041,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
    <para>
     Synchronous replication usually requires carefully planned and placed
     standby servers to ensure applications perform acceptably. Waiting
-    doesn't utilise system resources, but transaction locks continue to be
+    doesn't utilize system resources, but transaction locks continue to be
     held until the transfer is confirmed. As a result, incautious use of
     synchronous replication will reduce performance for database
     applications because of increased response times and higher contention.
