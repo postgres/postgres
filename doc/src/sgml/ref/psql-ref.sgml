@@ -2450,7 +2450,8 @@ testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
         Escapes to a separate Unix shell or executes the Unix command
         <replaceable class="parameter">command</replaceable>. The
         arguments are not further interpreted; the shell will see them
-        as-is.
+        as-is.  In particular, the variable substitution rules and
+        backslash escapes do not apply.
         </para>
         </listitem>
       </varlistentry>
