@@ -750,7 +750,7 @@
 
        <para>
         The new <quote>parameterized path</> mechanism allows inner
-        indexscans to use values from relations that are more than one join
+        index scans to use values from relations that are more than one join
         level up from the scan.  This can greatly improve performance in
         situations where semantic restrictions (such as outer joins) limit
         the allowed join orderings.
@@ -785,7 +785,7 @@
       <listitem>
        <para>
         Allow <literal>indexed_col op ANY(ARRAY[...])</> conditions to be
-        used in plain indexscans and index-only scans (Tom Lane)
+        used in plain index scans and index-only scans (Tom Lane)
        </para>
 
        <para>
@@ -796,14 +796,14 @@
       <listitem>
        <para>
         Support <function>MIN</>/<function>MAX</> index optimizations on
-        boolean columns (Marti Raudsepp)
+        <type>boolean</type> columns (Marti Raudsepp)
        </para>
       </listitem>
 
       <listitem>
        <para>
         Account for set-returning functions in <command>SELECT</> target
-        lists when setting rowcount estimates (Tom Lane)
+        lists when setting row count estimates (Tom Lane)
        </para>
       </listitem>
 
@@ -956,12 +956,12 @@
 
       <listitem>
        <para>
-        Support configurable eventlog application names on Windows
+        Support configurable event log application names on Windows
         (MauMau, Magnus Hagander)
        </para>
 
        <para>
-        This allows different instances to use the eventlog
+        This allows different instances to use the event log
         with different identifiers, by setting the <link
         linkend="guc-event-source"><varname>event_source</></link>
         server parameter, which is similar to how <link
@@ -1245,7 +1245,7 @@
 
       <listitem>
        <para>
-        Retain column names at runtime for row expressions
+        Retain column names at run time for row expressions
         (Andrew Dunstan, Tom Lane)
        </para>
 
@@ -2876,7 +2876,7 @@
 
       <listitem>
        <para>
-        Add a userspace access cache to sepgsql to improve performance
+        Add a user space access cache to sepgsql to improve performance
         (KaiGai Kohei)
        </para>
       </listitem>
