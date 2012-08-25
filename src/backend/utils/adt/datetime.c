@@ -944,6 +944,16 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				break;
 
 			case DTK_TIME:
+				/*
+				 * This might be an ISO time following a "t" field.
+				 */
+				if (ptype != 0)
+				{
+					/* Sanity check; should not fail this test */
+					if (ptype != DTK_TIME)
+						return DTERR_BAD_FORMAT;
+					ptype = 0;
+				}
 				dterr = DecodeTime(field[i], fmask, INTERVAL_FULL_RANGE,
 								   &tmask, tm, fsec);
 				if (dterr)
