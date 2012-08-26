@@ -110,7 +110,7 @@ HandleSlashCmds(PsqlScanState scan_state,
 	if (status == PSQL_CMD_UNKNOWN)
 	{
 		if (pset.cur_cmd_interactive)
-			fprintf(stderr, _("Invalid command \\%s. Try \\? for help.\n"), cmd);
+			psql_error("Invalid command \\%s. Try \\? for help.\n", cmd);
 		else
 			psql_error("invalid command \\%s\n", cmd);
 		status = PSQL_CMD_ERROR;
@@ -904,7 +904,7 @@ exec_command(const char *cmd,
 
 		if (strcmp(pw1, pw2) != 0)
 		{
-			fprintf(stderr, _("Passwords didn't match.\n"));
+			psql_error("Passwords didn't match.\n");
 			success = false;
 		}
 		else
@@ -922,7 +922,7 @@ exec_command(const char *cmd,
 
 			if (!encrypted_password)
 			{
-				fprintf(stderr, _("Password encryption failed.\n"));
+				psql_error("Password encryption failed.\n");
 				success = false;
 			}
 			else
@@ -1441,7 +1441,7 @@ exec_command(const char *cmd,
 		while ((value = psql_scan_slash_option(scan_state,
 											   OT_NORMAL, NULL, true)))
 		{
-			fprintf(stderr, "+ opt(%d) = |%s|\n", i++, value);
+			psql_error("+ opt(%d) = |%s|\n", i++, value);
 			free(value);
 		}
 	}
@@ -1519,7 +1519,8 @@ do_connect(char *dbname, char *user, char *host, char *port)
 		 *	to connect to the wrong database by using defaults, so require
 		 *	all parameters to be specified.
 		 */
-		fputs(_("All connection parameters must be supplied because no database connection exists\n"), stderr);
+		psql_error("All connection parameters must be supplied because no "
+				   "database connection exists\n");
 		return false;
 	}
 
@@ -1608,7 +1609,7 @@ do_connect(char *dbname, char *user, char *host, char *port)
 
 			/* pset.db is left unmodified */
 			if (o_conn)
-				fputs(_("Previous connection kept\n"), stderr);
+				psql_error("Previous connection kept\n");
 		}
 		else
 		{

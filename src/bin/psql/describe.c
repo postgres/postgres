@@ -132,7 +132,7 @@ describeTablespaces(const char *pattern, bool verbose)
 
 	if (pset.sversion < 80000)
 	{
-		fprintf(stderr, _("The server (version %d.%d) does not support tablespaces.\n"),
+		psql_error("The server (version %d.%d) does not support tablespaces.\n",
 				pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
@@ -219,13 +219,13 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 
 	if (strlen(functypes) != strspn(functypes, "antwS+"))
 	{
-		fprintf(stderr, _("\\df only takes [antwS+] as options\n"));
+		psql_error("\\df only takes [antwS+] as options\n");
 		return true;
 	}
 
 	if (showWindow && pset.sversion < 80400)
 	{
-		fprintf(stderr, _("\\df does not take a \"w\" option with server version %d.%d\n"),
+		psql_error("\\df does not take a \"w\" option with server version %d.%d\n",
 				pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
@@ -786,7 +786,7 @@ listDefaultACLs(const char *pattern)
 
 	if (pset.sversion < 90000)
 	{
-		fprintf(stderr, _("The server (version %d.%d) does not support altering default privileges.\n"),
+		psql_error("The server (version %d.%d) does not support altering default privileges.\n",
 				pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
@@ -1052,7 +1052,7 @@ describeTableDetails(const char *pattern, bool verbose, bool showSystem)
 	if (PQntuples(res) == 0)
 	{
 		if (!pset.quiet)
-			fprintf(stderr, _("Did not find any relation named \"%s\".\n"),
+			psql_error("Did not find any relation named \"%s\".\n",
 					pattern);
 		PQclear(res);
 		return false;
@@ -1225,8 +1225,7 @@ describeOneTableDetails(const char *schemaname,
 	if (PQntuples(res) == 0)
 	{
 		if (!pset.quiet)
-			fprintf(stderr, _("Did not find any relation with OID %s.\n"),
-					oid);
+			psql_error("Did not find any relation with OID %s.\n", oid);
 		goto error_return;
 	}
 
@@ -3126,7 +3125,7 @@ listCollations(const char *pattern, bool verbose, bool showSystem)
 
 	if (pset.sversion < 90100)
 	{
-		fprintf(stderr, _("The server (version %d.%d) does not support collations.\n"),
+		psql_error("The server (version %d.%d) does not support collations.\n",
 				pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
@@ -3257,7 +3256,7 @@ listTSParsers(const char *pattern, bool verbose)
 
 	if (pset.sversion < 80300)
 	{
-		fprintf(stderr, _("The server (version %d.%d) does not support full text search.\n"),
+		psql_error("The server (version %d.%d) does not support full text search.\n",
 				pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
@@ -3334,7 +3333,7 @@ listTSParsersVerbose(const char *pattern)
 	if (PQntuples(res) == 0)
 	{
 		if (!pset.quiet)
-			fprintf(stderr, _("Did not find any text search parser named \"%s\".\n"),
+			psql_error("Did not find any text search parser named \"%s\".\n",
 					pattern);
 		PQclear(res);
 		return false;
@@ -3490,7 +3489,7 @@ listTSDictionaries(const char *pattern, bool verbose)
 
 	if (pset.sversion < 80300)
 	{
-		fprintf(stderr, _("The server (version %d.%d) does not support full text search.\n"),
+		psql_error("The server (version %d.%d) does not support full text search.\n",
 				pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
@@ -3558,7 +3557,7 @@ listTSTemplates(const char *pattern, bool verbose)
 
 	if (pset.sversion < 80300)
 	{
-		fprintf(stderr, _("The server (version %d.%d) does not support full text search.\n"),
+		psql_error("The server (version %d.%d) does not support full text search.\n",
 				pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
@@ -3626,7 +3625,7 @@ listTSConfigs(const char *pattern, bool verbose)
 
 	if (pset.sversion < 80300)
 	{
-		fprintf(stderr, _("The server (version %d.%d) does not support full text search.\n"),
+		psql_error("The server (version %d.%d) does not support full text search.\n",
 				pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
@@ -3704,7 +3703,7 @@ listTSConfigsVerbose(const char *pattern)
 	if (PQntuples(res) == 0)
 	{
 		if (!pset.quiet)
-			fprintf(stderr, _("Did not find any text search configuration named \"%s\".\n"),
+			psql_error("Did not find any text search configuration named \"%s\".\n",
 					pattern);
 		PQclear(res);
 		return false;
@@ -3824,7 +3823,7 @@ listForeignDataWrappers(const char *pattern, bool verbose)
 
 	if (pset.sversion < 80400)
 	{
-		fprintf(stderr, _("The server (version %d.%d) does not support foreign-data wrappers.\n"),
+		psql_error("The server (version %d.%d) does not support foreign-data wrappers.\n",
 				pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
@@ -3904,7 +3903,7 @@ listForeignServers(const char *pattern, bool verbose)
 
 	if (pset.sversion < 80400)
 	{
-		fprintf(stderr, _("The server (version %d.%d) does not support foreign servers.\n"),
+		psql_error("The server (version %d.%d) does not support foreign servers.\n",
 				pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
@@ -3983,7 +3982,7 @@ listUserMappings(const char *pattern, bool verbose)
 
 	if (pset.sversion < 80400)
 	{
-		fprintf(stderr, _("The server (version %d.%d) does not support user mappings.\n"),
+		psql_error("The server (version %d.%d) does not support user mappings.\n",
 				pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
@@ -4041,7 +4040,7 @@ listForeignTables(const char *pattern, bool verbose)
 
 	if (pset.sversion < 90100)
 	{
-		fprintf(stderr, _("The server (version %d.%d) does not support foreign tables.\n"),
+		psql_error("The server (version %d.%d) does not support foreign tables.\n",
 				pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
@@ -4115,7 +4114,7 @@ listExtensions(const char *pattern)
 
 	if (pset.sversion < 90100)
 	{
-		fprintf(stderr, _("The server (version %d.%d) does not support extensions.\n"),
+		psql_error("The server (version %d.%d) does not support extensions.\n",
 				pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
@@ -4169,7 +4168,7 @@ listExtensionContents(const char *pattern)
 
 	if (pset.sversion < 90100)
 	{
-		fprintf(stderr, _("The server (version %d.%d) does not support extensions.\n"),
+		psql_error("The server (version %d.%d) does not support extensions.\n",
 				pset.sversion / 10000, (pset.sversion / 100) % 100);
 		return true;
 	}
@@ -4196,10 +4195,10 @@ listExtensionContents(const char *pattern)
 		if (!pset.quiet)
 		{
 			if (pattern)
-				fprintf(stderr, _("Did not find any extension named \"%s\".\n"),
+				psql_error("Did not find any extension named \"%s\".\n",
 						pattern);
 			else
-				fprintf(stderr, _("Did not find any extensions.\n"));
+				psql_error("Did not find any extensions.\n");
 		}
 		PQclear(res);
 		return false;

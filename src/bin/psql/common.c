@@ -42,7 +42,7 @@ pg_strdup(const char *string)
 
 	if (!string)
 	{
-		fprintf(stderr, _("%s: pg_strdup: cannot duplicate null pointer (internal error)\n"),
+		psql_error("%s: pg_strdup: cannot duplicate null pointer (internal error)\n",
 				pset.progname);
 		exit(EXIT_FAILURE);
 	}
@@ -161,7 +161,7 @@ psql_error(const char *fmt,...)
 	va_list		ap;
 
 	fflush(stdout);
-	if (pset.queryFout != stdout)
+	if (pset.queryFout && pset.queryFout != stdout)
 		fflush(pset.queryFout);
 
 	if (pset.inputfile)
@@ -219,6 +219,7 @@ static PGcancel *volatile cancelConn = NULL;
 static CRITICAL_SECTION cancelConnLock;
 #endif
 
+/* Used from signal handlers, no buffering */
 #define write_stderr(str)	write(fileno(stderr), str, strlen(str))
 
 
@@ -350,19 +351,19 @@ CheckConnection(void)
 			exit(EXIT_BADCONN);
 		}
 
-		fputs(_("The connection to the server was lost. Attempting reset: "), stderr);
+		psql_error("The connection to the server was lost. Attempting reset: ");
 		PQreset(pset.db);
 		OK = ConnectionUp();
 		if (!OK)
 		{
-			fputs(_("Failed.\n"), stderr);
+			psql_error("Failed.\n");
 			PQfinish(pset.db);
 			pset.db = NULL;
 			ResetCancelConn();
 			UnsyncVariables();
 		}
 		else
-			fputs(_("Succeeded.\n"), stderr);
+			psql_error("Succeeded.\n");
 	}
 
 	return OK;
@@ -910,7 +911,7 @@ SendQuery(const char *query)
 	{
 		if (on_error_rollback_warning == false && pset.sversion < 80000)
 		{
-			fprintf(stderr, _("The server (version %d.%d) does not support savepoints for ON_ERROR_ROLLBACK.\n"),
+			psql_error("The server (version %d.%d) does not support savepoints for ON_ERROR_ROLLBACK.\n",
 					pset.sversion / 10000, (pset.sversion / 100) % 100);
 			on_error_rollback_warning = true;
 		}

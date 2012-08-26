@@ -155,7 +155,7 @@ do_lo_export(const char *loid_arg, const char *filename_arg)
 	/* of course this status is documented nowhere :( */
 	if (status != 1)
 	{
-		fputs(PQerrorMessage(pset.db), stderr);
+		psql_error("%s", PQerrorMessage(pset.db));
 		return fail_lo_xact("\\lo_export", own_transaction);
 	}
 
@@ -190,7 +190,7 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 
 	if (loid == InvalidOid)
 	{
-		fputs(PQerrorMessage(pset.db), stderr);
+		psql_error("%s", PQerrorMessage(pset.db));
 		return fail_lo_xact("\\lo_import", own_transaction);
 	}
 
@@ -252,7 +252,7 @@ do_lo_unlink(const char *loid_arg)
 
 	if (status == -1)
 	{
-		fputs(PQerrorMessage(pset.db), stderr);
+		psql_error("%s", PQerrorMessage(pset.db));
 		return fail_lo_xact("\\lo_unlink", own_transaction);
 	}
 
