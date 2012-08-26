@@ -336,16 +336,13 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
      </para>
      <para>
       Not-null constraints are always copied to the new table.
-      <literal>CHECK</literal> constraints will only be copied if
-      <literal>INCLUDING CONSTRAINTS</literal> is specified; other types of
-      constraints will never be copied. Also, no distinction is made between
-      column constraints and table constraints &mdash; when constraints are
-      requested, all check constraints are copied.
-     </para>
-     <para>
-      Any indexes on the original table will not be created on the new
-      table, unless the <literal>INCLUDING INDEXES</literal> clause is
-      specified.
+      <literal>CHECK</literal> constraints will be copied only if
+      <literal>INCLUDING CONSTRAINTS</literal> is specified. 
+      Indexes, <literal>PRIMARY KEY</>, and <literal>UNIQUE</> constraints
+      on the original table will be created on the new table only if the
+      <literal>INCLUDING INDEXES</literal> clause is specified.
+      No distinction is made between column constraints and table
+      constraints.
      </para>
      <para><literal>STORAGE</> settings for the copied column definitions will only
       be copied if <literal>INCLUDING STORAGE</literal> is specified.  The
