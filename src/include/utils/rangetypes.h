@@ -170,6 +170,7 @@ extern Datum hash_range(PG_FUNCTION_ARGS);
 
 /* ANALYZE support */
 extern Datum range_typanalyze(PG_FUNCTION_ARGS);
+extern Datum rangesel(PG_FUNCTION_ARGS);
 
 /* Canonical functions */
 extern Datum int4range_canonical(PG_FUNCTION_ARGS);

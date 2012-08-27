@@ -30,7 +30,8 @@ OBJS = acl.o arrayfuncs.o array_selfuncs.o array_typanalyze.o \
 	tsginidx.o tsgistidx.o tsquery.o tsquery_cleanup.o tsquery_gist.o \
 	tsquery_op.o tsquery_rewrite.o tsquery_util.o tsrank.o \
 	tsvector.o tsvector_op.o tsvector_parser.o \
-	txid.o uuid.o windowfuncs.o xml.o rangetypes_spgist.o
+	txid.o uuid.o windowfuncs.o xml.o rangetypes_spgist.o \
+	rangetypes_typanalyze.o rangetypes_selfuncs.o
 
 like.o: like.c like_match.c
 

@@ -268,4 +268,22 @@ typedef FormData_pg_statistic *Form_pg_statistic;
  */
 #define STATISTIC_KIND_DECHIST	5
 
+/*
+ * An "empty frac" slot describes the fraction of empty ranges in a range-type
+ * column.  stavalues is not used and should be NULL.  stanumbers contains a
+ * single entry, the fraction of empty ranges (0.0 to 1.0).
+ */
+#define STATISTIC_KIND_RANGE_EMPTY_FRAC  6
+
+/*
+ * A "bounds histogram" slot is similar to STATISTIC_KIND_HISTOGRAM, but for
+ * a range-type column.  stavalues contains M (>=2) range values that divide
+ * the column data values into M-1 bins of approximately equal population.
+ * Unlike a regular scalar histogram, this is actually two histograms combined
+ * into a single array, with the lower bounds of each value forming a
+ * histogram of lower bounds, and the upper bounds a histogram of upper
+ * bounds.  Only non-NULL, non-empty ranges are included.
+ */
+#define STATISTIC_KIND_BOUNDS_HISTOGRAM  7
+
 #endif   /* PG_STATISTIC_H */

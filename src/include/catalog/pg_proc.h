@@ -4544,6 +4544,8 @@ DATA(insert OID = 3902 (  hash_range			PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 
 DESCR("hash a range");
 DATA(insert OID = 3916 (  range_typanalyze		PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 16 "2281" _null_ _null_ _null_ _null_ range_typanalyze _null_ _null_ _null_ ));
 DESCR("range typanalyze");
+DATA(insert OID = 3169 (  rangesel				PGNSP PGUID 12 1 0 0 0 f f f f t f s 4 0 701 "2281 26 2281 23" _null_ _null_ _null_ _null_ rangesel _null_ _null_ _null_ ));
+DESCR("restriction selectivity for range operators");
 
 DATA(insert OID = 3914 (  int4range_canonical		   PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 3904 "3904" _null_ _null_ _null_ _null_ int4range_canonical _null_ _null_ _null_ ));
 DESCR("convert an int4 range to canonical form");
