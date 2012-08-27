@@ -108,10 +108,11 @@ WaitLatchOrSocket(volatile Latch *latch, pgsocket sock, bool forRead,
 	numevents = 2;
 	if (sock != PGINVALID_SOCKET && (forRead || forWrite))
 	{
+		/* Need an event object to represent events on the socket */
 		int			flags = 0;
 
 		if (forRead)
-			flags |= FD_READ;
+			flags |= (FD_READ | FD_CLOSE);
 		if (forWrite)
 			flags |= FD_WRITE;
 
@@ -154,11 +155,10 @@ WaitLatchOrSocket(volatile Latch *latch, pgsocket sock, bool forRead,
 			Assert(sock != PGINVALID_SOCKET);
 
 			ZeroMemory(&resEvents, sizeof(resEvents));
-			if (WSAEnumNetworkEvents(sock, sockevent, &resEvents) == SOCKET_ERROR)
+			if (WSAEnumNetworkEvents(sock, sockevent, &resEvents) != 0)
 				ereport(FATAL,
-						(errmsg_internal("failed to enumerate network events: %i", (int) GetLastError())));
-
-			if ((forRead && resEvents.lNetworkEvents & FD_READ) ||
+						(errmsg_internal("failed to enumerate network events: %i", (int) WSAGetLastError())));
+			if ((forRead && resEvents.lNetworkEvents & (FD_READ | FD_CLOSE)) ||
 				(forWrite && resEvents.lNetworkEvents & FD_WRITE))
 				result = 2;
 			break;
@@ -167,10 +167,10 @@ WaitLatchOrSocket(volatile Latch *latch, pgsocket sock, bool forRead,
 			elog(ERROR, "unexpected return code from WaitForMultipleObjects(): %d", (int) rc);
 	}
 
-	/* Clean up the handle we created for the socket */
-	if (sock != PGINVALID_SOCKET && (forRead || forWrite))
+	/* Clean up the event object we created for the socket */
+	if (sockevent != WSA_INVALID_EVENT)
 	{
-		WSAEventSelect(sock, sockevent, 0);
+		WSAEventSelect(sock, NULL, 0);
 		WSACloseEvent(sockevent);
 	}
 
