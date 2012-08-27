@@ -4941,7 +4941,7 @@ DropStmt:	DROP drop_type IF_P EXISTS any_name_list opt_drop_behavior
 				{
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_INDEX;
-					n->missing_ok = FALSE;
+					n->missing_ok = TRUE;
 					n->objects = $6;
 					n->arguments = NIL;
 					n->behavior = $7;
