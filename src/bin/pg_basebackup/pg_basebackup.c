@@ -1325,7 +1325,7 @@ main(int argc, char **argv)
 				else
 				{
 					fprintf(stderr,
-							_("%s: invalid xlog-method option \"%s\", must be empty, \"fetch\", or \"stream\"\n"),
+							_("%s: invalid xlog-method option \"%s\", must be \"fetch\" or \"stream\"\n"),
 							progname, optarg);
 					exit(1);
 				}
