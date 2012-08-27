@@ -143,7 +143,7 @@ start_postmaster(ClusterInfo *cluster)
 	char		cmd[MAXPGPATH];
 	PGconn	   *conn;
 	bool		exit_hook_registered = false;
-	int			pg_ctl_return = 0;
+	bool		pg_ctl_return = false;
 
 	if (!exit_hook_registered)
 	{
@@ -159,22 +159,23 @@ start_postmaster(ClusterInfo *cluster)
 	 * not touch them.
 	 */
 	snprintf(cmd, sizeof(cmd),
-			 SYSTEMQUOTE "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" "
-			 "-o \"-p %d %s %s\" start >> \"%s\" 2>&1" SYSTEMQUOTE,
+			 "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" -o \"-p %d %s %s\" start",
 		  cluster->bindir, SERVER_LOG_FILE, cluster->pgconfig, cluster->port,
 			 (cluster->controldata.cat_ver >=
 			  BINARY_UPGRADE_SERVER_FLAG_CAT_VER) ? "-b" :
 			 "-c autovacuum=off -c autovacuum_freeze_max_age=2000000000",
-			 cluster->pgopts ? cluster->pgopts : "", SERVER_START_LOG_FILE);
+			 cluster->pgopts ? cluster->pgopts : "");
 
 	/*
 	 * Don't throw an error right away, let connecting throw the error because
 	 * it might supply a reason for the failure.
 	 */
-	pg_ctl_return = exec_prog(false, true, SERVER_START_LOG_FILE,
-	/* pass both file names if the differ */
-					  (strcmp(SERVER_LOG_FILE, SERVER_START_LOG_FILE) != 0) ?
+	pg_ctl_return = exec_prog(SERVER_START_LOG_FILE,
+							  /* pass both file names if they differ */
+							  (strcmp(SERVER_LOG_FILE,
+									  SERVER_START_LOG_FILE) != 0) ?
 							  SERVER_LOG_FILE : NULL,
+							  false,
 							  "%s", cmd);
 
 	/* Check to see if we can connect to the server; if not, report it. */
@@ -185,13 +186,14 @@ start_postmaster(ClusterInfo *cluster)
 			   PQerrorMessage(conn));
 		if (conn)
 			PQfinish(conn);
-		pg_log(PG_FATAL, "could not connect to %s postmaster started with the command: %s\n",
+		pg_log(PG_FATAL, "could not connect to %s postmaster started with the command:\n"
+			   "%s\n",
 			   CLUSTER_NAME(cluster), cmd);
 	}
 	PQfinish(conn);
 
 	/* If the connection didn't fail, fail now */
-	if (pg_ctl_return != 0)
+	if (!pg_ctl_return)
 		pg_log(PG_FATAL, "pg_ctl failed to start the %s server, or connection failed\n",
 			   CLUSTER_NAME(cluster));
 
@@ -202,7 +204,6 @@ start_postmaster(ClusterInfo *cluster)
 void
 stop_postmaster(bool fast)
 {
-	char		cmd[MAXPGPATH];
 	ClusterInfo *cluster;
 
 	if (os_info.running_cluster == &old_cluster)
@@ -212,14 +213,11 @@ stop_postmaster(bool fast)
 	else
 		return;					/* no cluster running */
 
-	snprintf(cmd, sizeof(cmd),
-			 SYSTEMQUOTE "\"%s/pg_ctl\" -w -D \"%s\" -o \"%s\" "
-			 "%s stop >> \"%s\" 2>&1" SYSTEMQUOTE,
-			 cluster->bindir, cluster->pgconfig,
-			 cluster->pgopts ? cluster->pgopts : "",
-			 fast ? "-m fast" : "", SERVER_STOP_LOG_FILE);
-
-	exec_prog(fast ? false : true, true, SERVER_STOP_LOG_FILE, NULL, "%s", cmd);
+	exec_prog(SERVER_STOP_LOG_FILE, NULL, !fast,
+			  "\"%s/pg_ctl\" -w -D \"%s\" -o \"%s\" %s stop",
+			  cluster->bindir, cluster->pgconfig,
+			  cluster->pgopts ? cluster->pgopts : "",
+			  fast ? "-m fast" : "");
 
 	os_info.running_cluster = NULL;
 }

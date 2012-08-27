@@ -26,77 +26,81 @@ static int	win32_check_directory_write_permissions(void);
 
 /*
  * exec_prog()
+ *		Execute an external program with stdout/stderr redirected, and report
+ *		errors
  *
- *	Formats a command from the given argument list and executes that
- *	command.  If the command executes, exec_prog() returns 1 otherwise
- *	exec_prog() logs an error message and returns 0.  Either way, the command
- *	line to be executed is saved to the specified log file.
+ * Formats a command from the given argument list, logs it to the log file,
+ * and attempts to execute that command.  If the command executes
+ * successfully, exec_prog() returns true.
  *
- *	If throw_error is TRUE, this function will throw a PG_FATAL error
- *	instead of returning should an error occur.  The command it appended
- *	to log_file;  opt_log_file is used in error messages.
+ * If the command fails, an error message is saved to the specified log_file.
+ * If throw_error is true, this raises a PG_FATAL error and pg_upgrade
+ * terminates; otherwise it is just reported as PG_REPORT and exec_prog()
+ * returns false.
  */
-int
-exec_prog(bool throw_error, bool is_priv, const char *log_file,
-		  const char *opt_log_file, const char *fmt,...)
+bool
+exec_prog(const char *log_file, const char *opt_log_file,
+		  bool throw_error, const char *fmt,...)
 {
-	va_list		args;
 	int			result;
-	int			retval;
-	char		cmd[MAXPGPATH];
+	int			written;
+#define MAXCMDLEN (2 * MAXPGPATH)
+	char		cmd[MAXCMDLEN];
 	mode_t		old_umask = 0;
 	FILE	   *log;
+	va_list		ap;
 
-	if (is_priv)
-		old_umask = umask(S_IRWXG | S_IRWXO);
+	old_umask = umask(S_IRWXG | S_IRWXO);
 
-	va_start(args, fmt);
-	vsnprintf(cmd, MAXPGPATH, fmt, args);
-	va_end(args);
+	written = strlcpy(cmd, SYSTEMQUOTE, strlen(SYSTEMQUOTE));
+	va_start(ap, fmt);
+	written += vsnprintf(cmd + written, MAXCMDLEN - written, fmt, ap);
+	va_end(ap);
+	if (written >= MAXCMDLEN)
+		pg_log(PG_FATAL, "command too long\n");
+	written += snprintf(cmd + written, MAXCMDLEN - written,
+						" >> \"%s\" 2>&1" SYSTEMQUOTE, log_file);
+	if (written >= MAXCMDLEN)
+		pg_log(PG_FATAL, "command too long\n");
 
 	if ((log = fopen_priv(log_file, "a+")) == NULL)
 		pg_log(PG_FATAL, "cannot write to log file %s\n", log_file);
 	pg_log(PG_VERBOSE, "%s\n", cmd);
 	fprintf(log, "command: %s\n", cmd);
+
 	/*
-	 *	In Windows, we must close then reopen the log file so the file is
-	 *	not open while the command is running, or we get a share violation.
+	 * In Windows, we must close the log file at this point so the file is not
+	 * open while the command is running, or we get a share violation.
 	 */
 	fclose(log);
 
 	result = system(cmd);
 
-	if (is_priv)
-		umask(old_umask);
+	umask(old_umask);
 
 	if (result != 0)
 	{
-		char opt_string[MAXPGPATH];
-
-		/* Create string for optional second log file */
-		if (opt_log_file)
-			snprintf(opt_string, sizeof(opt_string), " or \"%s\"", opt_log_file);
-		else
-			opt_string[0] = '\0';
-
 		report_status(PG_REPORT, "*failure*");
 		fflush(stdout);
 		pg_log(PG_VERBOSE, "There were problems executing \"%s\"\n", cmd);
-		pg_log(throw_error ? PG_FATAL : PG_REPORT,
-			   "Consult the last few lines of \"%s\"%s for\n"
-			   "the probable cause of the failure.\n",
-			   log_file, opt_string);
-		retval = 1;
+		if (opt_log_file)
+			pg_log(throw_error ? PG_FATAL : PG_REPORT,
+				   "Consult the last few lines of \"%s\" or \"%s\" for\n"
+				   "the probable cause of the failure.\n",
+				   log_file, opt_log_file);
+		else
+			pg_log(throw_error ? PG_FATAL : PG_REPORT,
+				   "Consult the last few lines of \"%s\" for\n"
+				   "the probable cause of the failure.\n",
+				   log_file);
 	}
-	else
-		retval = 0;
 
 	if ((log = fopen_priv(log_file, "a+")) == NULL)
 		pg_log(PG_FATAL, "cannot write to log file %s\n", log_file);
 	fprintf(log, "\n\n");
 	fclose(log);
 
-	return retval;
+	return result == 0;
 }
 
 

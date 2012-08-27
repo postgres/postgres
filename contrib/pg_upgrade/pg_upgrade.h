@@ -316,10 +316,11 @@ void		split_old_dump(void);
 
 /* exec.c */
 
-int
-exec_prog(bool throw_error, bool is_priv, const char *log_file,
-		  const char *opt_log_file, const char *cmd,...)
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 5, 6)));
+#define EXEC_PSQL_ARGS "--echo-queries --set ON_ERROR_STOP=on --no-psqlrc --dbname=template1"
+bool
+exec_prog(const char *log_file, const char *opt_log_file,
+		  bool throw_error, const char *fmt,...)
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 4, 5)));
 void		verify_directories(void);
 bool		is_server_running(const char *datadir);
 

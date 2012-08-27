@@ -23,12 +23,11 @@ generate_old_dump(void)
 	 * --binary-upgrade records the width of dropped columns in pg_class, and
 	 * restores the frozenid's for databases and relations.
 	 */
-	exec_prog(true, true, UTILITY_LOG_FILE, NULL,
-			  SYSTEMQUOTE "\"%s/pg_dumpall\" --port %d --username \"%s\" "
-			  "--schema-only --binary-upgrade %s > \"%s\" 2>> \"%s\""
-			  SYSTEMQUOTE, new_cluster.bindir, old_cluster.port, os_info.user,
+	exec_prog(UTILITY_LOG_FILE, NULL, true,
+			  "\"%s/pg_dumpall\" --port %d --username \"%s\" --schema-only --binary-upgrade %s -f %s",
+			  new_cluster.bindir, old_cluster.port, os_info.user,
 			  log_opts.verbose ? "--verbose" : "",
-			  ALL_DUMP_FILE, UTILITY_LOG_FILE);
+			  ALL_DUMP_FILE);
 	check_ok();
 }
 

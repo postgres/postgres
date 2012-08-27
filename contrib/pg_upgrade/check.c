@@ -183,13 +183,10 @@ issue_warnings(char *sequence_script_file_name)
 		if (sequence_script_file_name)
 		{
 			prep_status("Adjusting sequences");
-			exec_prog(true, true, UTILITY_LOG_FILE, NULL,
-					  SYSTEMQUOTE "\"%s/psql\" --echo-queries "
-					  "--set ON_ERROR_STOP=on "
-					  "--no-psqlrc --port %d --username \"%s\" "
-				   "-f \"%s\" --dbname template1 >> \"%s\" 2>&1" SYSTEMQUOTE,
+			exec_prog(UTILITY_LOG_FILE, NULL, true,
+					  "\"%s/psql\" " EXEC_PSQL_ARGS " --port %d --username \"%s\" -f \"%s\"",
 					  new_cluster.bindir, new_cluster.port, os_info.user,
-					  sequence_script_file_name, UTILITY_LOG_FILE);
+					  sequence_script_file_name);
 			unlink(sequence_script_file_name);
 			check_ok();
 		}
