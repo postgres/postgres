@@ -686,7 +686,8 @@
   <para>
    This utility, like most other <productname>PostgreSQL</> utilities,
    also uses the environment variables supported by <application>libpq</>
-   (see <xref linkend="libpq-envars">).
+   (see <xref linkend="libpq-envars">).  However, it does not read
+   <envar>PGDATABASE</envar> when a database name is not supplied.
   </para>
 
  </refsect1>
