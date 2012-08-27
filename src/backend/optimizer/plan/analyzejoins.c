@@ -298,6 +298,7 @@ remove_rel_from_query(PlannerInfo *root, int relid, Relids joinrelids)
 	List	   *joininfos;
 	Index		rti;
 	ListCell   *l;
+	ListCell   *nextl;
 
 	/*
 	 * Mark the rel as "dead" to show it is no longer part of the join tree.
@@ -348,6 +349,26 @@ remove_rel_from_query(PlannerInfo *root, int relid, Relids joinrelids)
 		sjinfo->min_righthand = bms_del_member(sjinfo->min_righthand, relid);
 		sjinfo->syn_lefthand = bms_del_member(sjinfo->syn_lefthand, relid);
 		sjinfo->syn_righthand = bms_del_member(sjinfo->syn_righthand, relid);
+	}
+
+	/*
+	 * Likewise remove references from LateralJoinInfo data structures.
+	 *
+	 * If we are deleting a LATERAL subquery, we can forget its
+	 * LateralJoinInfo altogether.  Otherwise, make sure the target is not
+	 * included in any lateral_lhs set.  (It probably can't be, since that
+	 * should have precluded deciding to remove it; but let's cope anyway.)
+	 */
+	for (l = list_head(root->lateral_info_list); l != NULL; l = nextl)
+	{
+		LateralJoinInfo *ljinfo = (LateralJoinInfo *) lfirst(l);
+
+		nextl = lnext(l);
+		if (ljinfo->lateral_rhs == relid)
+			root->lateral_info_list = list_delete_ptr(root->lateral_info_list,
+													  ljinfo);
+		else
+			ljinfo->lateral_lhs = bms_del_member(ljinfo->lateral_lhs, relid);
 	}
 
 	/*

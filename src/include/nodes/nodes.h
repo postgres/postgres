@@ -235,6 +235,7 @@ typedef enum NodeTag
 	T_RestrictInfo,
 	T_PlaceHolderVar,
 	T_SpecialJoinInfo,
+	T_LateralJoinInfo,
 	T_AppendRelInfo,
 	T_PlaceHolderInfo,
 	T_MinMaxAggInfo,

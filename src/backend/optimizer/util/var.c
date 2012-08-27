@@ -746,6 +746,7 @@ flatten_join_alias_vars_mutator(Node *node,
 	Assert(!IsA(node, SubPlan));
 	/* Shouldn't need to handle these planner auxiliary nodes here */
 	Assert(!IsA(node, SpecialJoinInfo));
+	Assert(!IsA(node, LateralJoinInfo));
 	Assert(!IsA(node, PlaceHolderInfo));
 	Assert(!IsA(node, MinMaxAggInfo));
 

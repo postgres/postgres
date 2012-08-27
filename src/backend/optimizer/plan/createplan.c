@@ -298,7 +298,18 @@ create_scan_plan(PlannerInfo *root, Path *best_path)
 		}
 	}
 	else
+	{
 		tlist = build_relation_tlist(rel);
+
+		/*
+		 * If it's a parameterized otherrel, there might be lateral references
+		 * in the tlist, which need to be replaced with Params.  This cannot
+		 * happen for regular baserels, though.  Note use_physical_tlist()
+		 * always fails for otherrels, so we don't need to check this above.
+		 */
+		if (rel->reloptkind != RELOPT_BASEREL && best_path->param_info)
+			tlist = (List *) replace_nestloop_params(root, (Node *) tlist);
+	}
 
 	/*
 	 * Extract the relevant restriction clauses from the parent relation. The
@@ -1583,6 +1594,7 @@ create_tidscan_plan(PlannerInfo *root, TidPath *best_path,
 {
 	TidScan    *scan_plan;
 	Index		scan_relid = best_path->path.parent->relid;
+	List	   *tidquals = best_path->tidquals;
 	List	   *ortidquals;
 
 	/* it should be a base rel... */
@@ -1595,11 +1607,20 @@ create_tidscan_plan(PlannerInfo *root, TidPath *best_path,
 	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
 
+	/* Replace any outer-relation variables with nestloop params */
+	if (best_path->path.param_info)
+	{
+		tidquals = (List *)
+			replace_nestloop_params(root, (Node *) tidquals);
+		scan_clauses = (List *)
+			replace_nestloop_params(root, (Node *) scan_clauses);
+	}
+
 	/*
 	 * Remove any clauses that are TID quals.  This is a bit tricky since the
 	 * tidquals list has implicit OR semantics.
 	 */
-	ortidquals = best_path->tidquals;
+	ortidquals = tidquals;
 	if (list_length(ortidquals) > 1)
 		ortidquals = list_make1(make_orclause(ortidquals));
 	scan_clauses = list_difference(scan_clauses, ortidquals);
@@ -1607,7 +1628,7 @@ create_tidscan_plan(PlannerInfo *root, TidPath *best_path,
 	scan_plan = make_tidscan(tlist,
 							 scan_clauses,
 							 scan_relid,
-							 best_path->tidquals);
+							 tidquals);
 
 	copy_path_costsize(&scan_plan->scan.plan, &best_path->path);
 
@@ -1823,6 +1844,13 @@ create_ctescan_plan(PlannerInfo *root, Path *best_path,
 	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
 
+	/* Replace any outer-relation variables with nestloop params */
+	if (best_path->param_info)
+	{
+		scan_clauses = (List *)
+			replace_nestloop_params(root, (Node *) scan_clauses);
+	}
+
 	scan_plan = make_ctescan(tlist, scan_clauses, scan_relid,
 							 plan_id, cte_param_id);
 
@@ -1875,6 +1903,13 @@ create_worktablescan_plan(PlannerInfo *root, Path *best_path,
 
 	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
+
+	/* Replace any outer-relation variables with nestloop params */
+	if (best_path->param_info)
+	{
+		scan_clauses = (List *)
+			replace_nestloop_params(root, (Node *) scan_clauses);
+	}
 
 	scan_plan = make_worktablescan(tlist, scan_clauses, scan_relid,
 								   cteroot->wt_param_id);

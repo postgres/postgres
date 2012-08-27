@@ -268,8 +268,9 @@ set_rel_size(PlannerInfo *root, RelOptInfo *rel,
 			case RTE_CTE:
 
 				/*
-				 * CTEs don't support parameterized paths, so just go ahead
-				 * and build their paths immediately.
+				 * CTEs don't support making a choice between parameterized
+				 * and unparameterized paths, so just go ahead and build their
+				 * paths immediately.
 				 */
 				if (rte->self_reference)
 					set_worktable_pathlist(root, rel, rte);
@@ -376,8 +377,18 @@ set_plain_rel_size(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 static void
 set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 {
+	Relids		required_outer;
+
+	/*
+	 * We don't support pushing join clauses into the quals of a seqscan, but
+	 * it could still have required parameterization due to LATERAL refs in
+	 * its tlist.  (That can only happen if the seqscan is on a relation
+	 * pulled up out of a UNION ALL appendrel.)
+	 */
+	required_outer = rel->lateral_relids;
+
 	/* Consider sequential scan */
-	add_path(rel, create_seqscan_path(root, rel, NULL));
+	add_path(rel, create_seqscan_path(root, rel, required_outer));
 
 	/* Consider index scans */
 	create_index_paths(root, rel);
@@ -536,10 +547,10 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		 * CE failed, so finish copying/modifying targetlist and join quals.
 		 *
 		 * Note: the resulting childrel->reltargetlist may contain arbitrary
-		 * expressions, which normally would not occur in a reltargetlist.
-		 * That is okay because nothing outside of this routine will look at
-		 * the child rel's reltargetlist.  We do have to cope with the case
-		 * while constructing attr_widths estimates below, though.
+		 * expressions, which otherwise would not occur in a reltargetlist.
+		 * Code that might be looking at an appendrel child must cope with
+		 * such.  Note in particular that "arbitrary expression" can include
+		 * "Var belonging to another relation", due to LATERAL references.
 		 */
 		childrel->joininfo = (List *)
 			adjust_appendrel_attrs(root,
@@ -610,7 +621,8 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 					int			pndx = parentvar->varattno - rel->min_attr;
 					int32		child_width = 0;
 
-					if (IsA(childvar, Var))
+					if (IsA(childvar, Var) &&
+						((Var *) childvar)->varno == childrel->relid)
 					{
 						int			cndx = ((Var *) childvar)->varattno - childrel->min_attr;
 
@@ -1054,17 +1066,10 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 
 	/*
 	 * If it's a LATERAL subquery, it might contain some Vars of the current
-	 * query level, requiring it to be treated as parameterized.
+	 * query level, requiring it to be treated as parameterized, even though
+	 * we don't support pushing down join quals into subqueries.
 	 */
-	if (rte->lateral)
-	{
-		required_outer = pull_varnos_of_level((Node *) subquery, 1);
-		/* Enforce convention that empty required_outer is exactly NULL */
-		if (bms_is_empty(required_outer))
-			required_outer = NULL;
-	}
-	else
-		required_outer = NULL;
+	required_outer = rel->lateral_relids;
 
 	/* We need a workspace for keeping track of set-op type coercions */
 	differentTypes = (bool *)
@@ -1175,10 +1180,6 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 /*
  * set_function_pathlist
  *		Build the (single) access path for a function RTE
- *
- * As with subqueries, a function RTE's path might be parameterized due to
- * LATERAL references, but that's inherent in the function expression and
- * not a result of pushing down join quals.
  */
 static void
 set_function_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
@@ -1186,18 +1187,11 @@ set_function_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	Relids		required_outer;
 
 	/*
-	 * If it's a LATERAL function, it might contain some Vars of the current
-	 * query level, requiring it to be treated as parameterized.
+	 * We don't support pushing join clauses into the quals of a function
+	 * scan, but it could still have required parameterization due to LATERAL
+	 * refs in the function expression.
 	 */
-	if (rte->lateral)
-	{
-		required_outer = pull_varnos_of_level(rte->funcexpr, 0);
-		/* Enforce convention that empty required_outer is exactly NULL */
-		if (bms_is_empty(required_outer))
-			required_outer = NULL;
-	}
-	else
-		required_outer = NULL;
+	required_outer = rel->lateral_relids;
 
 	/* Generate appropriate path */
 	add_path(rel, create_functionscan_path(root, rel, required_outer));
@@ -1209,10 +1203,6 @@ set_function_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 /*
  * set_values_pathlist
  *		Build the (single) access path for a VALUES RTE
- *
- * As with subqueries, a VALUES RTE's path might be parameterized due to
- * LATERAL references, but that's inherent in the values expressions and
- * not a result of pushing down join quals.
  */
 static void
 set_values_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
@@ -1220,18 +1210,11 @@ set_values_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	Relids		required_outer;
 
 	/*
-	 * If it's a LATERAL RTE, it might contain some Vars of the current query
-	 * level, requiring it to be treated as parameterized.
+	 * We don't support pushing join clauses into the quals of a values scan,
+	 * but it could still have required parameterization due to LATERAL refs
+	 * in the values expressions.
 	 */
-	if (rte->lateral)
-	{
-		required_outer = pull_varnos_of_level((Node *) rte->values_lists, 0);
-		/* Enforce convention that empty required_outer is exactly NULL */
-		if (bms_is_empty(required_outer))
-			required_outer = NULL;
-	}
-	else
-		required_outer = NULL;
+	required_outer = rel->lateral_relids;
 
 	/* Generate appropriate path */
 	add_path(rel, create_valuesscan_path(root, rel, required_outer));
@@ -1245,7 +1228,7 @@ set_values_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
  *		Build the (single) access path for a non-self-reference CTE RTE
  *
  * There's no need for a separate set_cte_size phase, since we don't
- * support parameterized paths for CTEs.
+ * support join-qual-parameterized paths for CTEs.
  */
 static void
 set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
@@ -1256,6 +1239,7 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	int			ndx;
 	ListCell   *lc;
 	int			plan_id;
+	Relids		required_outer;
 
 	/*
 	 * Find the referenced CTE, and locate the plan previously made for it.
@@ -1294,8 +1278,16 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	/* Mark rel with estimated output rows, width, etc */
 	set_cte_size_estimates(root, rel, cteplan);
 
+	/*
+	 * We don't support pushing join clauses into the quals of a CTE scan, but
+	 * it could still have required parameterization due to LATERAL refs in
+	 * its tlist.  (That can only happen if the CTE scan is on a relation
+	 * pulled up out of a UNION ALL appendrel.)
+	 */
+	required_outer = rel->lateral_relids;
+
 	/* Generate appropriate path */
-	add_path(rel, create_ctescan_path(root, rel));
+	add_path(rel, create_ctescan_path(root, rel, required_outer));
 
 	/* Select cheapest path (pretty easy in this case...) */
 	set_cheapest(rel);
@@ -1306,7 +1298,7 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
  *		Build the (single) access path for a self-reference CTE RTE
  *
  * There's no need for a separate set_worktable_size phase, since we don't
- * support parameterized paths for CTEs.
+ * support join-qual-parameterized paths for CTEs.
  */
 static void
 set_worktable_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
@@ -1314,6 +1306,7 @@ set_worktable_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	Plan	   *cteplan;
 	PlannerInfo *cteroot;
 	Index		levelsup;
+	Relids		required_outer;
 
 	/*
 	 * We need to find the non-recursive term's plan, which is in the plan
@@ -1338,8 +1331,18 @@ set_worktable_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	/* Mark rel with estimated output rows, width, etc */
 	set_cte_size_estimates(root, rel, cteplan);
 
+	/*
+	 * We don't support pushing join clauses into the quals of a worktable
+	 * scan, but it could still have required parameterization due to LATERAL
+	 * refs in its tlist.  (That can only happen if the worktable scan is on a
+	 * relation pulled up out of a UNION ALL appendrel.  I'm not sure this is
+	 * actually possible given the restrictions on recursive references, but
+	 * it's easy enough to support.)
+	 */
+	required_outer = rel->lateral_relids;
+
 	/* Generate appropriate path */
-	add_path(rel, create_worktablescan_path(root, rel));
+	add_path(rel, create_worktablescan_path(root, rel, required_outer));
 
 	/* Select cheapest path (pretty easy in this case...) */
 	set_cheapest(rel);

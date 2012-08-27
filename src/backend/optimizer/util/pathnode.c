@@ -902,18 +902,21 @@ create_bitmap_or_path(PlannerInfo *root,
  *	  Creates a path corresponding to a scan by TID, returning the pathnode.
  */
 TidPath *
-create_tidscan_path(PlannerInfo *root, RelOptInfo *rel, List *tidquals)
+create_tidscan_path(PlannerInfo *root, RelOptInfo *rel, List *tidquals,
+					Relids required_outer)
 {
 	TidPath    *pathnode = makeNode(TidPath);
 
 	pathnode->path.pathtype = T_TidScan;
 	pathnode->path.parent = rel;
-	pathnode->path.param_info = NULL;	/* never parameterized at present */
+	pathnode->path.param_info = get_baserel_parampathinfo(root, rel,
+														  required_outer);
 	pathnode->path.pathkeys = NIL;		/* always unordered */
 
 	pathnode->tidquals = tidquals;
 
-	cost_tidscan(&pathnode->path, root, rel, tidquals);
+	cost_tidscan(&pathnode->path, root, rel, tidquals,
+				 pathnode->path.param_info);
 
 	return pathnode;
 }
@@ -1061,7 +1064,7 @@ create_result_path(List *quals)
 
 	pathnode->path.pathtype = T_Result;
 	pathnode->path.parent = NULL;
-	pathnode->path.param_info = NULL;
+	pathnode->path.param_info = NULL;		/* there are no other rels... */
 	pathnode->path.pathkeys = NIL;
 	pathnode->quals = quals;
 
@@ -1711,16 +1714,17 @@ create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel,
  *	  returning the pathnode.
  */
 Path *
-create_ctescan_path(PlannerInfo *root, RelOptInfo *rel)
+create_ctescan_path(PlannerInfo *root, RelOptInfo *rel, Relids required_outer)
 {
 	Path	   *pathnode = makeNode(Path);
 
 	pathnode->pathtype = T_CteScan;
 	pathnode->parent = rel;
-	pathnode->param_info = NULL;	/* never parameterized at present */
+	pathnode->param_info = get_baserel_parampathinfo(root, rel,
+													 required_outer);
 	pathnode->pathkeys = NIL;	/* XXX for now, result is always unordered */
 
-	cost_ctescan(pathnode, root, rel);
+	cost_ctescan(pathnode, root, rel, pathnode->param_info);
 
 	return pathnode;
 }
@@ -1731,17 +1735,19 @@ create_ctescan_path(PlannerInfo *root, RelOptInfo *rel)
  *	  returning the pathnode.
  */
 Path *
-create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel)
+create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel,
+						  Relids required_outer)
 {
 	Path	   *pathnode = makeNode(Path);
 
 	pathnode->pathtype = T_WorkTableScan;
 	pathnode->parent = rel;
-	pathnode->param_info = NULL;	/* never parameterized at present */
+	pathnode->param_info = get_baserel_parampathinfo(root, rel,
+													 required_outer);
 	pathnode->pathkeys = NIL;	/* result is always unordered */
 
 	/* Cost is the same as for a regular CTE scan */
-	cost_ctescan(pathnode, root, rel);
+	cost_ctescan(pathnode, root, rel, pathnode->param_info);
 
 	return pathnode;
 }

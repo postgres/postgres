@@ -193,7 +193,9 @@ typedef struct PlannerInfo
 	List	   *full_join_clauses;		/* list of RestrictInfos for
 										 * mergejoinable full join clauses */
 
-	List	   *join_info_list; /* list of SpecialJoinInfos */
+	List	   *join_info_list;		/* list of SpecialJoinInfos */
+
+	List	   *lateral_info_list;	/* list of LateralJoinInfos */
 
 	List	   *append_rel_list;	/* list of AppendRelInfos */
 
@@ -223,6 +225,7 @@ typedef struct PlannerInfo
 	bool		hasInheritedTarget;		/* true if parse->resultRelation is an
 										 * inheritance child rel */
 	bool		hasJoinRTEs;	/* true if any RTEs are RTE_JOIN kind */
+	bool		hasLateralRTEs;	/* true if any RTEs are marked LATERAL */
 	bool		hasHavingQual;	/* true if havingQual was non-null */
 	bool		hasPseudoConstantQuals; /* true if any RestrictInfo has
 										 * pseudoconstant = true */
@@ -300,8 +303,8 @@ typedef struct PlannerInfo
  *						we need to output from this relation.
  *						List is in no particular order, but all rels of an
  *						appendrel set must use corresponding orders.
- *						NOTE: in a child relation, may contain RowExpr or
- *						ConvertRowtypeExpr representing a whole-row Var.
+ *						NOTE: in an appendrel child relation, may contain
+ *						arbitrary expressions pulled up from a subquery!
  *		pathlist - List of Path nodes, one for each potentially useful
  *				   method of generating the relation
  *		ppilist - ParamPathInfo nodes for parameterized Paths, if any
@@ -330,6 +333,10 @@ typedef struct PlannerInfo
  *				the attribute is needed as part of final targetlist
  *		attr_widths - cache space for per-attribute width estimates;
  *					  zero means not computed yet
+ *		lateral_vars - lateral cross-references of rel, if any (list of
+ *					   Vars and PlaceHolderVars)
+ *		lateral_relids - required outer rels for LATERAL, as a Relids set
+ *						 (for child rels this can be more than lateral_vars)
  *		indexlist - list of IndexOptInfo nodes for relation's indexes
  *					(always NIL if it's not a table)
  *		pages - number of disk pages in relation (zero if not a table)
@@ -417,6 +424,8 @@ typedef struct RelOptInfo
 	AttrNumber	max_attr;		/* largest attrno of rel */
 	Relids	   *attr_needed;	/* array indexed [min_attr .. max_attr] */
 	int32	   *attr_widths;	/* array indexed [min_attr .. max_attr] */
+	List	   *lateral_vars;	/* LATERAL Vars and PHVs referenced by rel */
+	Relids		lateral_relids;	/* minimum parameterization of rel */
 	List	   *indexlist;		/* list of IndexOptInfo */
 	BlockNumber pages;			/* size estimates derived from pg_class */
 	double		tuples;
@@ -1322,6 +1331,35 @@ typedef struct SpecialJoinInfo
 	bool		delay_upper_joins;		/* can't commute with upper RHS */
 	List	   *join_quals;		/* join quals, in implicit-AND list format */
 } SpecialJoinInfo;
+
+/*
+ * "Lateral join" info.
+ *
+ * Lateral references in subqueries constrain the join order in a way that's
+ * somewhat like outer joins, though different in detail.  We construct one or
+ * more LateralJoinInfos for each RTE with lateral references, and add them to
+ * the PlannerInfo node's lateral_info_list.
+ *
+ * lateral_rhs is the relid of a baserel with lateral references, and
+ * lateral_lhs is a set of relids of baserels it references, all of which
+ * must be present on the LHS to compute a parameter needed by the RHS.
+ * Typically, lateral_lhs is a singleton, but it can include multiple rels
+ * if the RHS references a PlaceHolderVar with a multi-rel ph_eval_at level.
+ * We disallow joining to only part of the LHS in such cases, since that would
+ * result in a join tree with no convenient place to compute the PHV.
+ *
+ * When an appendrel contains lateral references (eg "LATERAL (SELECT x.col1
+ * UNION ALL SELECT y.col2)"), the LateralJoinInfos reference the parent
+ * baserel not the member otherrels, since it is the parent relid that is
+ * considered for joining purposes.
+ */
+
+typedef struct LateralJoinInfo
+{
+	NodeTag		type;
+	Index		lateral_rhs;	/* a baserel containing lateral refs */
+	Relids		lateral_lhs;	/* some base relids it references */
+} LateralJoinInfo;
 
 /*
  * Append-relation info.

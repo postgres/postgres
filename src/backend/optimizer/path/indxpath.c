@@ -194,6 +194,15 @@ static Const *string_to_const(const char *str, Oid datatype);
  * 'rel' is the relation for which we want to generate index paths
  *
  * Note: check_partial_indexes() must have been run previously for this rel.
+ *
+ * Note: in corner cases involving LATERAL appendrel children, it's possible
+ * that rel->lateral_relids is nonempty.  Currently, we include lateral_relids
+ * into the parameterization reported for each path, but don't take it into
+ * account otherwise.  The fact that any such rels *must* be available as
+ * parameter sources perhaps should influence our choices of index quals ...
+ * but for now, it doesn't seem worth troubling over.  In particular, comments
+ * below about "unparameterized" paths should be read as meaning
+ * "unparameterized so far as the indexquals are concerned".
  */
 void
 create_index_paths(PlannerInfo *root, RelOptInfo *rel)
@@ -304,7 +313,8 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 		BitmapHeapPath *bpath;
 
 		bitmapqual = choose_bitmap_and(root, rel, bitindexpaths);
-		bpath = create_bitmap_heap_path(root, rel, bitmapqual, NULL, 1.0);
+		bpath = create_bitmap_heap_path(root, rel, bitmapqual,
+										rel->lateral_relids, 1.0);
 		add_path(rel, (Path *) bpath);
 	}
 
@@ -735,12 +745,13 @@ build_index_paths(PlannerInfo *root, RelOptInfo *rel,
 	 * clause.
 	 *
 	 * We also build a Relids set showing which outer rels are required by the
-	 * selected clauses.
+	 * selected clauses.  Any lateral_relids are included in that, but not
+	 * otherwise accounted for.
 	 */
 	index_clauses = NIL;
 	clause_columns = NIL;
 	found_clause = false;
-	outer_relids = NULL;
+	outer_relids = bms_copy(rel->lateral_relids);
 	for (indexcol = 0; indexcol < index->ncolumns; indexcol++)
 	{
 		ListCell   *lc;

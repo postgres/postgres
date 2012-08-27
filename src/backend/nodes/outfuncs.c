@@ -1699,6 +1699,7 @@ _outPlannerInfo(StringInfo str, const PlannerInfo *node)
 	WRITE_NODE_FIELD(right_join_clauses);
 	WRITE_NODE_FIELD(full_join_clauses);
 	WRITE_NODE_FIELD(join_info_list);
+	WRITE_NODE_FIELD(lateral_info_list);
 	WRITE_NODE_FIELD(append_rel_list);
 	WRITE_NODE_FIELD(rowMarks);
 	WRITE_NODE_FIELD(placeholder_list);
@@ -1713,6 +1714,7 @@ _outPlannerInfo(StringInfo str, const PlannerInfo *node)
 	WRITE_FLOAT_FIELD(limit_tuples, "%.0f");
 	WRITE_BOOL_FIELD(hasInheritedTarget);
 	WRITE_BOOL_FIELD(hasJoinRTEs);
+	WRITE_BOOL_FIELD(hasLateralRTEs);
 	WRITE_BOOL_FIELD(hasHavingQual);
 	WRITE_BOOL_FIELD(hasPseudoConstantQuals);
 	WRITE_BOOL_FIELD(hasRecursion);
@@ -1743,6 +1745,8 @@ _outRelOptInfo(StringInfo str, const RelOptInfo *node)
 	WRITE_ENUM_FIELD(rtekind, RTEKind);
 	WRITE_INT_FIELD(min_attr);
 	WRITE_INT_FIELD(max_attr);
+	WRITE_NODE_FIELD(lateral_vars);
+	WRITE_BITMAPSET_FIELD(lateral_relids);
 	WRITE_NODE_FIELD(indexlist);
 	WRITE_UINT_FIELD(pages);
 	WRITE_FLOAT_FIELD(tuples, "%.0f");
@@ -1888,6 +1892,15 @@ _outSpecialJoinInfo(StringInfo str, const SpecialJoinInfo *node)
 	WRITE_BOOL_FIELD(lhs_strict);
 	WRITE_BOOL_FIELD(delay_upper_joins);
 	WRITE_NODE_FIELD(join_quals);
+}
+
+static void
+_outLateralJoinInfo(StringInfo str, const LateralJoinInfo *node)
+{
+	WRITE_NODE_TYPE("LATERALJOININFO");
+
+	WRITE_UINT_FIELD(lateral_rhs);
+	WRITE_BITMAPSET_FIELD(lateral_lhs);
 }
 
 static void
@@ -3035,6 +3048,9 @@ _outNode(StringInfo str, const void *obj)
 				break;
 			case T_SpecialJoinInfo:
 				_outSpecialJoinInfo(str, obj);
+				break;
+			case T_LateralJoinInfo:
+				_outLateralJoinInfo(str, obj);
 				break;
 			case T_AppendRelInfo:
 				_outAppendRelInfo(str, obj);

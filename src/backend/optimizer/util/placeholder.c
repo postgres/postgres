@@ -412,14 +412,14 @@ add_placeholders_to_base_rels(PlannerInfo *root)
 		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(lc);
 		Relids		eval_at = phinfo->ph_eval_at;
 
-		if (bms_membership(eval_at) == BMS_SINGLETON)
+		if (bms_membership(eval_at) == BMS_SINGLETON &&
+			bms_nonempty_difference(phinfo->ph_needed, eval_at))
 		{
 			int			varno = bms_singleton_member(eval_at);
 			RelOptInfo *rel = find_base_rel(root, varno);
 
-			if (bms_nonempty_difference(phinfo->ph_needed, rel->relids))
-				rel->reltargetlist = lappend(rel->reltargetlist,
-											 copyObject(phinfo->ph_var));
+			rel->reltargetlist = lappend(rel->reltargetlist,
+										 copyObject(phinfo->ph_var));
 		}
 	}
 }

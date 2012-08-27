@@ -392,8 +392,9 @@ build_minmax_path(PlannerInfo *root, MinMaxAggInfo *mminfo,
 	subroot->parse = parse = (Query *) copyObject(root->parse);
 	/* make sure subroot planning won't change root->init_plans contents */
 	subroot->init_plans = list_copy(root->init_plans);
-	/* There shouldn't be any OJ info to translate, as yet */
+	/* There shouldn't be any OJ or LATERAL info to translate, as yet */
 	Assert(subroot->join_info_list == NIL);
+	Assert(subroot->lateral_info_list == NIL);
 	/* and we haven't created PlaceHolderInfos, either */
 	Assert(subroot->placeholder_list == NIL);
 

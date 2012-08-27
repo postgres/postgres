@@ -149,28 +149,20 @@ add_paths_to_joinrel(PlannerInfo *root,
 
 	/*
 	 * However, when a LATERAL subquery is involved, we have to be a bit
-	 * laxer, because there may simply not be any paths for the joinrel that
-	 * aren't parameterized by whatever the subquery is parameterized by.
-	 * Hence, add to param_source_rels anything that is in the minimum
-	 * parameterization of either input (and not in the other input).
-	 *
-	 * XXX need a more principled way of determining minimum parameterization.
+	 * laxer, because there will simply not be any paths for the joinrel that
+	 * aren't parameterized by whatever the subquery is parameterized by,
+	 * unless its parameterization is resolved within the joinrel.  Hence, add
+	 * to param_source_rels anything that is laterally referenced in either
+	 * input and is not in the join already.
 	 */
-	if (outerrel->cheapest_total_path == NULL)
+	foreach(lc, root->lateral_info_list)
 	{
-		Path	   *cheapest = (Path *) linitial(outerrel->cheapest_parameterized_paths);
+		LateralJoinInfo *ljinfo = (LateralJoinInfo *) lfirst(lc);
 
-		param_source_rels = bms_join(param_source_rels,
-									 bms_difference(PATH_REQ_OUTER(cheapest),
-													innerrel->relids));
-	}
-	if (innerrel->cheapest_total_path == NULL)
-	{
-		Path	   *cheapest = (Path *) linitial(innerrel->cheapest_parameterized_paths);
-
-		param_source_rels = bms_join(param_source_rels,
-									 bms_difference(PATH_REQ_OUTER(cheapest),
-													outerrel->relids));
+		if (bms_is_member(ljinfo->lateral_rhs, joinrel->relids))
+			param_source_rels = bms_join(param_source_rels,
+										 bms_difference(ljinfo->lateral_lhs,
+														joinrel->relids));
 	}
 
 	/*

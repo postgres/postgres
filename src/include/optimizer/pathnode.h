@@ -55,7 +55,7 @@ extern BitmapOrPath *create_bitmap_or_path(PlannerInfo *root,
 					  RelOptInfo *rel,
 					  List *bitmapquals);
 extern TidPath *create_tidscan_path(PlannerInfo *root, RelOptInfo *rel,
-					List *tidquals);
+					List *tidquals, Relids required_outer);
 extern AppendPath *create_append_path(RelOptInfo *rel, List *subpaths,
 				   Relids required_outer);
 extern MergeAppendPath *create_merge_append_path(PlannerInfo *root,
@@ -73,8 +73,10 @@ extern Path *create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
 						 Relids required_outer);
 extern Path *create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel,
 					   Relids required_outer);
-extern Path *create_ctescan_path(PlannerInfo *root, RelOptInfo *rel);
-extern Path *create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel);
+extern Path *create_ctescan_path(PlannerInfo *root, RelOptInfo *rel,
+					Relids required_outer);
+extern Path *create_worktablescan_path(PlannerInfo *root, RelOptInfo *rel,
+						  Relids required_outer);
 extern ForeignPath *create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
 						double rows, Cost startup_cost, Cost total_cost,
 						List *pathkeys,

@@ -109,6 +109,8 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	rel->relid = relid;
 	rel->rtekind = rte->rtekind;
 	/* min_attr, max_attr, attr_needed, attr_widths are set below */
+	rel->lateral_vars = NIL;
+	rel->lateral_relids = NULL;
 	rel->indexlist = NIL;
 	rel->pages = 0;
 	rel->tuples = 0;
@@ -365,6 +367,8 @@ build_join_rel(PlannerInfo *root,
 	joinrel->max_attr = 0;
 	joinrel->attr_needed = NULL;
 	joinrel->attr_widths = NULL;
+	joinrel->lateral_vars = NIL;
+	joinrel->lateral_relids = NULL;
 	joinrel->indexlist = NIL;
 	joinrel->pages = 0;
 	joinrel->tuples = 0;
@@ -472,8 +476,7 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 
 	foreach(vars, input_rel->reltargetlist)
 	{
-		Node	   *origvar = (Node *) lfirst(vars);
-		Var		   *var;
+		Var		   *var = (Var *) lfirst(vars);
 		RelOptInfo *baserel;
 		int			ndx;
 
@@ -481,22 +484,17 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 		 * Ignore PlaceHolderVars in the input tlists; we'll make our own
 		 * decisions about whether to copy them.
 		 */
-		if (IsA(origvar, PlaceHolderVar))
+		if (IsA(var, PlaceHolderVar))
 			continue;
 
 		/*
-		 * We can't run into any child RowExprs here, but we could find a
-		 * whole-row Var with a ConvertRowtypeExpr atop it.
+		 * Otherwise, anything in a baserel or joinrel targetlist ought to be
+		 * a Var.  (More general cases can only appear in appendrel child
+		 * rels, which will never be seen here.)
 		 */
-		var = (Var *) origvar;
-		while (!IsA(var, Var))
-		{
-			if (IsA(var, ConvertRowtypeExpr))
-				var = (Var *) ((ConvertRowtypeExpr *) var)->arg;
-			else
-				elog(ERROR, "unexpected node type in reltargetlist: %d",
-					 (int) nodeTag(var));
-		}
+		if (!IsA(var, Var))
+			elog(ERROR, "unexpected node type in reltargetlist: %d",
+				 (int) nodeTag(var));
 
 		/* Get the Var's original base rel */
 		baserel = find_base_rel(root, var->varno);
@@ -506,7 +504,7 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 		if (bms_nonempty_difference(baserel->attr_needed[ndx], relids))
 		{
 			/* Yup, add it to the output */
-			joinrel->reltargetlist = lappend(joinrel->reltargetlist, origvar);
+			joinrel->reltargetlist = lappend(joinrel->reltargetlist, var);
 			joinrel->width += baserel->attr_widths[ndx];
 		}
 	}

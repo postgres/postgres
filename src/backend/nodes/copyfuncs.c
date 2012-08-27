@@ -1907,6 +1907,20 @@ _copySpecialJoinInfo(const SpecialJoinInfo *from)
 }
 
 /*
+ * _copyLateralJoinInfo
+ */
+static LateralJoinInfo *
+_copyLateralJoinInfo(const LateralJoinInfo *from)
+{
+	LateralJoinInfo *newnode = makeNode(LateralJoinInfo);
+
+	COPY_SCALAR_FIELD(lateral_rhs);
+	COPY_BITMAPSET_FIELD(lateral_lhs);
+
+	return newnode;
+}
+
+/*
  * _copyAppendRelInfo
  */
 static AppendRelInfo *
@@ -4081,6 +4095,9 @@ copyObject(const void *from)
 			break;
 		case T_SpecialJoinInfo:
 			retval = _copySpecialJoinInfo(from);
+			break;
+		case T_LateralJoinInfo:
+			retval = _copyLateralJoinInfo(from);
 			break;
 		case T_AppendRelInfo:
 			retval = _copyAppendRelInfo(from);

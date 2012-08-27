@@ -77,14 +77,15 @@ extern void cost_bitmap_and_node(BitmapAndPath *path, PlannerInfo *root);
 extern void cost_bitmap_or_node(BitmapOrPath *path, PlannerInfo *root);
 extern void cost_bitmap_tree_node(Path *path, Cost *cost, Selectivity *selec);
 extern void cost_tidscan(Path *path, PlannerInfo *root,
-			 RelOptInfo *baserel, List *tidquals);
+			 RelOptInfo *baserel, List *tidquals, ParamPathInfo *param_info);
 extern void cost_subqueryscan(Path *path, PlannerInfo *root,
 				  RelOptInfo *baserel, ParamPathInfo *param_info);
 extern void cost_functionscan(Path *path, PlannerInfo *root,
 				  RelOptInfo *baserel, ParamPathInfo *param_info);
 extern void cost_valuesscan(Path *path, PlannerInfo *root,
 				RelOptInfo *baserel, ParamPathInfo *param_info);
-extern void cost_ctescan(Path *path, PlannerInfo *root, RelOptInfo *baserel);
+extern void cost_ctescan(Path *path, PlannerInfo *root,
+			 RelOptInfo *baserel, ParamPathInfo *param_info);
 extern void cost_recursive_union(Plan *runion, Plan *nrterm, Plan *rterm);
 extern void cost_sort(Path *path, PlannerInfo *root,
 		  List *pathkeys, Cost input_cost, double tuples, int width,

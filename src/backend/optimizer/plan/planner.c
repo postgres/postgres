@@ -54,6 +54,7 @@ planner_hook_type planner_hook = NULL;
 #define EXPRKIND_VALUES		3
 #define EXPRKIND_LIMIT		4
 #define EXPRKIND_APPINFO	5
+#define EXPRKIND_PHV		6
 
 
 static Node *preprocess_expression(PlannerInfo *root, Node *expr, int kind);
@@ -348,10 +349,12 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	/*
 	 * Detect whether any rangetable entries are RTE_JOIN kind; if not, we can
 	 * avoid the expense of doing flatten_join_alias_vars().  Also check for
-	 * outer joins --- if none, we can skip reduce_outer_joins(). This must be
-	 * done after we have done pull_up_subqueries, of course.
+	 * outer joins --- if none, we can skip reduce_outer_joins().  And check
+	 * for LATERAL RTEs, too.  This must be done after we have done
+	 * pull_up_subqueries(), of course.
 	 */
 	root->hasJoinRTEs = false;
+	root->hasLateralRTEs = false;
 	hasOuterJoins = false;
 	foreach(l, parse->rtable)
 	{
@@ -361,12 +364,10 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 		{
 			root->hasJoinRTEs = true;
 			if (IS_OUTER_JOIN(rte->jointype))
-			{
 				hasOuterJoins = true;
-				/* Can quit scanning once we find an outer join */
-				break;
-			}
 		}
+		if (rte->lateral)
+			root->hasLateralRTEs = true;
 	}
 
 	/*
@@ -576,7 +577,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
  * preprocess_expression
  *		Do subquery_planner's preprocessing work for an expression,
  *		which can be a targetlist, a WHERE clause (including JOIN/ON
- *		conditions), or a HAVING clause.
+ *		conditions), a HAVING clause, or a few other things.
  */
 static Node *
 preprocess_expression(PlannerInfo *root, Node *expr, int kind)
@@ -690,6 +691,23 @@ preprocess_qual_conditions(PlannerInfo *root, Node *jtnode)
 	else
 		elog(ERROR, "unrecognized node type: %d",
 			 (int) nodeTag(jtnode));
+}
+
+/*
+ * preprocess_phv_expression
+ *	  Do preprocessing on a PlaceHolderVar expression that's been pulled up.
+ *
+ * If a LATERAL subquery references an output of another subquery, and that
+ * output must be wrapped in a PlaceHolderVar because of an intermediate outer
+ * join, then we'll push the PlaceHolderVar expression down into the subquery
+ * and later pull it back up during find_lateral_references, which runs after
+ * subquery_planner has preprocessed all the expressions that were in the
+ * current query level to start with.  So we need to preprocess it then.
+ */
+Expr *
+preprocess_phv_expression(PlannerInfo *root, Expr *expr)
+{
+	return (Expr *) preprocess_expression(root, (Node *) expr, EXPRKIND_PHV);
 }
 
 /*
@@ -821,8 +839,9 @@ inheritance_planner(PlannerInfo *root)
 		}
 
 		/* We needn't modify the child's append_rel_list */
-		/* There shouldn't be any OJ info to translate, as yet */
+		/* There shouldn't be any OJ or LATERAL info to translate, as yet */
 		Assert(subroot.join_info_list == NIL);
+		Assert(subroot.lateral_info_list == NIL);
 		/* and we haven't created PlaceHolderInfos, either */
 		Assert(subroot.placeholder_list == NIL);
 		/* hack to mark target relation as an inheritance partition */
