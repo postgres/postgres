@@ -2321,7 +2321,7 @@ Indexes:
 --
 DROP INDEX CONCURRENTLY "concur_index2";				-- works
 DROP INDEX CONCURRENTLY IF EXISTS "concur_index2";		-- notice
-ERROR:  index "concur_index2" does not exist
+NOTICE:  index "concur_index2" does not exist, skipping
 -- failures
 DROP INDEX CONCURRENTLY "concur_index2", "concur_index3";
 ERROR:  DROP INDEX CONCURRENTLY does not support dropping multiple objects
