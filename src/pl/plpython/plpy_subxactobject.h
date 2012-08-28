@@ -5,6 +5,9 @@
 #ifndef PLPY_SUBXACTOBJECT
 #define PLPY_SUBXACTOBJECT
 
+#include "nodes/pg_list.h"
+#include "utils/resowner.h"
+
 /* a list of nested explicit subtransactions */
 extern List *explicit_subtransactions;
 
