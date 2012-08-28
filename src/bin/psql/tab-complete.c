@@ -2842,6 +2842,7 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev_wd, "TABLESPACE") != 0 &&
 			 pg_strcasecmp(prev_wd, "SCHEMA") != 0 &&
 			 prev_wd[strlen(prev_wd) - 1] != ')' &&
+			 prev_wd[strlen(prev_wd) - 1] != '=' &&
 			 pg_strcasecmp(prev4_wd, "DOMAIN") != 0)
 		COMPLETE_WITH_CONST("TO");
 	/* Suggest possible variable values */
