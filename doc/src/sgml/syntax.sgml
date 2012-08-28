@@ -664,7 +664,7 @@ $function$
     </para>
    </sect3>
 
-   <sect3>
+   <sect3 id="sql-syntax-constants-numeric">
     <title>Numeric Constants</title>
 
     <indexterm>
@@ -852,7 +852,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="sql-syntax-special-chars">
    <title>Special Characters</title>
 
   <para>
@@ -1310,7 +1310,7 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
    the remaining options.
   </para>
 
-  <sect2>
+  <sect2 id="sql-expressions-column-refs">
    <title>Column References</title>
 
    <indexterm>
@@ -1333,7 +1333,7 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="sql-expressions-parameters-positional">
    <title>Positional Parameters</title>
 
    <indexterm>
@@ -1373,7 +1373,7 @@ CREATE FUNCTION dept(text) RETURNS dept
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="sql-expressions-subscripts">
    <title>Subscripts</title>
 
    <indexterm>
@@ -1468,7 +1468,7 @@ $1.somecolumn
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="sql-expressions-operator-calls">
    <title>Operator Invocations</title>
 
    <indexterm>
@@ -1497,7 +1497,7 @@ $1.somecolumn
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="sql-expressions-function-calls">
    <title>Function Calls</title>
 
    <indexterm>
