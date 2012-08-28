@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "access/heapam_xlog.h"
 #include "access/transam.h"
 #include "miscadmin.h"
 #include "pgstat.h"

@@ -22,6 +22,7 @@
 #include "access/relscan.h"
 #include "access/transam.h"
 #include "catalog/index.h"
+#include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "utils/builtins.h"

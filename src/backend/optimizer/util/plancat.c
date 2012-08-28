@@ -21,6 +21,7 @@
 #include "access/heapam.h"
 #include "access/sysattr.h"
 #include "access/transam.h"
+#include "access/xlog.h"
 #include "catalog/catalog.h"
 #include "catalog/heap.h"
 #include "miscadmin.h"

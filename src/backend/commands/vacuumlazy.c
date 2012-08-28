@@ -39,6 +39,7 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/heapam_xlog.h"
 #include "access/transam.h"
 #include "access/visibilitymap.h"
 #include "catalog/storage.h"

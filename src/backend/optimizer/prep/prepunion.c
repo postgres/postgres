@@ -28,6 +28,7 @@
  */
 #include "postgres.h"
 
+#include <limits.h>
 
 #include "access/heapam.h"
 #include "access/sysattr.h"

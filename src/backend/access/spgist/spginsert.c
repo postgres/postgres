@@ -17,6 +17,7 @@
 #include "postgres.h"
 
 #include "access/genam.h"
+#include "access/heapam_xlog.h"
 #include "access/spgist_private.h"
 #include "catalog/index.h"
 #include "miscadmin.h"

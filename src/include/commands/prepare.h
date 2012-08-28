@@ -14,6 +14,7 @@
 #define PREPARE_H
 
 #include "commands/explain.h"
+#include "datatype/timestamp.h"
 #include "utils/plancache.h"
 
 /*

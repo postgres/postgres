@@ -16,7 +16,6 @@
 
 #include "access/sdir.h"
 #include "access/skey.h"
-#include "access/xlog.h"
 #include "nodes/primnodes.h"
 #include "storage/lock.h"
 #include "utils/relcache.h"
@@ -124,27 +123,6 @@ extern void heap_markpos(HeapScanDesc scan);
 extern void heap_restrpos(HeapScanDesc scan);
 
 extern void heap_sync(Relation relation);
-
-extern void heap_redo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void heap_desc(StringInfo buf, uint8 xl_info, char *rec);
-extern void heap2_redo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void heap2_desc(StringInfo buf, uint8 xl_info, char *rec);
-
-extern XLogRecPtr log_heap_cleanup_info(RelFileNode rnode,
-					  TransactionId latestRemovedXid);
-extern XLogRecPtr log_heap_clean(Relation reln, Buffer buffer,
-			   OffsetNumber *redirected, int nredirected,
-			   OffsetNumber *nowdead, int ndead,
-			   OffsetNumber *nowunused, int nunused,
-			   TransactionId latestRemovedXid);
-extern XLogRecPtr log_heap_freeze(Relation reln, Buffer buffer,
-				TransactionId cutoff_xid,
-				OffsetNumber *offsets, int offcnt);
-extern XLogRecPtr log_heap_visible(RelFileNode rnode, BlockNumber block,
-				 Buffer vm_buffer, TransactionId cutoff_xid);
-extern XLogRecPtr log_newpage(RelFileNode *rnode, ForkNumber forkNum,
-			BlockNumber blk, Page page);
-extern XLogRecPtr log_newpage_buffer(Buffer buffer);
 
 /* in heap/pruneheap.c */
 extern void heap_page_prune_opt(Relation relation, Buffer buffer,

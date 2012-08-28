@@ -18,6 +18,7 @@
  */
 #include "postgres.h"
 
+#include <limits.h>
 #include <math.h>
 
 #include "executor/executor.h"

@@ -41,6 +41,7 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "access/heapam_xlog.h"
 #include "access/hio.h"
 #include "access/multixact.h"
 #include "access/relscan.h"

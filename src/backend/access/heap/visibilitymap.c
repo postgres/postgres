@@ -82,7 +82,7 @@
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
+#include "access/heapam_xlog.h"
 #include "access/visibilitymap.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
