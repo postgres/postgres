@@ -438,7 +438,8 @@ main(int argc, char **argv)
 		else
 		{
 			fprintf(stderr,
-					_("%s: disconnected. Waiting %d seconds to try again\n"),
+					/* translator: check source for value for %d */
+					_("%s: disconnected. Waiting %d seconds to try again.\n"),
 					progname, RECONNECT_SLEEP_TIME);
 			pg_usleep(RECONNECT_SLEEP_TIME * 1000000);
 		}

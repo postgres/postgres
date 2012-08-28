@@ -180,7 +180,7 @@ close_walfile(char *basedir, char *walname, bool segment_complete)
 	}
 	else
 		fprintf(stderr,
-				_("%s: not renaming \"%s\", segment is not complete.\n"),
+				_("%s: not renaming \"%s\", segment is not complete\n"),
 				progname, walname);
 
 	return true;
@@ -622,7 +622,7 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 	if (copybuf != NULL)
 		PQfreemem(copybuf);
 	if (walfile != -1 && close(walfile) != 0)
-		fprintf(stderr, _("%s: could not close file %s: %s\n"),
+		fprintf(stderr, _("%s: could not close file \"%s\": %s\n"),
 				progname, current_walfile_name, strerror(errno));
 	walfile = -1;
 	return true;
@@ -631,7 +631,7 @@ error:
 	if (copybuf != NULL)
 		PQfreemem(copybuf);
 	if (walfile != -1 && close(walfile) != 0)
-		fprintf(stderr, _("%s: could not close file %s: %s\n"),
+		fprintf(stderr, _("%s: could not close file \"%s\": %s\n"),
 				progname, current_walfile_name, strerror(errno));
 	walfile = -1;
 	return false;
