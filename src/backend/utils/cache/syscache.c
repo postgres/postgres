@@ -56,6 +56,7 @@
 #include "catalog/pg_type.h"
 #include "catalog/pg_user_mapping.h"
 #include "utils/rel.h"
+#include "utils/catcache.h"
 #include "utils/syscache.h"
 
 

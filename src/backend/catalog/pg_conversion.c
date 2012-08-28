@@ -25,6 +25,7 @@
 #include "catalog/pg_proc.h"
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
+#include "utils/catcache.h"
 #include "utils/fmgroids.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"

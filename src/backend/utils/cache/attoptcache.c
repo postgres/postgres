@@ -18,6 +18,7 @@
 
 #include "access/reloptions.h"
 #include "utils/attoptcache.h"
+#include "utils/catcache.h"
 #include "utils/hsearch.h"
 #include "utils/inval.h"
 #include "utils/syscache.h"

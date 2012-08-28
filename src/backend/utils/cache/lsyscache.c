@@ -33,6 +33,7 @@
 #include "nodes/makefuncs.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/catcache.h"
 #include "utils/datum.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"

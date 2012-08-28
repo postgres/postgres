@@ -23,6 +23,7 @@
 #include "storage/lmgr.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
+#include "utils/catcache.h"
 #include "utils/fmgroids.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
