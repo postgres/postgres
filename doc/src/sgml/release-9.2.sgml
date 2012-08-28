@@ -196,7 +196,8 @@
        </para>
 
        <para>
-        Without this it is possible to output invalid <acronym>XML</acronym>.
+        Without this it is possible for the result not to be valid
+        <acronym>XML</acronym>.
        </para>
       </listitem>
 
@@ -216,15 +217,20 @@
       <listitem>
        <para>
         Make <link
-        linkend="functions-datetime-extract"><function>EXTRACT</></link> of
-        a non-timezone-aware value measure the epoch from local midnight,
-        not <acronym>UTC</acronym> midnight (Tom Lane)
+        linkend="functions-datetime-extract"><function>EXTRACT(EPOCH FROM
+        <replaceable>timestamp without time zone</>)</function></link>
+        measure the epoch from local midnight, not <acronym>UTC</acronym>
+        midnight (Tom Lane)
        </para>
 
        <para>
-        Having these computations depend on <acronym>UTC</acronym>
-        was inconsistent.  The old behavior is available by casting the
-        value to timestamp with time zone.
+        This change reverts an ill-considered change made in release 7.3.
+        Measuring from <acronym>UTC</acronym> midnight was inconsistent
+        because it made the result dependent on the <link
+        linkend="guc-timezone"><varname>timezone</></link> setting, which
+        computations for <type>timestamp without time zone</> should not be.
+        The previous behavior remains available by casting the input value
+        to <type>timestamp with time zone</>.
        </para>
       </listitem>
 
@@ -462,20 +468,21 @@
        </para>
 
        <para>
+        This change eliminates the designed-in assumption that the values
+        are accurate to microseconds and no more (since the <type>float8</>
+        values can be fractional).
         The columns affected are
         <structname>pg_stat_user_functions</>.<structfield>total_time</>,
         <structname>pg_stat_user_functions</>.<structfield>self_time</>,
         <structname>pg_stat_xact_user_functions</>.<structfield>total_time</>,
         and
         <structname>pg_stat_xact_user_functions</>.<structfield>self_time</>.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Change <application>pg_stat_statements</>'
-        <structfield>total_time</> column to be measured in milliseconds
-        (Tom Lane)
+        The statistics functions underlying these columns now also return
+        <type>float8</> milliseconds, rather than <type>bigint</>
+        microseconds.
+        <filename>contrib/pg_stat_statements</>'
+        <structfield>total_time</> column is now also measured in
+        milliseconds.
        </para>
       </listitem>
 
