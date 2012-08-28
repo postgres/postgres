@@ -57,7 +57,7 @@
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "utils/guc.h"
-#include "utils/resowner.h"
+#include "utils/resowner_private.h"
 
 
 /*

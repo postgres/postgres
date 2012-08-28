@@ -21,6 +21,7 @@
 #include "commands/trigger.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/catcache.h"
 #include "utils/evtcache.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"

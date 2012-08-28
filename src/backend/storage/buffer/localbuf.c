@@ -21,7 +21,7 @@
 #include "storage/bufmgr.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
-#include "utils/resowner.h"
+#include "utils/resowner_private.h"
 
 
 /*#define LBDEBUG*/

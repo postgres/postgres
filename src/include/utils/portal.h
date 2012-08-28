@@ -48,6 +48,7 @@
 
 #include "datatype/timestamp.h"
 #include "executor/execdesc.h"
+#include "utils/plancache.h"
 #include "utils/resowner.h"
 
 /*

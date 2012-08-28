@@ -61,6 +61,7 @@
 #include "tcop/utility.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"
+#include "utils/resowner_private.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 

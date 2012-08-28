@@ -25,6 +25,7 @@
 #include "storage/proc.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
+#include "utils/resowner_private.h"
 #include "utils/snapmgr.h"
 
 /*

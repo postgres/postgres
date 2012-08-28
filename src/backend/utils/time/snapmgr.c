@@ -48,6 +48,7 @@
 #include "storage/procarray.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
+#include "utils/resowner_private.h"
 #include "utils/snapmgr.h"
 #include "utils/tqual.h"
 
