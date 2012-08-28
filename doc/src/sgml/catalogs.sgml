@@ -7413,8 +7413,8 @@
    high-order half in the <structfield>classid</> column, its low-order half
    in the <structfield>objid</> column, and <structfield>objsubid</> equal
    to 1. The original <type>bigint</type> value can be reassembled with the
-   expression <literal>(classid::int::bit(64) &lt;&lt; 32 |
-   objid::int::bit(64))::bigint</literal>. Integer keys are displayed with the
+   expression <literal>(classid::bigint &lt;&lt; 32) |
+   objid::bigint</literal>. Integer keys are displayed with the
    first key in the
    <structfield>classid</> column, the second key in the <structfield>objid</>
    column, and <structfield>objsubid</> equal to 2.  The actual meaning of
