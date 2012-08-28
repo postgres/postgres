@@ -98,12 +98,12 @@
 Testing timing overhead for 3 seconds.
 Per loop time including overhead: 35.96 nsec
 Histogram of timing durations:
-   < usec:      count   percent
-       16:          2  0.00000%
-        8:         13  0.00002%
-        4:        126  0.00015%
-        2:    2999652  3.59518%
-        1:   80435604 96.40465%
+< usec   % of total      count
+     1     96.40465   80435604 
+     2      3.59518    2999652  
+     4      0.00015        126  
+     8      0.00002         13  
+    16      0.00000          2  
 </screen>
   </para>
 
@@ -159,12 +159,12 @@ tsc hpet acpi_pm
 # pg_test_timing
 Per loop time including overhead: 722.92 nsec
 Histogram of timing durations:
-   < usec:      count   percent
-       16:          3  0.00007%
-        8:        563  0.01357%
-        4:       3241  0.07810%
-        2:    2990371 72.05956%
-        1:    1155682 27.84870%
+< usec   % of total      count
+     1     27.84870    1155682 
+     2     72.05956    2990371 
+     4      0.07810       3241  
+     8      0.01357        563  
+    16      0.00007          3  
 </screen>
   </para>
 
@@ -206,13 +206,13 @@ $ pg_test_timing
 Testing timing overhead for 3 seconds.
 Per timing duration including loop overhead: 97.75 ns
 Histogram of timing durations:
-   < usec:      count   percent
-       32:          1  0.00000%
-       16:          1  0.00000%
-        8:         22  0.00007%
-        4:       3010  0.00981%
-        2:    2993204  9.75277%
-        1:   27694571 90.23734%
+< usec   % of total      count
+     1     90.23734   27694571 
+     2      9.75277    2993204  
+     4      0.00981       3010  
+     8      0.00007         22  
+    16      0.00000          1  
+    32      0.00000          1  
 </screen></para>
 
  </refsect2>
