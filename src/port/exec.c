@@ -26,11 +26,13 @@
 #include <unistd.h>
 
 #ifndef FRONTEND
-/* We use only 3-parameter elog calls in this file, for simplicity */
+/* We use only 3- and 4-parameter elog calls in this file, for simplicity */
 /* NOTE: caller must provide gettext call around str! */
 #define log_error(str, param)	elog(LOG, str, param)
+#define log_error4(str, param, arg1)	elog(LOG, str, param, arg1)
 #else
 #define log_error(str, param)	(fprintf(stderr, str, param), fputc('\n', stderr))
+#define log_error4(str, param, arg1)	(fprintf(stderr, str, param, arg1), fputc('\n', stderr))
 #endif
 
 #ifdef WIN32_ONLY_COMPILER
@@ -252,7 +254,7 @@ resolve_symlinks(char *path)
 			*lsep = '\0';
 			if (chdir(path) == -1)
 			{
-				log_error(_("could not change directory to \"%s\""), path);
+				log_error4(_("could not change directory to \"%s\": %s"), path, strerror(errno));
 				return -1;
 			}
 			fname = lsep + 1;
@@ -288,7 +290,7 @@ resolve_symlinks(char *path)
 
 	if (chdir(orig_wd) == -1)
 	{
-		log_error(_("could not change directory to \"%s\""), orig_wd);
+		log_error4(_("could not change directory to \"%s\": %s"), orig_wd, strerror(errno));
 		return -1;
 	}
 #endif   /* HAVE_READLINK */
