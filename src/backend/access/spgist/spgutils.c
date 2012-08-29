@@ -743,27 +743,32 @@ Datum *
 spgExtractNodeLabels(SpGistState *state, SpGistInnerTuple innerTuple)
 {
 	Datum	   *nodeLabels;
-	int			nullcount = 0;
 	int			i;
 	SpGistNodeTuple node;
 
-	nodeLabels = (Datum *) palloc(sizeof(Datum) * innerTuple->nNodes);
-	SGITITERATE(innerTuple, i, node)
+	/* Either all the labels must be NULL, or none. */
+	node = SGITNODEPTR(innerTuple);
+	if (IndexTupleHasNulls(node))
 	{
-		if (IndexTupleHasNulls(node))
-			nullcount++;
-		else
-			nodeLabels[i] = SGNTDATUM(node, state);
-	}
-	if (nullcount == innerTuple->nNodes)
-	{
+		SGITITERATE(innerTuple, i, node)
+		{
+			if (!IndexTupleHasNulls(node))
+				elog(ERROR, "some but not all node labels are null in SPGiST inner tuple");
+		}
 		/* They're all null, so just return NULL */
-		pfree(nodeLabels);
 		return NULL;
 	}
-	if (nullcount != 0)
-		elog(ERROR, "some but not all node labels are null in SPGiST inner tuple");
-	return nodeLabels;
+	else
+	{
+		nodeLabels = (Datum *) palloc(sizeof(Datum) * innerTuple->nNodes);
+		SGITITERATE(innerTuple, i, node)
+		{
+			if (IndexTupleHasNulls(node))
+				elog(ERROR, "some but not all node labels are null in SPGiST inner tuple");
+			nodeLabels[i] = SGNTDATUM(node, state);
+		}
+		return nodeLabels;
+	}
 }
 
 /*

@@ -1861,6 +1861,14 @@ spgdoinsert(Relation index, SpGistState *state,
 	int			leafSize;
 	SPPageDesc	current,
 				parent;
+	FmgrInfo   *procinfo = NULL;
+
+	/*
+	 * Look up FmgrInfo of the user-defined choose function once, to save
+	 * cycles in the loop below.
+	 */
+	if (!isnull)
+		procinfo = index_getprocinfo(index, 1, SPGIST_CHOOSE_PROC);
 
 	/*
 	 * Since we don't use index_form_tuple in this AM, we have to make sure
@@ -2007,7 +2015,6 @@ spgdoinsert(Relation index, SpGistState *state,
 			SpGistInnerTuple innerTuple;
 			spgChooseIn in;
 			spgChooseOut out;
-			FmgrInfo   *procinfo;
 
 			/*
 			 * spgAddNode and spgSplitTuple cases will loop back to here to
@@ -2035,7 +2042,6 @@ spgdoinsert(Relation index, SpGistState *state,
 			if (!isnull)
 			{
 				/* use user-defined choose method */
-				procinfo = index_getprocinfo(index, 1, SPGIST_CHOOSE_PROC);
 				FunctionCall2Coll(procinfo,
 								  index->rd_indcollation[0],
 								  PointerGetDatum(&in),
