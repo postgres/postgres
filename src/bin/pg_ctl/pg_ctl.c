@@ -292,8 +292,13 @@ get_pgpid(void)
 	}
 	if (fscanf(pidf, "%ld", &pid) != 1)
 	{
-		write_stderr(_("%s: invalid data in PID file \"%s\"\n"),
-					 progname, pid_file);
+		/* Is the file empty? */
+		if (ftell(pidf) == 0 && feof(pidf))
+			write_stderr(_("%s: the PID file \"%s\" is empty\n"),
+						 progname, pid_file);
+		else
+			write_stderr(_("%s: invalid data in PID file \"%s\"\n"),
+						 progname, pid_file);
 		exit(1);
 	}
 	fclose(pidf);
