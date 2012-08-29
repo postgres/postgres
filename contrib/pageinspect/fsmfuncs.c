@@ -18,10 +18,12 @@
  */
 
 #include "postgres.h"
+
+#include "funcapi.h"
+#include "lib/stringinfo.h"
+#include "miscadmin.h"
 #include "storage/fsm_internals.h"
 #include "utils/builtins.h"
-#include "miscadmin.h"
-#include "funcapi.h"
 
 Datum		fsm_page_contents(PG_FUNCTION_ARGS);
 

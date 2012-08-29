@@ -12,6 +12,8 @@
  */
 #include "postgres.h"
 
+#include <limits.h>
+
 #include "commands/explain.h"
 #include "executor/instrument.h"
 #include "utils/guc.h"

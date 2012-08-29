@@ -41,6 +41,7 @@
 #include "catalog/pg_type.h"
 #include "executor/spi.h"
 #include "foreign/foreign.h"
+#include "lib/stringinfo.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "parser/scansup.h"
