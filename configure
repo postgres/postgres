@@ -7454,11 +7454,22 @@ $as_echo_n "checking Python configuration directory... " >&6; }
 python_majorversion=`${PYTHON} -c "import sys; print(sys.version[0])"`
 python_version=`${PYTHON} -c "import sys; print(sys.version[:3])"`
 python_configdir=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LIBPL'))))"`
-python_includespec=`${PYTHON} -c "import distutils.sysconfig; print('-I'+distutils.sysconfig.get_python_inc())"`
-
-# This should be enough of a message.
 { $as_echo "$as_me:$LINENO: result: $python_configdir" >&5
 $as_echo "$python_configdir" >&6; }
+
+{ $as_echo "$as_me:$LINENO: checking Python include directories" >&5
+$as_echo_n "checking Python include directories... " >&6; }
+python_includespec=`${PYTHON} -c "
+import distutils.sysconfig
+a = '-I' + distutils.sysconfig.get_python_inc(False)
+b = '-I' + distutils.sysconfig.get_python_inc(True)
+if a == b:
+    print(a)
+else:
+    print(a + ' ' + b)"`
+{ $as_echo "$as_me:$LINENO: result: $python_includespec" >&5
+$as_echo "$python_includespec" >&6; }
+
 
 
 { $as_echo "$as_me:$LINENO: checking how to link an embedded Python application" >&5

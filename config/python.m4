@@ -33,14 +33,23 @@ AC_MSG_CHECKING([Python configuration directory])
 python_majorversion=`${PYTHON} -c "import sys; print(sys.version[[0]])"`
 python_version=`${PYTHON} -c "import sys; print(sys.version[[:3]])"`
 python_configdir=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LIBPL'))))"`
-python_includespec=`${PYTHON} -c "import distutils.sysconfig; print('-I'+distutils.sysconfig.get_python_inc())"`
+AC_MSG_RESULT([$python_configdir])
+
+AC_MSG_CHECKING([Python include directories])
+python_includespec=`${PYTHON} -c "
+import distutils.sysconfig
+a = '-I' + distutils.sysconfig.get_python_inc(False)
+b = '-I' + distutils.sysconfig.get_python_inc(True)
+if a == b:
+    print(a)
+else:
+    print(a + ' ' + b)"`
+AC_MSG_RESULT([$python_includespec])
 
 AC_SUBST(python_majorversion)[]dnl
 AC_SUBST(python_version)[]dnl
 AC_SUBST(python_configdir)[]dnl
 AC_SUBST(python_includespec)[]dnl
-# This should be enough of a message.
-AC_MSG_RESULT([$python_configdir])
 ])# _PGAC_CHECK_PYTHON_DIRS
 
 
