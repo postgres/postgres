@@ -722,7 +722,7 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		 * the unparameterized Append path we are constructing for the parent.
 		 * If not, there's no workable unparameterized path.
 		 */
-		if (childrel->cheapest_total_path)
+		if (childrel->cheapest_total_path->param_info == NULL)
 			subpaths = accumulate_append_subpath(subpaths,
 											 childrel->cheapest_total_path);
 		else
@@ -932,7 +932,6 @@ generate_mergeappend_paths(PlannerInfo *root, RelOptInfo *rel,
 				cheapest_startup = cheapest_total =
 					childrel->cheapest_total_path;
 				/* Assert we do have an unparameterized path for this child */
-				Assert(cheapest_total != NULL);
 				Assert(cheapest_total->param_info == NULL);
 			}
 

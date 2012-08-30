@@ -22,6 +22,9 @@
 #include "optimizer/paths.h"
 
 
+#define PATH_PARAM_BY_REL(path, rel)  \
+	((path)->param_info && bms_overlap(PATH_REQ_OUTER(path), (rel)->relids))
+
 static void sort_inner_and_outer(PlannerInfo *root, RelOptInfo *joinrel,
 					 RelOptInfo *outerrel, RelOptInfo *innerrel,
 					 List *restrictlist, List *mergeclause_list,
@@ -503,18 +506,24 @@ sort_inner_and_outer(PlannerInfo *root,
 	 * cheapest-startup-cost input paths later, and only if they don't need a
 	 * sort.
 	 *
-	 * This function intentionally does not consider parameterized input paths
-	 * (implicit in the fact that it only looks at cheapest_total_path, which
-	 * is always unparameterized).	If we did so, we'd have a combinatorial
-	 * explosion of mergejoin paths of dubious value.  This interacts with
-	 * decisions elsewhere that also discriminate against mergejoins with
-	 * parameterized inputs; see comments in src/backend/optimizer/README.
+	 * This function intentionally does not consider parameterized input
+	 * paths, except when the cheapest-total is parameterized.  If we did so,
+	 * we'd have a combinatorial explosion of mergejoin paths of dubious
+	 * value.  This interacts with decisions elsewhere that also discriminate
+	 * against mergejoins with parameterized inputs; see comments in
+	 * src/backend/optimizer/README.
 	 */
 	outer_path = outerrel->cheapest_total_path;
 	inner_path = innerrel->cheapest_total_path;
 
-	/* Punt if either rel has only parameterized paths */
-	if (!outer_path || !inner_path)
+	/*
+	 * If either cheapest-total path is parameterized by the other rel, we
+	 * can't use a mergejoin.  (There's no use looking for alternative input
+	 * paths, since these should already be the least-parameterized available
+	 * paths.)
+	 */
+	if (PATH_PARAM_BY_REL(outer_path, innerrel) ||
+		PATH_PARAM_BY_REL(inner_path, outerrel))
 		return;
 
 	/*
@@ -715,15 +724,22 @@ match_unsorted_outer(PlannerInfo *root,
 	}
 
 	/*
+	 * If inner_cheapest_total is parameterized by the outer rel, ignore it;
+	 * we will consider it below as a member of cheapest_parameterized_paths,
+	 * but the other possibilities considered in this routine aren't usable.
+	 */
+	if (PATH_PARAM_BY_REL(inner_cheapest_total, outerrel))
+		inner_cheapest_total = NULL;
+
+	/*
 	 * If we need to unique-ify the inner path, we will consider only the
 	 * cheapest-total inner.
 	 */
 	if (save_jointype == JOIN_UNIQUE_INNER)
 	{
-		/* XXX for the moment, don't crash on LATERAL --- rethink this */
+		/* No way to do this with an inner path parameterized by outer rel */
 		if (inner_cheapest_total == NULL)
 			return;
-
 		inner_cheapest_total = (Path *)
 			create_unique_path(root, innerrel, inner_cheapest_total, sjinfo);
 		Assert(inner_cheapest_total);
@@ -756,15 +772,13 @@ match_unsorted_outer(PlannerInfo *root,
 		/*
 		 * We cannot use an outer path that is parameterized by the inner rel.
 		 */
-		if (bms_overlap(PATH_REQ_OUTER(outerpath), innerrel->relids))
+		if (PATH_PARAM_BY_REL(outerpath, innerrel))
 			continue;
 
 		/*
 		 * If we need to unique-ify the outer path, it's pointless to consider
 		 * any but the cheapest outer.	(XXX we don't consider parameterized
 		 * outers, nor inners, for unique-ified cases.	Should we?)
-		 *
-		 * XXX does nothing for LATERAL, rethink
 		 */
 		if (save_jointype == JOIN_UNIQUE_OUTER)
 		{
@@ -844,8 +858,8 @@ match_unsorted_outer(PlannerInfo *root,
 		if (save_jointype == JOIN_UNIQUE_OUTER)
 			continue;
 
-		/* Can't do anything else if inner has no unparameterized paths */
-		if (!inner_cheapest_total)
+		/* Can't do anything else if inner rel is parameterized by outer */
+		if (inner_cheapest_total == NULL)
 			continue;
 
 		/* Look for useful mergeclauses (if any) */
@@ -1126,10 +1140,14 @@ hash_inner_and_outer(PlannerInfo *root,
 		Path	   *cheapest_total_outer = outerrel->cheapest_total_path;
 		Path	   *cheapest_total_inner = innerrel->cheapest_total_path;
 
-		/* Punt if either rel has only parameterized paths */
-		if (!cheapest_startup_outer ||
-			!cheapest_total_outer ||
-			!cheapest_total_inner)
+		/*
+		 * If either cheapest-total path is parameterized by the other rel, we
+		 * can't use a hashjoin.  (There's no use looking for alternative
+		 * input paths, since these should already be the least-parameterized
+		 * available paths.)
+		 */
+		if (PATH_PARAM_BY_REL(cheapest_total_outer, innerrel) ||
+			PATH_PARAM_BY_REL(cheapest_total_inner, outerrel))
 			return;
 
 		/* Unique-ify if need be; we ignore parameterized possibilities */
@@ -1169,7 +1187,8 @@ hash_inner_and_outer(PlannerInfo *root,
 							  cheapest_total_inner,
 							  restrictlist,
 							  hashclauses);
-			if (cheapest_startup_outer != cheapest_total_outer)
+			if (cheapest_startup_outer != NULL &&
+				cheapest_startup_outer != cheapest_total_outer)
 				try_hashjoin_path(root,
 								  joinrel,
 								  jointype,
@@ -1193,16 +1212,17 @@ hash_inner_and_outer(PlannerInfo *root,
 			ListCell   *lc1;
 			ListCell   *lc2;
 
-			try_hashjoin_path(root,
-							  joinrel,
-							  jointype,
-							  sjinfo,
-							  semifactors,
-							  param_source_rels,
-							  cheapest_startup_outer,
-							  cheapest_total_inner,
-							  restrictlist,
-							  hashclauses);
+			if (cheapest_startup_outer != NULL)
+				try_hashjoin_path(root,
+								  joinrel,
+								  jointype,
+								  sjinfo,
+								  semifactors,
+								  param_source_rels,
+								  cheapest_startup_outer,
+								  cheapest_total_inner,
+								  restrictlist,
+								  hashclauses);
 
 			foreach(lc1, outerrel->cheapest_parameterized_paths)
 			{
@@ -1212,7 +1232,7 @@ hash_inner_and_outer(PlannerInfo *root,
 				 * We cannot use an outer path that is parameterized by the
 				 * inner rel.
 				 */
-				if (bms_overlap(PATH_REQ_OUTER(outerpath), innerrel->relids))
+				if (PATH_PARAM_BY_REL(outerpath, innerrel))
 					continue;
 
 				foreach(lc2, innerrel->cheapest_parameterized_paths)
@@ -1223,8 +1243,7 @@ hash_inner_and_outer(PlannerInfo *root,
 					 * We cannot use an inner path that is parameterized by
 					 * the outer rel, either.
 					 */
-					if (bms_overlap(PATH_REQ_OUTER(innerpath),
-									outerrel->relids))
+					if (PATH_PARAM_BY_REL(innerpath, outerrel))
 						continue;
 
 					if (outerpath == cheapest_startup_outer &&

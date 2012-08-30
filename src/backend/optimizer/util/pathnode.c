@@ -37,7 +37,6 @@ typedef enum
 	COSTS_DIFFERENT				/* neither path dominates the other on cost */
 } PathCostComparison;
 
-static void add_parameterized_path(RelOptInfo *parent_rel, Path *new_path);
 static List *translate_sub_tlist(List *tlist, int relid);
 static bool query_is_distinct_for(Query *query, List *colnos, List *opids);
 static Oid	distinct_col_search(int colno, List *colnos, List *opids);
@@ -139,6 +138,12 @@ compare_fractional_path_costs(Path *path1, Path *path2,
  * is fuzzily better than the other on startup cost and fuzzily worse on
  * total cost, we just say that their costs are "different", since neither
  * dominates the other across the whole performance spectrum.
+ *
+ * This function also includes special hacks to support a policy enforced
+ * by its sole caller, add_path(): paths that have any parameterization
+ * cannot win comparisons on the grounds of having cheaper startup cost,
+ * since we deem only total cost to be of interest for a parameterized path.
+ * (Unparameterized paths are more common, so we check for this case last.)
  */
 static PathCostComparison
 compare_path_costs_fuzzily(Path *path1, Path *path2, double fuzz_factor)
@@ -150,7 +155,8 @@ compare_path_costs_fuzzily(Path *path1, Path *path2, double fuzz_factor)
 	if (path1->total_cost > path2->total_cost * fuzz_factor)
 	{
 		/* path1 fuzzily worse on total cost */
-		if (path2->startup_cost > path1->startup_cost * fuzz_factor)
+		if (path2->startup_cost > path1->startup_cost * fuzz_factor &&
+			path1->param_info == NULL)
 		{
 			/* ... but path2 fuzzily worse on startup, so DIFFERENT */
 			return COSTS_DIFFERENT;
@@ -161,7 +167,8 @@ compare_path_costs_fuzzily(Path *path1, Path *path2, double fuzz_factor)
 	if (path2->total_cost > path1->total_cost * fuzz_factor)
 	{
 		/* path2 fuzzily worse on total cost */
-		if (path1->startup_cost > path2->startup_cost * fuzz_factor)
+		if (path1->startup_cost > path2->startup_cost * fuzz_factor &&
+			path2->param_info == NULL)
 		{
 			/* ... but path1 fuzzily worse on startup, so DIFFERENT */
 			return COSTS_DIFFERENT;
@@ -170,12 +177,14 @@ compare_path_costs_fuzzily(Path *path1, Path *path2, double fuzz_factor)
 		return COSTS_BETTER1;
 	}
 	/* fuzzily the same on total cost */
-	if (path1->startup_cost > path2->startup_cost * fuzz_factor)
+	if (path1->startup_cost > path2->startup_cost * fuzz_factor &&
+		path2->param_info == NULL)
 	{
 		/* ... but path1 fuzzily worse on startup, so path2 wins */
 		return COSTS_BETTER2;
 	}
-	if (path2->startup_cost > path1->startup_cost * fuzz_factor)
+	if (path2->startup_cost > path1->startup_cost * fuzz_factor &&
+		path1->param_info == NULL)
 	{
 		/* ... but path2 fuzzily worse on startup, so path1 wins */
 		return COSTS_BETTER1;
@@ -189,11 +198,19 @@ compare_path_costs_fuzzily(Path *path1, Path *path2, double fuzz_factor)
  *	  Find the minimum-cost paths from among a relation's paths,
  *	  and save them in the rel's cheapest-path fields.
  *
- * Only unparameterized paths are considered candidates for cheapest_startup
- * and cheapest_total.	The cheapest_parameterized_paths list collects paths
- * that are cheapest-total for their parameterization (i.e., there is no
- * cheaper path with the same or weaker parameterization).	This list always
- * includes the unparameterized cheapest-total path, too, if there is one.
+ * cheapest_total_path is normally the cheapest-total-cost unparameterized
+ * path; but if there are no unparameterized paths, we assign it to be the
+ * best (cheapest least-parameterized) parameterized path.  However, only
+ * unparameterized paths are considered candidates for cheapest_startup_path,
+ * so that will be NULL if there are no unparameterized paths.
+ *
+ * The cheapest_parameterized_paths list collects all parameterized paths
+ * that have survived the add_path() tournament for this relation.  (Since
+ * add_path ignores pathkeys and startup cost for a parameterized path,
+ * these will be paths that have best total cost or best row count for their
+ * parameterization.)  cheapest_parameterized_paths always includes the
+ * cheapest-total unparameterized path, too, if there is one; the users of
+ * that list find it more convenient if that's included.
  *
  * This is normally called only after we've finished constructing the path
  * list for the rel node.
@@ -203,77 +220,118 @@ set_cheapest(RelOptInfo *parent_rel)
 {
 	Path	   *cheapest_startup_path;
 	Path	   *cheapest_total_path;
-	bool		have_parameterized_paths;
+	Path	   *best_param_path;
+	List	   *parameterized_paths;
 	ListCell   *p;
 
 	Assert(IsA(parent_rel, RelOptInfo));
 
-	cheapest_startup_path = cheapest_total_path = NULL;
-	have_parameterized_paths = false;
+	if (parent_rel->pathlist == NIL)
+		elog(ERROR, "could not devise a query plan for the given query");
+
+	cheapest_startup_path = cheapest_total_path = best_param_path = NULL;
+	parameterized_paths = NIL;
 
 	foreach(p, parent_rel->pathlist)
 	{
 		Path	   *path = (Path *) lfirst(p);
 		int			cmp;
 
-		/* We only consider unparameterized paths in this step */
 		if (path->param_info)
 		{
-			have_parameterized_paths = true;
-			continue;
-		}
+			/* Parameterized path, so add it to parameterized_paths */
+			parameterized_paths = lappend(parameterized_paths, path);
 
-		if (cheapest_total_path == NULL)
+			/*
+			 * If we have an unparameterized cheapest-total, we no longer care
+			 * about finding the best parameterized path, so move on.
+			 */
+			if (cheapest_total_path)
+				continue;
+
+			/*
+			 * Otherwise, track the best parameterized path, which is the one
+			 * with least total cost among those of the minimum
+			 * parameterization.
+			 */
+			if (best_param_path == NULL)
+				best_param_path = path;
+			else
+			{
+				switch (bms_subset_compare(PATH_REQ_OUTER(path),
+										   PATH_REQ_OUTER(best_param_path)))
+				{
+					case BMS_EQUAL:
+						/* keep the cheaper one */
+						if (compare_path_costs(path, best_param_path,
+											   TOTAL_COST) < 0)
+							best_param_path = path;
+						break;
+					case BMS_SUBSET1:
+						/* new path is less-parameterized */
+						best_param_path = path;
+						break;
+					case BMS_SUBSET2:
+						/* old path is less-parameterized, keep it */
+						break;
+					case BMS_DIFFERENT:
+						/*
+						 * This means that neither path has the least possible
+						 * parameterization for the rel.  We'll sit on the old
+						 * path until something better comes along.
+						 */
+						break;
+				}
+			}
+		}
+		else
 		{
-			cheapest_startup_path = cheapest_total_path = path;
-			continue;
+			/* Unparameterized path, so consider it for cheapest slots */
+			if (cheapest_total_path == NULL)
+			{
+				cheapest_startup_path = cheapest_total_path = path;
+				continue;
+			}
+
+			/*
+			 * If we find two paths of identical costs, try to keep the
+			 * better-sorted one.  The paths might have unrelated sort
+			 * orderings, in which case we can only guess which might be
+			 * better to keep, but if one is superior then we definitely
+			 * should keep that one.
+			 */
+			cmp = compare_path_costs(cheapest_startup_path, path, STARTUP_COST);
+			if (cmp > 0 ||
+				(cmp == 0 &&
+				 compare_pathkeys(cheapest_startup_path->pathkeys,
+								  path->pathkeys) == PATHKEYS_BETTER2))
+				cheapest_startup_path = path;
+
+			cmp = compare_path_costs(cheapest_total_path, path, TOTAL_COST);
+			if (cmp > 0 ||
+				(cmp == 0 &&
+				 compare_pathkeys(cheapest_total_path->pathkeys,
+								  path->pathkeys) == PATHKEYS_BETTER2))
+				cheapest_total_path = path;
 		}
-
-		/*
-		 * If we find two paths of identical costs, try to keep the
-		 * better-sorted one.  The paths might have unrelated sort orderings,
-		 * in which case we can only guess which might be better to keep, but
-		 * if one is superior then we definitely should keep that one.
-		 */
-		cmp = compare_path_costs(cheapest_startup_path, path, STARTUP_COST);
-		if (cmp > 0 ||
-			(cmp == 0 &&
-			 compare_pathkeys(cheapest_startup_path->pathkeys,
-							  path->pathkeys) == PATHKEYS_BETTER2))
-			cheapest_startup_path = path;
-
-		cmp = compare_path_costs(cheapest_total_path, path, TOTAL_COST);
-		if (cmp > 0 ||
-			(cmp == 0 &&
-			 compare_pathkeys(cheapest_total_path->pathkeys,
-							  path->pathkeys) == PATHKEYS_BETTER2))
-			cheapest_total_path = path;
 	}
 
-	if (cheapest_total_path == NULL && !have_parameterized_paths)
-		elog(ERROR, "could not devise a query plan for the given query");
+	/* Add cheapest unparameterized path, if any, to parameterized_paths */
+	if (cheapest_total_path)
+		parameterized_paths = lcons(cheapest_total_path, parameterized_paths);
+
+	/*
+	 * If there is no unparameterized path, use the best parameterized path
+	 * as cheapest_total_path (but not as cheapest_startup_path).
+	 */
+	if (cheapest_total_path == NULL)
+		cheapest_total_path = best_param_path;
+	Assert(cheapest_total_path != NULL);
 
 	parent_rel->cheapest_startup_path = cheapest_startup_path;
 	parent_rel->cheapest_total_path = cheapest_total_path;
 	parent_rel->cheapest_unique_path = NULL;	/* computed only if needed */
-
-	/* Seed the parameterized-paths list with the cheapest total, if any */
-	if (cheapest_total_path)
-		parent_rel->cheapest_parameterized_paths = list_make1(cheapest_total_path);
-	else
-		parent_rel->cheapest_parameterized_paths = NIL;
-
-	/* And, if there are any parameterized paths, add them in one at a time */
-	if (have_parameterized_paths)
-	{
-		foreach(p, parent_rel->pathlist)
-		{
-			Path	   *path = (Path *) lfirst(p);
-
-			if (path->param_info)
-				add_parameterized_path(parent_rel, path);
-		}
-	}
+	parent_rel->cheapest_parameterized_paths = parameterized_paths;
 }
 
 /*
@@ -295,11 +353,12 @@ set_cheapest(RelOptInfo *parent_rel)
  *	  one parameterization can seldom dominate a path of another.  But such
  *	  cases do arise, so we make the full set of checks anyway.
  *
- *	  There is one policy decision embedded in this function, along with its
- *	  sibling add_path_precheck: we treat all parameterized paths as having
- *	  NIL pathkeys, so that they compete only on cost.	This is to reduce
- *	  the number of parameterized paths that are kept.	See discussion in
- *	  src/backend/optimizer/README.
+ *	  There are two policy decisions embedded in this function, along with
+ *	  its sibling add_path_precheck: we treat all parameterized paths as
+ *	  having NIL pathkeys, and we ignore their startup costs, so that they
+ *	  compete only on parameterization, total cost and rowcount.  This is to
+ *	  reduce the number of parameterized paths that are kept.  See discussion
+ *	  in src/backend/optimizer/README.
  *
  *	  The pathlist is kept sorted by total_cost, with cheaper paths
  *	  at the front.  Within this routine, that's simply a speed hack:
@@ -552,7 +611,7 @@ add_path_precheck(RelOptInfo *parent_rel,
 	List	   *new_path_pathkeys;
 	ListCell   *p1;
 
-	/* Pretend parameterized paths have no pathkeys, per add_path comment */
+	/* Pretend parameterized paths have no pathkeys, per add_path policy */
 	new_path_pathkeys = required_outer ? NIL : pathkeys;
 
 	foreach(p1, parent_rel->pathlist)
@@ -572,8 +631,10 @@ add_path_precheck(RelOptInfo *parent_rel,
 		 */
 		if (total_cost >= old_path->total_cost)
 		{
-			if (startup_cost >= old_path->startup_cost)
+			/* can win on startup cost only if unparameterized */
+			if (startup_cost >= old_path->startup_cost || required_outer)
 			{
+				/* new path does not win on cost, so check pathkeys... */
 				List	   *old_path_pathkeys;
 
 				old_path_pathkeys = old_path->param_info ? NIL : old_path->pathkeys;
@@ -582,6 +643,7 @@ add_path_precheck(RelOptInfo *parent_rel,
 				if (keyscmp == PATHKEYS_EQUAL ||
 					keyscmp == PATHKEYS_BETTER2)
 				{
+					/* new path does not win on pathkeys... */
 					if (bms_equal(required_outer, PATH_REQ_OUTER(old_path)))
 					{
 						/* Found an old path that dominates the new one */
@@ -602,123 +664,6 @@ add_path_precheck(RelOptInfo *parent_rel,
 	}
 
 	return true;
-}
-
-/*
- * add_parameterized_path
- *	  Consider a parameterized implementation path for the specified rel,
- *	  and add it to the rel's cheapest_parameterized_paths list if it
- *	  belongs there, removing any old entries that it dominates.
- *
- *	  This is essentially a cut-down form of add_path(): we do not care
- *	  about startup cost or sort ordering, only total cost, rowcount, and
- *	  parameterization.  Also, we must not recycle rejected paths, since
- *	  they will still be present in the rel's pathlist.
- *
- * 'parent_rel' is the relation entry to which the path corresponds.
- * 'new_path' is a parameterized path for parent_rel.
- *
- * Returns nothing, but modifies parent_rel->cheapest_parameterized_paths.
- */
-static void
-add_parameterized_path(RelOptInfo *parent_rel, Path *new_path)
-{
-	bool		accept_new = true;		/* unless we find a superior old path */
-	ListCell   *insert_after = NULL;	/* where to insert new item */
-	ListCell   *p1;
-	ListCell   *p1_prev;
-	ListCell   *p1_next;
-
-	/*
-	 * Loop to check proposed new path against old paths.  Note it is possible
-	 * for more than one old path to be tossed out because new_path dominates
-	 * it.
-	 *
-	 * We can't use foreach here because the loop body may delete the current
-	 * list cell.
-	 */
-	p1_prev = NULL;
-	for (p1 = list_head(parent_rel->cheapest_parameterized_paths);
-		 p1 != NULL; p1 = p1_next)
-	{
-		Path	   *old_path = (Path *) lfirst(p1);
-		bool		remove_old = false; /* unless new proves superior */
-		int			costcmp;
-		BMS_Comparison outercmp;
-
-		p1_next = lnext(p1);
-
-		costcmp = compare_path_costs(new_path, old_path, TOTAL_COST);
-		outercmp = bms_subset_compare(PATH_REQ_OUTER(new_path),
-									  PATH_REQ_OUTER(old_path));
-		if (outercmp != BMS_DIFFERENT)
-		{
-			if (costcmp < 0)
-			{
-				if (outercmp != BMS_SUBSET2 &&
-					new_path->rows <= old_path->rows)
-					remove_old = true;	/* new dominates old */
-			}
-			else if (costcmp > 0)
-			{
-				if (outercmp != BMS_SUBSET1 &&
-					new_path->rows >= old_path->rows)
-					accept_new = false; /* old dominates new */
-			}
-			else if (outercmp == BMS_SUBSET1 &&
-					 new_path->rows <= old_path->rows)
-				remove_old = true;		/* new dominates old */
-			else if (outercmp == BMS_SUBSET2 &&
-					 new_path->rows >= old_path->rows)
-				accept_new = false;		/* old dominates new */
-			else if (new_path->rows < old_path->rows)
-				remove_old = true;		/* new dominates old */
-			else
-			{
-				/* Same cost, rows, and param rels; arbitrarily keep old */
-				accept_new = false;		/* old equals or dominates new */
-			}
-		}
-
-		/*
-		 * Remove current element from cheapest_parameterized_paths if
-		 * dominated by new.
-		 */
-		if (remove_old)
-		{
-			parent_rel->cheapest_parameterized_paths =
-				list_delete_cell(parent_rel->cheapest_parameterized_paths,
-								 p1, p1_prev);
-			/* p1_prev does not advance */
-		}
-		else
-		{
-			/* new belongs after this old path if it has cost >= old's */
-			if (costcmp >= 0)
-				insert_after = p1;
-			/* p1_prev advances */
-			p1_prev = p1;
-		}
-
-		/*
-		 * If we found an old path that dominates new_path, we can quit
-		 * scanning the list; we will not add new_path, and we assume new_path
-		 * cannot dominate any other elements of the list.
-		 */
-		if (!accept_new)
-			break;
-	}
-
-	if (accept_new)
-	{
-		/* Accept the new path: insert it at proper place in list */
-		if (insert_after)
-			lappend_cell(parent_rel->cheapest_parameterized_paths,
-						 insert_after, new_path);
-		else
-			parent_rel->cheapest_parameterized_paths =
-				lcons(new_path, parent_rel->cheapest_parameterized_paths);
-	}
 }
 
 
@@ -1136,13 +1081,6 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	bool		all_hash;
 	int			numCols;
 	ListCell   *lc;
-
-	/* XXX temporary band-aid to not crash on LATERAL queries */
-	if (subpath == NULL)
-	{
-		Assert(subpath == rel->cheapest_total_path);
-		return NULL;
-	}
 
 	/* Caller made a mistake if subpath isn't cheapest_total ... */
 	Assert(subpath == rel->cheapest_total_path);

@@ -789,7 +789,7 @@ a nestloop that provides parameters to the lower join's inputs).  While we
 do not ignore merge joins entirely, joinpath.c does not fully explore the
 space of potential merge joins with parameterized inputs.  Also, add_path
 treats parameterized paths as having no pathkeys, so that they compete
-only on cost and rowcount; they don't get preference for producing a
+only on total cost and rowcount; they don't get preference for producing a
 special sort order.  This creates additional bias against merge joins,
 since we might discard a path that could have been useful for performing
 a merge without an explicit sort step.  Since a parameterized path must
@@ -797,6 +797,21 @@ ultimately be used on the inside of a nestloop, where its sort order is
 uninteresting, these choices do not affect any requirement for the final
 output order of a query --- they only make it harder to use a merge join
 at a lower level.  The savings in planning work justifies that.
+
+
+LATERAL subqueries
+------------------
+
+As of 9.3 we support SQL-standard LATERAL references from subqueries in
+FROM (and also functions in FROM).  The planner implements these by
+generating parameterized paths for any RTE that contains lateral
+references.  In such cases, *all* paths for that relation will be
+parameterized by at least the set of relations used in its lateral
+references.  (And in turn, join relations including such a subquery might
+not have any unparameterized paths.)  All the other comments made above for
+parameterized paths still apply, though; in particular, each such path is
+still expected to enforce any join clauses that can be pushed down to it,
+so that all paths of the same parameterization have the same rowcount.
 
 
 -- bjm & tgl

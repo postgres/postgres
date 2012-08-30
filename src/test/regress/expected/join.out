@@ -3167,15 +3167,16 @@ explain (costs off)
   select * from int8_tbl a,
     int8_tbl x left join lateral (select a.q1 from int4_tbl y) ss(z)
       on x.q2 = ss.z;
-             QUERY PLAN             
-------------------------------------
+                QUERY PLAN                
+------------------------------------------
  Nested Loop
    ->  Seq Scan on int8_tbl a
-   ->  Nested Loop Left Join
-         Join Filter: (x.q2 = ($0))
+   ->  Hash Left Join
+         Hash Cond: (x.q2 = ($0))
          ->  Seq Scan on int8_tbl x
-         ->  Seq Scan on int4_tbl y
-(6 rows)
+         ->  Hash
+               ->  Seq Scan on int4_tbl y
+(7 rows)
 
 select * from int8_tbl a,
   int8_tbl x left join lateral (select a.q1 from int4_tbl y) ss(z)

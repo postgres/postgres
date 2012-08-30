@@ -103,17 +103,11 @@ geqo_eval(PlannerInfo *root, Gene *tour, int num_gene)
 	best_path = joinrel->cheapest_total_path;
 
 	/*
-	 * If no unparameterized path, use the cheapest parameterized path for
-	 * costing purposes.  XXX revisit this after LATERAL dust settles
-	 */
-	if (!best_path)
-		best_path = linitial(joinrel->cheapest_parameterized_paths);
-
-	/*
 	 * compute fitness
 	 *
 	 * XXX geqo does not currently support optimization for partial result
-	 * retrieval --- how to fix?
+	 * retrieval, nor do we take any cognizance of possible use of
+	 * parameterized paths --- how to fix?
 	 */
 	fitness = best_path->total_cost;
 
