@@ -183,8 +183,13 @@ Histogram of timing durations:
    information about the timer selected during boot:
 
 <screen>
-dmesg | grep "Timecounter"
-sysctl kern.timecounter.hardware=TSC
+# dmesg | grep "Timecounter"
+Timecounter "ACPI-fast" frequency 3579545 Hz quality 900
+Timecounter "i8254" frequency 1193182 Hz quality 0
+Timecounters tick every 10.000 msec
+Timecounter "TSC" frequency 2531787134 Hz quality 800
+# sysctl kern.timecounter.hardware=TSC
+kern.timecounter.hardware: ACPI-fast -> TSC
 </screen>
   </para>
 
@@ -277,7 +282,7 @@ Histogram of timing durations:
   </para>
 
   <para>
-   Timers used on older PC hardware including the 8254 Programmable Interval
+   Timers used on older PC hardware include the 8254 Programmable Interval
    Timer (PIT), the real-time clock (RTC), the Advanced Programmable Interrupt
    Controller (APIC) timer, and the Cyclone timer.  These timers aim for
    millisecond resolution.
