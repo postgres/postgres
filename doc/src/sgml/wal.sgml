@@ -422,12 +422,10 @@
    linkend="guc-checkpoint-segments"> log segments, or every <xref
    linkend="guc-checkpoint-timeout"> seconds, whichever comes first.
    The default settings are 3 segments and 300 seconds (5 minutes), respectively.
-   In cases where little or no WAL has been written, checkpoints will be
-   skipped even if checkpoint_timeout has passed.  At least one new WAL segment
-   must have been created before an automatic checkpoint occurs.  The time
-   between checkpoints and when new WAL segments are created are not related
-   in any other way.  If file-based WAL shipping is being used and you want to
-   bound how often files are sent to standby server to reduce potential data
+   In cases where no WAL has been written since the previous checkpoint, new 
+   checkpoints will be skipped even if checkpoint_timeout has passed.  
+   If WAL archiving is being used and you want to put a lower limit on
+   how often files are archived in order to bound potential data
    loss, you should adjust archive_timeout parameter rather than the checkpoint
    parameters.  It is also possible to force a checkpoint by using the SQL
    command <command>CHECKPOINT</command>.
