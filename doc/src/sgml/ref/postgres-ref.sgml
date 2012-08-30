@@ -732,14 +732,18 @@ PostgreSQL documentation
 
   <para>
    To cancel a running query, send the <literal>SIGINT</literal> signal
-   to the process running that command.
+   to the process running that command. To terminate a backend process
+   cleanly, send <literal>SIGTERM</literal> to that process. See
+   also <function>pg_cancel_backend</> and <function>pg_terminate_backend</>
+   in <xref linkend="functions-admin-signal"> for the SQL-callable equivalents
+   of these two actions.
   </para>
 
   <para>
-   The <command>postgres</command> server uses <literal>SIGTERM</literal>
-   to tell subordinate server processes to quit normally and
-   <literal>SIGQUIT</literal> to terminate without the normal cleanup.
-   These signals <emphasis>should not</emphasis> be used by users.  It
+   The <command>postgres</command> server uses <literal>SIGQUIT</literal>
+   to tell subordinate server processes to terminate without normal
+   cleanup.
+   This signal <emphasis>should not</emphasis> be used by users.  It
    is also unwise to send <literal>SIGKILL</literal> to a server
    process &mdash; the main <command>postgres</command> process will
    interpret this as a crash and will force all the sibling processes
