@@ -337,7 +337,6 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 			copy_file(srcpath, dstpath);
 		}
 
-		/* Done with the first pass. */
 		FreeDir(dbspace_dir);
 	}
 }

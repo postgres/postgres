@@ -8784,9 +8784,10 @@ copy_relation_data(SMgrRelation src, SMgrRelation dst,
 	pfree(buf);
 
 	/*
-	 * If the rel isn't temp, we must fsync it down to disk before it's safe
-	 * to commit the transaction.  (For a temp rel we don't care since the rel
-	 * will be uninteresting after a crash anyway.)
+	 * If the rel is WAL-logged, must fsync before commit.	We use heap_sync
+	 * to ensure that the toast table gets fsync'd too.  (For a temp or
+	 * unlogged rel we don't care since the data will be gone after a crash
+	 * anyway.)
 	 *
 	 * It's obvious that we must do this when not WAL-logging the copy. It's
 	 * less obvious that we have to do it even if we did WAL-log the copied
