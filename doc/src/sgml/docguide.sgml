@@ -201,8 +201,8 @@
     installing, or the following packages:
     <filename>sgml-common</filename>, <filename>docbook</filename>,
     <filename>stylesheets</filename>, <filename>openjade</filename>
-    (or <filename>jade</filename>).  Possibly
-    <filename>sgml-tools</filename> will be needed as well.  If your
+    (or <filename>jade</filename>).  You may also need <filename>sgml-tools</filename>
+    and either <filename>xsltproc</filename> or <filename>libxslt</>.  If your
     distributor does not provide these then you should be able to make
     use of the packages from some other, reasonably compatible vendor.
    </para>
