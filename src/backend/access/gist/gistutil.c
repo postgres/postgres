@@ -363,7 +363,12 @@ gistgetadjusted(Relation r, IndexTuple oldtup, IndexTuple addtup, GISTSTATE *gis
 }
 
 /*
- * find entry with lowest penalty
+ * Search a page for the entry with lowest penalty.
+ *
+ * The index may have multiple columns, and there's a penalty value for each column.
+ * The penalty associated with a column which appears earlier in the index definition is
+ * strictly more important than the penalty of column which appears later in the index
+ * definition.
  */
 OffsetNumber
 gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
@@ -389,12 +394,28 @@ gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 	Assert(maxoff >= FirstOffsetNumber);
 	Assert(!GistPageIsLeaf(p));
 
+	/*
+	 * Loop over tuples on page.
+	 *
+	 * We'll exit early if we find an index key that can accommodate the new key with no
+	 * penalty on any column.  sum_grow is used to track this condition.  Normally, it is the
+	 * sum of the penalties we've seen for this column so far, which is not a very useful
+	 * quantity in general because the penalties for each column are only considered
+	 * independently, but all we really care about is whether or not it's greater than zero.
+	 * Since penalties can't be negative, the sum of the penalties will be greater than
+	 * zero if and only if at least one penalty was greater than zero.  To make things just
+	 * a bit more complicated, we arbitrarily set sum_grow to 1.0 whenever we want to force
+	 * the at least one more iteration of this outer loop.  Any non-zero value would serve
+	 * just as well.
+	 */
 	for (i = FirstOffsetNumber; i <= maxoff && sum_grow; i = OffsetNumberNext(i))
 	{
 		int			j;
 		IndexTuple	itup = (IndexTuple) PageGetItem(p, PageGetItemId(p, i));
 
 		sum_grow = 0;
+
+		/* Loop over indexed attribtues. */
 		for (j = 0; j < r->rd_att->natts; j++)
 		{
 			Datum		datum;
@@ -409,16 +430,36 @@ gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 
 			if (which_grow[j] < 0 || usize < which_grow[j])
 			{
+				/*
+				 * We get here in two cases.  First, we may have just discovered that the
+				 * current tuple is the best one we've seen so far; that is, for the first
+				 * column for which the penalty is not equal to the best tuple seen so far,
+				 * this one has a lower penalty than the previously-seen one.  But, when
+				 * a new best tuple is found, we must record the best penalty value for
+				 * all the remaining columns.  We'll end up here for each remaining index
+				 * column in that case, too.
+				 */
 				which = i;
 				which_grow[j] = usize;
-				if (j < r->rd_att->natts - 1 && i == FirstOffsetNumber)
+				if (j < r->rd_att->natts - 1)
 					which_grow[j + 1] = -1;
 				sum_grow += which_grow[j];
 			}
 			else if (which_grow[j] == usize)
+			{
+				/*
+				 * The current tuple is exactly as good for this column as the best tuple
+				 * seen so far.  The next iteration of this loop will compare the next
+				 * column.
+				 */
 				sum_grow += usize;
+			}
 			else
 			{
+				/*
+				 * The current tuple is worse for this column than the best tuple seen so
+				 * far.  Skip the remaining columns and move on to the next tuple, if any.
+				 */
 				sum_grow = 1;
 				break;
 			}
