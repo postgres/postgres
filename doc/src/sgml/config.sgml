@@ -5550,9 +5550,9 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         fit in the lock table.  This is <emphasis>not</> the number of
         rows that can be locked; that value is unlimited.  The default,
         64, has historically proven sufficient, but you might need to
-        raise this value if you have clients that touch many different
-        tables in a single transaction. This parameter can only be set at
-        server start.
+        raise this value if you have queries that touch many different
+        tables in a single transaction, e.g. query of a parent table with
+        many children.  This parameter can only be set at server start.
        </para>
 
        <para>
