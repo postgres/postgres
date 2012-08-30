@@ -453,18 +453,8 @@
      The type <type>integer</type> is the common choice, as it offers
      the best balance between range, storage size, and performance.
      The <type>smallint</type> type is generally only used if disk
-     space is at a premium.  The <type>bigint</type> type should only
-     be used if the range of the <type>integer</type> type is insufficient,
-     because the latter is definitely faster.
-    </para>
-
-    <para>
-     On very minimal operating systems the <type>bigint</type> type
-     might not function correctly, because it relies on compiler support
-     for eight-byte integers.  On such machines, <type>bigint</type>
-     acts the same as <type>integer</type>, but still takes up eight
-     bytes of storage.  (We are not aware of any modern
-     platform where this is the case.)
+     space is at a premium.  The <type>bigint</type> type is designed to be
+     used when the range of the <type>integer</type> type is insufficient.
     </para>
 
     <para>
