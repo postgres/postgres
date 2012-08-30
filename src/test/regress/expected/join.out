@@ -3172,7 +3172,7 @@ explain (costs off)
  Nested Loop
    ->  Seq Scan on int8_tbl a
    ->  Hash Left Join
-         Hash Cond: (x.q2 = ($0))
+         Hash Cond: (x.q2 = (a.q1))
          ->  Seq Scan on int8_tbl x
          ->  Hash
                ->  Seq Scan on int4_tbl y

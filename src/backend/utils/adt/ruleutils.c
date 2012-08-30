@@ -2312,14 +2312,8 @@ push_child_plan(deparse_namespace *dpns, PlanState *ps,
 	/* Save state for restoration later */
 	*save_dpns = *dpns;
 
-	/*
-	 * Currently we don't bother to adjust the ancestors list, because an
-	 * OUTER_VAR or INNER_VAR reference really shouldn't contain any Params
-	 * that would be set by the parent node itself.  If we did want to adjust
-	 * the list, lcons'ing dpns->planstate onto dpns->ancestors would be the
-	 * appropriate thing --- and pop_child_plan would need to undo the change
-	 * to the list.
-	 */
+	/* Link current plan node into ancestors list */
+	dpns->ancestors = lcons(dpns->planstate, dpns->ancestors);
 
 	/* Set attention on selected child */
 	set_deparse_planstate(dpns, ps);
@@ -2331,8 +2325,16 @@ push_child_plan(deparse_namespace *dpns, PlanState *ps,
 static void
 pop_child_plan(deparse_namespace *dpns, deparse_namespace *save_dpns)
 {
+	List	   *ancestors;
+
+	/* Get rid of ancestors list cell added by push_child_plan */
+	ancestors = list_delete_first(dpns->ancestors);
+
 	/* Restore fields changed by push_child_plan */
 	*dpns = *save_dpns;
+
+	/* Make sure dpns->ancestors is right (may be unnecessary) */
+	dpns->ancestors = ancestors;
 }
 
 /*
