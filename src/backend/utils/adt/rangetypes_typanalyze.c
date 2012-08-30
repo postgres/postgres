@@ -158,7 +158,10 @@ compute_range_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 		/* Must copy the target values into anl_context */
 		old_cxt = MemoryContextSwitchTo(stats->anl_context);
 
-		if (non_empty_cnt > 0)
+		/*
+		 * Generate a histogram slot entry if there are at least two values.
+		 */
+		if (non_empty_cnt >= 2)
 		{
 			/* Sort bound values */
 			qsort_arg(lowers, non_empty_cnt, sizeof(RangeBound),
