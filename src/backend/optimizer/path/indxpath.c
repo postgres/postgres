@@ -121,10 +121,12 @@ static void match_restriction_clauses_to_index(RelOptInfo *rel,
 								   IndexClauseSet *clauseset);
 static void match_join_clauses_to_index(PlannerInfo *root,
 							RelOptInfo *rel, IndexOptInfo *index,
+							Relids lateral_referencers,
 							IndexClauseSet *clauseset,
 							List **joinorclauses);
 static void match_eclass_clauses_to_index(PlannerInfo *root,
 							  IndexOptInfo *index,
+							  Relids lateral_referencers,
 							  IndexClauseSet *clauseset);
 static void match_clauses_to_index(IndexOptInfo *index,
 					   List *clauses,
@@ -211,22 +213,40 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 	List	   *bitindexpaths;
 	List	   *bitjoinpaths;
 	List	   *joinorclauses;
+	Relids		lateral_referencers;
 	IndexClauseSet rclauseset;
 	IndexClauseSet jclauseset;
 	IndexClauseSet eclauseset;
-	ListCell   *ilist;
+	ListCell   *lc;
 
 	/* Skip the whole mess if no indexes */
 	if (rel->indexlist == NIL)
 		return;
 
+	/*
+	 * If there are any rels that have LATERAL references to this one, we
+	 * cannot use join quals referencing them as index quals for this one,
+	 * since such rels would have to be on the inside not the outside of a
+	 * nestloop join relative to this one.  Create a Relids set listing all
+	 * such rels, for use in checks of potential join clauses.
+	 */
+	lateral_referencers = NULL;
+	foreach(lc, root->lateral_info_list)
+	{
+		LateralJoinInfo *ljinfo = (LateralJoinInfo *) lfirst(lc);
+
+		if (bms_is_member(rel->relid, ljinfo->lateral_lhs))
+			lateral_referencers = bms_add_member(lateral_referencers,
+												 ljinfo->lateral_rhs);
+	}
+
 	/* Bitmap paths are collected and then dealt with at the end */
 	bitindexpaths = bitjoinpaths = joinorclauses = NIL;
 
 	/* Examine each index in turn */
-	foreach(ilist, rel->indexlist)
+	foreach(lc, rel->indexlist)
 	{
-		IndexOptInfo *index = (IndexOptInfo *) lfirst(ilist);
+		IndexOptInfo *index = (IndexOptInfo *) lfirst(lc);
 
 		/* Protect limited-size array in IndexClauseSets */
 		Assert(index->ncolumns <= INDEX_MAX_KEYS);
@@ -260,7 +280,7 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 		 * EquivalenceClasses.	Also, collect join OR clauses for later.
 		 */
 		MemSet(&jclauseset, 0, sizeof(jclauseset));
-		match_join_clauses_to_index(root, rel, index,
+		match_join_clauses_to_index(root, rel, index, lateral_referencers,
 									&jclauseset, &joinorclauses);
 
 		/*
@@ -268,7 +288,8 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 		 * the index.
 		 */
 		MemSet(&eclauseset, 0, sizeof(eclauseset));
-		match_eclass_clauses_to_index(root, index, &eclauseset);
+		match_eclass_clauses_to_index(root, index, lateral_referencers,
+									  &eclauseset);
 
 		/*
 		 * If we found any plain or eclass join clauses, decide what to do
@@ -1796,6 +1817,7 @@ match_restriction_clauses_to_index(RelOptInfo *rel, IndexOptInfo *index,
 static void
 match_join_clauses_to_index(PlannerInfo *root,
 							RelOptInfo *rel, IndexOptInfo *index,
+							Relids lateral_referencers,
 							IndexClauseSet *clauseset,
 							List **joinorclauses)
 {
@@ -1808,6 +1830,10 @@ match_join_clauses_to_index(PlannerInfo *root,
 
 		/* Check if clause can be moved to this rel */
 		if (!join_clause_is_movable_to(rinfo, rel->relid))
+			continue;
+
+		/* Not useful if it conflicts with any LATERAL references */
+		if (bms_overlap(rinfo->clause_relids, lateral_referencers))
 			continue;
 
 		/* Potentially usable, so see if it matches the index or is an OR */
@@ -1825,6 +1851,7 @@ match_join_clauses_to_index(PlannerInfo *root,
  */
 static void
 match_eclass_clauses_to_index(PlannerInfo *root, IndexOptInfo *index,
+							  Relids lateral_referencers,
 							  IndexClauseSet *clauseset)
 {
 	int			indexcol;
@@ -1837,9 +1864,11 @@ match_eclass_clauses_to_index(PlannerInfo *root, IndexOptInfo *index,
 	{
 		List	   *clauses;
 
+		/* Generate clauses, skipping any that join to lateral_referencers */
 		clauses = generate_implied_equalities_for_indexcol(root,
 														   index,
-														   indexcol);
+														   indexcol,
+														lateral_referencers);
 
 		/*
 		 * We have to check whether the results actually do match the index,

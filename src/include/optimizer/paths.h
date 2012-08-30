@@ -127,7 +127,8 @@ extern void mutate_eclass_expressions(PlannerInfo *root,
 						  void *context);
 extern List *generate_implied_equalities_for_indexcol(PlannerInfo *root,
 										 IndexOptInfo *index,
-										 int indexcol);
+										 int indexcol,
+										 Relids prohibited_rels);
 extern bool have_relevant_eclass_joinclause(PlannerInfo *root,
 								RelOptInfo *rel1, RelOptInfo *rel2);
 extern bool has_relevant_eclass_joinclause(PlannerInfo *root,

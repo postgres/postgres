@@ -1969,11 +1969,15 @@ mutate_eclass_expressions(PlannerInfo *root,
  * is no value in using more than one.	(But it *is* worthwhile to create
  * a separate parameterized path for each one, since that leads to different
  * join orders.)
+ *
+ * The caller can pass a Relids set of rels we aren't interested in joining
+ * to, so as to save the work of creating useless clauses.
  */
 List *
 generate_implied_equalities_for_indexcol(PlannerInfo *root,
 										 IndexOptInfo *index,
-										 int indexcol)
+										 int indexcol,
+										 Relids prohibited_rels)
 {
 	List	   *result = NIL;
 	RelOptInfo *rel = index->rel;
@@ -2048,6 +2052,10 @@ generate_implied_equalities_for_indexcol(PlannerInfo *root,
 			/* Make sure it'll be a join to a different rel */
 			if (other_em == cur_em ||
 				bms_overlap(other_em->em_relids, rel->relids))
+				continue;
+
+			/* Forget it if caller doesn't want joins to this rel */
+			if (bms_overlap(other_em->em_relids, prohibited_rels))
 				continue;
 
 			/*
