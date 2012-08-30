@@ -1203,8 +1203,9 @@ default:\
     optimal for <productname>PostgreSQL</productname>. Because of the
     way that the kernel implements memory overcommit, the kernel might
     terminate the <productname>PostgreSQL</productname> postmaster (the
-    master server process) if the memory demands of
-    another process cause the system to run out of virtual memory.
+    master server process) if the memory demands of either
+    <productname>PostgreSQL</productname> or another process cause the
+    system to run out of virtual memory.
    </para>
 
    <para>
@@ -1229,6 +1230,19 @@ Out of Memory: Killed process 12345 (postgres).
     operating system can help avoid the problem, because the
     out-of-memory (OOM) killer is invoked only when physical memory and
     swap space are exhausted.
+   </para>
+
+   <para>
+    If <productname>PostgreSQL</productname> itself is the cause of the
+    system running out of memory, you can avoid the problem by changing
+    your configuration.  In some cases, it may help to lower memory-related
+    configuration parameters, particularly
+    <link linkend="guc-shared-buffers"><varname>shared_buffers</></link>
+    and <link linkend="guc-work-mem"><varname>work_mem</></link>.  In
+    other cases, the problem may be caused by allowing too many connections
+    to the database server itself.  In many cases, it may be better to reduce
+    <link linkend="guc-max-connections"><varname>max_connections</></link>
+    and instead make use of external connection-pooling software.
    </para>
 
    <para>
