@@ -81,19 +81,15 @@ LINK.static = $(AR) $(AROPT)
 
 ifdef SO_MAJOR_VERSION
 # Default library naming convention used by the majority of platforms
-ifeq ($(enable_shared), yes)
 shlib		= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
 shlib_major	= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
 shlib_bare	= lib$(NAME)$(DLSUFFIX)
-endif
 # Testing the soname variable is a reliable way to determine whether a
 # linkable library is being built.
 soname		= $(shlib_major)
 else
 # Naming convention for dynamically loadable modules
-ifeq ($(enable_shared), yes)
 shlib		= $(NAME)$(DLSUFFIX)
-endif
 endif
 stlib		= lib$(NAME).a
 
@@ -321,7 +317,6 @@ $(stlib): $(OBJS) | $(SHLIB_PREREQS)
 	$(RANLIB) $@
 endif #haslibarule
 
-ifeq ($(enable_shared), yes)
 
 ifeq (,$(filter cygwin win32,$(PORTNAME)))
 ifneq ($(PORTNAME), aix)
@@ -392,8 +387,6 @@ $(stlib): $(shlib) $(DLL_DEFFILE) | $(SHLIB_PREREQS)
 
 endif # PORTNAME == cygwin || PORTNAME == win32
 
-endif # enable_shared
-
 
 # We need several not-quite-identical variants of .DEF files to build
 # DLLs for Windows.  These are made from the single source file
@@ -446,7 +439,6 @@ ifeq ($(PORTNAME), darwin)
 	ranlib $(stlib)
 endif
 
-ifeq ($(enable_shared), yes)
 install-lib-shared: $(shlib) installdirs-lib
 ifdef soname
 # we don't install $(shlib) on AIX
@@ -471,14 +463,6 @@ endif # not aix
 else # no soname
 	$(INSTALL_SHLIB) $< '$(DESTDIR)$(pkglibdir)/$(shlib)'
 endif
-else # not enable_shared
-ifndef soname
-install-lib-shared:
-	@echo "*****"; \
-	 echo "* Module $(NAME) was not installed due to lack of shared library support."; \
-	 echo "*****"
-endif
-endif # enable_shared
 
 
 installdirs-lib:
@@ -497,11 +481,9 @@ endif
 uninstall-lib:
 ifdef soname
 	rm -f '$(DESTDIR)$(libdir)/$(stlib)'
-ifeq ($(enable_shared), yes)
 	rm -f '$(DESTDIR)$(libdir)/$(shlib_bare)' \
 	  '$(DESTDIR)$(libdir)/$(shlib_major)' \
 	  '$(DESTDIR)$(libdir)/$(shlib)'
-endif # enable_shared
 else # no soname
 	rm -f '$(DESTDIR)$(pkglibdir)/$(shlib)'
 endif # no soname

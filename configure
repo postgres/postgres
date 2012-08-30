@@ -748,7 +748,6 @@ LCOV
 GCOV
 enable_debug
 enable_rpath
-enable_shared
 default_port
 WANTED_LANGUAGES
 enable_nls
@@ -810,7 +809,6 @@ with_libs
 enable_integer_datetimes
 enable_nls
 with_pgport
-enable_shared
 enable_rpath
 enable_spinlocks
 enable_debug
@@ -1490,7 +1488,6 @@ Optional Features:
                           disable 64-bit integer date/time support
   --enable-nls[=LANGUAGES]
                           enable Native Language Support
-  --disable-shared        do not build shared libraries
   --disable-rpath         do not embed shared library search path in
                           executables
   --disable-spinlocks     do not use spinlocks
@@ -2468,36 +2465,6 @@ _ACEOF
 cat >>confdefs.h <<_ACEOF
 #define DEF_PGPORT_STR "${default_port}"
 _ACEOF
-
-
-
-#
-# Option to disable shared libraries
-#
-
-
-# Check whether --enable-shared was given.
-if test "${enable_shared+set}" = set; then
-  enableval=$enable_shared;
-  case $enableval in
-    yes)
-      :
-      ;;
-    no)
-      :
-      ;;
-    *)
-      { { $as_echo "$as_me:$LINENO: error: no argument expected for --enable-shared option" >&5
-$as_echo "$as_me: error: no argument expected for --enable-shared option" >&2;}
-   { (exit 1); exit 1; }; }
-      ;;
-  esac
-
-else
-  enable_shared=yes
-
-fi
-
 
 
 

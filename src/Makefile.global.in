@@ -165,7 +165,6 @@ with_libxml	= @with_libxml@
 with_libxslt	= @with_libxslt@
 with_system_tzdata = @with_system_tzdata@
 with_zlib	= @with_zlib@
-enable_shared	= @enable_shared@
 enable_rpath	= @enable_rpath@
 enable_nls	= @enable_nls@
 enable_debug	= @enable_debug@
@@ -396,13 +395,6 @@ endif
 # This macro is for use by libraries linking to libpq.  (Because libpgport
 # isn't created with the same link flags as libpq, it can't be used.)
 libpq = -L$(libpq_builddir) -lpq
-
-# If doing static linking, shared library dependency info isn't available,
-# so add in the libraries that libpq depends on.
-ifeq ($(enable_shared), no)
-libpq += $(filter -lintl -lssl -lcrypto -lkrb5 -lcrypt, $(LIBS)) \
-	$(LDAP_LIBS_FE) $(PTHREAD_LIBS)
-endif
 
 # This macro is for use by client executables (not libraries) that use libpq.
 # We force clients to pull symbols from the non-shared library libpgport

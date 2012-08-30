@@ -166,7 +166,6 @@ CONVERSIONS = \
 all: $(SQLSCRIPT)
 
 $(SQLSCRIPT): Makefile
-ifeq ($(enable_shared), yes)
 	@set -e; \
 	set $(CONVERSIONS) ; \
 	while [ "$$#" -gt 0 ] ; \
@@ -183,9 +182,6 @@ ifeq ($(enable_shared), yes)
 		echo "CREATE DEFAULT CONVERSION pg_catalog.$$name FOR '$$se' TO '$$de' FROM $$func;"; \
 	        echo "COMMENT ON CONVERSION pg_catalog.$$name IS 'conversion for $$se to $$de';"; \
 	done > $@
-else
-	echo "-- No conversion support, for lack of shared library support" > $@
-endif
 
 $(REGRESSION_SCRIPT): Makefile
 	@set -e; \

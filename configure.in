@@ -164,13 +164,6 @@ AC_DEFINE_UNQUOTED(DEF_PGPORT_STR, "${default_port}",
 AC_SUBST(default_port)
 
 #
-# Option to disable shared libraries
-#
-PGAC_ARG_BOOL(enable, shared, yes,
-              [do not build shared libraries])
-AC_SUBST(enable_shared)
-
-#
 # '-rpath'-like feature can be disabled
 #
 PGAC_ARG_BOOL(enable, rpath, yes,
