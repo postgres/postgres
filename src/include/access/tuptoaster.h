@@ -13,7 +13,7 @@
 #ifndef TUPTOASTER_H
 #define TUPTOASTER_H
 
-#include "access/htup.h"
+#include "access/htup_details.h"
 #include "utils/relcache.h"
 
 /*

@@ -70,6 +70,7 @@
 
 #include <math.h>
 
+#include "access/htup_details.h"
 #include "executor/executor.h"
 #include "executor/nodeHash.h"
 #include "miscadmin.h"

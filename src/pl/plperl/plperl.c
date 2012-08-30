@@ -16,6 +16,7 @@
 #include <locale.h>
 
 /* postgreSQL stuff */
+#include "access/htup_details.h"
 #include "access/xact.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"

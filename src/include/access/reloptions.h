@@ -20,6 +20,7 @@
 #define RELOPTIONS_H
 
 #include "access/htup.h"
+#include "access/tupdesc.h"
 #include "nodes/pg_list.h"
 
 /* types supported by reloptions */

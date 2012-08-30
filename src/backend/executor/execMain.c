@@ -37,6 +37,7 @@
  */
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "access/sysattr.h"
 #include "access/transam.h"
 #include "access/xact.h"

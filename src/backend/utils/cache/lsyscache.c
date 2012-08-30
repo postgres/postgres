@@ -16,6 +16,7 @@
 #include "postgres.h"
 
 #include "access/hash.h"
+#include "access/htup_details.h"
 #include "access/nbtree.h"
 #include "bootstrap/bootstrap.h"
 #include "catalog/pg_amop.h"

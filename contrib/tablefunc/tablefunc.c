@@ -34,6 +34,7 @@
 
 #include <math.h>
 
+#include "access/htup_details.h"
 #include "catalog/pg_type.h"
 #include "executor/spi.h"
 #include "funcapi.h"

@@ -28,6 +28,7 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/htup_details.h"
 #include "access/xact.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"

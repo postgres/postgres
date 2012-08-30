@@ -15,6 +15,7 @@
 #define TUPCONVERT_H
 
 #include "access/htup.h"
+#include "access/tupdesc.h"
 
 
 typedef struct TupleConversionMap

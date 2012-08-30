@@ -16,6 +16,7 @@
 
 #include <ctype.h>
 
+#include "access/htup_details.h"
 #include "access/sysattr.h"
 #include "catalog/heap.h"
 #include "catalog/namespace.h"

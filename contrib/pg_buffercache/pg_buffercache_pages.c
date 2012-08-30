@@ -8,6 +8,7 @@
  */
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "storage/buf_internals.h"

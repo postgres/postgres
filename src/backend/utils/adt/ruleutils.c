@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include "access/htup_details.h"
 #include "access/sysattr.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"

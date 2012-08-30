@@ -95,6 +95,7 @@
  */
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "miscadmin.h"

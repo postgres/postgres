@@ -41,7 +41,7 @@
 
 #include "postgres.h"
 
-#include "access/htup.h"
+#include "access/htup_details.h"
 #include "access/xact.h"
 #include "utils/combocid.h"
 #include "utils/hsearch.h"

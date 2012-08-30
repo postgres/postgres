@@ -15,6 +15,7 @@
  */
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "executor/executor.h"

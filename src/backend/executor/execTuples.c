@@ -88,6 +88,7 @@
  */
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "funcapi.h"
 #include "catalog/pg_type.h"
 #include "nodes/nodeFuncs.h"

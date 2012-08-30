@@ -25,6 +25,7 @@
 
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "funcapi.h"
 #include "utils/builtins.h"
 #include "miscadmin.h"

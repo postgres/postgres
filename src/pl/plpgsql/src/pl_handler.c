@@ -15,6 +15,7 @@
 
 #include "plpgsql.h"
 
+#include "access/htup_details.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"

@@ -14,7 +14,7 @@
  */
 #include "postgres.h"
 
-#include "access/htup.h"
+#include "access/htup_details.h"
 
 
 /* ----------------------------------------------------------------

@@ -18,6 +18,7 @@
 
 #include <ctype.h>
 
+#include "access/htup_details.h"
 #include "access/xact.h"
 #include "catalog/pg_authid.h"
 #include "commands/variable.h"

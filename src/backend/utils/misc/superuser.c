@@ -20,6 +20,7 @@
  */
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "catalog/pg_authid.h"
 #include "utils/inval.h"
 #include "utils/syscache.h"

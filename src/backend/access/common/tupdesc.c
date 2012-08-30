@@ -19,6 +19,7 @@
 
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "parser/parse_type.h"

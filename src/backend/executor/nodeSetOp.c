@@ -44,6 +44,7 @@
 
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "executor/executor.h"
 #include "executor/nodeSetOp.h"
 #include "utils/memutils.h"

@@ -17,6 +17,7 @@
 
 #include "access/gist_private.h"
 #include "access/hash.h"
+#include "access/htup_details.h"
 #include "access/nbtree.h"
 #include "access/reloptions.h"
 #include "access/spgist.h"

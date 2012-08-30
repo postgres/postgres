@@ -33,6 +33,7 @@
 #include "access/reloptions.h"
 #include "access/sysattr.h"
 #include "access/transam.h"
+#include "access/htup_details.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/index.h"

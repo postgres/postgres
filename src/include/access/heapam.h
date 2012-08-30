@@ -17,6 +17,7 @@
 #include "access/sdir.h"
 #include "access/skey.h"
 #include "nodes/primnodes.h"
+#include "storage/bufpage.h"
 #include "storage/lock.h"
 #include "utils/relcache.h"
 #include "utils/snapshot.h"

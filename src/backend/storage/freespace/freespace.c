@@ -23,7 +23,7 @@
  */
 #include "postgres.h"
 
-#include "access/htup.h"
+#include "access/htup_details.h"
 #include "access/xlogutils.h"
 #include "miscadmin.h"
 #include "storage/freespace.h"

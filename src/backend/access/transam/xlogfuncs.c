@@ -16,6 +16,7 @@
  */
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
 #include "access/xlogutils.h"

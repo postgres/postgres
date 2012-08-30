@@ -28,6 +28,7 @@
  */
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"

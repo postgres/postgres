@@ -20,6 +20,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include "access/htup_details.h"
 #include "access/xact.h"
 #include "catalog/pg_proc.h"
 #include "libpq/libpq.h"

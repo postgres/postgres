@@ -30,8 +30,9 @@
 
 #include "postgres.h"
 
-#include "access/xact.h"
+#include "access/htup_details.h"
 #include "access/sysattr.h"
+#include "access/xact.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_operator.h"

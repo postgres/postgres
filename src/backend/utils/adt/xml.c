@@ -67,6 +67,7 @@
 #endif
 #endif   /* USE_LIBXML */
 
+#include "access/htup_details.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"

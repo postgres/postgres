@@ -15,6 +15,7 @@
 
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "executor/executor.h"
 #include "executor/hashjoin.h"
 #include "executor/nodeHash.h"

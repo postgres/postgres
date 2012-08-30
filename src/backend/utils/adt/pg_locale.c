@@ -54,6 +54,7 @@
 #include <locale.h>
 #include <time.h>
 
+#include "access/htup_details.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_control.h"
 #include "mb/pg_wchar.h"

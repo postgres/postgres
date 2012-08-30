@@ -13,6 +13,7 @@
  */
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "commands/trigger.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"

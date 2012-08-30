@@ -16,7 +16,7 @@
 
 #include "postgres.h"
 
-#include "access/htup.h"
+#include "access/htup_details.h"
 #include "libpq/pqformat.h"
 #include "nodes/nodeFuncs.h"
 #include "utils/array.h"

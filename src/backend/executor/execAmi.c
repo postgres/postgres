@@ -12,6 +12,7 @@
  */
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "executor/execdebug.h"
 #include "executor/nodeAgg.h"
 #include "executor/nodeAppend.h"

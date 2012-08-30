@@ -16,6 +16,7 @@
 
 #include "access/htup.h"
 #include "access/xlog.h"
+#include "storage/bufpage.h"
 #include "storage/relfilenode.h"
 #include "utils/relcache.h"
 

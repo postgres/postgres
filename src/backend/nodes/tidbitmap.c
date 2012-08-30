@@ -40,7 +40,7 @@
 
 #include <limits.h>
 
-#include "access/htup.h"
+#include "access/htup_details.h"
 #include "nodes/bitmapset.h"
 #include "nodes/tidbitmap.h"
 #include "utils/hsearch.h"

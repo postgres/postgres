@@ -18,6 +18,7 @@
 #define CONST84
 #endif
 
+#include "access/htup_details.h"
 #include "access/xact.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"

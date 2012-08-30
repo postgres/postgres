@@ -13,7 +13,9 @@
 #ifndef LSYSCACHE_H
 #define LSYSCACHE_H
 
+#include "access/attnum.h"
 #include "access/htup.h"
+#include "nodes/pg_list.h"
 
 /* Result list element for get_op_btree_interpretation */
 typedef struct OpBtreeInterpretation

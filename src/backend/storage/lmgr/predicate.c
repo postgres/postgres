@@ -183,6 +183,7 @@
 
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "access/slru.h"
 #include "access/subtrans.h"
 #include "access/transam.h"

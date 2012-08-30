@@ -24,6 +24,7 @@
 #include <math.h>
 #include <limits.h>
 
+#include "access/htup_details.h"
 #include "catalog/pg_statistic.h"
 #include "commands/tablespace.h"
 #include "executor/execdebug.h"

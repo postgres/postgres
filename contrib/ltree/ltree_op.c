@@ -7,6 +7,7 @@
 
 #include <ctype.h>
 
+#include "access/htup_details.h"
 #include "catalog/pg_statistic.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"

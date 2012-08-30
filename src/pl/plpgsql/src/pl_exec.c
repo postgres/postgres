@@ -17,6 +17,7 @@
 
 #include <ctype.h>
 
+#include "access/htup_details.h"
 #include "access/transam.h"
 #include "access/tupconvert.h"
 #include "catalog/pg_proc.h"

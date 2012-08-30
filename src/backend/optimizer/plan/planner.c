@@ -17,6 +17,7 @@
 
 #include <limits.h>
 
+#include "access/htup_details.h"
 #include "executor/executor.h"
 #include "executor/nodeAgg.h"
 #include "miscadmin.h"

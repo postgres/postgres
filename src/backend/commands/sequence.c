@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "access/transam.h"
+#include "access/htup_details.h"
 #include "access/xlogutils.h"
 #include "catalog/dependency.h"
 #include "catalog/namespace.h"

@@ -101,6 +101,7 @@
 #include <math.h>
 
 #include "access/gin.h"
+#include "access/htup_details.h"
 #include "access/sysattr.h"
 #include "catalog/index.h"
 #include "catalog/pg_collation.h"

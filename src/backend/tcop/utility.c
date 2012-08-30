@@ -16,6 +16,7 @@
  */
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "access/reloptions.h"
 #include "access/twophase.h"
 #include "access/xact.h"

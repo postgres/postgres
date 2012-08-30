@@ -6,6 +6,7 @@
 #define PLPY_TYPEIO_H
 
 #include "access/htup.h"
+#include "access/tupdesc.h"
 #include "fmgr.h"
 #include "storage/itemptr.h"
 

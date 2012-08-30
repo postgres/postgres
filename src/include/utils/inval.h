@@ -15,6 +15,7 @@
 #define INVAL_H
 
 #include "access/htup.h"
+#include "storage/relfilenode.h"
 #include "utils/relcache.h"
 
 

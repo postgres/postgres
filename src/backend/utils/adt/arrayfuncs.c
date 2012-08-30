@@ -16,6 +16,7 @@
 
 #include <ctype.h>
 
+#include "access/htup_details.h"
 #include "funcapi.h"
 #include "libpq/pqformat.h"
 #include "utils/array.h"

@@ -29,6 +29,7 @@
 #include <utime.h>
 #endif
 
+#include "access/htup_details.h"
 #include "catalog/pg_authid.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"

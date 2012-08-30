@@ -100,6 +100,7 @@
 
 #include <limits.h>
 
+#include "access/htup_details.h"
 #include "access/nbtree.h"
 #include "catalog/index.h"
 #include "commands/tablespace.h"

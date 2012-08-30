@@ -36,6 +36,7 @@
 
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "access/nbtree.h"
 #include "access/tupconvert.h"
 #include "catalog/pg_type.h"

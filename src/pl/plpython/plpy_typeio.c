@@ -6,6 +6,7 @@
 
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "access/transam.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"

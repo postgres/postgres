@@ -35,12 +35,14 @@
 #include <limits.h>
 
 #include "libpq-fe.h"
-#include "funcapi.h"
+
+#include "access/htup_details.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "executor/spi.h"
 #include "foreign/foreign.h"
+#include "funcapi.h"
 #include "lib/stringinfo.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"

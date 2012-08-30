@@ -37,6 +37,7 @@
 
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "access/xact.h"
 #include "commands/trigger.h"
 #include "executor/executor.h"
