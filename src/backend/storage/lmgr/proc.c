@@ -1093,7 +1093,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 				initStringInfo(&logbuf);
 				DescribeLockTag(&locktagbuf, &lock->tag);
 				appendStringInfo(&logbuf,
-					  _("Process %d waits for %s on %s"),
+					  _("Process %d waits for %s on %s."),
 						 MyProcPid,
 						 GetLockmodeName(lock->tag.locktag_lockmethodid,
 										 lockmode),
