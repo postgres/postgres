@@ -234,8 +234,7 @@ su - postgres
      </para>
 
      <para>
-      If you have problems, run <productname>Python</> 2.3 or later's
-      configure using the <literal>--enable-shared</> flag.  On some
+      On some
       operating systems you don't have to build a shared library, but
       you will have to convince the <productname>PostgreSQL</> build
       system of this.  Consult the <filename>Makefile</filename> in
