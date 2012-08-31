@@ -1206,17 +1206,17 @@ char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen,
 		else
 		{
 #ifdef HAVE_LOCALE_T
-#ifdef HAVE_WCSTOMBS_L
+#ifdef HAVE_MBSTOWCS_L
 			/* Use mbstowcs_l for nondefault locales */
 			result = mbstowcs_l(to, str, tolen, locale);
-#else							/* !HAVE_WCSTOMBS_L */
+#else							/* !HAVE_MBSTOWCS_L */
 			/* We have to temporarily set the locale as current ... ugh */
 			locale_t	save_locale = uselocale(locale);
 
 			result = mbstowcs(to, str, tolen);
 
 			uselocale(save_locale);
-#endif   /* HAVE_WCSTOMBS_L */
+#endif   /* HAVE_MBSTOWCS_L */
 #else							/* !HAVE_LOCALE_T */
 			/* Can't have locale != 0 without HAVE_LOCALE_T */
 			elog(ERROR, "mbstowcs_l is not available");
