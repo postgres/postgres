@@ -36,7 +36,7 @@ Disconnect.
 
 This API should be considered internal at the moment, but we could open it
 up for 3rd party replacements of libpqwalreceiver in the future, allowing
-pluggable methods for receiveing WAL.
+pluggable methods for receiving WAL.
 
 Walreceiver IPC
 ---------------
@@ -55,7 +55,7 @@ it to disk (in pg_xlog), it updates WalRcvData->receivedUpto and signals
 the startup process to know how far WAL replay can advance.
 
 Walreceiver sends information about replication progress to the master server
-whenever either it writes or flushes new WAL, or the specified interval elapses.
+whenever it either writes or flushes new WAL, or the specified interval elapses.
 This is used for reporting purpose.
 
 Walsender IPC
@@ -83,7 +83,7 @@ backends.
 
 Note that no big harm is done if postmaster thinks that a walsender is a
 regular backend; it will just terminate the walsender earlier in the shutdown
-phase. A walsenders will look like a regular backends until it's done with the
+phase. A walsender will look like a regular backend until it's done with the
 initialization and has marked itself in PMSignal array, and at process
 termination, after unmarking the PMSignal slot.
 
