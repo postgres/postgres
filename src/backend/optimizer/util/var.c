@@ -600,7 +600,9 @@ pull_var_clause_walker(Node *node, pull_var_clause_context *context)
  * hasSubLinks = TRUE, so this is only relevant to un-flattened subqueries.
  *
  * NOTE: this is used on not-yet-planned expressions.  We do not expect it
- * to be applied directly to a Query node.
+ * to be applied directly to the whole Query, so if we see a Query to start
+ * with, we do want to increment sublevels_up (this occurs for LATERAL
+ * subqueries).
  */
 Node *
 flatten_join_alias_vars(PlannerInfo *root, Node *node)

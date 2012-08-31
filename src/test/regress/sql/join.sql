@@ -901,6 +901,14 @@ select * from int8_tbl a,
   int8_tbl x left join lateral (select a.q1 from int4_tbl y) ss(z)
     on x.q2 = ss.z;
 
+-- lateral reference to a join alias variable
+select * from (select f1/2 as x from int4_tbl) ss1 join int4_tbl i4 on x = f1,
+  lateral (select x) ss2(y);
+select * from (select f1 as x from int4_tbl) ss1 join int4_tbl i4 on x = f1,
+  lateral (values(x)) ss2(y);
+select * from ((select f1/2 as x from int4_tbl) ss1 join int4_tbl i4 on x = f1) j,
+  lateral (select x) ss2(y);
+
 -- lateral references requiring pullup
 select * from (values(1)) x(lb),
   lateral generate_series(lb,4) x4;

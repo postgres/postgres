@@ -49,13 +49,15 @@ planner_hook_type planner_hook = NULL;
 
 
 /* Expression kind codes for preprocess_expression */
-#define EXPRKIND_QUAL		0
-#define EXPRKIND_TARGET		1
-#define EXPRKIND_RTFUNC		2
-#define EXPRKIND_VALUES		3
-#define EXPRKIND_LIMIT		4
-#define EXPRKIND_APPINFO	5
-#define EXPRKIND_PHV		6
+#define EXPRKIND_QUAL			0
+#define EXPRKIND_TARGET			1
+#define EXPRKIND_RTFUNC			2
+#define EXPRKIND_RTFUNC_LATERAL	3
+#define EXPRKIND_VALUES			4
+#define EXPRKIND_VALUES_LATERAL	5
+#define EXPRKIND_LIMIT			6
+#define EXPRKIND_APPINFO		7
+#define EXPRKIND_PHV			8
 
 
 static Node *preprocess_expression(PlannerInfo *root, Node *expr, int kind);
@@ -438,18 +440,38 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 		preprocess_expression(root, (Node *) root->append_rel_list,
 							  EXPRKIND_APPINFO);
 
-	/* Also need to preprocess expressions for function and values RTEs */
+	/* Also need to preprocess expressions within RTEs */
 	foreach(l, parse->rtable)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
+		int			kind;
 
-		if (rte->rtekind == RTE_FUNCTION)
-			rte->funcexpr = preprocess_expression(root, rte->funcexpr,
-												  EXPRKIND_RTFUNC);
+		if (rte->rtekind == RTE_SUBQUERY)
+		{
+			/*
+			 * We don't want to do all preprocessing yet on the subquery's
+			 * expressions, since that will happen when we plan it.  But if it
+			 * contains any join aliases of our level, those have to get
+			 * expanded now, because planning of the subquery won't do it.
+			 * That's only possible if the subquery is LATERAL.
+			 */
+			if (rte->lateral && root->hasJoinRTEs)
+				rte->subquery = (Query *)
+					flatten_join_alias_vars(root, (Node *) rte->subquery);
+		}
+		else if (rte->rtekind == RTE_FUNCTION)
+		{
+			/* Preprocess the function expression fully */
+			kind = rte->lateral ? EXPRKIND_RTFUNC_LATERAL : EXPRKIND_RTFUNC;
+			rte->funcexpr = preprocess_expression(root, rte->funcexpr, kind);
+		}
 		else if (rte->rtekind == RTE_VALUES)
+		{
+			/* Preprocess the values lists fully */
+			kind = rte->lateral ? EXPRKIND_VALUES_LATERAL : EXPRKIND_VALUES;
 			rte->values_lists = (List *)
-				preprocess_expression(root, (Node *) rte->values_lists,
-									  EXPRKIND_VALUES);
+				preprocess_expression(root, (Node *) rte->values_lists, kind);
+		}
 	}
 
 	/*
@@ -593,12 +615,13 @@ preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 
 	/*
 	 * If the query has any join RTEs, replace join alias variables with
-	 * base-relation variables. We must do this before sublink processing,
-	 * else sublinks expanded out from join aliases wouldn't get processed. We
-	 * can skip it in VALUES lists, however, since they can't contain any Vars
-	 * at all.
+	 * base-relation variables.  We must do this before sublink processing,
+	 * else sublinks expanded out from join aliases would not get processed.
+	 * We can skip it in non-lateral RTE functions and VALUES lists, however,
+	 * since they can't contain any Vars of the current query level.
 	 */
-	if (root->hasJoinRTEs && kind != EXPRKIND_VALUES)
+	if (root->hasJoinRTEs &&
+		!(kind == EXPRKIND_RTFUNC || kind == EXPRKIND_VALUES))
 		expr = flatten_join_alias_vars(root, expr);
 
 	/*
