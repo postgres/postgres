@@ -12,6 +12,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;;; Mode for C files to match src/tools/pgindent/pgindent formatting
+
 ;;; This set is known to work with old versions of emacs
 
 (setq auto-mode-alist
@@ -77,6 +79,26 @@
 		   (setq indent-tabs-mode t)
 		   )
 	       ))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; Mode for Perl files to match src/tools/pgindent/perltidyrc formatting
+
+(defun pgsql-perl-style ()
+  "Perl style adjusted for PostgreSQL project"
+  (interactive)
+  (setq tab-width 4)
+  (setq perl-indent-level 4)
+  (setq perl-continued-statement-offset 4)
+  (setq perl-continued-brace-offset 4)
+  (setq perl-brace-offset 0)
+  (setq perl-brace-imaginary-offset 0)
+  (setq perl-label-offset -2))
+
+(add-hook 'perl-mode-hook
+           (lambda ()
+             (if (string-match "postgresql" buffer-file-name)
+                 (pgsql-perl-style))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
