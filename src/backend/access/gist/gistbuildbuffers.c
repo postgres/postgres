@@ -625,18 +625,17 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 	}
 
 	/*
-	 * Loop through all index tuples on the buffer on the page being split,
-	 * moving them to buffers on the new pages.  We try to move each tuple
+	 * Loop through all index tuples in the buffer of the page being split,
+	 * moving them to buffers for the new pages.  We try to move each tuple to
 	 * the page that will result in the lowest penalty for the leading column
 	 * or, in the case of a tie, the lowest penalty for the earliest column
 	 * that is not tied.
 	 *
-	 * The guts of this loop are very similar to gistchoose().
+	 * The page searching logic is very similar to gistchoose().
 	 */
 	while (gistPopItupFromNodeBuffer(gfbb, &oldBuf, &itup))
 	{
-		float		sum_grow,
-					which_grow[INDEX_MAX_KEYS];
+		float		best_penalty[INDEX_MAX_KEYS];
 		int			i,
 					which;
 		IndexTuple	newtup;
@@ -645,71 +644,88 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 		gistDeCompressAtt(giststate, r,
 						  itup, NULL, (OffsetNumber) 0, entry, isnull);
 
-		which = -1;
-		*which_grow = -1.0f;
+		/* default to using first page (shouldn't matter) */
+		which = 0;
 
 		/*
-		 * Loop over possible target pages.  We'll exit early if we find an index key that
-		 * can accommodate the new key with no penalty on any column.  sum_grow is used to
-		 * track this condition.  It doesn't need to be exactly accurate, just >0 whenever
-		 * we want the loop to continue and equal to 0 when we want it to terminate.
+		 * best_penalty[j] is the best penalty we have seen so far for column
+		 * j, or -1 when we haven't yet examined column j.  Array entries to
+		 * the right of the first -1 are undefined.
 		 */
-		sum_grow = 1.0f;
+		best_penalty[0] = -1;
 
-		for (i = 0; i < splitPagesCount && sum_grow; i++)
+		/*
+		 * Loop over possible target pages, looking for one to move this tuple
+		 * to.
+		 */
+		for (i = 0; i < splitPagesCount; i++)
 		{
-			int			j;
 			RelocationBufferInfo *splitPageInfo = &relocationBuffersInfos[i];
+			bool		zero_penalty;
+			int			j;
 
-			sum_grow = 0.0f;
+			zero_penalty = true;
 
 			/* Loop over index attributes. */
 			for (j = 0; j < r->rd_att->natts; j++)
 			{
 				float		usize;
 
+				/* Compute penalty for this column. */
 				usize = gistpenalty(giststate, j,
 									&splitPageInfo->entry[j],
 									splitPageInfo->isnull[j],
 									&entry[j], isnull[j]);
+				if (usize > 0)
+					zero_penalty = false;
 
-				if (which_grow[j] < 0 || usize < which_grow[j])
+				if (best_penalty[j] < 0 || usize < best_penalty[j])
 				{
 					/*
-					 * We get here in two cases.  First, we may have just discovered that the
-					 * current tuple is the best one we've seen so far; that is, for the first
-					 * column for which the penalty is not equal to the best tuple seen so far,
-					 * this one has a lower penalty than the previously-seen one.  But, when
-					 * a new best tuple is found, we must record the best penalty value for
-					 * all the remaining columns.  We'll end up here for each remaining index
-					 * column in that case, too.
+					 * New best penalty for column.  Tentatively select this
+					 * page as the target, and record the best penalty.  Then
+					 * reset the next column's penalty to "unknown" (and
+					 * indirectly, the same for all the ones to its right).
+					 * This will force us to adopt this page's penalty values
+					 * as the best for all the remaining columns during
+					 * subsequent loop iterations.
 					 */
 					which = i;
-					which_grow[j] = usize;
+					best_penalty[j] = usize;
+
 					if (j < r->rd_att->natts - 1)
-						which_grow[j + 1] = -1;
-					sum_grow += which_grow[j];
+						best_penalty[j + 1] = -1;
 				}
-				else if (which_grow[j] == usize)
+				else if (best_penalty[j] == usize)
 				{
 					/*
-					 * The current tuple is exactly as good for this column as the best tuple
-					 * seen so far.  The next iteration of this loop will compare the next
-					 * column.
+					 * The current page is exactly as good for this column as
+					 * the best page seen so far.  The next iteration of this
+					 * loop will compare the next column.
 					 */
-					sum_grow += usize;
 				}
 				else
 				{
 					/*
-					 * The current tuple is worse for this column than the best tuple seen so
-					 * far.  Skip the remaining columns and move on to the next tuple, if any.
+					 * The current page is worse for this column than the best
+					 * page seen so far.  Skip the remaining columns and move
+					 * on to the next page, if any.
 					 */
-					sum_grow = 1;
+					zero_penalty = false;		/* so outer loop won't exit */
 					break;
 				}
 			}
+
+			/*
+			 * If we find a page with zero penalty for all columns, there's no
+			 * need to examine remaining pages; just break out of the loop and
+			 * return it.
+			 */
+			if (zero_penalty)
+				break;
 		}
+
+		/* OK, "which" is the page index to push the tuple to */
 		targetBufferInfo = &relocationBuffersInfos[which];
 
 		/* Push item to selected node buffer */

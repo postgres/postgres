@@ -363,113 +363,120 @@ gistgetadjusted(Relation r, IndexTuple oldtup, IndexTuple addtup, GISTSTATE *gis
 }
 
 /*
- * Search a page for the entry with lowest penalty.
+ * Search an upper index page for the entry with lowest penalty for insertion
+ * of the new index key contained in "it".
  *
- * The index may have multiple columns, and there's a penalty value for each column.
- * The penalty associated with a column which appears earlier in the index definition is
- * strictly more important than the penalty of column which appears later in the index
- * definition.
+ * Returns the index of the page entry to insert into.
  */
 OffsetNumber
 gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 		   GISTSTATE *giststate)
 {
+	OffsetNumber result;
 	OffsetNumber maxoff;
 	OffsetNumber i;
-	OffsetNumber which;
-	float		sum_grow,
-				which_grow[INDEX_MAX_KEYS];
+	float		best_penalty[INDEX_MAX_KEYS];
 	GISTENTRY	entry,
 				identry[INDEX_MAX_KEYS];
 	bool		isnull[INDEX_MAX_KEYS];
 
-	maxoff = PageGetMaxOffsetNumber(p);
-	*which_grow = -1.0;
-	which = InvalidOffsetNumber;
-	sum_grow = 1;
+	Assert(!GistPageIsLeaf(p));
+
 	gistDeCompressAtt(giststate, r,
 					  it, NULL, (OffsetNumber) 0,
 					  identry, isnull);
 
-	Assert(maxoff >= FirstOffsetNumber);
-	Assert(!GistPageIsLeaf(p));
+	/* we'll return FirstOffsetNumber if page is empty (shouldn't happen) */
+	result = FirstOffsetNumber;
+
+	/*
+	 * The index may have multiple columns, and there's a penalty value for
+	 * each column.  The penalty associated with a column that appears earlier
+	 * in the index definition is strictly more important than the penalty of
+	 * a column that appears later in the index definition.
+	 *
+	 * best_penalty[j] is the best penalty we have seen so far for column j,
+	 * or -1 when we haven't yet examined column j.  Array entries to the
+	 * right of the first -1 are undefined.
+	 */
+	best_penalty[0] = -1;
 
 	/*
 	 * Loop over tuples on page.
-	 *
-	 * We'll exit early if we find an index key that can accommodate the new key with no
-	 * penalty on any column.  sum_grow is used to track this condition.  Normally, it is the
-	 * sum of the penalties we've seen for this column so far, which is not a very useful
-	 * quantity in general because the penalties for each column are only considered
-	 * independently, but all we really care about is whether or not it's greater than zero.
-	 * Since penalties can't be negative, the sum of the penalties will be greater than
-	 * zero if and only if at least one penalty was greater than zero.  To make things just
-	 * a bit more complicated, we arbitrarily set sum_grow to 1.0 whenever we want to force
-	 * the at least one more iteration of this outer loop.  Any non-zero value would serve
-	 * just as well.
 	 */
-	for (i = FirstOffsetNumber; i <= maxoff && sum_grow; i = OffsetNumberNext(i))
+	maxoff = PageGetMaxOffsetNumber(p);
+	Assert(maxoff >= FirstOffsetNumber);
+
+	for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
 	{
-		int			j;
 		IndexTuple	itup = (IndexTuple) PageGetItem(p, PageGetItemId(p, i));
+		bool		zero_penalty;
+		int			j;
 
-		sum_grow = 0;
+		zero_penalty = true;
 
-		/* Loop over indexed attribtues. */
+		/* Loop over index attributes. */
 		for (j = 0; j < r->rd_att->natts; j++)
 		{
 			Datum		datum;
 			float		usize;
 			bool		IsNull;
 
+			/* Compute penalty for this column. */
 			datum = index_getattr(itup, j + 1, giststate->tupdesc, &IsNull);
 			gistdentryinit(giststate, j, &entry, datum, r, p, i,
 						   FALSE, IsNull);
 			usize = gistpenalty(giststate, j, &entry, IsNull,
 								&identry[j], isnull[j]);
+			if (usize > 0)
+				zero_penalty = false;
 
-			if (which_grow[j] < 0 || usize < which_grow[j])
+			if (best_penalty[j] < 0 || usize < best_penalty[j])
 			{
 				/*
-				 * We get here in two cases.  First, we may have just discovered that the
-				 * current tuple is the best one we've seen so far; that is, for the first
-				 * column for which the penalty is not equal to the best tuple seen so far,
-				 * this one has a lower penalty than the previously-seen one.  But, when
-				 * a new best tuple is found, we must record the best penalty value for
-				 * all the remaining columns.  We'll end up here for each remaining index
-				 * column in that case, too.
+				 * New best penalty for column.  Tentatively select this tuple
+				 * as the target, and record the best penalty.	Then reset the
+				 * next column's penalty to "unknown" (and indirectly, the
+				 * same for all the ones to its right).  This will force us to
+				 * adopt this tuple's penalty values as the best for all the
+				 * remaining columns during subsequent loop iterations.
 				 */
-				which = i;
-				which_grow[j] = usize;
+				result = i;
+				best_penalty[j] = usize;
+
 				if (j < r->rd_att->natts - 1)
-					which_grow[j + 1] = -1;
-				sum_grow += which_grow[j];
+					best_penalty[j + 1] = -1;
 			}
-			else if (which_grow[j] == usize)
+			else if (best_penalty[j] == usize)
 			{
 				/*
-				 * The current tuple is exactly as good for this column as the best tuple
-				 * seen so far.  The next iteration of this loop will compare the next
-				 * column.
+				 * The current tuple is exactly as good for this column as the
+				 * best tuple seen so far.	The next iteration of this loop
+				 * will compare the next column.
 				 */
-				sum_grow += usize;
 			}
 			else
 			{
 				/*
-				 * The current tuple is worse for this column than the best tuple seen so
-				 * far.  Skip the remaining columns and move on to the next tuple, if any.
+				 * The current tuple is worse for this column than the best
+				 * tuple seen so far.  Skip the remaining columns and move on
+				 * to the next tuple, if any.
 				 */
-				sum_grow = 1;
+				zero_penalty = false;	/* so outer loop won't exit */
 				break;
 			}
 		}
+
+		/*
+		 * If we find a tuple with zero penalty for all columns, there's no
+		 * need to examine remaining tuples; just break out of the loop and
+		 * return it.
+		 */
+		if (zero_penalty)
+			break;
 	}
 
-	if (which == InvalidOffsetNumber)
-		which = FirstOffsetNumber;
-
-	return which;
+	return result;
 }
 
 /*
