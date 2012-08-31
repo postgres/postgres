@@ -625,60 +625,107 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 	}
 
 	/*
-	 * Loop through all index tuples on the buffer on the splitted page,
-	 * moving them to buffers on the new pages.
+	 * Loop through all index tuples in the buffer of the page being split,
+	 * moving them to buffers for the new pages.  We try to move each tuple to
+	 * the page that will result in the lowest penalty for the leading column
+	 * or, in the case of a tie, the lowest penalty for the earliest column
+	 * that is not tied.
+	 *
+	 * The page searching logic is very similar to gistchoose().
 	 */
 	while (gistPopItupFromNodeBuffer(gfbb, &oldBuf, &itup))
 	{
-		float		sum_grow,
-					which_grow[INDEX_MAX_KEYS];
+		float		best_penalty[INDEX_MAX_KEYS];
 		int			i,
 					which;
 		IndexTuple	newtup;
 		RelocationBufferInfo *targetBufferInfo;
 
-		/*
-		 * Choose which page this tuple should go to.
-		 */
 		gistDeCompressAtt(giststate, r,
 						  itup, NULL, (OffsetNumber) 0, entry, isnull);
 
-		which = -1;
-		*which_grow = -1.0f;
-		sum_grow = 1.0f;
+		/* default to using first page (shouldn't matter) */
+		which = 0;
 
-		for (i = 0; i < splitPagesCount && sum_grow; i++)
+		/*
+		 * best_penalty[j] is the best penalty we have seen so far for column
+		 * j, or -1 when we haven't yet examined column j.  Array entries to
+		 * the right of the first -1 are undefined.
+		 */
+		best_penalty[0] = -1;
+
+		/*
+		 * Loop over possible target pages, looking for one to move this tuple
+		 * to.
+		 */
+		for (i = 0; i < splitPagesCount; i++)
 		{
-			int			j;
 			RelocationBufferInfo *splitPageInfo = &relocationBuffersInfos[i];
+			bool		zero_penalty;
+			int			j;
 
-			sum_grow = 0.0f;
+			zero_penalty = true;
+
+			/* Loop over index attributes. */
 			for (j = 0; j < r->rd_att->natts; j++)
 			{
 				float		usize;
 
+				/* Compute penalty for this column. */
 				usize = gistpenalty(giststate, j,
 									&splitPageInfo->entry[j],
 									splitPageInfo->isnull[j],
 									&entry[j], isnull[j]);
+				if (usize > 0)
+					zero_penalty = false;
 
-				if (which_grow[j] < 0 || usize < which_grow[j])
+				if (best_penalty[j] < 0 || usize < best_penalty[j])
 				{
+					/*
+					 * New best penalty for column.  Tentatively select this
+					 * page as the target, and record the best penalty.  Then
+					 * reset the next column's penalty to "unknown" (and
+					 * indirectly, the same for all the ones to its right).
+					 * This will force us to adopt this page's penalty values
+					 * as the best for all the remaining columns during
+					 * subsequent loop iterations.
+					 */
 					which = i;
-					which_grow[j] = usize;
-					if (j < r->rd_att->natts - 1 && i == 0)
-						which_grow[j + 1] = -1;
-					sum_grow += which_grow[j];
+					best_penalty[j] = usize;
+
+					if (j < r->rd_att->natts - 1)
+						best_penalty[j + 1] = -1;
 				}
-				else if (which_grow[j] == usize)
-					sum_grow += usize;
+				else if (best_penalty[j] == usize)
+				{
+					/*
+					 * The current page is exactly as good for this column as
+					 * the best page seen so far.  The next iteration of this
+					 * loop will compare the next column.
+					 */
+				}
 				else
 				{
-					sum_grow = 1;
+					/*
+					 * The current page is worse for this column than the best
+					 * page seen so far.  Skip the remaining columns and move
+					 * on to the next page, if any.
+					 */
+					zero_penalty = false;		/* so outer loop won't exit */
 					break;
 				}
 			}
+
+			/*
+			 * If we find a page with zero penalty for all columns, there's no
+			 * need to examine remaining pages; just break out of the loop and
+			 * return it.
+			 */
+			if (zero_penalty)
+				break;
 		}
+
+		/* OK, "which" is the page index to push the tuple to */
 		targetBufferInfo = &relocationBuffersInfos[which];
 
 		/* Push item to selected node buffer */
