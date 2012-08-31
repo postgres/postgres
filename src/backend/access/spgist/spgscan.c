@@ -21,6 +21,7 @@
 #include "storage/bufmgr.h"
 #include "utils/datum.h"
 #include "utils/memutils.h"
+#include "utils/rel.h"
 
 
 typedef void (*storeRes_func) (SpGistScanOpaque so, ItemPointer heapPtr,

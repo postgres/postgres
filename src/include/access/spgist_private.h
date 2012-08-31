@@ -17,7 +17,8 @@
 #include "access/itup.h"
 #include "access/spgist.h"
 #include "nodes/tidbitmap.h"
-#include "utils/rel.h"
+#include "storage/relfilenode.h"
+#include "utils/relcache.h"
 
 
 /* Page numbers of fixed-location pages */

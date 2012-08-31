@@ -24,6 +24,7 @@
 #include "storage/bufmgr.h"
 #include "storage/smgr.h"
 #include "utils/memutils.h"
+#include "utils/rel.h"
 
 
 typedef struct
