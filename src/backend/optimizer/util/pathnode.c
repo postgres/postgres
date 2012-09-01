@@ -139,6 +139,9 @@ compare_fractional_path_costs(Path *path1, Path *path2,
  * total cost, we just say that their costs are "different", since neither
  * dominates the other across the whole performance spectrum.
  *
+ * If consider_startup is false, then we don't care about keeping paths with
+ * good startup cost, so we'll never return COSTS_DIFFERENT.
+ *
  * This function also includes special hacks to support a policy enforced
  * by its sole caller, add_path(): paths that have any parameterization
  * cannot win comparisons on the grounds of having cheaper startup cost,
@@ -146,7 +149,8 @@ compare_fractional_path_costs(Path *path1, Path *path2,
  * (Unparameterized paths are more common, so we check for this case last.)
  */
 static PathCostComparison
-compare_path_costs_fuzzily(Path *path1, Path *path2, double fuzz_factor)
+compare_path_costs_fuzzily(Path *path1, Path *path2, double fuzz_factor,
+						   bool consider_startup)
 {
 	/*
 	 * Check total cost first since it's more likely to be different; many
@@ -155,7 +159,8 @@ compare_path_costs_fuzzily(Path *path1, Path *path2, double fuzz_factor)
 	if (path1->total_cost > path2->total_cost * fuzz_factor)
 	{
 		/* path1 fuzzily worse on total cost */
-		if (path2->startup_cost > path1->startup_cost * fuzz_factor &&
+		if (consider_startup &&
+			path2->startup_cost > path1->startup_cost * fuzz_factor &&
 			path1->param_info == NULL)
 		{
 			/* ... but path2 fuzzily worse on startup, so DIFFERENT */
@@ -167,7 +172,8 @@ compare_path_costs_fuzzily(Path *path1, Path *path2, double fuzz_factor)
 	if (path2->total_cost > path1->total_cost * fuzz_factor)
 	{
 		/* path2 fuzzily worse on total cost */
-		if (path1->startup_cost > path2->startup_cost * fuzz_factor &&
+		if (consider_startup &&
+			path1->startup_cost > path2->startup_cost * fuzz_factor &&
 			path2->param_info == NULL)
 		{
 			/* ... but path1 fuzzily worse on startup, so DIFFERENT */
@@ -177,6 +183,7 @@ compare_path_costs_fuzzily(Path *path1, Path *path2, double fuzz_factor)
 		return COSTS_BETTER1;
 	}
 	/* fuzzily the same on total cost */
+	/* (so we may as well compare startup cost, even if !consider_startup) */
 	if (path1->startup_cost > path2->startup_cost * fuzz_factor &&
 		path2->param_info == NULL)
 	{
@@ -360,6 +367,9 @@ set_cheapest(RelOptInfo *parent_rel)
  *	  reduce the number of parameterized paths that are kept.  See discussion
  *	  in src/backend/optimizer/README.
  *
+ *	  Another policy that is enforced here is that we only consider cheap
+ *	  startup cost to be interesting if parent_rel->consider_startup is true.
+ *
  *	  The pathlist is kept sorted by total_cost, with cheaper paths
  *	  at the front.  Within this routine, that's simply a speed hack:
  *	  doing it that way makes it more likely that we will reject an inferior
@@ -423,7 +433,8 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 		 * Do a fuzzy cost comparison with 1% fuzziness limit.	(XXX does this
 		 * percentage need to be user-configurable?)
 		 */
-		costcmp = compare_path_costs_fuzzily(new_path, old_path, 1.01);
+		costcmp = compare_path_costs_fuzzily(new_path, old_path, 1.01,
+											 parent_rel->consider_startup);
 
 		/*
 		 * If the two paths compare differently for startup and total cost,
@@ -488,8 +499,10 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 									remove_old = true;	/* new dominates old */
 								else if (new_path->rows > old_path->rows)
 									accept_new = false; /* old dominates new */
-								else if (compare_path_costs_fuzzily(new_path, old_path,
-											  1.0000000001) == COSTS_BETTER1)
+								else if (compare_path_costs_fuzzily(new_path,
+																	old_path,
+																	1.0000000001,
+																	parent_rel->consider_startup) == COSTS_BETTER1)
 									remove_old = true;	/* new dominates old */
 								else
 									accept_new = false; /* old equals or
