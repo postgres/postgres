@@ -199,10 +199,13 @@ add_vars_to_targetlist(PlannerInfo *root, List *vars,
 			/*
 			 * If we are creating PlaceHolderInfos, mark them with the correct
 			 * maybe-needed locations.	Otherwise, it's too late to change
-			 * that.
+			 * that, so we'd better not have set ph_needed to more than
+			 * ph_may_need.
 			 */
 			if (create_new_ph)
 				mark_placeholder_maybe_needed(root, phinfo, where_needed);
+			else
+				Assert(bms_is_subset(phinfo->ph_needed, phinfo->ph_may_need));
 		}
 		else
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));

@@ -3465,6 +3465,46 @@ select v.* from
  -4567890123456789 |                  
 (20 rows)
 
+-- case requiring nested PlaceHolderVars
+explain (verbose, costs off)
+select * from
+  int8_tbl c left join (
+    int8_tbl a left join (select q1, coalesce(q2,42) as x from int8_tbl b) ss1
+      on a.q2 = ss1.q1
+    cross join
+    lateral (select q1, coalesce(ss1.x,q2) as y from int8_tbl d) ss2
+  ) on c.q2 = ss2.q1,
+  lateral (select ss2.y) ss3;
+                                                                                  QUERY PLAN                                                                                  
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Nested Loop
+   Output: c.q1, c.q2, a.q1, a.q2, b.q1, (COALESCE(b.q2, 42::bigint)), d.q1, (COALESCE((COALESCE(b.q2, 42::bigint)), d.q2)), ((COALESCE((COALESCE(b.q2, 42::bigint)), d.q2)))
+   ->  Hash Right Join
+         Output: c.q1, c.q2, a.q1, a.q2, b.q1, d.q1, (COALESCE(b.q2, 42::bigint)), (COALESCE((COALESCE(b.q2, 42::bigint)), d.q2))
+         Hash Cond: (d.q1 = c.q2)
+         ->  Nested Loop
+               Output: a.q1, a.q2, b.q1, d.q1, (COALESCE(b.q2, 42::bigint)), COALESCE((COALESCE(b.q2, 42::bigint)), d.q2)
+               ->  Hash Left Join
+                     Output: a.q1, a.q2, b.q1, (COALESCE(b.q2, 42::bigint))
+                     Hash Cond: (a.q2 = b.q1)
+                     ->  Seq Scan on public.int8_tbl a
+                           Output: a.q1, a.q2
+                     ->  Hash
+                           Output: b.q1, (COALESCE(b.q2, 42::bigint))
+                           ->  Seq Scan on public.int8_tbl b
+                                 Output: b.q1, COALESCE(b.q2, 42::bigint)
+               ->  Materialize
+                     Output: d.q1, d.q2
+                     ->  Seq Scan on public.int8_tbl d
+                           Output: d.q1, d.q2
+         ->  Hash
+               Output: c.q1, c.q2
+               ->  Seq Scan on public.int8_tbl c
+                     Output: c.q1, c.q2
+   ->  Result
+         Output: (COALESCE((COALESCE(b.q2, 42::bigint)), d.q2))
+(26 rows)
+
 -- test some error cases where LATERAL should have been used but wasn't
 select f1,g from int4_tbl a, generate_series(0, f1) g;
 ERROR:  column "f1" does not exist
