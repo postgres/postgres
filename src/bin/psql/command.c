@@ -1694,8 +1694,8 @@ connection_warnings(bool in_startup)
 		else if (in_startup)
 			printf("%s (%s)\n", pset.progname, PG_VERSION);
 
-		if (pset.sversion / 100 != client_ver / 100)
-			printf(_("WARNING: %s version %d.%d, server version %d.%d.\n"
+		if (pset.sversion / 100 > client_ver / 100)
+			printf(_("WARNING: %s major version %d.%d, server major version %d.%d.\n"
 					 "         Some psql features might not work.\n"),
 				 pset.progname, client_ver / 10000, (client_ver / 100) % 100,
 				   pset.sversion / 10000, (pset.sversion / 100) % 100);

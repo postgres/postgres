@@ -3505,14 +3505,24 @@ PSQL_EDITOR_LINENUMBER_ARG='--line '
       </listitem>
 
       <listitem>
-      <para><application>psql</application> is only guaranteed to work smoothly
-       with servers of the same version. That does not mean other combinations
-       will fail outright, but subtle and not-so-subtle problems might come
-       up.  Backslash commands are particularly likely to fail if the
-       server is of a newer version than <application>psql</> itself.  However,
-       backslash commands of the <literal>\d</> family should work with
-       servers of versions back to 7.4, though not necessarily with servers
-       newer than  <application>psql</> itself.
+      <para><application>psql</application> works best with servers of the same
+       or an older major version.  Backslash commands are particularly likely
+       to fail if the server is of a newer version than <application>psql</>
+       itself.  However, backslash commands of the <literal>\d</> family should
+       work with servers of versions back to 7.4, though not necessarily with
+       servers newer than <application>psql</> itself.  The general
+       functionality of running SQL commands and displaying query results
+       should also work with servers of a newer major version, but this cannot
+       be guaranteed in all cases.
+      </para>
+      <para>
+       If you want to use <application>psql</application> to connect to several
+       servers of different major versions, it is recommended that you use the
+       newest version of <application>psql</application>.  Alternatively, you
+       can keep a copy of <application>psql</application> from each major
+       version around and be sure to use the version that matches the
+       respective server.  But in practice, this additional complication should
+       not be necessary.
       </para>
       </listitem>
 
