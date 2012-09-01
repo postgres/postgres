@@ -12548,9 +12548,10 @@ AND
 
   <para>
    This section describes functions that possibly return more than one row.
-   Currently the only functions in this class are series generating functions,
-   as detailed in <xref linkend="functions-srf-series"> and
-   <xref linkend="functions-srf-subscripts">.
+   The most widely used functions in this class are series generating
+   functions, as detailed in <xref linkend="functions-srf-series"> and
+   <xref linkend="functions-srf-subscripts">.  Other, more specialized
+   set-returning functions are described elsewhere in this manual.
   </para>
 
   <table id="functions-srf-series">

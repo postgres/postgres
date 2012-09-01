@@ -93,8 +93,8 @@
    </para>
 
    <para>
-    Alternatively, an SQL function can be declared to return a set,
-    by specifying the function's return type as <literal>SETOF
+    Alternatively, an SQL function can be declared to return a set (that is,
+    multiple rows) by specifying the function's return type as <literal>SETOF
     <replaceable>sometype</></literal>, or equivalently by declaring it as
     <literal>RETURNS TABLE(<replaceable>columns</>)</literal>.  In this case
     all rows of the last query's result are returned.  Further details appear
@@ -927,19 +927,15 @@ SELECT * FROM sum_n_product_with_tab(10);
     </para>
 
     <para>
-     Currently, functions returning sets can also be called in the select list
-     of a query.  For each row that the query
-     generates by itself, the function returning set is invoked, and an output
-     row is generated for each element of the function's result set. Note,
-     however, that this capability is deprecated and might be removed in future
-     releases. The following is an example function returning a set from the
-     select list:
+     It is frequently useful to construct a query's result by invoking a
+     set-returning function multiple times, with the parameters for each
+     invocation coming from successive rows of a table or subquery.  The
+     preferred way to do this is to use the <literal>LATERAL</> key word,
+     which is described in <xref linkend="queries-lateral">.
+     Here is an example using a set-returning function to enumerate
+     elements of a tree structure:
 
 <screen>
-CREATE FUNCTION listchildren(text) RETURNS SETOF text AS $$
-    SELECT name FROM nodes WHERE parent = $1
-$$ LANGUAGE SQL;
-
 SELECT * FROM nodes;
    name    | parent
 -----------+--------
@@ -951,6 +947,44 @@ SELECT * FROM nodes;
  SubChild2 | Child1
 (6 rows)
 
+CREATE FUNCTION listchildren(text) RETURNS SETOF text AS $$
+    SELECT name FROM nodes WHERE parent = $1
+$$ LANGUAGE SQL STABLE;
+
+SELECT * FROM listchildren('Top');
+ listchildren
+--------------
+ Child1
+ Child2
+ Child3
+(3 rows)
+
+SELECT name, child FROM nodes, LATERAL listchildren(name) AS child;
+  name  |   child
+--------+-----------
+ Top    | Child1
+ Top    | Child2
+ Top    | Child3
+ Child1 | SubChild1
+ Child1 | SubChild2
+(5 rows)
+</screen>
+
+     This example does not do anything that we couldn't have done with a
+     simple join, but in more complex calculations the option to put
+     some of the work into a function can be quite convenient.
+    </para>
+
+    <para>
+     Currently, functions returning sets can also be called in the select list
+     of a query.  For each row that the query
+     generates by itself, the function returning set is invoked, and an output
+     row is generated for each element of the function's result set. Note,
+     however, that this capability is deprecated and might be removed in future
+     releases. The previous example could also be done with queries like
+     these:
+
+<screen>
 SELECT listchildren('Top');
  listchildren
 --------------
@@ -973,7 +1007,9 @@ SELECT name, listchildren(name) FROM nodes;
      In the last <command>SELECT</command>,
      notice that no output row appears for <literal>Child2</>, <literal>Child3</>, etc.
      This happens because <function>listchildren</function> returns an empty set
-     for those arguments, so no result rows are generated.
+     for those arguments, so no result rows are generated.  This is the same
+     behavior as we got from an inner join to the function result when using
+     the <literal>LATERAL</> syntax.
     </para>
 
     <note>
@@ -985,6 +1021,19 @@ SELECT name, listchildren(name) FROM nodes;
       result rows.  Any extra rows produced by the <literal>RETURNING</>
       clause are silently dropped, but the commanded table modifications
       still happen (and are all completed before returning from the function).
+     </para>
+    </note>
+
+    <note>
+     <para>
+      The key problem with using set-returning functions in the select list,
+      rather than the <literal>FROM</> clause, is that putting more than one
+      set-returning function in the same select list does not behave very
+      sensibly.  (What you actually get if you do so is a number of output
+      rows equal to the least common multiple of the numbers of rows produced
+      by each set-returning function.)  The <literal>LATERAL</> syntax
+      produces less surprising results when calling multiple set-returning
+      functions, and should usually be used instead.
      </para>
     </note>
    </sect2>
