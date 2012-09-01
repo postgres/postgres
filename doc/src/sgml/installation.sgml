@@ -280,6 +280,14 @@ su - postgres
       encryption using those services.
      </para>
     </listitem>
+
+    <listitem>
+     <para>
+      To build the <productname>PostgreSQL</productname> documentation, 
+      there is a separate set of requirements.
+      See <xref linkend="docguide-toolsets">.
+     </para>
+    </listitem>
    </itemizedlist>
   </para>
 
