@@ -2,7 +2,8 @@
 <!--
 
 Use </link> not just </> so INSTALL.html can be created without links
-to the main documentation.  Don't use <xref>.
+to the main documentation.  Don't use <xref>; or if you must, wrap it
+in a standalone-ignore clause.
 
 -->
 
@@ -283,9 +284,11 @@ su - postgres
 
     <listitem>
      <para>
-      To build the <productname>PostgreSQL</productname> documentation, 
-      there is a separate set of requirements.
-      See <xref linkend="docguide-toolsets">.
+      To build the <productname>PostgreSQL</productname> documentation,
+      there is a separate set of requirements; see
+      <![%standalone-ignore;[<xref linkend="docguide-toolsets">.]]>
+      <![%standalone-include;[the main documentation's appendix on
+      documentation.]]>
      </para>
     </listitem>
    </itemizedlist>
