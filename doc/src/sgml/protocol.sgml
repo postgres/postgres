@@ -1819,7 +1819,7 @@ This section describes the base data types used in messages.
 </term>
 <listitem>
 <para>
-                An <replaceable>n</replaceable>-bit signed integer in network byte
+                An <replaceable>n</replaceable>-bit integer in network byte
                 order (most significant byte first).
                 If <replaceable>i</replaceable> is specified it
                 is the exact value that will appear, otherwise the value
