@@ -61,16 +61,22 @@ EOF
 	print $f <<EOF;
   </PropertyGroup>
 EOF
+
+	# We have to use this flag on 32 bit targets because the 32bit perls
+	# are built with it and sometimes crash if we don't.
+	my $use_32bit_time_t = 
+	  $self->{platform} eq 'Win32' ? '_USE_32BIT_TIME_T;' : '';
+
 	$self->WriteItemDefinitionGroup(
 		$f, 'Debug',
-		{   defs    => '_DEBUG;DEBUG=1;',
+		{   defs    => "_DEBUG;DEBUG=1;$use_32bit_time_t",
 			opt     => 'Disabled',
 			strpool => 'false',
 			runtime => 'MultiThreadedDebugDLL' });
 	$self->WriteItemDefinitionGroup(
 		$f,
 		'Release',
-		{   defs    => '',
+		{   defs    => "$use_32bit_time_t",
 			opt     => 'Full',
 			strpool => 'true',
 			runtime => 'MultiThreadedDLL' });

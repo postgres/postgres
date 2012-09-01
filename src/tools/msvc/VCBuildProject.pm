@@ -32,9 +32,16 @@ sub WriteHeader
  <Platforms><Platform Name="$self->{platform}"/></Platforms>
  <Configurations>
 EOF
+
+	# We have to use this flag on 32 bit targets because the 32bit perls
+	# are built with it and sometimes crash if we don't.
+	my $use_32bit_time_t = 
+	  $self->{platform} eq 'Win32' ? '_USE_32BIT_TIME_T;' : '';
+
+
 	$self->WriteConfiguration(
 		$f, 'Debug',
-		{   defs     => '_DEBUG;DEBUG=1;',
+		{   defs     => "_DEBUG;DEBUG=1;$use_32bit_time_t",
 			wholeopt => 0,
 			opt      => 0,
 			strpool  => 'false',
@@ -42,7 +49,7 @@ EOF
 	$self->WriteConfiguration(
 		$f,
 		'Release',
-		{   defs     => '',
+		{   defs     => "$use_32bit_time_t",
 			wholeopt => 0,
 			opt      => 3,
 			strpool  => 'true',
