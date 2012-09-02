@@ -1630,9 +1630,7 @@ ldapserver=ldap.example.net ldapprefix="cn=" ldapsuffix=", dc=example, dc=net"
     Therefore the user must already exist in the database before PAM
     can be used for authentication.  For more information about
     PAM, please read the <ulink url="http://www.kernel.org/pub/linux/libs/pam/">
-    <productname>Linux-PAM</> Page</ulink>
-    and the <ulink url="http://www.sun.com/software/solaris/pam/">
-    <systemitem class="osname">Solaris</> PAM Page</ulink>.
+    <productname>Linux-PAM</> Page</ulink>.
    </para>
 
    <para>

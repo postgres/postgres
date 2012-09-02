@@ -96,7 +96,7 @@
     <listitem>
       <para>
         On <productname>Solaris</>, the disk write cache is controlled by
-        <ulink url="http://www.sun.com/bigadmin/content/submitted/format_utility.jsp"><literal>format -e</></ulink>.
+        <command>format -e</>.
         (The Solaris <acronym>ZFS</> file system is safe with disk write-cache
         enabled because it issues its own disk cache flush commands.)
       </para>

@@ -2836,7 +2836,7 @@ MANPATH=/usr/lib/scohelp/%L/man:/usr/dt/man:/usr/man:/usr/share/man:scohelp:/usr
 
     <para>
      You can download Sun Studio
-     from <ulink url="http://developers.sun.com/sunstudio/downloads/"></ulink>.
+     from <ulink url="http://www.oracle.com/technetwork/server-storage/solarisstudio/downloads/"></ulink>.
      Many of GNU tools are integrated into Solaris 10, or they are
      present on the Solaris companion CD.  If you like packages for
      older version of Solaris, you can find these tools
@@ -2936,15 +2936,6 @@ LIBOBJS = snprintf.o
      and that is why 32-bit code is significant slower on this CPU
      family.
     </para>
-
-    <para>
-     Some tricks for tuning PostgreSQL and Solaris for performance can
-     be found
-     at <ulink url="http://www.sun.com/servers/coolthreads/tnb/applications_postgresql.jsp"></ulink>.
-     This article is primary focused on T2000 platform, but many of
-     the recommendations are also useful on other hardware with
-     Solaris.
-    </para>
    </sect3>
 
    <sect3>
@@ -2955,7 +2946,7 @@ LIBOBJS = snprintf.o
      documentation]]>
      <![%standalone-ignore[<xref linkend="dynamic-trace">]]> for further
      information.  You can also find more information in this
-     article: <ulink url="http://blogs.sun.com/robertlor/entry/user_level_dtrace_probes_in"></ulink>.
+     article: <ulink url="https://blogs.oracle.com/robertlor/entry/user_level_dtrace_probes_in"></ulink>.
     </para>
 
     <para>
