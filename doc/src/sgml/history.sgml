@@ -114,7 +114,9 @@
     <listitem>
      <para>
       The query language PostQUEL was replaced with
-      <acronym>SQL</acronym> (implemented in the server).  Subqueries
+      <acronym>SQL</acronym> (implemented in the server).  (Interface
+      library <link linkend="libpq">libpq</link> was named after PostQUEL.)
+      Subqueries
       were not supported until <productname>PostgreSQL</productname>
       (see below), but they could be imitated in
       <productname>Postgres95</productname> with user-defined
