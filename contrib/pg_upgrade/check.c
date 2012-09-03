@@ -23,6 +23,35 @@ static void check_for_reg_data_type_usage(ClusterInfo *cluster);
 static void get_bin_version(ClusterInfo *cluster);
 
 
+/*
+ * fix_path_separator
+ * For non-Windows, just return the argument.
+ * For Windows convert any forward slash to a backslash
+ * such as is suitable for arguments to builtin commands 
+ * like RMDIR and DEL.
+ */
+static char *fix_path_separator(char *path)
+{
+#ifdef WIN32
+
+	char *result;
+	char *c;
+
+	result = pg_strdup(path);
+
+	for (c = result; *c != '\0'; c++)
+		if (*c == '/')
+			*c = '\\';
+
+	return result;
+
+#else
+
+	return path;
+
+#endif
+}
+
 void
 output_check_banner(bool *live_check)
 {
@@ -544,7 +573,7 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 #endif
 
 	/* delete old cluster's default tablespace */
-	fprintf(script, RMDIR_CMD " %s\n", old_cluster.pgdata);
+	fprintf(script, RMDIR_CMD " %s\n", fix_path_separator(old_cluster.pgdata));
 
 	/* delete old cluster's alternate tablespaces */
 	for (tblnum = 0; tblnum < os_info.num_tablespaces; tblnum++)
@@ -561,14 +590,17 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 			fprintf(script, "\n");
 			/* remove PG_VERSION? */
 			if (GET_MAJOR_VERSION(old_cluster.major_version) <= 804)
-				fprintf(script, RM_CMD " %s%s/PG_VERSION\n",
-				 os_info.tablespaces[tblnum], old_cluster.tablespace_suffix);
+				fprintf(script, RM_CMD " %s%s%cPG_VERSION\n",
+						fix_path_separator(os_info.tablespaces[tblnum]), 
+						fix_path_separator(old_cluster.tablespace_suffix),
+						PATH_SEPARATOR);
 
 			for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
 			{
-				fprintf(script, RMDIR_CMD " %s%s/%d\n",
-				  os_info.tablespaces[tblnum], old_cluster.tablespace_suffix,
-						old_cluster.dbarr.dbs[dbnum].db_oid);
+				fprintf(script, RMDIR_CMD " %s%s%c%d\n",
+						fix_path_separator(os_info.tablespaces[tblnum]),
+						fix_path_separator(old_cluster.tablespace_suffix),
+						PATH_SEPARATOR, old_cluster.dbarr.dbs[dbnum].db_oid);
 			}
 		}
 		else
@@ -578,7 +610,8 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 			 * or a version-specific subdirectory.
 			 */
 			fprintf(script, RMDIR_CMD " %s%s\n",
-				 os_info.tablespaces[tblnum], old_cluster.tablespace_suffix);
+					fix_path_separator(os_info.tablespaces[tblnum]), 
+					fix_path_separator(old_cluster.tablespace_suffix));
 	}
 
 	fclose(script);
