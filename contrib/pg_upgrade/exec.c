@@ -52,7 +52,7 @@ exec_prog(const char *log_file, const char *opt_log_file,
 
 	old_umask = umask(S_IRWXG | S_IRWXO);
 
-	written = strlcpy(cmd, SYSTEMQUOTE, strlen(SYSTEMQUOTE));
+	written = strlcpy(cmd, SYSTEMQUOTE, sizeof(cmd));
 	va_start(ap, fmt);
 	written += vsnprintf(cmd + written, MAXCMDLEN - written, fmt, ap);
 	va_end(ap);
@@ -95,10 +95,16 @@ exec_prog(const char *log_file, const char *opt_log_file,
 				   log_file);
 	}
 
+#ifndef WIN32
+	/* 
+	 * Can't do this on Windows, postmaster will still hold the log file
+	 * open if the command was "pg_ctl start".
+	 */
 	if ((log = fopen_priv(log_file, "a+")) == NULL)
 		pg_log(PG_FATAL, "cannot write to log file %s\n", log_file);
 	fprintf(log, "\n\n");
 	fclose(log);
+#endif
 
 	return result == 0;
 }
