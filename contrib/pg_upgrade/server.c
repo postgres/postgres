@@ -46,18 +46,51 @@ connectToServer(ClusterInfo *cluster, const char *db_name)
 /*
  * get_db_conn()
  *
- * get database connection
+ * get database connection, using named database + standard params for cluster
  */
 static PGconn *
 get_db_conn(ClusterInfo *cluster, const char *db_name)
 {
-	char		conn_opts[MAXPGPATH];
+	char		conn_opts[2 * NAMEDATALEN + MAXPGPATH + 100];
 
-	snprintf(conn_opts, sizeof(conn_opts),
-			 "dbname = '%s' user = '%s' port = %d", db_name, os_info.user,
-			 cluster->port);
+	if (cluster->sockdir)
+		snprintf(conn_opts, sizeof(conn_opts),
+				 "dbname = '%s' user = '%s' host = '%s' port = %d",
+				 db_name, os_info.user, cluster->sockdir, cluster->port);
+	else
+		snprintf(conn_opts, sizeof(conn_opts),
+				 "dbname = '%s' user = '%s' port = %d",
+				 db_name, os_info.user, cluster->port);
 
 	return PQconnectdb(conn_opts);
+}
+
+
+/*
+ * cluster_conn_opts()
+ *
+ * Return standard command-line options for connecting to this cluster when
+ * using psql, pg_dump, etc.  Ideally this would match what get_db_conn()
+ * sets, but the utilities we need aren't very consistent about the treatment
+ * of database name options, so we leave that out.
+ *
+ * Note result is in static storage, so use it right away.
+ */
+char *
+cluster_conn_opts(ClusterInfo *cluster)
+{
+	static char	conn_opts[MAXPGPATH + NAMEDATALEN + 100];
+
+	if (cluster->sockdir)
+		snprintf(conn_opts, sizeof(conn_opts),
+				 "--host \"%s\" --port %d --username \"%s\"",
+				 cluster->sockdir, cluster->port, os_info.user);
+	else
+		snprintf(conn_opts, sizeof(conn_opts),
+				 "--port %d --username \"%s\"",
+				 cluster->port, os_info.user);
+
+	return conn_opts;
 }
 
 
@@ -140,16 +173,34 @@ stop_postmaster_atexit(void)
 void
 start_postmaster(ClusterInfo *cluster)
 {
-	char		cmd[MAXPGPATH];
+	char		cmd[MAXPGPATH * 4 + 1000];
 	PGconn	   *conn;
 	bool		exit_hook_registered = false;
 	bool		pg_ctl_return = false;
+	char		socket_string[MAXPGPATH + 200];
 
 	if (!exit_hook_registered)
 	{
 		atexit(stop_postmaster_atexit);
 		exit_hook_registered = true;
 	}
+
+	socket_string[0] = '\0';
+
+#ifdef HAVE_UNIX_SOCKETS
+	/* prevent TCP/IP connections, restrict socket access */
+	strcat(socket_string,
+		   " -c listen_addresses='' -c unix_socket_permissions=0700");
+
+	/* Have a sockdir?  Tell the postmaster. */
+	if (cluster->sockdir)
+		snprintf(socket_string + strlen(socket_string),
+				 sizeof(socket_string) - strlen(socket_string),
+				 " -c %s='%s'",
+				 (GET_MAJOR_VERSION(cluster->major_version) < 903) ?
+				 "unix_socket_directory" : "unix_socket_directories",
+				 cluster->sockdir);
+#endif
 
 	/*
 	 * Using autovacuum=off disables cleanup vacuum and analyze, but freeze
@@ -159,12 +210,12 @@ start_postmaster(ClusterInfo *cluster)
 	 * not touch them.
 	 */
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" -o \"-p %d %s %s\" start",
+			 "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" -o \"-p %d %s %s%s\" start",
 		  cluster->bindir, SERVER_LOG_FILE, cluster->pgconfig, cluster->port,
 			 (cluster->controldata.cat_ver >=
 			  BINARY_UPGRADE_SERVER_FLAG_CAT_VER) ? "-b" :
 			 "-c autovacuum=off -c autovacuum_freeze_max_age=2000000000",
-			 cluster->pgopts ? cluster->pgopts : "");
+			 cluster->pgopts ? cluster->pgopts : "", socket_string);
 
 	/*
 	 * Don't throw an error right away, let connecting throw the error because

@@ -24,8 +24,8 @@ generate_old_dump(void)
 	 * restores the frozenid's for databases and relations.
 	 */
 	exec_prog(UTILITY_LOG_FILE, NULL, true,
-			  "\"%s/pg_dumpall\" --port %d --username \"%s\" --schema-only --binary-upgrade %s -f %s",
-			  new_cluster.bindir, old_cluster.port, os_info.user,
+			  "\"%s/pg_dumpall\" %s --schema-only --binary-upgrade %s -f %s",
+			  new_cluster.bindir, cluster_conn_opts(&old_cluster),
 			  log_opts.verbose ? "--verbose" : "",
 			  ALL_DUMP_FILE);
 	check_ok();

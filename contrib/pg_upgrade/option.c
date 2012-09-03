@@ -9,6 +9,8 @@
 
 #include "postgres.h"
 
+#include "miscadmin.h"
+
 #include "pg_upgrade.h"
 
 #include <getopt_long.h>
@@ -375,4 +377,65 @@ adjust_data_dir(ClusterInfo *cluster)
 	cluster->pgdata = pg_strdup(cmd_output);
 
 	check_ok();
+}
+
+
+/*
+ * get_sock_dir
+ *
+ * Identify the socket directory to use for this cluster.  If we're doing
+ * a live check (old cluster only), we need to find out where the postmaster
+ * is listening.  Otherwise, we're going to put the socket into the current
+ * directory.
+ */
+void
+get_sock_dir(ClusterInfo *cluster, bool live_check)
+{
+#ifdef HAVE_UNIX_SOCKETS
+	if (!live_check)
+	{
+		/* Use the current directory for the socket */
+		cluster->sockdir = pg_malloc(MAXPGPATH);
+		if (!getcwd(cluster->sockdir, MAXPGPATH))
+			pg_log(PG_FATAL, "cannot find current directory\n");
+	}
+	else
+	{
+		/*
+		 *	If we are doing a live check, we will use the old cluster's Unix
+		 *	domain socket directory so we can connect to the live server.
+		 */
+
+		/* sockdir was added to postmaster.pid in PG 9.1 */
+		if (GET_MAJOR_VERSION(cluster->major_version) >= 901)
+		{
+			char		filename[MAXPGPATH];
+			FILE		*fp;
+			int			i;
+
+			snprintf(filename, sizeof(filename), "%s/postmaster.pid",
+					 cluster->pgdata);
+			if ((fp = fopen(filename, "r")) == NULL)
+				pg_log(PG_FATAL, "Could not get socket directory of the old server\n");
+
+			cluster->sockdir = pg_malloc(MAXPGPATH);
+			for (i = 0; i < LOCK_FILE_LINE_SOCKET_DIR; i++)
+				if (fgets(cluster->sockdir, MAXPGPATH, fp) == NULL)
+					pg_log(PG_FATAL, "Could not get socket directory of the old server\n");
+
+			fclose(fp);
+
+			/* Remove trailing newline */
+			if (strchr(cluster->sockdir, '\n') != NULL)
+				*strchr(cluster->sockdir, '\n') = '\0';
+		}
+		else
+		{
+			/* Can't get live sockdir, so assume the default is OK. */
+			cluster->sockdir = NULL;
+		}
+	}
+#else /* !HAVE_UNIX_SOCKETS */
+	cluster->sockdir = NULL;
+#endif
 }

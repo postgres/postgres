@@ -226,6 +226,7 @@ typedef struct
 	char	   *bindir;			/* pathname for cluster's executable directory */
 	char	   *pgopts;			/* options to pass to the server, like pg_ctl
 								 * -o */
+	char	   *sockdir;		/* directory for Unix Domain socket, if any */
 	unsigned short port;		/* port number where postmaster is waiting */
 	uint32		major_version;	/* PG_VERSION of cluster */
 	char		major_version_str[64];	/* string PG_VERSION of cluster */
@@ -387,6 +388,7 @@ void print_maps(FileNameMap *maps, int n,
 
 void		parseCommandLine(int argc, char *argv[]);
 void		adjust_data_dir(ClusterInfo *cluster);
+void		get_sock_dir(ClusterInfo *cluster, bool live_check);
 
 /* relfilenode.c */
 
@@ -406,6 +408,8 @@ PGconn	   *connectToServer(ClusterInfo *cluster, const char *db_name);
 PGresult *
 executeQueryOrDie(PGconn *conn, const char *fmt,...)
 __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
+
+char	   *cluster_conn_opts(ClusterInfo *cluster);
 
 void		start_postmaster(ClusterInfo *cluster);
 void		stop_postmaster(bool fast);
