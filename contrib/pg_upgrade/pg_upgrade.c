@@ -88,6 +88,9 @@ main(int argc, char **argv)
 	check_cluster_versions();
 	check_cluster_compatibility(live_check);
 
+	get_sock_dir(&old_cluster, live_check);
+	get_sock_dir(&new_cluster, false);
+
 	check_old_cluster(live_check, &sequence_script_file_name);
 
 
@@ -140,11 +143,10 @@ main(int argc, char **argv)
 	 * because there is no need to have the schema load use new oids.
 	 */
 	prep_status("Setting next OID for new cluster");
-	exec_prog(true, true, UTILITY_LOG_FILE, NULL,
-			  SYSTEMQUOTE "\"%s/pg_resetxlog\" -o %u \"%s\" >> \"%s\" 2>&1"
-			  SYSTEMQUOTE,
+	exec_prog(UTILITY_LOG_FILE, NULL, true,
+			  "\"%s/pg_resetxlog\" -o %u \"%s\"",
 			  new_cluster.bindir, old_cluster.controldata.chkpnt_nxtoid,
-			  new_cluster.pgdata, UTILITY_LOG_FILE);
+			  new_cluster.pgdata);
 	check_ok();
 
 	create_script_for_cluster_analyze(&analyze_script_file_name);
@@ -211,11 +213,10 @@ prepare_new_cluster(void)
 	 * --analyze so autovacuum doesn't update statistics later
 	 */
 	prep_status("Analyzing all rows in the new cluster");
-	exec_prog(true, true, UTILITY_LOG_FILE, NULL,
-			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --username \"%s\" "
-			  "--all --analyze %s >> \"%s\" 2>&1" SYSTEMQUOTE,
-			  new_cluster.bindir, new_cluster.port, os_info.user,
-			  log_opts.verbose ? "--verbose" : "", UTILITY_LOG_FILE);
+	exec_prog(UTILITY_LOG_FILE, NULL, true,
+			  "\"%s/vacuumdb\" %s --all --analyze %s",
+			  new_cluster.bindir, cluster_conn_opts(&new_cluster),
+			  log_opts.verbose ? "--verbose" : "");
 	check_ok();
 
 	/*
@@ -225,11 +226,10 @@ prepare_new_cluster(void)
 	 * later.
 	 */
 	prep_status("Freezing all rows on the new cluster");
-	exec_prog(true, true, UTILITY_LOG_FILE, NULL,
-			  SYSTEMQUOTE "\"%s/vacuumdb\" --port %d --username \"%s\" "
-			  "--all --freeze %s >> \"%s\" 2>&1" SYSTEMQUOTE,
-			  new_cluster.bindir, new_cluster.port, os_info.user,
-			  log_opts.verbose ? "--verbose" : "", UTILITY_LOG_FILE);
+	exec_prog(UTILITY_LOG_FILE, NULL, true,
+			  "\"%s/vacuumdb\" %s --all --freeze %s",
+			  new_cluster.bindir, cluster_conn_opts(&new_cluster),
+			  log_opts.verbose ? "--verbose" : "");
 	check_ok();
 
 	get_pg_database_relfilenode(&new_cluster);
@@ -263,14 +263,10 @@ prepare_new_databases(void)
 	 * support functions in template1 but pg_dumpall creates database using
 	 * the template0 template.
 	 */
-	exec_prog(true, true, RESTORE_LOG_FILE, NULL,
-			  SYSTEMQUOTE "\"%s/psql\" --echo-queries "
-			  "--set ON_ERROR_STOP=on "
-	/* --no-psqlrc prevents AUTOCOMMIT=off */
-			  "--no-psqlrc --port %d --username \"%s\" "
-			  "-f \"%s\" --dbname template1 >> \"%s\" 2>&1" SYSTEMQUOTE,
-			  new_cluster.bindir, new_cluster.port, os_info.user,
-			  GLOBALS_DUMP_FILE, RESTORE_LOG_FILE);
+	exec_prog(RESTORE_LOG_FILE, NULL, true,
+			  "\"%s/psql\" " EXEC_PSQL_ARGS " %s -f \"%s\"",
+			  new_cluster.bindir, cluster_conn_opts(&new_cluster),
+			  GLOBALS_DUMP_FILE);
 	check_ok();
 
 	/* we load this to get a current list of databases */
@@ -296,13 +292,10 @@ create_new_objects(void)
 	check_ok();
 
 	prep_status("Restoring database schema to new cluster");
-	exec_prog(true, true, RESTORE_LOG_FILE, NULL,
-			  SYSTEMQUOTE "\"%s/psql\" --echo-queries "
-			  "--set ON_ERROR_STOP=on "
-			  "--no-psqlrc --port %d --username \"%s\" "
-			  "-f \"%s\" --dbname template1 >> \"%s\" 2>&1" SYSTEMQUOTE,
-			  new_cluster.bindir, new_cluster.port, os_info.user,
-			  DB_DUMP_FILE, RESTORE_LOG_FILE);
+	exec_prog(RESTORE_LOG_FILE, NULL, true,
+			  "\"%s/psql\" " EXEC_PSQL_ARGS " %s -f \"%s\"",
+			  new_cluster.bindir, cluster_conn_opts(&new_cluster),
+			  DB_DUMP_FILE);
 	check_ok();
 
 	/* regenerate now that we have objects in the databases */
@@ -311,55 +304,60 @@ create_new_objects(void)
 	uninstall_support_functions_from_new_cluster();
 }
 
+/*
+ * Delete the given subdirectory contents from the new cluster, and copy the
+ * files from the old cluster into it.
+ */
+static void
+copy_subdir_files(char *subdir)
+{
+	char		old_path[MAXPGPATH];
+	char		new_path[MAXPGPATH];
+
+	prep_status("Deleting files from new %s", subdir);
+
+	snprintf(old_path, sizeof(old_path), "%s/%s", old_cluster.pgdata, subdir);
+	snprintf(new_path, sizeof(new_path), "%s/%s", new_cluster.pgdata, subdir);
+	if (!rmtree(new_path, true))
+		pg_log(PG_FATAL, "could not delete directory \"%s\"\n", new_path);
+	check_ok();
+
+	prep_status("Copying old %s to new server", subdir);
+
+	exec_prog(UTILITY_LOG_FILE, NULL, true,
+#ifndef WIN32
+			  "cp -Rf \"%s\" \"%s\"",
+#else
+	/* flags: everything, no confirm, quiet, overwrite read-only */
+			  "xcopy /e /y /q /r \"%s\" \"%s\\\"",
+#endif
+			  old_path, new_path);
+
+	check_ok();
+}
 
 static void
 copy_clog_xlog_xid(void)
 {
-	char		old_clog_path[MAXPGPATH];
-	char		new_clog_path[MAXPGPATH];
-
 	/* copy old commit logs to new data dir */
-	prep_status("Deleting new commit clogs");
-
-	snprintf(old_clog_path, sizeof(old_clog_path), "%s/pg_clog", old_cluster.pgdata);
-	snprintf(new_clog_path, sizeof(new_clog_path), "%s/pg_clog", new_cluster.pgdata);
-	if (!rmtree(new_clog_path, true))
-		pg_log(PG_FATAL, "could not delete directory \"%s\"\n", new_clog_path);
-	check_ok();
-
-	prep_status("Copying old commit clogs to new server");
-	exec_prog(true, false, UTILITY_LOG_FILE, NULL,
-#ifndef WIN32
-			  SYSTEMQUOTE "%s \"%s\" \"%s\" >> \"%s\" 2>&1" SYSTEMQUOTE,
-			  "cp -Rf",
-#else
-	/* flags: everything, no confirm, quiet, overwrite read-only */
-			  SYSTEMQUOTE "%s \"%s\" \"%s\\\" >> \"%s\" 2>&1" SYSTEMQUOTE,
-			  "xcopy /e /y /q /r",
-#endif
-			  old_clog_path, new_clog_path, UTILITY_LOG_FILE);
-	check_ok();
+	copy_subdir_files("pg_clog");
 
 	/* set the next transaction id of the new cluster */
 	prep_status("Setting next transaction ID for new cluster");
-	exec_prog(true, true, UTILITY_LOG_FILE, NULL,
-			  SYSTEMQUOTE
-			  "\"%s/pg_resetxlog\" -f -x %u \"%s\" >> \"%s\" 2>&1"
-			  SYSTEMQUOTE, new_cluster.bindir,
-			  old_cluster.controldata.chkpnt_nxtxid,
-			  new_cluster.pgdata, UTILITY_LOG_FILE);
+	exec_prog(UTILITY_LOG_FILE, NULL, true,
+			  "\"%s/pg_resetxlog\" -f -x %u \"%s\"",
+			  new_cluster.bindir, old_cluster.controldata.chkpnt_nxtxid,
+			  new_cluster.pgdata);
 	check_ok();
 
 	/* now reset the wal archives in the new cluster */
 	prep_status("Resetting WAL archives");
-	exec_prog(true, true, UTILITY_LOG_FILE, NULL,
-			  SYSTEMQUOTE
-			  "\"%s/pg_resetxlog\" -l %u,%u,%u \"%s\" >> \"%s\" 2>&1"
-			  SYSTEMQUOTE, new_cluster.bindir,
+	exec_prog(UTILITY_LOG_FILE, NULL, true,
+			  "\"%s/pg_resetxlog\" -l %u,%u,%u \"%s\"", new_cluster.bindir,
 			  old_cluster.controldata.chkpnt_tli,
 			  old_cluster.controldata.logid,
 			  old_cluster.controldata.nxtlogseg,
-			  new_cluster.pgdata, UTILITY_LOG_FILE);
+			  new_cluster.pgdata);
 	check_ok();
 }
 

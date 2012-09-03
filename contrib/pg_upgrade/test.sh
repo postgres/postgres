@@ -107,12 +107,15 @@ initdb
 pg_upgrade -d "${PGDATA}.old" -D "${PGDATA}" -b "$oldbindir" -B "$bindir"
 
 pg_ctl start -l "$logdir/postmaster2.log" -w
+sh ./analyze_new_cluster.sh
 pg_dumpall >"$temp_root"/dump2.sql || pg_dumpall2_status=$?
 pg_ctl -m fast stop
 if [ -n "$pg_dumpall2_status" ]; then
 	echo "pg_dumpall of post-upgrade database cluster failed"
 	exit 1
 fi
+
+sh ./delete_old_cluster.sh
 
 if diff -q "$temp_root"/dump1.sql "$temp_root"/dump2.sql; then
 	echo PASSED

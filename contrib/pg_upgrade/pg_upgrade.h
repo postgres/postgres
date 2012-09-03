@@ -227,6 +227,7 @@ typedef struct
 	char	   *bindir;			/* pathname for cluster's executable directory */
 	char	   *pgopts;			/* options to pass to the server, like pg_ctl
 								 * -o */
+	char	   *sockdir;		/* directory for Unix Domain socket, if any */
 	unsigned short port;		/* port number where postmaster is waiting */
 	uint32		major_version;	/* PG_VERSION of cluster */
 	char		major_version_str[64];	/* string PG_VERSION of cluster */
@@ -317,10 +318,11 @@ void		split_old_dump(void);
 
 /* exec.c */
 
-int
-exec_prog(bool throw_error, bool is_priv, const char *log_file,
-		  const char *opt_log_file, const char *cmd,...)
-__attribute__((format(PG_PRINTF_ATTRIBUTE, 5, 6)));
+#define EXEC_PSQL_ARGS "--echo-queries --set ON_ERROR_STOP=on --no-psqlrc --dbname=template1"
+bool
+exec_prog(const char *log_file, const char *opt_log_file,
+		  bool throw_error, const char *fmt,...)
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 4, 5)));
 void		verify_directories(void);
 bool		is_server_running(const char *datadir);
 
@@ -387,6 +389,7 @@ void print_maps(FileNameMap *maps, int n,
 
 void		parseCommandLine(int argc, char *argv[]);
 void		adjust_data_dir(ClusterInfo *cluster);
+void		get_sock_dir(ClusterInfo *cluster, bool live_check);
 
 /* relfilenode.c */
 
@@ -406,6 +409,8 @@ PGconn	   *connectToServer(ClusterInfo *cluster, const char *db_name);
 PGresult *
 executeQueryOrDie(PGconn *conn, const char *fmt,...)
 __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
+
+char	   *cluster_conn_opts(ClusterInfo *cluster);
 
 void		start_postmaster(ClusterInfo *cluster);
 void		stop_postmaster(bool fast);

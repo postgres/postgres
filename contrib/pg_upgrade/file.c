@@ -103,10 +103,10 @@ copyAndUpdateFile(pageCnvCtx *pageConverter,
 /*
  * linkAndUpdateFile()
  *
- * Creates a symbolic link between the given relation files. We use
+ * Creates a hard link between the given relation files. We use
  * this function to perform a true in-place update. If the on-disk
  * format of the new cluster is bit-for-bit compatible with the on-disk
- * format of the old cluster, we can simply symlink each relation
+ * format of the old cluster, we can simply link each relation
  * instead of copying the data from the old cluster to the new cluster.
  */
 const char *

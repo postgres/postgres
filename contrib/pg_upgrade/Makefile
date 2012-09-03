@@ -11,7 +11,7 @@ OBJS = check.o controldata.o dump.o exec.o file.o function.o info.o \
 PG_CPPFLAGS  = -DFRONTEND -DDLSUFFIX=\"$(DLSUFFIX)\" -I$(srcdir) -I$(libpq_srcdir)
 PG_LIBS = $(libpq_pgport)
 
-EXTRA_CLEAN = delete_old_cluster.sh log/ tmp_check/
+EXTRA_CLEAN = analyze_new_cluster.sh delete_old_cluster.sh log/ tmp_check/
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

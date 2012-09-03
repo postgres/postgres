@@ -367,8 +367,10 @@ pg_upgrade.exe
      Obviously, no one should be accessing the clusters during the
      upgrade.  <application>pg_upgrade</> defaults to running servers
      on port 50432 to avoid unintended client connections.
-     You can use the same port numbers for both clusters because the
-     old and new clusters will not be running at the same time.
+     You can use the same port number for both clusters when doing an
+     upgrade because the old and new clusters will not be running at the
+     same time.  However, when checking an old running server, the old
+     and new port numbers must be different.
     </para>
 
     <para>
@@ -515,6 +517,14 @@ psql --username postgres --file script.sql postgres
    real data directory location to <application>pg_upgrade</>, and
    pass the configuration directory location to the server, e.g.
    <literal>-d /real-data-directory -o '-D /configuration-directory'</>.
+  </para>
+
+  <para>
+   If doing <option>--check</> with a running old server of a pre-9.1 version,
+   and the old server is using a Unix-domain socket directory that is
+   different from the default built into the new <productname>PostgreSQL</>
+   installation, set <envar>PGHOST</> to point to the socket location of the
+   old server.  (This is not relevant on Windows.)
   </para>
 
   <para>
