@@ -29,7 +29,8 @@ static void get_bin_version(ClusterInfo *cluster);
  * such as is suitable for arguments to builtin commands 
  * like RMDIR and DEL.
  */
-static char *fix_path_separator(char *path)
+static char *
+fix_path_separator(char *path)
 {
 #ifdef WIN32
 
