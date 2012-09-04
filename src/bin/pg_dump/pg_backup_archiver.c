@@ -655,7 +655,7 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te,
 				if (strcmp(te->desc, "BLOBS") == 0 ||
 					strcmp(te->desc, "BLOB COMMENTS") == 0)
 				{
-					ahlog(AH, 1, "restoring %s\n", te->desc);
+					ahlog(AH, 1, "processing %s\n", te->desc);
 
 					_selectOutputSchema(AH, "pg_catalog");
 
@@ -669,7 +669,7 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te,
 					_becomeOwner(AH, te);
 					_selectOutputSchema(AH, te->namespace);
 
-					ahlog(AH, 1, "restoring data for table \"%s\"\n",
+					ahlog(AH, 1, "processing data for table \"%s\"\n",
 						  te->tag);
 
 					/*
