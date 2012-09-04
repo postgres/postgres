@@ -54,6 +54,13 @@
 
       <listitem>
        <para>
+        Allow <application>pg_basebackup</> to make base backups from
+        standby servers
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
         Add a <link
         linkend="app-pgreceivexlog"><application>pg_receivexlog</></link>
         tool to archive WAL file changes as they are written
@@ -1230,8 +1237,8 @@
 
       <listitem>
        <para>
-        Allow <application>pg_basebackup</> to pull from standby servers
-        (Jun Ishizuka, Fujii Masao)
+        Allow <application>pg_basebackup</> to make base backups from
+        standby servers (Jun Ishizuka, Fujii Masao)
        </para>
       </listitem>
 
