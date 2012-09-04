@@ -26,14 +26,15 @@ static void check_for_reg_data_type_usage(migratorContext *ctx, Cluster whichClu
  * such as is suitable for arguments to builtin commands 
  * like RMDIR and DEL.
  */
-static char *fix_path_separator(char *path)
+static char *
+fix_path_separator(migratorContext *ctx, char *path)
 {
 #ifdef WIN32
 
 	char *result;
 	char *c;
 
-	result = pg_strdup(path);
+	result = pg_strdup(ctx, path);
 
 	for (c = result; *c != '\0'; c++)
 		if (*c == '/')
@@ -431,7 +432,7 @@ create_script_for_old_cluster_deletion(migratorContext *ctx,
 #endif
 
 	/* delete old cluster's default tablespace */
-	fprintf(script, RMDIR_CMD " %s\n", fix_path_separator(ctx->old.pgdata));
+	fprintf(script, RMDIR_CMD " %s\n", fix_path_separator(ctx, ctx->old.pgdata));
 
 	/* delete old cluster's alternate tablespaces */
 	for (tblnum = 0; tblnum < ctx->num_tablespaces; tblnum++)
@@ -449,15 +450,15 @@ create_script_for_old_cluster_deletion(migratorContext *ctx,
 			/* remove PG_VERSION? */
 			if (GET_MAJOR_VERSION(ctx->old.major_version) <= 804)
 				fprintf(script, RM_CMD " %s%s%cPG_VERSION\n",
-						fix_path_separator(ctx->tablespaces[tblnum]),
-						fix_path_separator(ctx->old.tablespace_suffix),
+						fix_path_separator(ctx, ctx->tablespaces[tblnum]),
+						fix_path_separator(ctx, ctx->old.tablespace_suffix),
 						PATH_SEPARATOR);
 
 			for (dbnum = 0; dbnum < ctx->new.dbarr.ndbs; dbnum++)
 			{
 				fprintf(script, RMDIR_CMD " %s%s%c%d\n",
-						fix_path_separator(ctx->tablespaces[tblnum]),
-						fix_path_separator(ctx->old.tablespace_suffix),
+						fix_path_separator(ctx, ctx->tablespaces[tblnum]),
+						fix_path_separator(ctx, ctx->old.tablespace_suffix),
 						PATH_SEPARATOR, ctx->old.dbarr.dbs[dbnum].db_oid);
 			}
 		}
@@ -468,8 +469,8 @@ create_script_for_old_cluster_deletion(migratorContext *ctx,
 			 * or a version-specific subdirectory.
 			 */
 			fprintf(script, RMDIR_CMD " %s%s\n",
-					fix_path_separator(ctx->tablespaces[tblnum]),
-					fix_path_separator(ctx->old.tablespace_suffix));
+					fix_path_separator(ctx, ctx->tablespaces[tblnum]),
+					fix_path_separator(ctx, ctx->old.tablespace_suffix));
 	}
 
 	fclose(script);
