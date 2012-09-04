@@ -452,7 +452,7 @@ create_script_for_cluster_analyze(char **analyze_script_file_name)
 	fprintf(script, "#!/bin/sh\n\n");
 #else
 	/* suppress command echoing */
-	fprintf(script, "@echo off");
+	fprintf(script, "@echo off\n");
 #endif
 
 	fprintf(script, "echo %sThis script will generate minimal optimizer statistics rapidly%s\n",
