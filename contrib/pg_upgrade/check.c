@@ -58,12 +58,6 @@ output_check_banner(bool *live_check)
 	if (user_opts.check && is_server_running(old_cluster.pgdata))
 	{
 		*live_check = true;
-		if (old_cluster.port == DEF_PGUPORT)
-			pg_log(PG_FATAL, "When checking a live old server, "
-				   "you must specify the old server's port number.\n");
-		if (old_cluster.port == new_cluster.port)
-			pg_log(PG_FATAL, "When checking a live server, "
-				   "the old and new port numbers must be different.\n");
 		pg_log(PG_REPORT, "Performing Consistency Checks on Old Live Server\n");
 		pg_log(PG_REPORT, "------------------------------------------------\n");
 	}
@@ -320,6 +314,16 @@ check_cluster_compatibility(bool live_check)
 		new_cluster.controldata.cat_ver < TABLE_SPACE_SUBDIRS_CAT_VER)
 		pg_log(PG_FATAL, "This utility can only upgrade to PostgreSQL version 9.0 after 2010-01-11\n"
 			   "because of backend API changes made during development.\n");
+
+	/* We read the real port number for PG >= 9.1 */
+	if (live_check && GET_MAJOR_VERSION(old_cluster.major_version) < 901 &&
+		old_cluster.port == DEF_PGUPORT)
+			pg_log(PG_FATAL, "When checking a pre-PG 9.1 live old server, "
+				   "you must specify the old server's port number.\n");
+
+	if (live_check && old_cluster.port == new_cluster.port)
+		pg_log(PG_FATAL, "When checking a live server, "
+			   "the old and new port numbers must be different.\n");
 }
 
 

@@ -392,49 +392,65 @@ void
 get_sock_dir(ClusterInfo *cluster, bool live_check)
 {
 #ifdef HAVE_UNIX_SOCKETS
-	if (!live_check)
+	/*
+	 *	sockdir and port were added to postmaster.pid in PG 9.1.
+	 *	Pre-9.1 cannot process pg_ctl -w for sockets in non-default
+	 *	locations.
+	 */
+	if (GET_MAJOR_VERSION(cluster->major_version) >= 901)
 	{
-		/* Use the current directory for the socket */
-		cluster->sockdir = pg_malloc(MAXPGPATH);
-		if (!getcwd(cluster->sockdir, MAXPGPATH))
-			pg_log(PG_FATAL, "cannot find current directory\n");
-	}
-	else
-	{
-		/*
-		 *	If we are doing a live check, we will use the old cluster's Unix
-		 *	domain socket directory so we can connect to the live server.
-		 */
-
-		/* sockdir was added to postmaster.pid in PG 9.1 */
-		if (GET_MAJOR_VERSION(cluster->major_version) >= 901)
+		if (!live_check)
 		{
-			char		filename[MAXPGPATH];
-			FILE		*fp;
-			int			i;
-
-			snprintf(filename, sizeof(filename), "%s/postmaster.pid",
-					 cluster->pgdata);
-			if ((fp = fopen(filename, "r")) == NULL)
-				pg_log(PG_FATAL, "Could not get socket directory of the old server\n");
-
+			/* Use the current directory for the socket */
 			cluster->sockdir = pg_malloc(MAXPGPATH);
-			for (i = 0; i < LOCK_FILE_LINE_SOCKET_DIR; i++)
-				if (fgets(cluster->sockdir, MAXPGPATH, fp) == NULL)
-					pg_log(PG_FATAL, "Could not get socket directory of the old server\n");
-
-			fclose(fp);
-
-			/* Remove trailing newline */
-			if (strchr(cluster->sockdir, '\n') != NULL)
-				*strchr(cluster->sockdir, '\n') = '\0';
+			if (!getcwd(cluster->sockdir, MAXPGPATH))
+				pg_log(PG_FATAL, "cannot find current directory\n");
 		}
 		else
 		{
-			/* Can't get live sockdir, so assume the default is OK. */
-			cluster->sockdir = NULL;
+			/*
+			 *	If we are doing a live check, we will use the old cluster's Unix
+			 *	domain socket directory so we can connect to the live server.
+			 */
+			unsigned short orig_port = cluster->port;
+			char		filename[MAXPGPATH], line[MAXPGPATH];
+			FILE		*fp;
+			int			lineno;
+	
+			snprintf(filename, sizeof(filename), "%s/postmaster.pid",
+					 cluster->pgdata);
+			if ((fp = fopen(filename, "r")) == NULL)
+				pg_log(PG_FATAL, "Cannot open file %s: %m\n", filename);
+	
+			for (lineno = 1;
+				 lineno <= Max(LOCK_FILE_LINE_PORT, LOCK_FILE_LINE_SOCKET_DIR);
+				 lineno++)
+			{
+				if (fgets(line, sizeof(line), fp) == NULL)
+					pg_log(PG_FATAL, "Cannot read line %d from %s: %m\n", lineno, filename);
+	
+				/* potentially overwrite user-supplied value */
+				if (lineno == LOCK_FILE_LINE_PORT)
+					sscanf(line, "%hu", &old_cluster.port);
+				if (lineno == LOCK_FILE_LINE_SOCKET_DIR)
+				{
+					cluster->sockdir = pg_malloc(MAXPGPATH);
+					/* strip off newline */
+					sscanf(line, "%s\n", cluster->sockdir);
+				}
+			}
+			fclose(fp);
+	
+			/* warn of port number correction */
+			if (orig_port != DEF_PGUPORT && old_cluster.port != orig_port)
+				pg_log(PG_WARNING, "User-supplied old port number %hu corrected to %hu\n",
+				orig_port, cluster->port);
 		}
 	}
+	else
+		/* Can't get sockdir and pg_ctl -w can't use a non-default, use default */
+		cluster->sockdir = NULL;
+
 #else /* !HAVE_UNIX_SOCKETS */
 	cluster->sockdir = NULL;
 #endif

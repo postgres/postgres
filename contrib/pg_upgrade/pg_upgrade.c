@@ -86,10 +86,11 @@ main(int argc, char **argv)
 	setup(argv[0], live_check);
 
 	check_cluster_versions();
-	check_cluster_compatibility(live_check);
 
 	get_sock_dir(&old_cluster, live_check);
 	get_sock_dir(&new_cluster, false);
+
+	check_cluster_compatibility(live_check);
 
 	check_old_cluster(live_check, &sequence_script_file_name);
 
