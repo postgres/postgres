@@ -520,11 +520,10 @@ psql --username postgres --file script.sql postgres
   </para>
 
   <para>
-   If doing <option>--check</> with a running old server of a pre-9.1 version,
-   and the old server is using a Unix-domain socket directory that is
-   different from the default built into the new <productname>PostgreSQL</>
-   installation, set <envar>PGHOST</> to point to the socket location of the
-   old server.  (This is not relevant on Windows.)
+   If using a pre-9.1 old server that is using a non-default Unix-domain
+   socket directory or a default that differs from the default of the
+   new cluster, set <envar>PGHOST</> to point to the old server's socket
+   location.  (This is not relevant on Windows.)
   </para>
 
   <para>
