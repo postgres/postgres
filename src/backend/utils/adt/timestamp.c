@@ -3775,18 +3775,22 @@ isoweek2date(int woy, int *year, int *mon, int *mday)
 
 /* isoweekdate2date()
  *
- *	Convert an ISO 8601 week date (ISO year, ISO week and day of week) into a Gregorian date.
+ *	Convert an ISO 8601 week date (ISO year, ISO week) into a Gregorian date.
+ *	Gregorian day of week sent so weekday strings can be supplied.
  *	Populates year, mon, and mday with the correct Gregorian values.
  *	year must be passed in as the ISO year.
  */
 void
-isoweekdate2date(int isoweek, int isowday, int *year, int *mon, int *mday)
+isoweekdate2date(int isoweek, int wday, int *year, int *mon, int *mday)
 {
 	int			jday;
 
 	jday = isoweek2j(*year, isoweek);
-	jday += isowday - 1;
-
+	/* convert Gregorian week start (Sunday=1) to ISO week start (Monday=1) */
+	if (wday > 1)
+		jday += wday - 2;
+	else
+		jday += 6;
 	j2date(jday, year, mon, mday);
 }
 

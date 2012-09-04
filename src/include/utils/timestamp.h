@@ -236,7 +236,7 @@ extern int	timestamp_cmp_internal(Timestamp dt1, Timestamp dt2);
 
 extern int	isoweek2j(int year, int week);
 extern void isoweek2date(int woy, int *year, int *mon, int *mday);
-extern void isoweekdate2date(int isoweek, int isowday, int *year, int *mon, int *mday);
+extern void isoweekdate2date(int isoweek, int wday, int *year, int *mon, int *mday);
 extern int	date2isoweek(int year, int mon, int mday);
 extern int	date2isoyear(int year, int mon, int mday);
 extern int	date2isoyearday(int year, int mon, int mday);
