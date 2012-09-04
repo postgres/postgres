@@ -450,6 +450,9 @@ create_script_for_cluster_analyze(char **analyze_script_file_name)
 #ifndef WIN32
 	/* add shebang header */
 	fprintf(script, "#!/bin/sh\n\n");
+#else
+	/* suppress command echoing */
+	fprintf(script, "@echo off");
 #endif
 
 	fprintf(script, "echo %sThis script will generate minimal optimizer statistics rapidly%s\n",
@@ -460,7 +463,7 @@ create_script_for_cluster_analyze(char **analyze_script_file_name)
 			ECHO_QUOTE, ECHO_QUOTE);
 	fprintf(script, "echo %shave the default level of optimizer statistics.%s\n",
 			ECHO_QUOTE, ECHO_QUOTE);
-	fprintf(script, "echo\n\n");
+	fprintf(script, "echo%s\n\n", ECHO_BLANK);
 
 	fprintf(script, "echo %sIf you have used ALTER TABLE to modify the statistics target for%s\n",
 			ECHO_QUOTE, ECHO_QUOTE);
@@ -468,7 +471,7 @@ create_script_for_cluster_analyze(char **analyze_script_file_name)
 			ECHO_QUOTE, ECHO_QUOTE);
 	fprintf(script, "echo %srunning this script because they will delay fast statistics generation.%s\n",
 			ECHO_QUOTE, ECHO_QUOTE);
-	fprintf(script, "echo\n\n");
+	fprintf(script, "echo%s\n\n", ECHO_BLANK);
 
 	fprintf(script, "echo %sIf you would like default statistics as quickly as possible, cancel%s\n",
 			ECHO_QUOTE, ECHO_QUOTE);
@@ -478,7 +481,7 @@ create_script_for_cluster_analyze(char **analyze_script_file_name)
 	/* Did we copy the free space files? */
 			(GET_MAJOR_VERSION(old_cluster.major_version) >= 804) ?
 			"--analyze-only" : "--analyze", ECHO_QUOTE);
-	fprintf(script, "echo\n\n");
+	fprintf(script, "echo%s\n\n", ECHO_BLANK);
 
 #ifndef WIN32
 	fprintf(script, "sleep 2\n");
@@ -496,12 +499,12 @@ create_script_for_cluster_analyze(char **analyze_script_file_name)
 	fprintf(script, "echo %s--------------------------------------------------%s\n",
 			ECHO_QUOTE, ECHO_QUOTE);
 	fprintf(script, "vacuumdb --all --analyze-only\n");
-	fprintf(script, "echo\n");
+	fprintf(script, "echo%s\n", ECHO_BLANK);
 	fprintf(script, "echo %sThe server is now available with minimal optimizer statistics.%s\n",
 			ECHO_QUOTE, ECHO_QUOTE);
 	fprintf(script, "echo %sQuery performance will be optimal once this script completes.%s\n",
 			ECHO_QUOTE, ECHO_QUOTE);
-	fprintf(script, "echo\n\n");
+	fprintf(script, "echo%s\n\n", ECHO_BLANK);
 
 #ifndef WIN32
 	fprintf(script, "sleep 2\n");
@@ -517,7 +520,7 @@ create_script_for_cluster_analyze(char **analyze_script_file_name)
 	fprintf(script, "echo %s---------------------------------------------------%s\n",
 			ECHO_QUOTE, ECHO_QUOTE);
 	fprintf(script, "vacuumdb --all --analyze-only\n");
-	fprintf(script, "echo\n\n");
+	fprintf(script, "echo%s\n\n", ECHO_BLANK);
 
 #ifndef WIN32
 	fprintf(script, "unset PGOPTIONS\n");
@@ -534,7 +537,7 @@ create_script_for_cluster_analyze(char **analyze_script_file_name)
 			(GET_MAJOR_VERSION(old_cluster.major_version) >= 804) ?
 			"--analyze-only" : "--analyze");
 
-	fprintf(script, "echo\n\n");
+	fprintf(script, "echo%s\n\n", ECHO_BLANK);
 	fprintf(script, "echo %sDone%s\n",
 			ECHO_QUOTE, ECHO_QUOTE);
 

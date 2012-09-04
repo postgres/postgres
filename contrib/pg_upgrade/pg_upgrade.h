@@ -77,6 +77,7 @@ extern char *output_files[];
 #define RMDIR_CMD			"rm -rf"
 #define SCRIPT_EXT			"sh"
 #define ECHO_QUOTE	"'"
+#define ECHO_BLANK  ""
 #else
 #define pg_copy_file		CopyFile
 #define pg_mv_file			pgrename
@@ -88,6 +89,7 @@ extern char *output_files[];
 #define SCRIPT_EXT			"bat"
 #define EXE_EXT				".exe"
 #define ECHO_QUOTE	""
+#define ECHO_BLANK  "."
 #endif
 
 #define CLUSTER_NAME(cluster)	((cluster) == &old_cluster ? "old" : \
