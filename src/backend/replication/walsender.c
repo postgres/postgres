@@ -303,7 +303,7 @@ IdentifySystem(void)
 			 GetSystemIdentifier());
 	snprintf(tli, sizeof(tli), "%u", ThisTimeLineID);
 
-	logptr = am_cascading_walsender ? GetStandbyFlushRecPtr() : GetInsertRecPtr();
+	logptr = am_cascading_walsender ? GetStandbyFlushRecPtr(NULL) : GetInsertRecPtr();
 
 	snprintf(xpos, sizeof(xpos), "%X/%X", (uint32) (logptr >> 32), (uint32) logptr);
 
@@ -1137,7 +1137,31 @@ XLogSend(char *msgbuf, bool *caughtup)
 	 * subsequently crashes and restarts, slaves must not have applied any WAL
 	 * that gets lost on the master.
 	 */
-	SendRqstPtr = am_cascading_walsender ? GetStandbyFlushRecPtr() : GetFlushRecPtr();
+	if (am_cascading_walsender)
+	{
+		TimeLineID	currentTargetTLI;
+		SendRqstPtr = GetStandbyFlushRecPtr(&currentTargetTLI);
+
+		/*
+		 * If the recovery target timeline changed, bail out. It's a bit
+		 * unfortunate that we have to just disconnect, but there is no way
+		 * to tell the client that the timeline changed. We also don't know
+		 * exactly where the switch happened, so we cannot safely try to send
+		 * up to the switchover point before disconnecting.
+		 */
+		if (currentTargetTLI != ThisTimeLineID)
+		{
+			if (!walsender_ready_to_stop)
+				ereport(LOG,
+						(errmsg("terminating walsender process to force cascaded standby "
+								"to update timeline and reconnect")));
+			walsender_ready_to_stop = true;
+			*caughtup = true;
+			return;
+		}
+	}
+	else
+		SendRqstPtr = GetFlushRecPtr();
 
 	/* Quick exit if nothing to do */
 	if (XLByteLE(SendRqstPtr, sentPtr))
