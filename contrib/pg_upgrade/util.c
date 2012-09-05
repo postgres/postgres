@@ -81,10 +81,18 @@ pg_log(eLogType type, char *fmt,...)
 	/* fopen() on log_opts.internal might have failed, so check it */
 	if ((type != PG_VERBOSE || log_opts.verbose) && log_opts.internal != NULL)
 	{
-		fwrite(message, strlen(message), 1, log_opts.internal);
+		/*
+		 * There's nothing much we can do about it if fwrite fails, but some
+		 * platforms declare fwrite with warn_unused_result.  Do a little
+		 * dance with casting to void to shut up the compiler in such cases.
+		 */
+		size_t		rc;
+
+		rc = fwrite(message, strlen(message), 1, log_opts.internal);
 		/* if we are using OVERWRITE_MESSAGE, add newline to log file */
 		if (strchr(message, '\r') != NULL)
-			fwrite("\n", 1, 1, log_opts.internal);
+			rc = fwrite("\n", 1, 1, log_opts.internal);
+		(void) rc;
 		fflush(log_opts.internal);
 	}
 
