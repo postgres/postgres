@@ -2780,9 +2780,6 @@ XLogFileRead(XLogSegNo segno, int emode, TimeLineID tli,
 	 */
 	if (source == XLOG_FROM_ARCHIVE)
 	{
-		/* use volatile pointer to prevent code rearrangement */
-		volatile XLogCtlData *xlogctl = XLogCtl;
-		XLogRecPtr	endptr;
 		char		xlogfpath[MAXPGPATH];
 		bool		reload = false;
 		struct stat statbuf;
