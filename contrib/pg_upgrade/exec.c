@@ -63,8 +63,11 @@ exec_prog(const char *log_file, const char *opt_log_file,
 	if (written >= MAXCMDLEN)
 		pg_log(PG_FATAL, "command too long\n");
 
-	if ((log = fopen_priv(log_file, "a+")) == NULL)
+	if ((log = fopen_priv(log_file, "a")) == NULL)
 		pg_log(PG_FATAL, "cannot write to log file %s\n", log_file);
+#ifdef WIN32
+	fprintf(log, "\n\n");
+#endif
 	pg_log(PG_VERBOSE, "%s\n", cmd);
 	fprintf(log, "command: %s\n", cmd);
 
@@ -97,10 +100,13 @@ exec_prog(const char *log_file, const char *opt_log_file,
 
 #ifndef WIN32
 	/* 
-	 * Can't do this on Windows, postmaster will still hold the log file
-	 * open if the command was "pg_ctl start".
+	 *	We can't do this on Windows because it will keep the "pg_ctl start"
+	 *	output filename open until the server stops, so we do the \n\n above
+	 *	on that platform.  We use a unique filename for "pg_ctl start" that is
+	 *	never reused while the server is running, so it works fine.  We could
+	 *	log these commands to a third file, but that just adds complexity.
 	 */
-	if ((log = fopen_priv(log_file, "a+")) == NULL)
+	if ((log = fopen_priv(log_file, "a")) == NULL)
 		pg_log(PG_FATAL, "cannot write to log file %s\n", log_file);
 	fprintf(log, "\n\n");
 	fclose(log);

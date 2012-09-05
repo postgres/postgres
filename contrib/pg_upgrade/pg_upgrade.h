@@ -63,7 +63,11 @@ extern char *output_files[];
 #define SERVER_STOP_LOG_FILE	SERVER_LOG_FILE
 #else
 #define SERVER_START_LOG_FILE	"pg_upgrade_server_start.log"
-/* pg_ctl stop doesn't keep the log file open, so reuse UTILITY_LOG_FILE */
+/*
+ *	"pg_ctl start" keeps SERVER_START_LOG_FILE and SERVER_LOG_FILE open
+ *	while the server is running, so we use UTILITY_LOG_FILE for "pg_ctl
+ *	stop".
+ */
 #define SERVER_STOP_LOG_FILE	UTILITY_LOG_FILE
 #endif
 
