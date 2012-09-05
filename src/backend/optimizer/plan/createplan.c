@@ -84,7 +84,8 @@ static HashJoin *create_hashjoin_plan(PlannerInfo *root, HashPath *best_path,
 					 Plan *outer_plan, Plan *inner_plan);
 static Node *replace_nestloop_params(PlannerInfo *root, Node *expr);
 static Node *replace_nestloop_params_mutator(Node *node, PlannerInfo *root);
-static void identify_nestloop_extparams(PlannerInfo *root, Plan *subplan);
+static void process_subquery_nestloop_params(PlannerInfo *root,
+								 List *subplan_params);
 static List *fix_indexqual_references(PlannerInfo *root, IndexPath *index_path);
 static List *fix_indexorderby_references(PlannerInfo *root, IndexPath *index_path);
 static Node *fix_indexqual_operand(Node *node, IndexOptInfo *index, int indexcol);
@@ -188,6 +189,9 @@ create_plan(PlannerInfo *root, Path *best_path)
 {
 	Plan	   *plan;
 
+	/* plan_params should not be in use in current query level */
+	Assert(root->plan_params == NIL);
+
 	/* Initialize this module's private workspace in PlannerInfo */
 	root->curOuterRels = NULL;
 	root->curOuterParams = NIL;
@@ -198,6 +202,12 @@ create_plan(PlannerInfo *root, Path *best_path)
 	/* Check we successfully assigned all NestLoopParams to plan nodes */
 	if (root->curOuterParams != NIL)
 		elog(ERROR, "failed to assign all NestLoopParams to plan nodes");
+
+	/*
+	 * Reset plan_params to ensure param IDs used for nestloop params are not
+	 * re-used later
+	 */
+	root->plan_params = NIL;
 
 	return plan;
 }
@@ -1662,7 +1672,8 @@ create_subqueryscan_plan(PlannerInfo *root, Path *best_path,
 	{
 		scan_clauses = (List *)
 			replace_nestloop_params(root, (Node *) scan_clauses);
-		identify_nestloop_extparams(root, best_path->parent->subplan);
+		process_subquery_nestloop_params(root,
+										 best_path->parent->subplan_params);
 	}
 
 	scan_plan = make_subqueryscan(tlist,
@@ -2620,9 +2631,12 @@ replace_nestloop_params_mutator(Node *node, PlannerInfo *root)
 }
 
 /*
- * identify_nestloop_extparams
- *	  Identify extParams of a parameterized subquery that need to be fed
+ * process_subquery_nestloop_params
+ *	  Handle params of a parameterized subquery that need to be fed
  *	  from an outer nestloop.
+ *
+ * Currently, that would be *all* params that a subquery in FROM has demanded
+ * from the current query level, since they must be LATERAL references.
  *
  * The subplan's references to the outer variables are already represented
  * as PARAM_EXEC Params, so we need not modify the subplan here.  What we
@@ -2630,20 +2644,13 @@ replace_nestloop_params_mutator(Node *node, PlannerInfo *root)
  * nestloop plan node that it must provide these values.
  */
 static void
-identify_nestloop_extparams(PlannerInfo *root, Plan *subplan)
+process_subquery_nestloop_params(PlannerInfo *root, List *subplan_params)
 {
-	Bitmapset  *tmpset;
-	int			paramid;
+	ListCell   *ppl;
 
-	/* Examine each extParam of the subquery's plan */
-	tmpset = bms_copy(subplan->extParam);
-	while ((paramid = bms_first_member(tmpset)) >= 0)
+	foreach(ppl, subplan_params)
 	{
-		PlannerParamItem *pitem = list_nth(root->glob->paramlist, paramid);
-
-		/* Ignore anything coming from an upper query level */
-		if (pitem->abslevel != root->query_level)
-			continue;
+		PlannerParamItem *pitem = (PlannerParamItem *) lfirst(ppl);
 
 		if (IsA(pitem->item, Var))
 		{
@@ -2651,14 +2658,14 @@ identify_nestloop_extparams(PlannerInfo *root, Plan *subplan)
 			NestLoopParam *nlp;
 			ListCell   *lc;
 
-			/* If not from a nestloop outer rel, nothing to do */
+			/* If not from a nestloop outer rel, complain */
 			if (!bms_is_member(var->varno, root->curOuterRels))
-				continue;
+				elog(ERROR, "non-LATERAL parameter required by subquery");
 			/* Is this param already listed in root->curOuterParams? */
 			foreach(lc, root->curOuterParams)
 			{
 				nlp = (NestLoopParam *) lfirst(lc);
-				if (nlp->paramno == paramid)
+				if (nlp->paramno == pitem->paramId)
 				{
 					Assert(equal(var, nlp->paramval));
 					/* Present, so nothing to do */
@@ -2669,7 +2676,7 @@ identify_nestloop_extparams(PlannerInfo *root, Plan *subplan)
 			{
 				/* No, so add it */
 				nlp = makeNode(NestLoopParam);
-				nlp->paramno = paramid;
+				nlp->paramno = pitem->paramId;
 				nlp->paramval = copyObject(var);
 				root->curOuterParams = lappend(root->curOuterParams, nlp);
 			}
@@ -2680,22 +2687,15 @@ identify_nestloop_extparams(PlannerInfo *root, Plan *subplan)
 			NestLoopParam *nlp;
 			ListCell   *lc;
 
-			/*
-			 * If not from a nestloop outer rel, nothing to do.  We use
-			 * bms_overlap as a cheap/quick test to see if the PHV might be
-			 * evaluated in the outer rels, and then grab its PlaceHolderInfo
-			 * to tell for sure.
-			 */
-			if (!bms_overlap(phv->phrels, root->curOuterRels))
-				continue;
+			/* If not from a nestloop outer rel, complain */
 			if (!bms_is_subset(find_placeholder_info(root, phv, false)->ph_eval_at,
 							   root->curOuterRels))
-				continue;
+				elog(ERROR, "non-LATERAL parameter required by subquery");
 			/* Is this param already listed in root->curOuterParams? */
 			foreach(lc, root->curOuterParams)
 			{
 				nlp = (NestLoopParam *) lfirst(lc);
-				if (nlp->paramno == paramid)
+				if (nlp->paramno == pitem->paramId)
 				{
 					Assert(equal(phv, nlp->paramval));
 					/* Present, so nothing to do */
@@ -2706,13 +2706,14 @@ identify_nestloop_extparams(PlannerInfo *root, Plan *subplan)
 			{
 				/* No, so add it */
 				nlp = makeNode(NestLoopParam);
-				nlp->paramno = paramid;
+				nlp->paramno = pitem->paramId;
 				nlp->paramval = copyObject(phv);
 				root->curOuterParams = lappend(root->curOuterParams, nlp);
 			}
 		}
+		else
+			elog(ERROR, "unexpected type of subquery parameter");
 	}
-	bms_free(tmpset);
 }
 
 /*

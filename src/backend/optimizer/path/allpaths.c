@@ -1145,12 +1145,19 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	else
 		tuple_fraction = root->tuple_fraction;
 
+	/* plan_params should not be in use in current query level */
+	Assert(root->plan_params == NIL);
+
 	/* Generate the plan for the subquery */
 	rel->subplan = subquery_planner(root->glob, subquery,
 									root,
 									false, tuple_fraction,
 									&subroot);
 	rel->subroot = subroot;
+
+	/* Isolate the params needed by this specific subplan */
+	rel->subplan_params = root->plan_params;
+	root->plan_params = NIL;
 
 	/*
 	 * It's possible that constraint exclusion proved the subquery empty. If

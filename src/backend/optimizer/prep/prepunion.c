@@ -238,6 +238,9 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 		 */
 		rel = build_simple_rel(root, rtr->rtindex, RELOPT_BASEREL);
 
+		/* plan_params should not be in use in current query level */
+		Assert(root->plan_params == NIL);
+
 		/*
 		 * Generate plan for primitive subquery
 		 */
@@ -249,6 +252,13 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 		/* Save subroot and subplan in RelOptInfo for setrefs.c */
 		rel->subplan = subplan;
 		rel->subroot = subroot;
+
+		/*
+		 * It should not be possible for the primitive query to contain any
+		 * cross-references to other primitive queries in the setop tree.
+		 */
+		if (root->plan_params)
+			elog(ERROR, "unexpected outer reference in set operation subquery");
 
 		/*
 		 * Estimate number of groups if caller wants it.  If the subquery used

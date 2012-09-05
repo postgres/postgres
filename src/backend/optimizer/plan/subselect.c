@@ -54,6 +54,7 @@ typedef struct finalize_primnode_context
 
 
 static Node *build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
+			  List *plan_params,
 			  SubLinkType subLinkType, Node *testexpr,
 			  bool adjust_testexpr, bool unknownEqFalse);
 static List *generate_subquery_params(PlannerInfo *root, List *tlist,
@@ -82,35 +83,42 @@ static bool finalize_primnode(Node *node, finalize_primnode_context *context);
 
 
 /*
- * Select a PARAM_EXEC number to identify the given Var.
- * If the Var already has a param slot, return that one.
+ * Select a PARAM_EXEC number to identify the given Var as a parameter for
+ * the current subquery, or for a nestloop's inner scan.
+ * If the Var already has a param in the current context, return that one.
  */
 static int
 assign_param_for_var(PlannerInfo *root, Var *var)
 {
 	ListCell   *ppl;
 	PlannerParamItem *pitem;
-	Index		abslevel;
-	int			i;
+	Index		levelsup;
 
-	abslevel = root->query_level - var->varlevelsup;
+	/* Find the query level the Var belongs to */
+	for (levelsup = var->varlevelsup; levelsup > 0; levelsup--)
+		root = root->parent_root;
 
-	/* If there's already a paramlist entry for this same Var, just use it */
-	i = 0;
-	foreach(ppl, root->glob->paramlist)
+	/* If there's already a matching PlannerParamItem there, just use it */
+	foreach(ppl, root->plan_params)
 	{
 		pitem = (PlannerParamItem *) lfirst(ppl);
-		if (pitem->abslevel == abslevel && IsA(pitem->item, Var))
+		if (IsA(pitem->item, Var))
 		{
 			Var		   *pvar = (Var *) pitem->item;
 
+			/*
+			 * This comparison must match _equalVar(), except for ignoring
+			 * varlevelsup.  Note that _equalVar() ignores the location.
+			 */
 			if (pvar->varno == var->varno &&
 				pvar->varattno == var->varattno &&
 				pvar->vartype == var->vartype &&
-				pvar->vartypmod == var->vartypmod)
-				return i;
+				pvar->vartypmod == var->vartypmod &&
+				pvar->varcollid == var->varcollid &&
+				pvar->varnoold == var->varnoold &&
+				pvar->varoattno == var->varoattno)
+				return pitem->paramId;
 		}
-		i++;
 	}
 
 	/* Nope, so make a new one */
@@ -119,12 +127,11 @@ assign_param_for_var(PlannerInfo *root, Var *var)
 
 	pitem = makeNode(PlannerParamItem);
 	pitem->item = (Node *) var;
-	pitem->abslevel = abslevel;
+	pitem->paramId = root->glob->nParamExec++;
 
-	root->glob->paramlist = lappend(root->glob->paramlist, pitem);
+	root->plan_params = lappend(root->plan_params, pitem);
 
-	/* i is already the correct list index for the new item */
-	return i;
+	return pitem->paramId;
 }
 
 /*
@@ -139,16 +146,7 @@ replace_outer_var(PlannerInfo *root, Var *var)
 
 	Assert(var->varlevelsup > 0 && var->varlevelsup < root->query_level);
 
-	/*
-	 * Find the Var in root->glob->paramlist, or add it if not present.
-	 *
-	 * NOTE: in sufficiently complex querytrees, it is possible for the same
-	 * varno/abslevel to refer to different RTEs in different parts of the
-	 * parsetree, so that different fields might end up sharing the same Param
-	 * number.	As long as we check the vartype/typmod as well, I believe that
-	 * this sort of aliasing will cause no trouble.  The correct field should
-	 * get stored into the Param slot at execution in each part of the tree.
-	 */
+	/* Find the Var in the appropriate plan_params, or add it if not present */
 	i = assign_param_for_var(root, var);
 
 	retval = makeNode(Param);
@@ -157,7 +155,7 @@ replace_outer_var(PlannerInfo *root, Var *var)
 	retval->paramtype = var->vartype;
 	retval->paramtypmod = var->vartypmod;
 	retval->paramcollid = var->varcollid;
-	retval->location = -1;
+	retval->location = var->location;
 
 	return retval;
 }
@@ -166,8 +164,7 @@ replace_outer_var(PlannerInfo *root, Var *var)
  * Generate a Param node to replace the given Var, which will be supplied
  * from an upper NestLoop join node.
  *
- * Because we allow nestloop and subquery Params to alias each other,
- * this is effectively the same as replace_outer_var, except that we expect
+ * This is effectively the same as replace_outer_var, except that we expect
  * the Var to be local to the current query level.
  */
 Param *
@@ -186,14 +183,15 @@ assign_nestloop_param_var(PlannerInfo *root, Var *var)
 	retval->paramtype = var->vartype;
 	retval->paramtypmod = var->vartypmod;
 	retval->paramcollid = var->varcollid;
-	retval->location = -1;
+	retval->location = var->location;
 
 	return retval;
 }
 
 /*
- * Select a PARAM_EXEC number to identify the given PlaceHolderVar.
- * If the PlaceHolderVar already has a param slot, return that one.
+ * Select a PARAM_EXEC number to identify the given PlaceHolderVar as a
+ * parameter for the current subquery, or for a nestloop's inner scan.
+ * If the PHV already has a param in the current context, return that one.
  *
  * This is just like assign_param_for_var, except for PlaceHolderVars.
  */
@@ -202,25 +200,24 @@ assign_param_for_placeholdervar(PlannerInfo *root, PlaceHolderVar *phv)
 {
 	ListCell   *ppl;
 	PlannerParamItem *pitem;
-	Index		abslevel;
-	int			i;
+	Index		levelsup;
 
-	abslevel = root->query_level - phv->phlevelsup;
+	/* Find the query level the PHV belongs to */
+	for (levelsup = phv->phlevelsup; levelsup > 0; levelsup--)
+		root = root->parent_root;
 
-	/* If there's already a paramlist entry for this same PHV, just use it */
-	i = 0;
-	foreach(ppl, root->glob->paramlist)
+	/* If there's already a matching PlannerParamItem there, just use it */
+	foreach(ppl, root->plan_params)
 	{
 		pitem = (PlannerParamItem *) lfirst(ppl);
-		if (pitem->abslevel == abslevel && IsA(pitem->item, PlaceHolderVar))
+		if (IsA(pitem->item, PlaceHolderVar))
 		{
 			PlaceHolderVar *pphv = (PlaceHolderVar *) pitem->item;
 
 			/* We assume comparing the PHIDs is sufficient */
 			if (pphv->phid == phv->phid)
-				return i;
+				return pitem->paramId;
 		}
-		i++;
 	}
 
 	/* Nope, so make a new one */
@@ -233,12 +230,11 @@ assign_param_for_placeholdervar(PlannerInfo *root, PlaceHolderVar *phv)
 
 	pitem = makeNode(PlannerParamItem);
 	pitem->item = (Node *) phv;
-	pitem->abslevel = abslevel;
+	pitem->paramId = root->glob->nParamExec++;
 
-	root->glob->paramlist = lappend(root->glob->paramlist, pitem);
+	root->plan_params = lappend(root->plan_params, pitem);
 
-	/* i is already the correct list index for the new item */
-	return i;
+	return pitem->paramId;
 }
 
 /*
@@ -255,10 +251,7 @@ replace_outer_placeholdervar(PlannerInfo *root, PlaceHolderVar *phv)
 
 	Assert(phv->phlevelsup > 0 && phv->phlevelsup < root->query_level);
 
-	/*
-	 * Find the PlaceHolderVar in root->glob->paramlist, or add it if not
-	 * present.
-	 */
+	/* Find the PHV in the appropriate plan_params, or add it if not present */
 	i = assign_param_for_placeholdervar(root, phv);
 
 	retval = makeNode(Param);
@@ -308,11 +301,13 @@ replace_outer_agg(PlannerInfo *root, Aggref *agg)
 {
 	Param	   *retval;
 	PlannerParamItem *pitem;
-	Index		abslevel;
-	int			i;
+	Index		levelsup;
 
 	Assert(agg->agglevelsup > 0 && agg->agglevelsup < root->query_level);
-	abslevel = root->query_level - agg->agglevelsup;
+
+	/* Find the query level the Aggref belongs to */
+	for (levelsup = agg->agglevelsup; levelsup > 0; levelsup--)
+		root = root->parent_root;
 
 	/*
 	 * It does not seem worthwhile to try to match duplicate outer aggs. Just
@@ -324,18 +319,17 @@ replace_outer_agg(PlannerInfo *root, Aggref *agg)
 
 	pitem = makeNode(PlannerParamItem);
 	pitem->item = (Node *) agg;
-	pitem->abslevel = abslevel;
+	pitem->paramId = root->glob->nParamExec++;
 
-	root->glob->paramlist = lappend(root->glob->paramlist, pitem);
-	i = list_length(root->glob->paramlist) - 1;
+	root->plan_params = lappend(root->plan_params, pitem);
 
 	retval = makeNode(Param);
 	retval->paramkind = PARAM_EXEC;
-	retval->paramid = i;
+	retval->paramid = pitem->paramId;
 	retval->paramtype = agg->aggtype;
 	retval->paramtypmod = -1;
 	retval->paramcollid = agg->aggcollid;
-	retval->location = -1;
+	retval->location = agg->location;
 
 	return retval;
 }
@@ -343,28 +337,23 @@ replace_outer_agg(PlannerInfo *root, Aggref *agg)
 /*
  * Generate a new Param node that will not conflict with any other.
  *
- * This is used to allocate PARAM_EXEC slots for subplan outputs.
+ * This is used to create Params representing subplan outputs.
+ * We don't need to build a PlannerParamItem for such a Param, but we do
+ * need to record the PARAM_EXEC slot number as being allocated.
  */
 static Param *
 generate_new_param(PlannerInfo *root, Oid paramtype, int32 paramtypmod,
 				   Oid paramcollation)
 {
 	Param	   *retval;
-	PlannerParamItem *pitem;
 
 	retval = makeNode(Param);
 	retval->paramkind = PARAM_EXEC;
-	retval->paramid = list_length(root->glob->paramlist);
+	retval->paramid = root->glob->nParamExec++;
 	retval->paramtype = paramtype;
 	retval->paramtypmod = paramtypmod;
 	retval->paramcollid = paramcollation;
 	retval->location = -1;
-
-	pitem = makeNode(PlannerParamItem);
-	pitem->item = (Node *) retval;
-	pitem->abslevel = root->query_level;
-
-	root->glob->paramlist = lappend(root->glob->paramlist, pitem);
 
 	return retval;
 }
@@ -374,17 +363,13 @@ generate_new_param(PlannerInfo *root, Oid paramtype, int32 paramtypmod,
  * is not actually used to carry a value at runtime).  Such parameters are
  * used for special runtime signaling purposes, such as connecting a
  * recursive union node to its worktable scan node or forcing plan
- * re-evaluation within the EvalPlanQual mechanism.
+ * re-evaluation within the EvalPlanQual mechanism.  No actual Param node
+ * exists with this ID, however.
  */
 int
 SS_assign_special_param(PlannerInfo *root)
 {
-	Param	   *param;
-
-	/* We generate a Param of datatype INTERNAL */
-	param = generate_new_param(root, INTERNALOID, -1, InvalidOid);
-	/* ... but the caller only cares about its ID */
-	return param->paramid;
+	return root->glob->nParamExec++;
 }
 
 /*
@@ -445,6 +430,7 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
 	double		tuple_fraction;
 	Plan	   *plan;
 	PlannerInfo *subroot;
+	List	   *plan_params;
 	Node	   *result;
 
 	/*
@@ -488,6 +474,9 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
 	else
 		tuple_fraction = 0.0;	/* default behavior */
 
+	/* plan_params should not be in use in current query level */
+	Assert(root->plan_params == NIL);
+
 	/*
 	 * Generate the plan for the subquery.
 	 */
@@ -496,8 +485,12 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
 							false, tuple_fraction,
 							&subroot);
 
+	/* Isolate the params needed by this specific subplan */
+	plan_params = root->plan_params;
+	root->plan_params = NIL;
+
 	/* And convert to SubPlan or InitPlan format. */
-	result = build_subplan(root, plan, subroot,
+	result = build_subplan(root, plan, subroot, plan_params,
 						   subLinkType, testexpr, true, isTopQual);
 
 	/*
@@ -530,6 +523,10 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
 									false, 0.0,
 									&subroot);
 
+			/* Isolate the params needed by this specific subplan */
+			plan_params = root->plan_params;
+			root->plan_params = NIL;
+
 			/* Now we can check if it'll fit in work_mem */
 			if (subplan_is_hashable(plan))
 			{
@@ -538,6 +535,7 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
 
 				/* OK, convert to SubPlan format. */
 				hashplan = (SubPlan *) build_subplan(root, plan, subroot,
+													 plan_params,
 													 ANY_SUBLINK, newtestexpr,
 													 false, true);
 				/* Check we got what we expected */
@@ -566,14 +564,14 @@ make_subplan(PlannerInfo *root, Query *orig_subquery, SubLinkType subLinkType,
  */
 static Node *
 build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
+			  List *plan_params,
 			  SubLinkType subLinkType, Node *testexpr,
 			  bool adjust_testexpr, bool unknownEqFalse)
 {
 	Node	   *result;
 	SubPlan    *splan;
 	bool		isInitPlan;
-	Bitmapset  *tmpset;
-	int			paramid;
+	ListCell   *lc;
 
 	/*
 	 * Initialize the SubPlan node.  Note plan_id, plan_name, and cost fields
@@ -595,36 +593,26 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 	 * Make parParam and args lists of param IDs and expressions that current
 	 * query level will pass to this child plan.
 	 */
-	tmpset = bms_copy(plan->extParam);
-	while ((paramid = bms_first_member(tmpset)) >= 0)
+	foreach(lc, plan_params)
 	{
-		PlannerParamItem *pitem = list_nth(root->glob->paramlist, paramid);
+		PlannerParamItem *pitem = (PlannerParamItem *) lfirst(lc);
+		Node	   *arg = pitem->item;
 
-		if (pitem->abslevel == root->query_level)
-		{
-			Node	   *arg;
+		/*
+		 * The Var, PlaceHolderVar, or Aggref has already been adjusted to
+		 * have the correct varlevelsup, phlevelsup, or agglevelsup.
+		 *
+		 * If it's a PlaceHolderVar or Aggref, its arguments might contain
+		 * SubLinks, which have not yet been processed (see the comments for
+		 * SS_replace_correlation_vars).  Do that now.
+		 */
+		if (IsA(arg, PlaceHolderVar) ||
+			IsA(arg, Aggref))
+			arg = SS_process_sublinks(root, arg, false);
 
-			/*
-			 * The Var, PlaceHolderVar, or Aggref has already been adjusted to
-			 * have the correct varlevelsup, phlevelsup, or agglevelsup.  We
-			 * probably don't even need to copy it again, but be safe.
-			 */
-			arg = copyObject(pitem->item);
-
-			/*
-			 * If it's a PlaceHolderVar or Aggref, its arguments might contain
-			 * SubLinks, which have not yet been processed (see the comments
-			 * for SS_replace_correlation_vars).  Do that now.
-			 */
-			if (IsA(arg, PlaceHolderVar) ||
-				IsA(arg, Aggref))
-				arg = SS_process_sublinks(root, arg, false);
-
-			splan->parParam = lappend_int(splan->parParam, paramid);
-			splan->args = lappend(splan->args, arg);
-		}
+		splan->parParam = lappend_int(splan->parParam, pitem->paramId);
+		splan->args = lappend(splan->args, arg);
 	}
-	bms_free(tmpset);
 
 	/*
 	 * Un-correlated or undirect correlated plans of EXISTS, EXPR, ARRAY, or
@@ -1045,9 +1033,7 @@ SS_process_ctes(PlannerInfo *root)
 		Plan	   *plan;
 		PlannerInfo *subroot;
 		SubPlan    *splan;
-		Bitmapset  *tmpset;
 		int			paramid;
-		Param	   *prm;
 
 		/*
 		 * Ignore SELECT CTEs that are not actually referenced anywhere.
@@ -1065,6 +1051,9 @@ SS_process_ctes(PlannerInfo *root)
 		 */
 		subquery = (Query *) copyObject(cte->ctequery);
 
+		/* plan_params should not be in use in current query level */
+		Assert(root->plan_params == NIL);
+
 		/*
 		 * Generate the plan for the CTE query.  Always plan for full
 		 * retrieval --- we don't have enough info to predict otherwise.
@@ -1073,6 +1062,14 @@ SS_process_ctes(PlannerInfo *root)
 								root,
 								cte->cterecursive, 0.0,
 								&subroot);
+
+		/*
+		 * Since the current query level doesn't yet contain any RTEs, it
+		 * should not be possible for the CTE to have requested parameters of
+		 * this level.
+		 */
+		if (root->plan_params)
+			elog(ERROR, "unexpected outer reference in CTE query");
 
 		/*
 		 * Make a SubPlan node for it.	This is just enough unlike
@@ -1093,35 +1090,22 @@ SS_process_ctes(PlannerInfo *root)
 		splan->args = NIL;
 
 		/*
-		 * Make parParam and args lists of param IDs and expressions that
-		 * current query level will pass to this child plan.  Even though this
-		 * is an initplan, there could be side-references to earlier
-		 * initplan's outputs, specifically their CTE output parameters.
+		 * The node can't have any inputs (since it's an initplan), so the
+		 * parParam and args lists remain empty.  (It could contain references
+		 * to earlier CTEs' output param IDs, but CTE outputs are not
+		 * propagated via the args list.)
 		 */
-		tmpset = bms_copy(plan->extParam);
-		while ((paramid = bms_first_member(tmpset)) >= 0)
-		{
-			PlannerParamItem *pitem = list_nth(root->glob->paramlist, paramid);
-
-			if (pitem->abslevel == root->query_level)
-			{
-				prm = (Param *) pitem->item;
-				if (!IsA(prm, Param) ||
-					prm->paramtype != INTERNALOID)
-					elog(ERROR, "bogus local parameter passed to WITH query");
-
-				splan->parParam = lappend_int(splan->parParam, paramid);
-				splan->args = lappend(splan->args, copyObject(prm));
-			}
-		}
-		bms_free(tmpset);
 
 		/*
-		 * Assign a param to represent the query output.  We only really care
-		 * about reserving a parameter ID number.
+		 * Assign a param ID to represent the CTE's output.  No ordinary
+		 * "evaluation" of this param slot ever happens, but we use the param
+		 * ID for setParam/chgParam signaling just as if the CTE plan were
+		 * returning a simple scalar output.  (Also, the executor abuses the
+		 * ParamExecData slot for this param ID for communication among
+		 * multiple CteScan nodes that might be scanning this CTE.)
 		 */
-		prm = generate_new_param(root, INTERNALOID, -1, InvalidOid);
-		splan->setParam = list_make1_int(prm->paramid);
+		paramid = SS_assign_special_param(root);
+		splan->setParam = list_make1_int(paramid);
 
 		/*
 		 * Add the subplan and its PlannerInfo to the global lists.
@@ -1932,7 +1916,7 @@ SS_finalize_plan(PlannerInfo *root, Plan *plan, bool attach_initplans)
 			   *initExtParam,
 			   *initSetParam;
 	Cost		initplan_cost;
-	int			paramid;
+	PlannerInfo *proot;
 	ListCell   *l;
 
 	/*
@@ -1964,31 +1948,36 @@ SS_finalize_plan(PlannerInfo *root, Plan *plan, bool attach_initplans)
 	/*
 	 * Now determine the set of params that are validly referenceable in this
 	 * query level; to wit, those available from outer query levels plus the
-	 * output parameters of any initPlans.	(We do not include output
+	 * output parameters of any local initPlans.  (We do not include output
 	 * parameters of regular subplans.	Those should only appear within the
 	 * testexpr of SubPlan nodes, and are taken care of locally within
 	 * finalize_primnode.  Likewise, special parameters that are generated by
 	 * nodes such as ModifyTable are handled within finalize_plan.)
-	 *
-	 * Note: this is a bit overly generous since some parameters of upper
-	 * query levels might belong to query subtrees that don't include this
-	 * query, or might be nestloop params that won't be passed down at all.
-	 * However, valid_params is only a debugging crosscheck, so it doesn't
-	 * seem worth expending lots of cycles to try to be exact.
 	 */
 	valid_params = bms_copy(initSetParam);
-	paramid = 0;
-	foreach(l, root->glob->paramlist)
+	for (proot = root->parent_root; proot != NULL; proot = proot->parent_root)
 	{
-		PlannerParamItem *pitem = (PlannerParamItem *) lfirst(l);
-
-		if (pitem->abslevel < root->query_level)
+		/* Include ordinary Var/PHV/Aggref params */
+		foreach(l, proot->plan_params)
 		{
-			/* valid outer-level parameter */
-			valid_params = bms_add_member(valid_params, paramid);
-		}
+			PlannerParamItem *pitem = (PlannerParamItem *) lfirst(l);
 
-		paramid++;
+			valid_params = bms_add_member(valid_params, pitem->paramId);
+		}
+		/* Include any outputs of outer-level initPlans */
+		foreach(l, proot->init_plans)
+		{
+			SubPlan    *initsubplan = (SubPlan *) lfirst(l);
+			ListCell   *l2;
+
+			foreach(l2, initsubplan->setParam)
+			{
+				valid_params = bms_add_member(valid_params, lfirst_int(l2));
+			}
+		}
+		/* Include worktable ID, if a recursive query is being planned */
+		if (proot->wt_param_id >= 0)
+			valid_params = bms_add_member(valid_params, proot->wt_param_id);
 	}
 
 	/*

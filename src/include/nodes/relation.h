@@ -75,8 +75,6 @@ typedef struct PlannerGlobal
 
 	ParamListInfo boundParams;	/* Param values provided to planner() */
 
-	List	   *paramlist;		/* to keep track of cross-level Params */
-
 	List	   *subplans;		/* Plans for SubPlan nodes */
 
 	List	   *subroots;		/* PlannerInfos for SubPlan nodes */
@@ -92,6 +90,8 @@ typedef struct PlannerGlobal
 	List	   *relationOids;	/* OIDs of relations the plan depends on */
 
 	List	   *invalItems;		/* other dependencies, as PlanInvalItems */
+
+	int			nParamExec;		/* number of PARAM_EXEC Params used */
 
 	Index		lastPHId;		/* highest PlaceHolderVar ID assigned */
 
@@ -126,6 +126,8 @@ typedef struct PlannerInfo
 	Index		query_level;	/* 1 at the outermost Query */
 
 	struct PlannerInfo *parent_root;	/* NULL at outermost Query */
+
+	List	   *plan_params;	/* list of PlannerParamItems, see below */
 
 	/*
 	 * simple_rel_array holds pointers to "base rels" and "other rels" (see
@@ -344,6 +346,7 @@ typedef struct PlannerInfo
  *		allvisfrac - fraction of disk pages that are marked all-visible
  *		subplan - plan for subquery (NULL if it's not a subquery)
  *		subroot - PlannerInfo for subquery (NULL if it's not a subquery)
+ *		subplan_params - list of PlannerParamItems to be passed to subquery
  *		fdwroutine - function hooks for FDW, if foreign table (else NULL)
  *		fdw_private - private state for FDW, if foreign table (else NULL)
  *
@@ -436,6 +439,7 @@ typedef struct RelOptInfo
 	/* use "struct Plan" to avoid including plannodes.h here */
 	struct Plan *subplan;		/* if subquery */
 	PlannerInfo *subroot;		/* if subquery */
+	List	   *subplan_params;	/* if subquery */
 	/* use "struct FdwRoutine" to avoid including fdwapi.h here */
 	struct FdwRoutine *fdwroutine;		/* if foreign table */
 	void	   *fdw_private;	/* if foreign table */
@@ -1507,23 +1511,26 @@ typedef struct MinMaxAggInfo
 } MinMaxAggInfo;
 
 /*
- * glob->paramlist keeps track of the PARAM_EXEC slots that we have decided
- * we need for the query.  At runtime these slots are used to pass values
- * around from one plan node to another.  They can be used to pass values
- * down into subqueries (for outer references in subqueries), or up out of
- * subqueries (for the results of a subplan), or from a NestLoop plan node
- * into its inner relation (when the inner scan is parameterized with values
- * from the outer relation).  The n'th entry in the list (n counts from 0)
- * corresponds to Param->paramid = n.
+ * At runtime, PARAM_EXEC slots are used to pass values around from one plan
+ * node to another.  They can be used to pass values down into subqueries (for
+ * outer references in subqueries), or up out of subqueries (for the results
+ * of a subplan), or from a NestLoop plan node into its inner relation (when
+ * the inner scan is parameterized with values from the outer relation).
+ * The planner is responsible for assigning nonconflicting PARAM_EXEC IDs to
+ * the PARAM_EXEC Params it generates.
  *
- * Each paramlist item shows the absolute query level it is associated with,
- * where the outermost query is level 1 and nested subqueries have higher
- * numbers.  The item the parameter slot represents can be one of four kinds:
+ * Outer references are managed via root->plan_params, which is a list of
+ * PlannerParamItems.  While planning a subquery, each parent query level's
+ * plan_params contains the values required from it by the current subquery.
+ * During create_plan(), we use plan_params to track values that must be
+ * passed from outer to inner sides of NestLoop plan nodes.
  *
- * A Var: the slot represents a variable of that level that must be passed
+ * The item a PlannerParamItem represents can be one of three kinds:
+ *
+ * A Var: the slot represents a variable of this level that must be passed
  * down because subqueries have outer references to it, or must be passed
- * from a NestLoop node of that level to its inner scan.  The varlevelsup
- * value in the Var will always be zero.
+ * from a NestLoop node to its inner scan.  The varlevelsup value in the Var
+ * will always be zero.
  *
  * A PlaceHolderVar: this works much like the Var case, except that the
  * entry is a PlaceHolderVar node with a contained expression.	The PHV
@@ -1535,25 +1542,27 @@ typedef struct MinMaxAggInfo
  * subquery.  The Aggref itself has agglevelsup = 0, and its argument tree
  * is adjusted to match in level.
  *
- * A Param: the slot holds the result of a subplan (it is a setParam item
- * for that subplan).  The absolute level shown for such items corresponds
- * to the parent query of the subplan.
- *
  * Note: we detect duplicate Var and PlaceHolderVar parameters and coalesce
- * them into one slot, but we do not bother to do this for Aggrefs, and it
- * would be incorrect to do so for Param slots.  Duplicate detection is
- * actually *necessary* for NestLoop parameters since it serves to match up
- * the usage of a Param (in the inner scan) with the assignment of the value
- * (in the NestLoop node). This might result in the same PARAM_EXEC slot being
- * used by multiple NestLoop nodes or SubPlan nodes, but no harm is done since
- * the same value would be assigned anyway.
+ * them into one slot, but we do not bother to do that for Aggrefs.
+ * The scope of duplicate-elimination only extends across the set of
+ * parameters passed from one query level into a single subquery, or for
+ * nestloop parameters across the set of nestloop parameters used in a single
+ * query level.  So there is no possibility of a PARAM_EXEC slot being used
+ * for conflicting purposes.
+ *
+ * In addition, PARAM_EXEC slots are assigned for Params representing outputs
+ * from subplans (values that are setParam items for those subplans).  These
+ * IDs need not be tracked via PlannerParamItems, since we do not need any
+ * duplicate-elimination nor later processing of the represented expressions.
+ * Instead, we just record the assignment of the slot number by incrementing
+ * root->glob->nParamExec.
  */
 typedef struct PlannerParamItem
 {
 	NodeTag		type;
 
-	Node	   *item;			/* the Var, PlaceHolderVar, Aggref, or Param */
-	Index		abslevel;		/* its absolute query level */
+	Node	   *item;			/* the Var, PlaceHolderVar, or Aggref */
+	int			paramId;		/* its assigned PARAM_EXEC slot number */
 } PlannerParamItem;
 
 /*

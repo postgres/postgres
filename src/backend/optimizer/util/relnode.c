@@ -119,6 +119,7 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	rel->allvisfrac = 0;
 	rel->subplan = NULL;
 	rel->subroot = NULL;
+	rel->subplan_params = NIL;
 	rel->fdwroutine = NULL;
 	rel->fdw_private = NULL;
 	rel->baserestrictinfo = NIL;
@@ -379,6 +380,7 @@ build_join_rel(PlannerInfo *root,
 	joinrel->allvisfrac = 0;
 	joinrel->subplan = NULL;
 	joinrel->subroot = NULL;
+	joinrel->subplan_params = NIL;
 	joinrel->fdwroutine = NULL;
 	joinrel->fdw_private = NULL;
 	joinrel->baserestrictinfo = NIL;

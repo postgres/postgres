@@ -155,7 +155,6 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	glob = makeNode(PlannerGlobal);
 
 	glob->boundParams = boundParams;
-	glob->paramlist = NIL;
 	glob->subplans = NIL;
 	glob->subroots = NIL;
 	glob->rewindPlanIDs = NULL;
@@ -164,6 +163,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	glob->resultRelations = NIL;
 	glob->relationOids = NIL;
 	glob->invalItems = NIL;
+	glob->nParamExec = 0;
 	glob->lastPHId = 0;
 	glob->lastRowMarkId = 0;
 	glob->transientPlan = false;
@@ -243,7 +243,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	result->rowMarks = glob->finalrowmarks;
 	result->relationOids = glob->relationOids;
 	result->invalItems = glob->invalItems;
-	result->nParamExec = list_length(glob->paramlist);
+	result->nParamExec = glob->nParamExec;
 
 	return result;
 }
@@ -295,6 +295,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	root->glob = glob;
 	root->query_level = parent_root ? parent_root->query_level + 1 : 1;
 	root->parent_root = parent_root;
+	root->plan_params = NIL;
 	root->planner_cxt = CurrentMemoryContext;
 	root->init_plans = NIL;
 	root->cte_plan_ids = NIL;
@@ -586,7 +587,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	 * and attach the initPlans to the top plan node.
 	 */
 	if (list_length(glob->subplans) != num_old_subplans ||
-		root->glob->paramlist != NIL)
+		root->glob->nParamExec > 0)
 		SS_finalize_plan(root, plan, true);
 
 	/* Return internal info if caller wants it */
