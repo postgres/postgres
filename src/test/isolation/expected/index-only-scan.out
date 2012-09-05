@@ -1,0 +1,41 @@
+Parsed test spec with 2 sessions
+
+starting permutation: rxwy1 c1 rywx2 c2
+step rxwy1: DELETE FROM taby WHERE id = (SELECT min(id) FROM tabx);
+step c1: COMMIT;
+step rywx2: DELETE FROM tabx WHERE id = (SELECT min(id) FROM taby);
+step c2: COMMIT;
+
+starting permutation: rxwy1 rywx2 c1 c2
+step rxwy1: DELETE FROM taby WHERE id = (SELECT min(id) FROM tabx);
+step rywx2: DELETE FROM tabx WHERE id = (SELECT min(id) FROM taby);
+step c1: COMMIT;
+step c2: COMMIT;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rxwy1 rywx2 c2 c1
+step rxwy1: DELETE FROM taby WHERE id = (SELECT min(id) FROM tabx);
+step rywx2: DELETE FROM tabx WHERE id = (SELECT min(id) FROM taby);
+step c2: COMMIT;
+step c1: COMMIT;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rywx2 rxwy1 c1 c2
+step rywx2: DELETE FROM tabx WHERE id = (SELECT min(id) FROM taby);
+step rxwy1: DELETE FROM taby WHERE id = (SELECT min(id) FROM tabx);
+step c1: COMMIT;
+step c2: COMMIT;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rywx2 rxwy1 c2 c1
+step rywx2: DELETE FROM tabx WHERE id = (SELECT min(id) FROM taby);
+step rxwy1: DELETE FROM taby WHERE id = (SELECT min(id) FROM tabx);
+step c2: COMMIT;
+step c1: COMMIT;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: rywx2 c2 rxwy1 c1
+step rywx2: DELETE FROM tabx WHERE id = (SELECT min(id) FROM taby);
+step c2: COMMIT;
+step rxwy1: DELETE FROM taby WHERE id = (SELECT min(id) FROM tabx);
+step c1: COMMIT;
