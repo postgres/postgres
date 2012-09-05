@@ -22,7 +22,7 @@ generate_old_dump(void)
 	 */
 	exec_prog(true,
 			  SYSTEMQUOTE "\"%s/pg_dumpall\" --port %d --username \"%s\" "
-			  "--schema-only --binary-upgrade > \"%s/" ALL_DUMP_FILE "\""
+			  "--schema-only --binary-upgrade -f \"%s/" ALL_DUMP_FILE "\""
 			  SYSTEMQUOTE, new_cluster.bindir, old_cluster.port, os_info.user, os_info.cwd);
 	check_ok();
 }
@@ -54,14 +54,19 @@ split_old_dump(void)
 	char		filename[MAXPGPATH];
 	bool		suppressed_username = false;
 
+	/* 
+	 * Open all files in binary mode to avoid line end translation on Windows,
+	 * both for input and output.
+	 */
+
 	snprintf(filename, sizeof(filename), "%s/%s", os_info.cwd, ALL_DUMP_FILE);
-	if ((all_dump = fopen(filename, "r")) == NULL)
+	if ((all_dump = fopen(filename, PG_BINARY_R)) == NULL)
 		pg_log(PG_FATAL, "Cannot open dump file %s\n", filename);
 	snprintf(filename, sizeof(filename), "%s/%s", os_info.cwd, GLOBALS_DUMP_FILE);
-	if ((globals_dump = fopen(filename, "w")) == NULL)
+	if ((globals_dump = fopen(filename, PG_BINARY_W)) == NULL)
 		pg_log(PG_FATAL, "Cannot write to dump file %s\n", filename);
 	snprintf(filename, sizeof(filename), "%s/%s", os_info.cwd, DB_DUMP_FILE);
-	if ((db_dump = fopen(filename, "w")) == NULL)
+	if ((db_dump = fopen(filename, PG_BINARY_W)) == NULL)
 		pg_log(PG_FATAL, "Cannot write to dump file %s\n", filename);
 	current_output = globals_dump;
 
