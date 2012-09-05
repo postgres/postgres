@@ -265,9 +265,9 @@ static void
 sepgsql_utility_command(Node *parsetree,
 						const char *queryString,
 						ParamListInfo params,
-						bool isTopLevel,
 						DestReceiver *dest,
-						char *completionTag)
+						char *completionTag,
+						ProcessUtilityContext context)
 {
 	sepgsql_context_info_t saved_context_info = sepgsql_context_info;
 	ListCell   *cell;
@@ -328,10 +328,10 @@ sepgsql_utility_command(Node *parsetree,
 
 		if (next_ProcessUtility_hook)
 			(*next_ProcessUtility_hook) (parsetree, queryString, params,
-										 isTopLevel, dest, completionTag);
+										 dest, completionTag, context);
 		else
 			standard_ProcessUtility(parsetree, queryString, params,
-									isTopLevel, dest, completionTag);
+									dest, completionTag, context);
 	}
 	PG_CATCH();
 	{

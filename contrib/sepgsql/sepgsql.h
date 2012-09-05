@@ -247,7 +247,7 @@ extern bool sepgsql_check_perms(const char *scontext,
 					uint16 tclass,
 					uint32 required,
 					const char *audit_name,
-					bool abort);
+					bool abort_on_violation);
 
 /*
  * uavc.c
@@ -257,12 +257,12 @@ extern bool sepgsql_avc_check_perms_label(const char *tcontext,
 							  uint16 tclass,
 							  uint32 required,
 							  const char *audit_name,
-							  bool abort);
+							  bool abort_on_violation);
 extern bool sepgsql_avc_check_perms(const ObjectAddress *tobject,
 						uint16 tclass,
 						uint32 required,
 						const char *audit_name,
-						bool abort);
+						bool abort_on_violation);
 extern char *sepgsql_avc_trusted_proc(Oid functionId);
 extern void sepgsql_avc_init(void);
 
@@ -285,7 +285,7 @@ extern Datum sepgsql_restorecon(PG_FUNCTION_ARGS);
 /*
  * dml.c
  */
-extern bool sepgsql_dml_privileges(List *rangeTabls, bool abort);
+extern bool sepgsql_dml_privileges(List *rangeTabls, bool abort_on_violation);
 
 /*
  * database.c

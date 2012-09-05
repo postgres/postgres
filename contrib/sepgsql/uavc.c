@@ -335,7 +335,7 @@ sepgsql_avc_lookup(const char *scontext, const char *tcontext, uint16 tclass)
  *
  * It returns 'true', if the security policy suggested to allow the required
  * permissions. Otherwise, it returns 'false' or raises an error according
- * to the 'abort' argument.
+ * to the 'abort_on_violation' argument.
  * The 'tobject' and 'tclass' identify the target object being referenced,
  * and 'required' is a bitmask of permissions (SEPG_*__*) defined for each
  * object classes.
@@ -345,7 +345,8 @@ sepgsql_avc_lookup(const char *scontext, const char *tcontext, uint16 tclass)
 bool
 sepgsql_avc_check_perms_label(const char *tcontext,
 							  uint16 tclass, uint32 required,
-							  const char *audit_name, bool abort)
+							  const char *audit_name,
+							  bool abort_on_violation)
 {
 	char	   *scontext = sepgsql_get_client_label();
 	avc_cache  *cache;
@@ -415,7 +416,7 @@ sepgsql_avc_check_perms_label(const char *tcontext,
 						  audit_name);
 	}
 
-	if (abort && !result)
+	if (abort_on_violation && !result)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("SELinux: security policy violation")));
@@ -426,14 +427,15 @@ sepgsql_avc_check_perms_label(const char *tcontext,
 bool
 sepgsql_avc_check_perms(const ObjectAddress *tobject,
 						uint16 tclass, uint32 required,
-						const char *audit_name, bool abort)
+						const char *audit_name,
+						bool abort_on_violation)
 {
 	char	   *tcontext = GetSecurityLabel(tobject, SEPGSQL_LABEL_TAG);
 	bool		rc;
 
 	rc = sepgsql_avc_check_perms_label(tcontext,
 									   tclass, required,
-									   audit_name, abort);
+									   audit_name, abort_on_violation);
 	if (tcontext)
 		pfree(tcontext);
 
