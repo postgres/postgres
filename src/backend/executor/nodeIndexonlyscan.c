@@ -30,6 +30,7 @@
 #include "executor/nodeIndexonlyscan.h"
 #include "executor/nodeIndexscan.h"
 #include "storage/bufmgr.h"
+#include "storage/predicate.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 
@@ -52,7 +53,6 @@ IndexOnlyNext(IndexOnlyScanState *node)
 	ExprContext *econtext;
 	ScanDirection direction;
 	IndexScanDesc scandesc;
-	HeapTuple	tuple;
 	TupleTableSlot *slot;
 	ItemPointer tid;
 
@@ -78,6 +78,8 @@ IndexOnlyNext(IndexOnlyScanState *node)
 	 */
 	while ((tid = index_getnext_tid(scandesc, direction)) != NULL)
 	{
+		HeapTuple	tuple = NULL;
+
 		/*
 		 * We can skip the heap fetch if the TID references a heap page on
 		 * which all tuples are known visible to everybody.  In any case,
@@ -146,6 +148,18 @@ IndexOnlyNext(IndexOnlyScanState *node)
 				continue;
 			}
 		}
+
+		/*
+		 * Predicate locks for index-only scans must be acquired at the page
+		 * level when the heap is not accessed, since tuple-level predicate
+		 * locks need the tuple's xmin value.  If we had to visit the tuple
+		 * anyway, then we already have the tuple-level lock and can skip the
+		 * page lock.
+		 */
+		if (tuple == NULL)
+			PredicateLockPage(scandesc->heapRelation,
+							  ItemPointerGetBlockNumber(tid),
+							  estate->es_snapshot);
 
 		return slot;
 	}
