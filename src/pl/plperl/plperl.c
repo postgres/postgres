@@ -24,11 +24,13 @@
 #include "commands/trigger.h"
 #include "executor/spi.h"
 #include "funcapi.h"
+#include "libpq/pqsignal.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_type.h"
 #include "storage/ipc.h"
+#include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
@@ -742,6 +744,18 @@ plperl_init_interp(void)
 			char	   *dummy_env[1] = {NULL};
 
 			PERL_SYS_INIT3(&nargs, (char ***) &embedding, (char ***) &dummy_env);
+
+			/*
+			 * For unclear reasons, PERL_SYS_INIT3 sets the SIGFPE handler to
+			 * SIG_IGN.  Aside from being extremely unfriendly behavior for a
+			 * library, this is dumb on the grounds that the results of a
+			 * SIGFPE in this state are undefined according to POSIX, and in
+			 * fact you get a forced process kill at least on Linux.  Hence,
+			 * restore the SIGFPE handler to the backend's standard setting.
+			 * (See Perl bug 114574 for more information.)
+			 */
+			pqsignal(SIGFPE, FloatExceptionHandler);
+
 			perl_sys_init_done = 1;
 			/* quiet warning if PERL_SYS_INIT3 doesn't use the third argument */
 			dummy_env[0] = NULL;
