@@ -35,7 +35,9 @@ TestSpec		parseresult;			/* result of parsing is left here */
 	}			ptr_list;
 }
 
+%type <ptr_list> setup_list
 %type <str>  opt_setup opt_teardown
+%type <str> setup
 %type <ptr_list> step_list session_list permutation_list opt_permutation_list
 %type <ptr_list> string_list
 %type <session> session
@@ -48,12 +50,13 @@ TestSpec		parseresult;			/* result of parsing is left here */
 %%
 
 TestSpec:
-			opt_setup
+			setup_list
 			opt_teardown
 			session_list
 			opt_permutation_list
 			{
-				parseresult.setupsql = $1;
+				parseresult.setupsqls = (char **) $1.elements;
+				parseresult.nsetupsqls = $1.nelements;
 				parseresult.teardownsql = $2;
 				parseresult.sessions = (Session **) $3.elements;
 				parseresult.nsessions = $3.nelements;
@@ -62,9 +65,28 @@ TestSpec:
 			}
 		;
 
+setup_list:
+			/* EMPTY */
+			{
+				$$.elements = NULL;
+				$$.nelements = 0;
+			}
+			| setup_list setup
+			{
+				$$.elements = realloc($1.elements,
+									  ($1.nelements + 1) * sizeof(void *));
+				$$.elements[$1.nelements] = $2;
+				$$.nelements = $1.nelements + 1;
+			}
+		;
+
 opt_setup:
 			/* EMPTY */			{ $$ = NULL; }
-			| SETUP sqlblock	{ $$ = $2; }
+			| setup				{ $$ = $1; }
+		;
+
+setup:
+			SETUP sqlblock		{ $$ = $2; }
 		;
 
 opt_teardown:

@@ -512,9 +512,9 @@ run_permutation(TestSpec * testspec, int nsteps, Step ** steps)
 	printf("\n");
 
 	/* Perform setup */
-	if (testspec->setupsql)
+	for (i = 0; i < testspec->nsetupsqls; i++)
 	{
-		res = PQexec(conns[0], testspec->setupsql);
+		res = PQexec(conns[0], testspec->setupsqls[i]);
 		if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		{
 			fprintf(stderr, "setup failed: %s", PQerrorMessage(conns[0]));
