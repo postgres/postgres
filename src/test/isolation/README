@@ -49,8 +49,12 @@ subdirectory. A test specification consists of four parts, in this order:
 setup { <SQL> }
 
   The given SQL block is executed once, in one session only, before running
-  the test. Create any test tables or other required objects here. This
-  part is optional.
+  the test.  Create any test tables or other required objects here.  This
+  part is optional.  Multiple setup blocks are allowed if needed; each is
+  run separately, in the given order.  (The reason for allowing multiple
+  setup blocks is that each block is run as a single PQexec submission,
+  and some statements such as VACUUM cannot be combined with others in such
+  a block.)
 
 teardown { <SQL> }
 
