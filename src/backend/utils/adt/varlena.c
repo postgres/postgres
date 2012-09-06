@@ -2451,9 +2451,9 @@ SplitIdentifierString(char *rawstring, char separator,
  *
  * This is similar to SplitIdentifierString, except that the parsing
  * rules are meant to handle pathnames instead of identifiers: there is
- * no downcasing, the max length is MAXPGPATH-1, and we apply
- * canonicalize_path() to each extracted string.  Because of the last,
- * the returned strings are separately palloc'd rather than being
+ * no downcasing, embedded spaces are allowed, the max length is MAXPGPATH-1,
+ * and we apply canonicalize_path() to each extracted string.  Because of the
+ * last, the returned strings are separately palloc'd rather than being
  * pointers into rawstring --- but we still scribble on rawstring.
  *
  * Inputs:
@@ -2510,13 +2510,16 @@ SplitDirectoriesString(char *rawstring, char separator,
 		}
 		else
 		{
-			/* Unquoted name --- extends to separator or whitespace */
-			curname = nextp;
-			while (*nextp && *nextp != separator &&
-				   !isspace((unsigned char) *nextp))
+			/* Unquoted name --- extends to separator or end of string */
+			curname = endp = nextp;
+			while (*nextp && *nextp != separator)
+			{
+				/* trailing whitespace should not be included in name */
+				if (!isspace((unsigned char) *nextp))
+					endp = nextp + 1;
 				nextp++;
-			endp = nextp;
-			if (curname == nextp)
+			}
+			if (curname == endp)
 				return false;	/* empty unquoted name not allowed */
 		}
 
