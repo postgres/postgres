@@ -63,7 +63,28 @@ exec_prog(const char *log_file, const char *opt_log_file,
 	if (written >= MAXCMDLEN)
 		pg_log(PG_FATAL, "command too long\n");
 
-	if ((log = fopen_priv(log_file, "a")) == NULL)
+	log = fopen_priv(log_file, "a");
+
+#ifdef WIN32
+	{
+		/* 
+		 * "pg_ctl -w stop" might have reported that the server has
+		 * stopped because the postmaster.pid file has been removed,
+		 * but "pg_ctl -w start" might still be in the process of
+		 * closing and might still be holding its stdout and -l log
+		 * file descriptors open.  Therefore, try to open the log 
+		 * file a few more times.
+		 */
+		int iter;
+		for (iter = 0; iter < 4 && log == NULL; iter++)
+		{
+			sleep(1);
+			log = fopen_priv(log_file, "a");
+		}
+	}
+#endif
+
+	if (log == NULL)
 		pg_log(PG_FATAL, "cannot write to log file %s\n", log_file);
 #ifdef WIN32
 	fprintf(log, "\n\n");
