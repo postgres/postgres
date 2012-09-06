@@ -2167,7 +2167,7 @@
       <entry><literal>collation_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>
-       Name of the collation of the column, null if default or the
+       Name of the collation of the domain, null if default or the
        data type of the domain is not collatable
       </entry>
      </row>
