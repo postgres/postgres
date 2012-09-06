@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-08-06 12:46+0000\n"
-"PO-Revision-Date: 2012-08-06 18:17+0400\n"
+"POT-Creation-Date: 2012-08-31 04:16+0000\n"
+"PO-Revision-Date: 2012-08-31 11:20+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -145,6 +145,16 @@ msgstr ""
 
 #: pg_basebackup.c:124 pg_receivexlog.c:68
 #, c-format
+msgid "  -h, --host=HOSTNAME    database server host or socket directory\n"
+msgstr "  -h, --host=ИМЯ         имя сервера баз данных или каталог сокетов\n"
+
+#: pg_basebackup.c:125 pg_receivexlog.c:69
+#, c-format
+msgid "  -p, --port=PORT        database server port number\n"
+msgstr "  -p, --port=ПОРТ        номер порта сервера БД\n"
+
+#: pg_basebackup.c:126 pg_receivexlog.c:70
+#, c-format
 msgid ""
 "  -s, --status-interval=INTERVAL\n"
 "                         time between status packets sent to server (in "
@@ -153,16 +163,6 @@ msgstr ""
 "  -s, --statusint=ИНТЕРВАЛ\n"
 "                         интервал между передаваемыми серверу\n"
 "                         пакетами состояния (в секундах)\n"
-
-#: pg_basebackup.c:126 pg_receivexlog.c:70
-#, c-format
-msgid "  -h, --host=HOSTNAME    database server host or socket directory\n"
-msgstr "  -h, --host=ИМЯ         имя сервера баз данных или каталог сокетов\n"
-
-#: pg_basebackup.c:127 pg_receivexlog.c:71
-#, c-format
-msgid "  -p, --port=PORT        database server port number\n"
-msgstr "  -p, --port=ПОРТ        номер порта сервера БД\n"
 
 #: pg_basebackup.c:128 pg_receivexlog.c:72
 #, c-format
@@ -293,7 +293,7 @@ msgstr "%s: не удалось записать файл \"%s\": %s\n"
 msgid "%s: could not close compressed file \"%s\": %s\n"
 msgstr "%s: не удалось закрыть сжатый файл \"%s\": %s\n"
 
-#: pg_basebackup.c:648 receivelog.c:157
+#: pg_basebackup.c:648 receivelog.c:157 receivelog.c:625 receivelog.c:634
 #, c-format
 msgid "%s: could not close file \"%s\": %s\n"
 msgstr "%s: не удалось закрыть файл \"%s\": %s\n"
@@ -464,11 +464,10 @@ msgstr "%s: указать и --xlog, и --xlog-method одновременно 
 #: pg_basebackup.c:1328
 #, c-format
 msgid ""
-"%s: invalid xlog-method option \"%s\", must be empty, \"fetch\", or \"stream"
-"\"\n"
+"%s: invalid xlog-method option \"%s\", must be \"fetch\" or \"stream\"\n"
 msgstr ""
-"%s: неверный аргумент для xlog-method  - \"%s\", допускается только пустой, "
-"\"fetch\" или \"stream\"\n"
+"%s: неверный аргумент для xlog-method - \"%s\", допускается только \"fetch\" "
+"или \"stream\"\n"
 
 #: pg_basebackup.c:1347
 #, c-format
@@ -597,10 +596,11 @@ msgstr "%s: неверный номер порта \"%s\"\n"
 msgid "%s: disconnected.\n"
 msgstr "%s: отключение.\n"
 
-#: pg_receivexlog.c:439
+#. translator: check source for value for %d
+#: pg_receivexlog.c:440
 #, c-format
-msgid "%s: disconnected. Waiting %d seconds to try again\n"
-msgstr "%s: отключение. Через %d сек. последует повторное подключение\n"
+msgid "%s: disconnected. Waiting %d seconds to try again.\n"
+msgstr "%s: отключение. Через %d сек. последует повторное подключение.\n"
 
 #: receivelog.c:72
 #, c-format
@@ -645,8 +645,8 @@ msgstr "%s: не удалось переименовать файл \"%s\": %s\n
 
 #: receivelog.c:184
 #, c-format
-msgid "%s: not renaming \"%s\", segment is not complete.\n"
-msgstr "%s: файл \"%s\" не переименовывается, так как это не полный сегмент.\n"
+msgid "%s: not renaming \"%s\", segment is not complete\n"
+msgstr "%s: файл \"%s\" не переименовывается, так как это не полный сегмент\n"
 
 #: receivelog.c:319
 #, c-format
@@ -721,11 +721,6 @@ msgstr "%s: неожиданный конец потока репликации:
 msgid "%s: replication stream was terminated before stop point\n"
 msgstr "%s: поток репликации закончился до точки останова\n"
 
-#: receivelog.c:625 receivelog.c:634
-#, c-format
-msgid "%s: could not close file %s: %s\n"
-msgstr "%s: не удалось закрыть файл %s: %s\n"
-
 #: streamutil.c:46 streamutil.c:60
 #, c-format
 msgid "%s: out of memory\n"
@@ -755,6 +750,9 @@ msgstr "%s: не удалось получить настройку сервер
 msgid "%s: integer_datetimes compile flag does not match server\n"
 msgstr ""
 "%s: флаг компиляции integer_datetimes не соответствует настройке сервера\n"
+
+#~ msgid "%s: could not close file %s: %s\n"
+#~ msgstr "%s: не удалось закрыть файл %s: %s\n"
 
 #~ msgid "%s: invalid format of xlog location: %s\n"
 #~ msgstr "%s: неверный формат позиции в xlog: %s\n"

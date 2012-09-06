@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-08-22 22:11+0000\n"
-"PO-Revision-Date: 2012-08-23 01:54-0400\n"
+"POT-Creation-Date: 2012-09-05 02:11+0000\n"
+"PO-Revision-Date: 2012-09-04 22:47-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -297,8 +297,8 @@ msgstr "Index »%s« enthält ein inneres Tupel, das als ungültig markiert ist"
 msgid "This is caused by an incomplete page split at crash recovery before upgrading to PostgreSQL 9.1."
 msgstr "Das kommt von einem unvollständigen Page-Split bei der Crash-Recovery vor dem Upgrade auf PostgreSQL 9.1."
 
-#: access/gist/gist.c:603 access/gist/gistutil.c:592
-#: access/gist/gistutil.c:603 access/gist/gistvacuum.c:270
+#: access/gist/gist.c:603 access/gist/gistutil.c:640
+#: access/gist/gistutil.c:651 access/gist/gistvacuum.c:270
 #: access/hash/hashutil.c:172 access/hash/hashutil.c:183
 #: access/hash/hashutil.c:195 access/hash/hashutil.c:216
 #: access/nbtree/nbtpage.c:434 access/nbtree/nbtpage.c:445
@@ -316,7 +316,7 @@ msgstr "ungültiger Wert für Option »buffering«"
 msgid "Valid values are \"on\", \"off\", and \"auto\"."
 msgstr "Gültige Werte sind »on«, »off« und »auto«."
 
-#: access/gist/gistbuildbuffers.c:733 utils/sort/logtape.c:213
+#: access/gist/gistbuildbuffers.c:780 utils/sort/logtape.c:213
 #, c-format
 msgid "could not write block %ld of temporary file: %m"
 msgstr "konnte Block %ld von temporärer Datei nicht schreiben: %m"
@@ -331,13 +331,13 @@ msgstr "Picksplit-Methode für Spalte %d von Index »%s« fehlgeschlagen"
 msgid "The index is not optimal. To optimize it, contact a developer, or try to use the column as the second one in the CREATE INDEX command."
 msgstr "Der Index ist nicht optimal. Um ihn zu optimieren, kontaktieren Sie einen Entwickler oder versuchen Sie, die Spalte als die zweite im CREATE-INDEX-Befehl zu verwenden."
 
-#: access/gist/gistutil.c:589 access/hash/hashutil.c:169
+#: access/gist/gistutil.c:637 access/hash/hashutil.c:169
 #: access/nbtree/nbtpage.c:431
 #, c-format
 msgid "index \"%s\" contains unexpected zero page at block %u"
 msgstr "Index »%s« enthält unerwartete Nullseite bei Block %u"
 
-#: access/gist/gistutil.c:600 access/hash/hashutil.c:180
+#: access/gist/gistutil.c:648 access/hash/hashutil.c:180
 #: access/hash/hashutil.c:192 access/nbtree/nbtpage.c:442
 #, c-format
 msgid "index \"%s\" contains corrupted page at block %u"
@@ -1979,9 +1979,9 @@ msgid "invalid input syntax for transaction log location: \"%s\""
 msgstr "ungültige Eingabesyntax für Transaktionslogposition: »%s«"
 
 #: access/transam/xlogfuncs.c:542 access/transam/xlogfuncs.c:546
-#, fuzzy, c-format
+#, c-format
 msgid "xrecoff \"%X\" is out of valid range, 0..%X"
-msgstr "Index %d ist außerhalb des gültigen Bereichs, 0..%d"
+msgstr "Xrecoff »%X« ist außerhalb des gültigen Bereichs, 0..%X"
 
 #: bootstrap/bootstrap.c:279 postmaster/postmaster.c:701 tcop/postgres.c:3435
 #, c-format
@@ -3496,9 +3496,9 @@ msgid "A function returning a polymorphic type must have at least one polymorphi
 msgstr "Eine Funktion, die einen polymorphischen Typ zurückgibt, muss mindestens ein polymorphisches Argument haben."
 
 #: catalog/pg_proc.c:248
-#, fuzzy, c-format
+#, c-format
 msgid "A function returning ANYRANGE must have at least one ANYRANGE argument."
-msgstr "Eine Funktion, die »internal« zurückgibt, muss mindestens ein Argument vom Typ »internal« haben."
+msgstr "Eine Funktion, die ANYRANGE zurückgibt, muss mindestens ein Argument vom Typ ANYRANGE haben."
 
 #: catalog/pg_proc.c:266
 #, c-format
@@ -3916,8 +3916,8 @@ msgstr "Sortierfolge »%s« existiert bereits in Schema »%s«"
 #: commands/comment.c:61 commands/dbcommands.c:764 commands/dbcommands.c:920
 #: commands/dbcommands.c:1019 commands/dbcommands.c:1192
 #: commands/dbcommands.c:1377 commands/dbcommands.c:1462
-#: commands/dbcommands.c:1866 utils/init/postinit.c:708
-#: utils/init/postinit.c:776 utils/init/postinit.c:793
+#: commands/dbcommands.c:1866 utils/init/postinit.c:717
+#: utils/init/postinit.c:785 utils/init/postinit.c:802
 #, c-format
 msgid "database \"%s\" does not exist"
 msgstr "Datenbank »%s« existiert nicht"
@@ -7298,9 +7298,9 @@ msgid "conflicting NULL/NOT NULL constraints"
 msgstr "wiedersprüchliche NULL/NOT NULL-Constraints"
 
 #: commands/typecmds.c:931
-#, fuzzy, c-format
+#, c-format
 msgid "CHECK constraints for domains cannot be marked NO INHERIT"
-msgstr "%s-Constraints können nicht als NOT VALID markiert werden"
+msgstr "CHECK-Constraints für Domänen können nicht als NO INHERIT markiert werden"
 
 #: commands/typecmds.c:940 commands/typecmds.c:2397
 #, c-format
@@ -7378,24 +7378,24 @@ msgid "You must specify an operator class for the range type or define a default
 msgstr "Sie müssen für den Bereichstyp eine Operatorklasse angeben oder eine Standardoperatorklasse für den Untertyp definieren."
 
 #: commands/typecmds.c:1886
-#, fuzzy, c-format
+#, c-format
 msgid "range canonical function %s must return range type"
-msgstr "Typempfangsfunktion %s muss Typ %s zurückgeben"
+msgstr "Bereichstyp-Canonical-Funktion %s muss Bereichstyp zurückgeben"
 
 #: commands/typecmds.c:1892
-#, fuzzy, c-format
+#, c-format
 msgid "range canonical function %s must be immutable"
-msgstr "Typanalysefunktion %s muss Typ »boolean« zurückgeben"
+msgstr "Bereichstyp-Canonical-Funktion %s muss »immutable« sein"
 
 #: commands/typecmds.c:1928
-#, fuzzy, c-format
+#, c-format
 msgid "range subtype diff function %s must return type double precision"
-msgstr "Typeingabefunktion %s muss Typ %s zurückgeben"
+msgstr "Bereichstyp-Untertyp-Diff-Funktion %s muss Typ double precision zurückgeben"
 
 #: commands/typecmds.c:1934
-#, fuzzy, c-format
+#, c-format
 msgid "range subtype diff function %s must be immutable"
-msgstr "Typeingabefunktion %s muss Typ %s zurückgeben"
+msgstr "Bereichstyp-Untertyp-Diff-Funktion %s muss »immutable« sein"
 
 #: commands/typecmds.c:2240
 #, c-format
@@ -7493,7 +7493,7 @@ msgid "role \"%s\" already exists"
 msgstr "Rolle »%s« existiert bereits"
 
 #: commands/user.c:616 commands/user.c:818 commands/user.c:898
-#: commands/user.c:1060 commands/variable.c:846 commands/variable.c:918
+#: commands/user.c:1060 commands/variable.c:855 commands/variable.c:927
 #: utils/adt/acl.c:5088 utils/init/miscinit.c:432
 #, c-format
 msgid "role \"%s\" does not exist"
@@ -7767,62 +7767,62 @@ msgstr "Zeitzone »%s« verwendet anscheinend Schaltsekunden"
 msgid "PostgreSQL does not support leap seconds."
 msgstr "PostgreSQL unterstützt keine Schaltsekunden."
 
-#: commands/variable.c:546
+#: commands/variable.c:551
 #, c-format
 msgid "cannot set transaction read-write mode inside a read-only transaction"
 msgstr "kann den Read/Write-Modus einer Transaktion nicht in einer Read-Only-Transaktion setzen"
 
-#: commands/variable.c:553
+#: commands/variable.c:558
 #, c-format
 msgid "transaction read-write mode must be set before any query"
 msgstr "Read/Write-Modus einer Transaktion muss vor allen Anfragen gesetzt werden"
 
-#: commands/variable.c:559
+#: commands/variable.c:565
 #, c-format
 msgid "cannot set transaction read-write mode during recovery"
 msgstr "kann den Read/Write-Modus einer Transaktion nicht während der Wiederherstellung setzen"
 
-#: commands/variable.c:606
+#: commands/variable.c:614
 #, c-format
 msgid "SET TRANSACTION ISOLATION LEVEL must be called before any query"
 msgstr "SET TRANSACTION ISOLATION LEVEL muss vor allen Anfragen aufgerufen werden"
 
-#: commands/variable.c:613
+#: commands/variable.c:621
 #, c-format
 msgid "SET TRANSACTION ISOLATION LEVEL must not be called in a subtransaction"
 msgstr "SET TRANSACTION ISOLATION LEVEL kann nicht in einer Subtransaktion aufgerufen werden"
 
-#: commands/variable.c:619
+#: commands/variable.c:628 storage/lmgr/predicate.c:1582
 #, c-format
 msgid "cannot use serializable mode in a hot standby"
 msgstr "kann serialisierbaren Modus nicht in einem Hot Standby verwenden"
 
-#: commands/variable.c:620
+#: commands/variable.c:629
 #, c-format
 msgid "You can use REPEATABLE READ instead."
 msgstr "Sie können stattdessen REPEATABLE READ verwenden."
 
-#: commands/variable.c:668
+#: commands/variable.c:677
 #, c-format
 msgid "SET TRANSACTION [NOT] DEFERRABLE cannot be called within a subtransaction"
 msgstr "SET TRANSACTION [NOT] DEFERRABLE kann nicht in einer Subtransaktion aufgerufen werden"
 
-#: commands/variable.c:674
+#: commands/variable.c:683
 #, c-format
 msgid "SET TRANSACTION [NOT] DEFERRABLE must be called before any query"
 msgstr "SET TRANSACTION [NOT] DEFERRABLE muss vor allen Anfragen aufgerufen werden"
 
-#: commands/variable.c:756
+#: commands/variable.c:765
 #, c-format
 msgid "Conversion between %s and %s is not supported."
 msgstr "Umwandlung zwischen %s und %s wird nicht unterstützt."
 
-#: commands/variable.c:763
+#: commands/variable.c:772
 #, c-format
 msgid "Cannot change \"client_encoding\" now."
 msgstr "»client_encoding« kann jetzt nicht geändert werden."
 
-#: commands/variable.c:933
+#: commands/variable.c:942
 #, c-format
 msgid "permission denied to set role \"%s\""
 msgstr "keine Berechtigung, um Rolle »%s« zu setzen"
@@ -9429,14 +9429,14 @@ msgid "missing entry in file \"%s\" at end of line %d"
 msgstr "fehlender Eintrag in Datei »%s« am Ende von Zeile %d"
 
 #: libpq/hba.c:794
-#, fuzzy, c-format
+#, c-format
 msgid "multiple values in ident field"
-msgstr "mehrere WITH-Klauseln sind nicht erlaubt"
+msgstr "mehrere Werte in Ident-Feld"
 
 #: libpq/hba.c:839
-#, fuzzy, c-format
+#, c-format
 msgid "multiple values specified for connection type"
-msgstr "mehrere Vorgabewerte angegeben für Spalte »%s« von Tabelle »%s«"
+msgstr "mehrere Werte angegeben für Verbindungstyp"
 
 #: libpq/hba.c:840
 #, c-format
@@ -12281,9 +12281,9 @@ msgid "aborting startup due to startup process failure"
 msgstr "Serverstart abgebrochen wegen Startprozessfehler"
 
 #: postmaster/postmaster.c:2378
-#, fuzzy, c-format
+#, c-format
 msgid "terminating all walsender processes to force cascaded standby(s) to update timeline and reconnect"
-msgstr "breche WAL-Sender-Prozess ab wegen Zeitüberschreitung bei der Replikation"
+msgstr "breche alle WAL-Sender-Prozesse ab, damit der/die kaskadierte(n) Standbys die Zeitleiste aktualisieren und neu verbinden"
 
 #: postmaster/postmaster.c:2408
 #, c-format
@@ -12342,9 +12342,9 @@ msgstr "%s (PID %d) beendete mit Status %d"
 #: postmaster/postmaster.c:2873 postmaster/postmaster.c:2884
 #: postmaster/postmaster.c:2895 postmaster/postmaster.c:2904
 #: postmaster/postmaster.c:2914
-#, fuzzy, c-format
+#, c-format
 msgid "Failed process was running: %s"
-msgstr "Kindprozess wurde von Signal %s beendet"
+msgstr "Der fehlgeschlagene Prozess führte aus: %s"
 
 #. translator: %s is a noun phrase describing a child process, such as
 #. "server process"
@@ -12714,9 +12714,9 @@ msgid "invalid standby handshake message type %d"
 msgstr "ungültiger Standby-Handshake-Message-Typ %d"
 
 #: replication/walsender.c:399
-#, fuzzy, c-format
+#, c-format
 msgid "terminating walsender process to force cascaded standby to update timeline and reconnect"
-msgstr "breche WAL-Sender-Prozess ab wegen Zeitüberschreitung bei der Replikation"
+msgstr "breche WAL-Sender-Prozess ab, damit der kaskadierte Standby die Zeitleiste aktualisiert und neu verbindet"
 
 #: replication/walsender.c:493
 #, c-format
@@ -13245,8 +13245,8 @@ msgstr "konnte Verzeichnis »%s« nicht lesen: %m"
 #: storage/ipc/shmem.c:190 storage/lmgr/lock.c:757 storage/lmgr/lock.c:785
 #: storage/lmgr/lock.c:2386 storage/lmgr/lock.c:3022 storage/lmgr/lock.c:3500
 #: storage/lmgr/lock.c:3565 storage/lmgr/lock.c:3846
-#: storage/lmgr/predicate.c:2304 storage/lmgr/predicate.c:2319
-#: storage/lmgr/predicate.c:3715 storage/lmgr/predicate.c:4859
+#: storage/lmgr/predicate.c:2317 storage/lmgr/predicate.c:2332
+#: storage/lmgr/predicate.c:3728 storage/lmgr/predicate.c:4872
 #: storage/lmgr/proc.c:205 utils/hash/dynahash.c:928
 #, c-format
 msgid "out of shared memory"
@@ -13423,49 +13423,59 @@ msgstr "nicht genug Shared-Memory für Elemente der Datenstruktur »%s« (%lu By
 msgid "deferrable snapshot was unsafe; trying a new one"
 msgstr "aufschiebbarer Snapshot war unsicher; versuche einen neuen"
 
-#: storage/lmgr/predicate.c:1610
+#: storage/lmgr/predicate.c:1583
+#, c-format
+msgid "\"default_transaction_isolation\" is set to \"serializable\"."
+msgstr "»default_transaction_isolation« ist auf »serializable« gesetzt."
+
+#: storage/lmgr/predicate.c:1584
+#, c-format
+msgid "You can use \"SET default_transaction_isolation = 'repeatable read'\" to change the default."
+msgstr "Mit »SET default_transaction_isolation = 'repeatable read'« können Sie die Voreinstellung ändern."
+
+#: storage/lmgr/predicate.c:1623
 #, c-format
 msgid "a snapshot-importing transaction must not be READ ONLY DEFERRABLE"
 msgstr "eine Transaktion, die einen Snapshot importiert, must READ ONLY DEFERRABLE sein"
 
-#: storage/lmgr/predicate.c:1680 utils/time/snapmgr.c:282
+#: storage/lmgr/predicate.c:1693 utils/time/snapmgr.c:282
 #, c-format
 msgid "could not import the requested snapshot"
 msgstr "konnte den angeforderten Snapshot nicht importieren"
 
-#: storage/lmgr/predicate.c:1681 utils/time/snapmgr.c:283
+#: storage/lmgr/predicate.c:1694 utils/time/snapmgr.c:283
 #, c-format
 msgid "The source transaction %u is not running anymore."
 msgstr "Die Quelltransaktion %u läuft nicht mehr."
 
-#: storage/lmgr/predicate.c:2305 storage/lmgr/predicate.c:2320
-#: storage/lmgr/predicate.c:3716
+#: storage/lmgr/predicate.c:2318 storage/lmgr/predicate.c:2333
+#: storage/lmgr/predicate.c:3729
 #, c-format
 msgid "You might need to increase max_pred_locks_per_transaction."
 msgstr "Sie müssen möglicherweise max_pred_locks_per_transaction erhöhen."
 
-#: storage/lmgr/predicate.c:3870 storage/lmgr/predicate.c:3959
-#: storage/lmgr/predicate.c:3967 storage/lmgr/predicate.c:4006
-#: storage/lmgr/predicate.c:4245 storage/lmgr/predicate.c:4583
-#: storage/lmgr/predicate.c:4595 storage/lmgr/predicate.c:4637
-#: storage/lmgr/predicate.c:4675
+#: storage/lmgr/predicate.c:3883 storage/lmgr/predicate.c:3972
+#: storage/lmgr/predicate.c:3980 storage/lmgr/predicate.c:4019
+#: storage/lmgr/predicate.c:4258 storage/lmgr/predicate.c:4596
+#: storage/lmgr/predicate.c:4608 storage/lmgr/predicate.c:4650
+#: storage/lmgr/predicate.c:4688
 #, c-format
 msgid "could not serialize access due to read/write dependencies among transactions"
 msgstr "konnte Zugriff nicht serialisieren wegen Lese-/Schreib-Abhängigkeiten zwischen Transaktionen"
 
-#: storage/lmgr/predicate.c:3872 storage/lmgr/predicate.c:3961
-#: storage/lmgr/predicate.c:3969 storage/lmgr/predicate.c:4008
-#: storage/lmgr/predicate.c:4247 storage/lmgr/predicate.c:4585
-#: storage/lmgr/predicate.c:4597 storage/lmgr/predicate.c:4639
-#: storage/lmgr/predicate.c:4677
+#: storage/lmgr/predicate.c:3885 storage/lmgr/predicate.c:3974
+#: storage/lmgr/predicate.c:3982 storage/lmgr/predicate.c:4021
+#: storage/lmgr/predicate.c:4260 storage/lmgr/predicate.c:4598
+#: storage/lmgr/predicate.c:4610 storage/lmgr/predicate.c:4652
+#: storage/lmgr/predicate.c:4690
 #, c-format
 msgid "The transaction might succeed if retried."
 msgstr "Die Transaktion könnte erfolgreich sein, wenn sie erneut versucht würde."
 
 #: storage/lmgr/proc.c:1110
 #, c-format
-msgid "Process %d waits for %s on %s"
-msgstr "Prozess %d wartet auf %s-Sperre auf %s"
+msgid "Process %d waits for %s on %s."
+msgstr "Prozess %d wartet auf %s-Sperre auf %s."
 
 #: storage/lmgr/proc.c:1120
 #, c-format
@@ -15768,17 +15778,17 @@ msgstr "kann keinen Wert vom Typ pg_node_tree annehmen"
 #: utils/adt/rangetypes.c:396
 #, c-format
 msgid "range constructor flags argument must not be NULL"
-msgstr ""
+msgstr "Flags-Argument des Bereichstyp-Konstruktors darf nicht NULL sein"
 
 #: utils/adt/rangetypes.c:978
 #, c-format
 msgid "result of range difference would not be contiguous"
-msgstr ""
+msgstr "Ergebnis von Bereichsdifferenz würde nicht zusammenhängend sein"
 
 #: utils/adt/rangetypes.c:1039
 #, c-format
 msgid "result of range union would not be contiguous"
-msgstr ""
+msgstr "Ergebnis von Bereichsvereinigung würde nicht zusammenhängend sein"
 
 #: utils/adt/rangetypes.c:1508
 #, c-format
@@ -15787,9 +15797,9 @@ msgstr "Bereichsuntergrenze muss kleiner als oder gleich der Bereichsobergrenze 
 
 #: utils/adt/rangetypes.c:1891 utils/adt/rangetypes.c:1904
 #: utils/adt/rangetypes.c:1918
-#, fuzzy, c-format
+#, c-format
 msgid "invalid range bound flags"
-msgstr "ungültige Array-Flags"
+msgstr "ungültige Markierungen für Bereichsgrenzen"
 
 #: utils/adt/rangetypes.c:1892 utils/adt/rangetypes.c:1905
 #: utils/adt/rangetypes.c:1919
@@ -17091,57 +17101,57 @@ msgstr "Erzeugen Sie die Datenbank neu mit einer anderen Locale oder installiere
 msgid "The database was initialized with LC_CTYPE \"%s\",  which is not recognized by setlocale()."
 msgstr "Die Datenbank wurde mit LC_CTYPE »%s« initialisiert, was von setlocale() nicht erkannt wird."
 
-#: utils/init/postinit.c:599
+#: utils/init/postinit.c:608
 #, c-format
 msgid "no roles are defined in this database system"
 msgstr "in diesem Datenbanksystem sind keine Rollen definiert"
 
-#: utils/init/postinit.c:600
+#: utils/init/postinit.c:609
 #, c-format
 msgid "You should immediately run CREATE USER \"%s\" SUPERUSER;."
 msgstr "Sie sollten sofort CREATE USER \"%s\" SUPERUSER; ausführen."
 
-#: utils/init/postinit.c:623
+#: utils/init/postinit.c:632
 #, c-format
 msgid "new replication connections are not allowed during database shutdown"
 msgstr "während des Herunterfahrens der Datenbank sind keine neuen Replikationsverbindungen erlaubt"
 
-#: utils/init/postinit.c:627
+#: utils/init/postinit.c:636
 #, c-format
 msgid "must be superuser to connect during database shutdown"
 msgstr "nur Superuser können während des Herunterfahrens der Datenbank verbinden"
 
-#: utils/init/postinit.c:637
+#: utils/init/postinit.c:646
 #, c-format
 msgid "must be superuser to connect in binary upgrade mode"
 msgstr "nur Superuser können im Binary-Upgrade-Modus verbinden"
 
-#: utils/init/postinit.c:651
+#: utils/init/postinit.c:660
 #, c-format
 msgid "remaining connection slots are reserved for non-replication superuser connections"
 msgstr "die verbleibenden Verbindungen sind für Superuser auf Nicht-Replikationsverbindungen reserviert"
 
-#: utils/init/postinit.c:665
+#: utils/init/postinit.c:674
 #, c-format
 msgid "must be superuser or replication role to start walsender"
 msgstr "nur Superuser und Replikationsrollen können WAL-Sender starten"
 
-#: utils/init/postinit.c:725
+#: utils/init/postinit.c:734
 #, c-format
 msgid "database %u does not exist"
 msgstr "Datenbank %u existiert nicht"
 
-#: utils/init/postinit.c:777
+#: utils/init/postinit.c:786
 #, c-format
 msgid "It seems to have just been dropped or renamed."
 msgstr "Sie wurde anscheinend gerade gelöscht oder umbenannt."
 
-#: utils/init/postinit.c:795
+#: utils/init/postinit.c:804
 #, c-format
 msgid "The database subdirectory \"%s\" is missing."
 msgstr "Das Datenbankunterverzeichnis »%s« fehlt."
 
-#: utils/init/postinit.c:800
+#: utils/init/postinit.c:809
 #, c-format
 msgid "could not access directory \"%s\": %m"
 msgstr "konnte nicht auf Verzeichnis »%s« zugreifen: %m"

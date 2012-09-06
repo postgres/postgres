@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-08-10 13:17+0000\n"
-"PO-Revision-Date: 2012-08-10 23:41+0100\n"
+"POT-Creation-Date: 2012-09-03 19:46+0000\n"
+"PO-Revision-Date: 2012-09-03 22:57+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -143,28 +143,28 @@ msgstr ""
 #: pg_basebackup.c:124
 #: pg_receivexlog.c:68
 #, c-format
+msgid "  -h, --host=HOSTNAME    database server host or socket directory\n"
+msgstr ""
+"  -h, --host=NOMHÔTE           hôte du serveur de bases de données ou\n"
+"                               répertoire des sockets\n"
+
+#: pg_basebackup.c:125
+#: pg_receivexlog.c:69
+#, c-format
+msgid "  -p, --port=PORT        database server port number\n"
+msgstr ""
+"  -p, --port=PORT              numéro de port du serveur de bases de\n"
+"                               données\n"
+
+#: pg_basebackup.c:126
+#: pg_receivexlog.c:70
+#, c-format
 msgid ""
 "  -s, --status-interval=INTERVAL\n"
 "                         time between status packets sent to server (in seconds)\n"
 msgstr ""
 "  -s, --statusint=INTERVAL     durée entre l'envoi de paquets de statut au\n"
 "                               serveur (en secondes)\n"
-
-#: pg_basebackup.c:126
-#: pg_receivexlog.c:70
-#, c-format
-msgid "  -h, --host=HOSTNAME    database server host or socket directory\n"
-msgstr ""
-"  -h, --host=NOMHÔTE           hôte du serveur de bases de données ou\n"
-"                               répertoire des sockets\n"
-
-#: pg_basebackup.c:127
-#: pg_receivexlog.c:71
-#, c-format
-msgid "  -p, --port=PORT        database server port number\n"
-msgstr ""
-"  -p, --port=PORT              numéro de port du serveur de bases de\n"
-"                               données\n"
 
 #: pg_basebackup.c:128
 #: pg_receivexlog.c:72
@@ -305,6 +305,8 @@ msgstr "%s : n'a pas pu fermer le fichier compressé « %s » : %s\n"
 
 #: pg_basebackup.c:648
 #: receivelog.c:157
+#: receivelog.c:625
+#: receivelog.c:634
 #, c-format
 msgid "%s: could not close file \"%s\": %s\n"
 msgstr "%s : n'a pas pu fermer le fichier « %s » : %s\n"
@@ -479,9 +481,9 @@ msgstr "%s : ne peut pas spécifier à la fois --xlog et --xlog-method\n"
 
 #: pg_basebackup.c:1328
 #, c-format
-msgid "%s: invalid xlog-method option \"%s\", must be empty, \"fetch\", or \"stream\"\n"
+msgid "%s: invalid xlog-method option \"%s\", must be \"fetch\" or \"stream\"\n"
 msgstr ""
-"%s : options xlog-method « %s » invalide, doit être soit vide, soit « fetch »\n"
+"%s : option xlog-method « %s » invalide, doit être soit « fetch » soit « stream »\n"
 "soit « stream »\n"
 
 #: pg_basebackup.c:1347
@@ -616,10 +618,11 @@ msgstr "%s : numéro de port invalide : « %s »\n"
 msgid "%s: disconnected.\n"
 msgstr "%s : déconnecté.\n"
 
-#: pg_receivexlog.c:439
+#. translator: check source for value for %d
+#: pg_receivexlog.c:440
 #, c-format
-msgid "%s: disconnected. Waiting %d seconds to try again\n"
-msgstr "%s : déconnecté. Attente de %d secondes avant une nouvelle tentative\n"
+msgid "%s: disconnected. Waiting %d seconds to try again.\n"
+msgstr "%s : déconnecté. Attente de %d secondes avant une nouvelle tentative.\n"
 
 #: receivelog.c:72
 #, c-format
@@ -667,8 +670,8 @@ msgstr "%s : n'a pas pu renommer le fichier « %s » : %s\n"
 
 #: receivelog.c:184
 #, c-format
-msgid "%s: not renaming \"%s\", segment is not complete.\n"
-msgstr "%s : pas de renommage de « %s », le segment n'est pas complet.\n"
+msgid "%s: not renaming \"%s\", segment is not complete\n"
+msgstr "%s : pas de renommage de « %s », le segment n'est pas complet\n"
 
 #: receivelog.c:319
 #, c-format
@@ -741,12 +744,6 @@ msgstr "%s : fin inattendue du flux de réplication : %s"
 msgid "%s: replication stream was terminated before stop point\n"
 msgstr "%s : le flux de réplication a été abandonné avant d'arriver au point d'arrêt\n"
 
-#: receivelog.c:625
-#: receivelog.c:634
-#, c-format
-msgid "%s: could not close file %s: %s\n"
-msgstr "%s : n'a pas pu fermer le fichier %s : %s\n"
-
 #: streamutil.c:46
 #: streamutil.c:60
 #, c-format
@@ -777,53 +774,56 @@ msgstr "%s : n'a pas pu déterminer la configuration serveur de integer_datetimes
 msgid "%s: integer_datetimes compile flag does not match server\n"
 msgstr "%s : l'option de compilation integer_datetimes ne correspond pas au serveur\n"
 
-#~ msgid "  -V, --version            output version information, then exit\n"
-#~ msgstr "  -V, --version              affiche la version puis quitte\n"
-
-#~ msgid "  -?, --help               show this help, then exit\n"
-#~ msgstr "  -?, --help                 affiche cette aide puis quitte\n"
-
-#~ msgid "%s: could not parse xlog end position \"%s\"\n"
-#~ msgstr "%s : n'a pas pu analyser la position finale du journal de transactions « %s »\n"
-
-#~ msgid "%s: invalid format of xlog location: %s\n"
-#~ msgstr "%s : format invalide de l'emplacement du journal de transactions : %s\n"
-
-#~ msgid "%s: could not identify system: %s"
-#~ msgstr "%s : n'a pas pu identifier le système : %s"
-
-#~ msgid "%s: could not send base backup command: %s"
-#~ msgstr "%s : n'a pas pu envoyer la commande de sauvegarde de base : %s"
-
-#~ msgid "%s: could not identify system: %s\n"
-#~ msgstr "%s : n'a pas pu identifier le système : %s\n"
-
-#~ msgid "%s: could not parse log start position from value \"%s\"\n"
-#~ msgstr "%s : n'a pas pu analyser la position de départ des WAL à partir de la valeur « %s »\n"
-
-#~ msgid "%s: could not open WAL segment %s: %s\n"
-#~ msgstr "%s : n'a pas pu ouvrir le segment WAL %s : %s\n"
-
-#~ msgid "%s: could not stat WAL segment %s: %s\n"
-#~ msgstr "%s : n'a pas pu récupérer les informations sur le segment WAL %s : %s\n"
-
-#~ msgid "%s: could not pad WAL segment %s: %s\n"
-#~ msgstr "%s : n'a pas pu terminer le segment WAL %s : %s\n"
-
-#~ msgid "%s: could not seek back to beginning of WAL segment %s: %s\n"
-#~ msgstr "%s : n'a pas pu se déplacer au début du segment WAL %s : %s\n"
-
-#~ msgid "%s: could not get current position in file %s: %s\n"
-#~ msgstr "%s : n'a pas pu obtenir la position courant dans le fichier %s : %s\n"
-
-#~ msgid "%s: could not start replication: %s\n"
-#~ msgstr "%s : n'a pas pu démarrer la réplication : %s\n"
-
-#~ msgid "%s: could not read copy data: %s\n"
-#~ msgstr "%s : n'a pas pu lire les données du COPY : %s\n"
+#~ msgid "  --version                output version information, then exit\n"
+#~ msgstr "  --version                    affiche la version et quitte\n"
 
 #~ msgid "  --help                   show this help, then exit\n"
 #~ msgstr "  --help                       affiche cette aide et quitte\n"
 
-#~ msgid "  --version                output version information, then exit\n"
-#~ msgstr "  --version                    affiche la version et quitte\n"
+#~ msgid "%s: could not read copy data: %s\n"
+#~ msgstr "%s : n'a pas pu lire les données du COPY : %s\n"
+
+#~ msgid "%s: could not start replication: %s\n"
+#~ msgstr "%s : n'a pas pu démarrer la réplication : %s\n"
+
+#~ msgid "%s: could not get current position in file %s: %s\n"
+#~ msgstr "%s : n'a pas pu obtenir la position courant dans le fichier %s : %s\n"
+
+#~ msgid "%s: could not seek back to beginning of WAL segment %s: %s\n"
+#~ msgstr "%s : n'a pas pu se déplacer au début du segment WAL %s : %s\n"
+
+#~ msgid "%s: could not pad WAL segment %s: %s\n"
+#~ msgstr "%s : n'a pas pu terminer le segment WAL %s : %s\n"
+
+#~ msgid "%s: could not stat WAL segment %s: %s\n"
+#~ msgstr "%s : n'a pas pu récupérer les informations sur le segment WAL %s : %s\n"
+
+#~ msgid "%s: could not open WAL segment %s: %s\n"
+#~ msgstr "%s : n'a pas pu ouvrir le segment WAL %s : %s\n"
+
+#~ msgid "%s: could not parse log start position from value \"%s\"\n"
+#~ msgstr "%s : n'a pas pu analyser la position de départ des WAL à partir de la valeur « %s »\n"
+
+#~ msgid "%s: could not identify system: %s\n"
+#~ msgstr "%s : n'a pas pu identifier le système : %s\n"
+
+#~ msgid "%s: could not send base backup command: %s"
+#~ msgstr "%s : n'a pas pu envoyer la commande de sauvegarde de base : %s"
+
+#~ msgid "%s: could not identify system: %s"
+#~ msgstr "%s : n'a pas pu identifier le système : %s"
+
+#~ msgid "%s: invalid format of xlog location: %s\n"
+#~ msgstr "%s : format invalide de l'emplacement du journal de transactions : %s\n"
+
+#~ msgid "%s: could not parse xlog end position \"%s\"\n"
+#~ msgstr "%s : n'a pas pu analyser la position finale du journal de transactions « %s »\n"
+
+#~ msgid "  -?, --help               show this help, then exit\n"
+#~ msgstr "  -?, --help                 affiche cette aide puis quitte\n"
+
+#~ msgid "  -V, --version            output version information, then exit\n"
+#~ msgstr "  -V, --version              affiche la version puis quitte\n"
+
+#~ msgid "%s: could not close file %s: %s\n"
+#~ msgstr "%s : n'a pas pu fermer le fichier %s : %s\n"
