@@ -5989,9 +5989,10 @@ GetXLogReceiptTime(TimestampTz *rtime, bool *fromStream)
  */
 #define RecoveryRequiresIntParameter(param_name, currValue, minValue) \
 do { \
-	if (currValue < minValue) \
+	if ((currValue) < (minValue)) \
 		ereport(ERROR, \
-				(errmsg("hot standby is not possible because " \
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE), \
+				 errmsg("hot standby is not possible because " \
 						"%s = %d is a lower setting than on the master server " \
 						"(its value was %d)", \
 						param_name, \
@@ -6032,10 +6033,10 @@ CheckRequiredParameterValues(void)
 		RecoveryRequiresIntParameter("max_connections",
 									 MaxConnections,
 									 ControlFile->MaxConnections);
-		RecoveryRequiresIntParameter("max_prepared_xacts",
+		RecoveryRequiresIntParameter("max_prepared_transactions",
 									 max_prepared_xacts,
 									 ControlFile->max_prepared_xacts);
-		RecoveryRequiresIntParameter("max_locks_per_xact",
+		RecoveryRequiresIntParameter("max_locks_per_transaction",
 									 max_locks_per_xact,
 									 ControlFile->max_locks_per_xact);
 	}
