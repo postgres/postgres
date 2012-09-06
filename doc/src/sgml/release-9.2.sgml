@@ -6,8 +6,7 @@
 
   <note>
    <title>Release Date</title>
-   <simpara>2012-??-??</simpara>
-   <simpara>CURRENT AS OF 2012-08-21</simpara>
+   <simpara>2012-09-10</simpara>
   </note>
 
   <sect2>
@@ -54,8 +53,9 @@
 
       <listitem>
        <para>
-        Allow <application>pg_basebackup</> to make base backups from
-        standby servers
+        Allow <link
+        linkend="app-pgbasebackup"><application>pg_basebackup</></link>
+        to make base backups from standby servers
        </para>
       </listitem>
 
@@ -291,7 +291,9 @@
 
       <listitem>
        <para>
-        No longer forcibly lowercase procedural language names (Robert Haas)
+        No longer forcibly lowercase procedural language names in <link
+        linkend="SQL-CREATEFUNCTION"><command>CREATE FUNCTION</></link>
+        (Robert Haas)
        </para>
 
        <para>
@@ -566,7 +568,7 @@
 
       <listitem>
        <para>
-        Reduce overhead of creating virtual transaction id locks (Robert
+        Reduce overhead of creating virtual transaction ID locks (Robert
         Haas)
        </para>
       </listitem>
@@ -672,7 +674,8 @@
        </para>
 
        <para>
-        This allows Windows sessions to use more open file descriptors.
+        This allows Windows sessions to use more open file descriptors than
+        before.
        </para>
       </listitem>
 
@@ -790,7 +793,7 @@
        </para>
 
        <para>
-        This is only enabled when <link
+        This check is only performed when <link
         linkend="guc-constraint-exclusion"><varname>constraint_exclusion</></link>
         is <literal>on</literal>.
        </para>
@@ -837,7 +840,7 @@
        <para>
         This change improves selectivity estimation for the array
         <literal>&lt;@</literal>, <literal>&amp;&amp;</literal>, and
-        <literal>@&gt;</literal> (containment and overlaps) array operators.
+        <literal>@&gt;</literal> operators (array containment and overlaps).
        </para>
       </listitem>
 
@@ -988,6 +991,11 @@
         Change <quote>unexpected EOF</> messages to <literal>DEBUG1</> level,
         except when there is an open transaction (Magnus Hagander)
        </para>
+
+       <para>
+        This change reduces log chatter caused by applications that close
+        database connections ungracefully.
+       </para>
       </listitem>
 
      </itemizedlist>
@@ -1044,6 +1052,11 @@
         Silently ignore nonexistent schemas specified in <link
         linkend="guc-search-path"><varname>search_path</></link> (Tom Lane)
        </para>
+
+       <para>
+        This makes it more convenient to use generic path settings, which
+        might include some schemas that don't exist in all databases.
+       </para>
       </listitem>
 
       <listitem>
@@ -1079,7 +1092,8 @@
 
        <para>
         The system now remembers whether a <command>SET</command> was
-        performed by a superuser.
+        performed by a superuser, so that proper privilege checking can be
+        done when the extension is loaded.
        </para>
       </listitem>
 
@@ -1225,20 +1239,26 @@
 
       <listitem>
        <para>
-        Allow streaming of WAL files while <link linkend="app-pgbasebackup"><application>pg_basebackup</></link>
+        Allow <link
+        linkend="app-pgbasebackup"><application>pg_basebackup</></link>
+        to make base backups from standby servers (Jun Ishizuka, Fujii Masao)
+       </para>
+
+       <para>
+        This feature lets the work of making new base backups be off-loaded
+        from the primary server.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow streaming of WAL files while <application>pg_basebackup</>
         is performing a backup (Magnus Hagander)
        </para>
 
        <para>
         This allows passing of WAL files to the standby before they are
         discarded on the primary.
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        Allow <application>pg_basebackup</> to make base backups from
-        standby servers (Jun Ishizuka, Fujii Masao)
        </para>
       </listitem>
 
@@ -1253,7 +1273,13 @@
 
       <listitem>
        <para>
-        Cancel queries if clients get disconnected (Florian Pflug)
+        Cancel the running query if the client gets disconnected
+        (Florian Pflug)
+       </para>
+
+       <para>
+        If the backend detects loss of client connection during a query, it
+        will now cancel the query rather than attempting to finish it.
        </para>
       </listitem>
 
@@ -1297,7 +1323,7 @@
 
       <listitem>
        <para>
-        Warn about casts to and from domain types (Robert Haas)
+        Warn about creating casts to or from domain types (Robert Haas)
        </para>
 
        <para>
@@ -1361,7 +1387,7 @@
 
       <listitem>
        <para>
-        Improve pretty printing of view definitions (Andrew Dunstan)
+        Improve pretty-printing of view definitions (Andrew Dunstan)
        </para>
       </listitem>
 
@@ -1426,12 +1452,12 @@
        <para>
         Reduce need to rebuild tables and indexes for certain <link
         linkend="SQL-ALTERTABLE"><command>ALTER TABLE</command></link>
-        operations (Noah Misch)
+        ... <literal>ALTER COLUMN TYPE</> operations (Noah Misch)
        </para>
 
        <para>
         Increasing the length limit for a <type>varchar</> or <type>varbit</>
-        column, or removing it altogether, no longer requires a table
+        column, or removing the limit altogether, no longer requires a table
         rewrite.  Similarly, increasing the allowable precision of a
         <type>numeric</> column, or changing a column from constrained
         <type>numeric</> to unconstrained <type>numeric</>, no longer
@@ -1451,7 +1477,7 @@
 
       <listitem>
        <para>
-        Add <literal>IF EXISTS</> clause to some <command>ALTER</command>
+        Add <literal>IF EXISTS</> options to some <command>ALTER</command>
         commands (Pavel Stehule)
        </para>
 
@@ -1605,13 +1631,13 @@
 
       <listitem>
        <para>
-        Allow vacuum to more easily skip pages that cannot be locked
-        (Simon Riggs, Robert Haas)
+        Allow <link linkend="SQL-VACUUM"><command>VACUUM</></link> to more
+        easily skip pages that cannot be locked (Simon Riggs, Robert Haas)
        </para>
 
        <para>
-        This change should greatly reduce the incidence of vacuum getting
-        <quote>stuck</>.
+        This change should greatly reduce the incidence of <command>VACUUM</>
+        getting <quote>stuck</> waiting for other sessions.
        </para>
       </listitem>
 
@@ -1772,7 +1798,7 @@
        </para>
 
        <para>
-        Previously only superusers could use these functions.
+        Previously only superusers were allowed to use these functions.
        </para>
       </listitem>
 
@@ -2101,8 +2127,8 @@
 
       <listitem>
        <para>
-        Allow inclusion of a script file relative to the directory of the
-        file from which it was invoked (Gurjeet Singh)
+        Allow inclusion of a script file that is named relative to the
+        directory of the file from which it was invoked (Gurjeet Singh)
        </para>
 
        <para>
@@ -2136,8 +2162,8 @@
        </para>
 
        <para>
-        Specifically, <envar>PSQL_HISTORY</envar> and
-        <envar>PSQLRC</envar> determine these file names if set.
+        <envar>PSQL_HISTORY</envar> and <envar>PSQLRC</envar> now
+        determine these file names if set.
        </para>
       </listitem>
 
@@ -2150,7 +2176,7 @@
 
       <listitem>
        <para>
-        Make <application>psql</>'s temporary editor files use a
+        Name <application>psql</>'s temporary editor files with a
         <filename>.sql</> extension (Peter Eisentraut)
        </para>
 
@@ -2166,7 +2192,8 @@
        </para>
 
        <para>
-        Various shell tools use zero-byte (NUL) separators, e.g. find.
+        Various shell tools use zero-byte (NUL) separators,
+        e.g. <application>find</>.
        </para>
       </listitem>
 
