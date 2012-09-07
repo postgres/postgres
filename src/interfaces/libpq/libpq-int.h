@@ -488,6 +488,7 @@ extern char *const pgresStatus[];
 
 /* === in fe-connect.c === */
 
+extern void pqDropConnection(PGconn *conn);
 extern int pqPacketSend(PGconn *conn, char pack_type,
 			 const void *buf, size_t buf_len);
 extern bool pqGetHomeDirectory(char *buf, int bufsize);

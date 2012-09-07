@@ -345,6 +345,28 @@ pgthreadlock_t pg_g_threadlock = default_threadlock;
 
 
 /*
+ *		pqDropConnection
+ *
+ * Close any physical connection to the server, and reset associated
+ * state inside the connection object.  We don't release state that
+ * would be needed to reconnect, though.
+ */
+void
+pqDropConnection(PGconn *conn)
+{
+	/* Drop any SSL state */
+	pqsecure_close(conn);
+	/* Close the socket itself */
+	if (conn->sock >= 0)
+		closesocket(conn->sock);
+	conn->sock = -1;
+	/* Discard any unread/unsent data */
+	conn->inStart = conn->inCursor = conn->inEnd = 0;
+	conn->outCount = 0;
+}
+
+
+/*
  *		Connecting to a Database
  *
  * There are now six different ways a user of this API can connect to the
@@ -1416,12 +1438,7 @@ connectDBStart(PGconn *conn)
 		return 1;
 
 connect_errReturn:
-	if (conn->sock >= 0)
-	{
-		pqsecure_close(conn);
-		closesocket(conn->sock);
-		conn->sock = -1;
-	}
+	pqDropConnection(conn);
 	conn->status = CONNECTION_BAD;
 	return 0;
 }
@@ -1644,8 +1661,7 @@ keep_going:						/* We will come back to here until there is
 					{
 						if (!connectNoDelay(conn))
 						{
-							closesocket(conn->sock);
-							conn->sock = -1;
+							pqDropConnection(conn);
 							conn->addr_cur = addr_cur->ai_next;
 							continue;
 						}
@@ -1655,8 +1671,7 @@ keep_going:						/* We will come back to here until there is
 						appendPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext("could not set socket to non-blocking mode: %s\n"),
 							SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
-						closesocket(conn->sock);
-						conn->sock = -1;
+						pqDropConnection(conn);
 						conn->addr_cur = addr_cur->ai_next;
 						continue;
 					}
@@ -1667,8 +1682,7 @@ keep_going:						/* We will come back to here until there is
 						appendPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext("could not set socket to close-on-exec mode: %s\n"),
 							SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
-						closesocket(conn->sock);
-						conn->sock = -1;
+						pqDropConnection(conn);
 						conn->addr_cur = addr_cur->ai_next;
 						continue;
 					}
@@ -1715,8 +1729,7 @@ keep_going:						/* We will come back to here until there is
 
 						if (err)
 						{
-							closesocket(conn->sock);
-							conn->sock = -1;
+							pqDropConnection(conn);
 							conn->addr_cur = addr_cur->ai_next;
 							continue;
 						}
@@ -1802,11 +1815,7 @@ keep_going:						/* We will come back to here until there is
 					 * failure and keep going if there are more addresses.
 					 */
 					connectFailureMessage(conn, SOCK_ERRNO);
-					if (conn->sock >= 0)
-					{
-						closesocket(conn->sock);
-						conn->sock = -1;
-					}
+					pqDropConnection(conn);
 
 					/*
 					 * Try the next address, if any.
@@ -1851,6 +1860,7 @@ keep_going:						/* We will come back to here until there is
 					 * error message.
 					 */
 					connectFailureMessage(conn, optval);
+					pqDropConnection(conn);
 
 					/*
 					 * If more addresses remain, keep trying, just as in the
@@ -1858,11 +1868,6 @@ keep_going:						/* We will come back to here until there is
 					 */
 					if (conn->addr_cur->ai_next != NULL)
 					{
-						if (conn->sock >= 0)
-						{
-							closesocket(conn->sock);
-							conn->sock = -1;
-						}
 						conn->addr_cur = conn->addr_cur->ai_next;
 						conn->status = CONNECTION_NEEDED;
 						goto keep_going;
@@ -2137,12 +2142,8 @@ keep_going:						/* We will come back to here until there is
 						/* only retry once */
 						conn->allow_ssl_try = false;
 						/* Must drop the old connection */
-						closesocket(conn->sock);
-						conn->sock = -1;
+						pqDropConnection(conn);
 						conn->status = CONNECTION_NEEDED;
-						/* Discard any unread/unsent data */
-						conn->inStart = conn->inCursor = conn->inEnd = 0;
-						conn->outCount = 0;
 						goto keep_going;
 					}
 				}
@@ -2252,13 +2253,8 @@ keep_going:						/* We will come back to here until there is
 					{
 						conn->pversion = PG_PROTOCOL(2, 0);
 						/* Must drop the old connection */
-						pqsecure_close(conn);
-						closesocket(conn->sock);
-						conn->sock = -1;
+						pqDropConnection(conn);
 						conn->status = CONNECTION_NEEDED;
-						/* Discard any unread/unsent data */
-						conn->inStart = conn->inCursor = conn->inEnd = 0;
-						conn->outCount = 0;
 						goto keep_going;
 					}
 
@@ -2323,12 +2319,8 @@ keep_going:						/* We will come back to here until there is
 						/* only retry once */
 						conn->wait_ssl_try = false;
 						/* Must drop the old connection */
-						closesocket(conn->sock);
-						conn->sock = -1;
+						pqDropConnection(conn);
 						conn->status = CONNECTION_NEEDED;
-						/* Discard any unread/unsent data */
-						conn->inStart = conn->inCursor = conn->inEnd = 0;
-						conn->outCount = 0;
 						goto keep_going;
 					}
 
@@ -2343,13 +2335,8 @@ keep_going:						/* We will come back to here until there is
 						/* only retry once */
 						conn->allow_ssl_try = false;
 						/* Must drop the old connection */
-						pqsecure_close(conn);
-						closesocket(conn->sock);
-						conn->sock = -1;
+						pqDropConnection(conn);
 						conn->status = CONNECTION_NEEDED;
-						/* Discard any unread/unsent data */
-						conn->inStart = conn->inCursor = conn->inEnd = 0;
-						conn->outCount = 0;
 						goto keep_going;
 					}
 #endif
@@ -2509,13 +2496,8 @@ keep_going:						/* We will come back to here until there is
 							PQclear(res);
 							conn->send_appname = false;
 							/* Must drop the old connection */
-							pqsecure_close(conn);
-							closesocket(conn->sock);
-							conn->sock = -1;
+							pqDropConnection(conn);
 							conn->status = CONNECTION_NEEDED;
-							/* Discard any unread/unsent data */
-							conn->inStart = conn->inCursor = conn->inEnd = 0;
-							conn->outCount = 0;
 							goto keep_going;
 						}
 					}
@@ -2909,12 +2891,7 @@ closePGconn(PGconn *conn)
 	/*
 	 * Close the connection, reset all transient state, flush I/O buffers.
 	 */
-	if (conn->sock >= 0)
-	{
-		pqsecure_close(conn);
-		closesocket(conn->sock);
-	}
-	conn->sock = -1;
+	pqDropConnection(conn);
 	conn->status = CONNECTION_BAD;		/* Well, not really _bad_ - just
 										 * absent */
 	conn->asyncStatus = PGASYNC_IDLE;
@@ -2943,8 +2920,6 @@ closePGconn(PGconn *conn)
 	if (conn->lobjfuncs)
 		free(conn->lobjfuncs);
 	conn->lobjfuncs = NULL;
-	conn->inStart = conn->inCursor = conn->inEnd = 0;
-	conn->outCount = 0;
 #ifdef ENABLE_GSS
 	{
 		OM_uint32	min_s;
