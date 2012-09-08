@@ -62,7 +62,7 @@ typedef struct PlannerGlobal
 
 	ParamListInfo boundParams;	/* Param values provided to planner() */
 
-	List	   *paramlist;		/* to keep track of cross-level Params */
+	List	   *paramlist;		/* unused, will be removed in 9.3 */
 
 	List	   *subplans;		/* Plans for SubPlan nodes */
 
@@ -79,6 +79,9 @@ typedef struct PlannerGlobal
 	Index		lastPHId;		/* highest PlaceHolderVar ID assigned */
 
 	bool		transientPlan;	/* redo plan when TransactionXmin changes? */
+
+	/* Added post-release, will be in a saner place in 9.3: */
+	int			nParamExec;		/* number of PARAM_EXEC Params used */
 } PlannerGlobal;
 
 /* macro for fetching the Plan associated with a SubPlan node */
@@ -197,6 +200,9 @@ typedef struct PlannerInfo
 
 	bool		hasInheritedTarget;	/* true if parse->resultRelation is an
 									 * inheritance child rel */
+
+	/* Added post-release, will be in a saner place in 9.3: */
+	List	   *plan_params;	/* list of PlannerParamItems, see below */
 } PlannerInfo;
 
 
@@ -1310,22 +1316,25 @@ typedef struct PlaceHolderInfo
 } PlaceHolderInfo;
 
 /*
- * glob->paramlist keeps track of the PARAM_EXEC slots that we have decided
- * we need for the query.  At runtime these slots are used to pass values
- * either down into subqueries (for outer references in subqueries) or up out
- * of subqueries (for the results of a subplan).  The n'th entry in the list
- * (n counts from 0) corresponds to Param->paramid = n.
+ * At runtime, PARAM_EXEC slots are used to pass values around from one plan
+ * node to another.  They can be used to pass values down into subqueries (for
+ * outer references in subqueries), or up out of subqueries (for the results
+ * of a subplan).
+ * The planner is responsible for assigning nonconflicting PARAM_EXEC IDs to
+ * the PARAM_EXEC Params it generates.
  *
- * Each paramlist item shows the absolute query level it is associated with,
- * where the outermost query is level 1 and nested subqueries have higher
- * numbers.  The item the parameter slot represents can be one of four kinds:
+ * Outer references are managed via root->plan_params, which is a list of
+ * PlannerParamItems.  While planning a subquery, each parent query level's
+ * plan_params contains the values required from it by the current subquery.
  *
- * A Var: the slot represents a variable of that level that must be passed
+ * The item a PlannerParamItem represents can be one of three kinds:
+ *
+ * A Var: the slot represents a variable of this level that must be passed
  * down because subqueries have outer references to it.  The varlevelsup
  * value in the Var will always be zero.
  *
  * A PlaceHolderVar: this works much like the Var case, except that the
- * entry is a PlaceHolderVar node with a contained expression.  The PHV
+ * entry is a PlaceHolderVar node with a contained expression.	The PHV
  * will have phlevelsup = 0, and the contained expression is adjusted
  * to match in level.
  *
@@ -1334,19 +1343,25 @@ typedef struct PlaceHolderInfo
  * subquery.  The Aggref itself has agglevelsup = 0, and its argument tree
  * is adjusted to match in level.
  *
- * A Param: the slot holds the result of a subplan (it is a setParam item
- * for that subplan).  The absolute level shown for such items corresponds
- * to the parent query of the subplan.
- *
  * Note: we detect duplicate Var and PlaceHolderVar parameters and coalesce
- * them into one slot, but we do not do this for Aggref or Param slots.
+ * them into one slot, but we do not bother to do that for Aggrefs.
+ * The scope of duplicate-elimination only extends across the set of
+ * parameters passed from one query level into a single subquery.  So there is
+ * no possibility of a PARAM_EXEC slot being used for conflicting purposes.
+ *
+ * In addition, PARAM_EXEC slots are assigned for Params representing outputs
+ * from subplans (values that are setParam items for those subplans).  These
+ * IDs need not be tracked via PlannerParamItems, since we do not need any
+ * duplicate-elimination nor later processing of the represented expressions.
+ * Instead, we just record the assignment of the slot number by incrementing
+ * root->glob->nParamExec.
  */
 typedef struct PlannerParamItem
 {
 	NodeTag		type;
 
-	Node	   *item;			/* the Var, PlaceHolderVar, Aggref, or Param */
-	Index		abslevel;		/* its absolute query level */
+	Node	   *item;			/* the Var, PlaceHolderVar, or Aggref */
+	int			paramId;		/* its assigned PARAM_EXEC slot number */
 } PlannerParamItem;
 
 #endif   /* RELATION_H */

@@ -1459,13 +1459,13 @@ _outPlannerGlobal(StringInfo str, PlannerGlobal *node)
 	WRITE_NODE_TYPE("PLANNERGLOBAL");
 
 	/* NB: this isn't a complete set of fields */
-	WRITE_NODE_FIELD(paramlist);
 	WRITE_NODE_FIELD(subplans);
 	WRITE_NODE_FIELD(subrtables);
 	WRITE_BITMAPSET_FIELD(rewindPlanIDs);
 	WRITE_NODE_FIELD(finalrtable);
 	WRITE_NODE_FIELD(relationOids);
 	WRITE_NODE_FIELD(invalItems);
+	WRITE_INT_FIELD(nParamExec);
 	WRITE_UINT_FIELD(lastPHId);
 	WRITE_BOOL_FIELD(transientPlan);
 }
@@ -1479,6 +1479,7 @@ _outPlannerInfo(StringInfo str, PlannerInfo *node)
 	WRITE_NODE_FIELD(parse);
 	WRITE_NODE_FIELD(glob);
 	WRITE_UINT_FIELD(query_level);
+	WRITE_NODE_FIELD(plan_params);
 	WRITE_NODE_FIELD(join_rel_list);
 	WRITE_NODE_FIELD(resultRelations);
 	WRITE_NODE_FIELD(returningLists);
@@ -1699,7 +1700,7 @@ _outPlannerParamItem(StringInfo str, PlannerParamItem *node)
 	WRITE_NODE_TYPE("PLANNERPARAMITEM");
 
 	WRITE_NODE_FIELD(item);
-	WRITE_UINT_FIELD(abslevel);
+	WRITE_INT_FIELD(paramId);
 }
 
 /*****************************************************************************

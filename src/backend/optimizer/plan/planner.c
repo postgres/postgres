@@ -148,13 +148,13 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	glob = makeNode(PlannerGlobal);
 
 	glob->boundParams = boundParams;
-	glob->paramlist = NIL;
 	glob->subplans = NIL;
 	glob->subrtables = NIL;
 	glob->rewindPlanIDs = NULL;
 	glob->finalrtable = NIL;
 	glob->relationOids = NIL;
 	glob->invalItems = NIL;
+	glob->nParamExec = 0;
 	glob->lastPHId = 0;
 	glob->transientPlan = false;
 
@@ -230,7 +230,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	result->rowMarks = parse->rowMarks;
 	result->relationOids = glob->relationOids;
 	result->invalItems = glob->invalItems;
-	result->nParamExec = list_length(glob->paramlist);
+	result->nParamExec = glob->nParamExec;
 
 	return result;
 }
@@ -282,6 +282,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	root->glob = glob;
 	root->query_level = parent_root ? parent_root->query_level + 1 : 1;
 	root->parent_root = parent_root;
+	root->plan_params = NIL;
 	root->planner_cxt = CurrentMemoryContext;
 	root->init_plans = NIL;
 	root->cte_plan_ids = NIL;
