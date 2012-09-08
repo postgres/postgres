@@ -626,6 +626,9 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	else
 		tuple_fraction = root->tuple_fraction;
 
+	/* plan_params should not be in use in current query level */
+	Assert(root->plan_params == NIL);
+
 	/* Generate the plan for the subquery */
 	rel->subplan = subquery_planner(root->glob, subquery,
 									root,
@@ -633,6 +636,13 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 									&subroot);
 	rel->subrtable = subroot->parse->rtable;
 	rel->subrowmark = subroot->rowMarks;
+
+	/*
+	 * Since we don't yet support LATERAL, it should not be possible for the
+	 * sub-query to have requested parameters of this level.
+	 */
+	if (root->plan_params)
+		elog(ERROR, "unexpected outer reference in subquery in FROM");
 
 	/* Copy number of output rows from subplan */
 	rel->tuples = rel->subplan->plan_rows;
