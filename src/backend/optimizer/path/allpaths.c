@@ -1109,12 +1109,22 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	else
 		tuple_fraction = root->tuple_fraction;
 
+	/* plan_params should not be in use in current query level */
+	Assert(root->plan_params == NIL);
+
 	/* Generate the plan for the subquery */
 	rel->subplan = subquery_planner(root->glob, subquery,
 									root,
 									false, tuple_fraction,
 									&subroot);
 	rel->subroot = subroot;
+
+	/*
+	 * Since we don't yet support LATERAL, it should not be possible for the
+	 * sub-query to have requested parameters of this level.
+	 */
+	if (root->plan_params)
+		elog(ERROR, "unexpected outer reference in subquery in FROM");
 
 	/*
 	 * It's possible that constraint exclusion proved the subquery empty. If
