@@ -253,7 +253,7 @@ DROP TRIGGER stupid_trigger6 ON trigger_test;
 
 CREATE FUNCTION stupid7() RETURNS trigger
 AS $$
-    TD["new"] = {'a': 'foo', 'b': 'bar'}
+    TD["new"] = {'v': 'foo', 'a': 'bar'}
     return "MODIFY";
 $$ LANGUAGE plpythonu;
 
@@ -270,7 +270,7 @@ DROP TRIGGER stupid_trigger7 ON trigger_test;
 
 CREATE FUNCTION stupid7u() RETURNS trigger
 AS $$
-    TD["new"] = {u'a': 'foo', u'b': 'bar'}
+    TD["new"] = {u'v': 'foo', u'a': 'bar'}
     return "MODIFY"
 $$ LANGUAGE plpythonu;
 
