@@ -185,6 +185,9 @@ create_plan(PlannerInfo *root, Path *best_path)
 {
 	Plan	   *plan;
 
+	/* plan_params should not be in use in current query level */
+	Assert(root->plan_params == NIL);
+
 	/* Initialize this module's private workspace in PlannerInfo */
 	root->curOuterRels = NULL;
 	root->curOuterParams = NIL;
@@ -195,6 +198,12 @@ create_plan(PlannerInfo *root, Path *best_path)
 	/* Check we successfully assigned all NestLoopParams to plan nodes */
 	if (root->curOuterParams != NIL)
 		elog(ERROR, "failed to assign all NestLoopParams to plan nodes");
+
+	/*
+	 * Reset plan_params to ensure param IDs used for nestloop params are not
+	 * re-used later
+	 */
+	root->plan_params = NIL;
 
 	return plan;
 }
