@@ -4,6 +4,14 @@ include $(top_builddir)/src/Makefile.global
 
 SUBDIRS = include pgtypeslib ecpglib compatlib preproc
 
+# Suppress parallel build of subdirectories to avoid a bug in gmake 3.82, cf
+# http://savannah.gnu.org/bugs/?30653
+# https://bugzilla.redhat.com/show_bug.cgi?id=835424
+# (There are some other parallelism bugs in the subdirectory makefiles
+# themselves, but there's little point in fixing them as long as we have
+# to use this big hammer.)
+.NOTPARALLEL:
+
 $(recurse)
 
 all-pgtypeslib-recurse all-ecpglib-recurse all-compatlib-recurse all-preproc-recurse: all-include-recurse
