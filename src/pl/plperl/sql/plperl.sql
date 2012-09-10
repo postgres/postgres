@@ -462,3 +462,13 @@ CREATE OR REPLACE FUNCTION text_scalarref() RETURNS text AS $$
 $$ LANGUAGE plperl;
 
 SELECT text_scalarref();
+
+-- check safe behavior when a function body is replaced during execution
+CREATE OR REPLACE FUNCTION self_modify(INTEGER) RETURNS INTEGER AS $$
+   spi_exec_query('CREATE OR REPLACE FUNCTION self_modify(INTEGER) RETURNS INTEGER AS \'return $_[0] * 3;\' LANGUAGE plperl;');
+   spi_exec_query('select self_modify(42) AS a');
+   return $_[0] * 2;
+$$ LANGUAGE plperl;
+
+SELECT self_modify(42);
+SELECT self_modify(42);
