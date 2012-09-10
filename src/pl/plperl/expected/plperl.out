@@ -693,3 +693,21 @@ $$ LANGUAGE plperl;
 SELECT text_scalarref();
 ERROR:  PL/Perl function must return reference to hash or array
 CONTEXT:  PL/Perl function "text_scalarref"
+-- check safe behavior when a function body is replaced during execution
+CREATE OR REPLACE FUNCTION self_modify(INTEGER) RETURNS INTEGER AS $$
+   spi_exec_query('CREATE OR REPLACE FUNCTION self_modify(INTEGER) RETURNS INTEGER AS \'return $_[0] * 3;\' LANGUAGE plperl;');
+   spi_exec_query('select self_modify(42) AS a');
+   return $_[0] * 2;
+$$ LANGUAGE plperl;
+SELECT self_modify(42);
+ self_modify 
+-------------
+          84
+(1 row)
+
+SELECT self_modify(42);
+ self_modify 
+-------------
+         126
+(1 row)
+
