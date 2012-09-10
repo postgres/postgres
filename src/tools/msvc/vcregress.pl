@@ -9,15 +9,19 @@ our $config;
 use Cwd;
 use File::Copy;
 
+use Install qw(Install);
+
 my $startdir = getcwd();
 
 chdir "../../.." if (-d "../../../src/tools/msvc");
+
+my $topdir = getcwd();
 
 require 'src/tools/msvc/config_default.pl';
 require 'src/tools/msvc/config.pl' if (-f 'src/tools/msvc/config.pl');
 
 # buildenv.pl is for specifying the build environment settings
-# it should contian lines like:
+# it should contain lines like:
 # $ENV{PATH} = "c:/path/to/bison/bin;$ENV{PATH}";
 
 if (-e "src/tools/msvc/buildenv.pl")
@@ -27,7 +31,7 @@ if (-e "src/tools/msvc/buildenv.pl")
 
 my $what = shift || "";
 if ($what =~
-	/^(check|installcheck|plcheck|contribcheck|ecpgcheck|isolationcheck)$/i)
+	/^(check|installcheck|plcheck|contribcheck|ecpgcheck|isolationcheck|upgradecheck)$/i)
 {
 	$what = uc $what;
 }
@@ -53,8 +57,6 @@ unless ($schedule)
 	$schedule = "parallel" if ($what eq 'CHECK' || $what =~ /PARALLEL/);
 }
 
-my $topdir = getcwd();
-
 $ENV{PERL5LIB} = "$topdir/src/tools/msvc";
 
 my $maxconn = "";
@@ -73,7 +75,8 @@ my %command = (
 	INSTALLCHECK   => \&installcheck,
 	ECPGCHECK      => \&ecpgcheck,
 	CONTRIBCHECK   => \&contribcheck,
-	ISOLATIONCHECK => \&isolationcheck,);
+	ISOLATIONCHECK => \&isolationcheck,
+    UPGRADECHECK   => \&upgradecheck,);
 
 my $proc = $command{$what};
 
@@ -229,6 +232,75 @@ sub contribcheck
 		chdir "..";
 	}
 	exit $mstat if $mstat;
+}
+
+sub upgradecheck
+{
+	my $status;
+	my $cwd = getcwd();
+
+	# Much of this comes from the pg_upgrade test.sh script,
+	# but it only covers the --install case, and not the case
+	# where the old and new source or bin dirs are different.
+	# i.e. only the this version to this version check. That's
+	# what pg_upgrade's "make check" does.
+
+	$ENV{PGPORT} ||= 50432;
+	my $tmp_root = "$topdir/contrib/pg_upgrade/tmp_check";
+	(mkdir $tmp_root || die $!) unless -d $tmp_root;
+	my $tmp_install = "$tmp_root/install";
+	print "Setting up temp install\n\n";
+	Install($tmp_install, $config);
+	# Install does a chdir, so change back after that
+	chdir $cwd;
+	my ($bindir,$libdir,$oldsrc,$newsrc) = 
+	  ("$tmp_install/bin", "$tmp_install/lib", $topdir, $topdir);
+	$ENV{PATH} = "$bindir;$ENV{PATH}";
+	my $data = "$tmp_root/data";
+	$ENV{PGDATA} = $data;
+	my $logdir = "$topdir/contrib/pg_upgrade/log";
+	(mkdir $logdir || die $!) unless -d $logdir;
+	print "\nRunning initdb on old cluster\n\n";
+	system("initdb") == 0 or exit 1;
+	print "\nStarting old cluster\n\n";
+	system("pg_ctl start -l $logdir/postmaster1.log -w") == 0 or exit 1;
+	print "\nSetting up data for upgrading\n\n";
+	installcheck();
+	# now we can chdir into the source dir
+	chdir "$topdir/contrib/pg_upgrade";
+	print "\nDuming old cluster\n\n";
+	system("pg_dumpall -f $tmp_root/dump1.sql") == 0 or exit 1;
+	print "\nStopping old cluster\n\n";
+	system("pg_ctl -m fast stop") == 0 or exit 1;
+	rename $data, "$data.old";
+	print "\nSetting up new cluster\n\n";
+	system("initdb") == 0 or exit 1;
+	print "\nRunning pg_upgrade\n\n";
+	system("pg_upgrade -d $data.old -D $data -b $bindir -B $bindir") == 0 
+	  or exit 1;
+	print "\nStarting new cluster\n\n";
+	system("pg_ctl -l $logdir/postmaster2.log -w start") == 0 or exit 1;
+	print "\nSetting up stats on new cluster\n\n";
+	system(".\\analyze_new_cluster.bat") == 0 or exit 1;
+	print "\nDumping new cluster\n\n";
+	system("pg_dumpall -f $tmp_root/dump2.sql") == 0 or exit 1;
+	print "\nStopping new cluster\n\n";
+	system("pg_ctl -m fast stop") == 0 or exit 1;
+	print "\nDeleting old cluster\n\n";
+	system(".\\delete_old_cluster.bat") == 0 or exit 1;
+	print "\nComparing old and new cluster dumps\n\n";
+
+	system("diff -q $tmp_root/dump1.sql $tmp_root/dump2.sql");
+	$status = $?;
+	if (!$status)
+	{
+		print "PASSED\n";
+	}
+	else
+	{
+		print "dumps not identical!\n";
+		exit(1);
+	}
 }
 
 sub fetchRegressOpts

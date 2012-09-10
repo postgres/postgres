@@ -37,9 +37,16 @@ sub Install
 	$| = 1;
 
 	my $target = shift;
-	our $config;
-	require "config_default.pl";
-	require "config.pl" if (-f "config.pl");
+	# if called from vcregress, the config will be passed to us
+	# so no need to re-include these
+	our $config = shift;
+	unless ($config)
+	{
+		# suppress warning about harmless redeclaration of $config
+		no warnings 'misc'; 
+		require "config_default.pl";
+		require "config.pl" if (-f "config.pl");
+	}
 
 	chdir("../../..")    if (-f "../../../configure");
 	chdir("../../../..") if (-f "../../../../configure");
