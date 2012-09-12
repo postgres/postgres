@@ -2939,7 +2939,7 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 						  ccsrc,	/* Source form of check constraint */
 						  true, /* is local */
 						  0,	/* inhcount */
-						  false);		/* is only */
+						  false);		/* connoinherit */
 
 	/*
 	 * Return the compiled constraint expression so the calling routine can
