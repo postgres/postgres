@@ -303,23 +303,29 @@ tsquery_opr_selec(QueryItem *item, char *operand,
 		{
 			/* Prefix match, ie the query item is lexeme:* */
 			Selectivity matched,
-						allmcvs;
-			int			i;
+						allmces;
+			int			i,
+						n_matched;
 
 			/*
-			 * Our strategy is to scan through the MCV list and add up the
-			 * frequencies of the ones that match the prefix, thereby assuming
-			 * that the MCVs are representative of the whole lexeme population
-			 * in this respect.  Compare histogram_selectivity().
+			 * Our strategy is to scan through the MCELEM list and combine the
+			 * frequencies of the ones that match the prefix.  We then
+			 * extrapolate the fraction of matching MCELEMs to the remaining
+			 * rows, assuming that the MCELEMs are representative of the whole
+			 * lexeme population in this respect.  (Compare
+			 * histogram_selectivity().)  Note that these are most common
+			 * elements not most common values, so they're not mutually
+			 * exclusive.  We treat occurrences as independent events.
 			 *
 			 * This is only a good plan if we have a pretty fair number of
-			 * MCVs available; we set the threshold at 100.  If no stats or
+			 * MCELEMs available; we set the threshold at 100.  If no stats or
 			 * insufficient stats, arbitrarily use DEFAULT_TS_MATCH_SEL*4.
 			 */
 			if (lookup == NULL || length < 100)
 				return (Selectivity) (DEFAULT_TS_MATCH_SEL * 4);
 
-			matched = allmcvs = 0;
+			matched = allmces = 0;
+			n_matched = 0;
 			for (i = 0; i < length; i++)
 			{
 				TextFreq   *t = lookup + i;
@@ -328,20 +334,26 @@ tsquery_opr_selec(QueryItem *item, char *operand,
 				if (tlen >= key.length &&
 					strncmp(key.lexeme, VARDATA_ANY(t->element),
 							key.length) == 0)
-					matched += t->frequency;
-				allmcvs += t->frequency;
+				{
+					matched += t->frequency - matched * t->frequency;
+					n_matched++;
+				}
+				allmces += t->frequency - allmces * t->frequency;
 			}
 
-			if (allmcvs > 0)	/* paranoia about zero divide */
-				selec = matched / allmcvs;
-			else
-				selec = (Selectivity) (DEFAULT_TS_MATCH_SEL * 4);
+			/* Clamp to ensure sanity in the face of roundoff error */
+			CLAMP_PROBABILITY(matched);
+			CLAMP_PROBABILITY(allmces);
+
+			selec = matched + (1.0 - allmces) * ((double) n_matched / length);
 
 			/*
 			 * In any case, never believe that a prefix match has selectivity
-			 * less than DEFAULT_TS_MATCH_SEL.
+			 * less than we would assign for a non-MCELEM lexeme.  This
+			 * preserves the property that "word:*" should be estimated to
+			 * match at least as many rows as "word" would be.
 			 */
-			selec = Max(DEFAULT_TS_MATCH_SEL, selec);
+			selec = Max(Min(DEFAULT_TS_MATCH_SEL, minfreq / 2), selec);
 		}
 		else
 		{
