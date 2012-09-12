@@ -867,7 +867,7 @@ ts_rank(<optional> <replaceable class="PARAMETER">weights</replaceable> <type>fl
 
       <listitem>
        <para>
-        Ranks vectors based on the frequency of their matching lexems.
+        Ranks vectors based on the frequency of their matching lexemes.
        </para>
       </listitem>
      </varlistentry>
