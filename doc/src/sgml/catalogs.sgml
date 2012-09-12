@@ -2036,7 +2036,7 @@
      </row>
 
      <row>
-      <entry><structfield>conisonly</structfield></entry>
+      <entry><structfield>connoinherit</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
