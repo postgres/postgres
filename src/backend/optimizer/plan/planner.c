@@ -90,8 +90,8 @@ static void locate_grouping_columns(PlannerInfo *root,
 						AttrNumber *groupColIdx);
 static List *postprocess_setop_tlist(List *new_tlist, List *orig_tlist);
 static List *select_active_windows(PlannerInfo *root, WindowFuncLists *wflists);
-static List *add_volatile_sort_exprs(List *window_tlist, List *tlist,
-						List *activeWindows);
+static List *make_windowInputTargetList(PlannerInfo *root,
+						   List *tlist, List *activeWindows);
 static List *make_pathkeys_for_window(PlannerInfo *root, WindowClause *wc,
 						 List *tlist, bool canonicalize);
 static void get_column_info_for_window(PlannerInfo *root, WindowClause *wc,
@@ -1555,31 +1555,25 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 			/*
 			 * The "base" targetlist for all steps of the windowing process is
-			 * a flat tlist of all Vars and Aggs needed in the result. (In
+			 * a flat tlist of all Vars and Aggs needed in the result.  (In
 			 * some cases we wouldn't need to propagate all of these all the
 			 * way to the top, since they might only be needed as inputs to
 			 * WindowFuncs.  It's probably not worth trying to optimize that
-			 * though.)  We also need any volatile sort expressions, because
-			 * make_sort_from_pathkeys won't add those on its own, and anyway
-			 * we want them evaluated only once at the bottom of the stack. As
-			 * we climb up the stack, we add outputs for the WindowFuncs
-			 * computed at each level.	Also, each input tlist has to present
-			 * all the columns needed to sort the data for the next WindowAgg
-			 * step.  That's handled internally by make_sort_from_pathkeys,
-			 * but we need the copyObject steps here to ensure that each plan
-			 * node has a separately modifiable tlist.
-			 *
-			 * Note: it's essential here to use PVC_INCLUDE_AGGREGATES so that
-			 * Vars mentioned only in aggregate expressions aren't pulled out
-			 * as separate targetlist entries.	Otherwise we could be putting
-			 * ungrouped Vars directly into an Agg node's tlist, resulting in
-			 * undefined behavior.
+			 * though.)  We also add window partitioning and sorting
+			 * expressions to the base tlist, to ensure they're computed only
+			 * once at the bottom of the stack (that's critical for volatile
+			 * functions).  As we climb up the stack, we'll add outputs for
+			 * the WindowFuncs computed at each level.
 			 */
-			window_tlist = flatten_tlist(tlist,
-										 PVC_INCLUDE_AGGREGATES,
-										 PVC_INCLUDE_PLACEHOLDERS);
-			window_tlist = add_volatile_sort_exprs(window_tlist, tlist,
-												   activeWindows);
+			window_tlist = make_windowInputTargetList(root,
+													  tlist,
+													  activeWindows);
+
+			/*
+			 * The copyObject steps here are needed to ensure that each plan
+			 * node has a separately modifiable tlist.  (XXX wouldn't a
+			 * shallow list copy do for that?)
+			 */
 			result_plan->targetlist = (List *) copyObject(window_tlist);
 
 			foreach(l, activeWindows)
@@ -1603,9 +1597,11 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				 * really have to sort.  Even when no explicit sort is needed,
 				 * we need to have suitable resjunk items added to the input
 				 * plan's tlist for any partitioning or ordering columns that
-				 * aren't plain Vars.  Furthermore, this way we can use
-				 * existing infrastructure to identify which input columns are
-				 * the interesting ones.
+				 * aren't plain Vars.  (In theory, make_windowInputTargetList
+				 * should have provided all such columns, but let's not assume
+				 * that here.)  Furthermore, this way we can use existing
+				 * infrastructure to identify which input columns are the
+				 * interesting ones.
 				 */
 				if (window_pathkeys)
 				{
@@ -3006,18 +3002,57 @@ select_active_windows(PlannerInfo *root, WindowFuncLists *wflists)
 }
 
 /*
- * add_volatile_sort_exprs
- *		Identify any volatile sort/group expressions used by the active
- *		windows, and add them to window_tlist if not already present.
- *		Return the modified window_tlist.
+ * make_windowInputTargetList
+ *	  Generate appropriate target list for initial input to WindowAgg nodes.
+ *
+ * When grouping_planner inserts one or more WindowAgg nodes into the plan,
+ * this function computes the initial target list to be computed by the node
+ * just below the first WindowAgg.  This list must contain all values needed
+ * to evaluate the window functions, compute the final target list, and
+ * perform any required final sort step.  If multiple WindowAggs are needed,
+ * each intermediate one adds its window function results onto this tlist;
+ * only the topmost WindowAgg computes the actual desired target list.
+ *
+ * This function is much like make_subplanTargetList, though not quite enough
+ * like it to share code.  As in that function, we flatten most expressions
+ * into their component variables.  But we do not want to flatten window
+ * PARTITION BY/ORDER BY clauses, since that might result in multiple
+ * evaluations of them, which would be bad (possibly even resulting in
+ * inconsistent answers, if they contain volatile functions).  Also, we must
+ * not flatten GROUP BY clauses that were left unflattened by
+ * make_subplanTargetList, because we may no longer have access to the
+ * individual Vars in them.
+ *
+ * Another key difference from make_subplanTargetList is that we don't flatten
+ * Aggref expressions, since those are to be computed below the window
+ * functions and just referenced like Vars above that.
+ *
+ * 'tlist' is the query's final target list.
+ * 'activeWindows' is the list of active windows previously identified by
+ *			select_active_windows.
+ *
+ * The result is the targetlist to be computed by the plan node immediately
+ * below the first WindowAgg node.
  */
 static List *
-add_volatile_sort_exprs(List *window_tlist, List *tlist, List *activeWindows)
+make_windowInputTargetList(PlannerInfo *root,
+						   List *tlist,
+						   List *activeWindows)
 {
-	Bitmapset  *sgrefs = NULL;
+	Query	   *parse = root->parse;
+	Bitmapset  *sgrefs;
+	List	   *new_tlist;
+	List	   *flattenable_cols;
+	List	   *flattenable_vars;
 	ListCell   *lc;
 
-	/* First, collect the sortgrouprefs of the windows into a bitmapset */
+	Assert(parse->hasWindowFuncs);
+
+	/*
+	 * Collect the sortgroupref numbers of window PARTITION/ORDER BY clauses
+	 * into a bitmapset for convenient reference below.
+	 */
+	sgrefs = NULL;
 	foreach(lc, activeWindows)
 	{
 		WindowClause *wc = (WindowClause *) lfirst(lc);
@@ -3037,34 +3072,74 @@ add_volatile_sort_exprs(List *window_tlist, List *tlist, List *activeWindows)
 		}
 	}
 
+	/* Add in sortgroupref numbers of GROUP BY clauses, too */
+	foreach(lc, parse->groupClause)
+	{
+		SortGroupClause *grpcl = (SortGroupClause *) lfirst(lc);
+
+		sgrefs = bms_add_member(sgrefs, grpcl->tleSortGroupRef);
+	}
+
 	/*
-	 * Now scan the original tlist to find the referenced expressions. Any
-	 * that are volatile must be added to window_tlist.
-	 *
-	 * Note: we know that the input window_tlist contains no items marked with
-	 * ressortgrouprefs, so we don't have to worry about collisions of the
-	 * reference numbers.
+	 * Construct a tlist containing all the non-flattenable tlist items, and
+	 * save aside the others for a moment.
 	 */
+	new_tlist = NIL;
+	flattenable_cols = NIL;
+
 	foreach(lc, tlist)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(lc);
 
+		/*
+		 * Don't want to deconstruct window clauses or GROUP BY items.  (Note
+		 * that such items can't contain window functions, so it's okay to
+		 * compute them below the WindowAgg nodes.)
+		 */
 		if (tle->ressortgroupref != 0 &&
-			bms_is_member(tle->ressortgroupref, sgrefs) &&
-			contain_volatile_functions((Node *) tle->expr))
+			bms_is_member(tle->ressortgroupref, sgrefs))
 		{
+			/* Don't want to deconstruct this value, so add to new_tlist */
 			TargetEntry *newtle;
 
 			newtle = makeTargetEntry(tle->expr,
-									 list_length(window_tlist) + 1,
+									 list_length(new_tlist) + 1,
 									 NULL,
 									 false);
+			/* Preserve its sortgroupref marking, in case it's volatile */
 			newtle->ressortgroupref = tle->ressortgroupref;
-			window_tlist = lappend(window_tlist, newtle);
+			new_tlist = lappend(new_tlist, newtle);
+		}
+		else
+		{
+			/*
+			 * Column is to be flattened, so just remember the expression for
+			 * later call to pull_var_clause.  There's no need for
+			 * pull_var_clause to examine the TargetEntry node itself.
+			 */
+			flattenable_cols = lappend(flattenable_cols, tle->expr);
 		}
 	}
 
-	return window_tlist;
+	/*
+	 * Pull out all the Vars and Aggrefs mentioned in flattenable columns, and
+	 * add them to the result tlist if not already present.  (Some might be
+	 * there already because they're used directly as window/group clauses.)
+	 *
+	 * Note: it's essential to use PVC_INCLUDE_AGGREGATES here, so that the
+	 * Aggrefs are placed in the Agg node's tlist and not left to be computed
+	 * at higher levels.
+	 */
+	flattenable_vars = pull_var_clause((Node *) flattenable_cols,
+									   PVC_INCLUDE_AGGREGATES,
+									   PVC_INCLUDE_PLACEHOLDERS);
+	new_tlist = add_to_flat_tlist(new_tlist, flattenable_vars);
+
+	/* clean up cruft */
+	list_free(flattenable_vars);
+	list_free(flattenable_cols);
+
+	return new_tlist;
 }
 
 /*
