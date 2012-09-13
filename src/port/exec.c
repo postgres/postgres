@@ -506,7 +506,7 @@ pipe_read_line(char *cmd, char *line, int maxsize)
 /*
  * pclose() plus useful error reporting
  * Is this necessary?  bjm 2004-05-11
- * Originaally this was stated to be here because pipe.c had backend linkage.
+ * Originally this was stated to be here because pipe.c had backend linkage.
  * Perhaps that's no longer so now we have got rid of pipe.c amd 2012-03-28
  */
 int
