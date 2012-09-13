@@ -1705,10 +1705,15 @@ plperl_call_handler(PG_FUNCTION_ARGS)
 	Datum		retval;
 	plperl_call_data *save_call_data = current_call_data;
 	plperl_interp_desc *oldinterp = plperl_active_interp;
+	plperl_call_data this_call_data;
+
+	/* Initialize current-call status record */
+	MemSet(&this_call_data, 0, sizeof(this_call_data));
+	this_call_data.fcinfo = fcinfo;
 
 	PG_TRY();
 	{
-		current_call_data = NULL;
+		current_call_data = &this_call_data;
 		if (CALLED_AS_TRIGGER(fcinfo))
 			retval = PointerGetDatum(plperl_trigger_handler(fcinfo));
 		else
@@ -1716,16 +1721,16 @@ plperl_call_handler(PG_FUNCTION_ARGS)
 	}
 	PG_CATCH();
 	{
-		if (current_call_data && current_call_data->prodesc)
-			decrement_prodesc_refcount(current_call_data->prodesc);
+		if (this_call_data.prodesc)
+			decrement_prodesc_refcount(this_call_data.prodesc);
 		current_call_data = save_call_data;
 		activate_interpreter(oldinterp);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
-	if (current_call_data && current_call_data->prodesc)
-		decrement_prodesc_refcount(current_call_data->prodesc);
+	if (this_call_data.prodesc)
+		decrement_prodesc_refcount(this_call_data.prodesc);
 	current_call_data = save_call_data;
 	activate_interpreter(oldinterp);
 	return retval;
@@ -1745,7 +1750,11 @@ plperl_inline_handler(PG_FUNCTION_ARGS)
 	plperl_proc_desc desc;
 	plperl_call_data *save_call_data = current_call_data;
 	plperl_interp_desc *oldinterp = plperl_active_interp;
+	plperl_call_data this_call_data;
 	ErrorContextCallback pl_error_context;
+
+	/* Initialize current-call status record */
+	MemSet(&this_call_data, 0, sizeof(this_call_data));
 
 	/* Set up a callback for error reporting */
 	pl_error_context.callback = plperl_inline_callback;
@@ -1777,14 +1786,15 @@ plperl_inline_handler(PG_FUNCTION_ARGS)
 	desc.nargs = 0;
 	desc.reference = NULL;
 
+	this_call_data.fcinfo = &fake_fcinfo;
+	this_call_data.prodesc = &desc;
+	/* we do not bother with refcounting the fake prodesc */
+
 	PG_TRY();
 	{
 		SV		   *perlret;
 
-		current_call_data = (plperl_call_data *) palloc0(sizeof(plperl_call_data));
-		current_call_data->fcinfo = &fake_fcinfo;
-		current_call_data->prodesc = &desc;
-		/* we do not bother with refcounting the fake prodesc */
+		current_call_data = &this_call_data;
 
 		if (SPI_connect() != SPI_OK_CONNECT)
 			elog(ERROR, "could not connect to SPI manager");
@@ -2167,13 +2177,6 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	ReturnSetInfo *rsi;
 	ErrorContextCallback pl_error_context;
 
-	/*
-	 * Create the call_data before connecting to SPI, so that it is not
-	 * allocated in the SPI memory context
-	 */
-	current_call_data = (plperl_call_data *) palloc0(sizeof(plperl_call_data));
-	current_call_data->fcinfo = fcinfo;
-
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "could not connect to SPI manager");
 
@@ -2285,13 +2288,6 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 	SV		   *svTD;
 	HV		   *hvTD;
 	ErrorContextCallback pl_error_context;
-
-	/*
-	 * Create the call_data before connecting to SPI, so that it is not
-	 * allocated in the SPI memory context
-	 */
-	current_call_data = (plperl_call_data *) palloc0(sizeof(plperl_call_data));
-	current_call_data->fcinfo = fcinfo;
 
 	/* Connect to SPI manager */
 	if (SPI_connect() != SPI_OK_CONNECT)
