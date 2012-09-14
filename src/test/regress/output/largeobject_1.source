@@ -9,6 +9,25 @@ CREATE TABLE lotest_stash_values (loid oid, fd integer);
 -- The mode arg to lo_creat is unused, some vestigal holdover from ancient times
 -- returns the large object id
 INSERT INTO lotest_stash_values (loid) SELECT lo_creat(42);
+-- Test ALTER LARGE OBJECT
+CREATE ROLE regresslo;
+DO $$
+  BEGIN
+    EXECUTE 'ALTER LARGE OBJECT ' || (select loid from lotest_stash_values)
+		|| ' OWNER TO regresslo';
+  END
+$$;
+SELECT
+	rol.rolname
+FROM
+	lotest_stash_values s
+	JOIN pg_largeobject_metadata lo ON s.loid = lo.oid
+	JOIN pg_authid rol ON lo.lomowner = rol.oid;
+  rolname  
+-----------
+ regresslo
+(1 row)
+
 -- NOTE: large objects require transactions
 BEGIN;
 -- lo_open(lobjId oid, mode integer) returns integer
@@ -203,6 +222,13 @@ TRUNCATE lotest_stash_values;
 INSERT INTO lotest_stash_values (loid) SELECT lo_import('@abs_srcdir@/data/tenk.data');
 BEGIN;
 UPDATE lotest_stash_values SET fd=lo_open(loid, CAST(x'20000' | x'40000' AS integer));
+-- verify length of large object
+SELECT lo_lseek(fd, 0, 2) FROM lotest_stash_values;
+ lo_lseek 
+----------
+   680801
+(1 row)
+
 -- with the default BLKSZ, LOBLKSZ = 2048, so this positions us for a block
 -- edge case
 SELECT lo_lseek(fd, 2030, 0) FROM lotest_stash_values;
@@ -284,3 +310,4 @@ SELECT lo_unlink(loid) FROM lotest_stash_values;
 
 \lo_unlink :newloid
 TRUNCATE lotest_stash_values;
+DROP ROLE regresslo;
