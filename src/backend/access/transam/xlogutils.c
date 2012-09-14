@@ -394,6 +394,8 @@ CreateFakeRelcacheEntry(RelFileNode rnode)
 	FakeRelCacheEntry fakeentry;
 	Relation	rel;
 
+	Assert(InRecovery);
+
 	/* Allocate the Relation struct and all related space in one block. */
 	fakeentry = palloc0(sizeof(FakeRelCacheEntryData));
 	rel = (Relation) fakeentry;
@@ -402,6 +404,9 @@ CreateFakeRelcacheEntry(RelFileNode rnode)
 	rel->rd_node = rnode;
 	/* We will never be working with temp rels during recovery */
 	rel->rd_backend = InvalidBackendId;
+
+	/* It must be a permanent table if we're in recovery. */
+	rel->rd_rel->relpersistence = RELPERSISTENCE_PERMANENT;
 
 	/* We don't know the name of the relation; use relfilenode instead */
 	sprintf(RelationGetRelationName(rel), "%u", rnode.relNode);
