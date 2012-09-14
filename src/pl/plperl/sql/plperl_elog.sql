@@ -46,3 +46,33 @@ select uses_global();
 
 -- make sure we don't choke on readonly values
 do language plperl $$ elog(NOTICE, ${^TAINT}); $$;
+
+-- test recovery after "die"
+
+create or replace function just_die() returns void language plperl AS $$
+die "just die";
+$$;
+
+select just_die();
+
+create or replace function die_caller() returns int language plpgsql as $$
+BEGIN
+  BEGIN
+    PERFORM just_die();
+  EXCEPTION WHEN OTHERS THEN
+    RAISE NOTICE 'caught die';
+  END;
+  RETURN 1;
+END;
+$$;
+
+select die_caller();
+
+create or replace function indirect_die_caller() returns int language plperl as $$
+my $prepared = spi_prepare('SELECT die_caller() AS fx');
+my $a = spi_exec_prepared($prepared)->{rows}->[0]->{fx};
+my $b = spi_exec_prepared($prepared)->{rows}->[0]->{fx};
+return $a + $b;
+$$;
+
+select indirect_die_caller();
