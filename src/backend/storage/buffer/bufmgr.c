@@ -269,6 +269,8 @@ ReadBufferWithoutRelcache(RelFileNode rnode, ForkNumber forkNum,
 
 	SMgrRelation smgr = smgropen(rnode, InvalidBackendId);
 
+	Assert(InRecovery);
+
 	return ReadBuffer_common(smgr, RELPERSISTENCE_PERMANENT, forkNum, blockNum,
 							 mode, strategy, &hit);
 }
