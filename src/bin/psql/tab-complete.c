@@ -354,6 +354,21 @@ static const SchemaQuery Query_for_list_of_tables = {
 	NULL
 };
 
+static const SchemaQuery Query_for_list_of_constraints_with_schema = {
+	/* catname */
+	"pg_catalog.pg_constraint c",
+	/* selcondition */
+	"c.conrelid <> 0",
+	/* viscondition */
+	"true",				/* there is no pg_constraint_is_visible */
+	/* namespace */
+	"c.connamespace",
+	/* result */
+	"pg_catalog.quote_ident(c.conname)",
+	/* qualresult */
+	NULL
+};
+
 /* The bit masks for the following three functions come from
  * src/include/catalog/pg_trigger.h.
  */
@@ -586,6 +601,28 @@ static const SchemaQuery Query_for_list_of_views = {
 " WHERE c1.oid=conrelid and (%d = pg_catalog.length('%s'))"\
 "       and pg_catalog.quote_ident(c1.relname)='%s'"\
 "       and pg_catalog.pg_table_is_visible(c1.oid)"
+
+#define Query_for_all_table_constraints \
+"SELECT pg_catalog.quote_ident(conname) "\
+"  FROM pg_catalog.pg_constraint c "\
+" WHERE c.conrelid <> 0 "
+
+/* the silly-looking length condition is just to eat up the current word */
+#define Query_for_constraint_of_type \
+"SELECT pg_catalog.quote_ident(conname) "\
+"  FROM pg_catalog.pg_type t, pg_catalog.pg_constraint con "\
+" WHERE t.oid=contypid and (%d = pg_catalog.length('%s'))"\
+"       and pg_catalog.quote_ident(t.typname)='%s'"\
+"       and pg_catalog.pg_type_is_visible(t.oid)"
+
+/* the silly-looking length condition is just to eat up the current word */
+#define Query_for_list_of_tables_for_constraint	\
+"SELECT pg_catalog.quote_ident(relname) "\
+"  FROM pg_catalog.pg_class"\
+" WHERE (%d = pg_catalog.length('%s'))"\
+"   AND oid IN "\
+"       (SELECT conrelid FROM pg_catalog.pg_constraint "\
+"         WHERE pg_catalog.quote_ident(conname)='%s')"
 
 /* the silly-looking length condition is just to eat up the current word */
 #define Query_for_list_of_tables_for_trigger \
@@ -1147,6 +1184,17 @@ psql_completion(char *text, int start, int end)
 
 		COMPLETE_WITH_LIST(list_ALTERDOMAIN2);
 	}
+	/* ALTER DOMAIN <sth> DROP|RENAME|VALIDATE CONSTRAINT */
+	else if (pg_strcasecmp(prev5_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev4_wd, "DOMAIN") == 0 &&
+			 (pg_strcasecmp(prev2_wd, "DROP") == 0 ||
+			  pg_strcasecmp(prev2_wd, "RENAME") == 0 ||
+			  pg_strcasecmp(prev2_wd, "VALIDATE") == 0) &&
+			 pg_strcasecmp(prev_wd, "CONSTRAINT") == 0)
+	{
+		completion_info_charp = prev3_wd;
+		COMPLETE_WITH_QUERY(Query_for_constraint_of_type);
+	}
 	/* ALTER DOMAIN <sth> RENAME */
 	else if (pg_strcasecmp(prev4_wd, "ALTER") == 0 &&
 			 pg_strcasecmp(prev3_wd, "DOMAIN") == 0 &&
@@ -1340,14 +1388,18 @@ psql_completion(char *text, int start, int end)
 
 		COMPLETE_WITH_LIST(list_TABLEDROP);
 	}
-	/* If we have TABLE <sth> DROP COLUMN, provide list of columns */
-	else if (pg_strcasecmp(prev4_wd, "TABLE") == 0 &&
+	/* If we have ALTER TABLE <sth> DROP COLUMN, provide list of columns */
+	else if (pg_strcasecmp(prev5_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev4_wd, "TABLE") == 0 &&
 			 pg_strcasecmp(prev2_wd, "DROP") == 0 &&
 			 pg_strcasecmp(prev_wd, "COLUMN") == 0)
 		COMPLETE_WITH_ATTR(prev3_wd, "");
-	/* If we have TABLE <sth> DROP CONSTRAINT, provide list of constraints */
-	else if (pg_strcasecmp(prev4_wd, "TABLE") == 0 &&
-			 pg_strcasecmp(prev2_wd, "DROP") == 0 &&
+	/* If we have ALTER TABLE <sth> DROP|RENAME|VALIDATE CONSTRAINT, provide list of constraints */
+	else if (pg_strcasecmp(prev5_wd, "ALTER") == 0 &&
+			 pg_strcasecmp(prev4_wd, "TABLE") == 0 &&
+			 (pg_strcasecmp(prev2_wd, "DROP") == 0 ||
+			  pg_strcasecmp(prev2_wd, "RENAME") == 0 ||
+			  pg_strcasecmp(prev2_wd, "VALIDATE") == 0) &&
 			 pg_strcasecmp(prev_wd, "CONSTRAINT") == 0)
 	{
 		completion_info_charp = prev3_wd;
@@ -1743,6 +1795,26 @@ psql_completion(char *text, int start, int end)
 		{"CONFIGURATION", "DICTIONARY", "PARSER", "TEMPLATE", NULL};
 
 		COMPLETE_WITH_LIST(list_TRANS2);
+	}
+	else if (pg_strcasecmp(prev3_wd, "COMMENT") == 0 &&
+			 pg_strcasecmp(prev2_wd, "ON") == 0 &&
+			 pg_strcasecmp(prev_wd, "CONSTRAINT") == 0)
+	{
+		COMPLETE_WITH_QUERY(Query_for_all_table_constraints);
+	}
+	else if (pg_strcasecmp(prev4_wd, "COMMENT") == 0 &&
+			 pg_strcasecmp(prev3_wd, "ON") == 0 &&
+			 pg_strcasecmp(prev2_wd, "CONSTRAINT") == 0)
+	{
+		COMPLETE_WITH_CONST("ON");
+	}
+	else if (pg_strcasecmp(prev5_wd, "COMMENT") == 0 &&
+			 pg_strcasecmp(prev4_wd, "ON") == 0 &&
+			 pg_strcasecmp(prev3_wd, "CONSTRAINT") == 0 &&
+			 pg_strcasecmp(prev_wd, "ON") == 0)
+	{
+		completion_info_charp = prev2_wd;
+		COMPLETE_WITH_QUERY(Query_for_list_of_tables_for_constraint);
 	}
 	else if ((pg_strcasecmp(prev4_wd, "COMMENT") == 0 &&
 			  pg_strcasecmp(prev3_wd, "ON") == 0) ||
@@ -2804,6 +2876,12 @@ psql_completion(char *text, int start, int end)
 		{"ONLY", "WRITE", NULL};
 
 		COMPLETE_WITH_LIST(my_list);
+	}
+	/* SET CONSTRAINTS */
+	else if (pg_strcasecmp(prev2_wd, "SET") == 0 &&
+			 pg_strcasecmp(prev_wd, "CONSTRAINTS") == 0)
+	{
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_constraints_with_schema, "UNION SELECT 'ALL'");
 	}
 	/* Complete SET CONSTRAINTS <foo> with DEFERRED|IMMEDIATE */
 	else if (pg_strcasecmp(prev3_wd, "SET") == 0 &&
