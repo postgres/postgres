@@ -226,7 +226,7 @@ UPDATE lotest_stash_values SET fd=lo_open(loid, CAST(x'20000' | x'40000' AS inte
 SELECT lo_lseek(fd, 0, 2) FROM lotest_stash_values;
  lo_lseek 
 ----------
-   680801
+   680800
 (1 row)
 
 -- with the default BLKSZ, LOBLKSZ = 2048, so this positions us for a block
