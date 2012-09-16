@@ -492,8 +492,8 @@
     will take more space, because it must store the commit status of all
     transactions back to the <varname>autovacuum_freeze_max_age</> horizon.
     The commit status uses two bits per transaction, so if
-    <varname>autovacuum_freeze_max_age</> is set to its maximum allowed value of
-    a little less than two billion, <filename>pg_clog</> can be expected to
+    <varname>autovacuum_freeze_max_age</> is set to its maximum allowed
+    value of two billion, <filename>pg_clog</> can be expected to
     grow to about half a gigabyte.  If this is trivial compared to your
     total database size, setting <varname>autovacuum_freeze_max_age</> to
     its maximum allowed value is recommended.  Otherwise, set it depending
