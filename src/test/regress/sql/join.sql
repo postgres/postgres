@@ -859,10 +859,10 @@ explain (costs off)
   select unique2, x.*
   from int4_tbl x cross join lateral (select unique2 from tenk1 where f1 = unique1) ss;
 select unique2, x.*
-from int4_tbl x left join lateral (select unique1, unique2 from tenk1 where f1 = unique1) ss on f1 = unique1;
+from int4_tbl x left join lateral (select unique1, unique2 from tenk1 where f1 = unique1) ss on true;
 explain (costs off)
   select unique2, x.*
-  from int4_tbl x left join lateral (select unique1, unique2 from tenk1 where f1 = unique1) ss on f1 = unique1;
+  from int4_tbl x left join lateral (select unique1, unique2 from tenk1 where f1 = unique1) ss on true;
 
 -- check scoping of lateral versus parent references
 -- the first of these should return int8_tbl.q2, the second int8_tbl.q1

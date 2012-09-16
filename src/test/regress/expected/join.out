@@ -2798,17 +2798,17 @@ select b.unique1 from
    Sort Key: b.unique1
    ->  Nested Loop Left Join
          ->  Seq Scan on int4_tbl i2
-         ->  Nested Loop
-               ->  Seq Scan on int4_tbl i1
-               ->  Nested Loop Left Join
-                     Join Filter: (b.unique1 = 42)
+         ->  Nested Loop Left Join
+               Join Filter: (b.unique1 = 42)
+               ->  Nested Loop
                      ->  Nested Loop
+                           ->  Seq Scan on int4_tbl i1
                            ->  Index Scan using tenk1_thous_tenthous on tenk1 b
                                  Index Cond: ((thousand = i1.f1) AND (i2.f1 = tenthous))
-                           ->  Index Scan using tenk1_unique1 on tenk1 a
-                                 Index Cond: (unique1 = b.unique2)
-                     ->  Index Only Scan using tenk1_thous_tenthous on tenk1 c
-                           Index Cond: (thousand = a.thousand)
+                     ->  Index Scan using tenk1_unique1 on tenk1 a
+                           Index Cond: (unique1 = b.unique2)
+               ->  Index Only Scan using tenk1_thous_tenthous on tenk1 c
+                     Index Cond: (thousand = a.thousand)
 (15 rows)
 
 select b.unique1 from
@@ -3043,7 +3043,7 @@ explain (costs off)
 (4 rows)
 
 select unique2, x.*
-from int4_tbl x left join lateral (select unique1, unique2 from tenk1 where f1 = unique1) ss on f1 = unique1;
+from int4_tbl x left join lateral (select unique1, unique2 from tenk1 where f1 = unique1) ss on true;
  unique2 |     f1      
 ---------+-------------
     9998 |           0
@@ -3055,13 +3055,13 @@ from int4_tbl x left join lateral (select unique1, unique2 from tenk1 where f1 =
 
 explain (costs off)
   select unique2, x.*
-  from int4_tbl x left join lateral (select unique1, unique2 from tenk1 where f1 = unique1) ss on f1 = unique1;
+  from int4_tbl x left join lateral (select unique1, unique2 from tenk1 where f1 = unique1) ss on true;
                   QUERY PLAN                   
 -----------------------------------------------
  Nested Loop Left Join
    ->  Seq Scan on int4_tbl x
    ->  Index Scan using tenk1_unique1 on tenk1
-         Index Cond: (x.f1 = unique1)
+         Index Cond: (unique1 = x.f1)
 (4 rows)
 
 -- check scoping of lateral versus parent references
