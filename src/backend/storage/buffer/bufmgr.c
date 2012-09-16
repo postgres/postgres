@@ -1206,9 +1206,9 @@ BufferSync(int flags)
 
 	/*
 	 * Unless this is a shutdown checkpoint, we write only permanent, dirty
-	 * buffers.  But at shutdown time, we write all dirty buffers.
+	 * buffers.  But at shutdown or end of recovery, we write all dirty buffers.
 	 */
-	if (!(flags & CHECKPOINT_IS_SHUTDOWN))
+	if (!((flags & CHECKPOINT_IS_SHUTDOWN) || (flags & CHECKPOINT_END_OF_RECOVERY)))
 		mask |= BM_PERMANENT;
 
 	/*
