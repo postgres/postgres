@@ -140,6 +140,16 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
     &mdash; any columns added in subtables are ignored.
    </para>
 
+   <para>
+    Instead of writing <literal>ONLY</> before the table name, you can write
+    <literal>*</> after the table name to explicitly specify that descendant
+    tables are included.  Writing <literal>*</> is not necessary since that
+    behavior is the default (unless you have changed the setting of the <xref
+    linkend="guc-sql-inheritance"> configuration option).  However writing
+    <literal>*</> might be useful to emphasize that additional tables will be
+    searched.
+   </para>
+
    <sect3 id="queries-join">
     <title>Joined Tables</title>
 
