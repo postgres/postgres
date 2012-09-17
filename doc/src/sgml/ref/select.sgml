@@ -184,16 +184,12 @@ where <replaceable class="parameter">from_item</replaceable> can be one of:
       <term><replaceable class="parameter">table_name</replaceable></term>
       <listitem>
        <para>
-        The name (optionally schema-qualified) of an existing table or
-        view.  If <literal>ONLY</> is specified, only that table is
-        scanned.  If <literal>ONLY</> is not specified, the table and
-        all its descendant tables (if any) are scanned.  <literal>*</>
-        can be appended to the table name to indicate that descendant
-        tables are to be scanned, but in the current version, this is
-        the default behavior.  (In releases before 7.1,
-        <literal>ONLY</> was the default behavior.)  The default
-        behavior can be modified by changing the <xref
-        linkend="guc-sql-inheritance"> configuration option.
+        The name (optionally schema-qualified) of an existing table or view.
+        If <literal>ONLY</> is specified before the table name, only that
+        table is scanned.  If <literal>ONLY</> is not specified, the table
+        and all its descendant tables (if any) are scanned.  Optionally,
+        <literal>*</> can be specified after the table name to explicitly
+        indicate that descendant tables are included.
        </para>
       </listitem>
      </varlistentry>

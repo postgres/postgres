@@ -1996,6 +1996,23 @@ SELECT name, altitude
   </para>
 
   <para>
+   You can also write the table name with a trailing <literal>*</>
+   to explicitly specify that descendant tables are included:
+
+<programlisting>
+SELECT name, altitude
+    FROM cities*
+    WHERE altitude &gt; 500;
+</programlisting>
+
+   Writing <literal>*</> is not necessary, since this behavior is
+   the default (unless you have changed the setting of the
+   <xref linkend="guc-sql-inheritance"> configuration option).
+   However writing <literal>*</> might be useful to emphasize that
+   additional tables will be searched.
+  </para>
+
+  <para>
    In some cases you might wish to know which table a particular row
    originated from. There is a system column called
    <structfield>tableoid</structfield> in each table which can tell you the
@@ -2181,18 +2198,6 @@ VALUES ('New York', NULL, NULL, 'NY');
    but in the meantime considerable care is needed in deciding whether
    inheritance is useful for your problem.
   </para>
-
-  <note>
-   <title>Deprecated</title>
-   <para>
-     In releases of <productname>PostgreSQL</productname> prior to 7.1, the
-     default behavior was not to include child tables in queries. This was
-     found to be error prone and also in violation of the SQL
-     standard.  You can get the pre-7.1 behavior by turning off the
-     <xref linkend="guc-sql-inheritance"> configuration
-     option.
-   </para>
-  </note>
 
    </sect2>
   </sect1>
