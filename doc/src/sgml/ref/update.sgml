@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 [ WITH [ RECURSIVE ] <replaceable class="parameter">with_query</replaceable> [, ...] ]
-UPDATE [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ [ AS ] <replaceable class="parameter">alias</replaceable> ]
+UPDATE [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ * ] [ [ AS ] <replaceable class="parameter">alias</replaceable> ]
     SET { <replaceable class="PARAMETER">column_name</replaceable> = { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } |
           ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) = ( { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...] ) } [, ...]
     [ FROM <replaceable class="PARAMETER">from_list</replaceable> ]
@@ -39,13 +39,6 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ [ AS ]
    columns in all rows that satisfy the condition. Only the columns to
    be modified need be mentioned in the <literal>SET</literal> clause;
    columns not explicitly modified retain their previous values.
-  </para>
-
-  <para>
-   By default, <command>UPDATE</command> will update rows in the
-   specified table and all its subtables. If you wish to only update
-   the specific table mentioned, you must use the <literal>ONLY</>
-   clause.
   </para>
 
   <para>
@@ -97,6 +90,11 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ [ AS ]
     <listitem>
      <para>
       The name (optionally schema-qualified) of the table to update.
+      If <literal>ONLY</> is specified before the table name, matching rows
+      are updated in the named table only.  If <literal>ONLY</> is not
+      specified, matching rows are also updated in any tables inheriting from
+      the named table.  Optionally, <literal>*</> can be specified after the
+      table name to explicitly indicate that descendant tables are included.
      </para>
     </listitem>
    </varlistentry>
