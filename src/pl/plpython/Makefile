@@ -103,6 +103,8 @@ REGRESS = \
 	plpython_subtransaction \
 	plpython_drop
 
+REGRESS_PLPYTHON3_MANGLE := $(REGRESS)
+
 # where to find psql for running the tests
 PSQLDIR = $(bindir)
 
@@ -129,9 +131,20 @@ uninstall-data:
 
 ifeq ($(python_majorversion),3)
 # Adjust regression tests for Python 3 compatibility
-prep3:
-	$(MKDIR_P) python3 python3/sql python3/expected
-	for file in $(srcdir)/sql/*.sql $(srcdir)/expected/*.out; do \
+#
+# Mention those regression test files that need to be mangled in the
+# variable REGRESS_PLPYTHON3_MANGLE.  They will be copied to a
+# subdirectory python3/ and have their Python syntax and other bits
+# adjusted to work with Python 3.
+
+# Note that the order of the tests needs to be preserved in this
+# expression.
+REGRESS := $(foreach test,$(REGRESS),$(if $(filter $(test),$(REGRESS_PLPYTHON3_MANGLE)),python3/$(test),$(test)))
+
+.PHONY: pgregress-python3-mangle
+pgregress-python3-mangle:
+	$(MKDIR_P) sql/python3 expected/python3 results/python3
+	for file in $(patsubst %,$(srcdir)/sql/%.sql,$(REGRESS_PLPYTHON3_MANGLE)) $(patsubst %,$(srcdir)/expected/%*.out,$(REGRESS_PLPYTHON3_MANGLE)); do \
 	  sed -e 's/except \([[:alpha:]][[:alpha:].]*\), *\([[:alpha:]][[:alpha:]]*\):/except \1 as \2:/g' \
 	      -e "s/<type 'exceptions\.\([[:alpha:]]*\)'>/<class '\1'>/g" \
 	      -e "s/<type 'long'>/<class 'int'>/g" \
@@ -143,26 +156,22 @@ prep3:
 	      -e "s/LANGUAGE plpython2u/LANGUAGE plpython3u/g" \
 	      -e "s/EXTENSION plpythonu/EXTENSION plpython3u/g" \
 	      -e "s/EXTENSION plpython2u/EXTENSION plpython3u/g" \
-	    $$file >`echo $$file | sed 's,^.*\(/[^/][^/]*/[^/][^/]*\)$$,python3\1,'` || exit; \
+	    $$file >`echo $$file | sed 's,^.*/\([^/][^/]*/\)\([^/][^/]*\)$$,\1python3/\2,'` || exit; \
 	done
 
-clean3:
-	rm -rf python3/
+check installcheck: pgregress-python3-mangle
 
-check: all submake prep3
-	$(pg_regress_check) --inputdir=./python3 --outputdir=./python3 $(REGRESS_OPTS) $(REGRESS)
+pg_regress_clean_files += sql/python3/ expected/python3/ results/python3/
 
-installcheck: submake prep3
-	$(pg_regress_installcheck) --inputdir=./python3 --outputdir=./python3 $(REGRESS_OPTS) $(REGRESS)
+endif # Python 3
 
-clean: clean3
-else # not Python 3
+
 check: all submake
 	$(pg_regress_check) $(REGRESS_OPTS) $(REGRESS)
 
 installcheck: submake
 	$(pg_regress_installcheck) $(REGRESS_OPTS) $(REGRESS)
-endif # not Python 3
+
 
 .PHONY: submake
 submake:
