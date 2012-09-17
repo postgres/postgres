@@ -625,10 +625,12 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
       <term><replaceable class="PARAMETER">name</replaceable></term>
       <listitem>
        <para>
-        The name (possibly schema-qualified) of an existing table to
-        alter. If <literal>ONLY</> is specified, only that table is
-        altered. If <literal>ONLY</> is not specified, the table and any
-        descendant tables are altered.
+        The name (optionally schema-qualified) of an existing table to
+        alter. If <literal>ONLY</> is specified before the table name, only
+        that table is altered. If <literal>ONLY</> is not specified, the table
+        and all its descendant tables (if any) are altered.  Optionally,
+        <literal>*</> can be specified after the table name to explicitly
+        indicate that descendant tables are included.
        </para>
       </listitem>
      </varlistentry>
@@ -1026,7 +1028,7 @@ ALTER TABLE distributors DROP CONSTRAINT zipchk;
   </para>
 
   <para>
-   To remove a check constraint from a table only:
+   To remove a check constraint from one table only:
 <programlisting>
 ALTER TABLE ONLY distributors DROP CONSTRAINT zipchk;
 </programlisting>

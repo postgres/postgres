@@ -298,10 +298,12 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
       <term><replaceable class="parameter">table_name</replaceable></term>
       <listitem>
        <para>
-        The name (optionally schema-qualified) of an existing table or
-        view.  If <literal>ONLY</> is specified, only that table is
-        scanned.  If <literal>ONLY</> is not specified, the table and
-        any descendant tables are scanned.
+        The name (optionally schema-qualified) of an existing table or view.
+        If <literal>ONLY</> is specified before the table name, only that
+        table is scanned.  If <literal>ONLY</> is not specified, the table
+        and all its descendant tables (if any) are scanned.  Optionally,
+        <literal>*</> can be specified after the table name to explicitly
+        indicate that descendant tables are included.
        </para>
       </listitem>
      </varlistentry>
@@ -1599,15 +1601,24 @@ SELECT distributors.* WHERE distributors.name = 'Westward';
   </refsect2>
 
   <refsect2>
-   <title><literal>ONLY</literal> and Parentheses</title>
+   <title><literal>ONLY</literal> and Inheritance</title>
 
    <para>
-    The SQL standard requires parentheses around the table name
-    after <literal>ONLY</literal>, as in <literal>SELECT * FROM ONLY
-    (tab1), ONLY (tab2) WHERE ...</literal>.  PostgreSQL supports that
-    as well, but the parentheses are optional.  (This point applies
-    equally to all SQL commands supporting the <literal>ONLY</literal>
-    option.)
+    The SQL standard requires parentheses around the table name when
+    writing <literal>ONLY</literal>, for example <literal>SELECT * FROM ONLY
+    (tab1), ONLY (tab2) WHERE ...</literal>.  <productname>PostgreSQL</>
+    considers these parentheses to be optional.
+   </para>
+
+   <para>
+    <productname>PostgreSQL</> allows a trailing <literal>*</> to be written to
+    explicitly specify the non-<literal>ONLY</literal> behavior of including
+    child tables.  The standard does not allow this.
+   </para>
+
+   <para>
+    (These points apply equally to all SQL commands supporting the
+    <literal>ONLY</literal> option.)
    </para>
   </refsect2>
 

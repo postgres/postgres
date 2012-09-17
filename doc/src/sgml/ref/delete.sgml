@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 [ WITH [ RECURSIVE ] <replaceable class="parameter">with_query</replaceable> [, ...] ]
-DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ [ AS ] <replaceable class="parameter">alias</replaceable> ]
+DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ * ] [ [ AS ] <replaceable class="parameter">alias</replaceable> ]
     [ USING <replaceable class="PARAMETER">using_list</replaceable> ]
     [ WHERE <replaceable class="PARAMETER">condition</replaceable> | WHERE CURRENT OF <replaceable class="PARAMETER">cursor_name</replaceable> ]
     [ RETURNING * | <replaceable class="parameter">output_expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] [, ...] ]
@@ -46,13 +46,6 @@ DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ [
      faster mechanism to remove all rows from a table.
     </para>
    </tip>
-
-  <para>
-   By default, <command>DELETE</command> will delete rows in the
-   specified table and all its child tables. If you wish to delete only
-   from the specific table mentioned, you must use the
-   <literal>ONLY</literal> clause.
-  </para>
 
   <para>
    There are two ways to delete rows in a table using information
@@ -97,20 +90,16 @@ DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ [
    </varlistentry>
 
    <varlistentry>
-    <term><literal>ONLY</></term>
-    <listitem>
-     <para>
-      If specified, delete rows from the named table only.  When not
-      specified, any tables inheriting from the named table are also processed.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
     <term><replaceable class="parameter">table_name</replaceable></term>
     <listitem>
      <para>
-      The name (optionally schema-qualified) of an existing table.
+      The name (optionally schema-qualified) of the table to delete rows
+      from.  If <literal>ONLY</> is specified before the table name,
+      matching rows are deleted from the named table only.  If
+      <literal>ONLY</> is not specified, matching rows are also deleted
+      from any tables inheriting from the named table.  Optionally,
+      <literal>*</> can be specified after the table name to explicitly
+      indicate that descendant tables are included.
      </para>
     </listitem>
    </varlistentry>

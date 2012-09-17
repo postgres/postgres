@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-LOCK [ TABLE ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ IN <replaceable class="PARAMETER">lockmode</replaceable> MODE ] [ NOWAIT ]
+LOCK [ TABLE ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ] [, ...] [ IN <replaceable class="PARAMETER">lockmode</replaceable> MODE ] [ NOWAIT ]
 
 <phrase>where <replaceable class="PARAMETER">lockmode</replaceable> is one of:</phrase>
 
@@ -111,9 +111,11 @@ LOCK [ TABLE ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [, ...
     <listitem>
      <para>
       The name (optionally schema-qualified) of an existing table to
-      lock.  If <literal>ONLY</> is specified, only that table is
-      locked.  If <literal>ONLY</> is not specified, the table and all
-      its descendant tables (if any) are locked.
+      lock. If <literal>ONLY</> is specified before the table name, only that
+      table is locked. If <literal>ONLY</> is not specified, the table and all
+      its descendant tables (if any) are locked.  Optionally, <literal>*</>
+      can be specified after the table name to explicitly indicate that
+      descendant tables are included.
      </para>
 
      <para>
