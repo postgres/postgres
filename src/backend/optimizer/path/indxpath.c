@@ -756,6 +756,7 @@ build_index_paths(PlannerInfo *root, RelOptInfo *rel,
 	List	   *index_pathkeys;
 	List	   *useful_pathkeys;
 	bool		found_clause;
+	bool		found_lower_saop_clause;
 	bool		pathkeys_possibly_useful;
 	bool		index_is_ordered;
 	bool		index_only_scan;
@@ -793,12 +794,20 @@ build_index_paths(PlannerInfo *root, RelOptInfo *rel,
 	 * if saop_control is SAOP_REQUIRE, it has to be a ScalarArrayOpExpr
 	 * clause.
 	 *
+	 * found_lower_saop_clause is set true if there's a ScalarArrayOpExpr
+	 * index clause for a non-first index column.  This prevents us from
+	 * assuming that the scan result is ordered.  (Actually, the result is
+	 * still ordered if there are equality constraints for all earlier
+	 * columns, but it seems too expensive and non-modular for this code to be
+	 * aware of that refinement.)
+	 *
 	 * We also build a Relids set showing which outer rels are required by the
 	 * selected clauses.
 	 */
 	index_clauses = NIL;
 	clause_columns = NIL;
 	found_clause = false;
+	found_lower_saop_clause = false;
 	outer_relids = NULL;
 	for (indexcol = 0; indexcol < index->ncolumns; indexcol++)
 	{
@@ -814,6 +823,8 @@ build_index_paths(PlannerInfo *root, RelOptInfo *rel,
 				if (saop_control == SAOP_PER_AM && !index->amsearcharray)
 					continue;
 				found_clause = true;
+				if (indexcol > 0)
+					found_lower_saop_clause = true;
 			}
 			else
 			{
@@ -850,9 +861,11 @@ build_index_paths(PlannerInfo *root, RelOptInfo *rel,
 	/*
 	 * 2. Compute pathkeys describing index's ordering, if any, then see how
 	 * many of them are actually useful for this query.  This is not relevant
-	 * if we are only trying to build bitmap indexscans.
+	 * if we are only trying to build bitmap indexscans, nor if we have to
+	 * assume the scan is unordered.
 	 */
 	pathkeys_possibly_useful = (scantype != ST_BITMAPSCAN &&
+								!found_lower_saop_clause &&
 								has_useful_pathkeys(root, rel));
 	index_is_ordered = (index->sortopfamily != NULL);
 	if (index_is_ordered && pathkeys_possibly_useful)

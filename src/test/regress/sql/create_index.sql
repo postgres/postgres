@@ -888,3 +888,27 @@ EXPLAIN (COSTS OFF)
     WHERE f1 > 'WA' and id < 1000 and f1 ~<~ 'YX';
 SELECT count(*) FROM dupindexcols
   WHERE f1 > 'WA' and id < 1000 and f1 ~<~ 'YX';
+
+--
+-- Check ordering of =ANY indexqual results (bug in 9.2.0)
+--
+
+vacuum analyze tenk1;		-- ensure we get consistent plans here
+
+explain (costs off)
+SELECT unique1 FROM tenk1
+WHERE unique1 IN (1,42,7)
+ORDER BY unique1;
+
+SELECT unique1 FROM tenk1
+WHERE unique1 IN (1,42,7)
+ORDER BY unique1;
+
+explain (costs off)
+SELECT thousand, tenthous FROM tenk1
+WHERE thousand < 2 AND tenthous IN (1001,3000)
+ORDER BY thousand;
+
+SELECT thousand, tenthous FROM tenk1
+WHERE thousand < 2 AND tenthous IN (1001,3000)
+ORDER BY thousand;
