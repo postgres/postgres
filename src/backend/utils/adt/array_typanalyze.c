@@ -19,6 +19,7 @@
 #include "commands/vacuum.h"
 #include "utils/array.h"
 #include "utils/datum.h"
+#include "utils/lsyscache.h"
 #include "utils/typcache.h"
 
 
@@ -108,11 +109,10 @@ array_typanalyze(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(false);
 
 	/*
-	 * Check attribute data type is a varlena array.
+	 * Check attribute data type is a varlena array (or a domain over one).
 	 */
-	element_typeid = stats->attrtype->typelem;
-
-	if (!OidIsValid(element_typeid) || stats->attrtype->typlen != -1)
+	element_typeid = get_base_element_type(stats->attrtypid);
+	if (!OidIsValid(element_typeid))
 		elog(ERROR, "array_typanalyze was invoked for non-array type %u",
 			 stats->attrtypid);
 
