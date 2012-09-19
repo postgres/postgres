@@ -1,6 +1,261 @@
 <!-- doc/src/sgml/release-9.1.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-1-6">
+  <title>Release 9.1.6</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2012-09-24</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 9.1.5.
+   For information about new features in the 9.1 major release, see
+   <xref linkend="release-9-1">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.1.6</title>
+
+   <para>
+    A dump/restore is not required for those running 9.1.X.
+   </para>
+
+   <para>
+    However, you may need to perform <command>REINDEX</> operations to
+    recover from the effects of the data corruption bug described in the
+    first changelog item below.
+   </para>
+
+   <para>
+    Also, if you are upgrading from a version earlier than 9.1.4,
+    see the release notes for 9.1.4.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix persistence marking of shared buffers during WAL replay
+      (Jeff Davis)
+     </para>
+
+     <para>
+      This mistake can result in buffers not being written out during
+      checkpoints, resulting in data corruption if the server later crashes
+      without ever having written those buffers.  Corruption can occur on
+      any server following crash recovery, but it is significantly more
+      likely to occur on standby slave servers since those perform much
+      more WAL replay.  There is a low probability of corruption of btree
+      and GIN indexes.  There is a much higher probability of corruption of
+      table <quote>visibility maps</>.  Fortunately, visibility maps are
+      non-critical data in 9.1, so the worst consequence of such corruption
+      in 9.1 installations is transient inefficiency of vacuuming.  Table
+      data proper cannot be corrupted by this bug.
+     </para>
+
+     <para>
+      While no index corruption due to this bug is known to have occurred
+      in the field, as a precautionary measure it is recommended that
+      production installations <command>REINDEX</> all btree and GIN
+      indexes at a convenient time after upgrading to 9.1.6.
+     </para>
+
+     <para>
+      Also, if you intend to do an in-place upgrade to 9.2.X, before doing
+      so it is recommended to perform a <command>VACUUM</> of all tables
+      while having <link
+      linkend="guc-vacuum-freeze-table-age"><varname>vacuum_freeze_table_age</></link>
+      set to zero.  This will ensure that any lingering wrong data in the
+      visibility maps is corrected before 9.2.X can depend on it.  <link
+      linkend="guc-vacuum-cost-delay"><varname>vacuum_cost_delay</></link>
+      can be adjusted to reduce the performance impact of vacuuming, while
+      causing it to take longer to finish.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix planner's assignment of executor parameters, and fix executor's
+      rescan logic for CTE plan nodes (Tom Lane)
+     </para>
+
+     <para>
+      These errors could result in wrong answers from queries that scan the
+      same <literal>WITH</> subquery multiple times.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix misbehavior when <link
+      linkend="guc-default-transaction-isolation"><varname>default_transaction_isolation</></link>
+      is set to <literal>serializable</> (Kevin Grittner, Tom Lane, Heikki
+      Linnakangas)
+     </para>
+
+     <para>
+      Symptoms include crashes at process start on Windows, and crashes in
+      hot standby operation.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve selectivity estimation for text search queries involving
+      prefixes, i.e. <replaceable>word</><literal>:*</> patterns  (Tom Lane)
+     </para>
+
+     <para>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve page-splitting decisions in GiST indexes (Alexander Korotkov,
+      Robert Haas, Tom Lane)
+     </para>
+
+     <para>
+      Multi-column GiST indexes might suffer unexpected bloat due to this
+      error.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix cascading privilege revoke to stop if privileges are still held
+      (Tom Lane)
+     </para>
+
+     <para>
+      If we revoke a grant option from some role <replaceable>X</>, but
+      <replaceable>X</> still holds that option via a grant from someone
+      else, we should not recursively revoke the corresponding privilege
+      from role(s) <replaceable>Y</> that <replaceable>X</> had granted it
+      to.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Disallow extensions from containing the schema they are assigned to
+      (Thom Brown) 
+     </para>
+
+     <para>
+      This situation creates circular dependencies that confuse
+      <application>pg_dump</> and probably other things.  It's confusing
+      for humans too, so disallow it.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve error messages for Hot Standby misconfiguration errors
+      (Gurjeet Singh)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <application>configure</> probe for <function>mbstowcs_l</> (Tom
+      Lane)
+     </para>
+
+     <para>
+      This fixes build failures on some versions of AIX.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix handling of <literal>SIGFPE</> when PL/Perl is in use (Andres Freund)
+     </para>
+
+     <para>
+      Perl resets the process's <literal>SIGFPE</> handler to
+      <literal>SIG_IGN</>, which could result in crashes later on.  Restore
+      the normal Postgres signal handler after initializing PL/Perl.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent PL/Perl from crashing if a recursive PL/Perl function is
+      redefined while being executed (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Work around possible misoptimization in PL/Perl (Tom Lane)
+     </para>
+
+     <para>
+      Some Linux distributions contain an incorrect version of
+      <filename>pthread.h</> that results in incorrect compiled code in
+      PL/Perl, leading to crashes if a PL/Perl function calls another one
+      that throws an error.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix bugs in <filename>contrib/pg_trgm</>'s <literal>LIKE</> pattern
+      analysis code (Fujii Masao)
+     </para>
+
+     <para>
+      <literal>LIKE</> queries using a trigram index could produce wrong
+      results if the pattern contained <literal>LIKE</> escape characters.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_upgrade</>'s handling of line endings on Windows
+      (Andrew Dunstan)
+     </para>
+
+     <para>
+      Previously, <application>pg_upgrade</> might add or remove carriage
+      returns in places such as function bodies.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      On Windows, make <application>pg_upgrade</> use backslash path
+      separators in the scripts it emits (Andrew Dunstan)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove unnecessary dependency on <application>pg_config</> from
+      <application>pg_upgrade</> (Peter Eisentraut)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2012f
+      for DST law changes in Fiji
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-1-5">
   <title>Release 9.1.5</title>
 
