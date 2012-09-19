@@ -986,6 +986,20 @@ relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
 {
 	Oid			relOid;
 
+	/*
+	 * Check for shared-cache-inval messages before trying to open the
+	 * relation.  This is needed even if we already hold a lock on the
+	 * relation, because GRANT/REVOKE are executed without taking any lock on
+	 * the target relation, and we want to be sure we see current ACL
+	 * information.  We can skip this if asked for NoLock, on the assumption
+	 * that such a call is not the first one in the current command, and so we
+	 * should be reasonably up-to-date already.  (XXX this all could stand to
+	 * be redesigned, but for the moment we'll keep doing this like it's been
+	 * done historically.)
+	 */
+	if (lockmode != NoLock)
+		AcceptInvalidationMessages();
+
 	/* Look up and lock the appropriate relation using namespace search */
 	relOid = RangeVarGetRelid(relation, lockmode, false);
 
@@ -1007,6 +1021,13 @@ relation_openrv_extended(const RangeVar *relation, LOCKMODE lockmode,
 						 bool missing_ok)
 {
 	Oid			relOid;
+
+	/*
+	 * Check for shared-cache-inval messages before trying to open the
+	 * relation.  See comments in relation_openrv().
+	 */
+	if (lockmode != NoLock)
+		AcceptInvalidationMessages();
 
 	/* Look up and lock the appropriate relation using namespace search */
 	relOid = RangeVarGetRelid(relation, lockmode, missing_ok);
