@@ -290,7 +290,6 @@ check_bin_dir(ClusterInfo *cluster)
 	if (cluster == &new_cluster)
 	{
 		/* these are only needed in the new cluster */
-		validate_exec(cluster->bindir, "pg_config");
 		validate_exec(cluster->bindir, "psql");
 		validate_exec(cluster->bindir, "pg_dumpall");
 	}
