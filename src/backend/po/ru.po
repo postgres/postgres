@@ -22,8 +22,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.1\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-08-11 17:22+0000\n"
-"PO-Revision-Date: 2012-08-13 10:09+0400\n"
+"POT-Creation-Date: 2012-08-27 19:11+0000\n"
+"PO-Revision-Date: 2012-08-30 16:47+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -983,8 +983,8 @@ msgid "%s is not an enum"
 msgstr "\"%s\" не является перечислением"
 
 #: utils/hash/dynahash.c:928 storage/ipc/shmem.c:190
-#: storage/lmgr/predicate.c:2233 storage/lmgr/predicate.c:2248
-#: storage/lmgr/predicate.c:3643 storage/lmgr/predicate.c:4787
+#: storage/lmgr/predicate.c:2246 storage/lmgr/predicate.c:2261
+#: storage/lmgr/predicate.c:3656 storage/lmgr/predicate.c:4800
 #: storage/lmgr/proc.c:197 storage/lmgr/proc.c:216 storage/lmgr/lock.c:631
 #: storage/lmgr/lock.c:700 storage/lmgr/lock.c:2209 storage/lmgr/lock.c:2598
 #: storage/lmgr/lock.c:2663
@@ -2942,8 +2942,8 @@ msgstr ""
 msgid "could not change directory to \"%s\": %m"
 msgstr "не удалось перейти в каталог \"%s\": %m"
 
-#: utils/init/miscinit.c:432 utils/adt/acl.c:4822 commands/variable.c:882
-#: commands/variable.c:954 commands/user.c:623 commands/user.c:825
+#: utils/init/miscinit.c:432 utils/adt/acl.c:4822 commands/variable.c:891
+#: commands/variable.c:963 commands/user.c:623 commands/user.c:825
 #: commands/user.c:905 commands/user.c:1056
 #, c-format
 msgid "role \"%s\" does not exist"
@@ -3173,32 +3173,32 @@ msgstr ""
 "База данных была инициализирована с параметром LC_CTYPE \"%s\", но сейчас "
 "setlocale() не воспринимает его."
 
-#: utils/init/postinit.c:599
+#: utils/init/postinit.c:608
 msgid "no roles are defined in this database system"
 msgstr "в этой системе баз данных не создано ни одной роли"
 
-#: utils/init/postinit.c:600
+#: utils/init/postinit.c:609
 #, c-format
 msgid "You should immediately run CREATE USER \"%s\" SUPERUSER;."
 msgstr "Вы должны немедленно выполнить CREATE USER \"%s\" CREATEUSER;."
 
-#: utils/init/postinit.c:623
+#: utils/init/postinit.c:632
 msgid "new replication connections are not allowed during database shutdown"
 msgstr ""
 "новые подключения для репликации не допускаются в процессе остановки БД"
 
-#: utils/init/postinit.c:627
+#: utils/init/postinit.c:636
 msgid "must be superuser to connect during database shutdown"
 msgstr ""
 "нужно быть суперпользователем, чтобы подключиться в процессе остановки БД"
 
-#: utils/init/postinit.c:637
+#: utils/init/postinit.c:646
 msgid "must be superuser to connect in binary upgrade mode"
 msgstr ""
 "нужно быть суперпользователем, чтобы подключиться в режиме двоичного "
 "обновления"
 
-#: utils/init/postinit.c:651
+#: utils/init/postinit.c:660
 msgid ""
 "remaining connection slots are reserved for non-replication superuser "
 "connections"
@@ -3206,12 +3206,12 @@ msgstr ""
 "оставшиеся слоты подключений зарезервированы для подключений "
 "суперпользователя (не для репликации)"
 
-#: utils/init/postinit.c:666
+#: utils/init/postinit.c:675
 msgid "must be replication role to start walsender"
 msgstr "для запуска процесса walsender требуется роль репликации"
 
-#: utils/init/postinit.c:709 utils/init/postinit.c:777
-#: utils/init/postinit.c:794 commands/dbcommands.c:764
+#: utils/init/postinit.c:718 utils/init/postinit.c:786
+#: utils/init/postinit.c:803 commands/dbcommands.c:764
 #: commands/dbcommands.c:909 commands/dbcommands.c:1008
 #: commands/dbcommands.c:1181 commands/dbcommands.c:1366
 #: commands/dbcommands.c:1451 commands/dbcommands.c:1854 commands/comment.c:60
@@ -3219,21 +3219,21 @@ msgstr "для запуска процесса walsender требуется ро
 msgid "database \"%s\" does not exist"
 msgstr "база данных \"%s\" не существует"
 
-#: utils/init/postinit.c:726
+#: utils/init/postinit.c:735
 #, c-format
 msgid "database %u does not exist"
 msgstr "база данных \"%u не существует"
 
-#: utils/init/postinit.c:778
+#: utils/init/postinit.c:787
 msgid "It seems to have just been dropped or renamed."
 msgstr "Похоже, она только что была удалена или переименована."
 
-#: utils/init/postinit.c:796
+#: utils/init/postinit.c:805
 #, c-format
 msgid "The database subdirectory \"%s\" is missing."
 msgstr "Подкаталог базы данных \"%s\" отсутствует."
 
-#: utils/init/postinit.c:801
+#: utils/init/postinit.c:810
 #, c-format
 msgid "could not access directory \"%s\": %m"
 msgstr "ошибка доступа к каталогу \"%s\": %m"
@@ -3546,7 +3546,7 @@ msgstr "неверное имя исходной кодировки: \"%s\""
 msgid "invalid destination encoding name \"%s\""
 msgstr "неверное имя кодировки результата: \"%s\""
 
-#: utils/mb/mbutils.c:515 utils/adt/xml.c:156
+#: utils/mb/mbutils.c:515 utils/adt/xml.c:159
 #, c-format
 msgid "invalid encoding name \"%s\""
 msgstr "неверное имя кодировки: \"%s\""
@@ -3609,92 +3609,92 @@ msgstr "аргумент ntile должен быть больше нуля"
 msgid "argument of nth_value must be greater than zero"
 msgstr "аргумент nth_value должен быть больше нуля"
 
-#: utils/adt/xml.c:135
+#: utils/adt/xml.c:138
 msgid "unsupported XML feature"
 msgstr "XML-функции не поддерживаются"
 
-#: utils/adt/xml.c:136
+#: utils/adt/xml.c:139
 msgid "This functionality requires the server to be built with libxml support."
 msgstr "Для этой функциональности в сервере не хватает поддержки libxml."
 
-#: utils/adt/xml.c:137
+#: utils/adt/xml.c:140
 msgid "You need to rebuild PostgreSQL using --with-libxml."
 msgstr "Необходимо перекомпилировать PostgreSQL с ключом --with-libxml."
 
-#: utils/adt/xml.c:402 utils/adt/xml.c:407
+#: utils/adt/xml.c:405 utils/adt/xml.c:410
 msgid "invalid XML comment"
 msgstr "ошибка в XML-комментарии"
 
-#: utils/adt/xml.c:536
+#: utils/adt/xml.c:539
 msgid "not an XML document"
 msgstr "не XML-документ"
 
-#: utils/adt/xml.c:689 utils/adt/xml.c:712
+#: utils/adt/xml.c:692 utils/adt/xml.c:715
 msgid "invalid XML processing instruction"
 msgstr "неправильная XML-инструкция обработки (PI)"
 
-#: utils/adt/xml.c:690
+#: utils/adt/xml.c:693
 #, c-format
 msgid "XML processing instruction target name cannot be \"%s\"."
 msgstr "назначением XML-инструкции обработки (PI) не может быть \"%s\"."
 
-#: utils/adt/xml.c:713
+#: utils/adt/xml.c:716
 msgid "XML processing instruction cannot contain \"?>\"."
 msgstr "XML-инструкция обработки (PI) не может содержать \"?>\"."
 
-#: utils/adt/xml.c:792
+#: utils/adt/xml.c:795
 msgid "xmlvalidate is not implemented"
 msgstr "функция xmlvalidate не реализована"
 
-#: utils/adt/xml.c:877
+#: utils/adt/xml.c:880
 msgid "could not initialize XML library"
 msgstr "не удалось инициализировать библиотеку XML"
 
-#: utils/adt/xml.c:878
+#: utils/adt/xml.c:881
 #, c-format
 msgid ""
 "libxml2 has incompatible char type: sizeof(char)=%u, sizeof(xmlChar)=%u."
 msgstr "другой тип char в libxml2: sizeof(char)=%u, sizeof(xmlChar)=%u."
 
-#: utils/adt/xml.c:1420
+#: utils/adt/xml.c:1448
 msgid "Invalid character value."
 msgstr "Неверный символ."
 
-#: utils/adt/xml.c:1423
+#: utils/adt/xml.c:1451
 msgid "Space required."
 msgstr "Требуется пробел."
 
-#: utils/adt/xml.c:1426
+#: utils/adt/xml.c:1454
 msgid "standalone accepts only 'yes' or 'no'."
 msgstr "значениями атрибута standalone могут быть только 'yes' и 'no'."
 
-#: utils/adt/xml.c:1429
+#: utils/adt/xml.c:1457
 msgid "Malformed declaration: missing version."
 msgstr "Ошибочное объявление: не указана версия."
 
-#: utils/adt/xml.c:1432
+#: utils/adt/xml.c:1460
 msgid "Missing encoding in text declaration."
 msgstr "В объявлении не указана кодировка."
 
-#: utils/adt/xml.c:1435
+#: utils/adt/xml.c:1463
 msgid "Parsing XML declaration: '?>' expected."
 msgstr "Ошибка при разборе XML-объявления: ожидается '?>'."
 
-#: utils/adt/xml.c:1438
+#: utils/adt/xml.c:1466
 #, c-format
 msgid "Unrecognized libxml error code: %d."
 msgstr "нераспознанный код ошибки libxml: %d."
 
-#: utils/adt/xml.c:1689 utils/adt/date.c:217
+#: utils/adt/xml.c:1717 utils/adt/date.c:217
 msgid "date out of range"
 msgstr "дата вне диапазона"
 
-#: utils/adt/xml.c:1690
+#: utils/adt/xml.c:1718
 msgid "XML does not support infinite date values."
 msgstr "XML не поддерживает бесконечность в датах."
 
-#: utils/adt/xml.c:1712 utils/adt/xml.c:1719 utils/adt/xml.c:1739
-#: utils/adt/xml.c:1746 utils/adt/timestamp.c:226 utils/adt/timestamp.c:269
+#: utils/adt/xml.c:1740 utils/adt/xml.c:1747 utils/adt/xml.c:1767
+#: utils/adt/xml.c:1774 utils/adt/timestamp.c:226 utils/adt/timestamp.c:269
 #: utils/adt/timestamp.c:491 utils/adt/timestamp.c:531
 #: utils/adt/timestamp.c:2530 utils/adt/timestamp.c:2551
 #: utils/adt/timestamp.c:2564 utils/adt/timestamp.c:2573
@@ -3718,38 +3718,38 @@ msgstr "XML не поддерживает бесконечность в дата
 msgid "timestamp out of range"
 msgstr "timestamp вне диапазона"
 
-#: utils/adt/xml.c:1713 utils/adt/xml.c:1740
+#: utils/adt/xml.c:1741 utils/adt/xml.c:1768
 msgid "XML does not support infinite timestamp values."
 msgstr "XML не поддерживает бесконечность в timestamp."
 
-#: utils/adt/xml.c:2046 utils/adt/xml.c:2210 commands/portalcmds.c:168
+#: utils/adt/xml.c:2074 utils/adt/xml.c:2238 commands/portalcmds.c:168
 #: commands/portalcmds.c:222 executor/execCurrent.c:66
 #, c-format
 msgid "cursor \"%s\" does not exist"
 msgstr "курсор \"%s\" не существует"
 
-#: utils/adt/xml.c:2125
+#: utils/adt/xml.c:2153
 msgid "invalid query"
 msgstr "неверный запрос"
 
-#: utils/adt/xml.c:3349
+#: utils/adt/xml.c:3377
 msgid "invalid array for XML namespace mapping"
 msgstr "неправильный массив с сопоставлениями пространств имён XML"
 
-#: utils/adt/xml.c:3350
+#: utils/adt/xml.c:3378
 msgid ""
 "The array must be two-dimensional with length of the second axis equal to 2."
 msgstr "Массив должен быть двухмерным и содержать 2 элемента по второй оси."
 
-#: utils/adt/xml.c:3374
+#: utils/adt/xml.c:3402
 msgid "empty XPath expression"
 msgstr "пустое выражение XPath"
 
-#: utils/adt/xml.c:3422
+#: utils/adt/xml.c:3450
 msgid "neither namespace name nor URI may be null"
 msgstr "ни префикс, ни URI пространства имён не может быть null"
 
-#: utils/adt/xml.c:3429
+#: utils/adt/xml.c:3457
 #, c-format
 msgid "could not register XML namespace with name \"%s\" and URI \"%s\""
 msgstr ""
@@ -8361,62 +8361,62 @@ msgstr "часовой пояс \"%s\" видимо использует коо�
 msgid "PostgreSQL does not support leap seconds."
 msgstr "PostgreSQL не поддерживает координационные секунды."
 
-#: commands/variable.c:582
+#: commands/variable.c:587
 msgid "cannot set transaction read-write mode inside a read-only transaction"
 msgstr ""
 "нельзя установить режим транзакции \"чтение-запись\" внутри транзакции "
 "\"только чтение\""
 
-#: commands/variable.c:589
+#: commands/variable.c:594
 msgid "transaction read-write mode must be set before any query"
 msgstr ""
 "режим транзакции \"чтение-запись\" должен быть установлен до выполнения "
 "запросов"
 
-#: commands/variable.c:595
+#: commands/variable.c:601
 msgid "cannot set transaction read-write mode during recovery"
 msgstr ""
 "нельзя установить режим транзакции \"чтение-запись\" в процессе "
 "восстановления"
 
-#: commands/variable.c:642
+#: commands/variable.c:650
 msgid "SET TRANSACTION ISOLATION LEVEL must be called before any query"
 msgstr "команда SET TRANSACTION ISOLATION LEVEL должна выполняться до запросов"
 
-#: commands/variable.c:649
+#: commands/variable.c:657
 msgid "SET TRANSACTION ISOLATION LEVEL must not be called in a subtransaction"
 msgstr ""
 "команда SET TRANSACTION ISOLATION LEVEL не должна вызываться в подтранзакции"
 
-#: commands/variable.c:655
+#: commands/variable.c:664 storage/lmgr/predicate.c:1570
 msgid "cannot use serializable mode in a hot standby"
 msgstr "использовать сериализуемый режим в горячем резерве нельзя"
 
-#: commands/variable.c:656
+#: commands/variable.c:665
 msgid "You can use REPEATABLE READ instead."
 msgstr "Используйте REPEATABLE READ."
 
-#: commands/variable.c:704
+#: commands/variable.c:713
 msgid ""
 "SET TRANSACTION [NOT] DEFERRABLE cannot be called within a subtransaction"
 msgstr ""
 "команда SET TRANSACTION [NOT] DEFERRABLE не может вызываться в подтранзакции"
 
-#: commands/variable.c:710
+#: commands/variable.c:719
 msgid "SET TRANSACTION [NOT] DEFERRABLE must be called before any query"
 msgstr ""
 "команда SET TRANSACTION [NOT] DEFERRABLE должна выполняться до запросов"
 
-#: commands/variable.c:792
+#: commands/variable.c:801
 #, c-format
 msgid "Conversion between %s and %s is not supported."
 msgstr "Преобразование кодировок %s <-> %s не поддерживается."
 
-#: commands/variable.c:799
+#: commands/variable.c:808
 msgid "Cannot change \"client_encoding\" now."
 msgstr "Изменить клиентскую кодировку сейчас нельзя."
 
-#: commands/variable.c:969
+#: commands/variable.c:978
 #, c-format
 msgid "permission denied to set role \"%s\""
 msgstr "нет прав установить роль \"%s\""
@@ -9455,7 +9455,7 @@ msgstr ""
 #: commands/dbcommands.c:194 commands/dbcommands.c:1315
 #: commands/dbcommands.c:1323 commands/extension.c:1250
 #: commands/extension.c:1258 commands/extension.c:1266
-#: commands/extension.c:2501 commands/collationcmds.c:93 commands/user.c:133
+#: commands/extension.c:2512 commands/collationcmds.c:93 commands/user.c:133
 #: commands/user.c:150 commands/user.c:158 commands/user.c:166
 #: commands/user.c:174 commands/user.c:182 commands/user.c:190
 #: commands/user.c:198 commands/user.c:206 commands/user.c:214
@@ -10901,7 +10901,7 @@ msgstr ""
 "семейство операторов \"%s\" для метода доступа \"%s\" уже существует в схеме "
 "\"%s\""
 
-#: commands/extension.c:149 commands/extension.c:2459
+#: commands/extension.c:149 commands/extension.c:2470
 #, c-format
 msgid "extension \"%s\" does not exist"
 msgstr "расширение \"%s\" не существует"
@@ -11027,7 +11027,7 @@ msgstr "расширение \"%s\" уже существует"
 msgid "nested CREATE EXTENSION is not supported"
 msgstr "вложенные операторы CREATE EXTENSION не поддерживаются"
 
-#: commands/extension.c:1284 commands/extension.c:2519
+#: commands/extension.c:1284 commands/extension.c:2530
 msgid "version to install must be specified"
 msgstr "нужно указать версию для установки"
 
@@ -11041,7 +11041,7 @@ msgstr "версия FROM должна отличаться от устанав�
 msgid "extension \"%s\" must be installed in schema \"%s\""
 msgstr "расширение \"%s\" должно устанавливаться в схему \"%s\""
 
-#: commands/extension.c:1435 commands/extension.c:2660
+#: commands/extension.c:1435 commands/extension.c:2671
 #, c-format
 msgid "required extension \"%s\" is not installed"
 msgstr "требуемое расширение \"%s\" не установлено"
@@ -11079,31 +11079,49 @@ msgstr "OID %u не относится к таблице"
 msgid "table \"%s\" is not a member of the extension being created"
 msgstr "таблица \"%s\" не относится к созданному расширению"
 
-#: commands/extension.c:2329 commands/extension.c:2388
+#: commands/extension.c:2300
+#, c-format
+msgid ""
+"cannot move extension \"%s\" into schema \"%s\" because the extension "
+"contains the schema"
+msgstr ""
+"переместить расширение \"%s\" в схему \"%s\" нельзя, так как оно содержит "
+"схему"
+
+#: commands/extension.c:2340 commands/extension.c:2399
 #, c-format
 msgid "extension \"%s\" does not support SET SCHEMA"
 msgstr "расширение \"%s\" не поддерживает SET SCHEMA"
 
-#: commands/extension.c:2390
+#: commands/extension.c:2401
 #, c-format
 msgid "%s is not in the extension's schema \"%s\""
 msgstr "объект %s не принадлежит схеме расширения \"%s\""
 
-#: commands/extension.c:2439
+#: commands/extension.c:2450
 msgid "nested ALTER EXTENSION is not supported"
 msgstr "вложенные операторы ALTER EXTENSION не поддерживаются"
 
-#: commands/extension.c:2530
+#: commands/extension.c:2541
 #, c-format
 msgid "version \"%s\" of extension \"%s\" is already installed"
 msgstr "версия \"%s\" расширения \"%s\" уже установлена"
 
-#: commands/extension.c:2753 catalog/pg_depend.c:164
+#: commands/extension.c:2764 catalog/pg_depend.c:164
 #, c-format
 msgid "%s is already a member of extension \"%s\""
 msgstr "%s уже относится к расширению \"%s\""
 
-#: commands/extension.c:2770
+#: commands/extension.c:2776
+#, c-format
+msgid ""
+"cannot add schema \"%s\" to extension \"%s\" because the schema contains the "
+"extension"
+msgstr ""
+"добавить схему \"%s\" к расширению \"%s\" нельзя, так как схема содержит "
+"расширение"
+
+#: commands/extension.c:2794
 #, c-format
 msgid "%s is not a member of extension \"%s\""
 msgstr "%s не относится к расширению \"%s\""
@@ -14492,28 +14510,41 @@ msgstr ""
 msgid "deferrable snapshot was unsafe; trying a new one"
 msgstr "откладываемый снимок был небезопасен; пробуем более новый"
 
-#: storage/lmgr/predicate.c:2234 storage/lmgr/predicate.c:2249
-#: storage/lmgr/predicate.c:3644
+#: storage/lmgr/predicate.c:1571
+msgid "\"default_transaction_isolation\" is set to \"serializable\"."
+msgstr ""
+"Параметр \"default_transaction_isolation\" имеет значение \"serializable\"."
+
+#: storage/lmgr/predicate.c:1572
+msgid ""
+"You can use \"SET default_transaction_isolation = 'repeatable read'\" to "
+"change the default."
+msgstr ""
+"Чтобы изменить режим по умолчанию, выполните \"SET "
+"default_transaction_isolation = 'repeatable read'\"."
+
+#: storage/lmgr/predicate.c:2247 storage/lmgr/predicate.c:2262
+#: storage/lmgr/predicate.c:3657
 msgid "You might need to increase max_pred_locks_per_transaction."
 msgstr ""
 "Возможно, следует увеличить значение параметра max_locks_per_transaction."
 
-#: storage/lmgr/predicate.c:3798 storage/lmgr/predicate.c:3887
-#: storage/lmgr/predicate.c:3895 storage/lmgr/predicate.c:3934
-#: storage/lmgr/predicate.c:4173 storage/lmgr/predicate.c:4511
-#: storage/lmgr/predicate.c:4523 storage/lmgr/predicate.c:4565
-#: storage/lmgr/predicate.c:4603
+#: storage/lmgr/predicate.c:3811 storage/lmgr/predicate.c:3900
+#: storage/lmgr/predicate.c:3908 storage/lmgr/predicate.c:3947
+#: storage/lmgr/predicate.c:4186 storage/lmgr/predicate.c:4524
+#: storage/lmgr/predicate.c:4536 storage/lmgr/predicate.c:4578
+#: storage/lmgr/predicate.c:4616
 msgid ""
 "could not serialize access due to read/write dependencies among transactions"
 msgstr ""
 "не удалось сериализовать доступ из-за зависимостей чтения/записи между "
 "транзакциями"
 
-#: storage/lmgr/predicate.c:3800 storage/lmgr/predicate.c:3889
-#: storage/lmgr/predicate.c:3897 storage/lmgr/predicate.c:3936
-#: storage/lmgr/predicate.c:4175 storage/lmgr/predicate.c:4513
-#: storage/lmgr/predicate.c:4525 storage/lmgr/predicate.c:4567
-#: storage/lmgr/predicate.c:4605
+#: storage/lmgr/predicate.c:3813 storage/lmgr/predicate.c:3902
+#: storage/lmgr/predicate.c:3910 storage/lmgr/predicate.c:3949
+#: storage/lmgr/predicate.c:4188 storage/lmgr/predicate.c:4526
+#: storage/lmgr/predicate.c:4538 storage/lmgr/predicate.c:4580
+#: storage/lmgr/predicate.c:4618
 msgid "The transaction might succeed if retried."
 msgstr "Транзакция может завершиться успешно при следующей попытке."
 
@@ -18643,3 +18674,4 @@ msgstr "дочерний процесс завершён по сигналу %d"
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "дочерний процесс завершился с нераспознанным состоянием %d"
+
