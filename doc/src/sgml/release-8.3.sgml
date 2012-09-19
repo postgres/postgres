@@ -1,6 +1,116 @@
 <!-- doc/src/sgml/release-8.3.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-8-3-21">
+  <title>Release 8.3.21</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2012-09-24</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.3.20.
+   For information about new features in the 8.3 major release, see
+   <xref linkend="release-8-3">.
+  </para>
+
+  <para>
+   The <productname>PostgreSQL</> community will stop releasing updates
+   for the 8.3.X release series in February 2013.
+   Users are encouraged to update to a newer release branch soon.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.3.21</title>
+
+   <para>
+    A dump/restore is not required for those running 8.3.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 8.3.17,
+    see the release notes for 8.3.17.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Improve page-splitting decisions in GiST indexes (Alexander Korotkov,
+      Robert Haas, Tom Lane)
+     </para>
+
+     <para>
+      Multi-column GiST indexes might suffer unexpected bloat due to this
+      error.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix cascading privilege revoke to stop if privileges are still held
+      (Tom Lane)
+     </para>
+
+     <para>
+      If we revoke a grant option from some role <replaceable>X</>, but
+      <replaceable>X</> still holds that option via a grant from someone
+      else, we should not recursively revoke the corresponding privilege
+      from role(s) <replaceable>Y</> that <replaceable>X</> had granted it
+      to.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix handling of <literal>SIGFPE</> when PL/Perl is in use (Andres Freund)
+     </para>
+
+     <para>
+      Perl resets the process's <literal>SIGFPE</> handler to
+      <literal>SIG_IGN</>, which could result in crashes later on.  Restore
+      the normal Postgres signal handler after initializing PL/Perl.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent PL/Perl from crashing if a recursive PL/Perl function is
+      redefined while being executed (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Work around possible misoptimization in PL/Perl (Tom Lane)
+     </para>
+
+     <para>
+      Some Linux distributions contain an incorrect version of
+      <filename>pthread.h</> that results in incorrect compiled code in
+      PL/Perl, leading to crashes if a PL/Perl function calls another one
+      that throws an error.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2012f
+      for DST law changes in Fiji
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-8-3-20">
   <title>Release 8.3.20</title>
 
