@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-08-08 20:10+0000\n"
-"PO-Revision-Date: 2012-08-14 00:15-0400\n"
+"POT-Creation-Date: 2012-09-17 19:43+0000\n"
+"PO-Revision-Date: 2012-09-18 21:27-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -2456,8 +2456,8 @@ msgid "invalid value for parameter \"%s\": \"%s\""
 msgstr "ungültiger Wert für Parameter »%s«: »%s«"
 
 #: utils/misc/guc.c:4809 utils/misc/guc.c:5077 utils/fmgr/dfmgr.c:381
-#: utils/adt/xml.c:1365 utils/adt/xml.c:1366 utils/adt/xml.c:1372
-#: utils/adt/xml.c:1443 tcop/postgres.c:4099 commands/tablecmds.c:621
+#: utils/adt/xml.c:1393 utils/adt/xml.c:1394 utils/adt/xml.c:1400
+#: utils/adt/xml.c:1471 tcop/postgres.c:4099 commands/tablecmds.c:621
 #: commands/user.c:930 commands/user.c:931 commands/trigger.c:578
 #: commands/trigger.c:594 commands/trigger.c:606 nodes/print.c:85
 #: storage/lmgr/proc.c:939 storage/lmgr/deadlock.c:950
@@ -3256,7 +3256,7 @@ msgstr "ungültiger Quellkodierungsname »%s«"
 msgid "invalid destination encoding name \"%s\""
 msgstr "ungültiger Zielkodierungsname »%s«"
 
-#: utils/mb/mbutils.c:477 utils/adt/xml.c:156
+#: utils/mb/mbutils.c:477 utils/adt/xml.c:159
 #, c-format
 msgid "invalid encoding name \"%s\""
 msgstr "ungültiger Kodierungsname »%s«"
@@ -3342,95 +3342,95 @@ msgstr "Argument von ntile muss größer als null sein"
 msgid "argument of nth_value must be greater than zero"
 msgstr "Argument von nth_value muss größer als null sein"
 
-#: utils/adt/xml.c:135
+#: utils/adt/xml.c:138
 msgid "unsupported XML feature"
 msgstr "nicht unterstützte XML-Funktionalität"
 
-#: utils/adt/xml.c:136
+#: utils/adt/xml.c:139
 msgid "This functionality requires the server to be built with libxml support."
 msgstr ""
 "Diese Funktionalität verlangt, dass der Server mit Libxml-Unterstützung "
 "gebaut wird."
 
-#: utils/adt/xml.c:137
+#: utils/adt/xml.c:140
 msgid "You need to rebuild PostgreSQL using --with-libxml."
 msgstr "Sie müssen PostgreSQL mit --with-libxml neu bauen."
 
-#: utils/adt/xml.c:402 utils/adt/xml.c:407
+#: utils/adt/xml.c:405 utils/adt/xml.c:410
 msgid "invalid XML comment"
 msgstr "ungültiger XML-Kommentar"
 
-#: utils/adt/xml.c:536
+#: utils/adt/xml.c:539
 msgid "not an XML document"
 msgstr "kein XML-Dokument"
 
-#: utils/adt/xml.c:689 utils/adt/xml.c:712
+#: utils/adt/xml.c:692 utils/adt/xml.c:715
 msgid "invalid XML processing instruction"
 msgstr "ungültige XML-Verarbeitungsanweisung"
 
-#: utils/adt/xml.c:690
+#: utils/adt/xml.c:693
 #, c-format
 msgid "XML processing instruction target name cannot be \"%s\"."
 msgstr "Die Zielangabe der XML-Verarbeitungsanweisung darf nicht »%s« sein."
 
-#: utils/adt/xml.c:713
+#: utils/adt/xml.c:716
 msgid "XML processing instruction cannot contain \"?>\"."
 msgstr "XML-Verarbeitungsanweisung darf nicht »?>« enthalten."
 
-#: utils/adt/xml.c:792
+#: utils/adt/xml.c:795
 msgid "xmlvalidate is not implemented"
 msgstr "xmlvalidate ist nicht implementiert"
 
-#: utils/adt/xml.c:877
+#: utils/adt/xml.c:880
 msgid "could not initialize XML library"
 msgstr "konnte XML-Bibliothek nicht initialisieren"
 
-#: utils/adt/xml.c:878
+#: utils/adt/xml.c:881
 #, c-format
 msgid ""
 "libxml2 has incompatible char type: sizeof(char)=%u, sizeof(xmlChar)=%u."
 msgstr ""
 "libxml2 hat inkompatiblen char-Typ: sizeof(char)=%u, sizeof(xmlChar)=%u."
 
-#: utils/adt/xml.c:1419
+#: utils/adt/xml.c:1447
 msgid "Invalid character value."
 msgstr "Ungültiger Zeichenwert."
 
-#: utils/adt/xml.c:1422
+#: utils/adt/xml.c:1450
 msgid "Space required."
 msgstr "Leerzeichen benötigt."
 
-#: utils/adt/xml.c:1425
+#: utils/adt/xml.c:1453
 msgid "standalone accepts only 'yes' or 'no'."
 msgstr "standalone akzeptiert nur »yes« oder »no«."
 
-#: utils/adt/xml.c:1428
+#: utils/adt/xml.c:1456
 msgid "Malformed declaration: missing version."
 msgstr "Fehlerhafte Deklaration: Version fehlt."
 
-#: utils/adt/xml.c:1431
+#: utils/adt/xml.c:1459
 msgid "Missing encoding in text declaration."
 msgstr "Fehlende Kodierung in Textdeklaration."
 
-#: utils/adt/xml.c:1434
+#: utils/adt/xml.c:1462
 msgid "Parsing XML declaration: '?>' expected."
 msgstr "Beim Parsen der XML-Deklaration: »?>« erwartet."
 
-#: utils/adt/xml.c:1437
+#: utils/adt/xml.c:1465
 #, c-format
 msgid "Unrecognized libxml error code: %d."
 msgstr "Unbekannter Libxml-Fehlercode: %d."
 
-#: utils/adt/xml.c:1692
+#: utils/adt/xml.c:1720
 msgid "date out of range"
 msgstr "date ist außerhalb des gültigen Bereichs"
 
-#: utils/adt/xml.c:1693
+#: utils/adt/xml.c:1721
 msgid "XML does not support infinite date values."
 msgstr "XML unterstützt keine unendlichen Datumswerte."
 
-#: utils/adt/xml.c:1715 utils/adt/xml.c:1722 utils/adt/xml.c:1742
-#: utils/adt/xml.c:1749 utils/adt/timestamp.c:226 utils/adt/timestamp.c:264
+#: utils/adt/xml.c:1743 utils/adt/xml.c:1750 utils/adt/xml.c:1770
+#: utils/adt/xml.c:1777 utils/adt/timestamp.c:226 utils/adt/timestamp.c:264
 #: utils/adt/timestamp.c:486 utils/adt/timestamp.c:526
 #: utils/adt/timestamp.c:2525 utils/adt/timestamp.c:2546
 #: utils/adt/timestamp.c:2559 utils/adt/timestamp.c:2568
@@ -3454,40 +3454,40 @@ msgstr "XML unterstützt keine unendlichen Datumswerte."
 msgid "timestamp out of range"
 msgstr "timestamp ist außerhalb des gültigen Bereichs"
 
-#: utils/adt/xml.c:1716 utils/adt/xml.c:1743
+#: utils/adt/xml.c:1744 utils/adt/xml.c:1771
 msgid "XML does not support infinite timestamp values."
 msgstr "XML unterstützt keine unendlichen timestamp-Werte."
 
-#: utils/adt/xml.c:2033 utils/adt/xml.c:2197 commands/portalcmds.c:168
+#: utils/adt/xml.c:2061 utils/adt/xml.c:2225 commands/portalcmds.c:168
 #: commands/portalcmds.c:222 executor/execCurrent.c:66
 #, c-format
 msgid "cursor \"%s\" does not exist"
 msgstr "Cursor »%s« existiert nicht"
 
-#: utils/adt/xml.c:2112
+#: utils/adt/xml.c:2140
 msgid "invalid query"
 msgstr "ungültige Anfrage"
 
-#: utils/adt/xml.c:3345
+#: utils/adt/xml.c:3373
 msgid "invalid array for XML namespace mapping"
 msgstr "ungültiges Array for XML-Namensraumabbildung"
 
-#: utils/adt/xml.c:3346
+#: utils/adt/xml.c:3374
 msgid ""
 "The array must be two-dimensional with length of the second axis equal to 2."
 msgstr ""
 "Das Array muss zweidimensional sein und die Länge der zweiten Achse muss "
 "gleich 2 sein."
 
-#: utils/adt/xml.c:3370
+#: utils/adt/xml.c:3398
 msgid "empty XPath expression"
 msgstr "leerer XPath-Ausdruck"
 
-#: utils/adt/xml.c:3418
+#: utils/adt/xml.c:3446
 msgid "neither namespace name nor URI may be null"
 msgstr "weder Namensraumname noch URI dürfen NULL sein"
 
-#: utils/adt/xml.c:3425
+#: utils/adt/xml.c:3453
 #, c-format
 msgid "could not register XML namespace with name \"%s\" and URI \"%s\""
 msgstr "konnte XML-Namensraum mit Namen »%s« und URI »%s« nicht registrieren"
@@ -6157,7 +6157,7 @@ msgstr ""
 "Werte, die größer sind als eine Pufferseite, können nicht indiziert werden."
 
 #: access/hash/hashutil.c:169 access/nbtree/nbtpage.c:432
-#: access/gist/gistutil.c:596
+#: access/gist/gistutil.c:644
 #, c-format
 msgid "index \"%s\" contains unexpected zero page at block %u"
 msgstr "Index »%s« enthält unerwartete Nullseite bei Block %u"
@@ -6165,12 +6165,12 @@ msgstr "Index »%s« enthält unerwartete Nullseite bei Block %u"
 #: access/hash/hashutil.c:172 access/hash/hashutil.c:183
 #: access/hash/hashutil.c:195 access/hash/hashutil.c:216
 #: access/nbtree/nbtpage.c:435 access/nbtree/nbtpage.c:446
-#: access/gist/gistutil.c:599 access/gist/gistutil.c:610
+#: access/gist/gistutil.c:647 access/gist/gistutil.c:658
 msgid "Please REINDEX it."
 msgstr "Bitte führen Sie REINDEX für den Index aus."
 
 #: access/hash/hashutil.c:180 access/hash/hashutil.c:192
-#: access/nbtree/nbtpage.c:443 access/gist/gistutil.c:607
+#: access/nbtree/nbtpage.c:443 access/gist/gistutil.c:655
 #, c-format
 msgid "index \"%s\" contains corrupted page at block %u"
 msgstr "Index »%s« enthält korrupte Seite bei Block %u"
@@ -7587,7 +7587,7 @@ msgstr ""
 msgid "Incomplete insertion detected during crash replay."
 msgstr "Unvollständige Einfügeoperation beim Crash-Replay entdeckt."
 
-#: access/gist/gistutil.c:409
+#: access/gist/gistutil.c:428
 #, c-format
 msgid "index \"%s\" needs VACUUM or REINDEX to finish crash recovery"
 msgstr ""
@@ -7930,7 +7930,8 @@ msgstr "kann Verweis auf ganze Zeile der Tabelle nicht umwandeln"
 #: commands/tablecmds.c:1397 parser/parse_utilcmd.c:713
 #, c-format
 msgid "Constraint \"%s\" contains a whole-row reference to table \"%s\"."
-msgstr "Constraint »%s« enthält einen Verweis auf die ganze Zeile der Tabelle »%s«."
+msgstr ""
+"Constraint »%s« enthält einen Verweis auf die ganze Zeile der Tabelle »%s«."
 
 #: commands/tablecmds.c:1459
 #, c-format
@@ -11406,17 +11407,17 @@ msgstr ""
 "SELECT FOR UPDATE/SHARE kann nicht auf die nullbare Seite eines äußeren "
 "Verbundes angewendet werden"
 
-#: optimizer/plan/planner.c:845 parser/analyze.c:1209 parser/analyze.c:1403
+#: optimizer/plan/planner.c:846 parser/analyze.c:1209 parser/analyze.c:1403
 #: parser/analyze.c:2049
 msgid "SELECT FOR UPDATE/SHARE is not allowed with UNION/INTERSECT/EXCEPT"
 msgstr "SELECT FOR UPDATE/SHARE ist nicht in UNION/INTERSECT/EXCEPT erlaubt"
 
-#: optimizer/plan/planner.c:1043
+#: optimizer/plan/planner.c:1044
 msgid "could not implement GROUP BY"
 msgstr "konnte GROUP BY nicht implementieren"
 
-#: optimizer/plan/planner.c:1044 optimizer/plan/planner.c:1475
-#: optimizer/prep/prepunion.c:768
+#: optimizer/plan/planner.c:1045 optimizer/plan/planner.c:1476
+#: optimizer/prep/prepunion.c:778
 msgid ""
 "Some of the datatypes only support hashing, while others only support "
 "sorting."
@@ -11424,23 +11425,23 @@ msgstr ""
 "Einige Datentypen unterstützen nur Hashing, während andere nur Sortieren "
 "unterstützen."
 
-#: optimizer/plan/planner.c:1474
+#: optimizer/plan/planner.c:1475
 msgid "could not implement DISTINCT"
 msgstr "konnte DISTINCT nicht implementieren"
 
-#: optimizer/plan/planner.c:2522
+#: optimizer/plan/planner.c:2523
 msgid "could not implement window PARTITION BY"
 msgstr "konnte PARTITION BY für Fenster nicht implementieren"
 
-#: optimizer/plan/planner.c:2523
+#: optimizer/plan/planner.c:2524
 msgid "Window partitioning columns must be of sortable datatypes."
 msgstr "Fensterpartitionierungsspalten müssen sortierbare Datentypen haben."
 
-#: optimizer/plan/planner.c:2527
+#: optimizer/plan/planner.c:2528
 msgid "could not implement window ORDER BY"
 msgstr "konnte ORDER BY für Fenster nicht implementieren"
 
-#: optimizer/plan/planner.c:2528
+#: optimizer/plan/planner.c:2529
 msgid "Window ordering columns must be of sortable datatypes."
 msgstr "Fenstersortierspalten müssen sortierbare Datentypen haben."
 
@@ -11448,16 +11449,16 @@ msgstr "Fenstersortierspalten müssen sortierbare Datentypen haben."
 msgid "SELECT FOR UPDATE/SHARE is not allowed in subqueries"
 msgstr "SELECT FOR UPDATE/SHARE ist in Unteranfragen nicht erlaubt"
 
-#: optimizer/prep/prepunion.c:373
+#: optimizer/prep/prepunion.c:383
 msgid "could not implement recursive UNION"
 msgstr "konnte rekursive UNION nicht implementieren"
 
-#: optimizer/prep/prepunion.c:374
+#: optimizer/prep/prepunion.c:384
 msgid "All column datatypes must be hashable."
 msgstr "Alle Spaltendatentypen müssen hashbar sein."
 
 #. translator: %s is UNION, INTERSECT, or EXCEPT
-#: optimizer/prep/prepunion.c:767
+#: optimizer/prep/prepunion.c:777
 #, c-format
 msgid "could not implement %s"
 msgstr "konnte %s nicht implementieren"
@@ -12530,8 +12531,8 @@ msgstr ""
 
 #: storage/lmgr/proc.c:927
 #, c-format
-msgid "Process %d waits for %s on %s"
-msgstr "Prozess %d wartet auf %s-Sperre auf %s"
+msgid "Process %d waits for %s on %s."
+msgstr "Prozess %d wartet auf %s-Sperre auf %s."
 
 #: storage/lmgr/proc.c:937
 #, c-format
