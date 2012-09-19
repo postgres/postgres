@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-08-08 20:17+0000\n"
-"PO-Revision-Date: 2012-08-14 00:02-0400\n"
+"POT-Creation-Date: 2012-09-17 19:49+0000\n"
+"PO-Revision-Date: 2012-09-18 21:32-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -3172,7 +3172,7 @@ msgstr "ungültiger Quellkodierungsname »%s«"
 msgid "invalid destination encoding name \"%s\""
 msgstr "ungültiger Zielkodierungsname »%s«"
 
-#: utils/mb/mbutils.c:423 utils/adt/xml.c:160
+#: utils/mb/mbutils.c:423 utils/adt/xml.c:163
 #, c-format
 msgid "invalid encoding name \"%s\""
 msgstr "ungültiger Kodierungsname »%s«"
@@ -3238,95 +3238,95 @@ msgstr ""
 "Materialisierungsmodus wird benötigt, ist aber in diesem Zusammenhang nicht "
 "erlaubt"
 
-#: utils/adt/xml.c:135
+#: utils/adt/xml.c:138
 msgid "unsupported XML feature"
 msgstr "nicht unterstützte XML-Funktionalität"
 
-#: utils/adt/xml.c:136
+#: utils/adt/xml.c:139
 msgid "This functionality requires the server to be built with libxml support."
 msgstr ""
 "Diese Funktionalität verlangt, dass der Server mit Libxml-Unterstützung "
 "gebaut wird."
 
-#: utils/adt/xml.c:137
+#: utils/adt/xml.c:140
 msgid "You need to rebuild PostgreSQL using --with-libxml."
 msgstr "Sie müssen PostgreSQL mit --with-libxml neu bauen."
 
-#: utils/adt/xml.c:432 utils/adt/xml.c:437
+#: utils/adt/xml.c:435 utils/adt/xml.c:440
 msgid "invalid XML comment"
 msgstr "ungültiger XML-Kommentar"
 
-#: utils/adt/xml.c:568
+#: utils/adt/xml.c:571
 msgid "not an XML document"
 msgstr "kein XML-Dokument"
 
-#: utils/adt/xml.c:724 utils/adt/xml.c:747
+#: utils/adt/xml.c:727 utils/adt/xml.c:750
 msgid "invalid XML processing instruction"
 msgstr "ungültige XML-Verarbeitungsanweisung"
 
-#: utils/adt/xml.c:725
+#: utils/adt/xml.c:728
 #, c-format
 msgid "XML processing instruction target name cannot be \"%s\"."
 msgstr "Die Zielangabe der XML-Verarbeitungsanweisung darf nicht »%s« sein."
 
-#: utils/adt/xml.c:748
+#: utils/adt/xml.c:751
 msgid "XML processing instruction cannot contain \"?>\"."
 msgstr "XML-Verarbeitungsanweisung darf nicht »?>« enthalten."
 
-#: utils/adt/xml.c:829
+#: utils/adt/xml.c:832
 msgid "xmlvalidate is not implemented"
 msgstr "xmlvalidate ist nicht implementiert"
 
-#: utils/adt/xml.c:914
+#: utils/adt/xml.c:917
 msgid "could not initialize XML library"
 msgstr "konnte XML-Bibliothek nicht initialisieren"
 
-#: utils/adt/xml.c:915
+#: utils/adt/xml.c:918
 #, c-format
 msgid ""
 "libxml2 has incompatible char type: sizeof(char)=%u, sizeof(xmlChar)=%u."
 msgstr ""
 "libxml2 hat inkompatiblen char-Typ: sizeof(char)=%u, sizeof(xmlChar)=%u."
 
-#: utils/adt/xml.c:1409 utils/adt/xml.c:1410 utils/adt/xml.c:1416
-#: utils/adt/xml.c:1487 tcop/postgres.c:4116 commands/user.c:914
+#: utils/adt/xml.c:1437 utils/adt/xml.c:1438 utils/adt/xml.c:1444
+#: utils/adt/xml.c:1515 tcop/postgres.c:4116 commands/user.c:914
 #: nodes/print.c:83 storage/lmgr/proc.c:927 storage/lmgr/deadlock.c:926
 #: catalog/pg_shdepend.c:676
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: utils/adt/xml.c:1463
+#: utils/adt/xml.c:1491
 msgid "Invalid character value."
 msgstr "Ungültiger Zeichenwert."
 
-#: utils/adt/xml.c:1466
+#: utils/adt/xml.c:1494
 msgid "Space required."
 msgstr "Leerzeichen benötigt."
 
-#: utils/adt/xml.c:1469
+#: utils/adt/xml.c:1497
 msgid "standalone accepts only 'yes' or 'no'."
 msgstr "standalone akzeptiert nur »yes« oder »no«."
 
-#: utils/adt/xml.c:1472
+#: utils/adt/xml.c:1500
 msgid "Malformed declaration: missing version."
 msgstr "Fehlerhafte Deklaration: Version fehlt."
 
-#: utils/adt/xml.c:1475
+#: utils/adt/xml.c:1503
 msgid "Missing encoding in text declaration."
 msgstr "Fehlende Kodierung in Textdeklaration."
 
-#: utils/adt/xml.c:1478
+#: utils/adt/xml.c:1506
 msgid "Parsing XML declaration: '?>' expected."
 msgstr "Beim Parsen der XML-Deklaration: »?>« erwartet."
 
-#: utils/adt/xml.c:1481
+#: utils/adt/xml.c:1509
 #, c-format
 msgid "Unrecognized libxml error code: %d."
 msgstr "Unbekannter Libxml-Fehlercode: %d."
 
-#: utils/adt/xml.c:1766 utils/adt/xml.c:1772 utils/adt/xml.c:1792
-#: utils/adt/xml.c:1798 utils/adt/timestamp.c:210 utils/adt/timestamp.c:248
+#: utils/adt/xml.c:1794 utils/adt/xml.c:1800 utils/adt/xml.c:1820
+#: utils/adt/xml.c:1826 utils/adt/timestamp.c:210 utils/adt/timestamp.c:248
 #: utils/adt/timestamp.c:470 utils/adt/timestamp.c:510
 #: utils/adt/timestamp.c:2560 utils/adt/timestamp.c:2581
 #: utils/adt/timestamp.c:2594 utils/adt/timestamp.c:2603
@@ -3350,36 +3350,36 @@ msgstr "Unbekannter Libxml-Fehlercode: %d."
 msgid "timestamp out of range"
 msgstr "timestamp ist außerhalb des gültigen Bereichs"
 
-#: utils/adt/xml.c:2082 utils/adt/xml.c:2246 commands/portalcmds.c:168
+#: utils/adt/xml.c:2110 utils/adt/xml.c:2274 commands/portalcmds.c:168
 #: commands/portalcmds.c:222 executor/execCurrent.c:69
 #, c-format
 msgid "cursor \"%s\" does not exist"
 msgstr "Cursor »%s« existiert nicht"
 
-#: utils/adt/xml.c:2161
+#: utils/adt/xml.c:2189
 msgid "invalid query"
 msgstr "ungültige Anfrage"
 
-#: utils/adt/xml.c:3398
+#: utils/adt/xml.c:3426
 msgid "invalid array for XML namespace mapping"
 msgstr "ungültiges Array for XML-Namensraumabbildung"
 
-#: utils/adt/xml.c:3399
+#: utils/adt/xml.c:3427
 msgid ""
 "The array must be two-dimensional with length of the second axis equal to 2."
 msgstr ""
 "Das Array muss zweidimensional sein und die Länge der zweiten Achse muss "
 "gleich 2 sein."
 
-#: utils/adt/xml.c:3423
+#: utils/adt/xml.c:3451
 msgid "empty XPath expression"
 msgstr "leerer XPath-Ausdruck"
 
-#: utils/adt/xml.c:3540
+#: utils/adt/xml.c:3568
 msgid "neither namespace name nor URI may be null"
 msgstr "weder Namensraumname noch URI dürfen NULL sein"
 
-#: utils/adt/xml.c:3547
+#: utils/adt/xml.c:3575
 #, c-format
 msgid "could not register XML namespace with name \"%s\" and URI \"%s\""
 msgstr "konnte XML-Namensraum mit Namen »%s« und URI »%s« nicht registrieren"
@@ -6094,7 +6094,7 @@ msgstr ""
 "Werte, die größer sind als eine Pufferseite, können nicht indiziert werden."
 
 #: access/hash/hashutil.c:158 access/nbtree/nbtpage.c:429
-#: access/gist/gistutil.c:594
+#: access/gist/gistutil.c:642
 #, c-format
 msgid "index \"%s\" contains unexpected zero page at block %u"
 msgstr "Index »%s« enthält unerwartete Nullseite bei Block %u"
@@ -6102,12 +6102,12 @@ msgstr "Index »%s« enthält unerwartete Nullseite bei Block %u"
 #: access/hash/hashutil.c:161 access/hash/hashutil.c:173
 #: access/hash/hashutil.c:185 access/hash/hashutil.c:206
 #: access/nbtree/nbtpage.c:432 access/nbtree/nbtpage.c:444
-#: access/gist/gistutil.c:597 access/gist/gistutil.c:609
+#: access/gist/gistutil.c:645 access/gist/gistutil.c:657
 msgid "Please REINDEX it."
 msgstr "Bitte führen Sie REINDEX für den Index aus."
 
 #: access/hash/hashutil.c:170 access/hash/hashutil.c:182
-#: access/nbtree/nbtpage.c:441 access/gist/gistutil.c:606
+#: access/nbtree/nbtpage.c:441 access/gist/gistutil.c:654
 #, c-format
 msgid "index \"%s\" contains corrupted page at block %u"
 msgstr "Index »%s« enthält korrupte Seite bei Block %u"
@@ -7451,7 +7451,7 @@ msgstr ""
 msgid "Incomplete insertion detected during crash replay."
 msgstr "Unvollständige Einfügeoperation beim Crash-Replay entdeckt."
 
-#: access/gist/gistutil.c:407
+#: access/gist/gistutil.c:426
 #, c-format
 msgid "index \"%s\" needs VACUUM or REINDEX to finish crash recovery"
 msgstr ""
@@ -7683,7 +7683,8 @@ msgstr "kann Verweis auf ganze Zeile der Tabelle nicht umwandeln"
 #: commands/tablecmds.c:1012 parser/parse_utilcmd.c:695
 #, c-format
 msgid "Constraint \"%s\" contains a whole-row reference to table \"%s\"."
-msgstr "Constraint »%s« enthält einen Verweis auf die ganze Zeile der Tabelle »%s«."
+msgstr ""
+"Constraint »%s« enthält einen Verweis auf die ganze Zeile der Tabelle »%s«."
 
 #: commands/tablecmds.c:1065
 #, c-format
@@ -11760,8 +11761,8 @@ msgstr ""
 
 #: storage/lmgr/proc.c:915
 #, c-format
-msgid "Process %d waits for %s on %s"
-msgstr "Prozess %d wartet auf %s-Sperre auf %s"
+msgid "Process %d waits for %s on %s."
+msgstr "Prozess %d wartet auf %s-Sperre auf %s."
 
 #: storage/lmgr/proc.c:925
 #, c-format

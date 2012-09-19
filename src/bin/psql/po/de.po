@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-07-26 21:26+0000\n"
-"PO-Revision-Date: 2012-06-08 15:09+0300\n"
+"POT-Creation-Date: 2012-09-17 19:50+0000\n"
+"PO-Revision-Date: 2012-09-18 21:32-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -789,7 +789,8 @@ msgstr "  \\i DATEI       Anweisungen aus Datei ausführen\n"
 #: help.c:207
 #, c-format
 msgid "  \\o [FILE]      send all query results to file or |pipe\n"
-msgstr "  \\o [DATEI]     alle Anfrageergebnisse in Datei oder |Pipe schreiben\n"
+msgstr ""
+"  \\o [DATEI]     alle Anfrageergebnisse in Datei oder |Pipe schreiben\n"
 
 #: help.c:208
 #, c-format
@@ -3321,12 +3322,12 @@ msgstr "löscht Zeilen einer Tabelle"
 
 #: sql_help.h:282
 msgid ""
-"DELETE FROM [ ONLY ] table [ [ AS ] alias ]\n"
+"DELETE FROM [ ONLY ] table [ * ] [ [ AS ] alias ]\n"
 "    [ USING usinglist ]\n"
 "    [ WHERE condition | WHERE CURRENT OF cursor_name ]\n"
 "    [ RETURNING * | output_expression [ AS output_name ] [, ...] ]"
 msgstr ""
-"DELETE FROM [ ONLY ] tabelle [ [ AS ] alias ]\n"
+"DELETE FROM [ ONLY ] tabelle [ * ] [ [ AS ] alias ]\n"
 "    [ USING using-liste ]\n"
 "    [ WHERE bedingung | WHERE CURRENT OF cursorname ]\n"
 "    [ RETURNING * | ausgabeausdruck [ AS ausgabename ] [, ...] ]"
@@ -4175,7 +4176,7 @@ msgstr "aktualisiert Zeilen einer Tabelle"
 
 #: sql_help.h:530
 msgid ""
-"UPDATE [ ONLY ] table [ [ AS ] alias ]\n"
+"UPDATE [ ONLY ] table [ * ] [ [ AS ] alias ]\n"
 "    SET { column = { expression | DEFAULT } |\n"
 "          ( column [, ...] ) = ( { expression | DEFAULT } [, ...] ) } "
 "[, ...]\n"
@@ -4183,7 +4184,7 @@ msgid ""
 "    [ WHERE condition | WHERE CURRENT OF cursor_name ]\n"
 "    [ RETURNING * | output_expression [ AS output_name ] [, ...] ]"
 msgstr ""
-"UPDATE [ ONLY ] tabelle [ [ AS ] alias ]\n"
+"UPDATE [ ONLY ] tabelle [ * ] [ [ AS ] alias ]\n"
 "    SET { spalte = { ausdruck | DEFAULT } |\n"
 "          ( spalte [, ...] ) = ( { ausdruck | DEFAULT } [, ...] ) } [, ...]\n"
 "    [ FROM from-liste ]\n"
@@ -4250,27 +4251,27 @@ msgstr "konnte nicht in Verzeichnis »%s« wechseln"
 msgid "could not read symbolic link \"%s\""
 msgstr "konnte symbolische Verknüpfung »%s« nicht lesen"
 
-#: ../../port/exec.c:586
+#: ../../port/exec.c:595
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "Kindprozess hat mit Code %d beendet"
 
-#: ../../port/exec.c:590
+#: ../../port/exec.c:599
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "Kindprozess wurde durch Ausnahme 0x%X beendet"
 
-#: ../../port/exec.c:599
+#: ../../port/exec.c:608
 #, c-format
 msgid "child process was terminated by signal %s"
 msgstr "Kindprozess wurde von Signal %s beendet"
 
-#: ../../port/exec.c:602
+#: ../../port/exec.c:611
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "Kindprozess wurde von Signal %d beendet"
 
-#: ../../port/exec.c:606
+#: ../../port/exec.c:615
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "Kindprozess hat mit unbekanntem Status %d beendet"
