@@ -1,6 +1,177 @@
 <!-- doc/src/sgml/release-9.2.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-2-1">
+  <title>Release 9.2.1</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2012-09-24</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 9.2.0.
+   For information about new features in the 9.2 major release, see
+   <xref linkend="release-9-2">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.2.1</title>
+
+   <para>
+    A dump/restore is not required for those running 9.2.X.
+   </para>
+
+   <para>
+    However, you may need to perform <command>REINDEX</> and/or
+    <command>VACUUM</> operations to recover from the effects of the data
+    corruption bug described in the first changelog item below.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix persistence marking of shared buffers during WAL replay
+      (Jeff Davis)
+     </para>
+
+     <para>
+      This mistake can result in buffers not being written out during
+      checkpoints, resulting in data corruption if the server later crashes
+      without ever having written those buffers.  Corruption can occur on
+      any server following crash recovery, but it is significantly more
+      likely to occur on standby slave servers since those perform much
+      more WAL replay.  There is a low probability of corruption of btree
+      and GIN indexes.  There is a much higher probability of corruption
+      of table <quote>visibility maps</>, which might lead to wrong answers
+      from index-only scans.  Table data proper cannot be corrupted by this
+      bug.
+     </para>
+
+     <para>
+      While no index corruption due to this bug is known to have occurred
+      in the field, as a precautionary measure it is recommended that
+      production installations <command>REINDEX</> all btree and GIN
+      indexes at a convenient time after upgrading to 9.2.1.
+     </para>
+
+     <para>
+      Also, it is recommended to perform a <command>VACUUM</> of all tables
+      while having <link
+      linkend="guc-vacuum-freeze-table-age"><varname>vacuum_freeze_table_age</></link>
+      set to zero.  This will fix any incorrect visibility map data.  <link
+      linkend="guc-vacuum-cost-delay"><varname>vacuum_cost_delay</></link>
+      can be adjusted to reduce the performance impact of vacuuming, while
+      causing it to take longer to finish.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible incorrect sorting of output from queries involving
+      <literal>WHERE <replaceable>indexed_column</> IN
+      (<replaceable>list_of_values</>)</literal> (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix planner failure for queries involving <literal>GROUP BY</>
+      expressions along with window functions and aggregates (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix planner's assignment of executor parameters (Tom Lane)
+     </para>
+
+     <para>
+      This error could result in wrong answers from queries that scan the
+      same <literal>WITH</> subquery multiple times.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve planner's handling of join conditions in index scans (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve selectivity estimation for text search queries involving
+      prefixes, i.e. <replaceable>word</><literal>:*</> patterns  (Tom Lane)
+     </para>
+
+     <para>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix delayed recognition of permissions changes (Tom Lane)
+     </para>
+
+     <para>
+      A command that needed no locks other than ones its transaction already
+      had might fail to notice a concurrent <command>GRANT</> or
+      <command>REVOKE</> that committed since the start of its transaction.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <command>ANALYZE</> to not fail when a column is a domain over an
+      array type (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent PL/Perl from crashing if a recursive PL/Perl function is
+      redefined while being executed (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Work around possible misoptimization in PL/Perl (Tom Lane)
+     </para>
+
+     <para>
+      Some Linux distributions contain an incorrect version of
+      <filename>pthread.h</> that results in incorrect compiled code in
+      PL/Perl, leading to crashes if a PL/Perl function calls another one
+      that throws an error.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove unnecessary dependency on <application>pg_config</> from
+      <application>pg_upgrade</> (Peter Eisentraut)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2012f
+      for DST law changes in Fiji
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-2">
   <title>Release 9.2</title>
 
