@@ -743,7 +743,7 @@ msgstr ""
 #, c-format
 msgid "  --replication             role can initiate replication\n"
 msgstr ""
-"  --no-replication             le rôle peut initier une connexion de\n"
+"  --replication                le rôle peut initier une connexion de\n"
 "                               réplication\n"
 
 #: createuser.c:352
