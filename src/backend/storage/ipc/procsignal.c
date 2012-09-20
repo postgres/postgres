@@ -21,6 +21,7 @@
 #include "miscadmin.h"
 #include "storage/latch.h"
 #include "storage/ipc.h"
+#include "storage/shmem.h"
 #include "storage/sinval.h"
 #include "tcop/tcopprot.h"
 

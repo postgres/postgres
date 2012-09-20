@@ -19,8 +19,9 @@
 #ifndef TCOPPROT_H
 #define TCOPPROT_H
 
-#include "executor/execdesc.h"
+#include "nodes/params.h"
 #include "nodes/parsenodes.h"
+#include "nodes/plannodes.h"
 #include "storage/procsignal.h"
 #include "utils/guc.h"
 
