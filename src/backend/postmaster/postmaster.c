@@ -1151,7 +1151,16 @@ PostmasterMain(int argc, char *argv[])
 		ereport(FATAL,
 				(errmsg("could not load pg_hba.conf")));
 	}
-	load_ident();
+	if (!load_ident())
+	{
+		/*
+		 * We can start up without the IDENT file, although it means that you
+		 * cannot log in using any of the authentication methods that need a
+		 * user name mapping. load_ident() already logged the details of
+		 * error to the log.
+		 */
+	}
+
 
 	/*
 	 * Remove old temporary files.	At this point there can be no other
@@ -2153,7 +2162,9 @@ SIGHUP_handler(SIGNAL_ARGS)
 			ereport(WARNING,
 					(errmsg("pg_hba.conf not reloaded")));
 
-		load_ident();
+		if (!load_ident())
+			ereport(WARNING,
+					(errmsg("pg_ident.conf not reloaded")));
 
 #ifdef EXEC_BACKEND
 		/* Update the starting-point file for future children */
