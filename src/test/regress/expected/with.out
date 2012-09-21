@@ -2006,8 +2006,8 @@ SELECT * FROM parent;
 EXPLAIN (VERBOSE, COSTS OFF)
 WITH wcte AS ( INSERT INTO int8_tbl VALUES ( 42, 47 ) RETURNING q2 )
 DELETE FROM a USING wcte WHERE aa = q2;
-                    QUERY PLAN                    
---------------------------------------------------
+                   QUERY PLAN                   
+------------------------------------------------
  Delete on public.a
    CTE wcte
      ->  Insert on public.int8_tbl
@@ -2015,31 +2015,31 @@ DELETE FROM a USING wcte WHERE aa = q2;
            ->  Result
                  Output: 42::bigint, 47::bigint
    ->  Nested Loop
-         Output: public.a.ctid, wcte.*
-         Join Filter: (public.a.aa = wcte.q2)
+         Output: a.ctid, wcte.*
+         Join Filter: (a.aa = wcte.q2)
          ->  Seq Scan on public.a
-               Output: public.a.ctid, public.a.aa
+               Output: a.ctid, a.aa
          ->  CTE Scan on wcte
                Output: wcte.*, wcte.q2
    ->  Nested Loop
-         Output: public.a.ctid, wcte.*
-         Join Filter: (public.a.aa = wcte.q2)
-         ->  Seq Scan on public.b a
-               Output: public.a.ctid, public.a.aa
+         Output: b.ctid, wcte.*
+         Join Filter: (b.aa = wcte.q2)
+         ->  Seq Scan on public.b
+               Output: b.ctid, b.aa
          ->  CTE Scan on wcte
                Output: wcte.*, wcte.q2
    ->  Nested Loop
-         Output: public.a.ctid, wcte.*
-         Join Filter: (public.a.aa = wcte.q2)
-         ->  Seq Scan on public.c a
-               Output: public.a.ctid, public.a.aa
+         Output: c.ctid, wcte.*
+         Join Filter: (c.aa = wcte.q2)
+         ->  Seq Scan on public.c
+               Output: c.ctid, c.aa
          ->  CTE Scan on wcte
                Output: wcte.*, wcte.q2
    ->  Nested Loop
-         Output: public.a.ctid, wcte.*
-         Join Filter: (public.a.aa = wcte.q2)
-         ->  Seq Scan on public.d a
-               Output: public.a.ctid, public.a.aa
+         Output: d.ctid, wcte.*
+         Join Filter: (d.aa = wcte.q2)
+         ->  Seq Scan on public.d
+               Output: d.ctid, d.aa
          ->  CTE Scan on wcte
                Output: wcte.*, wcte.q2
 (34 rows)

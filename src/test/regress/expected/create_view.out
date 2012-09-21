@@ -288,8 +288,368 @@ SELECT relname, relkind, reloptions FROM pg_class
  mysecview4 | v       | {security_barrier=false}
 (4 rows)
 
+-- Test view decompilation in the face of renaming conflicts
+CREATE TABLE tt1 (f1 int, f2 int, f3 text);
+CREATE TABLE tx1 (x1 int, x2 int, x3 text);
+CREATE TABLE temp_view_test.tt1 (y1 int, f2 int, f3 text);
+CREATE VIEW aliased_view_1 AS
+  select * from tt1
+    where exists (select 1 from tx1 where tt1.f1 = tx1.x1);
+CREATE VIEW aliased_view_2 AS
+  select * from tt1 a1
+    where exists (select 1 from tx1 where a1.f1 = tx1.x1);
+CREATE VIEW aliased_view_3 AS
+  select * from tt1
+    where exists (select 1 from tx1 a2 where tt1.f1 = a2.x1);
+CREATE VIEW aliased_view_4 AS
+  select * from temp_view_test.tt1
+    where exists (select 1 from tt1 where temp_view_test.tt1.y1 = tt1.f1);
+\d+ aliased_view_1
+          View "testviewschm2.aliased_view_1"
+ Column |  Type   | Modifiers | Storage  | Description 
+--------+---------+-----------+----------+-------------
+ f1     | integer |           | plain    | 
+ f2     | integer |           | plain    | 
+ f3     | text    |           | extended | 
+View definition:
+ SELECT tt1.f1, tt1.f2, tt1.f3
+   FROM tt1
+  WHERE (EXISTS ( SELECT 1
+           FROM tx1
+          WHERE tt1.f1 = tx1.x1));
+
+\d+ aliased_view_2
+          View "testviewschm2.aliased_view_2"
+ Column |  Type   | Modifiers | Storage  | Description 
+--------+---------+-----------+----------+-------------
+ f1     | integer |           | plain    | 
+ f2     | integer |           | plain    | 
+ f3     | text    |           | extended | 
+View definition:
+ SELECT a1.f1, a1.f2, a1.f3
+   FROM tt1 a1
+  WHERE (EXISTS ( SELECT 1
+           FROM tx1
+          WHERE a1.f1 = tx1.x1));
+
+\d+ aliased_view_3
+          View "testviewschm2.aliased_view_3"
+ Column |  Type   | Modifiers | Storage  | Description 
+--------+---------+-----------+----------+-------------
+ f1     | integer |           | plain    | 
+ f2     | integer |           | plain    | 
+ f3     | text    |           | extended | 
+View definition:
+ SELECT tt1.f1, tt1.f2, tt1.f3
+   FROM tt1
+  WHERE (EXISTS ( SELECT 1
+           FROM tx1 a2
+          WHERE tt1.f1 = a2.x1));
+
+\d+ aliased_view_4
+          View "testviewschm2.aliased_view_4"
+ Column |  Type   | Modifiers | Storage  | Description 
+--------+---------+-----------+----------+-------------
+ y1     | integer |           | plain    | 
+ f2     | integer |           | plain    | 
+ f3     | text    |           | extended | 
+View definition:
+ SELECT tt1.y1, tt1.f2, tt1.f3
+   FROM temp_view_test.tt1
+  WHERE (EXISTS ( SELECT 1
+           FROM tt1 tt1_1
+          WHERE tt1.y1 = tt1_1.f1));
+
+ALTER TABLE tx1 RENAME TO a1;
+\d+ aliased_view_1
+          View "testviewschm2.aliased_view_1"
+ Column |  Type   | Modifiers | Storage  | Description 
+--------+---------+-----------+----------+-------------
+ f1     | integer |           | plain    | 
+ f2     | integer |           | plain    | 
+ f3     | text    |           | extended | 
+View definition:
+ SELECT tt1.f1, tt1.f2, tt1.f3
+   FROM tt1
+  WHERE (EXISTS ( SELECT 1
+           FROM a1
+          WHERE tt1.f1 = a1.x1));
+
+\d+ aliased_view_2
+          View "testviewschm2.aliased_view_2"
+ Column |  Type   | Modifiers | Storage  | Description 
+--------+---------+-----------+----------+-------------
+ f1     | integer |           | plain    | 
+ f2     | integer |           | plain    | 
+ f3     | text    |           | extended | 
+View definition:
+ SELECT a1.f1, a1.f2, a1.f3
+   FROM tt1 a1
+  WHERE (EXISTS ( SELECT 1
+           FROM a1 a1_1
+          WHERE a1.f1 = a1_1.x1));
+
+\d+ aliased_view_3
+          View "testviewschm2.aliased_view_3"
+ Column |  Type   | Modifiers | Storage  | Description 
+--------+---------+-----------+----------+-------------
+ f1     | integer |           | plain    | 
+ f2     | integer |           | plain    | 
+ f3     | text    |           | extended | 
+View definition:
+ SELECT tt1.f1, tt1.f2, tt1.f3
+   FROM tt1
+  WHERE (EXISTS ( SELECT 1
+           FROM a1 a2
+          WHERE tt1.f1 = a2.x1));
+
+\d+ aliased_view_4
+          View "testviewschm2.aliased_view_4"
+ Column |  Type   | Modifiers | Storage  | Description 
+--------+---------+-----------+----------+-------------
+ y1     | integer |           | plain    | 
+ f2     | integer |           | plain    | 
+ f3     | text    |           | extended | 
+View definition:
+ SELECT tt1.y1, tt1.f2, tt1.f3
+   FROM temp_view_test.tt1
+  WHERE (EXISTS ( SELECT 1
+           FROM tt1 tt1_1
+          WHERE tt1.y1 = tt1_1.f1));
+
+ALTER TABLE tt1 RENAME TO a2;
+\d+ aliased_view_1
+          View "testviewschm2.aliased_view_1"
+ Column |  Type   | Modifiers | Storage  | Description 
+--------+---------+-----------+----------+-------------
+ f1     | integer |           | plain    | 
+ f2     | integer |           | plain    | 
+ f3     | text    |           | extended | 
+View definition:
+ SELECT a2.f1, a2.f2, a2.f3
+   FROM a2
+  WHERE (EXISTS ( SELECT 1
+           FROM a1
+          WHERE a2.f1 = a1.x1));
+
+\d+ aliased_view_2
+          View "testviewschm2.aliased_view_2"
+ Column |  Type   | Modifiers | Storage  | Description 
+--------+---------+-----------+----------+-------------
+ f1     | integer |           | plain    | 
+ f2     | integer |           | plain    | 
+ f3     | text    |           | extended | 
+View definition:
+ SELECT a1.f1, a1.f2, a1.f3
+   FROM a2 a1
+  WHERE (EXISTS ( SELECT 1
+           FROM a1 a1_1
+          WHERE a1.f1 = a1_1.x1));
+
+\d+ aliased_view_3
+          View "testviewschm2.aliased_view_3"
+ Column |  Type   | Modifiers | Storage  | Description 
+--------+---------+-----------+----------+-------------
+ f1     | integer |           | plain    | 
+ f2     | integer |           | plain    | 
+ f3     | text    |           | extended | 
+View definition:
+ SELECT a2.f1, a2.f2, a2.f3
+   FROM a2
+  WHERE (EXISTS ( SELECT 1
+           FROM a1 a2_1
+          WHERE a2.f1 = a2_1.x1));
+
+\d+ aliased_view_4
+          View "testviewschm2.aliased_view_4"
+ Column |  Type   | Modifiers | Storage  | Description 
+--------+---------+-----------+----------+-------------
+ y1     | integer |           | plain    | 
+ f2     | integer |           | plain    | 
+ f3     | text    |           | extended | 
+View definition:
+ SELECT tt1.y1, tt1.f2, tt1.f3
+   FROM temp_view_test.tt1
+  WHERE (EXISTS ( SELECT 1
+           FROM a2
+          WHERE tt1.y1 = a2.f1));
+
+ALTER TABLE a1 RENAME TO tt1;
+\d+ aliased_view_1
+          View "testviewschm2.aliased_view_1"
+ Column |  Type   | Modifiers | Storage  | Description 
+--------+---------+-----------+----------+-------------
+ f1     | integer |           | plain    | 
+ f2     | integer |           | plain    | 
+ f3     | text    |           | extended | 
+View definition:
+ SELECT a2.f1, a2.f2, a2.f3
+   FROM a2
+  WHERE (EXISTS ( SELECT 1
+           FROM tt1
+          WHERE a2.f1 = tt1.x1));
+
+\d+ aliased_view_2
+          View "testviewschm2.aliased_view_2"
+ Column |  Type   | Modifiers | Storage  | Description 
+--------+---------+-----------+----------+-------------
+ f1     | integer |           | plain    | 
+ f2     | integer |           | plain    | 
+ f3     | text    |           | extended | 
+View definition:
+ SELECT a1.f1, a1.f2, a1.f3
+   FROM a2 a1
+  WHERE (EXISTS ( SELECT 1
+           FROM tt1
+          WHERE a1.f1 = tt1.x1));
+
+\d+ aliased_view_3
+          View "testviewschm2.aliased_view_3"
+ Column |  Type   | Modifiers | Storage  | Description 
+--------+---------+-----------+----------+-------------
+ f1     | integer |           | plain    | 
+ f2     | integer |           | plain    | 
+ f3     | text    |           | extended | 
+View definition:
+ SELECT a2.f1, a2.f2, a2.f3
+   FROM a2
+  WHERE (EXISTS ( SELECT 1
+           FROM tt1 a2_1
+          WHERE a2.f1 = a2_1.x1));
+
+\d+ aliased_view_4
+          View "testviewschm2.aliased_view_4"
+ Column |  Type   | Modifiers | Storage  | Description 
+--------+---------+-----------+----------+-------------
+ y1     | integer |           | plain    | 
+ f2     | integer |           | plain    | 
+ f3     | text    |           | extended | 
+View definition:
+ SELECT tt1.y1, tt1.f2, tt1.f3
+   FROM temp_view_test.tt1
+  WHERE (EXISTS ( SELECT 1
+           FROM a2
+          WHERE tt1.y1 = a2.f1));
+
+ALTER TABLE a2 RENAME TO tx1;
+ALTER TABLE tx1 SET SCHEMA temp_view_test;
+\d+ aliased_view_1
+          View "testviewschm2.aliased_view_1"
+ Column |  Type   | Modifiers | Storage  | Description 
+--------+---------+-----------+----------+-------------
+ f1     | integer |           | plain    | 
+ f2     | integer |           | plain    | 
+ f3     | text    |           | extended | 
+View definition:
+ SELECT tx1.f1, tx1.f2, tx1.f3
+   FROM temp_view_test.tx1
+  WHERE (EXISTS ( SELECT 1
+           FROM tt1
+          WHERE tx1.f1 = tt1.x1));
+
+\d+ aliased_view_2
+          View "testviewschm2.aliased_view_2"
+ Column |  Type   | Modifiers | Storage  | Description 
+--------+---------+-----------+----------+-------------
+ f1     | integer |           | plain    | 
+ f2     | integer |           | plain    | 
+ f3     | text    |           | extended | 
+View definition:
+ SELECT a1.f1, a1.f2, a1.f3
+   FROM temp_view_test.tx1 a1
+  WHERE (EXISTS ( SELECT 1
+           FROM tt1
+          WHERE a1.f1 = tt1.x1));
+
+\d+ aliased_view_3
+          View "testviewschm2.aliased_view_3"
+ Column |  Type   | Modifiers | Storage  | Description 
+--------+---------+-----------+----------+-------------
+ f1     | integer |           | plain    | 
+ f2     | integer |           | plain    | 
+ f3     | text    |           | extended | 
+View definition:
+ SELECT tx1.f1, tx1.f2, tx1.f3
+   FROM temp_view_test.tx1
+  WHERE (EXISTS ( SELECT 1
+           FROM tt1 a2
+          WHERE tx1.f1 = a2.x1));
+
+\d+ aliased_view_4
+          View "testviewschm2.aliased_view_4"
+ Column |  Type   | Modifiers | Storage  | Description 
+--------+---------+-----------+----------+-------------
+ y1     | integer |           | plain    | 
+ f2     | integer |           | plain    | 
+ f3     | text    |           | extended | 
+View definition:
+ SELECT tt1.y1, tt1.f2, tt1.f3
+   FROM temp_view_test.tt1
+  WHERE (EXISTS ( SELECT 1
+           FROM temp_view_test.tx1
+          WHERE tt1.y1 = tx1.f1));
+
+ALTER TABLE temp_view_test.tt1 RENAME TO tmp1;
+ALTER TABLE temp_view_test.tmp1 SET SCHEMA testviewschm2;
+ALTER TABLE tmp1 RENAME TO tx1;
+\d+ aliased_view_1
+          View "testviewschm2.aliased_view_1"
+ Column |  Type   | Modifiers | Storage  | Description 
+--------+---------+-----------+----------+-------------
+ f1     | integer |           | plain    | 
+ f2     | integer |           | plain    | 
+ f3     | text    |           | extended | 
+View definition:
+ SELECT tx1.f1, tx1.f2, tx1.f3
+   FROM temp_view_test.tx1
+  WHERE (EXISTS ( SELECT 1
+           FROM tt1
+          WHERE tx1.f1 = tt1.x1));
+
+\d+ aliased_view_2
+          View "testviewschm2.aliased_view_2"
+ Column |  Type   | Modifiers | Storage  | Description 
+--------+---------+-----------+----------+-------------
+ f1     | integer |           | plain    | 
+ f2     | integer |           | plain    | 
+ f3     | text    |           | extended | 
+View definition:
+ SELECT a1.f1, a1.f2, a1.f3
+   FROM temp_view_test.tx1 a1
+  WHERE (EXISTS ( SELECT 1
+           FROM tt1
+          WHERE a1.f1 = tt1.x1));
+
+\d+ aliased_view_3
+          View "testviewschm2.aliased_view_3"
+ Column |  Type   | Modifiers | Storage  | Description 
+--------+---------+-----------+----------+-------------
+ f1     | integer |           | plain    | 
+ f2     | integer |           | plain    | 
+ f3     | text    |           | extended | 
+View definition:
+ SELECT tx1.f1, tx1.f2, tx1.f3
+   FROM temp_view_test.tx1
+  WHERE (EXISTS ( SELECT 1
+           FROM tt1 a2
+          WHERE tx1.f1 = a2.x1));
+
+\d+ aliased_view_4
+          View "testviewschm2.aliased_view_4"
+ Column |  Type   | Modifiers | Storage  | Description 
+--------+---------+-----------+----------+-------------
+ y1     | integer |           | plain    | 
+ f2     | integer |           | plain    | 
+ f3     | text    |           | extended | 
+View definition:
+ SELECT tx1.y1, tx1.f2, tx1.f3
+   FROM tx1
+  WHERE (EXISTS ( SELECT 1
+           FROM temp_view_test.tx1 tx1_1
+          WHERE tx1.y1 = tx1_1.f1));
+
 DROP SCHEMA temp_view_test CASCADE;
-NOTICE:  drop cascades to 22 other objects
+NOTICE:  drop cascades to 27 other objects
 DETAIL:  drop cascades to table temp_view_test.base_table
 drop cascades to view v7_temp
 drop cascades to view v10_temp
@@ -312,8 +672,13 @@ drop cascades to view temp_view_test.v7
 drop cascades to view temp_view_test.v8
 drop cascades to sequence temp_view_test.seq1
 drop cascades to view temp_view_test.v9
+drop cascades to table temp_view_test.tx1
+drop cascades to view aliased_view_1
+drop cascades to view aliased_view_2
+drop cascades to view aliased_view_3
+drop cascades to view aliased_view_4
 DROP SCHEMA testviewschm2 CASCADE;
-NOTICE:  drop cascades to 20 other objects
+NOTICE:  drop cascades to 22 other objects
 DETAIL:  drop cascades to table t1
 drop cascades to view temporal1
 drop cascades to view temporal2
@@ -334,4 +699,6 @@ drop cascades to view mysecview1
 drop cascades to view mysecview2
 drop cascades to view mysecview3
 drop cascades to view mysecview4
+drop cascades to table tt1
+drop cascades to table tx1
 SET search_path to public;

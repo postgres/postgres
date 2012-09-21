@@ -224,6 +224,68 @@ SELECT relname, relkind, reloptions FROM pg_class
                      'mysecview3'::regclass, 'mysecview4'::regclass)
        ORDER BY relname;
 
+-- Test view decompilation in the face of renaming conflicts
+
+CREATE TABLE tt1 (f1 int, f2 int, f3 text);
+CREATE TABLE tx1 (x1 int, x2 int, x3 text);
+CREATE TABLE temp_view_test.tt1 (y1 int, f2 int, f3 text);
+
+CREATE VIEW aliased_view_1 AS
+  select * from tt1
+    where exists (select 1 from tx1 where tt1.f1 = tx1.x1);
+CREATE VIEW aliased_view_2 AS
+  select * from tt1 a1
+    where exists (select 1 from tx1 where a1.f1 = tx1.x1);
+CREATE VIEW aliased_view_3 AS
+  select * from tt1
+    where exists (select 1 from tx1 a2 where tt1.f1 = a2.x1);
+CREATE VIEW aliased_view_4 AS
+  select * from temp_view_test.tt1
+    where exists (select 1 from tt1 where temp_view_test.tt1.y1 = tt1.f1);
+
+\d+ aliased_view_1
+\d+ aliased_view_2
+\d+ aliased_view_3
+\d+ aliased_view_4
+
+ALTER TABLE tx1 RENAME TO a1;
+
+\d+ aliased_view_1
+\d+ aliased_view_2
+\d+ aliased_view_3
+\d+ aliased_view_4
+
+ALTER TABLE tt1 RENAME TO a2;
+
+\d+ aliased_view_1
+\d+ aliased_view_2
+\d+ aliased_view_3
+\d+ aliased_view_4
+
+ALTER TABLE a1 RENAME TO tt1;
+
+\d+ aliased_view_1
+\d+ aliased_view_2
+\d+ aliased_view_3
+\d+ aliased_view_4
+
+ALTER TABLE a2 RENAME TO tx1;
+ALTER TABLE tx1 SET SCHEMA temp_view_test;
+
+\d+ aliased_view_1
+\d+ aliased_view_2
+\d+ aliased_view_3
+\d+ aliased_view_4
+
+ALTER TABLE temp_view_test.tt1 RENAME TO tmp1;
+ALTER TABLE temp_view_test.tmp1 SET SCHEMA testviewschm2;
+ALTER TABLE tmp1 RENAME TO tx1;
+
+\d+ aliased_view_1
+\d+ aliased_view_2
+\d+ aliased_view_3
+\d+ aliased_view_4
+
 DROP SCHEMA temp_view_test CASCADE;
 DROP SCHEMA testviewschm2 CASCADE;
 

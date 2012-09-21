@@ -1421,10 +1421,10 @@ EXPLAIN (COSTS OFF) SELECT * FROM my_credit_card_usage_normal
          ->  Subquery Scan on l
                Filter: f_leak(l.cnum)
                ->  Hash Join
-                     Hash Cond: (r.cid = l.cid)
-                     ->  Seq Scan on credit_card r
+                     Hash Cond: (r_1.cid = l_1.cid)
+                     ->  Seq Scan on credit_card r_1
                      ->  Hash
-                           ->  Seq Scan on customer l
+                           ->  Seq Scan on customer l_1
                                  Filter: (name = ("current_user"())::text)
 (13 rows)
 
@@ -1452,8 +1452,8 @@ EXPLAIN (COSTS OFF) SELECT * FROM my_credit_card_usage_secure
                Filter: ((ymd >= '10-01-2011'::date) AND (ymd < '11-01-2011'::date))
          ->  Materialize
                ->  Hash Join
-                     Hash Cond: (r.cid = l.cid)
-                     ->  Seq Scan on credit_card r
+                     Hash Cond: (r_1.cid = l.cid)
+                     ->  Seq Scan on credit_card r_1
                      ->  Hash
                            ->  Seq Scan on customer l
                                  Filter: (name = ("current_user"())::text)

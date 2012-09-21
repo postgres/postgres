@@ -37,6 +37,7 @@ typedef struct ExplainState
 	/* other states */
 	PlannedStmt *pstmt;			/* top of plan */
 	List	   *rtable;			/* range table */
+	List	   *rtable_names;	/* alias names for RTEs */
 	int			indent;			/* current indentation level */
 	List	   *grouping_stack; /* format-specific grouping state */
 } ExplainState;

@@ -104,7 +104,9 @@ typedef struct
  * the current context's namespaces list.
  *
  * The rangetable is the list of actual RTEs from the query tree, and the
- * cte list is the list of actual CTEs.
+ * cte list is the list of actual CTEs.  rtable_names holds the alias name
+ * to be used for each RTE (either a C string, or NULL for nameless RTEs
+ * such as unnamed joins).
  *
  * When deparsing plan trees, there is always just a single item in the
  * deparse_namespace list (since a plan tree never contains Vars with
@@ -119,6 +121,7 @@ typedef struct
 typedef struct
 {
 	List	   *rtable;			/* List of RangeTblEntry nodes */
+	List	   *rtable_names;	/* Parallel list of names for RTEs */
 	List	   *ctes;			/* List of CommonTableExpr nodes */
 	/* Remaining fields are used only when deparsing a Plan tree: */
 	PlanState  *planstate;		/* immediate parent of current expression */
@@ -172,6 +175,11 @@ static text *pg_get_expr_worker(text *expr, Oid relid, const char *relname,
 static int print_function_arguments(StringInfo buf, HeapTuple proctup,
 						 bool print_table_args, bool print_defaults);
 static void print_function_rettype(StringInfo buf, HeapTuple proctup);
+static void set_rtable_names(deparse_namespace *dpns, List *parent_namespaces,
+				 Bitmapset *rels_used);
+static bool refname_is_unique(char *refname, deparse_namespace *dpns,
+				  List *parent_namespaces);
+static char *get_rtable_name(int rtindex, deparse_context *context);
 static void set_deparse_planstate(deparse_namespace *dpns, PlanState *ps);
 static void push_child_plan(deparse_namespace *dpns, PlanState *ps,
 				deparse_namespace *save_dpns);
@@ -212,8 +220,6 @@ static void get_rule_windowspec(WindowClause *wc, List *targetList,
 					deparse_context *context);
 static char *get_variable(Var *var, int levelsup, bool istoplevel,
 			 deparse_context *context);
-static RangeTblEntry *find_rte_by_refname(const char *refname,
-					deparse_context *context);
 static Node *find_param_referent(Param *param, deparse_context *context,
 					deparse_namespace **dpns_p, ListCell **ancestor_cell_p);
 static void get_parameter(Param *param, deparse_context *context);
@@ -676,7 +682,8 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 		oldrte->rtekind = RTE_RELATION;
 		oldrte->relid = trigrec->tgrelid;
 		oldrte->relkind = relkind;
-		oldrte->eref = makeAlias("old", NIL);
+		oldrte->alias = makeAlias("old", NIL);
+		oldrte->eref = oldrte->alias;
 		oldrte->lateral = false;
 		oldrte->inh = false;
 		oldrte->inFromCl = true;
@@ -685,7 +692,8 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 		newrte->rtekind = RTE_RELATION;
 		newrte->relid = trigrec->tgrelid;
 		newrte->relkind = relkind;
-		newrte->eref = makeAlias("new", NIL);
+		newrte->alias = makeAlias("new", NIL);
+		newrte->eref = newrte->alias;
 		newrte->lateral = false;
 		newrte->inh = false;
 		newrte->inFromCl = true;
@@ -694,6 +702,7 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 		memset(&dpns, 0, sizeof(dpns));
 		dpns.rtable = list_make2(oldrte, newrte);
 		dpns.ctes = NIL;
+		set_rtable_names(&dpns, NIL, NULL);
 
 		/* Set up context with one-deep namespace stack */
 		context.buf = &buf;
@@ -2176,7 +2185,8 @@ deparse_context_for(const char *aliasname, Oid relid)
 	rte->rtekind = RTE_RELATION;
 	rte->relid = relid;
 	rte->relkind = RELKIND_RELATION;	/* no need for exactness here */
-	rte->eref = makeAlias(aliasname, NIL);
+	rte->alias = makeAlias(aliasname, NIL);
+	rte->eref = rte->alias;
 	rte->lateral = false;
 	rte->inh = false;
 	rte->inFromCl = true;
@@ -2184,6 +2194,7 @@ deparse_context_for(const char *aliasname, Oid relid)
 	/* Build one-element rtable */
 	dpns->rtable = list_make1(rte);
 	dpns->ctes = NIL;
+	set_rtable_names(dpns, NIL, NULL);
 
 	/* Return a one-deep namespace stack */
 	return list_make1(dpns);
@@ -2209,13 +2220,14 @@ deparse_context_for(const char *aliasname, Oid relid)
  * most-closely-nested first.  This is needed to resolve PARAM_EXEC Params.
  * Note we assume that all the PlanStates share the same rtable.
  *
- * The plan's rangetable list must also be passed.  We actually prefer to use
- * the rangetable to resolve simple Vars, but the plan inputs are necessary
- * for Vars with special varnos.
+ * The plan's rangetable list must also be passed, along with the per-RTE
+ * alias names assigned by a previous call to select_rtable_names_for_explain.
+ * (We use the rangetable to resolve simple Vars, but the plan inputs are
+ * necessary for Vars with special varnos.)
  */
 List *
 deparse_context_for_planstate(Node *planstate, List *ancestors,
-							  List *rtable)
+							  List *rtable, List *rtable_names)
 {
 	deparse_namespace *dpns;
 
@@ -2223,6 +2235,7 @@ deparse_context_for_planstate(Node *planstate, List *ancestors,
 
 	/* Initialize fields that stay the same across the whole plan tree */
 	dpns->rtable = rtable;
+	dpns->rtable_names = rtable_names;
 	dpns->ctes = NIL;
 
 	/* Set our attention on the specific plan node passed in */
@@ -2231,6 +2244,142 @@ deparse_context_for_planstate(Node *planstate, List *ancestors,
 
 	/* Return a one-deep namespace stack */
 	return list_make1(dpns);
+}
+
+/*
+ * select_rtable_names_for_explain	- Select RTE aliases for EXPLAIN
+ *
+ * Determine the aliases we'll use during an EXPLAIN operation.  This is
+ * just a frontend to set_rtable_names.  We have to expose the aliases
+ * to EXPLAIN because EXPLAIN needs to know the right alias names to print.
+ */
+List *
+select_rtable_names_for_explain(List *rtable, Bitmapset *rels_used)
+{
+	deparse_namespace dpns;
+
+	memset(&dpns, 0, sizeof(dpns));
+	dpns.rtable = rtable;
+	dpns.ctes = NIL;
+	set_rtable_names(&dpns, NIL, rels_used);
+
+	return dpns.rtable_names;
+}
+
+/*
+ * set_rtable_names: select RTE aliases to be used in printing variables
+ *
+ * We fill in dpns->rtable_names with a list of names that is one-for-one with
+ * the already-filled dpns->rtable list.  Each RTE name is unique among those
+ * in the new namespace plus any ancestor namespaces listed in
+ * parent_namespaces.
+ *
+ * If rels_used isn't NULL, only RTE indexes listed in it are given aliases.
+ */
+static void
+set_rtable_names(deparse_namespace *dpns, List *parent_namespaces,
+				 Bitmapset *rels_used)
+{
+	ListCell   *lc;
+	int			rtindex = 1;
+
+	dpns->rtable_names = NIL;
+	foreach(lc, dpns->rtable)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
+		char	   *refname;
+
+		if (rels_used && !bms_is_member(rtindex, rels_used))
+		{
+			/* Ignore unreferenced RTE */
+			refname = NULL;
+		}
+		else if (rte->alias)
+		{
+			/* If RTE has a user-defined alias, prefer that */
+			refname = rte->alias->aliasname;
+		}
+		else if (rte->rtekind == RTE_RELATION)
+		{
+			/* Use the current actual name of the relation */
+			refname = get_rel_name(rte->relid);
+		}
+		else if (rte->rtekind == RTE_JOIN)
+		{
+			/* Unnamed join has no refname */
+			refname = NULL;
+		}
+		else
+		{
+			/* Otherwise use whatever the parser assigned */
+			refname = rte->eref->aliasname;
+		}
+
+		/*
+		 * If the selected name isn't unique, append digits to make it so
+		 */
+		if (refname &&
+			!refname_is_unique(refname, dpns, parent_namespaces))
+		{
+			char	   *modname = (char *) palloc(strlen(refname) + 32);
+			int			i = 0;
+
+			do
+			{
+				sprintf(modname, "%s_%d", refname, ++i);
+			} while (!refname_is_unique(modname, dpns, parent_namespaces));
+			refname = modname;
+		}
+
+		dpns->rtable_names = lappend(dpns->rtable_names, refname);
+		rtindex++;
+	}
+}
+
+/*
+ * refname_is_unique: is refname distinct from all already-chosen RTE names?
+ */
+static bool
+refname_is_unique(char *refname, deparse_namespace *dpns,
+				  List *parent_namespaces)
+{
+	ListCell   *lc;
+
+	foreach(lc, dpns->rtable_names)
+	{
+		char	   *oldname = (char *) lfirst(lc);
+
+		if (oldname && strcmp(oldname, refname) == 0)
+			return false;
+	}
+	foreach(lc, parent_namespaces)
+	{
+		deparse_namespace *olddpns = (deparse_namespace *) lfirst(lc);
+		ListCell   *lc2;
+
+		foreach(lc2, olddpns->rtable_names)
+		{
+			char	   *oldname = (char *) lfirst(lc2);
+
+			if (oldname && strcmp(oldname, refname) == 0)
+				return false;
+		}
+	}
+	return true;
+}
+
+/*
+ * get_rtable_name: convenience function to get a previously assigned RTE alias
+ *
+ * The RTE must belong to the topmost namespace level in "context".
+ */
+static char *
+get_rtable_name(int rtindex, deparse_context *context)
+{
+	deparse_namespace *dpns = (deparse_namespace *) linitial(context->namespaces);
+
+	Assert(rtindex > 0 && rtindex <= list_length(dpns->rtable_names));
+	return (char *) list_nth(dpns->rtable_names, rtindex - 1);
 }
 
 /*
@@ -2534,6 +2683,7 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 		memset(&dpns, 0, sizeof(dpns));
 		dpns.rtable = query->rtable;
 		dpns.ctes = query->cteList;
+		set_rtable_names(&dpns, NIL, NULL);
 
 		get_rule_expr(qual, &context, false);
 	}
@@ -2680,6 +2830,7 @@ get_query_def(Query *query, StringInfo buf, List *parentnamespace,
 	memset(&dpns, 0, sizeof(dpns));
 	dpns.rtable = query->rtable;
 	dpns.ctes = query->cteList;
+	set_rtable_names(&dpns, parentnamespace, NULL);
 
 	switch (query->commandType)
 	{
@@ -2899,7 +3050,6 @@ get_select_query_def(Query *query, deparse_context *context,
 		foreach(l, query->rowMarks)
 		{
 			RowMarkClause *rc = (RowMarkClause *) lfirst(l);
-			RangeTblEntry *rte = rt_fetch(rc->rti, query->rtable);
 
 			/* don't print implicit clauses */
 			if (rc->pushedDown)
@@ -2912,7 +3062,8 @@ get_select_query_def(Query *query, deparse_context *context,
 				appendContextKeyword(context, " FOR SHARE",
 									 -PRETTYINDENT_STD, PRETTYINDENT_STD, 0);
 			appendStringInfo(buf, " OF %s",
-							 quote_identifier(rte->eref->aliasname));
+							 quote_identifier(get_rtable_name(rc->rti,
+															  context)));
 			if (rc->noWait)
 				appendStringInfo(buf, " NOWAIT");
 		}
@@ -3854,7 +4005,6 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 	AttrNumber	attnum;
 	int			netlevelsup;
 	deparse_namespace *dpns;
-	char	   *schemaname;
 	char	   *refname;
 	char	   *attname;
 
@@ -3874,6 +4024,7 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 	if (var->varno >= 1 && var->varno <= list_length(dpns->rtable))
 	{
 		rte = rt_fetch(var->varno, dpns->rtable);
+		refname = (char *) list_nth(dpns->rtable_names, var->varno - 1);
 		attnum = var->varattno;
 	}
 	else if (var->varno == OUTER_VAR && dpns->outer_tlist)
@@ -3993,61 +4144,41 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 		return NULL;
 	}
 
-	/* Identify names to use */
-	schemaname = NULL;			/* default assumptions */
-	refname = rte->eref->aliasname;
-
-	/* Exceptions occur only if the RTE is alias-less */
-	if (rte->alias == NULL)
+	/*
+	 * If it's an unnamed join, look at the expansion of the alias variable.
+	 * If it's a simple reference to one of the input vars, then recursively
+	 * print the name of that var instead.	(This allows correct decompiling
+	 * of cases where there are identically named columns on both sides of the
+	 * join.)  When it's not a simple reference, we have to just print the
+	 * unqualified variable name (this can only happen with columns that were
+	 * merged by USING or NATURAL clauses).
+	 *
+	 * This wouldn't work in decompiling plan trees, because we don't store
+	 * joinaliasvars lists after planning; but a plan tree should never
+	 * contain a join alias variable.
+	 */
+	if (rte->rtekind == RTE_JOIN && rte->alias == NULL)
 	{
-		if (rte->rtekind == RTE_RELATION)
+		if (rte->joinaliasvars == NIL)
+			elog(ERROR, "cannot decompile join alias var in plan tree");
+		if (attnum > 0)
 		{
-			/*
-			 * It's possible that use of the bare refname would find another
-			 * more-closely-nested RTE, or be ambiguous, in which case we need
-			 * to specify the schemaname to avoid these errors.
-			 */
-			if (find_rte_by_refname(rte->eref->aliasname, context) != rte)
-				schemaname = get_namespace_name(get_rel_namespace(rte->relid));
-		}
-		else if (rte->rtekind == RTE_JOIN)
-		{
-			/*
-			 * If it's an unnamed join, look at the expansion of the alias
-			 * variable.  If it's a simple reference to one of the input vars
-			 * then recursively print the name of that var, instead. (This
-			 * allows correct decompiling of cases where there are identically
-			 * named columns on both sides of the join.) When it's not a
-			 * simple reference, we have to just print the unqualified
-			 * variable name (this can only happen with columns that were
-			 * merged by USING or NATURAL clauses).
-			 *
-			 * This wouldn't work in decompiling plan trees, because we don't
-			 * store joinaliasvars lists after planning; but a plan tree
-			 * should never contain a join alias variable.
-			 */
-			if (rte->joinaliasvars == NIL)
-				elog(ERROR, "cannot decompile join alias var in plan tree");
-			if (attnum > 0)
+			Var		   *aliasvar;
+
+			aliasvar = (Var *) list_nth(rte->joinaliasvars, attnum - 1);
+			if (IsA(aliasvar, Var))
 			{
-				Var		   *aliasvar;
-
-				aliasvar = (Var *) list_nth(rte->joinaliasvars, attnum - 1);
-				if (IsA(aliasvar, Var))
-				{
-					return get_variable(aliasvar, var->varlevelsup + levelsup,
-										istoplevel, context);
-				}
+				return get_variable(aliasvar, var->varlevelsup + levelsup,
+									istoplevel, context);
 			}
-
-			/*
-			 * Unnamed join has neither schemaname nor refname.  (Note: since
-			 * it's unnamed, there is no way the user could have referenced it
-			 * to create a whole-row Var for it.  So we don't have to cover
-			 * that case below.)
-			 */
-			refname = NULL;
 		}
+
+		/*
+		 * Unnamed join has no refname.  (Note: since it's unnamed, there is
+		 * no way the user could have referenced it to create a whole-row Var
+		 * for it.	So we don't have to cover that case below.)
+		 */
+		Assert(refname == NULL);
 	}
 
 	if (attnum == InvalidAttrNumber)
@@ -4057,9 +4188,6 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 
 	if (refname && (context->varprefix || attname == NULL))
 	{
-		if (schemaname)
-			appendStringInfo(buf, "%s.",
-							 quote_identifier(schemaname));
 		appendStringInfoString(buf, quote_identifier(refname));
 		appendStringInfoChar(buf, '.');
 	}
@@ -4289,6 +4417,7 @@ get_name_for_var_field(Var *var, int fieldno,
 						memset(&mydpns, 0, sizeof(mydpns));
 						mydpns.rtable = rte->subquery->rtable;
 						mydpns.ctes = rte->subquery->cteList;
+						set_rtable_names(&mydpns, context->namespaces, NULL);
 
 						context->namespaces = lcons(&mydpns,
 													context->namespaces);
@@ -4406,6 +4535,7 @@ get_name_for_var_field(Var *var, int fieldno,
 						memset(&mydpns, 0, sizeof(mydpns));
 						mydpns.rtable = ctequery->rtable;
 						mydpns.ctes = ctequery->cteList;
+						set_rtable_names(&mydpns, context->namespaces, NULL);
 
 						new_nslist = list_copy_tail(context->namespaces,
 													ctelevelsup);
@@ -4465,47 +4595,6 @@ get_name_for_var_field(Var *var, int fieldno,
 	/* Got the tupdesc, so we can extract the field name */
 	Assert(fieldno >= 1 && fieldno <= tupleDesc->natts);
 	return NameStr(tupleDesc->attrs[fieldno - 1]->attname);
-}
-
-
-/*
- * find_rte_by_refname		- look up an RTE by refname in a deparse context
- *
- * Returns NULL if there is no matching RTE or the refname is ambiguous.
- *
- * NOTE: this code is not really correct since it does not take account of
- * the fact that not all the RTEs in a rangetable may be visible from the
- * point where a Var reference appears.  For the purposes we need, however,
- * the only consequence of a false match is that we might stick a schema
- * qualifier on a Var that doesn't really need it.  So it seems close
- * enough.
- */
-static RangeTblEntry *
-find_rte_by_refname(const char *refname, deparse_context *context)
-{
-	RangeTblEntry *result = NULL;
-	ListCell   *nslist;
-
-	foreach(nslist, context->namespaces)
-	{
-		deparse_namespace *dpns = (deparse_namespace *) lfirst(nslist);
-		ListCell   *rtlist;
-
-		foreach(rtlist, dpns->rtable)
-		{
-			RangeTblEntry *rte = (RangeTblEntry *) lfirst(rtlist);
-
-			if (strcmp(rte->eref->aliasname, refname) == 0)
-			{
-				if (result)
-					return NULL;	/* it's ambiguous */
-				result = rte;
-			}
-		}
-		if (result)
-			break;
-	}
-	return result;
 }
 
 /*
@@ -6649,6 +6738,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 	{
 		int			varno = ((RangeTblRef *) jtnode)->rtindex;
 		RangeTblEntry *rte = rt_fetch(varno, query->rtable);
+		char	   *refname = get_rtable_name(varno, context);
 		bool		gavealias = false;
 
 		if (rte->lateral)
@@ -6688,32 +6778,31 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 
 		if (rte->alias != NULL)
 		{
-			appendStringInfo(buf, " %s",
-							 quote_identifier(rte->alias->aliasname));
+			/* Always print alias if user provided one */
+			appendStringInfo(buf, " %s", quote_identifier(refname));
 			gavealias = true;
 		}
-		else if (rte->rtekind == RTE_RELATION &&
-			strcmp(rte->eref->aliasname, get_relation_name(rte->relid)) != 0)
+		else if (rte->rtekind == RTE_RELATION)
 		{
 			/*
-			 * Apparently the rel has been renamed since the rule was made.
-			 * Emit a fake alias clause so that variable references will still
-			 * work.  This is not a 100% solution but should work in most
-			 * reasonable situations.
+			 * No need to print alias if it's same as relation name (this
+			 * would normally be the case, but not if set_rtable_names had to
+			 * resolve a conflict).
 			 */
-			appendStringInfo(buf, " %s",
-							 quote_identifier(rte->eref->aliasname));
-			gavealias = true;
+			if (strcmp(refname, get_relation_name(rte->relid)) != 0)
+			{
+				appendStringInfo(buf, " %s", quote_identifier(refname));
+				gavealias = true;
+			}
 		}
 		else if (rte->rtekind == RTE_FUNCTION)
 		{
 			/*
-			 * For a function RTE, always give an alias. This covers possible
+			 * For a function RTE, always print alias.  This covers possible
 			 * renaming of the function and/or instability of the
 			 * FigureColname rules for things that aren't simple functions.
 			 */
-			appendStringInfo(buf, " %s",
-							 quote_identifier(rte->eref->aliasname));
+			appendStringInfo(buf, " %s", quote_identifier(refname));
 			gavealias = true;
 		}
 

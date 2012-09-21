@@ -51,6 +51,10 @@ static void ExplainOneQuery(Query *query, IntoClause *into, ExplainState *es,
 static void report_triggers(ResultRelInfo *rInfo, bool show_relname,
 				ExplainState *es);
 static double elapsed_time(instr_time *starttime);
+static void ExplainPreScanNode(PlanState *planstate, Bitmapset **rels_used);
+static void ExplainPreScanMemberNodes(List *plans, PlanState **planstates,
+						  Bitmapset **rels_used);
+static void ExplainPreScanSubPlans(List *plans, Bitmapset **rels_used);
 static void ExplainNode(PlanState *planstate, List *ancestors,
 			const char *relationship, const char *plan_name,
 			ExplainState *es);
@@ -539,9 +543,13 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 void
 ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc)
 {
+	Bitmapset  *rels_used = NULL;
+
 	Assert(queryDesc->plannedstmt != NULL);
 	es->pstmt = queryDesc->plannedstmt;
 	es->rtable = queryDesc->plannedstmt->rtable;
+	ExplainPreScanNode(queryDesc->planstate, &rels_used);
+	es->rtable_names = select_rtable_names_for_explain(es->rtable, rels_used);
 	ExplainNode(queryDesc->planstate, NIL, NULL, NULL, es);
 }
 
@@ -638,6 +646,132 @@ elapsed_time(instr_time *starttime)
 	INSTR_TIME_SET_CURRENT(endtime);
 	INSTR_TIME_SUBTRACT(endtime, *starttime);
 	return INSTR_TIME_GET_DOUBLE(endtime);
+}
+
+/*
+ * ExplainPreScanNode -
+ *	  Prescan the planstate tree to identify which RTEs are referenced
+ *
+ * Adds the relid of each referenced RTE to *rels_used.  The result controls
+ * which RTEs are assigned aliases by select_rtable_names_for_explain.	This
+ * ensures that we don't confusingly assign un-suffixed aliases to RTEs that
+ * never appear in the EXPLAIN output (such as inheritance parents).
+ */
+static void
+ExplainPreScanNode(PlanState *planstate, Bitmapset **rels_used)
+{
+	Plan	   *plan = planstate->plan;
+
+	switch (nodeTag(plan))
+	{
+		case T_SeqScan:
+		case T_IndexScan:
+		case T_IndexOnlyScan:
+		case T_BitmapHeapScan:
+		case T_TidScan:
+		case T_SubqueryScan:
+		case T_FunctionScan:
+		case T_ValuesScan:
+		case T_CteScan:
+		case T_WorkTableScan:
+		case T_ForeignScan:
+			*rels_used = bms_add_member(*rels_used,
+										((Scan *) plan)->scanrelid);
+			break;
+		case T_ModifyTable:
+			/* cf ExplainModifyTarget */
+			*rels_used = bms_add_member(*rels_used,
+					  linitial_int(((ModifyTable *) plan)->resultRelations));
+			break;
+		default:
+			break;
+	}
+
+	/* initPlan-s */
+	if (planstate->initPlan)
+		ExplainPreScanSubPlans(planstate->initPlan, rels_used);
+
+	/* lefttree */
+	if (outerPlanState(planstate))
+		ExplainPreScanNode(outerPlanState(planstate), rels_used);
+
+	/* righttree */
+	if (innerPlanState(planstate))
+		ExplainPreScanNode(innerPlanState(planstate), rels_used);
+
+	/* special child plans */
+	switch (nodeTag(plan))
+	{
+		case T_ModifyTable:
+			ExplainPreScanMemberNodes(((ModifyTable *) plan)->plans,
+								  ((ModifyTableState *) planstate)->mt_plans,
+									  rels_used);
+			break;
+		case T_Append:
+			ExplainPreScanMemberNodes(((Append *) plan)->appendplans,
+									((AppendState *) planstate)->appendplans,
+									  rels_used);
+			break;
+		case T_MergeAppend:
+			ExplainPreScanMemberNodes(((MergeAppend *) plan)->mergeplans,
+								((MergeAppendState *) planstate)->mergeplans,
+									  rels_used);
+			break;
+		case T_BitmapAnd:
+			ExplainPreScanMemberNodes(((BitmapAnd *) plan)->bitmapplans,
+								 ((BitmapAndState *) planstate)->bitmapplans,
+									  rels_used);
+			break;
+		case T_BitmapOr:
+			ExplainPreScanMemberNodes(((BitmapOr *) plan)->bitmapplans,
+								  ((BitmapOrState *) planstate)->bitmapplans,
+									  rels_used);
+			break;
+		case T_SubqueryScan:
+			ExplainPreScanNode(((SubqueryScanState *) planstate)->subplan,
+							   rels_used);
+			break;
+		default:
+			break;
+	}
+
+	/* subPlan-s */
+	if (planstate->subPlan)
+		ExplainPreScanSubPlans(planstate->subPlan, rels_used);
+}
+
+/*
+ * Prescan the constituent plans of a ModifyTable, Append, MergeAppend,
+ * BitmapAnd, or BitmapOr node.
+ *
+ * Note: we don't actually need to examine the Plan list members, but
+ * we need the list in order to determine the length of the PlanState array.
+ */
+static void
+ExplainPreScanMemberNodes(List *plans, PlanState **planstates,
+						  Bitmapset **rels_used)
+{
+	int			nplans = list_length(plans);
+	int			j;
+
+	for (j = 0; j < nplans; j++)
+		ExplainPreScanNode(planstates[j], rels_used);
+}
+
+/*
+ * Prescan a list of SubPlans (or initPlans, which also use SubPlan nodes).
+ */
+static void
+ExplainPreScanSubPlans(List *plans, Bitmapset **rels_used)
+{
+	ListCell   *lst;
+
+	foreach(lst, plans)
+	{
+		SubPlanState *sps = (SubPlanState *) lfirst(lst);
+
+		ExplainPreScanNode(sps->planstate, rels_used);
+	}
 }
 
 /*
@@ -1440,7 +1574,8 @@ show_plan_tlist(PlanState *planstate, List *ancestors, ExplainState *es)
 	/* Set up deparsing context */
 	context = deparse_context_for_planstate((Node *) planstate,
 											ancestors,
-											es->rtable);
+											es->rtable,
+											es->rtable_names);
 	useprefix = list_length(es->rtable) > 1;
 
 	/* Deparse each result column (we now include resjunk ones) */
@@ -1471,7 +1606,8 @@ show_expression(Node *node, const char *qlabel,
 	/* Set up deparsing context */
 	context = deparse_context_for_planstate((Node *) planstate,
 											ancestors,
-											es->rtable);
+											es->rtable,
+											es->rtable_names);
 
 	/* Deparse the expression */
 	exprstr = deparse_expression(node, context, useprefix, false);
@@ -1573,7 +1709,8 @@ show_sort_keys_common(PlanState *planstate, int nkeys, AttrNumber *keycols,
 	/* Set up deparsing context */
 	context = deparse_context_for_planstate((Node *) planstate,
 											ancestors,
-											es->rtable);
+											es->rtable,
+											es->rtable_names);
 	useprefix = (list_length(es->rtable) > 1 || es->verbose);
 
 	for (keyno = 0; keyno < nkeys; keyno++)
@@ -1813,8 +1950,10 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 	char	   *namespace = NULL;
 	const char *objecttag = NULL;
 	RangeTblEntry *rte;
+	char	   *refname;
 
 	rte = rt_fetch(rti, es->rtable);
+	refname = (char *) list_nth(es->rtable_names, rti - 1);
 
 	switch (nodeTag(plan))
 	{
@@ -1887,10 +2026,9 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 							 quote_identifier(objectname));
 		else if (objectname != NULL)
 			appendStringInfo(es->str, " %s", quote_identifier(objectname));
-		if (objectname == NULL ||
-			strcmp(rte->eref->aliasname, objectname) != 0)
-			appendStringInfo(es->str, " %s",
-							 quote_identifier(rte->eref->aliasname));
+		if (refname != NULL &&
+			(objectname == NULL || strcmp(refname, objectname) != 0))
+			appendStringInfo(es->str, " %s", quote_identifier(refname));
 	}
 	else
 	{
@@ -1898,7 +2036,8 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 			ExplainPropertyText(objecttag, objectname, es);
 		if (namespace != NULL)
 			ExplainPropertyText("Schema", namespace, es);
-		ExplainPropertyText("Alias", rte->eref->aliasname, es);
+		if (refname != NULL)
+			ExplainPropertyText("Alias", refname, es);
 	}
 }
 
