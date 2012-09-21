@@ -183,9 +183,7 @@ PerformAuthentication(Port *port)
 
 	/*
 	 * In EXEC_BACKEND case, we didn't inherit the contents of pg_hba.conf
-	 * etcetera from the postmaster, and have to load them ourselves.  Note we
-	 * are loading them into the startup transaction's memory context, not
-	 * PostmasterContext, but that shouldn't matter.
+	 * etcetera from the postmaster, and have to load them ourselves.
 	 *
 	 * FIXME: [fork/exec] Ugh.	Is there a way around this overhead?
 	 */
