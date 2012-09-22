@@ -2306,7 +2306,7 @@ typedef struct AlterEnumStmt
 	char	   *newVal;			/* new enum value's name */
 	char	   *newValNeighbor; /* neighboring enum value, if specified */
 	bool		newValIsAfter;	/* place new enum value after neighbor? */
-	bool        skipIfExists;   /* ignore statement if label already exists */
+	bool		skipIfExists;	/* no error if label already exists */
 } AlterEnumStmt;
 
 /* ----------------------

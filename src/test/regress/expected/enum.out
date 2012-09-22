@@ -97,11 +97,11 @@ ALTER TYPE planets ADD VALUE 'pluto' AFTER 'zeus';
 ERROR:  "zeus" is not an existing enum label
 -- if not exists tests
 --  existing value gives error
--- We can't do this test because the error contains the
--- offending Oid value, which is unpredictable.
--- ALTER TYPE planets ADD VALUE 'mercury';
+ALTER TYPE planets ADD VALUE 'mercury';
+ERROR:  enum label "mercury" already exists
 -- unless IF NOT EXISTS is specified
 ALTER TYPE planets ADD VALUE IF NOT EXISTS 'mercury';
+NOTICE:  enum label "mercury" already exists, skipping
 -- should be neptune, not mercury
 SELECT enum_last(NULL::planets);
  enum_last 

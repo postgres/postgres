@@ -212,19 +212,30 @@ AddEnumLabel(Oid enumTypeOid,
 	 */
 	LockDatabaseObject(TypeRelationId, enumTypeOid, 0, ExclusiveLock);
 
-	/* Do the "IF NOT EXISTS" test if specified */
-	if (skipIfExists)
+	/*
+	 * Check if label is already in use.  The unique index on pg_enum would
+	 * catch this anyway, but we prefer a friendlier error message, and
+	 * besides we need a check to support IF NOT EXISTS.
+	 */
+	enum_tup = SearchSysCache2(ENUMTYPOIDNAME,
+							   ObjectIdGetDatum(enumTypeOid),
+							   CStringGetDatum(newVal));
+	if (HeapTupleIsValid(enum_tup))
 	{
-		HeapTuple tup;
-
-		tup = SearchSysCache2(ENUMTYPOIDNAME,
-							  ObjectIdGetDatum(enumTypeOid),
-							  CStringGetDatum(newVal));
-		if (HeapTupleIsValid(tup))
+		ReleaseSysCache(enum_tup);
+		if (skipIfExists)
 		{
-			ReleaseSysCache(tup);
+			ereport(NOTICE,
+					(errcode(ERRCODE_DUPLICATE_OBJECT),
+					 errmsg("enum label \"%s\" already exists, skipping",
+							newVal)));
 			return;
 		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_OBJECT),
+					 errmsg("enum label \"%s\" already exists",
+							newVal)));
 	}
 
 	pg_enum = heap_open(EnumRelationId, RowExclusiveLock);

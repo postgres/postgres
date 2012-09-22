@@ -109,15 +109,16 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> ADD VALUE [ IF NOT 
     <term><literal>ADD VALUE [ IF NOT EXISTS ] [ BEFORE | AFTER ]</literal></term>
     <listitem>
      <para>
-      This form adds a new value to an enum type. If the new value's place in
-      the enum's ordering is not specified using <literal>BEFORE</literal> or
-      <literal>AFTER</literal>, then the new item is placed at the end of the
-      list of values.
+      This form adds a new value to an enum type.  The new value's place in
+      the enum's ordering can be specified as being <literal>BEFORE</literal>
+      or <literal>AFTER</literal> one of the existing values.  Otherwise,
+      the new item is added at the end of the list of values.
      </para>
      <para>
-      If <literal>IF NOT EXISTS</literal> is used, it is not an error if the
-      type already contains the new value, and no action  is taken. Otherwise,
-      an error will occur if the new value is already present.
+      If <literal>IF NOT EXISTS</literal> is specified, it is not an error if
+      the type already contains the new value: a notice is issued but no other
+      action is taken. Otherwise, an error will occur if the new value is
+      already present.
      </para>
     </listitem>
    </varlistentry>
