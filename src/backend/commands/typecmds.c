@@ -1188,7 +1188,8 @@ AlterEnum(AlterEnumStmt *stmt)
 
 	/* Add the new label */
 	AddEnumLabel(enum_type_oid, stmt->newVal,
-				 stmt->newValNeighbor, stmt->newValIsAfter);
+				 stmt->newValNeighbor, stmt->newValIsAfter, 
+				 stmt->skipIfExists);
 
 	ReleaseSysCache(tup);
 }

@@ -95,6 +95,28 @@ ERROR:  invalid enum label "plutoplutoplutoplutoplutoplutoplutoplutoplutoplutopl
 DETAIL:  Labels must be 63 characters or less.
 ALTER TYPE planets ADD VALUE 'pluto' AFTER 'zeus';
 ERROR:  "zeus" is not an existing enum label
+-- if not exists tests
+--  existing value gives error
+-- We can't do this test because the error contains the
+-- offending Oid value, which is unpredictable.
+-- ALTER TYPE planets ADD VALUE 'mercury';
+-- unless IF NOT EXISTS is specified
+ALTER TYPE planets ADD VALUE IF NOT EXISTS 'mercury';
+-- should be neptune, not mercury
+SELECT enum_last(NULL::planets);
+ enum_last 
+-----------
+ neptune
+(1 row)
+
+ALTER TYPE planets ADD VALUE IF NOT EXISTS 'pluto';
+-- should be pluto, i.e. the new value
+SELECT enum_last(NULL::planets);
+ enum_last 
+-----------
+ pluto
+(1 row)
+
 --
 -- Test inserting so many values that we have to renumber
 --

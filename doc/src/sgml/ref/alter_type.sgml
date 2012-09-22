@@ -28,7 +28,7 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> OWNER TO <replaceab
 ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME ATTRIBUTE <replaceable class="PARAMETER">attribute_name</replaceable> TO <replaceable class="PARAMETER">new_attribute_name</replaceable>
 ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable class="PARAMETER">new_name</replaceable> [ CASCADE | RESTRICT ]
 ALTER TYPE <replaceable class="PARAMETER">name</replaceable> SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable>
-ALTER TYPE <replaceable class="PARAMETER">name</replaceable> ADD VALUE <replaceable class="PARAMETER">new_enum_value</replaceable> [ { BEFORE | AFTER } <replaceable class="PARAMETER">existing_enum_value</replaceable> ]
+ALTER TYPE <replaceable class="PARAMETER">name</replaceable> ADD VALUE [ IF NOT EXISTS ] <replaceable class="PARAMETER">new_enum_value</replaceable> [ { BEFORE | AFTER } <replaceable class="PARAMETER">existing_enum_value</replaceable> ]
 
 <phrase>where <replaceable class="PARAMETER">action</replaceable> is one of:</phrase>
 
@@ -106,13 +106,18 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> ADD VALUE <replacea
    </varlistentry>
 
    <varlistentry>
-    <term><literal>ADD VALUE [ BEFORE | AFTER ]</literal></term>
+    <term><literal>ADD VALUE [ IF NOT EXISTS ] [ BEFORE | AFTER ]</literal></term>
     <listitem>
      <para>
       This form adds a new value to an enum type. If the new value's place in
       the enum's ordering is not specified using <literal>BEFORE</literal> or
       <literal>AFTER</literal>, then the new item is placed at the end of the
       list of values.
+     </para>
+     <para>
+      If <literal>IF NOT EXISTS</literal is used, it is not an error if the
+      type already contains the new value, and no action  is taken. Otherwise,
+      an error will occur if the new value is already present.
      </para>
     </listitem>
    </varlistentry>

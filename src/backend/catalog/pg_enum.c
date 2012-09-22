@@ -179,7 +179,8 @@ void
 AddEnumLabel(Oid enumTypeOid,
 			 const char *newVal,
 			 const char *neighbor,
-			 bool newValIsAfter)
+			 bool newValIsAfter,
+	         bool skipIfExists)
 {
 	Relation	pg_enum;
 	Oid			newOid;
@@ -210,6 +211,21 @@ AddEnumLabel(Oid enumTypeOid,
 	 * RenumberEnumType.
 	 */
 	LockDatabaseObject(TypeRelationId, enumTypeOid, 0, ExclusiveLock);
+
+	/* Do the "IF NOT EXISTS" test if specified */
+	if (skipIfExists)
+	{
+		HeapTuple tup;
+
+		tup = SearchSysCache2(ENUMTYPOIDNAME,
+							  ObjectIdGetDatum(enumTypeOid),
+							  CStringGetDatum(newVal));
+		if (HeapTupleIsValid(tup))
+		{
+			ReleaseSysCache(tup);
+			return;
+		}
+	}
 
 	pg_enum = heap_open(EnumRelationId, RowExclusiveLock);
 

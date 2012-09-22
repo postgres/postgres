@@ -1439,6 +1439,7 @@ _equalAlterEnumStmt(const AlterEnumStmt *a, const AlterEnumStmt *b)
 	COMPARE_STRING_FIELD(newVal);
 	COMPARE_STRING_FIELD(newValNeighbor);
 	COMPARE_SCALAR_FIELD(newValIsAfter);
+	COMPARE_SCALAR_FIELD(skipIfExists);
 
 	return true;
 }

@@ -470,7 +470,7 @@ static void processCASbits(int cas_bits, int location, const char *constrType,
 %type <windef>	window_definition over_clause window_specification
 				opt_frame_clause frame_extent frame_bound
 %type <str>		opt_existing_window_name
-
+%type <boolean> opt_if_not_exists
 
 /*
  * Non-keyword token types.  These are hard-wired into the "flex" lexer.
@@ -4618,34 +4618,41 @@ enum_val_list:	Sconst
  *****************************************************************************/
 
 AlterEnumStmt:
-		ALTER TYPE_P any_name ADD_P VALUE_P Sconst
+		ALTER TYPE_P any_name ADD_P VALUE_P opt_if_not_exists Sconst
 			{
 				AlterEnumStmt *n = makeNode(AlterEnumStmt);
 				n->typeName = $3;
-				n->newVal = $6;
+				n->newVal = $7;
 				n->newValNeighbor = NULL;
 				n->newValIsAfter = true;
+				n->skipIfExists = $6;
 				$$ = (Node *) n;
 			}
-		 | ALTER TYPE_P any_name ADD_P VALUE_P Sconst BEFORE Sconst
+		 | ALTER TYPE_P any_name ADD_P VALUE_P opt_if_not_exists Sconst BEFORE Sconst
 			{
 				AlterEnumStmt *n = makeNode(AlterEnumStmt);
 				n->typeName = $3;
-				n->newVal = $6;
-				n->newValNeighbor = $8;
+				n->newVal = $7;
+				n->newValNeighbor = $9;
 				n->newValIsAfter = false;
+				n->skipIfExists = $6;
 				$$ = (Node *) n;
 			}
-		 | ALTER TYPE_P any_name ADD_P VALUE_P Sconst AFTER Sconst
+		 | ALTER TYPE_P any_name ADD_P VALUE_P opt_if_not_exists Sconst AFTER Sconst
 			{
 				AlterEnumStmt *n = makeNode(AlterEnumStmt);
 				n->typeName = $3;
-				n->newVal = $6;
-				n->newValNeighbor = $8;
+				n->newVal = $7;
+				n->newValNeighbor = $9;
 				n->newValIsAfter = true;
+				n->skipIfExists = $6;
 				$$ = (Node *) n;
 			}
 		 ;
+
+opt_if_not_exists: IF_P NOT EXISTS              { $$ = true; }
+         | /* empty */                          { $$ = false; }
+         ;
 
 
 /*****************************************************************************

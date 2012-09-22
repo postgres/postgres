@@ -54,6 +54,26 @@ ALTER TYPE planets ADD VALUE
 
 ALTER TYPE planets ADD VALUE 'pluto' AFTER 'zeus';
 
+-- if not exists tests
+
+--  existing value gives error
+
+-- We can't do this test because the error contains the
+-- offending Oid value, which is unpredictable.
+-- ALTER TYPE planets ADD VALUE 'mercury';
+
+-- unless IF NOT EXISTS is specified
+ALTER TYPE planets ADD VALUE IF NOT EXISTS 'mercury';
+
+-- should be neptune, not mercury
+SELECT enum_last(NULL::planets);
+
+ALTER TYPE planets ADD VALUE IF NOT EXISTS 'pluto';
+
+-- should be pluto, i.e. the new value
+SELECT enum_last(NULL::planets);
+
+
 --
 -- Test inserting so many values that we have to renumber
 --
