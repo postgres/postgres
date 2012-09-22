@@ -115,7 +115,7 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> ADD VALUE [ IF NOT 
       list of values.
      </para>
      <para>
-      If <literal>IF NOT EXISTS</literal is used, it is not an error if the
+      If <literal>IF NOT EXISTS</literal> is used, it is not an error if the
       type already contains the new value, and no action  is taken. Otherwise,
       an error will occur if the new value is already present.
      </para>
