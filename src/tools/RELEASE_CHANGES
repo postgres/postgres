@@ -164,7 +164,7 @@ Then doing it like this:
 
 	void print_stuff(int arg1, int arg2)
 	{
-	    print_stuff(arg1, arg2, 0);
+	    print_stuff2(arg1, arg2, 0);
 	}
 
 would maintain binary compatibility. Obviously this would add a fair
