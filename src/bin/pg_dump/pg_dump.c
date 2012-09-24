@@ -13904,7 +13904,7 @@ dumpRule(Archive *fout, RuleInfo *rinfo)
 	/*
 	 * Apply view's reloptions when its ON SELECT rule is separate.
 	 */
-	if (rinfo->reloptions)
+	if (rinfo->reloptions && strlen(rinfo->reloptions) > 0)
 	{
 		appendPQExpBuffer(cmd, "ALTER VIEW %s SET (%s);\n",
 						  fmtId(tbinfo->dobj.name),
