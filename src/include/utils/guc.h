@@ -116,6 +116,11 @@ extern bool ParseConfigFile(const char *config_file, const char *calling_file,
 extern bool ParseConfigFp(FILE *fp, const char *config_file,
 			  int depth, int elevel,
 			  ConfigVariable **head_p, ConfigVariable **tail_p);
+extern bool ParseConfigDirectory(const char *includedir,
+					 const char *calling_file,
+					 int depth, int elevel,
+					 ConfigVariable **head_p,
+					 ConfigVariable **tail_p);
 extern void FreeConfigVariables(ConfigVariable *list);
 
 /*

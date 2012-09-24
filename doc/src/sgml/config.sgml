@@ -81,38 +81,6 @@ shared_buffers = 128MB
 
     <para>
      <indexterm>
-      <primary><literal>include</></primary>
-      <secondary>in configuration file</secondary>
-     </indexterm>
-     In addition to parameter settings, the <filename>postgresql.conf</>
-     file can contain <firstterm>include directives</>, which specify
-     another file to read and process as if it were inserted into the
-     configuration file at this point.  This feature allows a configuration
-     file to be divided into physically separate parts.
-     Include directives simply look like:
-<programlisting>
-include 'filename'
-</programlisting>
-     If the file name is not an absolute path, it is taken as relative to
-     the directory containing the referencing configuration file.
-     Inclusions can be nested.
-    </para>
-
-    <para>
-     <indexterm>
-      <primary><literal>include_if_exists</></primary>
-      <secondary>in configuration file</secondary>
-     </indexterm>
-     There is also an <literal>include_if_exists</> directive, which acts
-     the same as the <literal>include</> directive, except for the behavior
-     when the referenced file does not exist or cannot be read.  A regular
-     <literal>include</> will consider this an error condition, but
-     <literal>include_if_exists</> merely logs a message and continues
-     processing the referencing configuration file.
-    </para>
-
-    <para>
-     <indexterm>
       <primary>SIGHUP</primary>
      </indexterm>
      The configuration file is reread whenever the main server process
@@ -213,7 +181,123 @@ SET ENABLE_SEQSCAN TO OFF;
     </para>
 
    </sect2>
-  </sect1>
+
+   <sect2 id="config-includes">
+    <title>Configuration File Includes</title>
+
+     <para>
+      <indexterm>
+       <primary><literal>include</></primary>
+       <secondary>in configuration file</secondary>
+       </indexterm>
+         In addition to parameter settings, the <filename>postgresql.conf</>
+         file can contain <firstterm>include directives</>, which specify
+         another file to read and process as if it were inserted into the
+         configuration file at this point.  This feature allows a configuration
+         file to be divided into physically separate parts.
+         Include directives simply look like:
+<programlisting>
+include 'filename'
+</programlisting>
+         If the file name is not an absolute path, it is taken as relative to
+         the directory containing the referencing configuration file.
+         Inclusions can be nested.
+     </para>
+
+     <para>
+      <indexterm>
+       <primary><literal>include_if_exists</></primary>
+       <secondary>in configuration file</secondary>
+      </indexterm>
+         There is also an <literal>include_if_exists</> directive, which acts
+         the same as the <literal>include</> directive, except for the behavior
+         when the referenced file does not exist or cannot be read.  A regular
+         <literal>include</> will consider this an error condition, but
+         <literal>include_if_exists</> merely logs a message and continues
+         processing the referencing configuration file.
+     </para>
+
+     <para>
+      <indexterm>
+       <primary><literal>include_dir</></primary>
+       <secondary>in configuration file</secondary>
+      </indexterm>
+        The <filename>postgresql.conf</> file can also contain
+        <firstterm>include_dir directives</>, which specify an entire directory
+        of configuration files to include.  It is used similarly:
+ <programlisting>
+ include_dir 'directory'
+ </programlisting>
+        Non-absolute directory names follow the same rules as single file include
+        directives:  they are relative to the directory containing the referencing
+        configuration file.  Within that directory, only non-directory files whose
+        names end with the suffix <literal>.conf</literal> will be included.  File
+        names that start with the <literal>.</literal> character are also excluded,
+        to prevent mistakes as they are hidden on some platforms.  Multiple files
+        within an include directory are processed in filename order. The filenames
+        are ordered by C locale rules, ie. numbers before letters, and uppercase
+        letters before lowercase ones.
+     </para>
+
+     <para>
+       Include files or directories can be used to logically separate portions
+       of the database configuration, rather than having a single large
+       <filename>postgresql.conf</> file.  Consider a company that has two
+       database servers, each with a different amount of memory.  There are likely
+       elements of the configuration both will share, for things such as logging.
+       But memory-related parameters on the server will vary between the two.  And
+       there might be server specific customizations, too.  One way to manage this
+       situation is to break the custom configuration changes for your site into
+       three files.  You could add this to the end of your
+       <filename>postgresql.conf</> file to include them:
+ <programlisting>
+ include 'shared.conf'
+ include 'memory.conf'
+ include 'server.conf'
+ </programlisting>
+       All systems would have the same <filename>shared.conf</>.  Each server
+       with a particular amount of memory could share the same
+       <filename>memory.conf</>; you might have one for all servers with 8GB of RAM,
+       another for those having 16GB.  And finally <filename>server.conf</> could
+       have truly server-specific configuration information in it.
+     </para>
+
+     <para>
+       Another possibility is to create a configuration file directory and
+       put this information into files there. For example, a <filename>conf.d</>
+       directory could be referenced at the end of<filename>postgresql.conf</>:
+ <screen>
+ include_dir 'conf.d'
+ </screen>
+       Then you could name the files in the <filename>conf.d</> directory like this:
+ <screen>
+ 00shared.conf
+ 01memory.conf
+ 02server.conf
+ </screen>
+       This shows a clear order in which these files will be loaded.  This is
+       important because only the last setting encountered when the server is
+       reading its configuration will be used.  Something set in
+       <filename>conf.d/02server.conf</> in this example would override a value
+       set in <filename>conf.d/01memory.conf</>.
+     </para>
+
+     <para>
+       You might instead use this configuration directory approach while naming
+       these files more descriptively:
+ <screen>
+ 00shared.conf
+ 01memory-8GB.conf
+ 02server-foo.conf
+ </screen>
+       This sort of arrangement gives a unique name for each configuration file
+       variation.  This can help eliminate ambiguity when several servers have
+       their configurations all stored in one place, such as in a version
+       control repository.  (Storing database configuration files under version
+       control is another good practice to consider).
+     </para>
+    </sect2>
+   </sect1>
 
    <sect1 id="runtime-config-file-locations">
     <title>File Locations</title>
