@@ -286,10 +286,10 @@ pg_ctl start -l logfile
    <filename>rc.d</> directories. Whatever you do, the server must be
    run by the <productname>PostgreSQL</productname> user account
    <emphasis>and not by root</emphasis> or any other user. Therefore you
-   probably should form your commands using <literal>su -c '...'
-   postgres</literal>.  For example:
+   probably should form your commands using
+   <literal>su postgres -c '...'</literal>.  For example:
 <programlisting>
-su -c 'pg_ctl start -D /usr/local/pgsql/data -l serverlog' postgres
+su postgres -c 'pg_ctl start -D /usr/local/pgsql/data -l serverlog'
 </programlisting>
   </para>
 
@@ -315,7 +315,7 @@ su -c 'pg_ctl start -D /usr/local/pgsql/data -l serverlog' postgres
       <indexterm><primary>OpenBSD</><secondary>start script</secondary></>
 <programlisting>
 if [ -x /usr/local/pgsql/bin/pg_ctl -a -x /usr/local/pgsql/bin/postgres ]; then
-    su - -c '/usr/local/pgsql/bin/pg_ctl start -l /var/postgresql/log -s' postgres
+    su -l postgres -c '/usr/local/pgsql/bin/pg_ctl start -s -l /var/postgresql/log -D /usr/local/pgsql/data'
     echo -n ' postgresql'
 fi
 </programlisting>
@@ -738,7 +738,7 @@ psql: could not connect to server: No such file or directory
       <indexterm><primary>FreeBSD</><secondary>IPC configuration</></>
       <listitem>
        <para>
-        The default settings can be changed using 
+        The default settings can be changed using
         the <command>sysctl</command> or
         <command>loader</command> interfaces.  The following
         parameters can be set using <command>sysctl</command>:
