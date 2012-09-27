@@ -125,6 +125,7 @@ test: without_oid
 test: conversion
 test: truncate
 test: alter_table
+test: alter_generic
 test: sequence
 test: polymorphism
 test: rowtypes
