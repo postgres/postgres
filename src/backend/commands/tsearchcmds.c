@@ -346,52 +346,6 @@ RenameTSParser(List *oldname, const char *newname)
 	heap_freetuple(tup);
 }
 
-/*
- * ALTER TEXT SEARCH PARSER any_name SET SCHEMA name
- */
-void
-AlterTSParserNamespace(List *name, const char *newschema)
-{
-	Oid			prsId,
-				nspOid;
-	Relation	rel;
-
-	rel = heap_open(TSParserRelationId, RowExclusiveLock);
-
-	prsId = get_ts_parser_oid(name, false);
-
-	/* get schema OID */
-	nspOid = LookupCreationNamespace(newschema);
-
-	AlterObjectNamespace(rel, TSPARSEROID, TSPARSERNAMENSP,
-						 prsId, nspOid,
-						 Anum_pg_ts_parser_prsname,
-						 Anum_pg_ts_parser_prsnamespace,
-						 -1, -1);
-
-	heap_close(rel, RowExclusiveLock);
-}
-
-Oid
-AlterTSParserNamespace_oid(Oid prsId, Oid newNspOid)
-{
-	Oid			oldNspOid;
-	Relation	rel;
-
-	rel = heap_open(TSParserRelationId, RowExclusiveLock);
-
-	oldNspOid =
-		AlterObjectNamespace(rel, TSPARSEROID, TSPARSERNAMENSP,
-							 prsId, newNspOid,
-							 Anum_pg_ts_parser_prsname,
-							 Anum_pg_ts_parser_prsnamespace,
-							 -1, -1);
-
-	heap_close(rel, RowExclusiveLock);
-
-	return oldNspOid;
-}
-
 /* ---------------------- TS Dictionary commands -----------------------*/
 
 /*
@@ -623,54 +577,6 @@ RenameTSDictionary(List *oldname, const char *newname)
 
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);
-}
-
-/*
- * ALTER TEXT SEARCH DICTIONARY any_name SET SCHEMA name
- */
-void
-AlterTSDictionaryNamespace(List *name, const char *newschema)
-{
-	Oid			dictId,
-				nspOid;
-	Relation	rel;
-
-	rel = heap_open(TSDictionaryRelationId, RowExclusiveLock);
-
-	dictId = get_ts_dict_oid(name, false);
-
-	/* get schema OID */
-	nspOid = LookupCreationNamespace(newschema);
-
-	AlterObjectNamespace(rel, TSDICTOID, TSDICTNAMENSP,
-						 dictId, nspOid,
-						 Anum_pg_ts_dict_dictname,
-						 Anum_pg_ts_dict_dictnamespace,
-						 Anum_pg_ts_dict_dictowner,
-						 ACL_KIND_TSDICTIONARY);
-
-	heap_close(rel, RowExclusiveLock);
-}
-
-Oid
-AlterTSDictionaryNamespace_oid(Oid dictId, Oid newNspOid)
-{
-	Oid			oldNspOid;
-	Relation	rel;
-
-	rel = heap_open(TSDictionaryRelationId, RowExclusiveLock);
-
-	oldNspOid =
-		AlterObjectNamespace(rel, TSDICTOID, TSDICTNAMENSP,
-							 dictId, newNspOid,
-							 Anum_pg_ts_dict_dictname,
-							 Anum_pg_ts_dict_dictnamespace,
-							 Anum_pg_ts_dict_dictowner,
-							 ACL_KIND_TSDICTIONARY);
-
-	heap_close(rel, RowExclusiveLock);
-
-	return oldNspOid;
 }
 
 /*
@@ -1091,52 +997,6 @@ RenameTSTemplate(List *oldname, const char *newname)
 }
 
 /*
- * ALTER TEXT SEARCH TEMPLATE any_name SET SCHEMA name
- */
-void
-AlterTSTemplateNamespace(List *name, const char *newschema)
-{
-	Oid			tmplId,
-				nspOid;
-	Relation	rel;
-
-	rel = heap_open(TSTemplateRelationId, RowExclusiveLock);
-
-	tmplId = get_ts_template_oid(name, false);
-
-	/* get schema OID */
-	nspOid = LookupCreationNamespace(newschema);
-
-	AlterObjectNamespace(rel, TSTEMPLATEOID, TSTEMPLATENAMENSP,
-						 tmplId, nspOid,
-						 Anum_pg_ts_template_tmplname,
-						 Anum_pg_ts_template_tmplnamespace,
-						 -1, -1);
-
-	heap_close(rel, RowExclusiveLock);
-}
-
-Oid
-AlterTSTemplateNamespace_oid(Oid tmplId, Oid newNspOid)
-{
-	Oid			oldNspOid;
-	Relation	rel;
-
-	rel = heap_open(TSTemplateRelationId, RowExclusiveLock);
-
-	oldNspOid =
-		AlterObjectNamespace(rel, TSTEMPLATEOID, TSTEMPLATENAMENSP,
-							 tmplId, newNspOid,
-							 Anum_pg_ts_template_tmplname,
-							 Anum_pg_ts_template_tmplnamespace,
-							 -1, -1);
-
-	heap_close(rel, RowExclusiveLock);
-
-	return oldNspOid;
-}
-
-/*
  * Guts of TS template deletion.
  */
 void
@@ -1480,54 +1340,6 @@ RenameTSConfiguration(List *oldname, const char *newname)
 
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);
-}
-
-/*
- * ALTER TEXT SEARCH CONFIGURATION any_name SET SCHEMA name
- */
-void
-AlterTSConfigurationNamespace(List *name, const char *newschema)
-{
-	Oid			cfgId,
-				nspOid;
-	Relation	rel;
-
-	rel = heap_open(TSConfigRelationId, RowExclusiveLock);
-
-	cfgId = get_ts_config_oid(name, false);
-
-	/* get schema OID */
-	nspOid = LookupCreationNamespace(newschema);
-
-	AlterObjectNamespace(rel, TSCONFIGOID, TSCONFIGNAMENSP,
-						 cfgId, nspOid,
-						 Anum_pg_ts_config_cfgname,
-						 Anum_pg_ts_config_cfgnamespace,
-						 Anum_pg_ts_config_cfgowner,
-						 ACL_KIND_TSCONFIGURATION);
-
-	heap_close(rel, RowExclusiveLock);
-}
-
-Oid
-AlterTSConfigurationNamespace_oid(Oid cfgId, Oid newNspOid)
-{
-	Oid			oldNspOid;
-	Relation	rel;
-
-	rel = heap_open(TSConfigRelationId, RowExclusiveLock);
-
-	oldNspOid =
-		AlterObjectNamespace(rel, TSCONFIGOID, TSCONFIGNAMENSP,
-							 cfgId, newNspOid,
-							 Anum_pg_ts_config_cfgname,
-							 Anum_pg_ts_config_cfgnamespace,
-							 Anum_pg_ts_config_cfgowner,
-							 ACL_KIND_TSCONFIGURATION);
-
-	heap_close(rel, RowExclusiveLock);
-
-	return oldNspOid;
 }
 
 /*

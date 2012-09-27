@@ -7146,7 +7146,7 @@ AlterObjectSchemaStmt:
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_OPCLASS;
 					n->object = $4;
-					n->addname = $6;
+					n->objarg = list_make1(makeString($6));
 					n->newschema = $9;
 					n->missing_ok = false;
 					$$ = (Node *)n;
@@ -7156,7 +7156,7 @@ AlterObjectSchemaStmt:
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_OPFAMILY;
 					n->object = $4;
-					n->addname = $6;
+					n->objarg = list_make1(makeString($6));
 					n->newschema = $9;
 					n->missing_ok = false;
 					$$ = (Node *)n;

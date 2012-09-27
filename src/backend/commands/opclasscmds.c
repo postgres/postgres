@@ -1915,58 +1915,6 @@ AlterOpClassOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 }
 
 /*
- * ALTER OPERATOR CLASS any_name USING access_method SET SCHEMA name
- */
-void
-AlterOpClassNamespace(List *name, char *access_method, const char *newschema)
-{
-	Oid			amOid;
-	Relation	rel;
-	Oid			opclassOid;
-	Oid			nspOid;
-
-	amOid = get_am_oid(access_method, false);
-
-	rel = heap_open(OperatorClassRelationId, RowExclusiveLock);
-
-	/* Look up the opclass */
-	opclassOid = get_opclass_oid(amOid, name, false);
-
-	/* get schema OID */
-	nspOid = LookupCreationNamespace(newschema);
-
-	AlterObjectNamespace(rel, CLAOID, -1,
-						 opclassOid, nspOid,
-						 Anum_pg_opclass_opcname,
-						 Anum_pg_opclass_opcnamespace,
-						 Anum_pg_opclass_opcowner,
-						 ACL_KIND_OPCLASS);
-
-	heap_close(rel, RowExclusiveLock);
-}
-
-Oid
-AlterOpClassNamespace_oid(Oid opclassOid, Oid newNspOid)
-{
-	Oid			oldNspOid;
-	Relation	rel;
-
-	rel = heap_open(OperatorClassRelationId, RowExclusiveLock);
-
-	oldNspOid =
-		AlterObjectNamespace(rel, CLAOID, -1,
-							 opclassOid, newNspOid,
-							 Anum_pg_opclass_opcname,
-							 Anum_pg_opclass_opcnamespace,
-							 Anum_pg_opclass_opcowner,
-							 ACL_KIND_OPCLASS);
-
-	heap_close(rel, RowExclusiveLock);
-
-	return oldNspOid;
-}
-
-/*
  * Change opfamily owner by name
  */
 void
@@ -2121,56 +2069,4 @@ get_am_oid(const char *amname, bool missing_ok)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("access method \"%s\" does not exist", amname)));
 	return oid;
-}
-
-/*
- * ALTER OPERATOR FAMILY any_name USING access_method SET SCHEMA name
- */
-void
-AlterOpFamilyNamespace(List *name, char *access_method, const char *newschema)
-{
-	Oid			amOid;
-	Relation	rel;
-	Oid			opfamilyOid;
-	Oid			nspOid;
-
-	amOid = get_am_oid(access_method, false);
-
-	rel = heap_open(OperatorFamilyRelationId, RowExclusiveLock);
-
-	/* Look up the opfamily */
-	opfamilyOid = get_opfamily_oid(amOid, name, false);
-
-	/* get schema OID */
-	nspOid = LookupCreationNamespace(newschema);
-
-	AlterObjectNamespace(rel, OPFAMILYOID, -1,
-						 opfamilyOid, nspOid,
-						 Anum_pg_opfamily_opfname,
-						 Anum_pg_opfamily_opfnamespace,
-						 Anum_pg_opfamily_opfowner,
-						 ACL_KIND_OPFAMILY);
-
-	heap_close(rel, RowExclusiveLock);
-}
-
-Oid
-AlterOpFamilyNamespace_oid(Oid opfamilyOid, Oid newNspOid)
-{
-	Oid			oldNspOid;
-	Relation	rel;
-
-	rel = heap_open(OperatorFamilyRelationId, RowExclusiveLock);
-
-	oldNspOid =
-		AlterObjectNamespace(rel, OPFAMILYOID, -1,
-							 opfamilyOid, newNspOid,
-							 Anum_pg_opfamily_opfname,
-							 Anum_pg_opfamily_opfnamespace,
-							 Anum_pg_opfamily_opfowner,
-							 ACL_KIND_OPFAMILY);
-
-	heap_close(rel, RowExclusiveLock);
-
-	return oldNspOid;
 }

@@ -173,10 +173,6 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
 			AlterCollationNamespace(stmt->object, stmt->newschema);
 			break;
 
-		case OBJECT_CONVERSION:
-			AlterConversionNamespace(stmt->object, stmt->newschema);
-			break;
-
 		case OBJECT_EXTENSION:
 			AlterExtensionNamespace(stmt->object, stmt->newschema);
 			break;
@@ -186,18 +182,6 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
 								   stmt->newschema);
 			break;
 
-		case OBJECT_OPERATOR:
-			AlterOperatorNamespace(stmt->object, stmt->objarg, stmt->newschema);
-			break;
-
-		case OBJECT_OPCLASS:
-			AlterOpClassNamespace(stmt->object, stmt->addname, stmt->newschema);
-			break;
-
-		case OBJECT_OPFAMILY:
-			AlterOpFamilyNamespace(stmt->object, stmt->addname, stmt->newschema);
-			break;
-
 		case OBJECT_SEQUENCE:
 		case OBJECT_TABLE:
 		case OBJECT_VIEW:
@@ -205,25 +189,42 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
 			AlterTableNamespace(stmt);
 			break;
 
-		case OBJECT_TSPARSER:
-			AlterTSParserNamespace(stmt->object, stmt->newschema);
-			break;
-
-		case OBJECT_TSDICTIONARY:
-			AlterTSDictionaryNamespace(stmt->object, stmt->newschema);
-			break;
-
-		case OBJECT_TSTEMPLATE:
-			AlterTSTemplateNamespace(stmt->object, stmt->newschema);
-			break;
-
-		case OBJECT_TSCONFIGURATION:
-			AlterTSConfigurationNamespace(stmt->object, stmt->newschema);
-			break;
-
 		case OBJECT_TYPE:
 		case OBJECT_DOMAIN:
 			AlterTypeNamespace(stmt->object, stmt->newschema, stmt->objectType);
+			break;
+
+			/* generic code path */
+		case OBJECT_CONVERSION:
+		case OBJECT_OPERATOR:
+		case OBJECT_OPCLASS:
+		case OBJECT_OPFAMILY:
+		case OBJECT_TSPARSER:
+		case OBJECT_TSDICTIONARY:
+		case OBJECT_TSTEMPLATE:
+		case OBJECT_TSCONFIGURATION:
+			{
+				Relation	catalog;
+				Relation	relation;
+				Oid			classId;
+				Oid			nspOid;
+				ObjectAddress address;
+
+				address = get_object_address(stmt->objectType,
+											 stmt->object,
+											 stmt->objarg,
+											 &relation,
+											 AccessExclusiveLock,
+											 false);
+				Assert(relation == NULL);
+				classId = address.classId;
+				catalog = heap_open(classId, RowExclusiveLock);
+				nspOid = LookupCreationNamespace(stmt->newschema);
+
+				AlterObjectNamespace_internal(catalog, address.objectId,
+											  nspOid);
+				heap_close(catalog, RowExclusiveLock);
+			}
 			break;
 
 		default:
@@ -293,35 +294,23 @@ AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid)
 			break;
 
 		case OCLASS_CONVERSION:
-			oldNspOid = AlterConversionNamespace_oid(objid, nspOid);
-			break;
-
 		case OCLASS_OPERATOR:
-			oldNspOid = AlterOperatorNamespace_oid(objid, nspOid);
-			break;
-
 		case OCLASS_OPCLASS:
-			oldNspOid = AlterOpClassNamespace_oid(objid, nspOid);
-			break;
-
 		case OCLASS_OPFAMILY:
-			oldNspOid = AlterOpFamilyNamespace_oid(objid, nspOid);
-			break;
-
 		case OCLASS_TSPARSER:
-			oldNspOid = AlterTSParserNamespace_oid(objid, nspOid);
-			break;
-
 		case OCLASS_TSDICT:
-			oldNspOid = AlterTSDictionaryNamespace_oid(objid, nspOid);
-			break;
-
 		case OCLASS_TSTEMPLATE:
-			oldNspOid = AlterTSTemplateNamespace_oid(objid, nspOid);
-			break;
-
 		case OCLASS_TSCONFIG:
-			oldNspOid = AlterTSConfigurationNamespace_oid(objid, nspOid);
+			{
+				Relation	catalog;
+
+				catalog = heap_open(classId, RowExclusiveLock);
+
+				oldNspOid = AlterObjectNamespace_internal(catalog, objid,
+														  nspOid);
+
+				heap_close(catalog, RowExclusiveLock);
+			}
 			break;
 
 		default:
@@ -336,32 +325,22 @@ AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid)
  * cases (won't work for tables, nor other cases where we need to do more
  * than change the namespace column of a single catalog entry).
  *
- * The AlterFooNamespace() calls just above will call a function whose job
- * is to lookup the arguments for the generic function here.
- *
  * rel: catalog relation containing object (RowExclusiveLock'd by caller)
- * oidCacheId: syscache that indexes this catalog by OID
- * nameCacheId: syscache that indexes this catalog by name and namespace
- *		(pass -1 if there is none)
  * objid: OID of object to change the namespace of
  * nspOid: OID of new namespace
- * Anum_name: column number of catalog's name column
- * Anum_namespace: column number of catalog's namespace column
- * Anum_owner: column number of catalog's owner column, or -1 if none
- * acl_kind: ACL type for object, or -1 if none assigned
- *
- * If the object does not have an owner or permissions, pass -1 for
- * Anum_owner and acl_kind.  In this case the calling user must be superuser.
  *
  * Returns the OID of the object's previous namespace.
  */
 Oid
-AlterObjectNamespace(Relation rel, int oidCacheId, int nameCacheId,
-					 Oid objid, Oid nspOid,
-					 int Anum_name, int Anum_namespace, int Anum_owner,
-					 AclObjectKind acl_kind)
+AlterObjectNamespace_internal(Relation rel, Oid objid, Oid nspOid)
 {
 	Oid			classId = RelationGetRelid(rel);
+	int			oidCacheId = get_object_catcache_oid(classId);
+	int			nameCacheId = get_object_catcache_name(classId);
+	AttrNumber	Anum_name = get_object_attnum_name(classId);
+	AttrNumber	Anum_namespace = get_object_attnum_namespace(classId);
+	AttrNumber	Anum_owner = get_object_attnum_owner(classId);
+	AclObjectKind acl_kind = get_object_aclkind(classId);
 	Oid			oldNspOid;
 	Datum		name,
 				namespace;
@@ -379,7 +358,8 @@ AlterObjectNamespace(Relation rel, int oidCacheId, int nameCacheId,
 
 	name = heap_getattr(tup, Anum_name, RelationGetDescr(rel), &isnull);
 	Assert(!isnull);
-	namespace = heap_getattr(tup, Anum_namespace, RelationGetDescr(rel), &isnull);
+	namespace = heap_getattr(tup, Anum_namespace, RelationGetDescr(rel),
+							 &isnull);
 	Assert(!isnull);
 	oldNspOid = DatumGetObjectId(namespace);
 

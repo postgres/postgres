@@ -339,7 +339,7 @@ AlterCollationNamespace_oid(Oid collOid, Oid newNspOid)
 
 	/*
 	 * We have to check for name collision ourselves, because
-	 * AlterObjectNamespace doesn't know how to deal with the encoding
+	 * AlterObjectNamespace_internal doesn't know how to deal with the encoding
 	 * considerations.
 	 */
 	collation_name = get_collation_name(collOid);
@@ -370,12 +370,7 @@ AlterCollationNamespace_oid(Oid collOid, Oid newNspOid)
 						get_namespace_name(newNspOid))));
 
 	/* OK, do the work */
-	oldNspOid = AlterObjectNamespace(rel, COLLOID, -1,
-									 collOid, newNspOid,
-									 Anum_pg_collation_collname,
-									 Anum_pg_collation_collnamespace,
-									 Anum_pg_collation_collowner,
-									 ACL_KIND_COLLATION);
+	oldNspOid = AlterObjectNamespace_internal(rel, collOid, newNspOid);
 
 	heap_close(rel, RowExclusiveLock);
 

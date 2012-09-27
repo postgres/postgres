@@ -47,6 +47,7 @@
 #include "catalog/pg_proc_fn.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_type_fn.h"
+#include "commands/alter.h"
 #include "commands/defrem.h"
 #include "commands/proclang.h"
 #include "miscadmin.h"
@@ -1851,20 +1852,15 @@ AlterFunctionNamespace_oid(Oid procOid, Oid nspOid)
 
 	procRel = heap_open(ProcedureRelationId, RowExclusiveLock);
 
+	/*
+	 * We have to check for name collisions ourselves, because
+	 * AlterObjectNamespace_internal doesn't know how to deal with the
+	 * argument types.
+	 */
 	tup = SearchSysCacheCopy1(PROCOID, ObjectIdGetDatum(procOid));
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for function %u", procOid);
 	proc = (Form_pg_proc) GETSTRUCT(tup);
-
-	/* check permissions on function */
-	if (!pg_proc_ownercheck(procOid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_PROC,
-					   NameStr(proc->proname));
-
-	oldNspOid = proc->pronamespace;
-
-	/* common checks on switching namespaces */
-	CheckSetNamespace(oldNspOid, nspOid, ProcedureRelationId, procOid);
 
 	/* check for duplicate name (more friendly than unique-index failure) */
 	if (SearchSysCacheExists3(PROCNAMEARGSNSP,
@@ -1877,21 +1873,8 @@ AlterFunctionNamespace_oid(Oid procOid, Oid nspOid)
 						NameStr(proc->proname),
 						get_namespace_name(nspOid))));
 
-	/* OK, modify the pg_proc row */
-
-	/* tup is a copy, so we can scribble directly on it */
-	proc->pronamespace = nspOid;
-
-	simple_heap_update(procRel, &tup->t_self, tup);
-	CatalogUpdateIndexes(procRel, tup);
-
-	/* Update dependency on schema */
-	if (changeDependencyFor(ProcedureRelationId, procOid,
-							NamespaceRelationId, oldNspOid, nspOid) != 1)
-		elog(ERROR, "failed to change schema dependency for function \"%s\"",
-			 NameStr(proc->proname));
-
-	heap_freetuple(tup);
+	/* OK, do the work */
+	oldNspOid = AlterObjectNamespace_internal(procRel, procOid, nspOid);
 
 	heap_close(procRel, RowExclusiveLock);
 

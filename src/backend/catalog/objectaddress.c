@@ -63,7 +63,6 @@
 #include "rewrite/rewriteSupport.h"
 #include "storage/lmgr.h"
 #include "storage/sinval.h"
-#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
@@ -81,7 +80,12 @@ typedef struct
 	Oid			class_oid;		/* oid of catalog */
 	Oid			oid_index_oid;	/* oid of index on system oid column */
 	int			oid_catcache_id;	/* id of catcache on system oid column	*/
+	int			name_catcache_id;		/* id of catcache on (name,namespace) */
+	AttrNumber	attnum_name;	/* attnum of name field */
 	AttrNumber	attnum_namespace;		/* attnum of namespace field */
+	AttrNumber	attnum_owner;	/* attnum of owner field */
+	AttrNumber	attnum_acl;		/* attnum of acl field */
+	AclObjectKind acl_kind;		/* ACL_KIND_* of this object type */
 } ObjectPropertyType;
 
 static ObjectPropertyType ObjectProperty[] =
@@ -90,157 +94,287 @@ static ObjectPropertyType ObjectProperty[] =
 		CastRelationId,
 		CastOidIndexId,
 		-1,
-		InvalidAttrNumber
+		-1,
+		InvalidAttrNumber,
+		InvalidAttrNumber,
+		InvalidAttrNumber,
+		InvalidAttrNumber,
+		-1
 	},
 	{
 		CollationRelationId,
 		CollationOidIndexId,
 		COLLOID,
-		Anum_pg_collation_collnamespace
+		-1,						/* COLLNAMEENCNSP also takes encoding */
+		Anum_pg_collation_collname,
+		Anum_pg_collation_collnamespace,
+		Anum_pg_collation_collowner,
+		InvalidAttrNumber,
+		ACL_KIND_COLLATION
 	},
 	{
 		ConstraintRelationId,
 		ConstraintOidIndexId,
 		CONSTROID,
-		Anum_pg_constraint_connamespace
+		-1,
+		Anum_pg_constraint_conname,
+		Anum_pg_constraint_connamespace,
+		InvalidAttrNumber,
+		InvalidAttrNumber,
+		-1
 	},
 	{
 		ConversionRelationId,
 		ConversionOidIndexId,
 		CONVOID,
-		Anum_pg_conversion_connamespace
+		CONNAMENSP,
+		Anum_pg_conversion_conname,
+		Anum_pg_conversion_connamespace,
+		Anum_pg_conversion_conowner,
+		InvalidAttrNumber,
+		ACL_KIND_CONVERSION
 	},
 	{
 		DatabaseRelationId,
 		DatabaseOidIndexId,
 		DATABASEOID,
-		InvalidAttrNumber
+		-1,
+		Anum_pg_database_datname,
+		InvalidAttrNumber,
+		Anum_pg_database_datdba,
+		Anum_pg_database_datacl,
+		ACL_KIND_DATABASE
 	},
 	{
 		ExtensionRelationId,
 		ExtensionOidIndexId,
 		-1,
-		InvalidAttrNumber		/* extension doesn't belong to extnamespace */
+		-1,
+		Anum_pg_extension_extname,
+		InvalidAttrNumber,		/* extension doesn't belong to extnamespace */
+		Anum_pg_extension_extowner,
+		InvalidAttrNumber,
+		ACL_KIND_EXTENSION
 	},
 	{
 		ForeignDataWrapperRelationId,
 		ForeignDataWrapperOidIndexId,
 		FOREIGNDATAWRAPPEROID,
-		InvalidAttrNumber
+		FOREIGNDATAWRAPPERNAME,
+		Anum_pg_foreign_data_wrapper_fdwname,
+		InvalidAttrNumber,
+		Anum_pg_foreign_data_wrapper_fdwowner,
+		Anum_pg_foreign_data_wrapper_fdwacl,
+		ACL_KIND_FDW
 	},
 	{
 		ForeignServerRelationId,
 		ForeignServerOidIndexId,
 		FOREIGNSERVEROID,
-		InvalidAttrNumber
+		FOREIGNSERVERNAME,
+		Anum_pg_foreign_server_srvname,
+		InvalidAttrNumber,
+		Anum_pg_foreign_server_srvowner,
+		Anum_pg_foreign_server_srvacl,
+		ACL_KIND_FOREIGN_SERVER
 	},
 	{
 		ProcedureRelationId,
 		ProcedureOidIndexId,
 		PROCOID,
-		Anum_pg_proc_pronamespace
+		-1,						/* PROCNAMEARGSNSP also takes argument types */
+		Anum_pg_proc_proname,
+		Anum_pg_proc_pronamespace,
+		Anum_pg_proc_proowner,
+		Anum_pg_proc_proacl,
+		ACL_KIND_PROC
 	},
 	{
 		LanguageRelationId,
 		LanguageOidIndexId,
 		LANGOID,
+		LANGNAME,
+		Anum_pg_language_lanname,
 		InvalidAttrNumber,
+		Anum_pg_language_lanowner,
+		Anum_pg_language_lanacl,
+		ACL_KIND_LANGUAGE
 	},
 	{
 		LargeObjectMetadataRelationId,
 		LargeObjectMetadataOidIndexId,
 		-1,
-		InvalidAttrNumber
+		-1,
+		InvalidAttrNumber,
+		InvalidAttrNumber,
+		Anum_pg_largeobject_metadata_lomowner,
+		Anum_pg_largeobject_metadata_lomacl,
+		ACL_KIND_LARGEOBJECT
 	},
 	{
 		OperatorClassRelationId,
 		OpclassOidIndexId,
 		CLAOID,
+		-1,						/* CLAAMNAMENSP also takes opcmethod */
+		Anum_pg_opclass_opcname,
 		Anum_pg_opclass_opcnamespace,
+		Anum_pg_opclass_opcowner,
+		InvalidAttrNumber,
+		ACL_KIND_OPCLASS
 	},
 	{
 		OperatorRelationId,
 		OperatorOidIndexId,
 		OPEROID,
-		Anum_pg_operator_oprnamespace
+		-1,						/* OPERNAMENSP also takes left and right type */
+		Anum_pg_operator_oprname,
+		Anum_pg_operator_oprnamespace,
+		Anum_pg_operator_oprowner,
+		InvalidAttrNumber,
+		ACL_KIND_OPER
 	},
 	{
 		OperatorFamilyRelationId,
 		OpfamilyOidIndexId,
 		OPFAMILYOID,
-		Anum_pg_opfamily_opfnamespace
+		-1,						/* OPFAMILYAMNAMENSP also takes opfmethod */
+		Anum_pg_opfamily_opfname,
+		Anum_pg_opfamily_opfnamespace,
+		Anum_pg_opfamily_opfowner,
+		InvalidAttrNumber,
+		ACL_KIND_OPFAMILY
 	},
 	{
 		AuthIdRelationId,
 		AuthIdOidIndexId,
 		AUTHOID,
-		InvalidAttrNumber
+		AUTHNAME,
+		Anum_pg_authid_rolname,
+		InvalidAttrNumber,
+		InvalidAttrNumber,
+		InvalidAttrNumber,
+		-1
 	},
 	{
 		RewriteRelationId,
 		RewriteOidIndexId,
 		-1,
-		InvalidAttrNumber
+		-1,
+		Anum_pg_rewrite_rulename,
+		InvalidAttrNumber,
+		InvalidAttrNumber,
+		InvalidAttrNumber,
+		-1
 	},
 	{
 		NamespaceRelationId,
 		NamespaceOidIndexId,
 		NAMESPACEOID,
-		InvalidAttrNumber
+		NAMESPACENAME,
+		Anum_pg_namespace_nspname,
+		InvalidAttrNumber,
+		Anum_pg_namespace_nspowner,
+		Anum_pg_namespace_nspacl,
+		ACL_KIND_NAMESPACE
 	},
 	{
 		RelationRelationId,
 		ClassOidIndexId,
 		RELOID,
-		Anum_pg_class_relnamespace
+		RELNAMENSP,
+		Anum_pg_class_relname,
+		Anum_pg_class_relnamespace,
+		Anum_pg_class_relowner,
+		Anum_pg_class_relacl,
+		ACL_KIND_CLASS
 	},
 	{
 		TableSpaceRelationId,
 		TablespaceOidIndexId,
 		TABLESPACEOID,
-		InvalidAttrNumber
+		-1,
+		Anum_pg_tablespace_spcname,
+		InvalidAttrNumber,
+		Anum_pg_tablespace_spcowner,
+		Anum_pg_tablespace_spcacl,
+		ACL_KIND_TABLESPACE
 	},
 	{
 		TriggerRelationId,
 		TriggerOidIndexId,
 		-1,
-		InvalidAttrNumber
+		-1,
+		Anum_pg_trigger_tgname,
+		InvalidAttrNumber,
+		InvalidAttrNumber,
+		InvalidAttrNumber,
+		-1,
 	},
 	{
 		EventTriggerRelationId,
 		EventTriggerOidIndexId,
-		-1,
-		InvalidAttrNumber
+		EVENTTRIGGEROID,
+		EVENTTRIGGERNAME,
+		Anum_pg_event_trigger_evtname,
+		InvalidAttrNumber,
+		Anum_pg_event_trigger_evtowner,
+		InvalidAttrNumber,
+		ACL_KIND_EVENT_TRIGGER,
 	},
 	{
 		TSConfigRelationId,
 		TSConfigOidIndexId,
 		TSCONFIGOID,
-		Anum_pg_ts_config_cfgnamespace
+		TSCONFIGNAMENSP,
+		Anum_pg_ts_config_cfgname,
+		Anum_pg_ts_config_cfgnamespace,
+		Anum_pg_ts_config_cfgowner,
+		InvalidAttrNumber,
+		ACL_KIND_TSCONFIGURATION
 	},
 	{
 		TSDictionaryRelationId,
 		TSDictionaryOidIndexId,
 		TSDICTOID,
-		Anum_pg_ts_dict_dictnamespace
+		TSDICTNAMENSP,
+		Anum_pg_ts_dict_dictname,
+		Anum_pg_ts_dict_dictnamespace,
+		Anum_pg_ts_dict_dictowner,
+		InvalidAttrNumber,
+		ACL_KIND_TSDICTIONARY
 	},
 	{
 		TSParserRelationId,
 		TSParserOidIndexId,
 		TSPARSEROID,
-		Anum_pg_ts_parser_prsnamespace
+		TSPARSERNAMENSP,
+		Anum_pg_ts_parser_prsname,
+		Anum_pg_ts_parser_prsnamespace,
+		InvalidAttrNumber,
+		InvalidAttrNumber,
+		-1,
 	},
 	{
 		TSTemplateRelationId,
 		TSTemplateOidIndexId,
 		TSTEMPLATEOID,
+		TSTEMPLATENAMENSP,
+		Anum_pg_ts_template_tmplname,
 		Anum_pg_ts_template_tmplnamespace,
+		InvalidAttrNumber,
+		InvalidAttrNumber,
+		-1,
 	},
 	{
 		TypeRelationId,
 		TypeOidIndexId,
 		TYPEOID,
-		Anum_pg_type_typnamespace
+		TYPENAMENSP,
+		Anum_pg_type_typname,
+		Anum_pg_type_typnamespace,
+		Anum_pg_type_typowner,
+		Anum_pg_type_typacl,
+		ACL_KIND_TYPE
 	}
 };
 
@@ -1133,17 +1267,97 @@ get_object_namespace(const ObjectAddress *address)
 }
 
 /*
+ * Interfaces to reference fields of ObjectPropertyType
+ */
+Oid
+get_object_oid_index(Oid class_id)
+{
+	ObjectPropertyType *prop = get_object_property_data(class_id);
+
+	return prop->oid_index_oid;
+}
+
+int
+get_object_catcache_oid(Oid class_id)
+{
+	ObjectPropertyType *prop = get_object_property_data(class_id);
+
+	return prop->oid_catcache_id;
+}
+
+int
+get_object_catcache_name(Oid class_id)
+{
+	ObjectPropertyType *prop = get_object_property_data(class_id);
+
+	return prop->name_catcache_id;
+}
+
+AttrNumber
+get_object_attnum_name(Oid class_id)
+{
+	ObjectPropertyType *prop = get_object_property_data(class_id);
+
+	return prop->attnum_name;
+}
+
+AttrNumber
+get_object_attnum_namespace(Oid class_id)
+{
+	ObjectPropertyType *prop = get_object_property_data(class_id);
+
+	return prop->attnum_namespace;
+}
+
+AttrNumber
+get_object_attnum_owner(Oid class_id)
+{
+	ObjectPropertyType *prop = get_object_property_data(class_id);
+
+	return prop->attnum_owner;
+}
+
+AttrNumber
+get_object_attnum_acl(Oid class_id)
+{
+	ObjectPropertyType *prop = get_object_property_data(class_id);
+
+	return prop->attnum_acl;
+}
+
+AclObjectKind
+get_object_aclkind(Oid class_id)
+{
+	ObjectPropertyType *prop = get_object_property_data(class_id);
+
+	return prop->acl_kind;
+}
+
+/*
  * Find ObjectProperty structure by class_id.
  */
 static ObjectPropertyType *
 get_object_property_data(Oid class_id)
 {
+	static ObjectPropertyType *prop_last = NULL;
 	int			index;
 
-	for (index = 0; index < lengthof(ObjectProperty); index++)
-		if (ObjectProperty[index].class_oid == class_id)
-			return &ObjectProperty[index];
+	/*
+	 * A shortcut to speed up multiple consecutive lookups of a particular
+	 * object class.
+	 */
+	if (prop_last && prop_last->class_oid == class_id)
+		return prop_last;
 
-	elog(ERROR, "unrecognized class id: %u", class_id);
-	return NULL;				/* not reached */
+	for (index = 0; index < lengthof(ObjectProperty); index++)
+	{
+		if (ObjectProperty[index].class_oid == class_id)
+		{
+			prop_last = &ObjectProperty[index];
+			return &ObjectProperty[index];
+		}
+	}
+
+	ereport(ERROR,
+			(errmsg_internal("unrecognized class id: %u", class_id)));
 }

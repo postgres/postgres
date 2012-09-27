@@ -13,8 +13,9 @@
 #ifndef OBJECTADDRESS_H
 #define OBJECTADDRESS_H
 
-#include "nodes/parsenodes.h"
+#include "nodes/pg_list.h"
 #include "storage/lock.h"
+#include "utils/acl.h"
 #include "utils/relcache.h"
 
 /*
@@ -36,5 +37,14 @@ extern void check_object_ownership(Oid roleid,
 					   List *objname, List *objargs, Relation relation);
 
 extern Oid	get_object_namespace(const ObjectAddress *address);
+
+extern Oid				get_object_oid_index(Oid class_id);
+extern int				get_object_catcache_oid(Oid class_id);
+extern int				get_object_catcache_name(Oid class_id);
+extern AttrNumber		get_object_attnum_name(Oid class_id);
+extern AttrNumber		get_object_attnum_namespace(Oid class_id);
+extern AttrNumber		get_object_attnum_owner(Oid class_id);
+extern AttrNumber		get_object_attnum_acl(Oid class_id);
+extern AclObjectKind	get_object_aclkind(Oid class_id);
 
 #endif   /* PARSE_OBJECT_H */
