@@ -64,8 +64,8 @@ mkdir "$logdir"
 
 set -x
 
-$oldbindir/initdb
-$oldbindir/pg_ctl start -l "$logdir/postmaster1.log" -w
+$oldbindir/initdb -N
+$oldbindir/pg_ctl start -l "$logdir/postmaster1.log" -o '-F' -w
 if "$MAKE" -C "$oldsrc" installcheck; then
 	pg_dumpall -f "$temp_root"/dump1.sql || pg_dumpall1_status=$?
 	if [ "$newsrc" != "$oldsrc" ]; then
@@ -104,11 +104,11 @@ fi
 
 mv "${PGDATA}" "${PGDATA}.old"
 
-initdb
+initdb -N
 
 pg_upgrade -d "${PGDATA}.old" -D "${PGDATA}" -b "$oldbindir" -B "$bindir"
 
-pg_ctl start -l "$logdir/postmaster2.log" -w
+pg_ctl start -l "$logdir/postmaster2.log" -o '-F' -w
 
 if [ $testhost = Msys ] ; then
 	cmd /c analyze_new_cluster.bat
