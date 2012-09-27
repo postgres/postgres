@@ -583,6 +583,10 @@ btmarkpos(PG_FUNCTION_ARGS)
 	else
 		so->markItemIndex = -1;
 
+	/* Also record the current positions of any array keys */
+	if (so->numArrayKeys)
+		_bt_mark_array_keys(scan);
+
 	PG_RETURN_VOID();
 }
 
@@ -594,6 +598,10 @@ btrestrpos(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
+
+	/* Restore the marked positions of any array keys */
+	if (so->numArrayKeys)
+		_bt_restore_array_keys(scan);
 
 	if (so->markItemIndex >= 0)
 	{
