@@ -73,12 +73,13 @@ current_query(PG_FUNCTION_ARGS)
 
 /*
  * Send a signal to another backend.
+ *
  * The signal is delivered if the user is either a superuser or the same
  * role as the backend being signaled. For "dangerous" signals, an explicit
  * check for superuser needs to be done prior to calling this function.
  *
  * Returns 0 on success, 1 on general failure, and 2 on permission error.
- * In the event of a general failure (returncode 1), a warning message will
+ * In the event of a general failure (return code 1), a warning message will
  * be emitted. For permission errors, doing that is the responsibility of
  * the caller.
  */
@@ -88,37 +89,29 @@ current_query(PG_FUNCTION_ARGS)
 static int
 pg_signal_backend(int pid, int sig)
 {
-	PGPROC	   *proc;
+	PGPROC	   *proc = BackendPidGetProc(pid);
 
-	if (!superuser())
-	{
-		/*
-		 * Since the user is not superuser, check for matching roles. Trust
-		 * that BackendPidGetProc will return NULL if the pid isn't valid,
-		 * even though the check for whether it's a backend process is below.
-		 * The IsBackendPid check can't be relied on as definitive even if it
-		 * was first. The process might end between successive checks
-		 * regardless of their order. There's no way to acquire a lock on an
-		 * arbitrary process to prevent that. But since so far all the callers
-		 * of this mechanism involve some request for ending the process
-		 * anyway, that it might end on its own first is not a problem.
-		 */
-		proc = BackendPidGetProc(pid);
-
-		if (proc == NULL || proc->roleId != GetUserId())
-			return SIGNAL_BACKEND_NOPERMISSION;
-	}
-
-	if (!IsBackendPid(pid))
+	/*
+	 * BackendPidGetProc returns NULL if the pid isn't valid; but by the time
+	 * we reach kill(), a process for which we get a valid proc here might have
+	 * terminated on its own.  There's no way to acquire a lock on an arbitrary
+	 * process to prevent that. But since so far all the callers of this
+	 * mechanism involve some request for ending the process anyway, that it
+	 * might end on its own first is not a problem.
+	 */
+	if (proc == NULL)
 	{
 		/*
 		 * This is just a warning so a loop-through-resultset will not abort
-		 * if one backend terminated on it's own during the run
+		 * if one backend terminated on its own during the run.
 		 */
 		ereport(WARNING,
 				(errmsg("PID %d is not a PostgreSQL server process", pid)));
 		return SIGNAL_BACKEND_ERROR;
 	}
+
+	if (!(superuser() || proc->roleId == GetUserId()))
+		return SIGNAL_BACKEND_NOPERMISSION;
 
 	/*
 	 * Can the process we just validated above end, followed by the pid being
