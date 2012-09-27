@@ -41,6 +41,7 @@ endif
 gram.h: gram.c ;
 
 gram.c: gram.y
+	$(PERL) $(srcdir)/check_keywords.pl $< $(top_srcdir)/src/include/parser/kwlist.h
 ifdef BISON
 	$(BISON) -d $(BISONFLAGS) -o $@ $<
 else
@@ -65,7 +66,3 @@ gram.o keywords.o parser.o: gram.h
 # are not cleaned here.
 clean distclean maintainer-clean:
 	rm -f lex.backup
-
-
-maintainer-check:
-	$(PERL) $(top_srcdir)/src/tools/check_keywords.pl $(top_srcdir)

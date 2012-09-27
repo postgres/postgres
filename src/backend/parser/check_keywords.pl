@@ -1,29 +1,23 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
+# Check that the keyword lists in gram.y and kwlist.h are sane.
+# Usage: check_keywords.pl gram.y kwlist.h
+
+# src/backend/parser/check_keywords.pl
+# Copyright (c) 2009-2012, PostgreSQL Global Development Group
+
+use warnings;
 use strict;
 
-# Check that the keyword lists in gram.y and kwlist.h are sane. Run from
-# the top directory, or pass a path to a top directory as argument.
-#
-# src/tools/check_keywords.pl
+my $gram_filename = $ARGV[0];
+my $kwlist_filename = $ARGV[1];
 
 my $errors = 0;
-my $path;
 
 sub error(@)
 {
 	print STDERR @_;
 	$errors = 1;
-}
-
-if (@ARGV)
-{
-	$path = $ARGV[0];
-	shift @ARGV;
-}
-else
-{
-	$path = ".";
 }
 
 $, = ' ';     # set output field separator
@@ -35,7 +29,6 @@ $keyword_categories{'col_name_keyword'}       = 'COL_NAME_KEYWORD';
 $keyword_categories{'type_func_name_keyword'} = 'TYPE_FUNC_NAME_KEYWORD';
 $keyword_categories{'reserved_keyword'}       = 'RESERVED_KEYWORD';
 
-my $gram_filename = "$path/src/backend/parser/gram.y";
 open(GRAM, $gram_filename) || die("Could not open : $gram_filename");
 
 my ($S, $s, $k, $n, $kcat);
@@ -59,7 +52,6 @@ line: while (<GRAM>)
 
 	if (!($kcat))
 	{
-
 		# Is this the beginning of a keyword list?
 		foreach $k (keys %keyword_categories)
 		{
@@ -89,7 +81,6 @@ line: while (<GRAM>)
 		}
 		elsif ($arr[$fieldIndexer] eq '/*')
 		{
-
 			# start of a multiline comment
 			$comment = 1;
 			next;
@@ -101,7 +92,6 @@ line: while (<GRAM>)
 
 		if ($arr[$fieldIndexer] eq ';')
 		{
-
 			# end of keyword list
 			$kcat = '';
 			next;
@@ -118,7 +108,7 @@ line: while (<GRAM>)
 }
 close GRAM;
 
-# Check that all keywords are in alphabetical order
+# Check that each keyword list is in alphabetical order (just for neatnik-ism)
 my ($prevkword, $kword, $bare_kword);
 foreach $kcat (keys %keyword_categories)
 {
@@ -126,7 +116,6 @@ foreach $kcat (keys %keyword_categories)
 
 	foreach $kword (@{ $keywords{$kcat} })
 	{
-
 		# Some keyword have a _P suffix. Remove it for the comparison.
 		$bare_kword = $kword;
 		$bare_kword =~ s/_P$//;
@@ -134,30 +123,28 @@ foreach $kcat (keys %keyword_categories)
 		{
 			error
 			  "'$bare_kword' after '$prevkword' in $kcat list is misplaced";
-			$errors = 1;
 		}
 		$prevkword = $bare_kword;
 	}
 }
 
 # Transform the keyword lists into hashes.
-# kwhashes is a hash of hashes, keyed by keyword category id, e.g.
-# UNRESERVED_KEYWORD. Each inner hash is a keyed by keyword id, e.g. ABORT_P
-# with a dummy value.
+# kwhashes is a hash of hashes, keyed by keyword category id,
+# e.g. UNRESERVED_KEYWORD.
+# Each inner hash is keyed by keyword id, e.g. ABORT_P, with a dummy value.
 my %kwhashes;
 while (my ($kcat, $kcat_id) = each(%keyword_categories))
 {
 	@arr = @{ $keywords{$kcat} };
 
 	my $hash;
-	foreach my $item (@arr) { $hash->{$item} = 1 }
+	foreach my $item (@arr) { $hash->{$item} = 1; }
 
 	$kwhashes{$kcat_id} = $hash;
 }
 
 # Now read in kwlist.h
 
-my $kwlist_filename = "$path/src/include/parser/kwlist.h";
 open(KWLIST, $kwlist_filename) || die("Could not open : $kwlist_filename");
 
 my $prevkwstring = '';
@@ -173,7 +160,7 @@ kwlist_line: while (<KWLIST>)
 		my ($kwname)   = $2;
 		my ($kwcat_id) = $3;
 
-		# Check that the list is in alphabetical order
+		# Check that the list is in alphabetical order (critical!)
 		if ($kwstring le $prevkwstring)
 		{
 			error
@@ -182,14 +169,14 @@ kwlist_line: while (<KWLIST>)
 		$prevkwstring = $kwstring;
 
 		# Check that the keyword string is valid: all lower-case ASCII chars
-		if ($kwstring !~ /^[a-z_]*$/)
+		if ($kwstring !~ /^[a-z_]+$/)
 		{
 			error
 "'$kwstring' is not a valid keyword string, must be all lower-case ASCII chars";
 		}
 
 		# Check that the keyword name is valid: all upper-case ASCII chars
-		if ($kwname !~ /^[A-Z_]*$/)
+		if ($kwname !~ /^[A-Z_]+$/)
 		{
 			error
 "'$kwname' is not a valid keyword name, must be all upper-case ASCII chars";
@@ -209,8 +196,7 @@ kwlist_line: while (<KWLIST>)
 
 		if (!(%kwhash))
 		{
-
-			#error "Unknown kwcat_id: $kwcat_id";
+			error "Unknown keyword category: $kwcat_id";
 		}
 		else
 		{
@@ -220,9 +206,9 @@ kwlist_line: while (<KWLIST>)
 			}
 			else
 			{
-
-				# Remove it from the hash, so that we can complain at the end
-				# if there's keywords left that were not found in kwlist.h
+				# Remove it from the hash, so that we can
+				# complain at the end if there's keywords left
+				# that were not found in kwlist.h
 				delete $kwhashes{$kwcat_id}->{$kwname};
 			}
 		}
