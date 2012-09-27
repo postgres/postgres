@@ -595,6 +595,65 @@ _bt_advance_array_keys(IndexScanDesc scan, ScanDirection dir)
 	return found;
 }
 
+/*
+ * _bt_mark_array_keys() -- Handle array keys during btmarkpos
+ *
+ * Save the current state of the array keys as the "mark" position.
+ */
+void
+_bt_mark_array_keys(IndexScanDesc scan)
+{
+	BTScanOpaque so = (BTScanOpaque) scan->opaque;
+	int			i;
+
+	for (i = 0; i < so->numArrayKeys; i++)
+	{
+		BTArrayKeyInfo *curArrayKey = &so->arrayKeys[i];
+
+		curArrayKey->mark_elem = curArrayKey->cur_elem;
+	}
+}
+
+/*
+ * _bt_restore_array_keys() -- Handle array keys during btrestrpos
+ *
+ * Restore the array keys to where they were when the mark was set.
+ */
+void
+_bt_restore_array_keys(IndexScanDesc scan)
+{
+	BTScanOpaque so = (BTScanOpaque) scan->opaque;
+	bool		changed = false;
+	int			i;
+
+	/* Restore each array key to its position when the mark was set */
+	for (i = 0; i < so->numArrayKeys; i++)
+	{
+		BTArrayKeyInfo *curArrayKey = &so->arrayKeys[i];
+		ScanKey		skey = &so->arrayKeyData[curArrayKey->scan_key];
+		int			mark_elem = curArrayKey->mark_elem;
+
+		if (curArrayKey->cur_elem != mark_elem)
+		{
+			curArrayKey->cur_elem = mark_elem;
+			skey->sk_argument = curArrayKey->elem_values[mark_elem];
+			changed = true;
+		}
+	}
+
+	/*
+	 * If we changed any keys, we must redo _bt_preprocess_keys.  That might
+	 * sound like overkill, but in cases with multiple keys per index column
+	 * it seems necessary to do the full set of pushups.
+	 */
+	if (changed)
+	{
+		_bt_preprocess_keys(scan);
+		/* The mark should have been set on a consistent set of keys... */
+		Assert(so->qual_ok);
+	}
+}
+
 
 /*
  *	_bt_preprocess_keys() -- Preprocess scan keys
