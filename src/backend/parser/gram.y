@@ -12444,6 +12444,7 @@ unreserved_keyword:
 			| ENCRYPTED
 			| ENUM_P
 			| ESCAPE
+			| EVENT
 			| EXCLUDE
 			| EXCLUDING
 			| EXCLUSIVE
