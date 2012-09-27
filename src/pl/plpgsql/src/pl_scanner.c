@@ -411,6 +411,25 @@ plpgsql_push_back_token(int token)
 }
 
 /*
+ * Tell whether a token is an unreserved keyword.
+ *
+ * (If it is, its lowercased form was returned as the token value, so we
+ * do not need to offer that data here.)
+ */
+bool
+plpgsql_token_is_unreserved_keyword(int token)
+{
+	int			i;
+
+	for (i = 0; i < num_unreserved_keywords; i++)
+	{
+		if (unreserved_keywords[i].value == token)
+			return true;
+	}
+	return false;
+}
+
+/*
  * Append the function text starting at startlocation and extending to
  * (not including) endlocation onto the existing contents of "buf".
  */
