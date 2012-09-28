@@ -882,8 +882,10 @@ _CloseArchive(ArchiveHandle *AH)
 
 		tarClose(AH, th);
 
-		/* Add a block of NULLs since it's de-rigeur. */
-		for (i = 0; i < 512; i++)
+		/*
+		 * EOF marker for tar files is two blocks of NULLs.
+		 */
+		for (i = 0; i < 512 * 2; i++)
 		{
 			if (fputc(0, ctx->tarFH) == EOF)
 				exit_horribly(modulename,
@@ -1032,11 +1034,16 @@ _tarChecksum(char *header)
 	int			i,
 				sum;
 
-	sum = 0;
+	/*
+	 * Per POSIX, the checksum is the simple sum of all bytes in the header,
+	 * treating the bytes as unsigned, and treating the checksum field (at
+	 * offset 148) as though it contained 8 spaces.
+	 */
+	sum = 8 * ' ';				/* presumed value for checksum field */
 	for (i = 0; i < 512; i++)
 		if (i < 148 || i >= 156)
 			sum += 0xFF & header[i];
-	return sum + 256;			/* Assume 8 blanks in checksum field */
+	return sum;
 }
 
 bool
@@ -1050,11 +1057,15 @@ isValidTarHeader(char *header)
 	if (sum != chk)
 		return false;
 
-	/* POSIX format */
-	if (strncmp(&header[257], "ustar00", 7) == 0)
+	/* POSIX tar format */
+	if (memcmp(&header[257], "ustar\0", 6) == 0 &&
+		memcmp(&header[263], "00", 2) == 0)
 		return true;
-	/* older format */
-	if (strncmp(&header[257], "ustar  ", 7) == 0)
+	/* GNU tar format */
+	if (memcmp(&header[257], "ustar  \0", 8) == 0)
+		return true;
+	/* not-quite-POSIX format written by pre-9.3 pg_dump */
+	if (memcmp(&header[257], "ustar00\0", 8) == 0)
 		return true;
 
 	return false;
