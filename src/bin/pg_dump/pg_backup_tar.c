@@ -882,8 +882,10 @@ _CloseArchive(ArchiveHandle *AH)
 
 		tarClose(AH, th);
 
-		/* Add a block of NULLs since it's de-rigeur. */
-		for (i = 0; i < 512; i++)
+		/*
+		 * EOF marker for tar files is two blocks of NULLs.
+		 */
+		for (i = 0; i < 512 * 2; i++)
 		{
 			if (fputc(0, ctx->tarFH) == EOF)
 				exit_horribly(modulename,
@@ -1032,11 +1034,16 @@ _tarChecksum(char *header)
 	int			i,
 				sum;
 
-	sum = 0;
+	/*
+	 * Per POSIX, the checksum is the simple sum of all bytes in the header,
+	 * treating the bytes as unsigned, and treating the checksum field (at
+	 * offset 148) as though it contained 8 spaces.
+	 */
+	sum = 8 * ' ';				/* presumed value for checksum field */
 	for (i = 0; i < 512; i++)
 		if (i < 148 || i >= 156)
 			sum += 0xFF & header[i];
-	return sum + 256;			/* Assume 8 blanks in checksum field */
+	return sum;
 }
 
 bool
@@ -1050,11 +1057,15 @@ isValidTarHeader(char *header)
 	if (sum != chk)
 		return false;
 
-	/* POSIX format */
-	if (strncmp(&header[257], "ustar00", 7) == 0)
+	/* POSIX tar format */
+	if (memcmp(&header[257], "ustar\0", 6) == 0 &&
+		memcmp(&header[263], "00", 2) == 0)
 		return true;
-	/* older format */
-	if (strncmp(&header[257], "ustar  ", 7) == 0)
+	/* GNU tar format */
+	if (memcmp(&header[257], "ustar  \0", 8) == 0)
+		return true;
+	/* not-quite-POSIX format written by pre-9.3 pg_dump */
+	if (memcmp(&header[257], "ustar00\0", 8) == 0)
 		return true;
 
 	return false;
@@ -1329,63 +1340,71 @@ static void
 _tarWriteHeader(TAR_MEMBER *th)
 {
 	char		h[512];
-	int			lastSum = 0;
-	int			sum;
 
+	/*
+	 * Note: most of the fields in a tar header are not supposed to be
+	 * null-terminated.  We use sprintf, which will write a null after the
+	 * required bytes; that null goes into the first byte of the next field.
+	 * This is okay as long as we fill the fields in order.
+	 */
 	memset(h, 0, sizeof(h));
 
 	/* Name 100 */
 	sprintf(&h[0], "%.99s", th->targetFile);
 
 	/* Mode 8 */
-	sprintf(&h[100], "100600 ");
+	sprintf(&h[100], "0000600 ");
 
 	/* User ID 8 */
-	sprintf(&h[108], "004000 ");
+	sprintf(&h[108], "0004000 ");
 
 	/* Group 8 */
-	sprintf(&h[116], "002000 ");
+	sprintf(&h[116], "0002000 ");
 
-	/* File size 12 - 11 digits, 1 space, no NUL */
+	/* File size 12 - 11 digits, 1 space; use print_val for 64 bit support */
 	print_val(&h[124], th->fileLen, 8, 11);
 	sprintf(&h[135], " ");
 
 	/* Mod Time 12 */
 	sprintf(&h[136], "%011o ", (int) time(NULL));
 
-	/* Checksum 8 */
-	sprintf(&h[148], "%06o ", lastSum);
+	/* Checksum 8 cannot be calculated until we've filled all other fields */
 
 	/* Type - regular file */
 	sprintf(&h[156], "0");
 
-	/* Link tag 100 (NULL) */
+	/* Link Name 100 (leave as nulls) */
 
-	/* Magic 6 + Version 2 */
-	sprintf(&h[257], "ustar00");
+	/* Magic 6 */
+	sprintf(&h[257], "ustar");
 
-#if 0
+	/* Version 2 */
+	sprintf(&h[263], "00");
+
 	/* User 32 */
-	sprintf(&h[265], "%.31s", "");		/* How do I get username reliably? Do
-										 * I need to? */
+	/* XXX: Do we need to care about setting correct username? */
+	sprintf(&h[265], "%.31s", "postgres");
 
 	/* Group 32 */
-	sprintf(&h[297], "%.31s", "");		/* How do I get group reliably? Do I
-										 * need to? */
+	/* XXX: Do we need to care about setting correct group name? */
+	sprintf(&h[297], "%.31s", "postgres");
 
-	/* Maj Dev 8 */
-	sprintf(&h[329], "%6o ", 0);
+	/* Major Dev 8 */
+	sprintf(&h[329], "%07o ", 0);
 
-	/* Min Dev 8 */
-	sprintf(&h[337], "%6o ", 0);
-#endif
+	/* Minor Dev 8 */
+	sprintf(&h[337], "%07o ", 0);
 
-	while ((sum = _tarChecksum(h)) != lastSum)
-	{
-		sprintf(&h[148], "%06o ", sum);
-		lastSum = sum;
-	}
+	/* Prefix 155 - not used, leave as nulls */
 
+	/*
+	 * We mustn't overwrite the next field while inserting the checksum.
+	 * Fortunately, the checksum can't exceed 6 octal digits, so we just write
+	 * 6 digits, a space, and a null, which is legal per POSIX.
+	 */
+	sprintf(&h[148], "%06o ", _tarChecksum(h));
+
+	/* Now write the completed header. */
 	if (fwrite(h, 1, 512, th->tarFH) != 512)
 		exit_horribly(modulename, "could not write to output file: %s\n", strerror(errno));
 }
