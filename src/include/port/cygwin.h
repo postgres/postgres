@@ -9,10 +9,6 @@
 #undef HAVE_UNIX_SOCKETS
 #endif
 
-#if __GNUC__ && ! defined (__declspec)
-#error You need egcs 1.1 or newer for compiling!
-#endif
-
 #ifdef BUILDING_DLL
 #define PGDLLIMPORT __declspec (dllexport)
 #else

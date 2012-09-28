@@ -68,10 +68,6 @@
 /* defines for dynamic linking on Win32 platform */
 #if defined(WIN32) || defined(__CYGWIN__)
 
-#if __GNUC__ && ! defined (__declspec)
-#error You need egcs 1.1 or newer for compiling!
-#endif
-
 #ifdef BUILDING_DLL
 #define PGDLLIMPORT __declspec (dllexport)
 #else							/* not BUILDING_DLL */
