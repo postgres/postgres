@@ -647,56 +647,46 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 	lclTocEntry *tctx = (lclTocEntry *) te->formatData;
-	char	   *tmpCopy;
-	size_t		i,
-				pos1,
-				pos2;
+	int			pos1;
 
 	if (!tctx->filename)
 		return;
 
+	/*
+	 * If we're writing the special restore.sql script, emit a suitable
+	 * command to include each table's data from the corresponding file.
+	 *
+	 * In the COPY case this is a bit klugy because the regular COPY command
+	 * was already printed before we get control.
+	 */
 	if (ctx->isSpecialScript)
 	{
-		if (!te->copyStmt)
-			return;
+		if (te->copyStmt)
+		{
+			/* Abort the COPY FROM stdin */
+			ahprintf(AH, "\\.\n");
 
-		/* Abort the default COPY */
-		ahprintf(AH, "\\.\n");
+			/*
+			 * The COPY statement should look like "COPY ... FROM stdin;\n",
+			 * see dumpTableData().
+			 */
+			pos1 = (int) strlen(te->copyStmt) - 13;
+			if (pos1 < 6 || strncmp(te->copyStmt, "COPY ", 5) != 0 ||
+				strcmp(te->copyStmt + pos1, " FROM stdin;\n") != 0)
+				exit_horribly(modulename,
+							  "unexpected COPY statement syntax: \"%s\"\n",
+							  te->copyStmt);
 
-		/* Get a copy of the COPY statement and clean it up */
-		tmpCopy = pg_strdup(te->copyStmt);
-		for (i = 0; i < strlen(tmpCopy); i++)
-			tmpCopy[i] = pg_tolower((unsigned char) tmpCopy[i]);
-
-		/*
-		 * This is very nasty; we don't know if the archive used WITH OIDS, so
-		 * we search the string for it in a paranoid sort of way.
-		 */
-		if (strncmp(tmpCopy, "copy ", 5) != 0)
-			exit_horribly(modulename,
-						  "invalid COPY statement -- could not find \"copy\" in string \"%s\"\n", tmpCopy);
-
-		pos1 = 5;
-		for (pos1 = 5; pos1 < strlen(tmpCopy); pos1++)
-			if (tmpCopy[pos1] != ' ')
-				break;
-
-		if (tmpCopy[pos1] == '"')
-			pos1 += 2;
-
-		pos1 += strlen(te->tag);
-
-		for (pos2 = pos1; pos2 < strlen(tmpCopy); pos2++)
-			if (strncmp(&tmpCopy[pos2], "from stdin", 10) == 0)
-				break;
-
-		if (pos2 >= strlen(tmpCopy))
-			exit_horribly(modulename,
-						  "invalid COPY statement -- could not find \"from stdin\" in string \"%s\" starting at position %lu\n",
-						  tmpCopy, (unsigned long) pos1);
-
-		ahwrite(tmpCopy, 1, pos2, AH);	/* 'copy "table" [with oids]' */
-		ahprintf(AH, " from '$$PATH$$/%s' %s", tctx->filename, &tmpCopy[pos2 + 10]);
+			/* Emit all but the FROM part ... */
+			ahwrite(te->copyStmt, 1, pos1, AH);
+			/* ... and insert modified FROM */
+			ahprintf(AH, " FROM '$$PATH$$/%s';\n\n", tctx->filename);
+		}
+		else
+		{
+			/* --inserts mode, no worries, just include the data file */
+			ahprintf(AH, "\\i $$PATH$$/%s\n\n", tctx->filename);
+		}
 
 		return;
 	}
@@ -843,18 +833,14 @@ _CloseArchive(ArchiveHandle *AH)
 		 * if the files have been extracted.
 		 */
 		th = tarOpen(AH, "restore.sql", 'w');
-		tarPrintf(AH, th, "create temporary table pgdump_restore_path(p text);\n");
+
 		tarPrintf(AH, th, "--\n"
 				  "-- NOTE:\n"
 				  "--\n"
 				  "-- File paths need to be edited. Search for $$PATH$$ and\n"
 				  "-- replace it with the path to the directory containing\n"
 				  "-- the extracted data files.\n"
-				  "--\n"
-				  "-- Edit the following to match the path where the\n"
-				  "-- tar archive has been extracted.\n"
 				  "--\n");
-		tarPrintf(AH, th, "insert into pgdump_restore_path values('/tmp');\n\n");
 
 		AH->CustomOutPtr = _scriptOut;
 
@@ -881,6 +867,8 @@ _CloseArchive(ArchiveHandle *AH)
 		AH->public.verbose = savVerbose;
 
 		tarClose(AH, th);
+
+		ctx->isSpecialScript = 0;
 
 		/*
 		 * EOF marker for tar files is two blocks of NULLs.
