@@ -302,7 +302,7 @@ $$ LANGUAGE plpythonu;
       <para>
        PostgreSQL <type>smallint</type> and <type>int</type> are
        converted to Python <type>int</type>.
-       PostgreSQL <type>bigint</type> is converted
+       PostgreSQL <type>bigint</type> and <type>oid</type> are converted
        to <type>long</type> in Python 2 and to <type>int</type> in
        Python 3.
       </para>

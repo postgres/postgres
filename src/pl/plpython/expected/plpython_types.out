@@ -321,6 +321,34 @@ CONTEXT:  PL/Python function "test_type_conversion_float8"
                             
 (1 row)
 
+CREATE FUNCTION test_type_conversion_oid(x oid) RETURNS oid AS $$
+plpy.info(x, type(x))
+return x
+$$ LANGUAGE plpythonu;
+SELECT * FROM test_type_conversion_oid(100);
+INFO:  (100L, <type 'long'>)
+CONTEXT:  PL/Python function "test_type_conversion_oid"
+ test_type_conversion_oid 
+--------------------------
+                      100
+(1 row)
+
+SELECT * FROM test_type_conversion_oid(2147483649);
+INFO:  (2147483649L, <type 'long'>)
+CONTEXT:  PL/Python function "test_type_conversion_oid"
+ test_type_conversion_oid 
+--------------------------
+               2147483649
+(1 row)
+
+SELECT * FROM test_type_conversion_oid(null);
+INFO:  (None, <type 'NoneType'>)
+CONTEXT:  PL/Python function "test_type_conversion_oid"
+ test_type_conversion_oid 
+--------------------------
+                         
+(1 row)
+
 CREATE FUNCTION test_type_conversion_text(x text) RETURNS text AS $$
 plpy.info(x, type(x))
 return x

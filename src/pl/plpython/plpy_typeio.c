@@ -39,6 +39,7 @@ static PyObject *PLyFloat_FromNumeric(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyInt_FromInt16(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyInt_FromInt32(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyLong_FromInt64(PLyDatumToOb *arg, Datum d);
+static PyObject *PLyLong_FromOid(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyBytes_FromBytea(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyString_FromDatum(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyList_FromArray(PLyDatumToOb *arg, Datum d);
@@ -460,6 +461,9 @@ PLy_input_datum_func2(PLyDatumToOb *arg, Oid typeOid, HeapTuple typeTup)
 		case INT8OID:
 			arg->func = PLyLong_FromInt64;
 			break;
+		case OIDOID:
+			arg->func = PLyLong_FromOid;
+			break;
 		case BYTEAOID:
 			arg->func = PLyBytes_FromBytea;
 			break;
@@ -544,6 +548,12 @@ PLyLong_FromInt64(PLyDatumToOb *arg, Datum d)
 		return PyLong_FromLongLong(DatumGetInt64(d));
 	else
 		return PyLong_FromLong(DatumGetInt64(d));
+}
+
+static PyObject *
+PLyLong_FromOid(PLyDatumToOb *arg, Datum d)
+{
+	return PyLong_FromUnsignedLong(DatumGetObjectId(d));
 }
 
 static PyObject *

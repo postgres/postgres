@@ -119,6 +119,16 @@ SELECT * FROM test_type_conversion_float8(5000000000.5);
 SELECT * FROM test_type_conversion_float8(null);
 
 
+CREATE FUNCTION test_type_conversion_oid(x oid) RETURNS oid AS $$
+plpy.info(x, type(x))
+return x
+$$ LANGUAGE plpythonu;
+
+SELECT * FROM test_type_conversion_oid(100);
+SELECT * FROM test_type_conversion_oid(2147483649);
+SELECT * FROM test_type_conversion_oid(null);
+
+
 CREATE FUNCTION test_type_conversion_text(x text) RETURNS text AS $$
 plpy.info(x, type(x))
 return x
