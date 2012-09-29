@@ -83,7 +83,7 @@ test: select_into select_distinct select_distinct_on select_implicit select_havi
 # ----------
 # Another group of parallel tests
 # ----------
-test: privileges security_label collate
+test: privileges security_label collate alter_generic
 
 test: misc
 # rules cannot run concurrently with any test that creates a view
@@ -101,7 +101,7 @@ test: select_views portals_p2 foreign_key cluster dependency guc bitmapops combo
 # NB: temp.sql does a reconnect which transiently uses 2 connections,
 # so keep this parallel group to at most 19 tests
 # ----------
-test: plancache limit plpgsql copy2 temp domain rangefuncs prepare without_oid conversion truncate alter_table alter_generic sequence polymorphism rowtypes returning largeobject with xml
+test: plancache limit plpgsql copy2 temp domain rangefuncs prepare without_oid conversion truncate alter_table sequence polymorphism rowtypes returning largeobject with xml
 
 # run stats by itself because its delay may be insufficient under heavy load
 test: stats
