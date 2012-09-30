@@ -3,8 +3,11 @@
 # Force _GNU_SOURCE on; plperl is broken with Perl 5.8.0 otherwise
 CPPFLAGS="$CPPFLAGS -D_GNU_SOURCE"
 
-# Many distributors use this, so we might as well see the warnings as well.
-CPPFLAGS="$CPPFLAGS -D_FORTIFY_SOURCE=2"
+# Many distributors use this, so we might as well see the warnings as
+# well.  ICC doesn't work when this is enabled.
+if test "$ICC" != "yes"; then
+  CPPFLAGS="$CPPFLAGS -D_FORTIFY_SOURCE=2"
+fi
 
 # If --enable-profiling is specified, we need -DLINUX_PROFILE
 PLATFORM_PROFILE_FLAGS="-DLINUX_PROFILE"
