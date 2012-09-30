@@ -689,6 +689,47 @@ typedef NameData *Name;
 	} while (0)
 
 
+/*
+ * Macros to support compile-time assertion checks, if the compiler has them.
+ *
+ * If the "condition" (a compile-time-constant expression) evaluates to false,
+ * throw a compile error using the "errmessage" (a string literal).
+ *
+ * gcc 4.6 and up supports _Static_assert(), but it has bizarre syntactic
+ * placement restrictions.  These macros make it safe to use as a statement
+ * or in an expression, respectively.
+ */
+#ifdef HAVE__STATIC_ASSERT
+#define StaticAssertStmt(condition, errmessage) \
+	do { _Static_assert(condition, errmessage); } while(0)
+#define StaticAssertExpr(condition, errmessage) \
+	({ StaticAssertStmt(condition, errmessage); true; })
+#else /* !HAVE__STATIC_ASSERT */
+#define StaticAssertStmt(condition, errmessage)
+#define StaticAssertExpr(condition, errmessage) ((void) true)
+#endif /* HAVE__STATIC_ASSERT */
+
+
+/*
+ * Compile-time checks that a variable (or expression) has the specified type.
+ *
+ * AssertVariableIsOfType() can be used as a statement.
+ * AssertVariableIsOfTypeMacro() is intended for use in macros, eg
+ *		#define foo(x) (AssertVariableIsOfTypeMacro(x, int), bar(x))
+ */
+#ifdef HAVE__BUILTIN_TYPES_COMPATIBLE_P
+#define AssertVariableIsOfType(varname, typename) \
+	StaticAssertStmt(__builtin_types_compatible_p(__typeof__(varname), typename), \
+	CppAsString(varname) " does not have type " CppAsString(typename))
+#define AssertVariableIsOfTypeMacro(varname, typename) \
+	StaticAssertExpr(__builtin_types_compatible_p(__typeof__(varname), typename), \
+	CppAsString(varname) " does not have type " CppAsString(typename))
+#else /* !HAVE__BUILTIN_TYPES_COMPATIBLE_P */
+#define AssertVariableIsOfType(varname, typename)
+#define AssertVariableIsOfTypeMacro(varname, typename) ((void) true)
+#endif /* HAVE__BUILTIN_TYPES_COMPATIBLE_P */
+
+
 /* ----------------------------------------------------------------
  *				Section 7:	random stuff
  * ----------------------------------------------------------------

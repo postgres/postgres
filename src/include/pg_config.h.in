@@ -635,6 +635,12 @@
 /* Define to 1 if you have the <winldap.h> header file. */
 #undef HAVE_WINLDAP_H
 
+/* Define to 1 if your compiler understands __builtin_types_compatible_p. */
+#undef HAVE__BUILTIN_TYPES_COMPATIBLE_P
+
+/* Define to 1 if your compiler understands _Static_assert. */
+#undef HAVE__STATIC_ASSERT
+
 /* Define to the appropriate snprintf format for 64-bit ints. */
 #undef INT64_FORMAT
 
