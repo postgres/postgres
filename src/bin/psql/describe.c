@@ -2522,16 +2522,19 @@ listDbRoleSettings(const char *pattern, const char *pattern2)
 	{
 		bool		havewhere;
 
-		printfPQExpBuffer(&buf, "SELECT rolname AS role, datname AS database,\n"
-				"pg_catalog.array_to_string(setconfig, E'\\n') AS settings\n"
+		printfPQExpBuffer(&buf, "SELECT rolname AS \"%s\", datname AS \"%s\",\n"
+				"pg_catalog.array_to_string(setconfig, E'\\n') AS \"%s\"\n"
 						  "FROM pg_db_role_setting AS s\n"
 				   "LEFT JOIN pg_database ON pg_database.oid = setdatabase\n"
-						  "LEFT JOIN pg_roles ON pg_roles.oid = setrole\n");
+						  "LEFT JOIN pg_roles ON pg_roles.oid = setrole\n",
+						  gettext_noop("Role"),
+						  gettext_noop("Database"),
+						  gettext_noop("Settings"));
 		havewhere = processSQLNamePattern(pset.db, &buf, pattern, false, false,
 									   NULL, "pg_roles.rolname", NULL, NULL);
 		processSQLNamePattern(pset.db, &buf, pattern2, havewhere, false,
 							  NULL, "pg_database.datname", NULL, NULL);
-		appendPQExpBufferStr(&buf, "ORDER BY role, database;");
+		appendPQExpBufferStr(&buf, "ORDER BY 1, 2;");
 	}
 	else
 	{
