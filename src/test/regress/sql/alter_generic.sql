@@ -87,38 +87,9 @@ SELECT n.nspname, proname, prorettype::regtype, proisagg, a.rolname
   ORDER BY nspname, proname;
 
 --
--- Collation
+-- We would test collations here, but it's not possible because the error
+-- messages tend to be nonportable.
 --
-SET SESSION AUTHORIZATION regtest_alter_user1;
-CREATE COLLATION alt_coll1 (locale = 'C');
-CREATE COLLATION alt_coll2 (locale = 'C');
-
--- can't test this: the error message includes the encoding name
--- ALTER COLLATION alt_coll1 RENAME TO alt_coll2;  -- failed (name conflict)
-ALTER COLLATION alt_coll1 RENAME TO alt_coll3;  -- OK
-ALTER COLLATION alt_coll2 OWNER TO regtest_alter_user2;  -- failed (no role membership)
-ALTER COLLATION alt_coll2 OWNER TO regtest_alter_user3;  -- OK
-ALTER COLLATION alt_coll2 SET SCHEMA alt_nsp2;  -- OK
-
-SET SESSION AUTHORIZATION regtest_alter_user2;
-CREATE COLLATION alt_coll1 (locale = 'C');
-CREATE COLLATION alt_coll2 (locale = 'C');
-
-ALTER COLLATION alt_coll3 RENAME TO alt_coll4;  -- failed (not owner)
-ALTER COLLATION alt_coll1 RENAME TO alt_coll4;  -- OK
-ALTER COLLATION alt_coll3 OWNER TO regtest_alter_user2;  -- failed (not owner)
-ALTER COLLATION alt_coll2 OWNER TO regtest_alter_user3;  -- failed (no role membership)
-ALTER COLLATION alt_coll3 SET SCHEMA alt_nsp2;  -- failed (not owner)
--- can't test this: the error message includes the encoding name
--- ALTER COLLATION alt_coll2 SET SCHEMA alt_nsp2;  -- failed (name conflict)
-
-RESET SESSION AUTHORIZATION;
-
-SELECT n.nspname, c.collname, a.rolname
-  FROM pg_collation c, pg_namespace n, pg_authid a
-  WHERE c.collnamespace = n.oid AND c.collowner = a.oid
-    AND n.nspname IN ('alt_nsp1', 'alt_nsp2')
-  ORDER BY n.nspname, c.collname;
 
 --
 -- Conversion
@@ -271,6 +242,7 @@ ALTER OPERATOR FAMILY alt_opf1 USING hash RENAME TO alt_opf4;  -- OK
 ALTER OPERATOR FAMILY alt_opf3 USING hash OWNER TO regtest_alter_user2;  -- failed (not owner)
 ALTER OPERATOR FAMILY alt_opf2 USING hash OWNER TO regtest_alter_user3;  -- failed (no role membership)
 ALTER OPERATOR FAMILY alt_opf3 USING hash SET SCHEMA alt_nsp2;  -- failed (not owner)
+-- can't test this: the error message includes the raw oid of namespace
 -- ALTER OPERATOR FAMILY alt_opf2 USING hash SET SCHEMA alt_nsp2;  -- failed (name conflict)
 
 ALTER OPERATOR CLASS alt_opc3 USING hash RENAME TO alt_opc4;	-- failed (not owner)
@@ -278,6 +250,7 @@ ALTER OPERATOR CLASS alt_opc1 USING hash RENAME TO alt_opc4;  -- OK
 ALTER OPERATOR CLASS alt_opc3 USING hash OWNER TO regtest_alter_user2;  -- failed (not owner)
 ALTER OPERATOR CLASS alt_opc2 USING hash OWNER TO regtest_alter_user3;  -- failed (no role membership)
 ALTER OPERATOR CLASS alt_opc3 USING hash SET SCHEMA alt_nsp2;  -- failed (not owner)
+-- can't test this: the error message includes the raw oid of namespace
 -- ALTER OPERATOR CLASS alt_opc2 USING hash SET SCHEMA alt_nsp2;  -- failed (name conflict)
 
 RESET SESSION AUTHORIZATION;

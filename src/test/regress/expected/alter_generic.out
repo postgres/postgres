@@ -100,46 +100,9 @@ SELECT n.nspname, proname, prorettype::regtype, proisagg, a.rolname
 (8 rows)
 
 --
--- Collation
+-- We would test collations here, but it's not possible because the error
+-- messages tend to be nonportable.
 --
-SET SESSION AUTHORIZATION regtest_alter_user1;
-CREATE COLLATION alt_coll1 (locale = 'C');
-CREATE COLLATION alt_coll2 (locale = 'C');
--- can't test this: the error message includes the encoding name
--- ALTER COLLATION alt_coll1 RENAME TO alt_coll2;  -- failed (name conflict)
-ALTER COLLATION alt_coll1 RENAME TO alt_coll3;  -- OK
-ALTER COLLATION alt_coll2 OWNER TO regtest_alter_user2;  -- failed (no role membership)
-ERROR:  must be member of role "regtest_alter_user2"
-ALTER COLLATION alt_coll2 OWNER TO regtest_alter_user3;  -- OK
-ALTER COLLATION alt_coll2 SET SCHEMA alt_nsp2;  -- OK
-SET SESSION AUTHORIZATION regtest_alter_user2;
-CREATE COLLATION alt_coll1 (locale = 'C');
-CREATE COLLATION alt_coll2 (locale = 'C');
-ALTER COLLATION alt_coll3 RENAME TO alt_coll4;  -- failed (not owner)
-ERROR:  must be owner of collation alt_coll3
-ALTER COLLATION alt_coll1 RENAME TO alt_coll4;  -- OK
-ALTER COLLATION alt_coll3 OWNER TO regtest_alter_user2;  -- failed (not owner)
-ERROR:  must be owner of collation alt_coll3
-ALTER COLLATION alt_coll2 OWNER TO regtest_alter_user3;  -- failed (no role membership)
-ERROR:  must be member of role "regtest_alter_user3"
-ALTER COLLATION alt_coll3 SET SCHEMA alt_nsp2;  -- failed (not owner)
-ERROR:  must be owner of collation alt_coll3
--- can't test this: the error message includes the encoding name
--- ALTER COLLATION alt_coll2 SET SCHEMA alt_nsp2;  -- failed (name conflict)
-RESET SESSION AUTHORIZATION;
-SELECT n.nspname, c.collname, a.rolname
-  FROM pg_collation c, pg_namespace n, pg_authid a
-  WHERE c.collnamespace = n.oid AND c.collowner = a.oid
-    AND n.nspname IN ('alt_nsp1', 'alt_nsp2')
-  ORDER BY n.nspname, c.collname;
- nspname  | collname  |       rolname       
-----------+-----------+---------------------
- alt_nsp1 | alt_coll2 | regtest_alter_user2
- alt_nsp1 | alt_coll3 | regtest_alter_user1
- alt_nsp1 | alt_coll4 | regtest_alter_user2
- alt_nsp2 | alt_coll2 | regtest_alter_user3
-(4 rows)
-
 --
 -- Conversion
 --
@@ -316,6 +279,7 @@ ALTER OPERATOR FAMILY alt_opf2 USING hash OWNER TO regtest_alter_user3;  -- fail
 ERROR:  must be member of role "regtest_alter_user3"
 ALTER OPERATOR FAMILY alt_opf3 USING hash SET SCHEMA alt_nsp2;  -- failed (not owner)
 ERROR:  must be owner of operator family alt_opf3
+-- can't test this: the error message includes the raw oid of namespace
 -- ALTER OPERATOR FAMILY alt_opf2 USING hash SET SCHEMA alt_nsp2;  -- failed (name conflict)
 ALTER OPERATOR CLASS alt_opc3 USING hash RENAME TO alt_opc4;	-- failed (not owner)
 ERROR:  must be owner of operator class alt_opc3
@@ -326,6 +290,7 @@ ALTER OPERATOR CLASS alt_opc2 USING hash OWNER TO regtest_alter_user3;  -- faile
 ERROR:  must be member of role "regtest_alter_user3"
 ALTER OPERATOR CLASS alt_opc3 USING hash SET SCHEMA alt_nsp2;  -- failed (not owner)
 ERROR:  must be owner of operator class alt_opc3
+-- can't test this: the error message includes the raw oid of namespace
 -- ALTER OPERATOR CLASS alt_opc2 USING hash SET SCHEMA alt_nsp2;  -- failed (name conflict)
 RESET SESSION AUTHORIZATION;
 SELECT nspname, opfname, amname, rolname
@@ -498,16 +463,13 @@ DROP LANGUAGE alt_lang3 CASCADE;
 DROP LANGUAGE alt_lang4 CASCADE;
 ERROR:  language "alt_lang4" does not exist
 DROP SCHEMA alt_nsp1 CASCADE;
-NOTICE:  drop cascades to 29 other objects
+NOTICE:  drop cascades to 26 other objects
 DETAIL:  drop cascades to function alt_func3(integer)
 drop cascades to function alt_agg3(integer)
 drop cascades to function alt_func4(integer)
 drop cascades to function alt_func2(integer)
 drop cascades to function alt_agg4(integer)
 drop cascades to function alt_agg2(integer)
-drop cascades to collation alt_coll3
-drop cascades to collation alt_coll4
-drop cascades to collation alt_coll2
 drop cascades to conversion alt_conv3
 drop cascades to conversion alt_conv4
 drop cascades to conversion alt_conv2
@@ -529,10 +491,9 @@ drop cascades to text search template alt_ts_temp2
 drop cascades to text search parser alt_ts_prs3
 drop cascades to text search parser alt_ts_prs2
 DROP SCHEMA alt_nsp2 CASCADE;
-NOTICE:  drop cascades to 10 other objects
+NOTICE:  drop cascades to 9 other objects
 DETAIL:  drop cascades to function alt_nsp2.alt_func2(integer)
 drop cascades to function alt_nsp2.alt_agg2(integer)
-drop cascades to collation alt_coll2
 drop cascades to conversion alt_conv2
 drop cascades to operator alt_nsp2.@-@(integer,integer)
 drop cascades to operator family alt_nsp2.alt_opf2 for access method hash
