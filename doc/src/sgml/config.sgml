@@ -1012,8 +1012,8 @@ include 'filename'
       <listitem>
        <para>
         Sets the amount of memory the database server uses for shared
-        memory buffers.  The default is typically 32 megabytes
-        (<literal>32MB</>), but might be less if your kernel settings will
+        memory buffers.  The default is typically 128 megabytes
+        (<literal>128MB</>), but might be less if your kernel settings will
         not support it (as determined during <application>initdb</>).
         This setting must be at least 128 kilobytes.  (Non-default
         values of <symbol>BLCKSZ</symbol> change the minimum.)  However,
