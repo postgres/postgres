@@ -690,14 +690,18 @@ typedef NameData *Name;
 
 
 /*
- * Macros to support compile-time assertion checks, if the compiler has them.
+ * Macros to support compile-time assertion checks.
  *
  * If the "condition" (a compile-time-constant expression) evaluates to false,
  * throw a compile error using the "errmessage" (a string literal).
  *
- * gcc 4.6 and up supports _Static_assert(), but it has bizarre syntactic
+ * gcc 4.6 and up supports _Static_assert(), but there are bizarre syntactic
  * placement restrictions.  These macros make it safe to use as a statement
  * or in an expression, respectively.
+ *
+ * Otherwise we fall back on a kluge that assumes the compiler will complain
+ * about a negative width for a struct bit-field.  This will not include a
+ * helpful error message, but it beats not getting an error at all.
  */
 #ifdef HAVE__STATIC_ASSERT
 #define StaticAssertStmt(condition, errmessage) \
@@ -705,8 +709,10 @@ typedef NameData *Name;
 #define StaticAssertExpr(condition, errmessage) \
 	({ StaticAssertStmt(condition, errmessage); true; })
 #else /* !HAVE__STATIC_ASSERT */
-#define StaticAssertStmt(condition, errmessage)
-#define StaticAssertExpr(condition, errmessage) ((void) true)
+#define StaticAssertStmt(condition, errmessage) \
+	((void) sizeof(struct { int static_assert_failure : (condition) ? 1 : -1; }))
+#define StaticAssertExpr(condition, errmessage) \
+	StaticAssertStmt(condition, errmessage)
 #endif /* HAVE__STATIC_ASSERT */
 
 
@@ -716,6 +722,10 @@ typedef NameData *Name;
  * AssertVariableIsOfType() can be used as a statement.
  * AssertVariableIsOfTypeMacro() is intended for use in macros, eg
  *		#define foo(x) (AssertVariableIsOfTypeMacro(x, int), bar(x))
+ *
+ * If we don't have __builtin_types_compatible_p, we can still assert that
+ * the types have the same size.  This is far from ideal (especially on 32-bit
+ * platforms) but it provides at least some coverage.
  */
 #ifdef HAVE__BUILTIN_TYPES_COMPATIBLE_P
 #define AssertVariableIsOfType(varname, typename) \
@@ -725,8 +735,12 @@ typedef NameData *Name;
 	StaticAssertExpr(__builtin_types_compatible_p(__typeof__(varname), typename), \
 	CppAsString(varname) " does not have type " CppAsString(typename))
 #else /* !HAVE__BUILTIN_TYPES_COMPATIBLE_P */
-#define AssertVariableIsOfType(varname, typename)
-#define AssertVariableIsOfTypeMacro(varname, typename) ((void) true)
+#define AssertVariableIsOfType(varname, typename) \
+	StaticAssertStmt(sizeof(varname) == sizeof(typename), \
+	CppAsString(varname) " does not have type " CppAsString(typename))
+#define AssertVariableIsOfTypeMacro(varname, typename) \
+	StaticAssertExpr(sizeof(varname) == sizeof(typename), \
+	CppAsString(varname) " does not have type " CppAsString(typename))
 #endif /* HAVE__BUILTIN_TYPES_COMPATIBLE_P */
 
 

@@ -94,7 +94,7 @@
  * etc. are compatible.
  *
  * If the above statement isn't true on some bizarre platform, we're
- * a bit hosed (see Assert in hstoreValidOldFormat).
+ * a bit hosed (see StaticAssertStmt in hstoreValidOldFormat).
  */
 typedef struct
 {
@@ -180,7 +180,8 @@ hstoreValidOldFormat(HStore *hs)
 		return 0;
 
 	/* New format uses an HEntry for key and another for value */
-	Assert(sizeof(HOldEntry) == (2 * sizeof(HEntry)));
+	StaticAssertStmt(sizeof(HOldEntry) == 2 * sizeof(HEntry),
+					 "old hstore format is not upward-compatible");
 
 	if (count == 0)
 		return 2;
