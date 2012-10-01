@@ -1929,6 +1929,8 @@ BackendXidGetPid(TransactionId xid)
 
 /*
  * IsBackendPid -- is a given pid a running backend
+ *
+ * This is not called by the backend, but is called by external modules.
  */
 bool
 IsBackendPid(int pid)
