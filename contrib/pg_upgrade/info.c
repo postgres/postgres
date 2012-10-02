@@ -40,14 +40,11 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 	int			relnum;
 	int			num_maps = 0;
 
-	if (old_db->rel_arr.nrels != new_db->rel_arr.nrels)
-		pg_log(PG_FATAL, "old and new databases \"%s\" have a different number of relations\n",
-			   old_db->db_name);
-
 	maps = (FileNameMap *) pg_malloc(sizeof(FileNameMap) *
 									 old_db->rel_arr.nrels);
 
-	for (relnum = 0; relnum < old_db->rel_arr.nrels; relnum++)
+	for (relnum = 0; relnum < Min(old_db->rel_arr.nrels, new_db->rel_arr.nrels);
+		 relnum++)
 	{
 		RelInfo    *old_rel = &old_db->rel_arr.rels[relnum];
 		RelInfo    *new_rel = &new_db->rel_arr.rels[relnum];
@@ -77,6 +74,11 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 								old_rel, new_rel, maps + num_maps);
 		num_maps++;
 	}
+
+	/* Do this check after the loop so hopefully we will produce a clearer error above */
+	if (old_db->rel_arr.nrels != new_db->rel_arr.nrels)
+		pg_log(PG_FATAL, "old and new databases \"%s\" have a different number of relations\n",
+			   old_db->db_name);
 
 	*nmaps = num_maps;
 	return maps;
