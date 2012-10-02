@@ -242,7 +242,7 @@ sub upgradecheck
 	# Much of this comes from the pg_upgrade test.sh script,
 	# but it only covers the --install case, and not the case
 	# where the old and new source or bin dirs are different.
-	# i.e. only the this version to this version check. That's
+	# i.e. only this version to this version check. That's
 	# what pg_upgrade's "make check" does.
 
 	$ENV{PGPORT} ||= 50432;
@@ -273,6 +273,9 @@ sub upgradecheck
 	print "\nStopping old cluster\n\n";
 	system("pg_ctl -m fast stop") == 0 or exit 1;
 	rename $data, "$data.old";
+	# take a breather in case Windows hasn't quite got
+	# the message about the directory moving
+	sleep(5);
 	print "\nSetting up new cluster\n\n";
 	system("initdb") == 0 or exit 1;
 	print "\nRunning pg_upgrade\n\n";
