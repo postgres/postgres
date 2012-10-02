@@ -263,7 +263,7 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier)
 	uint32		hi,
 				lo;
 
-	param = xmalloc0(sizeof(logstreamer_param));
+	param = pg_malloc0(sizeof(logstreamer_param));
 	param->timeline = timeline;
 	param->sysidentifier = sysidentifier;
 
@@ -977,7 +977,7 @@ BaseBackup(void)
 				progname, PQntuples(res), PQnfields(res), 1, 3);
 		disconnect_and_exit(1);
 	}
-	sysidentifier = strdup(PQgetvalue(res, 0, 0));
+	sysidentifier = pg_strdup(PQgetvalue(res, 0, 0));
 	timeline = atoi(PQgetvalue(res, 0, 1));
 	PQclear(res);
 
@@ -1286,7 +1286,7 @@ main(int argc, char **argv)
 		switch (c)
 		{
 			case 'D':
-				basedir = xstrdup(optarg);
+				basedir = pg_strdup(optarg);
 				break;
 			case 'F':
 				if (strcmp(optarg, "p") == 0 || strcmp(optarg, "plain") == 0)
@@ -1338,7 +1338,7 @@ main(int argc, char **argv)
 				}
 				break;
 			case 'l':
-				label = xstrdup(optarg);
+				label = pg_strdup(optarg);
 				break;
 			case 'z':
 #ifdef HAVE_LIBZ
@@ -1369,13 +1369,13 @@ main(int argc, char **argv)
 				}
 				break;
 			case 'h':
-				dbhost = xstrdup(optarg);
+				dbhost = pg_strdup(optarg);
 				break;
 			case 'p':
-				dbport = xstrdup(optarg);
+				dbport = pg_strdup(optarg);
 				break;
 			case 'U':
-				dbuser = xstrdup(optarg);
+				dbuser = pg_strdup(optarg);
 				break;
 			case 'w':
 				dbgetpassword = -1;

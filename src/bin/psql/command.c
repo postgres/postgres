@@ -1472,7 +1472,7 @@ prompt_for_password(const char *username)
 	{
 		char	   *prompt_text;
 
-		prompt_text = malloc(strlen(username) + 100);
+		prompt_text = pg_malloc(strlen(username) + 100);
 		snprintf(prompt_text, strlen(username) + 100,
 				 _("Password for user %s: "), username);
 		result = simple_prompt(prompt_text, 100, false);
@@ -1549,7 +1549,7 @@ do_connect(char *dbname, char *user, char *host, char *port)
 	}
 	else if (o_conn && user && strcmp(PQuser(o_conn), user) == 0)
 	{
-		password = strdup(PQpass(o_conn));
+		password = pg_strdup(PQpass(o_conn));
 	}
 
 	while (true)

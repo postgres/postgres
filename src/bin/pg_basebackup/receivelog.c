@@ -97,7 +97,7 @@ open_walfile(XLogRecPtr startpoint, uint32 timeline, char *basedir,
 	}
 
 	/* New, empty, file. So pad it to 16Mb with zeroes */
-	zerobuf = xmalloc0(XLOG_BLCKSZ);
+	zerobuf = pg_malloc0(XLOG_BLCKSZ);
 	for (bytes = 0; bytes < XLogSegSize; bytes += XLOG_BLCKSZ)
 	{
 		if (write(f, zerobuf, XLOG_BLCKSZ) != XLOG_BLCKSZ)

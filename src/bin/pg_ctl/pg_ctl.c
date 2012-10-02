@@ -118,7 +118,7 @@ write_stderr(const char *fmt,...)
    the supplied arguments. */
 __attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
 static void *pg_malloc(size_t size);
-static char *xstrdup(const char *s);
+static char *pg_strdup(const char *s);
 static void do_advice(void);
 static void do_help(void);
 static void set_mode(char *modeopt);
@@ -244,7 +244,7 @@ pg_malloc(size_t size)
 
 
 static char *
-xstrdup(const char *s)
+pg_strdup(const char *s)
 {
 	char	   *result;
 
@@ -351,7 +351,7 @@ readfile(const char *path)
 	rewind(infile);
 	nlines = 0;
 	while (fgets(buffer, maxlength + 1, infile) != NULL)
-		result[nlines++] = xstrdup(buffer);
+		result[nlines++] = pg_strdup(buffer);
 
 	fclose(infile);
 	free(buffer);
@@ -1931,7 +1931,7 @@ adjust_data_dir(void)
 	if (exec_path == NULL)
 		my_exec_path = find_other_exec_or_die(argv0, "postgres", PG_BACKEND_VERSIONSTR);
 	else
-		my_exec_path = xstrdup(exec_path);
+		my_exec_path = pg_strdup(exec_path);
 
 	snprintf(cmd, MAXPGPATH, SYSTEMQUOTE "\"%s\" %s%s -C data_directory" SYSTEMQUOTE,
 			 my_exec_path, pgdata_opt ? pgdata_opt : "", post_opts ?
@@ -1951,7 +1951,7 @@ adjust_data_dir(void)
 		*strchr(filename, '\n') = '\0';
 
 	free(pg_data);
-	pg_data = xstrdup(filename);
+	pg_data = pg_strdup(filename);
 	canonicalize_path(pg_data);
 }
 
@@ -2042,7 +2042,7 @@ main(int argc, char **argv)
 						char	   *pgdata_D;
 						char	   *env_var = pg_malloc(strlen(optarg) + 8);
 
-						pgdata_D = xstrdup(optarg);
+						pgdata_D = pg_strdup(optarg);
 						canonicalize_path(pgdata_D);
 						snprintf(env_var, strlen(optarg) + 8, "PGDATA=%s",
 								 pgdata_D);
@@ -2060,22 +2060,22 @@ main(int argc, char **argv)
 						break;
 					}
 				case 'l':
-					log_file = xstrdup(optarg);
+					log_file = pg_strdup(optarg);
 					break;
 				case 'm':
 					set_mode(optarg);
 					break;
 				case 'N':
-					register_servicename = xstrdup(optarg);
+					register_servicename = pg_strdup(optarg);
 					break;
 				case 'o':
-					post_opts = xstrdup(optarg);
+					post_opts = pg_strdup(optarg);
 					break;
 				case 'p':
-					exec_path = xstrdup(optarg);
+					exec_path = pg_strdup(optarg);
 					break;
 				case 'P':
-					register_password = xstrdup(optarg);
+					register_password = pg_strdup(optarg);
 					break;
 				case 's':
 					silent_mode = true;
@@ -2094,16 +2094,11 @@ main(int argc, char **argv)
 					break;
 				case 'U':
 					if (strchr(optarg, '\\'))
-						register_username = xstrdup(optarg);
+						register_username = pg_strdup(optarg);
 					else
 						/* Prepend .\ for local accounts */
 					{
-						register_username = malloc(strlen(optarg) + 3);
-						if (!register_username)
-						{
-							write_stderr(_("%s: out of memory\n"), progname);
-							exit(1);
-						}
+						register_username = pg_malloc(strlen(optarg) + 3);
 						strcpy(register_username, ".\\");
 						strcat(register_username, optarg);
 					}
@@ -2192,9 +2187,9 @@ main(int argc, char **argv)
 	pg_config = getenv("PGDATA");
 	if (pg_config)
 	{
-		pg_config = xstrdup(pg_config);
+		pg_config = pg_strdup(pg_config);
 		canonicalize_path(pg_config);
-		pg_data = xstrdup(pg_config);
+		pg_data = pg_strdup(pg_config);
 	}
 
 	/* -D might point at config-only directory; if so find the real PGDATA */

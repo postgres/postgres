@@ -1150,7 +1150,7 @@ psql_scan_create(void)
 {
 	PsqlScanState state;
 
-	state = (PsqlScanStateData *) pg_malloc_zero(sizeof(PsqlScanStateData));
+	state = (PsqlScanStateData *) pg_malloc0(sizeof(PsqlScanStateData));
 
 	psql_scan_reset(state);
 

@@ -178,7 +178,7 @@ static char bin_path[MAXPGPATH];
 static char backend_exec[MAXPGPATH];
 
 static void *pg_malloc(size_t size);
-static char *xstrdup(const char *s);
+static char *pg_strdup(const char *s);
 static char **replace_token(char **lines,
 			  const char *token, const char *replacement);
 
@@ -304,7 +304,7 @@ pg_malloc(size_t size)
 }
 
 static char *
-xstrdup(const char *s)
+pg_strdup(const char *s)
 {
 	char	   *result;
 
@@ -453,7 +453,7 @@ readfile(const char *path)
 	rewind(infile);
 	nlines = 0;
 	while (fgets(buffer, maxlength + 1, infile) != NULL)
-		result[nlines++] = xstrdup(buffer);
+		result[nlines++] = pg_strdup(buffer);
 
 	fclose(infile);
 	free(buffer);
@@ -796,7 +796,7 @@ get_id(void)
 	}
 #endif
 
-	return xstrdup(pw->pw_name);
+	return pg_strdup(pw->pw_name);
 }
 
 static char *
@@ -805,7 +805,7 @@ encodingid_to_string(int enc)
 	char		result[20];
 
 	sprintf(result, "%d", enc);
-	return xstrdup(result);
+	return pg_strdup(result);
 }
 
 /*
@@ -888,10 +888,10 @@ find_matching_ts_config(const char *lc_type)
 	 * underscore.	Just for paranoia, we also stop at '.' or '@'.
 	 */
 	if (lc_type == NULL)
-		langname = xstrdup("");
+		langname = pg_strdup("");
 	else
 	{
-		ptr = langname = xstrdup(lc_type);
+		ptr = langname = pg_strdup(lc_type);
 		while (*ptr && *ptr != '_' && *ptr != '.' && *ptr != '@')
 			ptr++;
 		*ptr = '\0';
@@ -1410,10 +1410,10 @@ bootstrap_template1(void)
 	 * there doesn't seem to be any compelling reason to do that.
 	 */
 	snprintf(cmd, sizeof(cmd), "LC_COLLATE=%s", lc_collate);
-	putenv(xstrdup(cmd));
+	putenv(pg_strdup(cmd));
 
 	snprintf(cmd, sizeof(cmd), "LC_CTYPE=%s", lc_ctype);
-	putenv(xstrdup(cmd));
+	putenv(pg_strdup(cmd));
 
 	unsetenv("LC_ALL");
 
@@ -1531,7 +1531,7 @@ get_set_pwd(void)
 		while (i > 0 && (pwdbuf[i - 1] == '\r' || pwdbuf[i - 1] == '\n'))
 			pwdbuf[--i] = '\0';
 
-		pwd1 = xstrdup(pwdbuf);
+		pwd1 = pg_strdup(pwdbuf);
 
 	}
 	printf(_("setting password ... "));
@@ -2065,7 +2065,7 @@ set_info_version(void)
 				minor = 0,
 				micro = 0;
 	char	   *endptr;
-	char	   *vstr = xstrdup(PG_VERSION);
+	char	   *vstr = pg_strdup(PG_VERSION);
 	char	   *ptr;
 
 	ptr = vstr + (strlen(vstr) - 1);
@@ -2433,7 +2433,7 @@ locale_date_order(const char *locale)
 	save = setlocale(LC_TIME, NULL);
 	if (!save)
 		return result;
-	save = xstrdup(save);
+	save = pg_strdup(save);
 
 	setlocale(LC_TIME, locale);
 
@@ -2493,14 +2493,14 @@ check_locale_name(int category, const char *locale, char **canonname)
 		return false;			/* won't happen, we hope */
 
 	/* save may be pointing at a modifiable scratch variable, so copy it. */
-	save = xstrdup(save);
+	save = pg_strdup(save);
 
 	/* set the locale with setlocale, to see if it accepts it. */
 	res = setlocale(category, locale);
 
 	/* save canonical name if requested. */
 	if (res && canonname)
-		*canonname = xstrdup(res);
+		*canonname = pg_strdup(res);
 
 	/* restore old value. */
 	if (!setlocale(category, save))
@@ -2588,34 +2588,34 @@ setlocales(void)
 	if (check_locale_name(LC_CTYPE, lc_ctype, &canonname))
 		lc_ctype = canonname;
 	else
-		lc_ctype = xstrdup(setlocale(LC_CTYPE, NULL));
+		lc_ctype = pg_strdup(setlocale(LC_CTYPE, NULL));
 	if (check_locale_name(LC_COLLATE, lc_collate, &canonname))
 		lc_collate = canonname;
 	else
-		lc_collate = xstrdup(setlocale(LC_COLLATE, NULL));
+		lc_collate = pg_strdup(setlocale(LC_COLLATE, NULL));
 	if (check_locale_name(LC_NUMERIC, lc_numeric, &canonname))
 		lc_numeric = canonname;
 	else
-		lc_numeric = xstrdup(setlocale(LC_NUMERIC, NULL));
+		lc_numeric = pg_strdup(setlocale(LC_NUMERIC, NULL));
 	if (check_locale_name(LC_TIME, lc_time, &canonname))
 		lc_time = canonname;
 	else
-		lc_time = xstrdup(setlocale(LC_TIME, NULL));
+		lc_time = pg_strdup(setlocale(LC_TIME, NULL));
 	if (check_locale_name(LC_MONETARY, lc_monetary, &canonname))
 		lc_monetary = canonname;
 	else
-		lc_monetary = xstrdup(setlocale(LC_MONETARY, NULL));
+		lc_monetary = pg_strdup(setlocale(LC_MONETARY, NULL));
 #if defined(LC_MESSAGES) && !defined(WIN32)
 	if (check_locale_name(LC_MESSAGES, lc_messages, &canonname))
 		lc_messages = canonname;
 	else
-		lc_messages = xstrdup(setlocale(LC_MESSAGES, NULL));
+		lc_messages = pg_strdup(setlocale(LC_MESSAGES, NULL));
 #else
 	/* when LC_MESSAGES is not available, use the LC_CTYPE setting */
 	if (check_locale_name(LC_CTYPE, lc_messages, &canonname))
 		lc_messages = canonname;
 	else
-		lc_messages = xstrdup(setlocale(LC_CTYPE, NULL));
+		lc_messages = pg_strdup(setlocale(LC_CTYPE, NULL));
 #endif
 }
 
@@ -2910,7 +2910,7 @@ main(int argc, char *argv[])
 		switch (c)
 		{
 			case 'A':
-				authmethodlocal = authmethodhost = xstrdup(optarg);
+				authmethodlocal = authmethodhost = pg_strdup(optarg);
 
 				/*
 				 * When ident is specified, use peer for local connections.
@@ -2923,22 +2923,22 @@ main(int argc, char *argv[])
 					authmethodhost = "ident";
 				break;
 			case 10:
-				authmethodlocal = xstrdup(optarg);
+				authmethodlocal = pg_strdup(optarg);
 				break;
 			case 11:
-				authmethodhost = xstrdup(optarg);
+				authmethodhost = pg_strdup(optarg);
 				break;
 			case 'D':
-				pg_data = xstrdup(optarg);
+				pg_data = pg_strdup(optarg);
 				break;
 			case 'E':
-				encoding = xstrdup(optarg);
+				encoding = pg_strdup(optarg);
 				break;
 			case 'W':
 				pwprompt = true;
 				break;
 			case 'U':
-				username = xstrdup(optarg);
+				username = pg_strdup(optarg);
 				break;
 			case 'd':
 				debug = true;
@@ -2952,43 +2952,43 @@ main(int argc, char *argv[])
 				do_sync = false;
 				break;
 			case 'L':
-				share_path = xstrdup(optarg);
+				share_path = pg_strdup(optarg);
 				break;
 			case 1:
-				locale = xstrdup(optarg);
+				locale = pg_strdup(optarg);
 				break;
 			case 2:
-				lc_collate = xstrdup(optarg);
+				lc_collate = pg_strdup(optarg);
 				break;
 			case 3:
-				lc_ctype = xstrdup(optarg);
+				lc_ctype = pg_strdup(optarg);
 				break;
 			case 4:
-				lc_monetary = xstrdup(optarg);
+				lc_monetary = pg_strdup(optarg);
 				break;
 			case 5:
-				lc_numeric = xstrdup(optarg);
+				lc_numeric = pg_strdup(optarg);
 				break;
 			case 6:
-				lc_time = xstrdup(optarg);
+				lc_time = pg_strdup(optarg);
 				break;
 			case 7:
-				lc_messages = xstrdup(optarg);
+				lc_messages = pg_strdup(optarg);
 				break;
 			case 8:
 				locale = "C";
 				break;
 			case 9:
-				pwfilename = xstrdup(optarg);
+				pwfilename = pg_strdup(optarg);
 				break;
 			case 's':
 				show_setting = true;
 				break;
 			case 'T':
-				default_text_search_config = xstrdup(optarg);
+				default_text_search_config = pg_strdup(optarg);
 				break;
 			case 'X':
-				xlog_dir = xstrdup(optarg);
+				xlog_dir = pg_strdup(optarg);
 				break;
 			default:
 				/* getopt_long already emitted a complaint */
@@ -3005,7 +3005,7 @@ main(int argc, char *argv[])
 	 */
 	if (optind < argc && strlen(pg_data) == 0)
 	{
-		pg_data = xstrdup(argv[optind]);
+		pg_data = pg_strdup(argv[optind]);
 		optind++;
 	}
 
@@ -3038,7 +3038,7 @@ main(int argc, char *argv[])
 		if (pgdenv && strlen(pgdenv))
 		{
 			/* PGDATA found */
-			pg_data = xstrdup(pgdenv);
+			pg_data = pg_strdup(pgdenv);
 		}
 		else
 		{
@@ -3069,7 +3069,7 @@ main(int argc, char *argv[])
 
 		ZeroMemory(&pi, sizeof(pi));
 
-		cmdline = xstrdup(GetCommandLine());
+		cmdline = pg_strdup(GetCommandLine());
 
 		putenv("PG_RESTRICT_EXEC=1");
 

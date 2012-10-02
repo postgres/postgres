@@ -28,8 +28,7 @@
  */
 extern char *pg_strdup(const char *string);
 extern void *pg_malloc(size_t size);
-extern void *pg_malloc_zero(size_t size);
-extern void *pg_calloc(size_t nmemb, size_t size);
+extern void *pg_malloc0(size_t size);
 
 extern bool setQFout(const char *fname);
 

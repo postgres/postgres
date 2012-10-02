@@ -552,7 +552,7 @@ findDependencyLoops(DumpableObject **objs, int nObjs, int totObjs)
 	bool		fixedloop;
 	int			i;
 
-	processed = (bool *) pg_calloc(getMaxDumpId() + 1, sizeof(bool));
+	processed = (bool *) pg_malloc0((getMaxDumpId() + 1) * sizeof(bool));
 	workspace = (DumpableObject **) pg_malloc(totObjs * sizeof(DumpableObject *));
 	fixedloop = false;
 

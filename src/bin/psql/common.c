@@ -70,26 +70,12 @@ pg_malloc(size_t size)
 }
 
 void *
-pg_malloc_zero(size_t size)
+pg_malloc0(size_t size)
 {
 	void	   *tmp;
 
 	tmp = pg_malloc(size);
-	memset(tmp, 0, size);
-	return tmp;
-}
-
-void *
-pg_calloc(size_t nmemb, size_t size)
-{
-	void	   *tmp;
-
-	tmp = calloc(nmemb, size);
-	if (!tmp)
-	{
-		psql_error("out of memory\n");
-		exit(EXIT_FAILURE);
-	}
+	MemSet(tmp, 0, size);
 	return tmp;
 }
 

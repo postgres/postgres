@@ -16,7 +16,7 @@
 
 extern char *pg_strdup(const char *string);
 extern void *pg_malloc(size_t size);
-extern void *pg_calloc(size_t nmemb, size_t size);
+extern void *pg_malloc0(size_t size);
 extern void *pg_realloc(void *ptr, size_t size);
 
 #endif   /* DUMPMEM_H */

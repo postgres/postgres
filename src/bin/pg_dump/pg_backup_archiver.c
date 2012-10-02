@@ -748,7 +748,7 @@ NewRestoreOptions(void)
 {
 	RestoreOptions *opts;
 
-	opts = (RestoreOptions *) pg_calloc(1, sizeof(RestoreOptions));
+	opts = (RestoreOptions *) pg_malloc0(sizeof(RestoreOptions));
 
 	/* set any fields that shouldn't default to zeroes */
 	opts->format = archUnknown;
@@ -848,7 +848,7 @@ ArchiveEntry(Archive *AHX,
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 	TocEntry   *newToc;
 
-	newToc = (TocEntry *) pg_calloc(1, sizeof(TocEntry));
+	newToc = (TocEntry *) pg_malloc0(sizeof(TocEntry));
 
 	AH->tocCount++;
 	if (dumpId > AH->maxDumpId)
@@ -1594,8 +1594,8 @@ buildTocEntryArrays(ArchiveHandle *AH)
 	DumpId		maxDumpId = AH->maxDumpId;
 	TocEntry   *te;
 
-	AH->tocsByDumpId = (TocEntry **) pg_calloc(maxDumpId + 1, sizeof(TocEntry *));
-	AH->tableDataId = (DumpId *) pg_calloc(maxDumpId + 1, sizeof(DumpId));
+	AH->tocsByDumpId = (TocEntry **) pg_malloc0((maxDumpId + 1) * sizeof(TocEntry *));
+	AH->tableDataId = (DumpId *) pg_malloc0((maxDumpId + 1) * sizeof(DumpId));
 
 	for (te = AH->toc->next; te != AH->toc; te = te->next)
 	{
@@ -1845,7 +1845,7 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 		free(AH->lookahead);
 
 	AH->lookaheadSize = 512;
-	AH->lookahead = pg_calloc(1, 512);
+	AH->lookahead = pg_malloc0(512);
 	AH->lookaheadLen = 0;
 	AH->lookaheadPos = 0;
 
@@ -2021,7 +2021,7 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 	write_msg(modulename, "allocating AH for %s, format %d\n", FileSpec, fmt);
 #endif
 
-	AH = (ArchiveHandle *) pg_calloc(1, sizeof(ArchiveHandle));
+	AH = (ArchiveHandle *) pg_malloc0(sizeof(ArchiveHandle));
 
 	/* AH->debugLevel = 100; */
 
@@ -2065,7 +2065,7 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 	AH->currTablespace = NULL;	/* ditto */
 	AH->currWithOids = -1;		/* force SET */
 
-	AH->toc = (TocEntry *) pg_calloc(1, sizeof(TocEntry));
+	AH->toc = (TocEntry *) pg_malloc0(sizeof(TocEntry));
 
 	AH->toc->next = AH->toc;
 	AH->toc->prev = AH->toc;
@@ -2246,7 +2246,7 @@ ReadToc(ArchiveHandle *AH)
 
 	for (i = 0; i < AH->tocCount; i++)
 	{
-		te = (TocEntry *) pg_calloc(1, sizeof(TocEntry));
+		te = (TocEntry *) pg_malloc0(sizeof(TocEntry));
 		te->dumpId = ReadInt(AH);
 
 		if (te->dumpId > AH->maxDumpId)
@@ -3485,9 +3485,9 @@ restore_toc_entries_parallel(ArchiveHandle *AH)
 
 	ahlog(AH, 2, "entering restore_toc_entries_parallel\n");
 
-	slots = (ParallelSlot *) pg_calloc(n_slots, sizeof(ParallelSlot));
+	slots = (ParallelSlot *) pg_malloc0(n_slots * sizeof(ParallelSlot));
 	pstate = (ParallelState *) pg_malloc(sizeof(ParallelState));
-	pstate->pse = (ParallelStateEntry *) pg_calloc(n_slots, sizeof(ParallelStateEntry));
+	pstate->pse = (ParallelStateEntry *) pg_malloc0(n_slots * sizeof(ParallelStateEntry));
 	pstate->numWorkers = ropt->number_of_jobs;
 	for (i = 0; i < pstate->numWorkers; i++)
 		unsetProcessIdentifier(&(pstate->pse[i]));
@@ -3776,7 +3776,7 @@ reap_child(ParallelSlot *slots, int n_slots, int *work_status)
 
 	/* first time around only, make space for handles to listen on */
 	if (handles == NULL)
-		handles = (HANDLE *) pg_calloc(sizeof(HANDLE), n_slots);
+		handles = (HANDLE *) pg_malloc0(n_slots * sizeof(HANDLE));
 
 	/* set up list of handles to listen to */
 	for (snum = 0, tnum = 0; snum < n_slots; snum++)

@@ -138,7 +138,7 @@ AllocateCompressor(int compression, WriteFunc writeF)
 		exit_horribly(modulename, "not built with zlib support\n");
 #endif
 
-	cs = (CompressorState *) pg_calloc(1, sizeof(CompressorState));
+	cs = (CompressorState *) pg_malloc0(sizeof(CompressorState));
 	cs->writeF = writeF;
 	cs->comprAlg = alg;
 

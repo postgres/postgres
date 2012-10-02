@@ -126,7 +126,7 @@ InitArchiveFmt_Directory(ArchiveHandle *AH)
 	AH->DeClonePtr = NULL;
 
 	/* Set up our private context */
-	ctx = (lclContext *) pg_calloc(1, sizeof(lclContext));
+	ctx = (lclContext *) pg_malloc0(sizeof(lclContext));
 	AH->formatData = (void *) ctx;
 
 	ctx->dataFH = NULL;
@@ -194,7 +194,7 @@ _ArchiveEntry(ArchiveHandle *AH, TocEntry *te)
 	lclTocEntry *tctx;
 	char		fn[MAXPGPATH];
 
-	tctx = (lclTocEntry *) pg_calloc(1, sizeof(lclTocEntry));
+	tctx = (lclTocEntry *) pg_malloc0(sizeof(lclTocEntry));
 	if (te->dataDumper)
 	{
 		snprintf(fn, MAXPGPATH, "%d.dat", te->dumpId);
@@ -243,7 +243,7 @@ _ReadExtraToc(ArchiveHandle *AH, TocEntry *te)
 
 	if (tctx == NULL)
 	{
-		tctx = (lclTocEntry *) pg_calloc(1, sizeof(lclTocEntry));
+		tctx = (lclTocEntry *) pg_malloc0(sizeof(lclTocEntry));
 		te->formatData = (void *) tctx;
 	}
 

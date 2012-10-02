@@ -32,11 +32,11 @@ static char *dbpassword = NULL;
 PGconn	   *conn = NULL;
 
 /*
- * strdup() and malloc() replacements that prints an error and exits
+ * strdup() and malloc() replacements that print an error and exit
  * if something goes wrong. Can never return NULL.
  */
 char *
-xstrdup(const char *s)
+pg_strdup(const char *s)
 {
 	char	   *result;
 
@@ -50,7 +50,7 @@ xstrdup(const char *s)
 }
 
 void *
-xmalloc0(int size)
+pg_malloc0(size_t size)
 {
 	void	   *result;
 
@@ -89,8 +89,8 @@ GetConnection(void)
 	if (dbport)
 		argcount++;
 
-	keywords = xmalloc0((argcount + 1) * sizeof(*keywords));
-	values = xmalloc0((argcount + 1) * sizeof(*values));
+	keywords = pg_malloc0((argcount + 1) * sizeof(*keywords));
+	values = pg_malloc0((argcount + 1) * sizeof(*values));
 
 	keywords[0] = "dbname";
 	values[0] = "replication";

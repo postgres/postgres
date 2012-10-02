@@ -188,8 +188,8 @@ main(int argc, char *argv[])
 		password_prompt = pg_strdup(_("Password: "));
 	else
 	{
-		password_prompt = malloc(strlen(_("Password for user %s: ")) - 2 +
-								 strlen(options.username) + 1);
+		password_prompt = pg_malloc(strlen(_("Password for user %s: ")) - 2 +
+									strlen(options.username) + 1);
 		sprintf(password_prompt, _("Password for user %s: "),
 				options.username);
 	}

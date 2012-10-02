@@ -49,13 +49,12 @@ pg_malloc(size_t size)
 }
 
 void *
-pg_calloc(size_t nmemb, size_t size)
+pg_malloc0(size_t size)
 {
 	void	   *tmp;
 
-	tmp = calloc(nmemb, size);
-	if (!tmp)
-		exit_horribly(NULL, "out of memory\n");
+	tmp = pg_malloc(size);
+	MemSet(tmp, 0, size);
 	return tmp;
 }
 
