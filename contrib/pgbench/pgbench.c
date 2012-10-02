@@ -295,6 +295,9 @@ xmalloc(size_t size)
 {
 	void	   *result;
 
+	/* Avoid unportable behavior of malloc(0) */
+	if (size == 0)
+		size = 1;
 	result = malloc(size);
 	if (!result)
 	{
@@ -309,6 +312,9 @@ xrealloc(void *ptr, size_t size)
 {
 	void	   *result;
 
+	/* Avoid unportable behavior of realloc(NULL, 0) */
+	if (ptr == NULL && size == 0)
+		size = 1;
 	result = realloc(ptr, size);
 	if (!result)
 	{

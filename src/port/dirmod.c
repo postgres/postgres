@@ -70,7 +70,11 @@ fe_palloc(Size size)
 {
 	void	   *res;
 
-	if ((res = malloc(size)) == NULL)
+	/* Avoid unportable behavior of malloc(0) */
+	if (size == 0)
+		size = 1;
+	res = malloc(size);
+	if (res == NULL)
 	{
 		fprintf(stderr, _("out of memory\n"));
 		exit(1);
@@ -96,7 +100,11 @@ fe_repalloc(void *pointer, Size size)
 {
 	void	   *res;
 
-	if ((res = realloc(pointer, size)) == NULL)
+	/* Avoid unportable behavior of realloc(NULL, 0) */
+	if (pointer == NULL && size == 0)
+		size = 1;
+	res = realloc(pointer, size);
+	if (res == NULL)
 	{
 		fprintf(stderr, _("out of memory\n"));
 		exit(1);
