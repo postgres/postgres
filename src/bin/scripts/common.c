@@ -304,6 +304,9 @@ pg_malloc(size_t size)
 {
 	void	   *tmp;
 
+	/* Avoid unportable behavior of malloc(0) */
+	if (size == 0)
+		size = 1;
 	tmp = malloc(size);
 	if (!tmp)
 	{

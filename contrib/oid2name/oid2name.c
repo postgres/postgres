@@ -51,6 +51,7 @@ struct options
 static void help(const char *progname);
 void		get_opts(int, char **, struct options *);
 void	   *pg_malloc(size_t size);
+void	   *pg_realloc(void *ptr, size_t size);
 char	   *pg_strdup(const char *str);
 void		add_one_elt(char *eltname, eary *eary);
 char	   *get_comma_elts(eary *eary);
@@ -203,14 +204,35 @@ help(const char *progname)
 void *
 pg_malloc(size_t size)
 {
-	void	   *ptr = malloc(size);
+	void	   *ptr;
 
+	/* Avoid unportable behavior of malloc(0) */
+	if (size == 0)
+		size = 1;
+	ptr = malloc(size);
 	if (!ptr)
 	{
-		fprintf(stderr, "out of memory");
+		fprintf(stderr, "out of memory\n");
 		exit(1);
 	}
 	return ptr;
+}
+
+void *
+pg_realloc(void *ptr, size_t size)
+{
+	void	   *result;
+
+	/* Avoid unportable behavior of realloc(NULL, 0) */
+	if (ptr == NULL && size == 0)
+		size = 1;
+	result = realloc(ptr, size);
+	if (!result)
+	{
+		fprintf(stderr, "out of memory\n");
+		exit(1);
+	}
+	return result;
 }
 
 char *
@@ -220,7 +242,7 @@ pg_strdup(const char *str)
 
 	if (!result)
 	{
-		fprintf(stderr, "out of memory");
+		fprintf(stderr, "out of memory\n");
 		exit(1);
 	}
 	return result;
@@ -242,14 +264,8 @@ add_one_elt(char *eltname, eary *eary)
 	else if (eary->num >= eary->alloc)
 	{
 		eary	  ->alloc *= 2;
-		eary	  ->array = (char **)
-		realloc(eary->array, eary->alloc * sizeof(char *));
-
-		if (!eary->array)
-		{
-			fprintf(stderr, "out of memory");
-			exit(1);
-		}
+		eary	  ->array = (char **) pg_realloc(eary->array,
+												 eary->alloc * sizeof(char *));
 	}
 
 	eary	  ->array[eary->num] = pg_strdup(eltname);
