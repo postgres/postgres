@@ -420,15 +420,20 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 			if (standby_message_timeout)
 			{
 				TimestampTz targettime;
+				long		secs;
+				int			usecs;
 
 				targettime = TimestampTzPlusMilliseconds(last_status,
 												standby_message_timeout - 1);
 				localTimestampDifference(now,
 										 targettime,
-										 &timeout.tv_sec,
-										 (int *) &timeout.tv_usec);
-				if (timeout.tv_sec <= 0)
+										 &secs,
+										 &usecs);
+				if (secs <= 0)
 					timeout.tv_sec = 1; /* Always sleep at least 1 sec */
+				else
+					timeout.tv_sec = secs;
+				timeout.tv_sec = usecs;
 				timeoutptr = &timeout;
 			}
 			else
