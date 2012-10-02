@@ -32,6 +32,7 @@
 
 #include "postgres.h"
 
+#include <sys/stat.h>
 #include <stdio.h>
 #include <unistd.h>
 
