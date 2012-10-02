@@ -433,7 +433,7 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 					timeout.tv_sec = 1; /* Always sleep at least 1 sec */
 				else
 					timeout.tv_sec = secs;
-				timeout.tv_sec = usecs;
+				timeout.tv_usec = usecs;
 				timeoutptr = &timeout;
 			}
 			else
