@@ -229,6 +229,29 @@ extern const RmgrData RmgrTable[];
 extern pg_time_t GetLastSegSwitchTime(void);
 extern XLogRecPtr RequestXLogSwitch(void);
 
+extern void GetOldestRestartPoint(XLogRecPtr *oldrecptr, TimeLineID *oldtli);
+
+/*
+ * Exported for the functions in timeline.c and xlogarchive.c.  Only valid
+ * in the startup process.
+ */
+extern bool InArchiveRecovery;
+extern bool StandbyMode;
+extern char *recoveryRestoreCommand;
+
+/*
+ * Prototypes for functions in xlogarchive.c
+ */
+extern bool RestoreArchivedFile(char *path, const char *xlogfname,
+					const char *recovername, off_t expectedSize);
+extern void ExecuteRecoveryCommand(char *command, char *commandName,
+					   bool failOnerror);
+extern void XLogArchiveNotify(const char *xlog);
+extern void XLogArchiveNotifySeg(XLogSegNo segno);
+extern bool XLogArchiveCheckDone(const char *xlog);
+extern bool XLogArchiveIsBusy(const char *xlog);
+extern void XLogArchiveCleanup(const char *xlog);
+
 /*
  * These aren't in xlog.h because I'd rather not include fmgr.h there.
  */
