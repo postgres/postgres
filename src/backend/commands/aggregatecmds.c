@@ -267,18 +267,3 @@ RenameAggregate(List *name, List *args, const char *newname)
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);
 }
-
-/*
- * Change aggregate owner
- */
-void
-AlterAggregateOwner(List *name, List *args, Oid newOwnerId)
-{
-	Oid			procOid;
-
-	/* Look up function and make sure it's an aggregate */
-	procOid = LookupAggNameTypeNames(name, args, false);
-
-	/* The rest is just like a function */
-	AlterFunctionOwner_oid(procOid, newOwnerId);
-}

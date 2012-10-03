@@ -716,66 +716,6 @@ AlterTSDictionary(AlterTSDictionaryStmt *stmt)
 	heap_close(rel, RowExclusiveLock);
 }
 
-/*
- * ALTER TEXT SEARCH DICTIONARY OWNER
- */
-void
-AlterTSDictionaryOwner(List *name, Oid newOwnerId)
-{
-	HeapTuple	tup;
-	Relation	rel;
-	Oid			dictId;
-	Oid			namespaceOid;
-	AclResult	aclresult;
-	Form_pg_ts_dict form;
-
-	rel = heap_open(TSDictionaryRelationId, RowExclusiveLock);
-
-	dictId = get_ts_dict_oid(name, false);
-
-	tup = SearchSysCacheCopy1(TSDICTOID, ObjectIdGetDatum(dictId));
-
-	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "cache lookup failed for text search dictionary %u",
-			 dictId);
-
-	form = (Form_pg_ts_dict) GETSTRUCT(tup);
-	namespaceOid = form->dictnamespace;
-
-	if (form->dictowner != newOwnerId)
-	{
-		/* Superusers can always do it */
-		if (!superuser())
-		{
-			/* must be owner */
-			if (!pg_ts_dict_ownercheck(dictId, GetUserId()))
-				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TSDICTIONARY,
-							   NameListToString(name));
-
-			/* Must be able to become new owner */
-			check_is_member_of_role(GetUserId(), newOwnerId);
-
-			/* New owner must have CREATE privilege on namespace */
-			aclresult = pg_namespace_aclcheck(namespaceOid, newOwnerId, ACL_CREATE);
-			if (aclresult != ACLCHECK_OK)
-				aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
-							   get_namespace_name(namespaceOid));
-		}
-
-		form->dictowner = newOwnerId;
-
-		simple_heap_update(rel, &tup->t_self, tup);
-		CatalogUpdateIndexes(rel, tup);
-
-		/* Update owner dependency reference */
-		changeDependencyOnOwner(TSDictionaryRelationId, HeapTupleGetOid(tup),
-								newOwnerId);
-	}
-
-	heap_close(rel, NoLock);
-	heap_freetuple(tup);
-}
-
 /* ---------------------- TS Template commands -----------------------*/
 
 /*
@@ -1388,66 +1328,6 @@ RemoveTSConfigurationById(Oid cfgId)
 	systable_endscan(scan);
 
 	heap_close(relMap, RowExclusiveLock);
-}
-
-/*
- * ALTER TEXT SEARCH CONFIGURATION OWNER
- */
-void
-AlterTSConfigurationOwner(List *name, Oid newOwnerId)
-{
-	HeapTuple	tup;
-	Relation	rel;
-	Oid			cfgId;
-	AclResult	aclresult;
-	Oid			namespaceOid;
-	Form_pg_ts_config form;
-
-	rel = heap_open(TSConfigRelationId, RowExclusiveLock);
-
-	cfgId = get_ts_config_oid(name, false);
-
-	tup = SearchSysCacheCopy1(TSCONFIGOID, ObjectIdGetDatum(cfgId));
-
-	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "cache lookup failed for text search configuration %u",
-			 cfgId);
-
-	form = (Form_pg_ts_config) GETSTRUCT(tup);
-	namespaceOid = form->cfgnamespace;
-
-	if (form->cfgowner != newOwnerId)
-	{
-		/* Superusers can always do it */
-		if (!superuser())
-		{
-			/* must be owner */
-			if (!pg_ts_config_ownercheck(cfgId, GetUserId()))
-				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TSCONFIGURATION,
-							   NameListToString(name));
-
-			/* Must be able to become new owner */
-			check_is_member_of_role(GetUserId(), newOwnerId);
-
-			/* New owner must have CREATE privilege on namespace */
-			aclresult = pg_namespace_aclcheck(namespaceOid, newOwnerId, ACL_CREATE);
-			if (aclresult != ACLCHECK_OK)
-				aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
-							   get_namespace_name(namespaceOid));
-		}
-
-		form->cfgowner = newOwnerId;
-
-		simple_heap_update(rel, &tup->t_self, tup);
-		CatalogUpdateIndexes(rel, tup);
-
-		/* Update owner dependency reference */
-		changeDependencyOnOwner(TSConfigRelationId, HeapTupleGetOid(tup),
-								newOwnerId);
-	}
-
-	heap_close(rel, NoLock);
-	heap_freetuple(tup);
 }
 
 /*

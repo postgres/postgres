@@ -15,10 +15,12 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
+#include "access/sysattr.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_largeobject.h"
+#include "catalog/pg_largeobject_metadata.h"
 #include "catalog/pg_namespace.h"
 #include "commands/alter.h"
 #include "commands/collationcmds.h"
@@ -37,9 +39,11 @@
 #include "miscadmin.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
+#include "utils/tqual.h"
 
 
 /*
@@ -446,69 +450,17 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 
 	switch (stmt->objectType)
 	{
-		case OBJECT_AGGREGATE:
-			AlterAggregateOwner(stmt->object, stmt->objarg, newowner);
-			break;
-
-		case OBJECT_COLLATION:
-			AlterCollationOwner(stmt->object, newowner);
-			break;
-
-		case OBJECT_CONVERSION:
-			AlterConversionOwner(stmt->object, newowner);
-			break;
-
 		case OBJECT_DATABASE:
 			AlterDatabaseOwner(strVal(linitial(stmt->object)), newowner);
-			break;
-
-		case OBJECT_FUNCTION:
-			AlterFunctionOwner(stmt->object, stmt->objarg, newowner);
-			break;
-
-		case OBJECT_LANGUAGE:
-			AlterLanguageOwner(strVal(linitial(stmt->object)), newowner);
-			break;
-
-		case OBJECT_LARGEOBJECT:
-			LargeObjectAlterOwner(oidparse(linitial(stmt->object)), newowner);
-			break;
-
-		case OBJECT_OPERATOR:
-			Assert(list_length(stmt->objarg) == 2);
-			AlterOperatorOwner(stmt->object,
-							   (TypeName *) linitial(stmt->objarg),
-							   (TypeName *) lsecond(stmt->objarg),
-							   newowner);
-			break;
-
-		case OBJECT_OPCLASS:
-			AlterOpClassOwner(stmt->object, stmt->addname, newowner);
-			break;
-
-		case OBJECT_OPFAMILY:
-			AlterOpFamilyOwner(stmt->object, stmt->addname, newowner);
 			break;
 
 		case OBJECT_SCHEMA:
 			AlterSchemaOwner(strVal(linitial(stmt->object)), newowner);
 			break;
 
-		case OBJECT_TABLESPACE:
-			AlterTableSpaceOwner(strVal(linitial(stmt->object)), newowner);
-			break;
-
 		case OBJECT_TYPE:
 		case OBJECT_DOMAIN:		/* same as TYPE */
 			AlterTypeOwner(stmt->object, newowner, stmt->objectType);
-			break;
-
-		case OBJECT_TSDICTIONARY:
-			AlterTSDictionaryOwner(stmt->object, newowner);
-			break;
-
-		case OBJECT_TSCONFIGURATION:
-			AlterTSConfigurationOwner(stmt->object, newowner);
 			break;
 
 		case OBJECT_FDW:
@@ -524,8 +476,240 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 			AlterEventTriggerOwner(strVal(linitial(stmt->object)), newowner);
 			break;
 
+		/* Generic cases */
+		case OBJECT_AGGREGATE:
+		case OBJECT_COLLATION:
+		case OBJECT_CONVERSION:
+		case OBJECT_FUNCTION:
+		case OBJECT_LANGUAGE:
+		case OBJECT_LARGEOBJECT:
+		case OBJECT_OPERATOR:
+		case OBJECT_OPCLASS:
+		case OBJECT_OPFAMILY:
+		case OBJECT_TABLESPACE:
+		case OBJECT_TSDICTIONARY:
+		case OBJECT_TSCONFIGURATION:
+			{
+				Relation	catalog;
+				Relation	relation;
+				Oid			classId;
+				ObjectAddress	address;
+
+				address = get_object_address(stmt->objectType,
+											 stmt->object,
+											 stmt->objarg,
+											 &relation,
+											 AccessExclusiveLock,
+											 false);
+				Assert(relation == NULL);
+				classId = address.classId;
+
+				/*
+				 * XXX - get_object_address returns Oid of pg_largeobject
+				 * catalog for OBJECT_LARGEOBJECT because of historical
+				 * reasons.  Fix up it here.
+				 */
+				if (classId == LargeObjectRelationId)
+					classId = LargeObjectMetadataRelationId;
+
+				catalog = heap_open(classId, RowExclusiveLock);
+
+				AlterObjectOwner_internal(catalog, address.objectId, newowner);
+				heap_close(catalog, RowExclusiveLock);
+			}
+			break;
+
 		default:
 			elog(ERROR, "unrecognized AlterOwnerStmt type: %d",
 				 (int) stmt->objectType);
+	}
+}
+
+/*
+ * Return a copy of the tuple for the object with the given object OID, from
+ * the given catalog (which must have been opened by the caller and suitably
+ * locked).  NULL is returned if the OID is not found.
+ *
+ * We try a syscache first, if available.
+ *
+ * XXX this function seems general in possible usage.  Given sufficient callers
+ * elsewhere, we should consider moving it to a more appropriate place.
+ */
+static HeapTuple
+get_catalog_object_by_oid(Relation catalog, Oid objectId)
+{
+	HeapTuple	tuple;
+	Oid			classId = RelationGetRelid(catalog);
+	int			oidCacheId = get_object_catcache_oid(classId);
+
+	if (oidCacheId > 0)
+	{
+		tuple = SearchSysCacheCopy1(oidCacheId, ObjectIdGetDatum(objectId));
+		if (!HeapTupleIsValid(tuple))  /* should not happen */
+			return NULL;
+	}
+	else
+	{
+		Oid			oidIndexId = get_object_oid_index(classId);
+		SysScanDesc	scan;
+		ScanKeyData	skey;
+
+		Assert(OidIsValid(oidIndexId));
+
+		ScanKeyInit(&skey,
+					ObjectIdAttributeNumber,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(objectId));
+
+		scan = systable_beginscan(catalog, oidIndexId, true,
+								  SnapshotNow, 1, &skey);
+		tuple = systable_getnext(scan);
+		if (!HeapTupleIsValid(tuple))
+		{
+			systable_endscan(scan);
+			return NULL;
+		}
+		tuple = heap_copytuple(tuple);
+
+		systable_endscan(scan);
+	}
+
+	return tuple;
+}
+
+/*
+ * Generic function to change the ownership of a given object, for simple
+ * cases (won't work for tables, nor other cases where we need to do more than
+ * change the ownership column of a single catalog entry).
+ *
+ * rel: catalog relation containing object (RowExclusiveLock'd by caller)
+ * objectId: OID of object to change the ownership of
+ * new_ownerId: OID of new object owner
+ */
+void
+AlterObjectOwner_internal(Relation rel, Oid objectId, Oid new_ownerId)
+{
+	Oid			classId = RelationGetRelid(rel);
+	AttrNumber	Anum_owner = get_object_attnum_owner(classId);
+	AttrNumber	Anum_namespace = get_object_attnum_namespace(classId);
+	AttrNumber	Anum_acl = get_object_attnum_acl(classId);
+	AttrNumber	Anum_name = get_object_attnum_name(classId);
+	HeapTuple	oldtup;
+	Datum		datum;
+	bool		isnull;
+	Oid			old_ownerId;
+	Oid			namespaceId = InvalidOid;
+
+	oldtup = get_catalog_object_by_oid(rel, objectId);
+	if (oldtup == NULL)
+		elog(ERROR, "cache lookup failed for object %u of catalog \"%s\"",
+			 objectId, RelationGetRelationName(rel));
+
+	datum = heap_getattr(oldtup, Anum_owner,
+						 RelationGetDescr(rel), &isnull);
+	Assert(!isnull);
+	old_ownerId = DatumGetObjectId(datum);
+
+	if (Anum_namespace != InvalidAttrNumber)
+	{
+		datum = heap_getattr(oldtup, Anum_namespace,
+							 RelationGetDescr(rel), &isnull);
+		Assert(!isnull);
+		namespaceId = DatumGetObjectId(datum);
+	}
+
+	if (old_ownerId != new_ownerId)
+	{
+		AttrNumber	nattrs;
+		HeapTuple	newtup;
+		Datum	   *values;
+		bool	   *nulls;
+		bool	   *replaces;
+
+		/* Superusers can bypass permission checks */
+		if (!superuser())
+		{
+			AclObjectKind	aclkind = get_object_aclkind(classId);
+
+			/* must be owner */
+			if (!has_privs_of_role(GetUserId(), old_ownerId))
+			{
+				char   *objname;
+				char	namebuf[NAMEDATALEN];
+
+				if (Anum_name != InvalidAttrNumber)
+				{
+					datum = heap_getattr(oldtup, Anum_name,
+										 RelationGetDescr(rel), &isnull);
+					Assert(!isnull);
+					objname = NameStr(*DatumGetName(datum));
+				}
+				else
+				{
+					snprintf(namebuf, sizeof(namebuf), "%u",
+							 HeapTupleGetOid(oldtup));
+					objname = namebuf;
+				}
+				aclcheck_error(ACLCHECK_NOT_OWNER, aclkind, objname);
+			}
+			/* Must be able to become new owner */
+			check_is_member_of_role(GetUserId(), new_ownerId);
+
+			/* New owner must have CREATE privilege on namespace */
+			if (OidIsValid(namespaceId))
+			{
+				AclResult   aclresult;
+
+				aclresult = pg_namespace_aclcheck(namespaceId, new_ownerId,
+												  ACL_CREATE);
+				if (aclresult != ACLCHECK_OK)
+					aclcheck_error(aclresult, aclkind,
+								   get_namespace_name(namespaceId));
+			}
+		}
+
+		/* Build a modified tuple */
+		nattrs = RelationGetNumberOfAttributes(rel);
+		values = palloc0(nattrs * sizeof(Datum));
+		nulls = palloc0(nattrs * sizeof(bool));
+		replaces = palloc0(nattrs * sizeof(bool));
+		values[Anum_owner - 1] = ObjectIdGetDatum(new_ownerId);
+		replaces[Anum_owner - 1] = true;
+
+		/*
+		 * Determine the modified ACL for the new owner.  This is only
+		 * necessary when the ACL is non-null.
+		 */
+		if (Anum_acl != InvalidAttrNumber)
+		{
+			datum = heap_getattr(oldtup,
+								 Anum_acl, RelationGetDescr(rel), &isnull);
+			if (!isnull)
+			{
+				Acl    *newAcl;
+
+				newAcl = aclnewowner(DatumGetAclP(datum),
+									 old_ownerId, new_ownerId);
+				values[Anum_acl - 1] = PointerGetDatum(newAcl);
+				replaces[Anum_acl - 1] = true;
+			}
+		}
+
+		newtup = heap_modify_tuple(oldtup, RelationGetDescr(rel),
+								   values, nulls, replaces);
+
+		/* Perform actual update */
+		simple_heap_update(rel, &newtup->t_self, newtup);
+		CatalogUpdateIndexes(rel, newtup);
+
+		/* Update owner dependency reference */
+		if (classId == LargeObjectMetadataRelationId)
+			classId = LargeObjectRelationId;
+		changeDependencyOnOwner(classId, HeapTupleGetOid(newtup), new_ownerId);
+
+		/* Release memory */
+		pfree(values);
+		pfree(nulls);
+		pfree(replaces);
 	}
 }

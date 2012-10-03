@@ -51,9 +51,6 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
-
-static void AlterOperatorOwner_internal(Relation rel, Oid operOid, Oid newOwnerId);
-
 /*
  * DefineOperator
  *		this function extracts all the information from the
@@ -332,94 +329,4 @@ RemoveOperatorById(Oid operOid)
 	ReleaseSysCache(tup);
 
 	heap_close(relation, RowExclusiveLock);
-}
-
-void
-AlterOperatorOwner_oid(Oid operOid, Oid newOwnerId)
-{
-	Relation	rel;
-
-	rel = heap_open(OperatorRelationId, RowExclusiveLock);
-
-	AlterOperatorOwner_internal(rel, operOid, newOwnerId);
-
-	heap_close(rel, NoLock);
-}
-
-/*
- * change operator owner
- */
-void
-AlterOperatorOwner(List *name, TypeName *typeName1, TypeName *typeName2,
-				   Oid newOwnerId)
-{
-	Oid			operOid;
-	Relation	rel;
-
-	rel = heap_open(OperatorRelationId, RowExclusiveLock);
-
-	operOid = LookupOperNameTypeNames(NULL, name,
-									  typeName1, typeName2,
-									  false, -1);
-
-	AlterOperatorOwner_internal(rel, operOid, newOwnerId);
-
-	heap_close(rel, NoLock);
-}
-
-static void
-AlterOperatorOwner_internal(Relation rel, Oid operOid, Oid newOwnerId)
-{
-	HeapTuple	tup;
-	AclResult	aclresult;
-	Form_pg_operator oprForm;
-
-	Assert(RelationGetRelid(rel) == OperatorRelationId);
-
-	tup = SearchSysCacheCopy1(OPEROID, ObjectIdGetDatum(operOid));
-	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "cache lookup failed for operator %u", operOid);
-
-	oprForm = (Form_pg_operator) GETSTRUCT(tup);
-
-	/*
-	 * If the new owner is the same as the existing owner, consider the
-	 * command to have succeeded.  This is for dump restoration purposes.
-	 */
-	if (oprForm->oprowner != newOwnerId)
-	{
-		/* Superusers can always do it */
-		if (!superuser())
-		{
-			/* Otherwise, must be owner of the existing object */
-			if (!pg_oper_ownercheck(operOid, GetUserId()))
-				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_OPER,
-							   NameStr(oprForm->oprname));
-
-			/* Must be able to become new owner */
-			check_is_member_of_role(GetUserId(), newOwnerId);
-
-			/* New owner must have CREATE privilege on namespace */
-			aclresult = pg_namespace_aclcheck(oprForm->oprnamespace,
-											  newOwnerId,
-											  ACL_CREATE);
-			if (aclresult != ACLCHECK_OK)
-				aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
-							   get_namespace_name(oprForm->oprnamespace));
-		}
-
-		/*
-		 * Modify the owner --- okay to scribble on tup because it's a copy
-		 */
-		oprForm->oprowner = newOwnerId;
-
-		simple_heap_update(rel, &tup->t_self, tup);
-
-		CatalogUpdateIndexes(rel, tup);
-
-		/* Update owner dependency reference */
-		changeDependencyOnOwner(OperatorRelationId, operOid, newOwnerId);
-	}
-
-	heap_freetuple(tup);
 }

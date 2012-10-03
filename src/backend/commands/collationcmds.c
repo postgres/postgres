@@ -34,9 +34,6 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
-static void AlterCollationOwner_internal(Relation rel, Oid collationOid,
-							 Oid newOwnerId);
-
 /*
  * CREATE COLLATION
  */
@@ -209,104 +206,6 @@ RenameCollation(List *name, const char *newname)
 	heap_freetuple(tup);
 
 	heap_close(rel, RowExclusiveLock);
-}
-
-/*
- * Change collation owner, by name
- */
-void
-AlterCollationOwner(List *name, Oid newOwnerId)
-{
-	Oid			collationOid;
-	Relation	rel;
-
-	rel = heap_open(CollationRelationId, RowExclusiveLock);
-
-	collationOid = get_collation_oid(name, false);
-
-	AlterCollationOwner_internal(rel, collationOid, newOwnerId);
-
-	heap_close(rel, RowExclusiveLock);
-}
-
-/*
- * Change collation owner, by oid
- */
-void
-AlterCollationOwner_oid(Oid collationOid, Oid newOwnerId)
-{
-	Relation	rel;
-
-	rel = heap_open(CollationRelationId, RowExclusiveLock);
-
-	AlterCollationOwner_internal(rel, collationOid, newOwnerId);
-
-	heap_close(rel, RowExclusiveLock);
-}
-
-/*
- * AlterCollationOwner_internal
- *
- * Internal routine for changing the owner.  rel must be pg_collation, already
- * open and suitably locked; it will not be closed.
- */
-static void
-AlterCollationOwner_internal(Relation rel, Oid collationOid, Oid newOwnerId)
-{
-	Form_pg_collation collForm;
-	HeapTuple	tup;
-
-	Assert(RelationGetRelid(rel) == CollationRelationId);
-
-	tup = SearchSysCacheCopy1(COLLOID, ObjectIdGetDatum(collationOid));
-	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "cache lookup failed for collation %u", collationOid);
-
-	collForm = (Form_pg_collation) GETSTRUCT(tup);
-
-	/*
-	 * If the new owner is the same as the existing owner, consider the
-	 * command to have succeeded.  This is for dump restoration purposes.
-	 */
-	if (collForm->collowner != newOwnerId)
-	{
-		AclResult	aclresult;
-
-		/* Superusers can always do it */
-		if (!superuser())
-		{
-			/* Otherwise, must be owner of the existing object */
-			if (!pg_collation_ownercheck(HeapTupleGetOid(tup), GetUserId()))
-				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_COLLATION,
-							   NameStr(collForm->collname));
-
-			/* Must be able to become new owner */
-			check_is_member_of_role(GetUserId(), newOwnerId);
-
-			/* New owner must have CREATE privilege on namespace */
-			aclresult = pg_namespace_aclcheck(collForm->collnamespace,
-											  newOwnerId,
-											  ACL_CREATE);
-			if (aclresult != ACLCHECK_OK)
-				aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
-							   get_namespace_name(collForm->collnamespace));
-		}
-
-		/*
-		 * Modify the owner --- okay to scribble on tup because it's a copy
-		 */
-		collForm->collowner = newOwnerId;
-
-		simple_heap_update(rel, &tup->t_self, tup);
-
-		CatalogUpdateIndexes(rel, tup);
-
-		/* Update owner dependency reference */
-		changeDependencyOnOwner(CollationRelationId, collationOid,
-								newOwnerId);
-	}
-
-	heap_freetuple(tup);
 }
 
 /*

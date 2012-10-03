@@ -18,9 +18,13 @@
 #include "utils/relcache.h"
 
 extern void ExecRenameStmt(RenameStmt *stmt);
+
 extern void ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt);
 extern Oid	AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid);
 extern Oid	AlterObjectNamespace_internal(Relation rel, Oid objid, Oid nspOid);
+
 extern void ExecAlterOwnerStmt(AlterOwnerStmt *stmt);
+extern void AlterObjectOwner_internal(Relation catalog, Oid objectId,
+						  Oid new_ownerId);
 
 #endif   /* ALTER_H */
