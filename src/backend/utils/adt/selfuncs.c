@@ -4518,8 +4518,10 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 		 */
 		rel = find_base_rel(root, var->varno);
 
-		/* Subquery should have been planned already */
-		Assert(rel->subroot && IsA(rel->subroot, PlannerInfo));
+		/* If the subquery hasn't been planned yet, we have to punt */
+		if (rel->subroot == NULL)
+			return;
+		Assert(IsA(rel->subroot, PlannerInfo));
 
 		/*
 		 * Switch our attention to the subquery as mangled by the planner. It
