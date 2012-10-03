@@ -6,10 +6,9 @@
  * A timeline history file lists the timeline changes of the timeline, in
  * a simple text format. They are archived along with the WAL segments.
  *
- * The files are named like "<WAL segment>.history". For example, if the
- * database starts up and switches to timeline 5, while processing WAL
- * segment 000000030000002A00000006 (the old timeline was 3), the timeline
- * history file would be called "000000050000002A00000006.history".
+ * The files are named like "<tli>.history". For example, if the database
+ * starts up and switches to timeline 5, the timeline history file would be
+ * called "00000005.history".
  *
  * Each line in the file represents a timeline switch:
  *
@@ -376,4 +375,8 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 				 errmsg("could not rename file \"%s\" to \"%s\": %m",
 						tmppath, path)));
 #endif
+
+	/* The history file can be archived immediately. */
+	TLHistoryFileName(histfname, newTLI);
+	XLogArchiveNotify(histfname);
 }
