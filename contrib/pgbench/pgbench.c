@@ -130,6 +130,11 @@ int			foreign_keys = 0;
 int			unlogged_tables = 0;
 
 /*
+ * log sampling rate (1.0 = log everything, 0.0 = option not given)
+ */
+double		sample_rate = 0.0;
+
+/*
  * tablespace selection
  */
 char	   *tablespace = NULL;
@@ -370,6 +375,8 @@ usage(void)
 		   "  -f FILENAME  read transaction script from FILENAME\n"
 		   "  -j NUM       number of threads (default: 1)\n"
 		   "  -l           write transaction times to log file\n"
+		   "  --sampling-rate NUM\n"
+		   "               fraction of transactions to log (e.g. 0.01 for 1%% sample)\n"
 		   "  -M simple|extended|prepared\n"
 		   "               protocol for submitting queries to server (default: simple)\n"
 		   "  -n           do not run VACUUM before tests\n"
@@ -883,21 +890,30 @@ top:
 			instr_time	diff;
 			double		usec;
 
-			INSTR_TIME_SET_CURRENT(now);
-			diff = now;
-			INSTR_TIME_SUBTRACT(diff, st->txn_begin);
-			usec = (double) INSTR_TIME_GET_MICROSEC(diff);
+			/*
+			 * write the log entry if this row belongs to the random sample,
+			 * or no sampling rate was given which means log everything.
+			 */
+			if (sample_rate == 0.0 ||
+				pg_erand48(thread->random_state) <= sample_rate)
+			{
+
+				INSTR_TIME_SET_CURRENT(now);
+				diff = now;
+				INSTR_TIME_SUBTRACT(diff, st->txn_begin);
+				usec = (double) INSTR_TIME_GET_MICROSEC(diff);
 
 #ifndef WIN32
-			/* This is more than we really ought to know about instr_time */
-			fprintf(logfile, "%d %d %.0f %d %ld %ld\n",
-					st->id, st->cnt, usec, st->use_file,
-					(long) now.tv_sec, (long) now.tv_usec);
+				/* This is more than we really ought to know about instr_time */
+				fprintf(logfile, "%d %d %.0f %d %ld %ld\n",
+						st->id, st->cnt, usec, st->use_file,
+						(long) now.tv_sec, (long) now.tv_usec);
 #else
-			/* On Windows, instr_time doesn't provide a timestamp anyway */
-			fprintf(logfile, "%d %d %.0f %d 0 0\n",
-					st->id, st->cnt, usec, st->use_file);
+				/* On Windows, instr_time doesn't provide a timestamp anyway */
+				fprintf(logfile, "%d %d %.0f %d 0 0\n",
+						st->id, st->cnt, usec, st->use_file);
 #endif
+			}
 		}
 
 		if (commands[st->state]->type == SQL_COMMAND)
@@ -1926,6 +1942,7 @@ main(int argc, char **argv)
 		{"index-tablespace", required_argument, NULL, 3},
 		{"tablespace", required_argument, NULL, 2},
 		{"unlogged-tables", no_argument, &unlogged_tables, 1},
+		{"sampling-rate", required_argument, NULL, 4},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -2131,6 +2148,14 @@ main(int argc, char **argv)
 			case 3:				/* index-tablespace */
 				index_tablespace = optarg;
 				break;
+			case 4:
+				sample_rate = atof(optarg);
+				if (sample_rate <= 0.0 || sample_rate > 1.0)
+				{
+					fprintf(stderr, "invalid sampling rate: %f\n", sample_rate);
+					exit(1);
+				}
+				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
@@ -2163,6 +2188,13 @@ main(int argc, char **argv)
 	if (nclients % nthreads != 0)
 	{
 		fprintf(stderr, "number of clients (%d) must be a multiple of number of threads (%d)\n", nclients, nthreads);
+		exit(1);
+	}
+
+	/* --sampling-rate may be used only with -l */
+	if (sample_rate > 0.0 && !use_log)
+	{
+		fprintf(stderr, "log sampling rate is allowed only when logging transactions (-l) \n");
 		exit(1);
 	}
 

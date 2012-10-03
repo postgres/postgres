@@ -317,6 +317,24 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
+      <term><option>--sampling-rate</option> <replaceable>rate</></term>
+      <listitem>
+       <para>
+        Sampling rate, used when writing data into the log, to reduce the
+        amount of log generated. If this option is given, only the specified
+        fraction of transactions are logged. 1.0 means all transactions will
+        be logged, 0.05 means only 5% of the transactions will be logged.
+       </para>
+       <para>
+        Remember to take the sampling rate into account when processing the
+        log file. For example, when computing tps values, you need to multiply
+        the numbers accordingly (e.g. with 0.01 sample rate, you'll only get
+        1/100 of the actual tps).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-M</option> <replaceable>querymode</></term>
       <listitem>
        <para>
@@ -750,6 +768,12 @@ END;
  0 201 2513 0 1175850569 608
  0 202 2038 0 1175850569 2663
 </screen></para>
+
+  <para>
+   When running a long test on hardware that can handle a lot of transactions,
+   the log files can become very large.  The <option>--sampling-rate</> option
+   can be used to log only a random sample of transactions.
+  </para>
  </refsect2>
 
  <refsect2>
