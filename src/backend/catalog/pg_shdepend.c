@@ -1185,8 +1185,12 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 			InternalGrant istmt;
 			ObjectAddress obj;
 
-			/* We only operate on objects in the current database */
-			if (sdepForm->dbid != MyDatabaseId)
+			/*
+			 * We only operate on shared objects and objects in the current
+			 * database
+			 */
+			if (sdepForm->dbid != MyDatabaseId &&
+				sdepForm->dbid != InvalidOid)
 				continue;
 
 			switch (sdepForm->deptype)
