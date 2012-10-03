@@ -1157,6 +1157,7 @@ typedef struct CreateSchemaStmt
 	char	   *schemaname;		/* the name of the schema to create */
 	char	   *authid;			/* the owner of the created schema */
 	List	   *schemaElts;		/* schema components (list of parsenodes) */
+	bool		if_not_exists;	/* just do nothing if schema already exists? */
 } CreateSchemaStmt;
 
 typedef enum DropBehavior

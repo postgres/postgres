@@ -1376,6 +1376,7 @@ CreateExtension(CreateExtensionStmt *stmt)
 			csstmt->schemaname = schemaName;
 			csstmt->authid = NULL;		/* will be created by current user */
 			csstmt->schemaElts = NIL;
+			csstmt->if_not_exists = false;
 			CreateSchemaCommand(csstmt, NULL);
 
 			/*

@@ -36,6 +36,19 @@ SELECT * FROM test_schema_1.abc_view;
  4 |  
 (3 rows)
 
+-- test IF NOT EXISTS cases
+CREATE SCHEMA test_schema_1; -- fail, already exists
+ERROR:  schema "test_schema_1" already exists
+CREATE SCHEMA IF NOT EXISTS test_schema_1; -- ok with notice
+NOTICE:  schema "test_schema_1" already exists, skipping
+CREATE SCHEMA IF NOT EXISTS test_schema_1 -- fail, disallowed
+       CREATE TABLE abc (
+              a serial,
+              b int UNIQUE
+       );
+ERROR:  CREATE SCHEMA IF NOT EXISTS cannot include schema elements
+LINE 1: CREATE SCHEMA IF NOT EXISTS test_schema_1 
+                                    ^
 DROP SCHEMA test_schema_1 CASCADE;
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to table test_schema_1.abc

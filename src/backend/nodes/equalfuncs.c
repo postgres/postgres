@@ -1909,6 +1909,7 @@ _equalCreateSchemaStmt(const CreateSchemaStmt *a, const CreateSchemaStmt *b)
 	COMPARE_STRING_FIELD(schemaname);
 	COMPARE_STRING_FIELD(authid);
 	COMPARE_NODE_FIELD(schemaElts);
+	COMPARE_SCALAR_FIELD(if_not_exists);
 
 	return true;
 }

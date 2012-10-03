@@ -84,6 +84,23 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 		   errdetail("The prefix \"pg_\" is reserved for system schemas.")));
 
 	/*
+	 * If if_not_exists was given and the schema already exists, bail out.
+	 * (Note: we needn't check this when not if_not_exists, because
+	 * NamespaceCreate will complain anyway.)  We could do this before making
+	 * the permissions checks, but since CREATE TABLE IF NOT EXISTS makes its
+	 * creation-permission check first, we do likewise.
+	 */
+	if (stmt->if_not_exists &&
+		SearchSysCacheExists1(NAMESPACENAME, PointerGetDatum(schemaName)))
+	{
+		ereport(NOTICE,
+				(errcode(ERRCODE_DUPLICATE_SCHEMA),
+				 errmsg("schema \"%s\" already exists, skipping",
+						schemaName)));
+		return;
+	}
+
+	/*
 	 * If the requested authorization is different from the current user,
 	 * temporarily set the current user so that the object(s) will be created
 	 * with the correct ownership.

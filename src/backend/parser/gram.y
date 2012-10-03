@@ -1169,6 +1169,7 @@ CreateSchemaStmt:
 						n->schemaname = $5;
 					n->authid = $5;
 					n->schemaElts = $6;
+					n->if_not_exists = false;
 					$$ = (Node *)n;
 				}
 			| CREATE SCHEMA ColId OptSchemaEltList
@@ -1178,6 +1179,40 @@ CreateSchemaStmt:
 					n->schemaname = $3;
 					n->authid = NULL;
 					n->schemaElts = $4;
+					n->if_not_exists = false;
+					$$ = (Node *)n;
+				}
+			| CREATE SCHEMA IF_P NOT EXISTS OptSchemaName AUTHORIZATION RoleId OptSchemaEltList
+				{
+					CreateSchemaStmt *n = makeNode(CreateSchemaStmt);
+					/* One can omit the schema name or the authorization id. */
+					if ($6 != NULL)
+						n->schemaname = $6;
+					else
+						n->schemaname = $8;
+					n->authid = $8;
+					if ($9 != NIL)
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("CREATE SCHEMA IF NOT EXISTS cannot include schema elements"),
+								 parser_errposition(@9)));
+					n->schemaElts = $9;
+					n->if_not_exists = true;
+					$$ = (Node *)n;
+				}
+			| CREATE SCHEMA IF_P NOT EXISTS ColId OptSchemaEltList
+				{
+					CreateSchemaStmt *n = makeNode(CreateSchemaStmt);
+					/* ...but not both */
+					n->schemaname = $6;
+					n->authid = NULL;
+					if ($7 != NIL)
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("CREATE SCHEMA IF NOT EXISTS cannot include schema elements"),
+								 parser_errposition(@7)));
+					n->schemaElts = $7;
+					n->if_not_exists = true;
 					$$ = (Node *)n;
 				}
 		;
