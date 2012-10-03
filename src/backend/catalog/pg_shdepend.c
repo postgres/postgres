@@ -1166,8 +1166,12 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 			InternalGrant istmt;
 			Form_pg_shdepend sdepForm = (Form_pg_shdepend) GETSTRUCT(tuple);
 
-			/* We only operate on objects in the current database */
-			if (sdepForm->dbid != MyDatabaseId)
+			/*
+			 * We only operate on shared objects and objects in the current
+			 * database
+			 */
+			if (sdepForm->dbid != MyDatabaseId &&
+				sdepForm->dbid != InvalidOid)
 				continue;
 
 			switch (sdepForm->deptype)
