@@ -1922,25 +1922,31 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 					_SPI_current->processed = _SPI_current->tuptable->alloced -
 						_SPI_current->tuptable->free;
 
+				res = SPI_OK_UTILITY;
+
 				/*
-				 * CREATE TABLE AS is a messy special case for historical
-				 * reasons.  We must set _SPI_current->processed even though
-				 * the tuples weren't returned to the caller, and we must
-				 * return a special result code if the statement was spelled
-				 * SELECT INTO.
+				 * Some utility statements return a row count, even though the
+				 * tuples are not returned to the caller.
 				 */
 				if (IsA(stmt, CreateTableAsStmt))
 				{
 					Assert(strncmp(completionTag, "SELECT ", 7) == 0);
 					_SPI_current->processed = strtoul(completionTag + 7,
 													  NULL, 10);
+
+					/*
+					 * For historical reasons, if CREATE TABLE AS was spelled
+					 * as SELECT INTO, return a special return code.
+					 */
 					if (((CreateTableAsStmt *) stmt)->is_select_into)
 						res = SPI_OK_SELINTO;
-					else
-						res = SPI_OK_UTILITY;
 				}
-				else
-					res = SPI_OK_UTILITY;
+				else if (IsA(stmt, CopyStmt))
+				{
+					Assert(strncmp(completionTag, "COPY ", 5) == 0);
+					_SPI_current->processed = strtoul(completionTag + 5,
+													  NULL, 10);
+				}
 			}
 
 			/*

@@ -377,7 +377,10 @@ SPI_execute("INSERT INTO foo SELECT * FROM bar", false, 5);
    global pointer <literal>SPITupleTable *SPI_tuptable</literal> to
    access the result rows.  Some utility commands (such as
    <command>EXPLAIN</>) also return row sets, and <literal>SPI_tuptable</>
-   will contain the result in these cases too.
+   will contain the result in these cases too. Some utility commands
+   (<command>COPY</>, <command>CREATE TABLE AS</>) don't return a row set, so
+   <literal>SPI_tuptable</> is NULL, but they still return the number of
+   rows processed in <varname>SPI_processed</>.
   </para>
 
   <para>
