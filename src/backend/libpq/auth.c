@@ -2161,6 +2161,7 @@ CheckLDAPAuth(Port *port)
 		char	   *attributes[2];
 		char	   *dn;
 		char	   *c;
+		int			count;
 
 		/*
 		 * Disallow any characters that we would otherwise need to escape,
@@ -2223,17 +2224,21 @@ CheckLDAPAuth(Port *port)
 			return STATUS_ERROR;
 		}
 
-		if (ldap_count_entries(ldap, search_message) != 1)
+		count = ldap_count_entries(ldap, search_message);
+		if (count != 1)
 		{
-			if (ldap_count_entries(ldap, search_message) == 0)
+			if (count == 0)
 				ereport(LOG,
-						(errmsg("LDAP search failed for filter \"%s\" on server \"%s\": no such user",
-								filter, port->hba->ldapserver)));
+						(errmsg("LDAP user \"%s\" does not exist", port->user_name),
+						 errdetail("LDAP search for filter \"%s\" on server \"%s\" returned no entries.",
+								   filter, port->hba->ldapserver)));
 			else
 				ereport(LOG,
-						(errmsg("LDAP search failed for filter \"%s\" on server \"%s\": user is not unique (%ld matches)",
-								filter, port->hba->ldapserver,
-						  (long) ldap_count_entries(ldap, search_message))));
+						(errmsg("LDAP user \"%s\" is not unique", port->user_name),
+						 errdetail_plural("LDAP search for filter \"%s\" on server \"%s\" returned %d entry.",
+										  "LDAP search for filter \"%s\" on server \"%s\" returned %d entries.",
+										  count,
+										  filter, port->hba->ldapserver, count)));
 
 			pfree(filter);
 			ldap_msgfree(search_message);
