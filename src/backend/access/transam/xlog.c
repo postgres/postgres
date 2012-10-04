@@ -8743,8 +8743,8 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive)
 	 * archived, or include them into the backup.
 	 *
 	 * We return the current minimum recovery point as the backup end
-	 * location. Note that it's would be bigger than the exact backup end
-	 * location if the minimum recovery point is updated since the backup of
+	 * location. Note that it can be greater than the exact backup end
+	 * location if the minimum recovery point is updated after the backup of
 	 * pg_control. This is harmless for current uses.
 	 *
 	 * XXX currently a backup history file is for informational and debug
