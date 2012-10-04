@@ -47,14 +47,6 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
   </para>
 
   <para>
-   Normally, the creator becomes the owner of the new database.
-   Superusers can create databases owned by other users, by using the
-   <literal>OWNER</> clause. They can even create databases owned by
-   users with no special privileges. Non-superusers with <literal>CREATEDB</>
-   privilege can only create databases owned by themselves.
-  </para>
-
-  <para>
    By default, the new database will be created by cloning the standard
    system database <literal>template1</>.  A different template can be
    specified by writing <literal>TEMPLATE
@@ -84,9 +76,11 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
       <term><replaceable class="parameter">user_name</replaceable></term>
       <listitem>
        <para>
-        The name of the database user who will own the new database,
+        The role name of the user who will own the new database,
         or <literal>DEFAULT</literal> to use the default (namely, the
-        user executing the command).
+        user executing the command).  To create a database owned by another
+        role, you must be a direct or indirect member of that role,
+        or be a superuser.
        </para>
       </listitem>
      </varlistentry>
