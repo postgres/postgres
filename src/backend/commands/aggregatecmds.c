@@ -61,6 +61,7 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters)
 	Oid		   *aggArgTypes;
 	int			numArgs;
 	Oid			transTypeId;
+	char		transTypeType;
 	ListCell   *pl;
 
 	/* Convert list of names to a name and namespace */
@@ -181,7 +182,8 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters)
 	 * aggregate.
 	 */
 	transTypeId = typenameTypeId(NULL, transType);
-	if (get_typtype(transTypeId) == TYPTYPE_PSEUDO &&
+	transTypeType = get_typtype(transTypeId);
+	if (transTypeType == TYPTYPE_PSEUDO &&
 		!IsPolymorphicType(transTypeId))
 	{
 		if (transTypeId == INTERNALOID && superuser())
@@ -191,6 +193,24 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters)
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 					 errmsg("aggregate transition data type cannot be %s",
 							format_type_be(transTypeId))));
+	}
+
+	/*
+	 * If we have an initval, and it's not for a pseudotype (particularly a
+	 * polymorphic type), make sure it's acceptable to the type's input
+	 * function.  We will store the initval as text, because the input
+	 * function isn't necessarily immutable (consider "now" for timestamp),
+	 * and we want to use the runtime not creation-time interpretation of the
+	 * value.  However, if it's an incorrect value it seems much more
+	 * user-friendly to complain at CREATE AGGREGATE time.
+	 */
+	if (initval && transTypeType != TYPTYPE_PSEUDO)
+	{
+		Oid			typinput,
+					typioparam;
+
+		getTypeInputInfo(transTypeId, &typinput, &typioparam);
+		(void) OidInputFunctionCall(typinput, initval, typioparam, -1);
 	}
 
 	/*
