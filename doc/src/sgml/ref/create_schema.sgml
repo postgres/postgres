@@ -64,7 +64,8 @@ CREATE SCHEMA AUTHORIZATION <replaceable class="parameter">username</replaceable
       <term><replaceable class="parameter">schemaname</replaceable></term>
       <listitem>
        <para>
-        The name of a schema to be created.  If this is omitted, the user name
+        The name of a schema to be created.  If this is omitted, the
+        <replaceable class="parameter">username</replaceable>
         is used as the schema name.  The name cannot
         begin with <literal>pg_</literal>, as such names
         are reserved for system schemas.
@@ -76,9 +77,10 @@ CREATE SCHEMA AUTHORIZATION <replaceable class="parameter">username</replaceable
       <term><replaceable class="parameter">username</replaceable></term>
       <listitem>
        <para>
-        The name of the user who will own the schema.  If omitted,
-        defaults to the user executing the command.  Only superusers
-        can create schemas owned by users other than themselves.
+        The role name of the user who will own the new schema.  If omitted,
+        defaults to the user executing the command.  To create a schema
+        owned by another role, you must be a direct or indirect member of
+        that role, or be a superuser.
        </para>
       </listitem>
      </varlistentry>
@@ -175,7 +177,8 @@ CREATE VIEW hollywood.winners AS
    all objects within it.  <productname>PostgreSQL</productname>
    allows schemas to contain objects owned by users other than the
    schema owner.  This can happen only if the schema owner grants the
-   <literal>CREATE</> privilege on his schema to someone else.
+   <literal>CREATE</> privilege on his schema to someone else, or a
+   superuser chooses to create objects in it.
   </para>
  </refsect1>
 
