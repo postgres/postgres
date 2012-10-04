@@ -47,8 +47,8 @@ CREATE SCHEMA IF NOT EXISTS test_schema_1 -- fail, disallowed
               b int UNIQUE
        );
 ERROR:  CREATE SCHEMA IF NOT EXISTS cannot include schema elements
-LINE 1: CREATE SCHEMA IF NOT EXISTS test_schema_1 
-                                    ^
+LINE 2:        CREATE TABLE abc (
+               ^
 DROP SCHEMA test_schema_1 CASCADE;
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to table test_schema_1.abc
