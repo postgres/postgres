@@ -373,11 +373,6 @@ getnameinfo(const struct sockaddr * sa, int salen,
 	if (sa == NULL || (node == NULL && service == NULL))
 		return EAI_FAIL;
 
-	/* We don't support those. */
-	if ((node && !(flags & NI_NUMERICHOST))
-		|| (service && !(flags & NI_NUMERICSERV)))
-		return EAI_FAIL;
-
 #ifdef	HAVE_IPV6
 	if (sa->sa_family == AF_INET6)
 		return EAI_FAMILY;
