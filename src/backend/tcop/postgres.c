@@ -192,6 +192,7 @@ static int	InteractiveBackend(StringInfo inBuf);
 static int	interactive_getc(void);
 static int	SocketBackend(StringInfo inBuf);
 static int	ReadCommand(StringInfo inBuf);
+static void forbidden_in_wal_sender(char firstchar);
 static List *pg_rewrite_query(Query *query);
 static bool check_log_statement(List *stmt_list);
 static int	errdetail_execute(List *raw_parsetree_list);
@@ -3720,12 +3721,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (IsUnderPostmaster && Log_disconnections)
 		on_proc_exit(log_disconnections, 0);
 
-	/* If this is a WAL sender process, we're done with initialization. */
+	/* Perform initialization specific to a WAL sender process. */
 	if (am_walsender)
-	{
-		WalSenderMain();		/* does not return */
-		abort();
-	}
+		InitWalSender();
 
 	/*
 	 * process any libraries that should be preloaded at backend start (this
@@ -3834,6 +3832,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 * Abort the current transaction in order to recover.
 		 */
 		AbortCurrentTransaction();
+
+		if (am_walsender)
+			WalSndErrorCleanup();
 
 		/*
 		 * Now return to normal top-level context and clear ErrorContext for
@@ -3969,7 +3970,10 @@ PostgresMain(int argc, char *argv[], const char *username)
 					query_string = pq_getmsgstring(&input_message);
 					pq_getmsgend(&input_message);
 
-					exec_simple_query(query_string);
+					if (am_walsender)
+						exec_replication_command(query_string);
+					else
+						exec_simple_query(query_string);
 
 					send_ready_for_query = true;
 				}
@@ -3981,6 +3985,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 					const char *query_string;
 					int			numParams;
 					Oid		   *paramTypes = NULL;
+
+					forbidden_in_wal_sender(firstchar);
 
 					/* Set statement_timestamp() */
 					SetCurrentStatementStartTimestamp();
@@ -4004,6 +4010,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 				break;
 
 			case 'B':			/* bind */
+				forbidden_in_wal_sender(firstchar);
+
 				/* Set statement_timestamp() */
 				SetCurrentStatementStartTimestamp();
 
@@ -4019,6 +4027,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 					const char *portal_name;
 					int			max_rows;
 
+					forbidden_in_wal_sender(firstchar);
+
 					/* Set statement_timestamp() */
 					SetCurrentStatementStartTimestamp();
 
@@ -4031,6 +4041,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 				break;
 
 			case 'F':			/* fastpath function call */
+				forbidden_in_wal_sender(firstchar);
+
 				/* Set statement_timestamp() */
 				SetCurrentStatementStartTimestamp();
 
@@ -4078,6 +4090,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 					int			close_type;
 					const char *close_target;
 
+					forbidden_in_wal_sender(firstchar);
+
 					close_type = pq_getmsgbyte(&input_message);
 					close_target = pq_getmsgstring(&input_message);
 					pq_getmsgend(&input_message);
@@ -4119,6 +4133,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 				{
 					int			describe_type;
 					const char *describe_target;
+
+					forbidden_in_wal_sender(firstchar);
 
 					/* Set statement_timestamp() (needed for xact) */
 					SetCurrentStatementStartTimestamp();
@@ -4199,6 +4215,29 @@ PostgresMain(int argc, char *argv[], const char *username)
 								firstchar)));
 		}
 	}							/* end of input-reading loop */
+}
+
+/*
+ * Throw an error if we're a WAL sender process.
+ *
+ * This is used to forbid anything else than simple query protocol messages
+ * in a WAL sender process.  'firstchar' specifies what kind of a forbidden
+ * message was received, and is used to construct the error message.
+ */
+static void
+forbidden_in_wal_sender(char firstchar)
+{
+	if (am_walsender)
+	{
+		if (firstchar == 'F')
+			ereport(ERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("fastpath function calls not supported in a replication connection")));
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("extended query protocol not supported in a replication connection")));
+	}
 }
 
 

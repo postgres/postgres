@@ -19,7 +19,6 @@
 /* global state */
 extern bool am_walsender;
 extern bool am_cascading_walsender;
-extern volatile sig_atomic_t walsender_shutdown_requested;
 extern volatile sig_atomic_t walsender_ready_to_stop;
 extern bool wake_wal_senders;
 
@@ -27,7 +26,9 @@ extern bool wake_wal_senders;
 extern int	max_wal_senders;
 extern int	replication_timeout;
 
-extern void WalSenderMain(void) __attribute__((noreturn));
+extern void InitWalSender(void);
+extern void exec_replication_command(const char *query_string);
+extern void WalSndErrorCleanup(void);
 extern void WalSndSignals(void);
 extern Size WalSndShmemSize(void);
 extern void WalSndShmemInit(void);
