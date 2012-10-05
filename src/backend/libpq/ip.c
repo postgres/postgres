@@ -247,11 +247,6 @@ getnameinfo_unix(const struct sockaddr_un * sa, int salen,
 		(node == NULL && service == NULL))
 		return EAI_FAIL;
 
-	/* We don't support those. */
-	if ((node && !(flags & NI_NUMERICHOST))
-		|| (service && !(flags & NI_NUMERICSERV)))
-		return EAI_FAIL;
-
 	if (node)
 	{
 		ret = snprintf(node, nodelen, "%s", "[local]");
