@@ -760,11 +760,6 @@ do
     normal clauses.
    </para>
 
-   <para>
-    Both of these methods only allow retrieving one row at a time.  If
-    you need to process result sets that potentially contain more than
-    one row, you need to use a cursor, as shown in the second example.
-   </para>
   </sect2>
 
   <sect2 id="ecpg-variables-type-mapping">
