@@ -58,7 +58,7 @@ pl_gram.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o pl_scanner.o: plpgsql.h pl
 
 pl_gram.h: pl_gram.c ;
 
-pl_gram.c: gram.y
+pl_gram.c: pl_gram.y
 ifdef BISON
 	$(BISON) -d $(BISONFLAGS) -o $@ $<
 else

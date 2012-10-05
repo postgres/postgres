@@ -107,7 +107,7 @@ sub mkvcbuild
 
 	my $plpgsql =
 	  $solution->AddProject('plpgsql', 'dll', 'PLs', 'src\pl\plpgsql\src');
-	$plpgsql->AddFiles('src\pl\plpgsql\src', 'gram.y');
+	$plpgsql->AddFiles('src\pl\plpgsql\src', 'pl_gram.y');
 	$plpgsql->AddReference($postgres);
 
 	if ($solution->{options}->{perl})
