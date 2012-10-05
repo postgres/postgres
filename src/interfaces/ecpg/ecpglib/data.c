@@ -422,6 +422,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 							ecpg_raise(lineno, ECPG_CONVERT_BOOL,
 									   ECPG_SQLSTATE_DATATYPE_MISMATCH,
 									   NULL);
+						pval++;
 						break;
 					}
 					else if (pval[0] == 't' && pval[1] == '\0')
@@ -434,6 +435,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 							ecpg_raise(lineno, ECPG_CONVERT_BOOL,
 									   ECPG_SQLSTATE_DATATYPE_MISMATCH,
 									   NULL);
+						pval++;
 						break;
 					}
 					else if (pval[0] == '\0' && PQgetisnull(results, act_tuple, act_field))
@@ -777,7 +779,7 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					++pval;
 			}
 		}
-	} while (*pval != '\0' && array_boundary(isarray, *pval));
+	} while (*pval != '\0' && !array_boundary(isarray, *pval));
 
 	return (true);
 }
