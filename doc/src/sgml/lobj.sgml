@@ -41,7 +41,7 @@
     larger than a single database page into a secondary storage area per table.
     This makes the large object facility partially obsolete.  One
     remaining advantage of the large object facility is that it allows values
-    up to 2 GB in size, whereas <acronym>TOAST</acronym>ed fields can be at
+    up to 4 TB in size, whereas <acronym>TOAST</acronym>ed fields can be at
     most 1 GB.  Also, large objects can be randomly modified using a read/write
     API that is more efficient than performing such operations using
     <acronym>TOAST</acronym>.
@@ -237,7 +237,9 @@ int lo_open(PGconn *conn, Oid lobjId, int mode);
      <function>lo_open</function> returns a (non-negative) large object
      descriptor for later use in <function>lo_read</function>,
      <function>lo_write</function>, <function>lo_lseek</function>,
-     <function>lo_tell</function>, and <function>lo_close</function>.
+	 <function>lo_lseek64</function>, <function>lo_tell</function>,
+     <function>lo_tell64</function>, <function>lo_truncate</function>,
+	 <function>lo_truncate64</function>, and <function>lo_close</function>.
      The descriptor is only valid for
      the duration of the current transaction.
      On failure, -1 is returned.
@@ -312,6 +314,7 @@ int lo_read(PGconn *conn, int fd, char *buf, size_t len);
      large object descriptor, call
 <synopsis>
 int lo_lseek(PGconn *conn, int fd, int offset, int whence);
+pg_int64 lo_lseek64(PGconn *conn, int fd, pg_int64 offset, int whence);
 </synopsis>
      <indexterm><primary>lo_lseek</></> This function moves the
      current location pointer for the large object descriptor identified by
@@ -321,7 +324,16 @@ int lo_lseek(PGconn *conn, int fd, int offset, int whence);
      <symbol>SEEK_CUR</> (seek from current position), and
      <symbol>SEEK_END</> (seek from object end).  The return value is
      the new location pointer, or -1 on error.
+     <indexterm><primary>lo_lseek64</></> <function>lo_lseek64</function>
+     is a function for large objects larger than 2GB. <symbol>pg_int64</>
+     is defined as 8-byte integer type.
 </para>
+<para>
+     <function>lo_lseek64</> is new as of <productname>PostgreSQL</productname>
+     9.3; if this function is run against an older server version, it will
+     fail and return a negative value.
+</para>
+
 </sect2>
 
 <sect2 id="lo-tell">
@@ -332,9 +344,17 @@ int lo_lseek(PGconn *conn, int fd, int offset, int whence);
      call
 <synopsis>
 int lo_tell(PGconn *conn, int fd);
+pg_int64 lo_tell64(PGconn *conn, int fd);
 </synopsis>
      <indexterm><primary>lo_tell</></> If there is an error, the
      return value is negative.
+     <indexterm><primary>lo_tell64</></> <function>lo_tell64</function> is
+     a function for large objects larger than 2GB.
+</para>
+<para>
+     <function>lo_tell64</> is new as of <productname>PostgreSQL</productname>
+     9.3; if this function is run against an older server version, it will
+     fail and return a negative value.
 </para>
 </sect2>
 
@@ -345,6 +365,7 @@ int lo_tell(PGconn *conn, int fd);
      To truncate a large object to a given length, call
 <synopsis>
 int lo_truncate(PGcon *conn, int fd, size_t len);
+int lo_truncate64(PGcon *conn, int fd, pg_int64 len);
 </synopsis>
      <indexterm><primary>lo_truncate</></> truncates the large object
      descriptor <parameter>fd</> to length <parameter>len</>.  The
@@ -352,6 +373,8 @@ int lo_truncate(PGcon *conn, int fd, size_t len);
      previous <function>lo_open</function>.  If <parameter>len</> is
      greater than the current large object length, the large object
      is extended with null bytes ('\0').
+     <indexterm><primary>lo_truncate64</></> <function>lo_truncate64</function>
+     is a function for large objects larger than 2GB.
 </para>
 
 <para>
@@ -359,13 +382,18 @@ int lo_truncate(PGcon *conn, int fd, size_t len);
 </para>
 
 <para>
-     On success <function>lo_truncate</function> returns
+     On success <function>lo_truncate</function> and <function>lo_truncate64</function> returns
      zero.  On error, the return value is negative.
 </para>
 
 <para>
      <function>lo_truncate</> is new as of <productname>PostgreSQL</productname>
      8.3; if this function is run against an older server version, it will
+     fail and return a negative value.
+</para>
+<para>
+     <function>lo_truncate64</> is new as of <productname>PostgreSQL</productname>
+     9.3; if this function is run against an older server version, it will
      fail and return a negative value.
 </para>
 </sect2>

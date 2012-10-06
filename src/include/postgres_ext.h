@@ -56,4 +56,9 @@ typedef unsigned int Oid;
 #define PG_DIAG_SOURCE_LINE		'L'
 #define PG_DIAG_SOURCE_FUNCTION 'R'
 
+#ifndef NO_PG_INT64
+#define HAVE_PG_INT64 1
+typedef long long int pg_int64;
+#endif
+
 #endif

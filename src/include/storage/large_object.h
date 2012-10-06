@@ -37,7 +37,7 @@ typedef struct LargeObjectDesc
 	Oid			id;				/* LO's identifier */
 	Snapshot	snapshot;		/* snapshot to use */
 	SubTransactionId subid;		/* owning subtransaction ID */
-	uint32		offset;			/* current seek pointer */
+	uint64		offset;			/* current seek pointer */
 	int			flags;			/* locking info, etc */
 
 /* flag bits: */
@@ -62,7 +62,10 @@ typedef struct LargeObjectDesc
  * This avoids unnecessary tuple updates caused by partial-page writes.
  */
 #define LOBLKSIZE		(BLCKSZ / 4)
-
+/*
+ * Maximum byte length for each large object
+*/
+#define MAX_LARGE_OBJECT_SIZE	INT64CONST(INT_MAX * LOBLKSIZE)
 
 /*
  * Function definitions...
@@ -74,10 +77,10 @@ extern Oid	inv_create(Oid lobjId);
 extern LargeObjectDesc *inv_open(Oid lobjId, int flags, MemoryContext mcxt);
 extern void inv_close(LargeObjectDesc *obj_desc);
 extern int	inv_drop(Oid lobjId);
-extern int	inv_seek(LargeObjectDesc *obj_desc, int offset, int whence);
-extern int	inv_tell(LargeObjectDesc *obj_desc);
+extern int64	inv_seek(LargeObjectDesc *obj_desc, int64 offset, int whence);
+extern int64	inv_tell(LargeObjectDesc *obj_desc);
 extern int	inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes);
 extern int	inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes);
-extern void inv_truncate(LargeObjectDesc *obj_desc, int len);
+extern void inv_truncate(LargeObjectDesc *obj_desc, int64 len);
 
 #endif   /* LARGE_OBJECT_H */

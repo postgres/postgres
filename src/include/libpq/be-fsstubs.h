@@ -34,8 +34,11 @@ extern Datum lowrite(PG_FUNCTION_ARGS);
 
 extern Datum lo_lseek(PG_FUNCTION_ARGS);
 extern Datum lo_tell(PG_FUNCTION_ARGS);
+extern Datum lo_lseek64(PG_FUNCTION_ARGS);
+extern Datum lo_tell64(PG_FUNCTION_ARGS);
 extern Datum lo_unlink(PG_FUNCTION_ARGS);
 extern Datum lo_truncate(PG_FUNCTION_ARGS);
+extern Datum lo_truncate64(PG_FUNCTION_ARGS);
 
 /*
  * compatibility option for access control

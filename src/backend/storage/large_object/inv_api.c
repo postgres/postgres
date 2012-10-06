@@ -324,10 +324,10 @@ inv_drop(Oid lobjId)
  * NOTE: LOs can contain gaps, just like Unix files.  We actually return
  * the offset of the last byte + 1.
  */
-static uint32
+static uint64
 inv_getsize(LargeObjectDesc *obj_desc)
 {
-	uint32		lastbyte = 0;
+	uint64		lastbyte = 0;
 	ScanKeyData skey[1];
 	SysScanDesc sd;
 	HeapTuple	tuple;
@@ -368,7 +368,7 @@ inv_getsize(LargeObjectDesc *obj_desc)
 				heap_tuple_untoast_attr((struct varlena *) datafield);
 			pfreeit = true;
 		}
-		lastbyte = data->pageno * LOBLKSIZE + getbytealen(datafield);
+		lastbyte = (uint64) data->pageno * LOBLKSIZE + getbytealen(datafield);
 		if (pfreeit)
 			pfree(datafield);
 	}
@@ -378,30 +378,31 @@ inv_getsize(LargeObjectDesc *obj_desc)
 	return lastbyte;
 }
 
-int
-inv_seek(LargeObjectDesc *obj_desc, int offset, int whence)
+int64
+inv_seek(LargeObjectDesc *obj_desc, int64 offset, int whence)
 {
 	Assert(PointerIsValid(obj_desc));
 
 	switch (whence)
 	{
 		case SEEK_SET:
-			if (offset < 0)
-				elog(ERROR, "invalid seek offset: %d", offset);
+			if (offset < 0 || offset >= MAX_LARGE_OBJECT_SIZE)
+				elog(ERROR, "invalid seek offset: " INT64_FORMAT, offset);
 			obj_desc->offset = offset;
 			break;
 		case SEEK_CUR:
-			if (offset < 0 && obj_desc->offset < ((uint32) (-offset)))
-				elog(ERROR, "invalid seek offset: %d", offset);
+			if ((offset + obj_desc->offset) < 0 ||
+			   (offset + obj_desc->offset) >= MAX_LARGE_OBJECT_SIZE)
+				elog(ERROR, "invalid seek offset: " INT64_FORMAT, offset);
 			obj_desc->offset += offset;
 			break;
 		case SEEK_END:
 			{
-				uint32		size = inv_getsize(obj_desc);
+				int64		pos = inv_getsize(obj_desc) + offset;
 
-				if (offset < 0 && size < ((uint32) (-offset)))
-					elog(ERROR, "invalid seek offset: %d", offset);
-				obj_desc->offset = size + offset;
+				if (pos < 0 || pos >= MAX_LARGE_OBJECT_SIZE)
+					elog(ERROR, "invalid seek offset: " INT64_FORMAT, offset);
+				obj_desc->offset = pos;
 			}
 			break;
 		default:
@@ -410,7 +411,7 @@ inv_seek(LargeObjectDesc *obj_desc, int offset, int whence)
 	return obj_desc->offset;
 }
 
-int
+int64
 inv_tell(LargeObjectDesc *obj_desc)
 {
 	Assert(PointerIsValid(obj_desc));
@@ -422,11 +423,11 @@ int
 inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 {
 	int			nread = 0;
-	int			n;
-	int			off;
+	int64		n;
+	int64		off;
 	int			len;
 	int32		pageno = (int32) (obj_desc->offset / LOBLKSIZE);
-	uint32		pageoff;
+	uint64		pageoff;
 	ScanKeyData skey[2];
 	SysScanDesc sd;
 	HeapTuple	tuple;
@@ -436,6 +437,9 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 
 	if (nbytes <= 0)
 		return 0;
+
+	if ((nbytes + obj_desc->offset) > MAX_LARGE_OBJECT_SIZE)
+		elog(ERROR, "invalid read request size: %d", nbytes);
 
 	open_lo_relation();
 
@@ -467,7 +471,7 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 		 * there may be missing pages if the LO contains unwritten "holes". We
 		 * want missing sections to read out as zeroes.
 		 */
-		pageoff = ((uint32) data->pageno) * LOBLKSIZE;
+		pageoff = ((uint64) data->pageno) * LOBLKSIZE;
 		if (pageoff > obj_desc->offset)
 		{
 			n = pageoff - obj_desc->offset;
@@ -559,6 +563,9 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 
 	if (nbytes <= 0)
 		return 0;
+
+	if ((nbytes + obj_desc->offset) > MAX_LARGE_OBJECT_SIZE)
+		elog(ERROR, "invalid write request size: %d", nbytes);
 
 	open_lo_relation();
 
@@ -718,10 +725,10 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 }
 
 void
-inv_truncate(LargeObjectDesc *obj_desc, int len)
+inv_truncate(LargeObjectDesc *obj_desc, int64 len)
 {
 	int32		pageno = (int32) (len / LOBLKSIZE);
-	int			off;
+	int32		off;
 	ScanKeyData skey[2];
 	SysScanDesc sd;
 	HeapTuple	oldtuple;

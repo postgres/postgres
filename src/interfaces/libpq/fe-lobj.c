@@ -37,10 +37,16 @@
 #include "libpq-int.h"
 #include "libpq/libpq-fs.h"		/* must come after sys/stat.h */
 
+/* for ntohl/htonl */
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #define LO_BUFSIZE		  8192
 
 static int	lo_initialize(PGconn *conn);
 static Oid	lo_import_internal(PGconn *conn, const char *filename, Oid oid);
+static pg_int64	lo_hton64(pg_int64 host64);
+static pg_int64	lo_ntoh64(pg_int64 net64);
 
 /*
  * lo_open
@@ -174,6 +180,59 @@ lo_truncate(PGconn *conn, int fd, size_t len)
 	}
 }
 
+/*
+ * lo_truncate64
+ *	  truncates an existing large object to the given size
+ *
+ * returns 0 upon success
+ * returns -1 upon failure
+ */
+#ifdef HAVE_PG_INT64
+int
+lo_truncate64(PGconn *conn, int fd, pg_int64 len)
+{
+	PQArgBlock	argv[2];
+	PGresult   *res;
+	int			retval;
+	int			result_len;
+
+	if (conn == NULL || conn->lobjfuncs == NULL)
+	{
+		if (lo_initialize(conn) < 0)
+			return -1;
+	}
+
+	if (conn->lobjfuncs->fn_lo_truncate64 == 0)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+			libpq_gettext("cannot determine OID of function lo_truncate64\n"));
+		return -1;
+	}
+
+	argv[0].isint = 1;
+	argv[0].len = 4;
+	argv[0].u.integer = fd;
+
+	len = lo_hton64(len);
+	argv[1].isint = 0;
+	argv[1].len = 8;
+	argv[1].u.ptr = (int *) &len;
+
+	res = PQfn(conn, conn->lobjfuncs->fn_lo_truncate64,
+			   &retval, &result_len, 1, argv, 2);
+
+	if (PQresultStatus(res) == PGRES_COMMAND_OK)
+	{
+		PQclear(res);
+		return retval;
+	}
+	else
+	{
+		PQclear(res);
+		return -1;
+	}
+}
+#endif
 
 /*
  * lo_read
@@ -311,6 +370,63 @@ lo_lseek(PGconn *conn, int fd, int offset, int whence)
 }
 
 /*
+ * lo_lseek64
+ *	  change the current read or write location on a large object
+ * currently, only L_SET is a legal value for whence
+ *
+ */
+
+#ifdef HAVE_PG_INT64
+pg_int64
+lo_lseek64(PGconn *conn, int fd, pg_int64 offset, int whence)
+{
+	PQArgBlock	argv[3];
+	PGresult   *res;
+	pg_int64		retval;
+	int			result_len;
+
+	if (conn == NULL || conn->lobjfuncs == NULL)
+	{
+		if (lo_initialize(conn) < 0)
+			return -1;
+	}
+
+	if (conn->lobjfuncs->fn_lo_lseek64 == 0)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+			libpq_gettext("cannot determine OID of function lo_lseek64\n"));
+		return -1;
+	}
+
+	argv[0].isint = 1;
+	argv[0].len = 4;
+	argv[0].u.integer = fd;
+
+	offset = lo_hton64(offset);
+	argv[1].isint = 0;
+	argv[1].len = 8;
+	argv[1].u.ptr = (int *) &offset;
+
+	argv[2].isint = 1;
+	argv[2].len = 4;
+	argv[2].u.integer = whence;
+
+	res = PQfn(conn, conn->lobjfuncs->fn_lo_lseek64,
+			   (int *)&retval, &result_len, 0, argv, 3);
+	if (PQresultStatus(res) == PGRES_COMMAND_OK)
+	{
+		PQclear(res);
+		return lo_ntoh64((pg_int64)retval);
+	}
+	else
+	{
+		PQclear(res);
+		return -1;
+	}
+}
+#endif
+
+/*
  * lo_creat
  *	  create a new large object
  * the mode is ignored (once upon a time it had a use)
@@ -434,6 +550,52 @@ lo_tell(PGconn *conn, int fd)
 		return -1;
 	}
 }
+
+/*
+ * lo_tell64
+ *	  returns the current seek location of the large object
+ *
+ */
+#ifdef HAVE_PG_INT64
+pg_int64
+lo_tell64(PGconn *conn, int fd)
+{
+	pg_int64	retval;
+	PQArgBlock	argv[1];
+	PGresult   *res;
+	int			result_len;
+
+	if (conn == NULL || conn->lobjfuncs == NULL)
+	{
+		if (lo_initialize(conn) < 0)
+			return -1;
+	}
+
+	if (conn->lobjfuncs->fn_lo_tell64 == 0)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+			libpq_gettext("cannot determine OID of function lo_tell64\n"));
+		return -1;
+	}
+
+	argv[0].isint = 1;
+	argv[0].len = 4;
+	argv[0].u.integer = fd;
+
+	res = PQfn(conn, conn->lobjfuncs->fn_lo_tell64,
+			   (int *) &retval, &result_len, 0, argv, 1);
+	if (PQresultStatus(res) == PGRES_COMMAND_OK)
+	{
+		PQclear(res);
+		return lo_ntoh64((pg_int64) retval);
+	}
+	else
+	{
+		PQclear(res);
+		return -1;
+	}
+}
+#endif
 
 /*
  * lo_unlink
@@ -713,8 +875,11 @@ lo_initialize(PGconn *conn)
 			"'lo_create', "
 			"'lo_unlink', "
 			"'lo_lseek', "
+			"'lo_lseek64', "
 			"'lo_tell', "
+			"'lo_tell64', "
 			"'lo_truncate', "
+			"'lo_truncate64', "
 			"'loread', "
 			"'lowrite') "
 			"and pronamespace = (select oid from pg_catalog.pg_namespace "
@@ -765,10 +930,16 @@ lo_initialize(PGconn *conn)
 			lobjfuncs->fn_lo_unlink = foid;
 		else if (strcmp(fname, "lo_lseek") == 0)
 			lobjfuncs->fn_lo_lseek = foid;
+		else if (strcmp(fname, "lo_lseek64") == 0)
+			lobjfuncs->fn_lo_lseek64 = foid;
 		else if (strcmp(fname, "lo_tell") == 0)
 			lobjfuncs->fn_lo_tell = foid;
+		else if (strcmp(fname, "lo_tell64") == 0)
+			lobjfuncs->fn_lo_tell64 = foid;
 		else if (strcmp(fname, "lo_truncate") == 0)
 			lobjfuncs->fn_lo_truncate = foid;
+		else if (strcmp(fname, "lo_truncate64") == 0)
+			lobjfuncs->fn_lo_truncate64 = foid;
 		else if (strcmp(fname, "loread") == 0)
 			lobjfuncs->fn_lo_read = foid;
 		else if (strcmp(fname, "lowrite") == 0)
@@ -836,10 +1007,76 @@ lo_initialize(PGconn *conn)
 		free(lobjfuncs);
 		return -1;
 	}
-
+	if (conn->sversion >= 90300)
+	{
+		if (lobjfuncs->fn_lo_lseek64 == 0)
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+					libpq_gettext("cannot determine OID of function lo_lseek64\n"));
+			free(lobjfuncs);
+			return -1;
+		}
+		if (lobjfuncs->fn_lo_tell64 == 0)
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+					libpq_gettext("cannot determine OID of function lo_tell64\n"));
+			free(lobjfuncs);
+			return -1;
+		}
+		if (lobjfuncs->fn_lo_truncate64 == 0)
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+					libpq_gettext("cannot determine OID of function lo_truncate64\n"));
+			free(lobjfuncs);
+			return -1;
+		}
+	}
 	/*
 	 * Put the structure into the connection control
 	 */
 	conn->lobjfuncs = lobjfuncs;
 	return 0;
+}
+
+/*
+ * lo_hton64
+ *	  converts an 64-bit integer from host byte order to network byte order
+ */
+static pg_int64
+lo_hton64(pg_int64 host64)
+{
+	pg_int64 	result;
+	uint32_t	h32, l32;
+
+	/* High order half first, since we're doing MSB-first */
+	h32 = (uint32_t) (host64 >> 32);
+
+	/* Now the low order half */
+	l32 = (uint32_t) (host64 & 0xffffffff);
+
+	result = htonl(l32);
+	result <<= 32;
+	result |= htonl(h32);
+
+	return result;
+}
+
+/*
+ * lo_ntoh64
+ *	  converts an 64-bit integer from network byte order to host byte order
+ */
+static pg_int64
+lo_ntoh64(pg_int64 net64)
+{
+	pg_int64 	result;
+	uint32_t	h32, l32;
+
+	l32 = (uint32_t) (net64 >> 32);
+	h32 = (uint32_t) (net64 & 0xffffffff);
+
+	result = ntohl(h32);
+	result <<= 32;
+	result |= ntohl(l32);
+
+	return result;
 }

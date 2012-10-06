@@ -1040,14 +1040,20 @@ DATA(insert OID = 955 (  lowrite		   PGNSP PGUID 12 1 0 0 0 f f f f t f v 2 0 23
 DESCR("large object write");
 DATA(insert OID = 956 (  lo_lseek		   PGNSP PGUID 12 1 0 0 0 f f f f t f v 3 0 23 "23 23 23" _null_ _null_ _null_ _null_	lo_lseek _null_ _null_ _null_ ));
 DESCR("large object seek");
+DATA(insert OID = 3170 (  lo_lseek64		   PGNSP PGUID 12 1 0 0 0 f f f f t f v 3 0 20 "23 20 23" _null_ _null_ _null_ _null_	lo_lseek64 _null_ _null_ _null_ ));
+DESCR("large object seek (64 bit)");
 DATA(insert OID = 957 (  lo_creat		   PGNSP PGUID 12 1 0 0 0 f f f f t f v 1 0 26 "23" _null_ _null_ _null_ _null_ lo_creat _null_ _null_ _null_ ));
 DESCR("large object create");
 DATA(insert OID = 715 (  lo_create		   PGNSP PGUID 12 1 0 0 0 f f f f t f v 1 0 26 "26" _null_ _null_ _null_ _null_ lo_create _null_ _null_ _null_ ));
 DESCR("large object create");
 DATA(insert OID = 958 (  lo_tell		   PGNSP PGUID 12 1 0 0 0 f f f f t f v 1 0 23 "23" _null_ _null_ _null_ _null_ lo_tell _null_ _null_ _null_ ));
 DESCR("large object position");
+DATA(insert OID = 3171 (  lo_tell64		   PGNSP PGUID 12 1 0 0 0 f f f f t f v 1 0 20 "23" _null_ _null_ _null_ _null_ lo_tell64 _null_ _null_ _null_ ));
+DESCR("large object position (64 bit)");
 DATA(insert OID = 1004 (  lo_truncate	   PGNSP PGUID 12 1 0 0 0 f f f f t f v 2 0 23 "23 23" _null_ _null_ _null_ _null_ lo_truncate _null_ _null_ _null_ ));
 DESCR("truncate large object");
+DATA(insert OID = 3172 (  lo_truncate64	   PGNSP PGUID 12 1 0 0 0 f f f f t f v 2 0 23 "23 20" _null_ _null_ _null_ _null_ lo_truncate64 _null_ _null_ _null_ ));
+DESCR("truncate large object (64 bit)");
 
 DATA(insert OID = 959 (  on_pl			   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "600 628" _null_ _null_ _null_ _null_	on_pl _null_ _null_ _null_ ));
 DATA(insert OID = 960 (  on_sl			   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "601 628" _null_ _null_ _null_ _null_	on_sl _null_ _null_ _null_ ));

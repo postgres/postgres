@@ -548,6 +548,12 @@ extern Oid	lo_import(PGconn *conn, const char *filename);
 extern Oid	lo_import_with_oid(PGconn *conn, const char *filename, Oid lobjId);
 extern int	lo_export(PGconn *conn, Oid lobjId, const char *filename);
 
+#ifdef HAVE_PG_INT64
+extern pg_int64	lo_lseek64(PGconn *conn, int fd, pg_int64 offset, int whence);
+extern pg_int64	lo_tell64(PGconn *conn, int fd);
+extern int	lo_truncate64(PGconn *conn, int fd, pg_int64 len);
+#endif
+
 /* === in fe-misc.c === */
 
 /* Get the version of the libpq library in use */
