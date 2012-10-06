@@ -1362,6 +1362,7 @@ omicron         bryanh                  guest1
 
    <para>
     LDAP authentication can operate in two modes. In the first mode,
+    which we will call the simple bind mode,
     the server will bind to the distinguished name constructed as
     <replaceable>prefix</> <replaceable>username</> <replaceable>suffix</>.
     Typically, the <replaceable>prefix</> parameter is used to specify
@@ -1371,24 +1372,27 @@ omicron         bryanh                  guest1
    </para>
 
    <para>
-    In the second mode, the server first binds to the LDAP directory with
+    In the second mode, which we will call the search+bind mode,
+    the server first binds to the LDAP directory with
     a fixed user name and password, specified with <replaceable>ldapbinduser</>
     and <replaceable>ldapbinddn</>, and performs a search for the user trying
     to log in to the database. If no user and password is configured, an
     anonymous bind will be attempted to the directory. The search will be
     performed over the subtree at <replaceable>ldapbasedn</>, and will try to
     do an exact match of the attribute specified in
-    <replaceable>ldapsearchattribute</>. If no attribute is specified, the
-    <literal>uid</> attribute will be used. Once the user has been found in
+    <replaceable>ldapsearchattribute</>.
+    Once the user has been found in
     this search, the server disconnects and re-binds to the directory as
     this user, using the password specified by the client, to verify that the
-    login is correct. This method allows for significantly more flexibility
+    login is correct. This mode is the same as that used by LDAP authentication
+    schemes in other software, such as Apache mod_authnz_ldap and pam_ldap.
+    This method allows for significantly more flexibility
     in where the user objects are located in the directory, but will cause
     two separate connections to the LDAP server to be made.
    </para>
 
    <para>
-    The following configuration options are supported for LDAP:
+    The following configuration options are used in both modes:
     <variablelist>
      <varlistentry>
       <term><literal>ldapserver</literal></term>
@@ -1419,6 +1423,10 @@ omicron         bryanh                  guest1
        </para>
       </listitem>
      </varlistentry>
+    </variablelist>
+
+    The following options are used in simple bind mode only:
+    <variablelist>
      <varlistentry>
       <term><literal>ldapprefix</literal></term>
       <listitem>
@@ -1437,6 +1445,10 @@ omicron         bryanh                  guest1
        </para>
       </listitem>
      </varlistentry>
+    </variablelist>
+
+    The following options are used in search+bind mode only:
+    <variablelist>
      <varlistentry>
       <term><literal>ldapbasedn</literal></term>
       <listitem>
@@ -1469,23 +1481,52 @@ omicron         bryanh                  guest1
        <listitem>
         <para>
          Attribute to match against the user name in the search when doing
-         search+bind authentication.
+         search+bind authentication.  If no attribute is specified, the
+         <literal>uid</> attribute will be used.
         </para>
        </listitem>
       </varlistentry>
     </variablelist>
    </para>
 
-   <note>
+   <para>
+    It is an error to mix configuration options for simple bind with options
+    for search+bind.
+   </para>
+
+   <para>
+    Here is an example for a simple-bind LDAP configuration:
+<programlisting>
+host ... ldap ldapserver=ldap.example.net ldapprefix="cn=" ldapsuffix=", dc=example, dc=net"
+</programlisting>
+    When a connection to the database server as database
+    user <literal>someuser</literal> is requested, PostgreSQL will attempt to
+    bind to the LDAP server using the DN <literal>cn=someuser, dc=example,
+    dc=net</literal> and the password provided by the client.  If that connection
+    succeeds, the database access is granted.
+   </para>
+
+   <para>
+    Here is an exaple for a search+bind configuration:
+<programlisting>
+host ... ldap ldapserver=ldap.example.net ldapbasedn="dc=example, dc=net" ldapsearchattribute=uid
+</programlisting>
+    When a connection to the database server as database
+    user <literal>someuser</literal> is requested, PostgreSQL will attempt to
+    bind anonymously (since <literal>ldapbinddn</literal> was not specified) to
+    the LDAP server, perform a search for <literal>(uid=someuser)</literal>
+    under the specified base DN.  If an entry is found, it will then attempt to
+    bind using that found information and the password supplied by the client.
+    If that second connection succeeds, the database access is granted.
+   </para>
+
+   <tip>
     <para>
      Since LDAP often uses commas and spaces to separate the different
      parts of a DN, it is often necessary to use double-quoted parameter
-     values when configuring LDAP options, for example:
-<programlisting>
-ldapserver=ldap.example.net ldapprefix="cn=" ldapsuffix=", dc=example, dc=net"
-</programlisting>
+     values when configuring LDAP options, as shown in the examples.
     </para>
-   </note>
+   </tip>
 
   </sect2>
 
