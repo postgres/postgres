@@ -1046,13 +1046,13 @@ static pg_int64
 lo_hton64(pg_int64 host64)
 {
 	pg_int64 	result;
-	uint32_t	h32, l32;
+	uint32	h32, l32;
 
 	/* High order half first, since we're doing MSB-first */
-	h32 = (uint32_t) (host64 >> 32);
+	h32 = (uint32) (host64 >> 32);
 
 	/* Now the low order half */
-	l32 = (uint32_t) (host64 & 0xffffffff);
+	l32 = (uint32) (host64 & 0xffffffff);
 
 	result = htonl(l32);
 	result <<= 32;
@@ -1069,10 +1069,10 @@ static pg_int64
 lo_ntoh64(pg_int64 net64)
 {
 	pg_int64 	result;
-	uint32_t	h32, l32;
+	uint32	h32, l32;
 
-	l32 = (uint32_t) (net64 >> 32);
-	h32 = (uint32_t) (net64 & 0xffffffff);
+	l32 = (uint32) (net64 >> 32);
+	h32 = (uint32) (net64 & 0xffffffff);
 
 	result = ntohl(h32);
 	result <<= 32;

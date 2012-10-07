@@ -65,7 +65,7 @@ typedef struct LargeObjectDesc
 /*
  * Maximum byte length for each large object
 */
-#define MAX_LARGE_OBJECT_SIZE	INT64CONST(INT_MAX * LOBLKSIZE)
+#define MAX_LARGE_OBJECT_SIZE	((int64)INT_MAX * LOBLKSIZE)
 
 /*
  * Function definitions...
