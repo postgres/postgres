@@ -68,6 +68,9 @@
 
 #include "postgres.h"
 
+#ifdef _MSCVER
+#include <float.h> /* for _isnan */
+#endif
 #include <math.h>
 
 #include "access/htup_details.h"

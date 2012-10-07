@@ -571,7 +571,7 @@ mcelem_array_contain_overlap_selec(Datum *mcelem, int nmcelem,
 	else
 	{
 		/* Without statistics make some default assumptions */
-		minfreq = 2 * DEFAULT_CONTAIN_SEL;
+		minfreq = 2 * (float4) DEFAULT_CONTAIN_SEL;
 	}
 
 	/* Decide whether it is faster to use binary search or not. */
