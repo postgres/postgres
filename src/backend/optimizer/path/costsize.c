@@ -68,7 +68,7 @@
 
 #include "postgres.h"
 
-#ifdef _MSCVER
+#ifdef _MSC_VER
 #include <float.h> /* for _isnan */
 #endif
 #include <math.h>
