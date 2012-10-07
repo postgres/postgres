@@ -5804,17 +5804,18 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       <listitem>
        <para>
         In <productname>PostgreSQL</> releases prior to 9.0, large objects
-        did not have access privileges and were, in effect, readable and
-        writable by all users.  Setting this variable to <literal>on</>
+        did not have access privileges and were, therefore, always readable
+        and writable by all users.  Setting this variable to <literal>on</>
         disables the new privilege checks, for compatibility with prior
         releases.  The default is <literal>off</>.
+        Only superusers can change this setting.
        </para>
        <para>
         Setting this variable does not disable all security checks related to
         large objects &mdash; only those for which the default behavior has
         changed in <productname>PostgreSQL</> 9.0.
         For example, <literal>lo_import()</literal> and
-        <literal>lo_export()</literal> need superuser privileges independent
+        <literal>lo_export()</literal> need superuser privileges regardless
         of this setting.
        </para>
       </listitem>
