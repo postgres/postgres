@@ -12,6 +12,7 @@ NULL=nul
 ALL:
    cd include
    if not exist pg_config.h copy pg_config.h.win32 pg_config.h
+   if not exist pg_config_ext.h copy pg_config_ext.h.win32 pg_config_ext.h
    if not exist pg_config_os.h copy port\win32.h pg_config_os.h
    cd ..
    cd interfaces\libpq
@@ -27,5 +28,5 @@ CLEAN:
 
 DISTCLEAN: CLEAN
    cd include
-   del pg_config.h pg_config_os.h
+   del pg_config.h pg_config_ext.h pg_config_os.h
    cd ..

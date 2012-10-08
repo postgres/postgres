@@ -187,7 +187,6 @@ lo_truncate(PGconn *conn, int fd, size_t len)
  * returns 0 upon success
  * returns -1 upon failure
  */
-#ifdef HAVE_PG_INT64
 int
 lo_truncate64(PGconn *conn, int fd, pg_int64 len)
 {
@@ -232,7 +231,6 @@ lo_truncate64(PGconn *conn, int fd, pg_int64 len)
 		return -1;
 	}
 }
-#endif
 
 /*
  * lo_read
@@ -325,10 +323,7 @@ lo_write(PGconn *conn, int fd, const char *buf, size_t len)
 /*
  * lo_lseek
  *	  change the current read or write location on a large object
- * currently, only L_SET is a legal value for whence
- *
  */
-
 int
 lo_lseek(PGconn *conn, int fd, int offset, int whence)
 {
@@ -372,11 +367,7 @@ lo_lseek(PGconn *conn, int fd, int offset, int whence)
 /*
  * lo_lseek64
  *	  change the current read or write location on a large object
- * currently, only L_SET is a legal value for whence
- *
  */
-
-#ifdef HAVE_PG_INT64
 pg_int64
 lo_lseek64(PGconn *conn, int fd, pg_int64 offset, int whence)
 {
@@ -424,7 +415,6 @@ lo_lseek64(PGconn *conn, int fd, pg_int64 offset, int whence)
 		return -1;
 	}
 }
-#endif
 
 /*
  * lo_creat
@@ -554,9 +544,7 @@ lo_tell(PGconn *conn, int fd)
 /*
  * lo_tell64
  *	  returns the current seek location of the large object
- *
  */
-#ifdef HAVE_PG_INT64
 pg_int64
 lo_tell64(PGconn *conn, int fd)
 {
@@ -595,12 +583,10 @@ lo_tell64(PGconn *conn, int fd)
 		return -1;
 	}
 }
-#endif
 
 /*
  * lo_unlink
  *	  delete a file
- *
  */
 
 int
@@ -1031,6 +1017,7 @@ lo_initialize(PGconn *conn)
 			return -1;
 		}
 	}
+
 	/*
 	 * Put the structure into the connection control
 	 */

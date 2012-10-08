@@ -562,6 +562,9 @@
 /* Define to the version of this package. */
 #define PACKAGE_VERSION "9.3devel"
 
+/* Define to the name of a signed 64-bit integer type. */
+#define PG_INT64_TYPE long long int
+
 /* PostgreSQL version as a string */
 #define PG_VERSION "9.3devel"
 

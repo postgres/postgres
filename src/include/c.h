@@ -44,25 +44,29 @@
 #ifndef C_H
 #define C_H
 
-/*
- * We have to include stdlib.h here because it defines many of these macros
- * on some platforms, and we only want our definitions used if stdlib.h doesn't
- * have its own.  The same goes for stddef and stdarg if present.
- */
+#include "postgres_ext.h"
+
+/* Must undef pg_config_ext.h symbols before including pg_config.h */
+#undef PG_INT64_TYPE
 
 #include "pg_config.h"
 #include "pg_config_manual.h"	/* must be after pg_config.h */
-#if !defined(WIN32) && !defined(__CYGWIN__)		/* win32 will include further
-												 * down */
+
+#if !defined(WIN32) && !defined(__CYGWIN__)	/* win32 includes further down */
 #include "pg_config_os.h"		/* must be before any system header files */
 #endif
-#include "postgres_ext.h"
 
 #if _MSC_VER >= 1400 || defined(HAVE_CRTDEFS_H)
 #define errcode __msvc_errcode
 #include <crtdefs.h>
 #undef errcode
 #endif
+
+/*
+ * We have to include stdlib.h here because it defines many of these macros
+ * on some platforms, and we only want our definitions used if stdlib.h doesn't
+ * have its own.  The same goes for stddef and stdarg if present.
+ */
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -490,7 +490,8 @@ sub CopyIncludeFiles
 	CopyFiles(
 		'Public headers',
 		$target . '/include/',
-		'src/include/', 'postgres_ext.h', 'pg_config.h', 'pg_config_os.h',
+		'src/include/', 'postgres_ext.h',
+		'pg_config.h', 'pg_config_ext.h', 'pg_config_os.h',
 		'pg_config_manual.h');
 	lcopy('src/include/libpq/libpq-fs.h', $target . '/include/libpq/')
 	  || croak 'Could not copy libpq-fs.h';
@@ -514,7 +515,7 @@ sub CopyIncludeFiles
 	CopyFiles(
 		'Server headers',
 		$target . '/include/server/',
-		'src/include/', 'pg_config.h', 'pg_config_os.h');
+		'src/include/', 'pg_config.h', 'pg_config_ext.h', 'pg_config_os.h');
 	CopyFiles(
 		'Grammar header',
 		$target . '/include/server/parser/',

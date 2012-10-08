@@ -24238,7 +24238,9 @@ _ACEOF
 fi
 
 
-if test x"$HAVE_LONG_INT_64" = x"no" ; then
+if test x"$HAVE_LONG_INT_64" = x"yes" ; then
+  pg_int64_type="long int"
+else
   { $as_echo "$as_me:$LINENO: checking whether long long int is 64 bits" >&5
 $as_echo_n "checking whether long long int is 64 bits... " >&6; }
 if test "${pgac_cv_type_long_long_int_64+set}" = set; then
@@ -24374,12 +24376,19 @@ _ACEOF
 
 fi
 
-  if test x"$HAVE_LONG_LONG_INT_64" = x"no" ; then
+  if test x"$HAVE_LONG_LONG_INT_64" = x"yes" ; then
+    pg_int64_type="long long int"
+  else
     { { $as_echo "$as_me:$LINENO: error: Cannot find a working 64-bit integer type." >&5
 $as_echo "$as_me: error: Cannot find a working 64-bit integer type." >&2;}
    { (exit 1); exit 1; }; }
   fi
 fi
+
+
+cat >>confdefs.h <<_ACEOF
+#define PG_INT64_TYPE $pg_int64_type
+_ACEOF
 
 
 
@@ -29930,6 +29939,9 @@ fi
 ac_config_headers="$ac_config_headers src/include/pg_config.h"
 
 
+ac_config_headers="$ac_config_headers src/include/pg_config_ext.h"
+
+
 ac_config_headers="$ac_config_headers src/interfaces/ecpg/include/ecpg_config.h"
 
 
@@ -30550,6 +30562,7 @@ do
     "src/Makefile.port") CONFIG_LINKS="$CONFIG_LINKS src/Makefile.port:src/makefiles/Makefile.${template}" ;;
     "check_win32_symlinks") CONFIG_COMMANDS="$CONFIG_COMMANDS check_win32_symlinks" ;;
     "src/include/pg_config.h") CONFIG_HEADERS="$CONFIG_HEADERS src/include/pg_config.h" ;;
+    "src/include/pg_config_ext.h") CONFIG_HEADERS="$CONFIG_HEADERS src/include/pg_config_ext.h" ;;
     "src/interfaces/ecpg/include/ecpg_config.h") CONFIG_HEADERS="$CONFIG_HEADERS src/interfaces/ecpg/include/ecpg_config.h" ;;
 
   *) { { $as_echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
@@ -31220,6 +31233,10 @@ $as_echo "$as_me: WARNING: *** link for $FILE -- please fix by hand" >&2;}
     "src/include/pg_config.h":H)
 # Update timestamp for pg_config.h (see Makefile.global)
 echo >src/include/stamp-h
+ ;;
+    "src/include/pg_config_ext.h":H)
+# Update timestamp for pg_config_ext.h (see Makefile.global)
+echo >src/include/stamp-ext-h
  ;;
     "src/interfaces/ecpg/include/ecpg_config.h":H) echo >src/interfaces/ecpg/include/stamp-h ;;
 

@@ -22,6 +22,7 @@ if exist src\backend\win32ver.rc del /q src\backend\win32ver.rc
 
 REM Delete files created with GenerateFiles() in Solution.pm
 if exist src\include\pg_config.h del /q src\include\pg_config.h
+if exist src\include\pg_config_ext.h del /q src\include\pg_config_ext.h
 if exist src\include\pg_config_os.h del /q src\include\pg_config_os.h
 if %DIST%==1 if exist src\backend\parser\gram.h del /q src\backend\parser\gram.h
 if exist src\include\utils\errcodes.h del /q src\include\utils\errcodes.h

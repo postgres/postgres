@@ -62,10 +62,13 @@ typedef struct LargeObjectDesc
  * This avoids unnecessary tuple updates caused by partial-page writes.
  */
 #define LOBLKSIZE		(BLCKSZ / 4)
+
 /*
- * Maximum byte length for each large object
-*/
-#define MAX_LARGE_OBJECT_SIZE	((int64)INT_MAX * LOBLKSIZE)
+ * Maximum length in bytes for a large object.  To make this larger, we'd
+ * have to widen pg_largeobject.pageno as well as various internal variables.
+ */
+#define MAX_LARGE_OBJECT_SIZE	((int64) INT_MAX * LOBLKSIZE)
+
 
 /*
  * Function definitions...
@@ -77,8 +80,8 @@ extern Oid	inv_create(Oid lobjId);
 extern LargeObjectDesc *inv_open(Oid lobjId, int flags, MemoryContext mcxt);
 extern void inv_close(LargeObjectDesc *obj_desc);
 extern int	inv_drop(Oid lobjId);
-extern int64	inv_seek(LargeObjectDesc *obj_desc, int64 offset, int whence);
-extern int64	inv_tell(LargeObjectDesc *obj_desc);
+extern int64 inv_seek(LargeObjectDesc *obj_desc, int64 offset, int whence);
+extern int64 inv_tell(LargeObjectDesc *obj_desc);
 extern int	inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes);
 extern int	inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes);
 extern void inv_truncate(LargeObjectDesc *obj_desc, int64 len);

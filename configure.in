@@ -1580,13 +1580,19 @@ dnl 64-bit type.  But we still handle the case of snprintf being broken.
 
 PGAC_TYPE_64BIT_INT([long int])
 
-if test x"$HAVE_LONG_INT_64" = x"no" ; then
+if test x"$HAVE_LONG_INT_64" = x"yes" ; then
+  pg_int64_type="long int"
+else
   PGAC_TYPE_64BIT_INT([long long int])
-  if test x"$HAVE_LONG_LONG_INT_64" = x"no" ; then
+  if test x"$HAVE_LONG_LONG_INT_64" = x"yes" ; then
+    pg_int64_type="long long int"
+  else
     AC_MSG_ERROR([Cannot find a working 64-bit integer type.])
   fi
 fi
 
+AC_DEFINE_UNQUOTED(PG_INT64_TYPE, $pg_int64_type,
+  [Define to the name of a signed 64-bit integer type.])
 
 dnl If we need to use "long long int", figure out whether nnnLL notation works.
 
@@ -1933,6 +1939,12 @@ AC_CONFIG_HEADERS([src/include/pg_config.h],
 [
 # Update timestamp for pg_config.h (see Makefile.global)
 echo >src/include/stamp-h
+])
+
+AC_CONFIG_HEADERS([src/include/pg_config_ext.h],
+[
+# Update timestamp for pg_config_ext.h (see Makefile.global)
+echo >src/include/stamp-ext-h
 ])
 
 AC_CONFIG_HEADERS([src/interfaces/ecpg/include/ecpg_config.h],
