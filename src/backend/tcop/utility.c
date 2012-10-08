@@ -1123,10 +1123,14 @@ standard_ProcessUtility(Node *parsetree,
 			break;
 
 		case T_VacuumStmt:
-			/* we choose to allow this during "read only" transactions */
-			PreventCommandDuringRecovery("VACUUM");
-			vacuum((VacuumStmt *) parsetree, InvalidOid, true, NULL, false,
-				   isTopLevel);
+			{
+				VacuumStmt *stmt = (VacuumStmt *) parsetree;
+
+				/* we choose to allow this during "read only" transactions */
+				PreventCommandDuringRecovery((stmt->options & VACOPT_VACUUM) ?
+											 "VACUUM" : "ANALYZE");
+				vacuum(stmt, InvalidOid, true, NULL, false, isTopLevel);
+			}
 			break;
 
 		case T_ExplainStmt:
