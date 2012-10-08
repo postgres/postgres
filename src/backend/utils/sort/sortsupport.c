@@ -15,6 +15,9 @@
 
 #include "postgres.h"
 
+/* See sortsupport.h */
+#define SORTSUPPORT_INCLUDE_DEFINITIONS
+
 #include "fmgr.h"
 #include "utils/lsyscache.h"
 #include "utils/sortsupport.h"
@@ -27,50 +30,6 @@ typedef struct
 	FmgrInfo	flinfo;			/* lookup data for comparison function */
 } SortShimExtra;
 
-
-/*
- * sortsupport.h defines inline versions of these functions if allowed by the
- * compiler; in which case the definitions below are skipped.
- */
-#ifndef USE_INLINE
-
-/*
- * Apply a sort comparator function and return a 3-way comparison result.
- * This takes care of handling reverse-sort and NULLs-ordering properly.
- */
-int
-ApplySortComparator(Datum datum1, bool isNull1,
-					Datum datum2, bool isNull2,
-					SortSupport ssup)
-{
-	int			compare;
-
-	if (isNull1)
-	{
-		if (isNull2)
-			compare = 0;		/* NULL "=" NULL */
-		else if (ssup->ssup_nulls_first)
-			compare = -1;		/* NULL "<" NOT_NULL */
-		else
-			compare = 1;		/* NULL ">" NOT_NULL */
-	}
-	else if (isNull2)
-	{
-		if (ssup->ssup_nulls_first)
-			compare = 1;		/* NOT_NULL ">" NULL */
-		else
-			compare = -1;		/* NOT_NULL "<" NULL */
-	}
-	else
-	{
-		compare = (*ssup->comparator) (datum1, datum2, ssup);
-		if (ssup->ssup_reverse)
-			compare = -compare;
-	}
-
-	return compare;
-}
-#endif   /* ! USE_INLINE */
 
 /*
  * Shim function for calling an old-style comparator

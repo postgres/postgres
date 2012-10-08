@@ -748,6 +748,24 @@ typedef NameData *Name;
 #endif /* HAVE__BUILTIN_TYPES_COMPATIBLE_P */
 
 
+/*
+ * Function inlining support -- Allow modules to define functions that may be
+ * inlined, if the compiler supports it.
+ *
+ * The function bodies must be defined in the module header prefixed by
+ * STATIC_IF_INLINE, protected by a cpp symbol that the module's .c file must
+ * define.  If the compiler doesn't support inline functions, the function
+ * definitions are pulled in by the .c file as regular (not inline) symbols.
+ *
+ * The header must also declare the functions' prototypes, protected by
+ * !USE_INLINE.
+ */
+#ifdef USE_INLINE
+#define STATIC_IF_INLINE static inline
+#else
+#define STATIC_IF_INLINE
+#endif	/* USE_INLINE */
+
 /* ----------------------------------------------------------------
  *				Section 7:	random stuff
  * ----------------------------------------------------------------

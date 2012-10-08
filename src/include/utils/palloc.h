@@ -73,14 +73,19 @@ extern void *repalloc(void *pointer, Size size);
 /*
  * MemoryContextSwitchTo can't be a macro in standard C compilers.
  * But we can make it an inline function if the compiler supports it.
+ * See STATIC_IF_INLINE in c.h.
  *
  * This file has to be includable by some non-backend code such as
  * pg_resetxlog, so don't expose the CurrentMemoryContext reference
  * if FRONTEND is defined.
  */
-#if defined(USE_INLINE) && !defined(FRONTEND)
+#ifndef FRONTEND
 
-static inline MemoryContext
+#ifndef USE_INLINE
+extern MemoryContext MemoryContextSwitchTo(MemoryContext context);
+#endif   /* !USE_INLINE */
+#if defined(USE_INLINE) || defined(MCXT_INCLUDE_DEFINITIONS)
+STATIC_IF_INLINE MemoryContext
 MemoryContextSwitchTo(MemoryContext context)
 {
 	MemoryContext old = CurrentMemoryContext;
@@ -88,10 +93,9 @@ MemoryContextSwitchTo(MemoryContext context)
 	CurrentMemoryContext = context;
 	return old;
 }
-#else
+#endif
 
-extern MemoryContext MemoryContextSwitchTo(MemoryContext context);
-#endif   /* USE_INLINE && !FRONTEND */
+#endif /* !FRONTEND */
 
 /*
  * These are like standard strdup() except the copied string is
