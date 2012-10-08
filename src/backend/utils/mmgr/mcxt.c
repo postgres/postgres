@@ -19,10 +19,10 @@
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
-
-/* see palloc.h */
+/* see palloc.h.  Must be before postgres.h */
 #define MCXT_INCLUDE_DEFINITIONS
+
+#include "postgres.h"
 
 #include "utils/memutils.h"
 
