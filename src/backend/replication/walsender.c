@@ -711,8 +711,11 @@ WalSndLoop(void)
 				XLogSend(output_message, &caughtup);
 				if (caughtup && !pq_is_send_pending())
 				{
-					ProcDiePending = true;
-					continue;	/* don't want to wait more */
+					/* Inform the standby that XLOG streaming is done */
+					pq_puttextmessage('C', "COPY 0");
+					pq_flush();
+
+					proc_exit(0);
 				}
 			}
 		}
