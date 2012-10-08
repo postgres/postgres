@@ -1040,7 +1040,7 @@ DATA(insert OID = 955 (  lowrite		   PGNSP PGUID 12 1 0 0 0 f f f f t f v 2 0 23
 DESCR("large object write");
 DATA(insert OID = 956 (  lo_lseek		   PGNSP PGUID 12 1 0 0 0 f f f f t f v 3 0 23 "23 23 23" _null_ _null_ _null_ _null_	lo_lseek _null_ _null_ _null_ ));
 DESCR("large object seek");
-DATA(insert OID = 3170 (  lo_lseek64		   PGNSP PGUID 12 1 0 0 0 f f f f t f v 3 0 20 "23 20 23" _null_ _null_ _null_ _null_	lo_lseek64 _null_ _null_ _null_ ));
+DATA(insert OID = 3170 (  lo_lseek64	   PGNSP PGUID 12 1 0 0 0 f f f f t f v 3 0 20 "23 20 23" _null_ _null_ _null_ _null_	lo_lseek64 _null_ _null_ _null_ ));
 DESCR("large object seek (64 bit)");
 DATA(insert OID = 957 (  lo_creat		   PGNSP PGUID 12 1 0 0 0 f f f f t f v 1 0 26 "23" _null_ _null_ _null_ _null_ lo_creat _null_ _null_ _null_ ));
 DESCR("large object create");

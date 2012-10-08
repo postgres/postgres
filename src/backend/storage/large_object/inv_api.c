@@ -30,6 +30,8 @@
  */
 #include "postgres.h"
 
+#include <limits.h>
+
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/sysattr.h"
@@ -264,7 +266,10 @@ inv_open(Oid lobjId, int flags, MemoryContext mcxt)
 		retval->flags = IFS_RDLOCK;
 	}
 	else
-		elog(ERROR, "invalid flags: %d", flags);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid flags for opening a large object: %d",
+						flags)));
 
 	/* Can't use LargeObjectExists here because it always uses SnapshotNow */
 	if (!myLargeObjectExists(lobjId, retval->snapshot))
@@ -381,34 +386,45 @@ inv_getsize(LargeObjectDesc *obj_desc)
 int64
 inv_seek(LargeObjectDesc *obj_desc, int64 offset, int whence)
 {
+	int64		newoffset;
+
 	Assert(PointerIsValid(obj_desc));
 
+	/*
+	 * Note: overflow in the additions is possible, but since we will reject
+	 * negative results, we don't need any extra test for that.
+	 */
 	switch (whence)
 	{
 		case SEEK_SET:
-			if (offset < 0 || offset >= MAX_LARGE_OBJECT_SIZE)
-				elog(ERROR, "invalid seek offset: " INT64_FORMAT, offset);
-			obj_desc->offset = offset;
+			newoffset = offset;
 			break;
 		case SEEK_CUR:
-			if ((offset + obj_desc->offset) < 0 ||
-			   (offset + obj_desc->offset) >= MAX_LARGE_OBJECT_SIZE)
-				elog(ERROR, "invalid seek offset: " INT64_FORMAT, offset);
-			obj_desc->offset += offset;
+			newoffset = obj_desc->offset + offset;
 			break;
 		case SEEK_END:
-			{
-				int64		pos = inv_getsize(obj_desc) + offset;
-
-				if (pos < 0 || pos >= MAX_LARGE_OBJECT_SIZE)
-					elog(ERROR, "invalid seek offset: " INT64_FORMAT, offset);
-				obj_desc->offset = pos;
-			}
+			newoffset = inv_getsize(obj_desc) + offset;
 			break;
 		default:
-			elog(ERROR, "invalid whence: %d", whence);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid whence setting: %d", whence)));
+			newoffset = 0;		/* keep compiler quiet */
+			break;
 	}
-	return obj_desc->offset;
+
+	/*
+	 * use errmsg_internal here because we don't want to expose INT64_FORMAT
+	 * in translatable strings; doing better is not worth the trouble
+	 */
+	if (newoffset < 0 || newoffset > MAX_LARGE_OBJECT_SIZE)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg_internal("invalid large object seek target: " INT64_FORMAT,
+								 newoffset)));
+
+	obj_desc->offset = newoffset;
+	return newoffset;
 }
 
 int64
@@ -437,9 +453,6 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 
 	if (nbytes <= 0)
 		return 0;
-
-	if ((nbytes + obj_desc->offset) > MAX_LARGE_OBJECT_SIZE)
-		elog(ERROR, "invalid read request size: %d", nbytes);
 
 	open_lo_relation();
 
@@ -559,13 +572,18 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 	if (!LargeObjectExists(obj_desc->id))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-			   errmsg("large object %u was already dropped", obj_desc->id)));
+				 errmsg("large object %u was already dropped",
+						obj_desc->id)));
 
 	if (nbytes <= 0)
 		return 0;
 
+	/* this addition can't overflow because nbytes is only int32 */
 	if ((nbytes + obj_desc->offset) > MAX_LARGE_OBJECT_SIZE)
-		elog(ERROR, "invalid write request size: %d", nbytes);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid large object write request size: %d",
+						nbytes)));
 
 	open_lo_relation();
 
@@ -759,7 +777,18 @@ inv_truncate(LargeObjectDesc *obj_desc, int64 len)
 	if (!LargeObjectExists(obj_desc->id))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-			   errmsg("large object %u was already dropped", obj_desc->id)));
+				 errmsg("large object %u was already dropped",
+						obj_desc->id)));
+
+	/*
+	 * use errmsg_internal here because we don't want to expose INT64_FORMAT
+	 * in translatable strings; doing better is not worth the trouble
+	 */
+	if (len < 0 || len > MAX_LARGE_OBJECT_SIZE)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg_internal("invalid large object truncation target: " INT64_FORMAT,
+								 len)));
 
 	open_lo_relation();
 

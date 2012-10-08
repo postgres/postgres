@@ -125,7 +125,7 @@ SELECT lo_tell(fd) FROM lotest_stash_values;
 SELECT lo_close(fd) FROM lotest_stash_values;
 END;
 
--- Test 64-bit largelbject functions.
+-- Test 64-bit large object functions.
 BEGIN;
 UPDATE lotest_stash_values SET fd = lo_open(loid, CAST(x'20000' | x'40000' AS integer));
 

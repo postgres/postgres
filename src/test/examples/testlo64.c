@@ -3,7 +3,7 @@
  * testlo64.c
  *	  test using large objects with libpq using 64-bit APIs
  *
- * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -46,7 +46,7 @@ importFile(PGconn *conn, char *filename)
 	fd = open(filename, O_RDONLY, 0666);
 	if (fd < 0)
 	{							/* error */
-		fprintf(stderr, "can't open unix file\"%s\"\n", filename);
+		fprintf(stderr, "cannot open unix file\"%s\"\n", filename);
 	}
 
 	/*
@@ -54,7 +54,7 @@ importFile(PGconn *conn, char *filename)
 	 */
 	lobjId = lo_creat(conn, INV_READ | INV_WRITE);
 	if (lobjId == 0)
-		fprintf(stderr, "can't create large object");
+		fprintf(stderr, "cannot create large object");
 
 	lobj_fd = lo_open(conn, lobjId, INV_WRITE);
 
@@ -81,24 +81,16 @@ pickout(PGconn *conn, Oid lobjId, pg_int64 start, int len)
 	char	   *buf;
 	int			nbytes;
 	int			nread;
-	pg_int64		pos;
 
 	lobj_fd = lo_open(conn, lobjId, INV_READ);
 	if (lobj_fd < 0)
-		fprintf(stderr, "can't open large object %u", lobjId);
+		fprintf(stderr, "cannot open large object %u", lobjId);
 
-	if (lo_tell64(conn, lobj_fd) < 0)
-	{
-		fprintf(stderr, "error lo_tell64: %s\n", PQerrorMessage(conn));
-	}
+	if (lo_lseek64(conn, lobj_fd, start, SEEK_SET) < 0)
+		fprintf(stderr, "error in lo_lseek64: %s", PQerrorMessage(conn));
 
-	if ((pos=lo_lseek64(conn, lobj_fd, start, SEEK_SET)) < 0)
-	{
-		fprintf(stderr, "error lo_lseek64: %s\n", PQerrorMessage(conn));
-		return;
-	}
-
-	fprintf(stderr, "before read: retval of lo_lseek64 : %lld\n", (long long int) pos);
+	if (lo_tell64(conn, lobj_fd) != start)
+		fprintf(stderr, "error in lo_tell64: %s", PQerrorMessage(conn));
 
 	buf = malloc(len + 1);
 
@@ -114,10 +106,6 @@ pickout(PGconn *conn, Oid lobjId, pg_int64 start, int len)
 	}
 	free(buf);
 	fprintf(stderr, "\n");
-
-	pos = lo_tell64(conn, lobj_fd);
-	fprintf(stderr, "after read: retval of lo_tell64 : %lld\n\n", (long long int) pos);
-
 	lo_close(conn, lobj_fd);
 }
 
@@ -129,18 +117,13 @@ overwrite(PGconn *conn, Oid lobjId, pg_int64 start, int len)
 	int			nbytes;
 	int			nwritten;
 	int			i;
-	pg_int64		pos;
 
-	lobj_fd = lo_open(conn, lobjId, INV_READ | INV_WRITE);
+	lobj_fd = lo_open(conn, lobjId, INV_WRITE);
 	if (lobj_fd < 0)
-		fprintf(stderr, "can't open large object %u", lobjId);
+		fprintf(stderr, "cannot open large object %u", lobjId);
 
-	if ((pos=lo_lseek64(conn, lobj_fd, start, SEEK_SET)) < 0)
-	{
-		fprintf(stderr, "error lo_lseek64: %s\n", PQerrorMessage(conn));
-		return;
-	}
-	fprintf(stderr, "before write: retval of lo_lseek64 : %lld\n", (long long int) pos);
+	if (lo_lseek64(conn, lobj_fd, start, SEEK_SET) < 0)
+		fprintf(stderr, "error in lo_lseek64: %s", PQerrorMessage(conn));
 
 	buf = malloc(len + 1);
 
@@ -160,30 +143,22 @@ overwrite(PGconn *conn, Oid lobjId, pg_int64 start, int len)
 		}
 	}
 	free(buf);
-
-	pos = lo_tell64(conn, lobj_fd);
-	fprintf(stderr, "after write: retval of lo_tell64 : %lld\n\n", (long long int) pos);
-
+	fprintf(stderr, "\n");
 	lo_close(conn, lobj_fd);
 }
 
 static void
-my_truncate(PGconn *conn, Oid lobjId, size_t len)
+my_truncate(PGconn *conn, Oid lobjId, pg_int64 len)
 {
 	int			lobj_fd;
 
 	lobj_fd = lo_open(conn, lobjId, INV_READ | INV_WRITE);
 	if (lobj_fd < 0)
-		fprintf(stderr, "can't open large object %u", lobjId);
+		fprintf(stderr, "cannot open large object %u", lobjId);
 
 	if (lo_truncate64(conn, lobj_fd, len) < 0)
-	{
-		fprintf(stderr, "error lo_truncate64: %s\n", PQerrorMessage(conn));
-		return;
-	}
+		fprintf(stderr, "error in lo_truncate64: %s", PQerrorMessage(conn));
 
-
-	fprintf(stderr, "\n");
 	lo_close(conn, lobj_fd);
 }
 
@@ -203,11 +178,11 @@ exportFile(PGconn *conn, Oid lobjId, char *filename)
 	int			fd;
 
 	/*
-	 * create an inversion "object"
+	 * open the large object
 	 */
 	lobj_fd = lo_open(conn, lobjId, INV_READ);
 	if (lobj_fd < 0)
-		fprintf(stderr, "can't open large object %u", lobjId);
+		fprintf(stderr, "cannot open large object %u", lobjId);
 
 	/*
 	 * open the file to be written to
@@ -215,12 +190,12 @@ exportFile(PGconn *conn, Oid lobjId, char *filename)
 	fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC, 0666);
 	if (fd < 0)
 	{							/* error */
-		fprintf(stderr, "can't open unix file\"%s\"",
+		fprintf(stderr, "cannot open unix file\"%s\"",
 				filename);
 	}
 
 	/*
-	 * read in from the Unix file and write to the inversion file
+	 * read in from the inversion file and write to the Unix file
 	 */
 	while ((nbytes = lo_read(conn, lobj_fd, buf, BUFSIZE)) > 0)
 	{
@@ -293,24 +268,22 @@ main(int argc, char **argv)
 		printf("\tas large object %u.\n", lobjOid);
 
 		printf("picking out bytes 4294967000-4294968000 of the large object\n");
-		pickout(conn, lobjOid, 4294967000ULL, 1000);
+		pickout(conn, lobjOid, 4294967000U, 1000);
 
 		printf("overwriting bytes 4294967000-4294968000 of the large object with X's\n");
-		overwrite(conn, lobjOid, 4294967000ULL, 1000);
-
+		overwrite(conn, lobjOid, 4294967000U, 1000);
 
 		printf("exporting large object to file \"%s\" ...\n", out_filename);
 /*		exportFile(conn, lobjOid, out_filename); */
 		if (!lo_export(conn, lobjOid, out_filename))
 			fprintf(stderr, "%s\n", PQerrorMessage(conn));
 
-		printf("truncating to 3294968000 byte\n");
-		my_truncate(conn, lobjOid, 3294968000ULL);
+		printf("truncating to 3294968000 bytes\n");
+		my_truncate(conn, lobjOid, 3294968000U);
 
 		printf("exporting truncated large object to file \"%s\" ...\n", out_filename2);
 		if (!lo_export(conn, lobjOid, out_filename2))
 			fprintf(stderr, "%s\n", PQerrorMessage(conn));
-
 	}
 
 	res = PQexec(conn, "end");

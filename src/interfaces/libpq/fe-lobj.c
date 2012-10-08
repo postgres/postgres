@@ -32,21 +32,19 @@
 
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <netinet/in.h>			/* for ntohl/htonl */
+#include <arpa/inet.h>
 
 #include "libpq-fe.h"
 #include "libpq-int.h"
 #include "libpq/libpq-fs.h"		/* must come after sys/stat.h */
 
-/* for ntohl/htonl */
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
 #define LO_BUFSIZE		  8192
 
 static int	lo_initialize(PGconn *conn);
 static Oid	lo_import_internal(PGconn *conn, const char *filename, Oid oid);
-static pg_int64	lo_hton64(pg_int64 host64);
-static pg_int64	lo_ntoh64(pg_int64 net64);
+static pg_int64 lo_hton64(pg_int64 host64);
+static pg_int64 lo_ntoh64(pg_int64 net64);
 
 /*
  * lo_open
@@ -373,7 +371,7 @@ lo_lseek64(PGconn *conn, int fd, pg_int64 offset, int whence)
 {
 	PQArgBlock	argv[3];
 	PGresult   *res;
-	pg_int64		retval;
+	pg_int64	retval;
 	int			result_len;
 
 	if (conn == NULL || conn->lobjfuncs == NULL)
@@ -403,11 +401,11 @@ lo_lseek64(PGconn *conn, int fd, pg_int64 offset, int whence)
 	argv[2].u.integer = whence;
 
 	res = PQfn(conn, conn->lobjfuncs->fn_lo_lseek64,
-			   (int *)&retval, &result_len, 0, argv, 3);
+			   (int *) &retval, &result_len, 0, argv, 3);
 	if (PQresultStatus(res) == PGRES_COMMAND_OK)
 	{
 		PQclear(res);
-		return lo_ntoh64((pg_int64)retval);
+		return lo_ntoh64(retval);
 	}
 	else
 	{
@@ -506,9 +504,7 @@ lo_create(PGconn *conn, Oid lobjId)
 /*
  * lo_tell
  *	  returns the current seek location of the large object
- *
  */
-
 int
 lo_tell(PGconn *conn, int fd)
 {
@@ -575,7 +571,7 @@ lo_tell64(PGconn *conn, int fd)
 	if (PQresultStatus(res) == PGRES_COMMAND_OK)
 	{
 		PQclear(res);
-		return lo_ntoh64((pg_int64) retval);
+		return lo_ntoh64(retval);
 	}
 	else
 	{
@@ -935,7 +931,9 @@ lo_initialize(PGconn *conn)
 	PQclear(res);
 
 	/*
-	 * Finally check that we really got all large object interface functions
+	 * Finally check that we got all required large object interface functions
+	 * (ones that have been added later than the stone age are instead checked
+	 * only if used)
 	 */
 	if (lobjfuncs->fn_lo_open == 0)
 	{
@@ -993,30 +991,6 @@ lo_initialize(PGconn *conn)
 		free(lobjfuncs);
 		return -1;
 	}
-	if (conn->sversion >= 90300)
-	{
-		if (lobjfuncs->fn_lo_lseek64 == 0)
-		{
-			printfPQExpBuffer(&conn->errorMessage,
-					libpq_gettext("cannot determine OID of function lo_lseek64\n"));
-			free(lobjfuncs);
-			return -1;
-		}
-		if (lobjfuncs->fn_lo_tell64 == 0)
-		{
-			printfPQExpBuffer(&conn->errorMessage,
-					libpq_gettext("cannot determine OID of function lo_tell64\n"));
-			free(lobjfuncs);
-			return -1;
-		}
-		if (lobjfuncs->fn_lo_truncate64 == 0)
-		{
-			printfPQExpBuffer(&conn->errorMessage,
-					libpq_gettext("cannot determine OID of function lo_truncate64\n"));
-			free(lobjfuncs);
-			return -1;
-		}
-	}
 
 	/*
 	 * Put the structure into the connection control
@@ -1027,43 +1001,48 @@ lo_initialize(PGconn *conn)
 
 /*
  * lo_hton64
- *	  converts an 64-bit integer from host byte order to network byte order
+ *	  converts a 64-bit integer from host byte order to network byte order
  */
 static pg_int64
 lo_hton64(pg_int64 host64)
 {
-	pg_int64 	result;
-	uint32	h32, l32;
+	union
+	{
+		pg_int64	i64;
+		uint32		i32[2];
+	}			swap;
+	uint32		t;
 
 	/* High order half first, since we're doing MSB-first */
-	h32 = (uint32) (host64 >> 32);
+	t = (uint32) (host64 >> 32);
+	swap.i32[0] = htonl(t);
 
 	/* Now the low order half */
-	l32 = (uint32) (host64 & 0xffffffff);
+	t = (uint32) host64;
+	swap.i32[1] = htonl(t);
 
-	result = htonl(l32);
-	result <<= 32;
-	result |= htonl(h32);
-
-	return result;
+	return swap.i64;
 }
 
 /*
  * lo_ntoh64
- *	  converts an 64-bit integer from network byte order to host byte order
+ *	  converts a 64-bit integer from network byte order to host byte order
  */
 static pg_int64
 lo_ntoh64(pg_int64 net64)
 {
-	pg_int64 	result;
-	uint32	h32, l32;
+	union
+	{
+		pg_int64	i64;
+		uint32		i32[2];
+	}			swap;
+	pg_int64	result;
 
-	l32 = (uint32) (net64 >> 32);
-	h32 = (uint32) (net64 & 0xffffffff);
+	swap.i64 = net64;
 
-	result = ntohl(h32);
+	result = (uint32) ntohl(swap.i32[0]);
 	result <<= 32;
-	result |= ntohl(l32);
+	result |= (uint32) ntohl(swap.i32[1]);
 
 	return result;
 }
