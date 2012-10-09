@@ -251,7 +251,7 @@ main(int argc, char **argv)
 
 		printf("exporting large object to file \"%s\" ...\n", out_filename);
 /*		exportFile(conn, lobjOid, out_filename); */
-		if (!lo_export(conn, lobjOid, out_filename))
+		if (lo_export(conn, lobjOid, out_filename) < 0)
 			fprintf(stderr, "%s\n", PQerrorMessage(conn));
 	}
 
