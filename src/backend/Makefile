@@ -311,7 +311,6 @@ maintainer-clean: distclean
 	      catalog/postgres.description \
 	      catalog/postgres.shdescription \
 	      replication/repl_gram.c \
-	      replication/repl_gram.h \
 	      replication/repl_scanner.c \
 	      utils/fmgroids.h \
 	      utils/fmgrtab.c \

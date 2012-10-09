@@ -22,11 +22,9 @@ include $(top_srcdir)/src/backend/common.mk
 # repl_scanner is compiled as part of repl_gram
 repl_gram.o: repl_scanner.c
 
-# See notes in src/backend/parser/Makefile about the following two rules
-
 repl_gram.c: repl_gram.y
 ifdef BISON
-	$(BISON) -d $(BISONFLAGS) -o $@ $<
+	$(BISON) $(BISONFLAGS) -o $@ $<
 else
 	@$(missing) bison $< $@
 endif
