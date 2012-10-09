@@ -25,7 +25,8 @@
 
 #define LABEL_FORMAT		"        %-32s"
 #define NA_FORMAT			"%18s"
-#define OPS_FORMAT			"%9.3f ops/sec"
+#define OPS_FORMAT			"%9.3f ops/sec (%6.f microsecs/op)"
+#define USECS_SEC			1000000
 
 /* These are macros to avoid timing the function call overhead. */
 #ifndef WIN32
@@ -568,8 +569,9 @@ print_elapse(struct timeval start_t, struct timeval stop_t, int ops)
 	double		total_time = (stop_t.tv_sec - start_t.tv_sec) +
 	(stop_t.tv_usec - start_t.tv_usec) * 0.000001;
 	double		per_second = ops / total_time;
+	double		avg_op_time_us = (total_time / ops) * USECS_SEC;
 
-	printf(OPS_FORMAT "\n", per_second);
+	printf(OPS_FORMAT "\n", per_second, avg_op_time_us);
 }
 
 #ifndef WIN32

@@ -30,11 +30,14 @@
   <application>pg_test_fsync</> is intended to give you a reasonable
   idea of what the fastest <xref linkend="guc-wal-sync-method"> is on your
   specific system,
-  as well as supplying diagnostic information in the event of an
-  identified I/O problem.  However, differences shown by <application>pg_test_fsync</application>
-  might not make any difference in real database throughput, especially
-  since many database servers are not speed-limited by their transaction
-  logs.
+  as well as supplying diagnostic information in the event of an identified I/O
+  problem.  However, differences shown by
+  <application>pg_test_fsync</application> might not make any significant
+  difference in real database throughput, especially since many database servers
+  are not speed-limited by their transaction logs.
+  <application>pg_test_fsync</application> reports average file sync operation
+  time in microseconds for each wal_sync_method, which can be used to inform
+  efforts to optimize the value of <varname>commit_delay</varname>.
  </para>
  </refsect1>
 
