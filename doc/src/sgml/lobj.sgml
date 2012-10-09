@@ -70,6 +70,17 @@
    </para>
 
    <para>
+    The chunks stored for a large object do not have to be contiguous.
+    For example, if an application opens a new large object, seeks to offset
+    1000000, and writes a few bytes there, this does not result in allocation
+    of 1000000 bytes worth of storage; only of chunks covering the range of
+    data bytes actually written.  A read operation will, however, read out
+    zeroes for any unallocated locations preceding the last existing chunk.
+    This corresponds to the common behavior of <quote>sparsely allocated</>
+    files in <acronym>Unix</acronym> file systems.
+   </para>
+
+   <para>
     As of <productname>PostgreSQL</> 9.0, large objects have an owner
     and a set of access permissions, which can be managed using
     <xref linkend="sql-grant"> and
@@ -299,11 +310,19 @@ inv_fd = lo_open(conn, inv_oid, INV_READ|INV_WRITE);
 int lo_write(PGconn *conn, int fd, const char *buf, size_t len);
 </synopsis>
      writes <parameter>len</parameter> bytes from <parameter>buf</parameter>
-     to large object descriptor <parameter>fd</>.  The <parameter>fd</parameter>
-     argument must have been returned by a previous
-     <function>lo_open</function>.  The number of bytes actually
-     written is returned.  In the event of an error, the return value
-     is -1.
+     (which must be of size <parameter>len</parameter>) to large object
+     descriptor <parameter>fd</>.  The <parameter>fd</parameter> argument must
+     have been returned by a previous <function>lo_open</function>.  The
+     number of bytes actually written is returned (in the current
+     implementation, this will always equal <parameter>len</parameter> unless
+     there is an error).  In the event of an error, the return value is -1.
+</para>
+
+<para>
+     Although the <parameter>len</parameter> parameter is declared as
+     <type>size_t</>, this function will reject length values larger than
+     <literal>INT_MAX</>.  In practice, it's best to transfer data in chunks
+     of at most a few megabytes anyway.
 </para>
 </sect2>
 
@@ -316,12 +335,21 @@ int lo_write(PGconn *conn, int fd, const char *buf, size_t len);
 <synopsis>
 int lo_read(PGconn *conn, int fd, char *buf, size_t len);
 </synopsis>
-     reads <parameter>len</parameter> bytes from large object descriptor
-     <parameter>fd</parameter> into <parameter>buf</parameter>. The
-     <parameter>fd</parameter> argument must have been returned by a
-     previous <function>lo_open</function>.  The number of bytes
-     actually read is returned. In the event of an error, the return
+     reads up to <parameter>len</parameter> bytes from large object descriptor
+     <parameter>fd</parameter> into <parameter>buf</parameter> (which must be
+     of size <parameter>len</parameter>).  The <parameter>fd</parameter>
+     argument must have been returned by a previous
+     <function>lo_open</function>.  The number of bytes actually read is
+     returned; this will be less than <parameter>len</parameter> if the end of
+     the large object is reached first.  In the event of an error, the return
      value is -1.
+</para>
+
+<para>
+     Although the <parameter>len</parameter> parameter is declared as
+     <type>size_t</>, this function will reject length values larger than
+     <literal>INT_MAX</>.  In practice, it's best to transfer data in chunks
+     of at most a few megabytes anyway.
 </para>
 </sect2>
 
@@ -416,7 +444,7 @@ int lo_truncate(PGcon *conn, int fd, size_t len);
      <parameter>fd</parameter> argument must have been returned by a
      previous <function>lo_open</function>.  If <parameter>len</> is
      greater than the large object's current length, the large object
-     is extended with null bytes ('\0').
+     is extended to the specified length with null bytes ('\0').
      On success, <function>lo_truncate</function> returns
      zero.  On error, the return value is -1.
 </para>
@@ -424,6 +452,12 @@ int lo_truncate(PGcon *conn, int fd, size_t len);
 <para>
      The read/write location associated with the descriptor
      <parameter>fd</parameter> is not changed.
+</para>
+
+<para>
+     Although the <parameter>len</parameter> parameter is declared as
+     <type>size_t</>, <function>lo_truncate</function> will reject length
+     values larger than <literal>INT_MAX</>.
 </para>
 
 <para>

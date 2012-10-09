@@ -31,6 +31,7 @@
 #endif
 
 #include <fcntl.h>
+#include <limits.h>
 #include <sys/stat.h>
 #include <netinet/in.h>			/* for ntohl/htonl */
 #include <arpa/inet.h>
@@ -155,13 +156,29 @@ lo_truncate(PGconn *conn, int fd, size_t len)
 		return -1;
 	}
 
+	/*
+	 * Long ago, somebody thought it'd be a good idea to declare this function
+	 * as taking size_t ... but the underlying backend function only accepts a
+	 * signed int32 length.  So throw error if the given value overflows
+	 * int32.  (A possible alternative is to automatically redirect the call
+	 * to lo_truncate64; but if the caller wanted to rely on that backend
+	 * function being available, he could have called lo_truncate64 for
+	 * himself.)
+	 */
+	if (len > (size_t) INT_MAX)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+			libpq_gettext("argument of lo_truncate exceeds integer range\n"));
+		return -1;
+	}
+
 	argv[0].isint = 1;
 	argv[0].len = 4;
 	argv[0].u.integer = fd;
 
 	argv[1].isint = 1;
 	argv[1].len = 4;
-	argv[1].u.integer = len;
+	argv[1].u.integer = (int) len;
 
 	res = PQfn(conn, conn->lobjfuncs->fn_lo_truncate,
 			   &retval, &result_len, 1, argv, 2);
@@ -251,13 +268,26 @@ lo_read(PGconn *conn, int fd, char *buf, size_t len)
 			return -1;
 	}
 
+	/*
+	 * Long ago, somebody thought it'd be a good idea to declare this function
+	 * as taking size_t ... but the underlying backend function only accepts a
+	 * signed int32 length.  So throw error if the given value overflows
+	 * int32.
+	 */
+	if (len > (size_t) INT_MAX)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+			libpq_gettext("argument of lo_read exceeds integer range\n"));
+		return -1;
+	}
+
 	argv[0].isint = 1;
 	argv[0].len = 4;
 	argv[0].u.integer = fd;
 
 	argv[1].isint = 1;
 	argv[1].len = 4;
-	argv[1].u.integer = len;
+	argv[1].u.integer = (int) len;
 
 	res = PQfn(conn, conn->lobjfuncs->fn_lo_read,
 			   (int *) buf, &result_len, 0, argv, 2);
@@ -293,15 +323,25 @@ lo_write(PGconn *conn, int fd, const char *buf, size_t len)
 			return -1;
 	}
 
-	if (len <= 0)
-		return 0;
+	/*
+	 * Long ago, somebody thought it'd be a good idea to declare this function
+	 * as taking size_t ... but the underlying backend function only accepts a
+	 * signed int32 length.  So throw error if the given value overflows
+	 * int32.
+	 */
+	if (len > (size_t) INT_MAX)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+			libpq_gettext("argument of lo_write exceeds integer range\n"));
+		return -1;
+	}
 
 	argv[0].isint = 1;
 	argv[0].len = 4;
 	argv[0].u.integer = fd;
 
 	argv[1].isint = 0;
-	argv[1].len = len;
+	argv[1].len = (int) len;
 	argv[1].u.ptr = (int *) buf;
 
 	res = PQfn(conn, conn->lobjfuncs->fn_lo_write,
