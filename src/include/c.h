@@ -758,13 +758,13 @@ typedef NameData *Name;
  * definitions are pulled in by the .c file as regular (not inline) symbols.
  *
  * The header must also declare the functions' prototypes, protected by
- * !USE_INLINE.
+ * !PG_USE_INLINE.
  */
-#ifdef USE_INLINE
+#ifdef PG_USE_INLINE
 #define STATIC_IF_INLINE static inline
 #else
 #define STATIC_IF_INLINE
-#endif	/* USE_INLINE */
+#endif	/* PG_USE_INLINE */
 
 /* ----------------------------------------------------------------
  *				Section 7:	random stuff

@@ -15182,7 +15182,7 @@ $as_echo "$pgac_cv_c_inline_quietly" >&6; }
 if test "$pgac_cv_c_inline_quietly" != no; then
 
 cat >>confdefs.h <<_ACEOF
-#define USE_INLINE 1
+#define PG_USE_INLINE 1
 _ACEOF
 
 fi

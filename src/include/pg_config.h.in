@@ -681,6 +681,10 @@
 /* PostgreSQL major version as a string */
 #undef PG_MAJORVERSION
 
+/* Define to 1 if "static inline" works without unwanted warnings from
+   compilations where static inline functions are defined but not called. */
+#undef PG_USE_INLINE
+
 /* PostgreSQL version as a string */
 #undef PG_VERSION
 
@@ -748,10 +752,6 @@
 /* Define to 1 if you want float8, int8, etc values to be passed by value.
    (--enable-float8-byval) */
 #undef USE_FLOAT8_BYVAL
-
-/* Define to 1 if "static inline" works without unwanted warnings from
-   compilations where static inline functions are defined but not called. */
-#undef USE_INLINE
 
 /* Define to 1 if you want 64-bit integer timestamp and interval support.
    (--enable-integer-datetimes) */

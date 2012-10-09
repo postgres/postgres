@@ -81,10 +81,10 @@ extern void *repalloc(void *pointer, Size size);
  */
 #ifndef FRONTEND
 
-#ifndef USE_INLINE
+#ifndef PG_USE_INLINE
 extern MemoryContext MemoryContextSwitchTo(MemoryContext context);
-#endif   /* !USE_INLINE */
-#if defined(USE_INLINE) || defined(MCXT_INCLUDE_DEFINITIONS)
+#endif   /* !PG_USE_INLINE */
+#if defined(PG_USE_INLINE) || defined(MCXT_INCLUDE_DEFINITIONS)
 STATIC_IF_INLINE MemoryContext
 MemoryContextSwitchTo(MemoryContext context)
 {
@@ -93,9 +93,8 @@ MemoryContextSwitchTo(MemoryContext context)
 	CurrentMemoryContext = context;
 	return old;
 }
-#endif
-
-#endif /* !FRONTEND */
+#endif   /* PG_USE_INLINE || MCXT_INCLUDE_DEFINITIONS */
+#endif   /* !FRONTEND */
 
 /*
  * These are like standard strdup() except the copied string is
