@@ -78,7 +78,7 @@ ALTER TABLESPACE <replaceable>name</replaceable> RESET ( <replaceable class="PAR
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">tablespace_parameter</replaceable></term>
+    <term><replaceable class="parameter">tablespace_option</replaceable></term>
     <listitem>
      <para>
       A tablespace parameter to be set or reset.  Currently, the only
