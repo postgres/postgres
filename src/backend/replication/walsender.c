@@ -1022,7 +1022,6 @@ retry:
  *
  * If there is no unsent WAL remaining, *caughtup is set to true, otherwise
  * *caughtup is set to false.
-
  */
 static void
 XLogSend(char *msgbuf, bool *caughtup)
