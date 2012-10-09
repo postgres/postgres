@@ -275,14 +275,14 @@ main(int argc, char **argv)
 
 		printf("exporting large object to file \"%s\" ...\n", out_filename);
 /*		exportFile(conn, lobjOid, out_filename); */
-		if (!lo_export(conn, lobjOid, out_filename))
+		if (lo_export(conn, lobjOid, out_filename) < 0)
 			fprintf(stderr, "%s\n", PQerrorMessage(conn));
 
 		printf("truncating to 3294968000 bytes\n");
 		my_truncate(conn, lobjOid, 3294968000U);
 
 		printf("exporting truncated large object to file \"%s\" ...\n", out_filename2);
-		if (!lo_export(conn, lobjOid, out_filename2))
+		if (lo_export(conn, lobjOid, out_filename2) < 0)
 			fprintf(stderr, "%s\n", PQerrorMessage(conn));
 	}
 
