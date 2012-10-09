@@ -571,10 +571,16 @@ lo_import_internal(PGconn *conn, const char *filename, const Oid oid)
 
 	if (nbytes < 0)
 	{
+		/* We must do lo_close before setting the errorMessage */
+		int			save_errno = errno;
+
+		(void) lo_close(conn, lobj);
+		(void) close(fd);
 		printfPQExpBuffer(&conn->errorMessage,
 					  libpq_gettext("could not read from file \"%s\": %s\n"),
-						  filename, pqStrerror(errno, sebuf, sizeof(sebuf)));
-		lobjOid = InvalidOid;
+						  filename,
+						  pqStrerror(save_errno, sebuf, sizeof(sebuf)));
+		return InvalidOid;
 	}
 
 	(void) close(fd);
@@ -619,11 +625,15 @@ lo_export(PGconn *conn, Oid lobjId, const char *filename)
 	 */
 	fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC | PG_BINARY, 0666);
 	if (fd < 0)
-	{							/* error */
+	{
+		/* We must do lo_close before setting the errorMessage */
+		int			save_errno = errno;
+
+		(void) lo_close(conn, lobj);
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("could not open file \"%s\": %s\n"),
-						  filename, pqStrerror(errno, sebuf, sizeof(sebuf)));
-		(void) lo_close(conn, lobj);
+						  filename,
+						  pqStrerror(save_errno, sebuf, sizeof(sebuf)));
 		return -1;
 	}
 
@@ -635,11 +645,15 @@ lo_export(PGconn *conn, Oid lobjId, const char *filename)
 		tmp = write(fd, buf, nbytes);
 		if (tmp != nbytes)
 		{
-			printfPQExpBuffer(&conn->errorMessage,
-					   libpq_gettext("could not write to file \"%s\": %s\n"),
-						  filename, pqStrerror(errno, sebuf, sizeof(sebuf)));
+			/* We must do lo_close before setting the errorMessage */
+			int			save_errno = errno;
+
 			(void) lo_close(conn, lobj);
 			(void) close(fd);
+			printfPQExpBuffer(&conn->errorMessage,
+					   libpq_gettext("could not write to file \"%s\": %s\n"),
+							  filename,
+							  pqStrerror(save_errno, sebuf, sizeof(sebuf)));
 			return -1;
 		}
 	}
@@ -657,7 +671,8 @@ lo_export(PGconn *conn, Oid lobjId, const char *filename)
 		result = -1;
 	}
 
-	if (close(fd))
+	/* if we already failed, don't overwrite that msg with a close error */
+	if (close(fd) && result >= 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 					   libpq_gettext("could not write to file \"%s\": %s\n"),
