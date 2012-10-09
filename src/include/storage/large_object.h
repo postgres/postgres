@@ -27,6 +27,10 @@
  * offset is the current seek offset within the LO
  * flags contains some flag bits
  *
+ * NOTE: in current usage, flag bit IFS_RDLOCK is *always* set, and we don't
+ * bother to test for it.  Permission checks are made at first read or write
+ * attempt, not during inv_open(), so we have other bits to remember that.
+ *
  * NOTE: before 7.1, we also had to store references to the separate table
  * and index of a specific large object.  Now they all live in pg_largeobject
  * and are accessed via a common relation descriptor.
@@ -38,11 +42,13 @@ typedef struct LargeObjectDesc
 	Snapshot	snapshot;		/* snapshot to use */
 	SubTransactionId subid;		/* owning subtransaction ID */
 	uint64		offset;			/* current seek pointer */
-	int			flags;			/* locking info, etc */
+	int			flags;			/* see flag bits below */
 
-/* flag bits: */
-#define IFS_RDLOCK		(1 << 0)
-#define IFS_WRLOCK		(1 << 1)
+/* bits in flags: */
+#define IFS_RDLOCK		(1 << 0)	/* LO was opened for reading */
+#define IFS_WRLOCK		(1 << 1)	/* LO was opened for writing */
+#define IFS_RD_PERM_OK	(1 << 2)	/* read permission has been verified */
+#define IFS_WR_PERM_OK	(1 << 3)	/* write permission has been verified */
 
 } LargeObjectDesc;
 

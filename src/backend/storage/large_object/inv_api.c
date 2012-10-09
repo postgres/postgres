@@ -420,8 +420,8 @@ inv_seek(LargeObjectDesc *obj_desc, int64 offset, int whence)
 	if (newoffset < 0 || newoffset > MAX_LARGE_OBJECT_SIZE)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg_internal("invalid large object seek target: " INT64_FORMAT,
-								 newoffset)));
+		   errmsg_internal("invalid large object seek target: " INT64_FORMAT,
+						   newoffset)));
 
 	obj_desc->offset = newoffset;
 	return newoffset;
@@ -562,18 +562,7 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 	Assert(buf != NULL);
 
 	/* enforce writability because snapshot is probably wrong otherwise */
-	if ((obj_desc->flags & IFS_WRLOCK) == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("large object %u was not opened for writing",
-						obj_desc->id)));
-
-	/* check existence of the target largeobject */
-	if (!LargeObjectExists(obj_desc->id))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("large object %u was already dropped",
-						obj_desc->id)));
+	Assert(obj_desc->flags & IFS_WRLOCK);
 
 	if (nbytes <= 0)
 		return 0;
@@ -767,18 +756,7 @@ inv_truncate(LargeObjectDesc *obj_desc, int64 len)
 	Assert(PointerIsValid(obj_desc));
 
 	/* enforce writability because snapshot is probably wrong otherwise */
-	if ((obj_desc->flags & IFS_WRLOCK) == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("large object %u was not opened for writing",
-						obj_desc->id)));
-
-	/* check existence of the target largeobject */
-	if (!LargeObjectExists(obj_desc->id))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("large object %u was already dropped",
-						obj_desc->id)));
+	Assert(obj_desc->flags & IFS_WRLOCK);
 
 	/*
 	 * use errmsg_internal here because we don't want to expose INT64_FORMAT
