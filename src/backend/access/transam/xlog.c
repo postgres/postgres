@@ -9499,7 +9499,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 				if (readFile < 0)
 				{
 					readFile = XLogFileRead(readSegNo, PANIC,
-											curFileTLI,
+											recoveryTargetTLI,
 											XLOG_FROM_STREAM, false);
 					Assert(readFile >= 0);
 				}
