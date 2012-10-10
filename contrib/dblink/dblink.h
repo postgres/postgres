@@ -58,5 +58,6 @@ extern Datum dblink_build_sql_delete(PG_FUNCTION_ARGS);
 extern Datum dblink_build_sql_update(PG_FUNCTION_ARGS);
 extern Datum dblink_current_query(PG_FUNCTION_ARGS);
 extern Datum dblink_get_notify(PG_FUNCTION_ARGS);
+extern Datum dblink_fdw_validator(PG_FUNCTION_ARGS);
 
 #endif   /* DBLINK_H */

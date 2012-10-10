@@ -361,9 +361,17 @@ SELECT dblink_disconnect('dtest1');
 -- test foreign data wrapper functionality
 CREATE USER dblink_regression_test;
 
-CREATE FOREIGN DATA WRAPPER postgresql;
-CREATE SERVER fdtest FOREIGN DATA WRAPPER postgresql OPTIONS (dbname 'contrib_regression');
+CREATE SERVER fdtest FOREIGN DATA WRAPPER dblink_fdw
+  OPTIONS (invalid 'val');   -- fail, invalid option
+CREATE SERVER fdtest FOREIGN DATA WRAPPER dblink_fdw
+  OPTIONS (password 'val');  -- fail, can't specify password here
+CREATE SERVER fdtest FOREIGN DATA WRAPPER dblink_fdw
+  OPTIONS (dbname 'contrib_regression');
+
+CREATE USER MAPPING FOR public SERVER fdtest
+  OPTIONS (server 'localhost');  -- fail, can't specify server here
 CREATE USER MAPPING FOR public SERVER fdtest;
+
 GRANT USAGE ON FOREIGN SERVER fdtest TO dblink_regression_test;
 GRANT EXECUTE ON FUNCTION dblink_connect_u(text, text) TO dblink_regression_test;
 
@@ -381,7 +389,6 @@ REVOKE EXECUTE ON FUNCTION dblink_connect_u(text, text) FROM dblink_regression_t
 DROP USER dblink_regression_test;
 DROP USER MAPPING FOR public SERVER fdtest;
 DROP SERVER fdtest;
-DROP FOREIGN DATA WRAPPER postgresql;
 
 -- test asynchronous notifications
 SELECT dblink_connect('dbname=contrib_regression');

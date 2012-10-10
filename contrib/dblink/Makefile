@@ -7,7 +7,7 @@ SHLIB_LINK = $(libpq)
 SHLIB_PREREQS = submake-libpq
 
 EXTENSION = dblink
-DATA = dblink--1.0.sql dblink--unpackaged--1.0.sql
+DATA = dblink--1.1.sql dblink--1.0--1.1.sql dblink--unpackaged--1.0.sql
 
 REGRESS = dblink
 

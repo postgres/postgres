@@ -46,12 +46,10 @@ dblink_connect(text connname, text connstr) returns text
 
    <para>
     The connection string may also be the name of an existing foreign
-    server.  It is recommended to use
-    the <function>postgresql_fdw_validator</function> when defining
-    the corresponding foreign-data wrapper.  See the example below, as
-    well as the following:
+    server.  It is recommended to use the foreign-data wrapper
+    <literal>dblink_fdw</literal> when defining the corresponding foreign
+    server.  See the example below, as well as the following:
     <simplelist type="inline">
-     <member><xref linkend="sql-createforeigndatawrapper"></member>
      <member><xref linkend="sql-createserver"></member>
      <member><xref linkend="sql-createusermapping"></member>
     </simplelist>
@@ -136,8 +134,7 @@ SELECT dblink_connect('myconn', 'dbname=postgres');
 --       DETAIL:  Non-superuser cannot connect if the server does not request a password.
 --       HINT:  Target server's authentication method must be changed.
 CREATE USER dblink_regression_test WITH PASSWORD 'secret';
-CREATE FOREIGN DATA WRAPPER postgresql VALIDATOR postgresql_fdw_validator;
-CREATE SERVER fdtest FOREIGN DATA WRAPPER postgresql OPTIONS (hostaddr '127.0.0.1', dbname 'contrib_regression');
+CREATE SERVER fdtest FOREIGN DATA WRAPPER dblink_fdw OPTIONS (hostaddr '127.0.0.1', dbname 'contrib_regression');
 
 CREATE USER MAPPING FOR dblink_regression_test SERVER fdtest OPTIONS (user 'dblink_regression_test', password 'secret');
 GRANT USAGE ON FOREIGN SERVER fdtest TO dblink_regression_test;
@@ -173,7 +170,6 @@ REVOKE SELECT ON TABLE foo FROM  dblink_regression_test;
 DROP USER MAPPING FOR dblink_regression_test SERVER fdtest;
 DROP USER dblink_regression_test;
 DROP SERVER fdtest;
-DROP FOREIGN DATA WRAPPER postgresql;
 </screen>
   </refsect1>
  </refentry>

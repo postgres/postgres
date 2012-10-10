@@ -1,4 +1,4 @@
-/* contrib/dblink/dblink--1.0.sql */
+/* contrib/dblink/dblink--1.1.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION dblink" to load this file. \quit
@@ -221,3 +221,15 @@ CREATE FUNCTION dblink_get_notify(
 RETURNS setof record
 AS 'MODULE_PATHNAME', 'dblink_get_notify'
 LANGUAGE C STRICT;
+
+/* New stuff in 1.1 begins here */
+
+CREATE FUNCTION dblink_fdw_validator(
+    options text[],
+    catalog oid
+)
+RETURNS void
+AS 'MODULE_PATHNAME', 'dblink_fdw_validator'
+LANGUAGE C STRICT;
+
+CREATE FOREIGN DATA WRAPPER dblink_fdw VALIDATOR dblink_fdw_validator;
