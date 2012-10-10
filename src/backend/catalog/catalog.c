@@ -472,10 +472,10 @@ GetNewOid(Relation relation)
  *
  * This is exported separately because there are cases where we want to use
  * an index that will not be recognized by RelationGetOidIndex: TOAST tables
- * and pg_largeobject have indexes that are usable, but have multiple columns
- * and are on ordinary columns rather than a true OID column.  This code
- * will work anyway, so long as the OID is the index's first column.  The
- * caller must pass in the actual heap attnum of the OID column, however.
+ * have indexes that are usable, but have multiple columns and are on
+ * ordinary columns rather than a true OID column.  This code will work
+ * anyway, so long as the OID is the index's first column.  The caller must
+ * pass in the actual heap attnum of the OID column, however.
  *
  * Caller must have a suitable lock on the relation.
  */
