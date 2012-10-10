@@ -149,7 +149,7 @@ get_major_server_version(ClusterInfo *cluster)
 	snprintf(ver_filename, sizeof(ver_filename), "%s/PG_VERSION",
 			 cluster->pgdata);
 	if ((version_fd = fopen(ver_filename, "r")) == NULL)
-		return 0;
+		pg_log(PG_FATAL, "could not open version file: %s\n", ver_filename);
 
 	if (fscanf(version_fd, "%63s", cluster->major_version_str) == 0 ||
 		sscanf(cluster->major_version_str, "%d.%d", &integer_version,
