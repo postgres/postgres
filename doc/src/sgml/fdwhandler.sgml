@@ -537,9 +537,10 @@ GetForeignServerByName(const char *name, bool missing_ok);
      <replaceable>local_variable</>.  Such clauses will not be found in
      <literal>baserel-&gt;baserestrictinfo</> but must be sought in the
      relation's join lists.  A path using such a clause is called a
-     <quote>parameterized path</>.  It must show the other relation(s) as
-     <literal>required_outer</> and list the specific join clause(s) in
-     <literal>param_clauses</>.  In <function>GetForeignPlan</>, the
+     <quote>parameterized path</>.  It must identify the other relations
+     used in the selected join clause(s) with a suitable value of
+     <literal>param_info</>; use <function>get_baserel_parampathinfo</>
+     to compute that value.  In <function>GetForeignPlan</>, the
      <replaceable>local_variable</> portion of the join clause would be added
      to <structfield>fdw_exprs</>, and then at run time the case works the
      same as for an ordinary restriction clause.
