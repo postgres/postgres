@@ -42,7 +42,8 @@ open($mf, $makefile);
 local $/ = undef;
 $make = <$mf>;
 close($mf);
-my $headerflag = ($make =~ /\$\(BISON\)\s+-d/ ? '-d' : '');
+my $basetarg = basename($output);
+my $headerflag = ($make =~ /^$basetarg:\s+BISONFLAGS\b.*-d/m ? '-d' : '');
 
 system("bison $headerflag $input -o $output");
 exit $? >> 8;

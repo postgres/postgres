@@ -44,7 +44,8 @@ open($mf, $makefile);
 local $/ = undef;
 $make = <$mf>;
 close($mf);
-my $flexflags = ($make =~ /^\s*FLEXFLAGS\s*=\s*(\S.*)/m ? $1 : '');
+my $basetarg = basename($output);
+my $flexflags = ($make =~ /^$basetarg:\s*FLEXFLAGS\s*=\s*(\S.*)/m ? $1 : '');
 
 system("flex $flexflags -o$output $input");
 if ($? == 0)
