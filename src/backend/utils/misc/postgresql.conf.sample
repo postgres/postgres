@@ -210,7 +210,7 @@
 #max_wal_senders = 0		# max number of walsender processes
 				# (change requires restart)
 #wal_keep_segments = 0		# in logfile segments, 16MB each; 0 disables
-#replication_timeout = 60s	# in milliseconds; 0 disables
+#wal_sender_timeout = 60s	# in milliseconds; 0 disables
 
 # - Master Server -
 
@@ -237,6 +237,9 @@
 					# 0 disables
 #hot_standby_feedback = off		# send info from standby to prevent
 					# query conflicts
+#wal_receiver_timeout = 60s		# time that receiver waits for
+					# communication from master
+					# in milliseconds; 0 disables
 
 
 #------------------------------------------------------------------------------

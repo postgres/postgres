@@ -3322,7 +3322,7 @@
      <listitem>
       <para>
        Add
-       <link linkend="guc-replication-timeout"><varname>replication_timeout</></link>
+       <varname>replication_timeout</>
        setting (Fujii Masao, Heikki Linnakangas)
       </para>
 

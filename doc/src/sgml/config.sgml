@@ -2236,10 +2236,10 @@ include 'filename'
        </listitem>
       </varlistentry>
 
-     <varlistentry id="guc-replication-timeout" xreflabel="replication_timeout">
-      <term><varname>replication_timeout</varname> (<type>integer</type>)</term>
+     <varlistentry id="guc-wal-sender-timeout" xreflabel="wal_sender_timeout">
+      <term><varname>wal_sender_timeout</varname> (<type>integer</type>)</term>
       <indexterm>
-       <primary><varname>replication_timeout</> configuration parameter</primary>
+       <primary><varname>wal_sender_timeout</> configuration parameter</primary>
       </indexterm>
       <listitem>
        <para>
@@ -2250,12 +2250,6 @@ include 'filename'
         can only be set in
         the <filename>postgresql.conf</> file or on the server command line.
         The default value is 60 seconds.
-       </para>
-       <para>
-        To prevent connections from being terminated prematurely,
-        <xref linkend="guc-wal-receiver-status-interval">
-        must be enabled on the standby, and its value must be less than the
-        value of <varname>replication_timeout</>.
        </para>
       </listitem>
      </varlistentry>
@@ -2474,11 +2468,6 @@ include 'filename'
        the <filename>postgresql.conf</> file or on the server command line.
        The default value is 10 seconds.
       </para>
-      <para>
-       When <xref linkend="guc-replication-timeout"> is enabled on a sending server,
-       <varname>wal_receiver_status_interval</> must be enabled, and its value
-       must be less than the value of <varname>replication_timeout</>.
-      </para>
       </listitem>
      </varlistentry>
 
@@ -2503,6 +2492,25 @@ include 'filename'
         If cascaded replication is in use the feedback is passed upstream
         until it eventually reaches the primary.  Standbys make no other use
         of feedback they receive other than to pass upstream.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-wal-receiver-timeout" xreflabel="wal_receiver_timeout">
+      <term><varname>wal_receiver_timeout</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>wal_receiver_timeout</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Terminate replication connections that are inactive longer
+        than the specified number of milliseconds. This is useful for
+        the receiving standby server to detect a primary node crash or network
+        outage.
+        A value of zero disables the timeout mechanism.  This parameter
+        can only be set in
+        the <filename>postgresql.conf</> file or on the server command line.
+        The default value is 60 seconds.
        </para>
       </listitem>
      </varlistentry>

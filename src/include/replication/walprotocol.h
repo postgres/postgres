@@ -27,6 +27,12 @@ typedef struct
 
 	/* Sender's system clock at the time of transmission */
 	TimestampTz sendTime;
+
+	/*
+	 * If replyRequested is set, the client should reply immediately to this
+	 * message, to avoid a timeout disconnect.
+	 */
+	bool		replyRequested;
 } WalSndrMessage;
 
 
@@ -80,6 +86,12 @@ typedef struct
 
 	/* Sender's system clock at the time of transmission */
 	TimestampTz sendTime;
+
+	/*
+	 * If replyRequested is set, the server should reply immediately to this
+	 * message, to avoid a timeout disconnect.
+	 */
+	bool		replyRequested;
 } StandbyReplyMessage;
 
 /*

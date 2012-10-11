@@ -37,7 +37,6 @@ typedef struct WalSnd
 	XLogRecPtr	sentPtr;		/* WAL has been sent up to this point */
 	bool		needreload;		/* does currently-open file need to be
 								 * reloaded? */
-	bool		sendKeepalive;	/* do we send keepalives on this connection? */
 
 	/*
 	 * The xlog locations that have been written, flushed, and applied by
