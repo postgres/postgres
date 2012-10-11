@@ -43,20 +43,6 @@ specparse.h: specparse.c ;
 # specscanner is compiled as part of specparse
 specparse.o: specscanner.c
 
-specparse.c: specparse.y
-ifdef BISON
-	$(BISON) $(BISONFLAGS) -o $@ $<
-else
-	@$(missing) bison $< $@
-endif
-
-specscanner.c: specscanner.l
-ifdef FLEX
-	$(FLEX) $(FLEXFLAGS) -o'$@' $<
-else
-	@$(missing) flex $< $@
-endif
-
 # specparse.c and specscanner.c are in the distribution tarball,
 # so do not clean them here
 clean distclean:

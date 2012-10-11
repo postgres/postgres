@@ -27,20 +27,6 @@ endif
 # cubescan is compiled as part of cubeparse
 cubeparse.o: cubescan.c
 
-cubeparse.c: cubeparse.y
-ifdef BISON
-	$(BISON) $(BISONFLAGS) -o $@ $<
-else
-	@$(missing) bison $< $@
-endif
-
-cubescan.c: cubescan.l
-ifdef FLEX
-	$(FLEX) $(FLEXFLAGS) -o'$@' $<
-else
-	@$(missing) flex $< $@
-endif
-
 distprep: cubeparse.c cubescan.c
 
 maintainer-clean:
