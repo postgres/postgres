@@ -784,14 +784,6 @@ SELECT dblink_disconnect('dtest1');
 -- test foreign data wrapper functionality
 CREATE USER dblink_regression_test;
 CREATE SERVER fdtest FOREIGN DATA WRAPPER dblink_fdw
-  OPTIONS (invalid 'val');   -- fail, invalid option
-ERROR:  invalid option "invalid"
-HINT:  Valid options in this context are: service, connect_timeout, dbname, host, hostaddr, port, application_name, fallback_application_name, keepalives, keepalives_idle, keepalives_interval, keepalives_count, sslmode, sslcompression, sslcert, sslkey, sslrootcert, sslcrl, requirepeer
-CREATE SERVER fdtest FOREIGN DATA WRAPPER dblink_fdw
-  OPTIONS (password 'val');  -- fail, can't specify password here
-ERROR:  invalid option "password"
-HINT:  Valid options in this context are: service, connect_timeout, dbname, host, hostaddr, port, application_name, fallback_application_name, keepalives, keepalives_idle, keepalives_interval, keepalives_count, sslmode, sslcompression, sslcert, sslkey, sslrootcert, sslcrl, requirepeer
-CREATE SERVER fdtest FOREIGN DATA WRAPPER dblink_fdw
   OPTIONS (dbname 'contrib_regression');
 CREATE USER MAPPING FOR public SERVER fdtest
   OPTIONS (server 'localhost');  -- fail, can't specify server here

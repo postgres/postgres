@@ -360,14 +360,8 @@ SELECT dblink_disconnect('dtest1');
 
 -- test foreign data wrapper functionality
 CREATE USER dblink_regression_test;
-
-CREATE SERVER fdtest FOREIGN DATA WRAPPER dblink_fdw
-  OPTIONS (invalid 'val');   -- fail, invalid option
-CREATE SERVER fdtest FOREIGN DATA WRAPPER dblink_fdw
-  OPTIONS (password 'val');  -- fail, can't specify password here
 CREATE SERVER fdtest FOREIGN DATA WRAPPER dblink_fdw
   OPTIONS (dbname 'contrib_regression');
-
 CREATE USER MAPPING FOR public SERVER fdtest
   OPTIONS (server 'localhost');  -- fail, can't specify server here
 CREATE USER MAPPING FOR public SERVER fdtest;
