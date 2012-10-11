@@ -346,6 +346,21 @@ from
   int4_tbl i4 on dummy = i4.f1;
 
 --
+-- Test case for cross-type partial matching in hashed subplan (bug #7597)
+--
+
+create temp table outer_7597 (f1 int4, f2 int4);
+insert into outer_7597 values (0, 0);
+insert into outer_7597 values (1, 0);
+insert into outer_7597 values (0, null);
+insert into outer_7597 values (1, null);
+
+create temp table inner_7597(c1 int8, c2 int8);
+insert into inner_7597 values(0, null);
+
+select * from outer_7597 where (f1, f2) not in (select * from inner_7597);
+
+--
 -- Test case for premature memory release during hashing of subplan output
 --
 
