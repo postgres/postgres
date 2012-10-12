@@ -25,7 +25,7 @@
 
 #define LABEL_FORMAT		"        %-32s"
 #define NA_FORMAT			"%18s"
-#define OPS_FORMAT			"%9.3f ops/sec (%6.f microsecs/op)"
+#define OPS_FORMAT			"%9.3f ops/sec (%6.0f microsecs/op)"
 #define USECS_SEC			1000000
 
 /* These are macros to avoid timing the function call overhead. */
