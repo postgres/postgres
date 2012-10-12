@@ -3549,12 +3549,6 @@ RelationGetIndexExpressions(Relation relation)
 	 */
 	result = (List *) eval_const_expressions(NULL, (Node *) result);
 
-	/*
-	 * Also mark any coercion format fields as "don't care", so that the
-	 * planner can match to both explicit and implicit coercions.
-	 */
-	set_coercionform_dontcare((Node *) result);
-
 	/* May as well fix opfuncids too */
 	fix_opfuncids((Node *) result);
 
@@ -3620,12 +3614,6 @@ RelationGetIndexPredicate(Relation relation)
 	result = (List *) eval_const_expressions(NULL, (Node *) result);
 
 	result = (List *) canonicalize_qual((Expr *) result);
-
-	/*
-	 * Also mark any coercion format fields as "don't care", so that the
-	 * planner can match to both explicit and implicit coercions.
-	 */
-	set_coercionform_dontcare((Node *) result);
 
 	/* Also convert to implicit-AND format */
 	result = make_ands_implicit((Expr *) result);

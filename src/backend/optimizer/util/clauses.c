@@ -98,7 +98,6 @@ static bool contain_leaky_functions_walker(Node *node, void *context);
 static Relids find_nonnullable_rels_walker(Node *node, bool top_level);
 static List *find_nonnullable_vars_walker(Node *node, bool top_level);
 static bool is_strict_saop(ScalarArrayOpExpr *expr, bool falseOK);
-static bool set_coercionform_dontcare_walker(Node *node, void *context);
 static Node *eval_const_expressions_mutator(Node *node,
 							   eval_const_expressions_context *context);
 static List *simplify_or_arguments(List *args,
@@ -2112,47 +2111,6 @@ strip_implicit_coercions(Node *node)
 			return strip_implicit_coercions((Node *) c->arg);
 	}
 	return node;
-}
-
-/*
- * set_coercionform_dontcare: set all CoercionForm fields to COERCE_DONTCARE
- *
- * This is used to make index expressions and index predicates more easily
- * comparable to clauses of queries.  CoercionForm is not semantically
- * significant (for cases where it does matter, the significant info is
- * coded into the coercion function arguments) so we can ignore it during
- * comparisons.  Thus, for example, an index on "foo::int4" can match an
- * implicit coercion to int4.
- *
- * Caution: the passed expression tree is modified in-place.
- */
-void
-set_coercionform_dontcare(Node *node)
-{
-	(void) set_coercionform_dontcare_walker(node, NULL);
-}
-
-static bool
-set_coercionform_dontcare_walker(Node *node, void *context)
-{
-	if (node == NULL)
-		return false;
-	if (IsA(node, FuncExpr))
-		((FuncExpr *) node)->funcformat = COERCE_DONTCARE;
-	else if (IsA(node, RelabelType))
-		((RelabelType *) node)->relabelformat = COERCE_DONTCARE;
-	else if (IsA(node, CoerceViaIO))
-		((CoerceViaIO *) node)->coerceformat = COERCE_DONTCARE;
-	else if (IsA(node, ArrayCoerceExpr))
-		((ArrayCoerceExpr *) node)->coerceformat = COERCE_DONTCARE;
-	else if (IsA(node, ConvertRowtypeExpr))
-		((ConvertRowtypeExpr *) node)->convertformat = COERCE_DONTCARE;
-	else if (IsA(node, RowExpr))
-		((RowExpr *) node)->row_format = COERCE_DONTCARE;
-	else if (IsA(node, CoerceToDomain))
-		((CoerceToDomain *) node)->coercionformat = COERCE_DONTCARE;
-	return expression_tree_walker(node, set_coercionform_dontcare_walker,
-								  context);
 }
 
 /*

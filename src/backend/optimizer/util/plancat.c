@@ -665,12 +665,6 @@ get_relation_constraints(PlannerInfo *root,
 
 			cexpr = (Node *) canonicalize_qual((Expr *) cexpr);
 
-			/*
-			 * Also mark any coercion format fields as "don't care", so that
-			 * we can match to both explicit and implicit coercions.
-			 */
-			set_coercionform_dontcare(cexpr);
-
 			/* Fix Vars to have the desired varno */
 			if (varno != 1)
 				ChangeVarNodes(cexpr, 1, varno, 0);
