@@ -178,6 +178,17 @@ SELECT * FROM vsubdepartment ORDER BY name;
 SELECT pg_get_viewdef('vsubdepartment'::regclass);
 SELECT pg_get_viewdef('vsubdepartment'::regclass, true);
 
+-- Another reverse-listing example
+CREATE VIEW sums_1_100 AS
+WITH RECURSIVE t(n) AS (
+    VALUES (1)
+UNION ALL
+    SELECT n+1 FROM t WHERE n < 100
+)
+SELECT sum(n) FROM t;
+
+\d+ sums_1_100
+
 -- corner case in which sub-WITH gets initialized first
 with recursive q as (
       select * from department

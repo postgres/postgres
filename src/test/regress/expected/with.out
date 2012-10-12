@@ -292,6 +292,30 @@ SELECT pg_get_viewdef('vsubdepartment'::regclass, true);
     FROM subdepartment;
 (1 row)
 
+-- Another reverse-listing example
+CREATE VIEW sums_1_100 AS
+WITH RECURSIVE t(n) AS (
+    VALUES (1)
+UNION ALL
+    SELECT n+1 FROM t WHERE n < 100
+)
+SELECT sum(n) FROM t;
+\d+ sums_1_100
+              View "public.sums_1_100"
+ Column |  Type  | Modifiers | Storage | Description 
+--------+--------+-----------+---------+-------------
+ sum    | bigint |           | plain   | 
+View definition:
+ WITH RECURSIVE t(n) AS (
+                 VALUES (1)
+        UNION ALL 
+                 SELECT t_1.n + 1
+                   FROM t t_1
+                  WHERE t_1.n < 100
+        )
+ SELECT sum(t.n) AS sum
+   FROM t;
+
 -- corner case in which sub-WITH gets initialized first
 with recursive q as (
       select * from department
