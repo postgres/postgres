@@ -2789,7 +2789,7 @@ eval_const_expressions_mutator(Node *node,
 					relabel->resulttype = exprType(arg);
 					relabel->resulttypmod = exprTypmod(arg);
 					relabel->resultcollid = collate->collOid;
-					relabel->relabelformat = COERCE_DONTCARE;
+					relabel->relabelformat = COERCE_IMPLICIT_CAST;
 					relabel->location = collate->location;
 
 					/* Don't create stacked RelabelTypes */
@@ -3625,7 +3625,7 @@ simplify_function(Oid funcid, Oid result_type, int32 result_typmod,
 		fexpr.funcid = funcid;
 		fexpr.funcresulttype = result_type;
 		fexpr.funcretset = func_form->proretset;
-		fexpr.funcformat = COERCE_DONTCARE;
+		fexpr.funcformat = COERCE_EXPLICIT_CALL;
 		fexpr.funccollid = result_collid;
 		fexpr.inputcollid = input_collid;
 		fexpr.args = args;
@@ -3959,7 +3959,7 @@ evaluate_function(Oid funcid, Oid result_type, int32 result_typmod,
 	newexpr->funcid = funcid;
 	newexpr->funcresulttype = result_type;
 	newexpr->funcretset = false;
-	newexpr->funcformat = COERCE_DONTCARE;		/* doesn't matter */
+	newexpr->funcformat = COERCE_EXPLICIT_CALL;	/* doesn't matter */
 	newexpr->funccollid = result_collid;		/* doesn't matter */
 	newexpr->inputcollid = input_collid;
 	newexpr->args = args;
@@ -4089,7 +4089,7 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 	fexpr->funcid = funcid;
 	fexpr->funcresulttype = result_type;
 	fexpr->funcretset = false;
-	fexpr->funcformat = COERCE_DONTCARE;		/* doesn't matter */
+	fexpr->funcformat = COERCE_EXPLICIT_CALL;	/* doesn't matter */
 	fexpr->funccollid = result_collid;	/* doesn't matter */
 	fexpr->inputcollid = input_collid;
 	fexpr->args = args;

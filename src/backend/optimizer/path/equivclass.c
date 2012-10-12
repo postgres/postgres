@@ -431,13 +431,13 @@ canonicalize_ec_expression(Expr *expr, Oid req_type, Oid req_collation)
 											req_type,
 											-1,
 											req_collation,
-											COERCE_DONTCARE);
+											COERCE_IMPLICIT_CAST);
 		else if (exprCollation((Node *) expr) != req_collation)
 			expr = (Expr *) makeRelabelType(expr,
 											req_type,
 											exprTypmod((Node *) expr),
 											req_collation,
-											COERCE_DONTCARE);
+											COERCE_IMPLICIT_CAST);
 	}
 
 	return expr;

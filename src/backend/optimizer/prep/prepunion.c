@@ -982,7 +982,7 @@ generate_setop_tlist(List *colTypes, List *colCollations,
 											exprType(expr),
 											exprTypmod(expr),
 											colColl,
-											COERCE_DONTCARE);
+											COERCE_IMPLICIT_CAST);
 		}
 
 		tle = makeTargetEntry((Expr *) expr,

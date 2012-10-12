@@ -1001,7 +1001,7 @@ build_aggregate_fnexprs(Oid *agg_input_types,
 										 args,
 										 InvalidOid,
 										 agg_input_collation,
-										 COERCE_DONTCARE);
+										 COERCE_EXPLICIT_CALL);
 
 	/* see if we have a final function */
 	if (!OidIsValid(finalfn_oid))
@@ -1027,5 +1027,5 @@ build_aggregate_fnexprs(Oid *agg_input_types,
 										 args,
 										 InvalidOid,
 										 agg_input_collation,
-										 COERCE_DONTCARE);
+										 COERCE_EXPLICIT_CALL);
 }

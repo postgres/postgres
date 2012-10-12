@@ -554,8 +554,7 @@ exprIsLengthCoercion(const Node *expr, int32 *coercedTypmod)
  *
  * This is primarily intended to be used during planning.  Therefore, it
  * strips any existing RelabelType nodes to maintain the planner's invariant
- * that there are not adjacent RelabelTypes, and it uses COERCE_DONTCARE
- * which would typically be inappropriate earlier.
+ * that there are not adjacent RelabelTypes.
  */
 Node *
 relabel_to_typmod(Node *expr, int32 typmod)
@@ -569,7 +568,7 @@ relabel_to_typmod(Node *expr, int32 typmod)
 
 	/* Apply new typmod, preserving the previous exposed type and collation */
 	return (Node *) makeRelabelType((Expr *) expr, type, typmod, coll,
-									COERCE_DONTCARE);
+									COERCE_EXPLICIT_CAST);
 }
 
 /*
