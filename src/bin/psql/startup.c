@@ -411,7 +411,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 				pset.popt.topt.format = PRINT_UNALIGNED;
 				break;
 			case 'c':
-				options->action_string = optarg;
+				options->action_string = pg_strdup(optarg);
 				if (optarg[0] == '\\')
 				{
 					options->action = ACT_SINGLE_SLASH;
@@ -421,7 +421,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 					options->action = ACT_SINGLE_QUERY;
 				break;
 			case 'd':
-				options->dbname = optarg;
+				options->dbname = pg_strdup(optarg);
 				break;
 			case 'e':
 				SetVariable(pset.vars, "ECHO", "queries");
@@ -431,14 +431,14 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 				break;
 			case 'f':
 				options->action = ACT_FILE;
-				options->action_string = optarg;
+				options->action_string = pg_strdup(optarg);
 				break;
 			case 'F':
 				pset.popt.topt.fieldSep.separator = pg_strdup(optarg);
 				pset.popt.topt.fieldSep.separator_zero = false;
 				break;
 			case 'h':
-				options->host = optarg;
+				options->host = pg_strdup(optarg);
 				break;
 			case 'H':
 				pset.popt.topt.format = PRINT_HTML;
@@ -447,7 +447,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 				options->action = ACT_LIST_DB;
 				break;
 			case 'L':
-				options->logfilename = optarg;
+				options->logfilename = pg_strdup(optarg);
 				break;
 			case 'n':
 				options->no_readline = true;
@@ -456,7 +456,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 				setQFout(optarg);
 				break;
 			case 'p':
-				options->port = optarg;
+				options->port = pg_strdup(optarg);
 				break;
 			case 'P':
 				{
@@ -503,7 +503,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 				pset.popt.topt.tableAttr = pg_strdup(optarg);
 				break;
 			case 'U':
-				options->username = optarg;
+				options->username = pg_strdup(optarg);
 				break;
 			case 'v':
 				{

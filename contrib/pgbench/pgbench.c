@@ -1995,7 +1995,7 @@ main(int argc, char **argv)
 				is_init_mode++;
 				break;
 			case 'h':
-				pghost = optarg;
+				pghost = pg_strdup(optarg);
 				break;
 			case 'n':
 				is_no_vacuum++;
@@ -2004,7 +2004,7 @@ main(int argc, char **argv)
 				do_vacuum_accounts++;
 				break;
 			case 'p':
-				pgport = optarg;
+				pgport = pg_strdup(optarg);
 				break;
 			case 'd':
 				debug++;
@@ -2090,14 +2090,14 @@ main(int argc, char **argv)
 				}
 				break;
 			case 'U':
-				login = optarg;
+				login = pg_strdup(optarg);
 				break;
 			case 'l':
 				use_log = true;
 				break;
 			case 'f':
 				ttype = 3;
-				filename = optarg;
+				filename = pg_strdup(optarg);
 				if (process_file(filename) == false || *sql_files[num_files - 1] == NULL)
 					exit(1);
 				break;
@@ -2143,10 +2143,10 @@ main(int argc, char **argv)
 				/* This covers long options which take no argument. */
 				break;
 			case 2:				/* tablespace */
-				tablespace = optarg;
+				tablespace = pg_strdup(optarg);
 				break;
 			case 3:				/* index-tablespace */
-				index_tablespace = optarg;
+				index_tablespace = pg_strdup(optarg);
 				break;
 			case 4:
 				sample_rate = atof(optarg);

@@ -505,7 +505,7 @@ main(int argc, char *argv[])
 				usage(stderr, EXIT_FAILURE);
 			case 'd':
 				if (directory == NULL)
-					directory = optarg;
+					directory = strdup(optarg);
 				else
 				{
 					(void) fprintf(stderr,
@@ -516,7 +516,7 @@ main(int argc, char *argv[])
 				break;
 			case 'l':
 				if (lcltime == NULL)
-					lcltime = optarg;
+					lcltime = strdup(optarg);
 				else
 				{
 					(void) fprintf(stderr,
@@ -527,7 +527,7 @@ main(int argc, char *argv[])
 				break;
 			case 'p':
 				if (psxrules == NULL)
-					psxrules = optarg;
+					psxrules = strdup(optarg);
 				else
 				{
 					(void) fprintf(stderr,
@@ -538,7 +538,7 @@ main(int argc, char *argv[])
 				break;
 			case 'y':
 				if (yitcommand == NULL)
-					yitcommand = optarg;
+					yitcommand = strdup(optarg);
 				else
 				{
 					(void) fprintf(stderr,
@@ -549,7 +549,7 @@ main(int argc, char *argv[])
 				break;
 			case 'L':
 				if (leapsec == NULL)
-					leapsec = optarg;
+					leapsec = strdup(optarg);
 				else
 				{
 					(void) fprintf(stderr,

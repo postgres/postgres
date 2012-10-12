@@ -64,13 +64,13 @@ main(int argc, char *argv[])
 				listlangs = true;
 				break;
 			case 'h':
-				host = optarg;
+				host = pg_strdup(optarg);
 				break;
 			case 'p':
-				port = optarg;
+				port = pg_strdup(optarg);
 				break;
 			case 'U':
-				username = optarg;
+				username = pg_strdup(optarg);
 				break;
 			case 'w':
 				prompt_password = TRI_NO;
@@ -79,7 +79,7 @@ main(int argc, char *argv[])
 				prompt_password = TRI_YES;
 				break;
 			case 'd':
-				dbname = optarg;
+				dbname = pg_strdup(optarg);
 				break;
 			case 'e':
 				echo = true;

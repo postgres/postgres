@@ -238,7 +238,7 @@ main(int argc, char **argv)
 				break;
 
 			case 'U':
-				opts->username = optarg;
+				opts->username = pg_strdup(optarg);
 				break;
 
 			case 'v':			/* verbose */
@@ -270,7 +270,7 @@ main(int argc, char **argv)
 				break;
 
 			case 2:				/* SET ROLE */
-				opts->use_role = optarg;
+				opts->use_role = pg_strdup(optarg);
 				break;
 
 			case 3:				/* section */

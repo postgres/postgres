@@ -200,7 +200,7 @@ main(int argc, char *argv[])
 				break;
 
 			case 'f':
-				filename = optarg;
+				filename = pg_strdup(optarg);
 				appendPQExpBuffer(pgdumpopts, " -f ");
 				doShellQuoting(pgdumpopts, filename);
 				break;
@@ -210,7 +210,7 @@ main(int argc, char *argv[])
 				break;
 
 			case 'h':
-				pghost = optarg;
+				pghost = pg_strdup(optarg);
 				appendPQExpBuffer(pgdumpopts, " -h ");
 				doShellQuoting(pgdumpopts, pghost);
 				break;
@@ -220,7 +220,7 @@ main(int argc, char *argv[])
 				break;
 
 			case 'l':
-				pgdb = optarg;
+				pgdb = pg_strdup(optarg);
 				break;
 
 			case 'o':
@@ -232,7 +232,7 @@ main(int argc, char *argv[])
 				break;
 
 			case 'p':
-				pgport = optarg;
+				pgport = pg_strdup(optarg);
 				appendPQExpBuffer(pgdumpopts, " -p ");
 				doShellQuoting(pgdumpopts, pgport);
 				break;
@@ -255,7 +255,7 @@ main(int argc, char *argv[])
 				break;
 
 			case 'U':
-				pguser = optarg;
+				pguser = pg_strdup(optarg);
 				appendPQExpBuffer(pgdumpopts, " -U ");
 				doShellQuoting(pgdumpopts, pguser);
 				break;
@@ -289,7 +289,7 @@ main(int argc, char *argv[])
 				break;
 
 			case 3:
-				use_role = optarg;
+				use_role = pg_strdup(optarg);
 				appendPQExpBuffer(pgdumpopts, " --role ");
 				doShellQuoting(pgdumpopts, use_role);
 				break;

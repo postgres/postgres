@@ -409,19 +409,19 @@ main(int argc, char **argv)
 				break;
 
 			case 'E':			/* Dump encoding */
-				dumpencoding = optarg;
+				dumpencoding = pg_strdup(optarg);
 				break;
 
 			case 'f':
-				filename = optarg;
+				filename = pg_strdup(optarg);
 				break;
 
 			case 'F':
-				format = optarg;
+				format = pg_strdup(optarg);
 				break;
 
 			case 'h':			/* server host */
-				pghost = optarg;
+				pghost = pg_strdup(optarg);
 				break;
 
 			case 'i':
@@ -446,7 +446,7 @@ main(int argc, char **argv)
 				break;
 
 			case 'p':			/* server port */
-				pgport = optarg;
+				pgport = pg_strdup(optarg);
 				break;
 
 			case 'R':
@@ -471,7 +471,7 @@ main(int argc, char **argv)
 				break;
 
 			case 'U':
-				username = optarg;
+				username = pg_strdup(optarg);
 				break;
 
 			case 'v':			/* verbose */
@@ -499,11 +499,11 @@ main(int argc, char **argv)
 				break;
 
 			case 2:				/* lock-wait-timeout */
-				lockWaitTimeout = optarg;
+				lockWaitTimeout = pg_strdup(optarg);
 				break;
 
 			case 3:				/* SET ROLE */
-				use_role = optarg;
+				use_role = pg_strdup(optarg);
 				break;
 
 			case 4:				/* exclude table(s) data */

@@ -171,7 +171,7 @@ main(int argc, char *const argv[])
 				regression_mode = true;
 				break;
 			case 'o':
-				output_filename = optarg;
+				output_filename = strdup(optarg);
 				if (strcmp(output_filename, "-") == 0)
 					yyout = stdout;
 				else

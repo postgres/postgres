@@ -570,11 +570,11 @@ PostmasterMain(int argc, char *argv[])
 				break;
 
 			case 'C':
-				output_config_variable = optarg;
+				output_config_variable = strdup(optarg);
 				break;
 
 			case 'D':
-				userDoption = optarg;
+				userDoption = strdup(optarg);
 				break;
 
 			case 'd':

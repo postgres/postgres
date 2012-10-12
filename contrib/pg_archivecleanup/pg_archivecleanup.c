@@ -299,7 +299,7 @@ main(int argc, char **argv)
 				dryrun = true;
 				break;
 			case 'x':
-				additional_ext = optarg;		/* Extension to remove from
+				additional_ext = strdup(optarg);		/* Extension to remove from
 												 * xlogfile names */
 				break;
 			default:
