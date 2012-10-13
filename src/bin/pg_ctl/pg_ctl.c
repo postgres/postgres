@@ -20,6 +20,7 @@
 #include "postgres_fe.h"
 #include "libpq-fe.h"
 
+#include <fcntl.h>
 #include <locale.h>
 #include <signal.h>
 #include <time.h>
@@ -315,50 +316,77 @@ get_pgpid(void)
 static char **
 readfile(const char *path)
 {
-	FILE	   *infile;
-	int			maxlength = 1,
-				linelen = 0;
-	int			nlines = 0;
+	int			fd;
+	int			nlines;
 	char	  **result;
 	char	   *buffer;
-	int			c;
+	char	   *linebegin;
+	int			i;
+	int			n;
+	int			len;
+	struct stat	statbuf;
 
-	if ((infile = fopen(path, "r")) == NULL)
+	/*
+	 * Slurp the file into memory.
+	 *
+	 * The file can change concurrently, so we read the whole file into memory
+	 * with a single read() call. That's not guaranteed to get an atomic
+	 * snapshot, but in practice, for a small file, it's close enough for the
+	 * current use.
+	 */
+	fd = open(path, O_RDONLY | PG_BINARY, 0);
+	if (fd < 0)
 		return NULL;
-
-	/* pass over the file twice - the first time to size the result */
-
-	while ((c = fgetc(infile)) != EOF)
+	if (fstat(fd, &statbuf) < 0)
+		return NULL;
+	if (statbuf.st_size == 0)
 	{
-		linelen++;
-		if (c == '\n')
-		{
-			nlines++;
-			if (linelen > maxlength)
-				maxlength = linelen;
-			linelen = 0;
-		}
+		/* empty file */
+		result = (char **) pg_malloc(sizeof(char *));
+		*result = NULL;
+		return result;
+	}
+	buffer = pg_malloc(statbuf.st_size + 1);
+
+	len = read(fd, buffer, statbuf.st_size + 1);
+	close(fd);
+	if (len != statbuf.st_size)
+	{
+		/* oops, the file size changed between fstat and read */
+		free(buffer);
+		return NULL;
 	}
 
-	/* handle last line without a terminating newline (yuck) */
-	if (linelen)
-		nlines++;
-	if (linelen > maxlength)
-		maxlength = linelen;
-
-	/* set up the result and the line buffer */
-	result = (char **) pg_malloc((nlines + 1) * sizeof(char *));
-	buffer = (char *) pg_malloc(maxlength + 1);
-
-	/* now reprocess the file and store the lines */
-	rewind(infile);
+	/* count newlines */
 	nlines = 0;
-	while (fgets(buffer, maxlength + 1, infile) != NULL)
-		result[nlines++] = pg_strdup(buffer);
+	for (i = 0; i < len - 1; i++)
+	{
+		if (buffer[i] == '\n')
+			nlines++;
+	}
+	nlines++; /* account for the last line */
 
-	fclose(infile);
+	/* set up the result buffer */
+	result = (char **) pg_malloc((nlines + 1) * sizeof(char *));
+
+	/* now split the buffer into lines */
+	linebegin = buffer;
+	n = 0;
+	for (i = 0; i < len; i++)
+	{
+		if (buffer[i] == '\n' || i == len - 1)
+		{
+			int		slen = &buffer[i] - linebegin + 1;
+			char   *linebuf = pg_malloc(slen + 1);
+			memcpy(linebuf, linebegin, slen);
+			linebuf[slen] = '\0';
+			result[n++] = linebuf;
+			linebegin = &buffer[i + 1];
+		}
+	}
+	result[n] = NULL;
+
 	free(buffer);
-	result[nlines] = NULL;
 
 	return result;
 }
