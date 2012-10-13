@@ -373,6 +373,7 @@ readfile(const char *path)
 	int			maxlength = 1,
 				linelen = 0;
 	int			nlines = 0;
+	int			n;
 	char	  **result;
 	char	   *buffer;
 	int			c;
@@ -410,13 +411,13 @@ readfile(const char *path)
 
 	/* now reprocess the file and store the lines */
 	rewind(infile);
-	nlines = 0;
-	while (fgets(buffer, maxlength + 1, infile) != NULL)
-		result[nlines++] = xstrdup(buffer);
+	n = 0;
+	while (fgets(buffer, maxlength + 1, infile) != NULL && n < nlines)
+		result[n++] = xstrdup(buffer);
 
 	fclose(infile);
 	free(buffer);
-	result[nlines] = NULL;
+	result[n] = NULL;
 
 	return result;
 }
