@@ -280,6 +280,13 @@ InitProcess(void)
 		elog(ERROR, "you already exist");
 
 	/*
+	 * Initialize process-local latch support.  This could fail if the kernel
+	 * is low on resources, and if so we want to exit cleanly before acquiring
+	 * any shared-memory resources.
+	 */
+	InitializeLatchSupport();
+
+	/*
 	 * Try to get a proc struct from the free list.  If this fails, we must be
 	 * out of PGPROC structures (not to mention semaphores).
 	 *
@@ -450,6 +457,13 @@ InitAuxiliaryProcess(void)
 
 	if (MyProc != NULL)
 		elog(ERROR, "you already exist");
+
+	/*
+	 * Initialize process-local latch support.  This could fail if the kernel
+	 * is low on resources, and if so we want to exit cleanly before acquiring
+	 * any shared-memory resources.
+	 */
+	InitializeLatchSupport();
 
 	/*
 	 * We use the ProcStructLock to protect assignment and releasing of

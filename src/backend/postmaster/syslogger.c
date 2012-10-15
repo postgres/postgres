@@ -251,6 +251,8 @@ SysLoggerMain(int argc, char *argv[])
 		elog(FATAL, "setsid() failed: %m");
 #endif
 
+	InitializeLatchSupport();		/* needed for latch waits */
+
 	/* Initialize private latch for use by signal handlers */
 	InitLatch(&sysLoggerLatch);
 

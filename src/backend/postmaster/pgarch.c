@@ -234,8 +234,6 @@ PgArchiverMain(int argc, char *argv[])
 
 	MyProcPid = getpid();		/* reset MyProcPid */
 
-	InitLatch(&mainloop_latch); /* initialize latch used in main loop */
-
 	MyStartTime = time(NULL);	/* record Start Time for logging */
 
 	/*
@@ -246,6 +244,10 @@ PgArchiverMain(int argc, char *argv[])
 	if (setsid() < 0)
 		elog(FATAL, "setsid() failed: %m");
 #endif
+
+	InitializeLatchSupport();		/* needed for latch waits */
+
+	InitLatch(&mainloop_latch); /* initialize latch used in main loop */
 
 	/*
 	 * Ignore all signals usually bound to some action in the postmaster,
