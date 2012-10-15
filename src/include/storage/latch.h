@@ -94,6 +94,7 @@ typedef struct
 /*
  * prototypes for functions in latch.c
  */
+extern void InitializeLatchSupport(void);
 extern void InitLatch(volatile Latch *latch);
 extern void InitSharedLatch(volatile Latch *latch);
 extern void OwnLatch(volatile Latch *latch);
