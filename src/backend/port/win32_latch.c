@@ -31,6 +31,12 @@
 
 
 void
+InitializeLatchSupport(void)
+{
+	/* currently, nothing to do here for Windows */
+}
+
+void
 InitLatch(volatile Latch *latch)
 {
 	latch->is_set = false;
