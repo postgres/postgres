@@ -51,7 +51,6 @@ test: create_function_1
 test: create_type
 test: create_table
 test: create_function_2
-test: create_function_3
 test: copy
 test: copyselect
 test: create_misc
@@ -59,6 +58,7 @@ test: create_operator
 test: create_index
 test: create_view
 test: create_aggregate
+test: create_function_3
 test: create_cast
 test: constraints
 test: triggers
@@ -95,6 +95,7 @@ test: privileges
 test: security_label
 test: collate
 test: misc
+test: alter_generic
 test: rules
 test: event_trigger
 test: select_views
@@ -125,7 +126,6 @@ test: without_oid
 test: conversion
 test: truncate
 test: alter_table
-test: alter_generic
 test: sequence
 test: polymorphism
 test: rowtypes

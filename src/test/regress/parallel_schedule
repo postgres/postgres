@@ -83,9 +83,13 @@ test: select_into select_distinct select_distinct_on select_implicit select_havi
 # ----------
 # Another group of parallel tests
 # ----------
-test: privileges security_label collate alter_generic
+test: privileges security_label collate
 
-test: misc
+# ----------
+# Another group of parallel tests
+# ----------
+test: misc alter_generic
+
 # rules cannot run concurrently with any test that creates a view
 test: rules
 # event triggers cannot run concurrently with any test that runs DDL
