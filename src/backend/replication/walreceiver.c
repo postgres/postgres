@@ -674,7 +674,7 @@ XLogWalRcvFlush(bool dying)
  * xmin and the current time.
  *
  * If 'force' is not set, the message is only sent if enough time has
- * passed since last status update to reach wal_receiver_status_internal.
+ * passed since last status update to reach wal_receiver_status_interval.
  * If wal_receiver_status_interval is disabled altogether and 'force' is
  * false, this is a no-op.
  *
