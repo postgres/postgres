@@ -416,7 +416,7 @@ extern char *local_preload_libraries_string;
  *		7	shared memory key (not present on Windows)
  *
  * Lines 6 and up are added via AddToDataDirLockFile() after initial file
- * creation; they have to be ordered according to time of addition.
+ * creation.
  *
  * The socket lock file, if used, has the same contents as lines 1-5.
  */
