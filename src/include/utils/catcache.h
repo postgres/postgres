@@ -22,7 +22,7 @@
 
 #include "access/htup.h"
 #include "access/skey.h"
-#include "lib/dllist.h"
+#include "lib/ilist.h"
 #include "utils/relcache.h"
 
 /*
@@ -37,7 +37,7 @@
 typedef struct catcache
 {
 	int			id;				/* cache identifier --- see syscache.h */
-	struct catcache *cc_next;	/* link to next catcache */
+	slist_node	cc_next;		/* list link */
 	const char *cc_relname;		/* name of relation the tuples come from */
 	Oid			cc_reloid;		/* OID of relation the tuples come from */
 	Oid			cc_indexoid;	/* OID of index matching cache keys */
@@ -51,7 +51,7 @@ typedef struct catcache
 	ScanKeyData cc_skey[CATCACHE_MAXKEYS];		/* precomputed key info for
 												 * heap scans */
 	bool		cc_isname[CATCACHE_MAXKEYS];	/* flag "name" key columns */
-	Dllist		cc_lists;		/* list of CatCList structs */
+	dlist_head	cc_lists;		/* list of CatCList structs */
 #ifdef CATCACHE_STATS
 	long		cc_searches;	/* total # searches against this cache */
 	long		cc_hits;		/* # of matches against existing entry */
@@ -66,7 +66,7 @@ typedef struct catcache
 	long		cc_lsearches;	/* total # list-searches */
 	long		cc_lhits;		/* # of matches against existing lists */
 #endif
-	Dllist		cc_bucket[1];	/* hash buckets --- VARIABLE LENGTH ARRAY */
+	dlist_head	cc_bucket[1];	/* hash buckets --- VARIABLE LENGTH ARRAY */
 } CatCache;						/* VARIABLE LENGTH STRUCT */
 
 
@@ -77,11 +77,12 @@ typedef struct catctup
 	CatCache   *my_cache;		/* link to owning catcache */
 
 	/*
-	 * Each tuple in a cache is a member of a Dllist that stores the elements
-	 * of its hash bucket.	We keep each Dllist in LRU order to speed repeated
+	 * Each tuple in a cache is a member of a dlist that stores the elements
+	 * of its hash bucket.	We keep each dlist in LRU order to speed repeated
 	 * lookups.
 	 */
-	Dlelem		cache_elem;		/* list member of per-bucket list */
+	dlist_node	cache_elem;		/* list member of per-bucket list */
+	dlist_head *cache_bucket;	/* containing bucket dlist */
 
 	/*
 	 * The tuple may also be a member of at most one CatCList.	(If a single
@@ -139,7 +140,7 @@ typedef struct catclist
 	 * might not be true during bootstrap or recovery operations. (namespace.c
 	 * is able to save some cycles when it is true.)
 	 */
-	Dlelem		cache_elem;		/* list member of per-catcache list */
+	dlist_node	cache_elem;		/* list member of per-catcache list */
 	int			refcount;		/* number of active references */
 	bool		dead;			/* dead but not yet removed? */
 	bool		ordered;		/* members listed in index order? */
@@ -153,7 +154,7 @@ typedef struct catclist
 
 typedef struct catcacheheader
 {
-	CatCache   *ch_caches;		/* head of list of CatCache structs */
+	slist_head	ch_caches;		/* head of list of CatCache structs */
 	int			ch_ntup;		/* # of tuples in all caches */
 } CatCacheHeader;
 

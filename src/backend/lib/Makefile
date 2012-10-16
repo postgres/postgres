@@ -12,6 +12,6 @@ subdir = src/backend/lib
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = dllist.o stringinfo.o
+OBJS = ilist.o stringinfo.o
 
 include $(top_srcdir)/src/backend/common.mk
