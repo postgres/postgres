@@ -1970,7 +1970,7 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 				}
 				break;
 			case 'c':
-				appendStringInfo(buf, "%lx.%x", (long) (MyStartTime), MyProcPid);
+				appendStringInfo(buf, "%lx.%04x", (long) (MyStartTime), MyProcPid);
 				break;
 			case 'p':
 				appendStringInfo(buf, "%d", MyProcPid);
@@ -2149,7 +2149,7 @@ write_csvlog(ErrorData *edata)
 	appendStringInfoChar(&buf, ',');
 
 	/* session id */
-	appendStringInfo(&buf, "%lx.%x", (long) MyStartTime, MyProcPid);
+	appendStringInfo(&buf, "%lx.%04x", (long) MyStartTime, MyProcPid);
 	appendStringInfoChar(&buf, ',');
 
 	/* Line number */
