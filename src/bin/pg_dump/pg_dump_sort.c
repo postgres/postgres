@@ -198,6 +198,9 @@ DOTypeNameCompare(const void *p1, const void *p2)
 		cmpval = fobj1->nargs - fobj2->nargs;
 		if (cmpval != 0)
 			return cmpval;
+		cmpval = strcmp(fobj1->proiargs, fobj2->proiargs);
+		if (cmpval != 0)
+			return cmpval;
 	}
 	else if (obj1->objType == DO_OPERATOR)
 	{
