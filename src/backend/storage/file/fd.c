@@ -126,8 +126,6 @@ int			max_safe_fds = 32;	/* default if not changed */
 /* these are the assigned bits in fdstate below: */
 #define FD_TEMPORARY		(1 << 0)	/* T = delete when closed */
 #define FD_XACT_TEMPORARY	(1 << 1)	/* T = delete at eoXact */
-#define FD_XACT_TRANSIENT	(1 << 2)	/* T = close (not delete) at aoXact,
-										 * but keep VFD */
 
 typedef struct vfd
 {
@@ -158,8 +156,11 @@ static Size SizeVfdCache = 0;
  */
 static int	nfile = 0;
 
-/* True if there are files to close/delete at end of transaction */
-static bool have_pending_fd_cleanup = false;
+/*
+ * Flag to tell whether it's worth scanning VfdCache looking for temp files
+ * to close
+ */
+static bool have_xact_temporary_files = false;
 
 /*
  * Tracks the total size of all temporary files.  Note: when temp_file_limit
@@ -607,7 +608,6 @@ LruDelete(File file)
 	Vfd		   *vfdP;
 
 	Assert(file != 0);
-	Assert(!FileIsNotOpen(file));
 
 	DO_DB(elog(LOG, "LruDelete %d (%s)",
 			   file, VfdCache[file].fileName));
@@ -971,7 +971,7 @@ OpenTemporaryFile(bool interXact)
 		VfdCache[file].resowner = CurrentResourceOwner;
 
 		/* ensure cleanup happens at eoxact */
-		have_pending_fd_cleanup = true;
+		have_xact_temporary_files = true;
 	}
 
 	return file;
@@ -1042,25 +1042,6 @@ OpenTemporaryFileInTablespace(Oid tblspcOid, bool rejectError)
 	}
 
 	return file;
-}
-
-/*
- * Set the transient flag on a file
- *
- * This flag tells CleanupTempFiles to close the kernel-level file descriptor
- * (but not the VFD itself) at end of transaction.
- */
-void
-FileSetTransient(File file)
-{
-	Vfd		   *vfdP;
-
-	Assert(FileIsValid(file));
-
-	vfdP = &VfdCache[file];
-	vfdP->fdstate |= FD_XACT_TRANSIENT;
-
-	have_pending_fd_cleanup = true;
 }
 
 /*
@@ -1863,9 +1844,8 @@ AtEOSubXact_Files(bool isCommit, SubTransactionId mySubid,
  * particularly care which).  All still-open per-transaction temporary file
  * VFDs are closed, which also causes the underlying files to be deleted
  * (although they should've been closed already by the ResourceOwner
- * cleanup). Transient files have their kernel file descriptors closed.
- * Furthermore, all "allocated" stdio files are closed. We also forget any
- * transaction-local temp tablespace list.
+ * cleanup). Furthermore, all "allocated" stdio files are closed. We also
+ * forget any transaction-local temp tablespace list.
  */
 void
 AtEOXact_Files(void)
@@ -1888,10 +1868,7 @@ AtProcExit_Files(int code, Datum arg)
 }
 
 /*
- * General cleanup routine for fd.c.
- *
- * Temporary files are closed, and their underlying files deleted.
- * Transient files are closed.
+ * Close temporary files and delete their underlying files.
  *
  * isProcExit: if true, this is being called as the backend process is
  * exiting. If that's the case, we should remove all temporary files; if
@@ -1908,51 +1885,35 @@ CleanupTempFiles(bool isProcExit)
 	 * Careful here: at proc_exit we need extra cleanup, not just
 	 * xact_temporary files.
 	 */
-	if (isProcExit || have_pending_fd_cleanup)
+	if (isProcExit || have_xact_temporary_files)
 	{
 		Assert(FileIsNotOpen(0));		/* Make sure ring not corrupted */
 		for (i = 1; i < SizeVfdCache; i++)
 		{
 			unsigned short fdstate = VfdCache[i].fdstate;
 
-			if (VfdCache[i].fileName != NULL)
+			if ((fdstate & FD_TEMPORARY) && VfdCache[i].fileName != NULL)
 			{
-				if (fdstate & FD_TEMPORARY)
+				/*
+				 * If we're in the process of exiting a backend process, close
+				 * all temporary files. Otherwise, only close temporary files
+				 * local to the current transaction. They should be closed by
+				 * the ResourceOwner mechanism already, so this is just a
+				 * debugging cross-check.
+				 */
+				if (isProcExit)
+					FileClose(i);
+				else if (fdstate & FD_XACT_TEMPORARY)
 				{
-					/*
-					 * If we're in the process of exiting a backend process,
-					 * close all temporary files. Otherwise, only close
-					 * temporary files local to the current transaction. They
-					 * should be closed by the ResourceOwner mechanism
-					 * already, so this is just a debugging cross-check.
-					 */
-					if (isProcExit)
-						FileClose(i);
-					else if (fdstate & FD_XACT_TEMPORARY)
-					{
-						elog(WARNING,
-						"temporary file %s not closed at end-of-transaction",
-							 VfdCache[i].fileName);
-						FileClose(i);
-					}
-				}
-				else if (fdstate & FD_XACT_TRANSIENT)
-				{
-					/*
-					 * Close the FD, and remove the entry from the LRU ring,
-					 * but also remove the flag from the VFD.  This is to
-					 * ensure that if the VFD is reused in the future for
-					 * non-transient access, we don't close it inappropriately
-					 * then.
-					 */
-					if (!FileIsNotOpen(i))
-						LruDelete(i);
-					VfdCache[i].fdstate &= ~FD_XACT_TRANSIENT;
+					elog(WARNING,
+						 "temporary file %s not closed at end-of-transaction",
+						 VfdCache[i].fileName);
+					FileClose(i);
 				}
 			}
 		}
 
-		have_pending_fd_cleanup = false;
+		have_xact_temporary_files = false;
 	}
 
 	/* Clean up "allocated" stdio files and dirs. */
