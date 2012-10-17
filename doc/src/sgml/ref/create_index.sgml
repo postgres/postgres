@@ -474,7 +474,7 @@ CREATE INDEX lower_title_idx ON films ((lower(title)));
     after a database crash if there were unwritten changes.
     Also, changes to hash indexes are not replicated over warm standby
     replication after the initial base backup, so they
-    give wrong anwers to queries that subsequently use them.
+    give wrong answers to queries that subsequently use them.
     For these reasons, hash index use is presently discouraged.
    </para>
   </caution>
