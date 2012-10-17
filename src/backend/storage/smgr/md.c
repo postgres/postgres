@@ -300,9 +300,6 @@ mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
 
 	pfree(path);
 
-	if (reln->smgr_transient)
-		FileSetTransient(fd);
-
 	reln->md_fd[forkNum] = _fdvec_alloc();
 
 	reln->md_fd[forkNum]->mdfd_vfd = fd;
@@ -584,9 +581,6 @@ mdopen(SMgrRelation reln, ForkNumber forknum, ExtensionBehavior behavior)
 	}
 
 	pfree(path);
-
-	if (reln->smgr_transient)
-		FileSetTransient(fd);
 
 	reln->md_fd[forknum] = mdfd = _fdvec_alloc();
 
@@ -1679,9 +1673,6 @@ _mdfd_openseg(SMgrRelation reln, ForkNumber forknum, BlockNumber segno,
 
 	if (fd < 0)
 		return NULL;
-
-	if (reln->smgr_transient)
-		FileSetTransient(fd);
 
 	/* allocate an mdfdvec entry for it */
 	v = _fdvec_alloc();
