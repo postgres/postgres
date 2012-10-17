@@ -33,6 +33,9 @@
  * without having to make the smgr explicitly aware of relcache.  There
  * can't be more than one "owner" pointer per SMgrRelation, but that's
  * all we need.
+ *
+ * SMgrRelations that do not have an "owner" are considered to be transient,
+ * and are deleted at end of transaction.
  */
 typedef struct SMgrRelationData
 {
@@ -63,6 +66,9 @@ typedef struct SMgrRelationData
 
 	/* for md.c; NULL for forks that are not open */
 	struct _MdfdVec *md_fd[MAX_FORKNUM + 1];
+
+	/* if unowned, list link in list of all unowned SMgrRelations */
+	struct SMgrRelationData *next_unowned_reln;
 } SMgrRelationData;
 
 typedef SMgrRelationData *SMgrRelation;
@@ -95,6 +101,7 @@ extern void smgrimmedsync(SMgrRelation reln, ForkNumber forknum);
 extern void smgrpreckpt(void);
 extern void smgrsync(void);
 extern void smgrpostckpt(void);
+extern void AtEOXact_SMgr(void);
 
 
 /* internals: move me elsewhere -- ay 7/94 */
