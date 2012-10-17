@@ -467,6 +467,18 @@ CREATE INDEX lower_title_idx ON films ((lower(title)));
 </programlisting>
   </para>
 
+  <caution>
+   <para>
+    Hash index operations are not presently WAL-logged,
+    so hash indexes might need to be rebuilt with <command>REINDEX</>
+    after a database crash if there were unwritten changes.
+    Also, changes to hash indexes are not replicated over warm standby
+    replication after the initial base backup, so they
+    give wrong anwers to queries that subsequently use them.
+    For these reasons, hash index use is presently discouraged.
+   </para>
+  </caution>
+
   <para>
    To create an index with non-default sort ordering of nulls:
 <programlisting>
