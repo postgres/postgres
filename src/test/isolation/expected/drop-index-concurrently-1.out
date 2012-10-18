@@ -1,0 +1,40 @@
+Parsed test spec with 3 sessions
+
+starting permutation: noseq prepi preps begin explaini explains select2 drop insert2 end2 selecti selects end
+step noseq: SET enable_seqscan = false;
+step prepi: PREPARE getrow_idx AS SELECT * FROM test_dc WHERE data=34 ORDER BY id,data;
+step preps: PREPARE getrow_seq AS SELECT * FROM test_dc WHERE data::text=34::text ORDER BY id,data;
+step begin: BEGIN;
+step explaini: EXPLAIN (COSTS OFF) EXECUTE getrow_idx;
+QUERY PLAN     
+
+Sort           
+  Sort Key: id 
+  ->  Index Scan using test_dc_data on test_dc
+        Index Cond: (data = 34)
+step explains: EXPLAIN (COSTS OFF) EXECUTE getrow_seq;
+QUERY PLAN     
+
+Sort           
+  Sort Key: id, data
+  ->  Seq Scan on test_dc
+        Filter: ((data)::text = '34'::text)
+step select2: SELECT * FROM test_dc WHERE data=34 ORDER BY id,data;
+id             data           
+
+34             34             
+step drop: DROP INDEX CONCURRENTLY test_dc_data; <waiting ...>
+step insert2: INSERT INTO test_dc(data) SELECT * FROM generate_series(1, 100);
+step end2: COMMIT;
+step selecti: EXECUTE getrow_idx;
+id             data           
+
+34             34             
+134            34             
+step selects: EXECUTE getrow_seq;
+id             data           
+
+34             34             
+134            34             
+step end: COMMIT;
+step drop: <... completed>

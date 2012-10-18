@@ -14,3 +14,4 @@ test: fk-contention
 test: fk-deadlock
 test: fk-deadlock2
 test: eval-plan-qual
+test: drop-index-concurrently-1
