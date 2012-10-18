@@ -1316,6 +1316,10 @@ index_drop(Oid indexId, bool concurrent)
 	 * table lock strong enough to prevent all queries on the table from
 	 * proceeding until we commit and send out a shared-cache-inval notice
 	 * that will make them update their index lists.
+	 *
+	 * In the concurrent case we make sure that nobody can be looking at the
+	 * indexes by dropping the index in multiple steps, so we don't need a full
+	 * AccessExclusiveLock yet.
 	 */
 	heapId = IndexGetRelation(indexId, false);
 	if (concurrent)
@@ -1336,7 +1340,19 @@ index_drop(Oid indexId, bool concurrent)
 
 	/*
 	 * Drop Index concurrently is similar in many ways to creating an index
-	 * concurrently, so some actions are similar to DefineIndex()
+	 * concurrently, so some actions are similar to DefineIndex() just in the
+	 * reverse order.
+	 *
+	 * First we unset indisvalid so queries starting afterwards don't use the
+	 * index to answer queries anymore. We have to keep indisready = true
+	 * so transactions that are still scanning the index can continue to
+	 * see valid index contents. E.g. when they are using READ COMMITTED mode,
+	 * and another transactions that started later commits makes changes and
+	 * commits, they need to see those new tuples in the index.
+	 *
+	 * After all transactions that could possibly have used it for queries
+	 * ended we can unset indisready and wait till nobody could be updating it
+	 * anymore.
 	 */
 	if (concurrent)
 	{
@@ -1355,20 +1371,20 @@ index_drop(Oid indexId, bool concurrent)
 			elog(ERROR, "cache lookup failed for index %u", indexId);
 		indexForm = (Form_pg_index) GETSTRUCT(tuple);
 
-		indexForm->indisvalid = false;	/* make unusable for queries */
-		indexForm->indisready = false;	/* make invisible to changes */
+		/*
+		 * If indisready == true we leave it set so the index still gets
+		 * maintained by pre-existing transactions. We only need to ensure
+		 * that indisvalid is false.
+		 */
+		if (indexForm->indisvalid)
+		{
+			indexForm->indisvalid = false;	/* make unusable for new queries */
 
-		simple_heap_update(indexRelation, &tuple->t_self, tuple);
-		CatalogUpdateIndexes(indexRelation, tuple);
+			simple_heap_update(indexRelation, &tuple->t_self, tuple);
+			CatalogUpdateIndexes(indexRelation, tuple);
+		}
 
 		heap_close(indexRelation, RowExclusiveLock);
-
-		/*
-		 * Invalidate the relcache for the table, so that after this
-		 * transaction we will refresh the index list. Forgetting just the
-		 * index is not enough.
-		 */
-		CacheInvalidateRelcache(userHeapRelation);
 
 		/* save lockrelid and locktag for below, then close but keep locks */
 		heaprelid = userHeapRelation->rd_lockInfo.lockRelId;
@@ -1381,8 +1397,8 @@ index_drop(Oid indexId, bool concurrent)
 		/*
 		 * For a concurrent drop, it's important to make the catalog entries
 		 * visible to other transactions before we drop the index. The index
-		 * will be marked not indisvalid, so that no one else tries to either
-		 * insert into it or use it for queries.
+		 * will be marked not indisvalid, so that no one else tries to use it
+		 * for queries.
 		 *
 		 * We must commit our current transaction so that the index update
 		 * becomes visible; then start another.  Note that all the data
@@ -1419,6 +1435,66 @@ index_drop(Oid indexId, bool concurrent)
 		 * Note: GetLockConflicts() never reports our own xid, hence we need
 		 * not check for that.	Also, prepared xacts are not reported, which
 		 * is fine since they certainly aren't going to do anything more.
+		 */
+		old_lockholders = GetLockConflicts(&heaplocktag, AccessExclusiveLock);
+
+		while (VirtualTransactionIdIsValid(*old_lockholders))
+		{
+			VirtualXactLock(*old_lockholders, true);
+			old_lockholders++;
+		}
+
+		/*
+		 * Now we are sure that nobody uses the index for queries, they just
+		 * might have it opened for updating it. So now we can unset
+		 * indisready and wait till nobody could update the index anymore.
+		 */
+		indexRelation = heap_open(IndexRelationId, RowExclusiveLock);
+
+		userHeapRelation = heap_open(heapId, ShareUpdateExclusiveLock);
+		userIndexRelation = index_open(indexId, ShareUpdateExclusiveLock);
+
+		tuple = SearchSysCacheCopy1(INDEXRELID,
+									ObjectIdGetDatum(indexId));
+		if (!HeapTupleIsValid(tuple))
+			elog(ERROR, "cache lookup failed for index %u", indexId);
+		indexForm = (Form_pg_index) GETSTRUCT(tuple);
+
+		Assert(indexForm->indisvalid == false);
+		if (indexForm->indisready)
+		{
+			indexForm->indisready = false;	/* don't update index anymore */
+
+			simple_heap_update(indexRelation, &tuple->t_self, tuple);
+			CatalogUpdateIndexes(indexRelation, tuple);
+		}
+
+		heap_close(indexRelation, RowExclusiveLock);
+
+		/*
+		 * Close the relations again, though still holding session lock.
+		 */
+		heap_close(userHeapRelation, NoLock);
+		index_close(userIndexRelation, NoLock);
+
+		/*
+		 * Invalidate the relcache for the table, so that after this
+		 * transaction we will refresh the index list. Forgetting just the
+		 * index is not enough.
+		 */
+		CacheInvalidateRelcache(userHeapRelation);
+
+		/*
+		 * Just as with indisvalid = false we need to make sure indisready
+		 * is false is visible for everyone.
+		 */
+		CommitTransactionCommand();
+		StartTransactionCommand();
+
+		/*
+		 * Wait till everyone that saw indisready = true finished so we can
+		 * finally really remove the index. The logic here is the same as
+		 * above.
 		 */
 		old_lockholders = GetLockConflicts(&heaplocktag, AccessExclusiveLock);
 
