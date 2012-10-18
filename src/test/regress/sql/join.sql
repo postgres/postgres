@@ -330,6 +330,8 @@ on (x1 = xx1) where (xx2 is not null);
 -- regression test: check for bug with propagation of implied equality
 -- to outside an IN
 --
+analyze tenk1;		-- ensure we get consistent plans here
+
 select count(*) from tenk1 a where unique1 in
   (select unique1 from tenk1 b join tenk1 c using (unique1)
    where b.unique2 = 42);
@@ -637,3 +639,15 @@ order by 1,2;
 --
 select * from int4_tbl a full join int4_tbl b on true;
 select * from int4_tbl a full join int4_tbl b on false;
+
+--
+-- test handling of potential equivalence clauses above outer joins
+--
+
+select q1, unique2, thousand, hundred
+  from int8_tbl a left join tenk1 b on q1 = unique2
+  where coalesce(thousand,123) = q1 and q1 = coalesce(hundred,123);
+
+select f1, unique2, case when unique2 is null then f1 else 0 end
+  from int4_tbl a left join tenk1 b on f1 = unique2
+  where (case when unique2 is null then f1 else 0 end) = 0;
