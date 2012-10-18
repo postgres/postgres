@@ -24,9 +24,11 @@
 #include "lib/ilist.h"
 
 /*
- * removes a node from a list
+ * Delete 'node' from list.
  *
- * Attention: O(n)
+ * It is not allowed to delete a 'node' which is is not in the list 'head'
+ *
+ * Caution: this is O(n)
  */
 void
 slist_delete(slist_head *head, slist_node *node)
@@ -47,9 +49,9 @@ slist_delete(slist_head *head, slist_node *node)
 		}
 		last = cur;
 	}
+	Assert(found);
 
 	slist_check(head);
-	Assert(found);
 }
 
 #ifdef ILIST_DEBUG
@@ -61,8 +63,11 @@ dlist_check(dlist_head *head)
 {
 	dlist_node *cur;
 
-	if (head == NULL || !(&head->head))
-		elog(ERROR, "doubly linked list head is not properly initialized");
+	if (head == NULL)
+		elog(ERROR, "doubly linked list head address is NULL");
+
+	if (head->head.next == NULL && head->head.prev == NULL)
+		return;					/* OK, initialized as zeroes */
 
 	/* iterate in forward direction */
 	for (cur = head->head.next; cur != &head->head; cur = cur->next)
@@ -96,10 +101,10 @@ slist_check(slist_head *head)
 	slist_node *cur;
 
 	if (head == NULL)
-		elog(ERROR, "singly linked is NULL");
+		elog(ERROR, "singly linked list head address is NULL");
 
 	/*
-	 * there isn't much we can test in a singly linked list other that it
+	 * there isn't much we can test in a singly linked list except that it
 	 * actually ends sometime, i.e. hasn't introduced a cycle or similar
 	 */
 	for (cur = head->head.next; cur != NULL; cur = cur->next)
