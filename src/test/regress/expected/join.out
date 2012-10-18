@@ -2827,6 +2827,77 @@ select b.unique1 from
 (5 rows)
 
 --
+-- test handling of potential equivalence clauses above outer joins
+--
+explain (costs off)
+select q1, unique2, thousand, hundred
+  from int8_tbl a left join tenk1 b on q1 = unique2
+  where coalesce(thousand,123) = q1 and q1 = coalesce(hundred,123);
+                                      QUERY PLAN                                      
+--------------------------------------------------------------------------------------
+ Nested Loop Left Join
+   Filter: ((COALESCE(b.thousand, 123) = a.q1) AND (a.q1 = COALESCE(b.hundred, 123)))
+   ->  Seq Scan on int8_tbl a
+   ->  Index Scan using tenk1_unique2 on tenk1 b
+         Index Cond: (a.q1 = unique2)
+(5 rows)
+
+select q1, unique2, thousand, hundred
+  from int8_tbl a left join tenk1 b on q1 = unique2
+  where coalesce(thousand,123) = q1 and q1 = coalesce(hundred,123);
+ q1 | unique2 | thousand | hundred 
+----+---------+----------+---------
+(0 rows)
+
+explain (costs off)
+select f1, unique2, case when unique2 is null then f1 else 0 end
+  from int4_tbl a left join tenk1 b on f1 = unique2
+  where (case when unique2 is null then f1 else 0 end) = 0;
+                             QUERY PLAN                             
+--------------------------------------------------------------------
+ Nested Loop Left Join
+   Filter: (CASE WHEN (b.unique2 IS NULL) THEN a.f1 ELSE 0 END = 0)
+   ->  Seq Scan on int4_tbl a
+   ->  Index Only Scan using tenk1_unique2 on tenk1 b
+         Index Cond: (unique2 = a.f1)
+(5 rows)
+
+select f1, unique2, case when unique2 is null then f1 else 0 end
+  from int4_tbl a left join tenk1 b on f1 = unique2
+  where (case when unique2 is null then f1 else 0 end) = 0;
+ f1 | unique2 | case 
+----+---------+------
+  0 |       0 |    0
+(1 row)
+
+--
+-- test ability to push constants through outer join clauses
+--
+explain (costs off)
+  select * from int4_tbl a left join tenk1 b on f1 = unique2 where f1 = 0;
+                   QUERY PLAN                    
+-------------------------------------------------
+ Nested Loop Left Join
+   Join Filter: (a.f1 = b.unique2)
+   ->  Seq Scan on int4_tbl a
+         Filter: (f1 = 0)
+   ->  Index Scan using tenk1_unique2 on tenk1 b
+         Index Cond: (unique2 = 0)
+(6 rows)
+
+explain (costs off)
+  select * from tenk1 a full join tenk1 b using(unique2) where unique2 = 42;
+                   QUERY PLAN                    
+-------------------------------------------------
+ Merge Full Join
+   Merge Cond: (a.unique2 = b.unique2)
+   ->  Index Scan using tenk1_unique2 on tenk1 a
+         Index Cond: (unique2 = 42)
+   ->  Index Scan using tenk1_unique2 on tenk1 b
+         Index Cond: (unique2 = 42)
+(6 rows)
+
+--
 -- test join removal
 --
 begin;
