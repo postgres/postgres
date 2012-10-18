@@ -338,10 +338,14 @@ readfile(const char *path)
 	if (fd < 0)
 		return NULL;
 	if (fstat(fd, &statbuf) < 0)
+	{
+		close(fd);
 		return NULL;
+	}
 	if (statbuf.st_size == 0)
 	{
 		/* empty file */
+		close(fd);
 		result = (char **) pg_malloc(sizeof(char *));
 		*result = NULL;
 		return result;
@@ -357,14 +361,17 @@ readfile(const char *path)
 		return NULL;
 	}
 
-	/* count newlines */
+	/*
+	 * Count newlines. We expect there to be a newline after each full line,
+	 * including one at the end of file. If there isn't a newline at the end,
+	 * any characters after the last newline will be ignored.
+	 */
 	nlines = 0;
-	for (i = 0; i < len - 1; i++)
+	for (i = 0; i < len; i++)
 	{
 		if (buffer[i] == '\n')
 			nlines++;
 	}
-	nlines++; /* account for the last line */
 
 	/* set up the result buffer */
 	result = (char **) pg_malloc((nlines + 1) * sizeof(char *));
@@ -374,7 +381,7 @@ readfile(const char *path)
 	n = 0;
 	for (i = 0; i < len; i++)
 	{
-		if (buffer[i] == '\n' || i == len - 1)
+		if (buffer[i] == '\n')
 		{
 			int		slen = &buffer[i] - linebegin + 1;
 			char   *linebuf = pg_malloc(slen + 1);
