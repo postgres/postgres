@@ -580,7 +580,6 @@ AutoVacLauncherMain(int argc, char *argv[])
 		struct timeval nap;
 		TimestampTz current_time = 0;
 		bool		can_launch;
-		avl_dbase  *avdb;
 		int			rc;
 
 		/*
@@ -725,7 +724,8 @@ AutoVacLauncherMain(int argc, char *argv[])
 					worker->wi_tableoid = InvalidOid;
 					worker->wi_proc = NULL;
 					worker->wi_launchtime = 0;
-					dlist_push_head(&AutoVacuumShmem->av_freeWorkers, &worker->wi_links);
+					dlist_push_head(&AutoVacuumShmem->av_freeWorkers,
+									&worker->wi_links);
 					AutoVacuumShmem->av_startingWorker = NULL;
 					elog(WARNING, "worker took too long to start; canceled");
 				}
@@ -760,6 +760,8 @@ AutoVacLauncherMain(int argc, char *argv[])
 			 * distant adl_next_worker first, we obtain our database from the
 			 * tail of the list.
 			 */
+			avl_dbase  *avdb;
+
 			avdb = dlist_tail_element(avl_dbase, adl_node, &DatabaseList);
 
 			/*
@@ -790,8 +792,6 @@ AutoVacLauncherMain(int argc, char *argv[])
 static void
 launcher_determine_sleep(bool canlaunch, bool recursing, struct timeval * nap)
 {
-	avl_dbase  *avdb;
-
 	/*
 	 * We sleep until the next scheduled vacuum.  We trust that when the
 	 * database list was built, care was taken so that no entries have times
@@ -807,6 +807,7 @@ launcher_determine_sleep(bool canlaunch, bool recursing, struct timeval * nap)
 	{
 		TimestampTz current_time = GetCurrentTimestamp();
 		TimestampTz next_wakeup;
+		avl_dbase  *avdb;
 		long		secs;
 		int			usecs;
 
@@ -1677,7 +1678,7 @@ FreeWorkerInfo(int code, Datum arg)
 		 */
 		AutovacuumLauncherPid = AutoVacuumShmem->av_launcherpid;
 
-		dlist_delete(&AutoVacuumShmem->av_runningWorkers, &MyWorkerInfo->wi_links);
+		dlist_delete(&MyWorkerInfo->wi_links);
 		MyWorkerInfo->wi_dboid = InvalidOid;
 		MyWorkerInfo->wi_tableoid = InvalidOid;
 		MyWorkerInfo->wi_proc = NULL;
@@ -1685,7 +1686,8 @@ FreeWorkerInfo(int code, Datum arg)
 		MyWorkerInfo->wi_cost_delay = 0;
 		MyWorkerInfo->wi_cost_limit = 0;
 		MyWorkerInfo->wi_cost_limit_base = 0;
-		dlist_push_head(&AutoVacuumShmem->av_freeWorkers, &MyWorkerInfo->wi_links);
+		dlist_push_head(&AutoVacuumShmem->av_freeWorkers,
+						&MyWorkerInfo->wi_links);
 		/* not mine anymore */
 		MyWorkerInfo = NULL;
 
@@ -2863,7 +2865,8 @@ AutoVacuumShmemInit(void)
 
 		/* initialize the WorkerInfo free list */
 		for (i = 0; i < autovacuum_max_workers; i++)
-			dlist_push_head(&AutoVacuumShmem->av_freeWorkers, &worker[i].wi_links);
+			dlist_push_head(&AutoVacuumShmem->av_freeWorkers,
+							&worker[i].wi_links);
 	}
 	else
 		Assert(found);

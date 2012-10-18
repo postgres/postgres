@@ -82,7 +82,6 @@ typedef struct catctup
 	 * lookups.
 	 */
 	dlist_node	cache_elem;		/* list member of per-bucket list */
-	dlist_head *cache_bucket;	/* containing bucket dlist */
 
 	/*
 	 * The tuple may also be a member of at most one CatCList.	(If a single

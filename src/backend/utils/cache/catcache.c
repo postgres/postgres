@@ -370,7 +370,7 @@ CatCacheRemoveCTup(CatCache *cache, CatCTup *ct)
 		return;					/* nothing left to do */
 	}
 
-	dlist_delete(ct->cache_bucket, &ct->cache_elem);
+	dlist_delete(&ct->cache_elem);
 
 	/* free associated tuple data */
 	if (ct->tuple.t_data != NULL)
@@ -413,7 +413,7 @@ CatCacheRemoveCList(CatCache *cache, CatCList *cl)
 	}
 
 	/* delink from linked list */
-	dlist_delete(&cache->cc_lists, &cl->cache_elem);
+	dlist_delete(&cl->cache_elem);
 
 	/* free associated tuple data */
 	if (cl->tuple.t_data != NULL)
@@ -1664,15 +1664,13 @@ CatalogCacheCreateEntry(CatCache *cache, HeapTuple ntp,
 	 */
 	ct->ct_magic = CT_MAGIC;
 	ct->my_cache = cache;
-	ct->cache_bucket = &cache->cc_bucket[hashIndex];
-
 	ct->c_list = NULL;
 	ct->refcount = 0;			/* for the moment */
 	ct->dead = false;
 	ct->negative = negative;
 	ct->hash_value = hashValue;
 
-	dlist_push_head(ct->cache_bucket, &ct->cache_elem);
+	dlist_push_head(&cache->cc_bucket[hashIndex], &ct->cache_elem);
 
 	cache->cc_ntup++;
 	CacheHdr->ch_ntup++;

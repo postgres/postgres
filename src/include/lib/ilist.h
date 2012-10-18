@@ -89,7 +89,7 @@
  *			continue;		// don't touch this one
  *
  *		// unlink the current table from the linked list
- *		dlist_delete(&db->tables, miter.cur);
+ *		dlist_delete(miter.cur);
  *		// as these lists never manage memory, we can still access the table
  *		// after it's been unlinked
  *		drop_table(db, tbl);
@@ -271,11 +271,9 @@ extern void dlist_init(dlist_head *head);
 extern bool dlist_is_empty(dlist_head *head);
 extern void dlist_push_head(dlist_head *head, dlist_node *node);
 extern void dlist_push_tail(dlist_head *head, dlist_node *node);
-extern void dlist_insert_after(dlist_head *head,
-				   dlist_node *after, dlist_node *node);
-extern void dlist_insert_before(dlist_head *head,
-					dlist_node *before, dlist_node *node);
-extern void dlist_delete(dlist_head *head, dlist_node *node);
+extern void dlist_insert_after(dlist_node *after, dlist_node *node);
+extern void dlist_insert_before(dlist_node *before, dlist_node *node);
+extern void dlist_delete(dlist_node *node);
 extern dlist_node *dlist_pop_head_node(dlist_head *head);
 extern void dlist_move_head(dlist_head *head, dlist_node *node);
 extern bool dlist_has_next(dlist_head *head, dlist_node *node);
@@ -352,50 +350,34 @@ dlist_push_tail(dlist_head *head, dlist_node *node)
  * Insert a node after another *in the same list*
  */
 STATIC_IF_INLINE void
-dlist_insert_after(dlist_head *head, dlist_node *after, dlist_node *node)
+dlist_insert_after(dlist_node *after, dlist_node *node)
 {
-	dlist_check(head);
-	/* XXX: assert 'after' is in 'head'? */
-
 	node->prev = after;
 	node->next = after->next;
 	after->next = node;
 	node->next->prev = node;
-
-	dlist_check(head);
 }
 
 /*
  * Insert a node before another *in the same list*
  */
 STATIC_IF_INLINE void
-dlist_insert_before(dlist_head *head, dlist_node *before, dlist_node *node)
+dlist_insert_before(dlist_node *before, dlist_node *node)
 {
-	dlist_check(head);
-	/* XXX: assert 'before' is in 'head'? */
-
 	node->prev = before->prev;
 	node->next = before;
 	before->prev = node;
 	node->prev->next = node;
-
-	dlist_check(head);
 }
 
 /*
- * Delete 'node' from list.
- *
- * It is not allowed to delete a 'node' which is is not in the list 'head'
+ * Delete 'node' from its list (it must be in one).
  */
 STATIC_IF_INLINE void
-dlist_delete(dlist_head *head, dlist_node *node)
+dlist_delete(dlist_node *node)
 {
-	dlist_check(head);
-
 	node->prev->next = node->next;
 	node->next->prev = node->prev;
-
-	dlist_check(head);
 }
 
 /*
@@ -408,7 +390,7 @@ dlist_pop_head_node(dlist_head *head)
 
 	Assert(!dlist_is_empty(head));
 	node = head->head.next;
-	dlist_delete(head, node);
+	dlist_delete(node);
 	return node;
 }
 
@@ -425,7 +407,7 @@ dlist_move_head(dlist_head *head, dlist_node *node)
 	if (head->head.next == node)
 		return;
 
-	dlist_delete(head, node);
+	dlist_delete(node);
 	dlist_push_head(head, node);
 
 	dlist_check(head);
@@ -591,8 +573,7 @@ dlist_tail_node(dlist_head *head)
 extern void slist_init(slist_head *head);
 extern bool slist_is_empty(slist_head *head);
 extern void slist_push_head(slist_head *head, slist_node *node);
-extern void slist_insert_after(slist_head *head,
-				   slist_node *after, slist_node *node);
+extern void slist_insert_after(slist_node *after, slist_node *node);
 extern slist_node *slist_pop_head_node(slist_head *head);
 extern bool slist_has_next(slist_head *head, slist_node *node);
 extern slist_node *slist_next_node(slist_head *head, slist_node *node);
@@ -640,12 +621,10 @@ slist_push_head(slist_head *head, slist_node *node)
  * Insert a node after another *in the same list*
  */
 STATIC_IF_INLINE void
-slist_insert_after(slist_head *head, slist_node *after, slist_node *node)
+slist_insert_after(slist_node *after, slist_node *node)
 {
 	node->next = after->next;
 	after->next = node;
-
-	slist_check(head);
 }
 
 /*

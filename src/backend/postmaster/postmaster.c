@@ -2696,7 +2696,7 @@ CleanupBackend(int pid,
 				ShmemBackendArrayRemove(bp);
 #endif
 			}
-			dlist_delete(&BackendList, iter.cur);
+			dlist_delete(iter.cur);
 			free(bp);
 			break;
 		}
@@ -2744,7 +2744,7 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 				ShmemBackendArrayRemove(bp);
 #endif
 			}
-			dlist_delete(&BackendList, iter.cur);
+			dlist_delete(iter.cur);
 			free(bp);
 			/* Keep looping so we can signal remaining backends */
 		}
