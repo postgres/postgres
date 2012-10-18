@@ -370,6 +370,7 @@ CatCacheRemoveCTup(CatCache *cache, CatCTup *ct)
 		return;					/* nothing left to do */
 	}
 
+	/* delink from linked list */
 	dlist_delete(&ct->cache_elem);
 
 	/* free associated tuple data */
@@ -452,9 +453,9 @@ CatalogCacheIdInvalidate(int cacheId, uint32 hashValue)
 	 */
 	slist_foreach(cache_iter, &CacheHdr->ch_caches)
 	{
+		CatCache   *ccp = slist_container(CatCache, cc_next, cache_iter.cur);
 		Index		hashIndex;
 		dlist_mutable_iter iter;
-		CatCache   *ccp = slist_container(CatCache, cc_next, cache_iter.cur);
 
 		if (cacheId != ccp->id)
 			continue;
@@ -555,7 +556,7 @@ AtEOXact_CatCache(bool isCommit)
 	{
 		slist_iter  cache_iter;
 
-		slist_foreach(cache_iter, &(CacheHdr->ch_caches))
+		slist_foreach(cache_iter, &CacheHdr->ch_caches)
 		{
 			CatCache   *ccp = slist_container(CatCache, cc_next, cache_iter.cur);
 			dlist_iter  iter;
@@ -682,7 +683,7 @@ CatalogCacheFlushCatalog(Oid catId)
 
 	CACHE2_elog(DEBUG2, "CatalogCacheFlushCatalog called for %u", catId);
 
-	slist_foreach(iter, &(CacheHdr->ch_caches))
+	slist_foreach(iter, &CacheHdr->ch_caches)
 	{
 		CatCache   *cache = slist_container(CatCache, cc_next, iter.cur);
 
@@ -770,8 +771,10 @@ InitCatCache(int id,
 
 	/*
 	 * allocate a new cache structure
+	 *
+	 * Note: we rely on zeroing to initialize all the dlist headers correctly
 	 */
-	cp = (CatCache *) palloc0(sizeof(CatCache) + nbuckets * sizeof(dlist_node));
+	cp = (CatCache *) palloc0(sizeof(CatCache) + nbuckets * sizeof(dlist_head));
 
 	/*
 	 * initialize the cache's relation information for the relation
@@ -789,9 +792,6 @@ InitCatCache(int id,
 	cp->cc_nkeys = nkeys;
 	for (i = 0; i < nkeys; ++i)
 		cp->cc_key[i] = key[i];
-
-	dlist_init(&cp->cc_lists);
-	MemSet(&cp->cc_bucket, 0, nbuckets * sizeof(dlist_head));
 
 	/*
 	 * new cache is initialized as far as we can go for now. print some
@@ -1060,7 +1060,7 @@ SearchCatCache(CatCache *cache,
 	ScanKeyData cur_skey[CATCACHE_MAXKEYS];
 	uint32		hashValue;
 	Index		hashIndex;
-	dlist_mutable_iter  iter;
+	dlist_iter	iter;
 	dlist_head *bucket;
 	CatCTup    *ct;
 	Relation	relation;
@@ -1094,10 +1094,12 @@ SearchCatCache(CatCache *cache,
 
 	/*
 	 * scan the hash bucket until we find a match or exhaust our tuples
+	 *
+	 * Note: it's okay to use dlist_foreach here, even though we modify the
+	 * dlist within the loop, because we don't continue the loop afterwards.
 	 */
 	bucket = &cache->cc_bucket[hashIndex];
-
-	dlist_foreach_modify(iter, bucket)
+	dlist_foreach(iter, bucket)
 	{
 		bool		res;
 
@@ -1382,6 +1384,9 @@ SearchCatCacheList(CatCache *cache,
 
 	/*
 	 * scan the items until we find a match or exhaust our list
+	 *
+	 * Note: it's okay to use dlist_foreach here, even though we modify the
+	 * dlist within the loop, because we don't continue the loop afterwards.
 	 */
 	dlist_foreach(iter, &cache->cc_lists)
 	{
@@ -1807,11 +1812,11 @@ PrepareToInvalidateCacheTuple(Relation relation,
 	 * ----------------
 	 */
 
-	slist_foreach(iter, &(CacheHdr->ch_caches))
+	slist_foreach(iter, &CacheHdr->ch_caches)
 	{
+		CatCache   *ccp = slist_container(CatCache, cc_next, iter.cur);
 		uint32		hashvalue;
 		Oid			dbid;
-		CatCache   *ccp = slist_container(CatCache, cc_next, iter.cur);
 
 		if (ccp->cc_reloid != reloid)
 			continue;
