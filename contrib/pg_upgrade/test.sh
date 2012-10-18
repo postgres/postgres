@@ -15,7 +15,7 @@ set -e
 : ${PGPORT=50432}
 export PGPORT
 
-testhost=`uname -o`
+testhost=`uname -s`
 
 temp_root=$PWD/tmp_check
 
@@ -110,11 +110,11 @@ pg_upgrade -d "${PGDATA}.old" -D "${PGDATA}" -b "$oldbindir" -B "$bindir"
 
 pg_ctl start -l "$logdir/postmaster2.log" -o '-F' -w
 
-if [ $testhost = Msys ] ; then
-	cmd /c analyze_new_cluster.bat
-else
-	sh ./analyze_new_cluster.sh
-fi
+case $testhost in
+	MINGW*)	cmd /c analyze_new_cluster.bat ;;
+	*)		sh ./analyze_new_cluster.sh ;;
+esac
+
 pg_dumpall -f "$temp_root"/dump2.sql || pg_dumpall2_status=$?
 pg_ctl -m fast stop
 if [ -n "$pg_dumpall2_status" ]; then
@@ -122,11 +122,10 @@ if [ -n "$pg_dumpall2_status" ]; then
 	exit 1
 fi
 
-if [ $testhost = Msys ] ; then
-	cmd /c delete_old_cluster.bat
-else
-	sh ./delete_old_cluster.sh
-fi
+case $testhost in
+	MINGW*)	cmd /c delete_old_cluster.bat ;;
+	*)	    sh ./delete_old_cluster.sh ;;
+esac
 
 if diff -q "$temp_root"/dump1.sql "$temp_root"/dump2.sql; then
 	echo PASSED
