@@ -1,0 +1,24 @@
+Parsed test spec with 3 sessions
+
+starting permutation: explain drop cancel rollback droptab selecti dropi
+step explain: EXPLAIN (COSTS OFF) SELECT * FROM test_dc WHERE data=34343;
+QUERY PLAN     
+
+Bitmap Heap Scan on test_dc
+  Recheck Cond: (data = 34343)
+  ->  Bitmap Index Scan on test_dc_data
+        Index Cond: (data = 34343)
+step drop: DROP INDEX CONCURRENTLY test_dc_data; <waiting ...>
+step cancel: SELECT pg_cancel_backend(pid) FROM pg_stat_activity WHERE query = 'DROP INDEX CONCURRENTLY test_dc_data;';
+pg_cancel_backend
+
+t              
+step drop: <... completed>
+error in steps cancel drop: ERROR:  canceling statement due to user request
+step rollback: ROLLBACK;
+step droptab: DROP TABLE test_dc;
+step selecti: SELECT indexrelid::regclass, indisvalid, indisready FROM pg_index WHERE indexrelid = 'test_dc_data'::regclass;
+indexrelid     indisvalid     indisready     
+
+test_dc_data   f              f              
+step dropi: DROP INDEX test_dc_data;
