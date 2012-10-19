@@ -351,12 +351,7 @@ performMultipleDeletions(const ObjectAddresses *objects,
 	/* And clean up */
 	free_object_addresses(targetObjects);
 
-	/*
-	 * We closed depRel earlier in deleteOneObject if doing a drop
-	 * concurrently
-	 */
-	if ((flags & PERFORM_DELETION_CONCURRENTLY) != PERFORM_DELETION_CONCURRENTLY)
-		heap_close(depRel, RowExclusiveLock);
+	heap_close(depRel, RowExclusiveLock);
 }
 
 /*
@@ -996,6 +991,7 @@ deleteOneObject(const ObjectAddress *object, Relation depRel, int flags)
 	int			nkeys;
 	SysScanDesc scan;
 	HeapTuple	tup;
+	Oid			depRelOid = depRel->rd_id;
 
 	/* DROP hook of the objects being removed */
 	if (object_access_hook)
@@ -1008,7 +1004,33 @@ deleteOneObject(const ObjectAddress *object, Relation depRel, int flags)
 	}
 
 	/*
-	 * First remove any pg_depend records that link from this object to
+	 * Close depRel if we are doing a drop concurrently. The individual
+	 * deletion has to commit the transaction and we don't want dangling
+	 * references.
+	 */
+	if (flags & PERFORM_DELETION_CONCURRENTLY)
+		heap_close(depRel, RowExclusiveLock);
+
+	/*
+	 * Delete the object itself, in an object-type-dependent way.
+	 *
+	 * Do this before removing outgoing dependencies as deletions can be
+	 * happening in concurrent mode. That will only happen for a single object
+	 * at once and if so the object will be invalidated inside a separate
+	 * transaction and only dropped inside a transaction thats in-progress when
+	 * doDeletion returns. This way no observer can see dangling dependency
+	 * entries.
+	 */
+	doDeletion(object, flags);
+
+	/*
+	 * Reopen depRel if we closed it before
+	 */
+	if (flags & PERFORM_DELETION_CONCURRENTLY)
+		depRel = heap_open(depRelOid, RowExclusiveLock);
+
+	/*
+	 * Then remove any pg_depend records that link from this object to
 	 * others.	(Any records linking to this object should be gone already.)
 	 *
 	 * When dropping a whole object (subId = 0), remove all pg_depend records
@@ -1050,17 +1072,6 @@ deleteOneObject(const ObjectAddress *object, Relation depRel, int flags)
 	deleteSharedDependencyRecordsFor(object->classId, object->objectId,
 									 object->objectSubId);
 
-	/*
-	 * Close depRel if we are doing a drop concurrently because it commits the
-	 * transaction, so we don't want dangling references.
-	 */
-	if ((flags & PERFORM_DELETION_CONCURRENTLY) == PERFORM_DELETION_CONCURRENTLY)
-		heap_close(depRel, RowExclusiveLock);
-
-	/*
-	 * Now delete the object itself, in an object-type-dependent way.
-	 */
-	doDeletion(object, flags);
 
 	/*
 	 * Delete any comments or security labels associated with this object.
@@ -1239,7 +1250,7 @@ AcquireDeletionLock(const ObjectAddress *object, int flags)
 {
 	if (object->classId == RelationRelationId)
 	{
-		if ((flags & PERFORM_DELETION_CONCURRENTLY) == PERFORM_DELETION_CONCURRENTLY)
+		if (flags & PERFORM_DELETION_CONCURRENTLY)
 			LockRelationOid(object->objectId, ShareUpdateExclusiveLock);
 		else
 			LockRelationOid(object->objectId, AccessExclusiveLock);
