@@ -1508,16 +1508,11 @@ UtilityContainsQuery(Node *parsetree)
 			return qry;
 
 		case T_CreateTableAsStmt:
-			/* might or might not contain a Query ... */
 			qry = (Query *) ((CreateTableAsStmt *) parsetree)->query;
-			if (IsA(qry, Query))
-			{
-				/* Recursion currently can't be necessary here */
-				Assert(qry->commandType != CMD_UTILITY);
-				return qry;
-			}
-			Assert(IsA(qry, ExecuteStmt));
-			return NULL;
+			Assert(IsA(qry, Query));
+			if (qry->commandType == CMD_UTILITY)
+				return UtilityContainsQuery(qry->utilityStmt);
+			return qry;
 
 		default:
 			return NULL;
