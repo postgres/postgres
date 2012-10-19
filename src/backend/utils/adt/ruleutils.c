@@ -3690,8 +3690,8 @@ get_insert_query_def(Query *query, deparse_context *context)
 	get_with_clause(query, context);
 
 	/*
-	 * If it's an INSERT ... SELECT or VALUES (...), (...), ... there will be
-	 * a single RTE for the SELECT or VALUES.
+	 * If it's an INSERT ... SELECT or multi-row VALUES, there will be a
+	 * single RTE for the SELECT or VALUES.  Plain VALUES has neither.
 	 */
 	foreach(l, query->rtable)
 	{
@@ -3725,7 +3725,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 		context->indentLevel += PRETTYINDENT_STD;
 		appendStringInfoChar(buf, ' ');
 	}
-	appendStringInfo(buf, "INSERT INTO %s (",
+	appendStringInfo(buf, "INSERT INTO %s ",
 					 generate_relation_name(rte->relid, NIL));
 
 	/*
@@ -3742,6 +3742,8 @@ get_insert_query_def(Query *query, deparse_context *context)
 		values_cell = NULL;
 	strippedexprs = NIL;
 	sep = "";
+	if (query->targetList)
+		appendStringInfoChar(buf, '(');
 	foreach(l, query->targetList)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
@@ -3778,7 +3780,8 @@ get_insert_query_def(Query *query, deparse_context *context)
 													   context, true));
 		}
 	}
-	appendStringInfo(buf, ") ");
+	if (query->targetList)
+		appendStringInfo(buf, ") ");
 
 	if (select_rte)
 	{
@@ -3791,13 +3794,18 @@ get_insert_query_def(Query *query, deparse_context *context)
 		/* Add the multi-VALUES expression lists */
 		get_values_def(values_rte->values_lists, context);
 	}
-	else
+	else if (strippedexprs)
 	{
 		/* Add the single-VALUES expression list */
 		appendContextKeyword(context, "VALUES (",
 							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 2);
 		get_rule_expr((Node *) strippedexprs, context, false);
 		appendStringInfoChar(buf, ')');
+	}
+	else
+	{
+		/* No expressions, so it must be DEFAULT VALUES */
+		appendStringInfo(buf, "DEFAULT VALUES");
 	}
 
 	/* Add RETURNING if present */
