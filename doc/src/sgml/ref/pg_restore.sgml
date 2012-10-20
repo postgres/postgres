@@ -109,6 +109,8 @@
       <listitem>
        <para>
         Clean (drop) database objects before recreating them.
+        (This might generate some harmless error messages, if any objects
+        were not present in the destination database.)
        </para>
       </listitem>
      </varlistentry>
@@ -118,11 +120,16 @@
       <term><option>--create</option></term>
       <listitem>
        <para>
-        Create the database before restoring into it.  (When this
-        option is used, the database named with <option>-d</option> is
-        used only to issue the initial <command>CREATE DATABASE</>
-        command.  All data is restored into the database name that
-        appears in the archive.)
+        Create the database before restoring into it.
+        If <option>--clean</option> is also specified, drop and
+        recreate the target database before connecting to it.
+       </para>
+
+       <para>
+        When this option is used, the database named with <option>-d</option>
+        is used only to issue the initial <command>DROP DATABASE</> and
+        <command>CREATE DATABASE</> commands.  All data is restored into the
+        database name that appears in the archive.
        </para>
       </listitem>
      </varlistentry>

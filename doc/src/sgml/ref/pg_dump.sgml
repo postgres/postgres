@@ -143,7 +143,8 @@ PostgreSQL documentation
        <para>
         Output commands to clean (drop)
         database objects prior to outputting the commands for creating them.
-        (Restore might generate some harmless errors.)
+        (Restore might generate some harmless error messages, if any objects
+        were not present in the destination database.)
        </para>
 
        <para>
@@ -161,8 +162,10 @@ PostgreSQL documentation
        <para>
         Begin the output with a command to create the
         database itself and reconnect to the created database.  (With a
-        script of this form, it doesn't matter which database you connect
-        to before running the script.)
+        script of this form, it doesn't matter which database in the
+        destination installation you connect to before running the script.)
+        If <option>--clean</option> is also specified, the script drops and
+        recreates the target database before reconnecting to it.
        </para>
 
        <para>
