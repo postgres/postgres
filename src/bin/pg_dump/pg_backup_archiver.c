@@ -303,15 +303,6 @@ RestoreArchive(Archive *AHX)
 	/*
 	 * Check for nonsensical option combinations.
 	 *
-	 * NB: createDB+dropSchema is useless because if you're creating the DB,
-	 * there's no need to drop individual items in it.  Moreover, if we tried
-	 * to do that then we'd issue the drops in the database initially
-	 * connected to, not the one we will create, which is very bad...
-	 */
-	if (ropt->createDB && ropt->dropSchema)
-		exit_horribly(modulename, "-C and -c are incompatible options\n");
-
-	/*
 	 * -C is not compatible with -1, because we can't create a database inside
 	 * a transaction block.
 	 */
@@ -456,7 +447,25 @@ RestoreArchive(Archive *AHX)
 		{
 			AH->currentTE = te;
 
-			/* We want anything that's selected and has a dropStmt */
+			/*
+			 * In createDB mode, issue a DROP *only* for the database as a
+			 * whole.  Issuing drops against anything else would be wrong,
+			 * because at this point we're connected to the wrong database.
+			 * Conversely, if we're not in createDB mode, we'd better not
+			 * issue a DROP against the database at all.
+			 */
+			if (ropt->createDB)
+			{
+				if (strcmp(te->desc, "DATABASE") != 0)
+					continue;
+			}
+			else
+			{
+				if (strcmp(te->desc, "DATABASE") == 0)
+					continue;
+			}
+
+			/* Otherwise, drop anything that's selected and has a dropStmt */
 			if (((te->reqs & (REQ_SCHEMA | REQ_DATA)) != 0) && te->dropStmt)
 			{
 				ahlog(AH, 1, "dropping %s %s\n", te->desc, te->tag);
@@ -937,9 +946,6 @@ PrintTOCSummary(Archive *AHX, RestoreOptions *ropt)
 				 AH->archiveDumpVersion);
 
 	ahprintf(AH, ";\n;\n; Selected TOC Entries:\n;\n");
-
-	/* We should print DATABASE entries whether or not -C was specified */
-	ropt->createDB = 1;
 
 	curSection = SECTION_PRE_DATA;
 	for (te = AH->toc->next; te != AH->toc; te = te->next)
