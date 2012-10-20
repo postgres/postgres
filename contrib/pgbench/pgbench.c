@@ -1444,7 +1444,7 @@ init(bool is_no_vacuum)
 		if (j % 100000 == 0)
 			fprintf(stderr, "%d of %d tuples (%d%%) done.\n",
 					j, naccounts * scale,
-					j * 100 / (naccounts * scale));
+					(int) (((int64) j * 100) / (naccounts * scale)));
 	}
 	if (PQputline(con, "\\.\n"))
 	{
