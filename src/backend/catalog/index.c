@@ -1320,6 +1320,18 @@ index_drop(Oid indexId, bool concurrent)
 	 * In the concurrent case we make sure that nobody can be looking at the
 	 * indexes by dropping the index in multiple steps, so we don't need a full
 	 * AccessExclusiveLock yet.
+	 *
+	 * All predicate locks on the index are about to be made invalid. Promote
+	 * them to relation locks on the heap. For correctness the index must not
+	 * be seen with indisvalid = true during query planning after the move
+	 * starts, so that the index will not be used for a scan after the
+	 * predicate lock move, as this could create new predicate locks on the
+	 * index which would not ensure a heap relation lock. Also, the index must
+	 * not be seen during execution of a heap tuple insert with indisready =
+	 * false before the move is complete, since the conflict with the
+	 * predicate lock on the index gap could be missed before the lock on the
+	 * heap relation is in place to detect a conflict based on the heap tuple
+	 * insert.
 	 */
 	heapId = IndexGetRelation(indexId, false);
 	if (concurrent)
@@ -1445,6 +1457,14 @@ index_drop(Oid indexId, bool concurrent)
 		}
 
 		/*
+		 * No more predicate locks will be acquired on this index, and we're
+		 * about to stop doing inserts into the index which could show
+		 * conflicts with existing predicate locks, so now is the time to move
+		 * them to the heap relation.
+		 */
+		TransferPredicateLocksToHeapRelation(userIndexRelation);
+
+		/*
 		 * Now we are sure that nobody uses the index for queries, they just
 		 * might have it opened for updating it. So now we can unset
 		 * indisready and wait till nobody could update the index anymore.
@@ -1514,12 +1534,8 @@ index_drop(Oid indexId, bool concurrent)
 		userHeapRelation = heap_open(heapId, ShareUpdateExclusiveLock);
 		userIndexRelation = index_open(indexId, AccessExclusiveLock);
 	}
-
-	/*
-	 * All predicate locks on the index are about to be made invalid. Promote
-	 * them to relation locks on the heap.
-	 */
-	TransferPredicateLocksToHeapRelation(userIndexRelation);
+	else
+		TransferPredicateLocksToHeapRelation(userIndexRelation);
 
 	/*
 	 * Schedule physical removal of the files
