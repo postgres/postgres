@@ -985,7 +985,8 @@ heap_create_with_catalog(const char *relname,
 						 OnCommitAction oncommit,
 						 Datum reloptions,
 						 bool use_user_acl,
-						 bool allow_system_table_mods)
+						 bool allow_system_table_mods,
+						 bool is_internal)
 {
 	Relation	pg_class_desc;
 	Relation	new_rel_desc;
@@ -1275,8 +1276,15 @@ heap_create_with_catalog(const char *relname,
 	}
 
 	/* Post creation hook for new relation */
-	InvokeObjectAccessHook(OAT_POST_CREATE,
-						   RelationRelationId, relid, 0, NULL);
+	if (object_access_hook)
+	{
+		ObjectAccessPostCreate	post_create_args;
+
+		memset(&post_create_args, 0, sizeof(ObjectAccessPostCreate));
+		post_create_args.is_internal = is_internal;
+		(*object_access_hook)(OAT_POST_CREATE, RelationRelationId,
+							  relid, 0, &post_create_args);
+    }
 
 	/*
 	 * Store any supplied constraints and defaults.

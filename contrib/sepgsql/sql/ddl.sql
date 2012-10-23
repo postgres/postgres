@@ -60,6 +60,18 @@ CREATE FUNCTION regtest_func_2(int) RETURNS bool LANGUAGE plpgsql
 RESET SESSION AUTHORIZATION;
 
 --
+-- ALTER and CREATE/DROP extra attribute permissions
+--
+CREATE TABLE regtest_table_4 (x int primary key, y int, z int);
+CREATE INDEX regtest_index_tbl4_y ON regtest_table_4(y);
+CREATE INDEX regtest_index_tbl4_z ON regtest_table_4(z);
+ALTER TABLE regtest_table_4 ALTER COLUMN y TYPE float;
+DROP INDEX regtest_index_tbl4_y;
+ALTER TABLE regtest_table_4
+      ADD CONSTRAINT regtest_tbl4_con EXCLUDE USING btree (z WITH =);
+DROP TABLE regtest_table_4 CASCADE;
+
+--
 -- DROP Permission checks (with clean-up)
 --
 

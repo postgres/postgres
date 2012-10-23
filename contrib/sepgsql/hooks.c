@@ -38,7 +38,6 @@ void		_PG_init(void);
 static object_access_hook_type next_object_access_hook = NULL;
 static ExecutorCheckPerms_hook_type next_exec_check_perms_hook = NULL;
 static ProcessUtility_hook_type next_ProcessUtility_hook = NULL;
-static ExecutorStart_hook_type next_ExecutorStart_hook = NULL;
 
 /*
  * Contextual information on DDL commands
@@ -97,53 +96,55 @@ sepgsql_object_access(ObjectAccessType access,
 	switch (access)
 	{
 		case OAT_POST_CREATE:
-			switch (classId)
 			{
-				case DatabaseRelationId:
-					sepgsql_database_post_create(objectId,
-									sepgsql_context_info.createdb_dtemplate);
-					break;
+				ObjectAccessPostCreate *pc_arg = arg;
+				bool	is_internal;
 
-				case NamespaceRelationId:
-					sepgsql_schema_post_create(objectId);
-					break;
+				is_internal = pc_arg ? pc_arg->is_internal : false;
 
-				case RelationRelationId:
-					if (subId == 0)
-					{
-						/*
-						 * All cases we want to apply permission checks on
-						 * creation of a new relation are invocation of the
-						 * heap_create_with_catalog via DefineRelation or
-						 * OpenIntoRel. Elsewhere, we need neither assignment
-						 * of security label nor permission checks.
-						 */
-						switch (sepgsql_context_info.cmdtype)
+				switch (classId)
+				{
+					case DatabaseRelationId:
+						Assert(!is_internal);
+						sepgsql_database_post_create(objectId,
+													 sepgsql_context_info.createdb_dtemplate);
+						break;
+
+					case NamespaceRelationId:
+						Assert(!is_internal);
+						sepgsql_schema_post_create(objectId);
+						break;
+
+					case RelationRelationId:
+						if (subId == 0)
 						{
-							case T_CreateStmt:
-							case T_ViewStmt:
-							case T_CreateSeqStmt:
-							case T_CompositeTypeStmt:
-							case T_CreateForeignTableStmt:
-							case T_SelectStmt:
-								sepgsql_relation_post_create(objectId);
+							/*
+							 * The cases in which we want to apply permission
+							 * checks on creation of a new relation correspond
+							 * to direct user invocation.  For internal uses,
+							 * that is creation of toast tables, index rebuild
+							 * or ALTER TABLE commands, we need neither
+							 * assignment of security labels nor permission
+							 * checks.
+							 */
+							if (is_internal)
 								break;
-							default:
-								/* via make_new_heap() */
-								break;
+
+							sepgsql_relation_post_create(objectId);
 						}
-					}
-					else
-						sepgsql_attribute_post_create(objectId, subId);
-					break;
+						else
+							sepgsql_attribute_post_create(objectId, subId);
+						break;
 
-				case ProcedureRelationId:
-					sepgsql_proc_post_create(objectId);
-					break;
+					case ProcedureRelationId:
+						Assert(!is_internal);
+						sepgsql_proc_post_create(objectId);
+						break;
 
-				default:
-					/* Ignore unsupported object classes */
-					break;
+					default:
+						/* Ignore unsupported object classes */
+						break;
+				}
 			}
 			break;
 
@@ -213,46 +214,6 @@ sepgsql_exec_check_perms(List *rangeTabls, bool abort)
 		return false;
 
 	return true;
-}
-
-/*
- * sepgsql_executor_start
- *
- * It saves contextual information during ExecutorStart to distinguish
- * a case with/without permission checks later.
- */
-static void
-sepgsql_executor_start(QueryDesc *queryDesc, int eflags)
-{
-	sepgsql_context_info_t saved_context_info = sepgsql_context_info;
-
-	PG_TRY();
-	{
-		if (queryDesc->operation == CMD_SELECT)
-			sepgsql_context_info.cmdtype = T_SelectStmt;
-		else if (queryDesc->operation == CMD_INSERT)
-			sepgsql_context_info.cmdtype = T_InsertStmt;
-		else if (queryDesc->operation == CMD_DELETE)
-			sepgsql_context_info.cmdtype = T_DeleteStmt;
-		else if (queryDesc->operation == CMD_UPDATE)
-			sepgsql_context_info.cmdtype = T_UpdateStmt;
-
-		/*
-		 * XXX - If queryDesc->operation is not above four cases, an error
-		 * shall be raised on the following executor stage soon.
-		 */
-		if (next_ExecutorStart_hook)
-			(*next_ExecutorStart_hook) (queryDesc, eflags);
-		else
-			standard_ExecutorStart(queryDesc, eflags);
-	}
-	PG_CATCH();
-	{
-		sepgsql_context_info = saved_context_info;
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
-	sepgsql_context_info = saved_context_info;
 }
 
 /*
@@ -424,10 +385,6 @@ _PG_init(void)
 	/* ProcessUtility hook */
 	next_ProcessUtility_hook = ProcessUtility_hook;
 	ProcessUtility_hook = sepgsql_utility_command;
-
-	/* ExecutorStart hook */
-	next_ExecutorStart_hook = ExecutorStart_hook;
-	ExecutorStart_hook = sepgsql_executor_start;
 
 	/* init contextual info */
 	memset(&sepgsql_context_info, 0, sizeof(sepgsql_context_info));

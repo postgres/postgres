@@ -596,7 +596,7 @@ DefineIndex(IndexStmt *stmt,
 					 stmt->isconstraint, stmt->deferrable, stmt->initdeferred,
 					 allowSystemTableMods,
 					 skip_build || stmt->concurrent,
-					 stmt->concurrent);
+					 stmt->concurrent, !check_rights);
 
 	/* Add any requested comment */
 	if (stmt->idxcomment != NULL)

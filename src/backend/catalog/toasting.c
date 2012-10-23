@@ -226,6 +226,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 										   ONCOMMIT_NOOP,
 										   reloptions,
 										   false,
+										   true,
 										   true);
 	Assert(toast_relid != InvalidOid);
 
@@ -279,7 +280,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid, Datum reloptio
 				 rel->rd_rel->reltablespace,
 				 collationObjectId, classObjectId, coloptions, (Datum) 0,
 				 true, false, false, false,
-				 true, false, false);
+				 true, false, false, true);
 
 	heap_close(toast_rel, NoLock);
 

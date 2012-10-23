@@ -31,6 +31,19 @@ typedef enum ObjectAccessType
 } ObjectAccessType;
 
 /*
+ * Arguments of OAT_POST_CREATE event
+ */
+typedef struct
+{
+	/*
+	 * This flag informs extensions whether the context of this creation
+	 * is invoked by user's operations, or not. E.g, it shall be dealt
+	 * as internal stuff on toast tables or indexes due to type changes.
+	 */
+	bool		is_internal;
+} ObjectAccessPostCreate;
+
+/*
  * Arguments of OAT_DROP event
  */
 typedef struct

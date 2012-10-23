@@ -450,6 +450,12 @@ UPDATE t1 SET x = 2, y = md5sum(y) WHERE z = 100;
    </para>
 
    <para>
+    When objects that are subsidiary of other objects (such as a table's indexes
+    or triggers) are created or dropped, <literal>setattr</> permission will be
+    checked on the main object, instead of the subsidiary object itself.
+   </para>
+
+   <para>
     When <xref linkend="sql-security-label"> is executed, <literal>setattr</>
     and <literal>relabelfrom</> will be checked on the object being relabeled
     with its old security label, then <literal>relabelto</> with the supplied

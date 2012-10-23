@@ -33,6 +33,7 @@
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_operator.h"
@@ -686,7 +687,8 @@ index_create(Relation heapRelation,
 			 bool initdeferred,
 			 bool allow_system_table_mods,
 			 bool skip_build,
-			 bool concurrent)
+			 bool concurrent,
+			 bool is_internal)
 {
 	Oid			heapRelationId = RelationGetRelid(heapRelation);
 	Relation	pg_class;
@@ -1016,6 +1018,17 @@ index_create(Relation heapRelation,
 		Assert(!isconstraint);
 		Assert(!deferrable);
 		Assert(!initdeferred);
+	}
+
+	/* Post creation hook for new index */
+	if (object_access_hook)
+	{
+		ObjectAccessPostCreate	post_create_args;
+
+		memset(&post_create_args, 0, sizeof(ObjectAccessPostCreate));
+		post_create_args.is_internal = is_internal;
+		(*object_access_hook)(OAT_POST_CREATE, RelationRelationId,
+							  indexRelationId, 0, &post_create_args);
 	}
 
 	/*
