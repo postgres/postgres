@@ -852,6 +852,21 @@ insert into rule_and_refint_t3 values (1, 11, 13, 'row7');
 insert into rule_and_refint_t3 values (1, 13, 11, 'row8');
 
 --
+-- test conversion of table to view (needed to load some pg_dump files)
+--
+
+create table fooview (x int, y text);
+select xmin, * from fooview;
+
+create rule "_RETURN" as on select to fooview do instead
+  select 1 as x, 'aaa'::text as y;
+
+select * from fooview;
+select xmin, * from fooview;  -- fail, views don't have such a column
+
+drop view fooview;
+
+--
 -- check for planner problems with complex inherited UPDATES
 --
 

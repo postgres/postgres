@@ -1442,6 +1442,28 @@ insert into rule_and_refint_t3 values (1, 13, 11, 'row8');
 ERROR:  insert or update on table "rule_and_refint_t3" violates foreign key constraint "rule_and_refint_t3_id3a_fkey"
 DETAIL:  Key (id3a,id3b)=(1,13) is not present in table "rule_and_refint_t1".
 --
+-- test conversion of table to view (needed to load some pg_dump files)
+--
+create table fooview (x int, y text);
+select xmin, * from fooview;
+ xmin | x | y 
+------+---+---
+(0 rows)
+
+create rule "_RETURN" as on select to fooview do instead
+  select 1 as x, 'aaa'::text as y;
+select * from fooview;
+ x |  y  
+---+-----
+ 1 | aaa
+(1 row)
+
+select xmin, * from fooview;  -- fail, views don't have such a column
+ERROR:  column "xmin" does not exist
+LINE 1: select xmin, * from fooview;
+               ^
+drop view fooview;
+--
 -- check for planner problems with complex inherited UPDATES
 --
 create table id (id serial primary key, name text);
