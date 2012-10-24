@@ -1457,6 +1457,28 @@ ERROR:  cannot drop rule _RETURN on view fooview because view fooview requires i
 HINT:  You can drop view fooview instead.
 drop view fooview;
 --
+-- test conversion of table to view (needed to load some pg_dump files)
+--
+create table fooview (x int, y text);
+select xmin, * from fooview;
+ xmin | x | y 
+------+---+---
+(0 rows)
+
+create rule "_RETURN" as on select to fooview do instead
+  select 1 as x, 'aaa'::text as y;
+select * from fooview;
+ x |  y  
+---+-----
+ 1 | aaa
+(1 row)
+
+select xmin, * from fooview;  -- fail, views don't have such a column
+ERROR:  column "xmin" does not exist
+LINE 1: select xmin, * from fooview;
+               ^
+drop view fooview;
+--
 -- check for planner problems with complex inherited UPDATES
 --
 create table id (id serial primary key, name text);

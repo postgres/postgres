@@ -18,6 +18,7 @@
 #include "access/htup_details.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
+#include "catalog/heap.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
@@ -510,13 +511,19 @@ DefineQueryRewrite(char *rulename,
 	}
 
 	/*
-	 * IF the relation is becoming a view, delete the storage files associated
-	 * with it.  NB: we had better have AccessExclusiveLock to do this ...
+	 * If the relation is becoming a view, delete the storage files associated
+	 * with it.  Also, get rid of any system attribute entries in pg_attribute,
+	 * because a view shouldn't have any of those.
+	 *
+	 * NB: we had better have AccessExclusiveLock to do this ...
 	 *
 	 * XXX what about getting rid of its TOAST table?  For now, we don't.
 	 */
 	if (RelisBecomingView)
+	{
 		RelationDropStorage(event_relation);
+		DeleteSystemAttributeTuples(event_relid);
+	}
 
 	/* Close rel, but keep lock till commit... */
 	heap_close(event_relation, NoLock);
