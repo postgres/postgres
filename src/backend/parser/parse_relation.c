@@ -495,11 +495,18 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname,
 		attnum = specialAttNum(colname);
 		if (attnum != InvalidAttrNumber)
 		{
-			/* now check to see if column actually is defined */
+			/*
+			 * Now check to see if column actually is defined.  Because of
+			 * an ancient oversight in DefineQueryRewrite, it's possible that
+			 * pg_attribute contains entries for system columns for a view,
+			 * even though views should not have such --- so we also check
+			 * the relkind.  This kluge will not be needed in 9.3 and later.
+			 */
 			if (SearchSysCacheExists(ATTNUM,
 									 ObjectIdGetDatum(rte->relid),
 									 Int16GetDatum(attnum),
-									 0, 0))
+									 0, 0) &&
+				get_rel_relkind(rte->relid) != RELKIND_VIEW)
 			{
 				var = make_var(pstate, rte, attnum, location);
 				/* Require read access to the column */
