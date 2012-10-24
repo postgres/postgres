@@ -6130,12 +6130,14 @@ genericcostestimate(PlannerInfo *root,
 	 * index would have better selectivity.)
 	 *
 	 * We can deal with this by adding a very small "fudge factor" that
-	 * depends on the index size.  The fudge factor used here is one
-	 * spc_random_page_cost per 10000 index pages, which should be small
-	 * enough to not alter index-vs-seqscan decisions, but will prevent
-	 * indexes of different sizes from looking exactly equally attractive.
+	 * depends on the index size, so that indexes of different sizes won't
+	 * look exactly equally attractive.  To ensure the fudge factor stays
+	 * small even for very large indexes, use a log function.  (We previously
+	 * used a factor of one spc_random_page_cost per 10000 index pages, which
+	 * grew too large for large indexes.  This expression has about the same
+	 * growth rate for small indexes, but tails off quickly.)
 	 */
-	*indexTotalCost += index->pages * spc_random_page_cost / 10000.0;
+	*indexTotalCost += log(1.0 + index->pages / 10000.0) * spc_random_page_cost;
 
 	/*
 	 * CPU cost: any complex expressions in the indexquals will need to be
