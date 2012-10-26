@@ -739,11 +739,11 @@ PostgreSQL documentation
           sections. The default is to dump all sections.
          </para>
          <para>
-          The data section contains actual table data as well as large-object
-          definitions.
-          Post-data items consist of definitions of indexes, triggers, rules
+          The data section contains actual table data, large-object
+          contents, and sequence values.
+          Post-data items include definitions of indexes, triggers, rules,
           and constraints other than validated check constraints.
-          Pre-data items consist of all other data definition items.
+          Pre-data items include all other data definition items.
          </para>
        </listitem>
      </varlistentry>
