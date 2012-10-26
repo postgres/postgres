@@ -295,8 +295,7 @@ ExecDelete(ItemPointer tupleid,
 	ResultRelInfo *resultRelInfo;
 	Relation	resultRelationDesc;
 	HTSU_Result result;
-	ItemPointerData update_ctid;
-	TransactionId update_xmax;
+	HeapUpdateFailureData hufd;
 
 	/*
 	 * get information on the (current) result relation
@@ -348,14 +347,44 @@ ExecDelete(ItemPointer tupleid,
 		 */
 ldelete:;
 		result = heap_delete(resultRelationDesc, tupleid,
-							 &update_ctid, &update_xmax,
 							 estate->es_output_cid,
 							 estate->es_crosscheck_snapshot,
-							 true /* wait for commit */ );
+							 true /* wait for commit */,
+							 &hufd);
 		switch (result)
 		{
 			case HeapTupleSelfUpdated:
-				/* already deleted by self; nothing to do */
+				/*
+				 * The target tuple was already updated or deleted by the
+				 * current command, or by a later command in the current
+				 * transaction.  The former case is possible in a join DELETE
+				 * where multiple tuples join to the same target tuple.
+				 * This is somewhat questionable, but Postgres has always
+				 * allowed it: we just ignore additional deletion attempts.
+				 *
+				 * The latter case arises if the tuple is modified by a
+				 * command in a BEFORE trigger, or perhaps by a command in a
+				 * volatile function used in the query.  In such situations we
+				 * should not ignore the deletion, but it is equally unsafe to
+				 * proceed.  We don't want to discard the original DELETE
+				 * while keeping the triggered actions based on its deletion;
+				 * and it would be no better to allow the original DELETE
+				 * while discarding updates that it triggered.  The row update
+				 * carries some information that might be important according
+				 * to business rules; so throwing an error is the only safe
+				 * course.
+				 *
+				 * If a trigger actually intends this type of interaction,
+				 * it can re-execute the DELETE and then return NULL to
+				 * cancel the outer delete.
+				 */
+				if (hufd.cmax != estate->es_output_cid)
+					ereport(ERROR,
+							(errcode(ERRCODE_TRIGGERED_DATA_CHANGE_VIOLATION),
+							 errmsg("tuple to be updated was already modified by an operation triggered by the current command"),
+							 errhint("Consider using an AFTER trigger instead of a BEFORE trigger to propagate changes to other rows.")));
+
+				/* Else, already deleted by self; nothing to do */
 				return NULL;
 
 			case HeapTupleMayBeUpdated:
@@ -366,7 +395,7 @@ ldelete:;
 					ereport(ERROR,
 							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 							 errmsg("could not serialize access due to concurrent update")));
-				if (!ItemPointerEquals(tupleid, &update_ctid))
+				if (!ItemPointerEquals(tupleid, &hufd.ctid))
 				{
 					TupleTableSlot *epqslot;
 
@@ -374,11 +403,11 @@ ldelete:;
 										   epqstate,
 										   resultRelationDesc,
 										   resultRelInfo->ri_RangeTableIndex,
-										   &update_ctid,
-										   update_xmax);
+										   &hufd.ctid,
+										   hufd.xmax);
 					if (!TupIsNull(epqslot))
 					{
-						*tupleid = update_ctid;
+						*tupleid = hufd.ctid;
 						goto ldelete;
 					}
 				}
@@ -482,8 +511,7 @@ ExecUpdate(ItemPointer tupleid,
 	ResultRelInfo *resultRelInfo;
 	Relation	resultRelationDesc;
 	HTSU_Result result;
-	ItemPointerData update_ctid;
-	TransactionId update_xmax;
+	HeapUpdateFailureData hufd;
 	List	   *recheckIndexes = NIL;
 
 	/*
@@ -564,14 +592,43 @@ lreplace:;
 		 * mode transactions.
 		 */
 		result = heap_update(resultRelationDesc, tupleid, tuple,
-							 &update_ctid, &update_xmax,
 							 estate->es_output_cid,
 							 estate->es_crosscheck_snapshot,
-							 true /* wait for commit */ );
+							 true /* wait for commit */,
+							 &hufd);
 		switch (result)
 		{
 			case HeapTupleSelfUpdated:
-				/* already deleted by self; nothing to do */
+				/*
+				 * The target tuple was already updated or deleted by the
+				 * current command, or by a later command in the current
+				 * transaction.  The former case is possible in a join UPDATE
+				 * where multiple tuples join to the same target tuple.
+				 * This is pretty questionable, but Postgres has always
+				 * allowed it: we just execute the first update action and
+				 * ignore additional update attempts.
+				 *
+				 * The latter case arises if the tuple is modified by a
+				 * command in a BEFORE trigger, or perhaps by a command in a
+				 * volatile function used in the query.  In such situations we
+				 * should not ignore the update, but it is equally unsafe to
+				 * proceed.  We don't want to discard the original UPDATE
+				 * while keeping the triggered actions based on it; and we
+				 * have no principled way to merge this update with the
+				 * previous ones.  So throwing an error is the only safe
+				 * course.
+				 *
+				 * If a trigger actually intends this type of interaction,
+				 * it can re-execute the UPDATE (assuming it can figure out
+				 * how) and then return NULL to cancel the outer update.
+				 */
+				if (hufd.cmax != estate->es_output_cid)
+					ereport(ERROR,
+							(errcode(ERRCODE_TRIGGERED_DATA_CHANGE_VIOLATION),
+							 errmsg("tuple to be updated was already modified by an operation triggered by the current command"),
+							 errhint("Consider using an AFTER trigger instead of a BEFORE trigger to propagate changes to other rows.")));
+
+				/* Else, already updated by self; nothing to do */
 				return NULL;
 
 			case HeapTupleMayBeUpdated:
@@ -582,7 +639,7 @@ lreplace:;
 					ereport(ERROR,
 							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 							 errmsg("could not serialize access due to concurrent update")));
-				if (!ItemPointerEquals(tupleid, &update_ctid))
+				if (!ItemPointerEquals(tupleid, &hufd.ctid))
 				{
 					TupleTableSlot *epqslot;
 
@@ -590,11 +647,11 @@ lreplace:;
 										   epqstate,
 										   resultRelationDesc,
 										   resultRelInfo->ri_RangeTableIndex,
-										   &update_ctid,
-										   update_xmax);
+										   &hufd.ctid,
+										   hufd.xmax);
 					if (!TupIsNull(epqslot))
 					{
-						*tupleid = update_ctid;
+						*tupleid = hufd.ctid;
 						slot = ExecFilterJunk(resultRelInfo->ri_junkFilter, epqslot);
 						tuple = ExecMaterializeSlot(slot);
 						goto lreplace;

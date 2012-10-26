@@ -2571,8 +2571,7 @@ GetTupleForTrigger(EState *estate,
 	if (newSlot != NULL)
 	{
 		HTSU_Result test;
-		ItemPointerData update_ctid;
-		TransactionId update_xmax;
+		HeapUpdateFailureData hufd;
 
 		*newSlot = NULL;
 
@@ -2584,13 +2583,27 @@ GetTupleForTrigger(EState *estate,
 		 */
 ltrmark:;
 		tuple.t_self = *tid;
-		test = heap_lock_tuple(relation, &tuple, &buffer,
-							   &update_ctid, &update_xmax,
+		test = heap_lock_tuple(relation, &tuple,
 							   estate->es_output_cid,
-							   LockTupleExclusive, false);
+							   LockTupleExclusive, false /* wait */,
+							   &buffer, &hufd);
 		switch (test)
 		{
 			case HeapTupleSelfUpdated:
+				/*
+				 * The target tuple was already updated or deleted by the
+				 * current command, or by a later command in the current
+				 * transaction.  We ignore the tuple in the former case, and
+				 * throw error in the latter case, for the same reasons
+				 * enumerated in ExecUpdate and ExecDelete in
+				 * nodeModifyTable.c.
+				 */
+				if (hufd.cmax != estate->es_output_cid)
+					ereport(ERROR,
+							(errcode(ERRCODE_TRIGGERED_DATA_CHANGE_VIOLATION),
+							 errmsg("tuple to be updated was already modified by an operation triggered by the current command"),
+							 errhint("Consider using an AFTER trigger instead of a BEFORE trigger to propagate changes to other rows.")));
+
 				/* treat it as deleted; do not process */
 				ReleaseBuffer(buffer);
 				return NULL;
@@ -2604,7 +2617,7 @@ ltrmark:;
 					ereport(ERROR,
 							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 							 errmsg("could not serialize access due to concurrent update")));
-				if (!ItemPointerEquals(&update_ctid, &tuple.t_self))
+				if (!ItemPointerEquals(&hufd.ctid, &tuple.t_self))
 				{
 					/* it was updated, so look at the updated version */
 					TupleTableSlot *epqslot;
@@ -2613,11 +2626,11 @@ ltrmark:;
 										   epqstate,
 										   relation,
 										   relinfo->ri_RangeTableIndex,
-										   &update_ctid,
-										   update_xmax);
+										   &hufd.ctid,
+										   hufd.xmax);
 					if (!TupIsNull(epqslot))
 					{
-						*tid = update_ctid;
+						*tid = hufd.ctid;
 						*newSlot = epqslot;
 
 						/*

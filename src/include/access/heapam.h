@@ -35,6 +35,29 @@ typedef enum
 	LockTupleExclusive
 } LockTupleMode;
 
+/*
+ * When heap_update, heap_delete, or heap_lock_tuple fail because the target
+ * tuple is already outdated, they fill in this struct to provide information
+ * to the caller about what happened.
+ * ctid is the target's ctid link: it is the same as the target's TID if the
+ * target was deleted, or the location of the replacement tuple if the target
+ * was updated.
+ * xmax is the outdating transaction's XID.  If the caller wants to visit the
+ * replacement tuple, it must check that this matches before believing the
+ * replacement is really a match.
+ * cmax is the outdating command's CID, but only when the failure code is
+ * HeapTupleSelfUpdated (i.e., something in the current transaction outdated
+ * the tuple); otherwise cmax is zero.  (We make this restriction because
+ * HeapTupleHeaderGetCmax doesn't work for tuples outdated in other
+ * transactions.)
+ */
+typedef struct HeapUpdateFailureData
+{
+	ItemPointerData		ctid;
+	TransactionId		xmax;
+	CommandId			cmax;
+} HeapUpdateFailureData;
+
 
 /* ----------------
  *		function prototypes for heap access method
@@ -100,16 +123,15 @@ extern Oid heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 extern void heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 				  CommandId cid, int options, BulkInsertState bistate);
 extern HTSU_Result heap_delete(Relation relation, ItemPointer tid,
-			ItemPointer ctid, TransactionId *update_xmax,
-			CommandId cid, Snapshot crosscheck, bool wait);
+			CommandId cid, Snapshot crosscheck, bool wait,
+			HeapUpdateFailureData *hufd);
 extern HTSU_Result heap_update(Relation relation, ItemPointer otid,
 			HeapTuple newtup,
-			ItemPointer ctid, TransactionId *update_xmax,
-			CommandId cid, Snapshot crosscheck, bool wait);
+			CommandId cid, Snapshot crosscheck, bool wait,
+			HeapUpdateFailureData *hufd);
 extern HTSU_Result heap_lock_tuple(Relation relation, HeapTuple tuple,
-				Buffer *buffer, ItemPointer ctid,
-				TransactionId *update_xmax, CommandId cid,
-				LockTupleMode mode, bool nowait);
+				CommandId cid, LockTupleMode mode, bool nowait,
+				Buffer *buffer, HeapUpdateFailureData *hufd);
 extern void heap_inplace_update(Relation relation, HeapTuple tuple);
 extern bool heap_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid);
 extern bool heap_tuple_needs_freeze(HeapTupleHeader tuple, TransactionId cutoff_xid,

@@ -71,8 +71,7 @@ lnext:
 		bool		isNull;
 		HeapTupleData tuple;
 		Buffer		buffer;
-		ItemPointerData update_ctid;
-		TransactionId update_xmax;
+		HeapUpdateFailureData hufd;
 		LockTupleMode lockmode;
 		HTSU_Result test;
 		HeapTuple	copyTuple;
@@ -117,15 +116,26 @@ lnext:
 		else
 			lockmode = LockTupleShared;
 
-		test = heap_lock_tuple(erm->relation, &tuple, &buffer,
-							   &update_ctid, &update_xmax,
+		test = heap_lock_tuple(erm->relation, &tuple,
 							   estate->es_output_cid,
-							   lockmode, erm->noWait);
+							   lockmode, erm->noWait,
+							   &buffer, &hufd);
 		ReleaseBuffer(buffer);
 		switch (test)
 		{
 			case HeapTupleSelfUpdated:
-				/* treat it as deleted; do not process */
+				/*
+				 * The target tuple was already updated or deleted by the
+				 * current command, or by a later command in the current
+				 * transaction.  We *must* ignore the tuple in the former
+				 * case, so as to avoid the "Halloween problem" of repeated
+				 * update attempts.  In the latter case it might be sensible
+				 * to fetch the updated tuple instead, but doing so would
+				 * require changing heap_lock_tuple as well as heap_update and
+				 * heap_delete to not complain about updating "invisible"
+				 * tuples, which seems pretty scary.  So for now, treat the
+				 * tuple as deleted and do not process.
+				 */
 				goto lnext;
 
 			case HeapTupleMayBeUpdated:
@@ -137,8 +147,7 @@ lnext:
 					ereport(ERROR,
 							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 							 errmsg("could not serialize access due to concurrent update")));
-				if (ItemPointerEquals(&update_ctid,
-									  &tuple.t_self))
+				if (ItemPointerEquals(&hufd.ctid, &tuple.t_self))
 				{
 					/* Tuple was deleted, so don't return it */
 					goto lnext;
@@ -146,7 +155,7 @@ lnext:
 
 				/* updated, so fetch and lock the updated version */
 				copyTuple = EvalPlanQualFetch(estate, erm->relation, lockmode,
-											  &update_ctid, update_xmax);
+											  &hufd.ctid, hufd.xmax);
 
 				if (copyTuple == NULL)
 				{

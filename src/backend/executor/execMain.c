@@ -1802,8 +1802,7 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 		if (heap_fetch(relation, &SnapshotDirty, &tuple, &buffer, true, NULL))
 		{
 			HTSU_Result test;
-			ItemPointerData update_ctid;
-			TransactionId update_xmax;
+			HeapUpdateFailureData hufd;
 
 			/*
 			 * If xmin isn't what we're expecting, the slot must have been
@@ -1838,13 +1837,13 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 			/*
 			 * If tuple was inserted by our own transaction, we have to check
 			 * cmin against es_output_cid: cmin >= current CID means our
-			 * command cannot see the tuple, so we should ignore it.  Without
-			 * this we are open to the "Halloween problem" of indefinitely
-			 * re-updating the same tuple. (We need not check cmax because
-			 * HeapTupleSatisfiesDirty will consider a tuple deleted by our
-			 * transaction dead, regardless of cmax.)  We just checked that
-			 * priorXmax == xmin, so we can test that variable instead of
-			 * doing HeapTupleHeaderGetXmin again.
+			 * command cannot see the tuple, so we should ignore it.
+			 * Otherwise heap_lock_tuple() will throw an error, and so would
+			 * any later attempt to update or delete the tuple.  (We need not
+			 * check cmax because HeapTupleSatisfiesDirty will consider a
+			 * tuple deleted by our transaction dead, regardless of cmax.)
+			 * Wee just checked that priorXmax == xmin, so we can test that
+			 * variable instead of doing HeapTupleHeaderGetXmin again.
 			 */
 			if (TransactionIdIsCurrentTransactionId(priorXmax) &&
 				HeapTupleHeaderGetCmin(tuple.t_data) >= estate->es_output_cid)
@@ -1856,17 +1855,29 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 			/*
 			 * This is a live tuple, so now try to lock it.
 			 */
-			test = heap_lock_tuple(relation, &tuple, &buffer,
-								   &update_ctid, &update_xmax,
+			test = heap_lock_tuple(relation, &tuple,
 								   estate->es_output_cid,
-								   lockmode, false);
+								   lockmode, false /* wait */,
+								   &buffer, &hufd);
 			/* We now have two pins on the buffer, get rid of one */
 			ReleaseBuffer(buffer);
 
 			switch (test)
 			{
 				case HeapTupleSelfUpdated:
-					/* treat it as deleted; do not process */
+					/*
+					 * The target tuple was already updated or deleted by the
+					 * current command, or by a later command in the current
+					 * transaction.  We *must* ignore the tuple in the former
+					 * case, so as to avoid the "Halloween problem" of
+					 * repeated update attempts.  In the latter case it might
+					 * be sensible to fetch the updated tuple instead, but
+					 * doing so would require changing heap_lock_tuple as well
+					 * as heap_update and heap_delete to not complain about
+					 * updating "invisible" tuples, which seems pretty scary.
+					 * So for now, treat the tuple as deleted and do not
+					 * process.
+					 */
 					ReleaseBuffer(buffer);
 					return NULL;
 
@@ -1880,12 +1891,12 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 						ereport(ERROR,
 								(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 								 errmsg("could not serialize access due to concurrent update")));
-					if (!ItemPointerEquals(&update_ctid, &tuple.t_self))
+					if (!ItemPointerEquals(&hufd.ctid, &tuple.t_self))
 					{
 						/* it was updated, so look at the updated version */
-						tuple.t_self = update_ctid;
+						tuple.t_self = hufd.ctid;
 						/* updated row should have xmin matching this xmax */
-						priorXmax = update_xmax;
+						priorXmax = hufd.xmax;
 						continue;
 					}
 					/* tuple was deleted, so give up */
