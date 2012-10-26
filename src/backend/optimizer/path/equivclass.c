@@ -769,7 +769,12 @@ generate_base_implied_equalities_const(PlannerInfo *root,
 		}
 	}
 
-	/* Find the constant member to use */
+	/*
+	 * Find the constant member to use.  We prefer an actual constant to
+	 * pseudo-constants (such as Params), because the constraint exclusion
+	 * machinery might be able to exclude relations on the basis of generated
+	 * "var = const" equalities, but "var = param" won't work for that.
+	 */
 	foreach(lc, ec->ec_members)
 	{
 		EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc);
@@ -777,7 +782,8 @@ generate_base_implied_equalities_const(PlannerInfo *root,
 		if (cur_em->em_is_const)
 		{
 			const_em = cur_em;
-			break;
+			if (IsA(cur_em->em_expr, Const))
+				break;
 		}
 	}
 	Assert(const_em != NULL);
