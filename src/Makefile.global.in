@@ -329,6 +329,8 @@ GENHTML = @GENHTML@
 ifeq ($(enable_coverage),yes)
 # ccache loses .gcno files
 export CCACHE_DISABLE = 1
+# preserve intermediate .c files for genhtml
+.PRECIOUS: %.c
 endif
 
 # Feature settings
