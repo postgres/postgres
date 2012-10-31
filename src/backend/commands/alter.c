@@ -241,7 +241,8 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
  * object doesn't have a schema.
  */
 Oid
-AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid)
+AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid,
+						 ObjectAddresses *objsMoved)
 {
 	Oid			oldNspOid = InvalidOid;
 	ObjectAddress dep;
@@ -255,20 +256,11 @@ AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid)
 		case OCLASS_CLASS:
 			{
 				Relation	rel;
-				Relation	classRel;
 
 				rel = relation_open(objid, AccessExclusiveLock);
 				oldNspOid = RelationGetNamespace(rel);
 
-				classRel = heap_open(RelationRelationId, RowExclusiveLock);
-
-				AlterRelationNamespaceInternal(classRel,
-											   objid,
-											   oldNspOid,
-											   nspOid,
-											   true);
-
-				heap_close(classRel, RowExclusiveLock);
+				AlterTableNamespaceInternal(rel, oldNspOid, nspOid, objsMoved);
 
 				relation_close(rel, NoLock);
 				break;
@@ -279,7 +271,7 @@ AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid)
 			break;
 
 		case OCLASS_TYPE:
-			oldNspOid = AlterTypeNamespace_oid(objid, nspOid);
+			oldNspOid = AlterTypeNamespace_oid(objid, nspOid, objsMoved);
 			break;
 
 		case OCLASS_COLLATION:

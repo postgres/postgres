@@ -15,6 +15,7 @@
 #define TYPECMDS_H
 
 #include "access/htup.h"
+#include "catalog/dependency.h"
 #include "nodes/parsenodes.h"
 
 
@@ -45,9 +46,10 @@ extern void AlterTypeOwner(List *names, Oid newOwnerId, ObjectType objecttype);
 extern void AlterTypeOwnerInternal(Oid typeOid, Oid newOwnerId,
 					   bool hasDependEntry);
 extern void AlterTypeNamespace(List *names, const char *newschema, ObjectType objecttype);
-extern Oid	AlterTypeNamespace_oid(Oid typeOid, Oid nspOid);
-extern Oid AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
+extern Oid	AlterTypeNamespace_oid(Oid typeOid, Oid nspOid, ObjectAddresses *objsMoved);
+extern Oid	AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 						   bool isImplicitArray,
-						   bool errorOnTableType);
+						   bool errorOnTableType,
+						   ObjectAddresses *objsMoved);
 
 #endif   /* TYPECMDS_H */
