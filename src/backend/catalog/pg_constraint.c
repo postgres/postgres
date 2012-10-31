@@ -679,7 +679,7 @@ RenameConstraintById(Oid conId, const char *newname)
  */
 void
 AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
-						  Oid newNspId, bool isType)
+						  Oid newNspId, bool isType, ObjectAddresses *objsMoved)
 {
 	Relation	conRel;
 	ScanKeyData key[1];
@@ -712,6 +712,14 @@ AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 	while (HeapTupleIsValid((tup = systable_getnext(scan))))
 	{
 		Form_pg_constraint conform = (Form_pg_constraint) GETSTRUCT(tup);
+		ObjectAddress	thisobj;
+
+		thisobj.classId = ConstraintRelationId;
+		thisobj.objectId = HeapTupleGetOid(tup);
+		thisobj.objectSubId = 0;
+
+		if (object_address_present(&thisobj, objsMoved))
+			continue;
 
 		if (conform->connamespace == oldNspId)
 		{
@@ -729,6 +737,8 @@ AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 			 * changeDependencyFor().
 			 */
 		}
+
+		add_exact_object_address(&thisobj, objsMoved);
 	}
 
 	systable_endscan(scan);

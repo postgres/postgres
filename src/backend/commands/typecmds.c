@@ -3322,6 +3322,7 @@ AlterTypeNamespace(List *names, const char *newschema, ObjectType objecttype)
 	TypeName   *typename;
 	Oid			typeOid;
 	Oid			nspOid;
+	ObjectAddresses	*objsMoved;
 
 	/* Make a TypeName so we can use standard type lookup machinery */
 	typename = makeTypeNameFromNameList(names);
@@ -3337,11 +3338,13 @@ AlterTypeNamespace(List *names, const char *newschema, ObjectType objecttype)
 	/* get schema OID and check its permissions */
 	nspOid = LookupCreationNamespace(newschema);
 
-	AlterTypeNamespace_oid(typeOid, nspOid);
+	objsMoved = new_object_addresses();
+	AlterTypeNamespace_oid(typeOid, nspOid, objsMoved);
+	free_object_addresses(objsMoved);
 }
 
 Oid
-AlterTypeNamespace_oid(Oid typeOid, Oid nspOid)
+AlterTypeNamespace_oid(Oid typeOid, Oid nspOid, ObjectAddresses *objsMoved)
 {
 	Oid			elemOid;
 
@@ -3360,7 +3363,7 @@ AlterTypeNamespace_oid(Oid typeOid, Oid nspOid)
 						 format_type_be(elemOid))));
 
 	/* and do the work */
-	return AlterTypeNamespaceInternal(typeOid, nspOid, false, true);
+	return AlterTypeNamespaceInternal(typeOid, nspOid, false, true, objsMoved);
 }
 
 /*
@@ -3381,7 +3384,8 @@ AlterTypeNamespace_oid(Oid typeOid, Oid nspOid)
 Oid
 AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 						   bool isImplicitArray,
-						   bool errorOnTableType)
+						   bool errorOnTableType,
+						   ObjectAddresses *objsMoved)
 {
 	Relation	rel;
 	HeapTuple	tup;
@@ -3389,6 +3393,17 @@ AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 	Oid			oldNspOid;
 	Oid			arrayOid;
 	bool		isCompositeType;
+	ObjectAddress thisobj;
+
+	/*
+	 * Make sure we haven't moved this object previously.
+	 */
+	thisobj.classId = TypeRelationId;
+	thisobj.objectId = typeOid;
+	thisobj.objectSubId = 0;
+
+	if (object_address_present(&thisobj, objsMoved))
+		return InvalidOid;
 
 	rel = heap_open(TypeRelationId, RowExclusiveLock);
 
@@ -3449,7 +3464,7 @@ AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 
 		AlterRelationNamespaceInternal(classRel, typform->typrelid,
 									   oldNspOid, nspOid,
-									   false);
+									   false, objsMoved);
 
 		heap_close(classRel, RowExclusiveLock);
 
@@ -3458,13 +3473,14 @@ AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 		 * currently support this, but probably will someday).
 		 */
 		AlterConstraintNamespaces(typform->typrelid, oldNspOid,
-								  nspOid, false);
+								  nspOid, false, objsMoved);
 	}
 	else
 	{
 		/* If it's a domain, it might have constraints */
 		if (typform->typtype == TYPTYPE_DOMAIN)
-			AlterConstraintNamespaces(typeOid, oldNspOid, nspOid, true);
+			AlterConstraintNamespaces(typeOid, oldNspOid, nspOid, true,
+									  objsMoved);
 	}
 
 	/*
@@ -3482,9 +3498,11 @@ AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 
 	heap_close(rel, RowExclusiveLock);
 
+	add_exact_object_address(&thisobj, objsMoved);
+
 	/* Recursively alter the associated array type, if any */
 	if (OidIsValid(arrayOid))
-		AlterTypeNamespaceInternal(arrayOid, nspOid, true, true);
+		AlterTypeNamespaceInternal(arrayOid, nspOid, true, true, objsMoved);
 
 	return oldNspOid;
 }

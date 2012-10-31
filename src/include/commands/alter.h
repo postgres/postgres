@@ -14,13 +14,15 @@
 #ifndef ALTER_H
 #define ALTER_H
 
+#include "catalog/dependency.h"
 #include "nodes/parsenodes.h"
 #include "utils/relcache.h"
 
 extern void ExecRenameStmt(RenameStmt *stmt);
 
 extern void ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt);
-extern Oid	AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid);
+extern Oid	AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid,
+						 ObjectAddresses *objsMoved);
 extern Oid	AlterObjectNamespace_internal(Relation rel, Oid objid, Oid nspOid);
 
 extern void ExecAlterOwnerStmt(AlterOwnerStmt *stmt);

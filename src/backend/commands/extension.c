@@ -2204,6 +2204,7 @@ AlterExtensionNamespace(List *names, const char *newschema)
 	Relation	depRel;
 	SysScanDesc depScan;
 	HeapTuple	depTup;
+	ObjectAddresses *objsMoved;
 
 	if (list_length(names) != 1)
 		ereport(ERROR,
@@ -2278,6 +2279,8 @@ AlterExtensionNamespace(List *names, const char *newschema)
 				 errmsg("extension \"%s\" does not support SET SCHEMA",
 						NameStr(extForm->extname))));
 
+	objsMoved = new_object_addresses();
+
 	/*
 	 * Scan pg_depend to find objects that depend directly on the extension,
 	 * and alter each one's schema.
@@ -2317,9 +2320,11 @@ AlterExtensionNamespace(List *names, const char *newschema)
 		if (dep.objectSubId != 0)		/* should not happen */
 			elog(ERROR, "extension should not have a sub-object dependency");
 
+		/* Relocate the object */
 		dep_oldNspOid = AlterObjectNamespace_oid(dep.classId,
 												 dep.objectId,
-												 nspOid);
+												 nspOid,
+												 objsMoved);
 
 		/*
 		 * Remember previous namespace of first object that has one
