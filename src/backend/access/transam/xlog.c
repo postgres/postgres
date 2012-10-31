@@ -8175,7 +8175,7 @@ assign_xlog_sync_method(int new_sync_method, void *extra)
 				ereport(PANIC,
 						(errcode_for_file_access(),
 						 errmsg("could not fsync log segment %s: %m",
-								XLogFileNameP(curFileTLI, readSegNo))));
+								XLogFileNameP(curFileTLI, openLogSegNo))));
 			if (get_sync_bit(sync_method) != get_sync_bit(new_sync_method))
 				XLogFileClose();
 		}
@@ -8199,7 +8199,7 @@ issue_xlog_fsync(int fd, XLogSegNo segno)
 				ereport(PANIC,
 						(errcode_for_file_access(),
 						 errmsg("could not fsync log file %s: %m",
-								XLogFileNameP(ThisTimeLineID, openLogSegNo))));
+								XLogFileNameP(ThisTimeLineID, segno))));
 			break;
 #ifdef HAVE_FSYNC_WRITETHROUGH
 		case SYNC_METHOD_FSYNC_WRITETHROUGH:
@@ -8207,7 +8207,7 @@ issue_xlog_fsync(int fd, XLogSegNo segno)
 				ereport(PANIC,
 						(errcode_for_file_access(),
 						 errmsg("could not fsync write-through log file %s: %m",
-								XLogFileNameP(ThisTimeLineID, openLogSegNo))));
+								XLogFileNameP(ThisTimeLineID, segno))));
 			break;
 #endif
 #ifdef HAVE_FDATASYNC
@@ -8216,7 +8216,7 @@ issue_xlog_fsync(int fd, XLogSegNo segno)
 				ereport(PANIC,
 						(errcode_for_file_access(),
 						 errmsg("could not fdatasync log file %s: %m",
-								XLogFileNameP(ThisTimeLineID, openLogSegNo))));
+								XLogFileNameP(ThisTimeLineID, segno))));
 			break;
 #endif
 		case SYNC_METHOD_OPEN:
