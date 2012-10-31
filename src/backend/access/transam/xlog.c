@@ -8175,7 +8175,7 @@ assign_xlog_sync_method(int new_sync_method, void *extra)
 				ereport(PANIC,
 						(errcode_for_file_access(),
 						 errmsg("could not fsync log segment %s: %m",
-								XLogFileNameP(curFileTLI, openLogSegNo))));
+								XLogFileNameP(ThisTimeLineID, openLogSegNo))));
 			if (get_sync_bit(sync_method) != get_sync_bit(new_sync_method))
 				XLogFileClose();
 		}
