@@ -591,8 +591,9 @@ SET ENABLE_SEQSCAN TO OFF;
         an otherwise idle connection.  A value of 0 uses the system default.
         This parameter is supported only on systems that support the
         <symbol>TCP_KEEPIDLE</> or <symbol>TCP_KEEPALIVE</> symbols, and on
-        Windows; on other systems, it must be zero. This parameter is ignored
-        for connections made via a Unix-domain socket.
+        Windows; on other systems, it must be zero.
+        In sessions connected via a Unix-domain socket, this parameter is
+        ignored and always reads as zero.
        </para>
        <note>
         <para>
@@ -614,8 +615,9 @@ SET ENABLE_SEQSCAN TO OFF;
         otherwise idle connection.  A value of 0 uses the system default.
         This parameter is supported only on systems that support the
         <symbol>TCP_KEEPINTVL</> symbol, and on Windows; on other systems, it
-        must be zero. This parameter is ignored for connections made via a
-        Unix-domain socket.
+        must be zero.
+        In sessions connected via a Unix-domain socket, this parameter is
+        ignored and always reads as zero.
        </para>
        <note>
         <para>
@@ -636,8 +638,9 @@ SET ENABLE_SEQSCAN TO OFF;
         Specifies the number of keepalive packets to send on an otherwise idle
         connection.  A value of 0 uses the system default.  This parameter is
         supported only on systems that support the <symbol>TCP_KEEPCNT</>
-        symbol; on other systems, it must be zero. This parameter is ignored
-        for connections made via a Unix-domain socket.
+        symbol; on other systems, it must be zero.
+        In sessions connected via a Unix-domain socket, this parameter is
+        ignored and always reads as zero.
        </para>
        <note>
         <para>
