@@ -31,6 +31,9 @@ all:
 # started to update the file.
 .DELETE_ON_ERROR:
 
+# Never delete any intermediate files automatically.
+.SECONDARY:
+
 # PostgreSQL version number
 VERSION = @PACKAGE_VERSION@
 MAJORVERSION = @PG_MAJORVERSION@
@@ -329,8 +332,6 @@ GENHTML = @GENHTML@
 ifeq ($(enable_coverage),yes)
 # ccache loses .gcno files
 export CCACHE_DISABLE = 1
-# preserve intermediate .c files for genhtml
-.PRECIOUS: %.c
 endif
 
 # Feature settings
@@ -684,17 +685,6 @@ clean distclean maintainer-clean: clean-deps
 .PHONY: clean-deps
 clean-deps:
 	@rm -rf $(DEPDIR)
-
-# When in automatic dependency mode, never delete any intermediate
-# files automatically.  Otherwise, the following could happen: When
-# starting from a clean source tree, the first build would delete the
-# intermediate file, but also create the dependency file, which
-# mentions the intermediate file, thus making it non-intermediate.
-# The second build will then need to rebuild the now non-intermediate
-# missing file.  So the second build will do work even though nothing
-# had changed.  One place where this happens is the .c -> .o -> .so
-# chain for some contrib modules.
-.SECONDARY:
 
 endif # autodepend
 
