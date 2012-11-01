@@ -13,19 +13,19 @@ override CPPFLAGS := -I$(srcdir) -I$(libpq_srcdir) -I$(srcdir)/../regress $(CPPF
 
 OBJS =  specparse.o isolationtester.o
 
+all: isolationtester$(X) pg_isolation_regress$(X)
+
 submake-regress:
 	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress.o
 
 pg_regress.o: | submake-regress
 	rm -f $@ && $(LN_S) $(top_builddir)/src/test/regress/pg_regress.o .
 
-pg_isolation_regress: isolation_main.o pg_regress.o
-	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
+pg_isolation_regress$(X): isolation_main.o pg_regress.o
+	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@
 
-all: isolationtester pg_isolation_regress
-
-isolationtester: $(OBJS) | submake-libpq submake-libpgport
-	$(CC) $(CFLAGS) $^ $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
+isolationtester$(X): $(OBJS) | submake-libpq submake-libpgport
+	$(CC) $(CFLAGS) $^ $(libpq_pgport) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@
 
 distprep: specparse.c specscanner.c
 
@@ -35,8 +35,6 @@ distprep: specparse.c specscanner.c
 # make, we must chain the dependencies like this.  The semicolon is
 # important, otherwise make will choose the built-in rule for
 # gram.y=>gram.c.
-
-all: isolationtester$(X) pg_isolation_regress$(X)
 
 specparse.h: specparse.c ;
 
