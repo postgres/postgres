@@ -92,6 +92,7 @@ static void consider_index_join_outer_rels(PlannerInfo *root, RelOptInfo *rel,
 							   IndexClauseSet *eclauseset,
 							   List **bitindexpaths,
 							   List *indexjoinclauses,
+							   int considered_clauses,
 							   List **considered_relids);
 static void get_join_index_paths(PlannerInfo *root, RelOptInfo *rel,
 					 IndexOptInfo *index,
@@ -101,6 +102,8 @@ static void get_join_index_paths(PlannerInfo *root, RelOptInfo *rel,
 					 List **bitindexpaths,
 					 Relids relids,
 					 List **considered_relids);
+static bool eclass_already_used(EquivalenceClass *parent_ec, Relids oldrelids,
+					List *indexjoinclauses);
 static bool bms_equal_any(Relids relids, List *relids_list);
 static void get_index_paths(PlannerInfo *root, RelOptInfo *rel,
 				IndexOptInfo *index, IndexClauseSet *clauses,
@@ -447,6 +450,7 @@ consider_index_join_clauses(PlannerInfo *root, RelOptInfo *rel,
 							IndexClauseSet *eclauseset,
 							List **bitindexpaths)
 {
+	int			considered_clauses = 0;
 	List	   *considered_relids = NIL;
 	int			indexcol;
 
@@ -460,8 +464,11 @@ consider_index_join_clauses(PlannerInfo *root, RelOptInfo *rel,
 	 * filter (qpqual); which is where an available clause would end up being
 	 * applied if we omit it from the indexquals.
 	 *
-	 * This looks expensive, but in practical cases there won't be very many
-	 * distinct sets of outer rels to consider.
+	 * This looks expensive, but in most practical cases there won't be very
+	 * many distinct sets of outer rels to consider.  As a safety valve when
+	 * that's not true, we use a heuristic: limit the number of outer rel sets
+	 * considered to a multiple of the number of clauses considered.  (We'll
+	 * always consider using each individual join clause, though.)
 	 *
 	 * For simplicity in selecting relevant clauses, we represent each set of
 	 * outer rels as a maximum set of clause_relids --- that is, the indexed
@@ -471,16 +478,20 @@ consider_index_join_clauses(PlannerInfo *root, RelOptInfo *rel,
 	for (indexcol = 0; indexcol < index->ncolumns; indexcol++)
 	{
 		/* Consider each applicable simple join clause */
+		considered_clauses += list_length(jclauseset->indexclauses[indexcol]);
 		consider_index_join_outer_rels(root, rel, index,
 									   rclauseset, jclauseset, eclauseset,
 									   bitindexpaths,
 									   jclauseset->indexclauses[indexcol],
+									   considered_clauses,
 									   &considered_relids);
 		/* Consider each applicable eclass join clause */
+		considered_clauses += list_length(eclauseset->indexclauses[indexcol]);
 		consider_index_join_outer_rels(root, rel, index,
 									   rclauseset, jclauseset, eclauseset,
 									   bitindexpaths,
 									   eclauseset->indexclauses[indexcol],
+									   considered_clauses,
 									   &considered_relids);
 	}
 }
@@ -494,6 +505,7 @@ consider_index_join_clauses(PlannerInfo *root, RelOptInfo *rel,
  * 'rel', 'index', 'rclauseset', 'jclauseset', 'eclauseset', and
  *		'bitindexpaths' as above
  * 'indexjoinclauses' is a list of RestrictInfos for join clauses
+ * 'considered_clauses' is the total number of clauses considered (so far)
  * '*considered_relids' is a list of all relids sets already considered
  */
 static void
@@ -504,6 +516,7 @@ consider_index_join_outer_rels(PlannerInfo *root, RelOptInfo *rel,
 							   IndexClauseSet *eclauseset,
 							   List **bitindexpaths,
 							   List *indexjoinclauses,
+							   int considered_clauses,
 							   List **considered_relids)
 {
 	ListCell   *lc;
@@ -522,7 +535,9 @@ consider_index_join_outer_rels(PlannerInfo *root, RelOptInfo *rel,
 		/*
 		 * Generate the union of this clause's relids set with each
 		 * previously-tried set.  This ensures we try this clause along with
-		 * every interesting subset of previous clauses.
+		 * every interesting subset of previous clauses.  However, to avoid
+		 * exponential growth of planning time when there are many clauses,
+		 * limit the number of relid sets accepted to 10 * considered_clauses.
 		 *
 		 * Note: get_join_index_paths adds entries to *considered_relids, but
 		 * it prepends them to the list, so that we won't visit new entries
@@ -542,6 +557,27 @@ consider_index_join_outer_rels(PlannerInfo *root, RelOptInfo *rel,
 			 */
 			if (bms_subset_compare(clause_relids, oldrelids) != BMS_DIFFERENT)
 				continue;
+
+			/*
+			 * If this clause was derived from an equivalence class, the
+			 * clause list may contain other clauses derived from the same
+			 * eclass.  We should not consider that combining this clause with
+			 * one of those clauses generates a usefully different
+			 * parameterization; so skip if any clause derived from the same
+			 * eclass would already have been included when using oldrelids.
+			 */
+			if (rinfo->parent_ec &&
+				eclass_already_used(rinfo->parent_ec, oldrelids,
+									indexjoinclauses))
+				continue;
+
+			/*
+			 * If the number of relid sets considered exceeds our heuristic
+			 * limit, stop considering combinations of clauses.  We'll still
+			 * consider the current clause alone, though (below this loop).
+			 */
+			if (list_length(*considered_relids) >= 10 * considered_clauses)
+				break;
 
 			/* OK, try the union set */
 			get_join_index_paths(root, rel, index,
@@ -645,6 +681,28 @@ get_join_index_paths(PlannerInfo *root, RelOptInfo *rel,
 	 * lappend to avoid confusing the loop in consider_index_join_outer_rels.
 	 */
 	*considered_relids = lcons(relids, *considered_relids);
+}
+
+/*
+ * eclass_already_used
+ *		True if any join clause usable with oldrelids was generated from
+ *		the specified equivalence class.
+ */
+static bool
+eclass_already_used(EquivalenceClass *parent_ec, Relids oldrelids,
+					List *indexjoinclauses)
+{
+	ListCell   *lc;
+
+	foreach(lc, indexjoinclauses)
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+
+		if (rinfo->parent_ec == parent_ec &&
+			bms_is_subset(rinfo->clause_relids, oldrelids))
+			return true;
+	}
+	return false;
 }
 
 /*
