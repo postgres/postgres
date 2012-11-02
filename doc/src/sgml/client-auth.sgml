@@ -1507,7 +1507,7 @@ host ... ldap ldapserver=ldap.example.net ldapprefix="cn=" ldapsuffix=", dc=exam
    </para>
 
    <para>
-    Here is an exaple for a search+bind configuration:
+    Here is an example for a search+bind configuration:
 <programlisting>
 host ... ldap ldapserver=ldap.example.net ldapbasedn="dc=example, dc=net" ldapsearchattribute=uid
 </programlisting>
