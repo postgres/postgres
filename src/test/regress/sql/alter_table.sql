@@ -1239,6 +1239,13 @@ select reltoastrelid <> 0 as has_toast_table
 from pg_class
 where oid = 'test_storage'::regclass;
 
+-- ALTER TYPE with a check constraint and a child table (bug before Nov 2012)
+CREATE TABLE test_inh_check (a float check (a > 10.2));
+CREATE TABLE test_inh_check_child() INHERITS(test_inh_check);
+ALTER TABLE test_inh_check ALTER COLUMN a TYPE numeric;
+\d test_inh_check
+\d test_inh_check_child
+
 --
 -- lock levels
 --
