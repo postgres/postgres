@@ -335,13 +335,15 @@ static void ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 			   IndexStmt *stmt, bool is_rebuild, LOCKMODE lockmode);
 static void ATExecAddConstraint(List **wqueue,
 					AlteredTableInfo *tab, Relation rel,
-				 Constraint *newConstraint, bool recurse, LOCKMODE lockmode);
+					Constraint *newConstraint, bool recurse, bool is_readd,
+					LOCKMODE lockmode);
 static void ATExecAddIndexConstraint(AlteredTableInfo *tab, Relation rel,
 						 IndexStmt *stmt, LOCKMODE lockmode);
 static void ATAddCheckConstraint(List **wqueue,
 					 AlteredTableInfo *tab, Relation rel,
 					 Constraint *constr,
-					 bool recurse, bool recursing, LOCKMODE lockmode);
+					 bool recurse, bool recursing, bool is_readd,
+					 LOCKMODE lockmode);
 static void ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 						  Constraint *fkconstraint, LOCKMODE lockmode);
 static void ATExecDropConstraint(Relation rel, const char *constrName,
@@ -2758,6 +2760,7 @@ AlterTableGetLockLevel(List *cmds)
 			case AT_ColumnDefault:
 			case AT_ProcessedConstraint:		/* becomes AT_AddConstraint */
 			case AT_AddConstraintRecurse:		/* becomes AT_AddConstraint */
+			case AT_ReAddConstraint:			/* becomes AT_AddConstraint */
 			case AT_EnableTrig:
 			case AT_EnableAlwaysTrig:
 			case AT_EnableReplicaTrig:
@@ -3249,11 +3252,15 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			break;
 		case AT_AddConstraint:	/* ADD CONSTRAINT */
 			ATExecAddConstraint(wqueue, tab, rel, (Constraint *) cmd->def,
-								false, lockmode);
+								false, false, lockmode);
 			break;
 		case AT_AddConstraintRecurse:	/* ADD CONSTRAINT with recursion */
 			ATExecAddConstraint(wqueue, tab, rel, (Constraint *) cmd->def,
-								true, lockmode);
+								true, false, lockmode);
+			break;
+		case AT_ReAddConstraint:	/* Re-add pre-existing check constraint */
+			ATExecAddConstraint(wqueue, tab, rel, (Constraint *) cmd->def,
+								false, true, lockmode);
 			break;
 		case AT_AddIndexConstraint:		/* ADD CONSTRAINT USING INDEX */
 			ATExecAddIndexConstraint(tab, rel, (IndexStmt *) cmd->def, lockmode);
@@ -5500,7 +5507,8 @@ ATExecAddIndexConstraint(AlteredTableInfo *tab, Relation rel,
  */
 static void
 ATExecAddConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
-				  Constraint *newConstraint, bool recurse, LOCKMODE lockmode)
+					Constraint *newConstraint, bool recurse, bool is_readd,
+					LOCKMODE lockmode)
 {
 	Assert(IsA(newConstraint, Constraint));
 
@@ -5513,7 +5521,8 @@ ATExecAddConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	{
 		case CONSTR_CHECK:
 			ATAddCheckConstraint(wqueue, tab, rel,
-								 newConstraint, recurse, false, lockmode);
+								 newConstraint, recurse, false, is_readd,
+								 lockmode);
 			break;
 
 		case CONSTR_FOREIGN:
@@ -5565,11 +5574,18 @@ ATExecAddConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
  * AddRelationNewConstraints would normally assign different names to the
  * child constraints.  To fix that, we must capture the name assigned at
  * the parent table and pass that down.
+ *
+ * When re-adding a previously existing constraint (during ALTER COLUMN TYPE),
+ * we don't need to recurse here, because recursion will be carried out at a
+ * higher level; the constraint name issue doesn't apply because the names
+ * have already been assigned and are just being re-used.  We need a separate
+ * "is_readd" flag for that; just setting recurse=false would result in an
+ * error if there are child tables.
  */
 static void
 ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 					 Constraint *constr, bool recurse, bool recursing,
-					 LOCKMODE lockmode)
+					 bool is_readd, LOCKMODE lockmode)
 {
 	List	   *newcons;
 	ListCell   *lcon;
@@ -5634,9 +5650,11 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		return;
 
 	/*
-	 * Adding a NO INHERIT constraint? No need to find our children
+	 * If adding a NO INHERIT constraint, no need to find our children.
+	 * Likewise, in a re-add operation, we don't need to recurse (that will be
+	 * handled at higher levels).
 	 */
-	if (constr->is_no_inherit)
+	if (constr->is_no_inherit || is_readd)
 		return;
 
 	/*
@@ -5671,7 +5689,7 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 
 		/* Recurse to child */
 		ATAddCheckConstraint(wqueue, childtab, childrel,
-							 constr, recurse, true, lockmode);
+							 constr, recurse, true, is_readd, lockmode);
 
 		heap_close(childrel, NoLock);
 	}
@@ -7862,6 +7880,10 @@ ATPostAlterTypeParse(Oid oldId, char *cmd,
 	/*
 	 * Attach each generated command to the proper place in the work queue.
 	 * Note this could result in creation of entirely new work-queue entries.
+	 *
+	 * Also note that we have to tweak the command subtypes, because it turns
+	 * out that re-creation of indexes and constraints has to act a bit
+	 * differently from initial creation.
 	 */
 	foreach(list_item, querytree_list)
 	{
@@ -7919,6 +7941,7 @@ ATPostAlterTypeParse(Oid oldId, char *cmd,
 								if (con->contype == CONSTR_FOREIGN &&
 									!rewrite && !tab->rewrite)
 									TryReuseForeignKey(oldId, con);
+								cmd->subtype = AT_ReAddConstraint;
 								tab->subcmds[AT_PASS_OLD_CONSTR] =
 									lappend(tab->subcmds[AT_PASS_OLD_CONSTR], cmd);
 								break;
