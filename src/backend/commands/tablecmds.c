@@ -297,11 +297,11 @@ static void ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 			   IndexStmt *stmt, bool is_rebuild);
 static void ATExecAddConstraint(List **wqueue,
 					AlteredTableInfo *tab, Relation rel,
-					Constraint *newConstraint, bool recurse);
+					Constraint *newConstraint, bool recurse, bool is_readd);
 static void ATAddCheckConstraint(List **wqueue,
 					 AlteredTableInfo *tab, Relation rel,
 					 Constraint *constr,
-					 bool recurse, bool recursing);
+					 bool recurse, bool recursing, bool is_readd);
 static void ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 						  Constraint *fkconstraint);
 static void ATExecDropConstraint(Relation rel, const char *constrName,
@@ -2663,11 +2663,15 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			break;
 		case AT_AddConstraint:	/* ADD CONSTRAINT */
 			ATExecAddConstraint(wqueue, tab, rel, (Constraint *) cmd->def,
-								false);
+								false, false);
 			break;
 		case AT_AddConstraintRecurse:	/* ADD CONSTRAINT with recursion */
 			ATExecAddConstraint(wqueue, tab, rel, (Constraint *) cmd->def,
-								true);
+								true, false);
+			break;
+		case AT_ReAddConstraint:	/* Re-add pre-existing check constraint */
+			ATExecAddConstraint(wqueue, tab, rel, (Constraint *) cmd->def,
+								false, true);
 			break;
 		case AT_DropConstraint:	/* DROP CONSTRAINT */
 			ATExecDropConstraint(rel, cmd->name, cmd->behavior,
@@ -4516,7 +4520,7 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
  */
 static void
 ATExecAddConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
-					Constraint *newConstraint, bool recurse)
+					Constraint *newConstraint, bool recurse, bool is_readd)
 {
 	Assert(IsA(newConstraint, Constraint));
 
@@ -4529,7 +4533,7 @@ ATExecAddConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	{
 		case CONSTR_CHECK:
 			ATAddCheckConstraint(wqueue, tab, rel,
-								 newConstraint, recurse, false);
+								 newConstraint, recurse, false, is_readd);
 			break;
 
 		case CONSTR_FOREIGN:
@@ -4581,10 +4585,18 @@ ATExecAddConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
  * AddRelationNewConstraints would normally assign different names to the
  * child constraints.  To fix that, we must capture the name assigned at
  * the parent table and pass that down.
+ *
+ * When re-adding a previously existing constraint (during ALTER COLUMN TYPE),
+ * we don't need to recurse here, because recursion will be carried out at a
+ * higher level; the constraint name issue doesn't apply because the names
+ * have already been assigned and are just being re-used.  We need a separate
+ * "is_readd" flag for that; just setting recurse=false would result in an
+ * error if there are child tables.
  */
 static void
 ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
-					 Constraint *constr, bool recurse, bool recursing)
+					 Constraint *constr, bool recurse, bool recursing,
+					 bool is_readd)
 {
 	List	   *newcons;
 	ListCell   *lcon;
@@ -4644,6 +4656,13 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		return;
 
 	/*
+	 * Also, in a re-add operation, we don't need to recurse (that will be
+	 * handled at higher levels).
+	 */
+	if (is_readd)
+		return;
+
+	/*
 	 * Propagate to children as appropriate.  Unlike most other ALTER
 	 * routines, we have to do this one level of recursion at a time; we can't
 	 * use find_all_inheritors to do it in one pass.
@@ -4675,7 +4694,7 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 
 		/* Recurse to child */
 		ATAddCheckConstraint(wqueue, childtab, childrel,
-							 constr, recurse, true);
+							 constr, recurse, true, is_readd);
 
 		heap_close(childrel, NoLock);
 	}
@@ -6330,6 +6349,10 @@ ATPostAlterTypeParse(char *cmd, List **wqueue)
 	/*
 	 * Attach each generated command to the proper place in the work queue.
 	 * Note this could result in creation of entirely new work-queue entries.
+	 *
+	 * Also note that we have to tweak the command subtypes, because it turns
+	 * out that re-creation of indexes and constraints has to act a bit
+	 * differently from initial creation.
 	 */
 	foreach(list_item, querytree_list)
 	{
@@ -6373,6 +6396,7 @@ ATPostAlterTypeParse(char *cmd, List **wqueue)
 									lappend(tab->subcmds[AT_PASS_OLD_INDEX], cmd);
 								break;
 							case AT_AddConstraint:
+								cmd->subtype = AT_ReAddConstraint;
 								tab->subcmds[AT_PASS_OLD_CONSTR] =
 									lappend(tab->subcmds[AT_PASS_OLD_CONSTR], cmd);
 								break;
