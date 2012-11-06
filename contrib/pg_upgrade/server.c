@@ -208,13 +208,18 @@ start_postmaster(ClusterInfo *cluster)
 	 * maximum.  We assume all datfrozenxid and relfrozen values are less than
 	 * a gap of 2000000000 from the current xid counter, so autovacuum will
 	 * not touch them.
+	 *
+	 *	synchronous_commit=off improves object creation speed, and we only
+	 *	modify the new cluster, so only use it there.  If there is a crash,
+	 *	the new cluster has to be recreated anyway.
 	 */
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" -o \"-p %d %s %s%s\" start",
+			 "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" -o \"-p %d%s%s%s%s\" start",
 		  cluster->bindir, SERVER_LOG_FILE, cluster->pgconfig, cluster->port,
 			 (cluster->controldata.cat_ver >=
-			  BINARY_UPGRADE_SERVER_FLAG_CAT_VER) ? "-b" :
-			 "-c autovacuum=off -c autovacuum_freeze_max_age=2000000000",
+			  BINARY_UPGRADE_SERVER_FLAG_CAT_VER) ? " -b" :
+			 " -c autovacuum=off -c autovacuum_freeze_max_age=2000000000",
+			 (cluster == &new_cluster) ? " -c synchronous_commit=off" : "",
 			 cluster->pgopts ? cluster->pgopts : "", socket_string);
 
 	/*
