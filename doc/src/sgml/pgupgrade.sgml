@@ -529,7 +529,10 @@ psql --username postgres --file script.sql postgres
   <para>
    A Log-Shipping Standby Server (<xref linkend="warm-standby">) cannot
    be upgraded because the server must allow writes.  The simplest way
-   is to upgrade the primary and use rsync to rebuild the standbys.
+   is to upgrade the primary and use <command>rsync</> to rebuild the
+   standbys.  You can run <command>rsync</> while the primary is down,
+   or as part of a base backup (<xref linkend="backup-base-backup">)
+   which overwrites the old standby cluster.
   </para>
 
   <para>
