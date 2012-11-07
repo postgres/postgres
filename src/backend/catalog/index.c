@@ -1475,6 +1475,8 @@ index_drop(Oid indexId, bool concurrent)
 		 * conflicts with existing predicate locks, so now is the time to move
 		 * them to the heap relation.
 		 */
+		userHeapRelation = heap_open(heapId, ShareUpdateExclusiveLock);
+		userIndexRelation = index_open(indexId, ShareUpdateExclusiveLock);
 		TransferPredicateLocksToHeapRelation(userIndexRelation);
 
 		/*
@@ -1483,9 +1485,6 @@ index_drop(Oid indexId, bool concurrent)
 		 * indisready and wait till nobody could update the index anymore.
 		 */
 		indexRelation = heap_open(IndexRelationId, RowExclusiveLock);
-
-		userHeapRelation = heap_open(heapId, ShareUpdateExclusiveLock);
-		userIndexRelation = index_open(indexId, ShareUpdateExclusiveLock);
 
 		tuple = SearchSysCacheCopy1(INDEXRELID,
 									ObjectIdGetDatum(indexId));
