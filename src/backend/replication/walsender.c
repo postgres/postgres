@@ -48,7 +48,6 @@
 #include "nodes/replnodes.h"
 #include "replication/basebackup.h"
 #include "replication/syncrep.h"
-#include "replication/walprotocol.h"
 #include "replication/walreceiver.h"
 #include "replication/walsender.h"
 #include "replication/walsender_private.h"
@@ -66,6 +65,16 @@
 #include "utils/timeout.h"
 #include "utils/timestamp.h"
 
+/*
+ * Maximum data payload in a WAL data message.	Must be >= XLOG_BLCKSZ.
+ *
+ * We don't have a good idea of what a good value would be; there's some
+ * overhead per message in both walsender and walreceiver, but on the other
+ * hand sending large batches makes walsender less responsive to signals
+ * because signals are checked only between messages.  128kB (with
+ * default 8k blocks) seems like a reasonable guess for now.
+ */
+#define MAX_SEND_SIZE (XLOG_BLCKSZ * 16)
 
 /* Array of WalSnds in shared memory */
 WalSndCtlData *WalSndCtl = NULL;
@@ -103,13 +112,10 @@ static uint32 sendOff = 0;
  */
 static XLogRecPtr sentPtr = 0;
 
-/* Buffer for processing reply messages. */
+/* Buffers for constructing outgoing messages and processing reply messages. */
+static StringInfoData output_message;
 static StringInfoData reply_message;
-/*
- * Buffer for constructing outgoing messages.
- * (1 + sizeof(WalDataMessageHeader) + MAX_SEND_SIZE bytes)
- */
-static char *output_message;
+static StringInfoData tmpbuf;
 
 /*
  * Timestamp of the last receipt of the reply from the standby.
@@ -526,17 +532,26 @@ ProcessStandbyMessage(void)
 static void
 ProcessStandbyReplyMessage(void)
 {
-	StandbyReplyMessage reply;
+	XLogRecPtr	writePtr,
+				flushPtr,
+				applyPtr;
+	bool		replyRequested;
 
-	pq_copymsgbytes(&reply_message, (char *) &reply, sizeof(StandbyReplyMessage));
+	/* the caller already consumed the msgtype byte */
+	writePtr = pq_getmsgint64(&reply_message);
+	flushPtr = pq_getmsgint64(&reply_message);
+	applyPtr = pq_getmsgint64(&reply_message);
+	(void) pq_getmsgint64(&reply_message);	/* sendTime; not used ATM */
+	replyRequested = pq_getmsgbyte(&reply_message);
 
-	elog(DEBUG2, "write %X/%X flush %X/%X apply %X/%X",
-		 (uint32) (reply.write >> 32), (uint32) reply.write,
-		 (uint32) (reply.flush >> 32), (uint32) reply.flush,
-		 (uint32) (reply.apply >> 32), (uint32) reply.apply);
+	elog(DEBUG2, "write %X/%X flush %X/%X apply %X/%X%s",
+		 (uint32) (writePtr >> 32), (uint32) writePtr,
+		 (uint32) (flushPtr >> 32), (uint32) flushPtr,
+		 (uint32) (applyPtr >> 32), (uint32) applyPtr,
+		 replyRequested ? " (reply requested)" : "");
 
 	/* Send a reply if the standby requested one. */
-	if (reply.replyRequested)
+	if (replyRequested)
 		WalSndKeepalive(false);
 
 	/*
@@ -548,9 +563,9 @@ ProcessStandbyReplyMessage(void)
 		volatile WalSnd *walsnd = MyWalSnd;
 
 		SpinLockAcquire(&walsnd->mutex);
-		walsnd->write = reply.write;
-		walsnd->flush = reply.flush;
-		walsnd->apply = reply.apply;
+		walsnd->write = writePtr;
+		walsnd->flush = flushPtr;
+		walsnd->apply = applyPtr;
 		SpinLockRelease(&walsnd->mutex);
 	}
 
@@ -564,20 +579,25 @@ ProcessStandbyReplyMessage(void)
 static void
 ProcessStandbyHSFeedbackMessage(void)
 {
-	StandbyHSFeedbackMessage reply;
 	TransactionId nextXid;
 	uint32		nextEpoch;
+	TransactionId feedbackXmin;
+	uint32		feedbackEpoch;
 
-	/* Decipher the reply message */
-	pq_copymsgbytes(&reply_message, (char *) &reply,
-					sizeof(StandbyHSFeedbackMessage));
+	/*
+	 * Decipher the reply message. The caller already consumed the msgtype
+	 * byte.
+	 */
+	(void) pq_getmsgint64(&reply_message);	/* sendTime; not used ATM */
+	feedbackXmin = pq_getmsgint(&reply_message, 4);
+	feedbackEpoch = pq_getmsgint(&reply_message, 4);
 
 	elog(DEBUG2, "hot standby feedback xmin %u epoch %u",
-		 reply.xmin,
-		 reply.epoch);
+		 feedbackXmin,
+		 feedbackEpoch);
 
 	/* Ignore invalid xmin (can't actually happen with current walreceiver) */
-	if (!TransactionIdIsNormal(reply.xmin))
+	if (!TransactionIdIsNormal(feedbackXmin))
 		return;
 
 	/*
@@ -589,18 +609,18 @@ ProcessStandbyHSFeedbackMessage(void)
 	 */
 	GetNextXidAndEpoch(&nextXid, &nextEpoch);
 
-	if (reply.xmin <= nextXid)
+	if (feedbackXmin <= nextXid)
 	{
-		if (reply.epoch != nextEpoch)
+		if (feedbackEpoch != nextEpoch)
 			return;
 	}
 	else
 	{
-		if (reply.epoch + 1 != nextEpoch)
+		if (feedbackEpoch + 1 != nextEpoch)
 			return;
 	}
 
-	if (!TransactionIdPrecedesOrEquals(reply.xmin, nextXid))
+	if (!TransactionIdPrecedesOrEquals(feedbackXmin, nextXid))
 		return;					/* epoch OK, but it's wrapped around */
 
 	/*
@@ -610,9 +630,9 @@ ProcessStandbyHSFeedbackMessage(void)
 	 * cleanup conflicts on the standby server.
 	 *
 	 * There is a small window for a race condition here: although we just
-	 * checked that reply.xmin precedes nextXid, the nextXid could have gotten
+	 * checked that feedbackXmin precedes nextXid, the nextXid could have gotten
 	 * advanced between our fetching it and applying the xmin below, perhaps
-	 * far enough to make reply.xmin wrap around.  In that case the xmin we
+	 * far enough to make feedbackXmin wrap around.  In that case the xmin we
 	 * set here would be "in the future" and have no effect.  No point in
 	 * worrying about this since it's too late to save the desired data
 	 * anyway.	Assuming that the standby sends us an increasing sequence of
@@ -625,7 +645,7 @@ ProcessStandbyHSFeedbackMessage(void)
 	 * safe, and if we're moving it backwards, well, the data is at risk
 	 * already since a VACUUM could have just finished calling GetOldestXmin.)
 	 */
-	MyPgXact->xmin = reply.xmin;
+	MyPgXact->xmin = feedbackXmin;
 }
 
 /* Main loop of walsender process that streams the WAL over Copy messages. */
@@ -635,17 +655,12 @@ WalSndLoop(void)
 	bool		caughtup = false;
 
 	/*
-	 * Allocate buffer that will be used for each output message.  We do this
-	 * just once to reduce palloc overhead.  The buffer must be made large
-	 * enough for maximum-sized messages.
+	 * Allocate buffers that will be used for each outgoing and incoming
+	 * message.  We do this just once to reduce palloc overhead.
 	 */
-	output_message = palloc(1 + sizeof(WalDataMessageHeader) + MAX_SEND_SIZE);
-
-	/*
-	 * Allocate buffer that will be used for processing reply messages.  As
-	 * above, do this just once to reduce palloc overhead.
-	 */
+	initStringInfo(&output_message);
 	initStringInfo(&reply_message);
+	initStringInfo(&tmpbuf);
 
 	/* Initialize the last reply timestamp */
 	last_reply_timestamp = GetCurrentTimestamp();
@@ -1048,7 +1063,6 @@ XLogSend(bool *caughtup)
 	XLogRecPtr	startptr;
 	XLogRecPtr	endptr;
 	Size		nbytes;
-	WalDataMessageHeader msghdr;
 
 	/*
 	 * Attempt to send all data that's already been written out and fsync'd to
@@ -1125,25 +1139,31 @@ XLogSend(bool *caughtup)
 	/*
 	 * OK to read and send the slice.
 	 */
-	output_message[0] = 'w';
+	resetStringInfo(&output_message);
+	pq_sendbyte(&output_message, 'w');
+
+	pq_sendint64(&output_message, startptr);	/* dataStart */
+	pq_sendint64(&output_message, SendRqstPtr);	/* walEnd */
+	pq_sendint64(&output_message, 0);			/* sendtime, filled in last */
 
 	/*
 	 * Read the log directly into the output buffer to avoid extra memcpy
 	 * calls.
 	 */
-	XLogRead(output_message + 1 + sizeof(WalDataMessageHeader), startptr, nbytes);
+	enlargeStringInfo(&output_message, nbytes);
+	XLogRead(&output_message.data[output_message.len], startptr, nbytes);
+	output_message.len += nbytes;
+	output_message.data[output_message.len] = '\0';
 
 	/*
-	 * We fill the message header last so that the send timestamp is taken as
-	 * late as possible.
+	 * Fill the send timestamp last, so that it is taken as late as possible.
 	 */
-	msghdr.dataStart = startptr;
-	msghdr.walEnd = SendRqstPtr;
-	msghdr.sendTime = GetCurrentTimestamp();
+	resetStringInfo(&tmpbuf);
+	pq_sendint64(&tmpbuf, GetCurrentIntegerTimestamp());
+	memcpy(&output_message.data[1 + sizeof(int64) + sizeof(int64)],
+		   tmpbuf.data, sizeof(int64));
 
-	memcpy(output_message + 1, &msghdr, sizeof(WalDataMessageHeader));
-
-	pq_putmessage_noblock('d', output_message, 1 + sizeof(WalDataMessageHeader) + nbytes);
+	pq_putmessage_noblock('d', output_message.data, output_message.len);
 
 	sentPtr = endptr;
 
@@ -1518,19 +1538,17 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 static void
 WalSndKeepalive(bool requestReply)
 {
-	PrimaryKeepaliveMessage keepalive_message;
-
-	/* Construct a new message */
-	keepalive_message.walEnd = sentPtr;
-	keepalive_message.sendTime = GetCurrentTimestamp();
-	keepalive_message.replyRequested = requestReply;
-
 	elog(DEBUG2, "sending replication keepalive");
 
-	/* Prepend with the message type and send it. */
-	output_message[0] = 'k';
-	memcpy(output_message + 1, &keepalive_message, sizeof(PrimaryKeepaliveMessage));
-	pq_putmessage_noblock('d', output_message, sizeof(PrimaryKeepaliveMessage) + 1);
+	/* construct the message... */
+	resetStringInfo(&output_message);
+	pq_sendbyte(&output_message, 'k');
+	pq_sendint64(&output_message, sentPtr);
+	pq_sendint64(&output_message, GetCurrentIntegerTimestamp());
+	pq_sendbyte(&output_message, requestReply ? 1 : 0);
+
+	/* ... and send it wrapped in CopyData */
+	pq_putmessage_noblock('d', output_message.data, output_message.len);
 }
 
 /*

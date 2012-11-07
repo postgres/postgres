@@ -1359,14 +1359,18 @@ The commands accepted in walsender mode are:
       has already been recycled. On success, server responds with a
       CopyBothResponse message, and then starts to stream WAL to the frontend.
       WAL will continue to be streamed until the connection is broken;
-      no further commands will be accepted.
+      no further commands will be accepted. If the WAL sender process is
+      terminated normally (during postmaster shutdown), it will send a
+      CommandComplete message before exiting. This might not happen during an
+      abnormal shutdown, of course.
      </para>
 
      <para>
       WAL data is sent as a series of CopyData messages.  (This allows
       other information to be intermixed; in particular the server can send
       an ErrorResponse message if it encounters a failure after beginning
-      to stream.)  The payload in each CopyData message follows this format:
+      to stream.)  The payload of each CopyData message from server to the
+      client contains a message of one of the following formats:
      </para>
 
      <para>
@@ -1390,34 +1394,32 @@ The commands accepted in walsender mode are:
       </varlistentry>
       <varlistentry>
       <term>
-          Byte8
+          Int64
       </term>
       <listitem>
       <para>
-          The starting point of the WAL data in this message, given in
-          XLogRecPtr format.
+          The starting point of the WAL data in this message.
       </para>
       </listitem>
       </varlistentry>
       <varlistentry>
       <term>
-          Byte8
+          Int64
       </term>
       <listitem>
       <para>
-          The current end of WAL on the server, given in
-          XLogRecPtr format.
+          The current end of WAL on the server.
       </para>
       </listitem>
       </varlistentry>
       <varlistentry>
       <term>
-          Byte8
+          Int64
       </term>
       <listitem>
       <para>
-          The server's system clock at the time of transmission,
-          given in TimestampTz format.
+          The server's system clock at the time of transmission, as
+          microseconds since midnight on 2000-01-01.
       </para>
       </listitem>
       </varlistentry>
@@ -1429,42 +1431,19 @@ The commands accepted in walsender mode are:
       <para>
           A section of the WAL data stream.
       </para>
+      <para>
+          A single WAL record is never split across two XLogData messages.
+          When a WAL record crosses a WAL page boundary, and is therefore
+          already split using continuation records, it can be split at the page
+          boundary. In other words, the first main WAL record and its
+          continuation records can be sent in different XLogData messages.
+      </para>
       </listitem>
       </varlistentry>
       </variablelist>
       </para>
       </listitem>
       </varlistentry>
-      </variablelist>
-     </para>
-     <para>
-       A single WAL record is never split across two CopyData messages.
-       When a WAL record crosses a WAL page boundary, and is therefore
-       already split using continuation records, it can be split at the page
-       boundary. In other words, the first main WAL record and its
-       continuation records can be sent in different CopyData messages.
-     </para>
-     <para>
-       Note that all fields within the WAL data and the above-described header
-       will be in the sending server's native format.  Endianness, and the
-       format for the timestamp, are unpredictable unless the receiver has
-       verified that the sender's system identifier matches its own
-       <filename>pg_control</> contents.
-     </para>
-     <para>
-       If the WAL sender process is terminated normally (during postmaster
-       shutdown), it will send a CommandComplete message before exiting.
-       This might not happen during an abnormal shutdown, of course.
-     </para>
-
-     <para>
-       The receiving process can send replies back to the sender at any time,
-       using one of the following message formats (also in the payload of a
-       CopyData message):
-     </para>
-
-     <para>
-      <variablelist>
       <varlistentry>
       <term>
           Primary keepalive message (B)
@@ -1484,23 +1463,33 @@ The commands accepted in walsender mode are:
       </varlistentry>
       <varlistentry>
       <term>
-          Byte8
+          Int64
       </term>
       <listitem>
       <para>
-          The current end of WAL on the server, given in
-          XLogRecPtr format.
+          The current end of WAL on the server.
       </para>
       </listitem>
       </varlistentry>
       <varlistentry>
       <term>
-          Byte8
+          Int64
       </term>
       <listitem>
       <para>
-          The server's system clock at the time of transmission,
-          given in TimestampTz format.
+          The server's system clock at the time of transmission, as
+          microseconds since midnight on 2000-01-01.
+      </para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term>
+          Byte1
+      </term>
+      <listitem>
+      <para>
+          1 means that the client should reply to this message as soon as
+          possible, to avoid a timeout disconnect. 0 otherwise.
       </para>
       </listitem>
       </varlistentry>
@@ -1509,6 +1498,12 @@ The commands accepted in walsender mode are:
       </listitem>
       </varlistentry>
       </variablelist>
+     </para>
+
+     <para>
+       The receiving process can send replies back to the sender at any time,
+       using one of the following message formats (also in the payload of a
+       CopyData message):
      </para>
 
      <para>
@@ -1532,45 +1527,56 @@ The commands accepted in walsender mode are:
       </varlistentry>
       <varlistentry>
       <term>
-          Byte8
+          Int64
       </term>
       <listitem>
       <para>
           The location of the last WAL byte + 1 received and written to disk
-          in the standby, in XLogRecPtr format.
+          in the standby.
       </para>
       </listitem>
       </varlistentry>
       <varlistentry>
       <term>
-          Byte8
+          Int64
       </term>
       <listitem>
       <para>
           The location of the last WAL byte + 1 flushed to disk in
-          the standby, in XLogRecPtr format.
+          the standby.
       </para>
       </listitem>
       </varlistentry>
       <varlistentry>
       <term>
-          Byte8
+          Int64
       </term>
       <listitem>
       <para>
-          The location of the last WAL byte + 1 applied in the standby, in
-          XLogRecPtr format.
+          The location of the last WAL byte + 1 applied in the standby.
       </para>
       </listitem>
       </varlistentry>
       <varlistentry>
       <term>
-          Byte8
+          Int64
       </term>
       <listitem>
       <para>
-          The server's system clock at the time of transmission,
-          given in TimestampTz format.
+          The client's system clock at the time of transmission, as
+          microseconds since midnight on 2000-01-01.
+      </para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term>
+          Byte1
+      </term>
+      <listitem>
+      <para>
+          If 1, the client requests the server to reply to this message
+          immediately. This can be used to ping the server, to test if
+          the connection is still healthy.
       </para>
       </listitem>
       </varlistentry>
@@ -1602,28 +1608,29 @@ The commands accepted in walsender mode are:
       </varlistentry>
       <varlistentry>
       <term>
-          Byte8
+          Int64
       </term>
       <listitem>
       <para>
-          The server's system clock at the time of transmission,
-          given in TimestampTz format.
+          The client's system clock at the time of transmission, as
+          microseconds since midnight on 2000-01-01.
       </para>
       </listitem>
       </varlistentry>
       <varlistentry>
       <term>
-          Byte4
+          Int32
       </term>
       <listitem>
       <para>
-          The standby's current xmin.
+          The standby's current xmin. This may be 0, if the standby does not
+          support feedback, or is not yet in Hot Standby state.
       </para>
       </listitem>
       </varlistentry>
       <varlistentry>
       <term>
-          Byte4
+          Int32
       </term>
       <listitem>
       <para>
