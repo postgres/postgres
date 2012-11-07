@@ -19,6 +19,15 @@
  */
 #define FRONTEND 1
 #include "postgres.h"
+
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
+/* for ntohl/htonl */
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include "libpq-fe.h"
 #include "access/xlog_internal.h"
 #include "utils/datetime.h"
@@ -26,11 +35,6 @@
 
 #include "receivelog.h"
 #include "streamutil.h"
-
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <unistd.h>
 
 
 /* fd for currently open WAL file */
