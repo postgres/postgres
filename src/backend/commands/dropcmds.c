@@ -203,7 +203,7 @@ does_not_exist_skipping(ObjectType objtype, List *objname, List *objargs)
 		case OBJECT_TRIGGER:
 			msg = gettext_noop("trigger \"%s\" for table \"%s\" does not exist, skipping");
 			name = strVal(llast(objname));
-			args = NameListToString(list_truncate(objname,
+			args = NameListToString(list_truncate(list_copy(objname),
 												  list_length(objname) - 1));
 			break;
 		case OBJECT_EVENT_TRIGGER:
@@ -213,7 +213,7 @@ does_not_exist_skipping(ObjectType objtype, List *objname, List *objargs)
 		case OBJECT_RULE:
 			msg = gettext_noop("rule \"%s\" for relation \"%s\" does not exist, skipping");
 			name = strVal(llast(objname));
-			args = NameListToString(list_truncate(objname,
+			args = NameListToString(list_truncate(list_copy(objname),
 												  list_length(objname) - 1));
 			break;
 		case OBJECT_FDW:
