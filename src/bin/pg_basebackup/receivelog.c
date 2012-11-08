@@ -287,7 +287,7 @@ recvint64(char *buf)
  * Send a Standby Status Update message to server.
  */
 static bool
-sendFeedback(PGconn *conn, XLogRecPtr blockpos, int64 now)
+sendFeedback(PGconn *conn, XLogRecPtr blockpos, int64 now, bool replyRequested)
 {
 	char		replybuf[1 + 8 + 8 + 8 + 8 + 1];
 	int 		len = 0;
@@ -302,7 +302,7 @@ sendFeedback(PGconn *conn, XLogRecPtr blockpos, int64 now)
 	len += 8;
 	sendint64(now, &replybuf[len]);					/* sendTime */
 	len += 8;
-	replybuf[len] = 0;								/* replyRequested */
+	replybuf[len] = replyRequested ? 1 : 0;			/* replyRequested */
 	len += 1;
 
 	if (PQputCopyData(conn, replybuf, len) <= 0 || PQflush(conn))
@@ -413,6 +413,7 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 		int			bytes_left;
 		int			bytes_written;
 		int64		now;
+		int			hdr_len;
 
 		if (copybuf != NULL)
 		{
@@ -441,7 +442,7 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 											standby_message_timeout))
 		{
 			/* Time to send feedback! */
-			if (!sendFeedback(conn, blockpos, now))
+			if (!sendFeedback(conn, blockpos, now, false))
 				goto error;
 			last_status = now;
 		}
@@ -520,10 +521,34 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 		/* Check the message type. */
 		if (copybuf[0] == 'k')
 		{
+			int		pos;
+			bool	replyRequested;
+
 			/*
-			 * keepalive message, sent in 9.2 and newer. We just ignore this
-			 * message completely, but need to skip past it in the stream.
+			 * Parse the keepalive message, enclosed in the CopyData message.
+			 * We just check if the server requested a reply, and ignore the
+			 * rest.
 			 */
+			pos = 1;	/* skip msgtype 'k' */
+			pos += 8;	/* skip walEnd */
+			pos += 8;	/* skip sendTime */
+
+			if (r < pos + 1)
+			{
+				fprintf(stderr, _("%s: streaming header too small: %d\n"),
+						progname, r);
+				goto error;
+			}
+			replyRequested = copybuf[pos];
+
+			/* If the server requested an immediate reply, send one. */
+			if (replyRequested)
+			{
+				now = localGetCurrentTimestamp();
+				if (!sendFeedback(conn, blockpos, now, false))
+					goto error;
+				last_status = now;
+			}
 			continue;
 		}
 		else if (copybuf[0] != 'w')
@@ -538,8 +563,11 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 		 * message. We only need the WAL location field (dataStart), the rest
 		 * of the header is ignored.
 		 */
-#define STREAMING_HEADER_SIZE (1 /* msgtype */ + 8 /* dataStart */ + 8 /* walEnd */ + 8 /* sendTime */)
-		if (r < STREAMING_HEADER_SIZE + 1)
+		hdr_len = 1;	/* msgtype 'w' */
+		hdr_len += 8;	/* dataStart */
+		hdr_len += 8;	/* walEnd */
+		hdr_len += 8;	/* sendTime */
+		if (r < hdr_len + 1)
 		{
 			fprintf(stderr, _("%s: streaming header too small: %d\n"),
 					progname, r);
@@ -578,7 +606,7 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 			}
 		}
 
-		bytes_left = r - STREAMING_HEADER_SIZE;
+		bytes_left = r - hdr_len;
 		bytes_written = 0;
 
 		while (bytes_left)
@@ -604,7 +632,7 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 			}
 
 			if (write(walfile,
-					  copybuf + STREAMING_HEADER_SIZE + bytes_written,
+					  copybuf + hdr_len + bytes_written,
 					  bytes_to_write) != bytes_to_write)
 			{
 				fprintf(stderr,
