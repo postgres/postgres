@@ -31,6 +31,13 @@ struct replace_rte_variables_context
 	bool		inserted_sublink;		/* have we inserted a SubLink? */
 };
 
+typedef enum ReplaceVarsNoMatchOption
+{
+	REPLACEVARS_REPORT_ERROR,	/* throw error if no match */
+	REPLACEVARS_CHANGE_VARNO,	/* change the Var's varno, nothing else */
+	REPLACEVARS_SUBSTITUTE_NULL	/* replace with a NULL Const */
+} ReplaceVarsNoMatchOption;
+
 
 extern void OffsetVarNodes(Node *node, int offset, int sublevels_up);
 extern void ChangeVarNodes(Node *node, int old_varno, int new_varno,
@@ -69,9 +76,12 @@ extern Node *map_variable_attnos(Node *node,
 					const AttrNumber *attno_map, int map_length,
 					bool *found_whole_row);
 
-extern Node *ResolveNew(Node *node, int target_varno, int sublevels_up,
-		   RangeTblEntry *target_rte,
-		   List *targetlist, int event, int update_varno,
-		   bool *outer_hasSubLinks);
+extern Node *ReplaceVarsFromTargetList(Node *node,
+						  int target_varno, int sublevels_up,
+						  RangeTblEntry *target_rte,
+						  List *targetlist,
+						  ReplaceVarsNoMatchOption nomatch_option,
+						  int nomatch_varno,
+						  bool *outer_hasSubLinks);
 
 #endif   /* REWRITEMANIP_H */

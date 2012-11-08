@@ -1835,10 +1835,10 @@ subquery_push_qual(Query *subquery, RangeTblEntry *rte, Index rti, Node *qual)
 		 * This step also ensures that when we are pushing into a setop tree,
 		 * each component query gets its own copy of the qual.
 		 */
-		qual = ResolveNew(qual, rti, 0, rte,
-						  subquery->targetList,
-						  CMD_SELECT, 0,
-						  &subquery->hasSubLinks);
+		qual = ReplaceVarsFromTargetList(qual, rti, 0, rte,
+										 subquery->targetList,
+										 REPLACEVARS_REPORT_ERROR, 0,
+										 &subquery->hasSubLinks);
 
 		/*
 		 * Now attach the qual to the proper place: normally WHERE, but if the

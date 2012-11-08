@@ -502,25 +502,27 @@ rewriteRuleAction(Query *parsetree,
 	AddQual(sub_action, parsetree->jointree->quals);
 
 	/*
-	 * Rewrite new.attribute w/ right hand side of target-list entry for
+	 * Rewrite new.attribute with right hand side of target-list entry for
 	 * appropriate field name in insert/update.
 	 *
-	 * KLUGE ALERT: since ResolveNew returns a mutated copy, we can't just
-	 * apply it to sub_action; we have to remember to update the sublink
-	 * inside rule_action, too.
+	 * KLUGE ALERT: since ReplaceVarsFromTargetList returns a mutated copy, we
+	 * can't just apply it to sub_action; we have to remember to update the
+	 * sublink inside rule_action, too.
 	 */
 	if ((event == CMD_INSERT || event == CMD_UPDATE) &&
 		sub_action->commandType != CMD_UTILITY)
 	{
-		sub_action = (Query *) ResolveNew((Node *) sub_action,
-										  new_varno,
-										  0,
-										  rt_fetch(new_varno,
-												   sub_action->rtable),
-										  parsetree->targetList,
-										  event,
-										  current_varno,
-										  NULL);
+		sub_action = (Query *)
+			ReplaceVarsFromTargetList((Node *) sub_action,
+									  new_varno,
+									  0,
+									  rt_fetch(new_varno, sub_action->rtable),
+									  parsetree->targetList,
+									  (event == CMD_UPDATE) ?
+									  REPLACEVARS_CHANGE_VARNO :
+									  REPLACEVARS_SUBSTITUTE_NULL,
+									  current_varno,
+									  NULL);
 		if (sub_action_ptr)
 			*sub_action_ptr = sub_action;
 		else
@@ -543,15 +545,15 @@ rewriteRuleAction(Query *parsetree,
 				   errmsg("cannot have RETURNING lists in multiple rules")));
 		*returning_flag = true;
 		rule_action->returningList = (List *)
-			ResolveNew((Node *) parsetree->returningList,
-					   parsetree->resultRelation,
-					   0,
-					   rt_fetch(parsetree->resultRelation,
-								parsetree->rtable),
-					   rule_action->returningList,
-					   CMD_SELECT,
-					   0,
-					   &rule_action->hasSubLinks);
+			ReplaceVarsFromTargetList((Node *) parsetree->returningList,
+									  parsetree->resultRelation,
+									  0,
+									  rt_fetch(parsetree->resultRelation,
+											   parsetree->rtable),
+									  rule_action->returningList,
+									  REPLACEVARS_REPORT_ERROR,
+									  0,
+									  &rule_action->hasSubLinks);
 
 		/*
 		 * There could have been some SubLinks in parsetree's returningList,
@@ -1703,14 +1705,17 @@ CopyAndAddInvertedQual(Query *parsetree,
 	ChangeVarNodes(new_qual, PRS2_OLD_VARNO, rt_index, 0);
 	/* Fix references to NEW */
 	if (event == CMD_INSERT || event == CMD_UPDATE)
-		new_qual = ResolveNew(new_qual,
-							  PRS2_NEW_VARNO,
-							  0,
-							  rt_fetch(rt_index, parsetree->rtable),
-							  parsetree->targetList,
-							  event,
-							  rt_index,
-							  &parsetree->hasSubLinks);
+		new_qual = ReplaceVarsFromTargetList(new_qual,
+											 PRS2_NEW_VARNO,
+											 0,
+											 rt_fetch(rt_index,
+													  parsetree->rtable),
+											 parsetree->targetList,
+											 (event == CMD_UPDATE) ?
+											 REPLACEVARS_CHANGE_VARNO :
+											 REPLACEVARS_SUBSTITUTE_NULL,
+											 rt_index,
+											 &parsetree->hasSubLinks);
 	/* And attach the fixed qual */
 	AddInvertedQual(parsetree, new_qual);
 

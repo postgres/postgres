@@ -1323,12 +1323,16 @@ map_variable_attnos(Node *node,
 
 
 /*
- * ResolveNew - replace Vars with corresponding items from a targetlist
+ * ReplaceVarsFromTargetList - replace Vars with items from a targetlist
  *
  * Vars matching target_varno and sublevels_up are replaced by the
  * entry with matching resno from targetlist, if there is one.
- * If not, we either change the unmatched Var's varno to update_varno
- * (when event == CMD_UPDATE) or replace it with a constant NULL.
+ *
+ * If there is no matching resno for such a Var, the action depends on the
+ * nomatch_option:
+ *	REPLACEVARS_REPORT_ERROR: throw an error
+ *	REPLACEVARS_CHANGE_VARNO: change Var's varno to nomatch_varno
+ *	REPLACEVARS_SUBSTITUTE_NULL: replace Var with a NULL Const of same type
  *
  * The caller must also provide target_rte, the RTE describing the target
  * relation.  This is needed to handle whole-row Vars referencing the target.
@@ -1341,15 +1345,15 @@ typedef struct
 {
 	RangeTblEntry *target_rte;
 	List	   *targetlist;
-	int			event;
-	int			update_varno;
-} ResolveNew_context;
+	ReplaceVarsNoMatchOption nomatch_option;
+	int			nomatch_varno;
+} ReplaceVarsFromTargetList_context;
 
 static Node *
-ResolveNew_callback(Var *var,
-					replace_rte_variables_context *context)
+ReplaceVarsFromTargetList_callback(Var *var,
+								   replace_rte_variables_context *context)
 {
-	ResolveNew_context *rcon = (ResolveNew_context *) context->callback_arg;
+	ReplaceVarsFromTargetList_context *rcon = (ReplaceVarsFromTargetList_context *) context->callback_arg;
 	TargetEntry *tle;
 
 	if (var->varattno == InvalidAttrNumber)
@@ -1388,29 +1392,37 @@ ResolveNew_callback(Var *var,
 
 	if (tle == NULL || tle->resjunk)
 	{
-		/* Failed to find column in insert/update tlist */
-		if (rcon->event == CMD_UPDATE)
+		/* Failed to find column in targetlist */
+		switch (rcon->nomatch_option)
 		{
-			/* For update, just change unmatched var's varno */
-			var = (Var *) copyObject(var);
-			var->varno = rcon->update_varno;
-			var->varnoold = rcon->update_varno;
-			return (Node *) var;
+			case REPLACEVARS_REPORT_ERROR:
+				/* fall through, throw error below */
+				break;
+
+			case REPLACEVARS_CHANGE_VARNO:
+				var = (Var *) copyObject(var);
+				var->varno = rcon->nomatch_varno;
+				var->varnoold = rcon->nomatch_varno;
+				return (Node *) var;
+
+			case REPLACEVARS_SUBSTITUTE_NULL:
+				/*
+				 * If Var is of domain type, we should add a CoerceToDomain
+				 * node, in case there is a NOT NULL domain constraint.
+				 */
+				return coerce_to_domain((Node *) makeNullConst(var->vartype,
+															   var->vartypmod,
+															   var->varcollid),
+										InvalidOid, -1,
+										var->vartype,
+										COERCE_IMPLICIT_CAST,
+										-1,
+										false,
+										false);
 		}
-		else
-		{
-			/* Otherwise replace unmatched var with a null */
-			/* need coerce_to_domain in case of NOT NULL domain constraint */
-			return coerce_to_domain((Node *) makeNullConst(var->vartype,
-														   var->vartypmod,
-														   var->varcollid),
-									InvalidOid, -1,
-									var->vartype,
-									COERCE_IMPLICIT_CAST,
-									-1,
-									false,
-									false);
-		}
+		elog(ERROR, "could not find replacement targetlist entry for attno %d",
+			 var->varattno);
+		return NULL;			/* keep compiler quiet */
 	}
 	else
 	{
@@ -1426,20 +1438,23 @@ ResolveNew_callback(Var *var,
 }
 
 Node *
-ResolveNew(Node *node, int target_varno, int sublevels_up,
-		   RangeTblEntry *target_rte,
-		   List *targetlist, int event, int update_varno,
-		   bool *outer_hasSubLinks)
+ReplaceVarsFromTargetList(Node *node,
+						  int target_varno, int sublevels_up,
+						  RangeTblEntry *target_rte,
+						  List *targetlist,
+						  ReplaceVarsNoMatchOption nomatch_option,
+						  int nomatch_varno,
+						  bool *outer_hasSubLinks)
 {
-	ResolveNew_context context;
+	ReplaceVarsFromTargetList_context context;
 
 	context.target_rte = target_rte;
 	context.targetlist = targetlist;
-	context.event = event;
-	context.update_varno = update_varno;
+	context.nomatch_option = nomatch_option;
+	context.nomatch_varno = nomatch_varno;
 
 	return replace_rte_variables(node, target_varno, sublevels_up,
-								 ResolveNew_callback,
+								 ReplaceVarsFromTargetList_callback,
 								 (void *) &context,
 								 outer_hasSubLinks);
 }
