@@ -342,7 +342,6 @@ ExecuteRecoveryCommand(char *command, char *commandName, bool failOnSignal)
 	GetOldestRestartPoint(&restartRedoPtr, &restartTli);
 	XLByteToSeg(restartRedoPtr, restartSegNo);
 	XLogFileName(lastRestartPointFname, restartTli, restartSegNo);
-	LWLockRelease(ControlFileLock);
 
 	/*
 	 * construct the command to be executed
