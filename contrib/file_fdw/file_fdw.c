@@ -614,13 +614,13 @@ fileIterateForeignScan(ForeignScanState *node)
 	FileFdwExecutionState *festate = (FileFdwExecutionState *) node->fdw_state;
 	TupleTableSlot *slot = node->ss.ss_ScanTupleSlot;
 	bool		found;
-	ErrorContextCallback errcontext;
+	ErrorContextCallback errcallback;
 
 	/* Set up callback to identify error line number. */
-	errcontext.callback = CopyFromErrorCallback;
-	errcontext.arg = (void *) festate->cstate;
-	errcontext.previous = error_context_stack;
-	error_context_stack = &errcontext;
+	errcallback.callback = CopyFromErrorCallback;
+	errcallback.arg = (void *) festate->cstate;
+	errcallback.previous = error_context_stack;
+	error_context_stack = &errcallback;
 
 	/*
 	 * The protocol for loading a virtual tuple into a slot is first
@@ -642,7 +642,7 @@ fileIterateForeignScan(ForeignScanState *node)
 		ExecStoreVirtualTuple(slot);
 
 	/* Remove error callback. */
-	error_context_stack = errcontext.previous;
+	error_context_stack = errcallback.previous;
 
 	return slot;
 }
@@ -976,7 +976,7 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 	char	   *filename;
 	List	   *options;
 	CopyState	cstate;
-	ErrorContextCallback errcontext;
+	ErrorContextCallback errcallback;
 	MemoryContext oldcontext = CurrentMemoryContext;
 	MemoryContext tupcontext;
 
@@ -1009,10 +1009,10 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 	rstate = anl_init_selection_state(targrows);
 
 	/* Set up callback to identify error line number. */
-	errcontext.callback = CopyFromErrorCallback;
-	errcontext.arg = (void *) cstate;
-	errcontext.previous = error_context_stack;
-	error_context_stack = &errcontext;
+	errcallback.callback = CopyFromErrorCallback;
+	errcallback.arg = (void *) cstate;
+	errcallback.previous = error_context_stack;
+	error_context_stack = &errcallback;
 
 	*totalrows = 0;
 	*totaldeadrows = 0;
@@ -1072,7 +1072,7 @@ file_acquire_sample_rows(Relation onerel, int elevel,
 	}
 
 	/* Remove error callback. */
-	error_context_stack = errcontext.previous;
+	error_context_stack = errcallback.previous;
 
 	/* Clean up. */
 	MemoryContextDelete(tupcontext);
