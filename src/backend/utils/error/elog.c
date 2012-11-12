@@ -683,13 +683,13 @@ errcode_for_socket_access(void)
  * to the edata field because the buffer might be considerably larger than
  * really necessary.
  */
-#define EVALUATE_MESSAGE(targetfield, appendval, translateit)  \
+#define EVALUATE_MESSAGE(domain, targetfield, appendval, translateit)	\
 	{ \
 		char		   *fmtbuf; \
 		StringInfoData	buf; \
 		/* Internationalize the error format string */ \
 		if (translateit && !in_error_recursion_trouble()) \
-			fmt = dgettext(edata->domain, fmt); \
+			fmt = dgettext((domain), fmt);				  \
 		/* Expand %m in format string */ \
 		fmtbuf = expand_fmt_string(fmt, edata); \
 		initStringInfo(&buf); \
@@ -723,14 +723,14 @@ errcode_for_socket_access(void)
  * must be declared like "const char *fmt_singular, const char *fmt_plural,
  * unsigned long n, ...".  Translation is assumed always wanted.
  */
-#define EVALUATE_MESSAGE_PLURAL(targetfield, appendval)  \
+#define EVALUATE_MESSAGE_PLURAL(domain, targetfield, appendval)  \
 	{ \
 		const char	   *fmt; \
 		char		   *fmtbuf; \
 		StringInfoData	buf; \
 		/* Internationalize the error format string */ \
 		if (!in_error_recursion_trouble()) \
-			fmt = dngettext(edata->domain, fmt_singular, fmt_plural, n); \
+			fmt = dngettext((domain), fmt_singular, fmt_plural, n);	\
 		else \
 			fmt = (n == 1 ? fmt_singular : fmt_plural); \
 		/* Expand %m in format string */ \
@@ -781,7 +781,7 @@ errmsg(const char *fmt,...)
 	CHECK_STACK_DEPTH();
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
-	EVALUATE_MESSAGE(message, false, true);
+	EVALUATE_MESSAGE(edata->domain, message, false, true);
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -810,7 +810,7 @@ errmsg_internal(const char *fmt,...)
 	CHECK_STACK_DEPTH();
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
-	EVALUATE_MESSAGE(message, false, false);
+	EVALUATE_MESSAGE(edata->domain, message, false, false);
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -833,7 +833,7 @@ errmsg_plural(const char *fmt_singular, const char *fmt_plural,
 	CHECK_STACK_DEPTH();
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
-	EVALUATE_MESSAGE_PLURAL(message, false);
+	EVALUATE_MESSAGE_PLURAL(edata->domain, message, false);
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -854,7 +854,7 @@ errdetail(const char *fmt,...)
 	CHECK_STACK_DEPTH();
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
-	EVALUATE_MESSAGE(detail, false, true);
+	EVALUATE_MESSAGE(edata->domain, detail, false, true);
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -881,7 +881,7 @@ errdetail_internal(const char *fmt,...)
 	CHECK_STACK_DEPTH();
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
-	EVALUATE_MESSAGE(detail, false, false);
+	EVALUATE_MESSAGE(edata->domain, detail, false, false);
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -902,7 +902,7 @@ errdetail_log(const char *fmt,...)
 	CHECK_STACK_DEPTH();
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
-	EVALUATE_MESSAGE(detail_log, false, true);
+	EVALUATE_MESSAGE(edata->domain, detail_log, false, true);
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -925,7 +925,7 @@ errdetail_plural(const char *fmt_singular, const char *fmt_plural,
 	CHECK_STACK_DEPTH();
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
-	EVALUATE_MESSAGE_PLURAL(detail, false);
+	EVALUATE_MESSAGE_PLURAL(edata->domain, detail, false);
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -946,7 +946,7 @@ errhint(const char *fmt,...)
 	CHECK_STACK_DEPTH();
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
-	EVALUATE_MESSAGE(hint, false, true);
+	EVALUATE_MESSAGE(edata->domain, hint, false, true);
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -955,14 +955,14 @@ errhint(const char *fmt,...)
 
 
 /*
- * errcontext --- add a context error message text to the current error
+ * errcontext_msg --- add a context error message text to the current error
  *
  * Unlike other cases, multiple calls are allowed to build up a stack of
  * context information.  We assume earlier calls represent more-closely-nested
  * states.
  */
 int
-errcontext(const char *fmt,...)
+errcontext_msg(const char *fmt,...)
 {
 	ErrorData  *edata = &errordata[errordata_stack_depth];
 	MemoryContext oldcontext;
@@ -971,10 +971,32 @@ errcontext(const char *fmt,...)
 	CHECK_STACK_DEPTH();
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
-	EVALUATE_MESSAGE(context, true, true);
+	EVALUATE_MESSAGE(edata->context_domain, context, true, true);
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
+	return 0;					/* return value does not matter */
+}
+
+/*
+ * set_errcontext_domain --- set message domain to be used by errcontext()
+ *
+ * errcontext_msg() can be called from a different module than the original
+ * ereport(), so we cannot use the message domain passed in errstart() to
+ * translate it.  Instead, each errcontext_msg() call should be preceded by
+ * a set_errcontext_domain() call to specify the domain.  This is usually
+ * done transparently by the errcontext() macro.
+ */
+int
+set_errcontext_domain(const char *domain)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+
+	/* we don't bother incrementing recursion_depth */
+	CHECK_STACK_DEPTH();
+
+	edata->context_domain = domain;
+
 	return 0;					/* return value does not matter */
 }
 
@@ -1201,7 +1223,7 @@ elog_finish(int elevel, const char *fmt,...)
 	recursion_depth++;
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
-	EVALUATE_MESSAGE(message, false, false);
+	EVALUATE_MESSAGE(edata->domain, message, false, false);
 
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
@@ -1260,7 +1282,7 @@ format_elog_string(const char *fmt,...)
 
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
-	EVALUATE_MESSAGE(message, false, true);
+	EVALUATE_MESSAGE(edata->domain, message, false, true);
 
 	MemoryContextSwitchTo(oldcontext);
 

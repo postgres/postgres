@@ -177,8 +177,19 @@ errhint(const char *fmt,...)
    the supplied arguments. */
 __attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
 
+/*
+ * errcontext() is typically called in error context callback functions, not
+ * within an ereport() invocation. The callback function can be in a different
+ * module than the ereport() call, so the message domain passed in errstart()
+ * is not usually the correct domain for translating the context message.
+ * set_errcontext_domain() first sets the domain to be used, and
+ * errcontext_msg() passes the actual message.
+ */
+#define errcontext	set_errcontext_domain(TEXTDOMAIN),  errcontext_msg
+
+extern int	set_errcontext_domain(const char *domain);
 extern int
-errcontext(const char *fmt,...)
+errcontext_msg(const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
 __attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));
@@ -320,6 +331,7 @@ typedef struct ErrorData
 	int			lineno;			/* __LINE__ of ereport() call */
 	const char *funcname;		/* __func__ of ereport() call */
 	const char *domain;			/* message domain */
+	const char *context_domain;	/* message domain for context message */
 	int			sqlerrcode;		/* encoded ERRSTATE */
 	char	   *message;		/* primary error message */
 	char	   *detail;			/* detail error message */

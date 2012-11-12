@@ -5698,7 +5698,7 @@ StartupXLOG(void)
 			bool		recoveryContinue = true;
 			bool		recoveryApply = true;
 			bool		recoveryPause = false;
-			ErrorContextCallback errcontext;
+			ErrorContextCallback errcallback;
 			TimestampTz xtime;
 
 			InRedo = true;
@@ -5760,10 +5760,10 @@ StartupXLOG(void)
 				}
 
 				/* Setup error traceback support for ereport() */
-				errcontext.callback = rm_redo_error_callback;
-				errcontext.arg = (void *) record;
-				errcontext.previous = error_context_stack;
-				error_context_stack = &errcontext;
+				errcallback.callback = rm_redo_error_callback;
+				errcallback.arg = (void *) record;
+				errcallback.previous = error_context_stack;
+				error_context_stack = &errcallback;
 
 				/*
 				 * ShmemVariableCache->nextXid must be beyond record's xid.
@@ -5808,7 +5808,7 @@ StartupXLOG(void)
 				RmgrTable[record->xl_rmid].rm_redo(EndRecPtr, record);
 
 				/* Pop the error context stack */
-				error_context_stack = errcontext.previous;
+				error_context_stack = errcallback.previous;
 
 				if (!XLogRecPtrIsInvalid(ControlFile->backupStartPoint) &&
 					XLByteLE(ControlFile->backupEndPoint, EndRecPtr))
