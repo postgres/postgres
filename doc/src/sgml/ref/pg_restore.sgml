@@ -390,7 +390,7 @@
       <listitem>
        <para>
         Specify the superuser user name to use when disabling triggers.
-        This is only relevant if <option>--disable-triggers</> is used.
+        This is relevant only if <option>--disable-triggers</> is used.
        </para>
       </listitem>
      </varlistentry>
@@ -465,7 +465,7 @@
       <term><option>--disable-triggers</></term>
       <listitem>
        <para>
-        This option is only relevant when performing a data-only restore.
+        This option is relevant only when performing a data-only restore.
         It instructs <application>pg_restore</application> to execute commands
         to temporarily disable triggers on the target tables while
         the data is reloaded.  Use this if you have referential

@@ -190,7 +190,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Specify the superuser user name to use when disabling triggers.
-        This is only relevant if <option>--disable-triggers</> is used.
+        This is relevant only if <option>--disable-triggers</> is used.
         (Usually, it's better to leave this out, and instead start the
         resulting script as superuser.)
        </para>
@@ -283,7 +283,7 @@ PostgreSQL documentation
       <term><option>--disable-triggers</></term>
       <listitem>
        <para>
-        This option is only relevant when creating a data-only dump.
+        This option is relevant only when creating a data-only dump.
         It instructs <application>pg_dumpall</application> to include commands
         to temporarily disable triggers on the target tables while
         the data is reloaded.  Use this if you have referential

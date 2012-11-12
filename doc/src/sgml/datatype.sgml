@@ -3596,7 +3596,7 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
      as the canonical form for MAC addresses, and specifies the first
      form (with colons) as the bit-reversed notation, so that
      08-00-2b-01-02-03 = 01:00:4D:08:04:0C.  This convention is widely
-     ignored nowadays, and it is only relevant for obsolete network
+     ignored nowadays, and it is relevant only for obsolete network
      protocols (such as Token Ring).  PostgreSQL makes no provisions
      for bit reversal, and all accepted formats use the canonical LSB
      order.
