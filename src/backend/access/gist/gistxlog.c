@@ -193,7 +193,7 @@ gistRedoPageUpdateRecord(XLogRecPtr lsn, XLogRecord *record, bool isnewroot)
 	Buffer		buffer;
 	Page		page;
 
-	/* we must fix incomplete_inserts list even if XLR_BKP_BLOCK_1 is set */
+	/* we must fix incomplete_inserts list even if it's full-page image */
 	forgetIncompleteInsert(xldata->node, xldata->key);
 
 	if (!isnewroot && xldata->blkno != GIST_ROOT_BLKNO)
@@ -202,9 +202,12 @@ gistRedoPageUpdateRecord(XLogRecPtr lsn, XLogRecord *record, bool isnewroot)
 							 &(xldata->blkno), 1,
 							 NULL);
 
-	/* nothing else to do if page was backed up (and no info to do it with) */
-	if (record->xl_info & XLR_BKP_BLOCK_1)
+	/* If we have a full-page image, restore it and we're done */
+	if (record->xl_info & XLR_BKP_BLOCK(0))
+	{
+		(void) RestoreBackupBlock(lsn, record, 0, false, false);
 		return;
+	}
 
 	decodePageUpdateRecord(&xlrec, record);
 
@@ -258,30 +261,6 @@ gistRedoPageUpdateRecord(XLogRecPtr lsn, XLogRecord *record, bool isnewroot)
 }
 
 static void
-gistRedoPageDeleteRecord(XLogRecPtr lsn, XLogRecord *record)
-{
-	gistxlogPageDelete *xldata = (gistxlogPageDelete *) XLogRecGetData(record);
-	Buffer		buffer;
-	Page		page;
-
-	/* nothing else to do if page was backed up (and no info to do it with) */
-	if (record->xl_info & XLR_BKP_BLOCK_1)
-		return;
-
-	buffer = XLogReadBuffer(xldata->node, xldata->blkno, false);
-	if (!BufferIsValid(buffer))
-		return;
-
-	page = (Page) BufferGetPage(buffer);
-	GistPageSetDeleted(page);
-
-	PageSetLSN(page, lsn);
-	PageSetTLI(page, ThisTimeLineID);
-	MarkBufferDirty(buffer);
-	UnlockReleaseBuffer(buffer);
-}
-
-static void
 decodePageSplitRecord(PageSplitRecord *decoded, XLogRecord *record)
 {
 	char	   *begin = XLogRecGetData(record),
@@ -321,6 +300,9 @@ gistRedoPageSplitRecord(XLogRecPtr lsn, XLogRecord *record)
 	int			i;
 	int			flags;
 
+	/* Backup blocks are not used in split records */
+	Assert(!(record->xl_info & XLR_BKP_BLOCK_MASK));
+
 	decodePageSplitRecord(&xlrec, record);
 	flags = xlrec.data->origleaf ? F_LEAF : 0;
 
@@ -359,6 +341,9 @@ gistRedoCreateIndex(XLogRecPtr lsn, XLogRecord *record)
 	Buffer		buffer;
 	Page		page;
 
+	/* Backup blocks are not used in create_index records */
+	Assert(!(record->xl_info & XLR_BKP_BLOCK_MASK));
+
 	buffer = XLogReadBuffer(*node, GIST_ROOT_BLKNO, true);
 	Assert(BufferIsValid(buffer));
 	page = (Page) BufferGetPage(buffer);
@@ -378,6 +363,9 @@ gistRedoCompleteInsert(XLogRecPtr lsn, XLogRecord *record)
 	char	   *begin = XLogRecGetData(record),
 			   *ptr;
 	gistxlogInsertComplete *xlrec;
+
+	/* Backup blocks are not used in insert_complete records */
+	Assert(!(record->xl_info & XLR_BKP_BLOCK_MASK));
 
 	xlrec = (gistxlogInsertComplete *) begin;
 
@@ -402,16 +390,11 @@ gist_redo(XLogRecPtr lsn, XLogRecord *record)
 	 * tuples outside VACUUM, we'll need to handle that here.
 	 */
 
-	RestoreBkpBlocks(lsn, record, false);
-
 	oldCxt = MemoryContextSwitchTo(opCtx);
 	switch (info)
 	{
 		case XLOG_GIST_PAGE_UPDATE:
 			gistRedoPageUpdateRecord(lsn, record, false);
-			break;
-		case XLOG_GIST_PAGE_DELETE:
-			gistRedoPageDeleteRecord(lsn, record);
 			break;
 		case XLOG_GIST_NEW_ROOT:
 			gistRedoPageUpdateRecord(lsn, record, true);
@@ -452,14 +435,6 @@ out_gistxlogPageUpdate(StringInfo buf, gistxlogPageUpdate *xlrec)
 }
 
 static void
-out_gistxlogPageDelete(StringInfo buf, gistxlogPageDelete *xlrec)
-{
-	appendStringInfo(buf, "page_delete: rel %u/%u/%u; blkno %u",
-				xlrec->node.spcNode, xlrec->node.dbNode, xlrec->node.relNode,
-					 xlrec->blkno);
-}
-
-static void
 out_gistxlogPageSplit(StringInfo buf, gistxlogPageSplit *xlrec)
 {
 	appendStringInfo(buf, "page_split: ");
@@ -478,9 +453,6 @@ gist_desc(StringInfo buf, uint8 xl_info, char *rec)
 		case XLOG_GIST_PAGE_UPDATE:
 			appendStringInfo(buf, "page_update: ");
 			out_gistxlogPageUpdate(buf, (gistxlogPageUpdate *) rec);
-			break;
-		case XLOG_GIST_PAGE_DELETE:
-			out_gistxlogPageDelete(buf, (gistxlogPageDelete *) rec);
 			break;
 		case XLOG_GIST_NEW_ROOT:
 			appendStringInfo(buf, "new_root: ");
