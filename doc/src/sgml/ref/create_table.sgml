@@ -1453,6 +1453,7 @@ CREATE TABLE employees OF employee_type (
   <simplelist type="inline">
    <member><xref linkend="sql-altertable"></member>
    <member><xref linkend="sql-droptable"></member>
+   <member><xref linkend="sql-createtableas"></member>
    <member><xref linkend="sql-createtablespace"></member>
    <member><xref linkend="sql-createtype"></member>
   </simplelist>
