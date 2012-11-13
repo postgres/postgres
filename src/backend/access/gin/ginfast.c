@@ -290,7 +290,7 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
 		if (metadata->head == InvalidBlockNumber)
 		{
 			/*
-			 * Main list is empty, so just copy sublist into main list
+			 * Main list is empty, so just insert sublist as main list
 			 */
 			START_CRIT_SECTION();
 
@@ -312,6 +312,14 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
 			buffer = ReadBuffer(index, metadata->tail);
 			LockBuffer(buffer, GIN_EXCLUSIVE);
 			page = BufferGetPage(buffer);
+
+			rdata[0].next = rdata + 1;
+
+			rdata[1].buffer = buffer;
+			rdata[1].buffer_std = true;
+			rdata[1].data = NULL;
+			rdata[1].len = 0;
+			rdata[1].next = NULL;
 
 			Assert(GinPageGetOpaque(page)->rightlink == InvalidBlockNumber);
 

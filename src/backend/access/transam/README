@@ -438,8 +438,9 @@ critical section.)
 4. Mark the shared buffer(s) as dirty with MarkBufferDirty().  (This must
 happen before the WAL record is inserted; see notes in SyncOneBuffer().)
 
-5. Build a WAL log record and pass it to XLogInsert(); then update the page's
-LSN and TLI using the returned XLOG location.  For instance,
+5. If the relation requires WAL-logging, build a WAL log record and pass it
+to XLogInsert(); then update the page's LSN and TLI using the returned XLOG
+location.  For instance,
 
 		recptr = XLogInsert(rmgr_id, info, rdata);
 
@@ -466,9 +467,9 @@ which buffers were handled that way --- otherwise they may be misled about
 what the XLOG record actually contains.  XLOG records that describe multi-page
 changes therefore require some care to design: you must be certain that you
 know what data is indicated by each "BKP" bit.  An example of the trickiness
-is that in a HEAP_UPDATE record, BKP(1) normally is associated with the source
-page and BKP(2) is associated with the destination page --- but if these are
-the same page, only BKP(1) would have been set.
+is that in a HEAP_UPDATE record, BKP(0) normally is associated with the source
+page and BKP(1) is associated with the destination page --- but if these are
+the same page, only BKP(0) would have been set.
 
 For this reason as well as the risk of deadlocking on buffer locks, it's best
 to design WAL records so that they reflect small atomic actions involving just
@@ -497,12 +498,19 @@ incrementally update the page, the rdata array *must* mention the buffer
 ID at least once; otherwise there is no defense against torn-page problems.
 The standard replay-routine pattern for this case is
 
-	if (record->xl_info & XLR_BKP_BLOCK_n)
-		<< do nothing, page was rewritten from logged copy >>;
+	if (record->xl_info & XLR_BKP_BLOCK(N))
+	{
+		/* apply the change from the full-page image */
+		(void) RestoreBackupBlock(lsn, record, N, false, false);
+		return;
+	}
 
 	buffer = XLogReadBuffer(rnode, blkno, false);
 	if (!BufferIsValid(buffer))
-		<< do nothing, page has been deleted >>;
+	{
+		/* page has been deleted, so we need do nothing */
+		return;
+	}
 	page = (Page) BufferGetPage(buffer);
 
 	if (XLByteLE(lsn, PageGetLSN(page)))
@@ -520,12 +528,41 @@ The standard replay-routine pattern for this case is
 	UnlockReleaseBuffer(buffer);
 
 As noted above, for a multi-page update you need to be able to determine
-which XLR_BKP_BLOCK_n flag applies to each page.  If a WAL record reflects
+which XLR_BKP_BLOCK(N) flag applies to each page.  If a WAL record reflects
 a combination of fully-rewritable and incremental updates, then the rewritable
-pages don't count for the XLR_BKP_BLOCK_n numbering.  (XLR_BKP_BLOCK_n is
-associated with the n'th distinct buffer ID seen in the "rdata" array, and
+pages don't count for the XLR_BKP_BLOCK(N) numbering.  (XLR_BKP_BLOCK(N) is
+associated with the N'th distinct buffer ID seen in the "rdata" array, and
 per the above discussion, fully-rewritable buffers shouldn't be mentioned in
 "rdata".)
+
+When replaying a WAL record that describes changes on multiple pages, you
+must be careful to lock the pages properly to prevent concurrent Hot Standby
+queries from seeing an inconsistent state.  If this requires that two
+or more buffer locks be held concurrently, the coding pattern shown above
+is too simplistic, since it assumes the routine can exit as soon as it's
+known the current page requires no modification.  Instead, you might have
+something like
+
+	if (record->xl_info & XLR_BKP_BLOCK(0))
+	{
+		/* apply the change from the full-page image */
+		buffer0 = RestoreBackupBlock(lsn, record, 0, false, true);
+	}
+	else
+	{
+		buffer0 = XLogReadBuffer(rnode, blkno, false);
+		if (BufferIsValid(buffer0))
+		{
+			... apply the change if not already done ...
+			MarkBufferDirty(buffer0);
+		}
+	}
+
+	... similarly apply the changes for remaining pages ...
+
+	/* and now we can release the lock on the first page */
+	if (BufferIsValid(buffer0))
+		UnlockReleaseBuffer(buffer0);
 
 Due to all these constraints, complex changes (such as a multilevel index
 insertion) normally need to be described by a series of atomic-action WAL
