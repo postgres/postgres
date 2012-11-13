@@ -255,8 +255,12 @@ postgres.xml: $(srcdir)/postgres.sgml $(ALMOSTALLSGML)
 	rm postgres.xmltmp
 # ' hello Emacs
 
-xslthtml: stylesheet.xsl postgres.xml
+xslthtml: xslthtml-stamp
+
+xslthtml-stamp: stylesheet.xsl postgres.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) $(XSLTPROC_HTML_FLAGS) $^
+	cp $(srcdir)/stylesheet.css html/
+	touch $@
 
 htmlhelp: stylesheet-hh.xsl postgres.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) $^
