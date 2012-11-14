@@ -1095,8 +1095,12 @@ int4mod(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	/* SELECT ((-2147483648)::int4) % (-1); causes a floating point exception */
-	if (arg1 == INT_MIN && arg2 == -1)
+	/*
+	 * Some machines throw a floating-point exception for INT_MIN % -1, which
+	 * is a bit silly since the correct answer is perfectly well-defined,
+	 * namely zero.
+	 */
+	if (arg2 == -1)
 		PG_RETURN_INT32(0);
 
 	/* No overflow is possible */
@@ -1118,6 +1122,15 @@ int2mod(PG_FUNCTION_ARGS)
 		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
 		PG_RETURN_NULL();
 	}
+
+	/*
+	 * Some machines throw a floating-point exception for INT_MIN % -1, which
+	 * is a bit silly since the correct answer is perfectly well-defined,
+	 * namely zero.  (It's not clear this ever happens when dealing with
+	 * int16, but we might as well have the test for safety.)
+	 */
+	if (arg2 == -1)
+		PG_RETURN_INT16(0);
 
 	/* No overflow is possible */
 
