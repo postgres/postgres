@@ -649,6 +649,14 @@ int8mod(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
+	/*
+	 * Some machines throw a floating-point exception for INT64_MIN % -1,
+	 * which is a bit silly since the correct answer is perfectly
+	 * well-defined, namely zero.
+	 */
+	if (arg2 == -1)
+		PG_RETURN_INT64(0);
+
 	/* No overflow is possible */
 
 	PG_RETURN_INT64(arg1 % arg2);
