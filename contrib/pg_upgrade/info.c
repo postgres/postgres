@@ -18,6 +18,7 @@ static void create_rel_filename_map(const char *old_data, const char *new_data,
 						const DbInfo *old_db, const DbInfo *new_db,
 						const RelInfo *old_rel, const RelInfo *new_rel,
 						FileNameMap *map);
+static void free_db_and_rel_infos(DbInfoArr *db_arr);
 static void get_db_infos(ClusterInfo *cluster);
 static void get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo);
 static void free_rel_infos(RelInfoArr *rel_arr);
@@ -370,7 +371,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 }
 
 
-void
+static void
 free_db_and_rel_infos(DbInfoArr *db_arr)
 {
 	int			dbnum;
