@@ -221,61 +221,6 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
 #endif
 
 
-/*
- * load_directory()
- *
- * Read all the file names in the specified directory, and return them as
- * an array of "char *" pointers.  The array address is returned in
- * *namelist, and the function result is the count of file names.
- *
- * To free the result data, free each (char *) array member, then free the
- * namelist array itself.
- */
-int
-load_directory(const char *dirname, char ***namelist)
-{
-	DIR		   *dirdesc;
-	struct dirent *direntry;
-	int			count = 0;
-	int			allocsize = 64;		/* initial array size */
-
-	*namelist = (char **) pg_malloc(allocsize * sizeof(char *));
-
-	if ((dirdesc = opendir(dirname)) == NULL)
-		pg_log(PG_FATAL, "could not open directory \"%s\": %s\n",
-			   dirname, getErrorText(errno));
-
-	while (errno = 0, (direntry = readdir(dirdesc)) != NULL)
-	{
-		if (count >= allocsize)
-		{
-			allocsize *= 2;
-			*namelist = (char **)
-						pg_realloc(*namelist, allocsize * sizeof(char *));
-		}
-
-		(*namelist)[count++] = pg_strdup(direntry->d_name);
-	}
-
-#ifdef WIN32
-	/*
-	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but not in
-	 * released version
-	 */
-	if (GetLastError() == ERROR_NO_MORE_FILES)
-		errno = 0;
-#endif
-
-	if (errno)
-		pg_log(PG_FATAL, "could not read directory \"%s\": %s\n",
-			   dirname, getErrorText(errno));
-
-	closedir(dirdesc);
-
-	return count;
-}
-
-
 void
 check_hard_link(void)
 {

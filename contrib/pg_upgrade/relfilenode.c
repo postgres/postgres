@@ -17,9 +17,8 @@
 
 static void transfer_single_new_db(pageCnvCtx *pageConverter,
 					   FileNameMap *maps, int size);
-static void transfer_relfile(pageCnvCtx *pageConverter,
-				 const char *fromfile, const char *tofile,
-				 const char *nspname, const char *relname);
+static void transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
+							 const char *suffix);
 
 
 /*
@@ -131,55 +130,21 @@ static void
 transfer_single_new_db(pageCnvCtx *pageConverter,
 					   FileNameMap *maps, int size)
 {
-	char		old_dir[MAXPGPATH];
-	char		file_pattern[MAXPGPATH];
-	char		**namelist = NULL;
-	int			numFiles = 0;
 	int			mapnum;
-	int			fileno;
-	bool		vm_crashsafe_change = false;
-
-	old_dir[0] = '\0';
-
-	/* Do not copy non-crashsafe vm files for binaries that assume crashsafety */
+	bool		vm_crashsafe_match = true;
+	
+	/*
+	 * Do the old and new cluster disagree on the crash-safetiness of the vm
+     * files?  If so, do not copy them.
+     */
 	if (old_cluster.controldata.cat_ver < VISIBILITY_MAP_CRASHSAFE_CAT_VER &&
 		new_cluster.controldata.cat_ver >= VISIBILITY_MAP_CRASHSAFE_CAT_VER)
-		vm_crashsafe_change = true;
+		vm_crashsafe_match = false;
 
 	for (mapnum = 0; mapnum < size; mapnum++)
 	{
-		char		old_file[MAXPGPATH];
-		char		new_file[MAXPGPATH];
-
-		/* Changed tablespaces?  Need a new directory scan? */
-		if (strcmp(maps[mapnum].old_dir, old_dir) != 0)
-		{
-			if (numFiles > 0)
-			{
-				for (fileno = 0; fileno < numFiles; fileno++)
-					pg_free(namelist[fileno]);
-				pg_free(namelist);
-			}
-
-			snprintf(old_dir, sizeof(old_dir), "%s", maps[mapnum].old_dir);
-			numFiles = load_directory(old_dir, &namelist);
-		}
-
-		/* Copying files might take some time, so give feedback. */
-
-		snprintf(old_file, sizeof(old_file), "%s/%u", maps[mapnum].old_dir,
-				 maps[mapnum].old_relfilenode);
-		snprintf(new_file, sizeof(new_file), "%s/%u", maps[mapnum].new_dir,
-				 maps[mapnum].new_relfilenode);
-		pg_log(PG_REPORT, OVERWRITE_MESSAGE, old_file);
-
-		/*
-		 * Copy/link the relation's primary file (segment 0 of main fork)
-		 * to the new cluster
-		 */
-		unlink(new_file);
-		transfer_relfile(pageConverter, old_file, new_file,
-						 maps[mapnum].nspname, maps[mapnum].relname);
+		/* transfer primary file */
+		transfer_relfile(pageConverter, &maps[mapnum], "");
 
 		/* fsm/vm files added in PG 8.4 */
 		if (GET_MAJOR_VERSION(old_cluster.major_version) >= 804)
@@ -187,66 +152,10 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 			/*
 			 * Copy/link any fsm and vm files, if they exist
 			 */
-			snprintf(file_pattern, sizeof(file_pattern), "%u_",
-					 maps[mapnum].old_relfilenode);
-
-			for (fileno = 0; fileno < numFiles; fileno++)
-			{
-				char	   *vm_offset = strstr(namelist[fileno], "_vm");
-				bool		is_vm_file = false;
-
-				/* Is a visibility map file? (name ends with _vm) */
-				if (vm_offset && strlen(vm_offset) == strlen("_vm"))
-					is_vm_file = true;
-
-				if (strncmp(namelist[fileno], file_pattern,
-							strlen(file_pattern)) == 0 &&
-					(!is_vm_file || !vm_crashsafe_change))
-				{
-					snprintf(old_file, sizeof(old_file), "%s/%s", maps[mapnum].old_dir,
-							 namelist[fileno]);
-					snprintf(new_file, sizeof(new_file), "%s/%u%s", maps[mapnum].new_dir,
-							 maps[mapnum].new_relfilenode, strchr(namelist[fileno], '_'));
-
-					unlink(new_file);
-					transfer_relfile(pageConverter, old_file, new_file,
-								 maps[mapnum].nspname, maps[mapnum].relname);
-				}
-			}
+			transfer_relfile(pageConverter, &maps[mapnum], "_fsm");
+			if (vm_crashsafe_match)
+				transfer_relfile(pageConverter, &maps[mapnum], "_vm");
 		}
-
-		/*
-		 * Now copy/link any related segments as well. Remember, PG breaks
-		 * large files into 1GB segments, the first segment has no extension,
-		 * subsequent segments are named relfilenode.1, relfilenode.2,
-		 * relfilenode.3, ...  'fsm' and 'vm' files use underscores so are not
-		 * copied.
-		 */
-		snprintf(file_pattern, sizeof(file_pattern), "%u.",
-				 maps[mapnum].old_relfilenode);
-
-		for (fileno = 0; fileno < numFiles; fileno++)
-		{
-			if (strncmp(namelist[fileno], file_pattern,
-						strlen(file_pattern)) == 0)
-			{
-				snprintf(old_file, sizeof(old_file), "%s/%s", maps[mapnum].old_dir,
-						 namelist[fileno]);
-				snprintf(new_file, sizeof(new_file), "%s/%u%s", maps[mapnum].new_dir,
-						 maps[mapnum].new_relfilenode, strchr(namelist[fileno], '.'));
-
-				unlink(new_file);
-				transfer_relfile(pageConverter, old_file, new_file,
-								 maps[mapnum].nspname, maps[mapnum].relname);
-			}
-		}
-	}
-
-	if (numFiles > 0)
-	{
-		for (fileno = 0; fileno < numFiles; fileno++)
-			pg_free(namelist[fileno]);
-		pg_free(namelist);
 	}
 }
 
@@ -257,31 +166,78 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
  * Copy or link file from old cluster to new one.
  */
 static void
-transfer_relfile(pageCnvCtx *pageConverter, const char *old_file,
-			  const char *new_file, const char *nspname, const char *relname)
+transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
+				 const char *type_suffix)
 {
 	const char *msg;
-
-	if ((user_opts.transfer_mode == TRANSFER_MODE_LINK) && (pageConverter != NULL))
-		pg_log(PG_FATAL, "This upgrade requires page-by-page conversion, "
-			   "you must use copy mode instead of link mode.\n");
-
-	if (user_opts.transfer_mode == TRANSFER_MODE_COPY)
+	char		old_file[MAXPGPATH];
+	char		new_file[MAXPGPATH];
+	int			fd;
+	int			segno;
+	char		extent_suffix[65];
+	
+	/*
+	 * Now copy/link any related segments as well. Remember, PG breaks
+	 * large files into 1GB segments, the first segment has no extension,
+	 * subsequent segments are named relfilenode.1, relfilenode.2,
+	 * relfilenode.3.
+	 * copied.
+	 */
+	for (segno = 0;; segno++)
 	{
-		pg_log(PG_VERBOSE, "copying \"%s\" to \"%s\"\n", old_file, new_file);
+		if (segno == 0)
+			extent_suffix[0] = '\0';
+		else
+			snprintf(extent_suffix, sizeof(extent_suffix), ".%d", segno);
 
-		if ((msg = copyAndUpdateFile(pageConverter, old_file, new_file, true)) != NULL)
-			pg_log(PG_FATAL, "error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
-				   nspname, relname, old_file, new_file, msg);
-	}
-	else
-	{
-		pg_log(PG_VERBOSE, "linking \"%s\" to \"%s\"\n", old_file, new_file);
+		snprintf(old_file, sizeof(old_file), "%s/%u%s%s", map->old_dir,
+				 map->old_relfilenode, type_suffix, extent_suffix);
+		snprintf(new_file, sizeof(new_file), "%s/%u%s%s", map->new_dir,
+				 map->new_relfilenode, type_suffix, extent_suffix);
+	
+		/* Is it an extent, fsm, or vm file? */
+		if (type_suffix[0] != '\0' || segno != 0)
+		{
+			/* Did file open fail? */
+			if ((fd = open(old_file, O_RDONLY)) == -1)
+			{
+				/* File does not exist?  That's OK, just return */
+				if (errno == ENOENT)
+					return;
+				else
+					pg_log(PG_FATAL, "non-existant file error while copying relation \"%s.%s\" (\"%s\" to \"%s\")\n",
+						   map->nspname, map->relname, old_file, new_file);
+			}
+			close(fd);
+		}
 
-		if ((msg = linkAndUpdateFile(pageConverter, old_file, new_file)) != NULL)
-			pg_log(PG_FATAL,
-				   "error while creating link for relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
-				   nspname, relname, old_file, new_file, msg);
-	}
+		unlink(new_file);
+	
+		/* Copying files might take some time, so give feedback. */
+		pg_log(PG_REPORT, OVERWRITE_MESSAGE, old_file);
+	
+		if ((user_opts.transfer_mode == TRANSFER_MODE_LINK) && (pageConverter != NULL))
+			pg_log(PG_FATAL, "This upgrade requires page-by-page conversion, "
+				   "you must use copy mode instead of link mode.\n");
+	
+		if (user_opts.transfer_mode == TRANSFER_MODE_COPY)
+		{
+			pg_log(PG_VERBOSE, "copying \"%s\" to \"%s\"\n", old_file, new_file);
+	
+			if ((msg = copyAndUpdateFile(pageConverter, old_file, new_file, true)) != NULL)
+				pg_log(PG_FATAL, "error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
+					   map->nspname, map->relname, old_file, new_file, msg);
+		}
+		else
+		{
+			pg_log(PG_VERBOSE, "linking \"%s\" to \"%s\"\n", old_file, new_file);
+	
+			if ((msg = linkAndUpdateFile(pageConverter, old_file, new_file)) != NULL)
+				pg_log(PG_FATAL,
+					   "error while creating link for relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
+					   map->nspname, map->relname, old_file, new_file, msg);
+		}
+   }
+
 	return;
 }

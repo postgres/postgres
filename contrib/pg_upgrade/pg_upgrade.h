@@ -7,7 +7,6 @@
 
 #include <unistd.h>
 #include <assert.h>
-#include <dirent.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 
@@ -366,7 +365,6 @@ const char *setupPageConverter(pageCnvCtx **result);
 typedef void *pageCnvCtx;
 #endif
 
-int			load_directory(const char *dirname, char ***namelist);
 const char *copyAndUpdateFile(pageCnvCtx *pageConverter, const char *src,
 				  const char *dst, bool force);
 const char *linkAndUpdateFile(pageCnvCtx *pageConverter, const char *src,
