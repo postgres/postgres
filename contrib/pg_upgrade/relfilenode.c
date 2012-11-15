@@ -199,7 +199,7 @@ transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
 		if (type_suffix[0] != '\0' || segno != 0)
 		{
 			/* Did file open fail? */
-			if ((fd = open(old_file, O_RDONLY)) == -1)
+			if ((fd = open(old_file, O_RDONLY, 0)) == -1)
 			{
 				/* File does not exist?  That's OK, just return */
 				if (errno == ENOENT)
