@@ -475,9 +475,9 @@
 
        <para>
         Presently, the commands emitted for
-        <option>--disable-triggers</> must be done as superuser.  So, you
-        should also specify a superuser name with <option>-S</>, or
-        preferably run <application>pg_restore</application> as a
+        <option>--disable-triggers</> must be done as superuser.  So you
+        should also specify a superuser name with <option>-S</> or,
+        preferably, run <application>pg_restore</application> as a
         <productname>PostgreSQL</> superuser.
        </para>
       </listitem>
