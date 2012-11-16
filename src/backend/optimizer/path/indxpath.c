@@ -2589,12 +2589,19 @@ match_clause_to_ordering_op(IndexOptInfo *index,
 void
 check_partial_indexes(PlannerInfo *root, RelOptInfo *rel)
 {
-	List	   *restrictinfo_list = rel->baserestrictinfo;
-	ListCell   *ilist;
+	List	   *clauselist;
+	bool		have_partial;
+	Relids		otherrels;
+	ListCell   *lc;
 
-	foreach(ilist, rel->indexlist)
+	/*
+	 * Frequently, there will be no partial indexes, so first check to make
+	 * sure there's something useful to do here.
+	 */
+	have_partial = false;
+	foreach(lc, rel->indexlist)
 	{
-		IndexOptInfo *index = (IndexOptInfo *) lfirst(ilist);
+		IndexOptInfo *index = (IndexOptInfo *) lfirst(lc);
 
 		if (index->indpred == NIL)
 			continue;			/* ignore non-partial indexes */
@@ -2602,8 +2609,71 @@ check_partial_indexes(PlannerInfo *root, RelOptInfo *rel)
 		if (index->predOK)
 			continue;			/* don't repeat work if already proven OK */
 
-		index->predOK = predicate_implied_by(index->indpred,
-											 restrictinfo_list);
+		have_partial = true;
+		break;
+	}
+	if (!have_partial)
+		return;
+
+	/*
+	 * Construct a list of clauses that we can assume true for the purpose
+	 * of proving the index(es) usable.  Restriction clauses for the rel are
+	 * always usable, and so are any join clauses that are "movable to" this
+	 * rel.  Also, we can consider any EC-derivable join clauses (which must
+	 * be "movable to" this rel, by definition).
+	 */
+	clauselist = list_copy(rel->baserestrictinfo);
+
+	/* Scan the rel's join clauses */
+	foreach(lc, rel->joininfo)
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+
+		/* Check if clause can be moved to this rel */
+		if (!join_clause_is_movable_to(rinfo, rel->relid))
+			continue;
+
+		clauselist = lappend(clauselist, rinfo);
+	}
+
+	/*
+	 * Add on any equivalence-derivable join clauses.  Computing the correct
+	 * relid sets for generate_join_implied_equalities is slightly tricky
+	 * because the rel could be a child rel rather than a true baserel, and
+	 * in that case we must remove its parent's relid from all_baserels.
+	 */
+	if (rel->reloptkind == RELOPT_OTHER_MEMBER_REL)
+	{
+		/* Lookup parent->child translation data */
+		AppendRelInfo *appinfo = find_childrel_appendrelinfo(root, rel);
+
+		otherrels = bms_difference(root->all_baserels,
+								   bms_make_singleton(appinfo->parent_relid));
+	}
+	else
+		otherrels = bms_difference(root->all_baserels, rel->relids);
+
+	if (!bms_is_empty(otherrels))
+		clauselist =
+			list_concat(clauselist,
+						generate_join_implied_equalities(root,
+														 bms_union(rel->relids,
+																   otherrels),
+														 otherrels,
+														 rel));
+
+	/* Now try to prove each index predicate true */
+	foreach(lc, rel->indexlist)
+	{
+		IndexOptInfo *index = (IndexOptInfo *) lfirst(lc);
+
+		if (index->indpred == NIL)
+			continue;			/* ignore non-partial indexes */
+
+		if (index->predOK)
+			continue;			/* don't repeat work if already proven OK */
+
+		index->predOK = predicate_implied_by(index->indpred, clauselist);
 	}
 }
 
