@@ -410,6 +410,7 @@ if test "$GCC" = yes -a "$ICC" = no; then
   # These work in some but not all gcc versions
   PGAC_PROG_CC_CFLAGS_OPT([-Wdeclaration-after-statement])
   PGAC_PROG_CC_CFLAGS_OPT([-Wendif-labels])
+  PGAC_PROG_CC_CFLAGS_OPT([-Wlogical-op])
   PGAC_PROG_CC_CFLAGS_OPT([-Wmissing-format-attribute])
   # This was included in -Wall/-Wformat in older GCC versions
   PGAC_PROG_CC_CFLAGS_OPT([-Wformat-security])
