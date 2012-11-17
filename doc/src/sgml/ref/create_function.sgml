@@ -684,7 +684,7 @@ SELECT * FROM dup(42);
     temporary-table schema, which is searched first by default, and
     is normally writable by anyone.  A secure arrangement can be had
     by forcing the temporary schema to be searched last.  To do this,
-    write <literal>pg_temp</> as the last entry in <varname>search_path</>.
+    write <literal>pg_temp</><indexterm><primary>pg_temp</><secondary>securing functions</></> as the last entry in <varname>search_path</>.
     This function illustrates safe usage:
    </para>
 
