@@ -20,6 +20,7 @@
 #include "postgres.h"
 
 #include <fcntl.h>
+#include <limits.h>
 #include <signal.h>
 #include <unistd.h>
 
@@ -130,7 +131,7 @@ WaitLatchOrSocket(volatile Latch *latch, int wakeEvents, pgsocket sock,
 	if (wakeEvents & WL_TIMEOUT)
 	{
 		INSTR_TIME_SET_CURRENT(start_time);
-		Assert(timeout >= 0);
+		Assert(timeout >= 0 && timeout <= INT_MAX);
 		cur_timeout = timeout;
 	}
 	else
