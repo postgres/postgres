@@ -24,6 +24,7 @@
 #include "postgres.h"
 
 #include <fcntl.h>
+#include <limits.h>
 #include <signal.h>
 #include <time.h>
 #include <unistd.h>
@@ -416,11 +417,23 @@ SysLoggerMain(int argc, char *argv[])
 		 * above is still close enough.  Note we can't make this calculation
 		 * until after calling logfile_rotate(), since it will advance
 		 * next_rotation_time.
+		 *
+		 * Also note that we need to beware of overflow in calculation of the
+		 * timeout: with large settings of Log_RotationAge, next_rotation_time
+		 * could be more than INT_MAX msec in the future.  In that case we'll
+		 * wait no more than INT_MAX msec, and try again.
 		 */
 		if (Log_RotationAge > 0 && !rotation_disabled)
 		{
-			if (now < next_rotation_time)
-				cur_timeout = (next_rotation_time - now) * 1000L;		/* msec */
+			pg_time_t	delay;
+
+			delay = next_rotation_time - now;
+			if (delay > 0)
+			{
+				if (delay > INT_MAX / 1000)
+					delay = INT_MAX / 1000;
+				cur_timeout = delay * 1000L;	/* msec */
+			}
 			else
 				cur_timeout = 0;
 			cur_flags = WL_TIMEOUT;
