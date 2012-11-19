@@ -64,7 +64,7 @@ readTimeLineHistory(TimeLineID targetTLI)
 	if (InArchiveRecovery)
 	{
 		TLHistoryFileName(histfname, targetTLI);
-		RestoreArchivedFile(path, histfname, "RECOVERYHISTORY", 0);
+		RestoreArchivedFile(path, histfname, "RECOVERYHISTORY", 0, false);
 	}
 	else
 		TLHistoryFilePath(path, targetTLI);
@@ -153,7 +153,7 @@ existsTimeLineHistory(TimeLineID probeTLI)
 	if (InArchiveRecovery)
 	{
 		TLHistoryFileName(histfname, probeTLI);
-		RestoreArchivedFile(path, histfname, "RECOVERYHISTORY", 0);
+		RestoreArchivedFile(path, histfname, "RECOVERYHISTORY", 0, false);
 	}
 	else
 		TLHistoryFilePath(path, probeTLI);
@@ -257,7 +257,7 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 	if (InArchiveRecovery)
 	{
 		TLHistoryFileName(histfname, parentTLI);
-		RestoreArchivedFile(path, histfname, "RECOVERYHISTORY", 0);
+		RestoreArchivedFile(path, histfname, "RECOVERYHISTORY", 0, false);
 	}
 	else
 		TLHistoryFilePath(path, parentTLI);

@@ -2588,7 +2588,8 @@ XLogFileRead(XLogSegNo segno, int emode, TimeLineID tli,
 
 			restoredFromArchive = RestoreArchivedFile(path, xlogfname,
 													  "RECOVERYXLOG",
-													  XLogSegSize);
+													  XLogSegSize,
+													  InRedo);
 			if (!restoredFromArchive)
 				return -1;
 			break;
@@ -9051,33 +9052,16 @@ GetXLogWriteRecPtr(void)
 }
 
 /*
- * Returns the redo pointer of the last restartpoint. This is the oldest
- * point in WAL that we still need, if we have to restart recovery. Returns
- * InvalidXLogRecPtr if we don't reliably know that point yet, that is,
- * before we have started WAL redo.
- *
- * This function only works in the startup process, and only while we are
- * in WAL redo. It's important to not return a value before redo has started,
- * to avoid deleting WAL files that we might still need, but there's no
- * fundamental reason why this couldn't return a valid value after redo has
- * finished, or in other processes. This is enough for the current usage,
- * however.
+ * Returns the redo pointer of the last checkpoint or restartpoint. This is
+ * the oldest point in WAL that we still need, if we have to restart recovery.
  */
 void
 GetOldestRestartPoint(XLogRecPtr *oldrecptr, TimeLineID *oldtli)
 {
-	if (InRedo)
-	{
-		LWLockAcquire(ControlFileLock, LW_SHARED);
-		*oldrecptr = ControlFile->checkPointCopy.redo;
-		*oldtli = ControlFile->checkPointCopy.ThisTimeLineID;
-		LWLockRelease(ControlFileLock);
-	}
-	else
-	{
-		*oldrecptr = InvalidXLogRecPtr;
-		*oldtli = 0;
-	}
+	LWLockAcquire(ControlFileLock, LW_SHARED);
+	*oldrecptr = ControlFile->checkPointCopy.redo;
+	*oldtli = ControlFile->checkPointCopy.ThisTimeLineID;
+	LWLockRelease(ControlFileLock);
 }
 
 /*

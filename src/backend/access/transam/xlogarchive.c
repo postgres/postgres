@@ -41,10 +41,15 @@
  * For fixed-size files, the caller may pass the expected size as an
  * additional crosscheck on successful recovery.  If the file size is not
  * known, set expectedSize = 0.
+ *
+ * When 'cleanupEnabled' is false, refrain from deleting any old WAL segments
+ * in the archive. This is used when fetching the initial checkpoint record,
+ * when we are not yet sure how far back we need the WAL.
  */
 bool
 RestoreArchivedFile(char *path, const char *xlogfname,
-					const char *recovername, off_t expectedSize)
+					const char *recovername, off_t expectedSize,
+					bool cleanupEnabled)
 {
 	char		xlogpath[MAXPGPATH];
 	char		xlogRestoreCmd[MAXPGPATH];
@@ -113,9 +118,10 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	 * replication. All files earlier than this point can be deleted from the
 	 * archive, though there is no requirement to do so.
 	 *
-	 * We initialise this with the filename of an InvalidXLogRecPtr, which
-	 * will prevent the deletion of any WAL files from the archive because of
-	 * the alphabetic sorting property of WAL filenames.
+	 * If cleanup is not enabled, initialise this with the filename of
+	 * InvalidXLogRecPtr, which will prevent the deletion of any WAL files
+	 * from the archive because of the alphabetic sorting property of WAL
+	 * filenames.
 	 *
 	 * Once we have successfully located the redo pointer of the checkpoint
 	 * from which we start recovery we never request a file prior to the redo
@@ -124,9 +130,9 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	 * flags to signify the point when we can begin deleting WAL files from
 	 * the archive.
 	 */
-	GetOldestRestartPoint(&restartRedoPtr, &restartTli);
-	if (!XLogRecPtrIsInvalid(restartRedoPtr))
+	if (cleanupEnabled)
 	{
+		GetOldestRestartPoint(&restartRedoPtr, &restartTli);
 		XLByteToSeg(restartRedoPtr, restartSegNo);
 		XLogFileName(lastRestartPointFname, restartTli, restartSegNo);
 		/* we shouldn't need anything earlier than last restart point */
