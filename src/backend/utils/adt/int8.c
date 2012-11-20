@@ -583,7 +583,8 @@ int8mul(PG_FUNCTION_ARGS)
 #endif
 	{
 		if (arg2 != 0 &&
-			(result / arg2 != arg1 || (arg2 == -1 && arg1 < 0 && result < 0)))
+			((arg2 == -1 && arg1 < 0 && result < 0) ||
+			 result / arg2 != arg1))
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("bigint out of range")));
@@ -607,17 +608,27 @@ int8div(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
+	/*
+	 * INT64_MIN / -1 is problematic, since the result can't be represented on
+	 * a two's-complement machine.  Some machines produce INT64_MIN, some
+	 * produce zero, some throw an exception.  We can dodge the problem by
+	 * recognizing that division by -1 is the same as negation.
+	 */
+	if (arg2 == -1)
+	{
+		result = -arg1;
+		/* overflow check (needed for INT64_MIN) */
+		if (arg1 != 0 && SAMESIGN(result, arg1))
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("bigint out of range")));
+		PG_RETURN_INT64(result);
+	}
+
+	/* No overflow is possible */
+
 	result = arg1 / arg2;
 
-	/*
-	 * Overflow check.	The only possible overflow case is for arg1 =
-	 * INT64_MIN, arg2 = -1, where the correct result is -INT64_MIN, which
-	 * can't be represented on a two's-complement machine.
-	 */
-	if (arg2 == -1 && arg1 < 0 && result < 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("bigint out of range")));
 	PG_RETURN_INT64(result);
 }
 
@@ -846,17 +857,27 @@ int84div(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
+	/*
+	 * INT64_MIN / -1 is problematic, since the result can't be represented on
+	 * a two's-complement machine.  Some machines produce INT64_MIN, some
+	 * produce zero, some throw an exception.  We can dodge the problem by
+	 * recognizing that division by -1 is the same as negation.
+	 */
+	if (arg2 == -1)
+	{
+		result = -arg1;
+		/* overflow check (needed for INT64_MIN) */
+		if (arg1 != 0 && SAMESIGN(result, arg1))
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("bigint out of range")));
+		PG_RETURN_INT64(result);
+	}
+
+	/* No overflow is possible */
+
 	result = arg1 / arg2;
 
-	/*
-	 * Overflow check.	The only possible overflow case is for arg1 =
-	 * INT64_MIN, arg2 = -1, where the correct result is -INT64_MIN, which
-	 * can't be represented on a two's-complement machine.
-	 */
-	if (arg2 == -1 && arg1 < 0 && result < 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("bigint out of range")));
 	PG_RETURN_INT64(result);
 }
 

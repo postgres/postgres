@@ -317,3 +317,24 @@ select '9223372036854775807'::int8;
 
 select '9223372036854775808'::int8;
 ERROR:  value "9223372036854775808" is out of range for type bigint
+-- check sane handling of INT64_MIN overflow cases
+SELECT (-9223372036854775808)::int8 * (-1)::int8;
+ERROR:  bigint out of range
+SELECT (-9223372036854775808)::int8 / (-1)::int8;
+ERROR:  bigint out of range
+SELECT (-9223372036854775808)::int8 % (-1)::int8;
+ ?column? 
+----------
+        0
+(1 row)
+
+SELECT (-9223372036854775808)::int8 * (-1)::int4;
+ERROR:  bigint out of range
+SELECT (-9223372036854775808)::int8 / (-1)::int4;
+ERROR:  bigint out of range
+SELECT (-9223372036854775808)::int8 % (-1)::int4;
+ ?column? 
+----------
+        0
+(1 row)
+

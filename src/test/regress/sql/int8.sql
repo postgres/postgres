@@ -69,3 +69,11 @@ select '-9223372036854775808'::int8;
 select '-9223372036854775809'::int8;
 select '9223372036854775807'::int8;
 select '9223372036854775808'::int8;
+
+-- check sane handling of INT64_MIN overflow cases
+SELECT (-9223372036854775808)::int8 * (-1)::int8;
+SELECT (-9223372036854775808)::int8 / (-1)::int8;
+SELECT (-9223372036854775808)::int8 % (-1)::int8;
+SELECT (-9223372036854775808)::int8 * (-1)::int4;
+SELECT (-9223372036854775808)::int8 / (-1)::int4;
+SELECT (-9223372036854775808)::int8 % (-1)::int4;

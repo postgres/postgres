@@ -671,18 +671,6 @@ int4mul(PG_FUNCTION_ARGS)
 	int32		arg2 = PG_GETARG_INT32(1);
 	int32		result;
 
-#ifdef WIN32
-
-	/*
-	 * Win32 doesn't throw a catchable exception for SELECT -2147483648 *
-	 * (-1);  -- INT_MIN
-	 */
-	if (arg2 == -1 && arg1 == INT_MIN)
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("integer out of range")));
-#endif
-
 	result = arg1 * arg2;
 
 	/*
@@ -699,7 +687,8 @@ int4mul(PG_FUNCTION_ARGS)
 	if (!(arg1 >= (int32) SHRT_MIN && arg1 <= (int32) SHRT_MAX &&
 		  arg2 >= (int32) SHRT_MIN && arg2 <= (int32) SHRT_MAX) &&
 		arg2 != 0 &&
-		(result / arg2 != arg1 || (arg2 == -1 && arg1 < 0 && result < 0)))
+		((arg2 == -1 && arg1 < 0 && result < 0) ||
+		 result / arg2 != arg1))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("integer out of range")));
@@ -722,29 +711,27 @@ int4div(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-#ifdef WIN32
-
 	/*
-	 * Win32 doesn't throw a catchable exception for SELECT -2147483648 /
-	 * (-1); -- INT_MIN
+	 * INT_MIN / -1 is problematic, since the result can't be represented on a
+	 * two's-complement machine.  Some machines produce INT_MIN, some produce
+	 * zero, some throw an exception.  We can dodge the problem by recognizing
+	 * that division by -1 is the same as negation.
 	 */
-	if (arg2 == -1 && arg1 == INT_MIN)
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("integer out of range")));
-#endif
+	if (arg2 == -1)
+	{
+		result = -arg1;
+		/* overflow check (needed for INT_MIN) */
+		if (arg1 != 0 && SAMESIGN(result, arg1))
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("integer out of range")));
+		PG_RETURN_INT32(result);
+	}
+
+	/* No overflow is possible */
 
 	result = arg1 / arg2;
 
-	/*
-	 * Overflow check.	The only possible overflow case is for arg1 = INT_MIN,
-	 * arg2 = -1, where the correct result is -INT_MIN, which can't be
-	 * represented on a two's-complement machine.
-	 */
-	if (arg2 == -1 && arg1 < 0 && result < 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("integer out of range")));
 	PG_RETURN_INT32(result);
 }
 
@@ -866,17 +853,27 @@ int2div(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
+	/*
+	 * SHRT_MIN / -1 is problematic, since the result can't be represented on
+	 * a two's-complement machine.  Some machines produce SHRT_MIN, some
+	 * produce zero, some throw an exception.  We can dodge the problem by
+	 * recognizing that division by -1 is the same as negation.
+	 */
+	if (arg2 == -1)
+	{
+		result = -arg1;
+		/* overflow check (needed for SHRT_MIN) */
+		if (arg1 != 0 && SAMESIGN(result, arg1))
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("smallint out of range")));
+		PG_RETURN_INT16(result);
+	}
+
+	/* No overflow is possible */
+
 	result = arg1 / arg2;
 
-	/*
-	 * Overflow check.	The only possible overflow case is for arg1 =
-	 * SHRT_MIN, arg2 = -1, where the correct result is -SHRT_MIN, which can't
-	 * be represented on a two's-complement machine.
-	 */
-	if (arg2 == -1 && arg1 < 0 && result < 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("smallint out of range")));
 	PG_RETURN_INT16(result);
 }
 
@@ -1054,17 +1051,27 @@ int42div(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
+	/*
+	 * INT_MIN / -1 is problematic, since the result can't be represented on a
+	 * two's-complement machine.  Some machines produce INT_MIN, some produce
+	 * zero, some throw an exception.  We can dodge the problem by recognizing
+	 * that division by -1 is the same as negation.
+	 */
+	if (arg2 == -1)
+	{
+		result = -arg1;
+		/* overflow check (needed for INT_MIN) */
+		if (arg1 != 0 && SAMESIGN(result, arg1))
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("integer out of range")));
+		PG_RETURN_INT32(result);
+	}
+
+	/* No overflow is possible */
+
 	result = arg1 / arg2;
 
-	/*
-	 * Overflow check.	The only possible overflow case is for arg1 = INT_MIN,
-	 * arg2 = -1, where the correct result is -INT_MIN, which can't be
-	 * represented on a two's-complement machine.
-	 */
-	if (arg2 == -1 && arg1 < 0 && result < 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("integer out of range")));
 	PG_RETURN_INT32(result);
 }
 
@@ -1159,6 +1166,14 @@ int42mod(PG_FUNCTION_ARGS)
 		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
 		PG_RETURN_NULL();
 	}
+
+	/*
+	 * Some machines throw a floating-point exception for INT_MIN % -1, which
+	 * is a bit silly since the correct answer is perfectly well-defined,
+	 * namely zero.
+	 */
+	if (arg2 == -1)
+		PG_RETURN_INT32(0);
 
 	/* No overflow is possible */
 
