@@ -86,3 +86,7 @@ SELECT '' AS five, i.f1, i.f1 / int2 '2' AS x FROM INT2_TBL i;
 
 SELECT '' AS five, i.f1, i.f1 / int4 '2' AS x FROM INT2_TBL i;
 
+-- check sane handling of INT16_MIN overflow cases
+SELECT (-32768)::int2 * (-1)::int2;
+SELECT (-32768)::int2 / (-1)::int2;
+SELECT (-32768)::int2 % (-1)::int2;

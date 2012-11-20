@@ -125,3 +125,11 @@ SELECT 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 AS ten;
 SELECT 2 + 2 / 2 AS three;
 
 SELECT (2 + 2) / 2 AS two;
+
+-- check sane handling of INT_MIN overflow cases
+SELECT (-2147483648)::int4 * (-1)::int4;
+SELECT (-2147483648)::int4 / (-1)::int4;
+SELECT (-2147483648)::int4 % (-1)::int4;
+SELECT (-2147483648)::int4 * (-1)::int2;
+SELECT (-2147483648)::int4 / (-1)::int2;
+SELECT (-2147483648)::int4 % (-1)::int2;

@@ -331,3 +331,24 @@ SELECT (2 + 2) / 2 AS two;
    2
 (1 row)
 
+-- check sane handling of INT_MIN overflow cases
+SELECT (-2147483648)::int4 * (-1)::int4;
+ERROR:  integer out of range
+SELECT (-2147483648)::int4 / (-1)::int4;
+ERROR:  integer out of range
+SELECT (-2147483648)::int4 % (-1)::int4;
+ ?column? 
+----------
+        0
+(1 row)
+
+SELECT (-2147483648)::int4 * (-1)::int2;
+ERROR:  integer out of range
+SELECT (-2147483648)::int4 / (-1)::int2;
+ERROR:  integer out of range
+SELECT (-2147483648)::int4 % (-1)::int2;
+ ?column? 
+----------
+        0
+(1 row)
+
