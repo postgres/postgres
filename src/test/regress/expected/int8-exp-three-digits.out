@@ -815,3 +815,34 @@ SELECT ((-1::int8<<63)+1)::text;
  -9223372036854775807
 (1 row)
 
+-- check sane handling of INT64_MIN overflow cases
+SELECT (-9223372036854775808)::int8 * (-1)::int8;
+ERROR:  bigint out of range
+SELECT (-9223372036854775808)::int8 / (-1)::int8;
+ERROR:  bigint out of range
+SELECT (-9223372036854775808)::int8 % (-1)::int8;
+ ?column? 
+----------
+        0
+(1 row)
+
+SELECT (-9223372036854775808)::int8 * (-1)::int4;
+ERROR:  bigint out of range
+SELECT (-9223372036854775808)::int8 / (-1)::int4;
+ERROR:  bigint out of range
+SELECT (-9223372036854775808)::int8 % (-1)::int4;
+ ?column? 
+----------
+        0
+(1 row)
+
+SELECT (-9223372036854775808)::int8 * (-1)::int2;
+ERROR:  bigint out of range
+SELECT (-9223372036854775808)::int8 / (-1)::int2;
+ERROR:  bigint out of range
+SELECT (-9223372036854775808)::int8 % (-1)::int2;
+ ?column? 
+----------
+        0
+(1 row)
+
