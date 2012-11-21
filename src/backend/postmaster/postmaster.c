@@ -2376,6 +2376,18 @@ reaper(SIGNAL_ARGS)
 			StartupPID = 0;
 
 			/*
+			 * Startup process exited in response to a shutdown request (or it
+			 * completed normally regardless of the shutdown request).
+			 */
+			if (Shutdown > NoShutdown &&
+				(EXIT_STATUS_0(exitstatus) || EXIT_STATUS_1(exitstatus)))
+			{
+				pmState = PM_WAIT_BACKENDS;
+				/* PostmasterStateMachine logic does the rest */
+				continue;
+			}
+
+			/*
 			 * Unexpected exit of startup process (including FATAL exit)
 			 * during PM_STARTUP is treated as catastrophic. There are no
 			 * other processes running yet, so we can just exit.
@@ -2387,18 +2399,6 @@ reaper(SIGNAL_ARGS)
 				ereport(LOG,
 				(errmsg("aborting startup due to startup process failure")));
 				ExitPostmaster(1);
-			}
-
-			/*
-			 * Startup process exited in response to a shutdown request (or it
-			 * completed normally regardless of the shutdown request).
-			 */
-			if (Shutdown > NoShutdown &&
-				(EXIT_STATUS_0(exitstatus) || EXIT_STATUS_1(exitstatus)))
-			{
-				pmState = PM_WAIT_BACKENDS;
-				/* PostmasterStateMachine logic does the rest */
-				continue;
 			}
 
 			/*
@@ -4241,7 +4241,7 @@ sigusr1_handler(SIGNAL_ARGS)
 	 * first. We don't want to go back to recovery in that case.
 	 */
 	if (CheckPostmasterSignal(PMSIGNAL_RECOVERY_STARTED) &&
-		pmState == PM_STARTUP)
+		pmState == PM_STARTUP && Shutdown == NoShutdown)
 	{
 		/* WAL redo has started. We're out of reinitialization. */
 		FatalError = false;
@@ -4256,7 +4256,7 @@ sigusr1_handler(SIGNAL_ARGS)
 		pmState = PM_RECOVERY;
 	}
 	if (CheckPostmasterSignal(PMSIGNAL_BEGIN_HOT_STANDBY) &&
-		pmState == PM_RECOVERY)
+		pmState == PM_RECOVERY && Shutdown == NoShutdown)
 	{
 		/*
 		 * Likewise, start other special children as needed.
@@ -4287,7 +4287,8 @@ sigusr1_handler(SIGNAL_ARGS)
 		signal_child(SysLoggerPID, SIGUSR1);
 	}
 
-	if (CheckPostmasterSignal(PMSIGNAL_START_AUTOVAC_LAUNCHER))
+	if (CheckPostmasterSignal(PMSIGNAL_START_AUTOVAC_LAUNCHER) &&
+		Shutdown == NoShutdown)
 	{
 		/*
 		 * Start one iteration of the autovacuum daemon, even if autovacuuming
@@ -4301,7 +4302,8 @@ sigusr1_handler(SIGNAL_ARGS)
 		start_autovac_launcher = true;
 	}
 
-	if (CheckPostmasterSignal(PMSIGNAL_START_AUTOVAC_WORKER))
+	if (CheckPostmasterSignal(PMSIGNAL_START_AUTOVAC_WORKER) &&
+		Shutdown == NoShutdown)
 	{
 		/* The autovacuum launcher wants us to start a worker process. */
 		StartAutovacuumWorker();
@@ -4310,7 +4312,8 @@ sigusr1_handler(SIGNAL_ARGS)
 	if (CheckPostmasterSignal(PMSIGNAL_START_WALRECEIVER) &&
 		WalReceiverPID == 0 &&
 		(pmState == PM_STARTUP || pmState == PM_RECOVERY ||
-		 pmState == PM_HOT_STANDBY || pmState == PM_WAIT_READONLY))
+		 pmState == PM_HOT_STANDBY || pmState == PM_WAIT_READONLY) &&
+		Shutdown == NoShutdown)
 	{
 		/* Startup Process wants us to start the walreceiver process. */
 		WalReceiverPID = StartWalReceiver();
