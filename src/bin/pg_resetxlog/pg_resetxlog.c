@@ -91,7 +91,6 @@ main(int argc, char *argv[])
 	char	   *endptr;
 	char	   *DataDir;
 	int			fd;
-	char		path[MAXPGPATH];
 
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_resetxlog"));
 
@@ -252,13 +251,12 @@ main(int argc, char *argv[])
 	 * Check for a postmaster lock file --- if there is one, refuse to
 	 * proceed, on grounds we might be interfering with a live installation.
 	 */
-	snprintf(path, MAXPGPATH, "%s/postmaster.pid", DataDir);
-
-	if ((fd = open(path, O_RDONLY, 0)) < 0)
+	if ((fd = open("postmaster.pid", O_RDONLY, 0)) < 0)
 	{
 		if (errno != ENOENT)
 		{
-			fprintf(stderr, _("%s: could not open file \"%s\" for reading: %s\n"), progname, path, strerror(errno));
+			fprintf(stderr, _("%s: could not open file \"%s\" for reading: %s\n"),
+					progname, "postmaster.pid", strerror(errno));
 			exit(1);
 		}
 	}
@@ -266,7 +264,7 @@ main(int argc, char *argv[])
 	{
 		fprintf(stderr, _("%s: lock file \"%s\" exists\n"
 						  "Is a server running?  If not, delete the lock file and try again.\n"),
-				progname, path);
+				progname, "postmaster.pid");
 		exit(1);
 	}
 
