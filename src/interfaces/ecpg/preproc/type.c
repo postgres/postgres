@@ -506,8 +506,8 @@ ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, char *arrsiz,
 	 */
 	struct ECPGstruct_member *p,
 			   *ind_p = NULL;
-	char		pbuf[BUFSIZ],
-				ind_pbuf[BUFSIZ];
+	char		*pbuf = (char *) mm_alloc(strlen(name) + ((prefix == NULL) ? 0 : strlen(prefix)) + 3);
+	char		*ind_pbuf = (char *) mm_alloc(strlen(ind_name) + ((ind_prefix == NULL) ? 0 : strlen(ind_prefix)) + 3);
 
 	if (atoi(arrsiz) == 1)
 		sprintf(pbuf, "%s%s.", prefix ? prefix : "", name);
@@ -540,6 +540,9 @@ ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, char *arrsiz,
 		if (ind_p != NULL && ind_p != &struct_no_indicator)
 			ind_p = ind_p->next;
 	}
+
+	free(pbuf);
+	free(ind_pbuf);
 }
 
 void
