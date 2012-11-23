@@ -375,6 +375,7 @@ SyncRepReleaseWaiters(void)
 	int			numprocs = 0;
 	int			priority = 0;
 	int			i;
+	XLogRecPtr	InvalidXLogRecPtr = {0, 0};
 
 	/*
 	 * If this WALSender is serving a standby that is not on the list of
@@ -384,7 +385,7 @@ SyncRepReleaseWaiters(void)
 	 */
 	if (MyWalSnd->sync_standby_priority == 0 ||
 		MyWalSnd->state < WALSNDSTATE_STREAMING ||
-		XLogRecPtrIsInvalid(MyWalSnd->flush))
+		XLByteEQ(MyWalSnd->flush, InvalidXLogRecPtr))
 		return;
 
 	/*
@@ -405,7 +406,7 @@ SyncRepReleaseWaiters(void)
 			walsnd->sync_standby_priority > 0 &&
 			(priority == 0 ||
 			 priority > walsnd->sync_standby_priority) &&
-			!XLogRecPtrIsInvalid(walsnd->flush))
+			!XLByteEQ(walsnd->flush, InvalidXLogRecPtr))
 		{
 			priority = walsnd->sync_standby_priority;
 			syncWalSnd = walsnd;
