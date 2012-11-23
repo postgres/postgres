@@ -45,6 +45,7 @@
 
 #include <unistd.h>
 
+#include "access/transam.h"
 #include "access/xact.h"
 #include "miscadmin.h"
 #include "replication/syncrep.h"
@@ -382,7 +383,7 @@ SyncRepReleaseWaiters(void)
 	 */
 	if (MyWalSnd->sync_standby_priority == 0 ||
 		MyWalSnd->state < WALSNDSTATE_STREAMING ||
-		XLogRecPtrIsInvalid(MyWalSnd->flush))
+		XLByteEQ(MyWalSnd->flush, InvalidXLogRecPtr))
 		return;
 
 	/*
@@ -403,7 +404,7 @@ SyncRepReleaseWaiters(void)
 			walsnd->sync_standby_priority > 0 &&
 			(priority == 0 ||
 			 priority > walsnd->sync_standby_priority) &&
-			!XLogRecPtrIsInvalid(walsnd->flush))
+			!XLByteEQ(walsnd->flush, InvalidXLogRecPtr))
 		{
 			priority = walsnd->sync_standby_priority;
 			syncWalSnd = walsnd;

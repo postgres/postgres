@@ -1559,14 +1559,14 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 			 * which always returns an invalid flush location, as an
 			 * asynchronous standby.
 			 */
-			sync_priority[i] = XLogRecPtrIsInvalid(walsnd->flush) ?
+			sync_priority[i] = XLByteEQ(walsnd->flush, InvalidXLogRecPtr) ?
 				0 : walsnd->sync_standby_priority;
 
 			if (walsnd->state == WALSNDSTATE_STREAMING &&
 				walsnd->sync_standby_priority > 0 &&
 				(priority == 0 ||
 				 priority > walsnd->sync_standby_priority) &&
-				!XLogRecPtrIsInvalid(walsnd->flush))
+				!XLByteEQ(walsnd->flush, InvalidXLogRecPtr))
 			{
 				priority = walsnd->sync_standby_priority;
 				sync_standby = i;
