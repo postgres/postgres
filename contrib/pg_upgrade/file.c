@@ -148,7 +148,7 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
 		return -1;
 	}
 
-	buffer = (char *) malloc(COPY_BUF_SIZE);
+	buffer = (char *) pg_malloc(COPY_BUF_SIZE);
 
 	if (buffer == NULL)
 	{
@@ -171,7 +171,7 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
 			int			save_errno = errno;
 
 			if (buffer != NULL)
-				free(buffer);
+				pg_free(buffer);
 
 			if (src_fd != 0)
 				close(src_fd);
@@ -194,7 +194,7 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
 			int			save_errno = errno ? errno : ENOSPC;
 
 			if (buffer != NULL)
-				free(buffer);
+				pg_free(buffer);
 
 			if (src_fd != 0)
 				close(src_fd);
@@ -208,7 +208,7 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
 	}
 
 	if (buffer != NULL)
-		free(buffer);
+		pg_free(buffer);
 
 	if (src_fd != 0)
 		close(src_fd);

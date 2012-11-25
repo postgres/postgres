@@ -987,7 +987,7 @@ get_canonical_locale_name(int category, const char *locale)
 	if (!setlocale(category, save))
         pg_log(PG_FATAL, "failed to restore old locale \"%s\"\n", save);
 
-	free(save);
+	pg_free(save);
 
 	return res;
 }
