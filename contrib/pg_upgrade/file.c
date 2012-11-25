@@ -133,6 +133,8 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
 	int			src_fd;
 	int			dest_fd;
 	char	   *buffer;
+	int			ret = 0;
+	int         save_errno = 0;
 
 	if ((srcfile == NULL) || (dstfile == NULL))
 		return -1;
@@ -150,17 +152,6 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
 
 	buffer = (char *) pg_malloc(COPY_BUF_SIZE);
 
-	if (buffer == NULL)
-	{
-		if (src_fd != 0)
-			close(src_fd);
-
-		if (dest_fd != 0)
-			close(dest_fd);
-
-		return -1;
-	}
-
 	/* perform data copying i.e read src source, write to destination */
 	while (true)
 	{
@@ -168,19 +159,9 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
 
 		if (nbytes < 0)
 		{
-			int			save_errno = errno;
-
-			if (buffer != NULL)
-				pg_free(buffer);
-
-			if (src_fd != 0)
-				close(src_fd);
-
-			if (dest_fd != 0)
-				close(dest_fd);
-
-			errno = save_errno;
-			return -1;
+			save_errno = errno;
+			ret = -1;
+			break;
 		}
 
 		if (nbytes == 0)
@@ -190,25 +171,13 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
 
 		if (write(dest_fd, buffer, nbytes) != nbytes)
 		{
-			/* if write didn't set errno, assume problem is no disk space */
-			int			save_errno = errno ? errno : ENOSPC;
-
-			if (buffer != NULL)
-				pg_free(buffer);
-
-			if (src_fd != 0)
-				close(src_fd);
-
-			if (dest_fd != 0)
-				close(dest_fd);
-
-			errno = save_errno;
-			return -1;
+			save_errno = errno;
+			ret = -1;
+			break;
 		}
 	}
 
-	if (buffer != NULL)
-		pg_free(buffer);
+	pg_free(buffer);
 
 	if (src_fd != 0)
 		close(src_fd);
@@ -216,7 +185,10 @@ copy_file(const char *srcfile, const char *dstfile, bool force)
 	if (dest_fd != 0)
 		close(dest_fd);
 
-	return 1;
+	if (save_errno != 0)
+		errno = save_errno;
+
+	return ret;
 }
 #endif
 
