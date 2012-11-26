@@ -976,6 +976,10 @@ exec_simple_query(const char *query_string)
 
 		plantree_list = pg_plan_queries(querytree_list, 0, NULL);
 
+		/* Done with the snapshot used for parsing/planning */
+		if (snapshot_set)
+			PopActiveSnapshot();
+
 		/* If we got a cancel signal in analysis or planning, quit */
 		CHECK_FOR_INTERRUPTS();
 
@@ -1000,19 +1004,9 @@ exec_simple_query(const char *query_string)
 						  NULL);
 
 		/*
-		 * Start the portal.
-		 *
-		 * If we took a snapshot for parsing/planning, the portal may be able
-		 * to reuse it for the execution phase.  Currently, this will only
-		 * happen in PORTAL_ONE_SELECT mode.  But even if PortalStart doesn't
-		 * end up being able to do this, keeping the parse/plan snapshot
-		 * around until after we start the portal doesn't cost much.
+		 * Start the portal.  No parameters here.
 		 */
-		PortalStart(portal, NULL, 0, snapshot_set);
-
-		/* Done with the snapshot used for parsing/planning */
-		if (snapshot_set)
-			PopActiveSnapshot();
+		PortalStart(portal, NULL, 0, InvalidSnapshot);
 
 		/*
 		 * Select the appropriate output format: text unless we are doing a
@@ -1735,18 +1729,14 @@ exec_bind_message(StringInfo input_message)
 					  cplan->stmt_list,
 					  cplan);
 
-	/*
-	 * And we're ready to start portal execution.
-	 *
-	 * If we took a snapshot for parsing/planning, we'll try to reuse it for
-	 * query execution (currently, reuse will only occur if PORTAL_ONE_SELECT
-	 * mode is chosen).
-	 */
-	PortalStart(portal, params, 0, snapshot_set);
-
 	/* Done with the snapshot used for parameter I/O and parsing/planning */
 	if (snapshot_set)
 		PopActiveSnapshot();
+
+	/*
+	 * And we're ready to start portal execution.
+	 */
+	PortalStart(portal, params, 0, InvalidSnapshot);
 
 	/*
 	 * Apply the result format requests to the portal.

@@ -811,13 +811,6 @@
 
       <listitem>
        <para>
-        Take fewer <acronym>MVCC</acronym> snapshots
-        (Robert Haas)
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
         Make the number of CLOG buffers scale based on <link
         linkend="guc-shared-buffers"><varname>shared_buffers</></link>
         (Robert Haas, Simon Riggs, Tom Lane)
