@@ -257,7 +257,10 @@ optimize_minmax_aggregates(PlannerInfo *root, List *tlist,
 
 	/*
 	 * We have to replace Aggrefs with Params in equivalence classes too, else
-	 * ORDER BY or DISTINCT on an optimized aggregate will fail.
+	 * ORDER BY or DISTINCT on an optimized aggregate will fail.  We don't
+	 * need to process child eclass members though, since they aren't of
+	 * interest anymore --- and replace_aggs_with_params_mutator isn't able
+	 * to handle Aggrefs containing translated child Vars, anyway.
 	 *
 	 * Note: at some point it might become necessary to mutate other data
 	 * structures too, such as the query's sortClause or distinctClause. Right
@@ -265,7 +268,8 @@ optimize_minmax_aggregates(PlannerInfo *root, List *tlist,
 	 */
 	mutate_eclass_expressions(root,
 							  replace_aggs_with_params_mutator,
-							  (void *) root);
+							  (void *) root,
+							  false);
 
 	/*
 	 * Generate the output plan --- basically just a Result

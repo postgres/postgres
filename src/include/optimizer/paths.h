@@ -124,7 +124,8 @@ extern void add_child_rel_equivalences(PlannerInfo *root,
 						   RelOptInfo *child_rel);
 extern void mutate_eclass_expressions(PlannerInfo *root,
 						  Node *(*mutator) (),
-						  void *context);
+						  void *context,
+						  bool include_child_exprs);
 extern List *generate_implied_equalities_for_indexcol(PlannerInfo *root,
 										 IndexOptInfo *index,
 										 int indexcol,

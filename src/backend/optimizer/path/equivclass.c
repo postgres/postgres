@@ -1973,12 +1973,12 @@ add_child_rel_equivalences(PlannerInfo *root,
 /*
  * mutate_eclass_expressions
  *	  Apply an expression tree mutator to all expressions stored in
- *	  equivalence classes.
+ *	  equivalence classes (but ignore child exprs unless include_child_exprs).
  *
  * This is a bit of a hack ... it's currently needed only by planagg.c,
  * which needs to do a global search-and-replace of MIN/MAX Aggrefs
  * after eclasses are already set up.  Without changing the eclasses too,
- * subsequent matching of ORDER BY clauses would fail.
+ * subsequent matching of ORDER BY and DISTINCT clauses would fail.
  *
  * Note that we assume the mutation won't affect relation membership or any
  * other properties we keep track of (which is a bit bogus, but by the time
@@ -1988,7 +1988,8 @@ add_child_rel_equivalences(PlannerInfo *root,
 void
 mutate_eclass_expressions(PlannerInfo *root,
 						  Node *(*mutator) (),
-						  void *context)
+						  void *context,
+						  bool include_child_exprs)
 {
 	ListCell   *lc1;
 
@@ -2000,6 +2001,9 @@ mutate_eclass_expressions(PlannerInfo *root,
 		foreach(lc2, cur_ec->ec_members)
 		{
 			EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc2);
+
+			if (cur_em->em_is_child && !include_child_exprs)
+				continue;		/* ignore children unless requested */
 
 			cur_em->em_expr = (Expr *)
 				mutator((Node *) cur_em->em_expr, context);

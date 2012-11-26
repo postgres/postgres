@@ -740,6 +740,45 @@ select min(f1), max(f1) from minmaxtest;
   11 |  18
 (1 row)
 
+-- DISTINCT doesn't do anything useful here, but it shouldn't fail
+explain (costs off)
+  select distinct min(f1), max(f1) from minmaxtest;
+                                          QUERY PLAN                                          
+----------------------------------------------------------------------------------------------
+ HashAggregate
+   InitPlan 1 (returns $0)
+     ->  Limit
+           ->  Merge Append
+                 Sort Key: minmaxtest.f1
+                 ->  Index Only Scan using minmaxtesti on minmaxtest
+                       Index Cond: (f1 IS NOT NULL)
+                 ->  Index Only Scan using minmaxtest1i on minmaxtest1
+                       Index Cond: (f1 IS NOT NULL)
+                 ->  Index Only Scan Backward using minmaxtest2i on minmaxtest2
+                       Index Cond: (f1 IS NOT NULL)
+                 ->  Index Only Scan using minmaxtest3i on minmaxtest3
+                       Index Cond: (f1 IS NOT NULL)
+   InitPlan 2 (returns $1)
+     ->  Limit
+           ->  Merge Append
+                 Sort Key: minmaxtest_1.f1
+                 ->  Index Only Scan Backward using minmaxtesti on minmaxtest minmaxtest_1
+                       Index Cond: (f1 IS NOT NULL)
+                 ->  Index Only Scan Backward using minmaxtest1i on minmaxtest1 minmaxtest1_1
+                       Index Cond: (f1 IS NOT NULL)
+                 ->  Index Only Scan using minmaxtest2i on minmaxtest2 minmaxtest2_1
+                       Index Cond: (f1 IS NOT NULL)
+                 ->  Index Only Scan Backward using minmaxtest3i on minmaxtest3 minmaxtest3_1
+                       Index Cond: (f1 IS NOT NULL)
+   ->  Result
+(26 rows)
+
+select distinct min(f1), max(f1) from minmaxtest;
+ min | max 
+-----+-----
+  11 |  18
+(1 row)
+
 drop table minmaxtest cascade;
 NOTICE:  drop cascades to 3 other objects
 DETAIL:  drop cascades to table minmaxtest1
