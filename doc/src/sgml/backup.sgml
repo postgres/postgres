@@ -1856,46 +1856,6 @@ if (!triggered)
    </para>
   </sect2>
 
-  <sect2 id="backup-incremental-updated">
-   <title>Incrementally Updated Backups</title>
-
-  <indexterm zone="backup">
-   <primary>incrementally updated backups</primary>
-  </indexterm>
-
-  <indexterm zone="backup">
-   <primary>change accumulation</primary>
-  </indexterm>
-
-   <para>
-    In a warm standby configuration, it is possible to offload the expense of
-    taking periodic base backups from the primary server; instead base backups
-    can be made by backing
-    up a standby server's files.  This concept is generally known as
-    incrementally updated backups, log change accumulation, or more simply,
-    change accumulation.
-   </para>
-
-   <para>
-    If we take a backup of the standby server's data directory while it is processing
-    logs shipped from the primary, we will be able to reload that data and
-    restart the standby's recovery process from the last restart point.
-    We no longer need to keep WAL files from before the restart point.
-    If we need to recover, it will be faster to recover from the incrementally
-    updated backup than from the original base backup.
-   </para>
-
-   <para>
-    Since the standby server is not <quote>live</>, it is not possible to
-    use <function>pg_start_backup()</> and <function>pg_stop_backup()</>
-    to manage the backup process; it will be up to you to determine how
-    far back you need to keep WAL segment files to have a recoverable
-    backup.  You can do this by running <application>pg_controldata</>
-    on the standby server to inspect the control file and determine the
-    current checkpoint WAL location, or by using the
-    <varname>log_checkpoints</> option to print values to the server log.
-   </para>
-  </sect2>
  </sect1>
 
  <sect1 id="migration">
