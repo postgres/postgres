@@ -2246,6 +2246,16 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
 
 	unlink(tmppath);
 
+	/*
+	 * Allocate a buffer full of zeros. This is done before opening the file
+	 * so that we don't leak the file descriptor if palloc fails.
+	 *
+	 * Note: palloc zbuffer, instead of just using a local char array, to
+	 * ensure it is reasonably well-aligned; this may save a few cycles
+	 * transferring data to the kernel.
+	 */
+	zbuffer = (char *) palloc0(XLOG_BLCKSZ);
+
 	/* do not use get_sync_bit() here --- want to fsync only at end of fill */
 	fd = BasicOpenFile(tmppath, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
 					   S_IRUSR | S_IWUSR);
@@ -2262,12 +2272,7 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
 	 * fsync below) that all the indirect blocks are down on disk.	Therefore,
 	 * fdatasync(2) or O_DSYNC will be sufficient to sync future writes to the
 	 * log file.
-	 *
-	 * Note: palloc zbuffer, instead of just using a local char array, to
-	 * ensure it is reasonably well-aligned; this may save a few cycles
-	 * transferring data to the kernel.
 	 */
-	zbuffer = (char *) palloc0(XLOG_BLCKSZ);
 	for (nbytes = 0; nbytes < XLogSegSize; nbytes += XLOG_BLCKSZ)
 	{
 		errno = 0;
@@ -2279,6 +2284,9 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
 			 * If we fail to make the file, delete it to release disk space
 			 */
 			unlink(tmppath);
+
+			close(fd);
+
 			/* if write didn't set errno, assume problem is no disk space */
 			errno = save_errno ? save_errno : ENOSPC;
 
@@ -2290,9 +2298,12 @@ XLogFileInit(XLogSegNo logsegno, bool *use_existent, bool use_lock)
 	pfree(zbuffer);
 
 	if (pg_fsync(fd) != 0)
+	{
+		close(fd);
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not fsync file \"%s\": %m", tmppath)));
+	}
 
 	if (close(fd))
 		ereport(ERROR,
@@ -2363,7 +2374,7 @@ XLogFileCopy(XLogSegNo destsegno, TimeLineID srcTLI, XLogSegNo srcsegno)
 	 * Open the source file
 	 */
 	XLogFilePath(path, srcTLI, srcsegno);
-	srcfd = BasicOpenFile(path, O_RDONLY | PG_BINARY, 0);
+	srcfd = OpenTransientFile(path, O_RDONLY | PG_BINARY, 0);
 	if (srcfd < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -2377,8 +2388,8 @@ XLogFileCopy(XLogSegNo destsegno, TimeLineID srcTLI, XLogSegNo srcsegno)
 	unlink(tmppath);
 
 	/* do not use get_sync_bit() here --- want to fsync only at end of fill */
-	fd = BasicOpenFile(tmppath, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
-					   S_IRUSR | S_IWUSR);
+	fd = OpenTransientFile(tmppath, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
+						   S_IRUSR | S_IWUSR);
 	if (fd < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -2423,12 +2434,12 @@ XLogFileCopy(XLogSegNo destsegno, TimeLineID srcTLI, XLogSegNo srcsegno)
 				(errcode_for_file_access(),
 				 errmsg("could not fsync file \"%s\": %m", tmppath)));
 
-	if (close(fd))
+	if (CloseTransientFile(fd))
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not close file \"%s\": %m", tmppath)));
 
-	close(srcfd);
+	CloseTransientFile(srcfd);
 
 	/*
 	 * Now move the segment into place with its final name.

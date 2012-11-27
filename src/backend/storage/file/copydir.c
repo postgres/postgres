@@ -162,14 +162,14 @@ copy_file(char *fromfile, char *tofile)
 	/*
 	 * Open the files
 	 */
-	srcfd = BasicOpenFile(fromfile, O_RDONLY | PG_BINARY, 0);
+	srcfd = OpenTransientFile(fromfile, O_RDONLY | PG_BINARY, 0);
 	if (srcfd < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not open file \"%s\": %m", fromfile)));
 
-	dstfd = BasicOpenFile(tofile, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
-						  S_IRUSR | S_IWUSR);
+	dstfd = OpenTransientFile(tofile, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
+							  S_IRUSR | S_IWUSR);
 	if (dstfd < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -209,12 +209,12 @@ copy_file(char *fromfile, char *tofile)
 		(void) pg_flush_data(dstfd, offset, nbytes);
 	}
 
-	if (close(dstfd))
+	if (CloseTransientFile(dstfd))
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not close file \"%s\": %m", tofile)));
 
-	close(srcfd);
+	CloseTransientFile(srcfd);
 
 	pfree(buffer);
 }
@@ -238,13 +238,13 @@ fsync_fname(char *fname, bool isdir)
 	 * cases here
 	 */
 	if (!isdir)
-		fd = BasicOpenFile(fname,
-						   O_RDWR | PG_BINARY,
-						   S_IRUSR | S_IWUSR);
+		fd = OpenTransientFile(fname,
+							   O_RDWR | PG_BINARY,
+							   S_IRUSR | S_IWUSR);
 	else
-		fd = BasicOpenFile(fname,
-						   O_RDONLY | PG_BINARY,
-						   S_IRUSR | S_IWUSR);
+		fd = OpenTransientFile(fname,
+							   O_RDONLY | PG_BINARY,
+							   S_IRUSR | S_IWUSR);
 
 	/*
 	 * Some OSs don't allow us to open directories at all (Windows returns
@@ -263,7 +263,7 @@ fsync_fname(char *fname, bool isdir)
 	/* Some OSs don't allow us to fsync directories at all */
 	if (returncode != 0 && isdir && errno == EBADF)
 	{
-		close(fd);
+		CloseTransientFile(fd);
 		return;
 	}
 
@@ -272,5 +272,5 @@ fsync_fname(char *fname, bool isdir)
 				(errcode_for_file_access(),
 				 errmsg("could not fsync file \"%s\": %m", fname)));
 
-	close(fd);
+	CloseTransientFile(fd);
 }

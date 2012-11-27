@@ -16,13 +16,13 @@
  * calls:
  *
  *	File {Close, Read, Write, Seek, Tell, Sync}
- *	{File Name Open, Allocate, Free} File
+ *	{Path Name Open, Allocate, Free} File
  *
  * These are NOT JUST RENAMINGS OF THE UNIX ROUTINES.
  * Use them for all file activity...
  *
  *	File fd;
- *	fd = FilePathOpenFile("foo", O_RDONLY, 0600);
+ *	fd = PathNameOpenFile("foo", O_RDONLY, 0600);
  *
  *	AllocateFile();
  *	FreeFile();
@@ -33,7 +33,8 @@
  * no way for them to share kernel file descriptors with other files.
  *
  * Likewise, use AllocateDir/FreeDir, not opendir/closedir, to allocate
- * open directories (DIR*).
+ * open directories (DIR*), and OpenTransientFile/CloseTransient File for an
+ * unbuffered file descriptor.
  */
 #ifndef FD_H
 #define FD_H
@@ -83,6 +84,10 @@ extern int	FreeFile(FILE *file);
 extern DIR *AllocateDir(const char *dirname);
 extern struct dirent *ReadDir(DIR *dir, const char *dirname);
 extern int	FreeDir(DIR *dir);
+
+/* Operations to allow use of a plain kernel FD, with automatic cleanup */
+extern int	OpenTransientFile(FileName fileName, int fileFlags, int fileMode);
+extern int	CloseTransientFile(int fd);
 
 /* If you've really really gotta have a plain kernel FD, use this */
 extern int	BasicOpenFile(FileName fileName, int fileFlags, int fileMode);

@@ -401,14 +401,14 @@ mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo)
 		/* truncate(2) would be easier here, but Windows hasn't got it */
 		int			fd;
 
-		fd = BasicOpenFile(path, O_RDWR | PG_BINARY, 0);
+		fd = OpenTransientFile(path, O_RDWR | PG_BINARY, 0);
 		if (fd >= 0)
 		{
 			int			save_errno;
 
 			ret = ftruncate(fd, 0);
 			save_errno = errno;
-			close(fd);
+			CloseTransientFile(fd);
 			errno = save_errno;
 		}
 		else

@@ -442,7 +442,7 @@ lo_import_with_oid(PG_FUNCTION_ARGS)
 static Oid
 lo_import_internal(text *filename, Oid lobjOid)
 {
-	File		fd;
+	int			fd;
 	int			nbytes,
 				tmp PG_USED_FOR_ASSERTS_ONLY;
 	char		buf[BUFSIZE];
@@ -464,7 +464,7 @@ lo_import_internal(text *filename, Oid lobjOid)
 	 * open the file to be read in
 	 */
 	text_to_cstring_buffer(filename, fnamebuf, sizeof(fnamebuf));
-	fd = PathNameOpenFile(fnamebuf, O_RDONLY | PG_BINARY, S_IRWXU);
+	fd = OpenTransientFile(fnamebuf, O_RDONLY | PG_BINARY, S_IRWXU);
 	if (fd < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -481,7 +481,7 @@ lo_import_internal(text *filename, Oid lobjOid)
 	 */
 	lobj = inv_open(oid, INV_WRITE, fscxt);
 
-	while ((nbytes = FileRead(fd, buf, BUFSIZE)) > 0)
+	while ((nbytes = read(fd, buf, BUFSIZE)) > 0)
 	{
 		tmp = inv_write(lobj, buf, nbytes);
 		Assert(tmp == nbytes);
@@ -494,7 +494,7 @@ lo_import_internal(text *filename, Oid lobjOid)
 						fnamebuf)));
 
 	inv_close(lobj);
-	FileClose(fd);
+	CloseTransientFile(fd);
 
 	return oid;
 }
@@ -508,7 +508,7 @@ lo_export(PG_FUNCTION_ARGS)
 {
 	Oid			lobjId = PG_GETARG_OID(0);
 	text	   *filename = PG_GETARG_TEXT_PP(1);
-	File		fd;
+	int			fd;
 	int			nbytes,
 				tmp;
 	char		buf[BUFSIZE];
@@ -540,8 +540,8 @@ lo_export(PG_FUNCTION_ARGS)
 	 */
 	text_to_cstring_buffer(filename, fnamebuf, sizeof(fnamebuf));
 	oumask = umask(S_IWGRP | S_IWOTH);
-	fd = PathNameOpenFile(fnamebuf, O_CREAT | O_WRONLY | O_TRUNC | PG_BINARY,
-						  S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	fd = OpenTransientFile(fnamebuf, O_CREAT | O_WRONLY | O_TRUNC | PG_BINARY,
+						   S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 	umask(oumask);
 	if (fd < 0)
 		ereport(ERROR,
@@ -554,7 +554,7 @@ lo_export(PG_FUNCTION_ARGS)
 	 */
 	while ((nbytes = inv_read(lobj, buf, BUFSIZE)) > 0)
 	{
-		tmp = FileWrite(fd, buf, nbytes);
+		tmp = write(fd, buf, nbytes);
 		if (tmp != nbytes)
 			ereport(ERROR,
 					(errcode_for_file_access(),
@@ -562,7 +562,7 @@ lo_export(PG_FUNCTION_ARGS)
 							fnamebuf)));
 	}
 
-	FileClose(fd);
+	CloseTransientFile(fd);
 	inv_close(lobj);
 
 	PG_RETURN_INT32(1);

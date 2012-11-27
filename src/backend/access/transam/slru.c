@@ -531,7 +531,7 @@ SlruInternalWritePage(SlruCtl ctl, int slotno, SlruFlush fdata)
 		int			i;
 
 		for (i = 0; i < fdata->num_files; i++)
-			close(fdata->fd[i]);
+			CloseTransientFile(fdata->fd[i]);
 	}
 
 	/* Re-acquire control lock and update page state */
@@ -593,7 +593,7 @@ SlruPhysicalReadPage(SlruCtl ctl, int pageno, int slotno)
 	 * SlruPhysicalWritePage).	Hence, if we are InRecovery, allow the case
 	 * where the file doesn't exist, and return zeroes instead.
 	 */
-	fd = BasicOpenFile(path, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
+	fd = OpenTransientFile(path, O_RDWR | PG_BINARY, S_IRUSR | S_IWUSR);
 	if (fd < 0)
 	{
 		if (errno != ENOENT || !InRecovery)
@@ -614,7 +614,7 @@ SlruPhysicalReadPage(SlruCtl ctl, int pageno, int slotno)
 	{
 		slru_errcause = SLRU_SEEK_FAILED;
 		slru_errno = errno;
-		close(fd);
+		CloseTransientFile(fd);
 		return false;
 	}
 
@@ -623,11 +623,11 @@ SlruPhysicalReadPage(SlruCtl ctl, int pageno, int slotno)
 	{
 		slru_errcause = SLRU_READ_FAILED;
 		slru_errno = errno;
-		close(fd);
+		CloseTransientFile(fd);
 		return false;
 	}
 
-	if (close(fd))
+	if (CloseTransientFile(fd))
 	{
 		slru_errcause = SLRU_CLOSE_FAILED;
 		slru_errno = errno;
@@ -740,8 +740,8 @@ SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno, SlruFlush fdata)
 		 * don't use O_EXCL or O_TRUNC or anything like that.
 		 */
 		SlruFileName(ctl, path, segno);
-		fd = BasicOpenFile(path, O_RDWR | O_CREAT | PG_BINARY,
-						   S_IRUSR | S_IWUSR);
+		fd = OpenTransientFile(path, O_RDWR | O_CREAT | PG_BINARY,
+							   S_IRUSR | S_IWUSR);
 		if (fd < 0)
 		{
 			slru_errcause = SLRU_OPEN_FAILED;
@@ -773,7 +773,7 @@ SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno, SlruFlush fdata)
 		slru_errcause = SLRU_SEEK_FAILED;
 		slru_errno = errno;
 		if (!fdata)
-			close(fd);
+			CloseTransientFile(fd);
 		return false;
 	}
 
@@ -786,7 +786,7 @@ SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno, SlruFlush fdata)
 		slru_errcause = SLRU_WRITE_FAILED;
 		slru_errno = errno;
 		if (!fdata)
-			close(fd);
+			CloseTransientFile(fd);
 		return false;
 	}
 
@@ -800,11 +800,11 @@ SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno, SlruFlush fdata)
 		{
 			slru_errcause = SLRU_FSYNC_FAILED;
 			slru_errno = errno;
-			close(fd);
+			CloseTransientFile(fd);
 			return false;
 		}
 
-		if (close(fd))
+		if (CloseTransientFile(fd))
 		{
 			slru_errcause = SLRU_CLOSE_FAILED;
 			slru_errno = errno;
@@ -1078,7 +1078,7 @@ SimpleLruFlush(SlruCtl ctl, bool checkpoint)
 			ok = false;
 		}
 
-		if (close(fdata.fd[i]))
+		if (CloseTransientFile(fdata.fd[i]))
 		{
 			slru_errcause = SLRU_CLOSE_FAILED;
 			slru_errno = errno;

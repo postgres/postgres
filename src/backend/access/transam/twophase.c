@@ -970,17 +970,12 @@ EndPrepare(GlobalTransaction gxact)
 
 	/*
 	 * Create the 2PC state file.
-	 *
-	 * Note: because we use BasicOpenFile(), we are responsible for ensuring
-	 * the FD gets closed in any error exit path.  Once we get into the
-	 * critical section, though, it doesn't matter since any failure causes
-	 * PANIC anyway.
 	 */
 	TwoPhaseFilePath(path, xid);
 
-	fd = BasicOpenFile(path,
-					   O_CREAT | O_EXCL | O_WRONLY | PG_BINARY,
-					   S_IRUSR | S_IWUSR);
+	fd = OpenTransientFile(path,
+						   O_CREAT | O_EXCL | O_WRONLY | PG_BINARY,
+						   S_IRUSR | S_IWUSR);
 	if (fd < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -995,7 +990,7 @@ EndPrepare(GlobalTransaction gxact)
 		COMP_CRC32(statefile_crc, record->data, record->len);
 		if ((write(fd, record->data, record->len)) != record->len)
 		{
-			close(fd);
+			CloseTransientFile(fd);
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not write two-phase state file: %m")));
@@ -1012,7 +1007,7 @@ EndPrepare(GlobalTransaction gxact)
 
 	if ((write(fd, &bogus_crc, sizeof(pg_crc32))) != sizeof(pg_crc32))
 	{
-		close(fd);
+		CloseTransientFile(fd);
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write two-phase state file: %m")));
@@ -1021,7 +1016,7 @@ EndPrepare(GlobalTransaction gxact)
 	/* Back up to prepare for rewriting the CRC */
 	if (lseek(fd, -((off_t) sizeof(pg_crc32)), SEEK_CUR) < 0)
 	{
-		close(fd);
+		CloseTransientFile(fd);
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not seek in two-phase state file: %m")));
@@ -1061,13 +1056,13 @@ EndPrepare(GlobalTransaction gxact)
 	/* write correct CRC and close file */
 	if ((write(fd, &statefile_crc, sizeof(pg_crc32))) != sizeof(pg_crc32))
 	{
-		close(fd);
+		CloseTransientFile(fd);
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write two-phase state file: %m")));
 	}
 
-	if (close(fd) != 0)
+	if (CloseTransientFile(fd) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not close two-phase state file: %m")));
@@ -1144,7 +1139,7 @@ ReadTwoPhaseFile(TransactionId xid, bool give_warnings)
 
 	TwoPhaseFilePath(path, xid);
 
-	fd = BasicOpenFile(path, O_RDONLY | PG_BINARY, 0);
+	fd = OpenTransientFile(path, O_RDONLY | PG_BINARY, 0);
 	if (fd < 0)
 	{
 		if (give_warnings)
@@ -1163,7 +1158,7 @@ ReadTwoPhaseFile(TransactionId xid, bool give_warnings)
 	 */
 	if (fstat(fd, &stat))
 	{
-		close(fd);
+		CloseTransientFile(fd);
 		if (give_warnings)
 			ereport(WARNING,
 					(errcode_for_file_access(),
@@ -1177,14 +1172,14 @@ ReadTwoPhaseFile(TransactionId xid, bool give_warnings)
 						sizeof(pg_crc32)) ||
 		stat.st_size > MaxAllocSize)
 	{
-		close(fd);
+		CloseTransientFile(fd);
 		return NULL;
 	}
 
 	crc_offset = stat.st_size - sizeof(pg_crc32);
 	if (crc_offset != MAXALIGN(crc_offset))
 	{
-		close(fd);
+		CloseTransientFile(fd);
 		return NULL;
 	}
 
@@ -1195,7 +1190,7 @@ ReadTwoPhaseFile(TransactionId xid, bool give_warnings)
 
 	if (read(fd, buf, stat.st_size) != stat.st_size)
 	{
-		close(fd);
+		CloseTransientFile(fd);
 		if (give_warnings)
 			ereport(WARNING,
 					(errcode_for_file_access(),
@@ -1205,7 +1200,7 @@ ReadTwoPhaseFile(TransactionId xid, bool give_warnings)
 		return NULL;
 	}
 
-	close(fd);
+	CloseTransientFile(fd);
 
 	hdr = (TwoPhaseFileHeader *) buf;
 	if (hdr->magic != TWOPHASE_MAGIC || hdr->total_len != stat.st_size)
@@ -1469,9 +1464,9 @@ RecreateTwoPhaseFile(TransactionId xid, void *content, int len)
 
 	TwoPhaseFilePath(path, xid);
 
-	fd = BasicOpenFile(path,
-					   O_CREAT | O_TRUNC | O_WRONLY | PG_BINARY,
-					   S_IRUSR | S_IWUSR);
+	fd = OpenTransientFile(path,
+						   O_CREAT | O_TRUNC | O_WRONLY | PG_BINARY,
+						   S_IRUSR | S_IWUSR);
 	if (fd < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -1481,14 +1476,14 @@ RecreateTwoPhaseFile(TransactionId xid, void *content, int len)
 	/* Write content and CRC */
 	if (write(fd, content, len) != len)
 	{
-		close(fd);
+		CloseTransientFile(fd);
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write two-phase state file: %m")));
 	}
 	if (write(fd, &statefile_crc, sizeof(pg_crc32)) != sizeof(pg_crc32))
 	{
-		close(fd);
+		CloseTransientFile(fd);
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write two-phase state file: %m")));
@@ -1500,13 +1495,13 @@ RecreateTwoPhaseFile(TransactionId xid, void *content, int len)
 	 */
 	if (pg_fsync(fd) != 0)
 	{
-		close(fd);
+		CloseTransientFile(fd);
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not fsync two-phase state file: %m")));
 	}
 
-	if (close(fd) != 0)
+	if (CloseTransientFile(fd) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not close two-phase state file: %m")));
@@ -1577,7 +1572,7 @@ CheckPointTwoPhase(XLogRecPtr redo_horizon)
 
 		TwoPhaseFilePath(path, xid);
 
-		fd = BasicOpenFile(path, O_RDWR | PG_BINARY, 0);
+		fd = OpenTransientFile(path, O_RDWR | PG_BINARY, 0);
 		if (fd < 0)
 		{
 			if (errno == ENOENT)
@@ -1596,14 +1591,14 @@ CheckPointTwoPhase(XLogRecPtr redo_horizon)
 
 		if (pg_fsync(fd) != 0)
 		{
-			close(fd);
+			CloseTransientFile(fd);
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not fsync two-phase state file \"%s\": %m",
 							path)));
 		}
 
-		if (close(fd) != 0)
+		if (CloseTransientFile(fd) != 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not close two-phase state file \"%s\": %m",
