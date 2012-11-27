@@ -467,7 +467,7 @@ dlist_head_element_off(dlist_head *head, size_t off)
 STATIC_IF_INLINE dlist_node *
 dlist_head_node(dlist_head *head)
 {
-	return dlist_head_element_off(head, 0);
+	return (dlist_node *) dlist_head_element_off(head, 0);
 }
 
 /* internal support function to get address of tail element's struct */
@@ -484,7 +484,7 @@ dlist_tail_element_off(dlist_head *head, size_t off)
 STATIC_IF_INLINE dlist_node *
 dlist_tail_node(dlist_head *head)
 {
-	return dlist_tail_element_off(head, 0);
+	return (dlist_node *) dlist_tail_element_off(head, 0);
 }
 #endif   /* PG_USE_INLINE || ILIST_INCLUDE_DEFINITIONS */
 
@@ -677,7 +677,7 @@ slist_head_element_off(slist_head *head, size_t off)
 STATIC_IF_INLINE slist_node *
 slist_head_node(slist_head *head)
 {
-	return slist_head_element_off(head, 0);
+	return (slist_node *) slist_head_element_off(head, 0);
 }
 #endif   /* PG_USE_INLINE || ILIST_INCLUDE_DEFINITIONS */
 
