@@ -6763,7 +6763,7 @@ StartupXLOG(void)
 				/* Pop the error context stack */
 				error_context_stack = errcontext.previous;
 
-				if (!XLogRecPtrIsInvalid(ControlFile->backupStartPoint) &&
+				if (!XLogRecPtrIsInvalid(ControlFile->backupEndPoint) &&
 					XLByteLE(ControlFile->backupEndPoint, EndRecPtr))
 				{
 					/*
