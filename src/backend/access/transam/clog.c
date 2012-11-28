@@ -768,26 +768,3 @@ clog_redo(XLogRecPtr lsn, XLogRecord *record)
 	else
 		elog(PANIC, "clog_redo: unknown op code %u", info);
 }
-
-void
-clog_desc(StringInfo buf, uint8 xl_info, char *rec)
-{
-	uint8		info = xl_info & ~XLR_INFO_MASK;
-
-	if (info == CLOG_ZEROPAGE)
-	{
-		int			pageno;
-
-		memcpy(&pageno, rec, sizeof(int));
-		appendStringInfo(buf, "zeropage: %d", pageno);
-	}
-	else if (info == CLOG_TRUNCATE)
-	{
-		int			pageno;
-
-		memcpy(&pageno, rec, sizeof(int));
-		appendStringInfo(buf, "truncate before: %d", pageno);
-	}
-	else
-		appendStringInfo(buf, "UNKNOWN");
-}

@@ -205,6 +205,25 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 			 (uint32) ((logSegNo) / XLogSegmentsPerXLogId), \
 			 (uint32) ((logSegNo) % XLogSegmentsPerXLogId), offset)
 
+/*
+ * Information logged when we detect a change in one of the parameters
+ * important for Hot Standby.
+ */
+typedef struct xl_parameter_change
+{
+	int			MaxConnections;
+	int			max_prepared_xacts;
+	int			max_locks_per_xact;
+	int			wal_level;
+} xl_parameter_change;
+
+/* logs restore point */
+typedef struct xl_restore_point
+{
+	TimestampTz rp_time;
+	char		rp_name[MAXFNAMELEN];
+} xl_restore_point;
+
 
 /*
  * Method table for resource managers.

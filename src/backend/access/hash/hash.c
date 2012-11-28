@@ -712,8 +712,3 @@ hash_redo(XLogRecPtr lsn, XLogRecord *record)
 {
 	elog(PANIC, "hash_redo: unimplemented");
 }
-
-void
-hash_desc(StringInfo buf, uint8 xl_info, char *rec)
-{
-}

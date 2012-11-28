@@ -1992,27 +1992,3 @@ dbase_redo(XLogRecPtr lsn, XLogRecord *record)
 	else
 		elog(PANIC, "dbase_redo: unknown op code %u", info);
 }
-
-void
-dbase_desc(StringInfo buf, uint8 xl_info, char *rec)
-{
-	uint8		info = xl_info & ~XLR_INFO_MASK;
-
-	if (info == XLOG_DBASE_CREATE)
-	{
-		xl_dbase_create_rec *xlrec = (xl_dbase_create_rec *) rec;
-
-		appendStringInfo(buf, "create db: copy dir %u/%u to %u/%u",
-						 xlrec->src_db_id, xlrec->src_tablespace_id,
-						 xlrec->db_id, xlrec->tablespace_id);
-	}
-	else if (info == XLOG_DBASE_DROP)
-	{
-		xl_dbase_drop_rec *xlrec = (xl_dbase_drop_rec *) rec;
-
-		appendStringInfo(buf, "drop db: dir %u/%u",
-						 xlrec->db_id, xlrec->tablespace_id);
-	}
-	else
-		appendStringInfo(buf, "UNKNOWN");
-}

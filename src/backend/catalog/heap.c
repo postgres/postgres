@@ -49,6 +49,7 @@
 #include "catalog/pg_type.h"
 #include "catalog/pg_type_fn.h"
 #include "catalog/storage.h"
+#include "catalog/storage_xlog.h"
 #include "commands/tablecmds.h"
 #include "commands/typecmds.h"
 #include "miscadmin.h"

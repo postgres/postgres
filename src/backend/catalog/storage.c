@@ -24,6 +24,7 @@
 #include "access/xlogutils.h"
 #include "catalog/catalog.h"
 #include "catalog/storage.h"
+#include "catalog/storage_xlog.h"
 #include "storage/freespace.h"
 #include "storage/smgr.h"
 #include "utils/memutils.h"
@@ -59,30 +60,6 @@ typedef struct PendingRelDelete
 } PendingRelDelete;
 
 static PendingRelDelete *pendingDeletes = NULL; /* head of linked list */
-
-/*
- * Declarations for smgr-related XLOG records
- *
- * Note: we log file creation and truncation here, but logging of deletion
- * actions is handled by xact.c, because it is part of transaction commit.
- */
-
-/* XLOG gives us high 4 bits */
-#define XLOG_SMGR_CREATE	0x10
-#define XLOG_SMGR_TRUNCATE	0x20
-
-typedef struct xl_smgr_create
-{
-	RelFileNode rnode;
-	ForkNumber	forkNum;
-} xl_smgr_create;
-
-typedef struct xl_smgr_truncate
-{
-	BlockNumber blkno;
-	RelFileNode rnode;
-} xl_smgr_truncate;
-
 
 /*
  * RelationCreateStorage
@@ -522,30 +499,4 @@ smgr_redo(XLogRecPtr lsn, XLogRecord *record)
 	}
 	else
 		elog(PANIC, "smgr_redo: unknown op code %u", info);
-}
-
-void
-smgr_desc(StringInfo buf, uint8 xl_info, char *rec)
-{
-	uint8		info = xl_info & ~XLR_INFO_MASK;
-
-	if (info == XLOG_SMGR_CREATE)
-	{
-		xl_smgr_create *xlrec = (xl_smgr_create *) rec;
-		char	   *path = relpathperm(xlrec->rnode, xlrec->forkNum);
-
-		appendStringInfo(buf, "file create: %s", path);
-		pfree(path);
-	}
-	else if (info == XLOG_SMGR_TRUNCATE)
-	{
-		xl_smgr_truncate *xlrec = (xl_smgr_truncate *) rec;
-		char	   *path = relpathperm(xlrec->rnode, MAIN_FORKNUM);
-
-		appendStringInfo(buf, "file truncate: %s to %u blocks", path,
-						 xlrec->blkno);
-		pfree(path);
-	}
-	else
-		appendStringInfo(buf, "UNKNOWN");
 }

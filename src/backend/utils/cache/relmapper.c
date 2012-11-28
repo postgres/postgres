@@ -891,19 +891,3 @@ relmap_redo(XLogRecPtr lsn, XLogRecord *record)
 	else
 		elog(PANIC, "relmap_redo: unknown op code %u", info);
 }
-
-void
-relmap_desc(StringInfo buf, uint8 xl_info, char *rec)
-{
-	uint8		info = xl_info & ~XLR_INFO_MASK;
-
-	if (info == XLOG_RELMAP_UPDATE)
-	{
-		xl_relmap_update *xlrec = (xl_relmap_update *) rec;
-
-		appendStringInfo(buf, "update relmap: database %u tablespace %u size %u",
-						 xlrec->dbid, xlrec->tsid, xlrec->nbytes);
-	}
-	else
-		appendStringInfo(buf, "UNKNOWN");
-}
