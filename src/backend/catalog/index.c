@@ -129,6 +129,10 @@ static void ResetReindexPending(void);
  *		See whether an existing relation has a primary key.
  *
  * Caller must have suitable lock on the relation.
+ *
+ * Note: we intentionally do not check IndexIsValid here; that's because this
+ * is used to enforce the rule that there can be only one indisprimary index,
+ * and we want that to be true even if said index is invalid.
  */
 static bool
 relationHasPrimaryKey(Relation rel)
@@ -1247,8 +1251,9 @@ index_constraint_create(Relation heapRelation,
 	 * Note: since this is a transactional update, it's unsafe against
 	 * concurrent SnapshotNow scans of pg_index.  When making an existing
 	 * index into a constraint, caller must have a table lock that prevents
-	 * concurrent table updates, and there is a risk that concurrent readers
-	 * of the table will miss seeing this index at all.
+	 * concurrent table updates; if it's less than a full exclusive lock,
+	 * there is a risk that concurrent readers of the table will miss seeing
+	 * this index at all.
 	 */
 	if (update_pgindex && (mark_as_primary || deferrable))
 	{
@@ -1450,7 +1455,7 @@ BuildIndexInfo(Relation index)
 
 	/* other info */
 	ii->ii_Unique = indexStruct->indisunique;
-	ii->ii_ReadyForInserts = indexStruct->indisready;
+	ii->ii_ReadyForInserts = IndexIsReady(indexStruct);
 
 	/* initialize index-build state to default */
 	ii->ii_Concurrent = false;
@@ -1789,8 +1794,20 @@ index_build(Relation heapRelation,
 	 * index's usability horizon.  Moreover, we *must not* try to change the
 	 * index's pg_index entry while reindexing pg_index itself, and this
 	 * optimization nicely prevents that.
+	 *
+	 * We also need not set indcheckxmin during a concurrent index build,
+	 * because we won't set indisvalid true until all transactions that care
+	 * about the broken HOT chains are gone.
+	 *
+	 * Therefore, this code path can only be taken during non-concurrent
+	 * CREATE INDEX.  Thus the fact that heap_update will set the pg_index
+	 * tuple's xmin doesn't matter, because that tuple was created in the
+	 * current transaction anyway.	That also means we don't need to worry
+	 * about any concurrent readers of the tuple; no other transaction can see
+	 * it yet.
 	 */
-	if (indexInfo->ii_BrokenHotChain && !isreindex)
+	if (indexInfo->ii_BrokenHotChain && !isreindex &&
+		!indexInfo->ii_Concurrent)
 	{
 		Oid			indexId = RelationGetRelid(indexRelation);
 		Relation	pg_index;
@@ -2754,6 +2771,65 @@ validate_index_heapscan(Relation heapRelation,
 
 
 /*
+ * index_set_state_flags - adjust pg_index state flags
+ *
+ * This is used during CREATE INDEX CONCURRENTLY to adjust the pg_index
+ * flags that denote the index's state.  We must use an in-place update of
+ * the pg_index tuple, because we do not have exclusive lock on the parent
+ * table and so other sessions might concurrently be doing SnapshotNow scans
+ * of pg_index to identify the table's indexes.  A transactional update would
+ * risk somebody not seeing the index at all.  Because the update is not
+ * transactional and will not roll back on error, this must only be used as
+ * the last step in a transaction that has not made any transactional catalog
+ * updates!
+ *
+ * Note that heap_inplace_update does send a cache inval message for the
+ * tuple, so other sessions will hear about the update as soon as we commit.
+ */
+void
+index_set_state_flags(Oid indexId, IndexStateFlagsAction action)
+{
+	Relation	pg_index;
+	HeapTuple	indexTuple;
+	Form_pg_index indexForm;
+
+	/* Assert that current xact hasn't done any transactional updates */
+	Assert(GetTopTransactionIdIfAny() == InvalidTransactionId);
+
+	/* Open pg_index and fetch a writable copy of the index's tuple */
+	pg_index = heap_open(IndexRelationId, RowExclusiveLock);
+
+	indexTuple = SearchSysCacheCopy1(INDEXRELID,
+									 ObjectIdGetDatum(indexId));
+	if (!HeapTupleIsValid(indexTuple))
+		elog(ERROR, "cache lookup failed for index %u", indexId);
+	indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
+
+	/* Perform the requested state change on the copy */
+	switch (action)
+	{
+		case INDEX_CREATE_SET_READY:
+			/* Set indisready during a CREATE INDEX CONCURRENTLY sequence */
+			Assert(!indexForm->indisready);
+			Assert(!indexForm->indisvalid);
+			indexForm->indisready = true;
+			break;
+		case INDEX_CREATE_SET_VALID:
+			/* Set indisvalid during a CREATE INDEX CONCURRENTLY sequence */
+			Assert(indexForm->indisready);
+			Assert(!indexForm->indisvalid);
+			indexForm->indisvalid = true;
+			break;
+	}
+
+	/* ... and write it back in-place */
+	heap_inplace_update(pg_index, indexTuple);
+
+	heap_close(pg_index, RowExclusiveLock);
+}
+
+
+/*
  * IndexGetRelation: given an index's relation OID, get the OID of the
  * relation it is an index on.	Uses the system cache.
  */
@@ -2782,12 +2858,9 @@ void
 reindex_index(Oid indexId, bool skip_constraint_checks)
 {
 	Relation	iRel,
-				heapRelation,
-				pg_index;
+				heapRelation;
 	Oid			heapId;
 	IndexInfo  *indexInfo;
-	HeapTuple	indexTuple;
-	Form_pg_index indexForm;
 	volatile bool skipped_constraint = false;
 
 	/*
@@ -2867,25 +2940,39 @@ reindex_index(Oid indexId, bool skip_constraint_checks)
 	 *
 	 * We can also reset indcheckxmin, because we have now done a
 	 * non-concurrent index build, *except* in the case where index_build
-	 * found some still-broken HOT chains.	If it did, we normally leave
-	 * indcheckxmin alone (note that index_build won't have changed it,
-	 * because this is a reindex).	But if the index was invalid or not ready
-	 * and there were broken HOT chains, it seems best to force indcheckxmin
-	 * true, because the normal argument that the HOT chains couldn't conflict
-	 * with the index is suspect for an invalid index.
+	 * found some still-broken HOT chains. If it did, and we don't have to
+	 * change any of the other flags, we just leave indcheckxmin alone (note
+	 * that index_build won't have changed it, because this is a reindex).
+	 * This is okay and desirable because not updating the tuple leaves the
+	 * index's usability horizon (recorded as the tuple's xmin value) the same
+	 * as it was.
 	 *
-	 * Note that it is important to not update the pg_index entry if we don't
-	 * have to, because updating it will move the index's usability horizon
-	 * (recorded as the tuple's xmin value) if indcheckxmin is true.  We don't
-	 * really want REINDEX to move the usability horizon forward ever, but we
-	 * have no choice if we are to fix indisvalid or indisready.  Of course,
-	 * clearing indcheckxmin eliminates the issue, so we're happy to do that
-	 * if we can.  Another reason for caution here is that while reindexing
-	 * pg_index itself, we must not try to update it.  We assume that
-	 * pg_index's indexes will always have these flags in their clean state.
+	 * But, if the index was invalid/not-ready and there were broken HOT
+	 * chains, we had better force indcheckxmin true, because the normal
+	 * argument that the HOT chains couldn't conflict with the index is
+	 * suspect for an invalid index.  In this case advancing the usability
+	 * horizon is appropriate.
+	 *
+	 * Note that if we have to update the tuple, there is a risk of concurrent
+	 * transactions not seeing it during their SnapshotNow scans of pg_index.
+	 * While not especially desirable, this is safe because no such
+	 * transaction could be trying to update the table (since we have
+	 * ShareLock on it).  The worst case is that someone might transiently
+	 * fail to use the index for a query --- but it was probably unusable
+	 * before anyway, if we are updating the tuple.
+	 *
+	 * Another reason for avoiding unnecessary updates here is that while
+	 * reindexing pg_index itself, we must not try to update tuples in it.
+	 * pg_index's indexes should always have these flags in their clean state,
+	 * so that won't happen.
 	 */
 	if (!skipped_constraint)
 	{
+		Relation	pg_index;
+		HeapTuple	indexTuple;
+		Form_pg_index indexForm;
+		bool		index_bad;
+
 		pg_index = heap_open(IndexRelationId, RowExclusiveLock);
 
 		indexTuple = SearchSysCacheCopy1(INDEXRELID,
@@ -2894,17 +2981,28 @@ reindex_index(Oid indexId, bool skip_constraint_checks)
 			elog(ERROR, "cache lookup failed for index %u", indexId);
 		indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
 
-		if (!indexForm->indisvalid || !indexForm->indisready ||
+		index_bad = (!indexForm->indisvalid ||
+					 !indexForm->indisready);
+		if (index_bad ||
 			(indexForm->indcheckxmin && !indexInfo->ii_BrokenHotChain))
 		{
 			if (!indexInfo->ii_BrokenHotChain)
 				indexForm->indcheckxmin = false;
-			else if (!indexForm->indisvalid || !indexForm->indisready)
+			else if (index_bad)
 				indexForm->indcheckxmin = true;
 			indexForm->indisvalid = true;
 			indexForm->indisready = true;
 			simple_heap_update(pg_index, &indexTuple->t_self, indexTuple);
 			CatalogUpdateIndexes(pg_index, indexTuple);
+
+			/*
+			 * Invalidate the relcache for the table, so that after we commit
+			 * all sessions will refresh the table's index list.  This ensures
+			 * that if anyone misses seeing the pg_index row during this
+			 * update, they'll refresh their list before attempting any update
+			 * on the table.
+			 */
+			CacheInvalidateRelcache(heapRelation);
 		}
 
 		heap_close(pg_index, RowExclusiveLock);
