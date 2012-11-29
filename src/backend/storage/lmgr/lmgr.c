@@ -535,6 +535,24 @@ VirtualXactLockTableInsert(VirtualTransactionId vxid)
 }
 
 /*
+ *		VirtualXactLockTableDelete
+ *
+ * Release a Virtual Transaction lock. Only called by Startup process
+ * at end of Hot Standby.
+ */
+void
+VirtualXactLockTableDelete(VirtualTransactionId vxid)
+{
+	LOCKTAG		tag;
+
+	Assert(VirtualTransactionIdIsValid(vxid));
+
+	SET_LOCKTAG_VIRTUALTRANSACTION(tag, vxid);
+
+	(void) LockRelease(&tag, ExclusiveLock, false);
+}
+
+/*
  *		VirtualXactLockTableWait
  *
  * Waits until the lock on the given VXID is released, which shows that

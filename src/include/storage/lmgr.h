@@ -58,6 +58,7 @@ extern bool ConditionalXactLockTableWait(TransactionId xid);
 
 /* Lock a VXID (used to wait for a transaction to finish) */
 extern void VirtualXactLockTableInsert(VirtualTransactionId vxid);
+extern void VirtualXactLockTableDelete(VirtualTransactionId vxid);
 extern void VirtualXactLockTableWait(VirtualTransactionId vxid);
 extern bool ConditionalVirtualXactLockTableWait(VirtualTransactionId vxid);
 
