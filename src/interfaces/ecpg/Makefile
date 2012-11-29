@@ -10,7 +10,9 @@ SUBDIRS = include pgtypeslib ecpglib compatlib preproc
 # (There are some other parallelism bugs in the subdirectory makefiles
 # themselves, but there's little point in fixing them as long as we have
 # to use this big hammer.)
+ifeq ($(MAKE_VERSION),3.82)
 .NOTPARALLEL:
+endif
 
 $(recurse)
 
