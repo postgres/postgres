@@ -81,7 +81,7 @@ InitRecoveryTransactionEnvironment(void)
 	 * hold AccessShareLocks so never block while we write or lock new rows.
 	 */
 	vxid.backendId = MyBackendId;
-	vxid.localTransactionId = GetNextLocalTransactionId();
+	vxid.localTransactionId = MyProc->lxid = GetNextLocalTransactionId();
 	VirtualXactLockTableInsert(vxid);
 
 	standbyState = STANDBY_INITIALIZED;
@@ -97,11 +97,18 @@ InitRecoveryTransactionEnvironment(void)
 void
 ShutdownRecoveryTransactionEnvironment(void)
 {
+	VirtualTransactionId vxid;
+
 	/* Mark all tracked in-progress transactions as finished. */
 	ExpireAllKnownAssignedTransactionIds();
 
 	/* Release all locks the tracked transactions were holding */
 	StandbyReleaseAllLocks();
+
+	/* Cleanup our VirtualTransaction */
+	vxid.backendId = MyBackendId;
+	vxid.localTransactionId = MyProc->lxid;
+	VirtualXactLockTableDelete(vxid);
 }
 
 
