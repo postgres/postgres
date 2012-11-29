@@ -906,6 +906,9 @@ ExecOpenIndices(ResultRelInfo *resultRelInfo)
 	/*
 	 * For each index, open the index relation and save pg_index info. We
 	 * acquire RowExclusiveLock, signifying we will update the index.
+	 *
+	 * Note: we do this even if the index is not IndexIsReady; it's not worth
+	 * the trouble to optimize for the case where it isn't.
 	 */
 	i = 0;
 	foreach(l, indexoidlist)

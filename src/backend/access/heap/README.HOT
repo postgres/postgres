@@ -386,6 +386,34 @@ from the index, as well as ensuring that no one can see any inconsistent
 rows in a broken HOT chain (the first condition is stronger than the
 second).  Finally, we can mark the index valid for searches.
 
+Note that we do not need to set pg_index.indcheckxmin in this code path,
+because we have outwaited any transactions that would need to avoid using
+the index.  (indcheckxmin is only needed because non-concurrent CREATE
+INDEX doesn't want to wait; its stronger lock would create too much risk of
+deadlock if it did.)
+
+
+DROP INDEX CONCURRENTLY
+-----------------------
+
+DROP INDEX CONCURRENTLY is sort of the reverse sequence of CREATE INDEX
+CONCURRENTLY.  We first mark the index as not indisvalid, and then wait for
+any transactions that could be using it in queries to end.  (During this
+time, index updates must still be performed as normal, since such
+transactions might expect freshly inserted tuples to be findable.)
+Then, we clear indisready and indislive, and again wait for transactions
+that could be updating the index to end.  Finally we can drop the index
+normally (though taking only ShareUpdateExclusiveLock on its parent table).
+
+The reason we need the pg_index.indislive flag is that after the second
+wait step begins, we don't want transactions to be touching the index at
+all; otherwise they might suffer errors if the DROP finally commits while
+they are reading catalog entries for the index.  If we had only indisvalid
+and indisready, this state would be indistinguishable from the first stage
+of CREATE INDEX CONCURRENTLY --- but in that state, we *do* want
+transactions to examine the index, since they must consider it in
+HOT-safety checks.
+
 
 Limitations and Restrictions
 ----------------------------

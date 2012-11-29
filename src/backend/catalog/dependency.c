@@ -995,7 +995,6 @@ deleteOneObject(const ObjectAddress *object, Relation depRel, int flags)
 	int			nkeys;
 	SysScanDesc scan;
 	HeapTuple	tup;
-	Oid			depRelOid = depRel->rd_id;
 
 	/* DROP hook of the objects being removed */
 	if (object_access_hook)
@@ -1008,9 +1007,9 @@ deleteOneObject(const ObjectAddress *object, Relation depRel, int flags)
 	}
 
 	/*
-	 * Close depRel if we are doing a drop concurrently. The individual
-	 * deletion has to commit the transaction and we don't want dangling
-	 * references.
+	 * Close depRel if we are doing a drop concurrently.  The object deletion
+	 * subroutine will commit the current transaction, so we can't keep the
+	 * relation open across doDeletion().
 	 */
 	if (flags & PERFORM_DELETION_CONCURRENTLY)
 		heap_close(depRel, RowExclusiveLock);
@@ -1018,24 +1017,23 @@ deleteOneObject(const ObjectAddress *object, Relation depRel, int flags)
 	/*
 	 * Delete the object itself, in an object-type-dependent way.
 	 *
-	 * Do this before removing outgoing dependencies as deletions can be
-	 * happening in concurrent mode. That will only happen for a single object
-	 * at once and if so the object will be invalidated inside a separate
-	 * transaction and only dropped inside a transaction thats in-progress when
-	 * doDeletion returns. This way no observer can see dangling dependency
-	 * entries.
+	 * We used to do this after removing the outgoing dependency links, but it
+	 * seems just as reasonable to do it beforehand.  In the concurrent case
+	 * we *must* do it in this order, because we can't make any transactional
+	 * updates before calling doDeletion() --- they'd get committed right
+	 * away, which is not cool if the deletion then fails.
 	 */
 	doDeletion(object, flags);
 
 	/*
-	 * Reopen depRel if we closed it before
+	 * Reopen depRel if we closed it above
 	 */
 	if (flags & PERFORM_DELETION_CONCURRENTLY)
-		depRel = heap_open(depRelOid, RowExclusiveLock);
+		depRel = heap_open(DependRelationId, RowExclusiveLock);
 
 	/*
-	 * Then remove any pg_depend records that link from this object to
-	 * others.	(Any records linking to this object should be gone already.)
+	 * Now remove any pg_depend records that link from this object to others.
+	 * (Any records linking to this object should be gone already.)
 	 *
 	 * When dropping a whole object (subId = 0), remove all pg_depend records
 	 * for its sub-objects too.
@@ -1258,15 +1256,23 @@ AcquireDeletionLock(const ObjectAddress *object, int flags)
 {
 	if (object->classId == RelationRelationId)
 	{
+		/*
+		 * In DROP INDEX CONCURRENTLY, take only ShareUpdateExclusiveLock on
+		 * the index for the moment.  index_drop() will promote the lock once
+		 * it's safe to do so.  In all other cases we need full exclusive
+		 * lock.
+		 */
 		if (flags & PERFORM_DELETION_CONCURRENTLY)
 			LockRelationOid(object->objectId, ShareUpdateExclusiveLock);
 		else
 			LockRelationOid(object->objectId, AccessExclusiveLock);
 	}
 	else
+	{
 		/* assume we should lock the whole object not a sub-object */
 		LockDatabaseObject(object->classId, object->objectId, 0,
 						   AccessExclusiveLock);
+	}
 }
 
 /*

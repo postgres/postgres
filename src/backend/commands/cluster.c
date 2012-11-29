@@ -444,7 +444,7 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck, LOCKMOD
 	 * might put recently-dead tuples out-of-order in the new table, and there
 	 * is little harm in that.)
 	 */
-	if (!OldIndex->rd_index->indisvalid)
+	if (!IndexIsValid(OldIndex->rd_index))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot cluster on invalid index \"%s\"",
@@ -458,6 +458,11 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck, LOCKMOD
  * mark_index_clustered: mark the specified index as the one clustered on
  *
  * With indexOid == InvalidOid, will mark all indexes of rel not-clustered.
+ *
+ * Note: we do transactional updates of the pg_index rows, which are unsafe
+ * against concurrent SnapshotNow scans of pg_index.  Therefore this is unsafe
+ * to execute with less than full exclusive lock on the parent table;
+ * otherwise concurrent executions of RelationGetIndexList could miss indexes.
  */
 void
 mark_index_clustered(Relation rel, Oid indexOid)
@@ -513,6 +518,9 @@ mark_index_clustered(Relation rel, Oid indexOid)
 		}
 		else if (thisIndexOid == indexOid)
 		{
+			/* this was checked earlier, but let's be real sure */
+			if (!IndexIsValid(indexForm))
+				elog(ERROR, "cannot cluster on invalid index %u", indexOid);
 			indexForm->indisclustered = true;
 			simple_heap_update(pg_index, &indexTuple->t_self, indexTuple);
 			CatalogUpdateIndexes(pg_index, indexTuple);

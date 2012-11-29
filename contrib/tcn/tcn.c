@@ -141,8 +141,8 @@ triggered_change_notification(PG_FUNCTION_ARGS)
 		if (!HeapTupleIsValid(indexTuple))		/* should not happen */
 			elog(ERROR, "cache lookup failed for index %u", indexoid);
 		index = (Form_pg_index) GETSTRUCT(indexTuple);
-		/* we're only interested if it is the primary key */
-		if (index->indisprimary)
+		/* we're only interested if it is the primary key and valid */
+		if (index->indisprimary && IndexIsValid(index))
 		{
 			int			numatts = index->indnatts;
 

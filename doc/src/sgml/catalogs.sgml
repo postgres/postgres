@@ -3480,7 +3480,7 @@
        index is possibly incomplete: it must still be modified by
        <command>INSERT</>/<command>UPDATE</> operations, but it cannot safely
        be used for queries. If it is unique, the uniqueness property is not
-       true either.
+       guaranteed true either.
       </entry>
      </row>
 
@@ -3504,6 +3504,16 @@
        If true, the index is currently ready for inserts.  False means the
        index must be ignored by <command>INSERT</>/<command>UPDATE</>
        operations.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>indislive</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       If false, the index is in process of being dropped, and should be
+       ignored for all purposes (including HOT-safety decisions)
       </entry>
      </row>
 

@@ -1533,16 +1533,10 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 							index_name, RelationGetRelationName(heap_rel)),
 					 parser_errposition(cxt->pstate, constraint->location)));
 
-		if (!index_form->indisvalid)
+		if (!IndexIsValid(index_form))
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					 errmsg("index \"%s\" is not valid", index_name),
-					 parser_errposition(cxt->pstate, constraint->location)));
-
-		if (!index_form->indisready)
-			ereport(ERROR,
-					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("index \"%s\" is not ready", index_name),
 					 parser_errposition(cxt->pstate, constraint->location)));
 
 		if (!index_form->indisunique)

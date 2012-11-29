@@ -124,6 +124,7 @@ CheckIndexCompatible(Oid oldId,
 	Oid			accessMethodId;
 	Oid			relationId;
 	HeapTuple	tuple;
+	Form_pg_index indexForm;
 	Form_pg_am	accessMethodForm;
 	bool		amcanorder;
 	int16	   *coloptions;
@@ -193,17 +194,22 @@ CheckIndexCompatible(Oid oldId,
 	tuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(oldId));
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for index %u", oldId);
+	indexForm = (Form_pg_index) GETSTRUCT(tuple);
 
-	/* We don't assess expressions or predicates; assume incompatibility. */
+	/*
+	 * We don't assess expressions or predicates; assume incompatibility.
+	 * Also, if the index is invalid for any reason, treat it as incompatible.
+	 */
 	if (!(heap_attisnull(tuple, Anum_pg_index_indpred) &&
-		  heap_attisnull(tuple, Anum_pg_index_indexprs)))
+		  heap_attisnull(tuple, Anum_pg_index_indexprs) &&
+		  IndexIsValid(indexForm)))
 	{
 		ReleaseSysCache(tuple);
 		return false;
 	}
 
 	/* Any change in operator class or collation breaks compatibility. */
-	old_natts = ((Form_pg_index) GETSTRUCT(tuple))->indnatts;
+	old_natts = indexForm->indnatts;
 	Assert(old_natts == numberOfAttributes);
 
 	d = SysCacheGetAttr(INDEXRELID, tuple, Anum_pg_index_indcollation, &isnull);
@@ -320,9 +326,6 @@ DefineIndex(IndexStmt *stmt,
 	LockRelId	heaprelid;
 	LOCKTAG		heaplocktag;
 	Snapshot	snapshot;
-	Relation	pg_index;
-	HeapTuple	indexTuple;
-	Form_pg_index indexForm;
 	int			i;
 
 	/*
@@ -717,23 +720,7 @@ DefineIndex(IndexStmt *stmt,
 	 * commit this transaction, any new transactions that open the table must
 	 * insert new entries into the index for insertions and non-HOT updates.
 	 */
-	pg_index = heap_open(IndexRelationId, RowExclusiveLock);
-
-	indexTuple = SearchSysCacheCopy1(INDEXRELID,
-									 ObjectIdGetDatum(indexRelationId));
-	if (!HeapTupleIsValid(indexTuple))
-		elog(ERROR, "cache lookup failed for index %u", indexRelationId);
-	indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
-
-	Assert(!indexForm->indisready);
-	Assert(!indexForm->indisvalid);
-
-	indexForm->indisready = true;
-
-	simple_heap_update(pg_index, &indexTuple->t_self, indexTuple);
-	CatalogUpdateIndexes(pg_index, indexTuple);
-
-	heap_close(pg_index, RowExclusiveLock);
+	index_set_state_flags(indexRelationId, INDEX_CREATE_SET_READY);
 
 	/* we can do away with our snapshot */
 	PopActiveSnapshot();
@@ -857,23 +844,7 @@ DefineIndex(IndexStmt *stmt,
 	/*
 	 * Index can now be marked valid -- update its pg_index entry
 	 */
-	pg_index = heap_open(IndexRelationId, RowExclusiveLock);
-
-	indexTuple = SearchSysCacheCopy1(INDEXRELID,
-									 ObjectIdGetDatum(indexRelationId));
-	if (!HeapTupleIsValid(indexTuple))
-		elog(ERROR, "cache lookup failed for index %u", indexRelationId);
-	indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
-
-	Assert(indexForm->indisready);
-	Assert(!indexForm->indisvalid);
-
-	indexForm->indisvalid = true;
-
-	simple_heap_update(pg_index, &indexTuple->t_self, indexTuple);
-	CatalogUpdateIndexes(pg_index, indexTuple);
-
-	heap_close(pg_index, RowExclusiveLock);
+	index_set_state_flags(indexRelationId, INDEX_CREATE_SET_VALID);
 
 	/*
 	 * The pg_index update will cause backends (including this one) to update
@@ -881,7 +852,7 @@ DefineIndex(IndexStmt *stmt,
 	 * relcache inval on the parent table to force replanning of cached plans.
 	 * Otherwise existing sessions might fail to use the new index where it
 	 * would be useful.  (Note that our earlier commits did not create reasons
-	 * to replan; relcache flush on the index itself was sufficient.)
+	 * to replan; so relcache flush on the index itself was sufficient.)
 	 */
 	CacheInvalidateRelcacheByRelid(heaprelid.relId);
 
