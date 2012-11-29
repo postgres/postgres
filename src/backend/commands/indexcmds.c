@@ -147,9 +147,6 @@ DefineIndex(RangeVar *heapRelation,
 	LockRelId	heaprelid;
 	LOCKTAG		heaplocktag;
 	Snapshot	snapshot;
-	Relation	pg_index;
-	HeapTuple	indexTuple;
-	Form_pg_index indexForm;
 	int			i;
 
 	/*
@@ -595,23 +592,7 @@ DefineIndex(RangeVar *heapRelation,
 	 * commit this transaction, any new transactions that open the table must
 	 * insert new entries into the index for insertions and non-HOT updates.
 	 */
-	pg_index = heap_open(IndexRelationId, RowExclusiveLock);
-
-	indexTuple = SearchSysCacheCopy1(INDEXRELID,
-									 ObjectIdGetDatum(indexRelationId));
-	if (!HeapTupleIsValid(indexTuple))
-		elog(ERROR, "cache lookup failed for index %u", indexRelationId);
-	indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
-
-	Assert(!indexForm->indisready);
-	Assert(!indexForm->indisvalid);
-
-	indexForm->indisready = true;
-
-	simple_heap_update(pg_index, &indexTuple->t_self, indexTuple);
-	CatalogUpdateIndexes(pg_index, indexTuple);
-
-	heap_close(pg_index, RowExclusiveLock);
+	index_set_state_flags(indexRelationId, INDEX_CREATE_SET_READY);
 
 	/* we can do away with our snapshot */
 	PopActiveSnapshot();
@@ -735,23 +716,7 @@ DefineIndex(RangeVar *heapRelation,
 	/*
 	 * Index can now be marked valid -- update its pg_index entry
 	 */
-	pg_index = heap_open(IndexRelationId, RowExclusiveLock);
-
-	indexTuple = SearchSysCacheCopy1(INDEXRELID,
-									 ObjectIdGetDatum(indexRelationId));
-	if (!HeapTupleIsValid(indexTuple))
-		elog(ERROR, "cache lookup failed for index %u", indexRelationId);
-	indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
-
-	Assert(indexForm->indisready);
-	Assert(!indexForm->indisvalid);
-
-	indexForm->indisvalid = true;
-
-	simple_heap_update(pg_index, &indexTuple->t_self, indexTuple);
-	CatalogUpdateIndexes(pg_index, indexTuple);
-
-	heap_close(pg_index, RowExclusiveLock);
+	index_set_state_flags(indexRelationId, INDEX_CREATE_SET_VALID);
 
 	/*
 	 * The pg_index update will cause backends (including this one) to update
@@ -759,7 +724,7 @@ DefineIndex(RangeVar *heapRelation,
 	 * relcache inval on the parent table to force replanning of cached plans.
 	 * Otherwise existing sessions might fail to use the new index where it
 	 * would be useful.  (Note that our earlier commits did not create reasons
-	 * to replan; relcache flush on the index itself was sufficient.)
+	 * to replan; so relcache flush on the index itself was sufficient.)
 	 */
 	CacheInvalidateRelcacheByRelid(heaprelid.relId);
 
