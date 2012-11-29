@@ -341,6 +341,8 @@ InitProcess(void)
 	SHMQueueElemInit(&(MyProc->links));
 	MyProc->waitStatus = STATUS_OK;
 	MyProc->lxid = InvalidLocalTransactionId;
+	MyProc->fpVXIDLock = false;
+	MyProc->fpLocalTransactionId = InvalidLocalTransactionId;
 	MyPgXact->xid = InvalidTransactionId;
 	MyPgXact->xmin = InvalidTransactionId;
 	MyProc->pid = MyProcPid;
@@ -507,6 +509,8 @@ InitAuxiliaryProcess(void)
 	SHMQueueElemInit(&(MyProc->links));
 	MyProc->waitStatus = STATUS_OK;
 	MyProc->lxid = InvalidLocalTransactionId;
+	MyProc->fpVXIDLock = false;
+	MyProc->fpLocalTransactionId = InvalidLocalTransactionId;
 	MyPgXact->xid = InvalidTransactionId;
 	MyPgXact->xmin = InvalidTransactionId;
 	MyProc->backendId = InvalidBackendId;
