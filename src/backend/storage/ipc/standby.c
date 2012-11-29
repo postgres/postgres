@@ -105,6 +105,9 @@ ShutdownRecoveryTransactionEnvironment(void)
 
 	/* Release all locks the tracked transactions were holding */
 	StandbyReleaseAllLocks();
+
+	/* Cleanup our VirtualTransaction */
+	VirtualXactLockTableCleanup();
 }
 
 

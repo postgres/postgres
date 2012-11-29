@@ -210,7 +210,6 @@ static bool FastPathUnGrantRelationLock(Oid relid, LOCKMODE lockmode);
 static bool FastPathTransferRelationLocks(LockMethod lockMethodTable,
 							  const LOCKTAG *locktag, uint32 hashcode);
 static PROCLOCK *FastPathGetRelationLockEntry(LOCALLOCK *locallock);
-static void VirtualXactLockTableCleanup(void);
 
 /*
  * To make the fast-path lock mechanism work, we must have some way of
@@ -3791,7 +3790,7 @@ VirtualXactLockTableInsert(VirtualTransactionId vxid)
  *		Check whether a VXID lock has been materialized; if so, release it,
  *		unblocking waiters.
  */
-static void
+void
 VirtualXactLockTableCleanup()
 {
 	bool		fastpath;
