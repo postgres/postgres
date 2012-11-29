@@ -401,6 +401,12 @@ from the index, as well as ensuring that no one can see any inconsistent
 rows in a broken HOT chain (the first condition is stronger than the
 second).  Finally, we can mark the index valid for searches.
 
+Note that we do not need to set pg_index.indcheckxmin in this code path,
+because we have outwaited any transactions that would need to avoid using
+the index.  (indcheckxmin is only needed because non-concurrent CREATE
+INDEX doesn't want to wait; its stronger lock would create too much risk of
+deadlock if it did.)
+
 
 Limitations and Restrictions
 ----------------------------

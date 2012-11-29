@@ -1704,9 +1704,20 @@ RelationReloadIndexInfo(Relation relation)
 				 RelationGetRelid(relation));
 		index = (Form_pg_index) GETSTRUCT(tuple);
 
+		/*
+		 * Basically, let's just copy all the bool fields.  There are one or
+		 * two of these that can't actually change in the current code, but
+		 * it's not worth it to track exactly which ones they are.  None of
+		 * the array fields are allowed to change, though.
+		 */
+		relation->rd_index->indisunique = index->indisunique;
+		relation->rd_index->indisprimary = index->indisprimary;
+		relation->rd_index->indisclustered = index->indisclustered;
 		relation->rd_index->indisvalid = index->indisvalid;
 		relation->rd_index->indcheckxmin = index->indcheckxmin;
 		relation->rd_index->indisready = index->indisready;
+
+		/* Copy xmin too, as that is needed to make sense of indcheckxmin */
 		HeapTupleHeaderSetXmin(relation->rd_indextuple->t_data,
 							   HeapTupleHeaderGetXmin(tuple->t_data));
 
@@ -3085,7 +3096,8 @@ RelationGetIndexList(Relation relation)
 		result = insert_ordered_oid(result, index->indexrelid);
 
 		/* Check to see if it is a unique, non-partial btree index on OID */
-		if (index->indnatts == 1 &&
+		if (IndexIsValid(index) &&
+			index->indnatts == 1 &&
 			index->indisunique &&
 			index->indkey.values[0] == ObjectIdAttributeNumber &&
 			index->indclass.values[0] == OID_BTREE_OPS_OID &&
@@ -3392,6 +3404,11 @@ RelationGetIndexAttrBitmap(Relation relation)
 
 	/*
 	 * For each index, add referenced attributes to indexattrs.
+	 *
+	 * Note: we consider all indexes returned by RelationGetIndexList, even if
+	 * they are not indisready or indisvalid.  This is important because an
+	 * index for which CREATE INDEX CONCURRENTLY has just started must be
+	 * included in HOT-safety decisions (see README.HOT).
 	 */
 	indexattrs = NULL;
 	foreach(l, indexoidlist)

@@ -27,6 +27,13 @@ typedef void (*IndexBuildCallback) (Relation index,
 												bool tupleIsAlive,
 												void *state);
 
+/* Action code for index_set_state_flags */
+typedef enum
+{
+	INDEX_CREATE_SET_READY,
+	INDEX_CREATE_SET_VALID
+} IndexStateFlagsAction;
+
 
 extern Oid index_create(Oid heapRelationId,
 			 const char *indexRelationName,
@@ -69,6 +76,8 @@ extern double IndexBuildHeapScan(Relation heapRelation,
 				   void *callback_state);
 
 extern void validate_index(Oid heapId, Oid indexId, Snapshot snapshot);
+
+extern void index_set_state_flags(Oid indexId, IndexStateFlagsAction action);
 
 extern void reindex_index(Oid indexId);
 extern bool reindex_relation(Oid relid, bool toast_too);
