@@ -40,34 +40,33 @@ DROP INDEX [ CONCURRENTLY ] [ IF EXISTS ] <replaceable class="PARAMETER">name</r
 
   <variablelist>
    <varlistentry>
-    <term><literal>IF EXISTS</literal></term>
+    <term><literal>CONCURRENTLY</literal></term>
     <listitem>
      <para>
-      Do not throw an error if the index does not exist. A notice is issued
-      in this case.
+      Drop the index without locking out concurrent selects, inserts, updates,
+      and deletes on the index's table.  A normal <command>DROP INDEX</>
+      acquires exclusive lock on the table, blocking other accesses until the
+      index drop can be completed.  With this option, the command instead
+      waits until conflicting transactions have completed.
+     </para>
+     <para>
+      There are several caveats to be aware of when using this option.
+      Only one index name can be specified, and the <literal>CASCADE</> option
+      is not supported.  (Thus, an index that supports a <literal>UNIQUE</> or
+      <literal>PRIMARY KEY</> constraint cannot be dropped this way.)
+      Also, regular <command>DROP INDEX</> commands can be
+      performed within a transaction block, but
+      <command>DROP INDEX CONCURRENTLY</> cannot.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>CONCURRENTLY</literal></term>
+    <term><literal>IF EXISTS</literal></term>
     <listitem>
      <para>
-      When this option is used, <productname>PostgreSQL</> will drop the
-      index without taking any locks that prevent concurrent selects, inserts,
-      updates, or deletes on the table; whereas a standard index drop
-      waits for a lock that locks out everything on the table until it's done.
-      Concurrent drop index is a two stage process. First, we mark the index
-      both invalid and not ready then commit the change. Next we wait until
-      there are no users locking the table who can see the index.
-     </para>
-     <para>
-      There are several caveats to be aware of when using this option.
-      Only one index name can be specified if the <literal>CONCURRENTLY</literal>
-      parameter is specified.  Regular <command>DROP INDEX</> command can be
-      performed within a transaction block, but
-      <command>DROP INDEX CONCURRENTLY</> cannot.
-      The CASCADE option is not supported when dropping an index concurrently.
+      Do not throw an error if the index does not exist. A notice is issued
+      in this case.
      </para>
     </listitem>
    </varlistentry>

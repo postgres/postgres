@@ -95,4 +95,13 @@ typedef FormData_pg_index *Form_pg_index;
 #define INDOPTION_DESC			0x0001	/* values are in reverse order */
 #define INDOPTION_NULLS_FIRST	0x0002	/* NULLs are first instead of last */
 
+/*
+ * Use of these macros is recommended over direct examination of the state
+ * flag columns where possible; this allows source code compatibility with
+ * the less ugly representation used after 9.2.
+ */
+#define IndexIsValid(indexForm) ((indexForm)->indisvalid && (indexForm)->indisready)
+#define IndexIsReady(indexForm) ((indexForm)->indisready)
+#define IndexIsLive(indexForm)	((indexForm)->indisready || !(indexForm)->indisvalid)
+
 #endif   /* PG_INDEX_H */
