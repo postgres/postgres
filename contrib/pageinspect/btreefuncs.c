@@ -158,9 +158,9 @@ GetBTPageStatistics(BlockNumber blkno, Buffer buffer, BTPageStat *stat)
 }
 
 /* -----------------------------------------------
- * bt_page()
+ * bt_page_stats()
  *
- * Usage: SELECT * FROM bt_page('t1_pkey', 1);
+ * Usage: SELECT * FROM bt_page_stats('t1_pkey', 1);
  * -----------------------------------------------
  */
 Datum
@@ -206,12 +206,16 @@ bt_page_stats(PG_FUNCTION_ARGS)
 	CHECK_RELATION_BLOCK_RANGE(rel, blkno);
 
 	buffer = ReadBuffer(rel, blkno);
+	LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
 	/* keep compiler quiet */
 	stat.btpo_prev = stat.btpo_next = InvalidBlockNumber;
 	stat.btpo_flags = stat.free_size = stat.avg_item_size = 0;
 
 	GetBTPageStatistics(blkno, buffer, &stat);
+
+	UnlockReleaseBuffer(buffer);
+	relation_close(rel, AccessShareLock);
 
 	/* Build a tuple descriptor for our result type */
 	if (get_call_result_type(fcinfo, NULL, &tupleDesc) != TYPEFUNC_COMPOSITE)
@@ -248,10 +252,6 @@ bt_page_stats(PG_FUNCTION_ARGS)
 								   values);
 
 	result = HeapTupleGetDatum(tuple);
-
-	ReleaseBuffer(buffer);
-
-	relation_close(rel, AccessShareLock);
 
 	PG_RETURN_DATUM(result);
 }
@@ -324,6 +324,7 @@ bt_page_items(PG_FUNCTION_ARGS)
 		CHECK_RELATION_BLOCK_RANGE(rel, blkno);
 
 		buffer = ReadBuffer(rel, blkno);
+		LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
 		/*
 		 * We copy the page into local storage to avoid holding pin on the
@@ -337,7 +338,7 @@ bt_page_items(PG_FUNCTION_ARGS)
 		uargs->page = palloc(BLCKSZ);
 		memcpy(uargs->page, BufferGetPage(buffer), BLCKSZ);
 
-		ReleaseBuffer(buffer);
+		UnlockReleaseBuffer(buffer);
 		relation_close(rel, AccessShareLock);
 
 		uargs->offset = FirstOffsetNumber;
@@ -468,6 +469,8 @@ bt_metap(PG_FUNCTION_ARGS)
 				 errmsg("cannot access temporary tables of other sessions")));
 
 	buffer = ReadBuffer(rel, 0);
+	LockBuffer(buffer, BUFFER_LOCK_SHARE);
+
 	page = BufferGetPage(buffer);
 	metad = BTPageGetMeta(page);
 
@@ -494,8 +497,7 @@ bt_metap(PG_FUNCTION_ARGS)
 
 	result = HeapTupleGetDatum(tuple);
 
-	ReleaseBuffer(buffer);
-
+	UnlockReleaseBuffer(buffer);
 	relation_close(rel, AccessShareLock);
 
 	PG_RETURN_DATUM(result);
