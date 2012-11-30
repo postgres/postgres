@@ -790,7 +790,7 @@ static int
 connectDBStart(PGconn *conn)
 {
 	int			portnum;
-	char		portstr[128];
+	char		portstr[MAXPGPATH];
 	struct addrinfo *addrs = NULL;
 	struct addrinfo hint;
 	const char *node;
@@ -842,6 +842,15 @@ connectDBStart(PGconn *conn)
 		node = NULL;
 		hint.ai_family = AF_UNIX;
 		UNIXSOCK_PATH(portstr, portnum, conn->pgunixsocket);
+		if (strlen(portstr) >= UNIXSOCK_PATH_BUFLEN)
+		{
+			appendPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("Unix-domain socket path \"%s\" is too long (maximum %d bytes)\n"),
+											portstr,
+											(int) (UNIXSOCK_PATH_BUFLEN - 1));
+			conn->options_valid = false;
+			goto connect_errReturn;
+		}
 #else
 		/* Without Unix sockets, default to localhost instead */
 		node = "localhost";
