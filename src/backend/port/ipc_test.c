@@ -113,7 +113,7 @@ ProcessInterrupts(void)
 {
 }
 
-int
+void
 ExceptionalCondition(const char *conditionName,
 					 const char *errorType,
 					 const char *fileName,
@@ -123,7 +123,6 @@ ExceptionalCondition(const char *conditionName,
 			errorType, conditionName,
 			fileName, lineNumber);
 	abort();
-	return 0;
 }
 
 
