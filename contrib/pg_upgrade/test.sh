@@ -58,6 +58,15 @@ PGDATA=$temp_root/data
 export PGDATA
 rm -rf "$PGDATA" "$PGDATA".old
 
+unset PGDATABASE
+unset PGUSER
+unset PGSERVICE
+unset PGSSLMODE
+unset PGREQUIRESSL
+unset PGCONNECT_TIMEOUT
+unset PGHOST
+unset PGHOSTADDR
+
 logdir=$PWD/log
 rm -rf "$logdir"
 mkdir "$logdir"
