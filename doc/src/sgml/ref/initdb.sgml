@@ -245,6 +245,17 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-S</option></term>
+      <term><option>--sync-only</option></term>
+      <listitem>
+       <para>
+        Safely write all database files to disk and exit.  This does not
+        perform any of the normal <application>initdb</> operations.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-T <replaceable>CFG</></option></term>
       <term><option>--text-search-config=<replaceable>CFG</></option></term>
       <listitem>
