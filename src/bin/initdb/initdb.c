@@ -144,6 +144,7 @@ static char infoversion[100];
 static bool caught_signal = false;
 static bool output_failed = false;
 static int	output_errno = 0;
+static char *pgdata_native;
 
 /* defaults */
 static int	n_connections = 10;
@@ -171,6 +172,27 @@ static char *authwarning = NULL;
  */
 static const char *boot_options = "-F";
 static const char *backend_options = "--single -F -O -c search_path=pg_catalog -c exit_on_error=true";
+
+#ifdef WIN32
+char	   *restrict_env;
+#endif
+const char *subdirs[] = {
+	"global",
+	"pg_xlog",
+	"pg_xlog/archive_status",
+	"pg_clog",
+	"pg_notify",
+	"pg_serial",
+	"pg_snapshots",
+	"pg_subtrans",
+	"pg_twophase",
+	"pg_multixact/members",
+	"pg_multixact/offsets",
+	"base",
+	"base/1",
+	"pg_tblspc",
+	"pg_stat_tmp"
+};
 
 
 /* path to 'initdb' binary directory */
@@ -227,6 +249,15 @@ static bool check_locale_name(int category, const char *locale,
 static bool check_locale_encoding(const char *locale, int encoding);
 static void setlocales(void);
 static void usage(const char *progname);
+void get_restricted_token(void);
+void setup_pgdata(void);
+void setup_bin_paths(const char *argv0);
+void setup_data_file_paths(void);
+void setup_locale_encoding(void);
+void setup_signals_and_umask(void);
+void setup_text_search(void);
+void process(const char *argv0);
+
 
 #ifdef WIN32
 static int	CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo);
@@ -2823,242 +2854,9 @@ check_need_password(const char *authmethodlocal, const char *authmethodhost)
 	}
 }
 
-int
-main(int argc, char *argv[])
+void
+get_restricted_token(void)
 {
-	/*
-	 * options with no short version return a low integer, the rest return
-	 * their short version value
-	 */
-	static struct option long_options[] = {
-		{"pgdata", required_argument, NULL, 'D'},
-		{"encoding", required_argument, NULL, 'E'},
-		{"locale", required_argument, NULL, 1},
-		{"lc-collate", required_argument, NULL, 2},
-		{"lc-ctype", required_argument, NULL, 3},
-		{"lc-monetary", required_argument, NULL, 4},
-		{"lc-numeric", required_argument, NULL, 5},
-		{"lc-time", required_argument, NULL, 6},
-		{"lc-messages", required_argument, NULL, 7},
-		{"no-locale", no_argument, NULL, 8},
-		{"text-search-config", required_argument, NULL, 'T'},
-		{"auth", required_argument, NULL, 'A'},
-		{"auth-local", required_argument, NULL, 10},
-		{"auth-host", required_argument, NULL, 11},
-		{"pwprompt", no_argument, NULL, 'W'},
-		{"pwfile", required_argument, NULL, 9},
-		{"username", required_argument, NULL, 'U'},
-		{"help", no_argument, NULL, '?'},
-		{"version", no_argument, NULL, 'V'},
-		{"debug", no_argument, NULL, 'd'},
-		{"show", no_argument, NULL, 's'},
-		{"noclean", no_argument, NULL, 'n'},
-		{"nosync", no_argument, NULL, 'N'},
-		{"xlogdir", required_argument, NULL, 'X'},
-		{NULL, 0, NULL, 0}
-	};
-
-	int			c,
-				i,
-				ret;
-	int			option_index;
-	char	   *effective_user;
-	char	   *pgdenv;			/* PGDATA value gotten from and sent to
-								 * environment */
-	char		bin_dir[MAXPGPATH];
-	char	   *pg_data_native;
-	int			user_enc;
-
-#ifdef WIN32
-	char	   *restrict_env;
-#endif
-	static const char *subdirs[] = {
-		"global",
-		"pg_xlog",
-		"pg_xlog/archive_status",
-		"pg_clog",
-		"pg_notify",
-		"pg_serial",
-		"pg_snapshots",
-		"pg_subtrans",
-		"pg_twophase",
-		"pg_multixact/members",
-		"pg_multixact/offsets",
-		"base",
-		"base/1",
-		"pg_tblspc",
-		"pg_stat_tmp"
-	};
-
-	progname = get_progname(argv[0]);
-	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("initdb"));
-
-	if (argc > 1)
-	{
-		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
-		{
-			usage(progname);
-			exit(0);
-		}
-		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
-		{
-			puts("initdb (PostgreSQL) " PG_VERSION);
-			exit(0);
-		}
-	}
-
-	/* process command-line options */
-
-	while ((c = getopt_long(argc, argv, "dD:E:L:nNU:WA:sT:X:", long_options, &option_index)) != -1)
-	{
-		switch (c)
-		{
-			case 'A':
-				authmethodlocal = authmethodhost = pg_strdup(optarg);
-
-				/*
-				 * When ident is specified, use peer for local connections.
-				 * Mirrored, when peer is specified, use ident for TCP/IP
-				 * connections.
-				 */
-				if (strcmp(authmethodhost, "ident") == 0)
-					authmethodlocal = "peer";
-				else if (strcmp(authmethodlocal, "peer") == 0)
-					authmethodhost = "ident";
-				break;
-			case 10:
-				authmethodlocal = pg_strdup(optarg);
-				break;
-			case 11:
-				authmethodhost = pg_strdup(optarg);
-				break;
-			case 'D':
-				pg_data = pg_strdup(optarg);
-				break;
-			case 'E':
-				encoding = pg_strdup(optarg);
-				break;
-			case 'W':
-				pwprompt = true;
-				break;
-			case 'U':
-				username = pg_strdup(optarg);
-				break;
-			case 'd':
-				debug = true;
-				printf(_("Running in debug mode.\n"));
-				break;
-			case 'n':
-				noclean = true;
-				printf(_("Running in noclean mode.  Mistakes will not be cleaned up.\n"));
-				break;
-			case 'N':
-				do_sync = false;
-				break;
-			case 'L':
-				share_path = pg_strdup(optarg);
-				break;
-			case 1:
-				locale = pg_strdup(optarg);
-				break;
-			case 2:
-				lc_collate = pg_strdup(optarg);
-				break;
-			case 3:
-				lc_ctype = pg_strdup(optarg);
-				break;
-			case 4:
-				lc_monetary = pg_strdup(optarg);
-				break;
-			case 5:
-				lc_numeric = pg_strdup(optarg);
-				break;
-			case 6:
-				lc_time = pg_strdup(optarg);
-				break;
-			case 7:
-				lc_messages = pg_strdup(optarg);
-				break;
-			case 8:
-				locale = "C";
-				break;
-			case 9:
-				pwfilename = pg_strdup(optarg);
-				break;
-			case 's':
-				show_setting = true;
-				break;
-			case 'T':
-				default_text_search_config = pg_strdup(optarg);
-				break;
-			case 'X':
-				xlog_dir = pg_strdup(optarg);
-				break;
-			default:
-				/* getopt_long already emitted a complaint */
-				fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-						progname);
-				exit(1);
-		}
-	}
-
-
-	/*
-	 * Non-option argument specifies data directory as long as it wasn't
-	 * already specified with -D / --pgdata
-	 */
-	if (optind < argc && strlen(pg_data) == 0)
-	{
-		pg_data = pg_strdup(argv[optind]);
-		optind++;
-	}
-
-	if (optind < argc)
-	{
-		fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
-				progname, argv[optind]);
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
-		exit(1);
-	}
-
-	if (pwprompt && pwfilename)
-	{
-		fprintf(stderr, _("%s: password prompt and password file cannot be specified together\n"), progname);
-		exit(1);
-	}
-
-	check_authmethod_unspecified(&authmethodlocal);
-	check_authmethod_unspecified(&authmethodhost);
-
-	check_authmethod_valid(authmethodlocal, auth_methods_local, "local");
-	check_authmethod_valid(authmethodhost, auth_methods_host, "host");
-
-	check_need_password(authmethodlocal, authmethodhost);
-
-	if (strlen(pg_data) == 0)
-	{
-		pgdenv = getenv("PGDATA");
-		if (pgdenv && strlen(pgdenv))
-		{
-			/* PGDATA found */
-			pg_data = pg_strdup(pgdenv);
-		}
-		else
-		{
-			fprintf(stderr,
-					_("%s: no data directory specified\n"
-					  "You must identify the directory where the data for this database system\n"
-					  "will reside.  Do this with either the invocation option -D or the\n"
-					  "environment variable PGDATA.\n"),
-					progname);
-			exit(1);
-		}
-	}
-
-	pg_data_native = pg_data;
-	canonicalize_path(pg_data);
-
 #ifdef WIN32
 	/*
 	 * Before we execute another program, make sure that we are running with a
@@ -3101,6 +2899,35 @@ main(int argc, char *argv[])
 		}
 	}
 #endif
+}
+
+void
+setup_pgdata(void)
+{
+	char	   *pgdata_get_env, *pgdata_set_env;
+
+	if (strlen(pg_data) == 0)
+	{
+		pgdata_get_env = getenv("PGDATA");
+		if (pgdata_get_env && strlen(pgdata_get_env))
+		{
+			/* PGDATA found */
+			pg_data = pg_strdup(pgdata_get_env);
+		}
+		else
+		{
+			fprintf(stderr,
+					_("%s: no data directory specified\n"
+					  "You must identify the directory where the data for this database system\n"
+					  "will reside.  Do this with either the invocation option -D or the\n"
+					  "environment variable PGDATA.\n"),
+					progname);
+			exit(1);
+		}
+	}
+
+	pgdata_native = pg_strdup(pg_data);
+	canonicalize_path(pg_data);
 
 	/*
 	 * we have to set PGDATA for postgres rather than pass it on the command
@@ -3108,16 +2935,23 @@ main(int argc, char *argv[])
 	 * need quotes otherwise on Windows because paths there are most likely to
 	 * have embedded spaces.
 	 */
-	pgdenv = pg_malloc(8 + strlen(pg_data));
-	sprintf(pgdenv, "PGDATA=%s", pg_data);
-	putenv(pgdenv);
+	pgdata_set_env = pg_malloc(8 + strlen(pg_data));
+	sprintf(pgdata_set_env, "PGDATA=%s", pg_data);
+	putenv(pgdata_set_env);
+}
 
-	if ((ret = find_other_exec(argv[0], "postgres", PG_BACKEND_VERSIONSTR,
+
+void
+setup_bin_paths(const char *argv0)
+{
+	int ret;
+
+	if ((ret = find_other_exec(argv0, "postgres", PG_BACKEND_VERSIONSTR,
 							   backend_exec)) < 0)
 	{
 		char		full_path[MAXPGPATH];
 
-		if (find_my_exec(argv[0], full_path) < 0)
+		if (find_my_exec(argv0, full_path) < 0)
 			strlcpy(full_path, progname, sizeof(full_path));
 
 		if (ret == -1)
@@ -3153,62 +2987,14 @@ main(int argc, char *argv[])
 	}
 
 	canonicalize_path(share_path);
+}
 
-	effective_user = get_id();
-	if (strlen(username) == 0)
-		username = effective_user;
-
-	set_input(&bki_file, "postgres.bki");
-	set_input(&desc_file, "postgres.description");
-	set_input(&shdesc_file, "postgres.shdescription");
-	set_input(&hba_file, "pg_hba.conf.sample");
-	set_input(&ident_file, "pg_ident.conf.sample");
-	set_input(&conf_file, "postgresql.conf.sample");
-	set_input(&conversion_file, "conversion_create.sql");
-	set_input(&dictionary_file, "snowball_create.sql");
-	set_input(&info_schema_file, "information_schema.sql");
-	set_input(&features_file, "sql_features.txt");
-	set_input(&system_views_file, "system_views.sql");
-
-	set_info_version();
-
-	if (show_setting || debug)
-	{
-		fprintf(stderr,
-				"VERSION=%s\n"
-				"PGDATA=%s\nshare_path=%s\nPGPATH=%s\n"
-				"POSTGRES_SUPERUSERNAME=%s\nPOSTGRES_BKI=%s\n"
-				"POSTGRES_DESCR=%s\nPOSTGRES_SHDESCR=%s\n"
-				"POSTGRESQL_CONF_SAMPLE=%s\n"
-				"PG_HBA_SAMPLE=%s\nPG_IDENT_SAMPLE=%s\n",
-				PG_VERSION,
-				pg_data, share_path, bin_path,
-				username, bki_file,
-				desc_file, shdesc_file,
-				conf_file,
-				hba_file, ident_file);
-		if (show_setting)
-			exit(0);
-	}
-
-	check_input(bki_file);
-	check_input(desc_file);
-	check_input(shdesc_file);
-	check_input(hba_file);
-	check_input(ident_file);
-	check_input(conf_file);
-	check_input(conversion_file);
-	check_input(dictionary_file);
-	check_input(info_schema_file);
-	check_input(features_file);
-	check_input(system_views_file);
+void
+setup_locale_encoding(void)
+{
+	int			user_enc;
 
 	setlocales();
-
-	printf(_("The files belonging to this database system will be owned "
-			 "by user \"%s\".\n"
-			 "This user must also own the server process.\n\n"),
-		   effective_user);
 
 	if (strcmp(lc_ctype, lc_collate) == 0 &&
 		strcmp(lc_ctype, lc_time) == 0 &&
@@ -3289,6 +3075,60 @@ main(int argc, char *argv[])
 		!check_locale_encoding(lc_collate, user_enc))
 		exit(1);				/* check_locale_encoding printed the error */
 
+}
+
+
+void
+setup_data_file_paths(void)
+{
+	set_input(&bki_file, "postgres.bki");
+	set_input(&desc_file, "postgres.description");
+	set_input(&shdesc_file, "postgres.shdescription");
+	set_input(&hba_file, "pg_hba.conf.sample");
+	set_input(&ident_file, "pg_ident.conf.sample");
+	set_input(&conf_file, "postgresql.conf.sample");
+	set_input(&conversion_file, "conversion_create.sql");
+	set_input(&dictionary_file, "snowball_create.sql");
+	set_input(&info_schema_file, "information_schema.sql");
+	set_input(&features_file, "sql_features.txt");
+	set_input(&system_views_file, "system_views.sql");
+
+	if (show_setting || debug)
+	{
+		fprintf(stderr,
+				"VERSION=%s\n"
+				"PGDATA=%s\nshare_path=%s\nPGPATH=%s\n"
+				"POSTGRES_SUPERUSERNAME=%s\nPOSTGRES_BKI=%s\n"
+				"POSTGRES_DESCR=%s\nPOSTGRES_SHDESCR=%s\n"
+				"POSTGRESQL_CONF_SAMPLE=%s\n"
+				"PG_HBA_SAMPLE=%s\nPG_IDENT_SAMPLE=%s\n",
+				PG_VERSION,
+				pg_data, share_path, bin_path,
+				username, bki_file,
+				desc_file, shdesc_file,
+				conf_file,
+				hba_file, ident_file);
+		if (show_setting)
+			exit(0);
+	}
+
+	check_input(bki_file);
+	check_input(desc_file);
+	check_input(shdesc_file);
+	check_input(hba_file);
+	check_input(ident_file);
+	check_input(conf_file);
+	check_input(conversion_file);
+	check_input(dictionary_file);
+	check_input(info_schema_file);
+	check_input(features_file);
+	check_input(system_views_file);
+}
+
+
+void
+setup_text_search(void)
+{
 	if (strlen(default_text_search_config) == 0)
 	{
 		default_text_search_config = find_matching_ts_config(lc_ctype);
@@ -3318,14 +3158,12 @@ main(int argc, char *argv[])
 	printf(_("The default text search configuration will be set to \"%s\".\n"),
 		   default_text_search_config);
 
-	printf("\n");
+}
 
-	umask(S_IRWXG | S_IRWXO);
 
-	/*
-	 * now we are starting to do real work, trap signals so we can clean up
-	 */
-
+void
+setup_signals_and_umask(void)
+{
 	/* some of these are not valid on Windows */
 #ifdef SIGHUP
 	pqsignal(SIGHUP, trapsig);
@@ -3345,6 +3183,18 @@ main(int argc, char *argv[])
 	pqsignal(SIGPIPE, SIG_IGN);
 #endif
 
+	umask(S_IRWXG | S_IRWXO);
+}
+
+
+void
+process(const char *argv0)
+{
+	int i;
+	char		bin_dir[MAXPGPATH];
+
+	setup_signals_and_umask();
+ 
 	switch (pg_check_dir(pg_data))
 	{
 		case 0:
@@ -3554,7 +3404,7 @@ main(int argc, char *argv[])
 		fprintf(stderr, "%s", authwarning);
 
 	/* Get directory specification used to start this executable */
-	strlcpy(bin_dir, argv[0], sizeof(bin_dir));
+	strlcpy(bin_dir, argv0, sizeof(bin_dir));
 	get_parent_directory(bin_dir);
 
 	printf(_("\nSuccess. You can now start the database server using:\n\n"
@@ -3562,9 +3412,223 @@ main(int argc, char *argv[])
 			 "or\n"
 			 "    %s%s%spg_ctl%s -D %s%s%s -l logfile start\n\n"),
 	   QUOTE_PATH, bin_dir, (strlen(bin_dir) > 0) ? DIR_SEP : "", QUOTE_PATH,
-		   QUOTE_PATH, pg_data_native, QUOTE_PATH,
+		   QUOTE_PATH, pgdata_native, QUOTE_PATH,
 	   QUOTE_PATH, bin_dir, (strlen(bin_dir) > 0) ? DIR_SEP : "", QUOTE_PATH,
-		   QUOTE_PATH, pg_data_native, QUOTE_PATH);
+		   QUOTE_PATH, pgdata_native, QUOTE_PATH);
+}
 
+
+int
+main(int argc, char *argv[])
+{
+	static struct option long_options[] = {
+		{"pgdata", required_argument, NULL, 'D'},
+		{"encoding", required_argument, NULL, 'E'},
+		{"locale", required_argument, NULL, 1},
+		{"lc-collate", required_argument, NULL, 2},
+		{"lc-ctype", required_argument, NULL, 3},
+		{"lc-monetary", required_argument, NULL, 4},
+		{"lc-numeric", required_argument, NULL, 5},
+		{"lc-time", required_argument, NULL, 6},
+		{"lc-messages", required_argument, NULL, 7},
+		{"no-locale", no_argument, NULL, 8},
+		{"text-search-config", required_argument, NULL, 'T'},
+		{"auth", required_argument, NULL, 'A'},
+		{"auth-local", required_argument, NULL, 10},
+		{"auth-host", required_argument, NULL, 11},
+		{"pwprompt", no_argument, NULL, 'W'},
+		{"pwfile", required_argument, NULL, 9},
+		{"username", required_argument, NULL, 'U'},
+		{"help", no_argument, NULL, '?'},
+		{"version", no_argument, NULL, 'V'},
+		{"debug", no_argument, NULL, 'd'},
+		{"show", no_argument, NULL, 's'},
+		{"noclean", no_argument, NULL, 'n'},
+		{"nosync", no_argument, NULL, 'N'},
+		{"xlogdir", required_argument, NULL, 'X'},
+		{NULL, 0, NULL, 0}
+	};
+
+	/*
+	 * options with no short version return a low integer, the rest return
+	 * their short version value
+	 */
+	int			c;
+	int			option_index;
+	char	   *effective_user;
+
+	progname = get_progname(argv[0]);
+	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("initdb"));
+
+	if (argc > 1)
+	{
+		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
+		{
+			usage(progname);
+			exit(0);
+		}
+		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
+		{
+			puts("initdb (PostgreSQL) " PG_VERSION);
+			exit(0);
+		}
+	}
+
+	/* process command-line options */
+
+	while ((c = getopt_long(argc, argv, "dD:E:L:nNU:WA:sT:X:", long_options, &option_index)) != -1)
+	{
+		switch (c)
+		{
+			case 'A':
+				authmethodlocal = authmethodhost = pg_strdup(optarg);
+
+				/*
+				 * When ident is specified, use peer for local connections.
+				 * Mirrored, when peer is specified, use ident for TCP/IP
+				 * connections.
+				 */
+				if (strcmp(authmethodhost, "ident") == 0)
+					authmethodlocal = "peer";
+				else if (strcmp(authmethodlocal, "peer") == 0)
+					authmethodhost = "ident";
+				break;
+			case 10:
+				authmethodlocal = pg_strdup(optarg);
+				break;
+			case 11:
+				authmethodhost = pg_strdup(optarg);
+				break;
+			case 'D':
+				pg_data = pg_strdup(optarg);
+				break;
+			case 'E':
+				encoding = pg_strdup(optarg);
+				break;
+			case 'W':
+				pwprompt = true;
+				break;
+			case 'U':
+				username = pg_strdup(optarg);
+				break;
+			case 'd':
+				debug = true;
+				printf(_("Running in debug mode.\n"));
+				break;
+			case 'n':
+				noclean = true;
+				printf(_("Running in noclean mode.  Mistakes will not be cleaned up.\n"));
+				break;
+			case 'N':
+				do_sync = false;
+				break;
+			case 'L':
+				share_path = pg_strdup(optarg);
+				break;
+			case 1:
+				locale = pg_strdup(optarg);
+				break;
+			case 2:
+				lc_collate = pg_strdup(optarg);
+				break;
+			case 3:
+				lc_ctype = pg_strdup(optarg);
+				break;
+			case 4:
+				lc_monetary = pg_strdup(optarg);
+				break;
+			case 5:
+				lc_numeric = pg_strdup(optarg);
+				break;
+			case 6:
+				lc_time = pg_strdup(optarg);
+				break;
+			case 7:
+				lc_messages = pg_strdup(optarg);
+				break;
+			case 8:
+				locale = "C";
+				break;
+			case 9:
+				pwfilename = pg_strdup(optarg);
+				break;
+			case 's':
+				show_setting = true;
+				break;
+			case 'T':
+				default_text_search_config = pg_strdup(optarg);
+				break;
+			case 'X':
+				xlog_dir = pg_strdup(optarg);
+				break;
+			default:
+				/* getopt_long already emitted a complaint */
+				fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
+						progname);
+				exit(1);
+		}
+	}
+
+
+	/*
+	 * Non-option argument specifies data directory as long as it wasn't
+	 * already specified with -D / --pgdata
+	 */
+	if (optind < argc && strlen(pg_data) == 0)
+	{
+		pg_data = pg_strdup(argv[optind]);
+		optind++;
+	}
+
+	if (optind < argc)
+	{
+		fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
+				progname, argv[optind]);
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
+				progname);
+		exit(1);
+	}
+
+	if (pwprompt && pwfilename)
+	{
+		fprintf(stderr, _("%s: password prompt and password file cannot be specified together\n"), progname);
+		exit(1);
+	}
+
+	check_authmethod_unspecified(&authmethodlocal);
+	check_authmethod_unspecified(&authmethodhost);
+
+	check_authmethod_valid(authmethodlocal, auth_methods_local, "local");
+	check_authmethod_valid(authmethodhost, auth_methods_host, "host");
+
+	check_need_password(authmethodlocal, authmethodhost);
+
+	get_restricted_token();
+
+	setup_pgdata();
+
+	setup_bin_paths(argv[0]);
+	
+	effective_user = get_id();
+	if (strlen(username) == 0)
+		username = effective_user;
+
+	printf(_("The files belonging to this database system will be owned "
+			 "by user \"%s\".\n"
+			 "This user must also own the server process.\n\n"),
+		   effective_user);
+
+	set_info_version();
+
+	setup_data_file_paths();
+
+	setup_locale_encoding();
+
+	setup_text_search();
+	
+	printf("\n");
+
+	process(argv[0]);
+	
 	return 0;
 }
