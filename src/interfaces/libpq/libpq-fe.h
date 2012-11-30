@@ -262,6 +262,9 @@ extern PQconninfoOption *PQconndefaults(void);
 /* parse connection options in same way as PQconnectdb */
 extern PQconninfoOption *PQconninfoParse(const char *conninfo, char **errmsg);
 
+/* return the connection options used by a live connection */
+extern PQconninfoOption *PQconninfo(PGconn *conn);
+
 /* free the data structure returned by PQconndefaults() or PQconninfoParse() */
 extern void PQconninfoFree(PQconninfoOption *connOptions);
 

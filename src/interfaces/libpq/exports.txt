@@ -164,3 +164,4 @@ PQsetSingleRowMode        161
 lo_lseek64                162
 lo_tell64                 163
 lo_truncate64             164
+PQconninfo                165

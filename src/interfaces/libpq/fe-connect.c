@@ -137,81 +137,112 @@ static int ldapServiceLookup(const char *purl, PQconninfoOption *options,
  * PQconninfoOptions[] *must* be NULL.	In a working copy, non-null "val"
  * fields point to malloc'd strings that should be freed when the working
  * array is freed (see PQconninfoFree).
+ *
+ * The first part of each struct is identical to the one in libpq-fe.h,
+ * which is required since we memcpy() data between the two!
  * ----------
  */
-static const PQconninfoOption PQconninfoOptions[] = {
+typedef struct _internalPQconninfoOption
+{
+	char	   *keyword;		/* The keyword of the option			*/
+	char	   *envvar;			/* Fallback environment variable name	*/
+	char	   *compiled;		/* Fallback compiled in default value	*/
+	char	   *val;			/* Option's current value, or NULL		 */
+	char	   *label;			/* Label for field in connect dialog	*/
+	char	   *dispchar;		/* Indicates how to display this field in a
+								 * connect dialog. Values are: "" Display
+								 * entered value as is "*" Password field -
+								 * hide value "D"  Debug option - don't show
+								 * by default */
+	int			dispsize;		/* Field size in characters for dialog	*/
+	/* ---
+	 * Anything above this comment must be synchronized with
+	 * PQconninfoOption in libpq-fe.h, since we memcpy() data
+	 * between them!
+	 * ---
+	 */
+	off_t		connofs;		/* Offset into PGconn struct, -1 if not there */
+}	internalPQconninfoOption;
+
+static const internalPQconninfoOption PQconninfoOptions[] = {
 	/*
 	 * "authtype" is no longer used, so mark it "don't show".  We keep it in
 	 * the array so as not to reject conninfo strings from old apps that might
 	 * still try to set it.
 	 */
 	{"authtype", "PGAUTHTYPE", DefaultAuthtype, NULL,
-	"Database-Authtype", "D", 20},
+	"Database-Authtype", "D", 20, -1},
 
 	{"service", "PGSERVICE", NULL, NULL,
-	"Database-Service", "", 20},
+	"Database-Service", "", 20, -1},
 
 	{"user", "PGUSER", NULL, NULL,
-	"Database-User", "", 20},
+		"Database-User", "", 20,
+	offsetof(struct pg_conn, pguser)},
 
 	{"password", "PGPASSWORD", NULL, NULL,
-	"Database-Password", "*", 20},
+		"Database-Password", "*", 20,
+	offsetof(struct pg_conn, pgpass)},
 
 	{"connect_timeout", "PGCONNECT_TIMEOUT", NULL, NULL,
-	"Connect-timeout", "", 10}, /* strlen(INT32_MAX) == 10 */
+		"Connect-timeout", "", 10,		/* strlen(INT32_MAX) == 10 */
+	offsetof(struct pg_conn, connect_timeout)},
 
 	{"dbname", "PGDATABASE", NULL, NULL,
-	"Database-Name", "", 20},
+		"Database-Name", "", 20,
+	offsetof(struct pg_conn, dbName)},
 
 	{"host", "PGHOST", NULL, NULL,
-	"Database-Host", "", 40},
+		"Database-Host", "", 40,
+	offsetof(struct pg_conn, pghost)},
 
 	{"hostaddr", "PGHOSTADDR", NULL, NULL,
-	"Database-Host-IP-Address", "", 45},
+		"Database-Host-IP-Address", "", 45,
+	offsetof(struct pg_conn, pghostaddr)},
 
 	{"port", "PGPORT", DEF_PGPORT_STR, NULL,
-	"Database-Port", "", 6},
+		"Database-Port", "", 6,
+	offsetof(struct pg_conn, pgport)},
 
 	{"client_encoding", "PGCLIENTENCODING", NULL, NULL,
-	"Client-Encoding", "", 10},
+		"Client-Encoding", "", 10,
+	offsetof(struct pg_conn, client_encoding_initial)},
 
 	/*
 	 * "tty" is no longer used either, but keep it present for backwards
 	 * compatibility.
 	 */
 	{"tty", "PGTTY", DefaultTty, NULL,
-	"Backend-Debug-TTY", "D", 40},
+		"Backend-Debug-TTY", "D", 40,
+	offsetof(struct pg_conn, pgtty)},
 
 	{"options", "PGOPTIONS", DefaultOption, NULL,
-	"Backend-Debug-Options", "D", 40},
+		"Backend-Debug-Options", "D", 40,
+	offsetof(struct pg_conn, pgoptions)},
 
 	{"application_name", "PGAPPNAME", NULL, NULL,
-	"Application-Name", "", 64},
+		"Application-Name", "", 64,
+	offsetof(struct pg_conn, appname)},
 
 	{"fallback_application_name", NULL, NULL, NULL,
-	"Fallback-Application-Name", "", 64},
+		"Fallback-Application-Name", "", 64,
+	offsetof(struct pg_conn, fbappname)},
 
 	{"keepalives", NULL, NULL, NULL,
-	"TCP-Keepalives", "", 1},	/* should be just '0' or '1' */
+		"TCP-Keepalives", "", 1,	/* should be just '0' or '1' */
+	offsetof(struct pg_conn, keepalives)},
 
 	{"keepalives_idle", NULL, NULL, NULL,
-	"TCP-Keepalives-Idle", "", 10},		/* strlen(INT32_MAX) == 10 */
+		"TCP-Keepalives-Idle", "", 10,	/* strlen(INT32_MAX) == 10 */
+	offsetof(struct pg_conn, keepalives_idle)},
 
 	{"keepalives_interval", NULL, NULL, NULL,
-	"TCP-Keepalives-Interval", "", 10}, /* strlen(INT32_MAX) == 10 */
+		"TCP-Keepalives-Interval", "", 10,		/* strlen(INT32_MAX) == 10 */
+	offsetof(struct pg_conn, keepalives_interval)},
 
 	{"keepalives_count", NULL, NULL, NULL,
-	"TCP-Keepalives-Count", "", 10},	/* strlen(INT32_MAX) == 10 */
-
-#ifdef USE_SSL
-
-	/*
-	 * "requiressl" is deprecated, its purpose having been taken over by
-	 * "sslmode". It remains for backwards compatibility.
-	 */
-	{"requiressl", "PGREQUIRESSL", "0", NULL,
-	"Require-SSL", "D", 1},
-#endif
+		"TCP-Keepalives-Count", "", 10, /* strlen(INT32_MAX) == 10 */
+	offsetof(struct pg_conn, keepalives_count)},
 
 	/*
 	 * ssl options are allowed even without client SSL support because the
@@ -220,30 +251,38 @@ static const PQconninfoOption PQconninfoOptions[] = {
 	 * to exclude them since none of them are mandatory.
 	 */
 	{"sslmode", "PGSSLMODE", DefaultSSLMode, NULL,
-	"SSL-Mode", "", 8},			/* sizeof("disable") == 8 */
+		"SSL-Mode", "", 8,		/* sizeof("disable") == 8 */
+	offsetof(struct pg_conn, sslmode)},
 
 	{"sslcompression", "PGSSLCOMPRESSION", "1", NULL,
-	"SSL-Compression", "", 1},
+		"SSL-Compression", "", 1,
+	offsetof(struct pg_conn, sslcompression)},
 
 	{"sslcert", "PGSSLCERT", NULL, NULL,
-	"SSL-Client-Cert", "", 64},
+		"SSL-Client-Cert", "", 64,
+	offsetof(struct pg_conn, sslcert)},
 
 	{"sslkey", "PGSSLKEY", NULL, NULL,
-	"SSL-Client-Key", "", 64},
+		"SSL-Client-Key", "", 64,
+	offsetof(struct pg_conn, sslkey)},
 
 	{"sslrootcert", "PGSSLROOTCERT", NULL, NULL,
-	"SSL-Root-Certificate", "", 64},
+		"SSL-Root-Certificate", "", 64,
+	offsetof(struct pg_conn, sslrootcert)},
 
 	{"sslcrl", "PGSSLCRL", NULL, NULL,
-	"SSL-Revocation-List", "", 64},
+		"SSL-Revocation-List", "", 64,
+	offsetof(struct pg_conn, sslcrl)},
 
 	{"requirepeer", "PGREQUIREPEER", NULL, NULL,
-	"Require-Peer", "", 10},
+		"Require-Peer", "", 10,
+	offsetof(struct pg_conn, requirepeer)},
 
 #if defined(KRB5) || defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 	/* Kerberos and GSSAPI authentication support specifying the service name */
 	{"krbsrvname", "PGKRBSRVNAME", PG_KRB_SRVNAM, NULL,
-	"Kerberos-service-name", "", 20},
+		"Kerberos-service-name", "", 20,
+	offsetof(struct pg_conn, krbsrvname)},
 #endif
 
 #if defined(ENABLE_GSS) && defined(ENABLE_SSPI)
@@ -253,11 +292,13 @@ static const PQconninfoOption PQconninfoOptions[] = {
 	 * default
 	 */
 	{"gsslib", "PGGSSLIB", NULL, NULL,
-	"GSS-library", "", 7},		/* sizeof("gssapi") = 7 */
+		"GSS-library", "", 7,	/* sizeof("gssapi") = 7 */
+	offsetof(struct pg_conn, gsslib)},
 #endif
 
 	{"replication", NULL, NULL, NULL,
-	"Replication", "D", 5},
+		"Replication", "D", 5,
+	offsetof(struct pg_conn, replication)},
 
 	/* Terminating entry --- MUST BE LAST */
 	{NULL, NULL, NULL, NULL,
@@ -627,7 +668,7 @@ PQconnectStart(const char *conninfo)
 static void
 fillPGconn(PGconn *conn, PQconninfoOption *connOptions)
 {
-	const char *tmp;
+	const internalPQconninfoOption *option;
 
 	/*
 	 * Move option values into conn structure
@@ -637,72 +678,19 @@ fillPGconn(PGconn *conn, PQconninfoOption *connOptions)
 	 *
 	 * XXX: probably worth checking strdup() return value here...
 	 */
-	tmp = conninfo_getval(connOptions, "hostaddr");
-	conn->pghostaddr = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "host");
-	conn->pghost = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "port");
-	conn->pgport = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "tty");
-	conn->pgtty = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "options");
-	conn->pgoptions = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "application_name");
-	conn->appname = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "fallback_application_name");
-	conn->fbappname = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "dbname");
-	conn->dbName = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "user");
-	conn->pguser = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "password");
-	conn->pgpass = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "connect_timeout");
-	conn->connect_timeout = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "client_encoding");
-	conn->client_encoding_initial = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "keepalives");
-	conn->keepalives = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "keepalives_idle");
-	conn->keepalives_idle = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "keepalives_interval");
-	conn->keepalives_interval = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "keepalives_count");
-	conn->keepalives_count = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "sslmode");
-	conn->sslmode = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "sslcompression");
-	conn->sslcompression = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "sslkey");
-	conn->sslkey = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "sslcert");
-	conn->sslcert = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "sslrootcert");
-	conn->sslrootcert = tmp ? strdup(tmp) : NULL;
-	tmp = conninfo_getval(connOptions, "sslcrl");
-	conn->sslcrl = tmp ? strdup(tmp) : NULL;
-#ifdef USE_SSL
-	tmp = conninfo_getval(connOptions, "requiressl");
-	if (tmp && tmp[0] == '1')
+	for (option = PQconninfoOptions; option->keyword; option++)
 	{
-		/* here warn that the requiressl option is deprecated? */
-		if (conn->sslmode)
-			free(conn->sslmode);
-		conn->sslmode = strdup("require");
+		const char *tmp = conninfo_getval(connOptions, option->keyword);
+
+		if (tmp && option->connofs >= 0)
+		{
+			char	  **connmember = (char **) ((char *) conn + option->connofs);
+
+			if (*connmember)
+				free(*connmember);
+			*connmember = tmp ? strdup(tmp) : NULL;
+		}
 	}
-#endif
-	tmp = conninfo_getval(connOptions, "requirepeer");
-	conn->requirepeer = tmp ? strdup(tmp) : NULL;
-#if defined(KRB5) || defined(ENABLE_GSS) || defined(ENABLE_SSPI)
-	tmp = conninfo_getval(connOptions, "krbsrvname");
-	conn->krbsrvname = tmp ? strdup(tmp) : NULL;
-#endif
-#if defined(ENABLE_GSS) && defined(ENABLE_SSPI)
-	tmp = conninfo_getval(connOptions, "gsslib");
-	conn->gsslib = tmp ? strdup(tmp) : NULL;
-#endif
-	tmp = conninfo_getval(connOptions, "replication");
-	conn->replication = tmp ? strdup(tmp) : NULL;
 }
 
 /*
@@ -4020,15 +4008,29 @@ static PQconninfoOption *
 conninfo_init(PQExpBuffer errorMessage)
 {
 	PQconninfoOption *options;
+	PQconninfoOption *opt_dest;
+	const internalPQconninfoOption *cur_opt;
 
-	options = (PQconninfoOption *) malloc(sizeof(PQconninfoOptions));
+	/*
+	 * Get enough memory for all options in PQconninfoOptions, even if some
+	 * end up being filtered out.
+	 */
+	options = (PQconninfoOption *) malloc(sizeof(PQconninfoOption) * sizeof(PQconninfoOptions) / sizeof(PQconninfoOptions[0]));
 	if (options == NULL)
 	{
 		printfPQExpBuffer(errorMessage,
 						  libpq_gettext("out of memory\n"));
 		return NULL;
 	}
-	memcpy(options, PQconninfoOptions, sizeof(PQconninfoOptions));
+	opt_dest = options;
+
+	for (cur_opt = PQconninfoOptions; cur_opt->keyword; cur_opt++)
+	{
+		/* Only copy the public part of the struct, not the full internal */
+		memcpy(opt_dest, cur_opt, sizeof(PQconninfoOption));
+		opt_dest++;
+	}
+	MemSet(opt_dest, 0, sizeof(PQconninfoOption));
 
 	return options;
 }
@@ -5017,6 +5019,20 @@ conninfo_storeval(PQconninfoOption *connOptions,
 	PQconninfoOption *option;
 	char	   *value_copy;
 
+	/*
+	 * For backwards compatibility, requiressl=1 gets translated to
+	 * sslmode=require, and requiressl=0 gets translated to sslmode=prefer
+	 * (which is the default for sslmode).
+	 */
+	if (strcmp(keyword, "requiressl") == 0)
+	{
+		keyword = "sslmode";
+		if (value[0] == '1')
+			value = "require";
+		else
+			value = "prefer";
+	}
+
 	option = conninfo_find(connOptions, keyword);
 	if (option == NULL)
 	{
@@ -5072,6 +5088,50 @@ conninfo_find(PQconninfoOption *connOptions, const char *keyword)
 	}
 
 	return NULL;
+}
+
+
+/*
+ * Return the connection options used for the connection
+ */
+PQconninfoOption *
+PQconninfo(PGconn *conn)
+{
+	PQExpBufferData errorBuf;
+	PQconninfoOption *connOptions;
+
+	if (conn == NULL)
+		return NULL;
+
+	/* We don't actually report any errors here, but callees want a buffer */
+	initPQExpBuffer(&errorBuf);
+	if (PQExpBufferDataBroken(errorBuf))
+		return NULL;			/* out of memory already :-( */
+
+	connOptions = conninfo_init(&errorBuf);
+
+	if (connOptions != NULL)
+	{
+		const internalPQconninfoOption *option;
+
+		for (option = PQconninfoOptions; option->keyword; option++)
+		{
+			char	  **connmember;
+
+			if (option->connofs < 0)
+				continue;
+
+			connmember = (char **) ((char *) conn + option->connofs);
+
+			if (*connmember)
+				conninfo_storeval(connOptions, option->keyword, *connmember,
+								  &errorBuf, true, false);
+		}
+	}
+
+	termPQExpBuffer(&errorBuf);
+
+	return connOptions;
 }
 
 

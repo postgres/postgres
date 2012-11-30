@@ -496,6 +496,30 @@ typedef struct
      </listitem>
     </varlistentry>
 
+    <varlistentry id="libpq-pqconninfo">
+     <term><function>PQconninfo</function><indexterm><primary>PQconninfo</></></term>
+     <listitem>
+      <para>
+       Returns the connection options used by a live connection.
+<synopsis>
+PQconninfoOption *PQconninfo(PGconn *conn);
+</synopsis>
+      </para>
+
+      <para>
+       Returns a connection options array.  This can be used to determine
+       all possible <function>PQconnectdb</function> options and the
+       values that were used to connect to the server. The return
+       value points to an array of <structname>PQconninfoOption</structname>
+       structures, which ends with an entry having a null <structfield>keyword</>
+       pointer. All notes above for <function>PQconndefaults</function> also
+       apply to the result of <function>PQconninfo</function>.
+      </para>
+
+     </listitem>
+    </varlistentry>
+
+
     <varlistentry id="libpq-pqconninfoparse">
      <term><function>PQconninfoParse</function><indexterm><primary>PQconninfoParse</></></term>
      <listitem>
