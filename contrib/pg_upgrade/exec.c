@@ -104,8 +104,10 @@ exec_prog(const char *log_file, const char *opt_log_file,
 
 	if (result != 0)
 	{
-		report_status(PG_REPORT, "*failure*");
+		/* we might be in on a progress status line, so go to the next line */
+		report_status(PG_REPORT, "\n*failure*");
 		fflush(stdout);
+
 		pg_log(PG_VERBOSE, "There were problems executing \"%s\"\n", cmd);
 		if (opt_log_file)
 			pg_log(throw_error ? PG_FATAL : PG_REPORT,

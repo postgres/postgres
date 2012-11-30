@@ -82,9 +82,7 @@ transfer_all_new_dbs(DbInfoArr *old_db_arr,
 		}
 	}
 
-	prep_status(" ");			/* in case nothing printed; pass a space so
-								 * gcc doesn't complain about empty format
-								 * string */
+	end_progress_output();
 	check_ok();
 
 	return msg;

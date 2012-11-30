@@ -29,10 +29,9 @@
 #define OVERWRITE_MESSAGE	"  %-" MESSAGE_WIDTH "." MESSAGE_WIDTH "s\r"
 #define GET_MAJOR_VERSION(v)	((v) / 100)
 
-#define ALL_DUMP_FILE		"pg_upgrade_dump_all.sql"
 /* contains both global db information and CREATE DATABASE commands */
 #define GLOBALS_DUMP_FILE	"pg_upgrade_dump_globals.sql"
-#define DB_DUMP_FILE		"pg_upgrade_dump_db.sql"
+#define DB_DUMP_FILE_MASK	"pg_upgrade_dump_%u.custom"
 
 #define SERVER_LOG_FILE		"pg_upgrade_server.log"
 #define RESTORE_LOG_FILE	"pg_upgrade_restore.log"
@@ -296,12 +295,12 @@ extern OSInfo os_info;
 /* check.c */
 
 void		output_check_banner(bool *live_check);
-void check_old_cluster(bool live_check,
+void		check_and_dump_old_cluster(bool live_check,
 				  char **sequence_script_file_name);
 void		check_new_cluster(void);
 void		report_clusters_compatible(void);
 void		issue_warnings(char *sequence_script_file_name);
-void output_completion_banner(char *analyze_script_file_name,
+void		output_completion_banner(char *analyze_script_file_name,
 						 char *deletion_script_file_name);
 void		check_cluster_versions(void);
 void		check_cluster_compatibility(bool live_check);
@@ -319,7 +318,6 @@ void		disable_old_cluster(void);
 /* dump.c */
 
 void		generate_old_dump(void);
-void		split_old_dump(void);
 
 
 /* exec.c */
@@ -433,6 +431,7 @@ __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
 void
 pg_log(eLogType type, char *fmt,...)
 __attribute__((format(PG_PRINTF_ATTRIBUTE, 2, 3)));
+void		end_progress_output(void);
 void
 prep_status(const char *fmt,...)
 __attribute__((format(PG_PRINTF_ATTRIBUTE, 1, 2)));

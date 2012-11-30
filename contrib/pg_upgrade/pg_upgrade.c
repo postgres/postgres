@@ -92,7 +92,7 @@ main(int argc, char **argv)
 
 	check_cluster_compatibility(live_check);
 
-	check_old_cluster(live_check, &sequence_script_file_name);
+	check_and_dump_old_cluster(live_check, &sequence_script_file_name);
 
 
 	/* -- NEW -- */
@@ -282,6 +282,11 @@ create_new_objects(void)
 
 	prep_status("Adding support functions to new cluster");
 
+	/*
+	 *	Technically, we only need to install these support functions in new
+	 *	databases that also exist in the old cluster, but for completeness
+	 *	we process all new databases.
+	 */
 	for (dbnum = 0; dbnum < new_cluster.dbarr.ndbs; dbnum++)
 	{
 		DbInfo	   *new_db = &new_cluster.dbarr.dbs[dbnum];
@@ -292,11 +297,27 @@ create_new_objects(void)
 	}
 	check_ok();
 
-	prep_status("Restoring database schema to new cluster");
-	exec_prog(RESTORE_LOG_FILE, NULL, true,
-			  "\"%s/psql\" " EXEC_PSQL_ARGS " %s -f \"%s\"",
-			  new_cluster.bindir, cluster_conn_opts(&new_cluster),
-			  DB_DUMP_FILE);
+	prep_status("Restoring database schema to new cluster\n");
+
+	for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
+	{
+		char file_name[MAXPGPATH];
+		DbInfo     *old_db = &old_cluster.dbarr.dbs[dbnum];
+
+		pg_log(PG_REPORT, OVERWRITE_MESSAGE, old_db->db_name);
+		snprintf(file_name, sizeof(file_name), DB_DUMP_FILE_MASK, old_db->db_oid);
+
+		/*
+		 *	Using pg_restore --single-transaction is faster than other
+		 *	methods, like --jobs.  pg_dump only produces its output at the
+		 *	end, so there is little parallelism using the pipe.
+		 */
+		exec_prog(RESTORE_LOG_FILE, NULL, true,
+				  "\"%s/pg_restore\" %s --exit-on-error --single-transaction --verbose --dbname \"%s\" \"%s\"",
+				  new_cluster.bindir, cluster_conn_opts(&new_cluster),
+				  old_db->db_name, file_name);
+	}
+	end_progress_output();
 	check_ok();
 
 	/* regenerate now that we have objects in the databases */
@@ -455,14 +476,23 @@ cleanup(void)
 	/* Remove dump and log files? */
 	if (!log_opts.retain)
 	{
+		int			dbnum;
 		char	  **filename;
 
 		for (filename = output_files; *filename != NULL; filename++)
 			unlink(*filename);
 
-		/* remove SQL files */
-		unlink(ALL_DUMP_FILE);
+		/* remove dump files */
 		unlink(GLOBALS_DUMP_FILE);
-		unlink(DB_DUMP_FILE);
+
+		if (old_cluster.dbarr.dbs)
+			for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
+			{
+				char file_name[MAXPGPATH];
+				DbInfo     *old_db = &old_cluster.dbarr.dbs[dbnum];
+
+				snprintf(file_name, sizeof(file_name), DB_DUMP_FILE_MASK, old_db->db_oid);
+				unlink(file_name);
+			}
 	}
 }

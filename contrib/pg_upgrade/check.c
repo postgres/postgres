@@ -72,7 +72,7 @@ output_check_banner(bool *live_check)
 
 
 void
-check_old_cluster(bool live_check, char **sequence_script_file_name)
+check_and_dump_old_cluster(bool live_check, char **sequence_script_file_name)
 {
 	/* -- OLD -- */
 
@@ -131,10 +131,7 @@ check_old_cluster(bool live_check, char **sequence_script_file_name)
 	 * the old server is running.
 	 */
 	if (!user_opts.check)
-	{
 		generate_old_dump();
-		split_old_dump();
-	}
 
 	if (!live_check)
 		stop_postmaster(false);

@@ -35,6 +35,18 @@ report_status(eLogType type, const char *fmt,...)
 }
 
 
+/* force blank output for progress display */
+void
+end_progress_output(void)
+{
+	/*
+	 *	In case nothing printed; pass a space so gcc doesn't complain about
+	 *	empty format string.
+	 */
+	prep_status(" ");
+}
+
+
 /*
  * prep_status
  *
