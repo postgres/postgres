@@ -82,24 +82,6 @@ static char *filename = NULL;
 int
 main(int argc, char *argv[])
 {
-	char	   *pghost = NULL;
-	char	   *pgport = NULL;
-	char	   *pguser = NULL;
-	char	   *pgdb = NULL;
-	char	   *use_role = NULL;
-	enum trivalue prompt_password = TRI_DEFAULT;
-	bool		data_only = false;
-	bool		globals_only = false;
-	bool		output_clean = false;
-	bool		roles_only = false;
-	bool		tablespaces_only = false;
-	PGconn	   *conn;
-	int			encoding;
-	const char *std_strings;
-	int			c,
-				ret;
-	int			optindex;
-
 	static struct option long_options[] = {
 		{"data-only", no_argument, NULL, 'a'},
 		{"clean", no_argument, NULL, 'c'},
@@ -141,6 +123,24 @@ main(int argc, char *argv[])
 
 		{NULL, 0, NULL, 0}
 	};
+
+	char	   *pghost = NULL;
+	char	   *pgport = NULL;
+	char	   *pguser = NULL;
+	char	   *pgdb = NULL;
+	char	   *use_role = NULL;
+	enum trivalue prompt_password = TRI_DEFAULT;
+	bool		data_only = false;
+	bool		globals_only = false;
+	bool		output_clean = false;
+	bool		roles_only = false;
+	bool		tablespaces_only = false;
+	PGconn	   *conn;
+	int			encoding;
+	const char *std_strings;
+	int			c,
+				ret;
+	int			optindex;
 
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_dump"));
 

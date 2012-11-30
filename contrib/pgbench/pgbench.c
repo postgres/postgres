@@ -1915,6 +1915,15 @@ printResults(int ttype, int normal_xacts, int nclients,
 int
 main(int argc, char **argv)
 {
+	static struct option long_options[] = {
+		{"foreign-keys", no_argument, &foreign_keys, 1},
+		{"index-tablespace", required_argument, NULL, 3},
+		{"tablespace", required_argument, NULL, 2},
+		{"unlogged-tables", no_argument, &unlogged_tables, 1},
+		{"sampling-rate", required_argument, NULL, 4},
+		{NULL, 0, NULL, 0}
+	};
+
 	int			c;
 	int			nclients = 1;	/* default number of simulated clients */
 	int			nthreads = 1;	/* default number of threads */
@@ -1936,15 +1945,6 @@ main(int argc, char **argv)
 	int			total_xacts;
 
 	int			i;
-
-	static struct option long_options[] = {
-		{"foreign-keys", no_argument, &foreign_keys, 1},
-		{"index-tablespace", required_argument, NULL, 3},
-		{"tablespace", required_argument, NULL, 2},
-		{"unlogged-tables", no_argument, &unlogged_tables, 1},
-		{"sampling-rate", required_argument, NULL, 4},
-		{NULL, 0, NULL, 0}
-	};
 
 #ifdef HAVE_GETRLIMIT
 	struct rlimit rlim;

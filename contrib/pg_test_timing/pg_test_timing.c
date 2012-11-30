@@ -43,6 +43,7 @@ handle_args(int argc, char *argv[])
 		{"duration", required_argument, NULL, 'd'},
 		{NULL, 0, NULL, 0}
 	};
+
 	int			option;			/* Command line option */
 	int			optindex = 0;	/* used by getopt_long */
 

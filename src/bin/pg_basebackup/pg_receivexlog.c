@@ -315,6 +315,7 @@ main(int argc, char **argv)
 		{"verbose", no_argument, NULL, 'v'},
 		{NULL, 0, NULL, 0}
 	};
+
 	int			c;
 	int			option_index;
 
