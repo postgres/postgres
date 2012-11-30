@@ -74,6 +74,19 @@ typedef struct
 				(port))
 
 /*
+ * The maximum workable length of a socket path is what will fit into
+ * struct sockaddr_un.  This is usually only 100 or so bytes :-(.
+ *
+ * For consistency, always pass a MAXPGPATH-sized buffer to UNIXSOCK_PATH(),
+ * then complain if the resulting string is >= UNIXSOCK_PATH_BUFLEN bytes.
+ * (Because the standard API for getaddrinfo doesn't allow it to complain in
+ * a useful way when the socket pathname is too long, we have to test for
+ * this explicitly, instead of just letting the subroutine return an error.)
+ */
+#define UNIXSOCK_PATH_BUFLEN sizeof(((struct sockaddr_un *) NULL)->sun_path)
+
+
+/*
  * These manipulate the frontend/backend protocol version number.
  *
  * The major number should be incremented for incompatible changes.  The minor
