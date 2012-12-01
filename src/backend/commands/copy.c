@@ -44,6 +44,7 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/portal.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
 
@@ -109,6 +110,7 @@ typedef struct CopyStateData
 	char	   *filename;		/* filename, or NULL for STDIN/STDOUT */
 	bool		binary;			/* binary format? */
 	bool		oids;			/* include OIDs? */
+	bool		freeze;			/* freeze rows on loading? */
 	bool		csv_mode;		/* Comma Separated Value format? */
 	bool		header_line;	/* CSV header line? */
 	char	   *null_print;		/* NULL marker string (server encoding!) */
@@ -894,6 +896,14 @@ ProcessCopyOptions(CopyState cstate,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
 			cstate->oids = defGetBoolean(defel);
+		}
+		else if (strcmp(defel->defname, "freeze") == 0)
+		{
+			if (cstate->freeze)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			cstate->freeze = defGetBoolean(defel);
 		}
 		else if (strcmp(defel->defname, "delimiter") == 0)
 		{
@@ -1974,7 +1984,30 @@ CopyFrom(CopyState cstate)
 		hi_options |= HEAP_INSERT_SKIP_FSM;
 		if (!XLogIsNeeded())
 			hi_options |= HEAP_INSERT_SKIP_WAL;
+
+		/*
+		 * Optimize if new relfilenode was created in this subxact or
+		 * one of its committed children and we won't see those rows later
+		 * as part of an earlier scan or command. This ensures that if this
+		 * subtransaction aborts then the frozen rows won't be visible
+		 * after xact cleanup. Note that the stronger test of exactly
+		 * which subtransaction created it is crucial for correctness
+		 * of this optimisation.
+		 */
+		if (ThereAreNoPriorRegisteredSnapshots() &&
+			ThereAreNoReadyPortals() &&
+			cstate->rel->rd_newRelfilenodeSubid == GetCurrentSubTransactionId())
+		{
+			hi_options |= HEAP_INSERT_COMMITTED;
+			if (cstate->freeze)
+				hi_options |= HEAP_INSERT_FROZEN;
+		}
 	}
+
+	if (cstate->freeze && (hi_options & HEAP_INSERT_FROZEN) == 0)
+		ereport(NOTICE,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("FREEZE option specified but pre-conditions not met")));
 
 	/*
 	 * We need a ResultRelInfo so we can use the regular executor's

@@ -1055,3 +1055,22 @@ pg_cursor(PG_FUNCTION_ARGS)
 
 	return (Datum) 0;
 }
+
+bool
+ThereAreNoReadyPortals(void)
+{
+	HASH_SEQ_STATUS status;
+	PortalHashEnt *hentry;
+
+	hash_seq_init(&status, PortalHashTable);
+
+	while ((hentry = (PortalHashEnt *) hash_seq_search(&status)) != NULL)
+	{
+		Portal		portal = hentry->portal;
+
+		if (portal->status == PORTAL_READY)
+			return false;
+	}
+
+	return true;
+}

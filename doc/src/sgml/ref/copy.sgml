@@ -34,6 +34,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
 
     FORMAT <replaceable class="parameter">format_name</replaceable>
     OIDS [ <replaceable class="parameter">boolean</replaceable> ]
+    FREEZE [ <replaceable class="parameter">boolean</replaceable> ]
     DELIMITER '<replaceable class="parameter">delimiter_character</replaceable>'
     NULL '<replaceable class="parameter">null_string</replaceable>'
     HEADER [ <replaceable class="parameter">boolean</replaceable> ]
@@ -177,6 +178,28 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
       <literal>OIDS</literal> is specified for a table that does not
       have OIDs, or in the case of copying a <replaceable
       class="parameter">query</replaceable>.)
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>FREEZE</literal></term>
+    <listitem>
+     <para>
+      Specifies copying the data with rows already frozen, just as they
+      would be after running the <command>VACUUM FREEZE</> command.
+      This is intended as a performance option for initial data loading.
+      Rows will be frozen only if the table being loaded has been created
+      in the current subtransaction, there are no cursors open and there
+      are no older snapshots held by this transaction. If those conditions
+      are not met the command will continue without error though will not
+      freeze rows.
+     </para>
+     <para>
+      Note that all sessions will immediately be able to see the data
+      once it has been successfully loaded. This violates the normal rules
+      of MVCC visibility and by specifying this option the user acknowledges
+      explicitly that this is understood.
      </para>
     </listitem>
    </varlistentry>

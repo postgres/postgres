@@ -220,5 +220,6 @@ extern void PortalDefineQuery(Portal portal,
 extern Node *PortalListGetPrimaryStmt(List *stmts);
 extern void PortalCreateHoldStore(Portal portal);
 extern void PortalHashTableDeleteAll(void);
+extern bool ThereAreNoReadyPortals(void);
 
 #endif   /* PORTAL_H */

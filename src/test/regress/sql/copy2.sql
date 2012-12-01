@@ -179,6 +179,84 @@ COPY testnull FROM stdin WITH NULL AS E'\\0';
 SELECT * FROM testnull;
 
 
+CREATE TABLE vistest (LIKE testeoc);
+BEGIN;
+TRUNCATE vistest;
+COPY vistest FROM stdin CSV;
+a
+b
+\.
+SELECT * FROM vistest;
+SAVEPOINT s1;
+TRUNCATE vistest;
+COPY vistest FROM stdin CSV;
+d
+e
+\.
+SELECT * FROM vistest;
+COMMIT;
+
+BEGIN;
+TRUNCATE vistest;
+COPY vistest FROM stdin CSV FREEZE;
+a
+b
+\.
+SELECT * FROM vistest;
+SAVEPOINT s1;
+TRUNCATE vistest;
+COPY vistest FROM stdin CSV FREEZE;
+d
+e
+\.
+SELECT * FROM vistest;
+COMMIT;
+BEGIN;
+TRUNCATE vistest;
+COPY vistest FROM stdin CSV FREEZE;
+x
+y
+\.
+SELECT * FROM vistest;
+COMMIT;
+TRUNCATE vistest;
+COPY vistest FROM stdin CSV FREEZE;
+p
+g
+\.
+BEGIN;
+INSERT INTO vistest VALUES ('z');
+SAVEPOINT s1;
+TRUNCATE vistest;
+ROLLBACK TO SAVEPOINT s1;
+-- FREEZE should be silently ignored here
+COPY vistest FROM stdin CSV FREEZE;
+d
+e
+\.
+SELECT * FROM vistest;
+COMMIT;
+CREATE FUNCTION truncate_in_subxact() RETURNS VOID AS
+$$
+BEGIN
+  SELECT * FROM nonexistent;
+EXCEPTION
+  WHEN OTHERS THEN
+  	TRUNCATE vistest;
+END;
+$$ language plpgsql;
+BEGIN;
+INSERT INTO vistest VALUES ('z');
+SELECT truncate_in_subxact();
+COPY vistest FROM stdin CSV FREEZE;
+d
+e
+\.
+SELECT * FROM vistest;
+COMMIT;
+SELECT * FROM vistest;
+DROP TABLE vistest;
+DROP FUNCTION truncate_in_subxact();
 DROP TABLE x, y;
 DROP FUNCTION fn_x_before();
 DROP FUNCTION fn_x_after();

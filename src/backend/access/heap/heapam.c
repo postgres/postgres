@@ -1875,6 +1875,14 @@ FreeBulkInsertState(BulkInsertState bistate)
  * The HEAP_INSERT_SKIP_FSM option is passed directly to
  * RelationGetBufferForTuple, which see for more info.
  *
+ * HEAP_INSERT_COMMITTED should only be specified for inserts into
+ * relfilenodes created during the current subtransaction and when
+ * there are no prior snapshots or pre-existing portals open.
+ *
+ * HEAP_INSERT_FROZEN only has meaning when HEAP_INSERT_COMMITTED is
+ * also set. This causes rows to be frozen, which is an MVCC violation
+ * and requires explicit options chosen by user.
+ *
  * Note that these options will be applied when inserting into the heap's
  * TOAST table, too, if the tuple requires any out-of-line data.
  *
@@ -2078,7 +2086,14 @@ heap_prepare_insert(Relation relation, HeapTuple tup, TransactionId xid,
 	tup->t_data->t_infomask &= ~(HEAP_XACT_MASK);
 	tup->t_data->t_infomask2 &= ~(HEAP2_XACT_MASK);
 	tup->t_data->t_infomask |= HEAP_XMAX_INVALID;
-	HeapTupleHeaderSetXmin(tup->t_data, xid);
+	if (options & HEAP_INSERT_COMMITTED)
+	{
+		tup->t_data->t_infomask |= HEAP_XMIN_COMMITTED;
+		if (options & HEAP_INSERT_FROZEN)
+			HeapTupleHeaderSetXmin(tup->t_data, FrozenTransactionId);
+	}
+	else
+		HeapTupleHeaderSetXmin(tup->t_data, xid);
 	HeapTupleHeaderSetCmin(tup->t_data, cid);
 	HeapTupleHeaderSetXmax(tup->t_data, 0);		/* for cleanliness */
 	tup->t_tableOid = RelationGetRelid(relation);

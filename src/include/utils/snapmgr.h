@@ -48,5 +48,6 @@ extern Datum pg_export_snapshot(PG_FUNCTION_ARGS);
 extern void ImportSnapshot(const char *idstr);
 extern bool XactHasExportedSnapshots(void);
 extern void DeleteAllExportedSnapshotFiles(void);
+extern bool ThereAreNoPriorRegisteredSnapshots(void);
 
 #endif   /* SNAPMGR_H */

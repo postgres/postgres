@@ -254,6 +254,112 @@ SELECT * FROM testnull;
     | 
 (4 rows)
 
+CREATE TABLE vistest (LIKE testeoc);
+BEGIN;
+TRUNCATE vistest;
+COPY vistest FROM stdin CSV;
+SELECT * FROM vistest;
+ a 
+---
+ a
+ b
+(2 rows)
+
+SAVEPOINT s1;
+TRUNCATE vistest;
+COPY vistest FROM stdin CSV;
+SELECT * FROM vistest;
+ a 
+---
+ d
+ e
+(2 rows)
+
+COMMIT;
+BEGIN;
+TRUNCATE vistest;
+COPY vistest FROM stdin CSV FREEZE;
+SELECT * FROM vistest;
+ a 
+---
+ a
+ b
+(2 rows)
+
+SAVEPOINT s1;
+TRUNCATE vistest;
+COPY vistest FROM stdin CSV FREEZE;
+SELECT * FROM vistest;
+ a 
+---
+ d
+ e
+(2 rows)
+
+COMMIT;
+TRUNCATE vistest;
+COPY vistest FROM stdin CSV FREEZE;
+NOTICE:  FREEZE option specified but pre-conditions not met
+SELECT * FROM vistest;
+ a 
+---
+ a
+ b
+(2 rows)
+
+BEGIN;
+INSERT INTO vistest VALUES ('z');
+SAVEPOINT s1;
+TRUNCATE vistest;
+ROLLBACK TO SAVEPOINT s1;
+-- FREEZE should be silently ignored here
+COPY vistest FROM stdin CSV FREEZE;
+NOTICE:  FREEZE option specified but pre-conditions not met
+SELECT * FROM vistest;
+ a 
+---
+ a
+ b
+ z
+ d
+ e
+(5 rows)
+
+COMMIT;
+CREATE FUNCTION truncate_in_subxact() RETURNS VOID AS
+$$
+BEGIN
+  SELECT * FROM nonexistent;
+EXCEPTION
+  WHEN OTHERS THEN
+  	TRUNCATE vistest;
+END;
+$$ language plpgsql;
+BEGIN;
+INSERT INTO vistest VALUES ('z');
+SELECT truncate_in_subxact();
+ truncate_in_subxact 
+---------------------
+ 
+(1 row)
+
+COPY vistest FROM stdin CSV FREEZE;
+SELECT * FROM vistest;
+ a 
+---
+ d
+ e
+(2 rows)
+
+COMMIT;
+SELECT * FROM vistest;
+ a 
+---
+ d
+ e
+(2 rows)
+
+DROP TABLE vistest;
 DROP TABLE x, y;
 DROP FUNCTION fn_x_before();
 DROP FUNCTION fn_x_after();

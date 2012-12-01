@@ -2383,6 +2383,10 @@ copy_opt_item:
 				{
 					$$ = makeDefElem("oids", (Node *)makeInteger(TRUE));
 				}
+			| FREEZE
+				{
+					$$ = makeDefElem("freeze", (Node *)makeInteger(TRUE));
+				}
 			| DELIMITER opt_as Sconst
 				{
 					$$ = makeDefElem("delimiter", (Node *)makeString($3));

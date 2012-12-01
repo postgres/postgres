@@ -1184,3 +1184,12 @@ DeleteAllExportedSnapshotFiles(void)
 
 	FreeDir(s_dir);
 }
+
+bool
+ThereAreNoPriorRegisteredSnapshots(void)
+{
+	if (RegisteredSnapshots <= 1)
+		return true;
+
+	return false;
+}
