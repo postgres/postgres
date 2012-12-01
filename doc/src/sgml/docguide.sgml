@@ -120,7 +120,7 @@
     </varlistentry>
 
     <varlistentry>
-     <term><ulink url="http://wiki.docbook.org/topic/DocBookDssslStylesheets">DocBook DSSSL Stylesheets</ulink></term>
+     <term><ulink url="http://wiki.docbook.org/DocBookDssslStylesheetDocs">DocBook DSSSL Stylesheets</ulink></term>
      <listitem>
       <para>
        These contain the processing instructions for converting the
