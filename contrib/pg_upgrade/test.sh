@@ -71,8 +71,6 @@ logdir=$PWD/log
 rm -rf "$logdir"
 mkdir "$logdir"
 
-set -x
-
 $oldbindir/initdb -N
 $oldbindir/pg_ctl start -l "$logdir/postmaster1.log" -o '-F' -w
 if "$MAKE" -C "$oldsrc" installcheck; then
