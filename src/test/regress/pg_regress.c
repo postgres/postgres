@@ -783,6 +783,19 @@ initialize_environment(void)
 		}
 
 		/*
+		 * GNU make stores some flags in the MAKEFLAGS environment variable to
+		 * pass arguments to its own children.	If we are invoked by make,
+		 * that causes the make invoked by us to think its part of the make
+		 * task invoking us, and so it tries to communicate with the toplevel
+		 * make.  Which fails.
+		 *
+		 * Unset the variable to protect against such problems.  We also reset
+		 * MAKELEVEL to be certain the child doesn't notice the make above us.
+		 */
+		unsetenv("MAKEFLAGS");
+		unsetenv("MAKELEVEL");
+
+		/*
 		 * Adjust path variables to point into the temp-install tree
 		 */
 		tmp = malloc(strlen(temp_install) + 32 + strlen(bindir));
