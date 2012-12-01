@@ -258,6 +258,33 @@ CREATE TABLE enumtest_bogus_child(parent bogus REFERENCES enumtest_parent);
 DROP TYPE bogus;
 
 --
+-- check transactional behaviour of ALTER TYPE ... ADD VALUE
+--
+CREATE TYPE bogus AS ENUM('good');
+
+-- check that we can't add new values to existing enums in a transaction
+BEGIN;
+ALTER TYPE bogus ADD VALUE 'bad';
+COMMIT;
+
+-- check that we recognize the case where the enum already existed but was
+-- modified in the current txn
+BEGIN;
+ALTER TYPE bogus RENAME TO bogon;
+ALTER TYPE bogon ADD VALUE 'bad';
+ROLLBACK;
+
+DROP TYPE bogus;
+
+-- check that we *can* add new values to existing enums in a transaction,
+-- if the type is new as well
+BEGIN;
+CREATE TYPE bogus AS ENUM();
+ALTER TYPE bogus ADD VALUE 'good';
+ALTER TYPE bogus ADD VALUE 'ugly';
+ROLLBACK;
+
+--
 -- Cleanup
 --
 DROP TABLE enumtest_child;

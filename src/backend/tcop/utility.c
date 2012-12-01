@@ -972,14 +972,7 @@ standard_ProcessUtility(Node *parsetree,
 		case T_AlterEnumStmt:	/* ALTER TYPE (enum) */
 			if (isCompleteQuery)
 				EventTriggerDDLCommandStart(parsetree);
-
-			/*
-			 * We disallow this in transaction blocks, because we can't cope
-			 * with enum OID values getting into indexes and then having their
-			 * defining pg_enum entries go away.
-			 */
-			PreventTransactionChain(isTopLevel, "ALTER TYPE ... ADD");
-			AlterEnum((AlterEnumStmt *) parsetree);
+			AlterEnum((AlterEnumStmt *) parsetree, isTopLevel);
 			break;
 
 		case T_ViewStmt:		/* CREATE VIEW */
