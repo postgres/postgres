@@ -297,16 +297,20 @@ SELECT * FROM vistest;
 (2 rows)
 
 COMMIT;
+BEGIN;
 TRUNCATE vistest;
 COPY vistest FROM stdin CSV FREEZE;
-NOTICE:  FREEZE option specified but pre-conditions not met
 SELECT * FROM vistest;
  a 
 ---
- a
- b
+ x
+ y
 (2 rows)
 
+COMMIT;
+TRUNCATE vistest;
+COPY vistest FROM stdin CSV FREEZE;
+NOTICE:  FREEZE option specified but pre-conditions not met
 BEGIN;
 INSERT INTO vistest VALUES ('z');
 SAVEPOINT s1;
@@ -318,8 +322,8 @@ NOTICE:  FREEZE option specified but pre-conditions not met
 SELECT * FROM vistest;
  a 
 ---
- a
- b
+ p
+ g
  z
  d
  e
@@ -360,6 +364,7 @@ SELECT * FROM vistest;
 (2 rows)
 
 DROP TABLE vistest;
+DROP FUNCTION truncate_in_subxact();
 DROP TABLE x, y;
 DROP FUNCTION fn_x_before();
 DROP FUNCTION fn_x_after();

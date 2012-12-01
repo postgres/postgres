@@ -229,7 +229,6 @@ INSERT INTO vistest VALUES ('z');
 SAVEPOINT s1;
 TRUNCATE vistest;
 ROLLBACK TO SAVEPOINT s1;
--- FREEZE should be silently ignored here
 COPY vistest FROM stdin CSV FREEZE;
 d
 e
