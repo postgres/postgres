@@ -316,7 +316,6 @@ INSERT INTO vistest VALUES ('z');
 SAVEPOINT s1;
 TRUNCATE vistest;
 ROLLBACK TO SAVEPOINT s1;
--- FREEZE should be silently ignored here
 COPY vistest FROM stdin CSV FREEZE;
 NOTICE:  FREEZE option specified but pre-conditions not met
 SELECT * FROM vistest;
