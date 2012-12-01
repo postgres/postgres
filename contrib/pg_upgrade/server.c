@@ -211,7 +211,8 @@ start_postmaster(ClusterInfo *cluster)
 	 *
 	 * Turn off durability requirements to improve object creation speed, and
 	 * we only modify the new cluster, so only use it there.  If there is a
-	 * crash, the new cluster has to be recreated anyway.
+	 * crash, the new cluster has to be recreated anyway.  fsync=off is a big
+	 * win on ext4.
 	 */
 	snprintf(cmd, sizeof(cmd),
 			 "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" -o \"-p %d%s%s%s%s\" start",
