@@ -18,9 +18,7 @@ generate_old_dump(void)
 {
 	int			dbnum;
 
-	prep_status("Creating catalog dump\n");
-
-	pg_log(PG_REPORT, OVERWRITE_MESSAGE, "global objects");
+	prep_status("Creating dump of global objects");
 
 	/* run new pg_dumpall binary for globals */
 	exec_prog(UTILITY_LOG_FILE, NULL, true,
@@ -28,6 +26,9 @@ generate_old_dump(void)
 			  new_cluster.bindir, cluster_conn_opts(&old_cluster),
 			  log_opts.verbose ? "--verbose" : "",
 			  GLOBALS_DUMP_FILE);
+	check_ok();
+
+	prep_status("Creating dump of database schemas\n");
 
  	/* create per-db dump files */
 	for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)

@@ -248,7 +248,7 @@ prepare_new_databases(void)
 
 	set_frozenxids();
 
-	prep_status("Creating databases in the new cluster");
+	prep_status("Restoring global objects in the new cluster");
 
 	/*
 	 * Install support functions in the global-object restore database to
@@ -297,7 +297,7 @@ create_new_objects(void)
 	}
 	check_ok();
 
-	prep_status("Restoring database schema to new cluster\n");
+	prep_status("Restoring database schemas in the new cluster\n");
 
 	for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
 	{
