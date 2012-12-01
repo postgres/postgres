@@ -146,6 +146,9 @@ endif # MODULE_big
 
 
 installdirs:
+ifneq (,$(EXTENSION))
+	$(MKDIR_P) '$(DESTDIR)$(datadir)/extension'
+endif
 ifneq (,$(DATA)$(DATA_built))
 	$(MKDIR_P) '$(DESTDIR)$(datadir)/$(datamoduledir)'
 endif
