@@ -1697,12 +1697,12 @@ include 'filename'
        </para>
 
        <para>
-        For reliable recovery when changing a cluster from
-        <varname>fsync</varname> off to on, it is necessary to force all
-        modified buffers in the kernel to durable storage.  This can be
-        done while the cluster is shutdown or while fsync is on by running
-        <command>initdb --sync-only</command>, running <command>sync</>,
-        unmounting the file system, or rebooting the server.
+        For reliable recovery when changing <varname>fsync</varname>
+        off to on, it is necessary to force all modified buffers in the
+        kernel to durable storage.  This can be done while the cluster
+        is shutdown or while fsync is on by running <command>initdb
+        --sync-only</command>, running <command>sync</>, unmounting the
+        file system, or rebooting the server.
        </para>
 
        <para>
