@@ -309,11 +309,12 @@ create_new_objects(void)
 
 		/*
 		 *	Using pg_restore --single-transaction is faster than other
-		 *	methods, like --jobs.  pg_dump only produces its output at the
+		 *	methods, like --jobs.  However, --single-transaction throws
+		 *	an error.  pg_dump only produces its output at the
 		 *	end, so there is little parallelism using the pipe.
 		 */
 		exec_prog(RESTORE_LOG_FILE, NULL, true,
-				  "\"%s/pg_restore\" %s --exit-on-error --single-transaction --verbose --dbname \"%s\" \"%s\"",
+				  "\"%s/pg_restore\" %s --exit-on-error --verbose --dbname \"%s\" \"%s\"",
 				  new_cluster.bindir, cluster_conn_opts(&new_cluster),
 				  old_db->db_name, file_name);
 	}
