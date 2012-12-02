@@ -1807,7 +1807,7 @@ prepare_buffer(const char *txt, int len, char **txtcopy)
 			/* first byte should always be okay... */
 			newtxt[i] = txt[i];
 			i++;
-			while (--thislen > 0)
+			while (--thislen > 0 && i < len)
 				newtxt[i++] = (char) 0xFF;
 		}
 	}
