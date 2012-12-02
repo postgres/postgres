@@ -6847,6 +6847,18 @@ LogCheckpointEnd(bool restartpoint)
  * Note: flags contains other bits, of interest here only for logging purposes.
  * In particular note that this routine is synchronous and does not pay
  * attention to CHECKPOINT_WAIT.
+ *
+ * If !shutdown then we are writing an online checkpoint. This is a very special
+ * kind of operation and WAL record because the checkpoint action occurs over
+ * a period of time yet logically occurs at just a single LSN. The logical
+ * position of the WAL record (redo ptr) is the same or earlier than the
+ * physical position. When we replay WAL we locate the checkpoint via its
+ * physical position then read the redo ptr and actually start replay at the
+ * earlier logical position. Note that we don't write *anything* to WAL at
+ * the logical position, so that location could be any other kind of WAL record.
+ * All of this mechanism allows us to continue working while we checkpoint.
+ * As a result, timing of actions is critical here and be careful to note that
+ * this function will likely take minutes to execute on a busy system.
  */
 void
 CreateCheckPoint(int flags)
