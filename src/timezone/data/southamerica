@@ -4,7 +4,7 @@
 
 # This data is by no means authoritative; if you think you know better,
 # go ahead and edit the file (and please send any changes to
-# tz@elsie.nci.nih.gov for general use in the future).
+# tz@iana.org for general use in the future).
 
 # From Paul Eggert (2006-03-22):
 # A good source for time zone historical data outside the U.S. is
@@ -829,6 +829,15 @@ Zone	America/La_Paz	-4:32:36 -	LMT	1890
 # http://www.in.gov.br/visualiza/index.jsp?data=13/10/2011&jornal=1000&pagina=6&totalArquivos=6
 # </a>
 
+# From Kelley Cook (2012-10-16):
+# The governor of state of Bahia in Brazil announced on Thursday that
+# due to public pressure, he is reversing the DST policy they implemented
+# last year and will not be going to Summer Time on October 21st....
+# http://www.correio24horas.com.br/r/artigo/apos-pressoes-wagner-suspende-horario-de-verao-na-bahia
+
+# From Rodrigo Severo (2012-10-16):
+# Tocantins state will have DST.
+# http://noticias.terra.com.br/brasil/noticias/0,,OI6232536-EI306.html
 
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 # Decree <a href="http://pcdsh01.on.br/HV20466.htm">20,466</a> (1931-10-01)
@@ -1048,7 +1057,8 @@ Zone America/Araguaina	-3:12:48 -	LMT	1914
 			-3:00	Brazil	BR%sT	1990 Sep 17
 			-3:00	-	BRT	1995 Sep 14
 			-3:00	Brazil	BR%sT	2003 Sep 24
-			-3:00	-	BRT
+			-3:00	-	BRT	2012 Oct 21
+			-3:00	Brazil	BR%sT
 #
 # Alagoas (AL), Sergipe (SE)
 Zone America/Maceio	-2:22:52 -	LMT	1914
@@ -1067,7 +1077,8 @@ Zone America/Maceio	-2:22:52 -	LMT	1914
 Zone America/Bahia	-2:34:04 -	LMT	1914
 			-3:00	Brazil	BR%sT	2003 Sep 24
 			-3:00	-	BRT	2011 Oct 16
-			-3:00	Brazil	BR%sT
+			-3:00	Brazil	BR%sT	2012 Oct 21
+			-3:00	-	BRT
 #
 # Goias (GO), Distrito Federal (DF), Minas Gerais (MG),
 # Espirito Santo (ES), Rio de Janeiro (RJ), Sao Paulo (SP), Parana (PR),
