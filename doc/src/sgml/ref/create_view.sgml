@@ -130,9 +130,12 @@ CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] VIEW <replaceable class="PARAMETER">n
    <para>
     Currently, views are read only: the system will not allow an insert,
     update, or delete on a view.  You can get the effect of an updatable
-    view by creating rules that rewrite inserts, etc. on the view into
+    view by creating <literal>INSTEAD</> triggers on the view, which
+    must convert attempted inserts, etc. on the view into
     appropriate actions on other tables.  For more information see
-    <xref linkend="sql-createrule">.
+    <xref linkend="sql-createtrigger">.  Another possibility is to create
+    rules (see <xref linkend="sql-createrule">), but in practice triggers
+    are easier to understand and use correctly.
    </para>
 
    <para>
