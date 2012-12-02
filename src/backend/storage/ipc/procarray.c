@@ -501,6 +501,13 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	 * Remove stale transactions, if any.
 	 */
 	ExpireOldKnownAssignedTransactionIds(running->oldestRunningXid);
+
+	/*
+	 * Remove stale locks, if any.
+	 *
+	 * Locks are always assigned to the toplevel xid so we don't need to care
+	 * about subxcnt/subxids (and by extension not about ->suboverflowed).
+	 */
 	StandbyReleaseOldLocks(running->xcnt, running->xids);
 
 	/*
@@ -581,13 +588,13 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	 * Allocate a temporary array to avoid modifying the array passed as
 	 * argument.
 	 */
-	xids = palloc(sizeof(TransactionId) * running->xcnt);
+	xids = palloc(sizeof(TransactionId) * (running->xcnt + running->subxcnt));
 
 	/*
 	 * Add to the temp array any xids which have not already completed.
 	 */
 	nxids = 0;
-	for (i = 0; i < running->xcnt; i++)
+	for (i = 0; i < running->xcnt + running->subxcnt; i++)
 	{
 		TransactionId xid = running->xids[i];
 
@@ -1627,15 +1634,13 @@ GetRunningTransactionData(void)
 	oldestRunningXid = ShmemVariableCache->nextXid;
 
 	/*
-	 * Spin over procArray collecting all xids and subxids.
+	 * Spin over procArray collecting all xids
 	 */
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
 		int			pgprocno = arrayP->pgprocnos[index];
-		volatile PGPROC *proc = &allProcs[pgprocno];
 		volatile PGXACT *pgxact = &allPgXact[pgprocno];
 		TransactionId xid;
-		int			nxids;
 
 		/* Fetch xid just once - see GetNewTransactionId */
 		xid = pgxact->xid;
@@ -1652,30 +1657,46 @@ GetRunningTransactionData(void)
 		if (TransactionIdPrecedes(xid, oldestRunningXid))
 			oldestRunningXid = xid;
 
-		/*
-		 * Save subtransaction XIDs. Other backends can't add or remove
-		 * entries while we're holding XidGenLock.
-		 */
-		nxids = pgxact->nxids;
-		if (nxids > 0)
-		{
-			memcpy(&xids[count], (void *) proc->subxids.xids,
-				   nxids * sizeof(TransactionId));
-			count += nxids;
-			subcount += nxids;
+		if (pgxact->overflowed)
+			suboverflowed = true;
+	}
 
-			if (pgxact->overflowed)
-				suboverflowed = true;
+	/*
+	 * Spin over procArray collecting all subxids, but only if there hasn't
+	 * been a suboverflow.
+	 */
+	if (!suboverflowed)
+	{
+		for (index = 0; index < arrayP->numProcs; index++)
+		{
+			int			pgprocno = arrayP->pgprocnos[index];
+			volatile PGPROC *proc = &allProcs[pgprocno];
+			volatile PGXACT *pgxact = &allPgXact[pgprocno];
+			int			nxids;
 
 			/*
-			 * Top-level XID of a transaction is always less than any of its
-			 * subxids, so we don't need to check if any of the subxids are
-			 * smaller than oldestRunningXid
+			 * Save subtransaction XIDs. Other backends can't add or remove
+			 * entries while we're holding XidGenLock.
 			 */
+			nxids = pgxact->nxids;
+			if (nxids > 0)
+			{
+				memcpy(&xids[count], (void *) proc->subxids.xids,
+					   nxids * sizeof(TransactionId));
+				count += nxids;
+				subcount += nxids;
+
+				/*
+				 * Top-level XID of a transaction is always less than any of
+				 * its subxids, so we don't need to check if any of the subxids
+				 * are smaller than oldestRunningXid
+				 */
+			}
 		}
 	}
 
-	CurrentRunningXacts->xcnt = count;
+	CurrentRunningXacts->xcnt = count - subcount;
+	CurrentRunningXacts->subxcnt = subcount;
 	CurrentRunningXacts->subxid_overflow = suboverflowed;
 	CurrentRunningXacts->nextXid = ShmemVariableCache->nextXid;
 	CurrentRunningXacts->oldestRunningXid = oldestRunningXid;
