@@ -4,7 +4,7 @@
 
 # This data is by no means authoritative; if you think you know better,
 # go ahead and edit the file (and please send any changes to
-# tz@elsie.nci.nih.gov for general use in the future).
+# tz@iana.org for general use in the future).
 
 # From Paul Eggert (2006-03-22):
 #
@@ -424,6 +424,20 @@ Zone	Africa/Monrovia	-0:43:08 -	LMT	1882
 
 # Libya
 
+# From Even Scharning (2012-11-10):
+# Libya set their time one hour back at 02:00 on Saturday November 10.
+# http://www.libyaherald.com/2012/11/04/clocks-to-go-back-an-hour-on-saturday/
+# Here is an official source [in Arabic]: http://ls.ly/fb6Yc
+#
+# Steffen Thorsen forwarded a translation (2012-11-10) in
+# http://mm.icann.org/pipermail/tz/2012-November/018451.html
+#
+# From Tim Parenti (2012-11-11):
+# Treat the 2012-11-10 change as a zone change from UTC+2 to UTC+1.
+# The DST rules planned for 2013 and onward roughly mirror those of Europe
+# (either two days before them or five days after them, so as to fall on
+# lastFri instead of lastSun).
+
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Libya	1951	only	-	Oct	14	2:00	1:00	S
 Rule	Libya	1952	only	-	Jan	 1	0:00	0	-
@@ -438,17 +452,21 @@ Rule	Libya	1986	only	-	Apr	 4	0:00	1:00	S
 Rule	Libya	1986	only	-	Oct	 3	0:00	0	-
 Rule	Libya	1987	1989	-	Apr	 1	0:00	1:00	S
 Rule	Libya	1987	1989	-	Oct	 1	0:00	0	-
+Rule	Libya	1997	only	-	Apr	 4	0:00	1:00	S
+Rule	Libya	1997	only	-	Oct	 4	0:00	0	-
+Rule	Libya	2013	max	-	Mar	lastFri	1:00	1:00	S
+Rule	Libya	2013	max	-	Oct	lastFri	2:00	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Africa/Tripoli	0:52:44 -	LMT	1920
 			1:00	Libya	CE%sT	1959
 			2:00	-	EET	1982
 			1:00	Libya	CE%sT	1990 May  4
-# The following entries are from Shanks & Pottenger;
+# The 1996 and 1997 entries are from Shanks & Pottenger;
 # the IATA SSIM data contain some obvious errors.
 			2:00	-	EET	1996 Sep 30
-			1:00	-	CET	1997 Apr  4
-			1:00	1:00	CEST	1997 Oct  4
-			2:00	-	EET
+			1:00	Libya	CE%sT	1997 Oct  4
+			2:00	-	EET	2012 Nov 10 2:00
+			1:00	Libya	CE%sT
 
 # Madagascar
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
