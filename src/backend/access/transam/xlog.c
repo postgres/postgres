@@ -7119,10 +7119,17 @@ CreateCheckPoint(int flags)
 	 * If we are shutting down, or Startup process is completing crash
 	 * recovery we don't need to write running xact data.
 	 *
-	 * Update checkPoint.nextXid since we have a later value
+	 * Update checkPoint.nextXid since we may have a later value. If we
+	 * do update the value, and we have wrapped, increment epoch also.
 	 */
 	if (!shutdown && XLogStandbyInfoActive())
+	{
+		TransactionId prevXid = checkPoint.nextXid;
+
 		LogStandbySnapshot(&checkPoint.nextXid);
+		if (checkPoint.nextXid < prevXid)
+			checkPoint.nextXidEpoch++;
+	}
 
 	START_CRIT_SECTION();
 
