@@ -4,7 +4,7 @@
 
 # This data is by no means authoritative; if you think you know better,
 # go ahead and edit the file (and please send any changes to
-# tz@elsie.nci.nih.gov for general use in the future).
+# tz@iana.org for general use in the future).
 
 # From Paul Eggert (2006-03-22):
 #
@@ -1170,15 +1170,15 @@ Rule	Zion	2004	only	-	Sep	22	1:00	0	S
 #
 #	ftp://ftp.cs.huji.ac.il/pub/tz/announcements/2005+beyond.ps
 
-# From Paul Eggert (2005-02-22):
+# From Paul Eggert (2012-10-26):
 # I used Ephraim Silverberg's dst-israel.el program
 # <ftp://ftp.cs.huji.ac.il/pub/tz/software/dst-israel.el> (2005-02-20)
 # along with Ed Reingold's cal-hebrew in GNU Emacs 21.4,
-# to generate the transitions in this list.
+# to generate the transitions from 2005 through 2012.
 # (I replaced "lastFri" with "Fri>=26" by hand.)
-# The spring transitions below all correspond to the following Rule:
+# The spring transitions all correspond to the following Rule:
 #
-# Rule	Zion	2005	max	-	Mar	Fri>=26	2:00	1:00	D
+# Rule	Zion	2005	2012	-	Mar	Fri>=26	2:00	1:00	D
 #
 # but older zic implementations (e.g., Solaris 8) do not support
 # "Fri>=26" to mean April 1 in years like 2005, so for now we list the
@@ -1195,39 +1195,39 @@ Rule	Zion	2009	only	-	Sep	27	2:00	0	S
 Rule	Zion	2010	only	-	Sep	12	2:00	0	S
 Rule	Zion	2011	only	-	Apr	 1	2:00	1:00	D
 Rule	Zion	2011	only	-	Oct	 2	2:00	0	S
-Rule	Zion	2012	2015	-	Mar	Fri>=26	2:00	1:00	D
+Rule	Zion	2012	only	-	Mar	Fri>=26	2:00	1:00	D
 Rule	Zion	2012	only	-	Sep	23	2:00	0	S
-Rule	Zion	2013	only	-	Sep	 8	2:00	0	S
-Rule	Zion	2014	only	-	Sep	28	2:00	0	S
-Rule	Zion	2015	only	-	Sep	20	2:00	0	S
-Rule	Zion	2016	only	-	Apr	 1	2:00	1:00	D
-Rule	Zion	2016	only	-	Oct	 9	2:00	0	S
-Rule	Zion	2017	2021	-	Mar	Fri>=26	2:00	1:00	D
-Rule	Zion	2017	only	-	Sep	24	2:00	0	S
-Rule	Zion	2018	only	-	Sep	16	2:00	0	S
-Rule	Zion	2019	only	-	Oct	 6	2:00	0	S
-Rule	Zion	2020	only	-	Sep	27	2:00	0	S
-Rule	Zion	2021	only	-	Sep	12	2:00	0	S
-Rule	Zion	2022	only	-	Apr	 1	2:00	1:00	D
-Rule	Zion	2022	only	-	Oct	 2	2:00	0	S
-Rule	Zion	2023	2032	-	Mar	Fri>=26	2:00	1:00	D
-Rule	Zion	2023	only	-	Sep	24	2:00	0	S
-Rule	Zion	2024	only	-	Oct	 6	2:00	0	S
-Rule	Zion	2025	only	-	Sep	28	2:00	0	S
-Rule	Zion	2026	only	-	Sep	20	2:00	0	S
-Rule	Zion	2027	only	-	Oct	10	2:00	0	S
-Rule	Zion	2028	only	-	Sep	24	2:00	0	S
-Rule	Zion	2029	only	-	Sep	16	2:00	0	S
-Rule	Zion	2030	only	-	Oct	 6	2:00	0	S
-Rule	Zion	2031	only	-	Sep	21	2:00	0	S
-Rule	Zion	2032	only	-	Sep	12	2:00	0	S
-Rule	Zion	2033	only	-	Apr	 1	2:00	1:00	D
-Rule	Zion	2033	only	-	Oct	 2	2:00	0	S
-Rule	Zion	2034	2037	-	Mar	Fri>=26	2:00	1:00	D
-Rule	Zion	2034	only	-	Sep	17	2:00	0	S
-Rule	Zion	2035	only	-	Oct	 7	2:00	0	S
-Rule	Zion	2036	only	-	Sep	28	2:00	0	S
-Rule	Zion	2037	only	-	Sep	13	2:00	0	S
+
+# From Ephraim Silverberg (2012-10-18):
+# Yesterday, the Interior Ministry Committee, after more than a year
+# past, approved sending the proposed June 2011 changes to the Time
+# Decree Law back to the Knesset for second and third (final) votes
+# before the upcoming elections on Jan. 22, 2013.  Hence, although the
+# changes are not yet law, they are expected to be so before February 2013.
+#
+# As of 2013, DST starts at 02:00 on the Friday before the last Sunday in March.
+# DST ends at 02:00 on the first Sunday after October 1, unless it occurs on the
+# second day of the Jewish Rosh Hashana holiday, in which case DST ends a day
+# later (i.e. at 02:00 the first Monday after October 2).
+# [Rosh Hashana holidays are factored in until 2100.]
+
+# From Ephraim Silverberg (2012-11-05):
+# The Knesset passed today (in second and final readings) the amendment to the
+# Time Decree Law making the changes ... law.
+
+# Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+Rule	Zion	2013	max	-	Mar	Fri>=23	2:00	1:00	D
+Rule	Zion	2013	2026	-	Oct	Sun>=2	2:00	0	S
+Rule	Zion	2027	only	-	Oct	Mon>=3	2:00	0	S
+Rule	Zion	2028	max	-	Oct	Sun>=2	2:00	0	S
+# The following rules are commented out for now, as they break older
+# versions of zic that support only signed 32-bit timestamps, i.e.,
+# through 2038-01-19 03:14:07 UTC.
+#Rule	Zion	2028	2053	-	Oct	Sun>=2	2:00	0	S
+#Rule	Zion	2054	only	-	Oct	Mon>=3	2:00	0	S
+#Rule	Zion	2055	2080	-	Oct	Sun>=2	2:00	0	S
+#Rule	Zion	2081	only	-	Oct	Mon>=3	2:00	0	S
+#Rule	Zion	2082	max	-	Oct	Sun>=2	2:00	0	S
 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Asia/Jerusalem	2:20:56 -	LMT	1880
@@ -1362,6 +1362,16 @@ Zone	Asia/Tokyo	9:18:59	-	LMT	1887 Dec 31 15:00u
 # From Arthur David Olson (2009-04-06):
 # We still have Jordan switching to DST on Thursdays in 2000 and 2001.
 
+# From Steffen Thorsen (2012-10-25):
+# Yesterday the government in Jordan announced that they will not
+# switch back to standard time this winter, so the will stay on DST
+# until about the same time next year (at least).
+# http://www.petra.gov.jo/Public_News/Nws_NewsDetails.aspx?NewsID=88950
+#
+# From Paul Eggert (2012-10-25):
+# For now, assume this is just a one-year measure.  If it becomes
+# permanent, we should move Jordan from EET to AST effective tomorrow.
+
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Jordan	1973	only	-	Jun	6	0:00	1:00	S
 Rule	Jordan	1973	1975	-	Oct	1	0:00	0	-
@@ -1390,7 +1400,8 @@ Rule	Jordan	2002	max	-	Mar	lastThu	24:00	1:00	S
 Rule	Jordan	2003	only	-	Oct	24	0:00s	0	-
 Rule	Jordan	2004	only	-	Oct	15	0:00s	0	-
 Rule	Jordan	2005	only	-	Sep	lastFri	0:00s	0	-
-Rule	Jordan	2006	max	-	Oct	lastFri	0:00s	0	-
+Rule	Jordan	2006	2011	-	Oct	lastFri	0:00s	0	-
+Rule	Jordan	2013	max	-	Oct	lastFri	0:00s	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Asia/Amman	2:23:44 -	LMT	1931
 			2:00	Jordan	EE%sT
@@ -2041,8 +2052,7 @@ Zone	Asia/Karachi	4:28:12 -	LMT	1907
 # occurred before our cutoff date of 1970.
 # However, as we get more information, we may need to add entries
 # for parts of the West Bank as they transitioned from Israel's rules
-# to Palestine's rules.  If you have more info about this, please
-# send it to tz@elsie.nci.nih.gov for incorporation into future editions.
+# to Palestine's rules.
 
 # From IINS News Service - Israel - 1998-03-23 10:38:07 Israel time,
 # forwarded by Ephraim Silverberg:
@@ -2293,6 +2303,8 @@ Rule Palestine	2010	only	-	Aug	11	0:00	0	-
 
 # From Arthur David Olson (2011-09-20):
 # 2011 transitions per http://www.timeanddate.com as of 2011-09-20.
+# From Paul Eggert (2012-10-12):
+# 2012 transitions per http://www.timeanddate.com as of 2012-10-12.
 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Asia/Gaza	2:17:52	-	LMT	1900 Oct
@@ -2303,7 +2315,7 @@ Zone	Asia/Gaza	2:17:52	-	LMT	1900 Oct
 			2:00 Palestine	EE%sT	2011 Apr  2 12:01
 			2:00	1:00	EEST	2011 Aug  1
 			2:00	-	EET	2012 Mar 30
-			2:00	1:00	EEST	2012 Sep 28
+			2:00	1:00	EEST	2012 Sep 21 1:00
 			2:00	-	EET
 
 Zone	Asia/Hebron	2:20:23	-	LMT	1900 Oct
@@ -2318,7 +2330,7 @@ Zone	Asia/Hebron	2:20:23	-	LMT	1900 Oct
 			2:00	-	EET	2011 Aug 30
 			2:00	1:00	EEST	2011 Sep 30 3:00
 			2:00	-	EET	2012 Mar 30
-			2:00	1:00	EEST	2012 Sep 28 3:00
+			2:00	1:00	EEST	2012 Sep 21 1:00
 			2:00	-	EET
 
 # Paracel Is
