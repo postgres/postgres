@@ -183,34 +183,37 @@ CREATE TABLE vistest (LIKE testeoc);
 BEGIN;
 TRUNCATE vistest;
 COPY vistest FROM stdin CSV;
-a
+a1
 b
 \.
 SELECT * FROM vistest;
 SAVEPOINT s1;
 TRUNCATE vistest;
 COPY vistest FROM stdin CSV;
-d
+d1
 e
 \.
 SELECT * FROM vistest;
 COMMIT;
+SELECT * FROM vistest;
 
 BEGIN;
 TRUNCATE vistest;
 COPY vistest FROM stdin CSV FREEZE;
-a
+a2
 b
 \.
 SELECT * FROM vistest;
 SAVEPOINT s1;
 TRUNCATE vistest;
 COPY vistest FROM stdin CSV FREEZE;
-d
+d2
 e
 \.
 SELECT * FROM vistest;
 COMMIT;
+SELECT * FROM vistest;
+
 BEGIN;
 TRUNCATE vistest;
 COPY vistest FROM stdin CSV FREEZE;
@@ -230,7 +233,7 @@ SAVEPOINT s1;
 TRUNCATE vistest;
 ROLLBACK TO SAVEPOINT s1;
 COPY vistest FROM stdin CSV FREEZE;
-d
+d3
 e
 \.
 SELECT * FROM vistest;
@@ -238,17 +241,17 @@ COMMIT;
 CREATE FUNCTION truncate_in_subxact() RETURNS VOID AS
 $$
 BEGIN
-  SELECT * FROM nonexistent;
+	TRUNCATE vistest;
 EXCEPTION
   WHEN OTHERS THEN
-  	TRUNCATE vistest;
+	INSERT INTO vistest VALUES ('subxact failure');
 END;
 $$ language plpgsql;
 BEGIN;
 INSERT INTO vistest VALUES ('z');
 SELECT truncate_in_subxact();
 COPY vistest FROM stdin CSV FREEZE;
-d
+d4
 e
 \.
 SELECT * FROM vistest;

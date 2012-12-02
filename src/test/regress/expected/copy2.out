@@ -259,9 +259,9 @@ BEGIN;
 TRUNCATE vistest;
 COPY vistest FROM stdin CSV;
 SELECT * FROM vistest;
- a 
----
- a
+ a  
+----
+ a1
  b
 (2 rows)
 
@@ -269,20 +269,27 @@ SAVEPOINT s1;
 TRUNCATE vistest;
 COPY vistest FROM stdin CSV;
 SELECT * FROM vistest;
- a 
----
- d
+ a  
+----
+ d1
  e
 (2 rows)
 
 COMMIT;
+SELECT * FROM vistest;
+ a  
+----
+ d1
+ e
+(2 rows)
+
 BEGIN;
 TRUNCATE vistest;
 COPY vistest FROM stdin CSV FREEZE;
 SELECT * FROM vistest;
- a 
----
- a
+ a  
+----
+ a2
  b
 (2 rows)
 
@@ -290,13 +297,20 @@ SAVEPOINT s1;
 TRUNCATE vistest;
 COPY vistest FROM stdin CSV FREEZE;
 SELECT * FROM vistest;
- a 
----
- d
+ a  
+----
+ d2
  e
 (2 rows)
 
 COMMIT;
+SELECT * FROM vistest;
+ a  
+----
+ d2
+ e
+(2 rows)
+
 BEGIN;
 TRUNCATE vistest;
 COPY vistest FROM stdin CSV FREEZE;
@@ -319,12 +333,12 @@ ROLLBACK TO SAVEPOINT s1;
 COPY vistest FROM stdin CSV FREEZE;
 NOTICE:  FREEZE option specified but pre-conditions not met
 SELECT * FROM vistest;
- a 
----
+ a  
+----
  p
  g
  z
- d
+ d3
  e
 (5 rows)
 
@@ -332,10 +346,10 @@ COMMIT;
 CREATE FUNCTION truncate_in_subxact() RETURNS VOID AS
 $$
 BEGIN
-  SELECT * FROM nonexistent;
+	TRUNCATE vistest;
 EXCEPTION
   WHEN OTHERS THEN
-  	TRUNCATE vistest;
+	INSERT INTO vistest VALUES ('subxact failure');
 END;
 $$ language plpgsql;
 BEGIN;
@@ -348,17 +362,17 @@ SELECT truncate_in_subxact();
 
 COPY vistest FROM stdin CSV FREEZE;
 SELECT * FROM vistest;
- a 
----
- d
+ a  
+----
+ d4
  e
 (2 rows)
 
 COMMIT;
 SELECT * FROM vistest;
- a 
----
- d
+ a  
+----
+ d4
  e
 (2 rows)
 

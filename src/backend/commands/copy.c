@@ -1994,14 +1994,11 @@ CopyFrom(CopyState cstate)
 		 * which subtransaction created it is crucial for correctness
 		 * of this optimisation.
 		 */
-		if (ThereAreNoPriorRegisteredSnapshots() &&
+		if (cstate->freeze &&
+			ThereAreNoPriorRegisteredSnapshots() &&
 			ThereAreNoReadyPortals() &&
 			cstate->rel->rd_newRelfilenodeSubid == GetCurrentSubTransactionId())
-		{
-			hi_options |= HEAP_INSERT_COMMITTED;
-			if (cstate->freeze)
-				hi_options |= HEAP_INSERT_FROZEN;
-		}
+			hi_options |= HEAP_INSERT_FROZEN;
 	}
 
 	if (cstate->freeze && (hi_options & HEAP_INSERT_FROZEN) == 0)
