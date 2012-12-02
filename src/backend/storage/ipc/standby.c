@@ -865,7 +865,7 @@ standby_desc(StringInfo buf, uint8 xl_info, char *rec)
  * from a time when they were possible.
  */
 void
-LogStandbySnapshot(TransactionId *nextXid)
+LogStandbySnapshot(void)
 {
 	RunningTransactions running;
 	xl_standby_lock *locks;
@@ -894,8 +894,6 @@ LogStandbySnapshot(TransactionId *nextXid)
 	LogCurrentRunningXacts(running);
 	/* GetRunningTransactionData() acquired XidGenLock, we must release it */
 	LWLockRelease(XidGenLock);
-
-	*nextXid = running->nextXid;
 }
 
 /*
