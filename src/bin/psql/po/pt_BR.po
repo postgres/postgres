@@ -1,11 +1,11 @@
 # "psql" translation to Brazilian Portuguese Language.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2011.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2003-2012.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-08-20 13:01-0300\n"
+"POT-Creation-Date: 2012-09-20 11:29-0300\n"
 "PO-Revision-Date: 2005-11-02 10:30-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -3341,12 +3341,12 @@ msgstr "apaga registros de uma tabela"
 
 #: sql_help.h:282
 msgid ""
-"DELETE FROM [ ONLY ] table [ [ AS ] alias ]\n"
+"DELETE FROM [ ONLY ] table [ * ] [ [ AS ] alias ]\n"
 "    [ USING usinglist ]\n"
 "    [ WHERE condition | WHERE CURRENT OF cursor_name ]\n"
 "    [ RETURNING * | output_expression [ AS output_name ] [, ...] ]"
 msgstr ""
-"DELETE FROM [ ONLY ] tabela [ [ AS ] aliás ]\n"
+"DELETE FROM [ ONLY ] tabela [ * ] [ [ AS ] aliás ]\n"
 "    [ USING lista_util ]\n"
 "    [ WHERE condição | WHERE CURRENT OF nome_cursor ]\n"
 "    [ RETURNING * | expressão_saída [ AS nome_saída ] [, ...] ]"
@@ -4195,7 +4195,7 @@ msgstr "atualiza registros de uma tabela"
 
 #: sql_help.h:530
 msgid ""
-"UPDATE [ ONLY ] table [ [ AS ] alias ]\n"
+"UPDATE [ ONLY ] table [ * ] [ [ AS ] alias ]\n"
 "    SET { column = { expression | DEFAULT } |\n"
 "          ( column [, ...] ) = ( { expression | DEFAULT } [, ...] ) } "
 "[, ...]\n"
@@ -4203,7 +4203,7 @@ msgid ""
 "    [ WHERE condition | WHERE CURRENT OF cursor_name ]\n"
 "    [ RETURNING * | output_expression [ AS output_name ] [, ...] ]"
 msgstr ""
-"UPDATE [ ONLY ] tabela [ [ AS ] aliás ]\n"
+"UPDATE [ ONLY ] tabela [ * ] [ [ AS ] aliás ]\n"
 "    SET { coluna = { expressão | DEFAULT } |\n"
 "          ( coluna [, ...] ) = ( { expressão | DEFAULT } [, ...] ) } "
 "[, ...]\n"
@@ -4272,27 +4272,27 @@ msgstr "não pôde mudar diretório para \"%s\""
 msgid "could not read symbolic link \"%s\""
 msgstr "não pôde ler link simbólico \"%s\""
 
-#: ../../port/exec.c:586
+#: ../../port/exec.c:595
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "processo filho terminou com código de saída %d"
 
-#: ../../port/exec.c:590
+#: ../../port/exec.c:599
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "processo filho foi terminado pela exceção 0x%X"
 
-#: ../../port/exec.c:599
+#: ../../port/exec.c:608
 #, c-format
 msgid "child process was terminated by signal %s"
 msgstr "processo filho foi terminado pelo sinal %s"
 
-#: ../../port/exec.c:602
+#: ../../port/exec.c:611
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "processo filho foi terminado pelo sinal %d"
 
-#: ../../port/exec.c:606
+#: ../../port/exec.c:615
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "processo filho terminou com status desconhecido %d"

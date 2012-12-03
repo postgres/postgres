@@ -26,8 +26,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-07-31 19:48+0000\n"
-"PO-Revision-Date: 2012-08-06 15:56+0400\n"
+"POT-Creation-Date: 2012-09-29 22:48+0000\n"
+"PO-Revision-Date: 2012-10-02 10:06+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -2916,7 +2916,7 @@ msgstr "отсутствует текст ошибки"
 #: utils/error/elog.c:2318
 #, c-format
 msgid " at character %d"
-msgstr " в символе %d"
+msgstr " (символ %d)"
 
 #: utils/error/elog.c:1977
 msgid "DETAIL:  "
@@ -3174,7 +3174,7 @@ msgstr "неверное имя исходной кодировки: \"%s\""
 msgid "invalid destination encoding name \"%s\""
 msgstr "неверное имя кодировки результата: \"%s\""
 
-#: utils/mb/mbutils.c:423 utils/adt/xml.c:160
+#: utils/mb/mbutils.c:423 utils/adt/xml.c:163
 #, c-format
 msgid "invalid encoding name \"%s\""
 msgstr "неверное имя кодировки: \"%s\""
@@ -3236,92 +3236,92 @@ msgstr "нельзя выполнить PREPARE для транзакции, с�
 msgid "materialize mode required, but it is not allowed in this context"
 msgstr "требуется режим материализации, но он недопустим в этом контексте"
 
-#: utils/adt/xml.c:135
+#: utils/adt/xml.c:138
 msgid "unsupported XML feature"
 msgstr "XML-функции не поддерживаются"
 
-#: utils/adt/xml.c:136
+#: utils/adt/xml.c:139
 msgid "This functionality requires the server to be built with libxml support."
 msgstr "Для этой функциональности в сервере не хватает поддержки libxml."
 
-#: utils/adt/xml.c:137
+#: utils/adt/xml.c:140
 msgid "You need to rebuild PostgreSQL using --with-libxml."
 msgstr "Необходимо перекомпилировать PostgreSQL с ключом --with-libxml."
 
-#: utils/adt/xml.c:432 utils/adt/xml.c:437
+#: utils/adt/xml.c:435 utils/adt/xml.c:440
 msgid "invalid XML comment"
 msgstr "ошибка в XML-комментарии"
 
-#: utils/adt/xml.c:568
+#: utils/adt/xml.c:571
 msgid "not an XML document"
 msgstr "не XML-документ"
 
-#: utils/adt/xml.c:724 utils/adt/xml.c:747
+#: utils/adt/xml.c:727 utils/adt/xml.c:750
 msgid "invalid XML processing instruction"
 msgstr "неправильная XML-инструкция обработки (PI)"
 
-#: utils/adt/xml.c:725
+#: utils/adt/xml.c:728
 #, c-format
 msgid "XML processing instruction target name cannot be \"%s\"."
 msgstr "назначением XML-инструкции обработки (PI) не может быть \"%s\"."
 
-#: utils/adt/xml.c:748
+#: utils/adt/xml.c:751
 msgid "XML processing instruction cannot contain \"?>\"."
 msgstr "XML-инструкция обработки (PI) не может содержать \"?>\"."
 
-#: utils/adt/xml.c:829
+#: utils/adt/xml.c:832
 msgid "xmlvalidate is not implemented"
 msgstr "функция xmlvalidate не реализована"
 
-#: utils/adt/xml.c:914
+#: utils/adt/xml.c:917
 msgid "could not initialize XML library"
 msgstr "не удалось инициализировать библиотеку XML"
 
-#: utils/adt/xml.c:915
+#: utils/adt/xml.c:918
 #, c-format
 msgid ""
 "libxml2 has incompatible char type: sizeof(char)=%u, sizeof(xmlChar)=%u."
 msgstr "другой тип char в libxml2: sizeof(char)=%u, sizeof(xmlChar)=%u."
 
-#: utils/adt/xml.c:1409 utils/adt/xml.c:1410 utils/adt/xml.c:1416
-#: utils/adt/xml.c:1487 tcop/postgres.c:4116 commands/user.c:914
+#: utils/adt/xml.c:1437 utils/adt/xml.c:1438 utils/adt/xml.c:1444
+#: utils/adt/xml.c:1515 tcop/postgres.c:4116 commands/user.c:914
 #: nodes/print.c:83 storage/lmgr/proc.c:927 storage/lmgr/deadlock.c:926
 #: catalog/pg_shdepend.c:676
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: utils/adt/xml.c:1463
+#: utils/adt/xml.c:1491
 msgid "Invalid character value."
 msgstr "Неверный символ."
 
-#: utils/adt/xml.c:1466
+#: utils/adt/xml.c:1494
 msgid "Space required."
 msgstr "Требуется пробел."
 
-#: utils/adt/xml.c:1469
+#: utils/adt/xml.c:1497
 msgid "standalone accepts only 'yes' or 'no'."
 msgstr "значениями атрибута standalone могут быть только 'yes' и 'no'."
 
-#: utils/adt/xml.c:1472
+#: utils/adt/xml.c:1500
 msgid "Malformed declaration: missing version."
 msgstr "Ошибочное объявление: не указана версия."
 
-#: utils/adt/xml.c:1475
+#: utils/adt/xml.c:1503
 msgid "Missing encoding in text declaration."
 msgstr "В объявлении не указана кодировка."
 
-#: utils/adt/xml.c:1478
+#: utils/adt/xml.c:1506
 msgid "Parsing XML declaration: '?>' expected."
 msgstr "Ошибка при разборе XML-объявления: ожидается '?>'."
 
-#: utils/adt/xml.c:1481
+#: utils/adt/xml.c:1509
 #, c-format
 msgid "Unrecognized libxml error code: %d."
 msgstr "нераспознанный код ошибки libxml: %d."
 
-#: utils/adt/xml.c:1766 utils/adt/xml.c:1772 utils/adt/xml.c:1792
-#: utils/adt/xml.c:1798 utils/adt/timestamp.c:210 utils/adt/timestamp.c:248
+#: utils/adt/xml.c:1794 utils/adt/xml.c:1800 utils/adt/xml.c:1820
+#: utils/adt/xml.c:1826 utils/adt/timestamp.c:210 utils/adt/timestamp.c:248
 #: utils/adt/timestamp.c:470 utils/adt/timestamp.c:510
 #: utils/adt/timestamp.c:2560 utils/adt/timestamp.c:2581
 #: utils/adt/timestamp.c:2594 utils/adt/timestamp.c:2603
@@ -3345,34 +3345,34 @@ msgstr "нераспознанный код ошибки libxml: %d."
 msgid "timestamp out of range"
 msgstr "timestamp вне диапазона"
 
-#: utils/adt/xml.c:2082 utils/adt/xml.c:2246 commands/portalcmds.c:168
+#: utils/adt/xml.c:2110 utils/adt/xml.c:2274 commands/portalcmds.c:168
 #: commands/portalcmds.c:222 executor/execCurrent.c:69
 #, c-format
 msgid "cursor \"%s\" does not exist"
 msgstr "курсор \"%s\" не существует"
 
-#: utils/adt/xml.c:2161
+#: utils/adt/xml.c:2189
 msgid "invalid query"
 msgstr "неверный запрос"
 
-#: utils/adt/xml.c:3398
+#: utils/adt/xml.c:3426
 msgid "invalid array for XML namespace mapping"
 msgstr "неправильный массив с сопоставлениями пространств имён XML"
 
-#: utils/adt/xml.c:3399
+#: utils/adt/xml.c:3427
 msgid ""
 "The array must be two-dimensional with length of the second axis equal to 2."
 msgstr "Массив должен быть двухмерным и содержать 2 элемента по второй оси."
 
-#: utils/adt/xml.c:3423
+#: utils/adt/xml.c:3451
 msgid "empty XPath expression"
 msgstr "пустое выражение XPath"
 
-#: utils/adt/xml.c:3540
+#: utils/adt/xml.c:3568
 msgid "neither namespace name nor URI may be null"
 msgstr "ни префикс, ни URI пространства имён не может быть null"
 
-#: utils/adt/xml.c:3547
+#: utils/adt/xml.c:3575
 #, c-format
 msgid "could not register XML namespace with name \"%s\" and URI \"%s\""
 msgstr ""
@@ -6073,7 +6073,7 @@ msgid "Values larger than a buffer page cannot be indexed."
 msgstr "Значения, не умещающиеся в страницу буфера, нельзя проиндексировать."
 
 #: access/hash/hashutil.c:158 access/nbtree/nbtpage.c:429
-#: access/gist/gistutil.c:594
+#: access/gist/gistutil.c:642
 #, c-format
 msgid "index \"%s\" contains unexpected zero page at block %u"
 msgstr "в индексе \"%s\" неожиданно оказалась нулевая страница в блоке %u"
@@ -6081,12 +6081,12 @@ msgstr "в индексе \"%s\" неожиданно оказалась нул�
 #: access/hash/hashutil.c:161 access/hash/hashutil.c:173
 #: access/hash/hashutil.c:185 access/hash/hashutil.c:206
 #: access/nbtree/nbtpage.c:432 access/nbtree/nbtpage.c:444
-#: access/gist/gistutil.c:597 access/gist/gistutil.c:609
+#: access/gist/gistutil.c:645 access/gist/gistutil.c:657
 msgid "Please REINDEX it."
 msgstr "Пожалуйста, выполните REINDEX для него."
 
 #: access/hash/hashutil.c:170 access/hash/hashutil.c:182
-#: access/nbtree/nbtpage.c:441 access/gist/gistutil.c:606
+#: access/nbtree/nbtpage.c:441 access/gist/gistutil.c:654
 #, c-format
 msgid "index \"%s\" contains corrupted page at block %u"
 msgstr "индекс \"%s\" содержит испорченную страницу в блоке %u"
@@ -7453,7 +7453,7 @@ msgid "Incomplete insertion detected during crash replay."
 msgstr ""
 "При воспроизведении после сбоя обнаружены неполностью добавленные данные."
 
-#: access/gist/gistutil.c:407
+#: access/gist/gistutil.c:426
 #, c-format
 msgid "index \"%s\" needs VACUUM or REINDEX to finish crash recovery"
 msgstr ""
@@ -11762,8 +11762,8 @@ msgstr "не удалось перейти к концу сегмента %u о�
 
 #: storage/lmgr/proc.c:915
 #, c-format
-msgid "Process %d waits for %s on %s"
-msgstr "Процесс %d ожидает в режиме %s блокировку %s"
+msgid "Process %d waits for %s on %s."
+msgstr "Процесс %d ожидает в режиме %s блокировку %s."
 
 #: storage/lmgr/proc.c:925
 #, c-format
