@@ -25,8 +25,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-08-06 12:47+0000\n"
-"PO-Revision-Date: 2012-08-06 18:18+0400\n"
+"POT-Creation-Date: 2012-09-29 22:17+0000\n"
+"PO-Revision-Date: 2012-10-02 12:20+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -287,7 +287,7 @@ msgstr "не удалось сжать данные: %s\n"
 
 #: compress_io.c:300 compress_io.c:431 pg_backup_archiver.c:1470
 #: pg_backup_archiver.c:1493 pg_backup_custom.c:650 pg_backup_directory.c:480
-#: pg_backup_tar.c:589 pg_backup_tar.c:1097 pg_backup_tar.c:1390
+#: pg_backup_tar.c:589 pg_backup_tar.c:1096 pg_backup_tar.c:1389
 #, c-format
 msgid "could not write to output file: %s\n"
 msgstr "не удалось записать в выходной файл: %s\n"
@@ -474,7 +474,7 @@ msgstr[0] "восстановлен %d большой объект\n"
 msgstr[1] "восстановлено %d больших объекта\n"
 msgstr[2] "восстановлено %d больших объектов\n"
 
-#: pg_backup_archiver.c:1056 pg_backup_tar.c:732
+#: pg_backup_archiver.c:1056 pg_backup_tar.c:722
 #, c-format
 msgid "restoring large object with OID %u\n"
 msgstr "восстановление большого объекта с OID %u\n"
@@ -581,7 +581,7 @@ msgid "file offset in dump file is too large\n"
 msgstr "слишком большое смещение в файле вывода\n"
 
 #: pg_backup_archiver.c:1824 pg_backup_archiver.c:3257 pg_backup_custom.c:628
-#: pg_backup_directory.c:463 pg_backup_tar.c:788
+#: pg_backup_directory.c:463 pg_backup_tar.c:778
 #, c-format
 msgid "unexpected end of file\n"
 msgstr "неожиданный конец файла\n"
@@ -1190,69 +1190,60 @@ msgstr "внутренняя ошибка -- в tarReadRaw() не указан �
 
 #: pg_backup_tar.c:677
 #, c-format
-msgid "invalid COPY statement -- could not find \"copy\" in string \"%s\"\n"
-msgstr "неверный оператор COPY -- слово \"copy\" не найдено в строке \"%s\"\n"
+msgid "unexpected COPY statement syntax: \"%s\"\n"
+msgstr "недопустимый синтаксис оператора COPY: \"%s\"\n"
 
-#: pg_backup_tar.c:695
-#, c-format
-msgid ""
-"invalid COPY statement -- could not find \"from stdin\" in string \"%s\" "
-"starting at position %lu\n"
-msgstr ""
-"неверный оператор COPY -- указание \"from stdin\" не найдено в строке \"%s"
-"\", начиная с позиции %lu\n"
-
-#: pg_backup_tar.c:890
+#: pg_backup_tar.c:880
 #, c-format
 msgid "could not write null block at end of tar archive\n"
 msgstr "не удалось записать нулевой блок в конец tar-архива\n"
 
-#: pg_backup_tar.c:945
+#: pg_backup_tar.c:935
 #, c-format
 msgid "invalid OID for large object (%u)\n"
 msgstr "неверный OID для большого объекта (%u)\n"
 
-#: pg_backup_tar.c:1088
+#: pg_backup_tar.c:1087
 #, c-format
 msgid "archive member too large for tar format\n"
 msgstr "компонент архива слишком велик для формата tar\n"
 
-#: pg_backup_tar.c:1103
+#: pg_backup_tar.c:1102
 #, c-format
 msgid "could not close temporary file: %s\n"
 msgstr "не удалось закрыть временный файл: %s\n"
 
-#: pg_backup_tar.c:1113
+#: pg_backup_tar.c:1112
 #, c-format
 msgid "actual file length (%s) does not match expected (%s)\n"
 msgstr "действительная длина файла (%s) не равна ожидаемой (%s)\n"
 
-#: pg_backup_tar.c:1121
+#: pg_backup_tar.c:1120
 #, c-format
 msgid "could not output padding at end of tar member\n"
 msgstr "не удалось записать выравнивание для компонента tar\n"
 
-#: pg_backup_tar.c:1150
+#: pg_backup_tar.c:1149
 #, c-format
 msgid "moving from position %s to next member at file position %s\n"
 msgstr "переход от позиции %s к следующему компоненту в позиции %s\n"
 
-#: pg_backup_tar.c:1161
+#: pg_backup_tar.c:1160
 #, c-format
 msgid "now at file position %s\n"
 msgstr "текущая позиция в файле %s\n"
 
-#: pg_backup_tar.c:1170 pg_backup_tar.c:1200
+#: pg_backup_tar.c:1169 pg_backup_tar.c:1199
 #, c-format
 msgid "could not find header for file \"%s\" in tar archive\n"
 msgstr "в архиве tar не найден заголовок для файла \"%s\"\n"
 
-#: pg_backup_tar.c:1184
+#: pg_backup_tar.c:1183
 #, c-format
 msgid "skipping tar member %s\n"
 msgstr "пропускается компонент tar %s\n"
 
-#: pg_backup_tar.c:1188
+#: pg_backup_tar.c:1187
 #, c-format
 msgid ""
 "restoring data out of order is not supported in this archive format: \"%s\" "
@@ -1262,12 +1253,12 @@ msgstr ""
 "поддерживается: требуется компонент \"%s\", но в файле архива прежде идёт "
 "\"%s\".\n"
 
-#: pg_backup_tar.c:1234
+#: pg_backup_tar.c:1233
 #, c-format
 msgid "mismatch in actual vs. predicted file position (%s vs. %s)\n"
 msgstr "реальная позиция в файле отличается от предсказанной (%s и %s)\n"
 
-#: pg_backup_tar.c:1249
+#: pg_backup_tar.c:1248
 #, c-format
 msgid "incomplete tar header found (%lu byte)\n"
 msgid_plural "incomplete tar header found (%lu bytes)\n"
@@ -1275,12 +1266,12 @@ msgstr[0] "найден неполный tar-заголовок (размер %l
 msgstr[1] "найден неполный tar-заголовок (размер %lu байта)\n"
 msgstr[2] "найден неполный tar-заголовок (размер %lu байтов)\n"
 
-#: pg_backup_tar.c:1287
+#: pg_backup_tar.c:1286
 #, c-format
 msgid "TOC Entry %s at %s (length %lu, checksum %d)\n"
 msgstr "Запись оглавления %s в %s (длина: %lu, контр. сумма: %d)\n"
 
-#: pg_backup_tar.c:1297
+#: pg_backup_tar.c:1296
 #, c-format
 msgid ""
 "corrupt tar header found in %s (expected %d, computed %d) file position %s\n"
@@ -1809,12 +1800,12 @@ msgstr ""
 "по OID %u не удалось найти родительскую таблицу для записи pg_rewrite с OID "
 "%u\n"
 
-#: pg_dump.c:5114
+#: pg_dump.c:5124
 #, c-format
 msgid "reading triggers for table \"%s\"\n"
 msgstr "чтение триггеров таблицы \"%s\"\n"
 
-#: pg_dump.c:5275
+#: pg_dump.c:5285
 #, c-format
 msgid ""
 "query produced null referenced table name for foreign key trigger \"%s\" on "
@@ -1823,32 +1814,32 @@ msgstr ""
 "запрос не вернул имя целевой таблицы для триггера внешнего ключа \"%s\" в "
 "таблице \"%s\" (OID целевой таблицы: %u)\n"
 
-#: pg_dump.c:5644
+#: pg_dump.c:5654
 #, c-format
 msgid "finding the columns and types of table \"%s\"\n"
 msgstr "поиск колонок и типов таблицы \"%s\"\n"
 
-#: pg_dump.c:5822
+#: pg_dump.c:5832
 #, c-format
 msgid "invalid column numbering in table \"%s\"\n"
 msgstr "неверная нумерация колонок в таблице \"%s\"\n"
 
-#: pg_dump.c:5856
+#: pg_dump.c:5866
 #, c-format
 msgid "finding default expressions of table \"%s\"\n"
 msgstr "поиск выражений по умолчанию для таблицы \"%s\"\n"
 
-#: pg_dump.c:5908
+#: pg_dump.c:5918
 #, c-format
 msgid "invalid adnum value %d for table \"%s\"\n"
 msgstr "неверное значение adnum (%d) в таблице \"%s\"\n"
 
-#: pg_dump.c:5980
+#: pg_dump.c:5990
 #, c-format
 msgid "finding check constraints for table \"%s\"\n"
 msgstr "поиск ограничений-проверок для таблицы \"%s\"\n"
 
-#: pg_dump.c:6075
+#: pg_dump.c:6085
 #, c-format
 msgid "expected %d check constraint on table \"%s\" but found %d\n"
 msgid_plural "expected %d check constraints on table \"%s\" but found %d\n"
@@ -1859,65 +1850,65 @@ msgstr[1] ""
 msgstr[2] ""
 "ожидалось %d ограничений-проверок для таблицы \"%s\", но найдено: %d\n"
 
-#: pg_dump.c:6079
+#: pg_dump.c:6089
 #, c-format
 msgid "(The system catalogs might be corrupted.)\n"
 msgstr "(Возможно повреждены системные каталоги.)\n"
 
-#: pg_dump.c:7436
+#: pg_dump.c:7446
 #, c-format
 msgid "WARNING: typtype of data type \"%s\" appears to be invalid\n"
 msgstr "ВНИМАНИЕ: у типа данных \"%s\" по-видимому неправильный тип типа\n"
 
-#: pg_dump.c:8845
+#: pg_dump.c:8855
 #, c-format
 msgid "WARNING: bogus value in proargmodes array\n"
 msgstr "ВНИМАНИЕ: неприемлемое значение в массиве proargmodes\n"
 
-#: pg_dump.c:9173
+#: pg_dump.c:9183
 #, c-format
 msgid "WARNING: could not parse proallargtypes array\n"
 msgstr "ВНИМАНИЕ: не удалось разобрать массив proallargtypes\n"
 
-#: pg_dump.c:9189
+#: pg_dump.c:9199
 #, c-format
 msgid "WARNING: could not parse proargmodes array\n"
 msgstr "ВНИМАНИЕ: не удалось разобрать массив proargmodes\n"
 
-#: pg_dump.c:9203
+#: pg_dump.c:9213
 #, c-format
 msgid "WARNING: could not parse proargnames array\n"
 msgstr "ВНИМАНИЕ: не удалось разобрать массив proargnames\n"
 
-#: pg_dump.c:9214
+#: pg_dump.c:9224
 #, c-format
 msgid "WARNING: could not parse proconfig array\n"
 msgstr "ВНИМАНИЕ: не удалось разобрать массив proconfig\n"
 
 # TO REVEIW
-#: pg_dump.c:9271
+#: pg_dump.c:9281
 #, c-format
 msgid "unrecognized provolatile value for function \"%s\"\n"
 msgstr "недопустимое значение provolatile для функции \"%s\"\n"
 
-#: pg_dump.c:9491
+#: pg_dump.c:9501
 #, c-format
 msgid "WARNING: bogus value in pg_cast.castfunc or pg_cast.castmethod field\n"
 msgstr ""
 "WARNING: неприемлемое значение в поле pg_cast.castfunc или pg_cast."
 "castmethod\n"
 
-#: pg_dump.c:9494
+#: pg_dump.c:9504
 #, c-format
 msgid "WARNING: bogus value in pg_cast.castmethod field\n"
 msgstr "WARNING: неприемлемое значение в поле pg_cast.castmethod\n"
 
-#: pg_dump.c:9863
+#: pg_dump.c:9873
 #, c-format
 msgid "WARNING: could not find operator with OID %s\n"
 msgstr "ВНИМАНИЕ: оператор с OID %s не найден\n"
 
-#: pg_dump.c:10925
+#: pg_dump.c:10935
 #, c-format
 msgid ""
 "WARNING: aggregate function %s could not be dumped correctly for this "
@@ -1926,28 +1917,28 @@ msgstr ""
 "ВНИМАНИЕ: агрегатная функция %s не может быть правильно выгружена для этой "
 "версии базы данных; функция проигнорирована\n"
 
-#: pg_dump.c:11698
+#: pg_dump.c:11708
 #, c-format
 msgid "unknown object type (%d) in default privileges\n"
 msgstr "неизвестный тип объекта (%d) в определении прав по умолчанию\n"
 
-#: pg_dump.c:11713
+#: pg_dump.c:11723
 #, c-format
 msgid "could not parse default ACL list (%s)\n"
 msgstr "не удалось разобрать список прав по умолчанию (%s)\n"
 
-#: pg_dump.c:11768
+#: pg_dump.c:11778
 #, c-format
 msgid "could not parse ACL list (%s) for object \"%s\" (%s)\n"
 msgstr "не удалось разобрать список прав (%s) для объекта \"%s\" (%s)\n"
 
-#: pg_dump.c:12209
+#: pg_dump.c:12219
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned no data\n"
 msgstr ""
 "запрос на получение определения представления \"%s\" не возвратил данные\n"
 
-#: pg_dump.c:12212
+#: pg_dump.c:12222
 #, c-format
 msgid ""
 "query to obtain definition of view \"%s\" returned more than one definition\n"
@@ -1955,27 +1946,27 @@ msgstr ""
 "запрос на получения определения представления \"%s\" возвратил несколько "
 "определений\n"
 
-#: pg_dump.c:12219
+#: pg_dump.c:12229
 #, c-format
 msgid "definition of view \"%s\" appears to be empty (length zero)\n"
 msgstr "определение представления \"%s\" пустое (длина равна нулю)\n"
 
-#: pg_dump.c:12830
+#: pg_dump.c:12840
 #, c-format
 msgid "invalid column number %d for table \"%s\"\n"
 msgstr "неверный номер колонки %d для таблицы \"%s\"\n"
 
-#: pg_dump.c:12940
+#: pg_dump.c:12950
 #, c-format
 msgid "missing index for constraint \"%s\"\n"
 msgstr "отсутствует индекс для ограничения \"%s\"\n"
 
-#: pg_dump.c:13127
+#: pg_dump.c:13137
 #, c-format
 msgid "unrecognized constraint type: %c\n"
 msgstr "нераспознанный тип ограничения: %c\n"
 
-#: pg_dump.c:13274
+#: pg_dump.c:13284
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d row (expected 1)\n"
 msgid_plural ""
@@ -1990,23 +1981,23 @@ msgstr[2] ""
 "запрос на получение данных последовательности \"%s\" вернул %d строк "
 "(ожидалась 1)\n"
 
-#: pg_dump.c:13285
+#: pg_dump.c:13295
 #, c-format
 msgid "query to get data of sequence \"%s\" returned name \"%s\"\n"
 msgstr ""
 "запрос на получение данных последовательности \"%s\" вернул имя \"%s\"\n"
 
-#: pg_dump.c:13515
+#: pg_dump.c:13525
 #, c-format
 msgid "unexpected tgtype value: %d\n"
 msgstr "неожиданное значение tgtype: %d\n"
 
-#: pg_dump.c:13597
+#: pg_dump.c:13607
 #, c-format
 msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\"\n"
 msgstr "неверная строка аргументов (%s) для триггера \"%s\" таблицы \"%s\"\n"
 
-#: pg_dump.c:13714
+#: pg_dump.c:13724
 #, c-format
 msgid ""
 "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows "
@@ -2015,12 +2006,12 @@ msgstr ""
 "запрос на получение правила \"%s\" для таблицы \"%s\" возвратил неверное "
 "число строк\n"
 
-#: pg_dump.c:13979
+#: pg_dump.c:13996
 #, c-format
 msgid "reading dependency data\n"
 msgstr "чтение данных о зависимостях\n"
 
-#: pg_dump.c:14560
+#: pg_dump.c:14577
 #, c-format
 msgid "query returned %d row instead of one: %s\n"
 msgid_plural "query returned %d rows instead of one: %s\n"
@@ -2048,19 +2039,19 @@ msgstr "неверная зависимость %d\n"
 msgid "could not identify dependency loop\n"
 msgstr "не удалось определить цикл зависимостей\n"
 
-#: pg_dump_sort.c:1028
+#: pg_dump_sort.c:1037
 #, c-format
 msgid ""
 "NOTICE: there are circular foreign-key constraints among these table(s):\n"
 msgstr ""
 "ЗАМЕЧАНИЕ: в следующих таблицах зациклены ограничения внешних ключей :\n"
 
-#: pg_dump_sort.c:1030 pg_dump_sort.c:1050
+#: pg_dump_sort.c:1039 pg_dump_sort.c:1059
 #, c-format
 msgid "  %s\n"
 msgstr "  %s\n"
 
-#: pg_dump_sort.c:1031
+#: pg_dump_sort.c:1040
 #, c-format
 msgid ""
 "You might not be able to restore the dump without using --disable-triggers "
@@ -2069,7 +2060,7 @@ msgstr ""
 "Возможно для восстановления базы вам потребуется использовать --disable-"
 "triggers или временно удалить ограничения.\n"
 
-#: pg_dump_sort.c:1032
+#: pg_dump_sort.c:1041
 #, c-format
 msgid ""
 "Consider using a full dump instead of a --data-only dump to avoid this "
@@ -2078,7 +2069,7 @@ msgstr ""
 "Во избежание этой проблемы, вам вероятно стоит выгружать всю базу данных, а "
 "не только данные (--data-only).\n"
 
-#: pg_dump_sort.c:1044
+#: pg_dump_sort.c:1053
 #, c-format
 msgid "WARNING: could not resolve dependency loop among these items:\n"
 msgstr ""
@@ -2514,6 +2505,17 @@ msgstr ""
 "Если имя входного файла не указано, используется стандартное устройство "
 "ввода.\n"
 "\n"
+
+#~ msgid "invalid COPY statement -- could not find \"copy\" in string \"%s\"\n"
+#~ msgstr ""
+#~ "неверный оператор COPY -- слово \"copy\" не найдено в строке \"%s\"\n"
+
+#~ msgid ""
+#~ "invalid COPY statement -- could not find \"from stdin\" in string \"%s\" "
+#~ "starting at position %lu\n"
+#~ msgstr ""
+#~ "неверный оператор COPY -- указание \"from stdin\" не найдено в строке \"%s"
+#~ "\", начиная с позиции %lu\n"
 
 #~ msgid "cannot create directory %s, it exists already\n"
 #~ msgstr "создать каталог %s не удалось, он уже существует\n"

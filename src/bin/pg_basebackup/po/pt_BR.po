@@ -1,0 +1,703 @@
+# Brazilian Portuguese message translation file for pg_basebackup
+# Copyright (C) 2011 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2012.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 9.2\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2012-09-02 22:43-0300\n"
+"PO-Revision-Date: 2011-08-20 23:33-0300\n"
+"Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
+"Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n>1;\n"
+
+#: pg_basebackup.c:103
+#, c-format
+msgid ""
+"%s takes a base backup of a running PostgreSQL server.\n"
+"\n"
+msgstr ""
+"%s faz uma cópia de segurança base de um servidor PostgreSQL em execução.\n"
+"\n"
+
+#: pg_basebackup.c:105 pg_receivexlog.c:59
+#, c-format
+msgid "Usage:\n"
+msgstr "Uso:\n"
+
+#: pg_basebackup.c:106 pg_receivexlog.c:60
+#, c-format
+msgid "  %s [OPTION]...\n"
+msgstr "  %s [OPÇÃO]...\n"
+
+#: pg_basebackup.c:107
+#, c-format
+msgid ""
+"\n"
+"Options controlling the output:\n"
+msgstr ""
+"\n"
+"Opções que controlam a saída:\n"
+
+#: pg_basebackup.c:108
+#, c-format
+msgid "  -D, --pgdata=DIRECTORY receive base backup into directory\n"
+msgstr "  -D, --pgdata=DIRETÓRIO armazena a cópia de segurança base no diretório\n"
+
+#: pg_basebackup.c:109
+#, c-format
+msgid "  -F, --format=p|t       output format (plain (default), tar)\n"
+msgstr "  -F, --format=p|t       formato de saída (texto (padrão), tar)\n"
+
+#: pg_basebackup.c:110
+#, c-format
+msgid "  -x, --xlog             include required WAL files in backup (fetch mode)\n"
+msgstr "  -x, --xlog             inclui os arquivos do WAL requeridos na cópia de segurança (modo busca)\n"
+
+#: pg_basebackup.c:111
+#, c-format
+msgid ""
+"  -X, --xlog-method=fetch|stream\n"
+"                         include required WAL files with specified method\n"
+msgstr ""
+"  -X, --xlog-method=fetch|stream\n"
+"                         inclui os arquivos do WAL requeridos na cópia de segurança\n"
+
+#: pg_basebackup.c:113
+#, c-format
+msgid "  -z, --gzip             compress tar output\n"
+msgstr "  -z, --gzip             comprime saída do tar\n"
+
+#: pg_basebackup.c:114
+#, c-format
+msgid "  -Z, --compress=0-9     compress tar output with given compression level\n"
+msgstr "  -Z, --compress=0-9     comprime saída do tar com o nível de compressão informado\n"
+
+#: pg_basebackup.c:115
+#, c-format
+msgid ""
+"\n"
+"General options:\n"
+msgstr ""
+"\n"
+"Opções gerais:\n"
+
+#: pg_basebackup.c:116
+#, c-format
+msgid ""
+"  -c, --checkpoint=fast|spread\n"
+"                         set fast or spread checkpointing\n"
+msgstr ""
+"  -c, --checkpoint=fast|spread\n"
+"                         define ponto de controle rápido ou distribuído\n"
+
+#: pg_basebackup.c:118
+#, c-format
+msgid "  -l, --label=LABEL      set backup label\n"
+msgstr "  -l, --label=RÓTULO     define rótulo da cópia de segurança\n"
+
+#: pg_basebackup.c:119
+#, c-format
+msgid "  -P, --progress         show progress information\n"
+msgstr "  -P, --progress         mostra informação de progresso\n"
+
+#: pg_basebackup.c:120 pg_receivexlog.c:64
+#, c-format
+msgid "  -v, --verbose          output verbose messages\n"
+msgstr "  -v, --verbose          mostra mensagens de detalhe\n"
+
+#: pg_basebackup.c:121 pg_receivexlog.c:65
+#, c-format
+msgid "  -V, --version          output version information, then exit\n"
+msgstr "  -V, --version          mostra informação sobre a versão e termina\n"
+
+#: pg_basebackup.c:122 pg_receivexlog.c:66
+#, c-format
+msgid "  -?, --help             show this help, then exit\n"
+msgstr "  -?, --help             mostra essa ajuda e termina\n"
+
+#: pg_basebackup.c:123 pg_receivexlog.c:67
+#, c-format
+msgid ""
+"\n"
+"Connection options:\n"
+msgstr ""
+"\n"
+"Opções de conexão: \n"
+
+#: pg_basebackup.c:124 pg_receivexlog.c:68
+#, c-format
+msgid "  -h, --host=HOSTNAME    database server host or socket directory\n"
+msgstr "  -h, --host=MÁQUINA     máquina do servidor de banco de dados ou diretório do soquete\n"
+
+#: pg_basebackup.c:125 pg_receivexlog.c:69
+#, c-format
+msgid "  -p, --port=PORT        database server port number\n"
+msgstr "  -p, --port=PORTA       número da porta do servidor de banco de dados\n"
+
+#: pg_basebackup.c:126 pg_receivexlog.c:70
+#, c-format
+msgid ""
+"  -s, --status-interval=INTERVAL\n"
+"                         time between status packets sent to server (in seconds)\n"
+msgstr ""
+"  -s, --status-interval=INTERVALO\n"
+"                         tempo entre envio de pacotes de status ao servidor (em segundos)\n"
+
+#: pg_basebackup.c:128 pg_receivexlog.c:72
+#, c-format
+msgid "  -U, --username=NAME    connect as specified database user\n"
+msgstr "  -U, --username=NOME    conecta como usuário do banco de dados especificado\n"
+
+#: pg_basebackup.c:129 pg_receivexlog.c:73
+#, c-format
+msgid "  -w, --no-password      never prompt for password\n"
+msgstr "  -w, --no-password      nunca pergunta senha\n"
+
+#: pg_basebackup.c:130 pg_receivexlog.c:74
+#, c-format
+msgid "  -W, --password         force password prompt (should happen automatically)\n"
+msgstr "  -W, --password         pergunta senha (pode ocorrer automaticamente)\n"
+
+#: pg_basebackup.c:131 pg_receivexlog.c:75
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"Relate erros a <pgsql-bugs@postgresql.org>.\n"
+
+#: pg_basebackup.c:172
+#, c-format
+msgid "%s: could not read from ready pipe: %s\n"
+msgstr "%s: não pôde ler do pipe: %s\n"
+
+#: pg_basebackup.c:180 pg_basebackup.c:271 pg_basebackup.c:1187
+#: pg_receivexlog.c:256
+#, c-format
+msgid "%s: could not parse transaction log location \"%s\"\n"
+msgstr "%s: não pôde validar local do log de transação \"%s\"\n"
+
+#: pg_basebackup.c:283
+#, c-format
+msgid "%s: could not create pipe for background process: %s\n"
+msgstr "%s: não pôde criar pipe para processo em segundo plano: %s\n"
+
+#: pg_basebackup.c:316
+#, c-format
+msgid "%s: could not create background process: %s\n"
+msgstr "%s: não pôde criar processo em segundo plano: %s\n"
+
+#: pg_basebackup.c:328
+#, c-format
+msgid "%s: could not create background thread: %s\n"
+msgstr "%s: não pôde criar thread em segundo plano: %s\n"
+
+#: pg_basebackup.c:353 pg_basebackup.c:821
+#, c-format
+msgid "%s: could not create directory \"%s\": %s\n"
+msgstr "%s: não pôde criar diretório \"%s\": %s\n"
+
+#: pg_basebackup.c:370
+#, c-format
+msgid "%s: directory \"%s\" exists but is not empty\n"
+msgstr "%s: diretório \"%s\" existe mas não está vazio\n"
+
+#: pg_basebackup.c:378
+#, c-format
+msgid "%s: could not access directory \"%s\": %s\n"
+msgstr "%s: não pôde acessar diretório \"%s\": %s\n"
+
+#: pg_basebackup.c:425
+#, c-format
+msgid "%s/%s kB (100%%), %d/%d tablespace %35s"
+msgid_plural "%s/%s kB (100%%), %d/%d tablespaces %35s"
+msgstr[0] "%s/%s kB (100%%), %d/%d tablespace %35s"
+msgstr[1] "%s/%s kB (100%%), %d/%d tablespaces %35s"
+
+#: pg_basebackup.c:432
+#, c-format
+msgid "%s/%s kB (%d%%), %d/%d tablespace (%-30.30s)"
+msgid_plural "%s/%s kB (%d%%), %d/%d tablespaces (%-30.30s)"
+msgstr[0] "%s/%s kB (%d%%), %d/%d tablespace (%-30.30s)"
+msgstr[1] "%s/%s kB (%d%%), %d/%d tablespaces (%-30.30s)"
+
+#: pg_basebackup.c:440
+#, c-format
+msgid "%s/%s kB (%d%%), %d/%d tablespace"
+msgid_plural "%s/%s kB (%d%%), %d/%d tablespaces"
+msgstr[0] "%s/%s kB (%d%%), %d/%d tablespace"
+msgstr[1] "%s/%s kB (%d%%), %d/%d tablespaces"
+
+#: pg_basebackup.c:486 pg_basebackup.c:506 pg_basebackup.c:534
+#, c-format
+msgid "%s: could not set compression level %d: %s\n"
+msgstr "%s: não pôde definir nível de compressão %d: %s\n"
+
+#: pg_basebackup.c:555
+#, c-format
+msgid "%s: could not create compressed file \"%s\": %s\n"
+msgstr "%s: não pôde criar arquivo comprimido \"%s\": %s\n"
+
+#: pg_basebackup.c:566 pg_basebackup.c:863
+#, c-format
+msgid "%s: could not create file \"%s\": %s\n"
+msgstr "%s: não pôde criar arquivo \"%s\": %s\n"
+
+#: pg_basebackup.c:578 pg_basebackup.c:725
+#, c-format
+msgid "%s: could not get COPY data stream: %s"
+msgstr "%s: não pôde obter fluxo de dados do COPY: %s"
+
+#: pg_basebackup.c:612 pg_basebackup.c:670
+#, c-format
+msgid "%s: could not write to compressed file \"%s\": %s\n"
+msgstr "%s: não pôde escrever no arquivo comprimido \"%s\": %s\n"
+
+#: pg_basebackup.c:623 pg_basebackup.c:680 pg_basebackup.c:903
+#, c-format
+msgid "%s: could not write to file \"%s\": %s\n"
+msgstr "%s: não pôde escrever no arquivo \"%s\": %s\n"
+
+#: pg_basebackup.c:635
+#, c-format
+msgid "%s: could not close compressed file \"%s\": %s\n"
+msgstr "%s: não pôde fechar arquivo comprimido \"%s\": %s\n"
+
+#: pg_basebackup.c:648 receivelog.c:157 receivelog.c:625 receivelog.c:634
+#, c-format
+msgid "%s: could not close file \"%s\": %s\n"
+msgstr "%s: não pôde fechar arquivo \"%s\": %s\n"
+
+#: pg_basebackup.c:659 pg_basebackup.c:754 receivelog.c:468
+#, c-format
+msgid "%s: could not read COPY data: %s"
+msgstr "%s: não pôde ler dados do COPY: %s"
+
+#: pg_basebackup.c:768
+#, c-format
+msgid "%s: invalid tar block header size: %d\n"
+msgstr "%s: tamanho do cabeçalho do bloco tar é inválido: %d\n"
+
+#: pg_basebackup.c:776
+#, c-format
+msgid "%s: could not parse file size\n"
+msgstr "%s: não pôde obter tamanho do arquivo\n"
+
+#: pg_basebackup.c:784
+#, c-format
+msgid "%s: could not parse file mode\n"
+msgstr "%s: não pôde obter modo do arquivo\n"
+
+#: pg_basebackup.c:829
+#, c-format
+msgid "%s: could not set permissions on directory \"%s\": %s\n"
+msgstr "%s: não pôde definir permissões no diretório \"%s\": %s\n"
+
+#: pg_basebackup.c:842
+#, c-format
+msgid "%s: could not create symbolic link from \"%s\" to \"%s\": %s\n"
+msgstr "%s: não pôde criar link simbólico de \"%s\" para \"%s\": %s\n"
+
+#: pg_basebackup.c:850
+#, c-format
+msgid "%s: unrecognized link indicator \"%c\"\n"
+msgstr "%s: indicador de link \"%c\" desconhecido\n"
+
+#: pg_basebackup.c:870
+#, c-format
+msgid "%s: could not set permissions on file \"%s\": %s\n"
+msgstr "%s: não pôde definir permissões no arquivo \"%s\": %s\n"
+
+#: pg_basebackup.c:929
+#, c-format
+msgid "%s: COPY stream ended before last file was finished\n"
+msgstr "%s: fluxo do COPY terminou antes que o último arquivo estivesse completo\n"
+
+#: pg_basebackup.c:965 pg_basebackup.c:994 pg_receivexlog.c:239
+#: receivelog.c:303 receivelog.c:340
+#, c-format
+msgid "%s: could not send replication command \"%s\": %s"
+msgstr "%s: não pôde enviar comando de replicação \"%s\": %s"
+
+#: pg_basebackup.c:972 pg_receivexlog.c:247 receivelog.c:311
+#, c-format
+msgid "%s: could not identify system: got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "%s: não pôde identificar sistema: recebeu %d registros e %d campos, esperado %d registros e %d campos\n"
+
+#: pg_basebackup.c:1005
+#, c-format
+msgid "%s: could not initiate base backup: %s"
+msgstr "%s: não pôde inicializar cópia de segurança base: %s"
+
+#: pg_basebackup.c:1011
+#, c-format
+msgid "%s: no start point returned from server\n"
+msgstr "%s: nenhum ponto de início foi retornado do servidor\n"
+
+#: pg_basebackup.c:1027
+#, c-format
+msgid "%s: could not get backup header: %s"
+msgstr "%s: não pôde obter cabeçalho da cópia de segurança: %s"
+
+#: pg_basebackup.c:1033
+#, c-format
+msgid "%s: no data returned from server\n"
+msgstr "%s: nenhum dado foi retornado do servidor\n"
+
+#: pg_basebackup.c:1062
+#, c-format
+msgid "%s: can only write single tablespace to stdout, database has %d\n"
+msgstr "%s: só pode escrever uma tablespace para saída padrão, banco de dados tem %d\n"
+
+#: pg_basebackup.c:1074
+#, c-format
+msgid "%s: starting background WAL receiver\n"
+msgstr "%s: iniciando receptor do WAL em segundo plano\n"
+
+#: pg_basebackup.c:1104
+#, c-format
+msgid "%s: could not get transaction log end position from server: %s"
+msgstr "%s: não pôde obter posição final do log de transação do servidor: %s"
+
+#: pg_basebackup.c:1111
+#, c-format
+msgid "%s: no transaction log end position returned from server\n"
+msgstr "%s: nenhuma posição final do log de transação foi retornada do servidor\n"
+
+#: pg_basebackup.c:1123
+#, c-format
+msgid "%s: final receive failed: %s"
+msgstr "%s: recepção final falhou: %s"
+
+#: pg_basebackup.c:1139
+#, c-format
+msgid "%s: waiting for background process to finish streaming...\n"
+msgstr "%s: esperando processo em segundo plano terminar o fluxo...\n"
+
+#: pg_basebackup.c:1145
+#, c-format
+msgid "%s: could not send command to background pipe: %s\n"
+msgstr "%s: não pôde enviar comando para pipe em segundo plano: %s\n"
+
+#: pg_basebackup.c:1154
+#, c-format
+msgid "%s: could not wait for child process: %s\n"
+msgstr "%s: não pôde esperar por processo filho: %s\n"
+
+#: pg_basebackup.c:1160
+#, c-format
+msgid "%s: child %d died, expected %d\n"
+msgstr "%s: processo filho %d morreu, esperado %d\n"
+
+#: pg_basebackup.c:1166
+#, c-format
+msgid "%s: child process did not exit normally\n"
+msgstr "%s: processo filho não terminou normalmente\n"
+
+#: pg_basebackup.c:1172
+#, c-format
+msgid "%s: child process exited with error %d\n"
+msgstr "%s: processo filho terminou com código de saída %d\n"
+
+#: pg_basebackup.c:1198
+#, c-format
+msgid "%s: could not wait for child thread: %s\n"
+msgstr "%s: não pôde esperar por thread filho: %s\n"
+
+#: pg_basebackup.c:1205
+#, c-format
+msgid "%s: could not get child thread exit status: %s\n"
+msgstr "%s: não pôde obter status de saída de thread filho: %s\n"
+
+#: pg_basebackup.c:1211
+#, c-format
+msgid "%s: child thread exited with error %u\n"
+msgstr "%s: thread filho terminou com erro %u\n"
+
+#: pg_basebackup.c:1292
+#, c-format
+msgid "%s: invalid output format \"%s\", must be \"plain\" or \"tar\"\n"
+msgstr "%s: formato de saída \"%s\" é inválido, deve ser \"plain\" ou \"tar\"\n"
+
+#: pg_basebackup.c:1301 pg_basebackup.c:1313
+#, c-format
+msgid "%s: cannot specify both --xlog and --xlog-method\n"
+msgstr "%s: não pode especificar ambas opções --xlog e --xlog-method\n"
+
+#: pg_basebackup.c:1328
+#, c-format
+msgid "%s: invalid xlog-method option \"%s\", must be \"fetch\" or \"stream\"\n"
+msgstr "%s: opção de xlog-method \"%s\" é inválida, deve ser \"fetch\" ou \"stream\"\n"
+
+#: pg_basebackup.c:1347
+#, c-format
+msgid "%s: invalid compression level \"%s\"\n"
+msgstr "%s: nível de compressão \"%s\" é inválido\n"
+
+#: pg_basebackup.c:1359
+#, c-format
+msgid "%s: invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\"\n"
+msgstr "%s: argumento de ponto de controle \"%s\" é inválido, deve ser \"fast\" ou \"spread\"\n"
+
+#: pg_basebackup.c:1383 pg_receivexlog.c:370
+#, c-format
+msgid "%s: invalid status interval \"%s\"\n"
+msgstr "%s: intervalo do status \"%s\" é inválido\n"
+
+#: pg_basebackup.c:1399 pg_basebackup.c:1413 pg_basebackup.c:1424
+#: pg_basebackup.c:1437 pg_basebackup.c:1447 pg_receivexlog.c:386
+#: pg_receivexlog.c:400 pg_receivexlog.c:411
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Tente \"%s --help\" para obter informações adicionais.\n"
+
+#: pg_basebackup.c:1411 pg_receivexlog.c:398
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: muitos argumentos de linha de comando (primeiro é \"%s\")\n"
+
+#: pg_basebackup.c:1423 pg_receivexlog.c:410
+#, c-format
+msgid "%s: no target directory specified\n"
+msgstr "%s: nenhum diretório de destino foi especificado\n"
+
+#: pg_basebackup.c:1435
+#, c-format
+msgid "%s: only tar mode backups can be compressed\n"
+msgstr "%s: somente cópias de segurança com modo tar podem ser comprimidas\n"
+
+#: pg_basebackup.c:1445
+#, c-format
+msgid "%s: wal streaming can only be used in plain mode\n"
+msgstr "%s: fluxo do wal só pode ser utilizado em modo plain\n"
+
+#: pg_basebackup.c:1456
+#, c-format
+msgid "%s: this build does not support compression\n"
+msgstr "%s: esse programa binário não suporta compressão\n"
+
+#: pg_receivexlog.c:57
+#, c-format
+msgid ""
+"%s receives PostgreSQL streaming transaction logs.\n"
+"\n"
+msgstr ""
+"%s recebe fluxo de logs de transação do PostgreSQL.\n"
+"\n"
+
+#: pg_receivexlog.c:61
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"Opções:\n"
+
+#: pg_receivexlog.c:62
+#, c-format
+msgid "  -D, --directory=DIR    receive transaction log files into this directory\n"
+msgstr "  -D, --directory=DIR    recebe arquivos de log de transação neste diretório\n"
+
+#: pg_receivexlog.c:63
+#, c-format
+msgid "  -n, --no-loop          do not loop on connection lost\n"
+msgstr "  -n, --no-loop          não tentar novamente ao perder a conexão\n"
+
+#: pg_receivexlog.c:82
+#, c-format
+msgid "%s: finished segment at %X/%X (timeline %u)\n"
+msgstr "%s: terminou o segmento em %X/%X (linha do tempo %u)\n"
+
+#: pg_receivexlog.c:87
+#, c-format
+msgid "%s: received interrupt signal, exiting.\n"
+msgstr "%s: recebeu sinal de interrupção, terminando.\n"
+
+#: pg_receivexlog.c:114
+#, c-format
+msgid "%s: could not open directory \"%s\": %s\n"
+msgstr "%s: não pôde abrir diretório \"%s\": %s\n"
+
+#: pg_receivexlog.c:155
+#, c-format
+msgid "%s: could not parse transaction log file name \"%s\"\n"
+msgstr "%s: não pôde validar nome do arquivo de log de transação \"%s\"\n"
+
+#: pg_receivexlog.c:168
+#, c-format
+msgid "%s: could not stat file \"%s\": %s\n"
+msgstr "%s: não pôde executar stat no arquivo \"%s\": %s\n"
+
+#: pg_receivexlog.c:187
+#, c-format
+msgid "%s: segment file \"%s\" has incorrect size %d, skipping\n"
+msgstr "%s: arquivo de segmento \"%s\" tem tamanho incorreto %d, ignorando\n"
+
+#: pg_receivexlog.c:277
+#, c-format
+msgid "%s: starting log streaming at %X/%X (timeline %u)\n"
+msgstr "%s: iniciando fluxo de log em %X/%X (linha do tempo %u)\n"
+
+#: pg_receivexlog.c:351
+#, c-format
+msgid "%s: invalid port number \"%s\"\n"
+msgstr "%s: número de porta inválido: \"%s\"\n"
+
+#: pg_receivexlog.c:433
+#, c-format
+msgid "%s: disconnected.\n"
+msgstr "%s: desconectado.\n"
+
+#. translator: check source for value for %d
+#: pg_receivexlog.c:440
+#, c-format
+msgid "%s: disconnected. Waiting %d seconds to try again.\n"
+msgstr "%s: desconectado. Esperando %d segundos para tentar novamente.\n"
+
+#: receivelog.c:72
+#, c-format
+msgid "%s: could not open transaction log file \"%s\": %s\n"
+msgstr "%s: não pôde abrir arquivo de log de transação \"%s\": %s\n"
+
+#: receivelog.c:84
+#, c-format
+msgid "%s: could not stat transaction log file \"%s\": %s\n"
+msgstr "%s: não pôde executar stat no arquivo de log de transação \"%s\": %s\n"
+
+#: receivelog.c:94
+#, c-format
+msgid "%s: transaction log file \"%s\" has %d bytes, should be 0 or %d\n"
+msgstr "%s: arquivo de log de transação \"%s\" tem %d bytes, deveria ser 0 ou %d\n"
+
+#: receivelog.c:107
+#, c-format
+msgid "%s: could not pad transaction log file \"%s\": %s\n"
+msgstr "%s: não pôde preencher arquivo de log de transação \"%s\": %s\n"
+
+#: receivelog.c:120
+#, c-format
+msgid "%s: could not seek to beginning of transaction log file \"%s\": %s\n"
+msgstr "%s: não pôde buscar início do arquivo de log de transação \"%s\": %s\n"
+
+#: receivelog.c:143
+#, c-format
+msgid "%s: could not determine seek position in file \"%s\": %s\n"
+msgstr "%s: não pôde determinar posição de busca no arquivo \"%s\": %s\n"
+
+#: receivelog.c:150
+#, c-format
+msgid "%s: could not fsync file \"%s\": %s\n"
+msgstr "%s: não pôde executar fsync no arquivo \"%s\": %s\n"
+
+#: receivelog.c:177
+#, c-format
+msgid "%s: could not rename file \"%s\": %s\n"
+msgstr "%s: não pôde renomear arquivo \"%s\": %s\n"
+
+#: receivelog.c:184
+#, c-format
+msgid "%s: not renaming \"%s\", segment is not complete\n"
+msgstr "%s: não renomeará \"%s\", segmento não está completo\n"
+
+#: receivelog.c:319
+#, c-format
+msgid "%s: system identifier does not match between base backup and streaming connection\n"
+msgstr "%s: identificador do sistema não corresponde entre cópia base e conexão de envio do WAL\n"
+
+#: receivelog.c:327
+#, c-format
+msgid "%s: timeline does not match between base backup and streaming connection\n"
+msgstr "%s: linha do tempo não corresponde entre cópia base e conexão de envio do WAL\n"
+
+#: receivelog.c:398
+#, c-format
+msgid "%s: could not send feedback packet: %s"
+msgstr "%s: não pôde enviar pacote de retorno: %s"
+
+#: receivelog.c:449
+#, c-format
+msgid "%s: select() failed: %s\n"
+msgstr "%s: select() falhou: %s\n"
+
+#: receivelog.c:457
+#, c-format
+msgid "%s: could not receive data from WAL stream: %s"
+msgstr "%s: não pôde receber dados do fluxo do WAL: %s"
+
+#: receivelog.c:481
+#, c-format
+msgid "%s: keepalive message has incorrect size %d\n"
+msgstr "%s: mensagem keepalive tem tamanho incorreto %d\n"
+
+#: receivelog.c:489
+#, c-format
+msgid "%s: unrecognized streaming header: \"%c\"\n"
+msgstr "%s: cabeçalho de fluxo desconhecido: \"%c\"\n"
+
+#: receivelog.c:495
+#, c-format
+msgid "%s: streaming header too small: %d\n"
+msgstr "%s: cabeçalho de fluxo muito pequeno: %d\n"
+
+#: receivelog.c:514
+#, c-format
+msgid "%s: received transaction log record for offset %u with no file open\n"
+msgstr "%s: recebeu registro do log de transação para posição %u sem um arquivo aberto\n"
+
+#: receivelog.c:526
+#, c-format
+msgid "%s: got WAL data offset %08x, expected %08x\n"
+msgstr "%s: recebeu dados do WAL da posição %08x, esperada %08x\n"
+
+#: receivelog.c:562
+#, c-format
+msgid "%s: could not write %u bytes to WAL file \"%s\": %s\n"
+msgstr "%s: não pôde escrever %u bytes no arquivo do WAL \"%s\": %s\n"
+
+#: receivelog.c:608
+#, c-format
+msgid "%s: unexpected termination of replication stream: %s"
+msgstr "%s: término inesperado do fluxo de replicação: %s"
+
+#: receivelog.c:617
+#, c-format
+msgid "%s: replication stream was terminated before stop point\n"
+msgstr "%s: fluxo de replicação foi terminado antes do ponto de parada\n"
+
+#: streamutil.c:46 streamutil.c:60
+#, c-format
+msgid "%s: out of memory\n"
+msgstr "%s: sem memória\n"
+
+#: streamutil.c:139
+msgid "Password: "
+msgstr "Senha: "
+
+#: streamutil.c:152
+#, c-format
+msgid "%s: could not connect to server\n"
+msgstr "%s: não pôde se conectar ao servidor\n"
+
+#: streamutil.c:168
+#, c-format
+msgid "%s: could not connect to server: %s\n"
+msgstr "%s: não pôde se conectar ao servidor: %s\n"
+
+#: streamutil.c:188
+#, c-format
+msgid "%s: could not determine server setting for integer_datetimes\n"
+msgstr "%s: não pôde determinar valor do parâmetro integer_datetimes do servidor\n"
+
+#: streamutil.c:201
+#, c-format
+msgid "%s: integer_datetimes compile flag does not match server\n"
+msgstr "%s: opção de compilação integer_datetimes não corresponde com a do servidor\n"

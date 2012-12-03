@@ -1,22 +1,77 @@
 # PG_CONFIG Translated Messages into the Polish Language
 # Copyright (c) 2005 toczek, xxxtoczekxxx@wp.pl
 # Distributed under the same licensing terms as PostgreSQL itself.
-# Begina Felicysym <begina.felicysym@wp.eu>, 2011.
+# Begina Felicysym <begina.felicysym@wp.eu>, 2011, 2012.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_config (PostgreSQL 9.1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-09-29 22:54+0000\n"
-"PO-Revision-Date: 2011-09-30 09:52-0300\n"
+"POT-Creation-Date: 2012-09-17 19:16+0000\n"
+"PO-Revision-Date: 2012-09-17 21:55+0200\n"
 "Last-Translator: Begina Felicysym <begina.felicysym@wp.eu>\n"
-"Language-Team: Polish TotroiseSvn translation team\n"
+"Language-Team: Begina Felicysym\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2);\n"
-"X-Generator: Virtaal 0.7.1-beta1\n"
+"X-Generator: Virtaal 0.7.1\n"
+
+#: ../../port/exec.c:125 ../../port/exec.c:239 ../../port/exec.c:282
+#, c-format
+msgid "could not identify current directory: %s"
+msgstr "nie można zidentyfikować bieżącego katalogu: %s"
+
+#: ../../port/exec.c:144
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "niepoprawny binarny \"%s\""
+
+#: ../../port/exec.c:193
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "nie można odczytać binarnego \"%s\""
+
+#: ../../port/exec.c:200
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "nie znaleziono \"%s\" do wykonania"
+
+#: ../../port/exec.c:255 ../../port/exec.c:291
+#, c-format
+msgid "could not change directory to \"%s\""
+msgstr "nie można zmienić katalogu na \"%s\""
+
+#: ../../port/exec.c:270
+#, c-format
+msgid "could not read symbolic link \"%s\""
+msgstr "nie można odczytać odwołania symbolicznego \"%s\""
+
+#: ../../port/exec.c:526
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "proces potomny zakończył działanie z kodem %d"
+
+#: ../../port/exec.c:530
+#, c-format
+msgid "child process was terminated by exception 0x%X"
+msgstr "proces potomny został zatrzymany przez wyjątek 0x%X"
+
+#: ../../port/exec.c:539
+#, c-format
+msgid "child process was terminated by signal %s"
+msgstr "proces potomny został zatrzymany przez sygnał %s"
+
+#: ../../port/exec.c:542
+#, c-format
+msgid "child process was terminated by signal %d"
+msgstr "proces potomny został zatrzymany przez sygnał %d"
+
+#: ../../port/exec.c:546
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "proces potomny zakończył działanie z nieznanym stanem %d"
 
 #: pg_config.c:243 pg_config.c:259 pg_config.c:275 pg_config.c:291
 #: pg_config.c:307 pg_config.c:323 pg_config.c:339 pg_config.c:355
@@ -86,8 +141,7 @@ msgstr "  --pkgincludedir       pokaż położenie innych plików nagłówkowych
 
 #: pg_config.c:438
 #, c-format
-msgid ""
-"  --includedir-server   show location of C header files for the server\n"
+msgid "  --includedir-server   show location of C header files for the server\n"
 msgstr "  --includedir-server   pokaż lokalizację nagłówków C dla serwera\n"
 
 #: pg_config.c:439
@@ -112,20 +166,15 @@ msgstr "  --mandir              pokaż położenie plików podręcznika\n"
 
 #: pg_config.c:443
 #, c-format
-msgid ""
-"  --sharedir            show location of architecture-independent support "
-"files\n"
+msgid "  --sharedir            show location of architecture-independent support files\n"
 msgstr ""
 "  --sharedir            pokaż położenie niezależnych od architektury\n"
 "                        plików obsługi\n"
 
 #: pg_config.c:444
 #, c-format
-msgid ""
-"  --sysconfdir          show location of system-wide configuration files\n"
-msgstr ""
-"  --sysconfdir          pokaż położenie ogólnosystemowych plików "
-"konfiguracyjnych\n"
+msgid "  --sysconfdir          show location of system-wide configuration files\n"
+msgstr "  --sysconfdir          pokaż położenie ogólnosystemowych plików konfiguracyjnych\n"
 
 #: pg_config.c:445
 #, c-format
@@ -144,65 +193,42 @@ msgstr ""
 #: pg_config.c:448
 #, c-format
 msgid "  --cc                  show CC value used when PostgreSQL was built\n"
-msgstr ""
-"  --cc                  pokaż wartość CC użytą podczas budowania PostgreSQL\n"
+msgstr "  --cc                  pokaż wartość CC użytą podczas budowania PostgreSQL\n"
 
 #: pg_config.c:449
 #, c-format
-msgid ""
-"  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
-msgstr ""
-"  --cppflags            pokaż wartość CPPFLAGS użytą podczas budowania "
-"PostgreSQL\n"
+msgid "  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
+msgstr "  --cppflags            pokaż wartość CPPFLAGS użytą podczas budowania PostgreSQL\n"
 
 #: pg_config.c:450
 #, c-format
-msgid ""
-"  --cflags              show CFLAGS value used when PostgreSQL was built\n"
-msgstr ""
-"  --cflags              pokaż wartość CFLAGS użytą podczas budowania "
-"PostgreSQL\n"
+msgid "  --cflags              show CFLAGS value used when PostgreSQL was built\n"
+msgstr "  --cflags              pokaż wartość CFLAGS użytą podczas budowania PostgreSQL\n"
 
 #: pg_config.c:451
 #, c-format
-msgid ""
-"  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
-msgstr ""
-"  --cflags_sl           pokaż wartość CFLAGS_SL użytą podczas budowania "
-"PostgreSQL\n"
+msgid "  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
+msgstr "  --cflags_sl           pokaż wartość CFLAGS_SL użytą podczas budowania PostgreSQL\n"
 
 #: pg_config.c:452
 #, c-format
-msgid ""
-"  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
-msgstr ""
-"  --ldflags             pokaż wartość LDFLAGS użytą podczas budowania "
-"PostgreSQL\n"
+msgid "  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
+msgstr "  --ldflags             pokaż wartość LDFLAGS użytą podczas budowania PostgreSQL\n"
 
 #: pg_config.c:453
 #, c-format
-msgid ""
-"  --ldflags_ex          show LDFLAGS_EX value used when PostgreSQL was "
-"built\n"
-msgstr ""
-"  --ldflags_ex          pokaż wartość LDFLAGS_EX użytą podczas budowania "
-"PostgreSQL\n"
+msgid "  --ldflags_ex          show LDFLAGS_EX value used when PostgreSQL was built\n"
+msgstr "  --ldflags_ex          pokaż wartość LDFLAGS_EX użytą podczas budowania PostgreSQL\n"
 
 #: pg_config.c:454
 #, c-format
-msgid ""
-"  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was "
-"built\n"
-msgstr ""
-"  --ldflags_sl          pokaż wartość LDFLAGS_SL użytą podczas budowania "
-"PostgreSQL\n"
+msgid "  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was built\n"
+msgstr "  --ldflags_sl          pokaż wartość LDFLAGS_SL użytą podczas budowania PostgreSQL\n"
 
 #: pg_config.c:455
 #, c-format
-msgid ""
-"  --libs                show LIBS value used when PostgreSQL was built\n"
-msgstr ""
-"  --libs                pokaż wartość LIBS użytą podczas budowania "
+msgid "  --libs                show LIBS value used when PostgreSQL was built\n"
+msgstr "  --libs                pokaż wartość LIBS użytą podczas budowania "
 "PostgreSQL\n"
 
 #: pg_config.c:456
@@ -212,8 +238,8 @@ msgstr "  --version             pokaż wersję PostgreSQL\n"
 
 #: pg_config.c:457
 #, c-format
-msgid "  --help                show this help, then exit\n"
-msgstr "  --help                pokaż ten ekran pomocy i zakończ\n"
+msgid "  -?, --help            show this help, then exit\n"
+msgstr "  -?, --help            pokaż tą pomoc i zakończ działanie\n"
 
 #: pg_config.c:458
 #, c-format
@@ -246,60 +272,8 @@ msgstr "%s: nie można znaleźć programu wykonywalnego\n"
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: niepoprawny parametr: %s\n"
 
-#: ../../port/exec.c:125 ../../port/exec.c:239 ../../port/exec.c:282
-#, c-format
-msgid "could not identify current directory: %s"
-msgstr "nie można zidentyfikować bieżącego katalogu: %s"
-
-#: ../../port/exec.c:144
-#, c-format
-msgid "invalid binary \"%s\""
-msgstr "niepoprawny binarny \"%s\""
-
-#: ../../port/exec.c:193
-#, c-format
-msgid "could not read binary \"%s\""
-msgstr "nie można odczytać binarnego \"%s\""
-
-#: ../../port/exec.c:200
-#, c-format
-msgid "could not find a \"%s\" to execute"
-msgstr "nie znaleziono \"%s\" do wykonania"
-
-#: ../../port/exec.c:255 ../../port/exec.c:291
-#, c-format
-msgid "could not change directory to \"%s\""
-msgstr "nie można zmienić katalogu na \"%s\""
-
-#: ../../port/exec.c:270
-#, c-format
-msgid "could not read symbolic link \"%s\""
-msgstr "nie można odczytać odwołania symbolicznego \"%s\""
-
-#: ../../port/exec.c:517
-#, c-format
-msgid "child process exited with exit code %d"
-msgstr "proces potomny zakończył działanie z kodem %d"
-
-#: ../../port/exec.c:521
-#, c-format
-msgid "child process was terminated by exception 0x%X"
-msgstr "proces potomny został zatrzymany przez wyjątek 0x%X"
-
-#: ../../port/exec.c:530
-#, c-format
-msgid "child process was terminated by signal %s"
-msgstr "proces potomny został zatrzymany przez sygnał %s"
-
-#: ../../port/exec.c:533
-#, c-format
-msgid "child process was terminated by signal %d"
-msgstr "proces potomny został zatrzymany przez sygnał %d"
-
-#: ../../port/exec.c:537
-#, c-format
-msgid "child process exited with unrecognized status %d"
-msgstr "proces potomny zakończył działanie z nieznanym stanem %d"
+#~ msgid "%s: argument required\n"
+#~ msgstr "%s: parametr wymagany\n"
 
 #~ msgid ""
 #~ "\n"
@@ -308,5 +282,5 @@ msgstr "proces potomny zakończył działanie z nieznanym stanem %d"
 #~ "\n"
 #~ "Spróbuj \"%s --help\" aby uzykać więcej informacji.\n"
 
-#~ msgid "%s: argument required\n"
-#~ msgstr "%s: parametr wymagany\n"
+#~ msgid "  --help                show this help, then exit\n"
+#~ msgstr "  --help                pokaż ten ekran pomocy i zakończ\n"

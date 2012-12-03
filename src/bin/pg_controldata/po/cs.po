@@ -1,19 +1,22 @@
-# simplified Chinese translation file for pg_controldata and friends
-# Bao Wei <weibao@forevertek.com>, 2002.
+# LANGUAGE message translation file for pg_controldata
+# Copyright (C) 2012 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
 #
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2012.
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_controldata (PostgreSQL 9.0)\n"
+"Project-Id-Version: PostgreSQL 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-10-18 20:47+0000\n"
-"PO-Revision-Date: 2012-10-19 14:39+0800\n"
-"Last-Translator: Xiong He <iihero@qq.com>\n"
-"Language-Team: Chinese (Simplified)\n"
-"Language: zh_CN\n"
+"POT-Creation-Date: 2012-09-18 16:48+0000\n"
+"PO-Revision-Date: 2012-09-19 01:30+0200\n"
+"Last-Translator: \n"
+"Language-Team: Czech <kde-i18n-doc@kde.org>\n"
+"Language: cs\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.5.4\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+"X-Generator: Lokalize 1.4\n"
 
 #: pg_controldata.c:33
 #, c-format
@@ -21,18 +24,18 @@ msgid ""
 "%s displays control information of a PostgreSQL database cluster.\n"
 "\n"
 msgstr ""
-"%s 显示 PostgreSQL 数据库簇控制信息.\n"
+"%s ukáže kontrolní informace o PostgreSQL databázi.\n"
 "\n"
 
 #: pg_controldata.c:34
 #, c-format
 msgid "Usage:\n"
-msgstr "使用方法:\n"
+msgstr "Použití:\n"
 
 #: pg_controldata.c:35
 #, c-format
 msgid "  %s [OPTION] [DATADIR]\n"
-msgstr "  %s [选项][DATADIR]\n"
+msgstr "  %s [VOLBY] [DATOVÝADRESÁŘ]\n"
 
 #: pg_controldata.c:36
 #, c-format
@@ -41,17 +44,17 @@ msgid ""
 "Options:\n"
 msgstr ""
 "\n"
-"选项:\n"
+"Volby:\n"
 
 #: pg_controldata.c:37
 #, c-format
 msgid "  -V, --version  output version information, then exit\n"
-msgstr " -V, --version 输出版本信息，然后退出\n"
+msgstr "  -V, --version  vypíše informaci o verzi, pak skončí\n"
 
 #: pg_controldata.c:38
 #, c-format
 msgid "  -?, --help     show this help, then exit\n"
-msgstr "  -?, --help     显示帮助信息，然后退出\n"
+msgstr "  -?, --help     ukáže tuto nápovědu, a skončí\n"
 
 #: pg_controldata.c:39
 #, c-format
@@ -63,70 +66,70 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"如果没有指定数据目录(DATADIR), 将使用\n"
-"环境变量PGDATA.\n"
+"Není-li specifikován datový adresář, je použita proměnná prostředí\n"
+"PGDATA.\n"
 "\n"
 
 #: pg_controldata.c:41
 #, c-format
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
-msgstr "报告错误至 <pgsql-bugs@postgresql.org>.\n"
+msgstr "Oznámení o chybách zasílejte na <pgsql-bugs@postgresql.org>.\n"
 
 #: pg_controldata.c:51
 msgid "starting up"
-msgstr "正在启动"
+msgstr "startování"
 
 #: pg_controldata.c:53
 msgid "shut down"
-msgstr "关闭"
+msgstr "ukončení"
 
 #: pg_controldata.c:55
 msgid "shut down in recovery"
-msgstr "在恢复过程中关闭数据库"
+msgstr "ukončení (shut down) během obnovy"
 
 #: pg_controldata.c:57
 msgid "shutting down"
-msgstr "正在关闭"
+msgstr "ukončování"
 
 #: pg_controldata.c:59
 msgid "in crash recovery"
-msgstr "在恢复中"
+msgstr "probíhá zotavení z pádu"
 
 #: pg_controldata.c:61
 msgid "in archive recovery"
-msgstr "正在归档恢复"
+msgstr "probíhá obnova z archivu"
 
 #: pg_controldata.c:63
 msgid "in production"
-msgstr "在运行中"
+msgstr "v provozu"
 
 #: pg_controldata.c:65
 msgid "unrecognized status code"
-msgstr "不被认可的状态码"
+msgstr "neznámý stavový kód"
 
 #: pg_controldata.c:80
 msgid "unrecognized wal_level"
-msgstr "参数wal_level的值无法识别"
+msgstr "neznámý wal_level"
 
 #: pg_controldata.c:123
 #, c-format
 msgid "%s: no data directory specified\n"
-msgstr "%s: 没有指定数据目录\n"
+msgstr "%s: není specifikován datový adresář\n"
 
 #: pg_controldata.c:124
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "用 \"%s --help\" 显示更多的信息.\n"
+msgstr "Zkuste \"%s --help\" pro více informací.\n"
 
 #: pg_controldata.c:132
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
-msgstr "%s: 无法打开文件 \"%s\" 读取信息: %s\n"
+msgstr "%s: nelze otevřít soubor \"%s\" pro čtení: %s\n"
 
 #: pg_controldata.c:139
 #, c-format
 msgid "%s: could not read file \"%s\": %s\n"
-msgstr "%s: 无法读取文件 \"%s\": %s\n"
+msgstr "%s: nelze číst soubor \"%s\": %s\n"
 
 #: pg_controldata.c:153
 #, c-format
@@ -136,15 +139,15 @@ msgid ""
 "is expecting.  The results below are untrustworthy.\n"
 "\n"
 msgstr ""
-"警告: 计算出来的CRC校验值与已保存在文件中的值不匹配.\n"
-"不是文件坏了,就是设计与程序的期望值不同.\n"
-"下面的结果是不可靠的.\n"
+"UPOZORNĚNÍ: Spočítaný CRC kontrolní součet nesouhlasí s hodnotou uloženou\n"
+"v souboru. Buď je soubor poškozen nebo má jinou strukturu než tento program\n"
+"očekává.  Níže uvedené výsledky jsou nedůvěryhodné.\n"
 "\n"
 
 #: pg_controldata.c:180
 #, c-format
 msgid "pg_control version number:            %u\n"
-msgstr "pg_control 版本:                      %u\n"
+msgstr "číslo verze pg_controlu:              %u\n"
 
 #: pg_controldata.c:183
 #, c-format
@@ -155,239 +158,223 @@ msgid ""
 "and\n"
 "the PostgreSQL installation would be incompatible with this data directory.\n"
 msgstr ""
-"警告: 可能字节顺序不匹配\n"
-"用于存储文件pg_control的字节顺序可能与程序使用的不匹配\n"
-"在那种情况下结果将会是不正确的,并且所安装的PostgreSQL\n"
-"将会与这个数据目录不兼容\n"
+"VAROVÁNÍ: možný nesoulad v pořadí bytů\n"
+"Pořadí bytů používané pro uložení pg_control souboru nemusí odpovídat tomu\n"
+"používanému tímto programem. V tom případě by výsledky uvedené níže byly "
+"chybné, a\n"
+"PostgreSQL instalace by byla nekompatibilní s tímto datovým adresářem.\n"
 
 #: pg_controldata.c:187
 #, c-format
 msgid "Catalog version number:               %u\n"
-msgstr "Catalog 版本:                         %u\n"
+msgstr "Číslo verze katalogu:               %u\n"
 
 #: pg_controldata.c:189
 #, c-format
 msgid "Database system identifier:           %s\n"
-msgstr "数据库系统标识符:                     %s\n"
+msgstr "Identifikátor databázového systému:   %s\n"
 
 #: pg_controldata.c:191
 #, c-format
 msgid "Database cluster state:               %s\n"
-msgstr "数据库簇状态:                         %s\n"
+msgstr "Status databázového klastru:           %s\n"
 
 #: pg_controldata.c:193
 #, c-format
 msgid "pg_control last modified:             %s\n"
-msgstr "pg_control 最后修改:                  %s\n"
+msgstr "poslední modifikace pg_control:      %s\n"
 
 #: pg_controldata.c:195
 #, c-format
 msgid "Latest checkpoint location:           %X/%X\n"
-msgstr "最新检查点位置:                       %X/%X\n"
+msgstr "Poslední umístění checkpointu:           %X/%X\n"
 
 #: pg_controldata.c:198
 #, c-format
 msgid "Prior checkpoint location:            %X/%X\n"
-msgstr "优先检查点位置:                       %X/%X\n"
+msgstr "Předešlé umístění checkpointu:            %X/%X\n"
 
 #: pg_controldata.c:201
 #, c-format
 msgid "Latest checkpoint's REDO location:    %X/%X\n"
-msgstr "最新检查点的 REDO 位置:               %X/%X\n"
+msgstr "Poslední umístění REDO checkpointu:    %X/%X\n"
 
 #: pg_controldata.c:204
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
-msgstr "最新检查点的 TimeLineID:              %u\n"
+msgstr "TimeLineID posledního checkpointu:     %u\n"
 
 #: pg_controldata.c:206
 #, c-format
 msgid "Latest checkpoint's full_page_writes: %s\n"
-msgstr "最新检查点的full_page_writes: %s\n"
+msgstr "Poslední full_page_writes checkpointu: %s\n"
 
-# help.c:48
 #: pg_controldata.c:207
 msgid "off"
-msgstr "关闭"
+msgstr "vypnuto"
 
-# help.c:48
 #: pg_controldata.c:207
 msgid "on"
-msgstr "开启"
+msgstr "zapnuto"
 
 #: pg_controldata.c:208
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u/%u\n"
-msgstr "最新检查点的 NextXID:            %u/%u\n"
+msgstr "Poslední umístění NextXID checkpointu:          %u/%u\n"
 
 #: pg_controldata.c:211
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
-msgstr "最新检查点的 NextOID:                 %u\n"
+msgstr "Poslední umístění NextOID checkpointu:          %u\n"
 
 #: pg_controldata.c:213
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
-msgstr "最新检查点的NextMultiXactId: %u\n"
+msgstr "NextMultiXactId posledního checkpointu:          %u\n"
 
 #: pg_controldata.c:215
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
-msgstr "最新检查点的NextMultiOffsetD: %u\n"
+msgstr "NextMultiOffset posledního checkpointu:          %u\n"
 
 #: pg_controldata.c:217
 #, c-format
 msgid "Latest checkpoint's oldestXID:        %u\n"
-msgstr "最新检查点的oldestXID:            %u\n"
+msgstr "oldestXID posledního checkpointu:          %u\n"
 
 #: pg_controldata.c:219
 #, c-format
 msgid "Latest checkpoint's oldestXID's DB:   %u\n"
-msgstr "最新检查点的oldestXID所在的数据库：%u\n"
+msgstr "DB k oldestXID posledního checkpointu:   %u\n"
 
 #: pg_controldata.c:221
 #, c-format
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
-msgstr "最新检查点检查oldestActiveXID:  %u\n"
+msgstr "oldestActiveXID posledního checkpointu:          %u\n"
 
 #: pg_controldata.c:223
 #, c-format
 msgid "Time of latest checkpoint:            %s\n"
-msgstr "最新检查点的时间:                     %s\n"
+msgstr "Čas posledního checkpointu:       %s\n"
 
 #: pg_controldata.c:225
 #, c-format
 msgid "Minimum recovery ending location:     %X/%X\n"
-msgstr "最小恢复结束位置: %X/%X\n"
+msgstr "Minimální pozice ukončení obnovy:     %X/%X\n"
 
 #: pg_controldata.c:228
 #, c-format
 msgid "Backup start location:                %X/%X\n"
-msgstr "开始进行备份的点位置:                       %X/%X\n"
+msgstr "Pozice počátku backupu:               %X/%X\n"
 
 #: pg_controldata.c:231
 #, c-format
 msgid "Backup end location:                  %X/%X\n"
-msgstr "备份的最终位置:                  %X/%X\n"
+msgstr "Koncová pozice zálohy:                %X/%X\n"
 
 #: pg_controldata.c:234
 #, c-format
 msgid "End-of-backup record required:        %s\n"
-msgstr "需要终止备份的记录:        %s\n"
+msgstr "Vyžadován záznam konce backupu:       %s\n"
 
 #: pg_controldata.c:235
 msgid "no"
-msgstr "否"
+msgstr "ne"
 
 #: pg_controldata.c:235
 msgid "yes"
-msgstr "是"
+msgstr "ano"
 
 #: pg_controldata.c:236
 #, c-format
 msgid "Current wal_level setting:            %s\n"
-msgstr "参数wal_level的当前设置:         %s\n"
+msgstr "Aktuální nastavení wal_level:         %s\n"
 
 #: pg_controldata.c:238
 #, c-format
 msgid "Current max_connections setting:      %d\n"
-msgstr "参数max_connections的当前设置：   %d\n"
+msgstr "Aktuální nastavení max_connections:   %d\n"
 
 #: pg_controldata.c:240
 #, c-format
 msgid "Current max_prepared_xacts setting:   %d\n"
-msgstr "参数 max_prepared_xacts的当前设置：   %d\n"
+msgstr "Aktuální nastavení max_prepared_xacts: %d\n"
 
 #: pg_controldata.c:242
 #, c-format
 msgid "Current max_locks_per_xact setting:   %d\n"
-msgstr "参数max_locks_per_xact setting的当前设置：   %d\n"
+msgstr "Aktuální nastavení max_locks_per_xact:   %d\n"
 
 #: pg_controldata.c:244
 #, c-format
 msgid "Maximum data alignment:               %u\n"
-msgstr "最大数据校准:     %u\n"
+msgstr "Maximální zarovnání dat:              %u\n"
 
 #: pg_controldata.c:247
 #, c-format
 msgid "Database block size:                  %u\n"
-msgstr "数据库块大小:                         %u\n"
+msgstr "Velikost databázového bloku:                  %u\n"
 
 #: pg_controldata.c:249
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
-msgstr "大关系的每段块数:                     %u\n"
+msgstr "Bloků v segmentu velké relace: %u\n"
 
 #: pg_controldata.c:251
 #, c-format
 msgid "WAL block size:                       %u\n"
-msgstr "WAL的块大小:    %u\n"
+msgstr "Velikost WAL bloku:                   %u\n"
 
 #: pg_controldata.c:253
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
-msgstr "每一个 WAL 段字节数:                  %u\n"
+msgstr "Bytů ve WAL segmentu:                  %u\n"
 
 #: pg_controldata.c:255
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
-msgstr "标识符的最大长度:                     %u\n"
+msgstr "Maximální délka identifikátorů:        %u\n"
 
 #: pg_controldata.c:257
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
-msgstr "在索引中可允许使用最大的列数:    %u\n"
+msgstr "Maximální počet sloupců v indexu:     %u\n"
 
 #: pg_controldata.c:259
 #, c-format
 msgid "Maximum size of a TOAST chunk:        %u\n"
-msgstr "TOAST区块的最大长度:                %u\n"
+msgstr "Maximální velikost úseku TOAST:       %u\n"
 
 #: pg_controldata.c:261
 #, c-format
 msgid "Date/time type storage:               %s\n"
-msgstr "日期/时间 类型存储:                   %s\n"
+msgstr "Způsob uložení typu date/time:               %s\n"
 
 #: pg_controldata.c:262
 msgid "64-bit integers"
-msgstr "64位整数"
+msgstr "64-bitová čísla"
 
 #: pg_controldata.c:262
 msgid "floating-point numbers"
-msgstr "浮点数"
+msgstr "čísla s plovoucí řádovou čárkou"
 
 #: pg_controldata.c:263
 #, c-format
 msgid "Float4 argument passing:              %s\n"
-msgstr "正在传递Flloat4类型的参数:           %s\n"
+msgstr "Způsob předávání float4 hodnot:        %s\n"
 
 #: pg_controldata.c:264 pg_controldata.c:266
 msgid "by reference"
-msgstr "由引用"
+msgstr "odkazem"
 
 #: pg_controldata.c:264 pg_controldata.c:266
 msgid "by value"
-msgstr "由值"
+msgstr "hodnotou"
 
 #: pg_controldata.c:265
 #, c-format
 msgid "Float8 argument passing:              %s\n"
-msgstr "正在传递Flloat8类型的参数:                   %s\n"
-
-#~ msgid "Latest checkpoint's StartUpID:        %u\n"
-#~ msgstr "最新检查点的 StartUpID:               %u\n"
-
-#~ msgid "LC_CTYPE:                             %s\n"
-#~ msgstr "LC_CTYPE:                             %s\n"
-
-#~ msgid "LC_COLLATE:                           %s\n"
-#~ msgstr "LC_COLLATE:                           %s\n"
-
-#~ msgid "Maximum number of function arguments: %u\n"
-#~ msgstr "函数参数的最大个数:                   %u\n"
-
-#~ msgid "Latest checkpoint's UNDO location:    %X/%X\n"
-#~ msgstr "最新检查点的 UNDO 位置:               %X/%X\n"
+msgstr "Způsob předávání float8 hodnot:        %s\n"
 
 #~ msgid ""
 #~ "Usage:\n"
@@ -397,9 +384,9 @@ msgstr "正在传递Flloat8类型的参数:                   %s\n"
 #~ "  --help         show this help, then exit\n"
 #~ "  --version      output version information, then exit\n"
 #~ msgstr ""
-#~ "使用方法:\n"
-#~ "  %s [选项] [数据目录]\n"
+#~ "Použití:\n"
+#~ "  %s [PŘEPÍNAČ] [ADRESÁŘ]\n"
 #~ "\n"
-#~ "选项:\n"
-#~ "  --help         显示此帮助信息, 然后退出\n"
-#~ "  --version      显示 pg_controldata 的版本, 然后退出\n"
+#~ "Přepínače:\n"
+#~ "  --help         ukáže tuto nápovědu a skončí\n"
+#~ "  --version      ukáže verzi tohoto programu a skončí\n"
