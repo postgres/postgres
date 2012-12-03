@@ -318,7 +318,7 @@ MarkAsPreparing(TransactionId xid, const char *gid,
 	proc->lxid = (LocalTransactionId) xid;
 	pgxact->xid = xid;
 	pgxact->xmin = InvalidTransactionId;
-	pgxact->inCommit = false;
+	pgxact->delayChkpt = false;
 	pgxact->vacuumFlags = 0;
 	proc->pid = 0;
 	proc->backendId = InvalidBackendId;
@@ -1034,18 +1034,18 @@ EndPrepare(GlobalTransaction gxact)
 	 * odds of a PANIC actually occurring should be very tiny given that we
 	 * were able to write the bogus CRC above.
 	 *
-	 * We have to set inCommit here, too; otherwise a checkpoint starting
+	 * We have to set delayChkpt here, too; otherwise a checkpoint starting
 	 * immediately after the WAL record is inserted could complete without
 	 * fsync'ing our state file.  (This is essentially the same kind of race
 	 * condition as the COMMIT-to-clog-write case that RecordTransactionCommit
-	 * uses inCommit for; see notes there.)
+	 * uses delayChkpt for; see notes there.)
 	 *
 	 * We save the PREPARE record's location in the gxact for later use by
 	 * CheckPointTwoPhase.
 	 */
 	START_CRIT_SECTION();
 
-	MyPgXact->inCommit = true;
+	MyPgXact->delayChkpt = true;
 
 	gxact->prepare_lsn = XLogInsert(RM_XACT_ID, XLOG_XACT_PREPARE,
 									records.head);
@@ -1086,7 +1086,7 @@ EndPrepare(GlobalTransaction gxact)
 	 * checkpoint starting after this will certainly see the gxact as a
 	 * candidate for fsyncing.
 	 */
-	MyPgXact->inCommit = false;
+	MyPgXact->delayChkpt = false;
 
 	END_CRIT_SECTION();
 
@@ -1972,7 +1972,7 @@ RecoverPreparedTransactions(void)
  *	RecordTransactionCommitPrepared
  *
  * This is basically the same as RecordTransactionCommit: in particular,
- * we must set the inCommit flag to avoid a race condition.
+ * we must set the delayChkpt flag to avoid a race condition.
  *
  * We know the transaction made at least one XLOG entry (its PREPARE),
  * so it is never possible to optimize out the commit record.
@@ -1995,7 +1995,7 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	START_CRIT_SECTION();
 
 	/* See notes in RecordTransactionCommit */
-	MyPgXact->inCommit = true;
+	MyPgXact->delayChkpt = true;
 
 	/* Emit the XLOG commit record */
 	xlrec.xid = xid;
@@ -2053,7 +2053,7 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	TransactionIdCommitTree(xid, nchildren, children);
 
 	/* Checkpoint can proceed now */
-	MyPgXact->inCommit = false;
+	MyPgXact->delayChkpt = false;
 
 	END_CRIT_SECTION();
 

@@ -168,7 +168,8 @@ typedef struct PGXACT
 
 	uint8		vacuumFlags;	/* vacuum-related flags, see above */
 	bool		overflowed;
-	bool		inCommit;		/* true if within commit critical section */
+	bool		delayChkpt; 	/* true if this proc delays checkpoint start */
+								/* previously called InCommit */
 
 	uint8		nxids;
 } PGXACT;

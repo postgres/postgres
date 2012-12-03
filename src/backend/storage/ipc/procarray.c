@@ -400,7 +400,7 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 		pgxact->xmin = InvalidTransactionId;
 		/* must be cleared with xid/xmin: */
 		pgxact->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
-		pgxact->inCommit = false;		/* be sure this is cleared in abort */
+		pgxact->delayChkpt = false; /* be sure this is cleared in abort */
 		proc->recoveryConflictPending = false;
 
 		/* Clear the subtransaction-XID cache too while holding the lock */
@@ -427,7 +427,7 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 		pgxact->xmin = InvalidTransactionId;
 		/* must be cleared with xid/xmin: */
 		pgxact->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
-		pgxact->inCommit = false;		/* be sure this is cleared in abort */
+		pgxact->delayChkpt = false; /* be sure this is cleared in abort */
 		proc->recoveryConflictPending = false;
 
 		Assert(pgxact->nxids == 0);
@@ -462,7 +462,7 @@ ProcArrayClearTransaction(PGPROC *proc)
 
 	/* redundant, but just in case */
 	pgxact->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
-	pgxact->inCommit = false;
+	pgxact->delayChkpt = false;
 
 	/* Clear the subtransaction-XID cache too */
 	pgxact->nxids = 0;
@@ -1778,65 +1778,70 @@ GetOldestActiveTransactionId(void)
 }
 
 /*
- * GetTransactionsInCommit -- Get the XIDs of transactions that are committing
+ * GetVirtualXIDsDelayingChkpt -- Get the VXIDs of transactions that are
+ * delaying checkpoint because they have critical actions in progress.
  *
- * Constructs an array of XIDs of transactions that are currently in commit
- * critical sections, as shown by having inCommit set in their PGXACT entries.
+ * Constructs an array of VXIDs of transactions that are currently in commit
+ * critical sections, as shown by having delayChkpt set in their PGXACT.
  *
- * *xids_p is set to a palloc'd array that should be freed by the caller.
- * The return value is the number of valid entries.
+ * Returns a palloc'd array that should be freed by the caller.
+ * *nvxids is the number of valid entries.
  *
- * Note that because backends set or clear inCommit without holding any lock,
+ * Note that because backends set or clear delayChkpt without holding any lock,
  * the result is somewhat indeterminate, but we don't really care.  Even in
  * a multiprocessor with delayed writes to shared memory, it should be certain
- * that setting of inCommit will propagate to shared memory when the backend
- * takes the WALInsertLock, so we cannot fail to see an xact as inCommit if
+ * that setting of delayChkpt will propagate to shared memory when the backend
+ * takes a lock, so we cannot fail to see an virtual xact as delayChkpt if
  * it's already inserted its commit record.  Whether it takes a little while
- * for clearing of inCommit to propagate is unimportant for correctness.
+ * for clearing of delayChkpt to propagate is unimportant for correctness.
  */
-int
-GetTransactionsInCommit(TransactionId **xids_p)
+VirtualTransactionId *
+GetVirtualXIDsDelayingChkpt(int *nvxids)
 {
+	VirtualTransactionId *vxids;
 	ProcArrayStruct *arrayP = procArray;
-	TransactionId *xids;
-	int			nxids;
+	int			count = 0;
 	int			index;
 
-	xids = (TransactionId *) palloc(arrayP->maxProcs * sizeof(TransactionId));
-	nxids = 0;
+	/* allocate what's certainly enough result space */
+	vxids = (VirtualTransactionId *)
+		palloc(sizeof(VirtualTransactionId) * arrayP->maxProcs);
 
 	LWLockAcquire(ProcArrayLock, LW_SHARED);
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		int			pgprocno = arrayP->pgprocnos[index];
-		volatile PGXACT *pgxact = &allPgXact[pgprocno];
-		TransactionId pxid;
+		int		pgprocno = arrayP->pgprocnos[index];
+		volatile PGPROC    *proc = &allProcs[pgprocno];
+		volatile PGXACT    *pgxact = &allPgXact[pgprocno];
 
-		/* Fetch xid just once - see GetNewTransactionId */
-		pxid = pgxact->xid;
+		if (pgxact->delayChkpt)
+		{
+			VirtualTransactionId vxid;
 
-		if (pgxact->inCommit && TransactionIdIsValid(pxid))
-			xids[nxids++] = pxid;
+			GET_VXID_FROM_PGPROC(vxid, *proc);
+			if (VirtualTransactionIdIsValid(vxid))
+				vxids[count++] = vxid;
+		}
 	}
 
 	LWLockRelease(ProcArrayLock);
 
-	*xids_p = xids;
-	return nxids;
+	*nvxids = count;
+	return vxids;
 }
 
 /*
- * HaveTransactionsInCommit -- Are any of the specified XIDs in commit?
+ * HaveVirtualXIDsDelayingChkpt -- Are any of the specified VXIDs delaying?
  *
- * This is used with the results of GetTransactionsInCommit to see if any
- * of the specified XIDs are still in their commit critical sections.
+ * This is used with the results of GetVirtualXIDsDelayingChkpt to see if any
+ * of the specified VXIDs are still in critical sections of code.
  *
- * Note: this is O(N^2) in the number of xacts that are/were in commit, but
+ * Note: this is O(N^2) in the number of vxacts that are/were delaying, but
  * those numbers should be small enough for it not to be a problem.
  */
 bool
-HaveTransactionsInCommit(TransactionId *xids, int nxids)
+HaveVirtualXIDsDelayingChkpt(VirtualTransactionId *vxids, int nvxids)
 {
 	bool		result = false;
 	ProcArrayStruct *arrayP = procArray;
@@ -1844,30 +1849,32 @@ HaveTransactionsInCommit(TransactionId *xids, int nxids)
 
 	LWLockAcquire(ProcArrayLock, LW_SHARED);
 
-	for (index = 0; index < arrayP->numProcs; index++)
+	while (VirtualTransactionIdIsValid(*vxids))
 	{
-		int			pgprocno = arrayP->pgprocnos[index];
-		volatile PGXACT *pgxact = &allPgXact[pgprocno];
-		TransactionId pxid;
-
-		/* Fetch xid just once - see GetNewTransactionId */
-		pxid = pgxact->xid;
-
-		if (pgxact->inCommit && TransactionIdIsValid(pxid))
+		for (index = 0; index < arrayP->numProcs; index++)
 		{
-			int			i;
+			int		pgprocno = arrayP->pgprocnos[index];
+			volatile PGPROC    *proc = &allProcs[pgprocno];
+			volatile PGXACT    *pgxact = &allPgXact[pgprocno];
+			VirtualTransactionId vxid;
 
-			for (i = 0; i < nxids; i++)
+			GET_VXID_FROM_PGPROC(vxid, *proc);
+			if (VirtualTransactionIdIsValid(vxid))
 			{
-				if (xids[i] == pxid)
+				if (VirtualTransactionIdEquals(vxid, *vxids) &&
+					pgxact->delayChkpt)
 				{
 					result = true;
 					break;
 				}
 			}
-			if (result)
-				break;
 		}
+
+		if (result)
+			break;
+
+		/* The virtual transaction is gone now, wait for the next one */
+		vxids++;
 	}
 
 	LWLockRelease(ProcArrayLock);

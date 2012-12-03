@@ -6884,8 +6884,8 @@ CreateCheckPoint(int flags)
 	XLogRecData rdata;
 	uint32		freespace;
 	XLogSegNo	_logSegNo;
-	TransactionId *inCommitXids;
-	int			nInCommit;
+	VirtualTransactionId *vxids;
+	int	nvxids;
 
 	/*
 	 * An end-of-recovery checkpoint is really a shutdown checkpoint, just
@@ -7056,9 +7056,14 @@ CreateCheckPoint(int flags)
 	TRACE_POSTGRESQL_CHECKPOINT_START(flags);
 
 	/*
-	 * Before flushing data, we must wait for any transactions that are
-	 * currently in their commit critical sections.  If an xact inserted its
-	 * commit record into XLOG just before the REDO point, then a crash
+	 * In some cases there are groups of actions that must all occur on
+	 * one side or the other of a checkpoint record. Before flushing the
+	 * checkpoint record we must explicitly wait for any backend currently
+	 * performing those groups of actions.
+	 *
+	 * One example is end of transaction, so we must wait for any transactions
+	 * that are currently in commit critical sections.  If an xact inserted
+	 * its commit record into XLOG just before the REDO point, then a crash
 	 * restart from the REDO point would not replay that record, which means
 	 * that our flushing had better include the xact's update of pg_clog.  So
 	 * we wait till he's out of his commit critical section before proceeding.
@@ -7073,21 +7078,24 @@ CreateCheckPoint(int flags)
 	 * protected by different locks, but again that seems best on grounds of
 	 * minimizing lock contention.)
 	 *
-	 * A transaction that has not yet set inCommit when we look cannot be at
+	 * A transaction that has not yet set delayChkpt when we look cannot be at
 	 * risk, since he's not inserted his commit record yet; and one that's
 	 * already cleared it is not at risk either, since he's done fixing clog
 	 * and we will correctly flush the update below.  So we cannot miss any
 	 * xacts we need to wait for.
 	 */
-	nInCommit = GetTransactionsInCommit(&inCommitXids);
-	if (nInCommit > 0)
+	vxids = GetVirtualXIDsDelayingChkpt(&nvxids);
+	if (nvxids > 0)
 	{
+		uint	nwaits = 0;
+
 		do
 		{
 			pg_usleep(10000L);	/* wait for 10 msec */
-		} while (HaveTransactionsInCommit(inCommitXids, nInCommit));
+			nwaits++;
+		} while (HaveVirtualXIDsDelayingChkpt(vxids, nvxids));
 	}
-	pfree(inCommitXids);
+	pfree(vxids);
 
 	/*
 	 * Get the other info we need for the checkpoint record.

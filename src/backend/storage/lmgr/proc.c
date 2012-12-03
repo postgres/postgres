@@ -350,7 +350,7 @@ InitProcess(void)
 	MyProc->backendId = InvalidBackendId;
 	MyProc->databaseId = InvalidOid;
 	MyProc->roleId = InvalidOid;
-	MyPgXact->inCommit = false;
+	MyPgXact->delayChkpt = false;
 	MyPgXact->vacuumFlags = 0;
 	/* NB -- autovac launcher intentionally does not set IS_AUTOVACUUM */
 	if (IsAutoVacuumWorkerProcess())
@@ -516,7 +516,7 @@ InitAuxiliaryProcess(void)
 	MyProc->backendId = InvalidBackendId;
 	MyProc->databaseId = InvalidOid;
 	MyProc->roleId = InvalidOid;
-	MyPgXact->inCommit = false;
+	MyPgXact->delayChkpt = false;
 	MyPgXact->vacuumFlags = 0;
 	MyProc->lwWaiting = false;
 	MyProc->lwWaitMode = 0;

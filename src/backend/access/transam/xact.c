@@ -1001,13 +1001,13 @@ RecordTransactionCommit(void)
 		 * RecordTransactionAbort.	That's because loss of a transaction abort
 		 * is noncritical; the presumption would be that it aborted, anyway.
 		 *
-		 * It's safe to change the inCommit flag of our own backend without
+		 * It's safe to change the delayChkpt flag of our own backend without
 		 * holding the ProcArrayLock, since we're the only one modifying it.
-		 * This makes checkpoint's determination of which xacts are inCommit a
+		 * This makes checkpoint's determination of which xacts are delayChkpt a
 		 * bit fuzzy, but it doesn't matter.
 		 */
 		START_CRIT_SECTION();
-		MyPgXact->inCommit = true;
+		MyPgXact->delayChkpt = true;
 
 		SetCurrentTransactionStopTimestamp();
 
@@ -1160,7 +1160,7 @@ RecordTransactionCommit(void)
 	 */
 	if (markXidCommitted)
 	{
-		MyPgXact->inCommit = false;
+		MyPgXact->delayChkpt = false;
 		END_CRIT_SECTION();
 	}
 
