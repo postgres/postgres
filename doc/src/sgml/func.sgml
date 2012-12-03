@@ -7872,7 +7872,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          </indexterm>
          <literal><function>path(<type>polygon</type>)</function></literal>
         </entry>
-        <entry><type>point</type></entry>
+        <entry><type>path</type></entry>
         <entry>polygon to path</entry>
         <entry><literal>path(polygon '((0,0),(1,1),(2,0))')</literal></entry>
        </row>
