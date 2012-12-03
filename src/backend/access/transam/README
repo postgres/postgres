@@ -564,6 +564,14 @@ something like
 	if (BufferIsValid(buffer0))
 		UnlockReleaseBuffer(buffer0);
 
+Note that we must only use PageSetLSN/PageGetLSN() when we know the action
+is serialised. Only Startup process may modify data blocks during recovery,
+so Startup process may execute PageGetLSN() without fear of serialisation
+problems. All other processes must only call PageSet/GetLSN when holding
+either an exclusive buffer lock or a shared lock plus buffer header lock,
+or be writing the data block directly rather than through shared buffers
+while holding AccessExclusiveLock on the relation.
+
 Due to all these constraints, complex changes (such as a multilevel index
 insertion) normally need to be described by a series of atomic-action WAL
 records.  What do you do if the intermediate states are not self-consistent?
