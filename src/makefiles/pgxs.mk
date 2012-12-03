@@ -233,11 +233,7 @@ ifdef REGRESS
 
 # Calling makefile can set REGRESS_OPTS, but this is the default:
 ifndef REGRESS_OPTS
- ifdef USE_MODULE_DB
-   REGRESS_OPTS = --dbname=$(CONTRIB_TESTDB_MODULE)
- else
-   REGRESS_OPTS = --dbname=$(CONTRIB_TESTDB)
- endif
+REGRESS_OPTS = --dbname=$(CONTRIB_TESTDB)
 endif
 
 # where to find psql for running the tests
