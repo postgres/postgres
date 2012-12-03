@@ -24,8 +24,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-07-10 22:44+0000\n"
-"PO-Revision-Date: 2012-04-02 22:12+0400\n"
+"POT-Creation-Date: 2012-09-29 22:44+0000\n"
+"PO-Revision-Date: 2012-10-02 10:50+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -437,7 +437,8 @@ msgid ""
 "The server (version %d.%d) does not support savepoints for "
 "ON_ERROR_ROLLBACK.\n"
 msgstr ""
-"Сервер (версия %d.%d) не поддерживает точки останова для ON_ERROR_ROLLBACK.\n"
+"Сервер (версия %d.%d) не поддерживает точки сохранения для "
+"ON_ERROR_ROLLBACK.\n"
 
 #: copy.c:120
 msgid "\\copy: arguments required\n"
@@ -3774,12 +3775,12 @@ msgstr "удалить записи таблицы"
 
 #: sql_help.h:306
 msgid ""
-"DELETE FROM [ ONLY ] table [ [ AS ] alias ]\n"
+"DELETE FROM [ ONLY ] table [ * ] [ [ AS ] alias ]\n"
 "    [ USING usinglist ]\n"
 "    [ WHERE condition | WHERE CURRENT OF cursor_name ]\n"
 "    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
 msgstr ""
-"DELETE FROM [ ONLY ] таблица [ [ AS ] псевдоним ]\n"
+"DELETE FROM [ ONLY ] таблица [ * ] [ [ AS ] псевдоним ]\n"
 "    [ USING список_USING ]\n"
 "    [ WHERE условие | WHERE CURRENT OF имя_курсора ]\n"
 "    [ RETURNING * | выражение_результата [ [ AS ] имя_результата ] [, ...] ]"
@@ -4257,15 +4258,15 @@ msgstr "заблокировать таблицу"
 
 #: sql_help.h:466
 msgid ""
-"LOCK [ TABLE ] [ ONLY ] name [, ...] [ IN lockmode MODE ] [ NOWAIT ]\n"
+"LOCK [ TABLE ] [ ONLY ] name [ * ] [, ...] [ IN lockmode MODE ] [ NOWAIT ]\n"
 "\n"
 "where lockmode is one of:\n"
 "\n"
 "    ACCESS SHARE | ROW SHARE | ROW EXCLUSIVE | SHARE UPDATE EXCLUSIVE\n"
 "    | SHARE | SHARE ROW EXCLUSIVE | EXCLUSIVE | ACCESS EXCLUSIVE"
 msgstr ""
-"LOCK [ TABLE ] [ ONLY ] имя [, ...] [ IN режим_блокировки MODE ] [ NOWAIT ]\n"
-"\n"
+"LOCK [ TABLE ] [ ONLY ] имя [ * ] [, ...] [ IN режим_блокировки MODE ] "
+"[ NOWAIT ]\n"
 "где допустимый режим_блокировки:\n"
 "\n"
 "    ACCESS SHARE | ROW SHARE | ROW EXCLUSIVE | SHARE UPDATE EXCLUSIVE\n"
@@ -4734,10 +4735,10 @@ msgstr "опустошить таблицу или набор таблиц"
 
 #: sql_help.h:562
 msgid ""
-"TRUNCATE [ TABLE ] [ ONLY ] name [, ... ]\n"
+"TRUNCATE [ TABLE ] [ ONLY ] name [ * ] [, ... ]\n"
 "    [ RESTART IDENTITY | CONTINUE IDENTITY ] [ CASCADE | RESTRICT ]"
 msgstr ""
-"TRUNCATE [ TABLE ] [ ONLY ] имя [, ... ]\n"
+"TRUNCATE [ TABLE ] [ ONLY ] имя [ * ] [, ... ]\n"
 "    [ RESTART IDENTITY | CONTINUE IDENTITY ] [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:565
@@ -4754,7 +4755,7 @@ msgstr "изменить строки таблицы"
 
 #: sql_help.h:570
 msgid ""
-"UPDATE [ ONLY ] table [ [ AS ] alias ]\n"
+"UPDATE [ ONLY ] table [ * ] [ [ AS ] alias ]\n"
 "    SET { column = { expression | DEFAULT } |\n"
 "          ( column [, ...] ) = ( { expression | DEFAULT } [, ...] ) } "
 "[, ...]\n"
@@ -4762,7 +4763,7 @@ msgid ""
 "    [ WHERE condition | WHERE CURRENT OF cursor_name ]\n"
 "    [ RETURNING * | output_expression [ [ AS ] output_name ] [, ...] ]"
 msgstr ""
-"UPDATE [ ONLY ] таблица [ [ AS ] псевдоним ]\n"
+"UPDATE [ ONLY ] таблица [ * ] [ [ AS ] псевдоним ]\n"
 "    SET { колонка = { выражение | DEFAULT } |\n"
 "          ( колонка [, ...] ) = ( { выражение | DEFAULT } [, ...] ) } "
 "[, ...]\n"
@@ -4833,27 +4834,27 @@ msgstr "не удалось перейти в каталог \"%s\""
 msgid "could not read symbolic link \"%s\""
 msgstr "не удалось прочитать символическую ссылку \"%s\""
 
-#: ../../port/exec.c:586
+#: ../../port/exec.c:595
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "дочерний процесс завершился с кодом возврата %d"
 
-#: ../../port/exec.c:590
+#: ../../port/exec.c:599
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "дочерний процесс прерван исключением 0x%X"
 
-#: ../../port/exec.c:599
+#: ../../port/exec.c:608
 #, c-format
 msgid "child process was terminated by signal %s"
 msgstr "дочерний процесс завершён по сигналу %s"
 
-#: ../../port/exec.c:602
+#: ../../port/exec.c:611
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "дочерний процесс завершён по сигналу %d"
 
-#: ../../port/exec.c:606
+#: ../../port/exec.c:615
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "дочерний процесс завершился с нераспознанным состоянием %d"

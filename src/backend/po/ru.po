@@ -26,8 +26,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-08-03 22:41+0000\n"
-"PO-Revision-Date: 2012-08-06 16:52+0400\n"
+"POT-Creation-Date: 2012-09-29 22:42+0000\n"
+"PO-Revision-Date: 2012-10-02 10:45+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -2458,8 +2458,8 @@ msgid "invalid value for parameter \"%s\": \"%s\""
 msgstr "неверное значение для параметра \"%s\": \"%s\""
 
 #: utils/misc/guc.c:4809 utils/misc/guc.c:5077 utils/fmgr/dfmgr.c:381
-#: utils/adt/xml.c:1365 utils/adt/xml.c:1366 utils/adt/xml.c:1372
-#: utils/adt/xml.c:1443 tcop/postgres.c:4099 commands/tablecmds.c:621
+#: utils/adt/xml.c:1393 utils/adt/xml.c:1394 utils/adt/xml.c:1400
+#: utils/adt/xml.c:1471 tcop/postgres.c:4099 commands/tablecmds.c:621
 #: commands/user.c:930 commands/user.c:931 commands/trigger.c:578
 #: commands/trigger.c:594 commands/trigger.c:606 nodes/print.c:85
 #: storage/lmgr/proc.c:939 storage/lmgr/deadlock.c:950
@@ -2970,7 +2970,7 @@ msgstr "отсутствует текст ошибки"
 #: utils/error/elog.c:2466
 #, c-format
 msgid " at character %d"
-msgstr " в символе %d"
+msgstr " (символ %d)"
 
 #: utils/error/elog.c:2116 utils/error/elog.c:2123
 msgid "DETAIL:  "
@@ -3257,7 +3257,7 @@ msgstr "неверное имя исходной кодировки: \"%s\""
 msgid "invalid destination encoding name \"%s\""
 msgstr "неверное имя кодировки результата: \"%s\""
 
-#: utils/mb/mbutils.c:477 utils/adt/xml.c:156
+#: utils/mb/mbutils.c:477 utils/adt/xml.c:159
 #, c-format
 msgid "invalid encoding name \"%s\""
 msgstr "неверное имя кодировки: \"%s\""
@@ -3338,92 +3338,92 @@ msgstr "аргумент ntile должен быть больше нуля"
 msgid "argument of nth_value must be greater than zero"
 msgstr "аргумент nth_value должен быть больше нуля"
 
-#: utils/adt/xml.c:135
+#: utils/adt/xml.c:138
 msgid "unsupported XML feature"
 msgstr "XML-функции не поддерживаются"
 
-#: utils/adt/xml.c:136
+#: utils/adt/xml.c:139
 msgid "This functionality requires the server to be built with libxml support."
 msgstr "Для этой функциональности в сервере не хватает поддержки libxml."
 
-#: utils/adt/xml.c:137
+#: utils/adt/xml.c:140
 msgid "You need to rebuild PostgreSQL using --with-libxml."
 msgstr "Необходимо перекомпилировать PostgreSQL с ключом --with-libxml."
 
-#: utils/adt/xml.c:402 utils/adt/xml.c:407
+#: utils/adt/xml.c:405 utils/adt/xml.c:410
 msgid "invalid XML comment"
 msgstr "ошибка в XML-комментарии"
 
-#: utils/adt/xml.c:536
+#: utils/adt/xml.c:539
 msgid "not an XML document"
 msgstr "не XML-документ"
 
-#: utils/adt/xml.c:689 utils/adt/xml.c:712
+#: utils/adt/xml.c:692 utils/adt/xml.c:715
 msgid "invalid XML processing instruction"
 msgstr "неправильная XML-инструкция обработки (PI)"
 
-#: utils/adt/xml.c:690
+#: utils/adt/xml.c:693
 #, c-format
 msgid "XML processing instruction target name cannot be \"%s\"."
 msgstr "назначением XML-инструкции обработки (PI) не может быть \"%s\"."
 
-#: utils/adt/xml.c:713
+#: utils/adt/xml.c:716
 msgid "XML processing instruction cannot contain \"?>\"."
 msgstr "XML-инструкция обработки (PI) не может содержать \"?>\"."
 
-#: utils/adt/xml.c:792
+#: utils/adt/xml.c:795
 msgid "xmlvalidate is not implemented"
 msgstr "функция xmlvalidate не реализована"
 
-#: utils/adt/xml.c:877
+#: utils/adt/xml.c:880
 msgid "could not initialize XML library"
 msgstr "не удалось инициализировать библиотеку XML"
 
-#: utils/adt/xml.c:878
+#: utils/adt/xml.c:881
 #, c-format
 msgid ""
 "libxml2 has incompatible char type: sizeof(char)=%u, sizeof(xmlChar)=%u."
 msgstr "другой тип char в libxml2: sizeof(char)=%u, sizeof(xmlChar)=%u."
 
-#: utils/adt/xml.c:1419
+#: utils/adt/xml.c:1447
 msgid "Invalid character value."
 msgstr "Неверный символ."
 
-#: utils/adt/xml.c:1422
+#: utils/adt/xml.c:1450
 msgid "Space required."
 msgstr "Требуется пробел."
 
-#: utils/adt/xml.c:1425
+#: utils/adt/xml.c:1453
 msgid "standalone accepts only 'yes' or 'no'."
 msgstr "значениями атрибута standalone могут быть только 'yes' и 'no'."
 
-#: utils/adt/xml.c:1428
+#: utils/adt/xml.c:1456
 msgid "Malformed declaration: missing version."
 msgstr "Ошибочное объявление: не указана версия."
 
-#: utils/adt/xml.c:1431
+#: utils/adt/xml.c:1459
 msgid "Missing encoding in text declaration."
 msgstr "В объявлении не указана кодировка."
 
-#: utils/adt/xml.c:1434
+#: utils/adt/xml.c:1462
 msgid "Parsing XML declaration: '?>' expected."
 msgstr "Ошибка при разборе XML-объявления: ожидается '?>'."
 
-#: utils/adt/xml.c:1437
+#: utils/adt/xml.c:1465
 #, c-format
 msgid "Unrecognized libxml error code: %d."
 msgstr "нераспознанный код ошибки libxml: %d."
 
-#: utils/adt/xml.c:1692
+#: utils/adt/xml.c:1720
 msgid "date out of range"
 msgstr "дата вне диапазона"
 
-#: utils/adt/xml.c:1693
+#: utils/adt/xml.c:1721
 msgid "XML does not support infinite date values."
 msgstr "XML не поддерживает бесконечность в датах."
 
-#: utils/adt/xml.c:1715 utils/adt/xml.c:1722 utils/adt/xml.c:1742
-#: utils/adt/xml.c:1749 utils/adt/timestamp.c:226 utils/adt/timestamp.c:264
+#: utils/adt/xml.c:1743 utils/adt/xml.c:1750 utils/adt/xml.c:1770
+#: utils/adt/xml.c:1777 utils/adt/timestamp.c:226 utils/adt/timestamp.c:264
 #: utils/adt/timestamp.c:486 utils/adt/timestamp.c:526
 #: utils/adt/timestamp.c:2525 utils/adt/timestamp.c:2546
 #: utils/adt/timestamp.c:2559 utils/adt/timestamp.c:2568
@@ -3447,38 +3447,38 @@ msgstr "XML не поддерживает бесконечность в дата
 msgid "timestamp out of range"
 msgstr "timestamp вне диапазона"
 
-#: utils/adt/xml.c:1716 utils/adt/xml.c:1743
+#: utils/adt/xml.c:1744 utils/adt/xml.c:1771
 msgid "XML does not support infinite timestamp values."
 msgstr "XML не поддерживает бесконечность в timestamp."
 
-#: utils/adt/xml.c:2033 utils/adt/xml.c:2197 commands/portalcmds.c:168
+#: utils/adt/xml.c:2061 utils/adt/xml.c:2225 commands/portalcmds.c:168
 #: commands/portalcmds.c:222 executor/execCurrent.c:66
 #, c-format
 msgid "cursor \"%s\" does not exist"
 msgstr "курсор \"%s\" не существует"
 
-#: utils/adt/xml.c:2112
+#: utils/adt/xml.c:2140
 msgid "invalid query"
 msgstr "неверный запрос"
 
-#: utils/adt/xml.c:3345
+#: utils/adt/xml.c:3373
 msgid "invalid array for XML namespace mapping"
 msgstr "неправильный массив с сопоставлениями пространств имён XML"
 
-#: utils/adt/xml.c:3346
+#: utils/adt/xml.c:3374
 msgid ""
 "The array must be two-dimensional with length of the second axis equal to 2."
 msgstr "Массив должен быть двухмерным и содержать 2 элемента по второй оси."
 
-#: utils/adt/xml.c:3370
+#: utils/adt/xml.c:3398
 msgid "empty XPath expression"
 msgstr "пустое выражение XPath"
 
-#: utils/adt/xml.c:3418
+#: utils/adt/xml.c:3446
 msgid "neither namespace name nor URI may be null"
 msgstr "ни префикс, ни URI пространства имён не может быть null"
 
-#: utils/adt/xml.c:3425
+#: utils/adt/xml.c:3453
 #, c-format
 msgid "could not register XML namespace with name \"%s\" and URI \"%s\""
 msgstr ""
@@ -6130,7 +6130,7 @@ msgid "Values larger than a buffer page cannot be indexed."
 msgstr "Значения, не умещающиеся в страницу буфера, нельзя проиндексировать."
 
 #: access/hash/hashutil.c:169 access/nbtree/nbtpage.c:432
-#: access/gist/gistutil.c:596
+#: access/gist/gistutil.c:644
 #, c-format
 msgid "index \"%s\" contains unexpected zero page at block %u"
 msgstr "в индексе \"%s\" неожиданно оказалась нулевая страница в блоке %u"
@@ -6138,12 +6138,12 @@ msgstr "в индексе \"%s\" неожиданно оказалась нул�
 #: access/hash/hashutil.c:172 access/hash/hashutil.c:183
 #: access/hash/hashutil.c:195 access/hash/hashutil.c:216
 #: access/nbtree/nbtpage.c:435 access/nbtree/nbtpage.c:446
-#: access/gist/gistutil.c:599 access/gist/gistutil.c:610
+#: access/gist/gistutil.c:647 access/gist/gistutil.c:658
 msgid "Please REINDEX it."
 msgstr "Пожалуйста, выполните REINDEX для него."
 
 #: access/hash/hashutil.c:180 access/hash/hashutil.c:192
-#: access/nbtree/nbtpage.c:443 access/gist/gistutil.c:607
+#: access/nbtree/nbtpage.c:443 access/gist/gistutil.c:655
 #, c-format
 msgid "index \"%s\" contains corrupted page at block %u"
 msgstr "индекс \"%s\" содержит испорченную страницу в блоке %u"
@@ -7587,7 +7587,7 @@ msgid "Incomplete insertion detected during crash replay."
 msgstr ""
 "При воспроизведении после сбоя обнаружены неполностью добавленные данные."
 
-#: access/gist/gistutil.c:409
+#: access/gist/gistutil.c:428
 #, c-format
 msgid "index \"%s\" needs VACUUM or REINDEX to finish crash recovery"
 msgstr ""
@@ -11405,17 +11405,17 @@ msgstr ""
 "SELECT FOR UPDATE/SHARE не может применяться к NULL-содержащей стороне "
 "внешнего соединения"
 
-#: optimizer/plan/planner.c:845 parser/analyze.c:1209 parser/analyze.c:1403
+#: optimizer/plan/planner.c:846 parser/analyze.c:1209 parser/analyze.c:1403
 #: parser/analyze.c:2049
 msgid "SELECT FOR UPDATE/SHARE is not allowed with UNION/INTERSECT/EXCEPT"
 msgstr "SELECT FOR UPDATE/SHARE не допускается с UNION/INTERSECT/EXCEPT"
 
-#: optimizer/plan/planner.c:1043
+#: optimizer/plan/planner.c:1044
 msgid "could not implement GROUP BY"
 msgstr "не удалось реализовать GROUP BY"
 
-#: optimizer/plan/planner.c:1044 optimizer/plan/planner.c:1475
-#: optimizer/prep/prepunion.c:768
+#: optimizer/plan/planner.c:1045 optimizer/plan/planner.c:1476
+#: optimizer/prep/prepunion.c:778
 msgid ""
 "Some of the datatypes only support hashing, while others only support "
 "sorting."
@@ -11423,23 +11423,23 @@ msgstr ""
 "Одни типы данных поддерживают только хэширование, а другие - только "
 "сортировку."
 
-#: optimizer/plan/planner.c:1474
+#: optimizer/plan/planner.c:1475
 msgid "could not implement DISTINCT"
 msgstr "не удалось реализовать DISTINCT"
 
-#: optimizer/plan/planner.c:2522
+#: optimizer/plan/planner.c:2523
 msgid "could not implement window PARTITION BY"
 msgstr "не удалось реализовать PARTITION BY для окна"
 
-#: optimizer/plan/planner.c:2523
+#: optimizer/plan/planner.c:2524
 msgid "Window partitioning columns must be of sortable datatypes."
 msgstr "Колонки, разбивающие окна, должны иметь сортируемые типы данных."
 
-#: optimizer/plan/planner.c:2527
+#: optimizer/plan/planner.c:2528
 msgid "could not implement window ORDER BY"
 msgstr "не удалось реализовать ORDER BY для окна"
 
-#: optimizer/plan/planner.c:2528
+#: optimizer/plan/planner.c:2529
 msgid "Window ordering columns must be of sortable datatypes."
 msgstr "Колонки, сортирующие окна, должны иметь сортируемые типы данных."
 
@@ -11447,16 +11447,16 @@ msgstr "Колонки, сортирующие окна, должны иметь
 msgid "SELECT FOR UPDATE/SHARE is not allowed in subqueries"
 msgstr "SELECT FOR UPDATE/SHARE в подзапросах не допускается"
 
-#: optimizer/prep/prepunion.c:373
+#: optimizer/prep/prepunion.c:383
 msgid "could not implement recursive UNION"
 msgstr "не удалось реализовать рекурсивный UNION"
 
-#: optimizer/prep/prepunion.c:374
+#: optimizer/prep/prepunion.c:384
 msgid "All column datatypes must be hashable."
 msgstr "Все колонки должны иметь хэшируемые типы данных."
 
 #. translator: %s is UNION, INTERSECT, or EXCEPT
-#: optimizer/prep/prepunion.c:767
+#: optimizer/prep/prepunion.c:777
 #, c-format
 msgid "could not implement %s"
 msgstr "не удалось реализовать %s"
@@ -12536,8 +12536,8 @@ msgstr "не удалось перейти к концу сегмента %u о�
 
 #: storage/lmgr/proc.c:927
 #, c-format
-msgid "Process %d waits for %s on %s"
-msgstr "Процесс %d ожидает в режиме %s блокировку %s"
+msgid "Process %d waits for %s on %s."
+msgstr "Процесс %d ожидает в режиме %s блокировку %s."
 
 #: storage/lmgr/proc.c:937
 #, c-format
@@ -14538,15 +14538,15 @@ msgstr "предикат UNIQUE ещё не реализован"
 
 #: gram.y:9414 gram.y:9429
 msgid "frame start cannot be UNBOUNDED FOLLOWING"
-msgstr "началом кадра не может быть UNBOUNDED FOLLOWING"
+msgstr "началом рамки не может быть UNBOUNDED FOLLOWING"
 
 #: gram.y:9419 gram.y:9434
 msgid "frame start at CURRENT ROW is not implemented"
-msgstr "начало кадра в CURRENT ROW не реализовано"
+msgstr "начало рамки в CURRENT ROW не реализовано"
 
 #: gram.y:9439
 msgid "frame end cannot be UNBOUNDED PRECEDING"
-msgstr "концом кадра не может быть UNBOUNDED PRECEDING"
+msgstr "концом рамки не может быть UNBOUNDED PRECEDING"
 
 #: gram.y:10559
 msgid "OLD used in query that is not in a rule"
@@ -15050,7 +15050,7 @@ msgstr "переопределить предложение ORDER BY для ок
 #: parser/parse_clause.c:1663
 #, c-format
 msgid "cannot override frame clause of window \"%s\""
-msgstr "переопределить описание кадра для окна \"%s\" нельзя"
+msgstr "переопределить описание рамки для окна \"%s\" нельзя"
 
 #: parser/parse_clause.c:1719
 msgid "for SELECT DISTINCT, ORDER BY expressions must appear in select list"
