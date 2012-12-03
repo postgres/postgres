@@ -7087,7 +7087,7 @@ CreateCheckPoint(int flags)
 	vxids = GetVirtualXIDsDelayingChkpt(&nvxids);
 	if (nvxids > 0)
 	{
-		uint	nwaits = 0;
+		uint32	nwaits = 0;
 
 		do
 		{
