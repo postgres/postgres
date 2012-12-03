@@ -3,21 +3,21 @@
 #
 # pgtranslation Id: psql.po,v 1.3.2.2 2011/09/22 04:00:11 petere Exp $
 # Karel Žák, 2001-2003, 2004.
-# Zdeněk Kotala, 2009, 2011.
+# Zdeněk Kotala, 2009, 2011, 2012.
 msgid ""
 msgstr ""
 "Project-Id-Version: postgresql 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2011-08-30 14:39+0200\n"
-"PO-Revision-Date: 2011-08-30 17:26+0200\n"
+"POT-Creation-Date: 2012-04-06 23:54+0000\n"
+"PO-Revision-Date: 2012-04-07 02:30+0200\n"
 "Last-Translator: \n"
 "Language-Team: Czech <kde-i18n-doc@kde.org>\n"
-"Language: \n"
+"Language: cs\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Lokalize 1.2\n"
+"X-Generator: Lokalize 1.4\n"
 
 #: command.c:112
 #, c-format
@@ -49,132 +49,137 @@ msgstr "\\%s: nelze změnit adresář na \"%s\": %s\n"
 msgid "Time: %.3f ms\n"
 msgstr "Čas: %.3f ms\n"
 
-#: command.c:485 command.c:513 command.c:1064
+#: command.c:485 command.c:519 command.c:1070
 msgid "no query buffer\n"
 msgstr "v historii není žádný dotaz\n"
 
-#: command.c:555
+#: command.c:513
+#, c-format
+msgid "The server (version %d.%d) does not support editing function source.\n"
+msgstr "Server (verze %d.%d) nepodporuje editaci zdrojového kódu funkce.\n"
+
+#: command.c:561
 msgid "No changes"
 msgstr "Žádné změny"
 
-#: command.c:609
+#: command.c:615
 #, c-format
 msgid "%s: invalid encoding name or conversion procedure not found\n"
 msgstr "%s: neplatné jméno kódování nebo nenalezena konverzní funkce\n"
 
-#: command.c:688 command.c:722 command.c:736 command.c:753 command.c:857
-#: command.c:907 command.c:1044 command.c:1075
+#: command.c:694 command.c:728 command.c:742 command.c:759 command.c:863
+#: command.c:913 command.c:1050 command.c:1081
 #, c-format
 msgid "\\%s: missing required argument\n"
 msgstr "\\%s: chybí požadovaný argument\n"
 
-#: command.c:785
+#: command.c:791
 msgid "Query buffer is empty."
 msgstr "Buffer dotazů je prázdný."
 
-#: command.c:795
+#: command.c:801
 msgid "Enter new password: "
 msgstr "Zadejte nové heslo: "
 
-#: command.c:796
+#: command.c:802
 msgid "Enter it again: "
 msgstr "Zadejte znova: "
 
-#: command.c:800
+#: command.c:806
 #, c-format
 msgid "Passwords didn't match.\n"
 msgstr "Hesla se neshodují.\n"
 
-#: command.c:818
+#: command.c:824
 #, c-format
 msgid "Password encryption failed.\n"
 msgstr "Zašifrování hesla selhalo.\n"
 
-#: command.c:886 command.c:987 command.c:1049
+#: command.c:892 command.c:993 command.c:1055
 #, c-format
 msgid "\\%s: error\n"
 msgstr "\\%s: chyba\n"
 
-#: command.c:927
+#: command.c:933
 msgid "Query buffer reset (cleared)."
 msgstr "Buffer dotazů vyprázdněn."
 
-#: command.c:940
+#: command.c:946
 #, c-format
 msgid "Wrote history to file \"%s/%s\".\n"
 msgstr "Historie zapsána do souboru: \"%s/%s\".\n"
 
-#: command.c:978 common.c:52 common.c:66 common.c:90 input.c:209 mainloop.c:72
+#: command.c:984 common.c:52 common.c:66 common.c:90 input.c:209 mainloop.c:72
 #: mainloop.c:234 print.c:137 print.c:151
 #, c-format
 msgid "out of memory\n"
 msgstr "nedostatek paměti\n"
 
-#: command.c:1029
+#: command.c:1035
 msgid "Timing is on."
 msgstr "Sledování času je zapnuto."
 
-#: command.c:1031
+#: command.c:1037
 msgid "Timing is off."
 msgstr "Sledování času je vypnuto."
 
-#: command.c:1092 command.c:1112 command.c:1633 command.c:1640 command.c:1649
-#: command.c:1659 command.c:1668 command.c:1682 command.c:1699 command.c:1737
+#: command.c:1098 command.c:1118 command.c:1639 command.c:1646 command.c:1655
+#: command.c:1665 command.c:1674 command.c:1688 command.c:1705 command.c:1743
 #: common.c:137 copy.c:283 copy.c:361
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
 
-#: command.c:1194 startup.c:159
+#: command.c:1200 startup.c:159
 msgid "Password: "
 msgstr "Heslo: "
 
-#: command.c:1201 startup.c:162 startup.c:164
+#: command.c:1207 startup.c:162 startup.c:164
 #, c-format
 msgid "Password for user %s: "
 msgstr "Heslo pro uživatele %s: "
 
-#: command.c:1318 command.c:2207 common.c:183 common.c:460 common.c:525
+#: command.c:1324 command.c:2213 common.c:183 common.c:460 common.c:525
 #: common.c:816 common.c:841 common.c:925 copy.c:432 copy.c:477 copy.c:607
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: command.c:1322
+#: command.c:1328
 msgid "Previous connection kept\n"
 msgstr "Předchozí spojení zachováno\n"
 
-#: command.c:1326
+#: command.c:1332
 #, c-format
 msgid "\\connect: %s"
 msgstr "\\connect: %s"
 
-#: command.c:1350
+#: command.c:1356
 #, c-format
 msgid "You are now connected to database \"%s\""
 msgstr "Nyní jste připojeni do databáze \"%s\""
 
-#: command.c:1353
+#: command.c:1359
 #, c-format
 msgid " on host \"%s\""
 msgstr " na počítač \"%s\""
 
-#: command.c:1356
+#: command.c:1362
 #, c-format
 msgid " at port \"%s\""
 msgstr " na port \"%s\""
 
-#: command.c:1359
+#: command.c:1365
 #, c-format
 msgid " as user \"%s\""
 msgstr " jako uživatel \"%s\""
 
-#: command.c:1394
+#: command.c:1400
 #, c-format
 msgid "%s (%s, server %s)\n"
 msgstr "%s (%s, server %s)\n"
 
-#: command.c:1402
+#: command.c:1408
 #, c-format
 msgid ""
 "WARNING: %s version %d.%d, server version %d.%d.\n"
@@ -183,17 +188,17 @@ msgstr ""
 "VAROVÁNÍ: %s verze %d.%d, verze serveru %d.%d.\n"
 "          Některé vlastnosti psql nemusí fungovat.\n"
 
-#: command.c:1432
+#: command.c:1438
 #, c-format
 msgid "SSL connection (cipher: %s, bits: %i)\n"
 msgstr "SSL spojení (šifra: %s, bitů: %i)\n"
 
-#: command.c:1442
+#: command.c:1448
 #, c-format
 msgid "SSL connection (unknown cipher)\n"
 msgstr "SSL spojení (neznámá šifra)\n"
 
-#: command.c:1463
+#: command.c:1469
 #, c-format
 msgid ""
 "WARNING: Console code page (%u) differs from Windows code page (%u)\n"
@@ -205,26 +210,26 @@ msgstr ""
 "         informace najdete v manuálu k psql na stránce \"Poznámky pro\n"
 "         uživatele Windows.\"\n"
 
-#: command.c:1552
+#: command.c:1558
 #, c-format
 msgid "could not start editor \"%s\"\n"
 msgstr "nelze spustit editor \"%s\"\n"
 
-#: command.c:1554
+#: command.c:1560
 msgid "could not start /bin/sh\n"
 msgstr "nelze spustit /bin/sh\n"
 
-#: command.c:1591
+#: command.c:1597
 #, c-format
 msgid "cannot locate temporary directory: %s\n"
 msgstr "nelze najít dočasný adresář: %s\n"
 
-#: command.c:1618
+#: command.c:1624
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "nelze otevřít dočasný soubor \"%s\": %s\n"
 
-#: command.c:1839
+#: command.c:1845
 msgid ""
 "\\pset: allowed formats are unaligned, aligned, wrapped, html, latex, troff-"
 "ms\n"
@@ -232,124 +237,122 @@ msgstr ""
 "\\pset: dovolené formáty jsou: unaligned, aligned, wrapped, html, latex, "
 "troff-ms\n"
 
-#: command.c:1844
+#: command.c:1850
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "Výstupní formát je %s.\n"
 
-#: command.c:1860
+#: command.c:1866
 msgid "\\pset: allowed line styles are ascii, old-ascii, unicode\n"
 msgstr "\\pset: povolené styly řádek jsou ascii, old-ascii, unicode\n"
 
-#: command.c:1865
+#: command.c:1871
 #, c-format
 msgid "Line style is %s.\n"
 msgstr "Styl čar je %s.\n"
 
-#: command.c:1876
+#: command.c:1882
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "Styl rámečků je %d.\n"
 
-#: command.c:1888
+#: command.c:1894
 #, c-format
 msgid "Expanded display is on.\n"
 msgstr "Rozšířené zobrazení zapnuto.\n"
 
-#: command.c:1889
+#: command.c:1895
 #, c-format
 msgid "Expanded display is off.\n"
 msgstr "Rozšířené zobrazení vypnuto.\n"
 
-#: command.c:1902
-#, fuzzy
+#: command.c:1908
 msgid "Showing locale-adjusted numeric output."
-msgstr "Zobrazí číselný výstup dle národního nastavení."
+msgstr "Showing locale-adjusted numeric output."
 
-#: command.c:1904
-#, fuzzy
+#: command.c:1910
 msgid "Locale-adjusted numeric output is off."
-msgstr "Zobrazení číselného výstupu dle národního nastavení je vypnuto."
+msgstr "Locale-adjusted numeric output is off."
 
-#: command.c:1917
+#: command.c:1923
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Null je zobrazován jako '\"%s\"'.\n"
 
-#: command.c:1929
+#: command.c:1935
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "Oddělovač polí je '\"%s\"'.\n"
 
-#: command.c:1943
+#: command.c:1949
 #, c-format
 msgid "Record separator is <newline>."
 msgstr "Oddělovač záznamů je <newline>."
 
-#: command.c:1945
+#: command.c:1951
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "Oddělovač záznamů je '\"%s\"'.\n"
 
-#: command.c:1959
+#: command.c:1965
 msgid "Showing only tuples."
 msgstr "Zobrazovány jsou pouze záznamy."
 
-#: command.c:1961
+#: command.c:1967
 msgid "Tuples only is off."
 msgstr "Zobrazování pouze záznamů je vypnuto."
 
-#: command.c:1977
+#: command.c:1983
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "Nadpis je \"%s\".\n"
 
-#: command.c:1979
+#: command.c:1985
 #, c-format
 msgid "Title is unset.\n"
 msgstr "Nadpis není nastaven.\n"
 
-#: command.c:1995
+#: command.c:2001
 #, c-format
 msgid "Table attribute is \"%s\".\n"
 msgstr "Atribut tabulky je \"%s\".\n"
 
-#: command.c:1997
+#: command.c:2003
 #, c-format
 msgid "Table attributes unset.\n"
 msgstr "Atributy tabulky nejsou nastaveny.\n"
 
-#: command.c:2018
+#: command.c:2024
 msgid "Pager is used for long output."
 msgstr "Stránkování je zapnuto pro dlouhé výstupy."
 
-#: command.c:2020
+#: command.c:2026
 msgid "Pager is always used."
 msgstr "Stránkování je vždy použito."
 
-#: command.c:2022
+#: command.c:2028
 msgid "Pager usage is off."
 msgstr "Stránkování je vypnuto."
 
-#: command.c:2036
+#: command.c:2042
 msgid "Default footer is on."
 msgstr "Implicitní zápatí je zapnuto."
 
-#: command.c:2038
+#: command.c:2044
 msgid "Default footer is off."
 msgstr "Implicitní zápatí je vypnuto."
 
-#: command.c:2049
+#: command.c:2055
 #, c-format
 msgid "Target width for \"wrapped\" format is %d.\n"
 msgstr "Cílová šířka pro \"wrapped\" formát je %d.\n"
 
-#: command.c:2054
+#: command.c:2060
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: neznámá volba: %s\n"
 
-#: command.c:2108
+#: command.c:2114
 msgid "\\!: failed\n"
 msgstr "\\!: selhal\n"
 
@@ -1806,7 +1809,7 @@ msgstr "Podřízené tabulky"
 #: describe.c:2004
 #, c-format
 msgid "Typed table of type: %s"
-msgstr ""
+msgstr "Typovaná tabulka typu: %s"
 
 #: describe.c:2011
 msgid "Has OIDs"
@@ -2047,7 +2050,7 @@ msgstr "Šablona"
 
 #: describe.c:2988
 msgid "Init options"
-msgstr ""
+msgstr "Init options"
 
 #: describe.c:3010
 msgid "List of text search dictionaries"
@@ -2055,11 +2058,11 @@ msgstr "Seznam fulltextových slovníků"
 
 #: describe.c:3050
 msgid "Init"
-msgstr ""
+msgstr "Init"
 
 #: describe.c:3051
 msgid "Lexize"
-msgstr ""
+msgstr "Lexize"
 
 #: describe.c:3078
 msgid "List of text search templates"
@@ -2592,9 +2595,8 @@ msgid "lock a table"
 msgstr "uzamkne tabulku"
 
 #: sql_help.h:743
-#, fuzzy
 msgid "position a cursor"
-msgstr "přemístí kursor"
+msgstr "position a cursor"
 
 #: sql_help.h:748
 msgid "generate a notification"
@@ -2846,7 +2848,7 @@ msgstr "jméno_omezení"
 
 #: sql_help.c:183 sql_help.c:1088 sql_help.c:1200
 msgid "valfunction"
-msgstr ""
+msgstr "valfunction"
 
 #: sql_help.c:215 sql_help.c:220 sql_help.c:225 sql_help.c:230 sql_help.c:851
 #: sql_help.c:1114 sql_help.c:1805 sql_help.c:2145 sql_help.c:2374
@@ -2882,7 +2884,7 @@ msgstr "výsledné_řádky"
 
 #: sql_help.c:251 sql_help.c:253 sql_help.c:255
 msgid "group_name"
-msgstr ""
+msgstr "group_name"
 
 #: sql_help.c:252 sql_help.c:254 sql_help.c:728 sql_help.c:1050
 #: sql_help.c:1319 sql_help.c:1321 sql_help.c:1501 sql_help.c:1680
@@ -2934,7 +2936,7 @@ msgstr "typ_operátoru"
 
 #: sql_help.c:344 sql_help.c:354 sql_help.c:1242
 msgid "support_number"
-msgstr ""
+msgstr "support_number"
 
 #: sql_help.c:347 sql_help.c:850 sql_help.c:996 sql_help.c:1021
 #: sql_help.c:1034 sql_help.c:1215 sql_help.c:1245 sql_help.c:1576
@@ -3159,11 +3161,11 @@ msgstr "null_string"
 
 #: sql_help.c:934
 msgid "quote_character"
-msgstr ""
+msgstr "quote_character"
 
 #: sql_help.c:935
 msgid "escape_character"
-msgstr ""
+msgstr "escape_character"
 
 #: sql_help.c:963
 msgid "input_data_type"
@@ -3171,7 +3173,7 @@ msgstr "vstupní_datový_typ"
 
 #: sql_help.c:964 sql_help.c:972
 msgid "sfunc"
-msgstr ""
+msgstr "sfunc"
 
 #: sql_help.c:965 sql_help.c:973
 msgid "state_data_type"
@@ -3179,7 +3181,7 @@ msgstr "datový_typ_stavu"
 
 #: sql_help.c:966 sql_help.c:974
 msgid "ffunc"
-msgstr ""
+msgstr "ffunc"
 
 #: sql_help.c:967 sql_help.c:975
 msgid "initial_condition"
@@ -3284,7 +3286,7 @@ msgstr "obj_file"
 
 #: sql_help.c:1129
 msgid "link_symbol"
-msgstr ""
+msgstr "link_symbol"
 
 #: sql_help.c:1130
 msgid "attribute"
@@ -3308,11 +3310,11 @@ msgstr "predikát"
 
 #: sql_help.c:1198
 msgid "call_handler"
-msgstr ""
+msgstr "call_handler"
 
 #: sql_help.c:1199
 msgid "inline_handler"
-msgstr ""
+msgstr "inline_handler"
 
 #: sql_help.c:1218
 msgid "com_op"
@@ -3389,7 +3391,7 @@ msgstr "a omezení_tabulky je:"
 
 #: sql_help.c:1456
 msgid "exclude_element"
-msgstr ""
+msgstr "exclude_element"
 
 #: sql_help.c:1465
 msgid "and like_option is:"
@@ -3413,7 +3415,7 @@ msgstr "jméno_parseru"
 
 #: sql_help.c:1515
 msgid "source_config"
-msgstr ""
+msgstr "source_config"
 
 #: sql_help.c:1544
 msgid "start_function"
@@ -3469,11 +3471,11 @@ msgstr "send_funkce"
 
 #: sql_help.c:1621
 msgid "type_modifier_input_function"
-msgstr ""
+msgstr "type_modifier_input_function"
 
 #: sql_help.c:1622
 msgid "type_modifier_output_function"
-msgstr ""
+msgstr "type_modifier_output_function"
 
 #: sql_help.c:1623
 msgid "analyze_function"
@@ -3690,7 +3692,7 @@ msgstr "from_seznam"
 
 #: sql_help.c:2766
 msgid "sort_expression"
-msgstr ""
+msgstr "sort_expression"
 
 #: ../../port/exec.c:125 ../../port/exec.c:239 ../../port/exec.c:282
 #, c-format

@@ -25,8 +25,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-07-10 22:37+0000\n"
-"PO-Revision-Date: 2012-04-03 08:50+0400\n"
+"POT-Creation-Date: 2012-09-29 22:37+0000\n"
+"PO-Revision-Date: 2012-10-02 11:15+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -887,7 +887,7 @@ msgstr "попытка сделать копию нулевого указате
 #: pg_backup_custom.c:1118 pg_backup_custom.c:1127 pg_backup_db.c:147
 #: pg_backup_db.c:157 pg_backup_db.c:205 pg_backup_db.c:249 pg_backup_db.c:264
 #: pg_backup_db.c:298 pg_backup_db.c:491 pg_backup_files.c:114
-#: pg_backup_null.c:72 pg_backup_tar.c:167 pg_backup_tar.c:1011
+#: pg_backup_null.c:72 pg_backup_tar.c:167 pg_backup_tar.c:1001
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
 
@@ -1012,7 +1012,7 @@ msgstr[0] "восстановлен %d большой объект\n"
 msgstr[1] "восстановлено %d больших объекта\n"
 msgstr[2] "восстановлено %d больших объектов\n"
 
-#: pg_backup_archiver.c:957 pg_backup_tar.c:729
+#: pg_backup_archiver.c:957 pg_backup_tar.c:719
 #, c-format
 msgid "restoring large object with OID %u\n"
 msgstr "восстановление большого объекта с OID %u\n"
@@ -1068,7 +1068,7 @@ msgstr "не удалось записать большой объект (рез
 
 #: pg_backup_archiver.c:1384 pg_backup_archiver.c:1407 pg_backup_custom.c:781
 #: pg_backup_custom.c:1040 pg_backup_custom.c:1054 pg_backup_files.c:432
-#: pg_backup_tar.c:586 pg_backup_tar.c:1089 pg_backup_tar.c:1382
+#: pg_backup_tar.c:586 pg_backup_tar.c:1088 pg_backup_tar.c:1381
 #, c-format
 msgid "could not write to output file: %s\n"
 msgstr "не удалось записать в выходной файл: %s\n"
@@ -1104,7 +1104,7 @@ msgid "file offset in dump file is too large\n"
 msgstr "слишком большое смещение в файле вывода\n"
 
 #: pg_backup_archiver.c:1751 pg_backup_archiver.c:3102 pg_backup_custom.c:757
-#: pg_backup_files.c:419 pg_backup_tar.c:785
+#: pg_backup_files.c:419 pg_backup_tar.c:775
 msgid "unexpected end of file\n"
 msgstr "неожиданный конец файла\n"
 
@@ -1570,7 +1570,7 @@ msgstr "не удалось записать байт\n"
 msgid "could not open large object TOC for output: %s\n"
 msgstr "не удалось открыть для записи файл оглавления больших объектов: %s\n"
 
-#: pg_backup_files.c:510 pg_backup_tar.c:935
+#: pg_backup_files.c:510 pg_backup_tar.c:925
 #, c-format
 msgid "invalid OID for large object (%u)\n"
 msgstr "неверный OID для большого объекта (%u)\n"
@@ -1640,61 +1640,52 @@ msgstr "внутренняя ошибка -- в tarReadRaw() не указан �
 
 #: pg_backup_tar.c:674
 #, c-format
-msgid "invalid COPY statement -- could not find \"copy\" in string \"%s\"\n"
-msgstr "неверный оператор COPY -- слово \"copy\" не найдено в строке \"%s\"\n"
+msgid "unexpected COPY statement syntax: \"%s\"\n"
+msgstr "недопустимый синтаксис оператора COPY: \"%s\"\n"
 
-#: pg_backup_tar.c:692
-#, c-format
-msgid ""
-"invalid COPY statement -- could not find \"from stdin\" in string \"%s\" "
-"starting at position %lu\n"
-msgstr ""
-"неверный оператор COPY -- указание \"from stdin\" не найдено в строке \"%s"
-"\", начиная с позиции %lu\n"
-
-#: pg_backup_tar.c:880
+#: pg_backup_tar.c:870
 msgid "could not write null block at end of tar archive\n"
 msgstr "не удалось записать нулевой блок в конец tar-архива\n"
 
-#: pg_backup_tar.c:1080
+#: pg_backup_tar.c:1079
 msgid "archive member too large for tar format\n"
 msgstr "компонент архива слишком велик для формата tar\n"
 
-#: pg_backup_tar.c:1095
+#: pg_backup_tar.c:1094
 #, c-format
 msgid "could not close temporary file: %s\n"
 msgstr "не удалось закрыть временный файл: %s\n"
 
-#: pg_backup_tar.c:1105
+#: pg_backup_tar.c:1104
 #, c-format
 msgid "actual file length (%s) does not match expected (%s)\n"
 msgstr "действительная длина файла (%s) не равна ожидаемой (%s)\n"
 
-#: pg_backup_tar.c:1113
+#: pg_backup_tar.c:1112
 msgid "could not output padding at end of tar member\n"
 msgstr "не удалось записать выравнивание для компонента tar\n"
 
-#: pg_backup_tar.c:1142
+#: pg_backup_tar.c:1141
 #, c-format
 msgid "moving from position %s to next member at file position %s\n"
 msgstr "переход от позиции %s к следующему компоненту в позиции %s\n"
 
-#: pg_backup_tar.c:1153
+#: pg_backup_tar.c:1152
 #, c-format
 msgid "now at file position %s\n"
 msgstr "текущая позиция в файле %s\n"
 
-#: pg_backup_tar.c:1162 pg_backup_tar.c:1192
+#: pg_backup_tar.c:1161 pg_backup_tar.c:1191
 #, c-format
 msgid "could not find header for file \"%s\" in tar archive\n"
 msgstr "в архиве tar не найден заголовок для файла \"%s\"\n"
 
-#: pg_backup_tar.c:1176
+#: pg_backup_tar.c:1175
 #, c-format
 msgid "skipping tar member %s\n"
 msgstr "пропускается компонент tar %s\n"
 
-#: pg_backup_tar.c:1180
+#: pg_backup_tar.c:1179
 #, c-format
 msgid ""
 "restoring data out of order is not supported in this archive format: \"%s\" "
@@ -1704,12 +1695,12 @@ msgstr ""
 "поддерживается: требуется компонент \"%s\", но в файле архива прежде идёт "
 "\"%s\".\n"
 
-#: pg_backup_tar.c:1226
+#: pg_backup_tar.c:1225
 #, c-format
 msgid "mismatch in actual vs. predicted file position (%s vs. %s)\n"
 msgstr "реальная позиция в файле отличается от предсказанной (%s и %s)\n"
 
-#: pg_backup_tar.c:1241
+#: pg_backup_tar.c:1240
 #, c-format
 msgid "incomplete tar header found (%lu byte)\n"
 msgid_plural "incomplete tar header found (%lu bytes)\n"
@@ -1717,12 +1708,12 @@ msgstr[0] "найден неполный tar-заголовок (размер %l
 msgstr[1] "найден неполный tar-заголовок (размер %lu байта)\n"
 msgstr[2] "найден неполный tar-заголовок (размер %lu байтов)\n"
 
-#: pg_backup_tar.c:1279
+#: pg_backup_tar.c:1278
 #, c-format
 msgid "TOC Entry %s at %s (length %lu, checksum %d)\n"
 msgstr "Запись оглавления %s в %s (длина: %lu, контр. сумма: %d)\n"
 
-#: pg_backup_tar.c:1289
+#: pg_backup_tar.c:1288
 #, c-format
 msgid ""
 "corrupt tar header found in %s (expected %d, computed %d) file position %s\n"
@@ -2213,30 +2204,41 @@ msgstr "не удалось перейти в каталог \"%s\""
 msgid "could not read symbolic link \"%s\""
 msgstr "не удалось прочитать символическую ссылку \"%s\""
 
-#: ../../port/exec.c:516
+#: ../../port/exec.c:525
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "дочерний процесс завершился с кодом возврата %d"
 
-#: ../../port/exec.c:520
+#: ../../port/exec.c:529
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "дочерний процесс прерван исключением 0x%X"
 
-#: ../../port/exec.c:529
+#: ../../port/exec.c:538
 #, c-format
 msgid "child process was terminated by signal %s"
 msgstr "дочерний процесс завершён по сигналу %s"
 
-#: ../../port/exec.c:532
+#: ../../port/exec.c:541
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "дочерний процесс завершён по сигналу %d"
 
-#: ../../port/exec.c:536
+#: ../../port/exec.c:545
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "дочерний процесс завершился с нераспознанным состоянием %d"
+
+#~ msgid "invalid COPY statement -- could not find \"copy\" in string \"%s\"\n"
+#~ msgstr ""
+#~ "неверный оператор COPY -- слово \"copy\" не найдено в строке \"%s\"\n"
+
+#~ msgid ""
+#~ "invalid COPY statement -- could not find \"from stdin\" in string \"%s\" "
+#~ "starting at position %lu\n"
+#~ msgstr ""
+#~ "неверный оператор COPY -- указание \"from stdin\" не найдено в строке \"%s"
+#~ "\", начиная с позиции %lu\n"
 
 #~ msgid "restoring large object OID %u\n"
 #~ msgstr "восстановление большого объекта с OID %u\n"

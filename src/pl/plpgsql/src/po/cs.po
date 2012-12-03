@@ -5,10 +5,10 @@
 # Pavel Stehule <pavel.stehule@gmail.com>, 2011.
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.0\n"
+"Project-Id-Version: PostgreSQL 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2011-09-03 19:33+0200\n"
-"PO-Revision-Date: 2011-09-22 06:58+0300\n"
+"PO-Revision-Date: 2011-09-03 19:36+0200\n"
 "Last-Translator: \n"
 "Language-Team: Czech <kde-i18n-doc@kde.org>\n"
 "Language: Czech\n"
@@ -711,3 +711,45 @@ msgstr "\"%s\" na konci vstupu"
 #, c-format
 msgid "%s at or near \"%s\""
 msgstr "\"%s\" u nebo poblíž \"%s\""
+
+#~ msgid "parameter name \"%s\" used more than once"
+#~ msgstr "identifikátor parametru \"%s\" není unikátní"
+
+#~ msgid "FOREACH expression must not be null"
+#~ msgstr "výraz ve FOREACH nesmí být null"
+
+# výrazu/příkazu
+#~ msgid "FOREACH expression must yield an array, not type %s"
+#~ msgstr "výsledkem výrazu příkazu FOREACH musí být pole, nikoliv %s"
+
+#~ msgid "slice dimension (%d) is out of the valid range 0..%d"
+#~ msgstr "dimenze podpole (%d) je mimo validní rozsah 0..%d"
+
+#~ msgid "FOREACH ... SLICE loop variable must be of an array type"
+#~ msgstr "FOREACH ... SLICE proměnná cyklu musí být typu pole"
+
+#~ msgid "FOREACH loop variable must not be of an array type"
+#~ msgstr "FOREACH proměnná cyklu nesmí být typu pole"
+
+#~ msgid "collations are not supported by type %s"
+#~ msgstr "typ %s nepodporuje collations"
+
+#~ msgid ""
+#~ "loop variable of FOREACH must be a known variable or list of variables"
+#~ msgstr ""
+#~ "řídící proměnná(é) cyklu FOREACH musí být existující proměnná, případně "
+#~ "seznam existujících proměnných"
+
+#~ msgid "FOREACH over array"
+#~ msgstr "FOREACH nad polem"
+
+#~ msgid "GET STACKED DIAGNOSTICS cannot be used outside an exception handler"
+#~ msgstr "GET STACKED DIAGNOSTICS nelze použít mimo obsluhu výjimky"
+
+#~ msgid "diagnostics item %s is not allowed in GET STACKED DIAGNOSTICS"
+#~ msgstr ""
+#~ "diagnostická položka %s není dostupná v příkazu GET STACKED DIAGNOSTICS"
+
+#~ msgid "diagnostics item %s is not allowed in GET CURRENT DIAGNOSTICS"
+#~ msgstr ""
+#~ "diagnostická položka %s není dostupná v příkazu GET CURRENT DIAGNOSTICS"
