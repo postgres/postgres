@@ -1212,7 +1212,8 @@ XLogCheckBuffer(XLogRecData *rdata, bool doPageWrites,
 	/*
 	 * XXX We assume page LSN is first data on *every* page that can be passed
 	 * to XLogInsert, whether it otherwise has the standard page layout or
-	 * not.
+	 * not. We don't need the buffer header lock for PageGetLSN because we
+	 * have exclusive lock on the page and/or the relation.
 	 */
 	*lsn = PageGetLSN(page);
 
