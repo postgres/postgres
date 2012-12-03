@@ -1,6 +1,469 @@
 <!-- doc/src/sgml/release-9.1.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-1-7">
+  <title>Release 9.1.7</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2012-12-06</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 9.1.6.
+   For information about new features in the 9.1 major release, see
+   <xref linkend="release-9-1">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.1.7</title>
+
+   <para>
+    A dump/restore is not required for those running 9.1.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 9.1.6,
+    see the release notes for 9.1.6.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix multiple bugs associated with <command>CREATE INDEX
+      CONCURRENTLY</> (Andres Freund, Tom Lane)
+     </para>
+
+     <para>
+      Fix <command>CREATE INDEX CONCURRENTLY</> to use
+      in-place updates when changing the state of an index's
+      <structname>pg_index</> row.  This prevents race conditions that could
+      cause concurrent sessions to miss updating the target index, thus
+      resulting in corrupt concurrently-created indexes.
+     </para>
+
+     <para>
+      Also, fix various other operations to ensure that they ignore
+      invalid indexes resulting from a failed <command>CREATE INDEX
+      CONCURRENTLY</> command.  The most important of these is
+      <command>VACUUM</>, because an auto-vacuum could easily be launched
+      on the table before corrective action can be taken to fix or remove
+      the invalid index.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix buffer locking during WAL replay (Tom Lane)
+     </para>
+
+     <para>
+      The WAL replay code was insufficiently careful about locking buffers
+      when replaying WAL records that affect more than one page.  This could
+      result in hot standby queries transiently seeing inconsistent states,
+      resulting in wrong answers or unexpected failures.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix an error in WAL generation logic for GIN indexes (Tom Lane)
+     </para>
+
+     <para>
+      This could result in index corruption, if a torn-page failure occurred.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Properly remove startup process's virtual XID lock when promoting a
+      hot standby server to normal running (Simon Riggs)
+     </para>
+
+     <para>
+      This oversight could prevent subsequent execution of certain
+      operations such as <command>CREATE INDEX CONCURRENTLY</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid bogus <quote>out-of-sequence timeline ID</> errors in standby
+      mode (Heikki Linnakangas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent the postmaster from launching new child processes after it's
+      received a shutdown signal (Tom Lane)
+     </para>
+
+     <para>
+      This mistake could result in shutdown taking longer than it should, or
+      even never completing at all without additional user action.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid corruption of internal hash tables when out of memory
+      (Hitoshi Harada)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent file descriptors for dropped tables from being held open past
+      transaction end (Tom Lane)
+     </para>
+
+     <para>
+      This should reduce problems with long-since-dropped tables continuing
+      to occupy disk space.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent database-wide crash and restart when a new child process is
+      unable to create a pipe for its latch (Tom Lane)
+     </para>
+
+     <para>
+      Although the new process must fail, there is no good reason to force a
+      database-wide restart, so avoid that.  This improves robustness when
+      the kernel is nearly out of file descriptors.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix planning of non-strict equivalence clauses above outer joins
+      (Tom Lane)
+     </para>
+
+     <para>
+      The planner could derive incorrect constraints from a clause equating
+      a non-strict construct to something else, for example
+      <literal>WHERE COALESCE(foo, 0) = 0</>
+      when <literal>foo</> is coming from the nullable side of an outer join.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <command>SELECT DISTINCT</> with index-optimized
+      <function>MIN</>/<function>MAX</> on an inheritance tree (Tom Lane)
+     </para>
+
+     <para>
+      The planner would fail with <quote>failed to re-find MinMaxAggInfo
+      record</> given this combination of factors.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve planner's ability to prove exclusion constraints from
+      equivalence classes (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix partial-row matching in hashed subplans to handle cross-type cases
+      correctly (Tom Lane)
+     </para>
+
+     <para>
+      This affects multicolumn <literal>NOT IN</> subplans, such as
+      <literal>WHERE (a, b) NOT IN (SELECT x, y FROM ...)</>
+      when for instance <literal>b</> and <literal>y</> are <type>int4</>
+      and <type>int8</> respectively.  This mistake led to wrong answers
+      or crashes depending on the specific datatypes involved.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Acquire buffer lock when re-fetching the old tuple for an
+      <literal>AFTER ROW UPDATE/DELETE</> trigger (Andres Freund)
+     </para>
+
+     <para>
+      In very unusual circumstances, this oversight could result in passing
+      incorrect data to a trigger <literal>WHEN</> condition, or to the
+      precheck logic for a foreign-key enforcement trigger.  That could
+      result in a crash, or in an incorrect decision about whether to
+      fire the trigger.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <command>ALTER COLUMN TYPE</> to handle inherited check
+      constraints properly (Pavan Deolasee)
+     </para>
+
+     <para>
+      This worked correctly in pre-8.4 releases, and now works correctly
+      in 8.4 and later.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <command>ALTER EXTENSION SET SCHEMA</>'s failure  to move some
+      subsidiary objects into the new schema (&Aacute;lvaro Herrera, Dimitri
+      Fontaine)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <command>REASSIGN OWNED</> to handle grants on tablespaces
+      (&Aacute;lvaro Herrera)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ignore incorrect <structname>pg_attribute</> entries for system
+      columns for views (Tom Lane)
+     </para>
+
+     <para>
+      Views do not have any system columns.  However, we forgot to
+      remove such entries when converting a table to a view.  That's fixed
+      properly for 9.3 and later, but in previous branches we need to defend
+      against existing mis-converted views.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix rule printing to dump <literal>INSERT INTO <replaceable>table</>
+      DEFAULT VALUES</literal> correctly (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Guard against stack overflow when there are too many
+      <literal>UNION</>/<literal>INTERSECT</>/<literal>EXCEPT</> clauses
+      in a query (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent platform-dependent failures when dividing the minimum possible
+      integer value by -1 (Xi Wang, Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible access past end of string in date parsing
+      (Hitoshi Harada)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix failure to advance XID epoch if XID wraparound happens during a
+      checkpoint and <varname>wal_level</> is <literal>hot_standby</>
+      (Tom Lane, Andres Freund)
+     </para>
+
+     <para>
+      While this mistake had no particular impact on
+      <productname>PostgreSQL</productname> itself, it was bad for
+      applications that rely on <function>txid_current()</> and related
+      functions: the TXID value would appear to go backwards.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix display of
+      <structname>pg_stat_replication</>.<structfield>sync_state</> at a
+      page boundary (Kyotaro Horiguchi)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Produce an understandable error message if the length of the path name
+      for a Unix-domain socket exceeds the platform-specific limit
+      (Tom Lane, Andrew Dunstan)
+     </para>
+
+     <para>
+      Formerly, this would result in something quite unhelpful, such as
+      <quote>Non-recoverable failure in name resolution</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix memory leaks when sending composite column values to the client
+      (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <application>pg_ctl</> more robust about reading the
+      <filename>postmaster.pid</> file (Heikki Linnakangas)
+     </para>
+
+     <para>
+      Fix race conditions and possible file descriptor leakage.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible crash in <application>psql</> if incorrectly-encoded data
+      is presented and the <varname>client_encoding</> setting is a
+      client-only encoding, such as SJIS (Jiang Guiqing)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <application>pg_dump</> dump <literal>SEQUENCE SET</> items in
+      the data not pre-data section of the archive (Tom Lane)
+     </para>
+
+     <para>
+      This change fixes dumping of sequences that are marked as extension
+      configuration tables.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix bugs in the <filename>restore.sql</> script emitted by
+      <application>pg_dump</> in <literal>tar</> output format (Tom Lane)
+     </para>
+
+     <para>
+      The script would fail outright on tables whose names include
+      upper-case characters.  Also, make the script capable of restoring
+      data in <option>--inserts</> mode as well as the regular COPY mode.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_restore</> to accept POSIX-conformant
+      <literal>tar</> files (Brian Weaver, Tom Lane)
+     </para>
+
+     <para>
+      The original coding of <application>pg_dump</>'s <literal>tar</>
+      output mode produced files that are not fully conformant with the
+      POSIX standard.  This has been corrected for version 9.3.  This
+      patch updates previous branches so that they will accept both the
+      incorrect and the corrected formats, in hopes of avoiding
+      compatibility problems when 9.3 comes out.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <literal>tar</> files emitted by <application>pg_basebackup</> to
+      be POSIX conformant (Brian Weaver, Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_resetxlog</> to locate <filename>postmaster.pid</>
+      correctly when given a relative path to the data directory (Tom Lane)
+     </para>
+
+     <para>
+      This mistake could lead to <application>pg_resetxlog</> not noticing
+      that there is an active postmaster using the data directory.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>libpq</>'s <function>lo_import()</> and
+      <function>lo_export()</> functions to report file I/O errors properly
+      (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>ecpg</>'s processing of nested structure pointer
+      variables (Muhammad Usama)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>ecpg</>'s <function>ecpg_get_data</> function to
+      handle arrays properly (Michael Meskes)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <filename>contrib/pageinspect</>'s btree page inspection
+      functions take buffer locks while examining pages (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that <literal>make install</> for an extension creates the
+      <filename>extension</> installation directory (C&eacute;dric Villemain)
+     </para>
+
+     <para>
+      Previously, this step was missed if <varname>MODULEDIR</> was set in
+      the extension's Makefile.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pgxs</> support for building loadable modules on AIX
+      (Tom Lane)
+     </para>
+
+     <para>
+      Building modules outside the original source tree didn't work on AIX.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</> release 2012j
+      for DST law changes in Cuba, Israel, Jordan, Libya, Palestine, Western
+      Samoa, and portions of Brazil.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-1-6">
   <title>Release 9.1.6</title>
 
@@ -146,7 +609,7 @@
     <listitem>
      <para>
       Disallow extensions from containing the schema they are assigned to
-      (Thom Brown) 
+      (Thom Brown)
      </para>
 
      <para>
