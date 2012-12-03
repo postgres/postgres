@@ -949,6 +949,15 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 												  vacrelstats->scanned_pages,
 														 num_tuples);
 
+	/*
+	 * Release any remaining pin on visibility map page.
+	 */
+	if (BufferIsValid(vmbuffer))
+	{
+		ReleaseBuffer(vmbuffer);
+		vmbuffer = InvalidBuffer;
+	}
+
 	/* If any tuples need to be deleted, perform final vacuum cycle */
 	/* XXX put a threshold on min number of tuples here? */
 	if (vacrelstats->num_dead_tuples > 0)
@@ -964,13 +973,6 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		/* Remove tuples from heap */
 		lazy_vacuum_heap(onerel, vacrelstats);
 		vacrelstats->num_index_scans++;
-	}
-
-	/* Release the pin on the visibility map page */
-	if (BufferIsValid(vmbuffer))
-	{
-		ReleaseBuffer(vmbuffer);
-		vmbuffer = InvalidBuffer;
 	}
 
 	/* Do post-vacuum cleanup and statistics update for each index */
