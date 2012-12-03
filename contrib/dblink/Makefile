@@ -11,9 +11,6 @@ DATA = dblink--1.1.sql dblink--1.0--1.1.sql dblink--unpackaged--1.0.sql
 
 REGRESS = dblink
 
-# the db name is hard-coded in the tests
-override undefine USE_MODULE_DB
-
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
