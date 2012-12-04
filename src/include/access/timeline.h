@@ -14,10 +14,28 @@
 #include "access/xlogdefs.h"
 #include "nodes/pg_list.h"
 
+/*
+ * A list of these structs describes the timeline history of the server. Each
+ * TimeLineHistoryEntry represents a piece of WAL belonging to the history,
+ * from newest to oldest. All WAL positions between 'begin' and 'end' belong to
+ * the timeline represented by the entry. Together the 'begin' and 'end'
+ * pointers of all the entries form a contiguous line from beginning of time
+ * to infinity.
+ */
+typedef struct
+{
+	TimeLineID	tli;
+	XLogRecPtr	begin;	/* inclusive */
+	XLogRecPtr	end;	/* exclusive, 0 means infinity */
+} TimeLineHistoryEntry;
+
 extern List *readTimeLineHistory(TimeLineID targetTLI);
 extern bool existsTimeLineHistory(TimeLineID probeTLI);
 extern TimeLineID findNewestTimeLine(TimeLineID startTLI);
 extern void writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
-					 TimeLineID endTLI, XLogSegNo endLogSegNo, char *reason);
+					 XLogRecPtr switchpoint, char *reason);
+extern bool tliInHistory(TimeLineID tli, List *expectedTLIs);
+extern TimeLineID tliOfPointInHistory(XLogRecPtr ptr, List *history);
+extern XLogRecPtr tliSwitchPoint(TimeLineID tli, List *history);
 
 #endif   /* TIMELINE_H */

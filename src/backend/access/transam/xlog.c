@@ -226,7 +226,7 @@ static bool recoveryStopAfter;
  *
  * recoveryTargetIsLatest: was the requested target timeline 'latest'?
  *
- * expectedTLIs: an integer list of recoveryTargetTLI and the TLIs of
+ * expectedTLEs: a list of TimeLineHistoryEntries for recoveryTargetTLI and the timelines of
  * its known parents, newest first (so recoveryTargetTLI is always the
  * first list member).	Only these TLIs are expected to be seen in the WAL
  * segments we read, and indeed only these TLIs will be considered as
@@ -240,7 +240,7 @@ static bool recoveryStopAfter;
  */
 static TimeLineID recoveryTargetTLI;
 static bool recoveryTargetIsLatest = false;
-static List *expectedTLIs;
+static List *expectedTLEs;
 static TimeLineID curFileTLI;
 
 /*
@@ -2515,7 +2515,7 @@ InstallXLogFileSegment(XLogSegNo *segno, char *tmppath,
 
 	/*
 	 * Prefer link() to rename() here just to be really sure that we don't
-	 * overwrite an existing logfile.  However, there shouldn't be one, so
+	 * overwrite an existing file.  However, there shouldn't be one, so
 	 * rename() is an acceptable substitute except for the truly paranoid.
 	 */
 #if HAVE_WORKING_LINK
@@ -2716,7 +2716,7 @@ XLogFileRead(XLogSegNo segno, int emode, TimeLineID tli,
 /*
  * Open a logfile segment for reading (during recovery).
  *
- * This version searches for the segment with any TLI listed in expectedTLIs.
+ * This version searches for the segment with any TLI listed in expectedTLEs.
  */
 static int
 XLogFileReadAnyTLI(XLogSegNo segno, int emode, int source)
@@ -2727,7 +2727,7 @@ XLogFileReadAnyTLI(XLogSegNo segno, int emode, int source)
 
 	/*
 	 * Loop looking for a suitable timeline ID: we might need to read any of
-	 * the timelines listed in expectedTLIs.
+	 * the timelines listed in expectedTLEs.
 	 *
 	 * We expect curFileTLI on entry to be the TLI of the preceding file in
 	 * sequence, or 0 if there was no predecessor.	We do not allow curFileTLI
@@ -2735,9 +2735,9 @@ XLogFileReadAnyTLI(XLogSegNo segno, int emode, int source)
 	 * parent timeline extends to higher segment numbers than the child we
 	 * want to read.
 	 */
-	foreach(cell, expectedTLIs)
+	foreach(cell, expectedTLEs)
 	{
-		TimeLineID	tli = (TimeLineID) lfirst_int(cell);
+		TimeLineID	tli = ((TimeLineHistoryEntry *) lfirst(cell))->tli;
 
 		if (tli < curFileTLI)
 			break;				/* don't bother looking at too-old TLIs */
@@ -3344,7 +3344,7 @@ ReadRecord(XLogRecPtr *RecPtr, int emode, bool fetching_ckpt)
 		/*
 		 * Since we are going to a random position in WAL, forget any prior
 		 * state about what timeline we were in, and allow it to be any
-		 * timeline in expectedTLIs.  We also set a flag to allow curFileTLI
+		 * timeline in expectedTLEs.  We also set a flag to allow curFileTLI
 		 * to go backwards (but we can't reset that variable right here, since
 		 * we might not change files at all).
 		 */
@@ -3675,7 +3675,7 @@ ValidXLogPageHeader(XLogPageHeader hdr, int emode, bool segmentonly)
 	/*
 	 * Check page TLI is one of the expected values.
 	 */
-	if (!list_member_int(expectedTLIs, (int) hdr->xlp_tli))
+	if (!tliInHistory(hdr->xlp_tli, expectedTLEs))
 	{
 		ereport(emode_for_corrupt_record(emode, recaddr),
 				(errmsg("unexpected timeline ID %u in log segment %s, offset %u",
@@ -3812,57 +3812,86 @@ ValidXLogRecordHeader(XLogRecPtr *RecPtr, XLogRecord *record, int emode,
 static bool
 rescanLatestTimeLine(void)
 {
+	List	   *newExpectedTLEs;
+	bool		found;
+	ListCell   *cell;
 	TimeLineID	newtarget;
+	TimeLineHistoryEntry *currentTle = NULL;
+	/* use volatile pointer to prevent code rearrangement */
+	volatile XLogCtlData *xlogctl = XLogCtl;
 
 	newtarget = findNewestTimeLine(recoveryTargetTLI);
-	if (newtarget != recoveryTargetTLI)
+	if (newtarget == recoveryTargetTLI)
 	{
-		/*
-		 * Determine the list of expected TLIs for the new TLI
-		 */
-		List	   *newExpectedTLIs;
+		/* No new timelines found */
+		return false;
+	}
 
-		newExpectedTLIs = readTimeLineHistory(newtarget);
+	/*
+	 * Determine the list of expected TLIs for the new TLI
+	 */
 
-		/*
-		 * If the current timeline is not part of the history of the new
-		 * timeline, we cannot proceed to it.
-		 *
-		 * XXX This isn't foolproof: The new timeline might have forked from
-		 * the current one, but before the current recovery location. In that
-		 * case we will still switch to the new timeline and proceed replaying
-		 * from it even though the history doesn't match what we already
-		 * replayed. That's not good. We will likely notice at the next online
-		 * checkpoint, as the TLI won't match what we expected, but it's not
-		 * guaranteed. The admin needs to make sure that doesn't happen.
-		 */
-		if (!list_member_int(newExpectedTLIs,
-							 (int) recoveryTargetTLI))
-			ereport(LOG,
-					(errmsg("new timeline %u is not a child of database system timeline %u",
-							newtarget,
-							ThisTimeLineID)));
-		else
+	newExpectedTLEs = readTimeLineHistory(newtarget);
+
+	/*
+	 * If the current timeline is not part of the history of the new
+	 * timeline, we cannot proceed to it.
+	 */
+	found = false;
+	foreach (cell, newExpectedTLEs)
+	{
+		currentTle = (TimeLineHistoryEntry *) lfirst(cell);
+
+		if (currentTle->tli == recoveryTargetTLI)
 		{
-			/* use volatile pointer to prevent code rearrangement */
-			volatile XLogCtlData *xlogctl = XLogCtl;
-
-			/* Switch target */
-			recoveryTargetTLI = newtarget;
-			list_free(expectedTLIs);
-			expectedTLIs = newExpectedTLIs;
-
-			SpinLockAcquire(&xlogctl->info_lck);
-			xlogctl->RecoveryTargetTLI = recoveryTargetTLI;
-			SpinLockRelease(&xlogctl->info_lck);
-
-			ereport(LOG,
-					(errmsg("new target timeline is %u",
-							recoveryTargetTLI)));
-			return true;
+			found = true;
+			break;
 		}
 	}
-	return false;
+	if (!found)
+	{
+		ereport(LOG,
+				(errmsg("new timeline %u is not a child of database system timeline %u",
+						newtarget,
+						ThisTimeLineID)));
+		return false;
+	}
+
+	/*
+	 * The current timeline was found in the history file, but check that the
+	 * next timeline was forked off from it *after* the current recovery
+	 * location.
+	 */
+	if (XLByteLT(currentTle->end, EndRecPtr))
+	{
+		ereport(LOG,
+				(errmsg("new timeline %u forked off current database system timeline %u before current recovery point %X/%X",
+						newtarget,
+						ThisTimeLineID,
+						(uint32) (EndRecPtr >> 32), (uint32) EndRecPtr)));
+		return false;
+	}
+
+	/* The new timeline history seems valid. Switch target */
+	recoveryTargetTLI = newtarget;
+	list_free_deep(expectedTLEs);
+	expectedTLEs = newExpectedTLEs;
+
+	SpinLockAcquire(&xlogctl->info_lck);
+	xlogctl->RecoveryTargetTLI = recoveryTargetTLI;
+	SpinLockRelease(&xlogctl->info_lck);
+
+	ereport(LOG,
+			(errmsg("new target timeline is %u",
+					recoveryTargetTLI)));
+
+	/*
+	 * Wake up any walsenders to notice that we have a new target timeline.
+	 */
+	if (AllowCascadeReplication())
+		WalSndWakeup();
+
+	return true;
 }
 
 /*
@@ -5300,26 +5329,41 @@ StartupXLOG(void)
 	readRecoveryCommandFile();
 
 	/* Now we can determine the list of expected TLIs */
-	expectedTLIs = readTimeLineHistory(recoveryTargetTLI);
+	expectedTLEs = readTimeLineHistory(recoveryTargetTLI);
 
 	/*
-	 * If pg_control's timeline is not in expectedTLIs, then we cannot
-	 * proceed: the backup is not part of the history of the requested
-	 * timeline.
+	 * If the location of the checkpoint record is not on the expected
+	 * timeline in the history of the requested timeline, we cannot proceed:
+	 * the backup is not part of the history of the requested timeline.
 	 */
-	if (!list_member_int(expectedTLIs,
-						 (int) ControlFile->checkPointCopy.ThisTimeLineID))
+	if (tliOfPointInHistory(ControlFile->checkPoint, expectedTLEs) !=
+			ControlFile->checkPointCopy.ThisTimeLineID)
+	{
+		XLogRecPtr switchpoint;
+
+		/*
+		 * tliSwitchPoint will throw an error if the checkpoint's timeline
+		 * is not in expectedTLEs at all.
+		 */
+		switchpoint = tliSwitchPoint(ControlFile->checkPointCopy.ThisTimeLineID, expectedTLEs);
 		ereport(FATAL,
-				(errmsg("requested timeline %u is not a child of database system timeline %u",
-						recoveryTargetTLI,
-						ControlFile->checkPointCopy.ThisTimeLineID)));
+				(errmsg("requested timeline %u is not a child of this server's history",
+						recoveryTargetTLI),
+				 errdetail("Latest checkpoint is at %X/%X on timeline %u, but in the history of the requested timeline, the server forked off from that timeline at %X/%X",
+						   (uint32) (ControlFile->checkPoint >> 32),
+						   (uint32) ControlFile->checkPoint,
+						   ControlFile->checkPointCopy.ThisTimeLineID,
+						   (uint32) (switchpoint >> 32),
+						   (uint32) switchpoint)));
+	}
 
 	/*
 	 * The min recovery point should be part of the requested timeline's
 	 * history, too.
 	 */
 	if (!XLogRecPtrIsInvalid(ControlFile->minRecoveryPoint) &&
-		!list_member_int(expectedTLIs, ControlFile->minRecoveryPointTLI))
+		tliOfPointInHistory(ControlFile->minRecoveryPoint - 1, expectedTLEs) !=
+			ControlFile->minRecoveryPointTLI)
 		ereport(FATAL,
 				(errmsg("requested timeline %u does not contain minimum recovery point %X/%X on timeline %u",
 						recoveryTargetTLI,
@@ -6026,8 +6070,8 @@ StartupXLOG(void)
 				(errmsg("selected new timeline ID: %u", ThisTimeLineID)));
 
 		/*
-		 * Write comment to history file to explain why and where timeline
-		 * changed. Comment varies according to the recovery target used.
+		 * Create a comment for the history file to explain why and where
+		 * timeline changed.
 		 */
 		if (recoveryTarget == RECOVERY_TARGET_XID)
 			snprintf(reason, sizeof(reason),
@@ -6047,7 +6091,7 @@ StartupXLOG(void)
 			snprintf(reason, sizeof(reason), "no recovery target specified");
 
 		writeTimeLineHistory(ThisTimeLineID, recoveryTargetTLI,
-							 curFileTLI, endLogSegNo, reason);
+							 EndRecPtr, reason);
 	}
 
 	/* Save the selected TimeLineID in shared memory, too */
@@ -7916,8 +7960,7 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 			 * decrease.
 			 */
 			if (checkPoint.ThisTimeLineID < ThisTimeLineID ||
-				!list_member_int(expectedTLIs,
-								 (int) checkPoint.ThisTimeLineID))
+				!tliInHistory(checkPoint.ThisTimeLineID, expectedTLEs))
 				ereport(PANIC,
 						(errmsg("unexpected timeline ID %u (after %u) in checkpoint record",
 								checkPoint.ThisTimeLineID, ThisTimeLineID)));
