@@ -1385,7 +1385,9 @@ parse_hba_line(List *line, int line_num)
 static bool
 parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline, int line_num)
 {
+#ifdef USE_LDAP
 	hbaline->ldapscope = LDAP_SCOPE_SUBTREE;
+#endif
 
 	if (strcmp(name, "map") == 0)
 	{
@@ -1448,11 +1450,12 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline, int line_num)
 	}
 	else if (strcmp(name, "ldapurl") == 0)
 	{
+#ifdef LDAP_API_FEATURE_X_OPENLDAP
 		LDAPURLDesc *urldata;
 		int rc;
+#endif
 
 		REQUIRE_AUTH_OPTION(uaLDAP, "ldapurl", "ldap");
-
 #ifdef LDAP_API_FEATURE_X_OPENLDAP
 		rc = ldap_url_parse(val, &urldata);
 		if (rc != LDAP_SUCCESS)
