@@ -38,10 +38,11 @@
 #include "utils/memutils.h"
 
 #ifdef USE_LDAP
-#ifndef WIN32
+#ifdef WIN32
+#include <winldap.h>
+#else
 #include <ldap.h>
 #endif
-/* currently no Windows LDAP needed in this file */
 #endif
 
 
