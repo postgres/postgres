@@ -209,9 +209,10 @@ start_postmaster(ClusterInfo *cluster)
 	 * a gap of 2000000000 from the current xid counter, so autovacuum will
 	 * not touch them.
 	 *
-	 *	synchronous_commit=off improves object creation speed, and we only
-	 *	modify the new cluster, so only use it there.  If there is a crash,
-	 *	the new cluster has to be recreated anyway.
+	 * Turn off durability requirements to improve object creation speed, and
+	 * we only modify the new cluster, so only use it there.  If there is a
+	 * crash, the new cluster has to be recreated anyway.  fsync=off is a big
+	 * win on ext4.
 	 */
 	snprintf(cmd, sizeof(cmd),
 			 "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" -o \"-p %d%s%s%s%s\" start",
@@ -219,7 +220,8 @@ start_postmaster(ClusterInfo *cluster)
 			 (cluster->controldata.cat_ver >=
 			  BINARY_UPGRADE_SERVER_FLAG_CAT_VER) ? " -b" :
 			 " -c autovacuum=off -c autovacuum_freeze_max_age=2000000000",
-			 (cluster == &new_cluster) ? " -c synchronous_commit=off" : "",
+			 (cluster == &new_cluster) ?
+				" -c synchronous_commit=off -c fsync=off -c full_page_writes=off" : "",
 			 cluster->pgopts ? cluster->pgopts : "", socket_string);
 
 	/*

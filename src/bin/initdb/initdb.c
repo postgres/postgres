@@ -118,6 +118,7 @@ static const char *authmethodlocal = "";
 static bool debug = false;
 static bool noclean = false;
 static bool do_sync = true;
+static bool sync_only = false;
 static bool show_setting = false;
 static char *xlog_dir = "";
 
@@ -2796,6 +2797,7 @@ usage(const char *progname)
 	printf(_("  -n, --noclean             do not clean up after errors\n"));
 	printf(_("  -N, --nosync              do not wait for changes to be written safely to disk\n"));
 	printf(_("  -s, --show                show internal settings\n"));
+	printf(_("  -S, --sync-only           only sync data directory\n"));
 	printf(_("\nOther options:\n"));
 	printf(_("  -V, --version             output version information, then exit\n"));
 	printf(_("  -?, --help                show this help, then exit\n"));
@@ -3445,6 +3447,7 @@ main(int argc, char *argv[])
 		{"show", no_argument, NULL, 's'},
 		{"noclean", no_argument, NULL, 'n'},
 		{"nosync", no_argument, NULL, 'N'},
+		{"sync-only", no_argument, NULL, 'S'},
 		{"xlogdir", required_argument, NULL, 'X'},
 		{NULL, 0, NULL, 0}
 	};
@@ -3476,7 +3479,7 @@ main(int argc, char *argv[])
 
 	/* process command-line options */
 
-	while ((c = getopt_long(argc, argv, "dD:E:L:nNU:WA:sT:X:", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "dD:E:L:nNU:WA:sST:X:", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -3521,6 +3524,9 @@ main(int argc, char *argv[])
 				break;
 			case 'N':
 				do_sync = false;
+				break;
+			case 'S':
+				sync_only = true;
 				break;
 			case 'L':
 				share_path = pg_strdup(optarg);
@@ -3589,6 +3595,14 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
+	/* If we only need to fsync, just to it and exit */
+	if (sync_only)
+	{
+		setup_pgdata();
+		perform_fsync();
+		return 0;
+	}
+	
 	if (pwprompt && pwfilename)
 	{
 		fprintf(stderr, _("%s: password prompt and password file cannot be specified together\n"), progname);
