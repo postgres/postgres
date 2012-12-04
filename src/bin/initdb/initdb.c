@@ -255,9 +255,11 @@ void setup_pgdata(void);
 void setup_bin_paths(const char *argv0);
 void setup_data_file_paths(void);
 void setup_locale_encoding(void);
-void setup_signals_and_umask(void);
+void setup_signals(void);
 void setup_text_search(void);
-void process(const char *argv0);
+void create_data_directory(void);
+void create_xlog_symlink(void);
+void initialize_data_directory(void);
 
 
 #ifdef WIN32
@@ -3164,7 +3166,7 @@ setup_text_search(void)
 
 
 void
-setup_signals_and_umask(void)
+setup_signals(void)
 {
 	/* some of these are not valid on Windows */
 #ifdef SIGHUP
@@ -3184,19 +3186,12 @@ setup_signals_and_umask(void)
 #ifdef SIGPIPE
 	pqsignal(SIGPIPE, SIG_IGN);
 #endif
-
-	umask(S_IRWXG | S_IRWXO);
 }
 
 
 void
-process(const char *argv0)
+create_data_directory(void)
 {
-	int i;
-	char		bin_dir[MAXPGPATH];
-
-	setup_signals_and_umask();
- 
 	switch (pg_check_dir(pg_data))
 	{
 		case 0:
@@ -3249,7 +3244,12 @@ process(const char *argv0)
 					progname, pg_data, strerror(errno));
 			exit_nicely();
 	}
+}
 
+
+void
+create_xlog_symlink(void)
+{
 	/* Create transaction log symlink, if required */
 	if (strcmp(xlog_dir, "") != 0)
 	{
@@ -3336,6 +3336,21 @@ process(const char *argv0)
 		exit_nicely();
 #endif
 	}
+}
+
+
+void
+initialize_data_directory(void)
+{
+	int i;
+
+	setup_signals();
+
+	umask(S_IRWXG | S_IRWXO);
+ 
+	create_data_directory();
+
+	create_xlog_symlink();
 
 	/* Create required subdirectories */
 	printf(_("creating subdirectories ... "));
@@ -3404,19 +3419,6 @@ process(const char *argv0)
 
 	if (authwarning != NULL)
 		fprintf(stderr, "%s", authwarning);
-
-	/* Get directory specification used to start this executable */
-	strlcpy(bin_dir, argv0, sizeof(bin_dir));
-	get_parent_directory(bin_dir);
-
-	printf(_("\nSuccess. You can now start the database server using:\n\n"
-			 "    %s%s%spostgres%s -D %s%s%s\n"
-			 "or\n"
-			 "    %s%s%spg_ctl%s -D %s%s%s -l logfile start\n\n"),
-	   QUOTE_PATH, bin_dir, (strlen(bin_dir) > 0) ? DIR_SEP : "", QUOTE_PATH,
-		   QUOTE_PATH, pgdata_native, QUOTE_PATH,
-	   QUOTE_PATH, bin_dir, (strlen(bin_dir) > 0) ? DIR_SEP : "", QUOTE_PATH,
-		   QUOTE_PATH, pgdata_native, QUOTE_PATH);
 }
 
 
@@ -3459,6 +3461,7 @@ main(int argc, char *argv[])
 	int			c;
 	int			option_index;
 	char	   *effective_user;
+	char		bin_dir[MAXPGPATH];
 
 	progname = get_progname(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("initdb"));
@@ -3642,7 +3645,20 @@ main(int argc, char *argv[])
 	
 	printf("\n");
 
-	process(argv[0]);
+	initialize_data_directory();
 	
+	/* Get directory specification used to start this executable */
+	strlcpy(bin_dir, argv[0], sizeof(bin_dir));
+	get_parent_directory(bin_dir);
+
+	printf(_("\nSuccess. You can now start the database server using:\n\n"
+			 "    %s%s%spostgres%s -D %s%s%s\n"
+			 "or\n"
+			 "    %s%s%spg_ctl%s -D %s%s%s -l logfile start\n\n"),
+	   QUOTE_PATH, bin_dir, (strlen(bin_dir) > 0) ? DIR_SEP : "", QUOTE_PATH,
+		   QUOTE_PATH, pgdata_native, QUOTE_PATH,
+	   QUOTE_PATH, bin_dir, (strlen(bin_dir) > 0) ? DIR_SEP : "", QUOTE_PATH,
+		   QUOTE_PATH, pgdata_native, QUOTE_PATH);
+
 	return 0;
 }
