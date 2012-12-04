@@ -3411,14 +3411,6 @@ initialize_data_directory(void)
 	make_template0();
 
 	make_postgres();
-
-	if (do_sync)
-		perform_fsync();
-	else
-		printf(_("\nSync to disk skipped.\nThe data directory might become corrupt if the operating system crashes.\n"));
-
-	if (authwarning != NULL)
-		fprintf(stderr, "%s", authwarning);
 }
 
 
@@ -3647,6 +3639,14 @@ main(int argc, char *argv[])
 
 	initialize_data_directory();
 	
+	if (do_sync)
+		perform_fsync();
+	else
+		printf(_("\nSync to disk skipped.\nThe data directory might become corrupt if the operating system crashes.\n"));
+
+	if (authwarning != NULL)
+		fprintf(stderr, "%s", authwarning);
+
 	/* Get directory specification used to start this executable */
 	strlcpy(bin_dir, argv[0], sizeof(bin_dir));
 	get_parent_directory(bin_dir);
