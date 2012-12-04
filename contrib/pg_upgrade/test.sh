@@ -127,6 +127,11 @@ esac
 
 pg_dumpall -f "$temp_root"/dump2.sql || pg_dumpall2_status=$?
 pg_ctl -m fast stop
+
+# no need to echo commands anymore
+set +x
+echo
+
 if [ -n "$pg_dumpall2_status" ]; then
 	echo "pg_dumpall of post-upgrade database cluster failed"
 	exit 1
