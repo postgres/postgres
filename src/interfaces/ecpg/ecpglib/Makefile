@@ -58,11 +58,7 @@ include $(top_srcdir)/src/Makefile.shlib
 # necessarily use the same object files as the backend uses. Instead,
 # symlink the source files in here and build our own object file.
 
-<<<<<<< HEAD
-path.c pgstrcasecmp.c snprintf.c strlcpy.c thread.c: % : $(top_srcdir)/src/port/%
-=======
-path.c pgstrcasecmp.c snprintf.c strlcpy.c thread.c win32setlocale.c isinf.c: % : $(top_srcdir)/src/port/%
->>>>>>> 6fc6ebf... Include isinf.o in libecpg if isinf() is not available on the system.
+path.c pgstrcasecmp.c snprintf.c strlcpy.c thread.c isinf.c: % : $(top_srcdir)/src/port/%
 	rm -f $@ && $(LN_S) $< .
 
 misc.o: misc.c $(top_builddir)/src/port/pg_config_paths.h
