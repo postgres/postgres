@@ -447,6 +447,7 @@ typedef struct XLogCtlData
 
 	/* end+1 of the last record replayed (or being replayed) */
 	XLogRecPtr	replayEndRecPtr;
+	TimeLineID	replayEndTLI;
 	/* end+1 of the last record replayed */
 	XLogRecPtr	recoveryLastRecPtr;
 	/* timestamp of last COMMIT/ABORT record replayed (or being replayed) */
@@ -580,6 +581,7 @@ static TimeLineID lastSegmentTLI = 0;
 
 static XLogRecPtr minRecoveryPoint;		/* local copy of
 										 * ControlFile->minRecoveryPoint */
+static TimeLineID minRecoveryPointTLI;
 static bool updateMinRecoveryPoint = true;
 
 /*
@@ -1778,6 +1780,7 @@ UpdateMinRecoveryPoint(XLogRecPtr lsn, bool force)
 
 	/* update local copy */
 	minRecoveryPoint = ControlFile->minRecoveryPoint;
+	minRecoveryPointTLI = ControlFile->minRecoveryPointTLI;
 
 	/*
 	 * An invalid minRecoveryPoint means that we need to recover all the WAL,
@@ -1791,6 +1794,7 @@ UpdateMinRecoveryPoint(XLogRecPtr lsn, bool force)
 		/* use volatile pointer to prevent code rearrangement */
 		volatile XLogCtlData *xlogctl = XLogCtl;
 		XLogRecPtr	newMinRecoveryPoint;
+		TimeLineID	newMinRecoveryPointTLI;
 
 		/*
 		 * To avoid having to update the control file too often, we update it
@@ -1807,6 +1811,7 @@ UpdateMinRecoveryPoint(XLogRecPtr lsn, bool force)
 		 */
 		SpinLockAcquire(&xlogctl->info_lck);
 		newMinRecoveryPoint = xlogctl->replayEndRecPtr;
+		newMinRecoveryPointTLI = xlogctl->replayEndTLI;
 		SpinLockRelease(&xlogctl->info_lck);
 
 		if (!force && XLByteLT(newMinRecoveryPoint, lsn))
@@ -1820,13 +1825,16 @@ UpdateMinRecoveryPoint(XLogRecPtr lsn, bool force)
 		if (XLByteLT(ControlFile->minRecoveryPoint, newMinRecoveryPoint))
 		{
 			ControlFile->minRecoveryPoint = newMinRecoveryPoint;
+			ControlFile->minRecoveryPointTLI = newMinRecoveryPointTLI;
 			UpdateControlFile();
 			minRecoveryPoint = newMinRecoveryPoint;
+			minRecoveryPointTLI = newMinRecoveryPointTLI;
 
 			ereport(DEBUG2,
-					(errmsg("updated min recovery point to %X/%X",
+					(errmsg("updated min recovery point to %X/%X on timeline %u",
 							(uint32) (minRecoveryPoint >> 32),
-							(uint32) minRecoveryPoint)));
+							(uint32) minRecoveryPoint,
+							newMinRecoveryPointTLI)));
 		}
 	}
 	LWLockRelease(ControlFileLock);
@@ -2132,6 +2140,7 @@ XLogNeedsFlush(XLogRecPtr record)
 		if (!LWLockConditionalAcquire(ControlFileLock, LW_SHARED))
 			return true;
 		minRecoveryPoint = ControlFile->minRecoveryPoint;
+		minRecoveryPointTLI = ControlFile->minRecoveryPointTLI;
 		LWLockRelease(ControlFileLock);
 
 		/*
@@ -5306,6 +5315,19 @@ StartupXLOG(void)
 						ControlFile->checkPointCopy.ThisTimeLineID)));
 
 	/*
+	 * The min recovery point should be part of the requested timeline's
+	 * history, too.
+	 */
+	if (!XLogRecPtrIsInvalid(ControlFile->minRecoveryPoint) &&
+		!list_member_int(expectedTLIs, ControlFile->minRecoveryPointTLI))
+		ereport(FATAL,
+				(errmsg("requested timeline %u does not contain minimum recovery point %X/%X on timeline %u",
+						recoveryTargetTLI,
+						(uint32) (ControlFile->minRecoveryPoint >> 32),
+						(uint32) ControlFile->minRecoveryPoint,
+						ControlFile->minRecoveryPointTLI)));
+
+	/*
 	 * Save the selected recovery target timeline ID and
 	 * archive_cleanup_command in shared memory so that other processes can
 	 * see them
@@ -5523,7 +5545,10 @@ StartupXLOG(void)
 		{
 			/* initialize minRecoveryPoint if not set yet */
 			if (XLByteLT(ControlFile->minRecoveryPoint, checkPoint.redo))
+			{
 				ControlFile->minRecoveryPoint = checkPoint.redo;
+				ControlFile->minRecoveryPointTLI = checkPoint.ThisTimeLineID;
+			}
 		}
 
 		/*
@@ -5556,6 +5581,7 @@ StartupXLOG(void)
 
 		/* initialize our local copy of minRecoveryPoint */
 		minRecoveryPoint = ControlFile->minRecoveryPoint;
+		minRecoveryPointTLI = ControlFile->minRecoveryPointTLI;
 
 		/*
 		 * Reset pgstat data, because it may be invalid after recovery.
@@ -5681,6 +5707,7 @@ StartupXLOG(void)
 		 */
 		SpinLockAcquire(&xlogctl->info_lck);
 		xlogctl->replayEndRecPtr = ReadRecPtr;
+		xlogctl->replayEndTLI = ThisTimeLineID;
 		xlogctl->recoveryLastRecPtr = EndRecPtr;
 		xlogctl->recoveryLastXTime = 0;
 		xlogctl->currentChunkStartTime = 0;
@@ -7202,6 +7229,7 @@ CreateCheckPoint(int flags)
 	ControlFile->time = (pg_time_t) time(NULL);
 	/* crash recovery should always recover to the end of WAL */
 	MemSet(&ControlFile->minRecoveryPoint, 0, sizeof(XLogRecPtr));
+	ControlFile->minRecoveryPointTLI = 0;
 	UpdateControlFile();
 	LWLockRelease(ControlFileLock);
 
@@ -7878,16 +7906,42 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 		}
 
 		/*
-		 * TLI may change in a shutdown checkpoint, but it shouldn't decrease
+		 * TLI may change in a shutdown checkpoint.
 		 */
 		if (checkPoint.ThisTimeLineID != ThisTimeLineID)
 		{
+			/*
+			 * The new timeline better be in the list of timelines we expect
+			 * to see, according to the timeline history. It should also not
+			 * decrease.
+			 */
 			if (checkPoint.ThisTimeLineID < ThisTimeLineID ||
 				!list_member_int(expectedTLIs,
 								 (int) checkPoint.ThisTimeLineID))
 				ereport(PANIC,
 						(errmsg("unexpected timeline ID %u (after %u) in checkpoint record",
 								checkPoint.ThisTimeLineID, ThisTimeLineID)));
+
+			/*
+			 * If we have not yet reached min recovery point, and we're about
+			 * to switch to a timeline greater than the timeline of the min
+			 * recovery point: trouble. After switching to the new timeline,
+			 * we could not possibly visit the min recovery point on the
+			 * correct timeline anymore. This can happen if there is a newer
+			 * timeline in the archive that branched before the timeline the
+			 * min recovery point is on, and you attempt to do PITR to the
+			 * new timeline.
+			 */
+			if (!XLogRecPtrIsInvalid(minRecoveryPoint) &&
+				XLByteLT(lsn, minRecoveryPoint) &&
+				checkPoint.ThisTimeLineID > minRecoveryPointTLI)
+				ereport(PANIC,
+						(errmsg("unexpected timeline ID %u in checkpoint record, before reaching minimum recovery point %X/%X on timeline %u",
+								checkPoint.ThisTimeLineID,
+								(uint32) (minRecoveryPoint >> 32),
+								(uint32) minRecoveryPoint,
+								minRecoveryPointTLI)));
+
 			/* Following WAL records should be run with new TLI */
 			ThisTimeLineID = checkPoint.ThisTimeLineID;
 		}
@@ -7972,7 +8026,10 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 			LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
 
 			if (XLByteLT(ControlFile->minRecoveryPoint, lsn))
+			{
 				ControlFile->minRecoveryPoint = lsn;
+				ControlFile->minRecoveryPointTLI = ThisTimeLineID;
+			}
 			MemSet(&ControlFile->backupStartPoint, 0, sizeof(XLogRecPtr));
 			ControlFile->backupEndRequired = false;
 			UpdateControlFile();
@@ -8002,9 +8059,11 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 		 * decreasing max_* settings.
 		 */
 		minRecoveryPoint = ControlFile->minRecoveryPoint;
+		minRecoveryPointTLI = ControlFile->minRecoveryPointTLI;
 		if (minRecoveryPoint != 0 && XLByteLT(minRecoveryPoint, lsn))
 		{
 			ControlFile->minRecoveryPoint = lsn;
+			ControlFile->minRecoveryPointTLI = ThisTimeLineID;
 		}
 
 		UpdateControlFile();

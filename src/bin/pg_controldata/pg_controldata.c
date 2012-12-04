@@ -234,9 +234,11 @@ main(int argc, char *argv[])
 		   ControlFile.checkPointCopy.oldestActiveXid);
 	printf(_("Time of latest checkpoint:            %s\n"),
 		   ckpttime_str);
-	printf(_("Minimum recovery ending location:     %X/%X\n"),
+	printf(_("Min recovery ending location:         %X/%X\n"),
 		   (uint32) (ControlFile.minRecoveryPoint >> 32),
 		   (uint32) ControlFile.minRecoveryPoint);
+	printf(_("Min recovery ending loc's timeline:   %u\n"),
+		   ControlFile.minRecoveryPointTLI);
 	printf(_("Backup start location:                %X/%X\n"),
 		   (uint32) (ControlFile.backupStartPoint >> 32),
 		   (uint32) ControlFile.backupStartPoint);
