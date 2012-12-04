@@ -37,6 +37,13 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 
+#ifdef USE_LDAP
+#ifndef WIN32
+#include <ldap.h>
+#endif
+/* currently no Windows LDAP needed in this file */
+#endif
+
 
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))
 #define atoxid(x)  ((TransactionId) strtoul((x), NULL, 10))
@@ -1336,7 +1343,7 @@ parse_hba_line(List *line, int line_num)
 			{
 				ereport(LOG,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("cannot use ldapbasedn, ldapbinddn, ldapbindpasswd, or ldapsearchattribute together with ldapprefix"),
+						 errmsg("cannot use ldapbasedn, ldapbinddn, ldapbindpasswd, ldapsearchattribute, or ldapurl together with ldapprefix"),
 						 errcontext("line %d of configuration file \"%s\"",
 									line_num, HbaFileName)));
 				return NULL;
@@ -1378,6 +1385,8 @@ parse_hba_line(List *line, int line_num)
 static bool
 parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline, int line_num)
 {
+	hbaline->ldapscope = LDAP_SCOPE_SUBTREE;
+
 	if (strcmp(name, "map") == 0)
 	{
 		if (hbaline->auth_method != uaIdent &&
@@ -1436,6 +1445,54 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline, int line_num)
 	{
 		REQUIRE_AUTH_OPTION(uaPAM, "pamservice", "pam");
 		hbaline->pamservice = pstrdup(val);
+	}
+	else if (strcmp(name, "ldapurl") == 0)
+	{
+		LDAPURLDesc *urldata;
+		int rc;
+
+		REQUIRE_AUTH_OPTION(uaLDAP, "ldapurl", "ldap");
+
+#ifdef LDAP_API_FEATURE_X_OPENLDAP
+		rc = ldap_url_parse(val, &urldata);
+		if (rc != LDAP_SUCCESS)
+		{
+			ereport(LOG,
+				 (errcode(ERRCODE_CONFIG_FILE_ERROR),
+				  errmsg("could not parse LDAP URL \"%s\": %s", val, ldap_err2string(rc))));
+			return false;
+		}
+
+		if (strcmp(urldata->lud_scheme, "ldap") != 0)
+		{
+			ereport(LOG,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("unsupported LDAP URL scheme: %s", urldata->lud_scheme)));
+			ldap_free_urldesc(urldata);
+			return false;
+		}
+
+		hbaline->ldapserver = pstrdup(urldata->lud_host);
+		hbaline->ldapport = urldata->lud_port;
+		hbaline->ldapbasedn = pstrdup(urldata->lud_dn);
+
+		if (urldata->lud_attrs)
+			hbaline->ldapsearchattribute = pstrdup(urldata->lud_attrs[0]);  /* only use first one */
+		hbaline->ldapscope = urldata->lud_scope;
+		if (urldata->lud_filter)
+		{
+			ereport(LOG,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("filters not supported in LDAP URLs")));
+			ldap_free_urldesc(urldata);
+			return false;
+		}
+		ldap_free_urldesc(urldata);
+#else /* not OpenLDAP */
+		ereport(LOG,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("LDAP URLs not supported on this platform")));
+#endif /* not OpenLDAP */
 	}
 	else if (strcmp(name, "ldaptls") == 0)
 	{

@@ -71,6 +71,7 @@ typedef struct HbaLine
 	char	   *ldapbindpasswd;
 	char	   *ldapsearchattribute;
 	char	   *ldapbasedn;
+	int			ldapscope;
 	char	   *ldapprefix;
 	char	   *ldapsuffix;
 	bool		clientcert;

@@ -1486,6 +1486,34 @@ omicron         bryanh                  guest1
         </para>
        </listitem>
       </varlistentry>
+      <varlistentry>
+       <term><literal>ldapurl</literal></term>
+       <listitem>
+        <para>
+         An RFC 4516 LDAP URL.  This is an alternative way to write most of the
+         other LDAP options in a more compact and standard form.  The format is
+<synopsis>
+ldap://[<replaceable>user</replaceable>[:<replaceable>password</replaceable>]@]<replaceable>host</replaceable>[:<replaceable>port</replaceable>]/<replaceable>basedn</replaceable>[?[<replaceable>attribute</replaceable>][?[<replaceable>scope</replaceable>]]]
+</synopsis>
+         <replaceable>scope</replaceable> must be one
+         of <literal>base</literal>, <literal>one</literal>, <literal>sub</literal>,
+         typically the latter.  Only one attribute is used, and some other
+         components of standard LDAP URLs such as filters and extensions are
+         not supported.
+        </para>
+
+        <para>
+         To use encrypted LDAP connections, the <literal>ldaptls</literal>
+         option has to be used in addition to <literal>ldapurl</literal>.
+         The <literal>ldaps</literal> URL scheme (direct SSL connection) is not
+         supported.
+        </para>
+
+        <para>
+         LDAP URLs are currently only supported with OpenLDAP, not on Windows.
+        </para>
+       </listitem>
+      </varlistentry>
     </variablelist>
    </para>
 
@@ -1518,6 +1546,15 @@ host ... ldap ldapserver=ldap.example.net ldapbasedn="dc=example, dc=net" ldapse
     under the specified base DN.  If an entry is found, it will then attempt to
     bind using that found information and the password supplied by the client.
     If that second connection succeeds, the database access is granted.
+   </para>
+
+   <para>
+    Here is the same search+bind configuration written as a URL:
+<programlisting>
+host ... ldap lapurl="ldap://ldap.example.net/dc=example,dc=net?uid?sub"
+</programlisting>
+    Some other software that supports authentication against LDAP uses the
+    same URL format, so it will be easier to share the configuration.
    </para>
 
    <tip>

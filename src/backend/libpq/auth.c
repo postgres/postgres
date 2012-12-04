@@ -2209,7 +2209,7 @@ CheckLDAPAuth(Port *port)
 
 		r = ldap_search_s(ldap,
 						  port->hba->ldapbasedn,
-						  LDAP_SCOPE_SUBTREE,
+						  port->hba->ldapscope,
 						  filter,
 						  attributes,
 						  0,
