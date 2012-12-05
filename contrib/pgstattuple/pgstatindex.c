@@ -27,7 +27,9 @@
 
 #include "postgres.h"
 
+#include "access/gin_private.h"
 #include "access/heapam.h"
+#include "access/htup_details.h"
 #include "access/nbtree.h"
 #include "catalog/namespace.h"
 #include "funcapi.h"
@@ -39,12 +41,15 @@
 
 extern Datum pgstatindex(PG_FUNCTION_ARGS);
 extern Datum pg_relpages(PG_FUNCTION_ARGS);
+extern Datum pgstatginindex(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(pgstatindex);
 PG_FUNCTION_INFO_V1(pg_relpages);
+PG_FUNCTION_INFO_V1(pgstatginindex);
 
 #define IS_INDEX(r) ((r)->rd_rel->relkind == RELKIND_INDEX)
 #define IS_BTREE(r) ((r)->rd_rel->relam == BTREE_AM_OID)
+#define IS_GIN(r) ((r)->rd_rel->relam == GIN_AM_OID)
 
 #define CHECK_PAGE_OFFSET_RANGE(pg, offnum) { \
 		if ( !(FirstOffsetNumber <= (offnum) && \
@@ -78,6 +83,19 @@ typedef struct BTIndexStat
 
 	uint64		fragments;
 } BTIndexStat;
+
+/* ------------------------------------------------
+ * A structure for a whole GIN index statistics
+ * used by pgstatginindex().
+ * ------------------------------------------------
+ */
+typedef struct GinIndexStat
+{
+	int32		version;
+
+	BlockNumber	pending_pages;
+	int64		pending_tuples;
+} GinIndexStat;
 
 /* ------------------------------------------------------
  * pgstatindex()
@@ -291,4 +309,80 @@ pg_relpages(PG_FUNCTION_ARGS)
 	relation_close(rel, AccessShareLock);
 
 	PG_RETURN_INT64(relpages);
+}
+
+/* ------------------------------------------------------
+ * pgstatginindex()
+ *
+ * Usage: SELECT * FROM pgstatginindex('ginindex');
+ * ------------------------------------------------------
+ */
+Datum
+pgstatginindex(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	Relation	rel;
+	Buffer		buffer;
+	Page		page;
+	GinMetaPageData	*metadata;
+	GinIndexStat stats;
+	HeapTuple	tuple;
+	TupleDesc	tupleDesc;
+	Datum		values[3];
+	bool		nulls[3] = {false, false, false};
+	Datum		result;
+
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to use pgstattuple functions"))));
+
+	rel = relation_open(relid, AccessShareLock);
+
+	if (!IS_INDEX(rel) || !IS_GIN(rel))
+		elog(ERROR, "relation \"%s\" is not a GIN index",
+			 RelationGetRelationName(rel));
+
+	/*
+	 * Reject attempts to read non-local temporary relations; we would be
+	 * likely to get wrong data since we have no visibility into the owning
+	 * session's local buffers.
+	 */
+	if (RELATION_IS_OTHER_TEMP(rel))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot access temporary indexes of other sessions")));
+
+	/*
+	 * Read metapage
+	 */
+	buffer = ReadBuffer(rel, GIN_METAPAGE_BLKNO);
+	LockBuffer(buffer, GIN_SHARE);
+	page = BufferGetPage(buffer);
+	metadata = GinPageGetMeta(page);
+
+	stats.version = metadata->ginVersion;
+	stats.pending_pages = metadata->nPendingPages;
+	stats.pending_tuples = metadata->nPendingHeapTuples;
+
+	UnlockReleaseBuffer(buffer);
+	relation_close(rel, AccessShareLock);
+
+	/*
+	 * Build a tuple descriptor for our result type
+	 */
+	if (get_call_result_type(fcinfo, NULL, &tupleDesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+
+	values[0] = Int32GetDatum(stats.version);
+	values[1] = UInt32GetDatum(stats.pending_pages);
+	values[2] = Int64GetDatum(stats.pending_tuples);
+
+	/*
+	 * Build and return the tuple
+	 */
+	tuple = heap_form_tuple(tupleDesc, values, nulls);
+	result = HeapTupleGetDatum(tuple);
+
+	PG_RETURN_DATUM(result);
 }

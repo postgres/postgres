@@ -4,7 +4,7 @@ MODULE_big	= pgstattuple
 OBJS		= pgstattuple.o pgstatindex.o
 
 EXTENSION = pgstattuple
-DATA = pgstattuple--1.0.sql pgstattuple--unpackaged--1.0.sql
+DATA = pgstattuple--1.1.sql pgstattuple--1.0--1.1.sql pgstattuple--unpackaged--1.0.sql
 
 REGRESS = pgstattuple
 

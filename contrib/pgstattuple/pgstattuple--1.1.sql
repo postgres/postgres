@@ -1,4 +1,4 @@
-/* contrib/pgstattuple/pgstattuple--1.0.sql */
+/* contrib/pgstattuple/pgstattuple--1.1.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION pgstattuple" to load this file. \quit
@@ -46,4 +46,13 @@ LANGUAGE C STRICT;
 CREATE FUNCTION pg_relpages(IN relname text)
 RETURNS BIGINT
 AS 'MODULE_PATHNAME', 'pg_relpages'
+LANGUAGE C STRICT;
+
+/* New stuff in 1.1 begins here */
+
+CREATE FUNCTION pgstatginindex(IN relname regclass,
+    OUT version INT4,
+    OUT pending_pages INT4,
+    OUT pending_tuples BIGINT)
+AS 'MODULE_PATHNAME', 'pgstatginindex'
 LANGUAGE C STRICT;

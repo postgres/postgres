@@ -246,6 +246,63 @@ leaf_fragmentation | 0
 
    <varlistentry>
     <term>
+     <function>pgstatginindex(regclass) returns record</>
+    </term>
+
+    <listitem>
+     <para>
+      <function>pgstatginindex</function> returns a record showing information
+      about a GIN index.  For example:
+<programlisting>
+test=> SELECT * FROM pgstatginindex('test_gin_index');
+-[ RECORD 1 ]--+--
+version        | 1
+pending_pages  | 0
+pending_tuples | 0
+</programlisting>
+     </para>
+
+    <para>
+     The output columns are:
+
+    <informaltable>
+     <tgroup cols="3">
+      <thead>
+       <row>
+        <entry>Column</entry>
+        <entry>Type</entry>
+        <entry>Description</entry>
+       </row>
+      </thead>
+
+      <tbody>
+       <row>
+        <entry><structfield>version</structfield></entry>
+        <entry><type>integer</type></entry>
+        <entry>GIN version number</entry>
+       </row>
+
+       <row>
+        <entry><structfield>pending_pages</structfield></entry>
+        <entry><type>integer</type></entry>
+        <entry>Number of pages in the pending list</entry>
+       </row>
+
+       <row>
+        <entry><structfield>pending_tuples</structfield></entry>
+        <entry><type>bigint</type></entry>
+        <entry>Number of tuples in the pending list</entry>
+       </row>
+
+      </tbody>
+     </tgroup>
+    </informaltable>
+    </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
      <function>pg_relpages(text) returns bigint</>
     </term>
 

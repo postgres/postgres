@@ -4,7 +4,7 @@ CREATE EXTENSION pgstattuple;
 -- the pgstattuple functions, but the results for empty tables and
 -- indexes should be that.
 --
-create table test (a int primary key);
+create table test (a int primary key, b int[]);
 select * from pgstattuple('test'::text);
  table_len | tuple_count | tuple_len | tuple_percent | dead_tuple_count | dead_tuple_len | dead_tuple_percent | free_space | free_percent 
 -----------+-------------+-----------+---------------+------------------+----------------+--------------------+------------+--------------
@@ -33,5 +33,12 @@ select pg_relpages('test_pkey');
  pg_relpages 
 -------------
            1
+(1 row)
+
+create index test_ginidx on test using gin (b);
+select * from pgstatginindex('test_ginidx');
+ version | pending_pages | pending_tuples 
+---------+---------------+----------------
+       1 |             0 |              0
 (1 row)
 
