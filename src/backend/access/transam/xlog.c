@@ -2515,7 +2515,7 @@ InstallXLogFileSegment(XLogSegNo *segno, char *tmppath,
 
 	/*
 	 * Prefer link() to rename() here just to be really sure that we don't
-	 * overwrite an existing file.  However, there shouldn't be one, so
+	 * overwrite an existing logfile.  However, there shouldn't be one, so
 	 * rename() is an acceptable substitute except for the truly paranoid.
 	 */
 #if HAVE_WORKING_LINK
