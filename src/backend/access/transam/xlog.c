@@ -6332,9 +6332,12 @@ CheckRecoveryConsistency(void)
 		return;
 
 	/*
-	 * Have we passed our safe starting point?
+	 * Have we passed our safe starting point? Note that minRecoveryPoint
+	 * is known to be incorrectly set if ControlFile->backupEndRequired,
+	 * until the XLOG_BACKUP_RECORD arrives to advise us of the correct
+	 * minRecoveryPoint. All we prior to that is its not consistent yet.
 	 */
-	if (!reachedConsistency &&
+	if (!reachedConsistency && !ControlFile->backupEndRequired &&
 		XLByteLE(minRecoveryPoint, EndRecPtr) &&
 		XLogRecPtrIsInvalid(ControlFile->backupStartPoint))
 	{
