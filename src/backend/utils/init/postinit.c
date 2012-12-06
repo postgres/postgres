@@ -627,6 +627,19 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 					 errhint("You should immediately run CREATE USER \"%s\" SUPERUSER;.",
 							 username)));
 	}
+	else if (IsBackgroundWorker)
+	{
+		if (username == NULL)
+		{
+			InitializeSessionUserIdStandalone();
+			am_superuser = true;
+		}
+		else
+		{
+			InitializeSessionUserId(username);
+			am_superuser = superuser();
+		}
+	}
 	else
 	{
 		/* normal multiuser case */

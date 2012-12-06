@@ -498,10 +498,10 @@ void
 InitializeSessionUserIdStandalone(void)
 {
 	/*
-	 * This function should only be called in single-user mode and in
-	 * autovacuum workers.
+	 * This function should only be called in single-user mode, in
+	 * autovacuum workers, and in background workers.
 	 */
-	AssertState(!IsUnderPostmaster || IsAutoVacuumWorkerProcess());
+	AssertState(!IsUnderPostmaster || IsAutoVacuumWorkerProcess() || IsBackgroundWorker);
 
 	/* call only once */
 	AssertState(!OidIsValid(AuthenticatedUserId));

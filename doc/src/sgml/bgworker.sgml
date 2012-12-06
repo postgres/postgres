@@ -1,0 +1,146 @@
+<!-- doc/src/sgml/bgworker.sgml -->
+
+<chapter id="bgworker">
+ <title>Background Worker Processes</title>
+
+ <indexterm zone="bgworker">
+  <primary>Background workers</primary>
+ </indexterm>
+
+ <para>
+  PostgreSQL can be extended to run user-supplied code in separate processes.
+  Such processes are started, stopped and monitored by <command>postgres</command>,
+  which permits them to have a lifetime closely linked to the server's status.
+  These processes have the option to attach to <productname>PostgreSQL</>'s
+  shared memory area and to connect to databases internally; they can also run
+  multiple transactions serially, just like a regular client-connected server
+  process.  Also, by linking to <application>libpq</> they can connect to the
+  server and behave like a regular client application.
+ </para>
+
+ <warning>
+  <para>
+   There are considerable robustness and security risks in using background
+   worker processes because, being written in the <literal>C</> language,
+   they have unrestricted access to data.  Administrators wishing to enable
+   modules that include background worker process should exercise extreme
+   caution.  Only carefully audited modules should be permitted to run
+   background worker processes.
+  </para>
+ </warning>
+
+ <para>
+  Only modules listed in <varname>shared_preload_libraries</> can run
+  background workers.  A module wishing to run a background worker needs
+  to register it by calling
+  <function>RegisterBackgroundWorker(<type>BackgroundWorker *worker</type>)</function>
+  from its <function>_PG_init()</>.
+  The structure <structname>BackgroundWorker</structname> is defined thus:
+<programlisting>
+typedef void (*bgworker_main_type)(void *main_arg);
+typedef void (*bgworker_sighdlr_type)(SIGNAL_ARGS);
+typedef struct BackgroundWorker
+{
+    char       *bgw_name;
+    int         bgw_flags;
+    BgWorkerStartTime bgw_start_time;
+    int         bgw_restart_time;       /* in seconds, or BGW_NEVER_RESTART */
+    bgworker_main_type  bgw_main;
+    void       *bgw_main_arg;
+    bgworker_sighdlr_type bgw_sighup;
+    bgworker_sighdlr_type bgw_sigterm;
+} BackgroundWorker;
+</programlisting>
+  </para>
+
+  <para>
+   <structfield>bgw_name</> is a string to be used in log messages, process
+   listings and similar contexts.
+  </para>
+
+  <para>
+   <structfield>bgw_flags</> is a bitwise-or'd bitmask indicating the
+   capabilities that the module wants.  Possible values are
+   <literal>BGWORKER_SHMEM_ACCESS</literal> (requesting shared memory access)
+   and <literal>BGWORKER_BACKEND_DATABASE_CONNECTION</literal> (requesting the
+   ability to establish a database connection, through which it can later run
+   transactions and queries).
+  </para>
+
+  <para>
+   <structfield>bgw_start_time</structfield> is the server state during which
+   <command>postgres</> should start the process; it can be one of
+   <literal>BgWorkerStart_PostmasterStart</> (start as soon as
+   <command>postgres</> itself has finished its own initialization; processes
+   requesting this are not eligible for database connections),
+   <literal>BgWorkerStart_ConsistentState</> (start as soon as a consistent state
+   has been reached in a HOT standby, allowing processes to connect to
+   databases and run read-only queries), and
+   <literal>BgWorkerStart_RecoveryFinished</> (start as soon as the system has
+   entered normal read-write state).  Note the last two values are equivalent
+   in a server that's not a HOT standby.  Note that this setting only indicates
+   when the processes are to be started; they do not stop when a different state
+   is reached.
+  </para>
+
+  <para>
+   <structfield>bgw_restart_time</structfield> is the interval, in seconds, that
+   <command>postgres</command> should wait before restarting the process, in
+   case it crashes.  It can be any positive value,
+   or <literal>BGW_NEVER_RESTART</literal>, indicating not to restart the
+   process in case of a crash.
+  </para>
+
+  <para>
+   <structfield>bgw_main</structfield> is a pointer to the function to run when
+   the process is started.  This function must take a single argument of type
+   <type>void *</> and return <type>void</>.
+   <structfield>bgw_main_arg</structfield> will be passed to it as its only
+   argument.  Note that the global variable <literal>MyBgworkerEntry</literal>
+   points to a copy of the <structname>BackgroundWorker</structname> structure
+   passed at registration time.
+  </para>
+
+  <para>
+   <structfield>bgw_sighup</structfield> and <structfield>bgw_sigterm</> are
+   pointers to functions that will be installed as signal handlers for the new
+   process.  If <structfield>bgw_sighup</> is NULL, then <literal>SIG_IGN</>
+   is used; if <structfield>bgw_sigterm</> is NULL, a handler is installed that
+   will terminate the process after logging a suitable message.
+  </para>
+
+  <para>Once running, the process can connect to a database by calling
+   <function>BackgroundWorkerInitializeConnection(<parameter>char *dbname</parameter>, <parameter>char *username</parameter>)</function>.
+   This allows the process to run transactions and queries using the
+   <literal>SPI</literal> interface.  If <varname>dbname</> is NULL,
+   the session is not connected to any particular database, but shared catalogs
+   can be accessed.  If <varname>username</> is NULL, the process will run as
+   the superuser created during <command>initdb</>.
+   BackgroundWorkerInitializeConnection can only be called once per background
+   process, it is not possible to switch databases.
+  </para>
+
+  <para>
+   Signals are initially blocked when control reaches the
+   <structfield>bgw_main</> function, and must be unblocked by it; this is to
+   allow the process to further customize its signal handlers, if necessary.
+   Signals can be unblocked in the new process by calling
+   <function>BackgroundWorkerUnblockSignals</> and blocked by calling
+   <function>BackgroundWorkerBlockSignals</>.
+  </para>
+
+  <para>
+   Background workers are expected to be continuously running; if they exit
+   cleanly, <command>postgres</> will restart them immediately.  Consider doing
+   interruptible sleep when they have nothing to do; this can be achieved by
+   calling <function>WaitLatch()</function>.  Make sure the
+   <literal>WL_POSTMASTER_DEATH</> flag is set when calling that function, and
+   verify the return code for a prompt exit in the emergency case that
+   <command>postgres</> itself has terminated.
+  </para>
+
+  <para>
+   The <filename>worker_spi</> contrib module contains a working example,
+   which demonstrates some useful techniques.
+  </para>
+</chapter>

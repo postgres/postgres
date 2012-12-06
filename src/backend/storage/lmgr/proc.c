@@ -140,7 +140,9 @@ ProcGlobalSemas(void)
  *	  So, now we grab enough semaphores to support the desired max number
  *	  of backends immediately at initialization --- if the sysadmin has set
  *	  MaxConnections or autovacuum_max_workers higher than his kernel will
- *	  support, he'll find out sooner rather than later.
+ *	  support, he'll find out sooner rather than later.  (The number of
+ *	  background worker processes registered by loadable modules is also taken
+ *	  into consideration.)
  *
  *	  Another reason for creating semaphores here is that the semaphore
  *	  implementation typically requires us to create semaphores in the
@@ -171,6 +173,7 @@ InitProcGlobal(void)
 	ProcGlobal->spins_per_delay = DEFAULT_SPINS_PER_DELAY;
 	ProcGlobal->freeProcs = NULL;
 	ProcGlobal->autovacFreeProcs = NULL;
+	ProcGlobal->bgworkerFreeProcs = NULL;
 	ProcGlobal->startupProc = NULL;
 	ProcGlobal->startupProcPid = 0;
 	ProcGlobal->startupBufferPinWaitBufId = -1;
@@ -179,10 +182,11 @@ InitProcGlobal(void)
 
 	/*
 	 * Create and initialize all the PGPROC structures we'll need.  There are
-	 * four separate consumers: (1) normal backends, (2) autovacuum workers
-	 * and the autovacuum launcher, (3) auxiliary processes, and (4) prepared
-	 * transactions.  Each PGPROC structure is dedicated to exactly one of
-	 * these purposes, and they do not move between groups.
+	 * five separate consumers: (1) normal backends, (2) autovacuum workers
+	 * and the autovacuum launcher, (3) background workers, (4) auxiliary
+	 * processes, and (5) prepared transactions.  Each PGPROC structure is
+	 * dedicated to exactly one of these purposes, and they do not move between
+	 * groups.
 	 */
 	procs = (PGPROC *) ShmemAlloc(TotalProcs * sizeof(PGPROC));
 	ProcGlobal->allProcs = procs;
@@ -223,12 +227,12 @@ InitProcGlobal(void)
 		procs[i].pgprocno = i;
 
 		/*
-		 * Newly created PGPROCs for normal backends or for autovacuum must be
-		 * queued up on the appropriate free list.	Because there can only
-		 * ever be a small, fixed number of auxiliary processes, no free list
-		 * is used in that case; InitAuxiliaryProcess() instead uses a linear
-		 * search.	PGPROCs for prepared transactions are added to a free list
-		 * by TwoPhaseShmemInit().
+		 * Newly created PGPROCs for normal backends, autovacuum and bgworkers
+		 * must be queued up on the appropriate free list.	Because there can
+		 * only ever be a small, fixed number of auxiliary processes, no free
+		 * list is used in that case; InitAuxiliaryProcess() instead uses a
+		 * linear search.	PGPROCs for prepared transactions are added to a
+		 * free list by TwoPhaseShmemInit().
 		 */
 		if (i < MaxConnections)
 		{
@@ -236,11 +240,17 @@ InitProcGlobal(void)
 			procs[i].links.next = (SHM_QUEUE *) ProcGlobal->freeProcs;
 			ProcGlobal->freeProcs = &procs[i];
 		}
-		else if (i < MaxBackends)
+		else if (i < MaxConnections + autovacuum_max_workers + 1)
 		{
 			/* PGPROC for AV launcher/worker, add to autovacFreeProcs list */
 			procs[i].links.next = (SHM_QUEUE *) ProcGlobal->autovacFreeProcs;
 			ProcGlobal->autovacFreeProcs = &procs[i];
+		}
+		else if (i < MaxBackends)
+		{
+			/* PGPROC for bgworker, add to bgworkerFreeProcs list */
+			procs[i].links.next = (SHM_QUEUE *) ProcGlobal->bgworkerFreeProcs;
+			ProcGlobal->bgworkerFreeProcs = &procs[i];
 		}
 
 		/* Initialize myProcLocks[] shared memory queues. */
@@ -299,6 +309,8 @@ InitProcess(void)
 
 	if (IsAnyAutoVacuumProcess())
 		MyProc = procglobal->autovacFreeProcs;
+	else if (IsBackgroundWorker)
+		MyProc = procglobal->bgworkerFreeProcs;
 	else
 		MyProc = procglobal->freeProcs;
 
@@ -306,6 +318,8 @@ InitProcess(void)
 	{
 		if (IsAnyAutoVacuumProcess())
 			procglobal->autovacFreeProcs = (PGPROC *) MyProc->links.next;
+		else if (IsBackgroundWorker)
+			procglobal->bgworkerFreeProcs = (PGPROC *) MyProc->links.next;
 		else
 			procglobal->freeProcs = (PGPROC *) MyProc->links.next;
 		SpinLockRelease(ProcStructLock);
@@ -781,6 +795,11 @@ ProcKill(int code, Datum arg)
 	{
 		MyProc->links.next = (SHM_QUEUE *) procglobal->autovacFreeProcs;
 		procglobal->autovacFreeProcs = MyProc;
+	}
+	else if (IsBackgroundWorker)
+	{
+		MyProc->links.next = (SHM_QUEUE *) procglobal->bgworkerFreeProcs;
+		procglobal->bgworkerFreeProcs = MyProc;
 	}
 	else
 	{

@@ -50,6 +50,7 @@
 <!ENTITY wal           SYSTEM "wal.sgml">
 
 <!-- programmer's guide -->
+<!ENTITY bgworker   SYSTEM "bgworker.sgml">
 <!ENTITY dfunc      SYSTEM "dfunc.sgml">
 <!ENTITY ecpg       SYSTEM "ecpg.sgml">
 <!ENTITY extend     SYSTEM "extend.sgml">
