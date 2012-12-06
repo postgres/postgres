@@ -167,13 +167,13 @@ static void findDependentObjects(const ObjectAddress *object,
 					 ObjectAddressStack *stack,
 					 ObjectAddresses *targetObjects,
 					 const ObjectAddresses *pendingObjects,
-					 Relation depRel);
+					 Relation *depRel);
 static void reportDependentObjects(const ObjectAddresses *targetObjects,
 					   DropBehavior behavior,
 					   int msglevel,
 					   const ObjectAddress *origObject);
 static void deleteOneObject(const ObjectAddress *object,
-				Relation depRel, int32 flags);
+				Relation *depRel, int32 flags);
 static void doDeletion(const ObjectAddress *object, int flags);
 static void AcquireDeletionLock(const ObjectAddress *object, int flags);
 static void ReleaseDeletionLock(const ObjectAddress *object);
@@ -246,7 +246,7 @@ performDeletion(const ObjectAddress *object,
 						 NULL,	/* empty stack */
 						 targetObjects,
 						 NULL,	/* no pendingObjects */
-						 depRel);
+						 &depRel);
 
 	/*
 	 * Check if deletion is allowed, and report about cascaded deletes.
@@ -263,7 +263,7 @@ performDeletion(const ObjectAddress *object,
 	{
 		ObjectAddress *thisobj = targetObjects->refs + i;
 
-		deleteOneObject(thisobj, depRel, flags);
+		deleteOneObject(thisobj, &depRel, flags);
 	}
 
 	/* And clean up */
@@ -324,7 +324,7 @@ performMultipleDeletions(const ObjectAddresses *objects,
 							 NULL,		/* empty stack */
 							 targetObjects,
 							 objects,
-							 depRel);
+							 &depRel);
 	}
 
 	/*
@@ -345,7 +345,7 @@ performMultipleDeletions(const ObjectAddresses *objects,
 	{
 		ObjectAddress *thisobj = targetObjects->refs + i;
 
-		deleteOneObject(thisobj, depRel, flags);
+		deleteOneObject(thisobj, &depRel, flags);
 	}
 
 	/* And clean up */
@@ -394,7 +394,7 @@ deleteWhatDependsOn(const ObjectAddress *object,
 						 NULL,	/* empty stack */
 						 targetObjects,
 						 NULL,	/* no pendingObjects */
-						 depRel);
+						 &depRel);
 
 	/*
 	 * Check if deletion is allowed, and report about cascaded deletes.
@@ -423,7 +423,7 @@ deleteWhatDependsOn(const ObjectAddress *object,
 		 * action.	If, in the future, this function is used for other
 		 * purposes, we might need to revisit this.
 		 */
-		deleteOneObject(thisobj, depRel, PERFORM_DELETION_INTERNAL);
+		deleteOneObject(thisobj, &depRel, PERFORM_DELETION_INTERNAL);
 	}
 
 	/* And clean up */
@@ -458,7 +458,7 @@ deleteWhatDependsOn(const ObjectAddress *object,
  *	targetObjects: list of objects that are scheduled to be deleted
  *	pendingObjects: list of other objects slated for destruction, but
  *			not necessarily in targetObjects yet (can be NULL if none)
- *	depRel: already opened pg_depend relation
+ *	*depRel: already opened pg_depend relation
  */
 static void
 findDependentObjects(const ObjectAddress *object,
@@ -466,7 +466,7 @@ findDependentObjects(const ObjectAddress *object,
 					 ObjectAddressStack *stack,
 					 ObjectAddresses *targetObjects,
 					 const ObjectAddresses *pendingObjects,
-					 Relation depRel)
+					 Relation *depRel)
 {
 	ScanKeyData key[3];
 	int			nkeys;
@@ -536,7 +536,7 @@ findDependentObjects(const ObjectAddress *object,
 	else
 		nkeys = 2;
 
-	scan = systable_beginscan(depRel, DependDependerIndexId, true,
+	scan = systable_beginscan(*depRel, DependDependerIndexId, true,
 							  SnapshotNow, nkeys, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
@@ -711,7 +711,7 @@ findDependentObjects(const ObjectAddress *object,
 	else
 		nkeys = 2;
 
-	scan = systable_beginscan(depRel, DependReferenceIndexId, true,
+	scan = systable_beginscan(*depRel, DependReferenceIndexId, true,
 							  SnapshotNow, nkeys, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
@@ -982,10 +982,10 @@ reportDependentObjects(const ObjectAddresses *targetObjects,
 /*
  * deleteOneObject: delete a single object for performDeletion.
  *
- * depRel is the already-open pg_depend relation.
+ * *depRel is the already-open pg_depend relation.
  */
 static void
-deleteOneObject(const ObjectAddress *object, Relation depRel, int flags)
+deleteOneObject(const ObjectAddress *object, Relation *depRel, int flags)
 {
 	ScanKeyData key[3];
 	int			nkeys;
@@ -1008,7 +1008,7 @@ deleteOneObject(const ObjectAddress *object, Relation depRel, int flags)
 	 * relation open across doDeletion().
 	 */
 	if (flags & PERFORM_DELETION_CONCURRENTLY)
-		heap_close(depRel, RowExclusiveLock);
+		heap_close(*depRel, RowExclusiveLock);
 
 	/*
 	 * Delete the object itself, in an object-type-dependent way.
@@ -1025,7 +1025,7 @@ deleteOneObject(const ObjectAddress *object, Relation depRel, int flags)
 	 * Reopen depRel if we closed it above
 	 */
 	if (flags & PERFORM_DELETION_CONCURRENTLY)
-		depRel = heap_open(DependRelationId, RowExclusiveLock);
+		*depRel = heap_open(DependRelationId, RowExclusiveLock);
 
 	/*
 	 * Now remove any pg_depend records that link from this object to others.
@@ -1053,12 +1053,12 @@ deleteOneObject(const ObjectAddress *object, Relation depRel, int flags)
 	else
 		nkeys = 2;
 
-	scan = systable_beginscan(depRel, DependDependerIndexId, true,
+	scan = systable_beginscan(*depRel, DependDependerIndexId, true,
 							  SnapshotNow, nkeys, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
-		simple_heap_delete(depRel, &tup->t_self);
+		simple_heap_delete(*depRel, &tup->t_self);
 	}
 
 	systable_endscan(scan);
