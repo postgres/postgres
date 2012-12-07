@@ -178,8 +178,14 @@ COPY testnull FROM stdin WITH NULL AS E'\\0';
 
 SELECT * FROM testnull;
 
-
+BEGIN;
 CREATE TABLE vistest (LIKE testeoc);
+COPY vistest FROM stdin CSV;
+a0
+b
+\.
+COMMIT;
+SELECT * FROM vistest;
 BEGIN;
 TRUNCATE vistest;
 COPY vistest FROM stdin CSV;

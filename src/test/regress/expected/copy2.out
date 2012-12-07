@@ -254,7 +254,17 @@ SELECT * FROM testnull;
     | 
 (4 rows)
 
+BEGIN;
 CREATE TABLE vistest (LIKE testeoc);
+COPY vistest FROM stdin CSV;
+COMMIT;
+SELECT xmax, * FROM vistest;
+ xmax | a  
+------+----
+    0 | a0
+    0 | b
+(2 rows)
+
 BEGIN;
 TRUNCATE vistest;
 COPY vistest FROM stdin CSV;
@@ -324,14 +334,12 @@ SELECT * FROM vistest;
 COMMIT;
 TRUNCATE vistest;
 COPY vistest FROM stdin CSV FREEZE;
-NOTICE:  FREEZE option specified but pre-conditions not met
 BEGIN;
 INSERT INTO vistest VALUES ('z');
 SAVEPOINT s1;
 TRUNCATE vistest;
 ROLLBACK TO SAVEPOINT s1;
 COPY vistest FROM stdin CSV FREEZE;
-NOTICE:  FREEZE option specified but pre-conditions not met
 SELECT * FROM vistest;
  a  
 ----

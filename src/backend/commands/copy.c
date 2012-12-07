@@ -2002,7 +2002,8 @@ CopyFrom(CopyState cstate)
 		if (cstate->freeze &&
 			ThereAreNoPriorRegisteredSnapshots() &&
 			ThereAreNoReadyPortals() &&
-			cstate->rel->rd_newRelfilenodeSubid == GetCurrentSubTransactionId())
+			(cstate->rel->rd_newRelfilenodeSubid == GetCurrentSubTransactionId() ||
+			 cstate->rel->rd_createSubid == GetCurrentSubTransactionId()))
 			hi_options |= HEAP_INSERT_FROZEN;
 	}
 
