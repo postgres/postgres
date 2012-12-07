@@ -258,11 +258,11 @@ BEGIN;
 CREATE TABLE vistest (LIKE testeoc);
 COPY vistest FROM stdin CSV;
 COMMIT;
-SELECT xmax, * FROM vistest;
- xmax | a  
-------+----
-    0 | a0
-    0 | b
+SELECT * FROM vistest;
+ a  
+----
+ a0
+ b
 (2 rows)
 
 BEGIN;
