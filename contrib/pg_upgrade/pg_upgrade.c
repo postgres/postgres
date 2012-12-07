@@ -310,7 +310,7 @@ create_new_objects(void)
 		char file_name[MAXPGPATH];
 		DbInfo     *old_db = &old_cluster.dbarr.dbs[dbnum];
 
-		pg_log(PG_REPORT, OVERWRITE_MESSAGE, old_db->db_name);
+		pg_log(PG_STATUS, "%s", old_db->db_name);
 		snprintf(file_name, sizeof(file_name), DB_DUMP_FILE_MASK, old_db->db_oid);
 
 		/*

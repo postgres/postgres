@@ -24,9 +24,8 @@
 
 #define MIGRATOR_API_VERSION	1
 
-#define MESSAGE_WIDTH		"60"
+#define MESSAGE_WIDTH		60
 
-#define OVERWRITE_MESSAGE	"  %-" MESSAGE_WIDTH "." MESSAGE_WIDTH "s\r"
 #define GET_MAJOR_VERSION(v)	((v) / 100)
 
 /* contains both global db information and CREATE DATABASE commands */
@@ -208,6 +207,7 @@ typedef enum
 typedef enum
 {
 	PG_VERBOSE,
+	PG_STATUS,
 	PG_REPORT,
 	PG_WARNING,
 	PG_FATAL

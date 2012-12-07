@@ -213,7 +213,7 @@ transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
 		unlink(new_file);
 	
 		/* Copying files might take some time, so give feedback. */
-		pg_log(PG_REPORT, OVERWRITE_MESSAGE, old_file);
+		pg_log(PG_STATUS, "%s", old_file);
 	
 		if ((user_opts.transfer_mode == TRANSFER_MODE_LINK) && (pageConverter != NULL))
 			pg_log(PG_FATAL, "This upgrade requires page-by-page conversion, "

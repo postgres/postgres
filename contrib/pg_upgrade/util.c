@@ -75,7 +75,8 @@ prep_status(const char *fmt,...)
 	if (strlen(message) > 0 && message[strlen(message) - 1] == '\n')
 		pg_log(PG_REPORT, "%s", message);
 	else
-		pg_log(PG_REPORT, "%-" MESSAGE_WIDTH "s", message);
+		/* trim strings that don't end in a newline */
+		pg_log(PG_REPORT, "%-*s", MESSAGE_WIDTH, message);
 }
 
 
@@ -89,22 +90,16 @@ pg_log(eLogType type, char *fmt,...)
 	vsnprintf(message, sizeof(message), fmt, args);
 	va_end(args);
 
-	/* PG_VERBOSE is only output in verbose mode */
+	/* PG_VERBOSE and PG_STATUS are only output in verbose mode */
 	/* fopen() on log_opts.internal might have failed, so check it */
-	if ((type != PG_VERBOSE || log_opts.verbose) && log_opts.internal != NULL)
+	if (((type != PG_VERBOSE && type != PG_STATUS) || log_opts.verbose) &&
+		log_opts.internal != NULL)
 	{
-		/*
-		 * There's nothing much we can do about it if fwrite fails, but some
-		 * platforms declare fwrite with warn_unused_result.  Do a little
-		 * dance with casting to void to shut up the compiler in such cases.
-		 */
-		size_t		rc;
-
-		rc = fwrite(message, strlen(message), 1, log_opts.internal);
-		/* if we are using OVERWRITE_MESSAGE, add newline to log file */
-		if (strchr(message, '\r') != NULL)
-			rc = fwrite("\n", 1, 1, log_opts.internal);
-		(void) rc;
+		if (type == PG_STATUS)
+			/* status messages need two leading spaces and a newline */
+			fprintf(log_opts.internal, "  %s\n", message);
+		else
+			fprintf(log_opts.internal, "%s", message);
 		fflush(log_opts.internal);
 	}
 
@@ -113,6 +108,21 @@ pg_log(eLogType type, char *fmt,...)
 		case PG_VERBOSE:
 			if (log_opts.verbose)
 				printf("%s", _(message));
+			break;
+
+		case PG_STATUS:
+			/* for output to a display, do leading truncation and append \r */
+			if (isatty(fileno(stdout)))
+				/* -2 because we use a 2-space indent */
+				printf("  %s%-*.*s\r", 
+						/* prefix with "..." if we do leading truncation */
+						strlen(message) <= MESSAGE_WIDTH - 2 ? "" : "...",
+						MESSAGE_WIDTH - 2, MESSAGE_WIDTH - 2,
+						/* optional leading truncation */
+						strlen(message) <= MESSAGE_WIDTH - 2 ? message :
+						message + strlen(message) - MESSAGE_WIDTH + 3 + 2);
+			else
+				printf("  %s\n", _(message));
 			break;
 
 		case PG_REPORT:
