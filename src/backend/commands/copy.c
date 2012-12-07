@@ -1993,6 +1993,11 @@ CopyFrom(CopyState cstate)
 		 * after xact cleanup. Note that the stronger test of exactly
 		 * which subtransaction created it is crucial for correctness
 		 * of this optimisation.
+		 *
+		 * Note that because the test is unreliable in case of relcache reset
+		 * we cannot guarantee that we can honour the request to FREEZE.
+		 * If we cannot honour the request we do so silently, firstly to
+		 * avoid noise for the user and also to avoid obscure test failures.
 		 */
 		if (cstate->freeze &&
 			ThereAreNoPriorRegisteredSnapshots() &&
@@ -2000,11 +2005,6 @@ CopyFrom(CopyState cstate)
 			cstate->rel->rd_newRelfilenodeSubid == GetCurrentSubTransactionId())
 			hi_options |= HEAP_INSERT_FROZEN;
 	}
-
-	if (cstate->freeze && (hi_options & HEAP_INSERT_FROZEN) == 0)
-		ereport(NOTICE,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("FREEZE option specified but pre-conditions not met")));
 
 	/*
 	 * We need a ResultRelInfo so we can use the regular executor's
