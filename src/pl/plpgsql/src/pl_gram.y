@@ -2926,32 +2926,27 @@ make_return_stmt(int location)
 	}
 	else if (plpgsql_curr_compile->fn_retistuple)
 	{
-		switch (yylex())
+		/*
+		 * We want to special-case simple row or record references for
+		 * efficiency.  So peek ahead to see if that's what we have.
+		 */
+		int		tok = yylex();
+
+		if (tok == T_DATUM && plpgsql_peek() == ';' &&
+			(yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_ROW ||
+			 yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_REC))
 		{
-			case K_NULL:
-				/* we allow this to support RETURN NULL in triggers */
-				break;
-
-			case T_DATUM:
-				if (yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_ROW ||
-					yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_REC)
-					new->retvarno = yylval.wdatum.datum->dno;
-				else
-					ereport(ERROR,
-							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("RETURN must specify a record or row variable in function returning row"),
-							 parser_errposition(yylloc)));
-				break;
-
-			default:
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("RETURN must specify a record or row variable in function returning row"),
-						 parser_errposition(yylloc)));
-				break;
+			new->retvarno = yylval.wdatum.datum->dno;
+			/* eat the semicolon token that we only peeked at above */
+			tok = yylex();
+			Assert(tok == ';');
 		}
-		if (yylex() != ';')
-			yyerror("syntax error");
+		else
+		{
+			/* Not (just) a row/record name, so treat as expression */
+			plpgsql_push_back_token(tok);
+			new->expr = read_sql_expression(';', ";");
+		}
 	}
 	else
 	{
@@ -2994,28 +2989,27 @@ make_return_next_stmt(int location)
 	}
 	else if (plpgsql_curr_compile->fn_retistuple)
 	{
-		switch (yylex())
-		{
-			case T_DATUM:
-				if (yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_ROW ||
-					yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_REC)
-					new->retvarno = yylval.wdatum.datum->dno;
-				else
-					ereport(ERROR,
-							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("RETURN NEXT must specify a record or row variable in function returning row"),
-							 parser_errposition(yylloc)));
-				break;
+		/*
+		 * We want to special-case simple row or record references for
+		 * efficiency.  So peek ahead to see if that's what we have.
+		 */
+		int		tok = yylex();
 
-			default:
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("RETURN NEXT must specify a record or row variable in function returning row"),
-						 parser_errposition(yylloc)));
-				break;
+		if (tok == T_DATUM && plpgsql_peek() == ';' &&
+			(yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_ROW ||
+			 yylval.wdatum.datum->dtype == PLPGSQL_DTYPE_REC))
+		{
+			new->retvarno = yylval.wdatum.datum->dno;
+			/* eat the semicolon token that we only peeked at above */
+			tok = yylex();
+			Assert(tok == ';');
 		}
-		if (yylex() != ';')
-			yyerror("syntax error");
+		else
+		{
+			/* Not (just) a row/record name, so treat as expression */
+			plpgsql_push_back_token(tok);
+			new->expr = read_sql_expression(';', ";");
+		}
 	}
 	else
 		new->expr = read_sql_expression(';', ";");

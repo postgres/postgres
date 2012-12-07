@@ -1571,11 +1571,11 @@ RETURN <replaceable>expression</replaceable>;
      </para>
 
      <para>
-      When returning a scalar type, any expression can be used. The
-      expression's result will be automatically cast into the
-      function's return type as described for assignments. To return a
-      composite (row) value, you must write a record or row variable
-      as the <replaceable>expression</replaceable>.
+      In a function that returns a scalar type, the expression's result will
+      automatically be cast into the function's return type as described for
+      assignments.  But to return a composite (row) value, you must write an
+      expression delivering exactly the requested column set.  This may
+      require use of explicit casting.
      </para>
 
      <para>
@@ -1599,6 +1599,20 @@ RETURN <replaceable>expression</replaceable>;
       with output parameters and functions returning <type>void</type>,
       however.  In those cases a <command>RETURN</command> statement is
       automatically executed if the top-level block finishes.
+     </para>
+
+     <para>
+      Some examples:
+
+<programlisting>
+-- functions returning a scalar type
+RETURN 1 + 2;
+RETURN scalar_var;
+
+-- functions returning a composite type
+RETURN composite_type_var;
+RETURN (1, 2, 'three'::text);  -- must cast columns to correct types
+</programlisting>
      </para>
     </sect3>
 

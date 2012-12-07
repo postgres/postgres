@@ -189,6 +189,12 @@ static void exec_move_row(PLpgSQL_execstate *estate,
 static HeapTuple make_tuple_from_row(PLpgSQL_execstate *estate,
 					PLpgSQL_row *row,
 					TupleDesc tupdesc);
+static HeapTuple get_tuple_from_datum(Datum value);
+static TupleDesc get_tupdesc_from_datum(Datum value);
+static void exec_move_row_from_datum(PLpgSQL_execstate *estate,
+						 PLpgSQL_rec *rec,
+						 PLpgSQL_row *row,
+						 Datum value);
 static char *convert_value_to_string(PLpgSQL_execstate *estate,
 						Datum value, Oid valtype);
 static Datum exec_cast_value(PLpgSQL_execstate *estate,
@@ -275,24 +281,9 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 
 					if (!fcinfo->argnull[i])
 					{
-						HeapTupleHeader td;
-						Oid			tupType;
-						int32		tupTypmod;
-						TupleDesc	tupdesc;
-						HeapTupleData tmptup;
-
-						td = DatumGetHeapTupleHeader(fcinfo->arg[i]);
-						/* Extract rowtype info and find a tupdesc */
-						tupType = HeapTupleHeaderGetTypeId(td);
-						tupTypmod = HeapTupleHeaderGetTypMod(td);
-						tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
-						/* Build a temporary HeapTuple control structure */
-						tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
-						ItemPointerSetInvalid(&(tmptup.t_self));
-						tmptup.t_tableOid = InvalidOid;
-						tmptup.t_data = td;
-						exec_move_row(&estate, NULL, row, &tmptup, tupdesc);
-						ReleaseTupleDesc(tupdesc);
+						/* Assign row value from composite datum */
+						exec_move_row_from_datum(&estate, NULL, row,
+												 fcinfo->arg[i]);
 					}
 					else
 					{
@@ -2396,6 +2387,10 @@ exec_stmt_return(PLpgSQL_execstate *estate, PLpgSQL_stmt_return *stmt)
 	estate->rettupdesc = NULL;
 	estate->retisnull = true;
 
+	/*
+	 * This special-case path covers record/row variables in fn_retistuple
+	 * functions, as well as functions with one or more OUT parameters.
+	 */
 	if (stmt->retvarno >= 0)
 	{
 		PLpgSQL_datum *retvar = estate->datums[stmt->retvarno];
@@ -2449,22 +2444,26 @@ exec_stmt_return(PLpgSQL_execstate *estate, PLpgSQL_stmt_return *stmt)
 
 	if (stmt->expr != NULL)
 	{
-		if (estate->retistuple)
+		estate->retval = exec_eval_expr(estate, stmt->expr,
+										&(estate->retisnull),
+										&(estate->rettype));
+
+		if (estate->retistuple && !estate->retisnull)
 		{
-			exec_run_select(estate, stmt->expr, 1, NULL);
-			if (estate->eval_processed > 0)
-			{
-				estate->retval = PointerGetDatum(estate->eval_tuptable->vals[0]);
-				estate->rettupdesc = estate->eval_tuptable->tupdesc;
-				estate->retisnull = false;
-			}
-		}
-		else
-		{
-			/* Normal case for scalar results */
-			estate->retval = exec_eval_expr(estate, stmt->expr,
-											&(estate->retisnull),
-											&(estate->rettype));
+			/* Convert composite datum to a HeapTuple and TupleDesc */
+			HeapTuple	tuple;
+			TupleDesc	tupdesc;
+
+			/* Source must be of RECORD or composite type */
+			if (!type_is_rowtype(estate->rettype))
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("cannot return non-composite value from function returning composite type")));
+			tuple = get_tuple_from_datum(estate->retval);
+			tupdesc = get_tupdesc_from_datum(estate->retval);
+			estate->retval = PointerGetDatum(tuple);
+			estate->rettupdesc = CreateTupleDescCopy(tupdesc);
+			ReleaseTupleDesc(tupdesc);
 		}
 
 		return PLPGSQL_RC_RETURN;
@@ -2473,8 +2472,7 @@ exec_stmt_return(PLpgSQL_execstate *estate, PLpgSQL_stmt_return *stmt)
 	/*
 	 * Special hack for function returning VOID: instead of NULL, return a
 	 * non-null VOID value.  This is of dubious importance but is kept for
-	 * backwards compatibility.  Note that the only other way to get here is
-	 * to have written "RETURN NULL" in a function returning tuple.
+	 * backwards compatibility.
 	 */
 	if (estate->fn_rettype == VOIDOID)
 	{
@@ -2513,6 +2511,10 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 	tupdesc = estate->rettupdesc;
 	natts = tupdesc->natts;
 
+	/*
+	 * This special-case path covers record/row variables in fn_retistuple
+	 * functions, as well as functions with one or more OUT parameters.
+	 */
 	if (stmt->retvarno >= 0)
 	{
 		PLpgSQL_datum *retvar = estate->datums[stmt->retvarno];
@@ -2593,26 +2595,77 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 		bool		isNull;
 		Oid			rettype;
 
-		if (natts != 1)
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("wrong result type supplied in RETURN NEXT")));
-
 		retval = exec_eval_expr(estate,
 								stmt->expr,
 								&isNull,
 								&rettype);
 
-		/* coerce type if needed */
-		retval = exec_simple_cast_value(estate,
-										retval,
-										rettype,
-										tupdesc->attrs[0]->atttypid,
-										tupdesc->attrs[0]->atttypmod,
-										isNull);
+		if (estate->retistuple)
+		{
+			/* Expression should be of RECORD or composite type */
+			if (!isNull)
+			{
+				TupleDesc	retvaldesc;
+				TupleConversionMap *tupmap;
 
-		tuplestore_putvalues(estate->tuple_store, tupdesc,
-							 &retval, &isNull);
+				if (!type_is_rowtype(rettype))
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("cannot return non-composite value from function returning composite type")));
+
+				tuple = get_tuple_from_datum(retval);
+				free_tuple = true;		/* tuple is always freshly palloc'd */
+
+				/* it might need conversion */
+				retvaldesc = get_tupdesc_from_datum(retval);
+				tupmap = convert_tuples_by_position(retvaldesc, tupdesc,
+													gettext_noop("returned record type does not match expected record type"));
+				if (tupmap)
+				{
+					HeapTuple	newtuple;
+
+					newtuple = do_convert_tuple(tuple, tupmap);
+					free_conversion_map(tupmap);
+					heap_freetuple(tuple);
+					tuple = newtuple;
+				}
+				ReleaseTupleDesc(retvaldesc);
+				/* tuple will be stored into tuplestore below */
+			}
+			else
+			{
+				/* Composite NULL --- store a row of nulls */
+				Datum	   *nulldatums;
+				bool	   *nullflags;
+
+				nulldatums = (Datum *) palloc0(natts * sizeof(Datum));
+				nullflags = (bool *) palloc(natts * sizeof(bool));
+				memset(nullflags, true, natts * sizeof(bool));
+				tuplestore_putvalues(estate->tuple_store, tupdesc,
+									 nulldatums, nullflags);
+				pfree(nulldatums);
+				pfree(nullflags);
+			}
+		}
+		else
+		{
+			/* Simple scalar result */
+			if (natts != 1)
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+					   errmsg("wrong result type supplied in RETURN NEXT")));
+
+			/* coerce type if needed */
+			retval = exec_simple_cast_value(estate,
+											retval,
+											rettype,
+											tupdesc->attrs[0]->atttypid,
+											tupdesc->attrs[0]->atttypmod,
+											isNull);
+
+			tuplestore_putvalues(estate->tuple_store, tupdesc,
+								 &retval, &isNull);
+		}
 	}
 	else
 	{
@@ -3901,30 +3954,12 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				}
 				else
 				{
-					HeapTupleHeader td;
-					Oid			tupType;
-					int32		tupTypmod;
-					TupleDesc	tupdesc;
-					HeapTupleData tmptup;
-
 					/* Source must be of RECORD or composite type */
 					if (!type_is_rowtype(valtype))
 						ereport(ERROR,
 								(errcode(ERRCODE_DATATYPE_MISMATCH),
 								 errmsg("cannot assign non-composite value to a row variable")));
-					/* Source is a tuple Datum, so safe to do this: */
-					td = DatumGetHeapTupleHeader(value);
-					/* Extract rowtype info and find a tupdesc */
-					tupType = HeapTupleHeaderGetTypeId(td);
-					tupTypmod = HeapTupleHeaderGetTypMod(td);
-					tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
-					/* Build a temporary HeapTuple control structure */
-					tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
-					ItemPointerSetInvalid(&(tmptup.t_self));
-					tmptup.t_tableOid = InvalidOid;
-					tmptup.t_data = td;
-					exec_move_row(estate, NULL, row, &tmptup, tupdesc);
-					ReleaseTupleDesc(tupdesc);
+					exec_move_row_from_datum(estate, NULL, row, value);
 				}
 				break;
 			}
@@ -3943,31 +3978,12 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				}
 				else
 				{
-					HeapTupleHeader td;
-					Oid			tupType;
-					int32		tupTypmod;
-					TupleDesc	tupdesc;
-					HeapTupleData tmptup;
-
 					/* Source must be of RECORD or composite type */
 					if (!type_is_rowtype(valtype))
 						ereport(ERROR,
 								(errcode(ERRCODE_DATATYPE_MISMATCH),
 								 errmsg("cannot assign non-composite value to a record variable")));
-
-					/* Source is a tuple Datum, so safe to do this: */
-					td = DatumGetHeapTupleHeader(value);
-					/* Extract rowtype info and find a tupdesc */
-					tupType = HeapTupleHeaderGetTypeId(td);
-					tupTypmod = HeapTupleHeaderGetTypMod(td);
-					tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
-					/* Build a temporary HeapTuple control structure */
-					tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
-					ItemPointerSetInvalid(&(tmptup.t_self));
-					tmptup.t_tableOid = InvalidOid;
-					tmptup.t_data = td;
-					exec_move_row(estate, rec, NULL, &tmptup, tupdesc);
-					ReleaseTupleDesc(tupdesc);
+					exec_move_row_from_datum(estate, rec, NULL, value);
 				}
 				break;
 			}
@@ -5414,6 +5430,89 @@ make_tuple_from_row(PLpgSQL_execstate *estate,
 	pfree(nulls);
 
 	return tuple;
+}
+
+/* ----------
+ * get_tuple_from_datum		extract a tuple from a composite Datum
+ *
+ * Returns a freshly palloc'd HeapTuple.
+ *
+ * Note: it's caller's responsibility to be sure value is of composite type.
+ * ----------
+ */
+static HeapTuple
+get_tuple_from_datum(Datum value)
+{
+	HeapTupleHeader td = DatumGetHeapTupleHeader(value);
+	HeapTupleData tmptup;
+
+	/* Build a temporary HeapTuple control structure */
+	tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
+	ItemPointerSetInvalid(&(tmptup.t_self));
+	tmptup.t_tableOid = InvalidOid;
+	tmptup.t_data = td;
+
+	/* Build a copy and return it */
+	return heap_copytuple(&tmptup);
+}
+
+/* ----------
+ * get_tupdesc_from_datum	get a tuple descriptor for a composite Datum
+ *
+ * Returns a pointer to the TupleDesc of the tuple's rowtype.
+ * Caller is responsible for calling ReleaseTupleDesc when done with it.
+ *
+ * Note: it's caller's responsibility to be sure value is of composite type.
+ * ----------
+ */
+static TupleDesc
+get_tupdesc_from_datum(Datum value)
+{
+	HeapTupleHeader td = DatumGetHeapTupleHeader(value);
+	Oid			tupType;
+	int32		tupTypmod;
+
+	/* Extract rowtype info and find a tupdesc */
+	tupType = HeapTupleHeaderGetTypeId(td);
+	tupTypmod = HeapTupleHeaderGetTypMod(td);
+	return lookup_rowtype_tupdesc(tupType, tupTypmod);
+}
+
+/* ----------
+ * exec_move_row_from_datum		Move a composite Datum into a record or row
+ *
+ * This is equivalent to get_tuple_from_datum() followed by exec_move_row(),
+ * but we avoid constructing an intermediate physical copy of the tuple.
+ * ----------
+ */
+static void
+exec_move_row_from_datum(PLpgSQL_execstate *estate,
+						 PLpgSQL_rec *rec,
+						 PLpgSQL_row *row,
+						 Datum value)
+{
+	HeapTupleHeader td = DatumGetHeapTupleHeader(value);
+	Oid			tupType;
+	int32		tupTypmod;
+	TupleDesc	tupdesc;
+	HeapTupleData tmptup;
+
+	/* Extract rowtype info and find a tupdesc */
+	tupType = HeapTupleHeaderGetTypeId(td);
+	tupTypmod = HeapTupleHeaderGetTypMod(td);
+	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+
+	/* Build a temporary HeapTuple control structure */
+	tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
+	ItemPointerSetInvalid(&(tmptup.t_self));
+	tmptup.t_tableOid = InvalidOid;
+	tmptup.t_data = td;
+
+	/* Do the move */
+	exec_move_row(estate, rec, row, &tmptup, tupdesc);
+
+	/* Release tupdesc usage count */
+	ReleaseTupleDesc(tupdesc);
 }
 
 /* ----------

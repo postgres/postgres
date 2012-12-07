@@ -2937,7 +2937,119 @@ select * from returnqueryf();
 drop function returnqueryf();
 drop table tabwithcols;
 
+--
+-- Tests for composite-type results
+--
+
+create type footype as (x int, y varchar);
+
+-- test: use of variable of composite type in return statement
+create or replace function foo() returns footype as $$
+declare
+  v footype;
+begin
+  v := (1, 'hello');
+  return v;
+end;
+$$ language plpgsql;
+
+select foo();
+
+-- test: use of variable of record type in return statement
+create or replace function foo() returns footype as $$
+declare
+  v record;
+begin
+  v := (1, 'hello'::varchar);
+  return v;
+end;
+$$ language plpgsql;
+
+select foo();
+
+-- test: use of row expr in return statement
+create or replace function foo() returns footype as $$
+begin
+  return (1, 'hello'::varchar);
+end;
+$$ language plpgsql;
+
+select foo();
+
+-- this does not work currently (no implicit casting)
+create or replace function foo() returns footype as $$
+begin
+  return (1, 'hello');
+end;
+$$ language plpgsql;
+
+select foo();
+
+-- ... but this does
+create or replace function foo() returns footype as $$
+begin
+  return (1, 'hello')::footype;
+end;
+$$ language plpgsql;
+
+select foo();
+
+drop function foo();
+
+-- test: return a row expr as record.
+create or replace function foorec() returns record as $$
+declare
+  v record;
+begin
+  v := (1, 'hello');
+  return v;
+end;
+$$ language plpgsql;
+
+select foorec();
+
+-- test: return row expr in return statement.
+create or replace function foorec() returns record as $$
+begin
+  return (1, 'hello');
+end;
+$$ language plpgsql;
+
+select foorec();
+
+drop function foorec();
+
+-- test: row expr in RETURN NEXT statement.
+create or replace function foo() returns setof footype as $$
+begin
+  for i in 1..3
+  loop
+    return next (1, 'hello'::varchar);
+  end loop;
+  return next null::footype;
+  return next (2, 'goodbye')::footype;
+end;
+$$ language plpgsql;
+
+select * from foo();
+
+drop function foo();
+
+-- test: use invalid expr in return statement.
+create or replace function foo() returns footype as $$
+begin
+  return 1 + 1;
+end;
+$$ language plpgsql;
+
+select foo();
+
+drop function foo();
+drop type footype;
+
+--
 -- Tests for 8.4's new RAISE features
+--
 
 create or replace function raise_test() returns void as $$
 begin
