@@ -128,17 +128,6 @@ CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] VIEW <replaceable class="PARAMETER">n
   <title>Notes</title>
 
    <para>
-    Currently, views are read only: the system will not allow an insert,
-    update, or delete on a view.  You can get the effect of an updatable
-    view by creating <literal>INSTEAD</> triggers on the view, which
-    must convert attempted inserts, etc. on the view into
-    appropriate actions on other tables.  For more information see
-    <xref linkend="sql-createtrigger">.  Another possibility is to create
-    rules (see <xref linkend="sql-createrule">), but in practice triggers
-    are easier to understand and use correctly.
-   </para>
-
-   <para>
     Use the <xref linkend="sql-dropview">
     statement to drop views.
    </para>
@@ -175,6 +164,105 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
     to replace it (this includes being a member of the owning role).
    </para>
 
+  <refsect2 id="SQL-CREATEVIEW-updatable-views">
+   <title id="SQL-CREATEVIEW-updatable-views-title">Updatable Views</title>
+
+   <indexterm zone="sql-createview-updatable-views">
+    <primary>updatable views</primary>
+   </indexterm>
+
+   <para>
+    Simple views are automatically updatable: the system will allow
+    <command>INSERT</>, <command>UPDATE</> and <command>DELETE</> statements
+    to be used on the view in the same way as on a regular table.  A view is
+    automatically updatable if it satisfies all of the following conditions:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       The view must have exactly one entry in its <literal>FROM</> list,
+       which must be a table or another updatable view.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The view definition must not contain <literal>WITH</>,
+       <literal>DISTINCT</>, <literal>GROUP BY</>, <literal>HAVING</>,
+       <literal>LIMIT</>, or <literal>OFFSET</> clauses at the top level.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The view definition must not contain set operations (<literal>UNION</>,
+       <literal>INTERSECT</> or <literal>EXCEPT</>) at the top level.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       All columns in the view's select list must be simple references to
+       columns of the underlying relation.  They cannot be expressions,
+       literals or functions.  System columns cannot be referenced, either.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       No column of the underlying relation can appear more than once in
+       the view's select list.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       The view must not have the <literal>security_barrier</> property.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+
+   <para>
+    If the view is automatically updatable the system will convert any
+    <command>INSERT</>, <command>UPDATE</> or <command>DELETE</> statement
+    on the view into the corresponding statement on the underlying base
+    relation.
+   </para>
+
+   <para>
+    If an automatically updatable view contains a <literal>WHERE</>
+    condition, the condition restricts which rows of the base relation are
+    available to be modified by <command>UPDATE</> and <command>DELETE</>
+    statements on the view.  However, an <command>UPDATE</> is allowed to
+    change a row so that it no longer satisfies the <literal>WHERE</>
+    condition, and thus is no longer visible through the view.  Similarly,
+    an <command>INSERT</> command can potentially insert base-relation rows
+    that do not satisfy the <literal>WHERE</> condition and thus are not
+    visible through the view.
+   </para>
+
+   <para>
+    A more complex view that does not satisfy all these conditions is
+    read-only by default: the system will not allow an insert, update, or
+    delete on the view.  You can get the effect of an updatable view by
+    creating <literal>INSTEAD OF</> triggers on the view, which must
+    convert attempted inserts, etc. on the view into appropriate actions
+    on other tables.  For more information see <xref
+    linkend="sql-createtrigger">.  Another possibility is to create rules
+    (see <xref linkend="sql-createrule">), but in practice triggers are
+    easier to understand and use correctly.
+   </para>
+
+   <para>
+    Note that the user performing the insert, update or delete on the view
+    must have the corresponding insert, update or delete privilege on the
+    view.  In addition the view's owner must have the relevant privileges on
+    the underlying base relations, but the user performing the update does
+    not need any permissions on the underlying base relations (see
+    <xref linkend="rules-privileges">).
+   </para>
+  </refsect2>
  </refsect1>
 
  <refsect1>
@@ -217,11 +305,15 @@ CREATE VIEW <replaceable class="parameter">name</replaceable> [ ( <replaceable c
       <term><literal>CHECK OPTION</literal></term>
       <listitem>
        <para>
-        This option has to do with updatable views.  All
-        <command>INSERT</> and <command>UPDATE</> commands on the view
-        will be checked to ensure data satisfy the view-defining
-        condition (that is, the new data would be visible through the
-        view). If they do not, the update will be rejected.
+        This option controls the behavior of automatically updatable views.
+        When given, <command>INSERT</> and <command>UPDATE</> commands on
+        the view will be checked to ensure new rows satisfy the
+        view-defining condition (that is, the new rows would be visible
+        through the view). If they do not, the update will be rejected.
+        Without <literal>CHECK OPTION</literal>, <command>INSERT</> and
+        <command>UPDATE</> commands on the view are allowed to create rows
+        that are not visible through the view.  (The latter behavior is the
+        only one currently provided by <productname>PostgreSQL</>.)
        </para>
       </listitem>
      </varlistentry>
@@ -252,6 +344,7 @@ CREATE VIEW <replaceable class="parameter">name</replaceable> [ ( <replaceable c
    <command>CREATE OR REPLACE VIEW</command> is a
    <productname>PostgreSQL</productname> language extension.
    So is the concept of a temporary view.
+   The <literal>WITH</> clause is an extension as well.
   </para>
  </refsect1>
 

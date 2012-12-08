@@ -80,10 +80,11 @@ ALTER VIEW [ IF EXISTS ] <replaceable class="parameter">name</replaceable> RESET
     <listitem>
      <para>
       These forms set or remove the default value for a column.
-      A default value associated with a view column is
-      inserted into <command>INSERT</> statements on the view before
-      the view's <literal>ON INSERT</literal> rule is applied, if
-      the <command>INSERT</> does not specify a value for the column.
+      A view column's default value is substituted into any
+      <command>INSERT</> or <command>UPDATE</> command whose target is the
+      view, before applying any rules or triggers for the view.  The view's
+      default will therefore take precedence over any default values from
+      underlying relations.
      </para>
     </listitem>
    </varlistentry>

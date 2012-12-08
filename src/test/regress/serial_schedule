@@ -67,6 +67,7 @@ test: create_table_like
 test: typed_table
 test: vacuum
 test: drop_if_exists
+test: updatable_views
 test: sanity_check
 test: errors
 test: select

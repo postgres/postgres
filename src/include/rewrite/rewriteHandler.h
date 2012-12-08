@@ -19,6 +19,8 @@
 
 extern List *QueryRewrite(Query *parsetree);
 extern void AcquireRewriteLocks(Query *parsetree, bool forUpdatePushedDown);
+
 extern Node *build_column_default(Relation rel, int attrno);
+extern bool relation_is_updatable(Oid reloid, int req_events);
 
 #endif   /* REWRITEHANDLER_H */

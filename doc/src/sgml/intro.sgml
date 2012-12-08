@@ -110,7 +110,7 @@
      <simpara>triggers</simpara>
     </listitem>
     <listitem>
-     <simpara>views</simpara>
+     <simpara>updatable views</simpara>
     </listitem>
     <listitem>
      <simpara>transactional integrity</simpara>

@@ -730,10 +730,8 @@ CREATE VIEW columns AS
            CAST('NEVER' AS character_data) AS is_generated,
            CAST(null AS character_data) AS generation_expression,
 
-           CAST(CASE WHEN c.relkind = 'r'
-                          OR (c.relkind = 'v'
-                              AND EXISTS (SELECT 1 FROM pg_rewrite WHERE ev_class = c.oid AND ev_type = '2' AND is_instead)
-                              AND EXISTS (SELECT 1 FROM pg_rewrite WHERE ev_class = c.oid AND ev_type = '4' AND is_instead))
+           CAST(CASE WHEN c.relkind = 'r' OR
+                          (c.relkind = 'v' AND pg_view_is_updatable(c.oid))
                 THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_updatable
 
     FROM (pg_attribute a LEFT JOIN pg_attrdef ad ON attrelid = adrelid AND attnum = adnum)
@@ -1896,9 +1894,8 @@ CREATE VIEW tables AS
            CAST(nt.nspname AS sql_identifier) AS user_defined_type_schema,
            CAST(t.typname AS sql_identifier) AS user_defined_type_name,
 
-           CAST(CASE WHEN c.relkind = 'r'
-                          OR (c.relkind = 'v'
-                              AND EXISTS (SELECT 1 FROM pg_rewrite WHERE ev_class = c.oid AND ev_type = '3' AND is_instead))
+           CAST(CASE WHEN c.relkind = 'r' OR
+                          (c.relkind = 'v' AND pg_view_is_insertable(c.oid))
                 THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_insertable_into,
 
            CAST(CASE WHEN t.typname IS NOT NULL THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_typed,
@@ -2497,14 +2494,11 @@ CREATE VIEW views AS
            CAST('NONE' AS character_data) AS check_option,
 
            CAST(
-             CASE WHEN EXISTS (SELECT 1 FROM pg_rewrite WHERE ev_class = c.oid AND ev_type = '2' AND is_instead)
-                   AND EXISTS (SELECT 1 FROM pg_rewrite WHERE ev_class = c.oid AND ev_type = '4' AND is_instead)
-                  THEN 'YES' ELSE 'NO' END
+             CASE WHEN pg_view_is_updatable(c.oid) THEN 'YES' ELSE 'NO' END
              AS yes_or_no) AS is_updatable,
 
            CAST(
-             CASE WHEN EXISTS (SELECT 1 FROM pg_rewrite WHERE ev_class = c.oid AND ev_type = '3' AND is_instead)
-                  THEN 'YES' ELSE 'NO' END
+             CASE WHEN pg_view_is_insertable(c.oid) THEN 'YES' ELSE 'NO' END
              AS yes_or_no) AS is_insertable_into,
 
            CAST(

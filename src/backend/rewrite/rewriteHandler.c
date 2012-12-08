@@ -1834,6 +1834,633 @@ fireRules(Query *parsetree,
 
 
 /*
+ * get_view_query - get the Query from a view's _RETURN rule.
+ *
+ * Caller should have verified that the relation is a view, and therefore
+ * we should find an ON SELECT action.
+ */
+static Query *
+get_view_query(Relation view)
+{
+	int			i;
+
+	Assert(view->rd_rel->relkind == RELKIND_VIEW);
+
+	for (i = 0; i < view->rd_rules->numLocks; i++)
+	{
+		RewriteRule *rule = view->rd_rules->rules[i];
+
+		if (rule->event == CMD_SELECT)
+		{
+			/* A _RETURN rule should have only one action */
+			if (list_length(rule->actions) != 1)
+				elog(ERROR, "invalid _RETURN rule action specification");
+
+			return (Query *) linitial(rule->actions);
+		}
+	}
+
+	elog(ERROR, "failed to find _RETURN rule for view");
+	return NULL;				/* keep compiler quiet */
+}
+
+
+/*
+ * view_has_instead_trigger - does view have an INSTEAD OF trigger for event?
+ *
+ * If it does, we don't want to treat it as auto-updatable.  This test can't
+ * be folded into view_is_auto_updatable because it's not an error condition.
+ */
+static bool
+view_has_instead_trigger(Relation view, CmdType event)
+{
+	TriggerDesc *trigDesc = view->trigdesc;
+
+	switch (event)
+	{
+		case CMD_INSERT:
+			if (trigDesc && trigDesc->trig_insert_instead_row)
+				return true;
+			break;
+		case CMD_UPDATE:
+			if (trigDesc && trigDesc->trig_update_instead_row)
+				return true;
+			break;
+		case CMD_DELETE:
+			if (trigDesc && trigDesc->trig_delete_instead_row)
+				return true;
+			break;
+		default:
+			elog(ERROR, "unrecognized CmdType: %d", (int) event);
+			break;
+	}
+	return false;
+}
+
+
+/*
+ * view_is_auto_updatable -
+ *	  Test if the specified view can be automatically updated. This will
+ *	  either return NULL (if the view can be updated) or a message string
+ *	  giving the reason that it cannot be.
+ *
+ * Caller must have verified that relation is a view!
+ *
+ * Note that the checks performed here are local to this view.	We do not
+ * check whether the view's underlying base relation is updatable; that
+ * will be dealt with in later, recursive processing.
+ *
+ * Also note that we don't check for INSTEAD triggers or rules here; those
+ * also prevent auto-update, but they must be checked for by the caller.
+ */
+static const char *
+view_is_auto_updatable(Relation view)
+{
+	Query	   *viewquery = get_view_query(view);
+	RangeTblRef *rtr;
+	RangeTblEntry *base_rte;
+	Bitmapset  *bms;
+	ListCell   *cell;
+
+	/*----------
+	 * Check if the view is simply updatable.  According to SQL-92 this means:
+	 *	- No DISTINCT clause.
+	 *	- Each TLE is a column reference, and each column appears at most once.
+	 *	- FROM contains exactly one base relation.
+	 *	- No GROUP BY or HAVING clauses.
+	 *	- No set operations (UNION, INTERSECT or EXCEPT).
+	 *	- No sub-queries in the WHERE clause that reference the target table.
+	 *
+	 * We ignore that last restriction since it would be complex to enforce
+	 * and there isn't any actual benefit to disallowing sub-queries.  (The
+	 * semantic issues that the standard is presumably concerned about don't
+	 * arise in Postgres, since any such sub-query will not see any updates
+	 * executed by the outer query anyway, thanks to MVCC snapshotting.)
+	 *
+	 * In addition we impose these constraints, involving features that are
+	 * not part of SQL-92:
+	 *	- No CTEs (WITH clauses).
+	 *	- No OFFSET or LIMIT clauses (this matches a SQL:2008 restriction).
+	 *	- No system columns (including whole-row references) in the tlist.
+	 *
+	 * Note that we do these checks without recursively expanding the view.
+	 * If the base relation is a view, we'll recursively deal with it later.
+	 *----------
+	 */
+	if (viewquery->distinctClause != NIL)
+		return gettext_noop("Views containing DISTINCT are not automatically updatable.");
+
+	if (viewquery->groupClause != NIL)
+		return gettext_noop("Views containing GROUP BY are not automatically updatable.");
+
+	if (viewquery->havingQual != NULL)
+		return gettext_noop("Views containing HAVING are not automatically updatable.");
+
+	if (viewquery->setOperations != NULL)
+		return gettext_noop("Views containing UNION, INTERSECT or EXCEPT are not automatically updatable.");
+
+	if (viewquery->cteList != NIL)
+		return gettext_noop("Views containing WITH are not automatically updatable.");
+
+	if (viewquery->limitOffset != NULL || viewquery->limitCount != NULL)
+		return gettext_noop("Views containing LIMIT or OFFSET are not automatically updatable.");
+
+	/*
+	 * For now, we also don't support security-barrier views, because of the
+	 * difficulty of keeping upper-level qual expressions away from
+	 * lower-level data.  This might get relaxed in future.
+	 */
+	if (RelationIsSecurityView(view))
+		return gettext_noop("Security-barrier views are not automatically updatable.");
+
+	/*
+	 * The view query should select from a single base relation, which must be
+	 * a table or another view.
+	 */
+	if (list_length(viewquery->jointree->fromlist) != 1)
+		return gettext_noop("Views that do not select from a single table or view are not automatically updatable.");
+
+	rtr = (RangeTblRef *) linitial(viewquery->jointree->fromlist);
+	if (!IsA(rtr, RangeTblRef))
+		return gettext_noop("Views that do not select from a single table or view are not automatically updatable.");
+
+	base_rte = rt_fetch(rtr->rtindex, viewquery->rtable);
+	if (base_rte->rtekind != RTE_RELATION ||
+		(base_rte->relkind != RELKIND_RELATION &&
+		 base_rte->relkind != RELKIND_VIEW))
+		return gettext_noop("Views that do not select from a single table or view are not automatically updatable.");
+
+	/*
+	 * The view's targetlist entries should all be Vars referring to user
+	 * columns of the base relation, and no two should refer to the same
+	 * column.
+	 *
+	 * Note however that we should ignore resjunk entries.	This proviso is
+	 * relevant because ORDER BY is not disallowed, and we shouldn't reject a
+	 * view defined like "SELECT * FROM t ORDER BY a+b".
+	 */
+	bms = NULL;
+	foreach(cell, viewquery->targetList)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(cell);
+		Var		   *var = (Var *) tle->expr;
+
+		if (tle->resjunk)
+			continue;
+
+		if (!IsA(var, Var) ||
+			var->varno != rtr->rtindex ||
+			var->varlevelsup != 0)
+			return gettext_noop("Views that return columns that are not columns of their base relation are not automatically updatable.");
+
+		if (var->varattno < 0)
+			return gettext_noop("Views that return system columns are not automatically updatable.");
+
+		if (var->varattno == 0)
+			return gettext_noop("Views that return whole-row references are not automatically updatable.");
+
+		if (bms_is_member(var->varattno, bms))
+			return gettext_noop("Views that return the same column more than once are not automatically updatable.");
+
+		bms = bms_add_member(bms, var->varattno);
+	}
+	bms_free(bms);				/* just for cleanliness */
+
+	return NULL;				/* the view is simply updatable */
+}
+
+
+/*
+ * relation_is_updatable - test if the specified relation is updatable.
+ *
+ * This is used for the information_schema views, which have separate concepts
+ * of "updatable" and "trigger updatable".	A relation is "updatable" if it
+ * can be updated without the need for triggers (either because it has a
+ * suitable RULE, or because it is simple enough to be automatically updated).
+ *
+ * A relation is "trigger updatable" if it has a suitable INSTEAD OF trigger.
+ * The SQL standard regards this as not necessarily updatable, presumably
+ * because there is no way of knowing what the trigger will actually do.
+ * That's currently handled directly in the information_schema views, so
+ * need not be considered here.
+ *
+ * In the case of an automatically updatable view, the base relation must
+ * also be updatable.
+ *
+ * reloid is the pg_class OID to examine.  req_events is a bitmask of
+ * rule event numbers; the relation is considered rule-updatable if it has
+ * all the specified rules.  (We do it this way so that we can test for
+ * UPDATE plus DELETE rules in a single call.)
+ */
+bool
+relation_is_updatable(Oid reloid, int req_events)
+{
+	Relation	rel;
+	RuleLock   *rulelocks;
+
+	rel = try_relation_open(reloid, AccessShareLock);
+
+	/*
+	 * If the relation doesn't exist, say "false" rather than throwing an
+	 * error.  This is helpful since scanning an information_schema view
+	 * under MVCC rules can result in referencing rels that were just
+	 * deleted according to a SnapshotNow probe.
+	 */
+	if (rel == NULL)
+		return false;
+
+	/* Look for unconditional DO INSTEAD rules, and note supported events */
+	rulelocks = rel->rd_rules;
+	if (rulelocks != NULL)
+	{
+		int			events = 0;
+		int			i;
+
+		for (i = 0; i < rulelocks->numLocks; i++)
+		{
+			if (rulelocks->rules[i]->isInstead &&
+				rulelocks->rules[i]->qual == NULL)
+			{
+				events |= 1 << rulelocks->rules[i]->event;
+			}
+		}
+
+		/* If we have all rules needed, say "yes" */
+		if ((events & req_events) == req_events)
+		{
+			relation_close(rel, AccessShareLock);
+			return true;
+		}
+	}
+
+	/* Check if this is an automatically updatable view */
+	if (rel->rd_rel->relkind == RELKIND_VIEW &&
+		view_is_auto_updatable(rel) == NULL)
+	{
+		Query	   *viewquery;
+		RangeTblRef *rtr;
+		RangeTblEntry *base_rte;
+		Oid			baseoid;
+
+		/* The base relation must also be updatable */
+		viewquery = get_view_query(rel);
+		rtr = (RangeTblRef *) linitial(viewquery->jointree->fromlist);
+		base_rte = rt_fetch(rtr->rtindex, viewquery->rtable);
+
+		if (base_rte->relkind == RELKIND_RELATION)
+		{
+			/* Tables are always updatable */
+			relation_close(rel, AccessShareLock);
+			return true;
+		}
+		else
+		{
+			/* Do a recursive check for any other kind of base relation */
+			baseoid = base_rte->relid;
+			relation_close(rel, AccessShareLock);
+			return relation_is_updatable(baseoid, req_events);
+		}
+	}
+
+	/* If we reach here, the relation is not updatable */
+	relation_close(rel, AccessShareLock);
+	return false;
+}
+
+
+/*
+ * adjust_view_column_set - map a set of column numbers according to targetlist
+ *
+ * This is used with simply-updatable views to map column-permissions sets for
+ * the view columns onto the matching columns in the underlying base relation.
+ * The targetlist is expected to be a list of plain Vars of the underlying
+ * relation (as per the checks above in view_is_auto_updatable).
+ */
+static Bitmapset *
+adjust_view_column_set(Bitmapset *cols, List *targetlist)
+{
+	Bitmapset  *result = NULL;
+	Bitmapset  *tmpcols;
+	AttrNumber	col;
+
+	tmpcols = bms_copy(cols);
+	while ((col = bms_first_member(tmpcols)) >= 0)
+	{
+		/* bit numbers are offset by FirstLowInvalidHeapAttributeNumber */
+		AttrNumber	attno = col + FirstLowInvalidHeapAttributeNumber;
+
+		if (attno == InvalidAttrNumber)
+		{
+			/*
+			 * There's a whole-row reference to the view.  For permissions
+			 * purposes, treat it as a reference to each column available from
+			 * the view.  (We should *not* convert this to a whole-row
+			 * reference to the base relation, since the view may not touch
+			 * all columns of the base relation.)
+			 */
+			ListCell   *lc;
+
+			foreach(lc, targetlist)
+			{
+				TargetEntry *tle = (TargetEntry *) lfirst(lc);
+				Var		   *var;
+
+				if (tle->resjunk)
+					continue;
+				var = (Var *) tle->expr;
+				Assert(IsA(var, Var));
+				result = bms_add_member(result,
+						 var->varattno - FirstLowInvalidHeapAttributeNumber);
+			}
+		}
+		else
+		{
+			/*
+			 * Views do not have system columns, so we do not expect to see
+			 * any other system attnos here.  If we do find one, the error
+			 * case will apply.
+			 */
+			TargetEntry *tle = get_tle_by_resno(targetlist, attno);
+
+			if (tle != NULL && !tle->resjunk && IsA(tle->expr, Var))
+			{
+				Var		   *var = (Var *) tle->expr;
+
+				result = bms_add_member(result,
+						 var->varattno - FirstLowInvalidHeapAttributeNumber);
+			}
+			else
+				elog(ERROR, "attribute number %d not found in view targetlist",
+					 attno);
+		}
+	}
+	bms_free(tmpcols);
+
+	return result;
+}
+
+
+/*
+ * rewriteTargetView -
+ *	  Attempt to rewrite a query where the target relation is a view, so that
+ *	  the view's base relation becomes the target relation.
+ *
+ * Note that the base relation here may itself be a view, which may or may not
+ * have INSTEAD OF triggers or rules to handle the update.	That is handled by
+ * the recursion in RewriteQuery.
+ */
+static Query *
+rewriteTargetView(Query *parsetree, Relation view)
+{
+	const char *auto_update_detail;
+	Query	   *viewquery;
+	RangeTblRef *rtr;
+	int			base_rt_index;
+	int			new_rt_index;
+	RangeTblEntry *base_rte;
+	RangeTblEntry *view_rte;
+	RangeTblEntry *new_rte;
+	Relation	base_rel;
+	List	   *view_targetlist;
+	ListCell   *lc;
+
+	/* The view must be simply updatable, else fail */
+	auto_update_detail = view_is_auto_updatable(view);
+	if (auto_update_detail)
+	{
+		/* messages here should match execMain.c's CheckValidResultRel */
+		switch (parsetree->commandType)
+		{
+			case CMD_INSERT:
+				ereport(ERROR,
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("cannot insert into view \"%s\"",
+								RelationGetRelationName(view)),
+						 errdetail_internal("%s", _(auto_update_detail)),
+						 errhint("To make the view insertable, provide an unconditional ON INSERT DO INSTEAD rule or an INSTEAD OF INSERT trigger.")));
+				break;
+			case CMD_UPDATE:
+				ereport(ERROR,
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("cannot update view \"%s\"",
+								RelationGetRelationName(view)),
+						 errdetail_internal("%s", _(auto_update_detail)),
+						 errhint("To make the view updatable, provide an unconditional ON UPDATE DO INSTEAD rule or an INSTEAD OF UPDATE trigger.")));
+				break;
+			case CMD_DELETE:
+				ereport(ERROR,
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("cannot delete from view \"%s\"",
+								RelationGetRelationName(view)),
+						 errdetail_internal("%s", _(auto_update_detail)),
+						 errhint("To make the view updatable, provide an unconditional ON DELETE DO INSTEAD rule or an INSTEAD OF DELETE trigger.")));
+				break;
+			default:
+				elog(ERROR, "unrecognized CmdType: %d",
+					 (int) parsetree->commandType);
+				break;
+		}
+	}
+
+	/* Locate RTE describing the view in the outer query */
+	view_rte = rt_fetch(parsetree->resultRelation, parsetree->rtable);
+
+	/*
+	 * If we get here, view_is_auto_updatable() has verified that the view
+	 * contains a single base relation.
+	 */
+	viewquery = get_view_query(view);
+
+	Assert(list_length(viewquery->jointree->fromlist) == 1);
+	rtr = (RangeTblRef *) linitial(viewquery->jointree->fromlist);
+	Assert(IsA(rtr, RangeTblRef));
+
+	base_rt_index = rtr->rtindex;
+	base_rte = rt_fetch(base_rt_index, viewquery->rtable);
+	Assert(base_rte->rtekind == RTE_RELATION);
+
+	/*
+	 * Up to now, the base relation hasn't been touched at all in our query.
+	 * We need to acquire lock on it before we try to do anything with it.
+	 * (The subsequent recursive call of RewriteQuery will suppose that we
+	 * already have the right lock!)  Since it will become the query target
+	 * relation, RowExclusiveLock is always the right thing.
+	 */
+	base_rel = heap_open(base_rte->relid, RowExclusiveLock);
+
+	/*
+	 * While we have the relation open, update the RTE's relkind, just in case
+	 * it changed since this view was made (cf. AcquireRewriteLocks).
+	 */
+	base_rte->relkind = base_rel->rd_rel->relkind;
+
+	heap_close(base_rel, NoLock);
+
+	/*
+	 * Create a new target RTE describing the base relation, and add it to the
+	 * outer query's rangetable.  (What's happening in the next few steps is
+	 * very much like what the planner would do to "pull up" the view into the
+	 * outer query.  Perhaps someday we should refactor things enough so that
+	 * we can share code with the planner.)
+	 */
+	new_rte = (RangeTblEntry *) copyObject(base_rte);
+	parsetree->rtable = lappend(parsetree->rtable, new_rte);
+	new_rt_index = list_length(parsetree->rtable);
+
+	/*
+	 * Make a copy of the view's targetlist, adjusting its Vars to reference
+	 * the new target RTE, ie make their varnos be new_rt_index instead of
+	 * base_rt_index.  There can be no Vars for other rels in the tlist, so
+	 * this is sufficient to pull up the tlist expressions for use in the
+	 * outer query.  The tlist will provide the replacement expressions used
+	 * by ReplaceVarsFromTargetList below.
+	 */
+	view_targetlist = copyObject(viewquery->targetList);
+
+	ChangeVarNodes((Node *) view_targetlist,
+				   base_rt_index,
+				   new_rt_index,
+				   0);
+
+	/*
+	 * Mark the new target RTE for the permissions checks that we want to
+	 * enforce against the view owner, as distinct from the query caller.  At
+	 * the relation level, require the same INSERT/UPDATE/DELETE permissions
+	 * that the query caller needs against the view.  We drop the ACL_SELECT
+	 * bit that is presumably in new_rte->requiredPerms initially.
+	 *
+	 * Note: the original view RTE remains in the query's rangetable list.
+	 * Although it will be unused in the query plan, we need it there so that
+	 * the executor still performs appropriate permissions checks for the
+	 * query caller's use of the view.
+	 */
+	new_rte->checkAsUser = view->rd_rel->relowner;
+	new_rte->requiredPerms = view_rte->requiredPerms;
+
+	/*
+	 * Now for the per-column permissions bits.
+	 *
+	 * Initially, new_rte contains selectedCols permission check bits for all
+	 * base-rel columns referenced by the view, but since the view is a SELECT
+	 * query its modifiedCols is empty.  We set modifiedCols to include all
+	 * the columns the outer query is trying to modify, adjusting the column
+	 * numbers as needed.  But we leave selectedCols as-is, so the view owner
+	 * must have read permission for all columns used in the view definition,
+	 * even if some of them are not read by the outer query.  We could try to
+	 * limit selectedCols to only columns used in the transformed query, but
+	 * that does not correspond to what happens in ordinary SELECT usage of a
+	 * view: all referenced columns must have read permission, even if
+	 * optimization finds that some of them can be discarded during query
+	 * transformation.  The flattening we're doing here is an optional
+	 * optimization, too.  (If you are unpersuaded and want to change this,
+	 * note that applying adjust_view_column_set to view_rte->selectedCols is
+	 * clearly *not* the right answer, since that neglects base-rel columns
+	 * used in the view's WHERE quals.)
+	 *
+	 * This step needs the modified view targetlist, so we have to do things
+	 * in this order.
+	 */
+	Assert(bms_is_empty(new_rte->modifiedCols));
+	new_rte->modifiedCols = adjust_view_column_set(view_rte->modifiedCols,
+												   view_targetlist);
+
+	/*
+	 * For UPDATE/DELETE, rewriteTargetListUD will have added a wholerow junk
+	 * TLE for the view to the end of the targetlist, which we no longer need.
+	 * Remove it to avoid unnecessary work when we process the targetlist.
+	 * Note that when we recurse through rewriteQuery a new junk TLE will be
+	 * added to allow the executor to find the proper row in the new target
+	 * relation.  (So, if we failed to do this, we might have multiple junk
+	 * TLEs with the same name, which would be disastrous.)
+	 */
+	if (parsetree->commandType != CMD_INSERT)
+	{
+		TargetEntry *tle = (TargetEntry *) llast(parsetree->targetList);
+
+		Assert(tle->resjunk);
+		Assert(IsA(tle->expr, Var) &&
+			   ((Var *) tle->expr)->varno == parsetree->resultRelation &&
+			   ((Var *) tle->expr)->varattno == 0);
+		parsetree->targetList = list_delete_ptr(parsetree->targetList, tle);
+	}
+
+	/*
+	 * Now update all Vars in the outer query that reference the view to
+	 * reference the appropriate column of the base relation instead.
+	 */
+	parsetree = (Query *)
+		ReplaceVarsFromTargetList((Node *) parsetree,
+								  parsetree->resultRelation,
+								  0,
+								  view_rte,
+								  view_targetlist,
+								  REPLACEVARS_REPORT_ERROR,
+								  0,
+								  &parsetree->hasSubLinks);
+
+	/*
+	 * Update all other RTI references in the query that point to the view
+	 * (for example, parsetree->resultRelation itself) to point to the new
+	 * base relation instead.  Vars will not be affected since none of them
+	 * reference parsetree->resultRelation any longer.
+	 */
+	ChangeVarNodes((Node *) parsetree,
+				   parsetree->resultRelation,
+				   new_rt_index,
+				   0);
+	Assert(parsetree->resultRelation == new_rt_index);
+
+	/*
+	 * For INSERT/UPDATE we must also update resnos in the targetlist to refer
+	 * to columns of the base relation, since those indicate the target
+	 * columns to be affected.
+	 *
+	 * Note that this destroys the resno ordering of the targetlist, but that
+	 * will be fixed when we recurse through rewriteQuery, which will invoke
+	 * rewriteTargetListIU again on the updated targetlist.
+	 */
+	if (parsetree->commandType != CMD_DELETE)
+	{
+		foreach(lc, parsetree->targetList)
+		{
+			TargetEntry *tle = (TargetEntry *) lfirst(lc);
+			TargetEntry *view_tle;
+
+			if (tle->resjunk)
+				continue;
+
+			view_tle = get_tle_by_resno(view_targetlist, tle->resno);
+			if (view_tle != NULL && !view_tle->resjunk && IsA(view_tle->expr, Var))
+				tle->resno = ((Var *) view_tle->expr)->varattno;
+			else
+				elog(ERROR, "attribute number %d not found in view targetlist",
+					 tle->resno);
+		}
+	}
+
+	/*
+	 * For UPDATE/DELETE, pull up any WHERE quals from the view.  We know that
+	 * any Vars in the quals must reference the one base relation, so we need
+	 * only adjust their varnos to reference the new target (just the same as
+	 * we did with the view targetlist).
+	 *
+	 * For INSERT, the view's quals can be ignored for now.  When we implement
+	 * WITH CHECK OPTION, this might be a good place to collect them.
+	 */
+	if (parsetree->commandType != CMD_INSERT &&
+		viewquery->jointree->quals != NULL)
+	{
+		Node	   *viewqual = (Node *) copyObject(viewquery->jointree->quals);
+
+		ChangeVarNodes(viewqual, base_rt_index, new_rt_index, 0);
+		AddQual(parsetree, (Node *) viewqual);
+	}
+
+	return parsetree;
+}
+
+
+/*
  * RewriteQuery -
  *	  rewrites the query and apply the rules again on the queries rewritten
  *
@@ -1927,6 +2554,7 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 		RangeTblEntry *rt_entry;
 		Relation	rt_entry_relation;
 		List	   *locks;
+		List	   *product_queries;
 
 		result_relation = parsetree->resultRelation;
 		Assert(result_relation != 0);
@@ -1997,17 +2625,54 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 		locks = matchLocks(event, rt_entry_relation->rd_rules,
 						   result_relation, parsetree);
 
-		if (locks != NIL)
-		{
-			List	   *product_queries;
+		product_queries = fireRules(parsetree,
+									result_relation,
+									event,
+									locks,
+									&instead,
+									&returning,
+									&qual_product);
 
-			product_queries = fireRules(parsetree,
-										result_relation,
-										event,
-										locks,
-										&instead,
-										&returning,
-										&qual_product);
+		/*
+		 * If there were no INSTEAD rules, and the target relation is a view
+		 * without any INSTEAD OF triggers, see if the view can be
+		 * automatically updated.  If so, we perform the necessary query
+		 * transformation here and add the resulting query to the
+		 * product_queries list, so that it gets recursively rewritten if
+		 * necessary.
+		 */
+		if (!instead && qual_product == NULL &&
+			rt_entry_relation->rd_rel->relkind == RELKIND_VIEW &&
+			!view_has_instead_trigger(rt_entry_relation, event))
+		{
+			/*
+			 * This throws an error if the view can't be automatically
+			 * updated, but that's OK since the query would fail at runtime
+			 * anyway.
+			 */
+			parsetree = rewriteTargetView(parsetree, rt_entry_relation);
+
+			/*
+			 * At this point product_queries contains any DO ALSO rule actions.
+			 * Add the rewritten query before or after those.  This must match
+			 * the handling the original query would have gotten below, if
+			 * we allowed it to be included again.
+			 */
+			if (parsetree->commandType == CMD_INSERT)
+				product_queries = lcons(parsetree, product_queries);
+			else
+				product_queries = lappend(product_queries, parsetree);
+
+			/*
+			 * Set the "instead" flag, as if there had been an unqualified
+			 * INSTEAD, to prevent the original query from being included a
+			 * second time below.  The transformation will have rewritten any
+			 * RETURNING list, so we can also set "returning" to forestall
+			 * throwing an error below.
+			 */
+			instead = true;
+			returning = true;
+		}
 
 			/*
 			 * If we got any product queries, recursively rewrite them --- but
@@ -2045,7 +2710,6 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 
 				rewrite_events = list_delete_first(rewrite_events);
 			}
-		}
 
 		/*
 		 * If there is an INSTEAD, and the original query has a RETURNING, we

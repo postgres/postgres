@@ -820,20 +820,6 @@ DROP TABLE min_updates_test_oids;
 -- Test triggers on views
 --
 CREATE VIEW main_view AS SELECT a, b FROM main_table;
--- Updates should fail without rules or triggers
-INSERT INTO main_view VALUES (1,2);
-ERROR:  cannot insert into view "main_view"
-HINT:  You need an unconditional ON INSERT DO INSTEAD rule or an INSTEAD OF INSERT trigger.
-UPDATE main_view SET b = 20 WHERE a = 50;
-ERROR:  cannot update view "main_view"
-HINT:  You need an unconditional ON UPDATE DO INSTEAD rule or an INSTEAD OF UPDATE trigger.
-DELETE FROM main_view WHERE a = 50;
-ERROR:  cannot delete from view "main_view"
-HINT:  You need an unconditional ON DELETE DO INSTEAD rule or an INSTEAD OF DELETE trigger.
--- Should fail even when there are no matching rows
-DELETE FROM main_view WHERE a = 51;
-ERROR:  cannot delete from view "main_view"
-HINT:  You need an unconditional ON DELETE DO INSTEAD rule or an INSTEAD OF DELETE trigger.
 -- VIEW trigger function
 CREATE OR REPLACE FUNCTION view_trigger() RETURNS trigger
 LANGUAGE plpgsql AS $$

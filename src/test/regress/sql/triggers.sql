@@ -611,13 +611,6 @@ DROP TABLE min_updates_test_oids;
 
 CREATE VIEW main_view AS SELECT a, b FROM main_table;
 
--- Updates should fail without rules or triggers
-INSERT INTO main_view VALUES (1,2);
-UPDATE main_view SET b = 20 WHERE a = 50;
-DELETE FROM main_view WHERE a = 50;
--- Should fail even when there are no matching rows
-DELETE FROM main_view WHERE a = 51;
-
 -- VIEW trigger function
 CREATE OR REPLACE FUNCTION view_trigger() RETURNS trigger
 LANGUAGE plpgsql AS $$

@@ -147,11 +147,9 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
     <listitem>
      <para>
       These forms set or remove the default value for a column.
-      The default values only apply to subsequent <command>INSERT</command>
-      commands; they do not cause rows already in the table to change.
-      Defaults can also be created for views, in which case they are
-      inserted into <command>INSERT</> statements on the view before
-      the view's <literal>ON INSERT</literal> rule is applied.
+      Default values only apply in subsequent <command>INSERT</command>
+      or <command>UPDATE</> commands; they do not cause rows already in the
+      table to change.
      </para>
     </listitem>
    </varlistentry>
