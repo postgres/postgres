@@ -2820,6 +2820,7 @@ getTypes(Archive *fout, int *numTypes)
 	int			i_oid;
 	int			i_typname;
 	int			i_typnamespace;
+	int			i_typacl;
 	int			i_rolname;
 	int			i_typinput;
 	int			i_typoutput;
@@ -2849,10 +2850,25 @@ getTypes(Archive *fout, int *numTypes)
 	/* Make sure we are in proper schema */
 	selectSourceSchema(fout, "pg_catalog");
 
-	if (fout->remoteVersion >= 80300)
+	if (fout->remoteVersion >= 90200)
 	{
 		appendPQExpBuffer(query, "SELECT tableoid, oid, typname, "
-						  "typnamespace, "
+						  "typnamespace, typacl, "
+						  "(%s typowner) AS rolname, "
+						  "typinput::oid AS typinput, "
+						  "typoutput::oid AS typoutput, typelem, typrelid, "
+						  "CASE WHEN typrelid = 0 THEN ' '::\"char\" "
+						  "ELSE (SELECT relkind FROM pg_class WHERE oid = typrelid) END AS typrelkind, "
+						  "typtype, typisdefined, "
+						  "typname[0] = '_' AND typelem != 0 AND "
+						  "(SELECT typarray FROM pg_type te WHERE oid = pg_type.typelem) = oid AS isarray "
+						  "FROM pg_type",
+						  username_subquery);
+	}
+	else if (fout->remoteVersion >= 80300)
+	{
+		appendPQExpBuffer(query, "SELECT tableoid, oid, typname, "
+						  "typnamespace, '{=U}' AS typacl, "
 						  "(%s typowner) AS rolname, "
 						  "typinput::oid AS typinput, "
 						  "typoutput::oid AS typoutput, typelem, typrelid, "
@@ -2867,7 +2883,7 @@ getTypes(Archive *fout, int *numTypes)
 	else if (fout->remoteVersion >= 70300)
 	{
 		appendPQExpBuffer(query, "SELECT tableoid, oid, typname, "
-						  "typnamespace, "
+						  "typnamespace, '{=U}' AS typacl, "
 						  "(%s typowner) AS rolname, "
 						  "typinput::oid AS typinput, "
 						  "typoutput::oid AS typoutput, typelem, typrelid, "
@@ -2881,7 +2897,7 @@ getTypes(Archive *fout, int *numTypes)
 	else if (fout->remoteVersion >= 70100)
 	{
 		appendPQExpBuffer(query, "SELECT tableoid, oid, typname, "
-						  "0::oid AS typnamespace, "
+						  "0::oid AS typnamespace, '{=U}' AS typacl, "
 						  "(%s typowner) AS rolname, "
 						  "typinput::oid AS typinput, "
 						  "typoutput::oid AS typoutput, typelem, typrelid, "
@@ -2897,7 +2913,7 @@ getTypes(Archive *fout, int *numTypes)
 		appendPQExpBuffer(query, "SELECT "
 		 "(SELECT oid FROM pg_class WHERE relname = 'pg_type') AS tableoid, "
 						  "oid, typname, "
-						  "0::oid AS typnamespace, "
+						  "0::oid AS typnamespace, '{=U}' AS typacl, "
 						  "(%s typowner) AS rolname, "
 						  "typinput::oid AS typinput, "
 						  "typoutput::oid AS typoutput, typelem, typrelid, "
@@ -2919,6 +2935,7 @@ getTypes(Archive *fout, int *numTypes)
 	i_oid = PQfnumber(res, "oid");
 	i_typname = PQfnumber(res, "typname");
 	i_typnamespace = PQfnumber(res, "typnamespace");
+	i_typacl = PQfnumber(res, "typacl");
 	i_rolname = PQfnumber(res, "rolname");
 	i_typinput = PQfnumber(res, "typinput");
 	i_typoutput = PQfnumber(res, "typoutput");
@@ -2941,6 +2958,7 @@ getTypes(Archive *fout, int *numTypes)
 						  atooid(PQgetvalue(res, i, i_typnamespace)),
 						  tyinfo[i].dobj.catId.oid);
 		tyinfo[i].rolname = pg_strdup(PQgetvalue(res, i, i_rolname));
+		tyinfo[i].typacl = pg_strdup(PQgetvalue(res, i, i_typacl));
 		tyinfo[i].typelem = atooid(PQgetvalue(res, i, i_typelem));
 		tyinfo[i].typrelid = atooid(PQgetvalue(res, i, i_typrelid));
 		tyinfo[i].typrelkind = *PQgetvalue(res, i, i_typrelkind);
@@ -7592,6 +7610,7 @@ dumpEnumType(Archive *fout, TypeInfo *tyinfo)
 	int			num,
 				i;
 	Oid			enum_oid;
+	char	   *qtypname;
 	char	   *label;
 
 	/* Set proper schema search path */
@@ -7614,6 +7633,8 @@ dumpEnumType(Archive *fout, TypeInfo *tyinfo)
 
 	num = PQntuples(res);
 
+	qtypname = pg_strdup(fmtId(tyinfo->dobj.name));
+
 	/*
 	 * DROP must be fully qualified in case same name appears in pg_catalog.
 	 * CASCADE shouldn't be required here as for normal types since the I/O
@@ -7622,14 +7643,14 @@ dumpEnumType(Archive *fout, TypeInfo *tyinfo)
 	appendPQExpBuffer(delq, "DROP TYPE %s.",
 					  fmtId(tyinfo->dobj.namespace->dobj.name));
 	appendPQExpBuffer(delq, "%s;\n",
-					  fmtId(tyinfo->dobj.name));
+					  qtypname);
 
 	if (binary_upgrade)
 		binary_upgrade_set_type_oids_by_type_oid(fout, q,
 												 tyinfo->dobj.catId.oid);
 
 	appendPQExpBuffer(q, "CREATE TYPE %s AS ENUM (",
-					  fmtId(tyinfo->dobj.name));
+					  qtypname);
 
 	if (!binary_upgrade)
 	{
@@ -7662,13 +7683,13 @@ dumpEnumType(Archive *fout, TypeInfo *tyinfo)
 			appendPQExpBuffer(q, "ALTER TYPE %s.",
 							  fmtId(tyinfo->dobj.namespace->dobj.name));
 			appendPQExpBuffer(q, "%s ADD VALUE ",
-							  fmtId(tyinfo->dobj.name));
+							  qtypname);
 			appendStringLiteralAH(q, label, fout);
 			appendPQExpBuffer(q, ";\n\n");
 		}
 	}
 
-	appendPQExpBuffer(labelq, "TYPE %s", fmtId(tyinfo->dobj.name));
+	appendPQExpBuffer(labelq, "TYPE %s", qtypname);
 
 	if (binary_upgrade)
 		binary_upgrade_extension_member(q, &tyinfo->dobj, labelq->data);
@@ -7691,6 +7712,11 @@ dumpEnumType(Archive *fout, TypeInfo *tyinfo)
 				 tyinfo->dobj.namespace->dobj.name, tyinfo->rolname,
 				 tyinfo->dobj.catId, 0, tyinfo->dobj.dumpId);
 
+	dumpACL(fout, tyinfo->dobj.catId, tyinfo->dobj.dumpId, "TYPE",
+			qtypname, NULL, tyinfo->dobj.name,
+			tyinfo->dobj.namespace->dobj.name,
+			tyinfo->rolname, tyinfo->typacl);
+
 	PQclear(res);
 	destroyPQExpBuffer(q);
 	destroyPQExpBuffer(delq);
@@ -7711,6 +7737,7 @@ dumpRangeType(Archive *fout, TypeInfo *tyinfo)
 	PQExpBuffer query = createPQExpBuffer();
 	PGresult   *res;
 	Oid			collationOid;
+	char	   *qtypname;
 	char	   *procname;
 
 	/*
@@ -7736,6 +7763,8 @@ dumpRangeType(Archive *fout, TypeInfo *tyinfo)
 
 	res = ExecuteSqlQueryForSingleRow(fout, query->data);
 
+	qtypname = pg_strdup(fmtId(tyinfo->dobj.name));
+
 	/*
 	 * DROP must be fully qualified in case same name appears in pg_catalog.
 	 * CASCADE shouldn't be required here as for normal types since the I/O
@@ -7744,14 +7773,14 @@ dumpRangeType(Archive *fout, TypeInfo *tyinfo)
 	appendPQExpBuffer(delq, "DROP TYPE %s.",
 					  fmtId(tyinfo->dobj.namespace->dobj.name));
 	appendPQExpBuffer(delq, "%s;\n",
-					  fmtId(tyinfo->dobj.name));
+					  qtypname);
 
 	if (binary_upgrade)
 		binary_upgrade_set_type_oids_by_type_oid(fout,
 												 q, tyinfo->dobj.catId.oid);
 
 	appendPQExpBuffer(q, "CREATE TYPE %s AS RANGE (",
-					  fmtId(tyinfo->dobj.name));
+					  qtypname);
 
 	appendPQExpBuffer(q, "\n    subtype = %s",
 					  PQgetvalue(res, 0, PQfnumber(res, "rngsubtype")));
@@ -7793,7 +7822,7 @@ dumpRangeType(Archive *fout, TypeInfo *tyinfo)
 
 	appendPQExpBuffer(q, "\n);\n");
 
-	appendPQExpBuffer(labelq, "TYPE %s", fmtId(tyinfo->dobj.name));
+	appendPQExpBuffer(labelq, "TYPE %s", qtypname);
 
 	if (binary_upgrade)
 		binary_upgrade_extension_member(q, &tyinfo->dobj, labelq->data);
@@ -7816,6 +7845,11 @@ dumpRangeType(Archive *fout, TypeInfo *tyinfo)
 				 tyinfo->dobj.namespace->dobj.name, tyinfo->rolname,
 				 tyinfo->dobj.catId, 0, tyinfo->dobj.dumpId);
 
+	dumpACL(fout, tyinfo->dobj.catId, tyinfo->dobj.dumpId, "TYPE",
+			qtypname, NULL, tyinfo->dobj.name,
+			tyinfo->dobj.namespace->dobj.name,
+			tyinfo->rolname, tyinfo->typacl);
+
 	PQclear(res);
 	destroyPQExpBuffer(q);
 	destroyPQExpBuffer(delq);
@@ -7835,6 +7869,7 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 	PQExpBuffer labelq = createPQExpBuffer();
 	PQExpBuffer query = createPQExpBuffer();
 	PGresult   *res;
+	char	   *qtypname;
 	char	   *typlen;
 	char	   *typinput;
 	char	   *typoutput;
@@ -8067,6 +8102,8 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 	else
 		typdefault = NULL;
 
+	qtypname = pg_strdup(fmtId(tyinfo->dobj.name));
+
 	/*
 	 * DROP must be fully qualified in case same name appears in pg_catalog.
 	 * The reason we include CASCADE is that the circular dependency between
@@ -8076,7 +8113,7 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 	appendPQExpBuffer(delq, "DROP TYPE %s.",
 					  fmtId(tyinfo->dobj.namespace->dobj.name));
 	appendPQExpBuffer(delq, "%s CASCADE;\n",
-					  fmtId(tyinfo->dobj.name));
+					  qtypname);
 
 	/* We might already have a shell type, but setting pg_type_oid is harmless */
 	if (binary_upgrade)
@@ -8086,7 +8123,7 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 	appendPQExpBuffer(q,
 					  "CREATE TYPE %s (\n"
 					  "    INTERNALLENGTH = %s",
-					  fmtId(tyinfo->dobj.name),
+					  qtypname,
 					  (strcmp(typlen, "-1") == 0) ? "variable" : typlen);
 
 	if (fout->remoteVersion >= 70300)
@@ -8175,7 +8212,7 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 
 	appendPQExpBuffer(q, "\n);\n");
 
-	appendPQExpBuffer(labelq, "TYPE %s", fmtId(tyinfo->dobj.name));
+	appendPQExpBuffer(labelq, "TYPE %s", qtypname);
 
 	if (binary_upgrade)
 		binary_upgrade_extension_member(q, &tyinfo->dobj, labelq->data);
@@ -8198,6 +8235,11 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 				 tyinfo->dobj.namespace->dobj.name, tyinfo->rolname,
 				 tyinfo->dobj.catId, 0, tyinfo->dobj.dumpId);
 
+	dumpACL(fout, tyinfo->dobj.catId, tyinfo->dobj.dumpId, "TYPE",
+			qtypname, NULL, tyinfo->dobj.name,
+			tyinfo->dobj.namespace->dobj.name,
+			tyinfo->rolname, tyinfo->typacl);
+
 	PQclear(res);
 	destroyPQExpBuffer(q);
 	destroyPQExpBuffer(delq);
@@ -8218,6 +8260,7 @@ dumpDomain(Archive *fout, TypeInfo *tyinfo)
 	PQExpBuffer query = createPQExpBuffer();
 	PGresult   *res;
 	int			i;
+	char	   *qtypname;
 	char	   *typnotnull;
 	char	   *typdefn;
 	char	   *typdefault;
@@ -8273,9 +8316,11 @@ dumpDomain(Archive *fout, TypeInfo *tyinfo)
 		binary_upgrade_set_type_oids_by_type_oid(fout, q,
 												 tyinfo->dobj.catId.oid);
 
+	qtypname = pg_strdup(fmtId(tyinfo->dobj.name));
+
 	appendPQExpBuffer(q,
 					  "CREATE DOMAIN %s AS %s",
-					  fmtId(tyinfo->dobj.name),
+					  qtypname,
 					  typdefn);
 
 	/* Print collation only if different from base type's collation */
@@ -8328,9 +8373,9 @@ dumpDomain(Archive *fout, TypeInfo *tyinfo)
 	appendPQExpBuffer(delq, "DROP DOMAIN %s.",
 					  fmtId(tyinfo->dobj.namespace->dobj.name));
 	appendPQExpBuffer(delq, "%s;\n",
-					  fmtId(tyinfo->dobj.name));
+					  qtypname);
 
-	appendPQExpBuffer(labelq, "DOMAIN %s", fmtId(tyinfo->dobj.name));
+	appendPQExpBuffer(labelq, "DOMAIN %s", qtypname);
 
 	if (binary_upgrade)
 		binary_upgrade_extension_member(q, &tyinfo->dobj, labelq->data);
@@ -8353,6 +8398,11 @@ dumpDomain(Archive *fout, TypeInfo *tyinfo)
 				 tyinfo->dobj.namespace->dobj.name, tyinfo->rolname,
 				 tyinfo->dobj.catId, 0, tyinfo->dobj.dumpId);
 
+	dumpACL(fout, tyinfo->dobj.catId, tyinfo->dobj.dumpId, "TYPE",
+			qtypname, NULL, tyinfo->dobj.name,
+			tyinfo->dobj.namespace->dobj.name,
+			tyinfo->rolname, tyinfo->typacl);
+
 	destroyPQExpBuffer(q);
 	destroyPQExpBuffer(delq);
 	destroyPQExpBuffer(labelq);
@@ -8373,6 +8423,7 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 	PQExpBuffer labelq = createPQExpBuffer();
 	PQExpBuffer query = createPQExpBuffer();
 	PGresult   *res;
+	char	   *qtypname;
 	int			ntups;
 	int			i_attname;
 	int			i_atttypdefn;
@@ -8450,8 +8501,10 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 		binary_upgrade_set_pg_class_oids(fout, q, typrelid, false);
 	}
 
+	qtypname = pg_strdup(fmtId(tyinfo->dobj.name));
+
 	appendPQExpBuffer(q, "CREATE TYPE %s AS (",
-					  fmtId(tyinfo->dobj.name));
+					  qtypname);
 
 	actual_atts = 0;
 	for (i = 0; i < ntups; i++)
@@ -8517,11 +8570,11 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 							  "WHERE attname = ", attlen, attalign);
 			appendStringLiteralAH(dropped, attname, fout);
 			appendPQExpBuffer(dropped, "\n  AND attrelid = ");
-			appendStringLiteralAH(dropped, fmtId(tyinfo->dobj.name), fout);
+			appendStringLiteralAH(dropped, qtypname, fout);
 			appendPQExpBuffer(dropped, "::pg_catalog.regclass;\n");
 
 			appendPQExpBuffer(dropped, "ALTER TYPE %s ",
-							  fmtId(tyinfo->dobj.name));
+							  qtypname);
 			appendPQExpBuffer(dropped, "DROP ATTRIBUTE %s;\n",
 							  fmtId(attname));
 		}
@@ -8535,9 +8588,9 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 	appendPQExpBuffer(delq, "DROP TYPE %s.",
 					  fmtId(tyinfo->dobj.namespace->dobj.name));
 	appendPQExpBuffer(delq, "%s;\n",
-					  fmtId(tyinfo->dobj.name));
+					  qtypname);
 
-	appendPQExpBuffer(labelq, "TYPE %s", fmtId(tyinfo->dobj.name));
+	appendPQExpBuffer(labelq, "TYPE %s", qtypname);
 
 	if (binary_upgrade)
 		binary_upgrade_extension_member(q, &tyinfo->dobj, labelq->data);
@@ -8560,6 +8613,11 @@ dumpCompositeType(Archive *fout, TypeInfo *tyinfo)
 	dumpSecLabel(fout, labelq->data,
 				 tyinfo->dobj.namespace->dobj.name, tyinfo->rolname,
 				 tyinfo->dobj.catId, 0, tyinfo->dobj.dumpId);
+
+	dumpACL(fout, tyinfo->dobj.catId, tyinfo->dobj.dumpId, "TYPE",
+			qtypname, NULL, tyinfo->dobj.name,
+			tyinfo->dobj.namespace->dobj.name,
+			tyinfo->rolname, tyinfo->typacl);
 
 	PQclear(res);
 	destroyPQExpBuffer(q);
@@ -11832,10 +11890,13 @@ dumpDefaultACL(Archive *fout, DefaultACLInfo *daclinfo)
 		case DEFACLOBJ_FUNCTION:
 			type = "FUNCTIONS";
 			break;
+		case DEFACLOBJ_TYPE:
+			type = "TYPES";
+			break;
 		default:
 			/* shouldn't get here */
 			exit_horribly(NULL,
-						  "unknown object type (%d) in default privileges\n",
+						  "unrecognized object type in default privileges: %d\n",
 						  (int) daclinfo->defaclobjtype);
 			type = "";			/* keep compiler quiet */
 	}

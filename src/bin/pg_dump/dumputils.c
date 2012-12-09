@@ -890,6 +890,9 @@ do { \
 	}
 	else if (strcmp(type, "TABLESPACE") == 0)
 		CONVERT_PRIV('C', "CREATE");
+	else if (strcmp(type, "TYPE") == 0 ||
+			 strcmp(type, "TYPES") == 0)
+		CONVERT_PRIV('U', "USAGE");
 	else if (strcmp(type, "FOREIGN DATA WRAPPER") == 0)
 		CONVERT_PRIV('U', "USAGE");
 	else if (strcmp(type, "FOREIGN SERVER") == 0)

@@ -164,6 +164,7 @@ typedef struct _typeInfo
 	 * produce something different than typname
 	 */
 	char	   *rolname;		/* name of owner, or empty string */
+	char	   *typacl;
 	Oid			typelem;
 	Oid			typrelid;
 	char		typrelkind;		/* 'r', 'v', 'c', etc */

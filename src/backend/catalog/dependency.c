@@ -2899,6 +2899,11 @@ getObjectDescription(const ObjectAddress *object)
 										 _("default privileges on new functions belonging to role %s"),
 									  GetUserNameFromId(defacl->defaclrole));
 						break;
+					case DEFACLOBJ_TYPE:
+						appendStringInfo(&buffer,
+										 _("default privileges on new types belonging to role %s"),
+									  GetUserNameFromId(defacl->defaclrole));
+						break;
 					default:
 						/* shouldn't get here */
 						appendStringInfo(&buffer,

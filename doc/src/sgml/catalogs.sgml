@@ -2674,7 +2674,8 @@
        Type of object this entry is for:
        <literal>r</> = relation (table, view),
        <literal>S</> = sequence,
-       <literal>f</> = function
+       <literal>f</> = function,
+       <literal>T</> = type
       </entry>
      </row>
 

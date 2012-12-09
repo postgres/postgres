@@ -1346,10 +1346,13 @@ RemoveRoleFromObjectACL(Oid roleid, Oid classid, Oid objid)
 			case DEFACLOBJ_FUNCTION:
 				iacls.objtype = ACL_OBJECT_FUNCTION;
 				break;
+			case DEFACLOBJ_TYPE:
+				iacls.objtype = ACL_OBJECT_TYPE;
+				break;
 			default:
 				/* Shouldn't get here */
-				elog(ERROR, "unexpected default ACL type %d",
-					 pg_default_acl_tuple->defaclobjtype);
+				elog(ERROR, "unexpected default ACL type: %d",
+					 (int) pg_default_acl_tuple->defaclobjtype);
 				break;
 		}
 
