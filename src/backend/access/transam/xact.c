@@ -4617,23 +4617,44 @@ xact_redo_commit_internal(TransactionId xid, XLogRecPtr lsn,
 	}
 
 	/* Make sure files supposed to be dropped are dropped */
-	for (i = 0; i < nrels; i++)
+	if (nrels > 0)
 	{
-		SMgrRelation srel = smgropen(xnodes[i], InvalidBackendId);
-		ForkNumber	fork;
+		/*
+		 * First update minimum recovery point to cover this WAL record. Once
+		 * a relation is deleted, there's no going back. The buffer manager
+		 * enforces the WAL-first rule for normal updates to relation files,
+		 * so that the minimum recovery point is always updated before the
+		 * corresponding change in the data file is flushed to disk, but we
+		 * have to do the same here since we're bypassing the buffer manager.
+		 *
+		 * Doing this before deleting the files means that if a deletion fails
+		 * for some reason, you cannot start up the system even after restart,
+		 * until you fix the underlying situation so that the deletion will
+		 * succeed. Alternatively, we could update the minimum recovery point
+		 * after deletion, but that would leave a small window where the
+		 * WAL-first rule would be violated.
+		 */
+		XLogFlush(lsn);
 
-		for (fork = 0; fork <= MAX_FORKNUM; fork++)
-			XLogDropRelation(xnodes[i], fork);
-		smgrdounlink(srel, true);
-		smgrclose(srel);
+		for (i = 0; i < nrels; i++)
+		{
+			SMgrRelation srel = smgropen(xnodes[i], InvalidBackendId);
+			ForkNumber	fork;
+
+			for (fork = 0; fork <= MAX_FORKNUM; fork++)
+				XLogDropRelation(xnodes[i], fork);
+			smgrdounlink(srel, true);
+			smgrclose(srel);
+		}
 	}
 
 	/*
 	 * We issue an XLogFlush() for the same reason we emit ForceSyncCommit()
-	 * in normal operation. For example, in DROP DATABASE, we delete all the
-	 * files belonging to the database, and then commit the transaction. If we
-	 * crash after all the files have been deleted but before the commit, you
-	 * have an entry in pg_database without any files. To minimize the window
+	 * in normal operation. For example, in CREATE DATABASE, we copy all files
+	 * from the template database, and then commit the transaction. If we
+	 * crash after all the files have been copied but before the commit, you
+	 * have files in the data directory without an entry in pg_database. To
+	 * minimize the window
 	 * for that, we use ForceSyncCommit() to rush the commit record to disk as
 	 * quick as possible. We have the same window during recovery, and forcing
 	 * an XLogFlush() (which updates minRecoveryPoint during recovery) helps
