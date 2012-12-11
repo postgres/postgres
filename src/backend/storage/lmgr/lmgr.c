@@ -233,6 +233,24 @@ UnlockRelation(Relation relation, LOCKMODE lockmode)
 }
 
 /*
+ *		LockHasWaitersRelation
+ *
+ * This is a functiion to check if someone else is waiting on a
+ * lock, we are currently holding.
+ */
+bool
+LockHasWaitersRelation(Relation relation, LOCKMODE lockmode)
+{
+	LOCKTAG		tag;
+
+	SET_LOCKTAG_RELATION(tag,
+						 relation->rd_lockInfo.lockRelId.dbId,
+						 relation->rd_lockInfo.lockRelId.relId);
+
+	return LockHasWaiters(&tag, lockmode, false);
+}
+
+/*
  *		LockRelationIdForSession
  *
  * This routine grabs a session-level lock on the target relation.	The
