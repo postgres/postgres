@@ -428,6 +428,15 @@ submake-libpgport:
 
 PL_TESTDB = pl_regression
 CONTRIB_TESTDB = contrib_regression
+ifneq ($(MODULE_big),)
+  CONTRIB_TESTDB_MODULE = contrib_regression_$(MODULE_big)
+else 
+  ifneq ($(MODULES),)
+    CONTRIB_TESTDB_MODULE = contrib_regression_$(MODULES)
+  else
+    CONTRIB_TESTDB_MODULE = contrib_regression
+  endif
+endif
 
 ifdef NO_LOCALE
 NOLOCALE += --no-locale
