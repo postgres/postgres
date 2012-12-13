@@ -1484,7 +1484,12 @@ pqGetCopyData3(PGconn *conn, char **buffer, int async)
 			 * expect the state was already changed.
 			 */
 			if (msgLength == -1)
-				conn->asyncStatus = PGASYNC_BUSY;
+			{
+				if (conn->asyncStatus == PGASYNC_COPY_BOTH)
+					conn->asyncStatus = PGASYNC_COPY_IN;
+				else
+					conn->asyncStatus = PGASYNC_BUSY;
+			}
 			return msgLength;	/* end-of-copy or error */
 		}
 		if (msgLength == 0)

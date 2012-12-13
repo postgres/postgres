@@ -5,6 +5,8 @@
  * The Startup process initialises the server and performs any recovery
  * actions that have been specified. Notice that there is no "main loop"
  * since the Startup process ends as soon as initialisation is complete.
+ * (in standby mode, one can think of the replay loop as a main loop,
+ * though.)
  *
  *
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group

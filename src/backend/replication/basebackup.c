@@ -56,6 +56,9 @@ static void perform_base_backup(basebackup_options *opt, DIR *tblspcdir);
 static void parse_basebackup_options(List *options, basebackup_options *opt);
 static void SendXlogRecPtrResult(XLogRecPtr ptr);
 
+/* Was the backup currently in-progress initiated in recovery mode? */
+static bool backup_started_in_recovery = false;
+
 /*
  * Size of each block sent into the tar stream for larger files.
  *
@@ -93,6 +96,8 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 	XLogRecPtr	startptr;
 	XLogRecPtr	endptr;
 	char	   *labelfile;
+
+	backup_started_in_recovery = RecoveryInProgress();
 
 	startptr = do_pg_start_backup(opt->label, opt->fastcheckpoint, &labelfile);
 	SendXlogRecPtrResult(startptr);
@@ -261,7 +266,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 				 * http://lists.apple.com/archives/xcode-users/2003/Dec//msg000
 				 * 51.html
 				 */
-				XLogRead(buf, ptr, TAR_SEND_SIZE);
+				XLogRead(buf, ThisTimeLineID, ptr, TAR_SEND_SIZE);
 				if (pq_putmessage('d', buf, TAR_SEND_SIZE))
 					ereport(ERROR,
 							(errmsg("base backup could not send data, aborting backup")));
@@ -592,11 +597,19 @@ sendDir(char *path, int basepathlen, bool sizeonly)
 		/*
 		 * Check if the postmaster has signaled us to exit, and abort with an
 		 * error in that case. The error handler further up will call
-		 * do_pg_abort_backup() for us.
+		 * do_pg_abort_backup() for us. Also check that if the backup was
+		 * started while still in recovery, the server wasn't promoted.
+		 * dp_pg_stop_backup() will check that too, but it's better to stop
+		 * the backup early than continue to the end and fail there.
 		 */
-		if (ProcDiePending || walsender_ready_to_stop)
+		CHECK_FOR_INTERRUPTS();
+		if (RecoveryInProgress() != backup_started_in_recovery)
 			ereport(ERROR,
-				(errmsg("shutdown requested, aborting active base backup")));
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("the standby was promoted during online backup"),
+					 errhint("This means that the backup being taken is corrupt "
+							 "and should not be used. "
+							 "Try taking another online backup.")));
 
 		snprintf(pathbuf, MAXPGPATH, "%s/%s", path, de->d_name);
 

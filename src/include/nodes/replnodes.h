@@ -46,7 +46,19 @@ typedef struct BaseBackupCmd
 typedef struct StartReplicationCmd
 {
 	NodeTag		type;
+	TimeLineID	timeline;
 	XLogRecPtr	startpoint;
 } StartReplicationCmd;
+
+
+/* ----------------------
+ *		TIMELINE_HISTORY command
+ * ----------------------
+ */
+typedef struct TimeLineHistoryCmd
+{
+	NodeTag		type;
+	TimeLineID	timeline;
+} TimeLineHistoryCmd;
 
 #endif   /* REPLNODES_H */

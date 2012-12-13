@@ -1018,14 +1018,21 @@
    </para>
 
    <para>
-    There is another Copy-related mode called Copy-both, which allows
+    There is another Copy-related mode called copy-both, which allows
     high-speed bulk data transfer to <emphasis>and</> from the server.
     Copy-both mode is initiated when a backend in walsender mode
     executes a <command>START_REPLICATION</command> statement.  The
     backend sends a CopyBothResponse message to the frontend.  Both
     the backend and the frontend may then send CopyData messages
-    until the connection is terminated.  See <xref
-    linkend="protocol-replication">.
+    until either end sends a CopyDone message. After the client
+    sends a CopyDone message, the connection goes from copy-both mode to
+    copy-out mode, and the client may not send any more CopyData messages.
+    Similarly, when the server sends a CopyDone message, the connection
+    goes into copy-in mode, and the server may not send any more CopyData
+    messages. After both sides have sent a CopyDone message, the copy mode
+    is terminated, and the backend reverts to the command-processing mode.
+    See <xref linkend="protocol-replication"> for more information on the
+    subprotocol transmitted over copy-both mode.
    </para>
 
    <para>
@@ -1350,19 +1357,69 @@ The commands accepted in walsender mode are:
   </varlistentry>
 
   <varlistentry>
-    <term>START_REPLICATION <replaceable>XXX</>/<replaceable>XXX</></term>
+    <term>TIMELINE_HISTORY <replaceable class="parameter">tli</replaceable></term>
+    <listitem>
+     <para>
+      Requests the server to send over the timeline history file for timeline
+      <replaceable class="parameter">tli</replaceable>.  Server replies with a
+      result set of a single row, containing two fields:
+     </para>
+
+     <para>
+      <variablelist>
+      <varlistentry>
+      <term>
+       filename
+      </term>
+      <listitem>
+      <para>
+       Filename of the timeline history file, e.g 00000002.history.
+      </para>
+      </listitem>
+      </varlistentry>
+
+      <varlistentry>
+      <term>
+       content
+      </term>
+      <listitem>
+      <para>
+       Contents of the timeline history file.
+      </para>
+      </listitem>
+      </varlistentry>
+
+      </variablelist>
+     </para>
+    </listitem>
+  </varlistentry>
+
+  <varlistentry>
+    <term>START_REPLICATION <replaceable class="parameter">XXX/XXX</> TIMELINE <replaceable class="parameter">tli</></term>
     <listitem>
      <para>
       Instructs server to start streaming WAL, starting at
-      WAL position <replaceable>XXX</>/<replaceable>XXX</>.
+      WAL position <replaceable class="parameter">XXX/XXX</> on timeline
+      <replaceable class="parameter">tli</>.
       The server can reply with an error, e.g. if the requested section of WAL
       has already been recycled. On success, server responds with a
       CopyBothResponse message, and then starts to stream WAL to the frontend.
-      WAL will continue to be streamed until the connection is broken;
-      no further commands will be accepted. If the WAL sender process is
-      terminated normally (during postmaster shutdown), it will send a
-      CommandComplete message before exiting. This might not happen during an
-      abnormal shutdown, of course.
+     </para>
+
+     <para>
+      If the client requests a timeline that's not the latest, but is part of
+      the history of the server, the server will stream all the WAL on that
+      timeline starting from the requested startpoint, up to the point where
+      the server switched to another timeline. If the client requests
+      streaming at exactly the end of an old timeline, the server responds
+      immediately with CommandComplete without entering COPY mode.
+     </para>
+
+     <para>
+      After streaming all the WAL on a timeline that is not the latest one,
+      the server will end streaming by exiting the COPY mode. When the client
+      acknowledges this by also exiting COPY mode, the server responds with a
+      CommandComplete message, and is ready to accept a new command.
      </para>
 
      <para>

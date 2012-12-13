@@ -411,6 +411,89 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 }
 
 /*
+ * Writes a history file for given timeline and contents.
+ *
+ * Currently this is only used in the walreceiver process, and so there are
+ * no locking considerations.  But we should be just as tense as XLogFileInit
+ * to avoid emplacing a bogus file.
+ */
+void
+writeTimeLineHistoryFile(TimeLineID tli, char *content, int size)
+{
+	char		path[MAXPGPATH];
+	char		tmppath[MAXPGPATH];
+	int			fd;
+
+	/*
+	 * Write into a temp file name.
+	 */
+	snprintf(tmppath, MAXPGPATH, XLOGDIR "/xlogtemp.%d", (int) getpid());
+
+	unlink(tmppath);
+
+	/* do not use get_sync_bit() here --- want to fsync only at end of fill */
+	fd = OpenTransientFile(tmppath, O_RDWR | O_CREAT | O_EXCL,
+						   S_IRUSR | S_IWUSR);
+	if (fd < 0)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not create file \"%s\": %m", tmppath)));
+
+	errno = 0;
+	if ((int) write(fd, content, size) != size)
+	{
+		int			save_errno = errno;
+
+		/*
+		 * If we fail to make the file, delete it to release disk space
+		 */
+		unlink(tmppath);
+		/* if write didn't set errno, assume problem is no disk space */
+		errno = save_errno ? save_errno : ENOSPC;
+
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not write to file \"%s\": %m", tmppath)));
+	}
+
+	if (pg_fsync(fd) != 0)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not fsync file \"%s\": %m", tmppath)));
+
+	if (CloseTransientFile(fd))
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not close file \"%s\": %m", tmppath)));
+
+
+	/*
+	 * Now move the completed history file into place with its final name.
+	 */
+	TLHistoryFilePath(path, tli);
+
+	/*
+	 * Prefer link() to rename() here just to be really sure that we don't
+	 * overwrite an existing logfile.  However, there shouldn't be one, so
+	 * rename() is an acceptable substitute except for the truly paranoid.
+	 */
+#if HAVE_WORKING_LINK
+	if (link(tmppath, path) < 0)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not link file \"%s\" to \"%s\": %m",
+						tmppath, path)));
+	unlink(tmppath);
+#else
+	if (rename(tmppath, path) < 0)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not rename file \"%s\" to \"%s\": %m",
+						tmppath, path)));
+#endif
+}
+
+/*
  * Returns true if 'expectedTLEs' contains a timeline with id 'tli'
  */
 bool

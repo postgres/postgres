@@ -34,6 +34,7 @@ extern bool existsTimeLineHistory(TimeLineID probeTLI);
 extern TimeLineID findNewestTimeLine(TimeLineID startTLI);
 extern void writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 					 XLogRecPtr switchpoint, char *reason);
+extern void writeTimeLineHistoryFile(TimeLineID tli, char *content, int size);
 extern bool tliInHistory(TimeLineID tli, List *expectedTLIs);
 extern TimeLineID tliOfPointInHistory(XLogRecPtr ptr, List *history);
 extern XLogRecPtr tliSwitchPoint(TimeLineID tli, List *history);

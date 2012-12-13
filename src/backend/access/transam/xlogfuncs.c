@@ -226,7 +226,7 @@ pg_last_xlog_receive_location(PG_FUNCTION_ARGS)
 	XLogRecPtr	recptr;
 	char		location[MAXFNAMELEN];
 
-	recptr = GetWalRcvWriteRecPtr(NULL);
+	recptr = GetWalRcvWriteRecPtr(NULL, NULL);
 
 	if (recptr == 0)
 		PG_RETURN_NULL();
@@ -248,7 +248,7 @@ pg_last_xlog_replay_location(PG_FUNCTION_ARGS)
 	XLogRecPtr	recptr;
 	char		location[MAXFNAMELEN];
 
-	recptr = GetXLogReplayRecPtr(NULL);
+	recptr = GetXLogReplayRecPtr();
 
 	if (recptr == 0)
 		PG_RETURN_NULL();

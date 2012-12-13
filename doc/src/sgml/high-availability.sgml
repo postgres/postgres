@@ -912,10 +912,9 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
    </para>
 
    <para>
-    Promoting a cascading standby terminates the immediate downstream replication
-    connections which it serves. This is because the timeline becomes different
-    between standbys, and they can no longer continue replication.  The
-    affected standby(s) may reconnect to reestablish streaming replication.
+    If an upstream standby server is promoted to become new master, downstream
+    servers will continue to stream from the new master if
+    <varname>recovery_target_timeline</> is set to <literal>'latest'</>.
    </para>
 
    <para>

@@ -15,6 +15,8 @@
  */
 #include "postgres.h"
 
+#include "utils/builtins.h"
+
 /* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
 #undef fprintf
 #define fprintf(file, fmt, msg)  ereport(ERROR, (errmsg_internal("%s", msg)))
@@ -49,6 +51,7 @@ xqstart			{quote}
 xqdouble		{quote}{quote}
 xqinside		[^']+
 
+digit			[0-9]+
 hexdigit		[0-9A-Za-z]+
 
 quote			'
@@ -63,13 +66,20 @@ LABEL			{ return K_LABEL; }
 NOWAIT			{ return K_NOWAIT; }
 PROGRESS			{ return K_PROGRESS; }
 WAL			{ return K_WAL; }
+TIMELINE			{ return K_TIMELINE; }
 START_REPLICATION	{ return K_START_REPLICATION; }
+TIMELINE_HISTORY	{ return K_TIMELINE_HISTORY; }
 ","				{ return ','; }
 ";"				{ return ';'; }
 
 [\n]			;
 [\t]			;
 " "				;
+
+{digit}+		{
+					yylval.intval = pg_atoi(yytext, sizeof(int32), 0);
+					return ICONST;
+				}
 
 {hexdigit}+\/{hexdigit}+		{
 					uint32	hi,
