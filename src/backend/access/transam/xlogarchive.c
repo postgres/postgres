@@ -20,6 +20,7 @@
 #include <signal.h>
 #include <unistd.h>
 
+#include "access/xlog.h"
 #include "access/xlog_internal.h"
 #include "miscadmin.h"
 #include "postmaster/startup.h"

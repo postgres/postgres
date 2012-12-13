@@ -8,6 +8,9 @@
  * needed by rmgr routines (redo support for individual record types).
  * So the XLogRecord typedef and associated stuff appear in xlog.h.
  *
+ * Note: This file must be includable in both frontend and backend contexts,
+ * to allow stand-alone tools like pg_receivexlog to deal with WAL files.
+ *
  * Portions Copyright (c) 1996-2012, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -16,8 +19,9 @@
 #ifndef XLOG_INTERNAL_H
 #define XLOG_INTERNAL_H
 
-#include "access/xlog.h"
-#include "fmgr.h"
+#include "access/xlogdefs.h"
+#include "datatype/timestamp.h"
+#include "lib/stringinfo.h"
 #include "pgtime.h"
 #include "storage/block.h"
 #include "storage/relfilenode.h"
@@ -226,6 +230,12 @@ typedef struct xl_restore_point
 
 
 /*
+ * XLogRecord is defined in xlog.h, but we avoid #including that to keep
+ * this file includable in stand-alone programs.
+ */
+struct XLogRecord;
+
+/*
  * Method table for resource managers.
  *
  * RmgrTable[] is indexed by RmgrId values (see rmgr.h).
@@ -233,7 +243,7 @@ typedef struct xl_restore_point
 typedef struct RmgrData
 {
 	const char *rm_name;
-	void		(*rm_redo) (XLogRecPtr lsn, XLogRecord *rptr);
+	void		(*rm_redo) (XLogRecPtr lsn, struct XLogRecord *rptr);
 	void		(*rm_desc) (StringInfo buf, uint8 xl_info, char *rec);
 	void		(*rm_startup) (void);
 	void		(*rm_cleanup) (void);
@@ -271,27 +281,5 @@ extern void XLogArchiveNotifySeg(XLogSegNo segno);
 extern bool XLogArchiveCheckDone(const char *xlog);
 extern bool XLogArchiveIsBusy(const char *xlog);
 extern void XLogArchiveCleanup(const char *xlog);
-
-/*
- * These aren't in xlog.h because I'd rather not include fmgr.h there.
- */
-extern Datum pg_start_backup(PG_FUNCTION_ARGS);
-extern Datum pg_stop_backup(PG_FUNCTION_ARGS);
-extern Datum pg_switch_xlog(PG_FUNCTION_ARGS);
-extern Datum pg_create_restore_point(PG_FUNCTION_ARGS);
-extern Datum pg_current_xlog_location(PG_FUNCTION_ARGS);
-extern Datum pg_current_xlog_insert_location(PG_FUNCTION_ARGS);
-extern Datum pg_last_xlog_receive_location(PG_FUNCTION_ARGS);
-extern Datum pg_last_xlog_replay_location(PG_FUNCTION_ARGS);
-extern Datum pg_last_xact_replay_timestamp(PG_FUNCTION_ARGS);
-extern Datum pg_xlogfile_name_offset(PG_FUNCTION_ARGS);
-extern Datum pg_xlogfile_name(PG_FUNCTION_ARGS);
-extern Datum pg_is_in_recovery(PG_FUNCTION_ARGS);
-extern Datum pg_xlog_replay_pause(PG_FUNCTION_ARGS);
-extern Datum pg_xlog_replay_resume(PG_FUNCTION_ARGS);
-extern Datum pg_is_xlog_replay_paused(PG_FUNCTION_ARGS);
-extern Datum pg_xlog_location_diff(PG_FUNCTION_ARGS);
-extern Datum pg_is_in_backup(PG_FUNCTION_ARGS);
-extern Datum pg_backup_start_time(PG_FUNCTION_ARGS);
 
 #endif   /* XLOG_INTERNAL_H */
