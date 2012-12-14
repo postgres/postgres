@@ -1160,7 +1160,7 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 			}
 
 			OK = AcceptResult(results);
-			psql_assert(!OK);
+			Assert(!OK);
 			PQclear(results);
 			break;
 		}

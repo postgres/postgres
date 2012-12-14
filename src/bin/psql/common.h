@@ -12,13 +12,6 @@
 #include <setjmp.h>
 #include "libpq-fe.h"
 
-#ifdef USE_ASSERT_CHECKING
-#include <assert.h>
-#define psql_assert(p) assert(p)
-#else
-#define psql_assert(p)
-#endif
-
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))
 
 /*

@@ -1184,8 +1184,8 @@ psql_scan_setup(PsqlScanState state,
 				const char *line, int line_len)
 {
 	/* Mustn't be scanning already */
-	psql_assert(state->scanbufhandle == NULL);
-	psql_assert(state->buffer_stack == NULL);
+	Assert(state->scanbufhandle == NULL);
+	Assert(state->buffer_stack == NULL);
 
 	/* Do we need to hack the character set encoding? */
 	state->encoding = pset.encoding;
@@ -1245,7 +1245,7 @@ psql_scan(PsqlScanState state,
 	int			lexresult;
 
 	/* Must be scanning already */
-	psql_assert(state->scanbufhandle);
+	Assert(state->scanbufhandle != NULL);
 
 	/* Set up static variables that will be used by yylex */
 	cur_state = state;
@@ -1424,7 +1424,7 @@ psql_scan_slash_command(PsqlScanState state)
 	PQExpBufferData mybuf;
 
 	/* Must be scanning already */
-	psql_assert(state->scanbufhandle);
+	Assert(state->scanbufhandle != NULL);
 
 	/* Build a local buffer that we'll return the data of */
 	initPQExpBuffer(&mybuf);
@@ -1478,7 +1478,7 @@ psql_scan_slash_option(PsqlScanState state,
 	char		local_quote;
 
 	/* Must be scanning already */
-	psql_assert(state->scanbufhandle);
+	Assert(state->scanbufhandle != NULL);
 
 	if (quote == NULL)
 		quote = &local_quote;
@@ -1512,7 +1512,7 @@ psql_scan_slash_option(PsqlScanState state,
 	 * or LEXRES_EOL (the latter indicating end of string).  If we were inside
 	 * a quoted string, as indicated by YY_START, EOL is an error.
 	 */
-	psql_assert(lexresult == LEXRES_EOL || lexresult == LEXRES_OK);
+	Assert(lexresult == LEXRES_EOL || lexresult == LEXRES_OK);
 
 	switch (YY_START)
 	{
@@ -1608,7 +1608,7 @@ void
 psql_scan_slash_command_end(PsqlScanState state)
 {
 	/* Must be scanning already */
-	psql_assert(state->scanbufhandle);
+	Assert(state->scanbufhandle != NULL);
 
 	/* Set up static variables that will be used by yylex */
 	cur_state = state;
