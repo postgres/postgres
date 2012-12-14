@@ -44,7 +44,7 @@ XGETTEXT += -ctranslator --copyright-holder='PostgreSQL Global Development Group
 endif
 
 ifdef MSGMERGE
-MSGMERGE += --no-wrap --sort-by-file
+MSGMERGE += --no-wrap --previous --sort-by-file
 endif
 
 # _ is defined in c.h, so it's global
