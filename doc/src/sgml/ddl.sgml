@@ -1735,7 +1735,7 @@ CREATE TABLE public.products ( ... );
    </para>
 
    <indexterm>
-    <primary>search_path</primary>
+    <primary><varname>search_path</varname> configuration parameter</primary>
    </indexterm>
 
    <para>

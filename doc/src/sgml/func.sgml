@@ -13507,6 +13507,11 @@ SELECT relname FROM pg_class WHERE pg_table_is_visible(oid);
 </programlisting>
   </para>
 
+   <indexterm>
+    <primary>search path</primary>
+    <secondary>object visibility</secondary>
+   </indexterm>
+
    <table id="functions-info-schema-table">
     <title>Schema Visibility Inquiry Functions</title>
     <tgroup cols="3">

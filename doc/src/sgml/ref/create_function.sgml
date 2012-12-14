@@ -673,6 +673,11 @@ SELECT * FROM dup(42);
  <refsect1 id="sql-createfunction-security">
   <title>Writing <literal>SECURITY DEFINER</literal> Functions Safely</title>
 
+  <indexterm>
+   <primary><varname>search_path</varname> configuration parameter</>
+   <secondary>use in securing functions</>
+  </indexterm>
+
    <para>
     Because a <literal>SECURITY DEFINER</literal> function is executed
     with the privileges of the user that created it, care is needed to
