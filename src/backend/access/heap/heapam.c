@@ -260,10 +260,23 @@ heapgetpage(HeapScanDesc scan, BlockNumber page)
 
 	/*
 	 * If the all-visible flag indicates that all tuples on the page are
-	 * visible to everyone, we can skip the per-tuple visibility tests. But
-	 * not in hot standby mode. A tuple that's already visible to all
+	 * visible to everyone, we can skip the per-tuple visibility tests.
+	 *
+	 * Note: In hot standby, a tuple that's already visible to all
 	 * transactions in the master might still be invisible to a read-only
-	 * transaction in the standby.
+	 * transaction in the standby. We partly handle this problem by tracking
+	 * the minimum xmin of visible tuples as the cut-off XID while marking a
+	 * page all-visible on master and WAL log that along with the visibility
+	 * map SET operation. In hot standby, we wait for (or abort) all
+	 * transactions that can potentially may not see one or more tuples on the
+	 * page. That's how index-only scans work fine in hot standby. A crucial
+	 * difference between index-only scans and heap scans is that the
+	 * index-only scan completely relies on the visibility map where as heap
+	 * scan looks at the page-level PD_ALL_VISIBLE flag. We are not sure if the
+	 * page-level flag can be trusted in the same way, because it might get
+	 * propagated somehow without being explicitly WAL-logged, e.g. via a full
+	 * page write. Until we can prove that beyond doubt, let's check each
+	 * tuple for visibility the hard way.
 	 */
 	all_visible = PageIsAllVisible(dp) && !snapshot->takenDuringRecovery;
 
