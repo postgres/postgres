@@ -1573,7 +1573,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><literal><function>pg_stat_get_activity</function>(<type>integer</type>)</literal></entry>
+      <entry><literal><function>pg_stat_get_activity</function>(<type>integer</type>)</literal><indexterm><primary>pg_stat_get_activity</primary></indexterm></entry>
       <entry><type>setof record</type></entry>
       <entry>
        Returns a record of information about the backend with the specified PID, or
@@ -1584,7 +1584,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><literal><function>pg_stat_clear_snapshot()</function></literal></entry>
+      <entry><literal><function>pg_stat_clear_snapshot()</function></literal><indexterm><primary>pg_stat_clear_snapshot</primary></indexterm></entry>
       <entry><type>void</type></entry>
       <entry>
        Discard the current statistics snapshot
@@ -1592,7 +1592,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><literal><function>pg_stat_reset()</function></literal></entry>
+      <entry><literal><function>pg_stat_reset()</function></literal><indexterm><primary>pg_stat_reset</primary></indexterm></entry>
       <entry><type>void</type></entry>
       <entry>
        Reset all statistics counters for the current database to zero
@@ -1601,7 +1601,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><literal><function>pg_stat_reset_shared</function>(text)</literal></entry>
+      <entry><literal><function>pg_stat_reset_shared</function>(text)</literal><indexterm><primary>pg_stat_reset_shared</primary></indexterm></entry>
       <entry><type>void</type></entry>
       <entry>
        Reset some cluster-wide statistics counters to zero, depending on the
@@ -1612,7 +1612,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><literal><function>pg_stat_reset_single_table_counters</function>(oid)</literal></entry>
+      <entry><literal><function>pg_stat_reset_single_table_counters</function>(oid)</literal><indexterm><primary>pg_stat_reset_single_table_counters</primary></indexterm></entry>
       <entry><type>void</type></entry>
       <entry>
        Reset statistics for a single table or index in the current database to
@@ -1621,7 +1621,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><literal><function>pg_stat_reset_single_function_counters</function>(oid)</literal></entry>
+      <entry><literal><function>pg_stat_reset_single_function_counters</function>(oid)</literal><indexterm><primary>pg_stat_reset_single_function_counters</primary></indexterm></entry>
       <entry><type>void</type></entry>
       <entry>
        Reset statistics for a single function in the current database to
