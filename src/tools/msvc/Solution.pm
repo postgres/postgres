@@ -275,6 +275,9 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 		system(
 "perl -I ../catalog Gen_fmgrtab.pl ../../../src/include/catalog/pg_proc.h");
 		chdir('..\..\..');
+	}
+	if (IsNewer('src\include\utils\fmgroids.h', 'src\backend\utils\fmgroids.h'))
+	{
 		copyFile('src\backend\utils\fmgroids.h',
 			'src\include\utils\fmgroids.h');
 	}
