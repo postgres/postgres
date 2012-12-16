@@ -1289,7 +1289,6 @@
      <row>
       <entry><structfield>oid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry></entry>
       <entry>Row identifier (hidden attribute; must be explicitly selected)</entry>
      </row>
 
