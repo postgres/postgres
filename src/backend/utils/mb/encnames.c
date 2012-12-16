@@ -6,7 +6,6 @@
  */
 #ifdef FRONTEND
 #include "postgres_fe.h"
-#define Assert(condition)
 #else
 #include "postgres.h"
 #include "utils/builtins.h"
