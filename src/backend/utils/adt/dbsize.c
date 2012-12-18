@@ -242,6 +242,9 @@ pg_tablespace_size_name(PG_FUNCTION_ARGS)
 
 /*
  * calculate size of (one fork of) a relation
+ *
+ * Note: we can safely apply this to temp tables of other sessions, so there
+ * is no check here or at the call sites for that.
  */
 static int64
 calculate_relation_size(RelFileNode *rfn, BackendId backend, ForkNumber forknum)

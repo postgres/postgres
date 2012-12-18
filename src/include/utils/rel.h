@@ -137,6 +137,7 @@ typedef struct RelationData
 	bool		rd_isvalid;		/* relcache entry is valid */
 	char		rd_indexvalid;	/* state of rd_indexlist: 0 = not valid, 1 =
 								 * valid, 2 = temporarily forced */
+	bool		rd_islocaltemp; /* rel is a temp rel of this session */
 
 	/*
 	 * rd_createSubid is the ID of the highest subtransaction the rel has
@@ -406,21 +407,15 @@ typedef struct StdRdOptions
 	((relation)->rd_rel->relpersistence == RELPERSISTENCE_TEMP)
 
 /*
- * RelationUsesTempNamespace
- *		True if relation's catalog entries live in a private namespace.
- */
-#define RelationUsesTempNamespace(relation) \
-	((relation)->rd_rel->relpersistence == RELPERSISTENCE_TEMP)
-
-/*
  * RELATION_IS_LOCAL
  *		If a rel is either temp or newly created in the current transaction,
- *		it can be assumed to be visible only to the current backend.
+ *		it can be assumed to be accessible only to the current backend.
+ *		This is typically used to decide that we can skip acquiring locks.
  *
  * Beware of multiple eval of argument
  */
 #define RELATION_IS_LOCAL(relation) \
-	((relation)->rd_backend == MyBackendId || \
+	((relation)->rd_islocaltemp || \
 	 (relation)->rd_createSubid != InvalidSubTransactionId)
 
 /*
@@ -430,8 +425,8 @@ typedef struct StdRdOptions
  * Beware of multiple eval of argument
  */
 #define RELATION_IS_OTHER_TEMP(relation) \
-	((relation)->rd_rel->relpersistence == RELPERSISTENCE_TEMP \
-	&& (relation)->rd_backend != MyBackendId)
+	((relation)->rd_rel->relpersistence == RELPERSISTENCE_TEMP && \
+	 !(relation)->rd_islocaltemp)
 
 /* routines in utils/cache/relcache.c */
 extern void RelationIncrementReferenceCount(Relation rel);
