@@ -853,20 +853,33 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 		case RELPERSISTENCE_UNLOGGED:
 		case RELPERSISTENCE_PERMANENT:
 			relation->rd_backend = InvalidBackendId;
+			relation->rd_islocaltemp = false;
 			break;
 		case RELPERSISTENCE_TEMP:
 			if (isTempOrToastNamespace(relation->rd_rel->relnamespace))
+			{
 				relation->rd_backend = MyBackendId;
+				relation->rd_islocaltemp = true;
+			}
 			else
 			{
 				/*
-				 * If it's a local temp table, but not one of ours, we have to
-				 * use the slow, grotty method to figure out the owning
-				 * backend.
+				 * If it's a temp table, but not one of ours, we have to use
+				 * the slow, grotty method to figure out the owning backend.
+				 *
+				 * Note: it's possible that rd_backend gets set to MyBackendId
+				 * here, in case we are looking at a pg_class entry left over
+				 * from a crashed backend that coincidentally had the same
+				 * BackendId we're using.  We should *not* consider such a
+				 * table to be "ours"; this is why we need the separate
+				 * rd_islocaltemp flag.  The pg_class entry will get flushed
+				 * if/when we clean out the corresponding temp table namespace
+				 * in preparation for using it.
 				 */
 				relation->rd_backend =
 					GetTempNamespaceBackendId(relation->rd_rel->relnamespace);
 				Assert(relation->rd_backend != InvalidBackendId);
+				relation->rd_islocaltemp = false;
 			}
 			break;
 		default:
@@ -1387,6 +1400,7 @@ formrdesc(const char *relationName, Oid relationReltype,
 	relation->rd_createSubid = InvalidSubTransactionId;
 	relation->rd_newRelfilenodeSubid = InvalidSubTransactionId;
 	relation->rd_backend = InvalidBackendId;
+	relation->rd_islocaltemp = false;
 
 	/*
 	 * initialize relation tuple form
@@ -2538,16 +2552,19 @@ RelationBuildLocalRelation(const char *relname,
 	/* needed when bootstrapping: */
 	rel->rd_rel->relowner = BOOTSTRAP_SUPERUSERID;
 
-	/* set up persistence; rd_backend is a function of persistence type */
+	/* set up persistence and relcache fields dependent on it */
 	rel->rd_rel->relpersistence = relpersistence;
 	switch (relpersistence)
 	{
 		case RELPERSISTENCE_UNLOGGED:
 		case RELPERSISTENCE_PERMANENT:
 			rel->rd_backend = InvalidBackendId;
+			rel->rd_islocaltemp = false;
 			break;
 		case RELPERSISTENCE_TEMP:
+			Assert(isTempOrToastNamespace(relnamespace));
 			rel->rd_backend = MyBackendId;
+			rel->rd_islocaltemp = true;
 			break;
 		default:
 			elog(ERROR, "invalid relpersistence: %c", relpersistence);

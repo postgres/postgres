@@ -806,7 +806,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 		Assert(rel);
 
 		/* check read-only transaction */
-		if (XactReadOnly && rel->rd_backend != MyBackendId)
+		if (XactReadOnly && !rel->rd_islocaltemp)
 			PreventCommandIfReadOnly("COPY FROM");
 
 		cstate = BeginCopyFrom(rel, stmt->filename,
