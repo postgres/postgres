@@ -28,9 +28,8 @@ override python_libspec = -framework Python
 override python_additional_libs =
 endif
 
-# If we don't have a shared library and the platform doesn't allow it
-# to work without, we have to skip it.
-ifneq (,$(findstring yes, $(shared_libpython)$(allow_nonpic_in_shlib)))
+# If we don't have a shared library, we have to skip it.
+ifeq ($(shared_libpython),yes)
 
 override CPPFLAGS := -I. -I$(srcdir) $(python_includespec) $(CPPFLAGS)
 
