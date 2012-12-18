@@ -3288,20 +3288,44 @@ RAISE NOTICE 'Calling cs_create_job(%)', v_job_id;
     You can attach additional information to the error report by writing
     <literal>USING</> followed by <replaceable
     class="parameter">option</replaceable> = <replaceable
-    class="parameter">expression</replaceable> items.  The allowed
-    <replaceable class="parameter">option</replaceable> keywords are
-    <literal>MESSAGE</>, <literal>DETAIL</>, <literal>HINT</>, and
-    <literal>ERRCODE</>, while each <replaceable
-    class="parameter">expression</replaceable> can be any string-valued
-    expression.
-    <literal>MESSAGE</> sets the error message text (this option can't
-    be used in the form of <command>RAISE</> that includes a format
-    string before <literal>USING</>).
-    <literal>DETAIL</> supplies an error detail message, while
-    <literal>HINT</> supplies a hint message.
-    <literal>ERRCODE</> specifies the error code (SQLSTATE) to report,
-    either by condition name as shown in <xref linkend="errcodes-appendix">,
-    or directly as a five-character SQLSTATE code.
+    class="parameter">expression</replaceable> items.  Each
+    <replaceable class="parameter">expression</replaceable> can be any
+    string-valued expression.  The allowed <replaceable
+    class="parameter">option</replaceable> key words are:
+
+    <variablelist id="raise-using-options">
+     <varlistentry>
+      <term><literal>MESSAGE</literal></term>
+      <listitem>
+       <para>Sets the error message text.  This option can't be used in the
+        form of <command>RAISE</> that includes a format string
+        before <literal>USING</>.</para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>DETAIL</literal></term>
+      <listitem>
+       <para>Supplies an error detail message.</para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>HINT</literal></term>
+      <listitem>
+       <para>Supplies a hint message.</para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>ERRCODE</literal></term>
+      <listitem>
+       <para>Specifies the error code (SQLSTATE) to report, either by condition
+        name, as shown in <xref linkend="errcodes-appendix">, or directly as a
+        five-character SQLSTATE code.</para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
    </para>
 
    <para>
