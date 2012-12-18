@@ -159,7 +159,7 @@ ROLLBACK;
       materialized plans, respectively. The number of blocks shown for an
       upper-level node includes those used by all its child nodes.  In text
       format, only non-zero values are printed.  This parameter may only be
-      used with <literal>ANALYZE</literal> parameter.  It defaults to
+      used with the <literal>ANALYZE</literal> parameter.  It defaults to
       <literal>FALSE</literal>.
      </para>
     </listitem>
