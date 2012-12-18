@@ -1202,6 +1202,13 @@ PGAC_VAR_INT_TIMEZONE
 AC_FUNC_ACCEPT_ARGTYPES
 PGAC_FUNC_GETTIMEOFDAY_1ARG
 
+# Some versions of libedit contain strlcpy(), setproctitle(), and other
+# symbols that that library has no business exposing to the world.  Pending
+# acquisition of a clue by those developers, ignore libedit (including its
+# possible alias of libreadline) while checking for everything else.
+LIBS_including_readline="$LIBS"
+LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
+
 AC_CHECK_FUNCS([cbrt dlopen fdatasync getifaddrs getpeerucred getrlimit mbstowcs_l memmove poll pstat readlink setproctitle setsid sigprocmask symlink sync_file_range towlower utime utimes wcstombs wcstombs_l])
 
 AC_REPLACE_FUNCS(fseeko)
@@ -1316,11 +1323,6 @@ else
   AC_CHECK_FUNCS([fpclass fp_class fp_class_d class], [break])
 fi
 
-# Some versions of libedit contain strlcpy(); so disregard that library while
-# checking for these standard libc functions.
-pgac_save_LIBS="$LIBS"
-LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
-
 AC_REPLACE_FUNCS([crypt fls getopt getrusage inet_aton random rint srandom strerror strlcat strlcpy])
 
 case $host_os in
@@ -1337,9 +1339,6 @@ case $host_os in
                 AC_REPLACE_FUNCS([unsetenv getpeereid])
 		;;
 esac
-
-
-LIBS="$pgac_save_LIBS"
 
 # System's version of getaddrinfo(), if any, may be used only if we found
 # a definition for struct addrinfo; see notes in src/include/getaddrinfo.h.
@@ -1394,13 +1393,6 @@ else
   AC_SUBST(have_win32_dbghelp,no)
 fi
 
-if test "$with_readline" = yes; then
-  PGAC_VAR_RL_COMPLETION_APPEND_CHARACTER
-  AC_CHECK_FUNCS([rl_completion_matches rl_filename_completion_function])
-  AC_CHECK_FUNCS([append_history history_truncate_file])
-fi
-
-
 dnl Cannot use AC_CHECK_FUNC because sigsetjmp may be a macro
 dnl (especially on GNU libc)
 dnl See also comments in c.h.
@@ -1449,6 +1441,15 @@ AC_CACHE_CHECK([for builtin locking functions], pgac_cv_gcc_int_atomics,
   [pgac_cv_gcc_int_atomics="no"])])
 if test x"$pgac_cv_gcc_int_atomics" = x"yes"; then
   AC_DEFINE(HAVE_GCC_INT_ATOMICS, 1, [Define to 1 if you have __sync_lock_test_and_set(int *) and friends.])
+fi
+
+# Lastly, restore full LIBS list and check for readline/libedit symbols
+LIBS="$LIBS_including_readline"
+
+if test "$with_readline" = yes; then
+  PGAC_VAR_RL_COMPLETION_APPEND_CHARACTER
+  AC_CHECK_FUNCS([rl_completion_matches rl_filename_completion_function])
+  AC_CHECK_FUNCS([append_history history_truncate_file])
 fi
 
 
