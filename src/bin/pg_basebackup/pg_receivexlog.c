@@ -80,7 +80,7 @@ stop_streaming(XLogRecPtr segendpos, uint32 timeline, bool segment_finished)
 
 	if (time_to_abort)
 	{
-		fprintf(stderr, _("%s: received interrupt signal, exiting.\n"),
+		fprintf(stderr, _("%s: received interrupt signal, exiting\n"),
 				progname);
 		return true;
 	}
@@ -427,14 +427,14 @@ main(int argc, char **argv)
 		}
 		else if (noloop)
 		{
-			fprintf(stderr, _("%s: disconnected.\n"), progname);
+			fprintf(stderr, _("%s: disconnected\n"), progname);
 			exit(1);
 		}
 		else
 		{
 			fprintf(stderr,
 					/* translator: check source for value for %d */
-					_("%s: disconnected. Waiting %d seconds to try again.\n"),
+					_("%s: disconnected; waiting %d seconds to try again\n"),
 					progname, RECONNECT_SLEEP_TIME);
 			pg_usleep(RECONNECT_SLEEP_TIME * 1000000);
 		}

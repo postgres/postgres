@@ -1136,7 +1136,7 @@ BaseBackup(void)
 
 		if (verbose)
 			fprintf(stderr,
-					_("%s: waiting for background process to finish streaming...\n"), progname);
+					_("%s: waiting for background process to finish streaming ...\n"), progname);
 
 #ifndef WIN32
 		if (write(bgpipe[1], xlogend, strlen(xlogend)) != strlen(xlogend))
@@ -1443,7 +1443,7 @@ main(int argc, char **argv)
 	if (format != 'p' && streamwal)
 	{
 		fprintf(stderr,
-				_("%s: wal streaming can only be used in plain mode\n"),
+				_("%s: WAL streaming can only be used in plain mode\n"),
 				progname);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
