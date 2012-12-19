@@ -386,7 +386,7 @@ S291	Unique constraint on entire row			NO
 S301	Enhanced UNNEST			NO	
 S401	Distinct types based on array types			NO	
 S402	Distinct types based on distinct types			NO	
-S403	MAX_CARDINALITY			NO	
+S403	ARRAY_MAX_CARDINALITY			NO	
 S404	TRIM_ARRAY			NO	
 T011	Timestamp in Information Schema			NO	
 T021	BINARY and VARBINARY data types			NO	
