@@ -114,8 +114,9 @@ extern char *output_files[];
  */
 typedef struct
 {
-	char		nspname[NAMEDATALEN];	/* namespace name */
-	char		relname[NAMEDATALEN];	/* relation name */
+	/* Can't use NAMEDATALEN;  not guaranteed to fit on client */
+	char		*nspname;		/* namespace name */
+	char		*relname;		/* relation name */
 	Oid			reloid;			/* relation oid */
 	Oid			relfilenode;	/* relation relfile node */
 	/* relation tablespace path, or "" for the cluster default */
@@ -143,8 +144,8 @@ typedef struct
 	Oid			old_relfilenode;
 	Oid			new_relfilenode;
 	/* the rest are used only for logging and error reporting */
-	char		nspname[NAMEDATALEN];	/* namespaces */
-	char		relname[NAMEDATALEN];
+	char		*nspname;		/* namespaces */
+	char		*relname;
 } FileNameMap;
 
 /*
@@ -153,7 +154,7 @@ typedef struct
 typedef struct
 {
 	Oid			db_oid;			/* oid of the database */
-	char		db_name[NAMEDATALEN];	/* database name */
+	char		*db_name;		/* database name */
 	char		db_tblspace[MAXPGPATH]; /* database default tablespace path */
 	RelInfoArr	rel_arr;		/* array of all user relinfos */
 } DbInfo;

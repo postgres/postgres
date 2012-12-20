@@ -23,7 +23,7 @@ static void get_db_infos(ClusterInfo *cluster);
 static void get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo);
 static void free_rel_infos(RelInfoArr *rel_arr);
 static void print_db_infos(DbInfoArr *dbinfo);
-static void print_rel_infos(RelInfoArr *arr);
+static void print_rel_infos(RelInfoArr *rel_arr);
 
 
 /*
@@ -130,8 +130,8 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 	map->new_relfilenode = new_rel->relfilenode;
 
 	/* used only for logging and error reporing, old/new are identical */
-	snprintf(map->nspname, sizeof(map->nspname), "%s", old_rel->nspname);
-	snprintf(map->relname, sizeof(map->relname), "%s", old_rel->relname);
+	map->nspname = old_rel->nspname;
+	map->relname = old_rel->relname;
 }
 
 
@@ -223,8 +223,7 @@ get_db_infos(ClusterInfo *cluster)
 	for (tupnum = 0; tupnum < ntups; tupnum++)
 	{
 		dbinfos[tupnum].db_oid = atooid(PQgetvalue(res, tupnum, i_oid));
-		snprintf(dbinfos[tupnum].db_name, sizeof(dbinfos[tupnum].db_name), "%s",
-				 PQgetvalue(res, tupnum, i_datname));
+		dbinfos[tupnum].db_name = pg_strdup(PQgetvalue(res, tupnum, i_datname));
 		snprintf(dbinfos[tupnum].db_tblspace, sizeof(dbinfos[tupnum].db_tblspace), "%s",
 				 PQgetvalue(res, tupnum, i_spclocation));
 	}
@@ -349,10 +348,10 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 		curr->reloid = atooid(PQgetvalue(res, relnum, i_oid));
 
 		nspname = PQgetvalue(res, relnum, i_nspname);
-		strlcpy(curr->nspname, nspname, sizeof(curr->nspname));
+		curr->nspname = pg_strdup(nspname);
 
 		relname = PQgetvalue(res, relnum, i_relname);
-		strlcpy(curr->relname, relname, sizeof(curr->relname));
+		curr->relname = pg_strdup(relname);
 
 		curr->relfilenode = atooid(PQgetvalue(res, relnum, i_relfilenode));
 
@@ -380,7 +379,10 @@ free_db_and_rel_infos(DbInfoArr *db_arr)
 	int			dbnum;
 
 	for (dbnum = 0; dbnum < db_arr->ndbs; dbnum++)
+	{
 		free_rel_infos(&db_arr->dbs[dbnum].rel_arr);
+		pg_free(db_arr->dbs[dbnum].db_name);
+	}
 	pg_free(db_arr->dbs);
 	db_arr->dbs = NULL;
 	db_arr->ndbs = 0;
@@ -390,6 +392,13 @@ free_db_and_rel_infos(DbInfoArr *db_arr)
 static void
 free_rel_infos(RelInfoArr *rel_arr)
 {
+	int			relnum;
+
+	for (relnum = 0; relnum < rel_arr->nrels; relnum++)
+	{
+		pg_free(rel_arr->rels[relnum].nspname);
+		pg_free(rel_arr->rels[relnum].relname);
+	}
 	pg_free(rel_arr->rels);
 	rel_arr->nrels = 0;
 }
@@ -410,12 +419,12 @@ print_db_infos(DbInfoArr *db_arr)
 
 
 static void
-print_rel_infos(RelInfoArr *arr)
+print_rel_infos(RelInfoArr *rel_arr)
 {
 	int			relnum;
 
-	for (relnum = 0; relnum < arr->nrels; relnum++)
+	for (relnum = 0; relnum < rel_arr->nrels; relnum++)
 		pg_log(PG_VERBOSE, "relname: %s.%s: reloid: %u reltblspace: %s\n",
-			   arr->rels[relnum].nspname, arr->rels[relnum].relname,
-			   arr->rels[relnum].reloid, arr->rels[relnum].tablespace);
+			   rel_arr->rels[relnum].nspname, rel_arr->rels[relnum].relname,
+			   rel_arr->rels[relnum].reloid, rel_arr->rels[relnum].tablespace);
 }

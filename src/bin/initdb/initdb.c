@@ -1836,7 +1836,7 @@ setup_collation(void)
 #if defined(HAVE_LOCALE_T) && !defined(WIN32)
 	int			i;
 	FILE	   *locale_a_handle;
-	char		localebuf[NAMEDATALEN];
+	char		localebuf[NAMEDATALEN]; /* we assume ASCII so this is fine */
 	int			count = 0;
 
 	PG_CMD_DECL;
