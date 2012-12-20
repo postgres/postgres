@@ -8415,6 +8415,13 @@ CreateRestartPoint(int flags)
 
 		KeepLogSeg(endptr, &_logId, &_logSeg);
 		PrevLogSeg(_logId, _logSeg);
+
+		/*
+		 * Update ThisTimeLineID to the recovery target timeline, so that
+		 * we install any recycled segments on the correct timeline.
+		 */
+		ThisTimeLineID = GetRecoveryTargetTLI();
+
 		RemoveOldXlogFiles(_logId, _logSeg, endptr);
 
 		/*
