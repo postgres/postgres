@@ -61,6 +61,9 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 		 * 9.0, TOAST relation names always use heap table oids, hence we
 		 * cannot check relation names when upgrading from pre-9.0. Clusters
 		 * upgraded to 9.0 will get matching TOAST names.
+		 * If index names don't match primary key constraint names, this will
+		 * fail because pg_dump dumps constraint names and pg_upgrade checks
+		 * index names.
 		 */
 		if (strcmp(old_rel->nspname, new_rel->nspname) != 0 ||
 			((GET_MAJOR_VERSION(old_cluster.major_version) >= 900 ||
