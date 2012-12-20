@@ -2901,7 +2901,12 @@ RemoveOldXlogFiles(XLogSegNo segno, XLogRecPtr endptr)
 				 errmsg("could not open transaction log directory \"%s\": %m",
 						XLOGDIR)));
 
-	XLogFileName(lastoff, ThisTimeLineID, segno);
+	/*
+	 * Construct a filename of the last segment to be kept. The timeline ID
+	 * doesn't matter, we ignore that in the comparison. (During recovery,
+	 * ThisTimeLineID isn't set, so we can't use that.)
+	 */
+	XLogFileName(lastoff, 0, segno);
 
 	elog(DEBUG2, "attempting to remove WAL segments older than log file %s",
 		 lastoff);
