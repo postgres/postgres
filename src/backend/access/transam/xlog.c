@@ -7637,6 +7637,19 @@ CreateRestartPoint(int flags)
 
 		KeepLogSeg(endptr, &_logSegNo);
 		_logSegNo--;
+
+		/*
+		 * Update ThisTimeLineID to the timeline we're currently replaying,
+		 * so that we install any recycled segments on that timeline.
+		 *
+		 * There is no guarantee that the WAL segments will be useful on the
+		 * current timeline; if recovery proceeds to a new timeline right
+		 * after this, the pre-allocated WAL segments on this timeline will
+		 * not be used, and will go wasted until recycled on the next
+		 * restartpoint. We'll live with that.
+		 */
+		(void) GetXLogReplayRecPtr(&ThisTimeLineID);
+
 		RemoveOldXlogFiles(_logSegNo, endptr);
 
 		/*
