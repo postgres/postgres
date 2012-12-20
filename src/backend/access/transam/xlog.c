@@ -453,6 +453,7 @@ typedef struct XLogCtlData
 	 * replayed, otherwise it's equal to lastReplayedEndRecPtr.
 	 */
 	XLogRecPtr	lastReplayedEndRecPtr;
+	TimeLineID	lastReplayedTLI;
 	XLogRecPtr	replayEndRecPtr;
 	TimeLineID	replayEndTLI;
 	/* timestamp of last COMMIT/ABORT record replayed (or being replayed) */
@@ -3829,7 +3830,6 @@ rescanLatestTimeLine(void)
 	TimeLineID	newtarget;
 	TimeLineHistoryEntry *currentTle = NULL;
 	/* use volatile pointer to prevent code rearrangement */
-	volatile XLogCtlData *xlogctl = XLogCtl;
 
 	newtarget = findNewestTimeLine(recoveryTargetTLI);
 	if (newtarget == recoveryTargetTLI)
@@ -3888,19 +3888,9 @@ rescanLatestTimeLine(void)
 	list_free_deep(expectedTLEs);
 	expectedTLEs = newExpectedTLEs;
 
-	SpinLockAcquire(&xlogctl->info_lck);
-	xlogctl->RecoveryTargetTLI = recoveryTargetTLI;
-	SpinLockRelease(&xlogctl->info_lck);
-
 	ereport(LOG,
 			(errmsg("new target timeline is %u",
 					recoveryTargetTLI)));
-
-	/*
-	 * Wake up any walsenders to notice that we have a new target timeline.
-	 */
-	if (AllowCascadeReplication())
-		WalSndWakeup();
 
 	return true;
 }
@@ -5389,11 +5379,9 @@ StartupXLOG(void)
 						ControlFile->minRecoveryPointTLI)));
 
 	/*
-	 * Save the selected recovery target timeline ID and
-	 * archive_cleanup_command in shared memory so that other processes can
-	 * see them
+	 * Save archive_cleanup_command in shared memory so that other processes
+	 * can see it.
 	 */
-	XLogCtl->RecoveryTargetTLI = recoveryTargetTLI;
 	strncpy(XLogCtl->archiveCleanupCommand,
 			archiveCleanupCommand ? archiveCleanupCommand : "",
 			sizeof(XLogCtl->archiveCleanupCommand));
@@ -5770,6 +5758,7 @@ StartupXLOG(void)
 		xlogctl->replayEndRecPtr = ReadRecPtr;
 		xlogctl->replayEndTLI = ThisTimeLineID;
 		xlogctl->lastReplayedEndRecPtr = EndRecPtr;
+		xlogctl->lastReplayedEndRecPtr = ThisTimeLineID;
 		xlogctl->recoveryLastXTime = 0;
 		xlogctl->currentChunkStartTime = 0;
 		xlogctl->recoveryPause = false;
@@ -5837,6 +5826,7 @@ StartupXLOG(void)
 			 */
 			do
 			{
+				bool switchedTLI = false;
 #ifdef WAL_DEBUG
 				if (XLOG_DEBUG ||
 				 (rmid == RM_XACT_ID && trace_recovery_messages <= DEBUG2) ||
@@ -5942,6 +5932,7 @@ StartupXLOG(void)
 
 						/* Following WAL records should be run with new TLI */
 						ThisTimeLineID = newTLI;
+						switchedTLI = true;
 					}
 				}
 
@@ -5974,6 +5965,7 @@ StartupXLOG(void)
 				 */
 				SpinLockAcquire(&xlogctl->info_lck);
 				xlogctl->lastReplayedEndRecPtr = EndRecPtr;
+				xlogctl->lastReplayedTLI = ThisTimeLineID;
 				SpinLockRelease(&xlogctl->info_lck);
 
 				/* Remember this record as the last-applied one */
@@ -5981,6 +5973,13 @@ StartupXLOG(void)
 
 				/* Allow read-only connections if we're consistent now */
 				CheckRecoveryConsistency();
+
+				/*
+				 * If this record was a timeline switch, wake up any
+				 * walsenders to notice that we are on a new timeline.
+				 */
+				if (switchedTLI && AllowCascadeReplication())
+					WalSndWakeup();
 
 				/* Exit loop if we reached inclusive recovery target */
 				if (!recoveryContinue)
@@ -6823,23 +6822,6 @@ GetNextXidAndEpoch(TransactionId *xid, uint32 *epoch)
 }
 
 /*
- * GetRecoveryTargetTLI - get the current recovery target timeline ID
- */
-TimeLineID
-GetRecoveryTargetTLI(void)
-{
-	/* use volatile pointer to prevent code rearrangement */
-	volatile XLogCtlData *xlogctl = XLogCtl;
-	TimeLineID result;
-
-	SpinLockAcquire(&xlogctl->info_lck);
-	result = xlogctl->RecoveryTargetTLI;
-	SpinLockRelease(&xlogctl->info_lck);
-
-	return result;
-}
-
-/*
  * This must be called ONCE during postmaster or standalone-backend shutdown
  */
 void
@@ -7642,10 +7624,16 @@ CreateRestartPoint(int flags)
 	 */
 	if (_logSegNo)
 	{
+		XLogRecPtr	receivePtr;
+		XLogRecPtr	replayPtr;
 		XLogRecPtr	endptr;
 
-		/* Get the current (or recent) end of xlog */
-		endptr = GetStandbyFlushRecPtr();
+		/*
+		 * Get the current end of xlog replayed or received, whichever is later.
+		 */
+		receivePtr = GetWalRcvWriteRecPtr(NULL, NULL);
+		replayPtr = GetXLogReplayRecPtr(NULL);
+		endptr = (receivePtr < replayPtr) ? replayPtr : receivePtr;
 
 		KeepLogSeg(endptr, &_logSegNo);
 		_logSegNo--;
@@ -9109,36 +9097,21 @@ do_pg_abort_backup(void)
  * Exported to allow WALReceiver to read the pointer directly.
  */
 XLogRecPtr
-GetXLogReplayRecPtr(void)
+GetXLogReplayRecPtr(TimeLineID *replayTLI)
 {
 	/* use volatile pointer to prevent code rearrangement */
 	volatile XLogCtlData *xlogctl = XLogCtl;
 	XLogRecPtr	recptr;
+	TimeLineID	tli;
 
 	SpinLockAcquire(&xlogctl->info_lck);
 	recptr = xlogctl->lastReplayedEndRecPtr;
+	tli = xlogctl->lastReplayedTLI;
 	SpinLockRelease(&xlogctl->info_lck);
 
+	if (replayTLI)
+		*replayTLI = tli;
 	return recptr;
-}
-
-/*
- * Get current standby flush position, ie, the last WAL position
- * known to be fsync'd to disk in standby.
- */
-XLogRecPtr
-GetStandbyFlushRecPtr(void)
-{
-	XLogRecPtr	receivePtr;
-	XLogRecPtr	replayPtr;
-
-	receivePtr = GetWalRcvWriteRecPtr(NULL, NULL);
-	replayPtr = GetXLogReplayRecPtr();
-
-	if (XLByteLT(receivePtr, replayPtr))
-		return replayPtr;
-	else
-		return receivePtr;
 }
 
 /*

@@ -324,7 +324,7 @@ GetReplicationApplyDelay(void)
 	receivePtr = walrcv->receivedUpto;
 	SpinLockRelease(&walrcv->mutex);
 
-	replayPtr = GetXLogReplayRecPtr();
+	replayPtr = GetXLogReplayRecPtr(NULL);
 
 	if (XLByteEQ(receivePtr, replayPtr))
 		return 0;

@@ -370,7 +370,7 @@ WalReceiverMain(void)
 			first_stream = false;
 
 			/* Initialize LogstreamResult and buffers for processing messages */
-			LogstreamResult.Write = LogstreamResult.Flush = GetXLogReplayRecPtr();
+			LogstreamResult.Write = LogstreamResult.Flush = GetXLogReplayRecPtr(NULL);
 			initStringInfo(&reply_message);
 			initStringInfo(&incoming_message);
 
@@ -1026,7 +1026,7 @@ XLogWalRcvSendReply(bool force, bool requestReply)
 	/* Construct a new message */
 	writePtr = LogstreamResult.Write;
 	flushPtr = LogstreamResult.Flush;
-	applyPtr = GetXLogReplayRecPtr();
+	applyPtr = GetXLogReplayRecPtr(NULL);
 
 	resetStringInfo(&reply_message);
 	pq_sendbyte(&reply_message, 'r');

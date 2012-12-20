@@ -248,7 +248,7 @@ pg_last_xlog_replay_location(PG_FUNCTION_ARGS)
 	XLogRecPtr	recptr;
 	char		location[MAXFNAMELEN];
 
-	recptr = GetXLogReplayRecPtr();
+	recptr = GetXLogReplayRecPtr(NULL);
 
 	if (recptr == 0)
 		PG_RETURN_NULL();
