@@ -665,6 +665,10 @@ SET LOCAL search_path TO @extschema@;
      and reload.
     </para>
 
+   <indexterm>
+    <primary>pg_extension_config_dump</primary>
+   </indexterm>
+
     <para>
      To solve this problem, an extension's script file can mark a table
      it has created as a configuration table, which will cause
@@ -702,6 +706,14 @@ SELECT pg_catalog.pg_extension_config_dump('my_config', 'WHERE NOT standard_entr
      More complicated situations, such as initially-provided rows that might
      be modified by users, can be handled by creating triggers on the
      configuration table to ensure that modified rows are marked correctly.
+    </para>
+
+    <para>
+     You can alter the filter condition associated with a configuration table
+     by calling <function>pg_extension_config_dump</> again.  (This would
+     typically be useful in an extension update script.)  The only way to mark
+     a table as no longer a configuration table is to dissociate it from the
+     extension with <command>ALTER EXTENSION ... DROP TABLE</>.
     </para>
    </sect2>
 
