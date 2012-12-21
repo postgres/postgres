@@ -8589,7 +8589,7 @@ do_pg_start_backup(const char *backupidstr, bool fast, char **labelfile)
 						  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 						   errmsg("WAL generated with full_page_writes=off was replayed "
 								  "since last restartpoint"),
-						   errhint("This means that the backup being taken on standby "
+						   errhint("This means that the backup being taken on the standby "
 								   "is corrupt and should not be used. "
 								   "Enable full_page_writes and run CHECKPOINT on the master, "
 								   "and then try an online backup again.")));
@@ -8938,7 +8938,7 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive)
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 			   errmsg("WAL generated with full_page_writes=off was replayed "
 					  "during online backup"),
-				 errhint("This means that the backup being taken on standby "
+				 errhint("This means that the backup being taken on the standby "
 						 "is corrupt and should not be used. "
 				 "Enable full_page_writes and run CHECKPOINT on the master, "
 						 "and then try an online backup again.")));
