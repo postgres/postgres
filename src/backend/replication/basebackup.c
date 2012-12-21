@@ -44,8 +44,8 @@ typedef struct
 
 
 static int64 sendDir(char *path, int basepathlen, bool sizeonly);
-static void sendFile(char *readfilename, char *tarfilename,
-		 struct stat * statbuf);
+static bool sendFile(char *readfilename, char *tarfilename,
+		 struct stat * statbuf, bool missing_ok);
 static void sendFileWithContent(const char *filename, const char *content);
 static void _tarWriteHeader(const char *filename, const char *linktarget,
 				struct stat * statbuf);
@@ -199,7 +199,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 									XLOG_CONTROL_FILE)));
 				}
 
-				sendFile(XLOG_CONTROL_FILE, XLOG_CONTROL_FILE, &statbuf);
+				sendFile(XLOG_CONTROL_FILE, XLOG_CONTROL_FILE, &statbuf, false);
 			}
 
 			/*
@@ -712,11 +712,18 @@ sendDir(char *path, int basepathlen, bool sizeonly)
 		}
 		else if (S_ISREG(statbuf.st_mode))
 		{
-			/* Add size, rounded up to 512byte block */
-			size += ((statbuf.st_size + 511) & ~511);
+			bool sent = false;
+
 			if (!sizeonly)
-				sendFile(pathbuf, pathbuf + basepathlen + 1, &statbuf);
-			size += 512;		/* Size of the header of the file */
+				sent = sendFile(pathbuf, pathbuf + basepathlen + 1, &statbuf,
+								true);
+
+			if (sent || sizeonly)
+			{
+				/* Add size, rounded up to 512byte block */
+				size += ((statbuf.st_size + 511) & ~511);
+				size += 512;		/* Size of the header of the file */
+			}
 		}
 		else
 			ereport(WARNING,
@@ -776,9 +783,17 @@ _tarChecksum(char *header)
 	return sum;
 }
 
-/* Given the member, write the TAR header & send the file */
-static void
-sendFile(char *readfilename, char *tarfilename, struct stat * statbuf)
+/*
+ * Given the member, write the TAR header & send the file.
+ *
+ * If 'missing_ok' is true, will not throw an error if the file is not found.
+ *
+ * Returns true if the file was successfully sent, false if 'missing_ok',
+ * and the file did not exist.
+ */
+static bool
+sendFile(char *readfilename, char *tarfilename, struct stat *statbuf,
+		 bool missing_ok)
 {
 	FILE	   *fp;
 	char		buf[TAR_SEND_SIZE];
@@ -788,9 +803,13 @@ sendFile(char *readfilename, char *tarfilename, struct stat * statbuf)
 
 	fp = AllocateFile(readfilename, "rb");
 	if (fp == NULL)
+	{
+		if (errno == ENOENT && missing_ok)
+			return false;
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not open file \"%s\": %m", readfilename)));
+	}
 
 	/*
 	 * Some compilers will throw a warning knowing this test can never be true
@@ -844,6 +863,8 @@ sendFile(char *readfilename, char *tarfilename, struct stat * statbuf)
 	}
 
 	FreeFile(fp);
+
+	return true;
 }
 
 
