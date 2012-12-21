@@ -246,7 +246,7 @@ ProcedureCreate(const char *procedureName,
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 				 errmsg("cannot determine result data type"),
-				 errdetail("A function returning ANYRANGE must have at least one ANYRANGE argument.")));
+				 errdetail("A function returning \"anyrange\" must have at least one \"anyrange\" argument.")));
 
 	if ((returnType == INTERNALOID || internalOutParam) && !internalInParam)
 		ereport(ERROR,

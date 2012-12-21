@@ -311,7 +311,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 							"pages: %d removed, %d remain\n"
 							"tuples: %.0f removed, %.0f remain\n"
 							"buffer usage: %d hits, %d misses, %d dirtied\n"
-					"avg read rate: %.3f MiB/s, avg write rate: %.3f MiB/s\n"
+					"avg read rate: %.3f MB/s, avg write rate: %.3f MB/s\n"
 							"system usage: %s",
 							get_database_name(MyDatabaseId),
 							get_namespace_name(RelationGetNamespace(onerel)),

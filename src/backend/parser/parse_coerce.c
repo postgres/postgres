@@ -1694,7 +1694,7 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 			if (!OidIsValid(range_typelem))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("argument declared \"anyrange\" is not a range but type %s",
+						 errmsg("argument declared \"anyrange\" is not a range type but type %s",
 								format_type_be(range_typeid))));
 		}
 
@@ -1915,7 +1915,7 @@ resolve_generic_type(Oid declared_type,
 			if (!OidIsValid(range_typelem))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("argument declared \"anyrange\" is not a range but type %s",
+						 errmsg("argument declared \"anyrange\" is not a range type but type %s",
 								format_type_be(context_base_type))));
 			return range_typelem;
 		}
