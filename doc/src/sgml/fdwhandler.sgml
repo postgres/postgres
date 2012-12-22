@@ -388,7 +388,7 @@ GetForeignTable(Oid relid);
     <para>
 <programlisting>
 List *
-GetForeignTableColumnOptions(Oid relid, AttrNumber attnum);
+GetForeignColumnOptions(Oid relid, AttrNumber attnum);
 </programlisting>
 
      This function returns the per-column FDW options for the column with the
