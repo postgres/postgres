@@ -38,7 +38,7 @@ static void AlterSchemaOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerI
 /*
  * CREATE SCHEMA
  */
-void
+Oid
 CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 {
 	const char *schemaName = stmt->schemaname;
@@ -97,7 +97,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 				(errcode(ERRCODE_DUPLICATE_SCHEMA),
 				 errmsg("schema \"%s\" already exists, skipping",
 						schemaName)));
-		return;
+		return InvalidOid;
 	}
 
 	/*
@@ -163,6 +163,8 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 
 	/* Reset current user and security context */
 	SetUserIdAndSecContext(saved_uid, save_sec_context);
+
+	return namespaceId;
 }
 
 /*
@@ -192,9 +194,10 @@ RemoveSchemaById(Oid schemaOid)
 /*
  * Rename schema
  */
-void
+Oid
 RenameSchema(const char *oldname, const char *newname)
 {
+	Oid			nspOid;
 	HeapTuple	tup;
 	Relation	rel;
 	AclResult	aclresult;
@@ -206,6 +209,8 @@ RenameSchema(const char *oldname, const char *newname)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_SCHEMA),
 				 errmsg("schema \"%s\" does not exist", oldname)));
+
+	nspOid = HeapTupleGetOid(tup);
 
 	/* make sure the new name doesn't exist */
 	if (OidIsValid(get_namespace_oid(newname, true)))
@@ -237,6 +242,8 @@ RenameSchema(const char *oldname, const char *newname)
 
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);
+
+	return nspOid;
 }
 
 void
@@ -262,9 +269,10 @@ AlterSchemaOwner_oid(Oid oid, Oid newOwnerId)
 /*
  * Change schema owner
  */
-void
+Oid
 AlterSchemaOwner(const char *name, Oid newOwnerId)
 {
+	Oid			nspOid;
 	HeapTuple	tup;
 	Relation	rel;
 
@@ -276,11 +284,15 @@ AlterSchemaOwner(const char *name, Oid newOwnerId)
 				(errcode(ERRCODE_UNDEFINED_SCHEMA),
 				 errmsg("schema \"%s\" does not exist", name)));
 
+	nspOid = HeapTupleGetOid(tup);
+
 	AlterSchemaOwner_internal(tup, rel, newOwnerId);
 
 	ReleaseSysCache(tup);
 
 	heap_close(rel, RowExclusiveLock);
+
+	return nspOid;
 }
 
 static void

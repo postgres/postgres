@@ -1036,7 +1036,7 @@ DropRole(DropRoleStmt *stmt)
 /*
  * Rename role
  */
-void
+Oid
 RenameRole(const char *oldname, const char *newname)
 {
 	HeapTuple	oldtuple,
@@ -1142,6 +1142,8 @@ RenameRole(const char *oldname, const char *newname)
 	 * Close pg_authid, but keep lock till commit.
 	 */
 	heap_close(rel, NoLock);
+
+	return roleid;
 }
 
 /*

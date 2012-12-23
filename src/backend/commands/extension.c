@@ -1174,7 +1174,7 @@ find_update_path(List *evi_list,
 /*
  * CREATE EXTENSION
  */
-void
+Oid
 CreateExtension(CreateExtensionStmt *stmt)
 {
 	DefElem    *d_schema = NULL;
@@ -1210,7 +1210,7 @@ CreateExtension(CreateExtensionStmt *stmt)
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
 					 errmsg("extension \"%s\" already exists, skipping",
 							stmt->extname)));
-			return;
+			return InvalidOid;
 		}
 		else
 			ereport(ERROR,
@@ -1470,6 +1470,8 @@ CreateExtension(CreateExtensionStmt *stmt)
 	 */
 	ApplyExtensionUpdates(extensionOid, pcontrol,
 						  versionName, updateVersions);
+
+	return extensionOid;
 }
 
 /*
@@ -2398,7 +2400,7 @@ extension_config_remove(Oid extensionoid, Oid tableoid)
 /*
  * Execute ALTER EXTENSION SET SCHEMA
  */
-void
+Oid
 AlterExtensionNamespace(List *names, const char *newschema)
 {
 	char	   *extensionName;
@@ -2479,7 +2481,7 @@ AlterExtensionNamespace(List *names, const char *newschema)
 	if (extForm->extnamespace == nspOid)
 	{
 		heap_close(extRel, RowExclusiveLock);
-		return;
+		return InvalidOid;
 	}
 
 	/* Check extension is supposed to be relocatable */
@@ -2571,6 +2573,8 @@ AlterExtensionNamespace(List *names, const char *newschema)
 	/* update dependencies to point to the new schema */
 	changeDependencyFor(ExtensionRelationId, extensionOid,
 						NamespaceRelationId, oldNspOid, nspOid);
+
+	return extensionOid;
 }
 
 /*

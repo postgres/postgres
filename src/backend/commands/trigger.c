@@ -1193,9 +1193,10 @@ RangeVarCallbackForRenameTrigger(const RangeVar *rv, Oid relid, Oid oldrelid,
  *		modify tgname in trigger tuple
  *		update row in catalog
  */
-void
+Oid
 renametrig(RenameStmt *stmt)
 {
+	Oid			tgoid;
 	Relation	targetrel;
 	Relation	tgrel;
 	HeapTuple	tuple;
@@ -1261,6 +1262,7 @@ renametrig(RenameStmt *stmt)
 								SnapshotNow, 2, key);
 	if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 	{
+		tgoid = HeapTupleGetOid(tuple);
 		/*
 		 * Update pg_trigger tuple with new tgname.
 		 */
@@ -1297,6 +1299,8 @@ renametrig(RenameStmt *stmt)
 	 * Close rel, but keep exclusive lock!
 	 */
 	relation_close(targetrel, NoLock);
+
+	return tgoid;
 }
 
 

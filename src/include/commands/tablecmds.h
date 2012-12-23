@@ -51,11 +51,11 @@ extern void ExecuteTruncate(TruncateStmt *stmt);
 
 extern void SetRelationHasSubclass(Oid relationId, bool relhassubclass);
 
-extern void renameatt(RenameStmt *stmt);
+extern Oid renameatt(RenameStmt *stmt);
 
-extern void RenameConstraint(RenameStmt *stmt);
+extern Oid RenameConstraint(RenameStmt *stmt);
 
-extern void RenameRelation(RenameStmt *stmt);
+extern Oid RenameRelation(RenameStmt *stmt);
 
 extern void RenameRelationInternal(Oid myrelid,
 					   const char *newrelname);

@@ -818,9 +818,10 @@ directory_is_empty(const char *path)
 /*
  * Rename a tablespace
  */
-void
+Oid
 RenameTableSpace(const char *oldname, const char *newname)
 {
+	Oid			tspId;
 	Relation	rel;
 	ScanKeyData entry[1];
 	HeapScanDesc scan;
@@ -843,6 +844,7 @@ RenameTableSpace(const char *oldname, const char *newname)
 				 errmsg("tablespace \"%s\" does not exist",
 						oldname)));
 
+	tspId = HeapTupleGetOid(tup);
 	newtuple = heap_copytuple(tup);
 	newform = (Form_pg_tablespace) GETSTRUCT(newtuple);
 
@@ -881,6 +883,8 @@ RenameTableSpace(const char *oldname, const char *newname)
 	CatalogUpdateIndexes(rel, newtuple);
 
 	heap_close(rel, NoLock);
+
+	return tspId;
 }
 
 /*

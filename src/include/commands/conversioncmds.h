@@ -17,7 +17,7 @@
 
 #include "nodes/parsenodes.h"
 
-extern void CreateConversionCommand(CreateConversionStmt *parsetree);
-extern void RenameConversion(List *name, const char *newname);
+extern Oid CreateConversionCommand(CreateConversionStmt *parsetree);
+extern Oid RenameConversion(List *name, const char *newname);
 
 #endif   /* CONVERSIONCMDS_H */

@@ -37,7 +37,7 @@
 /*
  * CREATE COLLATION
  */
-void
+Oid
 DefineCollation(List *names, List *parameters)
 {
 	char	   *collName;
@@ -140,12 +140,14 @@ DefineCollation(List *names, List *parameters)
 	/* check that the locales can be loaded */
 	CommandCounterIncrement();
 	(void) pg_newlocale_from_collation(newoid);
+
+	return newoid;
 }
 
 /*
  * Rename collation
  */
-void
+Oid
 RenameCollation(List *name, const char *newname)
 {
 	Oid			collationOid;
@@ -206,12 +208,14 @@ RenameCollation(List *name, const char *newname)
 	heap_freetuple(tup);
 
 	heap_close(rel, RowExclusiveLock);
+
+	return collationOid;
 }
 
 /*
  * Execute ALTER COLLATION SET SCHEMA
  */
-void
+Oid
 AlterCollationNamespace(List *name, const char *newschema)
 {
 	Oid			collOid,
@@ -222,6 +226,8 @@ AlterCollationNamespace(List *name, const char *newschema)
 	nspOid = LookupCreationNamespace(newschema);
 
 	AlterCollationNamespace_oid(collOid, nspOid);
+
+	return collOid;
 }
 
 /*

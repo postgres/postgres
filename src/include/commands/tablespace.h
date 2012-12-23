@@ -41,7 +41,7 @@ typedef struct TableSpaceOpts
 
 extern void CreateTableSpace(CreateTableSpaceStmt *stmt);
 extern void DropTableSpace(DropTableSpaceStmt *stmt);
-extern void RenameTableSpace(const char *oldname, const char *newname);
+extern Oid RenameTableSpace(const char *oldname, const char *newname);
 extern void AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt);
 
 extern void TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo);

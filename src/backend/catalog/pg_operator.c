@@ -326,7 +326,7 @@ OperatorShellMake(const char *operatorName,
  * Forward declaration is used only for this purpose, it is
  * not available to the user as it is for type definition.
  */
-void
+Oid
 OperatorCreate(const char *operatorName,
 			   Oid operatorNamespace,
 			   Oid leftTypeId,
@@ -565,6 +565,8 @@ OperatorCreate(const char *operatorName,
 
 	if (OidIsValid(commutatorId) || OidIsValid(negatorId))
 		OperatorUpd(operatorObjectId, commutatorId, negatorId);
+
+	return operatorObjectId;
 }
 
 /*

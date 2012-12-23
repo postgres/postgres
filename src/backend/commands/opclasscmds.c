@@ -1660,7 +1660,7 @@ RemoveAmProcEntryById(Oid entryOid)
 /*
  * Rename opclass
  */
-void
+Oid
 RenameOpClass(List *name, const char *access_method, const char *newname)
 {
 	Oid			opcOid;
@@ -1713,12 +1713,14 @@ RenameOpClass(List *name, const char *access_method, const char *newname)
 
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);
+
+	return opcOid;
 }
 
 /*
  * Rename opfamily
  */
-void
+Oid
 RenameOpFamily(List *name, const char *access_method, const char *newname)
 {
 	Oid			opfOid;
@@ -1802,6 +1804,8 @@ RenameOpFamily(List *name, const char *access_method, const char *newname)
 
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);
+
+	return opfOid;
 }
 
 /*

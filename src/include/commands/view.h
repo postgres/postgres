@@ -16,6 +16,6 @@
 
 #include "nodes/parsenodes.h"
 
-extern void DefineView(ViewStmt *stmt, const char *queryString);
+extern Oid DefineView(ViewStmt *stmt, const char *queryString);
 
 #endif   /* VIEW_H */

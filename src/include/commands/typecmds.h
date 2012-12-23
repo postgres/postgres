@@ -21,9 +21,9 @@
 
 #define DEFAULT_TYPDELIM		','
 
-extern void DefineType(List *names, List *parameters);
+extern Oid DefineType(List *names, List *parameters);
 extern void RemoveTypeById(Oid typeOid);
-extern void DefineDomain(CreateDomainStmt *stmt);
+extern Oid DefineDomain(CreateDomainStmt *stmt);
 extern void DefineEnum(CreateEnumStmt *stmt);
 extern void DefineRange(CreateRangeStmt *stmt);
 extern void AlterEnum(AlterEnumStmt *stmt, bool isTopLevel);
@@ -41,11 +41,11 @@ extern void checkDomainOwner(HeapTuple tup);
 
 extern List *GetDomainConstraints(Oid typeOid);
 
-extern void RenameType(RenameStmt *stmt);
-extern void AlterTypeOwner(List *names, Oid newOwnerId, ObjectType objecttype);
+extern Oid RenameType(RenameStmt *stmt);
+extern Oid AlterTypeOwner(List *names, Oid newOwnerId, ObjectType objecttype);
 extern void AlterTypeOwnerInternal(Oid typeOid, Oid newOwnerId,
 					   bool hasDependEntry);
-extern void AlterTypeNamespace(List *names, const char *newschema, ObjectType objecttype);
+extern Oid AlterTypeNamespace(List *names, const char *newschema, ObjectType objecttype);
 extern Oid	AlterTypeNamespace_oid(Oid typeOid, Oid nspOid, ObjectAddresses *objsMoved);
 extern Oid	AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 						   bool isImplicitArray,

@@ -50,112 +50,90 @@
  * Executes an ALTER OBJECT / RENAME TO statement.	Based on the object
  * type, the function appropriate to that type is executed.
  */
-void
+Oid
 ExecRenameStmt(RenameStmt *stmt)
 {
 	switch (stmt->renameType)
 	{
 		case OBJECT_AGGREGATE:
-			RenameAggregate(stmt->object, stmt->objarg, stmt->newname);
-			break;
+			return RenameAggregate(stmt->object, stmt->objarg, stmt->newname);
 
 		case OBJECT_COLLATION:
-			RenameCollation(stmt->object, stmt->newname);
-			break;
+			return RenameCollation(stmt->object, stmt->newname);
 
 		case OBJECT_CONSTRAINT:
-			RenameConstraint(stmt);
-			break;
+			return RenameConstraint(stmt);
 
 		case OBJECT_CONVERSION:
-			RenameConversion(stmt->object, stmt->newname);
-			break;
+			return RenameConversion(stmt->object, stmt->newname);
 
 		case OBJECT_DATABASE:
-			RenameDatabase(stmt->subname, stmt->newname);
-			break;
+			return RenameDatabase(stmt->subname, stmt->newname);
 
 		case OBJECT_FDW:
-			RenameForeignDataWrapper(stmt->subname, stmt->newname);
-			break;
+			return RenameForeignDataWrapper(stmt->subname, stmt->newname);
 
 		case OBJECT_FOREIGN_SERVER:
-			RenameForeignServer(stmt->subname, stmt->newname);
-			break;
+			return RenameForeignServer(stmt->subname, stmt->newname);
 
 		case OBJECT_EVENT_TRIGGER:
-			RenameEventTrigger(stmt->subname, stmt->newname);
-			break;
+			return RenameEventTrigger(stmt->subname, stmt->newname);
 
 		case OBJECT_FUNCTION:
-			RenameFunction(stmt->object, stmt->objarg, stmt->newname);
-			break;
+			return RenameFunction(stmt->object, stmt->objarg, stmt->newname);
 
 		case OBJECT_LANGUAGE:
-			RenameLanguage(stmt->subname, stmt->newname);
-			break;
+			return RenameLanguage(stmt->subname, stmt->newname);
 
 		case OBJECT_OPCLASS:
-			RenameOpClass(stmt->object, stmt->subname, stmt->newname);
-			break;
+			return RenameOpClass(stmt->object, stmt->subname, stmt->newname);
 
 		case OBJECT_OPFAMILY:
-			RenameOpFamily(stmt->object, stmt->subname, stmt->newname);
-			break;
+			return RenameOpFamily(stmt->object, stmt->subname, stmt->newname);
 
 		case OBJECT_ROLE:
-			RenameRole(stmt->subname, stmt->newname);
-			break;
+			return RenameRole(stmt->subname, stmt->newname);
 
 		case OBJECT_SCHEMA:
-			RenameSchema(stmt->subname, stmt->newname);
-			break;
+			return RenameSchema(stmt->subname, stmt->newname);
 
 		case OBJECT_TABLESPACE:
-			RenameTableSpace(stmt->subname, stmt->newname);
-			break;
+			return RenameTableSpace(stmt->subname, stmt->newname);
 
 		case OBJECT_TABLE:
 		case OBJECT_SEQUENCE:
 		case OBJECT_VIEW:
 		case OBJECT_INDEX:
 		case OBJECT_FOREIGN_TABLE:
-			RenameRelation(stmt);
-			break;
+			return RenameRelation(stmt);
 
 		case OBJECT_COLUMN:
 		case OBJECT_ATTRIBUTE:
-			renameatt(stmt);
-			break;
+			return renameatt(stmt);
 
 		case OBJECT_TRIGGER:
-			renametrig(stmt);
-			break;
+			return renametrig(stmt);
 
 		case OBJECT_TSPARSER:
-			RenameTSParser(stmt->object, stmt->newname);
-			break;
+			return RenameTSParser(stmt->object, stmt->newname);
 
 		case OBJECT_TSDICTIONARY:
-			RenameTSDictionary(stmt->object, stmt->newname);
-			break;
+			return RenameTSDictionary(stmt->object, stmt->newname);
 
 		case OBJECT_TSTEMPLATE:
-			RenameTSTemplate(stmt->object, stmt->newname);
-			break;
+			return RenameTSTemplate(stmt->object, stmt->newname);
 
 		case OBJECT_TSCONFIGURATION:
-			RenameTSConfiguration(stmt->object, stmt->newname);
-			break;
+			return RenameTSConfiguration(stmt->object, stmt->newname);
 
 		case OBJECT_DOMAIN:
 		case OBJECT_TYPE:
-			RenameType(stmt);
-			break;
+			return RenameType(stmt);
 
 		default:
 			elog(ERROR, "unrecognized rename stmt type: %d",
 				 (int) stmt->renameType);
+			return InvalidOid;			/* keep compiler happy */
 	}
 }
 
@@ -163,40 +141,35 @@ ExecRenameStmt(RenameStmt *stmt)
  * Executes an ALTER OBJECT / SET SCHEMA statement.  Based on the object
  * type, the function appropriate to that type is executed.
  */
-void
+Oid
 ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
 {
 	switch (stmt->objectType)
 	{
 		case OBJECT_AGGREGATE:
-			AlterFunctionNamespace(stmt->object, stmt->objarg, true,
-								   stmt->newschema);
-			break;
+			return AlterFunctionNamespace(stmt->object, stmt->objarg, true,
+										  stmt->newschema);
 
 		case OBJECT_COLLATION:
-			AlterCollationNamespace(stmt->object, stmt->newschema);
-			break;
+			return AlterCollationNamespace(stmt->object, stmt->newschema);
 
 		case OBJECT_EXTENSION:
-			AlterExtensionNamespace(stmt->object, stmt->newschema);
-			break;
+			return AlterExtensionNamespace(stmt->object, stmt->newschema);
 
 		case OBJECT_FUNCTION:
-			AlterFunctionNamespace(stmt->object, stmt->objarg, false,
-								   stmt->newschema);
-			break;
+			return AlterFunctionNamespace(stmt->object, stmt->objarg, false,
+										  stmt->newschema);
 
 		case OBJECT_SEQUENCE:
 		case OBJECT_TABLE:
 		case OBJECT_VIEW:
 		case OBJECT_FOREIGN_TABLE:
-			AlterTableNamespace(stmt);
-			break;
+			return AlterTableNamespace(stmt);
 
 		case OBJECT_TYPE:
 		case OBJECT_DOMAIN:
-			AlterTypeNamespace(stmt->object, stmt->newschema, stmt->objectType);
-			break;
+			return AlterTypeNamespace(stmt->object, stmt->newschema,
+									  stmt->objectType);
 
 			/* generic code path */
 		case OBJECT_CONVERSION:
@@ -228,12 +201,15 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
 				AlterObjectNamespace_internal(catalog, address.objectId,
 											  nspOid);
 				heap_close(catalog, RowExclusiveLock);
+
+				return address.objectId;
 			}
 			break;
 
 		default:
 			elog(ERROR, "unrecognized AlterObjectSchemaStmt type: %d",
 				 (int) stmt->objectType);
+			return InvalidOid;	/* keep compiler happy */
 	}
 }
 
@@ -435,7 +411,7 @@ AlterObjectNamespace_internal(Relation rel, Oid objid, Oid nspOid)
  * Executes an ALTER OBJECT / OWNER TO statement.  Based on the object
  * type, the function appropriate to that type is executed.
  */
-void
+Oid
 ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 {
 	Oid			newowner = get_role_oid(stmt->newowner, false);
@@ -443,30 +419,27 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 	switch (stmt->objectType)
 	{
 		case OBJECT_DATABASE:
-			AlterDatabaseOwner(strVal(linitial(stmt->object)), newowner);
-			break;
+			return AlterDatabaseOwner(strVal(linitial(stmt->object)), newowner);
 
 		case OBJECT_SCHEMA:
-			AlterSchemaOwner(strVal(linitial(stmt->object)), newowner);
-			break;
+			return AlterSchemaOwner(strVal(linitial(stmt->object)), newowner);
 
 		case OBJECT_TYPE:
 		case OBJECT_DOMAIN:		/* same as TYPE */
-			AlterTypeOwner(stmt->object, newowner, stmt->objectType);
+			return AlterTypeOwner(stmt->object, newowner, stmt->objectType);
 			break;
 
 		case OBJECT_FDW:
-			AlterForeignDataWrapperOwner(strVal(linitial(stmt->object)),
-										 newowner);
-			break;
+			return AlterForeignDataWrapperOwner(strVal(linitial(stmt->object)),
+												newowner);
 
 		case OBJECT_FOREIGN_SERVER:
-			AlterForeignServerOwner(strVal(linitial(stmt->object)), newowner);
-			break;
+			return AlterForeignServerOwner(strVal(linitial(stmt->object)),
+										   newowner);
 
 		case OBJECT_EVENT_TRIGGER:
-			AlterEventTriggerOwner(strVal(linitial(stmt->object)), newowner);
-			break;
+			return AlterEventTriggerOwner(strVal(linitial(stmt->object)),
+										  newowner);
 
 		/* Generic cases */
 		case OBJECT_AGGREGATE:
@@ -508,12 +481,16 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 
 				AlterObjectOwner_internal(catalog, address.objectId, newowner);
 				heap_close(catalog, RowExclusiveLock);
+
+				return address.objectId;
 			}
 			break;
 
 		default:
 			elog(ERROR, "unrecognized AlterOwnerStmt type: %d",
 				 (int) stmt->objectType);
+
+			return InvalidOid;	/* keep compiler happy */
 	}
 }
 

@@ -103,7 +103,7 @@ static void process_owned_by(Relation seqrel, List *owned_by);
  * DefineSequence
  *				Creates a new sequence relation
  */
-void
+Oid
 DefineSequence(CreateSeqStmt *seq)
 {
 	FormData_pg_sequence new;
@@ -228,6 +228,8 @@ DefineSequence(CreateSeqStmt *seq)
 		process_owned_by(rel, owned_by);
 
 	heap_close(rel, NoLock);
+
+	return seqoid;
 }
 
 /*
@@ -400,7 +402,7 @@ fill_seq_with_data(Relation rel, HeapTuple tuple)
  *
  * Modify the definition of a sequence relation
  */
-void
+Oid
 AlterSequence(AlterSeqStmt *stmt)
 {
 	Oid			relid;
@@ -419,7 +421,7 @@ AlterSequence(AlterSeqStmt *stmt)
 		ereport(NOTICE,
 				(errmsg("relation \"%s\" does not exist, skipping",
 						stmt->sequence->relname)));
-		return;
+		return InvalidOid;
 	}
 
 	init_sequence(relid, &elm, &seqrel);
@@ -483,6 +485,8 @@ AlterSequence(AlterSeqStmt *stmt)
 		process_owned_by(seqrel, owned_by);
 
 	relation_close(seqrel, NoLock);
+
+	return relid;
 }
 
 

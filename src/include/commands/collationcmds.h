@@ -17,9 +17,9 @@
 
 #include "nodes/parsenodes.h"
 
-extern void DefineCollation(List *names, List *parameters);
-extern void RenameCollation(List *name, const char *newname);
-extern void AlterCollationNamespace(List *name, const char *newschema);
+extern Oid DefineCollation(List *names, List *parameters);
+extern Oid RenameCollation(List *name, const char *newname);
+extern Oid AlterCollationNamespace(List *name, const char *newschema);
 extern Oid	AlterCollationNamespace_oid(Oid collOid, Oid newNspOid);
 
 #endif   /* COLLATIONCMDS_H */

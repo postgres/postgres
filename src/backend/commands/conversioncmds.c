@@ -34,7 +34,7 @@
 /*
  * CREATE CONVERSION
  */
-void
+Oid
 CreateConversionCommand(CreateConversionStmt *stmt)
 {
 	Oid			namespaceId;
@@ -111,14 +111,14 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 	 * All seem ok, go ahead (possible failure would be a duplicate conversion
 	 * name)
 	 */
-	ConversionCreate(conversion_name, namespaceId, GetUserId(),
-					 from_encoding, to_encoding, funcoid, stmt->def);
+	return ConversionCreate(conversion_name, namespaceId, GetUserId(),
+							from_encoding, to_encoding, funcoid, stmt->def);
 }
 
 /*
  * Rename conversion
  */
-void
+Oid
 RenameConversion(List *name, const char *newname)
 {
 	Oid			conversionOid;
@@ -164,4 +164,6 @@ RenameConversion(List *name, const char *newname)
 
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);
+
+	return conversionOid;
 }

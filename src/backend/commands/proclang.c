@@ -537,9 +537,10 @@ DropProceduralLanguageById(Oid langOid)
 /*
  * Rename language
  */
-void
+Oid
 RenameLanguage(const char *oldname, const char *newname)
 {
+	Oid			lanId;
 	HeapTuple	tup;
 	Relation	rel;
 
@@ -550,6 +551,8 @@ RenameLanguage(const char *oldname, const char *newname)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("language \"%s\" does not exist", oldname)));
+
+	lanId = HeapTupleGetOid(tup);
 
 	/* make sure the new name doesn't exist */
 	if (SearchSysCacheExists1(LANGNAME, CStringGetDatum(newname)))
@@ -569,6 +572,8 @@ RenameLanguage(const char *oldname, const char *newname)
 
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);
+
+	return lanId;
 }
 
 /*

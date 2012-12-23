@@ -167,7 +167,7 @@ makeParserDependencies(HeapTuple tuple)
 /*
  * CREATE TEXT SEARCH PARSER
  */
-void
+Oid
 DefineTSParser(List *names, List *parameters)
 {
 	char	   *prsname;
@@ -278,6 +278,8 @@ DefineTSParser(List *names, List *parameters)
 	heap_freetuple(tup);
 
 	heap_close(prsRel, RowExclusiveLock);
+
+	return prsOid;
 }
 
 /*
@@ -306,7 +308,7 @@ RemoveTSParserById(Oid prsId)
 /*
  * ALTER TEXT SEARCH PARSER RENAME
  */
-void
+Oid
 RenameTSParser(List *oldname, const char *newname)
 {
 	HeapTuple	tup;
@@ -344,6 +346,8 @@ RenameTSParser(List *oldname, const char *newname)
 
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);
+
+	return prsId;
 }
 
 /* ---------------------- TS Dictionary commands -----------------------*/
@@ -439,7 +443,7 @@ verify_dictoptions(Oid tmplId, List *dictoptions)
 /*
  * CREATE TEXT SEARCH DICTIONARY
  */
-void
+Oid
 DefineTSDictionary(List *names, List *parameters)
 {
 	ListCell   *pl;
@@ -526,12 +530,14 @@ DefineTSDictionary(List *names, List *parameters)
 	heap_freetuple(tup);
 
 	heap_close(dictRel, RowExclusiveLock);
+
+	return dictOid;
 }
 
 /*
  * ALTER TEXT SEARCH DICTIONARY RENAME
  */
-void
+Oid
 RenameTSDictionary(List *oldname, const char *newname)
 {
 	HeapTuple	tup;
@@ -577,6 +583,8 @@ RenameTSDictionary(List *oldname, const char *newname)
 
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);
+
+	return dictId;
 }
 
 /*
@@ -803,7 +811,7 @@ makeTSTemplateDependencies(HeapTuple tuple)
 /*
  * CREATE TEXT SEARCH TEMPLATE
  */
-void
+Oid
 DefineTSTemplate(List *names, List *parameters)
 {
 	ListCell   *pl;
@@ -813,7 +821,7 @@ DefineTSTemplate(List *names, List *parameters)
 	bool		nulls[Natts_pg_ts_template];
 	NameData	dname;
 	int			i;
-	Oid			dictOid;
+	Oid			tmplOid;
 	Oid			namespaceoid;
 	char	   *tmplname;
 
@@ -877,7 +885,7 @@ DefineTSTemplate(List *names, List *parameters)
 
 	tup = heap_form_tuple(tmplRel->rd_att, values, nulls);
 
-	dictOid = simple_heap_insert(tmplRel, tup);
+	tmplOid = simple_heap_insert(tmplRel, tup);
 
 	CatalogUpdateIndexes(tmplRel, tup);
 
@@ -885,17 +893,19 @@ DefineTSTemplate(List *names, List *parameters)
 
 	/* Post creation hook for new text search template */
 	InvokeObjectAccessHook(OAT_POST_CREATE,
-						   TSTemplateRelationId, dictOid, 0, NULL);
+						   TSTemplateRelationId, tmplOid, 0, NULL);
 
 	heap_freetuple(tup);
 
 	heap_close(tmplRel, RowExclusiveLock);
+
+	return tmplOid;
 }
 
 /*
  * ALTER TEXT SEARCH TEMPLATE RENAME
  */
-void
+Oid
 RenameTSTemplate(List *oldname, const char *newname)
 {
 	HeapTuple	tup;
@@ -934,6 +944,8 @@ RenameTSTemplate(List *oldname, const char *newname)
 
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);
+
+	return tmplId;
 }
 
 /*
@@ -1076,7 +1088,7 @@ makeConfigurationDependencies(HeapTuple tuple, bool removeOld,
 /*
  * CREATE TEXT SEARCH CONFIGURATION
  */
-void
+Oid
 DefineTSConfiguration(List *names, List *parameters)
 {
 	Relation	cfgRel;
@@ -1230,12 +1242,14 @@ DefineTSConfiguration(List *names, List *parameters)
 	if (mapRel)
 		heap_close(mapRel, RowExclusiveLock);
 	heap_close(cfgRel, RowExclusiveLock);
+
+	return cfgOid;
 }
 
 /*
  * ALTER TEXT SEARCH CONFIGURATION RENAME
  */
-void
+Oid
 RenameTSConfiguration(List *oldname, const char *newname)
 {
 	HeapTuple	tup;
@@ -1280,6 +1294,8 @@ RenameTSConfiguration(List *oldname, const char *newname)
 
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);
+
+	return cfgId;
 }
 
 /*

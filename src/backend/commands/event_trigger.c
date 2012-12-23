@@ -413,9 +413,10 @@ AlterEventTrigger(AlterEventTrigStmt *stmt)
 /*
  * Rename event trigger
  */
-void
+Oid
 RenameEventTrigger(const char *trigname, const char *newname)
 {
+	Oid			evtId;
 	HeapTuple	tup;
 	Relation	rel;
 	Form_pg_event_trigger evtForm;
@@ -438,6 +439,8 @@ RenameEventTrigger(const char *trigname, const char *newname)
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_EVENT_TRIGGER,
 					   trigname);
 
+	evtId = HeapTupleGetOid(tup);
+
 	evtForm = (Form_pg_event_trigger) GETSTRUCT(tup);
 
 	/* tuple is a copy, so we can rename it now */
@@ -447,15 +450,18 @@ RenameEventTrigger(const char *trigname, const char *newname)
 
 	heap_freetuple(tup);
 	heap_close(rel, RowExclusiveLock);
+
+	return evtId;
 }
 
 
 /*
  * Change event trigger's owner -- by name
  */
-void
+Oid
 AlterEventTriggerOwner(const char *name, Oid newOwnerId)
 {
+	Oid			evtOid;
 	HeapTuple	tup;
 	Relation	rel;
 
@@ -468,11 +474,15 @@ AlterEventTriggerOwner(const char *name, Oid newOwnerId)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("event trigger \"%s\" does not exist", name)));
 
+	evtOid = HeapTupleGetOid(tup);
+
 	AlterEventTriggerOwner_internal(rel, tup, newOwnerId);
 
 	heap_freetuple(tup);
 
 	heap_close(rel, RowExclusiveLock);
+
+	return evtOid;
 }
 
 /*

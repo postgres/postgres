@@ -784,7 +784,7 @@ interpret_AS_clause(Oid languageOid, const char *languageName,
  * CreateFunction
  *	 Execute a CREATE FUNCTION utility statement.
  */
-void
+Oid
 CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 {
 	char	   *probin_str;
@@ -960,30 +960,30 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 	 * And now that we have all the parameters, and know we're permitted to do
 	 * so, go ahead and create the function.
 	 */
-	ProcedureCreate(funcname,
-					namespaceId,
-					stmt->replace,
-					returnsSet,
-					prorettype,
-					GetUserId(),
-					languageOid,
-					languageValidator,
-					prosrc_str, /* converted to text later */
-					probin_str, /* converted to text later */
-					false,		/* not an aggregate */
-					isWindowFunc,
-					security,
-					isLeakProof,
-					isStrict,
-					volatility,
-					parameterTypes,
-					PointerGetDatum(allParameterTypes),
-					PointerGetDatum(parameterModes),
-					PointerGetDatum(parameterNames),
-					parameterDefaults,
-					PointerGetDatum(proconfig),
-					procost,
-					prorows);
+	return ProcedureCreate(funcname,
+						   namespaceId,
+						   stmt->replace,
+						   returnsSet,
+						   prorettype,
+						   GetUserId(),
+						   languageOid,
+						   languageValidator,
+						   prosrc_str, /* converted to text later */
+						   probin_str, /* converted to text later */
+						   false,		/* not an aggregate */
+						   isWindowFunc,
+						   security,
+						   isLeakProof,
+						   isStrict,
+						   volatility,
+						   parameterTypes,
+						   PointerGetDatum(allParameterTypes),
+						   PointerGetDatum(parameterModes),
+						   PointerGetDatum(parameterNames),
+						   parameterDefaults,
+						   PointerGetDatum(proconfig),
+						   procost,
+						   prorows);
 }
 
 
@@ -1040,7 +1040,7 @@ RemoveFunctionById(Oid funcOid)
 /*
  * Rename function
  */
-void
+Oid
 RenameFunction(List *name, List *argtypes, const char *newname)
 {
 	Oid			procOid;
@@ -1102,6 +1102,8 @@ RenameFunction(List *name, List *argtypes, const char *newname)
 
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);
+
+	return procOid;
 }
 
 /*
@@ -1686,7 +1688,7 @@ DropCastById(Oid castOid)
  *
  * These commands are identical except for the lookup procedure, so share code.
  */
-void
+Oid
 AlterFunctionNamespace(List *name, List *argtypes, bool isagg,
 					   const char *newschema)
 {
@@ -1703,6 +1705,8 @@ AlterFunctionNamespace(List *name, List *argtypes, bool isagg,
 	nspOid = LookupCreationNamespace(newschema);
 
 	AlterFunctionNamespace_oid(procOid, nspOid);
+
+	return procOid;
 }
 
 Oid

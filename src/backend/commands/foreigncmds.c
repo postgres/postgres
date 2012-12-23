@@ -204,9 +204,10 @@ GetUserOidFromMapping(const char *username, bool missing_ok)
 /*
  * Rename foreign-data wrapper
  */
-void
+Oid
 RenameForeignDataWrapper(const char *oldname, const char *newname)
 {
+	Oid			fdwId;
 	HeapTuple	tup;
 	Relation	rel;
 
@@ -217,6 +218,8 @@ RenameForeignDataWrapper(const char *oldname, const char *newname)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 			 errmsg("foreign-data wrapper \"%s\" does not exist", oldname)));
+
+	fdwId = HeapTupleGetOid(tup);
 
 	/* make sure the new name doesn't exist */
 	if (SearchSysCacheExists1(FOREIGNDATAWRAPPERNAME, CStringGetDatum(newname)))
@@ -236,15 +239,18 @@ RenameForeignDataWrapper(const char *oldname, const char *newname)
 
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);
+
+	return fdwId;
 }
 
 
 /*
  * Rename foreign server
  */
-void
+Oid
 RenameForeignServer(const char *oldname, const char *newname)
 {
+	Oid			srvId;
 	HeapTuple	tup;
 	Relation	rel;
 
@@ -255,6 +261,8 @@ RenameForeignServer(const char *oldname, const char *newname)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("server \"%s\" does not exist", oldname)));
+
+	srvId = HeapTupleGetOid(tup);
 
 	/* make sure the new name doesn't exist */
 	if (SearchSysCacheExists1(FOREIGNSERVERNAME, CStringGetDatum(newname)))
@@ -274,6 +282,8 @@ RenameForeignServer(const char *oldname, const char *newname)
 
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);
+
+	return srvId;
 }
 
 
@@ -325,9 +335,10 @@ AlterForeignDataWrapperOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerI
  *
  * Note restrictions in the "_internal" function, above.
  */
-void
+Oid
 AlterForeignDataWrapperOwner(const char *name, Oid newOwnerId)
 {
+	Oid			fdwId;
 	HeapTuple	tup;
 	Relation	rel;
 
@@ -340,11 +351,15 @@ AlterForeignDataWrapperOwner(const char *name, Oid newOwnerId)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("foreign-data wrapper \"%s\" does not exist", name)));
 
+	fdwId = HeapTupleGetOid(tup);
+
 	AlterForeignDataWrapperOwner_internal(rel, tup, newOwnerId);
 
 	heap_freetuple(tup);
 
 	heap_close(rel, RowExclusiveLock);
+
+	return fdwId;
 }
 
 /*
@@ -426,9 +441,10 @@ AlterForeignServerOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 /*
  * Change foreign server owner -- by name
  */
-void
+Oid
 AlterForeignServerOwner(const char *name, Oid newOwnerId)
 {
+	Oid			servOid;
 	HeapTuple	tup;
 	Relation	rel;
 
@@ -441,11 +457,15 @@ AlterForeignServerOwner(const char *name, Oid newOwnerId)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("server \"%s\" does not exist", name)));
 
+	servOid = HeapTupleGetOid(tup);
+
 	AlterForeignServerOwner_internal(rel, tup, newOwnerId);
 
 	heap_freetuple(tup);
 
 	heap_close(rel, RowExclusiveLock);
+
+	return servOid;
 }
 
 /*

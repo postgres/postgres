@@ -46,7 +46,7 @@
  * is specified by a BASETYPE element in the parameters.  Otherwise,
  * "args" defines the input type(s).
  */
-void
+Oid
 DefineAggregate(List *name, List *args, bool oldstyle, List *parameters)
 {
 	char	   *aggName;
@@ -216,15 +216,15 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters)
 	/*
 	 * Most of the argument-checking is done inside of AggregateCreate
 	 */
-	AggregateCreate(aggName,	/* aggregate name */
-					aggNamespace,		/* namespace */
-					aggArgTypes,	/* input data type(s) */
-					numArgs,
-					transfuncName,		/* step function name */
-					finalfuncName,		/* final function name */
-					sortoperatorName,	/* sort operator name */
-					transTypeId,	/* transition data type */
-					initval);	/* initial condition */
+	return AggregateCreate(aggName,	/* aggregate name */
+						   aggNamespace,		/* namespace */
+						   aggArgTypes,	/* input data type(s) */
+						   numArgs,
+						   transfuncName,		/* step function name */
+						   finalfuncName,		/* final function name */
+						   sortoperatorName,	/* sort operator name */
+						   transTypeId,	/* transition data type */
+						   initval);	/* initial condition */
 }
 
 
@@ -232,7 +232,7 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters)
  * RenameAggregate
  *		Rename an aggregate.
  */
-void
+Oid
 RenameAggregate(List *name, List *args, const char *newname)
 {
 	Oid			procOid;
@@ -286,4 +286,6 @@ RenameAggregate(List *name, List *args, const char *newname)
 
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);
+
+	return procOid;
 }
