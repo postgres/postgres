@@ -9817,6 +9817,9 @@ makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 	x->named_args = named_args;
 	x->arg_names = NIL;
 	x->args = args;
+	/* xmloption, if relevant, must be filled in by caller */
+	/* type and typmod will be filled in during parse analysis */
+	x->type = InvalidOid;			/* marks the node as not analyzed */
 	return (Node *) x;
 }
 
