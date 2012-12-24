@@ -90,11 +90,20 @@ typedef struct RelationData
 	/*
 	 * rd_createSubid is the ID of the highest subtransaction the rel has
 	 * survived into; or zero if the rel was not created in the current top
-	 * transaction.  This should be relied on only for optimization purposes;
-	 * it is possible for new-ness to be "forgotten" (eg, after CLUSTER).
+	 * transaction.  This can be now be relied on, whereas previously it
+	 * could be "forgotten" in earlier releases.
 	 * Likewise, rd_newRelfilenodeSubid is the ID of the highest
 	 * subtransaction the relfilenode change has survived into, or zero if not
 	 * changed in the current transaction (or we have forgotten changing it).
+	 * rd_newRelfilenodeSubid can be forgotten when a relation has multiple
+	 * new relfilenodes within a single transaction, with one of them occuring
+	 * in a subsequently aborted subtransaction, e.g.
+	 * 		BEGIN;
+	 * 		TRUNCATE t;
+	 * 		SAVEPOINT save;
+	 * 		TRUNCATE t;
+	 * 		ROLLBACK TO save;
+	 * 		-- rd_newRelfilenode is now forgotten
 	 */
 	SubTransactionId rd_createSubid;	/* rel was created in current xact */
 	SubTransactionId rd_newRelfilenodeSubid;	/* new relfilenode assigned in
