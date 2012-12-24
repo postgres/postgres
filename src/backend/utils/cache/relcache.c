@@ -2163,8 +2163,14 @@ RelationCacheInvalidate(void)
 		/* Must close all smgr references to avoid leaving dangling ptrs */
 		RelationCloseSmgr(relation);
 
-		/* Ignore new relations, since they are never cross-backend targets */
-		if (relation->rd_createSubid != InvalidSubTransactionId)
+		/*
+		 * Ignore new relations; no other backend will manipulate them before
+		 * we commit.  Likewise, before replacing a relation's relfilenode, we
+		 * shall have acquired AccessExclusiveLock and drained any applicable
+		 * pending invalidations.
+		 */
+		if (relation->rd_createSubid != InvalidSubTransactionId ||
+			relation->rd_newRelfilenodeSubid != InvalidSubTransactionId)
 			continue;
 
 		relcacheInvalsReceived++;
