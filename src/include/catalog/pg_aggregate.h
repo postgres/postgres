@@ -235,7 +235,7 @@ DATA(insert ( 3545	bytea_string_agg_transfn	bytea_string_agg_finalfn		0	2281	_nu
 /*
  * prototypes for functions in pg_aggregate.c
  */
-extern void AggregateCreate(const char *aggName,
+extern Oid AggregateCreate(const char *aggName,
 				Oid aggNamespace,
 				Oid *aggArgTypes,
 				int numArgs,
