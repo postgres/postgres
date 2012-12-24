@@ -36,8 +36,8 @@ extern void RemoveEventTriggerById(Oid ctrigOid);
 extern Oid	get_event_trigger_oid(const char *trigname, bool missing_ok);
 
 extern void AlterEventTrigger(AlterEventTrigStmt *stmt);
-extern void RenameEventTrigger(const char* trigname, const char *newname);
-extern void AlterEventTriggerOwner(const char *name, Oid newOwnerId);
+extern Oid RenameEventTrigger(const char* trigname, const char *newname);
+extern Oid AlterEventTriggerOwner(const char *name, Oid newOwnerId);
 extern void AlterEventTriggerOwner_oid(Oid, Oid newOwnerId);
 
 extern bool EventTriggerSupportsObjectType(ObjectType obtype);
