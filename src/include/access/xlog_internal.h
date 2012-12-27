@@ -120,17 +120,6 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 		(dest) = (segno) * XLOG_SEG_SIZE + (offset)
 
 /*
- * Macros for manipulating XLOG pointers
- */
-
-/* Align a record pointer to next page */
-#define NextLogPage(recptr) \
-	do {	\
-		if ((recptr) % XLOG_BLCKSZ != 0)	\
-			XLByteAdvance(recptr, (XLOG_BLCKSZ - (recptr) % XLOG_BLCKSZ)); \
-	} while (0)
-
-/*
  * Compute ID and segment from an XLogRecPtr.
  *
  * For XLByteToSeg, do the computation at face value.  For XLByteToPrevSeg,
