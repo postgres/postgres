@@ -33,18 +33,23 @@ generate_old_dump(void)
  	/* create per-db dump files */
 	for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
 	{
-		char 		file_name[MAXPGPATH];
+		char 		sql_file_name[MAXPGPATH], log_file_name[MAXPGPATH];
 		DbInfo     *old_db = &old_cluster.dbarr.dbs[dbnum];
 
 		pg_log(PG_STATUS, "%s", old_db->db_name);
-		snprintf(file_name, sizeof(file_name), DB_DUMP_FILE_MASK, old_db->db_oid);
+		snprintf(sql_file_name, sizeof(sql_file_name), DB_DUMP_FILE_MASK, old_db->db_oid);
+		snprintf(log_file_name, sizeof(log_file_name), DB_DUMP_LOG_FILE_MASK, old_db->db_oid);
 
-		exec_prog(RESTORE_LOG_FILE, NULL, true,
+		parallel_exec_prog(log_file_name, NULL,
 				  "\"%s/pg_dump\" %s --schema-only --binary-upgrade --format=custom %s --file=\"%s\" \"%s\"",
 				  new_cluster.bindir, cluster_conn_opts(&old_cluster),
-				  log_opts.verbose ? "--verbose" : "", file_name, old_db->db_name);
+				  log_opts.verbose ? "--verbose" : "", sql_file_name, old_db->db_name);
 	}
 
+	/* reap all children */
+	while (reap_child(true) == true)
+		;
+	            
 	end_progress_output();
 	check_ok();
 }

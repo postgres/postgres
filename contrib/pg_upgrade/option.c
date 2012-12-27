@@ -52,6 +52,7 @@ parseCommandLine(int argc, char *argv[])
 		{"check", no_argument, NULL, 'c'},
 		{"link", no_argument, NULL, 'k'},
 		{"retain", no_argument, NULL, 'r'},
+		{"jobs", required_argument, NULL, 'j'},
 		{"verbose", no_argument, NULL, 'v'},
 		{NULL, 0, NULL, 0}
 	};
@@ -101,7 +102,7 @@ parseCommandLine(int argc, char *argv[])
 	if ((log_opts.internal = fopen_priv(INTERNAL_LOG_FILE, "a")) == NULL)
 		pg_log(PG_FATAL, "cannot write to log file %s\n", INTERNAL_LOG_FILE);
 
-	while ((option = getopt_long(argc, argv, "d:D:b:B:cko:O:p:P:ru:v",
+	while ((option = getopt_long(argc, argv, "d:D:b:B:cj:ko:O:p:P:ru:v",
 								 long_options, &optindex)) != -1)
 	{
 		switch (option)
@@ -126,6 +127,10 @@ parseCommandLine(int argc, char *argv[])
 			case 'D':
 				new_cluster.pgdata = pg_strdup(optarg);
 				new_cluster.pgconfig = pg_strdup(optarg);
+				break;
+
+			case 'j':
+				user_opts.jobs = atoi(optarg);
 				break;
 
 			case 'k':
@@ -229,6 +234,7 @@ Options:\n\
   -c, --check                   check clusters only, don't change any data\n\
   -d, --old-datadir=OLDDATADIR  old cluster data directory\n\
   -D, --new-datadir=NEWDATADIR  new cluster data directory\n\
+  -j, --jobs                    number of simultaneous processes or threads to use\n\
   -k, --link                    link instead of copying files to new cluster\n\
   -o, --old-options=OPTIONS     old cluster options to pass to the server\n\
   -O, --new-options=OPTIONS     new cluster options to pass to the server\n\

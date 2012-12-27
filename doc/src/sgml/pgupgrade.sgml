@@ -113,6 +113,13 @@
      </varlistentry>
 
      <varlistentry>
+      <term><option>-j</option></term>
+      <term><option>--jobs</option></term>
+      <listitem><para>number of simultaneous processes or threads to use
+      </para></listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-k</option></term>
       <term><option>--link</option></term>
       <listitem><para>use hard links instead of copying files to the new cluster</para></listitem>
@@ -331,10 +338,15 @@ NET STOP pgsql-8.3  (<productname>PostgreSQL</> 8.3 and older used a different s
      requires that the old and new cluster data directories be in the
      same file system.  See <literal>pg_upgrade --help</> for a full
      list of options.
-   </para>
+    </para>
 
-   <para>
-   </para>
+    <para>
+     The <option>--jobs</> option allows multiple CPU cores to be used
+     to dump and reload database schemas in parallel;  a good place to
+     start is the number of CPU cores on the server.  This option can
+     dramatically reduce the time to upgrade a multi-database server
+     running on a multiprocessor machine.
+    </para>
 
     <para>
      For Windows users, you must be logged into an administrative account, and

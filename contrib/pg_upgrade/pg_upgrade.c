@@ -61,7 +61,6 @@ char	   *output_files[] = {
 	/* unique file for pg_ctl start */
 	SERVER_START_LOG_FILE,
 #endif
-	RESTORE_LOG_FILE,
 	UTILITY_LOG_FILE,
 	INTERNAL_LOG_FILE,
 	NULL
@@ -270,7 +269,7 @@ prepare_new_databases(void)
 	 * support functions in template1 but pg_dumpall creates database using
 	 * the template0 template.
 	 */
-	exec_prog(RESTORE_LOG_FILE, NULL, true,
+	exec_prog(UTILITY_LOG_FILE, NULL, true,
 			  "\"%s/psql\" " EXEC_PSQL_ARGS " %s -f \"%s\"",
 			  new_cluster.bindir, cluster_conn_opts(&new_cluster),
 			  GLOBALS_DUMP_FILE);
@@ -307,22 +306,28 @@ create_new_objects(void)
 
 	for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
 	{
-		char file_name[MAXPGPATH];
+		char sql_file_name[MAXPGPATH], log_file_name[MAXPGPATH];
 		DbInfo     *old_db = &old_cluster.dbarr.dbs[dbnum];
 
 		pg_log(PG_STATUS, "%s", old_db->db_name);
-		snprintf(file_name, sizeof(file_name), DB_DUMP_FILE_MASK, old_db->db_oid);
+		snprintf(sql_file_name, sizeof(sql_file_name), DB_DUMP_FILE_MASK, old_db->db_oid);
+		snprintf(log_file_name, sizeof(log_file_name), DB_DUMP_LOG_FILE_MASK, old_db->db_oid);
 
 		/*
 		 *	Using pg_restore --single-transaction is faster than other
 		 *	methods, like --jobs.  pg_dump only produces its output at the
 		 *	end, so there is little parallelism using the pipe.
 		 */
-		exec_prog(RESTORE_LOG_FILE, NULL, true,
+		parallel_exec_prog(log_file_name, NULL,
 				  "\"%s/pg_restore\" %s --exit-on-error --single-transaction --verbose --dbname \"%s\" \"%s\"",
 				  new_cluster.bindir, cluster_conn_opts(&new_cluster),
-				  old_db->db_name, file_name);
+				  old_db->db_name, sql_file_name);
 	}
+
+	/* reap all children */
+	while (reap_child(true) == true)
+		;
+
 	end_progress_output();
 	check_ok();
 
@@ -494,11 +499,14 @@ cleanup(void)
 		if (old_cluster.dbarr.dbs)
 			for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
 			{
-				char file_name[MAXPGPATH];
+				char sql_file_name[MAXPGPATH], log_file_name[MAXPGPATH];
 				DbInfo     *old_db = &old_cluster.dbarr.dbs[dbnum];
 
-				snprintf(file_name, sizeof(file_name), DB_DUMP_FILE_MASK, old_db->db_oid);
-				unlink(file_name);
+				snprintf(sql_file_name, sizeof(sql_file_name), DB_DUMP_FILE_MASK, old_db->db_oid);
+				unlink(sql_file_name);
+
+				snprintf(log_file_name, sizeof(log_file_name), DB_DUMP_FILE_MASK, old_db->db_oid);
+				unlink(log_file_name);
 			}
 	}
 }

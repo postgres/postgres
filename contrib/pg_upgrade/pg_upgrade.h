@@ -32,8 +32,8 @@
 #define GLOBALS_DUMP_FILE	"pg_upgrade_dump_globals.sql"
 #define DB_DUMP_FILE_MASK	"pg_upgrade_dump_%u.custom"
 
+#define DB_DUMP_LOG_FILE_MASK	"pg_upgrade_dump_%u.log"
 #define SERVER_LOG_FILE		"pg_upgrade_server.log"
-#define RESTORE_LOG_FILE	"pg_upgrade_restore.log"
 #define UTILITY_LOG_FILE	"pg_upgrade_utility.log"
 #define INTERNAL_LOG_FILE	"pg_upgrade_internal.log"
 
@@ -264,6 +264,7 @@ typedef struct
 	bool		check;			/* TRUE -> ask user for permission to make
 								 * changes */
 	transferMode transfer_mode; /* copy files or link them? */
+	int			jobs;
 } UserOpts;
 
 
@@ -461,3 +462,11 @@ void		old_8_3_invalidate_hash_gin_indexes(ClusterInfo *cluster, bool check_mode)
 void old_8_3_invalidate_bpchar_pattern_ops_indexes(ClusterInfo *cluster,
 											  bool check_mode);
 char	   *old_8_3_create_sequence_script(ClusterInfo *cluster);
+
+/* parallel.c */
+void parallel_exec_prog(const char *log_file, const char *opt_log_file,
+		  const char *fmt,...)
+__attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 4)));
+
+bool reap_child(bool wait_for_child);
+
