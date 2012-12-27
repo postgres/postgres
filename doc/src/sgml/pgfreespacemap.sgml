@@ -65,10 +65,12 @@
    whether a page is full or empty.
   </para>
 
-  <para>
-   NOTE: The interface was changed in version 8.4, to reflect the new FSM
-   implementation introduced in the same version.
-  </para>
+  <note>
+   <para>
+    The interface was changed in version 8.4, to reflect the new FSM
+    implementation introduced in the same version.
+   </para>
+  </note>
  </sect2>
 
  <sect2>
