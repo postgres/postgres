@@ -229,7 +229,7 @@ btree_xlog_insert(bool isleaf, bool ismeta,
 		{
 			page = (Page) BufferGetPage(buffer);
 
-			if (XLByteLE(lsn, PageGetLSN(page)))
+			if (lsn <= PageGetLSN(page))
 			{
 				UnlockReleaseBuffer(buffer);
 			}
@@ -381,7 +381,7 @@ btree_xlog_split(bool onleft, bool isroot,
 			Page		lpage = (Page) BufferGetPage(lbuf);
 			BTPageOpaque lopaque = (BTPageOpaque) PageGetSpecialPointer(lpage);
 
-			if (!XLByteLE(lsn, PageGetLSN(lpage)))
+			if (lsn > PageGetLSN(lpage))
 			{
 				OffsetNumber off;
 				OffsetNumber maxoff = PageGetMaxOffsetNumber(lpage);
@@ -459,7 +459,7 @@ btree_xlog_split(bool onleft, bool isroot,
 		{
 			Page		page = (Page) BufferGetPage(buffer);
 
-			if (!XLByteLE(lsn, PageGetLSN(page)))
+			if (lsn > PageGetLSN(page))
 			{
 				BTPageOpaque pageop = (BTPageOpaque) PageGetSpecialPointer(page);
 
@@ -537,7 +537,7 @@ btree_xlog_vacuum(XLogRecPtr lsn, XLogRecord *record)
 	LockBufferForCleanup(buffer);
 	page = (Page) BufferGetPage(buffer);
 
-	if (XLByteLE(lsn, PageGetLSN(page)))
+	if (lsn <= PageGetLSN(page))
 	{
 		UnlockReleaseBuffer(buffer);
 		return;
@@ -757,7 +757,7 @@ btree_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 		return;
 	page = (Page) BufferGetPage(buffer);
 
-	if (XLByteLE(lsn, PageGetLSN(page)))
+	if (lsn <= PageGetLSN(page))
 	{
 		UnlockReleaseBuffer(buffer);
 		return;
@@ -820,7 +820,7 @@ btree_xlog_delete_page(uint8 info, XLogRecPtr lsn, XLogRecord *record)
 		{
 			page = (Page) BufferGetPage(buffer);
 			pageop = (BTPageOpaque) PageGetSpecialPointer(page);
-			if (XLByteLE(lsn, PageGetLSN(page)))
+			if (lsn <= PageGetLSN(page))
 			{
 				UnlockReleaseBuffer(buffer);
 			}
@@ -867,7 +867,7 @@ btree_xlog_delete_page(uint8 info, XLogRecPtr lsn, XLogRecord *record)
 		if (BufferIsValid(buffer))
 		{
 			page = (Page) BufferGetPage(buffer);
-			if (XLByteLE(lsn, PageGetLSN(page)))
+			if (lsn <= PageGetLSN(page))
 			{
 				UnlockReleaseBuffer(buffer);
 			}
@@ -895,7 +895,7 @@ btree_xlog_delete_page(uint8 info, XLogRecPtr lsn, XLogRecord *record)
 			if (BufferIsValid(buffer))
 			{
 				page = (Page) BufferGetPage(buffer);
-				if (XLByteLE(lsn, PageGetLSN(page)))
+				if (lsn <= PageGetLSN(page))
 				{
 					UnlockReleaseBuffer(buffer);
 				}

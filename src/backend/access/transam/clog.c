@@ -365,7 +365,7 @@ TransactionIdSetStatusBit(TransactionId xid, XidStatus status, XLogRecPtr lsn, i
 	{
 		int			lsnindex = GetLSNIndex(slotno, xid);
 
-		if (XLByteLT(ClogCtl->shared->group_lsn[lsnindex], lsn))
+		if (ClogCtl->shared->group_lsn[lsnindex] < lsn)
 			ClogCtl->shared->group_lsn[lsnindex] = lsn;
 	}
 }

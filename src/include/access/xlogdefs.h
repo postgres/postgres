@@ -29,20 +29,6 @@ typedef uint64 XLogRecPtr;
 #define XLogRecPtrIsInvalid(r)	((r) == InvalidXLogRecPtr)
 
 /*
- * Macros for comparing XLogRecPtrs
- */
-#define XLByteLT(a, b)		((a) < (b))
-#define XLByteLE(a, b)		((a) <= (b))
-#define XLByteEQ(a, b)		((a) == (b))
-
-
-/*
- * Macro for advancing a record pointer by the specified number of bytes.
- */
-#define XLByteAdvance(recptr, nbytes)						\
-		(recptr) += nbytes									\
-
-/*
  * XLogSegNo - physical log file sequence number.
  */
 typedef uint64 XLogSegNo;

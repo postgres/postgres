@@ -471,7 +471,7 @@ StartReplication(StartReplicationCmd *cmd)
 			 * WAL segment.
 			 */
 			if (!XLogRecPtrIsInvalid(switchpoint) &&
-				XLByteLT(switchpoint, cmd->startpoint))
+				switchpoint < cmd->startpoint)
 			{
 				ereport(ERROR,
 						(errmsg("requested starting point %X/%X on timeline %u is not in this server's history",
@@ -497,7 +497,7 @@ StartReplication(StartReplicationCmd *cmd)
 
 	/* If there is nothing to stream, don't even enter COPY mode */
 	if (!sendTimeLineIsHistoric ||
-		XLByteLT(cmd->startpoint, sendTimeLineValidUpto))
+		cmd->startpoint < sendTimeLineValidUpto)
 	{
 		/*
 		 * When we first start replication the standby will be behind the primary.
@@ -520,7 +520,7 @@ StartReplication(StartReplicationCmd *cmd)
 		 * Don't allow a request to stream from a future point in WAL that
 		 * hasn't been flushed to disk in this server yet.
 		 */
-		if (XLByteLT(FlushPtr, cmd->startpoint))
+		if (FlushPtr < cmd->startpoint)
 		{
 			ereport(ERROR,
 					(errmsg("requested starting point %X/%X is ahead of the WAL flush position of this server %X/%X",
@@ -1249,7 +1249,7 @@ retry:
 		}
 
 		/* Update state for read */
-		XLByteAdvance(recptr, readbytes);
+		recptr += readbytes;
 
 		sendOff += readbytes;
 		nbytes -= readbytes;
@@ -1384,11 +1384,11 @@ XLogSend(bool *caughtup)
 
 			history = readTimeLineHistory(ThisTimeLineID);
 			sendTimeLineValidUpto = tliSwitchPoint(sendTimeLine, history);
-			Assert(XLByteLE(sentPtr, sendTimeLineValidUpto));
+			Assert(sentPtr <= sendTimeLineValidUpto);
 			list_free_deep(history);
 
-			/* the switchpoint should be >= current send pointer */
-			if (!XLByteLE(sentPtr, sendTimeLineValidUpto))
+			/* the current send pointer should be <= the switchpoint */
+			if (!(sentPtr <= sendTimeLineValidUpto))
 				elog(ERROR, "server switched off timeline %u at %X/%X, but walsender already streamed up to %X/%X",
 					 sendTimeLine,
 					 (uint32) (sendTimeLineValidUpto >> 32),
@@ -1420,7 +1420,7 @@ XLogSend(bool *caughtup)
 	 * If this is a historic timeline and we've reached the point where we
 	 * forked to the next timeline, stop streaming.
 	 */
-	if (sendTimeLineIsHistoric && XLByteLE(sendTimeLineValidUpto, sentPtr))
+	if (sendTimeLineIsHistoric && sendTimeLineValidUpto <= sentPtr)
 	{
 		/* close the current file. */
 		if (sendFile >= 0)
@@ -1436,8 +1436,8 @@ XLogSend(bool *caughtup)
 	}
 
 	/* Do we have any work to do? */
-	Assert(XLByteLE(sentPtr, SendRqstPtr));
-	if (XLByteLE(SendRqstPtr, sentPtr))
+	Assert(sentPtr <= SendRqstPtr);
+	if (SendRqstPtr <= sentPtr)
 	{
 		*caughtup = true;
 		return;
@@ -1456,10 +1456,10 @@ XLogSend(bool *caughtup)
 	 */
 	startptr = sentPtr;
 	endptr = startptr;
-	XLByteAdvance(endptr, MAX_SEND_SIZE);
+	endptr += MAX_SEND_SIZE;
 
 	/* if we went beyond SendRqstPtr, back off */
-	if (XLByteLE(SendRqstPtr, endptr))
+	if (SendRqstPtr <= endptr)
 	{
 		endptr = SendRqstPtr;
 		if (sendTimeLineIsHistoric)
@@ -1968,7 +1968,7 @@ GetOldestWALSendPointer(void)
 		if (recptr.xlogid == 0 && recptr.xrecoff == 0)
 			continue;
 
-		if (!found || XLByteLT(recptr, oldest))
+		if (!found || recptr < oldest)
 			oldest = recptr;
 		found = true;
 	}

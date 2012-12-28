@@ -914,7 +914,7 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 		}
 
 		/* Update state for write */
-		XLByteAdvance(recptr, byteswritten);
+		recptr += byteswritten;
 
 		recvOff += byteswritten;
 		nbytes -= byteswritten;
@@ -933,7 +933,7 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 static void
 XLogWalRcvFlush(bool dying)
 {
-	if (XLByteLT(LogstreamResult.Flush, LogstreamResult.Write))
+	if (LogstreamResult.Flush < LogstreamResult.Write)
 	{
 		/* use volatile pointer to prevent code rearrangement */
 		volatile WalRcvData *walrcv = WalRcv;
@@ -944,7 +944,7 @@ XLogWalRcvFlush(bool dying)
 
 		/* Update shared-memory status */
 		SpinLockAcquire(&walrcv->mutex);
-		if (XLByteLT(walrcv->receivedUpto, LogstreamResult.Flush))
+		if (walrcv->receivedUpto < LogstreamResult.Flush)
 		{
 			walrcv->latestChunkStart = walrcv->receivedUpto;
 			walrcv->receivedUpto = LogstreamResult.Flush;
@@ -1016,8 +1016,8 @@ XLogWalRcvSendReply(bool force, bool requestReply)
 	 * probably OK.
 	 */
 	if (!force
-		&& XLByteEQ(writePtr, LogstreamResult.Write)
-		&& XLByteEQ(flushPtr, LogstreamResult.Flush)
+		&& writePtr == LogstreamResult.Write
+		&& flushPtr == LogstreamResult.Flush
 		&& !TimestampDifferenceExceeds(sendTime, now,
 									   wal_receiver_status_interval * 1000))
 		return;
@@ -1126,7 +1126,7 @@ ProcessWalSndrMessage(XLogRecPtr walEnd, TimestampTz sendTime)
 
 	/* Update shared-memory status */
 	SpinLockAcquire(&walrcv->mutex);
-	if (XLByteLT(walrcv->latestWalEnd, walEnd))
+	if (walrcv->latestWalEnd < walEnd)
 		walrcv->latestWalEndTime = sendTime;
 	walrcv->latestWalEnd = walEnd;
 	walrcv->lastMsgSendTime = sendTime;

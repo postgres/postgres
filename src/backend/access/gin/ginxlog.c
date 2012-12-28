@@ -177,7 +177,7 @@ ginRedoInsert(XLogRecPtr lsn, XLogRecord *record)
 		return;					/* page was deleted, nothing to do */
 	page = (Page) BufferGetPage(buffer);
 
-	if (!XLByteLE(lsn, PageGetLSN(page)))
+	if (lsn > PageGetLSN(page))
 	{
 		if (data->isData)
 		{
@@ -393,7 +393,7 @@ ginRedoVacuumPage(XLogRecPtr lsn, XLogRecord *record)
 		return;
 	page = (Page) BufferGetPage(buffer);
 
-	if (!XLByteLE(lsn, PageGetLSN(page)))
+	if (lsn > PageGetLSN(page))
 	{
 		if (GinPageIsData(page))
 		{
@@ -448,7 +448,7 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 		if (BufferIsValid(dbuffer))
 		{
 			page = BufferGetPage(dbuffer);
-			if (!XLByteLE(lsn, PageGetLSN(page)))
+			if (lsn > PageGetLSN(page))
 			{
 				Assert(GinPageIsData(page));
 				GinPageGetOpaque(page)->flags = GIN_DELETED;
@@ -467,7 +467,7 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 		if (BufferIsValid(pbuffer))
 		{
 			page = BufferGetPage(pbuffer);
-			if (!XLByteLE(lsn, PageGetLSN(page)))
+			if (lsn > PageGetLSN(page))
 			{
 				Assert(GinPageIsData(page));
 				Assert(!GinPageIsLeaf(page));
@@ -487,7 +487,7 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 		if (BufferIsValid(lbuffer))
 		{
 			page = BufferGetPage(lbuffer);
-			if (!XLByteLE(lsn, PageGetLSN(page)))
+			if (lsn > PageGetLSN(page))
 			{
 				Assert(GinPageIsData(page));
 				GinPageGetOpaque(page)->rightlink = data->rightLink;
@@ -518,7 +518,7 @@ ginRedoUpdateMetapage(XLogRecPtr lsn, XLogRecord *record)
 		return;					/* assume index was deleted, nothing to do */
 	metapage = BufferGetPage(metabuffer);
 
-	if (!XLByteLE(lsn, PageGetLSN(metapage)))
+	if (lsn > PageGetLSN(metapage))
 	{
 		memcpy(GinPageGetMeta(metapage), &data->metadata, sizeof(GinMetaPageData));
 		PageSetLSN(metapage, lsn);
@@ -540,7 +540,7 @@ ginRedoUpdateMetapage(XLogRecPtr lsn, XLogRecord *record)
 			{
 				Page		page = BufferGetPage(buffer);
 
-				if (!XLByteLE(lsn, PageGetLSN(page)))
+				if (lsn > PageGetLSN(page))
 				{
 					OffsetNumber l,
 								off = (PageIsEmpty(page)) ? FirstOffsetNumber :
@@ -590,7 +590,7 @@ ginRedoUpdateMetapage(XLogRecPtr lsn, XLogRecord *record)
 			{
 				Page		page = BufferGetPage(buffer);
 
-				if (!XLByteLE(lsn, PageGetLSN(page)))
+				if (lsn > PageGetLSN(page))
 				{
 					GinPageGetOpaque(page)->rightlink = data->newRightlink;
 
@@ -677,7 +677,7 @@ ginRedoDeleteListPages(XLogRecPtr lsn, XLogRecord *record)
 		return;					/* assume index was deleted, nothing to do */
 	metapage = BufferGetPage(metabuffer);
 
-	if (!XLByteLE(lsn, PageGetLSN(metapage)))
+	if (lsn > PageGetLSN(metapage))
 	{
 		memcpy(GinPageGetMeta(metapage), &data->metadata, sizeof(GinMetaPageData));
 		PageSetLSN(metapage, lsn);
@@ -703,7 +703,7 @@ ginRedoDeleteListPages(XLogRecPtr lsn, XLogRecord *record)
 		{
 			Page		page = BufferGetPage(buffer);
 
-			if (!XLByteLE(lsn, PageGetLSN(page)))
+			if (lsn > PageGetLSN(page))
 			{
 				GinPageGetOpaque(page)->flags = GIN_DELETED;
 

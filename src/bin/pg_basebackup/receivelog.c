@@ -636,7 +636,7 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 			/* Write was successful, advance our position */
 			bytes_written += bytes_to_write;
 			bytes_left -= bytes_to_write;
-			XLByteAdvance(blockpos, bytes_to_write);
+			blockpos += bytes_to_write;
 			xlogoff += bytes_to_write;
 
 			/* Did we reach the end of a WAL segment? */

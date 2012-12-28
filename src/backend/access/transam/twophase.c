@@ -1559,7 +1559,7 @@ CheckPointTwoPhase(XLogRecPtr redo_horizon)
 		PGXACT	   *pgxact = &ProcGlobal->allPgXact[gxact->pgprocno];
 
 		if (gxact->valid &&
-			XLByteLE(gxact->prepare_lsn, redo_horizon))
+			gxact->prepare_lsn <= redo_horizon)
 			xids[nxids++] = pgxact->xid;
 	}
 

@@ -561,8 +561,7 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace, GISTSTATE *giststate)
 		}
 
 		if (stack->blkno != GIST_ROOT_BLKNO &&
-			XLByteLT(stack->parent->lsn,
-					 GistPageGetOpaque(stack->page)->nsn))
+			stack->parent->lsn < GistPageGetOpaque(stack->page)->nsn)
 		{
 			/*
 			 * Concurrent split detected. There's no guarantee that the
@@ -620,7 +619,7 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace, GISTSTATE *giststate)
 					xlocked = true;
 					stack->page = (Page) BufferGetPage(stack->buffer);
 
-					if (!XLByteEQ(PageGetLSN(stack->page), stack->lsn))
+					if (PageGetLSN(stack->page) != stack->lsn)
 					{
 						/* the page was changed while we unlocked it, retry */
 						continue;
@@ -708,8 +707,8 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace, GISTSTATE *giststate)
 					 */
 				}
 				else if (GistFollowRight(stack->page) ||
-						 XLByteLT(stack->parent->lsn,
-								  GistPageGetOpaque(stack->page)->nsn))
+						 stack->parent->lsn <
+								  GistPageGetOpaque(stack->page)->nsn)
 				{
 					/*
 					 * The page was split while we momentarily unlocked the
@@ -794,7 +793,7 @@ gistFindPath(Relation r, BlockNumber child, OffsetNumber *downlinkoffnum)
 		if (GistFollowRight(page))
 			elog(ERROR, "concurrent GiST page split was incomplete");
 
-		if (top->parent && XLByteLT(top->parent->lsn, GistPageGetOpaque(page)->nsn) &&
+		if (top->parent && top->parent->lsn < GistPageGetOpaque(page)->nsn &&
 			GistPageGetOpaque(page)->rightlink != InvalidBlockNumber /* sanity check */ )
 		{
 			/*
@@ -864,7 +863,8 @@ gistFindCorrectParent(Relation r, GISTInsertStack *child)
 	parent->page = (Page) BufferGetPage(parent->buffer);
 
 	/* here we don't need to distinguish between split and page update */
-	if (child->downlinkoffnum == InvalidOffsetNumber || !XLByteEQ(parent->lsn, PageGetLSN(parent->page)))
+	if (child->downlinkoffnum == InvalidOffsetNumber ||
+		parent->lsn != PageGetLSN(parent->page))
 	{
 		/* parent is changed, look child in right links until found */
 		OffsetNumber i,
