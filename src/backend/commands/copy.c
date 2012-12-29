@@ -743,14 +743,14 @@ CopyLoadRawBuf(CopyState cstate)
  * Do not allow the copy if user doesn't have proper permission to access
  * the table or the specifically requested columns.
  */
-uint64
-DoCopy(const CopyStmt *stmt, const char *queryString)
+Oid
+DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 {
 	CopyState	cstate;
 	bool		is_from = stmt->is_from;
 	bool		pipe = (stmt->filename == NULL);
 	Relation	rel;
-	uint64		processed;
+	Oid         relid;
 
 	/* Disallow file COPY except to superusers. */
 	if (!pipe && !superuser())
@@ -773,6 +773,8 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 		/* Open and lock the relation, using the appropriate lock type. */
 		rel = heap_openrv(stmt->relation,
 						  (is_from ? RowExclusiveLock : AccessShareLock));
+
+		relid = RelationGetRelid(rel);
 
 		rte = makeNode(RangeTblEntry);
 		rte->rtekind = RTE_RELATION;
@@ -811,14 +813,14 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 
 		cstate = BeginCopyFrom(rel, stmt->filename,
 							   stmt->attlist, stmt->options);
-		processed = CopyFrom(cstate);	/* copy from file to database */
+		*processed = CopyFrom(cstate);	/* copy from file to database */
 		EndCopyFrom(cstate);
 	}
 	else
 	{
 		cstate = BeginCopyTo(rel, stmt->query, queryString, stmt->filename,
 							 stmt->attlist, stmt->options);
-		processed = DoCopyTo(cstate);	/* copy from database to file */
+		*processed = DoCopyTo(cstate);	/* copy from database to file */
 		EndCopyTo(cstate);
 	}
 
@@ -830,7 +832,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 	if (rel != NULL)
 		heap_close(rel, (is_from ? NoLock : AccessShareLock));
 
-	return processed;
+	return relid;
 }
 
 /*

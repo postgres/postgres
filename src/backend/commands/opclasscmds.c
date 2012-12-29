@@ -321,7 +321,7 @@ CreateOpFamily(char *amname, char *opfname, Oid namespaceoid, Oid amoid)
  * DefineOpClass
  *		Define a new index operator class.
  */
-void
+Oid
 DefineOpClass(CreateOpClassStmt *stmt)
 {
 	char	   *opcname;		/* name of opclass we're creating */
@@ -714,6 +714,8 @@ DefineOpClass(CreateOpClassStmt *stmt)
 						   OperatorClassRelationId, opclassoid, 0, NULL);
 
 	heap_close(rel, RowExclusiveLock);
+
+	return opclassoid;
 }
 
 
@@ -721,7 +723,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
  * DefineOpFamily
  *		Define a new index operator family.
  */
-void
+Oid
 DefineOpFamily(CreateOpFamilyStmt *stmt)
 {
 	char	   *opfname;		/* name of opfamily we're creating */
@@ -754,7 +756,7 @@ DefineOpFamily(CreateOpFamilyStmt *stmt)
 				 errmsg("must be superuser to create an operator family")));
 
 	/* Insert pg_opfamily catalog entry */
-	(void) CreateOpFamily(stmt->amname, opfname, namespaceoid, amoid);
+	return CreateOpFamily(stmt->amname, opfname, namespaceoid, amoid);
 }
 
 
@@ -766,7 +768,7 @@ DefineOpFamily(CreateOpFamilyStmt *stmt)
  * other commands called ALTER OPERATOR FAMILY exist, but go through
  * different code paths.
  */
-void
+Oid
 AlterOpFamily(AlterOpFamilyStmt *stmt)
 {
 	Oid			amoid,			/* our AM's oid */
@@ -820,6 +822,8 @@ AlterOpFamily(AlterOpFamilyStmt *stmt)
 		AlterOpFamilyAdd(stmt->opfamilyname, amoid, opfamilyoid,
 						 maxOpNumber, maxProcNumber,
 						 stmt->items);
+
+	return opfamilyoid;
 }
 
 /*

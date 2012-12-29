@@ -38,7 +38,7 @@ static List *label_provider_list = NIL;
  *
  * Apply a security label to a database object.
  */
-void
+Oid
 ExecSecLabelStmt(SecLabelStmt *stmt)
 {
 	LabelProvider *provider = NULL;
@@ -131,6 +131,8 @@ ExecSecLabelStmt(SecLabelStmt *stmt)
 	 */
 	if (relation != NULL)
 		relation_close(relation, NoLock);
+
+	return address.objectId;
 }
 
 /*

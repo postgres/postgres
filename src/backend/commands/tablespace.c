@@ -222,7 +222,7 @@ TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
  * since we're determining the system layout and, anyway, we probably have
  * root if we're doing this kind of activity
  */
-void
+Oid
 CreateTableSpace(CreateTableSpaceStmt *stmt)
 {
 #ifdef HAVE_SYMLINK
@@ -371,6 +371,8 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("tablespaces are not supported on this platform")));
 #endif   /* HAVE_SYMLINK */
+
+	return tablespaceoid;
 }
 
 /*
@@ -890,13 +892,14 @@ RenameTableSpace(const char *oldname, const char *newname)
 /*
  * Alter table space options
  */
-void
+Oid
 AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt)
 {
 	Relation	rel;
 	ScanKeyData entry[1];
 	HeapScanDesc scandesc;
 	HeapTuple	tup;
+	Oid			tablespaceoid;
 	Datum		datum;
 	Datum		newOptions;
 	Datum		repl_val[Natts_pg_tablespace];
@@ -919,6 +922,8 @@ AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("tablespace \"%s\" does not exist",
 						stmt->tablespacename)));
+
+	tablespaceoid = HeapTupleGetOid(tup);
 
 	/* Must be owner of the existing object */
 	if (!pg_tablespace_ownercheck(HeapTupleGetOid(tup), GetUserId()))
@@ -952,6 +957,8 @@ AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt)
 	/* Conclude heap scan. */
 	heap_endscan(scandesc);
 	heap_close(rel, NoLock);
+
+	return tablespaceoid;
 }
 
 /*

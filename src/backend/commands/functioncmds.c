@@ -1111,7 +1111,7 @@ RenameFunction(List *name, List *argtypes, const char *newname)
  * RENAME and OWNER clauses, which are handled as part of the generic
  * ALTER framework).
  */
-void
+Oid
 AlterFunction(AlterFunctionStmt *stmt)
 {
 	HeapTuple	tup;
@@ -1241,6 +1241,8 @@ AlterFunction(AlterFunctionStmt *stmt)
 
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);
+
+	return funcOid;
 }
 
 /*
@@ -1318,7 +1320,7 @@ SetFunctionArgType(Oid funcOid, int argIndex, Oid newArgType)
 /*
  * CREATE CAST
  */
-void
+Oid
 CreateCast(CreateCastStmt *stmt)
 {
 	Oid			sourcetypeid;
@@ -1632,6 +1634,8 @@ CreateCast(CreateCastStmt *stmt)
 	heap_freetuple(tuple);
 
 	heap_close(relation, RowExclusiveLock);
+
+	return castid;
 }
 
 /*

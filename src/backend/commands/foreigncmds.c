@@ -583,7 +583,7 @@ parse_func_options(List *func_options,
 /*
  * Create a foreign-data wrapper
  */
-void
+Oid
 CreateForeignDataWrapper(CreateFdwStmt *stmt)
 {
 	Relation	rel;
@@ -690,13 +690,15 @@ CreateForeignDataWrapper(CreateFdwStmt *stmt)
 						   ForeignDataWrapperRelationId, fdwId, 0, NULL);
 
 	heap_close(rel, RowExclusiveLock);
+
+	return fdwId;
 }
 
 
 /*
  * Alter foreign-data wrapper
  */
-void
+Oid
 AlterForeignDataWrapper(AlterFdwStmt *stmt)
 {
 	Relation	rel;
@@ -851,6 +853,8 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 	}
 
 	heap_close(rel, RowExclusiveLock);
+
+	return fdwId;
 }
 
 
@@ -881,7 +885,7 @@ RemoveForeignDataWrapperById(Oid fdwId)
 /*
  * Create a foreign server
  */
-void
+Oid
 CreateForeignServer(CreateForeignServerStmt *stmt)
 {
 	Relation	rel;
@@ -987,13 +991,15 @@ CreateForeignServer(CreateForeignServerStmt *stmt)
 						   ForeignServerRelationId, srvId, 0, NULL);
 
 	heap_close(rel, RowExclusiveLock);
+
+	return srvId;
 }
 
 
 /*
  * Alter foreign server
  */
-void
+Oid
 AlterForeignServer(AlterForeignServerStmt *stmt)
 {
 	Relation	rel;
@@ -1080,6 +1086,8 @@ AlterForeignServer(AlterForeignServerStmt *stmt)
 	heap_freetuple(tp);
 
 	heap_close(rel, RowExclusiveLock);
+
+	return srvId;
 }
 
 
@@ -1137,7 +1145,7 @@ user_mapping_ddl_aclcheck(Oid umuserid, Oid serverid, const char *servername)
 /*
  * Create user mapping
  */
-void
+Oid
 CreateUserMapping(CreateUserMappingStmt *stmt)
 {
 	Relation	rel;
@@ -1228,13 +1236,15 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 						   UserMappingRelationId, umId, 0, NULL);
 
 	heap_close(rel, RowExclusiveLock);
+
+	return umId;
 }
 
 
 /*
  * Alter user mapping
  */
-void
+Oid
 AlterUserMapping(AlterUserMappingStmt *stmt)
 {
 	Relation	rel;
@@ -1314,13 +1324,15 @@ AlterUserMapping(AlterUserMappingStmt *stmt)
 	heap_freetuple(tp);
 
 	heap_close(rel, RowExclusiveLock);
+
+	return umId;
 }
 
 
 /*
  * Drop user mapping
  */
-void
+Oid
 RemoveUserMapping(DropUserMappingStmt *stmt)
 {
 	ObjectAddress object;
@@ -1338,7 +1350,7 @@ RemoveUserMapping(DropUserMappingStmt *stmt)
 		 * leave.
 		 */
 		elog(NOTICE, "role \"%s\" does not exist, skipping", stmt->username);
-		return;
+		return InvalidOid;
 	}
 
 	if (!srv)
@@ -1350,7 +1362,7 @@ RemoveUserMapping(DropUserMappingStmt *stmt)
 							stmt->servername)));
 		/* IF EXISTS, just note it */
 		ereport(NOTICE, (errmsg("server does not exist, skipping")));
-		return;
+		return InvalidOid;
 	}
 
 	umId = GetSysCacheOid2(USERMAPPINGUSERSERVER,
@@ -1369,7 +1381,7 @@ RemoveUserMapping(DropUserMappingStmt *stmt)
 		ereport(NOTICE,
 		(errmsg("user mapping \"%s\" does not exist for the server, skipping",
 				MappingUserName(useId))));
-		return;
+		return InvalidOid;
 	}
 
 	user_mapping_ddl_aclcheck(useId, srv->serverid, srv->servername);
@@ -1382,6 +1394,8 @@ RemoveUserMapping(DropUserMappingStmt *stmt)
 	object.objectSubId = 0;
 
 	performDeletion(&object, DROP_CASCADE, 0);
+
+	return umId;
 }
 
 

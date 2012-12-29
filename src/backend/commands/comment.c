@@ -36,7 +36,7 @@
  * This routine is used to add the associated comment into
  * pg_description for the object specified by the given SQL command.
  */
-void
+Oid
 CommentObject(CommentStmt *stmt)
 {
 	ObjectAddress address;
@@ -60,7 +60,7 @@ CommentObject(CommentStmt *stmt)
 			ereport(WARNING,
 					(errcode(ERRCODE_UNDEFINED_DATABASE),
 					 errmsg("database \"%s\" does not exist", database)));
-			return;
+			return InvalidOid;
 		}
 	}
 
@@ -123,6 +123,8 @@ CommentObject(CommentStmt *stmt)
 	 */
 	if (relation != NULL)
 		relation_close(relation, NoLock);
+
+	return address.objectId;
 }
 
 /*

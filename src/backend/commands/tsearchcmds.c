@@ -614,7 +614,7 @@ RemoveTSDictionaryById(Oid dictId)
 /*
  * ALTER TEXT SEARCH DICTIONARY
  */
-void
+Oid
 AlterTSDictionary(AlterTSDictionaryStmt *stmt)
 {
 	HeapTuple	tup,
@@ -722,6 +722,8 @@ AlterTSDictionary(AlterTSDictionaryStmt *stmt)
 	ReleaseSysCache(tup);
 
 	heap_close(rel, RowExclusiveLock);
+
+	return dictId;
 }
 
 /* ---------------------- TS Template commands -----------------------*/
@@ -1349,10 +1351,11 @@ RemoveTSConfigurationById(Oid cfgId)
 /*
  * ALTER TEXT SEARCH CONFIGURATION - main entry point
  */
-void
+Oid
 AlterTSConfiguration(AlterTSConfigurationStmt *stmt)
 {
 	HeapTuple	tup;
+	Oid			cfgId;
 	Relation	relMap;
 
 	/* Find the configuration */
@@ -1362,6 +1365,8 @@ AlterTSConfiguration(AlterTSConfigurationStmt *stmt)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("text search configuration \"%s\" does not exist",
 						NameListToString(stmt->cfgname))));
+
+	cfgId = HeapTupleGetOid(tup);
 
 	/* must be owner */
 	if (!pg_ts_config_ownercheck(HeapTupleGetOid(tup), GetUserId()))
@@ -1382,6 +1387,8 @@ AlterTSConfiguration(AlterTSConfigurationStmt *stmt)
 	heap_close(relMap, RowExclusiveLock);
 
 	ReleaseSysCache(tup);
+
+	return cfgId;
 }
 
 /*

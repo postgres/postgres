@@ -2580,7 +2580,7 @@ AlterExtensionNamespace(List *names, const char *newschema)
 /*
  * Execute ALTER EXTENSION UPDATE
  */
-void
+Oid
 ExecAlterExtensionStmt(AlterExtensionStmt *stmt)
 {
 	DefElem    *d_new_version = NULL;
@@ -2697,7 +2697,7 @@ ExecAlterExtensionStmt(AlterExtensionStmt *stmt)
 		ereport(NOTICE,
 		   (errmsg("version \"%s\" of extension \"%s\" is already installed",
 				   versionName, stmt->extname)));
-		return;
+		return InvalidOid;
 	}
 
 	/*
@@ -2713,6 +2713,8 @@ ExecAlterExtensionStmt(AlterExtensionStmt *stmt)
 	 */
 	ApplyExtensionUpdates(extensionOid, control,
 						  oldVersionName, updateVersions);
+
+	return extensionOid;
 }
 
 /*
@@ -2875,7 +2877,7 @@ ApplyExtensionUpdates(Oid extensionOid,
 /*
  * Execute ALTER EXTENSION ADD/DROP
  */
-void
+Oid
 ExecAlterExtensionContentsStmt(AlterExtensionContentsStmt *stmt)
 {
 	ObjectAddress extension;
@@ -2976,4 +2978,6 @@ ExecAlterExtensionContentsStmt(AlterExtensionContentsStmt *stmt)
 	 */
 	if (relation != NULL)
 		relation_close(relation, NoLock);
+
+	return extension.objectId;
 }

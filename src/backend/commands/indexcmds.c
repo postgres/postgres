@@ -1671,7 +1671,7 @@ ChooseIndexColumnNames(List *indexElems)
  * ReindexIndex
  *		Recreate a specific index.
  */
-void
+Oid
 ReindexIndex(RangeVar *indexRelation)
 {
 	Oid			indOid;
@@ -1684,6 +1684,8 @@ ReindexIndex(RangeVar *indexRelation)
 									  (void *) &heapOid);
 
 	reindex_index(indOid, false);
+
+	return indOid;
 }
 
 /*
@@ -1749,7 +1751,7 @@ RangeVarCallbackForReindexIndex(const RangeVar *relation,
  * ReindexTable
  *		Recreate all indexes of a table (and of its toast table, if any)
  */
-void
+Oid
 ReindexTable(RangeVar *relation)
 {
 	Oid			heapOid;
@@ -1762,6 +1764,8 @@ ReindexTable(RangeVar *relation)
 		ereport(NOTICE,
 				(errmsg("table \"%s\" has no indexes",
 						relation->relname)));
+
+	return heapOid;
 }
 
 /*
@@ -1772,7 +1776,7 @@ ReindexTable(RangeVar *relation)
  * separate transaction, so we can release the lock on it right away.
  * That means this must not be called within a user transaction block!
  */
-void
+Oid
 ReindexDatabase(const char *databaseName, bool do_system, bool do_user)
 {
 	Relation	relationRelation;
@@ -1882,4 +1886,6 @@ ReindexDatabase(const char *databaseName, bool do_system, bool do_user)
 	StartTransactionCommand();
 
 	MemoryContextDelete(private_context);
+
+	return MyDatabaseId;
 }

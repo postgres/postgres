@@ -31,11 +31,11 @@ typedef struct EventTriggerData
 #define CALLED_AS_EVENT_TRIGGER(fcinfo) \
 	((fcinfo)->context != NULL && IsA((fcinfo)->context, EventTriggerData))
 
-extern void CreateEventTrigger(CreateEventTrigStmt *stmt);
+extern Oid CreateEventTrigger(CreateEventTrigStmt *stmt);
 extern void RemoveEventTriggerById(Oid ctrigOid);
 extern Oid	get_event_trigger_oid(const char *trigname, bool missing_ok);
 
-extern void AlterEventTrigger(AlterEventTrigStmt *stmt);
+extern Oid AlterEventTrigger(AlterEventTrigStmt *stmt);
 extern Oid RenameEventTrigger(const char* trigname, const char *newname);
 extern Oid AlterEventTriggerOwner(const char *name, Oid newOwnerId);
 extern void AlterEventTriggerOwner_oid(Oid, Oid newOwnerId);

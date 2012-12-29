@@ -26,9 +26,9 @@ extern Oid DefineIndex(IndexStmt *stmt,
 			bool check_rights,
 			bool skip_build,
 			bool quiet);
-extern void ReindexIndex(RangeVar *indexRelation);
-extern void ReindexTable(RangeVar *relation);
-extern void ReindexDatabase(const char *databaseName,
+extern Oid ReindexIndex(RangeVar *indexRelation);
+extern Oid ReindexTable(RangeVar *relation);
+extern Oid ReindexDatabase(const char *databaseName,
 				bool do_system, bool do_user);
 extern char *makeObjectName(const char *name1, const char *name2,
 			   const char *label);
@@ -47,8 +47,8 @@ extern void RemoveFunctionById(Oid funcOid);
 extern void SetFunctionReturnType(Oid funcOid, Oid newRetType);
 extern void SetFunctionArgType(Oid funcOid, int argIndex, Oid newArgType);
 extern Oid RenameFunction(List *name, List *argtypes, const char *newname);
-extern void AlterFunction(AlterFunctionStmt *stmt);
-extern void CreateCast(CreateCastStmt *stmt);
+extern Oid AlterFunction(AlterFunctionStmt *stmt);
+extern Oid CreateCast(CreateCastStmt *stmt);
 extern void DropCastById(Oid castOid);
 extern Oid AlterFunctionNamespace(List *name, List *argtypes, bool isagg,
 								  const char *newschema);
@@ -66,9 +66,9 @@ extern Oid DefineAggregate(List *name, List *args, bool oldstyle,
 extern Oid RenameAggregate(List *name, List *args, const char *newname);
 
 /* commands/opclasscmds.c */
-extern void DefineOpClass(CreateOpClassStmt *stmt);
-extern void DefineOpFamily(CreateOpFamilyStmt *stmt);
-extern void AlterOpFamily(AlterOpFamilyStmt *stmt);
+extern Oid DefineOpClass(CreateOpClassStmt *stmt);
+extern Oid DefineOpFamily(CreateOpFamilyStmt *stmt);
+extern Oid AlterOpFamily(AlterOpFamilyStmt *stmt);
 extern void RemoveOpClassById(Oid opclassOid);
 extern void RemoveOpFamilyById(Oid opfamilyOid);
 extern void RemoveAmOpEntryById(Oid entryOid);
@@ -87,7 +87,7 @@ extern void RemoveTSParserById(Oid prsId);
 extern Oid DefineTSDictionary(List *names, List *parameters);
 extern Oid RenameTSDictionary(List *oldname, const char *newname);
 extern void RemoveTSDictionaryById(Oid dictId);
-extern void AlterTSDictionary(AlterTSDictionaryStmt *stmt);
+extern Oid AlterTSDictionary(AlterTSDictionaryStmt *stmt);
 
 extern Oid DefineTSTemplate(List *names, List *parameters);
 extern Oid RenameTSTemplate(List *oldname, const char *newname);
@@ -96,7 +96,7 @@ extern void RemoveTSTemplateById(Oid tmplId);
 extern Oid DefineTSConfiguration(List *names, List *parameters);
 extern Oid RenameTSConfiguration(List *oldname, const char *newname);
 extern void RemoveTSConfigurationById(Oid cfgId);
-extern void AlterTSConfiguration(AlterTSConfigurationStmt *stmt);
+extern Oid AlterTSConfiguration(AlterTSConfigurationStmt *stmt);
 
 extern text *serialize_deflist(List *deflist);
 extern List *deserialize_deflist(Datum txt);
@@ -108,15 +108,15 @@ extern Oid AlterForeignServerOwner(const char *name, Oid newOwnerId);
 extern void AlterForeignServerOwner_oid(Oid, Oid newOwnerId);
 extern Oid AlterForeignDataWrapperOwner(const char *name, Oid newOwnerId);
 extern void AlterForeignDataWrapperOwner_oid(Oid fwdId, Oid newOwnerId);
-extern void CreateForeignDataWrapper(CreateFdwStmt *stmt);
-extern void AlterForeignDataWrapper(AlterFdwStmt *stmt);
+extern Oid CreateForeignDataWrapper(CreateFdwStmt *stmt);
+extern Oid AlterForeignDataWrapper(AlterFdwStmt *stmt);
 extern void RemoveForeignDataWrapperById(Oid fdwId);
-extern void CreateForeignServer(CreateForeignServerStmt *stmt);
-extern void AlterForeignServer(AlterForeignServerStmt *stmt);
+extern Oid CreateForeignServer(CreateForeignServerStmt *stmt);
+extern Oid AlterForeignServer(AlterForeignServerStmt *stmt);
 extern void RemoveForeignServerById(Oid srvId);
-extern void CreateUserMapping(CreateUserMappingStmt *stmt);
-extern void AlterUserMapping(AlterUserMappingStmt *stmt);
-extern void RemoveUserMapping(DropUserMappingStmt *stmt);
+extern Oid CreateUserMapping(CreateUserMappingStmt *stmt);
+extern Oid AlterUserMapping(AlterUserMappingStmt *stmt);
+extern Oid RemoveUserMapping(DropUserMappingStmt *stmt);
 extern void RemoveUserMappingById(Oid umId);
 extern void CreateForeignTable(CreateForeignTableStmt *stmt, Oid relid);
 extern Datum transformGenericOptions(Oid catalogId,
