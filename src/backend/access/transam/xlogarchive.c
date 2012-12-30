@@ -24,6 +24,7 @@
 #include "access/xlog_internal.h"
 #include "miscadmin.h"
 #include "postmaster/startup.h"
+#include "replication/walsender.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
@@ -415,6 +416,80 @@ ExecuteRecoveryCommand(char *command, char *commandName, bool failOnSignal)
 	}
 }
 
+
+/*
+ * A file was restored from the archive under a temporary filename (path),
+ * and now we want to keep it. Rename it under the permanent filename in
+ * in pg_xlog (xlogfname), replacing any existing file with the same name.
+ */
+void
+KeepFileRestoredFromArchive(char *path, char *xlogfname)
+{
+	char		xlogfpath[MAXPGPATH];
+	bool		reload = false;
+	struct stat statbuf;
+
+	snprintf(xlogfpath, MAXPGPATH, XLOGDIR "/%s", xlogfname);
+
+	if (stat(xlogfpath, &statbuf) == 0)
+	{
+		char oldpath[MAXPGPATH];
+#ifdef WIN32
+		static unsigned int deletedcounter = 1;
+		/*
+		 * On Windows, if another process (e.g a walsender process) holds
+		 * the file open in FILE_SHARE_DELETE mode, unlink will succeed,
+		 * but the file will still show up in directory listing until the
+		 * last handle is closed, and we cannot rename the new file in its
+		 * place until that. To avoid that problem, rename the old file to
+		 * a temporary name first. Use a counter to create a unique
+		 * filename, because the same file might be restored from the
+		 * archive multiple times, and a walsender could still be holding
+		 * onto an old deleted version of it.
+		 */
+		snprintf(oldpath, MAXPGPATH, "%s.deleted%u",
+				 xlogfpath, deletedcounter++);
+		if (rename(xlogfpath, oldpath) != 0)
+		{
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not rename file \"%s\" to \"%s\": %m",
+							xlogfpath, oldpath)));
+		}
+#else
+		strncpy(oldpath, xlogfpath, MAXPGPATH);
+#endif
+		if (unlink(oldpath) != 0)
+			ereport(FATAL,
+					(errcode_for_file_access(),
+					 errmsg("could not remove file \"%s\": %m",
+							xlogfpath)));
+		reload = true;
+	}
+
+	if (rename(path, xlogfpath) < 0)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not rename file \"%s\" to \"%s\": %m",
+						path, xlogfpath)));
+
+	/*
+	 * If the existing file was replaced, since walsenders might have it
+	 * open, request them to reload a currently-open segment. This is only
+	 * required for WAL segments, walsenders don't hold other files open, but
+	 * there's no harm in doing this too often, and we don't know what kind
+	 * of a file we're dealing with here.
+	 */
+	if (reload)
+		WalSndRqstFileReload();
+
+	/*
+	 * Signal walsender that new WAL has arrived. Again, this isn't necessary
+	 * if we restored something other than a WAL segment, but it does no harm
+	 * either.
+	 */
+	WalSndWakeup();
+}
 
 /*
  * XLogArchiveNotify

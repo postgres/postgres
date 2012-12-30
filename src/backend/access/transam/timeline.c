@@ -59,6 +59,7 @@ readTimeLineHistory(TimeLineID targetTLI)
 	TimeLineHistoryEntry *entry;
 	TimeLineID	lasttli = 0;
 	XLogRecPtr	prevend;
+	bool		fromArchive = false;
 
 	/* Timeline 1 does not have a history file, so no need to check */
 	if (targetTLI == 1)
@@ -72,7 +73,8 @@ readTimeLineHistory(TimeLineID targetTLI)
 	if (InArchiveRecovery)
 	{
 		TLHistoryFileName(histfname, targetTLI);
-		RestoreArchivedFile(path, histfname, "RECOVERYHISTORY", 0, false);
+		fromArchive =
+			RestoreArchivedFile(path, histfname, "RECOVERYHISTORY", 0, false);
 	}
 	else
 		TLHistoryFilePath(path, targetTLI);
@@ -164,6 +166,13 @@ readTimeLineHistory(TimeLineID targetTLI)
 	entry->end = InvalidXLogRecPtr;
 
 	result = lcons(entry, result);
+
+	/*
+	 * If the history file was fetched from archive, save it in pg_xlog for
+	 * future reference.
+	 */
+	if (fromArchive)
+		KeepFileRestoredFromArchive(path, histfname);
 
 	return result;
 }

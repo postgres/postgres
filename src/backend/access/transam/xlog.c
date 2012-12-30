@@ -2626,68 +2626,12 @@ XLogFileRead(XLogSegNo segno, int emode, TimeLineID tli,
 	 */
 	if (source == XLOG_FROM_ARCHIVE)
 	{
-		char		xlogfpath[MAXPGPATH];
-		bool		reload = false;
-		struct stat statbuf;
-
-		XLogFilePath(xlogfpath, tli, segno);
-		if (stat(xlogfpath, &statbuf) == 0)
-		{
-			char oldpath[MAXPGPATH];
-#ifdef WIN32
-			static unsigned int deletedcounter = 1;
-			/*
-			 * On Windows, if another process (e.g a walsender process) holds
-			 * the file open in FILE_SHARE_DELETE mode, unlink will succeed,
-			 * but the file will still show up in directory listing until the
-			 * last handle is closed, and we cannot rename the new file in its
-			 * place until that. To avoid that problem, rename the old file to
-			 * a temporary name first. Use a counter to create a unique
-			 * filename, because the same file might be restored from the
-			 * archive multiple times, and a walsender could still be holding
-			 * onto an old deleted version of it.
-			 */
-			snprintf(oldpath, MAXPGPATH, "%s.deleted%u",
-					 xlogfpath, deletedcounter++);
-			if (rename(xlogfpath, oldpath) != 0)
-			{
-				ereport(ERROR,
-						(errcode_for_file_access(),
-						 errmsg("could not rename file \"%s\" to \"%s\": %m",
-								xlogfpath, oldpath)));
-			}
-#else
-			strncpy(oldpath, xlogfpath, MAXPGPATH);
-#endif
-			if (unlink(oldpath) != 0)
-				ereport(FATAL,
-						(errcode_for_file_access(),
-						 errmsg("could not remove file \"%s\": %m",
-								xlogfpath)));
-			reload = true;
-		}
-
-		if (rename(path, xlogfpath) < 0)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not rename file \"%s\" to \"%s\": %m",
-							path, xlogfpath)));
+		KeepFileRestoredFromArchive(path, xlogfname);
 
 		/*
 		 * Set path to point at the new file in pg_xlog.
 		 */
-		strncpy(path, xlogfpath, MAXPGPATH);
-
-		/*
-		 * If the existing segment was replaced, since walsenders might have
-		 * it open, request them to reload a currently-open segment.
-		 */
-		if (reload)
-			WalSndRqstFileReload();
-
-		/* Signal walsender that new WAL has arrived */
-		if (AllowCascadeReplication())
-			WalSndWakeup();
+		snprintf(path, MAXPGPATH, XLOGDIR "/%s", xlogfname);
 	}
 
 	fd = BasicOpenFile(path, O_RDONLY | PG_BINARY, 0);
