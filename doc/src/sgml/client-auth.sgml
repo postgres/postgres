@@ -1372,8 +1372,8 @@ omicron         bryanh                  guest1
 
    <para>
     In the second mode, the server first binds to the LDAP directory with
-    a fixed user name and password, specified with <replaceable>ldapbinduser</>
-    and <replaceable>ldapbinddn</>, and performs a search for the user trying
+    a fixed user name and password, specified with <replaceable>ldapbinddn</>
+    and <replaceable>ldapbindpasswd</>, and performs a search for the user trying
     to log in to the database. If no user and password is configured, an
     anonymous bind will be attempted to the directory. The search will be
     performed over the subtree at <replaceable>ldapbasedn</>, and will try to
