@@ -648,6 +648,7 @@ static bool XLogPageRead(XLogRecPtr *RecPtr, int emode, bool fetching_ckpt,
 			 bool randAccess);
 static int	emode_for_corrupt_record(int emode, XLogRecPtr RecPtr);
 static void XLogFileClose(void);
+static void KeepFileRestoredFromArchive(char *path, char *xlogfname);
 static bool RestoreArchivedFile(char *path, const char *xlogfname,
 					const char *recovername, off_t expectedSize);
 static void ExecuteRecoveryCommand(char *command, char *commandName,
@@ -2842,74 +2843,12 @@ XLogFileRead(uint32 log, uint32 seg, int emode, TimeLineID tli,
 	 */
 	if (source == XLOG_FROM_ARCHIVE)
 	{
-		char		xlogfpath[MAXPGPATH];
-		bool		reload = false;
-		struct stat statbuf;
-
-		XLogFilePath(xlogfpath, tli, log, seg);
-		if (stat(xlogfpath, &statbuf) == 0)
-		{
-			char oldpath[MAXPGPATH];
-#ifdef WIN32
-			static unsigned int deletedcounter = 1;
-			/*
-			 * On Windows, if another process (e.g a walsender process) holds
-			 * the file open in FILE_SHARE_DELETE mode, unlink will succeed,
-			 * but the file will still show up in directory listing until the
-			 * last handle is closed, and we cannot rename the new file in its
-			 * place until that. To avoid that problem, rename the old file to
-			 * a temporary name first. Use a counter to create a unique
-			 * filename, because the same file might be restored from the
-			 * archive multiple times, and a walsender could still be holding
-			 * onto an old deleted version of it.
-			 */
-			snprintf(oldpath, MAXPGPATH, "%s.deleted%u",
-					 xlogfpath, deletedcounter++);
-			if (rename(xlogfpath, oldpath) != 0)
-			{
-				ereport(ERROR,
-						(errcode_for_file_access(),
-						 errmsg("could not rename file \"%s\" to \"%s\": %m",
-								xlogfpath, oldpath)));
-			}
-#else
-			strncpy(oldpath, xlogfpath, MAXPGPATH);
-#endif
-			if (unlink(oldpath) != 0)
-				ereport(FATAL,
-						(errcode_for_file_access(),
-						 errmsg("could not remove file \"%s\": %m",
-								xlogfpath)));
-			reload = true;
-		}
-
-		if (rename(path, xlogfpath) < 0)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not rename file \"%s\" to \"%s\": %m",
-							path, xlogfpath)));
+		KeepFileRestoredFromArchive(path, xlogfname);
 
 		/*
 		 * Set path to point at the new file in pg_xlog.
 		 */
-		strncpy(path, xlogfpath, MAXPGPATH);
-
-		/*
-		 * Create .done file forcibly to prevent the restored segment from
-		 * being archived again later.
-		 */
-		XLogArchiveForceDone(xlogfname);
-
-		/*
-		 * If the existing segment was replaced, since walsenders might have
-		 * it open, request them to reload a currently-open segment.
-		 */
-		if (reload)
-			WalSndRqstFileReload();
-
-		/* Signal walsender that new WAL has arrived */
-		if (AllowCascadeReplication())
-			WalSndWakeup();
+		snprintf(path, MAXPGPATH, XLOGDIR "/%s", xlogfname);
 	}
 
 	fd = BasicOpenFile(path, O_RDONLY | PG_BINARY, 0);
@@ -3022,6 +2961,83 @@ XLogFileClose(void)
 				 errmsg("could not close log file %u, segment %u: %m",
 						openLogId, openLogSeg)));
 	openLogFile = -1;
+}
+
+/*
+ * A file was restored from the archive under a temporary filename (path),
+ * and now we want to keep it. Rename it under the permanent filename in
+ * in pg_xlog (xlogfname), replacing any existing file with the same name.
+ */
+static void
+KeepFileRestoredFromArchive(char *path, char *xlogfname)
+{
+	char		xlogfpath[MAXPGPATH];
+	bool		reload = false;
+	struct stat statbuf;
+
+	snprintf(xlogfpath, MAXPGPATH, XLOGDIR "/%s", xlogfname);
+
+	if (stat(xlogfpath, &statbuf) == 0)
+	{
+		char oldpath[MAXPGPATH];
+#ifdef WIN32
+		static unsigned int deletedcounter = 1;
+		/*
+		 * On Windows, if another process (e.g a walsender process) holds
+		 * the file open in FILE_SHARE_DELETE mode, unlink will succeed,
+		 * but the file will still show up in directory listing until the
+		 * last handle is closed, and we cannot rename the new file in its
+		 * place until that. To avoid that problem, rename the old file to
+		 * a temporary name first. Use a counter to create a unique
+		 * filename, because the same file might be restored from the
+		 * archive multiple times, and a walsender could still be holding
+		 * onto an old deleted version of it.
+		 */
+		snprintf(oldpath, MAXPGPATH, "%s.deleted%u",
+				 xlogfpath, deletedcounter++);
+		if (rename(xlogfpath, oldpath) != 0)
+		{
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not rename file \"%s\" to \"%s\": %m",
+							xlogfpath, oldpath)));
+		}
+#else
+		strncpy(oldpath, xlogfpath, MAXPGPATH);
+#endif
+		if (unlink(oldpath) != 0)
+			ereport(FATAL,
+					(errcode_for_file_access(),
+					 errmsg("could not remove file \"%s\": %m",
+							xlogfpath)));
+		reload = true;
+	}
+
+	if (rename(path, xlogfpath) < 0)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not rename file \"%s\" to \"%s\": %m",
+						path, xlogfpath)));
+
+	/*
+	 * Create .done file forcibly to prevent the restored segment from
+	 * being archived again later.
+	 */
+	XLogArchiveForceDone(xlogfname);
+
+	/*
+	 * If the existing file was replaced, since walsenders might have it
+	 * open, request them to reload a currently-open segment. This is only
+	 * required for WAL segments, walsenders don't hold other files open,
+	 * but there's no harm in doing this too often, and we don't know what
+	 * kind of a file we're dealing with here.
+	 */
+	if (reload)
+		WalSndRqstFileReload();
+
+	/* Signal walsender that new WAL has arrived */
+	if (AllowCascadeReplication())
+		WalSndWakeup();
 }
 
 /*
@@ -4356,6 +4372,7 @@ readTimeLineHistory(TimeLineID targetTLI)
 	char		histfname[MAXFNAMELEN];
 	char		fline[MAXPGPATH];
 	FILE	   *fd;
+	bool		fromArchive = false;
 
 	/* Timeline 1 does not have a history file, so no need to check */
 	if (targetTLI == 1)
@@ -4364,7 +4381,8 @@ readTimeLineHistory(TimeLineID targetTLI)
 	if (InArchiveRecovery)
 	{
 		TLHistoryFileName(histfname, targetTLI);
-		RestoreArchivedFile(path, histfname, "RECOVERYHISTORY", 0);
+		fromArchive =
+			RestoreArchivedFile(path, histfname, "RECOVERYHISTORY", 0);
 	}
 	else
 		TLHistoryFilePath(path, targetTLI);
@@ -4432,6 +4450,13 @@ readTimeLineHistory(TimeLineID targetTLI)
 	ereport(DEBUG3,
 			(errmsg_internal("history of timeline %u is %s",
 							 targetTLI, nodeToString(result))));
+
+	/*
+	 * If the history file was fetched from archive, save it in pg_xlog for
+	 * future reference.
+	 */
+	if (fromArchive)
+		KeepFileRestoredFromArchive(path, histfname);
 
 	return result;
 }
