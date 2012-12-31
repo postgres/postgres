@@ -653,9 +653,9 @@ elapsed_time(instr_time *starttime)
  *	  Prescan the planstate tree to identify which RTEs are referenced
  *
  * Adds the relid of each referenced RTE to *rels_used.  The result controls
- * which RTEs are assigned aliases by select_rtable_names_for_explain.	This
- * ensures that we don't confusingly assign un-suffixed aliases to RTEs that
- * never appear in the EXPLAIN output (such as inheritance parents).
+ * which RTEs are assigned aliases by select_rtable_names_for_explain.
+ * This ensures that we don't confusingly assign un-suffixed aliases to RTEs
+ * that never appear in the EXPLAIN output (such as inheritance parents).
  */
 static void
 ExplainPreScanNode(PlanState *planstate, Bitmapset **rels_used)
@@ -1954,6 +1954,8 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 
 	rte = rt_fetch(rti, es->rtable);
 	refname = (char *) list_nth(es->rtable_names, rti - 1);
+	if (refname == NULL)
+		refname = rte->eref->aliasname;
 
 	switch (nodeTag(plan))
 	{
@@ -2026,8 +2028,7 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 							 quote_identifier(objectname));
 		else if (objectname != NULL)
 			appendStringInfo(es->str, " %s", quote_identifier(objectname));
-		if (refname != NULL &&
-			(objectname == NULL || strcmp(refname, objectname) != 0))
+		if (objectname == NULL || strcmp(refname, objectname) != 0)
 			appendStringInfo(es->str, " %s", quote_identifier(refname));
 	}
 	else
@@ -2036,8 +2037,7 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 			ExplainPropertyText(objecttag, objectname, es);
 		if (namespace != NULL)
 			ExplainPropertyText("Schema", namespace, es);
-		if (refname != NULL)
-			ExplainPropertyText("Alias", refname, es);
+		ExplainPropertyText("Alias", refname, es);
 	}
 }
 

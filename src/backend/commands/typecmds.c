@@ -888,9 +888,7 @@ DefineDomain(CreateDomainStmt *stmt)
 						 */
 						defaultValue =
 							deparse_expression(defaultExpr,
-											   deparse_context_for(domainName,
-																 InvalidOid),
-											   false, false);
+											   NIL, false, false);
 						defaultValueBin = nodeToString(defaultExpr);
 					}
 				}
@@ -2143,9 +2141,7 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 			 * easier for pg_dump).
 			 */
 			defaultValue = deparse_expression(defaultExpr,
-								deparse_context_for(NameStr(typTup->typname),
-													InvalidOid),
-											  false, false);
+											  NIL, false, false);
 
 			/*
 			 * Form an updated tuple with the new default and write it back.
@@ -2941,14 +2937,9 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 
 	/*
 	 * Deparse it to produce text for consrc.
-	 *
-	 * Since VARNOs aren't allowed in domain constraints, relation context
-	 * isn't required as anything other than a shell.
 	 */
 	ccsrc = deparse_expression(expr,
-							   deparse_context_for(domainName,
-												   InvalidOid),
-							   false, false);
+							   NIL, false, false);
 
 	/*
 	 * Store the constraint in pg_constraint

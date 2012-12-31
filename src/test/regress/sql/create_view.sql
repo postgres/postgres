@@ -224,7 +224,7 @@ SELECT relname, relkind, reloptions FROM pg_class
                      'mysecview3'::regclass, 'mysecview4'::regclass)
        ORDER BY relname;
 
--- Test view decompilation in the face of renaming conflicts
+-- Test view decompilation in the face of relation renaming conflicts
 
 CREATE TABLE tt1 (f1 int, f2 int, f3 text);
 CREATE TABLE tx1 (x1 int, x2 int, x3 text);
@@ -286,7 +286,110 @@ ALTER TABLE tmp1 RENAME TO tx1;
 \d+ aliased_view_3
 \d+ aliased_view_4
 
+-- Test view decompilation in the face of column addition/deletion/renaming
+
+create table tt2 (a int, b int, c int);
+create table tt3 (ax int8, b int2, c numeric);
+create table tt4 (ay int, b int, q int);
+
+create view v1 as select * from tt2 natural join tt3;
+create view v1a as select * from (tt2 natural join tt3) j;
+create view v2 as select * from tt2 join tt3 using (b,c) join tt4 using (b);
+create view v2a as select * from (tt2 join tt3 using (b,c) join tt4 using (b)) j;
+create view v3 as select * from tt2 join tt3 using (b,c) full join tt4 using (b);
+
+select pg_get_viewdef('v1', true);
+select pg_get_viewdef('v1a', true);
+select pg_get_viewdef('v2', true);
+select pg_get_viewdef('v2a', true);
+select pg_get_viewdef('v3', true);
+
+alter table tt2 add column d int;
+alter table tt2 add column e int;
+
+select pg_get_viewdef('v1', true);
+select pg_get_viewdef('v1a', true);
+select pg_get_viewdef('v2', true);
+select pg_get_viewdef('v2a', true);
+select pg_get_viewdef('v3', true);
+
+alter table tt3 rename c to d;
+
+select pg_get_viewdef('v1', true);
+select pg_get_viewdef('v1a', true);
+select pg_get_viewdef('v2', true);
+select pg_get_viewdef('v2a', true);
+select pg_get_viewdef('v3', true);
+
+alter table tt3 add column c int;
+alter table tt3 add column e int;
+
+select pg_get_viewdef('v1', true);
+select pg_get_viewdef('v1a', true);
+select pg_get_viewdef('v2', true);
+select pg_get_viewdef('v2a', true);
+select pg_get_viewdef('v3', true);
+
+alter table tt2 drop column d;
+
+select pg_get_viewdef('v1', true);
+select pg_get_viewdef('v1a', true);
+select pg_get_viewdef('v2', true);
+select pg_get_viewdef('v2a', true);
+select pg_get_viewdef('v3', true);
+
+create table tt5 (a int, b int);
+create table tt6 (c int, d int);
+create view vv1 as select * from (tt5 cross join tt6) j(aa,bb,cc,dd);
+select pg_get_viewdef('vv1', true);
+alter table tt5 add column c int;
+select pg_get_viewdef('vv1', true);
+alter table tt5 add column cc int;
+select pg_get_viewdef('vv1', true);
+alter table tt5 drop column c;
+select pg_get_viewdef('vv1', true);
+
+-- Unnamed FULL JOIN USING is lots of fun too
+
+create table tt7 (x int, xx int, y int);
+alter table tt7 drop column xx;
+create table tt8 (x int, z int);
+
+create view vv2 as
+select * from (values(1,2,3,4,5)) v(a,b,c,d,e)
+union all
+select * from tt7 full join tt8 using (x), tt8 tt8x;
+
+select pg_get_viewdef('vv2', true);
+
+create view vv3 as
+select * from (values(1,2,3,4,5,6)) v(a,b,c,x,e,f)
+union all
+select * from
+  tt7 full join tt8 using (x),
+  tt7 tt7x full join tt8 tt8x using (x);
+
+select pg_get_viewdef('vv3', true);
+
+create view vv4 as
+select * from (values(1,2,3,4,5,6,7)) v(a,b,c,x,e,f,g)
+union all
+select * from
+  tt7 full join tt8 using (x),
+  tt7 tt7x full join tt8 tt8x using (x) full join tt8 tt8y using (x);
+
+select pg_get_viewdef('vv4', true);
+
+alter table tt7 add column zz int;
+alter table tt7 add column z int;
+alter table tt7 drop column zz;
+alter table tt8 add column z2 int;
+
+select pg_get_viewdef('vv2', true);
+select pg_get_viewdef('vv3', true);
+select pg_get_viewdef('vv4', true);
+
+-- clean up all the random objects we made above
+set client_min_messages = warning;
 DROP SCHEMA temp_view_test CASCADE;
 DROP SCHEMA testviewschm2 CASCADE;
-
-SET search_path to public;
