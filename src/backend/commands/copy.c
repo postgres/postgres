@@ -800,6 +800,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString, uint64 *processed)
 	{
 		Assert(stmt->query);
 
+		relid = InvalidOid;
 		rel = NULL;
 	}
 
