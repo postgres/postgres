@@ -1490,16 +1490,22 @@ omicron         bryanh                  guest1
        <term><literal>ldapurl</literal></term>
        <listitem>
         <para>
-         An RFC 4516 LDAP URL.  This is an alternative way to write most of the
+         An RFC 4516 LDAP URL.  This is an alternative way to write some of the
          other LDAP options in a more compact and standard form.  The format is
 <synopsis>
-ldap://[<replaceable>user</replaceable>[:<replaceable>password</replaceable>]@]<replaceable>host</replaceable>[:<replaceable>port</replaceable>]/<replaceable>basedn</replaceable>[?[<replaceable>attribute</replaceable>][?[<replaceable>scope</replaceable>]]]
+ldap://<replaceable>host</replaceable>[:<replaceable>port</replaceable>]/<replaceable>basedn</replaceable>[?[<replaceable>attribute</replaceable>][?[<replaceable>scope</replaceable>]]]
 </synopsis>
          <replaceable>scope</replaceable> must be one
          of <literal>base</literal>, <literal>one</literal>, <literal>sub</literal>,
          typically the latter.  Only one attribute is used, and some other
          components of standard LDAP URLs such as filters and extensions are
          not supported.
+        </para>
+
+        <para>
+         For non-anonymous binds, <literal>ldapbinddn</literal>
+         and <literal>ldapbindpasswd</literal> must be specified as separate
+         options.
         </para>
 
         <para>
