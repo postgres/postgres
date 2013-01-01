@@ -92,9 +92,10 @@
  </para>
 
  <para>
-  The tools for building using <productname>Visual C++</productname>,
-  are in the <filename>src/tools/msvc</filename> directory. When building,
-  make sure there are no tools from <productname>MinGW</productname> or
+  The tools for building using <productname>Visual C++</productname> or
+  <productname>Platform SDK</productname> are in the
+  <filename>src/tools/msvc</filename> directory. When building, make sure
+  there are no tools from <productname>MinGW</productname> or
   <productname>Cygwin</productname> present in your system PATH. Also, make
   sure you have all the required Visual C++ tools available in the PATH. In
   <productname>Visual Studio</productname>, start the
@@ -103,10 +104,12 @@
   the command, and vice versa.
   In the <productname>Microsoft Windows SDK</productname>, start the
   <application>CMD shell</application> listed under the SDK on the Start Menu.
-  In recent SDK versions you can change the targeted CPU architecture by using
-  the <command>setenv</command> command.
-  All commands should be run from the <filename>src\tools\msvc</filename>
-  directory.
+  In recent SDK versions you can change the targeted CPU architecture, build
+  type, and target OS by using the <command>setenv</command> command, e.g.
+  <command>setenv /x86 /release /xp</command> to target Windows XP or later
+  with a 32-bit release build. See <command>/?</command> for other options to
+  <command>setenv</command>.  All commands should be run from the
+  <filename>src\tools\msvc</filename> directory.
  </para>
 
  <para>
@@ -191,17 +194,32 @@ $ENV{PATH}=$ENV{PATH} . ';c:\some\where\bison\bin';
     <varlistentry>
      <term><productname>Bison</productname> and
       <productname>Flex</productname></term>
-     <listitem><para>
-      Bison and Flex are required to build from Git, but not required when
-      building from a release file. Note that only Bison 1.875 or versions
-      2.2 and later will work. Also, Flex version 2.5.31 or later is required.
-      Bison can be downloaded from <ulink url="http://gnuwin32.sourceforge.net"></>.
-      Flex can be downloaded from
-      <ulink url="http://www.postgresql.org/ftp/misc/winflex/"></>.
-      If you are using <productname>msysGit</productname> for accessing the
-      PostgreSQL <productname>Git</productname> repository you probably already
-      have recent versions of bison and flex in your <productname>Git</productname>
-      binary directory.
+     <listitem>
+     <para>
+      <productname>Bison</productname> and <productname>Flex</productname> are
+      required to build from Git, but not required when building from a release
+      file. Only <productname>Bison</productname> 1.875 or versions 2.2 and later
+      will work. <productname>Flex</productname> must be version 2.5.31 or later.
+     </para>
+
+     <para>
+      Both <productname>Bison</productname> and <productname>Flex</productname>
+      are included in the <productname>msys</productname> tool suite, available
+      from <ulink url="http://www.mingw.org/wiki/MSYS"></> as part of the
+      <productname>MinGW</productname> compiler suite. You can also get
+      <productname>msys</productname> as part of
+      <productname>msysGit</productname> from <ulink url="http://git-scm.com/"></>.
+     </para>
+
+     <para>
+      You will need to add the directory containing
+      <filename>flex.exe</filename> and <filename>bison.exe</filename> to the
+      PATH environment variable in <filename>buildenv.pl</filename> unless
+      they are already in PATH. In the case of MinGW, the directory is the
+      <filename>\msys\1.0\bin</filename> subdirectory of your MinGW
+      installation directory. For msysGit, it's the <filename>bin</filename>
+      directory in your Git install directory. Do not add the MinGW compiler
+      tools themselves to PATH.
      </para>
 
      <note>
@@ -210,7 +228,18 @@ $ENV{PATH}=$ENV{PATH} . ';c:\some\where\bison\bin';
         causes Bison to malfunction when installed in a directory with
         spaces in the name, such as the default location on English
         installations <filename>C:\Program Files\GnuWin32</filename>.
-        Consider installing into <filename>C:\GnuWin32</filename> instead.
+        Consider installing into <filename>C:\GnuWin32</filename> or use the
+        NTFS shortname path to GnuWin32 in your PATH environment setting
+        (e.g. <filename>C:\PROGRA~1\GnuWin32</filename>).
+       </para>
+     </note>
+
+     <note>
+       <para>
+       The obsolete "winflex" binaries distributed on the PostgreSQL FTP site
+       and referenced in older documentation will fail with "flex: fatal
+       internal error, exec failed" on 64-bit Windows hosts. Use flex from
+       msys instead.
        </para>
      </note>
      </listitem>
