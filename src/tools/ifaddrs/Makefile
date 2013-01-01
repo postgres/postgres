@@ -2,7 +2,7 @@
 #
 # Makefile for src/tools/ifaddrs
 #
-# Copyright (c) 2003-2012, PostgreSQL Global Development Group
+# Copyright (c) 2003-2013, PostgreSQL Global Development Group
 #
 # src/tools/ifaddrs/Makefile
 #
