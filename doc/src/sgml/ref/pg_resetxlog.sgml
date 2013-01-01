@@ -29,7 +29,7 @@ PostgreSQL documentation
    <arg choice="opt"><option>-e</option> <replaceable class="parameter">xid_epoch</replaceable></arg>
    <arg choice="opt"><option>-m</option> <replaceable class="parameter">mxid</replaceable></arg>
    <arg choice="opt"><option>-O</option> <replaceable class="parameter">mxoff</replaceable></arg>
-   <arg choice="opt"><option>-l</option> <replaceable class="parameter">timelineid</replaceable>,<replaceable class="parameter">fileid</replaceable>,<replaceable class="parameter">seg</replaceable></arg>
+   <arg choice="opt"><option>-l</option> <replaceable class="parameter">xlogfile</replaceable></arg>
    <arg choice="plain"><replaceable>datadir</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
