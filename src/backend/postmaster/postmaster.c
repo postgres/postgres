@@ -899,13 +899,9 @@ PostmasterMain(int argc, char *argv[])
 
 	/*
 	 * Now that loadable modules have had their chance to register background
-	 * workers, calculate MaxBackends.  Add one for the autovacuum launcher.
+	 * workers, calculate MaxBackends.
 	 */
-	MaxBackends = MaxConnections + autovacuum_max_workers + 1 +
-		GetNumShmemAttachedBgworkers();
-	/* internal error because the values were all checked previously */
-	if (MaxBackends > MAX_BACKENDS)
-		elog(ERROR, "too many backends configured");
+	InitializeMaxBackends();
 
 	/*
 	 * Establish input sockets.
