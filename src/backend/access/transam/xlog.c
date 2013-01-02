@@ -5702,7 +5702,7 @@ StartupXLOG(void)
 		xlogctl->replayEndRecPtr = ReadRecPtr;
 		xlogctl->replayEndTLI = ThisTimeLineID;
 		xlogctl->lastReplayedEndRecPtr = EndRecPtr;
-		xlogctl->lastReplayedEndRecPtr = ThisTimeLineID;
+		xlogctl->lastReplayedTLI = ThisTimeLineID;
 		xlogctl->recoveryLastXTime = 0;
 		xlogctl->currentChunkStartTime = 0;
 		xlogctl->recoveryPause = false;
