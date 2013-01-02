@@ -3654,10 +3654,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 */
 		CreateDataDirLockFile(false);
 
-		/* In EXEC_BACKEND, this was set via BackendParameters */
-#ifndef EXEC_BACKEND
+		/* Initialize MaxBackends (if under postmaster, was done already) */
 		InitializeMaxBackends();
-#endif
 	}
 
 	/* Early initialization */
