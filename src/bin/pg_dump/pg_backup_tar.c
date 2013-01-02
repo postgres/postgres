@@ -30,6 +30,7 @@
 #include "pg_backup_tar.h"
 #include "dumpmem.h"
 #include "dumputils.h"
+#include "pgtar.h"
 
 #include <sys/stat.h>
 #include <ctype.h>

@@ -465,8 +465,4 @@ extern int	pg_check_dir(const char *dir);
 /* port/pgmkdirp.c */
 extern int	pg_mkdir_p(char *path, int omode);
 
-/* port/tar.c */
-void		tarCreateHeader(char *h, const char *filename, const char *linktarget, size_t size, mode_t mode, uid_t uid, gid_t gid, time_t mtime);
-int			tarChecksum(char *header);
-
 #endif   /* PG_PORT_H */

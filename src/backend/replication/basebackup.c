@@ -32,6 +32,7 @@
 #include "utils/builtins.h"
 #include "utils/elog.h"
 #include "utils/ps_status.h"
+#include "pgtar.h"
 
 typedef struct
 {
