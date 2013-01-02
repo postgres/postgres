@@ -3653,6 +3653,11 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 * Create lockfile for data directory.
 		 */
 		CreateDataDirLockFile(false);
+
+		/* In EXEC_BACKEND, this was set via BackendParameters */
+#ifndef EXEC_BACKEND
+		InitializeMaxBackends();
+#endif
 	}
 
 	/* Early initialization */

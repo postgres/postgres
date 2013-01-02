@@ -453,8 +453,6 @@ InitializeMaxBackends(void)
 void
 BaseInit(void)
 {
-	InitializeMaxBackends();
-
 	/*
 	 * Attach to shared memory and semaphores, and initialize our
 	 * input/output/debugging file descriptors.
