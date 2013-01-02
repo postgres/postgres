@@ -103,13 +103,14 @@ int			work_mem = 1024;
 int			maintenance_work_mem = 16384;
 
 /*
- * Primary determinants of sizes of shared-memory structures.  MaxBackends is
- * MaxConnections + autovacuum_max_workers + 1 (it is computed by the GUC
- * assign hooks for those variables):
+ * Primary determinants of sizes of shared-memory structures.
+ *
+ * MaxBackends is computed by PostmasterMain after modules have had a chance to
+ * register background workers.
  */
 int			NBuffers = 1000;
-int			MaxBackends = 100;
 int			MaxConnections = 90;
+int			MaxBackends = 0;
 
 int			VacuumCostPageHit = 1;		/* GUC parameters for vacuum */
 int			VacuumCostPageMiss = 10;

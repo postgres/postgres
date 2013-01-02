@@ -499,6 +499,7 @@ typedef struct
 	bool		redirection_done;
 	bool		IsBinaryUpgrade;
 	int			max_safe_fds;
+	int			MaxBackends;
 #ifdef WIN32
 	HANDLE		PostmasterHandle;
 	HANDLE		initial_signal_pipe;
@@ -897,15 +898,14 @@ PostmasterMain(int argc, char *argv[])
 	process_shared_preload_libraries();
 
 	/*
-	 * If loadable modules have added background workers, MaxBackends needs to
-	 * be updated.	Do so now by forcing a no-op update of max_connections.
-	 * XXX This is a pretty ugly way to do it, but it doesn't seem worth
-	 * introducing a new entry point in guc.c to do it in a cleaner fashion.
+	 * Now that loadable modules have had their chance to register background
+	 * workers, calculate MaxBackends.  Add one for the autovacuum launcher.
 	 */
-	if (GetNumShmemAttachedBgworkers() > 0)
-		SetConfigOption("max_connections",
-						GetConfigOption("max_connections", false, false),
-						PGC_POSTMASTER, PGC_S_OVERRIDE);
+	MaxBackends = MaxConnections + autovacuum_max_workers + 1 +
+		GetNumShmemAttachedBgworkers();
+	/* internal error because the values were all checked previously */
+	if (MaxBackends > MAX_BACKENDS)
+		elog(ERROR, "too many backends configured");
 
 	/*
 	 * Establish input sockets.
@@ -5152,6 +5152,8 @@ RegisterBackgroundWorker(BackgroundWorker *worker)
 {
 	RegisteredBgWorker *rw;
 	int			namelen = strlen(worker->bgw_name);
+	static int	maxworkers;
+	static int	numworkers = 0;
 
 #ifdef EXEC_BACKEND
 
@@ -5161,6 +5163,11 @@ RegisterBackgroundWorker(BackgroundWorker *worker)
 	 */
 	static int	BackgroundWorkerCookie = 1;
 #endif
+
+	/* initialize upper limit on first call */
+	if (numworkers == 0)
+		maxworkers = MAX_BACKENDS -
+			(MaxConnections + autovacuum_max_workers + 1);
 
 	if (!IsUnderPostmaster)
 		ereport(LOG,
@@ -5211,6 +5218,23 @@ RegisterBackgroundWorker(BackgroundWorker *worker)
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("background worker \"%s\": invalid restart interval",
 						worker->bgw_name)));
+		return;
+	}
+
+	/*
+	 * Enforce maximum number of workers.  Note this is overly restrictive:
+	 * we could allow more non-shmem-connected workers, because these don't
+	 * count towards the MAX_BACKENDS limit elsewhere.  This doesn't really
+	 * matter for practical purposes; several million processes would need to
+	 * run on a single server.
+	 */
+	if (++numworkers > maxworkers)
+	{
+		ereport(LOG,
+				(errcode(ERRCODE_CONFIGURATION_LIMIT_EXCEEDED),
+				 errmsg("too many background workers"),
+				 errdetail("Up to %d background workers can be registered with the current settings.",
+						   maxworkers)));
 		return;
 	}
 
@@ -5836,6 +5860,8 @@ save_backend_variables(BackendParameters *param, Port *port,
 	param->IsBinaryUpgrade = IsBinaryUpgrade;
 	param->max_safe_fds = max_safe_fds;
 
+	param->MaxBackends = MaxBackends;
+
 #ifdef WIN32
 	param->PostmasterHandle = PostmasterHandle;
 	if (!write_duplicated_handle(&param->initial_signal_pipe,
@@ -6060,6 +6086,8 @@ restore_backend_variables(BackendParameters *param, Port *port)
 	redirection_done = param->redirection_done;
 	IsBinaryUpgrade = param->IsBinaryUpgrade;
 	max_safe_fds = param->max_safe_fds;
+
+	MaxBackends = param->MaxBackends;
 
 #ifdef WIN32
 	PostmasterHandle = param->PostmasterHandle;

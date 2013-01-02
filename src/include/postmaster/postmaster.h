@@ -61,4 +61,13 @@ extern Size ShmemBackendArraySize(void);
 extern void ShmemBackendArrayAllocation(void);
 #endif
 
+/*
+ * Note: MAX_BACKENDS is limited to 2^23-1 because inval.c stores the
+ * backend ID as a 3-byte signed integer.  Even if that limitation were
+ * removed, we still could not exceed INT_MAX/4 because some places compute
+ * 4*MaxBackends without any overflow check.  This is rechecked in the relevant
+ * GUC check hooks and in RegisterBackgroundWorker().
+ */
+#define MAX_BACKENDS	0x7fffff
+
 #endif   /* _POSTMASTER_H */

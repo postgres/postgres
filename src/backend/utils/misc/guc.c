@@ -103,17 +103,6 @@
 #define MAX_KILOBYTES	(INT_MAX / 1024)
 #endif
 
-/*
- * Note: MAX_BACKENDS is limited to 2^23-1 because inval.c stores the
- * backend ID as a 3-byte signed integer.  Even if that limitation were
- * removed, we still could not exceed INT_MAX/4 because some places compute
- * 4*MaxBackends without any overflow check.  This is rechecked in
- * check_maxconnections, since MaxBackends is computed as MaxConnections
- * plus the number of bgworkers plus autovacuum_max_workers plus one (for the
- * autovacuum launcher).
- */
-#define MAX_BACKENDS	0x7fffff
-
 #define KB_PER_MB (1024)
 #define KB_PER_GB (1024*1024)
 
@@ -199,9 +188,7 @@ static const char *show_tcp_keepalives_idle(void);
 static const char *show_tcp_keepalives_interval(void);
 static const char *show_tcp_keepalives_count(void);
 static bool check_maxconnections(int *newval, void **extra, GucSource source);
-static void assign_maxconnections(int newval, void *extra);
 static bool check_autovacuum_max_workers(int *newval, void **extra, GucSource source);
-static void assign_autovacuum_max_workers(int newval, void *extra);
 static bool check_effective_io_concurrency(int *newval, void **extra, GucSource source);
 static void assign_effective_io_concurrency(int newval, void *extra);
 static void assign_pgstat_temp_directory(const char *newval, void *extra);
@@ -1615,7 +1602,7 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&MaxConnections,
 		100, 1, MAX_BACKENDS,
-		check_maxconnections, assign_maxconnections, NULL
+		check_maxconnections, NULL, NULL
 	},
 
 	{
@@ -2290,7 +2277,7 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&autovacuum_max_workers,
 		3, 1, MAX_BACKENDS,
-		check_autovacuum_max_workers, assign_autovacuum_max_workers, NULL
+		check_autovacuum_max_workers, NULL, NULL
 	},
 
 	{
@@ -8636,13 +8623,6 @@ check_maxconnections(int *newval, void **extra, GucSource source)
 	return true;
 }
 
-static void
-assign_maxconnections(int newval, void *extra)
-{
-	MaxBackends = newval + autovacuum_max_workers + 1 +
-		GetNumShmemAttachedBgworkers();
-}
-
 static bool
 check_autovacuum_max_workers(int *newval, void **extra, GucSource source)
 {
@@ -8650,12 +8630,6 @@ check_autovacuum_max_workers(int *newval, void **extra, GucSource source)
 		MAX_BACKENDS)
 		return false;
 	return true;
-}
-
-static void
-assign_autovacuum_max_workers(int newval, void *extra)
-{
-	MaxBackends = MaxConnections + newval + 1 + GetNumShmemAttachedBgworkers();
 }
 
 static bool
