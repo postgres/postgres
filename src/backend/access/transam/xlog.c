@@ -2675,6 +2675,7 @@ XLogFileReadAnyTLI(XLogSegNo segno, int emode, int source)
 	char		path[MAXPGPATH];
 	ListCell   *cell;
 	int			fd;
+	List	   *tles;
 
 	/*
 	 * Loop looking for a suitable timeline ID: we might need to read any of
@@ -2685,8 +2686,21 @@ XLogFileReadAnyTLI(XLogSegNo segno, int emode, int source)
 	 * to go backwards; this prevents us from picking up the wrong file when a
 	 * parent timeline extends to higher segment numbers than the child we
 	 * want to read.
+	 *
+	 * If we haven't read the timeline history file yet, read it now, so that
+	 * we know which TLIs to scan.  We don't save the list in expectedTLEs,
+	 * however, unless we actually find a valid segment.  That way if there is
+	 * neither a timeline history file nor a WAL segment in the archive, and
+	 * streaming replication is set up, we'll read the timeline history file
+	 * streamed from the master when we start streaming, instead of recovering
+	 * with a dummy history generated here.
 	 */
-	foreach(cell, expectedTLEs)
+	if (expectedTLEs)
+		tles = expectedTLEs;
+	else
+		tles = readTimeLineHistory(recoveryTargetTLI);
+
+	foreach(cell, tles)
 	{
 		TimeLineID	tli = ((TimeLineHistoryEntry *) lfirst(cell))->tli;
 
@@ -2699,6 +2713,8 @@ XLogFileReadAnyTLI(XLogSegNo segno, int emode, int source)
 			if (fd != -1)
 			{
 				elog(DEBUG1, "got WAL segment from archive");
+				if (!expectedTLEs)
+					expectedTLEs = tles;
 				return fd;
 			}
 		}
@@ -2707,7 +2723,11 @@ XLogFileReadAnyTLI(XLogSegNo segno, int emode, int source)
 		{
 			fd = XLogFileRead(segno, emode, tli, XLOG_FROM_PG_XLOG, true);
 			if (fd != -1)
+			{
+				if (!expectedTLEs)
+					expectedTLEs = tles;
 				return fd;
+			}
 		}
 	}
 
@@ -5279,49 +5299,6 @@ StartupXLOG(void)
 	 */
 	readRecoveryCommandFile();
 
-	/* Now we can determine the list of expected TLIs */
-	expectedTLEs = readTimeLineHistory(recoveryTargetTLI);
-
-	/*
-	 * If the location of the checkpoint record is not on the expected
-	 * timeline in the history of the requested timeline, we cannot proceed:
-	 * the backup is not part of the history of the requested timeline.
-	 */
-	if (tliOfPointInHistory(ControlFile->checkPoint, expectedTLEs) !=
-			ControlFile->checkPointCopy.ThisTimeLineID)
-	{
-		XLogRecPtr switchpoint;
-
-		/*
-		 * tliSwitchPoint will throw an error if the checkpoint's timeline
-		 * is not in expectedTLEs at all.
-		 */
-		switchpoint = tliSwitchPoint(ControlFile->checkPointCopy.ThisTimeLineID, expectedTLEs);
-		ereport(FATAL,
-				(errmsg("requested timeline %u is not a child of this server's history",
-						recoveryTargetTLI),
-				 errdetail("Latest checkpoint is at %X/%X on timeline %u, but in the history of the requested timeline, the server forked off from that timeline at %X/%X",
-						   (uint32) (ControlFile->checkPoint >> 32),
-						   (uint32) ControlFile->checkPoint,
-						   ControlFile->checkPointCopy.ThisTimeLineID,
-						   (uint32) (switchpoint >> 32),
-						   (uint32) switchpoint)));
-	}
-
-	/*
-	 * The min recovery point should be part of the requested timeline's
-	 * history, too.
-	 */
-	if (!XLogRecPtrIsInvalid(ControlFile->minRecoveryPoint) &&
-		tliOfPointInHistory(ControlFile->minRecoveryPoint - 1, expectedTLEs) !=
-			ControlFile->minRecoveryPointTLI)
-		ereport(FATAL,
-				(errmsg("requested timeline %u does not contain minimum recovery point %X/%X on timeline %u",
-						recoveryTargetTLI,
-						(uint32) (ControlFile->minRecoveryPoint >> 32),
-						(uint32) ControlFile->minRecoveryPoint,
-						ControlFile->minRecoveryPointTLI)));
-
 	/*
 	 * Save archive_cleanup_command in shared memory so that other processes
 	 * can see it.
@@ -5442,6 +5419,47 @@ StartupXLOG(void)
 		memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
 		wasShutdown = (record->xl_info == XLOG_CHECKPOINT_SHUTDOWN);
 	}
+
+	/*
+	 * If the location of the checkpoint record is not on the expected
+	 * timeline in the history of the requested timeline, we cannot proceed:
+	 * the backup is not part of the history of the requested timeline.
+	 */
+	Assert(expectedTLEs); /* was initialized by reading checkpoint record */
+	if (tliOfPointInHistory(checkPointLoc, expectedTLEs) !=
+			checkPoint.ThisTimeLineID)
+	{
+		XLogRecPtr switchpoint;
+
+		/*
+		 * tliSwitchPoint will throw an error if the checkpoint's timeline
+		 * is not in expectedTLEs at all.
+		 */
+		switchpoint = tliSwitchPoint(ControlFile->checkPointCopy.ThisTimeLineID, expectedTLEs);
+		ereport(FATAL,
+				(errmsg("requested timeline %u is not a child of this server's history",
+						recoveryTargetTLI),
+				 errdetail("Latest checkpoint is at %X/%X on timeline %u, but in the history of the requested timeline, the server forked off from that timeline at %X/%X",
+						   (uint32) (ControlFile->checkPoint >> 32),
+						   (uint32) ControlFile->checkPoint,
+						   ControlFile->checkPointCopy.ThisTimeLineID,
+						   (uint32) (switchpoint >> 32),
+						   (uint32) switchpoint)));
+	}
+
+	/*
+	 * The min recovery point should be part of the requested timeline's
+	 * history, too.
+	 */
+	if (!XLogRecPtrIsInvalid(ControlFile->minRecoveryPoint) &&
+		tliOfPointInHistory(ControlFile->minRecoveryPoint - 1, expectedTLEs) !=
+			ControlFile->minRecoveryPointTLI)
+		ereport(FATAL,
+				(errmsg("requested timeline %u does not contain minimum recovery point %X/%X on timeline %u",
+						recoveryTargetTLI,
+						(uint32) (ControlFile->minRecoveryPoint >> 32),
+						(uint32) ControlFile->minRecoveryPoint,
+						ControlFile->minRecoveryPointTLI)));
 
 	LastRec = RecPtr = checkPointLoc;
 
@@ -9569,13 +9587,24 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 					 */
 					if (PrimaryConnInfo)
 					{
-						XLogRecPtr ptr = fetching_ckpt ? RedoStartLSN : RecPtr;
-						TimeLineID tli = tliOfPointInHistory(ptr, expectedTLEs);
+						XLogRecPtr ptr;
+						TimeLineID tli;
 
-						if (curFileTLI > 0 && tli < curFileTLI)
-							elog(ERROR, "according to history file, WAL location %X/%X belongs to timeline %u, but previous recovered WAL file came from timeline %u",
-								 (uint32) (ptr >> 32), (uint32) ptr,
-								 tli, curFileTLI);
+						if (fetching_ckpt)
+						{
+							ptr = RedoStartLSN;
+							tli = ControlFile->checkPointCopy.ThisTimeLineID;
+						}
+						else
+						{
+							ptr = RecPtr;
+							tli = tliOfPointInHistory(ptr, expectedTLEs);
+
+							if (curFileTLI > 0 && tli < curFileTLI)
+								elog(ERROR, "according to history file, WAL location %X/%X belongs to timeline %u, but previous recovered WAL file came from timeline %u",
+									 (uint32) (ptr >> 32), (uint32) ptr,
+									 tli, curFileTLI);
+						}
 						curFileTLI = tli;
 						RequestXLogStreaming(curFileTLI, ptr, PrimaryConnInfo);
 					}
@@ -9739,11 +9768,16 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 				{
 					/*
 					 * Great, streamed far enough.  Open the file if it's not
-					 * open already.  Use XLOG_FROM_STREAM so that source info
-					 * is set correctly and XLogReceiptTime isn't changed.
+					 * open already.  Also read the timeline history file if
+					 * we haven't initialized timeline history yet; it should
+					 * be streamed over and present in pg_xlog by now.  Use
+					 * XLOG_FROM_STREAM so that source info is set correctly
+					 * and XLogReceiptTime isn't changed.
 					 */
 					if (readFile < 0)
 					{
+						if (!expectedTLEs)
+							expectedTLEs = readTimeLineHistory(receiveTLI);
 						readFile = XLogFileRead(readSegNo, PANIC,
 												receiveTLI,
 												XLOG_FROM_STREAM, false);
