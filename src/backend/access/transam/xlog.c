@@ -2797,18 +2797,33 @@ PreallocXlogFiles(XLogRecPtr endptr)
 }
 
 /*
- * Get the segno of the latest removed or recycled WAL segment.
- * Returns 0/0 if no WAL segments have been removed since startup.
+ * Throws an error if the given log segment has already been removed or
+ * recycled. The caller should only pass a segment that it knows to have
+ * existed while the server has been running, as this function always
+ * succeeds if no WAL segments have been removed since startup.
+ * 'tli' is only used in the error message.
  */
 void
-XLogGetLastRemoved(XLogSegNo *segno)
+CheckXLogRemoved(XLogSegNo segno, TimeLineID tli)
 {
 	/* use volatile pointer to prevent code rearrangement */
 	volatile XLogCtlData *xlogctl = XLogCtl;
+	XLogSegNo	lastRemovedSegNo;
 
 	SpinLockAcquire(&xlogctl->info_lck);
-	*segno = xlogctl->lastRemovedSegNo;
+	lastRemovedSegNo = xlogctl->lastRemovedSegNo;
 	SpinLockRelease(&xlogctl->info_lck);
+
+	if (segno <= lastRemovedSegNo)
+	{
+		char		filename[MAXFNAMELEN];
+
+		XLogFileName(filename, tli, segno);
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("requested WAL segment %s has already been removed",
+						filename)));
+	}
 }
 
 /*

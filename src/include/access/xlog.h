@@ -267,7 +267,7 @@ extern bool XLogNeedsFlush(XLogRecPtr RecPtr);
 extern int XLogFileInit(XLogSegNo segno, bool *use_existent, bool use_lock);
 extern int	XLogFileOpen(XLogSegNo segno);
 
-extern void XLogGetLastRemoved(XLogSegNo *segno);
+extern void CheckXLogRemoved(XLogSegNo segno, TimeLineID tli);
 extern void XLogSetAsyncXactLSN(XLogRecPtr record);
 
 extern Buffer RestoreBackupBlock(XLogRecPtr lsn, XLogRecord *record,
