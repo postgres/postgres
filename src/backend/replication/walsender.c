@@ -977,8 +977,6 @@ XLogRead(char *buf, XLogRecPtr startptr, Size count)
 	char	   *p;
 	XLogRecPtr	recptr;
 	Size		nbytes;
-	uint32		lastRemovedLog;
-	uint32		lastRemovedSeg;
 	uint32		log;
 	uint32		seg;
 
@@ -1073,19 +1071,8 @@ retry:
 	 * read() succeeds in that case, but the data we tried to read might
 	 * already have been overwritten with new WAL records.
 	 */
-	XLogGetLastRemoved(&lastRemovedLog, &lastRemovedSeg);
 	XLByteToSeg(startptr, log, seg);
-	if (log < lastRemovedLog ||
-		(log == lastRemovedLog && seg <= lastRemovedSeg))
-	{
-		char		filename[MAXFNAMELEN];
-
-		XLogFileName(filename, ThisTimeLineID, log, seg);
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("requested WAL segment %s has already been removed",
-						filename)));
-	}
+	CheckXLogRemoved(log, seg, ThisTimeLineID);
 
 	/*
 	 * During recovery, the currently-open WAL file might be replaced with the

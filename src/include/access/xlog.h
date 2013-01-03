@@ -275,7 +275,7 @@ extern int XLogFileInit(uint32 log, uint32 seg,
 extern int	XLogFileOpen(uint32 log, uint32 seg);
 
 
-extern void XLogGetLastRemoved(uint32 *log, uint32 *seg);
+extern void CheckXLogRemoved(uint32 log, uint32 seg, TimeLineID tli);
 extern void XLogSetAsyncXactLSN(XLogRecPtr record);
 
 extern Buffer RestoreBackupBlock(XLogRecPtr lsn, XLogRecord *record,
