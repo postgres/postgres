@@ -27,13 +27,12 @@ static void transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
  * Responsible for upgrading all database. invokes routines to generate mappings and then
  * physically link the databases.
  */
-const char *
+void
 transfer_all_new_dbs(DbInfoArr *old_db_arr,
 				   DbInfoArr *new_db_arr, char *old_pgdata, char *new_pgdata)
 {
 	int			old_dbnum,
 				new_dbnum;
-	const char *msg = NULL;
 
 	pg_log(PG_REPORT, "%s user relation files\n",
 	  user_opts.transfer_mode == TRANSFER_MODE_LINK ? "Linking" : "Copying");
@@ -74,7 +73,7 @@ transfer_all_new_dbs(DbInfoArr *old_db_arr,
 			print_maps(mappings, n_maps, new_db->db_name);
 
 #ifdef PAGE_CONVERSION
-			msg = setupPageConverter(&pageConverter);
+			pageConverter = setupPageConverter();
 #endif
 			transfer_single_new_db(pageConverter, mappings, n_maps);
 
@@ -85,7 +84,7 @@ transfer_all_new_dbs(DbInfoArr *old_db_arr,
 	end_progress_output();
 	check_ok();
 
-	return msg;
+	return;
 }
 
 

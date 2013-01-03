@@ -359,7 +359,7 @@ typedef struct
 	pluginShutdown shutdown;	/* Pointer to plugin's shutdown function */
 } pageCnvCtx;
 
-const char *setupPageConverter(pageCnvCtx **result);
+const pageCnvCtx *setupPageConverter(void);
 #else
 /* dummy */
 typedef void *pageCnvCtx;
@@ -398,7 +398,7 @@ void		get_sock_dir(ClusterInfo *cluster, bool live_check);
 /* relfilenode.c */
 
 void		get_pg_database_relfilenode(ClusterInfo *cluster);
-const char *transfer_all_new_dbs(DbInfoArr *olddb_arr,
+void		transfer_all_new_dbs(DbInfoArr *olddb_arr,
 				   DbInfoArr *newdb_arr, char *old_pgdata, char *new_pgdata);
 
 
