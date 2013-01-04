@@ -326,9 +326,7 @@ SPI_execute("INSERT INTO foo SELECT * FROM bar", false, 5);
   </para>
 
   <para>
-   You can pass multiple commands in one string, but later commands cannot
-   depend on the creation of objects earlier in the string, because the
-   whole string will be parsed and planned before execution begins.
+   You can pass multiple commands in one string;
    <function>SPI_execute</function> returns the
    result for the command executed last.  The <parameter>count</parameter>
    limit applies to each command separately, but it is not applied to
@@ -395,7 +393,8 @@ typedef struct
     TupleDesc   tupdesc;        /* row descriptor */
     HeapTuple  *vals;           /* rows */
 } SPITupleTable;
-</programlisting><structfield>vals</> is an array of pointers to rows.  (The number
+</programlisting>
+   <structfield>vals</> is an array of pointers to rows.  (The number
    of valid entries is given by <varname>SPI_processed</varname>.)
    <structfield>tupdesc</> is a row descriptor which you can pass to
    SPI functions dealing with rows.  <structfield>tuptabcxt</>,
@@ -435,7 +434,8 @@ typedef struct
     <term><literal>long <parameter>count</parameter></literal></term>
     <listitem>
      <para>
-      maximum number of rows to process or return
+      maximum number of rows to process or return,
+      or <literal>0</> for no limit
      </para>
     </listitem>
    </varlistentry>
@@ -674,7 +674,8 @@ int SPI_exec(const char * <parameter>command</parameter>, long <parameter>count<
     <term><literal>long <parameter>count</parameter></literal></term>
     <listitem>
      <para>
-      maximum number of rows to process or return
+      maximum number of rows to process or return,
+      or <literal>0</> for no limit
      </para>
     </listitem>
    </varlistentry>
@@ -812,7 +813,8 @@ int SPI_execute_with_args(const char *<parameter>command</parameter>,
     <term><literal>long <parameter>count</parameter></literal></term>
     <listitem>
      <para>
-      maximum number of rows to process or return
+      maximum number of rows to process or return,
+      or <literal>0</> for no limit
      </para>
     </listitem>
    </varlistentry>
@@ -1455,7 +1457,8 @@ int SPI_execute_plan(SPIPlanPtr <parameter>plan</parameter>, Datum * <parameter>
     <term><literal>long <parameter>count</parameter></literal></term>
     <listitem>
      <para>
-      maximum number of rows to process or return
+      maximum number of rows to process or return,
+      or <literal>0</> for no limit
      </para>
     </listitem>
    </varlistentry>
@@ -1572,7 +1575,8 @@ int SPI_execute_plan_with_paramlist(SPIPlanPtr <parameter>plan</parameter>,
     <term><literal>long <parameter>count</parameter></literal></term>
     <listitem>
      <para>
-      maximum number of rows to process or return
+      maximum number of rows to process or return,
+      or <literal>0</> for no limit
      </para>
     </listitem>
    </varlistentry>
@@ -1672,7 +1676,8 @@ int SPI_execp(SPIPlanPtr <parameter>plan</parameter>, Datum * <parameter>values<
     <term><literal>long <parameter>count</parameter></literal></term>
     <listitem>
      <para>
-      maximum number of rows to process or return
+      maximum number of rows to process or return,
+      or <literal>0</> for no limit
      </para>
     </listitem>
    </varlistentry>
