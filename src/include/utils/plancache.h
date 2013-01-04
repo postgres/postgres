@@ -60,6 +60,14 @@
  * context that holds the rewritten query tree and associated data.  This
  * allows the query tree to be discarded easily when it is invalidated.
  *
+ * Some callers wish to use the CachedPlan API even with one-shot queries
+ * that have no reason to be saved at all.  We therefore support a "oneshot"
+ * variant that does no data copying or invalidation checking.  In this case
+ * there are no separate memory contexts: the CachedPlanSource struct and
+ * all subsidiary data live in the caller's CurrentMemoryContext, and there
+ * is no way to free memory short of clearing that entire context.  A oneshot
+ * plan is always treated as unsaved.
+ *
  * Note: the string referenced by commandTag is not subsidiary storage;
  * it is assumed to be a compile-time-constant string.	As with portals,
  * commandTag shall be NULL if and only if the original query string (before
@@ -69,7 +77,7 @@ typedef struct CachedPlanSource
 {
 	int			magic;			/* should equal CACHEDPLANSOURCE_MAGIC */
 	Node	   *raw_parse_tree; /* output of raw_parser() */
-	char	   *query_string;	/* source text of query */
+	const char *query_string;	/* source text of query */
 	const char *commandTag;		/* command tag (a constant!), or NULL */
 	Oid		   *param_types;	/* array of parameter type OIDs, or NULL */
 	int			num_params;		/* length of param_types array */
@@ -91,6 +99,7 @@ typedef struct CachedPlanSource
 	bool		is_complete;	/* has CompleteCachedPlan been done? */
 	bool		is_saved;		/* has CachedPlanSource been "saved"? */
 	bool		is_valid;		/* is the query_list currently valid? */
+	bool		is_oneshot;		/* is it a "oneshot" plan? */
 	int			generation;		/* increments each time we create a plan */
 	/* If CachedPlanSource has been saved, it is a member of a global list */
 	struct CachedPlanSource *next_saved;		/* list link, if so */
@@ -106,7 +115,9 @@ typedef struct CachedPlanSource
  * (if any), and any active plan executions, so the plan can be discarded
  * exactly when refcount goes to zero.	Both the struct itself and the
  * subsidiary data live in the context denoted by the context field.
- * This makes it easy to free a no-longer-needed cached plan.
+ * This makes it easy to free a no-longer-needed cached plan.  (However,
+ * if is_oneshot is true, the context does not belong solely to the CachedPlan
+ * so no freeing is possible.)
  */
 typedef struct CachedPlan
 {
@@ -115,6 +126,7 @@ typedef struct CachedPlan
 								 * bare utility statements) */
 	bool		is_saved;		/* is CachedPlan in a long-lived context? */
 	bool		is_valid;		/* is the stmt_list currently valid? */
+	bool		is_oneshot;		/* is it a "oneshot" plan? */
 	TransactionId saved_xmin;	/* if valid, replan when TransactionXmin
 								 * changes from this value */
 	int			generation;		/* parent's generation number for this plan */
@@ -127,6 +139,9 @@ extern void InitPlanCache(void);
 extern void ResetPlanCache(void);
 
 extern CachedPlanSource *CreateCachedPlan(Node *raw_parse_tree,
+				 const char *query_string,
+				 const char *commandTag);
+extern CachedPlanSource *CreateOneShotCachedPlan(Node *raw_parse_tree,
 				 const char *query_string,
 				 const char *commandTag);
 extern void CompleteCachedPlan(CachedPlanSource *plansource,
