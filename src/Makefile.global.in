@@ -175,11 +175,11 @@ enable_dtrace	= @enable_dtrace@
 enable_coverage	= @enable_coverage@
 enable_thread_safety	= @enable_thread_safety@
 
+python_enable_shared	= @python_enable_shared@
 python_includespec	= @python_includespec@
 python_libdir		= @python_libdir@
 python_libspec		= @python_libspec@
 python_additional_libs	= @python_additional_libs@
-python_configdir	= @python_configdir@
 python_majorversion	= @python_majorversion@
 python_version		= @python_version@
 
