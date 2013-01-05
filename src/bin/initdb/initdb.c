@@ -354,6 +354,18 @@ pg_strdup(const char *s)
 	return result;
 }
 
+static char *
+escape_quotes(const char *src)
+{
+	char *result = escape_single_quotes_ascii(src);
+	if (!result)
+	{
+		fprintf(stderr, _("%s: out of memory\n"), progname);
+		exit(1);
+	}
+	return result;
+}
+
 /*
  * make a copy of the array of lines, with token replaced by replacement
  * the first time it occurs on each line.
@@ -2413,35 +2425,6 @@ check_ok(void)
 		printf(_("ok\n"));
 		fflush(stdout);
 	}
-}
-
-/*
- * Escape (by doubling) any single quotes or backslashes in given string
- *
- * Note: this is used to process both postgresql.conf entries and SQL
- * string literals.  Since postgresql.conf strings are defined to treat
- * backslashes as escapes, we have to double backslashes here.	Hence,
- * when using this for a SQL string literal, use E'' syntax.
- *
- * We do not need to worry about encoding considerations because all
- * valid backend encodings are ASCII-safe.
- */
-static char *
-escape_quotes(const char *src)
-{
-	int			len = strlen(src),
-				i,
-				j;
-	char	   *result = pg_malloc(len * 2 + 1);
-
-	for (i = 0, j = 0; i < len; i++)
-	{
-		if (SQL_STR_DOUBLE(src[i], true))
-			result[j++] = src[i];
-		result[j++] = src[i];
-	}
-	result[j] = '\0';
-	return result;
 }
 
 /* Hack to suppress a warning about %x from some versions of gcc */

@@ -465,4 +465,7 @@ extern int	pg_check_dir(const char *dir);
 /* port/pgmkdirp.c */
 extern int	pg_mkdir_p(char *path, int omode);
 
+/* port/quotes.c */
+extern char *escape_single_quotes_ascii(const char *src);
+
 #endif   /* PG_PORT_H */
