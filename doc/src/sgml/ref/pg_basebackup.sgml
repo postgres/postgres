@@ -189,6 +189,20 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-R</option></term>
+      <term><option>--write-recovery-conf</option></term>
+      <listitem>
+
+       <para>
+        Write a minimal recovery.conf in the output directory (or into
+        the base archive file when using tar format) to ease setting
+        up a standby server.
+       </para>
+
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-x</option></term>
       <term><option>--xlog</option></term>
       <listitem>

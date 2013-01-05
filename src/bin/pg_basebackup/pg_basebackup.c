@@ -13,12 +13,15 @@
 
 #include "postgres_fe.h"
 #include "libpq-fe.h"
+#include "pqexpbuffer.h"
+#include "pgtar.h"
 
 #include <unistd.h>
 #include <dirent.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <time.h>
 
 #ifdef HAVE_LIBZ
 #include <zlib.h>
@@ -40,6 +43,7 @@ int			compresslevel = 0;
 bool		includewal = false;
 bool		streamwal = false;
 bool		fastcheckpoint = false;
+bool		writerecoveryconf = false;
 int			standby_message_timeout = 10 * 1000;		/* 10 sec = default */
 
 /* Progress counters */
@@ -64,6 +68,9 @@ static int	has_xlogendptr = 0;
 static volatile LONG has_xlogendptr = 0;
 #endif
 
+/* Contents of recovery.conf to be generated */
+static PQExpBuffer recoveryconfcontents = NULL;
+
 /* Function headers */
 static void usage(void);
 static void verify_dir_is_empty_or_create(char *dirname);
@@ -71,6 +78,8 @@ static void progress_report(int tablespacenum, const char *filename);
 
 static void ReceiveTarFile(PGconn *conn, PGresult *res, int rownum);
 static void ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum);
+static void GenerateRecoveryConf(PGconn *conn);
+static void WriteRecoveryConf(void);
 static void BaseBackup(void);
 
 static bool reached_end_position(XLogRecPtr segendpos, uint32 timeline,
@@ -101,6 +110,8 @@ usage(void)
 	printf(_("\nOptions controlling the output:\n"));
 	printf(_("  -D, --pgdata=DIRECTORY receive base backup into directory\n"));
 	printf(_("  -F, --format=p|t       output format (plain (default), tar)\n"));
+	printf(_("  -R, --write-recovery-conf\n"
+			 "                         write recovery.conf after backup\n"));
 	printf(_("  -x, --xlog             include required WAL files in backup (fetch mode)\n"));
 	printf(_("  -X, --xlog-method=fetch|stream\n"
 			 "                         include required WAL files with specified method\n"));
@@ -446,6 +457,45 @@ progress_report(int tablespacenum, const char *filename)
 
 
 /*
+ * Write a piece of tar data
+ */
+static void
+writeTarData(
+#ifdef HAVE_LIBZ
+			 gzFile ztarfile,
+#endif
+			 FILE *tarfile, char *buf, int r, char *current_file)
+{
+#ifdef HAVE_LIBZ
+	if (ztarfile != NULL)
+	{
+		if (gzwrite(ztarfile, buf, r) != r)
+		{
+			fprintf(stderr,
+					_("%s: could not write to compressed file \"%s\": %s\n"),
+					progname, current_file, get_gz_error(ztarfile));
+			disconnect_and_exit(1);
+		}
+	}
+	else
+#endif
+	{
+		if (fwrite(buf, r, 1, tarfile) != 1)
+		{
+			fprintf(stderr, _("%s: could not write to file \"%s\": %s\n"),
+					progname, current_file, strerror(errno));
+			disconnect_and_exit(1);
+		}
+	}
+}
+
+#ifdef HAVE_LIBZ
+#define WRITE_TAR_DATA(buf, sz) writeTarData(ztarfile, tarfile, buf, sz, filename)
+#else
+#define WRITE_TAR_DATA(buf, sz) writeTarData(tarfile, buf, sz, filename)
+#endif
+
+/*
  * Receive a tar format file from the connection to the server, and write
  * the data from this file directly into a tar file. If compression is
  * enabled, the data will be compressed while written to the file.
@@ -461,12 +511,18 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 	char		filename[MAXPGPATH];
 	char	   *copybuf = NULL;
 	FILE	   *tarfile = NULL;
+	char		tarhdr[512];
+	bool		basetablespace = PQgetisnull(res, rownum, 0);
+	bool		in_tarhdr = true;
+	bool		skip_file = false;
+	size_t		tarhdrsz = 0;
+	size_t		filesz = 0;
 
 #ifdef HAVE_LIBZ
 	gzFile		ztarfile = NULL;
 #endif
 
-	if (PQgetisnull(res, rownum, 0))
+	if (basetablespace)
 	{
 		/*
 		 * Base tablespaces
@@ -592,7 +648,9 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 		if (r == -1)
 		{
 			/*
-			 * End of chunk. Close file (but not stdout).
+			 * End of chunk. If requested, and this is the base tablespace,
+			 * write recovery.conf into the tarfile. When done, close the file
+			 * (but not stdout).
 			 *
 			 * Also, write two completely empty blocks at the end of the tar
 			 * file, as required by some tar programs.
@@ -600,29 +658,27 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 			char		zerobuf[1024];
 
 			MemSet(zerobuf, 0, sizeof(zerobuf));
-#ifdef HAVE_LIBZ
-			if (ztarfile != NULL)
+
+			if (basetablespace && writerecoveryconf)
 			{
-				if (gzwrite(ztarfile, zerobuf, sizeof(zerobuf)) !=
-					sizeof(zerobuf))
-				{
-					fprintf(stderr,
-					_("%s: could not write to compressed file \"%s\": %s\n"),
-							progname, filename, get_gz_error(ztarfile));
-					disconnect_and_exit(1);
-				}
+				char		header[512];
+				int			padding;
+
+				tarCreateHeader(header, "recovery.conf", NULL,
+								recoveryconfcontents->len,
+								0600, 04000, 02000,
+								time(NULL));
+
+				padding = ((recoveryconfcontents->len + 511) & ~511) - recoveryconfcontents->len;
+
+				WRITE_TAR_DATA(header, sizeof(header));
+				WRITE_TAR_DATA(recoveryconfcontents->data, recoveryconfcontents->len);
+				if (padding)
+					WRITE_TAR_DATA(zerobuf, padding);
 			}
-			else
-#endif
-			{
-				if (fwrite(zerobuf, sizeof(zerobuf), 1, tarfile) != 1)
-				{
-					fprintf(stderr,
-							_("%s: could not write to file \"%s\": %s\n"),
-							progname, filename, strerror(errno));
-					disconnect_and_exit(1);
-				}
-			}
+
+			/* 2 * 512 bytes empty data at end of file */
+			WRITE_TAR_DATA(zerobuf, sizeof(zerobuf));
 
 #ifdef HAVE_LIBZ
 			if (ztarfile != NULL)
@@ -659,25 +715,120 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 			disconnect_and_exit(1);
 		}
 
-#ifdef HAVE_LIBZ
-		if (ztarfile != NULL)
+		if (!writerecoveryconf || !basetablespace)
 		{
-			if (gzwrite(ztarfile, copybuf, r) != r)
-			{
-				fprintf(stderr,
-					_("%s: could not write to compressed file \"%s\": %s\n"),
-						progname, filename, get_gz_error(ztarfile));
-				disconnect_and_exit(1);
-			}
+			/*
+			 * When not writing recovery.conf, or when not working on the base
+			 * tablespace, we never have to look for an existing recovery.conf
+			 * file in the stream.
+			 */
+			WRITE_TAR_DATA(copybuf, r);
 		}
 		else
-#endif
 		{
-			if (fwrite(copybuf, r, 1, tarfile) != 1)
+			/*
+			 * Look for a recovery.conf in the existing tar stream. If it's
+			 * there, we must skip it so we can later overwrite it with our
+			 * own version of the file.
+			 *
+			 * To do this, we have to process the individual files inside the
+			 * TAR stream. The stream consists of a header and zero or more
+			 * chunks, all 512 bytes long. The stream from the server is
+			 * broken up into smaller pieces, so we have to track the size of
+			 * the files to find the next header structure.
+			 */
+			int			rr = r;
+			int			pos = 0;
+
+			while (rr > 0)
 			{
-				fprintf(stderr, _("%s: could not write to file \"%s\": %s\n"),
-						progname, filename, strerror(errno));
-				disconnect_and_exit(1);
+				if (in_tarhdr)
+				{
+					/*
+					 * We're currently reading a header structure inside the
+					 * TAR stream, i.e. the file metadata.
+					 */
+					if (tarhdrsz < 512)
+					{
+						/*
+						 * Copy the header structure into tarhdr in case the
+						 * header is not aligned to 512 bytes or it's not
+						 * returned in whole by the last PQgetCopyData call.
+						 */
+						int			hdrleft;
+						int			bytes2copy;
+
+						hdrleft = 512 - tarhdrsz;
+						bytes2copy = (rr > hdrleft ? hdrleft : rr);
+
+						memcpy(&tarhdr[tarhdrsz], copybuf + pos, bytes2copy);
+
+						rr -= bytes2copy;
+						pos += bytes2copy;
+						tarhdrsz += bytes2copy;
+					}
+					else
+					{
+						/*
+						 * We have the complete header structure in tarhdr,
+						 * look at the file metadata: - the subsequent file
+						 * contents have to be skipped if the filename is
+						 * recovery.conf - find out the size of the file
+						 * padded to the next multiple of 512
+						 */
+						int			padding;
+
+						skip_file = (strcmp(&tarhdr[0], "recovery.conf") == 0);
+
+						sscanf(&tarhdr[124], "%11o", (unsigned int *) &filesz);
+
+						padding = ((filesz + 511) & ~511) - filesz;
+						filesz += padding;
+
+						/* Next part is the file, not the header */
+						in_tarhdr = false;
+
+						/*
+						 * If we're not skipping the file, write the tar
+						 * header unmodified.
+						 */
+						if (!skip_file)
+							WRITE_TAR_DATA(tarhdr, 512);
+					}
+				}
+				else
+				{
+					/*
+					 * We're processing a file's contents.
+					 */
+					if (filesz > 0)
+					{
+						/*
+						 * We still have data to read (and possibly write).
+						 */
+						int			bytes2write;
+
+						bytes2write = (filesz > rr ? rr : filesz);
+
+						if (!skip_file)
+							WRITE_TAR_DATA(copybuf + pos, bytes2write);
+
+						rr -= bytes2write;
+						pos += bytes2write;
+						filesz -= bytes2write;
+					}
+					else
+					{
+						/*
+						 * No more data in the current file, the next piece of
+						 * data (if any) will be a new file header structure.
+						 */
+						in_tarhdr = true;
+						skip_file = false;
+						tarhdrsz = 0;
+						filesz = 0;
+					}
+				}
 			}
 		}
 		totaldone += r;
@@ -706,10 +857,11 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 	char		filename[MAXPGPATH];
 	int			current_len_left;
 	int			current_padding = 0;
+	bool		basetablespace = PQgetisnull(res, rownum, 0);
 	char	   *copybuf = NULL;
 	FILE	   *file = NULL;
 
-	if (PQgetisnull(res, rownum, 0))
+	if (basetablespace)
 		strcpy(current_path, basedir);
 	else
 		strcpy(current_path, PQgetvalue(res, rownum, 1));
@@ -931,6 +1083,120 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 
 	if (copybuf != NULL)
 		PQfreemem(copybuf);
+
+	if (basetablespace)
+		WriteRecoveryConf();
+}
+
+/*
+ * Escape single quotes used in connection parameters
+ */
+static char *
+escape_quotes(const char *src)
+{
+	char	   *result = escape_single_quotes_ascii(src);
+
+	if (!result)
+	{
+		fprintf(stderr, _("%s: out of memory\n"), progname);
+		exit(1);
+	}
+	return result;
+}
+
+/*
+ * Create a recovery.conf file in memory using a PQExpBuffer
+ */
+static void
+GenerateRecoveryConf(PGconn *conn)
+{
+	PQconninfoOption *connOptions;
+	PQconninfoOption *option;
+
+	recoveryconfcontents = createPQExpBuffer();
+	if (!recoveryconfcontents)
+	{
+		fprintf(stderr, _("%s: out of memory"), progname);
+		disconnect_and_exit(1);
+	}
+
+	connOptions = PQconninfo(conn);
+	if (connOptions == NULL)
+	{
+		fprintf(stderr, _("%s: out of memory"), progname);
+		disconnect_and_exit(1);
+	}
+
+	appendPQExpBufferStr(recoveryconfcontents, "standby_mode = 'on'\n");
+	appendPQExpBufferStr(recoveryconfcontents, "primary_conninfo = '");
+
+	for (option = connOptions; option && option->keyword; option++)
+	{
+		char	   *escaped;
+
+		/*
+		 * Do not emit this setting if: - the setting is "replication",
+		 * "dbname" or "fallback_application_name", since these would be
+		 * overridden by the libpqwalreceiver module anyway. - not set or
+		 * empty.
+		 */
+		if (strcmp(option->keyword, "replication") == 0 ||
+			strcmp(option->keyword, "dbname") == 0 ||
+			strcmp(option->keyword, "fallback_application_name") == 0 ||
+			(option->val == NULL) ||
+			(option->val != NULL && option->val[0] == '\0'))
+			continue;
+
+		/*
+		 * Write "keyword='value'" pieces, the value string is escaped if
+		 * necessary and doubled single quotes around the value string.
+		 */
+		escaped = escape_quotes(option->val);
+
+		appendPQExpBuffer(recoveryconfcontents, "%s=''%s'' ", option->keyword, escaped);
+
+		free(escaped);
+	}
+
+	appendPQExpBufferStr(recoveryconfcontents, "'\n");
+	if (PQExpBufferBroken(recoveryconfcontents))
+	{
+		fprintf(stderr, _("%s: out of memory"), progname);
+		disconnect_and_exit(1);
+	}
+
+	PQconninfoFree(connOptions);
+}
+
+
+/*
+ * Write a recovery.conf file into the directory specified in basedir,
+ * with the contents already collected in memory.
+ */
+static void
+WriteRecoveryConf(void)
+{
+	char		filename[MAXPGPATH];
+	FILE	   *cf;
+
+	sprintf(filename, "%s/recovery.conf", basedir);
+
+	cf = fopen(filename, "w");
+	if (cf == NULL)
+	{
+		fprintf(stderr, _("%s: could not create file %s: %s"), progname, filename, strerror(errno));
+		disconnect_and_exit(1);
+	}
+
+	if (fwrite(recoveryconfcontents->data, recoveryconfcontents->len, 1, cf) != 1)
+	{
+		fprintf(stderr,
+				_("%s: could not write to file \"%s\": %s\n"),
+				progname, filename, strerror(errno));
+		disconnect_and_exit(1);
+	}
+
+	fclose(cf);
 }
 
 
@@ -953,6 +1219,12 @@ BaseBackup(void)
 	if (!conn)
 		/* Error message already written in GetConnection() */
 		exit(1);
+
+	/*
+	 * Build contents of recovery.conf if requested
+	 */
+	if (writerecoveryconf)
+		GenerateRecoveryConf(conn);
 
 	/*
 	 * Run IDENTIFY_SYSTEM so we can get the timeline
@@ -1217,6 +1489,9 @@ BaseBackup(void)
 #endif
 	}
 
+	/* Free the recovery.conf contents */
+	destroyPQExpBuffer(recoveryconfcontents);
+
 	/*
 	 * End of copy data. Final result is already checked inside the loop.
 	 */
@@ -1237,6 +1512,7 @@ main(int argc, char **argv)
 		{"pgdata", required_argument, NULL, 'D'},
 		{"format", required_argument, NULL, 'F'},
 		{"checkpoint", required_argument, NULL, 'c'},
+		{"write-recovery-conf", no_argument, NULL, 'R'},
 		{"xlog", no_argument, NULL, 'x'},
 		{"xlog-method", required_argument, NULL, 'X'},
 		{"gzip", no_argument, NULL, 'z'},
@@ -1274,7 +1550,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "D:F:xX:l:zZ:c:h:p:U:s:wWvP",
+	while ((c = getopt_long(argc, argv, "D:F:RxX:l:zZ:c:h:p:U:s:wWvP",
 							long_options, &option_index)) != -1)
 	{
 		switch (c)
@@ -1294,6 +1570,9 @@ main(int argc, char **argv)
 							progname, optarg);
 					exit(1);
 				}
+				break;
+			case 'R':
+				writerecoveryconf = true;
 				break;
 			case 'x':
 				if (includewal)
