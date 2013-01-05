@@ -758,11 +758,9 @@ COMMIT;
   </para>
 
   <para>
-   The SQL standard does not specify parameter defaults.  The syntax
-   with the <literal>DEFAULT</literal> key word is from Oracle, and it
-   is somewhat in the spirit of the standard: SQL/PSM uses it for
-   variable default values.  The syntax with <literal>=</literal> is
-   used in T-SQL and Firebird.
+   For parameter defaults, the SQL standard specifies only the syntax with
+   the <literal>DEFAULT</literal> key word.  The syntax
+   with <literal>=</literal> is used in T-SQL and Firebird.
   </para>
  </refsect1>
 
