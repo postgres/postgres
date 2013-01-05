@@ -929,7 +929,7 @@ DefineDomain(CreateDomainStmt *stmt)
 				if (constr->is_no_inherit)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-							 errmsg("CHECK constraints for domains cannot be marked NO INHERIT")));
+							 errmsg("check constraints for domains cannot be marked NO INHERIT")));
 				break;
 
 				/*

@@ -1449,7 +1449,7 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 			break;
 		case EXPR_KIND_CHECK_CONSTRAINT:
 		case EXPR_KIND_DOMAIN_CHECK:
-			err = _("cannot use subquery in CHECK constraint");
+			err = _("cannot use subquery in check constraint");
 			break;
 		case EXPR_KIND_COLUMN_DEFAULT:
 		case EXPR_KIND_FUNCTION_DEFAULT:
