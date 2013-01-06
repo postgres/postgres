@@ -73,7 +73,7 @@ python_enable_shared=`${PYTHON} -c "import distutils.sysconfig; print(distutils.
 
 if test -n "$python_framework"; then
 	python_frameworkprefix=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('PYTHONFRAMEWORKPREFIX'))))"`
-	python_libspec="-F $python_frameworkprefix -framework $python_framework"
+	python_libspec="-F${python_frameworkprefix} -framework $python_framework"
 	python_enable_shared=1
 elif test x"${python_libdir}" != x"" -a x"${python_ldlibrary}" != x"" -a x"${python_ldlibrary}" != x"${ldlibrary}"
 then
