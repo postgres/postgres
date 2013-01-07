@@ -37,7 +37,7 @@ run_build($code_base) if ($build);
 # command line option wins, then first non-option arg,
 # then environment (which is how --build sets it) ,
 # then locations. based on current dir, then default location
-$typedefs_file ||= shift if @ARGV && $ARGV[0] !~ /\\.[ch]$/;
+$typedefs_file ||= shift if @ARGV && $ARGV[0] !~ /\.[ch]$/;
 $typedefs_file ||= $ENV{PGTYPEDEFS};
 
 # build mode sets PGINDENT and PGENTAB
