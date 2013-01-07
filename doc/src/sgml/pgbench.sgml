@@ -190,6 +190,17 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
+      <term><option>-q</option></term>
+      <listitem>
+       <para>
+        Switch logging to quiet mode, producing only one progress message per 5
+        seconds. The default logging prints one message each 100000 rows, which
+        often outputs many lines per second (especially on good hardware).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--foreign-keys</option></term>
       <listitem>
        <para>

@@ -39,6 +39,7 @@
 #include "portability/instr_time.h"
 
 #include <ctype.h>
+#include <math.h>
 
 #ifndef WIN32
 #include <sys/time.h>
@@ -102,6 +103,7 @@ extern int	optind;
 #define MAXCLIENTS	1024
 #endif
 
+#define LOG_STEP_SECONDS	5	/* seconds between log messages */
 #define DEFAULT_NXACTS	10		/* default nxacts */
 
 int			nxacts = 0;			/* number of transactions per client */
@@ -150,6 +152,7 @@ char	   *index_tablespace = NULL;
 #define naccounts	100000
 
 bool		use_log;			/* log transaction latencies to a file */
+bool		use_quiet;			/* quiet logging onto stderr */
 bool		is_connect;			/* establish connection for each transaction */
 bool		is_latencies;		/* report per-command latencies */
 int			main_pid;			/* main process id used in log filename */
@@ -359,6 +362,7 @@ usage(void)
 		   "  -n           do not run VACUUM after initialization\n"
 		   "  -F NUM       fill factor\n"
 		   "  -s NUM       scaling factor\n"
+		   "  -q           quiet logging (one message each 5 seconds)\n"
 		   "  --foreign-keys\n"
 		   "               create foreign key constraints between tables\n"
 		   "  --index-tablespace=TABLESPACE\n"
@@ -1362,6 +1366,11 @@ init(bool is_no_vacuum)
 	char		sql[256];
 	int			i;
 
+	/* used to track elapsed time and estimate of the remaining time */
+	instr_time	start, diff;
+	double		elapsed_sec, remaining_sec;
+	int			log_interval = 1;
+
 	if ((con = doConnect()) == NULL)
 		exit(1);
 
@@ -1430,6 +1439,8 @@ init(bool is_no_vacuum)
 	}
 	PQclear(res);
 
+	INSTR_TIME_SET_CURRENT(start);
+
 	for (i = 0; i < naccounts * scale; i++)
 	{
 		int			j = i + 1;
@@ -1441,10 +1452,42 @@ init(bool is_no_vacuum)
 			exit(1);
 		}
 
-		if (j % 100000 == 0)
-			fprintf(stderr, "%d of %d tuples (%d%%) done.\n",
-					j, naccounts * scale,
-					(int) (((int64) j * 100) / (naccounts * scale)));
+		/* If we want to stick with the original logging, print a message each
+		 * 100k inserted rows. */
+		if ((! use_quiet) && (j % 100000 == 0))
+		{
+			INSTR_TIME_SET_CURRENT(diff);
+			INSTR_TIME_SUBTRACT(diff, start);
+
+			elapsed_sec = INSTR_TIME_GET_DOUBLE(diff);
+			remaining_sec = (scale * naccounts - j) * elapsed_sec / j;
+
+			fprintf(stderr, "%d of %d tuples (%d%%) done (elapsed %.2f s, remaining %.2f s).\n",
+							j, naccounts * scale,
+							(int) (((int64) j * 100) / (naccounts * scale)),
+							elapsed_sec, remaining_sec);
+		}
+		/* let's not call the timing for each row, but only each 100 rows */
+		else if (use_quiet && (j % 100 == 0))
+		{
+			INSTR_TIME_SET_CURRENT(diff);
+			INSTR_TIME_SUBTRACT(diff, start);
+
+			elapsed_sec = INSTR_TIME_GET_DOUBLE(diff);
+			remaining_sec = (scale * naccounts - j) * elapsed_sec / j;
+
+			/* have we reached the next interval (or end)? */
+			if ((j == scale * naccounts) || (elapsed_sec >= log_interval * LOG_STEP_SECONDS)) {
+
+				fprintf(stderr, "%d of %d tuples (%d%%) done (elapsed %.2f s, remaining %.2f s).\n",
+						j, naccounts * scale,
+						(int) (((int64) j * 100) / (naccounts * scale)), elapsed_sec, remaining_sec);
+
+				/* skip to the next interval */
+				log_interval = (int)ceil(elapsed_sec/LOG_STEP_SECONDS);
+			}
+		}
+
 	}
 	if (PQputline(con, "\\.\n"))
 	{
@@ -1987,7 +2030,7 @@ main(int argc, char **argv)
 	state = (CState *) pg_malloc(sizeof(CState));
 	memset(state, 0, sizeof(CState));
 
-	while ((c = getopt_long(argc, argv, "ih:nvp:dSNc:j:Crs:t:T:U:lf:D:F:M:", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "ih:nvp:dqSNc:j:Crs:t:T:U:lf:D:F:M:", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -2095,6 +2138,9 @@ main(int argc, char **argv)
 			case 'l':
 				use_log = true;
 				break;
+			case 'q':
+				use_quiet = true;
+				break;
 			case 'f':
 				ttype = 3;
 				filename = pg_strdup(optarg);
@@ -2195,6 +2241,13 @@ main(int argc, char **argv)
 	if (sample_rate > 0.0 && !use_log)
 	{
 		fprintf(stderr, "log sampling rate is allowed only when logging transactions (-l) \n");
+		exit(1);
+	}
+
+	/* -q may be used only with -i */
+	if (use_quiet && !is_init_mode)
+	{
+		fprintf(stderr, "quiet-logging is allowed only in initialization mode (-i)\n");
 		exit(1);
 	}
 
