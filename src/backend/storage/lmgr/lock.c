@@ -1017,6 +1017,12 @@ LockAcquireExtended(const LOCKTAG *locktag,
 /*
  * Find or create LOCK and PROCLOCK objects as needed for a new lock
  * request.
+ *
+ * Returns the PROCLOCK object, or NULL if we failed to create the objects
+ * for lack of shared memory.
+ *
+ * The appropriate partition lock must be held at entry, and will be
+ * held at exit.
  */
 static PROCLOCK *
 SetupLockInTable(LockMethod lockMethodTable, PGPROC *proc,
@@ -2414,6 +2420,8 @@ FastPathUnGrantRelationLock(Oid relid, LOCKMODE lockmode)
  * FastPathTransferRelationLocks
  *		Transfer locks matching the given lock tag from per-backend fast-path
  *		arrays to the shared hash table.
+ *
+ * Returns true if successful, false if ran out of shared memory.
  */
 static bool
 FastPathTransferRelationLocks(LockMethod lockMethodTable, const LOCKTAG *locktag,
@@ -2529,6 +2537,7 @@ FastPathGetRelationLockEntry(LOCALLOCK *locallock)
 									locallock->hashcode, lockmode);
 		if (!proclock)
 		{
+			LWLockRelease(partitionLock);
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of shared memory"),
@@ -3422,9 +3431,6 @@ GetRunningTransactionLocks(int *nlocks)
 	for (i = 0; i < NUM_LOCK_PARTITIONS; i++)
 		LWLockAcquire(FirstLockMgrLock + i, LW_SHARED);
 
-	/* Now scan the tables to copy the data */
-	hash_seq_init(&seqstat, LockMethodProcLockHash);
-
 	/* Now we can safely count the number of proclocks */
 	els = hash_get_num_entries(LockMethodProcLockHash);
 
@@ -3433,6 +3439,9 @@ GetRunningTransactionLocks(int *nlocks)
 	 * but it's more convenient and faster than having to enlarge the array.
 	 */
 	accessExclusiveLocks = palloc(els * sizeof(xl_standby_lock));
+
+	/* Now scan the tables to copy the data */
+	hash_seq_init(&seqstat, LockMethodProcLockHash);
 
 	/*
 	 * If lock is a currently granted AccessExclusiveLock then it will have
@@ -3978,22 +3987,34 @@ VirtualXactLock(VirtualTransactionId vxid, bool wait)
 
 	/*
 	 * OK, we're going to need to sleep on the VXID.  But first, we must set
-	 * up the primary lock table entry, if needed.
+	 * up the primary lock table entry, if needed (ie, convert the proc's
+	 * fast-path lock on its VXID to a regular lock).
 	 */
 	if (proc->fpVXIDLock)
 	{
 		PROCLOCK   *proclock;
 		uint32		hashcode;
+		LWLockId	partitionLock;
 
 		hashcode = LockTagHashCode(&tag);
+
+		partitionLock = LockHashPartitionLock(hashcode);
+		LWLockAcquire(partitionLock, LW_EXCLUSIVE);
+
 		proclock = SetupLockInTable(LockMethods[DEFAULT_LOCKMETHOD], proc,
 									&tag, hashcode, ExclusiveLock);
 		if (!proclock)
+		{
+			LWLockRelease(partitionLock);
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of shared memory"),
 					 errhint("You might need to increase max_locks_per_transaction.")));
+		}
 		GrantLock(proclock->tag.myLock, proclock, ExclusiveLock);
+
+		LWLockRelease(partitionLock);
+
 		proc->fpVXIDLock = false;
 	}
 
