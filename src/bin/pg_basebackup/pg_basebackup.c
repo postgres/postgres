@@ -1084,7 +1084,7 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 	if (copybuf != NULL)
 		PQfreemem(copybuf);
 
-	if (basetablespace)
+	if (basetablespace && writerecoveryconf)
 		WriteRecoveryConf();
 }
 
