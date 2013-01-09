@@ -76,7 +76,7 @@ sub Install
         'Import libraries',
         $target .'/lib/',
         "$conf\\", "postgres\\postgres.lib","libpq\\libpq.lib", "libecpg\\libecpg.lib",
-        "libpgport\\libpgport.lib"
+        "libpgport\\libpgport.lib", "libpgtypes\\libpgtypes.lib","libecpg_compat\\libecpg_compat.lib"
     );
     CopySetOfFiles(
         'timezone names',
