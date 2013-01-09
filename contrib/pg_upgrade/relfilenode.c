@@ -16,9 +16,55 @@
 
 
 static void transfer_single_new_db(pageCnvCtx *pageConverter,
-					   FileNameMap *maps, int size);
+					   FileNameMap *maps, int size, char *old_tablespace);
 static void transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
 							 const char *suffix);
+
+
+/*
+ * transfer_all_new_tablespaces()
+ *
+ * Responsible for upgrading all database. invokes routines to generate mappings and then
+ * physically link the databases.
+ */
+void
+transfer_all_new_tablespaces(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
+					char *old_pgdata, char *new_pgdata)
+{
+	pg_log(PG_REPORT, "%s user relation files\n",
+	  user_opts.transfer_mode == TRANSFER_MODE_LINK ? "Linking" : "Copying");
+
+	/*
+	 *	Transfering files by tablespace is tricky because a single database
+	 *	can use multiple tablespaces.  For non-parallel mode, we just pass a
+	 *	NULL tablespace path, which matches all tablespaces.  In parallel mode,
+	 *	we pass the default tablespace and all user-created tablespaces
+	 *	and let those operations happen in parallel.
+	 */
+	if (user_opts.jobs <= 1)
+		parallel_transfer_all_new_dbs(old_db_arr, new_db_arr, old_pgdata,
+									  new_pgdata, NULL);
+	else
+	{
+		int tblnum;
+
+		/* transfer default tablespace */
+		parallel_transfer_all_new_dbs(old_db_arr, new_db_arr, old_pgdata,
+							  new_pgdata, old_pgdata);
+
+		for (tblnum = 0; tblnum < os_info.num_old_tablespaces; tblnum++)
+			parallel_transfer_all_new_dbs(old_db_arr, new_db_arr, old_pgdata,
+								  new_pgdata, os_info.old_tablespaces[tblnum]);
+		/* reap all children */
+		while (reap_child(true) == true)
+			;
+	}
+
+	end_progress_output();
+	check_ok();
+
+	return;
+}
 
 
 /*
@@ -28,14 +74,11 @@ static void transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
  * physically link the databases.
  */
 void
-transfer_all_new_dbs(DbInfoArr *old_db_arr,
-				   DbInfoArr *new_db_arr, char *old_pgdata, char *new_pgdata)
+transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
+					char *old_pgdata, char *new_pgdata, char *old_tablespace)
 {
 	int			old_dbnum,
 				new_dbnum;
-
-	pg_log(PG_REPORT, "%s user relation files\n",
-	  user_opts.transfer_mode == TRANSFER_MODE_LINK ? "Linking" : "Copying");
 
 	/* Scan the old cluster databases and transfer their files */
 	for (old_dbnum = new_dbnum = 0;
@@ -75,14 +118,12 @@ transfer_all_new_dbs(DbInfoArr *old_db_arr,
 #ifdef PAGE_CONVERSION
 			pageConverter = setupPageConverter();
 #endif
-			transfer_single_new_db(pageConverter, mappings, n_maps);
+			transfer_single_new_db(pageConverter, mappings, n_maps,
+								   old_tablespace);
 
 			pg_free(mappings);
 		}
 	}
-
-	end_progress_output();
-	check_ok();
 
 	return;
 }
@@ -125,7 +166,7 @@ get_pg_database_relfilenode(ClusterInfo *cluster)
  */
 static void
 transfer_single_new_db(pageCnvCtx *pageConverter,
-					   FileNameMap *maps, int size)
+					   FileNameMap *maps, int size, char *old_tablespace)
 {
 	int			mapnum;
 	bool		vm_crashsafe_match = true;
@@ -140,18 +181,22 @@ transfer_single_new_db(pageCnvCtx *pageConverter,
 
 	for (mapnum = 0; mapnum < size; mapnum++)
 	{
-		/* transfer primary file */
-		transfer_relfile(pageConverter, &maps[mapnum], "");
-
-		/* fsm/vm files added in PG 8.4 */
-		if (GET_MAJOR_VERSION(old_cluster.major_version) >= 804)
+		if (old_tablespace == NULL ||
+			strcmp(maps[mapnum].old_tablespace, old_tablespace) == 0)
 		{
-			/*
-			 * Copy/link any fsm and vm files, if they exist
-			 */
-			transfer_relfile(pageConverter, &maps[mapnum], "_fsm");
-			if (vm_crashsafe_match)
-				transfer_relfile(pageConverter, &maps[mapnum], "_vm");
+			/* transfer primary file */
+			transfer_relfile(pageConverter, &maps[mapnum], "");
+	
+			/* fsm/vm files added in PG 8.4 */
+			if (GET_MAJOR_VERSION(old_cluster.major_version) >= 804)
+			{
+				/*
+				 * Copy/link any fsm and vm files, if they exist
+				 */
+				transfer_relfile(pageConverter, &maps[mapnum], "_fsm");
+				if (vm_crashsafe_match)
+					transfer_relfile(pageConverter, &maps[mapnum], "_vm");
+			}
 		}
 	}
 }
@@ -187,10 +232,12 @@ transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
 		else
 			snprintf(extent_suffix, sizeof(extent_suffix), ".%d", segno);
 
-		snprintf(old_file, sizeof(old_file), "%s/%u%s%s", map->old_dir,
-				 map->old_relfilenode, type_suffix, extent_suffix);
-		snprintf(new_file, sizeof(new_file), "%s/%u%s%s", map->new_dir,
-				 map->new_relfilenode, type_suffix, extent_suffix);
+		snprintf(old_file, sizeof(old_file), "%s%s/%u/%u%s%s", map->old_tablespace,
+				 map->old_tablespace_suffix, map->old_db_oid, map->old_relfilenode,
+				 type_suffix, extent_suffix);
+		snprintf(new_file, sizeof(new_file), "%s%s/%u/%u%s%s", map->new_tablespace,
+				 map->new_tablespace_suffix, map->new_db_oid, map->new_relfilenode,
+				 type_suffix, extent_suffix);
 	
 		/* Is it an extent, fsm, or vm file? */
 		if (type_suffix[0] != '\0' || segno != 0)
@@ -239,3 +286,4 @@ transfer_relfile(pageCnvCtx *pageConverter, FileNameMap *map,
 
 	return;
 }
+

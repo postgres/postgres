@@ -106,19 +106,24 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 		 * relation belongs to the default tablespace, hence relfiles should
 		 * exist in the data directories.
 		 */
-		snprintf(map->old_dir, sizeof(map->old_dir), "%s/base/%u", old_data,
-				 old_db->db_oid);
-		snprintf(map->new_dir, sizeof(map->new_dir), "%s/base/%u", new_data,
-				 new_db->db_oid);
+		strlcpy(map->old_tablespace, old_data, sizeof(map->old_tablespace));
+		strlcpy(map->new_tablespace, new_data, sizeof(map->new_tablespace));
+		strlcpy(map->old_tablespace_suffix, "/base", sizeof(map->old_tablespace_suffix));
+		strlcpy(map->new_tablespace_suffix, "/base", sizeof(map->new_tablespace_suffix));
 	}
 	else
 	{
 		/* relation belongs to a tablespace, so use the tablespace location */
-		snprintf(map->old_dir, sizeof(map->old_dir), "%s%s/%u", old_rel->tablespace,
-				 old_cluster.tablespace_suffix, old_db->db_oid);
-		snprintf(map->new_dir, sizeof(map->new_dir), "%s%s/%u", new_rel->tablespace,
-				 new_cluster.tablespace_suffix, new_db->db_oid);
+		strlcpy(map->old_tablespace, old_rel->tablespace, sizeof(map->old_tablespace));
+		strlcpy(map->new_tablespace, new_rel->tablespace, sizeof(map->new_tablespace));
+		strlcpy(map->old_tablespace_suffix, old_cluster.tablespace_suffix,
+				sizeof(map->old_tablespace_suffix));
+		strlcpy(map->new_tablespace_suffix, new_cluster.tablespace_suffix,
+				sizeof(map->new_tablespace_suffix));
 	}
+
+	map->old_db_oid = old_db->db_oid;
+	map->new_db_oid = new_db->db_oid;
 
 	/*
 	 * old_relfilenode might differ from pg_class.oid (and hence

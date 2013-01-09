@@ -134,8 +134,12 @@ typedef struct
  */
 typedef struct
 {
-	char		old_dir[MAXPGPATH];
-	char		new_dir[MAXPGPATH];
+	char		old_tablespace[MAXPGPATH];
+	char		new_tablespace[MAXPGPATH];
+	char		old_tablespace_suffix[MAXPGPATH];
+	char		new_tablespace_suffix[MAXPGPATH];
+	Oid			old_db_oid;
+	Oid			new_db_oid;
 
 	/*
 	 * old/new relfilenodes might differ for pg_largeobject(_metadata) indexes
@@ -276,8 +280,8 @@ typedef struct
 	const char *progname;		/* complete pathname for this program */
 	char	   *exec_path;		/* full path to my executable */
 	char	   *user;			/* username for clusters */
-	char	  **tablespaces;	/* tablespaces */
-	int			num_tablespaces;
+	char	  **old_tablespaces;	/* tablespaces */
+	int			num_old_tablespaces;
 	char	  **libraries;		/* loadable libraries */
 	int			num_libraries;
 	ClusterInfo *running_cluster;
@@ -398,9 +402,11 @@ void		get_sock_dir(ClusterInfo *cluster, bool live_check);
 /* relfilenode.c */
 
 void		get_pg_database_relfilenode(ClusterInfo *cluster);
-void		transfer_all_new_dbs(DbInfoArr *olddb_arr,
-				   DbInfoArr *newdb_arr, char *old_pgdata, char *new_pgdata);
-
+void		transfer_all_new_tablespaces(DbInfoArr *old_db_arr,
+				   DbInfoArr *new_db_arr, char *old_pgdata, char *new_pgdata);
+void		transfer_all_new_dbs(DbInfoArr *old_db_arr,
+				   DbInfoArr *new_db_arr, char *old_pgdata, char *new_pgdata,
+				   char *old_tablespace);
 
 /* tablespace.c */
 
@@ -464,9 +470,11 @@ void old_8_3_invalidate_bpchar_pattern_ops_indexes(ClusterInfo *cluster,
 char	   *old_8_3_create_sequence_script(ClusterInfo *cluster);
 
 /* parallel.c */
-void parallel_exec_prog(const char *log_file, const char *opt_log_file,
+void		parallel_exec_prog(const char *log_file, const char *opt_log_file,
 		  const char *fmt,...)
 __attribute__((format(PG_PRINTF_ATTRIBUTE, 3, 4)));
-
-bool reap_child(bool wait_for_child);
+void		parallel_transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
+										  char *old_pgdata, char *new_pgdata,
+										  char *old_tablespace);
+bool		reap_child(bool wait_for_child);
 

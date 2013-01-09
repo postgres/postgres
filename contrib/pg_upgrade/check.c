@@ -606,7 +606,7 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 	fprintf(script, RMDIR_CMD " %s\n", fix_path_separator(old_cluster.pgdata));
 
 	/* delete old cluster's alternate tablespaces */
-	for (tblnum = 0; tblnum < os_info.num_tablespaces; tblnum++)
+	for (tblnum = 0; tblnum < os_info.num_old_tablespaces; tblnum++)
 	{
 		/*
 		 * Do the old cluster's per-database directories share a directory
@@ -621,14 +621,14 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 			/* remove PG_VERSION? */
 			if (GET_MAJOR_VERSION(old_cluster.major_version) <= 804)
 				fprintf(script, RM_CMD " %s%s%cPG_VERSION\n",
-						fix_path_separator(os_info.tablespaces[tblnum]), 
+						fix_path_separator(os_info.old_tablespaces[tblnum]), 
 						fix_path_separator(old_cluster.tablespace_suffix),
 						PATH_SEPARATOR);
 
 			for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
 			{
 				fprintf(script, RMDIR_CMD " %s%s%c%d\n",
-						fix_path_separator(os_info.tablespaces[tblnum]),
+						fix_path_separator(os_info.old_tablespaces[tblnum]),
 						fix_path_separator(old_cluster.tablespace_suffix),
 						PATH_SEPARATOR, old_cluster.dbarr.dbs[dbnum].db_oid);
 			}
@@ -640,7 +640,7 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 			 * or a version-specific subdirectory.
 			 */
 			fprintf(script, RMDIR_CMD " %s%s\n",
-					fix_path_separator(os_info.tablespaces[tblnum]), 
+					fix_path_separator(os_info.old_tablespaces[tblnum]), 
 					fix_path_separator(old_cluster.tablespace_suffix));
 	}
 

@@ -342,10 +342,11 @@ NET STOP pgsql-8.3  (<productname>PostgreSQL</> 8.3 and older used a different s
 
     <para>
      The <option>--jobs</> option allows multiple CPU cores to be used
-     to dump and reload database schemas in parallel;  a good place to
-     start is the number of CPU cores on the server.  This option can
-     dramatically reduce the time to upgrade a multi-database server
-     running on a multiprocessor machine.
+     for copying/linking of files and to dump and reload database schemas
+     in parallel;  a good place to start is the maximum of the number of
+     CPU cores and tablespaces.  This option can dramatically reduce the
+     time to upgrade a multi-database server running on a multiprocessor
+     machine.
     </para>
 
     <para>
