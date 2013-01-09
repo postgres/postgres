@@ -83,10 +83,11 @@ sub Install
 		"src");
 	CopySetOfFiles('config files', $sample_files, $target . '/share/');
 	CopyFiles(
-		'Import libraries', $target . '/lib/',
-		"$conf\\",          "postgres\\postgres.lib",
-		"libpq\\libpq.lib", "libecpg\\libecpg.lib",
-		"libpgport\\libpgport.lib");
+		'Import libraries',         $target . '/lib/',
+		"$conf\\",                  "postgres\\postgres.lib",
+		"libpq\\libpq.lib",         "libecpg\\libecpg.lib",
+		"libpgport\\libpgport.lib", "libpgtypes\\libpgtypes.lib",
+		"libecpg_compat\\libecpg_compat.lib");
 	CopySetOfFiles(
 		'timezone names',
 		[ glob('src\timezone\tznames\*.txt') ],
