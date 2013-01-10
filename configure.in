@@ -1792,6 +1792,30 @@ if test "$with_tcl" = yes; then
     CPPFLAGS=$ac_save_CPPFLAGS
 fi
 
+# check for <perl.h>
+if test "$with_perl" = yes; then
+  ac_save_CPPFLAGS=$CPPFLAGS
+  CPPFLAGS="-I$perl_archlibexp/CORE $CPPFLAGS"
+  AC_CHECK_HEADER(perl.h, [], [AC_MSG_ERROR([header file <perl.h> is required for Perl])],
+                  [#include <EXTERN.h>])
+  # While we're at it, check that we can link to libperl.
+  # On most platforms, if perl.h is there then libperl.so will be too, but at
+  # this writing Debian packages them separately.  There is no known reason to
+  # waste cycles on separate probes for the Tcl or Python libraries, though.
+  pgac_save_LIBS=$LIBS
+  LIBS="$perl_embed_ldflags $LIBS"
+  AC_MSG_CHECKING([for libperl])
+  AC_TRY_LINK([
+#include <EXTERN.h>
+#include <perl.h>
+],  [perl_alloc();],
+    [AC_MSG_RESULT(yes)],
+    [AC_MSG_RESULT(no)
+     AC_MSG_ERROR([libperl library is required for Perl])])
+  LIBS=$pgac_save_LIBS
+  CPPFLAGS=$ac_save_CPPFLAGS
+fi
+
 # check for <Python.h>
 if test "$with_python" = yes; then
   ac_save_CPPFLAGS=$CPPFLAGS
