@@ -1803,7 +1803,7 @@ if test "$with_perl" = yes; then
   # this writing Debian packages them separately.  There is no known reason to
   # waste cycles on separate probes for the Tcl or Python libraries, though.
   pgac_save_LIBS=$LIBS
-  LIBS="$perl_embed_ldflags $LIBS"
+  LIBS="$perl_embed_ldflags"
   AC_MSG_CHECKING([for libperl])
   AC_TRY_LINK([
 #include <EXTERN.h>
