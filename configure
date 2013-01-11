@@ -29127,7 +29127,7 @@ fi
 # check for <perl.h>
 if test "$with_perl" = yes; then
   ac_save_CPPFLAGS=$CPPFLAGS
-  CPPFLAGS="-I$perl_archlibexp/CORE $CPPFLAGS"
+  CPPFLAGS="$CPPFLAGS -I$perl_archlibexp/CORE"
   { $as_echo "$as_me:$LINENO: checking for perl.h" >&5
 $as_echo_n "checking for perl.h... " >&6; }
 if test "${ac_cv_header_perl_h+set}" = set; then

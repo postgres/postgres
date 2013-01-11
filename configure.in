@@ -1795,7 +1795,7 @@ fi
 # check for <perl.h>
 if test "$with_perl" = yes; then
   ac_save_CPPFLAGS=$CPPFLAGS
-  CPPFLAGS="-I$perl_archlibexp/CORE $CPPFLAGS"
+  CPPFLAGS="$CPPFLAGS -I$perl_archlibexp/CORE"
   AC_CHECK_HEADER(perl.h, [], [AC_MSG_ERROR([header file <perl.h> is required for Perl])],
                   [#include <EXTERN.h>])
   # While we're at it, check that we can link to libperl.
