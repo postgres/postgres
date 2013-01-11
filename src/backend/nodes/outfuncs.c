@@ -1772,7 +1772,9 @@ _outIndexOptInfo(StringInfo str, const IndexOptInfo *node)
 	/* Do NOT print rel field, else infinite recursion */
 	WRITE_UINT_FIELD(pages);
 	WRITE_FLOAT_FIELD(tuples, "%.0f");
+	WRITE_INT_FIELD(tree_height);
 	WRITE_INT_FIELD(ncolumns);
+	/* array fields aren't really worth the trouble to print */
 	WRITE_OID_FIELD(relam);
 	/* indexprs is redundant since we print indextlist */
 	WRITE_NODE_FIELD(indpred);
@@ -1781,6 +1783,7 @@ _outIndexOptInfo(StringInfo str, const IndexOptInfo *node)
 	WRITE_BOOL_FIELD(unique);
 	WRITE_BOOL_FIELD(immediate);
 	WRITE_BOOL_FIELD(hypothetical);
+	/* we don't bother with fields copied from the pg_am entry */
 }
 
 static void

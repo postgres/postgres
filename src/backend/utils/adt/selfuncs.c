@@ -201,6 +201,7 @@ static Selectivity regex_selectivity(const char *patt, int pattlen,
 static Datum string_to_datum(const char *str, Oid datatype);
 static Const *string_to_const(const char *str, Oid datatype);
 static Const *string_to_bytea_const(const char *str, size_t str_len);
+static List *add_predicate_to_quals(IndexOptInfo *index, List *indexQuals);
 
 
 /*
@@ -5916,76 +5917,55 @@ string_to_bytea_const(const char *str, size_t str_len)
  */
 
 /*
- * If the index is partial, add its predicate to the given qual list.
+ * genericcostestimate is a general-purpose estimator that can be used for
+ * most index types.  In some cases we use genericcostestimate as the base
+ * code and then incorporate additional index-type-specific knowledge in
+ * the type-specific calling function.  To avoid code duplication, we make
+ * genericcostestimate return a number of intermediate values as well as
+ * its preliminary estimates of the output cost values.  The GenericCosts
+ * struct includes all these values.
  *
- * ANDing the index predicate with the explicitly given indexquals produces
- * a more accurate idea of the index's selectivity.  However, we need to be
- * careful not to insert redundant clauses, because clauselist_selectivity()
- * is easily fooled into computing a too-low selectivity estimate.	Our
- * approach is to add only the predicate clause(s) that cannot be proven to
- * be implied by the given indexquals.	This successfully handles cases such
- * as a qual "x = 42" used with a partial index "WHERE x >= 40 AND x < 50".
- * There are many other cases where we won't detect redundancy, leading to a
- * too-low selectivity estimate, which will bias the system in favor of using
- * partial indexes where possible.	That is not necessarily bad though.
- *
- * Note that indexQuals contains RestrictInfo nodes while the indpred
- * does not, so the output list will be mixed.	This is OK for both
- * predicate_implied_by() and clauselist_selectivity(), but might be
- * problematic if the result were passed to other things.
+ * Callers should initialize all fields of GenericCosts to zero.  In addition,
+ * they can set numIndexTuples to some positive value if they have a better
+ * than default way of estimating the number of leaf index tuples visited.
  */
-static List *
-add_predicate_to_quals(IndexOptInfo *index, List *indexQuals)
+typedef struct
 {
-	List	   *predExtraQuals = NIL;
-	ListCell   *lc;
+	/* These are the values the cost estimator must return to the planner */
+	Cost		indexStartupCost;		/* index-related startup cost */
+	Cost		indexTotalCost;			/* total index-related scan cost */
+	Selectivity	indexSelectivity;		/* selectivity of index */
+	double		indexCorrelation;		/* order correlation of index */
 
-	if (index->indpred == NIL)
-		return indexQuals;
+	/* Intermediate values we obtain along the way */
+	double		numIndexPages;			/* number of leaf pages visited */
+	double		numIndexTuples;			/* number of leaf tuples visited */
+	double		spc_random_page_cost;	/* relevant random_page_cost value */
+	double		num_sa_scans;			/* # indexscans from ScalarArrayOps */
+} GenericCosts;
 
-	foreach(lc, index->indpred)
-	{
-		Node	   *predQual = (Node *) lfirst(lc);
-		List	   *oneQual = list_make1(predQual);
-
-		if (!predicate_implied_by(oneQual, indexQuals))
-			predExtraQuals = list_concat(predExtraQuals, oneQual);
-	}
-	/* list_concat avoids modifying the passed-in indexQuals list */
-	return list_concat(predExtraQuals, indexQuals);
-}
-
-/*
- * genericcostestimate is a general-purpose estimator for use when we
- * don't have any better idea about how to estimate.  Index-type-specific
- * knowledge can be incorporated in the type-specific routines.
- *
- * One bit of index-type-specific knowledge we can relatively easily use
- * in genericcostestimate is the estimate of the number of index tuples
- * visited.  If numIndexTuples is not 0 then it is used as the estimate,
- * otherwise we compute a generic estimate.
- */
 static void
 genericcostestimate(PlannerInfo *root,
 					IndexPath *path,
 					double loop_count,
-					double numIndexTuples,
-					Cost *indexStartupCost,
-					Cost *indexTotalCost,
-					Selectivity *indexSelectivity,
-					double *indexCorrelation)
+					GenericCosts *costs)
 {
 	IndexOptInfo *index = path->indexinfo;
 	List	   *indexQuals = path->indexquals;
 	List	   *indexOrderBys = path->indexorderbys;
+	Cost		indexStartupCost;
+	Cost		indexTotalCost;
+	Selectivity	indexSelectivity;
+	double		indexCorrelation;
 	double		numIndexPages;
+	double		numIndexTuples;
+	double		spc_random_page_cost;
 	double		num_sa_scans;
 	double		num_outer_scans;
 	double		num_scans;
 	QualCost	index_qual_cost;
 	double		qual_op_cost;
 	double		qual_arg_cost;
-	double		spc_random_page_cost;
 	List	   *selectivityQuals;
 	ListCell   *l;
 
@@ -6016,19 +5996,20 @@ genericcostestimate(PlannerInfo *root,
 	}
 
 	/* Estimate the fraction of main-table tuples that will be visited */
-	*indexSelectivity = clauselist_selectivity(root, selectivityQuals,
-											   index->rel->relid,
-											   JOIN_INNER,
-											   NULL);
+	indexSelectivity = clauselist_selectivity(root, selectivityQuals,
+											  index->rel->relid,
+											  JOIN_INNER,
+											  NULL);
 
 	/*
 	 * If caller didn't give us an estimate, estimate the number of index
 	 * tuples that will be visited.  We do it in this rather peculiar-looking
 	 * way in order to get the right answer for partial indexes.
 	 */
+	numIndexTuples = costs->numIndexTuples;
 	if (numIndexTuples <= 0.0)
 	{
-		numIndexTuples = *indexSelectivity * index->rel->tuples;
+		numIndexTuples = indexSelectivity * index->rel->tuples;
 
 		/*
 		 * The above calculation counts all the tuples visited across all
@@ -6055,9 +6036,12 @@ genericcostestimate(PlannerInfo *root,
 	 *
 	 * We use the simplistic method of taking a pro-rata fraction of the total
 	 * number of index pages.  In effect, this counts only leaf pages and not
-	 * any overhead such as index metapage or upper tree levels. In practice
-	 * this seems a better approximation than charging for access to the upper
-	 * levels, perhaps because those tend to stay in cache under load.
+	 * any overhead such as index metapage or upper tree levels.
+	 *
+	 * In practice access to upper index levels is often nearly free because
+	 * those tend to stay in cache under load; moreover, the cost involved is
+	 * highly dependent on index type.  We therefore ignore such costs here
+	 * and leave it to the caller to add a suitable charge if needed.
 	 */
 	if (index->pages > 1 && index->tuples > 1)
 		numIndexPages = ceil(numIndexTuples * index->pages / index->tuples);
@@ -6107,7 +6091,7 @@ genericcostestimate(PlannerInfo *root,
 		 * share for each outer scan.  (Don't pro-rate for ScalarArrayOpExpr,
 		 * since that's internal to the indexscan.)
 		 */
-		*indexTotalCost = (pages_fetched * spc_random_page_cost)
+		indexTotalCost = (pages_fetched * spc_random_page_cost)
 			/ num_outer_scans;
 	}
 	else
@@ -6116,28 +6100,8 @@ genericcostestimate(PlannerInfo *root,
 		 * For a single index scan, we just charge spc_random_page_cost per
 		 * page touched.
 		 */
-		*indexTotalCost = numIndexPages * spc_random_page_cost;
+		indexTotalCost = numIndexPages * spc_random_page_cost;
 	}
-
-	/*
-	 * A difficulty with the leaf-pages-only cost approach is that for small
-	 * selectivities (eg, single index tuple fetched) all indexes will look
-	 * equally attractive because we will estimate exactly 1 leaf page to be
-	 * fetched.  All else being equal, we should prefer physically smaller
-	 * indexes over larger ones.  (An index might be smaller because it is
-	 * partial or because it contains fewer columns; presumably the other
-	 * columns in the larger index aren't useful to the query, or the larger
-	 * index would have better selectivity.)
-	 *
-	 * We can deal with this by adding a very small "fudge factor" that
-	 * depends on the index size, so that indexes of different sizes won't
-	 * look exactly equally attractive.  To ensure the fudge factor stays
-	 * small even for very large indexes, use a log function.  (We previously
-	 * used a factor of one spc_random_page_cost per 10000 index pages, which
-	 * grew too large for large indexes.  This expression has about the same
-	 * growth rate for small indexes, but tails off quickly.)
-	 */
-	*indexTotalCost += log(1.0 + index->pages / 10000.0) * spc_random_page_cost;
 
 	/*
 	 * CPU cost: any complex expressions in the indexquals will need to be
@@ -6149,10 +6113,9 @@ genericcostestimate(PlannerInfo *root,
 	 * for ScalarArrayOpExpr cases.  Similarly add in costs for any index
 	 * ORDER BY expressions.
 	 *
-	 * Note: this neglects the possible costs of rechecking lossy operators
-	 * and OR-clause expressions.  Detecting that that might be needed seems
-	 * more expensive than it's worth, though, considering all the other
-	 * inaccuracies here ...
+	 * Note: this neglects the possible costs of rechecking lossy operators.
+	 * Detecting that that might be needed seems more expensive than it's
+	 * worth, though, considering all the other inaccuracies here ...
 	 */
 	cost_qual_eval(&index_qual_cost, indexQuals, root);
 	qual_arg_cost = index_qual_cost.startup + index_qual_cost.per_tuple;
@@ -6164,29 +6127,66 @@ genericcostestimate(PlannerInfo *root,
 	if (qual_arg_cost < 0)		/* just in case... */
 		qual_arg_cost = 0;
 
-	*indexStartupCost = qual_arg_cost;
-	*indexTotalCost += qual_arg_cost;
-	*indexTotalCost += numIndexTuples * num_sa_scans * (cpu_index_tuple_cost + qual_op_cost);
-
-	/*
-	 * We also add a CPU-cost component to represent the general costs of
-	 * starting an indexscan, such as analysis of btree index keys and initial
-	 * tree descent.  This is estimated at 100x cpu_operator_cost, which is a
-	 * bit arbitrary but seems the right order of magnitude. (As noted above,
-	 * we don't charge any I/O for touching upper tree levels, but charging
-	 * nothing at all has been found too optimistic.)
-	 *
-	 * Although this is startup cost with respect to any one scan, we add it
-	 * to the "total" cost component because it's only very interesting in the
-	 * many-ScalarArrayOpExpr-scan case, and there it will be paid over the
-	 * life of the scan node.
-	 */
-	*indexTotalCost += num_sa_scans * 100.0 * cpu_operator_cost;
+	indexStartupCost = qual_arg_cost;
+	indexTotalCost += qual_arg_cost;
+	indexTotalCost += numIndexTuples * num_sa_scans * (cpu_index_tuple_cost + qual_op_cost);
 
 	/*
 	 * Generic assumption about index correlation: there isn't any.
 	 */
-	*indexCorrelation = 0.0;
+	indexCorrelation = 0.0;
+
+	/*
+	 * Return everything to caller.
+	 */
+	costs->indexStartupCost = indexStartupCost;
+	costs->indexTotalCost = indexTotalCost;
+	costs->indexSelectivity = indexSelectivity;
+	costs->indexCorrelation = indexCorrelation;
+	costs->numIndexPages = numIndexPages;
+	costs->numIndexTuples = numIndexTuples;
+	costs->spc_random_page_cost = spc_random_page_cost;
+	costs->num_sa_scans = num_sa_scans;
+}
+
+/*
+ * If the index is partial, add its predicate to the given qual list.
+ *
+ * ANDing the index predicate with the explicitly given indexquals produces
+ * a more accurate idea of the index's selectivity.  However, we need to be
+ * careful not to insert redundant clauses, because clauselist_selectivity()
+ * is easily fooled into computing a too-low selectivity estimate.	Our
+ * approach is to add only the predicate clause(s) that cannot be proven to
+ * be implied by the given indexquals.	This successfully handles cases such
+ * as a qual "x = 42" used with a partial index "WHERE x >= 40 AND x < 50".
+ * There are many other cases where we won't detect redundancy, leading to a
+ * too-low selectivity estimate, which will bias the system in favor of using
+ * partial indexes where possible.	That is not necessarily bad though.
+ *
+ * Note that indexQuals contains RestrictInfo nodes while the indpred
+ * does not, so the output list will be mixed.	This is OK for both
+ * predicate_implied_by() and clauselist_selectivity(), but might be
+ * problematic if the result were passed to other things.
+ */
+static List *
+add_predicate_to_quals(IndexOptInfo *index, List *indexQuals)
+{
+	List	   *predExtraQuals = NIL;
+	ListCell   *lc;
+
+	if (index->indpred == NIL)
+		return indexQuals;
+
+	foreach(lc, index->indpred)
+	{
+		Node	   *predQual = (Node *) lfirst(lc);
+		List	   *oneQual = list_make1(predQual);
+
+		if (!predicate_implied_by(oneQual, indexQuals))
+			predExtraQuals = list_concat(predExtraQuals, oneQual);
+	}
+	/* list_concat avoids modifying the passed-in indexQuals list */
+	return list_concat(predExtraQuals, indexQuals);
 }
 
 
@@ -6201,10 +6201,12 @@ btcostestimate(PG_FUNCTION_ARGS)
 	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
 	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(6);
 	IndexOptInfo *index = path->indexinfo;
+	GenericCosts costs;
 	Oid			relid;
 	AttrNumber	colnum;
 	VariableStatData vardata;
 	double		numIndexTuples;
+	Cost		descentCost;
 	List	   *indexBoundQuals;
 	int			indexcol;
 	bool		eqQualHere;
@@ -6379,10 +6381,45 @@ btcostestimate(PG_FUNCTION_ARGS)
 		numIndexTuples = rint(numIndexTuples / num_sa_scans);
 	}
 
-	genericcostestimate(root, path, loop_count,
-						numIndexTuples,
-						indexStartupCost, indexTotalCost,
-						indexSelectivity, indexCorrelation);
+	/*
+	 * Now do generic index cost estimation.
+	 */
+	MemSet(&costs, 0, sizeof(costs));
+	costs.numIndexTuples = numIndexTuples;
+
+	genericcostestimate(root, path, loop_count, &costs);
+
+	/*
+	 * Add a CPU-cost component to represent the costs of initial btree
+	 * descent.  We don't charge any I/O cost for touching upper btree levels,
+	 * since they tend to stay in cache, but we still have to do about log2(N)
+	 * comparisons to descend a btree of N leaf tuples.  We charge one
+	 * cpu_operator_cost per comparison.
+	 *
+	 * If there are ScalarArrayOpExprs, charge this once per SA scan.  The
+	 * ones after the first one are not startup cost so far as the overall
+	 * plan is concerned, so add them only to "total" cost.
+	 */
+	if (index->tuples > 1)		/* avoid computing log(0) */
+	{
+		descentCost = ceil(log(index->tuples) / log(2.0)) * cpu_operator_cost;
+		costs.indexStartupCost += descentCost;
+		costs.indexTotalCost += costs.num_sa_scans * descentCost;
+	}
+
+	/*
+	 * Even though we're not charging I/O cost for touching upper btree pages,
+	 * it's still reasonable to charge some CPU cost per page descended
+	 * through.  Moreover, if we had no such charge at all, bloated indexes
+	 * would appear to have the same search cost as unbloated ones, at least
+	 * in cases where only a single leaf page is expected to be visited.  This
+	 * cost is somewhat arbitrarily set at 50x cpu_operator_cost per page
+	 * touched.  The number of such pages is btree tree height plus one (ie,
+	 * we charge for the leaf page too).  As above, charge once per SA scan.
+	 */
+	descentCost = (index->tree_height + 1) * 50.0 * cpu_operator_cost;
+	costs.indexStartupCost += descentCost;
+	costs.indexTotalCost += costs.num_sa_scans * descentCost;
 
 	/*
 	 * If we can get an estimate of the first column's ordering correlation C
@@ -6478,15 +6515,20 @@ btcostestimate(PG_FUNCTION_ARGS)
 				varCorrelation = -varCorrelation;
 
 			if (index->ncolumns > 1)
-				*indexCorrelation = varCorrelation * 0.75;
+				costs.indexCorrelation = varCorrelation * 0.75;
 			else
-				*indexCorrelation = varCorrelation;
+				costs.indexCorrelation = varCorrelation;
 
 			free_attstatsslot(InvalidOid, NULL, 0, numbers, nnumbers);
 		}
 	}
 
 	ReleaseVariableStats(vardata);
+
+	*indexStartupCost = costs.indexStartupCost;
+	*indexTotalCost = costs.indexTotalCost;
+	*indexSelectivity = costs.indexSelectivity;
+	*indexCorrelation = costs.indexCorrelation;
 
 	PG_RETURN_VOID();
 }
@@ -6501,10 +6543,41 @@ hashcostestimate(PG_FUNCTION_ARGS)
 	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(4);
 	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
 	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(6);
+	GenericCosts costs;
 
-	genericcostestimate(root, path, loop_count, 0.0,
-						indexStartupCost, indexTotalCost,
-						indexSelectivity, indexCorrelation);
+	MemSet(&costs, 0, sizeof(costs));
+
+	genericcostestimate(root, path, loop_count, &costs);
+
+	/*
+	 * A hash index has no descent costs as such, since the index AM can go
+	 * directly to the target bucket after computing the hash value.  There
+	 * are a couple of other hash-specific costs that we could conceivably add
+	 * here, though:
+	 *
+	 * Ideally we'd charge spc_random_page_cost for each page in the target
+	 * bucket, not just the numIndexPages pages that genericcostestimate
+	 * thought we'd visit.  However in most cases we don't know which bucket
+	 * that will be.  There's no point in considering the average bucket size
+	 * because the hash AM makes sure that's always one page.
+	 *
+	 * Likewise, we could consider charging some CPU for each index tuple in
+	 * the bucket, if we knew how many there were.  But the per-tuple cost is
+	 * just a hash value comparison, not a general datatype-dependent
+	 * comparison, so any such charge ought to be quite a bit less than
+	 * cpu_operator_cost; which makes it probably not worth worrying about.
+	 *
+	 * A bigger issue is that chance hash-value collisions will result in
+	 * wasted probes into the heap.  We don't currently attempt to model this
+	 * cost on the grounds that it's rare, but maybe it's not rare enough.
+	 * (Any fix for this ought to consider the generic lossy-operator problem,
+	 * though; it's not entirely hash-specific.)
+	 */
+
+	*indexStartupCost = costs.indexStartupCost;
+	*indexTotalCost = costs.indexTotalCost;
+	*indexSelectivity = costs.indexSelectivity;
+	*indexCorrelation = costs.indexCorrelation;
 
 	PG_RETURN_VOID();
 }
@@ -6519,10 +6592,54 @@ gistcostestimate(PG_FUNCTION_ARGS)
 	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(4);
 	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
 	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(6);
+	IndexOptInfo *index = path->indexinfo;
+	GenericCosts costs;
+	Cost		descentCost;
 
-	genericcostestimate(root, path, loop_count, 0.0,
-						indexStartupCost, indexTotalCost,
-						indexSelectivity, indexCorrelation);
+	MemSet(&costs, 0, sizeof(costs));
+
+	genericcostestimate(root, path, loop_count, &costs);
+
+	/*
+	 * We model index descent costs similarly to those for btree, but to do
+	 * that we first need an idea of the tree height.  We somewhat arbitrarily
+	 * assume that the fanout is 100, meaning the tree height is at most
+	 * log100(index->pages).
+	 *
+	 * Although this computation isn't really expensive enough to require
+	 * caching, we might as well use index->tree_height to cache it.
+	 */
+	if (index->tree_height < 0)	/* unknown? */
+	{
+		if (index->pages > 1)	/* avoid computing log(0) */
+			index->tree_height = (int) (log(index->pages) / log(100.0));
+		else
+			index->tree_height = 0;
+	}
+
+	/*
+	 * Add a CPU-cost component to represent the costs of initial descent.
+	 * We just use log(N) here not log2(N) since the branching factor isn't
+	 * necessarily two anyway.  As for btree, charge once per SA scan.
+	 */
+	if (index->tuples > 1)		/* avoid computing log(0) */
+	{
+		descentCost = ceil(log(index->tuples)) * cpu_operator_cost;
+		costs.indexStartupCost += descentCost;
+		costs.indexTotalCost += costs.num_sa_scans * descentCost;
+	}
+
+	/*
+	 * Likewise add a per-page charge, calculated the same as for btrees.
+	 */
+	descentCost = (index->tree_height + 1) * 50.0 * cpu_operator_cost;
+	costs.indexStartupCost += descentCost;
+	costs.indexTotalCost += costs.num_sa_scans * descentCost;
+
+	*indexStartupCost = costs.indexStartupCost;
+	*indexTotalCost = costs.indexTotalCost;
+	*indexSelectivity = costs.indexSelectivity;
+	*indexCorrelation = costs.indexCorrelation;
 
 	PG_RETURN_VOID();
 }
@@ -6537,10 +6654,54 @@ spgcostestimate(PG_FUNCTION_ARGS)
 	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(4);
 	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
 	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(6);
+	IndexOptInfo *index = path->indexinfo;
+	GenericCosts costs;
+	Cost		descentCost;
 
-	genericcostestimate(root, path, loop_count, 0.0,
-						indexStartupCost, indexTotalCost,
-						indexSelectivity, indexCorrelation);
+	MemSet(&costs, 0, sizeof(costs));
+
+	genericcostestimate(root, path, loop_count, &costs);
+
+	/*
+	 * We model index descent costs similarly to those for btree, but to do
+	 * that we first need an idea of the tree height.  We somewhat arbitrarily
+	 * assume that the fanout is 100, meaning the tree height is at most
+	 * log100(index->pages).
+	 *
+	 * Although this computation isn't really expensive enough to require
+	 * caching, we might as well use index->tree_height to cache it.
+	 */
+	if (index->tree_height < 0)	/* unknown? */
+	{
+		if (index->pages > 1)	/* avoid computing log(0) */
+			index->tree_height = (int) (log(index->pages) / log(100.0));
+		else
+			index->tree_height = 0;
+	}
+
+	/*
+	 * Add a CPU-cost component to represent the costs of initial descent.
+	 * We just use log(N) here not log2(N) since the branching factor isn't
+	 * necessarily two anyway.  As for btree, charge once per SA scan.
+	 */
+	if (index->tuples > 1)		/* avoid computing log(0) */
+	{
+		descentCost = ceil(log(index->tuples)) * cpu_operator_cost;
+		costs.indexStartupCost += descentCost;
+		costs.indexTotalCost += costs.num_sa_scans * descentCost;
+	}
+
+	/*
+	 * Likewise add a per-page charge, calculated the same as for btrees.
+	 */
+	descentCost = (index->tree_height + 1) * 50.0 * cpu_operator_cost;
+	costs.indexStartupCost += descentCost;
+	costs.indexTotalCost += costs.num_sa_scans * descentCost;
+
+	*indexStartupCost = costs.indexStartupCost;
+	*indexTotalCost = costs.indexTotalCost;
+	*indexSelectivity = costs.indexSelectivity;
+	*indexCorrelation = costs.indexCorrelation;
 
 	PG_RETURN_VOID();
 }

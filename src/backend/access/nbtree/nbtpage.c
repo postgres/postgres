@@ -412,6 +412,82 @@ _bt_gettrueroot(Relation rel)
 }
 
 /*
+ *	_bt_getrootheight() -- Get the height of the btree search tree.
+ *
+ *		We return the level (counting from zero) of the current fast root.
+ *		This represents the number of tree levels we'd have to descend through
+ *		to start any btree index search.
+ *
+ *		This is used by the planner for cost-estimation purposes.  Since it's
+ *		only an estimate, slightly-stale data is fine, hence we don't worry
+ *		about updating previously cached data.
+ */
+int
+_bt_getrootheight(Relation rel)
+{
+	BTMetaPageData *metad;
+
+	/*
+	 * We can get what we need from the cached metapage data.  If it's not
+	 * cached yet, load it.  Sanity checks here must match _bt_getroot().
+	 */
+	if (rel->rd_amcache == NULL)
+	{
+		Buffer		metabuf;
+		Page		metapg;
+		BTPageOpaque metaopaque;
+
+		metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_READ);
+		metapg = BufferGetPage(metabuf);
+		metaopaque = (BTPageOpaque) PageGetSpecialPointer(metapg);
+		metad = BTPageGetMeta(metapg);
+
+		/* sanity-check the metapage */
+		if (!(metaopaque->btpo_flags & BTP_META) ||
+			metad->btm_magic != BTREE_MAGIC)
+			ereport(ERROR,
+					(errcode(ERRCODE_INDEX_CORRUPTED),
+					 errmsg("index \"%s\" is not a btree",
+							RelationGetRelationName(rel))));
+
+		if (metad->btm_version != BTREE_VERSION)
+			ereport(ERROR,
+					(errcode(ERRCODE_INDEX_CORRUPTED),
+					 errmsg("version mismatch in index \"%s\": file version %d, code version %d",
+							RelationGetRelationName(rel),
+							metad->btm_version, BTREE_VERSION)));
+
+		/*
+		 * If there's no root page yet, _bt_getroot() doesn't expect a cache
+		 * to be made, so just stop here and report the index height is zero.
+		 * (XXX perhaps _bt_getroot() should be changed to allow this case.)
+		 */
+		if (metad->btm_root == P_NONE)
+		{
+			_bt_relbuf(rel, metabuf);
+			return 0;
+		}
+
+		/*
+		 * Cache the metapage data for next time
+		 */
+		rel->rd_amcache = MemoryContextAlloc(rel->rd_indexcxt,
+											 sizeof(BTMetaPageData));
+		memcpy(rel->rd_amcache, metad, sizeof(BTMetaPageData));
+
+		_bt_relbuf(rel, metabuf);
+	}
+
+	metad = (BTMetaPageData *) rel->rd_amcache;
+	/* We shouldn't have cached it if any of these fail */
+	Assert(metad->btm_magic == BTREE_MAGIC);
+	Assert(metad->btm_version == BTREE_VERSION);
+	Assert(metad->btm_fastroot != P_NONE);
+
+	return metad->btm_fastlevel;
+}
+
+/*
  *	_bt_checkpage() -- Verify that a freshly-read page looks sane.
  */
 void
