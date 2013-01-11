@@ -57,7 +57,7 @@ standby_desc(StringInfo buf, uint8 xl_info, char *rec)
 	{
 		xl_running_xacts *xlrec = (xl_running_xacts *) rec;
 
-		appendStringInfo(buf, " running xacts:");
+		appendStringInfo(buf, "running xacts:");
 		standby_desc_running_xacts(buf, xlrec);
 	}
 	else
