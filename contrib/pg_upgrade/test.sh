@@ -47,8 +47,9 @@ if [ "$1" = '--install' ]; then
 	# We need to make it use psql from our temporary installation,
 	# because otherwise the installcheck run below would try to
 	# use psql from the proper installation directory, which might
-	# be outdated or missing.
-	EXTRA_REGRESS_OPTS=--psqldir=$bindir
+	# be outdated or missing. But don't override anything else that's
+	# already in EXTRA_REGRESS_OPTS.
+	EXTRA_REGRESS_OPTS="$EXTRA_REGRESS_OPTS --psqldir=$bindir"
 	export EXTRA_REGRESS_OPTS
 fi
 
