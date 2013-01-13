@@ -1156,12 +1156,13 @@ getinternalerrposition(void)
  * elog_start --- startup for old-style API
  *
  * All that we do here is stash the hidden filename/lineno/funcname
- * arguments into a stack entry.
+ * arguments into a stack entry, along with the current value of errno.
  *
  * We need this to be separate from elog_finish because there's no other
- * portable way to deal with inserting extra arguments into the elog call.
- * (If macros with variable numbers of arguments were portable, it'd be
- * easy, but they aren't.)
+ * C89-compliant way to deal with inserting extra arguments into the elog
+ * call.  (When using C99's __VA_ARGS__, we could possibly merge this with
+ * elog_finish, but there doesn't seem to be a good way to save errno before
+ * evaluating the format arguments if we do that.)
  */
 void
 elog_start(const char *filename, int lineno, const char *funcname)
