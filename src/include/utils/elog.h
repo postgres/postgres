@@ -101,15 +101,33 @@
  * ereport_domain() directly, or preferably they can override the TEXTDOMAIN
  * macro.
  *
- * When elevel >= ERROR, we add an abort() call to give the compiler a hint
- * that the ereport() expansion will not return, but the abort() isn't actually
- * reached because the longjmp happens in errfinish().
+ * If elevel >= ERROR, the call will not return; we try to inform the compiler
+ * of that via pg_unreachable().  However, no useful optimization effect is
+ * obtained unless the compiler sees elevel as a compile-time constant, else
+ * we're just adding code bloat.  So, if __builtin_constant_p is available,
+ * use that to cause the second if() to vanish completely for non-constant
+ * cases.  We avoid using a local variable because it's not necessary and
+ * prevents gcc from making the unreachability deduction at optlevel -O0.
  *----------
  */
+#ifdef HAVE__BUILTIN_CONSTANT_P
 #define ereport_domain(elevel, domain, rest)	\
-	(errstart(elevel, __FILE__, __LINE__, PG_FUNCNAME_MACRO, domain) ? \
-	 (errfinish rest) : (void) 0),									   \
-		((elevel) >= ERROR ? abort() : (void) 0)
+	do { \
+		if (errstart(elevel, __FILE__, __LINE__, PG_FUNCNAME_MACRO, domain)) \
+			errfinish rest; \
+		if (__builtin_constant_p(elevel) && (elevel) >= ERROR) \
+			pg_unreachable(); \
+	} while(0)
+#else /* !HAVE__BUILTIN_CONSTANT_P */
+#define ereport_domain(elevel, domain, rest)	\
+	do { \
+		const int elevel_ = (elevel); \
+		if (errstart(elevel_, __FILE__, __LINE__, PG_FUNCNAME_MACRO, domain)) \
+			errfinish rest; \
+		if (elevel_ >= ERROR) \
+			pg_unreachable(); \
+	} while(0)
+#endif /* HAVE__BUILTIN_CONSTANT_P */
 
 #define ereport(elevel, rest)	\
 	ereport_domain(elevel, TEXTDOMAIN, rest)
@@ -212,7 +230,37 @@ extern int	getinternalerrposition(void);
  *		elog(ERROR, "portal \"%s\" not found", stmt->portalname);
  *----------
  */
-#define elog	elog_start(__FILE__, __LINE__, PG_FUNCNAME_MACRO), elog_finish
+#ifdef HAVE__VA_ARGS
+/*
+ * If we have variadic macros, we can give the compiler a hint about the
+ * call not returning when elevel >= ERROR.  See comments for ereport().
+ * Note that historically elog() has called elog_start (which saves errno)
+ * before evaluating "elevel", so we preserve that behavior here.
+ */
+#ifdef HAVE__BUILTIN_CONSTANT_P
+#define elog(elevel, ...)  \
+	do { \
+		elog_start(__FILE__, __LINE__, PG_FUNCNAME_MACRO); \
+		elog_finish(elevel, __VA_ARGS__); \
+		if (__builtin_constant_p(elevel) && (elevel) >= ERROR) \
+			pg_unreachable(); \
+	} while(0)
+#else /* !HAVE__BUILTIN_CONSTANT_P */
+#define elog(elevel, ...)  \
+	do { \
+		int		elevel_; \
+		elog_start(__FILE__, __LINE__, PG_FUNCNAME_MACRO); \
+		elevel_ = (elevel); \
+		elog_finish(elevel_, __VA_ARGS__); \
+		if (elevel_ >= ERROR) \
+			pg_unreachable(); \
+	} while(0)
+#endif /* HAVE__BUILTIN_CONSTANT_P */
+#else /* !HAVE__VA_ARGS */
+#define elog  \
+	elog_start(__FILE__, __LINE__, PG_FUNCNAME_MACRO), \
+	elog_finish
+#endif /* HAVE__VA_ARGS */
 
 extern void elog_start(const char *filename, int lineno, const char *funcname);
 extern void
@@ -299,14 +347,14 @@ extern PGDLLIMPORT ErrorContextCallback *error_context_stack;
 
 /*
  * gcc understands __attribute__((noreturn)); for other compilers, insert
- * a useless exit() call so that the compiler gets the point.
+ * pg_unreachable() so that the compiler gets the point.
  */
 #ifdef __GNUC__
 #define PG_RE_THROW()  \
 	pg_re_throw()
 #else
 #define PG_RE_THROW()  \
-	(pg_re_throw(), exit(1))
+	(pg_re_throw(), pg_unreachable())
 #endif
 
 extern PGDLLIMPORT sigjmp_buf *PG_exception_stack;
