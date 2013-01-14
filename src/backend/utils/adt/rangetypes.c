@@ -1966,7 +1966,7 @@ range_parse(const char *string, char *flags, char **lbound_str,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("malformed range literal: \"%s\"",
 							string),
-					 errdetail("Junk after \"empty\" keyword.")));
+					 errdetail("Junk after \"empty\" key word.")));
 
 		return;
 	}
