@@ -315,8 +315,8 @@ SendTimeLineHistory(TimeLineHistoryCmd *cmd)
 	char		histfname[MAXFNAMELEN];
 	char		path[MAXPGPATH];
 	int			fd;
-	size_t		histfilelen;
-	size_t		bytesleft;
+	off_t		histfilelen;
+	off_t		bytesleft;
 
 	/*
 	 * Reply with a result set with one row, and two columns. The first col
