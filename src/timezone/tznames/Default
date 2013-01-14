@@ -615,6 +615,9 @@ EETDST  10800 D  # East-Egypt Summertime
                  #     (Europe/Uzhgorod)
                  #     (Europe/Vilnius)
                  #     (Europe/Zaporozhye)
+FET     10800    # Further-eastern European Time
+                 #     (Europe/Kaliningrad)
+                 #     (Europe/Minsk)
 MEST     7200 D  # Middle Europe Summer Time (not in zic)
 MET      3600    # Middle Europe Time (not in zic)
 METDST   7200 D  # Middle Europe Summer Time (not in zic)
