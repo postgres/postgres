@@ -184,6 +184,12 @@ struct HTAB
 #define ELEMENTKEY(helem)  (((char *)(helem)) + MAXALIGN(sizeof(HASHELEMENT)))
 
 /*
+ * Obtain element pointer given pointer to key
+ */
+#define ELEMENT_FROM_KEY(key)  \
+	((HASHELEMENT *) (((char *) (key)) - MAXALIGN(sizeof(HASHELEMENT))))
+
+/*
  * Fast MOD arithmetic, assuming that y is a power of 2 !
  */
 #define MOD(x,y)			   ((x) & ((y)-1))
@@ -985,6 +991,144 @@ hash_search_with_hash_value(HTAB *hashp,
 	elog(ERROR, "unrecognized hash action code: %d", (int) action);
 
 	return NULL;				/* keep compiler quiet */
+}
+
+/*
+ * hash_update_hash_key -- change the hash key of an existing table entry
+ *
+ * This is equivalent to removing the entry, making a new entry, and copying
+ * over its data, except that the entry never goes to the table's freelist.
+ * Therefore this cannot suffer an out-of-memory failure, even if there are
+ * other processes operating in other partitions of the hashtable.
+ *
+ * Returns TRUE if successful, FALSE if the requested new hash key is already
+ * present.  Throws error if the specified entry pointer isn't actually a
+ * table member.
+ *
+ * NB: currently, there is no special case for old and new hash keys being
+ * identical, which means we'll report FALSE for that situation.  This is
+ * preferable for existing uses.
+ *
+ * NB: for a partitioned hashtable, caller must hold lock on both relevant
+ * partitions, if the new hash key would belong to a different partition.
+ */
+bool
+hash_update_hash_key(HTAB *hashp,
+					 void *existingEntry,
+					 const void *newKeyPtr)
+{
+	HASHELEMENT *existingElement = ELEMENT_FROM_KEY(existingEntry);
+	HASHHDR    *hctl = hashp->hctl;
+	uint32		newhashvalue;
+	Size		keysize;
+	uint32		bucket;
+	long		segment_num;
+	long		segment_ndx;
+	HASHSEGMENT segp;
+	HASHBUCKET	currBucket;
+	HASHBUCKET *prevBucketPtr;
+	HASHBUCKET *oldPrevPtr;
+	HashCompareFunc match;
+
+#if HASH_STATISTICS
+	hash_accesses++;
+	hctl->accesses++;
+#endif
+
+	/* disallow updates if frozen */
+	if (hashp->frozen)
+		elog(ERROR, "cannot update in frozen hashtable \"%s\"",
+			 hashp->tabname);
+
+	/*
+	 * Lookup the existing element using its saved hash value.  We need to
+	 * do this to be able to unlink it from its hash chain, but as a side
+	 * benefit we can verify the validity of the passed existingEntry pointer.
+	 */
+	bucket = calc_bucket(hctl, existingElement->hashvalue);
+
+	segment_num = bucket >> hashp->sshift;
+	segment_ndx = MOD(bucket, hashp->ssize);
+
+	segp = hashp->dir[segment_num];
+
+	if (segp == NULL)
+		hash_corrupted(hashp);
+
+	prevBucketPtr = &segp[segment_ndx];
+	currBucket = *prevBucketPtr;
+
+	while (currBucket != NULL)
+	{
+		if (currBucket == existingElement)
+			break;
+		prevBucketPtr = &(currBucket->link);
+		currBucket = *prevBucketPtr;
+	}
+
+	if (currBucket == NULL)
+		elog(ERROR, "hash_update_hash_key argument is not in hashtable \"%s\"",
+			 hashp->tabname);
+
+	oldPrevPtr = prevBucketPtr;
+
+	/*
+	 * Now perform the equivalent of a HASH_ENTER operation to locate the
+	 * hash chain we want to put the entry into.
+	 */
+	newhashvalue = hashp->hash(newKeyPtr, hashp->keysize);
+
+	bucket = calc_bucket(hctl, newhashvalue);
+
+	segment_num = bucket >> hashp->sshift;
+	segment_ndx = MOD(bucket, hashp->ssize);
+
+	segp = hashp->dir[segment_num];
+
+	if (segp == NULL)
+		hash_corrupted(hashp);
+
+	prevBucketPtr = &segp[segment_ndx];
+	currBucket = *prevBucketPtr;
+
+	/*
+	 * Follow collision chain looking for matching key
+	 */
+	match = hashp->match;		/* save one fetch in inner loop */
+	keysize = hashp->keysize;	/* ditto */
+
+	while (currBucket != NULL)
+	{
+		if (currBucket->hashvalue == newhashvalue &&
+			match(ELEMENTKEY(currBucket), newKeyPtr, keysize) == 0)
+			break;
+		prevBucketPtr = &(currBucket->link);
+		currBucket = *prevBucketPtr;
+#if HASH_STATISTICS
+		hash_collisions++;
+		hctl->collisions++;
+#endif
+	}
+
+	if (currBucket != NULL)
+		return false;			/* collision with an existing entry */
+
+	currBucket = existingElement;
+
+	/* OK to remove record from old hash bucket's chain. */
+	*oldPrevPtr = currBucket->link;
+
+	/* link into new hashbucket chain */
+	*prevBucketPtr = currBucket;
+	currBucket->link = NULL;
+
+	/* copy new key into record */
+	currBucket->hashvalue = newhashvalue;
+	hashp->keycopy(ELEMENTKEY(currBucket), newKeyPtr, keysize);
+
+	/* rest of record is untouched */
+
+	return true;
 }
 
 /*

@@ -3028,7 +3028,6 @@ PostPrepare_Locks(TransactionId xid)
 	LOCK	   *lock;
 	PROCLOCK   *proclock;
 	PROCLOCKTAG proclocktag;
-	bool		found;
 	int			partition;
 
 	/* This is a critical section: any error means big trouble */
@@ -3114,10 +3113,8 @@ PostPrepare_Locks(TransactionId xid)
 		while (proclock)
 		{
 			PROCLOCK   *nextplock;
-			LOCKMASK	holdMask;
-			PROCLOCK   *newproclock;
 
-			/* Get link first, since we may unlink/delete this proclock */
+			/* Get link first, since we may unlink/relink this proclock */
 			nextplock = (PROCLOCK *)
 				SHMQueueNext(procLocks, &proclock->procLink,
 							 offsetof(PROCLOCK, procLink));
@@ -3145,64 +3142,42 @@ PostPrepare_Locks(TransactionId xid)
 			if (proclock->releaseMask != proclock->holdMask)
 				elog(PANIC, "we seem to have dropped a bit somewhere");
 
-			holdMask = proclock->holdMask;
-
 			/*
 			 * We cannot simply modify proclock->tag.myProc to reassign
 			 * ownership of the lock, because that's part of the hash key and
-			 * the proclock would then be in the wrong hash chain.	So, unlink
-			 * and delete the old proclock; create a new one with the right
-			 * contents; and link it into place.  We do it in this order to be
-			 * certain we won't run out of shared memory (the way dynahash.c
-			 * works, the deleted object is certain to be available for
-			 * reallocation).
+			 * the proclock would then be in the wrong hash chain.  Instead
+			 * use hash_update_hash_key.  (We used to create a new hash entry,
+			 * but that risks out-of-memory failure if other processes are
+			 * busy making proclocks too.)  We must unlink the proclock from
+			 * our procLink chain and put it into the new proc's chain, too.
+			 *
+			 * Note: the updated proclock hash key will still belong to the
+			 * same hash partition, cf proclock_hash().  So the partition
+			 * lock we already hold is sufficient for this.
 			 */
-			SHMQueueDelete(&proclock->lockLink);
 			SHMQueueDelete(&proclock->procLink);
-			if (!hash_search(LockMethodProcLockHash,
-							 (void *) &(proclock->tag),
-							 HASH_REMOVE, NULL))
-				elog(PANIC, "proclock table corrupted");
 
 			/*
-			 * Create the hash key for the new proclock table.
+			 * Create the new hash key for the proclock.
 			 */
 			proclocktag.myLock = lock;
 			proclocktag.myProc = newproc;
 
-			newproclock = (PROCLOCK *) hash_search(LockMethodProcLockHash,
-												   (void *) &proclocktag,
-												   HASH_ENTER_NULL, &found);
-			if (!newproclock)
-				ereport(PANIC,	/* should not happen */
-						(errcode(ERRCODE_OUT_OF_MEMORY),
-						 errmsg("out of shared memory"),
-						 errdetail("Not enough memory for reassigning the prepared transaction's locks.")));
-
 			/*
-			 * If new, initialize the new entry
+			 * Update the proclock.  We should not find any existing entry
+			 * for the same hash key, since there can be only one entry for
+			 * any given lock with my own proc.
 			 */
-			if (!found)
-			{
-				newproclock->holdMask = 0;
-				newproclock->releaseMask = 0;
-				/* Add new proclock to appropriate lists */
-				SHMQueueInsertBefore(&lock->procLocks, &newproclock->lockLink);
-				SHMQueueInsertBefore(&(newproc->myProcLocks[partition]),
-									 &newproclock->procLink);
-				PROCLOCK_PRINT("PostPrepare_Locks: new", newproclock);
-			}
-			else
-			{
-				PROCLOCK_PRINT("PostPrepare_Locks: found", newproclock);
-				Assert((newproclock->holdMask & ~lock->grantMask) == 0);
-			}
+			if (!hash_update_hash_key(LockMethodProcLockHash,
+									  (void *) proclock,
+									  (void *) &proclocktag))
+				elog(PANIC, "duplicate entry found while reassigning a prepared transaction's locks");
 
-			/*
-			 * Pass over the identified lock ownership.
-			 */
-			Assert((newproclock->holdMask & holdMask) == 0);
-			newproclock->holdMask |= holdMask;
+			/* Re-link into the new proc's proclock list */
+			SHMQueueInsertBefore(&(newproc->myProcLocks[partition]),
+								 &proclock->procLink);
+
+			PROCLOCK_PRINT("PostPrepare_Locks: updated", proclock);
 
 	next_item:
 			proclock = nextplock;
