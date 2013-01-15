@@ -164,8 +164,6 @@ slashUsage(unsigned short int pager)
 	char	   *currdb;
 
 	currdb = PQdb(pset.db);
-	if (currdb == NULL)
-		currdb = _("none");
 
 	output = PageOutput(94, pager);
 
@@ -257,9 +255,13 @@ slashUsage(unsigned short int pager)
 	fprintf(output, "\n");
 
 	fprintf(output, _("Connection\n"));
-	fprintf(output, _("  \\c[onnect] [DBNAME|- USER|- HOST|- PORT|-]\n"
-	"                         connect to new database (currently \"%s\")\n"),
-			currdb);
+	if (currdb)
+		fprintf(output, _("  \\c[onnect] [DBNAME|- USER|- HOST|- PORT|-]\n"
+						  "                         connect to new database (currently \"%s\")\n"),
+				currdb);
+	else
+		fprintf(output, _("  \\c[onnect] [DBNAME|- USER|- HOST|- PORT|-]\n"
+						  "                         connect to new database (currently no connection)\n")),
 	fprintf(output, _("  \\encoding [ENCODING]   show or set client encoding\n"));
 	fprintf(output, _("  \\password [USERNAME]   securely change the password for a user\n"));
 	fprintf(output, _("  \\conninfo              display information about current connection\n"));
