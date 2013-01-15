@@ -1022,6 +1022,7 @@ hash_update_hash_key(HTAB *hashp,
 	uint32		newhashvalue;
 	Size		keysize;
 	uint32		bucket;
+	uint32		newbucket;
 	long		segment_num;
 	long		segment_ndx;
 	HASHSEGMENT segp;
@@ -1078,10 +1079,10 @@ hash_update_hash_key(HTAB *hashp,
 	 */
 	newhashvalue = hashp->hash(newKeyPtr, hashp->keysize);
 
-	bucket = calc_bucket(hctl, newhashvalue);
+	newbucket = calc_bucket(hctl, newhashvalue);
 
-	segment_num = bucket >> hashp->sshift;
-	segment_ndx = MOD(bucket, hashp->ssize);
+	segment_num = newbucket >> hashp->sshift;
+	segment_ndx = MOD(newbucket, hashp->ssize);
 
 	segp = hashp->dir[segment_num];
 
@@ -1115,12 +1116,22 @@ hash_update_hash_key(HTAB *hashp,
 
 	currBucket = existingElement;
 
-	/* OK to remove record from old hash bucket's chain. */
-	*oldPrevPtr = currBucket->link;
+	/*
+	 * If old and new hash values belong to the same bucket, we need not
+	 * change any chain links, and indeed should not since this simplistic
+	 * update will corrupt the list if currBucket is the last element.  (We
+	 * cannot fall out earlier, however, since we need to scan the bucket to
+	 * check for duplicate keys.)
+	 */
+	if (bucket != newbucket)
+	{
+		/* OK to remove record from old hash bucket's chain. */
+		*oldPrevPtr = currBucket->link;
 
-	/* link into new hashbucket chain */
-	*prevBucketPtr = currBucket;
-	currBucket->link = NULL;
+		/* link into new hashbucket chain */
+		*prevBucketPtr = currBucket;
+		currBucket->link = NULL;
+	}
 
 	/* copy new key into record */
 	currBucket->hashvalue = newhashvalue;
