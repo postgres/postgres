@@ -19,7 +19,6 @@
 
 extern Oid DefineCollation(List *names, List *parameters);
 extern Oid RenameCollation(List *name, const char *newname);
-extern Oid AlterCollationNamespace(List *name, const char *newschema);
-extern Oid	AlterCollationNamespace_oid(Oid collOid, Oid newNspOid);
+extern void IsThereCollationInNamespace(const char *collname, Oid newNspOid);
 
 #endif   /* COLLATIONCMDS_H */

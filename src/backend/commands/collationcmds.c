@@ -167,27 +167,7 @@ RenameCollation(List *name, const char *newname)
 	namespaceOid = ((Form_pg_collation) GETSTRUCT(tup))->collnamespace;
 
 	/* make sure the new name doesn't exist */
-	if (SearchSysCacheExists3(COLLNAMEENCNSP,
-							  CStringGetDatum(newname),
-							  Int32GetDatum(GetDatabaseEncoding()),
-							  ObjectIdGetDatum(namespaceOid)))
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("collation \"%s\" for encoding \"%s\" already exists in schema \"%s\"",
-						newname,
-						GetDatabaseEncodingName(),
-						get_namespace_name(namespaceOid))));
-
-	/* mustn't match an any-encoding entry, either */
-	if (SearchSysCacheExists3(COLLNAMEENCNSP,
-							  CStringGetDatum(newname),
-							  Int32GetDatum(-1),
-							  ObjectIdGetDatum(namespaceOid)))
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("collation \"%s\" already exists in schema \"%s\"",
-						newname,
-						get_namespace_name(namespaceOid))));
+	IsThereCollationInNamespace(newname, namespaceOid);
 
 	/* must be owner */
 	if (!pg_collation_ownercheck(collationOid, GetUserId()))
@@ -213,71 +193,32 @@ RenameCollation(List *name, const char *newname)
 }
 
 /*
- * Execute ALTER COLLATION SET SCHEMA
+ * Subroutine for ALTER COLLATION SET SCHEMA and RENAME
+ *
+ * Is there a collation with the same name of the given collation already in
+ * the given namespace?  If so, raise an appropriate error message.
  */
-Oid
-AlterCollationNamespace(List *name, const char *newschema)
+void
+IsThereCollationInNamespace(const char *collname, Oid nspOid)
 {
-	Oid			collOid,
-				nspOid;
-
-	collOid = get_collation_oid(name, false);
-
-	nspOid = LookupCreationNamespace(newschema);
-
-	AlterCollationNamespace_oid(collOid, nspOid);
-
-	return collOid;
-}
-
-/*
- * Change collation schema, by oid
- */
-Oid
-AlterCollationNamespace_oid(Oid collOid, Oid newNspOid)
-{
-	Oid			oldNspOid;
-	Relation	rel;
-	char	   *collation_name;
-
-	rel = heap_open(CollationRelationId, RowExclusiveLock);
-
-	/*
-	 * We have to check for name collision ourselves, because
-	 * AlterObjectNamespace_internal doesn't know how to deal with the encoding
-	 * considerations.
-	 */
-	collation_name = get_collation_name(collOid);
-	if (!collation_name)
-		elog(ERROR, "cache lookup failed for collation %u", collOid);
-
 	/* make sure the name doesn't already exist in new schema */
 	if (SearchSysCacheExists3(COLLNAMEENCNSP,
-							  CStringGetDatum(collation_name),
+							  CStringGetDatum(collname),
 							  Int32GetDatum(GetDatabaseEncoding()),
-							  ObjectIdGetDatum(newNspOid)))
+							  ObjectIdGetDatum(nspOid)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("collation \"%s\" for encoding \"%s\" already exists in schema \"%s\"",
-						collation_name,
-						GetDatabaseEncodingName(),
-						get_namespace_name(newNspOid))));
+						collname, GetDatabaseEncodingName(),
+						get_namespace_name(nspOid))));
 
 	/* mustn't match an any-encoding entry, either */
 	if (SearchSysCacheExists3(COLLNAMEENCNSP,
-							  CStringGetDatum(collation_name),
+							  CStringGetDatum(collname),
 							  Int32GetDatum(-1),
-							  ObjectIdGetDatum(newNspOid)))
+							  ObjectIdGetDatum(nspOid)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("collation \"%s\" already exists in schema \"%s\"",
-						collation_name,
-						get_namespace_name(newNspOid))));
-
-	/* OK, do the work */
-	oldNspOid = AlterObjectNamespace_internal(rel, collOid, newNspOid);
-
-	heap_close(rel, RowExclusiveLock);
-
-	return oldNspOid;
+						collname, get_namespace_name(nspOid))));
 }

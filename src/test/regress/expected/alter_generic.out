@@ -69,7 +69,7 @@ ERROR:  must be member of role "regtest_alter_user3"
 ALTER FUNCTION alt_func3(int) SET SCHEMA alt_nsp2;      -- failed (not owner)
 ERROR:  must be owner of function alt_func3
 ALTER FUNCTION alt_func2(int) SET SCHEMA alt_nsp2;	-- failed (name conflicts)
-ERROR:  function "alt_func2" already exists in schema "alt_nsp2"
+ERROR:  function alt_func2(integer) already exists in schema "alt_nsp2"
 ALTER AGGREGATE alt_agg3(int) RENAME TO alt_agg4;   -- failed (not owner)
 ERROR:  must be owner of function alt_agg3
 ALTER AGGREGATE alt_agg1(int) RENAME TO alt_agg4;   -- OK
@@ -80,7 +80,7 @@ ERROR:  must be member of role "regtest_alter_user3"
 ALTER AGGREGATE alt_agg3(int) SET SCHEMA alt_nsp2;  -- failed (not owner)
 ERROR:  must be owner of function alt_agg3
 ALTER AGGREGATE alt_agg2(int) SET SCHEMA alt_nsp2;  -- failed (name conflict)
-ERROR:  function "alt_agg2" already exists in schema "alt_nsp2"
+ERROR:  function alt_agg2(integer) already exists in schema "alt_nsp2"
 RESET SESSION AUTHORIZATION;
 SELECT n.nspname, proname, prorettype::regtype, proisagg, a.rolname
   FROM pg_proc p, pg_namespace n, pg_authid a
@@ -129,7 +129,7 @@ ERROR:  must be member of role "regtest_alter_user3"
 ALTER CONVERSION alt_conv3 SET SCHEMA alt_nsp2;  -- failed (not owner)
 ERROR:  must be owner of conversion alt_conv3
 ALTER CONVERSION alt_conv2 SET SCHEMA alt_nsp2;  -- failed (name conflict)
-ERROR:  conversion alt_conv2 already exists in schema "alt_nsp2"
+ERROR:  conversion "alt_conv2" already exists in schema "alt_nsp2"
 RESET SESSION AUTHORIZATION;
 SELECT n.nspname, c.conname, a.rolname
   FROM pg_conversion c, pg_namespace n, pg_authid a
@@ -346,7 +346,7 @@ ERROR:  must be member of role "regtest_alter_user3"
 ALTER TEXT SEARCH DICTIONARY alt_ts_dict3 SET SCHEMA alt_nsp2;  -- failed (not owner)
 ERROR:  must be owner of text search dictionary alt_ts_dict3
 ALTER TEXT SEARCH DICTIONARY alt_ts_dict2 SET SCHEMA alt_nsp2;  -- failed (name conflict)
-ERROR:  text search dictionary alt_ts_dict2 already exists in schema "alt_nsp2"
+ERROR:  text search dictionary "alt_ts_dict2" already exists in schema "alt_nsp2"
 RESET SESSION AUTHORIZATION;
 SELECT nspname, dictname, rolname
   FROM pg_ts_dict t, pg_namespace n, pg_authid a
@@ -387,7 +387,7 @@ ERROR:  must be member of role "regtest_alter_user3"
 ALTER TEXT SEARCH CONFIGURATION alt_ts_conf3 SET SCHEMA alt_nsp2;  -- failed (not owner)
 ERROR:  must be owner of text search configuration alt_ts_conf3
 ALTER TEXT SEARCH CONFIGURATION alt_ts_conf2 SET SCHEMA alt_nsp2;  -- failed (name conflict)
-ERROR:  text search configuration alt_ts_conf2 already exists in schema "alt_nsp2"
+ERROR:  text search configuration "alt_ts_conf2" already exists in schema "alt_nsp2"
 RESET SESSION AUTHORIZATION;
 SELECT nspname, cfgname, rolname
   FROM pg_ts_config t, pg_namespace n, pg_authid a
@@ -413,7 +413,7 @@ ALTER TEXT SEARCH TEMPLATE alt_ts_temp1 RENAME TO alt_ts_temp3; -- OK
 ALTER TEXT SEARCH TEMPLATE alt_ts_temp2 SET SCHEMA alt_nsp2;    -- OK
 CREATE TEXT SEARCH TEMPLATE alt_ts_temp2 (lexize=dsimple_lexize);
 ALTER TEXT SEARCH TEMPLATE alt_ts_temp2 SET SCHEMA alt_nsp2;    -- failed (name conflict)
-ERROR:  text search template alt_ts_temp2 already exists in schema "alt_nsp2"
+ERROR:  text search template "alt_ts_temp2" already exists in schema "alt_nsp2"
 SELECT nspname, tmplname
   FROM pg_ts_template t, pg_namespace n
   WHERE t.tmplnamespace = n.oid AND nspname like 'alt_nsp%'
@@ -439,7 +439,7 @@ ALTER TEXT SEARCH PARSER alt_ts_prs2 SET SCHEMA alt_nsp2;   -- OK
 CREATE TEXT SEARCH PARSER alt_ts_prs2
     (start = prsd_start, gettoken = prsd_nexttoken, end = prsd_end, lextypes = prsd_lextype);
 ALTER TEXT SEARCH PARSER alt_ts_prs2 SET SCHEMA alt_nsp2;   -- failed (name conflict)
-ERROR:  text search parser alt_ts_prs2 already exists in schema "alt_nsp2"
+ERROR:  text search parser "alt_ts_prs2" already exists in schema "alt_nsp2"
 SELECT nspname, prsname
   FROM pg_ts_parser t, pg_namespace n
   WHERE t.prsnamespace = n.oid AND nspname like 'alt_nsp%'

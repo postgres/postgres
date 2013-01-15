@@ -21,9 +21,8 @@
 extern Oid ExecRenameStmt(RenameStmt *stmt);
 
 extern Oid ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt);
-extern Oid	AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid,
+extern Oid AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid,
 						 ObjectAddresses *objsMoved);
-extern Oid	AlterObjectNamespace_internal(Relation rel, Oid objid, Oid nspOid);
 
 extern Oid ExecAlterOwnerStmt(AlterOwnerStmt *stmt);
 extern void AlterObjectOwner_internal(Relation catalog, Oid objectId,

@@ -19,9 +19,16 @@
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_collation.h"
+#include "catalog/pg_conversion.h"
 #include "catalog/pg_largeobject.h"
 #include "catalog/pg_largeobject_metadata.h"
 #include "catalog/pg_namespace.h"
+#include "catalog/pg_proc.h"
+#include "catalog/pg_ts_config.h"
+#include "catalog/pg_ts_dict.h"
+#include "catalog/pg_ts_parser.h"
+#include "catalog/pg_ts_template.h"
 #include "commands/alter.h"
 #include "commands/collationcmds.h"
 #include "commands/conversioncmds.h"
@@ -45,6 +52,8 @@
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 
+
+static Oid AlterObjectNamespace_internal(Relation rel, Oid objid, Oid nspOid);
 
 /*
  * Executes an ALTER OBJECT / RENAME TO statement.	Based on the object
@@ -146,40 +155,32 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt)
 {
 	switch (stmt->objectType)
 	{
-		case OBJECT_AGGREGATE:
-			return AlterFunctionNamespace(stmt->object, stmt->objarg, true,
-										  stmt->newschema);
-
-		case OBJECT_COLLATION:
-			return AlterCollationNamespace(stmt->object, stmt->newschema);
-
 		case OBJECT_EXTENSION:
 			return AlterExtensionNamespace(stmt->object, stmt->newschema);
 
-		case OBJECT_FUNCTION:
-			return AlterFunctionNamespace(stmt->object, stmt->objarg, false,
-										  stmt->newschema);
-
+		case OBJECT_FOREIGN_TABLE:
 		case OBJECT_SEQUENCE:
 		case OBJECT_TABLE:
 		case OBJECT_VIEW:
-		case OBJECT_FOREIGN_TABLE:
 			return AlterTableNamespace(stmt);
 
-		case OBJECT_TYPE:
 		case OBJECT_DOMAIN:
+		case OBJECT_TYPE:
 			return AlterTypeNamespace(stmt->object, stmt->newschema,
 									  stmt->objectType);
 
 			/* generic code path */
+		case OBJECT_AGGREGATE:
+		case OBJECT_COLLATION:
 		case OBJECT_CONVERSION:
+		case OBJECT_FUNCTION:
 		case OBJECT_OPERATOR:
 		case OBJECT_OPCLASS:
 		case OBJECT_OPFAMILY:
-		case OBJECT_TSPARSER:
-		case OBJECT_TSDICTIONARY:
-		case OBJECT_TSTEMPLATE:
 		case OBJECT_TSCONFIGURATION:
+		case OBJECT_TSDICTIONARY:
+		case OBJECT_TSPARSER:
+		case OBJECT_TSTEMPLATE:
 			{
 				Relation	catalog;
 				Relation	relation;
@@ -253,22 +254,16 @@ AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid,
 				break;
 			}
 
-		case OCLASS_PROC:
-			oldNspOid = AlterFunctionNamespace_oid(objid, nspOid);
-			break;
-
 		case OCLASS_TYPE:
 			oldNspOid = AlterTypeNamespace_oid(objid, nspOid, objsMoved);
 			break;
 
 		case OCLASS_COLLATION:
-			oldNspOid = AlterCollationNamespace_oid(objid, nspOid);
-			break;
-
 		case OCLASS_CONVERSION:
 		case OCLASS_OPERATOR:
 		case OCLASS_OPCLASS:
 		case OCLASS_OPFAMILY:
+		case OCLASS_PROC:
 		case OCLASS_TSPARSER:
 		case OCLASS_TSDICT:
 		case OCLASS_TSTEMPLATE:
@@ -293,6 +288,43 @@ AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid,
 }
 
 /*
+ * Raise an error to the effect that an object of the given name is already
+ * present in the given namespace.
+ */
+static void
+report_namespace_conflict(Oid classId, const char *name, Oid nspOid)
+{
+	char   *msgfmt;
+
+	Assert(OidIsValid(nspOid));
+	switch (classId)
+	{
+		case ConversionRelationId:
+			msgfmt = gettext_noop("conversion \"%s\" already exists in schema \"%s\"");
+			break;
+		case TSParserRelationId:
+			msgfmt = gettext_noop("text search parser \"%s\" already exists in schema \"%s\"");
+			break;
+		case TSDictionaryRelationId:
+			msgfmt = gettext_noop("text search dictionary \"%s\" already exists in schema \"%s\"");
+			break;
+		case TSTemplateRelationId:
+			msgfmt = gettext_noop("text search template \"%s\" already exists in schema \"%s\"");
+			break;
+		case TSConfigRelationId:
+			msgfmt = gettext_noop("text search configuration \"%s\" already exists in schema \"%s\"");
+			break;
+		default:
+			elog(ERROR, "unsupported object class %u", classId);
+			break;
+	}
+
+	ereport(ERROR,
+			(errcode(ERRCODE_DUPLICATE_OBJECT),
+			 errmsg(msgfmt, name, get_namespace_name(nspOid))));
+}
+
+/*
  * Generic function to change the namespace of a given object, for simple
  * cases (won't work for tables, nor other cases where we need to do more
  * than change the namespace column of a single catalog entry).
@@ -303,7 +335,7 @@ AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid,
  *
  * Returns the OID of the object's previous namespace.
  */
-Oid
+static Oid
 AlterObjectNamespace_internal(Relation rel, Oid objid, Oid nspOid)
 {
 	Oid			classId = RelationGetRelid(rel);
@@ -373,13 +405,36 @@ AlterObjectNamespace_internal(Relation rel, Oid objid, Oid nspOid)
 	 * Since this is just a friendliness check, we can just skip it in cases
 	 * where there isn't a suitable syscache available.
 	 */
-	if (nameCacheId >= 0 &&
-		SearchSysCacheExists2(nameCacheId, name, ObjectIdGetDatum(nspOid)))
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("%s already exists in schema \"%s\"",
-						getObjectDescriptionOids(classId, objid),
-						get_namespace_name(nspOid))));
+	if (classId == ProcedureRelationId)
+	{
+		HeapTuple	tup;
+		Form_pg_proc proc;
+
+		tup = SearchSysCacheCopy1(PROCOID, ObjectIdGetDatum(objid));
+		if (!HeapTupleIsValid(tup))
+			elog(ERROR, "cache lookup failed for function %u", objid);
+		proc = (Form_pg_proc) GETSTRUCT(tup);
+
+		IsThereFunctionInNamespace(NameStr(proc->proname), proc->pronargs,
+								   proc->proargtypes, nspOid);
+		heap_freetuple(tup);
+	}
+	else if (classId == CollationRelationId)
+	{
+		char *collname;
+
+		collname = get_collation_name(objid);
+		if (!collname)
+			elog(ERROR, "cache lookup failed for collation %u", objid);
+		IsThereCollationInNamespace(collname, nspOid);
+		pfree(collname);
+	}
+	else if (nameCacheId >= 0 &&
+			 SearchSysCacheExists2(nameCacheId, name,
+								   ObjectIdGetDatum(nspOid)))
+		report_namespace_conflict(classId,
+								  NameStr(*(DatumGetName(name))),
+								  nspOid);
 
 	/* Build modified tuple */
 	values = palloc0(RelationGetNumberOfAttributes(rel) * sizeof(Datum));
@@ -405,7 +460,6 @@ AlterObjectNamespace_internal(Relation rel, Oid objid, Oid nspOid)
 
 	return oldNspOid;
 }
-
 
 /*
  * Executes an ALTER OBJECT / OWNER TO statement.  Based on the object

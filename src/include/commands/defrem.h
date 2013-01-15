@@ -50,9 +50,8 @@ extern Oid RenameFunction(List *name, List *argtypes, const char *newname);
 extern Oid AlterFunction(AlterFunctionStmt *stmt);
 extern Oid CreateCast(CreateCastStmt *stmt);
 extern void DropCastById(Oid castOid);
-extern Oid AlterFunctionNamespace(List *name, List *argtypes, bool isagg,
-								  const char *newschema);
-extern Oid	AlterFunctionNamespace_oid(Oid procOid, Oid nspOid);
+extern void IsThereFunctionInNamespace(const char *proname, int pronargs,
+						   oidvector proargtypes, Oid nspOid);
 extern void ExecuteDoStmt(DoStmt *stmt);
 extern Oid	get_cast_oid(Oid sourcetypeid, Oid targettypeid, bool missing_ok);
 

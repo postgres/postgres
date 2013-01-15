@@ -1069,20 +1069,9 @@ RenameFunction(List *name, List *argtypes, const char *newname)
 	namespaceOid = procForm->pronamespace;
 
 	/* make sure the new name doesn't exist */
-	if (SearchSysCacheExists3(PROCNAMEARGSNSP,
-							  CStringGetDatum(newname),
-							  PointerGetDatum(&procForm->proargtypes),
-							  ObjectIdGetDatum(namespaceOid)))
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_FUNCTION),
-				 errmsg("function %s already exists in schema \"%s\"",
-						funcname_signature_string(newname,
-												  procForm->pronargs,
-												  NIL,
-											   procForm->proargtypes.values),
-						get_namespace_name(namespaceOid))));
-	}
+	IsThereFunctionInNamespace(newname, procForm->pronargs,
+							   procForm->proargtypes,
+							   namespaceOid);
 
 	/* must be owner */
 	if (!pg_proc_ownercheck(procOid, GetUserId()))
@@ -1688,70 +1677,27 @@ DropCastById(Oid castOid)
 }
 
 /*
- * Execute ALTER FUNCTION/AGGREGATE SET SCHEMA
+ * Subroutine for ALTER FUNCTION/AGGREGATE SET SCHEMA
  *
- * These commands are identical except for the lookup procedure, so share code.
+ * Is there a function with the given name and signature already in the given
+ * namespace?  If so, raise an appropriate error message.
  */
-Oid
-AlterFunctionNamespace(List *name, List *argtypes, bool isagg,
-					   const char *newschema)
+void
+IsThereFunctionInNamespace(const char *proname, int pronargs,
+						   oidvector proargtypes, Oid nspOid)
 {
-	Oid			procOid;
-	Oid			nspOid;
-
-	/* get function OID */
-	if (isagg)
-		procOid = LookupAggNameTypeNames(name, argtypes, false);
-	else
-		procOid = LookupFuncNameTypeNames(name, argtypes, false);
-
-	/* get schema OID and check its permissions */
-	nspOid = LookupCreationNamespace(newschema);
-
-	AlterFunctionNamespace_oid(procOid, nspOid);
-
-	return procOid;
-}
-
-Oid
-AlterFunctionNamespace_oid(Oid procOid, Oid nspOid)
-{
-	Oid			oldNspOid;
-	HeapTuple	tup;
-	Relation	procRel;
-	Form_pg_proc proc;
-
-	procRel = heap_open(ProcedureRelationId, RowExclusiveLock);
-
-	/*
-	 * We have to check for name collisions ourselves, because
-	 * AlterObjectNamespace_internal doesn't know how to deal with the
-	 * argument types.
-	 */
-	tup = SearchSysCacheCopy1(PROCOID, ObjectIdGetDatum(procOid));
-	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "cache lookup failed for function %u", procOid);
-	proc = (Form_pg_proc) GETSTRUCT(tup);
-
 	/* check for duplicate name (more friendly than unique-index failure) */
 	if (SearchSysCacheExists3(PROCNAMEARGSNSP,
-							  CStringGetDatum(NameStr(proc->proname)),
-							  PointerGetDatum(&proc->proargtypes),
+							  CStringGetDatum(proname),
+							  PointerGetDatum(&proargtypes),
 							  ObjectIdGetDatum(nspOid)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_FUNCTION),
-				 errmsg("function \"%s\" already exists in schema \"%s\"",
-						NameStr(proc->proname),
+				 errmsg("function %s already exists in schema \"%s\"",
+						funcname_signature_string(proname, pronargs,
+												  NIL, proargtypes.values),
 						get_namespace_name(nspOid))));
-
-	/* OK, do the work */
-	oldNspOid = AlterObjectNamespace_internal(procRel, procOid, nspOid);
-
-	heap_close(procRel, RowExclusiveLock);
-
-	return oldNspOid;
 }
-
 
 /*
  * ExecuteDoStmt
