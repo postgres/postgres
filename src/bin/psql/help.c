@@ -161,7 +161,7 @@ slashUsage(unsigned short int pager)
 
 	currdb = PQdb(pset.db);
 	if (currdb == NULL)
-		currdb = _("none");
+		currdb = "";
 
 	output = PageOutput(92, pager);
 
