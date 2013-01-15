@@ -159,6 +159,11 @@ void
 slashUsage(unsigned short int pager)
 {
 	FILE	   *output;
+	char	   *currdb;
+
+	currdb = PQdb(pset.db);
+	if (currdb == NULL)
+		currdb = _("none");
 
 	output = PageOutput(69, pager);
 
@@ -171,7 +176,7 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("General\n"));
 	fprintf(output, _("  \\c[onnect] [DBNAME|- USER|- HOST|- PORT|-]\n"
 			"                 connect to new database (currently \"%s\")\n"),
-			PQdb(pset.db));
+			currdb);
 	fprintf(output, _("  \\cd [DIR]      change the current working directory\n"));
 	fprintf(output, _("  \\copyright     show PostgreSQL usage and distribution terms\n"));
 	fprintf(output, _("  \\encoding [ENCODING]\n"
