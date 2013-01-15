@@ -342,6 +342,21 @@ ReceiveXlogStream(PGconn *conn, XLogRecPtr startpos, uint32 timeline,
 	int64		last_status = -1;
 	XLogRecPtr	blockpos = InvalidXLogRecPtr;
 
+	/*
+	 * The message format used in streaming replication changed in 9.3, so we
+	 * cannot stream from older servers. Don't know if we would work with
+	 * newer versions, but let's not take the risk.
+	 */
+	if (PQserverVersion(conn) / 100 != PG_VERSION_NUM / 100)
+	{
+		const char *serverver = PQparameterStatus(conn, "server_version");
+		fprintf(stderr, _("%s: incompatible server version %s; streaming is only supported with server version %s\n"),
+				progname,
+				serverver ? serverver : "'unknown'",
+				PG_MAJORVERSION);
+		return false;
+	}
+
 	if (sysidentifier != NULL)
 	{
 		/* Validate system identifier and timeline hasn't changed */
