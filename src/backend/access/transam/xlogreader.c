@@ -222,11 +222,7 @@ XLogReadRecord(XLogReaderState *state, XLogRecPtr RecPtr, char **errormsg)
 	readOff = ReadPageInternal(state, targetPagePtr, SizeOfXLogRecord);
 
 	if (readOff < 0)
-	{
-		if (state->errormsg_buf[0] != '\0')
-			*errormsg = state->errormsg_buf;
-		return NULL;
-	}
+		goto err;
 
 	/*
 	 * ReadPageInternal always returns at least the page header, so we can
@@ -246,8 +242,7 @@ XLogReadRecord(XLogReaderState *state, XLogRecPtr RecPtr, char **errormsg)
 	{
 		report_invalid_record(state, "invalid record offset at %X/%X",
 							  (uint32) (RecPtr >> 32), (uint32) RecPtr);
-		*errormsg = state->errormsg_buf;
-		return NULL;
+		goto err;
 	}
 
 	if ((((XLogPageHeader) state->readBuf)->xlp_info & XLP_FIRST_IS_CONTRECORD) &&
@@ -255,8 +250,7 @@ XLogReadRecord(XLogReaderState *state, XLogRecPtr RecPtr, char **errormsg)
 	{
 		report_invalid_record(state, "contrecord is requested by %X/%X",
 							  (uint32) (RecPtr >> 32), (uint32) RecPtr);
-		*errormsg = state->errormsg_buf;
-		return NULL;
+		goto err;
 	}
 
 	/* ReadPageInternal has verified the page header */
@@ -270,11 +264,7 @@ XLogReadRecord(XLogReaderState *state, XLogRecPtr RecPtr, char **errormsg)
 							   targetPagePtr,
 						  Min(targetRecOff + SizeOfXLogRecord, XLOG_BLCKSZ));
 	if (readOff < 0)
-	{
-		if (state->errormsg_buf[0] != '\0')
-			*errormsg = state->errormsg_buf;
-		return NULL;
-	}
+		goto err;
 
 	/*
 	 * Read the record length.
@@ -300,11 +290,7 @@ XLogReadRecord(XLogReaderState *state, XLogRecPtr RecPtr, char **errormsg)
 	{
 		if (!ValidXLogRecordHeader(state, RecPtr, state->ReadRecPtr, record,
 								   randAccess))
-		{
-			if (state->errormsg_buf[0] != '\0')
-				*errormsg = state->errormsg_buf;
-			return NULL;
-		}
+			goto err;
 		gotheader = true;
 	}
 	else
@@ -314,8 +300,7 @@ XLogReadRecord(XLogReaderState *state, XLogRecPtr RecPtr, char **errormsg)
 		{
 			report_invalid_record(state, "invalid record length at %X/%X",
 								  (uint32) (RecPtr >> 32), (uint32) RecPtr);
-			*errormsg = state->errormsg_buf;
-			return NULL;
+			goto err;
 		}
 		gotheader = false;
 	}
@@ -330,8 +315,7 @@ XLogReadRecord(XLogReaderState *state, XLogRecPtr RecPtr, char **errormsg)
 		report_invalid_record(state, "record length %u at %X/%X too long",
 							  total_len,
 							  (uint32) (RecPtr >> 32), (uint32) RecPtr);
-		*errormsg = state->errormsg_buf;
-		return NULL;
+		goto err;
 	}
 
 	len = XLOG_BLCKSZ - RecPtr % XLOG_BLCKSZ;

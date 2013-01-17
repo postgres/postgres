@@ -3180,7 +3180,8 @@ RestoreBackupBlock(XLogRecPtr lsn, XLogRecord *record, int block_index,
  * try to read a record just after the last one previously read.
  *
  * If no valid record is available, returns NULL, or fails if emode is PANIC.
- * (emode must be either PANIC, LOG)
+ * (emode must be either PANIC, LOG). In standby mode, retries until a valid
+ * record is available.
  *
  * The record is copied into readRecordBuf, so that on successful return,
  * the returned record pointer always points there.
@@ -3209,12 +3210,6 @@ ReadRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr, int emode,
 		EndRecPtr = xlogreader->EndRecPtr;
 		if (record == NULL)
 		{
-			/* not all failures fill errormsg; report those that do */
-			if (errormsg && errormsg[0] != '\0')
-				ereport(emode_for_corrupt_record(emode,
-												 RecPtr ? RecPtr : EndRecPtr),
-						(errmsg_internal("%s", errormsg) /* already translated */));
-
 			lastSourceFailed = true;
 
 			if (readFile >= 0)
@@ -3222,7 +3217,20 @@ ReadRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr, int emode,
 				close(readFile);
 				readFile = -1;
 			}
-			break;
+
+			/*
+			 * We only end up here without a message when XLogPageRead() failed
+			 * - in that case we already logged something.
+			 * In StandbyMode that only happens if we have been triggered, so
+			 * we shouldn't loop anymore in that case.
+			 */
+			if (errormsg)
+				ereport(emode_for_corrupt_record(emode,
+												 RecPtr ? RecPtr : EndRecPtr),
+						(errmsg_internal("%s", errormsg) /* already translated */));
+
+			/* Give up, or retry if we're in standby mode. */
+			continue;
 		}
 
 		/*
@@ -3234,6 +3242,8 @@ ReadRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr, int emode,
 			XLogSegNo segno;
 			int32 offset;
 
+			lastSourceFailed = true;
+
 			XLByteToSeg(xlogreader->latestPagePtr, segno);
 			offset = xlogreader->latestPagePtr % XLogSegSize;
 			XLogFileName(fname, xlogreader->readPageTLI, segno);
@@ -3243,9 +3253,10 @@ ReadRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr, int emode,
 							xlogreader->latestPageTLI,
 							fname,
 							offset)));
-			return false;
+			record = NULL;
+			continue;
 		}
-	} while (StandbyMode && record == NULL);
+	} while (StandbyMode && record == NULL && !CheckForStandbyTrigger());
 
 	return record;
 }
