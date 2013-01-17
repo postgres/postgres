@@ -62,6 +62,7 @@
 #define BUF_WRITTEN				0x01
 #define BUF_REUSABLE			0x02
 
+#define DROP_RELS_BSEARCH_THRESHOLD		20
 
 /* GUC variables */
 bool		zero_damaged_pages = false;
@@ -107,6 +108,7 @@ static volatile BufferDesc *BufferAlloc(SMgrRelation smgr,
 			bool *foundPtr);
 static void FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln);
 static void AtProcExit_Buffers(int code, Datum arg);
+static int rnode_comparator(const void *p1, const void *p2);
 
 
 /*
@@ -2086,43 +2088,103 @@ DropRelFileNodeBuffers(RelFileNodeBackend rnode, ForkNumber forkNum,
 }
 
 /* ---------------------------------------------------------------------
- *		DropRelFileNodeAllBuffers
+ *		DropRelFileNodesAllBuffers
  *
  *		This function removes from the buffer pool all the pages of all
- *		forks of the specified relation.  It's equivalent to calling
- *		DropRelFileNodeBuffers once per fork with firstDelBlock = 0.
+ *		forks of the specified relations.  It's equivalent to calling
+ *		DropRelFileNodeBuffers once per fork per relation with
+ *		firstDelBlock = 0.
  * --------------------------------------------------------------------
  */
 void
-DropRelFileNodeAllBuffers(RelFileNodeBackend rnode)
+DropRelFileNodesAllBuffers(RelFileNodeBackend *rnodes, int nnodes)
 {
-	int			i;
+	int         i,
+				n = 0;
+	RelFileNode *nodes;
+	bool		use_bsearch;
+
+	if (nnodes == 0)
+		return;
+
+	nodes = palloc(sizeof(RelFileNode) * nnodes); /* non-local relations */
 
 	/* If it's a local relation, it's localbuf.c's problem. */
-	if (RelFileNodeBackendIsTemp(rnode))
+	for (i = 0; i < nnodes; i++)
 	{
-		if (rnode.backend == MyBackendId)
-			DropRelFileNodeAllLocalBuffers(rnode.node);
+		if (RelFileNodeBackendIsTemp(rnodes[i]))
+		{
+			if (rnodes[i].backend == MyBackendId)
+				DropRelFileNodeAllLocalBuffers(rnodes[i].node);
+		}
+		else
+			nodes[n++] = rnodes[i].node;
+	}
+
+	/*
+	 * If there are no non-local relations, then we're done. Release the memory
+	 * and return.
+	 */
+	if (n == 0)
+	{
+		pfree(nodes);
 		return;
 	}
 
+	/*
+	 * For low number of relations to drop just use a simple walk through, to
+	 * save the bsearch overhead. The threshold to use is rather a guess than a
+	 * exactly determined value, as it depends on many factors (CPU and RAM
+	 * speeds, amount of shared buffers etc.).
+	 */
+	use_bsearch = n > DROP_RELS_BSEARCH_THRESHOLD;
+
+	/* sort the list of rnodes if necessary */
+	if (use_bsearch)
+		pg_qsort(nodes, n, sizeof(RelFileNode), rnode_comparator);
+
 	for (i = 0; i < NBuffers; i++)
 	{
+		RelFileNode *rnode = NULL;
 		volatile BufferDesc *bufHdr = &BufferDescriptors[i];
 
 		/*
 		 * As in DropRelFileNodeBuffers, an unlocked precheck should be safe
 		 * and saves some cycles.
 		 */
-		if (!RelFileNodeEquals(bufHdr->tag.rnode, rnode.node))
+
+		if (!use_bsearch)
+		{
+			int		j;
+
+			for (j = 0; j < n; j++)
+			{
+				if (RelFileNodeEquals(bufHdr->tag.rnode, nodes[j]))
+				{
+					rnode = &nodes[j];
+					break;
+				}
+			}
+		}
+		else
+		{
+			rnode = bsearch((const void *) &(bufHdr->tag.rnode),
+							nodes, n, sizeof(RelFileNode),
+							rnode_comparator);
+		}
+
+		/* buffer doesn't belong to any of the given relfilenodes; skip it */
+		if (rnode == NULL)
 			continue;
 
 		LockBufHdr(bufHdr);
-		if (RelFileNodeEquals(bufHdr->tag.rnode, rnode.node))
+		if (RelFileNodeEquals(bufHdr->tag.rnode, (*rnode)))
 			InvalidateBuffer(bufHdr);	/* releases spinlock */
 		else
 			UnlockBufHdr(bufHdr);
 	}
+
+	pfree(nodes);
 }
 
 /* ---------------------------------------------------------------------
@@ -2952,4 +3014,31 @@ local_buffer_write_error_callback(void *arg)
 				   bufHdr->tag.blockNum, path);
 		pfree(path);
 	}
+}
+
+/*
+ * RelFileNode qsort/bsearch comparator; see RelFileNodeEquals.
+ */
+static int
+rnode_comparator(const void *p1, const void *p2)
+{
+	RelFileNode n1 = *(RelFileNode *) p1;
+	RelFileNode n2 = *(RelFileNode *) p2;
+
+	if (n1.relNode < n2.relNode)
+		return -1;
+	else if (n1.relNode > n2.relNode)
+		return 1;
+
+	if (n1.dbNode < n2.dbNode)
+		return -1;
+	else if (n1.dbNode > n2.dbNode)
+		return 1;
+
+	if (n1.spcNode < n2.spcNode)
+		return -1;
+	else if (n1.spcNode > n2.spcNode)
+		return 1;
+	else
+		return 0;
 }
