@@ -17,6 +17,7 @@
 #include <ctype.h>
 
 #include "dumputils.h"
+#include "dumpmem.h"
 
 #include "parser/keywords.h"
 
@@ -1351,4 +1352,36 @@ exit_nicely(int code)
 #endif
 
 	exit(code);
+}
+
+void
+simple_string_list_append(SimpleStringList *list, const char *val)
+{
+	SimpleStringListCell *cell;
+
+	/* this calculation correctly accounts for the null trailing byte */
+	cell = (SimpleStringListCell *)
+		pg_malloc(sizeof(SimpleStringListCell) + strlen(val));
+
+	cell->next = NULL;
+	strcpy(cell->val, val);
+
+	if (list->tail)
+		list->tail->next = cell;
+	else
+		list->head = cell;
+	list->tail = cell;
+}
+
+bool
+simple_string_list_member(SimpleStringList *list, const char *val)
+{
+	SimpleStringListCell *cell;
+
+	for (cell = list->head; cell; cell = cell->next)
+	{
+		if (strcmp(cell->val, val) == 0)
+			return true;
+	}
+	return false;
 }

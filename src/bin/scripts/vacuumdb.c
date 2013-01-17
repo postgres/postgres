@@ -12,6 +12,7 @@
 
 #include "postgres_fe.h"
 #include "common.h"
+#include "dumputils.h"
 
 
 static void vacuum_one_database(const char *dbname, bool full, bool verbose,
@@ -68,9 +69,9 @@ main(int argc, char *argv[])
 	bool		analyze_only = false;
 	bool		freeze = false;
 	bool		alldb = false;
-	char	   *table = NULL;
 	bool		full = false;
 	bool		verbose = false;
+	SimpleStringList tables = {NULL, NULL};
 
 	progname = get_progname(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pgscripts"));
@@ -118,7 +119,7 @@ main(int argc, char *argv[])
 				alldb = true;
 				break;
 			case 't':
-				table = pg_strdup(optarg);
+				simple_string_list_append(&tables, optarg);
 				break;
 			case 'f':
 				full = true;
@@ -181,9 +182,9 @@ main(int argc, char *argv[])
 					progname);
 			exit(1);
 		}
-		if (table)
+		if (tables.head != NULL)
 		{
-			fprintf(stderr, _("%s: cannot vacuum a specific table in all databases\n"),
+			fprintf(stderr, _("%s: cannot vacuum specific table(s) in all databases\n"),
 					progname);
 			exit(1);
 		}
@@ -204,10 +205,25 @@ main(int argc, char *argv[])
 				dbname = get_user_name(progname);
 		}
 
-		vacuum_one_database(dbname, full, verbose, and_analyze, analyze_only,
-							freeze, table,
-							host, port, username, prompt_password,
-							progname, echo);
+		if (tables.head != NULL)
+		{
+			SimpleStringListCell *cell;
+
+			for (cell = tables.head; cell; cell = cell->next)
+			{
+				vacuum_one_database(dbname, full, verbose, and_analyze,
+									analyze_only,
+									freeze, cell->val,
+									host, port, username, prompt_password,
+									progname, echo);
+			}
+		}
+		else
+			vacuum_one_database(dbname, full, verbose, and_analyze,
+								analyze_only,
+								freeze, NULL,
+								host, port, username, prompt_password,
+								progname, echo);
 	}
 
 	exit(0);
@@ -348,7 +364,7 @@ help(const char *progname)
 	printf(_("  -f, --full                      do full vacuuming\n"));
 	printf(_("  -F, --freeze                    freeze row transaction information\n"));
 	printf(_("  -q, --quiet                     don't write any messages\n"));
-	printf(_("  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table only\n"));
+	printf(_("  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table(s) only\n"));
 	printf(_("  -v, --verbose                   write a lot of output\n"));
 	printf(_("  -V, --version                   output version information, then exit\n"));
 	printf(_("  -z, --analyze                   update optimizer statistics\n"));

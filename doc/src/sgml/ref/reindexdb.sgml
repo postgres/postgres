@@ -23,20 +23,27 @@ PostgreSQL documentation
   <cmdsynopsis>
    <command>reindexdb</command>
    <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
-   <group choice="opt">
-    <group choice="plain">
-     <arg choice="plain"><option>--table</option></arg>
-     <arg choice="plain"><option>-t</option></arg>
-    </group>
-    <replaceable>table</replaceable>
-   </group>
-   <group choice="opt">
-    <group choice="plain">
-     <arg choice="plain"><option>--index</option></arg>
-     <arg choice="plain"><option>-i</option></arg>
-    </group>
-    <replaceable>index</replaceable>
-   </group>
+
+   <arg choice="plain" rep="repeat">
+    <arg choice="opt">
+     <group choice="plain">
+      <arg choice="plain"><option>--table</option></arg>
+      <arg choice="plain"><option>-t</option></arg>
+     </group>
+     <replaceable>table</replaceable>
+    </arg>
+   </arg>
+
+   <arg choice="plain" rep="repeat">
+    <arg choice="opt">
+     <group choice="plain">
+      <arg choice="plain"><option>--index</option></arg>
+      <arg choice="plain"><option>-i</option></arg>
+     </group>
+     <replaceable>index</replaceable>
+    </arg>
+   </arg>
+
    <arg choice="opt"><replaceable>dbname</replaceable></arg>
   </cmdsynopsis>
 
@@ -128,6 +135,8 @@ PostgreSQL documentation
       <listitem>
        <para>
         Recreate <replaceable class="parameter">index</replaceable> only.
+        Multiple indexes can be recreated by writing multiple
+        <option>-i</> switches.
        </para>
       </listitem>
      </varlistentry>
@@ -158,6 +167,8 @@ PostgreSQL documentation
       <listitem>
        <para>
         Reindex <replaceable class="parameter">table</replaceable> only.
+        Multiple tables can be reindexed by writing multiple
+        <option>-t</> switches.
        </para>
       </listitem>
      </varlistentry>

@@ -64,8 +64,8 @@ main(int argc, char *argv[])
 	bool		alldb = false;
 	bool		echo = false;
 	bool		quiet = false;
-	const char *table = NULL;
-	const char *index = NULL;
+	SimpleStringList indexes = {NULL, NULL};
+	SimpleStringList tables = {NULL, NULL};
 
 	progname = get_progname(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pgscripts"));
@@ -108,10 +108,10 @@ main(int argc, char *argv[])
 				syscatalog = true;
 				break;
 			case 't':
-				table = pg_strdup(optarg);
+				simple_string_list_append(&tables, optarg);
 				break;
 			case 'i':
-				index = pg_strdup(optarg);
+				simple_string_list_append(&indexes, optarg);
 				break;
 			case 2:
 				maintenance_db = pg_strdup(optarg);
@@ -154,14 +154,14 @@ main(int argc, char *argv[])
 			fprintf(stderr, _("%s: cannot reindex all databases and system catalogs at the same time\n"), progname);
 			exit(1);
 		}
-		if (table)
+		if (tables.head != NULL)
 		{
-			fprintf(stderr, _("%s: cannot reindex a specific table in all databases\n"), progname);
+			fprintf(stderr, _("%s: cannot reindex specific table(s) in all databases\n"), progname);
 			exit(1);
 		}
-		if (index)
+		if (indexes.head != NULL)
 		{
-			fprintf(stderr, _("%s: cannot reindex a specific index in all databases\n"), progname);
+			fprintf(stderr, _("%s: cannot reindex specific index(es) in all databases\n"), progname);
 			exit(1);
 		}
 
@@ -170,14 +170,14 @@ main(int argc, char *argv[])
 	}
 	else if (syscatalog)
 	{
-		if (table)
+		if (tables.head != NULL)
 		{
-			fprintf(stderr, _("%s: cannot reindex a specific table and system catalogs at the same time\n"), progname);
+			fprintf(stderr, _("%s: cannot reindex specific table(s) and system catalogs at the same time\n"), progname);
 			exit(1);
 		}
-		if (index)
+		if (indexes.head != NULL)
 		{
-			fprintf(stderr, _("%s: cannot reindex a specific index and system catalogs at the same time\n"), progname);
+			fprintf(stderr, _("%s: cannot reindex specific index(es) and system catalogs at the same time\n"), progname);
 			exit(1);
 		}
 
@@ -206,14 +206,28 @@ main(int argc, char *argv[])
 				dbname = get_user_name(progname);
 		}
 
-		if (index)
-			reindex_one_database(index, dbname, "INDEX", host, port,
-								 username, prompt_password, progname, echo);
-		if (table)
-			reindex_one_database(table, dbname, "TABLE", host, port,
-								 username, prompt_password, progname, echo);
-		/* reindex database only if index or table is not specified */
-		if (index == NULL && table == NULL)
+		if (indexes.head != NULL)
+		{
+			SimpleStringListCell *cell;
+
+			for (cell = indexes.head; cell; cell = cell->next)
+			{
+				reindex_one_database(cell->val, dbname, "INDEX", host, port,
+								  username, prompt_password, progname, echo);
+			}
+		}
+		if (tables.head != NULL)
+		{
+			SimpleStringListCell *cell;
+
+			for (cell = tables.head; cell; cell = cell->next)
+			{
+				reindex_one_database(cell->val, dbname, "TABLE", host, port,
+								  username, prompt_password, progname, echo);
+			}
+		}
+		/* reindex database only if neither index nor table is specified */
+		if (indexes.head == NULL && tables.head == NULL)
 			reindex_one_database(dbname, dbname, "DATABASE", host, port,
 								 username, prompt_password, progname, echo);
 	}
@@ -331,10 +345,10 @@ help(const char *progname)
 	printf(_("  -a, --all                 reindex all databases\n"));
 	printf(_("  -d, --dbname=DBNAME       database to reindex\n"));
 	printf(_("  -e, --echo                show the commands being sent to the server\n"));
-	printf(_("  -i, --index=INDEX         recreate specific index only\n"));
+	printf(_("  -i, --index=INDEX         recreate specific index(es) only\n"));
 	printf(_("  -q, --quiet               don't write any messages\n"));
 	printf(_("  -s, --system              reindex system catalogs\n"));
-	printf(_("  -t, --table=TABLE         reindex specific table only\n"));
+	printf(_("  -t, --table=TABLE         reindex specific table(s) only\n"));
 	printf(_("  -V, --version             output version information, then exit\n"));
 	printf(_("  -?, --help                show this help, then exit\n"));
 	printf(_("\nConnection options:\n"));

@@ -898,24 +898,6 @@ simple_oid_list_append(SimpleOidList *list, Oid val)
 	list->tail = cell;
 }
 
-void
-simple_string_list_append(SimpleStringList *list, const char *val)
-{
-	SimpleStringListCell *cell;
-
-	/* this calculation correctly accounts for the null trailing byte */
-	cell = (SimpleStringListCell *)
-		pg_malloc(sizeof(SimpleStringListCell) + strlen(val));
-	cell->next = NULL;
-	strcpy(cell->val, val);
-
-	if (list->tail)
-		list->tail->next = cell;
-	else
-		list->head = cell;
-	list->tail = cell;
-}
-
 bool
 simple_oid_list_member(SimpleOidList *list, Oid val)
 {
@@ -924,19 +906,6 @@ simple_oid_list_member(SimpleOidList *list, Oid val)
 	for (cell = list->head; cell; cell = cell->next)
 	{
 		if (cell->val == val)
-			return true;
-	}
-	return false;
-}
-
-bool
-simple_string_list_member(SimpleStringList *list, const char *val)
-{
-	SimpleStringListCell *cell;
-
-	for (cell = list->head; cell; cell = cell->next)
-	{
-		if (strcmp(cell->val, val) == 0)
 			return true;
 	}
 	return false;

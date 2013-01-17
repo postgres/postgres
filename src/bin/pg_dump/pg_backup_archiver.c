@@ -2493,7 +2493,7 @@ _tocEntryRequired(TocEntry *te, teSection curSection, RestoreOptions *ropt)
 		{
 			if (!ropt->selTable)
 				return 0;
-			if (ropt->tableNames && strcmp(ropt->tableNames, te->tag) != 0)
+			if (ropt->tableNames.head != NULL && (!(simple_string_list_member(&ropt->tableNames, te->tag))))
 				return 0;
 		}
 		else if (strcmp(te->desc, "INDEX") == 0)

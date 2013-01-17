@@ -26,6 +26,7 @@
 #include "postgres_fe.h"
 
 #include "pg_dump.h"
+#include "dumputils.h"
 
 #include "libpq-fe.h"
 
@@ -125,9 +126,9 @@ typedef struct _restoreOptions
 	int			selTable;
 	char	   *indexNames;
 	char	   *functionNames;
-	char	   *tableNames;
 	char	   *schemaNames;
 	char	   *triggerNames;
+	SimpleStringList tableNames;
 
 	int			useDB;
 	char	   *dbname;

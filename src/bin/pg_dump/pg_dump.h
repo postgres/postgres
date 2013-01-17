@@ -58,17 +58,6 @@ typedef struct SimpleOidList
 	SimpleOidListCell *tail;
 } SimpleOidList;
 
-typedef struct SimpleStringListCell
-{
-	struct SimpleStringListCell *next;
-	char		val[1];			/* VARIABLE LENGTH FIELD */
-} SimpleStringListCell;
-
-typedef struct SimpleStringList
-{
-	SimpleStringListCell *head;
-	SimpleStringListCell *tail;
-} SimpleStringList;
 
 /*
  * The data structures used to store system catalog information.  Every
@@ -533,9 +522,7 @@ extern CollInfo *findCollationByOid(Oid oid);
 extern NamespaceInfo *findNamespaceByOid(Oid oid);
 
 extern void simple_oid_list_append(SimpleOidList *list, Oid val);
-extern void simple_string_list_append(SimpleStringList *list, const char *val);
 extern bool simple_oid_list_member(SimpleOidList *list, Oid val);
-extern bool simple_string_list_member(SimpleStringList *list, const char *val);
 
 extern void parseOidArray(const char *str, Oid *array, int arraysize);
 
