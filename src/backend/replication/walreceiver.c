@@ -431,7 +431,9 @@ WalReceiverMain(void)
 						{
 							ereport(LOG,
 									(errmsg("replication terminated by primary server"),
-									 errdetail("End of WAL reached on timeline %u", startpointTLI)));
+									 errdetail("End of WAL reached on timeline %u at %X/%X",
+											   startpointTLI,
+											   (uint32) (LogstreamResult.Write >> 32), (uint32) LogstreamResult.Write)));
 							endofwal = true;
 							break;
 						}

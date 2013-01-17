@@ -215,17 +215,27 @@ libpqrcv_endstreaming(void)
 
 	while ((res = PQgetResult(streamConn)) != NULL)
 	{
-		if (PQresultStatus(res) != PGRES_COMMAND_OK)
-			ereport(ERROR,
-					(errmsg("error reading result of streaming command: %s",
-							PQerrorMessage(streamConn))));
 		/*
+		 * After Copy, if the streaming ended because we reached end of the
+		 * timeline, server sends one result set with the next timeline's ID.
+		 * We don't need it, so just slurp and ignore it.
+		 *
 		 * If we had not yet received CopyDone from the backend, PGRES_COPY_IN
 		 * is also possible. However, at the moment this function is only
 		 * called after receiving CopyDone from the backend - the walreceiver
 		 * never terminates replication on its own initiative.
 		 */
+		switch (PQresultStatus(res))
+		{
+			case PGRES_COMMAND_OK:
+			case PGRES_TUPLES_OK:
+				break;
 
+			default:
+				ereport(ERROR,
+						(errmsg("error reading result of streaming command: %s",
+								PQerrorMessage(streamConn))));
+		}
 		PQclear(res);
 	}
 }
