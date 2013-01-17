@@ -37,6 +37,7 @@ extern void writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 extern void writeTimeLineHistoryFile(TimeLineID tli, char *content, int size);
 extern bool tliInHistory(TimeLineID tli, List *expectedTLIs);
 extern TimeLineID tliOfPointInHistory(XLogRecPtr ptr, List *history);
-extern XLogRecPtr tliSwitchPoint(TimeLineID tli, List *history);
+extern XLogRecPtr tliSwitchPoint(TimeLineID tli, List *history,
+			   TimeLineID *nextTLI);
 
 #endif   /* TIMELINE_H */

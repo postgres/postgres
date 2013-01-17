@@ -1418,8 +1418,10 @@ The commands accepted in walsender mode are:
      <para>
       After streaming all the WAL on a timeline that is not the latest one,
       the server will end streaming by exiting the COPY mode. When the client
-      acknowledges this by also exiting COPY mode, the server responds with a
-      CommandComplete message, and is ready to accept a new command.
+      acknowledges this by also exiting COPY mode, the server sends a
+      single-row, single-column result set indicating the next timeline in
+      this server's history. That is followed by a CommandComplete message,
+      and the server is ready to accept a new command.
      </para>
 
      <para>
@@ -1784,7 +1786,9 @@ The commands accepted in walsender mode are:
      </para>
      <para>
       The first ordinary result set contains the starting position of the
-      backup, given in XLogRecPtr format as a single column in a single row.
+      backup, in a single row with two columns. The first column contains
+      the start position given in XLogRecPtr format, and the second column
+      contains the corresponding timeline ID.
      </para>
      <para>
       The second ordinary result set has one row for each tablespace.
@@ -1827,7 +1831,9 @@ The commands accepted in walsender mode are:
       <quote>ustar interchange format</> specified in the POSIX 1003.1-2008
       standard) dump of the tablespace contents, except that the two trailing
       blocks of zeroes specified in the standard are omitted.
-      After the tar data is complete, a final ordinary result set will be sent.
+      After the tar data is complete, a final ordinary result set will be sent,
+      containing the WAL end position of the backup, in the same format as
+      the start position.
      </para>
 
      <para>

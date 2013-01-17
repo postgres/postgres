@@ -56,7 +56,7 @@ pg_start_backup(PG_FUNCTION_ARGS)
 
 	backupidstr = text_to_cstring(backupid);
 
-	startpoint = do_pg_start_backup(backupidstr, fast, NULL);
+	startpoint = do_pg_start_backup(backupidstr, fast, NULL, NULL);
 
 	snprintf(startxlogstr, sizeof(startxlogstr), "%X/%X",
 			 (uint32) (startpoint >> 32), (uint32) startpoint);
@@ -82,7 +82,7 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	XLogRecPtr	stoppoint;
 	char		stopxlogstr[MAXFNAMELEN];
 
-	stoppoint = do_pg_stop_backup(NULL, true);
+	stoppoint = do_pg_stop_backup(NULL, true, NULL);
 
 	snprintf(stopxlogstr, sizeof(stopxlogstr), "%X/%X",
 			 (uint32) (stoppoint >> 32), (uint32) stoppoint);

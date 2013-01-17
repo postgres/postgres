@@ -13,4 +13,4 @@ extern bool ReceiveXlogStream(PGconn *conn,
 				  char *basedir,
 				  stream_stop_callback stream_stop,
 				  int standby_message_timeout,
-				  bool rename_partial);
+				  char *partial_suffix);

@@ -545,22 +545,26 @@ tliOfPointInHistory(XLogRecPtr ptr, List *history)
 }
 
 /*
- * Returns the point in history where we branched off the given timeline.
- * Returns InvalidXLogRecPtr if the timeline is current (= we have not
- * branched off from it), and throws an error if the timeline is not part of
- * this server's history.
+ * Returns the point in history where we branched off the given timeline,
+ * and the timeline we branched to (*nextTLI). Returns InvalidXLogRecPtr if
+ * the timeline is current, ie. we have not branched off from it, and throws
+ * an error if the timeline is not part of this server's history.
  */
 XLogRecPtr
-tliSwitchPoint(TimeLineID tli, List *history)
+tliSwitchPoint(TimeLineID tli, List *history, TimeLineID *nextTLI)
 {
 	ListCell   *cell;
 
+	if (nextTLI)
+		*nextTLI = 0;
 	foreach (cell, history)
 	{
 		TimeLineHistoryEntry *tle = (TimeLineHistoryEntry *) lfirst(cell);
 
 		if (tle->tli == tli)
 			return tle->end;
+		if (nextTLI)
+			*nextTLI = tle->tli;
 	}
 
 	ereport(ERROR,

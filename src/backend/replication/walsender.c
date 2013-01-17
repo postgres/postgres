@@ -117,6 +117,7 @@ static uint32 sendOff = 0;
  * history forked off from that timeline at sendTimeLineValidUpto.
  */
 static TimeLineID	sendTimeLine = 0;
+static TimeLineID	sendTimeLineNextTLI = 0;
 static bool			sendTimeLineIsHistoric = false;
 static XLogRecPtr	sendTimeLineValidUpto = InvalidXLogRecPtr;
 
@@ -449,7 +450,8 @@ StartReplication(StartReplicationCmd *cmd)
 			 * requested start location is on that timeline.
 			 */
 			timeLineHistory = readTimeLineHistory(ThisTimeLineID);
-			switchpoint = tliSwitchPoint(cmd->timeline, timeLineHistory);
+			switchpoint = tliSwitchPoint(cmd->timeline, timeLineHistory,
+										 &sendTimeLineNextTLI);
 			list_free_deep(timeLineHistory);
 
 			/*
@@ -496,8 +498,7 @@ StartReplication(StartReplicationCmd *cmd)
 	streamingDoneSending = streamingDoneReceiving = false;
 
 	/* If there is nothing to stream, don't even enter COPY mode */
-	if (!sendTimeLineIsHistoric ||
-		cmd->startpoint < sendTimeLineValidUpto)
+	if (!sendTimeLineIsHistoric || cmd->startpoint < sendTimeLineValidUpto)
 	{
 		/*
 		 * When we first start replication the standby will be behind the primary.
@@ -554,10 +555,46 @@ StartReplication(StartReplicationCmd *cmd)
 		if (walsender_ready_to_stop)
 			proc_exit(0);
 		WalSndSetState(WALSNDSTATE_STARTUP);
+
+		Assert(streamingDoneSending && streamingDoneReceiving);
 	}
 
-	/* Get out of COPY mode (CommandComplete). */
-	EndCommand("COPY 0", DestRemote);
+	/*
+	 * Copy is finished now. Send a single-row result set indicating the next
+	 * timeline.
+	 */
+	if (sendTimeLineIsHistoric)
+	{
+		char		str[11];
+		snprintf(str, sizeof(str), "%u", sendTimeLineNextTLI);
+
+		pq_beginmessage(&buf, 'T'); /* RowDescription */
+		pq_sendint(&buf, 1, 2);		/* 1 field */
+
+		/* Field header */
+		pq_sendstring(&buf, "next_tli");
+		pq_sendint(&buf, 0, 4);		/* table oid */
+		pq_sendint(&buf, 0, 2);		/* attnum */
+		/*
+		 * int8 may seem like a surprising data type for this, but in theory
+		 * int4 would not be wide enough for this, as TimeLineID is unsigned.
+		 */
+		pq_sendint(&buf, INT8OID, 4);	/* type oid */
+		pq_sendint(&buf, -1, 2);
+		pq_sendint(&buf, 0, 4);
+		pq_sendint(&buf, 0, 2);
+		pq_endmessage(&buf);
+
+		/* Data row */
+		pq_beginmessage(&buf, 'D');
+		pq_sendint(&buf, 1, 2);		/* number of columns */
+		pq_sendint(&buf, strlen(str), 4);	/* length */
+		pq_sendbytes(&buf, str, strlen(str));
+		pq_endmessage(&buf);
+	}
+
+	/* Send CommandComplete message */
+	pq_puttextmessage('C', "START_STREAMING");
 }
 
 /*
@@ -1377,8 +1414,9 @@ XLogSend(bool *caughtup)
 			List	   *history;
 
 			history = readTimeLineHistory(ThisTimeLineID);
-			sendTimeLineValidUpto = tliSwitchPoint(sendTimeLine, history);
+			sendTimeLineValidUpto = tliSwitchPoint(sendTimeLine, history, &sendTimeLineNextTLI);
 			Assert(sentPtr <= sendTimeLineValidUpto);
+			Assert(sendTimeLine < sendTimeLineNextTLI);
 			list_free_deep(history);
 
 			/* the current send pointer should be <= the switchpoint */
