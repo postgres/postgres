@@ -64,10 +64,15 @@
 #define F_FOLLOW_RIGHT		(1 << 3)	/* page to the right has no downlink */
 
 typedef XLogRecPtr GistNSN;
+/*
+ * For on-disk compatibility with pre-9.3 servers, NSN is stored as two
+ * 32-bit fields on disk, same as LSNs.
+ */
+typedef PageXLogRecPtr PageGistNSN;
 
 typedef struct GISTPageOpaqueData
 {
-	GistNSN		nsn;			/* this value must change on page split */
+	PageGistNSN	nsn;			/* this value must change on page split */
 	BlockNumber rightlink;		/* next page if any */
 	uint16		flags;			/* see bit definitions above */
 	uint16		gist_page_id;	/* for identification of GiST indexes */
@@ -136,6 +141,9 @@ typedef struct GISTENTRY
 #define GistFollowRight(page) ( GistPageGetOpaque(page)->flags & F_FOLLOW_RIGHT)
 #define GistMarkFollowRight(page) ( GistPageGetOpaque(page)->flags |= F_FOLLOW_RIGHT)
 #define GistClearFollowRight(page)	( GistPageGetOpaque(page)->flags &= ~F_FOLLOW_RIGHT)
+
+#define GistPageGetNSN(page) ( PageXLogRecPtrGet(GistPageGetOpaque(page)->nsn))
+#define GistPageSetNSN(page, val) ( PageXLogRecPtrSet(GistPageGetOpaque(page)->nsn, val))
 
 /*
  * Vector of GISTENTRY structs; user-defined methods union and picksplit

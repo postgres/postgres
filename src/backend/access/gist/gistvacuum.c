@@ -114,7 +114,7 @@ pushStackIfSplited(Page page, GistBDItem *stack)
 	GISTPageOpaque opaque = GistPageGetOpaque(page);
 
 	if (stack->blkno != GIST_ROOT_BLKNO && !XLogRecPtrIsInvalid(stack->parentlsn) &&
-		(GistFollowRight(page) || stack->parentlsn < opaque->nsn) &&
+		(GistFollowRight(page) || stack->parentlsn < GistPageGetNSN(page)) &&
 		opaque->rightlink != InvalidBlockNumber /* sanity check */ )
 	{
 		/* split page detected, install right link to the stack */

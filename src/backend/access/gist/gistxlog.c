@@ -66,7 +66,7 @@ gistRedoClearFollowRight(XLogRecPtr lsn, XLogRecord *record, int block_index,
 	 */
 	if (lsn >= PageGetLSN(page))
 	{
-		GistPageGetOpaque(page)->nsn = lsn;
+		GistPageSetNSN(page, lsn);
 		GistClearFollowRight(page);
 
 		PageSetLSN(page, lsn);
@@ -271,7 +271,7 @@ gistRedoPageSplitRecord(XLogRecPtr lsn, XLogRecord *record)
 		if (newpage->header->blkno == GIST_ROOT_BLKNO)
 		{
 			GistPageGetOpaque(page)->rightlink = InvalidBlockNumber;
-			GistPageGetOpaque(page)->nsn = xldata->orignsn;
+			GistPageSetNSN(page, xldata->orignsn);
 			GistClearFollowRight(page);
 		}
 		else
@@ -280,7 +280,7 @@ gistRedoPageSplitRecord(XLogRecPtr lsn, XLogRecord *record)
 				GistPageGetOpaque(page)->rightlink = xlrec.page[i + 1].header->blkno;
 			else
 				GistPageGetOpaque(page)->rightlink = xldata->origrlink;
-			GistPageGetOpaque(page)->nsn = xldata->orignsn;
+			GistPageSetNSN(page, xldata->orignsn);
 			if (i < xlrec.data->npage - 1 && !isrootsplit &&
 				xldata->markfollowright)
 				GistMarkFollowRight(page);

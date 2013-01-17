@@ -240,7 +240,7 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 		{
 			/* save old rightlink and NSN */
 			oldrlink = GistPageGetOpaque(page)->rightlink;
-			oldnsn = GistPageGetOpaque(page)->nsn;
+			oldnsn = GistPageGetNSN(page);
 
 			dist->buffer = buffer;
 			dist->block.blkno = BufferGetBlockNumber(buffer);
@@ -364,7 +364,7 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 			 * F_FOLLOW_RIGHT flags ensure that scans will follow the
 			 * rightlinks until the downlinks are inserted.
 			 */
-			GistPageGetOpaque(ptr->page)->nsn = oldnsn;
+			GistPageSetNSN(ptr->page, oldnsn);
 		}
 
 		START_CRIT_SECTION();
@@ -473,7 +473,7 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 	{
 		Page		leftpg = BufferGetPage(leftchildbuf);
 
-		GistPageGetOpaque(leftpg)->nsn = recptr;
+		GistPageSetNSN(leftpg, recptr);
 		GistClearFollowRight(leftpg);
 
 		PageSetLSN(leftpg, recptr);
@@ -561,7 +561,7 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace, GISTSTATE *giststate)
 		}
 
 		if (stack->blkno != GIST_ROOT_BLKNO &&
-			stack->parent->lsn < GistPageGetOpaque(stack->page)->nsn)
+			stack->parent->lsn < GistPageGetNSN(stack->page))
 		{
 			/*
 			 * Concurrent split detected. There's no guarantee that the
@@ -707,8 +707,7 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace, GISTSTATE *giststate)
 					 */
 				}
 				else if (GistFollowRight(stack->page) ||
-						 stack->parent->lsn <
-								  GistPageGetOpaque(stack->page)->nsn)
+						 stack->parent->lsn < GistPageGetNSN(stack->page))
 				{
 					/*
 					 * The page was split while we momentarily unlocked the
@@ -793,7 +792,7 @@ gistFindPath(Relation r, BlockNumber child, OffsetNumber *downlinkoffnum)
 		if (GistFollowRight(page))
 			elog(ERROR, "concurrent GiST page split was incomplete");
 
-		if (top->parent && top->parent->lsn < GistPageGetOpaque(page)->nsn &&
+		if (top->parent && top->parent->lsn < GistPageGetNSN(page) &&
 			GistPageGetOpaque(page)->rightlink != InvalidBlockNumber /* sanity check */ )
 		{
 			/*
