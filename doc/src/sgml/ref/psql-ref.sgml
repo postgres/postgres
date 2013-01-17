@@ -1890,6 +1890,9 @@ lo_import 152801
           into the <literal>border=...</literal> attribute; in the
           other formats only values 0 (no border), 1 (internal dividing lines),
           and 2 (table frame) make sense.
+          <literal>latex</literal> and <literal>latex-longtable</literal>
+          also support a <literal>border</literal> value of 3 which adds
+          a dividing line between each row.
           </para>
           </listitem>
           </varlistentry>
@@ -1979,7 +1982,9 @@ lo_import 152801
           Sets the output format to one of <literal>unaligned</literal>,
           <literal>aligned</literal>, <literal>wrapped</literal>,
           <literal>html</literal>,
-          <literal>latex</literal>, or <literal>troff-ms</literal>.
+          <literal>latex</literal> (uses <literal>tabular</literal>),
+          <literal>latex-longtable</literal>, or
+          <literal>troff-ms</literal>.
           Unique abbreviations are allowed.  (That would mean one letter
           is enough.)
           </para>
@@ -2005,12 +2010,16 @@ lo_import 152801
           </para>
 
           <para>
-          The <literal>html</>, <literal>latex</>, and <literal>troff-ms</>
+          The <literal>html</>, <literal>latex</>,
+          <literal>latex-longtable</literal>, and <literal>troff-ms</>
           formats put out tables that are intended to
           be included in documents using the respective mark-up
-          language. They are not complete documents! (This might not be
-          so dramatic in <acronym>HTML</acronym>, but in <application>LaTeX</application> you must
-          have a complete document wrapper.)
+          language. They are not complete documents! This might not be
+          necessary in <acronym>HTML</acronym>, but in
+          <application>LaTeX</application> you must have a complete
+          document wrapper.  <literal>latex-longtable</literal>
+          also requires the <application>LaTeX</application>
+          <literal>longtable</literal> and <literal>booktabs</> packages.
           </para>
           </listitem>
           </varlistentry>
@@ -2141,9 +2150,8 @@ lo_import 152801
           <term><literal>tableattr</literal> (or <literal>T</literal>)</term>
           <listitem>
           <para>
-          Specifies attributes to be placed inside the
-          <acronym>HTML</acronym> <sgmltag>table</sgmltag> tag in
-          <literal>html</> output format. This
+          In <acronym>HTML</acronym> format, this specifies attributes
+          to be placed inside the <sgmltag>table</sgmltag> tag.  This
           could for example be <literal>cellpadding</literal> or
           <literal>bgcolor</literal>. Note that you probably don't want
           to specify <literal>border</literal> here, as that is already
@@ -2151,6 +2159,13 @@ lo_import 152801
           If no
           <replaceable class="parameter">value</replaceable> is given,
           the table attributes are unset.
+          </para>
+          <para>
+          In <literal>latex-longtable</literal> format, this controls
+          the proportional width of each column containing a left-aligned
+          data type.  It is specified as a space-separated list of values,
+          e.g. <literal>'0.2 0.2 0.6'</>.  Unspecified output columns
+          use the last specified value.
           </para>
           </listitem>
           </varlistentry>

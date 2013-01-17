@@ -1612,8 +1612,8 @@ print_latex_text(const printTableContent *cont, FILE *fout)
 	if (cancel_pressed)
 		return;
 
-	if (opt_border > 2)
-		opt_border = 2;
+	if (opt_border > 3)
+		opt_border = 3;
 
 	if (cont->opt->start_table)
 	{
@@ -1628,7 +1628,7 @@ print_latex_text(const printTableContent *cont, FILE *fout)
 		/* begin environment and set alignments and borders */
 		fputs("\\begin{tabular}{", fout);
 
-		if (opt_border == 2)
+		if (opt_border >= 2)
 			fputs("| ", fout);
 		for (i = 0; i < cont->ncolumns; i++)
 		{
@@ -1636,12 +1636,12 @@ print_latex_text(const printTableContent *cont, FILE *fout)
 			if (opt_border != 0 && i < cont->ncolumns - 1)
 				fputs(" | ", fout);
 		}
-		if (opt_border == 2)
+		if (opt_border >= 2)
 			fputs(" |", fout);
 
 		fputs("}\n", fout);
 
-		if (!opt_tuples_only && opt_border == 2)
+		if (!opt_tuples_only && opt_border >= 2)
 			fputs("\\hline\n", fout);
 
 		/* print headers */
@@ -1668,6 +1668,8 @@ print_latex_text(const printTableContent *cont, FILE *fout)
 		if ((i + 1) % cont->ncolumns == 0)
 		{
 			fputs(" \\\\\n", fout);
+			if (opt_border == 3)
+				fputs("\\hline\n", fout);
 			if (cancel_pressed)
 				break;
 		}
@@ -1679,7 +1681,7 @@ print_latex_text(const printTableContent *cont, FILE *fout)
 	{
 		printTableFooter *footers = footers_with_default(cont);
 
-		if (opt_border == 2)
+		if (opt_border >= 2)
 			fputs("\\hline\n", fout);
 
 		fputs("\\end{tabular}\n\n\\noindent ", fout);
@@ -1698,6 +1700,162 @@ print_latex_text(const printTableContent *cont, FILE *fout)
 
 		fputc('\n', fout);
 	}
+}
+
+
+static void
+print_latex_text_longtable(const printTableContent *cont, FILE *fout)
+{
+	bool		opt_tuples_only = cont->opt->tuples_only;
+	unsigned short opt_border = cont->opt->border;
+	unsigned int i;
+	const char *opt_table_attr = cont->opt->tableAttr;
+	const char *next_opt_table_attr_char = opt_table_attr;
+	const char *last_opt_table_attr_char = NULL;
+	const char *const * ptr;
+
+	if (cancel_pressed)
+		return;
+
+	if (opt_border > 3)
+		opt_border = 3;
+
+	if (cont->opt->start_table)
+	{
+		/* begin environment and set alignments and borders */
+		fputs("\\begin{longtable}{", fout);
+
+		if (opt_border >= 2)
+			fputs("| ", fout);
+
+		for (i = 0; i < cont->ncolumns; i++)
+		{
+			/* longtable supports either a width (p) or an alignment (l/r) */
+			/* Are we left-justified and was a proportional width specified? */
+			if (*(cont->aligns + i) == 'l' && opt_table_attr)
+			{
+#define LONGTABLE_WHITESPACE	" \t\n"
+
+				/* advance over whitespace */
+				next_opt_table_attr_char += strspn(next_opt_table_attr_char,
+												   LONGTABLE_WHITESPACE);
+				/* We have a value? */
+				if (next_opt_table_attr_char[0] != '\0')
+				{
+					fputs("p{", fout);
+					fwrite(next_opt_table_attr_char, strcspn(next_opt_table_attr_char,
+						   LONGTABLE_WHITESPACE), 1, fout);
+					last_opt_table_attr_char = next_opt_table_attr_char;
+					next_opt_table_attr_char += strcspn(next_opt_table_attr_char,
+													    LONGTABLE_WHITESPACE);
+					fputs("\\textwidth}", fout);
+				}
+				/* use previous value */
+				else if (last_opt_table_attr_char != NULL)
+				{
+					fputs("p{", fout);
+					fwrite(last_opt_table_attr_char, strcspn(last_opt_table_attr_char,
+						   LONGTABLE_WHITESPACE), 1, fout);
+					fputs("\\textwidth}", fout);
+				}
+				else
+					fputc('l', fout);
+			}
+			else
+				fputc(*(cont->aligns + i), fout);
+
+			if (opt_border != 0 && i < cont->ncolumns - 1)
+				fputs(" | ", fout);
+		}
+
+		if (opt_border >= 2)
+			fputs(" |", fout);
+
+		fputs("}\n", fout);
+
+		/* print headers */
+		if (!opt_tuples_only)
+		{
+			/* firsthead */
+			if (opt_border >= 2)
+				fputs("\\toprule\n", fout);
+			for (i = 0, ptr = cont->headers; i < cont->ncolumns; i++, ptr++)
+			{
+				if (i != 0)
+					fputs(" & ", fout);
+				fputs("\\small\\textbf{\\textit{", fout);
+				latex_escaped_print(*ptr, fout);
+				fputs("}}", fout);
+			}
+			fputs(" \\\\\n", fout);
+			fputs("\\midrule\n\\endfirsthead\n", fout);
+
+			/* secondary heads */
+			if (opt_border >= 2)
+				fputs("\\toprule\n", fout);
+			for (i = 0, ptr = cont->headers; i < cont->ncolumns; i++, ptr++)
+			{
+				if (i != 0)
+					fputs(" & ", fout);
+				fputs("\\small\\textbf{\\textit{", fout);
+				latex_escaped_print(*ptr, fout);
+				fputs("}}", fout);
+			}
+			fputs(" \\\\\n", fout);
+			/* If the line under the row already appeared, don't do another */
+			if (opt_border != 3)
+				fputs("\\midrule\n", fout);
+			fputs("\\endhead\n", fout);
+
+			/* table name, caption? */
+			if (!opt_tuples_only && cont->title)
+			{
+				/* Don't output if we are printing a line under each row */
+				if (opt_border == 2)
+					fputs("\\bottomrule\n", fout);
+				fputs("\\caption[", fout);
+				latex_escaped_print(cont->title, fout);
+				fputs(" (Continued)]{", fout);
+				latex_escaped_print(cont->title, fout);
+				fputs("}\n\\endfoot\n", fout);
+				if (opt_border == 2)
+					fputs("\\bottomrule\n", fout);
+				fputs("\\caption[", fout);
+				latex_escaped_print(cont->title, fout);
+				fputs("]{", fout);
+				latex_escaped_print(cont->title, fout);
+				fputs("}\n\\endlastfoot\n", fout);
+			}
+			/* output bottom table line? */
+			else if (opt_border >= 2)
+			{
+				fputs("\\bottomrule\n\\endfoot\n", fout);
+				fputs("\\bottomrule\n\\endlastfoot\n", fout);
+			}
+		}
+	}
+
+	/* print cells */
+	for (i = 0, ptr = cont->cells; *ptr; i++, ptr++)
+	{
+		/* Add a line under each row? */
+		if (i != 0 && i % cont->ncolumns != 0)
+			fputs("\n&\n", fout);
+		fputs("\\raggedright{", fout);
+		latex_escaped_print(*ptr, fout);
+		fputc('}', fout);
+		if ((i + 1) % cont->ncolumns == 0)
+		{
+			fputs(" \\tabularnewline\n", fout);
+			if (opt_border == 3)
+				fputs(" \\hline\n", fout);
+		}
+		if (cancel_pressed)
+			break;
+	}
+
+	if (cont->opt->stop_table)
+		fputs("\\end{longtable}\n", fout);
 }
 
 
@@ -2393,6 +2551,12 @@ printTable(const printTableContent *cont, FILE *fout, FILE *flog)
 				print_latex_vertical(cont, fout);
 			else
 				print_latex_text(cont, fout);
+			break;
+		case PRINT_LATEX_LONGTABLE:
+			if (cont->opt->expanded == 1)
+				print_latex_vertical(cont, fout);
+			else
+				print_latex_text_longtable(cont, fout);
 			break;
 		case PRINT_TROFF_MS:
 			if (cont->opt->expanded == 1)

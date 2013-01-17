@@ -19,6 +19,7 @@ enum printFormat
 	PRINT_WRAPPED,
 	PRINT_HTML,
 	PRINT_LATEX,
+	PRINT_LATEX_LONGTABLE,
 	PRINT_TROFF_MS
 	/* add your favourite output format here ... */
 };
