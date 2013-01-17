@@ -435,7 +435,7 @@ progress_report(int tablespacenum, const char *filename)
 					ngettext("%*s/%s kB (100%%), %d/%d tablespace %*s",
 							 "%*s/%s kB (100%%), %d/%d tablespaces %*s",
 							 tablespacecount),
-					strlen(totalsize_str),
+					(int) strlen(totalsize_str),
 					totaldone_str, totalsize_str,
 					tablespacenum, tablespacecount,
 					VERBOSE_FILENAME_LENGTH + 5, "");
@@ -447,7 +447,7 @@ progress_report(int tablespacenum, const char *filename)
 					ngettext("%*s/%s kB (%d%%), %d/%d tablespace (%s%-*.*s)",
 							 "%*s/%s kB (%d%%), %d/%d tablespaces (%s%-*.*s)",
 							 tablespacecount),
-					strlen(totalsize_str),
+					(int) strlen(totalsize_str),
 					totaldone_str, totalsize_str, percent,
 					tablespacenum, tablespacecount,
 					/* Prefix with "..." if we do leading truncation */
@@ -463,7 +463,7 @@ progress_report(int tablespacenum, const char *filename)
 				ngettext("%*s/%s kB (%d%%), %d/%d tablespace",
 						 "%*s/%s kB (%d%%), %d/%d tablespaces",
 						 tablespacecount),
-				strlen(totalsize_str),
+				(int) strlen(totalsize_str),
 				totaldone_str, totalsize_str, percent,
 				tablespacenum, tablespacecount);
 
