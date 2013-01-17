@@ -164,7 +164,7 @@ allocate_recordbuf(XLogReaderState *state, uint32 reclength)
  * If RecPtr is not NULL, try to read a record at that position.  Otherwise
  * try to read a record just after the last one previously read.
  *
- * If the page_read callback fails to read the requested data, NULL is
+ * If the read_page callback fails to read the requested data, NULL is
  * returned.  The callback is expected to have reported the error; errormsg
  * is set to NULL.
  *
@@ -217,10 +217,16 @@ XLogReadRecord(XLogReaderState *state, XLogRecPtr RecPtr, char **errormsg)
 	}
 
 	targetPagePtr = RecPtr - (RecPtr % XLOG_BLCKSZ);
+	targetRecOff = RecPtr % XLOG_BLCKSZ;
 
-	/* Read the page containing the record into state->readBuf */
-	readOff = ReadPageInternal(state, targetPagePtr, SizeOfXLogRecord);
-
+	/*
+	 * Read the page containing the record into state->readBuf. Request
+	 * enough byte to cover the whole record header, or at least the part of
+	 * it that fits on the same page.
+	 */
+	readOff = ReadPageInternal(state,
+							   targetPagePtr,
+						  Min(targetRecOff + SizeOfXLogRecord, XLOG_BLCKSZ));
 	if (readOff < 0)
 		goto err;
 
@@ -229,7 +235,6 @@ XLogReadRecord(XLogReaderState *state, XLogRecPtr RecPtr, char **errormsg)
 	 * examine it now.
 	 */
 	pageHeaderSize = XLogPageHeaderSize((XLogPageHeader) state->readBuf);
-	targetRecOff = RecPtr % XLOG_BLCKSZ;
 	if (targetRecOff == 0)
 	{
 		/*
@@ -255,16 +260,6 @@ XLogReadRecord(XLogReaderState *state, XLogRecPtr RecPtr, char **errormsg)
 
 	/* ReadPageInternal has verified the page header */
 	Assert(pageHeaderSize <= readOff);
-
-	/*
-	 * Ensure the whole record header or at least the part on this page is
-	 * read.
-	 */
-	readOff = ReadPageInternal(state,
-							   targetPagePtr,
-						  Min(targetRecOff + SizeOfXLogRecord, XLOG_BLCKSZ));
-	if (readOff < 0)
-		goto err;
 
 	/*
 	 * Read the record length.
@@ -463,7 +458,7 @@ err:
 }
 
 /*
- * Read a single xlog page including at least [pagestart, RecPtr] of valid data
+ * Read a single xlog page including at least [pageptr, reqLen] of valid data
  * via the read_page() callback.
  *
  * Returns -1 if the required page cannot be read for some reason; errormsg_buf
@@ -502,8 +497,7 @@ ReadPageInternal(XLogReaderState *state, XLogRecPtr pageptr, int reqLen)
 	 * record is.  This is so that we can check the additional identification
 	 * info that is present in the first page's "long" header.
 	 */
-	if (targetSegNo != state->readSegNo &&
-		targetPageOff != 0)
+	if (targetSegNo != state->readSegNo && targetPageOff != 0)
 	{
 		XLogPageHeader hdr;
 		XLogRecPtr	targetSegmentPtr = pageptr - targetPageOff;
