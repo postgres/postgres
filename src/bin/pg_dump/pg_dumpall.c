@@ -5,6 +5,8 @@
  * Portions Copyright (c) 1996-2013, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+ * pg_dumpall forces all pg_dump output to be text, since it also outputs
+ * text into the same output stream.
  *
  * src/bin/pg_dump/pg_dumpall.c
  *

@@ -5,11 +5,14 @@
  *	This file is copied from the 'files' format file, but dumps data into
  *	one temp file then sends it to the output TAR archive.
  *
+ *	The tar format also includes a 'restore.sql' script which is there for
+ *	the benefit of humans. This script is never used by pg_restore.
+ *
  *	NOTE: If you untar the created 'tar' file, the resulting files are
  *	compatible with the 'directory' format. Please keep the two formats in
  *	sync.
  *
- *	See the headers to pg_backup_files & pg_restore for more details.
+ *	See the headers to pg_backup_directory & pg_restore for more details.
  *
  * Copyright (c) 2000, Philip Warner
  *		Rights are granted to use this software in any way so long
