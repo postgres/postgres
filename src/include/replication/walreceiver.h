@@ -128,7 +128,7 @@ extern PGDLLIMPORT walrcv_readtimelinehistoryfile_type walrcv_readtimelinehistor
 typedef bool (*walrcv_startstreaming_type) (TimeLineID tli, XLogRecPtr startpoint);
 extern PGDLLIMPORT walrcv_startstreaming_type walrcv_startstreaming;
 
-typedef void (*walrcv_endstreaming_type) (void);
+typedef void (*walrcv_endstreaming_type) (TimeLineID *next_tli);
 extern PGDLLIMPORT walrcv_endstreaming_type walrcv_endstreaming;
 
 typedef int (*walrcv_receive_type) (int timeout, char **buffer);
