@@ -502,7 +502,8 @@ check_control_data(ControlData *oldctrl,
 {
 	if (oldctrl->align == 0 || oldctrl->align != newctrl->align)
 		pg_log(PG_FATAL,
-			   "old and new pg_controldata alignments are invalid or do not match\n");
+			   "old and new pg_controldata alignments are invalid or do not match\n"
+			   "Likely one cluster is a 32-bit install, the other 64-bit\n");
 
 	if (oldctrl->blocksz == 0 || oldctrl->blocksz != newctrl->blocksz)
 		pg_log(PG_FATAL,
