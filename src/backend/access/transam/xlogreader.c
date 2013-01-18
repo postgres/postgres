@@ -216,6 +216,8 @@ XLogReadRecord(XLogReaderState *state, XLogRecPtr RecPtr, char **errormsg)
 		randAccess = true;		/* allow readPageTLI to go backwards too */
 	}
 
+	state->currRecPtr = RecPtr;
+
 	targetPagePtr = RecPtr - (RecPtr % XLOG_BLCKSZ);
 	targetRecOff = RecPtr % XLOG_BLCKSZ;
 
@@ -503,6 +505,7 @@ ReadPageInternal(XLogReaderState *state, XLogRecPtr pageptr, int reqLen)
 		XLogRecPtr	targetSegmentPtr = pageptr - targetPageOff;
 
 		readLen = state->read_page(state, targetSegmentPtr, XLOG_BLCKSZ,
+								   state->currRecPtr,
 								   state->readBuf, &state->readPageTLI);
 		if (readLen < 0)
 			goto err;
@@ -521,6 +524,7 @@ ReadPageInternal(XLogReaderState *state, XLogRecPtr pageptr, int reqLen)
 	 * so that we can validate it.
 	 */
 	readLen = state->read_page(state, pageptr, Max(reqLen, SizeOfXLogShortPHD),
+							   state->currRecPtr,
 							   state->readBuf, &state->readPageTLI);
 	if (readLen < 0)
 		goto err;
@@ -539,6 +543,7 @@ ReadPageInternal(XLogReaderState *state, XLogRecPtr pageptr, int reqLen)
 	if (readLen < XLogPageHeaderSize(hdr))
 	{
 		readLen = state->read_page(state, pageptr, XLogPageHeaderSize(hdr),
+								   state->currRecPtr,
 								   state->readBuf, &state->readPageTLI);
 		if (readLen < 0)
 			goto err;

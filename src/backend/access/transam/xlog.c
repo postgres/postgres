@@ -626,9 +626,10 @@ static int XLogFileRead(XLogSegNo segno, int emode, TimeLineID tli,
 			 int source, bool notexistOk);
 static int XLogFileReadAnyTLI(XLogSegNo segno, int emode, int source);
 static int XLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr,
-				 int reqLen, char *readBuf, TimeLineID *readTLI);
+			 int reqLen, XLogRecPtr targetRecPtr, char *readBuf,
+			 TimeLineID *readTLI);
 static bool WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
-							bool fetching_ckpt);
+							bool fetching_ckpt, XLogRecPtr tliRecPtr);
 static int	emode_for_corrupt_record(int emode, XLogRecPtr RecPtr);
 static void XLogFileClose(void);
 static void PreallocXlogFiles(XLogRecPtr endptr);
@@ -8832,7 +8833,7 @@ CancelBackup(void)
  */
 static int
 XLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr, int reqLen,
-			 char *readBuf, TimeLineID *readTLI)
+			 XLogRecPtr targetRecPtr, char *readBuf, TimeLineID *readTLI)
 {
 	XLogPageReadPrivate *private =
 		(XLogPageReadPrivate *) xlogreader->private_data;
@@ -8880,7 +8881,8 @@ retry:
 		{
 			if (!WaitForWALToBecomeAvailable(targetPagePtr + reqLen,
 											 private->randAccess,
-											 private->fetching_ckpt))
+											 private->fetching_ckpt,
+											 targetRecPtr))
 				goto triggered;
 		}
 		/* In archive or crash recovery. */
@@ -8980,10 +8982,18 @@ triggered:
 }
 
 /*
- * In standby mode, wait for the requested record to become available, either
+ * In standby mode, wait for WAL at position 'RecPtr' to become available, either
  * via restore_command succeeding to restore the segment, or via walreceiver
  * having streamed the record (or via someone copying the segment directly to
  * pg_xlog, but that is not documented or recommended).
+ *
+ * If 'fetching_ckpt' is true, we're fetching a checkpoint record, and should
+ * prepare to read WAL starting from RedoStartLSN after this.
+ *
+ * 'RecPtr' might not point to the beginning of the record we're interested
+ * in, it might also point to the page or segment header. In that case,
+ * 'tliRecPtr' is the position of the WAL record we're interested in. It is
+ * used to decide which timeline to stream the requested WAL from.
  *
  * When the requested record becomes available, the function opens the file
  * containing it (if not open already), and returns true. When end of standby
@@ -8992,7 +9002,7 @@ triggered:
  */
 static bool
 WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
-							bool fetching_ckpt)
+							bool fetching_ckpt, XLogRecPtr tliRecPtr)
 {
 	static pg_time_t last_fail_time = 0;
 	pg_time_t now;
@@ -9076,7 +9086,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 						else
 						{
 							ptr = RecPtr;
-							tli = tliOfPointInHistory(ptr, expectedTLEs);
+							tli = tliOfPointInHistory(tliRecPtr, expectedTLEs);
 
 							if (curFileTLI > 0 && tli < curFileTLI)
 								elog(ERROR, "according to history file, WAL location %X/%X belongs to timeline %u, but previous recovered WAL file came from timeline %u",

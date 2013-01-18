@@ -27,6 +27,7 @@ typedef struct XLogReaderState XLogReaderState;
 typedef int (*XLogPageReadCB) (XLogReaderState *xlogreader,
 										   XLogRecPtr targetPagePtr,
 										   int reqLen,
+										   XLogRecPtr targetRecPtr,
 										   char *readBuf,
 										   TimeLineID *pageTLI);
 
@@ -46,11 +47,17 @@ struct XLogReaderState
 	 * -1 on failure.  The callback shall sleep, if necessary, to wait for the
 	 * requested bytes to become available.  The callback will not be invoked
 	 * again for the same page unless more than the returned number of bytes
-	 * are necessary.
+	 * are needed.
 	 *
-	 * *pageTLI should be set to the TLI of the file the page was read from.
-	 * It is currently used only for error reporting purposes, to reconstruct
-	 * the name of the WAL file where an error occurred.
+	 * targetRecPtr is the position of the WAL record we're reading.  Usually
+	 * it is equal to targetPagePtr + reqLen, but sometimes xlogreader needs
+	 * to read and verify the page or segment header, before it reads the
+	 * actual WAL record it's interested in.  In that case, targetRecPtr can
+	 * be used to determine which timeline to read the page from.
+	 *
+	 * The callback shall set *pageTLI to the TLI of the file the page was
+	 * read from.  It is currently used only for error reporting purposes, to
+	 * reconstruct the name of the WAL file where an error occurred.
 	 */
 	XLogPageReadCB read_page;
 
@@ -89,6 +96,9 @@ struct XLogReaderState
 	/* beginning of last page read, and its TLI  */
 	XLogRecPtr	latestPagePtr;
 	TimeLineID	latestPageTLI;
+
+	/* beginning of the WAL record being read. */
+	XLogRecPtr	currRecPtr;
 
 	/* Buffer for current ReadRecord result (expandable) */
 	char	   *readRecordBuf;
