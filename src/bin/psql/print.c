@@ -1681,7 +1681,7 @@ print_latex_text(const printTableContent *cont, FILE *fout)
 	{
 		printTableFooter *footers = footers_with_default(cont);
 
-		if (opt_border >= 2)
+		if (opt_border == 2)
 			fputs("\\hline\n", fout);
 
 		fputs("\\end{tabular}\n\n\\noindent ", fout);

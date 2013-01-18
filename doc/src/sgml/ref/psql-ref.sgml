@@ -2163,7 +2163,7 @@ lo_import 152801
           <para>
           In <literal>latex-longtable</literal> format, this controls
           the proportional width of each column containing a left-aligned
-          data type.  It is specified as a space-separated list of values,
+          data type.  It is specified as a whitespace-separated list of values,
           e.g. <literal>'0.2 0.2 0.6'</>.  Unspecified output columns
           use the last specified value.
           </para>
