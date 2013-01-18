@@ -8875,7 +8875,7 @@ retry:
 	/* See if we need to retrieve more data */
 	if (readFile < 0 ||
 		(readSource == XLOG_FROM_STREAM &&
-		 receivedUpto <= targetPagePtr + reqLen))
+		 receivedUpto < targetPagePtr + reqLen))
 	{
 		if (StandbyMode)
 		{
