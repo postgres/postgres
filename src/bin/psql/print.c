@@ -1704,7 +1704,7 @@ print_latex_text(const printTableContent *cont, FILE *fout)
 
 
 static void
-print_latex_text_longtable(const printTableContent *cont, FILE *fout)
+print_latex_longtable_text(const printTableContent *cont, FILE *fout)
 {
 	bool		opt_tuples_only = cont->opt->tuples_only;
 	unsigned short opt_border = cont->opt->border;
@@ -2556,7 +2556,7 @@ printTable(const printTableContent *cont, FILE *fout, FILE *flog)
 			if (cont->opt->expanded == 1)
 				print_latex_vertical(cont, fout);
 			else
-				print_latex_text_longtable(cont, fout);
+				print_latex_longtable_text(cont, fout);
 			break;
 		case PRINT_TROFF_MS:
 			if (cont->opt->expanded == 1)
