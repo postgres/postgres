@@ -618,7 +618,14 @@ main(int argc, char **argv)
 		else
 			ExecuteSqlStatement(fout,
 								"SET TRANSACTION ISOLATION LEVEL "
-								"REPEATABLE READ");
+								"REPEATABLE READ, READ ONLY");
+	}
+	else if (fout->remoteVersion >= 70400)
+	{
+		/* note: comma was not accepted in SET TRANSACTION before 8.0 */
+		ExecuteSqlStatement(fout,
+							"SET TRANSACTION ISOLATION LEVEL "
+							"SERIALIZABLE READ ONLY");
 	}
 	else
 		ExecuteSqlStatement(fout,
