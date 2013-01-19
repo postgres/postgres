@@ -2469,7 +2469,8 @@ ExecStatusType PQresultStatus(const PGresult *res);
         command that happens to retrieve zero rows still shows
         <literal>PGRES_TUPLES_OK</literal>.
         <literal>PGRES_COMMAND_OK</literal> is for commands that can never
-        return rows (<command>INSERT</command>, <command>UPDATE</command>,
+        return rows (<command>INSERT</command> or <command>UPDATE</command>
+        without a <literal>RETURNING</literal> clause,
         etc.). A response of <literal>PGRES_EMPTY_QUERY</literal> might
         indicate a bug in the client software.
        </para>
