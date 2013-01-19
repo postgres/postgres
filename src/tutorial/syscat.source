@@ -15,7 +15,11 @@
 -- Sets the schema search path to pg_catalog first, so that we do not
 -- need to qualify every system object
 --
-SET SEARCH_PATH TO pg_catalog;
+SET search_path TO pg_catalog;
+
+-- The LIKE pattern language requires underscores to be escaped, so make
+-- sure the backslashes are not misinterpreted.
+SET standard_conforming_strings TO on;
 
 --
 -- lists the names of all database owners and the name of their database(s)
@@ -32,7 +36,7 @@ SELECT n.nspname, c.relname
   FROM pg_class c, pg_namespace n
   WHERE c.relnamespace=n.oid
     and c.relkind = 'r'                   -- not indices, views, etc
-    and n.nspname not like 'pg\\_%'       -- not catalogs
+    and n.nspname not like 'pg\_%'       -- not catalogs
     and n.nspname != 'information_schema' -- not information_schema
   ORDER BY nspname, relname;
 
@@ -68,7 +72,7 @@ SELECT n.nspname, c.relname, a.attname, format_type(t.oid, null) as typname
        pg_attribute a, pg_type t
   WHERE n.oid = c.relnamespace
     and c.relkind = 'r'     -- no indices
-    and n.nspname not like 'pg\\_%' -- no catalogs
+    and n.nspname not like 'pg\_%' -- no catalogs
     and n.nspname != 'information_schema' -- no information_schema
     and a.attnum > 0        -- no system att's
     and not a.attisdropped   -- no dropped columns
@@ -86,7 +90,7 @@ SELECT n.nspname, r.rolname, format_type(t.oid, null) as typname
     and t.typnamespace = n.oid
     and t.typrelid = 0   -- no complex types
     and t.typelem = 0    -- no arrays
-    and n.nspname not like 'pg\\_%' -- no built-in types
+    and n.nspname not like 'pg\_%' -- no built-in types
     and n.nspname != 'information_schema' -- no information_schema
   ORDER BY nspname, rolname, typname;
 
@@ -145,7 +149,7 @@ SELECT n.nspname, p.proname, p.pronargs, format_type(t.oid, null) as return_type
   FROM pg_namespace n, pg_proc p,
        pg_language l, pg_type t
   WHERE p.pronamespace = n.oid
-    and n.nspname not like 'pg\\_%' -- no catalogs
+    and n.nspname not like 'pg\_%' -- no catalogs
     and n.nspname != 'information_schema' -- no information_schema
     and p.prolang = l.oid
     and p.prorettype = t.oid
@@ -179,6 +183,7 @@ SELECT am.amname, n.nspname, opf.opfname, opr.oprname
   ORDER BY nspname, amname, opfname, oprname;
 
 --
--- Reset the search path
+-- Reset the search path and standard_conforming_strings to their defaults
 --
-RESET SEARCH_PATH;
+RESET search_path;
+RESET standard_conforming_strings;
