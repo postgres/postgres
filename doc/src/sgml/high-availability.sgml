@@ -738,13 +738,14 @@ archive_cleanup_command = 'pg_archivecleanup /path/to/archive %r'
    </para>
 
    <para>
-    Streaming replication is asynchronous, so there is still a small delay
-    between committing a transaction in the primary and for the changes to
-    become visible in the standby. The delay is however much smaller than with
-    file-based log shipping, typically under one second assuming the standby
-    is powerful enough to keep up with the load. With streaming replication,
-    <varname>archive_timeout</> is not required to reduce the data loss
-    window.
+    Streaming replication is asynchronous by default
+    (see <xref linkend="synchronous-replication">), in which case there is
+    a small delay between committing a transaction in the primary and the
+    changes becoming visible in the standby. This delay is however much
+    smaller than with file-based log shipping, typically under one second
+    assuming the standby is powerful enough to keep up with the load. With
+    streaming replication, <varname>archive_timeout</> is not required to
+    reduce the data loss window.
    </para>
 
    <para>
