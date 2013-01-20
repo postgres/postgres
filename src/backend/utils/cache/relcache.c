@@ -137,9 +137,27 @@ static long relcacheInvalsReceived = 0L;
 static List *initFileRelationIds = NIL;
 
 /*
- * This flag lets us optimize away work in AtEO(Sub)Xact_RelationCache().
+ * eoxact_list[] stores the OIDs of relations that (might) need AtEOXact
+ * cleanup work.  This list intentionally has limited size; if it overflows,
+ * we fall back to scanning the whole hashtable.  There is no value in a very
+ * large list because (1) at some point, a hash_seq_search scan is faster than
+ * retail lookups, and (2) the value of this is to reduce EOXact work for
+ * short transactions, which can't have dirtied all that many tables anyway.
+ * EOXactListAdd() does not bother to prevent duplicate list entries, so the
+ * cleanup processing must be idempotent.
  */
-static bool need_eoxact_work = false;
+#define MAX_EOXACT_LIST 32
+static Oid	eoxact_list[MAX_EOXACT_LIST];
+static int	eoxact_list_len = 0;
+static bool eoxact_list_overflowed = false;
+
+#define EOXactListAdd(rel) \
+	do { \
+		if (eoxact_list_len < MAX_EOXACT_LIST) \
+			eoxact_list[eoxact_list_len++] = (rel)->rd_id; \
+		else \
+			eoxact_list_overflowed = true; \
+	} while (0)
 
 
 /*
@@ -204,6 +222,9 @@ static void RelationClearRelation(Relation relation, bool rebuild);
 
 static void RelationReloadIndexInfo(Relation relation);
 static void RelationFlushRelation(Relation relation);
+static void AtEOXact_cleanup(Relation relation, bool isCommit);
+static void AtEOSubXact_cleanup(Relation relation, bool isCommit,
+					SubTransactionId mySubid, SubTransactionId parentSubid);
 static bool load_relcache_init_file(bool shared);
 static void write_relcache_init_file(bool shared);
 static void write_item(const void *data, Size len, FILE *fp);
@@ -2275,31 +2296,56 @@ AtEOXact_RelationCache(bool isCommit)
 {
 	HASH_SEQ_STATUS status;
 	RelIdCacheEnt *idhentry;
+	int			i;
 
 	/*
-	 * To speed up transaction exit, we want to avoid scanning the relcache
-	 * unless there is actually something for this routine to do.  Other than
-	 * the debug-only Assert checks, most transactions don't create any work
-	 * for us to do here, so we keep a static flag that gets set if there is
-	 * anything to do.	(Currently, this means either a relation is created in
-	 * the current xact, or one is given a new relfilenode, or an index list
-	 * is forced.)	For simplicity, the flag remains set till end of top-level
-	 * transaction, even though we could clear it at subtransaction end in
-	 * some cases.
+	 * Unless the eoxact_list[] overflowed, we only need to examine the rels
+	 * listed in it.  Otherwise fall back on a hash_seq_search scan.
+	 *
+	 * For simplicity, eoxact_list[] entries are not deleted till end of
+	 * top-level transaction, even though we could remove them at
+	 * subtransaction end in some cases, or remove relations from the list if
+	 * they are cleared for other reasons.  Therefore we should expect the
+	 * case that list entries are not found in the hashtable; if not, there's
+	 * nothing to do for them.
 	 */
-	if (!need_eoxact_work
-#ifdef USE_ASSERT_CHECKING
-		&& !assert_enabled
-#endif
-		)
-		return;
-
-	hash_seq_init(&status, RelationIdCache);
-
-	while ((idhentry = (RelIdCacheEnt *) hash_seq_search(&status)) != NULL)
+	if (eoxact_list_overflowed)
 	{
-		Relation	relation = idhentry->reldesc;
+		hash_seq_init(&status, RelationIdCache);
+		while ((idhentry = (RelIdCacheEnt *) hash_seq_search(&status)) != NULL)
+		{
+			AtEOXact_cleanup(idhentry->reldesc, isCommit);
+		}
+	}
+	else
+	{
+		for (i = 0; i < eoxact_list_len; i++)
+		{
+			idhentry = (RelIdCacheEnt *) hash_search(RelationIdCache,
+													 (void *) &eoxact_list[i],
+													 HASH_FIND,
+													 NULL);
+			if (idhentry != NULL)
+				AtEOXact_cleanup(idhentry->reldesc, isCommit);
+		}
+	}
 
+	/* Now we're out of the transaction and can clear the list */
+	eoxact_list_len = 0;
+	eoxact_list_overflowed = false;
+}
+
+/*
+ * AtEOXact_cleanup
+ *
+ *	Clean up a single rel at main-transaction commit or abort
+ *
+ * NB: this processing must be idempotent, because EOXactListAdd() doesn't
+ * bother to prevent duplicate entries in eoxact_list[].
+ */
+static void
+AtEOXact_cleanup(Relation relation, bool isCommit)
+{
 		/*
 		 * The relcache entry's ref count should be back to its normal
 		 * not-in-a-transaction state: 0 unless it's nailed in cache.
@@ -2307,6 +2353,12 @@ AtEOXact_RelationCache(bool isCommit)
 		 * In bootstrap mode, this is NOT true, so don't check it --- the
 		 * bootstrap code expects relations to stay open across start/commit
 		 * transaction calls.  (That seems bogus, but it's not worth fixing.)
+		 *
+		 * Note: ideally this check would be applied to every relcache entry,
+		 * not just those that have eoxact work to do.	But it's not worth
+		 * forcing a scan of the whole relcache just for this.	(Moreover,
+		 * doing so would mean that assert-enabled testing never tests the
+		 * hash_search code path above, which seems a bad idea.)
 		 */
 #ifdef USE_ASSERT_CHECKING
 		if (!IsBootstrapProcessingMode())
@@ -2335,7 +2387,7 @@ AtEOXact_RelationCache(bool isCommit)
 			else
 			{
 				RelationClearRelation(relation, false);
-				continue;
+				return;
 			}
 		}
 
@@ -2354,10 +2406,6 @@ AtEOXact_RelationCache(bool isCommit)
 			relation->rd_oidindex = InvalidOid;
 			relation->rd_indexvalid = 0;
 		}
-	}
-
-	/* Once done with the transaction, we can reset need_eoxact_work */
-	need_eoxact_work = false;
 }
 
 /*
@@ -2373,20 +2421,51 @@ AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
 {
 	HASH_SEQ_STATUS status;
 	RelIdCacheEnt *idhentry;
+	int			i;
 
 	/*
-	 * Skip the relcache scan if nothing to do --- see notes for
-	 * AtEOXact_RelationCache.
+	 * Unless the eoxact_list[] overflowed, we only need to examine the rels
+	 * listed in it.  Otherwise fall back on a hash_seq_search scan.  Same
+	 * logic as in AtEOXact_RelationCache.
 	 */
-	if (!need_eoxact_work)
-		return;
-
-	hash_seq_init(&status, RelationIdCache);
-
-	while ((idhentry = (RelIdCacheEnt *) hash_seq_search(&status)) != NULL)
+	if (eoxact_list_overflowed)
 	{
-		Relation	relation = idhentry->reldesc;
+		hash_seq_init(&status, RelationIdCache);
+		while ((idhentry = (RelIdCacheEnt *) hash_seq_search(&status)) != NULL)
+		{
+			AtEOSubXact_cleanup(idhentry->reldesc, isCommit,
+								mySubid, parentSubid);
+		}
+	}
+	else
+	{
+		for (i = 0; i < eoxact_list_len; i++)
+		{
+			idhentry = (RelIdCacheEnt *) hash_search(RelationIdCache,
+													 (void *) &eoxact_list[i],
+													 HASH_FIND,
+													 NULL);
+			if (idhentry != NULL)
+				AtEOSubXact_cleanup(idhentry->reldesc, isCommit,
+									mySubid, parentSubid);
+		}
+	}
 
+	/* Don't reset the list; we still need more cleanup later */
+}
+
+/*
+ * AtEOSubXact_cleanup
+ *
+ *	Clean up a single rel at subtransaction commit or abort
+ *
+ * NB: this processing must be idempotent, because EOXactListAdd() doesn't
+ * bother to prevent duplicate entries in eoxact_list[].
+ */
+static void
+AtEOSubXact_cleanup(Relation relation, bool isCommit,
+					SubTransactionId mySubid, SubTransactionId parentSubid)
+{
 		/*
 		 * Is it a relation created in the current subtransaction?
 		 *
@@ -2400,7 +2479,7 @@ AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
 			else
 			{
 				RelationClearRelation(relation, false);
-				continue;
+				return;
 			}
 		}
 
@@ -2426,7 +2505,6 @@ AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
 			relation->rd_oidindex = InvalidOid;
 			relation->rd_indexvalid = 0;
 		}
-	}
 }
 
 
@@ -2515,9 +2593,6 @@ RelationBuildLocalRelation(const char *relname,
 	/* it's being created in this transaction */
 	rel->rd_createSubid = GetCurrentSubTransactionId();
 	rel->rd_newRelfilenodeSubid = InvalidSubTransactionId;
-
-	/* must flag that we have rels created in this transaction */
-	need_eoxact_work = true;
 
 	/*
 	 * create a new tuple descriptor from the one passed in.  We do this
@@ -2608,6 +2683,12 @@ RelationBuildLocalRelation(const char *relname,
 	 * Okay to insert into the relcache hash tables.
 	 */
 	RelationCacheInsert(rel);
+
+	/*
+	 * Flag relation as needing eoxact cleanup (to clear rd_createSubid).
+	 * We can't do this before storing relid in it.
+	 */
+	EOXactListAdd(rel);
 
 	/*
 	 * done building relcache entry.
@@ -2732,8 +2813,9 @@ RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid)
 	 * operations on the rel in the same transaction.
 	 */
 	relation->rd_newRelfilenodeSubid = GetCurrentSubTransactionId();
-	/* ... and now we have eoxact cleanup work to do */
-	need_eoxact_work = true;
+
+	/* Flag relation as needing eoxact cleanup (to remove the hint) */
+	EOXactListAdd(relation);
 }
 
 
@@ -3513,8 +3595,8 @@ RelationSetIndexList(Relation relation, List *indexIds, Oid oidIndex)
 	relation->rd_indexlist = indexIds;
 	relation->rd_oidindex = oidIndex;
 	relation->rd_indexvalid = 2;	/* mark list as forced */
-	/* must flag that we have a forced index list */
-	need_eoxact_work = true;
+	/* Flag relation as needing eoxact cleanup (to reset the list) */
+	EOXactListAdd(relation);
 }
 
 /*
