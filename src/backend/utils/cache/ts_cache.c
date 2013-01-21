@@ -640,7 +640,7 @@ check_TSCurrentConfig(char **newval, void **extra, GucSource source)
 		free(*newval);
 		*newval = strdup(buf);
 		pfree(buf);
-		if (!newval)
+		if (!*newval)
 			return false;
 	}
 
