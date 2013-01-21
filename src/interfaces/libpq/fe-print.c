@@ -681,7 +681,6 @@ PQprintTuples(const PGresult *res,
 	int			i,
 				j;
 	char		formatString[80];
-
 	char	   *tborder = NULL;
 
 	nFields = PQnfields(res);
@@ -700,15 +699,15 @@ PQprintTuples(const PGresult *res,
 			int			width;
 
 			width = nFields * 14;
-			tborder = malloc(width + 1);
+			tborder = (char *) malloc(width + 1);
 			if (!tborder)
 			{
 				fprintf(stderr, libpq_gettext("out of memory\n"));
 				abort();
 			}
-			for (i = 0; i <= width; i++)
+			for (i = 0; i < width; i++)
 				tborder[i] = '-';
-			tborder[i] = '\0';
+			tborder[width] = '\0';
 			fprintf(fout, "%s\n", tborder);
 		}
 
