@@ -167,6 +167,8 @@ BuildEventTriggerCache(void)
 		evtevent = NameStr(form->evtevent);
 		if (strcmp(evtevent, "ddl_command_start") == 0)
 			event = EVT_DDLCommandStart;
+		else if (strcmp(evtevent, "ddl_command_end") == 0)
+			event = EVT_DDLCommandEnd;
 		else
 			continue;
 

@@ -41,5 +41,6 @@ extern void AlterEventTriggerOwner_oid(Oid, Oid newOwnerId);
 
 extern bool EventTriggerSupportsObjectType(ObjectType obtype);
 extern void EventTriggerDDLCommandStart(Node *parsetree);
+extern void EventTriggerDDLCommandEnd(Node *parsetree);
 
 #endif   /* EVENT_TRIGGER_H */

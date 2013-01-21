@@ -18,6 +18,9 @@ create event trigger regress_event_trigger on elephant_bootstrap
 create event trigger regress_event_trigger on ddl_command_start
    execute procedure test_event_trigger();
 
+create event trigger regress_event_trigger_end on ddl_command_end
+   execute procedure test_event_trigger();
+
 -- should fail, food is not a valid filter variable
 create event trigger regress_event_trigger2 on ddl_command_start
    when food in ('sandwhich')
@@ -96,5 +99,6 @@ drop role regression_bob;
 drop event trigger if exists regress_event_trigger2;
 drop event trigger if exists regress_event_trigger2;
 drop event trigger regress_event_trigger3;
+drop event trigger regress_event_trigger_end;
 drop function test_event_trigger();
 drop role regression_bob;

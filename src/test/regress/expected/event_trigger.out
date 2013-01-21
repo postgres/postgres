@@ -16,6 +16,8 @@ ERROR:  unrecognized event name "elephant_bootstrap"
 -- OK
 create event trigger regress_event_trigger on ddl_command_start
    execute procedure test_event_trigger();
+create event trigger regress_event_trigger_end on ddl_command_end
+   execute procedure test_event_trigger();
 -- should fail, food is not a valid filter variable
 create event trigger regress_event_trigger2 on ddl_command_start
    when food in ('sandwhich')
@@ -65,9 +67,10 @@ alter event trigger regress_event_trigger enable;
 alter event trigger regress_event_trigger disable;
 -- regress_event_trigger2 should fire, but not regress_event_trigger
 create table event_trigger_fire1 (a int);
-NOTICE:  test_event_trigger: ddl_command_start CREATE TABLE
+NOTICE:  test_event_trigger: ddl_command_end CREATE TABLE
 -- but nothing should fire here
 drop table event_trigger_fire1;
+NOTICE:  test_event_trigger: ddl_command_end DROP TABLE
 -- alter owner to non-superuser should fail
 alter event trigger regress_event_trigger owner to regression_bob;
 ERROR:  permission denied to change owner of event trigger "regress_event_trigger"
@@ -92,5 +95,6 @@ drop event trigger if exists regress_event_trigger2;
 drop event trigger if exists regress_event_trigger2;
 NOTICE:  event trigger "regress_event_trigger2" does not exist, skipping
 drop event trigger regress_event_trigger3;
+drop event trigger regress_event_trigger_end;
 drop function test_event_trigger();
 drop role regression_bob;
