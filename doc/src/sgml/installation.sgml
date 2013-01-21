@@ -2320,7 +2320,7 @@ createlang: language installation failed: ERROR:  could not load library "/opt/d
      </biblioentry>
 
      <biblioentry>
-       <title><ulink url="  http://www.redbooks.ibm.com/abstracts/sg245674.html?Open">Developing and Porting C and C++ Applications on AIX</ulink></title>
+       <title><ulink url="http://www.redbooks.ibm.com/abstracts/sg245674.html?Open">Developing and Porting C and C++ Applications on AIX</ulink></title>
        <publisher>
         <publishername>IBM Redbook</publishername>
        </publisher>
