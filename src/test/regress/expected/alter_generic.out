@@ -279,8 +279,8 @@ ALTER OPERATOR FAMILY alt_opf2 USING hash OWNER TO regtest_alter_user3;  -- fail
 ERROR:  must be member of role "regtest_alter_user3"
 ALTER OPERATOR FAMILY alt_opf3 USING hash SET SCHEMA alt_nsp2;  -- failed (not owner)
 ERROR:  must be owner of operator family alt_opf3
--- can't test this: the error message includes the raw oid of namespace
--- ALTER OPERATOR FAMILY alt_opf2 USING hash SET SCHEMA alt_nsp2;  -- failed (name conflict)
+ALTER OPERATOR FAMILY alt_opf2 USING hash SET SCHEMA alt_nsp2;  -- failed (name conflict)
+ERROR:  operator family "alt_opf2" for access method "hash" already exists in schema "alt_nsp2"
 ALTER OPERATOR CLASS alt_opc3 USING hash RENAME TO alt_opc4;	-- failed (not owner)
 ERROR:  must be owner of operator class alt_opc3
 ALTER OPERATOR CLASS alt_opc1 USING hash RENAME TO alt_opc4;  -- OK
@@ -290,8 +290,8 @@ ALTER OPERATOR CLASS alt_opc2 USING hash OWNER TO regtest_alter_user3;  -- faile
 ERROR:  must be member of role "regtest_alter_user3"
 ALTER OPERATOR CLASS alt_opc3 USING hash SET SCHEMA alt_nsp2;  -- failed (not owner)
 ERROR:  must be owner of operator class alt_opc3
--- can't test this: the error message includes the raw oid of namespace
--- ALTER OPERATOR CLASS alt_opc2 USING hash SET SCHEMA alt_nsp2;  -- failed (name conflict)
+ALTER OPERATOR CLASS alt_opc2 USING hash SET SCHEMA alt_nsp2;  -- failed (name conflict)
+ERROR:  operator class "alt_opc2" for access method "hash" already exists in schema "alt_nsp2"
 RESET SESSION AUTHORIZATION;
 SELECT nspname, opfname, amname, rolname
   FROM pg_opfamily o, pg_am m, pg_namespace n, pg_authid a
@@ -327,7 +327,7 @@ SET SESSION AUTHORIZATION regtest_alter_user1;
 CREATE TEXT SEARCH DICTIONARY alt_ts_dict1 (template=simple);
 CREATE TEXT SEARCH DICTIONARY alt_ts_dict2 (template=simple);
 ALTER TEXT SEARCH DICTIONARY alt_ts_dict1 RENAME TO alt_ts_dict2;  -- failed (name conflict)
-ERROR:  text search dictionary "alt_ts_dict2" already exists
+ERROR:  text search dictionary "alt_ts_dict2" already exists in schema "alt_nsp1"
 ALTER TEXT SEARCH DICTIONARY alt_ts_dict1 RENAME TO alt_ts_dict3;  -- OK
 ALTER TEXT SEARCH DICTIONARY alt_ts_dict2 OWNER TO regtest_alter_user2;  -- failed (no role membership)
 ERROR:  must be member of role "regtest_alter_user2"
@@ -368,7 +368,7 @@ SET SESSION AUTHORIZATION regtest_alter_user1;
 CREATE TEXT SEARCH CONFIGURATION alt_ts_conf1 (copy=english);
 CREATE TEXT SEARCH CONFIGURATION alt_ts_conf2 (copy=english);
 ALTER TEXT SEARCH CONFIGURATION alt_ts_conf1 RENAME TO alt_ts_conf2;  -- failed (name conflict)
-ERROR:  text search configuration "alt_ts_conf2" already exists
+ERROR:  text search configuration "alt_ts_conf2" already exists in schema "alt_nsp1"
 ALTER TEXT SEARCH CONFIGURATION alt_ts_conf1 RENAME TO alt_ts_conf3;  -- OK
 ALTER TEXT SEARCH CONFIGURATION alt_ts_conf2 OWNER TO regtest_alter_user2;  -- failed (no role membership)
 ERROR:  must be member of role "regtest_alter_user2"
@@ -408,7 +408,7 @@ SELECT nspname, cfgname, rolname
 CREATE TEXT SEARCH TEMPLATE alt_ts_temp1 (lexize=dsimple_lexize);
 CREATE TEXT SEARCH TEMPLATE alt_ts_temp2 (lexize=dsimple_lexize);
 ALTER TEXT SEARCH TEMPLATE alt_ts_temp1 RENAME TO alt_ts_temp2; -- failed (name conflict)
-ERROR:  text search template "alt_ts_temp2" already exists
+ERROR:  text search template "alt_ts_temp2" already exists in schema "alt_nsp1"
 ALTER TEXT SEARCH TEMPLATE alt_ts_temp1 RENAME TO alt_ts_temp3; -- OK
 ALTER TEXT SEARCH TEMPLATE alt_ts_temp2 SET SCHEMA alt_nsp2;    -- OK
 CREATE TEXT SEARCH TEMPLATE alt_ts_temp2 (lexize=dsimple_lexize);
@@ -433,7 +433,7 @@ CREATE TEXT SEARCH PARSER alt_ts_prs1
 CREATE TEXT SEARCH PARSER alt_ts_prs2
     (start = prsd_start, gettoken = prsd_nexttoken, end = prsd_end, lextypes = prsd_lextype);
 ALTER TEXT SEARCH PARSER alt_ts_prs1 RENAME TO alt_ts_prs2; -- failed (name conflict)
-ERROR:  text search parser "alt_ts_prs2" already exists
+ERROR:  text search parser "alt_ts_prs2" already exists in schema "alt_nsp1"
 ALTER TEXT SEARCH PARSER alt_ts_prs1 RENAME TO alt_ts_prs3; -- OK
 ALTER TEXT SEARCH PARSER alt_ts_prs2 SET SCHEMA alt_nsp2;   -- OK
 CREATE TEXT SEARCH PARSER alt_ts_prs2

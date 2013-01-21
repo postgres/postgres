@@ -80,7 +80,9 @@ typedef struct
 	Oid			class_oid;		/* oid of catalog */
 	Oid			oid_index_oid;	/* oid of index on system oid column */
 	int			oid_catcache_id;	/* id of catcache on system oid column	*/
-	int			name_catcache_id;		/* id of catcache on (name,namespace) */
+	int			name_catcache_id;		/* id of catcache on (name,namespace),
+										 * or (name) if the object does not
+										 * live in a namespace */
 	AttrNumber	attnum_name;	/* attnum of name field */
 	AttrNumber	attnum_namespace;		/* attnum of namespace field */
 	AttrNumber	attnum_owner;	/* attnum of owner field */

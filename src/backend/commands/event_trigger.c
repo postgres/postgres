@@ -417,52 +417,6 @@ AlterEventTrigger(AlterEventTrigStmt *stmt)
 	return trigoid;
 }
 
-
-/*
- * Rename event trigger
- */
-Oid
-RenameEventTrigger(const char *trigname, const char *newname)
-{
-	Oid			evtId;
-	HeapTuple	tup;
-	Relation	rel;
-	Form_pg_event_trigger evtForm;
-
-	rel = heap_open(EventTriggerRelationId, RowExclusiveLock);
-
-	/* newname must be available */
-	if (SearchSysCacheExists1(EVENTTRIGGERNAME, CStringGetDatum(newname)))
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("event trigger \"%s\" already exists", newname)));
-
-	/* trigname must exists */
-	tup = SearchSysCacheCopy1(EVENTTRIGGERNAME, CStringGetDatum(trigname));
-	if (!HeapTupleIsValid(tup))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("event trigger \"%s\" does not exist", trigname)));
-	if (!pg_event_trigger_ownercheck(HeapTupleGetOid(tup), GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_EVENT_TRIGGER,
-					   trigname);
-
-	evtId = HeapTupleGetOid(tup);
-
-	evtForm = (Form_pg_event_trigger) GETSTRUCT(tup);
-
-	/* tuple is a copy, so we can rename it now */
-	namestrcpy(&(evtForm->evtname), newname);
-	simple_heap_update(rel, &tup->t_self, tup);
-	CatalogUpdateIndexes(rel, tup);
-
-	heap_freetuple(tup);
-	heap_close(rel, RowExclusiveLock);
-
-	return evtId;
-}
-
-
 /*
  * Change event trigger's owner -- by name
  */

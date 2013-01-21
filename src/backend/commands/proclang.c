@@ -537,48 +537,6 @@ DropProceduralLanguageById(Oid langOid)
 }
 
 /*
- * Rename language
- */
-Oid
-RenameLanguage(const char *oldname, const char *newname)
-{
-	Oid			lanId;
-	HeapTuple	tup;
-	Relation	rel;
-
-	rel = heap_open(LanguageRelationId, RowExclusiveLock);
-
-	tup = SearchSysCacheCopy1(LANGNAME, CStringGetDatum(oldname));
-	if (!HeapTupleIsValid(tup))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("language \"%s\" does not exist", oldname)));
-
-	lanId = HeapTupleGetOid(tup);
-
-	/* make sure the new name doesn't exist */
-	if (SearchSysCacheExists1(LANGNAME, CStringGetDatum(newname)))
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("language \"%s\" already exists", newname)));
-
-	/* must be owner of PL */
-	if (!pg_language_ownercheck(HeapTupleGetOid(tup), GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_LANGUAGE,
-					   oldname);
-
-	/* rename */
-	namestrcpy(&(((Form_pg_language) GETSTRUCT(tup))->lanname), newname);
-	simple_heap_update(rel, &tup->t_self, tup);
-	CatalogUpdateIndexes(rel, tup);
-
-	heap_close(rel, NoLock);
-	heap_freetuple(tup);
-
-	return lanId;
-}
-
-/*
  * get_language_oid - given a language name, look up the OID
  *
  * If missing_ok is false, throw an error if language name not found.  If

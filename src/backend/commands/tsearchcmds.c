@@ -305,51 +305,6 @@ RemoveTSParserById(Oid prsId)
 	heap_close(relation, RowExclusiveLock);
 }
 
-/*
- * ALTER TEXT SEARCH PARSER RENAME
- */
-Oid
-RenameTSParser(List *oldname, const char *newname)
-{
-	HeapTuple	tup;
-	Relation	rel;
-	Oid			prsId;
-	Oid			namespaceOid;
-
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to rename text search parsers")));
-
-	rel = heap_open(TSParserRelationId, RowExclusiveLock);
-
-	prsId = get_ts_parser_oid(oldname, false);
-
-	tup = SearchSysCacheCopy1(TSPARSEROID, ObjectIdGetDatum(prsId));
-
-	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "cache lookup failed for text search parser %u", prsId);
-
-	namespaceOid = ((Form_pg_ts_parser) GETSTRUCT(tup))->prsnamespace;
-
-	if (SearchSysCacheExists2(TSPARSERNAMENSP,
-							  PointerGetDatum(newname),
-							  ObjectIdGetDatum(namespaceOid)))
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("text search parser \"%s\" already exists",
-						newname)));
-
-	namestrcpy(&(((Form_pg_ts_parser) GETSTRUCT(tup))->prsname), newname);
-	simple_heap_update(rel, &tup->t_self, tup);
-	CatalogUpdateIndexes(rel, tup);
-
-	heap_close(rel, NoLock);
-	heap_freetuple(tup);
-
-	return prsId;
-}
-
 /* ---------------------- TS Dictionary commands -----------------------*/
 
 /*
@@ -532,59 +487,6 @@ DefineTSDictionary(List *names, List *parameters)
 	heap_close(dictRel, RowExclusiveLock);
 
 	return dictOid;
-}
-
-/*
- * ALTER TEXT SEARCH DICTIONARY RENAME
- */
-Oid
-RenameTSDictionary(List *oldname, const char *newname)
-{
-	HeapTuple	tup;
-	Relation	rel;
-	Oid			dictId;
-	Oid			namespaceOid;
-	AclResult	aclresult;
-
-	rel = heap_open(TSDictionaryRelationId, RowExclusiveLock);
-
-	dictId = get_ts_dict_oid(oldname, false);
-
-	tup = SearchSysCacheCopy1(TSDICTOID, ObjectIdGetDatum(dictId));
-
-	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "cache lookup failed for text search dictionary %u",
-			 dictId);
-
-	namespaceOid = ((Form_pg_ts_dict) GETSTRUCT(tup))->dictnamespace;
-
-	if (SearchSysCacheExists2(TSDICTNAMENSP,
-							  PointerGetDatum(newname),
-							  ObjectIdGetDatum(namespaceOid)))
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("text search dictionary \"%s\" already exists",
-						newname)));
-
-	/* must be owner */
-	if (!pg_ts_dict_ownercheck(dictId, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TSDICTIONARY,
-					   NameListToString(oldname));
-
-	/* must have CREATE privilege on namespace */
-	aclresult = pg_namespace_aclcheck(namespaceOid, GetUserId(), ACL_CREATE);
-	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
-					   get_namespace_name(namespaceOid));
-
-	namestrcpy(&(((Form_pg_ts_dict) GETSTRUCT(tup))->dictname), newname);
-	simple_heap_update(rel, &tup->t_self, tup);
-	CatalogUpdateIndexes(rel, tup);
-
-	heap_close(rel, NoLock);
-	heap_freetuple(tup);
-
-	return dictId;
 }
 
 /*
@@ -905,52 +807,6 @@ DefineTSTemplate(List *names, List *parameters)
 }
 
 /*
- * ALTER TEXT SEARCH TEMPLATE RENAME
- */
-Oid
-RenameTSTemplate(List *oldname, const char *newname)
-{
-	HeapTuple	tup;
-	Relation	rel;
-	Oid			tmplId;
-	Oid			namespaceOid;
-
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			   errmsg("must be superuser to rename text search templates")));
-
-	rel = heap_open(TSTemplateRelationId, RowExclusiveLock);
-
-	tmplId = get_ts_template_oid(oldname, false);
-
-	tup = SearchSysCacheCopy1(TSTEMPLATEOID, ObjectIdGetDatum(tmplId));
-
-	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "cache lookup failed for text search template %u",
-			 tmplId);
-
-	namespaceOid = ((Form_pg_ts_template) GETSTRUCT(tup))->tmplnamespace;
-
-	if (SearchSysCacheExists2(TSTEMPLATENAMENSP,
-							  PointerGetDatum(newname),
-							  ObjectIdGetDatum(namespaceOid)))
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("text search template \"%s\" already exists",
-						newname)));
-
-	namestrcpy(&(((Form_pg_ts_template) GETSTRUCT(tup))->tmplname), newname);
-	simple_heap_update(rel, &tup->t_self, tup);
-	CatalogUpdateIndexes(rel, tup);
-
-	heap_close(rel, NoLock);
-	heap_freetuple(tup);
-
-	return tmplId;
-}
-
-/*
  * Guts of TS template deletion.
  */
 void
@@ -1246,58 +1102,6 @@ DefineTSConfiguration(List *names, List *parameters)
 	heap_close(cfgRel, RowExclusiveLock);
 
 	return cfgOid;
-}
-
-/*
- * ALTER TEXT SEARCH CONFIGURATION RENAME
- */
-Oid
-RenameTSConfiguration(List *oldname, const char *newname)
-{
-	HeapTuple	tup;
-	Relation	rel;
-	Oid			cfgId;
-	AclResult	aclresult;
-	Oid			namespaceOid;
-
-	rel = heap_open(TSConfigRelationId, RowExclusiveLock);
-
-	cfgId = get_ts_config_oid(oldname, false);
-
-	tup = SearchSysCacheCopy1(TSCONFIGOID, ObjectIdGetDatum(cfgId));
-
-	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "cache lookup failed for text search configuration %u",
-			 cfgId);
-
-	namespaceOid = ((Form_pg_ts_config) GETSTRUCT(tup))->cfgnamespace;
-
-	if (SearchSysCacheExists2(TSCONFIGNAMENSP,
-							  PointerGetDatum(newname),
-							  ObjectIdGetDatum(namespaceOid)))
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("text search configuration \"%s\" already exists",
-						newname)));
-
-	/* must be owner */
-	if (!pg_ts_config_ownercheck(cfgId, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TSCONFIGURATION,
-					   NameListToString(oldname));
-
-	/* must have CREATE privilege on namespace */
-	aclresult = pg_namespace_aclcheck(namespaceOid, GetUserId(), ACL_CREATE);
-	aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
-				   get_namespace_name(namespaceOid));
-
-	namestrcpy(&(((Form_pg_ts_config) GETSTRUCT(tup))->cfgname), newname);
-	simple_heap_update(rel, &tup->t_self, tup);
-	CatalogUpdateIndexes(rel, tup);
-
-	heap_close(rel, NoLock);
-	heap_freetuple(tup);
-
-	return cfgId;
 }
 
 /*

@@ -16,7 +16,6 @@
 
 extern Oid CreateProceduralLanguage(CreatePLangStmt *stmt);
 extern void DropProceduralLanguageById(Oid langOid);
-extern Oid RenameLanguage(const char *oldname, const char *newname);
 extern bool PLTemplateExists(const char *languageName);
 extern Oid	get_language_oid(const char *langname, bool missing_ok);
 

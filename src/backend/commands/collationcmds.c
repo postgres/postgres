@@ -145,54 +145,6 @@ DefineCollation(List *names, List *parameters)
 }
 
 /*
- * Rename collation
- */
-Oid
-RenameCollation(List *name, const char *newname)
-{
-	Oid			collationOid;
-	Oid			namespaceOid;
-	HeapTuple	tup;
-	Relation	rel;
-	AclResult	aclresult;
-
-	rel = heap_open(CollationRelationId, RowExclusiveLock);
-
-	collationOid = get_collation_oid(name, false);
-
-	tup = SearchSysCacheCopy1(COLLOID, ObjectIdGetDatum(collationOid));
-	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "cache lookup failed for collation %u", collationOid);
-
-	namespaceOid = ((Form_pg_collation) GETSTRUCT(tup))->collnamespace;
-
-	/* make sure the new name doesn't exist */
-	IsThereCollationInNamespace(newname, namespaceOid);
-
-	/* must be owner */
-	if (!pg_collation_ownercheck(collationOid, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_COLLATION,
-					   NameListToString(name));
-
-	/* must have CREATE privilege on namespace */
-	aclresult = pg_namespace_aclcheck(namespaceOid, GetUserId(), ACL_CREATE);
-	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
-					   get_namespace_name(namespaceOid));
-
-	/* rename */
-	namestrcpy(&(((Form_pg_collation) GETSTRUCT(tup))->collname), newname);
-	simple_heap_update(rel, &tup->t_self, tup);
-	CatalogUpdateIndexes(rel, tup);
-
-	heap_freetuple(tup);
-
-	heap_close(rel, RowExclusiveLock);
-
-	return collationOid;
-}
-
-/*
  * Subroutine for ALTER COLLATION SET SCHEMA and RENAME
  *
  * Is there a collation with the same name of the given collation already in

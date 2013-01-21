@@ -242,16 +242,14 @@ ALTER OPERATOR FAMILY alt_opf1 USING hash RENAME TO alt_opf4;  -- OK
 ALTER OPERATOR FAMILY alt_opf3 USING hash OWNER TO regtest_alter_user2;  -- failed (not owner)
 ALTER OPERATOR FAMILY alt_opf2 USING hash OWNER TO regtest_alter_user3;  -- failed (no role membership)
 ALTER OPERATOR FAMILY alt_opf3 USING hash SET SCHEMA alt_nsp2;  -- failed (not owner)
--- can't test this: the error message includes the raw oid of namespace
--- ALTER OPERATOR FAMILY alt_opf2 USING hash SET SCHEMA alt_nsp2;  -- failed (name conflict)
+ALTER OPERATOR FAMILY alt_opf2 USING hash SET SCHEMA alt_nsp2;  -- failed (name conflict)
 
 ALTER OPERATOR CLASS alt_opc3 USING hash RENAME TO alt_opc4;	-- failed (not owner)
 ALTER OPERATOR CLASS alt_opc1 USING hash RENAME TO alt_opc4;  -- OK
 ALTER OPERATOR CLASS alt_opc3 USING hash OWNER TO regtest_alter_user2;  -- failed (not owner)
 ALTER OPERATOR CLASS alt_opc2 USING hash OWNER TO regtest_alter_user3;  -- failed (no role membership)
 ALTER OPERATOR CLASS alt_opc3 USING hash SET SCHEMA alt_nsp2;  -- failed (not owner)
--- can't test this: the error message includes the raw oid of namespace
--- ALTER OPERATOR CLASS alt_opc2 USING hash SET SCHEMA alt_nsp2;  -- failed (name conflict)
+ALTER OPERATOR CLASS alt_opc2 USING hash SET SCHEMA alt_nsp2;  -- failed (name conflict)
 
 RESET SESSION AUTHORIZATION;
 

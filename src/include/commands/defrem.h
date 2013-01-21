@@ -46,7 +46,6 @@ extern Oid CreateFunction(CreateFunctionStmt *stmt, const char *queryString);
 extern void RemoveFunctionById(Oid funcOid);
 extern void SetFunctionReturnType(Oid funcOid, Oid newRetType);
 extern void SetFunctionArgType(Oid funcOid, int argIndex, Oid newArgType);
-extern Oid RenameFunction(List *name, List *argtypes, const char *newname);
 extern Oid AlterFunction(AlterFunctionStmt *stmt);
 extern Oid CreateCast(CreateCastStmt *stmt);
 extern void DropCastById(Oid castOid);
@@ -62,7 +61,6 @@ extern void RemoveOperatorById(Oid operOid);
 /* commands/aggregatecmds.c */
 extern Oid DefineAggregate(List *name, List *args, bool oldstyle,
 				List *parameters);
-extern Oid RenameAggregate(List *name, List *args, const char *newname);
 
 /* commands/opclasscmds.c */
 extern Oid DefineOpClass(CreateOpClassStmt *stmt);
@@ -72,28 +70,26 @@ extern void RemoveOpClassById(Oid opclassOid);
 extern void RemoveOpFamilyById(Oid opfamilyOid);
 extern void RemoveAmOpEntryById(Oid entryOid);
 extern void RemoveAmProcEntryById(Oid entryOid);
-extern Oid RenameOpClass(List *name, const char *access_method, const char *newname);
-extern Oid RenameOpFamily(List *name, const char *access_method, const char *newname);
+extern void IsThereOpClassInNamespace(const char *opcname, Oid opcmethod,
+									  Oid opcnamespace);
+extern void IsThereOpFamilyInNamespace(const char *opfname, Oid opfmethod,
+									   Oid opfnamespace);
 extern Oid	get_am_oid(const char *amname, bool missing_ok);
 extern Oid	get_opclass_oid(Oid amID, List *opclassname, bool missing_ok);
 extern Oid	get_opfamily_oid(Oid amID, List *opfamilyname, bool missing_ok);
 
 /* commands/tsearchcmds.c */
 extern Oid DefineTSParser(List *names, List *parameters);
-extern Oid RenameTSParser(List *oldname, const char *newname);
 extern void RemoveTSParserById(Oid prsId);
 
 extern Oid DefineTSDictionary(List *names, List *parameters);
-extern Oid RenameTSDictionary(List *oldname, const char *newname);
 extern void RemoveTSDictionaryById(Oid dictId);
 extern Oid AlterTSDictionary(AlterTSDictionaryStmt *stmt);
 
 extern Oid DefineTSTemplate(List *names, List *parameters);
-extern Oid RenameTSTemplate(List *oldname, const char *newname);
 extern void RemoveTSTemplateById(Oid tmplId);
 
 extern Oid DefineTSConfiguration(List *names, List *parameters);
-extern Oid RenameTSConfiguration(List *oldname, const char *newname);
 extern void RemoveTSConfigurationById(Oid cfgId);
 extern Oid AlterTSConfiguration(AlterTSConfigurationStmt *stmt);
 
@@ -101,8 +97,6 @@ extern text *serialize_deflist(List *deflist);
 extern List *deserialize_deflist(Datum txt);
 
 /* commands/foreigncmds.c */
-extern Oid RenameForeignServer(const char *oldname, const char *newname);
-extern Oid RenameForeignDataWrapper(const char *oldname, const char *newname);
 extern Oid AlterForeignServerOwner(const char *name, Oid newOwnerId);
 extern void AlterForeignServerOwner_oid(Oid, Oid newOwnerId);
 extern Oid AlterForeignDataWrapperOwner(const char *name, Oid newOwnerId);
