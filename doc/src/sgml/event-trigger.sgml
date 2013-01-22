@@ -35,7 +35,7 @@
    <para>
      The <literal>ddl_command_start</> event occurs just before the
      execution of a <literal>CREATE</>, <literal>ALTER</>, or <literal>DROP</>
-     commmand.  As an exception, however, this event does not occur for
+     command.  As an exception, however, this event does not occur for
      DDL commands targeting shared objects - databases, roles, and tablespaces
      - or for command targeting event triggers themselves.  The event trigger
      mechanism does not support these object types.
@@ -47,7 +47,7 @@
    <para>
     The <literal>ddl_command_end</> event occurs just before returning
     control from the execution of a <literal>CREATE</>, <literal>ALTER</>,
-    or <literal>DROP</> commmand.  It shares the same exceptions as
+    or <literal>DROP</> command.  It shares the same exceptions as
     the <literal>ddl_command_start</> event.
    </para>
 
