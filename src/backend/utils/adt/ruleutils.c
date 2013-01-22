@@ -396,8 +396,9 @@ static Node *processIndirection(Node *node, deparse_context *context,
 static void printSubscripts(ArrayRef *aref, deparse_context *context);
 static char *get_relation_name(Oid relid);
 static char *generate_relation_name(Oid relid, List *namespaces);
-static char *generate_function_name(Oid funcid, int nargs, List *argnames,
-					   Oid *argtypes, bool *is_variadic);
+static char *generate_function_name(Oid funcid, int nargs,
+					   List *argnames, Oid *argtypes,
+					   bool was_variadic, bool *use_variadic_p);
 static char *generate_operator_name(Oid operid, Oid arg1, Oid arg2);
 static text *string_to_text(char *str);
 static char *flatten_reloptions(Oid relid);
@@ -858,7 +859,8 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 
 	appendStringInfo(&buf, "EXECUTE PROCEDURE %s(",
 					 generate_function_name(trigrec->tgfoid, 0,
-											NIL, NULL, NULL));
+											NIL, NULL,
+											false, NULL));
 
 	if (trigrec->tgnargs > 0)
 	{
@@ -7269,7 +7271,7 @@ get_func_expr(FuncExpr *expr, deparse_context *context,
 	Oid			argtypes[FUNC_MAX_ARGS];
 	int			nargs;
 	List	   *argnames;
-	bool		is_variadic;
+	bool		use_variadic;
 	ListCell   *l;
 
 	/*
@@ -7327,13 +7329,14 @@ get_func_expr(FuncExpr *expr, deparse_context *context,
 	appendStringInfo(buf, "%s(",
 					 generate_function_name(funcoid, nargs,
 											argnames, argtypes,
-											&is_variadic));
+											expr->funcvariadic,
+											&use_variadic));
 	nargs = 0;
 	foreach(l, expr->args)
 	{
 		if (nargs++ > 0)
 			appendStringInfoString(buf, ", ");
-		if (is_variadic && lnext(l) == NULL)
+		if (use_variadic && lnext(l) == NULL)
 			appendStringInfoString(buf, "VARIADIC ");
 		get_rule_expr((Node *) lfirst(l), context, true);
 	}
@@ -7374,7 +7377,8 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 
 	appendStringInfo(buf, "%s(%s",
 					 generate_function_name(aggref->aggfnoid, nargs,
-											NIL, argtypes, NULL),
+											NIL, argtypes,
+											false, NULL),
 					 (aggref->aggdistinct != NIL) ? "DISTINCT " : "");
 	/* aggstar can be set only in zero-argument aggregates */
 	if (aggref->aggstar)
@@ -7416,7 +7420,8 @@ get_windowfunc_expr(WindowFunc *wfunc, deparse_context *context)
 
 	appendStringInfo(buf, "%s(",
 					 generate_function_name(wfunc->winfnoid, nargs,
-											NIL, argtypes, NULL));
+											NIL, argtypes,
+											false, NULL));
 	/* winstar can be set only in zero-argument aggregates */
 	if (wfunc->winstar)
 		appendStringInfoChar(buf, '*');
@@ -8507,18 +8512,25 @@ generate_relation_name(Oid relid, List *namespaces)
  *		given that it is being called with the specified actual arg names and
  *		types.	(Those matter because of ambiguous-function resolution rules.)
  *
- * The result includes all necessary quoting and schema-prefixing.	We can
- * also pass back an indication of whether the function is variadic.
+ * If we're dealing with a potentially variadic function (in practice, this
+ * means a FuncExpr and not some other way of calling the function), then
+ * was_variadic must specify whether VARIADIC appeared in the original call,
+ * and *use_variadic_p will be set to indicate whether to print VARIADIC in
+ * the output.  For non-FuncExpr cases, was_variadic should be FALSE and
+ * use_variadic_p can be NULL.
+ *
+ * The result includes all necessary quoting and schema-prefixing.
  */
 static char *
-generate_function_name(Oid funcid, int nargs, List *argnames,
-					   Oid *argtypes, bool *is_variadic)
+generate_function_name(Oid funcid, int nargs, List *argnames, Oid *argtypes,
+					   bool was_variadic, bool *use_variadic_p)
 {
+	char	   *result;
 	HeapTuple	proctup;
 	Form_pg_proc procform;
 	char	   *proname;
+	bool		use_variadic;
 	char	   *nspname;
-	char	   *result;
 	FuncDetailCode p_result;
 	Oid			p_funcid;
 	Oid			p_rettype;
@@ -8533,14 +8545,46 @@ generate_function_name(Oid funcid, int nargs, List *argnames,
 	proname = NameStr(procform->proname);
 
 	/*
+	 * Determine whether VARIADIC should be printed.  We must do this first
+	 * since it affects the lookup rules in func_get_detail().
+	 *
+	 * Currently, we always print VARIADIC if the function is variadic and
+	 * takes a variadic type other than ANY.  (In principle, if VARIADIC
+	 * wasn't originally specified and the array actual argument is
+	 * deconstructable, we could print the array elements separately and not
+	 * print VARIADIC, thus more nearly reproducing the original input.  For
+	 * the moment that seems like too much complication for the benefit.)
+	 * However, if the function takes VARIADIC ANY, then the parser didn't
+	 * fold the arguments together into an array, so we must print VARIADIC if
+	 * and only if it was used originally.
+	 */
+	if (use_variadic_p)
+	{
+		if (OidIsValid(procform->provariadic))
+		{
+			if (procform->provariadic != ANYOID)
+				use_variadic = true;
+			else
+				use_variadic = was_variadic;
+		}
+		else
+			use_variadic = false;
+		*use_variadic_p = use_variadic;
+	}
+	else
+	{
+		Assert(!was_variadic);
+		use_variadic = false;
+	}
+
+	/*
 	 * The idea here is to schema-qualify only if the parser would fail to
 	 * resolve the correct function given the unqualified func name with the
-	 * specified argtypes.	If the function is variadic, we should presume
-	 * that VARIADIC will be included in the call.
+	 * specified argtypes and VARIADIC flag.
 	 */
 	p_result = func_get_detail(list_make1(makeString(proname)),
 							   NIL, argnames, nargs, argtypes,
-							   !OidIsValid(procform->provariadic), true,
+							   !use_variadic, true,
 							   &p_funcid, &p_rettype,
 							   &p_retset, &p_nvargs, &p_true_typeids, NULL);
 	if ((p_result == FUNCDETAIL_NORMAL ||
@@ -8552,17 +8596,6 @@ generate_function_name(Oid funcid, int nargs, List *argnames,
 		nspname = get_namespace_name(procform->pronamespace);
 
 	result = quote_qualified_identifier(nspname, proname);
-
-	/* Check variadic-ness if caller cares */
-	if (is_variadic)
-	{
-		/* "any" variadics are not treated as variadics for listing */
-		if (OidIsValid(procform->provariadic) &&
-			procform->provariadic != ANYOID)
-			*is_variadic = true;
-		else
-			*is_variadic = false;
-	}
 
 	ReleaseSysCache(proctup);
 

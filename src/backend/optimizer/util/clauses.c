@@ -110,7 +110,7 @@ static Node *simplify_boolean_equality(Oid opno, List *args);
 static Expr *simplify_function(Oid funcid,
 				  Oid result_type, int32 result_typmod,
 				  Oid result_collid, Oid input_collid, List **args_p,
-				  bool process_args, bool allow_non_const,
+				  bool funcvariadic, bool process_args, bool allow_non_const,
 				  eval_const_expressions_context *context);
 static List *expand_function_arguments(List *args, Oid result_type,
 						  HeapTuple func_tuple);
@@ -121,10 +121,12 @@ static void recheck_cast_function_args(List *args, Oid result_type,
 						   HeapTuple func_tuple);
 static Expr *evaluate_function(Oid funcid, Oid result_type, int32 result_typmod,
 				  Oid result_collid, Oid input_collid, List *args,
+				  bool funcvariadic,
 				  HeapTuple func_tuple,
 				  eval_const_expressions_context *context);
 static Expr *inline_function(Oid funcid, Oid result_type, Oid result_collid,
 				Oid input_collid, List *args,
+				bool funcvariadic,
 				HeapTuple func_tuple,
 				eval_const_expressions_context *context);
 static Node *substitute_actual_parameters(Node *expr, int nargs, List *args,
@@ -2314,6 +2316,7 @@ eval_const_expressions_mutator(Node *node,
 										   expr->funccollid,
 										   expr->inputcollid,
 										   &args,
+										   expr->funcvariadic,
 										   true,
 										   true,
 										   context);
@@ -2330,6 +2333,7 @@ eval_const_expressions_mutator(Node *node,
 				newexpr->funcid = expr->funcid;
 				newexpr->funcresulttype = expr->funcresulttype;
 				newexpr->funcretset = expr->funcretset;
+				newexpr->funcvariadic = expr->funcvariadic;
 				newexpr->funcformat = expr->funcformat;
 				newexpr->funccollid = expr->funccollid;
 				newexpr->inputcollid = expr->inputcollid;
@@ -2359,6 +2363,7 @@ eval_const_expressions_mutator(Node *node,
 										   expr->opcollid,
 										   expr->inputcollid,
 										   &args,
+										   false,
 										   true,
 										   true,
 										   context);
@@ -2462,6 +2467,7 @@ eval_const_expressions_mutator(Node *node,
 											   expr->opcollid,
 											   expr->inputcollid,
 											   &args,
+											   false,
 											   false,
 											   false,
 											   context);
@@ -2665,6 +2671,7 @@ eval_const_expressions_mutator(Node *node,
 										   InvalidOid,
 										   InvalidOid,
 										   &args,
+										   false,
 										   true,
 										   true,
 										   context);
@@ -2696,6 +2703,7 @@ eval_const_expressions_mutator(Node *node,
 											   expr->resultcollid,
 											   InvalidOid,
 											   &args,
+											   false,
 											   false,
 											   true,
 											   context);
@@ -3565,7 +3573,7 @@ simplify_boolean_equality(Oid opno, List *args)
 static Expr *
 simplify_function(Oid funcid, Oid result_type, int32 result_typmod,
 				  Oid result_collid, Oid input_collid, List **args_p,
-				  bool process_args, bool allow_non_const,
+				  bool funcvariadic, bool process_args, bool allow_non_const,
 				  eval_const_expressions_context *context)
 {
 	List	   *args = *args_p;
@@ -3609,7 +3617,8 @@ simplify_function(Oid funcid, Oid result_type, int32 result_typmod,
 	/* Now attempt simplification of the function call proper. */
 
 	newexpr = evaluate_function(funcid, result_type, result_typmod,
-								result_collid, input_collid, args,
+								result_collid, input_collid,
+								args, funcvariadic,
 								func_tuple, context);
 
 	if (!newexpr && allow_non_const && OidIsValid(func_form->protransform))
@@ -3625,6 +3634,7 @@ simplify_function(Oid funcid, Oid result_type, int32 result_typmod,
 		fexpr.funcid = funcid;
 		fexpr.funcresulttype = result_type;
 		fexpr.funcretset = func_form->proretset;
+		fexpr.funcvariadic = funcvariadic;
 		fexpr.funcformat = COERCE_EXPLICIT_CALL;
 		fexpr.funccollid = result_collid;
 		fexpr.inputcollid = input_collid;
@@ -3638,7 +3648,7 @@ simplify_function(Oid funcid, Oid result_type, int32 result_typmod,
 
 	if (!newexpr && allow_non_const)
 		newexpr = inline_function(funcid, result_type, result_collid,
-								  input_collid, args,
+								  input_collid, args, funcvariadic,
 								  func_tuple, context);
 
 	ReleaseSysCache(func_tuple);
@@ -3878,6 +3888,7 @@ recheck_cast_function_args(List *args, Oid result_type, HeapTuple func_tuple)
 static Expr *
 evaluate_function(Oid funcid, Oid result_type, int32 result_typmod,
 				  Oid result_collid, Oid input_collid, List *args,
+				  bool funcvariadic,
 				  HeapTuple func_tuple,
 				  eval_const_expressions_context *context)
 {
@@ -3959,6 +3970,7 @@ evaluate_function(Oid funcid, Oid result_type, int32 result_typmod,
 	newexpr->funcid = funcid;
 	newexpr->funcresulttype = result_type;
 	newexpr->funcretset = false;
+	newexpr->funcvariadic = funcvariadic;
 	newexpr->funcformat = COERCE_EXPLICIT_CALL;	/* doesn't matter */
 	newexpr->funccollid = result_collid;		/* doesn't matter */
 	newexpr->inputcollid = input_collid;
@@ -4001,6 +4013,7 @@ evaluate_function(Oid funcid, Oid result_type, int32 result_typmod,
 static Expr *
 inline_function(Oid funcid, Oid result_type, Oid result_collid,
 				Oid input_collid, List *args,
+				bool funcvariadic,
 				HeapTuple func_tuple,
 				eval_const_expressions_context *context)
 {
@@ -4089,6 +4102,7 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 	fexpr->funcid = funcid;
 	fexpr->funcresulttype = result_type;
 	fexpr->funcretset = false;
+	fexpr->funcvariadic = funcvariadic;
 	fexpr->funcformat = COERCE_EXPLICIT_CALL;	/* doesn't matter */
 	fexpr->funccollid = result_collid;	/* doesn't matter */
 	fexpr->inputcollid = input_collid;
