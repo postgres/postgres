@@ -566,6 +566,7 @@ run_permutation(TestSpec * testspec, int nsteps, Step ** steps)
 			 */
 			fflush(stdout);
 			fprintf(stderr, "invalid permutation detected\n");
+			fflush(stderr);
 
 			/* Cancel the waiting statement from this session. */
 			cancel = PQgetCancel(conn);
@@ -648,6 +649,7 @@ teardown:
 						testspec->sessions[i]->name,
 						PQerrorMessage(conns[i + 1]));
 				/* don't exit on teardown failure */
+				fflush(stderr);
 			}
 			PQclear(res);
 		}
@@ -666,7 +668,7 @@ teardown:
 			fprintf(stderr, "teardown failed: %s",
 					PQerrorMessage(conns[0]));
 			/* don't exit on teardown failure */
-
+			fflush(stderr);
 		}
 		PQclear(res);
 	}
