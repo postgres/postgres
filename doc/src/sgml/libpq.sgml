@@ -648,9 +648,10 @@ PostgresPollingStatusType PQresetPoll(PGconn *conn);
       <para>
        <function>PQpingParams</function> reports the status of the
        server.  It accepts connection parameters identical to those of
-       <function>PQconnectdbParams</>, described above.  It is not, however,
+       <function>PQconnectdbParams</>, described above.  It is not
        necessary to supply correct user name, password, or database name
-       values to obtain the server status.
+       values to obtain the server status; however, if incorrect values
+       are provided, the server will log a failed connection attempt.
 
 <synopsis>
 PGPing PQpingParams(const char * const *keywords,
@@ -716,9 +717,10 @@ PGPing PQpingParams(const char * const *keywords,
       <para>
        <function>PQping</function> reports the status of the
        server.  It accepts connection parameters identical to those of
-       <function>PQconnectdb</>, described above.  It is not, however,
+       <function>PQconnectdb</>, described above.  It is not
        necessary to supply correct user name, password, or database name
-       values to obtain the server status.
+       values to obtain the server status; however, if incorrect values
+       are provided, the server will log a failed connection attempt.
 
 <synopsis>
 PGPing PQping(const char *conninfo);
