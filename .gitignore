@@ -18,6 +18,7 @@ objfiles.txt
 *.gcov.out
 lcov.info
 *.vcproj
+*.vcxproj
 win32ver.rc
 *.exe
 lib*dll.def
