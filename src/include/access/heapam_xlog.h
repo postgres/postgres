@@ -54,6 +54,7 @@
 #define XLOG_HEAP2_CLEANUP_INFO 0x30
 #define XLOG_HEAP2_VISIBLE		0x40
 #define XLOG_HEAP2_MULTI_INSERT 0x50
+#define XLOG_HEAP2_LOCK_UPDATED 0x60
 
 /*
  * All what we need to find changed tuple
@@ -75,6 +76,8 @@ typedef struct xl_heaptid
 typedef struct xl_heap_delete
 {
 	xl_heaptid	target;			/* deleted tuple id */
+	TransactionId xmax;			/* xmax of the deleted tuple */
+	uint8		infobits_set;	/* infomask bits */
 	bool		all_visible_cleared;	/* PD_ALL_VISIBLE was cleared */
 } xl_heap_delete;
 
@@ -141,7 +144,10 @@ typedef struct xl_multi_insert_tuple
 typedef struct xl_heap_update
 {
 	xl_heaptid	target;			/* deleted tuple id */
+	TransactionId old_xmax;		/* xmax of the old tuple */
+	TransactionId new_xmax;		/* xmax of the new tuple */
 	ItemPointerData newtid;		/* new inserted tuple id */
+	uint8		old_infobits_set;	/* infomask bits to set on old tuple */
 	bool		all_visible_cleared;	/* PD_ALL_VISIBLE was cleared */
 	bool		new_all_visible_cleared;		/* same for the page of newtid */
 	/* NEW TUPLE xl_heap_header AND TUPLE DATA FOLLOWS AT END OF STRUCT */
@@ -197,16 +203,32 @@ typedef struct xl_heap_newpage
 
 #define SizeOfHeapNewpage	(offsetof(xl_heap_newpage, blkno) + sizeof(BlockNumber))
 
+/* flags for infobits_set */
+#define XLHL_XMAX_IS_MULTI		0x01
+#define XLHL_XMAX_LOCK_ONLY		0x02
+#define XLHL_XMAX_EXCL_LOCK		0x04
+#define XLHL_XMAX_KEYSHR_LOCK	0x08
+#define XLHL_KEYS_UPDATED		0x10
+
 /* This is what we need to know about lock */
 typedef struct xl_heap_lock
 {
 	xl_heaptid	target;			/* locked tuple id */
 	TransactionId locking_xid;	/* might be a MultiXactId not xid */
-	bool		xid_is_mxact;	/* is it? */
-	bool		shared_lock;	/* shared or exclusive row lock? */
+	int8		infobits_set;	/* infomask and infomask2 bits to set */
 } xl_heap_lock;
 
-#define SizeOfHeapLock	(offsetof(xl_heap_lock, shared_lock) + sizeof(bool))
+#define SizeOfHeapLock	(offsetof(xl_heap_lock, infobits_set) + sizeof(int8))
+
+/* This is what we need to know about locking an updated version of a row */
+typedef struct xl_heap_lock_updated
+{
+	xl_heaptid	target;
+	TransactionId	xmax;
+	uint8		infobits_set;
+} xl_heap_lock_updated;
+
+#define SizeOfHeapLockUpdated	(offsetof(xl_heap_lock_updated, infobits_set) + sizeof(uint8))
 
 /* This is what we need to know about in-place update */
 typedef struct xl_heap_inplace
@@ -223,10 +245,11 @@ typedef struct xl_heap_freeze
 	RelFileNode node;
 	BlockNumber block;
 	TransactionId cutoff_xid;
+	MultiXactId cutoff_multi;
 	/* TUPLE OFFSET NUMBERS FOLLOW AT THE END */
 } xl_heap_freeze;
 
-#define SizeOfHeapFreeze (offsetof(xl_heap_freeze, cutoff_xid) + sizeof(TransactionId))
+#define SizeOfHeapFreeze (offsetof(xl_heap_freeze, cutoff_multi) + sizeof(MultiXactId))
 
 /* This is what we need to know about setting a visibility map bit */
 typedef struct xl_heap_visible
@@ -254,7 +277,7 @@ extern XLogRecPtr log_heap_clean(Relation reln, Buffer buffer,
 			   OffsetNumber *nowunused, int nunused,
 			   TransactionId latestRemovedXid);
 extern XLogRecPtr log_heap_freeze(Relation reln, Buffer buffer,
-				TransactionId cutoff_xid,
+				TransactionId cutoff_xid, MultiXactId cutoff_multi,
 				OffsetNumber *offsets, int offcnt);
 extern XLogRecPtr log_heap_visible(RelFileNode rnode, BlockNumber block,
 				 Buffer vm_buffer, TransactionId cutoff_xid);

@@ -25,6 +25,21 @@ out_target(StringInfo buf, xl_heaptid *target)
 					 ItemPointerGetOffsetNumber(&(target->tid)));
 }
 
+static void
+out_infobits(StringInfo buf, uint8 infobits)
+{
+	if (infobits & XLHL_XMAX_IS_MULTI)
+		appendStringInfo(buf, "IS_MULTI ");
+	if (infobits & XLHL_XMAX_LOCK_ONLY)
+		appendStringInfo(buf, "LOCK_ONLY ");
+	if (infobits & XLHL_XMAX_EXCL_LOCK)
+		appendStringInfo(buf, "EXCL_LOCK ");
+	if (infobits & XLHL_XMAX_KEYSHR_LOCK)
+		appendStringInfo(buf, "KEYSHR_LOCK ");
+	if (infobits & XLHL_KEYS_UPDATED)
+		appendStringInfo(buf, "KEYS_UPDATED ");
+}
+
 void
 heap_desc(StringInfo buf, uint8 xl_info, char *rec)
 {
@@ -47,6 +62,8 @@ heap_desc(StringInfo buf, uint8 xl_info, char *rec)
 
 		appendStringInfo(buf, "delete: ");
 		out_target(buf, &(xlrec->target));
+		appendStringInfoChar(buf, ' ');
+		out_infobits(buf, xlrec->infobits_set);
 	}
 	else if (info == XLOG_HEAP_UPDATE)
 	{
@@ -57,9 +74,12 @@ heap_desc(StringInfo buf, uint8 xl_info, char *rec)
 		else
 			appendStringInfo(buf, "update: ");
 		out_target(buf, &(xlrec->target));
-		appendStringInfo(buf, "; new %u/%u",
+		appendStringInfo(buf, " xmax %u ", xlrec->old_xmax);
+		out_infobits(buf, xlrec->old_infobits_set);
+		appendStringInfo(buf, "; new tid %u/%u xmax %u",
 						 ItemPointerGetBlockNumber(&(xlrec->newtid)),
-						 ItemPointerGetOffsetNumber(&(xlrec->newtid)));
+						 ItemPointerGetOffsetNumber(&(xlrec->newtid)),
+						 xlrec->new_xmax);
 	}
 	else if (info == XLOG_HEAP_HOT_UPDATE)
 	{
@@ -70,9 +90,12 @@ heap_desc(StringInfo buf, uint8 xl_info, char *rec)
 		else
 			appendStringInfo(buf, "hot_update: ");
 		out_target(buf, &(xlrec->target));
-		appendStringInfo(buf, "; new %u/%u",
+		appendStringInfo(buf, " xmax %u ", xlrec->old_xmax);
+		out_infobits(buf, xlrec->old_infobits_set);
+		appendStringInfo(buf, "; new tid %u/%u xmax %u",
 						 ItemPointerGetBlockNumber(&(xlrec->newtid)),
-						 ItemPointerGetOffsetNumber(&(xlrec->newtid)));
+						 ItemPointerGetOffsetNumber(&(xlrec->newtid)),
+						 xlrec->new_xmax);
 	}
 	else if (info == XLOG_HEAP_NEWPAGE)
 	{
@@ -87,16 +110,10 @@ heap_desc(StringInfo buf, uint8 xl_info, char *rec)
 	{
 		xl_heap_lock *xlrec = (xl_heap_lock *) rec;
 
-		if (xlrec->shared_lock)
-			appendStringInfo(buf, "shared_lock: ");
-		else
-			appendStringInfo(buf, "exclusive_lock: ");
-		if (xlrec->xid_is_mxact)
-			appendStringInfo(buf, "mxid ");
-		else
-			appendStringInfo(buf, "xid ");
-		appendStringInfo(buf, "%u ", xlrec->locking_xid);
+		appendStringInfo(buf, "lock %u: ", xlrec->locking_xid);
 		out_target(buf, &(xlrec->target));
+		appendStringInfoChar(buf, ' ');
+		out_infobits(buf, xlrec->infobits_set);
 	}
 	else if (info == XLOG_HEAP_INPLACE)
 	{
@@ -108,7 +125,6 @@ heap_desc(StringInfo buf, uint8 xl_info, char *rec)
 	else
 		appendStringInfo(buf, "UNKNOWN");
 }
-
 void
 heap2_desc(StringInfo buf, uint8 xl_info, char *rec)
 {
@@ -119,10 +135,10 @@ heap2_desc(StringInfo buf, uint8 xl_info, char *rec)
 	{
 		xl_heap_freeze *xlrec = (xl_heap_freeze *) rec;
 
-		appendStringInfo(buf, "freeze: rel %u/%u/%u; blk %u; cutoff %u",
+		appendStringInfo(buf, "freeze: rel %u/%u/%u; blk %u; cutoff xid %u multi %u",
 						 xlrec->node.spcNode, xlrec->node.dbNode,
 						 xlrec->node.relNode, xlrec->block,
-						 xlrec->cutoff_xid);
+						 xlrec->cutoff_xid, xlrec->cutoff_multi);
 	}
 	else if (info == XLOG_HEAP2_CLEAN)
 	{
@@ -159,6 +175,14 @@ heap2_desc(StringInfo buf, uint8 xl_info, char *rec)
 		appendStringInfo(buf, "rel %u/%u/%u; blk %u; %d tuples",
 				xlrec->node.spcNode, xlrec->node.dbNode, xlrec->node.relNode,
 						 xlrec->blkno, xlrec->ntuples);
+	}
+	else if (info == XLOG_HEAP2_LOCK_UPDATED)
+	{
+		xl_heap_lock_updated *xlrec = (xl_heap_lock_updated *) rec;
+
+		appendStringInfo(buf, "lock updated: xmax %u msk %04x; ", xlrec->xmax,
+						 xlrec->infobits_set);
+		out_target(buf, &(xlrec->target));
 	}
 	else
 		appendStringInfo(buf, "UNKNOWN");

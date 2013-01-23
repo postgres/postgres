@@ -41,6 +41,7 @@ CATALOG(pg_database,1262) BKI_SHARED_RELATION BKI_ROWTYPE_OID(1248) BKI_SCHEMA_M
 	int32		datconnlimit;	/* max connections allowed (-1=no limit) */
 	Oid			datlastsysoid;	/* highest OID to consider a system OID */
 	TransactionId datfrozenxid; /* all Xids < this are frozen in this DB */
+	TransactionId datminmxid;	/* all multixacts in the DB are >= this */
 	Oid			dattablespace;	/* default table space for this DB */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
@@ -59,7 +60,7 @@ typedef FormData_pg_database *Form_pg_database;
  *		compiler constants for pg_database
  * ----------------
  */
-#define Natts_pg_database				12
+#define Natts_pg_database				13
 #define Anum_pg_database_datname		1
 #define Anum_pg_database_datdba			2
 #define Anum_pg_database_encoding		3
@@ -70,10 +71,11 @@ typedef FormData_pg_database *Form_pg_database;
 #define Anum_pg_database_datconnlimit	8
 #define Anum_pg_database_datlastsysoid	9
 #define Anum_pg_database_datfrozenxid	10
-#define Anum_pg_database_dattablespace	11
-#define Anum_pg_database_datacl			12
+#define Anum_pg_database_datminmxid		11
+#define Anum_pg_database_dattablespace	12
+#define Anum_pg_database_datacl			13
 
-DATA(insert OID = 1 (  template1 PGUID ENCODING "LC_COLLATE" "LC_CTYPE" t t -1 0 0 1663 _null_));
+DATA(insert OID = 1 (  template1 PGUID ENCODING "LC_COLLATE" "LC_CTYPE" t t -1 0 0 1 1663 _null_));
 SHDESCR("default template for new databases");
 #define TemplateDbOid			1
 

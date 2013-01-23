@@ -41,7 +41,7 @@ extern List *RelationGetIndexList(Relation relation);
 extern Oid	RelationGetOidIndex(Relation relation);
 extern List *RelationGetIndexExpressions(Relation relation);
 extern List *RelationGetIndexPredicate(Relation relation);
-extern Bitmapset *RelationGetIndexAttrBitmap(Relation relation);
+extern Bitmapset *RelationGetIndexAttrBitmap(Relation relation, bool keyAttrs);
 extern void RelationGetExclusionInfo(Relation indexRelation,
 						 Oid **operators,
 						 Oid **procs,
@@ -77,7 +77,7 @@ extern Relation RelationBuildLocalRelation(const char *relname,
  * Routine to manage assignment of new relfilenode to a relation
  */
 extern void RelationSetNewRelfilenode(Relation relation,
-						  TransactionId freezeXid);
+						  TransactionId freezeXid, MultiXactId minmulti);
 
 /*
  * Routines for flushing/rebuilding relcache entries in various scenarios

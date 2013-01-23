@@ -382,6 +382,52 @@ copy_clog_xlog_xid(void)
 			  new_cluster.pgdata);
 	check_ok();
 
+	/*
+	 * If both new and old are after the pg_multixact change commit, copy those
+	 * files too.  If the old server is before that change and the new server
+	 * is after, then we don't copy anything but we need to reset pg_control so
+	 * that the new server doesn't attempt to read multis older than the cutoff
+	 * value.
+	 */
+	if (old_cluster.controldata.cat_ver >= MULTIXACT_FORMATCHANGE_CAT_VER &&
+		new_cluster.controldata.cat_ver >= MULTIXACT_FORMATCHANGE_CAT_VER)
+	{
+		copy_subdir_files("pg_multixact/offsets");
+		copy_subdir_files("pg_multixact/members");
+		prep_status("Setting next multixact ID and offset for new cluster");
+		/*
+		 * we preserve all files and contents, so we must preserve both "next"
+		 * counters here and the oldest multi present on system.
+		 */
+		exec_prog(UTILITY_LOG_FILE, NULL, true,
+				  "\"%s/pg_resetxlog\" -O %u -m %u,%u \"%s\"",
+				  new_cluster.bindir,
+				  old_cluster.controldata.chkpnt_nxtmxoff,
+				  old_cluster.controldata.chkpnt_nxtmulti,
+				  old_cluster.controldata.chkpnt_oldstMulti,
+				  new_cluster.pgdata);
+		check_ok();
+	}
+	else if (new_cluster.controldata.cat_ver >= MULTIXACT_FORMATCHANGE_CAT_VER)
+	{
+		prep_status("Setting oldest multixact ID on new cluster");
+		/*
+		 * We don't preserve files in this case, but it's important that the
+		 * oldest multi is set to the latest value used by the old system, so
+		 * that multixact.c returns the empty set for multis that might be
+		 * present on disk.  We set next multi to the value following that; it
+		 * might end up wrapped around (i.e. 0) if the old cluster had
+		 * next=MaxMultiXactId, but multixact.c can cope with that just fine.
+		 */
+		exec_prog(UTILITY_LOG_FILE, NULL, true,
+				  "\"%s/pg_resetxlog\" -m %u,%u \"%s\"",
+				  new_cluster.bindir,
+				  old_cluster.controldata.chkpnt_nxtmulti + 1,
+				  old_cluster.controldata.chkpnt_nxtmulti,
+				  new_cluster.pgdata);
+		check_ok();
+	}
+
 	/* now reset the wal archives in the new cluster */
 	prep_status("Resetting WAL archives");
 	exec_prog(UTILITY_LOG_FILE, NULL, true,

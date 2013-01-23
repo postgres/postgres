@@ -163,7 +163,7 @@ heap_page_items(PG_FUNCTION_ARGS)
 			tuphdr = (HeapTupleHeader) PageGetItem(page, id);
 
 			values[4] = UInt32GetDatum(HeapTupleHeaderGetXmin(tuphdr));
-			values[5] = UInt32GetDatum(HeapTupleHeaderGetXmax(tuphdr));
+			values[5] = UInt32GetDatum(HeapTupleHeaderGetRawXmax(tuphdr));
 			values[6] = UInt32GetDatum(HeapTupleHeaderGetRawCommandId(tuphdr)); /* shared with xvac */
 			values[7] = PointerGetDatum(&tuphdr->t_ctid);
 			values[8] = UInt32GetDatum(tuphdr->t_infomask2);

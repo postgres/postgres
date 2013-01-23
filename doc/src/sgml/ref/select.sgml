@@ -45,7 +45,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
     [ LIMIT { <replaceable class="parameter">count</replaceable> | ALL } ]
     [ OFFSET <replaceable class="parameter">start</replaceable> [ ROW | ROWS ] ]
     [ FETCH { FIRST | NEXT } [ <replaceable class="parameter">count</replaceable> ] { ROW | ROWS } ONLY ]
-    [ FOR { UPDATE | SHARE } [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ] [ NOWAIT ] [...] ]
+    [ FOR { UPDATE | NO KEY UPDATE | SHARE | KEY SHARE } [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ] [ NOWAIT ] [...] ]
 
 <phrase>where <replaceable class="parameter">from_item</replaceable> can be one of:</phrase>
 
@@ -178,7 +178,8 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
 
     <listitem>
      <para>
-      If <literal>FOR UPDATE</literal> or <literal>FOR SHARE</literal>
+      If <literal>FOR UPDATE</>, <literal>FOR NO KEY UPDATE</literal>, <literal>FOR SHARE</literal>
+      or <literal>FOR KEY SHARE</literal>
       is specified, the
       <command>SELECT</command> statement locks the selected rows
       against concurrent updates.  (See <xref linkend="sql-for-update-share"
@@ -190,8 +191,9 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
 
   <para>
    You must have <literal>SELECT</literal> privilege on each column used
-   in a <command>SELECT</> command.  The use of <literal>FOR UPDATE</literal>
-   or <literal>FOR SHARE</literal> requires
+   in a <command>SELECT</> command.  The use of <literal>FOR NO KEY UPDATE</>,
+   <literal>FOR UPDATE</literal>,
+   <literal>FOR SHARE</literal> or <literal>FOR KEY SHARE</literal> requires
    <literal>UPDATE</literal> privilege as well (for at least one column
    of each table so selected).
   </para>
@@ -873,8 +875,8 @@ SELECT DISTINCT ON (location) location, time, report
 <replaceable class="parameter">select_statement</replaceable> UNION [ ALL | DISTINCT ] <replaceable class="parameter">select_statement</replaceable>
 </synopsis><replaceable class="parameter">select_statement</replaceable> is
     any <command>SELECT</command> statement without an <literal>ORDER
-    BY</>, <literal>LIMIT</>, <literal>FOR UPDATE</literal>, or
-    <literal>FOR SHARE</literal> clause.
+    BY</>, <literal>LIMIT</>, <literal>FOR NO KEY UPDATE</>, <literal>FOR UPDATE</literal>,
+    <literal>FOR SHARE</literal>, or <literal>FOR KEY SHARE</literal> clause.
     (<literal>ORDER BY</> and <literal>LIMIT</> can be attached to a
     subexpression if it is enclosed in parentheses.  Without
     parentheses, these clauses will be taken to apply to the result of
@@ -910,7 +912,8 @@ SELECT DISTINCT ON (location) location, time, report
    </para>
 
    <para>
-    Currently, <literal>FOR UPDATE</> and <literal>FOR SHARE</> cannot be
+    Currently, <literal>FOR NO KEY UPDATE</>, <literal>FOR UPDATE</>, <literal>FOR SHARE</> and
+    <literal>FOR KEY SHARE</> cannot be
     specified either for a <literal>UNION</> result or for any input of a
     <literal>UNION</>.
    </para>
@@ -925,8 +928,8 @@ SELECT DISTINCT ON (location) location, time, report
 <replaceable class="parameter">select_statement</replaceable> INTERSECT [ ALL | DISTINCT ] <replaceable class="parameter">select_statement</replaceable>
 </synopsis><replaceable class="parameter">select_statement</replaceable> is
     any <command>SELECT</command> statement without an <literal>ORDER
-    BY</>, <literal>LIMIT</>, <literal>FOR UPDATE</literal>, or
-    <literal>FOR SHARE</literal> clause.
+    BY</>, <literal>LIMIT</>, <literal>FOR NO KEY UPDATE</>, <literal>FOR UPDATE</literal>,
+    <literal>FOR SHARE</literal>, or <literal>FOR KEY SHARE</> clause.
    </para>
 
    <para>
@@ -957,7 +960,8 @@ SELECT DISTINCT ON (location) location, time, report
    </para>
 
    <para>
-    Currently, <literal>FOR UPDATE</> and <literal>FOR SHARE</> cannot be
+    Currently, <literal>FOR NO KEY UPDATE</>, <literal>FOR UPDATE</>, <literal>FOR SHARE</> and
+    <literal>FOR KEY SHARE</> cannot be
     specified either for an <literal>INTERSECT</> result or for any input of
     an <literal>INTERSECT</>.
    </para>
@@ -972,8 +976,8 @@ SELECT DISTINCT ON (location) location, time, report
 <replaceable class="parameter">select_statement</replaceable> EXCEPT [ ALL | DISTINCT ] <replaceable class="parameter">select_statement</replaceable>
 </synopsis><replaceable class="parameter">select_statement</replaceable> is
     any <command>SELECT</command> statement without an <literal>ORDER
-    BY</>, <literal>LIMIT</>, <literal>FOR UPDATE</literal>, or
-    <literal>FOR SHARE</literal> clause.
+    BY</>, <literal>LIMIT</>, <literal>FOR NO KEY UPDATE</>, <literal>FOR UPDATE</literal>,
+    <literal>FOR SHARE</literal>, or <literal>FOR KEY SHARE</> clause.
    </para>
 
    <para>
@@ -1000,7 +1004,8 @@ SELECT DISTINCT ON (location) location, time, report
    </para>
 
    <para>
-    Currently, <literal>FOR UPDATE</> and <literal>FOR SHARE</> cannot be
+    Currently, <literal>FOR NO KEY UPDATE</>, <literal>FOR UPDATE</>, <literal>FOR SHARE</> and
+    <literal>FOR KEY SHARE</> cannot be
     specified either for an <literal>EXCEPT</> result or for any input of
     an <literal>EXCEPT</>.
    </para>
@@ -1185,12 +1190,26 @@ FETCH { FIRST | NEXT } [ <replaceable class="parameter">count</replaceable> ] { 
   </refsect2>
 
   <refsect2 id="SQL-FOR-UPDATE-SHARE">
-   <title id="sql-for-update-share-title"><literal>FOR UPDATE</literal>/<literal>FOR SHARE</literal> Clause</title>
+   <title id="sql-for-update-share-title"><literal>FOR UPDATE</>, <literal>FOR NO KEY UPDATE</>/<literal>FOR SHARE</>/<literal>FOR KEY SHARE</> Clauses</title>
+
+   <para>
+    <literal>FOR UPDATE</>, <literal>FOR NO KEY UPDATE</>, <literal>FOR SHARE</>
+    and <literal>FOR KEY SHARE</>
+    are <firstterm>locking clauses</>; they affect how <literal>SELECT</>
+    locks rows as they are obtained from the table.
+   </para>
 
    <para>
     The <literal>FOR UPDATE</literal> clause has this form:
 <synopsis>
 FOR UPDATE [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ] [ NOWAIT ]
+</synopsis>
+   </para>
+
+   <para>
+    The <literal>FOR NO KEY UPDATE</literal> clause has this form:
+<synopsis>
+FOR NO KEY UPDATE [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ] [ NOWAIT ]
 </synopsis>
    </para>
 
@@ -1202,13 +1221,30 @@ FOR SHARE [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ]
    </para>
 
    <para>
+    Similarly, the <literal>FOR KEY SHARE</> clause has this form:
+<synopsis>
+FOR KEY SHARE [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ] [ NOWAIT ]
+</synopsis>
+   </para>
+
+   <para>
     <literal>FOR UPDATE</literal> causes the rows retrieved by the
     <command>SELECT</command> statement to be locked as though for
     update.  This prevents them from being modified or deleted by
     other transactions until the current transaction ends.  That is,
     other transactions that attempt <command>UPDATE</command>,
-    <command>DELETE</command>, or <command>SELECT FOR UPDATE</command>
+    <command>DELETE</command>,
+    <command>SELECT FOR UPDATE</command>,
+    <command>SELECT FOR SHARE</command> or
+    <command>SELECT FOR KEY SHARE</command>
     of these rows will be blocked until the current transaction ends.
+    The <literal>FOR UPDATE</> lock mode
+    is also acquired by any <command>DELETE</> on a row, and also by an
+    <command>UPDATE</> that modifies the values on certain columns.  Currently,
+    the set of columns considered for the <command>UPDATE</> case are those that
+    have an unique index on them that can be used in a foreign key (so partial
+    indexes and expressional indexes are not considered), but this may change
+    in the future.
     Also, if an <command>UPDATE</command>, <command>DELETE</command>,
     or <command>SELECT FOR UPDATE</command> from another transaction
     has already locked a selected row or rows, <command>SELECT FOR
@@ -1221,12 +1257,32 @@ FOR SHARE [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ]
    </para>
 
    <para>
+    <literal>FOR NO KEY UPDATE</> behaves similarly, except that the lock
+    acquired is weaker: this lock will not block
+    <literal>SELECT FOR KEY SHARE</> commands that attempt to acquire
+    a lock on the same rows.
+   </para>
+
+   <para>
     <literal>FOR SHARE</literal> behaves similarly, except that it
     acquires a shared rather than exclusive lock on each retrieved
     row.  A shared lock blocks other transactions from performing
     <command>UPDATE</command>, <command>DELETE</command>, or <command>SELECT
     FOR UPDATE</command> on these rows, but it does not prevent them
-    from performing <command>SELECT FOR SHARE</command>.
+    from performing <command>SELECT FOR SHARE</command> or
+    <command>SELECT FOR KEY SHARE</command>.
+   </para>
+
+   <para>
+    <literal>FOR KEY SHARE</> behaves similarly to <literal>FOR SHARE</literal>,
+    except that the lock
+    is weaker: <literal>SELECT FOR UPDATE</> is blocked, but
+    not <literal>SELECT FOR NO KEY UPDATE</>.  A key-shared
+    lock blocks other transactions from performing <command>DELETE</command>
+    or any <command>UPDATE</command> that changes the key values, but not
+    other <command>UPDATE</>, and neither it does prevent
+    <command>SELECT FOR UPDATE</>, <command>SELECT FOR SHARE</>, or
+    <command>SELECT FOR KEY SHARE</>.
    </para>
 
    <para>
@@ -1243,41 +1299,39 @@ FOR SHARE [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ]
    </para>
 
    <para>
-    If specific tables are named in <literal>FOR UPDATE</literal>
-    or <literal>FOR SHARE</literal>,
+    If specific tables are named in a locking clause,
     then only rows coming from those tables are locked; any other
     tables used in the <command>SELECT</command> are simply read as
-    usual.  A <literal>FOR UPDATE</literal> or <literal>FOR SHARE</literal>
+    usual.  A locking
     clause without a table list affects all tables used in the statement.
-    If <literal>FOR UPDATE</literal> or <literal>FOR SHARE</literal> is
+    If a locking clause is
     applied to a view or sub-query, it affects all tables used in
     the view or sub-query.
-    However, <literal>FOR UPDATE</literal>/<literal>FOR SHARE</literal>
+    However, these clauses
     do not apply to <literal>WITH</> queries referenced by the primary query.
     If you want row locking to occur within a <literal>WITH</> query, specify
-    <literal>FOR UPDATE</literal> or <literal>FOR SHARE</literal> within the
-    <literal>WITH</> query.
+    a locking clause within the <literal>WITH</> query.
    </para>
 
    <para>
-    Multiple <literal>FOR UPDATE</literal> and <literal>FOR SHARE</literal>
+    Multiple locking
     clauses can be written if it is necessary to specify different locking
     behavior for different tables.  If the same table is mentioned (or
-    implicitly affected) by both <literal>FOR UPDATE</literal> and
-    <literal>FOR SHARE</literal> clauses, then it is processed as
-    <literal>FOR UPDATE</literal>.  Similarly, a table is processed
+    implicitly affected) by more than one locking clause,
+    then it is processed as if it was only specified by the strongest one.
+    Similarly, a table is processed
     as <literal>NOWAIT</> if that is specified in any of the clauses
     affecting it.
    </para>
 
    <para>
-    <literal>FOR UPDATE</literal> and <literal>FOR SHARE</literal> cannot be
+    The locking clauses cannot be
     used in contexts where returned rows cannot be clearly identified with
     individual table rows; for example they cannot be used with aggregation.
    </para>
 
    <para>
-    When <literal>FOR UPDATE</literal> or <literal>FOR SHARE</literal>
+    When a locking clause
     appears at the top level of a <command>SELECT</> query, the rows that
     are locked are exactly those that are returned by the query; in the
     case of a join query, the rows locked are those that contribute to
@@ -1288,13 +1342,13 @@ FOR SHARE [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ]
     <literal>LIMIT</> is used, locking stops
     once enough rows have been returned to satisfy the limit (but note that
     rows skipped over by <literal>OFFSET</> will get locked).  Similarly,
-    if <literal>FOR UPDATE</literal> or <literal>FOR SHARE</literal>
+    if a locking clause
     is used in a cursor's query, only rows actually fetched or stepped past
     by the cursor will be locked.
    </para>
 
    <para>
-    When <literal>FOR UPDATE</literal> or <literal>FOR SHARE</literal>
+    When a locking clause
     appears in a sub-<command>SELECT</>, the rows locked are those
     returned to the outer query by the sub-query.  This might involve
     fewer rows than inspection of the sub-query alone would suggest,
@@ -1307,11 +1361,9 @@ SELECT * FROM (SELECT * FROM mytable FOR UPDATE) ss WHERE col1 = 5;
     condition is not textually within the sub-query.
    </para>
 
-  <caution>
-   <para>
-    Avoid locking a row and then modifying it within a later savepoint or
-    <application>PL/pgSQL</application> exception block.  A subsequent
-    rollback would cause the lock to be lost.  For example:
+  <para>
+   Previous releases failed to preserve a lock which is upgraded by a later
+   savepoint.  For example, this code:
 <programlisting>
 BEGIN;
 SELECT * FROM mytable WHERE key = 1 FOR UPDATE;
@@ -1319,23 +1371,15 @@ SAVEPOINT s;
 UPDATE mytable SET ... WHERE key = 1;
 ROLLBACK TO s;
 </programlisting>
-    After the <command>ROLLBACK</>, the row is effectively unlocked, rather
-    than returned to its pre-savepoint state of being locked but not modified.
-    This hazard occurs if a row locked in the current transaction is updated
-    or deleted, or if a shared lock is upgraded to exclusive: in all these
-    cases, the former lock state is forgotten.  If the transaction is then
-    rolled back to a state between the original locking command and the
-    subsequent change, the row will appear not to be locked at all.  This is
-    an implementation deficiency which will be addressed in a future release
-    of <productname>PostgreSQL</productname>.
-   </para>
-  </caution>
+   would fail to preserve the <literal>FOR UPDATE</> lock after the
+   <command>ROLLBACK</>.  This has been fixed in release 9.2.
+  </para>
 
   <caution>
    <para>
     It is possible for a <command>SELECT</> command running at the <literal>READ
     COMMITTED</literal> transaction isolation level and using <literal>ORDER
-    BY</literal> and <literal>FOR UPDATE/SHARE</literal> to return rows out of
+    BY</literal> and a locking clause to return rows out of
     order.  This is because <literal>ORDER BY</> is applied first.
     The command sorts the result, but might then block trying to obtain a lock
     on one or more of the rows.  Once the <literal>SELECT</> unblocks, some
@@ -1765,14 +1809,16 @@ SELECT distributors.* WHERE distributors.name = 'Westward';
   </refsect2>
 
   <refsect2>
-   <title><literal>FOR UPDATE</> and <literal>FOR SHARE</></title>
+   <title><literal>FOR NO KEY UPDATE</>, <literal>FOR UPDATE</>, <literal>FOR SHARE</>, <literal>FOR KEY SHARE</></title>
 
    <para>
     Although <literal>FOR UPDATE</> appears in the SQL standard, the
     standard allows it only as an option of <command>DECLARE CURSOR</>.
     <productname>PostgreSQL</productname> allows it in any <command>SELECT</>
     query as well as in sub-<command>SELECT</>s, but this is an extension.
-    The <literal>FOR SHARE</> variant, and the <literal>NOWAIT</> option,
+    The <literal>FOR NO KEY UPDATE</>, <literal>FOR SHARE</> and
+    <literal>FOR KEY SHARE</> variants,
+    as well as the <literal>NOWAIT</> option,
     do not appear in the standard.
    </para>
   </refsect2>

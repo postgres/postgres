@@ -403,6 +403,7 @@ ldelete:;
 										   epqstate,
 										   resultRelationDesc,
 										   resultRelInfo->ri_RangeTableIndex,
+										   LockTupleExclusive,
 										   &hufd.ctid,
 										   hufd.xmax);
 					if (!TupIsNull(epqslot))
@@ -569,6 +570,8 @@ ExecUpdate(ItemPointer tupleid,
 	}
 	else
 	{
+		LockTupleMode	lockmode;
+
 		/*
 		 * Check the constraints of the tuple
 		 *
@@ -595,7 +598,7 @@ lreplace:;
 							 estate->es_output_cid,
 							 estate->es_crosscheck_snapshot,
 							 true /* wait for commit */,
-							 &hufd);
+							 &hufd, &lockmode);
 		switch (result)
 		{
 			case HeapTupleSelfUpdated:
@@ -647,6 +650,7 @@ lreplace:;
 										   epqstate,
 										   resultRelationDesc,
 										   resultRelInfo->ri_RangeTableIndex,
+										   lockmode,
 										   &hufd.ctid,
 										   hufd.xmax);
 					if (!TupIsNull(epqslot))

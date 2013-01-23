@@ -131,7 +131,7 @@ CommandIsReadOnly(Node *parsetree)
 		{
 			case CMD_SELECT:
 				if (stmt->rowMarks != NIL)
-					return false;		/* SELECT FOR UPDATE/SHARE */
+					return false;		/* SELECT FOR [KEY] UPDATE/SHARE */
 				else if (stmt->hasModifyingCTE)
 					return false;		/* data-modifying CTE */
 				else
@@ -2283,10 +2283,28 @@ CreateCommandTag(Node *parsetree)
 						else if (stmt->rowMarks != NIL)
 						{
 							/* not 100% but probably close enough */
-							if (((PlanRowMark *) linitial(stmt->rowMarks))->markType == ROW_MARK_EXCLUSIVE)
-								tag = "SELECT FOR UPDATE";
-							else
-								tag = "SELECT FOR SHARE";
+							switch (((PlanRowMark *) linitial(stmt->rowMarks))->markType)
+							{
+								case ROW_MARK_EXCLUSIVE:
+									tag = "SELECT FOR UPDATE";
+									break;
+								case ROW_MARK_NOKEYEXCLUSIVE:
+									tag = "SELECT FOR NO KEY UPDATE";
+									break;
+								case ROW_MARK_SHARE:
+									tag = "SELECT FOR SHARE";
+									break;
+								case ROW_MARK_KEYSHARE:
+									tag = "SELECT FOR KEY SHARE";
+									break;
+								case ROW_MARK_REFERENCE:
+								case ROW_MARK_COPY:
+									tag = "SELECT";
+									break;
+								default:
+									tag = "???";
+									break;
+							}
 						}
 						else
 							tag = "SELECT";
@@ -2331,10 +2349,24 @@ CreateCommandTag(Node *parsetree)
 						else if (stmt->rowMarks != NIL)
 						{
 							/* not 100% but probably close enough */
-							if (((RowMarkClause *) linitial(stmt->rowMarks))->forUpdate)
-								tag = "SELECT FOR UPDATE";
-							else
-								tag = "SELECT FOR SHARE";
+							switch (((RowMarkClause *) linitial(stmt->rowMarks))->strength)
+							{
+								case LCS_FORKEYSHARE:
+									tag = "SELECT FOR KEY SHARE";
+									break;
+								case LCS_FORSHARE:
+									tag = "SELECT FOR SHARE";
+									break;
+								case LCS_FORNOKEYUPDATE:
+									tag = "SELECT FOR NO KEY UPDATE";
+									break;
+								case LCS_FORUPDATE:
+									tag = "SELECT FOR UPDATE";
+									break;
+								default:
+									tag =  "???";
+									break;
+							}
 						}
 						else
 							tag = "SELECT";

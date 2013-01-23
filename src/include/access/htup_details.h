@@ -162,12 +162,16 @@ struct HeapTupleHeaderData
 #define HEAP_HASVARWIDTH		0x0002	/* has variable-width attribute(s) */
 #define HEAP_HASEXTERNAL		0x0004	/* has external stored attribute(s) */
 #define HEAP_HASOID				0x0008	/* has an object-id field */
-/* bit 0x0010 is available */
+#define HEAP_XMAX_KEYSHR_LOCK	0x0010	/* xmax is a key-shared locker */
 #define HEAP_COMBOCID			0x0020	/* t_cid is a combo cid */
 #define HEAP_XMAX_EXCL_LOCK		0x0040	/* xmax is exclusive locker */
-#define HEAP_XMAX_SHARED_LOCK	0x0080	/* xmax is shared locker */
-/* if either LOCK bit is set, xmax hasn't deleted the tuple, only locked it */
-#define HEAP_IS_LOCKED	(HEAP_XMAX_EXCL_LOCK | HEAP_XMAX_SHARED_LOCK)
+#define HEAP_XMAX_LOCK_ONLY		0x0080	/* xmax, if valid, is only a locker */
+
+										/* xmax is a shared locker */
+#define HEAP_XMAX_SHR_LOCK	(HEAP_XMAX_EXCL_LOCK | HEAP_XMAX_KEYSHR_LOCK)
+
+#define HEAP_LOCK_MASK	(HEAP_XMAX_SHR_LOCK | HEAP_XMAX_EXCL_LOCK | \
+						 HEAP_XMAX_KEYSHR_LOCK)
 #define HEAP_XMIN_COMMITTED		0x0100	/* t_xmin committed */
 #define HEAP_XMIN_INVALID		0x0200	/* t_xmin invalid/aborted */
 #define HEAP_XMAX_COMMITTED		0x0400	/* t_xmax committed */
@@ -182,17 +186,42 @@ struct HeapTupleHeaderData
 										 * upgrade support */
 #define HEAP_MOVED (HEAP_MOVED_OFF | HEAP_MOVED_IN)
 
-#define HEAP_XACT_MASK			0xFFE0	/* visibility-related bits */
+#define HEAP_XACT_MASK			0xFFF0	/* visibility-related bits */
+
+/*
+ * A tuple is only locked (i.e. not updated by its Xmax) if it the
+ * HEAP_XMAX_LOCK_ONLY bit is set.
+ *
+ * See also HeapTupleHeaderIsOnlyLocked, which also checks for a possible
+ * aborted updater transaction.
+ */
+#define HEAP_XMAX_IS_LOCKED_ONLY(infomask) \
+	((infomask) & HEAP_XMAX_LOCK_ONLY)
+/*
+ * Use these to test whether a particular lock is applied to a tuple
+ */
+#define HEAP_XMAX_IS_SHR_LOCKED(infomask) \
+    (((infomask) & HEAP_LOCK_MASK) == HEAP_XMAX_SHR_LOCK)
+#define HEAP_XMAX_IS_EXCL_LOCKED(infomask) \
+    (((infomask) & HEAP_LOCK_MASK) == HEAP_XMAX_EXCL_LOCK)
+#define HEAP_XMAX_IS_KEYSHR_LOCKED(infomask) \
+    (((infomask) & HEAP_LOCK_MASK) == HEAP_XMAX_KEYSHR_LOCK)
+
+/* turn these all off when Xmax is to change */
+#define HEAP_XMAX_BITS (HEAP_XMAX_COMMITTED | HEAP_XMAX_INVALID | \
+						HEAP_XMAX_IS_MULTI | HEAP_LOCK_MASK | HEAP_XMAX_LOCK_ONLY)
 
 /*
  * information stored in t_infomask2:
  */
 #define HEAP_NATTS_MASK			0x07FF	/* 11 bits for number of attributes */
-/* bits 0x3800 are available */
+/* bits 0x1800 are available */
+#define HEAP_KEYS_UPDATED		0x2000	/* tuple was updated and key cols
+										 * modified, or tuple deleted */
 #define HEAP_HOT_UPDATED		0x4000	/* tuple was HOT-updated */
 #define HEAP_ONLY_TUPLE			0x8000	/* this is heap-only tuple */
 
-#define HEAP2_XACT_MASK			0xC000	/* visibility-related bits */
+#define HEAP2_XACT_MASK			0xE000	/* visibility-related bits */
 
 /*
  * HEAP_TUPLE_HAS_MATCH is a temporary flag used during hash joins.  It is
@@ -219,7 +248,24 @@ struct HeapTupleHeaderData
 	(tup)->t_choice.t_heap.t_xmin = (xid) \
 )
 
-#define HeapTupleHeaderGetXmax(tup) \
+/*
+ * HeapTupleHeaderGetRawXmax gets you the raw Xmax field.  To find out the Xid
+ * that updated a tuple, you might need to resolve the MultiXactId if certain
+ * bits are set.  HeapTupleHeaderGetUpdateXid checks those bits and takes care
+ * to resolve the MultiXactId if necessary.  This might involve multixact I/O,
+ * so it should only be used if absolutely necessary.
+ */
+#define HeapTupleHeaderGetUpdateXid(tup) \
+( \
+	(!((tup)->t_infomask & HEAP_XMAX_INVALID) && \
+	 ((tup)->t_infomask & HEAP_XMAX_IS_MULTI) && \
+	 !((tup)->t_infomask & HEAP_XMAX_LOCK_ONLY)) ? \
+		HeapTupleGetUpdateXid(tup) \
+	: \
+		HeapTupleHeaderGetRawXmax(tup) \
+)
+
+#define HeapTupleHeaderGetRawXmax(tup) \
 ( \
 	(tup)->t_choice.t_heap.t_xmax \
 )

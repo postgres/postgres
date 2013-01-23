@@ -111,14 +111,29 @@ lnext:
 		tuple.t_self = *((ItemPointer) DatumGetPointer(datum));
 
 		/* okay, try to lock the tuple */
-		if (erm->markType == ROW_MARK_EXCLUSIVE)
-			lockmode = LockTupleExclusive;
-		else
-			lockmode = LockTupleShared;
+		switch (erm->markType)
+		{
+			case ROW_MARK_EXCLUSIVE:
+				lockmode = LockTupleExclusive;
+				break;
+			case ROW_MARK_NOKEYEXCLUSIVE:
+				lockmode = LockTupleNoKeyExclusive;
+				break;
+			case ROW_MARK_SHARE:
+				lockmode = LockTupleShare;
+				break;
+			case ROW_MARK_KEYSHARE:
+				lockmode = LockTupleKeyShare;
+				break;
+			default:
+				elog(ERROR, "unsupported rowmark type");
+				lockmode = LockTupleNoKeyExclusive;	/* keep compiler quiet */
+				break;
+		}
 
 		test = heap_lock_tuple(erm->relation, &tuple,
 							   estate->es_output_cid,
-							   lockmode, erm->noWait,
+							   lockmode, erm->noWait, true,
 							   &buffer, &hufd);
 		ReleaseBuffer(buffer);
 		switch (test)

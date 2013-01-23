@@ -4,7 +4,7 @@ MODULE_big	= pgrowlocks
 OBJS		= pgrowlocks.o
 
 EXTENSION = pgrowlocks
-DATA = pgrowlocks--1.0.sql pgrowlocks--unpackaged--1.0.sql
+DATA = pgrowlocks--1.1.sql pgrowlocks--1.0--1.1.sql pgrowlocks--unpackaged--1.0.sql
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

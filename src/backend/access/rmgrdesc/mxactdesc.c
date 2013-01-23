@@ -16,6 +16,35 @@
 
 #include "access/multixact.h"
 
+static void
+out_member(StringInfo buf, MultiXactMember *member)
+{
+	appendStringInfo(buf, "%u ", member->xid);
+	switch (member->status)
+	{
+		case MultiXactStatusForKeyShare:
+			appendStringInfoString(buf, "(keysh) ");
+			break;
+		case MultiXactStatusForShare:
+			appendStringInfoString(buf, "(sh) ");
+			break;
+		case MultiXactStatusForNoKeyUpdate:
+			appendStringInfoString(buf, "(fornokeyupd) ");
+			break;
+		case MultiXactStatusForUpdate:
+			appendStringInfoString(buf, "(forupd) ");
+			break;
+		case MultiXactStatusNoKeyUpdate:
+			appendStringInfoString(buf, "(nokeyupd) ");
+			break;
+		case MultiXactStatusUpdate:
+			appendStringInfoString(buf, "(upd) ");
+			break;
+		default:
+			appendStringInfoString(buf, "(unk) ");
+			break;
+	}
+}
 
 void
 multixact_desc(StringInfo buf, uint8 xl_info, char *rec)
@@ -41,10 +70,10 @@ multixact_desc(StringInfo buf, uint8 xl_info, char *rec)
 		xl_multixact_create *xlrec = (xl_multixact_create *) rec;
 		int			i;
 
-		appendStringInfo(buf, "create multixact %u offset %u:",
-						 xlrec->mid, xlrec->moff);
-		for (i = 0; i < xlrec->nxids; i++)
-			appendStringInfo(buf, " %u", xlrec->xids[i]);
+		appendStringInfo(buf, "create mxid %u offset %u nmembers %d: ", xlrec->mid,
+						 xlrec->moff, xlrec->nmembers);
+		for (i = 0; i < xlrec->nmembers; i++)
+			out_member(buf, &xlrec->members[i]);
 	}
 	else
 		appendStringInfo(buf, "UNKNOWN");

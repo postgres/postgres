@@ -3905,10 +3905,10 @@ CheckForSerializableConflictOut(bool visible, Relation relation,
 		case HEAPTUPLE_RECENTLY_DEAD:
 			if (!visible)
 				return;
-			xid = HeapTupleHeaderGetXmax(tuple->t_data);
+			xid = HeapTupleHeaderGetUpdateXid(tuple->t_data);
 			break;
 		case HEAPTUPLE_DELETE_IN_PROGRESS:
-			xid = HeapTupleHeaderGetXmax(tuple->t_data);
+			xid = HeapTupleHeaderGetUpdateXid(tuple->t_data);
 			break;
 		case HEAPTUPLE_INSERT_IN_PROGRESS:
 			xid = HeapTupleHeaderGetXmin(tuple->t_data);

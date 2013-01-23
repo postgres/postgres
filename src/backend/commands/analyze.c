@@ -16,6 +16,7 @@
 
 #include <math.h>
 
+#include "access/multixact.h"
 #include "access/transam.h"
 #include "access/tupconvert.h"
 #include "access/tuptoaster.h"
@@ -580,7 +581,8 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 							totalrows,
 							visibilitymap_count(onerel),
 							hasindex,
-							InvalidTransactionId);
+							InvalidTransactionId,
+							InvalidMultiXactId);
 
 	/*
 	 * Same for indexes. Vacuum always scans all indexes, so if we're part of
@@ -600,7 +602,8 @@ do_analyze_rel(Relation onerel, VacuumStmt *vacstmt,
 								totalindexrows,
 								0,
 								false,
-								InvalidTransactionId);
+								InvalidTransactionId,
+								InvalidMultiXactId);
 		}
 	}
 
@@ -1193,7 +1196,7 @@ acquire_sample_rows(Relation onerel, int elevel,
 					 * right.  (Note: this works out properly when the row was
 					 * both inserted and deleted in our xact.)
 					 */
-					if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmax(targtuple.t_data)))
+					if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetUpdateXid(targtuple.t_data)))
 						deadrows += 1;
 					else
 						liverows += 1;

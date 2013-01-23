@@ -457,6 +457,13 @@ typedef Datum *DatumPtr;
 #define TransactionIdGetDatum(X) ((Datum) SET_4_BYTES((X)))
 
 /*
+ * MultiXactIdGetDatum
+ * 		Returns datum representation for a multixact identifier.
+ */
+
+#define MultiXactIdGetDatum(X) ((Datum) SET_4_BYTES((X)))
+
+/*
  * DatumGetCommandId
  *		Returns command identifier value of a datum.
  */

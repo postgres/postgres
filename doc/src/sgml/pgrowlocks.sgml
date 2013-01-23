@@ -44,12 +44,6 @@ pgrowlocks(text) returns setof record
       <entry>Tuple ID (TID) of locked row</entry>
      </row>
      <row>
-      <entry><structfield>lock_type</structfield></entry>
-      <entry><type>text</type></entry>
-      <entry><literal>Shared</> for shared lock, or
-             <literal>Exclusive</> for exclusive lock</entry>
-     </row>
-     <row>
       <entry><structfield>locker</structfield></entry>
       <entry><type>xid</type></entry>
       <entry>Transaction ID of locker, or multixact ID if multitransaction</entry>
@@ -64,6 +58,15 @@ pgrowlocks(text) returns setof record
       <entry><type>xid[]</type></entry>
       <entry>Transaction IDs of lockers (more than one if multitransaction)</entry>
      </row>
+     <row>
+      <entry><structfield>lock_type</structfield></entry>
+      <entry><type>text[]</type></entry>
+      <entry>Lock mode of lockers (more than one if multitransaction),
+       an array of <literal>Key Share</>, <literal>Share</>,
+       <literal>For No Key Update</>, <literal>No Key Update</>,
+       <literal>For Update</>, <literal>Update</>.</entry>
+     </row>
+
      <row>
       <entry><structfield>pids</structfield></entry>
       <entry><type>integer[]</type></entry>

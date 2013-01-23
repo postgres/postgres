@@ -30,10 +30,11 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include "access/htup_details.h"
+#include "access/multixact.h"
 #include "access/reloptions.h"
 #include "access/sysattr.h"
 #include "access/transam.h"
-#include "access/htup_details.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/index.h"
@@ -2725,7 +2726,8 @@ RelationBuildLocalRelation(const char *relname,
  * the XIDs that will be put into the new relation contents.
  */
 void
-RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid)
+RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid,
+						  MultiXactId minmulti)
 {
 	Oid			newrelfilenode;
 	RelFileNodeBackend newrnode;
@@ -2738,6 +2740,7 @@ RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid)
 			relation->rd_rel->relkind == RELKIND_SEQUENCE) ?
 		   freezeXid == InvalidTransactionId :
 		   TransactionIdIsNormal(freezeXid));
+	Assert(TransactionIdIsNormal(freezeXid) == MultiXactIdIsValid(minmulti));
 
 	/* Allocate a new relfilenode */
 	newrelfilenode = GetNewRelFileNode(relation->rd_rel->reltablespace, NULL,
@@ -2793,6 +2796,7 @@ RelationSetNewRelfilenode(Relation relation, TransactionId freezeXid)
 		classform->relallvisible = 0;
 	}
 	classform->relfrozenxid = freezeXid;
+	classform->relminmxid = minmulti;
 
 	simple_heap_update(pg_class, &tuple->t_self, tuple);
 	CatalogUpdateIndexes(pg_class, tuple);
@@ -3764,6 +3768,9 @@ RelationGetIndexPredicate(Relation relation)
  * simple index keys, but attributes used in expressions and partial-index
  * predicates.)
  *
+ * If "keyAttrs" is true, only attributes that can be referenced by foreign
+ * keys are considered.
+ *
  * Attribute numbers are offset by FirstLowInvalidHeapAttributeNumber so that
  * we can include system attributes (e.g., OID) in the bitmap representation.
  *
@@ -3775,16 +3782,17 @@ RelationGetIndexPredicate(Relation relation)
  * be bms_free'd when not needed anymore.
  */
 Bitmapset *
-RelationGetIndexAttrBitmap(Relation relation)
+RelationGetIndexAttrBitmap(Relation relation, bool keyAttrs)
 {
 	Bitmapset  *indexattrs;
+	Bitmapset  *uindexattrs;
 	List	   *indexoidlist;
 	ListCell   *l;
 	MemoryContext oldcxt;
 
 	/* Quick exit if we already computed the result. */
 	if (relation->rd_indexattr != NULL)
-		return bms_copy(relation->rd_indexattr);
+		return bms_copy(keyAttrs ? relation->rd_keyattr : relation->rd_indexattr);
 
 	/* Fast path if definitely no indexes */
 	if (!RelationGetForm(relation)->relhasindex)
@@ -3810,17 +3818,24 @@ RelationGetIndexAttrBitmap(Relation relation)
 	 * won't be returned at all by RelationGetIndexList.
 	 */
 	indexattrs = NULL;
+	uindexattrs = NULL;
 	foreach(l, indexoidlist)
 	{
 		Oid			indexOid = lfirst_oid(l);
 		Relation	indexDesc;
 		IndexInfo  *indexInfo;
 		int			i;
+		bool		isKey;
 
 		indexDesc = index_open(indexOid, AccessShareLock);
 
 		/* Extract index key information from the index's pg_index row */
 		indexInfo = BuildIndexInfo(indexDesc);
+
+		/* Can this index be referenced by a foreign key? */
+		isKey = indexInfo->ii_Unique &&
+				indexInfo->ii_Expressions == NIL &&
+				indexInfo->ii_Predicate == NIL;
 
 		/* Collect simple attribute references */
 		for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
@@ -3828,8 +3843,13 @@ RelationGetIndexAttrBitmap(Relation relation)
 			int			attrnum = indexInfo->ii_KeyAttrNumbers[i];
 
 			if (attrnum != 0)
+			{
 				indexattrs = bms_add_member(indexattrs,
 							   attrnum - FirstLowInvalidHeapAttributeNumber);
+				if (isKey)
+					uindexattrs = bms_add_member(uindexattrs,
+												 attrnum - FirstLowInvalidHeapAttributeNumber);
+			}
 		}
 
 		/* Collect all attributes used in expressions, too */
@@ -3846,10 +3866,11 @@ RelationGetIndexAttrBitmap(Relation relation)
 	/* Now save a copy of the bitmap in the relcache entry. */
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 	relation->rd_indexattr = bms_copy(indexattrs);
+	relation->rd_keyattr = bms_copy(uindexattrs);
 	MemoryContextSwitchTo(oldcxt);
 
 	/* We return our original working copy for caller to play with */
-	return indexattrs;
+	return keyAttrs ? uindexattrs : indexattrs;
 }
 
 /*

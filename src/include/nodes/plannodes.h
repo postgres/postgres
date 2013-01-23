@@ -752,7 +752,7 @@ typedef struct Limit
  * RowMarkType -
  *	  enums for types of row-marking operations
  *
- * When doing UPDATE, DELETE, or SELECT FOR UPDATE/SHARE, we have to uniquely
+ * When doing UPDATE, DELETE, or SELECT FOR [KEY] UPDATE/SHARE, we have to uniquely
  * identify all the source rows, not only those from the target relations, so
  * that we can perform EvalPlanQual rechecking at need.  For plain tables we
  * can just fetch the TID, the same as for a target relation.  Otherwise (for
@@ -763,20 +763,22 @@ typedef struct Limit
 typedef enum RowMarkType
 {
 	ROW_MARK_EXCLUSIVE,			/* obtain exclusive tuple lock */
+	ROW_MARK_NOKEYEXCLUSIVE,	/* obtain no-key exclusive tuple lock */
 	ROW_MARK_SHARE,				/* obtain shared tuple lock */
+	ROW_MARK_KEYSHARE,			/* obtain keyshare tuple lock */
 	ROW_MARK_REFERENCE,			/* just fetch the TID */
 	ROW_MARK_COPY				/* physically copy the row value */
 } RowMarkType;
 
-#define RowMarkRequiresRowShareLock(marktype)  ((marktype) <= ROW_MARK_SHARE)
+#define RowMarkRequiresRowShareLock(marktype)  ((marktype) <= ROW_MARK_KEYSHARE)
 
 /*
  * PlanRowMark -
- *	   plan-time representation of FOR UPDATE/SHARE clauses
+ *	   plan-time representation of FOR [KEY] UPDATE/SHARE clauses
  *
- * When doing UPDATE, DELETE, or SELECT FOR UPDATE/SHARE, we create a separate
+ * When doing UPDATE, DELETE, or SELECT FOR [KEY] UPDATE/SHARE, we create a separate
  * PlanRowMark node for each non-target relation in the query.	Relations that
- * are not specified as FOR UPDATE/SHARE are marked ROW_MARK_REFERENCE (if
+ * are not specified as FOR [KEY] UPDATE/SHARE are marked ROW_MARK_REFERENCE (if
  * real tables) or ROW_MARK_COPY (if not).
  *
  * Initially all PlanRowMarks have rti == prti and isParent == false.

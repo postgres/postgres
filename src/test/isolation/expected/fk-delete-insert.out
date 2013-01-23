@@ -1,0 +1,41 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1d s1c s2i s2c
+step s1d: DELETE FROM A WHERE AID = 1;
+step s1c: COMMIT;
+step s2i: INSERT INTO B (BID,AID,Col2) VALUES (2,1,0);
+ERROR:  insert or update on table "b" violates foreign key constraint "b_aid_fkey"
+step s2c: COMMIT;
+
+starting permutation: s1d s2i s1c s2c
+step s1d: DELETE FROM A WHERE AID = 1;
+step s2i: INSERT INTO B (BID,AID,Col2) VALUES (2,1,0); <waiting ...>
+step s1c: COMMIT;
+step s2i: <... completed>
+error in steps s1c s2i: ERROR:  insert or update on table "b" violates foreign key constraint "b_aid_fkey"
+step s2c: COMMIT;
+
+starting permutation: s1d s2i s2c s1c
+step s1d: DELETE FROM A WHERE AID = 1;
+step s2i: INSERT INTO B (BID,AID,Col2) VALUES (2,1,0); <waiting ...>
+invalid permutation detected
+
+starting permutation: s2i s1d s1c s2c
+step s2i: INSERT INTO B (BID,AID,Col2) VALUES (2,1,0);
+step s1d: DELETE FROM A WHERE AID = 1; <waiting ...>
+invalid permutation detected
+
+starting permutation: s2i s1d s2c s1c
+step s2i: INSERT INTO B (BID,AID,Col2) VALUES (2,1,0);
+step s1d: DELETE FROM A WHERE AID = 1; <waiting ...>
+step s2c: COMMIT;
+step s1d: <... completed>
+error in steps s2c s1d: ERROR:  update or delete on table "a" violates foreign key constraint "b_aid_fkey" on table "b"
+step s1c: COMMIT;
+
+starting permutation: s2i s2c s1d s1c
+step s2i: INSERT INTO B (BID,AID,Col2) VALUES (2,1,0);
+step s2c: COMMIT;
+step s1d: DELETE FROM A WHERE AID = 1;
+ERROR:  update or delete on table "a" violates foreign key constraint "b_aid_fkey" on table "b"
+step s1c: COMMIT;

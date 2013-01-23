@@ -75,6 +75,8 @@ GetNewTransactionId(bool isSubXact)
 	 * If we're past xidStopLimit, refuse to execute transactions, unless
 	 * we are running in a standalone backend (which gives an escape hatch
 	 * to the DBA who somehow got past the earlier defenses).
+	 *
+	 * Note that this coding also appears in GetNewMultiXactId.
 	 *----------
 	 */
 	if (TransactionIdFollowsOrEquals(xid, ShmemVariableCache->xidVacLimit))

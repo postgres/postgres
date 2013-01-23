@@ -542,7 +542,7 @@ heap_getsysattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
 			result = TransactionIdGetDatum(HeapTupleHeaderGetXmin(tup->t_data));
 			break;
 		case MaxTransactionIdAttributeNumber:
-			result = TransactionIdGetDatum(HeapTupleHeaderGetXmax(tup->t_data));
+			result = TransactionIdGetDatum(HeapTupleHeaderGetRawXmax(tup->t_data));
 			break;
 		case MinCommandIdAttributeNumber:
 		case MaxCommandIdAttributeNumber:

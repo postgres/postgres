@@ -59,6 +59,13 @@ typedef struct
 	int			ncolumns;
 } MyData;
 
+#define		Atnum_tid		0
+#define		Atnum_xmax		1
+#define		Atnum_ismulti	2
+#define		Atnum_xids		3
+#define		Atnum_modes		4
+#define		Atnum_pids		5
+
 Datum
 pgrowlocks(PG_FUNCTION_ARGS)
 {
@@ -117,79 +124,146 @@ pgrowlocks(PG_FUNCTION_ARGS)
 	/* scan the relation */
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
+		HTSU_Result	htsu;
+		TransactionId xmax;
+		uint16		infomask;
+
 		/* must hold a buffer lock to call HeapTupleSatisfiesUpdate */
 		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
 
-		if (HeapTupleSatisfiesUpdate(tuple->t_data,
-									 GetCurrentCommandId(false),
-									 scan->rs_cbuf) == HeapTupleBeingUpdated)
-		{
+		htsu = HeapTupleSatisfiesUpdate(tuple->t_data,
+										GetCurrentCommandId(false),
+										scan->rs_cbuf);
+		xmax = HeapTupleHeaderGetRawXmax(tuple->t_data);
+		infomask = tuple->t_data->t_infomask;
 
+		/*
+		 * a tuple is locked if HTSU returns BeingUpdated, and if it returns
+		 * MayBeUpdated but the Xmax is valid and pointing at us.
+		 */
+		if (htsu == HeapTupleBeingUpdated ||
+			(htsu == HeapTupleMayBeUpdated &&
+			 !(infomask & HEAP_XMAX_INVALID) &&
+			 !(infomask & HEAP_XMAX_IS_MULTI) &&
+			 (xmax == GetCurrentTransactionIdIfAny())))
+		{
 			char	  **values;
-			int			i;
 
 			values = (char **) palloc(mydata->ncolumns * sizeof(char *));
 
-			i = 0;
-			values[i++] = (char *) DirectFunctionCall1(tidout, PointerGetDatum(&tuple->t_self));
+			values[Atnum_tid] = (char *) DirectFunctionCall1(tidout,
+															 PointerGetDatum(&tuple->t_self));
 
-			if (tuple->t_data->t_infomask & HEAP_XMAX_SHARED_LOCK)
-				values[i++] = pstrdup("Shared");
-			else
-				values[i++] = pstrdup("Exclusive");
-			values[i] = palloc(NCHARS * sizeof(char));
-			snprintf(values[i++], NCHARS, "%d", HeapTupleHeaderGetXmax(tuple->t_data));
-			if (tuple->t_data->t_infomask & HEAP_XMAX_IS_MULTI)
+			values[Atnum_xmax] = palloc(NCHARS * sizeof(char));
+			snprintf(values[Atnum_xmax], NCHARS, "%d", xmax);
+			if (infomask & HEAP_XMAX_IS_MULTI)
 			{
-				TransactionId *xids;
-				int			nxids;
-				int			j;
-				int			isValidXid = 0;		/* any valid xid ever exists? */
+				MultiXactMember *members;
+				int			nmembers;
+				bool		first = true;
+				bool		allow_old;
 
-				values[i++] = pstrdup("true");
-				nxids = GetMultiXactIdMembers(HeapTupleHeaderGetXmax(tuple->t_data), &xids);
-				if (nxids == -1)
+				values[Atnum_ismulti] = pstrdup("true");
+
+				allow_old = !(infomask & HEAP_LOCK_MASK) &&
+							 (infomask & HEAP_XMAX_LOCK_ONLY);
+				nmembers = GetMultiXactIdMembers(xmax, &members, allow_old);
+				if (nmembers == -1)
 				{
-					elog(ERROR, "GetMultiXactIdMembers returns error");
+					values[Atnum_xids] = "{0}";
+					values[Atnum_modes] = "{transient upgrade status}";
+					values[Atnum_pids] = "{0}";
 				}
-
-				values[i] = palloc(NCHARS * nxids);
-				values[i + 1] = palloc(NCHARS * nxids);
-				strcpy(values[i], "{");
-				strcpy(values[i + 1], "{");
-
-				for (j = 0; j < nxids; j++)
+				else
 				{
-					char		buf[NCHARS];
+					int			j;
 
-					if (TransactionIdIsInProgress(xids[j]))
+					values[Atnum_xids] = palloc(NCHARS * nmembers);
+					values[Atnum_modes] = palloc(NCHARS * nmembers);
+					values[Atnum_pids] = palloc(NCHARS * nmembers);
+
+					strcpy(values[Atnum_xids], "{");
+					strcpy(values[Atnum_modes], "{");
+					strcpy(values[Atnum_pids], "{");
+
+					for (j = 0; j < nmembers; j++)
 					{
-						if (isValidXid)
+						char		buf[NCHARS];
+
+						if (!first)
 						{
-							strcat(values[i], ",");
-							strcat(values[i + 1], ",");
+							strcat(values[Atnum_xids], ",");
+							strcat(values[Atnum_modes], ",");
+							strcat(values[Atnum_pids], ",");
 						}
-						snprintf(buf, NCHARS, "%d", xids[j]);
-						strcat(values[i], buf);
-						snprintf(buf, NCHARS, "%d", BackendXidGetPid(xids[j]));
-						strcat(values[i + 1], buf);
+						snprintf(buf, NCHARS, "%d", members[j].xid);
+						strcat(values[Atnum_xids], buf);
+						switch (members[j].status)
+						{
+							case MultiXactStatusUpdate:
+								snprintf(buf, NCHARS, "Update");
+								break;
+							case MultiXactStatusNoKeyUpdate:
+								snprintf(buf, NCHARS, "No Key Update");
+								break;
+							case MultiXactStatusForUpdate:
+								snprintf(buf, NCHARS, "For Update");
+								break;
+							case MultiXactStatusForNoKeyUpdate:
+								snprintf(buf, NCHARS, "For No Key Update");
+								break;
+							case MultiXactStatusForShare:
+								snprintf(buf, NCHARS, "Share");
+								break;
+							case MultiXactStatusForKeyShare:
+								snprintf(buf, NCHARS, "Key Share");
+								break;
+						}
+						strcat(values[Atnum_modes], buf);
+						snprintf(buf, NCHARS, "%d",
+								 BackendXidGetPid(members[j].xid));
+						strcat(values[Atnum_pids], buf);
 
-						isValidXid = 1;
+						first = false;
 					}
-				}
 
-				strcat(values[i], "}");
-				strcat(values[i + 1], "}");
-				i++;
+					strcat(values[Atnum_xids], "}");
+					strcat(values[Atnum_modes], "}");
+					strcat(values[Atnum_pids], "}");
+				}
 			}
 			else
 			{
-				values[i++] = pstrdup("false");
-				values[i] = palloc(NCHARS * sizeof(char));
-				snprintf(values[i++], NCHARS, "{%d}", HeapTupleHeaderGetXmax(tuple->t_data));
+				values[Atnum_ismulti] = pstrdup("false");
 
-				values[i] = palloc(NCHARS * sizeof(char));
-				snprintf(values[i++], NCHARS, "{%d}", BackendXidGetPid(HeapTupleHeaderGetXmax(tuple->t_data)));
+				values[Atnum_xids] = palloc(NCHARS * sizeof(char));
+				snprintf(values[Atnum_xids], NCHARS, "{%d}", xmax);
+
+				values[Atnum_modes] = palloc(NCHARS);
+				if (infomask & HEAP_XMAX_LOCK_ONLY)
+				{
+					if (HEAP_XMAX_IS_SHR_LOCKED(infomask))
+						snprintf(values[Atnum_modes], NCHARS, "{For Share}");
+					else if (HEAP_XMAX_IS_KEYSHR_LOCKED(infomask))
+						snprintf(values[Atnum_modes], NCHARS, "{For Key Share}");
+					else if (HEAP_XMAX_IS_EXCL_LOCKED(infomask))
+						snprintf(values[Atnum_modes], NCHARS, "{For Update}");
+					else
+						/* neither keyshare nor exclusive bit it set */
+						snprintf(values[Atnum_modes], NCHARS,
+								 "{transient upgrade status}");
+				}
+				else
+				{
+					if (tuple->t_data->t_infomask2 & HEAP_KEYS_UPDATED)
+						snprintf(values[Atnum_modes], NCHARS, "{Key Update}");
+					else
+						snprintf(values[Atnum_modes], NCHARS, "{Update}");
+				}
+
+				values[Atnum_pids] = palloc(NCHARS * sizeof(char));
+				snprintf(values[Atnum_pids], NCHARS, "{%d}",
+						 BackendXidGetPid(xmax));
 			}
 
 			LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
@@ -200,10 +274,10 @@ pgrowlocks(PG_FUNCTION_ARGS)
 			/* make the tuple into a datum */
 			result = HeapTupleGetDatum(tuple);
 
-			/* Clean up */
-			for (i = 0; i < mydata->ncolumns; i++)
-				pfree(values[i]);
-			pfree(values);
+			/*
+			 * no need to pfree what we allocated; it's on a short-lived memory
+			 * context anyway
+			 */
 
 			SRF_RETURN_NEXT(funcctx, result);
 		}

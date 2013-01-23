@@ -4194,7 +4194,7 @@ get_select_query_def(Query *query, deparse_context *context,
 			get_rule_expr(query->limitCount, context, false);
 	}
 
-	/* Add FOR UPDATE/SHARE clauses if present */
+	/* Add FOR [KEY] UPDATE/SHARE clauses if present */
 	if (query->hasForUpdate)
 	{
 		foreach(l, query->rowMarks)
@@ -4205,12 +4205,26 @@ get_select_query_def(Query *query, deparse_context *context,
 			if (rc->pushedDown)
 				continue;
 
-			if (rc->forUpdate)
-				appendContextKeyword(context, " FOR UPDATE",
-									 -PRETTYINDENT_STD, PRETTYINDENT_STD, 0);
-			else
-				appendContextKeyword(context, " FOR SHARE",
-									 -PRETTYINDENT_STD, PRETTYINDENT_STD, 0);
+			switch (rc->strength)
+			{
+				case LCS_FORKEYSHARE:
+					appendContextKeyword(context, " FOR KEY SHARE",
+										 -PRETTYINDENT_STD, PRETTYINDENT_STD, 0);
+					break;
+				case LCS_FORSHARE:
+					appendContextKeyword(context, " FOR SHARE",
+										 -PRETTYINDENT_STD, PRETTYINDENT_STD, 0);
+					break;
+				case LCS_FORNOKEYUPDATE:
+					appendContextKeyword(context, " FOR NO KEY UPDATE",
+										 -PRETTYINDENT_STD, PRETTYINDENT_STD, 0);
+					break;
+				case LCS_FORUPDATE:
+					appendContextKeyword(context, " FOR UPDATE",
+										 -PRETTYINDENT_STD, PRETTYINDENT_STD, 0);
+					break;
+			}
+
 			appendStringInfo(buf, " OF %s",
 							 quote_identifier(get_rtable_name(rc->rti,
 															  context)));

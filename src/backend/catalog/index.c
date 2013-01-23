@@ -23,6 +23,7 @@
 
 #include <unistd.h>
 
+#include "access/multixact.h"
 #include "access/relscan.h"
 #include "access/sysattr.h"
 #include "access/transam.h"
@@ -2353,8 +2354,7 @@ IndexBuildHeapScan(Relation heapRelation,
 					 * As with INSERT_IN_PROGRESS case, this is unexpected
 					 * unless it's our own deletion or a system catalog.
 					 */
-					Assert(!(heapTuple->t_data->t_infomask & HEAP_XMAX_IS_MULTI));
-					xwait = HeapTupleHeaderGetXmax(heapTuple->t_data);
+					xwait = HeapTupleHeaderGetUpdateXid(heapTuple->t_data);
 					if (!TransactionIdIsCurrentTransactionId(xwait))
 					{
 						if (!is_system_catalog)
@@ -3184,7 +3184,8 @@ reindex_index(Oid indexId, bool skip_constraint_checks)
 		}
 
 		/* We'll build a new physical relation for the index */
-		RelationSetNewRelfilenode(iRel, InvalidTransactionId);
+		RelationSetNewRelfilenode(iRel, InvalidTransactionId,
+								  InvalidMultiXactId);
 
 		/* Initialize the index and rebuild */
 		/* Note: we do not need to re-establish pkey setting */
@@ -3364,7 +3365,7 @@ reindex_relation(Oid relid, int flags)
 
 	/* Ensure rd_indexattr is valid; see comments for RelationSetIndexList */
 	if (is_pg_class)
-		(void) RelationGetIndexAttrBitmap(rel);
+		(void) RelationGetIndexAttrBitmap(rel, false);
 
 	PG_TRY();
 	{

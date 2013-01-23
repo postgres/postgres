@@ -562,7 +562,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 				returningLists = NIL;
 
 			/*
-			 * If there was a FOR UPDATE/SHARE clause, the LockRows node will
+			 * If there was a FOR [KEY] UPDATE/SHARE clause, the LockRows node will
 			 * have dealt with fetching non-locked marked rows, else we need
 			 * to have ModifyTable do that.
 			 */
@@ -954,7 +954,7 @@ inheritance_planner(PlannerInfo *root)
 	root->simple_rel_array = save_rel_array;
 
 	/*
-	 * If there was a FOR UPDATE/SHARE clause, the LockRows node will have
+	 * If there was a FOR [KEY] UPDATE/SHARE clause, the LockRows node will have
 	 * dealt with fetching non-locked marked rows, else we need to have
 	 * ModifyTable do that.
 	 */
@@ -1065,13 +1065,13 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 										tlist);
 
 		/*
-		 * Can't handle FOR UPDATE/SHARE here (parser should have checked
+		 * Can't handle FOR [KEY] UPDATE/SHARE here (parser should have checked
 		 * already, but let's make sure).
 		 */
 		if (parse->rowMarks)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("SELECT FOR UPDATE/SHARE is not allowed with UNION/INTERSECT/EXCEPT")));
+					 errmsg("SELECT FOR UPDATE/SHARE/KEY UPDATE/KEY SHARE is not allowed with UNION/INTERSECT/EXCEPT")));
 
 		/*
 		 * Calculate pathkeys that represent result ordering requirements
@@ -1797,7 +1797,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	}
 
 	/*
-	 * If there is a FOR UPDATE/SHARE clause, add the LockRows node. (Note: we
+	 * If there is a FOR [KEY] UPDATE/SHARE clause, add the LockRows node. (Note: we
 	 * intentionally test parse->rowMarks not root->rowMarks here. If there
 	 * are only non-locking rowmarks, they should be handled by the
 	 * ModifyTable node instead.)
@@ -1983,7 +1983,7 @@ preprocess_rowmarks(PlannerInfo *root)
 	if (parse->rowMarks)
 	{
 		/*
-		 * We've got trouble if FOR UPDATE/SHARE appears inside grouping,
+		 * We've got trouble if FOR [KEY] UPDATE/SHARE appears inside grouping,
 		 * since grouping renders a reference to individual tuple CTIDs
 		 * invalid.  This is also checked at parse time, but that's
 		 * insufficient because of rule substitution, query pullup, etc.
@@ -1993,7 +1993,7 @@ preprocess_rowmarks(PlannerInfo *root)
 	else
 	{
 		/*
-		 * We only need rowmarks for UPDATE, DELETE, or FOR UPDATE/SHARE.
+		 * We only need rowmarks for UPDATE, DELETE, or FOR [KEY] UPDATE/SHARE.
 		 */
 		if (parse->commandType != CMD_UPDATE &&
 			parse->commandType != CMD_DELETE)
@@ -2003,7 +2003,7 @@ preprocess_rowmarks(PlannerInfo *root)
 	/*
 	 * We need to have rowmarks for all base relations except the target. We
 	 * make a bitmapset of all base rels and then remove the items we don't
-	 * need or have FOR UPDATE/SHARE marks for.
+	 * need or have FOR [KEY] UPDATE/SHARE marks for.
 	 */
 	rels = get_base_rel_indexes((Node *) parse->jointree);
 	if (parse->resultRelation)
@@ -2020,7 +2020,7 @@ preprocess_rowmarks(PlannerInfo *root)
 		PlanRowMark *newrc;
 
 		/*
-		 * Currently, it is syntactically impossible to have FOR UPDATE
+		 * Currently, it is syntactically impossible to have FOR UPDATE et al
 		 * applied to an update/delete target rel.	If that ever becomes
 		 * possible, we should drop the target from the PlanRowMark list.
 		 */
@@ -2040,10 +2040,21 @@ preprocess_rowmarks(PlannerInfo *root)
 		newrc = makeNode(PlanRowMark);
 		newrc->rti = newrc->prti = rc->rti;
 		newrc->rowmarkId = ++(root->glob->lastRowMarkId);
-		if (rc->forUpdate)
-			newrc->markType = ROW_MARK_EXCLUSIVE;
-		else
-			newrc->markType = ROW_MARK_SHARE;
+		switch (rc->strength)
+		{
+			case LCS_FORUPDATE:
+				newrc->markType = ROW_MARK_EXCLUSIVE;
+				break;
+			case LCS_FORNOKEYUPDATE:
+				newrc->markType = ROW_MARK_NOKEYEXCLUSIVE;
+				break;
+			case LCS_FORSHARE:
+				newrc->markType = ROW_MARK_SHARE;
+				break;
+			case LCS_FORKEYSHARE:
+				newrc->markType = ROW_MARK_KEYSHARE;
+				break;
+		}
 		newrc->noWait = rc->noWait;
 		newrc->isParent = false;
 

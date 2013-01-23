@@ -73,6 +73,7 @@ static HeapTuple GetTupleForTrigger(EState *estate,
 				   EPQState *epqstate,
 				   ResultRelInfo *relinfo,
 				   ItemPointer tid,
+				   LockTupleMode lockmode,
 				   TupleTableSlot **newSlot);
 static bool TriggerEnabled(EState *estate, ResultRelInfo *relinfo,
 			   Trigger *trigger, TriggerEvent event,
@@ -2147,7 +2148,7 @@ ExecBRDeleteTriggers(EState *estate, EPQState *epqstate,
 	int			i;
 
 	trigtuple = GetTupleForTrigger(estate, epqstate, relinfo, tupleid,
-								   &newSlot);
+								   LockTupleExclusive, &newSlot);
 	if (trigtuple == NULL)
 		return false;
 
@@ -2201,7 +2202,8 @@ ExecARDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 	if (trigdesc && trigdesc->trig_delete_after_row)
 	{
 		HeapTuple	trigtuple = GetTupleForTrigger(estate, NULL, relinfo,
-												   tupleid, NULL);
+												   tupleid, LockTupleExclusive,
+												   NULL);
 
 		AfterTriggerSaveEvent(estate, relinfo, TRIGGER_EVENT_DELETE,
 							  true, trigtuple, NULL, NIL, NULL);
@@ -2332,10 +2334,24 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 	TupleTableSlot *newSlot;
 	int			i;
 	Bitmapset  *modifiedCols;
+	Bitmapset  *keyCols;
+	LockTupleMode lockmode;
+
+	/*
+	 * Compute lock mode to use.  If columns that are part of the key have not
+	 * been modified, then we can use a weaker lock, allowing for better
+	 * concurrency.
+	 */
+	modifiedCols = GetModifiedColumns(relinfo, estate);
+	keyCols = RelationGetIndexAttrBitmap(relinfo->ri_RelationDesc, true);
+	if (bms_overlap(keyCols, modifiedCols))
+		lockmode = LockTupleExclusive;
+	else
+		lockmode = LockTupleNoKeyExclusive;
 
 	/* get a copy of the on-disk tuple we are planning to update */
 	trigtuple = GetTupleForTrigger(estate, epqstate, relinfo, tupleid,
-								   &newSlot);
+								   lockmode, &newSlot);
 	if (trigtuple == NULL)
 		return NULL;			/* cancel the update action */
 
@@ -2357,7 +2373,6 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 		newtuple = slottuple;
 	}
 
-	modifiedCols = GetModifiedColumns(relinfo, estate);
 
 	LocTriggerData.type = T_TriggerData;
 	LocTriggerData.tg_event = TRIGGER_EVENT_UPDATE |
@@ -2426,7 +2441,8 @@ ExecARUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 	if (trigdesc && trigdesc->trig_update_after_row)
 	{
 		HeapTuple	trigtuple = GetTupleForTrigger(estate, NULL, relinfo,
-												   tupleid, NULL);
+												   tupleid, LockTupleExclusive,
+												   NULL);
 
 		AfterTriggerSaveEvent(estate, relinfo, TRIGGER_EVENT_UPDATE,
 							  true, trigtuple, newtuple, recheckIndexes,
@@ -2565,6 +2581,7 @@ GetTupleForTrigger(EState *estate,
 				   EPQState *epqstate,
 				   ResultRelInfo *relinfo,
 				   ItemPointer tid,
+				   LockTupleMode lockmode,
 				   TupleTableSlot **newSlot)
 {
 	Relation	relation = relinfo->ri_RelationDesc;
@@ -2589,8 +2606,8 @@ ltrmark:;
 		tuple.t_self = *tid;
 		test = heap_lock_tuple(relation, &tuple,
 							   estate->es_output_cid,
-							   LockTupleExclusive, false /* wait */,
-							   &buffer, &hufd);
+							   lockmode, false /* wait */,
+							   false, &buffer, &hufd);
 		switch (test)
 		{
 			case HeapTupleSelfUpdated:
@@ -2630,6 +2647,7 @@ ltrmark:;
 										   epqstate,
 										   relation,
 										   relinfo->ri_RangeTableIndex,
+										   lockmode,
 										   &hufd.ctid,
 										   hufd.xmax);
 					if (!TupIsNull(epqslot))
