@@ -41,14 +41,20 @@
      mechanism does not support these object types.
      <literal>ddl_command_start</> also occurs just before the execution of a
      <literal>SELECT INTO</literal> command, since this is equivalent to
-     <literal>CREATE TABLE AS</literal>.
+     <literal>CREATE TABLE AS</literal>.  The <literal>ddl_command_end</>
+     event occurs just after the execution of this same set of commands.
    </para>
 
    <para>
-    The <literal>ddl_command_end</> event occurs just before returning
-    control from the execution of a <literal>CREATE</>, <literal>ALTER</>,
-    or <literal>DROP</> command.  It shares the same exceptions as
-    the <literal>ddl_command_start</> event.
+     Event triggers (like other functions) cannot be executed in an aborted
+     transaction.  Thus, if a DDL command fails with an error, any associated
+     <literal>ddl_command_end</> triggers will not be executed.  Conversely,
+     if a <literal>ddl_command_start</> trigger fails with an error, no
+     further event triggers will fire, and no attempt will be made to execute
+     the command itself.  Similarly, if a <literal>ddl_command_end</> trigger
+     fails with an error, the effects of the DDL statement will be rolled
+     back, just as they would be in any other case where the containing
+     transaction aborts.
    </para>
 
    <para>
