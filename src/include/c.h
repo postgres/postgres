@@ -755,6 +755,8 @@ typedef NameData *Name;
  */
 #if defined(HAVE__BUILTIN_UNREACHABLE) && !defined(USE_ASSERT_CHECKING)
 #define pg_unreachable() __builtin_unreachable()
+#elif defined(_MSC_VER) && !defined(USE_ASSERT_CHECKING)
+#define pg_unreachable() __assume(0)
 #else
 #define pg_unreachable() abort()
 #endif
