@@ -18,6 +18,7 @@ create event trigger regress_event_trigger on elephant_bootstrap
 create event trigger regress_event_trigger on ddl_command_start
    execute procedure test_event_trigger();
 
+-- OK
 create event trigger regress_event_trigger_end on ddl_command_end
    execute procedure test_event_trigger();
 
@@ -70,10 +71,11 @@ alter event trigger regress_event_trigger enable always;
 alter event trigger regress_event_trigger enable;
 alter event trigger regress_event_trigger disable;
 
--- regress_event_trigger2 should fire, but not regress_event_trigger
+-- regress_event_trigger2 and regress_event_trigger_end should fire, but not
+-- regress_event_trigger
 create table event_trigger_fire1 (a int);
 
--- but nothing should fire here
+-- regress_event_trigger_end should fire here
 drop table event_trigger_fire1;
 
 -- alter owner to non-superuser should fail

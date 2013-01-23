@@ -16,6 +16,7 @@ ERROR:  unrecognized event name "elephant_bootstrap"
 -- OK
 create event trigger regress_event_trigger on ddl_command_start
    execute procedure test_event_trigger();
+-- OK
 create event trigger regress_event_trigger_end on ddl_command_end
    execute procedure test_event_trigger();
 -- should fail, food is not a valid filter variable
@@ -65,10 +66,12 @@ alter event trigger regress_event_trigger enable replica;
 alter event trigger regress_event_trigger enable always;
 alter event trigger regress_event_trigger enable;
 alter event trigger regress_event_trigger disable;
--- regress_event_trigger2 should fire, but not regress_event_trigger
+-- regress_event_trigger2 and regress_event_trigger_end should fire, but not
+-- regress_event_trigger
 create table event_trigger_fire1 (a int);
+NOTICE:  test_event_trigger: ddl_command_start CREATE TABLE
 NOTICE:  test_event_trigger: ddl_command_end CREATE TABLE
--- but nothing should fire here
+-- regress_event_trigger_end should fire here
 drop table event_trigger_fire1;
 NOTICE:  test_event_trigger: ddl_command_end DROP TABLE
 -- alter owner to non-superuser should fail
