@@ -314,12 +314,11 @@ create_new_objects(void)
 		snprintf(log_file_name, sizeof(log_file_name), DB_DUMP_LOG_FILE_MASK, old_db->db_oid);
 
 		/*
-		 *	Using pg_restore --single-transaction is faster than other
-		 *	methods, like --jobs.  pg_dump only produces its output at the
-		 *	end, so there is little parallelism using the pipe.
+		 *	pg_dump only produces its output at the end, so there is little
+		 *	parallelism if using the pipe.
 		 */
 		parallel_exec_prog(log_file_name, NULL,
-				  "\"%s/pg_restore\" %s --exit-on-error --single-transaction --verbose --dbname \"%s\" \"%s\"",
+				  "\"%s/pg_restore\" %s --exit-on-error --verbose --dbname \"%s\" \"%s\"",
 				  new_cluster.bindir, cluster_conn_opts(&new_cluster),
 				  old_db->db_name, sql_file_name);
 	}
