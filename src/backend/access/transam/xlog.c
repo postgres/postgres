@@ -3276,8 +3276,8 @@ rescanLatestTimeLine(void)
 	bool		found;
 	ListCell   *cell;
 	TimeLineID	newtarget;
+	TimeLineID	oldtarget = recoveryTargetTLI;
 	TimeLineHistoryEntry *currentTle = NULL;
-	/* use volatile pointer to prevent code rearrangement */
 
 	newtarget = findNewestTimeLine(recoveryTargetTLI);
 	if (newtarget == recoveryTargetTLI)
@@ -3335,6 +3335,12 @@ rescanLatestTimeLine(void)
 	recoveryTargetTLI = newtarget;
 	list_free_deep(expectedTLEs);
 	expectedTLEs = newExpectedTLEs;
+
+	/*
+	 * As in StartupXLOG(), try to ensure we have all the history files
+	 * between the old target and new target in pg_xlog.
+	 */
+	restoreTimeLineHistoryFiles(oldtarget + 1, newtarget);
 
 	ereport(LOG,
 			(errmsg("new target timeline is %u",
@@ -4992,6 +4998,20 @@ StartupXLOG(void)
 	 * also xlog_redo()).
 	 */
 	ThisTimeLineID = checkPoint.ThisTimeLineID;
+
+	/*
+	 * Copy any missing timeline history files between 'now' and the
+	 * recovery target timeline from archive to pg_xlog. While we don't need
+	 * those files ourselves - the history file of the recovery target
+	 * timeline covers all the previous timelines in the history too - a
+	 * cascading standby server might be interested in them. Or, if you
+	 * archive the WAL from this server to a different archive than the
+	 * master, it'd be good for all the history files to get archived there
+	 * after failover, so that you can use one of the old timelines as a
+	 * PITR target. Timeline history files are small, so it's better to copy
+	 * them unnecessarily than not copy them and regret later.
+	 */
+	restoreTimeLineHistoryFiles(ThisTimeLineID, recoveryTargetTLI);
 
 	lastFullPageWrites = checkPoint.fullPageWrites;
 

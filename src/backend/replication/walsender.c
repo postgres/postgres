@@ -110,6 +110,9 @@ static int	sendFile = -1;
 static XLogSegNo sendSegNo = 0;
 static uint32 sendOff = 0;
 
+/* Timeline ID of the currently open file */
+static TimeLineID	curFileTimeLine = 0;
+
 /*
  * These variables keep track of the state of the timeline we're currently
  * sending. sendTimeLine identifies the timeline. If sendTimeLineIsHistoric,
@@ -1201,8 +1204,8 @@ WalSndKill(int code, Datum arg)
  * always be one descriptor left open until the process ends, but never
  * more than one.
  */
-void
-XLogRead(char *buf, TimeLineID tli, XLogRecPtr startptr, Size count)
+static void
+XLogRead(char *buf, XLogRecPtr startptr, Size count)
 {
 	char	   *p;
 	XLogRecPtr	recptr;
@@ -1222,7 +1225,7 @@ retry:
 
 		startoff = recptr % XLogSegSize;
 
-		if (sendFile < 0 || !XLByteInSeg(recptr, sendSegNo) || sendTimeLine != tli)
+		if (sendFile < 0 || !XLByteInSeg(recptr, sendSegNo))
 		{
 			char		path[MAXPGPATH];
 
@@ -1230,9 +1233,45 @@ retry:
 			if (sendFile >= 0)
 				close(sendFile);
 
-			sendTimeLine = tli;
 			XLByteToSeg(recptr, sendSegNo);
-			XLogFilePath(path, sendTimeLine, sendSegNo);
+
+			/*-------
+			 * When reading from a historic timeline, and there is a timeline
+			 * switch within this segment, read from the WAL segment belonging
+			 * to the new timeline.
+			 *
+			 * For example, imagine that this server is currently on timeline
+			 * 5, and we're streaming timeline 4. The switch from timeline 4
+			 * to 5 happened at 0/13002088. In pg_xlog, we have these files:
+			 *
+			 * ...
+			 * 000000040000000000000012
+			 * 000000040000000000000013
+			 * 000000050000000000000013
+			 * 000000050000000000000014
+			 * ...
+			 *
+			 * In this situation, when requested to send the WAL from
+			 * segment 0x13, on timeline 4, we read the WAL from file
+			 * 000000050000000000000013. Archive recovery prefers files from
+			 * newer timelines, so if the segment was restored from the
+			 * archive on this server, the file belonging to the old timeline,
+			 * 000000040000000000000013, might not exist. Their contents are
+			 * equal up to the switchpoint, because at a timeline switch, the
+			 * used portion of the old segment is copied to the new file.
+			 *-------
+			 */
+			curFileTimeLine = sendTimeLine;
+			if (sendTimeLineIsHistoric)
+			{
+				XLogSegNo endSegNo;
+
+				XLByteToSeg(sendTimeLineValidUpto, endSegNo);
+				if (sendSegNo == endSegNo)
+					curFileTimeLine = sendTimeLineNextTLI;
+			}
+
+			XLogFilePath(path, curFileTimeLine, sendSegNo);
 
 			sendFile = BasicOpenFile(path, O_RDONLY | PG_BINARY, 0);
 			if (sendFile < 0)
@@ -1246,7 +1285,7 @@ retry:
 					ereport(ERROR,
 							(errcode_for_file_access(),
 							 errmsg("requested WAL segment %s has already been removed",
-									XLogFileNameP(sendTimeLine, sendSegNo))));
+									XLogFileNameP(curFileTimeLine, sendSegNo))));
 				else
 					ereport(ERROR,
 							(errcode_for_file_access(),
@@ -1263,7 +1302,7 @@ retry:
 				ereport(ERROR,
 						(errcode_for_file_access(),
 						 errmsg("could not seek in log segment %s to offset %u: %m",
-								XLogFileNameP(sendTimeLine, sendSegNo),
+								XLogFileNameP(curFileTimeLine, sendSegNo),
 								startoff)));
 			sendOff = startoff;
 		}
@@ -1280,7 +1319,7 @@ retry:
 			ereport(ERROR,
 					(errcode_for_file_access(),
 			errmsg("could not read from log segment %s, offset %u, length %lu: %m",
-				   XLogFileNameP(sendTimeLine, sendSegNo),
+				   XLogFileNameP(curFileTimeLine, sendSegNo),
 				   sendOff, (unsigned long) segbytes)));
 		}
 
@@ -1524,7 +1563,7 @@ XLogSend(bool *caughtup)
 	 * calls.
 	 */
 	enlargeStringInfo(&output_message, nbytes);
-	XLogRead(&output_message.data[output_message.len], sendTimeLine, startptr, nbytes);
+	XLogRead(&output_message.data[output_message.len], startptr, nbytes);
 	output_message.len += nbytes;
 	output_message.data[output_message.len] = '\0';
 

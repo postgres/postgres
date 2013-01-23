@@ -41,6 +41,28 @@
 #include "storage/fd.h"
 
 /*
+ * Copies all timeline history files with id's between 'begin' and 'end'
+ * from archive to pg_xlog.
+ */
+void
+restoreTimeLineHistoryFiles(TimeLineID begin, TimeLineID end)
+{
+	char		path[MAXPGPATH];
+	char		histfname[MAXFNAMELEN];
+	TimeLineID tli;
+
+	for (tli = begin; tli < end; tli++)
+	{
+		if (tli == 1)
+			continue;
+
+		TLHistoryFileName(histfname, tli);
+		if (RestoreArchivedFile(path, histfname, "RECOVERYHISTORY", 0, false))
+			KeepFileRestoredFromArchive(path, histfname);
+	}
+}
+
+/*
  * Try to read a timeline's history file.
  *
  * If successful, return the list of component TLIs (the given TLI followed by

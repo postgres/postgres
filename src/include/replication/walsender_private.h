@@ -95,7 +95,6 @@ extern WalSndCtlData *WalSndCtl;
 
 
 extern void WalSndSetState(WalSndState state);
-extern void XLogRead(char *buf, TimeLineID tli, XLogRecPtr startptr, Size count);
 
 /*
  * Internal functions for parsing the replication grammar, in repl_gram.y and
