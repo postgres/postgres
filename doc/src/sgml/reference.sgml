@@ -223,6 +223,7 @@
    &pgConfig;
    &pgDump;
    &pgDumpall;
+   &pgIsready;
    &pgReceivexlog;
    &pgRestore;
    &psqlRef;

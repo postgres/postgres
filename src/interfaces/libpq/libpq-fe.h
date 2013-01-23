@@ -110,6 +110,11 @@ typedef enum
 	PQERRORS_VERBOSE			/* all the facts, ma'am */
 } PGVerbosity;
 
+/*
+ * PGPing - The ordering of this enum should not be altered because the
+ * values are exposed externally via pg_isready.
+ */
+
 typedef enum
 {
 	PQPING_OK,					/* server is accepting connections */

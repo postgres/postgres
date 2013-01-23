@@ -1,0 +1,200 @@
+<!--
+doc/src/sgml/ref/pg_isready.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="app-pg-isready">
+ <refmeta>
+  <refentrytitle><application>pg_isready</application></refentrytitle>
+  <manvolnum>1</manvolnum>
+  <refmiscinfo>Application</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>pg_isready</refname>
+  <refpurpose>checks the connection status of a <productname>PostgreSQL</productname> server</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="app-pg-isready">
+  <primary>pg_isready</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+  <cmdsynopsis>
+   <command>pg_isready</command>
+   <arg rep="repeat"><replaceable>connection-option</replaceable></arg>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
+  </cmdsynopsis>
+ </refsynopsisdiv>
+
+
+ <refsect1 id="app-pg-isready-description">
+  <title>Description</title>
+  <para>
+   <application>pg_isready</application> is a utility for checking the connection
+   status of a <productname>PostgreSQL</productname> database server. The exit
+   status specifies the result of the connection check.
+  </para>
+ </refsect1>
+
+ <refsect1 id="app-pg-isready-options">
+  <title>Options</title>
+
+    <variablelist>
+
+    <varlistentry>
+      <term><option>-d <replaceable class="parameter">dbname</replaceable></></term>
+      <term><option>--dbname=<replaceable class="parameter">dbname</replaceable></></term>
+      <listitem>
+      <para>
+       Specifies the name of the database to connect to.
+      </para>
+      <para>
+       If this parameter contains an <symbol>=</symbol> sign or starts
+       with a valid <acronym>URI</acronym> prefix
+       (<literal>postgresql://</literal>
+       or <literal>postgres://</literal>), it is treated as a
+       <parameter>conninfo</parameter> string. See <xref linkend="libpq-connect"> for more information.
+      </para>
+      </listitem>
+    </varlistentry>
+
+     <varlistentry>
+       <term><option>-h <replaceable class="parameter">hostname</replaceable></></term>
+       <term><option>--host=<replaceable class="parameter">hostname</replaceable></></term>
+       <listitem>
+       <para>
+       Specifies the host name of the machine on which the
+       server is running. If the value begins
+       with a slash, it is used as the directory for the Unix-domain
+       socket.
+       </para>
+       </listitem>
+     </varlistentry>
+
+     <varlistentry>
+       <term><option>-p <replaceable class="parameter">port</replaceable></></term>
+       <term><option>--port=<replaceable class="parameter">port</replaceable></></term>
+       <listitem>
+       <para>
+       Specifies the TCP port or the local Unix-domain
+       socket file extension on which the server is listening for
+       connections. Defaults to the value of the <envar>PGPORT</envar>
+       environment variable or, if not set, to the port specified at
+       compile time, usually 5432.
+       </para>
+       </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-q</option></term>
+      <term><option>--quiet</option></term>
+      <listitem>
+       <para>
+        Do not display status message. This is useful when scripting.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+       <term><option>-U <replaceable class="parameter">username</replaceable></></term>
+       <term><option>--username=<replaceable class="parameter">username</replaceable></></term>
+       <listitem>
+       <para>
+       Connect to the database as the user <replaceable
+       class="parameter">username</replaceable> instead of the default.
+       </para>
+       </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-V</></term>
+      <term><option>--version</></term>
+       <listitem>
+        <para>
+         Print the <application>pg_isready</application> version and exit.
+        </para>
+       </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-?</></term>
+      <term><option>--help</></term>
+      <listitem>
+       <para>
+        Show help about <application>pg_isready</application> command line
+        arguments, and exit.
+       </para>
+      </listitem>
+     </varlistentry>
+   </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Exit Status</title>
+
+  <para>
+   <application>pg_isready</application> returns <literal>0</literal> to the shell if the server
+   is accepting connections normally, <literal>1</literal> if the server is rejecting
+   connections (for example during startup), <literal>2</literal> if there was no response to the
+   connection attempt, and <literal>3</literal> if no attempt was made (for example due to invalid
+   parameters).
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Environment</title>
+
+  <para>
+   <command>pg_isready</command>, like most other <productname>PostgreSQL</>
+   utilities,
+   also uses the environment variables supported by <application>libpq</>
+   (see <xref linkend="libpq-envars">).
+  </para>
+ </refsect1>
+
+ <refsect1 id="app-pg-isready-notes">
+  <title>Notes</title>
+
+  <para>
+   The options <option>--dbname</> and <option>--username</> can be used to avoid gratuitous
+   error messages in the logs, but are not necessary for proper functionality.
+  </para>
+ </refsect1>
+
+ <refsect1 id="app-pg-isready-examples">
+  <title>Examples</title>
+
+  <para>
+   Standard Usage:
+   <screen>
+    <prompt>$</prompt> <userinput>pg_isready</userinput>
+    <computeroutput>/tmp:5432 - accepting connections</computeroutput>
+    <prompt>$</prompt> <userinput>echo $?</userinput>
+    <computeroutput>0</computeroutput>
+   </screen>
+  </para>
+
+  <para>
+   Running with connection parameters to a <productname>PostgreSQL</productname> cluster in startup:
+   <screen>
+    <prompt>$ </prompt><userinput>pg_isready -h localhost -p 5433</userinput>
+    <computeroutput>localhost:5433 - rejecting connections</computeroutput>
+    <prompt>$</prompt> <userinput>echo $?</userinput>
+    <computeroutput>1</computeroutput>
+   </screen>
+  </para>
+
+  <para>
+   Running with connection parameters to a non-responsive <productname>PostgreSQL</productname> cluster:
+   <screen>
+    <prompt>$ </prompt><userinput>pg_isready -h someremotehost</userinput>
+    <computeroutput>someremotehost:5432 - no response</computeroutput>
+    <prompt>$</prompt> <userinput>echo $?</userinput>
+    <computeroutput>2</computeroutput>
+   </screen>
+  </para>
+
+ </refsect1>
+
+</refentry>
