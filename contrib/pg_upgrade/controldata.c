@@ -469,7 +469,8 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 
 	/* verify that we got all the mandatory pg_control data */
 	if (!got_xid || !got_oid ||
-		!got_multi || !got_mxoff || !got_oldestmulti ||
+		!got_multi || !got_mxoff ||
+		(!got_oldestmulti && GET_MAJOR_VERSION(cluster->major_version) >= 903) ||
 		(!live_check && !got_nextxlogfile) ||
 		!got_tli ||
 		!got_align || !got_blocksz || !got_largesz || !got_walsz ||
@@ -492,7 +493,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		if (!got_mxoff)
 			pg_log(PG_REPORT, "  latest checkpoint next MultiXactOffset\n");
 
-		if (!got_oldestmulti)
+		if (!got_oldestmulti && GET_MAJOR_VERSION(cluster->major_version) >= 903)
 			pg_log(PG_REPORT, "  latest checkpoint oldest MultiXactId\n");
 
 		if (!live_check && !got_nextxlogfile)
