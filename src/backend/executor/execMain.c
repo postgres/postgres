@@ -228,7 +228,9 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
  *		we retrieve up to 'count' tuples in the specified direction.
  *
  *		Note: count = 0 is interpreted as no portal limit, i.e., run to
- *		completion.
+ *		completion.  Also note that the count limit is only applied to
+ *		retrieved tuples, not for instance to those inserted/updated/deleted
+ *		by a ModifyTable plan node.
  *
  *		There is no return value, but output tuples (if any) are sent to
  *		the destination receiver specified in the QueryDesc; and the number
@@ -1358,7 +1360,7 @@ ExecEndPlan(PlanState *planstate, EState *estate)
 /* ----------------------------------------------------------------
  *		ExecutePlan
  *
- *		Processes the query plan until we have processed 'numberTuples' tuples,
+ *		Processes the query plan until we have retrieved 'numberTuples' tuples,
  *		moving in the specified direction.
  *
  *		Runs to completion if numberTuples is 0
