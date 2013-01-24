@@ -48,7 +48,7 @@ static void prepare_new_databases(void);
 static void create_new_objects(void);
 static void copy_clog_xlog_xid(void);
 static void set_frozenxids(void);
-static void setup(char *argv0, bool live_check);
+static void setup(char *argv0, bool *live_check);
 static void cleanup(void);
 
 ClusterInfo old_cluster,
@@ -80,9 +80,9 @@ main(int argc, char **argv)
 	adjust_data_dir(&old_cluster);
 	adjust_data_dir(&new_cluster);
 
-	output_check_banner(&live_check);
+	setup(argv[0], &live_check);
 
-	setup(argv[0], live_check);
+	output_check_banner(live_check);
 
 	check_cluster_versions();
 
@@ -95,7 +95,7 @@ main(int argc, char **argv)
 
 
 	/* -- NEW -- */
-	start_postmaster(&new_cluster);
+	start_postmaster(&new_cluster, true);
 
 	check_new_cluster();
 	report_clusters_compatible();
@@ -116,7 +116,7 @@ main(int argc, char **argv)
 	/* New now using xids of the old system */
 
 	/* -- NEW -- */
-	start_postmaster(&new_cluster);
+	start_postmaster(&new_cluster, true);
 
 	prepare_new_databases();
 
@@ -177,7 +177,7 @@ main(int argc, char **argv)
 
 
 static void
-setup(char *argv0, bool live_check)
+setup(char *argv0, bool *live_check)
 {
 	char		exec_path[MAXPGPATH];	/* full path to my executable */
 
@@ -189,15 +189,39 @@ setup(char *argv0, bool live_check)
 
 	verify_directories();
 
-	/* no postmasters should be running */
-	if (!live_check && is_server_running(old_cluster.pgdata))
-		pg_log(PG_FATAL, "There seems to be a postmaster servicing the old cluster.\n"
-			   "Please shutdown that postmaster and try again.\n");
+	/* no postmasters should be running, except for a live check */
+	if (pid_lock_file_exists(old_cluster.pgdata))
+	{
+		/*
+		 *	If we have a postmaster.pid file, try to start the server.  If
+		 *	it starts, the pid file was stale, so stop the server.  If it
+		 *	doesn't start, assume the server is running.  If the pid file
+		 *	is left over from a server crash, this also allows any committed
+		 *	transactions stored in the WAL to be replayed so they are not
+		 *	lost, because WAL files are not transfered from old to new
+		 *	servers.
+		 */		
+		if (start_postmaster(&old_cluster, false))
+			stop_postmaster(false);
+		else
+		{
+			if (!user_opts.check)
+				pg_log(PG_FATAL, "There seems to be a postmaster servicing the old cluster.\n"
+					   "Please shutdown that postmaster and try again.\n");
+			else
+				*live_check = true;
+		}
+	}
 
 	/* same goes for the new postmaster */
-	if (is_server_running(new_cluster.pgdata))
-		pg_log(PG_FATAL, "There seems to be a postmaster servicing the new cluster.\n"
+	if (pid_lock_file_exists(new_cluster.pgdata))
+	{
+		if (start_postmaster(&new_cluster, false))
+			stop_postmaster(false);
+		else
+			pg_log(PG_FATAL, "There seems to be a postmaster servicing the new cluster.\n"
 			   "Please shutdown that postmaster and try again.\n");
+	}
 
 	/* get path to pg_upgrade executable */
 	if (find_my_exec(argv0, exec_path) < 0)

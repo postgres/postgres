@@ -170,8 +170,8 @@ stop_postmaster_atexit(void)
 }
 
 
-void
-start_postmaster(ClusterInfo *cluster)
+bool
+start_postmaster(ClusterInfo *cluster, bool throw_error)
 {
 	char		cmd[MAXPGPATH * 4 + 1000];
 	PGconn	   *conn;
@@ -236,6 +236,9 @@ start_postmaster(ClusterInfo *cluster)
 							  false,
 							  "%s", cmd);
 
+	if (!pg_ctl_return && !throw_error)
+		return false;
+							  
 	/* Check to see if we can connect to the server; if not, report it. */
 	if ((conn = get_db_conn(cluster, "template1")) == NULL ||
 		PQstatus(conn) != CONNECTION_OK)
@@ -256,6 +259,8 @@ start_postmaster(ClusterInfo *cluster)
 			   CLUSTER_NAME(cluster));
 
 	os_info.running_cluster = cluster;
+
+	return true;
 }
 
 

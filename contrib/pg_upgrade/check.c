@@ -56,11 +56,10 @@ fix_path_separator(char *path)
 }
 
 void
-output_check_banner(bool *live_check)
+output_check_banner(bool live_check)
 {
-	if (user_opts.check && is_server_running(old_cluster.pgdata))
+	if (user_opts.check && live_check)
 	{
-		*live_check = true;
 		pg_log(PG_REPORT, "Performing Consistency Checks on Old Live Server\n");
 		pg_log(PG_REPORT, "------------------------------------------------\n");
 	}
@@ -78,7 +77,7 @@ check_and_dump_old_cluster(bool live_check, char **sequence_script_file_name)
 	/* -- OLD -- */
 
 	if (!live_check)
-		start_postmaster(&old_cluster);
+		start_postmaster(&old_cluster, true);
 
 	set_locale_and_encoding(&old_cluster);
 
@@ -201,7 +200,7 @@ issue_warnings(char *sequence_script_file_name)
 	/* old = PG 8.3 warnings? */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 803)
 	{
-		start_postmaster(&new_cluster);
+		start_postmaster(&new_cluster, true);
 
 		/* restore proper sequence values using file created from old server */
 		if (sequence_script_file_name)
@@ -224,7 +223,7 @@ issue_warnings(char *sequence_script_file_name)
 	/* Create dummy large object permissions for old < PG 9.0? */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 804)
 	{
-		start_postmaster(&new_cluster);
+		start_postmaster(&new_cluster, true);
 		new_9_0_populate_pg_largeobject_metadata(&new_cluster, false);
 		stop_postmaster(false);
 	}
