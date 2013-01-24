@@ -56,15 +56,42 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 	if (!destination)
 		return NULL;
 
+#ifdef WIN32
+
+	/*
+	 * A Windows console has an "input code page" and an "output code page";
+	 * these usually match each other, but they rarely match the "Windows ANSI
+	 * code page" defined at system boot and expected of "char *" arguments to
+	 * Windows API functions.  The Microsoft CRT write() implementation
+	 * automatically converts text between these code pages when writing to a
+	 * console.  To identify such file descriptors, it calls GetConsoleMode()
+	 * on the underlying HANDLE, which in turn requires GENERIC_READ access on
+	 * the HANDLE.  Opening termout in mode "w+" allows that detection to
+	 * succeed.  Otherwise, write() would not recognize the descriptor as a
+	 * console, and non-ASCII characters would display incorrectly.
+	 *
+	 * XXX fgets() still receives text in the console's input code page.  This
+	 * makes non-ASCII credentials unportable.
+	 */
+	termin = fopen("CONIN$", "r");
+	termout = fopen("CONOUT$", "w+");
+#else
+
 	/*
 	 * Do not try to collapse these into one "w+" mode file. Doesn't work on
 	 * some platforms (eg, HPUX 10.20).
 	 */
-	termin = fopen(DEVTTY, "r");
-	termout = fopen(DEVTTY, "w");
+	termin = fopen("/dev/tty", "r");
+	termout = fopen("/dev/tty", "w");
+#endif
 	if (!termin || !termout
 #ifdef WIN32
-	/* See DEVTTY comment for msys */
+	/*
+	 * Direct console I/O does not work from the MSYS 1.0.10 console.  Writes
+	 * reach nowhere user-visible; reads block indefinitely.  XXX This affects
+	 * most Windows terminal environments, including rxvt, mintty, Cygwin
+	 * xterm, Cygwin sshd, and PowerShell ISE.  Switch to a more-generic test.
+	 */
 		|| (getenv("OSTYPE") && strcmp(getenv("OSTYPE"), "msys") == 0)
 #endif
 		)
