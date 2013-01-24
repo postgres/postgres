@@ -1064,10 +1064,12 @@ pipeThread(void *arg)
 		 * If we've filled the current logfile, nudge the main thread to do a
 		 * log rotation.
 		 */
-		if (Log_RotationSize > 0 &&
-			ftell(syslogFile) >= Log_RotationSize * 1024L)
-			SetLatch(&sysLoggerLatch);
-
+		if (Log_RotationSize > 0)
+		{
+			if (ftell(syslogFile) >= Log_RotationSize * 1024L ||
+				(csvlogFile != NULL && ftell(csvlogFile) >= Log_RotationSize * 1024L))
+				SetLatch(&sysLoggerLatch);
+		}
 		LeaveCriticalSection(&sysloggerSection);
 	}
 
