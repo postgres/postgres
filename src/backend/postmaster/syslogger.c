@@ -1059,6 +1059,15 @@ pipeThread(void *arg)
 			bytes_in_logbuffer += bytesRead;
 			process_pipe_input(logbuffer, &bytes_in_logbuffer);
 		}
+
+		/*
+		 * If we've filled the current logfile, nudge the main thread to do a
+		 * log rotation.
+		 */
+		if (Log_RotationSize > 0 &&
+			ftell(syslogFile) >= Log_RotationSize * 1024L)
+			SetLatch(&sysLoggerLatch);
+
 		LeaveCriticalSection(&sysloggerSection);
 	}
 
