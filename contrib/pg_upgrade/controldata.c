@@ -477,7 +477,8 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		!got_date_is_int || !got_float8_pass_by_value)
 	{
 		pg_log(PG_REPORT,
-			"Some required control information is missing;  cannot find:\n");
+			"The %s cluster lacks some required control information:\n",
+			CLUSTER_NAME(cluster));
 
 		if (!got_xid)
 			pg_log(PG_REPORT, "  checkpoint next XID\n");
