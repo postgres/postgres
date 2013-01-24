@@ -171,7 +171,7 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 	 * initialize the rest of our working state.
 	 */
 	prstate.new_prune_xid = InvalidTransactionId;
-	prstate.latestRemovedXid = InvalidTransactionId;
+	prstate.latestRemovedXid = *latestRemovedXid;
 	prstate.nredirected = prstate.ndead = prstate.nunused = 0;
 	memset(prstate.marked, 0, sizeof(prstate.marked));
 
