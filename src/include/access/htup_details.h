@@ -189,14 +189,19 @@ struct HeapTupleHeaderData
 #define HEAP_XACT_MASK			0xFFF0	/* visibility-related bits */
 
 /*
- * A tuple is only locked (i.e. not updated by its Xmax) if it the
- * HEAP_XMAX_LOCK_ONLY bit is set.
+ * A tuple is only locked (i.e. not updated by its Xmax) if the
+ * HEAP_XMAX_LOCK_ONLY bit is set; or, for pg_upgrade's sake, if the Xmax is
+ * not a multi and the EXCL_LOCK bit is set.
  *
  * See also HeapTupleHeaderIsOnlyLocked, which also checks for a possible
  * aborted updater transaction.
+ *
+ * Beware of multiple evaluations of the argument.
  */
 #define HEAP_XMAX_IS_LOCKED_ONLY(infomask) \
-	((infomask) & HEAP_XMAX_LOCK_ONLY)
+	(((infomask) & HEAP_XMAX_LOCK_ONLY) || \
+	 (((infomask) & (HEAP_XMAX_IS_MULTI | HEAP_LOCK_MASK)) == HEAP_XMAX_EXCL_LOCK))
+
 /*
  * Use these to test whether a particular lock is applied to a tuple
  */
