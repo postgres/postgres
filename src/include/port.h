@@ -109,11 +109,8 @@ extern BOOL AddUserToTokenDacl(HANDLE hToken);
 
 #if defined(WIN32) && !defined(__CYGWIN__)
 #define DEVNULL "nul"
-/* "con" does not work from the Msys 1.0.10 console (part of MinGW). */
-#define DEVTTY	"con"
 #else
 #define DEVNULL "/dev/null"
-#define DEVTTY "/dev/tty"
 #endif
 
 /*
