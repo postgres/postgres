@@ -74,11 +74,11 @@ typedef struct BackgroundWorker
    <command>postgres</> itself has finished its own initialization; processes
    requesting this are not eligible for database connections),
    <literal>BgWorkerStart_ConsistentState</> (start as soon as a consistent state
-   has been reached in a HOT standby, allowing processes to connect to
+   has been reached in a hot standby, allowing processes to connect to
    databases and run read-only queries), and
    <literal>BgWorkerStart_RecoveryFinished</> (start as soon as the system has
    entered normal read-write state).  Note the last two values are equivalent
-   in a server that's not a HOT standby.  Note that this setting only indicates
+   in a server that's not a hot standby.  Note that this setting only indicates
    when the processes are to be started; they do not stop when a different state
    is reached.
   </para>
