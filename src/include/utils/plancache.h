@@ -86,12 +86,13 @@ typedef struct CachedPlanSource
 	int			cursor_options; /* cursor options used for planning */
 	bool		fixed_result;	/* disallow change in result tupdesc? */
 	TupleDesc	resultDesc;		/* result type; NULL = doesn't return tuples */
-	struct OverrideSearchPath *search_path;		/* saved search_path */
 	MemoryContext context;		/* memory context holding all above */
 	/* These fields describe the current analyzed-and-rewritten query tree: */
 	List	   *query_list;		/* list of Query nodes, or NIL if not valid */
 	List	   *relationOids;	/* OIDs of relations the queries depend on */
 	List	   *invalItems;		/* other dependencies, as PlanInvalItems */
+	struct OverrideSearchPath *search_path;		/* search_path used for
+												 * parsing and planning */
 	MemoryContext query_context;	/* context holding the above, or NULL */
 	/* If we have a generic plan, this is a reference-counted link to it: */
 	struct CachedPlan *gplan;	/* generic plan, or NULL if not valid */

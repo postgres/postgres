@@ -976,6 +976,20 @@ SPIPlanPtr SPI_prepare(const char * <parameter>command</parameter>, int <paramet
   </para>
 
   <para>
+   Although the main point of a prepared statement is to avoid repeated parse
+   analysis and planning of the statement, <productname>PostgreSQL</> will
+   force re-analysis and re-planning of the statement before using it
+   whenever database objects used in the statement have undergone
+   definitional (DDL) changes since the previous use of the prepared
+   statement.  Also, if the value of <xref linkend="guc-search-path"> changes
+   from one use to the next, the statement will be re-parsed using the new
+   <varname>search_path</>.  (This latter behavior is new as of
+   <productname>PostgreSQL</productname> 9.3.)  See <xref
+   linkend="sql-prepare"> for more information about the behavior of prepared
+   statements.
+  </para>
+
+  <para>
    This function should only be called from a connected procedure.
   </para>
 

@@ -3097,6 +3097,28 @@ CopyOverrideSearchPath(OverrideSearchPath *path)
 }
 
 /*
+ * OverrideSearchPathMatchesCurrent - does path match current setting?
+ */
+bool
+OverrideSearchPathMatchesCurrent(OverrideSearchPath *path)
+{
+	/* Easiest way to do this is GetOverrideSearchPath() and compare */
+	bool		result;
+	OverrideSearchPath *cur;
+
+	cur = GetOverrideSearchPath(CurrentMemoryContext);
+	if (path->addCatalog == cur->addCatalog &&
+		path->addTemp == cur->addTemp &&
+		equal(path->schemas, cur->schemas))
+		result = true;
+	else
+		result = false;
+	list_free(cur->schemas);
+	pfree(cur);
+	return result;
+}
+
+/*
  * PushOverrideSearchPath - temporarily override the search path
  *
  * We allow nested overrides, hence the push/pop terminology.  The GUC

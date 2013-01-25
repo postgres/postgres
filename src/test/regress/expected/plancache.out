@@ -163,7 +163,7 @@ select cache_test_2();
         10007
 (1 row)
 
---- Check that change of search_path is ignored by replans
+--- Check that change of search_path is honored when re-using cached plan
 create schema s1
   create table abc (f1 int);
 create schema s2
@@ -188,14 +188,14 @@ select f1 from abc;
 execute p1;
  f1  
 -----
- 123
+ 456
 (1 row)
 
 alter table s1.abc add column f2 float8;   -- force replan
 execute p1;
  f1  
 -----
- 123
+ 456
 (1 row)
 
 drop schema s1 cascade;

@@ -94,7 +94,7 @@ create or replace temp view v1 as
   select 2+2+4+(select max(unique1) from tenk1) as f1;
 select cache_test_2();
 
---- Check that change of search_path is ignored by replans
+--- Check that change of search_path is honored when re-using cached plan
 
 create schema s1
   create table abc (f1 int);

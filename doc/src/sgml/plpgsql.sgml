@@ -4258,7 +4258,9 @@ $$ LANGUAGE plpgsql;
     on specific parameter values, and caching that for re-use.  Typically
     this will happen only if the execution plan is not very sensitive to
     the values of the <application>PL/pgSQL</> variables referenced in it.
-    If it is, generating a plan each time is a net win.
+    If it is, generating a plan each time is a net win.  See <xref
+    linkend="sql-prepare"> for more information about the behavior of
+    prepared statements.
    </para>
 
    <para>
