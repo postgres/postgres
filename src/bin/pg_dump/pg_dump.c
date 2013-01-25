@@ -606,6 +606,24 @@ main(int argc, char **argv)
 		no_security_labels = 1;
 
 	/*
+	 * When running against 9.0 or later, check if we are in recovery mode,
+	 * which means we are on a hot standby.
+	 */
+	if (fout->remoteVersion >= 90000)
+	{
+		PGresult *res = ExecuteSqlQueryForSingleRow(fout, "SELECT pg_catalog.pg_is_in_recovery()");
+		if (strcmp(PQgetvalue(res, 0, 0), "t") == 0)
+		{
+			/*
+			 * On hot standby slaves, never try to dump unlogged table data,
+			 * since it will just throw an error.
+			 */
+			no_unlogged_table_data = true;
+		}
+		PQclear(res);
+	}
+
+	/*
 	 * Start transaction-snapshot mode transaction to dump consistent data.
 	 */
 	ExecuteSqlStatement(fout, "BEGIN");
