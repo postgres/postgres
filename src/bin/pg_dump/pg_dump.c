@@ -656,9 +656,25 @@ main(int argc, char **argv)
 	 * When running against 9.0 or later, check if we are in recovery mode,
 	 * which means we are on a hot standby.
 	 */
-	if (fout->remoteVersion >= 90000)
+	if (g_fout->remoteVersion >= 90000)
 	{
-		PGresult *res = ExecuteSqlQueryForSingleRow(fout, "SELECT pg_catalog.pg_is_in_recovery()");
+		PGresult *res;
+		const char *query = "SELECT pg_catalog.pg_is_in_recovery()";
+		int ntups;
+
+		res = PQexec(g_conn, query);
+		check_sql_result(res, g_conn, query, PGRES_TUPLES_OK);
+		ntups = PQntuples(res);
+
+		if (ntups != 1)
+		{
+			write_msg(NULL, ngettext("query returned %d row instead of one: %s\n",
+									 "query returned %d rows instead of one: %s\n",
+									 ntups),
+					  ntups, query);
+			exit_nicely();
+		}
+
 		if (strcmp(PQgetvalue(res, 0, 0), "t") == 0)
 		{
 			/*
