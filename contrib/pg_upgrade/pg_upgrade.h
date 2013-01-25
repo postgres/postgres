@@ -54,6 +54,17 @@
 #define EXE_EXT				".exe"
 #endif
 
+#if defined(WIN32) && !defined(__CYGWIN__)
+
+		/*
+		 * XXX This does not work for all terminal environments or for output
+		 * containing non-ASCII characters; see comments in simple_prompt().
+		 */
+#define DEVTTY	"con"
+#else
+#define DEVTTY	"/dev/tty"
+#endif
+
 #define CLUSTER_NAME(cluster)	((cluster) == &old_cluster ? "old" : \
 								 (cluster) == &new_cluster ? "new" : "none")
 
