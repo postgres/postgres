@@ -12,13 +12,15 @@
 #include "postgres_fe.h"
 #include "common.h"
 
+#define	DEFAULT_CONNECT_TIMEOUT "3"
+
 static void
 help(const char *progname);
 
 int
 main(int argc, char **argv)
 {
-	int c,optindex,opt_index = 0;
+	int c,optindex,opt_index = 2;
 
 	const char *progname;
 
@@ -26,8 +28,10 @@ main(int argc, char **argv)
 	const char *pgport = NULL;
 	const char *pguser = NULL;
 	const char *pgdbname = NULL;
+	const char *connect_timeout = DEFAULT_CONNECT_TIMEOUT;
 
-	const char *keywords[4], *values[4];
+	const char *keywords[7] = { NULL };
+	const char *values[7] = { NULL };
 
 	bool quiet = false;
 
@@ -44,14 +48,16 @@ main(int argc, char **argv)
 			{"host", required_argument, NULL, 'h'},
 			{"port", required_argument, NULL, 'p'},
 			{"quiet", no_argument, NULL, 'q'},
+			{"timeout", required_argument, NULL, 't'},
 			{"username", required_argument, NULL, 'U'},
 			{NULL, 0, NULL, 0}
 		};
 
 	progname = get_progname(argv[0]);
+	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pgscripts"));
 	handle_help_version_opts(argc, argv, progname, help);
 
-	while ((c = getopt_long(argc, argv, "d:h:p:qU:V", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "d:h:p:qt:U:V", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -67,10 +73,14 @@ main(int argc, char **argv)
 			case 'q':
 				quiet = true;
 				break;
+			case 't':
+				connect_timeout = pg_strdup(optarg);
+				break;
 			case 'U':
 				pguser = pg_strdup(optarg);
 				break;
 			default:
+				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				/*
 				 * We need to make sure we don't return 1 here because someone
 				 * checking the return code might infer unintended meaning
@@ -92,12 +102,31 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 * Get the default options so we can display them in our output
+	 * Set connection options
 	 */
 
+	keywords[0] = "connect_timeout";
+	values[0] = connect_timeout;
+	keywords[1] = "fallback_application_name";
+	values[1] = progname;
+	if (pguser)
+	{
+		keywords[opt_index] = "user";
+		values[opt_index] = pguser;
+		opt_index++;
+	}
+	if (pgdbname)
+	{
+		keywords[opt_index] = "dbname";
+		values[opt_index] = pgdbname;
+		opt_index++;
+	}
+
+	/*
+	 * Get the default host and port so we can display them in our output
+	 */
 	connect_options = PQconndefaults();
 	conn_opt_ptr = connect_options;
-
 	while (conn_opt_ptr->keyword)
 	{
 		if (strncmp(conn_opt_ptr->keyword, "host", 5) == 0)
@@ -124,33 +153,8 @@ main(int argc, char **argv)
 			else if (conn_opt_ptr->val)
 				pgport = conn_opt_ptr->val;
 		}
-		else if (strncmp(conn_opt_ptr->keyword, "user", 5) == 0)
-		{
-			if (pguser)
-			{
-				keywords[opt_index] = conn_opt_ptr->keyword;
-				values[opt_index] = pguser;
-				opt_index++;
-			}
-			else if (conn_opt_ptr->val)
-				pguser = conn_opt_ptr->val;
-		}
-		else if (strncmp(conn_opt_ptr->keyword, "dbname", 7) == 0)
-		{
-			if (pgdbname)
-			{
-				keywords[opt_index] = conn_opt_ptr->keyword;
-				values[opt_index] = pgdbname;
-				opt_index++;
-			}
-			else if (conn_opt_ptr->val)
-				pgdbname = conn_opt_ptr->val;
-		}
 		conn_opt_ptr++;
 	}
-
-	keywords[opt_index] = NULL;
-	values[opt_index] = NULL;
 
 	rv = PQpingParams(keywords, values, 1);
 
@@ -198,5 +202,7 @@ help(const char *progname)
 	printf(_("\nConnection options:\n"));
 	printf(_("  -h, --host=HOSTNAME      database server host or socket directory\n"));
 	printf(_("  -p, --port=PORT          database server port\n"));
+	printf(_("  -t, --timeout=SECS       seconds to wait when attempting connection, 0 disables (default: %s)\n"), DEFAULT_CONNECT_TIMEOUT);
 	printf(_("  -U, --username=USERNAME  database username\n"));
+	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }

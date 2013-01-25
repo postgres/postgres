@@ -97,6 +97,18 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+       <term><option>-t <replaceable class="parameter">seconds</replaceable></></term>
+       <term><option>--timeout=<replaceable class="parameter">seconds</replaceable></></term>
+       <listitem>
+       <para>
+        The maximum number of seconds to wait when attempting connection before
+        returning that the server is not responding. Setting to 0 disables. The
+        default is 3 seconds.
+       </para>
+       </listitem>
+     </varlistentry>
+
+     <varlistentry>
        <term><option>-U <replaceable class="parameter">username</replaceable></></term>
        <term><option>--username=<replaceable class="parameter">username</replaceable></></term>
        <listitem>
