@@ -4778,7 +4778,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      <varlistentry id="guc-search-path" xreflabel="search_path">
       <term><varname>search_path</varname> (<type>string</type>)</term>
       <indexterm>
-       <primary><varname>search_path</> configuration parameter</primary>
+       <primary><varname>search_path</></primary>
+       <secondary>configuration parameter</secondary>
       </indexterm>
       <indexterm><primary>path</><secondary>for schemas</></>
       <listitem>
