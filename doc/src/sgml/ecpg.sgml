@@ -198,8 +198,7 @@ const char *passwd = "secret";
 EXEC SQL END DECLARE SECTION;
  ...
 EXEC SQL CONNECT TO :target USER :user USING :passwd;
-
-EXEC SQL CONNECT TO :target USER :user/:passwd;
+/* or EXEC SQL CONNECT TO :target USER :user/:passwd; */
 </programlisting>
    The last form makes use of the variant referred to above as
    character variable reference.  You will see in later sections how C
