@@ -1968,7 +1968,7 @@ include 'filename'
         the first process that becomes ready to flush waits for the configured
         interval, while subsequent processes wait only until the leader
         completes the flush.  The default <varname>commit_delay</> is zero
-        (no delay).
+        (no delay), and only honored if <varname>fsync</varname> is enabled.
        </para>
       </listitem>
      </varlistentry>
