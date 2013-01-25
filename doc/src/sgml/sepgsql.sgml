@@ -443,7 +443,7 @@ UPDATE t1 SET x = 2, y = md5sum(y) WHERE z = 100;
    <para>
     When <literal>DROP</> command is executed, <literal>drop</> will be
     checked on the object being removed for each object types.  Permissions
-    will not be checked for objects dropped indirectly via <literal>CASCADE</>.
+    will be also checked for objects dropped indirectly via <literal>CASCADE</>.
     Deletion of objects contained within a particular schema (tables, views,
     sequences and procedures) additionally requires
     <literal>remove_name</> on the schema.
