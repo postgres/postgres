@@ -174,7 +174,7 @@ CREATE EXTENSION file_fdw;
 </programlisting>
 
   <para>
-   Then create a foreign data server:
+   Then create a foreign server:
 
 <programlisting>
 CREATE SERVER pglog FOREIGN DATA WRAPPER file_fdw;
