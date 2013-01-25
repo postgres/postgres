@@ -76,12 +76,12 @@ static bytea *bytea_substring(Datum str,
 				bool length_not_specified);
 static bytea *bytea_overlay(bytea *t1, bytea *t2, int sp, int sl);
 static StringInfo makeStringAggState(FunctionCallInfo fcinfo);
-void text_format_string_conversion(StringInfo buf, char conversion,
-							  Oid typid, Datum value, bool isNull);
-
+static void text_format_string_conversion(StringInfo buf, char conversion,
+							  FmgrInfo *typOutputInfo,
+							  Datum value, bool isNull);
 static Datum text_to_array_internal(PG_FUNCTION_ARGS);
 static text *array_to_text_internal(FunctionCallInfo fcinfo, ArrayType *v,
-					   char *fldsep, char *null_string);
+					   const char *fldsep, const char *null_string);
 
 
 /*****************************************************************************
@@ -3451,7 +3451,7 @@ array_to_text_null(PG_FUNCTION_ARGS)
  */
 static text *
 array_to_text_internal(FunctionCallInfo fcinfo, ArrayType *v,
-					   char *fldsep, char *null_string)
+					   const char *fldsep, const char *null_string)
 {
 	text	   *result;
 	int			nitems,
@@ -3791,11 +3791,12 @@ string_agg_finalfn(PG_FUNCTION_ARGS)
 /*
  * Implementation of both concat() and concat_ws().
  *
- * sepstr/seplen describe the separator.  argidx is the first argument
- * to concatenate (counting from zero).
+ * sepstr is the separator string to place between values.
+ * argidx identifies the first argument to concatenate (counting from zero).
+ * Returns NULL if result should be NULL, else text value.
  */
 static text *
-concat_internal(const char *sepstr, int seplen, int argidx,
+concat_internal(const char *sepstr, int argidx,
 				FunctionCallInfo fcinfo)
 {
 	text	   *result;
@@ -3803,6 +3804,48 @@ concat_internal(const char *sepstr, int seplen, int argidx,
 	bool		first_arg = true;
 	int			i;
 
+	/*
+	 * concat(VARIADIC some-array) is essentially equivalent to
+	 * array_to_text(), ie concat the array elements with the given separator.
+	 * So we just pass the case off to that code.
+	 */
+	if (get_fn_expr_variadic(fcinfo->flinfo))
+	{
+		Oid			arr_typid;
+		ArrayType  *arr;
+
+		/* Should have just the one argument */
+		Assert(argidx == PG_NARGS() - 1);
+
+		/* concat(VARIADIC NULL) is defined as NULL */
+		if (PG_ARGISNULL(argidx))
+			return NULL;
+
+		/*
+		 * Non-null argument had better be an array.  The parser doesn't
+		 * enforce this for VARIADIC ANY functions (maybe it should?), so that
+		 * check uses ereport not just elog.
+		 */
+		arr_typid = get_fn_expr_argtype(fcinfo->flinfo, argidx);
+		if (!OidIsValid(arr_typid))
+			elog(ERROR, "could not determine data type of concat() input");
+
+		if (!OidIsValid(get_element_type(arr_typid)))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("VARIADIC argument must be an array")));
+
+		/* OK, safe to fetch the array value */
+		arr = PG_GETARG_ARRAYTYPE_P(argidx);
+
+		/*
+		 * And serialize the array.  We tell array_to_text to ignore null
+		 * elements, which matches the behavior of the loop below.
+		 */
+		return array_to_text_internal(fcinfo, arr, sepstr, NULL);
+	}
+
+	/* Normal case without explicit VARIADIC marker */
 	initStringInfo(&str);
 
 	for (i = argidx; i < PG_NARGS(); i++)
@@ -3818,7 +3861,7 @@ concat_internal(const char *sepstr, int seplen, int argidx,
 			if (first_arg)
 				first_arg = false;
 			else
-				appendBinaryStringInfo(&str, sepstr, seplen);
+				appendStringInfoString(&str, sepstr);
 
 			/* call the appropriate type output function, append the result */
 			valtype = get_fn_expr_argtype(fcinfo->flinfo, i);
@@ -3842,7 +3885,12 @@ concat_internal(const char *sepstr, int seplen, int argidx,
 Datum
 text_concat(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_TEXT_P(concat_internal("", 0, 0, fcinfo));
+	text	   *result;
+
+	result = concat_internal("", 0, fcinfo);
+	if (result == NULL)
+		PG_RETURN_NULL();
+	PG_RETURN_TEXT_P(result);
 }
 
 /*
@@ -3852,16 +3900,18 @@ text_concat(PG_FUNCTION_ARGS)
 Datum
 text_concat_ws(PG_FUNCTION_ARGS)
 {
-	text	   *sep;
+	char	   *sep;
+	text	   *result;
 
 	/* return NULL when separator is NULL */
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
+	sep = text_to_cstring(PG_GETARG_TEXT_PP(0));
 
-	sep = PG_GETARG_TEXT_PP(0);
-
-	PG_RETURN_TEXT_P(concat_internal(VARDATA_ANY(sep), VARSIZE_ANY_EXHDR(sep),
-									 1, fcinfo));
+	result = concat_internal(sep, 1, fcinfo);
+	if (result == NULL)
+		PG_RETURN_NULL();
+	PG_RETURN_TEXT_P(result);
 }
 
 /*
@@ -3959,10 +4009,72 @@ text_format(PG_FUNCTION_ARGS)
 	const char *end_ptr;
 	text	   *result;
 	int			arg = 0;
+	bool		funcvariadic;
+	int			nargs;
+	Datum	   *elements = NULL;
+	bool	   *nulls = NULL;
+	Oid			element_type = InvalidOid;
+	Oid			prev_type = InvalidOid;
+	FmgrInfo	typoutputfinfo;
 
 	/* When format string is null, returns null */
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
+
+	/* If argument is marked VARIADIC, expand array into elements */
+	if (get_fn_expr_variadic(fcinfo->flinfo))
+	{
+		Oid			arr_typid;
+		ArrayType  *arr;
+		int16		elmlen;
+		bool		elmbyval;
+		char		elmalign;
+		int			nitems;
+
+		/* Should have just the one argument */
+		Assert(PG_NARGS() == 2);
+
+		/* If argument is NULL, we treat it as zero-length array */
+		if (PG_ARGISNULL(1))
+			nitems = 0;
+		else
+		{
+			/*
+			 * Non-null argument had better be an array.  The parser doesn't
+			 * enforce this for VARIADIC ANY functions (maybe it should?), so
+			 * that check uses ereport not just elog.
+			 */
+			arr_typid = get_fn_expr_argtype(fcinfo->flinfo, 1);
+			if (!OidIsValid(arr_typid))
+				elog(ERROR, "could not determine data type of format() input");
+
+			if (!OidIsValid(get_element_type(arr_typid)))
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("VARIADIC argument must be an array")));
+
+			/* OK, safe to fetch the array value */
+			arr = PG_GETARG_ARRAYTYPE_P(1);
+
+			/* Get info about array element type */
+			element_type = ARR_ELEMTYPE(arr);
+			get_typlenbyvalalign(element_type,
+								 &elmlen, &elmbyval, &elmalign);
+
+			/* Extract all array elements */
+			deconstruct_array(arr, element_type, elmlen, elmbyval, elmalign,
+							  &elements, &nulls, &nitems);
+		}
+
+		nargs = nitems + 1;
+		funcvariadic = true;
+	}
+	else
+	{
+		/* Non-variadic case, we'll process the arguments individually */
+		nargs = PG_NARGS();
+		funcvariadic = false;
+	}
 
 	/* Setup for main loop. */
 	fmt = PG_GETARG_TEXT_PP(0);
@@ -4062,26 +4174,54 @@ text_format(PG_FUNCTION_ARGS)
 		}
 
 		/* Not enough arguments?  Deduct 1 to avoid counting format string. */
-		if (arg > PG_NARGS() - 1)
+		if (arg > nargs - 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("too few arguments for format")));
+
+		/* Get the value and type of the selected argument */
+		if (!funcvariadic)
+		{
+			value = PG_GETARG_DATUM(arg);
+			isNull = PG_ARGISNULL(arg);
+			typid = get_fn_expr_argtype(fcinfo->flinfo, arg);
+		}
+		else
+		{
+			value = elements[arg - 1];
+			isNull = nulls[arg - 1];
+			typid = element_type;
+		}
+		if (!OidIsValid(typid))
+			elog(ERROR, "could not determine data type of format() input");
+
+		/*
+		 * Get the appropriate typOutput function, reusing previous one if
+		 * same type as previous argument.  That's particularly useful in the
+		 * variadic-array case, but often saves work even for ordinary calls.
+		 */
+		if (typid != prev_type)
+		{
+			Oid			typoutputfunc;
+			bool		typIsVarlena;
+
+			getTypeOutputInfo(typid, &typoutputfunc, &typIsVarlena);
+			fmgr_info(typoutputfunc, &typoutputfinfo);
+			prev_type = typid;
+		}
 
 		/*
 		 * At this point, we should see the main conversion specifier. Whether
 		 * or not an argument position was present, it's known that at least
 		 * one character remains in the string at this point.
 		 */
-		value = PG_GETARG_DATUM(arg);
-		isNull = PG_ARGISNULL(arg);
-		typid = get_fn_expr_argtype(fcinfo->flinfo, arg);
-
 		switch (*cp)
 		{
 			case 's':
 			case 'I':
 			case 'L':
-				text_format_string_conversion(&str, *cp, typid, value, isNull);
+				text_format_string_conversion(&str, *cp, &typoutputfinfo,
+											  value, isNull);
 				break;
 			default:
 				ereport(ERROR,
@@ -4091,6 +4231,12 @@ text_format(PG_FUNCTION_ARGS)
 		}
 	}
 
+	/* Don't need deconstruct_array results anymore. */
+	if (elements != NULL)
+		pfree(elements);
+	if (nulls != NULL)
+		pfree(nulls);
+
 	/* Generate results. */
 	result = cstring_to_text_with_len(str.data, str.len);
 	pfree(str.data);
@@ -4099,12 +4245,11 @@ text_format(PG_FUNCTION_ARGS)
 }
 
 /* Format a %s, %I, or %L conversion. */
-void
+static void
 text_format_string_conversion(StringInfo buf, char conversion,
-							  Oid typid, Datum value, bool isNull)
+							  FmgrInfo *typOutputInfo,
+							  Datum value, bool isNull)
 {
-	Oid			typOutput;
-	bool		typIsVarlena;
 	char	   *str;
 
 	/* Handle NULL arguments before trying to stringify the value. */
@@ -4120,8 +4265,7 @@ text_format_string_conversion(StringInfo buf, char conversion,
 	}
 
 	/* Stringify. */
-	getTypeOutputInfo(typid, &typOutput, &typIsVarlena);
-	str = OidOutputFunctionCall(typOutput, value);
+	str = OutputFunctionCall(typOutputInfo, value);
 
 	/* Escape. */
 	if (conversion == 'I')

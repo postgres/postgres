@@ -3153,6 +3153,10 @@ CREATE OR REPLACE FUNCTION retcomposite(IN integer, IN integer,
      <literal>fcinfo-&gt;flinfo</>. The parameter <literal>argnum</>
      is zero based.  <function>get_call_result_type</> can also be used
      as an alternative to <function>get_fn_expr_rettype</>.
+     There is also <function>get_fn_expr_variadic</>, which can be used to
+     find out whether the call contained an explicit <literal>VARIADIC</>
+     keyword.  This is primarily useful for <literal>VARIADIC "any"</>
+     functions, as described below.
     </para>
 
     <para>
@@ -3229,7 +3233,12 @@ CREATE FUNCTION make_array(anyelement) RETURNS anyarray
      as happens with normal variadic functions; they will just be passed to
      the function separately.  The <function>PG_NARGS()</> macro and the
      methods described above must be used to determine the number of actual
-     arguments and their types when using this feature.
+     arguments and their types when using this feature.  Also, users of such
+     a function might wish to use the <literal>VARIADIC</> keyword in their
+     function call, with the expectation that the function would treat the
+     array elements as separate arguments.  The function itself must implement
+     that behavior if wanted, after using <function>get_fn_expr_variadic</> to
+     detect that the actual argument was marked with <literal>VARIADIC</>.
     </para>
    </sect2>
 

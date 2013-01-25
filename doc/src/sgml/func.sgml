@@ -1394,7 +1394,8 @@
        </entry>
        <entry><type>text</type></entry>
        <entry>
-        Concatenate all arguments. NULL arguments are ignored.
+        Concatenate the text representations of all the arguments.
+        NULL arguments are ignored.
        </entry>
        <entry><literal>concat('abcde', 2, NULL, 22)</literal></entry>
        <entry><literal>abcde222</literal></entry>
@@ -1411,8 +1412,8 @@
        </entry>
        <entry><type>text</type></entry>
        <entry>
-        Concatenate all but first arguments with separators. The first
-        parameter is used as a separator. NULL arguments are ignored.
+        Concatenate all but the first argument with separators. The first
+        argument is used as the separator string. NULL arguments are ignored.
        </entry>
        <entry><literal>concat_ws(',', 'abcde', 2, NULL, 22)</literal></entry>
        <entry><literal>abcde,2,22</literal></entry>
@@ -1522,8 +1523,9 @@
        </entry>
        <entry><type>text</type></entry>
        <entry>
-         Format a string.  This function is similar to the C function
-         <function>sprintf</>; but only the following conversion specifications
+         Format arguments according to a format string.
+         This function is similar to the C function
+         <function>sprintf</>, but only the following conversion specifications
          are recognized: <literal>%s</literal> interpolates the corresponding
          argument as a string; <literal>%I</literal> escapes its argument as
          an SQL identifier; <literal>%L</literal> escapes its argument as an
@@ -2032,6 +2034,18 @@
      </tbody>
     </tgroup>
    </table>
+
+   <para>
+    The <function>concat</function>, <function>concat_ws</function> and
+    <function>format</function> functions are variadic, so it is possible to
+    pass the values to be concatenated or formatted as an array marked with
+    the <literal>VARIADIC</literal> keyword (see <xref
+    linkend="xfunc-sql-variadic-functions">).  The array's elements are
+    treated as if they were separate ordinary arguments to the function.
+    If the variadic array argument is NULL, <function>concat</function>
+    and <function>concat_ws</function> return NULL, but
+    <function>format</function> treats a NULL as a zero-element array.
+   </para>
 
    <para>
    See also the aggregate function <function>string_agg</function> in
