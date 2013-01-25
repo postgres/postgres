@@ -256,7 +256,7 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 						  "  WHEN p.proiswindow THEN '%s'\n"
 						  "  WHEN p.prorettype = 'pg_catalog.trigger'::pg_catalog.regtype THEN '%s'\n"
 						  "  ELSE '%s'\n"
-						  "END as \"%s\"",
+						  " END as \"%s\"",
 						  gettext_noop("Result data type"),
 						  gettext_noop("Argument data types"),
 		/* translator: "agg" is short for "aggregate" */
@@ -330,15 +330,19 @@ describeFunctions(const char *functypes, const char *pattern, bool verbose, bool
 
 	if (verbose)
 		appendPQExpBuffer(&buf,
+						  ",\n CASE WHEN prosecdef THEN '%s' ELSE '%s' END AS \"%s\""
 						  ",\n CASE\n"
 						  "  WHEN p.provolatile = 'i' THEN '%s'\n"
 						  "  WHEN p.provolatile = 's' THEN '%s'\n"
 						  "  WHEN p.provolatile = 'v' THEN '%s'\n"
-						  "END as \"%s\""
+						  " END as \"%s\""
 				   ",\n  pg_catalog.pg_get_userbyid(p.proowner) as \"%s\",\n"
 						  "  l.lanname as \"%s\",\n"
 						  "  p.prosrc as \"%s\",\n"
 				  "  pg_catalog.obj_description(p.oid, 'pg_proc') as \"%s\"",
+						  gettext_noop("definer"),
+						  gettext_noop("invoker"),
+						  gettext_noop("Security"),
 						  gettext_noop("immutable"),
 						  gettext_noop("stable"),
 						  gettext_noop("volatile"),

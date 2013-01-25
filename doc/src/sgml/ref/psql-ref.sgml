@@ -1188,7 +1188,7 @@ testdb=&gt;
         class="parameter">pattern</replaceable> is specified, only
         functions whose names match the pattern are shown.  If the
         form <literal>\df+</literal> is used, additional information
-        about each function, including volatility, language, source
+        about each function, including security, volatility, language, source
         code and description, is shown.  By default, only user-created
         objects are shown; supply a pattern or the <literal>S</literal>
         modifier to include system objects.
