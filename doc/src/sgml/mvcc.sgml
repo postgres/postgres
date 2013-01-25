@@ -515,8 +515,9 @@ ERROR:  could not serialize access due to concurrent update
    </indexterm>
 
    <para>
-    The <firstterm>Serializable</firstterm> isolation level provides the strictest transaction
-    isolation.  This level emulates serial transaction execution,
+    The <firstterm>Serializable</firstterm> isolation level provides
+    the strictest transaction isolation.  This level emulates serial
+    transaction execution for all committed transactions;
     as if transactions had been executed one after another, serially,
     rather than concurrently.  However, like the Repeatable Read level,
     applications using this level must
@@ -569,6 +570,20 @@ ERROR:  could not serialize access due to read/write dependencies among transact
     executed before B, B would have computed the sum 330, not 300, and
     similarly the other order would have resulted in a different sum
     computed by A.
+   </para>
+
+   <para>
+    When relying on Serializable transactions to prevent anomalies, it is
+    important that any data read from a permanent user table not be
+    considered valid until the transaction which read it has successfully
+    committed.  This is true even for read-only transactions, except that
+    data read within a <firstterm>deferrable</firstterm> read-only
+    transaction is known to be valid as soon as it is read, because such a
+    transaction waits until it can acquire a snapshot guaranteed to be free
+    from such problems before starting to read any data.  In all other cases
+    applications must not depend on results read during a transaction that
+    later aborted; instead, they should retry the transaction until it
+    succeeds.
    </para>
 
    <para>
