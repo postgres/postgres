@@ -23,7 +23,6 @@
 
 
 static HTAB *PLy_procedure_cache = NULL;
-static HTAB *PLy_trigger_cache = NULL;
 
 static PLyProcedure *PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger);
 static bool PLy_procedure_argument_valid(PLyTypeInfo *arg);
@@ -37,18 +36,11 @@ init_procedure_caches(void)
 	HASHCTL		hash_ctl;
 
 	memset(&hash_ctl, 0, sizeof(hash_ctl));
-	hash_ctl.keysize = sizeof(Oid);
+	hash_ctl.keysize = sizeof(PLyProcedureKey);
 	hash_ctl.entrysize = sizeof(PLyProcedureEntry);
-	hash_ctl.hash = oid_hash;
+	hash_ctl.hash = tag_hash;
 	PLy_procedure_cache = hash_create("PL/Python procedures", 32, &hash_ctl,
 									  HASH_ELEM | HASH_FUNCTION);
-
-	memset(&hash_ctl, 0, sizeof(hash_ctl));
-	hash_ctl.keysize = sizeof(Oid);
-	hash_ctl.entrysize = sizeof(PLyProcedureEntry);
-	hash_ctl.hash = oid_hash;
-	PLy_trigger_cache = hash_create("PL/Python triggers", 32, &hash_ctl,
-									HASH_ELEM | HASH_FUNCTION);
 }
 
 /*
@@ -68,61 +60,74 @@ PLy_procedure_name(PLyProcedure *proc)
 
 /*
  * PLy_procedure_get: returns a cached PLyProcedure, or creates, stores and
- * returns a new PLyProcedure.	fcinfo is the call info, tgreloid is the
- * relation OID when calling a trigger, or InvalidOid (zero) for ordinary
- * function calls.
+ * returns a new PLyProcedure.
+ *
+ * fn_oid is the OID of the function requested
+ * fn_rel is InvalidOid or the relation this function triggers on
+ * is_trigger denotes whether the function is a trigger function
+ *
+ * The reason that both fn_rel and is_trigger need to be passed is that when
+ * trigger functions get validated we don't know which relation(s) they'll
+ * be used with, so no sensible fn_rel can be passed.
  */
 PLyProcedure *
-PLy_procedure_get(Oid fn_oid, bool is_trigger)
+PLy_procedure_get(Oid fn_oid, Oid fn_rel, bool is_trigger)
 {
+	bool		use_cache = !(is_trigger && fn_rel == InvalidOid);
 	HeapTuple	procTup;
-	PLyProcedureEntry *volatile entry;
-	bool		found;
+	PLyProcedureKey key;
+	PLyProcedureEntry *volatile entry = NULL;
+	PLyProcedure *volatile proc = NULL;
+	bool		found = false;
 
 	procTup = SearchSysCache1(PROCOID, ObjectIdGetDatum(fn_oid));
 	if (!HeapTupleIsValid(procTup))
 		elog(ERROR, "cache lookup failed for function %u", fn_oid);
 
-	/* Look for the function in the corresponding cache */
-	if (is_trigger)
-		entry = hash_search(PLy_trigger_cache,
-							&fn_oid, HASH_ENTER, &found);
-	else
-		entry = hash_search(PLy_procedure_cache,
-							&fn_oid, HASH_ENTER, &found);
+	/*
+	 * Look for the function in the cache, unless we don't have the necessary
+	 * information (e.g. during validation). In that case we just don't cache
+	 * anything.
+	 */
+	if (use_cache)
+	{
+		key.fn_oid = fn_oid;
+		key.fn_rel = fn_rel;
+		entry = hash_search(PLy_procedure_cache, &key, HASH_ENTER, &found);
+		proc = entry->proc;
+	}
 
 	PG_TRY();
 	{
 		if (!found)
 		{
-			/* Haven't found it, create a new cache entry */
-			entry->proc = PLy_procedure_create(procTup, fn_oid, is_trigger);
+			/* Haven't found it, create a new procedure */
+			proc = PLy_procedure_create(procTup, fn_oid, is_trigger);
+			if (use_cache)
+				entry->proc = proc;
 		}
-		else if (!PLy_procedure_valid(entry->proc, procTup))
+		else if (!PLy_procedure_valid(proc, procTup))
 		{
 			/* Found it, but it's invalid, free and reuse the cache entry */
-			PLy_procedure_delete(entry->proc);
-			PLy_free(entry->proc);
-			entry->proc = PLy_procedure_create(procTup, fn_oid, is_trigger);
+			PLy_procedure_delete(proc);
+			PLy_free(proc);
+			proc = PLy_procedure_create(procTup, fn_oid, is_trigger);
+			entry->proc = proc;
 		}
 		/* Found it and it's valid, it's fine to use it */
 	}
 	PG_CATCH();
 	{
 		/* Do not leave an uninitialised entry in the cache */
-		if (is_trigger)
-			hash_search(PLy_trigger_cache,
-						&fn_oid, HASH_REMOVE, NULL);
-		else
-			hash_search(PLy_procedure_cache,
-						&fn_oid, HASH_REMOVE, NULL);
+		if (use_cache)
+			hash_search(PLy_procedure_cache, &key, HASH_REMOVE, NULL);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
 	ReleaseSysCache(procTup);
 
-	return entry->proc;
+	return proc;
 }
 
 /*

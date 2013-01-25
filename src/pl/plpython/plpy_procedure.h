@@ -32,16 +32,23 @@ typedef struct PLyProcedure
 	PyObject   *globals;		/* data saved across calls, global scope */
 } PLyProcedure;
 
+/* the procedure cache key */
+typedef struct PLyProcedureKey
+{
+	Oid			fn_oid;			/* function OID */
+	Oid			fn_rel;			/* triggered-on relation or InvalidOid */
+} PLyProcedureKey;
+
 /* the procedure cache entry */
 typedef struct PLyProcedureEntry
 {
-	Oid			fn_oid;			/* hash key */
+	PLyProcedureKey key;		/* hash key */
 	PLyProcedure *proc;
 } PLyProcedureEntry;
 
 /* PLyProcedure manipulation */
 extern char *PLy_procedure_name(PLyProcedure *proc);
-extern PLyProcedure *PLy_procedure_get(Oid fn_oid, bool is_trigger);
+extern PLyProcedure *PLy_procedure_get(Oid fn_oid, Oid fn_rel, bool is_trigger);
 extern void PLy_procedure_compile(PLyProcedure *proc, const char *src);
 extern void PLy_procedure_delete(PLyProcedure *proc);
 
