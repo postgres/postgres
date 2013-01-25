@@ -14,6 +14,7 @@
 #include "miscadmin.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
+#include "utils/rel.h"
 #include "utils/syscache.h"
 
 #include "plpython.h"
@@ -174,7 +175,8 @@ plpython_validator(PG_FUNCTION_ARGS)
 
 	ReleaseSysCache(tuple);
 
-	PLy_procedure_get(funcoid, is_trigger);
+	/* We can't validate triggers against any particular table ... */
+	PLy_procedure_get(funcoid, InvalidOid, is_trigger);
 
 	PG_RETURN_VOID();
 }
@@ -215,20 +217,22 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 
 	PG_TRY();
 	{
+		Oid			funcoid = fcinfo->flinfo->fn_oid;
 		PLyProcedure *proc;
 
 		if (CALLED_AS_TRIGGER(fcinfo))
 		{
+			Relation	tgrel = ((TriggerData *) fcinfo->context)->tg_relation;
 			HeapTuple	trv;
 
-			proc = PLy_procedure_get(fcinfo->flinfo->fn_oid, true);
+			proc = PLy_procedure_get(funcoid, RelationGetRelid(tgrel), true);
 			exec_ctx->curr_proc = proc;
 			trv = PLy_exec_trigger(fcinfo, proc);
 			retval = PointerGetDatum(trv);
 		}
 		else
 		{
-			proc = PLy_procedure_get(fcinfo->flinfo->fn_oid, false);
+			proc = PLy_procedure_get(funcoid, InvalidOid, false);
 			exec_ctx->curr_proc = proc;
 			retval = PLy_exec_function(fcinfo, proc);
 		}
