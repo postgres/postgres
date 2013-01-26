@@ -149,7 +149,7 @@ LookupTypeName(ParseState *pstate, const TypeName *typeName,
 			/* Look in specific schema only */
 			Oid			namespaceId;
 
-			namespaceId = LookupExplicitNamespace(schemaname);
+			namespaceId = LookupExplicitNamespace(schemaname, false);
 			typoid = GetSysCacheOid2(TYPENAMENSP,
 									 PointerGetDatum(typname),
 									 ObjectIdGetDatum(namespaceId));

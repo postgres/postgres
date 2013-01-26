@@ -291,7 +291,11 @@ RangeVarGetRelidExtended(const RangeVar *relation, LOCKMODE lockmode,
 				{
 					Oid			namespaceId;
 
-					namespaceId = LookupExplicitNamespace(relation->schemaname);
+					namespaceId = LookupExplicitNamespace(relation->schemaname, missing_ok);
+					/*
+					 *	For missing_ok, allow a non-existant schema name
+					 *	to throw the error below (namespaceId == InvalidOid).
+					 */
 					if (namespaceId != myTempNamespace)
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
@@ -306,8 +310,11 @@ RangeVarGetRelidExtended(const RangeVar *relation, LOCKMODE lockmode,
 			Oid			namespaceId;
 
 			/* use exact schema given */
-			namespaceId = LookupExplicitNamespace(relation->schemaname);
-			relId = get_relname_relid(relation->relname, namespaceId);
+			namespaceId = LookupExplicitNamespace(relation->schemaname, missing_ok);
+			if (missing_ok && !OidIsValid(namespaceId))
+				relId = InvalidOid;
+			else
+				relId = get_relname_relid(relation->relname, namespaceId);
 		}
 		else
 		{
@@ -919,7 +926,7 @@ FuncnameGetCandidates(List *names, int nargs, List *argnames,
 	if (schemaname)
 	{
 		/* use exact schema given */
-		namespaceId = LookupExplicitNamespace(schemaname);
+		namespaceId = LookupExplicitNamespace(schemaname, false);
 	}
 	else
 	{
@@ -1453,7 +1460,7 @@ OpernameGetOprid(List *names, Oid oprleft, Oid oprright)
 		Oid			namespaceId;
 		HeapTuple	opertup;
 
-		namespaceId = LookupExplicitNamespace(schemaname);
+		namespaceId = LookupExplicitNamespace(schemaname, false);
 		opertup = SearchSysCache4(OPERNAMENSP,
 								  CStringGetDatum(opername),
 								  ObjectIdGetDatum(oprleft),
@@ -1551,7 +1558,7 @@ OpernameGetCandidates(List *names, char oprkind)
 	if (schemaname)
 	{
 		/* use exact schema given */
-		namespaceId = LookupExplicitNamespace(schemaname);
+		namespaceId = LookupExplicitNamespace(schemaname, false);
 	}
 	else
 	{
@@ -2093,10 +2100,13 @@ get_ts_parser_oid(List *names, bool missing_ok)
 	if (schemaname)
 	{
 		/* use exact schema given */
-		namespaceId = LookupExplicitNamespace(schemaname);
-		prsoid = GetSysCacheOid2(TSPARSERNAMENSP,
-								 PointerGetDatum(parser_name),
-								 ObjectIdGetDatum(namespaceId));
+		namespaceId = LookupExplicitNamespace(schemaname, missing_ok);
+		if (missing_ok && !OidIsValid(namespaceId))
+			prsoid = InvalidOid;
+		else
+			prsoid = GetSysCacheOid2(TSPARSERNAMENSP,
+									 PointerGetDatum(parser_name),
+									 ObjectIdGetDatum(namespaceId));
 	}
 	else
 	{
@@ -2216,10 +2226,13 @@ get_ts_dict_oid(List *names, bool missing_ok)
 	if (schemaname)
 	{
 		/* use exact schema given */
-		namespaceId = LookupExplicitNamespace(schemaname);
-		dictoid = GetSysCacheOid2(TSDICTNAMENSP,
-								  PointerGetDatum(dict_name),
-								  ObjectIdGetDatum(namespaceId));
+		namespaceId = LookupExplicitNamespace(schemaname, missing_ok);
+		if (missing_ok && !OidIsValid(namespaceId))
+			dictoid = InvalidOid;
+		else
+			dictoid = GetSysCacheOid2(TSDICTNAMENSP,
+									  PointerGetDatum(dict_name),
+									  ObjectIdGetDatum(namespaceId));
 	}
 	else
 	{
@@ -2340,10 +2353,13 @@ get_ts_template_oid(List *names, bool missing_ok)
 	if (schemaname)
 	{
 		/* use exact schema given */
-		namespaceId = LookupExplicitNamespace(schemaname);
-		tmploid = GetSysCacheOid2(TSTEMPLATENAMENSP,
-								  PointerGetDatum(template_name),
-								  ObjectIdGetDatum(namespaceId));
+		namespaceId = LookupExplicitNamespace(schemaname, missing_ok);
+		if (missing_ok && !OidIsValid(namespaceId))
+			tmploid = InvalidOid;
+		else
+			tmploid = GetSysCacheOid2(TSTEMPLATENAMENSP,
+									  PointerGetDatum(template_name),
+									  ObjectIdGetDatum(namespaceId));
 	}
 	else
 	{
@@ -2463,10 +2479,13 @@ get_ts_config_oid(List *names, bool missing_ok)
 	if (schemaname)
 	{
 		/* use exact schema given */
-		namespaceId = LookupExplicitNamespace(schemaname);
-		cfgoid = GetSysCacheOid2(TSCONFIGNAMENSP,
-								 PointerGetDatum(config_name),
-								 ObjectIdGetDatum(namespaceId));
+		namespaceId = LookupExplicitNamespace(schemaname, missing_ok);
+		if (missing_ok && !OidIsValid(namespaceId))
+			cfgoid = InvalidOid;
+		else
+			cfgoid = GetSysCacheOid2(TSCONFIGNAMENSP,
+									 PointerGetDatum(config_name),
+									 ObjectIdGetDatum(namespaceId));
 	}
 	else
 	{
@@ -2657,7 +2676,7 @@ LookupNamespaceNoError(const char *nspname)
  * Returns the namespace OID.  Raises ereport if any problem.
  */
 Oid
-LookupExplicitNamespace(const char *nspname)
+LookupExplicitNamespace(const char *nspname, bool missing_ok)
 {
 	Oid			namespaceId;
 	AclResult	aclresult;
@@ -2676,8 +2695,10 @@ LookupExplicitNamespace(const char *nspname)
 		 */
 	}
 
-	namespaceId = get_namespace_oid(nspname, false);
-
+	namespaceId = get_namespace_oid(nspname, missing_ok);
+	if (missing_ok && !OidIsValid(namespaceId))
+		return InvalidOid;
+	
 	aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
@@ -3248,7 +3269,9 @@ get_collation_oid(List *name, bool missing_ok)
 	if (schemaname)
 	{
 		/* use exact schema given */
-		namespaceId = LookupExplicitNamespace(schemaname);
+		namespaceId = LookupExplicitNamespace(schemaname, missing_ok);
+		if (missing_ok && !OidIsValid(namespaceId))
+			return InvalidOid;
 
 		/* first try for encoding-specific entry, then any-encoding */
 		colloid = GetSysCacheOid3(COLLNAMEENCNSP,
@@ -3318,10 +3341,13 @@ get_conversion_oid(List *name, bool missing_ok)
 	if (schemaname)
 	{
 		/* use exact schema given */
-		namespaceId = LookupExplicitNamespace(schemaname);
-		conoid = GetSysCacheOid2(CONNAMENSP,
-								 PointerGetDatum(conversion_name),
-								 ObjectIdGetDatum(namespaceId));
+		namespaceId = LookupExplicitNamespace(schemaname, missing_ok);
+		if (missing_ok && !OidIsValid(namespaceId))
+			conoid = InvalidOid;
+		else
+			conoid = GetSysCacheOid2(CONNAMENSP,
+									 PointerGetDatum(conversion_name),
+									 ObjectIdGetDatum(namespaceId));
 	}
 	else
 	{

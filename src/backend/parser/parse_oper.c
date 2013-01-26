@@ -1027,7 +1027,7 @@ make_oper_cache_key(OprCacheKey *key, List *opname, Oid ltypeId, Oid rtypeId)
 	if (schemaname)
 	{
 		/* search only in exact schema given */
-		key->search_path[0] = LookupExplicitNamespace(schemaname);
+		key->search_path[0] = LookupExplicitNamespace(schemaname, false);
 	}
 	else
 	{
