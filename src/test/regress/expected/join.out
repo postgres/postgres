@@ -3157,7 +3157,7 @@ select *, (select r from (select q1 as q2) x, lateral (select q2 as r) y) from i
  4567890123456789 | -4567890123456789 | 4567890123456789
 (5 rows)
 
--- lateral SRF
+-- lateral with function in FROM
 select count(*) from tenk1 a, lateral generate_series(1,two) g;
  count 
 -------
@@ -3176,6 +3176,17 @@ explain (costs off)
 
 explain (costs off)
   select count(*) from tenk1 a cross join lateral generate_series(1,two) g;
+                   QUERY PLAN                   
+------------------------------------------------
+ Aggregate
+   ->  Nested Loop
+         ->  Seq Scan on tenk1 a
+         ->  Function Scan on generate_series g
+(4 rows)
+
+-- don't need the explicit LATERAL keyword for functions
+explain (costs off)
+  select count(*) from tenk1 a, generate_series(1,two) g;
                    QUERY PLAN                   
 ------------------------------------------------
  Aggregate
@@ -3578,25 +3589,25 @@ select * from
 (26 rows)
 
 -- test some error cases where LATERAL should have been used but wasn't
-select f1,g from int4_tbl a, generate_series(0, f1) g;
+select f1,g from int4_tbl a, (select f1 as g) ss;
 ERROR:  column "f1" does not exist
-LINE 1: select f1,g from int4_tbl a, generate_series(0, f1) g;
-                                                        ^
+LINE 1: select f1,g from int4_tbl a, (select f1 as g) ss;
+                                             ^
 HINT:  There is a column named "f1" in table "a", but it cannot be referenced from this part of the query.
-select f1,g from int4_tbl a, generate_series(0, a.f1) g;
+select f1,g from int4_tbl a, (select a.f1 as g) ss;
 ERROR:  invalid reference to FROM-clause entry for table "a"
-LINE 1: select f1,g from int4_tbl a, generate_series(0, a.f1) g;
-                                                        ^
+LINE 1: select f1,g from int4_tbl a, (select a.f1 as g) ss;
+                                             ^
 HINT:  There is an entry for table "a", but it cannot be referenced from this part of the query.
-select f1,g from int4_tbl a cross join generate_series(0, f1) g;
+select f1,g from int4_tbl a cross join (select f1 as g) ss;
 ERROR:  column "f1" does not exist
-LINE 1: ...ct f1,g from int4_tbl a cross join generate_series(0, f1) g;
-                                                                 ^
+LINE 1: select f1,g from int4_tbl a cross join (select f1 as g) ss;
+                                                       ^
 HINT:  There is a column named "f1" in table "a", but it cannot be referenced from this part of the query.
-select f1,g from int4_tbl a cross join generate_series(0, a.f1) g;
+select f1,g from int4_tbl a cross join (select a.f1 as g) ss;
 ERROR:  invalid reference to FROM-clause entry for table "a"
-LINE 1: ... f1,g from int4_tbl a cross join generate_series(0, a.f1) g;
-                                                               ^
+LINE 1: select f1,g from int4_tbl a cross join (select a.f1 as g) ss...
+                                                       ^
 HINT:  There is an entry for table "a", but it cannot be referenced from this part of the query.
 -- SQL:2008 says the left table is in scope but illegal to access here
 select f1,g from int4_tbl a right join lateral generate_series(0, a.f1) g on true;

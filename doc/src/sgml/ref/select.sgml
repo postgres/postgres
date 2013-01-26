@@ -504,18 +504,28 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
      <varlistentry>
       <term><literal>LATERAL</literal></term>
       <listitem>
-       <para>The <literal>LATERAL</literal> key word can precede a
-        sub-<command>SELECT</command> or function-call <literal>FROM</>
-        item.  This allows the sub-<command>SELECT</command> or function
-        expression to refer to columns of <literal>FROM</> items that appear
-        before it in the <literal>FROM</> list.  (Without
-        <literal>LATERAL</literal>, each <literal>FROM</> item is evaluated
-        independently and so cannot cross-reference any other
-        <literal>FROM</> item.)  A <literal>LATERAL</literal> item can
-        appear at top level in the <literal>FROM</> list, or within a
-        <literal>JOIN</> tree; in the latter case it can also refer to any
-        items that are on the left-hand side of a <literal>JOIN</> that it is
-        on the right-hand side of.
+       <para>
+        The <literal>LATERAL</literal> key word can precede a
+        sub-<command>SELECT</command> <literal>FROM</> item.  This allows the
+        sub-<command>SELECT</command> to refer to columns of <literal>FROM</>
+        items that appear before it in the <literal>FROM</> list.  (Without
+        <literal>LATERAL</literal>, each sub-<command>SELECT</command> is
+        evaluated independently and so cannot cross-reference any other
+        <literal>FROM</> item.)
+       </para>
+
+       <para>
+        <literal>LATERAL</literal> can also precede a function-call
+        <literal>FROM</> item, but in this case it is a noise word, because
+        the function expression can refer to earlier <literal>FROM</> items
+        in any case.
+       </para>
+
+       <para>
+        A <literal>LATERAL</literal> item can appear at top level in the
+        <literal>FROM</> list, or within a <literal>JOIN</> tree.  In the
+        latter case it can also refer to any items that are on the left-hand
+        side of a <literal>JOIN</> that it is on the right-hand side of.
        </para>
 
        <para>
@@ -1738,7 +1748,12 @@ SELECT distributors.* WHERE distributors.name = 'Westward';
     sub-<command>SELECT</command>; that is, the syntax
     <literal>FROM <replaceable>func</>(...) <replaceable>alias</></literal>
     is approximately equivalent to
-    <literal>FROM (SELECT <replaceable>func</>(...)) <replaceable>alias</></literal>.
+    <literal>FROM LATERAL (SELECT <replaceable>func</>(...)) <replaceable>alias</></literal>.
+    Note that <literal>LATERAL</> is considered to be implicit; this is
+    because the standard requires <literal>LATERAL</> semantics for an
+    <literal>UNNEST()</> item in <literal>FROM</>.
+    <productname>PostgreSQL</productname> treats <literal>UNNEST()</> the
+    same as other set-returning functions.
    </para>
   </refsect2>
 

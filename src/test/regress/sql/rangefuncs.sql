@@ -7,7 +7,7 @@ INSERT INTO foo2 VALUES(1, 111);
 
 CREATE FUNCTION foot(int) returns setof foo2 as 'SELECT * FROM foo2 WHERE fooid = $1;' LANGUAGE SQL;
 
--- supposed to fail with ERROR
+-- function with implicit LATERAL
 select * from foo2, foot(foo2.fooid) z where foo2.f2 = z.f2;
 
 -- function in subselect

@@ -717,14 +717,24 @@ SELECT *
     </indexterm>
 
     <para>
-     Subqueries and table functions appearing in <literal>FROM</> can be
+     Subqueries appearing in <literal>FROM</> can be
      preceded by the key word <literal>LATERAL</>.  This allows them to
      reference columns provided by preceding <literal>FROM</> items.
-     (Without <literal>LATERAL</literal>, each <literal>FROM</> item is
+     (Without <literal>LATERAL</literal>, each subquery is
      evaluated independently and so cannot cross-reference any other
      <literal>FROM</> item.)
+    </para>
+
+    <para>
+     Table functions appearing in <literal>FROM</> can also be
+     preceded by the key word <literal>LATERAL</>, but for functions the
+     key word is optional; the function's arguments can contain references
+     to columns provided by preceding <literal>FROM</> items in any case.
+    </para>
+
+    <para>
      A <literal>LATERAL</literal> item can appear at top level in the
-     <literal>FROM</> list, or within a <literal>JOIN</> tree; in the latter
+     <literal>FROM</> list, or within a <literal>JOIN</> tree.  In the latter
      case it can also refer to any items that are on the left-hand side of a
      <literal>JOIN</> that it is on the right-hand side of.
     </para>
@@ -770,7 +780,9 @@ FROM polygons p1 CROSS JOIN LATERAL vertices(p1.poly) v1,
      polygons p2 CROSS JOIN LATERAL vertices(p2.poly) v2
 WHERE (v1 &lt;-&gt; v2) &lt; 10 AND p1.id != p2.id;
 </programlisting>
-     or in several other equivalent formulations.
+     or in several other equivalent formulations.  (As already mentioned,
+     the <literal>LATERAL</> key word is unnecessary in this example, but
+     we use it for clarity.)
     </para>
 
     <para>

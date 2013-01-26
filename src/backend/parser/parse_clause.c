@@ -503,6 +503,7 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 {
 	Node	   *funcexpr;
 	char	   *funcname;
+	bool		is_lateral;
 	RangeTblEntry *rte;
 
 	/*
@@ -514,12 +515,16 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 	funcname = FigureColname(r->funccallnode);
 
 	/*
-	 * If the function is LATERAL, make lateral_only names of this level
-	 * visible to it.  (LATERAL can't nest within a single pstate level, so we
-	 * don't need save/restore logic here.)
+	 * We make lateral_only names of this level visible, whether or not the
+	 * function is explicitly marked LATERAL.  This is needed for SQL spec
+	 * compliance in the case of UNNEST(), and seems useful on convenience
+	 * grounds for all functions in FROM.
+	 *
+	 * (LATERAL can't nest within a single pstate level, so we don't need
+	 * save/restore logic here.)
 	 */
 	Assert(!pstate->p_lateral_active);
-	pstate->p_lateral_active = r->lateral;
+	pstate->p_lateral_active = true;
 
 	/*
 	 * Transform the raw expression.
@@ -534,10 +539,16 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 	assign_expr_collations(pstate, funcexpr);
 
 	/*
+	 * Mark the RTE as LATERAL if the user said LATERAL explicitly, or if
+	 * there are any lateral cross-references in it.
+	 */
+	is_lateral = r->lateral || contain_vars_of_level(funcexpr, 0);
+
+	/*
 	 * OK, build an RTE for the function.
 	 */
 	rte = addRangeTableEntryForFunction(pstate, funcname, funcexpr,
-										r, r->lateral, true);
+										r, is_lateral, true);
 
 	/*
 	 * If a coldeflist was supplied, ensure it defines a legal set of names
