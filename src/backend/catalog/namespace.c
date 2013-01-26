@@ -2673,7 +2673,7 @@ LookupNamespaceNoError(const char *nspname)
  *		Process an explicitly-specified schema name: look up the schema
  *		and verify we have USAGE (lookup) rights in it.
  *
- * Returns the namespace OID.  Raises ereport if any problem.
+ * Returns the namespace OID
  */
 Oid
 LookupExplicitNamespace(const char *nspname, bool missing_ok)
@@ -2690,8 +2690,7 @@ LookupExplicitNamespace(const char *nspname, bool missing_ok)
 		/*
 		 * Since this is used only for looking up existing objects, there is
 		 * no point in trying to initialize the temp namespace here; and doing
-		 * so might create problems for some callers. Just fall through and
-		 * give the "does not exist" error.
+		 * so might create problems for some callers --- just fall through.
 		 */
 	}
 
