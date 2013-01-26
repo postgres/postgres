@@ -1978,8 +1978,6 @@ CopyFrom(CopyState cstate)
 	 * ROLLBACK TO save;
 	 * COPY ...
 	 *
-	 * However this is OK since at worst we will fail to make the optimization.
-	 *
 	 * Also, if the target file is new-in-transaction, we assume that checking
 	 * FSM for free space is a waste of time, even if we must use WAL because
 	 * of archiving.  This could possibly be wrong, but it's unlikely.
@@ -1991,6 +1989,7 @@ CopyFrom(CopyState cstate)
 	 * no additional work to enforce that.
 	 *----------
 	 */
+	/* createSubid is creation check, newRelfilenodeSubid is truncation check */
 	if (cstate->rel->rd_createSubid != InvalidSubTransactionId ||
 		cstate->rel->rd_newRelfilenodeSubid != InvalidSubTransactionId)
 	{
@@ -2006,18 +2005,27 @@ CopyFrom(CopyState cstate)
 		 * after xact cleanup. Note that the stronger test of exactly
 		 * which subtransaction created it is crucial for correctness
 		 * of this optimisation.
-		 *
-		 * As noted above rd_newRelfilenodeSubid is not set in all cases
-		 * where we can apply the optimization, so in those rare cases
-		 * where we cannot honour the request we do so silently.
 		 */
-		if (cstate->freeze &&
-			ThereAreNoPriorRegisteredSnapshots() &&
-			ThereAreNoReadyPortals() &&
-			(cstate->rel->rd_newRelfilenodeSubid == GetCurrentSubTransactionId() ||
-			 cstate->rel->rd_createSubid == GetCurrentSubTransactionId()))
-			hi_options |= HEAP_INSERT_FROZEN;
+		if (cstate->freeze)
+		{
+			if (!ThereAreNoPriorRegisteredSnapshots() || !ThereAreNoReadyPortals())
+				ereport(ERROR,
+						(ERRCODE_INVALID_TRANSACTION_STATE,
+						errmsg("cannot perform FREEZE because of prior transaction activity")));
+
+			if (cstate->rel->rd_createSubid == GetCurrentSubTransactionId() ||
+				cstate->rel->rd_newRelfilenodeSubid == GetCurrentSubTransactionId())
+				hi_options |= HEAP_INSERT_FROZEN;
+			else
+				ereport(ERROR,
+						(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE,
+						errmsg("cannot perform FREEZE because of transaction activity after table creation or truncation")));
+		}
 	}
+	else if (cstate->freeze)
+		ereport(ERROR,
+				(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE,
+				 errmsg("cannot perform FREEZE because the table was not created or truncated in the current transaction")));
 
 	/*
 	 * We need a ResultRelInfo so we can use the regular executor's

@@ -234,6 +234,14 @@ p
 g
 \.
 BEGIN;
+TRUNCATE vistest;
+SAVEPOINT s1;
+COPY vistest FROM stdin CSV FREEZE;
+m
+k
+\.
+COMMIT;
+BEGIN;
 INSERT INTO vistest VALUES ('z');
 SAVEPOINT s1;
 TRUNCATE vistest;
@@ -242,7 +250,6 @@ COPY vistest FROM stdin CSV FREEZE;
 d3
 e
 \.
-SELECT * FROM vistest;
 COMMIT;
 CREATE FUNCTION truncate_in_subxact() RETURNS VOID AS
 $$
