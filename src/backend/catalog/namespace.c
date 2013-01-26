@@ -217,8 +217,8 @@ Datum		pg_is_other_temp_schema(PG_FUNCTION_ARGS);
  *		Given a RangeVar describing an existing relation,
  *		select the proper namespace and look up the relation OID.
  *
- * If the relation is not found, return InvalidOid if missing_ok = true,
- * otherwise raise an error.
+ * If the schema or relation is not found, return InvalidOid if missing_ok
+ * = true, otherwise raise an error.
  *
  * If nowait = true, throw an error if we'd have to wait for a lock.
  *
@@ -293,8 +293,8 @@ RangeVarGetRelidExtended(const RangeVar *relation, LOCKMODE lockmode,
 
 					namespaceId = LookupExplicitNamespace(relation->schemaname, missing_ok);
 					/*
-					 *	For missing_ok, allow a non-existant schema name
-					 *	to throw the error below (namespaceId == InvalidOid).
+					 *	For missing_ok, allow a non-existant schema name to
+					 *	return InvalidOid.
 					 */
 					if (namespaceId != myTempNamespace)
 						ereport(ERROR,
