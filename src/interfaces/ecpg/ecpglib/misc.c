@@ -497,7 +497,7 @@ ecpg_gettext(const char *msgid)
 #endif
 	}
 
-	return dgettext(PG_TEXTDOMAIN("ecpg"), msgid);
+	return dgettext(PG_TEXTDOMAIN("ecpglib"), msgid);
 }
 #endif   /* ENABLE_NLS */
 
