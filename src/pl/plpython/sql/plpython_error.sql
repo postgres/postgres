@@ -298,3 +298,33 @@ plpy.execute(rollback)
 $$ LANGUAGE plpythonu;
 
 SELECT manual_subxact_prepared();
+
+/* raising plpy.spiexception.* from python code should preserve sqlstate
+ */
+CREATE FUNCTION plpy_raise_spiexception() RETURNS void AS $$
+raise plpy.spiexceptions.DivisionByZero()
+$$ LANGUAGE plpythonu;
+
+DO $$
+BEGIN
+	SELECT plpy_raise_spiexception();
+EXCEPTION WHEN division_by_zero THEN
+	-- NOOP
+END
+$$ LANGUAGE plpgsql;
+
+/* setting a custom sqlstate should be handled
+ */
+CREATE FUNCTION plpy_raise_spiexception_override() RETURNS void AS $$
+exc = plpy.spiexceptions.DivisionByZero()
+exc.sqlstate = 'SILLY'
+raise exc
+$$ LANGUAGE plpythonu;
+
+DO $$
+BEGIN
+	SELECT plpy_raise_spiexception_override();
+EXCEPTION WHEN SQLSTATE 'SILLY' THEN
+	-- NOOP
+END
+$$ LANGUAGE plpgsql;
