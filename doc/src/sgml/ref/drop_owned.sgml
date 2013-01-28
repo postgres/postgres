@@ -29,10 +29,11 @@ DROP OWNED BY <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCAD
   <title>Description</title>
 
   <para>
-   <command>DROP OWNED</command> drops all the objects in the current
+   <command>DROP OWNED</command> drops all the objects within the current
    database that are owned by one of the specified roles. Any
    privileges granted to the given roles on objects in the current
-   database will also be revoked.
+   database and on shared objects (databases, tablespaces) will also be
+   revoked.
   </para>
  </refsect1>
 
@@ -91,6 +92,10 @@ DROP OWNED BY <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCAD
    endterm="sql-reassign-owned-title"> command is an alternative that
    reassigns the ownership of all the database objects owned by one or
    more roles.
+  </para>
+
+  <para>
+   Databases and tablespaces owned by the role(s) will not be removed.
   </para>
  </refsect1>
 
