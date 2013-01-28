@@ -30,7 +30,7 @@ REASSIGN OWNED BY <replaceable class="PARAMETER">old_role</replaceable> [, ...] 
 
   <para>
    <command>REASSIGN OWNED</command> instructs the system to change
-   the ownership of the database objects owned by one of the
+   the ownership of database objects owned by one of the
    old_roles, to new_role.
   </para>
  </refsect1>
@@ -43,8 +43,9 @@ REASSIGN OWNED BY <replaceable class="PARAMETER">old_role</replaceable> [, ...] 
     <term><replaceable class="PARAMETER">old_role</replaceable></term>
     <listitem>
      <para>
-      The name of a role. The ownership of all the objects in the
-      current database owned by this role will be reassigned to
+      The name of a role. The ownership of all the objects within the
+      current database, and of all shared objects (databases, tablespaces),
+      owned by this role will be reassigned to
       <replaceable class="PARAMETER">new_role</replaceable>.
      </para>
     </listitem>
@@ -68,7 +69,7 @@ REASSIGN OWNED BY <replaceable class="PARAMETER">old_role</replaceable> [, ...] 
   <para>
    <command>REASSIGN OWNED</command> is often used to prepare for the
    removal of one or more roles. Because <command>REASSIGN
-   OWNED</command> only affects the objects in the current database,
+   OWNED</command> does not affect objects within other databases,
    it is usually necessary to execute this command in each database
    that contains objects owned by a role that is to be removed.
   </para>
@@ -90,12 +91,6 @@ REASSIGN OWNED BY <replaceable class="PARAMETER">old_role</replaceable> [, ...] 
    privileges granted to the old_roles in objects that are not owned
    by them.  Use <command>DROP OWNED</command> to revoke those
    privileges.
-  </para>
-
-  <para>
-   The <command>REASSIGN OWNED</command> command does not affect the
-   ownership of any databases owned by the role.  Use
-   <xref linkend="sql-alterdatabase"> to reassign that ownership.
   </para>
 
  </refsect1>

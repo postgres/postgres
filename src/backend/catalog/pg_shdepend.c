@@ -1325,8 +1325,12 @@ shdepReassignOwned(List *roleids, Oid newrole)
 		{
 			Form_pg_shdepend sdepForm = (Form_pg_shdepend) GETSTRUCT(tuple);
 
-			/* We only operate on objects in the current database */
-			if (sdepForm->dbid != MyDatabaseId)
+			/*
+			 * We only operate on shared objects and objects in the current
+			 * database
+			 */
+			if (sdepForm->dbid != MyDatabaseId &&
+				sdepForm->dbid != InvalidOid)
 				continue;
 
 			/* Unexpected because we checked for pins above */
@@ -1388,6 +1392,8 @@ shdepReassignOwned(List *roleids, Oid newrole)
 				case OperatorFamilyRelationId:
 				case OperatorClassRelationId:
 				case ExtensionRelationId:
+				case TableSpaceRelationId:
+				case DatabaseRelationId:
 					{
 						Oid			classId = sdepForm->classid;
 						Relation	catalog;
