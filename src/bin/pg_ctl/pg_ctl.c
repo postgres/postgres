@@ -1136,6 +1136,15 @@ do_promote(void)
 		exit(1);
 	}
 
+	/*
+	 * Use two different kinds of promotion file so we can understand
+	 * the difference between smart and fast promotion.
+	 */
+	if (shutdown_mode >= FAST_MODE)
+		snprintf(promote_file, MAXPGPATH, "%s/fast_promote", pg_data);
+	else
+		snprintf(promote_file, MAXPGPATH, "%s/promote", pg_data);
+
 	if ((prmfile = fopen(promote_file, "w")) == NULL)
 	{
 		write_stderr(_("%s: could not create promote signal file \"%s\": %s\n"),
@@ -1799,7 +1808,7 @@ do_help(void)
 			 "                 [-o \"OPTIONS\"]\n"), progname);
 	printf(_("  %s reload  [-D DATADIR] [-s]\n"), progname);
 	printf(_("  %s status  [-D DATADIR]\n"), progname);
-	printf(_("  %s promote [-D DATADIR] [-s]\n"), progname);
+	printf(_("  %s promote [-D DATADIR] [-s] [-m PROMOTION-MODE]\n"), progname);
 	printf(_("  %s kill    SIGNALNAME PID\n"), progname);
 #if defined(WIN32) || defined(__CYGWIN__)
 	printf(_("  %s register   [-N SERVICENAME] [-U USERNAME] [-P PASSWORD] [-D DATADIR]\n"
@@ -1828,13 +1837,17 @@ do_help(void)
 	printf(_("  -o OPTIONS             command line options to pass to postgres\n"
 	 "                         (PostgreSQL server executable) or initdb\n"));
 	printf(_("  -p PATH-TO-POSTGRES    normally not necessary\n"));
-	printf(_("\nOptions for stop or restart:\n"));
+	printf(_("\nOptions for stop, restart or promote:\n"));
 	printf(_("  -m, --mode=MODE        MODE can be \"smart\", \"fast\", or \"immediate\"\n"));
 
 	printf(_("\nShutdown modes are:\n"));
 	printf(_("  smart       quit after all clients have disconnected\n"));
 	printf(_("  fast        quit directly, with proper shutdown\n"));
 	printf(_("  immediate   quit without complete shutdown; will lead to recovery on restart\n"));
+
+	printf(_("\nPromotion modes are:\n"));
+	printf(_("  smart       promote after performing a checkpoint\n"));
+	printf(_("  fast        promote quickly without waiting for checkpoint completion\n"));
 
 	printf(_("\nAllowed signal names for kill:\n"));
 	printf("  ABRT HUP INT QUIT TERM USR1 USR2\n");
@@ -2271,7 +2284,6 @@ main(int argc, char **argv)
 		snprintf(pid_file, MAXPGPATH, "%s/postmaster.pid", pg_data);
 		snprintf(backup_file, MAXPGPATH, "%s/backup_label", pg_data);
 		snprintf(recovery_file, MAXPGPATH, "%s/recovery.conf", pg_data);
-		snprintf(promote_file, MAXPGPATH, "%s/promote", pg_data);
 	}
 
 	switch (ctl_command)

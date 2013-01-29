@@ -217,6 +217,12 @@ typedef struct xl_restore_point
 	char		rp_name[MAXFNAMELEN];
 } xl_restore_point;
 
+/* End of recovery mark, when we don't do an END_OF_RECOVERY checkpoint */
+typedef struct xl_end_of_recovery
+{
+	TimestampTz end_time;
+	TimeLineID	ThisTimeLineID;
+} xl_end_of_recovery;
 
 /*
  * XLogRecord is defined in xlog.h, but we avoid #including that to keep

@@ -66,6 +66,7 @@
 #define RECOVERY_COMMAND_FILE	"recovery.conf"
 #define RECOVERY_COMMAND_DONE	"recovery.done"
 #define PROMOTE_SIGNAL_FILE "promote"
+#define FAST_PROMOTE_SIGNAL_FILE "fast_promote"
 
 
 /* User-settable parameters */
@@ -209,6 +210,9 @@ static char *recoveryTargetName;
 bool StandbyMode = false;
 static char *PrimaryConnInfo = NULL;
 static char *TriggerFile = NULL;
+
+/* whether request for fast promotion has been made yet */
+static bool fast_promote = false;
 
 /* if recoveryStopsHere returns true, it saves actual stop xid/time/name here */
 static TransactionId recoveryStopXid;
@@ -611,6 +615,7 @@ static void CheckRequiredParameterValues(void);
 static void XLogReportParameters(void);
 static void checkTimeLineSwitch(XLogRecPtr lsn, TimeLineID newTLI);
 static void LocalSetXLogInsertAllowed(void);
+static void CreateEndOfRecoveryRecord(void);
 static void CheckPointGuts(XLogRecPtr checkPointRedo, int flags);
 static void KeepLogSeg(XLogRecPtr recptr, XLogSegNo *logSegNo);
 
@@ -642,7 +647,7 @@ static XLogRecord *ReadRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 		   int emode, bool fetching_ckpt);
 static void CheckRecoveryConsistency(void);
 static XLogRecord *ReadCheckpointRecord(XLogReaderState *xlogreader,
-					 XLogRecPtr RecPtr, int whichChkpt);
+					 XLogRecPtr RecPtr, int whichChkpti, bool report);
 static bool rescanLatestTimeLine(void);
 static void WriteControlFile(void);
 static void ReadControlFile(void);
@@ -4848,7 +4853,7 @@ StartupXLOG(void)
 		 * When a backup_label file is present, we want to roll forward from
 		 * the checkpoint it identifies, rather than using pg_control.
 		 */
-		record = ReadCheckpointRecord(xlogreader, checkPointLoc, 0);
+		record = ReadCheckpointRecord(xlogreader, checkPointLoc, 0, true);
 		if (record != NULL)
 		{
 			memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
@@ -4890,7 +4895,7 @@ StartupXLOG(void)
 		 */
 		checkPointLoc = ControlFile->checkPoint;
 		RedoStartLSN = ControlFile->checkPointCopy.redo;
-		record = ReadCheckpointRecord(xlogreader, checkPointLoc, 1);
+		record = ReadCheckpointRecord(xlogreader, checkPointLoc, 1, true);
 		if (record != NULL)
 		{
 			ereport(DEBUG1,
@@ -4909,7 +4914,7 @@ StartupXLOG(void)
 		else
 		{
 			checkPointLoc = ControlFile->prevCheckPoint;
-			record = ReadCheckpointRecord(xlogreader, checkPointLoc, 2);
+			record = ReadCheckpointRecord(xlogreader, checkPointLoc, 2, true);
 			if (record != NULL)
 			{
 				ereport(LOG,
@@ -5393,22 +5398,33 @@ StartupXLOG(void)
 				}
 
 				/*
-				 * Before replaying this record, check if it is a shutdown
-				 * checkpoint record that causes the current timeline to
-				 * change. The checkpoint record is already considered to be
-				 * part of the new timeline, so we update ThisTimeLineID
-				 * before replaying it. That's important so that replayEndTLI,
-				 * which is recorded as the minimum recovery point's TLI if
+				 * Before replaying this record, check if this record
+				 * causes the current timeline to change. The record is
+				 * already considered to be part of the new timeline,
+				 * so we update ThisTimeLineID before replaying it.
+				 * That's important so that replayEndTLI, which is
+				 * recorded as the minimum recovery point's TLI if
 				 * recovery stops after this record, is set correctly.
 				 */
-				if (record->xl_rmid == RM_XLOG_ID &&
-					(record->xl_info & ~XLR_INFO_MASK) == XLOG_CHECKPOINT_SHUTDOWN)
+				if (record->xl_rmid == RM_XLOG_ID)
 				{
-					CheckPoint	checkPoint;
-					TimeLineID	newTLI;
+					TimeLineID	newTLI = ThisTimeLineID;
+					uint8		info = record->xl_info & ~XLR_INFO_MASK;
 
-					memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
-					newTLI = checkPoint.ThisTimeLineID;
+					if (info == XLOG_CHECKPOINT_SHUTDOWN)
+					{
+						CheckPoint	checkPoint;
+
+						memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
+						newTLI = checkPoint.ThisTimeLineID;
+					}
+					else if (info == XLOG_END_OF_RECOVERY)
+					{
+						xl_end_of_recovery	xlrec;
+
+						memcpy(&xlrec, XLogRecGetData(record), sizeof(xl_end_of_recovery));
+						newTLI = xlrec.ThisTimeLineID;
+					}
 
 					if (newTLI != ThisTimeLineID)
 					{
@@ -5729,9 +5745,36 @@ StartupXLOG(void)
 		 * allows some extra error checking in xlog_redo.
 		 */
 		if (bgwriterLaunched)
-			RequestCheckpoint(CHECKPOINT_END_OF_RECOVERY |
-							  CHECKPOINT_IMMEDIATE |
-							  CHECKPOINT_WAIT);
+		{
+			bool	checkpoint_wait = true;
+
+			/*
+			 * If we've been explicitly promoted with fast option,
+			 * end of recovery without a checkpoint if possible.
+			 */
+			if (fast_promote)
+			{
+				checkPointLoc = ControlFile->prevCheckPoint;
+				record = ReadCheckpointRecord(xlogreader, checkPointLoc, 2, false);
+				if (record != NULL)
+				{
+					checkpoint_wait = false;
+					CreateEndOfRecoveryRecord();
+				}
+			}
+
+			/*
+			 * In most cases we will wait for a full checkpoint to complete.
+			 *
+			 * If not, issue a normal, non-immediate checkpoint but don't wait.
+			 */
+			if (checkpoint_wait)
+				RequestCheckpoint(CHECKPOINT_END_OF_RECOVERY |
+									CHECKPOINT_IMMEDIATE |
+									CHECKPOINT_WAIT);
+			else
+				RequestCheckpoint(0);	/* No flags */
+		}
 		else
 			CreateCheckPoint(CHECKPOINT_END_OF_RECOVERY | CHECKPOINT_IMMEDIATE);
 
@@ -6060,12 +6103,15 @@ LocalSetXLogInsertAllowed(void)
  */
 static XLogRecord *
 ReadCheckpointRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
-					 int whichChkpt)
+					 int whichChkpt, bool report)
 {
 	XLogRecord *record;
 
 	if (!XRecOffIsValid(RecPtr))
 	{
+		if (!report)
+			return NULL;
+
 		switch (whichChkpt)
 		{
 			case 1:
@@ -6088,6 +6134,9 @@ ReadCheckpointRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 
 	if (record == NULL)
 	{
+		if (!report)
+			return NULL;
+
 		switch (whichChkpt)
 		{
 			case 1:
@@ -6883,6 +6932,44 @@ CreateCheckPoint(int flags)
 }
 
 /*
+ * Mark the end of recovery in WAL though without running a full checkpoint.
+ * We can expect that a restartpoint is likely to be in progress as we
+ * do this, though we are unwilling to wait for it to complete. So be
+ * careful to avoid taking the CheckpointLock anywhere here.
+ *
+ * CreateRestartPoint() allows for the case where recovery may end before
+ * the restartpoint completes so there is no concern of concurrent behaviour.
+ */
+void
+CreateEndOfRecoveryRecord(void)
+{
+	xl_end_of_recovery	xlrec;
+	XLogRecData			rdata;
+
+	/* sanity check */
+	if (!RecoveryInProgress())
+		elog(ERROR, "can only be used to end recovery");
+
+	xlrec.end_time = time(NULL);
+	xlrec.ThisTimeLineID = ThisTimeLineID;
+
+	LocalSetXLogInsertAllowed();
+
+	START_CRIT_SECTION();
+
+	rdata.data = (char *) &xlrec;
+	rdata.len = sizeof(xl_end_of_recovery);
+	rdata.buffer = InvalidBuffer;
+	rdata.next = NULL;
+
+	(void) XLogInsert(RM_XLOG_ID, XLOG_END_OF_RECOVERY, &rdata);
+
+	END_CRIT_SECTION();
+
+	LocalXLogInsertAllowed = -1;		/* return to "check" state */
+}
+
+/*
  * Flush all data in shared memory to disk, and fsync
  *
  * This is the common code shared between regular checkpoints and
@@ -7612,6 +7699,27 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 							checkPoint.ThisTimeLineID, ThisTimeLineID)));
 
 		RecoveryRestartPoint(&checkPoint);
+	}
+	else if (info == XLOG_END_OF_RECOVERY)
+	{
+		xl_end_of_recovery xlrec;
+
+		memcpy(&xlrec, XLogRecGetData(record), sizeof(xl_end_of_recovery));
+
+		/*
+		 * For Hot Standby, we could treat this like a Shutdown Checkpoint,
+		 * but this case is rarer and harder to test, so the benefit doesn't
+		 * outweigh the potential extra cost of maintenance.
+		 */
+
+		/*
+		 * We should've already switched to the new TLI before replaying this
+		 * record.
+		 */
+		if (xlrec.ThisTimeLineID != ThisTimeLineID)
+			ereport(PANIC,
+					(errmsg("unexpected timeline ID %u (should be %u) in checkpoint record",
+							xlrec.ThisTimeLineID, ThisTimeLineID)));
 	}
 	else if (info == XLOG_NOOP)
 	{
@@ -9405,8 +9513,39 @@ CheckForStandbyTrigger(void)
 
 	if (IsPromoteTriggered())
 	{
-		ereport(LOG,
+		/*
+		 * In 9.1 and 9.2 the postmaster unlinked the promote file
+		 * inside the signal handler. We now leave the file in place
+		 * and let the Startup process do the unlink. This allows
+		 * Startup to know whether we're doing fast or normal
+		 * promotion. Fast promotion takes precedence.
+		 */
+		if (stat(FAST_PROMOTE_SIGNAL_FILE, &stat_buf) == 0)
+		{
+			unlink(FAST_PROMOTE_SIGNAL_FILE);
+			unlink(PROMOTE_SIGNAL_FILE);
+			fast_promote = true;
+		}
+		else if (stat(PROMOTE_SIGNAL_FILE, &stat_buf) == 0)
+		{
+			unlink(PROMOTE_SIGNAL_FILE);
+			fast_promote = false;
+		}
+
+		/*
+		 * We only look for fast promote via the pg_ctl promote option.
+		 * It would be possible to extend trigger file support for the
+		 * fast promotion option but that wouldn't be backwards compatible
+		 * anyway and we're looking to focus further work on the promote
+		 * option as the right way to signal end of recovery.
+		 */
+		if (fast_promote)
+			ereport(LOG,
+				(errmsg("received fast promote request")));
+		else
+			ereport(LOG,
 				(errmsg("received promote request")));
+
 		ResetPromoteTriggered();
 		triggered = true;
 		return true;
@@ -9435,15 +9574,10 @@ CheckPromoteSignal(void)
 {
 	struct stat stat_buf;
 
-	if (stat(PROMOTE_SIGNAL_FILE, &stat_buf) == 0)
-	{
-		/*
-		 * Since we are in a signal handler, it's not safe to elog. We
-		 * silently ignore any error from unlink.
-		 */
-		unlink(PROMOTE_SIGNAL_FILE);
+	if (stat(PROMOTE_SIGNAL_FILE, &stat_buf) == 0 ||
+		stat(FAST_PROMOTE_SIGNAL_FILE, &stat_buf) == 0)
 		return true;
-	}
+
 	return false;
 }
 

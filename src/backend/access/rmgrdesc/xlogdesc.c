@@ -18,6 +18,7 @@
 #include "access/xlog_internal.h"
 #include "catalog/pg_control.h"
 #include "utils/guc.h"
+#include "utils/timestamp.h"
 
 /*
  * GUC support
@@ -118,6 +119,15 @@ xlog_desc(StringInfo buf, uint8 xl_info, char *rec)
 
 		memcpy(&fpw, rec, sizeof(bool));
 		appendStringInfo(buf, "full_page_writes: %s", fpw ? "true" : "false");
+	}
+	else if (info == XLOG_END_OF_RECOVERY)
+	{
+		xl_end_of_recovery xlrec;
+
+		memcpy(&xlrec, rec, sizeof(xl_end_of_recovery));
+		appendStringInfo(buf, "end_of_recovery: tli %u; time %s",
+						 xlrec.ThisTimeLineID,
+						 timestamptz_to_str(xlrec.end_time));
 	}
 	else
 		appendStringInfo(buf, "UNKNOWN");
