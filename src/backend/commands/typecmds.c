@@ -2264,11 +2264,22 @@ AlterDomainNotNull(List *names, bool notNull)
 					int			attnum = rtc->atts[i];
 
 					if (heap_attisnull(tuple, attnum))
+					{
+						/*
+						 * In principle the auxiliary information for this
+						 * error should be errdatatype(), but errtablecol()
+						 * seems considerably more useful in practice.  Since
+						 * this code only executes in an ALTER DOMAIN command,
+						 * the client should already know which domain is in
+						 * question.
+						 */
 						ereport(ERROR,
 								(errcode(ERRCODE_NOT_NULL_VIOLATION),
 								 errmsg("column \"%s\" of table \"%s\" contains null values",
 								NameStr(tupdesc->attrs[attnum - 1]->attname),
-										RelationGetRelationName(testrel))));
+										RelationGetRelationName(testrel)),
+								 errtablecol(testrel, attnum)));
+					}
 				}
 			}
 			heap_endscan(scan);
@@ -2469,7 +2480,7 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 	 * to pg_constraint.
 	 */
 
-	ccbin = domainAddConstraint(HeapTupleGetOid(tup), typTup->typnamespace,
+	ccbin = domainAddConstraint(domainoid, typTup->typnamespace,
 								typTup->typbasetype, typTup->typtypmod,
 								constr, NameStr(typTup->typname));
 
@@ -2641,11 +2652,22 @@ validateDomainConstraint(Oid domainoid, char *ccbin)
 													  &isNull, NULL);
 
 				if (!isNull && !DatumGetBool(conResult))
+				{
+					/*
+					 * In principle the auxiliary information for this error
+					 * should be errdomainconstraint(), but errtablecol()
+					 * seems considerably more useful in practice.  Since this
+					 * code only executes in an ALTER DOMAIN command, the
+					 * client should already know which domain is in question,
+					 * and which constraint too.
+					 */
 					ereport(ERROR,
 							(errcode(ERRCODE_CHECK_VIOLATION),
 							 errmsg("column \"%s\" of table \"%s\" contains values that violate the new constraint",
 								NameStr(tupdesc->attrs[attnum - 1]->attname),
-									RelationGetRelationName(testrel))));
+									RelationGetRelationName(testrel)),
+							 errtablecol(testrel, attnum)));
+				}
 			}
 
 			ResetExprContext(econtext);

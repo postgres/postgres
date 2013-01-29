@@ -1451,6 +1451,8 @@ ExecutePlan(EState *estate,
 
 /*
  * ExecRelCheck --- check that tuple meets constraints for result relation
+ *
+ * Returns NULL if OK, else name of failed check constraint
  */
 static const char *
 ExecRelCheck(ResultRelInfo *resultRelInfo,
@@ -1534,7 +1536,8 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 						 errmsg("null value in column \"%s\" violates not-null constraint",
 						  NameStr(rel->rd_att->attrs[attrChk - 1]->attname)),
 						 errdetail("Failing row contains %s.",
-								   ExecBuildSlotValueDescription(slot, 64))));
+								   ExecBuildSlotValueDescription(slot, 64)),
+						 errtablecol(rel, attrChk)));
 		}
 	}
 
@@ -1548,7 +1551,8 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 					 errmsg("new row for relation \"%s\" violates check constraint \"%s\"",
 							RelationGetRelationName(rel), failed),
 					 errdetail("Failing row contains %s.",
-							   ExecBuildSlotValueDescription(slot, 64))));
+							   ExecBuildSlotValueDescription(slot, 64)),
+					 errtableconstraint(rel, failed)));
 	}
 }
 

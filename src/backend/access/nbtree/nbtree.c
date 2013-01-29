@@ -109,14 +109,14 @@ btbuild(PG_FUNCTION_ARGS)
 		elog(ERROR, "index \"%s\" already contains data",
 			 RelationGetRelationName(index));
 
-	buildstate.spool = _bt_spoolinit(index, indexInfo->ii_Unique, false);
+	buildstate.spool = _bt_spoolinit(heap, index, indexInfo->ii_Unique, false);
 
 	/*
 	 * If building a unique index, put dead tuples in a second spool to keep
 	 * them out of the uniqueness check.
 	 */
 	if (indexInfo->ii_Unique)
-		buildstate.spool2 = _bt_spoolinit(index, false, true);
+		buildstate.spool2 = _bt_spoolinit(heap, index, false, true);
 
 	/* do the heap scan */
 	reltuples = IndexBuildHeapScan(heap, index, indexInfo, true,

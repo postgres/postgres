@@ -31,11 +31,14 @@
  */
 #include "postgres.h"
 
+#include "access/htup_details.h"
+#include "catalog/pg_type.h"
 #include "commands/typecmds.h"
 #include "executor/executor.h"
 #include "lib/stringinfo.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
+#include "utils/syscache.h"
 
 
 /*
@@ -126,7 +129,8 @@ domain_check_input(Datum value, bool isnull, DomainIOData *my_extra)
 					ereport(ERROR,
 							(errcode(ERRCODE_NOT_NULL_VIOLATION),
 							 errmsg("domain %s does not allow null values",
-									format_type_be(my_extra->domain_type))));
+									format_type_be(my_extra->domain_type)),
+							 errdatatype(my_extra->domain_type)));
 				break;
 			case DOM_CONSTRAINT_CHECK:
 				{
@@ -163,7 +167,9 @@ domain_check_input(Datum value, bool isnull, DomainIOData *my_extra)
 								(errcode(ERRCODE_CHECK_VIOLATION),
 								 errmsg("value for domain %s violates check constraint \"%s\"",
 										format_type_be(my_extra->domain_type),
-										con->name)));
+										con->name),
+								 errdomainconstraint(my_extra->domain_type,
+													 con->name)));
 					break;
 				}
 			default:
@@ -310,7 +316,8 @@ domain_recv(PG_FUNCTION_ARGS)
  * setup is repeated for each call.
  */
 void
-domain_check(Datum value, bool isnull, Oid domainType, void **extra, MemoryContext mcxt)
+domain_check(Datum value, bool isnull, Oid domainType,
+			 void **extra, MemoryContext mcxt)
 {
 	DomainIOData *my_extra = NULL;
 
@@ -338,4 +345,41 @@ domain_check(Datum value, bool isnull, Oid domainType, void **extra, MemoryConte
 	 * Do the necessary checks to ensure it's a valid domain value.
 	 */
 	domain_check_input(value, isnull, my_extra);
+}
+
+/*
+ * errdatatype --- stores schema_name and datatype_name of a datatype
+ * within the current errordata.
+ */
+int
+errdatatype(Oid datatypeOid)
+{
+	HeapTuple	tup;
+	Form_pg_type typtup;
+
+	tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(datatypeOid));
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "cache lookup failed for type %u", datatypeOid);
+	typtup = (Form_pg_type) GETSTRUCT(tup);
+
+	err_generic_string(PG_DIAG_SCHEMA_NAME,
+					   get_namespace_name(typtup->typnamespace));
+	err_generic_string(PG_DIAG_DATATYPE_NAME, NameStr(typtup->typname));
+
+	ReleaseSysCache(tup);
+
+	return 0;					/* return value does not matter */
+}
+
+/*
+ * errdomainconstraint --- stores schema_name, datatype_name and
+ * constraint_name of a domain-related constraint within the current errordata.
+ */
+int
+errdomainconstraint(Oid datatypeOid, const char *conname)
+{
+	errdatatype(datatypeOid);
+	err_generic_string(PG_DIAG_CONSTRAINT_NAME, conname);
+
+	return 0;					/* return value does not matter */
 }

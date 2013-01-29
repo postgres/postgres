@@ -27,7 +27,7 @@
   According to the standard, the first two characters of an error code
   denote a class of errors, while the last three characters indicate
   a specific condition within that class.  Thus, an application that
-  does not recognize the specific error code can still be able to infer
+  does not recognize the specific error code might still be able to infer
   what to do from the error class.
  </para>
 
@@ -42,11 +42,23 @@
  </para>
 
  <para>
-  The symbol shown in the column <quote>Condition Name</quote> is also
+  The symbol shown in the column <quote>Condition Name</quote> is
   the condition name to use in <application>PL/pgSQL</>.  Condition
   names can be written in either upper or lower case.  (Note that
   <application>PL/pgSQL</> does not recognize warning, as opposed to error,
   condition names; those are classes 00, 01, and 02.)
+ </para>
+
+ <para>
+  For some types of errors, the server reports the name of a database object
+  (a table, table column, data type, or constraint) associated with the error;
+  for example, the name of the unique constraint that caused a
+  <symbol>unique_violation</> error.  Such names are supplied in separate
+  fields of the error report message so that applications need not try to
+  extract them from the possibly-localized human-readable text of the message.
+  As of <productname>PostgreSQL</> 9.3, complete coverage for this feature
+  exists only for errors in SQLSTATE class 23 (integrity constraint
+  violation), but this is likely to be expanded in future.
  </para>
 
 

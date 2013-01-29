@@ -1307,14 +1307,18 @@ retry:
 					 errmsg("could not create exclusion constraint \"%s\"",
 							RelationGetRelationName(index)),
 					 errdetail("Key %s conflicts with key %s.",
-							   error_new, error_existing)));
+							   error_new, error_existing),
+					 errtableconstraint(heap,
+										RelationGetRelationName(index))));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_EXCLUSION_VIOLATION),
 					 errmsg("conflicting key value violates exclusion constraint \"%s\"",
 							RelationGetRelationName(index)),
 					 errdetail("Key %s conflicts with existing key %s.",
-							   error_new, error_existing)));
+							   error_new, error_existing),
+					 errtableconstraint(heap,
+										RelationGetRelationName(index))));
 	}
 
 	index_endscan(index_scan);

@@ -143,7 +143,10 @@ extern Datum char_text(PG_FUNCTION_ARGS);
 /* domains.c */
 extern Datum domain_in(PG_FUNCTION_ARGS);
 extern Datum domain_recv(PG_FUNCTION_ARGS);
-extern void domain_check(Datum value, bool isnull, Oid domainType, void **extra, MemoryContext mcxt);
+extern void domain_check(Datum value, bool isnull, Oid domainType,
+			 void **extra, MemoryContext mcxt);
+extern int	errdatatype(Oid datatypeOid);
+extern int	errdomainconstraint(Oid datatypeOid, const char *conname);
 
 /* encode.c */
 extern Datum binary_encode(PG_FUNCTION_ARGS);

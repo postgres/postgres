@@ -3999,6 +3999,82 @@ RelationGetExclusionInfo(Relation indexRelation,
 
 
 /*
+ * Routines to support ereport() reports of relation-related errors
+ *
+ * These could have been put into elog.c, but it seems like a module layering
+ * violation to have elog.c calling relcache or syscache stuff --- and we
+ * definitely don't want elog.h including rel.h.  So we put them here.
+ */
+
+/*
+ * errtable --- stores schema_name and table_name of a table
+ * within the current errordata.
+ */
+int
+errtable(Relation rel)
+{
+	err_generic_string(PG_DIAG_SCHEMA_NAME,
+					   get_namespace_name(RelationGetNamespace(rel)));
+	err_generic_string(PG_DIAG_TABLE_NAME, RelationGetRelationName(rel));
+
+	return 0;			/* return value does not matter */
+}
+
+/*
+ * errtablecol --- stores schema_name, table_name and column_name
+ * of a table column within the current errordata.
+ *
+ * The column is specified by attribute number --- for most callers, this is
+ * easier and less error-prone than getting the column name for themselves.
+ */
+int
+errtablecol(Relation rel, int attnum)
+{
+	TupleDesc	reldesc = RelationGetDescr(rel);
+	const char *colname;
+
+	/* Use reldesc if it's a user attribute, else consult the catalogs */
+	if (attnum > 0 && attnum <= reldesc->natts)
+		colname = NameStr(reldesc->attrs[attnum - 1]->attname);
+	else
+		colname = get_relid_attribute_name(RelationGetRelid(rel), attnum);
+
+	return errtablecolname(rel, colname);
+}
+
+/*
+ * errtablecolname --- stores schema_name, table_name and column_name
+ * of a table column within the current errordata, where the column name is
+ * given directly rather than extracted from the relation's catalog data.
+ *
+ * Don't use this directly unless errtablecol() is inconvenient for some
+ * reason.  This might possibly be needed during intermediate states in ALTER
+ * TABLE, for instance.
+ */
+int
+errtablecolname(Relation rel, const char *colname)
+{
+	errtable(rel);
+	err_generic_string(PG_DIAG_COLUMN_NAME, colname);
+
+	return 0;			/* return value does not matter */
+}
+
+/*
+ * errtableconstraint --- stores schema_name, table_name and constraint_name
+ * of a table-related constraint within the current errordata.
+ */
+int
+errtableconstraint(Relation rel, const char *conname)
+{
+	errtable(rel);
+	err_generic_string(PG_DIAG_CONSTRAINT_NAME, conname);
+
+	return 0;			/* return value does not matter */
+}
+
+
+/*
  *	load_relcache_init_file, write_relcache_init_file
  *
  *		In late 1992, we started regularly having databases with more than

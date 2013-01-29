@@ -86,7 +86,7 @@ hashbuild(PG_FUNCTION_ARGS)
 	 * one page.
 	 */
 	if (num_buckets >= (uint32) NBuffers)
-		buildstate.spool = _h_spoolinit(index, num_buckets);
+		buildstate.spool = _h_spoolinit(heap, index, num_buckets);
 	else
 		buildstate.spool = NULL;
 

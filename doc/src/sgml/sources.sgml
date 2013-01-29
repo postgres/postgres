@@ -275,6 +275,45 @@ ereport(ERROR,
    </listitem>
    <listitem>
     <para>
+     <function>errtable(Relation rel)</function> specifies a relation whose
+     name and schema name should be included as auxiliary fields in the error
+     report.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <function>errtablecol(Relation rel, int attnum)</function> specifies
+     a column whose name, table name, and schema name should be included as
+     auxiliary fields in the error report.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <function>errtableconstraint(Relation rel, const char *conname)</function>
+     specifies a table constraint whose name, table name, and schema name
+     should be included as auxiliary fields in the error report.  Indexes
+     should be considered to be constraints for this purpose, whether or
+     not they have an associated <structname>pg_constraint</> entry.  Be
+     careful to pass the underlying heap relation, not the index itself, as
+     <literal>rel</>.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <function>errdatatype(Oid datatypeOid)</function> specifies a data
+     type whose name and schema name should be included as auxiliary fields
+     in the error report.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <function>errdomainconstraint(Oid datatypeOid, const char *conname)</function>
+     specifies a domain constraint whose name, domain name, and schema name
+     should be included as auxiliary fields in the error report.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
      <function>errcode_for_file_access()</> is a convenience function that
      selects an appropriate SQLSTATE error identifier for a failure in a
      file-access-related system call.  It uses the saved
@@ -300,6 +339,23 @@ ereport(ERROR,
    </listitem>
   </itemizedlist>
    </para>
+
+   <note>
+    <para>
+     At most one of the functions <function>errtable</>,
+     <function>errtablecol</>, <function>errtableconstraint</>,
+     <function>errdatatype</>, or <function>errdomainconstraint</> should
+     be used in an <function>ereport</> call.  These functions exist to
+     allow applications to extract the name of a database object associated
+     with the error condition without having to examine the
+     potentially-localized error message text.
+     These functions should be used in error reports for which it's likely
+     that applications would wish to have automatic error handling.  As of
+     <productname>PostgreSQL</> 9.3, complete coverage exists only for
+     errors in SQLSTATE class 23 (integrity constraint violation), but this
+     is likely to be expanded in future.
+    </para>
+   </note>
 
    <para>
     There is an older function <function>elog</> that is still heavily used.

@@ -364,6 +364,7 @@ struct Tuplesortstate
 	 * These variables are specific to the IndexTuple case; they are set by
 	 * tuplesort_begin_index_xxx and used only by the IndexTuple routines.
 	 */
+	Relation	heapRel;		/* table the index is being built on */
 	Relation	indexRel;		/* index being built */
 
 	/* These are specific to the index_btree subcase: */
@@ -720,7 +721,8 @@ tuplesort_begin_cluster(TupleDesc tupDesc,
 }
 
 Tuplesortstate *
-tuplesort_begin_index_btree(Relation indexRel,
+tuplesort_begin_index_btree(Relation heapRel,
+							Relation indexRel,
 							bool enforceUnique,
 							int workMem, bool randomAccess)
 {
@@ -751,6 +753,7 @@ tuplesort_begin_index_btree(Relation indexRel,
 	state->readtup = readtup_index;
 	state->reversedirection = reversedirection_index_btree;
 
+	state->heapRel = heapRel;
 	state->indexRel = indexRel;
 	state->indexScanKey = _bt_mkscankey_nodata(indexRel);
 	state->enforceUnique = enforceUnique;
@@ -761,7 +764,8 @@ tuplesort_begin_index_btree(Relation indexRel,
 }
 
 Tuplesortstate *
-tuplesort_begin_index_hash(Relation indexRel,
+tuplesort_begin_index_hash(Relation heapRel,
+						   Relation indexRel,
 						   uint32 hash_mask,
 						   int workMem, bool randomAccess)
 {
@@ -786,6 +790,7 @@ tuplesort_begin_index_hash(Relation indexRel,
 	state->readtup = readtup_index;
 	state->reversedirection = reversedirection_index_hash;
 
+	state->heapRel = heapRel;
 	state->indexRel = indexRel;
 
 	state->hash_mask = hash_mask;
@@ -3171,7 +3176,9 @@ comparetup_index_btree(const SortTuple *a, const SortTuple *b,
 						RelationGetRelationName(state->indexRel)),
 				 errdetail("Key %s is duplicated.",
 						   BuildIndexValueDescription(state->indexRel,
-													  values, isnull))));
+													  values, isnull)),
+				 errtableconstraint(state->heapRel,
+								 RelationGetRelationName(state->indexRel))));
 	}
 
 	/*

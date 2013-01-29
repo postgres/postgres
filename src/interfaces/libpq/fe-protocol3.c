@@ -920,6 +920,29 @@ pqGetErrorNotice3(PGconn *conn, bool isError)
 	}
 	if (conn->verbosity == PQERRORS_VERBOSE)
 	{
+		val = PQresultErrorField(res, PG_DIAG_SCHEMA_NAME);
+		if (val)
+			appendPQExpBuffer(&workBuf,
+							  libpq_gettext("SCHEMA NAME:  %s\n"), val);
+		val = PQresultErrorField(res, PG_DIAG_TABLE_NAME);
+		if (val)
+			appendPQExpBuffer(&workBuf,
+							  libpq_gettext("TABLE NAME:  %s\n"), val);
+		val = PQresultErrorField(res, PG_DIAG_COLUMN_NAME);
+		if (val)
+			appendPQExpBuffer(&workBuf,
+							  libpq_gettext("COLUMN NAME:  %s\n"), val);
+		val = PQresultErrorField(res, PG_DIAG_DATATYPE_NAME);
+		if (val)
+			appendPQExpBuffer(&workBuf,
+							  libpq_gettext("DATATYPE NAME:  %s\n"), val);
+		val = PQresultErrorField(res, PG_DIAG_CONSTRAINT_NAME);
+		if (val)
+			appendPQExpBuffer(&workBuf,
+							  libpq_gettext("CONSTRAINT NAME:  %s\n"), val);
+	}
+	if (conn->verbosity == PQERRORS_VERBOSE)
+	{
 		const char *valf;
 		const char *vall;
 

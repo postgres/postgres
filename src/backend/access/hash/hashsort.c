@@ -44,7 +44,7 @@ struct HSpool
  * create and initialize a spool structure
  */
 HSpool *
-_h_spoolinit(Relation index, uint32 num_buckets)
+_h_spoolinit(Relation heap, Relation index, uint32 num_buckets)
 {
 	HSpool	   *hspool = (HSpool *) palloc0(sizeof(HSpool));
 	uint32		hash_mask;
@@ -67,7 +67,8 @@ _h_spoolinit(Relation index, uint32 num_buckets)
 	 * speed index creation.  This should be OK since a single backend can't
 	 * run multiple index creations in parallel.
 	 */
-	hspool->sortstate = tuplesort_begin_index_hash(index,
+	hspool->sortstate = tuplesort_begin_index_hash(heap,
+												   index,
 												   hash_mask,
 												   maintenance_work_mem,
 												   false);

@@ -337,9 +337,11 @@ RI_FKey_check(TriggerData *trigdata)
 					ereport(ERROR,
 							(errcode(ERRCODE_FOREIGN_KEY_VIOLATION),
 							 errmsg("insert or update on table \"%s\" violates foreign key constraint \"%s\"",
-							  RelationGetRelationName(trigdata->tg_relation),
+									RelationGetRelationName(fk_rel),
 									NameStr(riinfo->conname)),
-							 errdetail("MATCH FULL does not allow mixing of null and nonnull key values.")));
+							 errdetail("MATCH FULL does not allow mixing of null and nonnull key values."),
+							 errtableconstraint(fk_rel,
+												NameStr(riinfo->conname))));
 					heap_close(pk_rel, RowShareLock);
 					return PointerGetDatum(NULL);
 
@@ -2470,7 +2472,9 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 					 errmsg("insert or update on table \"%s\" violates foreign key constraint \"%s\"",
 							RelationGetRelationName(fk_rel),
 							NameStr(fake_riinfo.conname)),
-					 errdetail("MATCH FULL does not allow mixing of null and nonnull key values.")));
+					 errdetail("MATCH FULL does not allow mixing of null and nonnull key values."),
+					 errtableconstraint(fk_rel,
+										NameStr(fake_riinfo.conname))));
 
 		/*
 		 * We tell ri_ReportViolation we were doing the RI_PLAN_CHECK_LOOKUPPK
@@ -3222,7 +3226,8 @@ ri_ReportViolation(const RI_ConstraintInfo *riinfo,
 						NameStr(riinfo->conname)),
 				 errdetail("Key (%s)=(%s) is not present in table \"%s\".",
 						   key_names.data, key_values.data,
-						   RelationGetRelationName(pk_rel))));
+						   RelationGetRelationName(pk_rel)),
+				 errtableconstraint(fk_rel, NameStr(riinfo->conname))));
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_FOREIGN_KEY_VIOLATION),
@@ -3232,7 +3237,8 @@ ri_ReportViolation(const RI_ConstraintInfo *riinfo,
 						RelationGetRelationName(fk_rel)),
 			errdetail("Key (%s)=(%s) is still referenced from table \"%s\".",
 					  key_names.data, key_values.data,
-					  RelationGetRelationName(fk_rel))));
+					  RelationGetRelationName(fk_rel)),
+				 errtableconstraint(fk_rel, NameStr(riinfo->conname))));
 }
 
 

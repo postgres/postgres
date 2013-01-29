@@ -87,6 +87,7 @@ err_gettext(const char *str)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
 __attribute__((format_arg(1)));
+static void set_errdata_field(char **ptr, const char *str);
 
 /* Global variables */
 ErrorContextCallback *error_context_stack = NULL;
@@ -475,6 +476,16 @@ errfinish(int dummy,...)
 		pfree(edata->hint);
 	if (edata->context)
 		pfree(edata->context);
+	if (edata->schema_name)
+		pfree(edata->schema_name);
+	if (edata->table_name)
+		pfree(edata->table_name);
+	if (edata->column_name)
+		pfree(edata->column_name);
+	if (edata->datatype_name)
+		pfree(edata->datatype_name);
+	if (edata->constraint_name)
+		pfree(edata->constraint_name);
 	if (edata->internalquery)
 		pfree(edata->internalquery);
 
@@ -1101,6 +1112,59 @@ internalerrquery(const char *query)
 }
 
 /*
+ * err_generic_string -- used to set individual ErrorData string fields
+ * identified by PG_DIAG_xxx codes.
+ *
+ * This intentionally only supports fields that don't use localized strings,
+ * so that there are no translation considerations.
+ *
+ * Most potential callers should not use this directly, but instead prefer
+ * higher-level abstractions, such as errtablecol() (see relcache.c).
+ */
+int
+err_generic_string(int field, const char *str)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+
+	/* we don't bother incrementing recursion_depth */
+	CHECK_STACK_DEPTH();
+
+	switch (field)
+	{
+		case PG_DIAG_SCHEMA_NAME:
+			set_errdata_field(&edata->schema_name, str);
+			break;
+		case PG_DIAG_TABLE_NAME:
+			set_errdata_field(&edata->table_name, str);
+			break;
+		case PG_DIAG_COLUMN_NAME:
+			set_errdata_field(&edata->column_name, str);
+			break;
+		case PG_DIAG_DATATYPE_NAME:
+			set_errdata_field(&edata->datatype_name, str);
+			break;
+		case PG_DIAG_CONSTRAINT_NAME:
+			set_errdata_field(&edata->constraint_name, str);
+			break;
+		default:
+			elog(ERROR, "unsupported ErrorData field id: %d", field);
+			break;
+	}
+
+	return 0;			/* return value does not matter */
+}
+
+/*
+ * set_errdata_field --- set an ErrorData string field
+ */
+static void
+set_errdata_field(char **ptr, const char *str)
+{
+	Assert(*ptr == NULL);
+	*ptr = MemoryContextStrdup(ErrorContext, str);
+}
+
+/*
  * geterrcode --- return the currently set SQLSTATE error code
  *
  * This is only intended for use in error callback subroutines, since there
@@ -1373,6 +1437,16 @@ CopyErrorData(void)
 		newedata->hint = pstrdup(newedata->hint);
 	if (newedata->context)
 		newedata->context = pstrdup(newedata->context);
+	if (newedata->schema_name)
+		newedata->schema_name = pstrdup(newedata->schema_name);
+	if (newedata->table_name)
+		newedata->table_name = pstrdup(newedata->table_name);
+	if (newedata->column_name)
+		newedata->column_name = pstrdup(newedata->column_name);
+	if (newedata->datatype_name)
+		newedata->datatype_name = pstrdup(newedata->datatype_name);
+	if (newedata->constraint_name)
+		newedata->constraint_name = pstrdup(newedata->constraint_name);
 	if (newedata->internalquery)
 		newedata->internalquery = pstrdup(newedata->internalquery);
 
@@ -1398,6 +1472,16 @@ FreeErrorData(ErrorData *edata)
 		pfree(edata->hint);
 	if (edata->context)
 		pfree(edata->context);
+	if (edata->schema_name)
+		pfree(edata->schema_name);
+	if (edata->table_name)
+		pfree(edata->table_name);
+	if (edata->column_name)
+		pfree(edata->column_name);
+	if (edata->datatype_name)
+		pfree(edata->datatype_name);
+	if (edata->constraint_name)
+		pfree(edata->constraint_name);
 	if (edata->internalquery)
 		pfree(edata->internalquery);
 	pfree(edata);
@@ -1470,6 +1554,16 @@ ReThrowError(ErrorData *edata)
 		newedata->hint = pstrdup(newedata->hint);
 	if (newedata->context)
 		newedata->context = pstrdup(newedata->context);
+	if (newedata->schema_name)
+		newedata->schema_name = pstrdup(newedata->schema_name);
+	if (newedata->table_name)
+		newedata->table_name = pstrdup(newedata->table_name);
+	if (newedata->column_name)
+		newedata->column_name = pstrdup(newedata->column_name);
+	if (newedata->datatype_name)
+		newedata->datatype_name = pstrdup(newedata->datatype_name);
+	if (newedata->constraint_name)
+		newedata->constraint_name = pstrdup(newedata->constraint_name);
 	if (newedata->internalquery)
 		newedata->internalquery = pstrdup(newedata->internalquery);
 
@@ -2655,6 +2749,36 @@ send_message_to_frontend(ErrorData *edata)
 		{
 			pq_sendbyte(&msgbuf, PG_DIAG_CONTEXT);
 			err_sendstring(&msgbuf, edata->context);
+		}
+
+		if (edata->schema_name)
+		{
+			pq_sendbyte(&msgbuf, PG_DIAG_SCHEMA_NAME);
+			err_sendstring(&msgbuf, edata->schema_name);
+		}
+
+		if (edata->table_name)
+		{
+			pq_sendbyte(&msgbuf, PG_DIAG_TABLE_NAME);
+			err_sendstring(&msgbuf, edata->table_name);
+		}
+
+		if (edata->column_name)
+		{
+			pq_sendbyte(&msgbuf, PG_DIAG_COLUMN_NAME);
+			err_sendstring(&msgbuf, edata->column_name);
+		}
+
+		if (edata->datatype_name)
+		{
+			pq_sendbyte(&msgbuf, PG_DIAG_DATATYPE_NAME);
+			err_sendstring(&msgbuf, edata->datatype_name);
+		}
+
+		if (edata->constraint_name)
+		{
+			pq_sendbyte(&msgbuf, PG_DIAG_CONSTRAINT_NAME);
+			err_sendstring(&msgbuf, edata->constraint_name);
 		}
 
 		if (edata->cursorpos > 0)

@@ -2679,6 +2679,62 @@ char *PQresultErrorField(const PGresult *res, int fieldcode);
           </listitem>
          </varlistentry>
 
+         <varlistentry id="libpq-pg-diag-schema-name">
+          <term><symbol>PG_DIAG_SCHEMA_NAME</></term>
+          <listitem>
+           <para>
+            If the error was associated with a specific database object,
+            the name of the schema containing that object, if any.
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry id="libpq-pg-diag-table-name">
+          <term><symbol>PG_DIAG_TABLE_NAME</></term>
+          <listitem>
+           <para>
+            If the error was associated with a specific table, the name of
+            the table.  (When this field is present, the schema name field
+            provides the name of the table's schema.)
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry id="libpq-pg-diag-column-name">
+          <term><symbol>PG_DIAG_COLUMN_NAME</></term>
+          <listitem>
+           <para>
+            If the error was associated with a specific table column, the
+            name of the column.  (When this field is present, the schema
+            and table name fields identify the table.)
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry id="libpq-pg-diag-datatype-name">
+          <term><symbol>PG_DIAG_DATATYPE_NAME</></term>
+          <listitem>
+           <para>
+            If the error was associated with a specific datatype, the name
+            of the datatype.  (When this field is present, the schema name
+            field provides the name of the datatype's schema.)
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry id="libpq-pg-diag-constraint-name">
+          <term><symbol>PG_DIAG_CONSTRAINT_NAME</></term>
+          <listitem>
+           <para>
+            If the error was associated with a specific constraint,
+            the name of the constraint.  The table or domain that the
+            constraint belongs to is reported using the fields listed
+            above.  (For this purpose, indexes are treated as constraints,
+            even if they weren't created with constraint syntax.)
+           </para>
+          </listitem>
+         </varlistentry>
+
          <varlistentry id="libpq-pg-diag-source-file">
           <term><symbol>PG_DIAG_SOURCE_FILE</></term>
           <listitem>
@@ -2709,6 +2765,14 @@ char *PQresultErrorField(const PGresult *res, int fieldcode);
          </varlistentry>
         </variablelist>
        </para>
+
+       <note>
+        <para>
+         The fields for schema name, table name, column name, datatype
+         name, and constraint name are supplied only for a limited number
+         of error types; see <xref linkend="errcodes-appendix">.
+        </para>
+       </note>
 
        <para>
         The client is responsible for formatting displayed information to meet

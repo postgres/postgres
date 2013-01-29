@@ -4759,6 +4759,72 @@ message.
 
 <varlistentry>
 <term>
+<literal>s</>
+</term>
+<listitem>
+<para>
+        Schema name: if the error was associated with a specific database
+        object, the name of the schema containing that object, if any.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<literal>t</>
+</term>
+<listitem>
+<para>
+        Table name: if the error was associated with a specific table, the
+        name of the table.  (When this field is present, the schema name field
+        provides the name of the table's schema.)
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<literal>c</>
+</term>
+<listitem>
+<para>
+        Column name: if the error was associated with a specific table column,
+        the name of the column.  (When this field is present, the schema and
+        table name fields identify the table.)
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<literal>d</>
+</term>
+<listitem>
+<para>
+        Datatype name: if the error was associated with a specific datatype,
+        the name of the datatype.  (When this field is present, the schema
+        name field provides the name of the datatype's schema.)
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
+<literal>n</>
+</term>
+<listitem>
+<para>
+        Constraint name: if the error was associated with a specific
+        constraint, the name of the constraint.  The table or domain that the
+        constraint belongs to is reported using the fields listed above.  (For
+        this purpose, indexes are treated as constraints, even if they weren't
+        created with constraint syntax.)
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
+<term>
 <literal>F</>
 </term>
 <listitem>
@@ -4793,6 +4859,14 @@ message.
 </varlistentry>
 
 </variablelist>
+
+<note>
+ <para>
+  The fields for schema name, table name, column name, datatype name, and
+  constraint name are supplied only for a limited number of error types;
+  see <xref linkend="errcodes-appendix">.
+ </para>
+</note>
 
 <para>
 The client is responsible for formatting displayed information to meet its

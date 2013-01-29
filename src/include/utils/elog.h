@@ -220,6 +220,8 @@ extern int	errposition(int cursorpos);
 extern int	internalerrposition(int cursorpos);
 extern int	internalerrquery(const char *query);
 
+extern int	err_generic_string(int field, const char *str);
+
 extern int	geterrcode(void);
 extern int	geterrposition(void);
 extern int	getinternalerrposition(void);
@@ -386,6 +388,11 @@ typedef struct ErrorData
 	char	   *detail_log;		/* detail error message for server log only */
 	char	   *hint;			/* hint message */
 	char	   *context;		/* context message */
+	char	   *schema_name;	/* name of schema */
+	char	   *table_name;		/* name of table */
+	char	   *column_name;	/* name of column */
+	char	   *datatype_name;	/* name of datatype */
+	char	   *constraint_name;	/* name of constraint */
 	int			cursorpos;		/* cursor index into query string */
 	int			internalpos;	/* cursor index into internalquery */
 	char	   *internalquery;	/* text of internally-generated query */

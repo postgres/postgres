@@ -3828,7 +3828,8 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 					ereport(ERROR,
 							(errcode(ERRCODE_NOT_NULL_VIOLATION),
 							 errmsg("column \"%s\" contains null values",
-								NameStr(newTupDesc->attrs[attn]->attname))));
+								NameStr(newTupDesc->attrs[attn]->attname)),
+							 errtablecol(oldrel, attn + 1)));
 			}
 
 			foreach(l, tab->constraints)
@@ -3842,7 +3843,8 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 							ereport(ERROR,
 									(errcode(ERRCODE_CHECK_VIOLATION),
 									 errmsg("check constraint \"%s\" is violated by some row",
-											con->name)));
+											con->name),
+									 errtableconstraint(oldrel, con->name)));
 						break;
 					case CONSTR_FOREIGN:
 						/* Nothing to do here */
@@ -6659,7 +6661,8 @@ validateCheckConstraint(Relation rel, HeapTuple constrtup)
 			ereport(ERROR,
 					(errcode(ERRCODE_CHECK_VIOLATION),
 					 errmsg("check constraint \"%s\" is violated by some row",
-							NameStr(constrForm->conname))));
+							NameStr(constrForm->conname)),
+					 errtableconstraint(rel, NameStr(constrForm->conname))));
 
 		ResetExprContext(econtext);
 	}

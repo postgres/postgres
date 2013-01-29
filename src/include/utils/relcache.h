@@ -53,6 +53,14 @@ extern void RelationSetIndexList(Relation relation,
 extern void RelationInitIndexAccessInfo(Relation relation);
 
 /*
+ * Routines to support ereport() reports of relation-related errors
+ */
+extern int	errtable(Relation rel);
+extern int	errtablecol(Relation rel, int attnum);
+extern int	errtablecolname(Relation rel, const char *colname);
+extern int	errtableconstraint(Relation rel, const char *conname);
+
+/*
  * Routines for backend startup
  */
 extern void RelationCacheInitialize(void);
