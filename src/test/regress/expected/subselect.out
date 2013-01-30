@@ -17,6 +17,61 @@ SELECT 1 AS zero WHERE 1 IN (SELECT 2);
 ------
 (0 rows)
 
+-- Check grammar's handling of extra parens in assorted contexts
+SELECT * FROM (SELECT 1 AS x) ss;
+ x 
+---
+ 1
+(1 row)
+
+SELECT * FROM ((SELECT 1 AS x)) ss;
+ x 
+---
+ 1
+(1 row)
+
+(SELECT 2) UNION SELECT 2;
+ ?column? 
+----------
+        2
+(1 row)
+
+((SELECT 2)) UNION SELECT 2;
+ ?column? 
+----------
+        2
+(1 row)
+
+SELECT ((SELECT 2) UNION SELECT 2);
+ ?column? 
+----------
+        2
+(1 row)
+
+SELECT (((SELECT 2)) UNION SELECT 2);
+ ?column? 
+----------
+        2
+(1 row)
+
+SELECT (SELECT ARRAY[1,2,3])[1];
+ array 
+-------
+     1
+(1 row)
+
+SELECT ((SELECT ARRAY[1,2,3]))[2];
+ array 
+-------
+     2
+(1 row)
+
+SELECT (((SELECT ARRAY[1,2,3])))[3];
+ array 
+-------
+     3
+(1 row)
+
 -- Set up some simple test tables
 CREATE TABLE SUBSELECT_TBL (
   f1 integer,
