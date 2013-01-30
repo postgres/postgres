@@ -8,6 +8,21 @@ SELECT 1 AS zero WHERE 1 NOT IN (SELECT 1);
 
 SELECT 1 AS zero WHERE 1 IN (SELECT 2);
 
+-- Check grammar's handling of extra parens in assorted contexts
+
+SELECT * FROM (SELECT 1 AS x) ss;
+SELECT * FROM ((SELECT 1 AS x)) ss;
+
+(SELECT 2) UNION SELECT 2;
+((SELECT 2)) UNION SELECT 2;
+
+SELECT ((SELECT 2) UNION SELECT 2);
+SELECT (((SELECT 2)) UNION SELECT 2);
+
+SELECT (SELECT ARRAY[1,2,3])[1];
+SELECT ((SELECT ARRAY[1,2,3]))[2];
+SELECT (((SELECT ARRAY[1,2,3])))[3];
+
 -- Set up some simple test tables
 
 CREATE TABLE SUBSELECT_TBL (
