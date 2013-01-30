@@ -1970,6 +1970,9 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 	 */
 	ifunc();
 
+	if (getenv("PG_REGRESS_DIFF_OPTS"))
+		pretty_diff_opts = getenv("PG_REGRESS_DIFF_OPTS");
+
 	while ((c = getopt_long(argc, argv, "hV", long_options, &option_index)) != -1)
 	{
 		switch (c)

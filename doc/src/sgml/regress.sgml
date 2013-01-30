@@ -285,7 +285,10 @@ gmake check EXTRA_TESTS=collate.linux.utf8 LANG=en_US.utf8
     file against the reference outputs stored in the
     <filename>src/test/regress/expected</filename> directory.  Any
     differences are saved for your inspection in
-    <filename>src/test/regress/regression.diffs</filename>.  (Or you
+    <filename>src/test/regress/regression.diffs</filename>.  If you don't
+    like the <command>diff</command> options that are used by default, set the
+    environment variable <envar>PG_REGRESS_DIFF_OPTS</envar>, for
+    instance <literal>PG_REGRESS_DIFF_OPTS='-u'</literal>.  (Or you
     can run <command>diff</command> yourself, if you prefer.)
    </para>
 
