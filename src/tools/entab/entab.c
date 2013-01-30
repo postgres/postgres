@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <unistd.h>
 
 #if defined(WIN32) || defined(__CYGWIN__)
 #define PG_BINARY_R "rb"
@@ -181,10 +182,12 @@ main(int argc, char **argv)
 						if (*src == '\\')
 							escaped = TRUE;
 						if (*src == '"' || *src == '\'')
+						{
 							if (quote_char == ' ')
 								quote_char = *src;
 							else if (*src == quote_char)
 								quote_char = ' ';
+						}
 					}
 					else if (*src != '\r' && *src != '\n')
 						escaped = FALSE;
