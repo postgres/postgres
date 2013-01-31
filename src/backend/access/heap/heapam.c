@@ -3269,7 +3269,13 @@ l2:
 							  &xmax_old_tuple, &infomask_old_tuple,
 							  &infomask2_old_tuple);
 
-	/* And also prepare an Xmax value for the new copy of the tuple */
+	/*
+	 * And also prepare an Xmax value for the new copy of the tuple.  If there
+	 * was no xmax previously, or there was one but all lockers are now gone,
+	 * then use InvalidXid; otherwise, get the xmax from the old tuple.  (In
+	 * rare cases that might also be InvalidXid and yet not have the
+	 * HEAP_XMAX_INVALID bit set; that's fine.)
+	 */
 	if ((oldtup.t_data->t_infomask & HEAP_XMAX_INVALID) ||
 		(checked_lockers && !locker_remains))
 		xmax_new_tuple = InvalidTransactionId;
@@ -3283,6 +3289,12 @@ l2:
 	}
 	else
 	{
+		/*
+		 * If we found a valid Xmax for the new tuple, then the infomask bits
+		 * to use on the new tuple depend on what was there on the old one.
+		 * Note that since we're doing an update, the only possibility is that
+		 * the lockers had FOR KEY SHARE lock.
+		 */
 		if (oldtup.t_data->t_infomask & HEAP_XMAX_IS_MULTI)
 		{
 			GetMultiXactIdHintBits(xmax_new_tuple, &infomask_new_tuple,
@@ -5161,6 +5173,7 @@ GetMultiXactIdHintBits(MultiXactId multi, uint16 *new_infomask,
 	uint16	bits = HEAP_XMAX_IS_MULTI;
 	uint16	bits2 = 0;
 	bool	has_update = false;
+	LockTupleMode	strongest = LockTupleKeyShare;
 
 	/*
 	 * We only use this in multis we just created, so they cannot be values
@@ -5170,32 +5183,47 @@ GetMultiXactIdHintBits(MultiXactId multi, uint16 *new_infomask,
 
 	for (i = 0; i < nmembers; i++)
 	{
+		LockTupleMode	mode;
+
+		/*
+		 * Remember the strongest lock mode held by any member of the
+		 * multixact.
+		 */
+		mode = TUPLOCK_from_mxstatus(members[i].status);
+		if (mode > strongest)
+			strongest = mode;
+
+		/* See what other bits we need */
 		switch (members[i].status)
 		{
 			case MultiXactStatusForKeyShare:
-				bits |= HEAP_XMAX_KEYSHR_LOCK;
-				break;
 			case MultiXactStatusForShare:
-				bits |= HEAP_XMAX_SHR_LOCK;
-				break;
 			case MultiXactStatusForNoKeyUpdate:
-				bits |= HEAP_XMAX_EXCL_LOCK;
 				break;
+
 			case MultiXactStatusForUpdate:
-				bits |= HEAP_XMAX_EXCL_LOCK;
 				bits2 |= HEAP_KEYS_UPDATED;
 				break;
+
 			case MultiXactStatusNoKeyUpdate:
-				bits |= HEAP_XMAX_EXCL_LOCK;
 				has_update = true;
 				break;
+
 			case MultiXactStatusUpdate:
-				bits |= HEAP_XMAX_EXCL_LOCK;
 				bits2 |= HEAP_KEYS_UPDATED;
 				has_update = true;
 				break;
 		}
 	}
+
+	if (strongest == LockTupleExclusive ||
+		strongest == LockTupleNoKeyExclusive)
+		bits |= HEAP_XMAX_EXCL_LOCK;
+	else if (strongest == LockTupleShare)
+		bits |= HEAP_XMAX_SHR_LOCK;
+	else if (strongest == LockTupleKeyShare)
+		bits |= HEAP_XMAX_KEYSHR_LOCK;
+
 	if (!has_update)
 		bits |= HEAP_XMAX_LOCK_ONLY;
 
