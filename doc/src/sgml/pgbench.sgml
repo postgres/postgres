@@ -351,6 +351,21 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
+      <term><option>--aggregate-interval</option> <replaceable>seconds</></term>
+      <listitem>
+       <para>
+        Length of aggregation interval (in seconds). May be used only together
+        with <application>-l</application> - with this option, the log contains
+        per-interval summary (number of transactions, min/max latency and two
+        additional fields useful for variance estimation).
+       </para>
+       <para>
+        This option is not currently supported on Windows.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-M</option> <replaceable>querymode</></term>
       <listitem>
        <para>
@@ -746,8 +761,9 @@ END;
   <title>Per-Transaction Logging</title>
 
   <para>
-   With the <option>-l</> option, <application>pgbench</> writes the time
-   taken by each transaction to a log file.  The log file will be named
+   With the <option>-l</> option but without the <option>--aggregate-interval</option>,
+   <application>pgbench</> writes the time taken by each transaction
+   to a log file.  The log file will be named
    <filename>pgbench_log.<replaceable>nnn</></filename>, where
    <replaceable>nnn</> is the PID of the pgbench process.
    If the <option>-j</> option is 2 or higher, creating multiple worker
@@ -790,6 +806,45 @@ END;
    the log files can become very large.  The <option>--sampling-rate</> option
    can be used to log only a random sample of transactions.
   </para>
+ </refsect2>
+
+ <refsect2>
+  <title>Aggregated Logging</title>
+  
+  <para>
+   With the <option>--aggregate-interval</option> option, the logs use a bit different format:
+
+<synopsis>
+<replaceable>interval_start</> <replaceable>num_of_transactions</> <replaceable>latency_sum</> <replaceable>latency_2_sum</> <replaceable>min_latency</> <replaceable>max_latency</>
+</synopsis>
+
+   where <replaceable>interval_start</> is the start of the interval (UNIX epoch
+   format timestamp), <replaceable>num_of_transactions</> is the number of transactions
+   within the interval, <replaceable>latency_sum</replaceable> is a sum of latencies
+   (so you can compute average latency easily). The following two fields are useful
+   for variance estimation - <replaceable>latency_sum</> is a sum of latencies and
+   <replaceable>latency_2_sum</> is a sum of 2nd powers of latencies. The last two
+   fields are <replaceable>min_latency</> - a minimum latency within the interval, and
+   <replaceable>max_latency</> - maximum latency within the interval. A transaction is
+   counted into the interval when it was committed.
+  </para>
+
+  <para>
+   Here is example outputs:
+<screen>
+1345828501 5601 1542744 483552416 61 2573
+1345828503 7884 1979812 565806736 60 1479
+1345828505 7208 1979422 567277552 59 1391
+1345828507 7685 1980268 569784714 60 1398
+1345828509 7073 1979779 573489941 236 1411
+</screen></para>
+
+  <para>
+   Notice that while the plain (unaggregated) log file contains index
+   of the custom script files, the aggregated log does not. Therefore if
+   you need per script data, you need to aggregate the data on your own.
+  </para>
+
  </refsect2>
 
  <refsect2>

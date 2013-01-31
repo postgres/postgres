@@ -162,6 +162,7 @@ char	   *index_tablespace = NULL;
 
 bool		use_log;			/* log transaction latencies to a file */
 bool		use_quiet;			/* quiet logging onto stderr */
+int			agg_interval;		/* log aggregates instead of individual transactions */
 bool		is_connect;			/* establish connection for each transaction */
 bool		is_latencies;		/* report per-command latencies */
 int			main_pid;			/* main process id used in log filename */
@@ -256,6 +257,18 @@ typedef struct
 	int			argc;			/* number of command words */
 	char	   *argv[MAX_ARGS]; /* command word list */
 } Command;
+
+typedef struct
+{
+
+	long	start_time;			/* when does the interval start */
+	int 	cnt;				/* number of transactions */
+	double	min_duration;		/* min/max durations */
+	double	max_duration;
+	double	sum;				/* sum(duration), sum(duration^2) - for estimates */
+	double	sum2;
+	
+} AggVals;
 
 static Command **sql_files[MAX_FILES];	/* SQL script files */
 static int	num_files;			/* number of script files */
@@ -390,6 +403,8 @@ usage(void)
 		   "  -l           write transaction times to log file\n"
 		   "  --sampling-rate NUM\n"
 		   "               fraction of transactions to log (e.g. 0.01 for 1%% sample)\n"
+		   "  --aggregate-interval NUM\n"
+		   "               aggregate data over NUM seconds\n"
 		   "  -M simple|extended|prepared\n"
 		   "               protocol for submitting queries to server (default: simple)\n"
 		   "  -n           do not run VACUUM before tests\n"
@@ -911,9 +926,25 @@ clientDone(CState *st, bool ok)
 	return false;				/* always false */
 }
 
+static
+void agg_vals_init(AggVals * aggs, instr_time start)
+{
+	/* basic counters */
+	aggs->cnt = 0;		/* number of transactions */
+	aggs->sum = 0;		/* SUM(duration) */
+	aggs->sum2 = 0;		/* SUM(duration*duration) */
+
+	/* min and max transaction duration */
+	aggs->min_duration = 0;
+	aggs->max_duration = 0;
+
+	/* start of the current interval */
+	aggs->start_time = INSTR_TIME_GET_DOUBLE(start);
+}
+
 /* return false iff client should be disconnected */
 static bool
-doCustom(TState *thread, CState *st, instr_time *conn_time, FILE *logfile)
+doCustom(TState *thread, CState *st, instr_time *conn_time, FILE *logfile, AggVals * agg)
 {
 	PGresult   *res;
 	Command   **commands;
@@ -978,22 +1009,74 @@ top:
 			if (sample_rate == 0.0 ||
 				pg_erand48(thread->random_state) <= sample_rate)
 			{
-
 				INSTR_TIME_SET_CURRENT(now);
 				diff = now;
 				INSTR_TIME_SUBTRACT(diff, st->txn_begin);
 				usec = (double) INSTR_TIME_GET_MICROSEC(diff);
 
+				/* should we aggregate the results or not? */
+				if (agg_interval > 0)
+				{
+					/* are we still in the same interval? if yes, accumulate the
+					* values (print them otherwise) */
+					if (agg->start_time + agg_interval >= INSTR_TIME_GET_DOUBLE(now))
+					{
+						agg->cnt += 1;
+						agg->sum  += usec;
+						agg->sum2 += usec * usec;
+
+						/* first in this aggregation interval */
+						if ((agg->cnt == 1) || (usec < agg->min_duration))
+							agg->min_duration =  usec;
+
+						if ((agg->cnt == 1) || (usec > agg->max_duration))
+							agg->max_duration = usec;
+					}
+					else
+					{
+						/* Loop until we reach the interval of the current transaction (and
+						 * print all the empty intervals in between). */
+						while (agg->start_time + agg_interval < INSTR_TIME_GET_DOUBLE(now))
+						{
+							/* This is a non-Windows branch (thanks to the ifdef in usage), so
+							 * we don't need to handle this in a special way (see below). */
+							fprintf(logfile, "%ld %d %.0f %.0f %.0f %.0f\n",
+									agg->start_time, agg->cnt, agg->sum, agg->sum2,
+									agg->min_duration, agg->max_duration);
+
+							/* move to the next inteval */
+							agg->start_time = agg->start_time + agg_interval;
+
+							/* reset for "no transaction" intervals */
+							agg->cnt = 0;
+							agg->min_duration = 0;
+							agg->max_duration = 0;
+							agg->sum = 0;
+							agg->sum2 = 0;
+						}
+
+						/* and now update the reset values (include the current) */
+						agg->cnt = 1;
+						agg->min_duration = usec;
+						agg->max_duration = usec;
+						agg->sum = usec;
+						agg->sum2 = usec * usec;
+					}
+				}
+				else
+				{
+					/* no, print raw transactions */
 #ifndef WIN32
-				/* This is more than we really ought to know about instr_time */
-				fprintf(logfile, "%d %d %.0f %d %ld %ld\n",
-						st->id, st->cnt, usec, st->use_file,
-						(long) now.tv_sec, (long) now.tv_usec);
+					/* This is more than we really ought to know about instr_time */
+					fprintf(logfile, "%d %d %.0f %d %ld %ld\n",
+							st->id, st->cnt, usec, st->use_file,
+							(long) now.tv_sec, (long) now.tv_usec);
 #else
-				/* On Windows, instr_time doesn't provide a timestamp anyway */
-				fprintf(logfile, "%d %d %.0f %d 0 0\n",
-						st->id, st->cnt, usec, st->use_file);
+					/* On Windows, instr_time doesn't provide a timestamp anyway */
+					fprintf(logfile, "%d %d %.0f %d 0 0\n",
+							st->id, st->cnt, usec, st->use_file);
 #endif
+				}
 			}
 		}
 
@@ -2055,6 +2138,7 @@ main(int argc, char **argv)
 		{"tablespace", required_argument, NULL, 2},
 		{"unlogged-tables", no_argument, &unlogged_tables, 1},
 		{"sampling-rate", required_argument, NULL, 4},
+		{"aggregate-interval", required_argument, NULL, 5},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -2293,6 +2377,19 @@ main(int argc, char **argv)
 					exit(1);
 				}
 				break;
+			case 5:
+#ifdef WIN32
+				fprintf(stderr, "--aggregate-interval is not currently supported on Windows");
+				exit(1);
+#else
+				agg_interval = atoi(optarg);
+				if (agg_interval <= 0)
+				{
+					fprintf(stderr, "invalid number of seconds for aggregation: %d\n", agg_interval);
+					exit(1);
+				}
+#endif
+				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
@@ -2339,6 +2436,28 @@ main(int argc, char **argv)
 	if (use_quiet && !is_init_mode)
 	{
 		fprintf(stderr, "quiet-logging is allowed only in initialization mode (-i)\n");
+		exit(1);
+	}
+
+	/* --sampling-rate may must not be used with --aggregate-interval */
+	if (sample_rate > 0.0 && agg_interval > 0)
+	{
+		fprintf(stderr, "log sampling (--sampling-rate) and aggregation (--aggregate-interval) can't be used at the same time\n");
+		exit(1);
+	}
+
+	if (agg_interval > 0 && (! use_log)) {
+		fprintf(stderr, "log aggregation is allowed only when actually logging transactions\n");
+		exit(1);
+	}
+
+	if ((duration > 0) && (agg_interval > duration)) {
+		fprintf(stderr, "number of seconds for aggregation (%d) must not be higher that test duration (%d)\n", agg_interval, duration);
+		exit(1);
+	}
+
+	if ((duration > 0) && (agg_interval > 0) && (duration % agg_interval != 0)) {
+		fprintf(stderr, "duration (%d) must be a multiple of aggregation interval (%d)\n", duration, agg_interval);
 		exit(1);
 	}
 
@@ -2601,7 +2720,10 @@ threadRun(void *arg)
 	int			remains = nstate;		/* number of remaining clients */
 	int			i;
 
+	AggVals		aggs;
+
 	result = pg_malloc(sizeof(TResult));
+	
 	INSTR_TIME_SET_ZERO(result->conn_time);
 
 	/* open log file if requested */
@@ -2636,6 +2758,8 @@ threadRun(void *arg)
 	INSTR_TIME_SET_CURRENT(result->conn_time);
 	INSTR_TIME_SUBTRACT(result->conn_time, thread->start_time);
 
+	agg_vals_init(&aggs, thread->start_time);
+	
 	/* send start up queries in async manner */
 	for (i = 0; i < nstate; i++)
 	{
@@ -2644,7 +2768,7 @@ threadRun(void *arg)
 		int			prev_ecnt = st->ecnt;
 
 		st->use_file = getrand(thread, 0, num_files - 1);
-		if (!doCustom(thread, st, &result->conn_time, logfile))
+		if (!doCustom(thread, st, &result->conn_time, logfile, &aggs))
 			remains--;			/* I've aborted */
 
 		if (st->ecnt > prev_ecnt && commands[st->state]->type == META_COMMAND)
@@ -2746,7 +2870,7 @@ threadRun(void *arg)
 			if (st->con && (FD_ISSET(PQsocket(st->con), &input_mask)
 							|| commands[st->state]->type == META_COMMAND))
 			{
-				if (!doCustom(thread, st, &result->conn_time, logfile))
+				if (!doCustom(thread, st, &result->conn_time, logfile, &aggs))
 					remains--;	/* I've aborted */
 			}
 
@@ -2772,7 +2896,6 @@ done:
 		fclose(logfile);
 	return result;
 }
-
 
 /*
  * Support for duration option: set timer_exceeded after so many seconds.
