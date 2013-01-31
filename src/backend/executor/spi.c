@@ -1132,6 +1132,7 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 	Snapshot	snapshot;
 	MemoryContext oldcontext;
 	Portal		portal;
+	ErrorContextCallback spierrcontext;
 
 	/*
 	 * Check that the plan is something the Portal code will special-case as
@@ -1182,6 +1183,15 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 									   plansource->query_string);
 
 	/*
+	 * Setup error traceback support for ereport(), in case GetCachedPlan
+	 * throws an error.
+	 */
+	spierrcontext.callback = _SPI_error_callback;
+	spierrcontext.arg = (void *) plansource->query_string;
+	spierrcontext.previous = error_context_stack;
+	error_context_stack = &spierrcontext;
+
+	/*
 	 * Note: for a saved plan, we mustn't have any failure occur between
 	 * GetCachedPlan and PortalDefineQuery; that would result in leaking our
 	 * plancache refcount.
@@ -1190,6 +1200,9 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 	/* Replan if needed, and increment plan refcount for portal */
 	cplan = GetCachedPlan(plansource, paramLI, false);
 	stmt_list = cplan->stmt_list;
+
+	/* Pop the error context stack */
+	error_context_stack = spierrcontext.previous;
 
 	if (!plan->saved)
 	{
@@ -1551,6 +1564,65 @@ SPI_result_code_string(int code)
 	sprintf(buf, "Unrecognized SPI code %d", code);
 	return buf;
 }
+
+/*
+ * SPI_plan_get_plan_sources --- get a SPI plan's underlying list of
+ * CachedPlanSources.
+ *
+ * This is exported so that pl/pgsql can use it (this beats letting pl/pgsql
+ * look directly into the SPIPlan for itself).  It's not documented in
+ * spi.sgml because we'd just as soon not have too many places using this.
+ */
+List *
+SPI_plan_get_plan_sources(SPIPlanPtr plan)
+{
+	Assert(plan->magic == _SPI_PLAN_MAGIC);
+	return plan->plancache_list;
+}
+
+/*
+ * SPI_plan_get_cached_plan --- get a SPI plan's generic CachedPlan,
+ * if the SPI plan contains exactly one CachedPlanSource.  If not,
+ * return NULL.  Caller is responsible for doing ReleaseCachedPlan().
+ *
+ * This is exported so that pl/pgsql can use it (this beats letting pl/pgsql
+ * look directly into the SPIPlan for itself).  It's not documented in
+ * spi.sgml because we'd just as soon not have too many places using this.
+ */
+CachedPlan *
+SPI_plan_get_cached_plan(SPIPlanPtr plan)
+{
+	CachedPlanSource *plansource;
+	CachedPlan *cplan;
+	ErrorContextCallback spierrcontext;
+
+	Assert(plan->magic == _SPI_PLAN_MAGIC);
+
+	/* Can't support one-shot plans here */
+	if (plan->oneshot)
+		return NULL;
+
+	/* Must have exactly one CachedPlanSource */
+	if (list_length(plan->plancache_list) != 1)
+		return NULL;
+	plansource = (CachedPlanSource *) linitial(plan->plancache_list);
+
+	/* Setup error traceback support for ereport() */
+	spierrcontext.callback = _SPI_error_callback;
+	spierrcontext.arg = (void *) plansource->query_string;
+	spierrcontext.previous = error_context_stack;
+	error_context_stack = &spierrcontext;
+
+	/* Get the generic plan for the query */
+	cplan = GetCachedPlan(plansource, NULL, plan->saved);
+	Assert(cplan == plansource->gplan);
+
+	/* Pop the error context stack */
+	error_context_stack = spierrcontext.previous;
+
+	return cplan;
+}
+
 
 /* =================== private functions =================== */
 

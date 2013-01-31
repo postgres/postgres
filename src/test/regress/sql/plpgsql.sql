@@ -3537,6 +3537,19 @@ rollback;
 drop function error2(p_name_table text);
 drop function error1(text);
 
+-- Test for consistent reporting of error context
+
+create function fail() returns int language plpgsql as $$
+begin
+  return 1/0;
+end
+$$;
+
+select fail();
+select fail();
+
+drop function fail();
+
 -- Test handling of string literals.
 
 set standard_conforming_strings = off;

@@ -4387,6 +4387,21 @@ select error2('public.stuffs');
 rollback;
 drop function error2(p_name_table text);
 drop function error1(text);
+-- Test for consistent reporting of error context
+create function fail() returns int language plpgsql as $$
+begin
+  return 1/0;
+end
+$$;
+select fail();
+ERROR:  division by zero
+CONTEXT:  SQL statement "SELECT 1/0"
+PL/pgSQL function fail() line 3 at RETURN
+select fail();
+ERROR:  division by zero
+CONTEXT:  SQL statement "SELECT 1/0"
+PL/pgSQL function fail() line 3 at RETURN
+drop function fail();
 -- Test handling of string literals.
 set standard_conforming_strings = off;
 create or replace function strtest() returns text as $$

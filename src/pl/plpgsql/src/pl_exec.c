@@ -22,7 +22,7 @@
 #include "access/tupconvert.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
-#include "executor/spi_priv.h"
+#include "executor/spi.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
@@ -3174,7 +3174,7 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 
 		exec_prepare_plan(estate, expr, 0);
 		stmt->mod_stmt = false;
-		foreach(l, expr->plan->plancache_list)
+		foreach(l, SPI_plan_get_plan_sources(expr->plan))
 		{
 			CachedPlanSource *plansource = (CachedPlanSource *) lfirst(l);
 			ListCell   *l2;
@@ -4954,10 +4954,11 @@ loop_exit:
  *
  * It is possible though unlikely for a simple expression to become non-simple
  * (consider for example redefining a trivial view).  We must handle that for
- * correctness; fortunately it's normally inexpensive to do GetCachedPlan on a
- * simple expression.  We do not consider the other direction (non-simple
- * expression becoming simple) because we'll still give correct results if
- * that happens, and it's unlikely to be worth the cycles to check.
+ * correctness; fortunately it's normally inexpensive to call
+ * SPI_plan_get_cached_plan for a simple expression.  We do not consider the
+ * other direction (non-simple expression becoming simple) because we'll still
+ * give correct results if that happens, and it's unlikely to be worth the
+ * cycles to check.
  *
  * Note: if pass-by-reference, the result is in the eval_econtext's
  * temporary memory context.  It will be freed when exec_eval_cleanup
@@ -4973,7 +4974,6 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 {
 	ExprContext *econtext = estate->eval_econtext;
 	LocalTransactionId curlxid = MyProc->lxid;
-	CachedPlanSource *plansource;
 	CachedPlan *cplan;
 	ParamListInfo paramLI;
 	PLpgSQL_expr *save_cur_expr;
@@ -4993,16 +4993,16 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 
 	/*
 	 * Revalidate cached plan, so that we will notice if it became stale. (We
-	 * need to hold a refcount while using the plan, anyway.)  Note that even
-	 * if replanning occurs, the length of plancache_list can't change, since
-	 * it is a property of the raw parsetree generated from the query text.
+	 * need to hold a refcount while using the plan, anyway.)
 	 */
-	Assert(list_length(expr->plan->plancache_list) == 1);
-	plansource = (CachedPlanSource *) linitial(expr->plan->plancache_list);
+	cplan = SPI_plan_get_cached_plan(expr->plan);
 
-	/* Get the generic plan for the query */
-	cplan = GetCachedPlan(plansource, NULL, true);
-	Assert(cplan == plansource->gplan);
+	/*
+	 * We can't get a failure here, because the number of CachedPlanSources in
+	 * the SPI plan can't change from what exec_simple_check_plan saw; it's a
+	 * property of the raw parsetree generated from the query text.
+	 */
+	Assert(cplan != NULL);
 
 	if (cplan->generation != expr->expr_simple_generation)
 	{
@@ -5893,6 +5893,7 @@ exec_simple_check_node(Node *node)
 static void
 exec_simple_check_plan(PLpgSQL_expr *expr)
 {
+	List	   *plansources;
 	CachedPlanSource *plansource;
 	Query	   *query;
 	CachedPlan *cplan;
@@ -5908,9 +5909,10 @@ exec_simple_check_plan(PLpgSQL_expr *expr)
 	/*
 	 * We can only test queries that resulted in exactly one CachedPlanSource
 	 */
-	if (list_length(expr->plan->plancache_list) != 1)
+	plansources = SPI_plan_get_plan_sources(expr->plan);
+	if (list_length(plansources) != 1)
 		return;
-	plansource = (CachedPlanSource *) linitial(expr->plan->plancache_list);
+	plansource = (CachedPlanSource *) linitial(plansources);
 
 	/*
 	 * Do some checking on the analyzed-and-rewritten form of the query. These
@@ -5968,8 +5970,10 @@ exec_simple_check_plan(PLpgSQL_expr *expr)
 	 */
 
 	/* Get the generic plan for the query */
-	cplan = GetCachedPlan(plansource, NULL, true);
-	Assert(cplan == plansource->gplan);
+	cplan = SPI_plan_get_cached_plan(expr->plan);
+
+	/* Can't fail, because we checked for a single CachedPlanSource above */
+	Assert(cplan != NULL);
 
 	/* Share the remaining work with recheck code path */
 	exec_simple_recheck_plan(expr, cplan);
