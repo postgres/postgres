@@ -4828,6 +4828,22 @@ StartupXLOG(void)
 			ereport(LOG,
 					(errmsg("starting archive recovery")));
 	}
+	else if (ControlFile->minRecoveryPointTLI > 0)
+	{
+		/*
+		 * If the minRecoveryPointTLI is set when not in Archive Recovery
+		 * it means that we have crashed after ending recovery and
+		 * yet before we wrote a new checkpoint on the new timeline.
+		 * That means we are doing a crash recovery that needs to cross
+		 * timelines to get to our newly assigned timeline again.
+		 * The timeline we are headed for is exact and not 'latest'.
+		 * As soon as we hit a checkpoint, the minRecoveryPointTLI is
+		 * reset, so we will not enter crash recovery again.
+		 */
+		Assert(ControlFile->minRecoveryPointTLI != 1);
+		recoveryTargetTLI = ControlFile->minRecoveryPointTLI;
+		recoveryTargetIsLatest = false;
+	}
 
 	/*
 	 * Take ownership of the wakeup latch if we're going to sleep during
@@ -5075,6 +5091,12 @@ StartupXLOG(void)
 			ereport(LOG,
 					(errmsg("database system was not properly shut down; "
 							"automatic recovery in progress")));
+			if (recoveryTargetTLI > 0)
+				ereport(LOG,
+					(errmsg("crash recovery starts in timeline %u "
+							"and has target timeline %u",
+							ControlFile->checkPointCopy.ThisTimeLineID,
+							recoveryTargetTLI)));
 			ControlFile->state = DB_IN_CRASH_RECOVERY;
 		}
 		ControlFile->prevCheckPoint = ControlFile->checkPoint;
@@ -6945,6 +6967,7 @@ CreateEndOfRecoveryRecord(void)
 {
 	xl_end_of_recovery	xlrec;
 	XLogRecData			rdata;
+	XLogRecPtr			recptr;
 
 	/* sanity check */
 	if (!RecoveryInProgress())
@@ -6962,7 +6985,20 @@ CreateEndOfRecoveryRecord(void)
 	rdata.buffer = InvalidBuffer;
 	rdata.next = NULL;
 
-	(void) XLogInsert(RM_XLOG_ID, XLOG_END_OF_RECOVERY, &rdata);
+	recptr = XLogInsert(RM_XLOG_ID, XLOG_END_OF_RECOVERY, &rdata);
+
+	XLogFlush(recptr);
+
+	/*
+	 * Update the control file so that crash recovery can follow
+	 * the timeline changes to this point.
+	 */
+	LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
+	ControlFile->time = (pg_time_t) xlrec.end_time;
+	ControlFile->minRecoveryPoint = recptr;
+	ControlFile->minRecoveryPointTLI = ThisTimeLineID;
+	UpdateControlFile();
+	LWLockRelease(ControlFileLock);
 
 	END_CRIT_SECTION();
 
