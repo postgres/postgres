@@ -247,7 +247,12 @@ pgrowlocks(PG_FUNCTION_ARGS)
 					else if (HEAP_XMAX_IS_KEYSHR_LOCKED(infomask))
 						snprintf(values[Atnum_modes], NCHARS, "{For Key Share}");
 					else if (HEAP_XMAX_IS_EXCL_LOCKED(infomask))
-						snprintf(values[Atnum_modes], NCHARS, "{For Update}");
+					{
+						if (tuple->t_data->t_infomask2 & HEAP_KEYS_UPDATED)
+							snprintf(values[Atnum_modes], NCHARS, "{For Update}");
+						else
+							snprintf(values[Atnum_modes], NCHARS, "{For No Key Update}");
+					}
 					else
 						/* neither keyshare nor exclusive bit it set */
 						snprintf(values[Atnum_modes], NCHARS,
@@ -256,9 +261,9 @@ pgrowlocks(PG_FUNCTION_ARGS)
 				else
 				{
 					if (tuple->t_data->t_infomask2 & HEAP_KEYS_UPDATED)
-						snprintf(values[Atnum_modes], NCHARS, "{Key Update}");
-					else
 						snprintf(values[Atnum_modes], NCHARS, "{Update}");
+					else
+						snprintf(values[Atnum_modes], NCHARS, "{No Key Update}");
 				}
 
 				values[Atnum_pids] = palloc(NCHARS * sizeof(char));
