@@ -2696,10 +2696,10 @@ timetz_izone(PG_FUNCTION_ARGS)
 	TimeTzADT  *result;
 	int			tz;
 
-	if (zone->month != 0)
+	if (zone->month != 0 || zone->day != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("\"interval\" time zone \"%s\" not valid",
+				 errmsg("interval time zone \"%s\" must not include months or days",
 						DatumGetCString(DirectFunctionCall1(interval_out,
 												  PointerGetDatum(zone))))));
 
