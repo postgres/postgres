@@ -103,6 +103,9 @@ extern bool SPI_is_cursor_plan(SPIPlanPtr plan);
 extern bool SPI_plan_is_valid(SPIPlanPtr plan);
 extern const char *SPI_result_code_string(int code);
 
+extern List *SPI_plan_get_plan_sources(SPIPlanPtr plan);
+extern CachedPlan *SPI_plan_get_cached_plan(SPIPlanPtr plan);
+
 extern HeapTuple SPI_copytuple(HeapTuple tuple);
 extern HeapTupleHeader SPI_returntuple(HeapTuple tuple, TupleDesc tupdesc);
 extern HeapTuple SPI_modifytuple(Relation rel, HeapTuple tuple, int natts,
