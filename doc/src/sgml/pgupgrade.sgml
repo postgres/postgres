@@ -402,7 +402,9 @@ pg_upgrade.exe
 
     <para>
      If you modified <filename>pg_hba.conf</> to use <literal>trust</>,
-     restore its original authentication settings.
+     restore its original authentication settings.  It might also be
+     necessary to adjust other configurations files in the new cluster to
+     match the old cluster, e.g. <filename>postgresql.conf</>.
     </para>
    </step>
 
