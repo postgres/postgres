@@ -306,7 +306,7 @@ sub AddResourceFile
     my ($self, $dir, $desc, $ico) = @_;
 
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
-    my $d = ($year - 100) . "$yday";
+    my $d = sprintf("%02d%03d", ($year - 100), $yday);
 
     if (Solution::IsNewer("$dir\\win32ver.rc",'src\port\win32ver.rc'))
     {
