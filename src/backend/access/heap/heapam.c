@@ -2978,9 +2978,32 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	lp = PageGetItemId(page, ItemPointerGetOffsetNumber(otid));
 	Assert(ItemIdIsNormal(lp));
 
+	/*
+	 * Fill in enough data in oldtup for HeapSatisfiesHOTandKeyUpdate to work
+	 * properly.
+	 */
+	oldtup.t_tableOid = RelationGetRelid(relation);
 	oldtup.t_data = (HeapTupleHeader) PageGetItem(page, lp);
 	oldtup.t_len = ItemIdGetLength(lp);
 	oldtup.t_self = *otid;
+
+	/* the new tuple is ready, except for this: */
+	newtup->t_tableOid = RelationGetRelid(relation);
+
+	/* Fill in OID for newtup */
+	if (relation->rd_rel->relhasoids)
+	{
+#ifdef NOT_USED
+		/* this is redundant with an Assert in HeapTupleSetOid */
+		Assert(newtup->t_data->t_infomask & HEAP_HASOID);
+#endif
+		HeapTupleSetOid(newtup, HeapTupleGetOid(&oldtup));
+	}
+	else
+	{
+		/* check there is not space for an OID */
+		Assert(!(newtup->t_data->t_infomask & HEAP_HASOID));
+	}
 
 	/*
 	 * If we're not updating any "key" column, we can grab a weaker lock type.
@@ -3243,20 +3266,7 @@ l2:
 	 */
 	CheckForSerializableConflictIn(relation, &oldtup, buffer);
 
-	/* Fill in OID and transaction status data for newtup */
-	if (relation->rd_rel->relhasoids)
-	{
-#ifdef NOT_USED
-		/* this is redundant with an Assert in HeapTupleSetOid */
-		Assert(newtup->t_data->t_infomask & HEAP_HASOID);
-#endif
-		HeapTupleSetOid(newtup, HeapTupleGetOid(&oldtup));
-	}
-	else
-	{
-		/* check there is not space for an OID */
-		Assert(!(newtup->t_data->t_infomask & HEAP_HASOID));
-	}
+	/* Fill in transaction status data */
 
 	/*
 	 * If the tuple we're updating is locked, we need to preserve the locking
@@ -3318,7 +3328,6 @@ l2:
 	newtup->t_data->t_infomask |= HEAP_UPDATED | infomask_new_tuple;
 	newtup->t_data->t_infomask2 |= infomask2_new_tuple;
 	HeapTupleHeaderSetXmax(newtup->t_data, xmax_new_tuple);
-	newtup->t_tableOid = RelationGetRelid(relation);
 
 	/*
 	 * Replace cid with a combo cid if necessary.  Note that we already put
