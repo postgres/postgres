@@ -25,7 +25,7 @@
  *	  -------	------------------------------------------------
  *		1)		variable-length datatypes (TOAST support)
  *		2)		datum type + support macros
- *		3)		exception handling definitions
+ *		3)		exception handling backend support
  *
  *	 NOTES
  *
@@ -634,61 +634,11 @@ extern Datum Float8GetDatum(float8 X);
 
 
 /* ----------------------------------------------------------------
- *				Section 3:	exception handling definitions
- *							Assert, Trap, etc macros
+ *				Section 3:	exception handling backend support
  * ----------------------------------------------------------------
  */
 
 extern PGDLLIMPORT bool assert_enabled;
-
-/*
- * USE_ASSERT_CHECKING, if defined, turns on all the assertions.
- * - plai  9/5/90
- *
- * It should _NOT_ be defined in releases or in benchmark copies
- */
-
-/*
- * Trap
- *		Generates an exception if the given condition is true.
- */
-#define Trap(condition, errorType) \
-	do { \
-		if ((assert_enabled) && (condition)) \
-			ExceptionalCondition(CppAsString(condition), (errorType), \
-								 __FILE__, __LINE__); \
-	} while (0)
-
-/*
- *	TrapMacro is the same as Trap but it's intended for use in macros:
- *
- *		#define foo(x) (AssertMacro(x != 0), bar(x))
- *
- *	Isn't CPP fun?
- */
-#define TrapMacro(condition, errorType) \
-	((bool) ((! assert_enabled) || ! (condition) || \
-			 (ExceptionalCondition(CppAsString(condition), (errorType), \
-								   __FILE__, __LINE__), 0)))
-
-#ifndef USE_ASSERT_CHECKING
-#define Assert(condition)
-#define AssertMacro(condition)	((void)true)
-#define AssertArg(condition)
-#define AssertState(condition)
-#else
-#define Assert(condition) \
-		Trap(!(condition), "FailedAssertion")
-
-#define AssertMacro(condition) \
-		((void) TrapMacro(!(condition), "FailedAssertion"))
-
-#define AssertArg(condition) \
-		Trap(!(condition), "BadArgument")
-
-#define AssertState(condition) \
-		Trap(!(condition), "BadState")
-#endif   /* USE_ASSERT_CHECKING */
 
 extern void ExceptionalCondition(const char *conditionName,
 					 const char *errorType,
