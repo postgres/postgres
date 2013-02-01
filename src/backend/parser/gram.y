@@ -164,6 +164,7 @@ static void SplitColQualList(List *qualList,
 static void processCASbits(int cas_bits, int location, const char *constrType,
 			   bool *deferrable, bool *initdeferred, bool *not_valid,
 			   bool *no_inherit, core_yyscan_t yyscanner);
+static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 %}
 
@@ -7839,6 +7840,30 @@ ViewStmt: CREATE OptTemp VIEW qualified_name opt_column_list opt_reloptions
 					n->options = $8;
 					$$ = (Node *) n;
 				}
+		| CREATE OptTemp RECURSIVE VIEW qualified_name '(' columnList ')' opt_reloptions
+				AS SelectStmt
+				{
+					ViewStmt *n = makeNode(ViewStmt);
+					n->view = $5;
+					n->view->relpersistence = $2;
+					n->aliases = $7;
+					n->query = makeRecursiveViewSelect(n->view->relname, n->aliases, $11);
+					n->replace = false;
+					n->options = $9;
+					$$ = (Node *) n;
+				}
+		| CREATE OR REPLACE OptTemp RECURSIVE VIEW qualified_name '(' columnList ')' opt_reloptions
+				AS SelectStmt
+				{
+					ViewStmt *n = makeNode(ViewStmt);
+					n->view = $7;
+					n->view->relpersistence = $4;
+					n->aliases = $9;
+					n->query = makeRecursiveViewSelect(n->view->relname, n->aliases, $13);
+					n->replace = true;
+					n->options = $11;
+					$$ = (Node *) n;
+				}
 		;
 
 opt_check_option:
@@ -13568,6 +13593,66 @@ processCASbits(int cas_bits, int location, const char *constrType,
 							constrType),
 					 parser_errposition(location)));
 	}
+}
+
+/*----------
+ * Recursive view transformation
+ *
+ * Convert
+ *
+ *     CREATE RECURSIVE VIEW relname (aliases) AS query
+ *
+ * to
+ *
+ *     CREATE VIEW relname (aliases) AS
+ *         WITH RECURSIVE relname (aliases) AS (query)
+ *         SELECT aliases FROM relname
+ *
+ * Actually, just the WITH ... part, which is then inserted into the original
+ * view definition as the query.
+ * ----------
+ */
+static Node *
+makeRecursiveViewSelect(char *relname, List *aliases, Node *query)
+{
+	SelectStmt *s = makeNode(SelectStmt);
+	WithClause *w = makeNode(WithClause);
+	CommonTableExpr *cte = makeNode(CommonTableExpr);
+	List	   *tl = NIL;
+	ListCell   *lc;
+
+	/* create common table expression */
+	cte->ctename = relname;
+	cte->aliascolnames = aliases;
+	cte->ctequery = query;
+	cte->location = -1;
+
+	/* create WITH clause and attach CTE */
+	w->recursive = true;
+	w->ctes = list_make1(cte);
+	w->location = -1;
+
+	/* create target list for the new SELECT from the alias list of the
+	 * recursive view specification */
+	foreach (lc, aliases)
+	{
+		ResTarget *rt = makeNode(ResTarget);
+
+		rt->name = NULL;
+		rt->indirection = NIL;
+		rt->val = makeColumnRef(strVal(lfirst(lc)), NIL, -1, 0);
+		rt->location = -1;
+
+		tl = lappend(tl, rt);
+	}
+
+	/* create new SELECT combining WITH clause, target list, and fake FROM
+	 * clause */
+	s->withClause = w;
+	s->targetList = tl;
+	s->fromClause = list_make1(makeRangeVar(NULL, relname, -1));
+
+	return (Node *) s;
 }
 
 /* parser_init()

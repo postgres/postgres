@@ -49,6 +49,36 @@ SELECT * FROM t;
  5
 (5 rows)
 
+-- recursive view
+CREATE RECURSIVE VIEW nums (n) AS
+    VALUES (1)
+UNION ALL
+    SELECT n+1 FROM nums WHERE n < 5;
+SELECT * FROM nums;
+ n 
+---
+ 1
+ 2
+ 3
+ 4
+ 5
+(5 rows)
+
+CREATE OR REPLACE RECURSIVE VIEW nums (n) AS
+    VALUES (1)
+UNION ALL
+    SELECT n+1 FROM nums WHERE n < 6;
+SELECT * FROM nums;
+ n 
+---
+ 1
+ 2
+ 3
+ 4
+ 5
+ 6
+(6 rows)
+
 -- This is an infinite loop with UNION ALL, but not with UNION
 WITH RECURSIVE t(n) AS (
     SELECT 1
