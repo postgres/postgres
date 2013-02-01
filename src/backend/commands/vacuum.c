@@ -449,7 +449,7 @@ vacuum_set_xid_limits(int freeze_min_age,
 		 * VACUUM schedule, the nightly VACUUM gets a chance to freeze tuples
 		 * before anti-wraparound autovacuum is launched.
 		 */
-		freezetable = freeze_min_age;
+		freezetable = freeze_table_age;
 		if (freezetable < 0)
 			freezetable = vacuum_freeze_table_age;
 		freezetable = Min(freezetable, autovacuum_freeze_max_age * 0.95);
