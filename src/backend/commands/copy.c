@@ -1996,36 +1996,32 @@ CopyFrom(CopyState cstate)
 		hi_options |= HEAP_INSERT_SKIP_FSM;
 		if (!XLogIsNeeded())
 			hi_options |= HEAP_INSERT_SKIP_WAL;
-
-		/*
-		 * Optimize if new relfilenode was created in this subxact or
-		 * one of its committed children and we won't see those rows later
-		 * as part of an earlier scan or command. This ensures that if this
-		 * subtransaction aborts then the frozen rows won't be visible
-		 * after xact cleanup. Note that the stronger test of exactly
-		 * which subtransaction created it is crucial for correctness
-		 * of this optimisation.
-		 */
-		if (cstate->freeze)
-		{
-			if (!ThereAreNoPriorRegisteredSnapshots() || !ThereAreNoReadyPortals())
-				ereport(ERROR,
-						(ERRCODE_INVALID_TRANSACTION_STATE,
-						errmsg("cannot perform FREEZE because of prior transaction activity")));
-
-			if (cstate->rel->rd_createSubid == GetCurrentSubTransactionId() ||
-				cstate->rel->rd_newRelfilenodeSubid == GetCurrentSubTransactionId())
-				hi_options |= HEAP_INSERT_FROZEN;
-			else
-				ereport(ERROR,
-						(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE,
-						errmsg("cannot perform FREEZE because of transaction activity after table creation or truncation")));
-		}
 	}
-	else if (cstate->freeze)
-		ereport(ERROR,
-				(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE,
-				 errmsg("cannot perform FREEZE because the table was not created or truncated in the current transaction")));
+
+	/*
+	 * Optimize if new relfilenode was created in this subxact or
+	 * one of its committed children and we won't see those rows later
+	 * as part of an earlier scan or command. This ensures that if this
+	 * subtransaction aborts then the frozen rows won't be visible
+	 * after xact cleanup. Note that the stronger test of exactly
+	 * which subtransaction created it is crucial for correctness
+	 * of this optimisation.
+	 */
+	if (cstate->freeze)
+	{
+		if (!ThereAreNoPriorRegisteredSnapshots() || !ThereAreNoReadyPortals())
+			ereport(ERROR,
+					(ERRCODE_INVALID_TRANSACTION_STATE,
+					errmsg("cannot perform FREEZE because of prior transaction activity")));
+
+		if (cstate->rel->rd_createSubid != GetCurrentSubTransactionId() &&
+			cstate->rel->rd_newRelfilenodeSubid != GetCurrentSubTransactionId())
+			ereport(ERROR,
+					(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE,
+					 errmsg("cannot perform FREEZE because the table was not created or truncated in the current subtransaction")));
+
+		hi_options |= HEAP_INSERT_FROZEN;
+	}
 
 	/*
 	 * We need a ResultRelInfo so we can use the regular executor's
