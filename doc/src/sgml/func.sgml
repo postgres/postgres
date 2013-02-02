@@ -4981,7 +4981,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
     will never match the newline character
     (so that matches will never cross newlines unless the RE
     explicitly arranges it)
-    and <literal>^</>and <literal>$</>
+    and <literal>^</> and <literal>$</>
     will match the empty string after and before a newline
     respectively, in addition to matching at beginning and end of string
     respectively.
