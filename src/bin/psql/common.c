@@ -607,9 +607,6 @@ PrintQueryTuples(const PGresult *results)
 
 		pset.queryFout = queryFout_copy;
 		pset.queryFoutPipe = queryFoutPipe_copy;
-
-		free(pset.gfname);
-		pset.gfname = NULL;
 	}
 	else
 		printQuery(results, &my_popt, pset.queryFout, pset.logfile);
@@ -835,14 +832,14 @@ SendQuery(const char *query)
 	PGresult   *results;
 	PGTransactionStatusType transaction_status;
 	double		elapsed_msec = 0;
-	bool		OK,
-				on_error_rollback_savepoint = false;
+	bool		OK = false;
+	bool		on_error_rollback_savepoint = false;
 	static bool on_error_rollback_warning = false;
 
 	if (!pset.db)
 	{
 		psql_error("You are currently not connected to a database.\n");
-		return false;
+		goto sendquery_cleanup;
 	}
 
 	if (pset.singlestep)
@@ -856,7 +853,7 @@ SendQuery(const char *query)
 		fflush(stdout);
 		if (fgets(buf, sizeof(buf), stdin) != NULL)
 			if (buf[0] == 'x')
-				return false;
+				goto sendquery_cleanup;
 	}
 	else if (pset.echo == PSQL_ECHO_QUERIES)
 	{
@@ -887,7 +884,7 @@ SendQuery(const char *query)
 			psql_error("%s", PQerrorMessage(pset.db));
 			PQclear(results);
 			ResetCancelConn();
-			return false;
+			goto sendquery_cleanup;
 		}
 		PQclear(results);
 		transaction_status = PQtransactionStatus(pset.db);
@@ -912,7 +909,7 @@ SendQuery(const char *query)
 				psql_error("%s", PQerrorMessage(pset.db));
 				PQclear(results);
 				ResetCancelConn();
-				return false;
+				goto sendquery_cleanup;
 			}
 			PQclear(results);
 			on_error_rollback_savepoint = true;
@@ -1008,10 +1005,11 @@ SendQuery(const char *query)
 			{
 				psql_error("%s", PQerrorMessage(pset.db));
 				PQclear(svptres);
+				OK = false;
 
 				PQclear(results);
 				ResetCancelConn();
-				return false;
+				goto sendquery_cleanup;
 			}
 			PQclear(svptres);
 		}
@@ -1036,6 +1034,17 @@ SendQuery(const char *query)
 	}
 
 	PrintNotifications();
+
+	/* perform cleanup that should occur after any attempted query */
+
+sendquery_cleanup:
+
+	/* reset \g's output-to-filename trigger */
+	if (pset.gfname)
+	{
+		free(pset.gfname);
+		pset.gfname = NULL;
+	}
 
 	return OK;
 }
@@ -1218,9 +1227,6 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 
 		pset.queryFout = queryFout_copy;
 		pset.queryFoutPipe = queryFoutPipe_copy;
-
-		free(pset.gfname);
-		pset.gfname = NULL;
 	}
 	else if (did_pager)
 	{

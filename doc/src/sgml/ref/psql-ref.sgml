@@ -1608,9 +1608,13 @@ Tue Oct 26 21:40:57 CEST 1999
         optionally stores the query's output in <replaceable
         class="parameter">filename</replaceable> or pipes the output
         into a separate Unix shell executing <replaceable
-        class="parameter">command</replaceable>. A bare
-        <literal>\g</literal> is virtually equivalent to a semicolon. A
-        <literal>\g</literal> with argument is a <quote>one-shot</quote>
+        class="parameter">command</replaceable>.  The file or command is
+        written to only if the query successfully returns zero or more tuples,
+        not if the query fails or is a non-data-returning SQL command.
+        </para>
+        <para>
+        A bare <literal>\g</literal> is essentially equivalent to a semicolon.
+        A <literal>\g</literal> with argument is a <quote>one-shot</quote>
         alternative to the <command>\o</command> command.
         </para>
         </listitem>

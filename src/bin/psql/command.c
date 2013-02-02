@@ -731,7 +731,7 @@ exec_command(const char *cmd,
 		free(fname);
 	}
 
-	/* \g means send query */
+	/* \g [filename] means send query, optionally with output to file/pipe */
 	else if (strcmp(cmd, "g") == 0)
 	{
 		char	   *fname = psql_scan_slash_option(scan_state,
