@@ -165,13 +165,14 @@ slashUsage(unsigned short int pager)
 
 	currdb = PQdb(pset.db);
 
-	output = PageOutput(94, pager);
+	output = PageOutput(95, pager);
 
 	/* if you add/remove a line here, change the row count above */
 
 	fprintf(output, _("General\n"));
 	fprintf(output, _("  \\copyright             show PostgreSQL usage and distribution terms\n"));
 	fprintf(output, _("  \\g [FILE] or ;         execute query (and send results to file or |pipe)\n"));
+	fprintf(output, _("  \\gset [PREFIX]         execute query and store results in psql variables\n"));
 	fprintf(output, _("  \\h [NAME]              help on syntax of SQL commands, * for all commands\n"));
 	fprintf(output, _("  \\q                     quit psql\n"));
 	fprintf(output, "\n");
@@ -261,7 +262,7 @@ slashUsage(unsigned short int pager)
 				currdb);
 	else
 		fprintf(output, _("  \\c[onnect] [DBNAME|- USER|- HOST|- PORT|-]\n"
-						  "                         connect to new database (currently no connection)\n")),
+						  "                         connect to new database (currently no connection)\n"));
 	fprintf(output, _("  \\encoding [ENCODING]   show or set client encoding\n"));
 	fprintf(output, _("  \\password [USERNAME]   securely change the password for a user\n"));
 	fprintf(output, _("  \\conninfo              display information about current connection\n"));

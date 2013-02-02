@@ -1621,6 +1621,46 @@ Tue Oct 26 21:40:57 CEST 1999
       </varlistentry>
 
       <varlistentry>
+        <term><literal>\gset</literal> [ <replaceable class="parameter">prefix</replaceable> ]</term>
+
+        <listitem>
+        <para>
+         Sends the current query input buffer to the server and stores the
+         query's output into <application>psql</> variables (see <xref
+         linkend="APP-PSQL-variables" endterm="APP-PSQL-variables-title">).
+         The query to be executed must return exactly one row.  Each column of
+         the row is stored into a separate variable, named the same as the
+         column.  For example:
+<programlisting>
+=&gt; <userinput>SELECT 'hello' AS var1, 10 AS var2</userinput>
+-&gt; <userinput>\gset</userinput>
+=&gt; <userinput>\echo :var1 :var2</userinput>
+hello 10
+</programlisting>
+        </para>
+        <para>
+         If you specify a <replaceable class="parameter">prefix</replaceable>,
+         that string is prepended to the query's column names to create the
+         variable names to use:
+<programlisting>
+=&gt; <userinput>SELECT 'hello' AS var1, 10 AS var2</userinput>
+-&gt; <userinput>\gset result_</userinput>
+=&gt; <userinput>\echo :result_var1 :result_var2</userinput>
+hello 10
+</programlisting>
+        </para>
+        <para>
+         If a column result is NULL, the corresponding variable is unset
+         rather than being set.
+        </para>
+        <para>
+         If the query fails or does not return one row,
+         no variables are changed.
+        </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term><literal>\h</literal> or <literal>\help</literal> <literal>[ <replaceable class="parameter">command</replaceable> ]</literal></term>
         <listitem>
         <para>

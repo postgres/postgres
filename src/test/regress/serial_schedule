@@ -95,8 +95,9 @@ test: prepared_xacts
 test: privileges
 test: security_label
 test: collate
-test: misc
 test: alter_generic
+test: misc
+test: psql
 test: rules
 test: event_trigger
 test: select_views
