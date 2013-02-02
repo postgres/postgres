@@ -1631,7 +1631,12 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"vacuum_defer_cleanup_age", PGC_SIGHUP, WAL_REPLICATION,
+		/*
+		 * Setting this to a higher value without restarting postmaster
+		 * can cause various bugs in TOAST object removal, CLUSTER and
+		 * possibly other places, so this must be changed only on restart.
+		 */
+		{"vacuum_defer_cleanup_age", PGC_POSTMASTER, WAL_REPLICATION,
 			gettext_noop("Number of transactions by which VACUUM and HOT cleanup should be deferred, if any."),
 			NULL
 		},
