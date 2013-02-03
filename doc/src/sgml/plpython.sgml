@@ -956,6 +956,17 @@ foo = rv[i]["my_column"]
          </para>
         </listitem>
        </varlistentry>
+
+       <varlistentry>
+        <term><literal><function>__str__</function>()</literal></term>
+        <listitem>
+         <para>
+          The standard <literal>__str__</literal> method is defined so that it
+          is possible for example to debug query execution results
+          using <literal>plpy.debug(rv)</literal>.
+         </para>
+        </listitem>
+       </varlistentry>
       </variablelist>
      </para>
 

@@ -22,6 +22,7 @@ static Py_ssize_t PLy_result_length(PyObject *arg);
 static PyObject *PLy_result_item(PyObject *arg, Py_ssize_t idx);
 static PyObject *PLy_result_slice(PyObject *arg, Py_ssize_t lidx, Py_ssize_t hidx);
 static int	PLy_result_ass_slice(PyObject *arg, Py_ssize_t lidx, Py_ssize_t hidx, PyObject *slice);
+static PyObject *PLy_result_str(PyObject *arg);
 static PyObject *PLy_result_subscript(PyObject *arg, PyObject *item);
 static int	PLy_result_ass_subscript(PyObject *self, PyObject *item, PyObject *value);
 
@@ -74,7 +75,7 @@ static PyTypeObject PLy_ResultType = {
 	&PLy_result_as_mapping,		/* tp_as_mapping */
 	0,							/* tp_hash */
 	0,							/* tp_call */
-	0,							/* tp_str */
+	&PLy_result_str,			/* tp_str */
 	0,							/* tp_getattro */
 	0,							/* tp_setattro */
 	0,							/* tp_as_buffer */
@@ -246,6 +247,26 @@ PLy_result_ass_slice(PyObject *arg, Py_ssize_t lidx, Py_ssize_t hidx, PyObject *
 
 	rv = PyList_SetSlice(ob->rows, lidx, hidx, slice);
 	return rv;
+}
+
+static PyObject *
+PLy_result_str(PyObject *arg)
+{
+	PLyResultObject *ob = (PLyResultObject *) arg;
+
+#if PY_MAJOR_VERSION >= 3
+	return PyUnicode_FromFormat("<%s status=%S nrows=%S rows=%S>",
+								Py_TYPE(ob)->tp_name,
+								ob->status,
+								ob->nrows,
+								ob->rows);
+#else
+	return PyString_FromFormat("<%s status=%ld nrows=%ld rows=%s>",
+							   ob->ob_type->tp_name,
+							   PyInt_AsLong(ob->status),
+							   PyInt_AsLong(ob->nrows),
+							   PyString_AsString(PyObject_Str(ob->rows)));
+#endif
 }
 
 static PyObject *
