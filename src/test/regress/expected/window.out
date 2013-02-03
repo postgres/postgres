@@ -950,9 +950,11 @@ SELECT * FROM v_window;
 (10 rows)
 
 SELECT pg_get_viewdef('v_window');
-                                                         pg_get_viewdef                                                          
----------------------------------------------------------------------------------------------------------------------------------
- SELECT i.i, sum(i.i) OVER (ORDER BY i.i ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS sum_rows FROM generate_series(1, 10) i(i);
+                                    pg_get_viewdef                                     
+---------------------------------------------------------------------------------------
+  SELECT i.i,                                                                         +
+     sum(i.i) OVER (ORDER BY i.i ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS sum_rows+
+    FROM generate_series(1, 10) i(i);
 (1 row)
 
 -- with UNION

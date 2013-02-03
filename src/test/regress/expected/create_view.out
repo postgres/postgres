@@ -312,7 +312,9 @@ CREATE VIEW aliased_view_4 AS
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT tt1.f1, tt1.f2, tt1.f3
+ SELECT tt1.f1, 
+    tt1.f2, 
+    tt1.f3
    FROM tt1
   WHERE (EXISTS ( SELECT 1
            FROM tx1
@@ -326,7 +328,9 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT a1.f1, a1.f2, a1.f3
+ SELECT a1.f1, 
+    a1.f2, 
+    a1.f3
    FROM tt1 a1
   WHERE (EXISTS ( SELECT 1
            FROM tx1
@@ -340,7 +344,9 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT tt1.f1, tt1.f2, tt1.f3
+ SELECT tt1.f1, 
+    tt1.f2, 
+    tt1.f3
    FROM tt1
   WHERE (EXISTS ( SELECT 1
            FROM tx1 a2
@@ -354,7 +360,9 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT tt1.y1, tt1.f2, tt1.f3
+ SELECT tt1.y1, 
+    tt1.f2, 
+    tt1.f3
    FROM temp_view_test.tt1
   WHERE (EXISTS ( SELECT 1
            FROM tt1 tt1_1
@@ -369,7 +377,9 @@ ALTER TABLE tx1 RENAME TO a1;
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT tt1.f1, tt1.f2, tt1.f3
+ SELECT tt1.f1, 
+    tt1.f2, 
+    tt1.f3
    FROM tt1
   WHERE (EXISTS ( SELECT 1
            FROM a1
@@ -383,7 +393,9 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT a1.f1, a1.f2, a1.f3
+ SELECT a1.f1, 
+    a1.f2, 
+    a1.f3
    FROM tt1 a1
   WHERE (EXISTS ( SELECT 1
            FROM a1 a1_1
@@ -397,7 +409,9 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT tt1.f1, tt1.f2, tt1.f3
+ SELECT tt1.f1, 
+    tt1.f2, 
+    tt1.f3
    FROM tt1
   WHERE (EXISTS ( SELECT 1
            FROM a1 a2
@@ -411,7 +425,9 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT tt1.y1, tt1.f2, tt1.f3
+ SELECT tt1.y1, 
+    tt1.f2, 
+    tt1.f3
    FROM temp_view_test.tt1
   WHERE (EXISTS ( SELECT 1
            FROM tt1 tt1_1
@@ -426,7 +442,9 @@ ALTER TABLE tt1 RENAME TO a2;
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT a2.f1, a2.f2, a2.f3
+ SELECT a2.f1, 
+    a2.f2, 
+    a2.f3
    FROM a2
   WHERE (EXISTS ( SELECT 1
            FROM a1
@@ -440,7 +458,9 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT a1.f1, a1.f2, a1.f3
+ SELECT a1.f1, 
+    a1.f2, 
+    a1.f3
    FROM a2 a1
   WHERE (EXISTS ( SELECT 1
            FROM a1 a1_1
@@ -454,7 +474,9 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT a2.f1, a2.f2, a2.f3
+ SELECT a2.f1, 
+    a2.f2, 
+    a2.f3
    FROM a2
   WHERE (EXISTS ( SELECT 1
            FROM a1 a2_1
@@ -468,7 +490,9 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT tt1.y1, tt1.f2, tt1.f3
+ SELECT tt1.y1, 
+    tt1.f2, 
+    tt1.f3
    FROM temp_view_test.tt1
   WHERE (EXISTS ( SELECT 1
            FROM a2
@@ -483,7 +507,9 @@ ALTER TABLE a1 RENAME TO tt1;
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT a2.f1, a2.f2, a2.f3
+ SELECT a2.f1, 
+    a2.f2, 
+    a2.f3
    FROM a2
   WHERE (EXISTS ( SELECT 1
            FROM tt1
@@ -497,7 +523,9 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT a1.f1, a1.f2, a1.f3
+ SELECT a1.f1, 
+    a1.f2, 
+    a1.f3
    FROM a2 a1
   WHERE (EXISTS ( SELECT 1
            FROM tt1
@@ -511,7 +539,9 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT a2.f1, a2.f2, a2.f3
+ SELECT a2.f1, 
+    a2.f2, 
+    a2.f3
    FROM a2
   WHERE (EXISTS ( SELECT 1
            FROM tt1 a2_1
@@ -525,7 +555,9 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT tt1.y1, tt1.f2, tt1.f3
+ SELECT tt1.y1, 
+    tt1.f2, 
+    tt1.f3
    FROM temp_view_test.tt1
   WHERE (EXISTS ( SELECT 1
            FROM a2
@@ -541,7 +573,9 @@ ALTER TABLE tx1 SET SCHEMA temp_view_test;
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT tx1.f1, tx1.f2, tx1.f3
+ SELECT tx1.f1, 
+    tx1.f2, 
+    tx1.f3
    FROM temp_view_test.tx1
   WHERE (EXISTS ( SELECT 1
            FROM tt1
@@ -555,7 +589,9 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT a1.f1, a1.f2, a1.f3
+ SELECT a1.f1, 
+    a1.f2, 
+    a1.f3
    FROM temp_view_test.tx1 a1
   WHERE (EXISTS ( SELECT 1
            FROM tt1
@@ -569,7 +605,9 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT tx1.f1, tx1.f2, tx1.f3
+ SELECT tx1.f1, 
+    tx1.f2, 
+    tx1.f3
    FROM temp_view_test.tx1
   WHERE (EXISTS ( SELECT 1
            FROM tt1 a2
@@ -583,7 +621,9 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT tt1.y1, tt1.f2, tt1.f3
+ SELECT tt1.y1, 
+    tt1.f2, 
+    tt1.f3
    FROM temp_view_test.tt1
   WHERE (EXISTS ( SELECT 1
            FROM temp_view_test.tx1
@@ -600,7 +640,9 @@ ALTER TABLE tmp1 RENAME TO tx1;
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT tx1.f1, tx1.f2, tx1.f3
+ SELECT tx1.f1, 
+    tx1.f2, 
+    tx1.f3
    FROM temp_view_test.tx1
   WHERE (EXISTS ( SELECT 1
            FROM tt1
@@ -614,7 +656,9 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT a1.f1, a1.f2, a1.f3
+ SELECT a1.f1, 
+    a1.f2, 
+    a1.f3
    FROM temp_view_test.tx1 a1
   WHERE (EXISTS ( SELECT 1
            FROM tt1
@@ -628,7 +672,9 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT tx1.f1, tx1.f2, tx1.f3
+ SELECT tx1.f1, 
+    tx1.f2, 
+    tx1.f3
    FROM temp_view_test.tx1
   WHERE (EXISTS ( SELECT 1
            FROM tt1 a2
@@ -642,7 +688,9 @@ View definition:
  f2     | integer |           | plain    | 
  f3     | text    |           | extended | 
 View definition:
- SELECT tx1.y1, tx1.f2, tx1.f3
+ SELECT tx1.y1, 
+    tx1.f2, 
+    tx1.f3
    FROM tx1
   WHERE (EXISTS ( SELECT 1
            FROM temp_view_test.tx1 tx1_1
@@ -658,90 +706,132 @@ create view v2 as select * from tt2 join tt3 using (b,c) join tt4 using (b);
 create view v2a as select * from (tt2 join tt3 using (b,c) join tt4 using (b)) j;
 create view v3 as select * from tt2 join tt3 using (b,c) full join tt4 using (b);
 select pg_get_viewdef('v1', true);
-           pg_get_viewdef            
--------------------------------------
-  SELECT tt2.b, tt3.c, tt2.a, tt3.ax+
-    FROM tt2                        +
+      pg_get_viewdef       
+---------------------------
+  SELECT tt2.b,           +
+     tt3.c,               +
+     tt2.a,               +
+     tt3.ax               +
+    FROM tt2              +
     JOIN tt3 USING (b, c);
 (1 row)
 
 select pg_get_viewdef('v1a', true);
         pg_get_viewdef        
 ------------------------------
-  SELECT j.b, j.c, j.a, j.ax +
+  SELECT j.b,                +
+     j.c,                    +
+     j.a,                    +
+     j.ax                    +
     FROM (tt2                +
     JOIN tt3 USING (b, c)) j;
 (1 row)
 
 select pg_get_viewdef('v2', true);
-                   pg_get_viewdef                   
-----------------------------------------------------
-  SELECT tt2.b, tt3.c, tt2.a, tt3.ax, tt4.ay, tt4.q+
-    FROM tt2                                       +
-    JOIN tt3 USING (b, c)                          +
+      pg_get_viewdef      
+--------------------------
+  SELECT tt2.b,          +
+     tt3.c,              +
+     tt2.a,              +
+     tt3.ax,             +
+     tt4.ay,             +
+     tt4.q               +
+    FROM tt2             +
+    JOIN tt3 USING (b, c)+
     JOIN tt4 USING (b);
 (1 row)
 
 select pg_get_viewdef('v2a', true);
-             pg_get_viewdef             
-----------------------------------------
-  SELECT j.b, j.c, j.a, j.ax, j.ay, j.q+
-    FROM (tt2                          +
-    JOIN tt3 USING (b, c)              +
+      pg_get_viewdef       
+---------------------------
+  SELECT j.b,             +
+     j.c,                 +
+     j.a,                 +
+     j.ax,                +
+     j.ay,                +
+     j.q                  +
+    FROM (tt2             +
+    JOIN tt3 USING (b, c) +
     JOIN tt4 USING (b)) j;
 (1 row)
 
 select pg_get_viewdef('v3', true);
-                 pg_get_viewdef                 
-------------------------------------------------
-  SELECT b, tt3.c, tt2.a, tt3.ax, tt4.ay, tt4.q+
-    FROM tt2                                   +
-    JOIN tt3 USING (b, c)                      +
+       pg_get_viewdef        
+-----------------------------
+  SELECT b,                 +
+     tt3.c,                 +
+     tt2.a,                 +
+     tt3.ax,                +
+     tt4.ay,                +
+     tt4.q                  +
+    FROM tt2                +
+    JOIN tt3 USING (b, c)   +
     FULL JOIN tt4 USING (b);
 (1 row)
 
 alter table tt2 add column d int;
 alter table tt2 add column e int;
 select pg_get_viewdef('v1', true);
-           pg_get_viewdef            
--------------------------------------
-  SELECT tt2.b, tt3.c, tt2.a, tt3.ax+
-    FROM tt2                        +
+      pg_get_viewdef       
+---------------------------
+  SELECT tt2.b,           +
+     tt3.c,               +
+     tt2.a,               +
+     tt3.ax               +
+    FROM tt2              +
     JOIN tt3 USING (b, c);
 (1 row)
 
 select pg_get_viewdef('v1a', true);
         pg_get_viewdef        
 ------------------------------
-  SELECT j.b, j.c, j.a, j.ax +
+  SELECT j.b,                +
+     j.c,                    +
+     j.a,                    +
+     j.ax                    +
     FROM (tt2                +
     JOIN tt3 USING (b, c)) j;
 (1 row)
 
 select pg_get_viewdef('v2', true);
-                   pg_get_viewdef                   
-----------------------------------------------------
-  SELECT tt2.b, tt3.c, tt2.a, tt3.ax, tt4.ay, tt4.q+
-    FROM tt2                                       +
-    JOIN tt3 USING (b, c)                          +
+      pg_get_viewdef      
+--------------------------
+  SELECT tt2.b,          +
+     tt3.c,              +
+     tt2.a,              +
+     tt3.ax,             +
+     tt4.ay,             +
+     tt4.q               +
+    FROM tt2             +
+    JOIN tt3 USING (b, c)+
     JOIN tt4 USING (b);
 (1 row)
 
 select pg_get_viewdef('v2a', true);
-             pg_get_viewdef             
-----------------------------------------
-  SELECT j.b, j.c, j.a, j.ax, j.ay, j.q+
-    FROM (tt2                          +
-    JOIN tt3 USING (b, c)              +
+      pg_get_viewdef       
+---------------------------
+  SELECT j.b,             +
+     j.c,                 +
+     j.a,                 +
+     j.ax,                +
+     j.ay,                +
+     j.q                  +
+    FROM (tt2             +
+    JOIN tt3 USING (b, c) +
     JOIN tt4 USING (b)) j;
 (1 row)
 
 select pg_get_viewdef('v3', true);
-                 pg_get_viewdef                 
-------------------------------------------------
-  SELECT b, tt3.c, tt2.a, tt3.ax, tt4.ay, tt4.q+
-    FROM tt2                                   +
-    JOIN tt3 USING (b, c)                      +
+       pg_get_viewdef        
+-----------------------------
+  SELECT b,                 +
+     tt3.c,                 +
+     tt2.a,                 +
+     tt3.ax,                +
+     tt4.ay,                +
+     tt4.q                  +
+    FROM tt2                +
+    JOIN tt3 USING (b, c)   +
     FULL JOIN tt4 USING (b);
 (1 row)
 
@@ -749,7 +839,10 @@ alter table tt3 rename c to d;
 select pg_get_viewdef('v1', true);
              pg_get_viewdef              
 -----------------------------------------
-  SELECT tt2.b, tt3.c, tt2.a, tt3.ax    +
+  SELECT tt2.b,                         +
+     tt3.c,                             +
+     tt2.a,                             +
+     tt3.ax                             +
     FROM tt2                            +
     JOIN tt3 tt3(ax, b, c) USING (b, c);
 (1 row)
@@ -757,35 +850,53 @@ select pg_get_viewdef('v1', true);
 select pg_get_viewdef('v1a', true);
                pg_get_viewdef               
 --------------------------------------------
-  SELECT j.b, j.c, j.a, j.ax               +
+  SELECT j.b,                              +
+     j.c,                                  +
+     j.a,                                  +
+     j.ax                                  +
     FROM (tt2                              +
     JOIN tt3 tt3(ax, b, c) USING (b, c)) j;
 (1 row)
 
 select pg_get_viewdef('v2', true);
-                   pg_get_viewdef                   
-----------------------------------------------------
-  SELECT tt2.b, tt3.c, tt2.a, tt3.ax, tt4.ay, tt4.q+
-    FROM tt2                                       +
-    JOIN tt3 tt3(ax, b, c) USING (b, c)            +
+             pg_get_viewdef             
+----------------------------------------
+  SELECT tt2.b,                        +
+     tt3.c,                            +
+     tt2.a,                            +
+     tt3.ax,                           +
+     tt4.ay,                           +
+     tt4.q                             +
+    FROM tt2                           +
+    JOIN tt3 tt3(ax, b, c) USING (b, c)+
     JOIN tt4 USING (b);
 (1 row)
 
 select pg_get_viewdef('v2a', true);
              pg_get_viewdef             
 ----------------------------------------
-  SELECT j.b, j.c, j.a, j.ax, j.ay, j.q+
+  SELECT j.b,                          +
+     j.c,                              +
+     j.a,                              +
+     j.ax,                             +
+     j.ay,                             +
+     j.q                               +
     FROM (tt2                          +
     JOIN tt3 tt3(ax, b, c) USING (b, c)+
     JOIN tt4 USING (b)) j;
 (1 row)
 
 select pg_get_viewdef('v3', true);
-                 pg_get_viewdef                 
-------------------------------------------------
-  SELECT b, tt3.c, tt2.a, tt3.ax, tt4.ay, tt4.q+
-    FROM tt2                                   +
-    JOIN tt3 tt3(ax, b, c) USING (b, c)        +
+             pg_get_viewdef             
+----------------------------------------
+  SELECT b,                            +
+     tt3.c,                            +
+     tt2.a,                            +
+     tt3.ax,                           +
+     tt4.ay,                           +
+     tt4.q                             +
+    FROM tt2                           +
+    JOIN tt3 tt3(ax, b, c) USING (b, c)+
     FULL JOIN tt4 USING (b);
 (1 row)
 
@@ -794,7 +905,10 @@ alter table tt3 add column e int;
 select pg_get_viewdef('v1', true);
                  pg_get_viewdef                  
 -------------------------------------------------
-  SELECT tt2.b, tt3.c, tt2.a, tt3.ax            +
+  SELECT tt2.b,                                 +
+     tt3.c,                                     +
+     tt2.a,                                     +
+     tt3.ax                                     +
     FROM tt2                                    +
     JOIN tt3 tt3(ax, b, c, c_1, e) USING (b, c);
 (1 row)
@@ -802,24 +916,37 @@ select pg_get_viewdef('v1', true);
 select pg_get_viewdef('v1a', true);
                                  pg_get_viewdef                                  
 ---------------------------------------------------------------------------------
-  SELECT j.b, j.c, j.a, j.ax                                                    +
+  SELECT j.b,                                                                   +
+     j.c,                                                                       +
+     j.a,                                                                       +
+     j.ax                                                                       +
     FROM (tt2                                                                   +
     JOIN tt3 tt3(ax, b, c, c_1, e) USING (b, c)) j(b, c, a, d, e, ax, c_1, e_1);
 (1 row)
 
 select pg_get_viewdef('v2', true);
-                   pg_get_viewdef                   
-----------------------------------------------------
-  SELECT tt2.b, tt3.c, tt2.a, tt3.ax, tt4.ay, tt4.q+
-    FROM tt2                                       +
-    JOIN tt3 tt3(ax, b, c, c_1, e) USING (b, c)    +
+                 pg_get_viewdef                 
+------------------------------------------------
+  SELECT tt2.b,                                +
+     tt3.c,                                    +
+     tt2.a,                                    +
+     tt3.ax,                                   +
+     tt4.ay,                                   +
+     tt4.q                                     +
+    FROM tt2                                   +
+    JOIN tt3 tt3(ax, b, c, c_1, e) USING (b, c)+
     JOIN tt4 USING (b);
 (1 row)
 
 select pg_get_viewdef('v2a', true);
                         pg_get_viewdef                         
 ---------------------------------------------------------------
-  SELECT j.b, j.c, j.a, j.ax, j.ay, j.q                       +
+  SELECT j.b,                                                 +
+     j.c,                                                     +
+     j.a,                                                     +
+     j.ax,                                                    +
+     j.ay,                                                    +
+     j.q                                                      +
     FROM (tt2                                                 +
     JOIN tt3 tt3(ax, b, c, c_1, e) USING (b, c)               +
     JOIN tt4 USING (b)) j(b, c, a, d, e, ax, c_1, e_1, ay, q);
@@ -828,7 +955,12 @@ select pg_get_viewdef('v2a', true);
 select pg_get_viewdef('v3', true);
                  pg_get_viewdef                 
 ------------------------------------------------
-  SELECT b, tt3.c, tt2.a, tt3.ax, tt4.ay, tt4.q+
+  SELECT b,                                    +
+     tt3.c,                                    +
+     tt2.a,                                    +
+     tt3.ax,                                   +
+     tt4.ay,                                   +
+     tt4.q                                     +
     FROM tt2                                   +
     JOIN tt3 tt3(ax, b, c, c_1, e) USING (b, c)+
     FULL JOIN tt4 USING (b);
@@ -838,7 +970,10 @@ alter table tt2 drop column d;
 select pg_get_viewdef('v1', true);
                  pg_get_viewdef                  
 -------------------------------------------------
-  SELECT tt2.b, tt3.c, tt2.a, tt3.ax            +
+  SELECT tt2.b,                                 +
+     tt3.c,                                     +
+     tt2.a,                                     +
+     tt3.ax                                     +
     FROM tt2                                    +
     JOIN tt3 tt3(ax, b, c, c_1, e) USING (b, c);
 (1 row)
@@ -846,24 +981,37 @@ select pg_get_viewdef('v1', true);
 select pg_get_viewdef('v1a', true);
                                 pg_get_viewdef                                
 ------------------------------------------------------------------------------
-  SELECT j.b, j.c, j.a, j.ax                                                 +
+  SELECT j.b,                                                                +
+     j.c,                                                                    +
+     j.a,                                                                    +
+     j.ax                                                                    +
     FROM (tt2                                                                +
     JOIN tt3 tt3(ax, b, c, c_1, e) USING (b, c)) j(b, c, a, e, ax, c_1, e_1);
 (1 row)
 
 select pg_get_viewdef('v2', true);
-                   pg_get_viewdef                   
-----------------------------------------------------
-  SELECT tt2.b, tt3.c, tt2.a, tt3.ax, tt4.ay, tt4.q+
-    FROM tt2                                       +
-    JOIN tt3 tt3(ax, b, c, c_1, e) USING (b, c)    +
+                 pg_get_viewdef                 
+------------------------------------------------
+  SELECT tt2.b,                                +
+     tt3.c,                                    +
+     tt2.a,                                    +
+     tt3.ax,                                   +
+     tt4.ay,                                   +
+     tt4.q                                     +
+    FROM tt2                                   +
+    JOIN tt3 tt3(ax, b, c, c_1, e) USING (b, c)+
     JOIN tt4 USING (b);
 (1 row)
 
 select pg_get_viewdef('v2a', true);
                        pg_get_viewdef                       
 ------------------------------------------------------------
-  SELECT j.b, j.c, j.a, j.ax, j.ay, j.q                    +
+  SELECT j.b,                                              +
+     j.c,                                                  +
+     j.a,                                                  +
+     j.ax,                                                 +
+     j.ay,                                                 +
+     j.q                                                   +
     FROM (tt2                                              +
     JOIN tt3 tt3(ax, b, c, c_1, e) USING (b, c)            +
     JOIN tt4 USING (b)) j(b, c, a, e, ax, c_1, e_1, ay, q);
@@ -872,7 +1020,12 @@ select pg_get_viewdef('v2a', true);
 select pg_get_viewdef('v3', true);
                  pg_get_viewdef                 
 ------------------------------------------------
-  SELECT b, tt3.c, tt2.a, tt3.ax, tt4.ay, tt4.q+
+  SELECT b,                                    +
+     tt3.c,                                    +
+     tt2.a,                                    +
+     tt3.ax,                                   +
+     tt4.ay,                                   +
+     tt4.q                                     +
     FROM tt2                                   +
     JOIN tt3 tt3(ax, b, c, c_1, e) USING (b, c)+
     FULL JOIN tt4 USING (b);
@@ -884,7 +1037,10 @@ create view vv1 as select * from (tt5 cross join tt6) j(aa,bb,cc,dd);
 select pg_get_viewdef('vv1', true);
             pg_get_viewdef            
 --------------------------------------
-  SELECT j.aa, j.bb, j.cc, j.dd      +
+  SELECT j.aa,                       +
+     j.bb,                           +
+     j.cc,                           +
+     j.dd                            +
     FROM (tt5                        +
    CROSS JOIN tt6) j(aa, bb, cc, dd);
 (1 row)
@@ -893,7 +1049,10 @@ alter table tt5 add column c int;
 select pg_get_viewdef('vv1', true);
              pg_get_viewdef              
 -----------------------------------------
-  SELECT j.aa, j.bb, j.cc, j.dd         +
+  SELECT j.aa,                          +
+     j.bb,                              +
+     j.cc,                              +
+     j.dd                               +
     FROM (tt5                           +
    CROSS JOIN tt6) j(aa, bb, c, cc, dd);
 (1 row)
@@ -902,7 +1061,10 @@ alter table tt5 add column cc int;
 select pg_get_viewdef('vv1', true);
                 pg_get_viewdef                 
 -----------------------------------------------
-  SELECT j.aa, j.bb, j.cc, j.dd               +
+  SELECT j.aa,                                +
+     j.bb,                                    +
+     j.cc,                                    +
+     j.dd                                     +
     FROM (tt5                                 +
    CROSS JOIN tt6) j(aa, bb, c, cc_1, cc, dd);
 (1 row)
@@ -911,7 +1073,10 @@ alter table tt5 drop column c;
 select pg_get_viewdef('vv1', true);
                pg_get_viewdef               
 --------------------------------------------
-  SELECT j.aa, j.bb, j.cc, j.dd            +
+  SELECT j.aa,                             +
+     j.bb,                                 +
+     j.cc,                                 +
+     j.dd                                  +
     FROM (tt5                              +
    CROSS JOIN tt6) j(aa, bb, cc_1, cc, dd);
 (1 row)
@@ -925,14 +1090,23 @@ select * from (values(1,2,3,4,5)) v(a,b,c,d,e)
 union all
 select * from tt7 full join tt8 using (x), tt8 tt8x;
 select pg_get_viewdef('vv2', true);
-                               pg_get_viewdef                               
-----------------------------------------------------------------------------
-          SELECT v.a, v.b, v.c, v.d, v.e                                   +
-            FROM ( VALUES (1,2,3,4,5)) v(a, b, c, d, e)                    +
- UNION ALL                                                                 +
-          SELECT x AS a, tt7.y AS b, tt8.z AS c, tt8x.x_1 AS d, tt8x.z AS e+
-            FROM tt7                                                       +
-       FULL JOIN tt8 USING (x), tt8 tt8x(x_1, z);
+                     pg_get_viewdef                     
+--------------------------------------------------------
+          SELECT v.a,                                  +
+             v.b,                                      +
+             v.c,                                      +
+             v.d,                                      +
+             v.e                                       +
+            FROM ( VALUES (1,2,3,4,5)) v(a, b, c, d, e)+
+ UNION ALL                                             +
+          SELECT x AS a,                               +
+             tt7.y AS b,                               +
+             tt8.z AS c,                               +
+             tt8x.x_1 AS d,                            +
+             tt8x.z AS e                               +
+            FROM tt7                                   +
+       FULL JOIN tt8 USING (x),                        +
+        tt8 tt8x(x_1, z);
 (1 row)
 
 create view vv3 as
@@ -942,16 +1116,25 @@ select * from
   tt7 full join tt8 using (x),
   tt7 tt7x full join tt8 tt8x using (x);
 select pg_get_viewdef('vv3', true);
-                             pg_get_viewdef                              
--------------------------------------------------------------------------
-          SELECT v.a, v.b, v.c, v.x, v.e, v.f                           +
-            FROM ( VALUES (1,2,3,4,5,6)) v(a, b, c, x, e, f)            +
- UNION ALL                                                              +
-          SELECT x AS a, tt7.y AS b, tt8.z AS c, x_1 AS x, tt7x.y AS e, +
-             tt8x.z AS f                                                +
-            FROM tt7                                                    +
-       FULL JOIN tt8 USING (x),                                         +
-     tt7 tt7x(x_1, y)                                                   +
+                       pg_get_viewdef                        
+-------------------------------------------------------------
+          SELECT v.a,                                       +
+             v.b,                                           +
+             v.c,                                           +
+             v.x,                                           +
+             v.e,                                           +
+             v.f                                            +
+            FROM ( VALUES (1,2,3,4,5,6)) v(a, b, c, x, e, f)+
+ UNION ALL                                                  +
+          SELECT x AS a,                                    +
+             tt7.y AS b,                                    +
+             tt8.z AS c,                                    +
+             x_1 AS x,                                      +
+             tt7x.y AS e,                                   +
+             tt8x.z AS f                                    +
+            FROM tt7                                        +
+       FULL JOIN tt8 USING (x),                             +
+     tt7 tt7x(x_1, y)                                       +
     FULL JOIN tt8 tt8x(x_1, z) USING (x_1);
 (1 row)
 
@@ -962,17 +1145,28 @@ select * from
   tt7 full join tt8 using (x),
   tt7 tt7x full join tt8 tt8x using (x) full join tt8 tt8y using (x);
 select pg_get_viewdef('vv4', true);
-                             pg_get_viewdef                              
--------------------------------------------------------------------------
-          SELECT v.a, v.b, v.c, v.x, v.e, v.f, v.g                      +
-            FROM ( VALUES (1,2,3,4,5,6,7)) v(a, b, c, x, e, f, g)       +
- UNION ALL                                                              +
-          SELECT x AS a, tt7.y AS b, tt8.z AS c, x_1 AS x, tt7x.y AS e, +
-             tt8x.z AS f, tt8y.z AS g                                   +
-            FROM tt7                                                    +
-       FULL JOIN tt8 USING (x),                                         +
-     tt7 tt7x(x_1, y)                                                   +
-    FULL JOIN tt8 tt8x(x_1, z) USING (x_1)                              +
+                          pg_get_viewdef                          
+------------------------------------------------------------------
+          SELECT v.a,                                            +
+             v.b,                                                +
+             v.c,                                                +
+             v.x,                                                +
+             v.e,                                                +
+             v.f,                                                +
+             v.g                                                 +
+            FROM ( VALUES (1,2,3,4,5,6,7)) v(a, b, c, x, e, f, g)+
+ UNION ALL                                                       +
+          SELECT x AS a,                                         +
+             tt7.y AS b,                                         +
+             tt8.z AS c,                                         +
+             x_1 AS x,                                           +
+             tt7x.y AS e,                                        +
+             tt8x.z AS f,                                        +
+             tt8y.z AS g                                         +
+            FROM tt7                                             +
+       FULL JOIN tt8 USING (x),                                  +
+     tt7 tt7x(x_1, y)                                            +
+    FULL JOIN tt8 tt8x(x_1, z) USING (x_1)                       +
     FULL JOIN tt8 tt8y(x_1, z) USING (x_1);
 (1 row)
 
@@ -981,42 +1175,71 @@ alter table tt7 add column z int;
 alter table tt7 drop column zz;
 alter table tt8 add column z2 int;
 select pg_get_viewdef('vv2', true);
-                               pg_get_viewdef                               
-----------------------------------------------------------------------------
-          SELECT v.a, v.b, v.c, v.d, v.e                                   +
-            FROM ( VALUES (1,2,3,4,5)) v(a, b, c, d, e)                    +
- UNION ALL                                                                 +
-          SELECT x AS a, tt7.y AS b, tt8.z AS c, tt8x.x_1 AS d, tt8x.z AS e+
-            FROM tt7                                                       +
-       FULL JOIN tt8 USING (x), tt8 tt8x(x_1, z, z2);
+                     pg_get_viewdef                     
+--------------------------------------------------------
+          SELECT v.a,                                  +
+             v.b,                                      +
+             v.c,                                      +
+             v.d,                                      +
+             v.e                                       +
+            FROM ( VALUES (1,2,3,4,5)) v(a, b, c, d, e)+
+ UNION ALL                                             +
+          SELECT x AS a,                               +
+             tt7.y AS b,                               +
+             tt8.z AS c,                               +
+             tt8x.x_1 AS d,                            +
+             tt8x.z AS e                               +
+            FROM tt7                                   +
+       FULL JOIN tt8 USING (x),                        +
+        tt8 tt8x(x_1, z, z2);
 (1 row)
 
 select pg_get_viewdef('vv3', true);
-                             pg_get_viewdef                              
--------------------------------------------------------------------------
-          SELECT v.a, v.b, v.c, v.x, v.e, v.f                           +
-            FROM ( VALUES (1,2,3,4,5,6)) v(a, b, c, x, e, f)            +
- UNION ALL                                                              +
-          SELECT x AS a, tt7.y AS b, tt8.z AS c, x_1 AS x, tt7x.y AS e, +
-             tt8x.z AS f                                                +
-            FROM tt7                                                    +
-       FULL JOIN tt8 USING (x),                                         +
-     tt7 tt7x(x_1, y, z)                                                +
+                       pg_get_viewdef                        
+-------------------------------------------------------------
+          SELECT v.a,                                       +
+             v.b,                                           +
+             v.c,                                           +
+             v.x,                                           +
+             v.e,                                           +
+             v.f                                            +
+            FROM ( VALUES (1,2,3,4,5,6)) v(a, b, c, x, e, f)+
+ UNION ALL                                                  +
+          SELECT x AS a,                                    +
+             tt7.y AS b,                                    +
+             tt8.z AS c,                                    +
+             x_1 AS x,                                      +
+             tt7x.y AS e,                                   +
+             tt8x.z AS f                                    +
+            FROM tt7                                        +
+       FULL JOIN tt8 USING (x),                             +
+     tt7 tt7x(x_1, y, z)                                    +
     FULL JOIN tt8 tt8x(x_1, z, z2) USING (x_1);
 (1 row)
 
 select pg_get_viewdef('vv4', true);
-                             pg_get_viewdef                              
--------------------------------------------------------------------------
-          SELECT v.a, v.b, v.c, v.x, v.e, v.f, v.g                      +
-            FROM ( VALUES (1,2,3,4,5,6,7)) v(a, b, c, x, e, f, g)       +
- UNION ALL                                                              +
-          SELECT x AS a, tt7.y AS b, tt8.z AS c, x_1 AS x, tt7x.y AS e, +
-             tt8x.z AS f, tt8y.z AS g                                   +
-            FROM tt7                                                    +
-       FULL JOIN tt8 USING (x),                                         +
-     tt7 tt7x(x_1, y, z)                                                +
-    FULL JOIN tt8 tt8x(x_1, z, z2) USING (x_1)                          +
+                          pg_get_viewdef                          
+------------------------------------------------------------------
+          SELECT v.a,                                            +
+             v.b,                                                +
+             v.c,                                                +
+             v.x,                                                +
+             v.e,                                                +
+             v.f,                                                +
+             v.g                                                 +
+            FROM ( VALUES (1,2,3,4,5,6,7)) v(a, b, c, x, e, f, g)+
+ UNION ALL                                                       +
+          SELECT x AS a,                                         +
+             tt7.y AS b,                                         +
+             tt8.z AS c,                                         +
+             x_1 AS x,                                           +
+             tt7x.y AS e,                                        +
+             tt8x.z AS f,                                        +
+             tt8y.z AS g                                         +
+            FROM tt7                                             +
+       FULL JOIN tt8 USING (x),                                  +
+     tt7 tt7x(x_1, y, z)                                         +
+    FULL JOIN tt8 tt8x(x_1, z, z2) USING (x_1)                   +
     FULL JOIN tt8 tt8y(x_1, z, z2) USING (x_1);
 (1 row)
 

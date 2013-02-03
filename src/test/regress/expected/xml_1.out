@@ -463,10 +463,10 @@ DETAIL:  This functionality requires the server to be built with libxml support.
 HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT table_name, view_definition FROM information_schema.views
   WHERE table_name LIKE 'xmlview%' ORDER BY 1;
- table_name |                                view_definition                                
-------------+-------------------------------------------------------------------------------
- xmlview1   | SELECT xmlcomment('test'::text) AS xmlcomment;
- xmlview5   | SELECT XMLPARSE(CONTENT '<abc>x</abc>'::text STRIP WHITESPACE) AS "xmlparse";
+ table_name |                                view_definition                                 
+------------+--------------------------------------------------------------------------------
+ xmlview1   |  SELECT xmlcomment('test'::text) AS xmlcomment;
+ xmlview5   |  SELECT XMLPARSE(CONTENT '<abc>x</abc>'::text STRIP WHITESPACE) AS "xmlparse";
 (2 rows)
 
 -- Text XPath expressions evaluation

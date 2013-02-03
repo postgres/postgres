@@ -943,9 +943,10 @@ select * from agg_view1;
 (1 row)
 
 select pg_get_viewdef('agg_view1'::regclass);
-                                                                     pg_get_viewdef                                                                     
---------------------------------------------------------------------------------------------------------------------------------------------------------
- SELECT aggfns(v.a, v.b, v.c) AS aggfns FROM (VALUES (1,3,'foo'::text), (0,NULL::integer,NULL::text), (2,2,'bar'::text), (3,1,'baz'::text)) v(a, b, c);
+                                                   pg_get_viewdef                                                    
+---------------------------------------------------------------------------------------------------------------------
+  SELECT aggfns(v.a, v.b, v.c) AS aggfns                                                                            +
+    FROM ( VALUES (1,3,'foo'::text), (0,NULL::integer,NULL::text), (2,2,'bar'::text), (3,1,'baz'::text)) v(a, b, c);
 (1 row)
 
 create or replace view agg_view1 as
@@ -959,9 +960,11 @@ select * from agg_view1;
 (1 row)
 
 select pg_get_viewdef('agg_view1'::regclass);
-                                                                                       pg_get_viewdef                                                                                        
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- SELECT aggfns(DISTINCT v.a, v.b, v.c) AS aggfns FROM (VALUES (1,3,'foo'::text), (0,NULL::integer,NULL::text), (2,2,'bar'::text), (3,1,'baz'::text)) v(a, b, c), generate_series(1, 3) i(i);
+                                                    pg_get_viewdef                                                    
+----------------------------------------------------------------------------------------------------------------------
+  SELECT aggfns(DISTINCT v.a, v.b, v.c) AS aggfns                                                                    +
+    FROM ( VALUES (1,3,'foo'::text), (0,NULL::integer,NULL::text), (2,2,'bar'::text), (3,1,'baz'::text)) v(a, b, c), +
+     generate_series(1, 3) i(i);
 (1 row)
 
 create or replace view agg_view1 as
@@ -975,9 +978,11 @@ select * from agg_view1;
 (1 row)
 
 select pg_get_viewdef('agg_view1'::regclass);
-                                                                                              pg_get_viewdef                                                                                              
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- SELECT aggfns(DISTINCT v.a, v.b, v.c ORDER BY v.b) AS aggfns FROM (VALUES (1,3,'foo'::text), (0,NULL::integer,NULL::text), (2,2,'bar'::text), (3,1,'baz'::text)) v(a, b, c), generate_series(1, 3) i(i);
+                                                    pg_get_viewdef                                                    
+----------------------------------------------------------------------------------------------------------------------
+  SELECT aggfns(DISTINCT v.a, v.b, v.c ORDER BY v.b) AS aggfns                                                       +
+    FROM ( VALUES (1,3,'foo'::text), (0,NULL::integer,NULL::text), (2,2,'bar'::text), (3,1,'baz'::text)) v(a, b, c), +
+     generate_series(1, 3) i(i);
 (1 row)
 
 create or replace view agg_view1 as
@@ -990,9 +995,10 @@ select * from agg_view1;
 (1 row)
 
 select pg_get_viewdef('agg_view1'::regclass);
-                                                                              pg_get_viewdef                                                                               
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- SELECT aggfns(v.a, v.b, v.c ORDER BY (v.b + 1)) AS aggfns FROM (VALUES (1,3,'foo'::text), (0,NULL::integer,NULL::text), (2,2,'bar'::text), (3,1,'baz'::text)) v(a, b, c);
+                                                   pg_get_viewdef                                                    
+---------------------------------------------------------------------------------------------------------------------
+  SELECT aggfns(v.a, v.b, v.c ORDER BY (v.b + 1)) AS aggfns                                                         +
+    FROM ( VALUES (1,3,'foo'::text), (0,NULL::integer,NULL::text), (2,2,'bar'::text), (3,1,'baz'::text)) v(a, b, c);
 (1 row)
 
 create or replace view agg_view1 as
@@ -1005,9 +1011,10 @@ select * from agg_view1;
 (1 row)
 
 select pg_get_viewdef('agg_view1'::regclass);
-                                                                           pg_get_viewdef                                                                            
----------------------------------------------------------------------------------------------------------------------------------------------------------------------
- SELECT aggfns(v.a, v.a, v.c ORDER BY v.b) AS aggfns FROM (VALUES (1,3,'foo'::text), (0,NULL::integer,NULL::text), (2,2,'bar'::text), (3,1,'baz'::text)) v(a, b, c);
+                                                   pg_get_viewdef                                                    
+---------------------------------------------------------------------------------------------------------------------
+  SELECT aggfns(v.a, v.a, v.c ORDER BY v.b) AS aggfns                                                               +
+    FROM ( VALUES (1,3,'foo'::text), (0,NULL::integer,NULL::text), (2,2,'bar'::text), (3,1,'baz'::text)) v(a, b, c);
 (1 row)
 
 create or replace view agg_view1 as
@@ -1020,9 +1027,10 @@ select * from agg_view1;
 (1 row)
 
 select pg_get_viewdef('agg_view1'::regclass);
-                                                                                      pg_get_viewdef                                                                                      
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- SELECT aggfns(v.a, v.b, v.c ORDER BY v.c USING ~<~ NULLS LAST) AS aggfns FROM (VALUES (1,3,'foo'::text), (0,NULL::integer,NULL::text), (2,2,'bar'::text), (3,1,'baz'::text)) v(a, b, c);
+                                                   pg_get_viewdef                                                    
+---------------------------------------------------------------------------------------------------------------------
+  SELECT aggfns(v.a, v.b, v.c ORDER BY v.c USING ~<~ NULLS LAST) AS aggfns                                          +
+    FROM ( VALUES (1,3,'foo'::text), (0,NULL::integer,NULL::text), (2,2,'bar'::text), (3,1,'baz'::text)) v(a, b, c);
 (1 row)
 
 create or replace view agg_view1 as
@@ -1036,9 +1044,11 @@ select * from agg_view1;
 (1 row)
 
 select pg_get_viewdef('agg_view1'::regclass);
-                                                                                                             pg_get_viewdef                                                                                                              
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- SELECT aggfns(DISTINCT v.a, v.b, v.c ORDER BY v.a, v.c USING ~<~ NULLS LAST, v.b) AS aggfns FROM (VALUES (1,3,'foo'::text), (0,NULL::integer,NULL::text), (2,2,'bar'::text), (3,1,'baz'::text)) v(a, b, c), generate_series(1, 2) i(i);
+                                                    pg_get_viewdef                                                    
+----------------------------------------------------------------------------------------------------------------------
+  SELECT aggfns(DISTINCT v.a, v.b, v.c ORDER BY v.a, v.c USING ~<~ NULLS LAST, v.b) AS aggfns                        +
+    FROM ( VALUES (1,3,'foo'::text), (0,NULL::integer,NULL::text), (2,2,'bar'::text), (3,1,'baz'::text)) v(a, b, c), +
+     generate_series(1, 2) i(i);
 (1 row)
 
 drop view agg_view1;
