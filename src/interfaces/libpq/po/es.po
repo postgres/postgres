@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL 8.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-05-29 18:13+0000\n"
+"POT-Creation-Date: 2013-01-29 13:20+0000\n"
 "PO-Revision-Date: 2010-09-24 18:07-0400\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
@@ -55,10 +55,10 @@ msgstr "error en conversión de nombre GSSAPI"
 msgid "SSPI continuation error"
 msgstr "error en continuación de SSPI"
 
-#: fe-auth.c:556 fe-auth.c:630 fe-auth.c:665 fe-auth.c:764 fe-connect.c:1342
-#: fe-connect.c:2630 fe-connect.c:2848 fe-connect.c:3219 fe-connect.c:3228
-#: fe-connect.c:3365 fe-connect.c:3411 fe-connect.c:3429 fe-exec.c:3091
-#: fe-lobj.c:696 fe-protocol2.c:1027 fe-protocol3.c:1421 fe-secure.c:708
+#: fe-auth.c:556 fe-auth.c:630 fe-auth.c:665 fe-auth.c:764 fe-connect.c:1351
+#: fe-connect.c:2639 fe-connect.c:2857 fe-connect.c:3228 fe-connect.c:3237
+#: fe-connect.c:3374 fe-connect.c:3420 fe-connect.c:3438 fe-exec.c:3091
+#: fe-lobj.c:711 fe-protocol2.c:1027 fe-protocol3.c:1421 fe-secure.c:708
 msgid "out of memory\n"
 msgstr "memoria agotada\n"
 
@@ -134,185 +134,192 @@ msgstr ""
 "\t¿Está el servidor en ejecución en el servidor «%s» y aceptando\n"
 "\tconexiones TCP/IP en el puerto %s?\n"
 
-#: fe-connect.c:858
+#: fe-connect.c:848
+#, c-format
+msgid "Unix-domain socket path \"%s\" is too long (maximum %d bytes)\n"
+msgstr ""
+"la ruta del socket de dominio Unix «%s» es demasiado larga (máximo %d "
+"bytes)\n"
+
+#: fe-connect.c:867
 #, c-format
 msgid "could not translate host name \"%s\" to address: %s\n"
 msgstr "no se pudo traducir el nombre «%s» a una dirección: %s\n"
 
-#: fe-connect.c:862
+#: fe-connect.c:871
 #, c-format
 msgid "could not translate Unix-domain socket path \"%s\" to address: %s\n"
 msgstr "no se pudo traducir la ruta del socket Unix «%s» a una dirección: %s\n"
 
-#: fe-connect.c:1069
+#: fe-connect.c:1078
 msgid "invalid connection state, probably indicative of memory corruption\n"
 msgstr ""
 "el estado de conexión no es válido, probablemente por corrupción de memoria\n"
 
-#: fe-connect.c:1112
+#: fe-connect.c:1121
 #, c-format
 msgid "could not create socket: %s\n"
 msgstr "no se pudo crear el socket: %s\n"
 
-#: fe-connect.c:1135
+#: fe-connect.c:1144
 #, c-format
 msgid "could not set socket to non-blocking mode: %s\n"
 msgstr "no se pudo establecer el socket en modo no bloqueante: %s\n"
 
-#: fe-connect.c:1147
+#: fe-connect.c:1156
 #, c-format
 msgid "could not set socket to close-on-exec mode: %s\n"
 msgstr "no se pudo poner el socket en modo close-on-exec: %s\n"
 
-#: fe-connect.c:1234
+#: fe-connect.c:1243
 #, c-format
 msgid "could not get socket error status: %s\n"
 msgstr "no se pudo determinar el estado de error del socket: %s\n"
 
-#: fe-connect.c:1272
+#: fe-connect.c:1281
 #, c-format
 msgid "could not get client address from socket: %s\n"
 msgstr "no se pudo obtener la dirección del cliente desde el socket: %s\n"
 
-#: fe-connect.c:1316
+#: fe-connect.c:1325
 #, c-format
 msgid "could not send SSL negotiation packet: %s\n"
 msgstr "no se pudo enviar el paquete de negociación SSL: %s\n"
 
-#: fe-connect.c:1355
+#: fe-connect.c:1364
 #, c-format
 msgid "could not send startup packet: %s\n"
 msgstr "no se pudo enviar el paquete de inicio: %s\n"
 
-#: fe-connect.c:1425
+#: fe-connect.c:1434
 msgid "server does not support SSL, but SSL was required\n"
 msgstr "el servidor no soporta SSL, pero SSL es requerida\n"
 
-#: fe-connect.c:1451
+#: fe-connect.c:1460
 #, c-format
 msgid "received invalid response to SSL negotiation: %c\n"
 msgstr "se ha recibido una respuesta no válida en la negociación SSL: %c\n"
 
-#: fe-connect.c:1530 fe-connect.c:1563
+#: fe-connect.c:1539 fe-connect.c:1572
 #, c-format
 msgid "expected authentication request from server, but received %c\n"
 msgstr ""
 "se esperaba una petición de autentificación desde el servidor, pero se ha "
 "recibido %c\n"
 
-#: fe-connect.c:1742
+#: fe-connect.c:1751
 #, c-format
 msgid "out of memory allocating GSSAPI buffer (%i)"
 msgstr "memoria agotada creando el búfer GSSAPI (%i)"
 
-#: fe-connect.c:1827
+#: fe-connect.c:1836
 msgid "unexpected message from server during startup\n"
 msgstr "se ha recibido un mensaje inesperado del servidor durante el inicio\n"
 
-#: fe-connect.c:1895
+#: fe-connect.c:1904
 #, c-format
 msgid "invalid connection state %c, probably indicative of memory corruption\n"
 msgstr ""
 "estado de conexión no válido %c, probablemente por corrupción de memoria\n"
 
-#: fe-connect.c:2238 fe-connect.c:2298
+#: fe-connect.c:2247 fe-connect.c:2307
 #, c-format
 msgid "PGEventProc \"%s\" failed during PGEVT_CONNRESET event\n"
 msgstr "PGEventProc «%s» falló durante el evento PGEVT_CONNRESET\n"
 
-#: fe-connect.c:2643
+#: fe-connect.c:2652
 #, c-format
 msgid "invalid LDAP URL \"%s\": scheme must be ldap://\n"
 msgstr "URL LDAP no válida «%s»: el esquema debe ser ldap://\n"
 
-#: fe-connect.c:2658
+#: fe-connect.c:2667
 #, c-format
 msgid "invalid LDAP URL \"%s\": missing distinguished name\n"
 msgstr "URL LDAP no válida «%s»: distinguished name faltante\n"
 
-#: fe-connect.c:2669 fe-connect.c:2722
+#: fe-connect.c:2678 fe-connect.c:2731
 #, c-format
 msgid "invalid LDAP URL \"%s\": must have exactly one attribute\n"
 msgstr "URL LDAP no válida «%s»: debe tener exactamente un atributo\n"
 
-#: fe-connect.c:2679 fe-connect.c:2736
+#: fe-connect.c:2688 fe-connect.c:2745
 #, c-format
 msgid "invalid LDAP URL \"%s\": must have search scope (base/one/sub)\n"
 msgstr ""
 "URL LDAP no válida «%s»: debe tener ámbito de búsqueda (base/one/sub)\n"
 
-#: fe-connect.c:2690
+#: fe-connect.c:2699
 #, c-format
 msgid "invalid LDAP URL \"%s\": no filter\n"
 msgstr "URL LDAP no válida «%s»: no tiene filtro\n"
 
-#: fe-connect.c:2711
+#: fe-connect.c:2720
 #, c-format
 msgid "invalid LDAP URL \"%s\": invalid port number\n"
 msgstr "URL LDAP no válida «%s»: número de puerto no válido\n"
 
-#: fe-connect.c:2745
+#: fe-connect.c:2754
 msgid "could not create LDAP structure\n"
 msgstr "no se pudo crear estructura LDAP\n"
 
-#: fe-connect.c:2787
+#: fe-connect.c:2796
 #, c-format
 msgid "lookup on LDAP server failed: %s\n"
 msgstr "búsqueda en servidor LDAP falló: %s\n"
 
-#: fe-connect.c:2798
+#: fe-connect.c:2807
 msgid "more than one entry found on LDAP lookup\n"
 msgstr "se encontro más de una entrada en búsqueda LDAP\n"
 
-#: fe-connect.c:2799 fe-connect.c:2811
+#: fe-connect.c:2808 fe-connect.c:2820
 msgid "no entry found on LDAP lookup\n"
 msgstr "no se encontró ninguna entrada en búsqueda LDAP\n"
 
-#: fe-connect.c:2822 fe-connect.c:2835
+#: fe-connect.c:2831 fe-connect.c:2844
 msgid "attribute has no values on LDAP lookup\n"
 msgstr "la búsqueda LDAP entregó atributo sin valores\n"
 
-#: fe-connect.c:2887 fe-connect.c:2906 fe-connect.c:3267
+#: fe-connect.c:2896 fe-connect.c:2915 fe-connect.c:3276
 #, c-format
 msgid "missing \"=\" after \"%s\" in connection info string\n"
 msgstr "falta «=» después de «%s» en la cadena de información de la conexión\n"
 
-#: fe-connect.c:2970 fe-connect.c:3349
+#: fe-connect.c:2979 fe-connect.c:3358
 #, c-format
 msgid "invalid connection option \"%s\"\n"
 msgstr "opción de conexión no válida «%s»\n"
 
-#: fe-connect.c:2986 fe-connect.c:3316
+#: fe-connect.c:2995 fe-connect.c:3325
 msgid "unterminated quoted string in connection info string\n"
 msgstr ""
 "cadena de caracteres entre comillas sin terminar en la cadena de información "
 "de conexión\n"
 
-#: fe-connect.c:3029
+#: fe-connect.c:3038
 #, c-format
 msgid "ERROR: service file \"%s\" not found\n"
 msgstr "ERROR: archivo de servicio «%s» no encontrado\n"
 
-#: fe-connect.c:3042
+#: fe-connect.c:3051
 #, c-format
 msgid "ERROR: line %d too long in service file \"%s\"\n"
 msgstr "ERROR: línea %d demasiado larga en archivo de servicio «%s»\n"
 
-#: fe-connect.c:3114 fe-connect.c:3141
+#: fe-connect.c:3123 fe-connect.c:3150
 #, c-format
 msgid "ERROR: syntax error in service file \"%s\", line %d\n"
 msgstr "ERROR: error de sintaxis en archivo de servicio «%s», línea %d\n"
 
-#: fe-connect.c:3597
+#: fe-connect.c:3606
 msgid "connection pointer is NULL\n"
 msgstr "el puntero de conexión es NULL\n"
 
-#: fe-connect.c:3880
+#: fe-connect.c:3889
 #, c-format
 msgid "WARNING: password file \"%s\" is not a plain file\n"
 msgstr "ADVERTENCIA: El archivo de claves «%s» no es un archivo plano\n"
 
-#: fe-connect.c:3889
+#: fe-connect.c:3898
 #, c-format
 msgid ""
 "WARNING: password file \"%s\" has group or world access; permissions should "
@@ -416,56 +423,56 @@ msgstr "no se puede determinar el OID de la función lo_truncate\n"
 msgid "cannot determine OID of function lo_create\n"
 msgstr "no se puede determinar el OID de la función lo_create\n"
 
-#: fe-lobj.c:525 fe-lobj.c:624
+#: fe-lobj.c:525 fe-lobj.c:634
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "no se pudo abrir el archivo «%s»: %s\n"
 
-#: fe-lobj.c:575
+#: fe-lobj.c:580
 #, c-format
 msgid "could not read from file \"%s\": %s\n"
 msgstr "no se pudo leer el archivo «%s»: %s\n"
 
-#: fe-lobj.c:639 fe-lobj.c:663
+#: fe-lobj.c:654 fe-lobj.c:678
 #, c-format
 msgid "could not write to file \"%s\": %s\n"
 msgstr "no se pudo escribir a archivo «%s»: %s\n"
 
-#: fe-lobj.c:744
+#: fe-lobj.c:759
 msgid "query to initialize large object functions did not return data\n"
 msgstr ""
 "la consulta para inicializar las funciones de objetos grandes no devuelve "
 "datos\n"
 
-#: fe-lobj.c:785
+#: fe-lobj.c:800
 msgid "cannot determine OID of function lo_open\n"
 msgstr "no se puede determinar el OID de la función lo_open\n"
 
-#: fe-lobj.c:792
+#: fe-lobj.c:807
 msgid "cannot determine OID of function lo_close\n"
 msgstr "no se puede determinar el OID de la función lo_close\n"
 
-#: fe-lobj.c:799
+#: fe-lobj.c:814
 msgid "cannot determine OID of function lo_creat\n"
 msgstr "no se puede determinar el OID de la función lo_creat\n"
 
-#: fe-lobj.c:806
+#: fe-lobj.c:821
 msgid "cannot determine OID of function lo_unlink\n"
 msgstr "no se puede determinar el OID de la función lo_unlink\n"
 
-#: fe-lobj.c:813
+#: fe-lobj.c:828
 msgid "cannot determine OID of function lo_lseek\n"
 msgstr "no se puede determinar el OID de la función lo_lseek\n"
 
-#: fe-lobj.c:820
+#: fe-lobj.c:835
 msgid "cannot determine OID of function lo_tell\n"
 msgstr "no se puede determinar el OID de la función lo_tell\n"
 
-#: fe-lobj.c:827
+#: fe-lobj.c:842
 msgid "cannot determine OID of function loread\n"
 msgstr "no se puede determinar el OID de la función loread\n"
 
-#: fe-lobj.c:834
+#: fe-lobj.c:849
 msgid "cannot determine OID of function lowrite\n"
 msgstr "no se puede determinar el OID de la función lowrite\n"
 
@@ -686,8 +693,7 @@ msgstr "no se pudo enviar datos al servidor: %s\n"
 
 #: fe-secure.c:701 fe-secure.c:718
 msgid "could not get server common name from server certificate\n"
-msgstr ""
-"no se pudo obtener el common name del certificado del servidor\n"
+msgstr "no se pudo obtener el common name del certificado del servidor\n"
 
 #: fe-secure.c:731
 msgid "SSL certificate's common name contains embedded null\n"

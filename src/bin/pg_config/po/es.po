@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_config (PostgreSQL 8.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-02-22 15:03+0000\n"
+"POT-Creation-Date: 2013-01-29 13:23+0000\n"
 "PO-Revision-Date: 2010-09-24 18:07-0400\n"
 "Last-Translator: Alvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: es <pgsql-es-ayuda@postgresql.org>\n"
@@ -283,27 +283,27 @@ msgstr "no se pudo cambiar el directorio a «%s»"
 msgid "could not read symbolic link \"%s\""
 msgstr "no se pudo leer el enlace simbólico «%s»"
 
-#: ../../port/exec.c:586
+#: ../../port/exec.c:595
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "el proceso hijo terminó con código de salida %d"
 
-#: ../../port/exec.c:590
+#: ../../port/exec.c:599
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "el proceso hijo fue terminado por una excepción 0x%X"
 
-#: ../../port/exec.c:599
+#: ../../port/exec.c:608
 #, c-format
 msgid "child process was terminated by signal %s"
 msgstr "el proceso hijo fue terminado por una señal %s"
 
-#: ../../port/exec.c:602
+#: ../../port/exec.c:611
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "el proceso hijo fue terminado por una señal %d"
 
-#: ../../port/exec.c:606
+#: ../../port/exec.c:615
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "el proceso hijo terminó con código no reconocido %d"

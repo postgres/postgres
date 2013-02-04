@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-02-22 15:00+0000\n"
+"POT-Creation-Date: 2013-01-29 13:19+0000\n"
 "PO-Revision-Date: 2010-09-24 18:07-0400\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
@@ -337,7 +337,7 @@ msgstr "inicializador no permitido en definición de tipo"
 msgid "type \"%s\" is already defined"
 msgstr "el tipo «%s» ya está definido"
 
-#: preproc.y:372 preproc.y:12127 preproc.y:12437 variable.c:584
+#: preproc.y:372 preproc.y:12127 preproc.y:12437 variable.c:588
 msgid "multidimensional arrays for simple data types are not supported"
 msgstr ""
 "los arrays multidimensionales para tipos de datos simples no están soportados"
@@ -539,50 +539,50 @@ msgstr "el indicador para tipo dato simple debe ser simple"
 msgid "unrecognized descriptor item code %d"
 msgstr "código de descriptor de elemento %d no reconocido"
 
-#: variable.c:89 variable.c:112
+#: variable.c:89 variable.c:116
 #, c-format
 msgid "incorrectly formed variable \"%s\""
 msgstr "variable formada incorrectamente «%s»"
 
-#: variable.c:135
+#: variable.c:139
 #, c-format
 msgid "variable \"%s\" is not a pointer"
 msgstr "la variable «%s» no es un puntero"
 
-#: variable.c:138 variable.c:163
+#: variable.c:142 variable.c:167
 #, c-format
 msgid "variable \"%s\" is not a pointer to a structure or a union"
 msgstr "la variable «%s» no es un puntero a una estructura o unión"
 
-#: variable.c:150
+#: variable.c:154
 #, c-format
 msgid "variable \"%s\" is neither a structure nor a union"
 msgstr "la variable «%s» no es una estructura ni una unión"
 
-#: variable.c:160
+#: variable.c:164
 #, c-format
 msgid "variable \"%s\" is not an array"
 msgstr "la variable «%s» no es un array"
 
-#: variable.c:229 variable.c:251
+#: variable.c:233 variable.c:255
 #, c-format
 msgid "variable \"%s\" is not declared"
 msgstr "la variable «%s» no está declarada"
 
-#: variable.c:459
+#: variable.c:463
 msgid "indicator variable must have an integer type"
 msgstr "la variable de un indicador debe ser de algún tipo numérico entero"
 
-#: variable.c:471
+#: variable.c:475
 #, c-format
 msgid "unrecognized data type name \"%s\""
 msgstr "nombre de tipo de datos «%s» no reconocido"
 
-#: variable.c:482 variable.c:490 variable.c:507 variable.c:510
+#: variable.c:486 variable.c:494 variable.c:511 variable.c:514
 msgid "multidimensional arrays are not supported"
 msgstr "los arrays multidimensionales no están soportados"
 
-#: variable.c:499
+#: variable.c:503
 #, c-format
 msgid ""
 "multilevel pointers (more than 2 levels) are not supported; found %d level"
@@ -593,11 +593,11 @@ msgstr[0] ""
 msgstr[1] ""
 "no se soportan los punteros multinivel (más de 2); se encontraron %d niveles"
 
-#: variable.c:504
+#: variable.c:508
 msgid "pointer to pointer is not supported for this data type"
 msgstr "los punteros a puntero no están soportados para este tipo de dato"
 
-#: variable.c:524
+#: variable.c:528
 msgid "multidimensional arrays for structures are not supported"
 msgstr "los arrays multidimensionales para estructuras no están soportados"
 
