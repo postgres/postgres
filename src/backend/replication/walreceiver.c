@@ -47,6 +47,7 @@
 #include <unistd.h>
 
 #include "access/timeline.h"
+#include "access/transam.h"
 #include "access/xlog_internal.h"
 #include "libpq/pqformat.h"
 #include "libpq/pqsignal.h"
@@ -138,7 +139,7 @@ static void XLogWalRcvProcessMsg(unsigned char type, char *buf, Size len);
 static void XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr);
 static void XLogWalRcvFlush(bool dying);
 static void XLogWalRcvSendReply(bool force, bool requestReply);
-static void XLogWalRcvSendHSFeedback(void);
+static void XLogWalRcvSendHSFeedback(bool immed);
 static void ProcessWalSndrMessage(XLogRecPtr walEnd, TimestampTz sendTime);
 
 /* Signal handlers */
@@ -406,6 +407,7 @@ WalReceiverMain(void)
 				{
 					got_SIGHUP = false;
 					ProcessConfigFile(PGC_SIGHUP);
+					XLogWalRcvSendHSFeedback(true);
 				}
 
 				/* Wait a while for data to arrive */
@@ -496,7 +498,7 @@ WalReceiverMain(void)
 					}
 
 					XLogWalRcvSendReply(requestReply, requestReply);
-					XLogWalRcvSendHSFeedback();
+					XLogWalRcvSendHSFeedback(false);
 				}
 			}
 
@@ -1059,46 +1061,60 @@ XLogWalRcvSendReply(bool force, bool requestReply)
 /*
  * Send hot standby feedback message to primary, plus the current time,
  * in case they don't have a watch.
+ *
+ * If the user disables feedback, send one final message to tell sender
+ * to forget about the xmin on this standby.
  */
 static void
-XLogWalRcvSendHSFeedback(void)
+XLogWalRcvSendHSFeedback(bool immed)
 {
 	TimestampTz now;
 	TransactionId nextXid;
 	uint32		nextEpoch;
 	TransactionId xmin;
 	static TimestampTz sendTime = 0;
+	static bool master_has_standby_xmin = false;
 
 	/*
 	 * If the user doesn't want status to be reported to the master, be sure
 	 * to exit before doing anything at all.
 	 */
-	if (wal_receiver_status_interval <= 0 || !hot_standby_feedback)
+	if ((wal_receiver_status_interval <= 0 || !hot_standby_feedback) &&
+		!master_has_standby_xmin)
 		return;
 
 	/* Get current timestamp. */
 	now = GetCurrentTimestamp();
 
-	/*
-	 * Send feedback at most once per wal_receiver_status_interval.
-	 */
-	if (!TimestampDifferenceExceeds(sendTime, now,
+	if (!immed)
+	{
+		/*
+		 * Send feedback at most once per wal_receiver_status_interval.
+		 */
+		if (!TimestampDifferenceExceeds(sendTime, now,
 									wal_receiver_status_interval * 1000))
-		return;
-	sendTime = now;
+			return;
+		sendTime = now;
+	}
 
 	/*
 	 * If Hot Standby is not yet active there is nothing to send. Check this
 	 * after the interval has expired to reduce number of calls.
 	 */
 	if (!HotStandbyActive())
+	{
+		Assert(!master_has_standby_xmin);
 		return;
+	}
 
 	/*
 	 * Make the expensive call to get the oldest xmin once we are certain
 	 * everything else has been checked.
 	 */
-	xmin = GetOldestXmin(true, false);
+	if (hot_standby_feedback)
+		xmin = GetOldestXmin(true, false);
+	else
+		xmin = InvalidTransactionId;
 
 	/*
 	 * Get epoch and adjust if nextXid and oldestXmin are different sides of
@@ -1118,6 +1134,10 @@ XLogWalRcvSendHSFeedback(void)
 	pq_sendint(&reply_message, xmin, 4);
 	pq_sendint(&reply_message, nextEpoch, 4);
 	walrcv_send(reply_message.data, reply_message.len);
+	if (TransactionIdIsValid(xmin))
+		master_has_standby_xmin = true;
+	else
+		master_has_standby_xmin = false;
 }
 
 /*
