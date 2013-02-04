@@ -17,6 +17,7 @@
 #include "access/heapam.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_enum.h"
+#include "catalog/pg_type.h"
 #include "libpq/pqformat.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
@@ -102,6 +103,10 @@ enum_recv(PG_FUNCTION_ARGS)
 	HeapTuple	tup;
 	char	   *name;
 	int			nbytes;
+
+	/* guard against pre-9.3 misdeclaration of enum_recv */
+	if (get_fn_expr_argtype(fcinfo->flinfo, 0) == CSTRINGOID)
+		elog(ERROR, "invalid argument for enum_recv");
 
 	name = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
 

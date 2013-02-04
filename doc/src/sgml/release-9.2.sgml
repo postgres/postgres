@@ -36,6 +36,19 @@
 
     <listitem>
      <para>
+      Prevent execution of <function>enum_recv</> from SQL (Tom Lane)
+     </para>
+
+     <para>
+      The function was misdeclared, allowing a simple SQL command to crash the
+      server.  In principle an attacker might be able to use it to examine the
+      contents of server memory.  Our thanks to Sumit Soni (via Secunia SVCRP)
+      for reporting this issue.  (CVE-2013-0255)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Fix multiple problems in detection of when a consistent database
       state has been reached during WAL replay (Fujii Masao, Heikki
       Linnakangas, Simon Riggs, Andres Freund)
