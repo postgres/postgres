@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpg (PostgreSQL 9.0)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-10-18 20:40+0000\n"
+"POT-Creation-Date: 2013-01-29 13:40+0000\n"
 "PO-Revision-Date: 2012-10-19 10:58+0800\n"
 "Last-Translator: Xiong He <iihero@qq.com>\n"
 "Language-Team: Chinese (Simplified)\n"
@@ -353,7 +353,7 @@ msgstr "在Informix模式中类型名称\"string\" 是被保留的"
 msgid "type \"%s\" is already defined"
 msgstr "已定义类型\"%s\" "
 
-#: preproc.y:553 preproc.y:13930 preproc.y:14251 variable.c:610
+#: preproc.y:553 preproc.y:13930 preproc.y:14251 variable.c:614
 #, c-format
 msgid "multidimensional arrays for simple data types are not supported"
 msgstr "不支持针对简单数据类型的多维数组"
@@ -593,52 +593,52 @@ msgstr "对简单数据类型的指标要简单 "
 msgid "unrecognized descriptor item code %d"
 msgstr "无法识别的描述符成员代码 %d"
 
-#: variable.c:89 variable.c:112
+#: variable.c:89 variable.c:116
 #, c-format
 msgid "incorrectly formed variable \"%s\""
 msgstr "不正确形成的变量 \"%s\""
 
-#: variable.c:135
+#: variable.c:139
 #, c-format
 msgid "variable \"%s\" is not a pointer"
 msgstr "变量\"%s\"不是一个指针"
 
-#: variable.c:138 variable.c:163
+#: variable.c:142 variable.c:167
 #, c-format
 msgid "variable \"%s\" is not a pointer to a structure or a union"
 msgstr "变量\"%s\" 不是一个指向结构或联合的指针"
 
-#: variable.c:150
+#: variable.c:154
 #, c-format
 msgid "variable \"%s\" is neither a structure nor a union"
 msgstr "变量\"%s\"既不是一个结构也不是一个联合"
 
-#: variable.c:160
+#: variable.c:164
 #, c-format
 msgid "variable \"%s\" is not an array"
 msgstr "变量\"%s\"不是一个数组"
 
-#: variable.c:229 variable.c:251
+#: variable.c:233 variable.c:255
 #, c-format
 msgid "variable \"%s\" is not declared"
 msgstr "没有声明变量\"%s\""
 
-#: variable.c:484
+#: variable.c:488
 #, c-format
 msgid "indicator variable must have an integer type"
 msgstr "标记变量必须有一个整数类型"
 
-#: variable.c:496
+#: variable.c:500
 #, c-format
 msgid "unrecognized data type name \"%s\""
 msgstr "无法识别的数据类型名称 \"%s\""
 
-#: variable.c:507 variable.c:515 variable.c:532 variable.c:535
+#: variable.c:511 variable.c:519 variable.c:536 variable.c:539
 #, c-format
 msgid "multidimensional arrays are not supported"
 msgstr "不支持多维数组"
 
-#: variable.c:524
+#: variable.c:528
 #, c-format
 msgid ""
 "multilevel pointers (more than 2 levels) are not supported; found %d level"
@@ -646,12 +646,12 @@ msgid_plural ""
 "multilevel pointers (more than 2 levels) are not supported; found %d levels"
 msgstr[0] "不支持多级指针（超过2级）；找到了%d级指针."
 
-#: variable.c:529
+#: variable.c:533
 #, c-format
 msgid "pointer to pointer is not supported for this data type"
 msgstr "对于这种数据类型不支持指向指针的指针"
 
-#: variable.c:549
+#: variable.c:553
 #, c-format
 msgid "multidimensional arrays for structures are not supported"
 msgstr "不支持结构类型的多维数组"

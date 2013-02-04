@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL 9.2)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-08-06 18:39+0000\n"
+"POT-Creation-Date: 2013-01-29 13:39+0000\n"
 "PO-Revision-Date: 2012-08-06 15:38-0400\n"
 "Last-Translator: Alvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
@@ -173,47 +173,47 @@ msgstr "mientras se modificaba la fila de disparador"
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "abortando una subtransacción que no se ha cerrado"
 
-#: plpy_main.c:100
+#: plpy_main.c:101
 #, c-format
 msgid "Python major version mismatch in session"
 msgstr "las versiones mayores de Python no coinciden en esta sesión"
 
-#: plpy_main.c:101
+#: plpy_main.c:102
 #, c-format
 msgid "This session has previously used Python major version %d, and it is now attempting to use Python major version %d."
 msgstr "Esta sesión ha usado previamente la versión mayor de Python %d, y ahora está intentando usar la versión mayor %d."
 
-#: plpy_main.c:103
+#: plpy_main.c:104
 #, c-format
 msgid "Start a new session to use a different Python major version."
 msgstr "Inicie una nueva sesión para usar una versión mayor de Python diferente."
 
-#: plpy_main.c:118
+#: plpy_main.c:119
 #, c-format
 msgid "untrapped error in initialization"
 msgstr "error no capturado en la inicialización"
 
-#: plpy_main.c:141
+#: plpy_main.c:142
 #, c-format
 msgid "could not import \"__main__\" module"
 msgstr "no se pudo importar el módulo «__main__»"
 
-#: plpy_main.c:146
+#: plpy_main.c:147
 #, c-format
 msgid "could not create globals"
 msgstr "no se pudo crear las globales"
 
-#: plpy_main.c:150
+#: plpy_main.c:151
 #, c-format
 msgid "could not initialize globals"
 msgstr "no se pudo inicializar las globales"
 
-#: plpy_main.c:347
+#: plpy_main.c:351
 #, c-format
 msgid "PL/Python function \"%s\""
 msgstr "función PL/Python «%s»"
 
-#: plpy_main.c:354
+#: plpy_main.c:358
 #, c-format
 msgid "PL/Python anonymous code block"
 msgstr "bloque de código anónimo de PL/Python"
@@ -252,27 +252,27 @@ msgstr "no se pudo desempaquetar los argumentos de plpy.elog"
 msgid "could not parse error message in plpy.elog"
 msgstr "no se pudo analizar el mensaje de error de plpy.elog"
 
-#: plpy_procedure.c:194
+#: plpy_procedure.c:199
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "las funciones disparadoras sólo pueden ser llamadas como disparadores"
 
-#: plpy_procedure.c:199 plpy_typeio.c:406
+#: plpy_procedure.c:204 plpy_typeio.c:406
 #, c-format
 msgid "PL/Python functions cannot return type %s"
 msgstr "las funciones PL/Python no pueden retornar el tipo %s"
 
-#: plpy_procedure.c:281
+#: plpy_procedure.c:286
 #, c-format
 msgid "PL/Python functions cannot accept type %s"
 msgstr "la funciones PL/Python no pueden aceptar el tipo %s"
 
-#: plpy_procedure.c:377
+#: plpy_procedure.c:382
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
 msgstr "no se pudo compilar la función PL/Python «%s»"
 
-#: plpy_procedure.c:380
+#: plpy_procedure.c:385
 #, c-format
 msgid "could not compile anonymous PL/Python code block"
 msgstr "no se pudo compilar el bloque anónimo PL/Python"

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL 9.2)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-08-06 18:46+0000\n"
-"PO-Revision-Date: 2012-08-06 15:36-0400\n"
+"POT-Creation-Date: 2013-01-29 13:46+0000\n"
+"PO-Revision-Date: 2013-01-29 15:42-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: Spanish <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -136,22 +136,22 @@ msgstr ""
 
 #: pg_basebackup.c:124 pg_receivexlog.c:68
 #, c-format
+msgid "  -h, --host=HOSTNAME    database server host or socket directory\n"
+msgstr "  -h, --host=ANFITRIÓN     dirección del servidor o directorio del socket\n"
+
+#: pg_basebackup.c:125 pg_receivexlog.c:69
+#, c-format
+msgid "  -p, --port=PORT        database server port number\n"
+msgstr "  -p, --port=PORT          número de port del servidor\n"
+
+#: pg_basebackup.c:126 pg_receivexlog.c:70
+#, c-format
 msgid ""
 "  -s, --status-interval=INTERVAL\n"
 "                         time between status packets sent to server (in seconds)\n"
 msgstr ""
 "  -s, --status-interval=INTERVALO (segundos)\n"
 "                         tiempo entre envíos de paquetes de estado al servidor\n"
-
-#: pg_basebackup.c:126 pg_receivexlog.c:70
-#, c-format
-msgid "  -h, --host=HOSTNAME    database server host or socket directory\n"
-msgstr "  -h, --host=ANFITRIÓN     dirección del servidor o directorio del socket\n"
-
-#: pg_basebackup.c:127 pg_receivexlog.c:71
-#, c-format
-msgid "  -p, --port=PORT        database server port number\n"
-msgstr "  -p, --port=PORT          número de port del servidor\n"
 
 #: pg_basebackup.c:128 pg_receivexlog.c:72
 #, c-format
@@ -276,12 +276,12 @@ msgstr "%s: no se pudo escribir al archivo «%s»: %s\n"
 msgid "%s: could not close compressed file \"%s\": %s\n"
 msgstr "%s: no se pudo cerrar el archivo comprimido «%s»: %s\n"
 
-#: pg_basebackup.c:648 receivelog.c:157
+#: pg_basebackup.c:648 receivelog.c:157 receivelog.c:630 receivelog.c:639
 #, c-format
 msgid "%s: could not close file \"%s\": %s\n"
 msgstr "%s: no se pudo cerrar el archivo «%s»: %s\n"
 
-#: pg_basebackup.c:659 pg_basebackup.c:754 receivelog.c:468
+#: pg_basebackup.c:659 pg_basebackup.c:754 receivelog.c:473
 #, c-format
 msgid "%s: could not read COPY data: %s"
 msgstr "%s: no fue posible leer datos COPY: %s"
@@ -439,8 +439,8 @@ msgstr "%s: no se puede tanto --xlog como --xlog-method\n"
 
 #: pg_basebackup.c:1328
 #, c-format
-msgid "%s: invalid xlog-method option \"%s\", must be empty, \"fetch\", or \"stream\"\n"
-msgstr "%s: opción de xlog-method «%s» no válida, debe ser vacía, «fetch» o «stream»\n"
+msgid "%s: invalid xlog-method option \"%s\", must be \"fetch\" or \"stream\"\n"
+msgstr "%s: opción de xlog-method «%s» no válida, debe ser «fetch» o «stream»\n"
 
 #: pg_basebackup.c:1347
 #, c-format
@@ -562,10 +562,11 @@ msgstr "%s: número de puerto «%s» no válido\n"
 msgid "%s: disconnected.\n"
 msgstr "%s: desconectado.\n"
 
-#: pg_receivexlog.c:439
+#. translator: check source for value for %d
+#: pg_receivexlog.c:440
 #, c-format
-msgid "%s: disconnected. Waiting %d seconds to try again\n"
-msgstr "%s: desconectado. Esperando %d segundos para intentar nuevamente\n"
+msgid "%s: disconnected. Waiting %d seconds to try again.\n"
+msgstr "%s: desconectado. Esperando %d segundos para intentar nuevamente.\n"
 
 #: receivelog.c:72
 #, c-format
@@ -609,8 +610,8 @@ msgstr "%s: no se pudo cambiar el nombre al archivo «%s»: %s\n"
 
 #: receivelog.c:184
 #, c-format
-msgid "%s: not renaming \"%s\", segment is not complete.\n"
-msgstr "%s: no se cambiará el nombre a «%s», el segmento no está completo.\n"
+msgid "%s: not renaming \"%s\", segment is not complete\n"
+msgstr "%s: no se cambiará el nombre a «%s», el segmento no está completo\n"
 
 #: receivelog.c:319
 #, c-format
@@ -627,86 +628,81 @@ msgstr "%s: el timeline no coincide entre el respaldo base y la conexión de flu
 msgid "%s: could not send feedback packet: %s"
 msgstr "%s: no se pudo enviar el paquete de retroalimentación: %s"
 
-#: receivelog.c:449
+#: receivelog.c:454
 #, c-format
 msgid "%s: select() failed: %s\n"
 msgstr "%s: select() falló: %s\n"
 
-#: receivelog.c:457
+#: receivelog.c:462
 #, c-format
 msgid "%s: could not receive data from WAL stream: %s"
 msgstr "%s: no se pudo recibir datos desde el flujo de WAL: %s"
 
-#: receivelog.c:481
+#: receivelog.c:486
 #, c-format
 msgid "%s: keepalive message has incorrect size %d\n"
 msgstr "%s: el mensaje «keepalive» tiene tamaño incorrecto %d\n"
 
-#: receivelog.c:489
+#: receivelog.c:494
 #, c-format
 msgid "%s: unrecognized streaming header: \"%c\"\n"
 msgstr "%s: cabecera de flujo no reconocida: «%c»\n"
 
-#: receivelog.c:495
+#: receivelog.c:500
 #, c-format
 msgid "%s: streaming header too small: %d\n"
 msgstr "%s: cabecera de flujo demasiado pequeña: %d\n"
 
-#: receivelog.c:514
+#: receivelog.c:519
 #, c-format
 msgid "%s: received transaction log record for offset %u with no file open\n"
 msgstr "%s: se recibió un registro transaccional para el desplazamiento %u sin ningún archivo abierto\n"
 
-#: receivelog.c:526
+#: receivelog.c:531
 #, c-format
 msgid "%s: got WAL data offset %08x, expected %08x\n"
 msgstr "%s: se obtuvo desplazamiento de datos WAL %08x, se esperaba %08x\n"
 
-#: receivelog.c:562
+#: receivelog.c:567
 #, c-format
 msgid "%s: could not write %u bytes to WAL file \"%s\": %s\n"
 msgstr "%s: no se pudo escribir %u bytes al archivo WAL «%s»: %s\n"
 
-#: receivelog.c:608
+#: receivelog.c:613
 #, c-format
 msgid "%s: unexpected termination of replication stream: %s"
 msgstr "%s: término inesperado del flujo de replicación: %s"
 
-#: receivelog.c:617
+#: receivelog.c:622
 #, c-format
 msgid "%s: replication stream was terminated before stop point\n"
 msgstr "%s: el flujo de replicación terminó antes del punto de término\n"
 
-#: receivelog.c:625 receivelog.c:634
-#, c-format
-msgid "%s: could not close file %s: %s\n"
-msgstr "%s: no se pudo cerrar el archivo %s: %s\n"
-
-#: streamutil.c:46 streamutil.c:60
+#: streamutil.c:46 streamutil.c:63
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: memoria agotada\n"
 
-#: streamutil.c:139
+#: streamutil.c:142
 msgid "Password: "
 msgstr "Contraseña: "
 
-#: streamutil.c:152
+#: streamutil.c:155
 #, c-format
 msgid "%s: could not connect to server\n"
 msgstr "%s: no se pudo conectar al servidor\n"
 
-#: streamutil.c:168
+#: streamutil.c:171
 #, c-format
 msgid "%s: could not connect to server: %s\n"
 msgstr "%s: no se pudo conectar al servidor: %s\n"
 
-#: streamutil.c:188
+#: streamutil.c:191
 #, c-format
 msgid "%s: could not determine server setting for integer_datetimes\n"
 msgstr "%s: no se pudo determinar la opción integer_datetimes del servidor\n"
 
-#: streamutil.c:201
+#: streamutil.c:204
 #, c-format
 msgid "%s: integer_datetimes compile flag does not match server\n"
 msgstr "%s: la opción de compilación integer_datetimes no coincide con el servidor\n"

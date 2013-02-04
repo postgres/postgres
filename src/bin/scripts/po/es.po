@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL 9.1)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-08-01 05:17+0000\n"
+"POT-Creation-Date: 2013-01-29 13:47+0000\n"
 "PO-Revision-Date: 2012-08-03 13:54-0400\n"
 "Last-Translator: Ávaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: Castellano <pgsql-es-ayuda@postgresql.org>\n"
@@ -551,8 +551,7 @@ msgstr "  -d, --createdb            el rol podrá crear bases de datos\n"
 #: createuser.c:334
 #, c-format
 msgid "  -D, --no-createdb         role cannot create databases (default)\n"
-msgstr ""
-"  -D, --no-createdb         el rol no podrá crear bases de datos (predeterm.)\n"
+msgstr "  -D, --no-createdb         el rol no podrá crear bases de datos (predeterm.)\n"
 
 #: createuser.c:336
 #, c-format
@@ -601,8 +600,7 @@ msgstr "  -r, --createrole          el rol podrá crear otros roles\n"
 #: createuser.c:345
 #, c-format
 msgid "  -R, --no-createrole       role cannot create roles (default)\n"
-msgstr ""
-"  -R, --no-createrole       el rol no podrá crear otros roles (predeterminado)\n"
+msgstr "  -R, --no-createrole       el rol no podrá crear otros roles (predeterminado)\n"
 
 #: createuser.c:346
 #, c-format
@@ -751,8 +749,7 @@ msgstr ""
 #: dropuser.c:163
 #, c-format
 msgid "  --if-exists               don't report error if user doesn't exist\n"
-msgstr ""
-"  --if-exists               no reportar error si el usuario no existe\n"
+msgstr "  --if-exists               no reportar error si el usuario no existe\n"
 
 #: dropuser.c:168
 #, c-format

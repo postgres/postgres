@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.1\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-02-21 16:40+0000\n"
+"POT-Creation-Date: 2013-01-29 13:40+0000\n"
 "PO-Revision-Date: 2012-02-21 22:52-0300\n"
 "Last-Translator: Emanuel Calvo Franco <postgres-arg@gmail.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
@@ -18,13 +18,17 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: connect.c:224
+#: connect.c:231
 msgid "empty message text"
 msgstr "mensaje de texto vacío"
 
-#: connect.c:379 connect.c:405 connect.c:518
+#: connect.c:384 connect.c:413 connect.c:618
 msgid "<DEFAULT>"
 msgstr "<POR OMISIÓN>"
+
+#: descriptor.c:807 misc.c:113
+msgid "NULL"
+msgstr "NULL"
 
 #: error.c:29
 #, c-format
@@ -59,16 +63,12 @@ msgstr "sintaxis de entrada no válida para el tipo entero: «%s», en línea %d
 #: error.c:89
 #, c-format
 msgid "invalid input syntax for type unsigned int: \"%s\", on line %d"
-msgstr ""
-"sintaxis de entrada no válida para el tipo entero sin signo: «%s», en línea "
-"%d"
+msgstr "sintaxis de entrada no válida para el tipo entero sin signo: «%s», en línea %d"
 
 #: error.c:99
 #, c-format
 msgid "invalid input syntax for floating-point type: \"%s\", on line %d"
-msgstr ""
-"sintaxis de entrada no válida para el tipo de coma flotante: «%s», en línea "
-"%d"
+msgstr "sintaxis de entrada no válida para el tipo de coma flotante: «%s», en línea %d"
 
 #: error.c:110
 #, c-format
@@ -78,8 +78,7 @@ msgstr "sintaxis no válida para el tipo booleano: «%s», en línea %d"
 #: error.c:118
 #, c-format
 msgid "could not convert boolean value: size mismatch, on line %d"
-msgstr ""
-"no se puede convertir el valor booleano: tamaño incorrecto, en línea %d"
+msgstr "no se puede convertir el valor booleano: tamaño incorrecto, en línea %d"
 
 #: error.c:128
 #, c-format
@@ -170,10 +169,6 @@ msgstr "se ha perdido la conexión al servidor"
 msgid "SQL error: %s\n"
 msgstr "error SQL: %s\n"
 
-#: execute.c:1919
+#: execute.c:1921
 msgid "<empty>"
 msgstr "<vacío>"
-
-#: misc.c:113
-msgid "NULL"
-msgstr "NULL"
