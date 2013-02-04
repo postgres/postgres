@@ -6,10 +6,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_config (PostgreSQL 9.0)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-10-01 14:40+0000\n"
+"POT-Creation-Date: 2013-01-29 13:56+0000\n"
 "PO-Revision-Date: 2010-10-01 12:43+0800\n"
 "Last-Translator: Weibin <ssmei_2000@yahoo.com>\n"
 "Language-Team: Chinese (Simplified)\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -255,27 +256,27 @@ msgstr "无法进入目录 \"%s\""
 msgid "could not read symbolic link \"%s\""
 msgstr "无法读取符号链结 \"%s\""
 
-#: ../../port/exec.c:516
+#: ../../port/exec.c:525
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "子进程已退出, 退出码为 %d"
 
-#: ../../port/exec.c:520
+#: ../../port/exec.c:529
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "子进程被例外(exception) 0x%X 终止"
 
-#: ../../port/exec.c:529
+#: ../../port/exec.c:538
 #, c-format
 msgid "child process was terminated by signal %s"
 msgstr "子进程被信号 %s 终止"
 
-#: ../../port/exec.c:532
+#: ../../port/exec.c:541
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "子进程被信号 %d 终止"
 
-#: ../../port/exec.c:536
+#: ../../port/exec.c:545
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "子进程已退出, 未知状态 %d"

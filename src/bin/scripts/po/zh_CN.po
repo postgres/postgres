@@ -6,24 +6,25 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL 9.0)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2010-10-01 14:40+0000\n"
+"POT-Creation-Date: 2013-01-29 13:57+0000\n"
 "PO-Revision-Date: 2010-10-01 12:52+0800\n"
 "Last-Translator: Weibin <ssmei_2000@yahoo.com>\n"
 "Language-Team: Chinese (Simplified)\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: createdb.c:114 createdb.c:133 createlang.c:89 createlang.c:110
 #: createlang.c:163 createuser.c:149 createuser.c:164 dropdb.c:83 dropdb.c:92
-#: dropdb.c:100 droplang.c:100 droplang.c:121 droplang.c:175 dropuser.c:83
+#: dropdb.c:100 droplang.c:88 droplang.c:109 droplang.c:163 dropuser.c:83
 #: dropuser.c:98 clusterdb.c:104 clusterdb.c:119 vacuumdb.c:127 vacuumdb.c:142
 #: reindexdb.c:114 reindexdb.c:128
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "请用 \"%s --help\" 获取更多的信息.\n"
 
-#: createdb.c:131 createlang.c:108 createuser.c:162 dropdb.c:98 droplang.c:119
+#: createdb.c:131 createlang.c:108 createuser.c:162 dropdb.c:98 droplang.c:107
 #: dropuser.c:96 clusterdb.c:117 vacuumdb.c:140 reindexdb.c:127
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
@@ -44,17 +45,17 @@ msgstr "%s: 只能指定--locale和--lc-collate这两个选项之一\n"
 msgid "%s: \"%s\" is not a valid encoding name\n"
 msgstr "%s: \"%s\" 不是一个有效的编码名称\n"
 
-#: createdb.c:204
+#: createdb.c:209
 #, c-format
 msgid "%s: database creation failed: %s"
 msgstr "%s: 创建数据库失败: %s"
 
-#: createdb.c:227
+#: createdb.c:229
 #, c-format
 msgid "%s: comment creation failed (database was created): %s"
 msgstr "%s: 创建注释失败 (数据库已创建): %s"
 
-#: createdb.c:244
+#: createdb.c:247
 #, c-format
 msgid ""
 "%s creates a PostgreSQL database.\n"
@@ -63,20 +64,20 @@ msgstr ""
 "%s 创建一个 PostgreSQL 数据库.\n"
 "\n"
 
-#: createdb.c:245 createlang.c:215 createuser.c:300 dropdb.c:140
-#: droplang.c:374 dropuser.c:139 clusterdb.c:236 vacuumdb.c:328
+#: createdb.c:248 createlang.c:223 createuser.c:300 dropdb.c:144
+#: droplang.c:224 dropuser.c:139 clusterdb.c:236 vacuumdb.c:328
 #: reindexdb.c:313
 #, c-format
 msgid "Usage:\n"
 msgstr "使用方法:\n"
 
-#: createdb.c:246
+#: createdb.c:249
 #, c-format
 msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
 msgstr "  %s [选项]... [数据库名称] [描述]\n"
 
-#: createdb.c:247 createlang.c:217 createuser.c:302 dropdb.c:142
-#: droplang.c:376 dropuser.c:141 clusterdb.c:238 vacuumdb.c:330
+#: createdb.c:250 createlang.c:225 createuser.c:302 dropdb.c:146
+#: droplang.c:226 dropuser.c:141 clusterdb.c:238 vacuumdb.c:330
 #: reindexdb.c:315
 #, c-format
 msgid ""
@@ -86,59 +87,59 @@ msgstr ""
 "\n"
 "选项:\n"
 
-#: createdb.c:248
+#: createdb.c:251
 #, c-format
 msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
 msgstr "  -D, --tablespace=TABLESPACE  数据库默认表空间\n"
 
-#: createdb.c:249
+#: createdb.c:252
 #, c-format
 msgid ""
 "  -e, --echo                   show the commands being sent to the server\n"
 msgstr "  -e, --echo                   显示发送到服务端的命令\n"
 
-#: createdb.c:250
+#: createdb.c:253
 #, c-format
 msgid "  -E, --encoding=ENCODING      encoding for the database\n"
 msgstr "  -E, --encoding=ENCODING      数据库编码\n"
 
-#: createdb.c:251
+#: createdb.c:254
 #, c-format
 msgid "  -l, --locale=LOCALE          locale settings for the database\n"
 msgstr "  -O, --owner=OWNER            新数据库的所属用户\n"
 
-#: createdb.c:252
+#: createdb.c:255
 #, c-format
 msgid "      --lc-collate=LOCALE      LC_COLLATE setting for the database\n"
 msgstr "      --lc-collate=LOCALE      数据库的LC_COLLATE设置\n"
 
-#: createdb.c:253
+#: createdb.c:256
 #, c-format
 msgid "      --lc-ctype=LOCALE        LC_CTYPE setting for the database\n"
 msgstr "      --lc-ctype=LOCALE        数据库的LC_CTYPE设置\n"
 
-#: createdb.c:254
+#: createdb.c:257
 #, c-format
 msgid "  -O, --owner=OWNER            database user to own the new database\n"
 msgstr "  -O, --owner=OWNER            新数据库的所属用户\n"
 
-#: createdb.c:255
+#: createdb.c:258
 #, c-format
 msgid "  -T, --template=TEMPLATE      template database to copy\n"
 msgstr "  -T, --template=TEMPLATE      要拷贝的数据库模板\n"
 
-#: createdb.c:256
+#: createdb.c:259
 #, c-format
 msgid "  --help                       show this help, then exit\n"
 msgstr "  --help                       显示此帮助信息, 然后退出\n"
 
-#: createdb.c:257
+#: createdb.c:260
 #, c-format
 msgid "  --version                    output version information, then exit\n"
 msgstr "  --versoin                    输出版本信息, 然后退出\n"
 
-#: createdb.c:258 createlang.c:223 createuser.c:321 dropdb.c:147
-#: droplang.c:382 dropuser.c:146 clusterdb.c:247 vacuumdb.c:343
+#: createdb.c:261 createlang.c:231 createuser.c:321 dropdb.c:151
+#: droplang.c:232 dropuser.c:146 clusterdb.c:247 vacuumdb.c:343
 #: reindexdb.c:325
 #, c-format
 msgid ""
@@ -148,34 +149,34 @@ msgstr ""
 "\n"
 "联接选项:\n"
 
-#: createdb.c:259
+#: createdb.c:262
 #, c-format
 msgid ""
 "  -h, --host=HOSTNAME          database server host or socket directory\n"
 msgstr ""
 "  -h, --host=HOSTNAME          数据库服务器所在机器的主机名或套接字目录\n"
 
-#: createdb.c:260
+#: createdb.c:263
 #, c-format
 msgid "  -p, --port=PORT              database server port\n"
 msgstr "  -p, --port=PORT              数据库服务器端口号\n"
 
-#: createdb.c:261
+#: createdb.c:264
 #, c-format
 msgid "  -U, --username=USERNAME      user name to connect as\n"
 msgstr "  -U, --username=USERNAME      联接的用户名\n"
 
-#: createdb.c:262
+#: createdb.c:265
 #, c-format
 msgid "  -w, --no-password            never prompt for password\n"
 msgstr "  -w, --no-password           永远不提示输入口令\n"
 
-#: createdb.c:263
+#: createdb.c:266
 #, c-format
 msgid "  -W, --password               force password prompt\n"
 msgstr "  -W, --password              强制提示输入口令\n"
 
-#: createdb.c:264
+#: createdb.c:267
 #, c-format
 msgid ""
 "\n"
@@ -184,8 +185,8 @@ msgstr ""
 "\n"
 "默认情况下, 以当前用户的用户名创建数据库.\n"
 
-#: createdb.c:265 createlang.c:229 createuser.c:329 dropdb.c:153
-#: droplang.c:388 dropuser.c:152 clusterdb.c:254 vacuumdb.c:350
+#: createdb.c:268 createlang.c:237 createuser.c:329 dropdb.c:157
+#: droplang.c:238 dropuser.c:152 clusterdb.c:254 vacuumdb.c:350
 #: reindexdb.c:332
 #, c-format
 msgid ""
@@ -195,27 +196,27 @@ msgstr ""
 "\n"
 "臭虫报告至 <pgsql-bugs@postgresql.org>.\n"
 
-#: createlang.c:140 droplang.c:151
+#: createlang.c:140 droplang.c:139
 msgid "Name"
 msgstr "名字"
 
-#: createlang.c:141 droplang.c:152
+#: createlang.c:141 droplang.c:140
 msgid "yes"
 msgstr "yes"
 
-#: createlang.c:141 droplang.c:152
+#: createlang.c:141 droplang.c:140
 msgid "no"
 msgstr "no"
 
-#: createlang.c:142 droplang.c:153
+#: createlang.c:142 droplang.c:141
 msgid "Trusted?"
 msgstr "是否信任?"
 
-#: createlang.c:151 droplang.c:162
+#: createlang.c:151 droplang.c:150
 msgid "Procedural Languages"
 msgstr "过程语言"
 
-#: createlang.c:162 droplang.c:173
+#: createlang.c:162 droplang.c:161
 #, c-format
 msgid "%s: missing required argument language name\n"
 msgstr "%s: 缺少要求的语言名称参数\n"
@@ -225,12 +226,12 @@ msgstr "%s: 缺少要求的语言名称参数\n"
 msgid "%s: language \"%s\" is already installed in database \"%s\"\n"
 msgstr "%1$s: 数据库 \"%3$s\" 中已经安装了语言 \"%2$s\"\n"
 
-#: createlang.c:198
+#: createlang.c:206
 #, c-format
 msgid "%s: language installation failed: %s"
 msgstr "%s: 语言安装失败: %s"
 
-#: createlang.c:214
+#: createlang.c:222
 #, c-format
 msgid ""
 "%s installs a procedural language into a PostgreSQL database.\n"
@@ -239,66 +240,66 @@ msgstr ""
 "%s 安装一个过程语言进 PostgreSQL 数据库.\n"
 "\n"
 
-#: createlang.c:216 droplang.c:375
+#: createlang.c:224 droplang.c:225
 #, c-format
 msgid "  %s [OPTION]... LANGNAME [DBNAME]\n"
 msgstr "  %s [选项]... 语言名称 [数据库名]\n"
 
-#: createlang.c:218
+#: createlang.c:226
 #, c-format
 msgid "  -d, --dbname=DBNAME       database to install language in\n"
 msgstr "  -d, --dbname=DBNAME       要安装语言的数据库\n"
 
-#: createlang.c:219 createuser.c:306 dropdb.c:143 droplang.c:378
+#: createlang.c:227 createuser.c:306 dropdb.c:147 droplang.c:228
 #: dropuser.c:142 clusterdb.c:241 reindexdb.c:318
 #, c-format
 msgid ""
 "  -e, --echo                show the commands being sent to the server\n"
 msgstr "  -e, --echo                显示发送到服务端的命令\n"
 
-#: createlang.c:220 droplang.c:379
+#: createlang.c:228 droplang.c:229
 #, c-format
 msgid ""
 "  -l, --list                show a list of currently installed languages\n"
 msgstr "  -l, --list                显示当前已经安装了的语言列表\n"
 
-#: createlang.c:221 createuser.c:319 dropdb.c:145 droplang.c:380
+#: createlang.c:229 createuser.c:319 dropdb.c:149 droplang.c:230
 #: dropuser.c:144 clusterdb.c:245 reindexdb.c:323
 #, c-format
 msgid "  --help                    show this help, then exit\n"
 msgstr "  --help                    显示此帮助信息, 然后退出\n"
 
-#: createlang.c:222 createuser.c:320 dropdb.c:146 droplang.c:381
+#: createlang.c:230 createuser.c:320 dropdb.c:150 droplang.c:231
 #: dropuser.c:145 clusterdb.c:246 reindexdb.c:324
 #, c-format
 msgid "  --version                 output version information, then exit\n"
 msgstr "  --version                 输出版本信息, 然后退出\n"
 
-#: createlang.c:224 createuser.c:322 dropdb.c:148 droplang.c:383
+#: createlang.c:232 createuser.c:322 dropdb.c:152 droplang.c:233
 #: dropuser.c:147 clusterdb.c:248 vacuumdb.c:344 reindexdb.c:326
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr "  -h, --host=HOSTNAM        数据库服务器所在机器的主机名或套接字目录\n"
 
-#: createlang.c:225 createuser.c:323 dropdb.c:149 droplang.c:384
+#: createlang.c:233 createuser.c:323 dropdb.c:153 droplang.c:234
 #: dropuser.c:148 clusterdb.c:249 vacuumdb.c:345 reindexdb.c:327
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=PORT           数据库服务器端口号\n"
 
-#: createlang.c:226 dropdb.c:150 droplang.c:385 clusterdb.c:250 vacuumdb.c:346
+#: createlang.c:234 dropdb.c:154 droplang.c:235 clusterdb.c:250 vacuumdb.c:346
 #: reindexdb.c:328
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=USERNAME   联接的用户名\n"
 
-#: createlang.c:227 createuser.c:325 dropdb.c:151 droplang.c:386
+#: createlang.c:235 createuser.c:325 dropdb.c:155 droplang.c:236
 #: dropuser.c:150 clusterdb.c:251 vacuumdb.c:347 reindexdb.c:329
 #, c-format
 msgid "  -w, --no-password         never prompt for password\n"
 msgstr "  -w, -no-password         永远不提示输入口令\n"
 
-#: createlang.c:228 createuser.c:326 dropdb.c:152 droplang.c:387
+#: createlang.c:236 createuser.c:326 dropdb.c:156 droplang.c:237
 #: dropuser.c:151 clusterdb.c:252 vacuumdb.c:348 reindexdb.c:330
 #, c-format
 msgid "  -W, --password            force password prompt\n"
@@ -463,12 +464,12 @@ msgstr "数据库 \"%s\" 将被永久的删除.\n"
 msgid "Are you sure?"
 msgstr "您确定吗? (y/n) "
 
-#: dropdb.c:124
+#: dropdb.c:128
 #, c-format
 msgid "%s: database removal failed: %s"
 msgstr "%s: 数据库删除失败: %s"
 
-#: dropdb.c:139
+#: dropdb.c:143
 #, c-format
 msgid ""
 "%s removes a PostgreSQL database.\n"
@@ -477,33 +478,27 @@ msgstr ""
 "%s 删除一个 PostgreSQL 数据库.\n"
 "\n"
 
-#: dropdb.c:141
+#: dropdb.c:145
 #, c-format
 msgid "  %s [OPTION]... DBNAME\n"
 msgstr "  %s [选项]... 数据库名\n"
 
-#: dropdb.c:144 dropuser.c:143
+#: dropdb.c:148 dropuser.c:143
 #, c-format
 msgid "  -i, --interactive         prompt before deleting anything\n"
 msgstr "  -i, --interactive         删除任何东西之前给予提示\n"
 
-#: droplang.c:203
+#: droplang.c:190
 #, c-format
 msgid "%s: language \"%s\" is not installed in database \"%s\"\n"
 msgstr "%1$s: 数据库 \"%3$s\" 中, 没有安装语言 \"%2$s\"\n"
 
-#: droplang.c:224
-#, c-format
-msgid ""
-"%s: still %s functions declared in language \"%s\"; language not removed\n"
-msgstr "%s: 函数 %s 是用语言 \"%s\" 声明的; 语言未被删除\n"
-
-#: droplang.c:358
+#: droplang.c:208
 #, c-format
 msgid "%s: language removal failed: %s"
 msgstr "%s: 语言删除失败: %s"
 
-#: droplang.c:373
+#: droplang.c:223
 #, c-format
 msgid ""
 "%s removes a procedural language from a database.\n"
@@ -512,7 +507,7 @@ msgstr ""
 "%s 从数据库中删除一个过程语言.\n"
 "\n"
 
-#: droplang.c:377
+#: droplang.c:227
 #, c-format
 msgid ""
 "  -d, --dbname=DBNAME       database from which to remove the language\n"
@@ -896,26 +891,32 @@ msgstr "y"
 msgid "n"
 msgstr "n"
 
-#: common.c:296
+#. translator: This is a question followed by the translated options for
+#. "yes" and "no".
+#: common.c:295
 #, c-format
 msgid "%s (%s/%s) "
 msgstr "%s (%s/%s) "
 
-#: common.c:317
+#: common.c:316
 #, c-format
 msgid "Please answer \"%s\" or \"%s\".\n"
 msgstr "请回答\"%s\"或\"%s\".\n"
 
-#: common.c:395 common.c:428
+#: common.c:394 common.c:427
 #, c-format
 msgid "Cancel request sent\n"
 msgstr "取消发送的请求\n"
 
 # fe-connect.c:1322
-#: common.c:397 common.c:430
+#: common.c:396 common.c:429
 #, c-format
 msgid "Could not send cancel request: %s"
 msgstr "无法发送取消请求: %s"
+
+#~ msgid ""
+#~ "%s: still %s functions declared in language \"%s\"; language not removed\n"
+#~ msgstr "%s: 函数 %s 是用语言 \"%s\" 声明的; 语言未被删除\n"
 
 #~ msgid "  -q, --quiet                  don't write any messages\n"
 #~ msgstr "  -q, --quiet                  不写任何信息\n"

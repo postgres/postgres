@@ -1,26 +1,27 @@
-# Spanish message translation file for pg_basebackup
-# Copyright (C) 2011-2012 PostgreSQL Global Development Group
+# Italian message translation file for pg_basebackup
+# Copyright (C) 2012 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Álvaro Herrera <alvherre@alvh.no-ip.org>, 2011-2012.
+# Daniele Varrazzo <daniele.varrazzo@gmail.com>, 2012.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_basebackup (PostgreSQL 9.1)\n"
+"Project-Id-Version: pg_basebackup (PostgreSQL) 9.1\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2013-01-29 13:57+0000\n"
-"PO-Revision-Date: 2012-08-14 15:44-0400\n"
-"Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
-"Language-Team: Spanish <pgsql-es-ayuda@postgresql.org>\n"
-"Language: es\n"
+"PO-Revision-Date: 2012-12-03 17:44+0100\n"
+"Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
+"Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
+"Language: it\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Poedit 1.5.4\n"
 
 #: pg_basebackup.c:96 pg_basebackup.c:110
 #, c-format
 msgid "%s: out of memory\n"
-msgstr "%s: memoria agotada\n"
+msgstr "%s: memoria esaurita\n"
 
 #: pg_basebackup.c:121
 #, c-format
@@ -28,19 +29,18 @@ msgid ""
 "%s takes a base backup of a running PostgreSQL server.\n"
 "\n"
 msgstr ""
-"%s obtiene un respaldo base a partir de un servidor PostgreSQL en "
-"ejecución.\n"
+"%s crea un backup di base di un server PostgreSQL in esecuzione.\n"
 "\n"
 
 #: pg_basebackup.c:123
 #, c-format
 msgid "Usage:\n"
-msgstr "Empleo:\n"
+msgstr "Utilizzo:\n"
 
 #: pg_basebackup.c:124
 #, c-format
 msgid "  %s [OPTION]...\n"
-msgstr "  %s [OPCIÓN]...\n"
+msgstr "  %s [OPZIONE]...\n"
 
 #: pg_basebackup.c:125
 #, c-format
@@ -49,37 +49,34 @@ msgid ""
 "Options controlling the output:\n"
 msgstr ""
 "\n"
-"Opciones que controlan la salida:\n"
+"Opzioni di controllo del'output:\n"
 
 #: pg_basebackup.c:126
 #, c-format
 msgid "  -D, --pgdata=DIRECTORY   receive base backup into directory\n"
-msgstr "  -D, --pgdata=DIRECTORIO  recibir el respaldo base en directorio\n"
+msgstr "  -D, --pgdata=DIRECTORY   directory in cui ricevere il backup di base\n"
 
 #: pg_basebackup.c:127
 #, c-format
 msgid "  -F, --format=p|t         output format (plain, tar)\n"
-msgstr "  -F, --format=p|t         formato de salida (plano, tar)\n"
+msgstr "  -F, --format=p|t         formato di output (plain (default), tar)\n"
 
 #: pg_basebackup.c:128
 #, c-format
 msgid "  -x, --xlog               include required WAL files in backup\n"
 msgstr ""
-"  -x, --xlog               incluye los archivos WAL necesarios en el "
-"respaldo\n"
+"  -x, --xlog               includi i file WAL necessari nel backup\n"
+"                           (modalità fetch)\n"
 
 #: pg_basebackup.c:129
 #, c-format
 msgid "  -z, --gzip               compress tar output\n"
-msgstr "  -z, --gzip               comprimir la salida de tar\n"
+msgstr "  -z, --gzip               comprimi l'output tar\n"
 
 #: pg_basebackup.c:130
 #, c-format
-msgid ""
-"  -Z, --compress=0-9       compress tar output with given compression level\n"
-msgstr ""
-"  -Z, --compress=0-9       comprimir salida tar con el nivel de compresión "
-"dado\n"
+msgid "  -Z, --compress=0-9       compress tar output with given compression level\n"
+msgstr "  -Z, --compress=0-9       comprimi l'output tar a questo livello di compressione\n"
 
 #: pg_basebackup.c:131
 #, c-format
@@ -88,7 +85,7 @@ msgid ""
 "General options:\n"
 msgstr ""
 "\n"
-"Opciones generales:\n"
+"Opzioni generali:\n"
 
 #: pg_basebackup.c:132
 #, c-format
@@ -97,33 +94,32 @@ msgid ""
 "                           set fast or spread checkpointing\n"
 msgstr ""
 "  -c, --checkpoint=fast|spread\n"
-"                           utilizar checkpoint rápido o extendido\n"
+"                           imposta punti di controllo più veloci o più radi\n"
 
 #: pg_basebackup.c:134
 #, c-format
 msgid "  -l, --label=LABEL        set backup label\n"
-msgstr "  -l, --label=ETIQUETA     establecer etiqueta del respaldo\n"
+msgstr "  -l, --label=LABEL        imposta l'etichetta del backup\n"
 
 #: pg_basebackup.c:135
 #, c-format
 msgid "  -P, --progress           show progress information\n"
-msgstr "  -P, --progress           mostrar información de progreso\n"
+msgstr "  -P, --progress           mostra informazioni sull'esecuzione\n"
 
 #: pg_basebackup.c:136
 #, c-format
 msgid "  -v, --verbose            output verbose messages\n"
-msgstr "  -v, --verbose            desplegar mensajes verbosos\n"
+msgstr "  -v, --verbose            messaggi di output più numerosi\n"
 
 #: pg_basebackup.c:137
 #, c-format
 msgid "  --help                   show this help, then exit\n"
-msgstr "  --help                   mostrar esta ayuda, luego salir\n"
+msgstr "  --help                   mostra questo aiuto ed esci\n"
 
 #: pg_basebackup.c:138
 #, c-format
 msgid "  --version                output version information, then exit\n"
-msgstr ""
-"  --version                desplegar información de versión, luego salir\n"
+msgstr "  --version                mostra informazioni sulla versione ed esci\n"
 
 #: pg_basebackup.c:139
 #, c-format
@@ -132,37 +128,34 @@ msgid ""
 "Connection options:\n"
 msgstr ""
 "\n"
-"Opciones de conexión:\n"
+"Opzioni di connessione:\n"
 
 #: pg_basebackup.c:140
 #, c-format
 msgid "  -h, --host=HOSTNAME      database server host or socket directory\n"
-msgstr ""
-"  -h, --host=ANFITRIÓN     dirección del servidor o directorio del socket\n"
+msgstr "  -h, --host=NOMEHOST      host server del database o directory socket\n"
 
 #: pg_basebackup.c:141
 #, c-format
 msgid "  -p, --port=PORT          database server port number\n"
-msgstr "  -p, --port=PORT          número de port del servidor\n"
+msgstr "  -p, --port=PORTA         numero porta del server di database\n"
 
 #: pg_basebackup.c:142
 #, c-format
 msgid "  -U, --username=NAME      connect as specified database user\n"
-msgstr "  -U, --username=NOMBRE    conectarse con el usuario especificado\n"
+msgstr "  -U, --username=NOME      connessione con l'utente di database specificato\n"
 
 #: pg_basebackup.c:143
 #, c-format
 msgid "  -w, --no-password        never prompt for password\n"
-msgstr "  -w, --no-password        no pedir contraseña\n"
+msgstr "  -w, --no-password        non chiedere mai le password\n"
 
 #: pg_basebackup.c:144
 #, c-format
-msgid ""
-"  -W, --password           force password prompt (should happen "
-"automatically)\n"
+msgid "  -W, --password           force password prompt (should happen automatically)\n"
 msgstr ""
-"  -W, --password           forzar un prompt para la contraseña\n"
-"                           (debería ser automático)\n"
+"  -W, --password           forza la richiesta di una password (dovrebbe essere\n"
+"                           automatico)\n"
 
 #: pg_basebackup.c:145
 #, c-format
@@ -171,228 +164,220 @@ msgid ""
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr ""
 "\n"
-"Reporte errores a <pgsql-bugs@postgresql.org>.\n"
+"Puoi segnalare eventuali bug a <pgsql-bugs@postgresql.org>.\n"
 
 #: pg_basebackup.c:167 pg_basebackup.c:613
 #, c-format
 msgid "%s: could not create directory \"%s\": %s\n"
-msgstr "%s: no se pudo crear el directorio «%s»: %s\n"
+msgstr "%s: creazione della directory \"%s\" fallita: %s\n"
 
 #: pg_basebackup.c:184
 #, c-format
 msgid "%s: directory \"%s\" exists but is not empty\n"
-msgstr "%s: el directorio «%s» existe pero no está vacío\n"
+msgstr "%s: la directory \"%s\" esiste ma non è vuota\n"
 
 #: pg_basebackup.c:192
 #, c-format
 msgid "%s: could not access directory \"%s\": %s\n"
-msgstr "%s: no se pudo acceder al directorio «%s»: %s\n"
+msgstr "%s: accesso alla directory \"%s\" fallito: %s\n"
 
 #: pg_basebackup.c:239
 #, c-format
 msgid "%s/%s kB (100%%), %d/%d tablespace %35s"
 msgid_plural "%s/%s kB (100%%), %d/%d tablespaces %35s"
 msgstr[0] "%s/%s kB (100%%), %d/%d tablespace %35s"
-msgstr[1] "%s/%s kB (100%%), %d/%d tablespaces %35s"
+msgstr[1] "%s/%s kB (100%%), %d/%d tablespace %35s"
 
 #: pg_basebackup.c:245
 #, c-format
 msgid "%s/%s kB (%d%%), %d/%d tablespace (%-30.30s)"
 msgid_plural "%s/%s kB (%d%%), %d/%d tablespaces (%-30.30s)"
 msgstr[0] "%s/%s kB (%d%%), %d/%d tablespace (%-30.30s)"
-msgstr[1] "%s/%s kB (%d%%), %d/%d tablespaces (%-30.30s)"
+msgstr[1] "%s/%s kB (%d%%), %d/%d tablespace (%-30.30s)"
 
 #: pg_basebackup.c:252
 #, c-format
 msgid "%s/%s kB (%d%%), %d/%d tablespace"
 msgid_plural "%s/%s kB (%d%%), %d/%d tablespaces"
 msgstr[0] "%s/%s kB (%d%%), %d/%d tablespace"
-msgstr[1] "%s/%s kB (%d%%), %d/%d tablespaces"
+msgstr[1] "%s/%s kB (%d%%), %d/%d tablespace"
 
 #: pg_basebackup.c:295 pg_basebackup.c:313 pg_basebackup.c:337
 #, c-format
 msgid "%s: could not set compression level %i: %s\n"
-msgstr "%s: no se pudo definir el nivel de compresión %i: %s\n"
+msgstr "%s: non è stato possibile impostare il livello di compressione %i: %s\n"
 
 #: pg_basebackup.c:356
 #, c-format
 msgid "%s: could not create compressed file \"%s\": %s\n"
-msgstr "%s: no se pudo crear el archivo comprimido «%s»: %s\n"
+msgstr "%s: creazione del file compresso \"%s\" fallita: %s\n"
 
 #: pg_basebackup.c:367 pg_basebackup.c:652
 #, c-format
 msgid "%s: could not create file \"%s\": %s\n"
-msgstr "%s: no se pudo crear el archivo «%s»: %s\n"
+msgstr "%s: creazione del file \"%s\" fallita: %s\n"
 
 #: pg_basebackup.c:379 pg_basebackup.c:525
 #, c-format
 msgid "%s: could not get COPY data stream: %s"
-msgstr "%s: no se pudo obtener un flujo de datos COPY: %s"
+msgstr "%s: non è stato possibile ottenere lo stream di dati COPY: %s"
 
 #: pg_basebackup.c:411 pg_basebackup.c:465
 #, c-format
 msgid "%s: could not write to compressed file \"%s\": %s\n"
-msgstr "%s: no se pudo escribir al archivo comprimido «%s»: %s\n"
+msgstr "%s: scrittura nel file compresso \"%s\" fallita: %s\n"
 
 #: pg_basebackup.c:421 pg_basebackup.c:475 pg_basebackup.c:692
 #, c-format
 msgid "%s: could not write to file \"%s\": %s\n"
-msgstr "%s: no se pudo escribir al archivo «%s»: %s\n"
+msgstr "%s: scrittura nel file \"%s\" fallita: %s\n"
 
 #: pg_basebackup.c:432
 #, c-format
 msgid "%s: could not close compressed file \"%s\": %s\n"
-msgstr "%s: no se pudo cerrar el archivo comprimido «%s»: %s\n"
+msgstr "%s: chiusura del file compresso \"%s\" fallita: %s\n"
 
 #: pg_basebackup.c:444
 #, c-format
 msgid "%s: could not close file \"%s\": %s\n"
-msgstr "%s: no se pudo cerrar el archivo «%s»: %s\n"
+msgstr "%s: chiusura del file \"%s\" fallita: %s\n"
 
 #: pg_basebackup.c:455 pg_basebackup.c:554
 #, c-format
 msgid "%s: could not read COPY data: %s"
-msgstr "%s: no fue posible leer datos COPY: %s"
+msgstr "%s: lettura dei dati COPY fallita: %s"
 
 #: pg_basebackup.c:568
 #, c-format
 msgid "%s: invalid tar block header size: %i\n"
-msgstr "%s: tamaño de bloque de cabecera de tar no válido: %i\n"
+msgstr "%s: dimensione del blocco di intestazione del file tar non valida: %i\n"
 
 #: pg_basebackup.c:576
 #, c-format
 msgid "%s: could not parse file size\n"
-msgstr "%s: no se pudo interpretar el tamaño del archivo\n"
+msgstr "%s: interpretazione della dimensione del file fallita\n"
 
 #: pg_basebackup.c:584
 #, c-format
 msgid "%s: could not parse file mode\n"
-msgstr "%s: nose pudo interpretar el modo del archivo\n"
+msgstr "%s: interpretazione della modalità del file fallita\n"
 
 #: pg_basebackup.c:619
 #, c-format
 msgid "%s: could not set permissions on directory \"%s\": %s\n"
-msgstr "%s: no se pudo definir los permisos en el directorio «%s»: %s\n"
+msgstr "%s: impostazione dei permessi sulla directory \"%s\" fallita: %s\n"
 
 #: pg_basebackup.c:632
 #, c-format
 msgid "%s: could not create symbolic link from \"%s\" to \"%s\": %s\n"
-msgstr "%s: no se pudo crear un enlace simbólico desde «%s» a «%s»: %s\n"
+msgstr "%s: creazione del link simbolico da \"%s\" a \"%s\" fallita: %s\n"
 
 #: pg_basebackup.c:639
 #, c-format
 msgid "%s: unrecognized link indicator \"%c\"\n"
-msgstr "%s: indicador de enlace «%c» no reconocido\n"
+msgstr "%s: indicatore di link sconosciuto \"%c\"\n"
 
 #: pg_basebackup.c:659
 #, c-format
 msgid "%s: could not set permissions on file \"%s\": %s\n"
-msgstr "%s: no se pudo definir los permisos al archivo «%s»: %s\n"
+msgstr "%s: impostazione dei permessi sul file \"%s\" fallita: %s\n"
 
 #: pg_basebackup.c:717
 #, c-format
 msgid "%s: COPY stream ended before last file was finished\n"
-msgstr ""
-"%s: el flujo COPY terminó antes que el último archivo estuviera completo\n"
+msgstr "%s: lo stream COPY è terminato prima che l'ultimo file fosse finito\n"
 
 #: pg_basebackup.c:778
 msgid "Password: "
-msgstr "Contraseña: "
+msgstr "Password: "
 
 #: pg_basebackup.c:798
 #, c-format
 msgid "%s: could not connect to server: %s"
-msgstr "%s: no se pudo conectar al servidor: %s"
+msgstr "%s: non è stato possibile connettersi al server: %s"
 
 #: pg_basebackup.c:838
 #, c-format
 msgid "%s: could not send base backup command: %s"
-msgstr "%s: no se pudo enviar la orden de respaldo base: %s"
+msgstr "%s: non è stato possibile inviare il comando di backup di base: %s"
 
 #: pg_basebackup.c:849
 #, c-format
 msgid "%s: could not initiate base backup: %s"
-msgstr "%s: no se pudo iniciar el respaldo base: %s"
+msgstr "%s: avvio del backup di base fallito: %s"
 
 #: pg_basebackup.c:855
 #, c-format
 msgid "%s: no start point returned from server\n"
-msgstr "%s: el servidor no retornó un punto de inicio\n"
+msgstr "%s: nessun punto di avvio restituito dal server\n"
 
 #: pg_basebackup.c:871
 #, c-format
 msgid "%s: could not get backup header: %s"
-msgstr "%s: no se pudo obtener la cabecera de respaldo: %s"
+msgstr "%s: non è stato possibile ottenere l'intestazione del backup: %s"
 
 #: pg_basebackup.c:877
 #, c-format
 msgid "%s: no data returned from server\n"
-msgstr "%s: el servidor no retornó datos\n"
+msgstr "%s: nessun dato restituito dal server\n"
 
 #: pg_basebackup.c:905
 #, c-format
 msgid "%s: can only write single tablespace to stdout, database has %i\n"
-msgstr ""
-"%s: sólo se puede escribir un tablespace a stdout, la base de datos tiene "
-"%i\n"
+msgstr "%s: è possibile scrivere solo un singolo tablespace su stdout, il database ne ha %i\n"
 
 #: pg_basebackup.c:934
 #, c-format
 msgid "%s: could not get WAL end position from server: %s"
-msgstr ""
-"%s: no se pudo obtener la posición del final del registro de transacciones "
-"del servidor: %s"
+msgstr "%s: non è stato possibile ottenere la posizione finale del WAL dal server: %s"
 
 #: pg_basebackup.c:940
 #, c-format
 msgid "%s: no WAL end position returned from server\n"
-msgstr "%s: el servidor no retornó un punto de fin de WAL\n"
+msgstr "%s: nessuna posizione finale del WAL restituita dal server\n"
 
 #: pg_basebackup.c:952
 #, c-format
 msgid "%s: final receive failed: %s"
-msgstr "%s: la recepción final falló: %s"
+msgstr "%s: ricezione finale fallita: %s"
 
 #: pg_basebackup.c:1026
 #, c-format
 msgid "%s: invalid output format \"%s\", must be \"plain\" or \"tar\"\n"
-msgstr "%s: formato de salida «%s» no válido, debe ser «plain» o «tar»\n"
+msgstr "%s: formato di output \"%s\" non valido, deve essere \"plain\" oppure \"tar\"\n"
 
 #: pg_basebackup.c:1048
 #, c-format
 msgid "%s: invalid compression level \"%s\"\n"
-msgstr "%s: valor de compresión «%s» no válido\n"
+msgstr "%s: livello di compressione non valido \"%s\"\n"
 
 #: pg_basebackup.c:1060
 #, c-format
-msgid ""
-"%s: invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\"\n"
-msgstr ""
-"%s: argumento de checkpoint «%s» no válido, debe ser «fast» o «spread»\n"
+msgid "%s: invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\"\n"
+msgstr "%s: argomento di checkpoint \"%s\" non valido, deve essere \"fast\" oppure \"spread\"\n"
 
 #: pg_basebackup.c:1091 pg_basebackup.c:1105 pg_basebackup.c:1116
 #: pg_basebackup.c:1129
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Use «%s --help» para obtener más información.\n"
+msgstr "Prova \"%s --help\" per maggiori informazioni.\n"
 
 #: pg_basebackup.c:1103
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr ""
-"%s: demasiados argumentos en la línea de órdenes (el primero es «%s»)\n"
+msgstr "%s: troppi argomenti nella riga di comando (il primo è \"%s\")\n"
 
 #: pg_basebackup.c:1115
 #, c-format
 msgid "%s: no target directory specified\n"
-msgstr "%s: no se especificó un directorio de salida\n"
+msgstr "%s: nessuna directory di destinazione specificata\n"
 
 #: pg_basebackup.c:1127
 #, c-format
 msgid "%s: only tar mode backups can be compressed\n"
-msgstr "%s: sólo los respaldos de modo tar pueden ser comprimidos\n"
+msgstr "%s: solo i backup in modalità tar possono essere compressi\n"
 
 #: pg_basebackup.c:1138
 #, c-format
 msgid "%s: this build does not support compression\n"
-msgstr "%s: esta instalación no soporta compresión\n"
+msgstr "%s: questo binario compilato non supporta la compressione\n"
