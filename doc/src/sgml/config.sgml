@@ -2356,7 +2356,8 @@ include 'filename'
         is measured in terms of number of write transactions occurring on the
         primary server, it is difficult to predict just how much additional
         grace time will be made available to standby queries.
-        This parameter can only be set at server start.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
        </para>
        <para>
         You should also consider setting <varname>hot_standby_feedback</>
