@@ -1,6 +1,162 @@
 <!-- doc/src/sgml/release-8.3.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-8-3-23">
+  <title>Release 8.3.23</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2013-02-07</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.3.22.
+   For information about new features in the 8.3 major release, see
+   <xref linkend="release-8-3">.
+  </para>
+
+  <para>
+   This is expected to be the last <productname>PostgreSQL</> release
+   in the 8.3.X series.  Users are encouraged to update to a newer
+   release branch soon.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.3.23</title>
+
+   <para>
+    A dump/restore is not required for those running 8.3.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 8.3.17,
+    see the release notes for 8.3.17.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix SQL grammar to allow subscripting or field selection from a
+      sub-SELECT result (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Protect against race conditions when scanning
+      <structname>pg_tablespace</> (Stephen Frost, Tom Lane)
+     </para>
+
+     <para>
+      <command>CREATE DATABASE</> and <command>DROP DATABASE</> could
+      misbehave if there were concurrent updates of
+      <structname>pg_tablespace</> entries.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent <command>DROP OWNED</> from trying to drop whole databases or
+      tablespaces (&Aacute;lvaro Herrera)
+     </para>
+
+     <para>
+      For safety, ownership of these objects must be reassigned, not dropped.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent misbehavior when a <symbol>RowExpr</> or <symbol>XmlExpr</>
+      is parse-analyzed twice (Andres Freund, Tom Lane)
+     </para>
+
+     <para>
+      This mistake could be user-visible in contexts such as
+      <literal>CREATE TABLE LIKE INCLUDING INDEXES</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve defenses against integer overflow in hashtable sizing
+      calculations (Jeff Davis)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that non-ASCII prompt strings are translated to the correct
+      code page on Windows (Alexander Law, Noah Misch)
+     </para>
+
+     <para>
+      This bug affected <application>psql</> and some other client programs.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible crash in <application>psql</>'s <command>\?</> command
+      when not connected to a database (Meng Qingzhong)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix one-byte buffer overrun in <application>libpq</>'s
+      <function>PQprintTuples</> (Xi Wang)
+     </para>
+
+     <para>
+      This ancient function is not used anywhere by
+      <productname>PostgreSQL</> itself, but it might still be used by some
+      client code.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Rearrange configure's tests for supplied functions so it is not
+      fooled by bogus exports from libedit/libreadline (Christoph Berg)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure Windows build number increases over time (Magnus Hagander)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <application>pgxs</> build executables with the right
+      <literal>.exe</> suffix when cross-compiling for Windows
+      (Zoltan Boszormenyi)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add new timezone abbreviation <literal>FET</> (Tom Lane)
+     </para>
+
+     <para>
+      This is now used in some eastern-European time zones.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-8-3-22">
   <title>Release 8.3.22</title>
 

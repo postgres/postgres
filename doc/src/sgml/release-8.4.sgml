@@ -1,6 +1,203 @@
 <!-- doc/src/sgml/release-8.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-8-4-16">
+  <title>Release 8.4.16</title>
+
+  <note>
+  <title>Release Date</title>
+  <simpara>2013-02-07</simpara>
+  </note>
+
+  <para>
+   This release contains a variety of fixes from 8.4.15.
+   For information about new features in the 8.4 major release, see
+   <xref linkend="release-8-4">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 8.4.16</title>
+
+   <para>
+    A dump/restore is not required for those running 8.4.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 8.4.10,
+    see the release notes for 8.4.10.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Update minimum recovery point when truncating a relation file (Heikki
+      Linnakangas)
+     </para>
+
+     <para>
+      Once data has been discarded, it's no longer safe to stop recovery at
+      an earlier point in the timeline.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix SQL grammar to allow subscripting or field selection from a
+      sub-SELECT result (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Protect against race conditions when scanning
+      <structname>pg_tablespace</> (Stephen Frost, Tom Lane)
+     </para>
+
+     <para>
+      <command>CREATE DATABASE</> and <command>DROP DATABASE</> could
+      misbehave if there were concurrent updates of
+      <structname>pg_tablespace</> entries.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent <command>DROP OWNED</> from trying to drop whole databases or
+      tablespaces (&Aacute;lvaro Herrera)
+     </para>
+
+     <para>
+      For safety, ownership of these objects must be reassigned, not dropped.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix error in <link
+      linkend="guc-vacuum-freeze-table-age"><varname>vacuum_freeze_table_age</></link>
+      implementation (Andres Freund)
+     </para>
+
+     <para>
+      The main consequence of this mistake is that lowering <link
+      linkend="guc-vacuum-freeze-min-age"><varname>vacuum_freeze_min_age</></link>
+      would cause full-table vacuuming scans to occur much more frequently
+      than intended.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent misbehavior when a <symbol>RowExpr</> or <symbol>XmlExpr</>
+      is parse-analyzed twice (Andres Freund, Tom Lane)
+     </para>
+
+     <para>
+      This mistake could be user-visible in contexts such as
+      <literal>CREATE TABLE LIKE INCLUDING INDEXES</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve defenses against integer overflow in hashtable sizing
+      calculations (Jeff Davis)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Reject out-of-range dates in <function>to_date()</> (Hitoshi Harada)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that non-ASCII prompt strings are translated to the correct
+      code page on Windows (Alexander Law, Noah Misch)
+     </para>
+
+     <para>
+      This bug affected <application>psql</> and some other client programs.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible crash in <application>psql</>'s <command>\?</> command
+      when not connected to a database (Meng Qingzhong)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix one-byte buffer overrun in <application>libpq</>'s
+      <function>PQprintTuples</> (Xi Wang)
+     </para>
+
+     <para>
+      This ancient function is not used anywhere by
+      <productname>PostgreSQL</> itself, but it might still be used by some
+      client code.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <application>ecpglib</> use translated messages properly
+      (Chen Huajun)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Properly install <application>ecpg_compat</> and
+      <application>pgtypes</> libraries on MSVC (Jiang Guiqing)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Rearrange configure's tests for supplied functions so it is not
+      fooled by bogus exports from libedit/libreadline (Christoph Berg)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure Windows build number increases over time (Magnus Hagander)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <application>pgxs</> build executables with the right
+      <literal>.exe</> suffix when cross-compiling for Windows
+      (Zoltan Boszormenyi)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add new timezone abbreviation <literal>FET</> (Tom Lane)
+     </para>
+
+     <para>
+      This is now used in some eastern-European time zones.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-8-4-15">
   <title>Release 8.4.15</title>
 
