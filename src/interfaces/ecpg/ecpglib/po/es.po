@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-02-22 14:50+0000\n"
+"POT-Creation-Date: 2013-01-29 13:10+0000\n"
 "PO-Revision-Date: 2010-05-05 12:41-0400\n"
 "Last-Translator: Emanuel Calvo Franco <postgres-arg@gmail.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
@@ -170,7 +170,7 @@ msgstr "se ha perdido la conexión al servidor"
 msgid "SQL error: %s\n"
 msgstr "error SQL: %s\n"
 
-#: execute.c:1920
+#: execute.c:1922
 msgid "<empty>"
 msgstr "<vacío>"
 

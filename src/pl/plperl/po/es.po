@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plperl (PostgreSQL 9.0)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2012-02-22 14:50+0000\n"
+"POT-Creation-Date: 2013-01-29 13:09+0000\n"
 "PO-Revision-Date: 2010-08-31 01:09-0400\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
@@ -19,101 +19,101 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: plperl.c:311
+#: plperl.c:332
 msgid ""
 "If true, trusted and untrusted Perl code will be compiled in strict mode."
 msgstr ""
 "Si es verdadero, se compilará código Perl confiable y no confiable en modo "
 "«strict»."
 
-#: plperl.c:325
+#: plperl.c:346
 msgid ""
 "Perl initialization code to execute when a Perl interpreter is initialized."
 msgstr ""
 "Código Perl de inicialización a ejecutar cuando un intérprete Perl es "
 "inicializado."
 
-#: plperl.c:347
+#: plperl.c:368
 msgid "Perl initialization code to execute once when plperl is first used."
 msgstr ""
 "Código Perl de inicialización a ejecutar cuando plperl se usa por primera "
 "vez."
 
-#: plperl.c:355
+#: plperl.c:376
 msgid "Perl initialization code to execute once when plperlu is first used."
 msgstr ""
 "Código Perl de inicialización a ejecutar cuando plperlu se usa por primera "
 "vez."
 
-#: plperl.c:571 plperl.c:730 plperl.c:735 plperl.c:838 plperl.c:851
-#: plperl.c:893 plperl.c:914 plperl.c:1451 plperl.c:1557 plperl.c:1613
+#: plperl.c:592 plperl.c:763 plperl.c:768 plperl.c:871 plperl.c:884
+#: plperl.c:926 plperl.c:947 plperl.c:1500 plperl.c:1606 plperl.c:1662
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: plperl.c:572
+#: plperl.c:593
 msgid "while executing PostgreSQL::InServer::SPI::bootstrap"
 msgstr "mientras se ejecutaba PostgreSQL::InServer::SPI::bootstrap"
 
-#: plperl.c:731
+#: plperl.c:764
 msgid "while parsing Perl initialization"
 msgstr "mientras se interpretaba la inicialización de Perl"
 
-#: plperl.c:736
+#: plperl.c:769
 msgid "while running Perl initialization"
 msgstr "mientras se ejecutaba la inicialización de Perl"
 
-#: plperl.c:839
+#: plperl.c:872
 msgid "while executing PLC_TRUSTED"
 msgstr "mientras se ejecutaba PLC_TRUSTED"
 
-#: plperl.c:852
+#: plperl.c:885
 msgid "while executing utf8fix"
 msgstr "mientras se ejecutaba utf8fix"
 
-#: plperl.c:894
+#: plperl.c:927
 msgid "while executing plperl.on_plperl_init"
 msgstr "mientras se ejecutaba plperl.on_plperl_init"
 
-#: plperl.c:915
+#: plperl.c:948
 msgid "while executing plperl.on_plperlu_init"
 msgstr "mientras se ejecutaba plperl.on_plperlu_init"
 
-#: plperl.c:957 plperl.c:1154
+#: plperl.c:990 plperl.c:1187
 #, c-format
 msgid "Perl hash contains nonexistent column \"%s\""
 msgstr "el hash de Perl contiene el columna inexistente «%s»"
 
-#: plperl.c:1130
+#: plperl.c:1163
 msgid "$_TD->{new} does not exist"
 msgstr "$_TD->{new} no existe"
 
-#: plperl.c:1134
+#: plperl.c:1167
 msgid "$_TD->{new} is not a hash reference"
 msgstr "$_TD->{new} no es una referencia a un hash"
 
-#: plperl.c:1368 plperl.c:2072
+#: plperl.c:1417 plperl.c:2122
 #, c-format
 msgid "PL/Perl functions cannot return type %s"
 msgstr "las funciones en PL/Perl no pueden retornar el tipo %s"
 
-#: plperl.c:1380 plperl.c:2118
+#: plperl.c:1429 plperl.c:2166
 #, c-format
 msgid "PL/Perl functions cannot accept type %s"
 msgstr "funciones de PL/Perl no pueden aceptar el tipo %s"
 
-#: plperl.c:1455
+#: plperl.c:1504
 #, c-format
 msgid "didn't get a CODE reference from compiling function \"%s\""
 msgstr "no se obtuvo una referencia CODE en la compilación de la función «%s»"
 
-#: plperl.c:1665
+#: plperl.c:1708
 msgid "set-valued function called in context that cannot accept a set"
 msgstr ""
 "se llamó a una función que retorna un conjunto en un contexto que no puede "
 "aceptarlo"
 
-#: plperl.c:1708
+#: plperl.c:1751
 msgid ""
 "set-returning PL/Perl function must return reference to array or use "
 "return_next"
@@ -121,43 +121,43 @@ msgstr ""
 "una función PL/Perl que retorna un conjunto debe retornar una referencia a "
 "un array o usar return_next"
 
-#: plperl.c:1741
+#: plperl.c:1784
 msgid "composite-returning PL/Perl function must return reference to hash"
 msgstr ""
 "una función Perl que retorna un tipo compuesto debe retornar una referencia "
 "a un hash"
 
-#: plperl.c:1750
+#: plperl.c:1793
 msgid ""
 "function returning record called in context that cannot accept type record"
 msgstr ""
 "se llamó una función que retorna un registro en un contexto que no puede "
 "aceptarlo"
 
-#: plperl.c:1870
+#: plperl.c:1907
 msgid "ignoring modified row in DELETE trigger"
 msgstr "ignorando la tupla modificada en el disparador DELETE"
 
-#: plperl.c:1878
+#: plperl.c:1915
 msgid ""
 "result of PL/Perl trigger function must be undef, \"SKIP\", or \"MODIFY\""
 msgstr ""
 "el resultado de la función disparadora en PL/Perl debe ser undef, «SKIP» o "
 "«MODIFY»"
 
-#: plperl.c:2003 plperl.c:2009
+#: plperl.c:2052 plperl.c:2062
 msgid "out of memory"
 msgstr "memoria agotada"
 
-#: plperl.c:2063
+#: plperl.c:2114
 msgid "trigger functions can only be called as triggers"
 msgstr "las funciones disparadoras sólo pueden ser llamadas como disparadores"
 
-#: plperl.c:2382
+#: plperl.c:2430
 msgid "cannot use return_next in a non-SETOF function"
 msgstr "no se puede utilizar return_next en una función sin SETOF"
 
-#: plperl.c:2388
+#: plperl.c:2436
 msgid ""
 "SETOF-composite-returning PL/Perl function must call return_next with "
 "reference to hash"
@@ -165,16 +165,16 @@ msgstr ""
 "una función Perl que retorna SETOF de un tipo compuesto debe invocar "
 "return_next con una referencia a un hash"
 
-#: plperl.c:3182
+#: plperl.c:3230
 #, c-format
 msgid "PL/Perl function \"%s\""
 msgstr "función PL/Perl «%s»"
 
-#: plperl.c:3194
+#: plperl.c:3242
 #, c-format
 msgid "compilation of PL/Perl function \"%s\""
 msgstr "compilación de la función PL/Perl «%s»"
 
-#: plperl.c:3203
+#: plperl.c:3251
 msgid "PL/Perl anonymous code block"
 msgstr "bloque de código anónimo de PL/Perl"
