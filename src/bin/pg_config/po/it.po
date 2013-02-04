@@ -1,0 +1,288 @@
+#
+# Translation of pg_config to Italian
+# PostgreSQL Project
+#
+# Associazione Culturale ITPUG - Italian PostgreSQL Users Group
+# http://www.itpug.org/ - info@itpug.org
+#
+# Traduttori:
+#  * Daniele Varrazzo <daniele.varrazzo@gmail.com>
+#  * Cosimo D'Arcangelo <cosimo.darcangelo@itpug.org>
+#
+# Revisori:
+#  * Emanuele Zamprogno <emanuele.zamprogno@itpug.org>
+#
+# Copyright (c) 2010, Associazione Culturale ITPUG
+# Distributed under the same license of the PostgreSQL project
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_config (PostgreSQL) 8.3\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2013-01-29 13:27+0000\n"
+"PO-Revision-Date: 2012-11-02 13:39+0100\n"
+"Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
+"Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Generator: Poedit 1.5.4\n"
+
+#: pg_config.c:231 pg_config.c:247 pg_config.c:263 pg_config.c:279
+#: pg_config.c:295 pg_config.c:311 pg_config.c:327 pg_config.c:343
+#, c-format
+msgid "not recorded\n"
+msgstr "non registrato\n"
+
+#: pg_config.c:398
+#, c-format
+msgid ""
+"\n"
+"%s provides information about the installed version of PostgreSQL.\n"
+"\n"
+msgstr ""
+"\n"
+"%s fornisce informazioni circa la versione di PostgreSQL installata.\n"
+"\n"
+
+#: pg_config.c:399
+#, c-format
+msgid "Usage:\n"
+msgstr "Utilizzo:\n"
+
+#: pg_config.c:400
+#, c-format
+msgid ""
+"  %s [ OPTION ... ]\n"
+"\n"
+msgstr ""
+"  %s [ OPZIONE ... ]\n"
+"\n"
+
+#: pg_config.c:401
+#, c-format
+msgid "Options:\n"
+msgstr "Opzioni:\n"
+
+#: pg_config.c:402
+#, c-format
+msgid "  --bindir              show location of user executables\n"
+msgstr "  --bindir              mostra la posizione degli eseguibili utente\n"
+
+#: pg_config.c:403
+#, c-format
+msgid "  --docdir              show location of documentation files\n"
+msgstr "  --docdir              mostra la posizione dei file di documentazione\n"
+
+#: pg_config.c:404
+#, c-format
+msgid ""
+"  --includedir          show location of C header files of the client\n"
+"                        interfaces\n"
+msgstr ""
+"  --includedir          mostra la posizione dei file header C delle interfacce\n"
+"                        client\n"
+
+#: pg_config.c:406
+#, c-format
+msgid "  --pkgincludedir       show location of other C header files\n"
+msgstr "  --pkgincludedir       mostra la posizione degli altri file header C\n"
+
+#: pg_config.c:407
+#, c-format
+msgid "  --includedir-server   show location of C header files for the server\n"
+msgstr "  --includedir-server   mostra la posizione dei file header C per il server\n"
+
+#: pg_config.c:408
+#, c-format
+msgid "  --libdir              show location of object code libraries\n"
+msgstr "  --libdir              mostra la posizione delle librerie codice oggetto\n"
+
+#: pg_config.c:409
+#, c-format
+msgid "  --pkglibdir           show location of dynamically loadable modules\n"
+msgstr "  --pkglibdir           mostra la posizione dei moduli caricabili dinamicamente\n"
+
+#: pg_config.c:410
+#, c-format
+msgid "  --localedir           show location of locale support files\n"
+msgstr "  --localedir           mostra la posizione dei file di supporto locale\n"
+
+#: pg_config.c:411
+#, c-format
+msgid "  --mandir              show location of manual pages\n"
+msgstr "  --mandir              mostra la posizione delle pagine del manuale\n"
+
+#: pg_config.c:412
+#, c-format
+msgid "  --sharedir            show location of architecture-independent support files\n"
+msgstr "  --sharedir            mostra la posizione dei file di supporto non dipendenti dall'architettura\n"
+
+#: pg_config.c:413
+#, c-format
+msgid "  --sysconfdir          show location of system-wide configuration files\n"
+msgstr ""
+"  --sysconfdir          mostra la posizione dei file di configurazione\n"
+"                        di sistema\n"
+
+#: pg_config.c:414
+#, c-format
+msgid "  --pgxs                show location of extension makefile\n"
+msgstr "  --pgxs                mostra la posizione delle estensioni makefile\n"
+
+#: pg_config.c:415
+#, c-format
+msgid ""
+"  --configure           show options given to \"configure\" script when\n"
+"                        PostgreSQL was built\n"
+msgstr ""
+"  --configure           mostra le opzioni fornite allo script \"configure\"\n"
+"                        alla compilazione di PostgreSQL\n"
+
+#: pg_config.c:417
+#, c-format
+msgid "  --cc                  show CC value used when PostgreSQL was built\n"
+msgstr ""
+"  --cc                  mostra il valore di CC usato alla compilazione di\n"
+"                        PostgreSQL\n"
+
+#: pg_config.c:418
+#, c-format
+msgid "  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
+msgstr ""
+"  --cppflags            mostra il valore di CPPFLAGS usato alla compilazione\n"
+"                        di PostgreSQL\n"
+
+#: pg_config.c:419
+#, c-format
+msgid "  --cflags              show CFLAGS value used when PostgreSQL was built\n"
+msgstr ""
+"  --cflags              mostra il valore di CFLAGS usato alla compilazione\n"
+"                        di PostgreSQL\n"
+
+#: pg_config.c:420
+#, c-format
+msgid "  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
+msgstr ""
+"  --cflags_sl           mostra il valore di CFLAGS_SL usato alla compilazione\n"
+"                        di PostgreSQL\n"
+
+#: pg_config.c:421
+#, c-format
+msgid "  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
+msgstr ""
+"  --ldflags             mostra il valore di LDFLAGS usato alla compilazione\n"
+"                        di PostgreSQL\n"
+
+#: pg_config.c:422
+#, c-format
+msgid "  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was built\n"
+msgstr ""
+"  --ldflags_sl          mostra il valore di LDFLAGS_SL usato alla compilazione\n"
+"                        di PostgreSQL\n"
+
+#: pg_config.c:423
+#, c-format
+msgid "  --libs                show LIBS value used when PostgreSQL was built\n"
+msgstr ""
+"  --libs                mostra il valore LIBS usato alla compilazione di\n"
+"                        PostgreSQL\n"
+
+#: pg_config.c:424
+#, c-format
+msgid "  --version             show the PostgreSQL version\n"
+msgstr "  --version             mostra la versione di PostgreSQL\n"
+
+#: pg_config.c:425
+#, c-format
+msgid "  --help                show this help, then exit\n"
+msgstr "  --help                mostra questo aiuto ed esci\n"
+
+#: pg_config.c:426
+#, c-format
+msgid ""
+"\n"
+"With no arguments, all known items are shown.\n"
+"\n"
+msgstr ""
+"\n"
+"Senza argomenti, vengono mostrati tutti gli elementi conosciuti.\n"
+"\n"
+
+#: pg_config.c:427
+#, c-format
+msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr "Puoi segnalare eventuali bug a <pgsql-bugs@postgresql.org>.\n"
+
+#: pg_config.c:433
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Prova \"%s --help\" per maggiori informazioni.\n"
+
+#: pg_config.c:472
+#, c-format
+msgid "%s: could not find own program executable\n"
+msgstr "%s: il proprio programma eseguibile non è stato trovato\n"
+
+#: pg_config.c:495
+#, c-format
+msgid "%s: invalid argument: %s\n"
+msgstr "%s: parametro non valido: %s\n"
+
+#: ../../port/exec.c:195 ../../port/exec.c:309 ../../port/exec.c:352
+#, c-format
+msgid "could not identify current directory: %s"
+msgstr "identificazione della directory corrente fallita: %s"
+
+#: ../../port/exec.c:214
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "binario non valido \"%s\""
+
+#: ../../port/exec.c:263
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "lettura del binario \"%s\" fallita"
+
+#: ../../port/exec.c:270
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "programma \"%s\" da eseguire non trovato"
+
+#: ../../port/exec.c:325 ../../port/exec.c:361
+#, c-format
+msgid "could not change directory to \"%s\""
+msgstr "spostamento nella directory \"%s\" fallito"
+
+#: ../../port/exec.c:340
+#, c-format
+msgid "could not read symbolic link \"%s\""
+msgstr "lettura del link simbolico \"%s\" fallita"
+
+#: ../../port/exec.c:595
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "processo figlio uscito con codice di uscita %d"
+
+#: ../../port/exec.c:599
+#, c-format
+msgid "child process was terminated by exception 0x%X"
+msgstr "processo figlio terminato da eccezione 0x%X"
+
+#: ../../port/exec.c:608
+#, c-format
+msgid "child process was terminated by signal %s"
+msgstr "processo figlio terminato da segnale %s"
+
+#: ../../port/exec.c:611
+#, c-format
+msgid "child process was terminated by signal %d"
+msgstr "processo figlio terminato da segnale %d"
+
+#: ../../port/exec.c:615
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "processo figlio uscito con stato non riconosciuto %d"

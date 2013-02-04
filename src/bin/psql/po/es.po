@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL 8.3)\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-02-22 15:07+0000\n"
-"PO-Revision-Date: 2008-09-17 19:51-0400\n"
+"POT-Creation-Date: 2013-01-29 13:27+0000\n"
+"PO-Revision-Date: 2013-01-29 16:20-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: Castellano <pgsql-es-ayuda@postgresql.org>\n"
 "Language: \n"
@@ -46,7 +46,7 @@ msgstr "\\%s: no se pudo cambiar directorio a «%s»: %s\n"
 msgid "Time: %.3f ms\n"
 msgstr "Duración: %.3f ms\n"
 
-#: command.c:449 command.c:949
+#: command.c:449 command.c:960
 msgid "no query buffer\n"
 msgstr "no hay búfer de consulta\n"
 
@@ -58,7 +58,7 @@ msgstr ""
 "no encontrado\n"
 
 #: command.c:580 command.c:614 command.c:628 command.c:645 command.c:749
-#: command.c:799 command.c:929 command.c:960
+#: command.c:799 command.c:940 command.c:971
 #, c-format
 msgid "\\%s: missing required argument\n"
 msgstr "\\%s: falta argumento requerido\n"
@@ -85,7 +85,7 @@ msgstr "Las constraseñas no coinciden.\n"
 msgid "Password encryption failed.\n"
 msgstr "El cifrado de la contraseña falló.\n"
 
-#: command.c:778 command.c:879 command.c:934
+#: command.c:778 command.c:890 command.c:945
 #, c-format
 msgid "\\%s: error\n"
 msgstr "\\%s: error\n"
@@ -94,202 +94,202 @@ msgstr "\\%s: error\n"
 msgid "Query buffer reset (cleared)."
 msgstr "El búfer de consulta ha sido reiniciado (limpiado)."
 
-#: command.c:832
+#: command.c:843
 #, c-format
 msgid "Wrote history to file \"%s/%s\".\n"
 msgstr "Se escribió la historia en el archivo \"%s/%s\".\n"
 
-#: command.c:870 common.c:50 common.c:64 common.c:88 mainloop.c:67 print.c:56
+#: command.c:881 common.c:50 common.c:64 common.c:88 mainloop.c:67 print.c:56
 #: print.c:70 print.c:835
 #, c-format
 msgid "out of memory\n"
 msgstr "memoria agotada\n"
 
-#: command.c:915
+#: command.c:926
 msgid "Timing is on."
 msgstr "El despliegue de duración está activado."
 
-#: command.c:917
+#: command.c:928
 msgid "Timing is off."
 msgstr "El despliegue de duración está desactivado."
 
-#: command.c:977 command.c:997 command.c:1395 command.c:1402 command.c:1411
-#: command.c:1421 command.c:1430 command.c:1444 command.c:1458 command.c:1491
+#: command.c:988 command.c:1008 command.c:1406 command.c:1413 command.c:1422
+#: command.c:1432 command.c:1441 command.c:1455 command.c:1469 command.c:1502
 #: common.c:135 copy.c:509 copy.c:576
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
 
-#: command.c:1079 startup.c:179
+#: command.c:1090 startup.c:179
 msgid "Password: "
 msgstr "Contraseña: "
 
-#: command.c:1086 startup.c:182 startup.c:184
+#: command.c:1097 startup.c:182 startup.c:184
 #, c-format
 msgid "Password for user %s: "
 msgstr "Contraseña para usuario %s: "
 
-#: command.c:1182 common.c:181 common.c:458 common.c:523 common.c:809
+#: command.c:1193 common.c:181 common.c:458 common.c:523 common.c:809
 #: common.c:834 common.c:907 copy.c:647 copy.c:692 copy.c:822
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: command.c:1186
+#: command.c:1197
 msgid "Previous connection kept\n"
 msgstr "Se ha mantenido la conexión anterior\n"
 
-#: command.c:1190
+#: command.c:1201
 #, c-format
 msgid "\\connect: %s"
 msgstr "\\connect: %s"
 
-#: command.c:1213
+#: command.c:1224
 #, c-format
 msgid "You are now connected to database \"%s\""
 msgstr "Ahora está conectado a la base de datos «%s»"
 
-#: command.c:1216
+#: command.c:1227
 #, c-format
 msgid " on host \"%s\""
 msgstr " en el servidor «%s»"
 
-#: command.c:1219
+#: command.c:1230
 #, c-format
 msgid " at port \"%s\""
 msgstr " en el puerto «%s»"
 
-#: command.c:1222
+#: command.c:1233
 #, c-format
 msgid " as user \"%s\""
 msgstr " como el usuario «%s»"
 
-#: command.c:1314
+#: command.c:1325
 #, c-format
 msgid "could not start editor \"%s\"\n"
 msgstr "no se pudo iniciar el editor «%s»\n"
 
-#: command.c:1316
+#: command.c:1327
 msgid "could not start /bin/sh\n"
 msgstr "no se pudo iniciar /bin/sh\n"
 
-#: command.c:1353
+#: command.c:1364
 #, c-format
 msgid "cannot locate temporary directory: %s\n"
 msgstr "no se puede ubicar el directorio temporal: %s\n"
 
-#: command.c:1380
+#: command.c:1391
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "no se pudo abrir archivo temporal «%s»: %s\n"
 
-#: command.c:1588
+#: command.c:1599
 msgid "\\pset: allowed formats are unaligned, aligned, html, latex, troff-ms\n"
 msgstr ""
 "\\pset: formatos permitidos son unaligned, aligned, html, latex, troff-ms\n"
 
-#: command.c:1593
+#: command.c:1604
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "El formato de salida es %s.\n"
 
-#: command.c:1603
+#: command.c:1614
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "El estilo de borde es %d.\n"
 
-#: command.c:1615
+#: command.c:1626
 #, c-format
 msgid "Expanded display is on.\n"
 msgstr "Se ha activado el despliegue expandido.\n"
 
-#: command.c:1616
+#: command.c:1627
 #, c-format
 msgid "Expanded display is off.\n"
 msgstr "Se ha desactivado el despliegue expandido.\n"
 
-#: command.c:1629
+#: command.c:1640
 msgid "Showing locale-adjusted numeric output."
 msgstr "Mostrando salida numérica ajustada localmente"
 
-#: command.c:1631
+#: command.c:1642
 msgid "Locale-adjusted numeric output is off."
 msgstr "La salida numérica ajustada localmente está deshabilitada. "
 
-#: command.c:1644
+#: command.c:1655
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Despliegue de nulos es «%s».\n"
 
-#: command.c:1656
+#: command.c:1667
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "El separador de campos es «%s».\n"
 
-#: command.c:1670
+#: command.c:1681
 #, c-format
 msgid "Record separator is <newline>."
 msgstr "El separador de filas es <salto de línea>."
 
-#: command.c:1672
+#: command.c:1683
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "El separador de filas es «%s».\n"
 
-#: command.c:1686
+#: command.c:1697
 msgid "Showing only tuples."
 msgstr "Mostrando sólo filas."
 
-#: command.c:1688
+#: command.c:1699
 msgid "Tuples only is off."
 msgstr "Mostrar sólo filas está desactivado."
 
-#: command.c:1704
+#: command.c:1715
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "El título es «%s».\n"
 
-#: command.c:1706
+#: command.c:1717
 #, c-format
 msgid "Title is unset.\n"
 msgstr "El título ha sido indefinido.\n"
 
-#: command.c:1722
+#: command.c:1733
 #, c-format
 msgid "Table attribute is \"%s\".\n"
 msgstr "Los atributos de tabla son «%s».\n"
 
-#: command.c:1724
+#: command.c:1735
 #, c-format
 msgid "Table attributes unset.\n"
 msgstr "Los atributos de tabla han sido indefinidos.\n"
 
-#: command.c:1745
+#: command.c:1756
 msgid "Pager is used for long output."
 msgstr "El paginador se usará para salida larga."
 
-#: command.c:1747
+#: command.c:1758
 msgid "Pager is always used."
 msgstr "El paginador se usará siempre."
 
-#: command.c:1749
+#: command.c:1760
 msgid "Pager usage is off."
 msgstr "El paginador no se usará."
 
-#: command.c:1763
+#: command.c:1774
 msgid "Default footer is on."
 msgstr "El pie por omisión está activo."
 
-#: command.c:1765
+#: command.c:1776
 msgid "Default footer is off."
 msgstr "El pie de página por omisión está desactivado."
 
-#: command.c:1771
+#: command.c:1782
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: opción desconocida: %s\n"
 
-#: command.c:1826
+#: command.c:1837
 msgid "\\!: failed\n"
 msgstr "\\!: falló\n"
 
@@ -647,12 +647,12 @@ msgstr ""
 "\n"
 "Reporte errores a <pgsql-bugs@postgresql.org>."
 
-#: help.c:171
+#: help.c:176
 #, c-format
 msgid "General\n"
 msgstr "General\n"
 
-#: help.c:172
+#: help.c:177
 #, c-format
 msgid ""
 "  \\c[onnect] [DBNAME|- USER|- HOST|- PORT|-]\n"
@@ -661,18 +661,18 @@ msgstr ""
 "  \\c[onnect] [BASE-DE-DATOS|- USUARIO|- ANFITRIÓN|- PUERTO|-]\n"
 "                  conectar a una nueva base de datos (actual: «%s»)\n"
 
-#: help.c:175
+#: help.c:180
 #, c-format
 msgid "  \\cd [DIR]      change the current working directory\n"
 msgstr "  \\cd [DIR]       cambiar el directorio de trabajo\n"
 
-#: help.c:176
+#: help.c:181
 #, c-format
 msgid "  \\copyright     show PostgreSQL usage and distribution terms\n"
 msgstr ""
 "  \\copyright      mostrar términos de uso y distribución de PostgreSQL\n"
 
-#: help.c:177
+#: help.c:182
 #, c-format
 msgid ""
 "  \\encoding [ENCODING]\n"
@@ -681,14 +681,14 @@ msgstr ""
 "  \\encoding [CODIFICACIÓN]\n"
 "                  mostrar o definir codificación del cliente\n"
 
-#: help.c:179
+#: help.c:184
 #, c-format
 msgid "  \\h [NAME]      help on syntax of SQL commands, * for all commands\n"
 msgstr ""
 "  \\h [NOMBRE]     mostrar ayuda de sintaxis de órdenes SQL,\n"
 "                  * para todas las órdenes\n"
 
-#: help.c:180
+#: help.c:185
 #, c-format
 msgid ""
 "  \\prompt [TEXT] NAME\n"
@@ -697,7 +697,7 @@ msgstr ""
 "  \\prompt [TEXTO] NOMBRE\n"
 "                  preguntar al usuario el valor de la variable interna\n"
 
-#: help.c:182
+#: help.c:187
 #, c-format
 msgid ""
 "  \\password [USERNAME]\n"
@@ -706,12 +706,12 @@ msgstr ""
 "  \\password [USUARIO]\n"
 "                  cambiar la contraseña para un usuario en forma segura\n"
 
-#: help.c:184
+#: help.c:189
 #, c-format
 msgid "  \\q             quit psql\n"
 msgstr "  \\q              salir de psql\n"
 
-#: help.c:185
+#: help.c:190
 #, c-format
 msgid ""
 "  \\set [NAME [VALUE]]\n"
@@ -721,31 +721,31 @@ msgstr ""
 "                  definir variables internas,\n"
 "                  listar todas si no se dan parámetros\n"
 
-#: help.c:187
+#: help.c:192
 #, c-format
 msgid "  \\timing        toggle timing of commands (currently %s)\n"
 msgstr ""
 "  \\timing         mostrar tiempo de ejecución de órdenes\n"
 "                  (actualmente %s)\n"
 
-#: help.c:189
+#: help.c:194
 #, c-format
 msgid "  \\unset NAME    unset (delete) internal variable\n"
 msgstr "  \\unset NOMBRE   indefinir (eliminar) variable interna\n"
 
-#: help.c:190
+#: help.c:195
 #, c-format
 msgid "  \\! [COMMAND]   execute command in shell or start interactive shell\n"
 msgstr ""
 "  \\! [ORDEN]      ejecutar orden en intérprete de órdenes (shell),\n"
 "                  o iniciar intérprete interactivo\n"
 
-#: help.c:193
+#: help.c:198
 #, c-format
 msgid "Query Buffer\n"
 msgstr "Búfer de consulta\n"
 
-#: help.c:194
+#: help.c:199
 #, c-format
 msgid ""
 "  \\e [FILE]      edit the query buffer (or file) with external editor\n"
@@ -753,7 +753,7 @@ msgstr ""
 "  \\e [ARCHIVO]    editar el búfer de consulta (o archivo) con editor "
 "externo\n"
 
-#: help.c:195
+#: help.c:200
 #, c-format
 msgid ""
 "  \\g [FILE]      send query buffer to server (and results to file or |"
@@ -762,65 +762,65 @@ msgstr ""
 "  \\g [ARCHIVO]    enviar búfer de consulta al servidor\n"
 "                  (y resultados a archivo u |orden)\n"
 
-#: help.c:196
+#: help.c:201
 #, c-format
 msgid "  \\p             show the contents of the query buffer\n"
 msgstr "  \\p              mostrar el contenido del búfer de consulta\n"
 
-#: help.c:197
+#: help.c:202
 #, c-format
 msgid "  \\r             reset (clear) the query buffer\n"
 msgstr "  \\r              reiniciar (limpiar) el búfer de consulta\n"
 
-#: help.c:199
+#: help.c:204
 #, c-format
 msgid "  \\s [FILE]      display history or save it to file\n"
 msgstr ""
 "  \\s [ARCHIVO]    mostrar historial de órdenes o guardarlo en archivo\n"
 
-#: help.c:201
+#: help.c:206
 #, c-format
 msgid "  \\w FILE        write query buffer to file\n"
 msgstr "  \\w ARCHIVO      escribir búfer de consulta a archivo\n"
 
-#: help.c:204
+#: help.c:209
 #, c-format
 msgid "Input/Output\n"
 msgstr "Entrada/Salida\n"
 
-#: help.c:205
+#: help.c:210
 #, c-format
 msgid "  \\echo [STRING] write string to standard output\n"
 msgstr "  \\echo [CADENA]  escribir cadena a salida estándar\n"
 
-#: help.c:206
+#: help.c:211
 #, c-format
 msgid "  \\i FILE        execute commands from file\n"
 msgstr "  \\i ARCHIVO      ejecutar órdenes desde archivo\n"
 
-#: help.c:207
+#: help.c:212
 #, c-format
 msgid "  \\o [FILE]      send all query results to file or |pipe\n"
 msgstr "  \\o [ARCHIVO]    envíar resultados de consultas a archivo u |orden\n"
 
-#: help.c:208
+#: help.c:213
 #, c-format
 msgid ""
 "  \\qecho [STRING]\n"
 "                 write string to query output stream (see \\o)\n"
 msgstr "  \\qecho [CADENA] escribir cadena a salida de consultas (ver \\o)\n"
 
-#: help.c:212
+#: help.c:217
 #, c-format
 msgid "Informational\n"
 msgstr "Informacional\n"
 
-#: help.c:213
+#: help.c:218
 #, c-format
 msgid "  \\d [NAME]      describe table, index, sequence, or view\n"
 msgstr "  \\d [NOMBRE]     describir tabla, índice, secuencia o vista\n"
 
-#: help.c:214
+#: help.c:219
 #, c-format
 msgid ""
 "  \\d{t|i|s|v|S} [PATTERN] (add \"+\" for more detail)\n"
@@ -829,42 +829,42 @@ msgstr ""
 "  \\d{t|i|s|v|S} [PATRÓN] («+» para obtener más detalles)\n"
 "                  listar tablas/índices/secuencias/vistas/tablas de sistema\n"
 
-#: help.c:216
+#: help.c:221
 #, c-format
 msgid "  \\da [PATTERN]  list aggregate functions\n"
 msgstr "  \\da [PATRÓN]    listar funciones de agregación\n"
 
-#: help.c:217
+#: help.c:222
 #, c-format
 msgid "  \\db [PATTERN]  list tablespaces (add \"+\" for more detail)\n"
 msgstr "  \\db [PATRÓN]    listar tablespaces («+» para más detalles)\n"
 
-#: help.c:218
+#: help.c:223
 #, c-format
 msgid "  \\dc [PATTERN]  list conversions\n"
 msgstr "  \\dc [PATRÓN]    listar conversiones\n"
 
-#: help.c:219
+#: help.c:224
 #, c-format
 msgid "  \\dC            list casts\n"
 msgstr "  \\dC             listar conversiones de tipo (casts)\n"
 
-#: help.c:220
+#: help.c:225
 #, c-format
 msgid "  \\dd [PATTERN]  show comment for object\n"
 msgstr "  \\dd [PATRÓN]    listar comentarios de objetos\n"
 
-#: help.c:221
+#: help.c:226
 #, c-format
 msgid "  \\dD [PATTERN]  list domains\n"
 msgstr "  \\dD [PATRÓN]    listar dominios\n"
 
-#: help.c:222
+#: help.c:227
 #, c-format
 msgid "  \\df [PATTERN]  list functions (add \"+\" for more detail)\n"
 msgstr "  \\df [PATRÓN]    listar funciones («+» para más detalles)\n"
 
-#: help.c:223
+#: help.c:228
 #, c-format
 msgid ""
 "  \\dF [PATTERN]  list text search configurations (add \"+\" for more "
@@ -873,7 +873,7 @@ msgstr ""
 "  \\dF [PATRÓN]    listar configuraciones de búsqueda en texto\n"
 "                  («+» para más detalles)\n"
 
-#: help.c:224
+#: help.c:229
 #, c-format
 msgid ""
 "  \\dFd [PATTERN] list text search dictionaries (add \"+\" for more detail)\n"
@@ -881,12 +881,12 @@ msgstr ""
 "  \\dFd [PATRÓN]   listar diccionarios de búsqueda en texto\n"
 "                  («+» para más detalles)\n"
 
-#: help.c:225
+#: help.c:230
 #, c-format
 msgid "  \\dFt [PATTERN] list text search templates\n"
 msgstr "  \\dFt [PATRÓN]   listar plantillas de búsqueda en texto\n"
 
-#: help.c:226
+#: help.c:231
 #, c-format
 msgid ""
 "  \\dFp [PATTERN] list text search parsers (add \"+\" for more detail)\n"
@@ -894,50 +894,50 @@ msgstr ""
 "  \\dFp [PATRÓN]   listar analizadores de búsqueda en texto\n"
 "                  («+» para más detalles)\n"
 
-#: help.c:227
+#: help.c:232
 #, c-format
 msgid "  \\dg [PATTERN]  list groups\n"
 msgstr "  \\dg [PATRÓN]    listar grupos\n"
 
-#: help.c:228
+#: help.c:233
 #, c-format
 msgid "  \\dn [PATTERN]  list schemas (add \"+\" for more detail)\n"
 msgstr "  \\dn [PATRÓN]    listar esquemas («+» para más detalles)\n"
 
-#: help.c:229
+#: help.c:234
 #, c-format
 msgid "  \\do [NAME]     list operators\n"
 msgstr "  \\do [NOMBRE]    listar operadores\n"
 
-#: help.c:230
+#: help.c:235
 #, c-format
 msgid "  \\dl            list large objects, same as \\lo_list\n"
 msgstr "  \\dl             listar objetos grandes, lo mismo que \\lo_list\n"
 
-#: help.c:231
+#: help.c:236
 #, c-format
 msgid "  \\dp [PATTERN]  list table, view, and sequence access privileges\n"
 msgstr ""
 "  \\dp [PATRÓN]    listar privilegios de acceso a tablas, vistas y "
 "secuencias\n"
 
-#: help.c:232
+#: help.c:237
 #, c-format
 msgid "  \\dT [PATTERN]  list data types (add \"+\" for more detail)\n"
 msgstr "  \\dT [PATRÓN]    listar tipos de dato («+» para más detalles)\n"
 
-#: help.c:233
+#: help.c:238
 #, c-format
 msgid "  \\du [PATTERN]  list users\n"
 msgstr "  \\du [PATRÓN]    listar usuarios\n"
 
-#: help.c:234
+#: help.c:239
 #, c-format
 msgid "  \\l             list all databases (add \"+\" for more detail)\n"
 msgstr ""
 "  \\l              listar todas las bases de datos («+» para más detalles)\n"
 
-#: help.c:235
+#: help.c:240
 #, c-format
 msgid ""
 "  \\z [PATTERN]   list table, view, and sequence access privileges (same as "
@@ -947,23 +947,23 @@ msgstr ""
 "secuencias\n"
 "                  (lo mismo que \\dp)\n"
 
-#: help.c:238
+#: help.c:243
 #, c-format
 msgid "Formatting\n"
 msgstr "Formato\n"
 
-#: help.c:239
+#: help.c:244
 #, c-format
 msgid "  \\a             toggle between unaligned and aligned output mode\n"
 msgstr ""
 "  \\a              cambiar entre modo de salida alineado y sin alinear\n"
 
-#: help.c:240
+#: help.c:245
 #, c-format
 msgid "  \\C [STRING]    set table title, or unset if none\n"
 msgstr "  \\C [CADENA]     definir título de tabla, o indefinir si es vacío\n"
 
-#: help.c:241
+#: help.c:246
 #, c-format
 msgid ""
 "  \\f [STRING]    show or set field separator for unaligned query output\n"
@@ -971,12 +971,12 @@ msgstr ""
 "  \\f [CADENA]     mostrar o definir separador de campos para\n"
 "                  modo de salida sin alinear\n"
 
-#: help.c:242
+#: help.c:247
 #, c-format
 msgid "  \\H             toggle HTML output mode (currently %s)\n"
 msgstr "  \\H              cambiar modo de salida HTML (actualmente %s)\n"
 
-#: help.c:244
+#: help.c:249
 #, c-format
 msgid ""
 "  \\pset NAME [VALUE]\n"
@@ -991,36 +991,36 @@ msgstr ""
 "                  numericlocale|recordsep|tuples_only|title|tableattr|"
 "pager})\n"
 
-#: help.c:248
+#: help.c:253
 #, c-format
 msgid "  \\t             show only rows (currently %s)\n"
 msgstr "  \\t              mostrar sólo filas (actualmente %s)\n"
 
-#: help.c:250
+#: help.c:255
 #, c-format
 msgid "  \\T [STRING]    set HTML <table> tag attributes, or unset if none\n"
 msgstr ""
 "  \\T [CADENA]     definir atributos HTML de <table>, o indefinir si es "
 "vacío\n"
 
-#: help.c:251
+#: help.c:256
 #, c-format
 msgid "  \\x             toggle expanded output (currently %s)\n"
 msgstr "  \\x              cambiar modo expandido (actualmente %s)\n"
 
-#: help.c:255
+#: help.c:260
 #, c-format
 msgid "Copy, Large Object\n"
 msgstr "Copy, Objetos Grandes\n"
 
-#: help.c:256
+#: help.c:261
 #, c-format
 msgid ""
 "  \\copy ...      perform SQL COPY with data stream to the client host\n"
 msgstr ""
 "  \\copy ...       ejecutar orden SQL COPY con flujo de datos al cliente\n"
 
-#: help.c:257
+#: help.c:262
 #, c-format
 msgid ""
 "  \\lo_export LOBOID FILE\n"
@@ -1033,11 +1033,11 @@ msgstr ""
 "  \\lo_unlink LOBOID\n"
 "  \\lo_list        operaciones con objetos grandes\n"
 
-#: help.c:309
+#: help.c:314
 msgid "Available help:\n"
 msgstr "Ayuda disponible:\n"
 
-#: help.c:398
+#: help.c:403
 #, c-format
 msgid ""
 "Command:     %s\n"
@@ -1051,7 +1051,7 @@ msgstr ""
 "Sintaxis:\n"
 "%s\n"
 
-#: help.c:414
+#: help.c:419
 #, c-format
 msgid ""
 "No help available for \"%-.*s\".\n"
@@ -3331,12 +3331,12 @@ msgstr "elimina filas de una tabla"
 
 #: sql_help.h:282
 msgid ""
-"DELETE FROM [ ONLY ] table [ [ AS ] alias ]\n"
+"DELETE FROM [ ONLY ] table [ * ] [ [ AS ] alias ]\n"
 "    [ USING usinglist ]\n"
 "    [ WHERE condition | WHERE CURRENT OF cursor_name ]\n"
 "    [ RETURNING * | output_expression [ AS output_name ] [, ...] ]"
 msgstr ""
-"DELETE FROM [ ONLY ] tabla [ [ AS ] alias ]\n"
+"DELETE FROM [ ONLY ] tabla [ * ] [ [ AS ] alias ]\n"
 "    [ USING lista_using ]\n"
 "    [ WHERE condición | WHERE CURRENT OF nombre_cursor ]\n"
 "    [ RETURNING * | expresión_de_salida [ AS nombre_de_salida ] [, ...] ]"
@@ -4191,7 +4191,7 @@ msgstr "actualiza filas de una tabla"
 
 #: sql_help.h:530
 msgid ""
-"UPDATE [ ONLY ] table [ [ AS ] alias ]\n"
+"UPDATE [ ONLY ] table [ * ] [ [ AS ] alias ]\n"
 "    SET { column = { expression | DEFAULT } |\n"
 "          ( column [, ...] ) = ( { expression | DEFAULT } [, ...] ) } "
 "[, ...]\n"
@@ -4199,7 +4199,7 @@ msgid ""
 "    [ WHERE condition | WHERE CURRENT OF cursor_name ]\n"
 "    [ RETURNING * | output_expression [ AS output_name ] [, ...] ]"
 msgstr ""
-"UPDATE [ ONLY ] tabla [ [ AS ] alias ]\n"
+"UPDATE [ ONLY ] tabla [ * ] [ [ AS ] alias ]\n"
 "    SET { columna = { expresión | DEFAULT } |\n"
 "          ( columna [, ...] ) = ( { expresión | DEFAULT } [, ...] ) } "
 "[, ...]\n"
@@ -4267,27 +4267,27 @@ msgstr "no se pudo cambiar el directorio a «%s»"
 msgid "could not read symbolic link \"%s\""
 msgstr "no se pudo leer el enlace simbólico «%s»"
 
-#: ../../port/exec.c:586
+#: ../../port/exec.c:595
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "el proceso hijo terminó con código de salida %d"
 
-#: ../../port/exec.c:590
+#: ../../port/exec.c:599
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "el proceso hijo fue terminado por una excepción 0x%X"
 
-#: ../../port/exec.c:599
+#: ../../port/exec.c:608
 #, c-format
 msgid "child process was terminated by signal %s"
 msgstr "el proceso hijo fue terminado por una señal %s"
 
-#: ../../port/exec.c:602
+#: ../../port/exec.c:611
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "el proceso hijo fue terminado por una señal %d"
 
-#: ../../port/exec.c:606
+#: ../../port/exec.c:615
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "el proceso hijo terminó con código no reconocido %d"

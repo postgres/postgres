@@ -25,8 +25,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-07-05 21:48+0000\n"
-"PO-Revision-Date: 2012-04-02 19:14+0400\n"
+"POT-Creation-Date: 2012-12-03 17:17+0000\n"
+"PO-Revision-Date: 2012-12-03 21:36+0400\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
 "Language: ru\n"
@@ -38,7 +38,7 @@ msgstr ""
 "X-Poedit-SourceCharset: utf-8\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Lokalize 1.4\n"
+"X-Generator: Lokalize 1.5\n"
 
 #: fe-auth.c:268
 #, c-format
@@ -75,10 +75,10 @@ msgstr "ошибка импорта имени в GSSAPI"
 msgid "SSPI continuation error"
 msgstr "ошибка продолжения в SSPI"
 
-#: fe-auth.c:581 fe-auth.c:654 fe-auth.c:680 fe-auth.c:779 fe-connect.c:1307
-#: fe-connect.c:2527 fe-connect.c:2745 fe-connect.c:3084 fe-connect.c:3093
-#: fe-connect.c:3230 fe-connect.c:3276 fe-connect.c:3294 fe-exec.c:2754
-#: fe-lobj.c:669 fe-protocol2.c:1027 fe-protocol3.c:1415
+#: fe-auth.c:581 fe-auth.c:654 fe-auth.c:680 fe-auth.c:779 fe-connect.c:1316
+#: fe-connect.c:2536 fe-connect.c:2754 fe-connect.c:3093 fe-connect.c:3102
+#: fe-connect.c:3239 fe-connect.c:3285 fe-connect.c:3303 fe-exec.c:2754
+#: fe-lobj.c:684 fe-protocol2.c:1027 fe-protocol3.c:1415
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
 
@@ -144,178 +144,183 @@ msgstr ""
 "\tОн действительно работает по адресу \"%s\"\n"
 "\t и принимает TCP-соединения (порт %s)?\n"
 
-#: fe-connect.c:833
+#: fe-connect.c:823
+#, c-format
+msgid "Unix-domain socket path \"%s\" is too long (maximum %d bytes)\n"
+msgstr "длина пути доменного сокета \"%s\" превышает предел (%d байт)\n"
+
+#: fe-connect.c:842
 #, c-format
 msgid "could not translate host name \"%s\" to address: %s\n"
 msgstr "преобразовать имя \"%s\" в адрес не удалось: %s\n"
 
-#: fe-connect.c:837
+#: fe-connect.c:846
 #, c-format
 msgid "could not translate Unix-domain socket path \"%s\" to address: %s\n"
 msgstr ""
 "преобразовать путь к доменному сокету UNIX \"%s\" в адрес не удалось: %s\n"
 
-#: fe-connect.c:1038
+#: fe-connect.c:1047
 msgid "invalid connection state, probably indicative of memory corruption\n"
 msgstr "неверное состояние соединения - возможно разрушение памяти\n"
 
-#: fe-connect.c:1081
+#: fe-connect.c:1090
 #, c-format
 msgid "could not create socket: %s\n"
 msgstr "не удалось создать сокет: %s\n"
 
-#: fe-connect.c:1104
+#: fe-connect.c:1113
 #, c-format
 msgid "could not set socket to non-blocking mode: %s\n"
 msgstr "не удалось перевести сокет в неблокирующий режим: %s\n"
 
-#: fe-connect.c:1116
+#: fe-connect.c:1125
 #, c-format
 msgid "could not set socket to close-on-exec mode: %s\n"
 msgstr ""
 "не удалось перевести сокет в режим закрытия при выполнении (close-on-exec): "
 "%s\n"
 
-#: fe-connect.c:1203
+#: fe-connect.c:1212
 #, c-format
 msgid "could not get socket error status: %s\n"
 msgstr "не удалось получить статус ошибки сокета: %s\n"
 
-#: fe-connect.c:1241
+#: fe-connect.c:1250
 #, c-format
 msgid "could not get client address from socket: %s\n"
 msgstr "не удалось получить адрес клиента из сокета: %s\n"
 
-#: fe-connect.c:1285
+#: fe-connect.c:1294
 #, c-format
 msgid "could not send SSL negotiation packet: %s\n"
 msgstr "не удалось отправить пакет согласования SSL: %s\n"
 
-#: fe-connect.c:1320
+#: fe-connect.c:1329
 #, c-format
 msgid "could not send startup packet: %s\n"
 msgstr "не удалось отправить стартовый пакет: %s\n"
 
-#: fe-connect.c:1388
+#: fe-connect.c:1397
 msgid "server does not support SSL, but SSL was required\n"
 msgstr "затребовано подключение через SSL, но сервер не поддерживает SSL\n"
 
-#: fe-connect.c:1414
+#: fe-connect.c:1423
 #, c-format
 msgid "received invalid response to SSL negotiation: %c\n"
 msgstr "получен неверный ответ на согласование SSL: %c\n"
 
-#: fe-connect.c:1493 fe-connect.c:1526
+#: fe-connect.c:1502 fe-connect.c:1535
 #, c-format
 msgid "expected authentication request from server, but received %c\n"
 msgstr "ожидался запрос аутентификации от сервера, но получено: %c\n"
 
-#: fe-connect.c:1713
+#: fe-connect.c:1722
 #, c-format
 msgid "out of memory allocating GSSAPI buffer (%i)"
 msgstr "недостаточно памяти для буфера GSSAPI (%i)"
 
-#: fe-connect.c:1798
+#: fe-connect.c:1807
 msgid "unexpected message from server during startup\n"
 msgstr "неожиданное сообщение от сервера в начале работы\n"
 
-#: fe-connect.c:1866
+#: fe-connect.c:1875
 #, c-format
 msgid "invalid connection state %c, probably indicative of memory corruption\n"
 msgstr "неверное состояние соединения %c - возможно разрушение памяти\n"
 
-#: fe-connect.c:2540
+#: fe-connect.c:2549
 #, c-format
 msgid "invalid LDAP URL \"%s\": scheme must be ldap://\n"
 msgstr "некорректный адрес LDAP \"%s\": схема должна быть ldap://\n"
 
-#: fe-connect.c:2555
+#: fe-connect.c:2564
 #, c-format
 msgid "invalid LDAP URL \"%s\": missing distinguished name\n"
 msgstr "некорректный адрес LDAP \"%s\": отсутствует уникальное имя\n"
 
-#: fe-connect.c:2566 fe-connect.c:2619
+#: fe-connect.c:2575 fe-connect.c:2628
 #, c-format
 msgid "invalid LDAP URL \"%s\": must have exactly one attribute\n"
 msgstr "некорректный адрес LDAP \"%s\": должен быть только один атрибут\n"
 
-#: fe-connect.c:2576 fe-connect.c:2633
+#: fe-connect.c:2585 fe-connect.c:2642
 #, c-format
 msgid "invalid LDAP URL \"%s\": must have search scope (base/one/sub)\n"
 msgstr ""
 "некорректный адрес LDAP \"%s\": не указана область поиска (base/one/sub)\n"
 
-#: fe-connect.c:2587
+#: fe-connect.c:2596
 #, c-format
 msgid "invalid LDAP URL \"%s\": no filter\n"
 msgstr "некорректный адрес LDAP \"%s\": нет фильтра\n"
 
-#: fe-connect.c:2608
+#: fe-connect.c:2617
 #, c-format
 msgid "invalid LDAP URL \"%s\": invalid port number\n"
 msgstr "некорректный адрес LDAP \"%s\": неверный номер порта\n"
 
-#: fe-connect.c:2642
+#: fe-connect.c:2651
 msgid "could not create LDAP structure\n"
 msgstr "не удалось создать структуру LDAP\n"
 
-#: fe-connect.c:2684
+#: fe-connect.c:2693
 #, c-format
 msgid "lookup on LDAP server failed: %s\n"
 msgstr "ошибка поиска на сервере LDAP: %s\n"
 
-#: fe-connect.c:2695
+#: fe-connect.c:2704
 msgid "more than one entry found on LDAP lookup\n"
 msgstr "при поиске LDAP найдено более одного вхождения\n"
 
-#: fe-connect.c:2696 fe-connect.c:2708
+#: fe-connect.c:2705 fe-connect.c:2717
 msgid "no entry found on LDAP lookup\n"
 msgstr "при поиске LDAP не найдено ничего\n"
 
-#: fe-connect.c:2719 fe-connect.c:2732
+#: fe-connect.c:2728 fe-connect.c:2741
 msgid "attribute has no values on LDAP lookup\n"
 msgstr "атрибут не содержит значений при поиске LDAP\n"
 
-#: fe-connect.c:2784 fe-connect.c:2803 fe-connect.c:3132
+#: fe-connect.c:2793 fe-connect.c:2812 fe-connect.c:3141
 #, c-format
 msgid "missing \"=\" after \"%s\" in connection info string\n"
 msgstr "в строке соединения нет \"=\" после \"%s\"\n"
 
-#: fe-connect.c:2867 fe-connect.c:3214
+#: fe-connect.c:2876 fe-connect.c:3223
 #, c-format
 msgid "invalid connection option \"%s\"\n"
 msgstr "неверный параметр соединения \"%s\"\n"
 
-#: fe-connect.c:2883 fe-connect.c:3181
+#: fe-connect.c:2892 fe-connect.c:3190
 msgid "unterminated quoted string in connection info string\n"
 msgstr "в строке соединения не хватает закрывающей кавычки\n"
 
-#: fe-connect.c:2926
+#: fe-connect.c:2935
 #, c-format
 msgid "ERROR: service file \"%s\" not found\n"
 msgstr "ОШИБКА: файл определений служб \"%s\" не найден\n"
 
-#: fe-connect.c:2939
+#: fe-connect.c:2948
 #, c-format
 msgid "ERROR: line %d too long in service file \"%s\"\n"
 msgstr "ОШИБКА: слишком длинная строка (%d) в файле определений служб \"%s\"\n"
 
-#: fe-connect.c:3011 fe-connect.c:3038
+#: fe-connect.c:3020 fe-connect.c:3047
 #, c-format
 msgid "ERROR: syntax error in service file \"%s\", line %d\n"
 msgstr ""
 "ОШИБКА: синтаксическая ошибка в файле определения служб \"%s\" (строка %d)\n"
 
-#: fe-connect.c:3462
+#: fe-connect.c:3471
 msgid "connection pointer is NULL\n"
 msgstr "нулевой указатель соединения\n"
 
-#: fe-connect.c:3746
+#: fe-connect.c:3755
 #, c-format
 msgid "WARNING: password file \"%s\" is not a plain file\n"
 msgstr "ВНИМАНИЕ: файл паролей \"%s\" - не обычный файл\n"
 
-#: fe-connect.c:3755
+#: fe-connect.c:3764
 #, c-format
 msgid ""
 "WARNING: password file \"%s\" has world or group read access; permission "
@@ -414,54 +419,54 @@ msgstr "не удалось определить OID функции lo_truncate\
 msgid "cannot determine OID of function lo_create\n"
 msgstr "не удалось определить OID функции lo_create\n"
 
-#: fe-lobj.c:502 fe-lobj.c:597
+#: fe-lobj.c:502 fe-lobj.c:607
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "не удалось открыть файл \"%s\": %s\n"
 
-#: fe-lobj.c:548
+#: fe-lobj.c:553
 #, c-format
 msgid "could not read from file \"%s\": %s\n"
 msgstr "не удалось прочитать файл \"%s\": %s\n"
 
-#: fe-lobj.c:612 fe-lobj.c:636
+#: fe-lobj.c:627 fe-lobj.c:651
 #, c-format
 msgid "could not write to file \"%s\": %s\n"
 msgstr "не удалось записать файл \"%s\": %s\n"
 
-#: fe-lobj.c:717
+#: fe-lobj.c:732
 msgid "query to initialize large object functions did not return data\n"
 msgstr "запрос инициализации функций для больших объектов не вернул данные\n"
 
-#: fe-lobj.c:758
+#: fe-lobj.c:773
 msgid "cannot determine OID of function lo_open\n"
 msgstr "не удалось определить OID функции lo_open\n"
 
-#: fe-lobj.c:765
+#: fe-lobj.c:780
 msgid "cannot determine OID of function lo_close\n"
 msgstr "не удалось определить OID функции lo_close\n"
 
-#: fe-lobj.c:772
+#: fe-lobj.c:787
 msgid "cannot determine OID of function lo_creat\n"
 msgstr "не удалось определить OID функции lo_creat\n"
 
-#: fe-lobj.c:779
+#: fe-lobj.c:794
 msgid "cannot determine OID of function lo_unlink\n"
 msgstr "не удалось определить OID функции lo_unlink\n"
 
-#: fe-lobj.c:786
+#: fe-lobj.c:801
 msgid "cannot determine OID of function lo_lseek\n"
 msgstr "не удалось определить OID функции lo_lseek\n"
 
-#: fe-lobj.c:793
+#: fe-lobj.c:808
 msgid "cannot determine OID of function lo_tell\n"
 msgstr "не удалось определить OID функции lo_tell\n"
 
-#: fe-lobj.c:800
+#: fe-lobj.c:815
 msgid "cannot determine OID of function loread\n"
 msgstr "не удалось определить OID функции loread\n"
 
-#: fe-lobj.c:807
+#: fe-lobj.c:822
 msgid "cannot determine OID of function lowrite\n"
 msgstr "не удалось определить OID функции lowrite\n"
 
