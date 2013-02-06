@@ -189,26 +189,49 @@ static const struct encoding_match encoding_match_list[] = {
 
 #ifdef WIN32
 /*
- * On Windows, use CP<codepage number> instead of the nl_langinfo() result
+ * On Windows, use CP<code page number> instead of the nl_langinfo() result
+ *
+ * Visual Studio 2012 expanded the set of valid LC_CTYPE values, so have its
+ * locale machinery determine the code page.  See comments at IsoLocaleName().
+ * For other compilers, follow the locale's predictable format.
+ *
+ * Returns a malloc()'d string for the caller to free.
  */
 static char *
 win32_langinfo(const char *ctype)
 {
-	char	   *r;
+	char	   *r = NULL;
+
+#if (_MSC_VER >= 1700)
+	_locale_t	loct = NULL;
+
+	loct = _create_locale(LC_CTYPE, ctype);
+	if (loct != NULL)
+	{
+		r = malloc(16);			/* excess */
+		if (r != NULL)
+			sprintf(r, "CP%u", loct->locinfo->lc_codepage);
+		_free_locale(loct);
+	}
+#else
 	char	   *codepage;
-	int			ln;
 
 	/*
 	 * Locale format on Win32 is <Language>_<Country>.<CodePage> . For
-	 * example, English_USA.1252.
+	 * example, English_United States.1252.
 	 */
 	codepage = strrchr(ctype, '.');
-	if (!codepage)
-		return NULL;
-	codepage++;
-	ln = strlen(codepage);
-	r = malloc(ln + 3);
-	sprintf(r, "CP%s", codepage);
+	if (codepage != NULL)
+	{
+		int			ln;
+
+		codepage++;
+		ln = strlen(codepage);
+		r = malloc(ln + 3);
+		if (r != NULL)
+			sprintf(r, "CP%s", codepage);
+	}
+#endif
 
 	return r;
 }

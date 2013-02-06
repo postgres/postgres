@@ -935,14 +935,22 @@ find_matching_ts_config(const char *lc_type)
 
 	/*
 	 * Convert lc_ctype to a language name by stripping everything after an
-	 * underscore.	Just for paranoia, we also stop at '.' or '@'.
+	 * underscore (usual case) or a hyphen (Windows "locale name"; see
+	 * comments at IsoLocaleName()).
+	 *
+	 * XXX Should ' ' be a stop character?  This would select "norwegian" for
+	 * the Windows locale "Norwegian (Nynorsk)_Norway.1252".  If we do so, we
+	 * should also accept the "nn" and "nb" Unix locales.
+	 *
+	 * Just for paranoia, we also stop at '.' or '@'.
 	 */
 	if (lc_type == NULL)
 		langname = pg_strdup("");
 	else
 	{
 		ptr = langname = pg_strdup(lc_type);
-		while (*ptr && *ptr != '_' && *ptr != '.' && *ptr != '@')
+		while (*ptr &&
+			   *ptr != '_' && *ptr != '-' && *ptr != '.' && *ptr != '@')
 			ptr++;
 		*ptr = '\0';
 	}

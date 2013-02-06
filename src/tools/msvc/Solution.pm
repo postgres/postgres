@@ -63,13 +63,12 @@ sub DeterminePlatform
 {
 	my $self = shift;
 
-	# Determine if we are in 32 or 64-bit mode. Do this by seeing if CL has
-	# 64-bit only parameters.
+	# Examine CL help output to determine if we are in 32 or 64-bit mode.
 	$self->{platform} = 'Win32';
-	open(P, "cl /? 2>NUL|") || die "cl command not found";
+	open(P, "cl /? 2>&1 |") || die "cl command not found";
 	while (<P>)
 	{
-		if (/^\/favor:</)
+		if (/^\/favor:<.+AMD64/)
 		{
 			$self->{platform} = 'x64';
 			last;
@@ -698,6 +697,30 @@ sub new
 	$self->{visualStudioName}    = 'Visual Studio 2010';
 
 	return $self;
+}
+
+package VS2012Solution;
+
+#
+# Package that encapsulates a Visual Studio 2012 solution file
+#
+
+use Carp;
+use strict;
+use warnings;
+use base qw(Solution);
+
+sub new
+{
+    my $classname = shift;
+    my $self = $classname->SUPER::_new(@_);
+    bless($self, $classname);
+
+    $self->{solutionFileVersion} = '12.00';
+    $self->{vcver} = '11.00';
+    $self->{visualStudioName} = 'Visual Studio 2012';
+
+    return $self;
 }
 
 1;

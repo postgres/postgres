@@ -92,10 +92,11 @@ These configuration arguments are passed over to Mkvcbuild::mkvcbuild
 (Mkvcbuild.pm) which creates the Visual Studio project and solution files.
 It does this by using VSObjectFactory::CreateSolution to create an object
 implementing the Solution interface (this could be either a VS2005Solution,
-a VS2008Solution or a VS2010Solution, all in Solution.pm, depending on the
-user's build environment) and adding objects implementing the corresponding
-Project interface (VC2005Project or VC2008Project from VCBuildProject.pm or
-VC2010Project from MSBuildProject.pm) to it.
+a VS2008Solution, a VS2010Solution or a VS2012Solution, all in Solution.pm,
+depending on the user's build environment) and adding objects implementing
+the corresponding Project interface (VC2005Project or VC2008Project from
+VCBuildProject.pm or VC2010Project or VC2012Project from MSBuildProject.pm)
+to it.
 When Solution::Save is called, the implementations of Solution and Project
 save their content in the appropriate format.
 The final step of starting the appropriate build program (msbuild or vcbuild)

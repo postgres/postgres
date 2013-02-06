@@ -40,6 +40,7 @@ while (<$ARGV[0]/*.obj>)
 		next if $pieces[6] =~ /^\(/;
 		next if $pieces[6] =~ /^__real/;
 		next if $pieces[6] =~ /^__imp/;
+		next if $pieces[6] =~ /^__xmm/;
 		next if $pieces[6] =~ /NULL_THUNK_DATA$/;
 		next if $pieces[6] =~ /^__IMPORT_DESCRIPTOR/;
 		next if $pieces[6] =~ /^__NULL_IMPORT/;

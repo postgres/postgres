@@ -715,12 +715,41 @@ cache_locale_time(void)
 
 #if defined(WIN32) && defined(LC_MESSAGES)
 /*
- *	Convert Windows locale name to the ISO formatted one
- *	if possible.
+ * Convert a Windows setlocale() argument to a Unix-style one.
  *
- *	This function returns NULL if conversion is impossible,
- *	otherwise returns the pointer to a static area which
- *	contains the iso formatted locale name.
+ * Regardless of platform, we install message catalogs under a Unix-style
+ * LL[_CC][.ENCODING][@VARIANT] naming convention.  Only LC_MESSAGES settings
+ * following that style will elicit localized interface strings.
+ *
+ * Before Visual Studio 2012 (msvcr110.dll), Windows setlocale() accepted "C"
+ * (but not "c") and strings of the form <Language>[_<Country>][.<CodePage>],
+ * case-insensitive.  setlocale() returns the fully-qualified form; for
+ * example, setlocale("thaI") returns "Thai_Thailand.874".  Internally,
+ * setlocale() and _create_locale() select a "locale identifier"[1] and store
+ * it in an undocumented _locale_t field.  From that LCID, we can retrieve the
+ * ISO 639 language and the ISO 3166 country.  Character encoding does not
+ * matter, because the server and client encodings govern that.
+ *
+ * Windows Vista introduced the "locale name" concept[2], closely following
+ * RFC 4646.  Locale identifiers are now deprecated.  Starting with Visual
+ * Studio 2012, setlocale() accepts locale names in addition to the strings it
+ * accepted historically.  It does not standardize them; setlocale("Th-tH")
+ * returns "Th-tH".  setlocale(category, "") still returns a traditional
+ * string.  Furthermore, msvcr110.dll changed the undocumented _locale_t
+ * content to carry locale names instead of locale identifiers.
+ *
+ * MinGW headers declare _create_locale(), but msvcrt.dll lacks that symbol.
+ * IsoLocaleName() always fails in a MinGW-built postgres.exe, so only
+ * Unix-style values of the lc_messages GUC can elicit localized messages.  In
+ * particular, every lc_messages setting that initdb can select automatically
+ * will yield only C-locale messages.  XXX This could be fixed by running the
+ * fully-qualified locale name through a lookup table.
+ *
+ * This function returns a pointer to a static buffer bearing the converted
+ * name or NULL if conversion fails.
+ *
+ * [1] http://msdn.microsoft.com/en-us/library/windows/desktop/dd373763.aspx
+ * [2] http://msdn.microsoft.com/en-us/library/windows/desktop/dd373814.aspx
  */
 static char *
 IsoLocaleName(const char *winlocname)
@@ -739,6 +768,34 @@ IsoLocaleName(const char *winlocname)
 	loct = _create_locale(LC_CTYPE, winlocname);
 	if (loct != NULL)
 	{
+#if (_MSC_VER >= 1700)			/* Visual Studio 2012 or later */
+		size_t		rc;
+		char	   *hyphen;
+
+		/* Locale names use only ASCII, any conversion locale suffices. */
+		rc = wchar2char(iso_lc_messages, loct->locinfo->locale_name[LC_CTYPE],
+						sizeof(iso_lc_messages), NULL);
+		_free_locale(loct);
+		if (rc == -1 || rc == sizeof(iso_lc_messages))
+			return NULL;
+
+		/*
+		 * Since the message catalogs sit on a case-insensitive filesystem, we
+		 * need not standardize letter case here.  So long as we do not ship
+		 * message catalogs for which it would matter, we also need not
+		 * translate the script/variant portion, e.g. uz-Cyrl-UZ to
+		 * uz_UZ@cyrillic.  Simply replace the hyphen with an underscore.
+		 *
+		 * Note that the locale name can be less-specific than the value we
+		 * would derive under earlier Visual Studio releases.  For example,
+		 * French_France.1252 yields just "fr".  This does not affect any of
+		 * the country-specific message catalogs available as of this writing
+		 * (pt_BR, zh_CN, zh_TW).
+		 */
+		hyphen = strchr(iso_lc_messages, '-');
+		if (hyphen)
+			*hyphen = '_';
+#else
 		char		isolang[32],
 					isocrty[32];
 		LCID		lcid;
@@ -753,6 +810,7 @@ IsoLocaleName(const char *winlocname)
 		if (!GetLocaleInfoA(lcid, LOCALE_SISO3166CTRYNAME, isocrty, sizeof(isocrty)))
 			return NULL;
 		snprintf(iso_lc_messages, sizeof(iso_lc_messages) - 1, "%s_%s", isolang, isocrty);
+#endif
 		return iso_lc_messages;
 	}
 	return NULL;
