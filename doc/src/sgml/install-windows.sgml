@@ -19,8 +19,8 @@
  <para>
   There are several different ways of building PostgreSQL on
   <productname>Windows</productname>. The simplest way to build with
-  Microsoft tools is to install a supported version of the
-  <productname>Microsoft Windows SDK</productname> and use the included
+  Microsoft tools is to install <productname>Visual Studio Express 2012
+  for Windows Desktop</productname> and use the included
   compiler. It is also possible to build with the full
   <productname>Microsoft Visual C++ 2005, 2008 or 2010</productname>. In some cases
   that requires the installation of the <productname>Windows SDK</productname>
@@ -77,17 +77,18 @@
   <productname>Visual Studio Express</productname> or some versions of the
   <productname>Microsoft Windows SDK</productname>. If you do not already have a
   <productname>Visual Studio</productname> environment set up, the easiest
-  way is to use the compilers in the <productname>Windows SDK</productname>,
-  which is a free download from Microsoft.
+  ways are to use the compilers in the <productname>Windows SDK 7.1</productname>
+  or those from <productname>Visual Studio Express 2012 for Windows
+  Desktop</productname>, which are both free downloads from Microsoft.
  </para>
 
  <para>
   PostgreSQL is known to support compilation using the compilers shipped with
   <productname>Visual Studio 2005</productname> to
-  <productname>Visual Studio 2010</productname> (including Express editions),
+  <productname>Visual Studio 2012</productname> (including Express editions),
   as well as standalone Windows SDK releases 6.0 to 7.1.
   64-bit PostgreSQL builds are only supported with
-  <productname>Microsoft Windows SDK</productname> version 6.0a and above or
+  <productname>Microsoft Windows SDK</productname> version 6.0a to 7.1 or
   <productname>Visual Studio 2008</productname> and above.
  </para>
 
@@ -146,17 +147,20 @@ $ENV{PATH}=$ENV{PATH} . ';c:\some\where\bison\bin';
     <varlistentry>
      <term><productname>Microsoft Windows SDK</productname></term>
      <listitem><para>
-      It is recommended that you upgrade to the latest supported version
-      of the <productname>Microsoft Windows SDK</productname> (currently
+      If your build environment doesn't ship with a supported version of the
+      <productname>Microsoft Windows SDK</productname> it
+      is recommended that you upgrade to the latest version (currently
       version 7.1), available for download from
       <ulink url="http://www.microsoft.com/downloads/"></>.
      </para>
      <para>
       You must always include the
       <application>Windows Headers and Libraries</application> part of the SDK.
-      If you install the <productname>Windows SDK</productname>
+      If you install a <productname>Windows SDK</productname>
       including the <application>Visual C++ Compilers</application>,
       you don't need <productname>Visual Studio</productname> to build.
+      Note that as of Version 8.0a the Windows SDK no longer ships with a
+      complete command-line build environment.
      </para></listitem>
     </varlistentry>
 

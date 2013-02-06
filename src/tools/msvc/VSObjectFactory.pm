@@ -41,6 +41,10 @@ sub CreateSolution
 	{
 		return new VS2010Solution(@_);
 	}
+	elsif ($visualStudioVersion eq '11.00')
+	{
+		return new VS2012Solution(@_);
+	}
 	else
 	{
 		croak "The requested Visual Studio version is not supported.";
@@ -68,6 +72,10 @@ sub CreateProject
 	{
 		return new VC2010Project(@_);
 	}
+	elsif ($visualStudioVersion eq '11.00')
+	{
+		return new VC2012Project(@_);
+	}
 	else
 	{
 		croak "The requested Visual Studio version is not supported.";
@@ -82,7 +90,7 @@ sub DetermineVisualStudioVersion
 	{
 
 # Determine version of nmake command, to set proper version of visual studio
-# we use nmake as it has existed for a long time and still exists in visual studio 2010
+# we use nmake as it has existed for a long time and still exists in current visual studio versions
 		open(P, "nmake /? 2>&1 |")
 		  || croak
 "Unable to determine Visual Studio version: The nmake command wasn't found.";
@@ -107,11 +115,11 @@ sub DetermineVisualStudioVersion
 sub _GetVisualStudioVersion
 {
 	my ($major, $minor) = @_;
-	if ($major > 10)
+	if ($major > 11)
 	{
 		carp
 "The determined version of Visual Studio is newer than the latest supported version. Returning the latest supported version instead.";
-		return '10.00';
+		return '11.00';
 	}
 	elsif ($major < 6)
 	{

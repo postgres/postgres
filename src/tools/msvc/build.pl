@@ -50,7 +50,7 @@ elsif ($ARGV[0] ne "RELEASE")
 
 # ... and do it
 
-if ($buildwhat and $vcver eq '10.00')
+if ($buildwhat and $vcver >= 10.00)
 {
 	system(
 "msbuild $buildwhat.vcxproj /verbosity:detailed /p:Configuration=$bconf");
