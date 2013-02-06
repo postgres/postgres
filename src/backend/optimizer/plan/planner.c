@@ -1071,7 +1071,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		if (parse->rowMarks)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("SELECT FOR UPDATE/SHARE/KEY UPDATE/KEY SHARE is not allowed with UNION/INTERSECT/EXCEPT")));
+					 errmsg("row-level locks are not allowed with UNION/INTERSECT/EXCEPT")));
 
 		/*
 		 * Calculate pathkeys that represent result ordering requirements

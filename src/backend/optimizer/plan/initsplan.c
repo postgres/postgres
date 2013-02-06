@@ -883,7 +883,7 @@ make_outerjoininfo(PlannerInfo *root,
 			(jointype == JOIN_FULL && bms_is_member(rc->rti, left_rels)))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("SELECT FOR UPDATE/SHARE/KEY UPDATE/KEY SHARE cannot be applied to the nullable side of an outer join")));
+					 errmsg("row-level locks cannot be applied to the nullable side of an outer join")));
 	}
 
 	sjinfo->syn_lefthand = left_rels;

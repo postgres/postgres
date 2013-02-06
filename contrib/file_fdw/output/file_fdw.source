@@ -191,7 +191,7 @@ ERROR:  cannot change foreign table "agg_csv"
 DELETE FROM agg_csv WHERE a = 100;
 ERROR:  cannot change foreign table "agg_csv"
 SELECT * FROM agg_csv FOR UPDATE OF agg_csv;
-ERROR:  SELECT FOR UPDATE/SHARE/KEY UPDATE/KEY SHARE cannot be used with foreign table "agg_csv"
+ERROR:  row-level locks cannot be used with foreign table "agg_csv"
 LINE 1: SELECT * FROM agg_csv FOR UPDATE OF agg_csv;
                                             ^
 -- but this should be ignored
