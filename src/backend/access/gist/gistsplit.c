@@ -19,21 +19,21 @@
 
 typedef struct
 {
-	Datum	   *attr;
-	int			len;
 	OffsetNumber *entries;
+	int			len;
+	Datum	   *attr;
 	bool	   *isnull;
 	bool	   *equiv;
 } GistSplitUnion;
 
 
 /*
- * Forms unions of subkeys after page split, but
- * uses only tuples aren't in groups of equalent tuples
+ * Form unions of subkeys after a page split, ignoring any tuples
+ * that are marked in gsvp->equiv[]
  */
 static void
 gistunionsubkeyvec(GISTSTATE *giststate, IndexTuple *itvec,
-				   GistSplitUnion *gsvp, int startkey)
+				   GistSplitUnion *gsvp)
 {
 	IndexTuple *cleanedItVec;
 	int			i,
@@ -49,35 +49,37 @@ gistunionsubkeyvec(GISTSTATE *giststate, IndexTuple *itvec,
 		cleanedItVec[cleanedLen++] = itvec[gsvp->entries[i] - 1];
 	}
 
-	gistMakeUnionItVec(giststate, cleanedItVec, cleanedLen, startkey,
-					   gsvp->attr, gsvp->isnull);
+	if (!gistMakeUnionItVec(giststate, cleanedItVec, cleanedLen,
+							gsvp->attr, gsvp->isnull))
+		elog(ERROR, "invalid GiST tuple not expected");
 
 	pfree(cleanedItVec);
 }
 
 /*
- * unions subkeys for after user picksplit over attno-1 column
+ * Recompute unions of subkeys after a page split, ignoring any tuples
+ * that are marked in spl->spl_equiv[]
  */
 static void
-gistunionsubkey(GISTSTATE *giststate, IndexTuple *itvec, GistSplitVector *spl, int attno)
+gistunionsubkey(GISTSTATE *giststate, IndexTuple *itvec, GistSplitVector *spl)
 {
 	GistSplitUnion gsvp;
 
 	gsvp.equiv = spl->spl_equiv;
 
-	gsvp.attr = spl->spl_lattr;
-	gsvp.len = spl->splitVector.spl_nleft;
 	gsvp.entries = spl->splitVector.spl_left;
+	gsvp.len = spl->splitVector.spl_nleft;
+	gsvp.attr = spl->spl_lattr;
 	gsvp.isnull = spl->spl_lisnull;
 
-	gistunionsubkeyvec(giststate, itvec, &gsvp, attno);
+	gistunionsubkeyvec(giststate, itvec, &gsvp);
 
-	gsvp.attr = spl->spl_rattr;
-	gsvp.len = spl->splitVector.spl_nright;
 	gsvp.entries = spl->splitVector.spl_right;
+	gsvp.len = spl->splitVector.spl_nright;
+	gsvp.attr = spl->spl_rattr;
 	gsvp.isnull = spl->spl_risnull;
 
-	gistunionsubkeyvec(giststate, itvec, &gsvp, attno);
+	gistunionsubkeyvec(giststate, itvec, &gsvp);
 }
 
 /*
@@ -440,14 +442,14 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GistSplitVec
 			 */
 			if (LenEquiv == 0)
 			{
-				gistunionsubkey(giststate, itup, v, attno + 1);
+				gistunionsubkey(giststate, itup, v);
 			}
 			else
 			{
 				cleanupOffsets(sv->spl_left, &sv->spl_nleft, v->spl_equiv, &LenEquiv);
 				cleanupOffsets(sv->spl_right, &sv->spl_nright, v->spl_equiv, &LenEquiv);
 
-				gistunionsubkey(giststate, itup, v, attno + 1);
+				gistunionsubkey(giststate, itup, v);
 				if (LenEquiv == 1)
 				{
 					/*
@@ -468,7 +470,7 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, int attno, GistSplitVec
 					 * performance, because it's very rarely
 					 */
 					v->spl_equiv = NULL;
-					gistunionsubkey(giststate, itup, v, attno + 1);
+					gistunionsubkey(giststate, itup, v);
 
 					return false;
 				}
@@ -547,7 +549,7 @@ gistSplitByInvalid(GISTSTATE *giststate, GistSplitVector *v, IndexTuple *itup, i
 		gsvp.entries = v->splitVector.spl_left;
 		gsvp.isnull = v->spl_lisnull;
 
-		gistunionsubkeyvec(giststate, itup, &gsvp, 0);
+		gistunionsubkeyvec(giststate, itup, &gsvp);
 	}
 }
 
@@ -619,7 +621,7 @@ gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len, GISTSTATE *gist
 				v->splitVector.spl_left[v->splitVector.spl_nleft++] = i;
 
 		v->spl_equiv = NULL;
-		gistunionsubkey(giststate, itup, v, attno);
+		gistunionsubkey(giststate, itup, v);
 	}
 	else
 	{
@@ -675,7 +677,7 @@ gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len, GISTSTATE *gist
 
 				v->splitVector = backupSplit;
 				/* reunion left and right datums */
-				gistunionsubkey(giststate, itup, v, attno);
+				gistunionsubkey(giststate, itup, v);
 			}
 		}
 	}
