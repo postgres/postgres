@@ -5777,7 +5777,13 @@ StartupXLOG(void)
 			if (fast_promote)
 			{
 				checkPointLoc = ControlFile->prevCheckPoint;
-				record = ReadCheckpointRecord(xlogreader, checkPointLoc, 2, false);
+
+				/*
+				 * Confirm the last checkpoint is available for us to recover
+				 * from if we fail. Note that we don't check for the secondary
+				 * checkpoint since that isn't available in most base backups.
+				 */
+				record = ReadCheckpointRecord(xlogreader, checkPointLoc, 1, false);
 				if (record != NULL)
 				{
 					checkpoint_wait = false;
