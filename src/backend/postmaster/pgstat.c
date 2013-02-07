@@ -686,8 +686,8 @@ pgstat_report_stat(bool force)
 	int			i;
 
 	/* Don't expend a clock check if nothing to do */
-	if ((pgStatTabList == NULL || pgStatTabList->tsa_used == 0)
-		&& !have_function_stats)
+	if ((pgStatTabList == NULL || pgStatTabList->tsa_used == 0) &&
+		!have_function_stats && !force)
 		return;
 
 	/*
