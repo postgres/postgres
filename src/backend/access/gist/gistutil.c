@@ -21,12 +21,6 @@
 #include "storage/lmgr.h"
 #include "utils/builtins.h"
 
-/*
- * static *S used for temporary storage (saves stack and palloc() call)
- */
-
-static Datum attrS[INDEX_MAX_KEYS];
-static bool isnullS[INDEX_MAX_KEYS];
 
 /*
  * Write itup vector to page, has no control of free space.
@@ -148,12 +142,12 @@ gistfillitupvec(IndexTuple *vec, int veclen, int *memlen)
 }
 
 /*
- * Make unions of keys in IndexTuple vector.
+ * Make unions of keys in IndexTuple vector (one union datum per index column).
+ * Union Datums are returned into the attr/isnull arrays.
  * Resulting Datums aren't compressed.
  */
-
 void
-gistMakeUnionItVec(GISTSTATE *giststate, IndexTuple *itvec, int len, int startkey,
+gistMakeUnionItVec(GISTSTATE *giststate, IndexTuple *itvec, int len,
 				   Datum *attr, bool *isnull)
 {
 	int			i;
@@ -162,19 +156,12 @@ gistMakeUnionItVec(GISTSTATE *giststate, IndexTuple *itvec, int len, int startke
 
 	evec = (GistEntryVector *) palloc((len + 2) * sizeof(GISTENTRY) + GEVHDRSZ);
 
-	for (i = startkey; i < giststate->tupdesc->natts; i++)
+	for (i = 0; i < giststate->tupdesc->natts; i++)
 	{
 		int			j;
 
+		/* Collect non-null datums for this column */
 		evec->n = 0;
-		if (!isnull[i])
-		{
-			gistentryinit(evec->vector[evec->n], attr[i],
-						  NULL, NULL, (OffsetNumber) 0,
-						  FALSE);
-			evec->n++;
-		}
-
 		for (j = 0; j < len; j++)
 		{
 			Datum		datum;
@@ -192,7 +179,7 @@ gistMakeUnionItVec(GISTSTATE *giststate, IndexTuple *itvec, int len, int startke
 			evec->n++;
 		}
 
-		/* If this tuple vector was all NULLs, the union is NULL */
+		/* If this column was all NULLs, the union is NULL */
 		if (evec->n == 0)
 		{
 			attr[i] = (Datum) 0;
@@ -202,6 +189,7 @@ gistMakeUnionItVec(GISTSTATE *giststate, IndexTuple *itvec, int len, int startke
 		{
 			if (evec->n == 1)
 			{
+				/* unionFn may expect at least two inputs */
 				evec->n = 2;
 				evec->vector[1] = evec->vector[0];
 			}
@@ -224,11 +212,12 @@ gistMakeUnionItVec(GISTSTATE *giststate, IndexTuple *itvec, int len, int startke
 IndexTuple
 gistunion(Relation r, IndexTuple *itvec, int len, GISTSTATE *giststate)
 {
-	memset(isnullS, TRUE, sizeof(bool) * giststate->tupdesc->natts);
+	Datum		attr[INDEX_MAX_KEYS];
+	bool		isnull[INDEX_MAX_KEYS];
 
-	gistMakeUnionItVec(giststate, itvec, len, 0, attrS, isnullS);
+	gistMakeUnionItVec(giststate, itvec, len, attr, isnull);
 
-	return gistFormTuple(giststate, r, attrS, isnullS, false);
+	return gistFormTuple(giststate, r, attr, isnull, false);
 }
 
 /*
@@ -240,11 +229,14 @@ gistMakeUnionKey(GISTSTATE *giststate, int attno,
 				 GISTENTRY *entry2, bool isnull2,
 				 Datum *dst, bool *dstisnull)
 {
-
+	/* we need a GistEntryVector with room for exactly 2 elements */
+	union
+	{
+		GistEntryVector gev;
+		char		padding[2 * sizeof(GISTENTRY) + GEVHDRSZ];
+	}			storage;
+	GistEntryVector *evec = &storage.gev;
 	int			dstsize;
-
-	static char storage[2 * sizeof(GISTENTRY) + GEVHDRSZ];
-	GistEntryVector *evec = (GistEntryVector *) storage;
 
 	evec->n = 2;
 
@@ -321,6 +313,8 @@ gistgetadjusted(Relation r, IndexTuple oldtup, IndexTuple addtup, GISTSTATE *gis
 				addentries[INDEX_MAX_KEYS];
 	bool		oldisnull[INDEX_MAX_KEYS],
 				addisnull[INDEX_MAX_KEYS];
+	Datum		attr[INDEX_MAX_KEYS];
+	bool		isnull[INDEX_MAX_KEYS];
 	IndexTuple	newtup = NULL;
 	int			i;
 
@@ -335,19 +329,20 @@ gistgetadjusted(Relation r, IndexTuple oldtup, IndexTuple addtup, GISTSTATE *gis
 		gistMakeUnionKey(giststate, i,
 						 oldentries + i, oldisnull[i],
 						 addentries + i, addisnull[i],
-						 attrS + i, isnullS + i);
+						 attr + i, isnull + i);
 
 		if (neednew)
 			/* we already need new key, so we can skip check */
 			continue;
 
-		if (isnullS[i])
+		if (isnull[i])
 			/* union of key may be NULL if and only if both keys are NULL */
 			continue;
 
 		if (!addisnull[i])
 		{
-			if (oldisnull[i] || gistKeyIsEQ(giststate, i, oldentries[i].key, attrS[i]) == false)
+			if (oldisnull[i] ||
+				!gistKeyIsEQ(giststate, i, oldentries[i].key, attr[i]))
 				neednew = true;
 		}
 	}
@@ -355,7 +350,7 @@ gistgetadjusted(Relation r, IndexTuple oldtup, IndexTuple addtup, GISTSTATE *gis
 	if (neednew)
 	{
 		/* need to update key */
-		newtup = gistFormTuple(giststate, r, attrS, isnullS, false);
+		newtup = gistFormTuple(giststate, r, attr, isnull, false);
 		newtup->t_tid = oldtup->t_tid;
 	}
 

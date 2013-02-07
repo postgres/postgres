@@ -500,7 +500,7 @@ extern void gistdentryinit(GISTSTATE *giststate, int nkey, GISTENTRY *e,
 extern float gistpenalty(GISTSTATE *giststate, int attno,
 			GISTENTRY *key1, bool isNull1,
 			GISTENTRY *key2, bool isNull2);
-extern void gistMakeUnionItVec(GISTSTATE *giststate, IndexTuple *itvec, int len, int startkey,
+extern void gistMakeUnionItVec(GISTSTATE *giststate, IndexTuple *itvec, int len,
 				   Datum *attr, bool *isnull);
 extern bool gistKeyIsEQ(GISTSTATE *giststate, int attno, Datum a, Datum b);
 extern void gistDeCompressAtt(GISTSTATE *giststate, Relation r, IndexTuple tuple, Page p,
